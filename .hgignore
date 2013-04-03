@@ -1,0 +1,20 @@
+syntax: glob
+
+logs
+project/project
+project/target
+target
+tmp
+.history
+dist
+/out
+.idea_modules
+.idea
+*.iml
+.classpath
+.project
+RUNNING_PID
+.settings
+*.swp
+*.rej
+*.orig
