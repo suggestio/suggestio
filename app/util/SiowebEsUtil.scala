@@ -3,7 +3,8 @@ package util
 import org.elasticsearch.node.NodeBuilder
 import org.elasticsearch.client.Client
 import org.elasticsearch.action.search.SearchType
-import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilders}
+import org.elasticsearch.index.query.{QueryBuilder, FilterBuilder, FilterBuilders, QueryBuilders}
+import org.elasticsearch.search.SearchHit
 
 /**
  * Suggest.io
@@ -11,11 +12,12 @@ import org.elasticsearch.index.query.{FilterBuilder, FilterBuilders, QueryBuilde
  * Created: 03.04.13 17:54
  * Description: Фунцкии для поддержки работы c ES на стороне веб-морды. В частности,
  * генерация запросов и поддержка инстанса клиента.
+ * Тут по сути нарезка необходимого из sio_elastic_search, sio_lucene_query, sio_m_page_es.
  */
 
 object SiowebEsUtil {
 
-  val RESULT_COUNT = 20
+  val RESULT_COUNT_DEFAULT = 20
 
   // Настройки ret*-полей опций выдачи.
   type RET_T = Symbol
@@ -25,9 +27,18 @@ object SiowebEsUtil {
 
   val PER_SHARD_DOCUMENTS_LIMIT = 500
 
+  val FIELD_URL   = "url"
   val FIELD_LANG  = "lang"
   val FIELD_TITLE = "title"
+  val FIELD_CONTENT_TEXT = "content_text"
+  val FIELD_IMAGE_KEY    = "image_key"
+  val FIELD_ALL   = "_all"
 
+  val FIELDS_ONLY_TITLE = List(FIELD_TITLE)
+  val FIELDS_TEXT_ALL   = List(FIELD_TITLE, FIELD_CONTENT_TEXT)
+
+  val SUBFIELD_ENGRAM = "gram"
+  val SUBFIELD_FTS    = "fts"
 
   // Инстанс локальной не-data ноды ES. Отсюда начинаются все поисковые и другие запросы.
   // TODO стоит это вынести это в отдельный актор? Нет при условии вызова node.close() при остановке системы.
@@ -38,47 +49,81 @@ object SiowebEsUtil {
    * Фунция генерации поискового запроса и выполнения поиска. Используется query-генератор, горождаемый ES-клиентом.
    * @param indices Список индексов, по которым будет идти поиск.
    * @param types Список типов, которые затрагиваются поиском.
-   * @param query Буквы, которые ввел юзер
+   * @param queryStr Буквы, которые ввел юзер
    * @param options Параметры запроса.
    */
-  def searchIndex(indices:Seq[String], types:Seq[String], query:String, options:SioSearchOptions)(implicit client:Client) = {
-    var filters : List[FilterBuilder] = List(FilterBuilders.limitFilter( queryShardLimit(query) ))
+  def searchIndex(indices:Seq[String], types:Seq[String], queryStr:String, options:SioSearchOptions)(implicit client:Client) : Array[SearchHit] = {
+    queryStr2Query(queryStr).map { textQuery =>
 
-    // Обработать options.langs, дописав при необходимости дополнительный фильтр.
-    if (!options.langs.isEmpty) {
-      val langs = options.langs
-      val termQuery = if (langs.tail.isEmpty)
+      var filters : List[FilterBuilder] = List(FilterBuilders.limitFilter( queryShardLimit(queryStr) ))
+
+      // Обработать options.langs, дописав при необходимости дополнительный фильтр.
+      if (!options.langs.isEmpty) {
+        val langs = options.langs
+        val termQuery = if (langs.tail.isEmpty)
         // Один язык - делаем простой term-фильтр
-        QueryBuilders.termQuery(FIELD_LANG, langs.head)
-      else
+          QueryBuilders.termQuery(FIELD_LANG, langs.head)
+        else
         // Запрошено несколько языков. Используем terms-query
-        QueryBuilders.termsQuery(FIELD_LANG, langs: _*)
-      filters = FilterBuilders.queryFilter(termQuery) :: filters
-    }
+          QueryBuilders.termsQuery(FIELD_LANG, langs: _*)
+        filters = FilterBuilders.queryFilter(termQuery) :: filters
+      }
 
-    // Если получилось несколько фильтров, то нужно их объеденить через and-фильтр.
-    val qfilter = if (!filters.tail.isEmpty)
-      FilterBuilders.andFilter(filters : _*)
-    else
-      filters.head
+      // Если получилось несколько фильтров, то нужно их объеденить через and-фильтр.
+      val qFilter = if (!filters.tail.isEmpty)
+        FilterBuilders.andFilter(filters : _*)
+      else
+        filters.head
 
-    // TODO
-    // TODO разрезать запрос, собрать дальше query
-    // TODO
+      val query : QueryBuilder = QueryBuilders.filteredQuery(textQuery, qFilter)
 
-    val reqBuilder = client
-      .prepareSearch(indices : _*)
-      .setTypes(types : _*)
-      .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+      // TODO включить boost по датам. Чем свежее, тем выше score.
+      /*if (options.withDateScoring) {
+        query = QueryBuilders.customScoreQuery(query)
+      }*/
 
-    reqBuilder
-      .setQuery(QueryBuilders.termQuery("multi", "test"))
-      .setFilter(FilterBuilders.rangeFilter("age").from(12).to(18))
-      .setFrom(0)
-      .setSize(RESULT_COUNT)
-      .setExplain(true)
-      .execute()
-      .actionGet()
+      val reqBuilder = client
+        .prepareSearch(indices : _*)
+        .setTypes(types : _*)
+        .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+        .setExplain(options.withExplain)
+        .setSize(options.size)
+        .setQuery(query)
+        .addField(FIELD_URL)
+
+      if (!options.fields.isEmpty)
+        reqBuilder.addFields(options.fields : _*)
+
+      // Настраиваем выдачу заголовков и их подсветку
+      if (options.retTitle != RET_NEVER) {
+        val hlField = subfield(FIELD_TITLE, SUBFIELD_ENGRAM)
+        reqBuilder
+          .addField(hlField)
+          .addHighlightedField(FIELD_TITLE, -1, 0)
+      }
+
+      // Настраиваем выдачу текста страницы.
+      if (options.retContentText != RET_NEVER) {
+        val hlField = subfield(FIELD_CONTENT_TEXT, SUBFIELD_ENGRAM)
+        reqBuilder.addHighlightedField(
+          hlField,
+          options.hlCtFragmentsSize,
+          options.hlCtFragmentsCount
+        )
+      }
+
+      // Возвращать картинки?
+      if (options.retImage)
+        reqBuilder.addField(FIELD_IMAGE_KEY)
+
+      // Выполнить запрос
+      val response = reqBuilder
+        .execute()
+        .actionGet()
+
+      response.getHits.getHits
+
+    }.getOrElse(Array())
   }
 
 
@@ -90,21 +135,128 @@ object SiowebEsUtil {
   def queryShardLimit(query:String) = PER_SHARD_DOCUMENTS_LIMIT
 
 
+  // Регэксп разбиения строки перед последним словом.
+  val splitLastWordRe = "\\s+(?=\\S*+$)".r
+  val endsWithSpace = "\\s$".r.pattern
+
+  def splitQueryStr(queryStr:String) : Option[(String, String)] = {
+    splitLastWordRe.split(queryStr) match {
+      case Array() =>
+        None
+
+      case Array(words) =>
+        // Нужно проверить words на наличие \\s внутри. Если есть, то это fts words. Иначе, engram-часть.
+        val result = if (endsWithSpace.matcher(queryStr).find())
+          (words, "")
+        else
+          ("", words)
+        Some(result)
+
+      case Array(fts, ngram:String) =>
+        // Бывает, что fts-часть состоит из одного предлога или слова, которое кажется сейчас предлогом.
+        // Если отправить в ES в качестве запроса предлог, то, очевидно, будет ноль результатов на выходе.
+        val fts1 = if (Stopwords.ALL_STOPS.contains(ngram))
+          ""
+        else
+          fts
+        Some((fts1, ngram))
+    }
+  }
+
+
+  /**
+   * Взять queryString, вбитую юзером, распилить на куски, проанализировать и сгенерить запрос или комбинацию запросов
+   * на её основе.
+   * @param queryStr Строка, которую набирает в поиске юзер.
+   */
+  def queryStr2Query(queryStr:String) : Option[QueryBuilder] = {
+    // Дробим исходный запрос на куски
+    val topQueriesOpt = splitQueryStr(queryStr).map { case (ftsQS, engramQS) =>
+
+      val ftsLen = ftsQS.length
+      val engramLen = engramQS.length
+
+      // Отрабатываем edge-ngram часть запроса.
+      var queries : List[QueryBuilder] = if (engramLen == 0)
+        List()
+
+      else {
+        // Если запрос короткий, то искать только по title
+        val fields = if (ftsLen + engramLen <= 1)
+          FIELDS_ONLY_TITLE
+        else
+          FIELDS_TEXT_ALL
+        // Генерим базовый engram-запрос
+        var engramQueries = fields.map { _field =>
+          val _subfield = subfield(_field, SUBFIELD_ENGRAM)
+          QueryBuilders.matchQuery(_subfield, engramQS)
+        }
+        // Если чел уже набрал достаточное кол-во символов, то искать парралельно в fts
+        if (engramLen >= 4) {
+          val _query = QueryBuilders.matchQuery(FIELD_ALL, engramQS)
+          engramQueries = _query :: engramQueries
+        }
+        // Если получилось несколько запросов, то обернуть их в bool-query
+        val finalEngramQuery = if (engramQueries.tail == Nil)
+          engramQueries.head
+        else {
+          val boolQB = QueryBuilders.boolQuery().minimumNumberShouldMatch(1)
+          engramQueries.foreach { boolQB.should(_) }
+          boolQB
+        }
+        List(finalEngramQuery)
+      }
+
+      // Обработать fts-часть исходного запроса.
+      if (ftsLen > 1) {
+        val queryFts = QueryBuilders.matchQuery(FIELD_ALL, ftsQS)
+        queries = queryFts :: queries
+      }
+
+      queries
+    }
+
+    // Если получилось несколько запросов верхнего уровня, то обернуть их bool-query must
+    topQueriesOpt match {
+      case None => None
+
+      case Some(topQueries) =>
+        topQueries match {
+
+          case List(query) => Some(query)
+          case Nil => None
+
+          case _ =>
+            val queryBool = QueryBuilders.boolQuery()
+            topQueries.foreach { queryBool.must(_) }
+            Some(queryBool)
+        }
+    }
+  }
+
+
+  protected def subfield(field:String, subfield:String) = field + "." + subfield
 }
 
 
+// Класс, хранящий опции поиска.
 case class SioSearchOptions(
   // Настройки выдачи результатов
   retTitle : SiowebEsUtil.RET_T = SiowebEsUtil.RET_ALWAYS,
   retContentText : SiowebEsUtil.RET_T = SiowebEsUtil.RET_ALWAYS,
-  retImage : SiowebEsUtil.RET_T = SiowebEsUtil.RET_ALWAYS,
+  retImage : Boolean = true,
+  size : Int = SiowebEsUtil.RESULT_COUNT_DEFAULT,
+
   // Языки, по которым стоит искать
   langs : List[String] = List(),
   fields : List[String] = List(),
+
   // Подсветка результатов
   hlCtFragmentsCount : Int = 1,
   hlCtFragmentsSize : Int = 200,
   hlCtFragmentSeparator : String = "",
+
   // Дебажные настройки всякие
-  use_date_scoring : Boolean = true
+  withDateScoring : Boolean = true,
+  withExplain : Boolean = false
 )

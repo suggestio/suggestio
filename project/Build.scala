@@ -1,6 +1,7 @@
 import sbt._
 import Keys._
 import play.Project._
+import java.io.File
 
 object ApplicationBuild extends Build {
 
@@ -18,12 +19,18 @@ object ApplicationBuild extends Build {
       "org.apache.hadoop" % "hadoop-core" % hadoopVsn,
       "org.apache.hadoop" % "hadoop-client" % hadoopVsn,
       // spat4j: костыль для http://elasticsearch-users.115913.n3.nabble.com/Compile-error-with-0-20-2-td4028743.html :
-      "com.spatial4j" % "spatial4j" % "0.3"
+      "com.spatial4j" % "spatial4j" % "0.3",
+      "io.suggest" %% "util" % "0.1"
     )
   }
  
   val main = play.Project(appName, appVersion, appDependencies).settings(
-    // Add your own project settings here      
+    
+    resolvers ++= Seq(
+      "local m2" at   "file://" + Path.userHome.absolutePath + "/.m2/repository",
+      Resolver.file("LocalIvy", file(Path.userHome + File.separator + ".ivy2" + File.separator + "local"))(Resolver.ivyStylePatterns)
+    )
+
   )
 
 }
