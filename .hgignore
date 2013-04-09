@@ -4,3 +4,5 @@ syntax: glob
 project/
 target/
 lib/
+.idea/
+.idea_modules/

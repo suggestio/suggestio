@@ -20,5 +20,6 @@ libraryDependencies ++= {
     "org.gnu.inet" % "libidn" % "1.15",
     "com.github.nscala-time" %% "nscala-time" % "0.2.0",
     "commons-lang" % "commons-lang" % "2.4",
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.1.3",
     "org.elasticsearch" % "elasticsearch" % "0.20.6"
   )}
