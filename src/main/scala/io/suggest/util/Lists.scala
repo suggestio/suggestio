@@ -1,5 +1,7 @@
 package io.suggest.util
 
+import collection.mutable
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -37,5 +39,15 @@ object Lists {
     }
   }
 
+
+  /**
+   * Тоже самое для mutable-словаря. Стоит заменить это добро на нормальный вызов с collections.MapLike и манифестами.
+   * @return
+   */
+  def mergeMutableMaps[K,V](ms:mutable.Map[K,V] *)(f: (K,V,V) => V) : mutable.Map[K,V] = {
+    (mutable.Map[K, V]() /: (for (m <- ms; kv <- m) yield kv)) { (a, kv) =>
+      a + (if (a.contains(kv._1)) kv._1 -> f(kv._1, a(kv._1), kv._2) else kv)
+    }
+  }
 
 }

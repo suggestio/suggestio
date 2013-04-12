@@ -3,6 +3,8 @@ package io.suggest.model
 import com.github.nscala_time.time.Imports._
 import org.apache.hadoop.fs.FileSystem
 import io.suggest.index_info._
+import collection.convert.Wrappers.JMapWrapper
+import io.suggest.util.JacksonWrapper
 
 /**
  * Suggest.io
@@ -24,13 +26,17 @@ object DomainSettings extends IndexInfoConstants {
       dkey = dkey,
       start_url = m("start_url").asInstanceOf[String],
       index_info = {
-        val iimap = m("index_info").asInstanceOf[Map[String,Any]]
-        m("index_info_type").asInstanceOf[IITYPE_T] match {
-          case IITYPE_BIG_SHARDED => BigShardedIndex(dkey, iimap)
-          case IITYPE_SMALL_MULTI => SmallMultiIndex(dkey, iimap)
+        m("index_info") match {
+          case jiimap : JMapWrapper[String @unchecked, Any @unchecked] =>
+            // Конвертим JavaMap в scala-представление:
+            val iimaps = JacksonWrapper.convert[Map[String,Any]](jiimap)
+            m("index_info_type").asInstanceOf[IITYPE_T] match {
+              case IITYPE_BIG_SHARDED => BigShardedIndex(dkey, iimaps)
+              case IITYPE_SMALL_MULTI => SmallMultiIndex(dkey, iimaps)
+            }
         }
       },
-      meta = m("meta").asInstanceOf[Map[String,Any]]
+      meta = JacksonWrapper.convert[Map[String,Any]](m("meta"))
     )
   }
 
@@ -47,7 +53,7 @@ object DomainSettings extends IndexInfoConstants {
     )
   }
 
-  protected def getName = getClass.getCanonicalName
+  protected val getName = getClass.getCanonicalName.replace("$", "")
 
   /**
    * Загрузить из хранилища данные для указанного домена
@@ -93,7 +99,7 @@ case class DomainSettings(
     val state = export
     JsonDfsBackend.writeTo(
       dkey = dkey,
-      name = getClass.getCanonicalName,
+      name = DomainSettings.getName,
       value = state
     )
     this
