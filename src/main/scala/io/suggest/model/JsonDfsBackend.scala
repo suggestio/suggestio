@@ -15,17 +15,17 @@ import io.suggest.util.JacksonWrapper
 object JsonDfsBackend {
 
   // Имя директории для хранения json-ов. После запуска нельзя менять, иначе записи потеряются.
-  val subdir = "conf_json"
+  val subdir = "conf"
 
   // Корневая ФС
-  protected var _root_fs : FileSystem = null
+  protected var _out_dir : Path = null
 
   /**
    * Выставляется fs. Это вместо конструктора.
-   * @param root_fs - корень, используемый для outdir в bixo.
+   * @param out_dir- корень, используемый для outdir в bixo. Поиск директорий доменов будет осуществляться тут.
    */
-  def setFs(root_fs:FileSystem) {
-    _root_fs = root_fs
+  def setOutDir(out_dir:Path) {
+    _out_dir = out_dir
   }
 
 
@@ -33,16 +33,19 @@ object JsonDfsBackend {
    * Прочитать ранее сохраненное в json состояние из хранилища.
    * @param dkey ключ домена сайта
    * @param name имя состояния
+   * @param fs DFS для записи. Нельзя вынести в implicit из-за T:Manifest-конструкции.
    * @tparam T тип для рефлексии, обязателен.
    * @return Опциональное нечто типа T
    */
-  def getAs[T: Manifest](dkey:String, name:String) : Option[T] = {
-    val path = getPath(dkey, name)
-    _root_fs.exists(path) match {
+  def getAs[T: Manifest](dkey:String, name:String, fs:FileSystem) : Option[T] = getAs[T](getPath(dkey, name), fs)
+  def getAs[T: Manifest](path:String, fs:FileSystem) : Option[T] = getAs[T](new Path(path), fs)
+  def getAs[T: Manifest](path:Path, fs:FileSystem) : Option[T] = {
+    val path1 = ensurePathAbsolute(path)
+    fs.exists(path1) match {
       case false => None
 
       case true =>
-        val is = _root_fs.open(path)
+        val is = fs.open(path1)
         try {
           Some(JacksonWrapper.deserialize[T](is))
         } finally {
@@ -58,13 +61,34 @@ object JsonDfsBackend {
    * @param name имя сохраняемого объекта
    * @param value и сам объект
    */
-  def writeTo(dkey:String, name:String, value:Any) {
+  def writeTo(dkey:String, name:String, value:Any)(implicit fs:FileSystem) {
     val path = getPath(dkey, name)
-    val os = _root_fs.create(path, true)
+    writeTo(path, value)
+  }
+
+  def writeTo(path:String, value:Any)(implicit fs:FileSystem) {
+    writeTo(new Path(path), value)
+  }
+
+  def writeTo(path:Path, value:Any)(implicit fs:FileSystem) {
+    val os = fs.create(ensurePathAbsolute(path), true)
     try {
-      JacksonWrapper.serialize(os, value)
+      JacksonWrapper.serializePretty(os, value)
     } finally {
       os.close()
+    }
+  }
+
+
+  /**
+   * Убедиться, что указанный путь является абсолютным. Если нет - то дописать в начало дефолтовый путь.
+   * @param path путь.
+   * @return 100% абсолютный путь.
+   */
+  protected def ensurePathAbsolute(path:Path) : Path = {
+    path.isAbsolute match {
+      case true  => path
+      case false => new Path(_out_dir, path)
     }
   }
 
@@ -75,6 +99,65 @@ object JsonDfsBackend {
    * @param name имя сохраняемого состяния. Обычно имя класса.
    * @return Path, относительный по отношению к _root_fs (и любым другим fs)
    */
-  def getPath(dkey:String, name:String) = new Path(dkey + "/" + subdir + "/" + name + ".json")
+  def getPath(dkey:String, name:String) = new Path(_out_dir, dkey + "/" + subdir + "/" + name + ".json")
 
+}
+
+
+trait JsonDfsClient {
+  protected type ImportExportMap = Map[String,Any]
+  protected def exportState : ImportExportMap
+  protected def importStateElement(key:String, value:Any)
+
+   /**
+   * Импорт экспортированного состояния.
+   * @param map
+   */
+  protected def importState(map: ImportExportMap) {
+    map.foreach { case (k,v) => importStateElement(k,v) }
+  }
+
+  /**
+   * Экспортировать состояние, сериализовать и отправить в DFS.
+   */
+  protected def saveState(implicit fs:FileSystem)
+
+  /**
+   * Восстановить ранее сохраненное состояние из DFS.
+   */
+  protected def loadState(implicit fs:FileSystem)
+
+  protected def getClassName = getClass.getCanonicalName
+  protected def getStateFileName = getClassName + ".json"
+}
+
+// Трайт для быстрой интеграции функций JsonDfsBackend в акторы и синглтоны, относящиеся к домену.
+trait JsonDfsClientDkey extends JsonDfsClient {
+
+  protected def dkey : String
+
+  protected def saveState(implicit fs:FileSystem) {
+    JsonDfsBackend.writeTo(dkey, getClassName, exportState)
+  }
+
+  protected def loadState(implicit fs:FileSystem) {
+    JsonDfsBackend.getAs[ImportExportMap](dkey, getStateFileName, fs) map(importState(_))
+  }
+
+}
+
+
+// Трайт для быстрой интеграции JsonDfsClient в акторы и синглтоны, работающих вне всех доменов
+// Это например супервизоры верхнего уровня, менеджеры индексов и т.д.
+trait JsonDfsClientGlobal extends JsonDfsClient {
+
+  protected def getStatePath = new Path(JsonDfsBackend.subdir, getStateFileName)
+
+  protected def saveState(implicit fs:FileSystem) {
+    JsonDfsBackend.writeTo(getStatePath, exportState)
+  }
+
+  protected def loadState(implicit fs:FileSystem) {
+    JsonDfsBackend.getAs[ImportExportMap](getStatePath, fs) map(importState(_))
+  }
 }

@@ -11,7 +11,7 @@ import gnu.inet.encoding.IDNA
  * Created: 05.03.13 14:05
  * Description: Переписанный на Scala неподдерживаемый bixo.utils.UrlUtils.
  */
-object UrlUtil extends Logs {
+object UrlUtil extends Logs with Serializable {
 
   val INSTANCE = this
 

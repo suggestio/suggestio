@@ -27,6 +27,11 @@ object JacksonWrapper {
     mapper.writeValue(os, value)
   }
 
+  def serializePretty(os:OutputStream, value:Any) {
+    val writer = mapper.writer().withDefaultPrettyPrinter()
+    writer.writeValue(os, value)
+  }
+
   def deserialize[T: Manifest](value: String) : T = {
     mapper.readValue(value, typeReference[T])
   }
@@ -35,17 +40,24 @@ object JacksonWrapper {
     mapper.readValue(stream, typeReference[T])
   }
 
-  private [this] def typeReference[T: Manifest] = new TypeReference[T] {
+  def convert[T: Manifest](fromValue : Any) : T = {
+    mapper.convertValue(fromValue, typeReference[T])
+  }
+
+  def typeReference[T: Manifest] = new TypeReference[T] {
     override def getType = typeFromManifest(manifest[T])
   }
 
-  private [this] def typeFromManifest(m: Manifest[_]): Type = {
-    // тут было m.erasure, но компилятор жаловался на deprecated и настаивал на вызова runtimeClass
-    if (m.typeArguments.isEmpty) { m.runtimeClass }
-    else new ParameterizedType {
-      def getRawType = m.runtimeClass
-      def getActualTypeArguments = m.typeArguments.map(typeFromManifest).toArray
-      def getOwnerType = null
+  final def typeFromManifest(m: Manifest[_]): Type = {
+    if (m.typeArguments.isEmpty) {
+      // тут было m.erasure, но компилятор жаловался на deprecated и настаивал на вызове runtimeClass()
+      m.runtimeClass
+    } else {
+      new ParameterizedType {
+        def getRawType = m.runtimeClass
+        def getActualTypeArguments = m.typeArguments.map(typeFromManifest).toArray
+        def getOwnerType = null
+      }
     }
   }
 }
