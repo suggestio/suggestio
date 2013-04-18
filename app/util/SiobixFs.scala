@@ -2,7 +2,7 @@ package util
 
 import play.api.Play.current
 import play.api.cache.Cache
-import io.suggest.model.DomainSettings
+import io.suggest.model.{JsonDfsBackend, DomainSettings}
 import org.apache.hadoop.fs.Path
 import com.scaleunlimited.cascading.hadoop.HadoopUtils
 
@@ -20,6 +20,8 @@ object SiobixFs {
   val conf = HadoopUtils.getDefaultJobConf
   implicit val fs = siobix_out_path.getFileSystem(conf)
 
+  JsonDfsBackend.setOutDir(siobix_out_path)
+
   /**
    * С помощью кеша и HDFS получить данные по домену.
    * @param dkey
@@ -28,6 +30,7 @@ object SiobixFs {
   def getSettingsForDkeyCache(dkey:String) : Option[DomainSettings] = {
     Cache.getOrElse(dkey + "/ds", 60)(getSettingForDkey(dkey))
   }
+
 
   /**
    * Получить данные по домену напрямую из HDFS.

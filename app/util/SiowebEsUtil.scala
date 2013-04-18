@@ -7,8 +7,9 @@ import org.elasticsearch.index.query.{QueryBuilder, FilterBuilder, FilterBuilder
 import org.elasticsearch.search.SearchHit
 import io.suggest.model.{SioSearchContext, DomainSettings}
 import scala.collection.JavaConversions._
-import collection.{MapLike, mutable}
+import collection.mutable
 import io.suggest.util.Lists
+import io.suggest.index_info.SioEsConstants._
 
 /**
  * Suggest.io
@@ -24,30 +25,23 @@ object SiowebEsUtil {
   val RESULT_COUNT_DEFAULT = 20
 
   // Настройки ret*-полей опций выдачи.
-  type RET_T = Symbol
-  val RET_ALWAYS      : RET_T = 'a
-  val RET_NEVER       : RET_T = 'n
-  val RET_IF_NO_IMAGE : RET_T = 'i
+  type RET_T = Char
+  val RET_ALWAYS      : RET_T = 'a'
+  val RET_NEVER       : RET_T = 'n'
+  val RET_IF_NO_IMAGE : RET_T = 'i'
 
   val PER_SHARD_DOCUMENTS_LIMIT = 500
-
-  val FIELD_URL   = "url"
-  val FIELD_LANG  = "lang"
-  val FIELD_TITLE = "title"
-  val FIELD_CONTENT_TEXT = "content_text"
-  val FIELD_IMAGE_KEY    = "image_key"
-  val FIELD_ALL   = "_all"
 
   val FIELDS_ONLY_TITLE = List(FIELD_TITLE)
   val FIELDS_TEXT_ALL   = List(FIELD_TITLE, FIELD_CONTENT_TEXT)
 
-  val SUBFIELD_ENGRAM = "gram"
-  val SUBFIELD_FTS    = "fts"
-
   // Только эти поля могут быть в карте результата
-  val resultAllowedFields = Set(FIELD_URL, FIELD_TITLE, FIELD_CONTENT_TEXT, FIELD_LANG, FIELD_IMAGE_KEY)
+  val resultAllowedFields = Set(FIELD_URL, FIELD_TITLE, FIELD_CONTENT_TEXT, FIELD_LANGUAGE, FIELD_IMAGE_ID)
 
   val hlFragSepDefault    = " "
+
+  protected type SioSearchResultsT = List[SioSearchResult]
+
 
   // Инстанс локальной не-data ноды ES. Отсюда начинаются все поисковые и другие запросы.
   // TODO стоит это вынести это в отдельный актор? Нет при условии вызова node.close() при остановке системы.
@@ -55,10 +49,10 @@ object SiowebEsUtil {
 
   /**
    * Поиск в рамках домена.
-   * @param domainSettings
-   * @param queryStr
-   * @param options
-   * @param searchContext
+   * @param domainSettings Состояние настроек домена по мнению siobix.
+   * @param queryStr Строка, которую набирает юзер
+   * @param options Настройки поиска по мнению sioweb21
+   * @param searchContext Контекст поиска.
    * @return
    */
   def searchDomain(domainSettings:DomainSettings, queryStr:String, options:SioSearchOptions, searchContext:SioSearchContext) = {
@@ -74,7 +68,7 @@ object SiowebEsUtil {
    * @param queryStr Буквы, которые ввел юзер
    * @param options Параметры запроса.
    */
-  def searchIndex(indices:Seq[String], types:Seq[String], queryStr:String, options:SioSearchOptions) : Array[SearchHit] = {
+  def searchIndex(indices:Seq[String], types:Seq[String], queryStr:String, options:SioSearchOptions) : SioSearchResultsT = {
     queryStr2Query(queryStr).map { textQuery =>
 
       var filters : List[FilterBuilder] = List(FilterBuilders.limitFilter( queryShardLimit(queryStr) ))
@@ -84,10 +78,10 @@ object SiowebEsUtil {
         val langs = options.langs
         val termQuery = if (langs.tail.isEmpty) {
           // Один язык - делаем простой term-фильтр
-          QueryBuilders.termQuery(FIELD_LANG, langs.head)
+          QueryBuilders.termQuery(FIELD_LANGUAGE, langs.head)
         } else {
           // Запрошено несколько языков. Используем terms-query
-          QueryBuilders.termsQuery(FIELD_LANG, langs: _*)
+          QueryBuilders.termsQuery(FIELD_LANGUAGE, langs: _*)
         }
         filters = FilterBuilders.queryFilter(termQuery) :: filters
       }
@@ -100,11 +94,12 @@ object SiowebEsUtil {
 
       val query : QueryBuilder = QueryBuilders.filteredQuery(textQuery, qFilter)
 
-      // TODO включить boost по датам. Чем свежее, тем выше score.
+      // TODO включить boost по датам. Чем свежее, тем выше score. Для этого нужна поддержка бустера в DomainSettings
       /*if (options.withDateScoring) {
         query = QueryBuilders.customScoreQuery(query)
       }*/
 
+      // Начать собирать поисковый запрос
       val reqBuilder = client
         .prepareSearch(indices : _*)
         .setTypes(types : _*)
@@ -114,6 +109,7 @@ object SiowebEsUtil {
         .setQuery(query)
         .addField(FIELD_URL)
 
+      // Добавить доролнительные поля для запроса, если такие есть.
       if (!options.fields.isEmpty)
         reqBuilder.addFields(options.fields : _*)
 
@@ -121,8 +117,8 @@ object SiowebEsUtil {
       if (options.retTitle != RET_NEVER) {
         val hlField = subfield(FIELD_TITLE, SUBFIELD_ENGRAM)
         reqBuilder
-          .addField(hlField)
-          .addHighlightedField(FIELD_TITLE, -1, 0)
+          .addField(FIELD_TITLE)
+          .addHighlightedField(hlField, -1, 0)
       }
 
       // Настраиваем выдачу текста страницы.
@@ -137,7 +133,7 @@ object SiowebEsUtil {
 
       // Возвращать картинки?
       if (options.retImage)
-        reqBuilder.addField(FIELD_IMAGE_KEY)
+        reqBuilder.addField(FIELD_IMAGE_ID)
 
       // Выполнить запрос
       val response = reqBuilder
@@ -146,37 +142,52 @@ object SiowebEsUtil {
 
       val hits = response.getHits.getHits
 
-      // Пора причесать результаты запроса
+      // Функционал причесывания результатов вынесен в отдельную функцию.
+      postprocessSearchHits(hits, options)
 
-      ???
-
-    }.getOrElse(Array())
+    }.getOrElse(List())
   }
+
 
   // Удалятор .fts и .ngram из хвостов названий полей
   val rmSubfieldSuffixRe = "\\.[a-z]+$".r
+
+  // Подсвеченный хайлатером текст обычно на полслова и без окончания. Нужно это пофиксить, переместив </em> в конец слова.
+  val hlTagsFixRe = "(\\p{L}{3,})(</em>)(\\p{L}{1,6})\\b".r
+  val hlTagsFixReplace = "$1$3$2"
+
+
+  /**
+   * Двинуть закрывающие теги em в конец слов при условии выполнения вышеуказанного регэкспа.
+   * @param str исходная строка -- выхлоп highlight
+   * @return
+   */
+  def moveHlTags(str:String) = hlTagsFixRe.replaceAllIn(str, hlTagsFixReplace)
+
 
   /**
    * В зависимости от настроек выдачи, нужно почистить выдаваемые результаты.
    * @param hits Результаты поиска в сыром виде.
    * @param options опции, которые, в частности, описывают параметры выдачи.
    */
-  def postprocessSearchHits(hits:Array[SearchHit], options:SioSearchOptions) = {
-
+  def postprocessSearchHits(hits:Array[SearchHit], options:SioSearchOptions) : SioSearchResultsT = {
+    // Собрать функцию маппинга одного словаря результата
     var mapHitF = { hit:SearchHit =>
       // подготовить highlighted-данные
       // .toMap нужен, ибо MapWrapper не совместим с типом Map, а является именно гребаным классом-враппером на ju.Map.
-      val hlData = hit.highlightFields().map { case (key, hl) =>
+      val hlData = hit.highlightFields.map { case (key, hl) =>
         // убрать возможные суффиксы .fts и .gram из имён подсвеченных полей
         val key1 = rmSubfieldSuffixRe.replaceFirstIn(key, "")
-        val hlText = hl.getFragments.mkString(options.hlCtFragmentSeparator)
+        val hlText = hl.getFragments
+          .map { textFragment => moveHlTags(textFragment.string()) }
+          .mkString(options.hlCtFragmentSeparator)
         (key1, hlText)
       }
       val sourceData = hit.getFields.map { case (name, field) => (name, field.getValue[String]) }
       // Мержим два словаря, отдавая предпочтение подсвеченным элементам
       Lists
         .mergeMutableMaps(sourceData, hlData) { (_, _, v) => v }
-        .filter { resultAllowedFields.contains(_) }
+        .filter { case (k:String, v) => resultAllowedFields.contains(k) }
     }
 
     // Возможно, нужно снести убрать content_text или title. Тут функция, обновляющая mapHitF если нужно что-то ещё делать.
@@ -190,20 +201,21 @@ object SiowebEsUtil {
       // Или сносить только там, где есть картинка
       if (ret == RET_IF_NO_IMAGE && options.retImage) {
         mapHitF = mapHitF andThen { map =>
-          if(map.get(FIELD_IMAGE_KEY).isDefined) {
+          if(map.get(FIELD_IMAGE_ID).isDefined) {
             map.remove(FIELD_CONTENT_TEXT)
           }
           map
         }
-      } else {}
+      }
     }
     removeFieldOptF(FIELD_TITLE, options.retTitle)
     removeFieldOptF(FIELD_CONTENT_TEXT, options.retContentText)
 
-    // Конечный словарь полей результата оборачиваем в класс-хелпер.
-    val mapHitF1 = mapHitF andThen(new SioSearchResult(_))
+    // Конечный словарь полей результатов оборачиваем в классы-хелперы для упрощения работы с ними на верхнем уровне.
+    val mapHitF1 = mapHitF andThen { new SioSearchResult(_) }
 
-    hits.map(mapHitF1)
+    val result = hits.toList.map(mapHitF1)
+    result
   }
 
 
@@ -343,15 +355,13 @@ final case class SioSearchOptions(
 
 
 // Используем переменные для снижения количества мусора и упрощения логики, ибо класс заполняется в цикле.
-case class SioSearchResult(map:mutable.Map[String,String]) {
+case class SioSearchResult(data:mutable.Map[String,String]) {
 
-  import SiowebEsUtil._
-
-  def title       = map.get(FIELD_TITLE)
-  def contentText = map.get(FIELD_CONTENT_TEXT)
-  def imageKey    = map.get(FIELD_IMAGE_KEY)
-  def url         = map(FIELD_URL)
-  def lang        = map.get(FIELD_LANG)
+  def title       = data.get(FIELD_TITLE)
+  def contentText = data.get(FIELD_CONTENT_TEXT)
+  def imageKey    = data.get(FIELD_IMAGE_ID)
+  def url         = data(FIELD_URL)
+  def lang        = data.get(FIELD_LANGUAGE)
 
 }
 

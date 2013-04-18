@@ -2,8 +2,9 @@ package controllers
 
 import play.api.mvc._
 import io.suggest.util.UrlUtil
-import util.{SioSearchOptions, SiowebEsUtil, SiobixFs}
+import _root_.util.{SioSearchResult, SioSearchOptions, SiowebEsUtil, SiobixFs}
 import io.suggest.model.SioSearchContext
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -14,8 +15,20 @@ import io.suggest.model.SioSearchContext
 
 object Search extends Controller {
 
-  // TODO Настройки поиска, заданные юзером, надо извлекать из модели
-  val searchOptions = new SioSearchOptions()
+  /**
+   * json-рендерер списка результатов.
+   */
+  implicit val maplistWrites = new Writes[List[SioSearchResult]] {
+
+    def writes(l: List[SioSearchResult]): JsValue = {
+      val jsonList = l.map { ssr =>
+        val m1 = ssr.data.mapValues(JsString(_))
+        JsObject(m1.toList)
+      }
+      JsArray(jsonList)
+    }
+  }
+
 
   /**
    * Запрос на поиск по сайту приходит сюда.
@@ -28,19 +41,26 @@ object Search extends Controller {
     SiobixFs.getSettingsForDkeyCache(dkey) match {
       // Домен есть в системе.
       case Some(domainSettings) =>
-        // TODO нужно восстанавливать SearchContext из реквеста или генерить новый
+        // TODO нужно восстанавливать SearchContext из кукисов реквеста или генерить новый
         val searchContext = new SioSearchContext()
-        val hits = SiowebEsUtil.searchDomain(
+        // TODO Настройки поиска, заданные юзером, надо извлекать из модели DomainData
+        val searchOptions = new SioSearchOptions(
+          withExplain = debug
+        )
+        val searchResults = SiowebEsUtil.searchDomain(
           domainSettings = domainSettings,
           queryStr = queryStr,
           options  = searchOptions,
           searchContext = searchContext
         )
+        // Отрендерить результаты в json-е
+        val jsonResp = Json.toJson(searchResults)
+        // TODO Сохранить обновлённый searchContext в кукис ответа
+        Ok(jsonResp)
 
-        // Отрендерить результаты юзеру
-        ???
-
-      case None => NotFound
+      // Нет такого домена в базе. TODO Нужно замутить какую-нибудь проверочку.
+      case None =>
+        NotFound
     }
   }
 
