@@ -4,6 +4,7 @@ import util.matching.Regex
 import com.github.nscala_time.time.Imports._
 import java.util.Locale
 import collection.mutable
+import io.suggest.index_info.SioEsConstants
 
 /**
  * Suggest.io
@@ -214,6 +215,25 @@ object DateParseUtil extends Logs {
       case 0 => None
       case n => Some(n)
     }
+  }
+
+
+  /**
+   * Превратить дату в короткое целое число.
+   * @param ld Дата joda.
+   * @return килосекунды от 0 н.э.
+   */
+  def date2kilosec(ld:LocalDate) : Long = {
+    ld.toDateMidnight.toInstant.getMillis / SioEsConstants.DATE_INSTANT_ZEROES
+  }
+
+  /**
+   * Обратное к date2number.
+   * @param n килосекунды
+   * @return LocalDate
+   */
+  def kilosec2date(n:Long) : LocalDate = {
+    new LocalDate(n * SioEsConstants.DATE_INSTANT_ZEROES)
   }
 
 }
