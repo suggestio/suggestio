@@ -2,9 +2,10 @@ package controllers
 
 import play.api.mvc._
 import io.suggest.util.UrlUtil
-import _root_.util.{SioSearchResult, SioSearchOptions, SiowebEsUtil, SiobixFs}
+import util.{SioSearchResult, SioSearchOptions, SiowebEsUtil, SiobixFs}
 import io.suggest.model.SioSearchContext
 import play.api.libs.json._
+import play.api.libs.Jsonp
 
 /**
  * Suggest.io
@@ -19,7 +20,11 @@ object Search extends Controller {
    * json-рендерер списка результатов.
    */
   implicit val maplistWrites = new Writes[List[SioSearchResult]] {
-
+    /**
+     * Сериализация списка результатов поиска.
+     * @param l список
+     * @return JsValue
+     */
     def writes(l: List[SioSearchResult]): JsValue = {
       val jsonList = l.map { ssr =>
         val m1 = ssr.data.mapValues(JsString(_))
@@ -45,6 +50,7 @@ object Search extends Controller {
         val searchContext = new SioSearchContext()
         // TODO Настройки поиска, заданные юзером, надо извлекать из модели DomainData
         val searchOptions = new SioSearchOptions(
+          dkey = dkey,
           withExplain = debug
         )
         val searchResults = SiowebEsUtil.searchDomain(
@@ -54,9 +60,14 @@ object Search extends Controller {
           searchContext = searchContext
         )
         // Отрендерить результаты в json-е
-        val jsonResp = Json.toJson(searchResults)
-        // TODO Сохранить обновлённый searchContext в кукис ответа
-        Ok(jsonResp)
+        val jsonResp : Map[String, JsValue] = Map(
+          "status"        -> JsString("ok"),
+          "timestamp"     -> JsNumber(System.currentTimeMillis()),
+          "search_result" -> Json.toJson(searchResults)
+        )
+        val jsonp = Jsonp("sio._s_add_result", Json.toJson(jsonResp))
+        // TODO Сохранить обновлённый searchContext и серилизовать в кукис ответа
+        Ok(jsonp)
 
       // Нет такого домена в базе. TODO Нужно замутить какую-нибудь проверочку.
       case None =>

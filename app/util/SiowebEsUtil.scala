@@ -10,6 +10,7 @@ import scala.collection.JavaConversions._
 import collection.mutable
 import io.suggest.util.Lists
 import io.suggest.index_info.SioEsConstants._
+import controllers.routes
 
 /**
  * Suggest.io
@@ -34,9 +35,10 @@ object SiowebEsUtil {
 
   val FIELDS_ONLY_TITLE = List(FIELD_TITLE)
   val FIELDS_TEXT_ALL   = List(FIELD_TITLE, FIELD_CONTENT_TEXT)
+  val FIELD_THUMB_REL_URL = "image_rel_url"
 
   // Только эти поля могут быть в карте результата
-  val resultAllowedFields = Set(FIELD_URL, FIELD_TITLE, FIELD_CONTENT_TEXT, FIELD_LANGUAGE, FIELD_IMAGE_ID)
+  val resultAllowedFields = Set(FIELD_URL, FIELD_TITLE, FIELD_CONTENT_TEXT, FIELD_LANGUAGE, FIELD_THUMB_REL_URL)
 
   val hlFragSepDefault    = " "
 
@@ -183,7 +185,14 @@ object SiowebEsUtil {
           .mkString(options.hlCtFragmentSeparator)
         (key1, hlText)
       }
-      val sourceData = hit.getFields.map { case (name, field) => (name, field.getValue[String]) }
+      // Отмаппить различные исходные данные
+      val sourceData = hit.getFields.map { case (name:String, field) =>
+        val fieldValue = field.getValue[String]
+        name match {
+          case FIELD_IMAGE_ID  => FIELD_THUMB_REL_URL -> routes.Thumb.getThumb(options.dkey, fieldValue).toString
+          case _               => name -> fieldValue
+        }
+      }
       // Мержим два словаря, отдавая предпочтение подсвеченным элементам
       Lists
         .mergeMutableMaps(sourceData, hlData) { (_, _, v) => v }
@@ -333,6 +342,9 @@ object SiowebEsUtil {
 
 // Класс, хранящий опции поиска.
 final case class SioSearchOptions(
+  // Данные состояния реквеста
+  dkey : String,
+
   // Настройки выдачи результатов
   retTitle : SiowebEsUtil.RET_T = SiowebEsUtil.RET_ALWAYS,
   retContentText : SiowebEsUtil.RET_T = SiowebEsUtil.RET_ALWAYS,
@@ -359,7 +371,7 @@ case class SioSearchResult(data:mutable.Map[String,String]) {
 
   def title       = data.get(FIELD_TITLE)
   def contentText = data.get(FIELD_CONTENT_TEXT)
-  def imageKey    = data.get(FIELD_IMAGE_ID)
+  def thumbRelUrl = data.get(SiowebEsUtil.FIELD_THUMB_REL_URL)
   def url         = data(FIELD_URL)
   def lang        = data.get(FIELD_LANGUAGE)
 

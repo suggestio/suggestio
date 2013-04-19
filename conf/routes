@@ -8,4 +8,5 @@ GET  /                                  controllers.Application.index
 # Map static resources from the /public folder to the /assets URL path
 GET  /assets/*file                      controllers.Assets.at(path="/public", file)
 
+GET  /thumb/get/$dkey<[-_\w\d~.]+>/$imageId<[\w\d]+>     controllers.Thumb.getThumb(dkey, imageId)
 GET  /search                            controllers.Search.liveSearch(h:String, q:String, debug:Boolean ?= false, lang:String ?= "")

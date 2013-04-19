@@ -34,12 +34,17 @@ case class MPerson(
 trait MPersonLinks {
   val email : String
 
-  def isAdmin = false
+  def isAdmin = MPerson.isAdmin(email)
 }
 
 
+// Статическая часть модели.
 object MPerson {
 
+  // Список емейлов админов suggest.io.
+  val adminEmails = Set("konstantin.nikiforov@cbca.ru", "ilya@shuma.ru", "sasha@cbca.ru")
+
+  // Путь хранилища модели в hdfs
   val model_path = new Path(SiobixFs.siobix_out_path, "m_person")
 
   /**
@@ -69,5 +74,13 @@ object MPerson {
     else
       throw new SecurityException("Incorrect email address: " + email)
   }
+
+
+  /**
+   * Принадлежит ли указанный мыльник админу suggest.io?
+   * @param email емейл
+   * @return
+   */
+  def isAdmin(email:String) = adminEmails.contains(email)
 
 }
