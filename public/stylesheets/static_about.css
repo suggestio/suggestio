@@ -1,0 +1,327 @@
+.main-layout
+{
+    position: fixed;
+    background: url('/static/images2/bg.png');
+    width: 100%;
+    top: 0px;
+    height: 50px;
+    z-index: 100000000;
+}
+.common-info
+{
+    z-index: 1000;
+    position: fixed;
+    background: #f0f0f0 url('/st atic/images2/bg.png');
+    width: 100%;
+    left: 0px;
+    bottom: 0px;
+    padding-left: 140px;
+    padding-bottom: 20px!important;
+}
+.razduv-top,
+.razduv-bottom
+{
+    opacity: 0;
+    z-index: 100000000;
+    position: fixed;
+    left: 0px;
+    top: 100px;
+    background: url('/static/images2/zatemnyalka.png') no-repeat left top;
+    width: 100%;
+    height: 40px;
+}
+.razduv-bottom
+{
+    top: auto;
+    bottom: 40px;
+    background: url('/static/images2/razduv-bottom.png') repeat-x left top;
+}
+
+.about-title
+{
+    width: 103px;
+    height: 23px;
+    margin-top: 60px;
+    background: url('/static/images2/sio-about-title.png') no-repeat left top;
+}
+
+.about-layout
+{
+}
+.about-layout .row { overflow: hidden!important; padding: 40px 0px 40px 141px; }
+
+.about-layout .row-content { color: #676666; font-family: Arial; font-size: 14px; }
+.about-layout .row-content p { padding: 10px 0px; }
+.title-row
+{
+    padding-top: 100px!important;
+    padding-bottom: 40px;
+}
+
+.white-row
+{
+    background: #fff url('/static/images2/sio-about-ls-row-top.png') repeat-x left top;
+}
+.row-container { position: relative; }
+
+.design-row { height: 500px; padding-left: 100px!important; }
+.design-row .design-plates { background:  url('/static/images2/sio-about-design-plates.png') no-repeat left top; width: 258px; height: 700px; position: absolute; left: 42px; top: 102px; }
+
+.design-plates-button.active span { color: #152d3b!important; border-color: #152d3b!important; }
+
+.design-row .design-plates.search-template { background-position: -261px top; }
+.design-row .design-plates.search-dimensions { background-position: -522px top; }
+.design-row .design-plates.search-colors { background-position: -783px top; }
+
+
+.design-row .row-container {
+    width: 1150px;
+    background: url('/static/images2/sio-design-bg.png') no-repeat 14px top;
+    height: 735px;
+    padding-top: 150px;
+}
+.design-row h1
+{
+    margin-left: 380px;
+}
+.design-row .row-content
+{
+    padding-left: 381px;
+    width: 380px;
+}
+
+.design-row .row-content ul li
+{
+    margin: 15px 0px;
+    color: #328fb0;
+}
+.design-row .row-content ul li span
+{
+    color: #328fb0;
+    border-bottom: 1px #328fb0 dashed;
+    cursor: pointer;
+}
+
+.livesearch-row
+{
+    padding: 30px 90px;
+    height: 290px;
+    overflow: hidden;
+}
+.livesearch-row .row-content { width: 290px; }
+
+.livesearch-demo
+{
+    position: absolute;
+    left: 305px;
+    top: 10px;
+    height: 100px;
+    width: 471px;
+}
+.livesearch-demo input
+{
+    outline: none;
+    background: url('/static/images2/sio-livesearch-input.png') no-repeat left top;
+    display: block;
+    width: 471px;
+    padding: 0px 20px;
+    height: 30px;
+    border: 0px;
+}
+.livesearch-demo .real-box
+{
+    position: relative;
+    width: 380px;
+    padding: 20px;
+    margin-top: 20px;
+    margin-left: 23px;
+    background: rgba(0,0,0,0.5);
+}
+.livesearch-demo .box
+{
+    width: 420px;
+    height: 500px;
+    margin-left: 25px;
+    margin-top: 15px;
+    background: url('/static/images2/sio-livesearch-box.png');
+}
+.livesearch-demo .real-box .box-inner
+{
+    background: #203846;
+}
+.livesearch-demo .corner
+{
+    position: absolute;
+    background: url('/static/images2/sio-about-search-corner.png') no-repeat left top;
+    width: 31px;
+    height: 15px;
+    top: 5px;
+    left: 24px;
+}
+
+.intro-message,
+.results,
+.found-none
+{
+    display: none;
+}
+.initial .intro-message
+{
+    display: block;
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 14px 15px;
+    font-family: Arial;
+}
+
+.qi-row .row-content { width: 290px; }
+
+.qi-row { padding-top: 70px!important; padding-bottom: 70px!important; background: url('/static/images2/sio-qi-bg.jpg') no-repeat 485px 70px; }
+
+.indexation-row
+{
+    background: #152d3b;
+    margin: 0px!important;
+    padding: 0px!important;
+}
+
+.indexation-row { overflow:hidden; height: 350px; }
+.indexation-row .row-container
+{
+    padding-top: 70px!important; padding-bottom: 70px!important;
+    background: url('/static/images2/sio-about-indexation-bg.png') no-repeat 130px top;
+}
+
+.indexation-row .row-content
+{
+    width: 283px;
+    margin-left: 480px;
+}
+
+.indexation-row h1,
+.indexation-row .row-content
+{
+    color: #d2d2d2;
+}
+
+ul li
+{
+    margin: 9px 0px;
+}
+
+h1
+{
+    font-family: "pt_sans_narrowregular";
+    color: #152d3b;
+    font-size: 25px;
+}
+
+.search-preferences-row .row-container {
+    position: absolute;
+    width: 1500px;
+    left: 100px;
+    padding-left: 40px;
+    top: 0px;
+    z-index: 300000;
+    padding-top: 80px!important;
+    padding-bottom: 80px!important;
+    background: #f0f0f0 url('/static/images2/sio-preferences-bg.jpg') no-repeat 373px 60px!important;
+}
+.search-preferences-row .row-content
+{
+    width: 280px;
+}
+
+.multilang-row { background: #fff url('/static/images2/sio-langs-bg-main.jpg') repeat-x left top; }
+.multilang-row .row-content { width: 280px; }
+.multilang-row .row-container {
+    height: 150px;
+    padding-top: 50px;
+    background: url('/static/images2/sio-langs-bg.jpg') no-repeat 350px 80px;
+}
+.support-row { background: #fff; }
+.support-row .row-container { width: 745px; padding-top: 50px!important; padding-bottom: 50px!important; border-top: 1px #f0f0f0 solid; }
+
+
+.welcome-row
+{
+    position: relative;
+    height: 220px;
+    margin: 0px!important;
+    padding: 0px!important;
+    background: #fff;
+    overflow: hidden;
+}
+.welcome-row .row-container
+{
+    width: 1000px;
+    height: 220px;
+    padding: 0px!important;
+    left: 0px!important;
+    position: relative!important;
+    background: url('/static/images2/sio-about-welcome.jpg') no-repeat left top;
+}
+.welcome-bottom-line
+{
+    position: absolute;
+    width: 100%;
+    height: 100px;
+    bottom: 0px;
+    z-index: 10000;
+    background: #f0f0f0 url('/static/images2/sio-about-welcome-bottom-line.jpg') no-repeat left top;
+    border-top: 2px #f6f7f7 solid;
+}
+
+@media only screen and (-Webkit-min-device-pixel-ratio: 1.5),
+only screen and (-moz-min-device-pixel-ratio: 1.5),
+only screen and (-o-min-device-pixel-ratio: 3/2),
+only screen and (min-device-pixel-ratio: 1.5) {
+
+    .about-title
+    {
+	background: url('/static/images2/sio-about-title-retina.png') no-repeat left top;
+	background-size: 103px 23px;
+    }
+
+    .qi-row
+    {
+	background: url('/static/images2/sio-qi-bg-retina.jpg') no-repeat 485px 70px;
+	background-size: 385px 97px;
+    }
+
+    .design-row .row-container {
+	background: url('/static/images2/sio-design-bg-retina.png') no-repeat 14px top;
+	background-size: 1150px 700px;
+    }
+
+    .design-row .design-plates
+    {
+	top: 94px;
+	left: 48px;
+	background:  url('/static/images2/sio-about-design-plates-retina.png') no-repeat left top;
+	background-size: 1021px 634px;
+    }
+
+    .design-row .design-plates.search-template { background-position: -256px top; }
+    .design-row .design-plates.search-dimensions { background-position: -512px top; }
+    .design-row .design-plates.search-colors { background-position: -767px top; }
+
+    .search-preferences-row .row-container {
+	background: #f0f0f0 url('/static/images2/sio-preferences-bg-retina.jpg') no-repeat 373px 70px!important;
+	background-size: 384px 223px!important;
+    }
+
+    .indexation-row .row-container
+    {
+	background: url('/static/images2/sio-about-indexation-bg-retina.png') no-repeat 130px 50px;
+	background-size: 276px 576px;
+    }
+
+    .multilang-row .row-container {
+	background: url('/static/images2/sio-langs-bg-retina.jpg') no-repeat 350px 80px;
+	background-size: 399px 134px;
+    }
+
+}
+

@@ -1,0 +1,106 @@
+@()(implicit c:util.Context)
+{% extends "crawl/index.html" %}
+
+{% block head_extended %}
+    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/crawl_showcase.css")"/>
+{% endblock %}
+
+{% block body %}
+
+<div class="test-line"></div>
+
+<div class="page-wrapper" id="pageWrapper">
+	
+	<div class="main-layout">
+		<a class="logo" href="/"></a>
+	</div>
+	{% include "_menu.html" with _active_link="showcase" %}
+	<div class="razduv-top" id="razduvTop"></div>
+	
+	<div class="showcase-layout" id="showcaseLayout">
+		
+		
+	</div>
+	
+</div>
+
+<script type="text/javascript">
+	
+	// showcase
+	var showcase_websites_count = 23;
+	var showcase_websites_container = $('#showcaseLayout');
+	
+	var websites = 
+	[
+		//{'id':0,'url':'http://sostav.ru'},
+		{'id':1,'url':'http://admiralboat.ru'},
+		{'id':2,'url':'http://aklugovoy.ru/'},
+		{'id':3,'url':'http://www.amichetta-spb.ru/'},
+		//{'id':4,'url':'http://waveru.ru/'},
+		//{'id':5,'url':'http://www.artkukla.com/'},
+		{'id':6,'url':'http://aversimage.ru/'},
+		{'id':7,'url':'http://babylook.me/'},
+		{'id':8,'url':'http://kino.myvi.ru/'},
+		{'id':9,'url':'http://macomp.ws/'},
+		{'id':10,'url':'http://ld-design.ru/'},
+		{'id':11,'url':'http://kothvosta.ru'},
+		{'id':12,'url':'http://ldpr.ru/'},
+		{'id':13,'url':'http://olastudio.ru/'},
+		{'id':14,'url':'http://weddingby.ru/'},
+		{'id':15,'url':'http://www.zombieit.net/'},
+		{'id':16,'url':'http://vlg.flashlife.ru/'},
+		{'id':17,'url':'http://ykasova.com/'},
+		{'id':18,'url':'http://ge-tech.ru/'},
+		{'id':19,'url':'http://shevgeny.com/'},
+		//{'id':21,'url':'http://sharovalex.ru/'},
+		{'id':22,'url':'http://megabit.in/'},
+		{'id':23,'url':'http://vesnaclinic.ru/'},
+		{'id':24,'url':'http://asfn.storeland.ru/'},
+		{'id':25,'url':'http://feodorovski.ru/'}
+		
+	]
+	
+	var prefix = window.devicePixelRatio > 1 ? '_retina' : '';
+	
+	for( var _i in websites )
+	{
+		var _s = websites[_i];
+		showcase_websites_container.append('<a class="showcase-website' + prefix + '" style="background-image: url(\'/static/images2/showcase_websites/' + _s.id + prefix + '.png\');" target="_blank" ontouchstart="window.location=\'' + _s.url + '\';" href="' + _s.url + '"><div class="hover-plate"></div></a>');
+	}
+	
+	showcase_websites_container.append('<div class="more-websites"></div><div class="clear"></div>');
+	
+	
+	$(window).bind('scroll', function()
+	{
+		var _scroll_top = $(window).scrollTop();
+		
+		var _abs_scroll_bottom = $(document).height() - _scroll_top - $(window).height();
+		
+		var _opacity = _scroll_top/300;
+		$('#razduvTop').css({'opacity':_opacity});
+		
+		$('.parallax-enabled').each(function()
+		{
+			var _base_point = $(this).data('basepoint');
+			var _division_index = $(this).data('division-index');
+			
+			if( $(this).attr('id') == 'welcomeRow' )
+			{
+				var _margin = _abs_scroll_bottom / 2;
+				console.log( _margin );
+			}
+			else	
+			{
+				var _margin = _base_point - _scroll_top/_division_index;
+			}
+			
+			$(this).css({'margin-top': _margin + 'px' });
+			
+		});
+		
+	});
+	
+</script>
+
+{% endblock %}

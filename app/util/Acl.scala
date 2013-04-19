@@ -19,11 +19,11 @@ trait AclT {
 
   // Алиасы типов, используемых тут. Полезны для укорачивания объявления типов в заголовках функций,
   // предназначенных для проверки прав по технологии Action Composition.
-  type PwOptT           = Option[MPerson]
-  type ActionF_T        = PwOptT => Request[AnyContent] => Result
-  type ActionF_BP_T[A]  = PwOptT => Request[A] => Result
-  type AclF_T           = (PwOptT, Request[AnyContent]) => Boolean
-  type AclF_BP_T[A]     = (PwOptT, Request[A]) => Boolean
+  type MPOptT           = Option[MPerson]
+  type ActionF_T        = MPOptT => Request[AnyContent] => Result
+  type ActionF_BP_T[A]  = MPOptT => Request[A] => Result
+  type AclF_T           = (MPOptT, Request[AnyContent]) => Boolean
+  type AclF_BP_T[A]     = (MPOptT, Request[A]) => Boolean
 
   /**
    * Определить залогиненность юзера
@@ -31,7 +31,7 @@ trait AclT {
    * @return Номер юзера по таблице Person. Наличие юзера в таблице здесь не проверяется, потому что для этого нужен
    *         коннекшен к базе и далеко не всегда это необходимо.
    */
-  protected def person(request: RequestHeader) : PwOptT = {
+  protected def person(request: RequestHeader) : MPOptT = {
     request.session.get(Security.username) match {
       case Some(person_id_str) => Some(new MPerson(person_id_str))
       case None => None

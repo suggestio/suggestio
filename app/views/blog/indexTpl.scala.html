@@ -1,0 +1,51 @@
+@()(implicit c:util.Context)
+{% extends "crawl/index.html" %}
+
+{% block head_extended %}
+<style type="text/css">
+    @* тут нужно добавиьт линк для stylesheets/blog_index.css *@
+</style>
+{% endblock %}
+
+{% block body %}
+
+<div class="page-wrapper" id="pageWrapper">
+	
+	<div class="main-layout">
+		<a class="logo" href="/"></a>
+		{% include "_menu.html" with _active_link="blog" %}
+	</div>
+	
+	<div id="razduvTop" class="razduv-top"></div>
+	<div class="razduv-bottom"></div>
+	
+	<div class="blog-layout">
+		
+		{% block blog_body %}
+		{% for blog_record in records %}
+			{% include "blog/_blog_record.html" with blog_record=blog_record preview="true" %}
+			<div class="blog-delimiter"></div>
+		{% endfor %}
+		{% endblock %}
+		
+	</div>
+	
+	<div class="common-info">© 2012 <a href="http://suggest.io/">Suggest.io</a>. {% trans "all_rights_reserved" %} <span class="retina-ready">Retina-ready</span></div>
+	
+</div>
+
+<script type="text/javascript">
+	$(window).bind('scroll', function()
+	{
+		var _scroll_top = $(window).scrollTop();
+		
+		var _opacity = _scroll_top/300;
+		$('#razduvTop').css({'opacity':_opacity});
+		
+		console.log( _opacity );
+		
+	});
+	
+</script>
+
+{% endblock %}

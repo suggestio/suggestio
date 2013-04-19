@@ -1,0 +1,89 @@
+live_search_for_your_website=Live search for your website
+provide_site_url_to_init_search=Type in your website address to join search system
+install_search=INSTALL SEARCH
+copy_js=Copy code listed above and paste it to all pages right before &lt;/body&gt; tag
+site_indexation_caption_initial=LAUNCHING INDEXATION
+site_indexation_caption=INDEXATION IN PROGRESS
+all_rights_reserved=All rights reserved
+locale=en
+blog=BLOG
+about_link=ABOUT
+feedback_link=CONTACTS
+undefined_event=undefined event
+crawler_activity_label=Crawler status:
+indexation_in_progress=indexation in progress
+indexation_complete=all known existing pages crawled, standby mode
+nxdomain=non existent domain
+too_complex_content_or_overloaded_system=crawler error — too complex content, or system currently overloaded, please, try again later
+unexpected_response_content=unexpected response content
+
+econnrefused=connection error (econnrefused)
+econnreset=connection error (econnreset)
+econnaborted=connection error (econnaborted)
+crawler_error=general crawler error
+indexation_error=crawler message
+page_deduplicated=Page reduplicated
+page_crawled=Page crawled
+url_crawled=Url crawled
+average_response_time=average server response time
+
+stat_10min=pages crawled last 10 minutes
+stat_hour=pages crawled last hour
+stat_day=pages crawled last day
+stat_week=pages crawled last week
+stat_month=pages crawled last month
+stat_year=pages crawled last year
+
+email_us_at=Email us at
+
+or_fill_the_form=or fill the form below
+your_email=Your email
+your_message=Your message
+about_step_one=We are Suggest.io. We are working on the best user search.
+about_step_two=Just type in your website address to start using Suggest.io. Our robots will crawl your website automaticly.
+about_step_three=Copy javascript code and paste in in you templates just before &lt;/body&gt; tag.
+unknown_character_encoding=Character encoding cannot be detected
+message_sent=You message successfully delivered to Suggest.io team!
+install_success=That's it. Now you can use live search on your website.
+http_500=Internal server error<br/>(HTTP 500)
+hostname_prohibited=Hostname prohibited
+
+zuck=Mark, is that you?
+durov=Pavel, is that you?
+
+your_domains=Your websites
+domain_admin_title=Search preferences
+delete_domain=Delete websites
+invalid_url=Invalid url
+no_domains_yet=No sites yet
+admin_add_new=Add website
+last_reindexed=Last reindexed
+if_show_images=Show images in search results
+show_content_text=Show search results text
+
+yes=Yes
+no=No
+
+customize_design_description=You can easily manage design of the search widget on your website. Just press &laquo;Customize&raquo; button and you will be redirected to your website, where all tools will be available.
+type_in_your_website=Type in your website url
+website=Website
+not_verified_yet=is not verified yet
+
+download_verification_file=Download verification file
+follow_instructions=and follow instructions
+
+if_no_image=If no image
+please=Please
+upload_verification_file=Put downloaded verification file to the root directory of your website. Than click &laquo;Check&raquo; button, or reload current page
+after_add=When you submit new domain, you will be asked to verify domain rights.
+
+intro_message=To start with search preferences, choose one of your websites in the left part of the window. If you don't have websites yet, please,
+site_add_form_title=add one now
+
+reindex_launched=Indexation launched
+reindex_try_later=Over limit. Please, try later.
+
+saved_successfully=Settings saved
+img_site_preferences=Site configuration
+overloaded_message=Temporarily overloaded. Try again later.
+recheck=Recheck

@@ -1,0 +1,32 @@
+@()(implicit c:util.Context)
+{% if preview == "true" %}
+</div>
+<div class="blog-post blog-preview {% if not blog_record.bg_image %}blog-preview-no-image{% endif %}">
+	<div class="blog-post-c" style="{% if blog_record.bg_color %}background-color: #{{ blog_record.bg_color }};{% endif %} {% if blog_record.bg_image %}background-image: url('{{ blog_record.bg_image }}');{% endif %}">
+	<div class="blog-post-inner">
+{% else %}
+<div class="blog-post blog-post-opened">
+{% endif %}
+	<h1>
+		{% if preview == "true" %}
+		<a href="{% url controller="blog" action="record" id=blog_record.id %}">{{ blog_record.title }}</a>
+		{% else %}
+		<h1>{{ blog_record.title }}</h1>
+		{% endif %}
+		{% if _before %}
+			{% if _before.is_admin == "true" %}
+			<a class="blog-edit-button" href="{% url controller="blog" action="edit" id=blog_record.id %}"></a>
+			<a class="blog-delete-button" href="{% url controller="blog" action="delete" id=blog_record.id %}"></a>
+			{% endif %}
+		{% endif %}
+	</h1>
+	<div class="blog-text">{% if preview %}{{ blog_record.description }}{% else %}{{ blog_record.text }}{% endif %}</div>
+	
+{% if preview == "true" %}
+</div>
+</div>
+</div>
+<div class="blog-layout-normal">
+{% else %}
+</div>
+{% endif %}

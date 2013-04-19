@@ -1,0 +1,21 @@
+@()(implicit c:util.Context)
+{% extends "base.html" %}
+{% block title %} | Настройка браузера{% endblock %}
+
+{% block browser_check %}
+	<script type="text/javascript">
+		window.location = '/';
+	</script>
+{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/badbrowser.css")"/>
+{% endblock %}
+
+{% block body %}
+	<div class="bad-browser-message">
+		<div class="logo"><a href=""></a></div>
+		<div class="message">
+		</div>
+	</div>
+{% endblock %}

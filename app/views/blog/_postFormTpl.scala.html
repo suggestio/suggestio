@@ -1,0 +1,43 @@
+@(postForm:Form[_])(implicit c:util.Context)
+
+@import helper._
+
+{% extends "blog/index.html" %}
+{% block blog_body %}
+<h1><a href="{% url controller="blog" action="" %}">< Back</a>Blog: new post</h1>
+
+<form action="/blog/save" method="POST">
+	<fieldset>
+		<label>Title</label>
+		<input type="text" name="title" value="{{blog_record.title|default:""}}">
+	</fieldset>
+	
+	<fieldset class="compact-fieldset">
+		<label>Preview image</label>
+		<input type="text" name="bg_image" value="{{blog_record.bg_image|default:""}}">
+	</fieldset>
+	
+	<fieldset class="compact-fieldset">
+		<label>Preview bg color</label>
+		<input type="text" name="bg_color" value="{{blog_record.bg_color|default:""}}">
+	</fieldset>
+	
+	<fieldset>
+		<label>Date</label>
+		<input type="text" name="date" value="{{blog_record.date|default:""}}">
+	</fieldset>
+	
+	<fieldset>
+		<label>Description</label>
+		<textarea name="description">{{blog_record.description|default:""}}</textarea>
+	</fieldset>
+	<fieldset>
+		<label>Text</label>
+		<textarea name="text">{{blog_record.text|default:""}}</textarea>
+	</fieldset>
+	{% if blog_record %}
+	<input type="hidden" name="record_id" value="{{blog_record.id}}">
+	{% endif %}
+	<input type="submit"/>
+</form>
+{% endblock %}

@@ -1,5 +1,8 @@
 package util
 
+import org.joda.time.DateTime
+import play.api.i18n.Lang
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -8,6 +11,11 @@ package util
  * и между шаблонами. Контроллеры просто расширяют этот трайт, а шаблоны просто объявляют тип возвращаемого значения
  * метода в implicit-списке параметров.
  */
+
+object Context {
+  val lang_default = "ru"
+}
+
 
 trait ContextT {
 
@@ -23,6 +31,10 @@ trait ContextT {
 
 
 case class Context(
-  // Тут будет инфа о залогиненном юзере и другие данные.
-  //now : DateTime = DateTime.now
-)
+  lang_str            : String = Context.lang_default,
+  implicit val lang   : Lang = Lang(Context.lang_default),
+  implicit val p_opt  : Acl.MPOptT = None    // Если юзер залогинен, то тут будет Some().
+) {
+
+  implicit lazy val now : DateTime = DateTime.now
+}

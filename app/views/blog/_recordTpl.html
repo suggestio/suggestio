@@ -1,0 +1,9 @@
+@()
+{% extends "blog/index.html" %}
+{% block blog_body %}
+	<a class="blog-all-records" href="{% url controller="blog" action="" %}"></a>
+	{% include "blog/_blog_record.html" with blog_record=blog_record %}
+	<div class="blog-delimiter"></div>
+	<div class="blog-delimiter"></div>
+	<div class="blog-delimiter"></div>
+{% endblock %}

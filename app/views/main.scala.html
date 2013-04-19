@@ -1,15 +1,33 @@
-@(title: String)(content: Html)
-
+@(title: String, head_after:Html = Html(""), browser_check:Boolean = true, withHeadCommon:Boolean = true, withAnalytics:Boolean = true)(content: Html)(implicit c:util.Context)
 <!DOCTYPE html>
+@import stuff._
 
 <html>
-    <head>
-        <title>@title</title>
-        <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
-        <link rel="shortcut icon" type="image/png" href="@routes.Assets.at("images/favicon.png")">
-        <script src="@routes.Assets.at("javascripts/jquery-1.9.0.min.js")" type="text/javascript"></script>
-    </head>
-    <body>
-        @content
-    </body>
+  <head>
+    <title>Suggest.io @if(!title.isEmpty) { | @title }</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name = "viewport" content = "width=1200;initial-scale=1">
+    
+    @if(browser_check) {
+      <noscript><meta http-equiv="refresh" content="0; URL=/badbrowser"></noscript>
+    }
+    
+    <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
+
+    @if(withHeadCommon) {
+      <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/main.v2.css")"/>
+      <link href="@routes.Assets.at("images/favicon.png")" rel="shortcut icon" type="image/x-icon">
+      <script src="@routes.Assets.at("javascripts/common.v2.js")"></script>
+    }
+		
+    @head_after
+  </head>
+
+  <body>
+    @content
+
+    @if(withAnalytics) {
+      @_analyticsTpl()
+    }
+  </body>
 </html>

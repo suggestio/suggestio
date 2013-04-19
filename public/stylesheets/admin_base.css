@@ -1,0 +1,348 @@
+body
+{
+	background: #152d3b;
+}
+*
+{
+	padding: 0px;
+	margin: 0px;
+}
+body,
+html
+{
+	width: 100%;
+	height: 100%;
+}
+.clear
+{
+	clear: both;
+}
+.admin-layout
+{
+	width: 100%;
+	height: 100%;
+	min-height: 800px;
+	position: relative;
+}
+
+.login-button
+{
+	position: absolute;
+	left: 50%;
+	top: 116px;
+	margin-left: -23px;
+}
+.login-button,
+.login-button a
+{
+	width: 46px;
+	height: 46px;
+}
+.login-button a
+{
+	display: block;
+	background: url('/static/images2/sio-login-button-png') no-repeat -2px -2px;
+}
+.login-button a
+{
+	background-position: -67px -2px
+}
+.login-button a:hover { background-position: -67px -62px }
+.login-button a:active { background-position: -67px -120px }
+
+/* Admin */
+.admin-container
+{
+	background: #f0f0f0;
+	width: 840px;
+	height: 580px;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	margin-top: -290px;
+	margin-left: -420px;
+	-webkit-box-shadow: 0px 0px 10px #000;
+	-moz-box-shadow: 0px 0px 10px #000;
+}
+
+.admin-copyright
+{
+	position: absolute;
+	left: 0px;
+	bottom: -30px;
+	color: #0c1a23;
+	font-family: Arial;
+	font-size: 12px;
+	display: block;
+}
+
+.admin-container .domain-list
+{
+	list-style-type: none;
+	font-family: Arial;
+	font-size: 15px;
+	padding-left: 0px;
+	margin-left: -30px;
+	margin-right: -30px;
+}
+	.admin-container .domain-list li
+	{
+		display: block;
+		border-bottom: 1px transparent solid;
+	}
+	.admin-container .domain-list li a,
+	.admin-add-domain-link
+	{
+		display: block;
+		color: #969696;
+		border-bottom: 1px transparent solid;
+		text-decoration: none;
+		padding: 5px 0px 5px 50px;
+	}
+	.admin-container .verified-domain a
+	{
+		color: #328fb0!important;
+		background: url('/static/images2/sio-website-checked.png') no-repeat 26px 8px;
+	}
+	.admin-container .domain-list li a:hover
+	{
+		color: #152d3b;
+	}
+	.admin-container .verified-domain a:hover,
+	.admin-container .pressed-domain a
+	{
+		color: #152d3b!important;
+		background-position: 26px -24px!important;
+	}
+	.domain-list .pressed-domain
+	{
+		background: #e9e9e9 url('/static/images2/sio-admin-pressed-bg.png') repeat-x left top;
+		border-bottom: 1px #fff solid!important;
+	}
+	
+	
+	.admin-add-domain-link
+	{
+		display: block;
+		font-family: Arial;
+		font-size: 14px;
+		padding-left: 20px;
+		padding-top: 30px;
+		text-shadow: 0px 1px 1px #fbfbfb;
+		background: url('/static/images2/sio-admin-add-domain.png') no-repeat 2px 33px;
+	}
+	.admin-add-domain-link:hover
+	{
+		text-decoration: underline;
+	}
+
+.admin-note
+{
+	display: block;
+	padding: 10px 0px;
+	font-size: 14px;
+	font-family: Arial;
+	color: #c8c8c8;
+	text-shadow: 0px 0px 1px #fff;
+}
+	.domain-list .admin-note
+	{
+		padding-left: 50px!important;
+	}
+	.admin-note a
+	{
+		color: #328fb0;
+	}
+.admin-left-part .admin-note
+{
+	padding-left: 20px;
+}
+
+.admin-left-part,
+.admin-right-part
+{
+	float: left;
+	height: 580px;
+}
+.admin-left-part
+{
+	width: 144px;
+	height: 500px;
+	padding: 40px 30px;
+	border-right: 1px #9f9f9f solid;
+}
+
+.admin-right-part
+{
+	padding: 40px 30px;
+	width: 575px;
+}
+
+.admin-right-part .domain-name
+{
+	color: #969696;
+	font-size: 16px;
+}
+.admin-right-part .admin-content
+{
+	padding-top: 45px;
+}
+
+.admin-left-part .h1
+{
+	padding-left: 18px;
+}
+
+.force-recheck
+{
+	display: block;
+	margin-left: -5px;
+	margin-top: 15px;
+}
+
+.sio-admin-settings-pict
+{
+	padding: 10px 0px;
+}
+.sio-admin-settings-pict a
+{
+	display: block;
+	margin-left: -6px;
+}
+.sio-a-s-delimiter
+{
+	padding-top: 70px;
+}
+
+.explanation-layout
+{
+	display: none;
+	position: absolute;
+	left: 0px; top: 0px;
+	background: rgba(21,45,59,0.9);
+	width: 100%;
+	height: 100%;
+	z-index: 100;
+	color: #f0f0f0;
+	font-family: Arial;
+}
+	.el-text
+	{
+		width: 500px;
+		padding-left: 235px;
+		padding-top: 140px;
+	}
+	.explanation-layout h1
+	{
+		font-weight: normal;
+		font-size: 26px;
+	}
+	.explanation-layout p
+	{
+		padding: 10px 0px;
+		font-size: 14px;
+	}
+
+.domain-settings-form fieldset a
+{
+	font-size: 14px;
+	color: #328fb0;
+	font-family: Arial;
+	text-decoration: none;
+	display: inline-block;
+	padding-top: 10px;
+	border-bottom: 1px #328fb0 dashed;
+}
+
+.domain-settings-form form,
+.domain-settings-form form fieldset
+{
+	border: 0px;
+}
+.domain-settings-form form label
+{
+	font-family: Arial;
+	display: block;
+}
+
+.domain-list li
+{
+	position: relative;
+}
+
+.delete-domain-cross
+{
+	position: absolute;
+	display: none;
+	right: 0px;
+	top: 0px;
+	z-index: 1;
+	width: 28px;
+	height: 28px;
+	cursor: pointer;
+	background: url('/static/images2/sio-admin-delete-cross.png') no-repeat center center;
+}
+.delete-domain-cross:hover
+{
+	background-color: #f21431;
+}
+.pressed-domain .delete-domain-cross
+{
+	display: block;
+}
+.domain-settings-form
+{
+	margin: 20px 0px;
+}
+.domain-settings-form label
+{
+	display: block;
+	font-family: Arial;
+	font-size: 14px;
+	color: #969696;
+	display: block;
+	padding: 5px 0px;
+}
+.domain-settings-form fieldset
+{
+	margin: 20px 0px;
+}
+.domain-settings-form .select
+{
+	width: 160px;
+}
+
+.domain-verification-window a:hover
+{
+	text-decoration: none!important;
+}
+
+.domain-indexation-info
+{
+	color: #c4c4c4;
+	font-family: Arial!important;
+	font-size: 13px!important;
+	text-shadow: 0px 0px 1px #fff;
+	margin: 30px 0px;
+}
+.domain-indexation-info span
+{
+	color: #328fb0;
+	display: block;
+	padding-top: 5px;
+}
+.domain-indexation-info .last-date
+{
+	width: 160px;
+	float: left;
+}
+.domain-indexation-info a
+{
+	display: block;
+	background: url('/static/images2/sio-admin-reindex-button.png') no-repeat left top;
+	width: 49px;
+	height: 49px;
+	float: right;
+}
+.domain-indexation-info a:hover { background-position: -53px top; }
+.domain-indexation-info a:active { background-position: -106px top; }

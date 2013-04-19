@@ -1,0 +1,1251 @@
+/* Стили элементов для поискового взаимодействия */
+
+.sio-fixed-body
+{
+	position: relative;
+	overflow: hidden;
+	text-align: left;
+  direction: ltr;
+}
+
+.sio-custom-field
+{
+	display: none;
+	width: 100%;
+	position: fixed;
+	left: 0px; top: 0px;
+	background: #c0c0c0;
+	z-index: 1000000000;
+	border-bottom: 1px #202020 solid;
+}
+	.sio-custom-field .sio-search-icon
+	{
+		position: absolute;
+		left: 28px; top: 50%; margin-top: -10px;
+		width: 30px; height: 30px;
+		background: url('/static/images2/sio-sf-icons.png') no-repeat left top;
+	}
+	.sio-custom-field .lsbs-ads
+	{
+		z-index: 100000;
+		display: block;
+		width: 44px; height: 14px;
+		position: absolute;
+		right: 70px;
+		top: 50%;
+		margin-top: -5px;
+		background: url('/static/images2/lsbs-small.png?v=1') no-repeat left top;
+	}
+	
+	
+	.sio-custom-field .sio-close-search-icon
+	{
+		position: absolute;
+		right: 28px; top: 50%; margin-top: -13px;
+	}
+	.sio-custom-field .sio-close-search-icon a
+	{
+		display: block;
+		width: 31px; height: 31px;
+		background: url('/static/images2/sio-sf-icons.png') no-repeat -78px top;
+	}
+	.sio-custom-field .sio-close-search-icon a:hover
+	{
+		background-position: -37px top;
+	}
+	.sio-csf-inner
+	{
+		padding: 10px 80px;
+	}
+	.sio-custom-field input,
+	.sio-csf-label
+	{
+		background: none;
+		border: 0px;
+		outline: none;
+		font-family: Helvetica;
+		font-size: 40px;
+		line-height: 40px;
+		padding: 0px!important;
+		margin: 0px!important;
+		color: #fff;
+		height: auto!important;
+		width: 100%;
+		-webkit-box-shadow: none!important;
+		box-shadow: none!important;
+		-moz-box-shadow: none!important;
+	}
+	
+	.sio-csf-label { position: absolute;top: 14px; left: 80px; opacity: 0.3; }
+
+.sio-clear { clear: both; }
+
+.sio-search-window
+{
+	text-align: left!important;
+	display: none;
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	z-index: 100000000;
+}
+	.sio-search-window *
+	{
+		text-align: left;
+	}
+.sio-t-window
+{
+	display: none;
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	background: rgba(0,0,0,0.1);
+	z-index: 1000000;
+}
+	.sio-t-column
+	{
+		position: relative;
+		width: 100%;
+		height: 100%;
+		overflow-y: scroll!important;
+	}
+	.sio-t-c-inner
+	{
+		position: absolute;
+		clear: both;
+		width: 550px;
+		left: 50%;
+		margin-left: -275px;
+		padding: 10px;
+		padding-top: 150px;
+	}
+
+/* Стили для окна с настройками */
+.sio-preferences-container
+{
+	text-align: left!important;
+	position: fixed;
+	left: 0px; bottom: 0px;
+	z-index: 1000000000;
+	width: 100%;
+	min-width: 1000px;
+}
+.sio-preferences-container *
+{
+	line-height: 14px;
+	padding: 0px; margin: 0px;
+	font-family: Arial!important;
+}
+
+
+.sio-pfs-tooltip
+{
+	display: none;
+	position: absolute;
+	top: 0px;
+	left: 40px;
+	background: rgba(32,56,70,0.8);
+	padding: 8px 18px;
+	color: #fff;
+	font-size: 12px;
+	border: 1px #203846 solid;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+	text-align: center;
+	z-index: 1000000;
+}
+
+/* Табы с настройками */
+.sio-pfs-tabs,
+.sio-pfs-tabs .sio-tab,
+.sio-pfs-tabs .sio-pfs-left-column
+{
+	height: 40px;
+}
+.sio-pfs-tabs
+{
+	background: #203846;
+}
+.sio-pfs-save-button,
+.sio-pfs-reset-button
+{
+	position: absolute;
+	left: 0px; top: 15px;
+}
+	.sio-pfs-reset-button { top: 45px; display: none; }
+	.sio-pfs-save-button,
+	.sio-pfs-reset-button
+	{
+		border-top: 1px #c5c5c5 solid;
+		border-bottom: 1px #c5c5c5 solid;
+		color: #969696;
+		font-size: 12px;
+		width: 112px;
+	}
+	
+	.sio-pfs-save-button a,
+	.sio-pfs-reset-button a
+	{
+		padding: 7px 10px 7px 40px;
+		display: block;
+		color: #969696;
+		cursor: default!important;
+		border-top: 1px #f6f5f5 solid;
+		background: url('/static/images2/sio-pfs-pictos.png') no-repeat 10px -61px;
+	}
+	.sio-pfs-reset-button a { background-position: 10px -30px; }
+	.sio-pfs-save-button.unsaved-changes a
+	{
+		cursor: pointer!important;
+		background-position: 10px -95px;
+		color: #6cb4cf;
+	}
+	.sio-pfs-save-button.ok-saved-changes a
+	{
+		cursor: default!important;
+		background-position: 10px -127px;
+		color: #6cb4cf;
+	}
+	.sio-pfs-save-button.unsaved-changes a:hover,
+	.sio-pfs-reset-button a:hover
+	{
+		background-color: #e6e6e6;
+	}
+	.sio-pfs-save-button.unsaved-changes a:active,
+	.sio-pfs-reset-button a:active
+	{
+		background-color: #dadada!important;
+		border-color: #dadada!important;
+	}
+	.sio-pfs-reset-button a:hover
+	{
+		background-position: 10px 1px;
+		cursor: pointer!important;
+	}
+	
+	.sio-pfs-tabs .sio-tab
+	{
+		float: left;
+		color: #fff;
+		font-family: Arial;
+		font-size: 12px;
+		padding: 14px 18px 0px 18px;
+		height: 25px;
+		cursor: pointer;
+		border-right: 1px #1a2d38 solid;
+		border-top: 1px #4d606b solid;
+	}
+	.sio-pfs-tabs .sio-active-tab
+	{
+		background: #2a4454;
+
+	}
+	.sio-logo
+	{
+		float: left;
+	}
+	.sio-pfs-tabs .sio-pfs-left-column
+	{
+		border-right: 1px #1a2d38 solid;
+		border-top: 1px #4d606b solid;
+		height: 39px;
+	}
+
+/* Блоки с инструменами */
+.sio-pfs-blocks,
+.sio-pfs-blocks .sio-pfs-left-column
+{
+	height: 150px;
+}
+.sio-pfs-blocks
+{
+	background: #f0f0f0;
+}
+	.sio-pfs-blocks .sio-pfs-left-column
+	{
+		position: relative;
+		float: left;
+		border-right: 1px #9f9f9f solid;
+	}
+	
+	.sio-logo.sio-pfs-left-column a
+	{
+		display: block;
+		height: 40px;
+		background: url('/static/images2/sio-pfs-logo-settings.png') no-repeat left top!important;
+	}
+	
+.sio-admin-button
+{
+	position: fixed;
+	color: #fff;
+	left: 0px; bottom: 10px;
+	z-index: 10000000;
+	cursor: pointer;
+	background: #203846;
+	height: 40px;
+	width: 97px;
+	-webkit-border-radius: 3px;
+	background: url('/static/images2/sio-pfs-logo-settings.png') no-repeat left top;
+}
+	.sio-admin-button div
+	{
+		width: 97px;
+		height: 40px;
+	}
+
+/* Внутрянка для блоков */
+.sio-pfs-templates-list
+{
+	margin: 20px 0px;
+}
+	.sio-pfs-templates-list a
+	{
+		display: block;
+		background: #e2e2e2;
+		float: left;
+		margin-right: 20px;
+	}
+
+/* Блок с цветами */
+.sio-block-sio_pfs_block_colors
+{
+	min-width: 500px;
+}
+.sio-pfs-color
+{
+	display: block;
+	width: 28px;
+	height: 28px;
+	float: left;
+	border: 1px #ccc solid;
+	margin-right: 12px;
+	margin-bottom: 12px;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+	cursor: pointer;
+}
+	.sio-pfs-color span
+	{
+		display: block;
+		background: url('/static/images2/sio-pfs-color-overlay.png') no-repeat left top;
+		width: 28px;
+		height: 28px;
+	}
+
+.sio-pfs-color-small
+{
+	width: 14px;
+	height: 14px;
+	border: 1px #a3a3a3 solid;
+	margin-top: -1px;
+	margin-left: -4px;
+	margin-right: 4px;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+}
+
+.sio-pfs-colors-left,
+.sio-pfs-colors-right
+{
+	float: left;
+	height: 100px;
+}
+.sio-pfs-colors-right
+{
+	width: 500px;
+}
+
+.sio-pfs-colors-left
+{
+	min-width: 150px;
+	padding-right: 100px;
+	margin-right: 12px;
+	border-right: 1px #cccccc solid;
+}
+
+.sio-active-list { z-index: 10000000; }
+
+.sio-pfs-color-selector { position: relative; margin-bottom: 10px; }
+.sio-pfs-color-selector .options
+{
+	-webkit-box-shadow: 0px 0px 7px #999;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+	box-shadow: 0px 0px 7px #999;
+	-moz-box-shadow: 0px 0px 7px #999;
+	-moz-border-radius: 3px;
+	display: block;
+	padding: 5px 0px;
+	background: #fff;
+	position: absolute;
+	bottom: -20px;
+	display: none;
+	font-size: 12px;
+	color: #969696;
+	font-family: Arial;
+}
+	.sio-pfs-color-selector .options div { padding: 5px 20px; white-space: nowrap; cursor: pointer; }
+	.sio-pfs-color-selector .options div:hover { background: #f2f2f2; }
+
+.sio-pfs-color-selector-active
+{
+	cursor: pointer;
+	padding: 5px 10px;
+	background: #fff url('/static/images2/sio-pfs-selector.png') repeat-x left top;
+	font-size: 12px;
+	color: #969696;
+	border: 1px #c5c5c5 solid;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	border-radius: 5px;
+}
+.sio-pfs-color-selector-active div
+{
+	float: left;
+}
+
+.sio-pfs-color-selector .options .active-option
+{
+	background: #203846!important;
+	color: #fff;
+}
+
+.sio-custom-color
+{
+	background: #a3a3a3 url('/static/images2/sio-custom-color-pict.png') no-repeat left 1px;
+	position: relative;
+}
+.sio-colorpicker
+{
+	display: none;
+	background: #203846;
+	border: 1px #a3a3a3 solid;
+	width: 236px;
+	height: 166px;
+	position: absolute;
+	right: -8px; bottom: -8px;
+	z-index: 1000000;
+}
+
+.sio-picker,
+.sio-slider
+{
+	position: absolute;
+	left: 6px; top: 6px;
+}
+.sio-picker { width: 150px; height: 150px; border: 2px #474848 solid; }
+.sio-slider { width: 17px; height: 150px; border: 2px #474848 solid; left: 173px; }
+
+.sio-colorpicker .sio-pfs-color
+{
+	position: absolute;
+	margin: 0px;
+	right: 6px; bottom: 6px;
+	background: #a3a3a3 url('/static/images2/sio-custom-color-pict.png') no-repeat left 1px;
+}
+
+/* Размеры */
+
+.dimensions-button
+{
+	margin: 0px 10px;
+}
+
+.sio-pfs-plane-resizer,
+.sio-pfs-window-resizer
+{
+	background: url('/static/images2/sio-pfs-columns-resizer.png?v=1') no-repeat left top;
+	position: relative;
+	width: 103px;
+	height: 35px;
+	float: left;
+}
+
+.sio-pfs-dimensions-text
+{
+	float: left;
+	margin-left: 15px;
+	padding-left: 15px;
+}
+
+	.sio-pfs-plane-resizer a,
+	.sio-pfs-window-resizer a
+	{
+		cursor: pointer;
+		display: block;
+		position: absolute;
+		width: 18px;
+		height: 35px;
+		margin: 0px;
+		top: 0px;left: 0px;
+		background: url('/static/images2/sio-pfs-columns-resizer.png?v=1') no-repeat left top;
+	}
+	.sio-pfs-plane-resizer a.l-l:active { background-position: left bottom; }
+	
+	.sio-pfs-plane-resizer a.l-r { left: 17px; background-position: -17px top; }
+	.sio-pfs-plane-resizer a.l-r:active { background-position: -17px bottom; }
+	
+	.sio-pfs-plane-resizer a.r-l { left: 68px; background-position: -68px top; }
+	.sio-pfs-plane-resizer a.r-l:active { background-position: -68px bottom; }
+	
+	.sio-pfs-plane-resizer a.r-r { left: 85px; background-position: -85px top; }
+	.sio-pfs-plane-resizer a.r-r:active { background-position: -85px bottom; }
+
+.sio-pfs-window-resizer,
+.sio-pfs-window-resizer a
+{
+	background: url('/static/images2/sio-pfs-window-resizer.png?v=3') no-repeat left top;
+	width: 103px; height: 103px;
+}
+
+.sio-pfs-window-resizer a.l-l { width: 18px; height: 103px; }
+.sio-pfs-window-resizer a.l-l:active { background: url('/static/images2/sio-pfs-window-resizer.png?v=3') no-repeat -103px top; z-index: 20;  }
+
+.sio-pfs-window-resizer a.l-r { width: 18px; height: 69px; left: 17px; top: 17px; background-position: -17px -17px; }
+.sio-pfs-window-resizer a.l-r:active { background-position: -120px -17px; z-index: 20; }
+
+.sio-pfs-window-resizer a.r-l { width: 18px; height: 68px; left: 68px; top: 17px; background-position: -68px -17px; }
+.sio-pfs-window-resizer a.r-l:active { background-position: -205px -17px;  z-index: 20;  }
+ 
+.sio-pfs-window-resizer a.r-r { width: 18px; height: 103px; left: 85px; top: 0px; background-position: -85px top; }
+.sio-pfs-window-resizer a.r-r:active { background-position: -222px top;  z-index: 20;  }
+
+.sio-pfs-window-resizer a.t-t { width: 103px; height: 18px; left: 0px; top: 0px; background-position: 0px 0px; }
+.sio-pfs-window-resizer a.t-t:active { background-position: -119px 0px; z-index: 20; }
+
+.sio-pfs-window-resizer a.t-b { width: 69px; height: 18px; left: 17px; top: 17px; background-position: -17px -17px; }
+.sio-pfs-window-resizer a.t-b:active { background-position: -136px -17px; z-index: 20; }
+
+.sio-pfs-window-resizer a.b-t { width: 69px; height: 18px; left: 17px; top: 68px; background-position: -17px -68px; }
+.sio-pfs-window-resizer a.b-t:active { background-position: -136px -68px; z-index: 20; }
+
+.sio-pfs-window-resizer a.b-b { width: 103px; height: 18px; left: 0px; top: 85px; background-position: 0px -85px; }
+.sio-pfs-window-resizer a.b-b:active { background-position: -119px -85px; z-index: 20; }
+
+/**/
+.sio-pfs-left-column
+{
+	width: 112px;
+}
+
+.sio-block
+{
+	display: none;
+	float: left;
+	height: 100px;
+	max-width: 900px;
+	padding: 25px 20px;
+}
+
+.sio-pfs-text,
+.sio-checkbox
+{
+	font-size: 12px;
+	color: #969696;
+	text-shadow: 0px 1px 1px #fff;
+}
+
+.sio-pfs-text { padding-bottom: 5px; }
+
+.sio-pfs-blocks .sio-checkbox input
+{
+	width: 15px;
+}
+
+.sio-pfs-c-size-selector,
+.sio-pfs-font-selector
+{
+	float: left;
+}
+.sio-pfs-font-selector
+{
+	margin-left: 40px;
+}
+
+.sio-spf-sf-checkbox
+{
+	float: left;
+	margin-right: 50px;
+}
+.sio-spf-sf-icons
+{
+	padding-top: 15px;
+}
+
+.sio-pfs-sf-select-layout
+{
+	padding-top: 10px!important;
+	text-align: center!important;
+}
+
+/* Триггеры */
+/* Надо подумать над рефакторингом */
+
+.sio-pfs-sf-select
+{
+	border: 1px transparent solid;
+	width: 66px;
+	height: 66px;
+	padding: 0px;
+	margin-right: 1px;
+	margin-bottom: 1px;
+	float: left;
+	cursor: pointer;
+}
+
+.sio-pfs-sf-select-active
+{
+	-webkit-box-shadow: inset 0px 0px 5px #999;
+	-moz-box-shadow: inset 0px 0px 5px #999;
+	box-shadow: inset 0px 0px 5px #999;
+	background: #e2e2e2;
+	border: 1px #a3a3a3 solid;
+	
+}
+
+.sio-field-prev-crnr-1
+{
+	background: url('/static/images2/sio-corners-previews.png') no-repeat -72px -3px;
+}
+
+.sio-field-prev-crnr-2
+{
+	background: url('/static/images2/sio-corners-previews.png') no-repeat -1px -2px;
+}
+
+.sio-field-prev-crnr-3
+{
+	background: url('/static/images2/sio-corners-previews.png') no-repeat -147px -2px;
+}
+
+.sio-field-prev-flag-1
+{
+	background: url('/static/images2/sio-corners-previews.png') no-repeat -2px -74px;
+}
+.sio-field-prev-flag-2
+{
+	background: url('/static/images2/sio-corners-previews.png') no-repeat -74px -76px;
+}
+.sio-field-prev-flag-3
+{
+	background: url('/static/images2/sio-corners-previews.png') no-repeat -147px -76px;
+}
+
+.sio-field-prev-flag-4
+{
+	background: url('/static/images2/sio-corners-previews.png') no-repeat -2px -149px;
+}
+.sio-field-prev-flag-5
+{
+	background: url('/static/images2/sio-corners-previews.png') no-repeat -74px -146px;
+}
+.sio-field-prev-flag-6
+{
+	background: url('/static/images2/sio-corners-previews.png') no-repeat -147px -146px;
+}
+.sio-field-prev-flag-7
+{
+	background: url('/static/images2/sio-corners-previews.png?v=10') no-repeat -2px -220px;
+}
+.sio-field-prev-flag-8
+{
+	background: url('/static/images2/sio-corners-previews.png?v=10') no-repeat -74px -220px;
+}
+.sio-field-prev-flag-9
+{
+	background: url('/static/images2/sio-corners-previews.png?v=10') no-repeat -147px -220px;
+}
+
+/* Sio triggers */
+.sio-custom-icon
+{
+	position: fixed;
+	right: 0px;
+	cursor: pointer;
+	z-index: 100000000!important;
+}
+
+.sio-crnr-1 { right: 0px; top: 0px; }
+
+.sio-flag-1,
+.sio-flag-2,
+.sio-flag-3,
+.sio-flag-4,
+.sio-flag-5,
+.sio-flag-6,
+.sio-flag-7,
+.sio-flag-8,
+.sio-flag-9 { right: 15px; top: 0px; }
+
+
+/* Drop down templates */
+
+.sio-sw-search-results
+{
+	max-height: 500px;
+	overflow-y: scroll;
+}
+
+/* Templates */
+
+
+/**/
+.sio-sw-cont.default
+{
+	background: rgba(0,0,0,0.6)!important;
+	padding: 20px 20px 0px 20px;
+}
+.sio-sw-cont.default .sio-sw-inner { border: 1px #ececec solid; }
+.sio-sw-cont.default .sio-sw-search-results {background: #fff; padding: 20px; }
+.sio-sw-cont.default .sio-result
+{
+	background: none!important;
+	margin: 0px; padding: 0px;
+	margin-bottom: 10px;
+	border-bottom: 2px #ececec dotted;
+}
+.sio-sw-cont.default .sio-result-inner { background: none!important; }
+
+.sio-sw-cont.default .sio-result-title
+{
+	display: block;
+	color: #0f0f0f;
+	font-family: Arial;
+	font-size: 15px;
+	font-weight: bold;
+	padding-bottom: 10px;
+}
+	.sio-sw-cont.default em { font-style: normal; }
+
+.sio-sw-cont.default .sio-result-desc
+{
+	font-family: Arial;
+	color: #868686;
+	font-size: 13px;
+	line-height: 17px;
+}
+
+.sio-sw-cont.default .sio-result-link
+{
+	color: #5bb6d5;
+	font-family: Arial;
+	font-size: 12px;
+	padding-top: 5px;
+	margin-bottom: 10px;
+}
+
+.sio-sw-cont.default .sio-sw-ads
+{
+	padding-top: 5px;
+	text-align: center;
+}
+
+.sio-result-desc img
+{
+	float: left;
+	margin-right: 10px;
+	margin-bottom: 10px;
+}
+
+/* Fatborder */
+.sio-sw-cont.fatborder .sio-sw-inner,
+.sio-sw-cont.fatborder .sio-sw-ads { border: 1px #0074b3 solid; background: #ccc; padding: 2px; }
+.sio-sw-cont.fatborder .sio-sw-inner { border-bottom: 0px; }
+.sio-sw-cont.fatborder .sio-sw-search-results { background: #fff; padding: 14px 20px; }
+
+.sio-sw-cont.fatborder .sio-result-title
+{
+	display: block;
+	color: #0074b3!important;
+	font-family: Arial;
+	font-size: 14px;
+	font-weight: bold;
+	padding-bottom: 7px;
+}
+
+	.sio-sw-cont.fatborder em { font-style: normal; }
+
+.sio-sw-cont.fatborder .sio-result
+{
+	background: none;
+	border-bottom: 1px #333333 solid;
+	padding: 0px;
+	margin-bottom: 10px;
+}
+
+.sio-sw-cont.fatborder .sio-result-desc
+{
+	color: #868686;
+	font-family: Arial;
+	padding: 10px 0px!important;
+	font-size: 12px!important;
+	line-height: 16px!important;
+}
+
+.sio-sw-cont.fatborder .sio-result-link
+{
+	color: #5bb6d5;
+	font-family: Arial;
+	font-size: 12px;
+	padding-top: 5px;
+	margin-bottom: 10px;
+}
+.sio-sw-cont.fatborder .sio-sw-ads { padding-top: 0px; border-top: 0px; }
+.sio-sw-cont.fatborder .sio-sw-ads a
+{
+	display: block;
+	background: #fff;
+	text-align: center;
+	padding-top: 3px;
+}
+
+/* Plaintext */
+.sio-sw-cont.plaintext .sio-sw-inner { border: 2px #ecebeb solid; background: #ccc; padding: 1px; }
+.sio-sw-cont.plaintext .sio-sw-inner-2 { background: #cbcbcb; padding: 2px; }
+.sio-sw-cont.plaintext .sio-sw-search-results { background: #fff; padding: 14px 20px; }
+
+.sio-sw-cont.plaintext .sio-result-title
+{
+	color: #213845;
+	font-size: 16px!important;
+	display: block;
+	padding-bottom: 10px;
+	font-weight: bold;
+	font-style: normal;
+}
+
+	.sio-sw-cont.plaintext em { font-style: normal; }
+
+.sio-sw-cont.plaintext .sio-result
+{
+	background: none;
+	border-bottom: 1px #ccc solid;
+	padding: 0px;
+	margin-bottom: 10px;
+}
+
+.sio-sw-cont.plaintext .sio-result-desc
+{
+	color: #868686;
+	font-family: Arial;
+	font-size: 12px;
+}
+
+.sio-sw-cont.plaintext .sio-result-link
+{
+	color: #5bb6d5;
+	font-family: Arial;
+	font-size: 12px;
+	padding-top: 5px;
+	margin-bottom: 10px;
+}
+.sio-sw-cont.plaintext .sio-sw-ads
+{
+	background: #ccc;
+	position: absolute;
+	padding: 4px 10px 0px 10px;
+	right: 10px; bottom: -20px;
+}
+
+/* Roundcorner */
+.sio-sw-cont.roundcorner .sio-sw-inner { border: 0px; background: #ccc; padding: 7px; }
+.sio-sw-cont.roundcorner .sio-sw-inner-2 { background: #eeeeee; }
+.sio-sw-cont.roundcorner .sio-sw-search-results { background: #eeeeee; padding: 0px; }
+
+.sio-sw-cont.roundcorner .sio-result-title
+{
+	display: block;
+	color: #333;
+	font-family: Arial;
+	background: none;
+	font-size: 14px;
+	font-weight: bold;
+	padding-bottom: 7px;
+}
+
+	.sio-sw-cont.roundcorner em { font-style: normal; }
+
+.sio-sw-cont.roundcorner .sio-result
+{
+	background: #eeeeee;
+	padding: 15px;
+	border-bottom: 1px #e1e1e1 solid;
+	border-top: 1px #fbfbfb solid;
+}
+
+.sio-sw-cont.roundcorner .sio-result-desc
+{
+	background: none;
+	color: #868686;
+	font-family: Arial;
+	font-size: 14px;
+}
+
+.sio-sw-cont.roundcorner .sio-result-link
+{
+	background: none;
+	color: #5bb6d5;
+	font-family: Arial;
+	font-size: 12px;
+	padding-top: 5px;
+	margin-bottom: 10px;
+}
+.sio-sw-cont.roundcorner .sio-sw-ads
+{
+	background: #ccc;
+	text-align: center;
+	padding: 4px 10px 0px 10px;
+}
+
+/* Normalone */
+.sio-sw-cont.normalone .sio-sw-inner { border: 10px #ccc solid; background: #ccc; padding: 1px; }
+.sio-sw-cont.normalone .sio-sw-inner-2 { background: #ccc; padding: 4px; }
+.sio-sw-cont.normalone .sio-sw-search-results { background: #fff; padding: 12px; }
+
+.sio-sw-cont.normalone .sio-result-title
+{
+	display: block;
+	color: #0074b3!important;
+	font-family: Arial;
+	font-size: 14px;
+	font-weight: bold;
+	padding-bottom: 7px;
+}
+
+	.sio-sw-cont.normalone em { font-style: normal; }
+
+.sio-sw-cont.normalone .sio-result
+{
+	background: #eeeeee;
+	border-bottom: 1px #0074b3 solid;
+	padding: 10px;
+	margin-bottom: 10px;
+}
+
+.sio-sw-cont.normalone .sio-result-desc
+{
+	color: #868686;
+	font-family: Arial;
+	font-size: 13px;
+}
+
+.sio-sw-cont.normalone .sio-result-link
+{
+	color: #5bb6d5;
+	font-family: Arial;
+	font-size: 12px;
+	padding-top: 5px;
+	margin-bottom: 10px;
+}
+.sio-sw-cont.normalone .sio-sw-ads { padding-top: 0px; border-top: 0px; text-align: center; padding-bottom: 3px; }
+
+/* sio-kk, t-window */
+.sio-t-column.sio-kk .sio-t-c-inner
+{
+	filter:progid:DXImageTransform.Microsoft.gradient (startColorstr=#cc999999, endColorstr=#cc999999, GradientType=1);
+	background: rgba(153,155,153,0.8);
+}
+.sio-kk .sio-result
+{
+	margin: 10px 0px;
+	padding: 0px;
+	background: none;
+}
+.sio-kk .sio-result .sio-result-inner
+{
+	background: #fff;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	margin: 0px;
+}
+
+.sio-kk .sio-result-title
+{
+	display: block;
+	font-family: Arial;
+	font-size: 18px;
+	padding: 20px;
+	color: #000;
+}
+.sio-kk em
+{
+	background: none;
+	font-style: normal;
+}
+
+.sio-kk .sio-result-desc,
+.sio-kk .sio-result-link
+{
+	font-family: Arial;
+	font-size: 12px;
+	padding: 10px 20px;
+}
+
+.sio-kk .sio-result-desc
+{
+	color: #868686;
+	background: url('/static/images2/sio-kk-desc-bg.png') repeat-x left top;
+}
+.sio-kk .sio-result-link
+{
+	color: #5bb6d5;
+}
+
+/* sio-bb, t-window */
+.sio-t-column.sio-bb .sio-t-c-inner
+{
+	filter:progid:DXImageTransform.Microsoft.gradient (startColorstr=#cc000000, endColorstr=#cc000000, GradientType=1);
+	background: rgba(0,0,0,0.8);
+}
+.sio-bb .sio-result
+{
+	margin: 9px 0px;
+	border: 2px #2190af solid;
+	padding: 25px;
+	background: rgba(255,255,255,0.8);
+}
+.sio-bb .sio-result .sio-result-inner
+{
+	background: none;
+}
+
+.sio-bb .sio-result-title
+{
+	background: #2190af;
+	color: #fff;
+	font-family: Arial;
+	font-size: 18px;
+}
+.sio-bb em
+{
+	background: none;
+	font-style: normal;
+}
+
+.sio-bb .sio-result-desc,
+.sio-bb .sio-result-link
+{
+	margin: 10px 0px;
+	font-family: Arial;
+	font-size: 12px;
+}
+.sio-bb .sio-result-link { color: #666; }
+
+/* sio-dd, t-window */
+.sio-t-column.sio-dd-def .sio-t-c-inner
+{
+	filter:progid:DXImageTransform.Microsoft.gradient (startColorstr=#cc000000, endColorstr=#cc000000, GradientType=1);
+	background: rgba(0,0,0,0.8);
+}
+	.sio-dd-def .sio-result
+	{
+		background: none!important;
+		border: 1px #696969 dashed;
+		border-top: 0px;
+		padding: 20px 30px;
+	}
+	.sio-dd-def .sio-result-inner
+	{
+		background: none;
+	}
+	.sio-dd-def .sio-result-title
+	{
+		font-size: 18px;
+		color: #2190af;
+		text-decoration: underline;
+	}
+	.sio-dd-def em
+	{
+		font-style: normal;
+		background: none;
+		color: #fff;
+	}
+	.sio-dd-def .sio-result-desc
+	{
+		padding: 10px 0px;
+		color: #fff;
+		font-size: 13px;
+	}
+	.sio-dd-def .sio-result-link
+	{
+		color: #787878;
+		font-size: 13px;
+	}
+
+/* Sio installation */
+.sio-install-steps
+{
+	position: fixed;
+	left: 0px; top: 0px;
+	width: 100%; height: 100%;
+	background: rgba(0,0,0,0.5);
+	padding: 10px;
+	z-index: 1000000000;
+}
+
+.qi-window,
+.qi-w-inner,
+.qi-w-inner-2
+{
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+}
+
+.qi-sio-logo
+{
+	text-align: center;
+}
+.qi-sio-logo a
+{
+	display: block;
+	width: 106px;
+	height: 78px;
+	margin: 30px auto;
+	background: url('/static/images2/sio-install-logo.png') no-repeat left top;
+}
+
+.sio-qi-close-cross { position: absolute; top: 17px; right: 15px; }
+.sio-qi-close-cross a
+{
+	display: block;
+	width: 16px;
+	height: 16px;
+	background: url('/static/images2/sio-qi-header.png') no-repeat -204px -2px;
+}
+	.sio-qi-close-cross a:hover
+	{
+		background-position: -204px -21px;
+	}
+
+.qi-prefs-button a
+{
+	background: url('/static/images2/sio-qi-prefs-button.png') no-repeat left top;
+	display: block;
+	width: 128px;
+	height: 48px;
+	margin: 20px auto 0px auto;
+}
+
+.qi-sio-header-ru
+{
+	width: 146px;
+	height: 26px;
+	padding: 0px!important;
+	margin: 0px auto 40px auto!important;
+	background: url('/static/images2/sio-qi-header.png') no-repeat left -29px;
+}
+
+.qi-sio-header-en
+{
+	width: 184px;
+	height: 24px;
+	padding: 0px!important;
+	margin: 0px auto 40px auto!important;
+	background: url('/static/images2/sio-qi-header.png') no-repeat left 0px;
+}
+
+.qi-w-inner-2 div
+{
+	padding: 5px 0px;
+	font-family: Arial;
+	color: #969696;
+	font-size: 14px;
+}
+.qi-w-inner-2 a
+{
+	color: #328fb0;
+}
+
+.qi-window
+{
+	position: absolute;
+	width: 400px;
+	left: 50%; top: 50%;
+	margin-left: -200px;
+	margin-top: -180px;
+	background: #fff;
+	padding: 4px;
+}
+	.qi-w-inner
+	{
+		background: #fff;
+		border: 1px #b4b3b3 solid;
+		padding: 1px;
+	}
+	.qi-w-inner-2
+	{
+		background: #f0f0f0 url('/static/images_js/sio-qi-window-bg.png') repeat-x left top;
+		padding: 10px;
+	}
+	
+@media only screen and (-Webkit-min-device-pixel-ratio: 1.5),
+			only screen and (-moz-min-device-pixel-ratio: 1.5),
+			only screen and (-o-min-device-pixel-ratio: 3/2),
+			only screen and (min-device-pixel-ratio: 1.5)
+{
+	.sio-logo.sio-pfs-left-column a
+	{
+		background: url('/static/images2/sio-pfs-logo-settings-retina.png') no-repeat left top!important;
+		background-size: 97px 40px!important;
+	}
+	.sio-admin-button
+	{
+		background: url('/static/images2/sio-pfs-logo-settings-retina.png') no-repeat left top;
+		background-size: 97px 40px;
+	}
+	
+	.sio-custom-field .lsbs-ads
+	{
+		background: url('/static/images2/lsbs-small-retina.png?v=1') no-repeat left top;
+		background-size: 44px 14px;
+	}
+	
+	.sio-custom-field .sio-close-search-icon a
+	{
+		background: url('/static/images2/sio-sf-icons-retina.png') no-repeat -75px top;
+		background-size: 109px 32px;
+	}
+	.sio-custom-field .sio-close-search-icon a:hover
+	{
+		background-position: -38px top;
+	}
+	
+	.sio-custom-field .sio-search-icon
+	{
+		background: url('/static/images2/sio-sf-icons-retina.png') no-repeat left top;
+		background-size: 109px 32px;
+	}
+	
+	.sio-field-prev-crnr-1,
+	.sio-field-prev-crnr-2,
+	.sio-field-prev-crnr-3,
+	.sio-field-prev-flag-1,
+	.sio-field-prev-flag-2,
+	.sio-field-prev-flag-3,
+	.sio-field-prev-flag-4,
+	.sio-field-prev-flag-5,
+	.sio-field-prev-flag-6,
+	.sio-field-prev-flag-7,
+	.sio-field-prev-flag-8,
+	.sio-field-prev-flag-9
+	{
+		background-image: url('/static/images2/sio-corners-previews-retina.png');
+		background-size: 215px 291px;
+	}
+	
+	.sio-pfs-save-button a,
+	.sio-pfs-reset-button a
+	{
+		background-image: url('/static/images2/sio-pfs-pictos-retina.png');
+		background-size: 22px 158px;
+	}
+	
+}
