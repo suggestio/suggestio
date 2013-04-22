@@ -1,0 +1,61 @@
+@()(implicit c:util.Context)
+
+@* Тут у нас инфа на тему создания учетки и регистрации/валидации сайта *@
+
+@import c.lang
+
+@defining(Messages("h.r.create_account_and_verify_site")) { title =>
+  @baseTpl(title, currentAction="registration") {
+	<h1>@title</h1>
+
+	@* "Создание учетной записи" *@
+	<h2>@Messages("h.r.creating_account")</h2>
+	<p>@Messages("h.r.creating_account_takes_ability_to"):	@* Создание учетки дает возможность: *@
+		<ul>
+			<li>@Messages("h.r.connect_new_sites_from_lk");</li> @* подключать к системе новые сайты из личного кабинета *@
+			<li>@Messages("h.r.tweak_appearance_and_behaviour").</li> @* настраивать вид и алгоритмы поиска *@
+		</ul>
+	</p>
+
+	<p>@Messages("h.r.sio_supports_mpersona"):
+		<ul>
+			<li>@Messages("h.r.press_login_in_the_corner")</li> @* Нажать кнопку логина на сайте suggest.io *@
+			<li>@Messages("h.r.mpersona_type_email_password_register")</li> @* Ввести email/пароль или зарегаться в persona *@
+		</ul>
+	</p>
+
+
+	<h2>@Messages("h.r.add_verify_sites")</h2>
+	<p>
+		<ul>
+			<li>@Messages("h.r.press_add_site_in_lk", "/admin")</li>@* нажмите "добавить сайт" в админке по ссылке *@
+			<li>@Messages("h.r.type_site_addr_in_field", "1")</li>	@* введите адрес сайта в поле 1*@
+		</ul>
+	</p>
+
+	@* После пункта 4, сайт отображается в списке; предлагается скачать txt для проверки прав на сайт *@
+	<p>@Messages("h.r.after_addr_shown_next_copy_txt_file", "4"):
+		<ul>
+			<li>@Messages("h.r.download_validation_txt", "2").</li> @* скачайте txt из раскрывшегося окна 2 *@
+			<li>@Messages("h.r.save_txt_to_site_root").</li>	@* сохраните txt в корень сайта *@
+		</ul>
+	</p>
+	
+	@* Например, если скачали такой файл, то он должен быть доступен по указанной ссылке или похожим ссылкам *@
+	<p>@Messages("h.r.for_eg_download_and_save_file", "mysite.com", "adfasd-45435345-fasdfasdfasdf.txt")</p>
+	
+	<p>
+		<ul>
+			<li>@Messages("h.r.press_recheck_in_lk", "/admin")</li> @* Нажмите recheck в админке *@
+			<li>@Messages("h.r.sio_robo_will_recheck_v_flag_appers")</li> @* Робот Suggest.io произведет проверку файла и выставит значек V *@
+		</ul>
+	</p>
+	<p>@Messages("h.r.register_and_verify_done_settings_available", "/admin")</p> @* Создание учетки и верификаця завершены. Функции доступны в админке *@
+	<p>@Messages("please_note"):
+		<ul>
+			<li>@Messages("h.r.removing_txt_will_remove_validation")</li> @* Что будет если удалить txt файл с сайта *@
+			<li>@Messages("h.r.use_other_fmt_if_txt_unavailable")</li> @* Вместо txt-файл можно создать страницу с кодом *@
+		</ul>
+	</p>
+  }
+}

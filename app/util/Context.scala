@@ -37,4 +37,7 @@ case class Context(
 ) {
 
   implicit lazy val now : DateTime = DateTime.now
+
+  def isAuth  = p_opt.isDefined
+  def isAdmin = isAuth && p_opt.get.isAdmin
 }

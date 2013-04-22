@@ -1,0 +1,21 @@
+@()(implicit c:util.Context)
+
+@import c.lang
+
+@baseTpl(title=Messages("help.menu.design_settings"), currentAction="design_settings") {
+
+@* Настройка внешнего вида поиска *@
+<h1>@Messages("help.menu.design_settings.search_apperance_settings")</h1>
+
+@* Настройка внешнего вида элементов поисковой выдачи *@
+<h2>@Messages("help.menu.design_settings.search_hit_apperance_settings")</h2>
+
+<p>
+    <ul>
+	<li>1. @Messages("h.ds.choose_site", "/admin")</li>
+	<li>2. @Messages("h.ds.choose_format", "/help/images")</li>
+	<li>3. @Messages("h.ds.push_settings_btn")</li>
+	<li>4. @Messages("h.ds.save")</li>
+    </ul>
+</p>
+}

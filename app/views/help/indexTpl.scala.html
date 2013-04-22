@@ -1,0 +1,25 @@
+@()(implicit c:util.Context)
+
+@* Раздел помощи "Общая информация" о suggest.io. Что за сервис, для чего нужен и т.д.*@
+
+@import c.lang
+
+@defining(Messages("h.ix.brief_info")) { title =>
+    @baseTpl(title) {
+	<h1>@title</h1>
+	
+	<p>@Messages("h.ix.sio_developed_for_fast_search_on_the_site")
+	    <ul>
+		<li>@Messages("h.ix.connection_site_to_the_system_for_search_needs")</li> @* быстрая установка *@
+		<li>@Messages("h.ix.indexing_sites_and_searching")</li> @* индесация и поиск по сайту *@
+		<li>@Messages("h.ix.search_appearance")</li> @* Настройки внешнего вида поисковой выдачи *@
+	    </ul>
+	</p>
+
+	@* Установка и настройка Suggest.io не требует специальных знаний... *@
+	<p>@Messages("h.ix.easy_install_and_about_this_doc")</p>
+
+	@* Уведомление о том, что suggest.io в разработке и инструкция может отличаться *@
+	<p>@Messages("h.ix.sio_develop_in_progress_notice")</p>
+    }
+}

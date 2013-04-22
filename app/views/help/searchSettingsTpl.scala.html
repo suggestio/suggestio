@@ -1,0 +1,102 @@
+@()(implicit c:util.Context)
+
+@* Дока по настройкам поиска *@
+
+@import c.lang
+
+@* Определяем элемент списка примеров локалей и языков со странами *@
+@li_locale(locale:String, lang:String, country:String) = {
+  <li>@locale - @Messages(lang), @Messages(country)</li>
+}
+
+@defining(Messages("h.ss.search_settings")) { title =>
+    @baseTpl(title, currentAction="search_settings") {
+
+<h1>@title</h1>
+
+<h2>@Messages("multilingual_site")</h2>
+
+@* Што есть мультиязыковой сайт в понимании этой инструкции *@
+<p>@Messages("h.ss.what_is_a_mlang_site") @Messages("for_example"):
+	<ul>
+	    @defining(Messages("and")) { and =>
+		<li>mysite.com/ru/... @and mysite.com/en/...;</li>
+		<li>mysite.com/some/page?lang=ru @and mysite.com/some/otherpage?lang=en;</li>
+	    }
+	</ul>
+	@Messages("h.ss.or_other_url_lang_schemes")
+</p>
+
+@* Если мультидомен, то просто добавить несколько сайтов *@
+<p>@Messages("h.ss.if_mlang_multidomain_just_add_several_sites")</p>
+
+@* Основная цель доки - научить систему выдавать только конкретный язык результатов для конкретного языкового раздела сайта *@
+<p>@Messages("h.ss.main_target_one_site_part_and_only_one_search_language") @Messages("to_do_this"):
+	<ul>
+		<li>@Messages("h.ss.add_page_language_on_the_page")</li>
+		<li>@Messages("h.ss.make_necessary_sio_tweaks")</li>
+	</ul>
+</p>
+
+@* Указание языка страниц на страницах сайта *@
+<h2>@Messages("h.ss.specifing_lang_descriptor_to_site_pages")</h2>
+<p>@Messages("h.ss.you_need_to_specify_lang_pages_add_head_tag"):
+	<code>&lt;meta property="og:locale" content="ru_RU"/&gt;</code>
+</p>
+
+<p>@Messages("h.ss.pay_attention_to_meta_content_locale_format"):
+    <ul>
+	@li_locale("ru_RU", "lang_rus", "RUSSIA")
+	@li_locale("uk_UA", "lang_ukr",	"UKRAINE")
+	@li_locale("en_GB", "lang_eng", "UNITED_KINGDOM")
+    </ul>
+</p>
+
+<p>@Messages("please_note"):
+	<ul>
+		@* На текущий момент, локали en_US и en_GB и т.д. являются эквивалентами. *@
+		<li>@Messages("h.ss.sio_does_not_separate_countries_in_locales")</li>
+		@* В случае ошибочной локали будет автоопределение, но это будет инфа меньше 100% *@
+		<li>@Messages("h.ss.sio_on_locale_error_auto")</li>
+		@* Указание тега локали также поможет другим поисковым система более лучше работать. *@
+		<li>@Messages("h.ss.about_og_locale_and_other_search_systems")</li>
+	</ul>
+</p>
+
+<h2>Настройка скрипта suggest.io</h2>
+
+@* Чтобы lang-поиск заработал, нужно настроить js-скрипт sio *@
+<p>@Messages("h.ss.need_to_alter_script_to_force_search_lang_depend")</p>
+
+@* Нужно создать глобальный _sio_params и задать там search_lang *@
+<p>@Messages("h.ss.create_sio_params_global_obj_example"):
+<pre>
+&lt;script type="text/javascript"&gt;
+
+window._sio_params = {
+search_lang : ["ru","en"]
+}
+
+&lt;/script&gt;
+</pre>
+</p>
+
+@* Пример скрипта инициализации Suggest.io с поддержкой поиска по страницам на русском и английском языках *@
+<p>@Messages("h.ss.example_sio_init_script_with_langs"):
+<pre>
+&lt;script type="text/javascript"&gt;
+(function() {
+var _sw = document.createElement('script'); _sw.type = 'text/javascript'; _sw.async = true;
+_sw.src = 'https://suggest.io/js';
+var _sh = document.getElementsByTagName('head')[0]; _sh.appendChild(_sw);
+
+window._sio_params = {
+search_lang : ["ru","en"]
+}
+
+})();
+&lt;/script&gt;
+</pre>
+</p>
+    }
+}

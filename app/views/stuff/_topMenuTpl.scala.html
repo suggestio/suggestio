@@ -1,0 +1,51 @@
+@(activeLink:String = null)(implicit c:util.Context)
+
+@* Тут набор ссылок для хидера/футера главной и других страниц *@
+
+@import c.lang
+
+<div style="z-index: 100000000000; position: fixed;" class="menu menu-@c.lang_str">
+
+	@defining(Messages("stuff.menu.ABOUT")) { about_msg =>
+	    @if(activeLink == "about") {
+		<span class="active-link">@about_msg</span>
+	    } else {
+		<a class="@if(c.lang_str != "ru") {menu-link}" data-popup="about" href="{% url controller="crawl" action="about" %}">@about_msg</a>
+	    }
+	}
+
+	<div class="delimiter"></div>
+
+	@defining(Messages("stuff.menu.BLOG")) { blog_str =>
+	    @if(activeLink == "blog") {
+		<span class="active-link">@blog_str</span>
+	    } else {
+		<a href="{% url controller="blog" action="" %}">@blog_str</a>
+	    }
+	}
+
+	<div class="delimiter"></div>
+
+	@defining(Messages("stuff.menu.HELP")) { help_msg =>
+	    @if(activeLink == "help") {
+		<span class="active-link">@help_msg</span>
+	    } else {
+		<a class="menu-link" href="/help">@help_msg</a>
+	    }
+	}
+
+	<div class="delimiter"></div>
+
+	@defining(Messages("stuff.menu.LIVE")) { live_msg =>
+	    @if(activeLink == "showcase") {
+		<span class="active-link">@live_msg</span>
+	    } else {
+		<a class="menu-link" href="/crawl/showcase">@live_msg</a>
+	    }
+	}
+
+	<div class="delimiter"></div>
+	
+	<a onclick="setTimeout(function(){ checkFeedbackLink(); },10);" class="menu-link" href="/#feedback">@Messages("stuff.menu.CONTACTS")</a>
+	
+</div>

@@ -1,16 +1,15 @@
 @()(implicit c:util.Context)
 
+@* Тут отображение главной страницы, в которой можно добавить сайт в кравлинг. *@
+
 @import c.lang
+@import stuff._
 
-{% extends "base.html" %}
-
-{% block title %} | {% trans "live_search_for_your_website" %}{% endblock %}
-
-{% block head %}
+@head_after = {
     <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/crawl_index.css")"/>
-{% endblock %}
+}
 
-{% block body %}
+@main(title=Messages("live_search_for_your_website"), head_after=head_after) {
 
 <div class="popup-container">
     <div class="close-button">
@@ -18,27 +17,27 @@
     </div>
 
     <div id="feedbackPopup" class="popup-content-block feedback-form">
-	<div class="feedback-sent feedback-sent-{% trans "locale" %}">
-	    <span>{% trans "message_sent" %}</span>
+	<div class="feedback-sent feedback-sent-@c.lang_str">
+	    <span>@Messages("message_sent")</span>
 	</div>
-	<div class="feedback-message feedback-message-{% trans "locale" %}">
-	    <span id="feedbackIntroMessage">{% trans "email_us_at" %} <a href="mailto:support@@suggest.io">support@@suggest.io</a>, {% trans "or_fill_the_form" %}:</span>
+	<div class="feedback-message feedback-message-@c.lang_str">
+	    <span id="feedbackIntroMessage">@Messages("email_us_at") <a href="mailto:support@@suggest.io">support@@suggest.io</a>, @Messages("or_fill_the_form"):</span>
 	</div>
 	<form id="feedbackForm" action="/feedback/submit" method="post">
 	    <fieldset>
-		<label id="labelfeedbackEmail">{% trans "your_email" %}</label>
+		<label id="labelfeedbackEmail">@Messages("your_email")</label>
 		<div class="input">
 		    <input name="email" id="feedbackEmail" type="text"/>
 		</div>
 	    </fieldset>
 	    <fieldset>
-		<label id="labelfeedbackMessage">{% trans "your_message" %}</label>
+		<label id="labelfeedbackMessage">@Messages("your_message")</label>
 		<div class="input">
 		    <textarea name="message" id="feedbackMessage"></textarea>
 		</div>
 	    </fieldset>
 	    <fieldset>
-		<a class="submit submit-{% trans "locale" %}" href=""></a>
+		<a class="submit submit-@c.lang_str" href=""></a>
 		<input style="display: none;" class="submit" type="submit" value=""/>
 	    </fieldset>
 	</form>
@@ -47,26 +46,26 @@
     <div id="aboutPopup" class="popup-content-block" style="display: none;">
 	<div class="about-images">
 	    <div class="image">
-		<div class="title-{% trans "locale" %}"></div>
+		<div class="title-@c.lang_str"></div>
 		<div class="desc">
-		    {% trans "about_step_one" %}
+		    @Messages("about_step_one")
 		</div>
 	    </div>
 	    <div class="image image-2">
-		<div class="title-{% trans "locale" %}"></div>
+		<div class="title-@c.lang_str"></div>
 		<div class="desc">
-		    {% trans "about_step_two" %} 
+		    @Messages("about_step_two")
 		</div>
 	    </div>
 	    <div class="image image-3">
-		<div class="title-{% trans "locale" %}"></div>
+		<div class="title-@c.lang_str"></div>
 		<div class="desc">
-		    {% trans "about_step_three" %}
+		    @Messages("about_step_three")
 		</div>
 	    </div>
 
 	    <div class="sio-about-success">
-		{% trans "install_success" %}
+		@Messages("install_success")
 	    </div>
 
 	</div>
@@ -77,35 +76,35 @@
     <div class="main-layout">
 
 	<div class="lang-menu menu">
-	    <a class="ru" href="/crawl/set_locale/ru">RU</a>
+	    <a class="ru" href="/crawl/set_locale/ru">RU</a>  @* TODO выставить ссылку routes *@
 	    <div class="delimiter"></div>
-	    <a class="en" href="/crawl/set_locale/en">EN</a>
+	    <a class="en" href="/crawl/set_locale/en">EN</a>  @* TODO выставить ссылку routes *@
 	</div>
 
 	<div class="login">
-	    {% if _before %}
-	    <a href="{% url controller="admin" action="" %}"></a>
-	    {% else %}
-	    <a href="" id="signin"></a>
-	    {% endif %}
+	    @if(c.isAuth) {
+		<a href="{% url controller="admin" action="" %}"></a>
+	    } else {
+		<a href="" id="signin"></a>
+	    }
 	</div>
 
 	<a class="logo" href=""></a>
 
-	<div class="slogo-{% trans "locale" %}"></div>
+	<div class="slogo-@c.lang_str"></div>
 
 	<a href="mailto:support@@suggest.io" class="custom-solutions">
-	    разработка<br/>индивидуальных<br/>поисковых<br/>решений.
+	    @Messages("custom_search_solutions_br")
 	</a>
 
-	{% include "_menu.html" %}
+	@_topMenuTpl()
 
 	<div class="first-step">
 	    <div class="input" style="position: relative;">
 		{% if not is_new_sites_allowed %}
 		{% if not is_debug %}
 		<div class="sio-wip">
-		    <div class="sio-wip-message">{% trans "overloaded_message" %}</div>
+		    <div class="sio-wip-message">@Messages("overloaded_message")</div>
 		</div>
 		{% endif %}
 		{% endif %}
@@ -115,7 +114,7 @@
 		    <div class="clear"></div>
 		</div>
 	    </div>
-	    <div class="note">{% trans "provide_site_url_to_init_search" %}</div>
+	    <div class="note">@Messages("provide_site_url_to_init_search")</div>
 	</div>
 
 	<div class="second-step">
@@ -123,7 +122,7 @@
 		<div class="unactive"></div>
 		<div class="active"></div>
 	    </div>
-	    <div class="label blue-label" id="installLabel" style="display: none;">Скопируйте JavaScript код и добавьте его к себе на сайт</div>
+	    <div class="label blue-label" id="installLabel" style="display: none;">@Messages("copy_js_code_to_your_site")</div>
 	    <div class="input">
 		<div class="input-shadow">
 		    <textarea id="jsCodeTextarea"></textarea>
@@ -131,8 +130,8 @@
 	    </div>
 
 	    <div class="install-explanation" id="installExplanation">
-		<div class="note"><p>Обратите внимание, код должен присутствовать на всех страницах вашего сайта.</p>
-		    <p>После установки кода, зайдите на свой сайт для окончания установки и настройки поиска.</p>
+		<div class="note"><p>@Messages("code_must_be_on_all_site_pages")</p>
+		    <p>@Messages("go_to_your_site_after_install")</p>
 		</div>
 
 	    </div>
@@ -145,7 +144,7 @@
 
     <div class="start-button"><a href=""></a></div>
 
-    <div class="common-info">© 2012 <a href="http://suggest.io/">Suggest.io</a>. {% trans "all_rights_reserved" %} <span class="retina-ready">Retina-ready</span></div>
+    <div class="common-info">© 2012 <a href="http://suggest.io/">Suggest.io</a>. @Messages("all_rights_reserved") <span class="retina-ready">Retina-ready</span></div>
     <div class="social"><a class="fb" href="https://www.facebook.com/sio.search">Facebook</a><a class="tw" href="https://twitter.com/suggestio_ru">Twitter</a></div>
 
 </div>
@@ -169,43 +168,43 @@ var checkFeedbackLink = function()
     }
 }
 
-locale = '{% trans "locale" %}';
-site_indexation_caption_progress = '{% trans "site_indexation_caption" %}';
+locale = '@c.lang_str';
+site_indexation_caption_progress = '@Messages("site_indexation_caption")';
 
 var crawler_events = 
 {
-   undefined_event		: '{% trans "undefined_event" %}',
-   crawler_activity_label	: '{% trans "crawler_activity_label" %}',
-   indexation_in_progress	: '{% trans "indexation_in_progress" %}',
-   indexation_complete		: '{% trans "indexation_complete" %}',
-   nxdomain			: '{% trans "nxdomain" %}',
-   too_complex_content_or_overloaded_system : '{% trans "too_complex_content_or_overloaded_system" %}',
-   unexpected_response_content	: '{% trans "unexpected_response_content" %}',
-   econnrefused			: '{% trans "econnrefused" %}',
-   econnreset			: '{% trans "econnreset" %}',
-   econnaborted			: '{% trans "econnaborted" %}',
-   crawler_error		: '{% trans "crawler_error" %}',
-   indexation_error		: '{% trans "indexation_error" %}',
-   unknown_character_encoding	: '{% trans "unknown_character_encoding" %}',
-   page_deduplicated		: '{% trans "page_deduplicated" %}',
-   page_crawled			: '{% trans "page_crawled" %}',
-   average_response_time	: '{% trans "average_response_time" %}',
-   stat_10min			: '{% trans "stat_10min" %}',
-   stat_hour			: '{% trans "stat_hour" %}',
-   stat_day			: '{% trans "stat_day" %}',
-   stat_week			: '{% trans "stat_week" %}',
-   stat_month			: '{% trans "stat_month" %}',
-   stat_year			: '{% trans "stat_year" %}',
+   undefined_event		: '@Messages("undefined_event")',
+   crawler_activity_label	: '@Messages("crawler_activity_label")',
+   indexation_in_progress	: '@Messages("indexation_in_progress")',
+   indexation_complete		: '@Messages("indexation_complete")',
+   nxdomain			: '@Messages("nxdomain")',
+   too_complex_content_or_overloaded_system : '@Messages("too_complex_content_or_overloaded_system")',
+   unexpected_response_content	: '@Messages("unexpected_response_content")',
+   econnrefused			: '@Messages("econnrefused")',
+   econnreset			: '@Messages("econnreset")',
+   econnaborted			: '@Messages("econnaborted")',
+   crawler_error		: '@Messages("crawler_error")',
+   indexation_error		: '@Messages("indexation_error")',
+   unknown_character_encoding	: '@Messages("unknown_character_encoding")',
+   page_deduplicated		: '@Messages("page_deduplicated")',
+   page_crawled			: '@Messages("page_crawled")',
+   average_response_time	: '@Messages("average_response_time")',
+   stat_10min			: '@Messages("stat_10min")',
+   stat_hour			: '@Messages("stat_hour")',
+   stat_day			: '@Messages("stat_day")',
+   stat_week			: '@Messages("stat_week")',
+   stat_month			: '@Messages("stat_month")',
+   stat_year			: '@Messages("stat_year")',
    http_request_timeout		: 'HTTP request timeout',
    http_404			: 'HTTP 404',
-   http_500			: '{% trans "http_500" %}',
-   url_crawled			: '{% trans "url_crawled" %}',
-   hostname_prohibited		: '{% trans "hostname_prohibited" %}',
-   zuck				: '{% trans "zuck" %}',
-   durov			: '{% trans "durov" %}',
-   invalid_url			: '{% trans "invalid_url" %}'
+   http_500			: '@Messages("http_500")',
+   url_crawled			: '@Messages("url_crawled")',
+   hostname_prohibited		: '@Messages("hostname_prohibited")',
+   zuck				: '@Messages("zuck")',
+   durov			: '@Messages("durov")',
+   invalid_url			: '@Messages("invalid_url")'
 }
 
 </script>
 
-{% endblock %}
+}

@@ -1,0 +1,21 @@
+@(currentAction:String = null)(implicit c:util.Context)
+
+@* Набор отображаемых ссылок в разделе "помощь". *@
+
+@import c.lang
+
+@* Описываем один пункт меню *@
+@item(action:String) = {
+  <li>
+    @if(currentAction != action) { <a href="{% url action="setup" %}"> }
+	@Messages("h.m." + action)
+    @if(currentAction != action) { </a> }
+  </li>
+}
+
+@* Описываем меню *@
+@item("setup")
+@item("registration")
+@item("search_settings")
+@item("images_settings")
+@* item("design_settings") *@

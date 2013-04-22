@@ -87,3 +87,123 @@ saved_successfully=Settings saved
 img_site_preferences=Site configuration
 overloaded_message=Temporarily overloaded. Try again later.
 recheck=Recheck
+
+copy_js_code_to_your_site=Copy the following JavaScript code and paste in into your site pages
+code_must_be_on_all_site_pages=Ensure that code present on all pages of your site.
+go_to_your_site_after_install=After code copy-paste, visit your site for finishing installation and accessing search settings.
+custom_search_solutions_br=Custom<br/>search<br/>solutions<br/>development.
+
+stuff.menu.ABOUT=ABOUT
+stuff.menu.BLOG=BLOG
+stuff.menu.HELP=HELP
+stuff.menu.LIVE=LIVE
+stuff.menu.CONTACTS=CONTACTS
+
+help=Help
+h.m.setup=Quick install
+h.m.registration=Register
+h.m.search_settings=Search settings
+h.m.images_settings=Images in the search results
+h.m.design_settings=Design settings
+
+h.ds.search_apperance_settings=Search window appearance
+h.ds.search_hit_apperance_settings=Search hit appearance 
+
+h.ds.choose_site=In <a href="{0}"your personal cabinet</a> choose the site you want to tweak. After click on site address, site settings menu appears.
+h.ds.choose_format=Look at the block «Domain settings». Select search results format: with images, with descriptions or without any. (For enabling pictures in search results, <a href="{0}">see corresponding chapter of this instruction</a>). Click «Save».
+h.ds.push_settings_btn=In the block «Design settings» click «Setup» button. Suggest.io will redirect you into your site in setting-edit mode. Suggest.io setting widget will be atop your site.
+h.ds.save=After making necessary changes, click «Save» button. Now, your site search appearance setting is saved in suggest.io database.
+
+h.is.title=Adding pictures into search results
+h.is.choose_one_of_two_methods=You need to point suggest.io crawler to the rigth picture for page. There are two methods to do it (choose one):
+h.is.add_og_to_head=Add into your site's pages &lt;head&gt; the following tag
+h.is.add_og_set_content="content" attribute (blue font) must point to real picture URL.
+h.is.add_sio_class=In other way, you can add class="sio-search-image" into main-image &lt;img&gt; tags of pages. 
+h.is.do_changes_in_templates=Please note: You need only to modify site templates. No need to change every tag on every page of site.
+
+h.is.go_to_admin_and_choose_site=Go to suggest.io <a href="{0}">search administation system</a>. Choose site in the left list.
+h.is.enable_images_checkbox=Check the checkbox "Show images".
+h.is.press_save=Press "save" button.
+h.is.reindex_if_templates_changed=If on setp {0} you've changed something in your templates, press «REINDEX» link to start site reindexing. Images in search results will appear by the time of reindexing progress.
+
+please_note=Please note
+h.is.if_og_image_present_reindexing_is_useless=If your site already has og:image-tags (see step {0}), you do NOT need reindexing: just only enable image checkbox.
+h.is.sio_refuses_too_many_reindexings=Suggest.io may refuse reindexing request if there are too often previous reindexings. In such case, try again later.
+
+
+h.ix.brief_info=General information
+h.ix.sio_developed_for_fast_search_on_the_site=Suggest.io web-service is developed and used for rapid organization of quick live site-level search. Suggest.io can:
+h.ix.connection_site_to_the_system_for_search_needs=Join new web-sites to the search system simple, rapidly and without any server-side logic changes.
+h.ix.indexing_sites_and_searching=Perform real-time site indexing and live searc by any user request.
+h.ix.search_appearance=Create and change search and appearance settings on the fly.
+h.ix.easy_install_and_about_this_doc=Suggest.io setup is very simple and does not need any special expirience. This documentation contains all information, needed for interaction with the service.
+h.ix.sio_develop_in_progress_notice=Suggest.io team continuosly developming the service. Some steps may be slightly differ from information in instruction. In case of any problems feel free to email us to <a href="mailto:{0}">{0}</a>.
+
+and=and
+or=or
+
+
+h.r.create_account_and_verify_site=Create account and verify site
+h.r.creating_account=Creating account
+h.r.creating_account_takes_ability_to=Creating account takes abilities to
+h.r.connect_new_sites_from_lk=connect new sites to suggest.io system from your personal account form
+h.r.tweak_appearance_and_behaviour=alter search appearance and behaviour settings on verified sites
+h.r.sio_supports_mpersona=Suggest.io supports Mozilla Persona authentication technique. Creating new user account takes place in the following sequence
+h.r.press_login_in_the_corner=Press login icon in top right corner on suggest.io main page.
+h.r.mpersona_type_email_password_register=In the opened window, type your email and password. If you not used Mozilla Person earlier, you need to pass the simple signup procedure.
+h.r.add_verify_sites=Sites addition and validation
+h.r.press_add_site_in_lk=Proceed to <a href="{0}">your personal account form</a> and press «Add site» button.
+h.r.type_site_addr_in_field=Type your site address in appeared field «{0}».
+h.r.after_addr_shown_next_copy_txt_file=After proceeding point {0}: site address appeared in your sites list. Suggest.io offers you to download validation file (further - "txt-file") to ensure, that you have rights to control the site selected
+h.r.download_validation_txt=Download txt-file from opened window «{0}».
+h.r.save_txt_to_site_root=Upload this txt-file to the your site as root-level resource.
+h.r.for_eg_download_and_save_file=For example: You've added site «{0}», and suggest.io offered you to download file «{1}». To pass the verification, you need to make this file globally available via http://{0}/{1} link (or any similar links with «https» and/or «www» prefixes).
+h.r.press_recheck_in_lk=In <a href="{0}">admin</a> click on «Recheck» button.
+h.r.sio_robo_will_recheck_v_flag_appers=Suggest.io system will verify the file on your site. After verification, address will be marked with «V» sign in your site list.
+h.r.register_and_verify_done_settings_available=Creating an account and site verification are finished. In <a href="{0}">admin page</a> all search settings become available.
+h.r.removing_txt_will_remove_validation=If someone will remove txt-file from your site in future, all user rights will be revoked in a half of hour.
+h.r.use_other_fmt_if_txt_unavailable=txt-file contains comments and some code. Suggest.io system expects to see at least this code in the validation URL response. If you cannot just copy-paste txt-file as-is, you can always create some html-page or other plain-text file and copy-paste verification code into it.
+
+
+h.ss.search_settings=Search settings
+multilingual_site=Multilingual site
+for_example=For example
+h.ss.what_is_a_mlang_site=Multilingual site is a signle domain (site) with language-aware content and corresponding URL scheme.
+h.ss.or_other_url_lang_schemes=Or other language schemas inside single domain.
+h.ss.if_mlang_multidomain_just_add_several_sites=If your site has per-language subdomain separation like ru.mysite.com, en.mysite.com etc, just add all this domains several sites into suggest.io system.
+to_do_this=To do this
+h.ss.main_target_one_site_part_and_only_one_search_language=Main target of this doc &mdash; to show how to make language/multilanguage-isolated site search using. For example: only english search results for english site part.
+h.ss.add_page_language_on_the_page=Specify language on site pages.
+h.ss.make_necessary_sio_tweaks=Make necessary tweaks of suggest.io.
+h.ss.specifing_lang_descriptor_to_site_pages=Specifying text language on site pages
+h.ss.you_need_to_specify_lang_pages_add_head_tag=You need to specify language of each page on the site. Add to page template before closing tag &lt;/head&gt; the following tag:
+h.ss.pay_attention_to_meta_content_locale_format=Take a look to «content» attribute. Format attr value is language_COUNTRY. For example:
+RUSSIA=RUSSIA
+lang_rus=Russian language
+UNITED_KINGDOM=UNITED KINGDOM
+lang_eng=English language
+UKRAINE=Ukraine
+lang_ukr=Ukrainian language
+h.ss.sio_does_not_separate_countries_in_locales=At the moment, suggest.io does not distinguish one language between different countries. So, en_US and en_GB are equivalents.
+h.ss.sio_on_locale_error_auto=If locale invalid or undefined, suggest.io will try to detect language automatically. This works ok on popular languages on mostly-single-language-pages. In other case, it will be better to define page language using tag.
+h.ss.about_og_locale_and_other_search_systems=Format of above tag is described in <a href="http://ogp.me"Open Graph Protocol</a> spec. Specifying such tag on the site pages will help other search and syndication systems to correctly observe pages' languages.
+h.ss.sio_script_tweak=Suggest.io search script tweaking
+h.ss.need_to_alter_script_to_force_search_lang_depend=To enable in-language searching, you need to add some settings for suggest.io javascript, installed on your site.
+h.ss.create_sio_params_global_obj_example=To do this, you need to add/modify global js-object named "_sio_params". Object must contain "search_lang" parameter with language code (string) or codes (array of strings) of interesting languages, for example
+h.ss.example_sio_init_script_with_langs=Example of modified suggest.io init script with embedded support of in-language search on russian and english pages simulateously
+
+
+h.sp.search_setup=Search setup
+h.sp.search_setup_does_not_need_registering_in_following_seq=Search setup does not require creating a user account and execution in following sequence
+h.sp.open_service_main_page=Open service main page
+h.sp.type_site_address_into_field=Type your site address into field «{0}».
+h.sp.press_add_site_btn_near_field=Press button «{0}» right from field «{1}». With button pressing:
+h.sp.sio_generating_js_code_into_field=System replying some javascript code for your site into text field «{0}».
+h.sp.copy_paste_code_to_site=Copy code from field «{0}». Insert this code into your site templates right before closing &lt;/body&gt; tag.
+h.sp.open_your_site_and_follow_installation_steps_shown=Open your site and finish installating using windown shown.
+h.sp.setup_finished_with_default_settings=Search setup finished. Suggest.io search settings are set to defaults.
+h.sp.next=Next
+h.sp.sio_going_to_index_site=Suggest.io is started to index your site. Indexing progress is displayed inside special window in <a href="{0}">admin</a>. Full indexing time depends on site content volume, site speed and suggest.io system load.
+h.sp.if_inputText_exist_sio_will_use_it=If site pages already contains search field, suggest.io will attach to it.
+h.sp.if_no_inputText_then_sio_icon_appears_on_the_corner=If site has no search field, suggest.io will create corner icon. Icon will be converted into search field after click.
+

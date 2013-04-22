@@ -1,0 +1,70 @@
+@(title:String = "", currentAction:String = null, head_after:Html = Html(""))(content:Html)(implicit c:util.Context)
+
+@import stuff._
+@import c.lang
+
+@head_after1 = {
+    @* crawl-index тут инклюдится потому base.html раньше расширял crawl/index.html,
+       что приносило только crawl_index.css и title страницы *@
+    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/crawl_index.css")"/>
+    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/help_base.css")"/>
+    @head_after
+}
+
+@main(title=Messages("help") + " | " + title, head_after=head_after1) {
+
+    <div class="page-wrapper" id="pageWrapper">
+	<div class="razduv-top" id="razduvTop"></div>
+	@_topMenuTpl(activeLink = "help")
+
+	<div class="header"></div>
+
+	<div class="main-layout">
+		<a class="logo" href="/"></a>
+		<div class="help-layout">
+			@* тут ссылки меню помощи *@
+			<div class="help-topics">
+				<ul>@_helpMenuTpl(currentAction)</ul>
+			</div>
+
+			@* Тут вся суть страницы *@
+			<div class="help-content">@content</div>
+			<div class="clear"></div>
+		</div>
+	</div>
+
+	@* <div class="common-info">© 2012-2013 <a href="http://suggest.io/">Suggest.io</a>. @Messages("all_rights_reserved")</div> *@
+    </div>
+
+    <script type="text/javascript">
+	$(window).bind('scroll', function()
+	{
+		var _scroll_top = $(window).scrollTop();
+		
+		var _abs_scroll_bottom = $(document).height() - _scroll_top - $(window).height();
+		
+		var _opacity = _scroll_top/300;
+		$('#razduvTop').css({'opacity':_opacity});
+		
+		$('.parallax-enabled').each(function()
+		{
+			var _base_point = $(this).data('basepoint');
+			var _division_index = $(this).data('division-index');
+			
+			if( $(this).attr('id') == 'welcomeRow' )
+			{
+				var _margin = _abs_scroll_bottom / 2;
+				console.log( _margin );
+			}
+			else
+			{
+				var _margin = _base_point - _scroll_top/_division_index;
+			}
+			
+			$(this).css({'margin-top': _margin + 'px' });
+			
+		});
+		
+	});
+    </script>
+}
