@@ -34,13 +34,37 @@ object ApplicationBuild extends Build {
     )
   }
  
+
+  // Gzip app/assets using gzip-assets sbt command
+  // https://groups.google.com/forum/#!msg/play-framework/dSJEKhYiMDE/u-N50plw6hwJ
+  val gzippableAssets = SettingKey[PathFinder]("gzippable-assets", "Defines the files to gzip")
+
+  // custom task to gzip static assets, will be available from the Assets controller
+  // when run in prod mode if the client accepts gzip
+  val gzipAssets = TaskKey[Seq[File]]("gzip-assets", "GZIP all assets")
+  lazy val gzipAssetsSetting = gzipAssets <<= gzipAssetsTask
+  lazy val gzipAssetsTask = (gzippableAssets, streams) map {
+    case (finder: PathFinder, s: TaskStreams) => {
+      finder.get.map { file =>
+        val gzTarget = new File(file.getAbsolutePath + ".gz")
+        IO.gzip(file, gzTarget)
+        s.log.info("Compressed " + file.getName + " " + file.length / 1000 + " k => " + gzTarget.getName + " " + gzTarget.length / 1000 + " k")
+        gzTarget
+      }
+    }
+  }
+
+
   val main = play.Project(appName, appVersion, appDependencies).settings(
     
     resolvers ++= Seq(
       "local m2" at   "file://" + Path.userHome.absolutePath + "/.m2/repository",
       Resolver.file("LocalIvy", file(Path.userHome + File.separator + ".ivy2" + File.separator + "local"))(Resolver.ivyStylePatterns)
-    )
+    ),
+    gzippableAssets <<= (resourceManaged in (ThisProject))(dir => ((dir ** "*.js") +++ (dir ** "*.css"))),
+    gzipAssetsSetting
 
   )
 
 }
+

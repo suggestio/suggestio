@@ -1,0 +1,274 @@
+.sio-admin-title
+    display: block!important
+    background: url('/assets/images2/sio-admin-titles.jpg') no-repeat 13px top
+
+.sio-intro-title-en
+    width: 100px
+    height: 26px
+    background-position: -88px -58px
+
+.sio-intro-title-ru
+    width: 122px
+    height: 30px
+    background-position: -6px -182px
+
+.sio-websites-title-en, .sio-websites-title-ru
+    width: 102px
+    height: 26px
+    background-position: 13px top
+
+.sio-websites-title-ru
+    background-position: 13px -118px
+
+.domain-verification-title-en, .sio-admin-domain-settings-en
+    width: 180px
+    height: 25px
+    background-position: -6px -58px
+    
+.domain-verification-title-ru, .sio-admin-domain-settings-ru
+    width: 210px
+    height: 30px
+    background-position: -6px -182px
+
+.sio-admin-design-settings-en
+    width: 176px
+    height: 26px
+    background-position: -6px -86px
+
+.sio-admin-design-settings-ru
+    width: 230px
+    height: 30px
+    background-position: -4px -212px
+
+.sio-new-website-title-en
+    width: 130px
+    height: 28px
+    background-position: -6px -28px
+
+.sio-new-website-title-ru
+    width: 150px
+    height: 30px
+    background-position: -6px -146px
+
+.site-add-input
+    float: left
+    width: 453px
+    height: 52px
+    margin-right: 15px
+    border: 1px #b4b3b3 solid
+
+.input-shadow
+    background: #fbfbfb
+    padding: 1px
+
+.http-prefix, .input-real
+    float: left
+
+.bad-url, .bad-url input
+    background: #F6C6C6!important
+
+.http-prefix
+    width: 57px
+    height: 33px
+    background: #fff
+    color: #969696
+    font-family: Arial
+    font-size: 15px
+    text-align: center
+    padding-top: 15px
+    border-top: 1px #d2d3d3 solid
+
+.input-real
+    border: 0px
+    border-top: 1px #d2d3d3 solid
+    background: #f4f4f4
+    height: 49px
+    width: 394px
+
+    input
+        border: 0px
+        background: #f4f4f4
+        outline: none
+        padding: 15px
+        font-family: Arial
+        color: #328fb0
+        font-size: 15px
+
+.submit-form a
+    float: left
+    display: block
+    width: 49px
+    height: 49px
+    background: url('/assets/images2/sio-admin-add-buttons.png') no-repeat left top
+    :hover
+        background-position: left -55px
+    :active
+        background-position: left -105px
+
+label
+    color: #c2c1c1
+    text-shadow: 0px 1px 1px #fff
+    display: block
+    font-family: Arial
+    font-size: 14px
+    padding: 15px 0px
+
+.domain-verification-title
+    width: 287px
+    height: 29px
+    background: url('/assets/images2/sio-admin-domain-validation-status-{% trans "locale" %}.png') no-repeat left top
+
+.sio-admin-customize-button-ru a
+    display: block
+    width: 150px; height: 60px
+    background: url('/assets/images2/sio-admin-buttons.png') no-repeat -465px top
+    :hover
+        background-position: -465px -69px
+    :active
+        background-position: -465px -130px
+
+
+.sio-admin-customize-button-en a
+    display: block
+    width: 160px; height: 60px
+    background: url('/assets/images2/sio-admin-buttons.png') no-repeat -294px top
+    :hover
+        background-position: -294px -69px
+    :active
+        background-position: -294px -130px
+
+
+.sio-admin-preferences-submit-en, .sio-admin-preferences-submit-ru
+    margin-left: -10px
+
+.sio-admin-preferences-submit-en a, .sio-admin-preferences-submit-ru a
+    background: url('/assets/images2/sio-admin-buttons.png') no-repeat left top
+    display: block
+    width: 125px
+    height: 60px
+
+.sio-admin-preferences-submit-en a
+    :hover 
+        background-position: left -66px
+    :active
+        background-position: left -128px
+
+.sio-admin-preferences-submit-ru a
+    background: url('/assets/images2/sio-admin-buttons.png') no-repeat -130px top
+    display: block
+    width: 160px
+    height: 60px
+    :hover
+        background-position: -130px -66px
+    :active
+        background-position: -130px -128px
+
+.admin-logo
+    position: absolute
+    left: -10px
+    top: -70px
+    display: block
+    width: 176px
+    height: 55px
+    background: url('/assets/images2/sio-dark-logo.png')
+
+.verification-step-one
+    padding-top: 10px
+.verification-step-one .digit,
+.verification-step-one .desc,
+.verification-step-two .digit,
+.verification-step-two .desc
+    float: left
+
+.verification-step-one .desc,
+.verification-step-two .desc
+    padding-top: 7px
+    width: 460px
+
+.verification-step-one .digit,
+.verification-step-two .digit
+    background: url('/assets/images2/digits.png') no-repeat left top
+    width: 50px
+    height: 100px
+
+.verification-step-two
+    .digit
+        background-position: -55px -120px
+    .digit-active
+        background-position: 0px -120px
+    .desc
+        display: none
+
+
+@media only screen and (-Webkit-min-device-pixel-ratio: 1.5),
+only screen and (-moz-min-device-pixel-ratio: 1.5),
+only screen and (-o-min-device-pixel-ratio: 3/2),
+only screen and (min-device-pixel-ratio: 1.5)
+    .sio-admin-title { background-size: 222px 356px!important }
+    
+    .sio-intro-title-en { background-position: -84px -180px }
+    .sio-intro-title-ru { background-position: -2px -296px }
+    .sio-websites-title-en { background-position: 14px -124px }
+    .sio-websites-title-ru { background-position: 16px -237px }
+    
+    .domain-verification-title-en,
+    .sio-admin-domain-settings-en { background-position: -2px -180px }
+    
+    .domain-verification-title-ru,
+    .sio-admin-domain-settings-ru { background-position: -2px -296px }
+    
+    .sio-admin-design-settings-en { background-position: -2px -210px }
+    .sio-admin-design-settings-ru { background-position: -2px -325px }
+    
+    .sio-new-website-title-en { background-position: -2px -150px  }
+    .sio-new-website-title-ru { background-position: -2px -266px  }
+    
+    .admin-logo
+        position: absolute
+        left: -10px
+        top: -70px
+        display: block
+        width: 176px
+        height: 55px
+        background-size: 176px 55px!important
+        background: url('/assets/images2/sio-admin-logo-retina.png') no-repeat left top
+    
+    .sio-admin-customize-button-en a,
+    .sio-admin-customize-button-ru a
+        background: url('/assets/images2/sio-admin-buttons-retina.png') no-repeat -304px top!important
+        background-size: 627px 187px!important
+    
+    .sio-admin-customize-button-en a
+        :hover { background-position: -304px -65px!important }
+        :active { background-position: -304px -131px!important }
+    
+    .sio-admin-customize-button-ru a
+        background-position: -478px 0px!important
+        :hover { background-position: -478px -65px!important }
+        :active { background-position: -478px -131px!important }
+    
+    .sio-admin-preferences-submit-en a,
+    .sio-admin-preferences-submit-ru a
+        background: url('/assets/images2/sio-admin-buttons-retina.png') no-repeat 3px top!important
+        background-size: 627px 187px!important
+    
+    .sio-admin-preferences-submit-en a
+        :hover { background-position: 3px -59px!important }
+        :active { background-position: 3px -131px!important }
+    
+    .sio-admin-preferences-submit-ru a
+        background-position: -128px 0px!important
+        :hover { background-position: -128px -65px!important }
+        :active { background-position: -128px -131px!important }
+    
+    .domain-indexation-info a
+        background: url('/assets/images2/sio-admin-reindex-retina.png?v=1') no-repeat left top
+        background-size: 157px 48px
+        :hover { background-position: -52px top }
+        :active { background-position: -107px top }
+    
+    .verification-step-one .digit,
+    .verification-step-two .digit
+        background-inage: url('/assets/images2/digits-retina.png') no-repeat left top
+        background-size: 85px 179px
+
