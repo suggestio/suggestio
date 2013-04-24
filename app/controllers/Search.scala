@@ -6,6 +6,7 @@ import util.{SioSearchResult, SioSearchOptions, SiowebEsUtil, SiobixFs}
 import io.suggest.model.SioSearchContext
 import play.api.libs.json._
 import play.api.libs.Jsonp
+import models.MDomain
 
 /**
  * Suggest.io
@@ -43,9 +44,8 @@ object Search extends Controller {
    */
   def liveSearch(domainRaw:String, queryStr:String, debug:Boolean, langs:String) = Action {
     val dkey = UrlUtil.normalizeHostname(domainRaw)
-    SiobixFs.getSettingsForDkeyCache(dkey) match {
+    MDomain.getForDkey(dkey).map { mdomain =>
       // Домен есть в системе.
-      case Some(domainSettings) =>
         // TODO нужно восстанавливать SearchContext из кукисов реквеста или генерить новый
         val searchContext = new SioSearchContext()
         // TODO Настройки поиска, заданные юзером, надо извлекать из модели DomainData
@@ -54,7 +54,7 @@ object Search extends Controller {
           withExplain = debug
         )
         val searchResults = SiowebEsUtil.searchDomain(
-          domainSettings = domainSettings,
+          domainSettings = mdomain.domainSettings,
           queryStr = queryStr,
           options  = searchOptions,
           searchContext = searchContext
@@ -69,10 +69,7 @@ object Search extends Controller {
         // TODO Сохранить обновлённый searchContext и серилизовать в кукис ответа
         Ok(jsonp)
 
-      // Нет такого домена в базе. TODO Нужно замутить какую-нибудь проверочку.
-      case None =>
-        NotFound
-    }
+    }.getOrElse(NotFound)
   }
 
 }

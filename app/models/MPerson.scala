@@ -3,6 +3,7 @@ package models
 import org.apache.hadoop.fs.Path
 import util.SiobixFs
 import SiobixFs.fs
+import io.suggest.model.JsonDfsBackend
 
 /**
  * Suggest.io
@@ -10,20 +11,45 @@ import SiobixFs.fs
  * Created: 18.04.13 18:19
  * Description: Юзер, зареганный на сайте. Как правило, админ одного или нескольких сайтов.
  * Люди различаются по email'ам. Это является их идентификаторами.
- * Пока что никакой инфы о юзерах нет, поэтому храняться пустые файлы.
  */
 
 case class MPerson(
-  email : String
+  email : String,
+  var dkeys : List[String] = List() // список доменов на панели доменов юзера
 ) extends MPersonLinks {
+
+  // Линки в другие модели.
+  def authzMy = MDomainPersonAuthz.getForPersonDkeys(email, dkeys)
+  def authzForDomain(dkey:String) = MDomainPersonAuthz.getForPersonDkey(dkey, email)
 
   /**
    * Сохранить отметку о таком юзере
    * @return
    */
-  def save = {
+  def save() {
     val path = MPerson.getPath(email)
-    fs.create(path).close()
+    JsonDfsBackend.writeTo(path, this)
+  }
+
+
+  /**
+   * Добавить домен в список доменов, относящихся к юзеру. Затем нужно вызвать save.
+   * @param dkey
+   * @return
+   */
+  def addDkey(dkey:String) : MPerson = {
+    dkeys = dkey :: dkeys
+    this
+  }
+
+
+  /**
+   * Удалить указанный домен из списка доменов.
+   * @param dkey ключ домена.
+   * @return
+   */
+  def deleteDkey(dkey:String) : MPerson = {
+    dkeys = dkeys.filter { _ != dkey }
     this
   }
 
@@ -56,7 +82,10 @@ object MPerson {
     val filePath = getPath(email)
     fs.exists(filePath) match {
       // Файл с данными по юзеру пуст - поэтому можно его не читать, а просто сделать необходимый объект.
-      case true  => Some(new MPerson(email))
+      case true =>
+        val person = JsonDfsBackend.getAs[MPerson](filePath, fs).get
+        Some(person)
+
       case false => None
     }
   }

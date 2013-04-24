@@ -31,7 +31,8 @@ object SiowebEsUtil {
   val RET_NEVER       : RET_T = 'n'
   val RET_IF_NO_IMAGE : RET_T = 'i'
 
-  val PER_SHARD_DOCUMENTS_LIMIT = 500
+  // Макс.число документов, анализируемых на совпадение после чтения из шарды
+  val PER_SHARD_DOCUMENTS_LIMIT = 1800
 
   val FIELDS_ONLY_TITLE = List(FIELD_TITLE)
   val FIELDS_TEXT_ALL   = List(FIELD_TITLE, FIELD_CONTENT_TEXT)
@@ -73,7 +74,10 @@ object SiowebEsUtil {
   def searchIndex(indices:Seq[String], types:Seq[String], queryStr:String, options:SioSearchOptions) : SioSearchResultsT = {
     queryStr2Query(queryStr).map { textQuery =>
 
-      var filters : List[FilterBuilder] = List(FilterBuilders.limitFilter( queryShardLimit(queryStr) ))
+      var filters : List[FilterBuilder] = {
+        val limitFilter = FilterBuilders.limitFilter( queryShardLimit(queryStr) )
+        List(limitFilter)
+      }
 
       // Обработать options.langs, дописав при необходимости дополнительный фильтр.
       if (!options.langs.isEmpty) {
@@ -233,7 +237,17 @@ object SiowebEsUtil {
    * @param query строка поиска
    * @return
    */
-  def queryShardLimit(query:String) = PER_SHARD_DOCUMENTS_LIMIT
+  def queryShardLimit(query:String) = {
+    query.length match {
+      case 0 => 0
+      case 1 => 100
+      case 2 => 200
+      case 3 => 400
+      case 5 => 600
+      case 6 => 800
+      case _ => PER_SHARD_DOCUMENTS_LIMIT
+    }
+  }
 
 
   // Регэксп разбиения строки перед последним словом.
@@ -301,7 +315,8 @@ object SiowebEsUtil {
         val finalEngramQuery = if (engramQueries.tail == Nil)
           engramQueries.head
         else {
-          val boolQB = QueryBuilders.boolQuery().minimumNumberShouldMatch(1)
+          val minShouldMatch = 1
+          val boolQB = QueryBuilders.boolQuery().minimumNumberShouldMatch(minShouldMatch)
           engramQueries.foreach { boolQB.should(_) }
           boolQB
         }

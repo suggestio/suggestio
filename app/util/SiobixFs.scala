@@ -1,10 +1,10 @@
 package util
 
 import play.api.Play.current
-import play.api.cache.Cache
 import io.suggest.model.{JsonDfsBackend, DomainSettings}
 import org.apache.hadoop.fs.Path
 import com.scaleunlimited.cascading.hadoop.HadoopUtils
+import io.suggest.index_info.SioEsConstants
 
 /**
  * Suggest.io
@@ -22,23 +22,7 @@ object SiobixFs {
 
   JsonDfsBackend.setOutDir(siobix_out_path)
 
-  /**
-   * С помощью кеша и HDFS получить данные по домену.
-   * @param dkey
-   * @return
-   */
-  def getSettingsForDkeyCache(dkey:String) : Option[DomainSettings] = {
-    Cache.getOrElse(dkey + "/ds", 60)(getSettingForDkey(dkey))
-  }
-
-
-  /**
-   * Получить данные по домену напрямую из HDFS.
-   * @param dkey
-   * @return
-   */
-  def getSettingForDkey(dkey:String) : Option[DomainSettings] = {
-    DomainSettings.load(dkey)
-  }
+  def dkeyPath(dkey:String) = new Path(siobix_out_path, dkey)
+  def dkeyPathConf(dkey:String) = new Path(dkeyPath(dkey), SioEsConstants.CONF_SUBDIR)
 
 }
