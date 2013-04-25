@@ -1,19 +1,20 @@
 @()(implicit c:util.Context)
-{% extends "crawl/index.html" %}
 
-{% block head_extended %}
-<style type="text/css">
-    @* тут нужно добавиьт линк для stylesheets/blog_index.css *@
-</style>
-{% endblock %}
+@import c.lang
+@import stuff._
 
-{% block body %}
+@head_after = {
+  @* Тут возможно ненужный crawl_index.css: *@
+  <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/crawl_index.min.css")"/>
+  <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/blog_index.min.css")"/>
+}
 
+@main(title=Messages("blog"), head_after=head_after) {
 <div class="page-wrapper" id="pageWrapper">
 	
 	<div class="main-layout">
 		<a class="logo" href="/"></a>
-		{% include "_menu.html" with _active_link="blog" %}
+		@_topMenuTpl(activeLink = "blog")
 	</div>
 	
 	<div id="razduvTop" class="razduv-top"></div>
@@ -29,9 +30,8 @@
 		{% endblock %}
 		
 	</div>
-	
-	<div class="common-info">© 2012 <a href="http://suggest.io/">Suggest.io</a>. {% trans "all_rights_reserved" %} <span class="retina-ready">Retina-ready</span></div>
-	
+
+	@_copyright()
 </div>
 
 <script type="text/javascript">
@@ -47,5 +47,4 @@
 	});
 	
 </script>
-
-{% endblock %}
+}

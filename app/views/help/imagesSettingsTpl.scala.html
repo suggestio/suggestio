@@ -4,12 +4,7 @@
 
 @import c.lang
 
-@defining(Messages("h.is.title")) { title =>
-  @baseTpl(title=title, currentAction="images_settings") {
-
-@* Страница настроек картинки *@
-
-<h1>@title</h1>
+@baseTpl(title=Messages("h.is.title"), currentAction="images_settings") {
 
 @* Одним из двух способов (на ваш выбор) укажите кравлеру картинку *@
 <p>1. @Messages("h.is.choose_one_of_two_methods")</p>
@@ -44,6 +39,4 @@
 	<li>@Messages("h.is.sio_refuses_too_many_reindexings")</li>
     </ul>
 </p>
-
-  } @* baseTpl *@
-}   @* defining title *@
+} @* baseTpl *@

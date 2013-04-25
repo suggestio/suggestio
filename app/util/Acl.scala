@@ -1,9 +1,9 @@
 package util
 
 import play.api.mvc._
-import play.api.mvc.Security.Authenticated
+import play.api.mvc.Security.{Authenticated, username}
 import controllers.routes
-import models.{MPersonLinks, MPerson}
+import models.MPerson
 import play.api.Play.current
 import scala.collection.JavaConversions._
 
@@ -32,7 +32,7 @@ trait AclT {
    *         коннекшен к базе и далеко не всегда это необходимо.
    */
   protected def person(request: RequestHeader) : MPOptT = {
-    request.session.get(Security.username) match {
+    request.session.get(username) match {
       case Some(person_id_str) => Some(new MPerson(person_id_str))
       case None => None
     }

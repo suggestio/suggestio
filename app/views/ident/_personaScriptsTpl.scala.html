@@ -1,0 +1,15 @@
+@()
+
+@* Набор скриптов для запуска persona-идентификации. *@
+
+<script src="https://login.persona.org/include.js"></script>
+<script type="text/javascript">
+@*// Набор псевдодинамических ссылок, генерируемых фреймворком в рантайме *@
+var persona_conf =
+{
+	login_url  : '{% url controller="login" action="persona_login" %}',
+	logout_url : '{% url controller="login" action="persona_logout" %}',
+	admin_location : '{% url controller="admin" action="" %}'
+}
+</script>
+<script src="@routes.Assets.at("javascripts/ident_persona.min.js")"></script>

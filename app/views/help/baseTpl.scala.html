@@ -1,13 +1,11 @@
-@(title:String = "", currentAction:String = null, head_after:Html = Html(""))(content:Html)(implicit c:util.Context)
+@(title:String = "", currentAction:String = null, head_after:Html = Html(""), withH1:Boolean = true)(content:Html)(implicit c:util.Context)
 
 @import stuff._
 @import c.lang
 
 @head_after1 = {
-    @* crawl-index тут инклюдится потому base.html раньше расширял crawl/index.html,
-       что приносило только crawl_index.css и title страницы *@
-    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/crawl_index.css")"/>
-    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/help_base.css")"/>
+    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/crawl_index.min.css")"/>
+    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/help_base.min.css")"/>
     @head_after
 }
 
@@ -28,12 +26,15 @@
 			</div>
 
 			@* Тут вся суть страницы *@
-			<div class="help-content">@content</div>
+			<div class="help-content">
+			    @if(withH1) { <h1>@title</h1> }
+			    @content
+			</div>
 			<div class="clear"></div>
 		</div>
 	</div>
 
-	@* <div class="common-info">© 2012-2013 <a href="http://suggest.io/">Suggest.io</a>. @Messages("all_rights_reserved")</div> *@
+	@* @_copyright() *@
     </div>
 
     <script type="text/javascript">

@@ -1,6 +1,6 @@
 package models
 
-import collection.mutable
+import scala.collection.{immutable, mutable}
 import util.SiobixFs
 import SiobixFs.fs
 import io.suggest.model.JsonDfsBackend
@@ -31,45 +31,20 @@ case class MDomainUserSettings(
    * mdus.showImages = false
    */
 
-  def showImages = data.getOrElse[Boolean](KEY_SHOW_IMAGES, DFLT_SHOW_IMAGES)
-  def showImages_= (value:Boolean) {
-    value match {
-      case DFLT_SHOW_IMAGES => data.remove(KEY_SHOW_IMAGES)
-      case _                => data(KEY_SHOW_IMAGES) = value
-    }
-  }
+  def showImages = getter[Boolean](KEY_SHOW_IMAGES)
+  def showImages_= (value:Boolean) { setter(KEY_SHOW_IMAGES, value) }
 
-  def showTitle  = data.getOrElse[String](KEY_SHOW_TITLE, DFLT_SHOW_TITLE)
-  def showTitle_= (value:String) {
-    value match {
-      case DFLT_SHOW_TITLE => data.remove(KEY_SHOW_TITLE)
-      case _               => data(KEY_SHOW_TITLE) = value
-    }
-  }
+  def showTitle = getter[String](KEY_SHOW_TITLE)
+  def showTitle_= (value:String) { setter(KEY_SHOW_TITLE, value) }
 
-  def showContentText = data.getOrElse[String](KEY_SHOW_CONTENT_TEXT, DFLT_SHOW_CONTENT_TEXT)
-  def showContentText_= (value:String) {
-    value match {
-      case DFLT_SHOW_CONTENT_TEXT => data.remove(KEY_SHOW_CONTENT_TEXT)
-      case _ => data(KEY_SHOW_CONTENT_TEXT) = value
-    }
-  }
+  def showContentText = getter[String](KEY_SHOW_CONTENT_TEXT)
+  def showContentText_= (value:String) { setter(KEY_SHOW_CONTENT_TEXT, value) }
 
-  def renderer = data.getOrElse[Int](KEY_RENDERER, DFLT_RENDERER)
-  def renderer_= (value:Int) {
-    value match {
-      case DFLT_RENDERER => data.remove(KEY_RENDERER)
-      case _ => data(KEY_RENDERER) = value
-    }
-  }
+  def renderer = getter[Int](KEY_RENDERER)
+  def renderer_= (value:Int) { setter(KEY_RENDERER, value) }
 
-  def useDateScoring = data.getOrElse[Boolean](KEY_USE_DATE_SCORING, DFLT_USE_DATE_SCORING)
-  def useDateScoring_= (value:Boolean) {
-    value match {
-      case DFLT_USE_DATE_SCORING => data.remove(KEY_USE_DATE_SCORING)
-      case _ => data(KEY_USE_DATE_SCORING) = value
-    }
-  }
+  def useDateScoring = getter[Boolean](KEY_USE_DATE_SCORING)
+  def useDateScoring_= (value:Boolean) { setter(KEY_USE_DATE_SCORING, value) }
 
   /**
    * Сохранить карту в DFS. Если карта пуста, то удалить файл карты из хранилища.
@@ -80,6 +55,33 @@ case class MDomainUserSettings(
       JsonDfsBackend.writeTo(path, data)
     } else {
       fs.delete(path, false)
+    }
+  }
+
+
+  /**
+   * Динамически-типизированный хелпер для работы с картой настроек
+   * @param key ключ настроек
+   * @param value значение настройки
+   * @tparam T тип значения (автоматически выводится из value)
+   */
+  protected def setter[T <: Any](key:String, value:T) {
+    defaults.get(key) match {
+      case dflt if dflt == value => data.remove(key)
+      case _ => data(key) = value
+    }
+  }
+
+  /**
+   * Динамическая читалка значений из настроек или списка дефолтовых значений, если ничего не найдено.
+   * @param key ключ настройки
+   * @tparam T тип значения (обязательно)
+   * @return значение указанного типа
+   */
+  protected def getter[T <: Any](key:String) : T = {
+    data.get(key) match {
+      case Some(value)  => value.asInstanceOf[T]
+      case None         => defaults(key).asInstanceOf[T]
     }
   }
 
@@ -108,12 +110,13 @@ object MDomainUserSettings {
   val RRR_AVAILABLE = List(RRR_2012_SIMPLE, RRR_2013_FULLSCREEN)
 
   // Дефолтовые значения для параметров
-  val DFLT_SHOW_IMAGES = true
-  val DFLT_SHOW_TITLE  = SHOW_ALWAYS
-  val DFLT_SHOW_CONTENT_TEXT = SHOW_ALWAYS
-  val DFLT_RENDERER = RRR_2013_FULLSCREEN
-  val DFLT_USE_DATE_SCORING = true
-
+  val defaults = immutable.Map[String, Any](
+    KEY_SHOW_IMAGES       -> true,
+    KEY_SHOW_TITLE        -> SHOW_ALWAYS,
+    KEY_SHOW_CONTENT_TEXT -> SHOW_ALWAYS,
+    KEY_RENDERER          -> RRR_2013_FULLSCREEN,
+    KEY_USE_DATE_SCORING  -> true
+  )
 
   /**
    * Сгенерить dfs-путь для указанного dkey

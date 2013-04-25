@@ -1,0 +1,24 @@
+@()(implicit c:util.Context)
+
+@* Сюда попадает юзер, когда от него требуют залогинится. *@
+
+@import admin.adminBaseTpl
+
+@head_after = {
+    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/ident_persona.min.css")"/>
+}
+
+
+@adminBaseTpl(title=" | Login", head_after=head_after) {
+
+<div class="admin-layout">
+	<div class="login-page-content-@c.lang_str">
+		<a href="/" class="login-page-logo"></a>
+		<div class="login-button">
+			<a id="signin" class="login-button" href=""></a>
+		</div>
+	</div>
+</div>
+
+@_personaScriptsTpl()
+}

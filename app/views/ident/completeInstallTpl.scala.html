@@ -1,0 +1,38 @@
+@()(implicit c:util.Context)
+
+@import c.lang
+@import stuff._
+
+
+@head_after = {
+	<link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/person_complete_install.min.css")"/>
+}
+
+@main(title=Messages("Login"), head_after=head_after) {
+<div class="page-wrapper" id="pageWrapper">
+	<div class="razduv-top" id="razduvTop"></div>
+	@_topMenuTpl()
+	
+	<div class="header"></div>
+	
+	<div class="main-layout">
+		<a class="logo" href="/"></a>
+		
+		<div class="complete-install-layout">
+			<h1>Регистрация и вход в личный кабинет</h1>
+			<p>Чтобы иметь постоянный доступ к настройкам поиска на вашем сайте, пройдите процесс быстрой регистрации.<br/>
+			Ваш сайт будет автоматически добавлен в личный кабинет.</p>
+			<p>Для простой и безопасной аутентификации пользователей мы используем Mozilla Persona.</p>
+			
+			<p><a href="" id="signin" class="persona-complete">Войти на сайт</a></p>
+			
+		</div>
+		
+	</div>
+
+	@_copyright()
+	@_social()
+</div>
+
+@_personaScriptsTpl()
+}
