@@ -3,7 +3,7 @@ package util
 import play.api.mvc._
 import play.api.mvc.Security.{Authenticated, username}
 import controllers.routes
-import models.MPerson
+import models.{MPersonLinks, MPerson}
 import play.api.Play.current
 import scala.collection.JavaConversions._
 
@@ -19,11 +19,11 @@ trait AclT {
 
   // Алиасы типов, используемых тут. Полезны для укорачивания объявления типов в заголовках функций,
   // предназначенных для проверки прав по технологии Action Composition.
-  type MPOptT           = Option[MPerson]
-  type ActionF_T        = MPOptT => Request[AnyContent] => Result
-  type ActionF_BP_T[A]  = MPOptT => Request[A] => Result
-  type AclF_T           = (MPOptT, Request[AnyContent]) => Boolean
-  type AclF_BP_T[A]     = (MPOptT, Request[A]) => Boolean
+  type PwOptT           = Option[PersonWrapper]
+  type ActionF_T        = PwOptT => Request[AnyContent] => Result
+  type ActionF_BP_T[A]  = PwOptT => Request[A] => Result
+  type AclF_T           = (PwOptT, Request[AnyContent]) => Boolean
+  type AclF_BP_T[A]     = (PwOptT, Request[A]) => Boolean
 
   /**
    * Определить залогиненность юзера
@@ -31,9 +31,9 @@ trait AclT {
    * @return Номер юзера по таблице Person. Наличие юзера в таблице здесь не проверяется, потому что для этого нужен
    *         коннекшен к базе и далеко не всегда это необходимо.
    */
-  protected def person(request: RequestHeader) : MPOptT = {
+  protected def person(request: RequestHeader) : PwOptT = {
     request.session.get(username) match {
-      case Some(person_id_str) => Some(new MPerson(person_id_str))
+      case Some(person_id_str) => Some(new PersonWrapper(person_id_str))
       case None => None
     }
   }
@@ -164,5 +164,14 @@ object Acl extends AclT {
 
   def isAdmin(person_id:Int) = admins.contains(person_id)
 
+}
+
+
+/**
+ * PersonWrapper нужен для ленивого доступа к данным. Часто содержимое MPerson не нужно, поэтому зачем его читать сразу?
+ * @param email id юзера
+ */
+case class PersonWrapper(email:String) extends MPersonLinks {
+  lazy val person = MPerson.getByEmail(email).get
 }
 

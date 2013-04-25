@@ -2,14 +2,14 @@
 
 @import stuff._
 @import c.lang
+@import crawl._
 
 @head_after1 = {
-    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/crawl_index.min.css")"/>
     <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/help_base.min.css")"/>
     @head_after
 }
 
-@main(title=Messages("help") + " | " + title, head_after=head_after1) {
+@crawlBaseTpl(title=Messages("help") + " | " + title, head_after=head_after1) {
 
     <div class="page-wrapper" id="pageWrapper">
 	<div class="razduv-top" id="razduvTop"></div>

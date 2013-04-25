@@ -8,7 +8,7 @@
 	<link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/person_complete_install.min.css")"/>
 }
 
-@main(title=Messages("Login"), head_after=head_after) {
+@main(title=Messages("i.ci.login"), head_after=head_after) {
 <div class="page-wrapper" id="pageWrapper">
 	<div class="razduv-top" id="razduvTop"></div>
 	@_topMenuTpl()
@@ -19,12 +19,21 @@
 		<a class="logo" href="/"></a>
 		
 		<div class="complete-install-layout">
-			<h1>Регистрация и вход в личный кабинет</h1>
-			<p>Чтобы иметь постоянный доступ к настройкам поиска на вашем сайте, пройдите процесс быстрой регистрации.<br/>
-			Ваш сайт будет автоматически добавлен в личный кабинет.</p>
-			<p>Для простой и безопасной аутентификации пользователей мы используем Mozilla Persona.</p>
-			
-			<p><a href="" id="signin" class="persona-complete">Войти на сайт</a></p>
+			@* Регистрация и вход в личный кабинет *@
+			<h1>@Messages("i.ci.register_and_private_office")</h1>
+
+			@* Чтобы иметь постоянный доступ к настройкам нужно зарегаться *@
+			<p>@Messages("i.ci.to_access_settings_register")<br/>
+
+
+			@* Ваш сайт будет автоматически добавлен в личный кабинет. *@
+			@Messages("i.ci.your_site_will_be_added_to_priv_office")</p>
+
+			@* Для простой и безопасной аутентификации пользователей мы используем Mozilla Persona. *@
+			<p>@Messages("i.ci.we_are_using_mozilla_persona")</p>
+
+			@* Войти на сайт *@
+			<p><a href="" id="signin" class="persona-complete">@Messages("i.ci.login_into")</a></p>
 			
 		</div>
 		

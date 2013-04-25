@@ -6,10 +6,10 @@
 @import stuff._
 
 @head_after = {
-    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/crawl_index.css")"/>
+    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/crawl_index.min.css")"/>
 }
 
-@main(title=Messages("live_search_for_your_website"), head_after=head_after) {
+@crawlBaseTpl(title=Messages("live_search_for_your_website")) {
 
 <div class="popup-container">
     <div class="close-button">

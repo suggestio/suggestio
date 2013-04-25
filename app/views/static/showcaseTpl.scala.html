@@ -1,11 +1,17 @@
 @()(implicit c:util.Context)
-{% extends "crawl/index.html" %}
 
-{% block head_extended %}
-    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/crawl_showcase.css")"/>
-{% endblock %}
+@* Раздел "В живую": вывод выборочного списка сайтов, установивших suggest.io. *@
 
-{% block body %}
+@import stuff._
+@import c.lang
+@import crawl._
+
+@head_after = {
+    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/crawl_showcase.min.css")"/>
+}
+
+
+@crawlBaseTpl(title=Messages("s.sc.live"), head_after=head_after) {
 
 <div class="test-line"></div>
 
@@ -14,12 +20,10 @@
 	<div class="main-layout">
 		<a class="logo" href="/"></a>
 	</div>
-	{% include "_menu.html" with _active_link="showcase" %}
+	@_topMenuTpl(activeLink = "showcase")
 	<div class="razduv-top" id="razduvTop"></div>
 	
 	<div class="showcase-layout" id="showcaseLayout">
-		
-		
 	</div>
 	
 </div>
@@ -102,5 +106,4 @@
 	});
 	
 </script>
-
-{% endblock %}
+}

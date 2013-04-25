@@ -207,3 +207,14 @@ h.sp.sio_going_to_index_site=Suggest.io is started to index your site. Indexing 
 h.sp.if_inputText_exist_sio_will_use_it=If site pages already contains search field, suggest.io will attach to it.
 h.sp.if_no_inputText_then_sio_icon_appears_on_the_corner=If site has no search field, suggest.io will create corner icon. Icon will be converted into search field after click.
 
+i.ci.login=Login
+i.ci.register_and_private_office=Account registration and private office
+i.ci.to_access_settings_register=To gain access to search and appearance settings you need to login into system. If your account not yet exist, it will be created.
+i.ci.your_site_will_be_added_to_priv_office=Your site will be linked to your account automatically.
+i.ci.we_are_using_mozilla_persona=We using Mozilla Persona as simple and secure authentication mechanism.
+i.ci.login_into=Login into system
+
+s.sc.live=Live!
+
+s.bb.title=Browser check
+

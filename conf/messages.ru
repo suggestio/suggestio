@@ -212,3 +212,14 @@ h.sp.sio_going_to_index_site=Система приступает к индекс
 h.sp.if_inputText_exist_sio_will_use_it=В том случае, если на вашем сайте есть поисковое поле, Suggest.io определяет его  и в дальнейшем работает с ним.
 h.sp.if_no_inputText_then_sio_icon_appears_on_the_corner=В том случае, если поискового поля нет, Suggest.io его создает. Иконка поиска появляется в верхнем правом углу страницы вашего сайта. При наведении курсора она разворачивается в поисковое поле.
 
+i.ci.login=Вход в систему
+i.ci.register_and_private_office=Регистрация и вход в личный кабинет
+i.ci.to_access_settings_register=Чтобы иметь постоянный доступ к настройкам поиска на вашем сайте, пройдите процесс быстрой регистрации.
+i.ci.your_site_will_be_added_to_priv_office=Ваш сайт будет автоматически добавлен в личный кабинет.
+i.ci.we_are_using_mozilla_persona=Для простой и безопасной аутентификации пользователей мы используем Mozilla Persona.
+i.ci.login_into=Войти на сайт
+
+s.sc.live=В живую
+
+s.bb.title=Настройка браузера
+

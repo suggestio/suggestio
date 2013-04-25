@@ -1,4 +1,4 @@
-@(title: String, head_after:Html = Html(""), browser_check:Boolean = true, withHeadCommon:Boolean = true, withAnalytics:Boolean = true)(content: Html)(implicit c:util.Context)
+@(title: String, head_after:Html = Html(""), browser_check:Option[Html] = None, withHeadCommon:Boolean = true, withAnalytics:Boolean = true)(content: Html)(implicit c:util.Context)
 <!DOCTYPE html>
 @import stuff._
 
@@ -8,8 +8,10 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta name = "viewport" content = "width=1200;initial-scale=1">
     
-    @if(browser_check) {
+    @if(!browser_check.isDefined) {
       <noscript><meta http-equiv="refresh" content="0; URL=/badbrowser"></noscript>
+    } else {
+      @browser_check.get
     }
     
     <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>

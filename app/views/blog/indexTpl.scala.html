@@ -2,14 +2,13 @@
 
 @import c.lang
 @import stuff._
+@import crawl._
 
 @head_after = {
-  @* Тут возможно ненужный crawl_index.css: *@
-  <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/crawl_index.min.css")"/>
   <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/blog_index.min.css")"/>
 }
 
-@main(title=Messages("blog"), head_after=head_after) {
+@crawlBaseTpl(title=Messages("blog"), head_after=head_after) {
 <div class="page-wrapper" id="pageWrapper">
 	
 	<div class="main-layout">

@@ -1,7 +1,7 @@
 package util
 
 import play.api.Play.current
-import io.suggest.model.{JsonDfsBackend, DomainSettings}
+import io.suggest.model.JsonDfsBackend
 import org.apache.hadoop.fs.Path
 import com.scaleunlimited.cascading.hadoop.HadoopUtils
 import io.suggest.index_info.SioEsConstants
@@ -17,6 +17,7 @@ object SiobixFs {
 
   val siobix_out_dir  = current.configuration.getString("siobix.dfs.dir").getOrElse("/home/user/projects/bixo-git/dout")
   val siobix_out_path = new Path(siobix_out_dir)
+  val siobix_conf_path = new Path(siobix_out_path, SioEsConstants.CONF_SUBDIR)
   val conf = HadoopUtils.getDefaultJobConf
   implicit val fs = siobix_out_path.getFileSystem(conf)
 

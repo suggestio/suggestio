@@ -7,9 +7,9 @@
 @*// Набор псевдодинамических ссылок, генерируемых фреймворком в рантайме *@
 var persona_conf =
 {
-	login_url  : '{% url controller="login" action="persona_login" %}',
-	logout_url : '{% url controller="login" action="persona_logout" %}',
-	admin_location : '{% url controller="admin" action="" %}'
+	login_url  : '@routes.Ident.persona_submit',
+	logout_url : '@routes.Ident.logout',
+	admin_location : '/admin'
 }
 </script>
 <script src="@routes.Assets.at("javascripts/ident_persona.min.js")"></script>

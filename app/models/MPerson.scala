@@ -19,16 +19,16 @@ case class MPerson(
 ) extends MPersonLinks {
 
   // Линки в другие модели.
-  def authzMy = MDomainPersonAuthz.getForPersonDkeys(email, dkeys)
-  def authzForDomain(dkey:String) = MDomainPersonAuthz.getForPersonDkey(dkey, email)
+  def authz = MDomainPersonAuthz.getForPersonDkeys(email, dkeys)
 
   /**
    * Сохранить отметку о таком юзере
    * @return
    */
-  def save() {
+  def save = {
     val path = MPerson.getPath(email)
     JsonDfsBackend.writeTo(path, this)
+    this
   }
 
 
@@ -61,6 +61,7 @@ trait MPersonLinks {
   val email : String
 
   def isAdmin = MPerson.isAdmin(email)
+  def authzForDomain(dkey:String) = MDomainPersonAuthz.getForPersonDkey(dkey, email)
 }
 
 
@@ -68,10 +69,10 @@ trait MPersonLinks {
 object MPerson {
 
   // Список емейлов админов suggest.io.
-  val adminEmails = Set("konstantin.nikiforov@cbca.ru", "ilya@shuma.ru", "sasha@cbca.ru")
+  protected val adminEmails = Set("konstantin.nikiforov@cbca.ru", "ilya@shuma.ru", "sasha@cbca.ru")
 
   // Путь хранилища модели в hdfs
-  val model_path = new Path(SiobixFs.siobix_out_path, "m_person")
+  protected val model_path = new Path(SiobixFs.siobix_conf_path, "m_person")
 
   /**
    * Прочитать объект Person из хранилища.

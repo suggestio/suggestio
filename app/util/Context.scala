@@ -2,6 +2,7 @@ package util
 
 import org.joda.time.DateTime
 import play.api.i18n.Lang
+import play.api.mvc.{Request, AnyContent}
 
 /**
  * Suggest.io
@@ -23,7 +24,7 @@ trait ContextT {
    * Выдать контекст. Неявно вызывается при вызове шаблона из контроллера.
    * @return
    */
-  implicit def getContext : Context = {
+  implicit def getContext(implicit mp_opt:Acl.PwOptT, request:Request[AnyContent], lang:Lang = Lang(Context.lang_default)) : Context = {
     new Context
   }
 
@@ -31,13 +32,15 @@ trait ContextT {
 
 
 case class Context(
-  lang_str            : String = Context.lang_default,
-  implicit val lang   : Lang = Lang(Context.lang_default),
-  implicit val p_opt  : Acl.MPOptT = None    // Если юзер залогинен, то тут будет Some().
+  implicit val mp_opt : Acl.PwOptT,    // Если юзер залогинен, то тут будет Some().
+  implicit val request : Request[AnyContent],
+  implicit val lang   : Lang
 ) {
 
   implicit lazy val now : DateTime = DateTime.now
 
-  def isAuth  = p_opt.isDefined
-  def isAdmin = isAuth && p_opt.get.isAdmin
+  def isAuth  = mp_opt.isDefined
+  def isAdmin = isAuth && mp_opt.get.isAdmin
+
+  def lang_str = lang.language
 }

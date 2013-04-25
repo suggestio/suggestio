@@ -49,13 +49,14 @@ case class MDomainUserSettings(
   /**
    * Сохранить карту в DFS. Если карта пуста, то удалить файл карты из хранилища.
    */
-  def save {
+  def save = {
     val path = getPath(dkey)
     if(!data.isEmpty) {
       JsonDfsBackend.writeTo(path, data)
     } else {
       fs.delete(path, false)
     }
+    this
   }
 
 

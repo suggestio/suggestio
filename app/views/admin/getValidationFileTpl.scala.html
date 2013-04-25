@@ -1,8 +1,8 @@
-@()(implicit c:util.Context)
+@(dpz:models.MDomainPersonAuthz)(implicit c:util.Context)
 ## Please put this file on your site. 
 ## Suggest.io will expect content on on the following URL:
 ## * {{ url }}
 ##
 ## Domain account validation will success, if URL response body will contain at least following ASCII text:
 
-{{ person_domain.body_code }}
+@dpz.body_code

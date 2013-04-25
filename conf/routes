@@ -10,3 +10,8 @@ GET  /assets/*file                      controllers.Assets.at(path="/public", fi
 
 GET  /thumb/get/$dkey<[-_\w\d~.]+>/$imageId<[\w\d]+>     controllers.Thumb.getThumb(dkey, imageId)
 GET  /search                            controllers.Search.liveSearch(h:String, q:String, debug:Boolean ?= false, lang:String ?= "")
+
+GET  /login/persona                     controllers.Ident.persona
+POST /login/persona                     controllers.Ident.persona_submit
+POST /logout                            controllers.Ident.logout
+

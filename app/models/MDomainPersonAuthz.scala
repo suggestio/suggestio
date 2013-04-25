@@ -123,7 +123,7 @@ object MDomainPersonAuthz extends Logs {
    * @param person_id мыльник
    * @return
    */
-  def getForPersonDkeys(person_id:String, dkeys:List[String]) : List[MDomainPersonAuthz] = {
+  def getForPersonDkeys(person_id:String, dkeys:Iterable[String]) : List[MDomainPersonAuthz] = {
     dkeys
       .map { dkeyPersonPath(_, person_id) }
       .filter { fs.exists }
