@@ -1,3 +1,5 @@
+import eu.diversit.sbt.plugin.WebDavPlugin._
+
 name := "util"
 
 version := "0.1"
@@ -10,6 +12,9 @@ resolvers += "Conjars" at "http://conjars.org/repo"
 
 organization := "io.suggest"
 
+credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
+
+publishTo := Some("Server Ivy2 Repo" at  "https://ivy2-internal.cbca.ru/sbt/")
 
 libraryDependencies ++= {
   val slf4jVsn  = "1.7.2"
