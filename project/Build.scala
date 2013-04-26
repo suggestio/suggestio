@@ -30,7 +30,10 @@ object ApplicationBuild extends Build {
       "cascading" % "cascading-hadoop" % cascadingVsn,
       "com.scaleunlimited" % "cascading.utils" % "2.1-SNAPSHOT",
       // akka - for siobix direct calls
-      "com.typesafe.akka" %% "akka-actor" % "2.1.0"
+      "com.typesafe.akka" %% "akka-actor" % "2.1.0",
+      // for domain validation:
+      "net.databinder.dispatch" %% "dispatch-core" % "0.10.0",
+      "org.apache.tika" % "tika-core" % "1.3"
     )
   }
  
@@ -56,11 +59,8 @@ object ApplicationBuild extends Build {
 
 
   val main = play.Project(appName, appVersion, appDependencies).settings(
-    
-    resolvers ++= Seq(
-      "local m2" at   "file://" + Path.userHome.absolutePath + "/.m2/repository",
-      Resolver.file("LocalIvy", file(Path.userHome + File.separator + ".ivy2" + File.separator + "local"))(Resolver.ivyStylePatterns)
-    ),
+    // резолверы определены цепочкой в этом конфиге:
+    externalIvySettings(baseDirectory(_ / "project" / "ivysettings.xml")),
     gzippableAssets <<= (resourceManaged in (ThisProject))(dir => ((dir ** "*.js") +++ (dir ** "*.css"))),
     gzipAssetsSetting
 
