@@ -2,19 +2,26 @@ import eu.diversit.sbt.plugin.WebDavPlugin._
 
 name := "util"
 
-version := "0.1"
+organization := "io.suggest"
+
+version := "0.2"
+
 
 scalaVersion := "2.10.1"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
-resolvers += "Conjars" at "http://conjars.org/repo"
 
-organization := "io.suggest"
+seq(WebDav.globalSettings : _*)
+
+publishMavenStyle := false
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
 publishTo := Some("Server Ivy2 Repo" at  "https://ivy2-internal.cbca.ru/sbt/")
+
+
+resolvers += "Conjars" at "http://conjars.org/repo"
 
 libraryDependencies ++= {
   val slf4jVsn  = "1.7.2"
