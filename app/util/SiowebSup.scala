@@ -88,4 +88,4 @@ object SiowebSup {
 
 
 // Сообщение запроса дочернего процесса
-protected case class GetChildRef(childName:String)
+protected final case class GetChildRef(childName:String)

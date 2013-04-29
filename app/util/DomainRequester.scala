@@ -52,7 +52,7 @@ object DomainRequester {
    */
   def queueUrlSync(dkey:String, url:String) = Await.result(queueUrl(dkey,url), timeoutSec)
 
-  def queueUrl(dkey:String, url:String) = (actorRef ? QueueUrl(dkey=dkey, url=url)).asInstanceOf[Future[Future[DRResp]]]
+  def queueUrl(dkey:String, url:String) = (actorRef ? QueueUrl(dkey=dkey, url=url)).asInstanceOf[Future[Future[DRResp200]]]
 
   /**
    * Функция нужна для отладки: чтение копии текущей карты из работающего актора.
@@ -144,7 +144,7 @@ class DomainRequester extends Actor {
   }
 
 
-  val asCtAndStream = as.Response { r => DRResp(r.getContentType, r.getResponseBodyAsStream) }
+  val asCtAndStream = as.Response { r => DRResp200(r.getContentType, r.getResponseBodyAsStream) }
 
 
   /**
@@ -163,8 +163,8 @@ class DomainRequester extends Actor {
 
 protected case class FutureReqTask(
   counter: CounterT,
-  future:  Future[DRResp]
+  future:  Future[DRResp200]
 )
 protected case class QueueUrl(dkey:String, url:String)
 protected case class FutureCompleted(dkey:String, counter:DomainRequester.CounterT)
-case class DRResp(content_type:String, istream:InputStream)
+case class DRResp200(content_type:String, istream:InputStream)

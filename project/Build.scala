@@ -21,7 +21,7 @@ object ApplicationBuild extends Build {
       "org.apache.hadoop" % "hadoop-client" % hadoopVsn,
       // spat4j: костыль для http://elasticsearch-users.115913.n3.nabble.com/Compile-error-with-0-20-2-td4028743.html :
       "com.spatial4j" % "spatial4j" % "0.3",
-      "io.suggest" %% "util" % "0.1",
+      "io.suggest" %% "util" % "0.2",
       // hadoop
       "org.apache.hadoop" % "hadoop-core" % hadoopVsn,
       "org.apache.hadoop" % "hadoop-client" % hadoopVsn,
