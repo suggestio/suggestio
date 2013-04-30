@@ -205,6 +205,8 @@ final case class UnwatchActor(actorRef:ActorRef)
 trait SubscriberT {
   def publish(event:SioNotifier.Event)
   def getActor : Option[ActorRef]
+  def toStringTail : String
+  override def toString: String = "sn_subscriber:" + toStringTail
 }
 
 
@@ -219,7 +221,6 @@ case class ActorRefSubscriber(actorRef:ActorRef) extends SubscriberT {
 
   def getActor = Some(actorRef)
 
-  override def toString: String = "subscriber=" + actorRef
   override def hashCode(): Int = actorRef.hashCode() + 10
   override def equals(obj: Any): Boolean = super.equals(obj) || {
     obj match {
@@ -227,6 +228,7 @@ case class ActorRefSubscriber(actorRef:ActorRef) extends SubscriberT {
       case _ => false
     }
   }
+  def toStringTail: String = actorRef.toString()
 }
 
 /**
@@ -249,5 +251,5 @@ case class ActorPathSubscriber(actorPath:ActorPath) extends SubscriberT {
       case _ => false
     }
   }
-  override def toString: String = "subscriber=" + actorPath
+  def toStringTail: String = actorPath.toString
 }

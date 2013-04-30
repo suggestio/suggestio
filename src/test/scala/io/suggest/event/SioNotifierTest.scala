@@ -145,15 +145,6 @@ class SioNotifierTest extends FlatSpec with ShouldMatchers with Logs {
   }
 
 
-  case class Event3(user_id:Int, timestamp:Long, msg:String) extends SioEventT {
-    lazy val getClassifier: Classifier = Event3.getClassifier(user_id=Some(user_id))
-  }
-
-  object Event3 extends SioEventObjectHelperT {
-    def getClassifier(user_id:Option[Int] = None) : Classifier = List(hd, user_id)
-  }
-
-
   case class WasEvent()
 
 }
