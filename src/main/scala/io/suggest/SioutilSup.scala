@@ -1,6 +1,6 @@
 package io.suggest
 
-import akka.actor.{ActorRef, ActorRefFactory, Actor, Props}
+import akka.actor._
 import io.suggest.event.{SioNotifier, SioNotifierWatcher}
 import akka.pattern.ask
 import scala.concurrent.duration._
@@ -34,6 +34,9 @@ class SioutilSup extends Actor {
     case name: String =>
       val childRefOpt = context.child(name)
       sender ! childRefOpt
+
+    case ResolveActorPath(path) =>
+      sender ! context.system.actorFor(path)
 
     // Получено сообщение об остановке супервизора
     case Stop() =>
@@ -69,6 +72,13 @@ object SioutilSup {
   def getChild(name:String) = (sup_ref ? name).asInstanceOf[Future[Option[ActorRef]]]
 
   /**
+   * Отрезолвить путь актора. Если актора не существует, то придет ref на dead letters.
+   * @param actorPath путь актора
+   * @return
+   */
+  def resolveActorPath(actorPath:ActorPath) = (sup_ref ? ResolveActorPath(actorPath)).asInstanceOf[Future[ActorRef]]
+
+  /**
    * Остановка супервизора.
    */
   def stop {
@@ -77,4 +87,5 @@ object SioutilSup {
 
 }
 
-final case class Stop()
+protected final case class ResolveActorPath(path:ActorPath)
+protected final case class Stop()

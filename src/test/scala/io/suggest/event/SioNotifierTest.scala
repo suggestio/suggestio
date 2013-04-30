@@ -32,9 +32,10 @@ class SioNotifierTest extends FlatSpec with ShouldMatchers with Logs {
       val act0 = actor(new Act {
         protected var uid10Rcvd = 0
         protected var uid20Rcvd = 0
+        protected def self_s = ActorRefSubscriber(self)
 
         whenStarting {
-          subscribe(self, Event2.getClassifier() )
+          subscribe(self_s, Event2.getClassifier() )
         }
 
         become {
@@ -51,7 +52,7 @@ class SioNotifierTest extends FlatSpec with ShouldMatchers with Logs {
         }
 
         whenStopping {
-          unsubscribe(self)
+          unsubscribe(self_s)
         }
       })
 
@@ -59,9 +60,10 @@ class SioNotifierTest extends FlatSpec with ShouldMatchers with Logs {
       val act20 = actor(new Act {
         protected var uid20Received = 0
         protected var uidOtherReceived = 0
+        protected def self_s = ActorRefSubscriber(self)
 
         whenStarting {
-          subscribe(self, Event2.getClassifier(user_id = Some(20)) )
+          subscribe(self_s, Event2.getClassifier(user_id = Some(20)) )
         }
 
         become {
@@ -99,19 +101,25 @@ class SioNotifierTest extends FlatSpec with ShouldMatchers with Logs {
     val f = fixture
     import f._
 
-    // Проверяем act0
+    // Просто проверяем act0
     wasEvent(act0) should equal (0, 0)
 
-    SioNotifier.publish(Event2(user_id=10, data="asd"))
+    publish(Event2(user_id=10, data="asd"))
     Thread.sleep(40)
-    wasEvent(f.act0) should equal (1, 0)
+    wasEvent(act0) should equal (1, 0)
+    wasEvent(act20)  should equal (0, 0)
 
     // Проверяем act20
-    wasEvent(act20)  should equal (0, 0)
-    SioNotifier.publish(Event2(user_id=20, data="bbb"))
-
+    publish(Event2(user_id=20, data="bbb"))
     Thread.sleep(40)
+    wasEvent(act0)  should equal (0, 1)
     wasEvent(act20) should equal (1, 0)
+
+    // Проверяем unsubscribe
+    unsubscribe(ActorRefSubscriber(act0))
+    publish(Event2(user_id=10, data="asd"))
+    Thread.sleep(40)
+    wasEvent(act0)  should equal (0, 0)
   }
 
 
