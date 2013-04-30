@@ -4,7 +4,7 @@ name := "util"
 
 organization := "io.suggest"
 
-version := "0.2"
+version := "0.3"
 
 
 scalaVersion := "2.10.1"
