@@ -10,7 +10,6 @@ import io.suggest.sax._
 import org.apache.tika.parser.{AutoDetectParser, ParseContext}
 import scala.concurrent.duration._
 import play.api.libs.concurrent.Promise.timeout
-import util.DRResp200
 import java.util.concurrent.TimeUnit
 
 /**
@@ -58,12 +57,14 @@ object DomainQi extends Logs {
     DomainRequester.queueUrl(dkey, url)
       // DomainRequest скоро запишет объект в выданный фьючерс. Внутри будет другой фьючерс - ответа хттп-клиента
       .onSuccess { case respFut =>
-        // Если пришел сырой 200-ответ сайта, нужно запустить тику с единственным SAX-handler и понять, если там тег скрипта suggest.io и с какой информацией.
+        // 200 OK: запустить тику с единственным SAX-handler и определить наличие скрипта на странице.
         respFut.onSuccess { case DRResp200(ct, istream) =>
           try {
+            // Формируем набор метаданных
             val md = new Metadata
             md.add(TikaMetadataKeys.RESOURCE_NAME_KEY, url)
             md.add(HttpHeaders.CONTENT_TYPE, ct)
+            // Запускаем через жабовскую FutureTask, ибо в scala нормального прерывания фьючерса по таймауту нет.
             val c = new DomainQiTikaCallable(md, istream)
             val task = new FutureTask(c)
             val t = new Thread(task)
@@ -85,7 +86,7 @@ object DomainQi extends Logs {
                   logger.error("qi install failed: found " + l)
               }
 
-            // Произошла какая-то ошибка, надо бы уведомить юзера
+            // Произошла какая-то ошибка во внутреннем try, надо бы уведомить юзера об этом
             } catch {
               case te:TimeoutException =>
                 task.cancel(true)
