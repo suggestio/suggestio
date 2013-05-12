@@ -100,7 +100,6 @@ class SioNotifierBus extends EventBus with SubchannelClassification {
 
   protected val _subclassification = new MySubClassification
 
-
   /**
    * Ориентировочный размер предполагаемого множества классификаторов.
    * @return
