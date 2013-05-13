@@ -1,11 +1,10 @@
 package io.suggest.event
 
-import akka.event.{EventBus, ActorEventBus, SubchannelClassification}
+import akka.event.{EventBus, SubchannelClassification}
 import akka.util.Subclassification
 import akka.actor.{ActorPath, Terminated, Actor, ActorRef}
 import io.suggest.SioutilSup
 import scala.concurrent.ExecutionContext.Implicits.global
-import io.suggest.util.Logs
 
 /**
  * Suggest.io

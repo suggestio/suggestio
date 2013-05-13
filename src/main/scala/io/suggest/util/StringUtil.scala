@@ -1,7 +1,7 @@
 package io.suggest.util
 
-import util.Random
 import annotation.tailrec
+import scala.util.Random
 
 /**
  * Suggest.io

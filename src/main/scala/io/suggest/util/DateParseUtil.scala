@@ -1,6 +1,6 @@
 package io.suggest.util
 
-import util.matching.Regex
+import scala.util.matching.Regex
 import com.github.nscala_time.time.Imports._
 import java.util.Locale
 import collection.mutable
