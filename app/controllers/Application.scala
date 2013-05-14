@@ -5,7 +5,10 @@ import play.api.mvc._
 import util.{AclT, ContextT}
 
 object Application extends Controller with ContextT with AclT {
-  
+ 
+  /** 
+   * Выдача главной страницы
+   */
   def index = maybeAuthenticated { implicit pw_opt => implicit request =>
     Ok(views.html.index("Your new application is ready."))
   }

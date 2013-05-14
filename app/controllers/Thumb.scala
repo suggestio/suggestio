@@ -12,8 +12,9 @@ import io.suggest.index_info.SioEsConstants
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 19.04.13 14:45
- * Description:
+ * Description: Раздача картинок, относящихся к поисковой выдаче. Точнее, превьюшек картинок.
  */
+
 object Thumb extends Controller {
 
   val domainsRoot   = SiobixFs.siobix_out_path

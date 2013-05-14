@@ -12,13 +12,15 @@ import models.MDomain
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 04.04.13 16:13
- * Description: Контроллер выполнения поисковых запросов.
+ * Description: Контроллер выполнения поисковых запросов. Получает запрос и возвращает поисковую выдачу.
  */
 
 object Search extends Controller {
 
   /**
    * json-рендерер списка результатов.
+   * Нужен, т.к. стандартный json-генератор понятия не имеет как работать с типом List[SioSearchResult].
+   * Передается автоматически в Json.toJson(searchResults).
    */
   implicit val maplistWrites = new Writes[List[SioSearchResult]] {
     /**
