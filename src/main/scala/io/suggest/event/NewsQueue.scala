@@ -37,6 +37,7 @@ object NewsQueue {
   // Сигнал, означающий для актора NewsQueue, что он остался в одиночестве и ему пора.
   val iAmLonelyMsg = 'iAmLonely
   val dropOldMsg = 'drop_old
+  val pingMsg = 'ping
 
   def getTimestampMs = System.currentTimeMillis()
 
@@ -74,6 +75,17 @@ object NewsQueue {
   def longPoll(nq:ActorRef, timestampMs:Long, timeoutMs:FiniteDuration) = {
     implicit val timeout = Timeout(timeoutMs + 100.millis)
     (nq ? LongPollNews(timestampMs, timeoutMs)).asInstanceOf[Future[NewsReply]]
+  }
+
+
+  /**
+   * Отправить ping актору.
+   * @param nq
+   * @return
+   */
+  def ping(nq:ActorRef) = {
+    implicit val timeout = Timeout(200.millis)
+    (nq ? pingMsg).asInstanceOf[Future[Boolean]]
   }
 
 }
@@ -115,6 +127,12 @@ abstract class NewsQueueAbstract(
    */
   def receive : PartialFunction[Any, Unit] = {
 
+    // Пинг используется чтобы сообщить, что актор ещё кому-то интересен.
+    case atom if atom == pingMsg =>
+      sender ! true
+      maybeRestartLonelyTimer()
+
+
     // Пришли новости. Закинуть их в очередь под текущим таймштампом.
     case PushNews(news) =>
       val queueWasEmpty = news_queue.isEmpty
@@ -125,8 +143,8 @@ abstract class NewsQueueAbstract(
         waiting.foreach {
           case WaitingActor(waitingActorRef, timeoutTref) =>
             timeoutTref.cancel()
-            context.unwatch(waitingActorRef)
             waitingActorRef ! newsReply
+            context.unwatch(waitingActorRef)
         }
         waiting.clear()
       }
@@ -319,6 +337,15 @@ abstract class NewsQueueAbstract(
     stopLonelyTimer()
     startLonelyTimer()
   }
+
+  /**
+   * Перезапустить таймер, если он запущен. Если таймера нет, то не запускать новый.
+   */
+  protected def maybeRestartLonelyTimer() {
+    if (lonelyTrefOpt.isDefined)
+      restartLonelyTimer()
+  }
+
 
   def rmWaiting(actorRef:ActorRef) {
     waiting = waiting.filterNot(_.actorRef != actorRef)
