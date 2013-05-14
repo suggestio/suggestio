@@ -52,7 +52,7 @@ object DomainRequester {
    */
   def queueUrlSync(dkey:String, url:String) = Await.result(queueUrl(dkey,url), timeoutSec)
 
-  def queueUrl(dkey:String, url:String) = (actorRef ? QueueUrl(dkey=dkey, url=url)).asInstanceOf[Future[Future[DRResp200]]]
+  def queueUrl(dkey:String, url:String) = (actorRef ? QueueUrl(dkey=dkey, url=url)).asInstanceOf[Future[DRResp200]]
 
   /**
    * Функция нужна для отладки: чтение копии текущей карты из работающего актора.
@@ -113,14 +113,14 @@ class DomainRequester extends Actor {
         // Никто не обращался к указанному домену последнее время. Нужно создать новый фьючерс.
         case None => startReqAsync(_url)
       }
-      // Скомбинировать фьючерс, чтоб он слал уведомление о завершении в этот актор.
-      val fut1 = fut andThen {
-        case _ => self ! FutureCompleted(_dkey, counter)
+      // Когда фьючерс завершается, он должет уведомленить о завершении в этот актор.
+      fut onComplete {
+        _ => self ! FutureCompleted(_dkey, counter)
       }
       // Отправить результат юзеру
-      sender ! fut1
+      sender ! fut
       // Обновить состояние актора
-      fmap(_dkey) = FutureReqTask(counter=counter, future=fut1)
+      fmap(_dkey) = FutureReqTask(counter=counter, future=fut)
       counter = counter + 1
 
 

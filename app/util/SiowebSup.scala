@@ -20,14 +20,16 @@ import akka.actor.OneForOneStrategy
 
 class SiowebSup extends Actor with Logs {
 
-  import SiowebSup._
+  import SiowebSup.DOMAIN_REQUESTER_NAME
 
   /**
    * Нужно запустить все дочерние процессы.
    */
   override def preStart() {
     super.preStart()
+
     context.actorOf(Props[DomainRequester], name=DOMAIN_REQUESTER_NAME)
+    NewsQueue4Play.startLinkSup(context)
   }
 
 
@@ -45,9 +47,10 @@ class SiowebSup extends Actor with Logs {
    * Стратеги супервайзинга этого актора.
    * @return
    */
-  override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 10 seconds) {
-    case _:Exception => Restart
-  }
+  override def supervisorStrategy: SupervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 10 seconds) {
+      case _:Exception => Restart
+    }
 
 }
 

@@ -5,12 +5,11 @@ import play.api.libs.concurrent.Execution.Implicits._
 import org.apache.tika.metadata.{HttpHeaders, TikaMetadataKeys, Metadata}
 import java.io.InputStream
 import java.util.concurrent._
-import scala.concurrent.{Future, future}
 import io.suggest.sax._
-import org.apache.tika.parser.{AutoDetectParser, ParseContext}
+import org.apache.tika.parser.AutoDetectParser
 import scala.concurrent.duration._
-import play.api.libs.concurrent.Promise.timeout
 import java.util.concurrent.TimeUnit
+import models.MDomainQi
 
 /**
  * Suggest.io
@@ -54,59 +53,87 @@ object DomainQi extends Logs {
    */
   def asyncCheckQi(dkey:String, url:String, qi_id:Option[String]) {
     // Запросить постановку в очередь указанной ссылки для указанного домена
-    DomainRequester.queueUrl(dkey, url)
-      // DomainRequest скоро запишет объект в выданный фьючерс. Внутри будет другой фьючерс - ответа хттп-клиента
-      .onSuccess { case respFut =>
-        // 200 OK: запустить тику с единственным SAX-handler и определить наличие скрипта на странице.
-        respFut.onSuccess { case DRResp200(ct, istream) =>
-          try {
-            // Формируем набор метаданных
-            val md = new Metadata
-            md.add(TikaMetadataKeys.RESOURCE_NAME_KEY, url)
-            md.add(HttpHeaders.CONTENT_TYPE, ct)
-            // Запускаем через жабовскую FutureTask, ибо в scala нормального прерывания фьючерса по таймауту нет.
-            val c = new DomainQiTikaCallable(md, istream)
-            val task = new FutureTask(c)
-            val t = new Thread(task)
-            t.start()
-            try {
-              val l = task.get(parseTimeout.toMillis, TimeUnit.MILLISECONDS)
-              // Есть список найденных скриптов suggest_io.js на странице. Определить, есть ли среди них подходящий.
-              l.find {
-                case SioJsV2(_dkey, _qi_id) if dkey == _dkey && qi_id.isDefined && qi_id.get == _qi_id => true
-                case other => false
-              } match {
-                case Some(info) =>
-                  val info2 = info.asInstanceOf[SioJsV2]
-                  // TODO нужно заапрувить учетку юзера
-                  logger.info("qi success!! " + info2)
+    DomainRequester.queueUrl(dkey, url) onSuccess { case DRResp200(ct, istream) =>
+      // 200 OK: запустить тику с единственным SAX-handler и определить наличие скрипта на странице.
+      try {
+        // Формируем набор метаданных
+        val md = new Metadata
+        md.add(TikaMetadataKeys.RESOURCE_NAME_KEY, url)
+        md.add(HttpHeaders.CONTENT_TYPE, ct)
+        // Запускаем через жабовскую FutureTask, ибо в scala нормального прерывания фьючерса по таймауту нет.
+        val c = new DomainQiTikaCallable(md, istream)
+        val task = new FutureTask(c)
+        val t = new Thread(task)
+        t.start()
+        val result : Either[String, SioJsV2] = try {
+          val l = task.get(parseTimeout.toMillis, TimeUnit.MILLISECONDS)
+          // Есть список найденных скриптов suggest_io.js на странице. Определить, есть ли среди них подходящий.
+          l.find {
+            case SioJsV2(_dkey, _qi_id) if dkey == _dkey && qi_id.isDefined && qi_id.get == _qi_id => true
+            case other => false
+          } match {
+            case Some(info) =>
+              val info2 = info.asInstanceOf[SioJsV2]
+              logger.info("qi success for " + dkey + "! " + info2)
+              Right(info2)
 
-                case None =>
-                  // TODO нужно послать уведомление о неудачной проверке. Если в списке есть элементы, то они "чужие", а если нет то что-то не так установлено.
-                  logger.error("qi install failed: found " + l)
-              }
-
-            // Произошла какая-то ошибка во внутреннем try, надо бы уведомить юзера об этом
-            } catch {
-              case te:TimeoutException =>
-                task.cancel(true)
-                t.interrupt()
-                // TODO послать сообщение о проблеме
-                logger.error("Cannot parse page " + url + " for qi: parsing timeout")
-
-              // Внутри callable вылетел экзепшен. Он обернут в ExecutionException
-              case ex:ExecutionException =>
-                // TODO Нужно сообщить юзеру об ошибке
-                logger.error("Cannot parse " + url, ex.getCause)
-            }
-
-          } finally {
-            istream.close()
+            case None =>
+              // Послать уведомление о неудачной проверке. Если в списке есть элементы, то они "чужие", а если нет то что-то не так установлено.
+              val errMsg = if (l.isEmpty)
+                "No suggest.io JS found on this page. Not installed?"
+              else
+                "Expected suggest.io.js key NOT found, but found other suggest.io scripts on the page. Not yours?"
+              Left(errMsg)
           }
+
+          // Произошла какая-то ошибка во внутреннем try, надо бы уведомить юзера об этом
+        } catch {
+          case te:TimeoutException =>
+            task.cancel(true)
+            t.interrupt()
+            Left("Cannot parse page " + url + " for qi: parsing timeout")
+
+          // Внутри callable вылетел экзепшен. Он обернут в ExecutionException
+          case ex:ExecutionException =>
+            val errMsg = "Cannot parse page: internal parse error."
+            logger.error("parse exception on %s".format(url) + ex.getCause)
+            Left(errMsg)
+        }
+        val qiNews : QiEventT = result match {
+          // Всё верно. Можно заапрувить учетку юзера по отношению к этому домену.
+          case Right(_) =>
+            approve_qi(dkey, qi_id.get)
+            QiSuccess(url)
+
+          // Ниасилил. Надо чиркануть в логи и вернуть в новости ошибку qi.
+          case Left(errMsg) =>
+            logger.warn("qi check failed on %s: %s".format(url, errMsg))
+            QiError(url, errMsg)
+        }
+        NewsQueue4Play.pushTo(dkey, "qi", qiNews)
+
+      } finally {
+        istream.close()
       }
     }
   }
 
+
+  /**
+   * Зааппрувить указанный qi id.
+   * @param dkey
+   * @param qi_id
+   */
+  def approve_qi(dkey:String, qi_id:String) {
+    MDomainQi.getForDkeyId(dkey, qi_id) match {
+      // Есть в базе запись об открытом qi. Нужно удалить этот qi и создать соответствующий PersonDomainAuthz
+      case Some(qi) =>
+        ???
+
+      case None =>
+        logger.error("approve_qi(): QI '%s' unexpectedly not found for domain '%s'".format(qi_id, dkey))
+    }
+  }
 
 }
 
@@ -125,4 +152,14 @@ class DomainQiTikaCallable(md:Metadata, input:InputStream) extends Callable[List
     jsInstalledHandler.getSioJsInfo
   }
 
+}
+
+
+trait QiEventT {
+  val url: String
+  val msg: String
+}
+case class QiError(url:String, msg:String) extends QiEventT
+case class QiSuccess(url:String) extends QiEventT {
+  val msg : String = "OK"
 }
