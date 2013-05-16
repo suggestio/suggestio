@@ -11,5 +11,5 @@ resolvers ++= Seq(
 addSbtPlugin("play" % "sbt-plugin" % "2.1.1")
 
 // add stylus css compiler for play 2.0
-addSbtPlugin("patience" % "play-stylus" % "0.1.3" from "file:///home/user/.ivy2/local/patience/play-stylus/scala_2.9.3/sbt_0.12/0.1.3/jars/play-stylus.jar")
-
+// addSbtPlugin("patience" % "play-stylus" % "0.1.3" from "file:///home/user/.ivy2/local/patience/play-stylus/scala_2.9.3/sbt_0.12/0.1.3/jars/play-stylus.jar")
+addSbtPlugin("patience" % "play-stylus" % "0.1.3" from "http://ivy2-internal.cbca.ru/sbt/patience/play-stylus_2.9.2_0.12/0.1.3/play-stylus-0.1.3.jar")
