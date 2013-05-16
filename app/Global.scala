@@ -1,4 +1,5 @@
 import play.api._
+import util.SiowebSup
 
 /**
  * Suggest.io
@@ -17,6 +18,7 @@ object Global extends GlobalSettings{
    */
   override def onStart(app: Application) {
     super.onStart(app)
+    SiowebSup.ensureStarted
   }
 
 }

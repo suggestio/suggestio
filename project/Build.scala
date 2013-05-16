@@ -10,7 +10,7 @@ object ApplicationBuild extends Build {
   
   val appDependencies = {
     val esVsn         = "0.20.6"
-    val hadoopVsn     = "1.1.1"
+    val hadoopVsn     = "1.1.2"
     val cascadingVsn  = "2.0.7"
     Seq(
       // Add your project dependencies here,
