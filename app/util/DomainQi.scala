@@ -32,15 +32,51 @@ object DomainQi extends Logs {
   val parseTimeout = 5.seconds
   protected val timeout_msg = "timeout"
 
+  def addToSession(qi:MDomainQi, session:Session) : Session = {
+    session.get("qi") match {
+      // Есть qi
+      case Some(qiStr) if qiStr != "" =>
+        qiStr2Map(qiStr).get(qi.dkey) match {
+          case Some(_qi_id) if _qi_id == qi.id =>
+            session
+
+          case _ =>
+            session + (qi.dkey -> qi.id)
+        }
+
+      // qi-данные в сессии ещё не определены.
+      case None => session
+    }
+  }
+
   /**
    * Прочитать из сессии список быстро добавленных в систему доменов и прилинковать их к текущему юзеру.
    * Домен появляется в сессии юзера, когда qi-проверялка реквестует страницу со скриптом и проверит все данные.
-   * @param email email юзера, т.е. его id
-   * @param session Неизменяемые данные сессии. Все данные сессии будут безвозвратно утрачены после завершения этого метода.
+   * Следует найти в них qi и подходящие для установки, выпилив затем из сессии.
+   * @param email E-mail юзера, т.е. его id.
+   * @param session Изменяемые данные сессии.
    */
-  def installFromSession(email:String, session:Session) {
+  def installFromSession(email:String, session:Session) = {
     println("installFromSession(): Not yet implemented")
+    session
   }
+
+
+  /**
+   * Распарсить строку сессии qi_str в карту dkey -> qi_id.
+   * @param qi_str строка сессии qi.
+   * @return Карта dkey -> qi_id
+   */
+  def qiStr2Map(qi_str:String) : Map[String, String] = {
+    val splits = qi_str.split(",") // -> ["a.ru", "asd3aef", "b.com", "sg53fsf", ... , ...]
+    // теперь надо превратить список токенов в карту
+    val acc0 : (List[(String, String)], Option[String])  =  List() -> None
+    splits.foldLeft (acc0) {
+      case ((acc, None), domain)         => (acc, Some(domain))
+      case ((acc, Some(domain)), qi_id)  => (domain -> qi_id :: acc, None)
+    }._1.toMap
+  }
+
 
 
   /**

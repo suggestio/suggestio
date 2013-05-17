@@ -18,6 +18,6 @@ POST /logout                            controllers.Ident.logout
 GET     /about                          controllers.Static.about
 GET     /showcase                       controllers.Static.showcase
 GET     /badbrowser                     controllers.Static.badbrowser
-GET     /blog                           controllers.Static.blog
+GET     /blog                           controllers.Blog.recordList
 GET     /help                           controllers.Static.help
 GET     /help/:page                     controllers.Static.helpPage(page:String)

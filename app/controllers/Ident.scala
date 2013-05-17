@@ -88,11 +88,11 @@ object Ident extends Controller with AclT with ContextT with Logs {
                       // Найти текущего юзера или создать нового
                       val person = MPerson.getByEmail(email).getOrElse { new MPerson(email).save }
                       // Заапрувить все анонимно-добавленные домены (qi)
-                      DomainQi.installFromSession(person.email, request.session)
+                      val session1 = DomainQi.installFromSession(person.email, request.session)
                       // В ответе от Persona есть ещё expires = (respJson \ "expires").as[Long]
                       // залогинить юзера наконец
                       rdrToAdmin
-                        .withNewSession
+                        .withSession(session1)
                         .withSession(username -> person.email)
 
                     // Юзер подменил audience url, значит его assertion невалиден. Либо мы запустили на локалхосте продакшен.
@@ -136,7 +136,5 @@ object Ident extends Controller with AclT with ContextT with Logs {
 
   // TODO выставить нормальный routing тут
   protected def rdrToAdmin = Redirect(routes.Application.index)
-
-
 
 }

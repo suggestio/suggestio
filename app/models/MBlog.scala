@@ -23,7 +23,7 @@ case class MBlog(
   var bg_image  : String,
   var bg_color  : String,
   var text      : String,
-  date      : DateTime = DateTime.now   // ctime не поддерживается в fs, поэтому дата хранится внутри файла
+  date          : DateTime = DateTime.now   // ctime не поддерживается в fs, поэтому дата хранится внутри файла
 ) {
 
   /**

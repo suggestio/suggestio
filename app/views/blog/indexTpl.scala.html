@@ -1,4 +1,4 @@
-@()(implicit c:util.Context)
+@(content:Html)(implicit c:util.Context)
 
 @import c.lang
 @import stuff._
@@ -19,16 +19,7 @@
 	<div id="razduvTop" class="razduv-top"></div>
 	<div class="razduv-bottom"></div>
 	
-	<div class="blog-layout">
-		
-		{% block blog_body %}
-		{% for blog_record in records %}
-			{% include "blog/_blog_record.html" with blog_record=blog_record preview="true" %}
-			<div class="blog-delimiter"></div>
-		{% endfor %}
-		{% endblock %}
-		
-	</div>
+	<div class="blog-layout">@content</div>
 
 	@_copyright()
 </div>

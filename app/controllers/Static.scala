@@ -11,39 +11,37 @@ package controllers
 import play.api._
 import play.api.mvc._
 import util.{AclT, ContextT}
+import views.html.static._
+import views.html.help._
 
- object Static extends Controller with ContextT with AclT {
-     def  about = maybeAuthenticated { implicit pw_opt => implicit request =>
-    Ok(views.html.static.aboutTpl())
+object Static extends Controller with ContextT with AclT {
+  def  about = maybeAuthenticated { implicit pw_opt => implicit request =>
+    Ok(aboutTpl())
+  }
+  def  showcase = maybeAuthenticated { implicit pw_opt => implicit request =>
+    Ok(showcaseTpl())
+
+  }
+
+  def  badbrowser = maybeAuthenticated { implicit pw_opt => implicit request =>
+    Ok(badbrowserTpl())
+
+  }
+
+  def  help = maybeAuthenticated { implicit pw_opt => implicit request =>
+    Ok(indexTpl())
+
+  }
+
+
+  def helpPage(page:String) =  maybeAuthenticated { implicit pw_opt => implicit request =>
+    page match {
+      case "registration"     => Ok(registrationTpl())
+      case "search_settings"  => Ok(searchSettingsTpl())
+      case "images_settings"  => Ok(imagesSettingsTpl())
+      case "design_settings"  => Ok(designSettingsTpl())
+      case "setup"            => Ok(setupTpl())
+      case _                  => NotFound
     }
-    def  showcase = maybeAuthenticated { implicit pw_opt => implicit request =>
-    Ok(views.html.static.showcaseTpl())
-
-    }
-
-   def  badbrowser = maybeAuthenticated { implicit pw_opt => implicit request =>
-     Ok(views.html.static.badbrowserTpl())
-
-   }
-
-   def  help = maybeAuthenticated { implicit pw_opt => implicit request =>
-     Ok(views.html.help.indexTpl())
-
-   }
-
-   def  blog = maybeAuthenticated { implicit pw_opt => implicit request =>
-     Ok(views.html.blog.indexTpl())
-
-   }
-
-   def helpPage(page:String) =  maybeAuthenticated { implicit pw_opt => implicit request =>
-      page match {
-           case "registration" => Ok(views.html.help.registrationTpl())
-           case "search_settings" => Ok(views.html.help.searchSettingsTpl())
-           case "images_settings" => Ok (views.html.help.imagesSettingsTpl())
-           case "design_settings" => Ok(views.html.help.designSettingsTpl())
-           case "setup" => Ok(views.html.help.setupTpl())
-           case _ => NotFound
-          }
-    }
- }
+  }
+}

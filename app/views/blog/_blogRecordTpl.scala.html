@@ -1,12 +1,16 @@
-@()(implicit c:util.Context)
-{% if preview == "true" %}
-</div>
-<div class="blog-post blog-preview {% if not blog_record.bg_image %}blog-preview-no-image{% endif %}">
-	<div class="blog-post-c" style="{% if blog_record.bg_color %}background-color: #{{ blog_record.bg_color }};{% endif %} {% if blog_record.bg_image %}background-image: url('{{ blog_record.bg_image }}');{% endif %}">
+@(b: models.MBlog, preview: Boolean = true)(implicit c:util.Context)
+
+@* Отображение одной записи блога в списке записей *@
+
+@if(preview) {
+	</div>
+	<div class="blog-post blog-preview @if(b.bg_image.isEmpty) {blog-preview-no-image}">
+	    <div class="blog-post-c" style="@if(!b.bg_color.isEmpty) {background-color: #@b.bg_color;} @if(!b.bg_image.isEmpty) { background-image: url('@b.bg_image');}">
 	<div class="blog-post-inner">
-{% else %}
-<div class="blog-post blog-post-opened">
-{% endif %}
+} else {
+    <div class="blog-post blog-post-opened">
+}
+
 	<h1>
 		{% if preview == "true" %}
 		<a href="{% url controller="blog" action="record" id=blog_record.id %}">{{ blog_record.title }}</a>

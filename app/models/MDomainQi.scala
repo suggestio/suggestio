@@ -5,6 +5,7 @@ import io.suggest.model.JsonDfsBackend
 import org.apache.hadoop.fs.Path
 import util.SiobixFs
 import SiobixFs.fs
+import com.fasterxml.jackson.annotation.JsonIgnore
 
 /**
  * Suggest.io
@@ -16,16 +17,16 @@ import SiobixFs.fs
  */
 
 case class MDomainQi(
-  id: String,
-  dkey: String,
-  start_url: String,
-  session_id: String,
-  date_created: Long = DateTime.now.toInstant.getMillis
+  id           : String,
+  dkey         : String,
+  start_url    : String,
+  session_id   : String,
+  date_created : Long = DateTime.now.toInstant.getMillis
 ) {
 
   import MDomainQi._
 
-  lazy val path = getPath(dkey, id)
+  @JsonIgnore lazy val path = getPath(dkey, id)
 
   /**
    * Сохранить сие в хранилище
@@ -37,9 +38,7 @@ case class MDomainQi(
   /**
    * Удалить этот qi из хранилища
    */
-  def delete() {
-    fs.delete(path, false)
-  }
+  def delete() = fs.delete(path, false)
 
 }
 

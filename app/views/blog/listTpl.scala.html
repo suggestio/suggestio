@@ -1,0 +1,10 @@
+@(blogs: List[models.MBlog])(implicit c:util.Context)
+
+@* Вывод списка записей блога *@
+
+@indexTpl {
+    @blogs.map { b =>
+	@_blogRecordTpl(b, preview = true)
+	<div class="blog-delimiter"></div>
+    }
+}
