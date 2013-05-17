@@ -33,20 +33,13 @@ object DomainQi extends Logs {
   protected val timeout_msg = "timeout"
 
   def addToSession(qi:MDomainQi, session:Session) : Session = {
-    session.get("qi") match {
-      // Есть qi
-      case Some(qiStr) if qiStr != "" =>
-        qiStr2Map(qiStr).get(qi.dkey) match {
-          case Some(_qi_id) if _qi_id == qi.id =>
-            session
-
-          case _ =>
-            session + (qi.dkey -> qi.id)
-        }
-
-      // qi-данные в сессии ещё не определены.
-      case None => session
+    val skey = dkey2skey(qi.dkey)
+    // Пишем ворнинг в логи, если какое-то странное действо происходит.
+    session.get(skey) foreach {
+      case qi_id_old if qi_id_old != qi.id =>
+        logger.warn("Overwriting session qi_id for domain %s : %s -> %s".format(qi.dkey, qi_id_old, qi.id))
     }
+    session + (skey -> qi.id)
   }
 
   /**
@@ -58,9 +51,11 @@ object DomainQi extends Logs {
    */
   def installFromSession(email:String, session:Session) = {
     println("installFromSession(): Not yet implemented")
+    ???
     session
   }
 
+  def dkey2skey(dkey:String) : String = "~" + dkey
 
   /**
    * Распарсить строку сессии qi_str в карту dkey -> qi_id.
