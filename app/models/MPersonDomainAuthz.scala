@@ -4,7 +4,7 @@ import org.joda.time.DateTime
 import io.suggest.util.{Logs, StringUtil}
 import util.SiobixFs
 import SiobixFs.fs
-import org.apache.hadoop.fs.{FileStatus, Path}
+import org.apache.hadoop.fs.Path
 import io.suggest.model.JsonDfsBackend
 
 /**
@@ -15,11 +15,11 @@ import io.suggest.model.JsonDfsBackend
  * Модель нужна для хранения данных авторизации юзеров, владеющими различными сайтами.
  */
 
-case class MDomainPersonAuthz(
+case class MPersonDomainAuthz(
   id               : String,
   dkey             : String,
   person_id        : String,
-  body_code        : String = StringUtil.randomId(MDomainPersonAuthz.BODY_CODE_LEN),
+  body_code        : String = StringUtil.randomId(MPersonDomainAuthz.BODY_CODE_LEN),
   date_created_utc : DateTime = DateTime.now,
   var date_last_checked : Option[DateTime] = None,
   var verify_info       : Option[String] = None
@@ -33,7 +33,7 @@ case class MDomainPersonAuthz(
    * Сохранить текущий экземпляр класса в базу.
    */
   def save() {
-    val path = MDomainPersonAuthz.dkeyPersonPath(dkey, person_id)
+    val path = MPersonDomainAuthz.dkeyPersonPath(dkey, person_id)
     JsonDfsBackend.writeTo(path, this)
   }
 
@@ -41,25 +41,20 @@ case class MDomainPersonAuthz(
 
 
 // Статическая часть модели
-object MDomainPersonAuthz extends Logs {
+object MPersonDomainAuthz extends Logs {
 
   // Длина кода валидации
   val BODY_CODE_LEN = 16
 
-  /**
-   * Путь к папке всех юзеров для указанного ключа домена.
-   * @param dkey
-   * @return
-   */
-  protected def dkeyAllPath(dkey:String) = new Path(SiobixFs.dkeyPath(dkey), "person")
+  val fileName = "auth"
 
   /**
-   * Путь к файлу данных по указанному юзеру в рамках домена.
+   * Путь к файлу данных по указанному юзеру в рамках домена. Имеет вид m_person/putin@kremlin.ru/sugggest.io/authz
    * @param dkey ключ домена
    * @param person_id id юзера, т.е. email
    * @return
    */
-  protected def dkeyPersonPath(dkey:String, person_id:String) = new Path(dkeyAllPath(dkey), person_id)
+  def dkeyPersonPath(dkey:String, person_id:String) = new Path(new Path(MPerson.getPath(person_id), dkey), fileName)
 
   /**
    * Прочитать из хранилища json-файл по данным юзера.
@@ -67,7 +62,7 @@ object MDomainPersonAuthz extends Logs {
    * @param person_id
    * @return
    */
-  def getForPersonDkey(dkey:String, person_id:String) : Option[MDomainPersonAuthz] = {
+  def getForPersonDkey(dkey:String, person_id:String) : Option[MPersonDomainAuthz] = {
     val path = dkeyPersonPath(dkey, person_id)
     readOne(path)
   }
@@ -78,9 +73,9 @@ object MDomainPersonAuthz extends Logs {
    * @param path путь, который читать.
    * @return Option[MDomainPerson]
    */
-  protected def readOne(path:Path) : Option[MDomainPersonAuthz] = {
+  protected def readOne(path:Path) : Option[MPersonDomainAuthz] = {
     try {
-      JsonDfsBackend.getAs[MDomainPersonAuthz](path, fs)
+      JsonDfsBackend.getAs[MPersonDomainAuthz](path, fs)
     } catch {
       case ex:Throwable =>
         error("Cannot read domain_person json from " + path, ex)
@@ -95,7 +90,7 @@ object MDomainPersonAuthz extends Logs {
    * @param path путь, из которого стоит читать данные
    * @return аккамулятор
    */
-  protected def readOneAcc(acc:List[MDomainPersonAuthz], path:Path) : List[MDomainPersonAuthz] = {
+  protected def readOneAcc(acc:List[MPersonDomainAuthz], path:Path) : List[MPersonDomainAuthz] = {
     readOne(path) match {
       case Some(mdp) => mdp :: acc
       case None => acc
@@ -103,19 +98,19 @@ object MDomainPersonAuthz extends Logs {
   }
 
 
-  /**
+  /*
    * Собрать все идентификации для домена в один список (в неопределенном порядке)
    * @param dkey
    * @return
    */
-  def getForDkey(dkey:String) : List[MDomainPersonAuthz] = {
+  /*def getForDkey(dkey:String) : List[MPersonDomainAuthz] = {
     val path = dkeyAllPath(dkey)
     fs.listStatus(path)
       .toList
-      .foldLeft(List[MDomainPersonAuthz]()) { (acc, fstatus:FileStatus) =>
+      .foldLeft(List[MPersonDomainAuthz]()) { (acc, fstatus:FileStatus) =>
         readOneAcc(acc, fstatus.getPath)
       }
-  }
+  }*/
 
 
   /**
@@ -123,11 +118,11 @@ object MDomainPersonAuthz extends Logs {
    * @param person_id мыльник
    * @return
    */
-  def getForPersonDkeys(person_id:String, dkeys:Iterable[String]) : List[MDomainPersonAuthz] = {
+  def getForPersonDkeys(person_id:String, dkeys:Iterable[String]) : List[MPersonDomainAuthz] = {
     dkeys
       .map { dkeyPersonPath(_, person_id) }
-      .filter { fs.exists }
-      .foldLeft(List[MDomainPersonAuthz]()) { readOneAcc }
+      .filter { fs.exists _ }
+      .foldLeft(List[MPersonDomainAuthz]()) { readOneAcc _ }
   }
 
 }

@@ -22,8 +22,7 @@ case class MDomain(
    * @return
    */
   def domainSettings = MDomain.getSettingsForDkeyCache(dkey).get
-  def authzAll = MDomainPersonAuthz.getForDkey(dkey)
-  def authzForPerson(person_id:String) = MDomainPersonAuthz.getForPersonDkey(dkey, person_id)
+  def authzForPerson(person_id:String) = MPersonDomainAuthz.getForPersonDkey(dkey, person_id)
 
 }
 

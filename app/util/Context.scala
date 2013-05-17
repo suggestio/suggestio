@@ -24,7 +24,9 @@ trait ContextT {
    * Выдать контекст. Неявно вызывается при вызове шаблона из контроллера.
    * @return
    */
-  implicit def getContext(implicit mp_opt:Acl.PwOptT, request:Request[AnyContent], lang:Lang = Lang(Context.lang_default)) : Context = {
+  implicit def getContext(implicit mp_opt: Acl.PwOptT,
+                          request: Request[AnyContent],
+                          lang: Lang = Lang(Context.lang_default)) : Context = {
     new Context
   }
 

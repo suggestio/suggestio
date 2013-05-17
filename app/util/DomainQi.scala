@@ -10,6 +10,7 @@ import org.apache.tika.parser.AutoDetectParser
 import scala.concurrent.duration._
 import java.util.concurrent.TimeUnit
 import models.MDomainQi
+import org.xml.sax.Attributes
 
 /**
  * Suggest.io
@@ -33,12 +34,11 @@ object DomainQi extends Logs {
 
   /**
    * Прочитать из сессии список быстро добавленных в систему доменов и прилинковать их к текущему юзеру.
-   * Домен появляется в сессии юзера только, когда qi-проверялка реквестует страницу со скриптом и проверит все данные.
+   * Домен появляется в сессии юзера, когда qi-проверялка реквестует страницу со скриптом и проверит все данные.
    * @param email email юзера, т.е. его id
    * @param session Неизменяемые данные сессии. Все данные сессии будут безвозвратно утрачены после завершения этого метода.
    */
   def installFromSession(email:String, session:Session) {
-
     println("installFromSession(): Not yet implemented")
   }
 
@@ -51,7 +51,7 @@ object DomainQi extends Logs {
    * @param qi_id заявленный юзером qi_id, если есть. Может и не быть, если в момент установки на сайт зашел кто-то
    *              другой без qi_id в сессии.
    */
-  def asyncCheckQi(dkey:String, url:String, qi_id:Option[String]) {
+  def checkQiAsync(dkey:String, url:String, qi_id:Option[String]) {
     // Запросить постановку в очередь указанной ссылки для указанного домена
     DomainRequester.queueUrl(dkey, url) onSuccess { case DRResp200(ct, istream) =>
       // 200 OK: запустить тику с единственным SAX-handler и определить наличие скрипта на странице.
@@ -90,7 +90,7 @@ object DomainQi extends Logs {
         } catch {
           case te:TimeoutException =>
             task.cancel(true)
-            t.interrupt()
+            //t.interrupt()   // cancel(true) сам вызывает t.interrupt()
             Left("Cannot parse page " + url + " for qi: parsing timeout")
 
           // Внутри callable вылетел экзепшен. Он обернут в ExecutionException
@@ -101,7 +101,7 @@ object DomainQi extends Logs {
         }
         val qiNews : QiEventT = result match {
           // Всё верно. Можно заапрувить учетку юзера по отношению к этому домену.
-          case Right(_) =>
+          case Right(_) if qi_id.isDefined =>
             approve_qi(dkey, qi_id.get)
             QiSuccess(url)
 
@@ -109,6 +109,11 @@ object DomainQi extends Logs {
           case Left(errMsg) =>
             logger.warn("qi check failed on %s: %s".format(url, errMsg))
             QiError(url, errMsg)
+
+          // Скорее всего, тот недостижимый код, но всё же перестраховываемся.
+          case other =>
+            logger.error("Unexpected results from qi checker: %s while qi_id opt = %s".format(other, qi_id))
+            QiError(url, "Internal suggest.io error. So sorry...")
         }
         NewsQueue4Play.pushTo(dkey, "qi", qiNews)
 
@@ -162,4 +167,26 @@ trait QiEventT {
 case class QiError(url:String, msg:String) extends QiEventT
 case class QiSuccess(url:String) extends QiEventT {
   val msg : String = "OK"
+}
+
+
+// Т.к. джава не умеет останавливать потоки, а только выставлять отметки interrupted, тут надо проверять сие.
+// ХЗ, нужен ли этот код вообще -- наверное лучше проверять длину ответа от сервера.
+class SioJsDetectorInterruptableSAX extends SioJsDetectorSAX {
+
+  // Счетчики тегов. Каждые N тегов проверять флаг текущего потока на предмет наличия прерывания.
+  protected var ie = 0
+  val checkIntEvery = 10
+
+  override def startElement(uri: String, localName: String, qName: String, attributes: Attributes) {
+    ie = ie + 1
+    if (ie > checkIntEvery) {
+      if (Thread.interrupted())
+        throw new InterruptedException(getClass.getSimpleName + ": thread interrupted")
+
+      ie = 0
+    }
+    super.startElement(uri, localName, qName, attributes)
+  }
+
 }

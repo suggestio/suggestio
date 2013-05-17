@@ -19,7 +19,7 @@ case class MPerson(
 ) extends MPersonLinks {
 
   // Линки в другие модели.
-  def authz = MDomainPersonAuthz.getForPersonDkeys(email, dkeys)
+  def authz = MPersonDomainAuthz.getForPersonDkeys(email, dkeys)
 
   /**
    * Сохранить отметку о таком юзере
@@ -61,7 +61,7 @@ trait MPersonLinks {
   val email : String
 
   def isAdmin = MPerson.isAdmin(email)
-  def authzForDomain(dkey:String) = MDomainPersonAuthz.getForPersonDkey(dkey, email)
+  def authzForDomain(dkey:String) = MPersonDomainAuthz.getForPersonDkey(dkey, email)
 }
 
 
