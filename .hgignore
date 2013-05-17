@@ -18,3 +18,4 @@ RUNNING_PID
 *.swp
 *.rej
 *.orig
+conf/application.conf
