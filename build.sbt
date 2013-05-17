@@ -4,7 +4,7 @@ name := "util"
 
 organization := "io.suggest"
 
-version := "0.4.2"
+version := "0.4.4"
 
 
 scalaVersion := "2.10.1"
@@ -25,8 +25,9 @@ resolvers += "Conjars" at "http://conjars.org/repo"
 
 libraryDependencies ++= {
   val slf4jVsn  = "1.7.2"
-  val hadoopVsn = "1.1.1"
+  val hadoopVsn = "1.1.2"
   val akkaVsn   = "2.1.0"
+  val jacksonVsn = "2.2.1"
   Seq(
     "org.scalatest" %% "scalatest" % "1.9.1" % "test",
     "org.slf4j" % "slf4j-api" % slf4jVsn,
@@ -34,7 +35,8 @@ libraryDependencies ++= {
     "org.gnu.inet" % "libidn" % "1.15",
     "com.github.nscala-time" %% "nscala-time" % "0.2.0",
     "commons-lang" % "commons-lang" % "2.4",
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.1.3",
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVsn,
+    "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % jacksonVsn,
     "org.elasticsearch" % "elasticsearch" % "0.20.6",
     "org.apache.hadoop" % "hadoop-core" % hadoopVsn,
     "org.apache.hadoop" % "hadoop-client" % hadoopVsn,
