@@ -7,7 +7,7 @@
 @* Описываем один пункт меню *@
 @item(action:String) = {
   <li>
-    @if(currentAction != action) { <a href="{% url action="setup" %}"> }
+    @if(currentAction != action) { <a href="@routes.Static.helpPage(action)"> }
 	@Messages("h.m." + action)
     @if(currentAction != action) { </a> }
   </li>
@@ -18,4 +18,4 @@
 @item("registration")
 @item("search_settings")
 @item("images_settings")
-@* item("design_settings") *@
+@item("design_settings")

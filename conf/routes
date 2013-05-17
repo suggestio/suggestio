@@ -15,5 +15,9 @@ GET  /login/persona                     controllers.Ident.persona
 POST /login/persona                     controllers.Ident.persona_submit
 POST /logout                            controllers.Ident.logout
 
-GET     /about                          controllers.Static.aboutTpl
-GET     /showcase                          controllers.Static.showcase
+GET     /about                          controllers.Static.about
+GET     /showcase                       controllers.Static.showcase
+GET     /badbrowser                     controllers.Static.badbrowser
+GET     /blog                           controllers.Static.blog
+GET     /help                           controllers.Static.help
+GET     /help/:page                     controllers.Static.helpPage(page:String)

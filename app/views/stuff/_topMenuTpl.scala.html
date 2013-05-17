@@ -10,7 +10,7 @@
 	    @if(activeLink == "about") {
 		<span class="active-link">@about_msg</span>
 	    } else {
-		<a class="@if(c.lang_str != "ru") {menu-link}" data-popup="about" href="{% url controller="crawl" action="about" %}">@about_msg</a>
+    <a class="menu-link" href="@routes.Static.about">@about_msg</a>
 	    }
 	}
 
@@ -20,7 +20,7 @@
 	    @if(activeLink == "blog") {
 		<span class="active-link">@blog_str</span>
 	    } else {
-		<a href="{% url controller="blog" action="" %}">@blog_str</a>
+    <a class="menu-link" href="@routes.Static.blog">@blog_str</a>
 	    }
 	}
 
@@ -30,7 +30,7 @@
 	    @if(activeLink == "help") {
 		<span class="active-link">@help_msg</span>
 	    } else {
-		<a class="menu-link" href="/help">@help_msg</a>
+		<a class="menu-link" href="@routes.Static.help">@help_msg</a>
 	    }
 	}
 
@@ -40,7 +40,7 @@
 	    @if(activeLink == "showcase") {
 		<span class="active-link">@live_msg</span>
 	    } else {
-		<a class="menu-link" href="/crawl/showcase">@live_msg</a>
+		<a class="menu-link" href="@routes.Static.showcase">@live_msg</a>
 	    }
 	}
 

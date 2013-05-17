@@ -7,7 +7,7 @@
 @import crawl._
 
 @head_after = {
-    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/crawl_showcase.min.css")"/>
+    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/static_showcase.min.css")"/>
 }
 
 
@@ -69,7 +69,7 @@
 	for( var _i in websites )
 	{
 		var _s = websites[_i];
-		showcase_websites_container.append('<a class="showcase-website' + prefix + '" style="background-image: url(\'/static/images2/showcase_websites/' + _s.id + prefix + '.png\');" target="_blank" ontouchstart="window.location=\'' + _s.url + '\';" href="' + _s.url + '"><div class="hover-plate"></div></a>');
+		showcase_websites_container.append('<a class="showcase-website' + prefix + '" style="background-image: url(\'/assets/images/showcase_websites/' + _s.id + prefix + '.png\');" target="_blank" ontouchstart="window.location=\'' + _s.url + '\';" href="' + _s.url + '"><div class="hover-plate"></div></a>');
 	}
 	
 	showcase_websites_container.append('<div class="more-websites"></div><div class="clear"></div>');
