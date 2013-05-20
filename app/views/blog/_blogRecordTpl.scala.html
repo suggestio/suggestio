@@ -12,25 +12,31 @@
 }
 
 	<h1>
-		{% if preview == "true" %}
-		<a href="{% url controller="blog" action="record" id=blog_record.id %}">{{ blog_record.title }}</a>
-		{% else %}
-		<h1>{{ blog_record.title }}</h1>
-		{% endif %}
-		{% if _before %}
-			{% if _before.is_admin == "true" %}
-			<a class="blog-edit-button" href="{% url controller="blog" action="edit" id=blog_record.id %}"></a>
-			<a class="blog-delete-button" href="{% url controller="blog" action="delete" id=blog_record.id %}"></a>
-			{% endif %}
-		{% endif %}
-	</h1>
-	<div class="blog-text">{% if preview %}{{ blog_record.description }}{% else %}{{ blog_record.text }}{% endif %}</div>
-	
-{% if preview == "true" %}
+
+@if(preview) {
+        <a href="@routes.Blog.readOne(b.id)">"@b.title"</a>
+} else {
+        <h1>"@b.title"</h1>
+        }
+
+
+               @if(c.isAuth) {
+                    @if(c.isAdmin) {
+                                      a class="blog-edit-button" href="{% url controller="blog" action="edit" id=blog_record.id %}"></a
+                                      <a class="blog-delete-button" href="@routes.Blog.deleteRecAdmin(b.id)"></a>
+                     }
+                }
+		</h1>
+	<div class="blog-text">
+@if(preview) {
+        "@b.description"
+} else {
+        "@b.text"
+        }
+    </div>
+
 </div>
 </div>
 </div>
 <div class="blog-layout-normal">
-{% else %}
 </div>
-{% endif %}

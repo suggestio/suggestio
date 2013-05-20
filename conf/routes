@@ -19,5 +19,7 @@ GET     /about                          controllers.Static.about
 GET     /showcase                       controllers.Static.showcase
 GET     /badbrowser                     controllers.Static.badbrowser
 GET     /blog                           controllers.Blog.recordList
+GET     /blog/:id                       controllers.Blog.readOne(id:String)
+GET     /blog/delete/:id                controllers.Blog.deleteRecAdmin(id:String)
 GET     /help                           controllers.Static.help
 GET     /help/:page                     controllers.Static.helpPage(page:String)
