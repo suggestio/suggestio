@@ -20,12 +20,12 @@
         }
 
 
-               @if(c.isAuth) {
-                    @if(c.isAdmin) {
-                                      a class="blog-edit-button" href="{% url controller="blog" action="edit" id=blog_record.id %}"></a
+               @* @if(c.isAuth) {  *@
+        @*    @if(c.isAdmin) { *@
+                                      <a class="blog-edit-button" href="@routes.Blog.newRec"></a>
                                       <a class="blog-delete-button" href="@routes.Blog.deleteRecAdmin(b.id)"></a>
-                     }
-                }
+        @*           }                 *@
+        @*      }                        *@
 		</h1>
 	<div class="blog-text">
 @if(preview) {

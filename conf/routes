@@ -15,11 +15,21 @@ GET  /login/persona                     controllers.Ident.persona
 POST /login/persona                     controllers.Ident.persona_submit
 POST /logout                            controllers.Ident.logout
 
+# Пункт меню "О проекте"
 GET     /about                          controllers.Static.about
+
+# Пункт меню "Вживую"
 GET     /showcase                       controllers.Static.showcase
+
 GET     /badbrowser                     controllers.Static.badbrowser
+
+# Пункт меню "Блог"
 GET     /blog                           controllers.Blog.recordList
 GET     /blog/:id                       controllers.Blog.readOne(id:String)
 GET     /blog/delete/:id                controllers.Blog.deleteRecAdmin(id:String)
+GET     /blog/edit/                     controllers.Blog.newRec
+POST    /blog/edit/                     controllers.Blog.newRecS
+
+
 GET     /help                           controllers.Static.help
 GET     /help/:page                     controllers.Static.helpPage(page:String)

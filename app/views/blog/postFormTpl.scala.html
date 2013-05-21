@@ -1,25 +1,30 @@
-@(postForm:Form[_])(implicit c:util.Context)
-
+@(postFormM:Form[_], isEdit: Boolean)(implicit c:util.Context)
 @import helper._
 
-{% extends "blog/index.html" %}
-{% block blog_body %}
-<h1><a href="{% url controller="blog" action="" %}">< Back</a>Blog: new post</h1>
+@indexTpl {
 
-<form action="/blog/save" method="POST">
+<h1><a href="{% url controller="blog" action="" %}">< Back</a>Blog: new post</h1>
+@form(routes.Blog.newRec) {
+
+    @if(!isEdit) {
+    <fieldset>
+        <label>id</label>
+        @inputText(postFormM("id"))
+    </fieldset>
+    }
 	<fieldset>
 		<label>Title</label>
-		<input type="text" name="title" value="{{blog_record.title|default:""}}">
+		@inputText(postFormM("title"))
 	</fieldset>
 	
 	<fieldset class="compact-fieldset">
 		<label>Preview image</label>
-		<input type="text" name="bg_image" value="{{blog_record.bg_image|default:""}}">
-	</fieldset>
+        @inputText(postFormM("bg_image"))
+		</fieldset>
 	
 	<fieldset class="compact-fieldset">
 		<label>Preview bg color</label>
-		<input type="text" name="bg_color" value="{{blog_record.bg_color|default:""}}">
+		@inputText(postFormM("bg_color"))
 	</fieldset>
 	
 	<fieldset>
@@ -28,16 +33,14 @@
 	</fieldset>
 	
 	<fieldset>
-		<label>Description</label>
-		<textarea name="description">{{blog_record.description|default:""}}</textarea>
-	</fieldset>
-	<fieldset>
-		<label>Text</label>
-		<textarea name="text">{{blog_record.text|default:""}}</textarea>
-	</fieldset>
-	{% if blog_record %}
-	<input type="hidden" name="record_id" value="{{blog_record.id}}">
-	{% endif %}
-	<input type="submit"/>
-</form>
-{% endblock %}
+        <label>Description</label>
+        @inputText(postFormM("description"))
+    </fieldset>
+    <fieldset>
+        <label>Text</label>
+        @inputText(postFormM("text"))
+    </fieldset>
+    <input type="submit"/>
+    }
+
+}
