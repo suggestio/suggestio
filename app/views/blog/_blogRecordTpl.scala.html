@@ -3,7 +3,7 @@
 @* Отображение одной записи блога в списке записей *@
 
 @if(preview) {
-	</div>
+    </div>
 	<div class="blog-post blog-preview @if(b.bg_image.isEmpty) {blog-preview-no-image}">
 	    <div class="blog-post-c" style="@if(!b.bg_color.isEmpty) {background-color: #@b.bg_color;} @if(!b.bg_image.isEmpty) { background-image: url('@b.bg_image');}">
 	<div class="blog-post-inner">
@@ -22,21 +22,18 @@
 
                @* @if(c.isAuth) {  *@
         @*    @if(c.isAdmin) { *@
-                                      <a class="blog-edit-button" href="@routes.Blog.newRec"></a>
+                                      <a class="blog-edit-button" href="@routes.Blog.editRecS(b.id)"></a>
                                       <a class="blog-delete-button" href="@routes.Blog.deleteRecAdmin(b.id)"></a>
         @*           }                 *@
         @*      }                        *@
 		</h1>
-	<div class="blog-text">
+	<div class="blog-text"> @if(preview) {"@b.description"} else {"@b.text"}</div>
 @if(preview) {
-        "@b.description"
-} else {
-        "@b.text"
-        }
-    </div>
-
 </div>
 </div>
 </div>
 <div class="blog-layout-normal">
+} else {
+</div>
+}
 </div>

@@ -27,9 +27,10 @@ GET     /badbrowser                     controllers.Static.badbrowser
 GET     /blog                           controllers.Blog.recordList
 GET     /blog/:id                       controllers.Blog.readOne(id:String)
 GET     /blog/delete/:id                controllers.Blog.deleteRecAdmin(id:String)
-GET     /blog/edit/                     controllers.Blog.newRec
-POST    /blog/edit/                     controllers.Blog.newRecS
-
+GET     /blog/add/                       controllers.Blog.newRec
+POST    /blog/add                       controllers.Blog.newRecS
+GET     /log/edit/:id                   controllers.Blog.editRecS(id: String)
+POST    /blog/edit/:id                  controllers.Blog.editRecS(id: String)
 
 GET     /help                           controllers.Static.help
 GET     /help/:page                     controllers.Static.helpPage(page:String)

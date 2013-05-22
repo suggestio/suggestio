@@ -42,10 +42,10 @@ object Blog extends Controller with ContextT with AclT {
   def readOne(blog_id: String) = maybeAuthenticated { implicit pw_opt => implicit request =>
     val recordOpt = MBlog.getById(blog_id)
     recordOpt match {
-    case Some(record) =>
-    Ok(_blogRecordTpl(record))
-    case None =>
-    NotFound
+      case Some(record) =>
+        Ok(_blogRecordTpl(record))
+      case None =>
+        NotFound
     }
   }
 
@@ -55,21 +55,27 @@ object Blog extends Controller with ContextT with AclT {
    * @return
    */
 
+  /**
+   * пока для тестов используется  maybeAuthenticated потом заменить на  isAdminAction (раскоментировать абзац ниже! а следующий удалить)
+   */
   // def deleteRecAdmin (rec_id: String) =  isAdminAction { implicit pw_opt => implicit request =>
   //  val deleteRec = MBlog.delete(rec_id)
   //  Ok(deleteRec.toString)
   //}
 
 
-   def deleteRecAdmin (rec_id: String) =  maybeAuthenticated { implicit pw_opt => implicit request =>
-   val deleteRec = MBlog.delete(rec_id)
-   Ok(deleteRec.toString)
+  def deleteRecAdmin (rec_id: String) =  maybeAuthenticated { implicit pw_opt => implicit request =>
+    val deleteRec = MBlog.delete(rec_id)
+    Ok(deleteRec.toString)
   }
 
 
   /**
    * Определение параметров формы для создания записи в блоге.
    */
+
+  /**
+
 
   val postFormM = Form(
     tuple(
@@ -81,10 +87,24 @@ object Blog extends Controller with ContextT with AclT {
     "text"  -> text
    )
 )
+    */
+
+  val postFormM = Form(
+    mapping(
+      "id" ->   nonEmptyText,
+      "title" ->  nonEmptyText,
+      "description" ->   nonEmptyText,
+      "bg_image" -> text,
+      "bg_color" -> text,
+      "text"  -> text
+    ) ((id, title, description, bg_image, bg_color, text) => MBlog(id, title, description, bg_image, bg_color, text))
+    ({rec: MBlog => Some(rec.id, rec.title, rec.description, rec.bg_image, rec.bg_color, rec.text) })
+  )
 
 
- // val dataId = Map {
- //   case (title,description) =>
+
+  // val dataId = Map {
+  //   case (title,description) =>
   // }
 
   /**
@@ -92,30 +112,45 @@ object Blog extends Controller with ContextT with AclT {
    * @return
    */
 
- def newRecS =  maybeAuthenticated { implicit pw_opt => implicit request =>
+  def newRecS =  maybeAuthenticated { implicit pw_opt => implicit request =>
     postFormM.bindFromRequest.fold(
-      formWithErrors => NotAcceptable,
-       {case (id, title, description, bg_image, bg_color, text1) =>
-     val new_blog_record = MBlog(id = id, title = title, description = description, bg_image = bg_image, bg_color = bg_color, text = text1).save
-      Redirect(routes.Blog.readOne(new_blog_record.id))
+    formWithErrors => NotAcceptable,
+    { rec => rec.save
+      Redirect(routes.Blog.readOne(rec.id))
     }
-  )
-}
+    )
+  }
+
+  /**
+   * Функция редактирования записи блога
+   * @param rec_id
+   * @return
+   */
+
+  def editRecS  (rec_id: String)=  maybeAuthenticated { implicit pw_opt => implicit request =>
+    MBlog.getById(rec_id) match {
+      case Some(record) =>
+        val formEdit = postFormM.fill(record)
+        Ok(postFormTpl(formEdit, isEdit = true))
+      case None =>
+        NotFound
+    }
+  }
 
 
-//  val saveForm = Form(
-//    mapping (
-//      "id"  ->  number,
-//      "title" ->   text,
-//      "description" -> text,
-//      "bg_image" -> text,
-//      "bg_color" -> text,
-//      "text" -> text
-//    )
-//  )
+  //  val saveForm = Form(
+  //    mapping (
+  //      "id"  ->  number,
+  //      "title" ->   text,
+  //      "description" -> text,
+  //      "bg_image" -> text,
+  //      "bg_color" -> text,
+  //      "text" -> text
+  //    )
+  //  )
 
-//  val dataForm = Map ( id -> 18, title ->
- // )
+  //  val dataForm = Map ( id -> 18, title ->
+  // )
 
   /**
    * Функция получения чистой формы для создания новой записи в блоге.
@@ -123,8 +158,8 @@ object Blog extends Controller with ContextT with AclT {
    * @return
    */
   def newRec  = maybeAuthenticated { implicit pw_opt => implicit request =>
-     Ok(postFormTpl(postFormM, isEdit = false))
- }
+    Ok(postFormTpl(postFormM, isEdit = false))
+  }
 
 
 
