@@ -3,37 +3,37 @@
 @* Отображение одной записи блога в списке записей *@
 
 @if(preview) {
+</div>
+<div class="blog-post blog-preview @if(b.bg_image.isEmpty) {blog-preview-no-image}">
+    <div class="blog-post-c" style="@if(!b.bg_color.isEmpty) {background-color: #@b.bg_color;} @if(!b.bg_image.isEmpty) { background-image: url('@b.bg_image');}">
+        <div class="blog-post-inner">
+            } else {
+            <div class="blog-post blog-post-opened">
+                }
+
+                <h1>
+
+                    @if(preview) {
+                    <a href="@routes.Blog.readOne(b.id)">"@b.title"</a>
+                    } else {
+                    <h1>"@b.title"</h1>
+                    }
+
+
+                    @* @if(c.isAuth) {  *@
+                    @*    @if(c.isAdmin) { *@
+                    <a class="blog-edit-button" href="@routes.Blog.editRec(b.id)"></a>
+                    <a class="blog-delete-button" href="@routes.Blog.deleteRecAdmin(b.id)"></a>
+                    @*           }                 *@
+                    @*      }                        *@
+                </h1>
+                <div class="blog-text"> @if(preview) {"@b.description"} else {"@b.text"}</div>
+                @if(preview) {
+            </div>
+        </div>
     </div>
-	<div class="blog-post blog-preview @if(b.bg_image.isEmpty) {blog-preview-no-image}">
-	    <div class="blog-post-c" style="@if(!b.bg_color.isEmpty) {background-color: #@b.bg_color;} @if(!b.bg_image.isEmpty) { background-image: url('@b.bg_image');}">
-	<div class="blog-post-inner">
-} else {
-    <div class="blog-post blog-post-opened">
-}
-
-	<h1>
-
-@if(preview) {
-        <a href="@routes.Blog.readOne(b.id)">"@b.title"</a>
-} else {
-        <h1>"@b.title"</h1>
-        }
-
-
-               @* @if(c.isAuth) {  *@
-        @*    @if(c.isAdmin) { *@
-                                      <a class="blog-edit-button" href="@routes.Blog.editRecS(b.id)"></a>
-                                      <a class="blog-delete-button" href="@routes.Blog.deleteRecAdmin(b.id)"></a>
-        @*           }                 *@
-        @*      }                        *@
-		</h1>
-	<div class="blog-text"> @if(preview) {"@b.description"} else {"@b.text"}</div>
-@if(preview) {
-</div>
-</div>
-</div>
-<div class="blog-layout-normal">
-} else {
-</div>
-}
+    <div class="blog-layout-normal">
+        } else {
+    </div>
+    }
 </div>

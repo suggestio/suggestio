@@ -74,20 +74,6 @@ object Blog extends Controller with ContextT with AclT {
    * Определение параметров формы для создания записи в блоге.
    */
 
-  /**
-
-
-  val postFormM = Form(
-    tuple(
-    "id" ->   nonEmptyText,
-    "title" ->  nonEmptyText,
-    "description" ->   nonEmptyText,
-    "bg_image" -> text,
-    "bg_color" -> text,
-    "text"  -> text
-   )
-)
-    */
 
   val postFormM = Form(
     mapping(
@@ -102,13 +88,8 @@ object Blog extends Controller with ContextT with AclT {
   )
 
 
-
-  // val dataId = Map {
-  //   case (title,description) =>
-  // }
-
   /**
-   * Функция получения параметров из вышеопределенной формы
+   * Сабмит формы добавления новой бложной записи в базу
    * @return
    */
 
@@ -122,45 +103,51 @@ object Blog extends Controller with ContextT with AclT {
   }
 
   /**
-   * Функция редактирования записи блога
+   * Сабмит формы измененной бложной записи в базу
    * @param rec_id
    * @return
    */
 
-  def editRecS  (rec_id: String)=  maybeAuthenticated { implicit pw_opt => implicit request =>
+
+  def editRecS (rec_id: String) = maybeAuthenticated { implicit pw_opt => implicit request =>
+    MBlog.getById(rec_id) match {
+      case Some(record) =>
+        postFormM.bindFromRequest.fold(
+        formWithErrors => NotAcceptable(editFormTpl(record, formWithErrors)),
+        { record => record.save
+          Redirect(routes.Blog.readOne(rec_id))
+        }
+        )
+      case None =>
+        NotFound
+    }
+  }
+
+  /**
+   *  Рендерим форму редактирования записи блога
+   * @param rec_id
+   * @return
+   */
+
+  def editRec  (rec_id: String)=  maybeAuthenticated { implicit pw_opt => implicit request =>
     MBlog.getById(rec_id) match {
       case Some(record) =>
         val formEdit = postFormM.fill(record)
-        Ok(postFormTpl(formEdit, isEdit = true))
+        Ok(editFormTpl(record, formEdit))
       case None =>
         NotFound
     }
   }
 
 
-  //  val saveForm = Form(
-  //    mapping (
-  //      "id"  ->  number,
-  //      "title" ->   text,
-  //      "description" -> text,
-  //      "bg_image" -> text,
-  //      "bg_color" -> text,
-  //      "text" -> text
-  //    )
-  //  )
-
-  //  val dataForm = Map ( id -> 18, title ->
-  // )
-
   /**
-   * Функция получения чистой формы для создания новой записи в блоге.
+   * Рендерим чистой форму для создания новой записи в блоге.
    * @param
    * @return
    */
+
   def newRec  = maybeAuthenticated { implicit pw_opt => implicit request =>
-    Ok(postFormTpl(postFormM, isEdit = false))
+    Ok(addRecordTpl(postFormM))
   }
-
-
 
 }

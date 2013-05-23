@@ -1,55 +1,60 @@
-@(postFormM:Form[_], isEdit: Boolean = true)(implicit c:util.Context)
+@(postFormM:Form[_], isEdit: Boolean = true, call:Call)(implicit c:util.Context)
 @import helper._
 
 @indexTpl {
 
-<h1><a href="@routes.Blog.recordList">< Back</a>
-  @if(!isEdit) {
+<h1><a href="@routes.Blog.recordList">&gt; Back</a>
+    @if(!isEdit) {
     Blog: new post</h1>
+} else {
+Blog: edit post</h1>
+}
+
+@form(call) {
+
+
+<fieldset>
+    <label>id</label>
+    @if(!isEdit) {
+    @inputText(postFormM("id"))
     } else {
-      Blog: edit post</h1>
+    @inputText(postFormM("id"), 'readonly -> "true")
     }
-@form(routes.Blog.newRecS) {
+</fieldset>
 
-  @if(!isEdit) {
-    <fieldset>
-        <label>id</label>
-        @inputText(postFormM("id"))
-    </fieldset>
-    }
-	<fieldset>
-		<label>Title</label>
-		@inputText(postFormM("title"))
-	</fieldset>
+<fieldset>
+    <label>Title</label>
+    @inputText(postFormM("title"))
+</fieldset>
 
-	<fieldset class="compact-fieldset">
-		<label>Preview image</label>
-        @inputText(postFormM("bg_image"))
-		</fieldset>
+<fieldset class="compact-fieldset">
+    <label>Preview image</label>
+    @inputText(postFormM("bg_image"))
+</fieldset>
 
-	<fieldset class="compact-fieldset">
-		<label>Preview bg color</label>
-		@inputText(postFormM("bg_color"))
-	</fieldset>
+<fieldset class="compact-fieldset">
+    <label>Preview bg color</label>
+    @inputText(postFormM("bg_color"))
+</fieldset>
 
-	@* <fieldset>
-		<label>Date</label>
-		<input type="text" name="date" value="{{blog_record.date|default:""}}">
-	</fieldset> *@
+@* <fieldset>
+    <label>Date</label>
+    <input type="text" name="date" value="{{blog_record.date|default:""}}">
+</fieldset> *@
 
-	<fieldset>
-        <label>Description</label>
-        @inputText(postFormM("description"))
-    </fieldset>
-    <fieldset>
-        <label>Text</label>
-        @inputText(postFormM("text"))
-    </fieldset>
+<fieldset>
+    <label>Description</label>
+    @inputText(postFormM("description"))
+</fieldset>
+<fieldset>
+    <label>Text</label>
+    @inputText(postFormM("text"))
+</fieldset>
 
-     @if(!isEdit) {
-    <input type="submit" value="Create"/>
-      } else {
-       <input type="submit" value="Update"/>
-      }
-  }
+@if(!isEdit) {
+<input type="submit" value="Create"/>
+} else {
+<input type="submit" value="Update"/>
+}
+}
 }

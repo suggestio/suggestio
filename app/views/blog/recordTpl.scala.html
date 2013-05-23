@@ -1,10 +1,10 @@
-@(b: models.MBlog)(implicit c:util.Context)
+@(implicit c:util.Context)
 
 @indexTpl {
-	<a class="blog-all-records" href="{% url controller="blog" action="" %}"></a>
-   @* @_blogRecordTpl { *@
-	<div class="blog-delimiter"></div>
-	<div class="blog-delimiter"></div>
-	<div class="blog-delimiter"></div>
-    @* }                     *@
+<a class="blog-all-records" href="{@routes.Blog.recordList}"></a>
+@* @_blogRecordTpl { 8@
+<div class="blog-delimiter"></div>
+<div class="blog-delimiter"></div>
+<div class="blog-delimiter"></div>
+@*  }                    *@
 }
