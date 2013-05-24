@@ -1,14 +1,15 @@
-@(postFormM:Form[_], isEdit: Boolean = true, call:Call)(implicit c:util.Context)
+@(postFormM:Form[_], isEdit: Boolean = true, call: Call)(implicit c:util.Context)
 @import helper._
 
 @indexTpl {
 
 <h1><a href="@routes.Blog.recordList">&gt; Back</a>
     @if(!isEdit) {
-    Blog: new post</h1>
-} else {
-Blog: edit post</h1>
-}
+        Blog: new post
+    } else {
+        Blog: edit post
+    }
+</h1>
 
 @form(call) {
 

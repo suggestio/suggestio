@@ -43,7 +43,7 @@ object Blog extends Controller with ContextT with AclT {
     val recordOpt = MBlog.getById(blog_id)
     recordOpt match {
       case Some(record) =>
-        Ok(_blogRecordTpl(record))
+        Ok(_blogRecordTpl(record, preview=false))
       case None =>
         NotFound
     }
