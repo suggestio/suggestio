@@ -8,8 +8,6 @@ import scala.Some
 import akka.actor.Terminated
 import subscriber._
 
-//import scala.concurrent.ExecutionContext.Implicits.global
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
