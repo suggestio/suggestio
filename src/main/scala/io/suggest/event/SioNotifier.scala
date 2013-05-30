@@ -2,9 +2,11 @@ package io.suggest.event
 
 import akka.event.{EventBus, SubchannelClassification}
 import akka.util.Subclassification
-import akka.actor.{ActorPath, Terminated, Actor, ActorRef}
+import akka.actor._
 import io.suggest.SioutilSup
-import scala.concurrent.ExecutionContext
+import scala.Some
+import akka.actor.Terminated
+import subscriber._
 
 //import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -23,30 +25,30 @@ object SioNotifier {
   type Event = SioEventT
   type ClassifierToken = Option[Any]
   type Classifier = List[ClassifierToken]
-  type Subscriber = SubscriberT
+  type Subscriber = SnSubscriberT
 
-  protected val bus = new SioNotifierBus
+  private var snRef : ActorRef = null
 
-  val SN_WATCHER_NAME = "sn_watcher"
+  val SN_NAME = "sn"
+
+  def startLink(arf: ActorRefFactory) : ActorRef = {
+    snRef = arf.actorOf(Props[SioNotifier], name=SN_NAME)
+    snRef
+  }
 
   /**
    * Узнать ref watcher-а у супервизора.
    * @return
    */
-  def watcherActorRefFuture = SioutilSup.getChild(SN_WATCHER_NAME)
+  def watcherActorRefFuture = SioutilSup.getChild(SN_NAME)
 
   /**
    * Подписать актора на событие
    * @param subscriber подписчик SubscriberT
    * @param classifier классификатор события
    */
-  def subscribe(subscriber:Subscriber, classifier:Classifier)(implicit ec:ExecutionContext) {
-    bus.subscribe(subscriber, classifier)
-    subscriber.getActor.map { actor =>
-      watcherActorRefFuture.onSuccess {
-        case Some(watcherRef) => watcherRef ! WatchActor(actor)
-      }
-    }
+  def subscribe(subscriber:Subscriber, classifier:Classifier) {
+    snRef ! SnSubscribe(subscriber, classifier)
   }
 
   /**
@@ -54,7 +56,7 @@ object SioNotifier {
    * @param event событие
    */
   def publish(event:Event) {
-    bus.publish(event)
+    snRef ! event
   }
 
   /**
@@ -62,126 +64,139 @@ object SioNotifier {
    * @param subscriber описалово подписчика
    * @param classifier классификатор, такой же как был в subscribe
    */
-  def unsubscribe(subscriber:Subscriber, classifier:Classifier)(implicit ec:ExecutionContext) {
-    unwatch(subscriber)
-    bus.unsubscribe(subscriber, classifier)
+  def unsubscribe(subscriber:Subscriber, classifier:Classifier) {
+    snRef ! SnUnsubscribe(subscriber, classifier)
   }
 
   /**
    * Отписать актора от всех событий в карте шины.
    * @param subscriber подписавшийся
    */
-  def unsubscribe(subscriber:Subscriber)(implicit ec:ExecutionContext) {
-    unwatch(subscriber)
-    bus.unsubscribe(subscriber)
+  def unsubscribe(subscriber:Subscriber) {
+    snRef ! SnUnsubscribeAll(subscriber)
   }
 
-
-  /**
-   * Отписать актора от наблюдения со стороны ActorWatcher.
-   * @param subscriber подписавшийся
-   */
-  protected def unwatch(subscriber:Subscriber)(implicit ec:ExecutionContext) {
-    subscriber.getActor.foreach { actor =>
-      watcherActorRefFuture.onSuccess {
-        case Some(watcherRef) =>
-          watcherRef ! UnwatchActor(actor)
-      }
-    }
-  }
-
-}
-
-
-class SioNotifierBus extends EventBus with SubchannelClassification {
-
-  type Subscriber = SioNotifier.Subscriber
-  type Event = SioNotifier.Event
-  override type Classifier = SioNotifier.Classifier
-
-  protected val _subclassification = new MySubClassification
-
-  /**
-   * Ориентировочный размер предполагаемого множества классификаторов.
-   * @return
-   */
-  protected def mapSize: Int = 16
-
-
-  /**
-   * Выдать класс субклассификатора.
-   * @return
-   */
-  protected implicit def subclassification: Subclassification[Classifier] = _subclassification
-
-
-  /**
-   * Вернуть классификатор для события
-   * @param event
-   * @return
-   */
-  protected def classify(event: Event): Classifier = event.getClassifier
-
-
-  /**
-   * Рассылка событий адресатам
-   * @param event событие
-   * @param subscriber подписчик
-   */
-  protected def publish(event: Event, subscriber: Subscriber) {
-    subscriber.publish(event)
-  }
-
-
-  // Подкласс, который занимается определением рассовой схожести двух классификаторов.
-  class MySubClassification extends Subclassification[Classifier] {
-    def isEqual(x: Classifier, y: Classifier): Boolean = {
-      x == y
-    }
-
-    /**
-     * True if x is subclass or equal of y.
-     * @param x subclass?
-     * @param y superclass
-     * @return
-     */
-    def isSubclass(x: Classifier, y: Classifier): Boolean = {
-      val xh :: xt = x
-      val yh :: yt = y
-      if (yh.isEmpty || xh == yh) {
-        // Начала списков совпадают или являются wildcard'ами. Теперь надо обработать хвосты.
-        val xte = xt.isEmpty
-        val yte = yt.isEmpty
-        if (xte && yte)         // Оба путя пройдены. Значит всё ок.
-          true
-        else if (xte || yte)    // один из списков закончился, а другой -- нет. Дальше сравнивать смысла нет, ибо это какое-то другое событие
-          false
-        else                    // оба хвоста содержат элементы. Продолжаем движение
-          isSubclass(xt, yt)
-
-      } else
-        // xh и yh не удовлетворяют друг-другу. Значит дальше можно не проверять - событие не подходит.
-        false
-    }
-
-  }
 }
 
 
 // Нужно наблюдать за подписчиками, т.к. они могут внезапно отвалится, а подписки останутся.
-class SioNotifierWatcher extends Actor {
+class SioNotifier extends Actor {
+
+  import SioNotifier.{Subscriber, Event}
+
+  // Шина сообщений. Делает все дела.
+  protected val bus = new SioNotifierBus
 
   def receive = {
-    case WatchActor(actorRef) =>
-      context.watch(actorRef)
+    // Пришло событие. Отправить его в шину.
+    case event:Event =>
+      bus.publish(event)
 
-    case UnwatchActor(actorRef) =>
-      context.unwatch(actorRef)
+    // Кто-то подписывается на сообщения по классификатору.
+    case SnSubscribe(subscriber, classifier) =>
+      bus.subscribe(subscriber, classifier)
+      watchSubscriber(subscriber)
 
+    // Кто-то отписывается от сообщений по классификатору.
+    case SnUnsubscribe(subscriber, classifier) =>
+      bus.unsubscribe(subscriber, classifier)
+      umwatchSubscriber(subscriber)
+
+    // Кто-то отписывается от всех сообщений.
+    case SnUnsubscribeAll(subscriber) =>
+      bus.unsubscribe(subscriber)
+      umwatchSubscriber(subscriber)
+
+    // Актор, подписанный на сообщения, помер. Нужно выкинуть его из шины.
     case Terminated(actorRef) =>
-      import context.dispatcher
-      SioNotifier.unsubscribe(ActorRefSubscriber(actorRef))
+      bus.unsubscribe(SnActorRefSubscriber(actorRef))
   }
+
+
+  protected def watchSubscriber(subscriber:Subscriber) {
+    subscriber.getActor.foreach(context.watch)
+  }
+
+  protected def umwatchSubscriber(subscriber:Subscriber) {
+    subscriber.getActor.foreach(context.unwatch)
+  }
+
+
+  // Реализация шины событий в рамках akka.
+  class SioNotifierBus extends EventBus with SubchannelClassification {
+
+    type Subscriber = SioNotifier.Subscriber
+    type Event = SioNotifier.Event
+    override type Classifier = SioNotifier.Classifier
+
+    protected val _subclassification = new MySubClassification
+
+    /**
+     * Ориентировочный размер предполагаемого множества классификаторов.
+     * @return
+     */
+    protected def mapSize: Int = 16
+
+
+    /**
+     * Выдать класс субклассификатора.
+     * @return
+     */
+    protected implicit def subclassification: Subclassification[Classifier] = _subclassification
+
+
+    /**
+     * Вернуть классификатор для события
+     * @param event событие, подлежащщее классификации.
+     * @return
+     */
+    protected def classify(event: Event): Classifier = event.getClassifier
+
+
+    /**
+     * Рассылка событий адресатам
+     * @param event событие
+     * @param subscriber подписчик
+     */
+    protected def publish(event: Event, subscriber: Subscriber) {
+      subscriber.publish(event)
+    }
+
+
+    // Подкласс, который занимается определением рассовой схожести двух классификаторов.
+    class MySubClassification extends Subclassification[Classifier] {
+      def isEqual(x: Classifier, y: Classifier): Boolean = {
+        x == y
+      }
+
+      /**
+       * True if x is subclass or equal of y.
+       * @param x subclass?
+       * @param y superclass
+       * @return
+       */
+      def isSubclass(x: Classifier, y: Classifier): Boolean = {
+        val xh :: xt = x
+        val yh :: yt = y
+        if (yh.isEmpty || xh == yh) {
+          // Начала списков совпадают или являются wildcard'ами. Теперь надо обработать хвосты.
+          val xte = xt.isEmpty
+          val yte = yt.isEmpty
+          if (xte && yte)         // Оба путя пройдены. Значит всё ок.
+            true
+          else if (xte || yte)    // один из списков закончился, а другой -- нет. Дальше сравнивать смысла нет, ибо это какое-то другое событие
+            false
+          else                    // оба хвоста содержат элементы. Продолжаем движение
+            isSubclass(xt, yt)
+
+        } else
+        // xh и yh не удовлетворяют друг-другу. Значит дальше можно не проверять - событие не подходит.
+          false
+      }
+
+    }
+  }
+
 }
 
 
@@ -195,62 +210,8 @@ trait SioEventObjectHelperT {
   val hd = Some(getClass.getSimpleName)
 }
 
-
-final case class WatchActor(actorRef:ActorRef)
-final case class UnwatchActor(actorRef:ActorRef)
-
-
-/**
- * Подписчик на шине. Он имеет метод publish(event), скрывающий его внутреннюю структуру (актора, метод и тд)
- */
-trait SubscriberT {
-  def publish(event:SioNotifier.Event)
-  def getActor : Option[ActorRef]
-  def toStringTail : String
-  override def toString: String = "sn_subscriber:" + toStringTail
-}
+protected final case class SnSubscribe(subscriber:SioNotifier.Subscriber, classifier:SioNotifier.Classifier)
+protected final case class SnUnsubscribe(subscriber:SioNotifier.Subscriber, classifier:SioNotifier.Classifier)
+protected final case class SnUnsubscribeAll(subscriber:SioNotifier.Subscriber)
 
 
-/**
- * Актор подписывается на сообщения.
- * @param actorRef реф актора.
- */
-case class ActorRefSubscriber(actorRef:ActorRef) extends SubscriberT {
-  def publish(event: SioNotifier.Event) {
-    actorRef ! event
-  }
-
-  def getActor = Some(actorRef)
-
-  override def hashCode(): Int = actorRef.hashCode() + 10
-  override def equals(obj: Any): Boolean = super.equals(obj) || {
-    obj match {
-      case ActorRefSubscriber(_actor) => actorRef == _actor
-      case _ => false
-    }
-  }
-  def toStringTail: String = actorRef.toString()
-}
-
-/**
- * Актор задан через путь. Связаваться с супервизором, чтоб он отрезовлвил путь.
- * @param actorPath путь до актора
- */
-case class ActorPathSubscriber(actorPath:ActorPath)(implicit ec:ExecutionContext) extends SubscriberT {
-  def publish(event: SioNotifier.Event) {
-    SioutilSup.resolveActorPath(actorPath) onSuccess { case actor =>
-      actor ! event
-    }
-  }
-
-  def getActor = None
-
-  override def hashCode(): Int = actorPath.hashCode() + 31
-  override def equals(obj: Any): Boolean = super.equals(obj) || {
-    obj match {
-      case ActorPathSubscriber(_actorPath) => actorPath == _actorPath
-      case _ => false
-    }
-  }
-  def toStringTail: String = actorPath.toString
-}

@@ -11,6 +11,7 @@ import scala.concurrent.duration._
 import akka.util.Timeout
 import scala.concurrent.Await
 import io.suggest.util.Logs
+import subscriber._
 
 /**
  * Suggest.io
@@ -32,7 +33,7 @@ class SioNotifierTest extends FlatSpec with ShouldMatchers with Logs {
       val act0 = actor(new Act {
         protected var uid10Rcvd = 0
         protected var uid20Rcvd = 0
-        protected def self_s = ActorRefSubscriber(self)
+        protected def self_s = SnActorRefSubscriber(self)
 
         whenStarting {
           subscribe(self_s, Event2.getClassifier() )
@@ -60,7 +61,7 @@ class SioNotifierTest extends FlatSpec with ShouldMatchers with Logs {
       val act20 = actor(new Act {
         protected var uid20Received = 0
         protected var uidOtherReceived = 0
-        protected def self_s = ActorRefSubscriber(self)
+        protected def self_s = SnActorRefSubscriber(self)
 
         whenStarting {
           subscribe(self_s, Event2.getClassifier(user_id = Some(20)) )
@@ -116,7 +117,7 @@ class SioNotifierTest extends FlatSpec with ShouldMatchers with Logs {
     wasEvent(act20) should equal (1, 0)
 
     // Проверяем unsubscribe
-    unsubscribe(ActorRefSubscriber(act0))
+    unsubscribe(SnActorRefSubscriber(act0))
     publish(Event2(user_id=10, data="asd"))
     Thread.sleep(40)
     wasEvent(act0)  should equal (0, 0)

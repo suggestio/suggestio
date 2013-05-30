@@ -5,7 +5,7 @@ import akka.pattern.ask
 import scala.concurrent.duration._
 import akka.util.Timeout
 import scala.concurrent.Future
-import io.suggest.event.{SioNotifier, SioNotifierWatcher}
+import io.suggest.event.SioNotifier
 
 /**
  * Suggest.io
@@ -22,7 +22,7 @@ class SioutilSup extends Actor {
   override def preStart() {
     super.preStart()
 
-    context.actorOf(Props[SioNotifierWatcher], name=SioNotifier.SN_WATCHER_NAME)
+    SioNotifier.startLink(context)
   }
 
   /**
