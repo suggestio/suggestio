@@ -1,11 +1,11 @@
 package io.suggest
 
 import akka.actor._
-import io.suggest.event.{SioNotifier, SioNotifierWatcher}
 import akka.pattern.ask
 import scala.concurrent.duration._
 import akka.util.Timeout
 import scala.concurrent.Future
+import io.suggest.event.{SioNotifier, SioNotifierWatcher}
 
 /**
  * Suggest.io

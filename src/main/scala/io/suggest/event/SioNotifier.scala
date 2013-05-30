@@ -4,7 +4,9 @@ import akka.event.{EventBus, SubchannelClassification}
 import akka.util.Subclassification
 import akka.actor.{ActorPath, Terminated, Actor, ActorRef}
 import io.suggest.SioutilSup
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
+
+//import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Suggest.io
@@ -38,7 +40,7 @@ object SioNotifier {
    * @param subscriber подписчик SubscriberT
    * @param classifier классификатор события
    */
-  def subscribe(subscriber:Subscriber, classifier:Classifier) {
+  def subscribe(subscriber:Subscriber, classifier:Classifier)(implicit ec:ExecutionContext) {
     bus.subscribe(subscriber, classifier)
     subscriber.getActor.map { actor =>
       watcherActorRefFuture.onSuccess {
@@ -60,7 +62,7 @@ object SioNotifier {
    * @param subscriber описалово подписчика
    * @param classifier классификатор, такой же как был в subscribe
    */
-  def unsubscribe(subscriber:Subscriber, classifier:Classifier) {
+  def unsubscribe(subscriber:Subscriber, classifier:Classifier)(implicit ec:ExecutionContext) {
     unwatch(subscriber)
     bus.unsubscribe(subscriber, classifier)
   }
@@ -69,7 +71,7 @@ object SioNotifier {
    * Отписать актора от всех событий в карте шины.
    * @param subscriber подписавшийся
    */
-  def unsubscribe(subscriber:Subscriber) {
+  def unsubscribe(subscriber:Subscriber)(implicit ec:ExecutionContext) {
     unwatch(subscriber)
     bus.unsubscribe(subscriber)
   }
@@ -79,8 +81,8 @@ object SioNotifier {
    * Отписать актора от наблюдения со стороны ActorWatcher.
    * @param subscriber подписавшийся
    */
-  protected def unwatch(subscriber:Subscriber) {
-    subscriber.getActor.map { actor =>
+  protected def unwatch(subscriber:Subscriber)(implicit ec:ExecutionContext) {
+    subscriber.getActor.foreach { actor =>
       watcherActorRefFuture.onSuccess {
         case Some(watcherRef) =>
           watcherRef ! UnwatchActor(actor)
@@ -177,6 +179,7 @@ class SioNotifierWatcher extends Actor {
       context.unwatch(actorRef)
 
     case Terminated(actorRef) =>
+      import context.dispatcher
       SioNotifier.unsubscribe(ActorRefSubscriber(actorRef))
   }
 }
@@ -233,7 +236,7 @@ case class ActorRefSubscriber(actorRef:ActorRef) extends SubscriberT {
  * Актор задан через путь. Связаваться с супервизором, чтоб он отрезовлвил путь.
  * @param actorPath путь до актора
  */
-case class ActorPathSubscriber(actorPath:ActorPath) extends SubscriberT {
+case class ActorPathSubscriber(actorPath:ActorPath)(implicit ec:ExecutionContext) extends SubscriberT {
   def publish(event: SioNotifier.Event) {
     SioutilSup.resolveActorPath(actorPath) onSuccess { case actor =>
       actor ! event
