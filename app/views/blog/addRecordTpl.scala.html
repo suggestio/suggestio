@@ -1,0 +1,8 @@
+@(newRec:Form[_])(implicit c:util.Context)
+
+@head_after = {
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js"></script>
+}
+
+@postFormTpl(newRec, call=routes.Blog.newRecS, isEdit=false)
+
