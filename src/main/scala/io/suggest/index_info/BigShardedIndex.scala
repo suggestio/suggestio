@@ -4,6 +4,7 @@ import com.github.nscala_time.time.Imports._
 import io.suggest.util.{Logs, JacksonWrapper}
 import org.joda.time
 import io.suggest.model.SioSearchContext
+import IndexInfoConstants._
 
 /**
  * Suggest.io

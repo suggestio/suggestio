@@ -4,6 +4,7 @@ import java.net.{URLDecoder, MalformedURLException, URL}
 import java.io.UnsupportedEncodingException
 import collection.SortedSet
 import gnu.inet.encoding.IDNA
+import scala.util.matching.Regex
 
 /**
  * Suggest.io
@@ -34,7 +35,92 @@ object UrlUtil extends Logs with Serializable {
   private val JSESSION_ID_PATTERN = "(?:;jsessionid=.*?)(\\?|&|#|$)".r.pattern
 
   // Тут собраны все возможные некорректные имена qs. В SimpleUrlNormalizer использовались позиционно-зависимые трудноулучшаемые регэкспы SESSION_ID_PATTERN и т.д.
-  val QS_BAD_KEY_PATTERN = "(?i)([sc]id|(bv|php|js?)?[_-]?sess(ion)?[-_]?(id|key)?|s?ra?nd|cache|from|lastmod|width|format|country|height|src|user|username|uname|return_url|returnurl|sort|sort_by|sortby|sort_direction|sort_key|order_by|orderby|sortorder|collate|r(e?di?r(ect)?|et(urn)?))".r.pattern
+  private val QS_BAD_KEY_PATTERN = "(?i)([sc]id|(bv|php|js?)?[_-]?sess(ion)?[-_]?(id|key)?|s?ra?nd|cache|from|lastmod|width|format|country|height|src|user|username|uname|return_url|returnurl|sort|sort_by|sortby|sort_direction|sort_key|order_by|orderby|sortorder|collate|r(e?di?r(ect)?|et(urn)?))".r.pattern
+
+
+  // Регэксп для отсеивания нежелательных хостов.
+  private val INVALID_HOSTNAME_RE = {
+    // TODO вынести reList в файл и сделать возможность периодического перечитывания файла.
+    val reList = List(
+      // запрещаем ip-адреса
+      "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}",			        // Decimal ip4: 127.0.0.1
+      "0[0-7]{1,3}\\.0[0-7]{1,3}\\.0[0-7]{1,3}\\.0[0-7]{1,3}",	// Octal ip4:	0305.0151.0043.0236
+      "0x[0-9a-f]",							                                // Hexadecimal ip4: 0xD65C238E
+      "\\d+",								                                    // Integer IPv4: 123124234
+      // TODO 158.35.108.213.hl.ru, ipv6
+      // Отечественное добро
+      "(odn[oa]klass?niki|vk([oau]ntakte|avkaze)?|mo[iy][kc]rug)\\.(ru|com|net|kz|by)",
+      // Домены, которые слишком большие и/или не нуждаются в поиске:
+      "sugg?est\\.io",
+      "(git(hub|orio?us)|bitbucket)\\.(com|org)",
+      // Всякие транснациональные порталы имеют много адресов в разных доменах
+      "goo\\.gl",
+      "(ya(ndex)?|google|(you|ru)tu(be)?|bing|yahoo|msn|microsoft)(\\.[a-z]{2,3})+",
+      "(facebook|twitter|linkedin)\\.com", "t\\.co",
+      "(paypal|moneybookers|ebay|amazon|(hot|g|x)?mail)\\.(com|ru|org|net|co\\.uk)",
+      "wikipedia\\.org",
+      "archive\\.org",
+      "paste(bin)?\\.(ca|org)",
+      "asdasd\\.ru"
+    )
+    val reStr = "^(?i)([^/]+\\.)?((" + reList.mkString(")|(") + "))$"
+    reStr.r
+  }
+
+  // Регэксп для отсеивания ссылок/линков на картинки.
+  private val INVALID_IMAGE_RE = "\\.(bmp|raw)$".r
+
+  // Список регэкспов для отсеивания нежелателньых и мусорных ссылок.
+  private val INVALID_URL_PATTERNS : List[Regex] = {
+    val reStrList = List(
+      // есть много сайтов, которые комменты делают отдельными страницами (news2.ru, snob.ru и другие).
+      "://[^/]+/.+comment(([.a-z]{4,6})?\\?.+=[0-9]+|/?[0-9]+/?$)",
+      "//.+//",
+      "^https?://[^/]+/se[ea]*r?t?[ch][hc][/?]",
+      "/bugs/",
+      "viewcvs",
+
+      // Skipping Apache.org urls
+      "\\.apache\\..+/dist/",
+      "/snapshots/",
+      "^https?://mail-archives",
+      // TODO apache mirror sites..
+      "apache\\.fastbull\\.org/.+",
+
+      // wiki
+      "wiki.*/+.*(E?Spe[czs]i(aa?|ie)le?|Specjalna|Istimewa|Toiminnot|%D0%A1%D0%BF%D0%B5%D1%86%D0%B8%D0%B0%D0%BB%D1%8C%D0%BD%D1%8B%D0%B5|MediaWiki(_talk)?)(:|%3A)",
+      "wiki.*/+.*/index.php\\?.*((oldid=[0-9]+)|(bookcmd=[a-z])|(printable=(yes|true|1))|(action=[a-z]))",
+
+      // livejournal
+      "livejournal.(com|ru)/[0-9]+\\..+\\?.*(thread=|reply|poster=)",
+
+      // phpBB
+      "\\?.*do=reply",
+
+      // TODO удалять отсюда расширения файлов по мере добавления функционала в парсеры.
+      // TODO Сделать бы это отдельным списком и чтоб был автогенератор регэкспа при компиляции или $init$...
+      "://[^/]+/[^.]+\\.(jpe?g|j2k|gif|png|bmp|exe|[gbx]?z(ip|2)?|dll|dat|avi|mkv|rtf|dot[xm]?|xl([scmwkt]|s[xbm])|f?o[dt][ts]|od[bmf]|s[tx][wc]|t[gbx]z2?|[tjr]?ar|so|csv|deb|rpm|git|i|raw|arw|bin|crt|pem|gpg|pgp|pub)\\b",
+      "[Mmr]akefile\\b",
+
+      // Skipping CVS repositories
+      "/cvs/\\.",
+
+      // Skipping Gitorious unseful pages
+      "git.+/(merge_requests|commits?|trees?)/",
+
+      // HG repositories
+      "/changeset/",
+
+      // Skipping SVN repositories
+      "svn.+/viewvc/.+/",
+      "/svn[\\./]",
+      "/branches",
+      "/trunk",
+      "/tags"
+    )
+    reStrList.map(reStr => ("(?i)" + reStr).r)
+  }
+
 
 
   /**
@@ -183,6 +269,8 @@ object UrlUtil extends Logs with Serializable {
     if (result.endsWith(".")) {
       result = result.substring(0, result.length - 1)
     }
+    if (result.startsWith("."))
+      result = result.tail
     IDNA.toASCII(result)
   }
 
@@ -274,8 +362,11 @@ object UrlUtil extends Logs with Serializable {
    * @param url - URL to normalize. Might not be valid, e.g. missing a protocol
    * @return - normalized URL. Still might not be valid, if input URL (for example)
    */
- def normalize(url: String): String = {
-    var result = url.trim
+  def normalize(url: String): String = {
+    var result = url
+      .trim
+      .replaceAll("[\r\n\t]", "")
+      .replaceAll("&quot$", "")
 
     // First, see if there is any protocol. If not - append http:// by default.
     result = result.indexOf("://") match {
@@ -335,6 +426,61 @@ object UrlUtil extends Logs with Serializable {
         error("Cannot build final URL from " + url, ex)
         result
     }
+  }
+
+
+  /**
+   * Является ли указанный хостнейм разрешенным.
+   * @param hostname хост
+   * @return true, если всё ок.
+   */
+  def isHostnameValid(hostname:String) : Boolean = {
+    !INVALID_HOSTNAME_RE.pattern.matcher(hostname).matches()
+  }
+
+
+  /**
+   * Является ли указанная ссылка/линк на картинку валидным?
+   * @param imageLink ссылка/линк на картинку.
+   * @return true, если всё ок.
+   */
+  def isImageLinkValid(imageLink:String) : Boolean = {
+    !INVALID_IMAGE_RE.pattern.matcher(imageLink).matches()
+  }
+
+
+  /**
+   * Является ли указанный URL валидным.
+   * @param url URL строка.
+   * @return true, если всё верно.
+   */
+  def isPageUrlValid(url:String): Boolean = {
+    !INVALID_URL_PATTERNS.exists(_.pattern.matcher(url).find())
+  }
+
+
+  /**
+   * Донормализовать хостнейм до dkey.
+   * @param host хост.
+   * @return строка dkey
+   */
+  def host2dkey(host:String): String = {
+    stripHostnameWww(
+      normalizeHostname(host)
+    )
+  }
+
+
+  /**
+   * Срезать все www. в начале хостнейма.
+   * @param host хостнейм
+   * @return
+   */
+  def stripHostnameWww(host:String) : String = {
+    if (host.startsWith("www."))
+      stripHostnameWww(host.substring(4))
+    else
+      host
   }
 
 

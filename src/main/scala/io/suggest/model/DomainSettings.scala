@@ -13,14 +13,22 @@ import io.suggest.util.JacksonWrapper
  * Description: Модель работы с настройками домена. Настройки храняться в json-файлах в hdfs.
  */
 
-object DomainSettings extends IndexInfoConstants {
+object DomainSettings extends DomainSettingsStaticT
+
+// Функции объекта DS вынесены в трайт, чтобы можно было экстендить функционал на стороне пользователй sioutil.
+trait DomainSettingsStaticT {
+
+  import IndexInfoConstants._
+
+  // Тип карты, которая хранит настройки. Value имеет динамический тип, и может содержать в себе DSMap_t.
+  type DSMap_t = Map[String, Any]
 
   /**
    * Сборка настроек из сохраненного ранее состояния
    * @param m карта экспортированного состояния.
    * @return Готовый объект DomainSettings.
    */
-  def apply(m:Map[String, Any]) : DomainSettings = {
+  def apply(m:DSMap_t) : DomainSettings = {
     val dkey = m("dkey").asInstanceOf[String]
     new DomainSettings(
       dkey = dkey,
@@ -29,14 +37,14 @@ object DomainSettings extends IndexInfoConstants {
         m("index_info") match {
           case jiimap : JMapWrapper[String @unchecked, Any @unchecked] =>
             // Конвертим JavaMap в scala-представление:
-            val iimaps = JacksonWrapper.convert[Map[String,Any]](jiimap)
+            val iimaps = JacksonWrapper.convert[DSMap_t](jiimap)
             m("index_info_type").asInstanceOf[IITYPE_T] match {
               case IITYPE_BIG_SHARDED => BigShardedIndex(dkey, iimaps)
               case IITYPE_SMALL_MULTI => SmallMultiIndex(dkey, iimaps)
             }
         }
       },
-      meta = JacksonWrapper.convert[Map[String,Any]](m("meta"))
+      meta = JacksonWrapper.convert[DSMap_t](m("meta"))
     )
   }
 
@@ -53,7 +61,7 @@ object DomainSettings extends IndexInfoConstants {
     )
   }
 
-  protected val getName = getClass.getCanonicalName.replace("$", "")
+  val getName = getClass.getCanonicalName.replace("$", "")
 
   /**
    * Загрузить из хранилища данные для указанного домена
@@ -61,7 +69,7 @@ object DomainSettings extends IndexInfoConstants {
    * @return Объект DomainSettings, если такой был некогда сохранен.
    */
   def load(dkey:String)(implicit fs:FileSystem) : Option[DomainSettings] = {
-    JsonDfsBackend.getAs[Map[String,Any]](dkey, getName, fs) map(apply(_))
+    JsonDfsBackend.getAs[DSMap_t](dkey, getName, fs) map(apply(_))
   }
 
 }
@@ -73,7 +81,7 @@ case class DomainSettings(
   index_info : IndexInfo,
   start_url : String,
   // Сериализуемое хранилище метаданных типа ключ-значение. Изначально хранит только дату добавления сайта в миллисекундах.
-  meta : Map[String, Any] = Map(
+  meta : DomainSettings.DSMap_t = Map(
     "domain_added_date_utc" -> DateTime.now.withZone(DateTimeZone.UTC).toInstant.getMillis
   )
 ) {
@@ -82,7 +90,7 @@ case class DomainSettings(
    * Экспорт всего состояния в легко сериализуемый объект, состящий из стандартных простых типов.
    * @return Map(key:String -> something)
    */
-  def export : Map[String, Any] = {
+  def export : DomainSettings.DSMap_t = {
     Map(
       "dkey"            -> dkey,
       "start_url"       -> start_url,

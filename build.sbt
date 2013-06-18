@@ -4,7 +4,7 @@ name := "util"
 
 organization := "io.suggest"
 
-version := "0.4.7"
+version := "0.5.0"
 
 
 scalaVersion := "2.10.1"
@@ -21,7 +21,7 @@ credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 publishTo := Some("Server Ivy2 Repo" at  "https://ivy2-internal.cbca.ru/sbt/")
 
 
-resolvers += "Conjars" at "http://conjars.org/repo"
+externalIvySettings(baseDirectory(_ / "project" / "ivysettings.xml"))
 
 libraryDependencies ++= {
   val slf4jVsn  = "1.7.2"

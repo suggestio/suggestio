@@ -81,4 +81,44 @@ class UrlUtilsTest extends FlatSpec with ShouldMatchers {
     normalize("http://ya.ru/asd/asd?q=aasd+ads&hg=1&ie=utf-8") should equal ("http://ya.ru/asd/asd?hg=1&ie=utf-8&q=aasd+ads")
   }
 
+
+  "isHostnameValid" should "filter-out invalid domains" in {
+    isHostnameValid("lenta.ru")          should equal (true)
+    isHostnameValid("newsru.com")        should equal (true)
+    isHostnameValid("f-1.ru")            should equal (true)
+    isHostnameValid("ya.ru")             should equal (false)
+    isHostnameValid("www.ya.ru")         should equal (false)
+    isHostnameValid("www.www1.ya.ru")    should equal (false)
+    isHostnameValid("odnoklasniki.ru")   should equal (false)
+    isHostnameValid("signon.ebay.co.uk") should equal (false)
+    isHostnameValid("google.ru")         should equal (false)
+    isHostnameValid("docs.google.com")   should equal (false)
+    isHostnameValid("www.vk.com")        should equal (false)
+  }
+
+
+  "isUrlValid" should "filter-out invalid URLs" in {
+    isPageUrlValid("http://wowgil.ru/?cat=25") should equal (true)
+    isPageUrlValid("http://aklugovoy.ru/personal_information/blog/Georgia_must_pay_compensation.JpEg") should equal (false)
+    isPageUrlValid("http://aklugovoy.ru/personal_information/blog/Georgia_must_pay_compensation.html") should equal (true)
+    isPageUrlValid("http://aklugovoy.ru/personal_information/blog/Georgia_must_pay_compensation")      should equal (true)
+    isPageUrlValid("http://aklugovoy.ru/personal_information/blog/Georgia_must_pay_compensation.")     should equal (true)
+    isPageUrlValid("http://kino.myvi.ru/search/genre/all?key_words=%D0%B0%D0%BB%D0%B8%D1%81%D0%B0+%D0%B2+%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%B5+%D1%87%D1%83%D0%B4%D0%B5%D1%81+&page=2") should equal (false)
+  }
+
+
+  "stripHostnameWww" should "do everything ok" in {
+    stripHostnameWww("www.www.kino.ru") should equal ("kino.ru")
+    stripHostnameWww("www.kino.ru")     should equal ("kino.ru")
+    stripHostnameWww("kino.ru")         should equal ("kino.ru")
+  }
+
+
+  "host2dkey" should "convert hostanames into dkeys" in {
+    host2dkey("www.kino.ru")            should equal ("kino.ru")
+    host2dkey("kino.ru")                should equal ("kino.ru")
+    host2dkey(".kino.ru.")              should equal ("kino.ru")
+    host2dkey("www.президент.рф.")      should equal ("xn--d1abbgf6aiiy.xn--p1ai")
+  }
+
 }

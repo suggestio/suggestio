@@ -10,10 +10,10 @@ import io.suggest.model.SioSearchContext
  * Description: Интерфейсы и константы для классов *IndexInfo.
  */
 
-trait IndexInfo extends IndexInfoConstants {
+trait IndexInfo {
 
   // Вернуть алиас типа
-  def iitype : IITYPE_T
+  def iitype : IndexInfoConstants.IITYPE_T
 
   // имя индекса, в которой лежат страницы для указанной даты
   def indexTypeForDate(d:LocalDate) : (String, String)
@@ -41,12 +41,12 @@ trait IndexInfo extends IndexInfoConstants {
 }
 
 
-trait IndexInfoConstants extends Serializable {
+object IndexInfoConstants extends Serializable {
 
   // Описание идентификатор типов
-  protected type IITYPE_T = String
+  type IITYPE_T = String
 
-  protected val IITYPE_SMALL_MULTI  : IITYPE_T = "small_multi"
-  protected val IITYPE_BIG_SHARDED  : IITYPE_T = "big_sharded"
+  val IITYPE_SMALL_MULTI  : IITYPE_T = "small_multi"
+  val IITYPE_BIG_SHARDED  : IITYPE_T = "big_sharded"
 
 }

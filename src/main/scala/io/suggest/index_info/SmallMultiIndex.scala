@@ -2,6 +2,7 @@ package io.suggest.index_info
 
 import com.github.nscala_time.time.Imports._
 import io.suggest.model.SioSearchContext
+import IndexInfoConstants._
 
 /**
  * Suggest.io
