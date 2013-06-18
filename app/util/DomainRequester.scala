@@ -20,7 +20,7 @@ import java.io.InputStream
  * тех или иных задач. Использует dispatch 0.10+ для поддержания пула http-клиентов через стандартные фьючерсы.
  *
  * Суть: кто-то отправляет актору ссылку, и он смотрит нет ли уже выполняющегося фьючерса в карте. Если нет, то
- * добавить новый фьючерс, иначе скомбинировать через с andThen и перезаписать в карте и вернуть его клиенту.
+ * добавить новый фьючерс, иначе скомбинировать через andThen и перезаписать в карте и вернуть его клиенту.
  *
  * Когда фьючерс завершится, актор получит уведомление и выкинет его из карты фьючерсов.
  * Если фьючерс был перезаписан, то удаления не произойдёт.
@@ -46,13 +46,15 @@ object DomainRequester {
   protected def actorRef : ActorRef = SiowebSup.getDomainRequesterRef
 
   /**
-   * Отправить ссылку в псевдо-очередь. Вернуть фьючерс запроса, который начнет выполнятся как только придёт время.
-   * @param dkey
-   * @param url
+   * Отправить ссылку в псевдо-очередь.
+   * @param dkey ключ домена, обычно нормализованный хостнейм.
+   * @param url ссылка на страницу, которую опрашиваем.
+   * @return Фьючерс DRResp200.
    */
-  def queueUrlSync(dkey:String, url:String) = Await.result(queueUrl(dkey,url), timeoutSec)
-
-  def queueUrl(dkey:String, url:String) = (actorRef ? QueueUrl(dkey=dkey, url=url)).asInstanceOf[Future[DRResp200]]
+  def queueUrl(dkey:String, url:String) : Future[DRResp200] = {
+    (actorRef ? QueueUrl(dkey=dkey, url=url))
+      .flatMap { _.asInstanceOf[Future[DRResp200]] }
+  }
 
   /**
    * Функция нужна для отладки: чтение копии текущей карты из работающего актора.
@@ -113,7 +115,7 @@ class DomainRequester extends Actor {
         // Никто не обращался к указанному домену последнее время. Нужно создать новый фьючерс.
         case None => startReqAsync(_url)
       }
-      // Когда фьючерс завершается, он должет уведомленить о завершении в этот актор.
+      // Когда фьючерс завершается, он должет уведомить о завершении в этот актор.
       fut onComplete {
         _ => self ! FutureCompleted(_dkey, counter)
       }

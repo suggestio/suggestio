@@ -12,7 +12,6 @@ object ApplicationBuild extends Build {
     val esVsn         = "0.20.6"
     val hadoopVsn     = "1.1.2"
     val cascadingVsn  = "2.0.7"
-    val sioutilVsn    = "0.4.4"
     Seq(
       // Add your project dependencies here,
       jdbc,
@@ -22,7 +21,8 @@ object ApplicationBuild extends Build {
       "org.apache.hadoop" % "hadoop-client" % hadoopVsn,
       // spat4j: костыль для http://elasticsearch-users.115913.n3.nabble.com/Compile-error-with-0-20-2-td4028743.html :
       "com.spatial4j" % "spatial4j" % "0.3",
-      "io.suggest" %% "util" % sioutilVsn,
+      "io.suggest" %% "util"      % "0.5.0",
+      "io.suggest" %% "util-play" % "0.4.8a",
       // hadoop
       "org.apache.hadoop" % "hadoop-core" % hadoopVsn,
       "org.apache.hadoop" % "hadoop-client" % hadoopVsn,

@@ -1,8 +1,5 @@
 package models
 
-import play.api.cache.Cache
-import play.api.Play.current
-import io.suggest.model.DomainSettings
 import util.SiobixFs
 import SiobixFs.fs
 
@@ -21,7 +18,7 @@ case class MDomain(
    * Выдать настройки для домена.
    * @return
    */
-  def domainSettings = MDomain.getSettingsForDkeyCache(dkey).get
+  def domainSettings = MDomainSettings.getForDkey(dkey).get
   def authzForPerson(person_id:String) = MPersonDomainAuthz.getForPersonDkey(dkey, person_id)
 
 }
@@ -31,29 +28,9 @@ case class MDomain(
 object MDomain {
 
   /**
-   * С помощью кеша и HDFS получить данные по домену.
-   * @param dkey
-   * @return
-   */
-  def getSettingsForDkeyCache(dkey:String) : Option[DomainSettings] = {
-    Cache.getOrElse(dkey + "/ds", 60)(getSettingForDkey(dkey))
-  }
-
-
-  /**
-   * Получить данные по домену напрямую из HDFS.
-   * @param dkey
-   * @return
-   */
-  def getSettingForDkey(dkey:String) : Option[DomainSettings] = {
-    DomainSettings.load(dkey)
-  }
-
-
-  /**
    * Прочитать для dkey. Если нет такого домена, то будет None.
-   * @param dkey
-   * @return
+   * @param dkey ключ домена.
+   * @return Соответсвующий MDomain, если найден.
    */
   def getForDkey(dkey:String) : Option[MDomain] = {
     val dkeyPath = SiobixFs.dkeyPath(dkey)

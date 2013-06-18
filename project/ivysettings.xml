@@ -8,7 +8,7 @@
     <chain name="play">
       <url name="cbca ivy2-internal">
 	<ivy pattern="https://ivy2-internal.cbca.ru/sbt/[orgPath]/[module]/[revision]/[type]-[revision].xml"/>
-	<artifact pattern="https://ivy2-internal.cbca.ru/sbt/[orgPath]/[module]/[revision]/[artifact]-[revision].[ext]"/>
+	<artifact pattern="https://ivy2-internal.cbca.ru/sbt/[orgPath]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"/>
       </url>
 
       <ibiblio name="typesafe-releases" m2compatible="true" root="http://repo.typesafe.com/typesafe/releases" />
@@ -21,9 +21,9 @@
       <ibiblio name="typesafe-snapshots" m2compatible="true" root="http://repo.typesafe.com/typesafe/snapshots" />
       <ibiblio name="sonatype-oss-snapshots" m2compatible="true" root="http://oss.sonatype.org/content/repositories/snapshots" />
 
-      <filesystem name="ivy2 localhost">
+      <filesystem name="local">
 	<ivy pattern="${env.HOME}/.ivy2/local/[organisation]/[module]/[revision]/ivys/ivy.xml"/>
-	<artifact pattern="${env.HOME}/.ivy2/local/[organisation]/[module]/[revision]/[type]s/[artifact].[ext]"/>
+	<artifact pattern="${env.HOME}/.ivy2/local/[organisation]/[module]/[revision]/[type]s/[artifact]-[revision](-[classifier]).[ext]"/>
       </filesystem>
 
       <ibiblio name="local m2" m2compatible="true" root="file://${env.HOME}/.m2/repository"/>

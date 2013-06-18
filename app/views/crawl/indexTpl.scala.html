@@ -2,7 +2,7 @@
 
 @* Тут отображение главной страницы, в которой можно добавить сайт в кравлинг. *@
 
-@import c.lang
+@import c._
 @import stuff._
 
 @head_after = {
@@ -101,13 +101,11 @@
 
 	<div class="first-step">
 	    <div class="input" style="position: relative;">
-		{% if not is_new_sites_allowed %}
-		{% if not is_debug %}
-		<div class="sio-wip">
+		@if(canAddSites && !isDebug) {
+		  <div class="sio-wip">
 		    <div class="sio-wip-message">@Messages("overloaded_message")</div>
-		</div>
-		{% endif %}
-		{% endif %}
+		  </div>
+		}
 		<div class="input-shadow">
 		    <div class="http-prefix">http://</div>
 		    <div class="input-real"><input id="userSiteInput" type="text"/></div>

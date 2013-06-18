@@ -3,6 +3,7 @@ package util
 import org.joda.time.DateTime
 import play.api.i18n.Lang
 import play.api.mvc.{Request, AnyContent}
+import play.api.Play.current
 
 /**
  * Suggest.io
@@ -45,4 +46,8 @@ case class Context(
   def isAdmin = isAuth && mp_opt.get.isAdmin
 
   def lang_str = lang.language
+
+  lazy val canAddSites: Boolean = current.configuration.getBoolean("can_add_sites") getOrElse true
+  lazy val isDebug: Boolean     = request.getQueryString("debug").isDefined
+
 }

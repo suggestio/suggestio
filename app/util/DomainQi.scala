@@ -11,6 +11,7 @@ import scala.concurrent.duration._
 import java.util.concurrent.TimeUnit
 import models.MDomainQi
 import org.xml.sax.Attributes
+import io.suggest.util.StringUtil.randomId
 
 /**
  * Suggest.io
@@ -25,22 +26,24 @@ import org.xml.sax.Attributes
  * затем проверять по базе и порождать какое-то событие или предпринимать иные действия.
  */
 
-
 // Статический клиент к DomainRequester, который выполняет запросы к доменам
 object DomainQi extends Logs {
 
   val parseTimeout = 5.seconds
   protected val timeout_msg = "timeout"
 
-  def addToSession(qi:MDomainQi, session:Session) : Session = {
-    val skey = dkey2skey(qi.dkey)
-    // Пишем ворнинг в логи, если какое-то странное действо происходит.
-    session.get(skey) foreach {
-      case qi_id_old if qi_id_old != qi.id =>
-        logger.warn("Overwriting session qi_id for domain %s : %s -> %s".format(qi.dkey, qi_id_old, qi.id))
-    }
-    session + (skey -> qi.id)
+  /**
+   * Отправить в сессию данные по добавлению сайта.
+   * @param dkey ключ домена.
+   * @param qi_id Можно передать qi_id, или же он будет сгенерирован автоматом.
+   * @return Обновлённый объект session.
+   */
+  def addDomainQiIntoSession(dkey:String, qi_id:String = randomId(8)) = {
+    // Храним домен в сессии, используя его в качестве ключа внутри криптоконтейнера.
+    val skey = dkey2skey(dkey)
+    skey -> qi_id
   }
+
 
   /**
    * Прочитать из сессии список быстро добавленных в систему доменов и прилинковать их к текущему юзеру.
@@ -100,14 +103,19 @@ object DomainQi extends Logs {
           val l = task.get(parseTimeout.toMillis, TimeUnit.MILLISECONDS)
           // Есть список найденных скриптов suggest_io.js на странице. Определить, есть ли среди них подходящий.
           l.find {
-            case SioJsV2(_dkey, _qi_id) if dkey == _dkey && qi_id.isDefined && qi_id.get == _qi_id => true
+            case SioJsV2(_dkey, _qi_id) =>
+              dkey == _dkey && qi_id.isDefined && qi_id.get == _qi_id
+
             case other => false
+
           } match {
+            // find нашел подходящий скрипт
             case Some(info) =>
               val info2 = info.asInstanceOf[SioJsV2]
               logger.info("qi success for " + dkey + "! " + info2)
               Right(info2)
 
+            // find не нашел ничего интересного на странице.
             case None =>
               // Послать уведомление о неудачной проверке. Если в списке есть элементы, то они "чужие", а если нет то что-то не так установлено.
               val errMsg = if (l.isEmpty)
@@ -129,6 +137,7 @@ object DomainQi extends Logs {
             val errMsg = "Cannot parse page: internal parse error."
             logger.error("parse exception on %s".format(url) + ex.getCause)
             Left(errMsg)
+
         }
         val qiNews : QiEventT = result match {
           // Всё верно. Можно заапрувить учетку юзера по отношению к этому домену.
@@ -156,9 +165,9 @@ object DomainQi extends Logs {
 
 
   /**
-   * Зааппрувить указанный qi id.
-   * @param dkey
-   * @param qi_id
+   * Зааппрувить указанный qi id. Нужно выдать юзеру с указанным qi права на указанный домен.
+   * @param dkey ключ домена, который должен быть добавлен в базу кравлера.
+   * @param qi_id qi id, относящиеся к неопределенному юзеру.
    */
   def approve_qi(dkey:String, qi_id:String) {
     MDomainQi.getForDkeyId(dkey, qi_id) match {
