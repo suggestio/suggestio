@@ -223,3 +223,6 @@ s.sc.live=В живую
 
 s.bb.title=Настройка браузера
 
+mappers.url.invalid_url=Некорректный URL.
+mappers.url.only_http_https_allowed=Недопустимый протокол. Только HTTP и HTTPS разрешены.
+mappers.url.hostname_prohibited=Этот сайт нельзя проиндексировать.

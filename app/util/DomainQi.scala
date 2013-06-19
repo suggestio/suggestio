@@ -31,17 +31,25 @@ object DomainQi extends Logs {
 
   val parseTimeout = 5.seconds
   protected val timeout_msg = "timeout"
+  val qiIdLen = 8
 
   /**
    * Отправить в сессию данные по добавлению сайта.
    * @param dkey ключ домена.
-   * @param qi_id Можно передать qi_id, или же он будет сгенерирован автоматом.
-   * @return Обновлённый объект session.
+   * @return qi_id для генерации скрипта и обновлённый объект session либо без него если session не изменялся.
    */
-  def addDomainQiIntoSession(dkey:String, qi_id:String = randomId(8)) = {
+  def addDomainQiIntoSession(dkey:String)(implicit session:Session) : (String, Option[Session]) = {
     // Храним домен в сессии, используя его в качестве ключа внутри криптоконтейнера.
     val skey = dkey2skey(dkey)
-    skey -> qi_id
+    session.get(skey) match {
+      case Some(qi_id) =>
+        qi_id -> None
+
+      case None =>
+        val qi_id = randomId(qiIdLen)
+        val session1 = session + (skey -> qi_id)
+        qi_id -> Some(session1)
+    }
   }
 
 
@@ -53,8 +61,8 @@ object DomainQi extends Logs {
    * @param session Изменяемые данные сессии.
    */
   def installFromSession(email:String, session:Session) = {
+
     println("installFromSession(): Not yet implemented")
-    ???
     session
   }
 

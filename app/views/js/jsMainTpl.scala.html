@@ -1,0 +1,12 @@
+@(dkey:String, qi_id:String, uSettings:models.MDomainUserSettingsT, isInstall:Boolean = false, isSiteAdmin:Boolean = false)(implicit ctx:util.Context)
+
+
+@*  Шаблон генерации js-скрипта, отображаемый обычным юзерам. По сути дергает другие шаблоны, подключая необходимый код.
+    Аргументы:
+        - dkey - нормализованный хостнейм
+        - qi_id - id быстрой установки
+        - uSettings - разные пользовательские настройки. На замену domain_data.
+        - isSiteAdmin - имеет ли юзер права на настройки поиска?
+*@
+
+@v2(dkey=dkey, qi_id=qi_id, uSettings=uSettings, isSiteAdmin=isSiteAdmin, isInstall=isInstall)

@@ -1,10 +1,12 @@
 package models
 
 import scala.collection.{immutable, mutable}
-import util.SiobixFs
+import util.{DfsModelStaticT, SiobixFs}
 import SiobixFs.fs
 import io.suggest.model.JsonDfsBackend
-import org.apache.hadoop.fs.Path
+import scala.concurrent.{Await, future}
+import scala.concurrent.duration._
+import play.api.libs.concurrent.Execution.Implicits._
 
 /**
  * Suggest.io
@@ -19,32 +21,31 @@ import org.apache.hadoop.fs.Path
  * юзером.
  */
 
-case class MDomainUserSettings(
-  dkey : String,
-  data : MDomainUserSettings.DataT
-) {
+// Есть несколько реализаций класса для разных задач. Тут трайт с общим кодом.
+trait MDomainUserSettingsT {
+
   import MDomainUserSettings._
 
-  /*
-   * Быстрое чтение различных элементов карты. Здесь эмулируется работа "как с переменными":
-   * val si = mdus.showImages
-   * mdus.showImages = false
-   */
+  // Абстрактные значения экземпляров классов.
+  val dkey: String
+  val data: MDomainUserSettings.DataT
 
+  // геттеры
   def showImages = getter[Boolean](KEY_SHOW_IMAGES)
-  def showImages_= (value:Boolean) { setter(KEY_SHOW_IMAGES, value) }
-
   def showTitle = getter[String](KEY_SHOW_TITLE)
-  def showTitle_= (value:String) { setter(KEY_SHOW_TITLE, value) }
-
   def showContentText = getter[String](KEY_SHOW_CONTENT_TEXT)
-  def showContentText_= (value:String) { setter(KEY_SHOW_CONTENT_TEXT, value) }
-
   def renderer = getter[Int](KEY_RENDERER)
-  def renderer_= (value:Int) { setter(KEY_RENDERER, value) }
-
   def useDateScoring = getter[Boolean](KEY_USE_DATE_SCORING)
-  def useDateScoring_= (value:Boolean) { setter(KEY_USE_DATE_SCORING, value) }
+  def json: Option[MDomainUserJson]
+  protected def jsonSync = MDomainUserJson.getForDkey(dkey)
+
+  // Сеттеры. Вызываются через оборот "value.showImages = true"
+  def showImages_=(value:Boolean) { setter(KEY_SHOW_IMAGES, value) }
+  def showTitle_=(value:String) { setter(KEY_SHOW_TITLE, value) }
+  def showContentText_=(value:String) { setter(KEY_SHOW_CONTENT_TEXT, value) }
+  def renderer_=(value:Int) { setter(KEY_RENDERER, value) }
+  def useDateScoring_=(value:Boolean) { setter(KEY_USE_DATE_SCORING, value) }
+  def json_=(data:String) = MDomainUserJson(dkey, data).save
 
   /**
    * Сохранить карту в DFS. Если карта пуста, то удалить файл карты из хранилища.
@@ -57,20 +58,6 @@ case class MDomainUserSettings(
       fs.delete(path, false)
     }
     this
-  }
-
-
-  /**
-   * Динамически-типизированный хелпер для работы с картой настроек
-   * @param key ключ настроек
-   * @param value значение настройки
-   * @tparam T тип значения (автоматически выводится из value)
-   */
-  protected def setter[T <: Any](key:String, value:T) {
-    defaults.get(key) match {
-      case dflt if dflt == value => data.remove(key)
-      case _ => data(key) = value
-    }
   }
 
   /**
@@ -86,10 +73,63 @@ case class MDomainUserSettings(
     }
   }
 
+
+  /**
+   * Динамически-типизированный хелпер для работы с картой настроек
+   * @param key ключ настроек
+   * @param value значение настройки
+   * @tparam T тип значения (автоматически выводится из value)
+   */
+  protected def setter[T <: Any](key:String, value:T) {
+    defaults.get(key) match {
+      case dflt if dflt == value => data.remove(key)
+      case _ => data(key) = value
+    }
+  }
 }
 
 
-object MDomainUserSettings {
+/**
+ * Статическая реализация сабжа. Пригодна для быстрого сохранения данных в базу.
+ * @param dkey ключ домена
+ * @param data данные
+ */
+case class MDomainUserSettingsStatic(
+  dkey : String,
+  data : MDomainUserSettings.DataT
+
+) extends MDomainUserSettingsT {
+  def json = jsonSync
+}
+
+
+/**
+ * Реализация сабжа футуризованная. Карта данных и пользовательский json приходят асинхронно из DFS.
+ * Синхронизация происходит через lazy val + Await future.
+ * @param dkey ключ домена.
+ */
+case class MDomainUserSettingsFuturized(dkey:String) extends MDomainUserSettingsT {
+  import MDomainUserSettings.{getData, futureAwaitDuration}
+
+  private val dataFuture = future(getData(dkey))
+  lazy val data = {
+    if (dataFuture.isCompleted)
+      dataFuture.value
+    else
+      Await.result(dataFuture, futureAwaitDuration)
+  }
+
+  private val jsonFuture = future(jsonSync)
+  lazy val json = {
+    if (jsonFuture.isCompleted)
+      jsonFuture.value
+    else
+      Await.result(jsonFuture, futureAwaitDuration)
+  }
+}
+
+
+object MDomainUserSettings extends DfsModelStaticT {
 
   // Список основных ключей, используемых в карте данных
   val KEY_SHOW_IMAGES = "show_images"
@@ -119,26 +159,26 @@ object MDomainUserSettings {
     KEY_USE_DATE_SCORING  -> true
   )
 
-  /**
-   * Сгенерить dfs-путь для указанного dkey
-   * @param dkey
-   * @return
-   */
-  protected def getPath(dkey:String) = {
-    val filename = getClass.getCanonicalName
-    new Path(SiobixFs.dkeyPathConf(dkey), filename)
-  }
+  val futureAwaitDuration = 3 seconds
 
 
   /**
    * Прочитать карту для ключа. Даже если ничего не сохранено, функция возвращает рабочий экземпляр класса.
    * @param dkey ключ домена
-   * @return
+   * @return MDomainUserSettings, если такой есть в хранилище.
    */
-  def getForDkey(dkey:String) : MDomainUserSettings = {
+  def getForDkey(dkey:String) = {
+    MDomainUserSettingsStatic(dkey, getData(dkey))
+  }
+
+  /**
+   * Прочитать data для указанного добра.
+   * @param dkey ключ домена.
+   * @return карта данных пользовательских настроек.
+   */
+  def getData(dkey:String) : DataT = {
     val path = getPath(dkey)
-    val data : DataT = JsonDfsBackend.getAs[DataT](path, fs).getOrElse(mutable.Map())
-    MDomainUserSettings(dkey, data)
+    JsonDfsBackend.getAs[DataT](path, fs).getOrElse(mutable.Map())
   }
 
 }

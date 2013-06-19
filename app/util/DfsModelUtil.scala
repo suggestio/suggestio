@@ -13,7 +13,6 @@ import SiobixFs.fs
 
 object DfsModelUtil extends Logs {
 
-
   /**
    * Аккуратненько прочитать файл. Если файла нет или чтение не удалось, то в логах будет экзепшен и None в результате.
    * @param path путь, который читать.
@@ -43,5 +42,21 @@ object DfsModelUtil extends Logs {
     }
   }
 
+}
 
+
+// Повторяющиеся куски кода для статических объектов моделей.
+trait DfsModelStaticT {
+
+  // Имя файла, под именем которого сохраняется всё добро. Имена объектов обычно содержат $ на конце, поэтому это удаляем.
+  val filename = getClass.getCanonicalName.replace("$", "")
+
+  /**
+   * Сгенерить DFS-путь для указанного сайта и класса модели.
+   * @param dkey ключ домена сайта.
+   * @return Путь.
+   */
+  def getPath(dkey:String) : Path = {
+    new Path(SiobixFs.dkeyPathConf(dkey), filename)
+  }
 }

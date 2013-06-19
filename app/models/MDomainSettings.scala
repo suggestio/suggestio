@@ -3,6 +3,7 @@ package models
 import play.api.cache.Cache
 import play.api.Play.current
 import io.suggest.model.{DomainSettings, DomainSettingsStaticT}
+import util.SiobixFs.fs
 
 /**
  * Suggest.io

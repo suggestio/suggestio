@@ -34,7 +34,8 @@ object ApplicationBuild extends Build {
       "com.typesafe.akka" %% "akka-actor" % "2.1.0",
       // for domain validation:
       "net.databinder.dispatch" %% "dispatch-core" % "0.10.0",
-      "org.apache.tika" % "tika-core" % "1.3"
+      "org.apache.tika" % "tika-core" % "1.3",
+      "com.google.guava" % "guava" % "14.0.1"
     )
   }
  

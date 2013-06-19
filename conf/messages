@@ -218,3 +218,7 @@ s.sc.live=Live!
 
 s.bb.title=Browser check
 
+
+mappers.url.invalid_url=Invalid URL.
+mappers.url.only_http_https_allowed=Only HTTP and HTTPS protocols are allowed.
+mappers.url.hostname_prohibited=This site cannot be indexed.
