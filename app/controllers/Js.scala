@@ -171,7 +171,7 @@ object Js extends Controller with AclT with ContextT {
    * @param qi_id qi_id, заявленное клиентом.
    * @return Возвращает различные коды ошибок с сообщениями.
    */
-  def installUrl(domain:String, qi_id:String) = {
+  def installUrl(domain:String, qi_id:String) = maybeAuthenticated { implicit pw_opt => implicit request =>
     addDomainFormM.bindFromRequest().fold(
       {formWithErrors => NotAcceptable("Not a URL.")}
       ,

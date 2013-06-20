@@ -18,7 +18,7 @@ GET  /login/persona                     controllers.Ident.persona
 POST /login/persona                     controllers.Ident.persona_submit
 POST /logout                            controllers.Ident.logout
 
-// Callback'и инсталляторов и валидаторов сайтов.
+## Callback'и инсталляторов и валидаторов сайтов.
 POST /js/install_url/:domain/:qi_id     controllers.Js.installUrl(domain, qi_id)
 
 # Пункт меню "О проекте"
