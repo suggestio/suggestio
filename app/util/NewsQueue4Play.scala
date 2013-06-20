@@ -2,6 +2,7 @@ package util
 
 import scala.concurrent.duration._
 import akka.actor._
+import io.suggest.event._
 import play.api.libs.concurrent.Execution.Implicits._
 import akka.actor.SupervisorStrategy._
 import scala.concurrent.{Future, Await}
@@ -164,7 +165,7 @@ class NewsQueue4PlaySup extends Actor {
  * @param dkey ключ домена
  * @param typ некий "тип". Нужно для разграничения очередей новостей внутри домена.
  */
-protected case class EnsureNQ(dkey:String, typ:String)
+sealed case class EnsureNQ(dkey:String, typ:String)
 
 
 // Самая простая реализация актора NewsQueue с логгированием через play.

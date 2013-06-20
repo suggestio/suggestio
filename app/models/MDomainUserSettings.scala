@@ -112,20 +112,10 @@ case class MDomainUserSettingsFuturized(dkey:String) extends MDomainUserSettings
   import MDomainUserSettings.{getData, futureAwaitDuration}
 
   private val dataFuture = future(getData(dkey))
-  lazy val data = {
-    if (dataFuture.isCompleted)
-      dataFuture.value
-    else
-      Await.result(dataFuture, futureAwaitDuration)
-  }
+  lazy val data = Await.result(dataFuture, futureAwaitDuration)
 
   private val jsonFuture = future(jsonSync)
-  lazy val json = {
-    if (jsonFuture.isCompleted)
-      jsonFuture.value
-    else
-      Await.result(jsonFuture, futureAwaitDuration)
-  }
+  lazy val json = Await.result(jsonFuture, futureAwaitDuration)
 }
 
 
@@ -167,9 +157,20 @@ object MDomainUserSettings extends DfsModelStaticT {
    * @param dkey ключ домена
    * @return MDomainUserSettings, если такой есть в хранилище.
    */
-  def getForDkey(dkey:String) = {
+  def getForDkey(dkey:String) : MDomainUserSettingsT = {
     MDomainUserSettingsStatic(dkey, getData(dkey))
   }
+
+  /**
+   * Быстро сгенерить объект, чьё состояние генерируется асинхронно.
+   * @param dkey ключ домена
+   * @return Моментальный MDomainUserSettings, чья карта данных приходит из hdfs в фоне.
+   */
+  def getForDkeyAsync(dkey:String) : MDomainUserSettingsT = {
+    MDomainUserSettingsFuturized(dkey)
+  }
+
+  private def emptyData : DataT = mutable.Map()
 
   /**
    * Прочитать data для указанного добра.
@@ -178,7 +179,14 @@ object MDomainUserSettings extends DfsModelStaticT {
    */
   def getData(dkey:String) : DataT = {
     val path = getPath(dkey)
-    JsonDfsBackend.getAs[DataT](path, fs).getOrElse(mutable.Map())
+    JsonDfsBackend.getAs[DataT](path, fs).getOrElse(emptyData)
   }
 
+  /**
+   * Выдать пустые (дефолтовые) пользовательские настройки.
+   * TODO тут всегда создается объект, хотя можно было бы снизить объем мусора.
+   * @param dkey ключ домена
+   * @return MDomainUserSettingsT, возвращающий дефолт по всем направлениям.
+   */
+  def empty(dkey:String): MDomainUserSettingsT = MDomainUserSettingsStatic(dkey, emptyData)
 }
