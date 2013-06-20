@@ -18,7 +18,7 @@ case class SnActorPathSubscriber(actorPath:ActorPath) extends SnSubscriberT {
    * @param ctx для возможности резолва ActorPath в системе Akka.
    */
   def publish(event: SioNotifier.Event)(implicit ctx:ActorContext) {
-    ctx.actorFor(actorPath) ! event
+    ctx.actorFor(actorPath) forward event
   }
 
   def getActor(implicit ctx:ActorContext) = None

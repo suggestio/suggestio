@@ -121,6 +121,32 @@ abstract class NewsQueueAbstract(
 
 
   /**
+   * Если пришли новости, то тут реакция. Вынесено за пределы receive, ибо новости по историческим причинам могут приходить по разным каналам.
+   * @param news новости.
+   */
+  protected def handleNews(news : NewsEventT) {
+    val queueWasEmpty = news_queue.isEmpty
+    news_queue.enqueue(QueuedNews(getTimestampMs, news))
+    // Уведомить всех ожидающих о появлении свежей новости
+    if (!waiting.isEmpty) {
+      val newsReply = NewsReply(timestampMs = getTimestampMs, news = List(news))
+      waiting.foreach {
+        case WaitingActor(waitingActorRef, timeoutTref) =>
+          timeoutTref.cancel()
+          waitingActorRef ! newsReply
+          context.unwatch(waitingActorRef)
+      }
+      waiting.clear()
+    }
+    // Т.к. ожидающих сейчас точно нет, надо убедится, что таймер самовыпиливания запущен
+    ensureLonelyTimer()
+    // Если очередь новостей БЫЛА пуста, то надо запустить таймер выпиливания старых новостей.
+    if (queueWasEmpty)
+      startDropOldNewsTimer(newsTtl)
+  }
+
+
+  /**
    * Обработка входящих сообщений, в частности входящих событий и запросов на получение свежих новостей.
    * Подклассы могут расширять функцию через super.receive orElse otherPartialFunction
    * @return
@@ -134,25 +160,11 @@ abstract class NewsQueueAbstract(
 
 
     // Пришли новости. Закинуть их в очередь под текущим таймштампом.
-    case PushNews(news) =>
-      val queueWasEmpty = news_queue.isEmpty
-      news_queue.enqueue(QueuedNews(getTimestampMs, news))
-      // Уведомить всех ожидающих о появлении свежей новости
-      if (!waiting.isEmpty) {
-        val newsReply = NewsReply(timestampMs = getTimestampMs, news = List(news))
-        waiting.foreach {
-          case WaitingActor(waitingActorRef, timeoutTref) =>
-            timeoutTref.cancel()
-            waitingActorRef ! newsReply
-            context.unwatch(waitingActorRef)
-        }
-        waiting.clear()
-      }
-      // Т.к. ожидающих сейчас точно нет, надо убедится, что таймер самовыпиливания запущен
-      ensureLonelyTimer()
-      // Если очередь новостей БЫЛА пуста, то надо запустить таймер выпиливания старых новостей.
-      if (queueWasEmpty)
-        startDropOldNewsTimer(newsTtl)
+    case PushNews(news)  => handleNews(news)
+
+
+    // Очередь присоединена напрямую к SioNotifier, и он пробрасывает новости.
+    case news: SioNotifier.Event => handleNews(news)
 
 
     // Cработал таймер очистки очереди новостей. Пора удалять старые новости. Обычно удаляется один самый старый элемент.
@@ -225,7 +237,6 @@ abstract class NewsQueueAbstract(
       error("News-client terminated during wait: " + actorRef)
       rmWaiting(actorRef)
       ensureLonelyTimerIfNoWaiting()
-
 
     // Таймер автозавершения сработал, т.е. наступило состояние полного одиночества.
     case atom if atom == iAmLonelyMsg =>

@@ -18,7 +18,7 @@ case class SnActorRefSubscriber(actorRef:ActorRef) extends SnSubscriberT {
    * @param ctx контекст актора sio_notifier.
    */
   def publish(event: SioNotifier.Event)(implicit ctx:ActorContext) {
-    actorRef ! event
+    actorRef forward event
   }
 
   def getActor(implicit ctx:ActorContext) = Some(actorRef)
