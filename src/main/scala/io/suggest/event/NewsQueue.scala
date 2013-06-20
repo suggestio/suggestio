@@ -1,4 +1,4 @@
-package util
+package io.suggest.event
 
 import akka.actor._
 import scala.collection.mutable
@@ -379,8 +379,8 @@ abstract class NewsQueueAbstract(
 }
 
 
-protected case class PushNews(news:NewsQueue.NewsEventT)
-protected case class ShortPullNews(timestampMs:Long)
-protected case class LongPollNews(timestampMs:Long, timeout:FiniteDuration)
-protected case class NewsReply(timestampMs:Long, news:List[NewsQueue.NewsEventT])
+sealed case class PushNews(news:NewsQueue.NewsEventT)
+sealed case class ShortPullNews(timestampMs:Long)
+sealed case class LongPollNews(timestampMs:Long, timeout:FiniteDuration)
+sealed case class NewsReply(timestampMs:Long, news:List[NewsQueue.NewsEventT])
 
