@@ -22,7 +22,7 @@ object SioNotifier {
 
   type Event = SioEventT
   type ClassifierToken = Option[Any]
-  type Classifier = List[ClassifierToken]
+  type Classifier = Seq[ClassifierToken]
   type Subscriber = SnSubscriberT
 
   private var snRef : ActorRef = null
