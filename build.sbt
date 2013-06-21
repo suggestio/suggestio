@@ -18,7 +18,7 @@ publishMavenStyle := false
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
-publishTo := Some("Server Ivy2 Repo" at  "https://ivy2-internal.cbca.ru/sbt/")
+publishTo := Some("cbca ivy2-internal" at  "https://ivy2-internal.cbca.ru/sbt/")
 
 
 externalIvySettings(baseDirectory(_ / "project" / "ivysettings.xml"))
