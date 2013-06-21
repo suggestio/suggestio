@@ -22,22 +22,24 @@ import scala.concurrent.{Future, ExecutionContext}
  * после некоторого периода неиспользования.
  */
 
+object NewsQueue extends NewsQueueStaticT {
 
-object NewsQueue {
+  // Сигнал, означающий для актора NewsQueue, что он остался в одиночестве и ему пора.
+  val iAmLonelyMsg = 'iAmLonely
+  val dropOldMsg = 'drop_old
+  val pingMsg = 'ping
+
+  // По таймеру дропать последнюю новость и последующие новости, если они устаревают в течение следующих N мс.
+  val checkNextNewsMs = 50
+}
+
+trait NewsQueueStaticT {
 
   import akka.pattern.ask
   import akka.util.Timeout
 
   // Какой тип данных является новостью
   type NewsEventT = AnyRef
-
-  // По таймеру дропать последнюю новость и последующие новости, если они устаревают в течение следующих N мс.
-  val checkNextNewsMs = 50
-
-  // Сигнал, означающий для актора NewsQueue, что он остался в одиночестве и ему пора.
-  val iAmLonelyMsg = 'iAmLonely
-  val dropOldMsg = 'drop_old
-  val pingMsg = 'ping
 
   def getTimestampMs = System.currentTimeMillis()
 
