@@ -27,7 +27,6 @@ object NewsQueue extends NewsQueueStaticT {
   // Сигнал, означающий для актора NewsQueue, что он остался в одиночестве и ему пора.
   val iAmLonelyMsg = 'iAmLonely
   val dropOldMsg = 'drop_old
-  val pingMsg = 'ping
 
   // По таймеру дропать последнюю новость и последующие новости, если они устаревают в течение следующих N мс.
   val checkNextNewsMs = 50
@@ -40,6 +39,8 @@ trait NewsQueueStaticT {
 
   // Какой тип данных является новостью
   type NewsEventT = AnyRef
+
+  val pingMsg = 'ping
 
   def getTimestampMs = System.currentTimeMillis()
 
