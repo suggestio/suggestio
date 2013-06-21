@@ -1,11 +1,12 @@
 package controllers
 
-import play.api.mvc.Controller
+import util.event._
+import play.api.mvc.{WebSocket, Controller}
 import play.api.data._
 import util.FormUtil._
 import _root_.util._
 import io.suggest.util.UrlUtil
-import models.{MDomainUserSettings, MDomain, MDomainQi}
+import models.{MDomainUserSettings, MDomain}
 import play.api.Play.current
 import play.api.libs.json._
 import views.html.js._
@@ -17,6 +18,9 @@ import io.suggest.event.subscriber.SnActorRefSubscriber
 import scala.Some
 import play.api.libs.json.JsObject
 import scala.concurrent.Future
+import java.util.UUID
+import play.api.libs.iteratee.{Iteratee, Concurrent}
+import io.suggest.util.event.subscriber.{SioEventTJSable, SnWebsocketSubscriber}
 
 
 /**
@@ -31,7 +35,7 @@ import scala.concurrent.Future
  * 3. Одновременно, инсталлер запускает comet и мониторит состояние qi.
  */
 
-object Js extends Controller with AclT with ContextT {
+object Js extends Controller with AclT with ContextT with Logs {
 
   val SIO_JS_STATIC_FILENAME  = current.configuration.getString("sio_js.filename") getOrElse "sio.search.v7.js"
   val PULL_INSTALLER_CALLBACK = current.configuration.getString("sio_js.installer.callback") getOrElse "sio.qi_events"
@@ -116,7 +120,10 @@ object Js extends Controller with AclT with ContextT {
           case true =>
             // Далее запрос становится асинхронным, т.к. ensureActorFor возвращает Future[ActorRef]. Можно блокироваться через EnsureSync, можно сгенерить фьючерс. Пока делаем второе.
             // Запустить очередь приема новостей, присоединив её к sio_notifier. Когда откроется ws-соединение, очередь будет выпилена, и коннект между sn и каналом ws будет уже прямой.
+            val timestamp0 = NewsQueue4Play.getTimestampMs
+            logger.debug("Requesting NewsQueue for (%s %s) user=%s..." format(dkey, qi_id, pw_opt))
             NewsQueue4Play.ensureActorFor(dkey, qi_id).map { queueActorRef =>
+              logger.debug("NewsQueue %s for (%s %s) ready." format(queueActorRef, dkey, qi_id))
               // Подписаться на события qi от sio_notifier
               SioNotifier.subscribe(
                 subscriber = SnActorRefSubscriber(queueActorRef),
@@ -132,7 +139,8 @@ object Js extends Controller with AclT with ContextT {
                 qi_id = qi_id,
                 isInstall = true,
                 uSettings = MDomainUserSettings.empty(dkey),
-                isSiteAdmin = false
+                isSiteAdmin = false,
+                wsTimestamp = Some(timestamp0)
               )
               replyJs(respBody)
 
@@ -167,6 +175,7 @@ object Js extends Controller with AclT with ContextT {
 
   /**
    * Скрипт инсталлера отправил нам содержимое window.location. Возможно, его стоит отправить в очередь на онализ.
+   * TODO Следует перенести этот микро-функционал в вебсокет в in-канал.
    * @param domain домен, заявленный клиентом.
    * @param qi_id qi_id, заявленное клиентом.
    * @return Возвращает различные коды ошибок с сообщениями.
@@ -178,7 +187,7 @@ object Js extends Controller with AclT with ContextT {
       // Действительно пришла ссылка. Нужно проверить присланные domain и qi_id и отправить ссылку на проверку.
       {url =>
         val dkey = UrlUtil.normalizeHostname(domain)
-        if (DomainQi.isQi(dkey, qi_id)) {
+        val result = if (DomainQi.isQi(dkey, qi_id)) {
           if (DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl = url.toExternalForm, qi_id=qi_id))
             Ok("Ok, your URL will be checked.")
           else
@@ -187,8 +196,112 @@ object Js extends Controller with AclT with ContextT {
         } else {
           Forbidden("Installer is not running for %s. Trying to cheat me? Well, go on." format domain)
         }
+        logger.debug("installUrl(%s %s): User %s want us to check also URL=%s. Decision: %s" format(dkey, qi_id, pw_opt, url, result))
+        result
       }
     )
+  }
+
+
+  /**
+   * Юзер устанавливает скрипт sio.js на сайт. Запустившийся инсталлер присоединяется к веб-сокету.
+   * @param dkey ключ домена, заявленный клиентом.
+   * @param qi_id ключ qi, заявленный клиентом.
+   * @param timestampMs таймштамп, выданный на шаге рендера js.
+   * @return каналы веб-сокет с данными JsValue.
+   */
+  def installWs(dkey:String, qi_id:String, timestampMs:Long) = WebSocket.using[JsValue] { implicit request =>
+    // Чтобы префикс логгера не писать много раз, выносим его за скобки
+    lazy val logPrefix = "installWs(%s %s %s): " format(dkey, qi_id, timestampMs)
+    implicit val pw_opt = person(request)
+    val (in0, out0) = EventUtil.globalUserEventIO
+    DomainQi.isQi(dkey, qi_id) match {
+      case true =>
+        // uuid для трубы, добавляемой в SioNotifier.
+        val uuid = UUID.randomUUID()
+        logger.debug(logPrefix + "Starting ws connection for user %s. Subscriber=%s" format(pw_opt, uuid.toString))
+        val classifier  = QiEventUtil.getClassifier(dkeyOpt = Some(dkey), qiIdOpt = Some(qi_id))
+        // Канал выдачи данных клиенту. Подписаться на события SioNotifier, затем залить в канал пропущенные новости, которые пришли между реквестами и во время подписки.
+        // Возможные дубликаты новостей безопасны, опасность представляют потерянные уведомления.
+        val out1 = out0 >- Concurrent.unicast(onStart = {channel: Concurrent.Channel[JsValue] =>
+          NewsQueue4Play.getActorFor(dkey, qi_id).foreach { nqActorRefOpt =>
+            val subscriberWs = new SnWebsocketSubscriber(uuid=uuid, channel=channel)
+            val snActionFuture: Future[Boolean] = nqActorRefOpt match {
+              // Как и ожидалось, у супервизора уже есть очередь с новостями. Нужно заменить её в SioNotifier на прямой канал SN -> WS.
+              case Some(nqActorRef) =>
+                logger.debug(logPrefix + "SN atomic replace: NewsQueue %s -> %s; user=%s" format(nqActorRef, subscriberWs, pw_opt))
+                SioNotifier.replaceSubscriberSync(
+                  subscriberOld = SnActorRefSubscriber(nqActorRef),
+                  classifier    = classifier,
+                  subscriberNew = subscriberWs
+                ) andThen { // Затем нужно перекачать накопленные новости в открытый канал.
+                  case _ =>
+                    NewsQueue4Play.shortPull(nqActorRef, timestampMs).foreach { newsReply =>
+                      val news = newsReply.news
+                      val newsFailed = news.foldLeft(List[NewsQueue4Play.NewsEventT]()) { (accWrong, n) =>
+                        n match {
+                          case n:SioEventTJSable =>
+                            channel.push(n.toJson)
+                            accWrong
+
+                          case other => other :: accWrong
+                        }
+                      }
+                      // Если были недопустимые новости, то нужен варнинг в логах.
+                      if(!newsFailed.isEmpty)
+                        logger.warn(logPrefix + "forwarded only %s news of total %s. Failed to forward: %s" format(news.size - newsFailed.size, news.size, newsFailed))
+                      else
+                        logger.debug("installWs(%s %s %s): " format(dkey, qi_id, timestampMs))
+                    }
+                    logger.debug(logPrefix + "Async.stopping NewsQueue %s ..." format(nqActorRef))
+                    NewsQueue4Play.stop(nqActorRef)
+                }
+
+              // Внезапно очереди нет. Это плохо, и это скорее всего приведет к ошибке, если валидация сайта уже прошла до текущего момента,
+              // и значит уведомление об успехе было отправлено в /dev/null. Нужно предложить юзеру обновить страницу.
+              // TODO Может нужно обновить страницу сразу? Или отобразить кнопку релоада юзеру?
+              case None =>
+                logger.error(logPrefix + "NewsQueue doesn't exist, but it should. Possible incorrect behaviour for user %s." format(pw_opt))
+                channel.push(MaybeErrorEvent("It looks like, something went wrong during installation procedure. If errors or problems occurs, please reload the page.").toJson)
+                SioNotifier.subscribeSync(
+                  subscriber = subscriberWs,
+                  classifier = classifier
+                )
+            }
+            // перехват возможных внутренних ошибок
+            snActionFuture onFailure { case ex:Throwable =>
+              logger.error(logPrefix + "Internal error during NQ -> WS swithing.", ex)
+              channel.push(InternalServerErrorEvent("Suggest.io has detected internal error.").toJson)
+            }
+          }
+        })
+        // Канал приема данных от клиента. При EOF нужно отписать от событий out-канал.
+        // TODO добавить сюда получатель window.location (см. installUrl() выше). Этот итератор in0 как-то не особо стремится комбинироваться с другими.
+        /*val in2 = Iteratee
+          .foreach[JsValue] {
+            case JsObject(Seq(("install_url", JsString(maybeUrl)))) =>
+              DomainQi.maybeCheckQiAsync(dkey=dkey, qi_id=qi_id, maybeUrl=maybeUrl)
+
+            case other =>
+          }*/
+        val in1 = in0.mapDone { _ =>
+          SioNotifier.unsubscribe(
+            subscriber = new SnWebsocketSubscriber(uuid=uuid, channel = null),
+            classifier = classifier
+          )
+        }
+        (in1, out1)
+
+
+      // Кто-то долбится на веб-сокет в обход сессии.
+      case false =>
+        logger.error(logPrefix + "Requested dkey/qi_id not in session %s. Returning error to user via websocket." format(session))
+        val out1 = out0 >- Concurrent.unicast(onStart = {channel: Concurrent.Channel[JsValue] =>
+          // TODO дергать нормальное событие в виде json, а не эту строку.
+          channel.push(AccessErrorEvent("Illegial access, install flow is not running").toJson)
+        })
+        (in0, out1)
+    }
   }
 
 

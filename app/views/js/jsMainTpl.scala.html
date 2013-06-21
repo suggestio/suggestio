@@ -1,4 +1,4 @@
-@(dkey:String, qi_id:String, uSettings:models.MDomainUserSettingsT, isInstall:Boolean = false, isSiteAdmin:Boolean = false)(implicit ctx:util.Context)
+@(dkey:String, qi_id:String, uSettings:models.MDomainUserSettingsT, isInstall:Boolean = false, isSiteAdmin:Boolean = false, wsTimestamp:Option[Long] = None)(implicit ctx:util.Context)
 
 
 @*  Шаблон генерации js-скрипта, отображаемый обычным юзерам. По сути дергает другие шаблоны, подключая необходимый код.
@@ -9,4 +9,4 @@
         - isSiteAdmin - имеет ли юзер права на настройки поиска?
 *@
 
-@v2(dkey=dkey, qi_id=qi_id, uSettings=uSettings, isSiteAdmin=isSiteAdmin, isInstall=isInstall)
+@v2(dkey=dkey, qi_id=qi_id, uSettings=uSettings, isSiteAdmin=isSiteAdmin, isInstall=isInstall, wsTimestamp=wsTimestamp)

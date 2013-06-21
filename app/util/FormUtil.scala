@@ -14,7 +14,7 @@ object FormUtil {
 
   val strIdentityF = {s:String => s}
 
-  private val allowedProtocolRePattern = "^(?i)https?^".r.pattern
+  private val allowedProtocolRePattern = "(?i)https?".r
 
   // Маппер form-поля URL
   val urlMapper = nonEmptyText(minLength = 8)
@@ -33,7 +33,7 @@ object FormUtil {
   // Проверить ссылку на возможность добавления сайта в индексацию.
   val urlAllowedMapper = urlMapper
     .verifying("mappers.url.only_http_https_allowed", { url =>
-      allowedProtocolRePattern.matcher(url.getProtocol).matches()
+      allowedProtocolRePattern.pattern.matcher(url.getProtocol).matches()
     })
     .verifying("mappers.url.hostname_prohibited", { url =>
       UrlUtil.isHostnameValid(url.getHost)

@@ -20,9 +20,7 @@ import akka.util.Timeout
  */
 
 // Статическое управлением всем добром для NewsQueue. Прозрачно резолвит идентификаторы акторов, управляет ими, обращается к ним.
-object NewsQueue4Play {
-
-  import NewsQueue._
+object NewsQueue4Play extends NewsQueueStaticT {
 
   val sup_name = "nq4playSup"
 
@@ -38,7 +36,8 @@ object NewsQueue4Play {
     supRef
   }
 
-  val ensureActorDuration = 2 second
+  private val ensureActorDuration = 2 second
+  private implicit val supRefAskTimeout = Timeout(ensureActorDuration)
 
   /**
    * Убедится, что актор для указанной очереди (указанного хоста и типа) запущен.
@@ -48,7 +47,6 @@ object NewsQueue4Play {
    * @return Future[ActorRef]
    */
   def ensureActorFor(dkey:String, typ:String) : Future[ActorRef] = {
-    implicit val timeout = Timeout(ensureActorDuration)
     (supRef ? EnsureNQ(dkey, typ)).asInstanceOf[Future[ActorRef]]
   }
 
@@ -62,6 +60,18 @@ object NewsQueue4Play {
     val fut = ensureActorFor(dkey, typ)
     Await.result(fut, ensureActorDuration)
   }
+
+
+  /**
+   * Узнать ref актора очереди, если тот запущен.
+   * @param dkey ключ домена
+   * @param typ "тип" очереди, ключ для разграничения очередей в рамках домена.
+   * @return Фьючерс с опшином, содержащим ActorRef очереди.
+   */
+  def getActorFor(dkey:String, typ:String) : Future[Option[ActorRef]] = {
+    (supRef ? GetNQ(dkey, typ)).asInstanceOf[Future[Option[ActorRef]]]
+  }
+
 
   /**
    * Отправить новость в очередь новостей.
@@ -131,6 +141,19 @@ object NewsQueue4Play {
     ensureActorFor(dkey, typ) flatMap(ping(_))
   }
 
+  def stop(nqActorRef: ActorRef) {
+    supRef ! StopActor(nqActorRef)
+  }
+
+  /**
+   * Остановить очередь, относящуюся к указанному домену и "типу".
+   * @param dkey ключ домена
+   * @param typ "Тип" для разграничения очередей в рамках домена.
+   */
+  def stopFor(dkey:String, typ:String) {
+    supRef ! StopNQ(dkey, typ)
+  }
+
 }
 
 
@@ -138,10 +161,9 @@ object NewsQueue4Play {
 class NewsQueue4PlaySup extends Actor {
 
   def receive = {
-
-    // Запрос резолва имени актора и его запуска, если тот не существует.
+    // Запрос запуска актора очереди, если тот не существует.
     case EnsureNQ(dkey, typ) =>
-      val name = dkey + "~" + typ
+      val name = nqActorName(dkey, typ)
       val childRef = context.child(name) match {
         case None =>
           context.actorOf(Props[NewsQueue4PlayActor], name = name)
@@ -150,13 +172,31 @@ class NewsQueue4PlaySup extends Actor {
           actorRef
       }
       sender ! childRef
+
+    // Запрос наличия очереди.
+    case GetNQ(dkey, typ) =>
+      val name = nqActorName(dkey, typ)
+      sender ! context.child(name)
+
+    // Остановить указанного актора.
+    case StopActor(actorRef) =>
+      context.stop(actorRef)
+
+    // Остановить актора очереди.
+    case StopNQ(dkey, typ) =>
+      val name = nqActorName(dkey, typ)
+      context.child(name).foreach { context.stop(_) }
   }
 
-  override def supervisorStrategy: SupervisorStrategy =
-    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
-      case _:Exception => Restart
-    }
 
+  override def supervisorStrategy: SupervisorStrategy = {
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
+      case _:Throwable => Restart
+      case _ => Stop
+    }
+  }
+
+  private def nqActorName(dkey:String, typ:String) = dkey + "~" + typ
 }
 
 
@@ -167,6 +207,15 @@ class NewsQueue4PlaySup extends Actor {
  */
 sealed case class EnsureNQ(dkey:String, typ:String)
 
+/**
+ * Сообщение, запрашивающее у супервизора данные по актору очереди, который может быть не запущен.
+ * @param dkey ключ домена
+ * @param typ "тип". Нужно для разграничения очередей новостей внутри домена.
+ */
+sealed case class GetNQ(dkey:String, typ:String)
+
+sealed case class StopNQ(dkey:String, typ:String)
+sealed case class StopActor(actorRef: ActorRef)
 
 // Самая простая реализация актора NewsQueue с логгированием через play.
 // Должна использоваться как основа для других реализаций очередей в рамках sioweb21.

@@ -1,4 +1,4 @@
-@(dkey:String, qi_id:String, uSettings:models.MDomainUserSettingsT, isInstall:Boolean = false, isSiteAdmin:Boolean = false)(implicit ctx:util.Context)
+@(dkey:String, qi_id:String, uSettings:models.MDomainUserSettingsT, isInstall:Boolean = false, isSiteAdmin:Boolean = false, wsTimestamp:Option[Long] = None)(implicit ctx:util.Context)
 @* sio renderer v2
 
 Шаблон для основного js-скрипта, выполняемого на клиентах. Обычно выполняется без переменных и кешируется на клиентах.

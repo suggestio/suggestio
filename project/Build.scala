@@ -21,8 +21,9 @@ object ApplicationBuild extends Build {
       "org.apache.hadoop" % "hadoop-client" % hadoopVsn,
       // spat4j: костыль для http://elasticsearch-users.115913.n3.nabble.com/Compile-error-with-0-20-2-td4028743.html :
       "com.spatial4j" % "spatial4j" % "0.3",
-      "io.suggest" %% "util"      % "0.5.3",
-      "io.suggest" %% "util-play" % "0.5.3",
+      "io.suggest" %% "util"      % "0.6.0-SNAPSHOT",
+      "io.suggest" %% "util-play" % "0.6.0-SNAPSHOT",
+      "net.sourceforge.htmlunit" % "htmlunit" % "2.12", // play-2.1.1: на 2.9 тесты виснут. Нужно убрать на будущих версиях play.
       // hadoop
       "org.apache.hadoop" % "hadoop-core" % hadoopVsn,
       "org.apache.hadoop" % "hadoop-client" % hadoopVsn,
