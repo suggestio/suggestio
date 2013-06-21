@@ -1,12 +1,15 @@
 package io.suggest.event
 
 import akka.event.{EventBus, SubchannelClassification}
-import akka.util.Subclassification
+import akka.util.{Timeout, Subclassification}
 import akka.actor._
 import io.suggest.SioutilSup
 import scala.Some
 import akka.actor.Terminated
 import subscriber._
+import scala.concurrent.duration._
+import akka.pattern.ask
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -26,6 +29,7 @@ object SioNotifier {
   type Subscriber = SnSubscriberT
 
   private var snRef : ActorRef = null
+  private implicit val snAskTimeoutDflt = Timeout(5 seconds)
 
   val SN_NAME = "sn"
 
@@ -47,6 +51,16 @@ object SioNotifier {
    */
   def subscribe(subscriber:Subscriber, classifier:Classifier) {
     snRef ! SnSubscribe(subscriber, classifier)
+  }
+
+  /**
+   * Неблокирующая подпись на события с подтверждением от SioNotifier.
+   * @param subscriber Подписчик SubscriberT.
+   * @param classifier классификатор события.
+   * @return Фьючерс с boolean внутри. true если всё ок.
+   */
+  def subscribeSync(subscriber:Subscriber, classifier:Classifier) : Future[Boolean] = {
+    (snRef ? SnSubscribeSync(subscriber, classifier)).asInstanceOf[Future[Boolean]]
   }
 
   /**
@@ -74,13 +88,37 @@ object SioNotifier {
     snRef ! SnUnsubscribeAll(subscriber)
   }
 
+
+  /**
+   * Клиент просит атомарно заменить одного подписчика на другого.
+   * Проверка на наличие старого подписчика отсутствует, однако функция гарантирует, что после выполнения асинхр.операции
+   * старого подписчика точно не будет, а новый уже будет привязан к шине.
+   * @param subscriberOld старый подписчик, которого может и не быть на шине.
+   * @param classifier классификатор для обоих
+   * @param subscriberNew новый подписчик
+   */
+  def replaceSubscriber(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber) {
+    snRef ! SnReplaceSubscriber(subscriberOld, classifier, subscriberNew)
+  }
+
+  /**
+   * ask-версия функции replaceSubscriber.
+   * @param subscriberOld старый подписчик, которого может и не быть на шине.
+   * @param classifier классификатор для обоих.
+   * @param subscriberNew новый подписчик, который точно будет на шине.
+   * @return Фьючерс с булевым. true, если всё нормально.
+   */
+  def replaceSubscriberSync(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber) = {
+    (snRef ? SnReplaceSubscriber(subscriberOld, classifier, subscriberNew)).asInstanceOf[Future[Boolean]]
+  }
+
 }
 
 
 // Нужно наблюдать за подписчиками, т.к. они могут внезапно отвалится, а подписки останутся.
 class SioNotifier extends Actor {
 
-  import SioNotifier.{Subscriber, Event}
+  import SioNotifier.{Subscriber, Event, Classifier}
 
   // Шина сообщений. Делает все дела.
   protected val bus = new SioNotifierBus
@@ -92,18 +130,30 @@ class SioNotifier extends Actor {
 
     // Кто-то подписывается на сообщения по классификатору.
     case SnSubscribe(subscriber, classifier) =>
-      bus.subscribe(subscriber, classifier)
-      watchSubscriber(subscriber)
+      subscribeOne(subscriber, classifier)
+
+    case SnSubscribeSync(subscriber, classifier) =>
+      subscribeOne(subscriber, classifier)
+      sender ! true
+
+
+    // Кто-то хочет заменить одного подписчика другим атомарно.
+    case SnReplaceSubscriber(subscriberOld, classifier, subscriberNew) =>
+      replaceSubscriber(subscriberOld, classifier, subscriberNew)
+
+    case SnReplaceSubscriberSync(subscriberOld, classifier, subscriberNew) =>
+      replaceSubscriber(subscriberOld, classifier, subscriberNew)
+      sender ! true
+
 
     // Кто-то отписывается от сообщений по классификатору.
     case SnUnsubscribe(subscriber, classifier) =>
-      bus.unsubscribe(subscriber, classifier)
-      umwatchSubscriber(subscriber)
+      unsubscribeOne(subscriber, classifier)
 
     // Кто-то отписывается от всех сообщений.
     case SnUnsubscribeAll(subscriber) =>
       bus.unsubscribe(subscriber)
-      umwatchSubscriber(subscriber)
+      unwatchSubscriber(subscriber)
 
     // Актор, подписанный на сообщения, помер. Нужно выкинуть его из шины.
     case Terminated(actorRef) =>
@@ -115,8 +165,23 @@ class SioNotifier extends Actor {
     subscriber.getActor.foreach(context.watch)
   }
 
-  protected def umwatchSubscriber(subscriber:Subscriber) {
+  protected def unwatchSubscriber(subscriber:Subscriber) {
     subscriber.getActor.foreach(context.unwatch)
+  }
+
+  protected def subscribeOne(subscriber:Subscriber, classifier:Classifier) {
+    bus.subscribe(subscriber, classifier)
+    watchSubscriber(subscriber)
+  }
+
+  protected def unsubscribeOne(subscriber:Subscriber, classifier:Classifier) {
+    bus.unsubscribe(subscriber, classifier)
+    unwatchSubscriber(subscriber)
+  }
+
+  protected def replaceSubscriber(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber) {
+    unsubscribeOne(subscriberOld, classifier)
+    subscribeOne(subscriberNew, classifier)
   }
 
 
@@ -208,8 +273,12 @@ trait SioEventObjectHelperT {
   val hd = Some(getClass.getSimpleName)
 }
 
-protected final case class SnSubscribe(subscriber:SioNotifier.Subscriber, classifier:SioNotifier.Classifier)
-protected final case class SnUnsubscribe(subscriber:SioNotifier.Subscriber, classifier:SioNotifier.Classifier)
-protected final case class SnUnsubscribeAll(subscriber:SioNotifier.Subscriber)
+import SioNotifier.{Subscriber, Classifier}
 
+sealed case class SnSubscribe(subscriber:Subscriber, classifier:Classifier)
+sealed case class SnSubscribeSync(subscriber:Subscriber, classifier:Classifier)
+sealed case class SnUnsubscribe(subscriber:Subscriber, classifier:Classifier)
+sealed case class SnUnsubscribeAll(subscriber:Subscriber)
+sealed case class SnReplaceSubscriber(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber)
+sealed case class SnReplaceSubscriberSync(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber)
 
