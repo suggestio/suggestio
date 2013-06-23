@@ -6,6 +6,7 @@ import _root_.util.DomainQi.qiIdLen
 import play.api.test._
 import play.api.test.Helpers._
 import play.api.libs.json._
+import play.api.libs.ws.WS
 
 /**
  * Suggest.io
@@ -17,10 +18,15 @@ class JsControllerFunSpec extends Specification {
 
   "Js controller " should {
 
-    val testSiteUrl = "http://test0.sio.cbca.ru"
+    val testSite = "test0.sio.cbca.ru"
+    val testSiteUrl = "http://" + testSite
+    val testSetCodeUrl  = testSiteUrl + "/common/set_code"
 
-    "handle requests of installing new site" in {
-      running(FakeApplication()) {
+    "handle valid installation via qi" in new WithServer {
+
+      val selfUrlPrefix = "http://localhost:" + port
+      // TODO fake-запросы надо переписать через WS.url.get с использованием вышеуказанного профикса, иначе сессии не пашут.
+
         val addDomainResult = controllers.Js.addDomain()(FakeRequest().withFormUrlEncodedBody("url" -> testSiteUrl))
         // Проверяем возвращаемый статус. Если ошибка, то напечатать в консоли тело ошибки для облегчения исправления ошибки.
         status(addDomainResult) match {
@@ -51,10 +57,31 @@ class JsControllerFunSpec extends Specification {
 	          _sw.async = true;_sw.src = "https://suggest.io%s";var _sh = document.getElementsByTagName("head")[0]; _sh.appendChild(_sw);})();
         </script>""" format jsUrl
 
-        // TODO Отправить скрипт на тестовый сайт через ws api.
-        // TODO Пройти процедуру валидации.
+        // Отправить "полученный" скрипт на тестовый сайт (через WebServices API).
+        val saveCodeResult = await(WS.url(testSetCodeUrl).post(Map(
+          "code"                -> Seq(script),
+          "domain_id"           -> Seq("68"),
+          "is_show_charset"     -> Seq("on"),
+          "validation_content"  -> Seq(""),
+          "validation_filename" -> Seq("")
+        )))
+        saveCodeResult.status must beEqualTo(200)
+
+        // Код установлен на сайт. Ход установки можно наблюдать через SioNotifier (или через WebSocket на клиенте).
+        
+
+        // Теперь надо сымитировать запрос к suggest.io к /js/v2/....
+        val jsReqResultOpt = route(FakeRequest(GET, jsUrl).withSession(
+          session(addDomainResult).data.toList : _*))
+        jsReqResultOpt must beSome
+
+        val jsReqResult = jsReqResultOpt.get
+        status(jsReqResult) must beEqualTo(200)
+        contentAsString(jsReqResult) must contain("install")
+
+        // Тут пошла асинхронная проверка сайта на наличие скрипта. Результаты накапливаются в очереди новостей и придут клиенту по web socket.
+        // TODO Пройти процедуру валидации. Тут нужен вебсокет видимо... А значит и работать надо через htmlunit и browser.
         // TODO Очистить тестовый сайт.
-      }
     }
 
 
