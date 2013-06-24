@@ -2,11 +2,11 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
+# Раздача жабаскрипта всем посетителям всех сайтов. Самая частовызываемая функция.
+GET  /js/v2/:domain/:qi_id              controllers.Js.v2(domain, qi_id)
+
 # Home page
 GET  /                                  controllers.Application.index
-
-# Раздача жабаскрипта.
-GET  /js/v2/:domain/:qi_id              controllers.Js.v2(domain, qi_id)
 
 # Map static resources from the /public folder to the /assets URL path
 GET  /assets/*file                      controllers.Assets.at(path="/public", file)
@@ -19,7 +19,8 @@ POST /login/persona                     controllers.Ident.persona_submit
 POST /logout                            controllers.Ident.logout
 
 ## Callback'и инсталляторов и валидаторов сайтов.
-POST /js/install_url/:domain/:qi_id     controllers.Js.installUrl(domain, qi_id)
+POST /js/add_domain                             controllers.Js.addDomain
+POST /js/install_url/:domain/:qi_id             controllers.Js.installUrl(domain, qi_id)
 GET  /js/install_ws/:domain/:qi_id/:timestamp   controllers.Js.installWs(domain, qi_id, timestamp:Long)
 
 # Пункт меню "О проекте"

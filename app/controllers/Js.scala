@@ -19,7 +19,7 @@ import scala.Some
 import play.api.libs.json.JsObject
 import scala.concurrent.Future
 import java.util.UUID
-import play.api.libs.iteratee.{Iteratee, Concurrent}
+import play.api.libs.iteratee.Concurrent
 import io.suggest.util.event.subscriber.{SioEventTJSable, SnWebsocketSubscriber}
 
 
@@ -114,6 +114,7 @@ object Js extends Controller with AclT with ContextT with Logs {
       // Нужно проверить, относится ли запрос к юзеру, которому принадлежит qi и есть ли реально скрипт на сайте.
       case None =>
         val isQi = DomainQi.isQi(dkey, qi_id)
+        lazy val logPrefix = "v2(%s %s): " format(dkey, qi_id)
         val futureResult = isQi match {
           // Да, это тот юзер, который запросил код на главной. Он устанавил скрипт на сайт или просто прошел по ссылки от скрипта.
           // Теперь нужно запустить проверку домена на наличие этого скрипта и вернуть скрипт с инсталлером.
@@ -121,38 +122,43 @@ object Js extends Controller with AclT with ContextT with Logs {
             // Далее запрос становится асинхронным, т.к. ensureActorFor возвращает Future[ActorRef]. Можно блокироваться через EnsureSync, можно сгенерить фьючерс. Пока делаем второе.
             // Запустить очередь приема новостей, присоединив её к sio_notifier. Когда откроется ws-соединение, очередь будет выпилена, и коннект между sn и каналом ws будет уже прямой.
             val timestamp0 = NewsQueue4Play.getTimestampMs
-            logger.debug("Requesting NewsQueue for (%s %s) user=%s..." format(dkey, qi_id, pw_opt))
-            NewsQueue4Play.ensureActorFor(dkey, qi_id).map { queueActorRef =>
-              logger.debug("NewsQueue %s for (%s %s) ready." format(queueActorRef, dkey, qi_id))
+            logger.debug(logPrefix + "Requesting NewsQueue for user=%s..." format(pw_opt))
+            NewsQueue4Play.ensureActorFor(dkey, qi_id) flatMap { queueActorRef =>
+              // Очередь запущена. Нужно подписать её на события SioNotifier.
+              logger.debug(logPrefix + "NewsQueue %s ready for user %s." format(queueActorRef, pw_opt))
               // Подписаться на события qi от sio_notifier
-              SioNotifier.subscribe(
+              SioNotifier.subscribeSync(
                 subscriber = SnActorRefSubscriber(queueActorRef),
                 classifier = QiEventUtil.getClassifier(dkeyOpt = Some(dkey), qiIdOpt=Some(qi_id))
-              )
-              // Отправить request referer на проверку. Бывает, что юзер ставит поиск не на главной, а где-то сбоку.
-              request.headers.get(REFERER).foreach { referer =>
-                DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl=referer, qi_id=qi_id)
+              ).map { _ =>
+                // Подписывание очереди на событие выполнено.
+                // Отправить request referer на проверку. Бывает, что юзер ставит поиск не на главной, а где-то сбоку.
+                request.headers.get(REFERER).foreach { referer =>
+                  DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl=referer, qi_id=qi_id, sendEvents=true)
+                }
+                // Сгенерить ответ.
+                val respBody = jsMainTpl(
+                  dkey = dkey,
+                  qi_id = qi_id,
+                  isInstall = true,
+                  uSettings = MDomainUserSettings.empty(dkey),
+                  isSiteAdmin = false,
+                  wsTimestamp = Some(timestamp0)
+                )
+                replyJs(respBody)
               }
-              // Сгенерить ответ.
-              val respBody = jsMainTpl(
-                dkey = dkey,
-                qi_id = qi_id,
-                isInstall = true,
-                uSettings = MDomainUserSettings.empty(dkey),
-                isSiteAdmin = false,
-                wsTimestamp = Some(timestamp0)
-              )
-              replyJs(respBody)
 
             // Перехватывать ошибки предыдущих фьючерсов
             } recover {
               case ex: Throwable =>
                 // TODO Нужно вернуть юзеру скрипт, который отобразит ему внутреннюю ошибку сервера suggest.io.
+                logger.error(logPrefix + "start-qi future chain failed: .recover() -> HTTP 500", ex)
                 InternalServerError("Internal server error")
             }
 
           // Кто-то зашел на ещё-не-установленный-сайт. Скрипт поиска выдавать смысла нет. Возвращаем уже готовый фьючерс, пригодный для дальнейшего комбинирования.
           case false =>
+            logger.warn(logPrefix + "isQi=false and domain not exist.")
             Future.successful {
               ServiceUnavailable("Search not properly installed. If site owner is you, please visit https://suggest.io/ and proceed installation steps.")
                 .withHeaders(RETRY_AFTER -> "5")
@@ -164,7 +170,8 @@ object Js extends Controller with AclT with ContextT with Logs {
           DomainQi.checkQiAsync(
             dkey = dkey,
             url  = "http://" + dkey + "/",
-            qiIdOpt = if(isQi) Some(qi_id) else None
+            qiIdOpt = if(isQi) Some(qi_id) else None,
+            sendEvents = true
           )
         }
         // наконец вернуть ещё не готовый, но уже результат
@@ -188,7 +195,7 @@ object Js extends Controller with AclT with ContextT with Logs {
       {url =>
         val dkey = UrlUtil.normalizeHostname(domain)
         val result = if (DomainQi.isQi(dkey, qi_id)) {
-          if (DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl = url.toExternalForm, qi_id=qi_id))
+          if (DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl = url.toExternalForm, qi_id=qi_id, sendEvents=true))
             Ok("Ok, your URL will be checked.")
           else
             Forbidden("Unexpected 3rd-party URL.")

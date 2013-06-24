@@ -107,22 +107,22 @@ class DomainRequester extends Actor {
 
     // Запилить URL в очередь, вернув фьючерс клиенту и сохранив в память.
     case QueueUrl(_dkey, _url) =>
-      val fut = fmap.get(_dkey) match {
+      val frt1: Future[DRResp200] = fmap.get(_dkey) match {
         // Какой-то запрос сейчас выполняется. Нужно скомбинировать этот фьючерс.
         case Some(frt) =>
-          frt.future andThen { case _ => startReqAsync(_url) }
+          frt.future flatMap { _ => startReqAsync(_url) }
 
         // Никто не обращался к указанному домену последнее время. Нужно создать новый фьючерс.
         case None => startReqAsync(_url)
       }
+      // Отправить будущий результат юзеру
+      sender ! frt1
       // Когда фьючерс завершается, он должет уведомить о завершении в этот актор.
-      fut onComplete {
+      frt1 onComplete {
         _ => self ! FutureCompleted(_dkey, counter)
       }
-      // Отправить результат юзеру
-      sender ! fut
       // Обновить состояние актора
-      fmap(_dkey) = FutureReqTask(counter=counter, future=fut)
+      fmap(_dkey) = FutureReqTask(counter=counter, future=frt1)
       counter = counter + 1
 
 

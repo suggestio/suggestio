@@ -4,11 +4,10 @@ import play.api.mvc.Session
 import play.api.libs.concurrent.Execution.Implicits._
 import org.apache.tika.metadata.{HttpHeaders, TikaMetadataKeys, Metadata}
 import java.io.InputStream
-import java.util.concurrent._
+import java.util.concurrent.{FutureTask, Callable, ExecutionException, TimeoutException, TimeUnit}
 import io.suggest.sax._
 import org.apache.tika.parser.AutoDetectParser
 import scala.concurrent.duration._
-import java.util.concurrent.TimeUnit
 import models.MDomainQi
 import org.xml.sax.Attributes
 import io.suggest.util.StringUtil.randomId
@@ -17,6 +16,7 @@ import play.api.libs.json.{JsBoolean, JsString, JsValue}
 import io.suggest.event.SioNotifier
 import java.net.{MalformedURLException, URL}
 import io.suggest.util.UrlUtil
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -115,7 +115,7 @@ object DomainQi extends Logs {
    * @param qi_id qi_id. Просто перенаправляется в нижележащую функцию.
    * @return true, если ссылка была выверена и отправлена в очередь на обход. Иначе false.
    */
-  def maybeCheckQiAsync(dkey:String, maybeUrl:String, qi_id:String): Boolean = {
+  def maybeCheckQiAsync(dkey:String, maybeUrl:String, qi_id:String, sendEvents:Boolean): Boolean = {
     try {
       val url = new URL(maybeUrl)
       // Протокол - это http/https?
@@ -129,7 +129,7 @@ object DomainQi extends Logs {
         !urlPathBadRe.pattern.matcher(pathNorm).find()
       }
       if (isCheck) {
-        checkQiAsync(dkey, url.toExternalForm, Some(qi_id))
+        checkQiAsync(dkey, url.toExternalForm, Some(qi_id), sendEvents=sendEvents)
         true
       } else false
 
@@ -146,10 +146,13 @@ object DomainQi extends Logs {
    * @param url ссылка. Обычно на гланге
    * @param qiIdOpt заявленный юзером qi_id, если есть. Может и не быть, если в момент установки на сайт зашел кто-то
    *              другой без qi_id в сессии.
+   * @param sendEvents Слать ли события QiSuccess/QiError в шину sio_notifier?
+   *                   Это бывает полезно для простой обратной связи с клиетом через websocket/comet/NewsQueue.
+   *                   Таким образом, если sendEvents = true, то функция имеет явные сайд-эффекты.
    */
-  def checkQiAsync(dkey:String, url:String, qiIdOpt:Option[String]) {
+  def checkQiAsync(dkey:String, url:String, qiIdOpt:Option[String], sendEvents:Boolean): Future[Either[(String, List[SioJsInfoT]), SioJsV2]] = {
     // Запросить постановку в очередь указанной ссылки для указанного домена
-    DomainRequester.queueUrl(dkey, url) onSuccess { case DRResp200(ct, istream) =>
+    DomainRequester.queueUrl(dkey, url) map { case DRResp200(ct, istream) =>
       // 200 OK: запустить тику с единственным SAX-handler и определить наличие скрипта на странице.
       try {
         // Формируем набор метаданных
@@ -187,7 +190,7 @@ object DomainQi extends Logs {
               Left(errMsg -> l)
           }
 
-        // Произошла какая-то ошибка во внутреннем try, надо бы уведомить юзера об этом
+          // Произошла какая-то ошибка во внутреннем try, надо бы уведомить юзера об этом
         } catch {
           case te:TimeoutException =>
             task.cancel(true)
@@ -206,20 +209,24 @@ object DomainQi extends Logs {
             logger.error(errMsg, ex)
             Left(errMsg -> Nil)
         }
-        val qiNews: QiEventT = result match {
-          // Всё верно. Можно заапрувить учетку юзера по отношению к этому домену.
-          case Right(jsInfo) =>
-            val qi_id1 = jsInfo.qi_id
-            approve_qi(dkey, qi_id1)
-            QiSuccess(dkey=dkey, qi_id=qi_id1, url=url)
+        // side-effects: Если приказано слать уведомления о ходе работы в шину событий, то сразу же сделать это, проанализировав результат анализа.
+        if (sendEvents) {
+          val qiNews: QiEventT = result match {
+            // Всё верно. Можно заапрувить учетку юзера по отношению к этому домену.
+            case Right(jsInfo) =>
+              val qi_id1 = jsInfo.qi_id
+              approve_qi(dkey, qi_id1)
+              QiSuccess(dkey=dkey, qi_id=qi_id1, url=url)
 
-          // Ниасилил. Надо чиркануть в логи и вернуть в новости ошибку qi.
-          case Left((errMsg, listJsInstalled)) =>
-            // TODO надо отреагировать на список найденных скриптов. Если там что-то есть с верным доменом, то значит надо установить.
-            logger.warn("qi check failed on %s: %s".format(url, errMsg))
-            QiError(dkey=dkey, qiIdOpt=qiIdOpt, url=url, msg=errMsg)
+            // Ниасилил. Надо чиркануть в логи и вернуть в новости ошибку qi.
+            case Left((errMsg, listJsInstalled)) =>
+              // TODO надо отреагировать на список найденных скриптов. Если там что-то есть с верным доменом, то значит надо установить.
+              logger.warn("qi check failed on %s: %s".format(url, errMsg))
+              QiError(dkey=dkey, qiIdOpt=qiIdOpt, url=url, msg=errMsg)
+          }
+          SioNotifier.publish(qiNews)
         }
-        NewsQueue4Play.pushTo(dkey, "qi", qiNews)
+        result
 
       } finally {
         istream.close()
