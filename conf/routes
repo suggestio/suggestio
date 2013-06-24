@@ -35,7 +35,7 @@ GET     /badbrowser                     controllers.Static.badbrowser
 GET     /blog                           controllers.Blog.recordList
 GET     /blog/:id                       controllers.Blog.readOne(id:String)
 GET     /blog/delete/:id                controllers.Blog.deleteRecAdmin(id:String)
-GET     /blog/new/                       controllers.Blog.newRec
+GET     /blog/new/                      controllers.Blog.newRec
 POST    /blog/new                       controllers.Blog.newRecS
 GET     /blog/edit/:id                  controllers.Blog.editRec(id:String)
 POST    /blog/edit/:id                  controllers.Blog.editRecS(id:String)

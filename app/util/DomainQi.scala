@@ -8,7 +8,6 @@ import java.util.concurrent.{FutureTask, Callable, ExecutionException, TimeoutEx
 import io.suggest.sax._
 import org.apache.tika.parser.AutoDetectParser
 import scala.concurrent.duration._
-import models.MDomainQi
 import org.xml.sax.Attributes
 import io.suggest.util.StringUtil.randomId
 import io.suggest.util.event.subscriber.SioEventTJSable
@@ -17,6 +16,10 @@ import io.suggest.event.SioNotifier
 import java.net.{MalformedURLException, URL}
 import io.suggest.util.UrlUtil
 import scala.concurrent.Future
+import models.{MDomainQiAuthzTmp, MPersonDomainAuthz}
+import util.Acl.PwOptT
+import org.joda.time.format.DateTimeFormatterBuilder
+import org.joda.time.LocalDate
 
 /**
  * Suggest.io
@@ -38,6 +41,23 @@ object DomainQi extends Logs {
   protected val timeout_msg = "timeout"
   val qiIdLen = 8
 
+  // Длинное описание типа несколько раз повторяется в файле, поэтому "вынесено за скобки".
+  private type CheckQiResult_t = Either[(String, List[SioJsInfoT]), SioJsV2]
+
+  // Нужно удалять из сессии юзера домены, которые он не осилил провалидировать. Тут - таймаут хранения qi-вхождений в сессии в днях.
+  val qiInSessionDaysMax = 3
+  // Даты, сохраняемые с qi в сессию должны иметь краткий формат. Форматтим дату в виде YYMMDD.
+  private val qiDateFormatter = {
+    new DateTimeFormatterBuilder()
+      .appendYear(2, 2)
+      .appendMonthOfYear(2)
+      .appendDayOfMonth(2)
+      .toFormatter
+  }
+
+
+  private def dtQiNow = qiDateFormatter.print(LocalDate.now())
+
   /**
    * Отправить в сессию данные по добавлению сайта.
    * @param dkey ключ домена.
@@ -47,12 +67,23 @@ object DomainQi extends Logs {
     // Храним домен в сессии, используя его в качестве ключа внутри криптоконтейнера.
     val skey = dkey2skey(dkey)
     session.get(skey) match {
-      case Some(qi_id) =>
-        qi_id -> None
+      // Этот домен уже упоминается в сессии. Опционально обновить дату и вернуть лежащий там qi_id.
+      case Some(v) =>
+        val Array(qi_id, dtQi) = v.split(',')
+        val _dtQiNow = dtQiNow
+        val newSessionOpt: Option[Session] = if (dtQi == _dtQiNow) {
+          None
+        } else {
+          val v = qi_id + "," + _dtQiNow
+          Some(session + (skey -> v))
+        }
+        qi_id -> newSessionOpt
 
+      // Нет такого домена в базе. Сгенерить новый qi_id и отправить его в сессию.
       case None =>
         val qi_id = randomId(qiIdLen)
-        val session1 = session + (skey -> qi_id)
+        val v = qi_id + "," + qiDateFormatter.print(LocalDate.now())
+        val session1 = session + (skey -> v)
         qi_id -> Some(session1)
     }
   }
@@ -68,40 +99,58 @@ object DomainQi extends Logs {
    */
   def isQi(dkey:String, qi_id:String)(implicit session:Session) : Boolean = {
     session.get(dkey2skey(dkey)) match {
-      case Some(qi_id_s) => qi_id_s == qi_id
+      case Some(v) => v.startsWith(qi_id)
       case None => false
     }
   }
 
 
   /**
-   * Прочитать из сессии список быстро добавленных в систему доменов и прилинковать их к текущему юзеру.
-   * Домен появляется в сессии юзера, когда qi-проверялка реквестует страницу со скриптом и проверит все данные.
-   * Следует найти в них qi и подходящие для установки, выпилив затем из сессии.
-   * @param email E-mail юзера, т.е. его id.
+   * Прочитать из сессии список быстро добавленных в систему доменов и выполнить те или иные действия.
+   * Бывают следующие случаи:
+   * - d+qi остались в сессии, но так же имеются в модели с is_verified=true. Это значит ЗАЛОГИНЕННЫЙ юзер добавил сайт
+   *   и прошел процедуру qi. Нужно просто удалить домен с ключом из сессии.
+   * - d+qi в сессии и в MDomainQiAuthzTmp. Это происходит, когда анонимус проходит qi, и затем логинится.
+   *   Нужно удалить врЕменное разрешение, и создать нормальный MPersonDomainAuthz.
+   * - d+qi в сессии не подходят под предыдущие условия. Значит не прошли валидацию. Смотреть дату, и удалить если истекло время хранения.
+   * @param person_id id юзер. Обычно это его e-mail.
    * @param session Изменяемые данные сессии.
    */
-  def installFromSession(email:String, session:Session) = {
-    println("installFromSession(): Not yet implemented")
-    session
+  def installFromSession(person_id:String, session:Session): Session = {
+    lazy val logPrefix = "installFromSession(%s): " format person_id
+    val sessData1 = session.data.filter { case (k, v)  =>
+      if (k.startsWith("~")) {
+        val dkey = k.substring(1)
+        // Пора распарсить и проанализировать всё
+        val Array(qi_id, dtQi) = v.split(',')
+        MPersonDomainAuthz.getForPersonDkey(dkey, person_id).map { da =>
+          // Зареганный юзер проходил qi-проверку. Если прошел, то значит предикат должен вернуть false.
+          !da.is_verified
+
+        } getOrElse {
+          MDomainQiAuthzTmp.get(dkey, qi_id) map { dqia =>
+            // Анонимус добавлял сайт и успешно прошел qi-проверку. Нужно перенести сайт к зареганному анонимусу
+            logger.debug(logPrefix + " approving (%s %s) to ex-anon".format(dkey, qi_id))
+            MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, person_id=person_id, is_verified=true).save
+            dqia.delete
+            false
+
+          } getOrElse {
+            // Юзер не проходил проверок, или прошел но неудачно. Нужно проверить, не истекло ли время хранения qi в сессии.
+            dtQi.toInt >= dtQiNow.toInt - qiInSessionDaysMax
+          }
+        }
+
+      } else {
+        // Другие элементы сессии здесь не интересны. Не трогаем их.
+        true
+      }
+    }
+    session.copy(sessData1)
   }
+
 
   def dkey2skey(dkey:String) : String = "~" + dkey
-
-  /**
-   * Распарсить строку сессии qi_str в карту dkey -> qi_id.
-   * @param qi_str строка сессии qi.
-   * @return Карта dkey -> qi_id
-   */
-  def qiStr2Map(qi_str:String) : Map[String, String] = {
-    val splits = qi_str.split(",") // -> ["a.ru", "asd3aef", "b.com", "sg53fsf", ... , ...]
-    // теперь надо превратить список токенов в карту
-    val acc0 : (List[(String, String)], Option[String])  =  List() -> None
-    splits.foldLeft (acc0) {
-      case ((acc, None), domain)         => (acc, Some(domain))
-      case ((acc, Some(domain)), qi_id)  => (domain -> qi_id :: acc, None)
-    }._1.toMap
-  }
 
 
   private val urlProtoAllowedRe = "(?i)https?".r
@@ -115,7 +164,7 @@ object DomainQi extends Logs {
    * @param qi_id qi_id. Просто перенаправляется в нижележащую функцию.
    * @return true, если ссылка была выверена и отправлена в очередь на обход. Иначе false.
    */
-  def maybeCheckQiAsync(dkey:String, maybeUrl:String, qi_id:String, sendEvents:Boolean): Boolean = {
+  def maybeCheckQiAsync(dkey:String, maybeUrl:String, qi_id:String, sendEvents:Boolean)(implicit pw_opt:PwOptT): Option[Future[CheckQiResult_t]] = {
     try {
       val url = new URL(maybeUrl)
       // Протокол - это http/https?
@@ -129,12 +178,13 @@ object DomainQi extends Logs {
         !urlPathBadRe.pattern.matcher(pathNorm).find()
       }
       if (isCheck) {
-        checkQiAsync(dkey, url.toExternalForm, Some(qi_id), sendEvents=sendEvents)
-        true
-      } else false
+        Some(checkQiAsync(dkey, url.toExternalForm, Some(qi_id), sendEvents=sendEvents))
+
+      } else None
 
     } catch {
-      case ex:MalformedURLException => false // Ссылка не верна. Ничего не делать, просто погасить исключение.
+      // Ссылка не верна. Ничего не делать, просто погасить исключение.
+      case ex:MalformedURLException => None
     }
   }
 
@@ -150,7 +200,7 @@ object DomainQi extends Logs {
    *                   Это бывает полезно для простой обратной связи с клиетом через websocket/comet/NewsQueue.
    *                   Таким образом, если sendEvents = true, то функция имеет явные сайд-эффекты.
    */
-  def checkQiAsync(dkey:String, url:String, qiIdOpt:Option[String], sendEvents:Boolean): Future[Either[(String, List[SioJsInfoT]), SioJsV2]] = {
+  def checkQiAsync(dkey:String, url:String, qiIdOpt:Option[String], sendEvents:Boolean)(implicit pw_opt:PwOptT): Future[CheckQiResult_t] = {
     // Запросить постановку в очередь указанной ссылки для указанного домена
     DomainRequester.queueUrl(dkey, url) map { case DRResp200(ct, istream) =>
       // 200 OK: запустить тику с единственным SAX-handler и определить наличие скрипта на странице.
@@ -164,7 +214,7 @@ object DomainQi extends Logs {
         val task = new FutureTask(c)
         val t = new Thread(task)
         t.start()
-        val result : Either[(String, List[SioJsInfoT]), SioJsV2] = try {
+        val result : CheckQiResult_t = try {
           val l = task.get(parseTimeout.toMillis, TimeUnit.MILLISECONDS)
           // Есть список найденных скриптов suggest_io.js на странице. Определить, есть ли среди них подходящий.
           l.find {
@@ -236,18 +286,19 @@ object DomainQi extends Logs {
 
 
   /**
-   * Зааппрувить указанный qi id. Нужно выдать юзеру с указанным qi права на указанный домен.
+   * Зааппрувить указанный qi id для указанного юзера. Нужно выдать юзеру с указанным qi права на указанный домен.
+   * Сессия юзера почистится из контроллера, когда тот обраружит у зареганного юзера, что в сессии лежат dkey+qi уже заапрувленного домена.
    * @param dkey ключ домена, который должен быть добавлен в базу кравлера.
    * @param qi_id qi id, относящиеся к неопределенному юзеру.
    */
-  def approve_qi(dkey:String, qi_id:String) {
-    MDomainQi.getForDkeyId(dkey, qi_id) match {
-      // Есть в базе запись об открытом qi. Нужно удалить этот qi и создать соответствующий PersonDomainAuthz
-      case Some(qi) =>
-        ???
+  def approve_qi(dkey:String, qi_id:String)(implicit pw_opt:PwOptT) {
+    pw_opt match {
+      case Some(pw) =>
+        MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, person_id=pw.email, is_verified=true).save
 
+      // Анонимус. Нужно поместить данные о профите во временное хранилище. Когда юзер зарегается, будет вызван installFromSession, который оттуда всё извлечет.
       case None =>
-        logger.error("approve_qi(): QI '%s' unexpectedly not found for domain '%s'".format(qi_id, dkey))
+        MDomainQiAuthzTmp(dkey=dkey, qi_id=qi_id).save
     }
   }
 

@@ -195,7 +195,7 @@ object Js extends Controller with AclT with ContextT with Logs {
       {url =>
         val dkey = UrlUtil.normalizeHostname(domain)
         val result = if (DomainQi.isQi(dkey, qi_id)) {
-          if (DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl = url.toExternalForm, qi_id=qi_id, sendEvents=true))
+          if (DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl = url.toExternalForm, qi_id=qi_id, sendEvents=true).isDefined)
             Ok("Ok, your URL will be checked.")
           else
             Forbidden("Unexpected 3rd-party URL.")
@@ -241,27 +241,27 @@ object Js extends Controller with AclT with ContextT with Logs {
                   subscriberOld = SnActorRefSubscriber(nqActorRef),
                   classifier    = classifier,
                   subscriberNew = subscriberWs
-                ) andThen { // Затем нужно перекачать накопленные новости в открытый канал.
-                  case _ =>
-                    NewsQueue4Play.shortPull(nqActorRef, timestampMs).foreach { newsReply =>
-                      val news = newsReply.news
-                      val newsFailed = news.foldLeft(List[NewsQueue4Play.NewsEventT]()) { (accWrong, n) =>
-                        n match {
-                          case n:SioEventTJSable =>
-                            channel.push(n.toJson)
-                            accWrong
+                ) andThen { case _ =>
+                  // Затем нужно перекачать накопленные новости в открытый канал.
+                  NewsQueue4Play.shortPull(nqActorRef, timestampMs).foreach { newsReply =>
+                    val news = newsReply.news
+                    val newsFailed = news.foldLeft(List[NewsQueue4Play.NewsEventT]()) { (accWrong, n) =>
+                      n match {
+                        case n:SioEventTJSable =>
+                          channel.push(n.toJson)
+                          accWrong
 
-                          case other => other :: accWrong
-                        }
+                        case other => other :: accWrong
                       }
-                      // Если были недопустимые новости, то нужен варнинг в логах.
-                      if(!newsFailed.isEmpty)
-                        logger.warn(logPrefix + "forwarded only %s news of total %s. Failed to forward: %s" format(news.size - newsFailed.size, news.size, newsFailed))
-                      else
-                        logger.debug("installWs(%s %s %s): " format(dkey, qi_id, timestampMs))
                     }
-                    logger.debug(logPrefix + "Async.stopping NewsQueue %s ..." format(nqActorRef))
-                    NewsQueue4Play.stop(nqActorRef)
+                    // Если были недопустимые новости, то нужен варнинг в логах.
+                    if(!newsFailed.isEmpty)
+                      logger.warn(logPrefix + "forwarded only %s news of total %s. Failed to forward: %s" format(news.size - newsFailed.size, news.size, newsFailed))
+                    else
+                      logger.debug("installWs(%s %s %s): " format(dkey, qi_id, timestampMs))
+                  }
+                  logger.debug(logPrefix + "Async.stopping NewsQueue %s ..." format(nqActorRef))
+                  NewsQueue4Play.stop(nqActorRef)
                 }
 
               // Внезапно очереди нет. Это плохо, и это скорее всего приведет к ошибке, если валидация сайта уже прошла до текущего момента,

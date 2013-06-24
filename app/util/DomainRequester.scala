@@ -110,7 +110,19 @@ class DomainRequester extends Actor {
       val frt1: Future[DRResp200] = fmap.get(_dkey) match {
         // Какой-то запрос сейчас выполняется. Нужно скомбинировать этот фьючерс.
         case Some(frt) =>
-          frt.future flatMap { _ => startReqAsync(_url) }
+          // Если фьючерс уже выполнен, то не комбинировать его, а выкинуть, создав новый.
+          if (frt.future.isCompleted) {
+            startReqAsync(_url)
+
+          } else {
+            // Нужно, чтобы независимо от результата выполняющегося фьючерса к нему прицепился следующий фьючерс.
+            // Это можно сделать только через Promise + onComplete.
+            val p = scala.concurrent.Promise[DRResp200]()
+            frt.future onComplete { case _ =>
+              p completeWith startReqAsync(_url)
+            }
+            p.future
+          }
 
         // Никто не обращался к указанному домену последнее время. Нужно создать новый фьючерс.
         case None => startReqAsync(_url)

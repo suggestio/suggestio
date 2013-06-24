@@ -30,7 +30,7 @@ object ApplicationBuild extends Build {
       // cascading
       "cascading" % "cascading-core" % cascadingVsn,
       "cascading" % "cascading-hadoop" % cascadingVsn,
-      "com.scaleunlimited" % "cascading.utils" % "2.1.4",
+      "com.scaleunlimited" % "cascading.utils" % "2.1.4", // нужно для HadoopUtils.
       // akka - for siobix direct calls
       "com.typesafe.akka" %% "akka-actor" % "2.1.0",
       // for domain validation:
