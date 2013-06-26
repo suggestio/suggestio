@@ -28,6 +28,7 @@ libraryDependencies ++= {
   val hadoopVsn = "1.1.2"
   val akkaVsn   = "2.1.0"
   val jacksonVsn = "2.2.1"
+  val tikaVsn = "1.3"
   Seq(
     "org.scalatest" %% "scalatest" % "1.9.1" % "test",
     "org.slf4j" % "slf4j-api" % slf4jVsn,
@@ -40,5 +41,7 @@ libraryDependencies ++= {
     "org.elasticsearch" % "elasticsearch" % "0.20.6",
     "org.apache.hadoop" % "hadoop-core" % hadoopVsn,
     "org.apache.hadoop" % "hadoop-client" % hadoopVsn,
+    "org.apache.tika" % "tika-core" % tikaVsn,
+    "org.apache.tika" % "tika-parsers" % tikaVsn,
     "com.typesafe.akka" %% "akka-actor" % akkaVsn
   )}
