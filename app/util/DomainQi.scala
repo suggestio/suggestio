@@ -38,11 +38,11 @@ import org.joda.time.LocalDate
 object DomainQi extends Logs {
 
   val parseTimeout = 5.seconds
+  private val parseTimeoutMs = parseTimeout.toMillis
   protected val timeout_msg = "timeout"
   val qiIdLen = 8
-
-  // Длинное описание типа несколько раз повторяется в файле, поэтому "вынесено за скобки".
-  private type CheckQiResult_t = Either[(String, List[SioJsInfoT]), SioJsV2]
+  val skeyPrefixStr = "~"
+  val qiDtSepCh = ','
 
   // Нужно удалять из сессии юзера домены, которые он не осилил провалидировать. Тут - таймаут хранения qi-вхождений в сессии в днях.
   val qiInSessionDaysMax = 3
@@ -69,7 +69,7 @@ object DomainQi extends Logs {
     session.get(skey) match {
       // Этот домен уже упоминается в сессии. Опционально обновить дату и вернуть лежащий там qi_id.
       case Some(v) =>
-        val Array(qi_id, dtQi) = v.split(',')
+        val Array(qi_id, dtQi) = v.split(qiDtSepCh)
         val _dtQiNow = dtQiNow
         val newSessionOpt: Option[Session] = if (dtQi == _dtQiNow) {
           None
@@ -106,6 +106,20 @@ object DomainQi extends Logs {
 
 
   /**
+   * Прочитать текущий qi_id, записанный у юзера в сессии для указанного домена.
+   * @param dkey Ключ домена.
+   * @param session Сессия запроса.
+   * @return Значение qi_id, если такое есть в сессии.
+   */
+  def getQiFromSession(dkey:String)(implicit session:Session): Option[String] = {
+    session.get(dkey2skey(dkey)) map { v =>
+      val sepPos = v.indexOf(qiDtSepCh)
+      v.substring(0, sepPos)
+    }
+  }
+
+
+  /**
    * Прочитать из сессии список быстро добавленных в систему доменов и выполнить те или иные действия.
    * Бывают следующие случаи:
    * - d+qi остались в сессии, но так же имеются в модели с is_verified=true. Это значит ЗАЛОГИНЕННЫЙ юзер добавил сайт
@@ -119,10 +133,10 @@ object DomainQi extends Logs {
   def installFromSession(person_id:String, session:Session): Session = {
     lazy val logPrefix = "installFromSession(%s): " format person_id
     val sessData1 = session.data.filter { case (k, v)  =>
-      if (k.startsWith("~")) {
+      if (k.startsWith(skeyPrefixStr)) {
         val dkey = k.substring(1)
         // Пора распарсить и проанализировать всё
-        val Array(qi_id, dtQi) = v.split(',')
+        val Array(qi_id, dtQi) = v.split(qiDtSepCh)
         MPersonDomainAuthz.getForPersonDkey(dkey, person_id).map { da =>
           // Зареганный юзер проходил qi-проверку. Если прошел, то значит предикат должен вернуть false.
           !da.is_verified
@@ -150,7 +164,7 @@ object DomainQi extends Logs {
   }
 
 
-  def dkey2skey(dkey:String) : String = "~" + dkey
+  def dkey2skey(dkey:String) : String = skeyPrefixStr + dkey
 
 
   private val urlProtoAllowedRe = "(?i)https?".r
@@ -164,7 +178,7 @@ object DomainQi extends Logs {
    * @param qi_id qi_id. Просто перенаправляется в нижележащую функцию.
    * @return true, если ссылка была выверена и отправлена в очередь на обход. Иначе false.
    */
-  def maybeCheckQiAsync(dkey:String, maybeUrl:String, qi_id:String, sendEvents:Boolean)(implicit pw_opt:PwOptT): Option[Future[CheckQiResult_t]] = {
+  def maybeCheckQiAsync(dkey:String, maybeUrl:String, qi_id:String, sendEvents:Boolean)(implicit pw_opt:PwOptT): Option[Future[SioJsV2]] = {
     try {
       val url = new URL(maybeUrl)
       // Протокол - это http/https?
@@ -200,7 +214,7 @@ object DomainQi extends Logs {
    *                   Это бывает полезно для простой обратной связи с клиетом через websocket/comet/NewsQueue.
    *                   Таким образом, если sendEvents = true, то функция имеет явные сайд-эффекты.
    */
-  def checkQiAsync(dkey:String, url:String, qiIdOpt:Option[String], sendEvents:Boolean)(implicit pw_opt:PwOptT): Future[CheckQiResult_t] = {
+  def checkQiAsync(dkey:String, url:String, qiIdOpt:Option[String], sendEvents:Boolean)(implicit pw_opt:PwOptT): Future[SioJsV2] = {
     // Запросить постановку в очередь указанной ссылки для указанного домена
     DomainRequester.queueUrl(dkey, url) map { case DRResp200(ct, istream) =>
       // 200 OK: запустить тику с единственным SAX-handler и определить наличие скрипта на странице.
@@ -214,8 +228,8 @@ object DomainQi extends Logs {
         val task = new FutureTask(c)
         val t = new Thread(task)
         t.start()
-        val result : CheckQiResult_t = try {
-          val l = task.get(parseTimeout.toMillis, TimeUnit.MILLISECONDS)
+        val result: Either[(String, List[SioJsInfoT]), SioJsV2] = try {
+          val l = task.get(parseTimeoutMs, TimeUnit.MILLISECONDS)
           // Есть список найденных скриптов suggest_io.js на странице. Определить, есть ли среди них подходящий.
           l.find {
             case SioJsV2(_dkey, _qi_id) =>
@@ -245,7 +259,8 @@ object DomainQi extends Logs {
           case te:TimeoutException =>
             task.cancel(true)
             //t.interrupt()   // cancel(true) сам вызывает t.interrupt()
-            Left("Cannot parse page %s for qi: parsing timeout".format(url) -> Nil)
+            val msg = "Cannot parse page %s for qi: parsing timeout" format url
+            Left(msg -> Nil)
 
           // Внутри callable вылетел экзепшен. Он обернут в ExecutionException
           case ex:ExecutionException =>
@@ -259,24 +274,28 @@ object DomainQi extends Logs {
             logger.error(errMsg, ex)
             Left(errMsg -> Nil)
         }
-        // side-effects: Если приказано слать уведомления о ходе работы в шину событий, то сразу же сделать это, проанализировав результат анализа.
-        if (sendEvents) {
-          val qiNews: QiEventT = result match {
-            // Всё верно. Можно заапрувить учетку юзера по отношению к этому домену.
-            case Right(jsInfo) =>
+        // Отрезультировать фьючерс с возможными side-эффектами. Если приказано слать уведомления о ходе работы в шину событий, то сразу же сделать это, проанализировав результат анализа.
+        result match {
+          // Всё верно. Можно заапрувить учетку юзера по отношению к этому домену.
+          case Right(jsInfo) =>
+            if (sendEvents) {
               val qi_id1 = jsInfo.qi_id
               approve_qi(dkey, qi_id1)
-              QiSuccess(dkey=dkey, qi_id=qi_id1, url=url)
+              val qiNews = QiSuccess(dkey=dkey, qi_id=qi_id1, url=url)
+              SioNotifier.publish(qiNews)
+            }
+            jsInfo
 
-            // Ниасилил. Надо чиркануть в логи и вернуть в новости ошибку qi.
-            case Left((errMsg, listJsInstalled)) =>
-              // TODO надо отреагировать на список найденных скриптов. Если там что-то есть с верным доменом, то значит надо установить.
+          // Ниасилил. Надо чиркануть в логи и сделать фьючерс неудачным.
+          case Left((errMsg, listJsInstalled)) =>
+            // TODO надо отреагировать на список найденных скриптов. Если там что-то есть с верным доменом, то значит надо установить.
+            if (sendEvents) {
               logger.warn("qi check failed on %s: %s".format(url, errMsg))
-              QiError(dkey=dkey, qiIdOpt=qiIdOpt, url=url, msg=errMsg)
-          }
-          SioNotifier.publish(qiNews)
+              val qiNews = QiError(dkey=dkey, qiIdOpt=qiIdOpt, url=url, msg=errMsg)
+              SioNotifier.publish(qiNews)
+            }
+            throw QiCheckException(message=errMsg, jsFound=listJsInstalled)
         }
-        result
 
       } finally {
         istream.close()
@@ -294,7 +313,7 @@ object DomainQi extends Logs {
   def approve_qi(dkey:String, qi_id:String)(implicit pw_opt:PwOptT) {
     pw_opt match {
       case Some(pw) =>
-        MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, person_id=pw.email, is_verified=true).save
+        MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, person_id=pw.id, is_verified=true).save
 
       // Анонимус. Нужно поместить данные о профите во временное хранилище. Когда юзер зарегается, будет вызван installFromSession, который оттуда всё извлечет.
       case None =>
@@ -303,6 +322,8 @@ object DomainQi extends Logs {
   }
 
 }
+
+case class QiCheckException(message:String, jsFound:List[SioJsInfoT]) extends Exception
 
 
 // Анализ вынесен в отдельный поток для возможности слежения за его выполнением и принудительной остановкой по таймауту.
@@ -323,7 +344,7 @@ class DomainQiTikaCallable(md:Metadata, input:InputStream) extends Callable[List
 
 
 object QiEventUtil {
-  private val headSneToken = Some("qi")
+  val headSneToken = Some("qi")
 
   def getClassifier(
     dkeyOpt:Option[String] = None,

@@ -1,6 +1,6 @@
 package util
 
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.{FileSystem, Path}
 import io.suggest.model.JsonDfsBackend
 import SiobixFs.fs
 
@@ -18,7 +18,7 @@ object DfsModelUtil extends Logs {
    * @param path путь, который читать.
    * @return Option[A]
    */
-  def readOne[A: Manifest](path:Path) : Option[A] = {
+  def readOne[A: Manifest](path:Path, fs:FileSystem = fs) : Option[A] = {
     try {
       JsonDfsBackend.getAs[A](path, fs)
     } catch {
@@ -35,8 +35,8 @@ object DfsModelUtil extends Logs {
    * @param path путь, из которого стоит читать данные
    * @return аккамулятор
    */
-  def readOneAcc[A: Manifest](acc:List[A], path:Path) : List[A] = {
-    readOne(path) match {
+  def readOneAcc[A: Manifest](acc:List[A], path:Path, fs:FileSystem = fs) : List[A] = {
+    readOne(path, fs) match {
       case Some(mdp) => mdp :: acc
       case None => acc
     }

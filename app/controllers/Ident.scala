@@ -86,14 +86,14 @@ object Ident extends Controller with AclT with ContextT with Logs {
                       // Запускаем юзера в студию
                       val email = (respJson \ "email").as[String].trim
                       // Найти текущего юзера или создать нового
-                      val person = MPerson.getByEmail(email).getOrElse { new MPerson(email).save }
+                      val person = MPerson.getById(email).getOrElse { new MPerson(email).save }
                       // Заапрувить все анонимно-добавленные домены (qi)
-                      val session1 = DomainQi.installFromSession(person.email, request.session)
+                      val session1 = DomainQi.installFromSession(person.id, request.session)
                       // В ответе от Persona есть ещё expires = (respJson \ "expires").as[Long]
                       // залогинить юзера наконец
                       rdrToAdmin
                         .withSession(session1)
-                        .withSession(username -> person.email)
+                        .withSession(username -> person.id)
 
                     // Юзер подменил audience url, значит его assertion невалиден. Либо мы запустили на локалхосте продакшен.
                     case other =>

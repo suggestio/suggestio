@@ -1,13 +1,14 @@
 package models
 
-import org.joda.time.DateTime
+import org.joda.time.{ReadableDuration, DateTime, Duration}
 import io.suggest.util.{Logs, StringUtil}
-import util.{DomainQi, SiobixFs}
+import util.{DfsModelUtil, SiobixFs}
 import SiobixFs.fs
 import org.apache.hadoop.fs.Path
 import io.suggest.model.JsonDfsBackend
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.util.UUID
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -25,14 +26,16 @@ case class MPersonDomainAuthz(
   typ                   : String, // "Тип" - это или qi, или va (validation). См. TYPE_* у объекта-компаньона.
   body_code             : String, // пустая строка для qi или случайная строка с кодом для validation
   date_created_utc      : DateTime = DateTime.now,
-  var dt_last_checked   : Option[DateTime] = None,
+  var dt_last_checked   : DateTime = MPersonDomainAuthz.dtDefault, // Не используем Option для облегчения сериализации + тут почти всегда будет Some().
   var is_verified       : Boolean = false,
   var last_errors       : List[String] = Nil
 ) {
 
+  import MPersonDomainAuthz.{TYPE_QI, TYPE_VALIDATION, genBodyCodeValidation, VERIFY_DURATION_SOFT, VERIFY_DURATION_HARD}
+
   // Связи с другими моделями.
   @JsonIgnore def domain = MDomain.getForDkey(dkey).get
-  @JsonIgnore def person = MPerson.getByEmail(person_id).get
+  @JsonIgnore def person = MPerson.getById(person_id).get
 
   /**
    * Сохранить текущий экземпляр класса в базу.
@@ -43,6 +46,65 @@ case class MPersonDomainAuthz(
     this
   }
 
+  def isQiType = typ == TYPE_QI
+  def isValidationType = typ == TYPE_VALIDATION
+
+  /**
+   * Убедиться, что это добро подходит для qi. Validation-тип не конвертим в qi, ибо это пока не требуется.
+   * @return Инсанс, подходящий для qi. Обычно функция возвращает this.
+   */
+  def toQi: MPersonDomainAuthz = {
+    if (isQiType)
+      this
+    else
+      ???
+  }
+
+  /**
+   * Сделать объект validation. Если текущий класс уже есть validation, то вернуть this. Иначе, сгенерить новый, заполнив body_code.
+   * @return Экземпляр класса, имеющего тип равный qi.
+   */
+  def toValidation: MPersonDomainAuthz = {
+    if (isValidationType)
+      this
+    else if (isQiType) {
+      val body_code1 = if (body_code == "")
+        genBodyCodeValidation
+      else
+        body_code
+      new MPersonDomainAuthz(id=id, dkey=dkey, person_id=person_id, typ=TYPE_VALIDATION, body_code=body_code1, date_created_utc=date_created_utc)
+
+    } else ???
+  }
+
+
+  /**
+   * Обернуть body_code в option.
+   * @return
+   */
+  def bodeCodeOpt = if (body_code == "")
+    None
+  else
+    Some(body_code)
+
+
+  /**
+   * Верифицировано ли? И если да, то является ли верификация актуальной?
+   * @return true, если всё ок.
+   */
+  def isVerified = is_verified && !breaksHardLimit
+
+  /**
+   * Пора ли проводить повторную переверификацию? Да, если is_verified=false или время true истекло.
+   * @return true, если пора пройти валидацию.
+   */
+  def isNeedReverification = !is_verified || breaksSoftLimit
+
+  def breaksHardLimit = breaksLimit(VERIFY_DURATION_HARD)
+  def breaksSoftLimit = breaksLimit(VERIFY_DURATION_SOFT)
+  def breaksLimit(limit:ReadableDuration): Boolean = {
+    dt_last_checked.minus(limit) isAfter DateTime.now
+  }
 }
 
 
@@ -56,20 +118,50 @@ object MPersonDomainAuthz extends Logs {
   val TYPE_QI         = "qi"
   val TYPE_VALIDATION = "va"
 
-  val fileName = "auth"
+  // Нужно периодически обновлять данные по валидности доступа. Софт и хард лимиты описывают периодичность проверок.
+  // Софт-лимит не ломает верификацию, однако намекает что надо бы сделать повторную проверку.
+  val VERIFY_DURATION_SOFT = new Duration(25.minutes.toMillis)
+  // Превышения хард-лимита означает, что верификация уже истекла и её нужно проверять заново.
+  val VERIFY_DURATION_HARD = new Duration(40.minutes.toMillis)
+
+  // Имя файла, в котором хранятся все данные модели. Инфа важная, поэтому менять или ставить в зависимость от имени класса нельзя.
+  val fileName = new Path("authz")
+
+  val personSubdir = new Path("domains")
+
+  // Дата, точность которой не важна и которая используется как "давно/никогда".
+  val dtDefault = new DateTime(1970, 1, 1, 0, 0)
+
+  /**
+   * Путь к поддиректории юзера с доменами. Вероятно, следует вынести в отдельную модель.
+   * @param person_id id юзера
+   * @return Путь к поддиректории domains в директории указанного юзера.
+   */
+  def personPath(person_id:String) = new Path(MPerson.getPath(person_id), personSubdir)
 
   /**
    * Путь к файлу данных по указанному юзеру в рамках домена. Имеет вид m_person/putin@kremlin.ru/sugggest.io/authz
    * @param dkey ключ домена
    * @param person_id id юзера, т.е. email
-   * @return
+   * @return Путь, указывающий на файл авторизации в папке доменов юзера. Часть этой функции имеет смысл вынести в MPersonDomain.
    */
-  def dkeyPersonPath(dkey:String, person_id:String) = new Path(new Path(MPerson.getPath(person_id), dkey), fileName)
+  def dkeyPersonPath(dkey:String, person_id:String) = {
+    val personDir = personPath(person_id)
+    val personDkeyDir = new Path(personDir, dkey)
+    authzFilePath(personDkeyDir)
+  }
+
+  /**
+   * Выдать путь к файлу с данными авторизации.
+   * @param personDkeyDir папка домена внутри папки пользователя.
+   */
+  protected def authzFilePath(personDkeyDir: Path) = new Path(personDkeyDir, fileName)
+
 
   /**
    * Прочитать из хранилища json-файл по данным юзера.
-   * @param dkey
-   * @param person_id
+   * @param dkey ключ домена
+   * @param person_id id юзера
    * @return
    */
   def getForPersonDkey(dkey:String, person_id:String) : Option[MPersonDomainAuthz] = {
@@ -79,19 +171,33 @@ object MPersonDomainAuthz extends Logs {
 
 
   /**
+   * Выдать домены, которые юзер админит или хотел бы админить.
+   * @param person_id id юзера
+   * @return Список сохраненных авторизаций, в т.ч. пустой. В алфавитном порядке.
+   */
+  def getForPerson(person_id:String): List[MPersonDomainAuthz] = {
+    val personDomainsDir = personPath(person_id)
+    fs.listStatus(personDomainsDir).foldLeft[List[MPersonDomainAuthz]] (Nil) { (acc, fstatus) =>
+      if (fstatus.isDir) {
+        val authzPath = authzFilePath(fstatus.getPath)
+        readOneAcc(acc, authzPath)
+
+      } else {
+        acc
+      }
+    } sortBy(_.dkey)
+  }
+
+
+  /**
    * Аккуратненько прочитать файл. Если файла нет или чтение не удалось, то в логах будет экзепшен и None в результате.
    * @param path путь, который читать.
    * @return Option[MDomainPerson]
    */
   protected def readOne(path:Path) : Option[MPersonDomainAuthz] = {
-    try {
-      JsonDfsBackend.getAs[MPersonDomainAuthz](path, fs)
-    } catch {
-      case ex:Throwable =>
-        error("Cannot read domain_person json from " + path, ex)
-        None
-    }
+    DfsModelUtil.readOne[MPersonDomainAuthz](path)
   }
+
 
 
   /**
@@ -101,10 +207,7 @@ object MPersonDomainAuthz extends Logs {
    * @return аккамулятор
    */
   protected def readOneAcc(acc:List[MPersonDomainAuthz], path:Path) : List[MPersonDomainAuthz] = {
-    readOne(path) match {
-      case Some(mdp) => mdp :: acc
-      case None => acc
-    }
+    DfsModelUtil.readOneAcc[MPersonDomainAuthz](acc, path)
   }
 
 
@@ -154,7 +257,7 @@ object MPersonDomainAuthz extends Logs {
   def newQi(id:String, dkey:String, person_id:String, is_verified:Boolean, last_errors:List[String] = Nil): MPersonDomainAuthz = {
     new MPersonDomainAuthz(id=id, dkey=dkey, person_id=person_id, typ=TYPE_QI, body_code="",
       is_verified = is_verified,
-      dt_last_checked = Some(DateTime.now()),
+      dt_last_checked = DateTime.now(),
       last_errors = last_errors
     )
   }

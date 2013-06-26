@@ -14,19 +14,19 @@ import io.suggest.model.JsonDfsBackend
  */
 
 case class MPerson(
-  email : String,
+  id : String,
   var dkeys : List[String] = List() // список доменов на панели доменов юзера
 ) extends MPersonLinks {
 
   // Линки в другие модели.
-  def authz = MPersonDomainAuthz.getForPersonDkeys(email, dkeys)
+  def authz = MPersonDomainAuthz.getForPersonDkeys(id, dkeys)
 
   /**
    * Сохранить отметку о таком юзере
    * @return
    */
   def save = {
-    val path = MPerson.getPath(email)
+    val path = MPerson.getPath(id)
     JsonDfsBackend.writeTo(path, this)
     this
   }
@@ -58,10 +58,11 @@ case class MPerson(
 
 // Трайт ссылок с юзера на другие модели. Это хорошо
 trait MPersonLinks {
-  val email : String
+  val id : String
 
-  def isAdmin = MPerson.isAdmin(email)
-  def authzForDomain(dkey:String) = MPersonDomainAuthz.getForPersonDkey(dkey, email)
+  def isAdmin = MPerson.isAdmin(id)
+  def authzForDomain(dkey:String) = MPersonDomainAuthz.getForPersonDkey(dkey, id)
+  def allDomainsAuthz = MPersonDomainAuthz.getForPerson(id)
 }
 
 
@@ -76,11 +77,11 @@ object MPerson {
 
   /**
    * Прочитать объект Person из хранилища.
-   * @param email адрес эл.почты, который вернула Mozilla Persona и который используется для идентификации юзеров.
+   * @param id адрес эл.почты, который вернула Mozilla Persona и который используется для идентификации юзеров.
    * @return опциональный Person.
    */
-  def getByEmail(email:String) : Option[MPerson] = {
-    val filePath = getPath(email)
+  def getById(id:String) : Option[MPerson] = {
+    val filePath = getPath(id)
     fs.exists(filePath) match {
       // Файл с данными по юзеру пуст - поэтому можно его не читать, а просто сделать необходимый объект.
       case true =>
@@ -94,15 +95,15 @@ object MPerson {
 
   /**
    * Сгенерить путь в ФС для мыльника
-   * @param email мыло
+   * @param person_id мыло
    * @return путь в ФС
    */
-  def getPath(email:String) = {
-    val filePath = new Path(model_path, email)
-    if (filePath.getParent == model_path && filePath.getName == email)
+  def getPath(person_id:String) = {
+    val filePath = new Path(model_path, person_id)
+    if (filePath.getParent == model_path && filePath.getName == person_id)
       filePath
     else
-      throw new SecurityException("Incorrect email address: " + email)
+      throw new SecurityException("Incorrect email address: " + person_id)
   }
 
 

@@ -3,9 +3,10 @@ package util
 import play.api.mvc._
 import play.api.mvc.Security.{Authenticated, username}
 import controllers.routes
-import models.{MPersonLinks, MPerson}
+import models.{MDomainQiAuthzTmp, MPersonDomainAuthz, MPersonLinks, MPerson}
 import play.api.Play.current
 import scala.collection.JavaConversions._
+import io.suggest.util.UrlUtil
 
 /**
  * Suggest.io
@@ -22,6 +23,7 @@ trait AclT {
   type PwOptT           = Option[PersonWrapper]
   type ActionF_T        = PwOptT => Request[AnyContent] => Result
   type ActionF_BP_T[A]  = PwOptT => Request[A] => Result
+  type ActionDkeyF_t    = PwOptT => Request[AnyContent] => String => Result
   type AclF_T           = (PwOptT, Request[AnyContent]) => Boolean
   type AclF_BP_T[A]     = (PwOptT, Request[A]) => Boolean
 
@@ -63,6 +65,39 @@ trait AclT {
       Action(request => f(Some(user))(request))
     }
   }
+
+
+  /**
+   * Специфичный и частый для suggest.io ACL: юзер имеет права на управление хостом.
+   * @param domain ненормализованное имя домена/хоста.
+   * @param f функция энтерпрайза.
+   * @return
+   */
+  protected def canAdminDomain(domain:String)(f: ActionDkeyF_t) = {
+    // На будущее: dkey можно вынести за Action и далее разбить функцию на две: canAdminDomain(domain) и canAdminDkey(dkey).
+    Action { request =>
+      val dkey = UrlUtil.normalizeHostname(domain)
+      val pw_opt = person(request)
+      val isAllowed: Boolean = pw_opt match {
+        // Анонимус. Возможно, он прошел валидацию уже. Нужно узнать из сессии текущий qi_id и проверить по базе.
+        case None =>
+          DomainQi.getQiFromSession(dkey)(request.session) exists { qi_id =>
+            MDomainQiAuthzTmp.get(dkey = dkey, qi_id = qi_id).isDefined
+          }
+
+        // Юзер залогинен. Проверить права.
+        case Some(pw) =>
+          pw.isAdmin || MPersonDomainAuthz.getForPersonDkey(dkey, pw.id).isDefined
+      }
+      if (isAllowed) {
+        f(pw_opt)(request)(dkey)
+      } else {
+        // TODO наврядли надо залогиненного юзера редиректить на главную. Нужна страница Forbidden.
+        onUnauthorized(request)
+      }
+    }
+  }
+
 
   /**
    * Юзер может быть как авторизован, так и нет. Пример экшена в контроллере:
@@ -123,7 +158,7 @@ trait AclT {
   protected final def can(actionF: ActionF_T)(aclF: AclF_T) = {
     Action { request =>
       val pwOpt = person(request)
-      if ((pwOpt.isDefined && pwOpt.get.isAdmin) || aclF(pwOpt, request))
+      if (pwOpt.isDefined && pwOpt.get.isAdmin || aclF(pwOpt, request))
         actionF(pwOpt)(request)
       else
         onUnauthorized(request)
@@ -142,7 +177,7 @@ trait AclT {
   protected final def canBP[A](bodyParser:BodyParser[A])(actionF: ActionF_BP_T[A])(aclF: AclF_BP_T[A]) = {
     Action(bodyParser) { request =>
       val pwOpt = person(request)
-      if ((pwOpt.isDefined && pwOpt.get.isAdmin) || aclF(pwOpt, request))
+      if (pwOpt.isDefined && pwOpt.get.isAdmin || aclF(pwOpt, request))
         actionF(pwOpt)(request)
       else
         onUnauthorized(request)
@@ -169,9 +204,9 @@ object Acl extends AclT {
 
 /**
  * PersonWrapper нужен для ленивого доступа к данным. Часто содержимое MPerson не нужно, поэтому зачем его читать сразу?
- * @param email id юзера
+ * @param id id юзера
  */
-case class PersonWrapper(email:String) extends MPersonLinks {
-  lazy val person = MPerson.getByEmail(email).get
+case class PersonWrapper(id:String) extends MPersonLinks {
+  lazy val person = MPerson.getById(id).get
 }
 
