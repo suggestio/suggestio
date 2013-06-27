@@ -1,6 +1,6 @@
 package models
 
-import util.SiobixFs
+import util.{DkeyContainerT, SiobixFs}
 import SiobixFs.fs
 
 /**
@@ -12,7 +12,7 @@ import SiobixFs.fs
 
 case class MDomain(
   dkey : String
-) {
+) extends DkeyContainerT {
 
   /**
    * Выдать настройки для домена.

@@ -1,7 +1,7 @@
 package models
 
 import scala.collection.{immutable, mutable}
-import util.{DfsModelStaticT, SiobixFs}
+import util.{DkeyContainerT, DfsModelStaticT, SiobixFs}
 import SiobixFs.fs
 import io.suggest.model.JsonDfsBackend
 import scala.concurrent.{Await, future}
@@ -22,7 +22,7 @@ import play.api.libs.concurrent.Execution.Implicits._
  */
 
 // Есть несколько реализаций класса для разных задач. Тут трайт с общим кодом.
-trait MDomainUserSettingsT {
+trait MDomainUserSettingsT extends DkeyContainerT {
 
   import MDomainUserSettings._
 

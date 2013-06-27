@@ -2,7 +2,7 @@ package models
 
 import org.joda.time.{ReadableDuration, DateTime, Duration}
 import io.suggest.util.{Logs, StringUtil}
-import util.{DfsModelUtil, SiobixFs}
+import util.{DomainValidator, DfsModelUtil, SiobixFs}
 import SiobixFs.fs
 import org.apache.hadoop.fs.Path
 import io.suggest.model.JsonDfsBackend
@@ -25,24 +25,27 @@ case class MPersonDomainAuthz(
   person_id             : String,
   typ                   : String, // "Тип" - это или qi, или va (validation). См. TYPE_* у объекта-компаньона.
   body_code             : String, // пустая строка для qi или случайная строка с кодом для validation
-  date_created_utc      : DateTime = DateTime.now,
+  date_created          : DateTime = DateTime.now,
   var dt_last_checked   : DateTime = MPersonDomainAuthz.dtDefault, // Не используем Option для облегчения сериализации + тут почти всегда будет Some().
   var is_verified       : Boolean = false,
   var last_errors       : List[String] = Nil
-) {
+) extends MDomainAuthzT {
 
-  import MPersonDomainAuthz.{TYPE_QI, TYPE_VALIDATION, genBodyCodeValidation, VERIFY_DURATION_SOFT, VERIFY_DURATION_HARD}
+  import MPersonDomainAuthz.{TYPE_QI, TYPE_VALIDATION, genBodyCodeValidation, VERIFY_DURATION_SOFT, VERIFY_DURATION_HARD, dkeyPersonPath}
 
-  // Связи с другими моделями.
-  @JsonIgnore def domain = MDomain.getForDkey(dkey).get
+  // Связи с другими моделями и компонентами системы.
   @JsonIgnore def person = MPerson.getById(person_id).get
+  @JsonIgnore def maybeRevalidate(sendEvents:Boolean = true) = DomainValidator.maybeRevalidate(this, sendEvents)
+  @JsonIgnore def revalidate(sendEvents:Boolean = true)      = DomainValidator.revalidate(this, sendEvents)
+
+
+  lazy val filepath = dkeyPersonPath(dkey, person_id)
 
   /**
    * Сохранить текущий экземпляр класса в базу.
    */
-  def save = {
-    val path = MPersonDomainAuthz.dkeyPersonPath(dkey, person_id)
-    JsonDfsBackend.writeTo(path, this)
+  def save: MPersonDomainAuthz = {
+    JsonDfsBackend.writeTo(filepath, this)
     this
   }
 
@@ -72,7 +75,7 @@ case class MPersonDomainAuthz(
         genBodyCodeValidation
       else
         body_code
-      new MPersonDomainAuthz(id=id, dkey=dkey, person_id=person_id, typ=TYPE_VALIDATION, body_code=body_code1, date_created_utc=date_created_utc)
+      new MPersonDomainAuthz(id=id, dkey=dkey, person_id=person_id, typ=TYPE_VALIDATION, body_code=body_code1, date_created=date_created)
 
     } else ???
   }
@@ -80,31 +83,37 @@ case class MPersonDomainAuthz(
 
   /**
    * Обернуть body_code в option.
-   * @return
+   * @return для qi-ключей обычно None. Для Validation-ключей всегда Some()
    */
-  def bodeCodeOpt = if (body_code == "")
-    None
-  else
-    Some(body_code)
+  override def bodyCodeOpt = {
+    if (body_code == "")
+      None
+    else
+      Some(body_code)
+  }
 
 
   /**
    * Верифицировано ли? И если да, то является ли верификация актуальной?
    * @return true, если всё ок.
    */
-  def isVerified = is_verified && !breaksHardLimit
+  def isValid = is_verified && !breaksHardLimit
 
   /**
    * Пора ли проводить повторную переверификацию? Да, если is_verified=false или время true истекло.
    * @return true, если пора пройти валидацию.
    */
-  def isNeedReverification = !is_verified || breaksSoftLimit
+  def isNeedRevalidation = !is_verified || breaksSoftLimit
 
   def breaksHardLimit = breaksLimit(VERIFY_DURATION_HARD)
   def breaksSoftLimit = breaksLimit(VERIFY_DURATION_SOFT)
   def breaksLimit(limit:ReadableDuration): Boolean = {
     dt_last_checked.minus(limit) isAfter DateTime.now
   }
+
+
+  def delete = fs.delete(filepath, false)
+  def personIdOpt: Option[String] = Some(person_id)
 }
 
 
@@ -276,6 +285,18 @@ object MPersonDomainAuthz extends Logs {
   def newValidation(id:String = UUID.randomUUID().toString, dkey:String, person_id:String, body_code:String = genBodyCodeValidation,
                     is_verified:Boolean = false, last_errors:List[String] = Nil, date_last_checked:Option[DateTime] = None): MPersonDomainAuthz = {
     new MPersonDomainAuthz(id=id, dkey=dkey, person_id=person_id, typ=TYPE_VALIDATION, body_code=body_code, is_verified=is_verified, last_errors=last_errors)
+  }
+
+
+  /**
+   * Удалить файл с сериализованными данными сабжа из хранилища.
+   * @param person_id id юзера.
+   * @param dkey id ключа.
+   * @return true, если файл удален. Иначе - false
+   */
+  def delete(person_id:String, dkey:String): Boolean = {
+    val path = dkeyPersonPath(dkey, person_id)
+    fs.delete(path, false)
   }
 
 }

@@ -77,9 +77,6 @@ please=Please
 upload_verification_file=Put downloaded verification file to the root directory of your website. Than click &laquo;Check&raquo; button, or reload current page
 after_add=When you submit new domain, you will be asked to verify domain rights.
 
-intro_message=To start with search preferences, choose one of your websites in the left part of the window. If you don't have websites yet, please,
-site_add_form_title=add one now
-
 reindex_launched=Indexation launched
 reindex_try_later=Over limit. Please, try later.
 
@@ -222,3 +219,13 @@ s.bb.title=Browser check
 mappers.url.invalid_url=Invalid URL.
 mappers.url.only_http_https_allowed=Only HTTP and HTTPS protocols are allowed.
 mappers.url.hostname_prohibited=This site cannot be indexed.
+
+
+a.in.images_site_tweaks_title=How to set up my site to work with search images?
+a.in.images_you_need_add_head_tag=Just add tag &lt;meta property="og:image"/&gt; to &lt;head&gt; section of all your pages:
+a.in.images_after_tag_info=After that press "Reindex" button.
+
+a.in.intro_message=To start with search preferences, choose one of your websites in the left part of the window. If you don't have websites yet, please,
+a.in.site_add_form_title=add one now
+
+a.in.site_not_installed_yet=Site not in db yet. Please, copy code below and paste it to your website.

@@ -1,92 +1,84 @@
-@()(implicit c:util.Context)
+@(person_domains: Seq[models.MPersonDomainAuthz], timestampMs:Long)(implicit ctx:util.Context)
 
 @* Корневой шаблон админки. Ещё не портирован на play.
    Нужно определить тут person_domains и timestamp
-   _before: как и везде - содержит запись типа person - текущий юзер
    timestamp - таймштамп для comet polling. Это нужно для поддержания сессии и для обновления верификационной инфы по доменам.
    person_domains - домены, которые юзер себе приписал. Текущее состояние валидности домена можно глянуть через функцию .is_verification_valid
 *@
 
 @* Если забыть импорт текущего языка, то всё будет на дефолтовом инглише. *@
-@import c.lang
+@import ctx._
 
 @head_after = {
-    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/admin_index.min.css")"/>
+	<link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/admin_index.min.css")"/>
 }
 
 @adminBaseTpl(title=Messages("domain_admin_title"), head_after=head_after) {
 <div class="admin-layout">
-    <div class="admin-container">
+	<div class="admin-container">
 
 	<div class="explanation-layout" id="imageExplanationLayout">
-	    <div class="el-text">
-		@if(c.lang_str == "ru") {
-		    <h1>Настройка сайта для отображения картинок в поиске</h1>
-		    <p>Для привязки иллюстраций к страницам необходимо добавить в &lt;head&gt; страницы тег, указывающий кравлеру на картинку, которую необходимо отображать:</p>
-		    <code>&lt;meta property="og:image" content="http://mysite.com/images/1.jpg"/&gt;</code>
-		    <p>Формат тега удовлетворяет спецификации Open Graph protocol, и, возможно, уже используется на вашем сайте для взаимодействия с другими системами поиска и синдикации. После добавления нового тега в шаблоны сайта, необходимо включить выдачу картинок и запустить переиндексацию сайта из панели настроек домена. URL картинки может указывать на сторонний домен.</p>
-		} else {
-		    <h1>How to set up my site to work with search images?</h1>
-		    <p>Just add tag &lt;meta property="og:image"/&gt; to &lt;head&gt; section of all your pages:</p>
-		    <code>&lt;meta property="og:image" content="http://mysite.com/images/1.jpg"/&gt;</code>
-		    <p>After that press "Reindex" button</p>
-		}
-	    </div>
+		<div class="el-text">
+			<h1>@Messages("a.in.images_site_tweaks_title")</h1>		@* Настройка сайта для отображения картинок в поиске. *@
+			<p>@Messages("a.in.images_you_need_add_head_tag")</p>	@* Нужно добавить тег в head: *@
+			<code>&lt;meta property="og:image" content="http://mysite.com/images/1.jpg"/&gt;</code>
+			<p>@Messages("a.in.images_after_tag_info")</p> 			@* Пост-инфа. Типа нажмите REINDEX и что этот тег полезен. *@
+		</div>
 	</div>
 
 	<a class="admin-logo" href="/"></a>
 
-	{# Список доменов юзера #}
+	@* Список доменов юзера *@
 	<div class="admin-left-part">
 
-	    <a href="{% url controller="admin" action="" %}"><div class="h1 sio-admin-title sio-websites-title-@c.lang_str"></div></a>
+		<a href="@routes.Admin.index"><div class="h1 sio-admin-title sio-websites-title-@lang_str"></div></a>
 
-	    <div class="admin-note">@Messages("your_domains")</div>
+		<div class="admin-note">@Messages("your_domains")</div>
 
-	    <ul id="domain_list" class="domain-list">
+		<ul id="domain_list" class="domain-list">
+		@if(person_domains.isEmpty) {
+			<div class="admin-note">@Messages("no_domains_yet")</div>
+		} else {
+			@person_domains.map { pd =>
+				<li data-domain="@pd.dkey" class="@if(!pd.isValid) {not-}verified-domain domain-li">
+					<a class="domain-link" href="">@pd.dkey</a>
 
-		{% for pd in person_domains %}
-		<li data-domain="{{pd.domain_id}}" class="{% if pd.is_verification_valid %}{% else %}not-{% endif %}verified-domain domain-li">
-		<a class="domain-link" href="">{{ pd.domain_id }}</a>
+					@* удалить домен *@
+					<span class="delete-domain-cross" data-href="{% url action="delete" %}" data-domain="@pd.dkey" title="@Messages("delete_domain")"></span>
+				</li>
+			}
+		}
+		</ul>
 
-		{# удалить домен #}
-		<span class="delete-domain-cross" data-href="{% url action="delete" %}" data-domain="{{pd.domain_id}}" title="@Messages("delete_domain")"></span>
-		</li>
-		{% empty %}
-		<div class="admin-note">@Messages("no_domains_yet")</div>
-
-		{% endfor %}
-	    </ul>
-
-	    <a class="admin-add-domain-link" id="addDomainLink" href="">@Messages("admin_add_new")</a>
+		<a class="admin-add-domain-link" id="addDomainLink" href="">@Messages("admin_add_new")</a>
 
 	</div>
 	<div class="admin-right-part">
 
-	    <div class="sio-admin-window" id="introWindow">
-		<div class="h1 sio-admin-title sio-intro-title-@c.lang_str"></div>
-		<div class="admin-note">@Messages("intro_message") <a href="" onclick="add_domain_action(); return false;">@Messages("site_add_form_title")</a>.</div>
-	    </div>
+		<div class="sio-admin-window" id="introWindow">
+			<div class="h1 sio-admin-title sio-intro-title-@lang_str"></div>
+			<div class="admin-note">@Messages("a.in.intro_message") <a href="" onclick="add_domain_action(); return false;">@Messages("a.in.site_add_form_title")</a>.</div>
+		</div>
 
-	    {# Тут выводим различные инструкции #}
+		@* Тут выводим различные инструкции *@
 
-	    {# форма добавления нового домена #}
-	    <div class="new-domain sio-admin-window" id="addDomainWindow" style="display: none;">
-		<div class="h1 sio-admin-title sio-new-website-title-@c.lang_str"></div>
+		@* форма добавления нового домена *@
+		<div class="new-domain sio-admin-window" id="addDomainWindow" style="display: none;">
+		<div class="h1 sio-admin-title sio-new-website-title-@lang_str"></div>
 		<form method="POST" id="addDomainForm" action="{% url action="add_domain" %}">
-		    <label>@Messages("type_in_your_website")</label>
+			<label>@Messages("type_in_your_website")</label>
 
-		    <div class="site-add-input">
-			<div class="input-shadow">
-			    <div class="http-prefix">http://</div>
-			    <div class="input-real"><input id="userSiteInput" type="text"></div>
-			    <div class="clear"></div>
+			<div class="site-add-input">
+				<div class="input-shadow">
+					<div class="http-prefix">http://</div>
+					<div class="input-real"><input id="userSiteInput" type="text"></div>
+					<div class="clear"></div>
+				</div>
 			</div>
-		    </div>
 
-		    <div class="submit-form">
-			<a href="" id="addNewDomainButton"></a>
-		    </div>
+			<div class="submit-form">
+				<a href="" id="addNewDomainButton"></a>
+			</div>
 
 		</form>
 		<div class="clear"></div>
@@ -95,177 +87,177 @@
 		<p/>
 
 		<div id="qiCode" style="display: none;">
-		    <div class="admin-note">Site not in db yet. Please, copy code below and paste it to your website.</div>
+			<div class="admin-note">@Messages("a.in.site_not_installed_yet")</div>
 
-		    <textarea id="jsCodeTextarea" style="width: 453px; height: 130px;">
+			<textarea id="jsCodeTextarea" style="width: 453px; height: 130px;">
 
-		    </textarea>
+			</textarea>
 		</div>
-	    </div>
+		</div>
 
-	    {# Инфа по верификации домена #}
-	    <div id="domainVerificationWindow" class="domain-verification-window sio-admin-window initial-verification" style="display: none;">
-		<div class="h1 sio-admin-title domain-verification-title-@c.lang_str"></div>
+		@* Инфа по верификации домена *@
+		<div id="domainVerificationWindow" class="domain-verification-window sio-admin-window initial-verification" style="display: none;">
+		<div class="h1 sio-admin-title domain-verification-title-@lang_str"></div>
 		<div class="admin-content admin-note" style="padding-top: 20px;">
 
-		    <span>@Messages("website") <span class="domain-name"></span> @Messages("not_verified_yet")</span>
+			<span>@Messages("website") <span class="domain-name"></span> @Messages("not_verified_yet")</span>
 
-		    <div class="verification-step-one">
+			<div class="verification-step-one">
 			<div class="digit"></div>
 			<div class="desc">
-			    <span style="display: block; margin-top: 10px;">
-				<a class="verification-file" href="">@Messages("download_verification_file")</a>,
-				@Messages("follow_instructions")
-			    </span>
+				<span style="display: block; margin-top: 10px;">
+					<a class="verification-file" href="">@Messages("download_verification_file")</a>,
+					@Messages("follow_instructions")
+				</span>
 			</div>
 			<div class="clear"></div>
-		    </div>
+			</div>
 
-		    <div class="verification-step-two">
+			<div class="verification-step-two">
 			<div class="digit"></div>
 			<div class="desc">
-			    <span style="display: block; margin-top: 10px;">@Messages("upload_verification_file")</span>
-			    <div class="admin-verification-button">
-				<a class="force-recheck" href="">@Messages("recheck")</a>
-			    </div>
+				<span style="display: block; margin-top: 10px;">@Messages("upload_verification_file")</span>
+				<div class="admin-verification-button">
+					<a class="force-recheck" href="">@Messages("recheck")</a>
+				</div>
 			</div>
 			<div class="clear"></div>
-		    </div>
+			</div>
 
 		</div>
-	    </div>
+		</div>
 
-	    {# Сюда в дальнейшем будем выводить все настройки для домена #}
-	    <div id="domainPreferencesWindow" class="domain-preferences-window sio-admin-window" style="display: none;">
+		@* Сюда в дальнейшем будем выводить все настройки для домена *@
+		<div id="domainPreferencesWindow" class="domain-preferences-window sio-admin-window" style="display: none;">
 
-	    </div>
+		</div>
 
 	</div>
 	<div class="clear"></div>
 
-	<div class="admin-copyright">© 2012 Suggest.io. All rights reserved</div>
-    </div>
+	<div class="admin-copyright">&copy; 2012-@now.getYear Suggest.io. @Messages("all_rights_reserved")</div>
+	</div>
 </div>
 
 
+@* TODO жабаскрипт надо вынести в отдельный файл coffeescript, оставив тут только динамические данные. *@
 <script type="text/javascript">
 
-    @* Генерим js объект со списком сайтов юзера
-	pd.domain_id — домен
-	pd.is_verification_valid — верифицирован сайт на данный момент, или нет
-	pd.verification_error — по какой причине сайт не верифицирован
-	{% url action="get_validation_file" domain_id=pd.domain_id %}
+	@* Генерим js объект со списком сайтов юзера
+		pd.dkey — домен
+		pd.isVerified — верифицирован сайт на данный момент, или нет
+		pd.last_errors — по каким причинам сайт не верифицирован. Список сообщений с различных проверяемых страниц сайта.
 	*@
 
-    var domains = 
-    {
+	var domains =
+	{
 	{% for pd in person_domains %}
-	    {% if forloop.counter > 1 %},{% endif %}
+		{% if forloop.counter > 1 %},{% endif %}
 		'{{pd.domain_id}}':{}
-	    {% empty %}
+		{% empty %}
 	{% endfor %}
-    }
+	}
 
-    // add domain link
-    $('#addDomainLink').bind('click', function()
-    {
+	// add domain link
+	$('#addDomainLink').bind('click', function()
+	{
 	add_domain_action();
 	return false;
-    });
+	});
 
-    var add_domain_action = function()
-    {
+	var add_domain_action = function()
+	{
 	$('.domain-li').removeClass('pressed-domain');
 	_hide_all_windows();
 	$('#addDomainWindow').show();
-    }
+	}
 
-    $('#addNewDomainButton').bind('click', function()
-    {
+	$('#addNewDomainButton').bind('click', function()
+	{
 	$('#addDomainForm').submit();
 	return false;
-    });
+	});
 
-    var install_js_template = function( js_url )
-    {
+	var install_js_template = function( js_url )
+	{
 	return "<script type=\"text/javascript\">\n\t" +
-	    "(function() {\n\t" +
+		"(function() {\n\t" +
 		"var _sw = document.createElement(\"script\");\n\t" +
 		"_sw.type = \"text/javascript\";\n\t" +
 		"_sw.async = true;" +
 		'_sw.src = "https://suggest.io' + js_url + '";'+
 		"var _sh = document.getElementsByTagName(\"head\")[0]; "+
 		"_sh.appendChild(_sw);})();\n" +
-	    "<\/script>"
-    }
+		"<\/script>"
+	}
 
-    var request_installation_code = function( url )
-    {
+	var request_installation_code = function( url )
+	{
 
 	$.post("/crawl/site_add", { url: 'http://' + url }).success(function( data )
 	{
-	    var js_url = data.js_url;
+		var js_url = data.js_url;
 
-	    $('#qiCode').show();
-	    $('#jsCodeTextarea').val( install_js_template( js_url ) );
+		$('#qiCode').show();
+		$('#jsCodeTextarea').val( install_js_template( js_url ) );
 
 	});
-    }
+	}
 
-    // add domain form
-    $('#addDomainForm').bind('submit', function()
-	    {
-	    var _a = $(this).attr('action');
-	    var _d = $('#userSiteInput').val();
+	// add domain form
+	$('#addDomainForm').bind('submit', function()
+		{
+		var _a = $(this).attr('action');
+		var _d = $('#userSiteInput').val();
 
-	    _d = _d.replace('http://','');
-	    if( _d.charAt(_d.length - 1 ) == '/' ) _d =  _d.substring(0, _d.length-1 );
+		_d = _d.replace('http://','');
+		if( _d.charAt(_d.length - 1 ) == '/' ) _d =  _d.substring(0, _d.length-1 );
 
-	    if( !validateURL( _d ) )
-	    {
-	    highlight_bad_url();
-	    return false;
-	    }
+		if( !validateURL( _d ) )
+		{
+		highlight_bad_url();
+		return false;
+		}
 
-	    $.post( _a, { "domain" : _d }, function(data) {
+		$.post( _a, { "domain" : _d }, function(data) {
 		if( data.status == 'no_such_domain' )
 		{
-		    request_installation_code( _d );
+			request_installation_code( _d );
 		}
 		else
 		{
-		    if( data.status != 'error' )
-		    {
+			if( data.status != 'error' )
+			{
 			add_domain_to_list( _d );
-		    }
-		    else
-		    {
+			}
+			else
+			{
 			highlight_bad_url( _d );
-		    }
+			}
 		}
 		});
 
-	    return false;
-	    });
+		return false;
+		});
 
-    $('#userSiteInput').bind('keypress', function()
-	    {
+	$('#userSiteInput').bind('keypress', function()
+		{
 		$('.input-real').removeClass('bad-url');
-	    });
+		});
 
-    var highlight_bad_url = function()
-    {
+	var highlight_bad_url = function()
+	{
 	$('.input-real').addClass('bad-url');
-    }
+	}
 
-    var validateURL = function(url) {
+	var validateURL = function(url) {
 	var regURLrf = /^(?:(?:https?|ftp|telnet):\/\/(?:[а-я0-9_-]{1,32}(?::[а-я0-9_-]{1,32})?@@)?)?(?:(?:[а-я0-9-]{1,128}\.)+(?:рф)|(?! 0)(?:(?! 0[^.]|255)[ 0-9]{1,3}\.){3}(?! 0|255)[ 0-9]{1,3})(?:\/[a-zа-я0-9.,_@@%&?+=\~\/-]*)?(?:#[^ \'\"&<>]*)?$/i;
 	var regURL = /^(?:(?:https?|ftp|telnet):\/\/(?:[a-z0-9_-]{1,32}(?::[a-z0-9_-]{1,32})?@@)?)?(?:(?:[a-z0-9-]{1,128}\.)+(?:com|net|org|mil|edu|arpa|ru|gov|biz|info|aero|inc|name|[a-z]{2})|(?! 0)(?:(?! 0[^.]|255)[ 0-9]{1,3}\.){3}(?! 0|255)[ 0-9]{1,3})(?:\/[a-zа-я0-9.,_@@%&?+=\~\/-]*)?(?:#[^ \'\"&<>]*)?$/i;
 	return regURLrf.test(url)||regURL.test(url);
-    }
+	}
 
-    var initSettingsForm = function()
-    {
+	var initSettingsForm = function()
+	{
 	// domain settings form
 	$('#domainSettingsForm').bind('submit', function()
 		{
@@ -273,47 +265,47 @@
 
 		$.post( _a, $('#domainSettingsForm').serialize()).success(
 
-		    function()
-		    {
+			function()
+			{
 
-		    render_caption('domainSettingsStatus','@Messages("saved_successfully")');
-		    setTimeout(function()
+			render_caption('domainSettingsStatus','@Messages("saved_successfully")');
+			setTimeout(function()
 			{
 			$('#domainSettingsStatus').fadeOut(function()
-			    {
-			    $(this).html('').show();
-			    });
+				{
+				$(this).html('').show();
+				});
 			}, 1000);
-		    }
-		    );
+			}
+			);
 		return false;
 		});
-    }
+	}
 
-    /**** inner functions ****/
+	/**** inner functions ****/
 
-    // add domain
-    var add_domain_to_list = function( _d )
-    {
+	// add domain
+	var add_domain_to_list = function( _d )
+	{
 	$('#domain_list').append( domains_list_template(_d) );
 
 	domains_list_init();
 	show_domainVerificationWindow(_d);
-    }
+	}
 
-    // возвращает html для списка доменов
-    var domains_list_template = function( _d )
-    {
+	// возвращает html для списка доменов
+	var domains_list_template = function( _d )
+	{
 
 	return '<li data-domain="' + _d + '" class="domain-li pressed-domain not-verified-domain">' +
-	    '<a class="domain-link" href="">' + _d + '</a>' +
-	    '<span class="delete-domain-cross" data-href="/admin/delete" data-domain="' + _d + '" title="Удалить сайт"></span>' +
-	    '</li>';
-    }
+		'<a class="domain-link" href="">' + _d + '</a>' +
+		'<span class="delete-domain-cross" data-href="/admin/delete" data-domain="' + _d + '" title="Удалить сайт"></span>' +
+		'</li>';
+	}
 
-    // показать окно с инфой о верификации домена
-    var show_domainVerificationWindow = function( _d )
-    {
+	// показать окно с инфой о верификации домена
+	var show_domainVerificationWindow = function( _d )
+	{
 
 	_hide_all_windows();
 
@@ -327,7 +319,7 @@
 		$.ajax('{% url action="revalidate" %}/' + _d, {
 			success:
 				function(data, code, xhr) {
-			    } });
+				} });
 
 		return false;
 		});
@@ -335,11 +327,11 @@
 	$('#domainVerificationWindow .verification-step-two .desc').hide();
 	$('.verification-step-two .digit').removeClass('digit-active');
 
-    };
+	};
 
-    $('.verification-file').bind('click', function()
-	    {
-	    setTimeout(function()
+	$('.verification-file').bind('click', function()
+		{
+		setTimeout(function()
 		{
 		$('#domainVerificationWindow .verification-step-two .desc').fadeIn(150);
 		$('.verification-step-two .digit').addClass('digit-active');
@@ -347,16 +339,16 @@
 		listen_for_events(_global_timestamp);
 
 		},500);
-	    });
+		});
 
-    var _hide_all_windows = function()
-    {
+	var _hide_all_windows = function()
+	{
 	$('.sio-admin-window').hide();
-    }
+	}
 
-    // показать окно с настройками для домена
-    var show_domainPreferencesWindow = function( _d )
-    {
+	// показать окно с настройками для домена
+	var show_domainPreferencesWindow = function( _d )
+	{
 	_hide_all_windows();
 	$.ajax('/admin/domain_settings/' + _d, {
 		success: function( _tpl ) {
@@ -368,31 +360,31 @@
 
 	if( d.is(':visible') )
 	{
-	    dpw_slides( d, 'out', function()
-		    {
-		    dpw_slides( d, 'in' );
-		    });
+		dpw_slides( d, 'out', function()
+			{
+			dpw_slides( d, 'in' );
+			});
 
 	} else
 	{
-	    d.show();
-	    dpw_slides( d, 'in' );
+		d.show();
+		dpw_slides( d, 'in' );
 	}
 
-    };
+	};
 
-    var dpw_slides = function( o, _d, c )
-    {
+	var dpw_slides = function( o, _d, c )
+	{
 	var off_params = {'opacity':'0','margin-left':'-30px'};
 	var on_params =  {'opacity':'1','margin-left':'0px'};
 
 	if( _d == 'in' )  o.css(off_params).stop().animate(on_params,350);
 	if( _d == 'out' ) o.stop().animate(off_params,350, function() { c(); });
-    }
+	}
 
-    // повесить нужные события на доменные имена в списке
-    var domains_list_init = function()
-    {
+	// повесить нужные события на доменные имена в списке
+	var domains_list_init = function()
+	{
 
 	$('.domain-link').unbind('click').bind('click', function()
 		{
@@ -421,57 +413,57 @@
 		if( !confirm( "Are you sure, that you want to delete domain?" ) ) return false;
 
 		$.post( _delete_href, { "domain" : _d }, function(data) {
-		    $('.domain-li').each(function()
+			$('.domain-li').each(function()
 			{
-			    if( $(this).attr('data-domain') == _d )
-			    {
+				if( $(this).attr('data-domain') == _d )
+				{
 				$(this).remove();
 				_hide_all_windows();
 				$('#introWindow').show();
-			    }
+				}
 			});
-		    });
+			});
 
 		});
-    }
+	}
 
-    // возвращает ссылку для верификации домена
-    var _domain_verification_link = function( _d )
-    {
+	// возвращает ссылку для верификации домена
+	var _domain_verification_link = function( _d )
+	{
 	return '{% url action="get_validation_file" %}/' + _d
-    }
+	}
 
-    // 
-    var _set_domain_status = function( _d, status )
-    {
+	//
+	var _set_domain_status = function( _d, status )
+	{
 	var _ds = $('.domain-li');
 	_ds.each(function()
 		{
-		    var _cd = $(this).attr('data-domain');
-		    if( _cd == _d )
-		    {
+			var _cd = $(this).attr('data-domain');
+			if( _cd == _d )
+			{
 			if( status === true )
 			{
-			    $(this).removeClass('not-verified-domain').addClass('verified-domain');
+				$(this).removeClass('not-verified-domain').addClass('verified-domain');
 
-			    if( loaded === true ) show_domainPreferencesWindow( _d );
+				if( loaded === true ) show_domainPreferencesWindow( _d );
 			}else
 			{
-			    $(this).removeClass('verified-domain').addClass('not-verified-domain');
+				$(this).removeClass('verified-domain').addClass('not-verified-domain');
 			}
-		    }
+			}
 		});
-    };
+	};
 
-    domains_list_init();
+	domains_list_init();
 
-    // подписаться на события
-    function listen_for_events( timestamp ) {
+	// подписаться на события
+	function listen_for_events( timestamp ) {
 	$.ajax('{% url action="pull" %}/' + timestamp,
 		{
 		success:
 			function(data, code, xhr) {
-				for (var i=0; i<data.events.length; i++) {
+				for (var i=0; i < data.events.length; i++) {
 					var _event = data.events[i];
 
 					if( _event.type == 'domain_verification' )
@@ -504,7 +496,7 @@
 
 	var showImagesExplanation = function()
 	{
-	    $('#imageExplanationLayout').fadeIn();
+		$('#imageExplanationLayout').fadeIn();
 	}
 
 	$('body').bind('click', function()
@@ -521,20 +513,20 @@
 	var render_caption = function( elt_id, new_value )
 	{
 
-	    if( typeof( window['render_caption' + elt_id] ) != 'undefined' ) return false;
+		if( typeof( window['render_caption' + elt_id] ) != 'undefined' ) return false;
 
-	    window['render_caption' + elt_id] = 1;
+		window['render_caption' + elt_id] = 1;
 
-	    var delay = 50;
-	    for( var i = 0; i < new_value.length+1; i++ )
-	    {
+		var delay = 50;
+		for( var i = 0; i < new_value.length+1; i++ )
+		{
 		setTimeout("$('#" + elt_id + "').html('" + new_value.substring(0,i) + "');", i*delay);
-	    }
+		}
 
-	    setTimeout(function()
-		    {
-		    delete( window['render_caption' + elt_id] );
-		    }, (new_value.length+1) * delay);
+		setTimeout(function()
+			{
+			delete( window['render_caption' + elt_id] );
+			}, (new_value.length+1) * delay);
 
 	}
 
@@ -547,9 +539,9 @@
 		},2000);
 
 	$(document).ready(function() {
-		listen_for_events(@c.now.toInstant);
-		_set_domain_status( "waveru.ru", true );
-		});
+		listen_for_events(@timestampMs);
+		@* _set_domain_status( "waveru.ru", true ); *@				@* ЧТО ЭТО??? *@
+	});
 </script>
 
 }

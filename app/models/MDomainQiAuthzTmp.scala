@@ -1,11 +1,12 @@
 package models
 
-import util.DfsModelStaticT
 import util.SiobixFs
 import util.SiobixFs.fs
 import org.apache.hadoop.fs.Path
-import org.joda.time.DateTime
+import org.joda.time.{Duration, DateTime}
 import io.suggest.model.JsonDfsBackend
+import com.fasterxml.jackson.annotation.JsonIgnore
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -18,13 +19,21 @@ import io.suggest.model.JsonDfsBackend
 
 case class MDomainQiAuthzTmp(
   dkey : String,
-  qi_id: String,
+  id: String,
   date_created: DateTime = DateTime.now()
-) {
+) extends MDomainAuthzT {
 
-  import MDomainQiAuthzTmp.getFilePath
+  import MDomainQiAuthzTmp.{getFilePath, VERIFY_DURATION_HARD, VERIFY_DURATION_SOFT}
 
-  lazy val filepath = getFilePath(dkey, qi_id)
+  @JsonIgnore def personIdOpt: Option[String] = None
+  @JsonIgnore def isValid: Boolean = {
+    date_created.minus(VERIFY_DURATION_HARD).isAfterNow
+  }
+  @JsonIgnore def isNeedRevalidation: Boolean = {
+    date_created.minus(VERIFY_DURATION_SOFT).isAfterNow
+  }
+
+  @JsonIgnore lazy val filepath = getFilePath(dkey, id)
 
   /**
    * Сохранить текущий ряд в базу.
@@ -47,6 +56,8 @@ case class MDomainQiAuthzTmp(
    */
   def delete = fs.delete(filepath, false)
 
+  @JsonIgnore def isQiType: Boolean = true
+  @JsonIgnore def isValidationType: Boolean = false
 }
 
 
@@ -54,6 +65,11 @@ object MDomainQiAuthzTmp {
 
   val tmpDirName = "qi_anon_tmp"
   val tmpDir = new Path(SiobixFs.siobix_conf_path, tmpDirName)
+
+  val VERIFY_DURATION_SOFT = new Duration(45.minutes.toMillis)
+  // Превышения хард-лимита означает, что верификация уже истекла и её нужно проверять заново.
+  val VERIFY_DURATION_HARD = new Duration(60.minutes.toMillis)
+
 
   def getFilePath(dkey:String, qi_id:String): Path = {
     new Path(tmpDir, dkey + "~" + qi_id)
@@ -63,11 +79,11 @@ object MDomainQiAuthzTmp {
   /**
    * Прочитать из временного хранилища ранее сохраненные данные по домену и qi.
    * @param dkey ключ домена
-   * @param qi_id qi id
+   * @param id qi id
    * @return Опциональный MDomainQiAuthzTmp
    */
-  def get(dkey:String, qi_id:String): Option[MDomainQiAuthzTmp] = {
-    val filepath = getFilePath(dkey, qi_id)
+  def get(dkey:String, id:String): Option[MDomainQiAuthzTmp] = {
+    val filepath = getFilePath(dkey, id)
     JsonDfsBackend.getAs[MDomainQiAuthzTmp](filepath, fs)
   }
 

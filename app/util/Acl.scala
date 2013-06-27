@@ -3,10 +3,11 @@ package util
 import play.api.mvc._
 import play.api.mvc.Security.{Authenticated, username}
 import controllers.routes
-import models.{MDomainQiAuthzTmp, MPersonDomainAuthz, MPersonLinks, MPerson}
+import models._
 import play.api.Play.current
 import scala.collection.JavaConversions._
 import io.suggest.util.UrlUtil
+import scala.Some
 
 /**
  * Suggest.io
@@ -23,7 +24,7 @@ trait AclT {
   type PwOptT           = Option[PersonWrapper]
   type ActionF_T        = PwOptT => Request[AnyContent] => Result
   type ActionF_BP_T[A]  = PwOptT => Request[A] => Result
-  type ActionDkeyF_t    = PwOptT => Request[AnyContent] => String => Result
+  type ActionDomainF_t  = PwOptT => Request[AnyContent] => MDomainAuthzT => Result
   type AclF_T           = (PwOptT, Request[AnyContent]) => Boolean
   type AclF_BP_T[A]     = (PwOptT, Request[A]) => Boolean
 
@@ -48,7 +49,7 @@ trait AclT {
    * @param request Заголовки запроса.
    * @return Result, такой же как и в экшенах контроллеров.
    */
-  protected def onUnauthorized(request: RequestHeader) = Results.Redirect(routes.Application.index())
+  protected def onUnauthorized(request: RequestHeader): Result = Results.Redirect(routes.Application.index())
 
   /**
    * Контроллер использует isAuthentificated вместо Action когда необходимо ограничить доступ к ресурсу неавторизованным
@@ -73,27 +74,31 @@ trait AclT {
    * @param f функция энтерпрайза.
    * @return
    */
-  protected def canAdminDomain(domain:String)(f: ActionDkeyF_t) = {
-    // На будущее: dkey можно вынести за Action и далее разбить функцию на две: canAdminDomain(domain) и canAdminDkey(dkey).
+  protected def isDomainAdmin(domain:String)(f: ActionDomainF_t) = {
+    // На будущее: dkey можно вынести за Action и далее разбить функцию на две: isDomainAdmin(domain) и canAdminDkey(dkey).
     Action { request =>
       val dkey = UrlUtil.normalizeHostname(domain)
       val pw_opt = person(request)
-      val isAllowed: Boolean = pw_opt match {
+      val authzInfoOpt: Option[MDomainAuthzT] = pw_opt match {
         // Анонимус. Возможно, он прошел валидацию уже. Нужно узнать из сессии текущий qi_id и проверить по базе.
         case None =>
-          DomainQi.getQiFromSession(dkey)(request.session) exists { qi_id =>
-            MDomainQiAuthzTmp.get(dkey = dkey, qi_id = qi_id).isDefined
+          DomainQi.getQiFromSession(dkey)(request.session) flatMap { qi_id =>
+            MDomainQiAuthzTmp.get(dkey=dkey, id=qi_id) filter(_.isValid)
           }
 
         // Юзер залогинен. Проверить права.
         case Some(pw) =>
-          pw.isAdmin || MPersonDomainAuthz.getForPersonDkey(dkey, pw.id).isDefined
+          if(pw.isAdmin) {
+            Some(MPersonDomainAuthzAdmin(person_id=pw.id, dkey=dkey))
+          } else {
+            MPersonDomainAuthz.getForPersonDkey(dkey, pw.id) filter(_.isValid)
+          }
       }
-      if (isAllowed) {
-        f(pw_opt)(request)(dkey)
-      } else {
-        // TODO наврядли надо залогиненного юзера редиректить на главную. Нужна страница Forbidden.
-        onUnauthorized(request)
+      authzInfoOpt match {
+        case Some(authzInfo) =>
+          f(pw_opt)(request)(authzInfo)
+
+        case None => onUnauthorized(request)
       }
     }
   }

@@ -3,6 +3,7 @@ package util
 import play.api.data.Forms._
 import java.net.URL
 import io.suggest.util.UrlUtil
+import gnu.inet.encoding.IDNA
 
 /**
  * Suggest.io
@@ -13,6 +14,8 @@ import io.suggest.util.UrlUtil
 object FormUtil {
 
   val strIdentityF = {s:String => s}
+  val strTrimF = {s:String => s.trim}
+  val strTrimLowerF = {s:String => s.trim.toLowerCase}
 
   private val allowedProtocolRePattern = "(?i)https?".r
 
@@ -39,4 +42,14 @@ object FormUtil {
       UrlUtil.isHostnameValid(url.getHost)
     })
 
+
+
+  // Маппер домена. Формат ввода тут пока не проверяется.
+  val domainMapper = nonEmptyText(minLength = 4, maxLength = 128)
+    .transform(strTrimLowerF, strIdentityF)
+    .verifying("mappers.url.hostname_prohibited", UrlUtil.isHostnameValid(_))
+
+  // Маппер домена с конвертором в dkey.
+  val domain2dkeyMapper = domainMapper
+    .transform(UrlUtil.normalizeHostname(_), {dkey:String => IDNA.toUnicode(dkey)})
 }

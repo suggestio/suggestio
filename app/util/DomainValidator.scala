@@ -1,6 +1,6 @@
 package util
 
-import models.MPersonDomainAuthz
+import models.MDomainAuthzT
 import scala.concurrent.{Promise, Future}
 import java.io.InputStream
 import scala.util.{Failure, Success}
@@ -31,20 +31,30 @@ import play.api.libs.json._
 object DomainValidator extends Logs {
 
   private val minimalPaths = List("")
-  private val trueFuture  = Future.successful(true)
-  private val falseFuture = Future.successful(false)
-  private type RevalidateResult_t = Boolean
-  private val validationNothingFoundFuture = Future.failed[RevalidateResult_t](NoMoreUrlsValidationException)
+  private val validationNothingFoundFuture = Future.failed[Boolean](NoMoreUrlsValidationException)
 
   val parseTimeout = 3.seconds
   private val parseTimeoutMs = parseTimeout.toMillis
 
   /**
+   * Возможно, необходимо запустить перевалидацию для домена.
+   * @param da Экземпляр MPersonDomainAuthz.
+   * @param sendEvents слать ли события об успехах/неудачах в шину?
+   * @return Опциональный фьючерс с конечным результатом true/false. Если перевалидация не требуется, то вернется уже исполненный фьючерс с true.
+   */
+  def maybeRevalidate(da: MDomainAuthzT, sendEvents:Boolean = true): Option[Future[Boolean]] = {
+    if (da.isNeedRevalidation)
+      Some(revalidate(da, sendEvents))
+    else
+      None
+  }
+
+  /**
    * Запустить ревалидацию в фоне. Возвращаемый фьючерс содержит результат валидации.
    * @param da данные по валидации.
-   * @param sendEvents слать ли результаты в шину SioNotifier?
+   * @param sendEvents слать ли результаты в шину SioNotifier? По дефолту - true.
    */
-  def revalidate(da: MPersonDomainAuthz, sendEvents:Boolean): Future[RevalidateResult_t] = {
+  def revalidate(da: MDomainAuthzT, sendEvents:Boolean = true): Future[Boolean] = {
     lazy val logPrefix = "revalidate(%s %s): " format(da, sendEvents)
     // Сгенерить имя файла, если это возможно
     val filenameOpt = if (da.isQiType)
@@ -61,7 +71,7 @@ object DomainValidator extends Logs {
     logger.debug(logPrefix + "will check URLs: " + urls)
 
     // Нужно вызывать функцию-итерацию проверки до первой удачи. А из функции быстро вернуть фьючерс результата.
-    val p = Promise[RevalidateResult_t]()
+    val p = Promise[Boolean]()
 
     def revalidateOne(urlsRest:List[String]) {
       if(urlsRest == Nil) {
@@ -69,9 +79,10 @@ object DomainValidator extends Logs {
         // Закончился список ссылок. Нужно на этом и закончить.
         p completeWith validationNothingFoundFuture
         if (sendEvents)
-          SioNotifier.publish(DVFailEvent(dkey=dkey, person_id=da.person_id))
+          SioNotifier.publish(DVFailEvent(dkey=dkey, personIdOpt=da.personIdOpt))
 
       } else {
+        // TODO нужно собирать ошибки в аккамулятор, и затем сохранять их в da.last_errors.
         // Есть ещё ссылки для обхода. Нужно извлечь верхнюю ссылку, взять и проверить её.
         val urlH :: urlsT = urlsRest
         logger.debug(logPrefix + "sending req to " + urlH)
@@ -117,16 +128,15 @@ object DomainValidator extends Logs {
               // Неудача чо-то с текущей ссылкой. Сообщить в шину и перейти к следующему.
               case Left((msg, ex)) =>
                 if (sendEvents)
-                  SioNotifier.publish(DVUrlFailedEvent(dkey=dkey, person_id=da.person_id, url=urlH, reason=msg, ex=ex))
+                  SioNotifier.publish(DVUrlFailedEvent(dkey=dkey, personIdOpt=da.personIdOpt, url=urlH, reason=msg, ex=ex))
                 logger.debug(logPrefix + "Check unsuccess for URL " + urlH, ex)
                 revalidateOne(urlsT)
 
               // Всё ок.
               case Right(_) =>
                 p complete Success(true)
-                if (sendEvents) {
-                  SioNotifier.publish(DVSuccessEvent(dkey=dkey, person_id=da.person_id, url=urlH))
-                }
+                if (sendEvents)
+                  SioNotifier.publish(DVSuccessEvent(dkey=dkey, personIdOpt=da.personIdOpt, url=urlH))
                 logger.debug("Check successeded for " + urlH)
             }
 
@@ -138,7 +148,7 @@ object DomainValidator extends Logs {
             // TODO нужно матчить исключение, извлекая из него причину ошибки. И отправлять юзеру.
             val msg = "Request failed"
             if(sendEvents)
-              SioNotifier.publish(DVUrlFailedEvent(dkey=dkey, person_id=da.person_id, url=urlH, reason=msg, ex=ex))
+              SioNotifier.publish(DVUrlFailedEvent(dkey=dkey, personIdOpt=da.personIdOpt, url=urlH, reason=msg, ex=ex))
             revalidateOne(urlsT)
         }
       }
@@ -195,7 +205,7 @@ object NoMoreUrlsValidationException extends Exception
 
 
 // tika-callable, содержащий прерываемую задачу по детектированию энтерпрайза.
-class DomainValidationTikaCallable(md:Metadata, input:InputStream, da:MPersonDomainAuthz) extends Callable[Boolean] {
+class DomainValidationTikaCallable(md:Metadata, input:InputStream, da:MDomainAuthzT) extends Callable[Boolean] {
 
   /**
    * Запуск анализаторов. Используется TeeContentHandler для мультиплекса различных sio-SAX-handler'ов.
@@ -206,8 +216,8 @@ class DomainValidationTikaCallable(md:Metadata, input:InputStream, da:MPersonDom
     val jsDetector = new SioJsDetectorInterruptableSAX
     var detectors = List[ContentHandler](jsDetector)
     // Если есть код тела проверки, то надо добавить детектор подстроки в писанине.
-    if (da.bodeCodeOpt.isDefined)
-      detectors = new SioSubstrDetectorSAX(da.bodeCodeOpt.get) :: detectors
+    if (da.bodyCodeOpt.isDefined)
+      detectors = new SioSubstrDetectorSAX(da.bodyCodeOpt.get) :: detectors
     // Использовать AutoDetectParser, ибо на входе могут быть как HTML-файлы, так и plain-text.
     val parser = new AutoDetectParser()
     // Если в списке детекторов валидации только один детектор, то TeeContentHandler избыточен.
@@ -257,15 +267,16 @@ object DVEventUtil {
   def getClassifier(dkeyOpt:Option[String] = None, personIdOpt:Option[String] = None, isSuccessOpt:Option[Boolean] = None): Classifier = {
     List(headSneToken, dkeyOpt, personIdOpt, isSuccessOpt)
   }
-
 }
 
 
-sealed trait DVEvent extends SioEventTJSable {
+
+
+sealed trait DVEvent extends SioEventTJSable with DkeyContainerT {
   import DVEventUtil.jsonEventType
 
   val dkey: String
-  val person_id: String
+  val personIdOpt: Option[String]
 
   // true, если есть положительный результат.
   val isSuccess: Boolean
@@ -277,35 +288,39 @@ sealed trait DVEvent extends SioEventTJSable {
 
   protected def jsonProps: List[(String, JsValue)]
 
-  def getClassifier: Classifier = DVEventUtil.getClassifier(dkeyOpt=Some(dkey), personIdOpt=Some(person_id), isSuccessOpt=Some(isSuccess))
+  def getClassifier: Classifier = DVEventUtil.getClassifier(dkeyOpt=Some(dkey), personIdOpt=personIdOpt, isSuccessOpt=Some(isSuccess))
 
   /**
    * Сериализовать данные события в json.
    * @return
    */
   implicit def toJson: JsValue = {
-    val jsonFields = {
+    val jsonFields0 = jsonProps
+    val jsonFields1 = personIdOpt match {
+      case Some(person_id) => "person_id"   -> JsString(person_id) :: jsonFields0
+      case None => jsonFields0
+    }
+    val jsonFields2 = {
       "type"        -> jsonEventType ::
       "dkey"        -> JsString(dkey) ::
-      "person_id"   -> JsString(person_id) ::
       "is_success"  -> JsBoolean(isSuccess) ::
       "is_finished" -> JsBoolean(isFinished) ::
-      jsonProps
+      jsonFields1
     }
-    JsObject(jsonFields)
+    JsObject(jsonFields2)
   }
 }
 
 // Событие "проверка пройдена"
-case class DVSuccessEvent(dkey:String, person_id:String, url:String) extends DVEvent {
+case class DVSuccessEvent(dkey:String, personIdOpt:Option[String], url:String) extends DVEvent {
   val isSuccess: Boolean  = true
   val isFinished: Boolean = true
 
   protected def jsonProps: List[(String, JsValue)] = List("url" -> JsString(url))
 }
 
-// Событие "На этой ссылке не фортануло"
-case class DVUrlFailedEvent(dkey:String, person_id:String, url:String, reason:String, ex:Throwable) extends DVEvent {
+// Событие "На этой ссылке не фортануло". Т.е. некий промежуточный результат.
+case class DVUrlFailedEvent(dkey:String, personIdOpt:Option[String], url:String, reason:String, ex:Throwable) extends DVEvent {
   val isSuccess: Boolean  = false
   val isFinished: Boolean = false
 
@@ -316,7 +331,7 @@ case class DVUrlFailedEvent(dkey:String, person_id:String, url:String, reason:St
 }
 
 // Событие "Вся валидация не удалась". Выдается после прохода всех ссылок с неудачами.
-case class DVFailEvent(dkey:String, person_id:String) extends DVEvent {
+case class DVFailEvent(dkey:String, personIdOpt:Option[String]) extends DVEvent {
   val isSuccess: Boolean  = false
   val isFinished: Boolean = true
 

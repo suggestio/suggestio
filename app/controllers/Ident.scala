@@ -10,7 +10,7 @@ import views.html.ident._
 import play.api.libs.concurrent.Promise.timeout
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.duration._
-import scala.concurrent.Future
+import scala.concurrent.{Future, future}
 import play.api.libs.json.JsString
 import models.MPerson
 import play.api.mvc.Security.username
@@ -73,7 +73,7 @@ object Ident extends Controller with AclT with ContextT with Logs {
         // На время запроса неопределенной длительности необходимо освободить текущий поток, поэтому возвращаем фьючерс:
         Async {
           val timeoutFuture = timeout("timeout", verifyReqFutureTimeout)
-          Future.firstCompletedOf(Seq(futureVerify, timeoutFuture)).map {
+          Future.firstCompletedOf(Seq(futureVerify, timeoutFuture)) map {
             // Получен ответ от сервера mozilla persona.
             case resp:Response =>
               val respJson = resp.json
@@ -85,12 +85,12 @@ object Ident extends Controller with AclT with ContextT with Logs {
                     case JsString(AUDIENCE_URL) =>
                       // Запускаем юзера в студию
                       val email = (respJson \ "email").as[String].trim
-                      // Найти текущего юзера или создать нового
-                      val person = MPerson.getById(email).getOrElse { new MPerson(email).save }
-                      // Заапрувить все анонимно-добавленные домены (qi)
-                      val session1 = DomainQi.installFromSession(person.id, request.session)
-                      // В ответе от Persona есть ещё expires = (respJson \ "expires").as[Long]
-                      // залогинить юзера наконец
+                      // Далее: сильно-блокирующий код, но на это плевать, т.к. мы уже находимся внутри фьючерса.
+                      // Найти текущего юзера или создать нового:
+                      val person = MPerson.getById(email) getOrElse { new MPerson(email).save }
+                      // Заапрувить анонимно-добавленные и подтвержденные домены (qi)
+                      val session1 = DomainQi.installFromSession(person.id)
+                      // залогинить юзера наконец.
                       rdrToAdmin
                         .withSession(session1)
                         .withSession(username -> person.id)

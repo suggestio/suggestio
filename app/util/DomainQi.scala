@@ -15,7 +15,7 @@ import play.api.libs.json.{JsBoolean, JsString, JsValue}
 import io.suggest.event.SioNotifier
 import java.net.{MalformedURLException, URL}
 import io.suggest.util.UrlUtil
-import scala.concurrent.Future
+import scala.concurrent.{Future, future}
 import models.{MDomainQiAuthzTmp, MPersonDomainAuthz}
 import util.Acl.PwOptT
 import org.joda.time.format.DateTimeFormatterBuilder
@@ -127,44 +127,64 @@ object DomainQi extends Logs {
    * - d+qi в сессии и в MDomainQiAuthzTmp. Это происходит, когда анонимус проходит qi, и затем логинится.
    *   Нужно удалить врЕменное разрешение, и создать нормальный MPersonDomainAuthz.
    * - d+qi в сессии не подходят под предыдущие условия. Значит не прошли валидацию. Смотреть дату, и удалить если истекло время хранения.
-   * @param person_id id юзер. Обычно это его e-mail.
-   * @param session Изменяемые данные сессии.
+   * @param person_id id Юзер. Обычно это его e-mail.
+   * @param session Исходные данные сессии.
+   * @return Обновлённые данные сессии.
    */
-  def installFromSession(person_id:String, session:Session): Session = {
+  def installFromSession(person_id:String)(implicit session:Session): Session = {
     lazy val logPrefix = "installFromSession(%s): " format person_id
+    // Фильтр ключей сессии имеет сайд-эффекты.
     val sessData1 = session.data.filter { case (k, v)  =>
-      if (k.startsWith(skeyPrefixStr)) {
-        val dkey = k.substring(1)
-        // Пора распарсить и проанализировать всё
-        val Array(qi_id, dtQi) = v.split(qiDtSepCh)
-        MPersonDomainAuthz.getForPersonDkey(dkey, person_id).map { da =>
+      skey2dkey(k) match {
+        // Это сериализованый ключ домена. Нужно продолжить анализ.
+        case Some(dkey) =>
+          // Пора распарсить и проанализировать значение по ключу.
+          val Array(qi_id, dtQi) = v.split(qiDtSepCh)
+          MPersonDomainAuthz.getForPersonDkey(dkey, person_id).map { da =>
           // Зареганный юзер проходил qi-проверку. Если прошел, то значит предикат должен вернуть false.
-          !da.is_verified
-
-        } getOrElse {
-          MDomainQiAuthzTmp.get(dkey, qi_id) map { dqia =>
-            // Анонимус добавлял сайт и успешно прошел qi-проверку. Нужно перенести сайт к зареганному анонимусу
-            logger.debug(logPrefix + " approving (%s %s) to ex-anon".format(dkey, qi_id))
-            MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, person_id=person_id, is_verified=true).save
-            dqia.delete
-            false
+            !da.is_verified
 
           } getOrElse {
-            // Юзер не проходил проверок, или прошел но неудачно. Нужно проверить, не истекло ли время хранения qi в сессии.
-            dtQi.toInt >= dtQiNow.toInt - qiInSessionDaysMax
-          }
-        }
+            MDomainQiAuthzTmp.get(dkey, qi_id) map { dqia =>
+            // Анонимус добавлял сайт и успешно прошел qi-проверку. Нужно перенести сайт к зареганному анонимусу
+              logger.debug(logPrefix + " approving (%s %s) to ex-anon".format(dkey, qi_id))
+              MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, person_id=person_id, is_verified=true).save
+              dqia.delete
+              false
 
-      } else {
+            } getOrElse {
+              // Юзер не проходил проверок, или прошел но неудачно. Нужно проверить, не истекло ли время хранения qi в сессии.
+              dtQi.toInt >= dtQiNow.toInt - qiInSessionDaysMax
+            }
+          }
+
         // Другие элементы сессии здесь не интересны. Не трогаем их.
-        true
+        case None => true
       }
     }
     session.copy(sessData1)
   }
 
 
+  /**
+   * Обернуть ключ домена в ключ сессии. Такое оборачивание используется, чтобы отличать обычные ключи в сессии от
+   * остальных возможных ключей без использования какой-либо группировки.
+   * @param dkey Ключ домена, строка. Считается заведомо валидной строкой.
+   * @return Строка, помеченная как dkey+qi.
+   */
   def dkey2skey(dkey:String) : String = skeyPrefixStr + dkey
+
+  /**
+   * Попытаться извлечь (какбы десериализовать) dkey из ключа сессии.
+   * @param skey Строка ключа сессии.
+   * @return Some(dkey) если ключ является dkey с пометкой qi. Иначе None.
+   */
+  def skey2dkey(skey:String) : Option[String] = {
+    if (skey.startsWith(skeyPrefixStr))
+      Some(skey.substring(1))
+    else
+      None
+  }
 
 
   private val urlProtoAllowedRe = "(?i)https?".r
@@ -317,7 +337,7 @@ object DomainQi extends Logs {
 
       // Анонимус. Нужно поместить данные о профите во временное хранилище. Когда юзер зарегается, будет вызван installFromSession, который оттуда всё извлечет.
       case None =>
-        MDomainQiAuthzTmp(dkey=dkey, qi_id=qi_id).save
+        MDomainQiAuthzTmp(dkey=dkey, id=qi_id).save
     }
   }
 
@@ -353,7 +373,7 @@ object QiEventUtil {
 }
 
 
-trait QiEventT extends SioEventTJSable {
+trait QiEventT extends SioEventTJSable with DkeyContainerT {
   import play.api.libs.json._
 
   val dkey: String
@@ -365,9 +385,11 @@ trait QiEventT extends SioEventTJSable {
   def getClassifier: SioNotifier.Classifier = QiEventUtil.getClassifier(dkeyOpt = Some(dkey), qiIdOpt=qiIdOpt, isSuccessOpt = Some(isSuccess))
 
   def toJson: JsValue = {
-    val jsonFields = "type" -> JsString(jsonEventType) ::
-      "url" -> JsString(url) ::
-      jsonMapTail
+    val jsonFields = {
+      "type" -> JsString(jsonEventType) ::
+      "url"  -> JsString(url) ::
+      jsonMapTail ++ dkeyJsProps
+    }
     JsObject(jsonFields)
   }
 

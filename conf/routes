@@ -42,3 +42,10 @@ POST    /blog/edit/:id                  controllers.Blog.editRecS(id:String)
 
 GET     /help                           controllers.Static.help
 GET     /help/:page                     controllers.Static.helpPage(page:String)
+
+
+# Админка
+GET  /admin                             controllers.Admin.index
+GET  /admin/ws/:timestampMs             controllers.Admin.ws(timestampMs:Long)
+POST /admin/add_domain                  controllers.Admin.addDomain
+POST /admin/delete_domain               controllers.Admin.deleteDomain
