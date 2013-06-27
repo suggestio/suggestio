@@ -114,6 +114,21 @@ case class MPersonDomainAuthz(
 
   def delete = fs.delete(filepath, false)
   def personIdOpt: Option[String] = Some(person_id)
+
+  /**
+   * Сгенерить проверочную ссылку на удаленном сервере.
+   * @param isUnicode true влияет на IDN-домены, выдавая хостнейм в национальном алфавите.
+   * @return Строка ссылки, которая будет использована как основа для проверки.
+   */
+  def fileUrl(isUnicode: Boolean = false): String = {
+    val hostname = if(isUnicode)
+      dkeyUnicode
+    else
+      dkey
+    "http://" + hostname + "/" + filename
+  }
+
+  def filename: String = id + ".txt"
 }
 
 

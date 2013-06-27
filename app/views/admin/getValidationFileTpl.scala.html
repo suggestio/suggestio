@@ -1,8 +1,8 @@
-@(dpz:models.MPersonDomainAuthz)(implicit c:util.Context)
-## Please put this file on your site. 
+@(da: models.MPersonDomainAuthz)
+## Please put this file on your site.
 ## Suggest.io will expect content on on the following URL:
-## * {{ url }}
+## * @da.fileUrl(isUnicode = true)
 ##
-## Domain account validation will success, if URL response body will contain at least following ASCII text:
+## Domain account validation will success, if URL response body will CONTAIN at least following ASCII/UTF8 characters:
 
-@dpz.body_code
+@da.body_code

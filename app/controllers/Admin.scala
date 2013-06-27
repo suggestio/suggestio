@@ -18,6 +18,7 @@ import play.api.data.Forms._
 import FormUtil._
 import gnu.inet.encoding.IDNA
 import DkeyContainer.dkeyJsProps
+import io.suggest.util.UrlUtil
 
 /**
  * Suggest.io
@@ -179,7 +180,27 @@ object Admin extends Controller with AclT with ContextT with Logs {
     )
   }
 
-  // TODO Осталось ещё GET getValidationFile, GET domain_settings, POST set_domain_settings, POST reindex?
+
+  /**
+   * Юзер хочет пройти валидацию сайта, загрузив файл на сайт.
+   * @param domain домен. Обычно dkey, но всё же будет повторно нормализован.
+   */
+  def getValidationFile(domain: String) = isAuthenticated { implicit pw_opt => implicit request =>
+    val dkey = UrlUtil.normalizeHostname(domain)
+    MPersonDomainAuthz.getForPersonDkey(person_id=pw_opt.get.id, dkey=dkey) match {
+      // Отрендерить файлик валидации и вернуть его юзеру.
+      case Some(da) =>
+        Ok(getValidationFileTpl(da))
+          .as("text/plain; charset=UTF-8")
+          .withHeaders(CONTENT_DISPOSITION -> ("attachment; filename=" + da.filename))
+
+      // Нет такого домена в списке добавленных юзером
+      case None =>
+        NotFound("No such domain in person's domain list.")
+    }
+  }
+
+  // TODO Осталось ещё GET domain_settings, POST set_domain_settings, POST reindex?
 
 
   /**
