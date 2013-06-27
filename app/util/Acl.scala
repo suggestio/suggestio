@@ -88,6 +88,8 @@ trait AclT {
 
         // Юзер залогинен. Проверить права.
         case Some(pw) =>
+          // TODO Надо проверить случай, когда у админа suggest.io есть добавленный домен. Всё ли нормально работает?
+          // Если нет, то надо обращение к модели вынести на первый план, а только потом уже проверять isAdmin.
           if(pw.isAdmin) {
             Some(MPersonDomainAuthzAdmin(person_id=pw.id, dkey=dkey))
           } else {
