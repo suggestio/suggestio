@@ -50,4 +50,5 @@ GET  /admin/ws/:timestampMs             controllers.Admin.ws(timestampMs:Long)
 POST /admin/add_domain                  controllers.Admin.addDomain
 POST /admin/delete_domain               controllers.Admin.deleteDomain
 GET  /admin/get_validation_file/:domain controllers.Admin.getValidationFile(domain)
+GET  /admin/domain_settings/:domain     controllers.Admin.domainSettings(domain)
 

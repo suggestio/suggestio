@@ -1,66 +1,66 @@
-@()(implicit c:util.Context)
+@(d:models.MDomain)(implicit ctx:util.Context)
 
 @* Инфа по индексации + кнопка reindex *@
 
-@import c.lang
+@import ctx._
 
 <div style="width: 240px; float: left;">
 
-    <div class="h1 sio-admin-title sio-admin-domain-settings-@c.lang_str"></div>
+	<div class="h1 sio-admin-title sio-admin-domain-settings-@lang_str"></div>
 
-    <div class="domain-indexation-info">
+	<div class="domain-indexation-info">
 	<div class="last-date">@Messages("last_reindexed"):
-	    <span id="lastIndexedDate">
+		<span id="lastIndexedDate">
 		{% with reindex_data=domain.reindex_info.data %}
 		{% if reindex_data %}
-		    {{ reindex_data|first|first|timestamp_to_date|date:"d.m.Y H:i" }}
+			{{ reindex_data|first|first|timestamp_to_date|date:"d.m.Y H:i" }}
 		{% else %}
-		    {{ domain.date_added_utc|date:"d.m.Y H:i" }}
+			{{ domain.date_added_utc|date:"d.m.Y H:i" }}
 		{% endif %}
 		{% endwith %}
 		UTC
-	    </span>
+		</span>
 	</div>
-	<a onclick="reindex_domain('{{dkey}}'); return false;" href="" title="@Messages("reindex")"></a>
+	<a onclick="reindex_domain('@d.dkey'); return false;" href="" title="@Messages("reindex")"></a>
 	<div class="clear"></div>
-    </div>
+	</div>
 
-    <div class="domain-settings-form">
+	<div class="domain-settings-form">
 	{# форма с настройками для домена #}
 	<form id="domainSettingsForm" method="post" action="/admin/set_domain_settings">
 
-	    <fieldset>
+		<fieldset>
 		<label>@Messages("if_show_images")?</label>
 		{% with show_images=domain_data.show_images|atom_tolist %}
 		<select name="show_images" style="width: 160px;">
-		    <option value="true" {% if show_images == "true" %}selected="selected"{% endif %}>@Messages("yes")</option>
-		    <option value="false" {% if show_images == "false" %}selected="selected"{% endif %}>@Messages("no")</option>
+			<option value="true" {% if show_images == "true" %}selected="selected"{% endif %}>@Messages("yes")</option>
+			<option value="false" {% if show_images == "false" %}selected="selected"{% endif %}>@Messages("no")</option>
 		</select>
 		{% endwith %}
 		<a id="imageExplanationButton" onclick="showImagesExplanation(); return false;" href="">@Messages("img_site_preferences")</a>
 
-	    </fieldset>
+		</fieldset>
 
-	    <fieldset>
-		<label>{% trans "show_content_text" %}</label>
+		<fieldset>
+		<label>@Messages("show_content_text")</label>
 		{% with show_content_text=domain_data.show_content_text|atom_tolist %}
 		<select name="show_content_text" style="width: 160px;">
-		    <option value="true" {% if show_content_text == "true" %}selected="selected"{% endif %}>@Messages("yes")</option>
-		    <option value="false" {% if show_content_text == "false" %}selected="selected"{% endif %}>@Messages("no")</option>
-		    <option value="if_no_image" {% if show_content_text == "if_no_image" %}selected="selected"{% endif %}>@Messages("if_no_image")</option>
+			<option value="true" {% if show_content_text == "true" %}selected="selected"{% endif %}>@Messages("yes")</option>
+			<option value="false" {% if show_content_text == "false" %}selected="selected"{% endif %}>@Messages("no")</option>
+			<option value="if_no_image" {% if show_content_text == "if_no_image" %}selected="selected"{% endif %}>@Messages("if_no_image")</option>
 		</select>
 		{% endwith %}
-	    </fieldset>
+		</fieldset>
 
-	    <input type="hidden" class="domain-name-value" name="domain" value='{{dkey}}'>
-	    <div class="sio-admin-preferences-submit-@c.lang_str">
+		<input type="hidden" class="domain-name-value" name="domain" value='@d.dkey'>
+		<div class="sio-admin-preferences-submit-@lang_str">
 		<a href="" onclick="$('#domainSettingsForm').submit(); return false;"></a>
-	    </div>
-	    <div class="domain-indexation-info" style="margin: 0px!important;">
+		</div>
+		<div class="domain-indexation-info" style="margin: 0px!important;">
 		<div class="last-date"><span id="domainSettingsStatus"></span></div>
-	    </div>
+		</div>
 	</form>
-    </div>
+	</div>
 
 </div>
 
@@ -68,17 +68,17 @@
 
 <div style="width: 240px; float: left;">
 
-    {# Ссылка для настройки дизайна в браузере, поверх сайта #}
-    <div class="h1 sio-admin-title sio-admin-design-settings-@c.lang_str"></div>
-    <div class="sio-admin-settings-pict">
+	@* Ссылка для настройки дизайна в браузере, поверх сайта *@
+	<div class="h1 sio-admin-title sio-admin-design-settings-@lang_str"></div>
+	<div class="sio-admin-settings-pict">
 
 	<div class="admin-note">
-	    @Messages("customize_design_description").
+		@Messages("customize_design_description").
 	</div>
-	<div class="sio-admin-customize-button-@c.lang_str">
-	    <a class="redirect-url" href="http://{{dkey}}/#sio_preferences" target="_blank"></a>
+	<div class="sio-admin-customize-button-@lang_str">
+		<a class="redirect-url" href="http://@d.dkey/#sio_preferences" target="_blank"></a>
 	</div>
-    </div>
+	</div>
 
 </div>
 

@@ -200,6 +200,23 @@ object Admin extends Controller with AclT with ContextT with Logs {
     }
   }
 
+
+  /**
+   * Юзер щелкнул по домену. Отобразить другую часть админки.
+   * @param domain домен.
+   * @return inline-рендер для домена.
+   */
+  def domainSettings(domain: String) = isAuthenticated { implicit pw_opt => implicit request =>
+    val dkey = UrlUtil.normalizeHostname(domain)
+    MDomain.getForDkey(dkey) match {
+      case Some(d) =>
+        Ok(_domainSettingsTpl(d))
+
+      case None => NotFound("Domain not found")
+    }
+  }
+
+
   // TODO Осталось ещё GET domain_settings, POST set_domain_settings, POST reindex?
 
 
