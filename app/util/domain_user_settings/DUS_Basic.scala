@@ -22,6 +22,10 @@ object DUS_Basic {
   val SHOW_ALWAYS = "always"
   val SHOW_NEVER  = "never"
   val SHOW_IF_NO_IMAGES = "if_no_images"
+  val SHOW_POSSIBLE_VALUES = List(SHOW_ALWAYS, SHOW_NEVER, SHOW_IF_NO_IMAGES)
+
+  val showVerifier = {s:String => SHOW_POSSIBLE_VALUES.contains(s)}
+  val showBadMsg   = "Invalid value"
 
   // Рендереры
   val RRR_2012_SIMPLE = 1
@@ -36,6 +40,7 @@ object DUS_Basic {
     KEY_RENDERER          -> RRR_2013_FULLSCREEN,
     KEY_USE_DATE_SCORING  -> true
   )
+
 }
 
 

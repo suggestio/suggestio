@@ -19,6 +19,7 @@ import FormUtil._
 import gnu.inet.encoding.IDNA
 import DkeyContainer.dkeyJsProps
 import io.suggest.util.UrlUtil
+import domain_user_settings.DUS_Basic._
 
 /**
  * Suggest.io
@@ -40,6 +41,14 @@ object Admin extends Controller with AclT with ContextT with Logs {
 
   // Маппинг для формы добавления домена в список доменов админки.
   val addDomainFormM = Form("domain" -> domain2dkeyMapper)
+
+  // Форма базовых настроек домена.
+  val domainBasicSettingsFormM = Form(tuple(
+    "dkey"        -> domain2dkeyMapper,
+    "show_images" -> boolean,
+    "show_content_text" -> nonEmptyText(4, 10)
+      .verifying(showBadMsg, showVerifier)
+  ))
 
 
   /**
