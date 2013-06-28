@@ -1,50 +1,45 @@
 package models
 
-import scala.collection.{immutable, mutable}
-import util.{DkeyContainerT, DfsModelStaticT, SiobixFs}
+import util.{DkeyModelT, DfsModelStaticT, SiobixFs}
 import SiobixFs.fs
 import io.suggest.model.JsonDfsBackend
-import scala.concurrent.{Await, future}
+import scala.concurrent.{Future, Await, future}
 import scala.concurrent.duration._
 import play.api.libs.concurrent.Execution.Implicits._
+import scala.util.{Failure, Success}
+import util.domain_user_settings.DUS_Basic
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 24.04.13 17:41
  * Description: Пользовательские настройки домена. Глобальны в рамках домена. Порт модели domain_data из старого sioweb.
- * Тут разные данные, которые выставляет админ сайта. Данные хранятся в виде карты Map[String,Any], которая
- * транслируется в json и обратно. Это немного усложняет код, но позволяет быстро расширять набор настроек без использования
+ * Тут разные данные, которые выставляет админ (админы) сайта. Данные хранятся в виде карты Map[String,Any], которая
+ * сериализуется в json и обратно. Это немного усложняет код, но позволяет быстро расширять набор настроек без использования
  * версионизации классов и файлов json.
  *
- * Эти настройки вынесены из DomainSettings потому что последние изменяются кравлером по команде, а эти изменяются только
- * юзером.
+ * Эти настройки вынесены за пределы DomainSettings, потому что последние изменяются кравлером, а эти изменяются только
+ * юзером (т.е. веб-интерфейсом).
+ *
+ * Непосредсвенно сами настройки (ключи, дефолтовые значения, геттеры) вынесены в группы в util.domain_user_settings.*
+ * чтобы не засорять ядро модели.
  */
 
 // Есть несколько реализаций класса для разных задач. Тут трайт с общим кодом.
-trait MDomainUserSettingsT extends DkeyContainerT {
+trait MDomainUserSettingsT extends DkeyModelT with DUS_Basic {
 
   import MDomainUserSettings._
 
   // Абстрактные значения экземпляров классов.
   val dkey: String
-  val data: MDomainUserSettings.DataT
+  val data: MDomainUserSettings.DataMap_t
 
-  // геттеры
-  def showImages = getter[Boolean](KEY_SHOW_IMAGES)
-  def showTitle = getter[String](KEY_SHOW_TITLE)
-  def showContentText = getter[String](KEY_SHOW_CONTENT_TEXT)
-  def renderer = getter[Int](KEY_RENDERER)
-  def useDateScoring = getter[Boolean](KEY_USE_DATE_SCORING)
+  // Базовые геттеры значений
   def json: Option[MDomainUserJson]
-  protected def jsonSync = MDomainUserJson.getForDkey(dkey)
+  def jsonSync = MDomainUserJson.getForDkey(dkey)
+
 
   // Сеттеры. Вызываются через оборот "value.showImages = true"
-  def showImages_=(value:Boolean) { setter(KEY_SHOW_IMAGES, value) }
-  def showTitle_=(value:String) { setter(KEY_SHOW_TITLE, value) }
-  def showContentText_=(value:String) { setter(KEY_SHOW_CONTENT_TEXT, value) }
-  def renderer_=(value:Int) { setter(KEY_RENDERER, value) }
-  def useDateScoring_=(value:Boolean) { setter(KEY_USE_DATE_SCORING, value) }
   def json_=(data:String) = MDomainUserJson(dkey, data).save
 
   /**
@@ -73,19 +68,6 @@ trait MDomainUserSettingsT extends DkeyContainerT {
     }
   }
 
-
-  /**
-   * Динамически-типизированный хелпер для работы с картой настроек
-   * @param key ключ настроек
-   * @param value значение настройки
-   * @tparam T тип значения (автоматически выводится из value)
-   */
-  protected def setter[T <: Any](key:String, value:T) {
-    defaults.get(key) match {
-      case dflt if dflt == value => data.remove(key)
-      case _ => data(key) = value
-    }
-  }
 }
 
 
@@ -96,7 +78,7 @@ trait MDomainUserSettingsT extends DkeyContainerT {
  */
 case class MDomainUserSettingsStatic(
   dkey : String,
-  data : MDomainUserSettings.DataT
+  data : MDomainUserSettings.DataMap_t
 
 ) extends MDomainUserSettingsT {
   def json = jsonSync
@@ -111,45 +93,44 @@ case class MDomainUserSettingsStatic(
 case class MDomainUserSettingsFuturized(dkey:String) extends MDomainUserSettingsT {
   import MDomainUserSettings.{getData, futureAwaitDuration}
 
+  /**
+   * Враппер на Await.result чтобы избежать ненужной короткой блокировки, когда фьючерс уже готов.
+   * @param fut фьючерс, который уже возможно завершился
+   * @param duration макс длительность ожидания. По дефолту = futureAwaitDuration
+   * @tparam T тип значения, с фьючерском которого работаем.
+   * @return Значение. Или экзепшен.
+   */
+  protected def maybeAwait[T](fut:Future[T], duration: Duration = futureAwaitDuration): T = {
+    if(fut.isCompleted) {
+      fut.value.get match {
+        case Success(v)  => v
+        case Failure(ex) => throw ex
+      }
+    } else {
+      Await.result(fut, duration)
+    }
+  }
+
   private val dataFuture = future(getData(dkey))
-  lazy val data = Await.result(dataFuture, futureAwaitDuration)
+  lazy val data = maybeAwait(dataFuture)
 
   private val jsonFuture = future(jsonSync)
-  lazy val json = Await.result(jsonFuture, futureAwaitDuration)
+  lazy val json = maybeAwait(jsonFuture)
 }
 
 
 object MDomainUserSettings extends DfsModelStaticT {
 
-  // Список основных ключей, используемых в карте данных
-  val KEY_SHOW_IMAGES = "show_images"
-  val KEY_SHOW_CONTENT_TEXT = "show_content_text"
-  val KEY_SHOW_TITLE = "show_title"
-  val KEY_RENDERER = "js_renderer"
-  val KEY_USE_DATE_SCORING = "use_date_scoring"
+  type DataMapKey_t = String
+  type DataMapValue_t = Any
+  type DataMap_t = Map[DataMapKey_t, DataMapValue_t]
 
-  type DataT = mutable.Map[String, Any]
-
-  // Параметры отображения title и content_text
-  val SHOW_ALWAYS = "always"
-  val SHOW_NEVER  = "never"
-  val SHOW_IF_NO_IMAGES = "if_no_images"
-
-  // Рендереры
-  val RRR_2012_SIMPLE = 1
-  val RRR_2013_FULLSCREEN = 2
-  val RRR_AVAILABLE = List(RRR_2012_SIMPLE, RRR_2013_FULLSCREEN)
-
-  // Дефолтовые значения для параметров
-  val defaults = immutable.Map[String, Any](
-    KEY_SHOW_IMAGES       -> true,
-    KEY_SHOW_TITLE        -> SHOW_ALWAYS,
-    KEY_SHOW_CONTENT_TEXT -> SHOW_ALWAYS,
-    KEY_RENDERER          -> RRR_2013_FULLSCREEN,
-    KEY_USE_DATE_SCORING  -> true
-  )
+  // При добавлении настроек сюда надо конкатенировать все новые карты дефолтовых групп значений.
+  val defaults: DataMap_t = DUS_Basic.defaults
 
   val futureAwaitDuration = 3 seconds
+
+  private val emptyDataMap: DataMap_t = Map()
 
 
   /**
@@ -170,16 +151,14 @@ object MDomainUserSettings extends DfsModelStaticT {
     MDomainUserSettingsFuturized(dkey)
   }
 
-  private def emptyData : DataT = mutable.Map()
-
   /**
    * Прочитать data для указанного добра.
    * @param dkey ключ домена.
    * @return карта данных пользовательских настроек.
    */
-  def getData(dkey:String) : DataT = {
+  def getData(dkey:String) : DataMap_t = {
     val path = getPath(dkey)
-    JsonDfsBackend.getAs[DataT](path, fs).getOrElse(emptyData)
+    JsonDfsBackend.getAs[DataMap_t](path, fs) getOrElse emptyDataMap
   }
 
   /**
@@ -188,5 +167,5 @@ object MDomainUserSettings extends DfsModelStaticT {
    * @param dkey ключ домена
    * @return MDomainUserSettingsT, возвращающий дефолт по всем направлениям.
    */
-  def empty(dkey:String): MDomainUserSettingsT = MDomainUserSettingsStatic(dkey, emptyData)
+  def empty(dkey:String): MDomainUserSettingsT = MDomainUserSettingsStatic(dkey, emptyDataMap)
 }

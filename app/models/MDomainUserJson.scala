@@ -3,7 +3,7 @@ package models
 import util.SiobixFs.fs
 import com.google.common.io.CharStreams
 import java.io.{PrintWriter, InputStreamReader}
-import util.{DkeyContainerT, DfsModelStaticT}
+import util.{DkeyModelT, DfsModelStaticT}
 
 /**
  * Suggest.io
@@ -16,7 +16,7 @@ import util.{DkeyContainerT, DfsModelStaticT}
 case class MDomainUserJson(
   dkey: String,
   data: String
-) extends DkeyContainerT {
+) extends DkeyModelT {
 
   import MDomainUserJson.getPath
 

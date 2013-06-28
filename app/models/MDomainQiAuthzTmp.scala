@@ -1,12 +1,13 @@
 package models
 
-import util.SiobixFs
+import util.{DkeyModelT, Logs, SiobixFs}
 import util.SiobixFs.fs
 import org.apache.hadoop.fs.Path
 import org.joda.time.{Duration, DateTime}
 import io.suggest.model.JsonDfsBackend
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.concurrent.duration._
+import util.DfsModelUtil._
 
 /**
  * Suggest.io
@@ -21,7 +22,7 @@ case class MDomainQiAuthzTmp(
   dkey : String,
   id: String,
   date_created: DateTime = DateTime.now()
-) extends MDomainAuthzT {
+) extends MDomainAuthzT with DkeyModelT {
 
   import MDomainQiAuthzTmp.{getFilePath, VERIFY_DURATION_HARD, VERIFY_DURATION_SOFT}
 
@@ -54,14 +55,19 @@ case class MDomainQiAuthzTmp(
    * Удалить файл, относящийся к текущему экземпляру класса.
    * @return true, если файл действительно удален.
    */
-  def delete = fs.delete(filepath, false)
+  def delete = {
+    val result = deleteNr(filepath)
+    // Скорее всего, директория домена теперь пустая, и её тоже пора удалить для поддержания чистоты в tmp-директории модели.
+    deleteNr(filepath.getParent)
+    result
+  }
 
   @JsonIgnore def isQiType: Boolean = true
   @JsonIgnore def isValidationType: Boolean = false
 }
 
 
-object MDomainQiAuthzTmp {
+object MDomainQiAuthzTmp extends Logs {
 
   val tmpDirName = "qi_anon_tmp"
   val tmpDir = new Path(SiobixFs.siobix_conf_path, tmpDirName)
@@ -70,9 +76,12 @@ object MDomainQiAuthzTmp {
   // Превышения хард-лимита означает, что верификация уже истекла и её нужно проверять заново.
   val VERIFY_DURATION_HARD = new Duration(60.minutes.toMillis)
 
+  def getDkeyDir(dkey:String): Path = {
+    new Path(tmpDir, dkey)
+  }
 
   def getFilePath(dkey:String, qi_id:String): Path = {
-    new Path(tmpDir, dkey + "~" + qi_id)
+    new Path(tmpDir, dkey + "/" + qi_id)
   }
 
 
@@ -84,7 +93,22 @@ object MDomainQiAuthzTmp {
    */
   def get(dkey:String, id:String): Option[MDomainQiAuthzTmp] = {
     val filepath = getFilePath(dkey, id)
-    JsonDfsBackend.getAs[MDomainQiAuthzTmp](filepath, fs)
+    readOne[MDomainQiAuthzTmp](filepath, fs)
+  }
+
+
+  /**
+   * Выдать список временных авторизация для указанного домена.
+   * @param dkey Ключ домена.
+   * @return Список сабжей в неопределенном порядке.
+   */
+  def listDkey(dkey:String): List[MDomainQiAuthzTmp] = {
+    val path = getDkeyDir(dkey)
+    fs.listStatus(path)
+      .toList
+      .foldLeft(List[MDomainQiAuthzTmp]()) { (acc, s) =>
+        readOneAcc[MDomainQiAuthzTmp](acc, s.getPath, fs)
+      }
   }
 
 }

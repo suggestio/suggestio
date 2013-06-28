@@ -1,7 +1,8 @@
 package util
 
 import gnu.inet.encoding.IDNA
-import play.api.libs.json.{JsValue, JsString}
+import play.api.libs.json.JsString
+import models._
 
 /**
  * Suggest.io
@@ -20,8 +21,24 @@ trait DkeyContainerT {
 }
 
 object DkeyContainer {
+
+  /**
+   * Сгенерить поля для JSON со значениями dkey и domain (utf).
+   * @param dkey исходный ключ домена (нормализованный)
+   * @return Список-хвост для json-списка.
+   */
   def dkeyJsProps(dkey: String): List[(String, JsString)] = List(
     "dkey"   -> JsString(dkey),
     "domain" -> JsString(IDNA.toUnicode(dkey))
   )
+}
+
+trait DkeyModelT extends DkeyContainerT {
+  def domainOpt = MDomain.getForDkey(dkey)
+  def domain    = domainOpt.get
+  def domainUserSettings = MDomainUserSettings.getForDkey(dkey)
+  def domainUserSettingsAsync = MDomainUserSettings.getForDkeyAsync(dkey)
+  def authzForPerson(person_id:String) = MPersonDomainAuthz.getForPersonDkey(dkey, person_id)
+  def qiTmpAuth(qi_id: String) = MDomainQiAuthzTmp.listDkey(dkey)
+  def domainSettings = MDomainSettings.getForDkey(dkey).get
 }

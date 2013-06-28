@@ -3,7 +3,7 @@ package models
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.hadoop.fs.Path
 import org.joda.time.DateTime
-import util.DkeyContainerT
+import util.DkeyModelT
 
 /**
  * Suggest.io
@@ -12,7 +12,7 @@ import util.DkeyContainerT
  * Description: Междумодельное барахло для аутентификаций.
  */
 
-trait MDomainAuthzT extends DkeyContainerT {
+trait MDomainAuthzT extends DkeyModelT {
   def id: String
   def dkey: String
   def date_created: DateTime
@@ -26,7 +26,6 @@ trait MDomainAuthzT extends DkeyContainerT {
   @JsonIgnore def isValidationType: Boolean
   @JsonIgnore def save: MDomainAuthzT
 
-  @JsonIgnore def domain = MDomain.getForDkey(dkey).get
   @JsonIgnore def personOpt = personIdOpt.map(MPerson.getById)
   @JsonIgnore def bodyCodeOpt: Option[String] = None
 }

@@ -42,6 +42,22 @@ object DfsModelUtil extends Logs {
     }
   }
 
+
+  /**
+   * Удалить файл или пустую папку нерекурсивно и подавляя исключения.
+   * @param path путь
+   * @return true, если удаление прошло успешно. Иначе false.
+   */
+  def deleteNr(path:Path): Boolean = {
+    try {
+      fs.delete(path, false)
+    } catch {
+      case ex:Throwable =>
+        logger.warn("Failed to delete DFS entry %s. Exception supressed." format path, ex)
+        false
+    }
+  }
+
 }
 
 

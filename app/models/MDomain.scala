@@ -1,6 +1,6 @@
 package models
 
-import util.{DkeyContainerT, SiobixFs}
+import util.{DkeyModelT, SiobixFs}
 import SiobixFs.fs
 
 /**
@@ -10,18 +10,7 @@ import SiobixFs.fs
  * Description: Модель доменов. Frontend-модель для доступа к различным данным доменов через другие модели.
  */
 
-case class MDomain(
-  dkey : String
-) extends DkeyContainerT {
-
-  /**
-   * Выдать настройки для домена.
-   * @return
-   */
-  def domainSettings = MDomainSettings.getForDkey(dkey).get
-  def authzForPerson(person_id:String) = MPersonDomainAuthz.getForPersonDkey(dkey, person_id)
-
-}
+case class MDomain(dkey : String) extends DkeyModelT
 
 
 // Статическая часть модели живёт здесь.

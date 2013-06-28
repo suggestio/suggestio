@@ -8,25 +8,10 @@
 
 	<div class="h1 sio-admin-title sio-admin-domain-settings-@lang_str"></div>
 
-	<div class="domain-indexation-info">
-	<div class="last-date">@Messages("last_reindexed"):
-		<span id="lastIndexedDate">
-		{% with reindex_data=domain.reindex_info.data %}
-		{% if reindex_data %}
-			{{ reindex_data|first|first|timestamp_to_date|date:"d.m.Y H:i" }}
-		{% else %}
-			{{ domain.date_added_utc|date:"d.m.Y H:i" }}
-		{% endif %}
-		{% endwith %}
-		UTC
-		</span>
-	</div>
-	<a onclick="reindex_domain('@d.dkey'); return false;" href="" title="@Messages("reindex")"></a>
-	<div class="clear"></div>
-	</div>
 
 	<div class="domain-settings-form">
-	{# форма с настройками для домена #}
+
+	@* форма с настройками для домена *@
 	<form id="domainSettingsForm" method="post" action="/admin/set_domain_settings">
 
 		<fieldset>
