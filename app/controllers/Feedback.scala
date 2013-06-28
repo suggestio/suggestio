@@ -56,7 +56,12 @@ object Feedback extends Controller with AclT with Logs with ContextT {
       {case (email1, message) =>
         // Отправить письмо на ящик suggest.io.
         val mail = use[MailerPlugin].email
-        mail.setSubject("Сообщение от пользователя Suggest.io")
+        // Разделять сабжи в зависимости от залогиненности юзеров.
+        val subjectEnd = pw_opt match {
+          case Some(pw) => "клиента " + pw.id
+          case None     => "посетителя сайта"
+        }
+        mail.setSubject("Сообщение от " + subjectEnd)
         mail.addFrom("support@suggest.io")
         mail.addHeader("Reply-To", email1)
         mail.addRecipient("support@suggest.io")
