@@ -1,0 +1,22 @@
+@()(implicit ctx:util.Context)
+
+@import ctx._
+@import helper._
+
+@form(routes.Admin.addDomain, 'id -> "addDomainForm") {
+	<label>@Messages("type_in_your_website")</label>
+
+	<div class="site-add-input">
+		<div class="input-shadow">
+			<div class="http-prefix">http://</div>
+			<div class="input-real">
+				<input id="userSiteInput" name="domain" type="text"/>
+			</div>
+			<div class="clear"></div>
+		</div>
+	</div>
+
+	<div class="submit-form">
+		<a href="" id="addNewDomainButton"></a>
+	</div>
+}

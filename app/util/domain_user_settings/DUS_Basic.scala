@@ -1,6 +1,8 @@
 package util.domain_user_settings
 
 import models.MDomainUserJson
+import play.api.data.Forms._
+import models.MDomainUserSettings.{DataMap_t, DataMapKey_t}
 
 /**
  * Suggest.io
@@ -16,7 +18,7 @@ object DUS_Basic {
   val KEY_SHOW_CONTENT_TEXT = "show_content_text"
   val KEY_SHOW_TITLE = "show_title"
   val KEY_RENDERER = "js_renderer"
-  val KEY_USE_DATE_SCORING = "use_date_scoring"
+  //val KEY_USE_DATE_SCORING = "use_date_scoring"
 
   // Параметры отображения title и content_text
   val SHOW_ALWAYS = "always"
@@ -24,22 +26,45 @@ object DUS_Basic {
   val SHOW_IF_NO_IMAGES = "if_no_images"
   val SHOW_POSSIBLE_VALUES = List(SHOW_ALWAYS, SHOW_NEVER, SHOW_IF_NO_IMAGES)
 
-  val showVerifier = {s:String => SHOW_POSSIBLE_VALUES.contains(s)}
-  val showBadMsg   = "Invalid value"
+  val showMapper = nonEmptyText(4, 13)
+    .verifying("Invalid value", SHOW_POSSIBLE_VALUES.contains(_))
+
 
   // Рендереры
   val RRR_2012_SIMPLE = 1
   val RRR_2013_FULLSCREEN = 2
   val RRR_AVAILABLE = List(RRR_2012_SIMPLE, RRR_2013_FULLSCREEN)
 
+  val rrrMapper = number(min=RRR_2012_SIMPLE, max=RRR_2013_FULLSCREEN)
+
   // Дефолтовые значения для параметров
-  val defaults = Map[String, Any](
+  val defaults: DataMap_t = Map(
     KEY_SHOW_IMAGES       -> true,
     KEY_SHOW_TITLE        -> SHOW_ALWAYS,
     KEY_SHOW_CONTENT_TEXT -> SHOW_ALWAYS,
-    KEY_RENDERER          -> RRR_2013_FULLSCREEN,
-    KEY_USE_DATE_SCORING  -> true
+    //KEY_USE_DATE_SCORING  -> true,
+    KEY_RENDERER          -> RRR_2013_FULLSCREEN
   )
+
+  /**
+   * Хелпер для комбинируемых функций applyDomainSettings.
+   */
+  val applyBasicSettingsF: PartialFunction[(DataMapKey_t, String, DataMap_t), DataMap_t] = {
+    case (k, v, data) if k == KEY_SHOW_IMAGES =>
+      data + (k -> (v == "true"))
+
+    case (k, v, data) if k == KEY_SHOW_TITLE || k == KEY_SHOW_CONTENT_TEXT =>
+      showMapper.bind(Map(k -> v)) match {
+        case Left(_)      => data
+        case Right(v1) => data + (k -> v1)
+      }
+
+    case (k, v, data) if k == KEY_RENDERER =>
+      rrrMapper.bind(Map(k -> v)) match {
+        case Left(_)    => data
+        case Right(rrr) => data + (k -> rrr)
+      }
+  }
 
 }
 
@@ -53,6 +78,6 @@ trait DUS_Basic {
   def showTitle = getter[String](KEY_SHOW_TITLE)
   def showContentText = getter[String](KEY_SHOW_CONTENT_TEXT)
   def renderer = getter[Int](KEY_RENDERER)
-  def useDateScoring = getter[Boolean](KEY_USE_DATE_SCORING)
+  //def useDateScoring = getter[Boolean](KEY_USE_DATE_SCORING)
   def json: Option[MDomainUserJson]
 }

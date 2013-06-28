@@ -1,8 +1,8 @@
-@()(implicit c:util.Context)
+@()(implicit ctx:util.Context)
 
 @* Тут отображение главной страницы, в которой можно добавить сайт в кравлинг. *@
 
-@import c._
+@import ctx._
 @import stuff._
 
 @head_after = {
@@ -16,56 +16,31 @@
 	<a id="popupCloseButton" href=""></a>
     </div>
 
-    <div id="feedbackPopup" class="popup-content-block feedback-form">
-	<div class="feedback-sent feedback-sent-@c.lang_str">
-	    <span>@Messages("message_sent")</span>
-	</div>
-	<div class="feedback-message feedback-message-@c.lang_str">
-	    <span id="feedbackIntroMessage">@Messages("email_us_at") <a href="mailto:support@@suggest.io">support@@suggest.io</a>, @Messages("or_fill_the_form"):</span>
-	</div>
-	<form id="feedbackForm" action="/feedback/submit" method="post">
-	    <fieldset>
-		<label id="labelfeedbackEmail">@Messages("your_email")</label>
-		<div class="input">
-		    <input name="email" id="feedbackEmail" type="text"/>
-		</div>
-	    </fieldset>
-	    <fieldset>
-		<label id="labelfeedbackMessage">@Messages("your_message")</label>
-		<div class="input">
-		    <textarea name="message" id="feedbackMessage"></textarea>
-		</div>
-	    </fieldset>
-	    <fieldset>
-		<a class="submit submit-@c.lang_str" href=""></a>
-		<input style="display: none;" class="submit" type="submit" value=""/>
-	    </fieldset>
-	</form>
-    </div>
+    @* Тут когда-то была форма feedback. Теперь она отдельной страницей и полностью отдельна. *@
 
     <div id="aboutPopup" class="popup-content-block" style="display: none;">
 	<div class="about-images">
 	    <div class="image">
-		<div class="title-@c.lang_str"></div>
+		<div class="title-@lang_str"></div>
 		<div class="desc">
 		    @Messages("about_step_one")
 		</div>
 	    </div>
 	    <div class="image image-2">
-		<div class="title-@c.lang_str"></div>
+		<div class="title-@lang_str"></div>
 		<div class="desc">
 		    @Messages("about_step_two")
 		</div>
 	    </div>
 	    <div class="image image-3">
-		<div class="title-@c.lang_str"></div>
+		<div class="title-@lang_str"></div>
 		<div class="desc">
 		    @Messages("about_step_three")
 		</div>
 	    </div>
 
 	    <div class="sio-about-success">
-		@Messages("install_success")
+		    @Messages("install_success")
 	    </div>
 
 	</div>
@@ -82,7 +57,7 @@
 	</div>
 
 	<div class="login">
-	    @if(c.isAuth) {
+	    @if(isAuth) {
 		<a href="{% url controller="admin" action="" %}"></a>
 	    } else {
 		<a href="" id="signin"></a>
@@ -91,7 +66,7 @@
 
 	<a class="logo" href=""></a>
 
-	<div class="slogo-@c.lang_str"></div>
+	<div class="slogo-@lang_str"></div>
 
 	<a href="mailto:support@@suggest.io" class="custom-solutions">
 	    @Messages("custom_search_solutions_br")
@@ -150,23 +125,7 @@
 {% include "login/_persona.html" %}
 
 <script type="text/javascript">
-
-    $(document).bind('ready', function()
-	    {
-	    checkFeedbackLink();
-	    });
-
-var checkFeedbackLink = function()
-{
-    if( window.location.hash == '#feedback' )
-    {
-	$('.popup-content-block').hide();
-	$('body').addClass('about-layer');
-	$('#feedbackPopup').show();
-    }
-}
-
-locale = '@c.lang_str';
+locale = '@lang_str';
 site_indexation_caption_progress = '@Messages("site_indexation_caption")';
 
 var crawler_events = 

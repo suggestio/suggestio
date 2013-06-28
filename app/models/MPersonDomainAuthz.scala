@@ -129,6 +129,13 @@ case class MPersonDomainAuthz(
   }
 
   def filename: String = id + ".txt"
+
+  override def authzForPerson(_person_id: String): Option[MPersonDomainAuthz] = {
+    if (person_id == _person_id)
+      Some(this)
+    else
+      super.authzForPerson(person_id)
+  }
 }
 
 

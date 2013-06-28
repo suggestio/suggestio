@@ -20,6 +20,7 @@ import gnu.inet.encoding.IDNA
 import DkeyContainer.dkeyJsProps
 import io.suggest.util.UrlUtil
 import domain_user_settings.DUS_Basic._
+import MDomainUserSettings.{DataMap_t, DataMapKey_t}
 
 /**
  * Suggest.io
@@ -44,10 +45,8 @@ object Admin extends Controller with AclT with ContextT with Logs {
 
   // Форма базовых настроек домена.
   val domainBasicSettingsFormM = Form(tuple(
-    "dkey"        -> domain2dkeyMapper,
-    "show_images" -> boolean,
-    "show_content_text" -> nonEmptyText(4, 10)
-      .verifying(showBadMsg, showVerifier)
+    "show_images"       -> boolean,
+    "show_content_text" -> showMapper
   ))
 
 
@@ -215,18 +214,64 @@ object Admin extends Controller with AclT with ContextT with Logs {
    * @param domain домен.
    * @return inline-рендер для домена.
    */
-  def domainSettings(domain: String) = isAuthenticated { implicit pw_opt => implicit request =>
-    val dkey = UrlUtil.normalizeHostname(domain)
-    MDomain.getForDkey(dkey) match {
-      case Some(d) =>
-        Ok(_domainSettingsTpl(d))
+  def domainSettings(domain: String) = isDomainAdmin(domain) { implicit pw_opt => implicit request => authz =>
+    val du = authz.domainUserSettingsAsync
+    val form = domainBasicSettingsFormM.fill((du.showImages, du.showContentText))
+    Ok(_domainSettingsTpl(du, form))
+  }
 
-      case None => NotFound("Domain not found")
-    }
+  /**
+   * Сабмит формы настроек из страницы админки.
+   * @param domain домен
+   * @return
+   */
+  def domainSettingsFormSubmit(domain: String) = isDomainAdmin(domain) { implicit pw_opt => implicit request => authz =>
+    domainBasicSettingsFormM.bindFromRequest().fold(
+      formWithErrors => NotAcceptable
+      ,
+      {case (showImages, showContentText) =>
+        val du = authz.domainUserSettings
+        val data1 = du.data + (KEY_SHOW_IMAGES -> showImages) + (KEY_SHOW_CONTENT_TEXT -> showContentText)
+        du.withData(data1).save
+        Ok
+      }
+    )
   }
 
 
-  // TODO Осталось ещё GET domain_settings, POST set_domain_settings, POST reindex?
+  /**
+   * Накатить настройки домена. Используется за пределами страницы админки.
+   * @param domain Домен, для которого сохраняем.
+   * @return ???
+   */
+  def applyDomainSettings(domain:String) = isDomainAdmin(domain) { implicit pw_opt => implicit request => authz =>
+    val du = authz.domainUserSettings
+    val data1 = request.body
+      .asFormUrlEncoded
+      .get
+      .foldLeft(du.data) { case (_data, kvs) =>
+        val (k, vs) = kvs
+        applyDUSF((k, vs.head, _data))
+    }
+    val du1 = du.withData(data1).save
+    Ok("Ok TODO")
+  }
+
+
+  // TODO Осталось ещё POST reindex?
+
+
+  /**
+   * Фунция накатывания различных параметров (без формы) на DomainUserSettings собирается здеся.
+   * Когда будут новые группы параметров, нужно будет подключать новые функции эти сюда.
+   */
+  private val applyDUSF: PartialFunction[(DataMapKey_t, String, DataMap_t), DataMap_t] = {
+    applyBasicSettingsF orElse {
+      case (k, v, data) =>
+        logger.warn("Unknown DUS key=%s => %s SKIPPED" format(k, v))
+        data
+    }
+  }
 
 
   /**

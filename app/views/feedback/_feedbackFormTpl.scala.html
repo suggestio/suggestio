@@ -1,0 +1,27 @@
+@(feedbackFormM: Form[_])(implicit ctx:util.Context)
+
+@* Форма обратной связи. *@
+
+@import ctx._
+@import helper._
+
+@form(routes.Feedback.feedbackFormSubmit) {
+	<fieldset>
+		<label id="labelfeedbackEmail">@Messages("your_email")</label>
+		<div class="input">
+		    @inputText(feedbackFormM("email"), 'id -> "feedbackEmail")
+		</div>
+	</fieldset>
+
+	<fieldset>
+		<label id="labelfeedbackMessage">@Messages("your_message")</label>
+		<div class="input">
+		    @textarea(feedbackFormM("message"), 'id -> "feedbackMessage")
+		</div>
+	</fieldset>
+
+	<fieldset>
+		@* Кнопка сабмита "отправить" *@
+		<input class="submit" type="submit" value="@Messages("send")"/>
+	</fieldset>
+}

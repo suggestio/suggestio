@@ -65,22 +65,7 @@
 		@* форма добавления нового домена *@
 		<div class="new-domain sio-admin-window" id="addDomainWindow" style="display: none;">
 		<div class="h1 sio-admin-title sio-new-website-title-@lang_str"></div>
-		<form method="POST" id="addDomainForm" action="{% url action="add_domain" %}">
-			<label>@Messages("type_in_your_website")</label>
-
-			<div class="site-add-input">
-				<div class="input-shadow">
-					<div class="http-prefix">http://</div>
-					<div class="input-real"><input id="userSiteInput" type="text"></div>
-					<div class="clear"></div>
-				</div>
-			</div>
-
-			<div class="submit-form">
-				<a href="" id="addNewDomainButton"></a>
-			</div>
-
-		</form>
+		@_addDomainFormTpl()
 		<div class="clear"></div>
 		<div class="admin-note">@Messages("after_add")</div>
 

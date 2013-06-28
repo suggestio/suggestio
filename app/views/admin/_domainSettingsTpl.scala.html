@@ -1,4 +1,4 @@
-@(d:models.MDomain)(implicit ctx:util.Context)
+@(du:models.MDomainUserSettingsT, dusFormM: Form[_])(implicit ctx:util.Context)
 
 @* Инфа по индексации + кнопка reindex *@
 
@@ -8,43 +8,10 @@
 
 	<div class="h1 sio-admin-title sio-admin-domain-settings-@lang_str"></div>
 
+	@* _reindexTpl(du) *@
 
 	<div class="domain-settings-form">
-
-	@* форма с настройками для домена *@
-	<form id="domainSettingsForm" method="post" action="/admin/set_domain_settings">
-
-		<fieldset>
-		<label>@Messages("if_show_images")?</label>
-		{% with show_images=domain_data.show_images|atom_tolist %}
-		<select name="show_images" style="width: 160px;">
-			<option value="true" {% if show_images == "true" %}selected="selected"{% endif %}>@Messages("yes")</option>
-			<option value="false" {% if show_images == "false" %}selected="selected"{% endif %}>@Messages("no")</option>
-		</select>
-		{% endwith %}
-		<a id="imageExplanationButton" onclick="showImagesExplanation(); return false;" href="">@Messages("img_site_preferences")</a>
-
-		</fieldset>
-
-		<fieldset>
-		<label>@Messages("show_content_text")</label>
-		{% with show_content_text=domain_data.show_content_text|atom_tolist %}
-		<select name="show_content_text" style="width: 160px;">
-			<option value="true" {% if show_content_text == "true" %}selected="selected"{% endif %}>@Messages("yes")</option>
-			<option value="false" {% if show_content_text == "false" %}selected="selected"{% endif %}>@Messages("no")</option>
-			<option value="if_no_image" {% if show_content_text == "if_no_image" %}selected="selected"{% endif %}>@Messages("if_no_image")</option>
-		</select>
-		{% endwith %}
-		</fieldset>
-
-		<input type="hidden" class="domain-name-value" name="domain" value='@d.dkey'>
-		<div class="sio-admin-preferences-submit-@lang_str">
-		<a href="" onclick="$('#domainSettingsForm').submit(); return false;"></a>
-		</div>
-		<div class="domain-indexation-info" style="margin: 0px!important;">
-		<div class="last-date"><span id="domainSettingsStatus"></span></div>
-		</div>
-	</form>
+		@_domainSettingsFormTpl(du.dkey, dusFormM)
 	</div>
 
 </div>
@@ -56,13 +23,13 @@
 	@* Ссылка для настройки дизайна в браузере, поверх сайта *@
 	<div class="h1 sio-admin-title sio-admin-design-settings-@lang_str"></div>
 	<div class="sio-admin-settings-pict">
+		<div class="admin-note">
+			@Messages("customize_design_description").
+		</div>
 
-	<div class="admin-note">
-		@Messages("customize_design_description").
-	</div>
-	<div class="sio-admin-customize-button-@lang_str">
-		<a class="redirect-url" href="http://@d.dkey/#sio_preferences" target="_blank"></a>
-	</div>
+		<div class="sio-admin-customize-button-@lang_str">
+			<a class="redirect-url" href="http://@du.dkey/#sio_preferences" target="_blank"></a>
+		</div>
 	</div>
 
 </div>

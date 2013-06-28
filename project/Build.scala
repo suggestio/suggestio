@@ -16,6 +16,8 @@ object ApplicationBuild extends Build {
       // Add your project dependencies here,
       jdbc,
       anorm,
+      "com.typesafe" %% "play-plugins-mailer" % "2.1.0",
+      "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
       "org.elasticsearch" % "elasticsearch" % esVsn,
       "org.apache.hadoop" % "hadoop-core" % hadoopVsn,
       "org.apache.hadoop" % "hadoop-client" % hadoopVsn,

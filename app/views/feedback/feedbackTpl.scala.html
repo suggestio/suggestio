@@ -1,0 +1,17 @@
+@(feedbackFormM: Form[_])(implicit ctx:util.Context)
+
+@* Страница с формой отзыва/обратной связи. *@
+
+@import ctx._
+@main(Messages("stuff.menu.CONTACTS")) {
+<div id="feedbackPopup" class="popup-content-block feedback-form">
+	<div class="feedback-sent feedback-sent-@lang_str">
+		<span>@Messages("message_sent")</span>
+	</div>
+	<div class="feedback-message feedback-message-@lang_str">
+		<span id="feedbackIntroMessage">@Messages("email_us_at") <a href="mailto:support@@suggest.io">support@@suggest.io</a>, @Messages("or_fill_the_form"):</span>
+	</div>
+	@_feedbackFormTpl(feedbackFormM)
+</div>
+}
+

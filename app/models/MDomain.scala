@@ -10,7 +10,10 @@ import SiobixFs.fs
  * Description: Модель доменов. Frontend-модель для доступа к различным данным доменов через другие модели.
  */
 
-case class MDomain(dkey : String) extends DkeyModelT
+case class MDomain(dkey : String) extends DkeyModelT {
+  override def domainOpt: Option[MDomain] = Some(this)
+  override def domain: MDomain = this
+}
 
 
 // Статическая часть модели живёт здесь.

@@ -64,6 +64,14 @@ case class MDomainQiAuthzTmp(
 
   @JsonIgnore def isQiType: Boolean = true
   @JsonIgnore def isValidationType: Boolean = false
+
+
+  override def qiTmpAuthPerson(qi_id: String): Option[MDomainQiAuthzTmp] = {
+    if(qi_id == id)
+      Some(this)
+    else
+      super.qiTmpAuthPerson(qi_id)
+  }
 }
 
 

@@ -68,6 +68,15 @@ trait MDomainUserSettingsT extends DkeyModelT with DUS_Basic {
     }
   }
 
+  override def domainUserSettings: MDomainUserSettingsT = this
+  override def domainUserSettingsAsync: MDomainUserSettingsT = this
+
+  /**
+   * Заменить данные, создав новый экземпляр сабжа.
+   * @param newData Обновлённая карта данных.
+   * @return Новый экземпляр класса с обновлённой картой данных.
+   */
+  def withData(newData:DataMap_t) = MDomainUserSettingsStatic(dkey, newData)
 }
 
 

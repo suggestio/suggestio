@@ -40,6 +40,7 @@ case class MDomainUserJson(
     this
   }
 
+  override def domainUserJson: Option[MDomainUserJson] = Some(this)
 }
 
 
