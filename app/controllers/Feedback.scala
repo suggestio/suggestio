@@ -30,12 +30,13 @@ object Feedback extends Controller with AclT with Logs with ContextT {
       .transform(supportMsgPolicy.sanitize(_).trim, strIdentityF)
   ))
 
+
   /**
    * Отрендерить страницу/форму обратной связи.
    * @param isAsync если true, то будет отрендерено inline. Если false, то на выходе будет страница.
    * @return Форма в виде страницы ИЛИ в виде inline-формы в зависимости от isAsync.
    */
-  def feedbackForm(isAsync:Boolean = false) = maybeAuthenticated { implicit pw_opt => implicit request =>
+  def feedbackForm(isAsync:Boolean) = maybeAuthenticated { implicit pw_opt => implicit request =>
     val render = if (isAsync) {
       feedbackTpl(feedbackSubmitFormM)
     } else {
@@ -43,6 +44,7 @@ object Feedback extends Controller with AclT with Logs with ContextT {
     }
     Ok(render)
   }
+
 
   /**
    * Сабмит формы обратной связи. Отправить по email письмо на support@suggest.io.

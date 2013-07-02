@@ -3,7 +3,7 @@
   <properties file="${env.HOME}/.ivy2/.credentials"/>
   <settings defaultResolver="play" defaultResolveMode="dynamic" />
   <caches defaultCacheDir="${env.HOME}/.ivy2/cache">
-      <cache name="main cache">
+      <cache name="main-cache">
 	  <ttl organisation="io.suggest" duration="0ms" useOrigin="true"/>
       </cache>
   </caches>

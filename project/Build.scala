@@ -10,8 +10,6 @@ object ApplicationBuild extends Build {
   
   val appDependencies = {
     val esVsn         = "0.20.6"
-    val hadoopVsn     = "1.1.2"
-    val cascadingVsn  = "2.0.7"
     Seq(
       // Add your project dependencies here,
       jdbc,
@@ -19,20 +17,11 @@ object ApplicationBuild extends Build {
       "com.typesafe" %% "play-plugins-mailer" % "2.1.0",
       "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
       "org.elasticsearch" % "elasticsearch" % esVsn,
-      "org.apache.hadoop" % "hadoop-core" % hadoopVsn,
-      "org.apache.hadoop" % "hadoop-client" % hadoopVsn,
       // spat4j: костыль для http://elasticsearch-users.115913.n3.nabble.com/Compile-error-with-0-20-2-td4028743.html :
       "com.spatial4j" % "spatial4j" % "0.3",
       "io.suggest" %% "util"      % "0.6.0-SNAPSHOT",
       "io.suggest" %% "util-play" % "0.6.0-SNAPSHOT",
       "net.sourceforge.htmlunit" % "htmlunit" % "2.12", // play-2.1.1: на 2.9 тесты виснут. Нужно убрать на будущих версиях play.
-      // hadoop
-      "org.apache.hadoop" % "hadoop-core" % hadoopVsn,
-      "org.apache.hadoop" % "hadoop-client" % hadoopVsn,
-      // cascading
-      "cascading" % "cascading-core" % cascadingVsn,
-      "cascading" % "cascading-hadoop" % cascadingVsn,
-      "com.scaleunlimited" % "cascading.utils" % "2.1.4", // нужно для HadoopUtils.
       // akka - for siobix direct calls
       "com.typesafe.akka" %% "akka-actor" % "2.1.0",
       // for domain validation:
