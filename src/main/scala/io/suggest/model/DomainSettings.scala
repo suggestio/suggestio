@@ -2,9 +2,7 @@ package io.suggest.model
 
 import com.github.nscala_time.time.Imports._
 import org.apache.hadoop.fs.FileSystem
-import io.suggest.index_info._
-import collection.convert.Wrappers.JMapWrapper
-import io.suggest.util.JacksonWrapper
+import io.suggest.util.SiobixFs.fs
 
 /**
  * Suggest.io
@@ -18,99 +16,94 @@ object DomainSettings extends DomainSettingsStaticT
 // Функции объекта DS вынесены в трайт, чтобы можно было экстендить функционал на стороне пользователй sioutil.
 trait DomainSettingsStaticT {
 
-  import IndexInfoConstants._
-
   // Тип карты, которая хранит настройки. Value имеет динамический тип, и может содержать в себе DSMap_t.
   type DSMap_t = Map[String, Any]
 
+  val getName = classOf[DomainSettings].getCanonicalName
+
   /**
-   * Сборка настроек из сохраненного ранее состояния
-   * @param m карта экспортированного состояния.
-   * @return Готовый объект DomainSettings.
+   * Собрать пустые дефолтовые настройки для [нового] указанного домена.
+   * @param dkey ключ домена. Используется для сохранения настроек.
+   * @return Экземпляр DomainSettingsT (не сохраненный).
    */
-  def apply(m:DSMap_t) : DomainSettings = {
-    val dkey = m("dkey").asInstanceOf[String]
-    new DomainSettings(
-      dkey = dkey,
-      start_url = m("start_url").asInstanceOf[String],
-      index_info = {
-        m("index_info") match {
-          case jiimap : JMapWrapper[String @unchecked, Any @unchecked] =>
-            // Конвертим JavaMap в scala-представление:
-            val iimaps = JacksonWrapper.convert[DSMap_t](jiimap)
-            m("index_info_type").asInstanceOf[IITYPE_T] match {
-              case IITYPE_BIG_SHARDED => BigShardedIndex(dkey, iimaps)
-              case IITYPE_SMALL_MULTI => SmallMultiIndex(dkey, iimaps)
-            }
-        }
-      },
-      meta = JacksonWrapper.convert[DSMap_t](m("meta"))
-    )
+  def apply(dkey:String): DomainSettingsT = DomainSettingsEmpty(dkey)
+
+  /**
+   * Прочитать настройки для домена.
+   * @param dkey ключ домена.
+   * @return Опциональный экземпляр прочитанных настроек для домена. Если ничего не сохранено или домена нет, то будет None.
+   */
+  def getForDkey(dkey:String): Option[DomainSettingsT] = {
+    JsonDfsBackend.getAs[DomainSettings](dkey=dkey, name=getName, fs=fs)
   }
 
   /**
-   * Был добавлен новый домен в базу. Тут создается дефолтовое состояние для начальных параметров.
-   * @param dkey нормальное имя домена, т.е ключ домена во всей системе.
-   * @return
+   * Выдать хоть что-нибудь в качестве настроек для домена.
+   * @param dkey ключ домена.
+   * @return Всегда какой-то экземпляр DomainSettingsT, даже если домен не существует, настройки не сохранены или нечитаемы.
    */
-  def apply(dkey:String, indexName:String, pageType:String) : DomainSettings = {
-    new DomainSettings(
-      dkey = dkey,
-      start_url = "http://" + dkey + "/",
-      index_info = BigShardedIndex(dkey, indexName, pageType)
-    )
-  }
-
-  val getName = getClass.getCanonicalName.replace("$", "")
-
-  /**
-   * Загрузить из хранилища данные для указанного домена
-   * @param dkey ключ домена (не проверяется)
-   * @return Объект DomainSettings, если такой был некогда сохранен.
-   */
-  def load(dkey:String)(implicit fs:FileSystem) : Option[DomainSettings] = {
-    JsonDfsBackend.getAs[DSMap_t](dkey, getName, fs) map(apply(_))
+  def getAnyForDkey(dkey:String): DomainSettingsT = {
+    getForDkey(dkey) getOrElse apply(dkey)
   }
 
 }
 
 
-// Объект, хранящий все настройки для домена.
-case class DomainSettings(
-  dkey : String,
-  index_info : IndexInfo,
-  start_url : String,
-  // Сериализуемое хранилище метаданных типа ключ-значение. Изначально хранит только дату добавления сайта в миллисекундах.
-  meta : DomainSettings.DSMap_t = Map(
-    "domain_added_date_utc" -> DateTime.now.withZone(DateTimeZone.UTC).toInstant.getMillis
+import DomainSettings.DSMap_t
+
+trait DomainSettingsT {
+  // Ключ домена. Используется, чтобы знать, куда сохранять данные.
+  val dkey: String
+
+  // Карта метаданных, которая легко сериализуется в JSON.
+  def meta: DSMap_t
+
+  /**
+   * Фунцкия экспорта состояния.
+   * @return Карту, пригодную для сериализации в JSON.
+   */
+  def export: DSMap_t = Map(
+    "dkey" -> dkey,
+    "meta" -> meta
   )
-) {
 
   /**
-   * Экспорт всего состояния в легко сериализуемый объект, состящий из стандартных простых типов.
-   * @return Map(key:String -> something)
+   * Сохранить в dfs.
+   * @param fs dfs
+   * @return Текущий экземпляр класса, хотя теоретически в будущем может возвращаться и новый экземпляр класса.
    */
-  def export : DomainSettings.DSMap_t = {
-    Map(
-      "dkey"            -> dkey,
-      "start_url"       -> start_url,
-      "index_info_type" -> index_info.iitype,
-      "index_info"      -> index_info.export,
-      "meta"            -> meta
-    )
-  }
-
-  /**
-   * Вызвать экспорт в json и сохранение награбленного.
-   */
-  def save(implicit fs:FileSystem) : DomainSettings = {
-    val state = export
+  def save(implicit fs:FileSystem): DomainSettingsT = {
     JsonDfsBackend.writeTo(
-      dkey = dkey,
-      name = DomainSettings.getName,
-      value = state
+      dkey  = dkey,
+      name  = DomainSettings.getName,
+      value = export
     )
     this
   }
+
+  // Короткие врапперы для изменения метаданных. Во всех случаях создаются новые инстансы неизменяемого DomainSettingsT.
+  def +(kv: (String, Any)) = copy(meta + kv)
+  def -(k: String)         = copy(meta - k)
+  def ++(map1: DSMap_t)    = copy(meta ++ map1)
+
+  def copy(newmeta:DSMap_t) = DomainSettings(dkey=dkey, meta=newmeta)
 }
+
+
+/**
+ * Когда пустой набор настроек для домена. Тот тут просто инициалзация по сути.
+ * @param dkey ключ домена.
+ */
+case class DomainSettingsEmpty(dkey:String) extends DomainSettingsT {
+  val meta = Map(
+    "domain_added_date_utc" -> DateTime.now.withZone(DateTimeZone.UTC)
+  )
+}
+
+/**
+ * Полноценные настройки, возможно уже сохраненные и считанные.
+ * @param dkey ключ домена.
+ * @param meta карта метаданных.
+ */
+case class DomainSettings(dkey:String, meta:DSMap_t) extends DomainSettingsT
 

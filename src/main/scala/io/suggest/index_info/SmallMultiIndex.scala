@@ -17,9 +17,16 @@ case class SmallMultiIndex(
   mi_id : Int
 ) extends IndexInfo {
 
-  def iitype : IITYPE_T = IITYPE_SMALL_MULTI
+  val iitype : IITYPE_T = IITYPE_SMALL_MULTI
 
-  protected val _mi = "mi_" + mi_id
+  protected val _mi = "mi" + mi_id
+
+
+  /**
+   * Строка, которая дает идентификатор этому индексу в целом, безотносительно числа шард/типов и т.д.
+   * @return ASCII-строка без пробелов, включающая в себя имя используемой шарды и, вероятно, dkey.
+   */
+  lazy val name: String = _mi + "." + type_page
 
   /**
    * Индекс+тип для указанной даты. Используется при сохранении страницы.

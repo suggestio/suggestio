@@ -12,8 +12,16 @@ import io.suggest.model.SioSearchContext
 
 trait IndexInfo {
 
+  val dkey: String
+
   // Вернуть алиас типа
-  def iitype : IndexInfoConstants.IITYPE_T
+  val iitype : IndexInfoConstants.IITYPE_T
+
+  /**
+   * Строка, которая дает идентификатор этому индексу в целом, безотносительно числа шард/типов и т.д.
+   * @return ASCII-строка без пробелов, включающая в себя имя используемой шарды и, вероятно, dkey.
+   */
+  def name: String
 
   // имя индекса, в которой лежат страницы для указанной даты
   def indexTypeForDate(d:LocalDate) : (String, String)
@@ -21,7 +29,7 @@ trait IndexInfo {
   def export : Map[String, Any]
 
   // тип, используемый для хранения страниц.
-  val type_page : String
+  def type_page : String
 
   /**
    * Является ли индекс шардовым или нет? Генератор реквестов может учитывать это при построении
@@ -46,7 +54,7 @@ object IndexInfoConstants extends Serializable {
   // Описание идентификатор типов
   type IITYPE_T = String
 
-  val IITYPE_SMALL_MULTI  : IITYPE_T = "small_multi"
-  val IITYPE_BIG_SHARDED  : IITYPE_T = "big_sharded"
+  val IITYPE_SMALL_MULTI  : IITYPE_T = "smi"
+  val IITYPE_BIG_SHARDED  : IITYPE_T = "bsi"
 
 }

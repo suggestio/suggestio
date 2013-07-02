@@ -24,9 +24,15 @@ case class BigShardedIndex(
 
 ) extends IndexInfo {
 
-  def iitype : IITYPE_T = IITYPE_BIG_SHARDED
+  val iitype : IITYPE_T = IITYPE_BIG_SHARDED
 
   protected val isSingleShard = shards.tail == Nil
+
+  /**
+   * Строка, которая дает идентификатор этому индексу в целом, безотносительно числа шард/типов и т.д.
+   * @return ASCII-строка без пробелов, включающая в себя имя используемой шарды и, вероятно, dkey.
+   */
+  lazy val name: String = dkey + "." + shards.length
 
   /**
    * Узнать индекс+тип для указанной даты. Используется при сохранении страницы в индекс.
@@ -39,7 +45,7 @@ case class BigShardedIndex(
     // Ищем шарду, удовлетворяющую дате
     val shard = isSingleShard match {
       case true  => shards.head
-      case false => shards.find { _.lowerDate < days } getOrElse(shards.last)
+      case false => shards find { _.lowerDate < days } getOrElse shards.last
     }
     // В выбранной шарде ищем тип, удовлетворяющий дате
     val subshards = shard.subshards
@@ -47,7 +53,7 @@ case class BigShardedIndex(
       subshards.head
     } else {
       // Подобрать тип по дате
-      subshards.find { _.lowerDate < days } getOrElse(subshards.last)
+      subshards find { _.lowerDate < days } getOrElse subshards.last
     }
     (shard.indexName, typ.typeName)
   }
