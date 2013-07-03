@@ -10,6 +10,7 @@ import io.suggest.index_info.SioEsConstants._
 import scala.concurrent.{Future, Promise}
 import org.elasticsearch.action.{ActionListener, ListenableActionFuture}
 import org.elasticsearch.action.admin.indices.optimize.{OptimizeResponse, OptimizeRequest}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Suggest.io
@@ -34,7 +35,7 @@ object SioEsUtil {
       .setSettings(getNewIndexSettings(shards, replicas))
       .execute()
       .get(timeoutSec, TimeUnit.SECONDS)
-      .acknowledged()
+      .isAcknowledged
   }
 
 
@@ -52,11 +53,10 @@ object SioEsUtil {
       .`type`(typeName)
       .source(mapping)
     // Выполнить запрос.
-    c.admin()
-      .indices()
+    c.admin().indices()
       .putMapping(req)
       .actionGet(timeoutSec * 1000)
-      .acknowledged()
+      .isAcknowledged
   }
 
   /**
@@ -78,11 +78,10 @@ object SioEsUtil {
    * @return true, если индексы с такими именами существуют.
    */
   def isIndexExistSync(indexNames:String *)(implicit c:Client) : Boolean = {
-    c.admin()
-      .indices()
+    c.admin().indices()
       .exists(new IndicesExistsRequest(indexNames : _*))
       .actionGet()
-      .exists
+      .isExists
   }
 
 

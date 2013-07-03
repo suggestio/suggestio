@@ -4,11 +4,13 @@ import org.joda.time.LocalDate
 import io.suggest.model.{SioSearchContext, JsonDfsBackend}
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
-import scala.concurrent.{Promise, Future, future}
+import scala.concurrent.Future
 import org.elasticsearch.action.search.SearchResponse
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.Logs
 import org.elasticsearch.action.admin.indices.optimize.OptimizeRequestBuilder
+import scala.concurrent.ExecutionContext.Implicits.global
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
 
 /**
  * Suggest.io
@@ -71,7 +73,7 @@ trait IndexInfo extends Logs with Serializable {
         .prepareCreate(shardName)
         .setSettings(getNewIndexSettings(shards=1))
         .execute()
-        .map { _.acknowledged() }
+        .map { _.isAcknowledged }
 
     } map iterableOnlyTrue
   }
@@ -90,7 +92,7 @@ trait IndexInfo extends Logs with Serializable {
           .setSource(getPageMapping(typ))
           .execute()
           .map { resp =>
-            val result = resp.acknowledged()
+            val result = resp.isAcknowledged
             // При ошибке написать в лог
             if(!result) {
               error("Cannot ensure inx/typ %s/%s: %s" format(inx, typ, resp.getHeaders))
@@ -109,19 +111,9 @@ trait IndexInfo extends Logs with Serializable {
    * части данных из индекса.
    * @return true, если всё нормально.
    */
-  def deleteOnlyData(implicit client: Client): Future[Boolean] = {
-    val adm = client.admin().indices()
-    Future.traverse(shardTypesMap) { case (inx, types) =>
-      adm.prepareDeleteMapping(inx)
-        .setType(type_page)
-        .execute()
-        .flatMap { case _ =>
-          new OptimizeRequestBuilder(adm)
-            .setIndices(inx)
-            .setOnlyExpungeDeletes(true)
-            .execute()
-        }.map { _ => true }
-
+  def deleteMappings(implicit client: Client): Future[Boolean] = {
+    Future.traverse(shardTypesMap) {
+      case (inx, types) => deleteMappingsFrom(inx, types)
     } map iterableOnlyTrue
   }
 
@@ -130,11 +122,11 @@ trait IndexInfo extends Logs with Serializable {
    * Подготовиться к скроллингу по индексу. Скроллинг позволяет эффективно проходить по огромным объемам данных курсором.
    * @return scroll_id, который нужно передавать аргументом в сlient.prepareSearchScroll()
    */
-  def startScrollAll(timeoutSec: Long = 60l)(implicit client:Client): Future[SearchResponse] = {
+  def startScrollAll(timeoutSec:Long = 60l, sizePerShard:Int = 25)(implicit client:Client): Future[SearchResponse] = {
     client
       .prepareSearch(allShards: _*)
       .setTypes(allTypes: _*)
-      .setSize(25)
+      .setSize(sizePerShard)
       .setScroll(TimeValue.timeValueSeconds(timeoutSec))
       .execute()
   }
@@ -142,7 +134,7 @@ trait IndexInfo extends Logs with Serializable {
 }
 
 
-object IndexInfoStatic extends Serializable {
+object IndexInfoStatic extends Logs with Serializable {
 
   // Описание идентификатор типов
   type IITYPE_t = String
@@ -169,4 +161,56 @@ object IndexInfoStatic extends Serializable {
 
   val futureTrue  = Future.successful(true)
   val futureFalse = Future.successful(false)
+
+
+  /**
+   * Удалить указанные типы только из указанного индекса.
+   * @param inx имя шарды.
+   * @param types Удаляемые типы.
+   * @return true, если всё нормально.
+   */
+  def deleteMappingsFrom(inx:String, types:Seq[String], optimize:Boolean = true)(implicit client: Client): Future[Boolean] = {
+    val adm = client.admin().indices()
+    // TODO тут лучше бы последовательное, а не парралельное удаление...
+    val fut = Future.traverse(types) { typ =>
+      adm.prepareDeleteMapping(inx)
+        .setType(typ)
+        .execute()
+        .map(_ => true)
+    } .map(iterableOnlyTrue)
+    // Заказать оптимизацию индекса, если удаление маппингов прошло ок.
+    if (optimize) {
+      fut.onSuccess { case true =>
+        debug("Expunge deletes on index %s..." format inx)
+        new OptimizeRequestBuilder(adm)
+          .setIndices(inx)
+          .setOnlyExpungeDeletes(true)
+          .execute()
+      }
+    }
+    // Вернуть фьючерс
+    fut
+  }
+
+  /**
+   * Удалить указанные шарды целиком.
+   * @param indicies имя шарды
+   * @return Фьючерс с ответом о завершении удаления индекса.
+   */
+  def deleteShard(indicies:String *)(implicit client:Client): Future[Boolean] = {
+    info("Deleting empty index %s..." format indicies)
+    val fut: Future[DeleteIndexResponse] = {
+      client.admin().indices()
+        .prepareDelete(indicies: _*)
+        .execute()
+    }
+    // Если включен дебаг, то доложить в лог о завершении.
+    if (logger.isDebugEnabled) {
+      fut.onComplete { result =>
+        debug("Index %s deletion result: %s" format(indicies, result))
+      }
+    }
+    fut.map(_.isAcknowledged)
+  }
+
 }

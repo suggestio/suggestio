@@ -4,7 +4,6 @@ import io.suggest.model.{JsonDfsBackend, MIndexInfo}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.hadoop.fs.{Path, PathFilter}
 import io.suggest.util.SiobixFs.fs
-import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -40,7 +39,7 @@ object MiiFileWithIi extends Serializable {
 /**
  * Файл, содержащий IndexInfo. Такой файл надо бы сохранять по-особому, ибо IndexInfo может быть разнотипным.
  */
-trait MiiFileWithIiT[T <: MiiFileWithIiT] extends MiiFileT {
+trait MiiFileWithIiT[T <: MiiFileWithIiT[T]] extends MiiFileT {
 
   import MiiFileWithIi._
 
@@ -90,7 +89,7 @@ trait MiiPathFilterT extends Serializable {
 
 // Статическая часть для object'ов, обслуживающих классы MiiFileWithIiT. Тут функции десериализации полиморфных Mii инстансов.
 // Суть в том, чтобы избавиться от одинакового кода между MiiActive и MiiAdd.
-trait MiiFileWithIiStaticT[T <: MiiFileWithIiT] extends MiiPathFilterT {
+trait MiiFileWithIiStaticT[T] extends MiiPathFilterT {
   import MiiFileWithIi._
 
   /**

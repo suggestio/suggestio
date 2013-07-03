@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
  * Description: http://stackoverflow.com/a/2087048
  */
 trait Logs extends LogsAbstract {
-  private[this] val logger = LoggerFactory.getLogger(getClass.getName)
+  protected val logger = LoggerFactory.getLogger(getClass.getName)
 
   protected def debug(message: => String) = if (logger.isDebugEnabled) logger.debug(message)
   protected def debug(message: => String, ex:Throwable) = if (logger.isDebugEnabled) logger.debug(message,ex)

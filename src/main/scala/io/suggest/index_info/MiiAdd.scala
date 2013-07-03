@@ -5,6 +5,7 @@ import IndexInfoStatic._
 import org.elasticsearch.client.Client
 import scala.concurrent.{Future, future}
 import io.suggest.util.SioEsUtil
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Suggest.io

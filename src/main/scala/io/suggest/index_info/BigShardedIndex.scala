@@ -5,7 +5,7 @@ import io.suggest.util.{Logs, JacksonWrapper}
 import org.joda.time
 import io.suggest.model.SioSearchContext
 import IndexInfoStatic._
-import scala.concurrent.ExecutionContext.global
+import scala.concurrent.ExecutionContext.Implicits.global
 import org.elasticsearch.client.Client
 import scala.concurrent.Future
 import io.suggest.util.SioEsUtil._
@@ -130,17 +130,34 @@ case class BigShardedIndex(
 
   /**
    * Асинхронное удаление данных из ES. Нужно удалить все шарды.
-   * TODO: а если в одном индексе лежат несколько доменов сразу?
-   *       Можно проверять список типов (список маппингов) и сверять с текущим. http://elasticsearch-users.115913.n3.nabble.com/Java-API-to-get-a-mapping-td2988351.html
+   * Если в одном индексе лежат несколько доменов сразу, то проверять список типов (список маппингов) и сверяется с текущим.
    * @return true, если всё ок.
    */
   def delete(implicit client: Client): Future[Boolean] = {
     val shardNames = shards.map(_.indexName)
+    // Читаем маппинги http://elasticsearch-users.115913.n3.nabble.com/Java-API-to-get-a-mapping-td2988351.html
+    client.admin().cluster().prepareState().setFilterIndices(shardNames: _*).execute().flatMap { resp =>
+      val cmd = resp.getState.getMetaData
+      val hasOtherShards = shardTypesMap.groupBy { case (inx, types) =>
+        val imd = cmd.index(inx)
+        val currMappings = imd.getMappings
+        currMappings.size > types.length
+        // TODO может стоит сверять типы?
+      }
+      // Начать удаление данных из индексов.
+      Future.traverse(hasOtherShards) {
+        // Эти индексы можно снести целиком
+        case (true, m) =>
+          deleteShard(m.keys.toSeq: _*)
 
-    client.admin().indices()
-      .prepareDelete(shardNames: _*)
-      .execute()
-      .map(_.acknowledged())
+        // Нельзя удалить эти индексы целиком. Запустить парралельное удаление маппингов во всех занятых индексах.
+        case (false, m) =>
+          Future
+            .traverse(m) { case (inx, types) => deleteMappingsFrom(inx, types) }
+            .map(iterableOnlyTrue)
+
+      } map iterableOnlyTrue
+    }
   }
 }
 
