@@ -1,9 +1,5 @@
 package io.suggest.index_info
 
-import io.suggest.util.SiobixFs.fs
-import io.suggest.model.JsonDfsBackend
-import io.suggest.model.MIndexInfo._
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -11,25 +7,13 @@ import io.suggest.model.MIndexInfo._
  * Description: Метаданные активных используемых для индексации индексов.
  */
 
-object MiiActive extends MiiPathFilter {
+object MiiActive extends MiiFileWithIiStaticT[MiiActive] {
 
   val prefix = "@"
 
-  /**
-   * Выдать список активных индексов в неопределенном порядке.
-   * @param dkey ключ домена.
-   * @return Список активных индексов в неопределенном порядке.
-   */
-  def getActive(dkey:String) : List[MiiActive] = {
-    val path = getDkeyPath(dkey)
-    fs.listStatus(path, pathFilter).toList.foldLeft[List[MiiActive]] (Nil) { (acc, st) =>
-      JsonDfsBackend.getAs[MiiActive](st.getPath, fs) match {
-        case Some(miiActive) => miiActive :: acc
-        case None => acc
-      }
-    }
+  protected def toResult(dkey: String, iinfo: IndexInfo, m: MiiFileWithIi.JsonMap_t): MiiActive = {
+    MiiActive(iinfo)
   }
-
 }
 
 
@@ -37,7 +21,6 @@ object MiiActive extends MiiPathFilter {
  * Данные об активном индексе.
  * @param indexInfo Метаданные индекса.
  */
-case class MiiActive(indexInfo: IndexInfo) extends MiiFileWithIiT {
+case class MiiActive(indexInfo: IndexInfo) extends MiiFileWithIiT[MiiActive] {
   def prefix: String = MiiActive.prefix
-  override def save: MiiFileWithIiT = super.save.asInstanceOf[MiiActive]
 }

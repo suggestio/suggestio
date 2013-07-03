@@ -17,7 +17,7 @@ object DomainSettings extends DomainSettingsStaticT
 trait DomainSettingsStaticT {
 
   // Тип карты, которая хранит настройки. Value имеет динамический тип, и может содержать в себе DSMap_t.
-  type DSMap_t = Map[String, Any]
+  type DSMap_t = JsonDfsBackend.JsonMap_t
 
   val getName = classOf[DomainSettings].getCanonicalName
 

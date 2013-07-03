@@ -10,7 +10,7 @@ import io.suggest.model.MIndexInfo._
  * Description: Mii сообщает о необходимости удаления индекса.
  */
 
-object MiiRemove extends MiiPathFilter {
+object MiiRemove extends MiiPathFilterT {
 
   val prefix = "-"
 
@@ -19,7 +19,7 @@ object MiiRemove extends MiiPathFilter {
    * @param dkey Ключ домена.
    * @return Список MiiRemove в неопределенном порядке.
    */
-  def getRemoves(dkey: String) : List[MiiRemove] = {
+  def getForDkey(dkey: String) : List[MiiRemove] = {
     val path = getDkeyPath(dkey)
     fs.listStatus(path, pathFilter).toList.map { st =>
       val name = st.getPath.getName.tail

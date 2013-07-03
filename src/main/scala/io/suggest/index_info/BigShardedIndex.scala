@@ -4,7 +4,11 @@ import com.github.nscala_time.time.Imports._
 import io.suggest.util.{Logs, JacksonWrapper}
 import org.joda.time
 import io.suggest.model.SioSearchContext
-import IndexInfoConstants._
+import IndexInfoStatic._
+import scala.concurrent.ExecutionContext.global
+import org.elasticsearch.client.Client
+import scala.concurrent.Future
+import io.suggest.util.SioEsUtil._
 
 /**
  * Suggest.io
@@ -24,7 +28,7 @@ case class BigShardedIndex(
 
 ) extends IndexInfo {
 
-  val iitype : IITYPE_T = IITYPE_BIG_SHARDED
+  val iitype : IITYPE_t = IITYPE_BIG_SHARDED
 
   protected val isSingleShard = shards.tail == Nil
 
@@ -80,7 +84,7 @@ case class BigShardedIndex(
 
 
   // Экспорт состояния в карту, пригодную для сериализации в json
-  def export: Map[String, Any] = Map(
+  def export = Map(
     "generation" -> generation,
     "shards"     -> shards
   )
@@ -98,6 +102,46 @@ case class BigShardedIndex(
       true
   }
 
+  /**
+   * Выдать список всех индексов.
+   * @return Список названий es-индексов в порядке убывания даты.
+   */
+  def allShards: List[String] = {
+    shards.map { _.indexName }
+  }
+
+  /**
+   * Выдать список всех задействованных типов во всех индексах.
+   * @return Список типов (суб-шард) во всех шардах в порядке убывания дат.
+   */
+  def allTypes: List[String] = {
+    shards.flatMap { _.subshards.map { _.typeName } }
+  }
+
+
+  /**
+   * Выдать es-карту индекса.
+   * @return
+   */
+  def shardTypesMap: Map[String, Seq[String]] = shards.map { shard =>
+    shard.indexName -> shard.subshards.map(_.typeName)
+  } toMap
+
+
+  /**
+   * Асинхронное удаление данных из ES. Нужно удалить все шарды.
+   * TODO: а если в одном индексе лежат несколько доменов сразу?
+   *       Можно проверять список типов (список маппингов) и сверять с текущим. http://elasticsearch-users.115913.n3.nabble.com/Java-API-to-get-a-mapping-td2988351.html
+   * @return true, если всё ок.
+   */
+  def delete(implicit client: Client): Future[Boolean] = {
+    val shardNames = shards.map(_.indexName)
+
+    client.admin().indices()
+      .prepareDelete(shardNames: _*)
+      .execute()
+      .map(_.acknowledged())
+  }
 }
 
 
@@ -110,7 +154,7 @@ object BigShardedIndex extends Logs {
    * @param m экспортированное состояние в виде карты
    * @return
    */
-  def apply(dkey:String, m:Map[String,Any]) : BigShardedIndex = {
+  def apply(dkey:String, m:AnyJsonMap) : BigShardedIndex = {
     new BigShardedIndex(
       dkey = dkey,
       generation = m("generation").asInstanceOf[Int],

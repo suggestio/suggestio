@@ -1,8 +1,10 @@
 package io.suggest.index_info
 
-import io.suggest.model.MIndexInfo._
-import io.suggest.util.SiobixFs.fs
-import io.suggest.model.JsonDfsBackend
+import MiiFileWithIi._
+import IndexInfoStatic._
+import org.elasticsearch.client.Client
+import scala.concurrent.{Future, future}
+import io.suggest.util.SioEsUtil
 
 /**
  * Suggest.io
@@ -11,43 +13,82 @@ import io.suggest.model.JsonDfsBackend
  * Description: Файл с директивами добавления нового индекса.
  */
 
-object MiiAdd extends MiiPathFilter {
+object MiiAdd extends MiiFileWithIiStaticT[MiiAdd] {
+
+  // Префикс имени файла.
   val prefix = "+"
 
-  /**
-   * Прочитать все добавляемые индексы.
-   * @param dkey Ключ домена.
-   * @return Список MiiAdd в неопределенном порядке.
-   */
-  def getAdds(dkey:String): List[MiiAdd] = {
-    val dirPath = getDkeyPath(dkey)
-    fs.listStatus(dirPath, pathFilter)
-      .toList
-      .foldLeft[List[MiiAdd]] (Nil) { (acc, st) =>
-        val onePath = st.getPath
-        JsonDfsBackend.getAs[MiiAdd](onePath, fs) match {
-          case Some(miiAdd) => miiAdd :: acc
-          case None         => acc
-        }
-      }
-  }
+  // Дополнительные ключи, характеризующие состояние инстанса MiiAdd.
+  val KEY_INX_ALRDY_EXIST = "exist"
+  val KEY_USE_FOR_SEARCH  = "search"
 
+  protected def toResult(dkey: String, iinfo: IndexInfo, m: MiiFileWithIi.JsonMap_t): MiiAdd = {
+    val isAlreadyExist = getFromMap(KEY_INX_ALRDY_EXIST, m, false)
+    val useForSearch   = getFromMap(KEY_USE_FOR_SEARCH, m, false)
+    MiiAdd(iinfo, isAlreadyExist=isAlreadyExist, useForSearch=useForSearch)
+  }
 }
 
 
 /**
  * Файл, обозначающий необходимость подключения нового индекса.
  * @param indexInfo Метаданные индекса.
- * @param isIndexAlreadyExist Существует ли уже указанный индекс в elasticsearch? Иначе его надо будет создать.
+ * @param isAlreadyExist Существует ли уже указанный индекс в elasticsearch? Иначе его надо будет создать.
  * @param useForSearch Если true, то этот индекс должен использоваться для поиска.
  */
-case class MiiAdd(indexInfo: IndexInfo, isIndexAlreadyExist:Boolean, useForSearch:Boolean = false) extends MiiFileWithIiT {
+case class MiiAdd(indexInfo: IndexInfo, isAlreadyExist:Boolean, useForSearch:Boolean = false) extends MiiFileWithIiT[MiiAdd] {
+
+  import MiiAdd.{KEY_INX_ALRDY_EXIST, KEY_USE_FOR_SEARCH}
+
   def prefix: String = MiiAdd.prefix
-  override def save: MiiFileWithIiT = super.save.asInstanceOf[MiiAdd]
+
 
   /**
    * Сконвертить в ActiveMII.
    * @return Экземпляр ActiveMII с текущим indexInfo.
    */
   def toActive = MiiActive(indexInfo)
+
+
+  /**
+   * Экспорт состояния текущего экземпляра.
+   * @return Карту, пригодную для сериализации в json.
+   */
+  override protected def export: JsonMap_t = super.export ++ Map(
+    KEY_INX_ALRDY_EXIST -> isAlreadyExist,
+    KEY_USE_FOR_SEARCH  -> useForSearch
+  )
+
+
+  /**
+   * Убедится, что желаемый индекс существует в ElasticSearch. Готовность индекса -- это наличие индекса и
+   * залитый маппинг. Маппинг заливается всегда, а индекс проверяется лишь по наличию.
+   */
+  def ensureCreated(implicit client:Client): Future[Boolean] = {
+    val allShards = indexInfo.allShards
+    SioEsUtil.isIndexExist(allShards: _*) flatMap { isExist =>
+      if (isAlreadyExist && isExist) {
+        futureTrue
+      } else if (!isAlreadyExist) {
+        // Индекс(ы) ещё не существуют, надо создать бы их.
+        ensureIndexCreated
+      } else {
+        val ex = new RuntimeException("Indexes %s not exist, but they should! Something goes wrong." format allShards)
+        Future.failed(ex)
+      }
+    }
+  }
+
+
+  /**
+   * Создать индексы в базе, залить маппинги.
+   * @return true, если всё ок.
+   */
+  def ensureIndexCreated(implicit client:Client): Future[Boolean] = {
+    indexInfo.ensureShards flatMap {
+      case true  => indexInfo.ensureMappings
+      case false => futureFalse
+    }
+  }
+
 }

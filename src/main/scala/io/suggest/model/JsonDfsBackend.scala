@@ -28,6 +28,8 @@ object JsonDfsBackend {
     _out_dir = out_dir
   }
 
+  type JsonMap_t = Map[String, Any]
+
 
   /**
    * Прочитать ранее сохраненное в json состояние из хранилища.

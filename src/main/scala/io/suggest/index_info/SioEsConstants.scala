@@ -21,11 +21,11 @@ object SioEsConstants {
   val FIELD_DATE          = "date"
 
   // Имена системных полей, все в одном месте.
-  val FIELD_ALL           = AllFieldMapper.NAME
-  val FIELD_SOURCE        = SourceFieldMapper.NAME
-  val FIELD_ROUTING       = RoutingFieldMapper.NAME
-  val FIELD_ANALYZER      = AnalyzerMapper.NAME
-  val FIELD_BOOST         = BoostFieldMapper.NAME
+  def FIELD_ALL           = AllFieldMapper.NAME
+  def FIELD_SOURCE        = SourceFieldMapper.NAME
+  def FIELD_ROUTING       = RoutingFieldMapper.NAME
+  def FIELD_ANALYZER      = AnalyzerMapper.NAME
+  def FIELD_BOOST         = BoostFieldMapper.NAME
 
   // Названия анализаторов
   val ANALYZER_MINIMAL    = "a_minimal"
