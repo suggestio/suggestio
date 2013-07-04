@@ -6,7 +6,7 @@
   <credentials host="${host}" realm="${realm}" username="${user}" passwd="${password}"/>
   <resolvers>
     <chain name="chain1">
-      <filesystem name="local" changingPattern="*-SNAPSHOT">
+      <filesystem name="local" changingPattern="*-SNAPSHOT" local="true">
 	<ivy pattern="${env.HOME}/.ivy2/local/[organisation]/[module]/[revision]/ivy.xml"/>
 	<artifact pattern="${env.HOME}/.ivy2/local/[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"/>
       </filesystem>
