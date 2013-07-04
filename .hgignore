@@ -6,3 +6,5 @@ target/
 lib/
 .idea/
 .idea_modules/
+.ensime
+.ensime_lucene
