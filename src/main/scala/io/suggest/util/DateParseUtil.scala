@@ -5,6 +5,7 @@ import com.github.nscala_time.time.Imports._
 import java.util.Locale
 import collection.mutable
 import io.suggest.index_info.SioEsConstants
+import scala.util.Random
 
 /**
  * Suggest.io
@@ -234,6 +235,43 @@ object DateParseUtil extends Logs {
    */
   def kilosec2date(n:Long) : LocalDate = {
     new LocalDate(n * SioEsConstants.DATE_INSTANT_ZEROES)
+  }
+
+
+  // Используем внутренний ГСЧ для надежности
+  protected val rnd = new Random(System.currentTimeMillis())
+  // Нижняя планка случайного года
+  protected val min_random_year = -10
+
+  /**
+   * Генерация рандомной даты. Нужно, когда дата страницы неизвестна.
+   * @return
+   */
+  def randomDate : LocalDate = {
+    val now = LocalDate.now
+    // Генерим год в разрешенном диапазоне годов
+    val curr_year = now.getYear
+    val min_year = if (min_random_year < 0)
+      curr_year + min_random_year
+    else if (min_random_year > 1900)
+      min_random_year
+    else
+      throw new IllegalArgumentException("min_random_year MUST > 1900 OR < 0")
+    val year = min_year + rnd.nextInt(curr_year - min_year + 1)
+    // Генерим месяц
+    val maxMonth = if (year == curr_year)
+      now.getMonthOfYear
+    else
+      12
+    val month = rnd.nextInt(maxMonth) + 1
+    // Генерим день
+    val maxDay = if (year == curr_year && month == now.getMonthOfYear)
+      now.getDayOfMonth
+    else
+      28
+    val day = rnd.nextInt(maxDay) + 1
+    // Генерим конечную дату.
+    new LocalDate(year, month, day)
   }
 
 }
