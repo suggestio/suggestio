@@ -9,14 +9,12 @@ object ApplicationBuild extends Build {
   val appVersion      = "1.0-SNAPSHOT"
   
   val appDependencies = {
-    val esVsn         = "0.20.6"
     Seq(
       // Add your project dependencies here,
       jdbc,
       anorm,
       "com.typesafe" %% "play-plugins-mailer" % "2.1.0",
       "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
-      "org.elasticsearch" % "elasticsearch" % esVsn,
       // spat4j: костыль для http://elasticsearch-users.115913.n3.nabble.com/Compile-error-with-0-20-2-td4028743.html :
       "com.spatial4j" % "spatial4j" % "0.3",
       "io.suggest" %% "util"      % "0.6.0-SNAPSHOT",
