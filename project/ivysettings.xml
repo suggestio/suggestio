@@ -1,38 +1,31 @@
 <ivysettings>
   <properties environment="env" />
   <properties file="${env.HOME}/.ivy2/.credentials"/>
-  <settings defaultResolver="play" defaultResolveMode="dynamic" />
-  <caches defaultCacheDir="${env.HOME}/.ivy2/cache">
-      <cache name="main-cache">
-	  <ttl organisation="io.suggest" duration="0ms" useOrigin="true"/>
-      </cache>
-  </caches>
+  <settings defaultResolver="chain1" defaultResolveMode="dynamic" />
+  <caches defaultCacheDir="${env.HOME}/.ivy2/cache" />
   <credentials host="${host}" realm="${realm}" username="${user}" passwd="${password}"/>
   <resolvers>
-    <chain name="play">
+    <chain name="chain1">
+      <filesystem name="local" changingPattern="*-SNAPSHOT" local="true">
+	<ivy pattern="${env.HOME}/.ivy2/local/[organisation]/[module]/[revision]/ivy.xml"/>
+	<artifact pattern="${env.HOME}/.ivy2/local/[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"/>
+      </filesystem>
 
-      <filesystem name="local-filesystem" local="true">
+      <filesystem name="play-repo" local="true">
         <ivy pattern="${env.PLAY_HOME}/repository/local/[organization]/[module]/[revision]/ivys/ivy.xml" />
         <artifact pattern="${env.PLAY_HOME}/repository/local/[organization]/[module]/[revision]/[type]s/[module](-[classifier]).[ext]" />
       </filesystem>
 
-      <filesystem name="local" local="true">
-	<ivy pattern="${env.HOME}/.ivy2/local/[organisation]/[module]/[revision]/ivys/ivy.xml"/>
-	<artifact pattern="${env.HOME}/.ivy2/local/[organisation]/[module]/[revision]/[type]s/[artifact]-[revision](-[classifier]).[ext]"/>
-      </filesystem>
-
-      <url name="cbca ivy2-internal">
+      <url name="cbca ivy2-internal" changingPattern="*-SNAPSHOT">
 	<ivy pattern="https://ivy2-internal.cbca.ru/sbt/[orgPath]/[module]/[revision]/[type]-[revision].xml"/>
 	<artifact pattern="https://ivy2-internal.cbca.ru/sbt/[orgPath]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"/>
       </url>
 
-      <ibiblio name="conjars-repo" m2compatible="true" root="http://conjars.org/repo"/>
       <ibiblio name="typesafe-releases" m2compatible="true" root="http://repo.typesafe.com/typesafe/releases" />
       <ibiblio name="sonatype-oss-releases" m2compatible="true" root="http://oss.sonatype.org/content/repositories/releases" />
       <ibiblio name="central-uk" m2compatible="true" root="http://uk.maven.org/maven2" />
       <ibiblio name="typesafe-snapshots" m2compatible="true" root="http://repo.typesafe.com/typesafe/snapshots" />
-      <ibiblio name="sonatype-oss-snapshots" m2compatible="true" root="http://oss.sonatype.org/content/repositories/snapshots" />
-
+      <ibiblio name="sonatype-oss-snapshots" m2compatible="true" root="http://oss.sonatype.org/content/repositories/snapshots"/>
       <ibiblio name="local m2" m2compatible="true" root="file://${env.HOME}/.m2/repository"/>
     </chain>
   </resolvers>
