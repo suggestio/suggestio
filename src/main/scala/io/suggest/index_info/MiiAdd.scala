@@ -3,9 +3,8 @@ package io.suggest.index_info
 import MiiFileWithIi._
 import IndexInfoStatic._
 import org.elasticsearch.client.Client
-import scala.concurrent.{Future, future}
+import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.util.SioEsUtil
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Suggest.io
@@ -65,14 +64,16 @@ case class MiiAdd(indexInfo: IndexInfo, isAlreadyExist:Boolean, useForSearch:Boo
    * Убедится, что желаемый индекс существует в ElasticSearch. Готовность индекса -- это наличие индекса и
    * залитый маппинг. Маппинг заливается всегда, а индекс проверяется лишь по наличию.
    */
-  def ensureCreated(implicit client:Client): Future[Boolean] = {
+  def ensureCreated(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     val allShards = indexInfo.allShards
     SioEsUtil.isIndexExist(allShards: _*) flatMap { isExist =>
       if (isAlreadyExist && isExist) {
         futureTrue
+
       } else if (!isAlreadyExist) {
         // Индекс(ы) ещё не существуют, надо создать бы их.
         ensureIndexCreated
+
       } else {
         val ex = new RuntimeException("Indexes %s not exist, but they should! Something goes wrong." format allShards)
         Future.failed(ex)
@@ -85,7 +86,7 @@ case class MiiAdd(indexInfo: IndexInfo, isAlreadyExist:Boolean, useForSearch:Boo
    * Создать индексы в базе, залить маппинги.
    * @return true, если всё ок.
    */
-  def ensureIndexCreated(implicit client:Client): Future[Boolean] = {
+  def ensureIndexCreated(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     indexInfo.ensureShards flatMap {
       case true  => indexInfo.ensureMappings
       case false => futureFalse

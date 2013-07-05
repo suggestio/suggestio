@@ -1,16 +1,18 @@
 package io.suggest.util
 
 import org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder
-import java.util.concurrent.TimeUnit
 import org.elasticsearch.client.Client
-import org.elasticsearch.action.admin.indices.exists.indices.{IndicesExistsResponse, IndicesExistsRequest}
+import org.elasticsearch.action.admin.indices.exists.indices.{IndicesExistsRequestBuilder, IndicesExistsRequest}
 import org.elasticsearch.common.xcontent.XContentBuilder
-import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest
+import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequestBuilder
 import io.suggest.index_info.SioEsConstants._
 import scala.concurrent.{Future, Promise}
 import org.elasticsearch.action.{ActionListener, ListenableActionFuture}
 import org.elasticsearch.action.admin.indices.optimize.{OptimizeResponse, OptimizeRequest}
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
+import scala.util.{Success, Failure}
+import org.elasticsearch.action.admin.indices.close.CloseIndexRequestBuilder
+import org.elasticsearch.action.admin.indices.open.OpenIndexRequestBuilder
 
 /**
  * Suggest.io
@@ -19,23 +21,21 @@ import scala.concurrent.ExecutionContext.Implicits.global
  * Description: Функции для работы с ElasticSearch. В основном - функции генерации json-спек индексов.
  */
 
-object SioEsUtil {
+object SioEsUtil extends Logs {
 
   /**
    * Убедиться, что есть такой индекс
    * @param indexName имя индекса
    * @param shards кол-во шард. По дефолту = 1
    * @param replicas кол-во реплик. По дефолту = 1
-   * @param timeoutSec таймаут в секундах, по дефолту = 30
    * @return true, если индекс принят.
    */
-  def ensureIndex(indexName:String, shards:Int = 1, replicas:Int=1, timeoutSec:Int=30)(implicit c:Client) : Boolean = {
+  def ensureIndex(indexName:String, shards:Int = 1, replicas:Int=1)(implicit c:Client, executor:ExecutionContext): Future[Boolean] = {
     c.admin().indices()
       .prepareCreate(indexName)
       .setSettings(getNewIndexSettings(shards, replicas))
       .execute()
-      .get(timeoutSec, TimeUnit.SECONDS)
-      .isAcknowledged
+      .map(_.isAcknowledged)
   }
 
 
@@ -44,19 +44,15 @@ object SioEsUtil {
    * @param indexName имя индекса, в который записать маппинг.
    * @param typeName имя типа для маппинга.
    * @param mapping маппинг.
-   * @param timeoutSec таймаут ответа в секундах
    * @return true, если маппинг принят кластером.
    */
-  def putMapping(indexName:String, typeName:String, mapping:XContentBuilder, timeoutSec:Int=15)(implicit c:Client) : Boolean = {
-    val req = new PutMappingRequest()
-      .indices(Array(indexName))
-      .`type`(typeName)
-      .source(mapping)
-    // Выполнить запрос.
-    c.admin().indices()
-      .putMapping(req)
-      .actionGet(timeoutSec * 1000)
-      .isAcknowledged
+  def putMapping(indexName:String, typeName:String, mapping:XContentBuilder)(implicit client:Client, executor:ExecutionContext) : Future[Boolean] = {
+    new PutMappingRequestBuilder(client.admin().indices())
+      .setIndices(indexName)
+      .setType(typeName)
+      .setSource(mapping)
+      .execute()
+      .map(_.isAcknowledged)
   }
 
   /**
@@ -64,12 +60,11 @@ object SioEsUtil {
    * @param indexNames список индексов
    * @return true, если все перечисленные индексы существуют.
    */
-  def isIndexExist(indexNames: String *)(implicit c:Client) : Future[Boolean] = {
-    val req = new IndicesExistsRequest(indexNames : _*)
-    val p = Promise[IndicesExistsResponse]()
-    val listener = actionListener(p)
-    c.admin().indices().exists(req, listener)
-    p.future.map(_.isExists)
+  def isIndexExist(indexNames: String *)(implicit client:Client, executor:ExecutionContext) : Future[Boolean] = {
+    new IndicesExistsRequestBuilder(client.admin().indices())
+      .setIndices(indexNames: _*)
+      .execute()
+      .map(_.isExists)
   }
 
   /**
@@ -77,11 +72,115 @@ object SioEsUtil {
    * @param indexNames Имена индексов.
    * @return true, если индексы с такими именами существуют.
    */
+  @deprecated("Please use non-blocking isIndexExist()", "2013.07.05")
   def isIndexExistSync(indexNames:String *)(implicit c:Client) : Boolean = {
     c.admin().indices()
       .exists(new IndicesExistsRequest(indexNames : _*))
       .actionGet()
       .isExists
+  }
+
+
+  /**
+   * Закрыть индекс указанный
+   * @param indexName имя индекса.
+   */
+  def closeIndex(indexName:String)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
+    lazy val logPrefix = "closeIndex(%s): " format indexName
+    debug(logPrefix + "Starting close ...")
+    val adm = client.admin().indices()
+    new CloseIndexRequestBuilder(adm).setIndex(indexName).execute().transform(
+      {resp =>
+        val result = resp.isAcknowledged
+        debug(logPrefix + "Close index result = %s" format result)
+        result
+      },
+      {ex =>
+        warn(logPrefix + "Cannot close index", ex)
+        ex}
+    )
+  }
+
+  /**
+   * Послать запрос на открытие индекса. Это загружает данные индекса в память соотвтествующих нод, если индекс был ранее закрыт.
+   * @param indexName Имя открываемого индекса.
+   * @return true, если всё нормально
+   */
+  def openIndex(indexName:String)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
+    lazy val logPrefix = "openIndex(%s): " format indexName
+    debug(logPrefix + "Sending open request...")
+    new OpenIndexRequestBuilder(client.admin().indices())
+      .setIndex(indexName)
+      .execute()
+      .transform(
+        {resp =>
+          val result = resp.isAcknowledged
+          debug(logPrefix + "Open index finished: %s" format result)
+          result
+        },
+        {ex =>
+          error(logPrefix + "Open index error", ex)
+          ex}
+      )
+  }
+
+
+  // Кол-во попыток поиска свободного имени для будущего индекса.
+  val FREE_INDEX_NAME_MAX_FIND_ATTEMPTS = 8
+
+  /**
+   * Совсем асинхронно найти свободное имя индекса (не занятое другими индексами).
+   * @return Фьючерс строки названия индекса.
+   */
+  def getFreeIndexName(maxAttempts: Int = FREE_INDEX_NAME_MAX_FIND_ATTEMPTS)(implicit client:Client, executor:ExecutionContext) : Future[String] = {
+    lazy val logPrefix = "getFreeIndexName(%s): " format maxAttempts
+    debug(logPrefix + "Starting...")
+    val p = Promise[String]()
+    // Тут как бы рекурсивный неблокирующий фьючерс.
+    def freeIndexNameLookup(n:Int) {
+      if (n < maxAttempts) {
+        val id = StringUtil.randomId(10).toLowerCase + ".x"
+        debug(logPrefix + "Asking for random index name %s..." format id)
+        SioEsUtil.isIndexExist(id) onComplete {
+          case Success(true) =>
+            debug(logPrefix + "Index name '%s' is busy. Retrying." format id)
+            freeIndexNameLookup(n + 1)
+
+          case Success(false) =>
+            debug(logPrefix + "Free index name found: %s" format id)
+            p success id
+
+          case Failure(ex) =>
+            warn(logPrefix + "Cannot call isIndexExist(%s). Retry" format id, ex)
+            freeIndexNameLookup(n + 1)
+        }
+      } else {
+        p failure new RuntimeException(logPrefix + "Too many failure attemps")
+      }
+    }
+    freeIndexNameLookup(0)
+    p.future
+  }
+
+
+  /**
+   * Создать рандомный индекс.
+   * @param maxAttempts Число попыток поиска свободного имени индекса. просто передается в getFreeIndexName.
+   * @return Фьчерс с именем созданного индекса.
+   */
+  def createRandomIndex(maxAttempts: Int = FREE_INDEX_NAME_MAX_FIND_ATTEMPTS)(implicit client:Client, executor:ExecutionContext): Future[String] = {
+    lazy val logPrefix = "createRandomIndex(%s): " format maxAttempts
+    getFreeIndexName(maxAttempts)
+      .flatMap { indexName =>
+        debug(logPrefix + "free index name: %s" format indexName)
+        SioEsUtil.ensureIndex(indexName) map {
+          case true  =>
+            debug("Index '%s' ensured and ready." format indexName)
+            indexName
+
+          case false => throw new Exception("Index is not created. Free name became busy?")
+        }
+      }
   }
 
 

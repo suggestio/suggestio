@@ -5,7 +5,7 @@ import io.suggest.util.{Logs, JacksonWrapper}
 import org.joda.time
 import io.suggest.model.SioSearchContext
 import IndexInfoStatic._
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import org.elasticsearch.client.Client
 import scala.concurrent.Future
 import io.suggest.util.SioEsUtil._
@@ -133,7 +133,7 @@ case class BigShardedIndex(
    * Если в одном индексе лежат несколько доменов сразу, то проверять список типов (список маппингов) и сверяется с текущим.
    * @return true, если всё ок.
    */
-  def delete(implicit client: Client): Future[Boolean] = {
+  def delete(implicit client: Client, executor:ExecutionContext): Future[Boolean] = {
     val shardNames = shards.map(_.indexName)
     // Читаем маппинги http://elasticsearch-users.115913.n3.nabble.com/Java-API-to-get-a-mapping-td2988351.html
     client.admin().cluster().prepareState().setFilterIndices(shardNames: _*).execute().flatMap { resp =>
@@ -180,10 +180,17 @@ object BigShardedIndex extends Logs {
     )
   }
 
-  def apply(dkey:String, indexName:String, pageType:String) = {
+  /**
+   * Создать BSI на основе имени индекса и ключа домена. Используется при добавлении сайта.
+   * @param dkey ключ домена.
+   * @param indexName имя индекса
+   * @param pageType Опциональное имя типа для проиндексированных страниц.
+   * @return Экземпляр BSI.
+   */
+  def applyDomainAdd(dkey:String, indexName:String, pageType: Option[String] = None): BigShardedIndex = {
     new BigShardedIndex(
-      dkey = dkey,
-      shards = shardsForAddedDomain(dkey, indexName, pageType)
+      dkey   = dkey,
+      shards = shardsForAddedDomain(dkey, indexName, pageType = pageType getOrElse dkey)
     )
   }
 

@@ -4,10 +4,9 @@ import com.github.nscala_time.time.Imports._
 import io.suggest.model.SioSearchContext
 import IndexInfoStatic._
 import org.elasticsearch.client.Client
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.count.CountRequestBuilder
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Suggest.io
@@ -83,11 +82,11 @@ case class SmallMultiIndex(
    * и последующая оптимизация индекса.
    * @return true, если данные больше не существуют и поверхностная оптимизация индекса завершена.
    */
-  def delete(implicit client: Client): Future[Boolean] = {
+  def delete(implicit client: Client, executor:ExecutionContext): Future[Boolean] = {
     val fut = deleteMappingsFrom(_mi, Seq(type_page))
     // В фоне: если индекс теперь пуст, то его надо бы удалить.
     fut onSuccess { case true =>
-      // TODO возможно есть более эффективный метод, без полного подсчета? Через статистику индекса, например...
+      // TODO Использовать более эффективный метод, без полного подсчета. Через статистику индекса, например.
       new CountRequestBuilder(client).setIndices(_mi).execute().foreach { countResp =>
         val c = countResp.getCount
         debug("Index %s contains %s docs." format(_mi, c))

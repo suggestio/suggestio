@@ -2,16 +2,18 @@
   <properties environment="env" />
   <properties file="${env.HOME}/.ivy2/.credentials"/>
   <settings defaultResolver="chain1" defaultResolveMode="dynamic" />
-  <caches defaultCacheDir="${env.HOME}/.ivy2/cache" />
+  <caches>
+      <cache name="cache-origin" useOrigin="true" defaultTTL="0ms"/>
+  </caches>
   <credentials host="${host}" realm="${realm}" username="${user}" passwd="${password}"/>
   <resolvers>
     <chain name="chain1">
-      <filesystem name="local" changingPattern="*-SNAPSHOT" local="true">
+      <filesystem name="local" changingPattern="-SNAPSHOT" local="true" cache="cache-origin">
 	<ivy pattern="${env.HOME}/.ivy2/local/[organisation]/[module]/[revision]/ivy.xml"/>
 	<artifact pattern="${env.HOME}/.ivy2/local/[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"/>
       </filesystem>
        
-      <url name="cbca ivy2-internal" changingPattern="*-SNAPSHOT">
+      <url name="cbca ivy2-internal" changingPattern="-SNAPSHOT">
 	<ivy pattern="https://ivy2-internal.cbca.ru/sbt/[orgPath]/[module]/[revision]/[type]-[revision].xml"/>
 	<artifact pattern="https://ivy2-internal.cbca.ru/sbt/[orgPath]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"/>
       </url>

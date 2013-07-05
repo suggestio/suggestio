@@ -9,7 +9,7 @@ import org.elasticsearch.action.search.{SearchType, SearchResponse}
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.{DateParseUtil, Logs}
 import org.elasticsearch.action.admin.indices.optimize.{OptimizeResponse, OptimizeRequestBuilder}
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
 import scala.util.{Failure, Success}
 import org.elasticsearch.index.query.QueryBuilders
@@ -70,7 +70,7 @@ trait IndexInfo extends Logs with Serializable {
    * Убедиться, что все шарды ES созданы.
    * @return true, если всё ок.
    */
-  def ensureShards(implicit client:Client): Future[Boolean] = {
+  def ensureShards(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     Future.traverse(allShards) { shardName =>
       client
         .admin()
@@ -89,7 +89,7 @@ trait IndexInfo extends Logs with Serializable {
    * выноситься на уровень имплементаций.
    * @return true, если всё ок.
    */
-  def ensureMappings(implicit client:Client) : Future[Boolean] = {
+  def ensureMappings(implicit client:Client, executor:ExecutionContext) : Future[Boolean] = {
     val adm = client.admin().indices()
     Future.traverse(shardTypesMap) { case (inx, types) =>
       Future.traverse(types) { typ =>
@@ -108,7 +108,7 @@ trait IndexInfo extends Logs with Serializable {
     } map iterableOnlyTrue
   }
 
-  def delete(implicit client: Client): Future[Boolean]
+  def delete(implicit client: Client, executor:ExecutionContext): Future[Boolean]
 
 
   /**
@@ -116,7 +116,7 @@ trait IndexInfo extends Logs with Serializable {
    * части данных из индекса.
    * @return true, если всё нормально.
    */
-  def deleteMappings(implicit client: Client): Future[Boolean] = {
+  def deleteMappings(implicit client: Client, executor:ExecutionContext): Future[Boolean] = {
     Future.traverse(shardTypesMap) {
       case (inx, types) => deleteMappingsFrom(inx, types)
     } map iterableOnlyTrue
@@ -127,7 +127,7 @@ trait IndexInfo extends Logs with Serializable {
    * Подготовиться к скроллингу по индексу. Скроллинг позволяет эффективно проходить по огромным объемам данных курсором.
    * @return scroll_id, который нужно передавать аргументом в сlient.prepareSearchScroll()
    */
-  def startFullScroll(timeout:TimeValue = SCROLL_TIMEOUT_INIT_DFLT, sizePerShard:Int = SCROLL_PER_SHARD_DFLT)(implicit client:Client): Future[SearchResponse] = {
+  def startFullScroll(timeout:TimeValue = SCROLL_TIMEOUT_INIT_DFLT, sizePerShard:Int = SCROLL_PER_SHARD_DFLT)(implicit client:Client, executor:ExecutionContext): Future[SearchResponse] = {
     val _allShards = allShards
     val _allTypes  = allTypes
     debug("startFullScroll() starting: indices=%s types=%s timeout=%ss perShard=%s" format(_allShards, _allTypes, timeout, sizePerShard))
@@ -188,7 +188,7 @@ object IndexInfoStatic extends Logs with Serializable {
    * @param types Удаляемые типы.
    * @return true, если всё нормально.
    */
-  def deleteMappingsFrom(inx:String, types:Seq[String], optimize:Boolean = true)(implicit client: Client): Future[Boolean] = {
+  def deleteMappingsFrom(inx:String, types:Seq[String], optimize:Boolean = true)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     val adm = client.admin().indices()
     // TODO тут лучше бы последовательное, а не парралельное удаление...
     val fut = Future.traverse(types) { typ =>
@@ -211,7 +211,7 @@ object IndexInfoStatic extends Logs with Serializable {
    * @param indicies имя шарды
    * @return Фьючерс с ответом о завершении удаления индекса.
    */
-  def deleteShard(indicies:String *)(implicit client:Client): Future[Boolean] = {
+  def deleteShard(indicies:String *)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     info("Deleting empty index %s..." format indicies)
     val adm = client.admin().indices()
     val fut: Future[DeleteIndexResponse] = adm.prepareDelete(indicies: _*).execute()
@@ -229,7 +229,7 @@ object IndexInfoStatic extends Logs with Serializable {
    * @param indices список индексов для оптимизации
    * @return true, если всё ок.
    */
-  def optimizeExpunge(indices: String *)(implicit client:Client): Future[Boolean] = {
+  def optimizeExpunge(indices: String *)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     debug("Expunge deletes on indices %s..." format indices)
     val adm = client.admin().indices()
     val fut: Future[OptimizeResponse] = {
@@ -254,7 +254,7 @@ object IndexInfoStatic extends Logs with Serializable {
    * @param isTolerant Гасить одиночные ошибки импорта?
    * @return Фьючерс, по которому можно оценивать окончание импрота.
    */
-  def copy(fromIndex:IndexInfo, toIndex:IndexInfo, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client): Future[Boolean] = {
+  def copy(fromIndex:IndexInfo, toIndex:IndexInfo, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     val logPrefix = "copy(%s -> %s tolerant=%s): " format(fromIndex.name, toIndex.name, isTolerant)
     debug(logPrefix + "Start scrolling...")
     fromIndex.startFullScroll().flatMap { resp =>
@@ -293,7 +293,7 @@ object IndexInfoStatic extends Logs with Serializable {
    * @param isTolerant Гасить одиночные ошибки импорта?
    * @return true, когда всё нормально.
    */
-  def move(fromIndex:IndexInfo, toIndex:IndexInfo, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client): Future[Boolean] = {
+  def move(fromIndex:IndexInfo, toIndex:IndexInfo, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     lazy val logPrefix = "move(%s -> %s tolerant=%s): " format(fromIndex.name, toIndex.name, isTolerant)
     debug(logPrefix + "Starting copy()...")
     copy(fromIndex, toIndex, isTolerant) flatMap { _ =>
@@ -312,7 +312,7 @@ object IndexInfoStatic extends Logs with Serializable {
    * @param isTolerant Если true, то ошибки при обработке документов будут подавляться. По дефолту true, ибо допускаются небольшие потери.
    * @return Фьючерс, который висит пока не наступает успех.
    */
-  def scrollImport(scrollId: String, toIndex: IndexInfo, timeout:TimeValue = SCROLL_TIMEOUT_DFLT, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client: Client) = {
+  def scrollImport(scrollId: String, toIndex: IndexInfo, timeout:TimeValue = SCROLL_TIMEOUT_DFLT, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, executor:ExecutionContext) = {
     val logPrefix = "scrollImport(-> %s): " format toIndex.name
     info(logPrefix + "starting...")
     val p = Promise[Boolean]()
