@@ -1,7 +1,6 @@
 package io.suggest.util
 
-import io.suggest.model.JsonDfsBackend
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.{FileSystem, Path}
 import com.scaleunlimited.cascading.hadoop.HadoopUtils
 import io.suggest.index_info.SioEsConstants
 
@@ -16,16 +15,31 @@ object SiobixFs extends SiobixFsStaticT
 
 trait SiobixFsStaticT {
 
-  val siobix_out_dir = "/home/user/projects/bixo-git/dout"
+  /**
+   * Корневая директория данных. Все остальные пути зависят от неё.
+   */
+  val siobix_out_dir: String = System.getProperty("siobix.dfs.dir") match {
+    case null       => "/home/user/projects/sio/2/bixo/dout"
+    case str:String => str
+  }
 
   val siobix_out_path  = new Path(siobix_out_dir)
+
   val siobix_conf_path = new Path(siobix_out_path, SioEsConstants.CONF_SUBDIR)
-  val conf = HadoopUtils.getDefaultJobConf
-  implicit val fs = siobix_out_path.getFileSystem(conf)
+  val dkeysConfRoot    = new Path(siobix_conf_path, "dkey")
+  val crawlRoot        = new Path(siobix_out_path,  "crawl")
 
-  JsonDfsBackend.setOutDir(siobix_out_path)
+  implicit val fs: FileSystem = {
+    val conf = HadoopUtils.getDefaultJobConf
+    siobix_out_path.getFileSystem(conf)
+  }
 
-  def dkeyPath(dkey:String) = new Path(siobix_out_path, dkey)
-  def dkeyPathConf(dkey:String) = new Path(dkeyPath(dkey), SioEsConstants.CONF_SUBDIR)
+  /**
+   * Выдать путь до директории с конфигами для указанного dkey.
+   * @param dkey ключ домена.
+   * @return Path(/dout/conf/dkey)
+   * TODO нужно переделать название функции.
+   */
+  def dkeyPathConf(dkey:String) = new Path(dkeysConfRoot, dkey)
 
 }

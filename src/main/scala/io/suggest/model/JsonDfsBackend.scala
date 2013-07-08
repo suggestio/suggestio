@@ -2,6 +2,7 @@ package io.suggest.model
 
 import org.apache.hadoop.fs.{Path, FileSystem}
 import io.suggest.util.JacksonWrapper
+import io.suggest.util.SiobixFs._
 
 /**
  * Suggest.io
@@ -14,22 +15,7 @@ import io.suggest.util.JacksonWrapper
 // Статическая часть модели
 object JsonDfsBackend {
 
-  // Имя директории для хранения json-ов. После запуска нельзя менять, иначе записи потеряются.
-  val subdir = "conf"
-
-  // Корневая ФС
-  protected var _out_dir : Path = null
-
-  /**
-   * Выставляется fs. Это вместо конструктора.
-   * @param out_dir- корень, используемый для outdir в bixo. Поиск директорий доменов будет осуществляться тут.
-   */
-  def setOutDir(out_dir:Path) {
-    _out_dir = out_dir
-  }
-
   type JsonMap_t = Map[String, Any]
-
 
   /**
    * Прочитать ранее сохраненное в json состояние из хранилища.
@@ -90,7 +76,7 @@ object JsonDfsBackend {
   protected def ensurePathAbsolute(path:Path) : Path = {
     path.isAbsolute match {
       case true  => path
-      case false => new Path(_out_dir, path)
+      case false => new Path(siobix_out_path, path)
     }
   }
 
@@ -101,7 +87,7 @@ object JsonDfsBackend {
    * @param name имя сохраняемого состяния. Обычно имя класса.
    * @return Path, относительный по отношению к _root_fs (и любым другим fs)
    */
-  def getPath(dkey:String, name:String) = new Path(_out_dir, dkey + "/" + subdir + "/" + name + ".json")
+  def getPath(dkey:String, name:String) = new Path(dkeyPathConf(dkey), name + ".json")
 
 }
 
@@ -133,6 +119,7 @@ trait JsonDfsClient {
   protected def getStateFileName = getClassName + ".json"
 }
 
+
 // Трайт для быстрой интеграции функций JsonDfsBackend в акторы и синглтоны, относящиеся к домену.
 trait JsonDfsClientDkey extends JsonDfsClient {
 
@@ -153,7 +140,7 @@ trait JsonDfsClientDkey extends JsonDfsClient {
 // Это например супервизоры верхнего уровня, менеджеры индексов и т.д.
 trait JsonDfsClientGlobal extends JsonDfsClient {
 
-  protected def getStatePath = new Path(JsonDfsBackend.subdir, getStateFileName)
+  protected def getStatePath = new Path(siobix_conf_path, getStateFileName)
 
   protected def saveState(implicit fs:FileSystem) {
     JsonDfsBackend.writeTo(getStatePath, exportState)
