@@ -113,7 +113,7 @@ trait JsonDfsClient {
   /**
    * Восстановить ранее сохраненное состояние из DFS.
    */
-  protected def loadState(implicit fs:FileSystem)
+  protected def loadState(implicit fs:FileSystem): Boolean
 
   protected def getClassName = getClass.getCanonicalName
   protected def getStateFileName = getClassName + ".json"
@@ -129,8 +129,11 @@ trait JsonDfsClientDkey extends JsonDfsClient {
     JsonDfsBackend.writeTo(dkey, getClassName, exportState)
   }
 
-  protected def loadState(implicit fs:FileSystem) {
-    JsonDfsBackend.getAs[ImportExportMap](dkey, getStateFileName, fs) map(importState(_))
+  protected def loadState(implicit fs:FileSystem) = {
+    JsonDfsBackend.getAs[ImportExportMap](dkey, getStateFileName, fs) exists { data =>
+      importState(data)
+      true
+    }
   }
 
 }
@@ -146,7 +149,10 @@ trait JsonDfsClientGlobal extends JsonDfsClient {
     JsonDfsBackend.writeTo(getStatePath, exportState)
   }
 
-  protected def loadState(implicit fs:FileSystem) {
-    JsonDfsBackend.getAs[ImportExportMap](getStatePath, fs) map(importState(_))
+  protected def loadState(implicit fs:FileSystem): Boolean = {
+    JsonDfsBackend.getAs[ImportExportMap](getStatePath, fs) exists { data =>
+      importState(data)
+      true
+    }
   }
 }
