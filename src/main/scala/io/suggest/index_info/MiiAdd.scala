@@ -16,7 +16,7 @@ import io.suggest.util.SioEsUtil
 object MiiAdd extends MiiFileWithIiStaticT[MiiAdd] {
 
   // Префикс имени файла.
-  val prefix = "+"
+  val prefix = "N" // New
 
   // Дополнительные ключи, характеризующие состояние инстанса MiiAdd.
   val KEY_INX_ALRDY_EXIST = "exist"

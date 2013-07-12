@@ -12,7 +12,7 @@ import io.suggest.model.MIndexInfo._
 
 object MiiRemove extends MiiPathFilterT {
 
-  val prefix = "-"
+  val prefix = "X"
 
   /**
    * Выдать список того, что выставлено на удаление.
@@ -21,10 +21,12 @@ object MiiRemove extends MiiPathFilterT {
    */
   def getForDkey(dkey: String) : List[MiiRemove] = {
     val path = getDkeyPath(dkey)
-    fs.listStatus(path, pathFilter).toList.map { st =>
-      val name = st.getPath.getName.tail
-      MiiRemove(dkey=dkey, name=name)
-    }
+    fs.listStatus(path, pathFilter)
+      .toList
+      .map { st =>
+        val name = st.getPath.getName.tail
+        MiiRemove(dkey=dkey, name=name)
+      }
   }
 
 }

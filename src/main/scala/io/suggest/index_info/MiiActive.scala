@@ -9,7 +9,7 @@ package io.suggest.index_info
 
 object MiiActive extends MiiFileWithIiStaticT[MiiActive] {
 
-  val prefix = "@"
+  val prefix = "A"
 
   protected def toResult(dkey: String, iinfo: IndexInfo, m: MiiFileWithIi.JsonMap_t): MiiActive = {
     MiiActive(iinfo)

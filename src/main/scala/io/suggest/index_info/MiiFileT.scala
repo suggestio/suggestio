@@ -19,7 +19,7 @@ trait MiiFileT extends Serializable {
   @JsonIgnore def prefix: String
   @JsonIgnore def name: String
 
-  @JsonIgnore def filename: String = prefix + name
+  @JsonIgnore def filename: String = prefix + "." + name
   @JsonIgnore lazy val filepath = MIndexInfo.getFilePath(dkey, filename)
 
   @JsonIgnore def save: MiiFileT
@@ -100,7 +100,6 @@ trait MiiFileWithIiStaticT[T] extends MiiPathFilterT {
   def getForDkey(dkey:String) : List[T] = {
     val dkeyPath = MIndexInfo.getDkeyPath(dkey)
     fs.listStatus(dkeyPath, pathFilter)
-      .toList
       .foldLeft[List[T]] (Nil) { (acc, st) => readThisAcc(acc, st.getPath) }
   }
 
