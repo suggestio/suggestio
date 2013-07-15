@@ -136,7 +136,7 @@ case class BigShardedIndex(
   def delete(implicit client: Client, executor:ExecutionContext): Future[Boolean] = {
     val shardNames = shards.map(_.indexName)
     // Читаем маппинги http://elasticsearch-users.115913.n3.nabble.com/Java-API-to-get-a-mapping-td2988351.html
-    client.admin().cluster().prepareState().setFilterIndices(shardNames: _*).execute().flatMap { resp =>
+    client.admin().cluster().prepareState().setFilterIndices(shardNames: _*).setFilterMetaData(true).execute().flatMap { resp =>
       val cmd = resp.getState.getMetaData
       val hasOtherShards = shardTypesMap.groupBy { case (inx, types) =>
         val imd = cmd.index(inx)

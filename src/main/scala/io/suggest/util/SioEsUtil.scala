@@ -33,7 +33,7 @@ object SioEsUtil extends Logs {
   def ensureIndex(indexName:String, shards:Int = 1, replicas:Int=1)(implicit c:Client, executor:ExecutionContext): Future[Boolean] = {
     c.admin().indices()
       .prepareCreate(indexName)
-      .setSettings(getNewIndexSettings(shards, replicas))
+      .setSettings(getNewIndexSettings(shards=shards, replicas=replicas))
       .execute()
       .map(_.isAcknowledged)
   }

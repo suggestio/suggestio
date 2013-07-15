@@ -1,6 +1,6 @@
 package io.suggest.index_info
 
-import io.suggest.model.{JsonDfsBackend, MIndexInfo}
+import io.suggest.model.{JsonDfsBackend, MDkeyVirtualIndex}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.hadoop.fs.{Path, PathFilter}
 import io.suggest.util.SiobixFs.fs
@@ -20,7 +20,7 @@ trait MiiFileT extends Serializable {
   @JsonIgnore def name: String
 
   @JsonIgnore def filename: String = prefix + "." + name
-  @JsonIgnore lazy val filepath = MIndexInfo.getFilePath(dkey, filename)
+  @JsonIgnore lazy val filepath = MDkeyVirtualIndex.getFilePath(dkey, filename)
 
   @JsonIgnore def save: MiiFileT
 }
@@ -98,7 +98,7 @@ trait MiiFileWithIiStaticT[T] extends MiiPathFilterT {
    * @return Опциональный сабж.
    */
   def getForDkey(dkey:String) : List[T] = {
-    val dkeyPath = MIndexInfo.getDkeyPath(dkey)
+    val dkeyPath = MDkeyVirtualIndex.getDkeyPath(dkey)
     fs.listStatus(dkeyPath, pathFilter)
       .foldLeft[List[T]] (Nil) { (acc, st) => readThisAcc(acc, st.getPath) }
   }

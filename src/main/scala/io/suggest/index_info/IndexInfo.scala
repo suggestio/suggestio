@@ -128,17 +128,7 @@ trait IndexInfo extends Logs with Serializable {
    * @return scroll_id, который нужно передавать аргументом в сlient.prepareSearchScroll()
    */
   def startFullScroll(timeout:TimeValue = SCROLL_TIMEOUT_INIT_DFLT, sizePerShard:Int = SCROLL_PER_SHARD_DFLT)(implicit client:Client, executor:ExecutionContext): Future[SearchResponse] = {
-    val _allShards = allShards
-    val _allTypes  = allTypes
-    debug("startFullScroll() starting: indices=%s types=%s timeout=%ss perShard=%s" format(_allShards, _allTypes, timeout, sizePerShard))
-    client
-      .prepareSearch(_allShards: _*)
-      .setSearchType(SearchType.SCAN)
-      .setTypes(_allTypes: _*)
-      .setSize(sizePerShard)
-      .setQuery(QueryBuilders.matchAllQuery())
-      .setScroll(timeout)
-      .execute()
+    startFullScrollIn(allShards, allTypes, timeout, sizePerShard)
   }
 
 }
@@ -312,12 +302,15 @@ object IndexInfoStatic extends Logs with Serializable {
    * @param isTolerant Если true, то ошибки при обработке документов будут подавляться. По дефолту true, ибо допускаются небольшие потери.
    * @return Фьючерс, который висит пока не наступает успех.
    */
-  def scrollImport(scrollId: String, toIndex: IndexInfo, timeout:TimeValue = SCROLL_TIMEOUT_DFLT, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, executor:ExecutionContext) = {
+  def scrollImport(scrollId:String, toIndex:IndexInfo, timeout:TimeValue = SCROLL_TIMEOUT_DFLT, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, executor:ExecutionContext) = {
     val logPrefix = "scrollImport(-> %s): " format toIndex.name
     info(logPrefix + "starting...")
     val p = Promise[Boolean]()
     def scrollImportIteration(_scrollId: String) {
-      val fut: Future[SearchResponse] = client.prepareSearchScroll(_scrollId).setScroll(timeout).execute()
+      val fut: Future[SearchResponse] = client
+        .prepareSearchScroll(_scrollId)
+        .setScroll(timeout)
+        .execute()
       // Используем голые callback'и вместо всяких flatMap и andThen, т.к. каллабки не порождают жирных хвостов из promise'ов.
       fut onComplete {
         // Пришли результаты скроллинга, как и ожидалось.
@@ -396,6 +389,23 @@ object IndexInfoStatic extends Logs with Serializable {
     scrollImportIteration(scrollId)
     // Вернуть overall-фьючерс вопрошающему.
     p.future
+  }
+
+
+  /**
+   * Подготовиться к скроллингу по индексу (индексам). Скроллинг позволяет эффективно проходить по огромным объемам данных server-side курсором.
+   * @return scroll_id, который нужно передавать аргументом в сlient.prepareSearchScroll()
+   */
+  def startFullScrollIn(allShards:Seq[String], allTypes:Seq[String], timeout:TimeValue = SCROLL_TIMEOUT_INIT_DFLT, sizePerShard:Int = SCROLL_PER_SHARD_DFLT)(implicit client:Client, executor:ExecutionContext): Future[SearchResponse] = {
+    debug("startFullScroll() starting: indices=%s types=%s timeout=%ss perShard=%s" format(allShards, allTypes, timeout, sizePerShard))
+    client
+      .prepareSearch(allShards: _*)
+      .setSearchType(SearchType.SCAN)
+      .setTypes(allTypes: _*)
+      .setSize(sizePerShard)
+      .setQuery(QueryBuilders.matchAllQuery())
+      .setScroll(timeout)
+      .execute()
   }
 
 }

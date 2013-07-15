@@ -1,7 +1,7 @@
 package io.suggest.index_info
 
 import io.suggest.util.SiobixFs.fs
-import io.suggest.model.MIndexInfo._
+import io.suggest.model.MDkeyVirtualIndex._
 import java.io.{InputStreamReader, BufferedReader}
 import io.suggest.util.Logs
 

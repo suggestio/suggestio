@@ -12,7 +12,7 @@ import org.elasticsearch.client.Client
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 02.07.13 14:30
- * Description: IndexInfo хранит инфу о связях текущего dkey с индексами и необходимости произведения действий
+ * Description: Сабж хранит инфу о связях текущего dkey с индексами, а также о необходимости произведения действий
  * над ними. Логически, хранилище данных об индексе устроено в виде директории с файлами:
  * /vasya.com/index_info/
  *  | N.also_replicate_to_this_index          // Скопировать уже имеющиеся данные в этот индекс.
@@ -48,18 +48,20 @@ import org.elasticsearch.client.Client
  * В этом объекте - кое-какой общий код работы с моделью и разные высокоуровневые операции.
  */
 
-object MIndexInfo extends Logs with Serializable {
+object MDkeyVirtualIndex extends Logs with Serializable {
 
   // Имя поддиректории модели в папке $dkey. Используется как основа для всего остального в этой модели.
-  val dirName = "inx"
+  val dirName = "inxs"
 
   // Фильтр файлов, которыми интересуется функция ensure при начальном листинге.
-  val pathFilterEnsure = new PathFilter with Serializable {
-    val allowedPrefixesCh = List[Char](MiiActive.prefixCh, MiiAdd.prefixCh, MiiRemove.prefixCh)
+  val pathFilterEnsure = {
+    new PathFilter with Serializable {
+      val allowedPrefixesCh = List[Char](MiiActive.prefixCh, MiiAdd.prefixCh, MiiRemove.prefixCh)
 
-    def accept(path: Path): Boolean = {
-      val prefixCh = path.getName.charAt(0)
-      allowedPrefixesCh contains prefixCh
+      def accept(path: Path): Boolean = {
+        val prefixCh = path.getName.charAt(0)
+        allowedPrefixesCh contains prefixCh
+      }
     }
   }
 
@@ -125,6 +127,21 @@ object MIndexInfo extends Logs with Serializable {
 
 }
 
+/**
+ * Экземпляр записи, которая сериализуется в файл.
+ * @param vinName Virtual Index Basename. Поле Basename в MVirtualIndex
+ * @param subshards Подшарды (типы, ограниченные по временному интервалу)
+ * @param generation поколение. Обычно когда 
+ */
+case class MDkeyVirtualIndex(
+  vinName:    String,
+  subshards:  List[DkeySubshard],
+  generation: Int = 0
+)
 
 
-
+case class DkeySubshard(
+  typename:      String,
+  lowerDateDays: Int,
+  shardNumber:   Int
+)
