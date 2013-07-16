@@ -2,9 +2,8 @@ package io.suggest.util
 
 import org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder
 import org.elasticsearch.client.Client
-import org.elasticsearch.action.admin.indices.exists.indices.{IndicesExistsRequestBuilder, IndicesExistsRequest}
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest
 import org.elasticsearch.common.xcontent.XContentBuilder
-import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequestBuilder
 import io.suggest.index_info.SioEsConstants._
 import scala.concurrent.{Future, Promise}
 import org.elasticsearch.action.{ActionListener, ListenableActionFuture}
@@ -47,8 +46,8 @@ object SioEsUtil extends Logs {
    * @return true, если маппинг принят кластером.
    */
   def putMapping(indexName:String, typeName:String, mapping:XContentBuilder)(implicit client:Client, executor:ExecutionContext) : Future[Boolean] = {
-    new PutMappingRequestBuilder(client.admin().indices())
-      .setIndices(indexName)
+    client.admin().indices()
+      .preparePutMapping(indexName)
       .setType(typeName)
       .setSource(mapping)
       .execute()
@@ -61,8 +60,8 @@ object SioEsUtil extends Logs {
    * @return true, если все перечисленные индексы существуют.
    */
   def isIndexExist(indexNames: String *)(implicit client:Client, executor:ExecutionContext) : Future[Boolean] = {
-    new IndicesExistsRequestBuilder(client.admin().indices())
-      .setIndices(indexNames: _*)
+    client.admin().indices()
+      .prepareExists(indexNames: _*)
       .execute()
       .map(_.isExists)
   }

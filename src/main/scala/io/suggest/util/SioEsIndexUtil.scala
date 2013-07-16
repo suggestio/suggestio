@@ -1,196 +1,84 @@
-package io.suggest.index_info
+package io.suggest.util
 
 import org.joda.time.LocalDate
-import io.suggest.model.{SioSearchContext, JsonDfsBackend}
+import io.suggest.model.JsonDfsBackend
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
 import scala.concurrent.{Promise, Future}
 import org.elasticsearch.action.search.{SearchType, SearchResponse}
 import io.suggest.util.SioEsUtil._
-import io.suggest.util.{DateParseUtil, Logs}
 import org.elasticsearch.action.admin.indices.optimize.{OptimizeResponse, OptimizeRequestBuilder}
 import scala.concurrent.ExecutionContext
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
 import scala.util.{Failure, Success}
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.action.index.IndexRequest
+import io.suggest.index_info.{IndexInfo, SioEsConstants}
 import SioEsConstants.FIELD_DATE
 import java.util.Date
+import org.elasticsearch.common.settings.ImmutableSettings
+import org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 11.04.13 16:09
- * Description: Интерфейсы и константы для классов *IndexInfo.
+ * Created: 16.07.13 17:58
+ * Description:
  */
 
-trait IndexInfo extends Logs with Serializable {
-
-  import IndexInfoStatic._
-
-  val dkey: String
-
-  // Вернуть алиас типа
-  val iitype : IITYPE_t
-
-  /**
-   * Строка, которая дает идентификатор этому индексу в целом, безотносительно числа шард/типов и т.д.
-   * @return ASCII-строка без пробелов, включающая в себя имя используемой шарды и, вероятно, dkey.
-   */
-  def name: String
-
-  // имя индекса, в которой лежат страницы для указанной даты
-  def indexTypeForDate(d:LocalDate) : (String, String)
-
-  def export : IIMap_t
-
-  // тип, используемый для хранения страниц.
-  def type_page : String
-
-  /**
-   * Является ли индекс шардовым или нет? Генератор реквестов может учитывать это при построении
-   * запроса к ElasticSearch.
-   */
-  def isSharded : Boolean
-
-  /**
-   * Вебморда собирается сделать запрос, и ей нужно узнать то, какие индесы необходимо опрашивать
-   * и какие типы в них фильтровать.
-   * TODO тут должен быть некий экземпляр request context, который будет описывать ход поиска.
-   * @param sc Контекст поискового запроса.
-   * @return Список названий индексов-шард и список имен типов в этих индексах.
-   */
-  def indexesTypesForRequest(sc:SioSearchContext) : (List[String], List[String])
-
-  def allShards: List[String]
-  def allTypes:  List[String]
-  def shardTypesMap : Map[String, Seq[String]]
-
-  /**
-   * Убедиться, что все шарды ES созданы.
-   * @return true, если всё ок.
-   */
-  def ensureShards(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
-    Future.traverse(allShards) { shardName =>
-      client.admin().indices()
-        .prepareCreate(shardName)
-        .setSettings(getNewIndexSettings(shards=1))
-        .execute()
-        .map { _.isAcknowledged }
-
-    } map iterableOnlyTrue
-  }
-
-
-  /**
-   * Залить все маппинги в базу. Пока что тут у всех одинаковый маппинг, однако потом это всё будет усложняться и
-   * выноситься на уровень имплементаций.
-   * @return true, если всё ок.
-   */
-  def ensureMappings(implicit client:Client, executor:ExecutionContext) : Future[Boolean] = {
-    val adm = client.admin().indices()
-    Future.traverse(shardTypesMap) { case (inx, types) =>
-      Future.traverse(types) { typ =>
-        adm.preparePutMapping(inx)
-          .setSource(getPageMapping(typ))
-          .execute()
-          .map { resp =>
-            val result = resp.isAcknowledged
-            // При ошибке написать в лог
-            if(!result) {
-              error("Cannot ensure inx/typ %s/%s: %s" format(inx, typ, resp.getHeaders))
-            }
-            result
-          }
-      } map iterableOnlyTrue
-    } map iterableOnlyTrue
-  }
-
-  def delete(implicit client: Client, executor:ExecutionContext): Future[Boolean]
-
-
-  /**
-   * Удалить только данные из индексов, не трогая сами индексы. Это ресурсоемкая операция, используется для удаления
-   * части данных из индекса.
-   * @return true, если всё нормально.
-   */
-  def deleteMappings(implicit client: Client, executor:ExecutionContext): Future[Boolean] = {
-    Future.traverse(shardTypesMap) {
-      case (inx, types) => deleteMappingsFrom(inx, types)
-    } map iterableOnlyTrue
-  }
-
-
-  /**
-   * Подготовиться к скроллингу по индексу. Скроллинг позволяет эффективно проходить по огромным объемам данных курсором.
-   * @return scroll_id, который нужно передавать аргументом в сlient.prepareSearchScroll()
-   */
-  def startFullScroll(timeout:TimeValue = SCROLL_TIMEOUT_INIT_DFLT, sizePerShard:Int = SCROLL_PER_SHARD_DFLT)(implicit client:Client, executor:ExecutionContext): Future[SearchResponse] = {
-    startFullScrollIn(allShards, allTypes, timeout, sizePerShard)
-  }
-
-}
-
-@deprecated("удалить после перепиливания. Юзать SioEsIndexUtil.", "2013.07.16")
-// Статическая часть IndexInfo.
-object IndexInfoStatic extends Logs with Serializable {
+object SioEsIndexUtil extends Logs with Serializable {
 
   // Описание идентификатор типов
   type IITYPE_t = String
   type IIMap_t  = JsonDfsBackend.JsonMap_t
   type AnyJsonMap = scala.collection.Map[String, Any]
 
-  val IITYPE_SMALL_MULTI  : IITYPE_t = "smi"
-  val IITYPE_BIG_SHARDED  : IITYPE_t = "bsi"
-
   // Дефолтовые настройки скролла.
   val SCROLL_TIMEOUT_DFLT      = TimeValue.timeValueMinutes(2)
   val SCROLL_TIMEOUT_INIT_DFLT = TimeValue.timeValueSeconds(30)
   val SCROLL_PER_SHARD_DFLT = 25
 
-  /**
-   * Импорт данных из экспортированной карты и типа.
-   * @param iitype тип (выхлоп iitype)
-   * @param iimap карта (результат IndexInfo.export)
-   * @return Инстанс IndexInfo.
-   */
-  def apply(dkey:String, iitype: IITYPE_t, iimap: AnyJsonMap): IndexInfo = {
-    iitype match {
-      case IITYPE_SMALL_MULTI => SmallMultiIndex(dkey, iimap)
-      case IITYPE_BIG_SHARDED => BigShardedIndex(dkey, iimap)
-    }
-  }
+  val iterableOnlyTrue = { l: Iterable[Boolean] => l.forall(_ == true) }
 
-  val iterableOnlyTrue = {l: Iterable[Boolean] => l.forall(_ == true)}
-
-  val futureTrue  = Future.successful(true)
-  val futureFalse = Future.successful(false)
-  val futureNone  = Future.successful(None)
+  //val futureTrue  = Future.successful(true)
+  //val futureFalse = Future.successful(false)
+  //val futureNone  = Future.successful(None)
 
   val IS_TOLERANT_DFLT = true
 
 
   /**
-   * Удалить только указанные типы из указанного индекса.
-   * @param inx имя шарды.
-   * @param types Удаляемые типы.
+   * Удалить только указанные типы из указанного индекса. Функция последовательно удаляет маппинги
+   * парралельно во всех перечисленных индексах.
+   * @param indices Имена индексов
+   * @param types Удаляемые типы (маппинги).
    * @return true, если всё нормально.
    */
-  def deleteMappingsFrom(inx:String, types:Seq[String], optimize:Boolean = true)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
+  def deleteMappingsSeqFrom(indices:Seq[String], types:Seq[String])(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
     val adm = client.admin().indices()
-    // TODO тут лучше бы последовательное, а не парралельное удаление... По крайней мере внутри одного индекса.
-    val fut = Future.traverse(types) { typ =>
-      adm.prepareDeleteMapping(inx)
-        .setType(typ)
-        .execute()
-        .map(_ => true)
-    } .map(iterableOnlyTrue)
-    // Заказать оптимизацию индекса, если удаление маппингов прошло ок.
-    if (optimize) {
-      fut onSuccess { case true => optimizeExpunge(inx) }
+    val p = Promise[Unit]()
+    // Рекурсивный последовательный фьючерс.
+    def deleteMapping(restTypes:Seq[String]) {
+      if (!restTypes.isEmpty) {
+        val h :: t = restTypes
+        adm.prepareDeleteMapping(indices: _*)
+          .setType(h)
+          .execute()
+          .onComplete { result =>
+            result match {
+              case Success(false) => warn("Index mapping '%s' MAY NOT fully erased: %s"    format (h, indices))
+              case Failure(ex)    => error("Failed to delete mapping '%s' from indices %s" format (h, indices))
+              case Success(true)  => debug("Mapping %s sucessfully erased from indices %s" format (h, indices))
+            }
+            // Рекурсивно запустить следующую итерацию независимо от результатов.
+            deleteMapping(t)
+          }
+      } else {
+        p success true
+      }
     }
-    // Вернуть фьючерс
-    fut
+    deleteMapping(types)
+    p.future
   }
 
 
@@ -199,7 +87,7 @@ object IndexInfoStatic extends Logs with Serializable {
    * @param indicies имя шарды
    * @return Фьючерс с ответом о завершении удаления индекса.
    */
-  def deleteShard(indicies:String *)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
+  def deleteShard(indicies:Seq[String])(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     info("Deleting empty index %s..." format indicies)
     val adm = client.admin().indices()
     val fut: Future[DeleteIndexResponse] = adm.prepareDelete(indicies: _*).execute()
@@ -217,7 +105,7 @@ object IndexInfoStatic extends Logs with Serializable {
    * @param indices список индексов для оптимизации
    * @return true, если всё ок.
    */
-  def optimizeExpunge(indices: String *)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
+  def optimizeExpunge(indices: Seq[String])(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     debug("Expunge deletes on indices %s..." format indices)
     val adm = client.admin().indices()
     val fut: Future[OptimizeResponse] = {
@@ -325,7 +213,7 @@ object IndexInfoStatic extends Logs with Serializable {
 
               // Отмаппить все полученные hit'ы на bulkRequest.
               hits.foreach { hit =>
-                // Внутренний try позволяет толерантно обходить проблемы внутри цикла.
+              // Внутренний try позволяет толерантно обходить проблемы внутри цикла.
                 try {
                   val date: LocalDate = hit.field(FIELD_DATE) match {
                     case null =>
@@ -368,7 +256,7 @@ object IndexInfoStatic extends Logs with Serializable {
               p success true
             }
 
-          // Проблема импорта целой пачки документов или isTolerant отключен. Надо прерываться в любом случае.
+            // Проблема импорта целой пачки документов или isTolerant отключен. Надо прерываться в любом случае.
           } catch {
             case ex:Throwable =>
               p failure ex
@@ -404,6 +292,54 @@ object IndexInfoStatic extends Logs with Serializable {
       .setQuery(QueryBuilders.matchAllQuery())
       .setScroll(timeout)
       .execute()
+  }
+
+
+  /**
+   * Выставить маппинг в es для всех индексов.
+   * @param indices Список индексов. По дефолту запрашивается у виртуального индекса.
+   * @param failOnError Сдыхать при ошибке. По дефолту true.
+   * @return фьючерс с isAcknowledged.
+   */
+  def setMappingsFor(indices:Seq[String], typename:String, failOnError:Boolean = true)(implicit client:Client): Future[Boolean] = {
+    val mappingData = SioEsUtil.getPageMapping(typename)
+    // Запустить параллельную загрузку маппинга во все индексы.
+    client.admin().indices()
+      .preparePutMapping(indices: _*)
+      .setType(typename)
+      .setSource(mappingData)
+      .execute()
+      .flatMap { resp =>
+        val isAck = resp.isAcknowledged
+        if (isAck || !failOnError) {
+          Future.successful(isAck)
+
+        } else {
+          val msg = "Failed to set mappings for subshard %s. indices=%s" format (typename, indices)
+          error(msg)
+          Future.failed(new RuntimeException(msg))
+        }
+      }
+  }
+
+
+  /**
+   * Выставить кол-во реплик для указанных индексов.
+   * @param indices индексы.
+   * @param replicasCount новое кол-во реплик.
+   * @return Удачный фьючерс, когда всё ок.
+   */
+  def setReplicasCountFor(indices:Seq[String], replicasCount:Int)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
+    debug("setReplicasCountFor(%s for %s) called..." format (replicasCount, indices))
+    val settings = ImmutableSettings.settingsBuilder()
+      .put(SETTING_NUMBER_OF_REPLICAS, replicasCount)
+      .build()
+    client.admin().indices()
+      .prepareUpdateSettings()
+      .setIndices(indices: _*)
+      .setSettings(settings)
+      .execute()
+      .map(_ => true)
   }
 
 }

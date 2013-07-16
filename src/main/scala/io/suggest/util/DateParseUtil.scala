@@ -274,4 +274,17 @@ object DateParseUtil extends Logs {
     new LocalDate(year, month, day)
   }
 
+
+  /**
+   * Приблизительное число дней от начала времён. Тут не требуется работать с миллисекундами,
+   * поэтому точность в несколько дней достаточна.
+   * @param d исходная дата, которую необходимо перевести в дни.
+   * @return
+   */
+  def toDaysCount(d:LocalDate, sinceYear: Int = 1980) : Int = {
+    val year = d.getYear - sinceYear
+    d.getDayOfYear + year * 365 + year/4 - year/100 + year/400
+  }
+
+
 }
