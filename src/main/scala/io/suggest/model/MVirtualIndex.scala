@@ -90,7 +90,7 @@ object MVirtualIndex extends Logs {
    * @param indices индексы.
    */
   def ensureIndices(indices:Seq[String], replicasCount:Int = 1)(implicit client:Client, executor:ExecutionContext) = {
-    Future.traverse(indices) { inx => ensureIndex(inx, replicas=replicasCount) }
+    Future.traverse(indices) { inx => createIndex(inx, replicas=replicasCount) }
   }
 
   /**
@@ -185,6 +185,22 @@ case class MVirtualIndex(
             }
         }
       }
+  }
+
+  /**
+   * Закрыть все шарды, выгрузив их из памяти. Типа заморозка.
+   * @return Список isAcknowledged.
+   */
+  def close(implicit client:Client, executor:ExecutionContext): Future[Seq[Boolean]] = {
+    Future.traverse(getShards) { closeIndex }
+  }
+
+  /**
+   * Открыть все шарды этого индекса.
+   * @return Список результатов от шард.
+   */
+  def open(implicit client:Client, executor:ExecutionContext): Future[Seq[Boolean]] = {
+    Future.traverse(getShards) { openIndex }
   }
 
 }

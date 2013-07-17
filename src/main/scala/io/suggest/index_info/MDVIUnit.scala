@@ -1,0 +1,71 @@
+package io.suggest.index_info
+
+import org.joda.time.LocalDate
+import io.suggest.model.{MDVISubshard, SioSearchContext, MVirtualIndex}
+import org.apache.hadoop.fs.{Path, FileSystem}
+import org.elasticsearch.common.unit.TimeValue
+import org.elasticsearch.client.Client
+import org.elasticsearch.action.search.SearchResponse
+import scala.concurrent.{ExecutionContext, Future}
+import io.suggest.util.SiobixFs.dkeyPathConf
+import io.suggest.util.SioEsIndexUtil.{SCROLL_TIMEOUT_INIT_DFLT, SCROLL_PER_SHARD_DFLT}
+
+/**
+ * Suggest.io
+ * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+ * Created: 17.07.13 16:15
+ * Description: Интерфейсы для системы индексов.
+ */
+
+// Базовый интерфейс для классов, исповедующих доступ к dkey-индексам.
+trait MDVIUnit {
+  val dkey: String
+  def filename: String
+  val vin: String
+  def subshards: List[MDVISubshard]
+  val generation: Int
+  def id: String
+  def getSubshardForDate(d:LocalDate): MDVISubshard
+  def isSingleShard: Boolean
+  def getAllTypes: List[String]
+  def getAllTypesForShard(shardN: Int): List[MDVISubshard]
+  def getVirtualIndex: MVirtualIndex
+  def getTypesForRequest(sc:SioSearchContext): List[String]
+  def save(implicit fs:FileSystem): MDVIUnit
+  def getShards: Seq[String]
+
+  def startFullScroll(timeout:TimeValue = SCROLL_TIMEOUT_INIT_DFLT, sizePerShard:Int = SCROLL_PER_SHARD_DFLT)(implicit client:Client): Future[SearchResponse]
+}
+
+// Трейт для индексного юнита, над которым можно проводить операции. Над merge-индексами например нельзя проводить
+// ряд операций, ибо они целиком виртуальны, и используют данные других индексов.
+trait MDVIUnitAlterable extends MDVIUnit {
+  def setMappings(failOnError:Boolean = true)(implicit client:Client, executor:ExecutionContext): Future[Boolean]
+  def deleteMappings(implicit client:Client, executor:ExecutionContext): Future[Unit]
+
+  /**
+   * Бывает, что можно удалить всё вместе с физическим индексом. А бывает, что наоборот.
+   * Тут функция, которая делает либо первое, либо второе в зависимости от обстоятельств.
+   */
+  def deleteIndexOrMappings(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
+    // TODO Нужно как-то определять, относится ли текущий вирт.индекс к другим dkey. Если filename=default, то
+    //      простым поиском по маске это сделать нельзя. Если имя файла приравнять к имени домена, то для нахождения
+    //      индекса на веб-морде нужно в 2 раза больше операций с DFS (прочитать указатель или листить /active).
+    ???
+  }
+}
+
+
+object MDVIUnit {
+
+  // Имя поддиректории модели в папке $dkey. Используется как основа для всего остального в этой модели.
+  val rootDirNamePath = new Path("indexing")
+
+  /**
+   * Выдать путь к index-конфигам для указанного домена.
+   * @param dkey ключ домена
+   * @return
+   */
+  def getDkeyPath(dkey:String) = new Path(dkeyPathConf(dkey), rootDirNamePath)
+
+}

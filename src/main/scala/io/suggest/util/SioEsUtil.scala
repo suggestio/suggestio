@@ -23,13 +23,27 @@ import org.elasticsearch.action.admin.indices.open.OpenIndexRequestBuilder
 object SioEsUtil extends Logs {
 
   /**
+   * Создать параллельно пачку одинаковых индексов.
+   * @param indices Имена индексов.
+   * @param shardsPerIndex Шардинг
+   * @param replicasPerIndex Репликация
+   * @return Список результатов (список isAcknowledged()).
+   */
+  def createIndices(indices:Seq[String], shardsPerIndex:Int = 1, replicasPerIndex:Int = 1)(implicit c:Client, executor:ExecutionContext) : Future[Seq[Boolean]] = {
+    Future.traverse(indices) {
+      createIndex(_, shardsPerIndex, replicasPerIndex)
+    }
+  }
+
+
+  /**
    * Убедиться, что есть такой индекс
    * @param indexName имя индекса
    * @param shards кол-во шард. По дефолту = 1
    * @param replicas кол-во реплик. По дефолту = 1
    * @return true, если индекс принят.
    */
-  def ensureIndex(indexName:String, shards:Int = 1, replicas:Int=1)(implicit c:Client, executor:ExecutionContext): Future[Boolean] = {
+  def createIndex(indexName:String, shards:Int = 1, replicas:Int=1)(implicit c:Client, executor:ExecutionContext): Future[Boolean] = {
     c.admin().indices()
       .prepareCreate(indexName)
       .setSettings(getNewIndexSettings(shards=shards, replicas=replicas))
@@ -108,8 +122,8 @@ object SioEsUtil extends Logs {
   def openIndex(indexName:String)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     lazy val logPrefix = "openIndex(%s): " format indexName
     debug(logPrefix + "Sending open request...")
-    new OpenIndexRequestBuilder(client.admin().indices())
-      .setIndex(indexName)
+    client.admin().indices()
+      .prepareOpen(indexName)
       .execute()
       .transform(
         {resp =>
@@ -118,7 +132,7 @@ object SioEsUtil extends Logs {
           result
         },
         {ex =>
-          error(logPrefix + "Open index error", ex)
+          error(logPrefix + "Failed to open index '%s'" format indexName, ex)
           ex}
       )
   }
@@ -172,7 +186,7 @@ object SioEsUtil extends Logs {
     getFreeIndexName(maxAttempts)
       .flatMap { indexName =>
         debug(logPrefix + "free index name: %s" format indexName)
-        SioEsUtil.ensureIndex(indexName) map {
+        SioEsUtil.createIndex(indexName) map {
           case true  =>
             debug("Index '%s' ensured and ready." format indexName)
             indexName

@@ -13,7 +13,7 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
 import scala.util.{Failure, Success}
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.action.index.IndexRequest
-import io.suggest.index_info.{IndexInfo, SioEsConstants}
+import io.suggest.index_info.{MDVIUnitAlterable, MDVIUnit, SioEsConstants}
 import SioEsConstants.FIELD_DATE
 import java.util.Date
 import org.elasticsearch.common.settings.ImmutableSettings
@@ -130,8 +130,8 @@ object SioEsIndexUtil extends Logs with Serializable {
    * @param isTolerant Гасить одиночные ошибки импорта?
    * @return Фьючерс, по которому можно оценивать окончание импрота.
    */
-  def copy(fromIndex:IndexInfo, toIndex:IndexInfo, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
-    val logPrefix = "copy(%s -> %s tolerant=%s): " format(fromIndex.name, toIndex.name, isTolerant)
+  def copy(fromIndex:MDVIUnit, toIndex:MDVIUnitAlterable, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
+    val logPrefix = "copy(%s -> %s tolerant=%s): " format (fromIndex.id, toIndex.id, isTolerant)
     debug(logPrefix + "Start scrolling...")
     fromIndex.startFullScroll().flatMap { resp =>
       val scrollId = resp.getScrollId
@@ -148,14 +148,11 @@ object SioEsIndexUtil extends Logs with Serializable {
         // Цепочка обработки ошибок импорта: нужно вычистить неконсистентный индекс.
         fut recoverWith { case ex =>
           warn(logPrefix + "scrollImport() failed. Rollback...", ex)
-          toIndex.delete andThen {
-            case Success(_)   => Future.failed(ex)
-
-            // Не удалось почистить/удалить кривой индекс. Возможно, индекса не существует или работа кластера сильно нарушена.
-            case Failure(ex1) =>
-              error("Cannot rollback: failed to delete inconsistent index %s" format toIndex.name, ex1)
-              Future.failed(ex)
+          val futRecover = toIndex.deleteMappings
+          futRecover onFailure { case ex1 =>
+            error("Cannot rollback: failed to delete inconsistent index %s" format toIndex.id, ex1)
           }
+          futRecover
         }
       }
     }
@@ -170,7 +167,7 @@ object SioEsIndexUtil extends Logs with Serializable {
    * @return true, когда всё нормально.
    */
   def move(fromIndex:IndexInfo, toIndex:IndexInfo, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
-    lazy val logPrefix = "move(%s -> %s tolerant=%s): " format(fromIndex.name, toIndex.name, isTolerant)
+    lazy val logPrefix = "move(%s -> %s tolerant=%s): " format (fromIndex.name, toIndex.name, isTolerant)
     debug(logPrefix + "Starting copy()...")
     copy(fromIndex, toIndex, isTolerant) flatMap { _ =>
       debug(logPrefix + "copy() finished. Let's delete old index %s..." format fromIndex.name)
@@ -188,8 +185,8 @@ object SioEsIndexUtil extends Logs with Serializable {
    * @param isTolerant Если true, то ошибки при обработке документов будут подавляться. По дефолту true, ибо допускаются небольшие потери.
    * @return Фьючерс, который висит пока не наступает успех.
    */
-  def scrollImport(scrollId:String, toIndex:IndexInfo, timeout:TimeValue = SCROLL_TIMEOUT_DFLT, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, executor:ExecutionContext) = {
-    val logPrefix = "scrollImport(-> %s): " format toIndex.name
+  def scrollImport(scrollId:String, toIndex:MDVIUnit, timeout:TimeValue = SCROLL_TIMEOUT_DFLT, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
+    val logPrefix = "scrollImport(-> %s): " format toIndex.id
     info(logPrefix + "starting...")
     val p = Promise[Boolean]()
     def scrollImportIteration(_scrollId: String) {
@@ -222,7 +219,7 @@ object SioEsIndexUtil extends Logs with Serializable {
 
                     case r => new LocalDate(r.getValue[Date])
                   }
-                  val (inx, typ) = toIndex.indexTypeForDate(date)
+                  val (inx, typ) = toIndex.getSubshardForDate(date).typename
                   val inxReq = new IndexRequest()
                     .index(inx)
                     .`type`(typ)
@@ -266,7 +263,7 @@ object SioEsIndexUtil extends Logs with Serializable {
 
         // Возникла проблема при выполнении Search-запроса. Прерываемся, ибо новый scroll_id отсутствует, и продолжение невозможно.
         case Failure(ex) =>
-          error("Cannot import data into %s" format toIndex, ex)
+          error("Cannot import data into %s" format toIndex.id, ex)
           p failure ex
       }
     }
@@ -282,7 +279,7 @@ object SioEsIndexUtil extends Logs with Serializable {
    * Подготовиться к скроллингу по индексу (индексам). Скроллинг позволяет эффективно проходить по огромным объемам данных server-side курсором.
    * @return scroll_id, который нужно передавать аргументом в сlient.prepareSearchScroll()
    */
-  def startFullScrollIn(allShards:Seq[String], allTypes:Seq[String], timeout:TimeValue = SCROLL_TIMEOUT_INIT_DFLT, sizePerShard:Int = SCROLL_PER_SHARD_DFLT)(implicit client:Client, executor:ExecutionContext): Future[SearchResponse] = {
+  def startFullScrollIn(allShards:Seq[String], allTypes:Seq[String], timeout:TimeValue = SCROLL_TIMEOUT_INIT_DFLT, sizePerShard:Int = SCROLL_PER_SHARD_DFLT)(implicit client:Client): Future[SearchResponse] = {
     debug("startFullScroll() starting: indices=%s types=%s timeout=%ss perShard=%s" format(allShards, allTypes, timeout, sizePerShard))
     client
       .prepareSearch(allShards: _*)
@@ -301,7 +298,7 @@ object SioEsIndexUtil extends Logs with Serializable {
    * @param failOnError Сдыхать при ошибке. По дефолту true.
    * @return фьючерс с isAcknowledged.
    */
-  def setMappingsFor(indices:Seq[String], typename:String, failOnError:Boolean = true)(implicit client:Client): Future[Boolean] = {
+  def setMappingsFor(indices:Seq[String], typename:String, failOnError:Boolean = true)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     val mappingData = SioEsUtil.getPageMapping(typename)
     // Запустить параллельную загрузку маппинга во все индексы.
     client.admin().indices()
@@ -339,7 +336,7 @@ object SioEsIndexUtil extends Logs with Serializable {
       .setIndices(indices: _*)
       .setSettings(settings)
       .execute()
-      .map(_ => true)
+      .map(_ => Unit)
   }
 
 }

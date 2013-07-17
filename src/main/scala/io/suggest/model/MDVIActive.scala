@@ -1,14 +1,13 @@
-package io.suggest.index_info
+package io.suggest.model
 
-import io.suggest.model.MDkeyVirtualIndex.activeDirRelPath
 import org.apache.hadoop.fs.{FileSystem, Path}
-import io.suggest.util.SiobixFs.dkeyPathConf
-import io.suggest.model.{MVirtualIndex, SioSearchContext, JsonDfsBackend}
 import org.joda.time.LocalDate
-import io.suggest.util.Logs
+import io.suggest.util.{SioFutureUtil, Logs}
 import io.suggest.util.DateParseUtil.toDaysCount
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.Client
+import io.suggest.index_info.{MDVIUnitAlterable, MDVIUnit}
+import org.elasticsearch.common.unit.TimeValue
 
 /**
  * Suggest.io
@@ -19,21 +18,24 @@ import org.elasticsearch.client.Client
 
 object MDVIActive {
 
+  val activeSubdirNamePath = new Path("active")
+  val activeDirRelPath     = new Path(MDVIUnit.rootDirNamePath, activeSubdirNamePath)
+
   /**
    * Сгенерить путь для dkey куда сохраняются данные этой модели.
    * @param dkey ключ домена.
    * @return путь.
    */
-  def getDkeyPath(dkey:String) = new Path(dkeyPathConf(dkey), activeDirRelPath)
+  def getDkeyPath(dkey:String, filename:String) = new Path(MDVIUnit.getDkeyPath(dkey), activeSubdirNamePath)
 
   /**
    * Прочитать из хранилища и распарсить json-сериализованные данные по сабжу.
    * @param dkey Ключ домена.
-   * @param vinName Название индекса.
+   * @param fileame Название, под которым сохранены данные. Обычно "default"
    * @return Опциональный сабж.
    */
-  def getForDkeyVin(dkey:String, vinName:String)(implicit fs:FileSystem): Option[MDVIActive] = {
-    JsonDfsBackend.getAs[MDVIActive](getDkeyPath(dkey), fs)
+  def getForDkeyName(dkey:String, fileame:String)(implicit fs:FileSystem): Option[MDVIActive] = {
+    JsonDfsBackend.getAs[MDVIActive](getDkeyPath(dkey, fileame), fs)
   }
 
 }
@@ -42,32 +44,30 @@ object MDVIActive {
 import MDVIActive._
 
 /**
- * Класс верхнего уровня. Хранит информацию по виртуальному индексу в контексте текущего dkey.
- * @param dkey ключ домена
- * @param vin имя нижележащего виртуального индекса.
+ * Класс уровня домена. Хранит информацию по виртуальному индексу в контексте текущего dkey.
+ * @param dkey Ключ домена
+ * @param vin Имя нижележащего виртуального индекса.
+ * @param filename В рамках dkey используется этот идентификатор.
  * @param subshards Список подшард.
  * @param generation Поколение. При миграции в другой индекс поколение инкрементируется.
  */
 case class MDVIActive(
   dkey:       String,
   vin:        String,
-  subshards:  List[MDkeyVirtualSubshard],
-  generation: Int = 0
+  filename:   String = "default",
+  generation: Int = 0,
+  subshards:  List[MDVISubshard] = List(new MDVISubshard(this, 0))
 
-) extends Logs {
+) extends MDVIUnitAlterable with Logs {
 
-  // TODO Когда тут всё стабилизируется, надо сделать extract interface. Тогда можно будет создавать merge-индексы,
-  //      позволяя юзерам объединять домены.
-
-  // типа как бы id всего DkeyIndex.
-  lazy val id = dkey + "$" + vin
+  def id: String = "%s$%s$%s" format (dkey, vin, generation)
 
   /**
    * Нужно сохранить документ. И встает вопрос: в какую именно подшарду.
    * @param d дата документа.
    * @return подшарду для указанной даты. Из неё можно получить название типа при необходимости.
    */
-  def getSubshardForDate(d:LocalDate): MDkeyVirtualSubshard = {
+  def getSubshardForDate(d:LocalDate): MDVISubshard = {
     val days = toDaysCount(d)
     // Ищем шарду, удовлетворяющую дате
     isSingleShard match {
@@ -92,8 +92,8 @@ case class MDVIActive(
    * @param shardN номер родительской шарды
    * @return списочек подшард
    */
-  def getAllTypesForShard(shardN: Int): List[MDkeyVirtualSubshard] = {
-    subshards.foldLeft[List[MDkeyVirtualSubshard]] (Nil) { (acc, ss) =>
+  def getAllTypesForShard(shardN: Int): List[MDVISubshard] = {
+    subshards.foldLeft[List[MDVISubshard]] (Nil) { (acc, ss) =>
       if (ss.shards contains shardN) {
         ss :: acc
       } else {
@@ -126,7 +126,7 @@ case class MDVIActive(
    * @return Сохраненные (т.е. текущий) экземпляр сабжа.
    */
   def save(implicit fs:FileSystem): MDVIActive = {
-    val path = getDkeyPath(dkey)
+    val path = getDkeyPath(dkey, filename)
     JsonDfsBackend.writeTo(path, this)
     this
   }
@@ -139,14 +139,13 @@ case class MDVIActive(
 
   /**
    * Выставить маппинги для всех подшард.
-   * @param indices список индексов. По дефолту запрашивается у virtual-индекса.
    * @param failOnError Сдыхать при ошибке. По дефолту true.
    * @return true, если всё хорошо.
    */
-  def setMappings(indices:Seq[String] = getShards, failOnError:Boolean = true)(implicit client:Client): Future[Boolean] = {
+  def setMappings(failOnError:Boolean = true)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     // Запустить парралельно загрузку маппингов для всех типов (всех подшард).
     Future.traverse(subshards) {
-      _.setMappings(indices, failOnError)
+      _.setMappings(getShards, failOnError)
     } flatMap { boolSeq =>
       // Проанализировать результаты.
       // TODO Возможно, тут проверка излишня, и при любой ошибке будет хороший failed future автоматом.
@@ -164,11 +163,25 @@ case class MDVIActive(
 
   /**
    * Удалить маппинги позволяет удалить данные.
-   * @param optimize Вызывать ли автоматически чистку индекса от удаленных данных? По дефолту = нет.
-   * @return
+   * @return Выполненный фьючерс когда всё закончится.
    */
-  def deleteMappings(optimize:Boolean = false)(implicit client:Client): Future[Boolean] = {
+  def deleteMappings(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
+    SioFutureUtil
+      .mapLeftSequentally(subshards, ignoreErrors=true) { _.deleteMappaings() }
+      .map(_ => Unit)
+  }
 
+
+  import io.suggest.util.SioEsIndexUtil._
+
+  /**
+   * Запуск полного скроллинга по индексу.
+   * @param timeout Время жизни курсора на стороне ES.
+   * @param sizePerShard Сколько брать из шарды за один шаг.
+   * @return Фьючес ответа, содержащего скроллер и прочую инфу.
+   */
+  def startFullScroll(timeout:TimeValue = SCROLL_TIMEOUT_INIT_DFLT, sizePerShard:Int = SCROLL_PER_SHARD_DFLT)(implicit client:Client) = {
+    startFullScrollIn(getShards, getAllTypes, timeout, sizePerShard)
   }
 
 }
