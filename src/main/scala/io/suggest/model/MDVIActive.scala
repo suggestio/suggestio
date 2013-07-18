@@ -2,9 +2,9 @@ package io.suggest.model
 
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.joda.time.LocalDate
-import io.suggest.util.{SioFutureUtil, Logs}
+import io.suggest.util.{LogsPrefixed, SioFutureUtil, Logs}
 import io.suggest.util.DateParseUtil.toDaysCount
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future, future}
 import org.elasticsearch.client.Client
 import io.suggest.index_info.{MDVIUnitAlterable, MDVIUnit}
 import org.elasticsearch.common.unit.TimeValue
@@ -16,17 +16,23 @@ import org.elasticsearch.common.unit.TimeValue
  * Description: Model Dkey Virtual Index Active - модель хранения активных связей между dkey и виртуальными шардами.
  */
 
-object MDVIActive {
+object MDVIActive extends Logs {
 
   val activeSubdirNamePath = new Path("active")
-  val activeDirRelPath     = new Path(MDVIUnit.rootDirNamePath, activeSubdirNamePath)
+
+  /**
+   * Выдать путь до поддиректории /active, хранящей все файлы с данными об активных индексах.
+   * @param dkey ключ домена.
+   * @return Path для /active-поддиректории.
+   */
+  def getDkeyActiveDirPath(dkey:String) = new Path(MDVIUnit.getDkeyPath(dkey), activeSubdirNamePath)
 
   /**
    * Сгенерить путь для dkey куда сохраняются данные этой модели.
    * @param dkey ключ домена.
    * @return путь.
    */
-  def getDkeyPath(dkey:String, filename:String) = new Path(MDVIUnit.getDkeyPath(dkey), activeSubdirNamePath)
+  def getDkeyPath(dkey:String, filename:String) = new Path(getDkeyActiveDirPath(dkey), filename)
 
   /**
    * Прочитать из хранилища и распарсить json-сериализованные данные по сабжу.
@@ -38,6 +44,28 @@ object MDVIActive {
     JsonDfsBackend.getAs[MDVIActive](getDkeyPath(dkey, fileame), fs)
   }
 
+  private val glogPath = getDkeyActiveDirPath("*")
+
+  /**
+   * Найти все dkey, которые используют указанный индекс. Для этого нужно запросить листинг
+   * /conf/dkey/.../active/$vin
+   * @param vin имя индекса, для которого проводится поиск.
+   * @return Список dkey без повторяющихся элементов в произвольном порядке.
+   */
+  def findDkeysForIndex(vin:String)(implicit fs:FileSystem, executor:ExecutionContext): Future[Seq[String]] = {
+    debug("findDkeysForIndex(%s) starting" format vin)
+    val glogPathVin = new Path(glogPath, vin)
+    future {
+      fs.globStatus(glogPathVin) map { fstatus =>
+      // Отмаппить в последовательность dkey, которые надо извлечь из path.
+        val activePath = fstatus.getPath.getParent
+        val dkeyIndexesPath = activePath.getParent
+        val dkey = dkeyIndexesPath.getParent.getName
+        dkey
+      }
+    }
+  }
+
 }
 
 
@@ -47,20 +75,20 @@ import MDVIActive._
  * Класс уровня домена. Хранит информацию по виртуальному индексу в контексте текущего dkey.
  * @param dkey Ключ домена
  * @param vin Имя нижележащего виртуального индекса.
- * @param filename В рамках dkey используется этот идентификатор.
  * @param subshards Список подшард.
  * @param generation Поколение. При миграции в другой индекс поколение инкрементируется.
  */
 case class MDVIActive(
   dkey:       String,
   vin:        String,
-  filename:   String = "default",
   generation: Int = 0,
   subshards:  List[MDVISubshard] = List(new MDVISubshard(this, 0))
 
-) extends MDVIUnitAlterable with Logs {
+) extends MDVIUnitAlterable with LogsPrefixed {
 
   def id: String = "%s$%s$%s" format (dkey, vin, generation)
+
+  protected val logPrefix: String = "%s/%s" format (dkey, vin)
 
   /**
    * Нужно сохранить документ. И встает вопрос: в какую именно подшарду.
@@ -78,6 +106,19 @@ case class MDVIActive(
       case false => subshards find { _.lowerDateDays < days } getOrElse subshards.last
     }
   }
+
+  /**
+   * Выдать имя файла, под которым будут сохраняться данные этого экземпляра.
+   * @return Строка имени файла, без пути, файлового расширения и т.д.
+   */
+  def filename: String = vin
+
+  /**
+   * Путь к файлу в DFS, пригодный для отправки в JsonDfsBackend.
+   * @return Путь.
+   */
+  def filepath: Path = getDkeyPath(dkey, filename)
+
 
   lazy val isSingleShard = subshards.length == 1
 
@@ -126,8 +167,7 @@ case class MDVIActive(
    * @return Сохраненные (т.е. текущий) экземпляр сабжа.
    */
   def save(implicit fs:FileSystem): MDVIActive = {
-    val path = getDkeyPath(dkey, filename)
-    JsonDfsBackend.writeTo(path, this)
+    JsonDfsBackend.writeTo(path=filepath, value=this, overwrite=false)
     this
   }
 
@@ -143,6 +183,7 @@ case class MDVIActive(
    * @return true, если всё хорошо.
    */
   def setMappings(failOnError:Boolean = true)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
+    debug("setMappings(%s): starting" format failOnError)
     // Запустить парралельно загрузку маппингов для всех типов (всех подшард).
     Future.traverse(subshards) {
       _.setMappings(getShards, failOnError)
@@ -166,9 +207,40 @@ case class MDVIActive(
    * @return Выполненный фьючерс когда всё закончится.
    */
   def deleteMappings(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
+    debug("deleteMappings(): dkey=%s vin=%s types=%s" format (dkey, vin, subshards map { _.typename }))
     SioFutureUtil
       .mapLeftSequentally(subshards, ignoreErrors=true) { _.deleteMappaings() }
       .map(_ => Unit)
+  }
+
+  /**
+   * Используется ли указанный vin другими доменами?
+   * @return true, если используется.
+   */
+  def isVinUsedByOtherDkeys(implicit fs:FileSystem, executor:ExecutionContext): Future[Boolean] = {
+    findDkeysForIndex(vin) map { vinUsedBy =>
+      var l = vinUsedBy.length
+      if (vinUsedBy contains dkey)
+        l -= 1
+      val result = l > 0
+      debug(
+        if (result)
+          "VIndex is used by several domains: %s." format vinUsedBy
+        else
+          "VIndex is only used by me."
+      )
+      result
+    }
+  }
+
+
+  /**
+   * Бывает, что можно удалить всё вместе с физическим индексом. А бывает, что наоборот.
+   * Тут функция, которая делает либо первое, либо второе в зависимости от обстоятельств.
+   */
+  def deleteIndexOrMappings(implicit client: Client, executor: ExecutionContext): Future[Unit] = {
+
+
   }
 
 

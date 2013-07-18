@@ -17,6 +17,13 @@ object JsonDfsBackend {
 
   type JsonMap_t = Map[String, Any]
 
+  // writeTo(): Перезаписывать ли по умолчанию, если overwrite не задан?
+  val OVERWRITE_DFLT = true
+
+  // writeTo(): Печатать красиво по умолчанию?
+  // Да, т.к. на время отладки нужен быстрый и понятный доступ к файлам для быстрого исправления проблем.
+  val PRETTY_DFLT = true
+
   /**
    * Прочитать ранее сохраненное в json состояние из хранилища.
    * @param dkey ключ домена сайта
@@ -45,23 +52,30 @@ object JsonDfsBackend {
 
   /**
    * Серилизовать в json и сохранить в hdfs.
-   * @param dkey ключ домена сайта
-   * @param name имя сохраняемого объекта
-   * @param value и сам объект
+   * @param dkey Ключ домена сайта
+   * @param name Имя сохраняемого объекта
+   * @param value Сам объект, подлежащий сериализации.
+   * @param overwrite Перезаписывать имеющийся файл?
+   * @param pretty Красиво печатать? Или же одной строчкой.
    */
-  def writeTo(dkey:String, name:String, value:Any)(implicit fs:FileSystem) {
+  def writeTo(dkey:String, name:String, value:Any, overwrite:Boolean = OVERWRITE_DFLT, pretty:Boolean = PRETTY_DFLT)(implicit fs:FileSystem) {
     val path = getPath(dkey, name)
-    writeTo(path, value)
+    writeTo(path, value, overwrite, pretty)
   }
 
-  def writeTo(path:String, value:Any)(implicit fs:FileSystem) {
-    writeTo(new Path(path), value)
+  def writeTo(path:String, value:Any, overwrite:Boolean = OVERWRITE_DFLT, pretty:Boolean = PRETTY_DFLT)(implicit fs:FileSystem) {
+    writeTo(new Path(path), value, overwrite, pretty)
   }
 
-  def writeTo(path:Path, value:Any)(implicit fs:FileSystem) {
-    val os = fs.create(ensurePathAbsolute(path), true)
+  def writeTo(path:Path, value:Any, overwrite:Boolean = OVERWRITE_DFLT, pretty:Boolean = PRETTY_DFLT)(implicit fs:FileSystem) {
+    val os = fs.create(ensurePathAbsolute(path), overwrite)
     try {
-      JacksonWrapper.serializePretty(os, value)
+      if (pretty) {
+        JacksonWrapper.serializePretty(os, value)
+      } else {
+        JacksonWrapper.serialize(os, value)
+      }
+
     } finally {
       os.close()
     }

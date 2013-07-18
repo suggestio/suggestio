@@ -1,10 +1,11 @@
 package io.suggest.model
 
 import scala.concurrent.{ExecutionContext, Future}
-import io.suggest.util.{SioEsIndexUtil, Logs}
+import io.suggest.util.{LogsPrefixed, SioEsIndexUtil, Logs}
 import org.elasticsearch.client.Client
 import io.suggest.model.MVirtualIndex
 import io.suggest.index_info.MDVIUnit
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -23,7 +24,9 @@ case class MDVISubshard(
   dvin:          MDVIUnit,
   lowerDateDays: Int,
   shards:        List[Int] = Nil
-) extends Logs {
+) extends LogsPrefixed {
+
+  protected val logPrefix: String = dvin.id + "-" + lowerDateDays
 
   /**
    * Получить список названий шард на основе их id'шников.
@@ -52,7 +55,15 @@ case class MDVISubshard(
    * @return фьючерс с isAcknowledged.
    */
   def setMappings(indices:Seq[String] = getShards, failOnError:Boolean = true)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
-    SioEsIndexUtil.setMappingsFor(indices, typename, failOnError)
+    val _typename = typename
+    val fut = SioEsIndexUtil.setMappingsFor(indices, _typename, failOnError)
+    fut andThen { case result =>
+      val msgPrefix = "setMappings(indices=%s failOnError=%s) typename=%s " format (indices, failOnError, _typename)
+      result match {
+        case Success(bool) => debug(msgPrefix + "finished with: %s" format bool)
+        case Failure(ex)   => error(msgPrefix + "failed", ex)
+      }
+    }
   }
 
   /**
@@ -61,7 +72,9 @@ case class MDVISubshard(
    * @return Выполненный фьючерс, если всё нормально.
    */
   def deleteMappaings(indices:Seq[String] = getShards)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
-    SioEsIndexUtil.deleteMappingsSeqFrom(indices, Seq(typename))
+    val _typename = typename
+    debug("deleteMappings(%s) typename=%s" format (indices, _typename))
+    SioEsIndexUtil.deleteMappingsSeqFrom(indices, Seq(_typename))
   }
 
 }

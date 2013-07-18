@@ -22,6 +22,9 @@ object JacksonWrapper {
       .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
   }
 
+  val prettyWriter = mapper.writer().withDefaultPrettyPrinter()
+
+
   def serialize(value: Any): String = {
     val writer = new StringWriter()
     mapper.writeValue(writer, value)
@@ -33,8 +36,7 @@ object JacksonWrapper {
   }
 
   def serializePretty(os:OutputStream, value:Any) {
-    val writer = mapper.writer().withDefaultPrettyPrinter()
-    writer.writeValue(os, value)
+    prettyWriter.writeValue(os, value)
   }
 
   def deserialize[T: Manifest](value: String) : T = {

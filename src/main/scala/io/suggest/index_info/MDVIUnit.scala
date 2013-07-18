@@ -21,6 +21,7 @@ import io.suggest.util.SioEsIndexUtil.{SCROLL_TIMEOUT_INIT_DFLT, SCROLL_PER_SHAR
 trait MDVIUnit {
   val dkey: String
   def filename: String
+  def filepath: String
   val vin: String
   def subshards: List[MDVISubshard]
   val generation: Int
@@ -47,12 +48,7 @@ trait MDVIUnitAlterable extends MDVIUnit {
    * Бывает, что можно удалить всё вместе с физическим индексом. А бывает, что наоборот.
    * Тут функция, которая делает либо первое, либо второе в зависимости от обстоятельств.
    */
-  def deleteIndexOrMappings(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
-    // TODO Нужно как-то определять, относится ли текущий вирт.индекс к другим dkey. Если filename=default, то
-    //      простым поиском по маске это сделать нельзя. Если имя файла приравнять к имени домена, то для нахождения
-    //      индекса на веб-морде нужно в 2 раза больше операций с DFS (прочитать указатель или листить /active).
-    ???
-  }
+  def deleteIndexOrMappings(implicit client:Client, executor:ExecutionContext): Future[Unit]
 }
 
 
