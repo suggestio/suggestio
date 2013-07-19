@@ -184,7 +184,6 @@ case class MDVIActive(
 
   /**
    * Сохранить текущий экземпляр в хранилище.
-   * @param fs Используемая DFS
    * @return Сохраненные (т.е. текущий) экземпляр сабжа.
    */
   def save: MDVIActive = {

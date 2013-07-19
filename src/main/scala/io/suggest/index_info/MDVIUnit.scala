@@ -49,7 +49,7 @@ trait MDVIUnitAlterable extends MDVIUnit {
    * Бывает, что можно удалить всё вместе с физическим индексом. А бывает, что наоборот.
    * Тут функция, которая делает либо первое, либо второе в зависимости от обстоятельств.
    */
-  def deleteIndexOrMappings(implicit client:Client, executor:ExecutionContext, fs:FileSystem): Future[Unit]
+  def deleteIndexOrMappings(implicit client:Client, executor:ExecutionContext): Future[Unit]
 }
 
 
