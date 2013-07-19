@@ -26,13 +26,12 @@ trait MDVIUnit {
   def subshards: List[MDVISubshard]
   val generation: Int
   def id: String
-  def getSubshardForDate(d:LocalDate): MDVISubshard
   def isSingleShard: Boolean
   def getAllTypes: List[String]
   def getAllTypesForShard(shardN: Int): List[MDVISubshard]
   def getVirtualIndex: MVirtualIndex
   def getTypesForRequest(sc:SioSearchContext): List[String]
-  def save(implicit fs:FileSystem): MDVIUnit
+  def save: MDVIUnit
   def getShards: Seq[String]
 
   def startFullScroll(timeout:TimeValue = SCROLL_TIMEOUT_INIT_DFLT, sizePerShard:Int = SCROLL_PER_SHARD_DFLT)(implicit client:Client): Future[SearchResponse]
@@ -43,12 +42,14 @@ trait MDVIUnit {
 trait MDVIUnitAlterable extends MDVIUnit {
   def setMappings(failOnError:Boolean = true)(implicit client:Client, executor:ExecutionContext): Future[Boolean]
   def deleteMappings(implicit client:Client, executor:ExecutionContext): Future[Unit]
+  def getSubshardForDate(d:LocalDate): MDVISubshard
+  def getInxTypeForDate(d:LocalDate): (String, String)
 
   /**
    * Бывает, что можно удалить всё вместе с физическим индексом. А бывает, что наоборот.
    * Тут функция, которая делает либо первое, либо второе в зависимости от обстоятельств.
    */
-  def deleteIndexOrMappings(implicit client:Client, executor:ExecutionContext): Future[Unit]
+  def deleteIndexOrMappings(implicit client:Client, executor:ExecutionContext, fs:FileSystem): Future[Unit]
 }
 
 

@@ -1,6 +1,6 @@
 package io.suggest.model
 
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.Path
 import org.joda.time.LocalDate
 import io.suggest.util.{LogsPrefixed, SioFutureUtil, Logs}
 import io.suggest.util.DateParseUtil.toDaysCount
@@ -8,6 +8,7 @@ import scala.concurrent.{ExecutionContext, Future, future}
 import org.elasticsearch.client.Client
 import io.suggest.index_info.{MDVIUnitAlterable, MDVIUnit}
 import org.elasticsearch.common.unit.TimeValue
+import io.suggest.util.SiobixFs.fs
 
 /**
  * Suggest.io
@@ -40,7 +41,7 @@ object MDVIActive extends Logs {
    * @param fileame Название, под которым сохранены данные. Обычно "default"
    * @return Опциональный сабж.
    */
-  def getForDkeyName(dkey:String, fileame:String)(implicit fs:FileSystem): Option[MDVIActive] = {
+  def getForDkeyName(dkey:String, fileame:String): Option[MDVIActive] = {
     JsonDfsBackend.getAs[MDVIActive](getDkeyPath(dkey, fileame), fs)
   }
 
@@ -52,7 +53,7 @@ object MDVIActive extends Logs {
    * @param vin имя индекса, для которого проводится поиск.
    * @return Список dkey без повторяющихся элементов в произвольном порядке.
    */
-  def findDkeysForIndex(vin:String)(implicit fs:FileSystem, executor:ExecutionContext): Future[Seq[String]] = {
+  def findDkeysForIndex(vin:String)(implicit executor:ExecutionContext): Future[Seq[String]] = {
     debug("findDkeysForIndex(%s) starting" format vin)
     val glogPathVin = new Path(glogPath, vin)
     future {
@@ -97,14 +98,34 @@ case class MDVIActive(
    */
   def getSubshardForDate(d:LocalDate): MDVISubshard = {
     val days = toDaysCount(d)
-    // Ищем шарду, удовлетворяющую дате
+    getSubshardForDaysCount(days)
+  }
+
+  /**
+   * Выдать шарду для указанного кол-ва дней.
+   * @param daysCount кол-во дней.
+   * @return название шарды.
+   */
+  def getSubshardForDaysCount(daysCount:Int): MDVISubshard = {
     isSingleShard match {
       case true  => subshards.head
 
       // TODO Выбираются все шарды слева направо, однако это может неэффективно.
       //      Следует отбрасывать "свежие" шарды слева, если их многовато.
-      case false => subshards find { _.lowerDateDays < days } getOrElse subshards.last
+      case false => subshards find { _.lowerDateDays < daysCount } getOrElse subshards.last
     }
+  }
+
+  /**
+   * Когда настало время сохранять что-то, то нужно выбрать шарду подходящую.
+   * @param d дата документа
+   * @return кортеж индекса и типа.
+   */
+  def getInxTypeForDate(d:LocalDate): (String, String) = {
+    val days = toDaysCount(d)
+    val ss = getSubshardForDaysCount(days)
+    val inx = ss.getShardForDaysCount(days)
+    inx -> ss.getTypename
   }
 
   /**
@@ -126,7 +147,7 @@ case class MDVIActive(
    * Выдать все типы, относящиеся ко всем индексам в этой подшарде.
    * @return список типов.
    */
-  def getAllTypes = subshards.map(_.typename)
+  def getAllTypes = subshards.map(_.getTypename)
 
   /**
    * Выдать все типы, лежащие на указанной шарде.
@@ -166,8 +187,8 @@ case class MDVIActive(
    * @param fs Используемая DFS
    * @return Сохраненные (т.е. текущий) экземпляр сабжа.
    */
-  def save(implicit fs:FileSystem): MDVIActive = {
-    JsonDfsBackend.writeTo(path=filepath, value=this, overwrite=false)
+  def save: MDVIActive = {
+    JsonDfsBackend.writeToPath(path=filepath, value=this, overwrite=false)
     this
   }
 
@@ -207,7 +228,7 @@ case class MDVIActive(
    * @return Выполненный фьючерс когда всё закончится.
    */
   def deleteMappings(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
-    debug("deleteMappings(): dkey=%s vin=%s types=%s" format (dkey, vin, subshards map { _.typename }))
+    debug("deleteMappings(): dkey=%s vin=%s types=%s" format (dkey, vin, subshards map { _.getTypename }))
     SioFutureUtil
       .mapLeftSequentally(subshards, ignoreErrors=true) { _.deleteMappaings() }
       .map(_ => Unit)
@@ -217,7 +238,7 @@ case class MDVIActive(
    * Используется ли указанный vin другими доменами?
    * @return true, если используется.
    */
-  def isVinUsedByOtherDkeys(implicit fs:FileSystem, executor:ExecutionContext): Future[Boolean] = {
+  def isVinUsedByOtherDkeys(implicit executor:ExecutionContext): Future[Boolean] = {
     findDkeysForIndex(vin) map { vinUsedBy =>
       var l = vinUsedBy.length
       if (vinUsedBy contains dkey)
@@ -239,8 +260,10 @@ case class MDVIActive(
    * Тут функция, которая делает либо первое, либо второе в зависимости от обстоятельств.
    */
   def deleteIndexOrMappings(implicit client: Client, executor: ExecutionContext): Future[Unit] = {
-
-
+    isVinUsedByOtherDkeys map {
+      case true  => deleteMappings
+      case false => getVirtualIndex.delete
+    }
   }
 
 

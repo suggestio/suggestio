@@ -1,11 +1,12 @@
 package io.suggest.model
 
 import scala.concurrent.{ExecutionContext, Future}
-import io.suggest.util.{LogsPrefixed, SioEsIndexUtil, Logs}
+import io.suggest.util.{LogsPrefixed, SioEsIndexUtil}
 import org.elasticsearch.client.Client
-import io.suggest.model.MVirtualIndex
 import io.suggest.index_info.MDVIUnit
 import scala.util.{Failure, Success}
+import org.joda.time.LocalDate
+import io.suggest.util.DateParseUtil.toDaysCount
 
 /**
  * Suggest.io
@@ -40,12 +41,36 @@ case class MDVISubshard(
     }
   }
 
+  /**
+   * Получить кол-во шард прямо из мультииндекса.
+   */
+  def getShardsCount: Int = dvin.getVirtualIndex.shardCount
+
 
   /**
    * Вернуть тип, который будет адресоваться в рамках ES.
    * @return Строка типа индекса. Например "suggest.io-123123".
    */
-  def typename: String = dvin.dkey + "-" + lowerDateDays
+  def getTypename: String = dvin.dkey + "-" + lowerDateDays
+
+
+  /**
+   * Выдать шарду для указанной даты. Если мультишардовый тип, вычисляется через hashCode mod shardCount.
+   * @param date дата, к которой относится страница.
+   * @return Имя индекса
+   */
+  def getShardForDate(date:LocalDate): String = getShardForDaysCount(toDaysCount(date))
+
+
+  /**
+   * Выдать шарду для указанного days count.
+   * @param daysCount кол-во дней от начала эпохи.
+   * @return Название реальной шарды.
+   */
+  def getShardForDaysCount(daysCount:Int): String = {
+    val shardNumber = daysCount % getShardsCount
+    MVirtualIndex.vinAndCounter2indexName(dvin.vin, shardNumber)
+  }
 
 
   /**
@@ -55,16 +80,18 @@ case class MDVISubshard(
    * @return фьючерс с isAcknowledged.
    */
   def setMappings(indices:Seq[String] = getShards, failOnError:Boolean = true)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
-    val _typename = typename
+    val _typename = getTypename
     val fut = SioEsIndexUtil.setMappingsFor(indices, _typename, failOnError)
     fut andThen { case result =>
-      val msgPrefix = "setMappings(indices=%s failOnError=%s) typename=%s " format (indices, failOnError, _typename)
+      val msgPrefix = "setMappings(indices=%s failOnError=%s) getTypename=%s " format (indices, failOnError, _typename)
       result match {
-        case Success(bool) => debug(msgPrefix + "finished with: %s" format bool)
-        case Failure(ex)   => error(msgPrefix + "failed", ex)
+        case Success(true)  => debug(msgPrefix + "successed")
+        case Failure(ex)    => error(msgPrefix + "failed", ex)
+        case Success(false) => warn(msgPrefix + "finished with isAck = false!")
       }
     }
   }
+
 
   /**
    * Удалить маппинги (вероятно, содержащие данные), созданные из setMappings.
@@ -72,8 +99,8 @@ case class MDVISubshard(
    * @return Выполненный фьючерс, если всё нормально.
    */
   def deleteMappaings(indices:Seq[String] = getShards)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
-    val _typename = typename
-    debug("deleteMappings(%s) typename=%s" format (indices, _typename))
+    val _typename = getTypename
+    debug("deleteMappings(%s) getTypename=%s" format (indices, _typename))
     SioEsIndexUtil.deleteMappingsSeqFrom(indices, Seq(_typename))
   }
 

@@ -22,7 +22,9 @@ object SioFutureUtil extends Logs {
    */
   def mapLeftSequentally[A, B](in:TraversableOnce[A], ignoreErrors:Boolean = false)(f: A => Future[B])(implicit executor:ExecutionContext): Future[List[B]] = {
     val acc0: List[B] = Nil
-    val foldF = { case (acc:List[B], a:A) => f(a) :: acc }
+    val foldF: (List[B], A) => Future[List[B]] = {
+      case (acc, a) => f(a) map( _ :: acc)
+    }
     foldLeftSequental(in, acc0, ignoreErrors)(foldF)
       .map(_.reverse)
   }

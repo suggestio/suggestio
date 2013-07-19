@@ -63,7 +63,7 @@ case class MDVISearchPtr(
    */
   def save(implicit fs:FileSystem): MDVISearchPtr = {
     val path = getDkeySearchPath(dkey, id)
-    JsonDfsBackend.writeTo(path, this, overwrite=true)
+    JsonDfsBackend.writeToPath(path, this, overwrite=true)
     this
   }
 

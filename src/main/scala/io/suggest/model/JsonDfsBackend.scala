@@ -17,10 +17,10 @@ object JsonDfsBackend {
 
   type JsonMap_t = Map[String, Any]
 
-  // writeTo(): Перезаписывать ли по умолчанию, если overwrite не задан?
+  // writeToDkeyName(): Перезаписывать ли по умолчанию, если overwrite не задан?
   val OVERWRITE_DFLT = true
 
-  // writeTo(): Печатать красиво по умолчанию?
+  // writeToDkeyName(): Печатать красиво по умолчанию?
   // Да, т.к. на время отладки нужен быстрый и понятный доступ к файлам для быстрого исправления проблем.
   val PRETTY_DFLT = true
 
@@ -58,16 +58,12 @@ object JsonDfsBackend {
    * @param overwrite Перезаписывать имеющийся файл?
    * @param pretty Красиво печатать? Или же одной строчкой.
    */
-  def writeTo(dkey:String, name:String, value:Any, overwrite:Boolean = OVERWRITE_DFLT, pretty:Boolean = PRETTY_DFLT)(implicit fs:FileSystem) {
+  def writeToDkeyName(dkey:String, name:String, value:Any, overwrite:Boolean = OVERWRITE_DFLT, pretty:Boolean = PRETTY_DFLT)(implicit fs:FileSystem) {
     val path = getPath(dkey, name)
-    writeTo(path, value, overwrite, pretty)
+    writeToPath(path, value, overwrite, pretty)
   }
 
-  def writeTo(path:String, value:Any, overwrite:Boolean = OVERWRITE_DFLT, pretty:Boolean = PRETTY_DFLT)(implicit fs:FileSystem) {
-    writeTo(new Path(path), value, overwrite, pretty)
-  }
-
-  def writeTo(path:Path, value:Any, overwrite:Boolean = OVERWRITE_DFLT, pretty:Boolean = PRETTY_DFLT)(implicit fs:FileSystem) {
+  def writeToPath(path:Path, value:Any, overwrite:Boolean = OVERWRITE_DFLT, pretty:Boolean = PRETTY_DFLT)(implicit fs:FileSystem) {
     val os = fs.create(ensurePathAbsolute(path), overwrite)
     try {
       if (pretty) {
@@ -140,7 +136,7 @@ trait JsonDfsClientDkey extends JsonDfsClient {
   protected def dkey : String
 
   protected def saveState(implicit fs:FileSystem) {
-    JsonDfsBackend.writeTo(dkey, getClassName, exportState)
+    JsonDfsBackend.writeToDkeyName(dkey, getClassName, exportState)
   }
 
   protected def loadState(implicit fs:FileSystem) = {
@@ -160,7 +156,7 @@ trait JsonDfsClientGlobal extends JsonDfsClient {
   protected def getStatePath = new Path(siobix_conf_path, getStateFileName)
 
   protected def saveState(implicit fs:FileSystem) {
-    JsonDfsBackend.writeTo(getStatePath, exportState)
+    JsonDfsBackend.writeToPath(getStatePath, exportState)
   }
 
   protected def loadState(implicit fs:FileSystem): Boolean = {

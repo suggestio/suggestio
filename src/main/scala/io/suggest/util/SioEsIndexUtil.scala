@@ -18,6 +18,7 @@ import SioEsConstants.FIELD_DATE
 import java.util.Date
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS
+import org.apache.hadoop.fs.FileSystem
 
 /**
  * Suggest.io
@@ -66,15 +67,14 @@ object SioEsIndexUtil extends Logs with Serializable {
           .execute()
           .onComplete { result =>
             result match {
-              case Success(false) => warn("Index mapping '%s' MAY NOT fully erased: %s"    format (h, indices))
-              case Failure(ex)    => error("Failed to delete mapping '%s' from indices %s" format (h, indices))
-              case Success(true)  => debug("Mapping %s sucessfully erased from indices %s" format (h, indices))
+              case Success(_)  => debug("Mapping %s sucessfully erased from indices %s" format (h, indices))
+              case Failure(ex) => error("Failed to delete mapping '%s' from indices %s" format (h, indices))
             }
             // Рекурсивно запустить следующую итерацию независимо от результатов.
             deleteMapping(t)
           }
       } else {
-        p success true
+        p success ()
       }
     }
     deleteMapping(types)
@@ -166,12 +166,12 @@ object SioEsIndexUtil extends Logs with Serializable {
    * @param isTolerant Гасить одиночные ошибки импорта?
    * @return true, когда всё нормально.
    */
-  def move(fromIndex:IndexInfo, toIndex:IndexInfo, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
-    lazy val logPrefix = "move(%s -> %s tolerant=%s): " format (fromIndex.name, toIndex.name, isTolerant)
+  def move(fromIndex:MDVIUnitAlterable, toIndex:MDVIUnitAlterable, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, fs:FileSystem, executor:ExecutionContext): Future[Unit] = {
+    lazy val logPrefix = "move(%s -> %s tolerant=%s): " format (fromIndex.vin, toIndex.vin, isTolerant)
     debug(logPrefix + "Starting copy()...")
     copy(fromIndex, toIndex, isTolerant) flatMap { _ =>
-      debug(logPrefix + "copy() finished. Let's delete old index %s..." format fromIndex.name)
-      fromIndex.delete
+      debug(logPrefix + "copy() finished. Let's delete old index %s..." format fromIndex.vin)
+      fromIndex.deleteIndexOrMappings
     }
   }
 
@@ -185,10 +185,10 @@ object SioEsIndexUtil extends Logs with Serializable {
    * @param isTolerant Если true, то ошибки при обработке документов будут подавляться. По дефолту true, ибо допускаются небольшие потери.
    * @return Фьючерс, который висит пока не наступает успех.
    */
-  def scrollImport(scrollId:String, toIndex:MDVIUnit, timeout:TimeValue = SCROLL_TIMEOUT_DFLT, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
+  def scrollImport(scrollId:String, toIndex:MDVIUnitAlterable, timeout:TimeValue = SCROLL_TIMEOUT_DFLT, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
     val logPrefix = "scrollImport(-> %s): " format toIndex.id
     info(logPrefix + "starting...")
-    val p = Promise[Boolean]()
+    val p = Promise[Unit]()
     def scrollImportIteration(_scrollId: String) {
       val fut: Future[SearchResponse] = client
         .prepareSearchScroll(_scrollId)
@@ -219,7 +219,7 @@ object SioEsIndexUtil extends Logs with Serializable {
 
                     case r => new LocalDate(r.getValue[Date])
                   }
-                  val (inx, typ) = toIndex.getSubshardForDate(date).typename
+                  val (inx, typ) = toIndex.getInxTypeForDate(date)
                   val inxReq = new IndexRequest()
                     .index(inx)
                     .`type`(typ)
@@ -250,7 +250,7 @@ object SioEsIndexUtil extends Logs with Serializable {
               // Скроллинг завершен. Завершить исходный promise.
             } else {
               info(logPrefix + "No more hits received. Finishing...")
-              p success true
+              p success ()
             }
 
             // Проблема импорта целой пачки документов или isTolerant отключен. Надо прерываться в любом случае.

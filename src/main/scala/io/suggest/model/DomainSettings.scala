@@ -73,7 +73,7 @@ trait DomainSettingsT {
    * @return Текущий экземпляр класса, хотя теоретически в будущем может возвращаться и новый экземпляр класса.
    */
   def save(implicit fs:FileSystem): DomainSettingsT = {
-    JsonDfsBackend.writeTo(
+    JsonDfsBackend.writeToDkeyName(
       dkey  = dkey,
       name  = DomainSettings.getName,
       value = export

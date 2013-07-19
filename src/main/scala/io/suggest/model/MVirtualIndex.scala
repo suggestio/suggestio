@@ -1,13 +1,14 @@
 package io.suggest.model
 
 import io.suggest.util.SiobixFs._
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.Path
 import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.Client
 import io.suggest.util.SioEsUtil._
 import org.apache.lucene.index.IndexNotFoundException
 import io.suggest.util.{SioEsIndexUtil, LogsPrefixed, Logs}
 import org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS
+import io.suggest.util.SiobixFs.fs
 
 /**
  * Suggest.io
@@ -36,7 +37,7 @@ object MVirtualIndex extends Logs {
    * @param vin базовое имя индекса.
    * @return Опциональный экземпляр сабжа.
    */
-  def getForVin(vin:String)(implicit fs:FileSystem): Option[MVirtualIndex] = {
+  def getForVin(vin:String): Option[MVirtualIndex] = {
     JsonDfsBackend.getAs[MVirtualIndex](getPath(vin), fs)
   }
 
@@ -78,7 +79,7 @@ object MVirtualIndex extends Logs {
    * Удалить эти индексы вообще.
    * @return true, если всё ок.
    */
-  def deleteAll(indices:Seq[String])(implicit client:Client): Future[Boolean] = {
+  def deleteThese(indices:Seq[String])(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     client.admin().indices()
       .prepareDelete(indices: _*)
       .execute()
@@ -151,17 +152,22 @@ case class MVirtualIndex(
    * Сохранить текущий экземпляр в базу.
    * @return Сохраненный экземпляр.
    */
-  def save(implicit fs:FileSystem): MVirtualIndex = {
-    JsonDfsBackend.writeTo(getPath(vin), this)
+  def save: MVirtualIndex = {
+    JsonDfsBackend.writeToPath(getPath(vin), this)
     this
   }
 
 
   /**
-   * Удалить индекс вообще.
-   * @return true, если всё ок.
+   * Удалить индекс вообще. И файл индекса в след за ним.
+   * @return true, если всё ок. Фьючерс исполняется, когда всё сделано.
    */
-  def delete(implicit client:Client): Future[Boolean] = deleteAll(getShards)
+  def delete(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
+    deleteThese(getShards) andThen { case _ =>
+      fs.delete(getPath(vin), false)
+    }
+  }
+
 
   /**
    * Создать все необходимые для текущего экземпляра индексы.
@@ -180,7 +186,7 @@ case class MVirtualIndex(
             val msg = "Cannot create some of requested shards: %s => %s. Rollbacking..." format (shards, boolSeq)
             error(msg)
             val createdIndexes = (shards zip boolSeq) filter(_._2) map(_._1)
-            deleteAll(createdIndexes) flatMap { _ =>
+            deleteThese(createdIndexes) flatMap { _ =>
               Future.failed(new RuntimeException(msg))
             }
         }
