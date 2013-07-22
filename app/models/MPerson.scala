@@ -27,7 +27,7 @@ case class MPerson(
    */
   def save = {
     val path = MPerson.getPath(id)
-    JsonDfsBackend.writeTo(path, this)
+    JsonDfsBackend.writeToPath(path, this)
     this
   }
 

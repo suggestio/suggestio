@@ -43,7 +43,7 @@ case class MDomainQiAuthzTmp(
   def save: MDomainQiAuthzTmp = {
     val os = fs.create(filepath)
     try {
-      JsonDfsBackend.writeTo(filepath, this)
+      JsonDfsBackend.writeToPath(filepath, this)
       this
 
     } finally {

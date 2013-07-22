@@ -37,7 +37,7 @@ case class MBlog(
    * @return саму себя для удобства method chaining.
    */
   def save = {
-    JsonDfsBackend.writeTo(getFilePath, this)
+    JsonDfsBackend.writeToPath(getFilePath, this)
     this
   }
 
@@ -73,7 +73,7 @@ object MBlog extends Logs {
 
   /**
    * Выдать путь к файлу с данными в json.
-   * @param id
+   * @param id id записи блога.
    * @return
    */
   def getFilePath(id: String) = new Path(model_path, id)

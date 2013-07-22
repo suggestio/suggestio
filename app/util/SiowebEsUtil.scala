@@ -5,12 +5,14 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.action.search.SearchType
 import org.elasticsearch.index.query.{QueryBuilder, FilterBuilder, FilterBuilders, QueryBuilders}
 import org.elasticsearch.search.SearchHit
-import io.suggest.model.{SioSearchContext, DomainSettings}
+import io.suggest.model._
 import scala.collection.JavaConversions._
 import collection.mutable
 import io.suggest.util.Lists
 import io.suggest.index_info.SioEsConstants._
 import controllers.routes
+import scala.Some
+import io.suggest.model.SioSearchContext
 
 /**
  * Suggest.io
@@ -58,9 +60,16 @@ object SiowebEsUtil {
    * @param searchContext Контекст поиска.
    * @return
    */
-  def searchDomain(domainSettings:DomainSettings, queryStr:String, options:SioSearchOptions, searchContext:SioSearchContext) = {
-    val (indices, types) = domainSettings.index_info.indexesTypesForRequest(searchContext)
-    searchIndex(indices, types, queryStr, options)
+  def searchDomain(domainSettings:DomainSettingsT, queryStr:String, options:SioSearchOptions, searchContext:SioSearchContext, sptrIdOpt:Option[String] = None) = {
+    val dkey = domainSettings.dkey
+    val sptrId = sptrIdOpt getOrElse dkey
+    MDVISearchPtr.getForDkeyId(dkey, sptrId) map { iptr =>
+      val dvi = iptr.getDVIs.head  // TODO если searchPtr указывает на несколько индексов, то надо это отрабатывать.
+      val types = dvi.getTypesForRequest(searchContext)
+      val indices = dvi.getVirtualIndex.getShards
+      searchIndex(indices, types, queryStr, options)
+
+    } getOrElse Nil
   }
 
 
