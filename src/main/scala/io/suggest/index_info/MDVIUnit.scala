@@ -21,7 +21,7 @@ import io.suggest.util.SioEsIndexUtil.{SCROLL_TIMEOUT_INIT_DFLT, SCROLL_PER_SHAR
 trait MDVIUnit {
   val dkey: String
   def filename: String
-  def filepath: String
+  def filepath: Path
   val vin: String
   def subshards: List[MDVISubshard]
   val generation: Int

@@ -1,7 +1,8 @@
 package io.suggest.model
 
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.Path
 import io.suggest.index_info.MDVIUnit
+import io.suggest.util.SiobixFs.fs
 
 /**
  * Suggest.io
@@ -41,7 +42,7 @@ object MDVISearchPtr {
    * @param id Идентификатор.
    * @return Опциональный распрарсенный экземпляр MDVISearchPtr.
    */
-  def getForDkeyId(dkey:String, id:String)(implicit fs:FileSystem): Option[MDVISearchPtr] = {
+  def getForDkeyId(dkey:String, id:String): Option[MDVISearchPtr] = {
     val path = getDkeySearchPath(dkey, id)
     JsonDfsBackend.getAs[MDVISearchPtr](path, fs)
   }
@@ -54,17 +55,29 @@ import MDVISearchPtr._
 case class MDVISearchPtr(
   dkey:  String,
   id:    String,
-  mdvis: List[String]
+  dviNames: List[String]
 ) {
 
   /**
    * Сохранить в DFS.
    * @return Экземпляр сохраненного сабжа. Т.е. текущий экземпляр.
    */
-  def save(implicit fs:FileSystem): MDVISearchPtr = {
+  def save: MDVISearchPtr = {
     val path = getDkeySearchPath(dkey, id)
     JsonDfsBackend.writeToPath(path, this, overwrite=true)
     this
+  }
+
+  // Связи с другими моделями
+
+  /**
+   * Выдать список используемых доменных виртуальных шард вместо их имён.
+   * @return
+   */
+  def getDVIs: List[MDVIActive] = {
+    dviNames map {
+      MDVIActive.getForDkeyName(dkey, _).get
+    }
   }
 
 }

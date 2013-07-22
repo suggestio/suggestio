@@ -17,15 +17,13 @@ import io.suggest.util.DateParseUtil.toDaysCount
  * партициирование того или иного типа. Например, в целях экономии RAM при индексировании данных, для которых
  * нежелательно партициирование данных из-за неустранимого long-tail в текстовом индексе (куча редких слов).
  * @param dvin Родительский экземпляр MDVIActive.
- * @param lowerDateDays Нижняя дата этой подшарды в днях.
- * @param shards Номера задействованных шард в elasticsearch. Если Nil, то значит нужно опрашивать
- *               всю родительскую виртуальную шарду.
  */
 case class MDVISubshard(
-  dvin:          MDVIUnit,
-  lowerDateDays: Int,
-  shards:        List[Int] = Nil
+  dvin: MDVIUnit,
+  subshardData: MDVISubshardInfo
 ) extends LogsPrefixed {
+
+  import subshardData._
 
   protected val logPrefix: String = dvin.id + "-" + lowerDateDays
 
@@ -106,3 +104,13 @@ case class MDVISubshard(
 
 }
 
+/**
+ * Сами данные по шарде вынесены за скобки.
+ * @param lowerDateDays Нижняя дата этой подшарды в днях.
+ * @param shards Номера задействованных шард в elasticsearch. Если Nil, то значит нужно опрашивать
+ *               всю родительскую виртуальную шарду.
+ */
+case class MDVISubshardInfo(
+  lowerDateDays: Int,
+  shards:        List[Int] = Nil
+)

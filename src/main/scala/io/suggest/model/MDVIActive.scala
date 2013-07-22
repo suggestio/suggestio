@@ -38,11 +38,11 @@ object MDVIActive extends Logs {
   /**
    * Прочитать из хранилища и распарсить json-сериализованные данные по сабжу.
    * @param dkey Ключ домена.
-   * @param fileame Название, под которым сохранены данные. Обычно "default"
+   * @param filename Название, под которым сохранены данные. Обычно "default"
    * @return Опциональный сабж.
    */
-  def getForDkeyName(dkey:String, fileame:String): Option[MDVIActive] = {
-    JsonDfsBackend.getAs[MDVIActive](getDkeyPath(dkey, fileame), fs)
+  def getForDkeyName(dkey:String, filename:String): Option[MDVIActive] = {
+    JsonDfsBackend.getAs[MDVIActive](getDkeyPath(dkey, filename), fs)
   }
 
   private val glogPath = getDkeyActiveDirPath("*")
@@ -76,16 +76,18 @@ import MDVIActive._
  * Класс уровня домена. Хранит информацию по виртуальному индексу в контексте текущего dkey.
  * @param dkey Ключ домена
  * @param vin Имя нижележащего виртуального индекса.
- * @param subshards Список подшард.
+ * @param subshardsInfo Список подшард.
  * @param generation Поколение. При миграции в другой индекс поколение инкрементируется.
  */
 case class MDVIActive(
   dkey:       String,
   vin:        String,
   generation: Int = 0,
-  subshards:  List[MDVISubshard] = List(new MDVISubshard(this, 0))
+  subshardsInfo:  List[MDVISubshardInfo] = List(new MDVISubshardInfo(0))
 
 ) extends MDVIUnitAlterable with LogsPrefixed {
+
+  def subshards:List[MDVISubshard] = subshardsInfo.map(new MDVISubshard(this, _))
 
   def id: String = "%s$%s$%s" format (dkey, vin, generation)
 
@@ -112,7 +114,7 @@ case class MDVIActive(
 
       // TODO Выбираются все шарды слева направо, однако это может неэффективно.
       //      Следует отбрасывать "свежие" шарды слева, если их многовато.
-      case false => subshards find { _.lowerDateDays < daysCount } getOrElse subshards.last
+      case false => subshards find { _.subshardData.lowerDateDays < daysCount } getOrElse subshards.last
     }
   }
 
@@ -156,7 +158,7 @@ case class MDVIActive(
    */
   def getAllTypesForShard(shardN: Int): List[MDVISubshard] = {
     subshards.foldLeft[List[MDVISubshard]] (Nil) { (acc, ss) =>
-      if (ss.shards contains shardN) {
+      if (ss.subshardData.shards contains shardN) {
         ss :: acc
       } else {
         acc
