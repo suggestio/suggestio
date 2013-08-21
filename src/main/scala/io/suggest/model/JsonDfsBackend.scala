@@ -63,6 +63,15 @@ object JsonDfsBackend {
     writeToPath(path, value, overwrite, pretty)
   }
 
+
+  /**
+   * Серилизовать произвольные данные в указанный путь.
+   * @param path Путь к файлу, который может не существовать.
+   * @param value Данные.
+   * @param overwrite Перезаписывать? По дефолту - OVERWRITE_DFLT.
+   * @param pretty Писать красиво? Если false, то одной строчкой. По дефолту = PRETTY_DFLT.
+   * @param fs Файловая система.
+   */
   def writeToPath(path:Path, value:Any, overwrite:Boolean = OVERWRITE_DFLT, pretty:Boolean = PRETTY_DFLT)(implicit fs:FileSystem) {
     val os = fs.create(ensurePathAbsolute(path), overwrite)
     try {

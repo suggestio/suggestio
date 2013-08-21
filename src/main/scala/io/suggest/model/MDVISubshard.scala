@@ -19,7 +19,7 @@ import io.suggest.util.DateParseUtil.toDaysCount
  * @param dvin Родительский экземпляр MDVIActive.
  */
 case class MDVISubshard(
-  dvin: MDVIUnit,
+  dvin:         MDVIUnit,
   subshardData: MDVISubshardInfo
 ) extends LogsPrefixed {
 
@@ -113,4 +113,4 @@ case class MDVISubshard(
 case class MDVISubshardInfo(
   lowerDateDays: Int,
   shards:        List[Int] = Nil
-)
+) extends Serializable

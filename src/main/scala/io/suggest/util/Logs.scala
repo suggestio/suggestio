@@ -25,6 +25,7 @@ trait Logs extends LogsAbstract {
   protected def error(message: => String, ex:Throwable) = if (logger.isErrorEnabled) logger.error(message,ex)
 }
 
+
 // То же самое, что и Logs, но добавляется префикс.
 trait LogsPrefixed extends Logs {
   protected val logPrefix: String
@@ -38,11 +39,12 @@ trait LogsPrefixed extends Logs {
   override protected def warn(message: => String) = super.warn(logPrefix + message)
   override protected def warn(message: => String, ex: Throwable) = super.warn(logPrefix + message, ex)
 
-  override protected def error(ex: Throwable) = super.error(logPrefix + ex)
+  override protected def error(ex: Throwable) = super.error(logPrefix, ex)
   override protected def error(message: => String) = super.error(logPrefix + message)
 
   override protected def error(message: => String, ex: Throwable) = super.error(logPrefix + message, ex)
 }
+
 
 /**
  * Абстрактный логгер появился как костыль для play-framework,
@@ -71,3 +73,26 @@ trait LogsAbstract {
   protected def error(message: => String, ex:Throwable)
 
 }
+
+
+// Бывает, что нужен логгер в виде объекта.
+class LogsImpl(clazz: Class[_]) {
+  val logger = LoggerFactory.getLogger(clazz.getName)
+
+  def debug(message: => String) = if (logger.isDebugEnabled) logger.debug(message)
+  def debug(message: => String, ex:Throwable) = if (logger.isDebugEnabled) logger.debug(message,ex)
+
+  def info(message: => String) = if (logger.isInfoEnabled) logger.info(message)
+  def info(message: => String, ex:Throwable) = if (logger.isInfoEnabled) logger.info(message,ex)
+
+  def warn(message: => String) = if (logger.isWarnEnabled) logger.warn(message)
+  def warn(message: => String, ex:Throwable) = if (logger.isWarnEnabled) logger.warn(message,ex)
+
+  def error(ex:Throwable) = if (logger.isErrorEnabled) logger.error(ex.toString,ex)
+  def error(message: => String) = if (logger.isErrorEnabled) logger.error(message)
+  def error(message: => String, ex:Throwable) = if (logger.isErrorEnabled) logger.error(message,ex)
+
+  def trace(message: => String) = if (logger.isTraceEnabled) logger.trace(message)
+  def trace(message: => String, ex:Throwable) = if(logger.isTraceEnabled) logger.trace(message, ex)
+}
+

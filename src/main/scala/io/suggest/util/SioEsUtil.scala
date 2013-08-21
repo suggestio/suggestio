@@ -355,7 +355,6 @@ object SioEsUtil extends Logs {
     }
   }
 
-}
 
 
 // Далее идут классы JSON-DSL-генераторы для упрощения написания всяких вещей.
@@ -822,3 +821,4 @@ class _index_mapping(typ:String, static_fields:Seq[_json_object], properties:Seq
 
 // END поля документа --------------------------------------------------------------------------------------------------
 
+}

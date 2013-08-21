@@ -51,7 +51,7 @@ trait DomainSettingsStaticT {
 
 import DomainSettings.DSMap_t
 
-trait DomainSettingsT {
+trait DomainSettingsT extends Serializable {
   // Ключ домена. Используется, чтобы знать, куда сохранять данные.
   val dkey: String
 

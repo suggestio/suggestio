@@ -6,9 +6,10 @@ import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.Client
 import io.suggest.util.SioEsUtil._
 import org.apache.lucene.index.IndexNotFoundException
-import io.suggest.util.{SioEsIndexUtil, LogsPrefixed, Logs}
+import io.suggest.util.{LogsImpl, SioEsIndexUtil}
 import org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS
 import io.suggest.util.SiobixFs.fs
+import com.fasterxml.jackson.annotation.JsonIgnore
 
 /**
  * Suggest.io
@@ -20,10 +21,14 @@ import io.suggest.util.SiobixFs.fs
  * Информация хранится без dkey. Таким образом, одна запись (один файл, т.е. один индекс или группа индексов) могут
  * относится к нескольким dkey.
  */
-object MVirtualIndex extends Logs {
+object MVirtualIndex {
 
   val rootDir     = "phys_inx"
   val rootDirPath = new Path(siobix_conf_path, rootDir)
+
+  private val futureSuccessUnit = Future.successful(())
+
+  private val staticLogger = new LogsImpl(getClass)
 
   /**
    * Вычислить путь для сохранения данных об этом индексе.
@@ -115,14 +120,15 @@ import MVirtualIndex._
 case class MVirtualIndex(
   vin:        String,
   shardCount: Int = 1
-) extends LogsPrefixed {
+) extends Serializable {
 
-  val logPrefix = vin
+  import staticLogger._
 
   /**
    * Выдать имена всех шард.
    * @return Последовательность шард в порядке возрастания индекса.
    */
+  @JsonIgnore
   def getShards: Seq[String] = {
     // Если шарда только одна, то она без номера-суффика.
     if (shardCount == 1) {
@@ -152,6 +158,7 @@ case class MVirtualIndex(
    * Сохранить текущий экземпляр в базу.
    * @return Сохраненный экземпляр.
    */
+  @JsonIgnore
   def save: MVirtualIndex = {
     JsonDfsBackend.writeToPath(getPath(vin), this)
     this
@@ -172,15 +179,15 @@ case class MVirtualIndex(
   /**
    * Создать все необходимые для текущего экземпляра индексы.
    * @param replicasCount кол-во реплик.
-   * @return
+   * @return Фьючерс.
    */
-  def ensureShards(replicasCount: Int = 1)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
+  def ensureShards(replicasCount: Int = 1)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
     val shards = getShards
     ensureIndices(shards, replicasCount=replicasCount)
       .flatMap { boolSeq =>
         boolSeq.distinct match {
           case s if s.length == 1 =>
-            Future.successful(true)
+            futureSuccessUnit
 
           case other =>
             val msg = "Cannot create some of requested shards: %s => %s. Rollbacking..." format (shards, boolSeq)
@@ -192,6 +199,7 @@ case class MVirtualIndex(
         }
       }
   }
+
 
   /**
    * Закрыть все шарды, выгрузив их из памяти. Типа заморозка.
