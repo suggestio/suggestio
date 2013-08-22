@@ -76,23 +76,25 @@ trait LogsAbstract {
 
 
 // Бывает, что нужен логгер в виде объекта.
-class LogsImpl(clazz: Class[_]) {
-  val logger = LoggerFactory.getLogger(clazz.getName)
+class LogsImpl(className: String) {
+  def this(clazz: Class[_]) = this(clazz.getName)
 
-  def debug(message: => String) = if (logger.isDebugEnabled) logger.debug(message)
-  def debug(message: => String, ex:Throwable) = if (logger.isDebugEnabled) logger.debug(message,ex)
+  private val _logger = LoggerFactory.getLogger(className)
 
-  def info(message: => String) = if (logger.isInfoEnabled) logger.info(message)
-  def info(message: => String, ex:Throwable) = if (logger.isInfoEnabled) logger.info(message,ex)
+  def debug(message: => String) = if (_logger.isDebugEnabled) _logger.debug(message)
+  def debug(message: => String, ex:Throwable) = if (_logger.isDebugEnabled) _logger.debug(message,ex)
 
-  def warn(message: => String) = if (logger.isWarnEnabled) logger.warn(message)
-  def warn(message: => String, ex:Throwable) = if (logger.isWarnEnabled) logger.warn(message,ex)
+  def info(message: => String) = if (_logger.isInfoEnabled) _logger.info(message)
+  def info(message: => String, ex:Throwable) = if (_logger.isInfoEnabled) _logger.info(message,ex)
 
-  def error(ex:Throwable) = if (logger.isErrorEnabled) logger.error(ex.toString,ex)
-  def error(message: => String) = if (logger.isErrorEnabled) logger.error(message)
-  def error(message: => String, ex:Throwable) = if (logger.isErrorEnabled) logger.error(message,ex)
+  def warn(message: => String) = if (_logger.isWarnEnabled) _logger.warn(message)
+  def warn(message: => String, ex:Throwable) = if (_logger.isWarnEnabled) _logger.warn(message,ex)
 
-  def trace(message: => String) = if (logger.isTraceEnabled) logger.trace(message)
-  def trace(message: => String, ex:Throwable) = if(logger.isTraceEnabled) logger.trace(message, ex)
+  def error(ex:Throwable) = if (_logger.isErrorEnabled) _logger.error(ex.toString,ex)
+  def error(message: => String) = if (_logger.isErrorEnabled) _logger.error(message)
+  def error(message: => String, ex:Throwable) = if (_logger.isErrorEnabled) _logger.error(message,ex)
+
+  def trace(message: => String) = if (_logger.isTraceEnabled) _logger.trace(message)
+  def trace(message: => String, ex:Throwable) = if(_logger.isTraceEnabled) _logger.trace(message, ex)
 }
 

@@ -1,7 +1,7 @@
 package io.suggest.util
 
 import scala.concurrent.{ExecutionContext, Promise, Future}
-import scala.util.{Success, Failure}
+import scala.util.{Try, Success, Failure}
 
 /**
  * Suggest.io
