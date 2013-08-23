@@ -11,6 +11,9 @@ import org.slf4j.LoggerFactory
 trait Logs extends LogsAbstract {
   protected val logger = LoggerFactory.getLogger(getClass.getName)
 
+  protected def trace(message: => String) = if (logger.isTraceEnabled) logger.trace(message)
+  protected def trace(message: => String, ex:Throwable) = if (logger.isTraceEnabled) logger.trace(message, ex)
+
   protected def debug(message: => String) = if (logger.isDebugEnabled) logger.debug(message)
   protected def debug(message: => String, ex:Throwable) = if (logger.isDebugEnabled) logger.debug(message,ex)
 
@@ -30,6 +33,9 @@ trait Logs extends LogsAbstract {
 trait LogsPrefixed extends Logs {
   protected val logPrefix: String
 
+  override protected def trace(message: => String) = super.trace(logPrefix + message)
+  override protected def trace(message: => String, ex: Throwable) = super.trace(logPrefix + message, ex)
+
   override protected def debug(message: => String) = super.debug(logPrefix + message)
   override protected def debug(message: => String, ex: Throwable)  = super.debug(logPrefix + message, ex)
 
@@ -41,7 +47,6 @@ trait LogsPrefixed extends Logs {
 
   override protected def error(ex: Throwable) = super.error(logPrefix, ex)
   override protected def error(message: => String) = super.error(logPrefix + message)
-
   override protected def error(message: => String, ex: Throwable) = super.error(logPrefix + message, ex)
 }
 

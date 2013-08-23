@@ -2,6 +2,8 @@ package io.suggest.util
 
 import scala.concurrent.{ExecutionContext, Promise, Future}
 import scala.util.{Try, Success, Failure}
+import scala.concurrent.duration.FiniteDuration
+import java.util.TimerTask
 
 /**
  * Suggest.io
@@ -74,6 +76,26 @@ object SioFutureUtil extends Logs {
     foldLeftStep(acc0, in)
     p.future
   }
+
+
+  private val timer = new java.util.Timer()
+
+  /**
+   * Сгенерить фьючерс, который будет исполнен указанным сообщением message:A через указанный интервал времени duration.
+   * @param messageFut Фьючерс результата. Обычно, создается через Future.successful() или Future.failed().
+   * @param duration Сколько ждать?
+   * @tparam A Тип результата фьючерса.
+   * @return Future[A]
+   */
+  def timeoutFuture[A](messageFut:Future[A], duration:FiniteDuration)(implicit ec:ExecutionContext): Future[A] = {
+    val p = Promise[A]()
+    val task = new TimerTask {
+      def run() { p completeWith messageFut }
+    }
+    timer.schedule(task, duration.toMillis)
+    p.future
+  }
+
 
   private def warnError(hash:Int, h:Any, ex:Throwable) {
     warn("foldLeftSequentally()#%s: Suppressed exception in/before future for element %s" format (hash, h), ex)
