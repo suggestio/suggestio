@@ -37,7 +37,7 @@ case class MBlog(
    * @return саму себя для удобства method chaining.
    */
   def save = {
-    JsonDfsBackend.writeTo(getFilePath, this)
+    JsonDfsBackend.writeToPath(getFilePath, this)
     this
   }
 

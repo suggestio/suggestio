@@ -45,7 +45,7 @@ case class MPersonDomainAuthz(
    * Сохранить текущий экземпляр класса в базу.
    */
   def save: MPersonDomainAuthz = {
-    JsonDfsBackend.writeTo(filepath, this)
+    JsonDfsBackend.writeToPath(filepath, this)
     this
   }
 

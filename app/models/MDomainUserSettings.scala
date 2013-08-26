@@ -48,7 +48,7 @@ trait MDomainUserSettingsT extends DkeyModelT with DUS_Basic {
   def save = {
     val path = getPath(dkey)
     if(!data.isEmpty) {
-      JsonDfsBackend.writeTo(path, data)
+      JsonDfsBackend.writeToPath(path, data)
     } else {
       fs.delete(path, false)
     }

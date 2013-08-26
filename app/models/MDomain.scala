@@ -25,7 +25,7 @@ object MDomain {
    * @return Соответсвующий MDomain, если найден.
    */
   def getForDkey(dkey:String) : Option[MDomain] = {
-    val dkeyPath = SiobixFs.dkeyPath(dkey)
+    val dkeyPath = SiobixFs.dkeyPathConf(dkey)
     fs.exists(dkeyPath) match {
       case true  => Some(MDomain(dkey=dkey))
       case false => None

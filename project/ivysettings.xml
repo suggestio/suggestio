@@ -21,8 +21,9 @@
       <url name="cbca ivy2-internal" changingPattern="-SNAPSHOT">
 	<ivy pattern="https://ivy2-internal.cbca.ru/sbt/[orgPath]/[module]/[revision]/[type]-[revision].xml"/>
 	<artifact pattern="https://ivy2-internal.cbca.ru/sbt/[orgPath]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"/>
-      </url>
+    </url>
 
+      <ibiblio name="conjas-releases" m2compatible="true" root="http://conjars.org/repo/"/>
       <ibiblio name="typesafe-releases" m2compatible="true" root="http://repo.typesafe.com/typesafe/releases" />
       <ibiblio name="sonatype-oss-releases" m2compatible="true" root="http://oss.sonatype.org/content/repositories/releases" />
       <ibiblio name="central-uk" m2compatible="true" root="http://uk.maven.org/maven2" />

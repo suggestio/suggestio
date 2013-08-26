@@ -5,12 +5,14 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.action.search.SearchType
 import org.elasticsearch.index.query.{QueryBuilder, FilterBuilder, FilterBuilders, QueryBuilders}
 import org.elasticsearch.search.SearchHit
-import io.suggest.model.{SioSearchContext, DomainSettings}
+import io.suggest.model._
 import scala.collection.JavaConversions._
 import collection.mutable
-import io.suggest.util.Lists
+import io.suggest.util.{LogsImpl, Lists}
 import io.suggest.index_info.SioEsConstants._
 import controllers.routes
+import scala.Some
+import io.suggest.model.SioSearchContext
 
 /**
  * Suggest.io
@@ -24,6 +26,9 @@ import controllers.routes
 object SiowebEsUtil {
 
   val RESULT_COUNT_DEFAULT = 20
+
+  private val LOGGER = new LogsImpl(getClass)
+  import LOGGER._
 
   // Настройки ret*-полей опций выдачи.
   type RET_T = Char
@@ -58,14 +63,35 @@ object SiowebEsUtil {
    * @param searchContext Контекст поиска.
    * @return
    */
-  def searchDomain(domainSettings:DomainSettings, queryStr:String, options:SioSearchOptions, searchContext:SioSearchContext) = {
-    val (indices, types) = domainSettings.index_info.indexesTypesForRequest(searchContext)
-    searchIndex(indices, types, queryStr, options)
+  def searchDomain(domainSettings:DomainSettingsT, queryStr:String, options:SioSearchOptions, searchContext:SioSearchContext) = {
+    // TODO потом нужно добавить поддержку переключения searchPtr в каком-либо виде.
+    import options.dkey
+    MDVISearchPtr.getForDkeyId(dkey) match {
+      case Some(searchPtr) =>
+        // Собрать все индексы и типы со всех виртуальных индексов.
+        val (indices, types) = searchPtr.dviNames.foldLeft[(List[String], List[String])] (Nil -> Nil) { (acc, dviName) =>
+          MDVIActive.getForDkeyName(dkey, dviName) match {
+            case Some(dviActive) =>
+              val (accIndices, accTypes) = acc
+              val accIndices1 = dviActive.getShards.toList ++ accIndices
+              val accTypes1   = dviActive.getTypesForRequest(searchContext) ++ accTypes
+              accIndices1 -> accTypes1
+
+            case None =>
+              warn("searchPtr '%s' points to nothing at dviName=%s" format (searchPtr, dviName))
+              acc
+          }
+        }
+        searchIndex(indices, types, queryStr, options)
+
+      case None => Nil
+    }
   }
 
 
   /**
-   * Фунция генерации поискового запроса и выполнения поиска. Используется query-генератор, горождаемый ES-клиентом.
+   * Фунцкия генерации поискового запроса и выполнения поиска. Используется query-DSL из ES-клиента.
+   * Отделена от searchDomain для возможности создания произвольного поиска, а не только в рамках домена.
    * @param indices Список индексов, по которым будет идти поиск.
    * @param types Список типов, которые затрагиваются поиском.
    * @param queryStr Буквы, которые ввел юзер

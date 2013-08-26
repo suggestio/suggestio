@@ -2,8 +2,7 @@ package models
 
 import play.api.cache.Cache
 import play.api.Play.current
-import io.suggest.model.{DomainSettings, DomainSettingsStaticT}
-import util.SiobixFs.fs
+import io.suggest.model._
 
 /**
  * Suggest.io
@@ -19,7 +18,7 @@ object MDomainSettings extends DomainSettingsStaticT {
    * @param dkey
    * @return
    */
-  def getForDkey(dkey:String) : Option[DomainSettings] = {
+  override def getForDkey(dkey:String) : Option[DomainSettingsT] = {
     Cache.getOrElse(dkey + "/ds", 60)(getForDkeyNocache(dkey))
   }
 
@@ -29,8 +28,8 @@ object MDomainSettings extends DomainSettingsStaticT {
    * @param dkey
    * @return
    */
-  def getForDkeyNocache(dkey:String) : Option[DomainSettings] = {
-    DomainSettings.load(dkey)
+  def getForDkeyNocache(dkey:String) : Option[DomainSettingsT] = {
+    DomainSettings.getForDkey(dkey)
   }
 
 }
