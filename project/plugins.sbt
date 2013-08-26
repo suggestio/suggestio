@@ -11,7 +11,7 @@ resolvers ++= Seq(
 resolvers += "DiversIT repo" at "http://repository-diversit.forge.cloudbees.com/release"
 
 // Use the Play sbt plugin for Play projects
-addSbtPlugin("play" % "sbt-plugin" % "2.1.1")
+addSbtPlugin("play" % "sbt-plugin" % "2.1.3")
 
 addSbtPlugin("patience" % "play-stylus" % "0.1.3" from "http://ivy2-internal.cbca.ru/sbt/patience/play-stylus_2.9.2_0.12/0.1.3/play-stylus-0.1.3.jar")
 
