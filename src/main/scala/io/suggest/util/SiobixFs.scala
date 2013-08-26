@@ -18,10 +18,14 @@ trait SiobixFsStaticT {
   /**
    * Корневая директория данных. Все остальные пути зависят от неё.
    */
-  val siobix_out_dir: String = System.getProperty("siobix.dfs.dir") match {
+  def siobix_out_dir: String = siobixOutDirVal
+
+  // Вместо val используется def+val из-за ограничений scala или vm: http://www.scala-lang.org/old/node/8139
+  protected val siobixOutDirVal = System.getProperty("siobix.dfs.dir") match {
     case null       => "/home/user/projects/sio/2/bixo/dout"
     case str:String => str
   }
+
 
   val siobix_out_path  = new Path(siobix_out_dir)
 

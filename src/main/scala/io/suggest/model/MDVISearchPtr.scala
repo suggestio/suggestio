@@ -19,7 +19,8 @@ import io.suggest.util.SiobixFs.fs
 object MDVISearchPtr {
 
   val searchSubdirNamePath = new Path("search")
-  val readBuffSize = 128
+
+  val ID_DEFAULT = "default"
 
   /**
    * Выдать путь до поддиректории /search, хранящей файлы с search-указателями для указанного домена.
@@ -34,7 +35,7 @@ object MDVISearchPtr {
    * @param id идентификатор
    * @return Path
    */
-  def getDkeySearchPath(dkey:String, id:String) = new Path(getDkeySearchDirPath(dkey), id)
+  def getDkeySearchPath(dkey:String, id:String = ID_DEFAULT) = new Path(getDkeySearchDirPath(dkey), id)
 
   /**
    * Прочитать указатель для dkey и id.
@@ -42,7 +43,7 @@ object MDVISearchPtr {
    * @param id Идентификатор.
    * @return Опциональный распрарсенный экземпляр MDVISearchPtr.
    */
-  def getForDkeyId(dkey:String, id:String): Option[MDVISearchPtr] = {
+  def getForDkeyId(dkey:String, id:String = ID_DEFAULT): Option[MDVISearchPtr] = {
     val path = getDkeySearchPath(dkey, id)
     JsonDfsBackend.getAs[MDVISearchPtr](path, fs)
   }
@@ -53,9 +54,9 @@ object MDVISearchPtr {
 import MDVISearchPtr._
 
 case class MDVISearchPtr(
-  dkey:  String,
-  id:    String,
-  dviNames: List[String]
+  dkey:     String,
+  dviNames: List[String],
+  id:       String = MDVISearchPtr.ID_DEFAULT   // TODO почему-то import не отрабатывает тут о_О
 ) {
 
   /**
