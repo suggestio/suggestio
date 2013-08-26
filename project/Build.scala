@@ -2,6 +2,7 @@ import sbt._
 import Keys._
 import play.Project._
 import java.io.File
+import com.jmparsons.plugin.LesscPlugin._
 
 object ApplicationBuild extends Build {
 
@@ -48,13 +49,19 @@ object ApplicationBuild extends Build {
     }
   }
 
+  // Компилировать эти less-файлы через Lessc вместо Rhino.
+  def customLessEntryPoints(base: File): PathFinder = (
+      (base / "app" / "assets" / "stylesheets" * "*.less")
+  )
 
-  val main = play.Project(appName, appVersion, appDependencies).settings(
+  val main = play.Project(appName, appVersion, appDependencies).settings(lesscSettings: _*).settings(
     // резолверы определены цепочкой в этом конфиге:
     externalIvySettings(baseDirectory(_ / "project" / "ivysettings.xml")),
     gzippableAssets <<= (resourceManaged in (ThisProject))(dir => ((dir ** "*.js") +++ (dir ** "*.css"))),
-    gzipAssetsSetting
-
+    gzipAssetsSetting,
+    // использовать lessc вместо встроенного less-компилятора.
+    lessEntryPoints := Nil,
+    lesscEntryPoints in Compile <<= baseDirectory(customLessEntryPoints)
   )
 
 }

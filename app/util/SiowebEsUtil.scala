@@ -11,7 +11,6 @@ import collection.mutable
 import io.suggest.util.{LogsImpl, Lists}
 import io.suggest.index_info.SioEsConstants._
 import controllers.routes
-import scala.Some
 import io.suggest.model.SioSearchContext
 
 /**
