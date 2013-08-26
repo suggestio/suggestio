@@ -73,7 +73,7 @@ object MBlog extends Logs {
 
   /**
    * Выдать путь к файлу с данными в json.
-   * @param id
+   * @param id id записи блога.
    * @return
    */
   def getFilePath(id: String) = new Path(model_path, id)

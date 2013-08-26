@@ -13,6 +13,6 @@ import io.suggest.util.SiobixFsStaticT
 object SiobixFs extends SiobixFsStaticT {
 
   // Разрешить переопределять dfs-директорию через ключ конфига.
-  override def siobix_out_dir = current.configuration getString "siobix.dfs.dir" getOrElse super.siobix_out_dir
+  val siobixOutDir = current.configuration getString "siobix.dfs.dir" getOrElse siobix_out_dir
 
 }

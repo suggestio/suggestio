@@ -2,7 +2,7 @@ package models
 
 import play.api.cache.Cache
 import play.api.Play.current
-import io.suggest.model._
+import io.suggest.model.{DomainSettingsT, DomainSettings, DomainSettingsStaticT}
 
 /**
  * Suggest.io
@@ -18,18 +18,8 @@ object MDomainSettings extends DomainSettingsStaticT {
    * @param dkey
    * @return
    */
-  override def getForDkey(dkey:String) : Option[DomainSettingsT] = {
-    Cache.getOrElse(dkey + "/ds", 60)(getForDkeyNocache(dkey))
-  }
-
-
-  /**
-   * Получить данные по домену напрямую из HDFS.
-   * @param dkey
-   * @return
-   */
-  def getForDkeyNocache(dkey:String) : Option[DomainSettingsT] = {
-    DomainSettings.getForDkey(dkey)
+  def getForDkeyCached(dkey:String) : Option[DomainSettingsT] = {
+    Cache.getOrElse(dkey + "/ds", 60)(super.getForDkey(dkey))
   }
 
 }
