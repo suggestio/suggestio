@@ -20,8 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 
 object MDVIActive {
 
-  private val staticLogger = new LogsImpl(getClass)
-  import staticLogger._
+  private val LOGGER = new LogsImpl(getClass)
+  import LOGGER._
 
 
   val activeSubdirNamePath = new Path("active")
@@ -119,7 +119,7 @@ case class MDVIActive(
 
 ) extends MDVIUnitAlterable with Serializable {
 
-  import staticLogger._
+  import LOGGER._
 
   /**
    * Отразить список подшард в виде полноценных объектов Subshard, ссылкающихся на своего родителя.
