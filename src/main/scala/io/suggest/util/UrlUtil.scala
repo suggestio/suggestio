@@ -470,6 +470,14 @@ object UrlUtil extends Logs with Serializable {
     )
   }
 
+  /**
+   * Извлечь dkey из ссылки.
+   * @param url Исходная ссылка
+   * @return Строка dkey.
+   */
+  def url2dkey(url:String): String = {
+    host2dkey(new URL(url).getHost)
+  }
 
   /**
    * Срезать все www. в начале хостнейма.
