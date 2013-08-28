@@ -38,9 +38,9 @@ object Feedback extends Controller with AclT with Logs with ContextT {
    */
   def feedbackForm(isAsync:Boolean) = maybeAuthenticated { implicit pw_opt => implicit request =>
     val render = if (isAsync) {
-      feedbackTpl(feedbackSubmitFormM)
-    } else {
       _feedbackFormTpl(feedbackSubmitFormM)
+    } else {
+      feedbackTpl(feedbackSubmitFormM)
     }
     Ok(render)
   }

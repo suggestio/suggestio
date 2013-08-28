@@ -2,7 +2,6 @@
 
 @import c.lang
 @import stuff._
-@import crawl._
 
 
 
@@ -14,7 +13,7 @@
   <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/blog_index.min.css")"/>
 }
 
-@crawlBaseTpl(title=Messages("blog"), head_after=head_after) {
+@main(title=Messages("blog"), head_after=head_after) {
 
 <style type="text/css">
 .main-layout

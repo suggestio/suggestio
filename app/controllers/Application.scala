@@ -6,8 +6,11 @@ import views.html.crawl.indexTpl
 import play.api.data._
 import play.api.data.Forms._
 import java.net.URL
+import play.api.i18n.Lang
+import play.api.Logger
 import gnu.inet.encoding.IDNA
 import io.suggest.util.UrlUtil
+import play.api.Play.current
 
 object Application extends Controller with ContextT with AclT {
 
@@ -30,7 +33,16 @@ object Application extends Controller with ContextT with AclT {
   def index = maybeAuthenticated { implicit pw_opt => implicit request =>
     Ok(indexTpl())
   }
-
+  
+  def change_locale(locale:String) = maybeAuthenticated { implicit pw_opt => implicit request =>
+    
+    val referrer = request.headers.get(REFERER).getOrElse("/")
+    
+    Logger.logger.debug("Change user lang to : " + locale)
+    Redirect(referrer).withLang(Lang(locale)) // TODO Check if the lang is handled by the application
+  
+  }
+  
   /**
    * Добавление сайта, шаг 1. Нужно подготовить qi и сгенерить данные для генерации js-кода.
    * @return Переменные для генерации js-кода на клиенте.

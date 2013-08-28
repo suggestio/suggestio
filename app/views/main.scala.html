@@ -1,12 +1,21 @@
 @(title: String, head_after:Html = Html(""), browser_check:Option[Html] = None, withHeadCommon:Boolean = true, withAnalytics:Boolean = true)(content: Html)(implicit c:util.Context)
-<!DOCTYPE html>
 @import stuff._
 
+<!DOCTYPE html>
 <html>
   <head>
+    
     <title>Suggest.io @if(!title.isEmpty) { | @title }</title>
+    
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <meta name = "viewport" content = "width=1200;initial-scale=1">
+    <meta name="viewport" content="width=520, initial-scale=1.0">
+    
+    <link href="@routes.Assets.at("stylesheets/bootstrap.min.css")" rel="stylesheet" media="screen">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="../../assets/js/html5shiv.js"></script>
+      <script src="../../assets/js/respond.min.js"></script>
+    <![endif]-->
     
     @if(!browser_check.isDefined) {
       <noscript><meta http-equiv="refresh" content="0; URL=/badbrowser"></noscript>
@@ -15,21 +24,23 @@
     }
     
     <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
-
+    
     @if(withHeadCommon) {
-      <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/main.v2.min.css")"/>
+      <link href="@routes.Assets.at("stylesheets/main.min.css")" rel="stylesheet" media="screen">
       <link href="@routes.Assets.at("images/favicon.png")" rel="shortcut icon" type="image/x-icon">
-      <script src="@routes.Assets.at("javascripts/common.v2.js")"></script>
     }
-		
+    
     @head_after
+    
   </head>
 
   <body>
+    
     @content
-
+    
     @if(withAnalytics) {
       @_analyticsTpl()
     }
+    
   </body>
 </html>

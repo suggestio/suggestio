@@ -5,163 +5,92 @@
 @import ctx._
 @import stuff._
 
-@head_after = {
-    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/crawl_index.min.css")"/>
-}
+@head_after = {}
 
-@crawlBaseTpl(title=Messages("live_search_for_your_website")) {
+@main(title=Messages("live_search_for_your_website")) {
 
-<div class="popup-container">
-    <div class="close-button">
-	<a id="popupCloseButton" href=""></a>
+
+<div class="container">
+  
+  @_mainHeaderTpl()
+  
+  <div class="row">
+    
+    <div class="col-sm-12">
+      
+      <div class="sio-slogo"></div>
+      
     </div>
-
-    @* Тут когда-то была форма feedback. Теперь она отдельной страницей и полностью отдельна. *@
-
-    <div id="aboutPopup" class="popup-content-block" style="display: none;">
-	<div class="about-images">
-	    <div class="image">
-		<div class="title-@lang_str"></div>
-		<div class="desc">
-		    @Messages("about_step_one")
-		</div>
-	    </div>
-	    <div class="image image-2">
-		<div class="title-@lang_str"></div>
-		<div class="desc">
-		    @Messages("about_step_two")
-		</div>
-	    </div>
-	    <div class="image image-3">
-		<div class="title-@lang_str"></div>
-		<div class="desc">
-		    @Messages("about_step_three")
-		</div>
-	    </div>
-
-	    <div class="sio-about-success">
-		    @Messages("install_success")
-	    </div>
-
-	</div>
+    
+  </div>
+  
+  <div class="row">
+    
+    <div class="col-sm-11">
+      
+      <div class="sio-first-step">
+        <div class="input">
+          <div class="shadow">
+            
+            <div class="row">
+              <div class="col-xs-1 http-prefix">http://</div>
+              <div class="col-xs-11">
+                <input type="text"/>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+      
     </div>
-</div>
-
-<div class="page-wrapper" id="pageWrapper">
-    <div class="main-layout">
-
-	<div class="lang-menu menu">
-            <a class="ru" href="/crawl/set_locale/ru">RU</a>  @* TODO выставить ссылку routes *@
-	    <div class="delimiter"></div>
-	    <a class="en" href="/crawl/set_locale/en">EN</a>  @* TODO выставить ссылку routes *@
-	</div>
-
-	<div class="login">
-	    @if(isAuth) {
-		<a href="{% url controller="admin" action="" %}"></a>
-	    } else {
-		<a href="" id="signin"></a>
-	    }
-	</div>
-
-	<a class="logo" href=""></a>
-
-	<div class="slogo-@lang_str"></div>
-
-	<a href="mailto:support@@suggest.io" class="custom-solutions">
-	    @Messages("custom_search_solutions_br")
-	</a>
-
-	@_topMenuTpl()
-
-	<div class="first-step">
-	    <div class="input" style="position: relative;">
-		@if(canAddSites && !isDebug) {
-		  <div class="sio-wip">
-		    <div class="sio-wip-message">@Messages("overloaded_message")</div>
-		  </div>
-		}
-		<div class="input-shadow">
-		    <div class="http-prefix">http://</div>
-		    <div class="input-real"><input id="userSiteInput" type="text"/></div>
-		    <div class="clear"></div>
-		</div>
-	    </div>
-	    <div class="note">@Messages("provide_site_url_to_init_search")</div>
-	</div>
-
-	<div class="second-step">
-	    <div class="digit">
-		<div class="unactive"></div>
-		<div class="active"></div>
-	    </div>
-	    <div class="label blue-label" id="installLabel" style="display: none;">@Messages("copy_js_code_to_your_site")</div>
-	    <div class="input">
-		<div class="input-shadow">
-		    <textarea id="jsCodeTextarea"></textarea>
-		</div>
-	    </div>
-
-	    <div class="install-explanation" id="installExplanation">
-		<div class="note"><p>@Messages("code_must_be_on_all_site_pages")</p>
-		    <p>@Messages("go_to_your_site_after_install")</p>
-		</div>
-
-	    </div>
-
-	    <div class="clear"></div>
-
-	</div>
-
+    
+    <div class="col-sm-1">
+      
+      <div class="start-button"><a href=""></a></div>
+      
     </div>
-
-    <div class="start-button"><a href=""></a></div>
-
-    @_copyright()
-    @_social()
+    
+  </div>
 
 </div>
 
-{% include "login/_persona.html" %}
+<div class="sio-footer-container">
+<div class="container">
+ 
+  <div class="row sio-footer-row">
+    
+    <div class="col-sm-8 common-info">
+      © 2012 Suggest.io. All rights reserved Retina-ready
+    </div>
+    
+    <div class="col-sm-4">
+      @_social()
+    </div>
+    
+  </div>
+  
+</div>
+</div>
 
-<script type="text/javascript">
-locale = '@lang_str';
-site_indexation_caption_progress = '@Messages("site_indexation_caption")';
+<div style="display: none">
 
-var crawler_events = 
-{
-   undefined_event		: '@Messages("undefined_event")',
-   crawler_activity_label	: '@Messages("crawler_activity_label")',
-   indexation_in_progress	: '@Messages("indexation_in_progress")',
-   indexation_complete		: '@Messages("indexation_complete")',
-   nxdomain			: '@Messages("nxdomain")',
-   too_complex_content_or_overloaded_system : '@Messages("too_complex_content_or_overloaded_system")',
-   unexpected_response_content	: '@Messages("unexpected_response_content")',
-   econnrefused			: '@Messages("econnrefused")',
-   econnreset			: '@Messages("econnreset")',
-   econnaborted			: '@Messages("econnaborted")',
-   crawler_error		: '@Messages("crawler_error")',
-   indexation_error		: '@Messages("indexation_error")',
-   unknown_character_encoding	: '@Messages("unknown_character_encoding")',
-   page_deduplicated		: '@Messages("page_deduplicated")',
-   page_crawled			: '@Messages("page_crawled")',
-   average_response_time	: '@Messages("average_response_time")',
-   stat_10min			: '@Messages("stat_10min")',
-   stat_hour			: '@Messages("stat_hour")',
-   stat_day			: '@Messages("stat_day")',
-   stat_week			: '@Messages("stat_week")',
-   stat_month			: '@Messages("stat_month")',
-   stat_year			: '@Messages("stat_year")',
-   http_request_timeout		: 'HTTP request timeout',
-   http_404			: 'HTTP 404',
-   http_500			: '@Messages("http_500")',
-   url_crawled			: '@Messages("url_crawled")',
-   hostname_prohibited		: '@Messages("hostname_prohibited")',
-   zuck				: '@Messages("zuck")',
-   durov			: '@Messages("durov")',
-   invalid_url			: '@Messages("invalid_url")'
-}
+<p>@Messages("about_step_one")</p>
+<p>@Messages("about_step_two")</p>
+<p>@Messages("about_step_three")</p>
+<p>@Messages("install_success")</p>
 
-</script>
+<p>
+  <a class="ru" href="/change_locale/ru">RU</a>  @* TODO выставить ссылку routes *@
+  <a class="en" href="/change_locale/en">EN</a>  @* TODO выставить ссылку routes *@
+</p>
+
+<p>
+  @if(isAuth) {
+    <a href="{% url controller="admin" action="" %}"></a>
+  } else {
+    <a href="" id="signin"></a>
+  }
+</p>
 
 }

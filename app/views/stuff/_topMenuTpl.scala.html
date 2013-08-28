@@ -1,10 +1,8 @@
 @(activeLink:String = null)(implicit c:util.Context)
 
-@* Тут набор ссылок для хидера/футера главной и других страниц *@
-
 @import c.lang
 
-<div style="z-index: 100000000000; position: fixed;" class="menu menu-@c.lang_str">
+<div class="menu">
 
 	@defining(Messages("stuff.menu.ABOUT")) { about_msg =>
 		@if(activeLink == "about") {

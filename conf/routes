@@ -7,6 +7,7 @@ GET  /js/v2/:domain/:qi_id              controllers.Js.v2(domain, qi_id)
 
 # Home page
 GET  /                                  controllers.Application.index
+GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
 
 # Map static resources from the /public folder to the /assets URL path
 GET  /assets/*file                      controllers.Assets.at(path="/public", file)

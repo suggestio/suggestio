@@ -27,7 +27,7 @@ trait ContextT {
    */
   implicit def getContext(implicit pw_opt: Acl.PwOptT,
                           request: Request[AnyContent],
-                          lang: Lang = Lang(Context.lang_default)) : Context = {
+                          lang: Lang = Lang("ru")) : Context = {
     new Context
   }
 

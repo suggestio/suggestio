@@ -19,3 +19,4 @@ RUNNING_PID
 *.rej
 *.orig
 conf/application.conf
+.DS_Store
