@@ -13,8 +13,8 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse
 import scala.util.{Failure, Success}
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.action.index.IndexRequest
-import io.suggest.index_info.{MDVIUnitAlterable, MDVIUnit, SioEsConstants}
-import SioEsConstants.FIELD_DATE
+import io.suggest.index_info.{MDVIUnitAlterable, MDVIUnit}
+import SioConstants.FIELD_DATE
 import java.util.Date
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS

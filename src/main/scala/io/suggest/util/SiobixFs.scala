@@ -2,7 +2,6 @@ package io.suggest.util
 
 import org.apache.hadoop.fs.{FileSystem, Path}
 import com.scaleunlimited.cascading.hadoop.HadoopUtils
-import io.suggest.index_info.SioEsConstants
 
 /**
  * Suggest.io
@@ -29,11 +28,11 @@ trait SiobixFsStaticT {
 
   val siobix_out_path  = new Path(siobix_out_dir)
 
-  val siobix_conf_path = new Path(siobix_out_path, SioEsConstants.CONF_SUBDIR)
+  val siobix_conf_path = new Path(siobix_out_path, SioConstants.CONF_SUBDIR)
   val dkeysConfRoot    = new Path(siobix_conf_path, "dkey")
   val crawlRoot        = new Path(siobix_out_path,  "crawl")
   val imgRoot          = new Path(siobix_out_path,  "img")
-  val thumbsRoot       = new Path(imgRoot,          SioEsConstants.THUMBS_SUBDIR)
+  val thumbsRoot       = new Path(imgRoot,          SioConstants.THUMBS_SUBDIR)
 
   implicit val fs: FileSystem = {
     val conf = HadoopUtils.getDefaultJobConf

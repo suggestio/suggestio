@@ -4,7 +4,7 @@ import org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder
 import org.elasticsearch.client.Client
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest
 import org.elasticsearch.common.xcontent.XContentBuilder
-import io.suggest.index_info.SioEsConstants._
+import SioConstants._
 import scala.concurrent.{Future, Promise}
 import org.elasticsearch.action.{ActionListener, ListenableActionFuture}
 import org.elasticsearch.action.admin.indices.optimize.{OptimizeResponse, OptimizeRequest}

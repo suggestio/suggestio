@@ -4,7 +4,6 @@ import scala.util.matching.Regex
 import com.github.nscala_time.time.Imports._
 import java.util.Locale
 import collection.mutable
-import io.suggest.index_info.SioEsConstants
 import scala.util.Random
 
 /**
@@ -225,7 +224,7 @@ object DateParseUtil extends Logs {
    * @return килосекунды от 0 н.э.
    */
   def date2kilosec(ld:LocalDate) : Long = {
-    ld.toDateMidnight.toInstant.getMillis / SioEsConstants.DATE_INSTANT_ZEROES
+    ld.toDateMidnight.toInstant.getMillis / SioConstants.DATE_INSTANT_ZEROES
   }
 
   /**
@@ -234,7 +233,7 @@ object DateParseUtil extends Logs {
    * @return LocalDate
    */
   def kilosec2date(n:Long) : LocalDate = {
-    new LocalDate(n * SioEsConstants.DATE_INSTANT_ZEROES)
+    new LocalDate(n * SioConstants.DATE_INSTANT_ZEROES)
   }
 
 

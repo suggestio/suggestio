@@ -22,6 +22,8 @@
       <ibiblio name="typesafe-releases" m2compatible="true" root="http://repo.typesafe.com/typesafe/releases" />
       <ibiblio name="sonatype-oss-releases" m2compatible="true" root="http://oss.sonatype.org/content/repositories/releases" />
       <ibiblio name="central-uk" m2compatible="true" root="http://uk.maven.org/maven2" />
+      <ibiblio name="twitter-maven-repo" m2compatible="true" root="http://maven.twttr.com"/>
+      <ibiblio name="apache-repo" m2compatible="true" root="https://repository.apache.org/content/repositories/releases"/>
       <ibiblio name="typesafe-snapshots" m2compatible="true" root="http://repo.typesafe.com/typesafe/snapshots" />
       <ibiblio name="sonatype-oss-snapshots" m2compatible="true" root="http://oss.sonatype.org/content/repositories/snapshots"/>
       <ibiblio name="local m2" m2compatible="true" root="file://${env.HOME}/.m2/repository"/>

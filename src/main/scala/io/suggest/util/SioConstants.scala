@@ -1,4 +1,4 @@
-package io.suggest.index_info
+package io.suggest.util
 
 import org.elasticsearch.index.mapper.internal._
 
@@ -9,7 +9,7 @@ import org.elasticsearch.index.mapper.internal._
  * Description: Набор констант, используемый в кравлере и в веб-морде: имена полей в маппингах и т.д.
  */
 
-object SioEsConstants {
+object SioConstants {
 
   // Имена полей, используемых в sio-маппингах
   val FIELD_URL           = "url"
@@ -44,5 +44,17 @@ object SioEsConstants {
 
   // Конфиги всякие лежат в субдиректориях с таким названием
   val CONF_SUBDIR         = "conf"
+
+
+  // HBase
+  // Тут описываются имена column-families. Имена CF должны быть максимально короткими и уникальными.
+  /** Имя CF для хранение данных crawldb. */
+  val CF_CRAWLDB = "c"
+
+  /** Имя CF для хранения контента полученных страниц. */
+  val CF_CONTENT = "d"
+
+  /** Имя CF для хранения некоторых метаданных от парсеров. Например, даты страницы. */
+  val CF_PARSED_META = "p"
 
 }
