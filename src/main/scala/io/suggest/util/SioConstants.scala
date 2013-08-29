@@ -1,6 +1,7 @@
 package io.suggest.util
 
 import org.elasticsearch.index.mapper.internal._
+import cascading.tuple.Fields
 
 /**
  * Suggest.io
@@ -56,5 +57,12 @@ object SioConstants {
 
   /** Имя CF для хранения некоторых метаданных от парсеров. Например, даты страницы. */
   val CF_PARSED_META = "p"
+
+  // Название ключевого поля: DkeyUrlKey. В HBase название не сохраняется, но глобально в рамках каждого Flow.
+  val HBASE_KEY_FN = "duk"
+  def HBASE_KEY_FIELDS = new Fields(HBASE_KEY_FN)
+
+  // Префикс таблиц кравлера.
+  val HTABLE_CRAWL_NAME_PREFIX = "crwl_"
 
 }
