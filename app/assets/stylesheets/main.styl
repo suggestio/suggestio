@@ -1,6 +1,27 @@
+@font-face
+  font-family: 'pt_sans_narrowbold'
+  src: url('/static/fonts/ptn77f-webfont.eot')
+  src: url('/static/fonts/ptn77f-webfont.eot?#iefix') format('embedded-opentype'),
+       url('/static/fonts/ptn77f-webfont.woff') format('woff'),
+       url('/static/fonts/ptn77f-webfont.ttf') format('truetype')
+       font-weight: normal
+       font-style: normal
+
+@font-face
+  font-family: 'pt_sans_narrowregular'
+  src: url('/static/fonts/ptn57f_regular-webfont.eot')
+  src: url('/static/fonts/ptn57f_regular-webfont.eot?#iefix') format('embedded-opentype'),
+       url('/static/fonts/ptn57f_regular-webfont.woff') format('woff'),
+       url('/static/fonts/ptn57f_regular-webfont.ttf') format('truetype')
+       font-weight: normal
+       font-style: normal
+
 body
   background: #ececec url('/assets/images/bg.png') center top
   min-width: 500px
+
+.relative
+  position: relative
 
 .sio-container
   position: relative
@@ -19,6 +40,16 @@ body
   left: 0px
   top: 0px
   width: 100%
+  background: #ececec url('/assets/images/bg.png') center top
+  z-index: 100
+
+.sio-top-glow
+  position: absolute
+  top: 100px
+  bottom: 0px
+  height: 100px
+  width: 100%
+  background: url('/assets/images/zatemnyalka.png') no-repeat left top
 
 .sio-help-container
   padding-top: 150px
@@ -30,11 +61,11 @@ body
   
   a,
   span
-    text-decoration: none;
-    font-family: Arial;
-    font-size: 13px!important;
-    color: #969696;
-    text-shadow: 0px 1px 1px #fff;
+    text-decoration: none
+    font-family: Arial
+    font-size: 13px!important
+    color: #969696
+    text-shadow: 0px 1px 1px #fff
   
   a:hover
     color: #328fb0
@@ -44,17 +75,17 @@ body
     float: left
   .delimiter
     float: left
-    width: 1px;
-    height: 15px;
-    background: #ccc;
-    -webkit-box-shadow: 0px 1px 1px #fff;
-    margin: 0px 15px;
+    width: 1px
+    height: 15px
+    background: #ccc
+    -webkit-box-shadow: 0px 1px 1px #fff
+    margin: 0px 15px
     
 .sio-slogo
   background: url('/assets/images/sio-slogo-en.jpg') no-repeat left top
   width: 419px
   height: 135px
-  margin: 20px 10px 10px 52px
+  margin: 30px 10px 30px 52px
   
 .sio-first-step
   margin-left: 52px
@@ -70,10 +101,10 @@ body
     background: #fff
     
     .shadow
-      border-left: 1px #fbfbfb solid;
-      border-right: 1px #fbfbfb solid;
-      border-top: 1px #d2d3d3 solid;
-      -webkit-border-radius: 2px;
+      border-left: 1px #fbfbfb solid
+      border-right: 1px #fbfbfb solid
+      border-top: 1px #d2d3d3 solid
+      -webkit-border-radius: 2px
     
     .col-xs-11
       padding: 0px!important
@@ -102,7 +133,7 @@ body
   display: block
   width: 50px
   height: 50px
-  margin-top: 24px
+  margin-top: 22px
   
   a
     display: block
@@ -120,15 +151,43 @@ body
   font-size: 12px
   padding: 25px 0px
   padding-left: 64px
+  color: #b1b1b1
+  font-family: Arial
+  font-size: 12px
+  text-shadow: 0px 1px 1px #fbfbfb
 
+.social
+  position: absolute
+  right: 0px
 
-  
+.social
+  a
+    display: block
+    float: left
+    background: url('/assets/images/social-icons-png.png') no-repeat -5px -6px
+    padding-left: 20px
+    margin-right: 20px
+    text-shadow: 0px 1px 1px #fff
+
+.common-info a,
+.social a
+  color: #9ec4cd
+  text-decoration: none
+
 // Help
 .sio-help-content
   margin-left: 42px
   
 .help-topics
   ul li a
-    color: #328fb0;
-    font-family: Arial;
-    font-size: 14px;
+    color: #328fb0
+    font-family: Arial
+    font-size: 14px
+    
+// Blog
+.sio-blog
+  padding-top: 150px
+  
+.blog-preview
+  height: 470px
+  background-position: 30% top
