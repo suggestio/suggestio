@@ -6,7 +6,7 @@ import SiobixFs.fs
 import org.apache.hadoop.fs.Path
 import play.api.libs.iteratee.Enumerator
 import scala.concurrent.duration._
-import io.suggest.index_info.SioEsConstants
+import io.suggest.util.SioConstants._
 
 /**
  * Suggest.io
@@ -18,7 +18,7 @@ import io.suggest.index_info.SioEsConstants
 object Thumb extends Controller {
 
   val domainsRoot   = SiobixFs.siobix_out_path
-  val thumbsSubpath = new Path(SioEsConstants.THUMBS_SUBDIR)
+  val thumbsSubpath = new Path(THUMBS_SUBDIR)
 
   // Хидер Cache-Control для всех одинаковый
   val cacheControlHdr = {

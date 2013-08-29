@@ -9,7 +9,7 @@ import io.suggest.model._
 import scala.collection.JavaConversions._
 import collection.mutable
 import io.suggest.util.{LogsImpl, Lists}
-import io.suggest.index_info.SioEsConstants._
+import io.suggest.util.SioConstants._
 import controllers.routes
 import io.suggest.model.SioSearchContext
 
