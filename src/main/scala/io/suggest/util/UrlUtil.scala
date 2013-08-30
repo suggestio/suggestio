@@ -491,7 +491,47 @@ object UrlUtil extends Logs with Serializable {
       host
   }
 
+  /**
+   * Отреверсить доменное имя  (www.suggest.io -> io.suggest.www). Бывает полезно для HBase-ключей, чтобы в будущем
+   * делать быстрые сканы внутри домена по префиксу ключа.
+   * @param domain Исходное доменное имя.
+   * @return Обратное доменное имя.
+   */
+  def reverseDomain(domain:String): String = {
+    domain
+      .split('.')
+      .reverse
+      .mkString(".")
+  }
 
-  //
-  //def url_to_crawldb_hostless_key()
+  /**
+   * Перегнать строковую ссылку в row-key для HBase. По сути враппер над url2rowKey().
+   * @param urlStr Строка URL.
+   * @return Строка row-key.
+   */
+  def urlStr2rowKey(urlStr:String) = url2rowKey(new URL(urlStr))
+
+  /**
+   * Перегнать ссылку в нормальный row-key для HBase.
+   * @param url Ссыль.
+   * @return Строка row-key.
+   */
+  def url2rowKey(url:URL): String = {
+    val dkeyR = reverseDomain(
+                 host2dkey(
+                   url.getHost))
+    val sb = new StringBuilder(dkeyR)
+    val urlPath = normalizePath(url.getPath)
+    if (urlPath != null) {
+      sb.append("/")
+        .append(urlPath)
+    }
+    val urlQuery = normalizeQuery(url.getQuery)
+    if (urlQuery != null) {
+      sb.append("?")
+        .append(urlQuery)
+    }
+    sb.toString()
+  }
+
 }

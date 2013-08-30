@@ -60,7 +60,7 @@ object SioConstants {
 
   // Название ключевого поля: DkeyUrlKey. В HBase название не сохраняется, но глобально в рамках каждого Flow.
   val HBASE_KEY_FN = "duk"
-  def HBASE_KEY_FIELDS = new Fields(HBASE_KEY_FN)
+  val HBASE_KEY_FIELDS = new Fields(HBASE_KEY_FN)
 
   // Префикс таблиц кравлера.
   val HTABLE_CRAWL_NAME_PREFIX = "crwl_"
