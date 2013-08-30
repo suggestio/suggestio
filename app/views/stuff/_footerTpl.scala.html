@@ -1,0 +1,24 @@
+@(lang:String)
+
+<div class="sio-footer-container">
+<div class="container">
+ 
+  <div class="row sio-footer-row">
+    
+    <div class="col-sm-8 common-info">
+      © 2012 Suggest.io. All rights reserved Retina-ready
+      <span class="delimiter">|</span>
+      
+      <a @if(lang=="ru"){ class="active" } href="/change_locale/ru">Ru</a>  @* TODO выставить ссылку routes *@
+      <a @if(lang=="en"){ class="active" } href="/change_locale/en">En</a>  @* TODO выставить ссылку routes *@
+      
+    </div>
+    
+    <div class="col-sm-3 relative">
+      @_social()
+    </div>
+    
+  </div>
+  
+</div>
+</div>

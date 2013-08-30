@@ -1,61 +1,62 @@
 @(postFormM:Form[_], isEdit: Boolean = true, call: Call)(implicit c:util.Context)
 @import helper._
+@import c.lang
 
 @indexTpl {
 
-<h1><a href="@routes.Blog.recordList">&gt; Back</a>
+<div class="container">
+  
+  <div class="row">
+    
+    <div class="single-row">
+    <h1>
     @if(!isEdit) {
-        Blog: new post
+      @Messages("b.a.new_blog_record")
     } else {
-        Blog: edit post
+      @Messages("b.a.edit_blog_record")
     }
-</h1>
-
+    </h1>
+    
 @form(call) {
 
-
 <fieldset>
-    <label>id</label>
-    @if(!isEdit) {
-    @inputText(postFormM("id"))
-    } else {
+  @if(!isEdit) {
+    @inputText(postFormM("id"), '_label -> Messages("b.a.record_id"))
+  } else {
     @inputText(postFormM("id"), 'readonly -> "true")
-    }
+  }
 </fieldset>
 
 <fieldset>
-    <label>Title</label>
-    @inputText(postFormM("title"))
+  @inputText(postFormM("title"))
 </fieldset>
 
 <fieldset class="compact-fieldset">
-    <label>Preview image</label>
-    @inputText(postFormM("bg_image"))
+  @inputText(postFormM("bg_image"))
 </fieldset>
 
 <fieldset class="compact-fieldset">
-    <label>Preview bg color</label>
-    @inputText(postFormM("bg_color"))
+  @inputText(postFormM("bg_color"))
 </fieldset>
 
-@* <fieldset>
-    <label>Date</label>
-    <input type="text" name="date" value="{{blog_record.date|default:""}}">
-</fieldset> *@
+<fieldset>
+  @inputText(postFormM("description"), '_label -> "Описание")
+</fieldset>
 
 <fieldset>
-    <label>Description</label>
-    @inputText(postFormM("description"))
-</fieldset>
-<fieldset>
-    <label>Text</label>
-    @inputText(postFormM("text"))
+  @inputText(postFormM("text"))
 </fieldset>
 
 @if(!isEdit) {
-<input type="submit" value="Create"/>
+  <input type="submit" value="Create"/>
 } else {
-<input type="submit" value="Update"/>
+  <input type="submit" value="Update"/>
 }
+
 }
+
+</div>
+</div>
+</div>
+
 }

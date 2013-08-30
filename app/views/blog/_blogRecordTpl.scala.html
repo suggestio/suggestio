@@ -4,9 +4,12 @@
 
   @if(preview) {
     
-    <div class="blog-record blog-preview" style="@if(!b.bg_color.isEmpty) {background-color: @b.bg_color}; @if(!b.bg_image.isEmpty) { background-image: url('@b.bg_image')}">
+    <div class="blog-preview" style="@if(!b.bg_color.isEmpty) {background-color: @b.bg_color}; @if(!b.bg_image.isEmpty) { background-image: url('@b.bg_image')}">
       
-      <a href="@routes.Blog.readOne(b.id)">"@b.title"</a>
+      <div class="container">
+      <div class="row">
+      
+      <h2><a href="@routes.Blog.readOne(b.id)">@Html(b.title)</a></h2>
 
       @* Эти два цикла нужно раскоментить после того как в вызовах будет проверяться аутентификация isAdmin, а не maybeAuthenticated (включена для тестов). Чтоб запись бога мог редактировать только зарегестрированный пользователь.
       @* @if(c.isAuth) { *@
@@ -16,18 +19,25 @@
       @*   } *@
       @*}    *@
       
-      @b.description
+      <div class="description">@Html(b.description)</div>
+      </div>
+      </div>
     </div>
   }else{
     
+    @indexTpl {
     <div class="container">
       
-      <h1>@b.title</h1>
+      <div class="blog-record">
+      <h1>@Html(b.title)</h1>
       
       <div class="text">
-        @b.text
+        @Html(b.text)
+      </div>
       </div>
       
     </div>
+    
+    }
     
   }

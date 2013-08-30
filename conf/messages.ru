@@ -1,3 +1,6 @@
+error.required=Поле обязаельно для заполнения
+infos.required=Req
+
 live_search_for_your_website=Живой поиск для вашего сайта
 provide_site_url_to_init_search=Введите адрес вашего сайта, чтобы присоединиться к поисковой системе
 install_search=УСТАНОВИТЕ ПОИСК НА САЙТ
@@ -101,6 +104,11 @@ stuff.menu.BLOG=БЛОГ
 stuff.menu.HELP=ПОМОЩЬ
 stuff.menu.LIVE=ВЖИВУЮ
 stuff.menu.CONTACTS=КОНТАКТЫ
+
+blog=Blog
+b.a.record_id=Идентификатор записи (id)
+b.a.new_blog_record=Создание записи блога
+b.a.edit_blog_record=Редактирование записи блога
 
 help=Помощь
 h.m.setup=Быстрая установка

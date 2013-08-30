@@ -1,6 +1,14 @@
-@()(implicit ctx:util.Context)
+@(isFixed:Boolean=false)(implicit ctx:util.Context)
 @import stuff._
 @import ctx._
+
+
+
+
+@if(isFixed){
+<div class="sio-fixed-top-container">
+<div class="container">
+}
 
 <div class="row sio-first-row">
   
@@ -9,6 +17,10 @@
     <a href="/" class="logo">
       <img src="https://suggest.io/static/images2/sio-logo.png">
     </a>
+    
+    @if(isFixed){
+      <div class="sio-glow"></div>
+    }
   
   </div>
   
@@ -17,3 +29,11 @@
   </div>
   
 </div>
+
+@if(isFixed){
+</div>
+</div>
+
+<div class="sio-top-glow"></div>
+
+}

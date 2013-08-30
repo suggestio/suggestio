@@ -3,21 +3,11 @@
 @import c.lang
 @import stuff._
 
-@head_after = {
-}
+@head_after = {}
 
 @main(title=Messages("blog"), head_after=head_after) {
   
-  <div class="sio-fixed-top-container">
-    <div class="container">
-      
-      @_mainHeaderTpl()
-      
-    </div>
-    
-  </div>
-  
-  <div class="sio-top-glow"></div>
+  @_mainHeaderTpl(isFixed=true)
   
   <div class="sio-blog">
     @content

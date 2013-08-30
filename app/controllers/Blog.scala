@@ -95,7 +95,7 @@ object Blog extends Controller with ContextT with AclT {
 
   def newRecS =  maybeAuthenticated { implicit pw_opt => implicit request =>
     postFormM.bindFromRequest.fold(
-    formWithErrors => NotAcceptable,
+    formWithErrors => NotAcceptable(addRecordTpl(formWithErrors)),
     { rec => rec.save
       Redirect(routes.Blog.readOne(rec.id))
     }

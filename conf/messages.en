@@ -1,3 +1,6 @@
+error.required=This field is required
+info.required=Req
+
 live_search_for_your_website=Live search for your website
 provide_site_url_to_init_search=Type in your website address to join search system
 install_search=INSTALL SEARCH
@@ -95,6 +98,12 @@ stuff.menu.BLOG=BLOG
 stuff.menu.HELP=HELP
 stuff.menu.LIVE=LIVE
 stuff.menu.CONTACTS=CONTACTS
+
+
+blog=Blog
+b.a.record_id=Record id (id)
+b.a.new_blog_record=New blog record
+b.a.edit_blog_record=Edit blog record
 
 help=Help
 h.m.setup=Quick install

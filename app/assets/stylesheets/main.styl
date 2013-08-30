@@ -1,24 +1,41 @@
 @font-face
   font-family: 'pt_sans_narrowbold'
-  src: url('/static/fonts/ptn77f-webfont.eot')
-  src: url('/static/fonts/ptn77f-webfont.eot?#iefix') format('embedded-opentype'),
-       url('/static/fonts/ptn77f-webfont.woff') format('woff'),
-       url('/static/fonts/ptn77f-webfont.ttf') format('truetype')
+  src: url('/assets/fonts/ptn77f-webfont.eot')
+  src: url('/assets/fonts/ptn77f-webfont.eot?#iefix') format('embedded-opentype'),
+       url('/assets/fonts/ptn77f-webfont.woff') format('woff'),
+       url('/assets/fonts/ptn77f-webfont.ttf') format('truetype')
        font-weight: normal
        font-style: normal
 
 @font-face
   font-family: 'pt_sans_narrowregular'
-  src: url('/static/fonts/ptn57f_regular-webfont.eot')
-  src: url('/static/fonts/ptn57f_regular-webfont.eot?#iefix') format('embedded-opentype'),
-       url('/static/fonts/ptn57f_regular-webfont.woff') format('woff'),
-       url('/static/fonts/ptn57f_regular-webfont.ttf') format('truetype')
+  src: url('/assets/fonts/ptn57f_regular-webfont.eot')
+  src: url('/assets/fonts/ptn57f_regular-webfont.eot?#iefix') format('embedded-opentype'),
+       url('/assets/fonts/ptn57f_regular-webfont.woff') format('woff'),
+       url('/assets/fonts/ptn57f_regular-webfont.ttf') format('truetype')
        font-weight: normal
        font-style: normal
 
 body
   background: #ececec url('/assets/images/bg.png') center top
   min-width: 500px
+
+form
+  label
+    font-size: 12px
+  input
+    width: 100%
+    padding: 10px
+    border: 1px #ccc solid
+  
+  .info,
+  .error
+    color: #999
+    font-size: 12px
+    padding: 5px 0px
+  
+  .error
+    color: red
 
 .relative
   position: relative
@@ -35,21 +52,34 @@ body
   bottom: 0px
   width: 100%
 
+.single-row
+  width: 700px
+  padding-left: 65px
+
 .sio-fixed-top-container
   position: fixed
   left: 0px
   top: 0px
   width: 100%
   background: #ececec url('/assets/images/bg.png') center top
+  height: 100px
   z-index: 100
 
 .sio-top-glow
-  position: absolute
+  position: fixed
   top: 100px
   bottom: 0px
-  height: 100px
+  height: 23px
   width: 100%
   background: url('/assets/images/zatemnyalka.png') no-repeat left top
+
+.sio-glow
+  position: absolute
+  bottom: -31px
+  left: -15px;
+  width: 110px
+  height: 23px
+  background: url('/assets/images/top-glow.png') no-repeat left top
 
 .sio-help-container
   padding-top: 150px
@@ -144,6 +174,10 @@ body
     background-position: -51px top
   a:active
     background-position: -102px top
+
+.common-info
+  .delimiter
+    padding: 0px 10px
     
 .common-info,
 .social
@@ -172,7 +206,12 @@ body
 .common-info a,
 .social a
   color: #9ec4cd
+  text-decoration: underline
+
+.common-info a.active,
+.social a.active
   text-decoration: none
+  cursor: default!important
 
 // Help
 .sio-help-content
@@ -187,7 +226,29 @@ body
 // Blog
 .sio-blog
   padding-top: 150px
+
+.blog-record
+  width: 700px
+  padding-left: 52px
   
+  ul
+    margin: 20px 0px
+    border-left: 1px #ccc solid
+    list-style-type: none
+    
+    li 
+      margin: 20px 0px;
+
 .blog-preview
   height: 470px
   background-position: 30% top
+  
+  h2
+    width: 400px
+    padding: 10px 0px 10px 62px
+    font-family: Georgia
+    
+  .description
+    width: 400px
+    padding: 0px 0px 0px 62px
+    font-size: 12px
