@@ -1,5 +1,20 @@
-error.required=Поле обязаельно для заполнения
-infos.required=Req
+error.invalid=Неверное значение
+error.invalid.java.util.Date=Неверное значение даты
+error.required=Поле обязательно для заполнения
+error.number=Необходимо ввести числовое значение
+error.min=Должно быть больше или равно {0}
+error.min.strict=Должно быть больше {0}
+error.max=Должно быть меньше или равно {0}
+error.max.strict=Должно быть меньше {0}
+error.minLength=Минимальная длина {0}
+error.maxLength=Максимальная длина {0}
+
+constraint.required=Обязетально
+constraint.min=Минимальное значение: {0}
+constraint.max=Максимальное значение: {0}
+constraint.minLength=Минимальная длина: {0}
+constraint.maxLength=Максимальная длина: {0}
+constraint.email=Email
 
 live_search_for_your_website=Живой поиск для вашего сайта
 provide_site_url_to_init_search=Введите адрес вашего сайта, чтобы присоединиться к поисковой системе

@@ -3,17 +3,31 @@
 @* Страница с формой отзыва/обратной связи. *@
 
 @import ctx._
+@import stuff._
 
-@main(Messages("stuff.menu.CONTACTS")) {
+@main(Messages("contacts")) {
 
-<div id="feedbackPopup" class="popup-content-block feedback-form">
-	<div class="feedback-sent feedback-sent-@lang_str">
-		<span>@Messages("message_sent")</span>
-	</div>
-	<div class="feedback-message feedback-message-@lang_str">
-		<span id="feedbackIntroMessage">@Messages("email_us_at") <a href="mailto:support@@suggest.io">support@@suggest.io</a>, @Messages("or_fill_the_form"):</span>
-	</div>
-	@_feedbackFormTpl(feedbackFormM)
+
+<div class="container">
+  
+  @_mainHeaderTpl()
+  
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="sio-slogo-@ctx.lang_str"></div>
+    </div>
+  </div>
+  
+  <div class="row">
+    
+    <div class="feedback-message feedback-message-@lang_str">
+      <span id="feedbackIntroMessage">@Messages("email_us_at") <a href="mailto:support@@suggest.io">support@@suggest.io</a>, @Messages("or_fill_the_form"):</span>
+    </div>
+    
+     @_feedbackFormTpl(feedbackFormM)
+     
+  </div>
 </div>
+
 }
 
