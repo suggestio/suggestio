@@ -12,7 +12,10 @@ import scala.util.matching.Regex
  * Created: 05.03.13 14:05
  * Description: Переписанный на Scala неподдерживаемый bixo.utils.UrlUtils.
  */
-object UrlUtil extends Logs with Serializable {
+object UrlUtil extends Serializable {
+
+  @transient private lazy val LOGGER = new LogsImpl(getClass)
+  import LOGGER._
 
   val INSTANCE = this
 

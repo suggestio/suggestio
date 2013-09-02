@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
  * Description: http://stackoverflow.com/a/2087048
  */
 trait Logs extends LogsAbstract {
-  protected val logger = LoggerFactory.getLogger(getClass.getName)
+  @transient protected lazy val logger = LoggerFactory.getLogger(getClass.getName)
 
   protected def trace(message: => String) = if (logger.isTraceEnabled) logger.trace(message)
   protected def trace(message: => String, ex:Throwable) = if (logger.isTraceEnabled) logger.trace(message, ex)
@@ -84,7 +84,7 @@ trait LogsAbstract {
 class LogsImpl(className: String) {
   def this(clazz: Class[_]) = this(clazz.getName)
 
-  private val _logger = LoggerFactory.getLogger(className)
+  @transient private lazy val _logger = LoggerFactory.getLogger(className)
 
   def debug(message: => String) = if (_logger.isDebugEnabled) _logger.debug(message)
   def debug(message: => String, ex:Throwable) = if (_logger.isDebugEnabled) _logger.debug(message,ex)
