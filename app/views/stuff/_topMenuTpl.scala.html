@@ -1,9 +1,9 @@
 @(activeLink:String = null)(implicit c:util.Context)
 
 @import c.lang
-
 <div class="menu">
-
+	<div class="menu-inner">
+	
 	@defining(Messages("stuff.menu.ABOUT")) { about_msg =>
 		@if(activeLink == "about") {
 		<span class="active-link">@about_msg</span>
@@ -44,6 +44,13 @@
 
 	<div class="delimiter"></div>
 	
-	<a class="menu-link" href="@routes.Feedback.feedbackForm()">@Messages("stuff.menu.CONTACTS")</a>
+	@defining(Messages("stuff.menu.CONTACTS")) { contacts_msg =>
+		@if(activeLink == "contacts") {
+			<span class="active-link">@contacts_msg</span>
+		} else {
+			<a class="menu-link" href="@routes.Feedback.feedbackForm()">@contacts_msg</a>
+		}
+	}
 	
+	</div>
 </div>

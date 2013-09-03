@@ -1,3 +1,4 @@
+error.email=Необходимо ввести настоящий e-mail
 error.invalid=Неверное значение
 error.invalid.java.util.Date=Неверное значение даты
 error.required=Поле обязательно для заполнения

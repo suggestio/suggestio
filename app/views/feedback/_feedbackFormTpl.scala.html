@@ -6,22 +6,20 @@
 @import helper._
 
 @form(routes.Feedback.feedbackFormSubmit) {
-	<fieldset>
-		<label id="labelfeedbackEmail">@Messages("your_email")</label>
-		<div class="input">
-		    @inputText(feedbackFormM("email"), 'id -> "feedbackEmail")
-		</div>
-	</fieldset>
+  <fieldset>
+    <div class="f-input">
+      @inputText(feedbackFormM("email"), 'id -> "feedbackEmail", '_label -> Messages("your_email"))
+    </div>
+  </fieldset>
 
-	<fieldset>
-		<label id="labelfeedbackMessage">@Messages("your_message")</label>
-		<div class="input">
-		    @textarea(feedbackFormM("message"), 'id -> "feedbackMessage")
-		</div>
-	</fieldset>
-
-	<fieldset>
-		@* Кнопка сабмита "отправить" *@
-		<input class="submit" type="submit" value="@Messages("send")"/>
-	</fieldset>
+  <fieldset>
+    <div class="f-input">
+      @textarea(feedbackFormM("message"), 'id -> "feedbackMessage", '_label -> Messages("your_message"))
+    </div>
+  </fieldset>
+  
+  <fieldset>
+    @* Кнопка сабмита "отправить" *@
+    <input class="submit" type="submit" value="@Messages("send")"/>
+  </fieldset>
 }

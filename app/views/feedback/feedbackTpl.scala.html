@@ -10,7 +10,7 @@
 
 <div class="container">
   
-  @_mainHeaderTpl()
+  @_mainHeaderTpl(false, "contacts")
   
   <div class="row">
     <div class="col-sm-12">
@@ -20,12 +20,14 @@
   
   <div class="row">
     
-    <div class="feedback-message feedback-message-@lang_str">
-      <span id="feedbackIntroMessage">@Messages("email_us_at") <a href="mailto:support@@suggest.io">support@@suggest.io</a>, @Messages("or_fill_the_form"):</span>
+    <div class="feedback-row">
+      <div class="feedback-message feedback-message-@lang_str">
+        <span id="feedbackIntroMessage">@Messages("email_us_at") <a href="mailto:support@@suggest.io">support@@suggest.io</a>, @Messages("or_fill_the_form"):</span>
+      </div>
+      
+      @_feedbackFormTpl(feedbackFormM)
+      
     </div>
-    
-     @_feedbackFormTpl(feedbackFormM)
-     
   </div>
 </div>
 

@@ -1,9 +1,6 @@
-@(isFixed:Boolean=false)(implicit ctx:util.Context)
+@(isFixed:Boolean=false,activeLink:String=null)(implicit ctx:util.Context)
 @import stuff._
 @import ctx._
-
-
-
 
 @if(isFixed){
 <div class="sio-fixed-top-container">
@@ -25,7 +22,7 @@
   </div>
   
   <div class="col-sm-10">
-    @_topMenuTpl()
+    @_topMenuTpl(activeLink)
   </div>
   
 </div>
@@ -35,5 +32,25 @@
 </div>
 
 <div class="sio-top-glow"></div>
+
+<script type="text/javascript">
+	$(window).bind("scroll", function()
+	{
+		var st = $(window).scrollTop();
+		
+		var to = 0;
+		
+		if( st > 100 )
+		{
+			to = 1
+		}else
+		{
+			to = st / 100
+		}
+		
+		$('.sio-glow, .sio-top-glow').css({'opacity' : to});
+		
+	});
+</script>
 
 }
