@@ -24,7 +24,7 @@ object ApplicationBuild extends Build {
       // akka - for siobix direct calls
       "com.typesafe.akka" %% "akka-actor" % "2.1.0",
       // coffeescript-компилятор используем свой заместо компилятора play по ряду причин (последний прибит гвоздями к sbt-plugin, например).
-      "org.jcoffeescript" % "jcoffeescript" % "1.6.1",
+      "org.jcoffeescript" % "jcoffeescript" % "1.6-SNAPSHOT",
       // for domain validation:
       "net.databinder.dispatch" %% "dispatch-core" % "0.10.0",
       "com.google.guava" % "guava" % "14.0.1"
