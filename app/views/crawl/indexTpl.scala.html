@@ -28,6 +28,7 @@
     
     <div class="col-sm-11">
       
+      @* Поле ввода для сайта юзера *@
       <div class="sio-first-step">
         <div class="input">
           <div class="shadow">
@@ -35,14 +36,36 @@
             <div class="row">
               <div class="col-xs-1 http-prefix">http://</div>
               <div class="col-xs-11">
-                <input type="text"/>
+                <input id="userSiteInput" type="text"/>
               </div>
             </div>
             
           </div>
         </div>
+        
+        <div class="note">Введите адрес вашего сайта, чтобы присоединиться к поисковой системе</div>
+        
       </div>
       
+      @* Окошко с JS для быстрой установки *@
+      
+      <div class="sio-second-step">
+        
+        <div class="sio-label sio-blue-label">Скопируйте JavaScript код и добавьте его к себе на сайт</div>
+        
+        <div class="input" style="display: block;">
+          <div class="input-shadow">
+            <textarea id="jsCodeTextarea"></textarea>
+          </div>
+        </div>
+        
+        <div class="install-explanation" id="installExplanation" style="display: block;">
+          <div class="note"><p>Обратите внимание, код должен присутствовать на всех страницах вашего сайта.</p>
+            <p>После установки кода, зайдите на свой сайт для окончания установки и настройки поиска.</p>
+          </div>
+        </div>
+      </div>
+    
     </div>
     
     <div class="col-sm-1 hidden-xs">
@@ -73,5 +96,11 @@
 </p>
 
 </div>
+
+<script type="text/javascript">
+  $(document).ready(function(){
+    sio.index.init();
+  });
+</script>
 
 }

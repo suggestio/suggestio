@@ -281,7 +281,7 @@ object Admin extends Controller with AclT with ContextT with Logs {
    * @param request Заголовки запроса.
    * @return Result, такой же как и в экшенах контроллеров.
    */
-  override protected def onUnauthorized(request: RequestHeader): Result = Forbidden("403 Forbidden")
+  override protected def onUnauthorized(request: RequestHeader): Result = Redirect( routes.Ident.persona )
 
   /**
    * Генерация классификатора событий для юзера в админке.

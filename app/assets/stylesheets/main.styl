@@ -42,6 +42,15 @@ form
   .error
     color: red
 
+.sio-label
+  padding: 12px 0px 10px 0px!important
+  font-size: 16px
+
+.sio-blue-label
+  color: #328fb0
+  font-size: 14px!important
+  max-width: 420px
+  
 .relative
   position: relative
 
@@ -136,10 +145,14 @@ form
   width: 449px
   background: url('/assets/images/sio-slogo-ru.jpg') no-repeat left top
 
-.sio-first-step
+.sio-first-step,
+.sio-second-step
   margin-left: 52px
   margin-top: 20px
   
+.sio-first-step,
+.sio-second-step
+  margin-bottom: 50px
   .row
     margin: 0px!important
   
@@ -158,13 +171,17 @@ form
     .col-xs-11
       padding: 0px!important
     
-    input
+    input,
+    textarea
       width: 100%
       border: 0px
       outline: none
       color: #328fb0
       padding: 15px 10px
       background: #f6f6f6
+    
+    textarea
+      height: 200px
     
     .input-shadow
       border-left: 1px #fbfbfb solid

@@ -1,0 +1,116 @@
+# Разные полезные функции
+utils =
+  
+  # Сгенерить рандомное целое число
+  rand : () ->
+    Math.floor Math.random() * 10000000
+  
+  # Создать DOM элемент
+  ce : ( tag, attributes, inhtml ) ->
+    
+    ne = document.createElement tag
+    
+    for k,v of attributes
+      ne.setAttribute k, v
+    
+    if( typeof( inhtml ) != 'undefined' )
+      ne.innerHTML = inhtml
+    
+    ne
+  
+  # Удалить DOM элемент
+  re : ( e ) ->
+    
+    if typeof( e ) == 'string'
+      e = ge(e)
+    else
+      e = e
+    
+    if( !exists( e ) || e == null )
+      return false
+      p = e.parentNode
+    
+    if( p != null )
+      p.removeChild e
+    
+  # Проверить, есть ли объект
+  exists : (o) ->
+    if typeof( o ) == 'undefined'
+      false
+    else
+      true
+  
+  ge : () ->
+    for e in arguments
+      
+      if typeof e == 'string' || typeof e == 'number'
+        e = document.getElementById e
+      
+      if arguments.length == 1
+        e
+      if (!ea)
+        ea = new Array();
+      ea.push e
+    
+    ea
+  
+  ge_tag : ( tag ) ->
+    document.getElementsByTagName tag
+  
+  # Есть ли у переданного элемента запрошенный класс
+  hasClass : (element, value) ->
+    _class_pattern = new RegExp(value, "gi")
+    element.className.match( _class_pattern )
+  
+  is_retina : () ->
+    if window.devicePixelRatio > 1
+      true
+    else
+      false
+  
+  # Добавить указанный класс к переданному элементу
+  addClass : (element, value) ->
+    element = ge element if typeof( element ) == 'string' else element
+    
+    if element==null
+      return 0
+    
+    if !element.className
+      element.className = value
+    else
+      newClassName = element.className
+      _class_pattern = new RegExp(value, "gi")
+      
+      if newClassName.match( _class_pattern )
+        return false
+      
+      newClassName += " "
+      newClassName += value
+      element.className = newClassName
+  
+  # Удалить указанный класс с элемента
+  removeClass : (element, value) ->
+    element = ge(element)
+    
+    if element==null
+      return 0
+    
+    if !element.className
+      element.className = ''
+    else
+      newClassName = element.className.replace(value,'').replace(/\s{2,}/g, ' ')
+      element.className = newClassName;
+  
+  # Показать объект
+  show : ( element ) ->
+    if ge element == null
+      return false
+    
+    ge(element).style.display = 'block'
+  
+  hide : ( element ) ->
+    if ge element == null
+      return false
+    
+    ge(element).style.display = 'none'
+  

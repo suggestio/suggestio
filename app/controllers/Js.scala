@@ -9,7 +9,7 @@ import io.suggest.util.UrlUtil
 import models.{MDomainUserSettings, MDomain}
 import play.api.Play.current
 import play.api.libs.json._
-import views.html.js._
+import views.txt.js._
 import play.api.templates.Html
 import io.suggest.event.SioNotifier
 import play.api.libs.concurrent.Execution.Implicits._
@@ -21,6 +21,7 @@ import scala.concurrent.Future
 import java.util.UUID
 import play.api.libs.iteratee.Concurrent
 import io.suggest.util.event.subscriber.{SioEventTJSable, SnWebsocketSubscriber}
+import play.api.Logger
 
 
 /**
@@ -113,6 +114,7 @@ object Js extends Controller with AclT with ContextT with Logs {
       // Запрос скрипта для неизвестного сайта. ВОЗМОЖНО теперь там установлен скрипт.
       // Нужно проверить, относится ли запрос к юзеру, которому принадлежит qi и есть ли реально скрипт на сайте.
       case None =>
+        
         val isQi = DomainQi.isQi(dkey, qi_id)
         lazy val logPrefix = "v2(%s %s): " format(dkey, qi_id)
         val futureResult = isQi match {
@@ -174,8 +176,11 @@ object Js extends Controller with AclT with ContextT with Logs {
             sendEvents = true
           )
         }
-        // наконец вернуть ещё не готовый, но уже результат
+         
+        
+        
         Async(futureResult1)
+       
     }
   }
 
@@ -255,6 +260,6 @@ object Js extends Controller with AclT with ContextT with Logs {
   }
 
 
-  private def replyJs(respBody:Html) = Ok(respBody).as("text/javascript")
+  private def replyJs(respBody:play.api.templates.Txt) = Ok(respBody).as("text/javascript")
 
 }

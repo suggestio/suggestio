@@ -1,0 +1,44 @@
+@(dkey:String,qi_id:String,wsTimestamp:Option[Long] = None)
+
+_qi_complete = () ->
+  
+  sio._qi_completed = true
+  
+  host = '@dkey'
+  qi_id = '@qi_id'
+  timestamp = '@wsTimestamp'
+  sio.dkey_host = host
+  
+  iframe_params = 
+    id : 'sio-install-post-iframe'
+    name:'sio-install-post-iframe'
+  
+  _sio_iframe = utils.ce 'iframe', iframe_params, ''
+  _sio_iframe.style.display = 'none'
+  
+  utils.ge_tag('body')[0].appendChild _sio_iframe
+  
+  form_params = 
+    id : 'sio-install-post-form'
+    action : sio.config.sio_host + 'js/install_url/' + host + '/' + qi_id
+    method : 'post'
+    target : 'sio-install-post-iframe'
+  
+  _sio_install_form = utils.ce 'form', form_params, '<input type="text" name="url" value="' + window.location + '"><input type="submit" value="post">'
+  _sio_install_form.style.display = 'none'
+  utils.ge_tag('body')[0].appendChild _sio_install_form
+  
+  _sio_install_form.submit()
+  
+  _listen_qi_events host, qi_id, timestamp
+  
+_listen_qi_events = ( host, qi_id, timestamp ) ->
+  
+  params = 
+    type : 'text/javascript'
+    src : sio.config.sio_host + 'js/install_ws/' + host + '/' + qi_id + '/' + timestamp
+  
+  _lqi = utils.ce 'script', params
+  utils.ge_tag('head')[0].appendChild _lqi
+  
+_qi_complete()

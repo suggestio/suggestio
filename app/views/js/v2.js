@@ -1,42 +1,18 @@
-@(dkey:String, qi_id:String, uSettings:models.MDomainUserSettingsT, isInstall:Boolean = false, isSiteAdmin:Boolean = false, wsTimestamp:Option[Long] = None)(implicit ctx:util.Context)
-@* sio renderer v2
+{#/* sio renderer v2
 
-Шаблон для основного js-скрипта, выполняемого на клиентах. Обычно выполняется без переменных и кешируется на клиентах.
+Шаблон для скриптоты. Обычно выполняется без переменных и кешируется на клиентах.
+если происходит добавление домена в базу suggest.io
 
 Доступны переменные:
     - dkey. Например "vasya.ru"
-    - isSiteAdmin. Если true, то значит этот юзер -- владелец сайта, и нужно ему отобразить редактор.
-    - uSettings - Доступ к пользовательским настройкам сайта. Бывш. domain_data.
-      !!! uSettings считывается из хранилища асинхронно, поэтому для ускорения рендера желательно обращаться к нему как можно позднее.
-    - ctx. Контекст, в котором так же имеется timestamp.
+    - timestamp для GET /js/pull/vasya.ru/123123123123
 
 TODO:
-    - Переписать на coffeescript, исправив текущие ошибки компиляции.
-
-    - Переписать, разбивая код на модули, которые распихиваются по другим шаблонам и инклюдятся.
-      Например, редактор настроек должен быть в отдельном шаблоне, а поисковая часть и её рендереры -- в других шаблонах, инстраллеры - в третьих.
-      main.scala.html должен содержать лишь глобальные переменные и код, дергающий другие шаблоны и собирающий необходимый скрипт из желаемых кусков.
-
-    - Заюзать статический routes и javascriptRouter для вычисления адресов запросов к suggest.io, а НЕ генерировать ссылки руками.
-      http://www.playframework.com/documentation/2.1.0/ScalaJavascriptRouting
-      Embedded router создаст необходимый объект (например "jsRoutes"), затем можно будет через него динамические получать ссылки, методы или сразу делать запросы.
-      JS-роутеры в разных шаблонах должны быть у каждого свои + в шаблонах можно заюзать один глобальный js-роутер из верхнего шаблона.
-      Это также относится к вебсокет-ссылкам.
-
-    - Сообщения на разных языках вынести в conf/messages. JSON-объекты сообщений сформировать через вызов Messages(), обернув в cache для ускорения генерации.
-
-    - Отрабатывать ситуацию, когда юзер добавил вызов скрипта на страницу дважды
-    - -//- когда юзер добавил вызов скрипта в head
+    - отрабатывать ситуацию, когда юзер добавил вызов скрипта на страницу дважды
+    - -//- когда юзер добавил вызов скрипта в <head>
     - не отображать настройки если юзер зашел с мобилы
-
-script-тег тут в комменте, чтобы сработала подсветка js в html-файле.
-<script type="text/javascript">
-*@
-
-@import ctx._
-@* нельзя import uSettings._ , ибо будет конфликт dkey *@
-@import uSettings.showImages
-
+*/
+#}
 (function() {
 	
 	var sio = {};
@@ -50,6 +26,7 @@ script-тег тут в комменте, чтобы сработала подс
 	/* Настроечки */
 	var config = 
 	{
+		//sio_host : 'https://suggest.io/',
 		sio_host : 'https://suggest.io/',
 		sio_css : 'static/css/sio.v8.css',// + rand(),
 		host : window.location,
@@ -64,7 +41,7 @@ script-тег тут в комменте, чтобы сработала подс
 		config.host = 'http://localhost:8003/';
 	}
 	
-	/* Локализация. TODO вынести сие в messages и messages.ru соответственно */
+	/* Локализация */
 	var langs = 
 	{
 		'en' : 
@@ -807,9 +784,9 @@ script-тег тут в комменте, чтобы сработала подс
 		search.init(1);
 		
 		// разместить кнопку с управлением настройками
-		@if(isInstall) {
-		    render_admin_button();
-		}
+		{% if host_admin or render_installer %}
+		render_admin_button();
+		{% endif %}
 	}
 	sio._receive_domain_data = _receive_domain_data;
 	
@@ -966,6 +943,7 @@ script-тег тут в комменте, чтобы сработала подс
 			init: function()
 			{
 				if( ge('sio_search_window') != null ) return false;
+				
 				var sf = ce('div',{'class':'sio-search-window','id':'sio_search_window'});
 				
 				if ( typeof( sio.domain_data.drop_down_template ) != 'undefined' )
@@ -1187,7 +1165,7 @@ script-тег тут в комменте, чтобы сработала подс
 						}else
 						{
 							var _pe = x;
-							for( var l=0;l < config.search_field_test_depth; l++ )
+							for( var l=0;l<config.search_field_test_depth;l++ )
 							{
 								_pe = _pe.parentNode;
 								if( this.is_search_field( _pe ) === true )
@@ -1555,49 +1533,54 @@ script-тег тут в комменте, чтобы сработала подс
 	{
 		// Дернув функцию можно узнать, нужно ли отрендерить клиенту окна для быстрой установки
 		//return window.location.hash == '#complete_installation' ? true : false;
-
-		return @isInstall;
+		
+		{% if render_installer %}
+		return true;
+		{% else %}
+		return false;
+		{% endif %}
+		
 	}
 	
 	var _qi_complete = function()
 	{
 		sio._qi_completed = true;
 		
-		@if(isInstall) {
-		    var host = '@dkey';
-		    var timestamp = @ctx.timestamp
+		{% if render_installer %}
+		var host = '{{dkey}}';
+		var timestamp = {{timestamp}}
 		
-		    sio.dkey_host = host;
+		sio.dkey_host = host;
 		
-		    // запостить
+		// запостить
 		
-    		var _sio_iframe_1 = ce( 'iframe', {id:'sio-install-post-iframe', name:'sio-install-post-iframe'}, '' );
-		    _sio_iframe_1.style.display = 'none';
-		    ge_tag('body')[0].appendChild( _sio_iframe_1 );
+		var _sio_iframe_1 = ce( 'iframe', {id:'sio-install-post-iframe', name:'sio-install-post-iframe'}, '' );
+		_sio_iframe_1.style.display = 'none';
+		ge_tag('body')[0].appendChild( _sio_iframe_1 );
 		
-		    // sio form
-		    var _sio_install_form = ce( 'form', {id:'sio-install-post-form', action: config.sio_host + 'js/install_url/' + host + '/@qi_id', method:'post', target:'sio-install-post-iframe'}, '<input type="text" name="url" value="' + window.location + '"><input type="submit" value="post">' );
-		    _sio_install_form.style.display = 'none';
-		    ge_tag('body')[0].appendChild( _sio_install_form );
+		// sio form
+		var _sio_install_form = ce( 'form', {id:'sio-install-post-form',action: config.sio_host + 'js/install_url/' + host + '/{{domain_qi_id}}',method:'post',target:'sio-install-post-iframe'}, '<input type="text" name="url" value="' + window.location + '"><input type="submit" value="post">' );
+		_sio_install_form.style.display = 'none';
+		ge_tag('body')[0].appendChild( _sio_install_form );
     
-            _sio_install_form.submit();
+    _sio_install_form.submit();
 		
-		    // Отрендерить окно c установкой
-		    var _qi_window = ce('div',{'class':'sio-install-steps','id':'sio_qi_window'});
-		    _qi_window.innerHTML = '<div class="qi-window"><div class="qi-w-inner"><div class="qi-w-inner-2"><!--<div class="sio-qi-close-cross"><a href="" onclick="sio._close_qi(); return false;"></a></div>--><div class="qi-sio-logo"><a href="https://suggest.io/"></a></div>'+
+		// Отрендерить окно c установкой
+		var _qi_window = ce('div',{'class':'sio-install-steps','id':'sio_qi_window'});
+		_qi_window.innerHTML = '<div class="qi-window"><div class="qi-w-inner"><div class="qi-w-inner-2"><!--<div class="sio-qi-close-cross"><a href="" onclick="sio._close_qi(); return false;"></a></div>--><div class="qi-sio-logo"><a href="https://suggest.io/"></a></div>'+
 													 '<div><small>\u041a\u043e\u0434 Suggest.io \u0443\u0441\u043f\u0435\u0448\u043d\u043e \u0443\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d \u043d\u0430 \u0441\u0430\u0439\u0442! \u0427\u0435\u0440\u0435\u0437 \u043d\u0435\u0441\u043a\u043e\u043b\u044c\u043a\u043e \u0441\u0435\u043a\u0443\u043d\u0434 \u0431\u0443\u0434\u0435\u0442 \u0437\u0430\u043f\u0443\u0449\u0435\u043d \u043f\u0440\u043e\u0446\u0435\u0441\u0441 \u0438\u043d\u0434\u0435\u043a\u0441\u0430\u0446\u0438\u0438 \u0441\u0430\u0439\u0442\u0430.</small></div>' +
 													 '<div><small><strong>\u0421\u0442\u0430\u0442\u0443\u0441:</strong> <span id="qi_status_message">\u0437\u0430\u043f\u0443\u0441\u043a \u0438\u043d\u0434\u0435\u043a\u0441\u0430\u0446\u0438\u0438</span></small></div>' +
 													 '<div class="qi-prefs-button"><a href="" onclick="sio._close_qi(); sio.preferences.init(); return false;"></a><div>' +
 													 '</div></div></div>';
 		
-		    ge_tag('body')[0].appendChild(_qi_window);
+		ge_tag('body')[0].appendChild(_qi_window);
 		
-		    setTimeout(function()
-		    {
-			    _listen_qi_events( host, timestamp );
-		    }, 500);
+		setTimeout(function()
+		{
+			_listen_qi_events( host, timestamp );
+		}, 500);
 		
-		} @* if isInstall *@
+		{% endif %}
 		
 	}
 	
@@ -1640,7 +1623,7 @@ script-тег тут в комменте, чтобы сработала подс
 		 	'search_layout' : 'default' || 'suit'
 		 } */
 	
-@if(isInstall) {
+	{% if host_admin or render_installer %}
 	var preferences =
 	{
 		// скрыть окно с настройкмаи
@@ -2376,12 +2359,14 @@ script-тег тут в комменте, чтобы сработала подс
 				h += sio.preferences.c_select.draw("results_target",options);
 				
 				// Показывать картинке?
+				{% with show_images=domain_data.show_images|atom_tolist %}
 				h += '<div class="sio-pfs-text">' + transl( 'show_images_in_sr_label' ) + '</div>';
 				
 				options = [
-												{'label' : transl( 'yes' ), 'value' : 'true'@if(showImages) {, 'is_active' : true}},
-												{'label' : transl( 'no' ), 'value' : 'false'@if(showImages) {, 'is_active' : true}}];
+												{'label' : transl( 'yes' ), 'value' : 'true'{% if show_images == "true" %}, 'is_active' : true{% endif %}},
+												{'label' : transl( 'no' ), 'value' : 'false'{% if show_images != "true" %},'is_active' : true{% endif %}}];
 				h += sio.preferences.c_select.draw("is_show_images_selector",options);
+				{% endwith %}
 				h += '</div><div style="float: left;">';
 				
 				// Какой языг?
@@ -2634,8 +2619,7 @@ script-тег тут в комменте, чтобы сработала подс
 		
 	}
 	sio.preferences = preferences;
-
-} @* if isInstall *@
+	{% endif %}
 	
 	// Если имеет место быть быстрая установка — отрендерить клиенту необходимые окна
 	if( _if_render_installer() === true ) _qi_complete();
@@ -2643,4 +2627,4 @@ script-тег тут в комменте, чтобы сработала подс
 	search.init();
 	window.sio = sio;
 	
-})();@* </script> *@
+})();
