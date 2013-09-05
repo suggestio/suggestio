@@ -1,6 +1,6 @@
 package util
 
-import play.api.templates.Html
+import play.api.templates._
 import org.jcoffeescript
 
 /**
@@ -25,6 +25,16 @@ object CoffeeScriptTemplate {
   val compiler = new jcoffeescript.JCoffeeScriptCompiler()
 
   def coffee(source: Html): String = {
+    val t = source.body
+      .replaceAll("&lt;", ">")
+      .replaceAll("&gt;", "<")
+      .replaceAll("&quot;", "\"")
+      .replaceAll("&#x27;", "'")
+      .replaceAll("&amp;", "&")
+    compiler.compile(t)
+  }
+
+  def coffee(source: Txt): String = {
     compiler.compile(source.body)
   }
 
