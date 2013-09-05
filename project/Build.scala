@@ -23,6 +23,8 @@ object ApplicationBuild extends Build {
       "net.sourceforge.htmlunit" % "htmlunit" % "2.12", // play-2.1.1: на 2.9 тесты виснут. Нужно убрать на будущих версиях play.
       // akka - for siobix direct calls
       "com.typesafe.akka" %% "akka-actor" % "2.1.0",
+      // coffeescript-компилятор используем свой заместо компилятора play по ряду причин (последний прибит гвоздями к sbt-plugin, например).
+      "org.jcoffeescript" % "jcoffeescript" % "1.6.1",
       // for domain validation:
       "net.databinder.dispatch" %% "dispatch-core" % "0.10.0",
       "com.google.guava" % "guava" % "14.0.1"
