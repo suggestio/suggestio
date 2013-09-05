@@ -24,7 +24,7 @@ object CoffeeScriptTemplate {
 
   val compiler = new jcoffeescript.JCoffeeScriptCompiler()
 
-  def coffee(source: Html, options: Seq[String] = Nil): String = {
+  def coffee(source: Html): String = {
     compiler.compile(source.body)
   }
 
