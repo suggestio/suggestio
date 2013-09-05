@@ -9,6 +9,7 @@ import concurrent.Await
 import akka.pattern.ask
 import akka.util.Timeout
 import akka.actor.OneForOneStrategy
+import io.suggest.SioutilSup
 
 /**
  * Suggest.io
@@ -29,6 +30,7 @@ class SiowebSup extends Actor with Logs {
     super.preStart()
 
     context.actorOf(Props[DomainRequester], name=DOMAIN_REQUESTER_NAME)
+    SioutilSup.start_link(context)
     NewsQueue4Play.startLinkSup(context)
   }
 
