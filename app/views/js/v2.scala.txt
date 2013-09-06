@@ -45,7 +45,7 @@ sio =
   
   # Настроечки
   config :
-    sio_host : "http://localhost:9000/"
+    sio_host : "http://192.168.199.148:9000/"
     sio_css : 'static/css/sio.v8.css'
     host : window.location
     searchRequestDelay : 100

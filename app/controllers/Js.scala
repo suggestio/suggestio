@@ -193,13 +193,16 @@ object Js extends Controller with AclT with ContextT with Logs {
    * @return Возвращает различные коды ошибок с сообщениями.
    */
   def installUrl(domain:String, qi_id:String) = maybeAuthenticated { implicit pw_opt => implicit request =>
+    
     addDomainFormM.bindFromRequest().fold(
       {formWithErrors => NotAcceptable("Not a URL.")}
       ,
       // Действительно пришла ссылка. Нужно проверить присланные domain и qi_id и отправить ссылку на проверку.
       {url =>
+        
         val dkey = UrlUtil.normalizeHostname(domain)
         val result = if (DomainQi.isQi(dkey, qi_id)) {
+          
           if (DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl = url.toExternalForm, qi_id=qi_id, sendEvents=true).isDefined)
             Ok("Ok, your URL will be checked.")
           else

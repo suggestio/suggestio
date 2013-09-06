@@ -30,15 +30,30 @@ _qi_complete = () ->
   
   _sio_install_form.submit()
   
-  _listen_qi_events host, qi_id, timestamp
+  cb = () ->
+    _listen_qi_events host, qi_id, timestamp
+    
+  setTimeout cb, 500
   
 _listen_qi_events = ( host, qi_id, timestamp ) ->
   
-  params = 
-    type : 'text/javascript'
-    src : sio.config.sio_host + 'js/install_ws/' + host + '/' + qi_id + '/' + timestamp
+  socket_url = sio.config.sio_host.replace('http','ws') + 'js/install_ws/' + host + '/' + qi_id + '/' + timestamp
   
-  _lqi = utils.ce 'script', params
-  utils.ge_tag('head')[0].appendChild _lqi
+  socket = new WebSocket socket_url
+  
+  socket.onopen = () ->
+    console.log "ws connection established"
+  
+  socket.onclose = (event) ->
+    if event.wasClean
+      console.log "ws connection closed"
+    else
+      console.log "ws connection dropped"
+  
+  socket.onmessage = (event) ->
+    console.log "ws data received : " + event.data
+  
+  socket.onerror = (error) ->
+    console.log "ws error : " + error.message
   
 _qi_complete()

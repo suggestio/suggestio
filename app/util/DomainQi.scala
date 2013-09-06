@@ -20,6 +20,7 @@ import models.{MDomainQiAuthzTmp, MPersonDomainAuthz}
 import util.Acl.PwOptT
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.LocalDate
+import play.api.Logger
 
 /**
  * Suggest.io
@@ -201,16 +202,23 @@ object DomainQi extends Logs {
   def maybeCheckQiAsync(dkey:String, maybeUrl:String, qi_id:String, sendEvents:Boolean)(implicit pw_opt:PwOptT): Option[Future[SioJsV2]] = {
     try {
       val url = new URL(maybeUrl)
+      
       // Протокол - это http/https?
       val isCheck: Boolean = urlProtoAllowedRe.pattern.matcher(url.getProtocol).matches() && {
         // хост верен?
         val urlDkey = UrlUtil.normalizeHostname(url.getHost)
+        
         urlDkey == dkey
+        
       } && {
         // ссылка ведет НЕ на главную и НЕ на страницу встроенного поиска на сайте?
         val pathNorm = UrlUtil.normalizePath(url.getPath)
-        !urlPathBadRe.pattern.matcher(pathNorm).find()
+        
+        Logger.logger.debug("pathNorm : " + urlPathBadRe.pattern.matcher(pathNorm).find())
+        
+        urlPathBadRe.pattern.matcher(pathNorm).find()
       }
+      
       if (isCheck) {
         Some(checkQiAsync(dkey, url.toExternalForm, Some(qi_id), sendEvents=sendEvents))
 
@@ -218,7 +226,9 @@ object DomainQi extends Logs {
 
     } catch {
       // Ссылка не верна. Ничего не делать, просто погасить исключение.
-      case ex:MalformedURLException => None
+      case ex:MalformedURLException =>
+      	Logger.logger.debug("malformed url")
+      	None
     }
   }
 
