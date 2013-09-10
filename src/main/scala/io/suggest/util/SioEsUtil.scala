@@ -12,6 +12,7 @@ import scala.concurrent.ExecutionContext
 import scala.util.{Success, Failure}
 import org.elasticsearch.action.admin.indices.close.CloseIndexRequestBuilder
 import org.elasticsearch.action.admin.indices.open.OpenIndexRequestBuilder
+import io.suggest.model.MVirtualIndex
 
 /**
  * Suggest.io
@@ -100,7 +101,7 @@ object SioEsUtil extends Logs {
    */
   def closeIndex(indexName:String)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     lazy val logPrefix = "closeIndex(%s): " format indexName
-    debug(logPrefix + "Starting close ...")
+    trace(logPrefix + "Starting close ...")
     val adm = client.admin().indices()
     new CloseIndexRequestBuilder(adm).setIndex(indexName).execute().transform(
       {resp =>
@@ -121,7 +122,7 @@ object SioEsUtil extends Logs {
    */
   def openIndex(indexName:String)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     lazy val logPrefix = "openIndex(%s): " format indexName
-    debug(logPrefix + "Sending open request...")
+    trace(logPrefix + "Sending open request...")
     client.admin().indices()
       .prepareOpen(indexName)
       .execute()
@@ -140,31 +141,34 @@ object SioEsUtil extends Logs {
 
   // Кол-во попыток поиска свободного имени для будущего индекса.
   val FREE_INDEX_NAME_MAX_FIND_ATTEMPTS = 8
+  val RANDOM_INDEX_PREFIX_LEN = 8
 
   /**
    * Совсем асинхронно найти свободное имя индекса (не занятое другими индексами).
    * @return Фьючерс строки названия индекса.
    */
-  def getFreeIndexName(maxAttempts: Int = FREE_INDEX_NAME_MAX_FIND_ATTEMPTS)(implicit client:Client, executor:ExecutionContext) : Future[String] = {
-    lazy val logPrefix = "getFreeIndexName(%s): " format maxAttempts
-    debug(logPrefix + "Starting...")
-    val p = Promise[String]()
+  def findFreeVirtualIndex(shardCount: Int, maxAttempts: Int = FREE_INDEX_NAME_MAX_FIND_ATTEMPTS)(implicit client:Client, executor:ExecutionContext) : Future[MVirtualIndex] = {
+    lazy val logPrefix = "getFreeIndexName(shardCount=%s, maxAttempts=%s): " format (shardCount, maxAttempts)
+    trace(logPrefix + "Starting...")
+    val p = Promise[MVirtualIndex]()
     // Тут как бы рекурсивный неблокирующий фьючерс.
     def freeIndexNameLookup(n:Int) {
       if (n < maxAttempts) {
-        val id = StringUtil.randomId(10).toLowerCase + ".x"
-        debug(logPrefix + "Asking for random index name %s..." format id)
-        SioEsUtil.isIndexExist(id) onComplete {
+        val vinPrefix = StringUtil.randomIdLatLc(RANDOM_INDEX_PREFIX_LEN)
+        val mvi = MVirtualIndex(vinPrefix, shardCount)
+        val firstEsShard = mvi.head
+        debug(logPrefix + "Asking for random index name %s..." format firstEsShard)
+        SioEsUtil.isIndexExist(firstEsShard) onComplete {
           case Success(true) =>
-            debug(logPrefix + "Index name '%s' is busy. Retrying." format id)
+            trace(logPrefix + "Index name '%s' is busy. Retrying." format firstEsShard)
             freeIndexNameLookup(n + 1)
 
           case Success(false) =>
-            debug(logPrefix + "Free index name found: %s" format id)
-            p success id
+            debug(logPrefix + "Free index name found: %s" format firstEsShard)
+            p success mvi
 
           case Failure(ex) =>
-            warn(logPrefix + "Cannot call isIndexExist(%s). Retry" format id, ex)
+            warn(logPrefix + "Cannot call isIndexExist(%s). Retry" format firstEsShard, ex)
             freeIndexNameLookup(n + 1)
         }
       } else {
@@ -178,21 +182,17 @@ object SioEsUtil extends Logs {
 
   /**
    * Создать рандомный индекс.
+   * @param shardCount Кол-во шард, будет вдолблено в имя домена.
    * @param maxAttempts Число попыток поиска свободного имени индекса. просто передается в getFreeIndexName.
-   * @return Фьчерс с именем созданного индекса.
+   * @return Фьчерс с именами созданных индексов-шард.
    */
-  def createRandomIndex(maxAttempts: Int = FREE_INDEX_NAME_MAX_FIND_ATTEMPTS)(implicit client:Client, executor:ExecutionContext): Future[String] = {
-    lazy val logPrefix = "createRandomIndex(%s): " format maxAttempts
-    getFreeIndexName(maxAttempts)
-      .flatMap { indexName =>
-        debug(logPrefix + "free index name: %s" format indexName)
-        SioEsUtil.createIndex(indexName) map {
-          case true  =>
-            debug("Index '%s' ensured and ready." format indexName)
-            indexName
-
-          case false => throw new Exception("Index is not created. Free name became busy?")
-        }
+  def createRandomVirtualIndex(shardCount:Int, replicasCount:Int, maxAttempts: Int = FREE_INDEX_NAME_MAX_FIND_ATTEMPTS)(implicit client:Client, executor:ExecutionContext): Future[MVirtualIndex] = {
+    lazy val logPrefix = "createRandomIndex(shardCount=%s, maxAttempts=%s): " format (shardCount, maxAttempts)
+    trace(logPrefix + "starting")
+    findFreeVirtualIndex(maxAttempts)
+      .andThen { case Success(mvi) =>
+        trace(logPrefix + "free index name prefix: %s" format mvi.vinPrefix)
+        mvi.ensureShards(replicasCount)
       }
   }
 

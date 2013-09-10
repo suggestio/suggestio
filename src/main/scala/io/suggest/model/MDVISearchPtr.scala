@@ -77,7 +77,7 @@ case class MDVISearchPtr(
    */
   def getDVIs: List[MDVIActive] = {
     dviNames map {
-      MDVIActive.getForDkeyName(dkey, _).get
+      MDVIActive.getForDkeyNameFromFs(dkey, _).get
     }
   }
 

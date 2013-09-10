@@ -22,8 +22,7 @@ object StringUtil {
   def randomId(len:Int = 10) = 1 to len map {_ => randomIdChar} mkString
 
 
-  /**
-   * Сгенерить случайный символ из диапазона 0-9 a-z A-Z
+  /** Сгенерить случайный символ из диапазона 0-9 a-z A-Z
    * @return случайный alphanumeric символ.
    */
   @tailrec
@@ -31,5 +30,21 @@ object StringUtil {
     case c if c>='0' && c<='9' || c>='A' && c<='Z' || c>='a' && c<='z'  => c
     case _ => randomIdChar
   }
+
+  /** Генерация одного случайного lower-case символа латиницы.
+   * @return Символ от 'a' до 'z'.
+   */
+  @tailrec
+  def randomIdLatLcChar: Char = rnd.nextPrintableChar() match {
+    case c if c>='a' && c<='z'  => c
+    case c if c>='A' && c<='Z'  => c.toLower
+    case _                      => randomIdLatLcChar
+  }
+
+  /** Генерация случайно строки из латинских символов от 'a' до 'z'.
+   * @param len Длина результирующей строки.
+   * @return Случайная строка вида "asdftbhdb" длины len.
+   */
+  def randomIdLatLc(len: Int = 10) = 1 to len map { _ => randomIdLatLcChar } mkString
 
 }

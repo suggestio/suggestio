@@ -30,6 +30,7 @@ libraryDependencies ++= {
   val jacksonVsn    = "2.2.1"
   val tikaVsn       = "1.3"
   val cascadingVsn  = "2.1.5"
+  val hbaseVsn      = "0.95.1-hadoop1"
   Seq(
     "org.scalatest" %% "scalatest" % "1.9.1" % "test",
     "org.slf4j" % "slf4j-api" % slf4jVsn,
@@ -46,9 +47,17 @@ libraryDependencies ++= {
     // hadoop
     "org.apache.hadoop" % "hadoop-core" % hadoopVsn,
     "org.apache.hadoop" % "hadoop-client" % hadoopVsn,
+    // hbase
+    "org.apache.hbase" % "hbase-server" % hbaseVsn,
+    "org.apache.hbase" % "hbase-common" % hbaseVsn,
+    "org.hbase" % "asynchbase" % "1.4.1", // java-oriented async client
     // cascading
     "cascading" % "cascading-core" % cascadingVsn,
     "cascading" % "cascading-hadoop" % cascadingVsn,
     "com.scaleunlimited" % "cascading.utils" % "2.1.4" // нужно для HadoopUtils.
   )}
 
+// sbt-avro support:
+//seq( sbtavro.SbtAvro.avroSettings : _*)
+//
+//(version in avroConfig) := "1.7.5"

@@ -1,51 +1,70 @@
 package io.suggest.model
 
-import io.suggest.util.SiobixFs._
-import org.apache.hadoop.fs.Path
 import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.Client
 import io.suggest.util.SioEsUtil._
 import org.apache.lucene.index.IndexNotFoundException
 import io.suggest.util.{LogsImpl, SioEsIndexUtil}
 import org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS
-import io.suggest.util.SiobixFs.fs
 import com.fasterxml.jackson.annotation.JsonIgnore
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 15.07.13 11:03
- * Description: Непосредственная информация об индексах в ES управляется через эту модель.
+ * Description: Непосредственная информация об индексах в ES обрабатывается через эту модель.
  * Шардинг ES не позволяет соотнести какой-то конкретный тип с конкретной шардой, а routing не позволяет понять,
- * в какую шарду сохранен тот или иной документ, поэтому нужны виртуальные индексы здесь.
- * Информация хранится без dkey. Таким образом, одна запись (один файл, т.е. один индекс или группа индексов) могут
- * относится к нескольким dkey.
+ * в какую шарду сохранен тот или иной документ, поэтому нужны виртуальные индексы.
+ *
+ * Вся информация хранится без dkey. Информация проста: кол-во шард. Вся инфа содержится в имени индекса, поэтому
+ * не требуется какого-либо хранилища для данных этой модели.
+ * abcdefgh3 - означает, что имеет место виртуальный индекс, состоящий из трех шард с именами abcdefgh3_0, abcdefgh3_1 и abcdefgh3_2
+ * Префикс - это просто префикс, состоящий из букв латинского алфавита и нужен просто для именования.
  */
 object MVirtualIndex {
 
-  val rootDir     = "phys_inx"
-  val rootDirPath = new Path(siobix_conf_path, rootDir)
-
   private val futureSuccessUnit = Future.successful(())
 
-  private val staticLogger = new LogsImpl(getClass)
+  private val LOGGER = new LogsImpl(getClass)
 
-  /**
-   * Вычислить путь для сохранения данных об этом индексе.
-   * @param vin базовое имя.
-   * @return Экземпляр Path.
+  /** Сгенерить vin по префиксу и общему числу шард.
+   * @param vinPrefix Префикс. Обычно случайная строка из [a-z].
+   * @param shardCount Общее кол-во шард в виртуальном индексе.
+   * @return Строка, которая может быть использована для сохранения как id индекса.
    */
-  def getPath(vin:String) = new Path(rootDirPath, vin)
+  def vinFor(vinPrefix: String, shardCount: Int): String = vinPrefix + shardCount
+
+  /** Имя физической es-шарды (es-индекса) на основе данных виртуального индекса и номера шарды.
+   * @param vinPrefix Префикс. Обычно случайная строка из [a-z].
+   * @param shardCount Общее кол-во шард в виртуальном индексе.
+   * @param shardN Номер шарды от 0 до shardCount-1.
+   * @return Строка, которая используется для именования индексов в ES.
+   */
+  def esShardNameFor(vinPrefix: String, shardCount: Int, shardN: Int): String = {
+    if (shardN >= shardCount || shardN < 0) {
+      throw new IllegalArgumentException("shardN invalid = %s. Should be in [0..%s)." format (shardN, shardCount))
+    }
+    val vin = vinFor(vinPrefix, shardCount)
+    esShardNameFor(vin, shardN)
+  }
+
+  /** Сгенерить имя es-индекса (es-шарды) на основе готового vin и номера шарды в индексе.
+   * @param vin id виртуального индекса.
+   * @param shardN Номер шарды в виртуальном индексе.
+   * @return Строка, которая используется для именования индексов в ES.
+   */
+  def esShardNameFor(vin:String, shardN: Int): String = vin + "_" + shardN
+
+  // Регэксп для парсинга vin на vinPrefix и shardCount.
+  val vin2prefixCountRe = "^([a-z]+)([0-9]+)$".r
 
   /**
    * Прочитать файл из хранилища.
    * @param vin базовое имя индекса.
-   * @return Опциональный экземпляр сабжа.
+   * @return Экземпляр сабжа, даже если он на деле не существует.
    */
-  def getForVin(vin:String): Option[MVirtualIndex] = {
-    JsonDfsBackend.getAs[MVirtualIndex](getPath(vin), fs)
-  }
-
+  def apply(vin: String): MVirtualIndex = MVirtualIndexVin(vin)
+  def apply(vinPrefix:String, shardCount:Int): MVirtualIndex = MVirtualIndexPrefixCount(vinPrefix, shardCount)
 
   /**
    * Прочитать кол-во реплик для указанного виртуального индекса, состоящего из натуральных ES-индексов.
@@ -113,16 +132,32 @@ object MVirtualIndex {
 import MVirtualIndex._
 
 /**
- * Динамическая часть модели отражает прочитанный файл с хранимой информацией.
- * @param vin базовое имя индекса. Название индекса в ES и имя файла в DFS генерятся на основе этого.
- * @param shardCount кол-во шард
+ * Динамическая часть модели отражает созданный mvi с соответствующей информацией.
+ * @param vinPrefix Базовое имя индекса. vin-идентификатор генерится на основе этого всего.
+ * @param shardCount Кол-во шард.
  */
-case class MVirtualIndex(
-  vin:        String,
-  shardCount: Int = 1
-) extends Serializable {
+case class MVirtualIndexPrefixCount(vinPrefix: String, shardCount: Int) extends MVirtualIndex {
+  lazy val vin: String = vinFor(vinPrefix, shardCount)
+}
 
-  import staticLogger._
+/** Экземпляр индекса по vin.
+ * @param vin vin, включающий префикс и кол-во шард.
+ */
+case class MVirtualIndexVin(vin: String) extends MVirtualIndex {
+  lazy val (vinPrefix, shardCount) = {
+    val vin2prefixCountRe(_vinPrefix, _shardCountStr) = vin
+    (_vinPrefix, _shardCountStr.toInt)
+  }
+}
+
+trait MVirtualIndex extends Serializable {
+  def vinPrefix:  String
+  def shardCount: Int
+  def vin: String
+
+  import LOGGER._
+
+  def head = esShardNameFor(vin, 0)
 
   /**
    * Выдать имена всех шард.
@@ -154,26 +189,12 @@ case class MVirtualIndex(
     SioEsIndexUtil.setReplicasCountFor(getShards, replicasCount)
   }
 
-  /**
-   * Сохранить текущий экземпляр в базу.
-   * @return Сохраненный экземпляр.
-   */
-  @JsonIgnore
-  def save: MVirtualIndex = {
-    JsonDfsBackend.writeToPath(getPath(vin), this)
-    this
-  }
-
 
   /**
    * Удалить индекс вообще. И файл индекса в след за ним.
    * @return true, если всё ок. Фьючерс исполняется, когда всё сделано.
    */
-  def delete(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
-    deleteThese(getShards) andThen { case _ =>
-      fs.delete(getPath(vin), false)
-    }
-  }
+  def eraseShards(implicit client:Client, executor:ExecutionContext) = deleteThese(getShards)
 
 
   /**

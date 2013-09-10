@@ -107,7 +107,7 @@ case class MDVISubshard(
 /**
  * Сами данные по шарде вынесены за скобки.
  * @param lowerDateDays Нижняя дата этой подшарды в днях.
- * @param shards Номера задействованных шард в elasticsearch. Если Nil, то значит нужно опрашивать
+ * @param shards Номера задействованных шард в vin. Если Nil, то значит нужно опрашивать
  *               всю родительскую виртуальную шарду.
  */
 case class MDVISubshardInfo(

@@ -33,6 +33,7 @@ trait MDVIUnit {
   def getTypesForRequest(sc:SioSearchContext): List[String]
   def save: MDVIUnit
   def getShards: Seq[String]
+  def serialize: Array[Byte]
 
   def startFullScroll(timeout:TimeValue = SCROLL_TIMEOUT_INIT_DFLT, sizePerShard:Int = SCROLL_PER_SHARD_DFLT)(implicit client:Client): Future[SearchResponse]
 }
