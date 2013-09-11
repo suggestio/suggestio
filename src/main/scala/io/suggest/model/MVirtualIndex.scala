@@ -104,6 +104,8 @@ object MVirtualIndex {
    * @return true, если всё ок.
    */
   def deleteThese(indices:Seq[String])(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
+    // TODO Нужно проконтроллировать, что удаление существующих индексов будет выполнено, даже если одного или нескольких
+    // индексов нет в наличии.
     client.admin().indices()
       .prepareDelete(indices: _*)
       .execute()
@@ -137,26 +139,31 @@ import MVirtualIndex._
  * @param shardCount Кол-во шард.
  */
 case class MVirtualIndexPrefixCount(vinPrefix: String, shardCount: Int) extends MVirtualIndex {
+  @JsonIgnore
   lazy val vin: String = vinFor(vinPrefix, shardCount)
 }
 
 /** Экземпляр индекса по vin.
  * @param vin vin, включающий префикс и кол-во шард.
  */
-case class MVirtualIndexVin(vin: String) extends MVirtualIndex {
+case class MVirtualIndexVin(@JsonIgnore vin: String) extends MVirtualIndex {
   lazy val (vinPrefix, shardCount) = {
     val vin2prefixCountRe(_vinPrefix, _shardCountStr) = vin
-    (_vinPrefix, _shardCountStr.toInt)
+    _vinPrefix -> _shardCountStr.toInt
   }
 }
 
 trait MVirtualIndex extends Serializable {
-  def vinPrefix:  String
-  def shardCount: Int
-  def vin: String
 
   import LOGGER._
 
+  def vinPrefix:  String
+  def shardCount: Int
+
+  @JsonIgnore
+  def vin: String
+
+  @JsonIgnore
   def head = esShardNameFor(vin, 0)
 
   /**
@@ -165,12 +172,7 @@ trait MVirtualIndex extends Serializable {
    */
   @JsonIgnore
   def getShards: Seq[String] = {
-    // Если шарда только одна, то она без номера-суффика.
-    if (shardCount == 1) {
-      Seq(vin)
-    } else {
-      (0 until shardCount) map { vinAndCounter2indexName(vin, _) }
-    }
+    (0 until shardCount) map { vinAndCounter2indexName(vin, _) }
   }
 
   /**
@@ -178,6 +180,7 @@ trait MVirtualIndex extends Serializable {
    * то будет ошибка.
    * @return Фьючерс с кол-вом доступных шард.
    */
+  @JsonIgnore
   def getReplicasCount(implicit client:Client, executor:ExecutionContext): Future[Int] = getReplicasCountFor(getShards)
 
   /**
@@ -185,6 +188,7 @@ trait MVirtualIndex extends Serializable {
    * @param replicasCount новое число реплик.
    * @return true, если всё ок. false по сути никогда и не возвращает.
    */
+  @JsonIgnore
   def setReplicasCount(replicasCount:Int)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
     SioEsIndexUtil.setReplicasCountFor(getShards, replicasCount)
   }
@@ -194,6 +198,7 @@ trait MVirtualIndex extends Serializable {
    * Удалить индекс вообще. И файл индекса в след за ним.
    * @return true, если всё ок. Фьючерс исполняется, когда всё сделано.
    */
+  @JsonIgnore
   def eraseShards(implicit client:Client, executor:ExecutionContext) = deleteThese(getShards)
 
 
@@ -202,6 +207,7 @@ trait MVirtualIndex extends Serializable {
    * @param replicasCount кол-во реплик.
    * @return Фьючерс.
    */
+  @JsonIgnore
   def ensureShards(replicasCount: Int = 1)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
     val shards = getShards
     ensureIndices(shards, replicasCount=replicasCount)
@@ -226,7 +232,8 @@ trait MVirtualIndex extends Serializable {
    * Закрыть все шарды, выгрузив их из памяти. Типа заморозка.
    * @return Список isAcknowledged.
    */
-  def close(implicit client:Client, executor:ExecutionContext): Future[Seq[Boolean]] = {
+  @JsonIgnore
+  def close(implicit client:Client, ec:ExecutionContext): Future[Seq[Boolean]] = {
     Future.traverse(getShards) { closeIndex }
   }
 
@@ -234,8 +241,27 @@ trait MVirtualIndex extends Serializable {
    * Открыть все шарды этого индекса.
    * @return Список результатов от шард.
    */
-  def open(implicit client:Client, executor:ExecutionContext): Future[Seq[Boolean]] = {
+  @JsonIgnore
+  def open(implicit client:Client, ec:ExecutionContext): Future[Seq[Boolean]] = {
     Future.traverse(getShards) { openIndex }
   }
+
+  /** Узнать, все ли необходимые шарды вирт.индекса существуют в ES?
+   * @return true, если всё существует. Иначе false.
+   */
+  @JsonIgnore
+  def isExist(implicit client:Client, ec:ExecutionContext): Future[Boolean] = {
+    client.admin().indices()
+      .prepareExists(getShards : _*)
+      .execute()
+      .map { _.isExists }
+  }
+
+
+  /** Выдать домены, официально использующие этот индекс. Ресурсоемкая операция, перебирающая всю таблицу.
+   * @return Коллекция сабжей, в т.ч. пустая.
+   */
+  @JsonIgnore
+  def getUsers(implicit ec: ExecutionContext) = MDVIActive.getAllLatestForVin(vin)
 
 }

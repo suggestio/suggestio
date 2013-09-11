@@ -260,7 +260,7 @@ case class MDVIActive(
    * @return Сохраненные (т.е. текущий) экземпляр сабжа.
    */
   @JsonIgnore
-  def save = {
+  def save: Future[MDVIActive] = {
     val v = JacksonWrapper.serialize(exportInternalState)
     val putReq = new Put(dkey).add(CF_INX_ACTIVE, vin, v)
     hclient map { _client =>
