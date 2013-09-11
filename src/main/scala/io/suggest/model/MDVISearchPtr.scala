@@ -1,8 +1,10 @@
 package io.suggest.model
 
-import org.apache.hadoop.fs.Path
-import io.suggest.index_info.MDVIUnit
-import io.suggest.util.SiobixFs.fs
+import HTapConversionsBasic._
+import scala.concurrent.{ExecutionContext, Future}
+import MDomain.{hclient, CF_SEARCH_PTR}
+import org.apache.hadoop.hbase.client.{Put, Get}
+import org.apache.hadoop.hbase.HColumnDescriptor
 
 /**
  * Suggest.io
@@ -10,75 +12,86 @@ import io.suggest.util.SiobixFs.fs
  * Created: 18.07.13 10:27
  * Description: Активных индексов может быть несколько, и они могут иметь различные имена.
  * Однако веб-морде нужно быстро узнавать в каком индексе нужно производить поиск.
- * Тут - модель для задания указателей на активные индексы. Что-то типа алиасов ES, но описывают более специфичные
- * и необходимые для suggest.io вещи.
+ * Тут - модель для задания используемых указателей на активные индексы.
  *
- * Содержимое файла указатель имя (или имена разделенные \n) active-индексов, на которые указывает этот указатель.
+ * Указателей у одного dkey может быть несколько, однако использование их является опциональным.
  */
 
 object MDVISearchPtr {
 
-  val searchSubdirNamePath = new Path("search")
+  val COLUMN_PREFIX = "_sp"
+  val COLUMN_DFLT: Array[Byte] = COLUMN_PREFIX
+  val SEP = ","
 
-  val ID_DEFAULT = "default"
-
-  /**
-   * Выдать путь до поддиректории /search, хранящей файлы с search-указателями для указанного домена.
-   * @param dkey ключ домена
-   * @return Path.
-   */
-  def getDkeySearchDirPath(dkey:String) = new Path(MDVIUnit.getDkeyPath(dkey), searchSubdirNamePath)
-
-  /**
-   * Выдать путь до файла search-указателя.
-   * @param dkey ключ домена
-   * @param id идентификатор
-   * @return Path
-   */
-  def getDkeySearchPath(dkey:String, id:String = ID_DEFAULT) = new Path(getDkeySearchDirPath(dkey), id)
-
-  /**
-   * Прочитать указатель для dkey и id.
-   * @param dkey Ключ домена.
-   * @param id Идентификатор.
-   * @return Опциональный распрарсенный экземпляр MDVISearchPtr.
-   */
-  def getForDkeyId(dkey:String, id:String = ID_DEFAULT): Option[MDVISearchPtr] = {
-    val path = getDkeySearchPath(dkey, id)
-    JsonDfsBackend.getAs[MDVISearchPtr](path, fs)
+  def id2column(id: String) = COLUMN_PREFIX + "." + id
+  def idOpt2column(id: Option[String]): Array[Byte] = {
+    id match {
+      case None      => COLUMN_DFLT
+      case Some(_id) => id2column(_id)
+    }
   }
 
-}
+  /** Прочитать указатель для dkey и id.
+   * @param dkey Ключ домена.
+   * @return Опциональный распрарсенный экземпляр MDVISearchPtr.
+   */
+  def getForDkey(dkey:String, idOpt:Option[String] = None)(implicit executor: ExecutionContext): Future[Option[MDVISearchPtr]] = {
+    val column: Array[Byte] = idOpt2column(idOpt)
+    val getReq = new Get(dkey).addColumn(CF_SEARCH_PTR, column)
+    hclient map { _client =>
+      val result = try {
+        _client.get(getReq)
+      } finally {
+        _client.close()
+      }
+      // Разобрать полученный результат
+      if (result.isEmpty) {
+        None
+      } else {
+        val v = result.getColumnLatest(CF_SEARCH_PTR, column).getValue
+        val vins = v.split(SEP).toList
+        Some(MDVISearchPtr(dkey=dkey, idOpt=idOpt, vins=vins))
+      }
+    }
+  }
 
+  /** Выдать CF-дескриптор для используемого CF_SEARCH_PTR
+   * @return Новый экземпляр HColumnDescriptor.
+   */
+  def getCFDescriptor = new HColumnDescriptor(CF_SEARCH_PTR).setMaxVersions(1)
+
+}
 
 import MDVISearchPtr._
 
 case class MDVISearchPtr(
-  dkey:     String,
-  dviNames: List[String],
-  id:       String = MDVISearchPtr.ID_DEFAULT   // TODO почему-то import не отрабатывает тут о_О
+  dkey: String,
+  vins: List[String],
+  idOpt: Option[String] = None
 ) {
 
-  /**
-   * Сохранить в DFS.
-   * @return Экземпляр сохраненного сабжа. Т.е. текущий экземпляр.
-   */
-  def save: MDVISearchPtr = {
-    val path = getDkeySearchPath(dkey, id)
-    JsonDfsBackend.writeToPath(path, this, overwrite=true)
-    this
-  }
+  def columnName = idOpt2column(idOpt)
 
-  // Связи с другими моделями
-
-  /**
-   * Выдать список используемых доменных виртуальных шард вместо их имён.
-   * @return
+  /** Сохранить в хранилище.
+   * @return Пустой фьючерс, который исполняется после реального сохранения данных в БД.
    */
-  def getDVIs: List[MDVIActive] = {
-    dviNames map {
-      MDVIActive.getForDkeyNameFromFs(dkey, _).get
+  def save(implicit executor: ExecutionContext): Future[Unit] = {
+    val v = vins.mkString(SEP)
+    val putReq = new Put(dkey).add(CF_SEARCH_PTR, columnName, v)
+    hclient map { _client =>
+      try {
+        _client.put(putReq)
+
+      } finally {
+        _client.close()
+      }
     }
   }
+
+
+  /** Выдать экземпляр MVirtualIndex.
+   * @return Экземпляр, который не обязательно существует физически.
+   */
+  def getVirtualIndices = vins.map(MVirtualIndex(_))
 
 }

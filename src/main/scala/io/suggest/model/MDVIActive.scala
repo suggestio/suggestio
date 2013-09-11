@@ -1,19 +1,19 @@
 package io.suggest.model
 
-import org.apache.hadoop.fs.Path
 import org.joda.time.LocalDate
 import io.suggest.util.{JacksonWrapper, LogsImpl, SioFutureUtil}
 import io.suggest.util.DateParseUtil.toDaysCount
-import scala.concurrent.{ExecutionContext, Future, future}
+import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.{Client => EsClient}
-import io.suggest.index_info.{MDVIUnitAlterable, MDVIUnit}
+import io.suggest.index_info.MDVIUnitAlterable
 import org.elasticsearch.common.unit.TimeValue
-import io.suggest.util.SiobixFs.fs
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.{ByteArrayOutputStream, ByteArrayInputStream}
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable
-import org.apache.hadoop.hbase.client.Get
-import SioHBaseSyncClient.clientForTable
+import org.apache.hadoop.hbase.client.{Put, Scan, Get}
+import org.apache.hadoop.hbase.HColumnDescriptor
+import MDomain.{hclient, CF_INX_ACTIVE}
+import scala.collection.JavaConversions._
+import HTapConversionsBasic._
 
 /**
  * Suggest.io
@@ -27,140 +27,110 @@ object MDVIActive {
   private val LOGGER = new LogsImpl(getClass)
   import LOGGER._
 
-  val HTABLE_NAME = "mdviActive"
-
-  /** Имя CF и колонки для метаданных активных индексов. */
-  val CF_INX_ACTIVE = "a".getBytes
-  val C_ACTIVE = CF_INX_ACTIVE
-
-  val activeSubdirNamePath = new Path("active")
-
-  private def hclient(implicit executor: ExecutionContext) = clientForTable(HTABLE_NAME)
-
-  /**
-   * Выдать путь до поддиректории /active, хранящей все файлы с данными об активных индексах.
-   * @param dkey ключ домена.
-   * @return Path для /active-поддиректории.
-   */
-  def getFsDkeyDirPath(dkey:String) = new Path(MDVIUnit.getDkeyPath(dkey), activeSubdirNamePath)
-
-  /**
-   * Сгенерить путь для dkey куда сохраняются данные этой модели.
-   * @param dkey ключ домена.
-   * @return путь.
-   */
-  def getFsDkeyPath(dkey:String, filename:String) = new Path(getFsDkeyDirPath(dkey), filename)
-
-  /**
-   * Прочитать из хранилища и распарсить json-сериализованные данные по сабжу.
-   * @param dkey Ключ домена.
-   * @param filename Название, под которым сохранены данные. Обычно "default"
-   * @return Опциональный сабж.
-   */
-  def getForDkeyNameFromFs(dkey:String, filename:String): Option[MDVIActive] = {
-    getForFsPath(getFsDkeyPath(dkey, filename))
-  }
-
-  private def getForFsPath(p:Path): Option[MDVIActive] = {
-    JsonDfsBackend.getAs[MDVIActive](p, fs)
-  }
-
-  private val globPath = getFsDkeyDirPath("*")
-
-  /**
-   * Найти все dkey, которые используют указанный индекс. Для этого нужно запросить
-   * листинг /conf/dkey/.../active/[vin].
-   * @param vin имя индекса, для которого проводится поиск.
-   * @return Список dkey без повторяющихся элементов в произвольном порядке.
-   */
-  def findFsDkeysForIndex(vin:String)(implicit executor:ExecutionContext): Future[Seq[String]] = {
-    debug("findDkeysForIndex(%s) starting" format vin)
-    val glogPathVin = new Path(globPath, vin)
-    future {
-      fs.globStatus(glogPathVin) map { fstatus =>
-        // Отмаппить в последовательность dkey, которые надо извлечь из path.
-        val activePath = fstatus.getPath.getParent
-        val dkeyIndexesPath = activePath.getParent
-        val dkey = dkeyIndexesPath.getParent.getName
-        dkey
-      }
-    }
-  }
-
-
-  /**
-   * Асинхронно прочитать все активные индексы для указанного dkey.
-   * @param dkey Ключ домена.
-   * @return Будущий список MDVIActive.
-   */
-  def getFsAllForDkey(dkey:String)(implicit executor:ExecutionContext): Future[List[MDVIActive]] = {
-    val path = getFsDkeyDirPath(dkey)
-    future {
-      fs.listStatus(path).foldLeft[List[MDVIActive]] (Nil) { (acc, s) =>
-        if (s.isDir) {
-          acc
-        } else {
-          val spath = s.getPath
-          getForFsPath(spath) match {
-            case Some(mdviA) => mdviA :: acc
-            case None        => acc
-          }
-        }
-      }
-    }
-  }
+  // Ключи для сериализованной карты данных.
+  val SER_KEY_GENERATION = "g"
+  val SER_KEY_SUBSHARDS = "s"
 
   /** Десериализовать набор байт в MDVIActive.
    * @param b Массив байтов.
    * @return Экземпляр MDVIActive.
    */
-  def deserializeBytes(b: Array[Byte]): MDVIActive = {
+  implicit def deserializeBytes(dkey:String, vin:String, b: Array[Byte]): MDVIActive = {
     val is = new ByteArrayInputStream(b)
-    try {
-      JacksonWrapper.deserialize(is)
+    val data = try {
+      JacksonWrapper.deserialize[Map[String, Any]](is)
     } finally {
       is.close()
     }
+    val generation = data(SER_KEY_GENERATION).asInstanceOf[Int]
+    val subshardsInfo = JacksonWrapper.convert [List[MDVISubshardInfo]] (data(SER_KEY_SUBSHARDS))
+    MDVIActive(dkey=dkey, vin=vin, generation=generation, subshardsInfo=subshardsInfo)
   }
 
-  /** Десереализовать из разных поддерживаемых форматов сериализации. Полезно при работе с данными из TupleEntry.
-   */
-  val desealizeAny: PartialFunction[AnyRef, MDVIActive] = {
-    case s:   String                  => JacksonWrapper.deserialize(s)
-    case ibw: ImmutableBytesWritable  => deserializeBytes(ibw.get)
-    case b:   Array[Byte]             => deserializeBytes(b)
-  }
 
-  /** Сгенерить ключ исходя из ключа домена и vin.
+  /**
+   * Прочитать из хранилища и распарсить json-сериализованные данные по сабжу.
    * @param dkey Ключ домена.
-   * @param vin Строка vin, описывающая виртуальный индекс.
-   * @return Строку, которая используется в качестве ключа.
+   * @param vin vin, определяющий шардинг виртуального индекса.
+   * @return Опциональный сабж.
    */
-  def dkeyVin2rowKey(dkey:String, vin:String) = dkey + "/" + vin
-
-  /** Прочитать значение сабжа из таблицы по ключу.
-   * @param dkey Ключ домена.
-   * @param vin Строка vin, хранящий данные об используемом индексе.
-   * @return Экземпляр MDVIActive, если найден.
-   */
-  def getForDkeyVinHbase(dkey: String, vin:String)(implicit executor: ExecutionContext): Future[Option[MDVIActive]] = {
+  def getForDkeyVin(dkey:String, vin:String)(implicit executor:ExecutionContext): Future[Option[MDVIActive]] = {
     // TODO Задействовать асинхронный клиент при появлении возможности, ибо тут адски блокирующаяся поделка.
-    val getReq = new Get(dkeyVin2rowKey(dkey, vin).getBytes)
-      .addColumn(CF_INX_ACTIVE, C_ACTIVE)
-    hclient.map { _client =>
+    val column: Array[Byte] = vin
+    val getReq = new Get(dkey)
+      .addColumn(CF_INX_ACTIVE, column)
+    hclient map { _client =>
       try {
         val results = _client.get(getReq)
         if (results.isEmpty) {
           None
         } else {
-          val bytes = results.getColumnLatest(CF_INX_ACTIVE, C_ACTIVE).getValue
-          Some(deserializeBytes(bytes))
+          val bytes = results.getColumnLatest(CF_INX_ACTIVE, column).getValue
+          Some(deserializeBytes(dkey=dkey, vin=vin, b=bytes))
         }
       } finally {
         _client.close()
       }
     }
   }
+
+
+  /** Найти все dkey, которые используют указанный индекс.
+   * Ресурсоемкая операция, т.к. для этого нужно просмотреть все dkey.
+   * @param vin имя индекса, для которого проводится поиск.
+   * @return Список dkey->MDVIActive без повторяющихся элементов в произвольном порядке.
+   *         При желании можно сконвертить в карту через .toMap()
+   */
+  def getAllLatestForVin(vin: String)(implicit executor:ExecutionContext): Future[Iterable[MDVIActive]] = {
+    // TODO Тут очень нужен неблокирующий асинхронный hbase-клиент.
+    trace("getAllForVin(%s)" format vin)
+    val column: Array[Byte] = vin
+    // Скан всех рядов, содержащих колонку с названием индеска с указанной CF.
+    val scanReq = new Scan().addColumn(CF_INX_ACTIVE, column)
+    hclient map { _client =>
+      try {
+        val scanner = _client.getScanner(scanReq)
+        try {
+          scanner map { result =>
+            val v = result.getColumnLatest(CF_INX_ACTIVE, column).getValue
+            val dkey = result.getRow
+            deserializeBytes(vin=vin, dkey=dkey, b=v)
+          }
+
+        } finally {
+          scanner.close()
+        }
+      } finally {
+        _client.close()
+      }
+    }
+  }
+
+
+  /** Асинхронно прочитать все активные индексы для указанного dkey. Быстрая операция.
+   * @param dkey Ключ домена.
+   * @return Будущий список MDVIActive.
+   */
+  def getAllForDkey(dkey: String)(implicit executor:ExecutionContext): Future[Iterable[MDVIActive]] = {
+    val getReq = new Get(dkey).addFamily(CF_INX_ACTIVE)
+    hclient map { _client =>
+      try {
+        _client
+          .get(getReq)
+          .getFamilyMap(CF_INX_ACTIVE)
+          .map { case(vinBytes, dataBytes) => deserializeBytes(dkey=dkey, vin=vinBytes, b=dataBytes) }
+
+      } finally {
+        _client.close()
+      }
+    }
+  }
+
+
+  /** Выдать CF-дескриптор для используемого CF
+   * @return Новый экземпляр HColumnDescriptor.
+   */
+  def getCFDescriptor = new HColumnDescriptor(CF_INX_ACTIVE).setMaxVersions(3)
 
 }
 
@@ -235,21 +205,6 @@ case class MDVIActive(
     inx -> ss.getTypename
   }
 
-  /**
-   * Выдать имя файла, под которым будут сохраняться данные этого экземпляра.
-   * @return Строка имени файла, без пути, файлового расширения и т.д.
-   */
-  @JsonIgnore
-  def filename: String = vin
-
-  /**
-   * Путь к файлу в DFS, пригодный для отправки в JsonDfsBackend.
-   * @return Путь.
-   */
-  @JsonIgnore
-  def filepath: Path = getFsDkeyPath(dkey, filename)
-
-
   @JsonIgnore
   lazy val isSingleShard = subshards.length == 1
 
@@ -294,14 +249,27 @@ case class MDVIActive(
     getAllTypes  // TODO нужно как-то что-то где-то определять.
   }
 
+  def exportInternalState: Map[String, Any] = Map(
+    SER_KEY_GENERATION -> generation,
+    SER_KEY_SUBSHARDS  -> subshardsInfo
+  )
+
   /**
    * Сохранить текущий экземпляр в хранилище.
    * @return Сохраненные (т.е. текущий) экземпляр сабжа.
    */
   @JsonIgnore
-  def save: MDVIActive = {
-    JsonDfsBackend.writeToPath(path=filepath, value=this, overwrite=false)
-    this
+  def save(implicit executor: ExecutionContext) = {
+    val v = JacksonWrapper.serialize(exportInternalState)
+    val putReq = new Put(dkey).add(CF_INX_ACTIVE, vin, v)
+    hclient map { _client =>
+      try {
+        _client.put(putReq)
+        this
+      } finally {
+        _client.close()
+      }
+    }
   }
 
   /** Сериализовать этот экземпляр класса в десериализуемое представление.
@@ -366,8 +334,8 @@ case class MDVIActive(
    * @return true, если используется.
    */
   def isVinUsedByOtherDkeys(implicit executor:ExecutionContext): Future[Boolean] = {
-    findFsDkeysForIndex(vin) map { vinUsedBy =>
-      var l = vinUsedBy.length
+    getAllLatestForVin(vin) map { vinUsedBy =>
+      var l = vinUsedBy.size
       if (vinUsedBy contains dkey)
         l -= 1
       val result = l > 0

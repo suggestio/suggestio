@@ -32,9 +32,9 @@ trait SioHBaseSyncClientT {
   val getConf = HBaseConfiguration.create()
 
   /**
-   * Выдать готовый к работе admin-клиент.
+   * Выдать готовый к работе admin-клиент. Одноразовый, т.к. по доке так рекомендовано.
    */
-  lazy val admin = new HBaseAdmin(getConf)
+  def admin = new HBaseAdmin(getConf)
 
   val pool = new HTablePool(getConf, 16)
 
@@ -51,7 +51,7 @@ trait SioHBaseSyncClientT {
 object SioHBaseSyncClient extends SioHBaseSyncClientT
 
 
-// Будущий асинхронный клиент, на который надо будет переехать, когда его наконец запилят под HBase 0.95.x
+// Будущий асинхронный клиент, на который надо будет переехать, когда его наконец запилят поддержку HBase 0.95.x
 trait SioHBaseAsyncClientT {
 
   val asyncClient = new HBaseClient(SioHBaseClient.QUORUM_SPEC)

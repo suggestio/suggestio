@@ -20,8 +20,6 @@ import io.suggest.util.SioEsIndexUtil.{SCROLL_TIMEOUT_INIT_DFLT, SCROLL_PER_SHAR
 // Базовый интерфейс для классов, исповедующих доступ к dkey-индексам.
 trait MDVIUnit {
   val dkey: String
-  def filename: String
-  def filepath: Path
   val vin: String
   def subshards: List[MDVISubshard]
   val generation: Int
@@ -31,7 +29,7 @@ trait MDVIUnit {
   def getAllTypesForShard(shardN: Int): List[MDVISubshard]
   def getVirtualIndex: MVirtualIndex
   def getTypesForRequest(sc:SioSearchContext): List[String]
-  def save: MDVIUnit
+  def save(implicit executor: ExecutionContext): Future[MDVIUnit]
   def getShards: Seq[String]
   def serialize: Array[Byte]
 
