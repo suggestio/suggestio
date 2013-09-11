@@ -14,6 +14,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor
 import MDomain.{hclient, CF_INX_ACTIVE}
 import scala.collection.JavaConversions._
 import HTapConversionsBasic._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Suggest.io
@@ -54,7 +55,7 @@ object MDVIActive {
    * @param vin vin, определяющий шардинг виртуального индекса.
    * @return Опциональный сабж.
    */
-  def getForDkeyVin(dkey:String, vin:String)(implicit executor:ExecutionContext): Future[Option[MDVIActive]] = {
+  def getForDkeyVin(dkey:String, vin:String): Future[Option[MDVIActive]] = {
     // TODO Задействовать асинхронный клиент при появлении возможности, ибо тут адски блокирующаяся поделка.
     val column: Array[Byte] = vin
     val getReq = new Get(dkey)
@@ -81,7 +82,7 @@ object MDVIActive {
    * @return Список dkey->MDVIActive без повторяющихся элементов в произвольном порядке.
    *         При желании можно сконвертить в карту через .toMap()
    */
-  def getAllLatestForVin(vin: String)(implicit executor:ExecutionContext): Future[Iterable[MDVIActive]] = {
+  def getAllLatestForVin(vin: String): Future[Iterable[MDVIActive]] = {
     // TODO Тут очень нужен неблокирующий асинхронный hbase-клиент.
     trace("getAllForVin(%s)" format vin)
     val column: Array[Byte] = vin
@@ -111,7 +112,7 @@ object MDVIActive {
    * @param dkey Ключ домена.
    * @return Будущий список MDVIActive.
    */
-  def getAllForDkey(dkey: String)(implicit executor:ExecutionContext): Future[Iterable[MDVIActive]] = {
+  def getAllForDkey(dkey: String): Future[Iterable[MDVIActive]] = {
     val getReq = new Get(dkey).addFamily(CF_INX_ACTIVE)
     hclient map { _client =>
       try {
@@ -244,7 +245,7 @@ case class MDVIActive(
    * @param sc Контекст поискового запроса.
    * @return Список названий индексов/шард и список имен типов в этих индексах.
    */
-  def getTypesForRequest(sc:SioSearchContext): List[String] = {
+  def getTypesForRequest(sc: SioSearchContext): List[String] = {
     error("getTypesForRequest: NOT YET IMPLEMENTED")
     getAllTypes  // TODO нужно как-то что-то где-то определять.
   }
@@ -259,7 +260,7 @@ case class MDVIActive(
    * @return Сохраненные (т.е. текущий) экземпляр сабжа.
    */
   @JsonIgnore
-  def save(implicit executor: ExecutionContext) = {
+  def save = {
     val v = JacksonWrapper.serialize(exportInternalState)
     val putReq = new Put(dkey).add(CF_INX_ACTIVE, vin, v)
     hclient map { _client =>
@@ -298,7 +299,7 @@ case class MDVIActive(
    * @param failOnError Сдыхать при ошибке. По дефолту true.
    * @return true, если всё хорошо.
    */
-  def setMappings(failOnError:Boolean = true)(implicit esClient:EsClient, executor:ExecutionContext): Future[Boolean] = {
+  def setMappings(failOnError:Boolean = true)(implicit esClient:EsClient, ec:ExecutionContext): Future[Boolean] = {
     debug("setMappings(%s): starting" format failOnError)
     // Запустить парралельно загрузку маппингов для всех типов (всех подшард).
     Future.traverse(subshards) {
@@ -322,7 +323,7 @@ case class MDVIActive(
    * Удалить маппинги позволяет удалить данные.
    * @return Выполненный фьючерс когда всё закончится.
    */
-  def deleteMappings(implicit esClient:EsClient, executor:ExecutionContext): Future[Unit] = {
+  def deleteMappings(implicit esClient:EsClient, ec:ExecutionContext): Future[Unit] = {
     debug("deleteMappings(): dkey=%s vin=%s types=%s" format (dkey, vin, subshards map { _.getTypename }))
     SioFutureUtil
       .mapLeftSequentally(subshards, ignoreErrors=true) { _.deleteMappaings() }
@@ -333,7 +334,7 @@ case class MDVIActive(
    * Используется ли указанный vin другими доменами?
    * @return true, если используется.
    */
-  def isVinUsedByOtherDkeys(implicit executor:ExecutionContext): Future[Boolean] = {
+  def isVinUsedByOtherDkeys(implicit ec:ExecutionContext): Future[Boolean] = {
     getAllLatestForVin(vin) map { vinUsedBy =>
       var l = vinUsedBy.size
       if (vinUsedBy contains dkey)
@@ -354,7 +355,7 @@ case class MDVIActive(
    * Бывает, что можно удалить всё вместе с физическим индексом. А бывает, что наоборот.
    * Тут функция, которая делает либо первое, либо второе в зависимости от обстоятельств.
    */
-  def deleteIndexOrMappings(implicit esClient: EsClient, executor: ExecutionContext): Future[Unit] = {
+  def deleteIndexOrMappings(implicit esClient: EsClient, ec: ExecutionContext): Future[Unit] = {
     isVinUsedByOtherDkeys map {
       case true  => deleteMappings
       case false => getVirtualIndex.eraseShards

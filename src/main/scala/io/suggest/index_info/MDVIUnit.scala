@@ -2,7 +2,7 @@ package io.suggest.index_info
 
 import org.joda.time.LocalDate
 import io.suggest.model.{MDVISubshard, SioSearchContext, MVirtualIndex}
-import org.apache.hadoop.fs.{Path, FileSystem}
+import org.apache.hadoop.fs.Path
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.client.Client
 import org.elasticsearch.action.search.SearchResponse
@@ -29,7 +29,7 @@ trait MDVIUnit {
   def getAllTypesForShard(shardN: Int): List[MDVISubshard]
   def getVirtualIndex: MVirtualIndex
   def getTypesForRequest(sc:SioSearchContext): List[String]
-  def save(implicit executor: ExecutionContext): Future[MDVIUnit]
+  def save: Future[MDVIUnit]
   def getShards: Seq[String]
   def serialize: Array[Byte]
 

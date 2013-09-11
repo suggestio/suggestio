@@ -72,7 +72,7 @@ trait DomainSettingsT extends Serializable {
   /** Сохранить в хранилище.
    * @return Текущий экземпляр класса, хотя теоретически в будущем может возвращаться и новый экземпляр класса.
    */
-  def save(implicit ec: ExecutionContext): Future[Unit] = {
+  def save: Future[Unit] = {
     val v = JacksonWrapper.serialize(meta)
     MDomain.setProp(dkey, DomainSettings.COLUMN, v)
   }

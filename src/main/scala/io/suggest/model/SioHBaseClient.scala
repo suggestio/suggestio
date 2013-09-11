@@ -6,7 +6,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.util.Bytes
 import org.hbase.async.HBaseClient
 import com.stumbleupon.async.{Callback, Deferred}
-import scala.concurrent.{ExecutionContext, Promise, Future, future}
+import scala.concurrent.{Promise, Future, future}
 
 /**
  * Suggest.io
@@ -23,6 +23,10 @@ object SioHBaseClient {
 // Официальный тормозной HBase-клиент, внешне полностью синхронный, несмотря на то, что асинхроннен внутри.
 // Эталон неэффективности, неудобный в использовании, но всегда поддерживает нужную версию HBase.
 trait SioHBaseSyncClientT {
+
+  // Выпилить, когда придет время асинхронного клиента.
+  import scala.concurrent.ExecutionContext.Implicits.global
+
 
   /**
    * Выдать пустую конфигурацию для открытия коннекшенов. Является долгоживущим объектом, что позволяет шарить
@@ -44,7 +48,7 @@ trait SioHBaseSyncClientT {
    * @return Фьючерс с экземпляром табличного клиента. Клиент не является thread-safe и его нужно закрывать когда он
     *        более не нужен.
    */
-  def clientForTable(tableName:String)(implicit executor: ExecutionContext) = future {
+  def clientForTable(tableName:String) = future {
     pool.getTable(tableName)
   }
 }

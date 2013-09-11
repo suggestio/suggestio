@@ -1,10 +1,11 @@
 package io.suggest.model
 
 import HTapConversionsBasic._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import MDomain.{hclient, CF_SEARCH_PTR}
 import org.apache.hadoop.hbase.client.{Put, Get}
 import org.apache.hadoop.hbase.HColumnDescriptor
+import scala.concurrent.ExecutionContext.Implicits.global // TODO Используем, пока не появится нормальный async hbase клиент.
 
 /**
  * Suggest.io
@@ -35,7 +36,7 @@ object MDVISearchPtr {
    * @param dkey Ключ домена.
    * @return Опциональный распрарсенный экземпляр MDVISearchPtr.
    */
-  def getForDkey(dkey:String, idOpt:Option[String] = None)(implicit executor: ExecutionContext): Future[Option[MDVISearchPtr]] = {
+  def getForDkey(dkey:String, idOpt:Option[String] = None): Future[Option[MDVISearchPtr]] = {
     val column: Array[Byte] = idOpt2column(idOpt)
     val getReq = new Get(dkey).addColumn(CF_SEARCH_PTR, column)
     hclient map { _client =>
@@ -75,7 +76,7 @@ case class MDVISearchPtr(
   /** Сохранить в хранилище.
    * @return Пустой фьючерс, который исполняется после реального сохранения данных в БД.
    */
-  def save(implicit executor: ExecutionContext): Future[Unit] = {
+  def save: Future[Unit] = {
     val v = vins.mkString(SEP)
     val putReq = new Put(dkey).add(CF_SEARCH_PTR, columnName, v)
     hclient map { _client =>
