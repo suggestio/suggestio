@@ -126,7 +126,7 @@ object MVirtualIndex {
    * @param n Номер шарды.
    * @return Строка, которая будет использоваться как имя es-индекса.
    */
-  def vinAndCounter2indexName(vin:String, n:Int): String = vin + n
+  def vinAndCounter2indexName(vin:String, n:Int): String = vin + "_" + n
 
 }
 

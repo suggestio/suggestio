@@ -148,13 +148,14 @@ object SioEsUtil extends Logs {
    * @return Фьючерс строки названия индекса.
    */
   def findFreeVirtualIndex(shardCount: Int, maxAttempts: Int = FREE_INDEX_NAME_MAX_FIND_ATTEMPTS)(implicit client:Client, executor:ExecutionContext) : Future[MVirtualIndex] = {
-    lazy val logPrefix = "getFreeIndexName(shardCount=%s, maxAttempts=%s): " format (shardCount, maxAttempts)
+    lazy val logPrefix = "findFreeIndexName(shardCount=%s, maxAttempts=%s): " format (shardCount, maxAttempts)
     trace(logPrefix + "Starting...")
     val p = Promise[MVirtualIndex]()
     // Тут как бы рекурсивный неблокирующий фьючерс.
     def freeIndexNameLookup(n:Int) {
       if (n < maxAttempts) {
         val vinPrefix = StringUtil.randomIdLatLc(RANDOM_INDEX_PREFIX_LEN)
+        debug(logPrefix + "Trying vinPrefix = %s" format vinPrefix)
         val mvi = MVirtualIndex(vinPrefix, shardCount)
         val firstEsShard = mvi.head
         debug(logPrefix + "Asking for random index name %s..." format firstEsShard)
@@ -189,10 +190,10 @@ object SioEsUtil extends Logs {
   def createRandomVirtualIndex(shardCount:Int, replicasCount:Int, maxAttempts: Int = FREE_INDEX_NAME_MAX_FIND_ATTEMPTS)(implicit client:Client, executor:ExecutionContext): Future[MVirtualIndex] = {
     lazy val logPrefix = "createRandomIndex(shardCount=%s, maxAttempts=%s): " format (shardCount, maxAttempts)
     trace(logPrefix + "starting")
-    findFreeVirtualIndex(maxAttempts)
-      .andThen { case Success(mvi) =>
-        trace(logPrefix + "free index name prefix: %s" format mvi.vinPrefix)
-        mvi.ensureShards(replicasCount)
+    findFreeVirtualIndex(shardCount, maxAttempts)
+      .flatMap { mvi =>
+        info(logPrefix + "Esuring shards for mvi=%s" format mvi)
+        mvi.ensureShards(replicasCount) map { _ => mvi }
       }
   }
 

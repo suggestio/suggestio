@@ -29,7 +29,7 @@ libraryDependencies ++= {
   val akkaVsn       = "2.1.0"
   val jacksonVsn    = "2.2.1"
   val tikaVsn       = "1.3"
-  val cascadingVsn  = "2.1.5"
+  val cascadingVsn  = "2.1.6"
   val hbaseVsn      = "0.95.1-hadoop1"
   Seq(
     "org.scalatest" %% "scalatest" % "1.9.1" % "test",

@@ -11,7 +11,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 12.09.13 10:37
- * Description: Модель мелких объектов suggest.io: домеенов, юзеров, новостей и всего остального.
+ * Description: Модель мелких объектов suggest.io с random-чтением и записью: доменов, юзеров, новостей и всего остального.
  * Мелкие немногочисленные бессвязные вещи хранятся в одной таблице в разных CF-ках чтобы избежать передозировки
  * неэффективно используемых регионов и сопутствуюих проблем.
  */
@@ -75,6 +75,25 @@ object MObject {
 
   private def hcd(name: Array[Byte], maxVersions:Int) = new HColumnDescriptor(name).setMaxVersions(maxVersions)
 
+
+  /** Существует ли таблица с именем obj?
+   * @return true, если таблица с именем obj существует. Иначе false.
+   */
+  def isTableExists: Future[Boolean] = {
+    future {
+      SioHBaseSyncClient.admin.tableExists(HTABLE_NAME)
+    }
+  }
+
+  /** Убедиться, что таблица существует.
+   * TODO Сделать, чтобы был updateTable при необходимости (если схема таблицы слегка устарела).
+   */
+  def ensureTableExists: Future[Unit] = {
+    isTableExists flatMap {
+      case false => createTable
+      case true  => Future.successful(())
+    }
+  }
 
   /** Выставить произвольнон значение для произвольной колонки в CF_PROPS. По идее должно использоваться из других моделей,
    * занимающихся сериализацией.

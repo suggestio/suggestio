@@ -61,7 +61,7 @@ object SioConstants {
   val HBASE_KEY_FIELDS = new Fields(HBASE_KEY_FN)
 
   // Префикс таблиц кравлера.
-  val HTABLE_CRAWL_NAME_PREFIX = "crwl_"
+  val HTABLE_WEBTABLE_NAME_PREFIX = "wt_"
 
   // Время жизни рядов qi, создаваемых в базе на веб-морде.
   val DOMAIN_QI_TTL_SECONDS = (5 hours).toSeconds.toInt
