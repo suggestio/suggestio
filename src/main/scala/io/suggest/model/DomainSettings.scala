@@ -39,7 +39,7 @@ trait DomainSettingsStaticT {
    * @return Опциональный экземпляр прочитанных настроек для домена. Если ничего не сохранено или домена нет, то будет None.
    */
   def getForDkey(dkey: String)(implicit ec: ExecutionContext): Future[Option[DomainSettingsT]] = {
-    MDomain.getProp(dkey, COLUMN) map {
+    MObject.getProp(dkey, COLUMN) map {
       // Опциональный Array[Byte] маппим на опциональный экземпляр этой модели.
       _ map { v =>
         val meta = JacksonWrapper.deserialize[DomainSettings.DSMap_t](v)
@@ -74,7 +74,7 @@ trait DomainSettingsT extends Serializable {
    */
   def save: Future[Unit] = {
     val v = JacksonWrapper.serialize(meta)
-    MDomain.setProp(dkey, DomainSettings.COLUMN, v)
+    MObject.setProp(dkey, DomainSettings.COLUMN, v)
   }
 
   // Короткие врапперы для изменения метаданных. Во всех случаях создаются новые инстансы неизменяемого DomainSettingsT.

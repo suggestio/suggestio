@@ -40,7 +40,10 @@ trait SioHBaseSyncClientT {
    */
   def admin = new HBaseAdmin(getConf)
 
-  val pool = new HTablePool(getConf, 16)
+  val pool = {
+    val poolSize = System.getProperty("io.suggest.model.hclient.pool.size", "32").toInt
+    new HTablePool(getConf, poolSize)
+  }
 
   /** Сгенерить простого (НЕ-admin) клиента для работы с указанной таблицей: можно читать и писать ряды в таблицу.
    * Клиент нужно закрывать по окончании работы.

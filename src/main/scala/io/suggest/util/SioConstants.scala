@@ -2,6 +2,7 @@ package io.suggest.util
 
 import org.elasticsearch.index.mapper.internal._
 import cascading.tuple.Fields
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -61,5 +62,8 @@ object SioConstants {
 
   // Префикс таблиц кравлера.
   val HTABLE_CRAWL_NAME_PREFIX = "crwl_"
+
+  // Время жизни рядов qi, создаваемых в базе на веб-морде.
+  val DOMAIN_QI_TTL_SECONDS = (5 hours).toSeconds.toInt
 
 }

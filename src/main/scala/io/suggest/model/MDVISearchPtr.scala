@@ -2,7 +2,7 @@ package io.suggest.model
 
 import HTapConversionsBasic._
 import scala.concurrent.Future
-import MDomain.{hclient, CF_SEARCH_PTR}
+import MObject.{hclient, CF_DSEARCH_PTR}
 import org.apache.hadoop.hbase.client.{Put, Get}
 import org.apache.hadoop.hbase.HColumnDescriptor
 import scala.concurrent.ExecutionContext.Implicits.global // TODO Используем, пока не появится нормальный async hbase клиент.
@@ -38,7 +38,7 @@ object MDVISearchPtr {
    */
   def getForDkey(dkey:String, idOpt:Option[String] = None): Future[Option[MDVISearchPtr]] = {
     val column: Array[Byte] = idOpt2column(idOpt)
-    val getReq = new Get(dkey).addColumn(CF_SEARCH_PTR, column)
+    val getReq = new Get(dkey).addColumn(CF_DSEARCH_PTR, column)
     hclient map { _client =>
       val result = try {
         _client.get(getReq)
@@ -49,17 +49,17 @@ object MDVISearchPtr {
       if (result.isEmpty) {
         None
       } else {
-        val v = result.getColumnLatest(CF_SEARCH_PTR, column).getValue
+        val v = result.getColumnLatest(CF_DSEARCH_PTR, column).getValue
         val vins = v.split(SEP).toList
         Some(MDVISearchPtr(dkey=dkey, idOpt=idOpt, vins=vins))
       }
     }
   }
 
-  /** Выдать CF-дескриптор для используемого CF_SEARCH_PTR
+  /** Выдать CF-дескриптор для используемого CF_DSEARCH_PTR
    * @return Новый экземпляр HColumnDescriptor.
    */
-  def getCFDescriptor = new HColumnDescriptor(CF_SEARCH_PTR).setMaxVersions(1)
+  def getCFDescriptor = new HColumnDescriptor(CF_DSEARCH_PTR).setMaxVersions(1)
 
 }
 
@@ -78,7 +78,7 @@ case class MDVISearchPtr(
    */
   def save: Future[Unit] = {
     val v = vins.mkString(SEP)
-    val putReq = new Put(dkey).add(CF_SEARCH_PTR, columnName, v)
+    val putReq = new Put(dkey).add(CF_DSEARCH_PTR, columnName, v)
     hclient map { _client =>
       try {
         _client.put(putReq)

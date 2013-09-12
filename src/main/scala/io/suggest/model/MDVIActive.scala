@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.{ByteArrayOutputStream, ByteArrayInputStream}
 import org.apache.hadoop.hbase.client.{Put, Scan, Get}
 import org.apache.hadoop.hbase.HColumnDescriptor
-import MDomain.{hclient, CF_INX_ACTIVE}
+import MObject.{hclient, CF_DINX_ACTIVE}
 import scala.collection.JavaConversions._
 import HTapConversionsBasic._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -59,14 +59,14 @@ object MDVIActive {
     // TODO Задействовать асинхронный клиент при появлении возможности, ибо тут адски блокирующаяся поделка.
     val column: Array[Byte] = vin
     val getReq = new Get(dkey)
-      .addColumn(CF_INX_ACTIVE, column)
+      .addColumn(CF_DINX_ACTIVE, column)
     hclient map { _client =>
       try {
         val results = _client.get(getReq)
         if (results.isEmpty) {
           None
         } else {
-          val bytes = results.getColumnLatest(CF_INX_ACTIVE, column).getValue
+          val bytes = results.getColumnLatest(CF_DINX_ACTIVE, column).getValue
           Some(deserializeBytes(dkey=dkey, vin=vin, b=bytes))
         }
       } finally {
@@ -87,13 +87,13 @@ object MDVIActive {
     trace("getAllForVin(%s)" format vin)
     val column: Array[Byte] = vin
     // Скан всех рядов, содержащих колонку с названием индеска с указанной CF.
-    val scanReq = new Scan().addColumn(CF_INX_ACTIVE, column)
+    val scanReq = new Scan().addColumn(CF_DINX_ACTIVE, column)
     hclient map { _client =>
       try {
         val scanner = _client.getScanner(scanReq)
         try {
           scanner map { result =>
-            val v = result.getColumnLatest(CF_INX_ACTIVE, column).getValue
+            val v = result.getColumnLatest(CF_DINX_ACTIVE, column).getValue
             val dkey = result.getRow
             deserializeBytes(vin=vin, dkey=dkey, b=v)
           }
@@ -113,12 +113,12 @@ object MDVIActive {
    * @return Будущий список MDVIActive.
    */
   def getAllForDkey(dkey: String): Future[Iterable[MDVIActive]] = {
-    val getReq = new Get(dkey).addFamily(CF_INX_ACTIVE)
+    val getReq = new Get(dkey).addFamily(CF_DINX_ACTIVE)
     hclient map { _client =>
       try {
         _client
           .get(getReq)
-          .getFamilyMap(CF_INX_ACTIVE)
+          .getFamilyMap(CF_DINX_ACTIVE)
           .map { case(vinBytes, dataBytes) => deserializeBytes(dkey=dkey, vin=vinBytes, b=dataBytes) }
 
       } finally {
@@ -131,7 +131,7 @@ object MDVIActive {
   /** Выдать CF-дескриптор для используемого CF
    * @return Новый экземпляр HColumnDescriptor.
    */
-  def getCFDescriptor = new HColumnDescriptor(CF_INX_ACTIVE).setMaxVersions(3)
+  def getCFDescriptor = new HColumnDescriptor(CF_DINX_ACTIVE).setMaxVersions(3)
 
 }
 
@@ -262,7 +262,7 @@ case class MDVIActive(
   @JsonIgnore
   def save: Future[MDVIActive] = {
     val v = JacksonWrapper.serialize(exportInternalState)
-    val putReq = new Put(dkey).add(CF_INX_ACTIVE, vin, v)
+    val putReq = new Put(dkey).add(CF_DINX_ACTIVE, vin, v)
     hclient map { _client =>
       try {
         _client.put(putReq)
