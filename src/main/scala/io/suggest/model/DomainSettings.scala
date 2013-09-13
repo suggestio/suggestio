@@ -70,9 +70,9 @@ trait DomainSettingsT extends Serializable {
   def meta: DSMap_t
 
   /** Сохранить в хранилище.
-   * @return Текущий экземпляр класса, хотя теоретически в будущем может возвращаться и новый экземпляр класса.
+   * @return Фьючерс для опциональной синхронизации. Любые данные в нём не несут никакого смысла.
    */
-  def save: Future[Unit] = {
+  def save: Future[AnyRef] = {
     val v = JacksonWrapper.serialize(meta)
     MObject.setProp(dkey, DomainSettings.COLUMN, v)
   }

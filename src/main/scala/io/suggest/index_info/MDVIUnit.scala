@@ -29,7 +29,7 @@ trait MDVIUnit {
   def getAllTypesForShard(shardN: Int): List[MDVISubshard]
   def getVirtualIndex: MVirtualIndex
   def getTypesForRequest(sc:SioSearchContext): List[String]
-  def save: Future[MDVIUnit]
+  def save(implicit ec:ExecutionContext): Future[MDVIUnit]
   def getShards: Seq[String]
   def serialize: Array[Byte]
 

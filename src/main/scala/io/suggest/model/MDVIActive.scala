@@ -3,18 +3,19 @@ package io.suggest.model
 import org.joda.time.LocalDate
 import io.suggest.util.{JacksonWrapper, LogsImpl, SioFutureUtil}
 import io.suggest.util.DateParseUtil.toDaysCount
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Promise, ExecutionContext, Future}
 import org.elasticsearch.client.{Client => EsClient}
 import io.suggest.index_info.MDVIUnitAlterable
 import org.elasticsearch.common.unit.TimeValue
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.{ByteArrayOutputStream, ByteArrayInputStream}
-import org.apache.hadoop.hbase.client.{Put, Scan, Get}
 import org.apache.hadoop.hbase.HColumnDescriptor
-import MObject.hclient
 import scala.collection.JavaConversions._
 import HTapConversionsBasic._
-import scala.concurrent.ExecutionContext.Implicits.global
+import SioHBaseAsyncClient._
+import org.hbase.async.{PutRequest, KeyValue, GetRequest}
+import scala.util.{Failure, Success}
+import java.util
 
 /**
  * Suggest.io
@@ -59,56 +60,52 @@ object MDVIActive {
    * @param vin vin, определяющий шардинг виртуального индекса.
    * @return Опциональный сабж.
    */
-  def getForDkeyVin(dkey:String, vin:String): Future[Option[MDVIActive]] = {
-    // TODO Задействовать асинхронный клиент при появлении возможности, ибо тут адски блокирующаяся поделка.
+  def getForDkeyVin(dkey:String, vin:String)(implicit ec:ExecutionContext): Future[Option[MDVIActive]] = {
     val column: Array[Byte] = vin
-    val getReq = new Get(dkey)
-      .addColumn(CF, column)
-    hclient map { _client =>
-      try {
-        val results = _client.get(getReq)
-        if (results.isEmpty) {
-          None
-        } else {
-          val bytes = results.getColumnLatest(CF, column).getValue
-          Some(deserializeBytes(dkey=dkey, vin=vin, b=bytes))
-        }
-      } finally {
-        _client.close()
+    val getReq = new GetRequest(HTABLE_NAME, dkey).family(CF).qualifier(column)
+    ahclient.get(getReq) map { results =>
+      if (results.isEmpty) {
+        None
+      } else {
+        val bytes = results.head.value()
+        Some(deserializeBytes(dkey=dkey, vin=vin, b=bytes))
       }
     }
   }
 
 
-  /** Найти все dkey, которые используют указанный индекс.
+  /** Найти все dkey, которые используют указанный индекс. Неблокирующая непоточная операция, завершается лишь
+   * только когда всё-всё готово.
    * Ресурсоемкая операция, т.к. для этого нужно просмотреть все dkey.
    * @param vin имя индекса, для которого проводится поиск.
    * @return Список dkey->MDVIActive без повторяющихся элементов в произвольном порядке.
    *         При желании можно сконвертить в карту через .toMap()
    */
-  def getAllLatestForVin(vin: String): Future[Iterable[MDVIActive]] = {
-    // TODO Тут очень нужен неблокирующий асинхронный hbase-клиент.
+  def getAllLatestForVin(vin: String)(implicit ec:ExecutionContext): Future[List[MDVIActive]] = {
     trace("getAllForVin(%s)" format vin)
     val column: Array[Byte] = vin
-    // Скан всех рядов, содержащих колонку с названием индеска с указанной CF.
-    val scanReq = new Scan().addColumn(CF, column)
-    hclient map { _client =>
-      try {
-        val scanner = _client.getScanner(scanReq)
-        try {
-          scanner map { result =>
-            val v = result.getColumnLatest(CF, column).getValue
-            val dkey = result.getRow
-            deserializeBytes(vin=vin, dkey=dkey, b=v)
-          }
+    val scanner = ahclient.newScanner(HTABLE_NAME)
+    scanner.setFamily(CF)
+    scanner.setQualifier(column)
+    val p = Promise[List[MDVIActive]]()
+    def foldNextAsync(_acc: List[MDVIActive], _fut: Future[util.ArrayList[util.ArrayList[KeyValue]]]) {
+      _fut onComplete {
+        case Success(null) => p success _acc
 
-        } finally {
-          scanner.close()
-        }
-      } finally {
-        _client.close()
+        case Success(rows) =>
+          val acc1 = rows.foldLeft(_acc) { (__acc, __rows) =>
+            __rows.foldLeft(__acc) { (___acc, row) =>
+              val dkey = row.key()
+              deserializeBytes(vin=vin, dkey=dkey, b=row.value()) :: ___acc
+            }
+          }
+          foldNextAsync(acc1, scanner.nextRows)
+
+        case Failure(ex) => p failure ex
       }
     }
+    foldNextAsync(Nil, scanner.nextRows)
+    p.future
   }
 
 
@@ -116,17 +113,13 @@ object MDVIActive {
    * @param dkey Ключ домена.
    * @return Будущий список MDVIActive.
    */
-  def getAllForDkey(dkey: String): Future[Iterable[MDVIActive]] = {
-    val getReq = new Get(dkey).addFamily(CF)
-    hclient map { _client =>
-      try {
-        _client
-          .get(getReq)
-          .getFamilyMap(CF)
-          .map { case(vinBytes, dataBytes) => deserializeBytes(dkey=dkey, vin=vinBytes, b=dataBytes) }
-
-      } finally {
-        _client.close()
+  def getAllForDkey(dkey: String)(implicit ec:ExecutionContext): Future[Seq[MDVIActive]] = {
+    val getReq = new GetRequest(HTABLE_NAME, dkey).family(CF)
+    ahclient.get(getReq) map { results =>
+      if (results.isEmpty) {
+        Nil
+      } else {
+        results.map { kv => deserializeBytes(dkey=dkey, vin=kv.key, b=kv.value) }
       }
     }
   }
@@ -264,17 +257,10 @@ case class MDVIActive(
    * @return Сохраненные (т.е. текущий) экземпляр сабжа.
    */
   @JsonIgnore
-  def save: Future[MDVIActive] = {
+  def save(implicit ec: ExecutionContext): Future[MDVIActive] = {
     val v = JacksonWrapper.serialize(exportInternalState)
-    val putReq = new Put(dkey).add(CF, vin, v)
-    hclient map { _client =>
-      try {
-        _client.put(putReq)
-        this
-      } finally {
-        _client.close()
-      }
-    }
+    val putReq = new PutRequest(HTABLE_NAME:Array[Byte], dkey:Array[Byte], CF, vin:Array[Byte], v:Array[Byte])
+    ahclient.put(putReq) map { _ => this }
   }
 
   /** Сериализовать этот экземпляр класса в десериализуемое представление.

@@ -1,11 +1,12 @@
 package io.suggest.model
 
 import HTapConversionsBasic._
-import scala.concurrent.Future
-import MObject.{hclient, CF_DSEARCH_PTR}
-import org.apache.hadoop.hbase.client.{Put, Get}
+import scala.concurrent.{ExecutionContext, Future}
+import MObject.CF_DSEARCH_PTR
+import SioHBaseAsyncClient._
 import org.apache.hadoop.hbase.HColumnDescriptor
-import scala.concurrent.ExecutionContext.Implicits.global // TODO Используем, пока не появится нормальный async hbase клиент.
+import org.hbase.async.{PutRequest, GetRequest}
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -24,6 +25,8 @@ object MDVISearchPtr {
   val COLUMN_DFLT: Array[Byte] = COLUMN_PREFIX
   val SEP = ","
 
+  def HTABLE_NAME = MObject.HTABLE_NAME
+
   def id2column(id: String) = COLUMN_PREFIX + "." + id
   def idOpt2column(id: Option[String]): Array[Byte] = {
     id match {
@@ -36,20 +39,14 @@ object MDVISearchPtr {
    * @param dkey Ключ домена.
    * @return Опциональный распрарсенный экземпляр MDVISearchPtr.
    */
-  def getForDkey(dkey:String, idOpt:Option[String] = None): Future[Option[MDVISearchPtr]] = {
+  def getForDkey(dkey:String, idOpt:Option[String] = None)(implicit ec:ExecutionContext): Future[Option[MDVISearchPtr]] = {
     val column: Array[Byte] = idOpt2column(idOpt)
-    val getReq = new Get(dkey).addColumn(CF_DSEARCH_PTR, column)
-    hclient map { _client =>
-      val result = try {
-        _client.get(getReq)
-      } finally {
-        _client.close()
-      }
-      // Разобрать полученный результат
-      if (result.isEmpty) {
+    val getReq = new GetRequest(HTABLE_NAME, dkey).family(CF_DSEARCH_PTR).qualifier(column)
+    ahclient.get(getReq) map { results =>
+      if (results.isEmpty) {
         None
       } else {
-        val v = result.getColumnLatest(CF_DSEARCH_PTR, column).getValue
+        val v = results.head.value()
         val vins = v.split(SEP).toList
         Some(MDVISearchPtr(dkey=dkey, idOpt=idOpt, vins=vins))
       }
@@ -74,19 +71,13 @@ case class MDVISearchPtr(
   def columnName = idOpt2column(idOpt)
 
   /** Сохранить в хранилище.
-   * @return Пустой фьючерс, который исполняется после реального сохранения данных в БД.
+   * @return Пустой фьючерс, который исполняется после реального сохранения данных в БД. Объект внутри фьючерса не имеет
+   *         никакого потайного смысла, это просто индикатор из клиента.
    */
-  def save: Future[Unit] = {
+  def save(implicit ec:ExecutionContext): Future[AnyRef] = {
     val v = vins.mkString(SEP)
-    val putReq = new Put(dkey).add(CF_DSEARCH_PTR, columnName, v)
-    hclient map { _client =>
-      try {
-        _client.put(putReq)
-
-      } finally {
-        _client.close()
-      }
-    }
+    val putReq = new PutRequest(HTABLE_NAME:Array[Byte], dkey:Array[Byte], CF_DSEARCH_PTR, columnName, v:Array[Byte])
+    ahclient.put(putReq)
   }
 
 

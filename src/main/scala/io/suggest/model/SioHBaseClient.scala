@@ -40,6 +40,7 @@ trait SioHBaseSyncClientT {
    */
   def admin = new HBaseAdmin(getConf)
 
+  // в 0.95 пул вернули в строй и сделали основным, не ломая API.
   val pool = {
     val poolSize = System.getProperty("io.suggest.model.hclient.pool.size", "32").toInt
     new HTablePool(getConf, poolSize)
@@ -61,34 +62,38 @@ object SioHBaseSyncClient extends SioHBaseSyncClientT
 // Будущий асинхронный клиент, на который надо будет переехать, когда его наконец запилят поддержку HBase 0.95.x
 trait SioHBaseAsyncClientT {
 
-  val asyncClient = new HBaseClient(SioHBaseClient.QUORUM_SPEC)
+  val ahclient = new HBaseClient(SioHBaseClient.QUORUM_SPEC)
 
   /** Оборачивание asynchbase-фьючерса в скаловский фьючерс через два костыля.
    * @param d Экземпляр Deferred, который по сути есть фьючерс.
    * @tparam R Тип возвращаемого значения фьючерса.
    * @return Future[R], который подхватывает как успехи, так и фейлы.
    */
-  implicit def deferred2future[R](d: Deferred[R]): Future[R] = {
-    throw new NotImplementedError("Hbase 0.95 not yet supported by asynchbase. Please use synchronous client until.")
-    val p = Promise[R]()
-    d.addCallbacks(
-      new Callback[R, R] {
-        def call(arg: R): R = {
-          p trySuccess arg
-          arg
+  implicit def deferred2future[R <: AnyRef](d: Deferred[R]): Future[R] = {
+    if (d == null) {
+      Future.successful(null.asInstanceOf[R])
+    } else {
+      val p = Promise[R]()
+      d.addCallbacks(
+        new Callback[R, R] {
+          def call(arg: R): R = {
+            p trySuccess arg
+            arg
+          }
+        },
+        new Callback[AnyRef, Throwable] {
+          def call(arg: Throwable): AnyRef = {
+            p tryFailure arg
+            arg
+          }
         }
-      },
-      new Callback[AnyRef, Throwable] {
-        def call(arg: Throwable): AnyRef = {
-          p tryFailure arg
-          arg
-        }
-      }
-    )
-    p.future
+      )
+      p.future
+    }
   }
 
 }
+object SioHBaseAsyncClient extends SioHBaseAsyncClientT
 
 
 trait HTapConversionsBasicT {

@@ -1,11 +1,14 @@
 package io.suggest.model
 
 import org.apache.hadoop.hbase.client.{Get, Put}
-import scala.concurrent.{Future, future}
+import scala.concurrent.{ExecutionContext, Future, future}
 import org.apache.hadoop.hbase.{HTableDescriptor, HColumnDescriptor}
 import HTapConversionsBasic._
 import io.suggest.util.SioConstants.DOMAIN_QI_TTL_SECONDS
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.collection.JavaConversions._
+import org.hbase.async.{GetRequest, PutRequest}
+import SioHBaseAsyncClient._
 
 /**
  * Suggest.io
@@ -97,20 +100,14 @@ object MObject {
 
   /** Выставить произвольнон значение для произвольной колонки в CF_PROPS. По идее должно использоваться из других моделей,
    * занимающихся сериализацией.
-   * @param dkey ключ домена
-   * @param key ключ
+   * @param dkey Ключ домена.
+   * @param key Ключ.
    * @param value сериализованное значение
-   * @return Пустой фьючерс для опциональной синхронизации.
+   * @return Фьючерс для опциональной синхронизации. Любые данные внутри возвращаемого фьючерса не имеют смысла.
    */
-  def setProp(dkey:String, key:String, value: Array[Byte]): Future[Unit] = {
-    val putReq = new Put(dkey).add(CF_DPROPS, key, value)
-    hclient map { _client =>
-      try {
-        _client.put(putReq)
-      } finally {
-        _client.close()
-      }
-    }
+  def setProp(dkey:String, key:String, value: Array[Byte]): Future[AnyRef] = {
+    val putReq = new PutRequest(HTABLE_NAME:Array[Byte], dkey:Array[Byte], CF_DPROPS, key:Array[Byte], value)
+    ahclient.put(putReq)
   }
 
 
@@ -119,19 +116,14 @@ object MObject {
    * @param key Ключ.
    * @return Фьючерс с опциональным значением, если такое найдено.
    */
-  def getProp(dkey: String, key: String): Future[Option[Array[Byte]]] = {
+  def getProp(dkey: String, key: String)(implicit ec: ExecutionContext): Future[Option[Array[Byte]]] = {
     val column: Array[Byte] = key
-    val getReq = new Get(dkey).addColumn(CF_DPROPS, column)
-    hclient map { _client =>
-      val result = try {
-        _client.get(getReq)
-      } finally {
-        _client.close()
-      }
-      if (result.isEmpty) {
+    val getReq = new GetRequest(HTABLE_NAME, dkey) family CF_DPROPS qualifier column
+    ahclient.get(getReq) map { results =>
+      if (results.isEmpty) {
         None
       } else {
-        Some(result.getColumnLatest(CF_DPROPS, column).getValue)
+        Some(results.head.value)
       }
     }
   }
