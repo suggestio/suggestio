@@ -47,17 +47,8 @@ object SioConstants {
   // Конфиги всякие лежат в субдиректориях с таким названием
   val CONF_SUBDIR         = "conf"
 
-
-  // HBase
-  // Тут описываются имена column-families. Имена CF должны быть максимально короткими и уникальными.
-  /** Имя CF для хранение данных crawldb в таблицах crwl_*. */
-  val CF_CRAWLDB = "c"
-
-  /** Имя CF для хранения некоторых метаданных от парсеров в таблицах crwl_*. Например, даты страницы. */
-  val CF_PARSED_META = "p"
-
   // Название ключевого поля: DkeyUrlKey. В HBase название не сохраняется, но глобально в рамках каждого Flow.
-  val HBASE_KEY_FN = "duk"
+  val HBASE_KEY_FN = "hbaseRowKey"
   val HBASE_KEY_FIELDS = new Fields(HBASE_KEY_FN)
 
   // Префикс таблиц кравлера.
