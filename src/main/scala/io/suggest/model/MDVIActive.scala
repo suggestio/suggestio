@@ -16,6 +16,7 @@ import SioHBaseAsyncClient._
 import org.hbase.async.{PutRequest, KeyValue, GetRequest}
 import scala.util.{Failure, Success}
 import java.util
+import cascading.tuple.Tuple
 
 /**
  * Suggest.io
@@ -96,7 +97,7 @@ object MDVIActive {
           val acc1 = rows.foldLeft(_acc) { (__acc, __rows) =>
             __rows.foldLeft(__acc) { (___acc, row) =>
               val dkey = row.key()
-              deserializeBytes(vin=vin, dkey=dkey, b=row.value()) :: ___acc
+              deserializeBytes(vin=vin, dkey=dkey, b=row.value) :: ___acc
             }
           }
           foldNextAsync(acc1, scanner.nextRows)
@@ -129,6 +130,43 @@ object MDVIActive {
    * @return Новый экземпляр HColumnDescriptor.
    */
   def getCFDescriptor = new HColumnDescriptor(CF).setMaxVersions(3)
+
+
+  /** Сериализовать данные в tuple.
+   * @param dvi исходные экземпляр сабжа, подлежащий сериализации в переносимый tuple.
+   * @return Tuple, НЕ содержащий dkey.
+   */
+  def serializeToDkeylessTuple(dvi: MDVIActive): Tuple = {
+    val t = new Tuple(dvi.vin)
+    t.addInteger(dvi.generation)
+    dvi.subshardsInfo.foreach { si =>
+      t.add(si.lowerDateDays)
+      t.add(si.shards.mkString(","))
+    }
+    t
+  }
+
+  /** Десериализация данных, сгенерированных в serialize2DkeylessTuple() и dkey.
+   * @param dkey Ключ домена.
+   * @param t Кортеж.
+   * @return Экземпляр MDVIActive.
+   */
+  def deserializeFromTupleDkey(dkey: String, t: Tuple): MDVIActive = {
+    val vin :: generation :: sii = t.toList
+    if (sii.size % 2 != 0) {
+      throw new IllegalArgumentException("invalid size of serialized subshardsInfo.")
+    }
+    val (None, si) = sii.foldRight[(Option[Int], List[MDVISubshardInfo])] (None -> Nil) {
+      case (ldd, (None, acc)) =>
+        Some(ldd.toString.toInt) -> acc
+
+      case (shardsS, (Some(ldd), acc)) =>
+        val shardsIds = ldd.toString.split(",").toList.map(_.toInt)
+        val acc1 = MDVISubshardInfo(ldd, shardsIds) :: acc
+        None -> acc1
+    }
+    MDVIActive(dkey, vin.toString, generation.toString.toInt, si)
+  }
 
 }
 
@@ -365,5 +403,9 @@ case class MDVIActive(
     startFullScrollIn(getShards, getAllTypes, timeout, sizePerShard)
   }
 
+  /** Сериализовать в cascading.tuple без dkey.
+   * @return cascading Tuple, содержащий все необходимые для восстановления данные за искл. поля dkey.
+   */
+  def toDkeylessTuple = serializeToDkeylessTuple(this)
 }
 

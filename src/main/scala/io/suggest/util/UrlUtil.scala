@@ -512,7 +512,7 @@ object UrlUtil extends Serializable {
    * @param urlStr Строка URL.
    * @return Строка row-key.
    */
-  def urlStr2rowKey(urlStr:String) = url2rowKey(new URL(urlStr))
+  def url2rowKey(urlStr:String): String = url2rowKey(new URL(urlStr))
 
   /**
    * Перегнать ссылку в нормальный row-key для HBase.
@@ -525,9 +525,9 @@ object UrlUtil extends Serializable {
                    url.getHost))
     val sb = new StringBuilder(dkeyR)
     val urlPath = normalizePath(url.getPath)
+    sb.append("/")
     if (urlPath != null) {
-      sb.append("/")
-        .append(urlPath)
+      sb.append(urlPath)
     }
     val urlQuery = normalizeQuery(url.getQuery)
     if (urlQuery != null) {
