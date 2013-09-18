@@ -146,7 +146,7 @@ object MDVIActive {
     t
   }
 
-  /** Десериализация данных, сгенерированных в serialize2DkeylessTuple() и dkey.
+  /** Десериализация данных, сгенерированных в serializeToDkeylessTuple() и dkey
    * @param dkey Ключ домена.
    * @param t Кортеж.
    * @return Экземпляр MDVIActive.
@@ -156,16 +156,21 @@ object MDVIActive {
     if (sii.size % 2 != 0) {
       throw new IllegalArgumentException("invalid size of serialized subshardsInfo.")
     }
-    val (None, si) = sii.foldRight[(Option[Int], List[MDVISubshardInfo])] (None -> Nil) {
-      case (ldd, (None, acc)) =>
+    val (None, si) = sii.foldLeft[(Option[Int], List[MDVISubshardInfo])] (None -> Nil) {
+      case ((None, acc), ldd) =>
         Some(ldd.toString.toInt) -> acc
 
-      case (shardsS, (Some(ldd), acc)) =>
-        val shardsIds = ldd.toString.split(",").toList.map(_.toInt)
+      case ((Some(ldd), acc), shardS) =>
+        val shardStr = shardS.toString
+        val shardsIds = if (shardStr.isEmpty) {
+          Nil
+        } else {
+          shardStr.split(",").toList.map(_.toInt)
+        }
         val acc1 = MDVISubshardInfo(ldd, shardsIds) :: acc
         None -> acc1
     }
-    MDVIActive(dkey, vin.toString, generation.toString.toInt, si)
+    MDVIActive(dkey, vin.toString, generation.toString.toInt, si.reverse)
   }
 
 }
