@@ -374,25 +374,22 @@ case class _index_settings(
   number_of_shards : Int = 5,
   number_of_replicas : Int = 0,
   cache_field_type : String = "soft"
-) extends _json_object("settings") {
+) extends _json_object(null) {
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
-    b.startObject("index")
-      // Рендерим настройки всякие
-      .field("number_of_shards", number_of_shards)
+    // Рендерим настройки всякие
+    b .field("number_of_shards", number_of_shards)
       .field("number_of_replicas", number_of_replicas)
       .field("cache.field_type", cache_field_type)
 
-      // Рендерим параметры анализа
-      if (analyzers != Nil || tokenizers != Nil || filters != Nil) {
-        b.startObject("analysis")
-        maybeRenderListOf(analyzers,  "analysis")
-        maybeRenderListOf(tokenizers, "tokenizer")
-        maybeRenderListOf(filters,    "filter")
-        b.endObject()
-      }
-
-    b.endObject()
+    // Рендерим параметры анализа
+    if (analyzers != Nil || tokenizers != Nil || filters != Nil) {
+      b.startObject("analysis")
+      maybeRenderListOf(analyzers,  "analyzer")
+      maybeRenderListOf(tokenizers, "tokenizer")
+      maybeRenderListOf(filters,    "filter")
+      b.endObject()
+    }
   }
 
 
@@ -417,9 +414,14 @@ case class _index_settings(
 // Абстрактный json-объект.
 class _json_object(_id:String) extends _renderable {
   def builder(implicit b: XContentBuilder): XContentBuilder = {
-    b.startObject(_id)
-      fieldsBuilder
-    b.endObject()
+    if (_id != null) {
+      b.startObject(_id)
+    }
+    fieldsBuilder
+    if (_id != null) {
+      b.endObject()
+    }
+    b
   }
 
   def fieldsBuilder(implicit b:XContentBuilder) {}
@@ -448,7 +450,6 @@ class _analyzer_custom(
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
-
     b.field("tokenizer", tokenizer)
      .array("filter", filters : _*)
   }
@@ -469,7 +470,6 @@ class _tokenizer_standard(
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
-
     if (max_token_length != 255)
       b.field("max_token_length", max_token_length)
   }
@@ -485,11 +485,10 @@ class _filter(_id : String, typ : String) extends _typed_json_object(_id, typ)
 class _filter_stopwords(
   id : String,
   stopwords : String    // = english, russian, etc
-) extends _filter(id, "stopwords") {
+) extends _filter(id, "stop") {
 
   override def fieldsBuilder(implicit b:XContentBuilder) {
     super.fieldsBuilder
-
     b.field("stopwords", stopwords)
   }
 
@@ -503,7 +502,8 @@ class _filter_word_delimiter(
 ) extends _filter(id, "word_delimiter") {
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
-    if (preserve_original != false)
+    super.fieldsBuilder
+    if (preserve_original)
       b.field("preserve_original", preserve_original)
   }
 
@@ -517,6 +517,7 @@ class _filter_stemmer(
 ) extends _filter(id, "stemmer") {
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
     b.field("language", language)
   }
 
@@ -535,6 +536,7 @@ class _filter_edge_ngram(
 ) extends _filter(id, "edgeNGram") {
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
     if (min_gram > 1)
       b.field("min_gram", min_gram)
     if (max_gram > 2)
@@ -583,7 +585,7 @@ class _field_indexable(
       b.field("index", index)
     if (boost.isDefined)
       b.field("boost", boost.get)
-    if (include_in_all != true)
+    if (!include_in_all)
       b.field("include_in_all", include_in_all)
     if (null_value != null)
       b.field("null_value", null_value)
@@ -778,7 +780,7 @@ class _field_routing(
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
 
-    if (required != false)
+    if (required)
       b.field("required", required)
     if (store != null)
       b.field("store", store)
