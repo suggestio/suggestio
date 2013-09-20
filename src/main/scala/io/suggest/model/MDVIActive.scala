@@ -16,7 +16,7 @@ import SioHBaseAsyncClient._
 import org.hbase.async.{PutRequest, KeyValue, GetRequest}
 import scala.util.{Failure, Success}
 import java.util
-import cascading.tuple.Tuple
+import cascading.tuple.{Tuples, Tuple}
 
 /**
  * Suggest.io
@@ -141,7 +141,12 @@ object MDVIActive {
     t.addInteger(dvi.generation)
     dvi.subshardsInfo.foreach { si =>
       t.add(si.lowerDateDays)
-      t.add(si.shards.mkString(","))
+      val ts: Tuple = if (si.shards.isEmpty) {
+        null
+      } else {
+        new Tuple(si.shards.map(Tuples.toIntegerObject) : _*)
+      }
+      t.add(ts)
     }
     t
   }
@@ -157,15 +162,17 @@ object MDVIActive {
       throw new IllegalArgumentException("invalid size of serialized subshardsInfo.")
     }
     val (None, si) = sii.foldLeft[(Option[Int], List[MDVISubshardInfo])] (None -> Nil) {
+      // Нечетный шаг. Текущий элемент - это сериализованный lowerDateDays.
       case ((None, acc), ldd) =>
-        Some(ldd.toString.toInt) -> acc
+        val lddInt = Tuples.toInteger(ldd)
+        Some(lddInt) -> acc
 
-      case ((Some(ldd), acc), shardS) =>
-        val shardStr = shardS.toString
-        val shardsIds = if (shardStr.isEmpty) {
+      // Четный шаг. Текущий элемент - сериализованный список id шард mvi.
+      case ((Some(ldd), acc), ts) =>
+        val shardsIds = if (ts == null) {
           Nil
         } else {
-          shardStr.split(",").toList.map(_.toInt)
+          ts.asInstanceOf[Tuple].toList.map(Tuples.toInteger)
         }
         val acc1 = MDVISubshardInfo(ldd, shardsIds) :: acc
         None -> acc1
@@ -182,8 +189,9 @@ import MDVIActive._
  * Класс уровня домена. Хранит информацию по виртуальному индексу в контексте текущего dkey.
  * @param dkey Ключ домена
  * @param vin Имя нижележащего виртуального индекса.
- * @param subshardsInfo Список подшард.
  * @param generation Поколение. При миграции в другой индекс поколение инкрементируется.
+ * @param subshardsInfo Список подшард. "Новые" всегла левее (ближе к head), чем старые. В последнем хвосте списка
+ *                      всегда находится шарда с lowerDaysCount = 0.
  */
 case class MDVIActive(
   dkey:       String,
@@ -195,12 +203,15 @@ case class MDVIActive(
 
   import LOGGER._
 
+  protected implicit def toSubshard(sInfo: MDVISubshardInfo) = new MDVISubshard(this, sInfo)
+  protected implicit def toSubshardsList(sInfoList: List[MDVISubshardInfo]) = sInfoList.map(toSubshard)
+
   /**
    * Отразить список подшард в виде полноценных объектов Subshard, ссылкающихся на своего родителя.
    * @return Список MDVISubshard.
    */
   @JsonIgnore
-  def subshards: List[MDVISubshard] = subshardsInfo.map(new MDVISubshard(this, _))
+  def subshards: List[MDVISubshard] = subshardsInfo
 
   /**
    * Выдать id этого виртуального индекса.
@@ -219,6 +230,8 @@ case class MDVIActive(
     getSubshardForDaysCount(days)
   }
 
+
+
   /**
    * Выдать шарду для указанного кол-ва дней.
    * @param daysCount кол-во дней.
@@ -230,7 +243,9 @@ case class MDVIActive(
 
       // TODO Выбираются все шарды слева направо, однако это может неэффективно.
       //      Следует отбрасывать "свежие" шарды слева, если их многовато.
-      case false => subshards find { _.subshardData.lowerDateDays < daysCount } getOrElse subshards.last
+      case false =>
+        val si = subshardsInfo find { _.lowerDateDays < daysCount } getOrElse subshardsInfo.last
+        si
     }
   }
 
@@ -286,7 +301,7 @@ case class MDVIActive(
    * @return Список названий индексов/шард и список имен типов в этих индексах.
    */
   def getTypesForRequest(sc: SioSearchContext): List[String] = {
-    error("getTypesForRequest: NOT YET IMPLEMENTED")
+    error("getTypesForRequest: STUB: NOT YET IMPLEMENTED")
     getAllTypes  // TODO нужно как-то что-то где-то определять.
   }
 

@@ -11,7 +11,7 @@ import UrlUtil._
  * Created: 06.03.13 10:44
  * Description: scalatests for UrlUtils.
  */
-class UrlUtilsTest extends FlatSpec with ShouldMatchers {
+class UrlUtilTest extends FlatSpec with ShouldMatchers {
 
   "ensureAbsoluteUrl()" should "absolutize relative urls if baseUrl = suggest.io/a/" in {
     val baseUrl1 = new URL("https://suggest.io/a/")
@@ -114,11 +114,36 @@ class UrlUtilsTest extends FlatSpec with ShouldMatchers {
   }
 
 
-  "host2dkey" should "convert hostanames into dkeys" in {
+  "host2dkey" should "convert hostnames into dkeys" in {
     host2dkey("www.kino.ru")            should equal ("kino.ru")
     host2dkey("kino.ru")                should equal ("kino.ru")
     host2dkey(".kino.ru.")              should equal ("kino.ru")
     host2dkey("www.президент.рф.")      should equal ("xn--d1abbgf6aiiy.xn--p1ai")
+  }
+
+  "url2dkey" should "convert URLs in dkeys" in {
+    url2dkey("http://aversimage.ru/asd/1?gefs=e&x=y") should equal ("aversimage.ru")
+    url2dkey(new URL("http://aversimage.ru/asd/35"))  should equal ("aversimage.ru")
+  }
+
+  "url2rowKey" should "convert URLs into HBase row keys (String)" in {
+    url2rowKey("http://aversimage.ru/asd/1/?asd=q")   should equal ("ru.aversimage/asd/1?asd=q")
+    url2rowKey("http://aversimage.ru/")               should equal ("ru.aversimage")
+    url2rowKey("http://aversimage.ru:80/asd")         should equal ("ru.aversimage/asd")
+    url2rowKey("http://aversimage.ru:808/asd")        should equal ("ru.aversimage/asd")
+    url2rowKey("https://aversimage.ru:443/asd")       should equal ("ru.aversimage/asd")
+    url2rowKey("http://aversimage.ru//")              should equal ("ru.aversimage")
+    url2rowKey("http://aversimage.ru")                should equal ("ru.aversimage")
+    url2rowKey("http://aversimage.ru/asd/1/?b=1&a=q") should equal ("ru.aversimage/asd/1?a=q&b=1")
+    url2rowKey("http://aversimage.ru/asd/1/?a=q&b=1") should equal ("ru.aversimage/asd/1?a=q&b=1")
+    url2rowKey("https://президент.рф/wiki")           should equal ("xn--p1ai.xn--d1abbgf6aiiy/wiki")
+  }
+
+  "rowKey2dkey" should "convert hbase rowKeys into site dkeys" in {
+    rowKey2dkey("ru.aversimage/123/asd/gsdf")         should equal ("aversimage.ru")
+    rowKey2dkey("io.suggest/")                        should equal ("suggest.io")
+    rowKey2dkey("io.suggest")                         should equal ("suggest.io")
+    rowKey2dkey("ru.avto/a/s/d?asf234=asd&234")       should equal ("avto.ru")
   }
 
 }

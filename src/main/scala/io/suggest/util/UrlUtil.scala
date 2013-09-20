@@ -5,6 +5,7 @@ import java.io.UnsupportedEncodingException
 import collection.SortedSet
 import gnu.inet.encoding.IDNA
 import scala.util.matching.Regex
+import scala.annotation.tailrec
 
 /**
  * Suggest.io
@@ -478,16 +479,15 @@ object UrlUtil extends Serializable {
    * @param url Исходная ссылка
    * @return Строка dkey.
    */
-  def url2dkey(url:String): String = {
-    host2dkey(new URL(url).getHost)
-  }
+  def url2dkey(url:String): String = url2dkey(new URL(url))
+  def url2dkey(url:URL): String    = host2dkey(url.getHost)
 
   /**
    * Срезать все www. в начале хостнейма.
    * @param host хостнейм
    * @return
    */
-  def stripHostnameWww(host:String) : String = {
+  @tailrec def stripHostnameWww(host:String) : String = {
     if (host.startsWith("www."))
       stripHostnameWww(host.substring(4))
     else
@@ -520,21 +520,36 @@ object UrlUtil extends Serializable {
    * @return Строка row-key.
    */
   def url2rowKey(url:URL): String = {
+    // TODO: hbase-ключ может содержать utf8 символы. Можно не дергать IDNA тут, хотя это экономии практически никакой не даст.
     val dkeyR = reverseDomain(
                  host2dkey(
                    url.getHost))
     val sb = new StringBuilder(dkeyR)
     val urlPath = normalizePath(url.getPath)
-    sb.append("/")
-    if (urlPath != null) {
-      sb.append(urlPath)
+    if (urlPath != null && !urlPath.isEmpty) {
+      val urlPath1 = urlPath.replaceFirst("/$", "")
+      sb.append(urlPath1)
+    } else {
+      sb.append("/")
     }
     val urlQuery = normalizeQuery(url.getQuery)
-    if (urlQuery != null) {
+    if (urlQuery != null && !urlQuery.isEmpty) {
       sb.append("?")
         .append(urlQuery)
     }
     sb.toString()
+  }
+
+  /** Извлечь dkey из rowKey.
+   * @param rowKey rowKey в виде строки (результат url2rowKey()).
+   * @return dkey.
+   */
+  def rowKey2dkey(rowKey:String): String = {
+    val reversedDkey = rowKey.indexOf('/') match {
+      case pos if pos > 3 => rowKey.substring(0, pos)
+      case -1             => rowKey
+    }
+    reverseDomain(reversedDkey)
   }
 
 }
