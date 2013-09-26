@@ -22,7 +22,7 @@ trait MDVIUnit {
   val dkey: String
   val vin: String
   def subshards: List[MDVISubshard]
-  val generation: Int
+  val generation: Long
   def id: String
   def isSingleShard: Boolean
   def getAllTypes: List[String]

@@ -15,7 +15,7 @@ import HTapConversionsBasic._
 import SioHBaseAsyncClient._
 import org.hbase.async.{PutRequest, KeyValue, GetRequest}
 import scala.util.{Failure, Success}
-import java.util
+import java.util.{ArrayList => juArrayList}
 import cascading.tuple.{Tuples, Tuple}
 
 /**
@@ -23,8 +23,11 @@ import cascading.tuple.{Tuples, Tuple}
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 16.07.13 12:01
  * Description: Model Dkey Virtual Index Active - модель хранения активных связей между dkey и виртуальными шардами.
+ *
+ * TODO В этой модели исторически живут два вида сериализации: кусочная в json и полноразмерная в Tuple.
+ *      Надо устранить зоопарк сериализаций. При чтении из бд внутрь flow json-представление конвертируется в Tuple-представление.
+ *      Tuple-представление быстрое и вроде бы универсальное, однако вопрос эволюции его во времени пока не решен.
  */
-
 object MDVIActive {
 
   private val LOGGER = new LogsImpl(getClass)
@@ -38,7 +41,12 @@ object MDVIActive {
   val SER_KEY_GENERATION = "g"
   val SER_KEY_SUBSHARDS = "s"
 
+  /** Это поколение выставляется для сабжа, если  */
+  val GENERATION_BOOTSTRAP = -1
+
   /** Десериализовать набор байт в MDVIActive.
+   * @param dkey Ключ домена, ибо массив байт обычно не содержит dkey.
+   * @param vin Id индекса. Обычно является ключом и хранится вне массива байтов.
    * @param b Массив байтов.
    * @return Экземпляр MDVIActive.
    */
@@ -89,7 +97,7 @@ object MDVIActive {
     scanner.setFamily(CF)
     scanner.setQualifier(column)
     val p = Promise[List[MDVIActive]]()
-    def foldNextAsync(_acc: List[MDVIActive], _fut: Future[util.ArrayList[util.ArrayList[KeyValue]]]) {
+    def foldNextAsync(_acc: List[MDVIActive], _fut: Future[juArrayList[juArrayList[KeyValue]]]) {
       _fut onComplete {
         case Success(null) => p success _acc
 
@@ -138,7 +146,7 @@ object MDVIActive {
    */
   def serializeToDkeylessTuple(dvi: MDVIActive): Tuple = {
     val t = new Tuple(dvi.vin)
-    t.addInteger(dvi.generation)
+    t.addLong(dvi.generation)
     dvi.subshardsInfo.foreach { si =>
       t.add(si.lowerDateDays)
       val ts: Tuple = if (si.shards.isEmpty) {
@@ -180,6 +188,13 @@ object MDVIActive {
     MDVIActive(dkey, vin.toString, generation.toString.toInt, si.reverse)
   }
 
+
+  /**
+   * Сгенерить id текущего поколения с точностью до 10 секунд.
+   * @return Long.
+   */
+  def currentGeneration: Long = System.currentTimeMillis() / 10000
+
 }
 
 
@@ -189,14 +204,14 @@ import MDVIActive._
  * Класс уровня домена. Хранит информацию по виртуальному индексу в контексте текущего dkey.
  * @param dkey Ключ домена
  * @param vin Имя нижележащего виртуального индекса.
- * @param generation Поколение. При миграции в другой индекс поколение инкрементируется.
+ * @param generation Поколение. При миграции в другой индекс поколение увеличивается.
  * @param subshardsInfo Список подшард. "Новые" всегла левее (ближе к head), чем старые. В последнем хвосте списка
  *                      всегда находится шарда с lowerDaysCount = 0.
  */
 case class MDVIActive(
   dkey:       String,
   vin:        String,
-  generation: Int = 0,
+  generation: Long,
   subshardsInfo: List[MDVISubshardInfo] = List(new MDVISubshardInfo(0))
 
 ) extends MDVIUnitAlterable with Serializable {
