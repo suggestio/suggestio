@@ -13,7 +13,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor
 import scala.collection.JavaConversions._
 import HTapConversionsBasic._
 import SioHBaseAsyncClient._
-import org.hbase.async.{PutRequest, KeyValue, GetRequest}
+import org.hbase.async.{DeleteRequest, PutRequest, KeyValue, GetRequest}
 import scala.util.{Failure, Success}
 import java.util.{ArrayList => juArrayList}
 import cascading.tuple.{Tuples, Tuple}
@@ -337,6 +337,15 @@ case class MDVIActive(
     val v = JacksonWrapper.serialize(exportInternalState)
     val putReq = new PutRequest(HTABLE_NAME:Array[Byte], dkey:Array[Byte], CF, vin:Array[Byte], v:Array[Byte])
     ahclient.put(putReq) map { _ => this }
+  }
+
+  /**
+   * Удалить ряд из хранилища.
+   * @return Фьючерс для синхронизации.
+   */
+  def delete(implicit ec: ExecutionContext): Future[Unit] = {
+    val delReq = new DeleteRequest(HTABLE_NAME, dkey)
+    ahclient.delete(delReq) map { _ => () }
   }
 
   /** Сериализовать этот экземпляр класса в десериализуемое представление.
