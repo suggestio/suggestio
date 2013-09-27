@@ -27,6 +27,10 @@ import cascading.tuple.{Tuples, Tuple}
  * TODO В этой модели исторически живут два вида сериализации: кусочная в json и полноразмерная в Tuple.
  *      Надо устранить зоопарк сериализаций. При чтении из бд внутрь flow json-представление конвертируется в Tuple-представление.
  *      Tuple-представление быстрое и вроде бы универсальное, однако вопрос эволюции его во времени пока не решен.
+ *
+ *      Вариант: перевести MDVIActive в подкласс BaseDatum (выковырять из bixo), добавить версии,
+ *      а subshardsInfo сериализовывать в подкортеж, как это сделано в моделях bixo. Для tap'ов использовать простую
+ *      tuple-схему.
  */
 object MDVIActive {
 
@@ -246,7 +250,6 @@ case class MDVIActive(
   }
 
 
-
   /**
    * Выдать шарду для указанного кол-ва дней.
    * @param daysCount кол-во дней.
@@ -404,10 +407,11 @@ case class MDVIActive(
         l -= 1
       val result = l > 0
       debug(
-        if (result)
+        if (result) {
           "VIndex is used by several domains: %s." format vinUsedBy
-        else
+        } else {
           "VIndex is only used by me."
+        }
       )
       result
     }
