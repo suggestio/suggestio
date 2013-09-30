@@ -122,6 +122,36 @@ object MDVIActive {
   }
 
 
+  /**
+   * Прочитать всю CF из таблицы.
+   * @return Будущий список MDVIActive.
+   */
+  def getAll(implicit ec:ExecutionContext): Future[List[MDVIActive]] = {
+    val scanner = ahclient.newScanner(HTABLE_NAME)
+    scanner.setFamily(CF)
+    val p = Promise[List[MDVIActive]]()
+    def foldNextAsync(acc0: List[MDVIActive], fut0: Future[juArrayList[juArrayList[KeyValue]]]) {
+      fut0 onComplete {
+        case Success(null) => p success acc0
+
+        case Success(rows) =>
+          val acc1 = rows.foldLeft(acc0) { (_acc0, _rows) =>
+            _rows.foldLeft(_acc0) { (__acc0, row) =>
+              val dkey = row.key()
+              val vin = row.qualifier()
+              deserializeBytes(vin=vin, dkey=dkey, b=row.value) :: __acc0
+            }
+          }
+          foldNextAsync(acc1, scanner.nextRows)
+
+        case Failure(ex) => p failure ex
+      }
+    }
+    foldNextAsync(Nil, scanner.nextRows)
+    p.future
+  }
+
+
   /** Асинхронно прочитать все активные индексы для указанного dkey. Быстрая операция.
    * @param dkey Ключ домена.
    * @return Будущий список MDVIActive.
@@ -219,6 +249,11 @@ case class MDVIActive(
   subshardsInfo: List[MDVISubshardInfo] = List(new MDVISubshardInfo(0))
 
 ) extends MDVIUnitAlterable with Serializable {
+
+  if (subshardsInfo.isEmpty) {
+    throw new IllegalArgumentException("subshardInfo MUST contain at least one shard. See default value for example.")
+  }
+
 
   import LOGGER._
 

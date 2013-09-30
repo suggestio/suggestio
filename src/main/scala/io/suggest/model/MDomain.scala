@@ -19,7 +19,7 @@ trait MDomainT {
 
   def getDVIByVin(vin: String)(implicit ec: ExecutionContext) = MDVIActive.getForDkeyVin(dkey, vin)
   def getAllDVI(implicit ec: ExecutionContext) = MDVIActive.getAllForDkey(dkey)
-  def getSearchPtr(idOpt:Option[String] = None)(implicit ec: ExecutionContext) = MDVISearchPtr.getForDkey(dkey)
+  def getSearchPtr(idOpt:Option[String] = None)(implicit ec: ExecutionContext) = MDVISearchPtr.getForDkeyId(dkey)
   def getProp(key: String)                                = MObject.getProp(dkey, key)
   def setProp(key: String, value: Array[Byte])            = MObject.setProp(dkey, key, value)
   def getDomainSettings(implicit ec: ExecutionContext)    = DomainSettings.getForDkey(dkey)

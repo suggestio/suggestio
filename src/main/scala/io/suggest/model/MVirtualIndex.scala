@@ -7,6 +7,8 @@ import org.apache.lucene.index.IndexNotFoundException
 import io.suggest.util.{LogsImpl, SioEsIndexUtil}
 import org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS
 import com.fasterxml.jackson.annotation.JsonIgnore
+import scala.collection.JavaConversions._
+import org.elasticsearch.action.admin.indices.settings.UpdateSettingsResponse
 
 /**
  * Suggest.io
@@ -23,9 +25,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore
  */
 object MVirtualIndex {
 
-  private val futureSuccessUnit = Future.successful(())
-
   private val LOGGER = new LogsImpl(getClass)
+
+  val INDEX_REFRESH_INTERVAL = "index.refresh_interval"
+  val INDEX_REFRESH_INTERVAL_BULK = Integer.valueOf(-1)
+  val INDEX_REFRESH_INTERVAL_SECONDS_DFLT = Integer.valueOf(16)
 
   /** Сгенерить vin по префиксу и общему числу шард.
    * @param vinPrefix Префикс. Обычно случайная строка из [a-z].
@@ -128,6 +132,31 @@ object MVirtualIndex {
    */
   def vinAndCounter2indexName(vin:String, n:Int): String = vin + "_" + n
 
+
+  /**
+   * Короткая функция для обновления произвольных настроек индексов.
+   * @param settings Карта новых сеттингов.
+   * @param indices Индексы, подлежащие изменению настроек.
+   * @return Фьючерс с малополезным результатом.
+   */
+  def updateInxSettings(settings:Map[String, AnyRef], indices:Seq[String])(implicit client:Client): Future[UpdateSettingsResponse] = {
+    client.admin().indices()
+      .prepareUpdateSettings(indices : _*)
+      .setSettings(settings)
+      .execute()
+  }
+
+  /**
+   * Выставить refresh interval.
+   * @param newRefreshInterval Новый интервал в секундах.
+   * @param indices Шарды.
+   * @return Фьючерс для синхронизации с каким-то мусором внутри.
+   */
+  def setRefreshInterval(newRefreshInterval: Integer, indices: Seq[String])(implicit client:Client) = {
+    val settings = Map(INDEX_REFRESH_INTERVAL -> newRefreshInterval)
+    updateInxSettings(settings, indices)
+  }
+
 }
 
 
@@ -157,21 +186,19 @@ trait MVirtualIndex extends Serializable {
 
   import LOGGER._
 
-  def vinPrefix:  String
-  def shardCount: Int
 
-  @JsonIgnore
-  def vin: String
+  @JsonIgnore def vinPrefix:  String
+  @JsonIgnore def shardCount: Int
+  @JsonIgnore def vin: String
 
-  @JsonIgnore
-  def head = esShardNameFor(vin, 0)
+  @JsonIgnore def head = esShardNameFor(vin, 0)
 
   /**
    * Выдать имена всех шард.
    * @return Последовательность шард в порядке возрастания индекса.
    */
   @JsonIgnore
-  def getShards: Seq[String] = {
+  lazy val getShards: Seq[String] = {
     (0 until shardCount) map { vinAndCounter2indexName(vin, _) }
   }
 
@@ -180,7 +207,6 @@ trait MVirtualIndex extends Serializable {
    * то будет ошибка.
    * @return Фьючерс с кол-вом доступных шард.
    */
-  @JsonIgnore
   def getReplicasCount(implicit client:Client, executor:ExecutionContext): Future[Int] = getReplicasCountFor(getShards)
 
   /**
@@ -188,9 +214,8 @@ trait MVirtualIndex extends Serializable {
    * @param replicasCount новое число реплик.
    * @return true, если всё ок. false по сути никогда и не возвращает.
    */
-  @JsonIgnore
-  def setReplicasCount(replicasCount:Int)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
-    SioEsIndexUtil.setReplicasCountFor(getShards, replicasCount)
+  def setReplicasCount(replicasCount:Int, shards:Seq[String] = getShards)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
+    SioEsIndexUtil.setReplicasCountFor(shards, replicasCount)
   }
 
 
@@ -198,7 +223,6 @@ trait MVirtualIndex extends Serializable {
    * Удалить индекс вообще. И файл индекса в след за ним.
    * @return true, если всё ок. Фьючерс исполняется, когда всё сделано.
    */
-  @JsonIgnore
   def eraseShards(implicit client:Client, executor:ExecutionContext) = deleteThese(getShards)
 
 
@@ -207,14 +231,14 @@ trait MVirtualIndex extends Serializable {
    * @param replicasCount кол-во реплик.
    * @return Фьючерс.
    */
-  @JsonIgnore
   def ensureShards(replicasCount: Int = 1)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
     val shards = getShards
     ensureIndices(shards, replicasCount=replicasCount)
       .flatMap { boolSeq =>
         boolSeq.distinct match {
           case s if s.length == 1 =>
-            futureSuccessUnit
+            // Убедится, что replicalCount соответствует нужному числу реплик.
+            setReplicasCount(replicasCount, shards)
 
           case other =>
             val msg = "Cannot create some of requested shards: %s => %s. Rollbacking..." format (shards, boolSeq)
@@ -232,7 +256,6 @@ trait MVirtualIndex extends Serializable {
    * Закрыть все шарды, выгрузив их из памяти. Типа заморозка.
    * @return Список isAcknowledged.
    */
-  @JsonIgnore
   def close(implicit client:Client, ec:ExecutionContext): Future[Seq[Boolean]] = {
     Future.traverse(getShards) { closeIndex }
   }
@@ -241,7 +264,6 @@ trait MVirtualIndex extends Serializable {
    * Открыть все шарды этого индекса.
    * @return Список результатов от шард.
    */
-  @JsonIgnore
   def open(implicit client:Client, ec:ExecutionContext): Future[Seq[Boolean]] = {
     Future.traverse(getShards) { openIndex }
   }
@@ -249,7 +271,6 @@ trait MVirtualIndex extends Serializable {
   /** Узнать, все ли необходимые шарды вирт.индекса существуют в ES?
    * @return true, если всё существует. Иначе false.
    */
-  @JsonIgnore
   def isExist(implicit client:Client, ec:ExecutionContext): Future[Boolean] = {
     client.admin().indices()
       .prepareExists(getShards : _*)
@@ -261,7 +282,34 @@ trait MVirtualIndex extends Serializable {
   /** Выдать домены, официально использующие этот индекс. Ресурсоемкая операция, перебирающая всю таблицу.
    * @return Коллекция сабжей, в т.ч. пустая.
    */
-  @JsonIgnore
   def getUsers(implicit ec: ExecutionContext) = MDVIActive.getAllLatestForVin(vin)
+
+
+  /**
+   * Отключить автообновление индекса, перейдя тем самым в режим bulk-работы.
+   * @return Фьючерс для синхронизации.
+   */
+  def setBulkIndexing(implicit client:Client) = setRefreshInterval(INDEX_REFRESH_INTERVAL_BULK, getShards)
+
+  /**
+   * Включить асинхронное автообновление индекса, вернувшись в нормальный режим работы индекса.
+   * @return Фьючерс для синхронизации.
+   */
+  def unsetBulkIndexing(implicit client:Client) = setRefreshInterval(INDEX_REFRESH_INTERVAL_SECONDS_DFLT, getShards)
+
+
+  /**
+   * Прооптимизировать все подчиненные шарды.
+   * @param maxNumSegments Макс.число сегментов в результатирующем индексе.
+   * @param flush Флушить? Почти всегда - true.
+   * @return Фьючерс с бесполезным содержимым.
+   */
+  def optimize(maxNumSegments:Int = 1, flush:Boolean = true)(implicit client:Client): Future[AnyRef] = {
+    client.admin().indices()
+      .prepareOptimize(getShards : _*)
+      .setFlush(flush)
+      .setMaxNumSegments(maxNumSegments)
+      .execute()
+  }
 
 }
