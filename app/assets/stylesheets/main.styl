@@ -20,9 +20,28 @@
 				 font-style: normal;
 }
 
+@font-face {
+	font-family: "helios";
+		src: url('/assets/fonts/heliosthin-webfont.eot');
+		src: url('/assets/fonts/heliosthin-webfont.eot?#iefix') format('embedded-opentype'),
+				 url('/assets/fonts/heliosthin-webfont.woff') format('woff'),
+				 url('/assets/fonts/heliosthin-webfont.ttf') format('truetype');
+				 font-weight: normal;
+				 font-style: normal;
+}
+
+@font-face {
+	font-family: "helios_italic";
+		src: url('/assets/fonts/heliosthin-italic-webfont.eot');
+		src: url('/assets/fonts/heliosthin-italic-webfont.eot?#iefix') format('embedded-opentype'),
+				 url('/assets/fonts/heliosthin-italic-webfont') format('woff'),
+				 url('/assets/fonts/heliosthin-italic-webfont') format('truetype');
+				 font-weight: normal;
+				 font-style: normal;
+}
+
 }
 body
-  min-width: 560px
   background: #ececec url('/assets/images/bg.png') center top
 
 form
@@ -57,9 +76,6 @@ form
 .sio-container
   position: relative
 
-.sio-first-row
-  padding-top: 50px
-
 .sio-footer-container
   position: fixed
   left: 0px
@@ -71,42 +87,49 @@ form
   width: 700px
   padding-left: 65px
 
+.sio-first-row
+  padding-top: 10px
+
 .sio-fixed-top-container
   position: fixed
   left: 0px
   top: 0px
   width: 100%
   background: #ececec url('/assets/images/bg.png') center top
-  height: 100px
-  z-index: 100
+  height: 66px!important
+  z-index: 1000
 
 .sio-top-glow
   opacity: 0
   position: fixed
-  top: 100px
+  top: 66px
   bottom: 0px
   height: 23px
   width: 100%
+  z-index: 10000
   background: url('/assets/images/zatemnyalka.png') no-repeat left top
 
 .sio-glow
   opacity: 0
   position: absolute
-  bottom: -31px
+  bottom: -78px
   left: -15px;
   width: 110px
   height: 23px
   background: url('/assets/images/top-glow.png') no-repeat left top
 
 .sio-help-container
-  padding-top: 150px
+  padding-top: 90px
+
+.logo
+  float: left
 
 .menu
-  width: 100%
   padding-top: 15px
+  float: left
   
   .menu-inner
-  	padding-left: 52px
+  	padding-left: 28px
   
   a,
   span
@@ -133,22 +156,53 @@ form
   
   .active-link
   	color: #c7c7c7!important
-  
-.sio-slogo-en,
-.sio-slogo-ru
-  background: url('/assets/images/sio-slogo-en.jpg') no-repeat left top
-  width: 419px
-  height: 135px
-  margin: 30px 10px 30px 52px
 
-.sio-slogo-ru
-  width: 449px
-  background: url('/assets/images/sio-slogo-ru.jpg') no-repeat left top
+.mobile-menu-button
+  position: absolute
+  left: 200px
+  top: -60px
+  background: url('/assets/images/menu_button.png') no-repeat left top
+  width: 50px
+  height: 50px
+
+.mobile-menu-button:hover
+  background: url('/assets/images/menu_hover_button.png') no-repeat left top
+
+.mobile-menu-button:active,
+.mobile-menu-button.active
+  background: url('/assets/images/menu_pressed_button.png') no-repeat left top
+
+.mobile-menu
+  position: absolute
+  left: 0px
+  top: 56 px
+  width: 100%
+  background: #23313d!important
+  
+  .menu
+    display: none
+    padding-bottom: 10px
+  .menu,
+  .menu a
+    float: none
+  
+  a 
+    display: block
+    text-shadow: none!important
+    padding: 5px 0px 5px 39px
+  .menu .delimiter
+    display: none
+
+.sio-slogo
+  padding-left: 52px
 
 .sio-first-step,
 .sio-second-step
   margin-left: 52px
   margin-top: 20px
+
+.sio-first-row
+  height: 68px
   
 .sio-first-step,
 .sio-second-step
@@ -194,7 +248,7 @@ form
       background: #fff
       text-align: center
       padding: 15px 5px
-      
+
 .start-button
   display: block
   width: 50px
@@ -210,6 +264,18 @@ form
     background-position: -51px top
   a:active
     background-position: -102px top
+
+.start-button-mobile
+  width: 135px
+  height: 55px
+  padding: 0px!important
+  margin-left: 32px!important
+  
+  a
+    display: block
+    width: 135px
+    height: 55px
+    background:url('/assets/images/add_button.png') no-repeat left top!important
 
 .common-info
   .delimiter
@@ -252,13 +318,41 @@ form
 // Help
 .sio-help-content
   margin-left: 42px
+  margin-top: 0px
+  padding: 0px;
+  padding-right: 50px
   
+  h1
+    padding: 0px
+    margin: 0px
+    font-family: "helios"
+    font-size: 48px
+    color: #23313d
+    padding-bottom: 35px
+  
+  ul
+    margin: 15px 0px
+    padding: 0px 0px 0px 5px
+    list-style-position: inside
+    li 
+      padding:10px 0px
+      line-height: 16px
+  
+  p 
+    padding-left: 4px
+    line-height: 20px
+  p.light 
+    color: #959595
+
 .help-topics
-  ul li a
-    color: #328fb0
-    font-family: Arial
-    font-size: 14px
-    
+  list-style-type: none
+  padding-left: 37px
+  li 
+    padding: 6px 0px
+  
+  a 
+    color: #5a8ead
+
 // Blog
 .sio-blog
   padding-top: 150px
@@ -358,4 +452,27 @@ form
   
 .feedback-message-en
   background: url('/assets/images/sio-send-message.png') no-repeat left top;
+
+@css{
+@media screen and (max-width: 767px){
   
+  .help-topics
+  {
+    margin: 0px;
+    padding: 0px;
+  }
+  
+  .sio-help-content{
+    padding-left: 0px!important;
+    padding-right: 0px!important;
+    margin-left: 0px!important;
+    margin-right: 0px!important;
+  }
+  
+  .sio-help-content h1{
+    font-size: 44px;
+  }
+  
+  
+}
+}

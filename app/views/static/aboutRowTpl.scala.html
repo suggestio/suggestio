@@ -1,0 +1,13 @@
+@(left_column_content:Html = Html(""), center_column_content:Html = Html(""), right_column_content:Html = Html(""), row_class:String="")
+
+<div class="@row_class sio-about-row">
+  <div class="container">
+  
+    <div class="col-sm-3">@left_column_content</div>
+    
+    <div class="col-sm-5">@center_column_content</div>
+    
+    <div class="col-sm-4">@right_column_content</div>
+  
+  </div>
+</div>

@@ -9,7 +9,7 @@
 
 <div class="row sio-first-row">
   
-  <div class="col-sm-2">
+  <div class="col-sm-12">
   
     <a href="/" class="logo">
       <img src="https://suggest.io/static/images2/sio-logo.png">
@@ -19,11 +19,17 @@
       <div class="sio-glow"></div>
     }
   
+  <div class="hidden-xs">
+  @_topMenuTpl(activeLink)
   </div>
   
-  <div class="col-sm-10">
+  <div class="visible-xs mobile-menu">
+    <a id="mobileMenuButton" href="" class="mobile-menu-button"></a>
     @_topMenuTpl(activeLink)
   </div>
+  
+  </div>
+  
   
 </div>
 
@@ -34,6 +40,14 @@
 <div class="sio-top-glow"></div>
 
 <script type="text/javascript">
+	
+	$('#mobileMenuButton').bind("click", function()
+	{
+  	$('.mobile-menu .menu').show();
+  	$(this).addClass('active');
+  	return false;
+	});
+	
 	$(window).bind("scroll", function()
 	{
 		var st = $(window).scrollTop();

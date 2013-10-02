@@ -49,7 +49,7 @@ utils =
       if arguments.length == 1
         e
       if (!ea)
-        ea = new Array();
+        ea = new Array()
       ea.push e
     
     ea
@@ -99,7 +99,7 @@ utils =
       element.className = ''
     else
       newClassName = element.className.replace(value,'').replace(/\s{2,}/g, ' ')
-      element.className = newClassName;
+      element.className = newClassName
   
   # Показать объект
   show : ( element ) ->
