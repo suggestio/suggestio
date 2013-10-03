@@ -19,7 +19,7 @@
     <div class="col-sm-12">
       
       <div class="sio-slogo">
-        <img class="img-responsive" src="/assets/images/sio-slogo-en.jpg">
+        <img id="slogoImage" class="img-responsive" width="418" src="/assets/images/sio-slogo-en.jpg">
       </div>
       
     </div>
@@ -98,6 +98,9 @@
 </div>
 
 <script type="text/javascript">
+  
+  $('#slogoImage').attr("src", "/assets/images/sio-slogo-en-retina.jpg");
+  
   $(document).ready(function(){
     sio.index.init();
   });

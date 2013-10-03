@@ -7,6 +7,7 @@
 @import c.lang
 @import stuff._
 @import crawl._
+@import share._
 
 @head_after = {
    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/static_about.min.css")"/>
@@ -23,5 +24,7 @@
   @_aboutPreferencesTpl()
   
   @_aboutSupportTpl()
+  
+  @_shareTpl()
   
 }

@@ -3,7 +3,10 @@
 @import c.lang
 @import stuff._
 
-@head_after = {}
+@head_after = {
+   <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/static_blog.min.css")"/>
+}
+
 
 @main(title=Messages("blog"), head_after=head_after) {
   

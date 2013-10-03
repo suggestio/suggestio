@@ -2,42 +2,4 @@
 
 @* Отображение одной записи блога в списке записей *@
 
-  @if(preview) {
-    
-    <div class="blog-preview" style="@if(!b.bg_color.isEmpty) {background-color: @b.bg_color}; @if(!b.bg_image.isEmpty) { background-image: url('@b.bg_image')}">
-      
-      <div class="container">
-      <div class="row">
-      
-      <h2><a href="@routes.Blog.readOne(b.id)">@Html(b.title)</a></h2>
-
-      @* Эти два цикла нужно раскоментить после того как в вызовах будет проверяться аутентификация isAdmin, а не maybeAuthenticated (включена для тестов). Чтоб запись бога мог редактировать только зарегестрированный пользователь.
-      @* @if(c.isAuth) { *@
-      @* @if(c.isAdmin) { *@
-        <a class="blog-edit-button" href="@routes.Blog.editRec(b.id)"></a>
-        <a class="blog-delete-button" href="@routes.Blog.deleteRecAdmin(b.id)"></a>
-      @*   } *@
-      @*}    *@
-      
-      <div class="description">@Html(b.description)</div>
-      </div>
-      </div>
-    </div>
-  }else{
-    
-    @indexTpl {
-    <div class="container">
-      
-      <div class="blog-record">
-      <h1>@Html(b.title)</h1>
-      
-      <div class="text">
-        @Html(b.text)
-      </div>
-      </div>
-      
-    </div>
-    
-    }
-    
-  }
+  

@@ -123,6 +123,10 @@ form
 
 .logo
   float: left
+  display: block
+  width: 165px
+  height: 42px
+  background: url('/assets/images/sio-logo.png') no-repeat left top
 
 .menu
   padding-top: 15px
@@ -161,22 +165,24 @@ form
   position: absolute
   left: 200px
   top: -60px
-  background: url('/assets/images/menu_button.png') no-repeat left top
+  background: url('/assets/images/menu.png') no-repeat center center
   width: 50px
   height: 50px
+  z-index: 10000
 
 .mobile-menu-button:hover
-  background: url('/assets/images/menu_hover_button.png') no-repeat left top
+  background: url('/assets/images/menu_hover.png') no-repeat center center
 
 .mobile-menu-button:active,
 .mobile-menu-button.active
-  background: url('/assets/images/menu_pressed_button.png') no-repeat left top
+  background: url('/assets/images/menu_pressed.png') no-repeat center center
 
 .mobile-menu
   position: absolute
   left: 0px
   top: 56 px
   width: 100%
+  z-index: 10000!important
   background: #23313d!important
   
   .menu
@@ -353,41 +359,6 @@ form
   a 
     color: #5a8ead
 
-// Blog
-.sio-blog
-  padding-top: 150px
-
-.blog-record
-  width: 700px
-  padding-left: 52px
-  padding-bottom: 120px
-  
-  ul
-    margin: 20px 0px
-    border-left: 1px #ccc solid
-    list-style-type: none
-    
-    li 
-      margin: 20px 
-
-.blog-preview
-  height: 470px
-  background-position: 30% top
-  
-  h2
-    width: 400px
-    padding: 10px 0px 10px 62px
-    font-family: "pt_sans_narrowregular"
-    
-    a 
-    	color: #152d3b
-    
-  .description
-    color: #969696
-    width: 400px
-    padding: 0px 0px 0px 62px
-    font-size: 12px
-    
 // Feedback
 
 .feedback-row
@@ -473,6 +444,51 @@ form
     font-size: 44px;
   }
   
+  .sio-slogo
+  {
+    padding-left: 6px
+  }
+  .sio-first-step
+  {
+    margin-left: 6px;
+    margin-bottom: 0px;
+  }
+  .start-button-mobile
+  {
+    margin-left: -16px!important;
+  }
+  .http-prefix
+  {
   
+  }
+  
+}
+
+@media only screen and (-Webkit-min-device-pixel-ratio: 1.5),
+			only screen and (-moz-min-device-pixel-ratio: 1.5),
+			only screen and (-o-min-device-pixel-ratio: 3/2),
+			only screen and (min-device-pixel-ratio: 1.5) {
+
+.mobile-menu-button
+{
+  background-image: url('/assets/images/menu_retina.png');
+  background-size: 30px 30px;
+}
+.mobile-menu-button:hover
+{
+  background-image: url('/assets/images/menu_hover_retina.png');
+  background-size: 30px 30px;
+}
+.mobile-menu-button:active,
+.mobile-menu-button.active
+{
+  background-image: url('/assets/images/menu_pressed_retina.png');
+  background-size: 30px 30px;
+}
+
+
+.logo{
+  background-image: url('/assets/images/sio-logo-retina.png');
+  background-size: 165px 42px;
 }
 }
