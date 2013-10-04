@@ -16,7 +16,7 @@ import SioHBaseAsyncClient._
 import org.hbase.async.{DeleteRequest, PutRequest, KeyValue, GetRequest}
 import scala.util.{Failure, Success}
 import java.util.{ArrayList => juArrayList}
-import cascading.tuple.{Tuples, Tuple}
+import cascading.tuple.Tuple
 
 /**
  * Suggest.io
@@ -181,17 +181,9 @@ object MDVIActive {
   def serializeToDkeylessTuple(dvi: MDVIActive): Tuple = {
     val t = new Tuple(dvi.vin)
     t.addLong(dvi.generation)
-    dvi.subshardsInfo.foreach { si =>
-      t.add(si.lowerDateDays)
-      val ts: Tuple = if (si.shards.isEmpty) {
-        null
-      } else {
-        new Tuple(si.shards.map(Tuples.toIntegerObject) : _*)
-      }
-      t.add(ts)
-    }
-    t
+    MDVISubshard.serializeSubshardInfo(dvi.subshardsInfo, t)
   }
+
 
   /** Десериализация данных, сгенерированных в serializeToDkeylessTuple() и dkey
    * @param dkey Ключ домена.
@@ -200,26 +192,8 @@ object MDVIActive {
    */
   def deserializeFromTupleDkey(dkey: String, t: Tuple): MDVIActive = {
     val vin :: generation :: sii = t.toList
-    if (sii.size % 2 != 0) {
-      throw new IllegalArgumentException("invalid size of serialized subshardsInfo.")
-    }
-    val (None, si) = sii.foldLeft[(Option[Int], List[MDVISubshardInfo])] (None -> Nil) {
-      // Нечетный шаг. Текущий элемент - это сериализованный lowerDateDays.
-      case ((None, acc), ldd) =>
-        val lddInt = Tuples.toInteger(ldd)
-        Some(lddInt) -> acc
-
-      // Четный шаг. Текущий элемент - сериализованный список id шард mvi.
-      case ((Some(ldd), acc), ts) =>
-        val shardsIds = if (ts == null) {
-          Nil
-        } else {
-          ts.asInstanceOf[Tuple].toList.map(Tuples.toInteger)
-        }
-        val acc1 = MDVISubshardInfo(ldd, shardsIds) :: acc
-        None -> acc1
-    }
-    MDVIActive(dkey, vin.toString, generation.toString.toInt, si.reverse)
+    val si = MDVISubshard.deserializeSubshardInfo(sii)
+    MDVIActive(dkey, vin.toString, generation.toString.toInt, si)
   }
 
 
@@ -228,6 +202,8 @@ object MDVIActive {
    * @return Long.
    */
   def currentGeneration: Long = System.currentTimeMillis() / 10000
+
+  val SUBSHARD_INFO_DFLT = List(new MDVISubshardInfo(0))
 
 }
 
@@ -246,7 +222,7 @@ case class MDVIActive(
   dkey:       String,
   vin:        String,
   generation: Long,
-  subshardsInfo: List[MDVISubshardInfo] = List(new MDVISubshardInfo(0))
+  subshardsInfo: List[MDVISubshardInfo] = MDVIActive.SUBSHARD_INFO_DFLT
 
 ) extends MDVIUnitAlterable with Serializable {
 

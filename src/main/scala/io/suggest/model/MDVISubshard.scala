@@ -7,6 +7,8 @@ import io.suggest.index_info.MDVIUnit
 import scala.util.{Failure, Success}
 import org.joda.time.LocalDate
 import io.suggest.util.DateParseUtil.toDaysCount
+import cascading.tuple.{Tuples, Tuple}
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -16,8 +18,65 @@ import io.suggest.util.DateParseUtil.toDaysCount
  * Управление номерами шард сделано для возможных случаев, когда необходимо или же наоборот нежелательно
  * партициирование того или иного типа. Например, в целях экономии RAM при индексировании данных, для которых
  * нежелательно партициирование данных из-за неустранимого long-tail в текстовом индексе (куча редких слов).
- * @param dvin Родительский экземпляр MDVIActive.
  */
+object MDVISubshard {
+
+  /**
+   * Сериализовать значение .subshardInfo в кортеж.
+   * @param lsi Исходный список MDVISubshardInfo.
+   * @param t Аккамулятор. Если не задан, то будет использован новый кортеж.
+   * @return Обновлённый аккамулятор.
+   */
+  def serializeSubshardInfo(lsi: List[MDVISubshardInfo], t:Tuple = new Tuple): Tuple = {
+    lsi.foreach { si =>
+      t.add(si.lowerDateDays)
+      val ts: Tuple = if (si.shards.isEmpty) {
+        null
+      } else {
+        new Tuple(si.shards.map(Tuples.toIntegerObject) : _*)
+      }
+      t.add(ts)
+    }
+    t
+  }
+
+
+  /** Десериализовать subshardInfo
+    * @param sii Исходный список, полученный из сериализованного кортежа.
+    * @return
+    */
+  def deserializeSubshardInfo(sii: List[AnyRef]): List[MDVISubshardInfo] = {
+    if (sii.size % 2 != 0) {
+      throw new IllegalArgumentException("invalid size of serialized subshardsInfo.")
+    }
+    val (None, si) = sii.foldLeft[(Option[Int], List[MDVISubshardInfo])] (None -> Nil) {
+      // Нечетный шаг. Текущий элемент - это сериализованный lowerDateDays.
+      case ((None, acc), ldd) =>
+        val lddInt = Tuples.toInteger(ldd)
+        Some(lddInt) -> acc
+
+      // Четный шаг. Текущий элемент - сериализованный список id шард mvi.
+      case ((Some(ldd), acc), ts) =>
+        val shardsIds = if (ts == null) {
+          Nil
+        } else {
+          ts.asInstanceOf[Tuple].toList.map(Tuples.toInteger)
+        }
+        val acc1 = MDVISubshardInfo(ldd, shardsIds) :: acc
+        None -> acc1
+    }
+    si.reverse
+  }
+
+  /** Десериализовать subshard info их котржеа.
+   * @param sii Tuple
+   * @return Список MDVISubshard.
+   */
+  def deserializeSubshardInfo(sii: Tuple): List[MDVISubshardInfo] = deserializeSubshardInfo(sii.toList)
+
+}
+
+
 case class MDVISubshard(
   dvin:         MDVIUnit,
   subshardData: MDVISubshardInfo
@@ -103,6 +162,7 @@ case class MDVISubshard(
   }
 
 }
+
 
 /**
  * Сами данные по шарде вынесены за скобки.
