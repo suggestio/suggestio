@@ -7,7 +7,7 @@ organization := "io.suggest"
 version := "0.6.0-SNAPSHOT"
 
 
-scalaVersion := "2.10.1"
+scalaVersion := "2.10.2"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
@@ -26,7 +26,7 @@ externalIvySettings(baseDirectory(_ / "project" / "ivysettings.xml"))
 libraryDependencies ++= {
   val slf4jVsn      = "1.7.2"
   val hadoopVsn     = "1.1.2"
-  val akkaVsn       = "2.1.0"
+  val akkaVsn       = "2.2.0"
   val jacksonVsn    = "2.2.1"
   val tikaVsn       = "1.3"
   val cascadingVsn  = "2.1.6"
@@ -44,7 +44,9 @@ libraryDependencies ++= {
     "org.elasticsearch" % "elasticsearch" % "0.90.5",
     "org.apache.tika" % "tika-core" % tikaVsn,
     "org.apache.tika" % "tika-parsers" % tikaVsn,
-    "com.typesafe.akka" %% "akka-actor" % akkaVsn,
+    // akka
+    "com.typesafe.akka" %% "akka-actor"  % akkaVsn,
+    "com.typesafe.akka" %% "akka-remote" % akkaVsn,
     // hadoop
     "org.apache.hadoop" % "hadoop-core" % hadoopVsn,
     "org.apache.hadoop" % "hadoop-client" % hadoopVsn,
