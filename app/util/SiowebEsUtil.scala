@@ -12,6 +12,7 @@ import io.suggest.util.{LogsImpl, Lists}
 import io.suggest.util.SioConstants._
 import controllers.routes
 import io.suggest.model.SioSearchContext
+import play.api.libs.concurrent.Execution.Implicits._
 
 /**
  * Suggest.io

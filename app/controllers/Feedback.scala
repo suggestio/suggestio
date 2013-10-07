@@ -64,9 +64,9 @@ object Feedback extends Controller with AclT with Logs with ContextT {
           case None     => "посетителя сайта"
         }
         mail.setSubject("Сообщение от " + subjectEnd)
-        mail.addFrom("support@suggest.io")
+        mail.setFrom("support@suggest.io")
         mail.addHeader("Reply-To", email1)
-        mail.addRecipient("support@suggest.io")
+        mail.setRecipient("support@suggest.io")
         val ctx = getContext
         mail.send(feedbackMailTxtTpl(email1, message)(ctx).toString())
         // Отредиректить юзера куда-нибудь

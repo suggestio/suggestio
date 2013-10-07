@@ -2,7 +2,7 @@ import sbt._
 import Keys._
 import play.Project._
 import java.io.File
-import com.jmparsons.plugin.LesscPlugin._
+//import com.jmparsons.plugin.LesscPlugin._
 
 object ApplicationBuild extends Build {
 
@@ -11,18 +11,14 @@ object ApplicationBuild extends Build {
   
   val appDependencies = {
     Seq(
-      // Add your project dependencies here,
       jdbc,
       anorm,
-      "com.typesafe" %% "play-plugins-mailer" % "2.1.0",
+      cache,    // play 2.2.x +
+      "com.typesafe" %% "play-plugins-mailer" % "2.2.0",
       "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
-      // spat4j: костыль для http://elasticsearch-users.115913.n3.nabble.com/Compile-error-with-0-20-2-td4028743.html :
-      "com.spatial4j" % "spatial4j" % "0.3",
+      // io.suggest stuff
       "io.suggest" %% "util"      % "0.6.0-SNAPSHOT",
       "io.suggest" %% "util-play" % "0.6.0-SNAPSHOT",
-      "net.sourceforge.htmlunit" % "htmlunit" % "2.12", // play-2.1.1: на 2.9 тесты виснут. Нужно убрать на будущих версиях play.
-      // akka - for siobix direct calls
-      "com.typesafe.akka" %% "akka-actor" % "2.1.0",
       // coffeescript-компилятор используем свой заместо компилятора play по ряду причин (последний прибит гвоздями к sbt-plugin, например).
       "org.jcoffeescript" % "jcoffeescript" % "1.6-SNAPSHOT",
       // for domain validation:
@@ -52,19 +48,24 @@ object ApplicationBuild extends Build {
   }
 
   // Компилировать эти less-файлы через Lessc вместо Rhino.
-  def customLessEntryPoints(base: File): PathFinder = (
-      (base / "app" / "assets" / "stylesheets" * "*.less")
-  )
+  //def customLessEntryPoints(base: File): PathFinder = (
+  //    (base / "app" / "assets" / "stylesheets" * "*.less")
+  //)
 
-  val main = play.Project(appName, appVersion, appDependencies).settings(lesscSettings: _*).settings(
-    // резолверы определены цепочкой в этом конфиге:
-    externalIvySettings(baseDirectory(_ / "project" / "ivysettings.xml")),
-    gzippableAssets <<= (resourceManaged in (ThisProject))(dir => ((dir ** "*.js") +++ (dir ** "*.css"))),
-    gzipAssetsSetting,
-    // использовать lessc вместо встроенного less-компилятора.
-    lessEntryPoints := Nil,
-    lesscEntryPoints in Compile <<= baseDirectory(customLessEntryPoints)
-  )
+  val main = play.Project(appName, appVersion, appDependencies)
+    //.settings(lesscSettings: _*)
+    .settings(
+      // резолверы определены цепочкой в этом конфиге:
+      externalIvySettings(baseDirectory(_ / "project" / "ivysettings.xml")),
+
+      // использовать lessc вместо встроенного less-компилятора.
+      //lessEntryPoints := Nil,
+      //lesscEntryPoints in Compile <<= baseDirectory(customLessEntryPoints)
+
+      // Сжимать текстовые asset'ы при сборке проекта.
+      gzippableAssets <<= (resourceManaged in (ThisProject))(dir => ((dir ** "*.js") +++ (dir ** "*.css"))),
+      gzipAssetsSetting
+    )
 
 }
 

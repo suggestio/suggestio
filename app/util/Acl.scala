@@ -49,7 +49,7 @@ trait AclT {
    * @param request Заголовки запроса.
    * @return Result, такой же как и в экшенах контроллеров.
    */
-  protected def onUnauthorized(request: RequestHeader): Result = Results.Redirect(routes.Application.index())
+  protected def onUnauthorized(request: RequestHeader): SimpleResult = Results.Redirect(routes.Application.index())
 
   /**
    * Контроллер использует isAuthentificated вместо Action когда необходимо ограничить доступ к ресурсу неавторизованным
