@@ -45,6 +45,11 @@ object MDVIActive {
   val SER_KEY_GENERATION = "g"
   val SER_KEY_SUBSHARDS = "s"
 
+  // Номер поколения - это миллисекунды, вычтенные и деленные на указанный делитель.
+  // Номер поколения точно не будет раньше этого времени. Выкидываем.
+  val GENERATION_SUBSTRACT  = 1381140627123 // 2013/oct/07 14:11 +04:00.
+  val GENERATION_RESOLUTION = 10000         // Округлять мс до 10 секунд.
+
   /** Это поколение выставляется для сабжа, если  */
   val GENERATION_BOOTSTRAP = -1
 
@@ -201,8 +206,17 @@ object MDVIActive {
    * Сгенерить id текущего поколения с точностью до 10 секунд.
    * @return Long.
    */
-  def currentGeneration: Long = System.currentTimeMillis() / 10000
+  def currentGeneration: Long  = (System.currentTimeMillis() - GENERATION_SUBSTRACT) / GENERATION_RESOLUTION
 
+  /**
+   * Перевести поколение во время в миллисекундах с учетом точности/округления.
+   * @param g Генерейшен, произведенный ранее функцией currentGeneration().
+   * @return Число миллисекунд с 1970/1/1 0:00:00 округленной согласно GENERATION_SUBSTRACT.
+   */
+  def generationToMillis(g: Long): Long = g * GENERATION_RESOLUTION + GENERATION_SUBSTRACT
+
+
+  /** Дефолтовое значение поля subshardsInfo. */
   val SUBSHARD_INFO_DFLT = List(new MDVISubshardInfo(0))
 
 }
