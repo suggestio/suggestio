@@ -15,14 +15,12 @@ import HTapConversionsBasic._
 object DomainSettings extends DomainSettingsStaticT {
  // Тип карты, которая хранит настройки. Value имеет динамический тип, и может содержать в себе DSMap_t.
  type DSMap_t = JsonDfsBackend.JsonMap_t
-
- val COLUMN = "_ds"
 }
 
 // Функции объекта DS вынесены в трайт, чтобы можно было экстендить функционал на стороне пользователй sioutil.
 trait DomainSettingsStaticT {
 
-  def COLUMN: String
+  val COLUMN = "_ds"
 
   val getName = classOf[DomainSettings].getCanonicalName
 

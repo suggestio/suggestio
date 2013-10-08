@@ -17,7 +17,11 @@ import scala.collection.JavaConversions._
  * Тут - модель для задания используемых указателей на активные индексы.
  *
  * Указателей у одного dkey может быть несколько, однако использование их является опциональным.
+ *
  */
+
+// TODO В sioutil зачем-то сделана поддержка нескольких vin в рамках alias'a в searchPtr.
+//      Надо бы вспомнить зачем...
 
 object MDVISearchPtr {
 
@@ -115,6 +119,8 @@ case class MDVISearchPtr(
   vins: List[String],
   idOpt: Option[String] = None
 ) {
+  if (vins.isEmpty)
+    throw new IllegalArgumentException("vins must be NON-empty list.")
 
   def columnName = idOpt2column(idOpt)
 
