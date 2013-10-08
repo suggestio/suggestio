@@ -1,6 +1,6 @@
 package util
 
-import akka.actor.{ActorRef, Actor}
+import akka.actor.{Props, ActorRefFactory, ActorRef, Actor}
 import scala.concurrent.Future
 import dispatch._
 import com.ning.http.client.{AsyncHttpClient, AsyncHttpClientConfig}
@@ -39,6 +39,8 @@ object DomainRequester {
   protected val timeoutSec = 5.seconds
   protected implicit val timeout = Timeout(timeoutSec)
 
+  val ACTOR_NAME = "domainRequester"
+
   /**
    * Узнать actorRef для актора DomainRequester. Можно использовать actorFor(path), но тут по сути короче.
    * @return ActorRef
@@ -71,6 +73,10 @@ object DomainRequester {
    */
   protected def call[T](msg:Any) = Await.result(actorRef ? 'getFMapCopy, timeoutSec).asInstanceOf[T]
 
+
+  def startLink(arf: ActorRefFactory): ActorRef = {
+    arf.actorOf(Props[DomainRequester], name=ACTOR_NAME)
+  }
 }
 
 

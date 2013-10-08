@@ -20,3 +20,4 @@ RUNNING_PID
 *.orig
 conf/application.conf
 .DS_Store
+dout/

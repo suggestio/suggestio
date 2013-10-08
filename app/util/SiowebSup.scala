@@ -10,6 +10,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import akka.actor.OneForOneStrategy
 import io.suggest.SioutilSup
+import DomainRequester.{ACTOR_NAME => DOMAIN_REQUESTER_NAME}
 
 /**
  * Suggest.io
@@ -21,17 +22,16 @@ import io.suggest.SioutilSup
 
 class SiowebSup extends Actor with Logs {
 
-  import SiowebSup.DOMAIN_REQUESTER_NAME
-
   /**
    * Нужно запустить все дочерние процессы.
    */
   override def preStart() {
     super.preStart()
-
-    context.actorOf(Props[DomainRequester], name=DOMAIN_REQUESTER_NAME)
+    // Запускаем все дочерние процессы.
+    DomainRequester.startLink(context)
     SioutilSup.start_link(context)
     NewsQueue4Play.startLinkSup(context)
+    //SiobixClient.startLink(context)   // TODO включить, когда будет готов, и удалить это TODO
   }
 
 
@@ -59,9 +59,6 @@ class SiowebSup extends Actor with Logs {
 
 // Статический клиент к актору. В частности, запускает супервизора и хранит его ref.
 object SiowebSup {
-
-  // id DomainRequester'а, под которым он будет числится в дереве супервизора.
-  val DOMAIN_REQUESTER_NAME = "dr"
 
   private val timeoutSec = 5.seconds
   private implicit val timeout = Timeout(timeoutSec)

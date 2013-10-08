@@ -63,7 +63,7 @@ session.username=p
 # Siobix web crawler integration
 # ~~~~~
 # dfs.dir: dfs address for filesystem connection; URI. See util.SiobixFs
-siobix.dfs.dir=/home/user/projects/bixo-git/dout
+siobix.dfs.dir=/home/user/projects/sio/2/bixo/dout
 
 # EMAIL
 smtp.host="192.168.101.9"
@@ -71,4 +71,24 @@ smtp.host="192.168.101.9"
 ##smtp.ssl=yes
 smtp.user="no-reply@suggest.io"
 smtp.password="BedCenEnakJidLilfEp"
+
+## akka remoting
+## TODO Use akka clustering instead of remoting.
+akka {
+ actor {
+  provider = "akka.remote.RemoteActorRefProvider"
+ }
+ remote {
+  enabled-transports = ["akka.remote.netty.tcp"]
+  netty.tcp {
+   hostname = "127.0.0.1"
+   port = 2552
+  }
+ }
+}
+
+## akka url до супервизора кравлера. Меняется в зависимости от deployment'а.
+siobix.akka.url.prefix="akka.tcp://application@127.0.0.1:2553"
+## akka путь до супервизора кравлеров.
+siobix.akka.path.crawler.sup="/user/sup/crawlers"
 
