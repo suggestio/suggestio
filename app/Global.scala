@@ -1,5 +1,4 @@
-import play.api._
-import util.{ContextT, Context, SiowebSup}
+import util.{ContextT, SiowebSup}
 
 /**
  * Suggest.io

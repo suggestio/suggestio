@@ -7,6 +7,7 @@ import org.apache.hadoop.fs.Path
 import play.api.libs.iteratee.Enumerator
 import scala.concurrent.duration._
 import io.suggest.util.SioConstants._
+import play.api.libs.concurrent.Execution.Implicits._
 
 /**
  * Suggest.io
@@ -41,7 +42,7 @@ object Thumb extends Controller {
       val fileStream = fs.open(imageFilePath, 16384)
       // Используется Chunked как самый простой вариант раздачи картинок из InputStream.
       val fileEnumerator = Enumerator.fromStream(fileStream)
-      Ok.stream(fileEnumerator)
+      Ok.chunked(fileEnumerator)
         .as("image/jpeg")
         .withHeaders(cacheControlHdr)
 

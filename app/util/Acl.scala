@@ -201,7 +201,7 @@ object Acl extends AclT {
   val admins : Set[Int] = {
     current.configuration.getIntList("person.admins").map { integerList =>
       integerList.map(_.intValue()).toSet
-    } getOrElse(Set(26))
+    } getOrElse Set(26)
   }
 
   def isAdmin(person_id:Int) = admins.contains(person_id)

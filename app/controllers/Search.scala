@@ -2,11 +2,14 @@ package controllers
 
 import play.api.mvc._
 import io.suggest.util.UrlUtil
-import util.{SioSearchResult, SioSearchOptions, SiowebEsUtil, SiobixFs}
-import io.suggest.model.SioSearchContext
+import _root_.util._
 import play.api.libs.json._
 import play.api.libs.Jsonp
 import models.MDomain
+import scala.concurrent.Future
+import io.suggest.model.SioSearchContext
+import play.api.libs.concurrent.Execution.Implicits._
+import scala.Some
 
 /**
  * Suggest.io
@@ -30,7 +33,7 @@ object Search extends Controller {
      */
     def writes(l: List[SioSearchResult]): JsValue = {
       val jsonList = l.map { ssr =>
-        val m1 = ssr.data.mapValues(JsString(_))
+        val m1 = ssr.data.mapValues(JsString)
         JsObject(m1.toList)
       }
       JsArray(jsonList)
@@ -44,34 +47,41 @@ object Search extends Controller {
    * @param queryStr Строка запроса
    * @return
    */
-  def liveSearch(domainRaw:String, queryStr:String, debug:Boolean, langs:String) = Action {
+  def liveSearch(domainRaw:String, queryStr:String, debug:Boolean, langs:String) = Action.async {
     val dkey = UrlUtil.normalizeHostname(domainRaw)
-    MDomain.getForDkey(dkey).map { mdomain =>
-      // Домен есть в системе.
+    MDomain.getForDkey(dkey) match {
+      case Some(mdomain) =>
+        // Домен есть в системе.
         // TODO нужно восстанавливать SearchContext из кукисов реквеста или генерить новый
         val searchContext = new SioSearchContext()
         // TODO Настройки поиска, заданные юзером, надо извлекать из модели DomainData
         val searchOptions = new SioSearchOptions(
-          dkey = dkey,
+          domain = mdomain,
           withExplain = debug
         )
-        val searchResults = SiowebEsUtil.searchDomain(
-          domainSettings = mdomain.domainSettings,
+        SiowebEsUtil.searchDomain(
           queryStr = queryStr,
           options  = searchOptions,
           searchContext = searchContext
-        )
+        ) map { searchResults =>
         // Отрендерить результаты в json-е
-        val jsonResp : Map[String, JsValue] = Map(
-          "status"        -> JsString("ok"),
-          "timestamp"     -> JsNumber(System.currentTimeMillis()),
-          "search_result" -> Json.toJson(searchResults)
-        )
-        val jsonp = Jsonp("sio._s_add_result", Json.toJson(jsonResp))
-        // TODO Сохранить обновлённый searchContext и серилизовать в кукис ответа
-        Ok(jsonp)
+          val jsonResp : Map[String, JsValue] = Map(
+            "status"        -> JsString("ok"),
+            "timestamp"     -> JsNumber(System.currentTimeMillis()),
+            "search_result" -> Json.toJson(searchResults)
+          )
+          val jsonp = Jsonp("sio._s_add_result", Json.toJson(jsonResp))
+          // TODO Сохранить обновлённый searchContext и серилизовать в кукис ответа
+          Ok(jsonp)
+        } recover {
+          case ex:NoSuchDomainException      => NotFound(ex.getMessage)
+          case ex:EmptySearchQueryException  => ExpectationFailed(ex.getMessage)
+          case ex                            => InternalServerError(ex.getMessage)
+        }
 
-    }.getOrElse(NotFound)
+      case None =>
+        Future.successful(NotFound)
+    }
   }
 
 }
