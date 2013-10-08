@@ -14,6 +14,10 @@ import scala.Some
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 13.03.13 11:55
  * Description: Security-функции для контроллеров. Например, определение залогиненности юзера.
+ *
+ * TODO Надо отрефакторить под play-2.2.x:
+ *  - http://www.playframework.com/documentation/2.2.x/ScalaActionsComposition
+ *  - http://www.playframework.com/documentation/2.2.x/api/scala/index.html#play.api.mvc.Security$$AuthenticatedBuilder$
  */
 
 // Трайт для контроллеров. Содержит некоторые функции, используемые только кон

@@ -83,7 +83,7 @@ object Admin extends Controller with AclT with ContextT with Logs {
             NewsQueue4Play.stop(nqActorRef)
             logger.debug(logPrefix + "No revalidations needed. NQ %s stopping..." format nqActorRef)
           } else {
-            logger.debug("Started %s revalidations" format rdvCount)
+            logger.debug(logPrefix + "Started %s revalidations" format rdvCount)
           }
         }
       }

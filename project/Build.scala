@@ -17,7 +17,7 @@ object ApplicationBuild extends Build {
       "com.typesafe" %% "play-plugins-mailer" % "2.2.0",
       "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
       // io.suggest stuff
-      "io.suggest" %% "util"      % "0.6.0-SNAPSHOT",
+      "io.suggest" %% "util"      % "0.6.0-SNAPSHOT" changing(),
       "io.suggest" %% "util-play" % "0.6.0-SNAPSHOT",
       // coffeescript-компилятор используем свой заместо компилятора play по ряду причин (последний прибит гвоздями к sbt-plugin, например).
       "org.jcoffeescript" % "jcoffeescript" % "1.6-SNAPSHOT",
