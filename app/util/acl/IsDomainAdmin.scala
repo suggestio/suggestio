@@ -16,20 +16,17 @@ import util.acl.PersonWrapper.PwOpt_t
 
 object IsDomainAdmin {
 
-  /** При проблемах с доступом используется эта функция по дефолту. */
-  def onUnauth(hostname:String, pwOpt: PwOpt_t, req: RequestHeader): SimpleResult = {
-    pwOpt match {
-      // Юзер залогинен, но долбится на чужой домен
-      case Some(_) => Results.Forbidden(s"Current user have no access to '$hostname'")
-
-      // Юзер не залогинен, и долбится на сайт без соотв. qi-сессии.
-      case None    => IsAuth.onUnauthDefault(req)
-    }
-  }
-
   /** Фьючерс для onUnauth() */
   def onUnauthFut(hostname: String, pwOpt: PwOpt_t, req:RequestHeader): Future[SimpleResult] = {
-    Future.successful(onUnauth(hostname, pwOpt, req))
+    pwOpt match {
+      // Юзер залогинен, но долбится на чужой домен
+      case Some(_) =>
+        val result = Results.Forbidden(s"Current user have no access to '$hostname'")
+        Future.successful(result)
+
+      // Юзер не залогинен, и долбится на сайт без соотв. qi-сессии. Повторяем логику из IsAuth.
+      case None => IsAuth.onUnauth(req)
+    }
   }
 
 }
