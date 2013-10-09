@@ -26,11 +26,6 @@ trait ContextT {
    * Выдать контекст. Неявно вызывается при вызове шаблона из контроллера.
    * @return
    */
-  implicit def getContext1(implicit pwOpt: PwOpt_t, request: Request[AnyContent], lang: Lang = Context.LANG_DFLT): Context = {
-    Context1(pwOpt, request, lang)
-  }
-
-
   implicit def getContext2(implicit req:AbstractRequestWithPwOpt[_], lang:Lang = Context.LANG_DFLT): Context = {
     Context2(req, lang)
   }
@@ -62,14 +57,6 @@ trait Context {
 
 
 // Непосредственные реализации контекстов. Расширять их API в обход trait Context не имеет смысла.
-
-/** Старый формат контекста. Использовался до внедрения action-builder'ов. */
-case class Context1(
-  pw_opt  : PwOpt_t,    // Если юзер залогинен, то тут будет Some().
-  request : Request[_],
-  lang    : Lang
-) extends Context
-
 
 /** Контекст времён комбинируемых ActionBuilder'ов. */
 case class Context2(

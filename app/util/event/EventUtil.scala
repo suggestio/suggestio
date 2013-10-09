@@ -132,7 +132,8 @@ object EventUtil extends Logs {
    * @return Новый Iteratee на базе исходного. Новый автоматически вызовет unsubscribe, когда канал начнет закрываться.
    */
   def inIterateeSnUnsubscribeWsOnEOF[A, B](in:Iteratee[A, B], uuid:UUID, classifier:Classifier): Iteratee[A, B] = {
-    in.mapDone { x =>
+    // Раньше было .mapDone(), теперь просто .map().
+    in.map { x =>
       SioNotifier.unsubscribe(
         subscriber = new SnWebsocketSubscriber(uuid=uuid, channel = null),
         classifier = classifier

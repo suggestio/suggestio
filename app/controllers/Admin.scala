@@ -38,7 +38,8 @@ import MDomainUserSettings.{DataMap_t, DataMapKey_t}
 
 object Admin extends Controller with ContextT with Logs {
 
-  private val nqTyp = "admin"
+  // Под-имя очереди новостей (nq) для админов. Самим именем является email.
+  private val NQ_TYPE = "admin"
 
   // Маппинг для формы добавления домена в список доменов админки.
   val addDomainFormM = Form("domain" -> domain2dkeyMapper)
@@ -68,7 +69,7 @@ object Admin extends Controller with ContextT with Logs {
       val timestampMs = NewsQueue4Play.getTimestampMs
       if (!pw.isAdmin && !personDomains.isEmpty) {
         logger.debug(logPrefix + "Maybe need revalidate %s domains. Starting news queue..." format personDomains.size)
-        NewsQueue4Play.ensureActorFor(pw.id, nqTyp) onSuccess { case nqActorRef =>
+        NewsQueue4Play.ensureActorFor(pw.id, NQ_TYPE) onSuccess { case nqActorRef =>
           logger.debug(logPrefix + "NewsQueue started as %s" format nqActorRef)
           // Подписать очередь на события SioNotifier
           SioNotifier.subscribe(
@@ -114,7 +115,7 @@ object Admin extends Controller with ContextT with Logs {
       val (in0, out0) = EventUtil.globalUserEventIO
       // Подписаться на события валидации
       val out1 = out0 >- Concurrent.unicast(onStart = { channel: Concurrent.Channel[JsValue] =>
-        EventUtil.replaceNqWithWsChannel(classifier, uuid, nqDkey=pw.id, nqTyp=nqTyp, channel=channel, nqIsMandatory=false, timestampMs=timestampMs, logPrefix=logPrefix)
+        EventUtil.replaceNqWithWsChannel(classifier, uuid, nqDkey=pw.id, nqTyp=NQ_TYPE, channel=channel, nqIsMandatory=false, timestampMs=timestampMs, logPrefix=logPrefix)
       })
       // При закрытии канала отписаться от событий, подписанных выше.
       val in1 = EventUtil.inIterateeSnUnsubscribeWsOnEOF(in0, uuid, classifier)
