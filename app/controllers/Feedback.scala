@@ -1,7 +1,7 @@
 package controllers
 
 import play.api.mvc.Controller
-import util.{ContextT, Logs, AclT}
+import util.{ContextT, Logs}
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.data._
 import play.api.data.Forms._
@@ -10,6 +10,7 @@ import util.FormUtil.strIdentityF
 import views.html.feedback._
 import play.api.Play.current
 import play.api.i18n.Messages
+import util.acl._
 
 /**
  * Suggest.io
@@ -19,7 +20,7 @@ import play.api.i18n.Messages
  * Пока что тут только отправка писем с сайта.
  */
 
-object Feedback extends Controller with AclT with Logs with ContextT {
+object Feedback extends Controller with Logs with ContextT {
 
   /**
    * Форма написания сообщения.
@@ -36,7 +37,7 @@ object Feedback extends Controller with AclT with Logs with ContextT {
    * @param isAsync если true, то будет отрендерено inline. Если false, то на выходе будет страница.
    * @return Форма в виде страницы ИЛИ в виде inline-формы в зависимости от isAsync.
    */
-  def feedbackForm(isAsync:Boolean) = maybeAuthenticated { implicit pw_opt => implicit request =>
+  def feedbackForm(isAsync:Boolean) = MaybeAuth { implicit request =>
     val render = if (isAsync) {
       _feedbackFormTpl(feedbackSubmitFormM)
     } else {
@@ -50,7 +51,8 @@ object Feedback extends Controller with AclT with Logs with ContextT {
    * Сабмит формы обратной связи. Отправить по email письмо на support@suggest.io.
    * @return Редирект куда-нибудь + flash.
    */
-  def feedbackFormSubmit = maybeAuthenticated { implicit pw_opt => implicit request =>
+  def feedbackFormSubmit = MaybeAuth { implicit request =>
+    import request.pwOpt
     feedbackSubmitFormM.bindFromRequest().fold(
       formWithErrors =>
         NotAcceptable(feedbackTpl(formWithErrors))
@@ -59,7 +61,7 @@ object Feedback extends Controller with AclT with Logs with ContextT {
         // Отправить письмо на ящик suggest.io.
         val mail = use[MailerPlugin].email
         // Разделять сабжи в зависимости от залогиненности юзеров.
-        val subjectEnd = pw_opt match {
+        val subjectEnd = pwOpt match {
           case Some(pw) => "клиента " + pw.id
           case None     => "посетителя сайта"
         }
@@ -67,7 +69,7 @@ object Feedback extends Controller with AclT with Logs with ContextT {
         mail.setFrom("support@suggest.io")
         mail.addHeader("Reply-To", email1)
         mail.setRecipient("support@suggest.io")
-        val ctx = getContext
+        val ctx = getContext2
         mail.send(feedbackMailTxtTpl(email1, message)(ctx).toString())
         // Отредиректить юзера куда-нибудь
         Redirect(routes.Application.index())

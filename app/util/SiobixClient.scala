@@ -2,7 +2,12 @@ package util
 
 import play.api.Play.current
 import play.api.libs.concurrent.Akka.system
-import akka.actor.{Actor, Props, ActorRefFactory, ActorRef}
+import akka.pattern.AskableActorSelection
+import io.suggest.proto.bixo.CrawlersSupProto._
+import scala.concurrent.Future
+import scala.collection.immutable
+import akka.util.Timeout
+import concurrent.duration._
 
 /**
  * Suggest.io
@@ -12,25 +17,28 @@ import akka.actor.{Actor, Props, ActorRefFactory, ActorRef}
  */
 object SiobixClient {
 
-  private var clientRef: ActorRef = null
-
   def URL_PREFIX = current.configuration.getString("siobix.akka.url.prefix").get
   def CRAWLERS_SUP_LP = current.configuration.getString("siobix.akka.path.crawler.sup").get
 
-  def CRAWLERS_SUP_URL = URL_PREFIX + CRAWLERS_SUP_LP
-  def CRAWLERS_SUP_PATH = system actorSelection CRAWLERS_SUP_URL
+  implicit val askTimeout = new Timeout(
+    current.configuration.getInt("siobix.akka.bootstrap.ask_timeout_ms").getOrElse(2000) milliseconds
+  )
 
-  def startLink(arf: ActorRefFactory): ActorRef = {
-    val ref = arf.actorOf(Props[SiobixClient])
-    clientRef = ref
-    ref
+  val CRAWLERS_SUP_URL = URL_PREFIX + CRAWLERS_SUP_LP
+  def getCrawlersSupSelector = new AskableActorSelection(system actorSelection CRAWLERS_SUP_URL)
+
+  /**
+   * Отправить в кравлер сообщение о запросе бутстрапа домена
+   * @param dkey Доменный ключ.
+   * @param seedUrls Ссылки для начала обхода.
+   * @return
+   */
+  def maybeBootstrapDkey(dkey:String, seedUrls: immutable.Seq[String]) = {
+    (getCrawlersSupSelector ? MaybeBootstrapDkey(dkey, seedUrls))
+      .asInstanceOf[Future[MaybeBootstrapDkeyReply_t]]
   }
 
 }
 
-// Для отправки надо указать адресата. Этот актор - получатель ответов от кравлеров.
-class SiobixClient extends Actor {
-  def receive: Actor.Receive = {
-    case _ => ???
-  }
-}
+// TODO Следует использовать один актора для диспетчеризации протокола.
+//      Ибо ask() всегда порождает новый актора в /temp, а тут этого можно и нужно избежать.

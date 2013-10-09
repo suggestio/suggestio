@@ -20,60 +20,31 @@ import DomainRequester.{ACTOR_NAME => DOMAIN_REQUESTER_NAME}
  * Когда запускается, также запускает дочерние вышеуказанные процессы.
  */
 
-class SiowebSup extends Actor with Logs {
-
-  /**
-   * Нужно запустить все дочерние процессы.
-   */
-  override def preStart() {
-    super.preStart()
-    // Запускаем все дочерние процессы.
-    DomainRequester.startLink(context)
-    SioutilSup.start_link(context)
-    NewsQueue4Play.startLinkSup(context)
-    //SiobixClient.startLink(context)   // TODO включить, когда будет готов, и удалить это TODO
-  }
-
-
-  /**
-   * Получение сообщения от кого-либо.
-   * @return
-   */
-  def receive = {
-    case GetChildRef(childName) =>
-      sender ! context.child(childName)
-  }
-
-
-  /**
-   * Стратеги супервайзинга этого актора.
-   * @return
-   */
-  override def supervisorStrategy: SupervisorStrategy =
-    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 10 seconds) {
-      case _:Exception => Restart
-    }
-
-}
-
-
-// Статический клиент к актору. В частности, запускает супервизора и хранит его ref.
+// Статический клиент к актору. Запускает всё дерево супервизора.
 object SiowebSup {
 
   private val timeoutSec = 5.seconds
   private implicit val timeout = Timeout(timeoutSec)
 
+  val actorName = "siowebSup"
+  val actorPath = Akka.system / actorName
+
   private val supRef = {
     val props = Props[SiowebSup]
-    Akka.system.actorOf(props, name="sioweb_sup")
+    Akka.system.actorOf(props, name=actorName)
   }
 
+  type GetChildRefReply_t = Option[ActorRef]    // Тип возвращаемого значения getChildRef.
+
   /**
-   * Хелпер для получения child-ref у супервизора.
-   * @param childName
+   * Хелпер для получения child-ref у супервизора. В целом, метод не нужный.
+   * @param childName Имя дочернего актора.
    * @return
    */
-  protected def getChildRef(childName:String) = Await.result(supRef ? GetChildRef(childName), timeoutSec).asInstanceOf[Option[ActorRef]]
+  def getChildRef(childName: String) = {
+    Akka.system.actorSelection(actorPath)
+    Await.result(supRef ? GetChildRef(childName), timeoutSec).asInstanceOf[GetChildRefReply_t]
+  }
 
   /**
    * Выдать ref менеджера менеджера запросов в доменам-сайтам.
@@ -86,8 +57,51 @@ object SiowebSup {
     !supRef.isTerminated
   }
 
+  // Сообщение запроса дочернего процесса
+  sealed case class GetChildRef(childName: String)
 }
 
 
-// Сообщение запроса дочернего процесса
-protected final case class GetChildRef(childName:String)
+import SiowebSup._
+
+class SiowebSup extends Actor with Logs {
+
+  /**
+   * Нужно запустить все дочерние процессы.
+   */
+  override def preStart() {
+    super.preStart()
+    // Убедится, что статический actor-путь до этого супервизора стабилен и корректен.
+    if (self.path != SiowebSup.actorPath) {
+      throw new Exception("self.path==%s but it must be equal to val %s.actorPath = %s" format (self.path, SiowebSup.getClass.getSimpleName, actorPath))
+    }
+    // Запускаем все дочерние процессы.
+    DomainRequester.startLink(context)
+    SioutilSup.start_link(context)
+    NewsQueue4Play.startLinkSup(context)
+  }
+
+
+  /**
+   * Получение сообщения от кого-либо.
+   * @return
+   */
+  def receive = {
+    case GetChildRef(childName) =>
+      val reply: GetChildRefReply_t = context.child(childName)  // вручную проверяем тип из-за динамической типизации в akka.
+      sender ! reply
+  }
+
+
+  /**
+   * Стратеги супервайзинга этого актора.
+   * @return
+   */
+  override def supervisorStrategy: SupervisorStrategy = {
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 10 seconds) {
+      case _:Exception => Restart
+    }
+  }
+
+}
+

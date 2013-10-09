@@ -11,6 +11,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import play.api.libs.concurrent.Execution.Implicits._
 import java.io.InputStream
+import play.api.Play.current
 
 /**
  * Suggest.io
@@ -32,9 +33,16 @@ object DomainRequester {
   // Тип, используемый для счетчика.
   type CounterT = Int
 
+  /** Короткий враппер для получения int'а из конфига. */
+  private def gi(key:String, default: => Int): Int = {
+    current.configuration.getInt(key) getOrElse default
+  }
+
   // Таймаут выполнения одного запроса.
-  val httpFetchTimeoutMs = 15.seconds.toMillis.toInt
-  val idleConnectionTimeoutMs = 5.seconds.toMillis.toInt
+  val httpRequestTimeoutMs = gi("domain.requester.http.request.timeout_ms", 15.seconds.toMillis.toInt)
+  val idleConnectionTimeoutMs = gi("domain.requester.pool.idle.timeout_ms", 5.seconds.toMillis.toInt)
+  val maxConnPerHost = gi("domain.requester.pool.max_per_host", 1)
+  val maxPoolSize = gi("domain.requester.pool.max_size", 5)
 
   protected val timeoutSec = 5.seconds
   protected implicit val timeout = Timeout(timeoutSec)
@@ -55,6 +63,7 @@ object DomainRequester {
    */
   def queueUrl(dkey:String, url:String) : Future[DRResp200] = {
     (actorRef ? QueueUrl(dkey=dkey, url=url))
+      // Можно заменить на asInstanceOf[Future[Future[...]] + flatten, но это затруднит читабельность кода.
       .flatMap { _.asInstanceOf[Future[DRResp200]] }
   }
 
@@ -66,7 +75,7 @@ object DomainRequester {
 
 
   /**
-   * Короткий враппер для вызова call.
+   * Короткий враппер для вызова синхронного call. Это только для отладки.
    * @param msg сообщение актору.
    * @tparam T тип возвращаемого значения ответа, обязателен.
    * @return ответ актора типа T
@@ -95,10 +104,10 @@ class DomainRequester extends Actor {
     val builder = new AsyncHttpClientConfig.Builder()
       .setCompressionEnabled(false) // чтобы ускорить процесс и не напрягаться с декомпрессией
       .setAllowPoolingConnection(true)
-      .setRequestTimeoutInMs(httpFetchTimeoutMs)
+      .setRequestTimeoutInMs(httpRequestTimeoutMs)
       .setFollowRedirects(false)
-      .setMaximumConnectionsTotal(5)
-      .setMaximumConnectionsPerHost(1)
+      .setMaximumConnectionsTotal(maxPoolSize)
+      .setMaximumConnectionsPerHost(maxConnPerHost)
       .setIdleConnectionInPoolTimeoutInMs(idleConnectionTimeoutMs)
 
     override val client = new AsyncHttpClient(builder.build())

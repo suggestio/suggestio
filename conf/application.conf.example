@@ -65,15 +65,21 @@ session.username=p
 # dfs.dir: dfs address for filesystem connection; URI. See util.SiobixFs
 siobix.dfs.dir=/home/user/projects/sio/2/bixo/dout
 
-# EMAIL
+
+###############################################################################
+## EMAIL
+###############################################################################
 smtp.host="192.168.101.9"
 #smtp.port=465
 ##smtp.ssl=yes
 smtp.user="no-reply@suggest.io"
 smtp.password="BedCenEnakJidLilfEp"
 
-## akka remoting
-## TODO Use akka clustering instead of remoting.
+
+###############################################################################
+## Akka
+###############################################################################
+## TODO Use akka clustering instead of remoting in future.
 akka {
  actor {
   provider = "akka.remote.RemoteActorRefProvider"
@@ -87,8 +93,43 @@ akka {
  }
 }
 
+
+###############################################################################
+## Общение с siobix-нодой.
+###############################################################################
 ## akka url до супервизора кравлера. Меняется в зависимости от deployment'а.
 siobix.akka.url.prefix="akka.tcp://application@127.0.0.1:2553"
+
 ## akka путь до супервизора кравлеров.
 siobix.akka.path.crawler.sup="/user/sup/crawlers"
+
+## Сколько времени ждать ответа от кравлера по поводу добавления нового сайта. [2000]
+siobix.akka.bootstrap.ask_timeout_ms = 2500
+
+
+###############################################################################
+## Domain Requester (подсистема валидации сайтов)
+###############################################################################
+## Set the maximum time in millisecond an AsyncHttpClient wait for a response. [15000]
+domain.requester.http.request.timeout_ms = 15000
+
+## Maximum time in millisecond an AsyncHttpClient will keep connection idle in pool. [5000]
+domain.requester.pool.idle.timeout_ms = 5000
+
+## Maximum number of connections per hosts an AsyncHttpClient can handle. [1]
+domain.requester.pool.max_per_host = 1
+
+## Maximum number of connections an AsyncHttpClient can handle. [5]
+domain.requester.pool.max_size = 5
+
+
+###############################################################################
+## Persona (Auth)
+###############################################################################
+# Куда редиректить юзера после авторизации в persona. Обязательный параметр.
+persona.audience.url = "http://localhost:9000"
+#persona.audience.url = "https://suggest.io:443"
+
+# Через какой сервис проверять сессию юзера. [https://verifier.login.persona.org/verify]
+persona.verify.url = "https://verifier.login.persona.org/verify"
 

@@ -2,6 +2,7 @@ package controllers
 
 import util.event.EventUtil
 import play.api.mvc._
+import util.acl._
 import util._
 import models._
 import scala.concurrent.future
@@ -16,7 +17,6 @@ import scala.Some
 import play.api.data._
 import play.api.data.Forms._
 import FormUtil._
-import gnu.inet.encoding.IDNA
 import DkeyContainer.dkeyJsProps
 import io.suggest.util.UrlUtil
 import domain_user_settings.DUS_Basic._
@@ -36,7 +36,7 @@ import MDomainUserSettings.{DataMap_t, DataMapKey_t}
  * Исходное API сохраняется (как в прошлой версии).
  */
 
-object Admin extends Controller with AclT with ContextT with Logs {
+object Admin extends Controller with ContextT with Logs {
 
   private val nqTyp = "admin"
 
@@ -54,11 +54,12 @@ object Admin extends Controller with AclT with ContextT with Logs {
    * Юзер заходит в админку (на главную страницу админки).
    * @return Нужно отрендерить главную форму админки со списком доменов и прочими причиндалами.
    */
-  def index = isAuthenticated { implicit pw_opt => implicit request =>
-    val pw = pw_opt.get
+  def index = IsAuth.async { implicit request =>
+    val pw = request.pwOpt.get
     lazy val logPrefix = "index() user=%s: " format pw.id
-    // Опрос DFS может быть долгим, поэтому дальше всё делаем асинхронно.
-    Async { future {
+    // Опрос DFS может быть долгим, поэтому дальше всё делать надо бы асинхронно.
+    future {
+      // TODO модель будет асинхронная, поэтому тут надо её использовать вместо future {}.
       val personDomains = pw.allDomainsAuthz
       // Т.к. в фоне будет запущена валидация доменов, надо ещё запустить очередь новостей, которая потом будет подцеплена
       // к SioNotifier, и затем заменена прямым на веб-сокетом. Процесс очереди НЕ надо запускать, если доменов нет
@@ -88,7 +89,7 @@ object Admin extends Controller with AclT with ContextT with Logs {
         }
       }
       Ok(indexTpl(personDomains, timestampMs))
-    }}
+    }
   }
 
 
@@ -96,17 +97,17 @@ object Admin extends Controller with AclT with ContextT with Logs {
    * Подключение к событиям админки через WebSocket.
    */
   def ws(timestampMs: Long) = WebSocket.using[JsValue] { implicit request =>
-    implicit val pw_opt = person(request)
-    lazy val logPrefix = "ws(%s) user=%s: " format(timestampMs, pw_opt)
+    implicit val pwOpt = PersonWrapper.getFromRequest
+    lazy val logPrefix = "ws(%s) user=%s: " format(timestampMs, pwOpt)
     // Проверить права.
-    if (pw_opt.isEmpty) {
+    if (pwOpt.isEmpty) {
       logger.warn(logPrefix + "Unexpected anonymous hacker: " + request.remoteAddress)
       // Анонимус долбиться на веб-сокет. Выдать ему сообщение о невозможности подобной эксплуатации энтерпрайза.
       EventUtil.wsAccessImpossbleIO("Anonymous users cannot use admin interface: not yet implemented.")
 
     } else {
       // Это зареганный юзер зашел в админку. Пока он входил, уже возможно запустилась очередь новостями перевалидации.
-      val pw = pw_opt.get
+      val pw = pwOpt.get
       // Нужно найти очередь с новостями валидации (если она существует), и вытащить из неё данные,
       val classifier = getUserValidationClassifier(pw.id)
       val uuid = UUID.randomUUID()
@@ -128,8 +129,8 @@ object Admin extends Controller with AclT with ContextT with Logs {
    * @return 204 No Content - recheck не требуется.
    *         201 Created    - запущена перевалидация
    */
-  def revalidateDomain(domain: String) = isDomainAdmin(domain) { implicit pw_opt => implicit request => authz =>
-    DomainValidator.maybeRevalidate(authz, sendEvents = true) match {
+  def revalidateDomain(domain: String) = IsDomainAdmin(domain).apply { implicit request =>
+    DomainValidator.maybeRevalidate(request.dAuthz, sendEvents = true) match {
       case Some(_) => Created
       case None    => NoContent
     }
@@ -143,7 +144,7 @@ object Admin extends Controller with AclT with ContextT with Logs {
    * Юзер сабмиттит форму добавления домена.
    * @return 201 Created - домен добавлен
    */
-  def addDomain = isAuthenticated { implicit pw_opt => implicit request =>
+  def addDomain = IsAuth { implicit request =>
     addDomainFormM.bindFromRequest().fold(
       // Пришла некорректная форма. Вернуть назад.
       formWithErrors =>
@@ -155,7 +156,7 @@ object Admin extends Controller with AclT with ContextT with Logs {
         MDomain.getForDkey(dkey) match {
           // Есть такой домен в базе
           case Some(_) =>
-            val person_id = pw_opt.get.id
+            val person_id = request.pwOpt.get.id
             val da = MPersonDomainAuthz.newValidation(dkey=dkey, person_id=person_id).save
             // Теперь надо сгенерить json ответа
             val jsonFields1 = "status" -> jsStatusOk :: jsonFields0
@@ -175,12 +176,13 @@ object Admin extends Controller with AclT with ContextT with Logs {
    * @return 204 No content - удалено;
    *         404 Not Found  - не такого домена у юзера в списке (обычно) или какая-то другая неведомая ошибка.
    */
-  def deleteDomain = isAuthenticated { implicit pw_opt => implicit request =>
+  def deleteDomain = IsAuth { implicit request =>
     addDomainFormM.bindFromRequest().fold(
       formWithErrors => NotAcceptable
       ,
       {dkey =>
-        MPersonDomainAuthz.delete(person_id=pw_opt.get.id, dkey=dkey) match {
+        val person_id = request.pwOpt.get.id
+        MPersonDomainAuthz.delete(person_id, dkey) match {
           case true  => NoContent
           case false => NotFound
         }
@@ -193,9 +195,10 @@ object Admin extends Controller with AclT with ContextT with Logs {
    * Юзер хочет пройти валидацию сайта, загрузив файл на сайт.
    * @param domain домен. Обычно dkey, но всё же будет повторно нормализован.
    */
-  def getValidationFile(domain: String) = isAuthenticated { implicit pw_opt => implicit request =>
+  def getValidationFile(domain: String) = IsAuth { implicit request =>
     val dkey = UrlUtil.normalizeHostname(domain)
-    MPersonDomainAuthz.getForPersonDkey(person_id=pw_opt.get.id, dkey=dkey) match {
+    val person_id = request.pwOpt.get.id
+    MPersonDomainAuthz.getForPersonDkey(person_id, dkey) match {
       // Отрендерить файлик валидации и вернуть его юзеру.
       case Some(da) =>
         Ok(getValidationFileTpl(da))
@@ -214,8 +217,8 @@ object Admin extends Controller with AclT with ContextT with Logs {
    * @param domain домен.
    * @return inline-рендер для домена.
    */
-  def domainSettings(domain: String) = isDomainAdmin(domain) { implicit pw_opt => implicit request => authz =>
-    val du = authz.domainUserSettingsAsync
+  def domainSettings(domain: String) = IsDomainAdmin(domain).apply { implicit request =>
+    val du = request.dAuthz.domainUserSettingsAsync
     val form = domainBasicSettingsFormM.fill((du.showImages, du.showContentText))
     Ok(_domainSettingsTpl(du, form))
   }
@@ -225,12 +228,12 @@ object Admin extends Controller with AclT with ContextT with Logs {
    * @param domain домен
    * @return
    */
-  def domainSettingsFormSubmit(domain: String) = isDomainAdmin(domain) { implicit pw_opt => implicit request => authz =>
+  def domainSettingsFormSubmit(domain: String) = IsDomainAdmin(domain).apply { implicit request =>
     domainBasicSettingsFormM.bindFromRequest().fold(
       formWithErrors => NotAcceptable
       ,
       {case (showImages, showContentText) =>
-        val du = authz.domainUserSettings
+        val du = request.dAuthz.domainUserSettings
         val data1 = du.data + (KEY_SHOW_IMAGES -> showImages) + (KEY_SHOW_CONTENT_TEXT -> showContentText)
         du.withData(data1).save
         Ok
@@ -244,8 +247,8 @@ object Admin extends Controller with AclT with ContextT with Logs {
    * @param domain Домен, для которого сохраняем.
    * @return ???
    */
-  def applyDomainSettings(domain:String) = isDomainAdmin(domain) { implicit pw_opt => implicit request => authz =>
-    val du = authz.domainUserSettings
+  def applyDomainSettings(domain:String) = IsDomainAdmin(domain).apply { implicit request =>
+    val du = request.dAuthz.domainUserSettings
     val data1 = request.body
       .asFormUrlEncoded
       .get
@@ -268,20 +271,11 @@ object Admin extends Controller with AclT with ContextT with Logs {
   private val applyDUSF: PartialFunction[(DataMapKey_t, String, DataMap_t), DataMap_t] = {
     applyBasicSettingsF orElse {
       case (k, v, data) =>
-        logger.warn("Unknown DUS key=%s => %s SKIPPED" format(k, v))
+        logger.warn("Unknown DUS key=%s => %s SKIPPED" format (k, v))
         data
     }
   }
 
-
-  /**
-   * Эта функция вызывается для генерации ответа, когда выполнение какого-то действия в контроллере запрещено по причине
-   * незалогиненности юзера. В данном случае, должен происходить редирект на форму логина.
-   * request с пометкой implicit
-   * @param request Заголовки запроса.
-   * @return Result, такой же как и в экшенах контроллеров.
-   */
-  override protected def onUnauthorized(request: RequestHeader) = Redirect( routes.Ident.persona() )
 
   /**
    * Генерация классификатора событий для юзера в админке.

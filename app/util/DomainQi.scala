@@ -15,9 +15,9 @@ import play.api.libs.json.{JsBoolean, JsString, JsValue}
 import io.suggest.event.SioNotifier
 import java.net.{MalformedURLException, URL}
 import io.suggest.util.UrlUtil
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import models.{MDomainQiAuthzTmp, MPersonDomainAuthz}
-import util.Acl.PwOptT
+import util.acl.PersonWrapper.PwOpt_t
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.LocalDate
 import play.api.Logger
@@ -199,7 +199,7 @@ object DomainQi extends Logs {
    * @param qi_id qi_id. Просто перенаправляется в нижележащую функцию.
    * @return true, если ссылка была выверена и отправлена в очередь на обход. Иначе false.
    */
-  def maybeCheckQiAsync(dkey:String, maybeUrl:String, qi_id:String, sendEvents:Boolean)(implicit pw_opt:PwOptT): Option[Future[SioJsV2]] = {
+  def maybeCheckQiAsync(dkey:String, maybeUrl:String, qi_id:String, sendEvents:Boolean, pwOpt:PwOpt_t): Option[Future[SioJsV2]] = {
     try {
       val url = new URL(maybeUrl)
       
@@ -220,7 +220,7 @@ object DomainQi extends Logs {
       }
       
       if (isCheck) {
-        Some(checkQiAsync(dkey, url.toExternalForm, Some(qi_id), sendEvents=sendEvents))
+        Some(checkQiAsync(dkey, url.toExternalForm, Some(qi_id), sendEvents=sendEvents, pwOpt=pwOpt))
 
       } else None
 
@@ -244,7 +244,7 @@ object DomainQi extends Logs {
    *                   Это бывает полезно для простой обратной связи с клиетом через websocket/comet/NewsQueue.
    *                   Таким образом, если sendEvents = true, то функция имеет явные сайд-эффекты.
    */
-  def checkQiAsync(dkey:String, url:String, qiIdOpt:Option[String], sendEvents:Boolean)(implicit pw_opt:PwOptT): Future[SioJsV2] = {
+  def checkQiAsync(dkey:String, url:String, qiIdOpt:Option[String], sendEvents:Boolean, pwOpt:PwOpt_t): Future[SioJsV2] = {
     // Запросить постановку в очередь указанной ссылки для указанного домена
     DomainRequester.queueUrl(dkey, url) map { case DRResp200(ct, istream) =>
       // 200 OK: запустить тику с единственным SAX-handler и определить наличие скрипта на странице.
@@ -310,7 +310,7 @@ object DomainQi extends Logs {
           case Right(jsInfo) =>
             if (sendEvents) {
               val qi_id1 = jsInfo.qi_id
-              approve_qi(dkey, qi_id1)
+              approve_qi(dkey, qi_id1, pwOpt)
               val qiNews = QiSuccess(dkey=dkey, qi_id=qi_id1, url=url)
               SioNotifier.publish(qiNews)
             }
@@ -340,8 +340,8 @@ object DomainQi extends Logs {
    * @param dkey ключ домена, который должен быть добавлен в базу кравлера.
    * @param qi_id qi id, относящиеся к неопределенному юзеру.
    */
-  def approve_qi(dkey:String, qi_id:String)(implicit pw_opt:PwOptT) {
-    pw_opt match {
+  def approve_qi(dkey:String, qi_id:String, pwOpt:PwOpt_t) {
+    pwOpt match {
       case Some(pw) =>
         MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, person_id=pw.id, is_verified=true).save
 

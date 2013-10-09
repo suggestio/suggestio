@@ -2,12 +2,12 @@ package util.event
 
 import play.api.libs.iteratee._
 import play.api.libs.json.JsValue
-import util.{Logs, NewsQueue4Play, Acl}
+import util.{Logs, NewsQueue4Play}
 import io.suggest.event.SioNotifier.Classifier
 import io.suggest.util.event.subscriber.SioEventTJSable
 import scala.concurrent.Future
 import io.suggest.event.SioNotifier
-import util.Acl.PwOptT
+import util.acl.PersonWrapper.PwOpt_t
 import java.util.UUID
 import io.suggest.event.subscriber.SnActorRefSubscriber
 import io.suggest.util.event.subscriber.SnWebsocketSubscriber
@@ -34,7 +34,7 @@ object EventUtil extends Logs {
    * @param pw_opt acl-данные о юзере, обычно приходят неявно из экшенов.
    * @return In и Out каналы, пригодные для раздачи по websocket и комбинированию в контроллерах под конкретные задачи.
    */
-  def globalUserEventIO(implicit pw_opt:Acl.PwOptT) : EventIO_t = {
+  def globalUserEventIO(implicit pw_opt: PwOpt_t) : EventIO_t = {
     // TODO нужно для владельцев сайтов подцеплять события и важные уведомления какие-то для обратной связи.
     dummyIO
   }
@@ -66,7 +66,7 @@ object EventUtil extends Logs {
    * @param timestampMs Перекачивать из очереди новостей только новости новее указанного времени.
    * @param logPrefix Использовать указанный префикс для log-записей. Обычно функция работает без лог-записей, поэтому этот параметр "ленивый".
    */
-  def replaceNqWithWsChannel(classifier:Classifier, uuid:UUID, nqDkey:String, nqTyp:String, channel:Concurrent.Channel[JsValue], nqIsMandatory:Boolean = false, timestampMs:Long = -1L, logPrefix: => String = "???")(implicit pw_opt:PwOptT = None) {
+  def replaceNqWithWsChannel(classifier:Classifier, uuid:UUID, nqDkey:String, nqTyp:String, channel:Concurrent.Channel[JsValue], nqIsMandatory:Boolean = false, timestampMs:Long = -1L, logPrefix: => String = "???")(implicit pw_opt:PwOpt_t = None) {
     // TODO вероятно, эту функцию нужно разбить на две.
     NewsQueue4Play.getActorFor(nqDkey, nqTyp).foreach { nqActorRefOpt =>
       logger.debug(logPrefix + "NQ supervisor answered: queue(%s %s) => %s" format(nqDkey, nqTyp, nqActorRefOpt))

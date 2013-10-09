@@ -1,40 +1,42 @@
 package controllers
 
 /**
- * Created with IntelliJ IDEA.
- * User: alex
+ * User: Alexander Pestrikov <alexander.pestrikov@cbca.ru>
  * Date: 16.05.13
  * Time: 13:34
- * To change this template use File | Settings | File Templates.
+ * Статика всякая.
  */
 
-import play.api._
 import play.api.mvc._
-import util.{AclT, ContextT}
+import util.ContextT
+import util.acl._
 import views.html.static._
 import views.html.help._
 
-object Static extends Controller with ContextT with AclT {
-  def  about = maybeAuthenticated { implicit pw_opt => implicit request =>
+object Static extends Controller with ContextT {
+
+  def about = MaybeAuth { implicit request =>
     Ok(aboutTpl())
   }
-  def  showcase = maybeAuthenticated { implicit pw_opt => implicit request =>
-    Ok(showcaseTpl())
 
+
+  def showcase = MaybeAuth { implicit request =>
+    Ok(showcaseTpl())
   }
 
-  def  badbrowser = maybeAuthenticated { implicit pw_opt => implicit request =>
+
+  def badbrowser = MaybeAuth { implicit request =>
     Ok(badbrowserTpl())
 
   }
 
-  def  help = maybeAuthenticated { implicit pw_opt => implicit request =>
-    Ok(indexTpl())
 
+  def help = MaybeAuth { implicit request =>
+    Ok(indexTpl())
   }
 
 
-  def helpPage(page:String) =  maybeAuthenticated { implicit pw_opt => implicit request =>
+  def helpPage(page:String) = MaybeAuth { implicit request =>
     page match {
       case "registration"     => Ok(registrationTpl())
       case "search_settings"  => Ok(searchSettingsTpl())
