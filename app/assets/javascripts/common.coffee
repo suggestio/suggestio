@@ -29,7 +29,15 @@ sio =
           site_url = $(this).val()
           
           sio.index.add_site site_url
-    
+
+      ## И через нажание на кнопку
+      $('.sioStartButton').bind "click", () ->
+        site_url = $('#userSiteInput').val()
+        sio.index.add_site site_url
+
+        return false
+
+
     ## Фунция для добавления сайта
     ## Делает POST запрос на сервак
     add_site : ( site_url ) ->
@@ -41,13 +49,13 @@ sio =
         data :
           url : 'http://' + site_url
         success : ( data ) ->
-          
-          sio.index.render_install_code data 
+          sio.index.render_install_code data
       
       $.ajax api_url, params
     
     ## Показать юзеру код для установки
     render_install_code : ( data ) ->
       $('#jsCodeTextarea').val sio.index.js_code_tpl( data.js_url )
+      $('.sio-second-step').show()
       
 window.sio = sio
