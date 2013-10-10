@@ -4,9 +4,10 @@ import org.apache.hadoop.hbase.HBaseConfiguration
 import org.apache.hadoop.hbase.client.{HTablePool, HBaseAdmin}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.util.Bytes
-import org.hbase.async.HBaseClient
+import org.hbase.async.{KeyValue, Scanner, HBaseClient}
 import com.stumbleupon.async.{Callback, Deferred}
-import scala.concurrent.{Promise, Future, future}
+import scala.concurrent.{ExecutionContext, Promise, Future, future}
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -94,6 +95,40 @@ trait SioHBaseAsyncClientT {
 
 }
 object SioHBaseAsyncClient extends SioHBaseAsyncClientT
+
+/** Система безопасной асинхронной пакетной сверстки данных, поступающих из HBase. */
+abstract class AsyncHbaseScannerBulkFold[A] {
+  import java.util.{ArrayList => juArrayList}
+  import SioHBaseAsyncClient._
+
+  def foldBulk(acc0: A, rows: juArrayList[juArrayList[KeyValue]]): A
+
+  def apply(acc0: A, scanner: Scanner)(implicit ec:ExecutionContext) = {
+    val p = Promise[A]()
+    def foldNextAsync(acc0: A, fut0: Future[juArrayList[juArrayList[KeyValue]]]) {
+      fut0 onComplete {
+        case Success(null) => p success acc0
+
+        case Success(rows) =>
+          try {
+            val acc1 = foldBulk(acc0, rows)
+            foldNextAsync(acc1, scanner.nextRows)
+          } catch {
+            case ex:Throwable => p failure mapThrowable(acc0, ex)
+          }
+
+        case Failure(ex) => p failure mapThrowable(acc0, ex)
+      }
+    }
+    foldNextAsync(acc0, scanner.nextRows)
+    val fut = p.future
+    fut onComplete { case _ => scanner.close() }
+    fut
+  }
+
+  // Трансформация исключения при необходимости производится путем переопределения этого метода.
+  def mapThrowable(acc: A, ex: Throwable) = ex
+}
 
 
 trait HTapConversionsBasicT {

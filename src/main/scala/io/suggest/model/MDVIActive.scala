@@ -123,7 +123,9 @@ object MDVIActive {
       }
     }
     foldNextAsync(Nil, scanner.nextRows)
-    p.future
+    val fut = p.future
+    fut onComplete { case _ => scanner.close() }
+    fut
   }
 
 
@@ -134,26 +136,18 @@ object MDVIActive {
   def getAll(implicit ec:ExecutionContext): Future[List[MDVIActive]] = {
     val scanner = ahclient.newScanner(HTABLE_NAME)
     scanner.setFamily(CF)
-    val p = Promise[List[MDVIActive]]()
-    def foldNextAsync(acc0: List[MDVIActive], fut0: Future[juArrayList[juArrayList[KeyValue]]]) {
-      fut0 onComplete {
-        case Success(null) => p success acc0
-
-        case Success(rows) =>
-          val acc1 = rows.foldLeft(acc0) { (_acc0, _rows) =>
-            _rows.foldLeft(_acc0) { (__acc0, row) =>
-              val dkey = row.key()
-              val vin = row.qualifier()
-              deserializeBytes(vin=vin, dkey=dkey, b=row.value) :: __acc0
-            }
+    val folder = new AsyncHbaseScannerBulkFold [List[MDVIActive]] {
+      def foldBulk(acc0: List[MDVIActive], rows: juArrayList[juArrayList[KeyValue]]): List[MDVIActive] = {
+        rows.foldLeft(acc0) { (_acc0, _rows) =>
+          _rows.foldLeft(_acc0) { (__acc0, row) =>
+            val dkey = row.key()
+            val vin = row.qualifier()
+            deserializeBytes(vin=vin, dkey=dkey, b=row.value) :: __acc0
           }
-          foldNextAsync(acc1, scanner.nextRows)
-
-        case Failure(ex) => p failure ex
+        }
       }
     }
-    foldNextAsync(Nil, scanner.nextRows)
-    p.future
+    folder(Nil, scanner)
   }
 
 
