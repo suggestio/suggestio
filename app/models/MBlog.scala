@@ -5,15 +5,16 @@ import util.DfsModelUtil
 import org.apache.hadoop.fs.Path
 import util.{Logs, SiobixFs, StorageUtil}
 import StorageUtil.StorageType._
-import io.suggest.model.{SioHBaseAsyncClient, JsonDfsBackend, MObject}
+import io.suggest.model._
 import util.DateTimeUtil.dateTimeOrdering
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits._
-import org.hbase.async.{DeleteRequest, GetRequest, PutRequest}
+import org.hbase.async.{KeyValue, DeleteRequest, GetRequest, PutRequest}
 import io.suggest.util.JacksonWrapper
 import java.io.ByteArrayInputStream
 import scala.collection.JavaConversions._
+import scala.Some
 
 /**
  * Suggest.io
@@ -64,7 +65,11 @@ object MBlog extends Logs {
    * Прочитать все записи из папки-хранилища.
    * @return Список распарсенных записей в виде классов MBlog.
    */
-  def getAll = BACKEND.getAll
+  def getAll = {
+    BACKEND.getAll
+      // Отсортировтаь записи в порядке убывания.
+      .map { _.sortBy(_.date).reverse }
+  }
 
 
   /**
@@ -114,9 +119,6 @@ object MBlog extends Logs {
           readOneAcc(acc, fstatus.getPath)
         } else acc
       }
-      // Далее, надо отсортировать записи в порядке их создания.
-      .sortBy(_.date)
-      .reverse
     }
 
     def delete(id: String): Future[Unit] = future {
@@ -131,8 +133,8 @@ object MBlog extends Logs {
     import SioHBaseAsyncClient._
     import MObject.{HTABLE_NAME_BYTES, CF_BLOG}
 
-    val KEYPREFIX = "MBlog:"
-    val QUALIFIER = "blog".getBytes
+    val KEYPREFIX = "mblog:"
+    def QUALIFIER = CF_BLOG
 
     // TODO проверить и убедится, что таблица существует.
     def id2key(id: String) = (KEYPREFIX + id).getBytes
@@ -164,7 +166,19 @@ object MBlog extends Logs {
       }
     }
 
-    def getAll: Future[List[MBlog]] = ???
+    def getAll: Future[List[MBlog]] = {
+      val scanner = ahclient.newScanner(HTABLE_NAME_BYTES)
+      scanner.setFamily(CF_BLOG)
+      scanner.setQualifier(QUALIFIER)
+      val folder = new AsyncHbaseScannerFold[List[MBlog]] {
+        def fold(acc0: List[MBlog], kv: KeyValue): List[MBlog] = {
+          deserialize(kv.value()) :: acc0
+        }
+
+        override def mapThrowable(acc: List[MBlog], ex: Throwable): Throwable = MBlogAsyncFoldException(ex, acc)
+      }
+      folder(Nil, scanner)
+    }
 
     def delete(id: String): Future[Unit] = {
       val key = id2key(id)
@@ -173,4 +187,6 @@ object MBlog extends Logs {
     }
   }
 
+
+  case class MBlogAsyncFoldException(ex:Throwable, accLast:List[MBlog]) extends RuntimeException
 }
