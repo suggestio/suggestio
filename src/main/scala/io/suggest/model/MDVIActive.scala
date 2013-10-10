@@ -136,15 +136,11 @@ object MDVIActive {
   def getAll(implicit ec:ExecutionContext): Future[List[MDVIActive]] = {
     val scanner = ahclient.newScanner(HTABLE_NAME)
     scanner.setFamily(CF)
-    val folder = new AsyncHbaseScannerBulkFold [List[MDVIActive]] {
-      def foldBulk(acc0: List[MDVIActive], rows: juArrayList[juArrayList[KeyValue]]): List[MDVIActive] = {
-        rows.foldLeft(acc0) { (_acc0, _rows) =>
-          _rows.foldLeft(_acc0) { (__acc0, row) =>
-            val dkey = row.key()
-            val vin = row.qualifier()
-            deserializeBytes(vin=vin, dkey=dkey, b=row.value) :: __acc0
-          }
-        }
+    val folder = new AsyncHbaseScannerFold [List[MDVIActive]] {
+      def fold(acc0: List[MDVIActive], kv: KeyValue): List[MDVIActive] = {
+        val dkey = kv.key()
+        val vin = kv.qualifier()
+        deserializeBytes(vin=vin, dkey=dkey, b=kv.value) :: acc0
       }
     }
     folder(Nil, scanner)

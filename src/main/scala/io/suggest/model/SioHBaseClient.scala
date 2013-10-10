@@ -8,6 +8,7 @@ import org.hbase.async.{KeyValue, Scanner, HBaseClient}
 import com.stumbleupon.async.{Callback, Deferred}
 import scala.concurrent.{ExecutionContext, Promise, Future, future}
 import scala.util.{Failure, Success}
+import java.util
 
 /**
  * Suggest.io
@@ -97,7 +98,7 @@ trait SioHBaseAsyncClientT {
 object SioHBaseAsyncClient extends SioHBaseAsyncClientT
 
 /** Система безопасной асинхронной пакетной сверстки данных, поступающих из HBase. */
-abstract class AsyncHbaseScannerBulkFold[A] {
+trait AsyncHbaseScannerBulkFold[A] {
   import java.util.{ArrayList => juArrayList}
   import SioHBaseAsyncClient._
 
@@ -128,6 +129,21 @@ abstract class AsyncHbaseScannerBulkFold[A] {
 
   // Трансформация исключения при необходимости производится путем переопределения этого метода.
   def mapThrowable(acc: A, ex: Throwable) = ex
+}
+
+/** Последовательная сверстка, скрывающая особенности работы сканнера. Один kv за раз. */
+trait AsyncHbaseScannerFold[A] extends AsyncHbaseScannerBulkFold[A] {
+  import scala.collection.JavaConversions._
+
+  def fold(acc0: A, kv: KeyValue): A
+
+  def foldBulk(acc0: A, rows: util.ArrayList[util.ArrayList[KeyValue]]): A = {
+    rows.foldLeft(acc0) { (_acc0, _rows) =>
+      _rows.foldLeft(_acc0) { (__acc0, __row) =>
+        fold(__acc0, __row)
+      }
+    }
+  }
 }
 
 
