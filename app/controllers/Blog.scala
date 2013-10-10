@@ -14,6 +14,7 @@ import play.api.mvc._
 import util.ContextT
 import util.acl._
 import views.html.blog._
+import play.api.libs.concurrent.Execution.Implicits._
 
 
 object Blog extends Controller with ContextT {
@@ -35,15 +36,15 @@ object Blog extends Controller with ContextT {
   )
 
 
-
   /**
    * Функция запроса всех записей блога
    * @return
    */
 
-  def recordList = MaybeAuth { implicit request =>
-    val blogs = MBlog.getAll
-    Ok(listTpl(blogs))
+  def recordList = MaybeAuth.async { implicit request =>
+    MBlog.getAll.map { blogs =>
+      Ok(listTpl(blogs))
+    }
   }
 
   /**
@@ -52,11 +53,11 @@ object Blog extends Controller with ContextT {
    * @return
    */
 
-  def readOne(blog_id: String) = MaybeAuth { implicit request =>
-    val recordOpt = MBlog.getById(blog_id)
-    recordOpt match {
+  def readOne(blog_id: String) = MaybeAuth.async { implicit request =>
+    MBlog.getById(blog_id) map {
       case Some(record) =>
         Ok(_blogRecordTpl(record, preview=false))
+
       case None =>
         NotFound
     }
@@ -65,12 +66,12 @@ object Blog extends Controller with ContextT {
 
   /**
    * Функция удаление записи в блоге.
-   * @param rec_id
+   * @param blog_id
    * @return
    */
-  def deleteRecAdmin(rec_id: String) =  MaybeAuth { implicit request =>
+  def deleteRecAdmin(blog_id: String) = MaybeAuth { implicit request =>
     // TODO пока для тестов используется maybeAuthenticated потом заменить на  isAdminAction (раскоментировать абзац ниже! а следующий удалить)
-    val deleteRec = MBlog.delete(rec_id)
+    val deleteRec = MBlog.delete(blog_id)
     Ok(deleteRec.toString)
   }
 
@@ -95,12 +96,12 @@ object Blog extends Controller with ContextT {
 
   /**
    * Рендерим форму редактирования записи блога.
-   * @param rec_id id записи блога.
+   * @param blog_id id записи блога.
    * @return 200 + Форма редакторования записи блога или 404
    */
-  def editRec (rec_id: String) = MaybeAuth { implicit request =>
+  def editRec (blog_id: String) = MaybeAuth.async { implicit request =>
     // TODO пока для тестов используется maybeAuthenticated потом заменить на  isAdminAction (раскоментировать абзац ниже! а следующий удалить)
-    MBlog.getById(rec_id) match {
+    MBlog.getById(blog_id) map {
       case Some(record) =>
         val formEdit = postFormM.fill(record)
         Ok(editFormTpl(record, formEdit))
@@ -113,18 +114,18 @@ object Blog extends Controller with ContextT {
 
   /**
    * Сабмит формы измененной бложной записи в базу.
-   * @param rec_id id записи блога.
+   * @param blog_id id записи блога.
    * @return Редирект на запись или 404.
    */
-  def editRecSubmit (rec_id: String) = MaybeAuth { implicit request =>
+  def editRecSubmit (blog_id: String) = MaybeAuth.async { implicit request =>
     // TODO пока для тестов используется maybeAuthenticated потом заменить на  isAdminAction (раскоментировать абзац ниже! а следующий удалить)
-    MBlog.getById(rec_id) match {
+    MBlog.getById(blog_id) map {
       case Some(record) =>
         postFormM.bindFromRequest.fold(
           formWithErrors => NotAcceptable(editFormTpl(record, formWithErrors)),
           {record =>
             record.save
-            Redirect(routes.Blog.readOne(rec_id))
+            Redirect(routes.Blog.readOne(blog_id))
           }
         )
 

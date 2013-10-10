@@ -1,4 +1,4 @@
-import util.{DomainManager, ContextT, SiowebSup}
+import util.{ContextT, SiowebSup}
 
 /**
  * Suggest.io
@@ -9,9 +9,6 @@ import util.{DomainManager, ContextT, SiowebSup}
  * http://www.playframework.com/documentation/2.1.0/ScalaGlobal
  */
 import play.api._
-import play.api.mvc._
-import play.api.mvc.Results._
-
 
 object Global extends GlobalSettings with ContextT {
 

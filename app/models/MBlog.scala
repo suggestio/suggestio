@@ -3,10 +3,17 @@ package models
 import org.joda.time.DateTime
 import util.DfsModelUtil
 import org.apache.hadoop.fs.Path
-import util.{Logs, SiobixFs}, SiobixFs.fs
-import io.suggest.model.JsonDfsBackend
+import util.{Logs, SiobixFs, StorageUtil}
+import StorageUtil.StorageType._
+import io.suggest.model.{SioHBaseAsyncClient, JsonDfsBackend, MObject}
 import util.DateTimeUtil.dateTimeOrdering
 import com.fasterxml.jackson.annotation.JsonIgnore
+import scala.concurrent.{Future, future}
+import play.api.libs.concurrent.Execution.Implicits._
+import org.hbase.async.{DeleteRequest, GetRequest, PutRequest}
+import io.suggest.util.JacksonWrapper
+import java.io.ByteArrayInputStream
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -25,25 +32,19 @@ case class MBlog(
   var text      : String,
   date          : DateTime = DateTime.now   // ctime не поддерживается в fs, поэтому дата хранится внутри файла
 ) {
-
-  /**
-   * Выдать путь к файлу (который возможно не существует), который хранит (должен хранить) текущий объект.
-   * @return
-   */
-  @JsonIgnore def getFilePath = MBlog.getFilePath(id)
+  import MBlog.BACKEND
 
   /**
    * Сохранить запись блога в хранилище.
    * @return саму себя для удобства method chaining.
    */
-  def save = {
-    JsonDfsBackend.writeToPath(getFilePath, this)
-    this
-  }
+  @JsonIgnore
+  def save = BACKEND.save(id, this)
 
   /**
    * Удалить текущий ряд их хранилища
    */
+  @JsonIgnore
   def delete = MBlog.delete(id)
 
 }
@@ -51,32 +52,19 @@ case class MBlog(
 
 object MBlog extends Logs {
 
-  val model_path = new Path(SiobixFs.siobix_conf_path, "blog")
-
+  // Выбираем storage backend этой модели.
+  private val BACKEND: Backend = {
+    StorageUtil.STORAGE match {
+      case DFS    => new DfsBackend
+      case HBASE  => new HBaseBackend
+    }
+  }
 
   /**
    * Прочитать все записи из папки-хранилища.
    * @return Список распарсенных записей в виде классов MBlog.
    */
-  def getAll : List[MBlog] = {
-    // Читаем и парсим все файлы из папки model_path.
-    fs.listStatus(model_path).foldLeft(List[MBlog]()) { (acc, fstatus) =>
-      if (!fstatus.isDir) {
-        readOneAcc(acc, fstatus.getPath)
-      } else acc
-    }
-      // Далее, надо отсортировать записи в порядке их создания.
-      .sortBy(_.date)
-      .reverse
-  }
-
-
-  /**
-   * Выдать путь к файлу с данными в json.
-   * @param id id записи блога.
-   * @return
-   */
-  def getFilePath(id: String) = new Path(model_path, id)
+  def getAll = BACKEND.getAll
 
 
   /**
@@ -84,33 +72,105 @@ object MBlog extends Logs {
    * @param id id записи.
    * @return
    */
-  def delete(id: String) : Boolean = {
-    val path = getFilePath(id)
-    fs.delete(path, false)
-  }
+  def delete(id: String) = BACKEND.delete(id)
 
   /**
    * Прочитать запись блога из базы по id
    * @param id id записи
    * @return запись блога, если есть.
    */
-  def getById(id: String) : Option[MBlog] = readOne(getFilePath(id))
+  def getById(id: String) = BACKEND.getById(id)
 
 
-  /**
-   * Аккуратненько прочитать файл. Если файла нет или чтение не удалось, то в логах будет экзепшен и None в результате.
-   * @param path путь, который читать.
-   * @return Option[MDomainPerson]
-   */
-  protected def readOne(path:Path) : Option[MBlog] = DfsModelUtil.readOne[MBlog](path)
+  trait Backend {
+    def save(id: String, data:MBlog): Future[MBlog]
+    def getById(id: String): Future[Option[MBlog]]
+    def getAll: Future[List[MBlog]]
+    def delete(id: String): Future[Unit]
+  }
+
+  /** Backend для хранения в DFS. */
+  class DfsBackend extends Backend {
+    import SiobixFs.fs
+
+    val modelPath = new Path(SiobixFs.siobix_conf_path, "blog")
+    def getFilePath(id: String) = new Path(modelPath, id)
+    def readOne(path:Path) : Option[MBlog] = DfsModelUtil.readOne[MBlog](path)
+    def readOneAcc(acc:List[MBlog], path:Path) : List[MBlog] = DfsModelUtil.readOneAcc[MBlog](acc, path)
+
+    def save(id: String, data:MBlog): Future[MBlog] = future {
+      JsonDfsBackend.writeToPath(getFilePath(id), data)
+      data
+    }
+
+    def getById(id: String): Future[Option[MBlog]] = future {
+      readOne(getFilePath(id))
+    }
+
+    def getAll: Future[List[MBlog]] = future {
+      // Читаем и парсим все файлы из папки model_path.
+      fs.listStatus(modelPath).foldLeft(List[MBlog]()) { (acc, fstatus) =>
+        if (!fstatus.isDir) {
+          readOneAcc(acc, fstatus.getPath)
+        } else acc
+      }
+      // Далее, надо отсортировать записи в порядке их создания.
+      .sortBy(_.date)
+      .reverse
+    }
+
+    def delete(id: String): Future[Unit] = future {
+      val path = getFilePath(id)
+      fs.delete(path, false)
+    }
+  }
 
 
-  /**
-   * Враппер над readOne для удобства вызова из foldLeft()().
-   * @param acc аккамулятор типа List[MDomainPerson]
-   * @param path путь, из которого стоит читать данные
-   * @return аккамулятор
-   */
-  protected def readOneAcc(acc:List[MBlog], path:Path) : List[MBlog] = DfsModelUtil.readOneAcc[MBlog](acc, path)
+  /** Backend для хранения в HBase. Используем таблицу obj. */
+  class HBaseBackend extends Backend {
+    import SioHBaseAsyncClient._
+    import MObject.{HTABLE_NAME_BYTES, CF_BLOG}
+
+    val KEYPREFIX = "MBlog:"
+    val QUALIFIER = "blog".getBytes
+
+    // TODO проверить и убедится, что таблица существует.
+    def id2key(id: String) = (KEYPREFIX + id).getBytes
+
+    def serialize(data: MBlog) = JacksonWrapper.serialize(data).getBytes
+
+    def deserialize(data: Array[Byte]): MBlog = {
+      val bais = new ByteArrayInputStream(data)
+      JacksonWrapper.deserialize[MBlog](bais)
+    }
+
+    def save(id: String, data: MBlog): Future[MBlog] = {
+      val key = id2key(id)
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, key, CF_BLOG, QUALIFIER, serialize(data))
+      ahclient.put(putReq).map(_ => data)
+    }
+
+    def getById(id: String): Future[Option[MBlog]] = {
+      val key = id2key(id)
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, key).family(CF_BLOG).qualifier(QUALIFIER)
+      ahclient.get(getReq) map { r =>
+        if (r.isEmpty) {
+          None
+        } else {
+          val vb = r.head.value()
+          val v = deserialize(vb)
+          Some(v)
+        }
+      }
+    }
+
+    def getAll: Future[List[MBlog]] = ???
+
+    def delete(id: String): Future[Unit] = {
+      val key = id2key(id)
+      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, key)
+      ahclient.delete(delReq).map(_ => ())
+    }
+  }
 
 }

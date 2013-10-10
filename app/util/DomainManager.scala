@@ -13,17 +13,12 @@ import util.event.{ValidSioJsFoundOnSite, SioJsFoundOnSite}
  */
 object DomainManager extends SNStaticSubscriber {
 
-  def snMap: Seq[(Classifier, Seq[Subscriber])] = Seq(
-    getClassifier -> Seq(getSubscriber)
-  )
-
-
-  /** Сгенерить классификатор. */
-  def getClassifier = SioJsFoundOnSite.getClassifier(isValidOpt = Some(true))
-
-  /** Сгенерить экземпляр класса приемника событий. */
-  def getSubscriber = SnFunSubscriber {
-    case ValidSioJsFoundOnSite(_dkey) => maybeInstallDkey(_dkey)
+  def snMap: Seq[(Classifier, Seq[Subscriber])] = {
+    val c = SioJsFoundOnSite.getClassifier(isValidOpt = Some(true))
+    val s = SnFunSubscriber {
+      case ValidSioJsFoundOnSite(_dkey) => maybeInstallDkey(_dkey)
+    }
+    Seq(c -> Seq(s))
   }
 
   /**
