@@ -12,32 +12,44 @@ import scala.util.matching.Regex
  * Description: SAX-handler для обнаружения тега suggest.js на странице.
  */
 
+object SioJsDetectorSAX extends Serializable {
+
+  // Версии всякие.
+  object SioJsVersion extends Enumeration {
+    type SioJsVersion = Value
+    val JSv1, JSv2 = Value
+  }
+
+  // TODO следует запретить захватывать в результат ненужные скобки типа www. и т.д.
+  val reStr = "https?://(www\\.)?suggest\\.io/(static/)?js/?(v2/([^/]+)/([a-zA-Z0-9]+))?"
+  val srcReStr = "^\\s*" + reStr + "\\s*$"
+
+  // Какие группы экстрактить из регэкспов. Тут две группы, они будут отражены на домен и qi_id.
+  val groups = List(4, 5)
+
+  val TAG_SCRIPT = "script"
+  val ATTR_SRC   = "src"
+
+  val SCRIPT_BODY_ACC_LEN_MAX = 2048
+}
+
+
+import SioJsDetectorSAX._
 class SioJsDetectorSAX extends DefaultHandler with Serializable {
 
   // Скриптов на странице бывает несколько (это ошибочно, но надо это тоже отрабатывать).
   protected var scriptInfoAcc : List[SioJsInfoT] = List()
 
-  // Регэксп
-  protected val (srcRe, textRe) = {
-    val reStr = "https?://(www\\.)?suggest\\.io/(static/)?js/?(v2/([^/]+)/([a-zA-Z0-9]+))?"
-    val srcReStr = "^\\s*" + reStr + "\\s*$"
-    (srcReStr.r, reStr.r)
-  }
+  // Регэксп. Компилируем его в конструкторе класса, чтобы избежать ненужной передачи скомпиленного регэкспа.
+  val srcRe = srcReStr.r
+  val textRe = reStr.r
 
-  // Какие группы экстрактить из регэкспов. Тут две группы, они будут отражены на домен и qi_id.
-  val groups = List(4, 5)
-
+  protected var scriptBodyAccCharLen = 0
 
   // Мы внутри тега script? Если > 0, то да.
   protected var inScript = 0
 
-  val TAG_SCRIPT = "script"
-  val ATTR_SRC   = "src"
-
-  var scriptBodyAcc = List[String]()
-
-  val scriptBodyAccCharLenMax = 2048
-  var scriptBodyAccCharLen = 0
+  protected var scriptBodyAcc = List[String]()
 
 
   /**
@@ -72,7 +84,7 @@ class SioJsDetectorSAX extends DefaultHandler with Serializable {
 
     if (inScript > 0) {
       val newAccLen = scriptBodyAccCharLen + length
-      if (newAccLen <= scriptBodyAccCharLenMax) {
+      if (newAccLen <= SCRIPT_BODY_ACC_LEN_MAX) {
         scriptBodyAcc = new String(ch, start, length) :: scriptBodyAcc
         scriptBodyAccCharLen = newAccLen
       }
@@ -122,7 +134,7 @@ class SioJsDetectorSAX extends DefaultHandler with Serializable {
    */
   protected def maybeMatches(re:Regex, text:String) {
     re.findFirstMatchIn(text).map { m =>
-      val groupValues = groups.map(m.group(_))
+      val groupValues = groups.map(m.group)
       scriptInfoAcc = SioJsInfo(groupValues) :: scriptInfoAcc
     }
   }
@@ -130,10 +142,12 @@ class SioJsDetectorSAX extends DefaultHandler with Serializable {
 }
 
 
-trait SioJsInfoT {
-  val version : Short
+import SioJsVersion._
 
-  override def hashCode(): Int = 829 * version
+trait SioJsInfoT {
+  def version : SioJsVersion
+
+  override def hashCode(): Int = 829 * version.hashCode()
 }
 
 object SioJsInfo {
@@ -155,12 +169,12 @@ object SioJsInfo {
 
 // Тут типа класс-сингтон в виде объекта, ибо такой класс не принимает параметров. Это ускорит сравнение при List.distinct()
 object SioJsV1 extends SioJsInfoT {
-  val version = 1.toShort
+  def version = JSv1
 }
 
 // v2-версия имеет параметры, и сравнение нужно делать аккуратнее.
 case class SioJsV2(dkey:String, qi_id:String) extends SioJsInfoT {
-  val version = 2.toShort
+  def version = JSv2
 
   /**
    * Целочисленный хеш объекта

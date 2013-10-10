@@ -3,7 +3,6 @@ package io.suggest.event
 import akka.event.{EventBus, SubchannelClassification}
 import akka.util.{Timeout, Subclassification}
 import akka.actor._
-import io.suggest.SioutilSup
 import scala.Some
 import akka.actor.Terminated
 import subscriber._
@@ -21,37 +20,44 @@ import scala.concurrent.Future
  * В идеале, хорошо бы иметь древовидную рекурсивную структуру путей, а не текущую линейную карту событий - так эффективнее.
  */
 
-object SioNotifier {
+object SioNotifier extends SioNotifierStaticActorRef {
 
   type Event = SioEventT
   type ClassifierToken = Option[Any]
   type Classifier = Seq[ClassifierToken]
   type Subscriber = SnSubscriberT
 
-  private var snRef : ActorRef = null
-  private implicit val snAskTimeoutDflt = Timeout(5 seconds)
+  // Дефолтовая реализация SN-клиента.
+  // TODO Но надо бы отсюда её удалить.
+  val actorName = "sn"
+  protected implicit val SN_ASC_TIMEOUT: Timeout = Timeout(5 seconds)
 
-  val SN_NAME = "sn"
+  protected var snRef : ActorRef = null
 
   def startLink(arf: ActorRefFactory) : ActorRef = {
-    snRef = arf.actorOf(Props[SioNotifier], name=SN_NAME)
+    snRef = arf.actorOf(Props[SioNotifier], name=actorName)
     snRef
   }
+}
+
+
+/** Интерфейс для static-клиентов. Чтобы не писать комменты кучу раз и немного устаканить интерфейс взаимодействия. */
+trait SioNotifierStaticClientI {
+  import SioNotifier._
 
   /**
-   * Узнать ref watcher-а у супервизора.
-   * @return
+   * Запуск актора из супервизора.
+   * @param arf ActorRefFactory, как правило контекст супервизора.
+   * @return ActorRef запущенного сабжа.
    */
-  def watcherActorRefFuture = SioutilSup.getChild(SN_NAME)
+  def startLink(arf: ActorRefFactory): ActorRef
 
   /**
    * Подписать актора на событие
    * @param subscriber подписчик SubscriberT
    * @param classifier классификатор события
    */
-  def subscribe(subscriber:Subscriber, classifier:Classifier) {
-    snRef ! SnSubscribe(subscriber, classifier)
-  }
+  def subscribe(subscriber:Subscriber, classifier:Classifier)
 
   /**
    * Неблокирующая подпись на события с подтверждением от SioNotifier.
@@ -59,35 +65,26 @@ object SioNotifier {
    * @param classifier классификатор события.
    * @return Фьючерс с boolean внутри. true если всё ок.
    */
-  def subscribeSync(subscriber:Subscriber, classifier:Classifier) : Future[Boolean] = {
-    (snRef ? SnSubscribeSync(subscriber, classifier)).asInstanceOf[Future[Boolean]]
-  }
+  def subscribeSync(subscriber:Subscriber, classifier:Classifier) : Future[Boolean]
 
   /**
    * Отправить событие в шину.
    * @param event событие
    */
-  def publish(event:Event) {
-    snRef ! event
-  }
+  def publish(event:Event)
 
   /**
    * Отписать актора от событий.
    * @param subscriber описалово подписчика
    * @param classifier классификатор, такой же как был в subscribe
    */
-  def unsubscribe(subscriber:Subscriber, classifier:Classifier) {
-    snRef ! SnUnsubscribe(subscriber, classifier)
-  }
+  def unsubscribe(subscriber:Subscriber, classifier:Classifier)
 
   /**
    * Отписать актора от всех событий в карте шины.
    * @param subscriber подписавшийся
    */
-  def unsubscribe(subscriber:Subscriber) {
-    snRef ! SnUnsubscribeAll(subscriber)
-  }
-
+  def unsubscribe(subscriber:Subscriber)
 
   /**
    * Клиент просит атомарно заменить одного подписчика на другого.
@@ -97,9 +94,7 @@ object SioNotifier {
    * @param classifier классификатор для обоих
    * @param subscriberNew новый подписчик
    */
-  def replaceSubscriber(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber) {
-    snRef ! SnReplaceSubscriber(subscriberOld, classifier, subscriberNew)
-  }
+  def replaceSubscriber(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber)
 
   /**
    * ask-версия функции replaceSubscriber.
@@ -108,6 +103,46 @@ object SioNotifier {
    * @param subscriberNew новый подписчик, который точно будет на шине.
    * @return Фьючерс с булевым. true, если всё нормально.
    */
+  def replaceSubscriberSync(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber): Future[Boolean]
+}
+
+
+// TODO Далее два статических интерфейса для взаимодействия с актором SN: через actorRef и actorSelection.
+// Между ними дубликация кода из-за отсутствия в akka общего интерфейса между ActorRef и ActorSelection несмотря на
+// почти идентичные сигнатуры методов.
+
+trait SioNotifierStaticActorRef extends SioNotifierStaticClientI {
+  import SioNotifier._
+
+  // protected на случай, если интерфейс будет сделан через var. Наследующий класс всегда может сделать public при необходимости.
+  protected def snRef: ActorRef
+  protected implicit def SN_ASC_TIMEOUT: Timeout
+
+  def subscribe(subscriber:Subscriber, classifier:Classifier) {
+    snRef ! SnSubscribe(subscriber, classifier)
+  }
+
+  def subscribeSync(subscriber:Subscriber, classifier:Classifier) : Future[Boolean] = {
+    (snRef ? SnSubscribeSync(subscriber, classifier)).asInstanceOf[Future[Boolean]]
+  }
+
+  def publish(event:Event) {
+    snRef ! event
+  }
+
+  def unsubscribe(subscriber:Subscriber, classifier:Classifier) {
+    snRef ! SnUnsubscribe(subscriber, classifier)
+  }
+
+  def unsubscribe(subscriber:Subscriber) {
+    snRef ! SnUnsubscribeAll(subscriber)
+  }
+
+
+  def replaceSubscriber(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber) {
+    snRef ! SnReplaceSubscriber(subscriberOld, classifier, subscriberNew)
+  }
+
   def replaceSubscriberSync(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber) = {
     (snRef ? SnReplaceSubscriber(subscriberOld, classifier, subscriberNew)).asInstanceOf[Future[Boolean]]
   }
@@ -115,7 +150,80 @@ object SioNotifier {
 }
 
 
-// Нужно наблюдать за подписчиками, т.к. они могут внезапно отвалится, а подписки останутся.
+trait SioNotifierStaticActorSelection extends SioNotifierStaticClientI {
+  import SioNotifier._
+
+  def actorName: String = getClass.getSimpleName.replace("$", "")
+  def supPath: ActorPath
+  val actorPath = supPath / actorName
+
+  implicit def SN_ASK_TIMEOUT: Timeout
+
+  protected def getSystem: ActorSystem
+
+  def actorSelection = getSystem.actorSelection(actorPath)
+
+
+  def subscribe(subscriber:Subscriber, classifier:Classifier) {
+    actorSelection ! SnSubscribe(subscriber, classifier)
+  }
+
+  def subscribeSync(subscriber:Subscriber, classifier:Classifier) : Future[Boolean] = {
+    (actorSelection ? SnSubscribeSync(subscriber, classifier)).asInstanceOf[Future[Boolean]]
+  }
+
+  def publish(event:Event) {
+    actorSelection ! event
+  }
+
+  def unsubscribe(subscriber:Subscriber, classifier:Classifier) {
+    actorSelection ! SnUnsubscribe(subscriber, classifier)
+  }
+
+  def unsubscribe(subscriber:Subscriber) {
+    actorSelection ! SnUnsubscribeAll(subscriber)
+  }
+
+  def replaceSubscriber(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber) {
+    actorSelection ! SnReplaceSubscriber(subscriberOld, classifier, subscriberNew)
+  }
+
+  def replaceSubscriberSync(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber) = {
+    (actorSelection ? SnReplaceSubscriber(subscriberOld, classifier, subscriberNew)).asInstanceOf[Future[Boolean]]
+  }
+
+}
+
+
+/** Бывает, что необходимо задействовать статическую подписку на события для текущего объекта. (Допустим, дергать
+  * какой-либо статический метод объекта при событии). Это подобие #sn_info{} в прошлом suggest.io. */
+trait SNStaticSubscriber {
+  import SioNotifier._
+  def snMap: Seq[(Classifier, Seq[Subscriber])]
+}
+
+/** Когда нужно выполнить подписание/отписание всех статических подписчиков, можно подмешать этот код и
+  * оформить соотв. вызов в preStart() */
+trait SNStaticSubscriptionManager extends SioNotifierStaticClientI {
+  import SioNotifier.{Subscriber, Classifier}
+
+  /** Карта подписей: на какое событие каких подписчиков повесить. */
+  protected def getStaticSubscribers: Seq[SNStaticSubscriber]
+
+  protected def staticSubscribeAllSync() = applyForeachSC(subscribe)
+  protected def staticUnsubscribeAllSync() = applyForeachSC(unsubscribe)    // TODO а надо ли оно вообще?
+
+  protected def applyForeachSC(f: (Subscriber, Classifier) => Unit) {
+    getStaticSubscribers foreach { ssObject =>
+      ssObject.snMap foreach { case (c, sss) =>
+        sss foreach { ss => f(ss, c) }
+      }
+    }
+  }
+}
+
+
+/** Реализация механизма SioNotifier в виде актора. */
 class SioNotifier extends Actor {
 
   import SioNotifier.{Subscriber, Event, Classifier}

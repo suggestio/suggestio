@@ -9,7 +9,7 @@ import akka.actor.{ActorRef, ActorContext}
  * Created: 30.05.13 15:41
  * Description: Scala-класс для вешания анонимных функций на события SioNotifier.
  */
-case class SnFunSubscriber(f: SioNotifier.Event => Unit) extends SnSubscriberT {
+case class SnFunSubscriber(f: PartialFunction[SioNotifier.Event, Unit]) extends SnSubscriberT {
 
   /**
    * Передать событие подписчику.
@@ -17,10 +17,12 @@ case class SnFunSubscriber(f: SioNotifier.Event => Unit) extends SnSubscriberT {
    * @param ctx контекст sio-notifier.
    */
   def publish(event: SioNotifier.Event)(implicit ctx: ActorContext) {
-    val r = new Runnable {
-      def run() { f(event) }
+    if (f isDefinedAt event) {
+      val r = new Runnable {
+        def run() { f(event) }
+      }
+      ctx.dispatcher.execute(r)
     }
-    ctx.dispatcher.execute(r)
   }
 
   /**

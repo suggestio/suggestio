@@ -14,6 +14,8 @@ import io.suggest.event.SioNotifier
  * Description: Супервизор для акторов, лежащих в sioutil.
  */
 
+// TODO Вероятно, это надо удалить.
+
 class SioutilSup extends Actor {
 
   /**
