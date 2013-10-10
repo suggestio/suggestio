@@ -7,12 +7,9 @@ import java.io.InputStream
 import java.util.concurrent.{FutureTask, Callable, ExecutionException, TimeoutException, TimeUnit}
 import io.suggest.sax._
 import org.apache.tika.parser.AutoDetectParser
-import scala.concurrent.duration._
 import org.xml.sax.Attributes
 import io.suggest.util.StringUtil.randomId
-import io.suggest.util.event.subscriber.SioEventTJSable
-import play.api.libs.json.{JsBoolean, JsString, JsValue}
-import io.suggest.event.SioNotifier
+import util.event._
 import java.net.{MalformedURLException, URL}
 import io.suggest.util.UrlUtil
 import scala.concurrent.Future
@@ -21,6 +18,7 @@ import util.acl.PersonWrapper.PwOpt_t
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.LocalDate
 import play.api.Logger
+import play.api.Play.current
 
 /**
  * Suggest.io
@@ -38,10 +36,9 @@ import play.api.Logger
 // Статический клиент к DomainRequester, который выполняет запросы к доменам
 object DomainQi extends Logs {
 
-  val parseTimeout = 5.seconds
-  private val parseTimeoutMs = parseTimeout.toMillis
+  val parseTimeoutMs = current.configuration.getInt("domain.qi.parse.timeout_ms") getOrElse 5000
   protected val timeout_msg = "timeout"
-  val qiIdLen = 8
+  val qiIdLen = current.configuration.getInt("domain.qi.id.len") getOrElse 8
   val skeyPrefixStr = "~"
   val qiDtSepCh = ','
 
@@ -57,7 +54,7 @@ object DomainQi extends Logs {
   }
 
 
-  private def dtQiNow = qiDateFormatter.print(LocalDate.now())
+  def dtQiNow = qiDateFormatter.print(LocalDate.now())
 
   /**
    * Отправить в сессию данные по добавлению сайта.
@@ -246,7 +243,7 @@ object DomainQi extends Logs {
    */
   def checkQiAsync(dkey:String, url:String, qiIdOpt:Option[String], sendEvents:Boolean, pwOpt:PwOpt_t): Future[SioJsV2] = {
     // Запросить постановку в очередь указанной ссылки для указанного домена
-    DomainRequester.queueUrl(dkey, url) map { case DRResp200(ct, istream) =>
+    DomainRequester.queueUrl(dkey, url) flatMap { case DRResp200(ct, istream) =>
       // 200 OK: запустить тику с единственным SAX-handler и определить наличие скрипта на странице.
       try {
         // Формируем набор метаданных
@@ -262,9 +259,16 @@ object DomainQi extends Logs {
           val l = task.get(parseTimeoutMs, TimeUnit.MILLISECONDS)
           // Есть список найденных скриптов suggest_io.js на странице. Определить, есть ли среди них подходящий.
           l.find {
+            // Найден js нужной версии. Нужно проверить его компоненты.
             case SioJsV2(_dkey, _qi_id) =>
-              dkey == _dkey && qiIdOpt.isDefined && qiIdOpt.get == _qi_id
+              dkey == _dkey && {
+                // Сообщить системе, что есть событие установки скрипта на сайт.
+                SiowebNotifier publish ValidSioJsFoundOnSite(dkey)
+                // Что вернуть юзеру? Это зависит от qi_id (его наличия и совпадения с текущим в сессии).
+                qiIdOpt.isDefined  &&  qiIdOpt.get == _qi_id
+              }
 
+            // Что-то иное. Вероятно SioJs старой версии, который для qi не подходит.
             case other => false
 
           } match {
@@ -284,8 +288,8 @@ object DomainQi extends Logs {
               Left(errMsg -> l)
           }
 
-          // Произошла какая-то ошибка во внутреннем try, надо бы уведомить юзера об этом
-        } catch {
+        } catch {   // Произошла какая-то ошибка во внутреннем try, надо бы уведомить юзера об этом
+          // Таймаут работы парсера. Возможно юзер подсунул бесконечный документ. Надо прервать его.
           case te:TimeoutException =>
             task.cancel(true)
             //t.interrupt()   // cancel(true) сам вызывает t.interrupt()
@@ -308,23 +312,25 @@ object DomainQi extends Logs {
         result match {
           // Всё верно. Можно заапрувить учетку юзера по отношению к этому домену.
           case Right(jsInfo) =>
+            // Отправить юзеру соответствующее уведомление.
             if (sendEvents) {
               val qi_id1 = jsInfo.qi_id
-              approve_qi(dkey, qi_id1, pwOpt)
+              approveQi(dkey, qi_id1, pwOpt)
               val qiNews = QiSuccess(dkey=dkey, qi_id=qi_id1, url=url)
-              SioNotifier.publish(qiNews)
+              SiowebNotifier publish qiNews
             }
-            jsInfo
+            Future.successful(jsInfo)
 
           // Ниасилил. Надо чиркануть в логи и сделать фьючерс неудачным.
           case Left((errMsg, listJsInstalled)) =>
             // TODO надо отреагировать на список найденных скриптов. Если там что-то есть с верным доменом, то значит надо установить.
             if (sendEvents) {
-              logger.warn("qi check failed on %s: %s".format(url, errMsg))
+              logger.warn("qi check failed on %s: %s" format (url, errMsg))
               val qiNews = QiError(dkey=dkey, qiIdOpt=qiIdOpt, url=url, msg=errMsg)
-              SioNotifier.publish(qiNews)
+              SiowebNotifier publish qiNews
             }
-            throw QiCheckException(message=errMsg, jsFound=listJsInstalled)
+            val ex = QiCheckException(message=errMsg, jsFound=listJsInstalled)
+            Future.failed(ex)
         }
 
       } finally {
@@ -340,7 +346,7 @@ object DomainQi extends Logs {
    * @param dkey ключ домена, который должен быть добавлен в базу кравлера.
    * @param qi_id qi id, относящиеся к неопределенному юзеру.
    */
-  def approve_qi(dkey:String, qi_id:String, pwOpt:PwOpt_t) {
+  def approveQi(dkey:String, qi_id:String, pwOpt:PwOpt_t) {
     pwOpt match {
       case Some(pw) =>
         MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, person_id=pw.id, is_verified=true).save
@@ -353,7 +359,7 @@ object DomainQi extends Logs {
 
 }
 
-case class QiCheckException(message:String, jsFound:List[SioJsInfoT]) extends Exception
+sealed case class QiCheckException(message:String, jsFound:List[SioJsInfoT]) extends Exception
 
 
 // Анализ вынесен в отдельный поток для возможности слежения за его выполнением и принудительной остановкой по таймауту.
@@ -370,67 +376,6 @@ class DomainQiTikaCallable(md:Metadata, input:InputStream) extends Callable[List
     jsInstalledHandler.getSioJsInfo
   }
 
-}
-
-
-object QiEventUtil {
-  val headSneToken = Some("qi")
-
-  def getClassifier(
-    dkeyOpt:Option[String] = None,
-    qiIdOpt:Option[String] = None,
-    isSuccessOpt: Option[Boolean] = None): SioNotifier.Classifier = List(headSneToken, dkeyOpt, qiIdOpt, isSuccessOpt)
-}
-
-
-trait QiEventT extends SioEventTJSable with DkeyContainerT {
-  import play.api.libs.json._
-
-  val dkey: String
-  val url: String
-  val qiIdOpt: Option[String]
-  def isSuccess : Boolean
-
-
-  def getClassifier: SioNotifier.Classifier = QiEventUtil.getClassifier(dkeyOpt = Some(dkey), qiIdOpt=qiIdOpt, isSuccessOpt = Some(isSuccess))
-
-  def toJson: JsValue = {
-    val jsonFields = {
-      "type" -> JsString(jsonEventType) ::
-      "url"  -> JsString(url) ::
-      jsonMapTail ++ dkeyJsProps
-    }
-    JsObject(jsonFields)
-  }
-
-  def jsonEventType : String
-  def jsonMapTail : List[(String, JsValue)]
-}
-
-/**
- * Уведомление об ошибке qi.
- * @param dkey Ключ домена
- * @param url Ссылка, которая проверялась на предмет qi
- * @param msg Сообщение о проблеме.
- */
-case class QiError(dkey:String, qiIdOpt:Option[String], url:String, msg:String) extends QiEventT {
-  val isSuccess = false
-
-  def jsonEventType: String = "qi.error"
-  def jsonMapTail: List[(String, JsValue)] = List("error" -> JsString(msg))
-}
-
-/**
- * Уведомление об успешном прохождении qi.
- * @param dkey Ключ домена
- * @param url Ссылка, для информации.
- */
-case class QiSuccess(dkey:String, qi_id:String, url:String) extends QiEventT {
-  val isSuccess = true
-  val qiIdOpt = Some(qi_id)
-
-  def jsonEventType: String = "qi.success"
-  def jsonMapTail: List[(String, JsValue)] = List("is_js_installed" -> JsBoolean(isSuccess))
 }
 
 
@@ -454,3 +399,4 @@ class SioJsDetectorInterruptableSAX extends SioJsDetectorSAX {
   }
 
 }
+

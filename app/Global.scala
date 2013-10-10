@@ -1,4 +1,4 @@
-import util.{ContextT, SiowebSup}
+import util.{DomainManager, ContextT, SiowebSup}
 
 /**
  * Suggest.io
@@ -22,6 +22,11 @@ object Global extends GlobalSettings with ContextT {
   override def onStart(app: Application) {
     super.onStart(app)
     SiowebSup.ensureStarted
+  }
+
+
+  override def onStop(app: Application) {
+    super.onStop(app)
   }
 
 

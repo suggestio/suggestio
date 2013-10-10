@@ -11,6 +11,7 @@ import akka.util.Timeout
 import akka.actor.OneForOneStrategy
 import io.suggest.SioutilSup
 import DomainRequester.{ACTOR_NAME => DOMAIN_REQUESTER_NAME}
+import util.event.SiowebNotifier
 
 /**
  * Suggest.io
@@ -77,8 +78,8 @@ class SiowebSup extends Actor with Logs {
     }
     // Запускаем все дочерние процессы.
     DomainRequester.startLink(context)
-    SioutilSup.start_link(context)
     NewsQueue4Play.startLinkSup(context)
+    SiowebNotifier.startLink(context)
   }
 
 

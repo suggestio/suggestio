@@ -32,48 +32,50 @@ object IsDomainAdmin {
 }
 
 
-/** Абстрактный класс для различнх реализаций сабжа. */
+/** Абстрактный класс для различных реализаций сабжа. Основная цель декомпозиции: позволить контроллерам легко
+  * переопределять путь редиректа в случае проблемы с правами, а так же менять другие части логики работы. */
 abstract class IsDomainAdminAbstract extends ActionBuilder[AbstractRequestWithDAuthz] {
 
   def hostname: String
 
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithDAuthz[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val dkey = UrlUtil.normalizeHostname(hostname)
-      val pwOpt = PersonWrapper.getFromRequest(request)
-      val authzInfoOpt: Option[MDomainAuthzT] = pwOpt match {
-        // Анонимус. Возможно, он прошел валидацию уже. Нужно узнать из сессии текущий qi_id и проверить по базе.
-        case None =>
-          DomainQi.getQiFromSession(dkey)(request.session) flatMap { qi_id =>
-            MDomainQiAuthzTmp.get(dkey=dkey, id=qi_id) filter(_.isValid)
-          }
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    val authzInfoOpt: Option[MDomainAuthzT] = pwOpt match {
+      // Анонимус. Возможно, он прошел валидацию уже. Нужно узнать из сессии текущий qi_id и проверить по базе.
+      case None =>
+        DomainQi.getQiFromSession(dkey)(request.session) flatMap { qi_id =>
+          MDomainQiAuthzTmp.get(dkey=dkey, id=qi_id) filter(_.isValid)
+        }
 
-        // Юзер залогинен. Проверить права.
-        case Some(pw) =>
-          // TODO Надо проверить случай, когда у админа suggest.io есть добавленный домен. Всё ли нормально работает?
-          // Если нет, то надо обращение к модели вынести на первый план, а только потом уже проверять isAdmin.
-          if (pw.isAdmin) {
-            Some(MPersonDomainAuthzAdmin(person_id=pw.id, dkey=dkey))
-          } else {
-            MPersonDomainAuthz.getForPersonDkey(dkey, pw.id) filter(_.isValid)
-          }
-      }
-      authzInfoOpt match {
-        case Some(authzInfo) =>
-          val req1 = new RequestWithDAuthz(pwOpt, authzInfo, request)
-          block(req1)
+      // Юзер залогинен. Проверить права.
+      case Some(pw) =>
+        // TODO Надо проверить случай, когда у админа suggest.io есть добавленный домен. Всё ли нормально работает?
+        // Если нет, то надо обращение к модели вынести на первый план, а только потом уже проверять isAdmin.
+        if (pw.isAdmin) {
+          Some(MPersonDomainAuthzAdmin(person_id=pw.id, dkey=dkey))
+        } else {
+          MPersonDomainAuthz.getForPersonDkey(dkey, pw.id) filter(_.isValid)
+        }
+    }
+    authzInfoOpt match {
+      case Some(authzInfo) =>
+        val req1 = new RequestWithDAuthz(pwOpt, authzInfo, request)
+        block(req1)
 
-        case None => onUnauthFut(pwOpt, request)
-      }
+      case None => onUnauthFut(pwOpt, request)
+    }
   }
 
   def onUnauthFut(pwOpt: PwOpt_t, request: RequestHeader): Future[SimpleResult]
 }
 
 /**
- * Дефолтовая реализация декоратора ACL для проверки домена. Логика отсылки юзера описана в IsDomainAdmin.onUnauth()
+ * Дефолтовая реализация декоратора ACL для проверки прав на домен. При проблеме с доступом, юзер отсылается согласно
+ * статической IsDomainAdmin.onUnauthFut().
  * @param hostname Сырое имя хоста.
  */
-case class IsDomainAdmin(hostname:String) extends IsDomainAdminAbstract {
+case class IsDomainAdmin(hostname: String) extends IsDomainAdminAbstract {
   def onUnauthFut(pwOpt: PwOpt_t, request: RequestHeader) = {
     IsDomainAdmin.onUnauthFut(hostname, pwOpt, request)
   }

@@ -11,7 +11,6 @@ import models.{MDomainUserSettings, MDomain}
 import play.api.Play.current
 import play.api.libs.json._
 import views.txt.js._
-import io.suggest.event.SioNotifier
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.JsString
 import io.suggest.event.subscriber.SnActorRefSubscriber
@@ -126,9 +125,9 @@ object Js extends Controller with ContextT with Logs {
               // Очередь запущена. Нужно подписать её на события SioNotifier.
               logger.debug(logPrefix + "NewsQueue %s ready for user %s." format (queueActorRef, pwOpt))
               // Подписаться на события qi от sio_notifier
-              SioNotifier.subscribeSync(
+              SiowebNotifier.subscribeSync(
                 subscriber = SnActorRefSubscriber(queueActorRef),
-                classifier = QiEventUtil.getClassifier(dkeyOpt = Some(dkey), qiIdOpt=Some(qi_id))
+                classifier = QiEvent.getClassifier(dkeyOpt = Some(dkey), qiIdOpt=Some(qi_id))
               ).map { _ =>
                 // Подписывание очереди на событие выполнено.
                 // Отправить request referer на проверку. Бывает, что юзер ставит поиск не на главной, а где-то сбоку.
@@ -230,7 +229,7 @@ object Js extends Controller with ContextT with Logs {
         // uuid для трубы, добавляемой в SioNotifier.
         val uuid = UUID.randomUUID()
         logger.debug(logPrefix + "Starting ws connection for user %s. Subscriber=%s" format(pwOpt, uuid.toString))
-        val classifier  = QiEventUtil.getClassifier(dkeyOpt = Some(dkey), qiIdOpt = Some(qi_id))
+        val classifier = QiEvent.getClassifier(dkeyOpt = Some(dkey), qiIdOpt = Some(qi_id))
         // Канал выдачи данных клиенту. Подписаться на события SioNotifier, затем залить в канал пропущенные новости, которые пришли между реквестами и во время подписки.
         // Возможные дубликаты новостей безопасны, опасность представляют потерянные уведомления.
         val out1 = out0 >- Concurrent.unicast(onStart = {channel: Concurrent.Channel[JsValue] =>

@@ -6,7 +6,6 @@ import util.{Logs, NewsQueue4Play}
 import io.suggest.event.SioNotifier.Classifier
 import io.suggest.util.event.subscriber.SioEventTJSable
 import scala.concurrent.Future
-import io.suggest.event.SioNotifier
 import util.acl.PersonWrapper.PwOpt_t
 import java.util.UUID
 import io.suggest.event.subscriber.SnActorRefSubscriber
@@ -25,9 +24,10 @@ object EventUtil extends Logs {
   type EventIO_t = (Iteratee[JsValue, Unit], Enumerator[JsValue])
 
   // Статическая раздача пустых каналов ввода-вывода.
-  val dummyIn  = Iteratee.ignore[JsValue]
-  val dummyOut = Enumerator[JsValue]()
-  val dummyIO : EventIO_t = (dummyIn, dummyOut)
+  // TODO Возможно, это потом придется перенести в val, убедившись, что это безопасно.
+  def dummyIn  = Iteratee.ignore[JsValue]
+  def dummyOut = Enumerator[JsValue]()
+  def dummyIO : EventIO_t = (dummyIn, dummyOut)
 
   /**
    * Раздача базовых каналов для вебсокетов юзера.
@@ -75,7 +75,7 @@ object EventUtil extends Logs {
         // Как и ожидалось, у супервизора уже есть очередь с новостями. Нужно заменить её в SioNotifier на прямой канал SN -> WS.
         case Some(nqActorRef) =>
           logger.debug(logPrefix + "SN atomic replace: NewsQueue %s -> %s; user=%s" format(nqActorRef, subscriberWs, pw_opt))
-          SioNotifier.replaceSubscriberSync(
+          SiowebNotifier.replaceSubscriberSync(
             subscriberOld = SnActorRefSubscriber(nqActorRef),
             classifier    = classifier,
             subscriberNew = subscriberWs
@@ -110,7 +110,7 @@ object EventUtil extends Logs {
             logger.error(logPrefix + "NewsQueue doesn't exist, but it should. Possible incorrect behaviour for user %s." format pw_opt)
             channel.push(MaybeErrorEvent("It looks like, something went wrong during installation procedure. If errors or problems occurs, please reload the page.").toJson)
           }
-          SioNotifier.subscribeSync(
+          SiowebNotifier.subscribeSync(
             subscriber = subscriberWs,
             classifier = classifier
           )
@@ -134,7 +134,7 @@ object EventUtil extends Logs {
   def inIterateeSnUnsubscribeWsOnEOF[A, B](in:Iteratee[A, B], uuid:UUID, classifier:Classifier): Iteratee[A, B] = {
     // Раньше было .mapDone(), теперь просто .map().
     in.map { x =>
-      SioNotifier.unsubscribe(
+      SiowebNotifier.unsubscribe(
         subscriber = new SnWebsocketSubscriber(uuid=uuid, channel = null),
         classifier = classifier
       )

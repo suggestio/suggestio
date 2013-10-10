@@ -2,7 +2,7 @@ package util.event
 
 import io.suggest.util.event.subscriber.SioEventTJSable
 import play.api.libs.json._
-import io.suggest.event.SioNotifier
+import io.suggest.event.SioNotifier.Classifier
 
 /**
  * Suggest.io
@@ -12,7 +12,7 @@ import io.suggest.event.SioNotifier
  */
 
 class ErrorEvent(msg:String, severity:String) extends SioEventTJSable {
-  def getClassifier: SioNotifier.Classifier = ???
+  def getClassifier: Classifier = ???
 
   def toJson: JsValue = {
     JsObject(Seq(

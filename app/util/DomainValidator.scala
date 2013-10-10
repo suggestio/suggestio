@@ -1,5 +1,6 @@
 package util
 
+import _root_.util.event.SiowebNotifier
 import models.MDomainAuthzT
 import scala.concurrent.{Promise, Future}
 import java.io.InputStream
@@ -13,8 +14,7 @@ import io.suggest.sax.{SioMetaVerificationDetectorSAX, SioJsV2, SioSubstrDetecto
 import org.xml.sax.ContentHandler
 import org.apache.tika.parser.AutoDetectParser
 import org.apache.tika.sax.TeeContentHandler
-import io.suggest.event.SioNotifier
-import SioNotifier.{Classifier, ClassifierToken}
+import io.suggest.event.SioNotifier.{Classifier, ClassifierToken}
 import io.suggest.util.event.subscriber.SioEventTJSable
 import play.api.libs.json._
 
@@ -79,7 +79,7 @@ object DomainValidator extends Logs {
         // Закончился список ссылок. Нужно на этом и закончить.
         p completeWith validationNothingFoundFuture
         if (sendEvents)
-          SioNotifier.publish(DVFailEvent(dkey=dkey, personIdOpt=da.personIdOpt))
+          SiowebNotifier.publish(DVFailEvent(dkey=dkey, personIdOpt=da.personIdOpt))
 
       } else {
         // TODO нужно собирать ошибки в аккамулятор, и затем сохранять их в da.last_errors.
@@ -128,7 +128,7 @@ object DomainValidator extends Logs {
               // Неудача чо-то с текущей ссылкой. Сообщить в шину и перейти к следующему.
               case Left((msg, ex)) =>
                 if (sendEvents)
-                  SioNotifier.publish(DVUrlFailedEvent(dkey=dkey, personIdOpt=da.personIdOpt, url=urlH, reason=msg, ex=ex))
+                  SiowebNotifier.publish(DVUrlFailedEvent(dkey=dkey, personIdOpt=da.personIdOpt, url=urlH, reason=msg, ex=ex))
                 logger.debug(logPrefix + "Check unsuccess for URL " + urlH, ex)
                 revalidateOne(urlsT)
 
@@ -136,7 +136,7 @@ object DomainValidator extends Logs {
               case Right(_) =>
                 p complete Success(true)
                 if (sendEvents)
-                  SioNotifier.publish(DVSuccessEvent(dkey=dkey, personIdOpt=da.personIdOpt, url=urlH))
+                  SiowebNotifier.publish(DVSuccessEvent(dkey=dkey, personIdOpt=da.personIdOpt, url=urlH))
                 logger.debug("Check successeded for " + urlH)
             }
 
@@ -148,7 +148,7 @@ object DomainValidator extends Logs {
             // TODO нужно матчить исключение, извлекая из него причину ошибки. И отправлять юзеру.
             val msg = "Request failed"
             if(sendEvents)
-              SioNotifier.publish(DVUrlFailedEvent(dkey=dkey, personIdOpt=da.personIdOpt, url=urlH, reason=msg, ex=ex))
+              SiowebNotifier.publish(DVUrlFailedEvent(dkey=dkey, personIdOpt=da.personIdOpt, url=urlH, reason=msg, ex=ex))
             revalidateOne(urlsT)
         }
       }
@@ -262,7 +262,7 @@ object DVEventUtil {
    * @param dkeyOpt Ключ домена.
    * @param personIdOpt id юзера, который проходит валидацию.
    * @param isSuccessOpt Бинарный результат проверки.
-   * @return Классификатор, пригодный для SioNotifier.
+   * @return Классификатор, пригодный для SiowebNotifier.
    */
   def getClassifier(dkeyOpt:Option[String] = None, personIdOpt:Option[String] = None, isSuccessOpt:Option[Boolean] = None): Classifier = {
     List(headSneToken, dkeyOpt, personIdOpt, isSuccessOpt)

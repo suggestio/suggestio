@@ -2,7 +2,7 @@ package util
 
 import org.joda.time.DateTime
 import play.api.i18n.Lang
-import play.api.mvc.{Request, AnyContent}
+import play.api.mvc.Request
 import play.api.Play.current
 import util.acl._, PersonWrapper.PwOpt_t
 
@@ -26,7 +26,7 @@ trait ContextT {
    * Выдать контекст. Неявно вызывается при вызове шаблона из контроллера.
    * @return
    */
-  implicit def getContext2(implicit req:AbstractRequestWithPwOpt[_], lang:Lang = Context.LANG_DFLT): Context = {
+  implicit final def getContext2(implicit req:AbstractRequestWithPwOpt[_], lang:Lang = Context.LANG_DFLT): Context = {
     Context2(req, lang)
   }
 

@@ -2,7 +2,7 @@ package util.acl
 
 import util.acl.PersonWrapper._
 import play.api.mvc.{WrappedRequest, Request}
-import models.{MDomainAuthzT, MPersonDomainAuthz}
+import models.MDomainAuthzT
 
 /*
   Используется комбинация из абстрактных классов и их реализаций case class'ов. Это необходимо из-за невозможности

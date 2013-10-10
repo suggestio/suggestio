@@ -1,6 +1,6 @@
 package controllers
 
-import util.event.EventUtil
+import util.event._
 import play.api.mvc._
 import util.acl._
 import util._
@@ -8,7 +8,6 @@ import models._
 import scala.concurrent.future
 import views.html.admin._
 import play.api.libs.concurrent.Execution.Implicits._
-import io.suggest.event.SioNotifier
 import play.api.libs.json._
 import java.util.UUID
 import play.api.libs.iteratee.Concurrent
@@ -72,7 +71,7 @@ object Admin extends Controller with ContextT with Logs {
         NewsQueue4Play.ensureActorFor(pw.id, NQ_TYPE) onSuccess { case nqActorRef =>
           logger.debug(logPrefix + "NewsQueue started as %s" format nqActorRef)
           // Подписать очередь на события SioNotifier
-          SioNotifier.subscribe(
+          SiowebNotifier.subscribe(
             subscriber = new SnActorRefSubscriber(nqActorRef),
             classifier = getUserValidationClassifier(pw.id)
           )
