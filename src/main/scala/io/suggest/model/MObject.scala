@@ -25,6 +25,7 @@ import SioHBaseAsyncClient._
 object MObject {
 
   val HTABLE_NAME = "obj"
+  val HTABLE_NAME_BYTES = HTABLE_NAME.getBytes
 
   // Column family для хранения произвольных k-v колонок для доменов (ключ - dkey). В значениях идём по алфавиту.
   val CF_DPROPS      = "a".getBytes   // Пропертисы всякие. js-install и reindex info в частности.
