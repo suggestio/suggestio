@@ -36,7 +36,7 @@ case class MBlog(
    * @return саму себя для удобства method chaining.
    */
   @JsonIgnore
-  def save = BACKEND.save(id, this)
+  def save = BACKEND.save(this)
 
   /**
    * Удалить текущий ряд их хранилища
@@ -88,11 +88,10 @@ object MBlog extends Logs {
     /**
      * Сохранение экземпляра MBlog в хранилище. Если запись уже существует, то она будет перезаписана
      * (или появится её новая версия в случае с HBase).
-     * @param id id, под которым будем сохранять.
      * @param data Данные - экземпляр MBlog.
      * @return Фьючес с сохраненным MBlog. Обычно, это тот же экземпляр, что и исходный data.
      */
-    def save(id: String, data:MBlog): Future[MBlog]
+    def save(data:MBlog): Future[MBlog]
 
     /**
      * Чтения элемента по id.
@@ -125,8 +124,8 @@ object MBlog extends Logs {
     def readOne(path:Path) : Option[MBlog] = DfsModelUtil.readOne[MBlog](path)
     def readOneAcc(acc:List[MBlog], path:Path) : List[MBlog] = DfsModelUtil.readOneAcc[MBlog](acc, path)
 
-    def save(id: String, data:MBlog): Future[MBlog] = future {
-      JsonDfsBackend.writeToPath(getFilePath(id), data)
+    def save(data:MBlog): Future[MBlog] = future {
+      JsonDfsBackend.writeToPath(getFilePath(data.id), data)
       data
     }
 
@@ -165,8 +164,8 @@ object MBlog extends Logs {
 
     def deserialize(data: Array[Byte]) = deserializeTo[MBlog](data)
 
-    def save(id: String, data: MBlog): Future[MBlog] = {
-      val key = id2key(id)
+    def save(data: MBlog): Future[MBlog] = {
+      val key = id2key(data.id)
       val putReq = new PutRequest(HTABLE_NAME_BYTES, key, CF_BLOG, QUALIFIER, serialize(data))
       ahclient.put(putReq).map(_ => data)
     }

@@ -77,6 +77,7 @@ object Ident extends SioController with Logs {
               // Всё ок. Нужно награбить email и залогинить/зарегать юзера
               case JsString("okay") =>
                 // В доках написано, что нужно сверять AudienceURL, присланный сервером персоны
+                // TODO переписать этот многоэтажный АД
                 respJson \ "audience" match {
                   case JsString(AUDIENCE_URL) =>
                     // Запускаем юзера в студию
@@ -87,13 +88,14 @@ object Ident extends SioController with Logs {
                         case None    => new MPerson(email).save
                         case Some(p) => Future successful p
                       }
-                      personFut map { person =>
+                      personFut flatMap { person =>
                         // Заапрувить анонимно-добавленные и подтвержденные домены (qi)
-                        val session1 = DomainQi.installFromSession(person.id)
-                        // залогинить юзера наконец.
-                        rdrToAdmin
-                          .withSession(session1)
-                          .withSession(username -> person.id)
+                        DomainQi.installFromSession(person.id) map { session1 =>
+                          // залогинить юзера наконец.
+                          rdrToAdmin
+                            .withSession(session1)
+                            .withSession(username -> person.id)
+                        }
                       }
                     }
 

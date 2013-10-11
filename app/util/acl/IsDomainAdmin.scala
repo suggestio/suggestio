@@ -6,6 +6,7 @@ import models.{MDomainAuthzT, MDomainQiAuthzTmp, MPersonDomainAuthzAdmin, MPerso
 import util.DomainQi
 import io.suggest.util.UrlUtil
 import util.acl.PersonWrapper.PwOpt_t
+import play.api.libs.concurrent.Execution.Implicits._
 
 /**
  * Suggest.io
@@ -41,11 +42,12 @@ abstract class IsDomainAdminAbstract extends ActionBuilder[AbstractRequestWithDA
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithDAuthz[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val dkey = UrlUtil.normalizeHostname(hostname)
     val pwOpt = PersonWrapper.getFromRequest(request)
-    val authzInfoOpt: Option[MDomainAuthzT] = pwOpt match {
+    val authzInfoOptFut: Future[Option[MDomainAuthzT]] = pwOpt match {
       // Анонимус. Возможно, он прошел валидацию уже. Нужно узнать из сессии текущий qi_id и проверить по базе.
       case None =>
-        DomainQi.getQiFromSession(dkey)(request.session) flatMap { qi_id =>
-          MDomainQiAuthzTmp.get(dkey=dkey, id=qi_id) filter(_.isValid)
+        DomainQi.getQiFromSession(dkey)(request.session) match {
+          case Some(qi_id) => MDomainQiAuthzTmp.getForDkeyId(dkey=dkey, id=qi_id)
+          case None        => Future.successful(None)
         }
 
       // Юзер залогинен. Проверить права.
@@ -53,17 +55,19 @@ abstract class IsDomainAdminAbstract extends ActionBuilder[AbstractRequestWithDA
         // TODO Надо проверить случай, когда у админа suggest.io есть добавленный домен. Всё ли нормально работает?
         // Если нет, то надо обращение к модели вынести на первый план, а только потом уже проверять isAdmin.
         if (pw.isAdmin) {
-          Some(MPersonDomainAuthzAdmin(person_id=pw.id, dkey=dkey))
+          Future.successful(
+            Some(MPersonDomainAuthzAdmin(person_id=pw.id, dkey=dkey))
+          )
         } else {
-          MPersonDomainAuthz.getForPersonDkey(dkey, pw.id) filter(_.isValid)
+          MPersonDomainAuthz.getForPersonDkey(dkey, pw.id)
         }
     }
-    authzInfoOpt match {
-      case Some(authzInfo) =>
+    authzInfoOptFut flatMap {
+      case Some(authzInfo) if authzInfo.isValid =>
         val req1 = new RequestWithDAuthz(pwOpt, authzInfo, request)
         block(req1)
 
-      case None => onUnauthFut(pwOpt, request)
+      case _ => onUnauthFut(pwOpt, request)
     }
   }
 

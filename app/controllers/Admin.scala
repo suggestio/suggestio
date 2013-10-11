@@ -5,7 +5,7 @@ import play.api.mvc._
 import util.acl._
 import util._
 import models._
-import scala.concurrent.future
+import scala.concurrent.{Future, future}
 import views.html.admin._
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json._
@@ -58,9 +58,7 @@ object Admin extends Controller with ContextT with Logs {
     val pw = request.pwOpt.get
     lazy val logPrefix = "index() user=%s: " format pw.id
     // Опрос DFS может быть долгим, поэтому дальше всё делать надо бы асинхронно.
-    future {
-      // TODO модель будет асинхронная, поэтому тут надо её использовать вместо future {}.
-      val personDomains = pw.allDomainsAuthz
+    pw.allDomainsAuthz map { personDomains =>
       // Т.к. в фоне будет запущена валидация доменов, надо ещё запустить очередь новостей, которая потом будет подцеплена
       // к SioNotifier, и затем заменена прямым на веб-сокетом. Процесс очереди НЕ надо запускать, если доменов нет
       // или если юзер является админом suggest.io.
@@ -173,19 +171,15 @@ object Admin extends Controller with ContextT with Logs {
 
   /**
    * Юзер хочет удалить домен из списка.
-   * @return 204 No content - удалено;
-   *         404 Not Found  - не такого домена у юзера в списке (обычно) или какая-то другая неведомая ошибка.
+   * @return 204 No content;
    */
-  def deleteDomain = IsAuth { implicit request =>
+  def deleteDomain = IsAuth.async { implicit request =>
     addDomainFormM.bindFromRequest().fold(
-      formWithErrors => NotAcceptable
+      formWithErrors => Future successful NotAcceptable
       ,
       {dkey =>
         val person_id = request.pwOpt.get.id
-        MPersonDomainAuthz.delete(person_id, dkey) match {
-          case true  => NoContent
-          case false => NotFound
-        }
+        MPersonDomainAuthz.delete(person_id, dkey) map {_ => NoContent}
       }
     )
   }
@@ -195,15 +189,15 @@ object Admin extends Controller with ContextT with Logs {
    * Юзер хочет пройти валидацию сайта, загрузив файл на сайт.
    * @param domain домен. Обычно dkey, но всё же будет повторно нормализован.
    */
-  def getValidationFile(domain: String) = IsAuth { implicit request =>
+  def getValidationFile(domain: String) = IsAuth.async { implicit request =>
     val dkey = UrlUtil.normalizeHostname(domain)
     val person_id = request.pwOpt.get.id
-    MPersonDomainAuthz.getForPersonDkey(person_id, dkey) match {
+    MPersonDomainAuthz.getForPersonDkey(person_id, dkey) map {
       // Отрендерить файлик валидации и вернуть его юзеру.
       case Some(da) =>
         Ok(getValidationFileTpl(da))
           .as("text/plain; charset=UTF-8")
-          .withHeaders(CONTENT_DISPOSITION -> ("attachment; filename=" + da.filename))
+          .withHeaders(CONTENT_DISPOSITION -> ("attachment; filename=" + da.remoteFilename))
 
       // Нет такого домена в списке добавленных юзером
       case None =>

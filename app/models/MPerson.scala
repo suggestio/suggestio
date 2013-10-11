@@ -31,7 +31,7 @@ case class MPerson(
    * Сохранить отметку о таком юзере
    * @return Фьючерс с сохраненным экземпляром MPerson.
    */
-  def save = BACKEND.save(id, this)
+  def save = BACKEND.save(this)
 
 
   /**
@@ -100,15 +100,15 @@ object MPerson {
 
   /** Интерфейс storage backend'а. для данной модели */
   trait Backend {
-    def save(id: String, data:MPerson): Future[MPerson]
+    def save(data:MPerson): Future[MPerson]
     def getById(id: String): Future[Option[MPerson]]
   }
 
 
   /** DFS-backend для текущей модели. */
   class DfsBackend extends Backend {
-    def save(id: String, data: MPerson): Future[MPerson] = {
-      val path = getPersonPath(id)
+    def save(data: MPerson): Future[MPerson] = {
+      val path = getPersonPath(data.id)
       future {
         JsonDfsBackend.writeToPath(path, this)
         data
@@ -142,8 +142,8 @@ object MPerson {
     def id2key(id: String) = (KEYPREFIX + id).getBytes
     def deserialize(data: Array[Byte]) = deserializeTo[MPerson](data)
 
-    def save(id: String, data: MPerson): Future[MPerson] = {
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, id2key(id), CF_UPROPS, QUALIFIER, serialize(data))
+    def save(data: MPerson): Future[MPerson] = {
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, id2key(data.id), CF_UPROPS, QUALIFIER, serialize(data))
       ahclient.put(putReq).map(_ => data)
     }
 

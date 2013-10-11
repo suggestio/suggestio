@@ -8,13 +8,14 @@ import io.suggest.model.JsonDfsBackend
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.concurrent.duration._
 import util.DfsModelUtil._
+import scala.concurrent.{Future, future}
+import play.api.libs.concurrent.Execution.Implicits._
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 24.06.13 15:37
  * Description: временное промежуточное хранилище данных qi-проверки доменов для анонимусов.
- * В качестве backend-хранилища отдельная папка в JSON DFS.
  * Можно было бы использовать кеш, но это вызовет серьезные проблемы при масштабировании узлов с веб-мордами.
  */
 
@@ -24,7 +25,7 @@ case class MDomainQiAuthzTmp(
   date_created: DateTime = DateTime.now()
 ) extends MDomainAuthzT with DkeyModelT {
 
-  import MDomainQiAuthzTmp.{getFilePath, VERIFY_DURATION_HARD, VERIFY_DURATION_SOFT}
+  import MDomainQiAuthzTmp.{BACKEND, VERIFY_DURATION_HARD, VERIFY_DURATION_SOFT}
 
   @JsonIgnore def personIdOpt: Option[String] = None
   @JsonIgnore def isValid: Boolean = {
@@ -34,63 +35,43 @@ case class MDomainQiAuthzTmp(
     date_created.minus(VERIFY_DURATION_SOFT).isAfterNow
   }
 
-  @JsonIgnore lazy val filepath = getFilePath(dkey, id)
-
   /**
    * Сохранить текущий ряд в базу.
    * @return
    */
-  def save: MDomainQiAuthzTmp = {
-    val os = fs.create(filepath)
-    try {
-      JsonDfsBackend.writeToPath(filepath, this)
-      this
-
-    } finally {
-      os.close()
-    }
-  }
+  def save = BACKEND.save(this)
 
   /**
    * Удалить файл, относящийся к текущему экземпляру класса.
    * @return true, если файл действительно удален.
    */
-  def delete = {
-    val result = deleteNr(filepath)
-    // Скорее всего, директория домена теперь пустая, и её тоже пора удалить для поддержания чистоты в tmp-директории модели.
-    deleteNr(filepath.getParent)
-    result
-  }
+  def delete = BACKEND.delete(dkey=dkey, id=id)
 
   @JsonIgnore def isQiType: Boolean = true
   @JsonIgnore def isValidationType: Boolean = false
 
 
-  override def qiTmpAuthPerson(qi_id: String): Option[MDomainQiAuthzTmp] = {
-    if(qi_id == id)
-      Some(this)
-    else
+  override def qiTmpAuthPerson(qi_id: String): Future[Option[MDomainQiAuthzTmp]] = {
+    if (qi_id == id) {
+      Future.successful(Some(this))
+    } else {
       super.qiTmpAuthPerson(qi_id)
+    }
   }
+
+
+  def bodyCodeOpt: Option[String] = None
 }
 
 
 object MDomainQiAuthzTmp extends Logs {
 
-  val tmpDirName = "qi_anon_tmp"
-  val tmpDir = new Path(SiobixFs.siobix_conf_path, tmpDirName)
+  private val BACKEND: Backend = new DfsBackend
 
   val VERIFY_DURATION_SOFT = new Duration(45.minutes.toMillis)
   // Превышения хард-лимита означает, что верификация уже истекла и её нужно проверять заново.
   val VERIFY_DURATION_HARD = new Duration(60.minutes.toMillis)
 
-  def getDkeyDir(dkey:String): Path = {
-    new Path(tmpDir, dkey)
-  }
-
-  def getFilePath(dkey:String, qi_id:String): Path = {
-    new Path(tmpDir, dkey + "/" + qi_id)
-  }
 
 
   /**
@@ -99,24 +80,69 @@ object MDomainQiAuthzTmp extends Logs {
    * @param id qi id
    * @return Опциональный MDomainQiAuthzTmp
    */
-  def get(dkey:String, id:String): Option[MDomainQiAuthzTmp] = {
-    val filepath = getFilePath(dkey, id)
-    readOne[MDomainQiAuthzTmp](filepath, fs)
+  def getForDkeyId(dkey:String, id:String) = BACKEND.getForDkeyId(dkey, id)
+
+
+
+  trait Backend {
+    def save(data: MDomainQiAuthzTmp): Future[MDomainQiAuthzTmp]
+    def delete(dkey:String, id:String): Future[Any]
+    def getForDkeyId(dkey:String, id:String): Future[Option[MDomainQiAuthzTmp]]
+    //def listDkey(dkey: String): Future[List[MDomainQiAuthzTmp]]
   }
+  
+  
+  class DfsBackend extends Backend {
 
+    val tmpDirName = "qi_anon_tmp"
+    val tmpDir = new Path(SiobixFs.siobix_conf_path, tmpDirName)
 
-  /**
-   * Выдать список временных авторизация для указанного домена.
-   * @param dkey Ключ домена.
-   * @return Список сабжей в неопределенном порядке.
-   */
-  def listDkey(dkey:String): List[MDomainQiAuthzTmp] = {
-    val path = getDkeyDir(dkey)
-    fs.listStatus(path)
-      .toList
-      .foldLeft(List[MDomainQiAuthzTmp]()) { (acc, s) =>
-        readOneAcc[MDomainQiAuthzTmp](acc, s.getPath, fs)
+    def getDkeyDir(dkey:String): Path = {
+      new Path(tmpDir, dkey)
+    }
+
+    def getFilePath(dkey:String, qi_id:String): Path = {
+      new Path(tmpDir, dkey + "/" + qi_id)
+    }
+
+    def save(data: MDomainQiAuthzTmp): Future[MDomainQiAuthzTmp] = future {
+      val filepath = getFilePath(dkey=data.dkey, qi_id=data.id)
+      val os = fs.create(filepath)
+      try {
+        JsonDfsBackend.writeToPath(filepath, this)
+        data
+      } finally {
+        os.close()
       }
+    }
+
+    def delete(dkey: String, id: String): Future[Any] = future {
+      val filepath = getFilePath(dkey, id)
+      val result = deleteNr(filepath)
+      // Скорее всего, директория домена теперь пустая, и её тоже пора удалить для поддержания чистоты в tmp-директории модели.
+      deleteNr(filepath.getParent)
+      result
+    }
+
+    def getForDkeyId(dkey: String, id: String): Future[Option[MDomainQiAuthzTmp]] = future {
+      val filepath = getFilePath(dkey, id)
+      readOne[MDomainQiAuthzTmp](filepath, fs)
+    }
+
+    /*
+     * Выдать список временных авторизация для указанного домена.
+     * @param dkey Ключ домена.
+     * @return Список сабжей в неопределенном порядке.
+     */
+    /*def listDkey(dkey:String): List[MDomainQiAuthzTmp] = {
+      val path = getDkeyDir(dkey)
+      fs.listStatus(path)
+        .toList
+        .foldLeft(List[MDomainQiAuthzTmp]()) { (acc, s) =>
+          readOneAcc[MDomainQiAuthzTmp](acc, s.getPath, fs)
+        }
+    }*/
+
   }
 
 }

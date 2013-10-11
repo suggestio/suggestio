@@ -12,13 +12,14 @@ import io.suggest.util.StringUtil.randomId
 import util.event._
 import java.net.{MalformedURLException, URL}
 import io.suggest.util.UrlUtil
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import models.{MDomainQiAuthzTmp, MPersonDomainAuthz}
 import util.acl.PersonWrapper.PwOpt_t
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.LocalDate
 import play.api.Logger
 import play.api.Play.current
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -129,38 +130,51 @@ object DomainQi extends Logs {
    * @param session Исходные данные сессии.
    * @return Обновлённые данные сессии.
    */
-  def installFromSession(person_id:String)(implicit session:Session): Session = {
+  def installFromSession(person_id:String)(implicit session:Session): Future[Session] = {
     lazy val logPrefix = "installFromSession(%s): " format person_id
-    // Фильтр ключей сессии имеет сайд-эффекты.
-    val sessData1 = session.data.filter { case (k, v)  =>
-      skey2dkey(k) match {
-        // Это сериализованый ключ домена. Нужно продолжить анализ.
-        case Some(dkey) =>
-          // Пора распарсить и проанализировать значение по ключу.
-          val Array(qi_id, dtQi) = v.split(qiDtSepCh)
-          MPersonDomainAuthz.getForPersonDkey(dkey, person_id).map { da =>
+    // Разделить карту сессии на относящихся к qi и остальные.
+    val sesMap = session.data.groupBy { case (k,_) => isSkey(k) }
+    // Относящиеся к qi данные параллельно проанализировать на профпригодность.
+    val skeySession = sesMap.getOrElse(true, Map.empty)
+    Future.traverse(skeySession) { case kv @ (k, v) =>
+      val dkey = skey2dkey(k)
+      // Пора распарсить и проанализировать значение по ключу.
+      val Array(qi_id, dtQi) = v split qiDtSepCh
+      // Надо ли оставить этот элемент сессии (true)? Или стереть?
+      val keepFut = MPersonDomainAuthz.getForPersonDkey(dkey, person_id) flatMap {
+        case Some(da) =>
           // Зареганный юзер проходил qi-проверку. Если прошел, то значит предикат должен вернуть false.
-            !da.is_verified
+          Future.successful(!da.is_verified)
 
-          } getOrElse {
-            MDomainQiAuthzTmp.get(dkey, qi_id) map { dqia =>
+        case None =>
+          MDomainQiAuthzTmp.getForDkeyId(dkey, qi_id) flatMap {
             // Анонимус добавлял сайт и успешно прошел qi-проверку. Нужно перенести сайт к зареганному анонимусу
-              logger.debug(logPrefix + " approving (%s %s) to ex-anon".format(dkey, qi_id))
-              MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, person_id=person_id, is_verified=true).save
-              dqia.delete
-              false
+            case Some(dqia) =>
+              logger.debug(logPrefix + s" approving ($dkey $qi_id) to ex-anon")
+              // side-effects:
+              MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, person_id=person_id, is_verified=true).save flatMap {_ =>
+                // Удалить анонимный qi из базы и из сессии, ибо больше не нужен.
+                dqia.delete map { _ => false }
+              }
 
-            } getOrElse {
-              // Юзер не проходил проверок, или прошел но неудачно. Нужно проверить, не истекло ли время хранения qi в сессии.
-              dtQi.toInt >= dtQiNow.toInt - qiInSessionDaysMax
-            }
+            // Юзер не проходил проверок, или прошел но неудачно. Нужно проверить, не истекло ли время хранения qi в сессии.
+            case None =>
+              val result = dtQi.toInt >= dtQiNow.toInt - qiInSessionDaysMax
+              Future successful result
           }
-
-        // Другие элементы сессии здесь не интересны. Не трогаем их.
-        case None => true
       }
+      keepFut map {
+        case true  => Some(kv)
+        case false => None
+      }
+    }.map { skeySession2 =>
+      val otherSession = sesMap.getOrElse(false, Map.empty).toList
+      val s2 = skeySession2.foldLeft(otherSession) {
+        case (accSes, Some(kv)) => kv :: accSes
+        case (accSes, None)     => accSes
+      }
+      session.copy(s2.toMap)
     }
-    session.copy(sessData1)
   }
 
 
@@ -177,12 +191,14 @@ object DomainQi extends Logs {
    * @param skey Строка ключа сессии.
    * @return Some(dkey) если ключ является dkey с пометкой qi. Иначе None.
    */
-  def skey2dkey(skey:String) : Option[String] = {
-    if (skey.startsWith(skeyPrefixStr))
-      Some(skey.substring(1))
+  def skey2dkeyOpt(skey:String) : Option[String] = {
+    if (isSkey(skey))
+      Some(skey2dkey(skey))
     else
       None
   }
+  def skey2dkey(skey: String): String = skey.substring(skeyPrefixStr.length)
+  def isSkey(skey: String): Boolean = skey startsWith skeyPrefixStr
 
 
   private val urlProtoAllowedRe = "(?i)https?".r

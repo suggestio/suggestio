@@ -9,6 +9,8 @@ import io.suggest.model.JsonDfsBackend
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.util.UUID
 import scala.concurrent.duration._
+import scala.concurrent.{Future, future}
+import play.api.libs.concurrent.Execution.Implicits._
 
 /**
  * Suggest.io
@@ -31,23 +33,18 @@ case class MPersonDomainAuthz(
   var last_errors       : List[String] = Nil
 ) extends MDomainAuthzT {
 
-  import MPersonDomainAuthz.{TYPE_QI, TYPE_VALIDATION, genBodyCodeValidation, VERIFY_DURATION_SOFT, VERIFY_DURATION_HARD, dkeyPersonPath}
+  import MPersonDomainAuthz._
 
   // Связи с другими моделями и компонентами системы.
   @JsonIgnore def person = MPerson.getById(person_id)
-  @JsonIgnore def maybeRevalidate(sendEvents:Boolean = true) = DomainValidator.maybeRevalidate(this, sendEvents)
-  @JsonIgnore def revalidate(sendEvents:Boolean = true)      = DomainValidator.revalidate(this, sendEvents)
+  def maybeRevalidate(sendEvents:Boolean = true) = DomainValidator.maybeRevalidate(this, sendEvents)
+  def revalidate(sendEvents:Boolean = true)      = DomainValidator.revalidate(this, sendEvents)
 
-
-  private lazy val filepath = dkeyPersonPath(dkey, person_id)
 
   /**
    * Сохранить текущий экземпляр класса в базу.
    */
-  def save: MPersonDomainAuthz = {
-    JsonDfsBackend.writeToPath(filepath, this)
-    this
-  }
+  def save = BACKEND.save(this)
 
   def isQiType = typ == TYPE_QI
   def isValidationType = typ == TYPE_VALIDATION
@@ -56,18 +53,13 @@ case class MPersonDomainAuthz(
    * Убедиться, что это добро подходит для qi. Validation-тип не конвертим в qi, ибо это пока не требуется.
    * @return Инсанс, подходящий для qi. Обычно функция возвращает this.
    */
-  def toQi: MPersonDomainAuthz = {
-    if (isQiType)
-      this
-    else
-      ???
-  }
+  @JsonIgnore def toQi: MPersonDomainAuthz = if (isQiType) this else ???
 
   /**
    * Сделать объект validation. Если текущий класс уже есть validation, то вернуть this. Иначе, сгенерить новый, заполнив body_code.
    * @return Экземпляр класса, имеющего тип равный qi.
    */
-  def toValidation: MPersonDomainAuthz = {
+  @JsonIgnore def toValidation: MPersonDomainAuthz = {
     if (isValidationType)
       this
     else if (isQiType) {
@@ -85,12 +77,7 @@ case class MPersonDomainAuthz(
    * Обернуть body_code в option.
    * @return для qi-ключей обычно None. Для Validation-ключей всегда Some()
    */
-  override def bodyCodeOpt = {
-    if (body_code == "")
-      None
-    else
-      Some(body_code)
-  }
+  def bodyCodeOpt = if (body_code == "") None  else  Some(body_code)
 
 
   /**
@@ -105,14 +92,14 @@ case class MPersonDomainAuthz(
    */
   def isNeedRevalidation = !is_verified || breaksSoftLimit
 
-  def breaksHardLimit = breaksLimit(VERIFY_DURATION_HARD)
-  def breaksSoftLimit = breaksLimit(VERIFY_DURATION_SOFT)
+  @JsonIgnore def breaksHardLimit = breaksLimit(VERIFY_DURATION_HARD)
+  @JsonIgnore def breaksSoftLimit = breaksLimit(VERIFY_DURATION_SOFT)
   def breaksLimit(limit:ReadableDuration): Boolean = {
     dt_last_checked.minus(limit) isAfter DateTime.now
   }
 
 
-  def delete = fs.delete(filepath, false)
+  def delete = MPersonDomainAuthz.delete(person_id=person_id, dkey=dkey)
   def personIdOpt: Option[String] = Some(person_id)
 
   /**
@@ -121,26 +108,26 @@ case class MPersonDomainAuthz(
    * @return Строка ссылки, которая будет использована как основа для проверки.
    */
   def fileUrl(isUnicode: Boolean = false): String = {
-    val hostname = if(isUnicode)
-      dkeyUnicode
-    else
-      dkey
-    "http://" + hostname + "/" + filename
+    val hostname = if (isUnicode) dkeyUnicode else dkey
+    "http://" + hostname + "/" + remoteFilename
   }
 
-  def filename: String = id + ".txt"
+  def remoteFilename: String = id + ".txt"
 
-  override def authzForPerson(_person_id: String): Option[MPersonDomainAuthz] = {
-    if (person_id == _person_id)
-      Some(this)
-    else
+  override def authzForPerson(_person_id: String): Future[Option[MPersonDomainAuthz]] = {
+    if (person_id == _person_id) {
+      Future.successful(Some(this))
+    } else {
       super.authzForPerson(person_id)
+    }
   }
 }
 
 
 // Статическая часть модели
 object MPersonDomainAuthz extends Logs {
+
+  private val BACKEND = new DfsBackend
 
   // Длина кода валидации
   private val BODY_CODE_LEN = 16
@@ -155,38 +142,8 @@ object MPersonDomainAuthz extends Logs {
   // Превышения хард-лимита означает, что верификация уже истекла и её нужно проверять заново.
   private val VERIFY_DURATION_HARD = new Duration(40.minutes.toMillis)
 
-  // Имя файла, в котором хранятся все данные модели. Инфа важная, поэтому менять или ставить в зависимость от имени класса нельзя.
-  private val fileName = new Path("authz")
-
-  private val personSubdir = new Path("domains")
-
   // Дата, точность которой не важна и которая используется как "давно/никогда".
   private val dtDefault = new DateTime(1970, 1, 1, 0, 0)
-
-  /**
-   * Путь к поддиректории юзера с доменами. Вероятно, следует вынести в отдельную модель.
-   * @param person_id id юзера
-   * @return Путь к поддиректории domains в директории указанного юзера.
-   */
-  private def personPath(person_id:String) = new Path(DfsModelUtil.getPersonPath(person_id), personSubdir)
-
-  /**
-   * Путь к файлу данных по указанному юзеру в рамках домена. Имеет вид m_person/putin@kremlin.ru/sugggest.io/authz
-   * @param dkey ключ домена
-   * @param person_id id юзера, т.е. email
-   * @return Путь, указывающий на файл авторизации в папке доменов юзера. Часть этой функции имеет смысл вынести в MPersonDomain.
-   */
-  private def dkeyPersonPath(dkey:String, person_id:String) = {
-    val personDir = personPath(person_id)
-    val personDkeyDir = new Path(personDir, dkey)
-    authzFilePath(personDkeyDir)
-  }
-
-  /**
-   * Выдать путь к файлу с данными авторизации.
-   * @param personDkeyDir папка домена внутри папки пользователя.
-   */
-  private def authzFilePath(personDkeyDir: Path) = new Path(personDkeyDir, fileName)
 
 
   /**
@@ -195,10 +152,7 @@ object MPersonDomainAuthz extends Logs {
    * @param person_id id юзера
    * @return
    */
-  def getForPersonDkey(dkey:String, person_id:String) : Option[MPersonDomainAuthz] = {
-    val path = dkeyPersonPath(dkey, person_id)
-    readOne(path)
-  }
+  def getForPersonDkey(dkey:String, person_id:String) = BACKEND.getForPersonDkey(dkey, person_id)
 
 
   /**
@@ -206,55 +160,7 @@ object MPersonDomainAuthz extends Logs {
    * @param person_id id юзера
    * @return Список сохраненных авторизаций, в т.ч. пустой. В алфавитном порядке.
    */
-  def getForPerson(person_id:String): List[MPersonDomainAuthz] = {
-    val personDomainsDir = personPath(person_id)
-    fs.listStatus(personDomainsDir).foldLeft[List[MPersonDomainAuthz]] (Nil) { (acc, fstatus) =>
-      if (fstatus.isDir) {
-        val authzPath = authzFilePath(fstatus.getPath)
-        readOneAcc(acc, authzPath)
-
-      } else {
-        acc
-      }
-    } sortBy(_.dkey)
-  }
-
-
-  /**
-   * Аккуратненько прочитать файл. Если файла нет или чтение не удалось, то в логах будет экзепшен и None в результате.
-   * @param path путь, который читать.
-   * @return Option[MDomainPerson]
-   */
-  protected def readOne(path:Path) : Option[MPersonDomainAuthz] = {
-    DfsModelUtil.readOne[MPersonDomainAuthz](path)
-  }
-
-
-
-  /**
-   * Враппер над readOne для удобства вызова из foldLeft()().
-   * @param acc аккамулятор типа List[MDomainPerson]
-   * @param path путь, из которого стоит читать данные
-   * @return аккамулятор
-   */
-  protected def readOneAcc(acc:List[MPersonDomainAuthz], path:Path) : List[MPersonDomainAuthz] = {
-    DfsModelUtil.readOneAcc[MPersonDomainAuthz](acc, path)
-  }
-
-
-  /*
-   * Собрать все идентификации для домена в один список (в неопределенном порядке)
-   * @param dkey
-   * @return
-   */
-  /*def getForDkey(dkey:String) : List[MPersonDomainAuthz] = {
-    val path = dkeyAllPath(dkey)
-    fs.listStatus(path)
-      .toList
-      .foldLeft(List[MPersonDomainAuthz]()) { (acc, fstatus:FileStatus) =>
-        readOneAcc(acc, fstatus.getPath)
-      }
-  }*/
+  def getForPerson(person_id:String) = BACKEND.getForPerson(person_id) map { _.sortBy(_.dkey) }
 
 
   /**
@@ -262,12 +168,8 @@ object MPersonDomainAuthz extends Logs {
    * @param person_id мыльник
    * @return
    */
-  def getForPersonDkeys(person_id:String, dkeys:Iterable[String]) : List[MPersonDomainAuthz] = {
-    dkeys
-      .map { dkeyPersonPath(_, person_id) }
-      .filter { fs.exists _ }
-      .foldLeft(List[MPersonDomainAuthz]()) { readOneAcc _ }
-  }
+  def getForPersonDkeys(person_id:String, dkeys:Iterable[String]) = BACKEND.getForPersonDkeys(person_id, dkeys)
+
 
 
   /**
@@ -316,9 +218,126 @@ object MPersonDomainAuthz extends Logs {
    * @param dkey id ключа.
    * @return true, если файл удален. Иначе - false
    */
-  def delete(person_id:String, dkey:String): Boolean = {
-    val path = dkeyPersonPath(dkey, person_id)
-    fs.delete(path, false)
+  def delete(person_id:String, dkey:String) = BACKEND.delete(person_id=person_id, dkey=dkey)
+
+
+  /** Интерфейс для storage backend'ов этой модели. */
+  trait Backend {
+    def save(data: MPersonDomainAuthz): Future[MPersonDomainAuthz]
+    def delete(person_id:String, dkey:String): Future[Any]
+    def getForPersonDkey(dkey:String, person_id:String) : Future[Option[MPersonDomainAuthz]]
+    def getForPersonDkeys(person_id:String, dkeys:Iterable[String]) : Future[List[MPersonDomainAuthz]]
+    def getForPerson(person_id:String): Future[List[MPersonDomainAuthz]]
+    //def getForDkey(dkey:String) : Future[List[MPersonDomainAuthz]]
+  }
+
+
+  /** Backend для хранения данных модели в DFS. */
+  class DfsBackend extends Backend {
+    // Имя файла, в котором хранятся все данные модели. Инфа важная, поэтому менять или ставить в зависимость от имени класса нельзя.
+    private val fileName = new Path("authz")
+
+    private val personSubdir = new Path("domains")
+
+    /**
+     * Путь к поддиректории юзера с доменами. Вероятно, следует вынести в отдельную модель.
+     * @param person_id id юзера
+     * @return Путь к поддиректории domains в директории указанного юзера.
+     */
+    private def personPath(person_id:String) = new Path(DfsModelUtil.getPersonPath(person_id), personSubdir)
+
+    /**
+     * Путь к файлу данных по указанному юзеру в рамках домена. Имеет вид m_person/putin@kremlin.ru/sugggest.io/authz
+     * @param dkey ключ домена
+     * @param person_id id юзера, т.е. email
+     * @return Путь, указывающий на файл авторизации в папке доменов юзера. Часть этой функции имеет смысл вынести в MPersonDomain.
+     */
+    private def dkeyPersonPath(dkey:String, person_id:String) = {
+      val personDir = personPath(person_id)
+      val personDkeyDir = new Path(personDir, dkey)
+      authzFilePath(personDkeyDir)
+    }
+
+    /**
+     * Выдать путь к файлу с данными авторизации.
+     * @param personDkeyDir папка домена внутри папки пользователя.
+     */
+    private def authzFilePath(personDkeyDir: Path) = new Path(personDkeyDir, fileName)
+
+
+    /**
+     * Аккуратненько прочитать файл. Если файла нет или чтение не удалось, то в логах будет экзепшен и None в результате.
+     * @param path путь, который читать.
+     * @return Option[MDomainPerson]
+     */
+    private def readOne(path:Path) : Option[MPersonDomainAuthz] = {
+      DfsModelUtil.readOne[MPersonDomainAuthz](path)
+    }
+
+
+    /**
+     * Враппер над readOne для удобства вызова из foldLeft()().
+     * @param acc аккамулятор типа List[MDomainPerson]
+     * @param path путь, из которого стоит читать данные
+     * @return аккамулятор
+     */
+    private def readOneAcc(acc:List[MPersonDomainAuthz], path:Path) : List[MPersonDomainAuthz] = {
+      DfsModelUtil.readOneAcc[MPersonDomainAuthz](acc, path)
+    }
+
+
+    /*
+     * Собрать все идентификации для домена в один список (в неопределенном порядке)
+     * @param dkey
+     * @return
+     */
+    /*def getForDkey(dkey:String) : List[MPersonDomainAuthz] = {
+      val path = dkeyAllPath(dkey)
+      fs.listStatus(path)
+        .toList
+        .foldLeft(List[MPersonDomainAuthz]()) { (acc, fstatus:FileStatus) =>
+          readOneAcc(acc, fstatus.getPath)
+        }
+    }*/
+
+
+    def save(data: MPersonDomainAuthz): Future[MPersonDomainAuthz] = {
+      val filepath = dkeyPersonPath(dkey = data.dkey,  person_id = data.person_id)
+      future {
+        JsonDfsBackend.writeToPath(filepath, data)
+        data
+      }
+    }
+
+    def delete(person_id: String, dkey: String): Future[Any] = {
+      val path = dkeyPersonPath(dkey, person_id)
+      future { fs.delete(path, false) }
+    }
+
+    def getForPersonDkey(dkey: String, person_id: String): Future[Option[MPersonDomainAuthz]] = {
+      val path = dkeyPersonPath(dkey, person_id)
+      future { readOne(path) }
+    }
+
+    def getForPersonDkeys(person_id: String, dkeys: Iterable[String]): Future[List[MPersonDomainAuthz]] = future {
+      dkeys
+        .map { dkeyPersonPath(_, person_id) }
+        .filter { fs.exists }
+        .foldLeft[List[MPersonDomainAuthz]] (Nil) { readOneAcc }
+    }
+
+    def getForPerson(person_id: String): Future[List[MPersonDomainAuthz]] = future {
+      val personDomainsDir = personPath(person_id)
+      fs.listStatus(personDomainsDir).foldLeft[List[MPersonDomainAuthz]] (Nil) { (acc, fstatus) =>
+        if (fstatus.isDir) {
+          val authzPath = authzFilePath(fstatus.getPath)
+          readOneAcc(acc, authzPath)
+
+        } else {
+          acc
+        }
+      }
+    }
   }
 
 }

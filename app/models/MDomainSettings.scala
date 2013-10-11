@@ -2,7 +2,7 @@ package models
 
 import play.api.cache.Cache
 import play.api.Play.current
-import io.suggest.model.{DomainSettingsT, DomainSettings, DomainSettingsStaticT}
+import io.suggest.model.{DomainSettingsT, DomainSettingsStaticT}
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
