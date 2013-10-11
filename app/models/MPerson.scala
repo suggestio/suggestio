@@ -1,9 +1,14 @@
 package models
 
-import org.apache.hadoop.fs.Path
-import util.SiobixFs
+import util.{StorageUtil, ModelSerialJson, SiobixFs}
 import SiobixFs.fs
 import io.suggest.model.JsonDfsBackend
+import util.DfsModelUtil.getPersonPath
+import scala.concurrent.{Future, future}
+import play.api.libs.concurrent.Execution.Implicits._
+import org.hbase.async.{GetRequest, PutRequest}
+import scala.collection.JavaConversions._
+import StorageUtil.StorageType._
 
 /**
  * Suggest.io
@@ -15,26 +20,23 @@ import io.suggest.model.JsonDfsBackend
 
 case class MPerson(
   id : String,
-  var dkeys : List[String] = List() // список доменов на панели доменов юзера
+  var dkeys : List[String] = Nil // список доменов на панели доменов юзера
 ) extends MPersonLinks {
+  import MPerson.BACKEND
 
   // Линки в другие модели.
   def authz = MPersonDomainAuthz.getForPersonDkeys(id, dkeys)
 
   /**
    * Сохранить отметку о таком юзере
-   * @return
+   * @return Фьючерс с сохраненным экземпляром MPerson.
    */
-  def save = {
-    val path = MPerson.getPath(id)
-    JsonDfsBackend.writeToPath(path, this)
-    this
-  }
+  def save = BACKEND.save(id, this)
 
 
   /**
    * Добавить домен в список доменов, относящихся к юзеру. Затем нужно вызвать save.
-   * @param dkey
+   * @param dkey Ключ домена.
    * @return
    */
   def addDkey(dkey:String) : MPerson = {
@@ -69,42 +71,23 @@ trait MPersonLinks {
 // Статическая часть модели.
 object MPerson {
 
-  // Список емейлов админов suggest.io.
-  protected val adminEmails = Set("konstantin.nikiforov@cbca.ru", "ilya@shuma.ru", "sasha@cbca.ru")
+  private val BACKEND: Backend = {
+    StorageUtil.STORAGE match {
+      case DFS    => new DfsBackend
+      case HBASE  => new HBaseBackend
+    }
+    new DfsBackend
+  }
 
-  // Путь хранилища модели в hdfs
-  protected val model_path = new Path(SiobixFs.siobix_conf_path, "m_person")
+  // Список емейлов админов suggest.io. Пока преднамеренно захардкожен, потом -- посмотрим.
+  protected val adminEmails = Set("konstantin.nikiforov@cbca.ru", "ilya@shuma.ru", "sasha@cbca.ru")
 
   /**
    * Прочитать объект Person из хранилища.
    * @param id адрес эл.почты, который вернула Mozilla Persona и который используется для идентификации юзеров.
-   * @return опциональный Person.
+   * @return Фьючерс с опциональным MPerson.
    */
-  def getById(id:String) : Option[MPerson] = {
-    val filePath = getPath(id)
-    fs.exists(filePath) match {
-      // Файл с данными по юзеру пуст - поэтому можно его не читать, а просто сделать необходимый объект.
-      case true =>
-        val person = JsonDfsBackend.getAs[MPerson](filePath, fs).get
-        Some(person)
-
-      case false => None
-    }
-  }
-
-
-  /**
-   * Сгенерить путь в ФС для мыльника
-   * @param person_id мыло
-   * @return путь в ФС
-   */
-  def getPath(person_id:String) = {
-    val filePath = new Path(model_path, person_id)
-    if (filePath.getParent == model_path && filePath.getName == person_id)
-      filePath
-    else
-      throw new SecurityException("Incorrect email address: " + person_id)
-  }
+  def getById(id: String) = BACKEND.getById(id)
 
 
   /**
@@ -113,5 +96,63 @@ object MPerson {
    * @return
    */
   def isAdmin(email:String) = adminEmails.contains(email)
+
+
+  /** Интерфейс storage backend'а. для данной модели */
+  trait Backend {
+    def save(id: String, data:MPerson): Future[MPerson]
+    def getById(id: String): Future[Option[MPerson]]
+  }
+
+
+  /** DFS-backend для текущей модели. */
+  class DfsBackend extends Backend {
+    def save(id: String, data: MPerson): Future[MPerson] = {
+      val path = getPersonPath(id)
+      future {
+        JsonDfsBackend.writeToPath(path, this)
+        data
+      }
+    }
+
+    def getById(id: String): Future[Option[MPerson]] = {
+      val filePath = getPersonPath(id)
+      future {
+        fs.exists(filePath) match {
+          // Файл с данными по юзеру пуст - поэтому можно его не читать, а просто сделать необходимый объект.
+          case true =>
+            val person = JsonDfsBackend.getAs[MPerson](filePath, fs).get
+            Some(person)
+
+          case false => None
+        }
+      }
+    }
+  }
+
+
+  /** Hbase backend для текущей модели */
+  class HBaseBackend extends Backend with ModelSerialJson {
+    import io.suggest.model.MObject.{HTABLE_NAME_BYTES, CF_UPROPS}
+    import io.suggest.model.SioHBaseAsyncClient._
+
+    val KEYPREFIX = "mperson:"
+    def QUALIFIER = CF_UPROPS
+
+    def id2key(id: String) = (KEYPREFIX + id).getBytes
+    def deserialize(data: Array[Byte]) = deserializeTo[MPerson](data)
+
+    def save(id: String, data: MPerson): Future[MPerson] = {
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, id2key(id), CF_UPROPS, QUALIFIER, serialize(data))
+      ahclient.put(putReq).map(_ => data)
+    }
+
+    def getById(id: String): Future[Option[MPerson]] = {
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, id2key(id)).family(CF_UPROPS).qualifier(QUALIFIER)
+      ahclient.get(getReq) map { al =>
+        if (al.isEmpty) None else Some(deserialize(al.head.value()))
+      }
+    }
+  }
 
 }

@@ -21,7 +21,6 @@ trait MDomainAuthzT extends DkeyModelT {
   @JsonIgnore def delete: Boolean
   @JsonIgnore def isValid: Boolean
   @JsonIgnore def isNeedRevalidation: Boolean
-  @JsonIgnore def filepath: Path
   @JsonIgnore def isQiType: Boolean
   @JsonIgnore def isValidationType: Boolean
   @JsonIgnore def save: MDomainAuthzT
@@ -44,7 +43,6 @@ case class MPersonDomainAuthzAdmin(
   def delete: Boolean = false
   def isValid: Boolean = true
   def isNeedRevalidation: Boolean = false
-  def filepath: Path = null
   def isQiType: Boolean = false
   def isValidationType: Boolean = false
   def save = this

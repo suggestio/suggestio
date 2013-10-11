@@ -3,6 +3,8 @@ package util
 import org.apache.hadoop.fs.{FileSystem, Path}
 import io.suggest.model.JsonDfsBackend
 import SiobixFs.fs
+import io.suggest.util.JacksonWrapper
+import java.io.ByteArrayInputStream
 
 /**
  * Suggest.io
@@ -58,6 +60,25 @@ object DfsModelUtil extends Logs {
     }
   }
 
+
+  // MPerson: вынесено сюда для доступа из DFS-Backend'ов DFS моделей.
+  val personModelPath = new Path(SiobixFs.siobix_conf_path, "m_person")
+
+  /**
+   * Сгенерить путь в ФС для мыльника
+   * @param person_id мыло
+   * @return путь в ФС
+   */
+  def getPersonPath(person_id:String) = {
+    val filePath = new Path(personModelPath, person_id)
+    if (filePath.getParent == personModelPath && filePath.getName == person_id) {
+      filePath
+    } else {
+      throw new SecurityException("Incorrect email address: " + person_id)
+    }
+  }
+
+
 }
 
 
@@ -76,3 +97,13 @@ trait DfsModelStaticT {
     new Path(SiobixFs.dkeyPathConf(dkey), filename)
   }
 }
+
+
+trait ModelSerialJson {
+  def serialize(v: Any) = JacksonWrapper.serialize(v).getBytes
+  def deserializeTo[T: Manifest](a: Array[Byte]): T = {
+    val bais = new ByteArrayInputStream(a)
+    JacksonWrapper.deserialize[T](bais)
+  }
+}
+

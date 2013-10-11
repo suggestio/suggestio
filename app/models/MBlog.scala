@@ -1,9 +1,8 @@
 package models
 
 import org.joda.time.DateTime
-import util.DfsModelUtil
+import util._
 import org.apache.hadoop.fs.Path
-import util.{Logs, SiobixFs, StorageUtil}
 import StorageUtil.StorageType._
 import io.suggest.model._
 import util.DateTimeUtil.dateTimeOrdering
@@ -11,10 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits._
 import org.hbase.async.{KeyValue, DeleteRequest, GetRequest, PutRequest}
-import io.suggest.util.JacksonWrapper
-import java.io.ByteArrayInputStream
 import scala.collection.JavaConversions._
-import scala.Some
 
 /**
  * Suggest.io
@@ -67,7 +63,7 @@ object MBlog extends Logs {
    */
   def getAll = {
     BACKEND.getAll
-      // Отсортировтаь записи в порядке убывания.
+      // Отсортировать записи в порядке убывания.
       .map { _.sortBy(_.date).reverse }
   }
 
@@ -87,12 +83,38 @@ object MBlog extends Logs {
   def getById(id: String) = BACKEND.getById(id)
 
 
+  /** Интерфейс для storage-backend'ов этой модели. */
   trait Backend {
+    /**
+     * Сохранение экземпляра MBlog в хранилище. Если запись уже существует, то она будет перезаписана
+     * (или появится её новая версия в случае с HBase).
+     * @param id id, под которым будем сохранять.
+     * @param data Данные - экземпляр MBlog.
+     * @return Фьючес с сохраненным MBlog. Обычно, это тот же экземпляр, что и исходный data.
+     */
     def save(id: String, data:MBlog): Future[MBlog]
+
+    /**
+     * Чтения элемента по id.
+     * @param id id записи блога.
+     * @return Фьючерс с найденной записью, если такая существует.
+     */
     def getById(id: String): Future[Option[MBlog]]
+
+    /**
+     * Прочитать все данные блога.
+     * @return Фьючерс со списком записей, новые в начале.
+     */
     def getAll: Future[List[MBlog]]
-    def delete(id: String): Future[Unit]
+
+    /**
+     * Удалить запись блога.
+     * @param id id записи блога.
+     * @return Фьючерс без значения.
+     */
+    def delete(id: String): Future[Any]
   }
+
 
   /** Backend для хранения в DFS. */
   class DfsBackend extends Backend {
@@ -121,7 +143,7 @@ object MBlog extends Logs {
       }
     }
 
-    def delete(id: String): Future[Unit] = future {
+    def delete(id: String): Future[Any] = future {
       val path = getFilePath(id)
       fs.delete(path, false)
     }
@@ -129,22 +151,19 @@ object MBlog extends Logs {
 
 
   /** Backend для хранения в HBase. Используем таблицу obj. */
-  class HBaseBackend extends Backend {
+  class HBaseBackend extends Backend with ModelSerialJson {
     import SioHBaseAsyncClient._
     import MObject.{HTABLE_NAME_BYTES, CF_BLOG}
+
+    // TODO проверить и убедится, что таблица существует.
 
     val KEYPREFIX = "mblog:"
     def QUALIFIER = CF_BLOG
 
-    // TODO проверить и убедится, что таблица существует.
+    // TODO Ключ надо использовать для сортировки по дате.
     def id2key(id: String) = (KEYPREFIX + id).getBytes
 
-    def serialize(data: MBlog) = JacksonWrapper.serialize(data).getBytes
-
-    def deserialize(data: Array[Byte]): MBlog = {
-      val bais = new ByteArrayInputStream(data)
-      JacksonWrapper.deserialize[MBlog](bais)
-    }
+    def deserialize(data: Array[Byte]) = deserializeTo[MBlog](data)
 
     def save(id: String, data: MBlog): Future[MBlog] = {
       val key = id2key(id)
@@ -180,13 +199,14 @@ object MBlog extends Logs {
       folder(Nil, scanner)
     }
 
-    def delete(id: String): Future[Unit] = {
+    def delete(id: String): Future[Any] = {
       val key = id2key(id)
       val delReq = new DeleteRequest(HTABLE_NAME_BYTES, key)
-      ahclient.delete(delReq).map(_ => ())
+      ahclient.delete(delReq)
     }
   }
 
 
   case class MBlogAsyncFoldException(ex:Throwable, accLast:List[MBlog]) extends RuntimeException
 }
+

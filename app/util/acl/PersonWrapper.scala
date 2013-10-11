@@ -2,6 +2,8 @@ package util.acl
 
 import models.{MPerson, MPersonLinks}
 import play.api.mvc._, Security.username
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 object PersonWrapper {
 
@@ -29,5 +31,7 @@ object PersonWrapper {
  * @param id id юзера
  */
 case class PersonWrapper(id: String) extends MPersonLinks {
-  lazy val person = MPerson.getById(id).get
+  // TODO Надо будет это оптимизировать. Если .person будет нужен почти везде, то надо запрос фьючерса отделить от Await
+  //      в отдельный val класса. На текущий момент этот вызов нигде не используется, поэтому целиком lazy.
+  lazy val person = Await.result(MPerson.getById(id), 5 seconds).get
 }

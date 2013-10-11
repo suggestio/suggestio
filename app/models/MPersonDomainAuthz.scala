@@ -34,12 +34,12 @@ case class MPersonDomainAuthz(
   import MPersonDomainAuthz.{TYPE_QI, TYPE_VALIDATION, genBodyCodeValidation, VERIFY_DURATION_SOFT, VERIFY_DURATION_HARD, dkeyPersonPath}
 
   // Связи с другими моделями и компонентами системы.
-  @JsonIgnore def person = MPerson.getById(person_id).get
+  @JsonIgnore def person = MPerson.getById(person_id)
   @JsonIgnore def maybeRevalidate(sendEvents:Boolean = true) = DomainValidator.maybeRevalidate(this, sendEvents)
   @JsonIgnore def revalidate(sendEvents:Boolean = true)      = DomainValidator.revalidate(this, sendEvents)
 
 
-  lazy val filepath = dkeyPersonPath(dkey, person_id)
+  private lazy val filepath = dkeyPersonPath(dkey, person_id)
 
   /**
    * Сохранить текущий экземпляр класса в базу.
@@ -143,32 +143,32 @@ case class MPersonDomainAuthz(
 object MPersonDomainAuthz extends Logs {
 
   // Длина кода валидации
-  val BODY_CODE_LEN = 16
+  private val BODY_CODE_LEN = 16
 
   // Допустимые значения поля typ класса.
-  val TYPE_QI         = "qi"
-  val TYPE_VALIDATION = "va"
+  private val TYPE_QI         = "qi"
+  private val TYPE_VALIDATION = "va"
 
   // Нужно периодически обновлять данные по валидности доступа. Софт и хард лимиты описывают периодичность проверок.
   // Софт-лимит не ломает верификацию, однако намекает что надо бы сделать повторную проверку.
-  val VERIFY_DURATION_SOFT = new Duration(25.minutes.toMillis)
+  private val VERIFY_DURATION_SOFT = new Duration(25.minutes.toMillis)
   // Превышения хард-лимита означает, что верификация уже истекла и её нужно проверять заново.
-  val VERIFY_DURATION_HARD = new Duration(40.minutes.toMillis)
+  private val VERIFY_DURATION_HARD = new Duration(40.minutes.toMillis)
 
   // Имя файла, в котором хранятся все данные модели. Инфа важная, поэтому менять или ставить в зависимость от имени класса нельзя.
-  val fileName = new Path("authz")
+  private val fileName = new Path("authz")
 
-  val personSubdir = new Path("domains")
+  private val personSubdir = new Path("domains")
 
   // Дата, точность которой не важна и которая используется как "давно/никогда".
-  val dtDefault = new DateTime(1970, 1, 1, 0, 0)
+  private val dtDefault = new DateTime(1970, 1, 1, 0, 0)
 
   /**
    * Путь к поддиректории юзера с доменами. Вероятно, следует вынести в отдельную модель.
    * @param person_id id юзера
    * @return Путь к поддиректории domains в директории указанного юзера.
    */
-  def personPath(person_id:String) = new Path(MPerson.getPath(person_id), personSubdir)
+  private def personPath(person_id:String) = new Path(DfsModelUtil.getPersonPath(person_id), personSubdir)
 
   /**
    * Путь к файлу данных по указанному юзеру в рамках домена. Имеет вид m_person/putin@kremlin.ru/sugggest.io/authz
@@ -176,7 +176,7 @@ object MPersonDomainAuthz extends Logs {
    * @param person_id id юзера, т.е. email
    * @return Путь, указывающий на файл авторизации в папке доменов юзера. Часть этой функции имеет смысл вынести в MPersonDomain.
    */
-  def dkeyPersonPath(dkey:String, person_id:String) = {
+  private def dkeyPersonPath(dkey:String, person_id:String) = {
     val personDir = personPath(person_id)
     val personDkeyDir = new Path(personDir, dkey)
     authzFilePath(personDkeyDir)
@@ -186,7 +186,7 @@ object MPersonDomainAuthz extends Logs {
    * Выдать путь к файлу с данными авторизации.
    * @param personDkeyDir папка домена внутри папки пользователя.
    */
-  protected def authzFilePath(personDkeyDir: Path) = new Path(personDkeyDir, fileName)
+  private def authzFilePath(personDkeyDir: Path) = new Path(personDkeyDir, fileName)
 
 
   /**

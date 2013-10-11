@@ -6,7 +6,7 @@ import play.api.data._
 import play.api.data.Forms._
 import util.acl._
 import util._
-import play.api.mvc.{Action, Controller}
+import play.api.mvc.{SimpleResult, Action, Controller}
 import views.html.ident._
 import play.api.libs.concurrent.Promise.timeout
 import play.api.libs.concurrent.Execution.Implicits._
@@ -24,7 +24,7 @@ import play.api.mvc.Security.username
  * в будущем будет также и вход по имени/паролю для некоторых учетных записей.
  */
 
-object Ident extends Controller with ContextT with Logs {
+object Ident extends SioController with Logs {
 
   // URL, используемый для person'a. Если сие запущено на локалхосте, то надо менять этот адресок.
   val AUDIENCE_URL = current.configuration.getString("persona.audience.url").get
@@ -45,10 +45,9 @@ object Ident extends Controller with ContextT with Logs {
     request.pwOpt match {
       // Уже залогинен -- отправить в админку
       case Some(_) => rdrToAdmin
-      case None => Ok(personaTpl())
+      case None    => Ok(personaTpl())
     }
   }
-
 
   /**
    * Юзер завершает логин через persona. Нужно тут принять значения audience, проверить, залогинить юзера
@@ -59,7 +58,7 @@ object Ident extends Controller with ContextT with Logs {
     personaM.bindFromRequest.fold(
       formWithErrors => Future.successful(BadRequest)
       ,
-      { assertion =>
+      {assertion =>
         val reqBody : Map[String, Seq[String]] = Map(
           "assertion" -> Seq(assertion),
           "audience"  -> Seq(AUDIENCE_URL)
@@ -70,7 +69,7 @@ object Ident extends Controller with ContextT with Logs {
           .post(reqBody)
         // На время запроса неопределенной длительности необходимо освободить текущий поток, поэтому возвращаем фьючерс:
         val timeoutFuture = timeout("timeout", verifyReqFutureTimeout)
-        Future.firstCompletedOf(Seq(futureVerify, timeoutFuture)) map {
+        Future.firstCompletedOf(Seq(futureVerify, timeoutFuture)) flatMap {
           // Получен ответ от сервера mozilla persona.
           case resp:Response =>
             val respJson = resp.json
@@ -82,15 +81,21 @@ object Ident extends Controller with ContextT with Logs {
                   case JsString(AUDIENCE_URL) =>
                     // Запускаем юзера в студию
                     val email = (respJson \ "email").as[String].trim
-                    // Далее: сильно-блокирующий код, но на это плевать, т.к. мы уже находимся внутри фьючерса.
                     // Найти текущего юзера или создать нового:
-                    val person = MPerson.getById(email) getOrElse { new MPerson(email).save }
-                    // Заапрувить анонимно-добавленные и подтвержденные домены (qi)
-                    val session1 = DomainQi.installFromSession(person.id)
-                    // залогинить юзера наконец.
-                    rdrToAdmin
-                      .withSession(session1)
-                      .withSession(username -> person.id)
+                    MPerson.getById(email) flatMap { personOpt =>
+                      val personFut = personOpt match {
+                        case None    => new MPerson(email).save
+                        case Some(p) => Future successful p
+                      }
+                      personFut map { person =>
+                        // Заапрувить анонимно-добавленные и подтвержденные домены (qi)
+                        val session1 = DomainQi.installFromSession(person.id)
+                        // залогинить юзера наконец.
+                        rdrToAdmin
+                          .withSession(session1)
+                          .withSession(username -> person.id)
+                      }
+                    }
 
                   // Юзер подменил audience url, значит его assertion невалиден. Либо мы запустили на локалхосте продакшен.
                   case other =>
