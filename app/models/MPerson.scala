@@ -135,11 +135,12 @@ object MPerson {
   class HBaseBackend extends Backend with ModelSerialJson {
     import io.suggest.model.MObject.{HTABLE_NAME_BYTES, CF_UPROPS}
     import io.suggest.model.SioHBaseAsyncClient._
+    import io.suggest.model.HTapConversionsBasic._
 
     val KEYPREFIX = "mperson:"
     def QUALIFIER = CF_UPROPS
 
-    def id2key(id: String) = (KEYPREFIX + id).getBytes
+    def id2key(id: String): Array[Byte] = KEYPREFIX + id
     def deserialize(data: Array[Byte]) = deserializeTo[MPerson](data)
 
     def save(data: MPerson): Future[MPerson] = {

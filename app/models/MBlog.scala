@@ -153,6 +153,7 @@ object MBlog extends Logs {
   class HBaseBackend extends Backend with ModelSerialJson {
     import SioHBaseAsyncClient._
     import MObject.{HTABLE_NAME_BYTES, CF_BLOG}
+    import io.suggest.model.HTapConversionsBasic._
 
     // TODO проверить и убедится, что таблица существует.
 
@@ -160,7 +161,7 @@ object MBlog extends Logs {
     def QUALIFIER = CF_BLOG
 
     // TODO Ключ надо использовать для сортировки по дате.
-    def id2key(id: String) = (KEYPREFIX + id).getBytes
+    def id2key(id: String): Array[Byte] = KEYPREFIX + id
 
     def deserialize(data: Array[Byte]) = deserializeTo[MBlog](data)
 

@@ -157,9 +157,10 @@ object MDomainQiAuthzTmp extends Logs {
   class HBaseBackend extends Backend with ModelSerialJson {
     import io.suggest.model.MObject.{CF_DQI, HTABLE_NAME_BYTES}
     import io.suggest.model.SioHBaseAsyncClient._
+    import io.suggest.model.HTapConversionsBasic._
 
-    def dkey2key(dkey: String) = dkey.getBytes
-    def id2column(id: String) = id.getBytes
+    def dkey2key(dkey: String): Array[Byte] = dkey
+    def id2column(id: String): Array[Byte] = id
     def deserialize(data: Array[Byte]) = deserializeTo[MDomainQiAuthzTmp](data)
 
     def save(data: MDomainQiAuthzTmp): Future[MDomainQiAuthzTmp] = {

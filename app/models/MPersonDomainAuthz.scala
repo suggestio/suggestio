@@ -2,7 +2,7 @@ package models
 
 import org.joda.time.{ReadableDuration, DateTime, Duration}
 import io.suggest.util.{Logs, StringUtil}
-import util.{DomainValidator, DfsModelUtil, SiobixFs}
+import util.{ModelSerialJson, DomainValidator, DfsModelUtil, SiobixFs}
 import SiobixFs.fs
 import org.apache.hadoop.fs.Path
 import io.suggest.model.JsonDfsBackend
@@ -11,6 +11,9 @@ import java.util.UUID
 import scala.concurrent.duration._
 import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits._
+import scala.collection.JavaConversions._
+import org.hbase.async.{GetRequest, DeleteRequest, PutRequest}
+import util.StorageUtil, StorageUtil.StorageType._
 
 /**
  * Suggest.io
@@ -127,7 +130,10 @@ case class MPersonDomainAuthz(
 // Статическая часть модели
 object MPersonDomainAuthz extends Logs {
 
-  private val BACKEND = new DfsBackend
+  private val BACKEND = StorageUtil.STORAGE match {
+    case DFS    => new DfsBackend
+    case HBASE  => new HBaseBackend
+  }
 
   // Длина кода валидации
   private val BODY_CODE_LEN = 16
@@ -152,7 +158,7 @@ object MPersonDomainAuthz extends Logs {
    * @param person_id id юзера
    * @return
    */
-  def getForPersonDkey(dkey:String, person_id:String) = BACKEND.getForPersonDkey(dkey, person_id)
+  def getForPersonDkey(dkey:String, person_id:String) = BACKEND.getForPersonDkey(dkey=dkey, person_id=person_id)
 
 
   /**
@@ -168,7 +174,7 @@ object MPersonDomainAuthz extends Logs {
    * @param person_id мыльник
    * @return
    */
-  def getForPersonDkeys(person_id:String, dkeys:Iterable[String]) = BACKEND.getForPersonDkeys(person_id, dkeys)
+  def getForPersonDkeys(person_id:String, dkeys:Seq[String]) = BACKEND.getForPersonDkeys(person_id, dkeys)
 
 
 
@@ -225,8 +231,13 @@ object MPersonDomainAuthz extends Logs {
   trait Backend {
     def save(data: MPersonDomainAuthz): Future[MPersonDomainAuthz]
     def delete(person_id:String, dkey:String): Future[Any]
-    def getForPersonDkey(dkey:String, person_id:String) : Future[Option[MPersonDomainAuthz]]
-    def getForPersonDkeys(person_id:String, dkeys:Iterable[String]) : Future[List[MPersonDomainAuthz]]
+    def getForPersonDkey(person_id:String, dkey:String) : Future[Option[MPersonDomainAuthz]]
+    def getForPersonDkeys(person_id:String, dkeys:Seq[String]) : Future[List[MPersonDomainAuthz]] = {
+      // По дефолту фильтрануть getForPerson на предмет желаемых dkey.
+      getForPerson(person_id) map {
+        _.filter { dkeys contains _.dkey }
+      }
+    }
     def getForPerson(person_id:String): Future[List[MPersonDomainAuthz]]
     //def getForDkey(dkey:String) : Future[List[MPersonDomainAuthz]]
   }
@@ -234,7 +245,8 @@ object MPersonDomainAuthz extends Logs {
 
   /** Backend для хранения данных модели в DFS. */
   class DfsBackend extends Backend {
-    // Имя файла, в котором хранятся все данные модели. Инфа важная, поэтому менять или ставить в зависимость от имени класса нельзя.
+    /** Имя файла, в котором хранятся все данные модели. Инфа важная, поэтому менять или
+     * ставить в зависимость от имени класса нельзя. */
     private val fileName = new Path("authz")
 
     private val personSubdir = new Path("domains")
@@ -252,7 +264,7 @@ object MPersonDomainAuthz extends Logs {
      * @param person_id id юзера, т.е. email
      * @return Путь, указывающий на файл авторизации в папке доменов юзера. Часть этой функции имеет смысл вынести в MPersonDomain.
      */
-    private def dkeyPersonPath(dkey:String, person_id:String) = {
+    private def dkeyPersonPath(person_id:String, dkey:String) = {
       val personDir = personPath(person_id)
       val personDkeyDir = new Path(personDir, dkey)
       authzFilePath(personDkeyDir)
@@ -310,18 +322,18 @@ object MPersonDomainAuthz extends Logs {
     }
 
     def delete(person_id: String, dkey: String): Future[Any] = {
-      val path = dkeyPersonPath(dkey, person_id)
+      val path = dkeyPersonPath(dkey=dkey, person_id=person_id)
       future { fs.delete(path, false) }
     }
 
-    def getForPersonDkey(dkey: String, person_id: String): Future[Option[MPersonDomainAuthz]] = {
-      val path = dkeyPersonPath(dkey, person_id)
+    def getForPersonDkey(person_id: String, dkey: String): Future[Option[MPersonDomainAuthz]] = {
+      val path = dkeyPersonPath(dkey=dkey, person_id=person_id)
       future { readOne(path) }
     }
 
-    def getForPersonDkeys(person_id: String, dkeys: Iterable[String]): Future[List[MPersonDomainAuthz]] = future {
+    override def getForPersonDkeys(person_id: String, dkeys: Seq[String]): Future[List[MPersonDomainAuthz]] = future {
       dkeys
-        .map { dkeyPersonPath(_, person_id) }
+        .map { _dkey => dkeyPersonPath(dkey = _dkey, person_id=person_id) }
         .filter { fs.exists }
         .foldLeft[List[MPersonDomainAuthz]] (Nil) { readOneAcc }
     }
@@ -332,10 +344,45 @@ object MPersonDomainAuthz extends Logs {
         if (fstatus.isDir) {
           val authzPath = authzFilePath(fstatus.getPath)
           readOneAcc(acc, authzPath)
-
         } else {
           acc
         }
+      }
+    }
+  }
+
+
+  /** При использовании HBase использовать id юзера как ряд, а dkey как колонку. */
+  class HBaseBackend extends Backend with ModelSerialJson {
+    import io.suggest.model.MObject.{CF_UAUTHZ, HTABLE_NAME_BYTES}
+    import io.suggest.model.SioHBaseAsyncClient._
+    import io.suggest.model.HTapConversionsBasic._
+
+    def personId2key(person_id: String): Array[Byte] = person_id
+    def dkey2qualifier(dkey: String): Array[Byte] = dkey
+    def deserialize(data: Array[Byte]) = deserializeTo[MPersonDomainAuthz](data)
+
+    def save(data: MPersonDomainAuthz): Future[MPersonDomainAuthz] = {
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, personId2key(data.person_id), CF_UAUTHZ, dkey2qualifier(data.dkey), serialize(data))
+      ahclient.put(putReq) map { _ => data }
+    }
+
+    def delete(person_id: String, dkey: String): Future[Any] = {
+      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, personId2key(person_id), CF_UAUTHZ, dkey2qualifier(dkey))
+      ahclient.delete(delReq)
+    }
+
+    def getForPersonDkey(person_id: String, dkey: String): Future[Option[MPersonDomainAuthz]] = {
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, personId2key(person_id)).family(CF_UAUTHZ).qualifier(dkey2qualifier(dkey))
+      ahclient.get(getReq) map { kvs =>
+        if (kvs.isEmpty)  None  else  Some(deserialize(kvs.head.value))
+      }
+    }
+
+    def getForPerson(person_id: String): Future[List[MPersonDomainAuthz]] = {
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, personId2key(person_id)).family(CF_UAUTHZ)
+      ahclient.get(getReq) map { kvs =>
+        kvs.map { kv => deserialize(kv.value) }.toList
       }
     }
   }
