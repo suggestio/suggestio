@@ -35,7 +35,7 @@ trait MDomainUserSettingsT extends DkeyModelT with DUS_Basic {
   val data: MDomainUserSettings.DataMap_t
 
   // Базовые геттеры значений
-  def json: Option[MDomainUserJson]
+  def json: Future[Option[MDomainUserJson]]
   def jsonSync = MDomainUserJson.getForDkey(dkey)
 
 

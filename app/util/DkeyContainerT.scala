@@ -3,7 +3,7 @@ package util
 import gnu.inet.encoding.IDNA
 import play.api.libs.json.JsString
 import models._
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext}
 
 /**
  * Suggest.io
@@ -43,5 +43,5 @@ trait DkeyModelT extends DkeyContainerT {
   //def qiTmpAuth = MDomainQiAuthzTmp.listDkey(dkey)  // unused
   def qiTmpAuthPerson(qi_id: String) = MDomainQiAuthzTmp.getForDkeyId(dkey=dkey, id=qi_id)
   def domainSettingsFut(implicit ec:ExecutionContext) = MDomainSettings.getForDkey(dkey)
-  def domainUserJson = MDomainUserJson.getForDkey(dkey)
+  def domainUserJson: Future[Option[MDomainUserJson]] = MDomainUserJson.getForDkey(dkey)
 }

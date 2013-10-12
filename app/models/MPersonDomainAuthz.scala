@@ -130,7 +130,7 @@ case class MPersonDomainAuthz(
 // Статическая часть модели
 object MPersonDomainAuthz extends Logs {
 
-  private val BACKEND = StorageUtil.STORAGE match {
+  private val BACKEND: Backend = StorageUtil.STORAGE match {
     case DFS    => new DfsBackend
     case HBASE  => new HBaseBackend
   }
@@ -388,3 +388,4 @@ object MPersonDomainAuthz extends Logs {
   }
 
 }
+

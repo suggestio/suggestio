@@ -3,7 +3,13 @@ package models
 import util.SiobixFs.fs
 import com.google.common.io.CharStreams
 import java.io.{PrintWriter, InputStreamReader}
-import util.{DkeyModelT, DfsModelStaticT}
+import util.{StorageUtil, SiobixFs, DkeyModelT, DfsModelStaticT}
+import StorageUtil.StorageType._
+import scala.concurrent.{future, Future}
+import org.apache.hadoop.fs.Path
+import play.api.libs.concurrent.Execution.Implicits._
+import org.hbase.async.{GetRequest, PutRequest}
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -11,64 +17,123 @@ import util.{DkeyModelT, DfsModelStaticT}
  * Created: 19.06.13 16:35
  * Description: Модель хранения пользовательских настроек в виде сырого json, который пишется и читается только на клиенте.
  * JSON имеет произвольный формат, настройки генерируются через редактор и разбираются там же на клиентах.
+ *
+ * TODO Можно добавить поддержку множества профилей через набор колонок (qualifier).
  */
 
 case class MDomainUserJson(
   dkey: String,
   data: String
 ) extends DkeyModelT {
-
-  import MDomainUserJson.getPath
+  import MDomainUserJson.BACKEND
 
   /**
    * Сохранить экземпляр класса в хранилище.
    * @return Текущий экземпляр класса.
    */
-  def save : MDomainUserJson = {
-    val path = getPath(dkey)
-    if (data.isEmpty) {
-      fs.delete(path, false)
-    } else {
-      val os = fs.create(path, true)
-      try {
-        new PrintWriter(os).print(data)
+  def save = BACKEND.save(this)
 
-      } finally {
-        os.close()
-      }
-    }
-    this
-  }
-
-  override def domainUserJson: Option[MDomainUserJson] = Some(this)
+  override def domainUserJson = Future.successful(Some(this))
 }
 
 
 object MDomainUserJson extends DfsModelStaticT {
+
+  private val BACKEND: Backend = StorageUtil.STORAGE match {
+    case DFS => new DfsBackend
+    case HBASE => new HBaseBackend
+  }
+
 
   /**
    * Прочитать сырые данные для домена.
    * @param dkey ключ домена
    * @return Экземпляр сабжа, если такой найден в хранилищах.
    */
-  def getForDkey(dkey:String) : Option[MDomainUserJson] = {
-    val path = getPath(dkey)
-    fs.exists(path) match {
-      case true =>
-        val is = fs.open(path)
+  def getForDkey(dkey:String) = BACKEND.getForDkey(dkey)
+
+
+  trait Backend {
+    def save(data: MDomainUserJson): Future[MDomainUserJson]
+    def getForDkey(dkey: String): Future[Option[MDomainUserJson]]
+  }
+
+  class DfsBackend extends Backend {
+    // Имя файла, под именем которого сохраняется всё добро. Имена объектов обычно содержат $ на конце, поэтому это удаляем.
+    val filename = MDomainUserJson.getClass.getCanonicalName.replace("$", "")
+
+    /**
+     * Сгенерить DFS-путь для указанного сайта и класса модели.
+     * @param dkey ключ домена сайта.
+     * @return Путь.
+     */
+    private def getPath(dkey:String) : Path = new Path(SiobixFs.dkeyPathConf(dkey), filename)
+
+    def save(j: MDomainUserJson): Future[MDomainUserJson] = future {
+      import j._
+      val path = getPath(dkey)
+      if (data.isEmpty) {
+        fs.delete(path, false)
+      } else {
+        val os = fs.create(path, true)
         try {
-          // Прочитать весь файл в строку
-          val result = new MDomainUserJson(
-            dkey = dkey,
-            data = CharStreams.toString(new InputStreamReader(is, "UTF-8"))
-          )
-          Some(result)
+          new PrintWriter(os).print(data)
 
         } finally {
-          is.close()
+          os.close()
         }
+      }
+      j
+    }
 
-      case false => None
+    def getForDkey(dkey: String): Future[Option[MDomainUserJson]] = future {
+      val path = getPath(dkey)
+      fs.exists(path) match {
+        case true =>
+          val is = fs.open(path)
+          try {
+            // Прочитать весь файл в строку
+            val result = new MDomainUserJson(
+              dkey = dkey,
+              data = CharStreams.toString(new InputStreamReader(is, "UTF-8"))
+            )
+            Some(result)
+
+          } finally {
+            is.close()
+          }
+
+        case false => None
+      }
+    }
+  }
+
+
+  class HBaseBackend extends Backend {
+    import io.suggest.model.MObject.{CF_DDATA, HTABLE_NAME_BYTES}
+    import io.suggest.model.SioHBaseAsyncClient._
+    import io.suggest.model.HTapConversionsBasic._
+
+    def dkey2key(dkey: String): Array[Byte] = dkey
+    val QUALIFIER: Array[Byte] = "uj"
+    def deserialize(j: Array[Byte]): String = j
+
+    def save(j: MDomainUserJson): Future[MDomainUserJson] = {
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, dkey2key(j.dkey), CF_DDATA, QUALIFIER, j.data:Array[Byte])
+      ahclient.put(putReq).map(_ => j)
+    }
+
+    def getForDkey(dkey: String): Future[Option[MDomainUserJson]] = {
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, dkey2key(dkey)).family(CF_DDATA).qualifier(QUALIFIER)
+      ahclient.get(getReq).map { kvs =>
+        if (kvs.isEmpty) {
+          None
+        } else {
+          val data: String = kvs.head.value
+          val result = MDomainUserJson(dkey=dkey, data=data)
+          Some(result)
+        }
+      }
     }
   }
 

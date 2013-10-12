@@ -3,6 +3,7 @@ package util.domain_user_settings
 import models.MDomainUserJson
 import play.api.data.Forms._
 import models.MDomainUserSettings.{DataMap_t, DataMapKey_t}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -79,5 +80,5 @@ trait DUS_Basic {
   def showContentText = getter[String](KEY_SHOW_CONTENT_TEXT)
   def renderer = getter[Int](KEY_RENDERER)
   //def useDateScoring = getter[Boolean](KEY_USE_DATE_SCORING)
-  def json: Option[MDomainUserJson]
+  def json: Future[Option[MDomainUserJson]]
 }
