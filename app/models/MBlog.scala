@@ -200,7 +200,7 @@ object MBlog extends Logs {
 
     def delete(id: String): Future[Any] = {
       val key = id2key(id)
-      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, key)
+      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, key, CF_BLOG, QUALIFIER)
       ahclient.delete(delReq)
     }
   }

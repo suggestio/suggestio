@@ -1,6 +1,6 @@
 package models
 
-import util.{DkeyModelT, Logs, SiobixFs}
+import util._
 import util.SiobixFs.fs
 import org.apache.hadoop.fs.Path
 import org.joda.time.{Duration, DateTime}
@@ -10,6 +10,10 @@ import scala.concurrent.duration._
 import util.DfsModelUtil._
 import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits._
+import org.hbase.async.{GetRequest, DeleteRequest, PutRequest}
+import scala.collection.JavaConversions._
+import scala.Some
+import StorageUtil.StorageType._
 
 /**
  * Suggest.io
@@ -66,7 +70,12 @@ case class MDomainQiAuthzTmp(
 
 object MDomainQiAuthzTmp extends Logs {
 
-  private val BACKEND: Backend = new DfsBackend
+  private val BACKEND: Backend = {
+    StorageUtil.STORAGE match {
+      case DFS    => new DfsBackend
+      case HBASE  => new HBaseBackend
+    }
+  }
 
   val VERIFY_DURATION_SOFT = new Duration(45.minutes.toMillis)
   // Превышения хард-лимита означает, что верификация уже истекла и её нужно проверять заново.
@@ -83,7 +92,7 @@ object MDomainQiAuthzTmp extends Logs {
   def getForDkeyId(dkey:String, id:String) = BACKEND.getForDkeyId(dkey, id)
 
 
-
+  /** Интерфейс бэкэндов модели. */
   trait Backend {
     def save(data: MDomainQiAuthzTmp): Future[MDomainQiAuthzTmp]
     def delete(dkey:String, id:String): Future[Any]
@@ -91,7 +100,7 @@ object MDomainQiAuthzTmp extends Logs {
     //def listDkey(dkey: String): Future[List[MDomainQiAuthzTmp]]
   }
   
-  
+  /** Бэкэнд для хранения данных модели в ФС. */
   class DfsBackend extends Backend {
 
     val tmpDirName = "qi_anon_tmp"
@@ -129,8 +138,7 @@ object MDomainQiAuthzTmp extends Logs {
       readOne[MDomainQiAuthzTmp](filepath, fs)
     }
 
-    /*
-     * Выдать список временных авторизация для указанного домена.
+    /* Выдать список временных авторизация для указанного домена.
      * @param dkey Ключ домена.
      * @return Список сабжей в неопределенном порядке.
      */
@@ -142,7 +150,38 @@ object MDomainQiAuthzTmp extends Logs {
           readOneAcc[MDomainQiAuthzTmp](acc, s.getPath, fs)
         }
     }*/
+  }
 
+
+  /** HBase-backend для сохранения данных модели в HBase. */
+  class HBaseBackend extends Backend with ModelSerialJson {
+    import io.suggest.model.MObject.{CF_DQI, HTABLE_NAME_BYTES}
+    import io.suggest.model.SioHBaseAsyncClient._
+
+    def dkey2key(dkey: String) = dkey.getBytes
+    def id2column(id: String) = id.getBytes
+    def deserialize(data: Array[Byte]) = deserializeTo[MDomainQiAuthzTmp](data)
+
+    def save(data: MDomainQiAuthzTmp): Future[MDomainQiAuthzTmp] = {
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, dkey2key(data.dkey), CF_DQI, id2column(data.id), serialize(data))
+      ahclient.put(putReq) map { _ => data }
+    }
+
+    def delete(dkey: String, id: String): Future[Any] = {
+      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, dkey2key(dkey), CF_DQI, id2column(id))
+      ahclient.delete(delReq)
+    }
+
+    def getForDkeyId(dkey: String, id: String): Future[Option[MDomainQiAuthzTmp]] = {
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, dkey2key(dkey)).family(CF_DQI).qualifier(id2column(id))
+      ahclient.get(getReq) map { kvs =>
+        if (kvs.isEmpty) {
+          None
+        } else {
+          Some(deserialize(kvs.head.value()))
+        }
+      }
+    }
   }
 
 }
