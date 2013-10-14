@@ -25,7 +25,7 @@ object DfsModelUtil extends Logs {
       JsonDfsBackend.getAs[A](path, fs)
     } catch {
       case ex:Throwable =>
-        logger.error("Cannot read/parse json data from " + path, ex)
+        LOGGER.error("Cannot read/parse json data from " + path, ex)
         None
     }
   }
@@ -55,7 +55,7 @@ object DfsModelUtil extends Logs {
       fs.delete(path, false)
     } catch {
       case ex:Throwable =>
-        logger.warn("Failed to delete DFS entry %s. Exception supressed." format path, ex)
+        LOGGER.warn("Failed to delete DFS entry %s. Exception supressed." format path, ex)
         false
     }
   }

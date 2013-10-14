@@ -11,7 +11,7 @@ import play.api.Play.current
 
 object StorageUtil extends Logs {
 
-  import logger._
+  import LOGGER._
 
 
   // Модели могут переключаться между HBase, так и JsonDFS. Для продакшена подоходит только HBase, но не очень подходит

@@ -45,8 +45,8 @@ object Admin extends SioController with Logs {
 
   // Форма базовых настроек домена.
   val domainBasicSettingsFormM = Form(tuple(
-    "show_images"       -> boolean,
-    "show_content_text" -> showMapper
+    KEY_SHOW_IMAGES       -> boolean,
+    KEY_SHOW_CONTENT_TEXT -> showMapper
   ))
 
 
@@ -65,9 +65,9 @@ object Admin extends SioController with Logs {
       // В итоге получается, что очередь запускается на случай сбора новостей между этим экшеном и окончанием активации WebSocket'а.
       val timestampMs = NewsQueue4Play.getTimestampMs
       if (!pw.isAdmin && !personDomains.isEmpty) {
-        logger.debug(logPrefix + "Maybe need revalidate %s domains. Starting news queue..." format personDomains.size)
+        LOGGER.debug(logPrefix + "Maybe need revalidate %s domains. Starting news queue..." format personDomains.size)
         NewsQueue4Play.ensureActorFor(pw.id, NQ_TYPE) onSuccess { case nqActorRef =>
-          logger.debug(logPrefix + "NewsQueue started as %s" format nqActorRef)
+          LOGGER.debug(logPrefix + "NewsQueue started as %s" format nqActorRef)
           // Подписать очередь на события SioNotifier
           SiowebNotifier.subscribe(
             subscriber = new SnActorRefSubscriber(nqActorRef),
@@ -80,9 +80,9 @@ object Admin extends SioController with Logs {
           // Если ни один из доменов не начал процедуру валидации, то очередь можно сразу грохнуть.
           if (rdvCount == 0) {
             NewsQueue4Play.stop(nqActorRef)
-            logger.debug(logPrefix + "No revalidations needed. NQ %s stopping..." format nqActorRef)
+            LOGGER.debug(logPrefix + "No revalidations needed. NQ %s stopping..." format nqActorRef)
           } else {
-            logger.debug(logPrefix + "Started %s revalidations" format rdvCount)
+            LOGGER.debug(logPrefix + "Started %s revalidations" format rdvCount)
           }
         }
       }
@@ -99,7 +99,7 @@ object Admin extends SioController with Logs {
     lazy val logPrefix = "ws(%s) user=%s: " format(timestampMs, pwOpt)
     // Проверить права.
     if (pwOpt.isEmpty) {
-      logger.warn(logPrefix + "Unexpected anonymous hacker: " + request.remoteAddress)
+      LOGGER.warn(logPrefix + "Unexpected anonymous hacker: " + request.remoteAddress)
       // Анонимус долбиться на веб-сокет. Выдать ему сообщение о невозможности подобной эксплуатации энтерпрайза.
       EventUtil.wsAccessImpossbleIO("Anonymous users cannot use admin interface: not yet implemented.")
 
@@ -270,7 +270,7 @@ object Admin extends SioController with Logs {
   private val applyDUSF: PartialFunction[(DataMapKey_t, String, DataMap_t), DataMap_t] = {
     applyBasicSettingsF orElse {
       case (k, v, data) =>
-        logger.warn("Unknown DUS key=%s => %s SKIPPED" format (k, v))
+        LOGGER.warn("Unknown DUS key=%s => %s SKIPPED" format (k, v))
         data
     }
   }

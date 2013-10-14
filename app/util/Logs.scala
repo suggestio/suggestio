@@ -12,7 +12,7 @@ import io.suggest.util.LogsAbstract
 
 trait Logs {
 
-  protected val logger = Logger(getClass.getName)
+  protected val LOGGER = Logger(getClass.getName)
 
 }
 
@@ -20,47 +20,47 @@ trait Logs {
 trait SioutilLogs extends LogsAbstract with Logs {
 
   protected def debug(message: => String) {
-    if (logger.isDebugEnabled)
-      logger.debug(message)
+    if (LOGGER.isDebugEnabled)
+      LOGGER.debug(message)
   }
 
   protected def debug(message: => String, ex: Throwable) {
-    if (logger.isDebugEnabled)
-      logger.debug(message, ex)
+    if (LOGGER.isDebugEnabled)
+      LOGGER.debug(message, ex)
   }
 
   protected def info(message: => String) {
-    if (logger.isInfoEnabled)
-      logger.info(message)
+    if (LOGGER.isInfoEnabled)
+      LOGGER.info(message)
   }
 
   protected def info(message: => String, ex: Throwable) {
-    if (logger.isInfoEnabled)
-      logger.info(message, ex)
+    if (LOGGER.isInfoEnabled)
+      LOGGER.info(message, ex)
   }
 
   protected def warn(message: => String) {
-    if (logger.isWarnEnabled)
-      logger.warn(message)
+    if (LOGGER.isWarnEnabled)
+      LOGGER.warn(message)
   }
 
   protected def warn(message: => String, ex: Throwable) {
-    if (logger.isWarnEnabled)
-      logger.warn(message, ex)
+    if (LOGGER.isWarnEnabled)
+      LOGGER.warn(message, ex)
   }
 
   protected def error(ex: Throwable) {
-    if (logger.isErrorEnabled)
-      logger.error("Undescribed error: ", ex)
+    if (LOGGER.isErrorEnabled)
+      LOGGER.error("Undescribed error: ", ex)
   }
 
   protected def error(message: => String) {
-    if (logger.isErrorEnabled)
-      logger.error(message)
+    if (LOGGER.isErrorEnabled)
+      LOGGER.error(message)
   }
 
   protected def error(message: => String, ex: Throwable) {
-    if (logger.isErrorEnabled)
-      logger.error(message, ex)
+    if (LOGGER.isErrorEnabled)
+      LOGGER.error(message, ex)
   }
 }

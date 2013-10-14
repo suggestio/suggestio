@@ -150,7 +150,7 @@ object DomainQi extends Logs {
           MDomainQiAuthzTmp.getForDkeyId(dkey, qi_id) flatMap {
             // Анонимус добавлял сайт и успешно прошел qi-проверку. Нужно перенести сайт к зареганному анонимусу
             case Some(dqia) =>
-              logger.debug(logPrefix + s" approving ($dkey $qi_id) to ex-anon")
+              LOGGER.debug(logPrefix + s" approving ($dkey $qi_id) to ex-anon")
               // side-effects:
               MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, person_id=person_id, is_verified=true).save flatMap {_ =>
                 // Удалить анонимный qi из базы и из сессии, ибо больше не нужен.
@@ -291,7 +291,7 @@ object DomainQi extends Logs {
             // find нашел подходящий скрипт
             case Some(info) =>
               val info2 = info.asInstanceOf[SioJsV2]
-              logger.info("qi success for " + dkey + "! " + info2)
+              LOGGER.info("qi success for " + dkey + "! " + info2)
               Right(info2)
 
             // find не нашел ничего интересного на странице.
@@ -315,13 +315,13 @@ object DomainQi extends Logs {
           // Внутри callable вылетел экзепшен. Он обернут в ExecutionException
           case ex:ExecutionException =>
             val errMsg = "Cannot parse page: internal parse error."
-            logger.error("parse exception on %s" format url, ex)
+            LOGGER.error("parse exception on %s" format url, ex)
             Left(errMsg -> Nil)
 
           // Какое-то неведомое исключение возникло.
           case ex:Throwable =>
             val errMsg = "Unknown error during qi."
-            logger.error(errMsg, ex)
+            LOGGER.error(errMsg, ex)
             Left(errMsg -> Nil)
         }
         // Отрезультировать фьючерс с возможными side-эффектами. Если приказано слать уведомления о ходе работы в шину событий, то сразу же сделать это, проанализировав результат анализа.
@@ -341,7 +341,7 @@ object DomainQi extends Logs {
           case Left((errMsg, listJsInstalled)) =>
             // TODO надо отреагировать на список найденных скриптов. Если там что-то есть с верным доменом, то значит надо установить.
             if (sendEvents) {
-              logger.warn("qi check failed on %s: %s" format (url, errMsg))
+              LOGGER.warn("qi check failed on %s: %s" format (url, errMsg))
               val qiNews = QiError(dkey=dkey, qiIdOpt=qiIdOpt, url=url, msg=errMsg)
               SiowebNotifier publish qiNews
             }

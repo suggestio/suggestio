@@ -68,7 +68,6 @@ object Application extends Controller with ContextT {
         if (UrlUtil.isHostnameValid(hostIDN)) {
           // Хостнейм валиден
 
-
         } else {
           // Хостнейм невалиден.
           "hostname_prohibited"

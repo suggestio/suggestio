@@ -64,18 +64,18 @@ object DomainValidator extends Logs {
     else
       ???
     val dkey = da.dkey
-    logger.debug(logPrefix + "dkey=%s filename=%s".format(dkey, filenameOpt))
+    LOGGER.debug(logPrefix + "dkey=%s filename=%s".format(dkey, filenameOpt))
 
     // Подобрать ссылки для обхода.
     val urls = variateUrl(dkey, filenameOpt)
-    logger.debug(logPrefix + "will check URLs: " + urls)
+    LOGGER.debug(logPrefix + "will check URLs: " + urls)
 
     // Нужно вызывать функцию-итерацию проверки до первой удачи. А из функции быстро вернуть фьючерс результата.
     val p = Promise[Boolean]()
 
     def revalidateOne(urlsRest:List[String]) {
       if(urlsRest == Nil) {
-        logger.debug(logPrefix + " no more URLs to check. Validation failed.")
+        LOGGER.debug(logPrefix + " no more URLs to check. Validation failed.")
         // Закончился список ссылок. Нужно на этом и закончить.
         p completeWith validationNothingFoundFuture
         if (sendEvents)
@@ -85,7 +85,7 @@ object DomainValidator extends Logs {
         // TODO нужно собирать ошибки в аккамулятор, и затем сохранять их в da.last_errors.
         // Есть ещё ссылки для обхода. Нужно извлечь верхнюю ссылку, взять и проверить её.
         val urlH :: urlsT = urlsRest
-        logger.debug(logPrefix + "sending req to " + urlH)
+        LOGGER.debug(logPrefix + "sending req to " + urlH)
         val queueUrlFuture = DomainRequester.queueUrl(dkey, urlH)
         queueUrlFuture onComplete {
           case Success(DRResp200(ct:String, is:InputStream)) =>
@@ -112,7 +112,7 @@ object DomainValidator extends Logs {
                   val msg = ex match {
                     case eex:ExecutionException => "Cannot parse page."
                     case tex:TimeoutException =>
-                      logger.warn(logPrefix + "Timeout parsing page %s ; Cancelling..." format urlH)
+                      LOGGER.warn(logPrefix + "Timeout parsing page %s ; Cancelling..." format urlH)
                       task.cancel(true)
                       "Page too big."
                     case _ => "Internal server error during validation procedure."
@@ -129,7 +129,7 @@ object DomainValidator extends Logs {
               case Left((msg, ex)) =>
                 if (sendEvents)
                   SiowebNotifier.publish(DVUrlFailedEvent(dkey=dkey, personIdOpt=da.personIdOpt, url=urlH, reason=msg, ex=ex))
-                logger.debug(logPrefix + "Check unsuccess for URL " + urlH, ex)
+                LOGGER.debug(logPrefix + "Check unsuccess for URL " + urlH, ex)
                 revalidateOne(urlsT)
 
               // Всё ок.
@@ -137,14 +137,14 @@ object DomainValidator extends Logs {
                 p complete Success(true)
                 if (sendEvents)
                   SiowebNotifier.publish(DVSuccessEvent(dkey=dkey, personIdOpt=da.personIdOpt, url=urlH))
-                logger.debug("Check successeded for " + urlH)
+                LOGGER.debug("Check successeded for " + urlH)
             }
 
 
           // При ошибке запроса (не-200 ответ, таймаут, etc) надо уведомлять, лог писать и продолжать дальнейшие действия.
           // TODO следует это как-то объединить с ветвью Left((msg, ex)) в предыдущей части функции.
           case Failure(ex) =>
-            logger.debug("request to %s failed." format urlH, ex)
+            LOGGER.debug("request to %s failed." format urlH, ex)
             // TODO нужно матчить исключение, извлекая из него причину ошибки. И отправлять юзеру.
             val msg = "Request failed"
             if(sendEvents)

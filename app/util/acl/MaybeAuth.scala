@@ -2,6 +2,7 @@ package util.acl
 
 import play.api.mvc._
 import scala.concurrent.Future
+import util.Logs
 
 /**
  * Suggest.io
@@ -9,7 +10,9 @@ import scala.concurrent.Future
  * Created: 09.10.13 15:10
  * Description: ActionBuilder для определения залогиненности юзера.
  */
-object MaybeAuth extends ActionBuilder[AbstractRequestWithPwOpt] {
+object MaybeAuth extends ActionBuilder[AbstractRequestWithPwOpt] with Logs {
+
+  import LOGGER._
 
   /**
    * Вызывается генератор экшена в билдере.
@@ -20,6 +23,7 @@ object MaybeAuth extends ActionBuilder[AbstractRequestWithPwOpt] {
    */
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
+    trace("invokeBlock(): pwOpt = " + pwOpt)
     block(RequestWithPwOpt(pwOpt, request))
   }
 

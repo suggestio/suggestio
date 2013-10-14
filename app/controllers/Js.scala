@@ -40,15 +40,20 @@ object Js extends Controller with ContextT with Logs {
 
   val addDomainFormM = Form("url" -> urlAllowedMapper)
 
+  import LOGGER._
+
   /**
    * Юзер хочет добавить домен в систему. Нужно вернуть ему js-код.
    * В новой редакции это Stateless-pure-функция, все данные по qi лежат у юзера в сессии в кукисах и нигде более.
    * Иными словами, сабмит нового сайта не меняет состояние системы.
    */
   def addDomain = MaybeAuth { implicit request =>
+    lazy val logPrefix = "addDomain(): "
+    trace(logPrefix + "starting...")
     addDomainFormM.bindFromRequest().fold(
       // Не осилил засабмиченную ссылку. Нужно вернуть json с ошибками.
       {formWithErrors =>
+        debug(logPrefix + "form parse failed: " + formWithErrors.errors)
         // Для генерации локализованных сообщений об ошибках, нужно импортировать контекст.
         // Сгенерить json-ответ
         val respProps = Map[String, JsValue](
@@ -56,14 +61,18 @@ object Js extends Controller with ContextT with Logs {
           "errors" -> formWithErrors.errorsAsJson
         )
         val respJson = JsObject(respProps.toList)
+        trace(logPrefix + "reply: NotAcceptable / " + respJson)
         NotAcceptable(respJson)
       }
       ,
       // Есть ссылка на хост. Нужно взять из неё хостнейм (который, возможно, IDN'утый), нормализовать и загнать в сессию.
       {url =>
+        trace(logPrefix + "form parsed ok. found URL = " + url.toExternalForm)
         val dkey = UrlUtil.normalizeHostname(url.getHost)
+        trace(logPrefix + "dkey = " + dkey)
         //val startUrlStr = UrlUtil.normalize(url.toExternalForm)
-        val (qi_id, session1opt) = DomainQi.addDomainQiIntoSession(dkey)
+        val (qi_id, session1Opt) = DomainQi.addDomainQiIntoSession(dkey)
+        trace(logPrefix + s"qi = $qi_id ;; sessionOpt = " + session1Opt)
         // Сгенерить json ответа
         val resultProps = Map(
           "url"    -> url.toExternalForm,
@@ -72,9 +81,10 @@ object Js extends Controller with ContextT with Logs {
           "js_url" -> routes.Js.v2(dkey, qi_id).url
         ).mapValues(JsString)
         val respJson = JsObject(resultProps.toList)
+        trace(logPrefix + "reply: 200 Ok / " + respJson)
         val resp0 = Ok(respJson)
         // Если сессия не изменилась, то можно её и не возвращать.
-        session1opt match {
+        session1Opt match {
           case Some(session1) => resp0 withSession session1
           case None           => resp0
         }
@@ -90,16 +100,21 @@ object Js extends Controller with ContextT with Logs {
    * @return Скрипт, который сделает всё круто.
    */
   def v2(domainStr:String, qi_id:String) = MaybeAuth.async { implicit request =>
+    lazy val logPrefix = s"v2($domainStr $qi_id): "
+    trace(logPrefix + "starting...")
     val dkey = UrlUtil.normalizeHostname(domainStr)
     // Найти домен в базе. Если его там нет, то надо запустить инсталлер и вернуть скрипт с инсталлером. Затем выполнить остальные действия из sioweb_js_controller.
     MDomain.getForDkey(dkey) match {
       // Есть домен такой в базе. Нужно выдать js-скрипт для поиска, т.е. всё как обычно.
       case Some(domain) =>
+        trace(logPrefix + s"dkey=$dkey found as $domain")
+        // Параллельно читаем права юзера на домен и настройки домена. Через "for {} yield {}" подавляем многоэтажность фьючерсов.
         val isSiteAdminFut = IsDomainAdmin.isDkeyAdmin(dkey, request.pwOpt, request)
         for {
           dus           <- MDomainUserSettings.getForDkey(dkey)
           siteAdminOpt  <- isSiteAdminFut
         } yield {
+          trace(logPrefix + "siteAdminOpt = " + siteAdminOpt + " ;; settings = " + dus)
           // Отрендерить js
           val respBody = jsMainTpl(
             dkey        = dkey,
@@ -118,7 +133,7 @@ object Js extends Controller with ContextT with Logs {
         import request.pwOpt
 
         val isQi = DomainQi.isQi(dkey, qi_id)
-        lazy val logPrefix = "v2(%s %s): " format (dkey, qi_id)
+        trace(logPrefix + s"dkey=$dkey not found in storage. isQi=$isQi")
         val futureResult = isQi match {
           // Да, это тот юзер, который запросил код на главной. Он устанавил скрипт на сайт или просто прошел по ссылки от скрипта.
           // Теперь нужно запустить проверку домена на наличие этого скрипта и вернуть скрипт с инсталлером.
@@ -126,18 +141,20 @@ object Js extends Controller with ContextT with Logs {
             // Далее запрос становится асинхронным, т.к. ensureActorFor возвращает Future[ActorRef]. Можно блокироваться через EnsureSync, можно сгенерить фьючерс. Пока делаем второе.
             // Запустить очередь приема новостей, присоединив её к sio_notifier. Когда откроется ws-соединение, очередь будет выпилена, и коннект между sn и каналом ws будет уже прямой.
             val timestamp0 = NewsQueue4Play.getTimestampMs
-            logger.debug(logPrefix + "Requesting NewsQueue for user=%s..." format pwOpt)
+            debug(logPrefix + s"Requesting NewsQueue for user=$pwOpt ;; tstamp=$timestamp0")
             NewsQueue4Play.ensureActorFor(dkey, qi_id) flatMap { queueActorRef =>
               // Очередь запущена. Нужно подписать её на события SioNotifier.
-              logger.debug(logPrefix + "NewsQueue %s ready for user %s." format (queueActorRef, pwOpt))
+              debug(logPrefix + s"NewsQueue $queueActorRef ready for user=$pwOpt. Subscribing NQ for SN...")
               // Подписаться на события qi от sio_notifier
               SiowebNotifier.subscribeSync(
                 subscriber = SnActorRefSubscriber(queueActorRef),
                 classifier = QiEvent.getClassifier(dkeyOpt = Some(dkey), qiIdOpt=Some(qi_id))
               ) map { _ =>
+                debug(logPrefix + "SN subscribed OK")
                 // Подписывание очереди на событие выполнено.
                 // Отправить request referer на проверку. Бывает, что юзер ставит поиск не на главной, а где-то сбоку.
                 request.headers.get(REFERER).foreach { referer =>
+                  trace(logPrefix + "found referrer: " + referer)
                   DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl=referer, qi_id=qi_id, sendEvents=true, pwOpt=pwOpt)
                 }
                 // Сгенерить ответ.
@@ -156,13 +173,13 @@ object Js extends Controller with ContextT with Logs {
             } recover {
               case ex: Throwable =>
                 // TODO Нужно вернуть юзеру скрипт, который отобразит ему внутреннюю ошибку сервера suggest.io.
-                logger.error(logPrefix + "start-qi future chain failed: .recover() -> HTTP 500", ex)
+                error(logPrefix + "start-qi future chain failed: .recover() -> HTTP 500", ex)
                 InternalServerError("Internal server error")
             }
 
           // Кто-то зашел на ещё-не-установленный-сайт. Скрипт поиска выдавать смысла нет. Возвращаем уже готовый фьючерс, пригодный для дальнейшего комбинирования.
           case false =>
-            logger.warn(logPrefix + "isQi=false and domain not exist.")
+            warn(logPrefix + "isQi=false and domain not exist.")
             Future.successful {
               ServiceUnavailable("Search not properly installed. If site owner is you, please visit https://suggest.io/ and proceed installation steps.")
                 .withHeaders(RETRY_AFTER -> "5")
@@ -210,7 +227,7 @@ object Js extends Controller with ContextT with Logs {
         } else {
           Forbidden("Installer is not running for %s. Trying to cheat me? Well, go on." format domain)
         }
-        logger.debug("installUrl(%s %s): User %s want us to check also URL=%s. Decision: %s" format(dkey, qi_id, pwOpt, url, result))
+        LOGGER.debug("installUrl(%s %s): User %s want us to check also URL=%s. Decision: %s" format(dkey, qi_id, pwOpt, url, result))
         result
       }
     )
@@ -234,7 +251,7 @@ object Js extends Controller with ContextT with Logs {
         val (in0, out0) = EventUtil.globalUserEventIO
         // uuid для трубы, добавляемой в SioNotifier.
         val uuid = UUID.randomUUID()
-        logger.debug(logPrefix + "Starting ws connection for user %s. Subscriber=%s" format(pwOpt, uuid.toString))
+        LOGGER.debug(logPrefix + "Starting ws connection for user %s. Subscriber=%s" format(pwOpt, uuid.toString))
         val classifier = QiEvent.getClassifier(dkeyOpt = Some(dkey), qiIdOpt = Some(qi_id))
         // Канал выдачи данных клиенту. Подписаться на события SioNotifier, затем залить в канал пропущенные новости, которые пришли между реквестами и во время подписки.
         // Возможные дубликаты новостей безопасны, опасность представляют потерянные уведомления.
@@ -256,12 +273,15 @@ object Js extends Controller with ContextT with Logs {
 
       // Кто-то долбится на веб-сокет в обход сессии.
       case false =>
-        logger.error(logPrefix + "Requested dkey/qi_id not in session %s. Returning error to user via websocket." format session)
+        LOGGER.error(logPrefix + "Requested dkey/qi_id not in session %s. Returning error to user via websocket." format session)
         EventUtil.wsAccessImpossbleIO("Illegial access, installation flow is not running.")
     }
   }
 
 
-  private def replyJs(respBody:play.api.templates.Txt) = Ok(respBody).as("text/javascript")
+  private def replyJs(respBody:play.api.templates.Txt) = {
+    trace("replyJs(): 200 Ok")
+    Ok(respBody).as("text/javascript")
+  }
 
 }

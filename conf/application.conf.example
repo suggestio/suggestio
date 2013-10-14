@@ -54,7 +54,12 @@ logger.root=ERROR
 logger.play=INFO
 
 # Logger provided to your application:
-logger.application=DEBUG
+logger.application=TRACE
+
+## Кастомные логгеры в конкретных классах попадают в root где срезаются. Переопределяем их.
+logger.controllers=${logger.application}
+logger.util=${logger.application}
+logger.model=${logger.application}
 
 
 # name of username cookie

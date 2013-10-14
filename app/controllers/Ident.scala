@@ -102,25 +102,25 @@ object Ident extends SioController with Logs {
                   // Юзер подменил audience url, значит его assertion невалиден. Либо мы запустили на локалхосте продакшен.
                   case other =>
                     // TODO использовать логгирование, а не сие:
-                    logger.warn("Invalid audience URL: " + other)
+                    LOGGER.warn("Invalid audience URL: " + other)
                     Forbidden("Broken URL in credentials. Please try again.")
                 } // проверка audience
 
               // Юзер что-то мухлюет или persona глючит
               case JsString("failure") =>
-                logger.warn("invalid credentials")
+                LOGGER.warn("invalid credentials")
                 NotAcceptable("Mozilla Persona: invalid credentials")
 
               // WTF
               case other =>
                 val msg = "Mozilla Persona: unsupported response format."
-                logger.error(msg + "status = " + other + "\n\n" + respJson)
+                LOGGER.error(msg + "status = " + other + "\n\n" + respJson)
                 InternalServerError(msg)
             } // проверка status
 
           case "timeout" =>
             val msg = "Mozilla Persona server does not responding."
-            logger.warn(msg)
+            LOGGER.warn(msg)
             InternalServerError(msg)
         } // тело фьючерса ws-запроса
       } // матчинг assertion из присланных пользователем данных

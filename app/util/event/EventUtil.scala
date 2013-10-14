@@ -69,12 +69,12 @@ object EventUtil extends Logs {
   def replaceNqWithWsChannel(classifier:Classifier, uuid:UUID, nqDkey:String, nqTyp:String, channel:Concurrent.Channel[JsValue], nqIsMandatory:Boolean = false, timestampMs:Long = -1L, logPrefix: => String = "???")(implicit pw_opt:PwOpt_t = None) {
     // TODO вероятно, эту функцию нужно разбить на две.
     NewsQueue4Play.getActorFor(nqDkey, nqTyp).foreach { nqActorRefOpt =>
-      logger.debug(logPrefix + "NQ supervisor answered: queue(%s %s) => %s" format(nqDkey, nqTyp, nqActorRefOpt))
+      LOGGER.debug(logPrefix + "NQ supervisor answered: queue(%s %s) => %s" format(nqDkey, nqTyp, nqActorRefOpt))
       val subscriberWs = new SnWebsocketSubscriber(uuid=uuid, channel=channel)
       val snActionFuture: Future[Boolean] = nqActorRefOpt match {
         // Как и ожидалось, у супервизора уже есть очередь с новостями. Нужно заменить её в SioNotifier на прямой канал SN -> WS.
         case Some(nqActorRef) =>
-          logger.debug(logPrefix + "SN atomic replace: NewsQueue %s -> %s; user=%s" format(nqActorRef, subscriberWs, pw_opt))
+          LOGGER.debug(logPrefix + "SN atomic replace: NewsQueue %s -> %s; user=%s" format(nqActorRef, subscriberWs, pw_opt))
           SiowebNotifier.replaceSubscriberSync(
             subscriberOld = SnActorRefSubscriber(nqActorRef),
             classifier    = classifier,
@@ -94,11 +94,11 @@ object EventUtil extends Logs {
               }
               // Если были недопустимые новости, то нужен варнинг в логах.
               if(!newsFailed.isEmpty)
-                logger.warn(logPrefix + "forwarded only %s news of total %s. Failed to forward: %s" format(news.size - newsFailed.size, news.size, newsFailed))
+                LOGGER.warn(logPrefix + "forwarded only %s news of total %s. Failed to forward: %s" format(news.size - newsFailed.size, news.size, newsFailed))
               else
-                logger.debug(logPrefix + "All %s news forwarded from NewsQueue@%s into ws channel".format(news.size, nqActorRef))
+                LOGGER.debug(logPrefix + "All %s news forwarded from NewsQueue@%s into ws channel".format(news.size, nqActorRef))
             }
-            logger.debug(logPrefix + "Async.stopping NewsQueue %s ..." format nqActorRef)
+            LOGGER.debug(logPrefix + "Async.stopping NewsQueue %s ..." format nqActorRef)
             NewsQueue4Play.stop(nqActorRef)
           }
 
@@ -107,7 +107,7 @@ object EventUtil extends Logs {
         // TODO Может нужно обновить страницу сразу? Или отобразить кнопку релоада юзеру?
         case None =>
           if(nqIsMandatory) {
-            logger.error(logPrefix + "NewsQueue doesn't exist, but it should. Possible incorrect behaviour for user %s." format pw_opt)
+            LOGGER.error(logPrefix + "NewsQueue doesn't exist, but it should. Possible incorrect behaviour for user %s." format pw_opt)
             channel.push(MaybeErrorEvent("It looks like, something went wrong during installation procedure. If errors or problems occurs, please reload the page.").toJson)
           }
           SiowebNotifier.subscribeSync(
@@ -117,7 +117,7 @@ object EventUtil extends Logs {
       }
       // перехват возможных внутренних ошибок
       snActionFuture onFailure { case ex:Throwable =>
-        logger.error(logPrefix + "Internal error during NQ -> WS swithing.", ex)
+        LOGGER.error(logPrefix + "Internal error during NQ -> WS swithing.", ex)
         channel.push(InternalServerErrorEvent("Suggest.io has detected internal error.").toJson)
       }
     }
