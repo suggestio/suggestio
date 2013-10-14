@@ -27,7 +27,7 @@ trait ContextT {
    * @return
    */
   implicit final def getContext2(implicit req:AbstractRequestWithPwOpt[_], lang:Lang = Context.LANG_DFLT): Context = {
-    Context2(req, lang)
+    Context2()
   }
 
 }
@@ -38,9 +38,9 @@ trait ContextT {
   */
 trait Context {
 
-  def pw_opt: PwOpt_t
-  def request: Request[_]
-  def lang: Lang
+  implicit def pw_opt: PwOpt_t
+  implicit def request: Request[_]
+  implicit def lang: Lang
 
   implicit lazy val now : DateTime = DateTime.now
 
@@ -60,9 +60,10 @@ trait Context {
 
 /** Контекст времён комбинируемых ActionBuilder'ов. */
 case class Context2(
-  request: AbstractRequestWithPwOpt[_],
-  lang: Lang
+  implicit val request: AbstractRequestWithPwOpt[_],
+  implicit val lang: Lang
 ) extends Context {
-  def pw_opt = request.pwOpt
+
+  implicit def pw_opt = request.pwOpt
 }
 

@@ -111,8 +111,9 @@ object Admin extends SioController with Logs {
       val uuid = UUID.randomUUID()
       val (in0, out0) = EventUtil.globalUserEventIO
       // Подписаться на события валидации
-      val out1 = out0 >- Concurrent.unicast(onStart = { channel: Concurrent.Channel[JsValue] =>
-        EventUtil.replaceNqWithWsChannel(classifier, uuid, nqDkey=pw.id, nqTyp=NQ_TYPE, channel=channel, nqIsMandatory=false, timestampMs=timestampMs, logPrefix=logPrefix)
+      val out1 = out0 >- Concurrent.unicast(onStart = {
+        channel: Concurrent.Channel[JsValue] =>
+          EventUtil.replaceNqWithWsChannel(classifier, uuid, nqDkey=pw.id, nqTyp=NQ_TYPE, channel=channel, nqIsMandatory=false, timestampMs=timestampMs, logPrefix=logPrefix)
       })
       // При закрытии канала отписаться от событий, подписанных выше.
       val in1 = EventUtil.inIterateeSnUnsubscribeWsOnEOF(in0, uuid, classifier)

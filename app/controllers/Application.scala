@@ -43,7 +43,7 @@ object Application extends Controller with ContextT {
   }
 
   /** Запрос смены языка UI. */
-  def change_locale(locale:String) = MaybeAuth { implicit request =>
+  def change_locale(locale: String) = MaybeAuth { implicit request =>
     val referrer = request.headers.get(REFERER).getOrElse("/")
     
     Logger.logger.debug("Change user lang to : " + locale)
