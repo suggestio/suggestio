@@ -1,13 +1,18 @@
 package models
 
-import util.{DkeyModelT, DfsModelStaticT, SiobixFs}
+import util._
 import SiobixFs.fs
 import io.suggest.model.JsonDfsBackend
-import scala.concurrent.{Future, Await, future}
+import scala.concurrent.{Future, future}
 import scala.concurrent.duration._
 import play.api.libs.concurrent.Execution.Implicits._
-import scala.util.{Failure, Success}
 import util.domain_user_settings.DUS_Basic
+import com.fasterxml.jackson.annotation.JsonIgnore
+import org.apache.hadoop.fs.Path
+import org.hbase.async.{GetRequest, PutRequest}
+import scala.Some
+import scala.collection.JavaConversions._
+import StorageUtil.StorageType._
 
 /**
  * Suggest.io
@@ -25,35 +30,28 @@ import util.domain_user_settings.DUS_Basic
  * чтобы не засорять ядро модели.
  */
 
-// Есть несколько реализаций класса для разных задач. Тут трайт с общим кодом.
-trait MDomainUserSettingsT extends DkeyModelT with DUS_Basic {
+
+/**
+ * ActiveRecord-реализация сабжа.
+ * @param dkey ключ домена
+ * @param data данные
+ */
+case class MDomainUserSettings(
+  dkey : String,
+  data : MDomainUserSettings.DataMap_t
+) extends DkeyModelT with DUS_Basic {
 
   import MDomainUserSettings._
 
-  // Абстрактные значения экземпляров классов.
-  val dkey: String
-  val data: MDomainUserSettings.DataMap_t
-
-  // Базовые геттеры значений
-  def json: Future[Option[MDomainUserJson]]
-  def jsonSync = MDomainUserJson.getForDkey(dkey)
-
-
-  // Сеттеры. Вызываются через оборот "value.showImages = true"
-  def json_=(data:String) = MDomainUserJson(dkey, data).save
+  /** Сохранить карту данных в DFS. Если карта пуста, то удалить файл карты из хранилища. */
+  @JsonIgnore def save = BACKEND save this
 
   /**
-   * Сохранить карту в DFS. Если карта пуста, то удалить файл карты из хранилища.
+   * Заменить данные, создав новый экземпляр сабжа.
+   * @param newData Обновлённая карта данных.
+   * @return Новый экземпляр класса с обновлённой картой данных.
    */
-  def save = {
-    val path = getPath(dkey)
-    if(!data.isEmpty) {
-      JsonDfsBackend.writeToPath(path, data)
-    } else {
-      fs.delete(path, false)
-    }
-    this
-  }
+  def withData(newData:DataMap_t) = MDomainUserSettings(dkey, newData)
 
   /**
    * Динамическая читалка значений из настроек или списка дефолтовых значений, если ничего не найдено.
@@ -61,103 +59,44 @@ trait MDomainUserSettingsT extends DkeyModelT with DUS_Basic {
    * @tparam T тип значения (обязательно)
    * @return значение указанного типа
    */
-  protected def getter[T <: Any](key:String) : T = {
+  protected def getter[T <: Any](key: String) : T = {
     data.get(key) match {
       case Some(value)  => value.asInstanceOf[T]
       case None         => defaults(key).asInstanceOf[T]
     }
   }
 
-  override def domainUserSettings: MDomainUserSettingsT = this
-  override def domainUserSettingsAsync: MDomainUserSettingsT = this
-
-  /**
-   * Заменить данные, создав новый экземпляр сабжа.
-   * @param newData Обновлённая карта данных.
-   * @return Новый экземпляр класса с обновлённой картой данных.
-   */
-  def withData(newData:DataMap_t) = MDomainUserSettingsStatic(dkey, newData)
 }
 
 
-/**
- * Статическая реализация сабжа. Пригодна для быстрого сохранения данных в базу.
- * @param dkey ключ домена
- * @param data данные
- */
-case class MDomainUserSettingsStatic(
-  dkey : String,
-  data : MDomainUserSettings.DataMap_t
-
-) extends MDomainUserSettingsT {
-  def json = jsonSync
-}
-
-
-/**
- * Реализация сабжа футуризованная. Карта данных и пользовательский json приходят асинхронно из DFS.
- * Синхронизация происходит через lazy val + Await future.
- * @param dkey ключ домена.
- */
-case class MDomainUserSettingsFuturized(dkey:String) extends MDomainUserSettingsT {
-  import MDomainUserSettings.{getData, futureAwaitDuration}
-
-  /**
-   * Враппер на Await.result чтобы избежать ненужной короткой блокировки, когда фьючерс уже готов.
-   * @param fut фьючерс, который уже возможно завершился
-   * @param duration макс длительность ожидания. По дефолту = futureAwaitDuration
-   * @tparam T тип значения, с фьючерском которого работаем.
-   * @return Значение. Или экзепшен.
-   */
-  protected def maybeAwait[T](fut:Future[T], duration: Duration = futureAwaitDuration): T = {
-    if(fut.isCompleted) {
-      fut.value.get match {
-        case Success(v)  => v
-        case Failure(ex) => throw ex
-      }
-    } else {
-      Await.result(fut, duration)
-    }
-  }
-
-  private val dataFuture = future(getData(dkey))
-  lazy val data = maybeAwait(dataFuture)
-
-  private val jsonFuture = future(jsonSync)
-  lazy val json = maybeAwait(jsonFuture)
-}
-
-
+/** Статическая сторона модели и её бэкэнды. */
 object MDomainUserSettings extends DfsModelStaticT {
+
+  val BACKEND: Backend = StorageUtil.STORAGE match {
+    case DFS    => new DfsBackend
+    case HBASE  => new HBaseBackend
+  }
 
   type DataMapKey_t = String
   type DataMapValue_t = Any
   type DataMap_t = Map[DataMapKey_t, DataMapValue_t]
 
   // При добавлении настроек сюда надо конкатенировать все новые карты дефолтовых групп значений.
-  val defaults: DataMap_t = DUS_Basic.defaults
+  def defaults: DataMap_t = DUS_Basic.defaults
 
-  val futureAwaitDuration = 3 seconds
+  def futureAwaitDuration = 3 seconds
 
   private val emptyDataMap: DataMap_t = Map()
-
 
   /**
    * Прочитать карту для ключа. Даже если ничего не сохранено, функция возвращает рабочий экземпляр класса.
    * @param dkey ключ домена
    * @return MDomainUserSettings, если такой есть в хранилище.
    */
-  def getForDkey(dkey:String) : MDomainUserSettingsT = {
-    MDomainUserSettingsStatic(dkey, getData(dkey))
-  }
-
-  /**
-   * Быстро сгенерить объект, чьё состояние генерируется асинхронно.
-   * @param dkey ключ домена
-   * @return Моментальный MDomainUserSettings, чья карта данных приходит из hdfs в фоне.
-   */
-  def getForDkeyAsync(dkey:String) : MDomainUserSettingsT = {
-    MDomainUserSettingsFuturized(dkey)
+  def getForDkey(dkey:String) = {
+    getProps(dkey) map {
+      MDomainUserSettings(dkey, _)
+    }
   }
 
   /**
@@ -165,10 +104,7 @@ object MDomainUserSettings extends DfsModelStaticT {
    * @param dkey ключ домена.
    * @return карта данных пользовательских настроек.
    */
-  def getData(dkey:String) : DataMap_t = {
-    val path = getPath(dkey)
-    JsonDfsBackend.getAs[DataMap_t](path, fs) getOrElse emptyDataMap
-  }
+  def getProps(dkey: String) = BACKEND.getProps(dkey)
 
   /**
    * Выдать пустые (дефолтовые) пользовательские настройки.
@@ -176,5 +112,73 @@ object MDomainUserSettings extends DfsModelStaticT {
    * @param dkey ключ домена
    * @return MDomainUserSettingsT, возвращающий дефолт по всем направлениям.
    */
-  def empty(dkey:String): MDomainUserSettingsT = MDomainUserSettingsStatic(dkey, emptyDataMap)
+  def empty(dkey:String) = MDomainUserSettings(dkey, emptyDataMap)
+
+
+  /** Интерфейс для внутренних бэкэндов модели. */
+  trait Backend {
+    def save(d: MDomainUserSettings): Future[MDomainUserSettings]
+    def getProps(dkey: String): Future[DataMap_t]
+  }
+
+
+  /** Бэкэнд для хранения данных в dfs. */
+  class DfsBackend extends Backend {
+
+    // Имя файла, под именем которого сохраняется всё добро. Имена объектов обычно содержат $ на конце, поэтому это удаляем.
+    val filename = "domainUserSettings"
+
+    /**
+     * Сгенерить DFS-путь для указанного сайта и класса модели.
+     * @param dkey ключ домена сайта.
+     * @return Путь.
+     */
+    def getPath(dkey:String) : Path = {
+      new Path(SiobixFs.dkeyPathConf(dkey), filename)
+    }
+
+    def save(d: MDomainUserSettings): Future[MDomainUserSettings] = future {
+      val path = getPath(d.dkey)
+      if (!d.data.isEmpty) {
+        JsonDfsBackend.writeToPath(path, d.data)
+      } else {
+        fs.delete(path, false)
+      }
+      d
+    }
+
+    def getProps(dkey: String): Future[MDomainUserSettings.DataMap_t] = future {
+      val path = getPath(dkey)
+      JsonDfsBackend.getAs[DataMap_t](path, fs) getOrElse emptyDataMap
+    }
+  }
+
+
+  /** Бэкэнд для хранения данных модели в HBase. */
+  class HBaseBackend extends Backend with ModelSerialJava {
+    import io.suggest.model.MObject.{HTABLE_NAME_BYTES, CF_DPROPS}
+    import io.suggest.model.SioHBaseAsyncClient._
+    import io.suggest.model.HTapConversionsBasic._
+
+    val QUALIFIER = CF_DPROPS
+
+    def dkey2key(dkey: String): Array[Byte] = dkey
+    def deserialize(d: Array[Byte]) = deserializeTo[DataMap_t](d)
+
+    def save(d: MDomainUserSettings): Future[MDomainUserSettings] = {
+      val key = dkey2key(d.dkey)
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, key, CF_DPROPS, QUALIFIER, serialize(d.data))
+      ahclient.put(putReq) map {_ => d}
+    }
+
+    def getProps(dkey: String): Future[DataMap_t] = {
+      val key = dkey2key(dkey)
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, key).family(CF_DPROPS).qualifier(QUALIFIER)
+      ahclient.get(getReq) map { kvs =>
+        if (kvs.isEmpty) emptyDataMap else deserialize(kvs.head.value)
+      }
+    }
+  }
+
 }
+

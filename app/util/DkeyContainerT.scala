@@ -4,6 +4,7 @@ import gnu.inet.encoding.IDNA
 import play.api.libs.json.JsString
 import models._
 import scala.concurrent.{Future, ExecutionContext}
+import com.fasterxml.jackson.annotation.JsonIgnore
 
 /**
  * Suggest.io
@@ -16,9 +17,9 @@ import scala.concurrent.{Future, ExecutionContext}
 trait DkeyContainerT {
   def dkey: String
 
-  def dkeyUnicode: String = IDNA.toUnicode(dkey)
-  def dkeyUnicodeJs = JsString(dkeyUnicode)
-  def dkeyJsProps = List[(String, JsString)]("dkey" -> JsString(dkey), "domain" -> dkeyUnicodeJs)
+  @JsonIgnore def dkeyUnicode: String = IDNA.toUnicode(dkey)
+  @JsonIgnore def dkeyUnicodeJs = JsString(dkeyUnicode)
+  @JsonIgnore def dkeyJsProps = List[(String, JsString)]("dkey" -> JsString(dkey), "domain" -> dkeyUnicodeJs)
 }
 
 object DkeyContainer {
@@ -35,13 +36,20 @@ object DkeyContainer {
 }
 
 trait DkeyModelT extends DkeyContainerT {
+  @JsonIgnore
   def domainOpt = MDomain.getForDkey(dkey)
-  def domain    = domainOpt.get
+
+  @JsonIgnore
+  def domain = domainOpt.get
+
+  @JsonIgnore
   def domainUserSettings = MDomainUserSettings.getForDkey(dkey)
-  def domainUserSettingsAsync = MDomainUserSettings.getForDkeyAsync(dkey)
+
   def authzForPerson(person_id:String) = MPersonDomainAuthz.getForPersonDkey(dkey, person_id)
   //def qiTmpAuth = MDomainQiAuthzTmp.listDkey(dkey)  // unused
   def qiTmpAuthPerson(qi_id: String) = MDomainQiAuthzTmp.getForDkeyId(dkey=dkey, id=qi_id)
   def domainSettingsFut(implicit ec:ExecutionContext) = MDomainSettings.getForDkey(dkey)
+
+  @JsonIgnore
   def domainUserJson: Future[Option[MDomainUserJson]] = MDomainUserJson.getForDkey(dkey)
 }

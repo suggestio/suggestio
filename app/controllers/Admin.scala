@@ -35,7 +35,7 @@ import MDomainUserSettings.{DataMap_t, DataMapKey_t}
  * Исходное API сохраняется (как в прошлой версии).
  */
 
-object Admin extends Controller with ContextT with Logs {
+object Admin extends SioController with Logs {
 
   // Под-имя очереди новостей (nq) для админов. Самим именем является email.
   private val NQ_TYPE = "admin"
@@ -211,10 +211,11 @@ object Admin extends Controller with ContextT with Logs {
    * @param domain домен.
    * @return inline-рендер для домена.
    */
-  def domainSettings(domain: String) = IsDomainAdmin(domain).apply { implicit request =>
-    val du = request.dAuthz.domainUserSettingsAsync
-    val form = domainBasicSettingsFormM.fill((du.showImages, du.showContentText))
-    Ok(_domainSettingsTpl(du, form))
+  def domainSettings(domain: String) = IsDomainAdmin(domain).async { implicit request =>
+    request.dAuthz.domainUserSettings map { du =>
+      val form = domainBasicSettingsFormM.fill((du.showImages, du.showContentText))
+      Ok(_domainSettingsTpl(du, form))
+    }
   }
 
   /**
@@ -222,15 +223,16 @@ object Admin extends Controller with ContextT with Logs {
    * @param domain домен
    * @return
    */
-  def domainSettingsFormSubmit(domain: String) = IsDomainAdmin(domain).apply { implicit request =>
+  def domainSettingsFormSubmit(domain: String) = IsDomainAdmin(domain).async { implicit request =>
     domainBasicSettingsFormM.bindFromRequest().fold(
       formWithErrors => NotAcceptable
       ,
       {case (showImages, showContentText) =>
-        val du = request.dAuthz.domainUserSettings
-        val data1 = du.data + (KEY_SHOW_IMAGES -> showImages) + (KEY_SHOW_CONTENT_TEXT -> showContentText)
-        du.withData(data1).save
-        Ok
+        request.dAuthz.domainUserSettings map { du =>
+          val data1 = du.data + (KEY_SHOW_IMAGES -> showImages) + (KEY_SHOW_CONTENT_TEXT -> showContentText)
+          du.withData(data1).save
+          Ok
+        }
       }
     )
   }
@@ -241,17 +243,19 @@ object Admin extends Controller with ContextT with Logs {
    * @param domain Домен, для которого сохраняем.
    * @return ???
    */
-  def applyDomainSettings(domain:String) = IsDomainAdmin(domain).apply { implicit request =>
-    val du = request.dAuthz.domainUserSettings
+  def applyDomainSettings(domain:String) = IsDomainAdmin(domain).async { implicit request =>
+    val duFut = request.dAuthz.domainUserSettings
     val data1 = request.body
       .asFormUrlEncoded
       .get
-      .foldLeft(du.data) { case (_data, kvs) =>
+    duFut.map { du =>
+      val data2 = data1.foldLeft (du.data) { case (_data, kvs) =>
         val (k, vs) = kvs
         applyDUSF((k, vs.head, _data))
+      }
+      val du1 = du.withData(data2).save
+      Ok("Ok TODO")
     }
-    val du1 = du.withData(data1).save
-    Ok("Ok TODO")
   }
 
 

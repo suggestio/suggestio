@@ -47,16 +47,17 @@ object DUS_Basic {
     KEY_RENDERER          -> RRR_2013_FULLSCREEN
   )
 
-  /**
-   * Хелпер для комбинируемых функций applyDomainSettings.
-   */
+  /** Хелпер для комбинируемых функций applyDomainSettings. */
   val applyBasicSettingsF: PartialFunction[(DataMapKey_t, String, DataMap_t), DataMap_t] = {
     case (k, v, data) if k == KEY_SHOW_IMAGES =>
-      data + (k -> (v == "true"))
+      boolean.bind(Map(k -> v)) match {
+        case Left(_)  => data
+        case Right(b) => data + (k -> b)
+      }
 
     case (k, v, data) if k == KEY_SHOW_TITLE || k == KEY_SHOW_CONTENT_TEXT =>
       showMapper.bind(Map(k -> v)) match {
-        case Left(_)      => data
+        case Left(_)   => data
         case Right(v1) => data + (k -> v1)
       }
 
@@ -74,11 +75,12 @@ trait DUS_Basic {
   import DUS_Basic._
 
   protected def getter[T <: Any](key:String) : T
+  def dkey: String
 
   def showImages = getter[Boolean](KEY_SHOW_IMAGES)
   def showTitle = getter[String](KEY_SHOW_TITLE)
   def showContentText = getter[String](KEY_SHOW_CONTENT_TEXT)
   def renderer = getter[Int](KEY_RENDERER)
   //def useDateScoring = getter[Boolean](KEY_USE_DATE_SCORING)
-  def json: Future[Option[MDomainUserJson]]
+  def json: Future[Option[MDomainUserJson]] = MDomainUserJson.getForDkey(dkey)
 }

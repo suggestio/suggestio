@@ -4,7 +4,7 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import io.suggest.model.JsonDfsBackend
 import SiobixFs.fs
 import io.suggest.util.JacksonWrapper
-import java.io.ByteArrayInputStream
+import java.io.{ObjectInputStream, ObjectOutputStream, ByteArrayOutputStream, ByteArrayInputStream}
 
 /**
  * Suggest.io
@@ -99,7 +99,14 @@ trait DfsModelStaticT {
 }
 
 
-trait ModelSerialJson {
+// Интерфейс для сериализаторов.
+trait ModelSerialT {
+  def serialize(v: Any): Array[Byte]
+  def deserializeTo[T: Manifest](a: Array[Byte]): T
+}
+
+/** Сериализатор данных в json. */
+trait ModelSerialJson extends ModelSerialT {
   def serialize(v: Any) = JacksonWrapper.serialize(v).getBytes
   def deserializeTo[T: Manifest](a: Array[Byte]): T = {
     val bais = new ByteArrayInputStream(a)
@@ -107,3 +114,26 @@ trait ModelSerialJson {
   }
 }
 
+/** Сериализатор java-классов в бинари. */
+trait ModelSerialJava extends ModelSerialT {
+  def serialize(v: Any): Array[Byte] = {
+    val baos = new ByteArrayOutputStream(255)
+    val oos  = new ObjectOutputStream(baos)
+    try {
+      oos.writeObject(v)
+    } finally {
+      oos.close()
+    }
+    baos.toByteArray
+  }
+
+  def deserializeTo[T: Manifest](a: Array[Byte]): T = {
+    val bais = new ByteArrayInputStream(a)
+    val ois = new ObjectInputStream(bais)
+    try {
+      ois.readObject().asInstanceOf[T]
+    } finally {
+      ois.close()
+    }
+  }
+}

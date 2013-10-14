@@ -95,15 +95,17 @@ object Js extends Controller with ContextT with Logs {
     MDomain.getForDkey(dkey) match {
       // Есть домен такой в базе. Нужно выдать js-скрипт для поиска, т.е. всё как обычно.
       case Some(domain) =>
-        // Отрендерить js
-        val respBody = jsMainTpl(
-          dkey  = dkey,
-          qi_id = qi_id,
-          isInstall = false,
-          uSettings = MDomainUserSettings.getForDkeyAsync(dkey),
-          isSiteAdmin = false // TODO определять бы по базе
-        )
-        Future.successful(replyJs(respBody))
+        MDomainUserSettings.getForDkey(dkey) map { dus =>
+          // Отрендерить js
+          val respBody = jsMainTpl(
+            dkey  = dkey,
+            qi_id = qi_id,
+            isInstall = false,
+            uSettings = dus,
+            isSiteAdmin = false // TODO определять бы по базе
+          )
+          replyJs(respBody)
+        }
 
 
       // Запрос скрипта для неизвестного сайта. ВОЗМОЖНО теперь там установлен скрипт.
@@ -128,7 +130,7 @@ object Js extends Controller with ContextT with Logs {
               SiowebNotifier.subscribeSync(
                 subscriber = SnActorRefSubscriber(queueActorRef),
                 classifier = QiEvent.getClassifier(dkeyOpt = Some(dkey), qiIdOpt=Some(qi_id))
-              ).map { _ =>
+              ) map { _ =>
                 // Подписывание очереди на событие выполнено.
                 // Отправить request referer на проверку. Бывает, что юзер ставит поиск не на главной, а где-то сбоку.
                 request.headers.get(REFERER).foreach { referer =>
@@ -168,7 +170,7 @@ object Js extends Controller with ContextT with Logs {
           DomainQi.checkQiAsync(
             dkey = dkey,
             url  = "http://" + dkey + "/",
-            qiIdOpt = if(isQi) Some(qi_id) else None,
+            qiIdOpt = if (isQi) Some(qi_id) else None,
             sendEvents = true,
             pwOpt = pwOpt
           )
