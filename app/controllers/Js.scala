@@ -75,7 +75,7 @@ object Js extends Controller with ContextT with Logs {
         val resp0 = Ok(respJson)
         // Если сессия не изменилась, то можно её и не возвращать.
         session1opt match {
-          case Some(session1) => resp0.withSession(session1)
+          case Some(session1) => resp0 withSession session1
           case None           => resp0
         }
       }
@@ -95,14 +95,18 @@ object Js extends Controller with ContextT with Logs {
     MDomain.getForDkey(dkey) match {
       // Есть домен такой в базе. Нужно выдать js-скрипт для поиска, т.е. всё как обычно.
       case Some(domain) =>
-        MDomainUserSettings.getForDkey(dkey) map { dus =>
+        val isSiteAdminFut = IsDomainAdmin.isDkeyAdmin(dkey, request.pwOpt, request)
+        for {
+          dus           <- MDomainUserSettings.getForDkey(dkey)
+          siteAdminOpt  <- isSiteAdminFut
+        } yield {
           // Отрендерить js
           val respBody = jsMainTpl(
-            dkey  = dkey,
-            qi_id = qi_id,
-            isInstall = false,
-            uSettings = dus,
-            isSiteAdmin = false // TODO определять бы по базе
+            dkey        = dkey,
+            qi_id       = qi_id,
+            isInstall   = false,
+            uSettings   = dus,
+            isSiteAdmin = siteAdminOpt.isDefined
           )
           replyJs(respBody)
         }

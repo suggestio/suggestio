@@ -30,19 +30,15 @@ object IsDomainAdmin {
     }
   }
 
-}
-
-
-/** Абстрактный класс для различных реализаций сабжа. Основная цель декомпозиции: позволить контроллерам легко
-  * переопределять путь редиректа в случае проблемы с правами, а так же менять другие части логики работы. */
-abstract class IsDomainAdminAbstract extends ActionBuilder[AbstractRequestWithDAuthz] {
-
-  def hostname: String
-
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithDAuthz[A]) => Future[SimpleResult]): Future[SimpleResult] = {
-    val dkey = UrlUtil.normalizeHostname(hostname)
-    val pwOpt = PersonWrapper.getFromRequest(request)
-    val authzInfoOptFut: Future[Option[MDomainAuthzT]] = pwOpt match {
+  /** Определить, может ли указанный юзер осуществлять управление указанным доменом.
+   * @param dkey Ключ домена.
+   * @param pwOpt Данные о текущем юзере.
+   * @param request Реквест на случай необходимости чтения сессии.
+   * @tparam A Подтип реквеста.
+   * @return None если нет прав. Some(authz) если есть причина, по которой юзеру следует разрешить управлять сайтом.
+   */
+  def isDkeyAdmin[A](dkey: String, pwOpt:PwOpt_t, request: Request[A]): Future[Option[MDomainAuthzT]] = {
+    pwOpt match {
       // Анонимус. Возможно, он прошел валидацию уже. Нужно узнать из сессии текущий qi_id и проверить по базе.
       case None =>
         DomainQi.getQiFromSession(dkey)(request.session) match {
@@ -55,14 +51,27 @@ abstract class IsDomainAdminAbstract extends ActionBuilder[AbstractRequestWithDA
         // TODO Надо проверить случай, когда у админа suggest.io есть добавленный домен. Всё ли нормально работает?
         // Если нет, то надо обращение к модели вынести на первый план, а только потом уже проверять isAdmin.
         if (pw.isAdmin) {
-          Future.successful(
-            Some(MPersonDomainAuthzAdmin(person_id=pw.id, dkey=dkey))
-          )
+          val result = Some(MPersonDomainAuthzAdmin(person_id=pw.id, dkey=dkey))
+          Future.successful(result)
         } else {
           MPersonDomainAuthz.getForPersonDkey(dkey, pw.id)
         }
     }
-    authzInfoOptFut flatMap {
+  }
+
+}
+
+
+/** Абстрактный класс для различных реализаций сабжа. Основная цель декомпозиции: позволить контроллерам легко
+  * переопределять путь редиректа в случае проблемы с правами, а так же менять другие части логики работы. */
+abstract class IsDomainAdminAbstract extends ActionBuilder[AbstractRequestWithDAuthz] {
+
+  def hostname: String
+
+  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithDAuthz[A]) => Future[SimpleResult]): Future[SimpleResult] = {
+    val dkey = UrlUtil.normalizeHostname(hostname)
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    IsDomainAdmin.isDkeyAdmin(dkey, pwOpt, request) flatMap {
       case Some(authzInfo) if authzInfo.isValid =>
         val req1 = new RequestWithDAuthz(pwOpt, authzInfo, request)
         block(req1)
@@ -73,6 +82,7 @@ abstract class IsDomainAdminAbstract extends ActionBuilder[AbstractRequestWithDA
 
   def onUnauthFut(pwOpt: PwOpt_t, request: RequestHeader): Future[SimpleResult]
 }
+
 
 /**
  * Дефолтовая реализация декоратора ACL для проверки прав на домен. При проблеме с доступом, юзер отсылается согласно
