@@ -3,7 +3,7 @@ package controllers
 import play.api.mvc._
 import util.ContextT
 import util.acl._
-import views.html.crawl.indexTpl
+import views.html.crawl._
 import play.api.data._
 import play.api.data.Forms._
 import java.net.URL
@@ -33,6 +33,13 @@ object Application extends Controller with ContextT {
    */
   def index = MaybeAuth { implicit request =>
     Ok(indexTpl())
+  }
+
+  /**
+   * Форма быстрого поиска
+   */
+  def search = MaybeAuth { implicit request =>
+    Ok(searchTpl())
   }
 
   /** Запрос смены языка UI. */
