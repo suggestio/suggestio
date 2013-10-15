@@ -112,10 +112,10 @@ akka {
 ## Общение с siobix-нодой.
 ###############################################################################
 ## akka url до супервизора кравлера. Меняется в зависимости от deployment'а.
-siobix.akka.url.prefix="akka.tcp://application@127.0.0.1:2553"
+siobix.akka.url.prefix="akka.tcp://siobix@127.0.0.1:2553"
 
 ## akka путь до супервизора кравлеров.
-siobix.akka.path.crawler.sup="/user/sup/crawlers"
+siobix.akka.path.crawler.sup="/user/sup/CrawlersSup"
 
 ## Сколько времени ждать ответа от кравлера по поводу добавления нового сайта. [2000]
 siobix.akka.bootstrap.ask_timeout_ms = 2500

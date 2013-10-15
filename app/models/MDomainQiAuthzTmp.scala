@@ -118,7 +118,7 @@ object MDomainQiAuthzTmp extends Logs {
       val filepath = getFilePath(dkey=data.dkey, qi_id=data.id)
       val os = fs.create(filepath)
       try {
-        JsonDfsBackend.writeToPath(filepath, this)
+        JsonDfsBackend.writeToPath(filepath, data)
         data
       } finally {
         os.close()

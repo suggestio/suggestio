@@ -138,7 +138,7 @@ object NewsQueue4Play extends NewsQueueStaticT {
   }
 
   def pingFor(dkey:String, typ:String) = {
-    ensureActorFor(dkey, typ) flatMap(ping(_))
+    ensureActorFor(dkey, typ) flatMap ping
   }
 
   def stop(nqActorRef: ActorRef) {
@@ -154,38 +154,73 @@ object NewsQueue4Play extends NewsQueueStaticT {
     supRef ! StopNQ(dkey, typ)
   }
 
+
+  /**
+   * Сообщение, говорящее супервизору убедится в том, что необходимый менеджер очереди новостей работает и готов.
+   * @param dkey ключ домена
+   * @param typ некий "тип". Нужно для разграничения очередей новостей внутри домена.
+   */
+  sealed case class EnsureNQ(dkey:String, typ:String)
+
+  /**
+   * Сообщение, запрашивающее у супервизора данные по актору очереди, который может быть не запущен.
+   * @param dkey ключ домена
+   * @param typ "тип". Нужно для разграничения очередей новостей внутри домена.
+   */
+  sealed case class GetNQ(dkey:String, typ:String)
+
+  sealed case class StopNQ(dkey:String, typ:String)
+  sealed case class StopActor(actorRef: ActorRef)
+
 }
 
 
 // Супервизорд для множества акторов NewsQueue4Play.
-class NewsQueue4PlaySup extends Actor {
+class NewsQueue4PlaySup extends Actor with Logs {
+  import LOGGER._
+  import NewsQueue4Play._
 
   def receive = {
     // Запрос запуска актора очереди, если тот не существует.
     case EnsureNQ(dkey, typ) =>
       val name = nqActorName(dkey, typ)
-      val childRef = context.child(name) match {
+      lazy val logPrefix = s"EnsureNQ($dkey, $typ): childName => $name: "
+      val childRef: ActorRef = context.child(name) match {
         case None =>
-          context.actorOf(Props[NewsQueue4PlayActor], name = name)
+          val ref = context.actorOf(Props[NewsQueue4PlayActor], name = name)
+          trace(logPrefix + "New child started at " + ref)
+          ref
 
-        case Some(actorRef) =>
-          actorRef
+        case Some(ref) =>
+          trace(logPrefix + "Child already exists: " + ref)
+          ref
       }
       sender ! childRef
 
     // Запрос наличия очереди.
     case GetNQ(dkey, typ) =>
       val name = nqActorName(dkey, typ)
-      sender ! context.child(name)
+      val result = context.child(name)
+      trace(s"GetNQ($dkey, $typ): child with name=$name is $result")
+      sender ! result
 
     // Остановить указанного актора.
     case StopActor(actorRef) =>
+      trace(s"StopActor($actorRef)")
       context.stop(actorRef)
 
     // Остановить актора очереди.
     case StopNQ(dkey, typ) =>
       val name = nqActorName(dkey, typ)
-      context.child(name).foreach { context.stop(_) }
+      lazy val logPrefix = s"StopNQ($dkey, $typ): name => $name: "
+      context.child(name) match {
+        case Some(ref) =>
+          debug(logPrefix + "stopping child" + ref)
+          context.stop(ref)
+
+        case None =>
+          debug(logPrefix + "No child exist for name=" + name)
+      }
   }
 
 
@@ -200,23 +235,7 @@ class NewsQueue4PlaySup extends Actor {
 }
 
 
-/**
- * Сообщение, говорящее супервизору убедится в том, что необходимый менеджер очереди новостей работает и готов.
- * @param dkey ключ домена
- * @param typ некий "тип". Нужно для разграничения очередей новостей внутри домена.
- */
-sealed case class EnsureNQ(dkey:String, typ:String)
-
-/**
- * Сообщение, запрашивающее у супервизора данные по актору очереди, который может быть не запущен.
- * @param dkey ключ домена
- * @param typ "тип". Нужно для разграничения очередей новостей внутри домена.
- */
-sealed case class GetNQ(dkey:String, typ:String)
-
-sealed case class StopNQ(dkey:String, typ:String)
-sealed case class StopActor(actorRef: ActorRef)
-
 // Самая простая реализация актора NewsQueue с логгированием через play.
 // Должна использоваться как основа для других реализаций очередей в рамках sioweb21.
 class NewsQueue4PlayActor extends NewsQueueAbstract with SioutilLogs
+

@@ -1,7 +1,7 @@
 package util.event
 
 import io.suggest.event._
-import util.{DomainManager, SiowebSup}
+import util.{SioutilLogs, Logs, DomainManager, SiowebSup}
 import akka.actor.{Props, ActorRef, ActorRefFactory}
 import akka.util.Timeout
 import scala.concurrent.duration._
@@ -36,7 +36,7 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
 
   /** SiowebSup собирается запустить сие. */
   def startLink(arf: ActorRefFactory): ActorRef = {
-    arf.actorOf(Props[SiowebNotifier])
+    arf.actorOf(Props[SiowebNotifier], name=actorName)
   }
 
   /** Сабжевый актор стартанул. Надо выполнить асинхронно какие-то действия.
@@ -48,10 +48,11 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
 }
 
 
-class SiowebNotifier extends SioNotifier {
+class SiowebNotifier extends SioNotifier with SioutilLogs {
 
   // После запуска надо подписаться на статические события проекта.
   override def preStart(): Unit = {
+    trace(s"preStart(): my actor path = " + self.path)
     super.preStart()
     SiowebNotifier.snAfterStartAsync
   }

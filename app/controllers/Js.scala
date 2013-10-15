@@ -100,7 +100,7 @@ object Js extends Controller with ContextT with Logs {
    * @return Скрипт, который сделает всё круто.
    */
   def v2(domainStr:String, qi_id:String) = MaybeAuth.async { implicit request =>
-    lazy val logPrefix = s"v2($domainStr $qi_id): "
+    lazy val logPrefix = s"v2($domainStr, $qi_id): "
     trace(logPrefix + "starting...")
     val dkey = UrlUtil.normalizeHostname(domainStr)
     // Найти домен в базе. Если его там нет, то надо запустить инсталлер и вернуть скрипт с инсталлером. Затем выполнить остальные действия из sioweb_js_controller.
@@ -131,7 +131,7 @@ object Js extends Controller with ContextT with Logs {
       // Нужно проверить, относится ли запрос к юзеру, которому принадлежит qi и есть ли реально скрипт на сайте.
       case None =>
         import request.pwOpt
-
+        lazy val firstCheckUrl = "http://" + dkey + "/"
         val isQi = DomainQi.isQi(dkey, qi_id)
         trace(logPrefix + s"dkey=$dkey not found in storage. isQi=$isQi")
         val futureResult = isQi match {
@@ -141,10 +141,10 @@ object Js extends Controller with ContextT with Logs {
             // Далее запрос становится асинхронным, т.к. ensureActorFor возвращает Future[ActorRef]. Можно блокироваться через EnsureSync, можно сгенерить фьючерс. Пока делаем второе.
             // Запустить очередь приема новостей, присоединив её к sio_notifier. Когда откроется ws-соединение, очередь будет выпилена, и коннект между sn и каналом ws будет уже прямой.
             val timestamp0 = NewsQueue4Play.getTimestampMs
-            debug(logPrefix + s"Requesting NewsQueue for user=$pwOpt ;; tstamp=$timestamp0")
+            debug(logPrefix + s"Requesting NewsQueue for user=$pwOpt ;; tstamp=$timestamp0 ...")
             NewsQueue4Play.ensureActorFor(dkey, qi_id) flatMap { queueActorRef =>
               // Очередь запущена. Нужно подписать её на события SioNotifier.
-              debug(logPrefix + s"NewsQueue $queueActorRef ready for user=$pwOpt. Subscribing NQ for SN...")
+              debug(logPrefix + s"NewsQueue $queueActorRef ready for user=$pwOpt. Subscribing NewsQueue for SioweNotifier events...")
               // Подписаться на события qi от sio_notifier
               SiowebNotifier.subscribeSync(
                 subscriber = SnActorRefSubscriber(queueActorRef),
@@ -153,9 +153,14 @@ object Js extends Controller with ContextT with Logs {
                 debug(logPrefix + "SN subscribed OK")
                 // Подписывание очереди на событие выполнено.
                 // Отправить request referer на проверку. Бывает, что юзер ставит поиск не на главной, а где-то сбоку.
-                request.headers.get(REFERER).foreach { referer =>
-                  trace(logPrefix + "found referrer: " + referer)
-                  DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl=referer, qi_id=qi_id, sendEvents=true, pwOpt=pwOpt)
+                request.headers.get(REFERER) foreach { referer =>
+                  // Если реферер совпадает с проверяемым url, то НЕ нужно его проверять второй раз.
+                  if (referer != firstCheckUrl) {
+                    debug(logPrefix + "found referrer: " + referer)
+                    DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl=referer, qi_id=qi_id, sendEvents=true, pwOpt=pwOpt)
+                  } else {
+                    debug(logPrefix + "ignoring refererer: " + referer)
+                  }
                 }
                 // Сгенерить ответ.
                 val respBody = jsMainTpl(
@@ -187,6 +192,7 @@ object Js extends Controller with ContextT with Logs {
         }
         // Добавить фоновую проверку во фьючерс результата
         futureResult andThen { case _ =>
+          trace(logPrefix + "All ok, let's check Qi in background...")
           // отправить ссылку на корень сайта на проверку, вдруг там действительно по-тихому установлен скрипт.
           DomainQi.checkQiAsync(
             dkey = dkey,
@@ -209,26 +215,32 @@ object Js extends Controller with ContextT with Logs {
    * @return Возвращает различные коды ошибок с сообщениями.
    */
   def installUrl(domain:String, qi_id:String) = MaybeAuth { implicit request =>
-    import request.pwOpt
+    lazy val logPrefix = s"installUrl($domain, $qi_id): "
+    trace(logPrefix + "starting...")
+
     addDomainFormM.bindFromRequest().fold(
-      {formWithErrors => NotAcceptable("Not a URL.")}
+      {formWithErrors =>
+        warn(logPrefix + "POST parse failure: " + formWithErrors.errors)
+        NotAcceptable("Not a URL.")}
       ,
       // Действительно пришла ссылка. Нужно проверить присланные domain и qi_id и отправить ссылку на проверку.
       {url =>
-        
         val dkey = UrlUtil.normalizeHostname(domain)
-        val result = if (DomainQi.isQi(dkey, qi_id)) {
+        trace(logPrefix + s"Found URL in POST: $url ;; dkey = $dkey")
+        if (DomainQi.isQi(dkey, qi_id)) {
           
-          if (DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl = url.toExternalForm, qi_id=qi_id, sendEvents=true, pwOpt).isDefined)
+          if (DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl = url.toExternalForm, qi_id=qi_id, sendEvents=true, request.pwOpt).isDefined) {
+            debug(logPrefix + "200 OK - this url will be checked: " + url)
             Ok("Ok, your URL will be checked.")
-          else
+          } else {
+            warn(logPrefix + "Error: 3-rd paru URL: " + url)
             Forbidden("Unexpected 3rd-party URL.")
+          }
 
         } else {
+          warn(logPrefix + s"Installer not running for $dkey -> $qi_id")
           Forbidden("Installer is not running for %s. Trying to cheat me? Well, go on." format domain)
         }
-        LOGGER.debug("installUrl(%s %s): User %s want us to check also URL=%s. Decision: %s" format(dkey, qi_id, pwOpt, url, result))
-        result
       }
     )
   }

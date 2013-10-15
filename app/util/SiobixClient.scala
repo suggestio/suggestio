@@ -15,7 +15,9 @@ import concurrent.duration._
  * Created: 08.10.13 18:40
  * Description: Статический Akka-клиент для связи с нодой siobix-кравлера.
  */
-object SiobixClient {
+object SiobixClient extends Logs {
+
+  import LOGGER._
 
   def URL_PREFIX = current.configuration.getString("siobix.akka.url.prefix").get
   def CRAWLERS_SUP_LP = current.configuration.getString("siobix.akka.path.crawler.sup").get
@@ -34,7 +36,9 @@ object SiobixClient {
    * @return
    */
   def maybeBootstrapDkey(dkey:String, seedUrls: immutable.Seq[String]) = {
-    (getCrawlersSupSelector ? MaybeBootstrapDkey(dkey, seedUrls))
+    val sel = getCrawlersSupSelector
+    trace(s"maybeBootstrapDkey($dkey, $seedUrls): crawlersSup URL = " + CRAWLERS_SUP_URL)
+    (sel ? MaybeBootstrapDkey(dkey, seedUrls))
       .asInstanceOf[Future[MaybeBootstrapDkeyReply_t]]
   }
 

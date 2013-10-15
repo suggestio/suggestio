@@ -110,7 +110,7 @@ object MPerson {
     def save(data: MPerson): Future[MPerson] = {
       val path = getPersonPath(data.id)
       future {
-        JsonDfsBackend.writeToPath(path, this)
+        JsonDfsBackend.writeToPath(path, data)
         data
       }
     }

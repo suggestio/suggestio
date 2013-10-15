@@ -9,7 +9,6 @@ import concurrent.Await
 import akka.pattern.ask
 import akka.util.Timeout
 import akka.actor.OneForOneStrategy
-import io.suggest.SioutilSup
 import DomainRequester.{ACTOR_NAME => DOMAIN_REQUESTER_NAME}
 import util.event.SiowebNotifier
 

@@ -6,20 +6,20 @@ import org.apache.tika.metadata.{HttpHeaders, TikaMetadataKeys, Metadata}
 import java.io.InputStream
 import java.util.concurrent.{FutureTask, Callable, ExecutionException, TimeoutException, TimeUnit}
 import io.suggest.sax._
-import org.apache.tika.parser.AutoDetectParser
+import org.apache.tika.parser.{ParseContext, AutoDetectParser}
 import org.xml.sax.Attributes
 import io.suggest.util.StringUtil.randomId
 import util.event._
 import java.net.{MalformedURLException, URL}
 import io.suggest.util.UrlUtil
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import models.{MDomainQiAuthzTmp, MPersonDomainAuthz}
 import util.acl.PersonWrapper.PwOpt_t
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.LocalDate
-import play.api.Logger
 import play.api.Play.current
-import scala.concurrent.duration._
+import scala.util.{Failure, Success}
+import org.apache.tika.parser.html.{IdentityHtmlMapper, HtmlMapper}
 
 /**
  * Suggest.io
@@ -36,6 +36,8 @@ import scala.concurrent.duration._
 
 // Статический клиент к DomainRequester, который выполняет запросы к доменам
 object DomainQi extends Logs {
+
+  import LOGGER._
 
   val parseTimeoutMs = current.configuration.getInt("domain.qi.parse.timeout_ms") getOrElse 5000
   protected val timeout_msg = "timeout"
@@ -150,7 +152,7 @@ object DomainQi extends Logs {
           MDomainQiAuthzTmp.getForDkeyId(dkey, qi_id) flatMap {
             // Анонимус добавлял сайт и успешно прошел qi-проверку. Нужно перенести сайт к зареганному анонимусу
             case Some(dqia) =>
-              LOGGER.debug(logPrefix + s" approving ($dkey $qi_id) to ex-anon")
+              debug(logPrefix + s" approving ($dkey $qi_id) to ex-anon")
               // side-effects:
               MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, person_id=person_id, is_verified=true).save flatMap {_ =>
                 // Удалить анонимный qi из базы и из сессии, ибо больше не нужен.
@@ -213,6 +215,8 @@ object DomainQi extends Logs {
    * @return true, если ссылка была выверена и отправлена в очередь на обход. Иначе false.
    */
   def maybeCheckQiAsync(dkey:String, maybeUrl:String, qi_id:String, sendEvents:Boolean, pwOpt:PwOpt_t): Option[Future[SioJsV2]] = {
+    lazy val logPrefix = s"maybeCheckQiAsync($dkey, $qi_id): "
+    trace(logPrefix + s"url=$maybeUrl sendEvents=$sendEvents pwOpt=$pwOpt ;; starting...")
     try {
       val url = new URL(maybeUrl)
       
@@ -220,27 +224,30 @@ object DomainQi extends Logs {
       val isCheck: Boolean = urlProtoAllowedRe.pattern.matcher(url.getProtocol).matches() && {
         // хост верен?
         val urlDkey = UrlUtil.normalizeHostname(url.getHost)
-        
-        urlDkey == dkey
+        val isDkeyOk = urlDkey == dkey
+        if (!isDkeyOk)
+          debug(logPrefix + s"dkey invalid. expected=$dkey real=$urlDkey")
+        isDkeyOk
         
       } && {
         // ссылка ведет НЕ на главную и НЕ на страницу встроенного поиска на сайте?
         val pathNorm = UrlUtil.normalizePath(url.getPath)
-        
-        Logger.logger.debug("pathNorm : " + urlPathBadRe.pattern.matcher(pathNorm).find())
-        
+        debug("pathNorm : " + urlPathBadRe.pattern.matcher(pathNorm).find())
         urlPathBadRe.pattern.matcher(pathNorm).find()
       }
-      
-      if (isCheck) {
-        Some(checkQiAsync(dkey, url.toExternalForm, Some(qi_id), sendEvents=sendEvents, pwOpt=pwOpt))
 
-      } else None
+      if (isCheck) {
+        trace(logPrefix + "all ok. Let's check qi on remote site")
+        Some(checkQiAsync(dkey, url.toExternalForm, Some(qi_id), sendEvents=sendEvents, pwOpt=pwOpt))
+      } else {
+        debug(logPrefix + "One or more Qi pre-checks failed. Returning with nothing.")
+        None
+      }
 
     } catch {
       // Ссылка не верна. Ничего не делать, просто погасить исключение.
       case ex:MalformedURLException =>
-      	Logger.logger.debug("malformed url")
+      	debug("malformed url")
       	None
     }
   }
@@ -258,7 +265,10 @@ object DomainQi extends Logs {
    *                   Таким образом, если sendEvents = true, то функция имеет явные сайд-эффекты.
    */
   def checkQiAsync(dkey:String, url:String, qiIdOpt:Option[String], sendEvents:Boolean, pwOpt:PwOpt_t): Future[SioJsV2] = {
+    lazy val logPrefix = s"checkQiAsync($dkey, qi=$qiIdOpt): "
+    trace(logPrefix + s"url=$url sendEvents=$sendEvents pwOpt=$pwOpt ;; starting in background.")
     // Запросить постановку в очередь указанной ссылки для указанного домена
+    // Тут сама функция заканчивается, и начинается асинхронный и многопоточный ад.
     DomainRequester.queueUrl(dkey, url) flatMap { case DRResp200(ct, istream) =>
       // 200 OK: запустить тику с единственным SAX-handler и определить наличие скрипта на странице.
       try {
@@ -271,28 +281,38 @@ object DomainQi extends Logs {
         val task = new FutureTask(c)
         val t = new Thread(task)
         t.start()
+        trace("tika parser started in thread " + t.getId)
         val result: Either[(String, List[SioJsInfoT]), SioJsV2] = try {
           val l = task.get(parseTimeoutMs, TimeUnit.MILLISECONDS)
+          debug(logPrefix + "sio.js finder result: " + l)
           // Есть список найденных скриптов suggest_io.js на странице. Определить, есть ли среди них подходящий.
           l.find {
             // Найден js нужной версии. Нужно проверить его компоненты.
-            case SioJsV2(_dkey, _qi_id) =>
+            case s2 @ SioJsV2(_dkey, siteQiId) =>
+              trace(logPrefix + "v2 script detected: " + s2)
               dkey == _dkey && {
-                // Сообщить системе, что есть событие установки скрипта на сайт.
-                SiowebNotifier publish ValidSioJsFoundOnSite(dkey)
+                trace(logPrefix + "dkey matches. sio.js is installed on " + dkey)
+                validSioJsFoundOn(dkey)
                 // Что вернуть юзеру? Это зависит от qi_id (его наличия и совпадения с текущим в сессии).
-                qiIdOpt.isDefined  &&  qiIdOpt.get == _qi_id
+                val isQiMatches = qiIdOpt.isDefined  &&  qiIdOpt.get == siteQiId
+                if (isQiMatches) {
+                  debug(logPrefix + "qi check => success for " + dkey + "! ")
+                } else {
+                  warn(logPrefix + "qi check failed: found on site = " + siteQiId)
+                }
+                isQiMatches
               }
 
             // Что-то иное. Вероятно SioJs старой версии, который для qi не подходит.
-            case other => false
+            case other =>
+              warn(logPrefix + "smthing other found on site by parser: " + other)
+              false
 
           } match {
             // find нашел подходящий скрипт
-            case Some(info) =>
-              val info2 = info.asInstanceOf[SioJsV2]
-              LOGGER.info("qi success for " + dkey + "! " + info2)
-              Right(info2)
+            case Some(jsInfo1) =>
+              val jsInfo2 = jsInfo1.asInstanceOf[SioJsV2]
+              Right(jsInfo2)
 
             // find не нашел ничего интересного на странице.
             case None =>
@@ -315,33 +335,34 @@ object DomainQi extends Logs {
           // Внутри callable вылетел экзепшен. Он обернут в ExecutionException
           case ex:ExecutionException =>
             val errMsg = "Cannot parse page: internal parse error."
-            LOGGER.error("parse exception on %s" format url, ex)
+            error("parse exception on %s" format url, ex)
             Left(errMsg -> Nil)
 
           // Какое-то неведомое исключение возникло.
           case ex:Throwable =>
             val errMsg = "Unknown error during qi."
-            LOGGER.error(errMsg, ex)
+            error(errMsg, ex)
             Left(errMsg -> Nil)
         }
         // Отрезультировать фьючерс с возможными side-эффектами. Если приказано слать уведомления о ходе работы в шину событий, то сразу же сделать это, проанализировав результат анализа.
         result match {
           // Всё верно. Можно заапрувить учетку юзера по отношению к этому домену.
           case Right(jsInfo) =>
-            // Отправить юзеру соответствующее уведомление.
-            if (sendEvents) {
-              val qi_id1 = jsInfo.qi_id
-              approveQi(dkey, qi_id1, pwOpt)
-              val qiNews = QiSuccess(dkey=dkey, qi_id=qi_id1, url=url)
-              SiowebNotifier publish qiNews
+            info(logPrefix + "qi check success.")
+            val qi_id1 = jsInfo.qi_id
+            approveQi(dkey, qi_id1, pwOpt) map { _ =>
+              // Отправить юзеру соответствующее уведомление.
+              if (sendEvents) {
+                val qiNews = QiSuccess(dkey=dkey, qi_id=qi_id1, url=url)
+                SiowebNotifier publish qiNews
+              }
+              jsInfo
             }
-            Future.successful(jsInfo)
 
           // Ниасилил. Надо чиркануть в логи и сделать фьючерс неудачным.
           case Left((errMsg, listJsInstalled)) =>
-            // TODO надо отреагировать на список найденных скриптов. Если там что-то есть с верным доменом, то значит надо установить.
+            debug(logPrefix + s"qi check failed on $url: $errMsg")
             if (sendEvents) {
-              LOGGER.warn("qi check failed on %s: %s" format (url, errMsg))
               val qiNews = QiError(dkey=dkey, qiIdOpt=qiIdOpt, url=url, msg=errMsg)
               SiowebNotifier publish qiNews
             }
@@ -361,16 +382,35 @@ object DomainQi extends Logs {
    * Сессия юзера почистится из контроллера, когда тот обраружит у зареганного юзера, что в сессии лежат dkey+qi уже заапрувленного домена.
    * @param dkey ключ домена, который должен быть добавлен в базу кравлера.
    * @param qi_id qi id, относящиеся к неопределенному юзеру.
+   * @return Фьючерс с каким-то результатом в зависимости от залогиненности юзера.
    */
-  def approveQi(dkey:String, qi_id:String, pwOpt:PwOpt_t) {
-    pwOpt match {
+  def approveQi(dkey:String, qi_id:String, pwOpt:PwOpt_t): Future[_] = {
+    lazy val logPrefix = s"approveQi($dkey, $qi_id): "
+    trace(logPrefix + "started for pwOpt = " + pwOpt)
+    val fut = pwOpt match {
       case Some(pw) =>
+        debug(logPrefix + "Registering user as domain owner.")
         MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, person_id=pw.id, is_verified=true).save
 
       // Анонимус. Нужно поместить данные о профите во временное хранилище. Когда юзер зарегается, будет вызван installFromSession, который оттуда всё извлечет.
       case None =>
+        debug(logPrefix + "Saving temporary Qi credentials for anonymous.")
         MDomainQiAuthzTmp(dkey=dkey, id=qi_id).save
     }
+    fut onComplete {
+      case Success(result) => debug(logPrefix + "successfully saved as: " + result)
+      case Failure(ex)     => error(logPrefix + "cannot save authz data for user " + pwOpt, ex)
+    }
+    fut
+  }
+
+
+  /** На каком-то сайте обнаружен установленный sio.js. Нужно что-то сделать.
+    * @param dkey Ключ домена.
+    */
+  def validSioJsFoundOn(dkey: String) {
+    // Сообщить системе, что есть событие установки скрипта на сайт.
+    SiowebNotifier publish ValidSioJsFoundOnSite(dkey)
   }
 
 }
@@ -388,7 +428,9 @@ class DomainQiTikaCallable(md:Metadata, input:InputStream) extends Callable[List
   def call(): List[SioJsInfoT] = {
     val jsInstalledHandler = new SioJsDetectorSAX
     val parser = new AutoDetectParser()
-    parser.parse(input, jsInstalledHandler, md)
+    val parseContext = new ParseContext
+    parseContext.set(classOf[HtmlMapper], new IdentityHtmlMapper)
+    parser.parse(input, jsInstalledHandler, md, parseContext)
     jsInstalledHandler.getSioJsInfo
   }
 
