@@ -77,6 +77,8 @@ trait LogsAbstract {
   protected def error(message: => String)
   protected def error(message: => String, ex:Throwable)
 
+  protected def trace(message: => String)
+  protected def trace(message: => String, ex:Throwable)
 }
 
 

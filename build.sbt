@@ -33,7 +33,6 @@ libraryDependencies ++= {
   //val hbaseVsn      = "0.95.1-hadoop1"
   val hbaseVsn      = "0.94.11"
   Seq(
-    "org.scalatest" %% "scalatest" % "1.9.1" % "test",
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
     "org.gnu.inet" % "libidn" % "1.15",
@@ -58,6 +57,10 @@ libraryDependencies ++= {
     // cascading
     "cascading" % "cascading-core" % cascadingVsn,
     "cascading" % "cascading-hadoop" % cascadingVsn,
-    "com.scaleunlimited" % "cascading.utils" % "2.1.4" // нужно для HadoopUtils.
-  )}
+    "com.scaleunlimited" % "cascading.utils" % "2.1.4", // нужно для HadoopUtils.
+    // TEST
+    "net.databinder.dispatch" %% "dispatch-core" % "0.11.0" % "test",
+    "org.scalatest" %% "scalatest" % "1.9.1" % "test"
+  )
+}
 

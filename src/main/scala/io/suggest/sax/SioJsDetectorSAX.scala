@@ -2,7 +2,7 @@ package io.suggest.sax
 
 import org.xml.sax.helpers.DefaultHandler
 import org.xml.sax.Attributes
-import io.suggest.util.UrlUtil
+import io.suggest.util.{LogsImpl, UrlUtil}
 import scala.util.matching.Regex
 
 /**
@@ -20,8 +20,8 @@ object SioJsDetectorSAX extends Serializable {
     val JSv1, JSv2 = Value
   }
 
-  // TODO следует запретить захватывать в результат ненужные скобки типа www. и т.д.
-  val reStr = "https?://(www\\.)?suggest\\.io/(static/)?js/?(v2/([^/]+)/([a-zA-Z0-9]+))?"
+  // TODO Следует отрабатывать автоматический выбор домена поиска.
+  val reStr = "https?://(?:(?:www\\.)?suggest\\.io|localhost:9000)/(?:static/)?js/?(?:v2/([^/]+)/([a-zA-Z0-9]+))?"
   val srcReStr = "^\\s*" + reStr + "\\s*$"
 
   // Какие группы экстрактить из регэкспов. Тут две группы, они будут отражены на домен и qi_id.
@@ -36,6 +36,9 @@ object SioJsDetectorSAX extends Serializable {
 
 import SioJsDetectorSAX._
 class SioJsDetectorSAX extends DefaultHandler with Serializable {
+
+  val LOGGER = new LogsImpl(getClass)
+  import LOGGER._
 
   // Скриптов на странице бывает несколько (это ошибочно, но надо это тоже отрабатывать).
   protected var scriptInfoAcc : List[SioJsInfoT] = List()
@@ -61,13 +64,12 @@ class SioJsDetectorSAX extends DefaultHandler with Serializable {
    */
   override def startElement(uri: String, localName: String, qName: String, attributes: Attributes) {
     super.startElement(uri, localName, qName, attributes)
-
     // Если это script
     if (localName == TAG_SCRIPT) {
       inScript = inScript + 1
       // Если src задан, то нужно его проанализировать
       val src = attributes.getValue(ATTR_SRC)
-      if(src != null)
+      if (src != null)
         maybeMatches(srcRe, src)
     }
   }
@@ -85,7 +87,7 @@ class SioJsDetectorSAX extends DefaultHandler with Serializable {
     if (inScript > 0) {
       val newAccLen = scriptBodyAccCharLen + length
       if (newAccLen <= SCRIPT_BODY_ACC_LEN_MAX) {
-        scriptBodyAcc = new String(ch, start, length) :: scriptBodyAcc
+        scriptBodyAcc ::= new String(ch, start, length)
         scriptBodyAccCharLen = newAccLen
       }
     }
@@ -133,9 +135,8 @@ class SioJsDetectorSAX extends DefaultHandler with Serializable {
    * @param text текст
    */
   protected def maybeMatches(re:Regex, text:String) {
-    re.findFirstMatchIn(text).map { m =>
-      val groupValues = groups.map(m.group)
-      scriptInfoAcc = SioJsInfo(groupValues) :: scriptInfoAcc
+    re findAllMatchIn text foreach { m =>
+      scriptInfoAcc ::= SioJsInfo(m.subgroups)
     }
   }
 
@@ -156,12 +157,14 @@ object SioJsInfo {
    * Сгенерить нужный класс на основе распарсенных значений
    * @return
    */
-  def apply(values : List[String]) : SioJsInfoT = values match {
-    case List(d, q) if d != null && q != null && d.length > 3 && q.length > 4 =>
-      val dn = UrlUtil.normalizeHostname(d)
-      SioJsV2(dn, q)
+  def apply(values : List[String]) : SioJsInfoT = {
+    values match {
+      case List(d, q) if d != null && q != null && d.length > 3 && q.length > 4 =>
+        val dn = UrlUtil.normalizeHostname(d)
+        SioJsV2(dn, q)
 
-    case _ => SioJsV1
+      case _ => SioJsV1
+    }
   }
 
 }

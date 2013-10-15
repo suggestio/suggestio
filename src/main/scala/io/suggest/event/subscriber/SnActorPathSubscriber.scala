@@ -10,6 +10,9 @@ import io.suggest.event.SioNotifier
  * Description: Актор задан через путь. Связаваться с супервизором, чтоб он отрезовлвил путь.
  * @param actorPath путь до актора
  */
+// TODO использовать ActorSystem вместо контекста.
+// TODO использовать ActorSelection вместо actorFor. Нужно убедится, что ActorRef.forward не нужен и его можно безопасно заменить на !.
+
 case class SnActorPathSubscriber(actorPath:ActorPath) extends SnSubscriberT {
 
   /**

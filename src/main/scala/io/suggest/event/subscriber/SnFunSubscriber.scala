@@ -29,7 +29,7 @@ case class SnFunSubscriber(f: PartialFunction[SioNotifier.Event, Unit]) extends 
    * Актор, относящийся к подписчику, если есть.
    * @return
    */
-  def getActor(implicit ctx: ActorContext): Option[ActorRef] = ???
+  def getActor(implicit ctx: ActorContext): Option[ActorRef] = None
 
   /**
    * Хелпер для toString(). Выдаёт суффиксы.
