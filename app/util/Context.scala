@@ -2,9 +2,10 @@ package util
 
 import org.joda.time.DateTime
 import play.api.i18n.Lang
-import play.api.mvc.Request
+import play.api.mvc.{RequestHeader, Request}
 import play.api.Play.current
 import util.acl._, PersonWrapper.PwOpt_t
+import io.suggest.util.UrlUtil
 
 /**
  * Suggest.io
@@ -26,7 +27,10 @@ trait ContextT {
    * Выдать контекст. Неявно вызывается при вызове шаблона из контроллера.
    * @return
    */
-  implicit final def getContext2(implicit req:AbstractRequestWithPwOpt[_], lang:Lang = Context.LANG_DFLT): Context = {
+  implicit final def getContext2(implicit req:AbstractRequestWithPwOpt[_], lang:Lang): Context = {
+    // TODO Следует брать дефолтовый Lang с учетом возможного ?lang=ru в qs запрашиваемой ссылки.
+    //      Для этого надо override implicit def lang(implicit request: RequestHeader) в SioController.
+    //      Это позволит кравелрам сопоставлять ссылку и страницу с конкретным языком. Нужно также не забыть link rel=canonical в шаблонах.
     Context2()
   }
 
@@ -39,13 +43,13 @@ trait ContextT {
 trait Context {
 
   implicit def pw_opt: PwOpt_t
-  implicit def request: Request[_]
+  implicit def request: RequestHeader
   implicit def lang: Lang
 
   implicit lazy val now : DateTime = DateTime.now
 
   def isAuth:  Boolean = pw_opt.isDefined
-  def isAdmin: Boolean = pw_opt.exists(_.isAdmin)
+  def isSuperuser: Boolean = pw_opt.exists(_.isSuperuser)
 
   def lang_str = lang.language
 
@@ -67,3 +71,7 @@ case class Context2(
   implicit def pw_opt = request.pwOpt
 }
 
+/** Упрощенная версия контекста, используемая в минимальных условиях и вручную. */
+case class ContextImpl(implicit val request: RequestHeader, val lang: Lang) extends Context {
+  def pw_opt = PersonWrapper.getFromRequest(request)
+}

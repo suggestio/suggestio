@@ -35,6 +35,7 @@ import play.api.libs.iteratee.Concurrent
 
 object Js extends Controller with ContextT with Logs {
 
+  // TODO удалить, если это более не нужно.
   val SIO_JS_STATIC_FILENAME  = current.configuration.getString("sio_js.filename") getOrElse "sio.search.v7.js"
   val PULL_INSTALLER_CALLBACK = current.configuration.getString("sio_js.installer.callback") getOrElse "sio.qi_events"
 
@@ -104,7 +105,7 @@ object Js extends Controller with ContextT with Logs {
     trace(logPrefix + "starting...")
     val dkey = UrlUtil.normalizeHostname(domainStr)
     // Найти домен в базе. Если его там нет, то надо запустить инсталлер и вернуть скрипт с инсталлером. Затем выполнить остальные действия из sioweb_js_controller.
-    MDomain.getForDkey(dkey) match {
+    MDomain.getForDkey(dkey) flatMap {
       // Есть домен такой в базе. Нужно выдать js-скрипт для поиска, т.е. всё как обычно.
       case Some(domain) =>
         trace(logPrefix + s"dkey=$dkey found as $domain")

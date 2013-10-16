@@ -2,6 +2,7 @@ package util
 
 import play.api.Play.current
 import io.suggest.util.SiobixFsStaticT
+import org.apache.hadoop.fs.Path
 
 /**
  * Suggest.io

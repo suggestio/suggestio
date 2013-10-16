@@ -18,7 +18,7 @@ GET  /livesearch                        controllers.Search.liveSearch(h:String, 
 
 GET  /login/persona                     controllers.Ident.persona
 POST /login/persona                     controllers.Ident.persona_submit
-GET /logout                             controllers.Ident.logout
+GET  /logout                            controllers.Ident.logout
 
 ## Callback'и инсталляторов и валидаторов сайтов.
 POST /js/add_domain                             controllers.Js.addDomain
@@ -60,3 +60,8 @@ POST /admin/apply_ds/:domain            controllers.Admin.applyDomainSettings(do
 GET  /feedback                          controllers.Feedback.feedbackForm(isAsync:Boolean ?= false)
 POST /feedback                          controllers.Feedback.feedbackFormSubmit
 
+GET  /sys                               controllers.Sys.index
+GET  /sys/dkeys/all                     controllers.Sys.dkeysListAll
+GET  /sys/dkey/:dkey                    controllers.Sys.dkeyShow(dkey)
+GET  /sys/addSite                       controllers.Sys.addSiteForm
+POST /sys/addSite                       controllers.Sys.addSiteFormSubmit

@@ -40,15 +40,15 @@ trait DkeyModelT extends DkeyContainerT {
   def domainOpt = MDomain.getForDkey(dkey)
 
   @JsonIgnore
-  def domain = domainOpt.get
-
-  @JsonIgnore
   def domainUserSettings = MDomainUserSettings.getForDkey(dkey)
 
   def authzForPerson(person_id:String) = MPersonDomainAuthz.getForPersonDkey(dkey, person_id)
   //def qiTmpAuth = MDomainQiAuthzTmp.listDkey(dkey)  // unused
   def qiTmpAuthPerson(qi_id: String) = MDomainQiAuthzTmp.getForDkeyId(dkey=dkey, id=qi_id)
   def domainSettingsFut(implicit ec:ExecutionContext) = MDomainSettings.getForDkey(dkey)
+
+  @JsonIgnore
+  def allPersonAuthz = MPersonDomainAuthz.getForDkey(dkey)
 
   @JsonIgnore
   def domainUserJson: Future[Option[MDomainUserJson]] = MDomainUserJson.getForDkey(dkey)

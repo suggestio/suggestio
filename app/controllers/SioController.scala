@@ -10,8 +10,10 @@ import scala.concurrent.Future
  * Created: 11.10.13 11:43
  * Description:
  */
+
 trait SioController extends Controller with ContextT {
-
-  implicit protected def simpleResult2async(sr: SimpleResult): Future[SimpleResult] = Future.successful(sr)
-
+  implicit protected def simpleResult2async(sr: SimpleResult): Future[SimpleResult] = {
+    Future.successful(sr)
+  }
 }
+

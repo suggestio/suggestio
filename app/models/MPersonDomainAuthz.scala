@@ -1,19 +1,21 @@
 package models
 
 import org.joda.time.{ReadableDuration, DateTime, Duration}
-import io.suggest.util.{Logs, StringUtil}
-import util.{ModelSerialJson, DomainValidator, DfsModelUtil, SiobixFs}
+import io.suggest.util.StringUtil
+import util._
 import SiobixFs.fs
-import org.apache.hadoop.fs.Path
-import io.suggest.model.JsonDfsBackend
+import org.apache.hadoop.fs.{FileStatus, Path}
+import io.suggest.model.{AsyncHbaseScannerFold, JsonDfsBackend}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.util.UUID
 import scala.concurrent.duration._
 import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.collection.JavaConversions._
-import org.hbase.async.{GetRequest, DeleteRequest, PutRequest}
-import util.StorageUtil, StorageUtil.StorageType._
+import org.hbase.async.{KeyValue, GetRequest, DeleteRequest, PutRequest}
+import StorageUtil.StorageType._
+import scala.Some
+import play.api.Logger
 
 /**
  * Suggest.io
@@ -37,6 +39,7 @@ case class MPersonDomainAuthz(
 ) extends MDomainAuthzT {
 
   import MPersonDomainAuthz._
+  import LOGGER._
 
   // Связи с другими моделями и компонентами системы.
   @JsonIgnore def person = MPerson.getById(person_id)
@@ -47,7 +50,10 @@ case class MPersonDomainAuthz(
   /**
    * Сохранить текущий экземпляр класса в базу.
    */
-  def save = BACKEND.save(this)
+  def save = {
+    trace(s"save(): Saving authz id=$id dkey=$dkey for person=$person_id.")
+    BACKEND.save(this)
+  }
 
   def isQiType = typ == TYPE_QI
   def isValidationType = typ == TYPE_VALIDATION
@@ -128,7 +134,9 @@ case class MPersonDomainAuthz(
 
 
 // Статическая часть модели
-object MPersonDomainAuthz extends Logs {
+object MPersonDomainAuthz {
+
+  private val LOGGER = Logger(getClass)
 
   private val BACKEND: Backend = StorageUtil.STORAGE match {
     case DFS    => new DfsBackend
@@ -226,6 +234,14 @@ object MPersonDomainAuthz extends Logs {
    */
   def delete(person_id:String, dkey:String) = BACKEND.delete(person_id=person_id, dkey=dkey)
 
+  /**
+   * Найти все авторизации для указанного домена. Не такая быстрая функция, и только для целевого использования:
+   * в /sys/ или для других нечастых задач.
+   * @param dkey Ключ домена
+   * @return Фьючерс с найденными Authz. Возможно, в порядке (прямом или обратном) поля person_id.
+   */
+  def getForDkey(dkey: String) = BACKEND.getForDkey(dkey)
+
 
   /** Интерфейс для storage backend'ов этой модели. */
   trait Backend {
@@ -234,12 +250,12 @@ object MPersonDomainAuthz extends Logs {
     def getForPersonDkey(person_id:String, dkey:String) : Future[Option[MPersonDomainAuthz]]
     def getForPersonDkeys(person_id:String, dkeys:Seq[String]) : Future[List[MPersonDomainAuthz]] = {
       // По дефолту фильтрануть getForPerson на предмет желаемых dkey.
-      getForPerson(person_id) map {
-        _.filter { dkeys contains _.dkey }
+      getForPerson(person_id) map { authz =>
+        authz.filter { dkeys contains _.dkey }
       }
     }
-    def getForPerson(person_id:String): Future[List[MPersonDomainAuthz]]
-    //def getForDkey(dkey:String) : Future[List[MPersonDomainAuthz]]
+    def getForPerson(person_id: String): Future[List[MPersonDomainAuthz]]
+    def getForDkey(dkey:String) : Future[List[MPersonDomainAuthz]]
   }
 
 
@@ -270,6 +286,8 @@ object MPersonDomainAuthz extends Logs {
       authzFilePath(personDkeyDir)
     }
 
+    private def dkeyAllPath(dkey: String) = dkeyPersonPath(person_id="*", dkey=dkey)
+
     /**
      * Выдать путь к файлу с данными авторизации.
      * @param personDkeyDir папка домена внутри папки пользователя.
@@ -298,19 +316,19 @@ object MPersonDomainAuthz extends Logs {
     }
 
 
-    /*
+    /**
      * Собрать все идентификации для домена в один список (в неопределенном порядке)
      * @param dkey
      * @return
      */
-    /*def getForDkey(dkey:String) : List[MPersonDomainAuthz] = {
+    def getForDkey(dkey:String) : Future[List[MPersonDomainAuthz]] = future {
       val path = dkeyAllPath(dkey)
       fs.listStatus(path)
         .toList
-        .foldLeft(List[MPersonDomainAuthz]()) { (acc, fstatus:FileStatus) =>
+        .foldLeft[List[MPersonDomainAuthz]] (Nil) { (acc, fstatus:FileStatus) =>
           readOneAcc(acc, fstatus.getPath)
         }
-    }*/
+    }
 
 
     def save(data: MPersonDomainAuthz): Future[MPersonDomainAuthz] = {
@@ -384,6 +402,18 @@ object MPersonDomainAuthz extends Logs {
       ahclient.get(getReq) map { kvs =>
         kvs.map { kv => deserialize(kv.value) }.toList
       }
+    }
+
+    def getForDkey(dkey: String): Future[List[MPersonDomainAuthz]] = {
+      val scanner = ahclient.newScanner(HTABLE_NAME_BYTES)
+      scanner.setFamily(CF_UAUTHZ)
+      scanner.setQualifier(dkey2qualifier(dkey))
+      val folder = new AsyncHbaseScannerFold[List[MPersonDomainAuthz]] {
+        def fold(acc0: List[MPersonDomainAuthz], kv: KeyValue): List[MPersonDomainAuthz] = {
+          deserialize(kv.value()) :: acc0
+        }
+      }
+      folder(Nil, scanner)
     }
   }
 

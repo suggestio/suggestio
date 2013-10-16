@@ -40,7 +40,7 @@ case class MPerson(
    * @param dkey Ключ домена.
    * @return
    */
-  def addDkey(dkey:String) : MPerson = {
+  def addDkey(dkey: String) : MPerson = {
     dkeys = dkey :: dkeys
     this
   }
@@ -63,7 +63,7 @@ case class MPerson(
 trait MPersonLinks {
   val id : String
 
-  @JsonIgnore def isAdmin = MPerson.isAdmin(id)
+  @JsonIgnore def isSuperuser = MPerson isSuperuserId id
   def authzForDomain(dkey:String) = MPersonDomainAuthz.getForPersonDkey(dkey, id)
   @JsonIgnore def allDomainsAuthz = MPersonDomainAuthz.getForPerson(id)
 }
@@ -81,7 +81,7 @@ object MPerson {
   }
 
   // Список емейлов админов suggest.io. Пока преднамеренно захардкожен, потом -- посмотрим.
-  protected val adminEmails = Set("konstantin.nikiforov@cbca.ru", "ilya@shuma.ru", "sasha@cbca.ru")
+  private val suEmails = Set("konstantin.nikiforov@cbca.ru", "ilya@shuma.ru", "sasha@cbca.ru")
 
   /**
    * Прочитать объект Person из хранилища.
@@ -96,7 +96,7 @@ object MPerson {
    * @param email емейл
    * @return
    */
-  def isAdmin(email:String) = adminEmails.contains(email)
+  def isSuperuserId(email:String) = suEmails.contains(email)
 
 
   /** Интерфейс storage backend'а. для данной модели */

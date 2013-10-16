@@ -1,4 +1,4 @@
-@(title: String, head_after:Html = Html(""), browser_check:Option[Html] = None, withHeadCommon:Boolean = true, withAnalytics:Boolean = true)(content: Html)(implicit c:util.Context)
+@(title: String, head_after:Html = Html.empty, browser_check:Option[Html] = None, withHeadCommon:Boolean = true, withAnalytics:Boolean = true)(content: Html)(implicit c:util.Context)
 @import stuff._
 
 <!DOCTYPE html>
@@ -11,10 +11,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <link href="@routes.Assets.at("stylesheets/bootstrap.min.css")" rel="stylesheet" media="screen">
-    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    @* HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries *@
     <!--[if lt IE 9]>
-      <script src="../../assets/js/html5shiv.js"></script>
-      <script src="../../assets/js/respond.min.js"></script>
+      <script src="@routes.Assets.at("javascripts/bootstrap/html5shiv.js")"></script>
+      <script src="@routes.Assets.at("javascripts/bootstrap/respond.min.js")"></script>
     <![endif]-->
     
     @if(!browser_check.isDefined) {

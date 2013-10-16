@@ -1,7 +1,7 @@
 package controllers
 
 import play.api.mvc._
-import util.ContextT
+import util.ContextImpl
 import util.acl._
 import views.html.crawl._
 import play.api.data._
@@ -12,8 +12,9 @@ import play.api.Logger
 import gnu.inet.encoding.IDNA
 import io.suggest.util.UrlUtil
 import play.api.Play.current
+import scala.concurrent.Future
 
-object Application extends Controller with ContextT {
+object Application extends SioController {
 
   val addSiteFormM = Form(
     "url" -> nonEmptyText(minLength = 7, maxLength = 40)
@@ -76,5 +77,15 @@ object Application extends Controller with ContextT {
       }
     )
   }
-  
+
+
+  /** Тело экшена, генерирующее страницу 404. Используется при минимальном окружении. */
+  def http404(implicit request: RequestHeader): SimpleResult = {
+    implicit val ctx = ContextImpl()
+    NotFound(views.html.static.http404Tpl())
+  }
+
+  /** Враппер, генерящий фьючерс с телом экшена http404(RequestHeader). */
+  def http404Fut(implicit request: RequestHeader): Future[SimpleResult] = http404
+
 }

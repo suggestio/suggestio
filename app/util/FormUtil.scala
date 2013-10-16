@@ -19,18 +19,20 @@ object FormUtil {
 
   private val allowedProtocolRePattern = "(?i)https?".r
 
+  def isValidUrl(urlStr: String): Boolean = {
+    try {
+      new URL(urlStr)
+      true
+
+    } catch {
+      case ex:Throwable => false
+    }
+  }
+
   // Маппер form-поля URL
   val urlMapper = nonEmptyText(minLength = 8)
     .transform(_.trim, strIdentityF)
-    .verifying("mappers.url.invalid_url", { urlStr =>
-      try {
-        new URL(urlStr)
-        true
-
-      } catch {
-        case ex:Throwable => false
-      }
-    })
+    .verifying("mappers.url.invalid_url", isValidUrl(_))
     .transform(new URL(_), {url:URL => url.toExternalForm})
 
   // Проверить ссылку на возможность добавления сайта в индексацию.
@@ -41,7 +43,6 @@ object FormUtil {
     .verifying("mappers.url.hostname_prohibited", { url =>
       UrlUtil.isHostnameValid(url.getHost)
     })
-
 
 
   // Маппер домена. Формат ввода тут пока не проверяется.

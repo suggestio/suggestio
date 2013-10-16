@@ -133,7 +133,8 @@ object DomainQi extends Logs {
    * @return Обновлённые данные сессии.
    */
   def installFromSession(person_id:String)(implicit session:Session): Future[Session] = {
-    lazy val logPrefix = "installFromSession(%s): " format person_id
+    lazy val logPrefix = s"installFromSession($person_id): "
+    trace(logPrefix + "starting...")
     // Разделить карту сессии на относящихся к qi и остальные.
     val sesMap = session.data.groupBy { case (k,_) => isSkey(k) }
     // Относящиеся к qi данные параллельно проанализировать на профпригодность.
@@ -152,16 +153,21 @@ object DomainQi extends Logs {
           MDomainQiAuthzTmp.getForDkeyId(dkey, qi_id) flatMap {
             // Анонимус добавлял сайт и успешно прошел qi-проверку. Нужно перенести сайт к зареганному анонимусу
             case Some(dqia) =>
-              debug(logPrefix + s" approving ($dkey $qi_id) to ex-anon")
+              debug(logPrefix + s" approving qi($dkey $qi_id): will replace MDomainQiAuthzTmp with non-anon MPersonDomainAuthz...")
               // side-effects:
               MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, person_id=person_id, is_verified=true).save flatMap {_ =>
+                trace(logPrefix + "domain authz saved for " + dkey)
                 // Удалить анонимный qi из базы и из сессии, ибо больше не нужен.
-                dqia.delete map { _ => false }
+                dqia.delete map { _ =>
+                  trace(logPrefix + s"rights takeover done for qi($dkey $qi_id) to person_id=$person_id. Delete it from session.")
+                  false
+                }
               }
 
             // Юзер не проходил проверок, или прошел но неудачно. Нужно проверить, не истекло ли время хранения qi в сессии.
             case None =>
               val result = dtQi.toInt >= dtQiNow.toInt - qiInSessionDaysMax
+              trace(logPrefix + s"qi($dkey $qi_id) stalled in session. Keep? " + result)
               Future successful result
           }
       }
@@ -175,7 +181,9 @@ object DomainQi extends Logs {
         case (accSes, Some(kv)) => kv :: accSes
         case (accSes, None)     => accSes
       }
-      session.copy(s2.toMap)
+      val result = session.copy(s2.toMap)
+      trace(logPrefix + "new session is " + result)
+      result
     }
   }
 

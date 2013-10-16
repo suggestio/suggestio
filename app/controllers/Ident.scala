@@ -11,7 +11,7 @@ import views.html.ident._
 import play.api.libs.concurrent.Promise.timeout
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.duration._
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import play.api.libs.json.JsString
 import models.MPerson
 import play.api.mvc.Security.username
@@ -57,10 +57,16 @@ object Ident extends SioController with Logs {
    * @return
    */
   def persona_submit = Action.async { implicit request =>
+    lazy val logPrefix = "personaSubmit(): "
+    trace(logPrefix + "starting...")
     personaM.bindFromRequest.fold(
-      formWithErrors => Future.successful(BadRequest)
+      {formWithErrors =>
+        warn(logPrefix + "Cannot parse POST body: " + formWithErrors.errors)
+        Future.successful(BadRequest)
+      }
       ,
       {assertion =>
+        trace(logPrefix + "mozilla persona assertion received in POST: " + assertion)
         val reqBody : Map[String, Seq[String]] = Map(
           "assertion" -> Seq(assertion),
           "audience"  -> Seq(AUDIENCE_URL)
@@ -75,6 +81,7 @@ object Ident extends SioController with Logs {
           // Получен ответ от сервера mozilla persona.
           case resp:Response =>
             val respJson = resp.json
+            trace(logPrefix + s"MP verifier resp: ${resp.status} ${resp.statusText} :: " + respJson)
             respJson \ "status" match {
               // Всё ок. Нужно награбить email и залогинить/зарегать юзера
               case JsString("okay") =>
@@ -84,15 +91,22 @@ object Ident extends SioController with Logs {
                   case JsString(AUDIENCE_URL) =>
                     // Запускаем юзера в студию
                     val email = (respJson \ "email").as[String].trim
+                    trace(logPrefix + "found email: " + email)
                     // Найти текущего юзера или создать нового:
                     MPerson.getById(email) flatMap { personOpt =>
                       val personFut = personOpt match {
-                        case None    => new MPerson(email).save
-                        case Some(p) => Future successful p
+                        case None    =>
+                          trace(logPrefix + "Registering new user: " + email)
+                          new MPerson(email).save
+
+                        case Some(p) =>
+                          trace(logPrefix + "Login already registered user: " + p)
+                          Future successful p
                       }
                       personFut flatMap { person =>
                         // Заапрувить анонимно-добавленные и подтвержденные домены (qi)
                         DomainQi.installFromSession(person.id) map { session1 =>
+                          trace(logPrefix + email + " successfully logged in. Redirecting.")
                           // залогинить юзера наконец.
                           rdrToAdmin
                             .withSession(session1)

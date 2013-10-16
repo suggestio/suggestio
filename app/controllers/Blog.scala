@@ -10,14 +10,13 @@ package controllers
 import models.MBlog
 import play.api.data._
 import play.api.data.Forms._
-import play.api.mvc._
-import util.ContextT
 import util.acl._
 import views.html.blog._
 import play.api.libs.concurrent.Execution.Implicits._
+import Application.http404
 
 
-object Blog extends Controller with ContextT {
+object Blog extends SioController {
 
   /** Определение параметров формы для создания записи в блоге. */
   val postFormM = Form(
@@ -58,8 +57,7 @@ object Blog extends Controller with ContextT {
       case Some(record) =>
         Ok(_blogRecordTpl(record, preview=false))
 
-      case None =>
-        NotFound
+      case None => http404
     }
   }
 
@@ -106,8 +104,7 @@ object Blog extends Controller with ContextT {
         val formEdit = postFormM.fill(record)
         Ok(editFormTpl(record, formEdit))
 
-      case None =>
-        NotFound
+      case None => http404
     }
   }
 
@@ -129,7 +126,7 @@ object Blog extends Controller with ContextT {
           }
         )
 
-      case None => NotFound
+      case None => http404
     }
   }
 

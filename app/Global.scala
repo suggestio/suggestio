@@ -1,4 +1,7 @@
+import play.api.mvc.{SimpleResult, RequestHeader}
+import scala.concurrent.Future
 import util.{ContextT, SiowebSup}
+import play.api.Play._
 
 /**
  * Suggest.io
@@ -10,7 +13,7 @@ import util.{ContextT, SiowebSup}
  */
 import play.api._
 
-object Global extends GlobalSettings with ContextT {
+object Global extends GlobalSettings {
 
   /**
    * При запуске нужно
@@ -28,16 +31,15 @@ object Global extends GlobalSettings with ContextT {
 
 
   /**
-   *Вызов страницы 404
-
-
-   override def onHandlerNotFound(request: RequestHeader): Result = {
-
-    super.onHandlerNotFound(request)
-     NotFound(
-       views.html.static.http404Tpl()
-     )
+   * Вызов страницы 404. В продакшене надо выводить специальную страницу 404.
+   */
+  override def onHandlerNotFound(request: RequestHeader): Future[SimpleResult] = {
+    maybeApplication match {
+      case Some(app) if app.mode == Mode.Prod => controllers.Application.http404Fut(request)
+      // При разработке следует выводить нормальное 404.
+      case _ => super.onHandlerNotFound(request)
+    }
   }
-  */
+
 }
 

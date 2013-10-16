@@ -64,7 +64,7 @@ object Admin extends SioController with Logs {
       // или если юзер является админом suggest.io.
       // В итоге получается, что очередь запускается на случай сбора новостей между этим экшеном и окончанием активации WebSocket'а.
       val timestampMs = NewsQueue4Play.getTimestampMs
-      if (!pw.isAdmin && !personDomains.isEmpty) {
+      if (!pw.isSuperuser && !personDomains.isEmpty) {
         LOGGER.debug(logPrefix + "Maybe need revalidate %s domains. Starting news queue..." format personDomains.size)
         NewsQueue4Play.ensureActorFor(pw.id, NQ_TYPE) onSuccess { case nqActorRef =>
           LOGGER.debug(logPrefix + "NewsQueue started as %s" format nqActorRef)
@@ -143,7 +143,7 @@ object Admin extends SioController with Logs {
    * Юзер сабмиттит форму добавления домена.
    * @return 201 Created - домен добавлен
    */
-  def addDomain = IsAuth { implicit request =>
+  def addDomain = IsAuth.async { implicit request =>
     addDomainFormM.bindFromRequest().fold(
       // Пришла некорректная форма. Вернуть назад.
       formWithErrors =>
@@ -152,7 +152,7 @@ object Admin extends SioController with Logs {
       ,
       {dkey =>
         val jsonFields0 = dkeyJsProps(dkey)
-        MDomain.getForDkey(dkey) match {
+        MDomain.getForDkey(dkey) map {
           // Есть такой домен в базе
           case Some(_) =>
             val person_id = request.pwOpt.get.id

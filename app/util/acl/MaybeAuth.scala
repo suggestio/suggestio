@@ -23,7 +23,7 @@ object MaybeAuth extends ActionBuilder[AbstractRequestWithPwOpt] with Logs {
    */
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
-    trace("invokeBlock(): pwOpt = " + pwOpt)
+    trace("pwOpt = " + pwOpt)
     block(RequestWithPwOpt(pwOpt, request))
   }
 

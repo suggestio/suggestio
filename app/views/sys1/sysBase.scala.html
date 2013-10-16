@@ -1,0 +1,21 @@
+@(title: String, headAfter:Html = Html.empty, currNodeOpt:Option[String] = None)(content: Html)(implicit c:util.Context)
+@import stuff._
+
+@* base-шаблон для системной панели suggest.io. *@
+
+<html>
+<head>
+	<title>@title | system | s.io</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
+	<link rel="stylesheet" type="text/css" href="@routes.Assets.at("sys.css")"/>
+	@headAfter
+</head>
+
+<body>
+	<div class="sio-db-logo">
+		<a href="@routes.Sys.index"><img src="@routes.Assets.at("images/sio-dark-logo.png")"></a>
+	</div>
+	<div class="sio-db-layout">@content</div>
+</body>
+</html>

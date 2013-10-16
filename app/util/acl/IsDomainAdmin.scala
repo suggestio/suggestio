@@ -34,10 +34,9 @@ object IsDomainAdmin {
    * @param dkey Ключ домена.
    * @param pwOpt Данные о текущем юзере.
    * @param request Реквест на случай необходимости чтения сессии.
-   * @tparam A Подтип реквеста.
    * @return None если нет прав. Some(authz) если есть причина, по которой юзеру следует разрешить управлять сайтом.
    */
-  def isDkeyAdmin[A](dkey: String, pwOpt:PwOpt_t, request: Request[A]): Future[Option[MDomainAuthzT]] = {
+  def isDkeyAdmin(dkey: String, pwOpt:PwOpt_t, request: RequestHeader): Future[Option[MDomainAuthzT]] = {
     pwOpt match {
       // Анонимус. Возможно, он прошел валидацию уже. Нужно узнать из сессии текущий qi_id и проверить по базе.
       case None =>
@@ -50,7 +49,7 @@ object IsDomainAdmin {
       case Some(pw) =>
         // TODO Надо проверить случай, когда у админа suggest.io есть добавленный домен. Всё ли нормально работает?
         // Если нет, то надо обращение к модели вынести на первый план, а только потом уже проверять isAdmin.
-        if (pw.isAdmin) {
+        if (pw.isSuperuser) {
           val result = Some(MPersonDomainAuthzAdmin(person_id=pw.id, dkey=dkey))
           Future.successful(result)
         } else {

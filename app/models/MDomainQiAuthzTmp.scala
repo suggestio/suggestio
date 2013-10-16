@@ -14,6 +14,7 @@ import org.hbase.async.{GetRequest, DeleteRequest, PutRequest}
 import scala.collection.JavaConversions._
 import scala.Some
 import StorageUtil.StorageType._
+import play.api.Logger
 
 /**
  * Suggest.io
@@ -29,7 +30,8 @@ case class MDomainQiAuthzTmp(
   date_created: DateTime = DateTime.now()
 ) extends MDomainAuthzT with DkeyModelT {
 
-  import MDomainQiAuthzTmp.{BACKEND, VERIFY_DURATION_HARD, VERIFY_DURATION_SOFT}
+  import MDomainQiAuthzTmp.{BACKEND, VERIFY_DURATION_HARD, VERIFY_DURATION_SOFT, LOGGER}
+  import LOGGER._
 
   @JsonIgnore def personIdOpt: Option[String] = None
   @JsonIgnore def isValid: Boolean = {
@@ -43,13 +45,19 @@ case class MDomainQiAuthzTmp(
    * Сохранить текущий ряд в базу.
    * @return
    */
-  def save = BACKEND.save(this)
+  def save = {
+    trace(s"save(): id=$id dkey=$dkey")
+    BACKEND.save(this)
+  }
 
   /**
    * Удалить файл, относящийся к текущему экземпляру класса.
    * @return true, если файл действительно удален.
    */
-  def delete = BACKEND.delete(dkey=dkey, id=id)
+  def delete = {
+    trace(s"delete(): id=$id dkey=$dkey")
+    BACKEND.delete(dkey=dkey, id=id)
+  }
 
   @JsonIgnore def isQiType: Boolean = true
   @JsonIgnore def isValidationType: Boolean = false
@@ -68,7 +76,10 @@ case class MDomainQiAuthzTmp(
 }
 
 
-object MDomainQiAuthzTmp extends Logs {
+object MDomainQiAuthzTmp {
+
+  // Не используем extends Logs т.к. этот логгер вызывается из класса-компаньона в том числе.
+  private val LOGGER = Logger(getClass.getName)
 
   private val BACKEND: Backend = {
     StorageUtil.STORAGE match {

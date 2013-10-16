@@ -18,7 +18,7 @@ import scala.Some
  * Description: Контроллер выполнения поисковых запросов. Получает запрос и возвращает поисковую выдачу.
  */
 
-object Search extends Controller {
+object Search extends SioController {
 
   /**
    * json-рендерер списка результатов.
@@ -49,7 +49,7 @@ object Search extends Controller {
    */
   def liveSearch(domainRaw:String, queryStr:String, debug:Boolean, langs:String) = Action.async {
     val dkey = UrlUtil.normalizeHostname(domainRaw)
-    MDomain.getForDkey(dkey) match {
+    MDomain.getForDkey(dkey) flatMap {
       case Some(mdomain) =>
         // Домен есть в системе.
         // TODO нужно восстанавливать SearchContext из кукисов реквеста или генерить новый
@@ -79,8 +79,7 @@ object Search extends Controller {
           case ex                            => InternalServerError(ex.getMessage)
         }
 
-      case None =>
-        Future.successful(NotFound)
+      case None => NotFound
     }
   }
 
