@@ -231,6 +231,7 @@ object DomainQi extends Logs {
         
       } && {
         // ссылка ведет НЕ на главную и НЕ на страницу встроенного поиска на сайте?
+        // TODO Этот код не работает.
         val pathNorm = UrlUtil.normalizePath(url.getPath)
         debug("pathNorm : " + urlPathBadRe.pattern.matcher(pathNorm).find())
         urlPathBadRe.pattern.matcher(pathNorm).find()
@@ -296,7 +297,7 @@ object DomainQi extends Logs {
                 // Что вернуть юзеру? Это зависит от qi_id (его наличия и совпадения с текущим в сессии).
                 val isQiMatches = qiIdOpt.isDefined  &&  qiIdOpt.get == siteQiId
                 if (isQiMatches) {
-                  debug(logPrefix + "qi check => success for " + dkey + "! ")
+                  debug(logPrefix + "qi (dkey and id) check success for user " + pwOpt)
                 } else {
                   warn(logPrefix + "qi check failed: found on site = " + siteQiId)
                 }
@@ -305,7 +306,7 @@ object DomainQi extends Logs {
 
             // Что-то иное. Вероятно SioJs старой версии, который для qi не подходит.
             case other =>
-              warn(logPrefix + "smthing other found on site by parser: " + other)
+              warn(logPrefix + "something other found on site by parser, ignoring: " + other)
               false
 
           } match {
@@ -348,7 +349,7 @@ object DomainQi extends Logs {
         result match {
           // Всё верно. Можно заапрувить учетку юзера по отношению к этому домену.
           case Right(jsInfo) =>
-            info(logPrefix + "qi check success.")
+            trace(logPrefix + "qi check successed. Saving qi for user " + pwOpt)
             val qi_id1 = jsInfo.qi_id
             approveQi(dkey, qi_id1, pwOpt) map { _ =>
               // Отправить юзеру соответствующее уведомление.
@@ -419,18 +420,33 @@ sealed case class QiCheckException(message:String, jsFound:List[SioJsInfoT]) ext
 
 
 // Анализ вынесен в отдельный поток для возможности слежения за его выполнением и принудительной остановкой по таймауту.
-class DomainQiTikaCallable(md:Metadata, input:InputStream) extends Callable[List[SioJsInfoT]] {
+class DomainQiTikaCallable(md:Metadata, input:InputStream) extends Callable[List[SioJsInfoT]] with Logs {
+
+  import LOGGER._
 
   /**
    * Запуск tika для парсинга запроса
    * @return
    */
   def call(): List[SioJsInfoT] = {
+    lazy val logPrefix = "call(): "
+    trace(logPrefix + "starting, md = " + md)
+    // Сборка цепочки парсинга
     val jsInstalledHandler = new SioJsDetectorSAX
-    val parser = new AutoDetectParser()
+    val parser = new AutoDetectParser()   // TODO использовать HtmlParser? Да, если безопасно ли скармливать на вход HtmlParser'у левые данные.
     val parseContext = new ParseContext
     parseContext.set(classOf[HtmlMapper], new IdentityHtmlMapper)
-    parser.parse(input, jsInstalledHandler, md, parseContext)
+    // Блокирующий запуск парсера. Заодно засекаем время его работы.
+    val parserStartedAt: Long = if (isDebugEnabled) System.currentTimeMillis() else -1L
+    try {
+      parser.parse(input, jsInstalledHandler, md, parseContext)
+    } finally {
+      // Выполнено. Не исключено, что с ошибкой, ибо вместо HTML может прийти всё что угодно.
+      debug {
+        val timeMs = System.currentTimeMillis() - parserStartedAt
+        logPrefix + "tika parser completed after " + timeMs + " ms."
+      }
+    }
     jsInstalledHandler.getSioJsInfo
   }
 

@@ -1,5 +1,6 @@
 package controllers
 
+import _root_.util.acl.PersonWrapper.PwOpt_t
 import util.event._
 import play.api.mvc.{WebSocket, Controller}
 import play.api.data._
@@ -227,14 +228,14 @@ object Js extends Controller with ContextT with Logs {
       {url =>
         val dkey = UrlUtil.normalizeHostname(domain)
         trace(logPrefix + s"Found URL in POST: $url ;; dkey = $dkey")
-        if (DomainQi.isQi(dkey, qi_id)) {
+        if (DomainQi.isQi(dkey=dkey, qi_id=qi_id)) {
           
           if (DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl = url.toExternalForm, qi_id=qi_id, sendEvents=true, request.pwOpt).isDefined) {
-            debug(logPrefix + "200 OK - this url will be checked: " + url)
-            Ok("Ok, your URL will be checked.")
+            debug(logPrefix + "200 OK - this url MAY be checked: " + url)
+            Ok("OK.")
           } else {
-            warn(logPrefix + "Error: 3-rd paru URL: " + url)
-            Forbidden("Unexpected 3rd-party URL.")
+            warn(logPrefix + "ignoring unwanted URL: " + url)
+            Forbidden("No.")
           }
 
         } else {
