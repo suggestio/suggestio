@@ -1,6 +1,5 @@
 package controllers
 
-import _root_.util.acl.PersonWrapper.PwOpt_t
 import util.event._
 import play.api.mvc.{WebSocket, Controller}
 import play.api.data._

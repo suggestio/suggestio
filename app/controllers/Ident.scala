@@ -6,7 +6,7 @@ import play.api.data._
 import play.api.data.Forms._
 import util.acl._
 import util._
-import play.api.mvc.{SimpleResult, Action, Controller}
+import play.api.mvc.Action
 import views.html.ident._
 import play.api.libs.concurrent.Promise.timeout
 import play.api.libs.concurrent.Execution.Implicits._
@@ -25,6 +25,8 @@ import play.api.mvc.Security.username
  */
 
 object Ident extends SioController with Logs {
+
+  import LOGGER._
 
   // URL, используемый для person'a. Если сие запущено на локалхосте, то надо менять этот адресок.
   val AUDIENCE_URL = current.configuration.getString("persona.audience.url").get
@@ -102,25 +104,25 @@ object Ident extends SioController with Logs {
                   // Юзер подменил audience url, значит его assertion невалиден. Либо мы запустили на локалхосте продакшен.
                   case other =>
                     // TODO использовать логгирование, а не сие:
-                    LOGGER.warn("Invalid audience URL: " + other)
+                    warn("Invalid audience URL: " + other)
                     Forbidden("Broken URL in credentials. Please try again.")
                 } // проверка audience
 
               // Юзер что-то мухлюет или persona глючит
               case JsString("failure") =>
-                LOGGER.warn("invalid credentials")
+                warn("invalid credentials")
                 NotAcceptable("Mozilla Persona: invalid credentials")
 
               // WTF
               case other =>
                 val msg = "Mozilla Persona: unsupported response format."
-                LOGGER.error(msg + "status = " + other + "\n\n" + respJson)
+                error(msg + "status = " + other + "\n\n" + respJson)
                 InternalServerError(msg)
             } // проверка status
 
           case "timeout" =>
             val msg = "Mozilla Persona server does not responding."
-            LOGGER.warn(msg)
+            warn(msg)
             InternalServerError(msg)
         } // тело фьючерса ws-запроса
       } // матчинг assertion из присланных пользователем данных
@@ -129,15 +131,16 @@ object Ident extends SioController with Logs {
 
 
   /**
-   * Юзер разлогинивается
-   * @return
+   * Юзер разлогинивается. Выпилить из сессии данные о его логине.
+   * @return Редирект на главную, ибо анонимусу идти больше некуда.
    */
   def logout = Action { implicit request =>
-    Redirect(routes.Application.index()).withNewSession
+    Redirect(routes.Application.index())
+      .withSession(session - username)
   }
 
 
   // TODO выставить нормальный routing тут
-  protected def rdrToAdmin = Redirect(routes.Application.index)
+  protected def rdrToAdmin = Redirect(routes.Application.index())
 
 }

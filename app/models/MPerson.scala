@@ -9,6 +9,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import org.hbase.async.{GetRequest, PutRequest}
 import scala.collection.JavaConversions._
 import StorageUtil.StorageType._
+import com.fasterxml.jackson.annotation.JsonIgnore
 
 /**
  * Suggest.io
@@ -25,13 +26,13 @@ case class MPerson(
   import MPerson.BACKEND
 
   // Линки в другие модели.
-  def authz = MPersonDomainAuthz.getForPersonDkeys(id, dkeys)
+  @JsonIgnore def authz = MPersonDomainAuthz.getForPersonDkeys(id, dkeys)
 
   /**
    * Сохранить отметку о таком юзере
    * @return Фьючерс с сохраненным экземпляром MPerson.
    */
-  def save = BACKEND.save(this)
+  @JsonIgnore def save = BACKEND.save(this)
 
 
   /**
@@ -62,9 +63,9 @@ case class MPerson(
 trait MPersonLinks {
   val id : String
 
-  def isAdmin = MPerson.isAdmin(id)
+  @JsonIgnore def isAdmin = MPerson.isAdmin(id)
   def authzForDomain(dkey:String) = MPersonDomainAuthz.getForPersonDkey(dkey, id)
-  def allDomainsAuthz = MPersonDomainAuthz.getForPerson(id)
+  @JsonIgnore def allDomainsAuthz = MPersonDomainAuthz.getForPerson(id)
 }
 
 
