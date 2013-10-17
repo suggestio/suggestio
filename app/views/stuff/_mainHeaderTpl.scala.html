@@ -1,6 +1,7 @@
 @(isFixed:Boolean=false,activeLink:String=null)(implicit ctx:util.Context)
 @import stuff._
 @import ctx._
+@import ident._
 
 @if(isFixed){
 <div class="sio-fixed-top-container">
@@ -13,7 +14,11 @@
   
     <a href="/" class="logo">
     </a>
-    
+
+    <div id="signInButton" class="login-button">
+      <a href=""></a>
+    </div>
+
     @if(isFixed){
     <div class="sio-glow"></div>
     }
@@ -59,6 +64,8 @@
 </script>
 
 }
+
+@_personaScriptsTpl()
 
 <script type="text/javascript">
   $('#mobileMenuButton').bind("click", function()

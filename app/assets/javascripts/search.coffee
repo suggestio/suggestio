@@ -2,6 +2,10 @@ do_search = (search_request, domain, is_debug) ->
 
     request_params =
         url : 'livesearch?h=' + domain + '&q=' + search_request + '&debug=' + is_debug
+        success : () ->
+            console.log "success"
+        error : (  ) ->
+            console.log "error"
 
     $.ajax request_params
 

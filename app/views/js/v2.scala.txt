@@ -40,7 +40,7 @@ TODO:
 @import views.txt.js._
 
 @coffee{
-  
+
 sio = 
   
   # Настроечки
