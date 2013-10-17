@@ -1,23 +1,18 @@
-@()(implicit ctx:util.Context)
+@(dkey: String)(implicit ctx:util.Context)
+
+@* Поиск данных в домене для админов. *@
 
 @import ctx._
 @import stuff._
 
-@main(title=Messages("Quick search by domain")) {
-
-<div class="container">
-
-    @_mainHeaderTpl()
+@dkeyBase(titleOpt=Some("Поиск"), dkey=dkey) {
 
     <div class="row">
 
         <div class="col-sm-1"></div>
         <div class="col-sm-10">
             <form>
-                <fieldset>
-                    <label>Домен</label>
-                    <input id="searchDomainField" type="text" name="domain"/>
-                </fieldset>
+                <input id="searchDomainField" type="hidden" name="domain"/>
                 <fieldset>
                     <label>IsDebug</label>
                     <input id="isDebugField" type="checkbox">
@@ -28,15 +23,11 @@
                 </fieldset>
             </form>
 
-
-
         </div>
         <div class="col-sm-1"></div>
 
     </div>
 
     <script src="@routes.Assets.at("javascripts/search.min.js")"></script>
-
-</div>
 
 }

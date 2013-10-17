@@ -4,7 +4,7 @@
 @* Отобразить список всех установленных в системе доменов. *@
 
 @sysBase("sites list") {
-  @if(domains.isEmpty) {
+  @if(!domains.isEmpty) {
     <table>
       <tr>
 	<th>Domain</th>
@@ -15,6 +15,8 @@
 	</tr>
       }
     </table>
+
+    <a href="@routes.Sys.addSiteForm">Добавить ещё.</a>
 
   } else {
     Сайтов пока нет. <a href="@routes.Sys.addSiteForm">Добавить?</a>

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.concurrent.Future
 import io.suggest.model.{MDomain => MDomainRaw}
 import play.api.libs.concurrent.Execution.Implicits._
+import org.joda.time.DateTime
 
 /**
  * Suggest.io
@@ -14,6 +15,11 @@ import play.api.libs.concurrent.Execution.Implicits._
  * другими моделями sioweb21, и чтобы только read-only.
  */
 case class MDomain(underlying: MDomainRaw) extends DkeyModelT {
+
+  def this(dkey: String, addedBy: String, addedAt:DateTime = DateTime.now) = {
+    this(new MDomainRaw(dkey=dkey, addedBy=addedBy, addedAt=addedAt))
+  }
+
   def dkey = underlying.dkey
   def addedAt = underlying.addedAt
   def addedBy = underlying.addedBy
@@ -26,12 +32,6 @@ case class MDomain(underlying: MDomainRaw) extends DkeyModelT {
 
 
 object MDomain {
-
-  /** Конструктор сабжа. Используется при добавлении домена в базу. */
-  def apply(dkey: String, addedBy: String): MDomain = {
-    val dr = new MDomainRaw(dkey=dkey, addedBy=addedBy)
-    MDomain(dr)
-  }
 
   def getForDkey(dkey: String): Future[Option[MDomain]] = {
     MDomainRaw.getForDkey(dkey).map(_.map(MDomain(_)))

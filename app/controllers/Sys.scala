@@ -53,6 +53,19 @@ object Sys extends SioController with Logs {
   }
 
 
+  /**
+   * Отрендерить страницу поиска по домену.
+   * @param dkey Ключ домена.
+   * @return Форма для имитации живого поиска на сайте.
+   */
+  def dkeySearch(dkey: String) = IsSuperuser.async { implicit request =>
+    MDomain.getForDkey(dkey: String) map {
+      case Some(domain) => Ok(dkeySearchTpl(dkey))
+      case None         => NotFound("No such domain: " + dkey)
+    }
+  }
+
+
   /** Рендер формы добавления домена. */
   def addSiteForm = IsSuperuser { implicit request =>
     Ok(addSiteFormTpl(addSiteFormM))
@@ -82,4 +95,9 @@ object Sys extends SioController with Logs {
     )
   }
 
+
+  /** Удаление домена из системы. */
+  def dkeyDelete(dkey: String) = IsSuperuser { implicit request =>
+    ???
+  }
 }

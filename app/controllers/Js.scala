@@ -1,7 +1,7 @@
 package controllers
 
 import util.event._
-import play.api.mvc.{SimpleResult, WebSocket, Controller}
+import play.api.mvc.{SimpleResult, WebSocket}
 import play.api.data._
 import util.FormUtil._
 import util.acl._
@@ -33,7 +33,7 @@ import play.api.libs.iteratee.Concurrent
  * 3. Одновременно, инсталлер запускает comet и мониторит состояние qi.
  */
 
-object Js extends Controller with ContextT with Logs {
+object Js extends SioController with Logs {
 
   // TODO удалить, если это более не нужно.
   val SIO_JS_STATIC_FILENAME  = current.configuration.getString("sio_js.filename") getOrElse "sio.search.v7.js"
@@ -98,7 +98,7 @@ object Js extends Controller with ContextT with Logs {
    * Запрос скрипта в технологии v2. Этот метод подразумевает запуск инсталлятора.
    * @param domainStr домен. Обычно нормализованный dkey, но лучше нормализовать ещё раз.
    * @param qi_id [a-z0-9] последовательность, описывающая юзера, который устанавливал этот js.
-   * @return Скрипт, который сделает всё круто.
+   * @return Скрипт, который сделает всё, что необходимо.
    */
   def v2(domainStr:String, qi_id:String) = MaybeAuth.async { implicit request =>
     lazy val logPrefix = s"v2($domainStr, $qi_id): "
@@ -119,13 +119,15 @@ object Js extends Controller with ContextT with Logs {
       case Some(domain) if isQi =>
         qiInstallerAction(dkey, qi_id) recoverWith {
           // При проблеме с qi выдать обычный js.      // TODO удалить qi из сессии?
-          case ex: Throwable => jsServingAction(dkey)
+          case ex: Throwable =>
+            error(logPrefix + "Failed to continue Qi for user " + request.pwOpt + ". Rollbacking to normal js serving.", ex)
+            jsServingAction(dkey)
         }
 
 
       // Домена [пока] нет в хранилище. Нужно что-то предпринять в зав-ти от Qi и в любом случае начать проверку сайта.
       case None =>
-        val futureResult = if (isQi) {
+        val futureResult: Future[SimpleResult] = if (isQi) {
           // Какбы-админ зашел на сайт. Отрендерить инсталлер.
           trace(logPrefix + s"dkey '$dkey' not found in storage, but qi install is going on...")
           qiInstallerAction(dkey=dkey, qi_id=qi_id) recover {
@@ -134,13 +136,12 @@ object Js extends Controller with ContextT with Logs {
               error(logPrefix + "start-qi future chain failed: .recover() -> HTTP 500", ex)
               InternalServerError("Internal server error")
           }
+
         } else {
-          // Какой-то левый юзер зашел на сайт, на который идёт установка скрипта в данный момент. 
+          // Какой-то левый юзер зашел на сайт, на который, скорее всего, идёт установка скрипта в данный момент.
           warn(logPrefix + "isQi=false and domain not exist.")
-          Future.successful {
-            ServiceUnavailable("Search not properly installed. If site owner is you, please visit https://suggest.io/ and proceed installation steps.")
-              .withHeaders(RETRY_AFTER -> "5")
-          }
+          ServiceUnavailable("Search not properly installed. If site owner is you, please visit https://suggest.io/ and proceed installation steps.")
+            .withHeaders(RETRY_AFTER -> "5")
         }
         // В фоне добавить фоновую проверку во фьючерс результата.
         futureResult onComplete { case _ =>
@@ -217,7 +218,7 @@ object Js extends Controller with ContextT with Logs {
         val (in0, out0) = EventUtil.globalUserEventIO
         // uuid для трубы, добавляемой в SioNotifier.
         val uuid = UUID.randomUUID()
-        LOGGER.debug(logPrefix + "Starting ws connection for user %s. Subscriber=%s" format(pwOpt, uuid.toString))
+        trace(logPrefix + s"isQi=true. Opening ws connection for user $pwOpt. Subscriber=" + uuid)
         val classifier = QiEvent.getClassifier(dkeyOpt = Some(dkey), qiIdOpt = Some(qi_id))
         // Канал выдачи данных клиенту. Подписаться на события SioNotifier, затем залить в канал пропущенные новости, которые пришли между реквестами и во время подписки.
         // Возможные дубликаты новостей безопасны, опасность представляют потерянные уведомления.
@@ -239,7 +240,7 @@ object Js extends Controller with ContextT with Logs {
 
       // Кто-то долбится на веб-сокет в обход сессии.
       case false =>
-        LOGGER.error(logPrefix + "Requested dkey/qi_id not in session %s. Returning error to user via websocket." format session)
+        error(logPrefix + "Requested dkey/qi_id not in session %s. Returning error to user via websocket." format session)
         EventUtil.wsAccessImpossbleIO("Illegial access, installation flow is not running.")
     }
   }
@@ -266,7 +267,7 @@ object Js extends Controller with ContextT with Logs {
     val timestamp0 = NewsQueue4Play.getTimestampMs
     debug(logPrefix + s"Requesting NewsQueue for user=$pwOpt ;; tstamp=$timestamp0 ...")
     NewsQueue4Play.ensureActorFor(dkey, qi_id) flatMap { queueActorRef =>
-    // Очередь запущена. Нужно подписать её на события SioNotifier.
+      // Очередь запущена. Нужно подписать её на события SioNotifier.
       debug(logPrefix + s"NewsQueue $queueActorRef ready for user=$pwOpt. Subscribing NewsQueue for SioweNotifier events...")
       // Подписаться на события qi от sio_notifier
       SiowebNotifier.subscribeSync(
@@ -277,7 +278,7 @@ object Js extends Controller with ContextT with Logs {
         // Подписывание очереди на событие выполнено.
         // Отправить request referer на проверку. Бывает, что юзер ставит поиск не на главной, а где-то сбоку.
         request.headers.get(REFERER) foreach { referer =>
-        // Если реферер совпадает с проверяемым url, то НЕ нужно его проверять второй раз.
+          // Если реферер совпадает с проверяемым url, то НЕ нужно его проверять второй раз.
           if (referer != firstCheckUrl(dkey)) {
             debug(logPrefix + "found referrer: " + referer)
             DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl=referer, qi_id=qi_id, sendEvents=true, pwOpt=pwOpt)
@@ -295,14 +296,12 @@ object Js extends Controller with ContextT with Logs {
         )
         replyJs(respBody)
       }
-
-      // Перехватывать ошибки предыдущих фьючерсов
     }
   }
 
 
   /**
-   * Тело экшена раздачи обычного js всем вподряд.
+   * Тело экшена раздачи обычного js всем вподряд. Вынесено из v2 ибо вызывается в нескольких местах.
    * @param dkey Ключ домена.
    * @param request Реквест.
    * @return Фьючерс с результатом запроса.
@@ -324,10 +323,10 @@ object Js extends Controller with ContextT with Logs {
       )
       replyJs(respBody)
     }
-
   }
 
 
+  /** Сгенерить ссылку на главную для указанного домена. */
   private def firstCheckUrl(dkey: String) = "http://" + dkey + "/"
 
 }

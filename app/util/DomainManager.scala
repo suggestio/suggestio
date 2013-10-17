@@ -53,7 +53,7 @@ object DomainManager extends SNStaticSubscriber with Logs {
     fut onComplete {
       case Success(r)  =>
         info(logPrefix + "success; result = " + r)
-        MDomain(dkey=dkey, addedBy=addedBy).save
+        new MDomain(dkey=dkey, addedBy=addedBy).save
 
       case Failure(ex) => error(logPrefix + "crawler ask failed", ex)
     }
