@@ -42,6 +42,8 @@ object MObject {
 
   // Другое (веб-морда).
   val CF_BLOG        = "i".getBytes   // Блог-записи/новости (веб-морда, ключ = некий id).
+  val CF_DOMAIN      = "j".getBytes   // Записи MDomain.
+  //val CF_DKNOWLEDGE  = "k".getBytes   // Записи MDomainKnowledge, заполняемые кравлером. qualifier является ключом, а value - значением.
 
   // /!\ При добавлении новых CF-записей нужно также обновлять/запиливать функции createTable() и updateTable().
 
@@ -69,7 +71,9 @@ object MObject {
       hcd(CF_DQI, 1).setTimeToLive(DOMAIN_QI_TTL_SECONDS),
       hcd(CF_UPROPS, 1),
       hcd(CF_UAUTHZ, 2),
-      hcd(CF_BLOG, 1)
+      hcd(CF_BLOG, 1),
+      hcd(CF_DOMAIN, 2)
+      //hcd(CF_DKNOWLEDGE, 1)
     )
     cfs foreach tableDesc.addFamily
     future {

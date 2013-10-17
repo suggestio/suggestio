@@ -1,7 +1,7 @@
 package io.suggest.event.subscriber
 
 import akka.actor.{ActorContext, ActorPath}
-import io.suggest.event.SioNotifier
+import io.suggest.event.SioNotifier.Event
 
 /**
  * Suggest.io
@@ -10,8 +10,7 @@ import io.suggest.event.SioNotifier
  * Description: Актор задан через путь. Связаваться с супервизором, чтоб он отрезовлвил путь.
  * @param actorPath путь до актора
  */
-// TODO использовать ActorSystem вместо контекста.
-// TODO использовать ActorSelection вместо actorFor. Нужно убедится, что ActorRef.forward не нужен и его можно безопасно заменить на !.
+// TODO использовать ActorSystem вместо контекста актора.
 
 case class SnActorPathSubscriber(actorPath:ActorPath) extends SnSubscriberT {
 
@@ -20,8 +19,8 @@ case class SnActorPathSubscriber(actorPath:ActorPath) extends SnSubscriberT {
    * @param event событие.
    * @param ctx для возможности резолва ActorPath в системе Akka.
    */
-  def publish(event: SioNotifier.Event)(implicit ctx:ActorContext) {
-    ctx.actorFor(actorPath) forward event
+  def publish(event: Event)(implicit ctx:ActorContext) {
+    ctx.actorSelection(actorPath) ! event
   }
 
   def getActor(implicit ctx:ActorContext) = None

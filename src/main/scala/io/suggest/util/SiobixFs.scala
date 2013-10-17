@@ -45,6 +45,6 @@ trait SiobixFsStaticT {
    * @return Path(/dout/conf/dkey)
    * TODO нужно переделать название функции.
    */
-  def dkeyPathConf(dkey:String) = new Path(dkeysConfRoot, dkey)
+  def dkeyPathConf(dkey: String) = new Path(dkeysConfRoot, dkey)
 
 }
