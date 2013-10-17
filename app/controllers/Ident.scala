@@ -57,7 +57,7 @@ object Ident extends SioController with Logs {
    * @return
    */
   def persona_submit = Action.async { implicit request =>
-    lazy val logPrefix = "personaSubmit(): "
+    lazy val logPrefix = s"personaSubmit() ${request.remoteAddress}: "
     trace(logPrefix + "starting...")
     personaM.bindFromRequest.fold(
       {formWithErrors =>
@@ -106,7 +106,8 @@ object Ident extends SioController with Logs {
                       personFut flatMap { person =>
                         // Заапрувить анонимно-добавленные и подтвержденные домены (qi)
                         DomainQi.installFromSession(person.id) map { session1 =>
-                          trace(logPrefix + email + " successfully logged in. Redirecting.")
+                          // Делаем info чтобы в логах мониторить логины пользователей.
+                          info(logPrefix + "successfully logged in as " + email)
                           // залогинить юзера наконец.
                           rdrToAdmin
                             .withSession(session1)

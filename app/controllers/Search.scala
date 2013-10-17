@@ -2,14 +2,13 @@ package controllers
 
 import play.api.mvc._
 import io.suggest.util.UrlUtil
-import _root_.util._
+import util._
 import play.api.libs.json._
 import play.api.libs.Jsonp
-import models.MDomain
-import scala.concurrent.Future
 import io.suggest.model.SioSearchContext
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.Some
+import models.MDomain
 
 /**
  * Suggest.io
@@ -64,7 +63,7 @@ object Search extends SioController {
           options  = searchOptions,
           searchContext = searchContext
         ) map { searchResults =>
-        // Отрендерить результаты в json-е
+          // Отрендерить результаты в json-е
           val jsonResp : Map[String, JsValue] = Map(
             "status"        -> JsString("ok"),
             "timestamp"     -> JsNumber(System.currentTimeMillis()),

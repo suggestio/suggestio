@@ -1,0 +1,15 @@
+@(f: Form[_])(implicit ctx:util.Context)
+
+@* Форма добавления сайта в систему в обход всех проверок. *@
+
+@import helper._
+
+@sysBase("add new site") {
+  <h1>Добавить новый сайт в систему</h1>
+
+  @form(routes.Sys.addSiteFormSubmit) {
+    Домен (адрес сайта без http):
+    @inputText(f("domain"), 'placeholder -> "aversimage.ru")
+    <input type="submit" value="Добавить сайт."/>
+  }
+}

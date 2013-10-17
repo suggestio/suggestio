@@ -6,6 +6,8 @@ import io.suggest.event.subscriber.SnFunSubscriber
 import util.event.{ValidSioJsFoundOnSite, SioJsFoundOnSite}
 import scala.util.{Failure, Success}
 import play.api.libs.concurrent.Execution.Implicits._
+import models.MDomain
+import util.acl.PersonWrapper.PwOpt_t
 
 /**
  * Suggest.io
@@ -20,7 +22,9 @@ object DomainManager extends SNStaticSubscriber with Logs {
   def snMap: Seq[(Classifier, Seq[Subscriber])] = {
     val c = SioJsFoundOnSite.getClassifier(isValidOpt = Some(true))
     val s = SnFunSubscriber {
-      case ValidSioJsFoundOnSite(_dkey) => maybeInstallDkey(_dkey)
+      case ValidSioJsFoundOnSite(_dkey, _pwOpt) =>
+        val addedBy = _pwOpt.map(_.id) getOrElse "anonymous"
+        maybeInstallDkey(_dkey, addedBy)
     }
     Seq(c -> Seq(s))
   }
@@ -29,17 +33,17 @@ object DomainManager extends SNStaticSubscriber with Logs {
    * Запрос на установку домена в систему. Возможно, он уже установлен.
    * @param dkey Ключ домена.
    */
-  def maybeInstallDkey(dkey: String) = {
+  def maybeInstallDkey(dkey:String, addedBy:String) = {
     trace(s"maybeInstallDkey($dkey): starting")
     // TODO
-    installDkey(dkey)
+    installDkey(dkey=dkey, addedBy=addedBy)
   }
 
   /**
    * Выполнить все действия для добавления домена в кравлер.
    * @param dkey Ключ домена.
    */
-  def installDkey(dkey: String) = {
+  def installDkey(dkey: String, addedBy: String) = {
     lazy val logPrefix = s"installDkey($dkey): "
     val seedUrls = List("http://" + dkey + "/")
     trace(logPrefix + "seedUrls = " + seedUrls)
@@ -47,7 +51,10 @@ object DomainManager extends SNStaticSubscriber with Logs {
     //      редиректы с проверкой dkey.
     val fut = SiobixClient.maybeBootstrapDkey(dkey, seedUrls)
     fut onComplete {
-      case Success(r)  => info(logPrefix + "success; result = " + r)
+      case Success(r)  =>
+        info(logPrefix + "success; result = " + r)
+        MDomain(dkey=dkey, addedBy=addedBy).save
+
       case Failure(ex) => error(logPrefix + "crawler ask failed", ex)
     }
     fut

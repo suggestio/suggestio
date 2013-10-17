@@ -301,7 +301,7 @@ object DomainQi extends Logs {
               trace(logPrefix + "v2 script detected: " + s2)
               dkey == _dkey && {
                 trace(logPrefix + "dkey matches. sio.js is installed on " + dkey)
-                validSioJsFoundOn(dkey)
+                validSioJsFoundOn(dkey, pwOpt)
                 // Что вернуть юзеру? Это зависит от qi_id (его наличия и совпадения с текущим в сессии).
                 val isQiMatches = qiIdOpt.isDefined  &&  qiIdOpt.get == siteQiId
                 if (isQiMatches) {
@@ -417,9 +417,9 @@ object DomainQi extends Logs {
   /** На каком-то сайте обнаружен установленный sio.js. Нужно что-то сделать.
     * @param dkey Ключ домена.
     */
-  def validSioJsFoundOn(dkey: String) {
+  def validSioJsFoundOn(dkey: String, pwOpt: PwOpt_t) {
     // Сообщить системе, что есть событие установки скрипта на сайт.
-    SiowebNotifier publish ValidSioJsFoundOnSite(dkey)
+    SiowebNotifier publish ValidSioJsFoundOnSite(dkey, pwOpt)
   }
 
 }

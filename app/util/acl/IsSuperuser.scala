@@ -18,9 +18,9 @@ object IsSuperuser extends ActionBuilder[AbstractRequestWithPwOpt] with Logs {
   
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
-    trace("for pwOpt = " + pwOpt)
     pwOpt match {
       case Some(pw) if pw.isSuperuser =>
+        trace(s"for user ${pw.id} :: ${request.method} ${request.path}")
         block(new RequestWithPwOpt[A](pwOpt, request))
 
       case _ => onUnauthFut(request)

@@ -1,13 +1,13 @@
 package controllers
 
 import util.event._
-import play.api.mvc.{WebSocket, Controller}
+import play.api.mvc.{SimpleResult, WebSocket, Controller}
 import play.api.data._
 import util.FormUtil._
 import util.acl._
 import _root_.util._
 import io.suggest.util.UrlUtil
-import models.{MDomainUserSettings, MDomain}
+import models._
 import play.api.Play.current
 import play.api.libs.json._
 import views.txt.js._
@@ -115,7 +115,7 @@ object Js extends Controller with ContextT with Logs {
           dus           <- MDomainUserSettings.getForDkey(dkey)
           siteAdminOpt  <- isSiteAdminFut
         } yield {
-          trace(logPrefix + "siteAdminOpt = " + siteAdminOpt + " ;; settings = " + dus)
+          trace(logPrefix + s"siteAdminOpt = $siteAdminOpt ;; settings = $dus")
           // Отрендерить js
           val respBody = jsMainTpl(
             dkey        = dkey,
@@ -296,5 +296,11 @@ object Js extends Controller with ContextT with Logs {
     trace("replyJs(): 200 Ok")
     Ok(respBody).as("text/javascript")
   }
+
+
+
+  /*private def qiAction(dkey: String)(implicit request: RequestWithPwOpt): Future[SimpleResult] = {
+    import request.pwOpt
+  }*/
 
 }

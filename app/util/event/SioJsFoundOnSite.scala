@@ -2,6 +2,7 @@ package util.event
 
 import io.suggest.event.SioEventT
 import io.suggest.event.SioNotifier.Classifier
+import util.acl.PersonWrapper.PwOpt_t
 
 /**
  * Suggest.io
@@ -24,9 +25,10 @@ abstract class SioJsFoundOnSite extends SioEventT {
   def dkey: String
   def isValid: Boolean
   def getClassifier: Classifier = SioJsFoundOnSite.getClassifier(dkeyOpt = Some(dkey),  isValidOpt = Some(isValid))
+  def addedBy: PwOpt_t
 }
 
 
-case class ValidSioJsFoundOnSite(dkey: String) extends SioJsFoundOnSite {
+case class ValidSioJsFoundOnSite(dkey: String, addedBy: PwOpt_t) extends SioJsFoundOnSite {
   def isValid: Boolean = true
 }
