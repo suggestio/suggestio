@@ -1,7 +1,6 @@
 @(isFixed:Boolean=false,activeLink:String=null)(implicit ctx:util.Context)
 @import stuff._
 @import ctx._
-@import ident._
 
 @if(isFixed){
 <div class="sio-fixed-top-container">
@@ -64,8 +63,6 @@
 </script>
 
 }
-
-@_personaScriptsTpl()
 
 <script type="text/javascript">
   $('#mobileMenuButton').bind("click", function()
