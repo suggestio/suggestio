@@ -4,14 +4,19 @@
 @* Отобразить список всех установленных в системе доменов. *@
 
 @sysBase("sites list") {
-<table>
-  <tr>
-    <th>Domain</th>
-  </tr>
-  @domains.map { domain =>
-    <tr>
-      <td><a href="@routes.Sys.dkeyShow(domain.dkey)">@domain.dkey</a></td>
-    </tr>
+  @if(domains.isEmpty) {
+    <table>
+      <tr>
+	<th>Domain</th>
+      </tr>
+      @domains.map { domain =>
+	<tr>
+	  <td><a href="@routes.Sys.dkeyShow(domain.dkey)">@domain.dkey</a></td>
+	</tr>
+      }
+    </table>
+
+  } else {
+    Сайтов пока нет. <a href="@routes.Sys.addSiteForm">Добавить?</a>
   }
-</table>
 }

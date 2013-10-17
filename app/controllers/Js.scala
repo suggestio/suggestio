@@ -102,97 +102,48 @@ object Js extends Controller with ContextT with Logs {
    */
   def v2(domainStr:String, qi_id:String) = MaybeAuth.async { implicit request =>
     lazy val logPrefix = s"v2($domainStr, $qi_id): "
-    trace(logPrefix + "starting...")
     val dkey = UrlUtil.normalizeHostname(domainStr)
+    val isQi = DomainQi.isQi(dkey, qi_id)
+    trace(logPrefix + s"starting for dkey=$dkey isQi=$isQi")
     // Найти домен в базе. Если его там нет, то надо запустить инсталлер и вернуть скрипт с инсталлером. Затем выполнить остальные действия из sioweb_js_controller.
     MDomain.getForDkey(dkey) flatMap {
-      // Есть домен такой в базе. Нужно выдать js-скрипт для поиска, т.е. всё как обычно.
-      case Some(domain) =>
-        trace(logPrefix + s"dkey=$dkey found as $domain")
-        // Параллельно читаем права юзера на домен и настройки домена. Через "for {} yield {}" подавляем многоэтажность фьючерсов.
-        val isSiteAdminFut = IsDomainAdmin.isDkeyAdmin(dkey, request.pwOpt, request)
-        for {
-          dus           <- MDomainUserSettings.getForDkey(dkey)
-          siteAdminOpt  <- isSiteAdminFut
-        } yield {
-          trace(logPrefix + s"siteAdminOpt = $siteAdminOpt ;; settings = $dus")
-          // Отрендерить js
-          val respBody = jsMainTpl(
-            dkey        = dkey,
-            qi_id       = qi_id,
-            isInstall   = false,
-            uSettings   = dus,
-            isSiteAdmin = siteAdminOpt.isDefined
-          )
-          replyJs(respBody)
+
+      // Есть домен такой в базе. Нужно выдать js-скрипт для поиска, т.е. всё как обычно. Эта ветвь выполняется в 99.9% случаев.
+      case Some(domain) if !isQi =>
+        trace(logPrefix + s"dkey=$dkey found, no Qi flow => normal activity.")
+        jsServingAction(dkey)
+
+
+      // Домен уже есть в базе, а в сессии есть установка Qi. Такое бывает, когда во время установки на сайте гуляют юзеры.
+      // Нужно проверить права на qi и запустить инсталлер, который в итоге доведет дело до конца и почистит сессию.
+      case Some(domain) if isQi =>
+        qiInstallerAction(dkey, qi_id) recoverWith {
+          // При проблеме с qi выдать обычный js.      // TODO удалить qi из сессии?
+          case ex: Throwable => jsServingAction(dkey)
         }
 
 
-      // Запрос скрипта для неизвестного сайта. ВОЗМОЖНО теперь там установлен скрипт.
-      // Нужно проверить, относится ли запрос к юзеру, которому принадлежит qi и есть ли реально скрипт на сайте.
+      // Домена [пока] нет в хранилище. Нужно что-то предпринять в зав-ти от Qi и в любом случае начать проверку сайта.
       case None =>
-        import request.pwOpt
-        lazy val firstCheckUrl = "http://" + dkey + "/"
-        val isQi = DomainQi.isQi(dkey, qi_id)
-        trace(logPrefix + s"dkey=$dkey not found in storage. isQi=$isQi")
-        val futureResult = isQi match {
-          // Да, это тот юзер, который запросил код на главной. Он устанавил скрипт на сайт или просто прошел по ссылки от скрипта.
-          // Теперь нужно запустить проверку домена на наличие этого скрипта и вернуть скрипт с инсталлером.
-          case true =>
-            // Далее запрос становится асинхронным, т.к. ensureActorFor возвращает Future[ActorRef]. Можно блокироваться через EnsureSync, можно сгенерить фьючерс. Пока делаем второе.
-            // Запустить очередь приема новостей, присоединив её к sio_notifier. Когда откроется ws-соединение, очередь будет выпилена, и коннект между sn и каналом ws будет уже прямой.
-            val timestamp0 = NewsQueue4Play.getTimestampMs
-            debug(logPrefix + s"Requesting NewsQueue for user=$pwOpt ;; tstamp=$timestamp0 ...")
-            NewsQueue4Play.ensureActorFor(dkey, qi_id) flatMap { queueActorRef =>
-              // Очередь запущена. Нужно подписать её на события SioNotifier.
-              debug(logPrefix + s"NewsQueue $queueActorRef ready for user=$pwOpt. Subscribing NewsQueue for SioweNotifier events...")
-              // Подписаться на события qi от sio_notifier
-              SiowebNotifier.subscribeSync(
-                subscriber = SnActorRefSubscriber(queueActorRef),
-                classifier = QiEvent.getClassifier(dkeyOpt = Some(dkey), qiIdOpt=Some(qi_id))
-              ) map { _ =>
-                debug(logPrefix + "SN subscribed OK")
-                // Подписывание очереди на событие выполнено.
-                // Отправить request referer на проверку. Бывает, что юзер ставит поиск не на главной, а где-то сбоку.
-                request.headers.get(REFERER) foreach { referer =>
-                  // Если реферер совпадает с проверяемым url, то НЕ нужно его проверять второй раз.
-                  if (referer != firstCheckUrl) {
-                    debug(logPrefix + "found referrer: " + referer)
-                    DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl=referer, qi_id=qi_id, sendEvents=true, pwOpt=pwOpt)
-                  } else {
-                    debug(logPrefix + "ignoring refererer: " + referer)
-                  }
-                }
-                // Сгенерить ответ.
-                val respBody = jsMainTpl(
-                  dkey = dkey,
-                  qi_id = qi_id,
-                  isInstall = true,
-                  uSettings = MDomainUserSettings.empty(dkey),
-                  isSiteAdmin = false,
-                  wsTimestamp = Some(timestamp0)
-                )
-                replyJs(respBody)
-              }
-
-            // Перехватывать ошибки предыдущих фьючерсов
-            } recover {
-              case ex: Throwable =>
-                // TODO Нужно вернуть юзеру скрипт, который отобразит ему внутреннюю ошибку сервера suggest.io.
-                error(logPrefix + "start-qi future chain failed: .recover() -> HTTP 500", ex)
-                InternalServerError("Internal server error")
-            }
-
-          // Кто-то зашел на ещё-не-установленный-сайт. Скрипт поиска выдавать смысла нет. Возвращаем уже готовый фьючерс, пригодный для дальнейшего комбинирования.
-          case false =>
-            warn(logPrefix + "isQi=false and domain not exist.")
-            Future.successful {
-              ServiceUnavailable("Search not properly installed. If site owner is you, please visit https://suggest.io/ and proceed installation steps.")
-                .withHeaders(RETRY_AFTER -> "5")
-            }
+        val futureResult = if (isQi) {
+          // Какбы-админ зашел на сайт. Отрендерить инсталлер.
+          trace(logPrefix + s"dkey '$dkey' not found in storage, but qi install is going on...")
+          qiInstallerAction(dkey=dkey, qi_id=qi_id) recover {
+            case ex: Throwable =>
+              // TODO Нужно вернуть юзеру скрипт, который отобразит ему внутреннюю ошибку сервера suggest.io.
+              error(logPrefix + "start-qi future chain failed: .recover() -> HTTP 500", ex)
+              InternalServerError("Internal server error")
+          }
+        } else {
+          // Какой-то левый юзер зашел на сайт, на который идёт установка скрипта в данный момент. 
+          warn(logPrefix + "isQi=false and domain not exist.")
+          Future.successful {
+            ServiceUnavailable("Search not properly installed. If site owner is you, please visit https://suggest.io/ and proceed installation steps.")
+              .withHeaders(RETRY_AFTER -> "5")
+          }
         }
-        // Добавить фоновую проверку во фьючерс результата
-        futureResult andThen { case _ =>
+        // В фоне добавить фоновую проверку во фьючерс результата.
+        futureResult onComplete { case _ =>
           trace(logPrefix + "All ok, let's check Qi in background...")
           // отправить ссылку на корень сайта на проверку, вдруг там действительно по-тихому установлен скрипт.
           DomainQi.checkQiAsync(
@@ -200,10 +151,11 @@ object Js extends Controller with ContextT with Logs {
             url  = "http://" + dkey + "/",
             qiIdOpt = if (isQi) Some(qi_id) else None,
             sendEvents = true,
-            pwOpt = pwOpt
+            pwOpt = request.pwOpt
           )
         }
-
+        // Вернуть результат юзеру.
+        futureResult
     }
   }
 
@@ -256,8 +208,9 @@ object Js extends Controller with ContextT with Logs {
    */
   def installWs(dkey:String, qi_id:String, timestampMs:Long) = WebSocket.using[JsValue] { implicit request =>
     // Чтобы префикс логгера не писать много раз, выносим его за скобки
-    lazy val logPrefix = "installWs(%s %s %s): " format(dkey, qi_id, timestampMs)
+    lazy val logPrefix = s"installWs($dkey $qi_id): "
     implicit val pwOpt = PersonWrapper.getFromRequest
+    trace(logPrefix + s"Starting at timestamp = $timestampMs for user = $pwOpt")
     DomainQi.isQi(dkey, qi_id) match {
       // Настоящий юзер проходит настоящую установку.
       case true =>
@@ -298,9 +251,83 @@ object Js extends Controller with ContextT with Logs {
   }
 
 
-
-  /*private def qiAction(dkey: String)(implicit request: RequestWithPwOpt): Future[SimpleResult] = {
+  /**
+   * Кусок экшена, отвечающий за обработку qi-установки. Вынесен из v2 для декомпозиции + используется в нескольких местах.
+   * @param dkey Ключ домена.
+   * @param qi_id id qi.
+   * @param request Реквест.
+   * @return Фьючерс с результатом работы.
+   */
+  private def qiInstallerAction(dkey:String, qi_id:String)(implicit request: AbstractRequestWithPwOpt[_]): Future[SimpleResult] = {
     import request.pwOpt
-  }*/
+    val logPrefix = s"qiAction($dkey): "
+    // Далее запрос становится асинхронным, т.к. ensureActorFor возвращает Future[ActorRef]. Можно блокироваться через EnsureSync, можно сгенерить фьючерс. Пока делаем второе.
+    // Запустить очередь приема новостей, присоединив её к sio_notifier. Когда откроется ws-соединение, очередь будет выпилена, и коннект между sn и каналом ws будет уже прямой.
+    val timestamp0 = NewsQueue4Play.getTimestampMs
+    debug(logPrefix + s"Requesting NewsQueue for user=$pwOpt ;; tstamp=$timestamp0 ...")
+    NewsQueue4Play.ensureActorFor(dkey, qi_id) flatMap { queueActorRef =>
+    // Очередь запущена. Нужно подписать её на события SioNotifier.
+      debug(logPrefix + s"NewsQueue $queueActorRef ready for user=$pwOpt. Subscribing NewsQueue for SioweNotifier events...")
+      // Подписаться на события qi от sio_notifier
+      SiowebNotifier.subscribeSync(
+        subscriber = SnActorRefSubscriber(queueActorRef),
+        classifier = QiEvent.getClassifier(dkeyOpt = Some(dkey), qiIdOpt=Some(qi_id))
+      ) map { _ =>
+        debug(logPrefix + "SN subscribed OK")
+        // Подписывание очереди на событие выполнено.
+        // Отправить request referer на проверку. Бывает, что юзер ставит поиск не на главной, а где-то сбоку.
+        request.headers.get(REFERER) foreach { referer =>
+        // Если реферер совпадает с проверяемым url, то НЕ нужно его проверять второй раз.
+          if (referer != firstCheckUrl(dkey)) {
+            debug(logPrefix + "found referrer: " + referer)
+            DomainQi.maybeCheckQiAsync(dkey=dkey, maybeUrl=referer, qi_id=qi_id, sendEvents=true, pwOpt=pwOpt)
+          } else {
+            debug(logPrefix + "ignoring refererer: " + referer)
+          }
+        }
+        // Сгенерить ответ.
+        val respBody = jsMainTpl(
+          dkey = dkey,
+          qiIdOpt = Some(qi_id),
+          uSettings = MDomainUserSettings.empty(dkey),
+          isSiteAdmin = false,
+          wsTimestamp = Some(timestamp0)
+        )
+        replyJs(respBody)
+      }
+
+      // Перехватывать ошибки предыдущих фьючерсов
+    }
+  }
+
+
+  /**
+   * Тело экшена раздачи обычного js всем вподряд.
+   * @param dkey Ключ домена.
+   * @param request Реквест.
+   * @return Фьючерс с результатом запроса.
+   */
+  private def jsServingAction(dkey: String)(implicit request: AbstractRequestWithPwOpt[_]): Future[SimpleResult] = {
+    // Параллельно читаем права юзера на домен и настройки домена. Через "for {} yield {}" подавляем многоэтажность фьючерсов.
+    val isSiteAdminFut = IsDomainAdmin.isDkeyAdmin(dkey, request.pwOpt, request)
+    for {
+      dus           <- MDomainUserSettings.getForDkey(dkey)
+      siteAdminOpt  <- isSiteAdminFut
+    } yield {
+      trace(s"jsServingAction($dkey): siteAdminOpt = $siteAdminOpt ;; settings = $dus")
+      // Отрендерить js
+      val respBody = jsMainTpl(
+        dkey        = dkey,
+        qiIdOpt     = None,
+        uSettings   = dus,
+        isSiteAdmin = siteAdminOpt.isDefined
+      )
+      replyJs(respBody)
+    }
+
+  }
+
+
+  private def firstCheckUrl(dkey: String) = "http://" + dkey + "/"
 
 }
