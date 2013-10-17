@@ -1,12 +1,12 @@
-@(dkey:String, qi_id:String, uSettings:models.MDomainUserSettings, isInstall:Boolean = false, isSiteAdmin:Boolean = false, wsTimestamp:Option[Long] = None)(implicit ctx:util.Context)
+@(dkey:String, qiIdOpt:Option[String], uSettings:models.MDomainUserSettings, isSiteAdmin:Boolean = false, wsTimestamp:Option[Long] = None)(implicit ctx:util.Context)
 
 
 @*  Шаблон генерации js-скрипта, отображаемый обычным юзерам. По сути дергает другие шаблоны, подключая необходимый код.
     Аргументы:
         - dkey - нормализованный хостнейм
-        - qi_id - id быстрой установки
+        - qiIdOpt - id быстрой установки, если есть.
         - uSettings - разные пользовательские настройки. На замену domain_data.
         - isSiteAdmin - имеет ли юзер права на настройки поиска?
 *@
 
-@v2(dkey=dkey, qi_id=qi_id, uSettings=uSettings, isSiteAdmin=isSiteAdmin, isInstall=isInstall, wsTimestamp=wsTimestamp)
+@v2(dkey=dkey, qiIdOpt=qiIdOpt, uSettings=uSettings, isSiteAdmin=isSiteAdmin, wsTimestamp=wsTimestamp)

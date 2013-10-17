@@ -1,0 +1,10 @@
+@(dkey: String)
+
+@* Форма-кнопка удаления сайта из системы. *@
+
+@import helper._
+
+@form(routes.Sys.dkeyDelete(dkey), 'id -> "deleteForm") {
+    <input id="delete-btn" type="submit" value="Удалить">
+}
+

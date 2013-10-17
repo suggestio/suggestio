@@ -2,9 +2,9 @@ package util
 
 import gnu.inet.encoding.IDNA
 import play.api.libs.json.JsString
-import models._
 import scala.concurrent.{Future, ExecutionContext}
 import com.fasterxml.jackson.annotation.JsonIgnore
+import models._
 
 /**
  * Suggest.io
@@ -45,7 +45,6 @@ trait DkeyModelT extends DkeyContainerT {
   def authzForPerson(person_id:String) = MPersonDomainAuthz.getForPersonDkey(dkey, person_id)
   //def qiTmpAuth = MDomainQiAuthzTmp.listDkey(dkey)  // unused
   def qiTmpAuthPerson(qi_id: String) = MDomainQiAuthzTmp.getForDkeyId(dkey=dkey, id=qi_id)
-  def domainSettingsFut(implicit ec:ExecutionContext) = MDomainSettings.getForDkey(dkey)
 
   @JsonIgnore
   def allPersonAuthz = MPersonDomainAuthz.getForDkey(dkey)

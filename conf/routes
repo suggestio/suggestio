@@ -63,5 +63,8 @@ POST /feedback                          controllers.Feedback.feedbackFormSubmit
 GET  /sys                               controllers.Sys.index
 GET  /sys/dkeys/all                     controllers.Sys.dkeysListAll
 GET  /sys/dkey/:dkey                    controllers.Sys.dkeyShow(dkey)
+GET  /sys/dkey/:dkey/search             controllers.Sys.dkeySearch(dkey)
 GET  /sys/addSite                       controllers.Sys.addSiteForm
 POST /sys/addSite                       controllers.Sys.addSiteFormSubmit
+POST /sys/dkey/:dkey/delete             controllers.Sys.dkeyDelete(dkey)
+

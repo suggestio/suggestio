@@ -1,4 +1,4 @@
-@(dkey:String, qi_id:String, uSettings:models.MDomainUserSettings, isInstall:Boolean = false, isSiteAdmin:Boolean = false, wsTimestamp:Option[Long] = None)(implicit ctx:util.Context)
+@(dkey:String, qiIdOpt:Option[String], uSettings:models.MDomainUserSettings, isSiteAdmin:Boolean = false, wsTimestamp:Option[Long] = None)(implicit ctx:util.Context)
 @* sio renderer v2
     
 Шаблон для основного js-скрипта, выполняемого на клиентах. Обычно выполняется без переменных и кешируется на клиентах.
@@ -52,6 +52,8 @@ sio =
 
 @_utils()
 @_templates()
-@_install(dkey,qi_id,wsTimestamp)
+
+@* Отрендерить инсталлер, если qi_id задан *@
+@qiIdOpt.map { qi_id => @_install(dkey, qi_id, wsTimestamp) }
 
 }
