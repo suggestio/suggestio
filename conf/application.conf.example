@@ -1,52 +1,7 @@
-# This is the main configuration file for the application.
-# ~~~~~
-
-# Secret key
-# ~~~~~
-# The secret key is used to secure cryptographics functions.
-# If you deploy your application to several instances be sure to use the same key!
-application.secret="t6]=<]3/5pf19dTae_K?_DemwXGVK12<:6tnlL^7vVV9q>ZW<]jhh8[pH]YIJY=8"
-
-# The application languages
-# ~~~~~
-application.langs="en,ru"
-
-# Global object class
-# ~~~~~
-# Define the Global object class for this application.
-# Default to Global in the root package.
-# application.global=Global
-
-# Router 
-# ~~~~~
-# Define the Router object to use for this application.
-# This router will be looked up first when the application is starting up,
-# so make sure this is the entry point. 
-# Furthermore, it's assumed your route file is named properly. 
-# So for an application router like `my.application.Router`,
-# you may need to define a router file `conf/my.application.routes`.
-# Default to Routes in the root package (and conf/routes)
-# application.router=my.application.Routes
-
-# Database configuration
-# ~~~~~ 
-# You can declare as many datasources as you want.
-# By convention, the default datasource is named `default`
-#
-# db.default.driver=org.h2.Driver
-# db.default.url="jdbc:h2:mem:play"
-# db.default.user=sa
-# db.default.password=""
-
-# Evolutions
-# ~~~~~
-# You can disable evolutions if needed
-# evolutionplugin=disabled
-
-# Logger
-# ~~~~~
+###############################################################################
+## Logger
+###############################################################################
 # You can also configure logback (http://logback.qos.ch/), by providing a logger.xml file in the conf directory .
-
 # Root logger:
 logger.root=ERROR
 
@@ -60,16 +15,7 @@ logger.application=TRACE
 logger.controllers=${logger.application}
 logger.util=${logger.application}
 logger.model=${logger.application}
-
-
-# name of username cookie
-session.username=p
-
-# Siobix web crawler integration
-# ~~~~~
-# dfs.dir: dfs address for filesystem connection; URI. See util.SiobixFs
-siobix.dfs.dir=/home/user/projects/sio/2/bixo/dout
-
+#logger.org.elasticsearch=WARN	# не помогает :(
 
 
 ###############################################################################
@@ -78,6 +24,9 @@ siobix.dfs.dir=/home/user/projects/sio/2/bixo/dout
 # Используемое хранилище. Модели могут использовать "DFS" или "HBase". Регистр
 # символов значения не имеет значение. [DFS]
 storage = "DFS"
+
+# dfs address/path for DFS model backends. See util.SiobixFs. Not related to hbase backend.
+siobix.dfs.dir=/home/user/projects/sio/2/bixo/dout
 
 
 ###############################################################################
@@ -157,4 +106,48 @@ domain.qi.parse.timeout_ms = 5000
 # Длина qi-идентификатора. Следует менять только при острой необходимости и с осторожностью. [8]
 #domain.qi.id.len = 8
 
+
+
+###############################################################################
+## Search
+###############################################################################
+# Название кластера, к которму должен коннктится ES-клиент. [o.es.cluster.ClusterName.DEFAULT]
+#es.cluster.name = "suggest.io"
+
+
+###############################################################################
+## Play framework
+###############################################################################
+# The secret key is used to secure cryptographics functions.
+# If you deploy your application to several instances be sure to use the same key!
+application.secret="t6]=<]3/5pf19dTae_K?_DemwXGVK12<:6tnlL^7vVV9q>ZW<]jhh8[pH]YIJY=8"
+
+# The application languages
+application.langs="en,ru"
+
+# Global object class
+# ~~~~~
+# Define the Global object class for this application.
+# Default to Global in the root package.
+#application.global=Global
+
+# Router 
+# ~~~~~
+# Define the Router object to use for this application.
+# This router will be looked up first when the application is starting up,
+# so make sure this is the entry point. 
+# Furthermore, it's assumed your route file is named properly. 
+# So for an application router like `my.application.Router`,
+# you may need to define a router file `conf/my.application.routes`.
+# Default to Routes in the root package (and conf/routes)
+#application.router=my.application.Routes
+
+# You can disable evolutions if needed
+evolutionplugin=disabled
+
+# name of username session key
+session.username = "p"
+
+# name of session cookie
+session.cookieName = "s"
 

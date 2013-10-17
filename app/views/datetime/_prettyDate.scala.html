@@ -1,0 +1,11 @@
+@(dt:org.joda.time.DateTime, isCap:Boolean = true, withSpan:Boolean = false)(implicit ctx:util.Context)
+
+@* Рендер даты по-человечески. Настройки вывода в модуле util.DateTimePrettyPrinter.
+   isCap - с большой буквы или с маленькой? (если результат начинается со слова)
+   withSpan - обернуть в теги span, чтобы при наведении появлялась подсказка с точной датой.
+*@
+
+@import util.DateTimePrettyPrinter._
+@if(withSpan) {<span title="Точная дата: @dt">}
+@humanizeDt(dt, isCap)
+@if(withSpan) {</span>}

@@ -1,7 +1,7 @@
 do_search = (search_request, domain, is_debug) ->
 
     request_params =
-        url : 'livesearch?h=' + domain + '&q=' + search_request + '&debug=' + is_debug
+        url : '/search/site?h=' + domain + '&q=' + search_request + '&debug=' + is_debug
 
     $.ajax request_params
 

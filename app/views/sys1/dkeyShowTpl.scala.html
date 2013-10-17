@@ -1,6 +1,7 @@
 @(domain: MDomain, authzList:Seq[MPersonDomainAuthz])(implicit c:util.Context)
 @import stuff._
 @import domain._
+@import datetime._
 
 @* Отобразить страницу с резюме по домену. Тут в основном ссылки на другие странице и минимум инфы. *@
 
@@ -25,9 +26,9 @@
 
   <hr/>
 
-  Домен добавлен в индексацию @addedAt (@addedBy)
+  Домен добавлен в индексацию @_prettyDate(addedAt, withSpan=true, isCap=false) -- @addedBy
 
   @* Ссылка на удаление. Пока удаление в кравлере не поддерживается, тут закомменчено. *@
-  @dkeyDeleteBtnTpl(dkey)
+  @*_dkeyDeleteBtnTpl(dkey) *@
 
 }

@@ -82,14 +82,14 @@ object Sys extends SioController with Logs {
       ,
       {dkey =>
         trace(logPrefix + "POST parsed. dkey found = " + dkey)
-        val addedBy = request.pwOpt.get.id + " (system)"
+        val addedBy = request.pwOpt.get.id + " (без проверки)"
         DomainManager.installDkey(dkey=dkey, addedBy=addedBy) map { result =>
           val msg = result match {
             case Some(crawlerRef) => "Domain already in crawler: " + crawlerRef
             case None             => "Crawler successfully notified about new domain."
           }
           info(logPrefix + msg)
-          Ok(msg)
+          Ok(addSiteSuccessTpl(dkey, result.map(_.toString())))
         }
       }
     )

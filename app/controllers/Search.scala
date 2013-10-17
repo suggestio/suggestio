@@ -17,7 +17,9 @@ import models.MDomain
  * Description: Контроллер выполнения поисковых запросов. Получает запрос и возвращает поисковую выдачу.
  */
 
-object Search extends SioController {
+object Search extends SioController with Logs {
+
+  import LOGGER._
 
   /**
    * json-рендерер списка результатов.
@@ -46,8 +48,10 @@ object Search extends SioController {
    * @param queryStr Строка запроса
    * @return
    */
-  def liveSearch(domainRaw:String, queryStr:String, debug:Boolean, langs:String) = Action.async {
+  def siteSearch(domainRaw:String, queryStr:String, debug:Boolean, langs:String) = Action.async {
     val dkey = UrlUtil.normalizeHostname(domainRaw)
+    lazy val logPrefix = s"siteSearch($dkey): "
+    trace(logPrefix + s"q='$queryStr' debug=$debug langs=$langs")
     MDomain.getForDkey(dkey) flatMap {
       case Some(mdomain) =>
         // Домен есть в системе.

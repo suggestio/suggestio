@@ -1,6 +1,6 @@
 package util
 
-import org.elasticsearch.node.NodeBuilder
+import org.elasticsearch.node.{Node, NodeBuilder}
 import org.elasticsearch.client.Client
 import org.elasticsearch.action.search.SearchType
 import org.elasticsearch.index.query.{QueryBuilder, FilterBuilder, FilterBuilders, QueryBuilders}
@@ -15,6 +15,8 @@ import controllers.routes
 import io.suggest.model.SioSearchContext
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.Future
+import play.api.Play.{current, configuration}
+import org.elasticsearch.cluster.ClusterName
 
 /**
  * Suggest.io
@@ -50,10 +52,40 @@ object SiowebEsUtil {
 
   val hlFragSepDefault    = " "
 
+  // Тут хранится клиент к кластеру. В инициализаторе класса надо закинуть сюда начальный экземпляр клиент.
+  // Это переменная для возможности остановки клиента.
+  private var _node: Node = createNode
 
-  // Инстанс локальной не-data ноды ES. Отсюда начинаются все поисковые и другие запросы.
-  // TODO стоит это вынести это в отдельный актор? Нет при условии вызова node.close() при остановке системы.
-  implicit val client:Client = NodeBuilder.nodeBuilder().client(true).node.client()
+  /** Имя кластера elasticsearch, к которому будет коннектиться клиент. */
+  def getClusterName: String = configuration.getString("es.cluster.name") getOrElse "elasticsearch"
+
+  /** Убедиться, что клиент запущен. Обычно вызывается при запуске системы. */
+  def ensureNode() {
+    if (_node == null) {
+      _node = createNode
+    }
+    _node.start()
+  }
+
+  /** Собрать и запустить клиентскую ноду. */
+  def createNode = {
+    NodeBuilder.nodeBuilder()
+      .client(true)
+      .clusterName(getClusterName)
+      .node
+  }
+
+  /** Остановить клиентскую ноду, если запущена. */
+  def stopNode() {
+    if (_node != null) {
+      _node.close()
+      _node = null
+    }
+  }
+
+
+  // Инстанс локальной client-ноды ES. Отсюда начинаются все поисковые и другие запросы.
+  implicit def client = _node.client()
 
   /**
    * Поиск в рамках домена.

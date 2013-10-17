@@ -6,7 +6,7 @@
 
 @sysBase(title=titleOpt.map(_ + " | ").getOrElse("") + dkey, headAfter=headAfter) {
 <h1>
-  / <a href="@routes.Sys.index">index</a>
+  / <a href="@routes.Sys.index">system</a>
   / <a href="@routes.Sys.dkeysListAll">sites</a>
   / <a href="@routes.Sys.dkeyShow(dkey)">@dkey</a>
   @if(titleOpt.isDefined) {/} @titleOpt

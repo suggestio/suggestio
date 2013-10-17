@@ -6,6 +6,7 @@ import util.Logs
 import scala.Some
 import play.api.mvc.SimpleResult
 import controllers.Application.http404Fut
+import util.acl.PersonWrapper.PwOpt_t
 
 /**
  * Suggest.io
@@ -23,13 +24,13 @@ object IsSuperuser extends ActionBuilder[AbstractRequestWithPwOpt] with Logs {
         trace(s"for user ${pw.id} :: ${request.method} ${request.path}")
         block(new RequestWithPwOpt[A](pwOpt, request))
 
-      case _ => onUnauthFut(request)
+      case _ => onUnauthFut(request, pwOpt)
     }
   }
 
-  def onUnauthFut(request: RequestHeader): Future[SimpleResult] = {
+  def onUnauthFut(request: RequestHeader, pwOpt: PwOpt_t): Future[SimpleResult] = {
     import request._
-    warn(s"$method $path <- Unauthorized access to hidden/priveleged place from $remoteAddress")
+    warn(s"$method $path <- BLOCKED access to hidden/priveleged place from $remoteAddress user=$pwOpt")
     http404Fut(request)
   }
 

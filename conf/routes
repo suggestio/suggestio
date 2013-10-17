@@ -14,7 +14,7 @@ GET  /change_locale/:locale             controllers.Application.change_locale(lo
 GET  /assets/*file                      controllers.Assets.at(path="/public", file)
 
 GET  /thumb/get/$dkey<[-_\w\d~.]+>/$imageId<[\w\d]+>     controllers.Thumb.getThumb(dkey, imageId)
-GET  /livesearch                        controllers.Search.liveSearch(h:String, q:String, addDomain:Boolean ?= false, lang:String ?= "")
+GET  /search/site                       controllers.Search.siteSearch(h:String, q:String, debug:Boolean ?= false, lang:String ?= "")
 
 GET  /login/persona                     controllers.Ident.persona
 POST /login/persona                     controllers.Ident.persona_submit
