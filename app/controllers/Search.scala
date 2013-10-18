@@ -54,6 +54,7 @@ object Search extends SioController with Logs {
     trace(logPrefix + s"q='$queryStr' debug=$debug langs=$langs")
     MDomain.getForDkey(dkey) flatMap {
       case Some(mdomain) =>
+        trace(logPrefix + "domain found: " + mdomain)
         // Домен есть в системе.
         // TODO нужно восстанавливать SearchContext из кукисов реквеста или генерить новый
         val searchContext = new SioSearchContext()
@@ -62,11 +63,17 @@ object Search extends SioController with Logs {
           domain = mdomain,
           withExplain = debug
         )
+        // Отправляем время выполнения поиска в логи, если включен trace'инг.
+        val searchStartedAt: Long = if (isTraceEnabled) System.currentTimeMillis() else -1L
         SiowebEsUtil.searchDomain(
           queryStr = queryStr,
           options  = searchOptions,
           searchContext = searchContext
         ) map { searchResults =>
+          trace {
+            val tookMs = System.currentTimeMillis() - searchStartedAt
+            logPrefix + s"search:'$queryStr' with ${searchResults.size} results. [$tookMs ms]"
+          }
           // Отрендерить результаты в json-е
           val jsonResp : Map[String, JsValue] = Map(
             "status"        -> JsString("ok"),
@@ -76,13 +83,20 @@ object Search extends SioController with Logs {
           val jsonp = Jsonp("sio._s_add_result", Json.toJson(jsonResp))
           // TODO Сохранить обновлённый searchContext и серилизовать в кукис ответа
           Ok(jsonp)
-        } recover {
-          case ex:NoSuchDomainException      => NotFound(ex.getMessage)
-          case ex:EmptySearchQueryException  => ExpectationFailed(ex.getMessage)
-          case ex                            => InternalServerError(ex.getMessage)
+
+        } recover { case ex =>
+          error(logPrefix + "Search failed", ex)
+          ex match {
+            case _:NoSuchDomainException      => NotFound(ex.getMessage)
+            case _:EmptySearchQueryException  => ExpectationFailed(ex.getMessage)
+            case _                            => InternalServerError(ex.getMessage)
+          }
         }
 
-      case None => NotFound
+      case None =>
+        warn(logPrefix + "dkey not found. 404")
+        // TODO нужно наверное запускать проверку на предмет наличия на этом сайте скрипта?
+        NotFound
     }
   }
 

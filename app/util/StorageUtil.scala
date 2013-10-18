@@ -23,13 +23,13 @@ object StorageUtil extends Logs {
 
   import StorageType._
 
-  private val storageDflt = DFS
+  private val STORAGE_DFLT = DFS
 
   /** Выбор хранилища, которую будут использовать модели. */
   val STORAGE: StorageType = {
     current.configuration.getString("storage").map(_.toUpperCase) match {
       case None =>
-        val v = storageDflt
+        val v = STORAGE_DFLT
         warn(s"Storage backend not defined in application.conf. Using 'storage' = '$v'.")
         v
 

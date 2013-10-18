@@ -8,7 +8,7 @@ import org.elasticsearch.search.SearchHit
 import io.suggest.model._
 import scala.collection.JavaConversions._
 import collection.mutable
-import io.suggest.util.{LogsImpl, Lists}
+import io.suggest.util.{SioEsClient, LogsImpl, Lists}
 import io.suggest.util.SioConstants._
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import controllers.routes
@@ -27,7 +27,7 @@ import org.elasticsearch.cluster.ClusterName
  * Тут по сути нарезка необходимого из sio_elastic_search, sio_lucene_query, sio_m_page_es.
  */
 
-object SiowebEsUtil {
+object SiowebEsUtil extends SioEsClient {
 
   val RESULT_COUNT_DEFAULT = 20
 
@@ -52,40 +52,9 @@ object SiowebEsUtil {
 
   val hlFragSepDefault    = " "
 
-  // Тут хранится клиент к кластеру. В инициализаторе класса надо закинуть сюда начальный экземпляр клиент.
-  // Это переменная для возможности остановки клиента.
-  private var _node: Node = createNode
-
   /** Имя кластера elasticsearch, к которому будет коннектиться клиент. */
-  def getClusterName: String = configuration.getString("es.cluster.name") getOrElse "elasticsearch"
+  override def getEsClusterName = configuration.getString("es.cluster.name") getOrElse super.getEsClusterName
 
-  /** Убедиться, что клиент запущен. Обычно вызывается при запуске системы. */
-  def ensureNode() {
-    if (_node == null) {
-      _node = createNode
-    }
-    _node.start()
-  }
-
-  /** Собрать и запустить клиентскую ноду. */
-  def createNode = {
-    NodeBuilder.nodeBuilder()
-      .client(true)
-      .clusterName(getClusterName)
-      .node
-  }
-
-  /** Остановить клиентскую ноду, если запущена. */
-  def stopNode() {
-    if (_node != null) {
-      _node.close()
-      _node = null
-    }
-  }
-
-
-  // Инстанс локальной client-ноды ES. Отсюда начинаются все поисковые и другие запросы.
-  implicit def client = _node.client()
 
   /**
    * Поиск в рамках домена.
@@ -94,17 +63,21 @@ object SiowebEsUtil {
    * @param searchContext Контекст поиска.
    * @return Фьючерс с результатом searchIndex или с экзепшеном.
    */
-  def searchDomain(queryStr:String, options:SioSearchOptions, searchContext:SioSearchContext) = {
-    // TODO потом нужно добавить поддержку переключения searchPtr в каком-либо виде.
+  def searchDomain(queryStr:String, options:SioSearchOptions, searchContext:SioSearchContext): Future[List[SioSearchResult]] = {
     import options.dkey
+    lazy val logPrefix = s"searchDomain($dkey, $queryStr): "
+    trace(logPrefix + "Planning search request...")
+    // TODO потом нужно добавить поддержку переключения searchPtr в каком-либо виде.
     MDVISearchPtr.getForDkeyId(dkey) flatMap {
       case Some(searchPtr) =>
+        trace(logPrefix + "searchPtr -> " + searchPtr)
         // Параллельно собрать все индексы и типы со всех виртуальных индексов.
         Future.traverse(searchPtr.vins) { vin =>
           MDVIActive.getForDkeyVin(dkey, vin) map {
             case Some(dviActive) =>
               val indices = dviActive.getShards
               val types = dviActive.getTypesForRequest(searchContext)
+              trace(logPrefix + s"found index: $dviActive :: indices -> $indices ;; types -> $types")
               Some(indices -> types)
 
             // Внезапно нет индекса, на который указывает указатель.
@@ -120,6 +93,7 @@ object SiowebEsUtil {
           }
           // запустить поиск
           if (allIndices.isEmpty) {
+            warn(logPrefix + "no indices found for search. allTypes -> " + allTypes)
             Future.failed(NoSuchDomainException(dkey))
           } else {
             searchIndex(allIndices, allTypes, queryStr, options)
@@ -144,6 +118,8 @@ object SiowebEsUtil {
    * @param options Параметры запроса.
    */
   def searchIndex(indices:Seq[String], types:Seq[String], queryStr:String, options:SioSearchOptions) : Future[List[SioSearchResult]] = {
+    lazy val logPrefix = s"searchIndex(${options.dkey}, '$queryStr'): "
+    trace(logPrefix + s"indices=$indices , types=$types")
     queryStr2Query(queryStr).map { textQuery =>
       var filters : List[FilterBuilder] = {
         // TODO limit должен также зависеть от индекса.
