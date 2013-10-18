@@ -1,6 +1,5 @@
 do_search = (search_request, domain, is_debug) ->
 
-<<<<<<< local
     url : '/search/site?h=' + domain + '&q=' + search_request + '&debug=' + is_debug
 
     search_script = document.createElement "script"
@@ -9,18 +8,6 @@ do_search = (search_request, domain, is_debug) ->
 
     head = document.getElementsByTagName("head")[0]
     head.appendChild search_script
-=======
-    request_params =
-<<<<<<< local
-        url : '/search/site?h=' + domain + '&q=' + search_request + '&debug=' + is_debug
-=======
-        url : 'livesearch?h=' + domain + '&q=' + search_request + '&debug=' + is_debug
-        success : () ->
-            console.log "success"
-        error : (  ) ->
-            console.log "error"
->>>>>>> other
->>>>>>> other
 
     $.ajax request_params
 
