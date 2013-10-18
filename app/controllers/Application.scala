@@ -48,7 +48,8 @@ object Application extends SioController {
     val referrer = request.headers.get(REFERER).getOrElse("/")
     
     Logger.logger.debug("Change user lang to : " + locale)
-    Redirect(referrer).withLang(Lang(locale)) // TODO Check if the lang is handled by the application
+    Redirect(referrer).withLang(Lang(locale))
+    // TODO Check if the lang is handled by the application
     // TODO нужно сохранять это в БД если юзер залогинен.
   }
   

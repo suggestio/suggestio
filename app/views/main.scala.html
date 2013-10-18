@@ -1,5 +1,6 @@
 @(title: String, head_after:Html = Html.empty, browser_check:Option[Html] = None, withHeadCommon:Boolean = true, withAnalytics:Boolean = true)(content: Html)(implicit c:util.Context)
 @import stuff._
+@import ident._
 
 <!DOCTYPE html>
 <html>
@@ -22,7 +23,7 @@
     } else {
       @browser_check.get
     }
-    
+
     <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
     <script src="@routes.Assets.at("javascripts/common.min.js")"></script>
     
@@ -44,6 +45,6 @@
     @if(withAnalytics) {
       @_analyticsTpl()
     }
-    
+    @_personaScriptsTpl()
   </body>
 </html>

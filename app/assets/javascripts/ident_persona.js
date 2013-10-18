@@ -1,4 +1,4 @@
-var signinLink = document.getElementById('signin');
+var signinLink = document.getElementById('signInButton');
 
 if (signinLink) {
 	signinLink.onclick = function() {
