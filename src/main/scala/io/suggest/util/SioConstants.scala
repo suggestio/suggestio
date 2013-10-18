@@ -17,9 +17,9 @@ object SioConstants {
   val FIELD_URL           = "url"
   val FIELD_LANGUAGE      = "lang"
   val FIELD_TITLE         = "title"
-  val FIELD_CONTENT_TEXT  = "content_text"
-  val FIELD_IMAGE_ID      = "image_id"
-  val FIELD_DATE_KILOSEC  = "date_ks"
+  val FIELD_CONTENT_TEXT  = "contentText"
+  val FIELD_IMAGE_ID      = "imageId"
+  val FIELD_DATE_KILOSEC  = "dateKs"
   val FIELD_DATE          = "date"
 
   // Имена системных полей, все в одном месте.

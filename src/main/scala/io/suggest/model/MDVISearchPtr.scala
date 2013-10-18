@@ -128,10 +128,10 @@ case class MDVISearchPtr(
    * @return Пустой фьючерс, который исполняется после реального сохранения данных в БД. Объект внутри фьючерса не имеет
    *         никакого потайного смысла, это просто индикатор из клиента.
    */
-  def save(implicit ec:ExecutionContext): Future[AnyRef] = {
+  def save(implicit ec:ExecutionContext): Future[MDVISearchPtr] = {
     val v = serializeVins(vins)
     val putReq = new PutRequest(HTABLE_NAME:Array[Byte], dkey:Array[Byte], CF_DSEARCH_PTR, columnName, v)
-    ahclient.put(putReq)
+    ahclient.put(putReq).map { _ => this }
   }
 
 

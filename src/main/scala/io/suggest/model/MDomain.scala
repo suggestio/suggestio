@@ -41,7 +41,7 @@ case class MDomain(
 
 object MDomain {
 
-  val BACKEND: Backend = new DfsBackend
+  val BACKEND: Backend = new HBaseBackend
 
   /**
    * Прочитать экземпляр модели из хранилища по ключу.

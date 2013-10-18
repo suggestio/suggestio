@@ -13,6 +13,8 @@ import scala.util.{Success, Failure}
 import org.elasticsearch.action.admin.indices.close.CloseIndexRequestBuilder
 import org.elasticsearch.action.admin.indices.open.OpenIndexRequestBuilder
 import io.suggest.model.MVirtualIndex
+import org.elasticsearch.node.{NodeBuilder, Node}
+import org.elasticsearch.cluster.ClusterName
 
 /**
  * Suggest.io
@@ -825,3 +827,52 @@ class _index_mapping(typ:String, static_fields:Seq[_json_object], properties:Seq
 // END поля документа --------------------------------------------------------------------------------------------------
 
 }
+
+
+/** Неабстрактный трейт для подмешивания клиенского функционала в произольный объект.
+  * Для управления именем кластера, нужно переопределить метод getEsClusterName.  */
+trait SioEsClient {
+
+  // Тут хранится клиент к кластеру. В инициализаторе класса надо закинуть сюда начальный экземпляр клиент.
+  // Это переменная для возможности остановки клиента.
+  protected var _node: Node = createNode
+
+  /** Имя кластера elasticsearch, к которому будет коннектиться клиент. */
+  def getEsClusterName: String = ClusterName.DEFAULT.value()
+
+  /** Убедиться, что клиент запущен. Обычно вызывается при запуске системы. */
+  def ensureNode() {
+    if (_node == null) {
+      _node = createNode
+    }
+    _node.start()
+  }
+
+  /** Собрать и запустить клиентскую ноду. */
+  def createNode = {
+    NodeBuilder.nodeBuilder()
+      .client(true)
+      .clusterName(getEsClusterName)
+      .node
+  }
+
+  /** Остановить клиентскую ноду, если запущена. */
+  def stopNode() {
+    if (_node != null) {
+      _node.close()
+      _node = null
+    }
+  }
+
+  /** Инстанс локальной client-ноды ES. Отсюда начинаются все поисковые и другие запросы. */
+  implicit def client = _node.client()
+
+
+
+  /** Перед вычищением из памяти класса следует убедится, что нода остановлена.
+    * Маловероятно, что от этой функции есть какой-то толк. */
+  override def finalize() {
+    _node.stop()
+  }
+}
+

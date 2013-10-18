@@ -7,7 +7,7 @@ import HTapConversionsBasic._
 import io.suggest.util.SioConstants.DOMAIN_QI_TTL_SECONDS
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.JavaConversions._
-import org.hbase.async.{GetRequest, PutRequest}
+import org.hbase.async.{DeleteRequest, KeyValue, GetRequest, PutRequest}
 import SioHBaseAsyncClient._
 
 /**
@@ -46,6 +46,14 @@ object MObject {
   //val CF_DKNOWLEDGE  = "k".getBytes   // Записи MDomainKnowledge, заполняемые кравлером. qualifier является ключом, а value - значением.
 
   // /!\ При добавлении новых CF-записей нужно также обновлять/запиливать функции createTable() и updateTable().
+  def CFs = Seq(
+    CF_DPROPS, CF_DINX_ACTIVE, CF_DSEARCH_PTR,
+    CF_DDATA, CF_DPUBLISH, CF_DQI,
+    CF_UPROPS, CF_UAUTHZ ,
+    CF_BLOG, CF_DOMAIN
+  )
+
+  def CFs_CRAWLER = Seq(CF_DOMAIN, CF_DPROPS, CF_DINX_ACTIVE, CF_DSEARCH_PTR)
 
 
   /** Одноразовый клиент для этой таблицы. Нужно вызывать close() по завершению его работы.
@@ -59,27 +67,33 @@ object MObject {
    */
   def createTable: Future[Unit] = {
     val tableDesc = new HTableDescriptor(HTABLE_NAME)
-    val cfs = List(
-      // Object props
-      hcd(CF_DPROPS, 3),
-      // utils-модели
-      MDVIActive.getCFDescriptor,       // MDVIActive
-      MDVISearchPtr.getCFDescriptor,    // MDVISearchPtr
-      // остальные (внешние) модели
-      hcd(CF_DDATA, 2),
-      hcd(CF_DPUBLISH, 1),
-      hcd(CF_DQI, 1).setTimeToLive(DOMAIN_QI_TTL_SECONDS),
-      hcd(CF_UPROPS, 1),
-      hcd(CF_UAUTHZ, 2),
-      hcd(CF_BLOG, 1),
-      hcd(CF_DOMAIN, 2)
-      //hcd(CF_DKNOWLEDGE, 1)
-    )
-    cfs foreach tableDesc.addFamily
+    CFs foreach { cfName => tableDesc addFamily getColumnDescriptor(cfName) }
     future {
-      SioHBaseSyncClient.admin.createTable(tableDesc)
+      val adm = SioHBaseSyncClient.admin
+      try {
+        adm.createTable(tableDesc)
+      } finally {
+        adm.close()
+      }
     }
   }
+
+
+  def getColumnDescriptor(cf: Array[Byte]): HColumnDescriptor = {
+    cf match {
+      case CF_DPROPS      => hcd(cf, 3)
+      case CF_DINX_ACTIVE => MDVIActive.getCFDescriptor
+      case CF_DSEARCH_PTR => MDVISearchPtr.getCFDescriptor
+      case CF_DDATA       => hcd(cf, 2)
+      case CF_DPUBLISH    => hcd(cf, 1)
+      case CF_DQI         => hcd(cf, 1).setTimeToLive(DOMAIN_QI_TTL_SECONDS)
+      case CF_UPROPS      => hcd(cf, 1)
+      case CF_UAUTHZ      => hcd(cf, 2)
+      case CF_BLOG        => hcd(cf, 1)
+      case CF_DOMAIN      => hcd(cf, 2)
+    }
+  }
+
 
   private def hcd(name: Array[Byte], maxVersions:Int) = new HColumnDescriptor(name).setMaxVersions(maxVersions)
 
@@ -133,5 +147,58 @@ object MObject {
     }
   }
 
+
+  /** Пересоздать CF-ки, относящиеся к кравлингу (вычистив тем самым их от данных). Обычно используется при reset'е
+    * кравлера при девелопменте/отладке.
+    */
+  def clearCrawlerCFs = {
+    import SioHBaseAsyncClient._
+    Future.traverse(CFs_CRAWLER) { cfName =>
+      val scanner = ahclient.newScanner(HTABLE_NAME_BYTES)
+      scanner.setFamily(cfName)
+      val folder = new AsyncHbaseScannerFold[Future[AnyRef]] {
+        def fold(acc0: Future[AnyRef], kv: KeyValue): Future[AnyRef] = {
+          acc0 andThen { case _ =>
+            val delReq = new DeleteRequest(HTABLE_NAME_BYTES, kv.key, cfName)
+            ahclient.delete(delReq)
+          }
+        }
+      }
+      folder(Future.successful(None), scanner)
+        .flatMap(identity)  // Это типа Future.flatten()
+    }
+  }
+
+  /**
+   * Пересоздать указанные. Кривой код, чисто для девелопмента. Опривачен, ибо не нужен пока что.
+   * @param cfs Названия CF'ок этой модели.
+   * @return Фьючерс для синхронизации исполнения задачи.
+   */
+  private def recreateCFs(cfs: Seq[Array[Byte]]): Future[Unit] = future {
+    val adm = SioHBaseSyncClient.admin
+    try {
+      adm.disableTable(HTABLE_NAME_BYTES)
+      try {
+        // удалить CF-ки, которые подлежат
+        val desc0 = adm.getTableDescriptor(HTABLE_NAME_BYTES)
+        cfs foreach desc0.removeFamily
+        adm.modifyTable(HTABLE_NAME_BYTES, desc0)
+
+        // modifyTable - asynchronous operation.
+        Thread.sleep(1000)
+
+        // Разудалить CF'ки.
+        val desc1 = adm.getTableDescriptor(HTABLE_NAME_BYTES)
+        cfs foreach { cf => desc1 addFamily getColumnDescriptor(cf) }
+        adm.modifyTable(HTABLE_NAME_BYTES, desc1)
+
+      } finally {
+        adm.enableTable(HTABLE_NAME_BYTES)
+      }
+
+    } finally {
+      adm.close()
+    }
+  }
 }
 

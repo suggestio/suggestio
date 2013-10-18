@@ -18,6 +18,8 @@ object MyConfig {
 
   val CONFIG = MyConfig(ConfigFactory.load())
 
+  val KEY_STORAGE_MODE = "storage"
+
 }
 
 import MyConfig._
