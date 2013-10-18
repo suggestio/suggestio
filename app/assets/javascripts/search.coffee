@@ -1,6 +1,6 @@
 do_search = (search_request, domain, is_debug) ->
 
-    url : '/search/site?h=' + domain + '&q=' + search_request + '&debug=' + is_debug
+    url = '/search/site?h=' + domain + '&q=' + search_request + '&debug=' + is_debug
 
     search_script = document.createElement "script"
     search_script.setAttribute "type", "text/javascript"
