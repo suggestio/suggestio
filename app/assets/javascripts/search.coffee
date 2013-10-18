@@ -1,7 +1,15 @@
 do_search = (search_request, domain, is_debug) ->
 
     request_params =
+<<<<<<< local
         url : '/search/site?h=' + domain + '&q=' + search_request + '&debug=' + is_debug
+=======
+        url : 'livesearch?h=' + domain + '&q=' + search_request + '&debug=' + is_debug
+        success : () ->
+            console.log "success"
+        error : (  ) ->
+            console.log "error"
+>>>>>>> other
 
     $.ajax request_params
 

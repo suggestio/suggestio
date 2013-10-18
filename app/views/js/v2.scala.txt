@@ -40,10 +40,8 @@ TODO:
 @import views.txt.js._
 
 @coffee{
-  
+
 sio = 
-  
-  # Настроечки
   config :
     sio_host : "http://@request.host/"
     sio_css : 'static/css/sio.v8.css'
