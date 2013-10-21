@@ -1,11 +1,10 @@
 package io.suggest.model
 
-import org.apache.hadoop.hbase.client.{Get, Put}
 import scala.concurrent.{ExecutionContext, Future, future}
-import org.apache.hadoop.hbase.{HTableDescriptor, HColumnDescriptor}
+import org.apache.hadoop.hbase.HColumnDescriptor
 import HTapConversionsBasic._
 import io.suggest.util.SioConstants.DOMAIN_QI_TTL_SECONDS
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext.Implicits._
 import scala.collection.JavaConversions._
 import org.hbase.async.{DeleteRequest, KeyValue, GetRequest, PutRequest}
 import SioHBaseAsyncClient._
@@ -22,10 +21,8 @@ import SioHBaseAsyncClient._
 
 // Бывшая MDomain. Используется для хранения мелких объектов типа метаданным по объектам, юзерам и т.д.
 // Для разграничения используются CF'ки.
-object MObject {
-
+object MObject extends HTableModel {
   val HTABLE_NAME = "obj"
-  val HTABLE_NAME_BYTES = HTABLE_NAME.getBytes
 
   // Column family для хранения произвольных k-v колонок для доменов (ключ - dkey). В значениях идём по алфавиту.
   val CF_DPROPS      = "a".getBytes   // Пропертисы всякие. js-install и reindex info в частности.
@@ -43,7 +40,8 @@ object MObject {
   // Другое (веб-морда).
   val CF_BLOG        = "i".getBytes   // Блог-записи/новости (веб-морда, ключ = некий id).
   val CF_DOMAIN      = "j".getBytes   // Записи MDomain.
-  //val CF_DKNOWLEDGE  = "k".getBytes   // Записи MDomainKnowledge, заполняемые кравлером. qualifier является ключом, а value - значением.
+
+  //val CF_DKNOWLEDGE  = ???.getBytes   // Записи MDomainKnowledge, заполняемые кравлером. qualifier является ключом, а value - значением.
 
   // /!\ При добавлении новых CF-записей нужно также обновлять/запиливать функции createTable() и updateTable().
   def CFs = Seq(
@@ -56,32 +54,9 @@ object MObject {
   def CFs_CRAWLER = Seq(CF_DOMAIN, CF_DPROPS, CF_DINX_ACTIVE, CF_DSEARCH_PTR)
 
 
-  /** Одноразовый клиент для этой таблицы. Нужно вызывать close() по завершению его работы.
-   * @return Фьючерс с клиентом. Если пул клиентов исчерпан, то фьючерс будет исполнен через некоторое время.
-   */
-  def hclient = SioHBaseSyncClient.clientForTable(HTABLE_NAME)
-
-
-  /** Асинхронно создать таблицу. Полезно при первом запуске. Созданная таблица относится и к подчиненным моделям.
-   * @return Пустой фьючерс, который исполняется при наступлении эффекта созданной таблицы.
-   */
-  def createTable: Future[Unit] = {
-    val tableDesc = new HTableDescriptor(HTABLE_NAME)
-    CFs foreach { cfName => tableDesc addFamily getColumnDescriptor(cfName) }
-    future {
-      val adm = SioHBaseSyncClient.admin
-      try {
-        adm.createTable(tableDesc)
-      } finally {
-        adm.close()
-      }
-    }
-  }
-
-
   def getColumnDescriptor(cf: Array[Byte]): HColumnDescriptor = {
     cf match {
-      case CF_DPROPS      => hcd(cf, 3)
+      case CF_DPROPS      => hcd(cf, 2)
       case CF_DINX_ACTIVE => MDVIActive.getCFDescriptor
       case CF_DSEARCH_PTR => MDVISearchPtr.getCFDescriptor
       case CF_DDATA       => hcd(cf, 2)
@@ -94,28 +69,8 @@ object MObject {
     }
   }
 
+  private def hcd(cf:Array[Byte], maxVsn:Int) = HTableModel.cfDescSimple(cf, maxVsn)
 
-  private def hcd(name: Array[Byte], maxVersions:Int) = new HColumnDescriptor(name).setMaxVersions(maxVersions)
-
-
-  /** Существует ли таблица с именем obj?
-   * @return true, если таблица с именем obj существует. Иначе false.
-   */
-  def isTableExists: Future[Boolean] = {
-    future {
-      SioHBaseSyncClient.admin.tableExists(HTABLE_NAME)
-    }
-  }
-
-  /** Убедиться, что таблица существует.
-   * TODO Сделать, чтобы был updateTable при необходимости (если схема таблицы слегка устарела).
-   */
-  def ensureTableExists: Future[Unit] = {
-    isTableExists flatMap {
-      case false => createTable
-      case true  => Future.successful(())
-    }
-  }
 
   /** Выставить произвольнон значение для произвольной колонки в CF_PROPS. По идее должно использоваться из других моделей,
    * занимающихся сериализацией.

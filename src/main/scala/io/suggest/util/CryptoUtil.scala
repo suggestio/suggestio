@@ -25,15 +25,18 @@ object CryptoUtil {
   }
 
 
-  val md5Digest = MessageDigest.getInstance("md5")
+  def md5Digest = MessageDigest.getInstance("md5")
+
+  /** Сгенерить md5-байты на основе входной строки. */
+  def md5(str: String) = md5Digest.digest(str.getBytes)
 
   /**
-   * Сделать из обычной строки md5-хеш строку.
+   * Сделать из обычной строки md5-хеш строку капслоком.
    * @param str строка для превращения в md5-хеш.
    * @return
    */
   def md5hex(str:String) : String = {
-    val digest = md5Digest.digest(str.getBytes("UTF-8"))
+    val digest = md5(str)
     // TODO Вместо 16-ричного кодирования лучше использовать весь алфавит + алфавит в upper-case.
     //      Тогда хеши будут ощутимо короче. В эрланге использовалось 36-ричное кодирование: [0-9a-z]
     HexBin.encode(digest)
