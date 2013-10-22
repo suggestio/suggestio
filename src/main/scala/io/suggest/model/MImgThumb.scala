@@ -6,7 +6,7 @@ import org.hbase.async.GetRequest
 import HTapConversionsBasic._
 import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContext, Future}
-import io.suggest.util.{CryptoUtil, UrlUtil}
+import io.suggest.util.{SerialUtil, CryptoUtil, UrlUtil}
 import java.net.URL
 import com.scaleunlimited.cascading.BaseDatum
 import cascading.tuple.{Tuple, Fields, TupleEntry}
@@ -31,12 +31,24 @@ object MImgThumb extends MPictSubmodel {
   val THUMB_FN     = fieldName("thumb")
 
   val FIELDS = new Fields(ID_FN, DKEY_FN, IMAGE_URL_FN, THUMB_FN)
+  val FIELDS_DATA = FIELDS subtract new Fields(ID_FN, DKEY_FN)
 
-  /** Прочитать по hex id и dkey. */
+  /**
+   * Прочитать по hex id и dkey.
+   * @param id Ключ ряда в виде hex-строки.
+   * @param dkey Ключ домена.
+   * @return Фьючерс с опциональным результатом.
+   */
   def getByIdDkey(id: String, dkey: String)(implicit ec:ExecutionContext): Future[Option[MImgThumb]] = {
     getByIdDkey(HexBin.decode(id), dkey)
   }
 
+  /**
+   * Прочитать по бинарном id и dkey.
+   * @param idBin Бинарный id (ключ ряда, row key).
+   * @param dkey Ключ домена, используемый в качестве колонки.
+   * @return Фьючерс с опциональным результом.
+   */
   def getByIdDkey(idBin: Array[Byte], dkey: String)(implicit ec:ExecutionContext): Future[Option[MImgThumb]] = {
     val q: Array[Byte] = dkey
     val getReq = new GetRequest(HTABLE_NAME_BYTES, idBin).family(CF).qualifier(q)
@@ -47,6 +59,19 @@ object MImgThumb extends MPictSubmodel {
         new MImgThumb(t)
       }
     }
+  }
+
+  /** Сериализовать только полезные данные (без dkey и id, которые будут хранится в ключе и колонке). */
+  def serializeDataOnly(t: MImgThumb) = {
+    val data = t.getTupleEntry.selectEntry(FIELDS_DATA).getTuple
+    SerialUtil.serializeTuple(data)
+  }
+
+  /** Десериализовать данные, собранные в serializeDataOnly(). */
+  def deserializeDataOnly(id:Array[Byte], dkey:String, data:Array[Byte]): MImgThumb = {
+    val t = new Tuple(id, dkey)
+    SerialUtil.deserializeTuple(data, t)
+    new MImgThumb(t)
   }
 
 
@@ -91,14 +116,15 @@ class MImgThumb extends BaseDatum(FIELDS) {
   def getImageUrl = _tupleEntry.getString(IMAGE_URL_FN)
   def setImageUrl(imageUrl: String) = _tupleEntry.setString(IMAGE_URL_FN, imageUrl)
 
-  def getThumb = {
-    val ibw = _tupleEntry.getObject(THUMB_FN)
-    ibw.asInstanceOf[ImmutableBytesWritable].get()
-  }
+  def getThumb = _tupleEntry.getObject(THUMB_FN).asInstanceOf[ImmutableBytesWritable].get()
   def setThumb(thumb: Array[Byte]) = {
     val ibw = new ImmutableBytesWritable(thumb)
     _tupleEntry.set(THUMB_FN, ibw)
   }
 
+  def dataEntry = _tupleEntry selectEntry FIELDS_DATA
+  def dataTuple = _tupleEntry selectTuple FIELDS_DATA
+
+  def serializeDataOnly = MImgThumb serializeDataOnly this
 }
 

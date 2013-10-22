@@ -13,9 +13,12 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
  */
 object SerialUtil {
   val TUPLE_SER_BUF_SZ_DFLT = 512
+
+  /** Кешируем тут TupleSerialization. Возможно, это не безопасно. Можно юзать только для локальной работы. */
+  val TS_DFLT = new TupleSerialization
   
   /** Сериализация кортежа. */
-  def serializeTuple(t:Tuple, ts:TupleSerialization = new TupleSerialization, buffSz0:Int = TUPLE_SER_BUF_SZ_DFLT): Array[Byte] = {
+  def serializeTuple(t:Tuple, ts:TupleSerialization = TS_DFLT, buffSz0:Int = TUPLE_SER_BUF_SZ_DFLT): Array[Byte] = {
     val serializer = ts.getSerializer(classOf[Tuple]).asInstanceOf[TupleSerializer]
     // TODO Нужно как-то определять необходимый размер буфера исходя из наполнения кортежа.
     val baos = new ByteArrayOutputStream(buffSz0)
@@ -27,7 +30,7 @@ object SerialUtil {
 
   
   /** Десериализация кортежа. На выходе - resultTuple */
-  def deserializeTuple(data:Array[Byte], resultTuple:Tuple = new Tuple, ts:TupleSerialization = new TupleSerialization): Tuple = {
+  def deserializeTuple(data:Array[Byte], resultTuple:Tuple = new Tuple, ts:TupleSerialization = TS_DFLT): Tuple = {
     val deserializer = ts.getDeserializer(classOf[Tuple]).asInstanceOf[TupleDeserializer]
     // Десериализовать данные
     val bais = new ByteArrayInputStream(data)
