@@ -24,11 +24,11 @@ object CryptoUtil {
     HASH_LENS.contains(qv.length) && HASH_PATTERN.matcher(qv).matches
   }
 
-
   def md5Digest = MessageDigest.getInstance("md5")
 
   /** Сгенерить md5-байты на основе входной строки. */
-  def md5(str: String) = md5Digest.digest(str.getBytes)
+  def md5(str: String): Array[Byte]    = md5(str.getBytes)
+  def md5(a: Array[Byte]): Array[Byte] = md5Digest.digest(a)
 
   /**
    * Сделать из обычной строки md5-хеш строку капслоком.
@@ -41,4 +41,11 @@ object CryptoUtil {
     //      Тогда хеши будут ощутимо короче. В эрланге использовалось 36-ричное кодирование: [0-9a-z]
     HexBin.encode(digest)
   }
+
+
+  def sha1Digest = MessageDigest.getInstance("sha-1")
+
+  def sha1(str: String): Array[Byte]    = sha1(str.getBytes)
+  def sha1(a: Array[Byte]): Array[Byte] = sha1Digest.digest(a)
+
 }

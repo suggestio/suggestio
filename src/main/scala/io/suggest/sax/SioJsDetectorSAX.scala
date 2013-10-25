@@ -69,8 +69,9 @@ class SioJsDetectorSAX extends DefaultHandler with Serializable {
       inScript = inScript + 1
       // Если src задан, то нужно его проанализировать
       val src = attributes.getValue(ATTR_SRC)
-      if (src != null)
+      if (src != null) {
         maybeMatches(srcRe, src)
+      }
     }
   }
 

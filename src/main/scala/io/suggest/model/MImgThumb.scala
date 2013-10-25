@@ -1,9 +1,7 @@
 package io.suggest.model
 
 import SioHBaseAsyncClient._
-import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin
 import org.hbase.async.GetRequest
-import HTapConversionsBasic._
 import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.util.{SerialUtil, CryptoUtil, UrlUtil}
@@ -12,6 +10,7 @@ import com.scaleunlimited.cascading.BaseDatum
 import cascading.tuple.{Tuple, Fields, TupleEntry}
 import io.suggest.util.SerialUtil._
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
+import org.apache.commons.codec.binary.Base64
 
 /**
  * Suggest.io
@@ -26,35 +25,30 @@ object MImgThumb extends MPictSubmodel {
   def CF = MPict.CF_IMG_THUMB
 
   val ID_FN        = fieldName("id")
-  val DKEY_FN      = fieldName("dkey")
   val IMAGE_URL_FN = fieldName("imageUrl")
   val THUMB_FN     = fieldName("thumb")
 
-  val FIELDS = new Fields(ID_FN, DKEY_FN, IMAGE_URL_FN, THUMB_FN)
-  val FIELDS_DATA = FIELDS subtract new Fields(ID_FN, DKEY_FN)
+  val FIELDS = new Fields(ID_FN, IMAGE_URL_FN, THUMB_FN)
+  val FIELDS_DATA = FIELDS subtract new Fields(ID_FN)
 
   /**
    * Прочитать по hex id и dkey.
-   * @param id Ключ ряда в виде hex-строки.
-   * @param dkey Ключ домена.
+   * @param idStr Ключ ряда в виде hex-строки.
    * @return Фьючерс с опциональным результатом.
    */
-  def getByIdDkey(id: String, dkey: String)(implicit ec:ExecutionContext): Future[Option[MImgThumb]] = {
-    getByIdDkey(HexBin.decode(id), dkey)
-  }
+  def getById(idStr: String)(implicit ec:ExecutionContext): Future[Option[MImgThumb]] = getById(idStr2Bin(idStr))
 
   /**
    * Прочитать по бинарном id и dkey.
    * @param idBin Бинарный id (ключ ряда, row key).
-   * @param dkey Ключ домена, используемый в качестве колонки.
    * @return Фьючерс с опциональным результом.
    */
-  def getByIdDkey(idBin: Array[Byte], dkey: String)(implicit ec:ExecutionContext): Future[Option[MImgThumb]] = {
-    val q: Array[Byte] = dkey
+  def getById(idBin: Array[Byte])(implicit ec:ExecutionContext): Future[Option[MImgThumb]] = {
+    val q = CF 
     val getReq = new GetRequest(HTABLE_NAME_BYTES, idBin).family(CF).qualifier(q)
     ahclient.get(getReq).map { kvs =>
       kvs.headOption.map { kv =>
-        val t = new Tuple(idBin, dkey)
+        val t = new Tuple(idBin)
         deserializeTuple(kv.value(), t)
         new MImgThumb(t)
       }
@@ -68,8 +62,8 @@ object MImgThumb extends MPictSubmodel {
   }
 
   /** Десериализовать данные, собранные в serializeDataOnly(). */
-  def deserializeDataOnly(id:Array[Byte], dkey:String, data:Array[Byte]): MImgThumb = {
-    val t = new Tuple(id, dkey)
+  def deserializeDataOnly(id:Array[Byte], data:Array[Byte]): MImgThumb = {
+    val t = new Tuple(id)
     SerialUtil.deserializeTuple(data, t)
     new MImgThumb(t)
   }
@@ -77,7 +71,11 @@ object MImgThumb extends MPictSubmodel {
 
   /** Сгенерить id картинки на основе её URL. */
   def imgUrl2id(url: String): Array[Byte] = imgUrl2id(new URL(url))
-  def imgUrl2id(url: URL): Array[Byte]    = CryptoUtil.md5(UrlUtil.url2rowKey(url))
+  def imgUrl2id(url: URL): Array[Byte]    = CryptoUtil.sha1(UrlUtil.url2rowKey(url))
+
+  // TODO заюзать implicit?
+  def idBin2Str(id: Array[Byte]) = Base64 encodeBase64URLSafeString id
+  def idStr2Bin(idStr: String)   = Base64 decodeBase64 idStr
 
   private def fieldName(fn: String) = BaseDatum.fieldName(getClass, fn)
 }
@@ -98,28 +96,41 @@ class MImgThumb extends BaseDatum(FIELDS) {
     setTuple(t)
   }
 
-  def this(id:Array[Byte], dkey:String, imageUrl:String, thumb:Array[Byte]) = {
+  def this(id:Array[Byte], imageUrl:String, thumb:Array[Byte]) = {
     this()
     setId(id)
     setImageUrl(imageUrl)
     setThumb(thumb)
   }
 
-  def getId = _tupleEntry.getObject(ID_FN).asInstanceOf[Array[Byte]]
-  def setId(id: Array[Byte]) = _tupleEntry.set(ID_FN, id)
-  def getIdHex = HexBin.encode(getId)
-  def setIdHex(idHex: String) = _tupleEntry.set(ID_FN, HexBin.decode(idHex))
+  def this(id:ImmutableBytesWritable, imageUrl:String, thumb:ImmutableBytesWritable) = {
+    this
+    setId(id)
+    setImageUrl(imageUrl)
+    setThumb(thumb)
+  }
 
-  def getDkey = _tupleEntry.getString(DKEY_FN)
-  def setDkey(dkey: String) = _tupleEntry.setString(DKEY_FN, dkey)
+  def getId = _tupleEntry.getObject(ID_FN).asInstanceOf[ImmutableBytesWritable].get
+  def setId(id: Array[Byte]) {
+    setId(new ImmutableBytesWritable(id))
+  }
+  def setId(id: ImmutableBytesWritable) {
+    _tupleEntry.set(ID_FN, id)
+  }
+
+  def getIdStr = idBin2Str(getId)
+  def setIdStr(idStr: String) = _tupleEntry.set(ID_FN, idStr2Bin(idStr))
 
   def getImageUrl = _tupleEntry.getString(IMAGE_URL_FN)
   def setImageUrl(imageUrl: String) = _tupleEntry.setString(IMAGE_URL_FN, imageUrl)
 
   def getThumb = _tupleEntry.getObject(THUMB_FN).asInstanceOf[ImmutableBytesWritable].get()
-  def setThumb(thumb: Array[Byte]) = {
+  def setThumb(thumb: Array[Byte]) {
     val ibw = new ImmutableBytesWritable(thumb)
-    _tupleEntry.set(THUMB_FN, ibw)
+    setThumb(ibw)
+  }
+  def setThumb(thumbIbw: ImmutableBytesWritable) {
+    _tupleEntry.set(THUMB_FN, thumbIbw)
   }
 
   def dataEntry = _tupleEntry selectEntry FIELDS_DATA
