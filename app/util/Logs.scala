@@ -12,10 +12,13 @@ import io.suggest.util.LogsAbstract
 
 trait Logs {
 
-  protected val LOGGER = Logger(getClass.getName)
+  protected val LOGGER = Logger(getClass)
 
 }
 
+trait LazyLogger {
+  protected lazy val LOGGER = Logger(getClass)
+}
 
 /** trait-костыль. Подмешивается к abstract-классам из библиотек, ибо они не совместимы с play-логгером. */
 trait SioutilLogs extends LogsAbstract with Logs {

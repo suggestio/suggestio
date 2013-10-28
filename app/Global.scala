@@ -1,7 +1,8 @@
 import play.api.mvc.{SimpleResult, RequestHeader}
 import scala.concurrent.{Future, future}
-import util.{Logs, SiowebEsUtil, ContextT, SiowebSup}
+import util.{SiowebEsUtil, SiowebSup}
 import play.api.Play._
+import play.api._
 
 /**
  * Suggest.io
@@ -11,11 +12,8 @@ import play.api.Play._
  * обработки ошибок и т.д.
  * http://www.playframework.com/documentation/2.1.0/ScalaGlobal
  */
-import play.api._
 
-object Global extends GlobalSettings with Logs {
-
-  import LOGGER._
+object Global extends GlobalSettings {
 
   /**
    * При запуске нужно все перечисленные действия.
@@ -45,6 +43,8 @@ object Global extends GlobalSettings with Logs {
    * Вызов страницы 404. В продакшене надо выводить специальную страницу 404.
    */
   override def onHandlerNotFound(request: RequestHeader): Future[SimpleResult] = {
+    // TODO логгер тут не работает почему-то...
+    println(request.path + " - 404")
     maybeApplication match {
       case Some(app) if app.mode == Mode.Prod => controllers.Application.http404Fut(request)
       // При разработке следует выводить нормальное 404.
