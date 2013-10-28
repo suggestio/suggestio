@@ -27,9 +27,10 @@ object MImgThumb extends MPictSubmodel {
   val ID_FN        = fieldName("id")
   val IMAGE_URL_FN = fieldName("imageUrl")
   val THUMB_FN     = fieldName("thumb")
+  val TIMESTAMP_FN = fieldName("timestamp")
 
-  val FIELDS = new Fields(ID_FN, IMAGE_URL_FN, THUMB_FN)
-  val FIELDS_DATA = FIELDS subtract new Fields(ID_FN)
+  val FIELDS      = new Fields(ID_FN, IMAGE_URL_FN, THUMB_FN, TIMESTAMP_FN)
+  val FIELDS_DATA = new Fields(IMAGE_URL_FN, THUMB_FN)
 
   /**
    * Прочитать по hex id и dkey.
@@ -45,11 +46,11 @@ object MImgThumb extends MPictSubmodel {
    */
   def getById(idBin: Array[Byte])(implicit ec:ExecutionContext): Future[Option[MImgThumb]] = {
     val q = CF 
-    val getReq = new GetRequest(HTABLE_NAME_BYTES, idBin).family(CF).qualifier(q)
+    val getReq = new GetRequest(HTABLE_NAME, idBin).family(CF).qualifier(q)
     ahclient.get(getReq).map { kvs =>
       kvs.headOption.map { kv =>
-        val t = new Tuple(idBin)
-        deserializeTuple(kv.value(), t)
+        val t = new Tuple(idBin) append deserializeTuple(kv.value())
+        t addLong kv.timestamp
         new MImgThumb(t)
       }
     }
@@ -132,6 +133,9 @@ class MImgThumb extends BaseDatum(FIELDS) {
   def setThumb(thumbIbw: ImmutableBytesWritable) {
     _tupleEntry.set(THUMB_FN, thumbIbw)
   }
+
+  def getTimestamp = _tupleEntry.getLong(TIMESTAMP_FN)
+  def setTimestamp(timestamp: Long) = _tupleEntry.setLong(TIMESTAMP_FN, timestamp)
 
   def dataEntry = _tupleEntry selectEntry FIELDS_DATA
   def dataTuple = _tupleEntry selectTuple FIELDS_DATA

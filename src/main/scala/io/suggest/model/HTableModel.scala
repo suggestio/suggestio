@@ -27,7 +27,7 @@ trait HTableModel {
   def CFs: Seq[Array[Byte]]
 
   // TODO Тогда имя получается изменяемое. Это может быть небезопасно для якобы неизменяемого состояния.
-  val HTABLE_NAME_BYTES: Array[Byte] = HTABLE_NAME
+  def HTABLE_NAME_BYTES: Array[Byte] = HTABLE_NAME
 
   /** Существует ли указанная таблица? */
   def isTableExists: Future[Boolean] = {
