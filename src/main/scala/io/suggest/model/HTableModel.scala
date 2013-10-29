@@ -20,6 +20,7 @@ object HTableModel {
 
 }
 
+
 trait HTableModel {
 
   val HTABLE_NAME: String
