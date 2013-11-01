@@ -40,6 +40,7 @@ object MObject extends HTableModel {
   // Другое (веб-морда).
   val CF_BLOG        = "i".getBytes   // Блог-записи/новости (веб-морда, ключ = некий id).
   val CF_DOMAIN      = "j".getBytes   // Записи MDomain.
+  val CF_FACET_INVLINK = "k".getBytes // У кравлера есть хранимые данные sio.analysis.facet.invlink.
 
   //val CF_DKNOWLEDGE  = ???.getBytes   // Записи MDomainKnowledge, заполняемые кравлером. qualifier является ключом, а value - значением.
 
@@ -48,10 +49,11 @@ object MObject extends HTableModel {
     CF_DPROPS, CF_DINX_ACTIVE, CF_DSEARCH_PTR,
     CF_DDATA, CF_DPUBLISH, CF_DQI,
     CF_UPROPS, CF_UAUTHZ ,
-    CF_BLOG, CF_DOMAIN
+    CF_BLOG, CF_DOMAIN,
+    CF_FACET_INVLINK
   )
 
-  def CFs_CRAWLER = Seq(CF_DOMAIN, CF_DPROPS, CF_DINX_ACTIVE, CF_DSEARCH_PTR)
+  def CFs_CRAWLER = Seq(CF_DOMAIN, CF_DPROPS, CF_DINX_ACTIVE, CF_DSEARCH_PTR, CF_FACET_INVLINK)
 
 
   def getColumnDescriptor(cf: Array[Byte]): HColumnDescriptor = {
@@ -66,6 +68,7 @@ object MObject extends HTableModel {
       case CF_UAUTHZ      => hcd(cf, 2)
       case CF_BLOG        => hcd(cf, 1)
       case CF_DOMAIN      => hcd(cf, 2)
+      case CF_FACET_INVLINK => hcd(cf, 1)
     }
   }
 
