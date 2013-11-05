@@ -67,4 +67,5 @@ GET  /sys/dkey/:dkey/search             controllers.Sys.dkeySearch(dkey)
 GET  /sys/addSite                       controllers.Sys.addSiteForm
 POST /sys/addSite                       controllers.Sys.addSiteFormSubmit
 POST /sys/dkey/:dkey/delete             controllers.Sys.dkeyDelete(dkey)
+POST /sys/majorRebuild                  controllers.Sys.majorRebuild
 

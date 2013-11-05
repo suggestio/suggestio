@@ -7,7 +7,7 @@ import util.FormUtil._
 import views.html.sys1._
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
-import util.{Logs, DomainManager}
+import util.{SiobixClient, Logs, DomainManager}
 import scala.concurrent.Future
 
 /**
@@ -99,5 +99,14 @@ object Sys extends SioController with Logs {
   /** Удаление домена из системы. */
   def dkeyDelete(dkey: String) = IsSuperuser { implicit request =>
     ???
+  }
+
+
+  /** Запрос major rebuild. */
+  def majorRebuild = IsSuperuser.async { implicit request =>
+    SiobixClient.majorRebuildRequest map {
+      case Left(reason) => BadRequest(reason)
+      case Right(msg)   => Ok(msg)
+    }
   }
 }
