@@ -5,13 +5,13 @@
 # Раздача жабаскрипта всем посетителям всех сайтов. Самая частовызываемая функция.
 GET  /js/v2/:domain/:qi_id              controllers.Js.v2(domain, qi_id)
 
+# Map static resources from the /public folder to the /assets URL path
+GET  /assets/*file                      controllers.Assets.at(path="/public", file)
+
 # Home page
 GET  /                                  controllers.Application.index
 GET  /search                            controllers.Application.search
 GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
-
-# Map static resources from the /public folder to the /assets URL path
-GET  /assets/*file                      controllers.Assets.at(path="/public", file)
 
 GET  /thumb/get/$dkey<[-_\w\d~.]+>/$imageId<[-_\w\d]+>     controllers.Thumb.getThumb(dkey, imageId)
 GET  /search/site                       controllers.Search.siteSearch(h:String, q:String, debug:Boolean ?= false, lang:String ?= "")
@@ -68,4 +68,6 @@ GET  /sys/addSite                       controllers.Sys.addSiteForm
 POST /sys/addSite                       controllers.Sys.addSiteFormSubmit
 POST /sys/dkey/:dkey/delete             controllers.Sys.dkeyDelete(dkey)
 POST /sys/majorRebuild                  controllers.Sys.majorRebuild
+GET  /sys/siobix/actorTree/*path        controllers.Sys.siobixActor(path: String)
+GET  /sys/siobix                        controllers.Sys.siobixIndex
 

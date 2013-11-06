@@ -63,6 +63,9 @@ akka {
 ## akka url до супервизора кравлера. Меняется в зависимости от deployment'а.
 siobix.akka.url.prefix="akka.tcp://siobix@127.0.0.1:2553"
 
+## Адрес top-level супервизора.
+siobix.akka.sup.path="/user/sup"
+
 ## akka путь до супервизора кравлеров.
 siobix.akka.crawler.sup.path="/user/sup/CrawlersSup"
 

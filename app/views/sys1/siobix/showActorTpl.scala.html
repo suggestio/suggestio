@@ -1,0 +1,9 @@
+@(path:String, statusJson:String, children:Seq[String])(implicit ctx: util.Context)
+
+@sysSiobixBase(path) {
+  <pre>@statusJson</pre>
+
+  @children.map { child =>
+    <a href="@routes.Sys.siobixActor(path + "/" + child)">@child</a>
+  }
+}

@@ -1,0 +1,6 @@
+@(title: String, headAfter:Html = Html.empty)(content: Html)(implicit c:util.Context)
+
+@sys1.sysBase(title = title + " | siobix", headAfter=headAfter) {
+    <h2>Кравлер / @title</h2>
+    @content
+}

@@ -1,0 +1,10 @@
+@()(implicit ctx: util.Context)
+
+@sysSiobixBase("index") {
+    <p>Тут работа с системой кравлинга.</p>
+
+    <p></p><a href="@routes.Sys.siobixActor("sup")">Supervisor</a></p>
+
+    <hr/>
+    @_majorRebuildButtonTpl()
+}

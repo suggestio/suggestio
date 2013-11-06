@@ -9,6 +9,8 @@ import play.api.libs.concurrent.Execution.Implicits._
 import models._
 import util.{SiobixClient, Logs, DomainManager}
 import scala.concurrent.Future
+import SiobixClient.askTimeout
+import io.suggest.proto.bixo._
 
 /**
  * Suggest.io
@@ -102,11 +104,36 @@ object Sys extends SioController with Logs {
   }
 
 
-  /** Запрос major rebuild. */
+  /** Запрос major rebuild. Он направляется в main-кравлер. */
   def majorRebuild = IsSuperuser.async { implicit request =>
     SiobixClient.majorRebuildRequest map {
       case Left(reason) => BadRequest(reason)
       case Right(msg)   => Ok(msg)
     }
   }
+
+
+  /** Отрендерить страницу индекса в разделе siobix. */
+  def siobixIndex = IsSuperuser { implicit request =>
+    Ok(siobix.indexTpl())
+  }
+
+  /** Гуляем по дереву акторов (TalkitiveActor) в siobix. */
+  def siobixActor(path: String) = IsSuperuser.async { implicit request =>
+    val logPrefix = s"siobixActor($path): "
+    val actorPath = if (path startsWith "/") path else "/" + path
+    val sel = SiobixClient.remoteSelection("/user" + actorPath)
+    trace(logPrefix + s"actorPath -> $actorPath ;; asking selection -> ${sel.actorSel}")
+    val childFut = (sel ? TA_GetDirectChildren).asInstanceOf[Future[List[String]]]
+    for {
+      statusJson <- (sel ? TA_GetStatusReport).asInstanceOf[Future[String]]
+      children   <- childFut
+    } yield {
+      trace(logPrefix + "statusJson -> " + statusJson)
+      trace(logPrefix + "children -> " + children)
+      val slashlessPath = if (path startsWith "/") path.tail else path
+      Ok(siobix.showActorTpl(slashlessPath, statusJson, children))
+    }
+  }
+
 }

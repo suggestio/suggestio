@@ -21,18 +21,18 @@ object SiobixClient extends Logs {
 
   import LOGGER._
 
-  def URL_PREFIX = current.configuration.getString("siobix.akka.url.prefix").get
-  def CRAWLERS_SUP_LP = current.configuration.getString("siobix.akka.crawler.sup.path").get
+  val URL_PREFIX = current.configuration.getString("siobix.akka.url.prefix").get
+  val CRAWLERS_SUP_PATH = current.configuration.getString("siobix.akka.crawler.sup.path").get
 
   implicit val askTimeout = new Timeout(
     current.configuration.getInt("siobix.akka.bootstrap.ask_timeout_ms").getOrElse(2000) milliseconds
   )
 
-  val CRAWLERS_SUP_URL = URL_PREFIX + CRAWLERS_SUP_LP
-  def getCrawlersSupSelector = new AskableActorSelection(system actorSelection CRAWLERS_SUP_URL)
+  def remoteSelection(actorPath: String) = new AskableActorSelection(system.actorSelection(URL_PREFIX + actorPath))
+  def getCrawlersSupSelector = remoteSelection(CRAWLERS_SUP_PATH)
 
-  val MAIN_CRAWLER_URL = URL_PREFIX + CRAWLERS_SUP_LP + "/" + MainProto.NAME
-  def getMainCrawlerSelector = new AskableActorSelection(system actorSelection MAIN_CRAWLER_URL)
+  val MAIN_CRAWLER_PATH = CRAWLERS_SUP_PATH + "/" + MainProto.NAME
+  def getMainCrawlerSelector = remoteSelection(MAIN_CRAWLER_PATH)
 
   /**
    * Отправить в кравлер сообщение о запросе бутстрапа домена
@@ -42,7 +42,7 @@ object SiobixClient extends Logs {
    */
   def maybeBootstrapDkey(dkey:String, seedUrls: immutable.Seq[String]) = {
     val sel = getCrawlersSupSelector
-    trace(s"maybeBootstrapDkey($dkey, $seedUrls): crawlersSup URL = " + CRAWLERS_SUP_URL)
+    trace(s"maybeBootstrapDkey($dkey, $seedUrls): crawlersSup URL = " + CRAWLERS_SUP_PATH)
     (sel ? MaybeBootstrapDkey(dkey, seedUrls))
       .asInstanceOf[Future[MaybeBootstrapDkeyReply_t]]
   }
