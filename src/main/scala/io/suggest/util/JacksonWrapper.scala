@@ -39,6 +39,12 @@ object JacksonWrapper {
     prettyWriter.writeValue(os, value)
   }
 
+  def serializePretty(value: Any): String = {
+    val writer = new StringWriter()
+    prettyWriter.writeValue(writer, value)
+    writer.toString
+  }
+
   def deserialize[T: Manifest](value: String) : T = {
     mapper.readValue(value, typeReference[T])
   }
