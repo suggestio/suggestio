@@ -56,6 +56,13 @@ object MImgThumb extends MPictSubmodel {
     }
   }
 
+  /** Десериализация значения в поле ID в бинарь. */
+  val deserializeId: PartialFunction[AnyRef, Array[Byte]] = {
+    case ibw: ImmutableBytesWritable => ibw.get
+    case null => null
+    case other => throw new IllegalArgumentException("unexpected input: " + other)
+  }
+
   /** Сериализовать только полезные данные (без dkey и id, которые будут хранится в ключе и колонке). */
   def serializeDataOnly(t: MImgThumb) = {
     val data = t.getTupleEntry.selectEntry(FIELDS_DATA).getTuple
@@ -111,7 +118,7 @@ class MImgThumb extends BaseDatum(FIELDS) {
     setThumb(thumb)
   }
 
-  def getId = _tupleEntry.getObject(ID_FN).asInstanceOf[ImmutableBytesWritable].get
+  def getId = deserializeId(_tupleEntry getObject ID_FN)
   def setId(id: Array[Byte]) {
     setId(new ImmutableBytesWritable(id))
   }
