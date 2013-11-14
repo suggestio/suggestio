@@ -1,0 +1,39 @@
+@(l: Seq[io.suggest.model.MDVIActive])(implicit ctx: util.Context)
+
+@* Инлайновый шаблон для вывода списка элементов MDVIActive в шаблонах верхнего уровня. *@
+
+@if(l.isEmpty) {
+  <b>Индексов не найдено.</b> Вероятно, что-то сломалось или работает неправильно.
+
+} else {
+  <table>
+    <thead>
+    <tr>
+      <td>view</td>
+      <td>dkey</td>
+      <td>vin</td>
+      <td title="generation">gen</td>
+      <td>subshards</td>
+    </tr>
+    </thead>
+
+    <tbody>
+    @l.map { e =>
+      <tr>
+        <td><a href="@routes.Sys.indicesShowActiveFor(dkey=e.dkey, vin=e.vin)">:::</a></td>
+        <td><a href="@routes.Sys.dkeyShow(e.dkey)">@e.dkey</a></td>
+        <td><a href="@routes.Sys.showVin(e.vin)">@e.vin</a></td>
+        <td>@e.generation</td>
+        <td>
+          <span title="Кол-во">(@e.subshards.size)</span>:
+          @e.subshardsInfo.map { si =>
+            &#123;<span title="lowerDateDays = @si.lowerDateDays">@si.lowerDate</span>
+            =&gt;
+            [@if(si.shards.isEmpty) {*} else {@si.shards.mkString(",")}]&#125;
+          }
+        </td>
+      </tr>
+    }
+    </tbody>
+  </table>
+}

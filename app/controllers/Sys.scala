@@ -11,6 +11,7 @@ import util.{SiobixClient, Logs, DomainManager}
 import scala.concurrent.Future
 import SiobixClient.askTimeout
 import io.suggest.proto.bixo._
+import io.suggest.model.{MVirtualIndexVin, MVirtualIndex, MDVIActive}
 
 /**
  * Suggest.io
@@ -133,6 +134,41 @@ object Sys extends SioController with Logs {
       trace(logPrefix + "children -> " + children)
       val slashlessPath = if (path startsWith "/") path.tail else path
       Ok(siobix.showActorTpl(slashlessPath, statusJson, children))
+    }
+  }
+
+
+  // ============================================================
+  // Текущие индексы (просмотр конфигурации виртуальных индексов)
+
+  def indicesIndex = IsSuperuser { implicit request =>
+    Ok(indices.indexTpl())
+  }
+
+  /** Листинг всех MDVIActive. */
+  def indicesListAllActive = IsSuperuser.async { implicit request =>
+    MDVIActive.getAll.map { l =>
+      trace("All MDVIActive found: " + l.size)
+      Ok(indices.listAllMdviActiveTpl(l))
+    }
+  }
+
+  /** Выдать данные по вирт.индексу в домене.
+    * @param dkey Ключ домена
+    * @param vin виртуальный индекс.
+    */
+  def indicesShowActiveFor(dkey:String, vin:String) = IsSuperuser.async { implicit request =>
+    MDVIActive.getForDkeyVin(dkey=dkey, vin=vin) map {
+      case Some(mdviActive) => Ok(indices.showMdviActiveTpl(mdviActive))
+      case None             => NotFound(s"No virtual index '$vin' for dkey '$dkey'")
+    }
+  }
+
+  /** Выдать данные по vin'у. */
+  def showVin(vin: String) = IsSuperuser.async { implicit request =>
+    val mvi = new MVirtualIndexVin(vin)
+    mvi.getUsers.map { l =>
+      Ok(indices.showMviTpl(mvi, l))
     }
   }
 

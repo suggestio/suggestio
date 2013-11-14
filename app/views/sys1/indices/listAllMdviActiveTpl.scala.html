@@ -1,0 +1,5 @@
+@(l: Seq[io.suggest.model.MDVIActive])(implicit ctx: util.Context)
+
+@indicesBase("Все виртуальные индексы") {
+  @_listMdviActiveTpl(l)
+}

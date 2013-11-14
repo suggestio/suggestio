@@ -71,3 +71,8 @@ POST /sys/majorRebuild                  controllers.Sys.majorRebuild
 GET  /sys/siobix/actorTree/*path        controllers.Sys.siobixActor(path: String)
 GET  /sys/siobix                        controllers.Sys.siobixIndex
 
+GET  /sys/indices                       controllers.Sys.indicesIndex
+GET  /sys/indices/active/all            controllers.Sys.indicesListAllActive
+GET  /sys/indices/active/:dkey/:vin     controllers.Sys.indicesShowActiveFor(dkey:String, vin:String)
+GET  /sys/indices/vin/:vin              controllers.Sys.showVin(vin)
+

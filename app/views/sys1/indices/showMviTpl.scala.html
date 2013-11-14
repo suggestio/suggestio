@@ -1,0 +1,13 @@
+@(mvi: io.suggest.model.MVirtualIndex, mviUsers: Seq[io.suggest.model.MDVIActive])(implicit ctx: util.Context)
+
+@* Отображение данных о мульти-индексе. *@
+
+@indicesBase(mvi.vin + " | mvi") {
+  <p>vin: <b>@mvi.vin</b></p>
+  <p>phys. shard count: <b>@mvi.shardCount</b></p>
+  <p>vin prefix: <b>@mvi.vinPrefix</b></p>
+  <p>phys. shards: <b>@mvi.getShards.mkString(" ")</b></p>
+
+  <h3>Virtual index users</h3>
+  @_listMdviActiveTpl(mviUsers)
+}
