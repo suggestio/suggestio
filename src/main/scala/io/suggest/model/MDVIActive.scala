@@ -39,6 +39,8 @@ object MDVIActive {
 
   // Короткие подсказки для модели и её внешних пользователей, которым не важно внутреннее устройство модели.
   def HTABLE_NAME = MObject.HTABLE_NAME
+  def HTABLE_NAME_BYTES = MObject.HTABLE_NAME_BYTES
+
   def CF = MObject.CF_DINX_ACTIVE
 
   // Ключи для сериализованной карты данных.
@@ -350,16 +352,17 @@ case class MDVIActive(
   @JsonIgnore
   def save(implicit ec: ExecutionContext): Future[MDVIActive] = {
     val v = JacksonWrapper.serialize(exportInternalState)
-    val putReq = new PutRequest(HTABLE_NAME:Array[Byte], dkey:Array[Byte], CF, vin:Array[Byte], v:Array[Byte])
+    val putReq = new PutRequest(HTABLE_NAME_BYTES, dkey:Array[Byte], CF, vin:Array[Byte], v:Array[Byte])
     ahclient.put(putReq) map { _ => this }
   }
 
   /**
-   * Удалить ряд из хранилища.
+   * Удалить ряд из хранилища. Проверку по generation не делаем, ибо оно неразрывно связано с dkey+vin и является
+   * вспомогательной в рамках flow величиной.
    * @return Фьючерс для синхронизации.
    */
   def delete(implicit ec: ExecutionContext): Future[Unit] = {
-    val delReq = new DeleteRequest(HTABLE_NAME, dkey)
+    val delReq = new DeleteRequest(HTABLE_NAME_BYTES, dkey:Array[Byte], CF, vin:Array[Byte])
     ahclient.delete(delReq) map { _ => () }
   }
 
