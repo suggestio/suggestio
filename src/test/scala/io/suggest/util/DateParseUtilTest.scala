@@ -149,4 +149,9 @@ class DateParseUtilTest extends FlatSpec with ShouldMatchers {
     extractDates("sdf 29-Feb-2013!")                                    should equal(empty)
   }
 
+
+  "toDaysCount()" should "convert all dates to days count and back" in {
+    dateFromDaysCount(toDaysCount(LocalDate.now))                       should equal (LocalDate.now)
+  }
+
 }

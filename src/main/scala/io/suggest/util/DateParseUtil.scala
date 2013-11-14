@@ -5,6 +5,7 @@ import com.github.nscala_time.time.Imports._
 import java.util.Locale
 import collection.mutable
 import scala.util.Random
+import org.joda.time.DateMidnight
 
 /**
  * Suggest.io
@@ -274,16 +275,30 @@ object DateParseUtil extends Logs {
   }
 
 
+  private val SINSE_YEAR_DFLT_INSTANT_MS = new DateMidnight(1980, 1, 1).getMillis
+  private val MS_PER_DAY: Long = 24L * 3600L * 1000L
+
   /**
    * Приблизительное число дней от начала времён. Тут не требуется работать с миллисекундами,
    * поэтому точность в несколько дней достаточна.
    * @param d исходная дата, которую необходимо перевести в дни.
    * @return
    */
-  def toDaysCount(d:LocalDate, sinceYear: Int = 1980) : Int = {
-    val year = d.getYear - sinceYear
-    d.getDayOfYear + year * 365 + year/4 - year/100 + year/400
+  def toDaysCount(d: LocalDate) : Int = {
+    val dcL = (d.toDateMidnight.getMillis - SINSE_YEAR_DFLT_INSTANT_MS) / MS_PER_DAY + 1
+    dcL.toInt
   }
 
 
+  /**
+   * Обратная манипуляция по отношению к toDaysCount с дефолтовой датой.
+   * @param dc Результат toDaysCount.
+   * @return LocalDate
+   */
+  def dateFromDaysCount(dc: Int): LocalDate = {
+    val ms = dc * MS_PER_DAY
+    new LocalDate(SINSE_YEAR_DFLT_INSTANT_MS + ms)
+  }
+
 }
+

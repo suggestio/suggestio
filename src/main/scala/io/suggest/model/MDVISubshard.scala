@@ -1,7 +1,7 @@
 package io.suggest.model
 
 import scala.concurrent.{ExecutionContext, Future}
-import io.suggest.util.{LogsPrefixed, SioEsIndexUtil}
+import io.suggest.util.{DateParseUtil, LogsPrefixed, SioEsIndexUtil}
 import org.elasticsearch.client.Client
 import io.suggest.index_info.MDVIUnit
 import scala.util.{Failure, Success}
@@ -119,6 +119,12 @@ case class MDVISubshard(
   def getShardForDate(date:LocalDate): String = getShardForDaysCount(toDaysCount(date))
 
 
+  /** Выдать значение lowerDateDays для текущей подшарды. */
+  def lowerDateDays = subshardData.lowerDateDays
+  def lowerDate     = subshardData.lowerDate
+  def shardIds      = subshardData.shards
+
+
   /**
    * Выдать шарду для указанного days count.
    * @param daysCount кол-во дней от начала эпохи.
@@ -173,4 +179,9 @@ case class MDVISubshard(
 case class MDVISubshardInfo(
   lowerDateDays: Int,
   shards:        List[Int] = Nil
-) extends Serializable
+) extends Serializable {
+
+  /** Представление lowerDateDays в виде даты. */
+  def lowerDate = DateParseUtil.dateFromDaysCount(lowerDateDays)
+}
+
