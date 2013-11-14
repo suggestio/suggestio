@@ -7,6 +7,7 @@ import SioHBaseAsyncClient._
 import org.apache.hadoop.hbase.HColumnDescriptor
 import org.hbase.async.{PutRequest, GetRequest}
 import scala.collection.JavaConversions._
+import java.util
 
 /**
  * Suggest.io
@@ -49,7 +50,7 @@ object MDVISearchPtr {
    * @return idOpt.
    */
   def column2idOpt(c: Array[Byte]): Option[String] = {
-    if (c == COLUMN_DFLT) {
+    if (util.Arrays.equals(c, COLUMN_DFLT)) {
       None
     } else {
       val cs = new String(c)
