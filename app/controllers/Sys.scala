@@ -11,7 +11,7 @@ import util.{SiobixClient, Logs, DomainManager}
 import scala.concurrent.Future
 import SiobixClient.askTimeout
 import io.suggest.proto.bixo._
-import io.suggest.model.{MVirtualIndexVin, MVirtualIndex, MDVIActive}
+import io.suggest.model.{MVirtualIndexVin, MDVIActive}
 
 /**
  * Suggest.io
