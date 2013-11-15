@@ -105,7 +105,7 @@ object DateParseUtil extends Logs {
 
               // Месяц не удалось определить. Пожаловаться в лог и забыть.
               case _ =>
-                debug("Cannot parse month from date str: " + _matched)
+                trace("Cannot parse month from date str: " + _matched)
                 _acc
             }
 

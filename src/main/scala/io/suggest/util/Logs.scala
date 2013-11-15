@@ -86,7 +86,7 @@ trait LogsAbstract {
 class LogsImpl(className: String) {
   def this(clazz: Class[_]) = this(clazz.getName)
 
-  @transient private lazy val _logger = LoggerFactory.getLogger(className)
+  @transient val _logger = LoggerFactory.getLogger(className)
 
   def debug(message: => String) = if (_logger.isDebugEnabled) _logger.debug(message)
   def debug(message: => String, ex:Throwable) = if (_logger.isDebugEnabled) _logger.debug(message,ex)
@@ -103,5 +103,11 @@ class LogsImpl(className: String) {
 
   def trace(message: => String) = if (_logger.isTraceEnabled) _logger.trace(message)
   def trace(message: => String, ex:Throwable) = if(_logger.isTraceEnabled) _logger.trace(message, ex)
+
+  def isTraceEnabled = _logger.isTraceEnabled
+  def isDebugEnabled = _logger.isDebugEnabled
+  def isInfoEnabled  = _logger.isInfoEnabled
+  def isWarnEnabled  = _logger.isWarnEnabled
+  def isErrorEnabled = _logger.isErrorEnabled
 }
 

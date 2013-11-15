@@ -450,9 +450,15 @@ case class MDVIActive(
    * Тут функция, которая делает либо первое, либо второе в зависимости от обстоятельств.
    */
   def deleteIndexOrMappings(implicit esClient: EsClient, ec: ExecutionContext): Future[Unit] = {
+    val logPrefix = "deleteIndexOrMappings():"
     isVinUsedByOtherDkeys map {
-      case true  => deleteMappings
-      case false => getVirtualIndex.eraseShards
+      case true  =>
+        warn(s"$logPrefix vin=$vin used by dkeys, other than '$dkey'. Delete mapping...")
+        deleteMappings
+
+      case false =>
+        warn(s"$logPrefix vin=$vin dkey='$dkey' is NOT used by anyone. Delete fully.")
+        getVirtualIndex.eraseShards
     }
   }
 
