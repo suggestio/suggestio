@@ -112,13 +112,13 @@ object DateParseUtil extends Logs {
           // Ошибка при парсинге даты. Вобщем-то, нередкая ситуация.
           } catch {
             case ex:Throwable =>
-              error("Cannot parse date: " + _matched + " :: " + ex.getLocalizedMessage)
+              trace("Cannot parse date: " + _matched + " :: " + ex.getLocalizedMessage)
               _acc
           }
 
         // split не смог разделить строку на три части. Такое маловероятно, обычно означает ошибку в регэкспе или около.
         case _ =>
-          error("Cannot split '" + _matched + "' into 3 parts.")
+          trace("Cannot split '" + _matched + "' into 3 parts.")
           _acc
       }
     }

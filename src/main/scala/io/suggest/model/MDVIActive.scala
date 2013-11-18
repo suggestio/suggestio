@@ -449,17 +449,22 @@ case class MDVIActive(
    * Бывает, что можно удалить всё вместе с физическим индексом. А бывает, что наоборот.
    * Тут функция, которая делает либо первое, либо второе в зависимости от обстоятельств.
    */
-  def deleteIndexOrMappings(implicit esClient: EsClient, ec: ExecutionContext): Future[Unit] = {
+  def eraseIndexOrMappings(implicit esClient: EsClient, ec: ExecutionContext): Future[_] = {
     val logPrefix = "deleteIndexOrMappings():"
-    isVinUsedByOtherDkeys map {
+    isVinUsedByOtherDkeys flatMap {
       case true  =>
         warn(s"$logPrefix vin=$vin used by dkeys, other than '$dkey'. Delete mapping...")
         deleteMappings
 
-      case false =>
-        warn(s"$logPrefix vin=$vin dkey='$dkey' is NOT used by anyone. Delete fully.")
-        getVirtualIndex.eraseShards
+      case false => eraseBackingIndex
     }
+  }
+
+
+  /** Удалить весь индекс целиком, даже если в нём хранятся другие сайты (без проверок). */
+  def eraseBackingIndex(implicit esClient: EsClient, ec:ExecutionContext): Future[Boolean] = {
+    warn(s"eraseBackingIndex(): vin=$vin dkey='$dkey' Deleting real index FULLY!")
+    getVirtualIndex.eraseShards
   }
 
 

@@ -66,9 +66,10 @@ object SioEsIndexUtil extends Logs with Serializable {
           .setType(h)
           .execute()
           .onComplete { result =>
+            lazy val indicesStr = indices.mkString(",")
             result match {
-              case Success(_)  => debug("Mapping %s sucessfully erased from indices %s" format (h, indices))
-              case Failure(ex) => error("Failed to delete mapping '%s' from indices %s" format (h, indices))
+              case Success(_)  => debug(s"Mapping $h sucessfully erased from indices $indicesStr")
+              case Failure(ex) => error(s"Failed to delete mapping '$h' from indices $indicesStr")
             }
             // Рекурсивно запустить следующую итерацию независимо от результатов.
             deleteMapping(t)
@@ -166,12 +167,12 @@ object SioEsIndexUtil extends Logs with Serializable {
    * @param isTolerant Гасить одиночные ошибки импорта?
    * @return true, когда всё нормально.
    */
-  def move(fromIndex:MDVIUnitAlterable, toIndex:MDVIUnitAlterable, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, fs:FileSystem, executor:ExecutionContext): Future[Unit] = {
+  def move(fromIndex:MDVIUnitAlterable, toIndex:MDVIUnitAlterable, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, fs:FileSystem, executor:ExecutionContext): Future[_] = {
     lazy val logPrefix = "move(%s -> %s tolerant=%s): " format (fromIndex.vin, toIndex.vin, isTolerant)
     debug(logPrefix + "Starting copy()...")
     copy(fromIndex, toIndex, isTolerant) flatMap { _ =>
       debug(logPrefix + "copy() finished. Let's delete old index %s..." format fromIndex.vin)
-      fromIndex.deleteIndexOrMappings
+      fromIndex.eraseIndexOrMappings
     }
   }
 
