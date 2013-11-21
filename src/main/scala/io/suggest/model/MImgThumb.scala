@@ -60,7 +60,7 @@ object MImgThumb extends MPictSubmodel {
   val deserializeId: PartialFunction[AnyRef, Array[Byte]] = {
     case ibw: ImmutableBytesWritable => ibw.get
     case null => null
-    case other => throw new IllegalArgumentException("unexpected input: " + other)
+    case other => throw new IllegalArgumentException("unexpected input[" + other.getClass.getName + "]: " + other)
   }
 
   /** Сериализовать только полезные данные (без dkey и id, которые будут хранится в ключе и колонке). */
