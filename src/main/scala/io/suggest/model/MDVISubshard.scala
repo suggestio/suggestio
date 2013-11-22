@@ -82,7 +82,8 @@ object MDVISubshard {
     */
   def getShardId(shardIds:Seq[Int], daysCount:Int): Int = {
     // TODO хреновый алгоритм какой-то тут
-    val shardNumber = daysCount % shardIds.size
+    val daysCount1 = Math.max(1000, daysCount)
+    val shardNumber = daysCount1 % shardIds.size
     val shardId = shardIds(shardNumber)
     shardId
   }

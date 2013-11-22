@@ -1,7 +1,6 @@
 package io.suggest.util
 
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.FlatSpec
+import org.scalatest._
 import Lists._
 
 /**
@@ -10,7 +9,7 @@ import Lists._
  * Created: 18.03.13 19:41
  * Description:
  */
-class ListsTest extends FlatSpec with ShouldMatchers {
+class ListsTest extends FlatSpec with Matchers {
 
   "insideOut()" should "do the work" in {
     insideOut(Map(1 -> List('a','b','c'), 2 -> List('b', 'c', 'd'))) should equal (Map('a' -> Set(1), 'b' -> Set(1,2), 'c' -> Set(1,2), 'd' -> Set(2)))

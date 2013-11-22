@@ -60,7 +60,7 @@ libraryDependencies ++= {
     "com.scaleunlimited" % "cascading.utils" % "2.1.4", // нужно для HadoopUtils.
     // TEST
     "net.databinder.dispatch" %% "dispatch-core" % "0.11.0" % "test",
-    "org.scalatest" %% "scalatest" % "1.9.1" % "test"
+    "org.scalatest" %% "scalatest" % "2.0" % "test"
   )
 }
 

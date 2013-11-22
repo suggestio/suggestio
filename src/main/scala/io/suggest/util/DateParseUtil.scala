@@ -285,8 +285,13 @@ object DateParseUtil extends Logs {
    * @return
    */
   def toDaysCount(d: LocalDate) : Int = {
-    val dcL = (d.toDateMidnight.getMillis - SINSE_YEAR_DFLT_INSTANT_MS) / MS_PER_DAY + 1
-    dcL.toInt
+    val dms = d.toDateMidnight.getMillis
+    if (dms <= SINSE_YEAR_DFLT_INSTANT_MS) {
+      0
+    } else {
+      val dcL = (dms - SINSE_YEAR_DFLT_INSTANT_MS) / MS_PER_DAY + 1
+      dcL.toInt
+    }
   }
 
 

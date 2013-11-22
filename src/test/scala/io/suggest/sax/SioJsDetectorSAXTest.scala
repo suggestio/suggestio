@@ -1,7 +1,6 @@
 package io.suggest.sax
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest._
 import dispatch._, Defaults._
 import java.io.{InputStream, ByteArrayInputStream}
 import org.apache.tika.metadata.{TikaMetadataKeys, Metadata}
@@ -20,7 +19,7 @@ import org.apache.tika.parser.html.{IdentityHtmlMapper, HtmlMapper, HtmlParser}
  * Created: 15.10.13 14:43
  * Description: Набор тестов для проверки работы детектора установленного js-кода на сайтах.
  */
-class SioJsDetectorSAXTest extends FlatSpec with ShouldMatchers {
+class SioJsDetectorSAXTest extends FlatSpec with Matchers {
 
   val fetchTimeoutMs = 5000
   val parseTimeoutMs = 5000

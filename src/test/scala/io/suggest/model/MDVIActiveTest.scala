@@ -1,7 +1,6 @@
 package io.suggest.model
 
 import org.scalatest._
-import matchers.ShouldMatchers
 import MDVIActive._
 import org.joda.time.LocalDate
 import io.suggest.util.DateParseUtil.{toDaysCount, dateFromDaysCount}
@@ -14,7 +13,7 @@ import MDVISubshardInfo.getTypename
  * Created: 18.09.13 19:19
  * Description: Тесты для модели MDVIActive.
  */
-class MDVIActiveTest extends FlatSpec with ShouldMatchers {
+class MDVIActiveTest extends FlatSpec with Matchers {
 
   // Тестируется выборка хранилища в виртуальном индексе
   private val dkey = "suggest.io"
@@ -54,9 +53,13 @@ class MDVIActiveTest extends FlatSpec with ShouldMatchers {
   "getInxTypeForDate()" should "return correct inx/types on 1-shard MVI 1-subshard MDVIA" in {
     val mdvia = MDVIActive(vin="adasdasd1", dkey=dkey, generation=123123L)
     val result = mdvia.getShards.head -> getTypename(dkey, 0L)
-    mdvia.getInxTypeForDate(LocalDate.now)                should equal  (result)
-    mdvia.getInxTypeForDate(new LocalDate(2004, 3, 2))    should equal  (result)
-    mdvia.getInxTypeForDate(new LocalDate(2044, 10, 14))  should equal  (result)
+    import mdvia.getInxTypeForDate
+    getInxTypeForDate(LocalDate.now)                should equal  (result)
+    getInxTypeForDate(new LocalDate(2004, 3, 2))    should equal  (result)
+    getInxTypeForDate(new LocalDate(2044, 10, 14))  should equal  (result)
+    getInxTypeForDate(new LocalDate(1944, 10, 11))  should equal  (result)
+    getInxTypeForDate(new LocalDate(1644, 10, 11))  should equal  (result)
+    getInxTypeForDate(new LocalDate(2555, 12, 12))  should equal  (result)
   }
 
   it should "return correct inx/types on 1-shard MVI 3-subshard MDVIA" in {
@@ -94,6 +97,7 @@ class MDVIActiveTest extends FlatSpec with ShouldMatchers {
     getInxTypeForDate(new LocalDate(2004, 1, 1))    should equal  (resultOld)
     getInxTypeForDate(new LocalDate(1999, 2, 3))    should equal  (resultOld)
     getInxTypeForDate(new LocalDate(1990, 3, 4))    should equal  (resultOld)
+    getInxTypeForDate(new LocalDate(1944, 1, 1))    should equal  (resultOld)
   }
 
   it should "return correct inx/type on 2-shard MVI 3-subshard MDVIA" in {
@@ -137,6 +141,8 @@ class MDVIActiveTest extends FlatSpec with ShouldMatchers {
     getInxTypeForDate(new LocalDate(2003, 10, 10))  should equal  (resultOld)
     getInxTypeForDate(new LocalDate(1999, 11, 11))  should equal  (resultOld)
     getInxTypeForDate(new LocalDate(1990, 12, 12))  should equal  (resultOld)
+    getInxTypeForDate(new LocalDate(1944, 11, 11))  should equal  (resultOld)
+    getInxTypeForDate(new LocalDate(1755, 12, 12))  should equal  (resultOld)
   }
 
 

@@ -1,7 +1,6 @@
 package io.suggest.model
 
 import org.scalatest._
-import matchers.ShouldMatchers
 import MVirtualIndex._
 
 /**
@@ -11,7 +10,7 @@ import MVirtualIndex._
  * Description: Тесты для функционала модели MVirtualIndex. Модель целиком существует только в памяти, поэтому всё можно
  * протестировать без сайд-эффектов.
  */
-class MVirtualIndexTest extends FlatSpec with ShouldMatchers {
+class MVirtualIndexTest extends FlatSpec with Matchers {
 
   val vinPrefix = "abcdefg"
   

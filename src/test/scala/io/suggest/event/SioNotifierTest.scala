@@ -1,7 +1,6 @@
 package io.suggest.event
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest._
 import akka.actor._
 import akka.actor.ActorDSL._
 import SioNotifier._
@@ -142,7 +141,7 @@ class SioNotifierTest extends FlatSpec with ShouldMatchers with Logs {
 
 
   // Нужно очищать контекст по завершении тестов.
-  override protected def withFixture(test: NoArgTest) {
+  override protected def withFixture(test: NoArgTest) = {
     try {
       super.withFixture(test)
 

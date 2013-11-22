@@ -1,7 +1,6 @@
 package io.suggest.util
 
 import org.scalatest._
-import matchers.ShouldMatchers
 import java.net.URL
 import UrlUtil._
 
@@ -11,7 +10,7 @@ import UrlUtil._
  * Created: 06.03.13 10:44
  * Description: scalatests for UrlUtils.
  */
-class UrlUtilTest extends FlatSpec with ShouldMatchers {
+class UrlUtilTest extends FlatSpec with Matchers {
 
   "ensureAbsoluteUrl()" should "absolutize relative urls if baseUrl = suggest.io/a/" in {
     val baseUrl1 = new URL("https://suggest.io/a/")

@@ -1,7 +1,6 @@
 package io.suggest.model
 
 import org.scalatest._
-import matchers.ShouldMatchers
 import MDVISearchPtr._
 
 /**
@@ -10,7 +9,7 @@ import MDVISearchPtr._
  * Created: 30.09.13 15:58
  * Description:
  */
-class MDVISearchPtrTest extends FlatSpec with ShouldMatchers {
+class MDVISearchPtrTest extends FlatSpec with Matchers {
 
   // Проверить сериализацию/десериализацию idOpt в название колонки.
   "idOpt" should "be serializeable/deserializeable as column qualifier" in {
