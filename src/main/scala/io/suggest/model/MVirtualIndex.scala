@@ -27,6 +27,9 @@ object MVirtualIndex {
 
   private val LOGGER = new LogsImpl(getClass)
 
+  // Регэксп для парсинга vin на vinPrefix и shardCount.
+  val vin2prefixCountRe = "^([a-z]+)([0-9]+)$".r
+
   val INDEX_REFRESH_INTERVAL = "index.refresh_interval"
   val INDEX_REFRESH_INTERVAL_BULK = Integer.valueOf(-1)
   val INDEX_REFRESH_INTERVAL_SECONDS_DFLT = Integer.valueOf(16)
@@ -52,15 +55,16 @@ object MVirtualIndex {
     esShardNameFor(vin, shardN)
   }
 
+
   /** Сгенерить имя es-индекса (es-шарды) на основе готового vin и номера шарды в индексе.
    * @param vin id виртуального индекса.
    * @param shardN Номер шарды в виртуальном индексе.
    * @return Строка, которая используется для именования индексов в ES.
    */
-  def esShardNameFor(vin:String, shardN: Int): String = vin + "_" + shardN
+  def esShardNameFor(vin:String, shardN: Int): String = {
+    vin + "_" + shardN
+  }
 
-  // Регэксп для парсинга vin на vinPrefix и shardCount.
-  val vin2prefixCountRe = "^([a-z]+)([0-9]+)$".r
 
   /**
    * Прочитать файл из хранилища.
@@ -76,7 +80,7 @@ object MVirtualIndex {
    * @param indices список индексов, подлежащих вычитыванию.
    * @return Кол-во реплик.
    */
-  def getReplicasCountFor(indices:Seq[String])(implicit client:Client, executor:ExecutionContext): Future[Int] = {
+  def getReplicasCountFor(indices: Seq[String])(implicit client:Client, executor:ExecutionContext): Future[Int] = {
     client.admin().cluster()
       .prepareState()
       .setFilterIndices(indices: _*)
@@ -123,14 +127,6 @@ object MVirtualIndex {
   def ensureIndices(indices:Seq[String], replicasCount:Int = 1)(implicit client:Client, executor:ExecutionContext) = {
     Future.traverse(indices) { inx => createIndex(inx, replicas=replicasCount) }
   }
-
-  /**
-   * Функция генерации имени индекса из базового имени и номера шарды.
-   * @param vin Virtual index name.
-   * @param n Номер шарды.
-   * @return Строка, которая будет использоваться как имя es-индекса.
-   */
-  def vinAndCounter2indexName(vin:String, n:Int): String = vin + "_" + n
 
 
   /**
@@ -182,6 +178,7 @@ case class MVirtualIndexVin(@JsonIgnore vin: String) extends MVirtualIndex {
   }
 }
 
+
 trait MVirtualIndex extends Serializable {
 
   import LOGGER._
@@ -193,13 +190,15 @@ trait MVirtualIndex extends Serializable {
 
   @JsonIgnore def head = esShardNameFor(vin, 0)
 
+  def getShardIds: Seq[Int] = 0 until shardCount
+
   /**
    * Выдать имена всех шард.
    * @return Последовательность шард в порядке возрастания индекса.
    */
   @JsonIgnore
   lazy val getShards: Seq[String] = {
-    (0 until shardCount) map { vinAndCounter2indexName(vin, _) }
+    getShardIds map { esShardNameFor(vin, _) }
   }
 
   /**

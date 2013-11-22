@@ -26,7 +26,6 @@ trait MDVIUnit {
   def id: String
   def isSingleShard: Boolean
   def getAllTypes: List[String]
-  def getAllTypesForShard(shardN: Int): List[MDVISubshard]
   def getVirtualIndex: MVirtualIndex
   def getTypesForRequest(sc:SioSearchContext): List[String]
   def save(implicit ec:ExecutionContext): Future[MDVIUnit]

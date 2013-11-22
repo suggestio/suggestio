@@ -1,7 +1,7 @@
 package io.suggest.model
 
 import scala.concurrent.{ExecutionContext, Future}
-import io.suggest.util.{DateParseUtil, LogsPrefixed, SioEsIndexUtil}
+import io.suggest.util.{LogsImpl, DateParseUtil, LogsPrefixed, SioEsIndexUtil}
 import org.elasticsearch.client.Client
 import io.suggest.index_info.MDVIUnit
 import scala.util.{Failure, Success}
@@ -74,13 +74,29 @@ object MDVISubshard {
    */
   def deserializeSubshardInfo(sii: Tuple): List[MDVISubshardInfo] = deserializeSubshardInfo(sii.toList)
 
+
+  /** Определать id es-шарды для указазанного времени.
+    * @param shardIds Список шард, из которых надо выбрать.
+    * @param daysCount кол-во дней, результат функции DateParseUtil.toDaysCount().
+    * @return shard id, один из shards.
+    */
+  def getShardId(shardIds:Seq[Int], daysCount:Int): Int = {
+    // TODO хреновый алгоритм какой-то тут
+    val shardNumber = daysCount % shardIds.size
+    val shardId = shardIds(shardNumber)
+    shardId
+  }
+
 }
 
 
 case class MDVISubshard(
   dvin:         MDVIUnit,
   subshardData: MDVISubshardInfo
-) extends LogsPrefixed {
+) extends MDVISubshardInfoT {
+
+  private val LOGGER = new LogsImpl(getClass)
+  import LOGGER._
 
   import subshardData._
 
@@ -94,21 +110,24 @@ case class MDVISubshard(
       dvin.getShards
     } else {
       val vin = dvin.vin
-      shards.map(MVirtualIndex.vinAndCounter2indexName(vin, _))
+      shards.map(MVirtualIndex.esShardNameFor(vin, _))
     }
   }
 
-  /**
-   * Получить кол-во шард прямо из мультииндекса.
-   */
-  def getShardsCount: Int = dvin.getVirtualIndex.shardCount
+
+  /** Получить кол-во задействованных шард. */
+  def getUsedShards: Seq[Int] = if (shards.isEmpty) {
+    dvin.getVirtualIndex.getShardIds
+  } else {
+    shards
+  }
 
 
   /**
    * Вернуть тип, который будет адресоваться в рамках ES.
    * @return Строка типа индекса. Например "suggest.io-123123".
    */
-  def getTypename: String = dvin.dkey + "-" + lowerDateDays
+  def getTypename: String = subshardData.getTypename(dvin.dkey)
 
 
   /**
@@ -116,7 +135,7 @@ case class MDVISubshard(
    * @param date дата, к которой относится страница.
    * @return Имя индекса
    */
-  def getShardForDate(date:LocalDate): String = getShardForDaysCount(toDaysCount(date))
+  def getShardForDate(date: LocalDate): String = getShardForDaysCount(toDaysCount(date))
 
 
   /** Выдать значение lowerDateDays для текущей подшарды. */
@@ -126,13 +145,23 @@ case class MDVISubshard(
 
 
   /**
-   * Выдать шарду для указанного days count.
+   * Выдать es-шарду для указанного days count.
    * @param daysCount кол-во дней от начала эпохи.
    * @return Название реальной шарды.
    */
-  def getShardForDaysCount(daysCount:Int): String = {
-    val shardNumber = daysCount % getShardsCount
-    MVirtualIndex.vinAndCounter2indexName(dvin.vin, shardNumber)
+  def getShardForDaysCount(daysCount: Int): String = {
+    val shardIds = getUsedShards
+    val shardId = MDVISubshard.getShardId(shardIds, daysCount)
+    trace(s"getShardForDaysCount(dc=$daysCount): shardId=$shardId shardCount=${shardIds.size} subshardData=$subshardData")
+    MVirtualIndex.esShardNameFor(dvin.vin, shardId)
+  }
+
+
+  /** Выдать id'шники ES-шард. */
+  def getShardIds: Seq[Int] = if (shards.isEmpty) {
+    dvin.getVirtualIndex.getShardIds
+  } else {
+    shards
   }
 
 
@@ -161,7 +190,7 @@ case class MDVISubshard(
    * @param indices индексы. По дефолту взять из файла данных.
    * @return Выполненный фьючерс, если всё нормально.
    */
-  def deleteMappaings(indices:Seq[String] = getShards)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
+  def deleteMappaings(indices: Seq[String] = getShards)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
     val _typename = getTypename
     debug("deleteMappings(%s) getTypename=%s" format (indices, _typename))
     SioEsIndexUtil.deleteMappingsSeqFrom(indices, Seq(_typename))
@@ -169,19 +198,4 @@ case class MDVISubshard(
 
 }
 
-
-/**
- * Сами данные по шарде вынесены за скобки.
- * @param lowerDateDays Нижняя дата этой подшарды в днях.
- * @param shards Номера задействованных шард в vin. Если Nil, то значит нужно опрашивать
- *               всю родительскую виртуальную шарду.
- */
-case class MDVISubshardInfo(
-  lowerDateDays: Int,
-  shards:        List[Int] = Nil
-) extends Serializable {
-
-  /** Представление lowerDateDays в виде даты. */
-  def lowerDate = DateParseUtil.dateFromDaysCount(lowerDateDays)
-}
 

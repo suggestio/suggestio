@@ -232,12 +232,11 @@ case class MDVIActive(
 
 ) extends MDVIUnitAlterable with Serializable {
 
+  import LOGGER._
+
   if (subshardsInfo.isEmpty) {
     throw new IllegalArgumentException("subshardInfo MUST contain at least one shard. See default value for example.")
   }
-
-
-  import LOGGER._
 
   protected implicit def toSubshard(sInfo: MDVISubshardInfo) = new MDVISubshard(this, sInfo)
   protected implicit def toSubshardsList(sInfoList: List[MDVISubshardInfo]) = sInfoList.map(toSubshard)
@@ -261,7 +260,7 @@ case class MDVIActive(
    * @param d дата документа.
    * @return подшарду для указанной даты. Из неё можно получить название типа при необходимости.
    */
-  def getSubshardForDate(d:LocalDate): MDVISubshard = {
+  def getSubshardForDate(d: LocalDate): MDVISubshard = {
     val days = toDaysCount(d)
     getSubshardForDaysCount(days)
   }
@@ -289,7 +288,7 @@ case class MDVIActive(
    * @param d дата документа
    * @return кортеж индекса и типа.
    */
-  def getInxTypeForDate(d:LocalDate): (String, String) = {
+  def getInxTypeForDate(d: LocalDate): (String, String) = {
     val days = toDaysCount(d)
     val ss = getSubshardForDaysCount(days)
     val inx = ss.getShardForDaysCount(days)
@@ -306,20 +305,6 @@ case class MDVIActive(
   @JsonIgnore
   def getAllTypes = subshards.map(_.getTypename)
 
-  /**
-   * Выдать все типы, лежащие на указанной шарде.
-   * @param shardN номер родительской шарды
-   * @return списочек подшард
-   */
-  def getAllTypesForShard(shardN: Int): List[MDVISubshard] = {
-    subshards.foldLeft[List[MDVISubshard]] (Nil) { (acc, ss) =>
-      if (ss.subshardData.shards contains shardN) {
-        ss :: acc
-      } else {
-        acc
-      }
-    }
-  }
 
   /**
    * Выдать экземпляр модели MVirtualIndex. Линк между моделями по ключу.
