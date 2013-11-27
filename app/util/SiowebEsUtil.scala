@@ -1,14 +1,12 @@
 package util
 
-import org.elasticsearch.node.{Node, NodeBuilder}
-import org.elasticsearch.client.Client
 import org.elasticsearch.action.search.SearchType
 import org.elasticsearch.index.query.{QueryBuilder, FilterBuilder, FilterBuilders, QueryBuilders}
 import org.elasticsearch.search.SearchHit
 import io.suggest.model._
 import scala.collection.JavaConversions._
 import collection.mutable
-import io.suggest.util.{SioEsClient, LogsImpl, Lists}
+import io.suggest.util.{SioEsClient, LogsImpl}
 import io.suggest.util.SioConstants._
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import controllers.routes
@@ -16,7 +14,7 @@ import io.suggest.model.SioSearchContext
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.Future
 import play.api.Play.{current, configuration}
-import org.elasticsearch.cluster.ClusterName
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -48,7 +46,7 @@ object SiowebEsUtil extends SioEsClient {
   val FIELD_THUMB_REL_URL = "image_rel_url"
 
   // Только эти поля могут быть в карте результата
-  val resultAllowedFields = Set(FIELD_URL, FIELD_TITLE, FIELD_CONTENT_TEXT, FIELD_LANGUAGE, FIELD_THUMB_REL_URL)
+  val resultAllowedFields = Set(FIELD_URL, FIELD_TITLE, FIELD_CONTENT_TEXT, FIELD_LANGUAGE, FIELD_THUMB_REL_URL, FIELD_PAGE_TAGS)
 
   val hlFragSepDefault    = " "
 
@@ -161,7 +159,7 @@ object SiowebEsUtil extends SioEsClient {
         .setExplain(options.withExplain)
         .setSize(options.size)
         .setQuery(query)
-        .addField(FIELD_URL)
+        .addFields(FIELD_URL, FIELD_PAGE_TAGS)
 
       // Добавить доролнительные поля для запроса, если такие есть.
       if (!options.fields.isEmpty)
@@ -228,41 +226,48 @@ object SiowebEsUtil extends SioEsClient {
    */
   def postprocessSearchHits(hits:Array[SearchHit], options:SioSearchOptions) : List[SioSearchResult] = {
     // Собрать функцию маппинга одного словаря результата
-    var mapHitF = { hit:SearchHit =>
-      // подготовить highlighted-данные
-      // .toMap нужен, ибо MapWrapper не совместим с типом Map, а является именно гребаным классом-враппером на ju.Map.
-      val hlData = hit.highlightFields.map { case (key, hl) =>
+    var mapHitF = { hit: SearchHit =>
+      val resultMap = new mutable.ListMap[String, AnyRef]
+      hit.getFields.foreach {
+        case (FIELD_IMAGE_ID, field) =>
+          val imageId = field.getValue[String]
+          resultMap(FIELD_THUMB_REL_URL) = routes.Thumb.getThumb(options.dkey, imageId).toString()
+
+        case (FIELD_PAGE_TAGS, fieldValue) =>
+          val pageTags = fieldValue.getValue[java.util.List[String]]
+          if (!pageTags.isEmpty) {
+            resultMap(FIELD_PAGE_TAGS) = pageTags.toSeq
+          }
+
+        case (name, field) =>
+          resultMap(name) = field.getValue[AnyRef]
+      }
+      // Накатить сверху highlighted-данные
+      hit.highlightFields.foreach { case (key, hl) =>
         // убрать возможные суффиксы .fts и .gram из имён подсвеченных полей
         val key1 = rmSubfieldSuffixRe.replaceFirstIn(key, "")
         val hlText = hl.getFragments
+          .toSeq
           .map { textFragment => moveHlTags(textFragment.string()) }
           .mkString(options.hlCtFragmentSeparator)
-        (key1, hlText)
+        resultMap(key1) = hlText
       }
       // Отмаппить различные исходные данные
-      val sourceData = hit.getFields.map { case (name:String, field) =>
-        val fieldValue = field.getValue[String]
-        name match {
-          case FIELD_IMAGE_ID  => FIELD_THUMB_REL_URL -> routes.Thumb.getThumb(options.dkey, fieldValue).toString
-          case _               => name -> fieldValue
-        }
-      }
+
       // Мержим два словаря, отдавая предпочтение подсвеченным элементам
-      Lists
-        .mergeMutableMaps(sourceData, hlData) { (_, _, v) => v }
-        .filter { case (k:String, v) => resultAllowedFields.contains(k) }
+      resultMap.filter { case (k, _) => resultAllowedFields.contains(k) }
     }
 
     // Возможно, нужно снести убрать content_text или title. Тут функция, обновляющая mapHitF если нужно что-то ещё делать.
-    val removeFieldOptF = { (fieldName:String, ret:RET_T) =>
+    def removeFieldOptF(fieldName:String, ret:RET_T) = {
       if (ret == RET_NEVER) {
         mapHitF = mapHitF andThen { map =>
           map.remove(fieldName)
           map
         }
-      } else
-      // Или сносить только там, где есть картинка
-      if (ret == RET_IF_NO_IMAGE && options.retImage) {
+
+      } else if (ret == RET_IF_NO_IMAGE && options.retImage) {
+        // Или сносить только там, где есть картинка
         mapHitF = mapHitF andThen { map =>
           if(map.get(FIELD_IMAGE_ID).isDefined) {
             map.remove(FIELD_CONTENT_TEXT)
@@ -394,7 +399,7 @@ object SiowebEsUtil extends SioEsClient {
 
           case _ =>
             val queryBool = QueryBuilders.boolQuery()
-            topQueries.foreach { queryBool.must(_) }
+            topQueries.foreach { queryBool.must }
             Some(queryBool)
         }
     }
@@ -405,16 +410,19 @@ object SiowebEsUtil extends SioEsClient {
 }
 
 
+import SiowebEsUtil._
+
+
 // Класс, хранящий опции поиска.
 final case class SioSearchOptions(
   // Данные состояния реквеста
   domain : models.MDomain,
 
   // Настройки выдачи результатов
-  retTitle : SiowebEsUtil.RET_T = SiowebEsUtil.RET_ALWAYS,
-  retContentText : SiowebEsUtil.RET_T = SiowebEsUtil.RET_ALWAYS,
+  retTitle : RET_T = RET_ALWAYS,
+  retContentText : RET_T = RET_ALWAYS,
   retImage : Boolean = true,
-  size : Int = SiowebEsUtil.RESULT_COUNT_DEFAULT,
+  size : Int = RESULT_COUNT_DEFAULT,
 
   // Языки, по которым стоит искать
   langs : List[String] = List(),
@@ -423,7 +431,7 @@ final case class SioSearchOptions(
   // Подсветка результатов
   hlCtFragmentsCount : Int = 1,
   hlCtFragmentsSize : Int = 200,
-  hlCtFragmentSeparator : String = SiowebEsUtil.hlFragSepDefault,
+  hlCtFragmentSeparator : String = hlFragSepDefault,
 
   // Дебажные настройки всякие
   withDateScoring : Boolean = true,
@@ -433,15 +441,30 @@ final case class SioSearchOptions(
 }
 
 
-// Используем переменные для снижения количества мусора и упрощения логики, ибо класс заполняется в цикле.
-case class SioSearchResult(data:mutable.Map[String,String]) {
+/** Объект используется для представления результата поиска. */
+case class SioSearchResult(data: collection.Map[String, AnyRef]) {
 
-  def title       = data.get(FIELD_TITLE)
-  def contentText = data.get(FIELD_CONTENT_TEXT)
-  def thumbRelUrl = data.get(SiowebEsUtil.FIELD_THUMB_REL_URL)
-  def url         = data(FIELD_URL)
-  def lang        = data.get(FIELD_LANGUAGE)
+  def title       = data.get(FIELD_TITLE).asInstanceOf[Option[String]]
+  def contentText = data.get(FIELD_CONTENT_TEXT).asInstanceOf[Option[String]]
+  def thumbRelUrl = data.get(FIELD_THUMB_REL_URL).asInstanceOf[Option[String]]
+  def url         = data(FIELD_URL).asInstanceOf[String]
+  def lang        = data.get(FIELD_LANGUAGE).asInstanceOf[Option[String]]
+  def pageTags    = data.get(FIELD_PAGE_TAGS).asInstanceOf[Option[Seq[String]]]
 
+  def toJsValue: JsValue = {
+    JsObject(
+      data.foldLeft[List[(String, JsValue)]] (Nil) { case (acc, (k, v)) =>
+        val jsV = k match {
+          case FIELD_TITLE | FIELD_CONTENT_TEXT | FIELD_URL | FIELD_LANGUAGE | FIELD_THUMB_REL_URL =>
+            JsString(v.asInstanceOf[String])
+
+          case FIELD_PAGE_TAGS =>
+            JsArray(v.asInstanceOf[Seq[String]].map(JsString))
+        }
+        k -> jsV  ::  acc
+      }
+    )
+  }
 }
 
 case class NoSuchDomainException(dkey: String) extends Exception("Domain '%s' is not installed." format dkey)

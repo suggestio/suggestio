@@ -22,27 +22,6 @@ object Search extends SioController with Logs {
   import LOGGER._
 
   /**
-   * json-рендерер списка результатов.
-   * Нужен, т.к. стандартный json-генератор понятия не имеет как работать с типом List[SioSearchResult].
-   * Передается автоматически в Json.toJson(searchResults).
-   */
-  implicit val maplistWrites = new Writes[List[SioSearchResult]] {
-    /**
-     * Сериализация списка результатов поиска.
-     * @param l список
-     * @return JsValue
-     */
-    def writes(l: List[SioSearchResult]): JsValue = {
-      val jsonList = l.map { ssr =>
-        val m1 = ssr.data.mapValues(JsString)
-        JsObject(m1.toList)
-      }
-      JsArray(jsonList)
-    }
-  }
-
-
-  /**
    * Запрос на поиск по сайту приходит сюда.
    * @param domainRaw домен поиска.
    * @param queryStr Строка запроса
@@ -78,7 +57,7 @@ object Search extends SioController with Logs {
           val jsonResp : Map[String, JsValue] = Map(
             "status"        -> JsString("ok"),
             "timestamp"     -> JsNumber(System.currentTimeMillis()),
-            "search_result" -> Json.toJson(searchResults)
+            "search_result" -> JsArray(searchResults.map(_.toJsValue))
           )
           val jsonp = Jsonp("sio._s_add_result", Json.toJson(jsonResp))
           // TODO Сохранить обновлённый searchContext и серилизовать в кукис ответа

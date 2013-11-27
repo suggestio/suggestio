@@ -1,0 +1,8 @@
+@()
+
+@* Форма-кнопка экстренного отката индексов. *@
+
+@helper.form(routes.Sys.indicesDowngradeAll) {
+  Экстренный откат индексов (не нажимать!):
+  <input type="submit" value="downgrade all" title="Не нажимай никогда."/>
+}

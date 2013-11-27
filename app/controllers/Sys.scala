@@ -12,6 +12,8 @@ import scala.concurrent.Future
 import SiobixClient.askTimeout
 import io.suggest.proto.bixo._
 import io.suggest.model.{MVirtualIndexVin, MDVIActive}
+import io.suggest.util.VirtualIndexUtil
+import util.SiowebEsUtil.client
 
 /**
  * Suggest.io
@@ -169,6 +171,14 @@ object Sys extends SioController with Logs {
     val mvi = new MVirtualIndexVin(vin)
     mvi.getUsers.map { l =>
       Ok(indices.showMviTpl(mvi, l))
+    }
+  }
+
+  /** Запрос на downgrade всех индексов. */
+  def indicesDowngradeAll = IsSuperuser.async { implicit request =>
+    // TODO Нужно отправлять запрос в main-кравлер, чтобы тот делал всё это если можно. На время начальной разработки, этот функционал тут, хоть и конфликтует с majorRebuild().
+    VirtualIndexUtil.downgradeAll.map { _ =>
+      Redirect(routes.Sys.indicesListAllActive())
     }
   }
 

@@ -3,7 +3,7 @@ sioweb3
 
 Вёб-морда для suggest.io на базе play 2.
 
-2.2: Только npm install -g stylish. Для LESS используется Rhino.
+2.2: Только npm install -g stylish. Для LESS используется Rhino (встроен в play).
 
 2.1: Для работы less и stylish нужно, чтобы
      npm install -g stylish

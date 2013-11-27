@@ -13,7 +13,7 @@
       <td>view</td>
       <td>dkey</td>
       <td>vin</td>
-      <td title="generation">gen</td>
+      <td>generation</td>
       <td>subshards</td>
     </tr>
     </thead>
@@ -23,10 +23,13 @@
       <tr>
         <td><a href="@routes.Sys.indicesShowActiveFor(dkey=e.dkey, vin=e.vin)">:::</a></td>
         <td><a href="@routes.Sys.dkeyShow(e.dkey)">@e.dkey</a></td>
-        <td><a href="@routes.Sys.showVin(e.vin)">@e.vin</a></td>
+        @* Индекс отображается разным шрифтом в зависимости от кол-ва реальных шард индекса. *@
+        @defining(e.getVirtualIndex.shardCount) { esShardCount =>
+          <td><a title="@esShardCount-шардовый индекс." href="@routes.Sys.showVin(e.vin)"><font size="@Math.min(7, esShardCount)">@e.vin</font></a></td>
+        }
         <td>@e.generation</td>
         <td>
-          <span title="Кол-во">(@e.subshards.size)</span>:
+          <span title="Количество виртуальных подшард">(@e.subshards.size)</span>:
           @e.subshardsInfo.map { si =>
             &#123;<span title="lowerDateDays = @si.lowerDateDays">@si.lowerDate</span>
             =&gt;
