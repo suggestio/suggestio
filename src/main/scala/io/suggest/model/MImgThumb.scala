@@ -123,11 +123,11 @@ class MImgThumb extends BaseDatum(FIELDS) {
     setId(new ImmutableBytesWritable(id))
   }
   def setId(id: ImmutableBytesWritable) {
-    _tupleEntry.set(ID_FN, id)
+    _tupleEntry.setObject(ID_FN, id)
   }
 
   def getIdStr = idBin2Str(getId)
-  def setIdStr(idStr: String) = _tupleEntry.set(ID_FN, idStr2Bin(idStr))
+  def setIdStr(idStr: String) = _tupleEntry.setObject(ID_FN, idStr2Bin(idStr))
 
   def getImageUrl = _tupleEntry.getString(IMAGE_URL_FN)
   def setImageUrl(imageUrl: String) = _tupleEntry.setString(IMAGE_URL_FN, imageUrl)
@@ -138,7 +138,7 @@ class MImgThumb extends BaseDatum(FIELDS) {
     setThumb(ibw)
   }
   def setThumb(thumbIbw: ImmutableBytesWritable) {
-    _tupleEntry.set(THUMB_FN, thumbIbw)
+    _tupleEntry.setObject(THUMB_FN, thumbIbw)
   }
 
   def getTimestamp = _tupleEntry.getLong(TIMESTAMP_FN)

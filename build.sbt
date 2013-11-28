@@ -25,11 +25,11 @@ externalIvySettings(baseDirectory(_ / "project" / "ivysettings.xml"))
 
 libraryDependencies ++= {
   val slf4jVsn      = "1.7.2"
-  val hadoopVsn     = "1.1.2"
+  val hadoopVsn     = "1.2.1"
   val akkaVsn       = "2.2.0"
   val jacksonVsn    = "2.2.1"
   val tikaVsn       = "1.4"
-  val cascadingVsn  = "2.1.6"
+  val cascadingVsn  = "2.2.1"
   //val hbaseVsn      = "0.95.1-hadoop1"
   val hbaseVsn      = "0.94.11"
   Seq(
@@ -57,7 +57,7 @@ libraryDependencies ++= {
     // cascading
     "cascading" % "cascading-core" % cascadingVsn,
     "cascading" % "cascading-hadoop" % cascadingVsn,
-    "com.scaleunlimited" % "cascading.utils" % "2.1.4", // нужно для HadoopUtils.
+    "com.scaleunlimited" % "cascading.utils" % "2.2sio-SNAPSHOT", // нужно для HadoopUtils.
     // TEST
     "net.databinder.dispatch" %% "dispatch-core" % "0.11.0" % "test",
     "org.scalatest" %% "scalatest" % "2.0" % "test"
