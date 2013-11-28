@@ -367,6 +367,7 @@ object UrlUtil extends Serializable {
    * @return - normalized URL. Still might not be valid, if input URL (for example)
    */
   def normalize(url: String): String = {
+    // TODO Следует наверное использовать Option[String] или Either[String,String] в качестве результата функции.
     var result = url
       .trim
       .replaceAll("[\r\n\t]", "")
@@ -393,7 +394,12 @@ object UrlUtil extends Serializable {
       url1 = testUrl.toExternalForm
     } catch {
       case ex:MalformedURLException =>
-        debug("Malformed URL " + result + " returning as-is", ex)
+        // Если включен трейсинг, то выдать бактрейс в логи.
+        if (isTraceEnabled) {
+          debug("normalize(): Malformed URL: " + result, ex)
+        } else {
+          debug(s"normalize(): ${ex.getClass.getSimpleName}: ${ex.getMessage} ;; returning URL as-is: $result")
+        }
         return result
     }
 

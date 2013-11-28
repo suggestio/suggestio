@@ -41,10 +41,6 @@ object SioEsIndexUtil extends Logs with Serializable {
 
   val iterableOnlyTrue = { l: Iterable[Boolean] => l.forall(_ == true) }
 
-  //val futureTrue  = Future.successful(true)
-  //val futureFalse = Future.successful(false)
-  //val futureNone  = Future.successful(None)
-
   val IS_TOLERANT_DFLT = true
 
 
@@ -328,7 +324,7 @@ object SioEsIndexUtil extends Logs with Serializable {
    * @return Удачный фьючерс, когда всё ок.
    */
   def setReplicasCountFor(indices:Seq[String], replicasCount:Int)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
-    debug("setReplicasCountFor(%s for %s) called..." format (replicasCount, indices))
+    debug(s"setReplicasCountFor($replicasCount for ${indices.mkString(",")}}) called...")
     val settings = ImmutableSettings.settingsBuilder()
       .put(SETTING_NUMBER_OF_REPLICAS, replicasCount)
       .build()

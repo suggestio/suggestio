@@ -175,14 +175,15 @@ case class MDVISubshard(
   def setMappings(indices:Seq[String] = getShards, failOnError:Boolean = true)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
     val _typename = getTypename
     val fut = SioEsIndexUtil.setMappingsFor(indices, _typename, failOnError)
-    fut andThen { case result =>
-      val msgPrefix = "setMappings(indices=%s failOnError=%s) getTypename=%s " format (indices, failOnError, _typename)
+    fut onComplete { case result =>
+      lazy val msgPrefix = s"setMappings(indices=${indices.mkString(",")} failOnError=$failOnError) getTypename=${_typename} => "
       result match {
         case Success(true)  => debug(msgPrefix + "successed")
         case Failure(ex)    => error(msgPrefix + "failed", ex)
-        case Success(false) => warn(msgPrefix + "finished with isAck = false!")
+        case Success(false) => warn(msgPrefix + "finished with isAck == false!")
       }
     }
+    fut
   }
 
 
