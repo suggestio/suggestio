@@ -41,6 +41,7 @@ object MObject extends HTableModel {
   val CF_BLOG        = "i".getBytes   // Блог-записи/новости (веб-морда, ключ = некий id).
   val CF_DOMAIN      = "j".getBytes   // Записи MDomain.
   val CF_FACET_INVLINK = "k".getBytes // У кравлера есть хранимые данные sio.analysis.facet.invlink.
+  val CF_FACET_INVLINK_GARBAGE = "l"  // В дополнение к готовым данным facet invlink: карты с ссылочным мусором для улучшения.
 
   //val CF_DKNOWLEDGE  = ???.getBytes   // Записи MDomainKnowledge, заполняемые кравлером. qualifier является ключом, а value - значением.
 
