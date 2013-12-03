@@ -12,8 +12,6 @@ package io.suggest.model
  * прерывать выполнение запроса, если в этом нет смысла.
  */
 
-case class SioSearchContext(
-  offset : Int = 0
-) {
-
+trait SioSearchContext {
+  // TODO А тут надо что-то написать
 }

@@ -5,9 +5,10 @@ import scala.concurrent.ExecutionContext.Implicits._
 import io.suggest.util.SiobixFs.fs
 import org.apache.hadoop.fs.Path
 import io.suggest.util.{JacksonWrapper, SiobixFs}
-import org.hbase.async.{DeleteRequest, PutRequest, KeyValue, GetRequest}
+import org.hbase.async._
 import scala.collection.JavaConversions._
 import org.joda.time.DateTime
+import scala.Some
 
 /**
  * Suggest.io
@@ -65,12 +66,22 @@ object MDomain {
   def getAll = BACKEND.getAll
 
 
+  /**
+   * Выдать несколько доменов из общей кучи.
+   * HBase-функция оптимизирована под продакшен и максимально эффективное потребление ресурсов.
+   * @param dkeys Список ключей. Он будет унимально отсортирован.
+   * @return Фьючерс со списком записей в неопределенном порядке.
+   */
+  def getSeveral(dkeys: Seq[String]) = BACKEND.getSeveral(dkeys)
+
+
   /** Интерфейс хранилищ модели. */
   trait Backend {
     def getForDkey(dkey: String): Future[Option[MDomain]]
     def getAll: Future[List[MDomain]]
     def save(d: MDomain): Future[MDomain]
     def delete(dkey: String): Future[Any]
+    def getSeveral(dkeys: Seq[String]): Future[List[MDomain]]
   }
 
 
@@ -119,6 +130,12 @@ object MDomain {
       val filePath = dkeyPath(dkey)
       fs.delete(filePath, true)
     }
+
+    // Тут примитивная фунцкия, ибо DfsBackend не для продакшена и эффективность работы не требуется вообще.
+    def getSeveral(dkeys: Seq[String]): Future[List[MDomain]] = {
+      getAll.map(_.filter(dkeys contains _))
+    }
+
   }
 
 
@@ -145,17 +162,8 @@ object MDomain {
       }
     }
 
-    def getAll: Future[List[MDomain]] = {
-      val scanner = ahclient.newScanner(HTABLE_NAME_BYTES)
-      scanner.setFamily(CF_DOMAIN)
-      scanner.setQualifier(QUALIFIER)
-      val folder = new AsyncHbaseScannerFold[List[MDomain]] {
-        def fold(acc0: List[MDomain], kv: KeyValue): List[MDomain] = {
-          deserialize(kv.value) :: acc0
-        }
-      }
-      folder(Nil, scanner)
-    }
+    def getAll: Future[List[MDomain]] = collectAllFromScanner(getScanner)
+
 
     def save(d: MDomain): Future[MDomain] = {
       val putReq = new PutRequest(HTABLE_NAME_BYTES, d.dkey:Array[Byte], CF_DOMAIN, QUALIFIER, serialize(d))
@@ -165,6 +173,33 @@ object MDomain {
     def delete(dkey: String): Future[Any] = {
       val delReq = new DeleteRequest(HTABLE_NAME_BYTES, dkey:Array[Byte], CF_DOMAIN, QUALIFIER)
       ahclient.delete(delReq)
+    }
+
+    def getSeveral(dkeys: Seq[String]): Future[List[MDomain]] = {
+      val scanner = getScanner
+      val dkeysSorted = dkeys.sorted.distinct   // TODO Надо бы использовать какой-нибудь usort.
+      scanner.setStartKey(dkeysSorted.head)
+      scanner.setStopKey(dkeysSorted.last + " ")
+      // Чтобы сервер hbase отсеивал лишние ключи сразу, нужен regexp
+      val keyRe = "^(" + dkeys.mkString("|") + ")$"
+      scanner.setKeyRegexp(keyRe)
+      collectAllFromScanner(scanner)
+    }
+
+    private def getScanner = {
+      val scanner = ahclient.newScanner(HTABLE_NAME_BYTES)
+      scanner.setFamily(CF_DOMAIN)
+      scanner.setQualifier(QUALIFIER)
+      scanner
+    }
+
+    private def collectAllFromScanner(scanner: Scanner): Future[List[MDomain]] = {
+      val folder = new AsyncHbaseScannerFold[List[MDomain]] {
+        def fold(acc0: List[MDomain], kv: KeyValue): List[MDomain] = {
+          deserialize(kv.value) :: acc0
+        }
+      }
+      folder(Nil, getScanner)
     }
   }
 
