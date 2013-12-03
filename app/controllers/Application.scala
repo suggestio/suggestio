@@ -36,9 +36,7 @@ object Application extends SioController {
     Ok(indexTpl())
   }
 
-  /**
-   * Форма быстрого поиска
-   */
+  /** Форма быстрого поиска на произвольном сайте. Используется в служебных целях в основном, в /sys/. */
   def search = MaybeAuth { implicit request =>
     Ok(searchTpl())
   }

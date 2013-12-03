@@ -4,6 +4,7 @@ import play.api.data.Forms._
 import java.net.URL
 import io.suggest.util.UrlUtil
 import gnu.inet.encoding.IDNA
+import models._
 
 /**
  * Suggest.io
@@ -29,6 +30,12 @@ object FormUtil {
     }
   }
 
+
+  // Трансформеры для optional-списков.
+  def optList2ListF[T] = { optList: Option[List[T]] => optList getOrElse Nil }
+  def list2OptListF[T] = { l:List[T] =>  if (l.isEmpty) None else Some(l) }
+
+
   // Маппер form-поля URL
   val urlMapper = nonEmptyText(minLength = 8)
     .transform(_.trim, strIdentityF)
@@ -52,5 +59,5 @@ object FormUtil {
 
   // Маппер домена с конвертором в dkey.
   val domain2dkeyMapper = domainMapper
-    .transform(UrlUtil.normalizeHostname(_), {dkey:String => IDNA.toUnicode(dkey)})
+    .transform(UrlUtil.normalizeHostname, {dkey:String => IDNA.toUnicode(dkey)})
 }

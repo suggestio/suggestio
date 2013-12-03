@@ -14,7 +14,7 @@ GET  /search                            controllers.Application.search
 GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
 
 GET  /thumb/get/$dkey<[-_\w\d~.]+>/$imageId<[-_\w\d]+>     controllers.Thumb.getThumb(dkey, imageId)
-GET  /search/site                       controllers.Search.siteSearch(h:String, q:String, debug:Boolean ?= false, lang:String ?= "")
+GET  /search/site                       controllers.Search.siteSearchGET
 
 GET  /login/persona                     controllers.Ident.persona
 POST /login/persona                     controllers.Ident.persona_submit

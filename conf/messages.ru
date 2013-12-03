@@ -262,3 +262,6 @@ a.in.site_not_installed_yet=Этот сайт ещё не присоединен
 f.feedback_sent_success=Спасибо! Ваше сообщение отправлено разработчикам Suggest.io.
 send=Отправить
 
+
+c.s.search_query.empty=Пустая строка поиска. Что-то ищем?
+

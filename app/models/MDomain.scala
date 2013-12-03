@@ -38,7 +38,26 @@ object MDomain {
   }
 
   def getAll: Future[List[MDomain]] = {
-    MDomainRaw.getAll.map(_.map(MDomain(_)))
+    unrawFutureListResult(MDomainRaw.getAll)
   }
 
+  def getSeveral(dkeys: Seq[String]): Future[List[MDomain]] = {
+    unrawFutureListResult(
+      MDomainRaw.getSeveral(dkeys)
+    )
+  }
+
+  def maybeGetSeveral(dkeys: List[String]): Future[List[MDomain]] = {
+    if (dkeys.isEmpty) {
+      Future.successful(Nil)
+    } else if (dkeys.tail.isEmpty) {
+      getForDkey(dkeys.head).map(_.toList)
+    } else {
+      getSeveral(dkeys)
+    }
+  }
+
+  private def unrawFutureListResult(fut: Future[List[MDomainRaw]]): Future[List[MDomain]] = {
+    fut.map(_.map(MDomain(_)))
+  }
 }

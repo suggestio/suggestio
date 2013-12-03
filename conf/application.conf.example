@@ -117,6 +117,9 @@ domain.qi.parse.timeout_ms = 5000
 # Название кластера, к которму должен коннктится ES-клиент. [o.es.cluster.ClusterName.DEFAULT]
 #es.cluster.name = "suggest.io"
 
+# Макс кол-во тегов, которое пользователь может указать к одному запросу. [5]
+search.facet.invlink.request.tags.max = 5
+
 
 ###############################################################################
 ## Play framework

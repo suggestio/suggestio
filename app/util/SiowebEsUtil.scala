@@ -6,15 +6,15 @@ import org.elasticsearch.search.SearchHit
 import io.suggest.model._
 import scala.collection.JavaConversions._
 import collection.mutable
-import io.suggest.util.{SioEsClient, LogsImpl}
+import io.suggest.util.{UrlUtil, SioConstants, SioEsClient, LogsImpl}
 import io.suggest.util.SioConstants._
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import controllers.routes
-import io.suggest.model.SioSearchContext
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.Future
 import play.api.Play.{current, configuration}
 import play.api.libs.json._
+import org.elasticsearch.search.facet.FacetBuilders
 
 /**
  * Suggest.io
@@ -27,12 +27,12 @@ import play.api.libs.json._
 
 object SiowebEsUtil extends SioEsClient {
 
-  val RESULT_COUNT_DEFAULT = 20
+  val RESULT_COUNT_DEFAULT = configuration.getInt("search.results.count.default") getOrElse 20
 
   private val LOGGER = new LogsImpl(getClass)
   import LOGGER._
 
-  // Настройки ret*-полей опций выдачи.
+  // Настройки ret*-полей опций выдачи. TODO Переписать через enum
   type RET_T = Char
   val RET_ALWAYS      : RET_T = 'a'
   val RET_NEVER       : RET_T = 'n'
@@ -56,53 +56,60 @@ object SiowebEsUtil extends SioEsClient {
 
   /**
    * Поиск в рамках домена.
-   * @param queryStr Строка, которую набирает юзер
-   * @param options Настройки поиска по мнению sioweb21
-   * @param searchContext Контекст поиска.
+   * @param sso Настройки поиска по мнению sioweb21
    * @return Фьючерс с результатом searchIndex или с экзепшеном.
    */
-  def searchDomain(queryStr:String, options:SioSearchOptions, searchContext:SioSearchContext): Future[List[SioSearchResult]] = {
-    import options.dkey
-    lazy val logPrefix = s"searchDomain($dkey, $queryStr): "
+  def searchDkeys(implicit sso: SioSearchOptions): Future[List[SioSearchResult]] = {
+    import sso.{dkeys, queryStr}
+    lazy val logPrefix = s"searchDomain(${dkeys.mkString(",")}, $queryStr): "
     trace(logPrefix + "Planning search request...")
     // TODO потом нужно добавить поддержку переключения searchPtr в каком-либо виде.
-    MDVISearchPtr.getForDkeyId(dkey) flatMap {
-      case Some(searchPtr) =>
-        trace(logPrefix + "searchPtr -> " + searchPtr)
-        // Параллельно собрать все индексы и типы со всех виртуальных индексов.
-        Future.traverse(searchPtr.vins) { vin =>
-          MDVIActive.getForDkeyVin(dkey, vin) map {
-            case Some(dviActive) =>
-              val indices = dviActive.getShards
-              val types = dviActive.getTypesForRequest(searchContext)
-              trace(logPrefix + s"found index: $dviActive :: indices -> $indices ;; types -> $types")
-              Some(indices -> types)
+    Future.traverse(dkeys) { dkey =>
+      MDVISearchPtr.getForDkeyId(dkey).flatMap {
+        // Есть указатель поиска для домена. Найти метаданные для индекса.
+        case Some(searchPtr) =>
+          Future.traverse(searchPtr.vins) { vin =>
+            MDVIActive.getForDkeyVin(dkey, vin) map {
+              case Some(dviActive) =>
+                val indices = dviActive.getShards
+                val types = dviActive.getTypesForRequest(sso)
+                trace(logPrefix + s"found index: $dviActive :: indices -> $indices ;; types -> $types")
+                Some(indices -> types)
 
-            // Внезапно нет индекса, на который указывает указатель.
-            case None =>
-              warn("MDVIActive not found for dkey='%s' and vin='%s', but it should (according to %s)" format (dkey, vin, searchPtr))
-              None
+              // Внезапно нет индекса, на который указывает указатель.
+              case None =>
+                warn("MDVIActive not found for dkey='%s' and vin='%s', but it should (according to %s)" format (dkey, vin, searchPtr))
+                None
+            }
+          }.map { listOfIndicesTypesOpt =>
+            // Смержить все индексы и типы в два списка. На выходе будет кортеж, который описан аккумулятором: allIndices -> allTypes
+            val result = listOfIndicesTypesOpt.foldLeft [(List[String], List[String])] (Nil -> Nil) {
+              case ((_accIndices, _accTypes), Some((_indices, _types))) => (_accIndices ++ _indices) -> (_accTypes ++ _types)
+              case (_acc, None) => _acc
+            }
+            Some(result)
           }
-        } flatMap { indicesTypesOpt =>
-          // Смержить все индексы и типы в два списка.
-          val (allIndices, allTypes) = indicesTypesOpt.foldLeft [(List[String], List[String])] (Nil -> Nil) {
-            case ((_accIndices, _accTypes), Some((_indices, _types))) => (_accIndices ++ _indices) -> (_accTypes ++ _types)
-            case (_acc, None) => _acc
-          }
-          // запустить поиск
-          if (allIndices.isEmpty) {
-            warn(logPrefix + "no indices found for search. allTypes -> " + allTypes)
-            Future.failed(NoSuchDomainException(dkey))
-          } else {
-            searchIndex(allIndices, allTypes, queryStr, options)
-          }
-        }
 
-      // Нет данных (указателя) для поиска. Скорее всего, домен не установлен.
-      // TODO Возможно, домен установлен, а тут какая-то другая проблема. Нужно разбираццо и/или удалить этот TODO.
-      case None =>
-        val ex = NoSuchDomainException(dkey)
-        Future.failed(ex)
+        case None => Future.successful(None)
+      }
+    } map { optList =>
+      val (indices, types) = optList.foldLeft[(List[String], List[String])] (Nil -> Nil) {
+        case ((indicesAcc, typesAcc), Some((_indices, _types))) =>
+          (indicesAcc ++ _indices) -> (typesAcc ++ _types)
+
+        case (acc, None)      => acc
+      }
+      indices.distinct -> types.distinct
+    } flatMap { case (indices, types) =>
+      // запустить поиск
+      if (indices.isEmpty) {
+        // Нет метаданных для выполнения поиска. Скорее всего, домен не установлен.
+        // TODO Возможно, домен установлен, а тут какая-то другая проблема. Нужно разбираццо и/или удалить этот TODO.
+        warn(logPrefix + "no indices found for search. allTypes -> " + types)
+        Future.failed(NoSuchDomainException(dkeys))
+      } else {
+        searchIndex(indices, types, queryStr)
+      }
     }
   }
 
@@ -115,8 +122,8 @@ object SiowebEsUtil extends SioEsClient {
    * @param queryStr Буквы, которые ввел юзер
    * @param options Параметры запроса.
    */
-  def searchIndex(indices:Seq[String], types:Seq[String], queryStr:String, options:SioSearchOptions) : Future[List[SioSearchResult]] = {
-    lazy val logPrefix = s"searchIndex(${options.dkey}, '$queryStr'): "
+  def searchIndex(indices:Seq[String], types:Seq[String], queryStr:String)(implicit options: SioSearchOptions): Future[List[SioSearchResult]] = {
+    lazy val logPrefix = s"searchIndex(${indices.mkString(",")}, '$queryStr'): "
     trace(logPrefix + s"indices=$indices , types=$types")
     queryStr2Query(queryStr).map { textQuery =>
       var filters : List[FilterBuilder] = {
@@ -193,11 +200,11 @@ object SiowebEsUtil extends SioEsClient {
         .map { esResp =>
           val hits = esResp.getHits.getHits
           // Функционал причесывания результатов вынесен в отдельную функцию.
-          postprocessSearchHits(hits, options)
+          postprocessSearchHits(hits)
         }
 
     } getOrElse {
-      val ex = EmptySearchQueryException(options.dkey, queryStr)
+      val ex = EmptySearchQueryException(options.dkeys, queryStr)
       Future.failed(ex)
     }
   }
@@ -222,21 +229,27 @@ object SiowebEsUtil extends SioEsClient {
   /**
    * В зависимости от настроек выдачи, нужно почистить выдаваемые результаты.
    * @param hits Результаты поиска в сыром виде.
-   * @param options опции, которые, в частности, описывают параметры выдачи.
+   * @param sso опции, которые, в частности, описывают параметры выдачи.
    */
-  def postprocessSearchHits(hits:Array[SearchHit], options:SioSearchOptions) : List[SioSearchResult] = {
+  def postprocessSearchHits(hits:Array[SearchHit])(implicit sso:SioSearchOptions) : List[SioSearchResult] = {
     // Собрать функцию маппинга одного словаря результата
     var mapHitF = { hit: SearchHit =>
       val resultMap = new mutable.ListMap[String, AnyRef]
+      val hitFields = hit.getFields
+      lazy val hitDkey = Option(hitFields.get("dkey")) map(_.getValue[String]) getOrElse {
+        val url = hitFields.get(FIELD_URL).getValue[String]
+        info(s"postprocessSearchHits(): 'dkey' field expected, but not found for doc inx=${hit.getIndex} type=${hit.getType} id=${hit.getId} url=$url")
+        UrlUtil.url2dkey(url)
+      }
       hit.getFields.foreach {
         case (FIELD_IMAGE_ID, field) =>
           val imageId = field.getValue[String]
-          resultMap(FIELD_THUMB_REL_URL) = routes.Thumb.getThumb(options.dkey, imageId).toString()
+          resultMap(FIELD_THUMB_REL_URL) = routes.Thumb.getThumb(hitDkey, imageId).toString()
 
         case (FIELD_PAGE_TAGS, fieldValue) =>
           val pageTags = fieldValue.getValue[java.util.List[String]]
           if (!pageTags.isEmpty) {
-            resultMap(FIELD_PAGE_TAGS) = pageTags.toSeq
+            resultMap(FIELD_PAGE_TAGS) = pageTags
           }
 
         case (name, field) =>
@@ -249,7 +262,7 @@ object SiowebEsUtil extends SioEsClient {
         val hlText = hl.getFragments
           .toSeq
           .map { textFragment => moveHlTags(textFragment.string()) }
-          .mkString(options.hlCtFragmentSeparator)
+          .mkString(sso.hlCtFragmentSeparator)
         resultMap(key1) = hlText
       }
       // Отмаппить различные исходные данные
@@ -266,7 +279,7 @@ object SiowebEsUtil extends SioEsClient {
           map
         }
 
-      } else if (ret == RET_IF_NO_IMAGE && options.retImage) {
+      } else if (ret == RET_IF_NO_IMAGE && sso.retImage) {
         // Или сносить только там, где есть картинка
         mapHitF = mapHitF andThen { map =>
           if(map.get(FIELD_IMAGE_ID).isDefined) {
@@ -276,8 +289,8 @@ object SiowebEsUtil extends SioEsClient {
         }
       }
     }
-    removeFieldOptF(FIELD_TITLE, options.retTitle)
-    removeFieldOptF(FIELD_CONTENT_TEXT, options.retContentText)
+    removeFieldOptF(FIELD_TITLE, sso.retTitle)
+    removeFieldOptF(FIELD_CONTENT_TEXT, sso.retContentText)
 
     // Конечный словарь полей результатов оборачиваем в классы-хелперы для упрощения работы с ними на верхнем уровне.
     val mapHitF1 = mapHitF andThen { new SioSearchResult(_) }
@@ -413,31 +426,36 @@ object SiowebEsUtil extends SioEsClient {
 import SiowebEsUtil._
 
 
-// Класс, хранящий опции поиска.
+// Класс, хранящий опции поиска. Ориентирован на работу в режиме аккамулятора настроек, которые втыкаются в разных местах.
 final case class SioSearchOptions(
-  // Данные состояния реквеста
-  domain : models.MDomain,
+  var queryStr: String,
+  var dkeys: List[String] = Nil,
+  var domains: Seq[models.MDomain] = Nil,
 
   // Настройки выдачи результатов
-  retTitle : RET_T = RET_ALWAYS,
-  retContentText : RET_T = RET_ALWAYS,
-  retImage : Boolean = true,
-  size : Int = RESULT_COUNT_DEFAULT,
+  var retTitle : RET_T = RET_ALWAYS,
+  var retContentText : RET_T = RET_ALWAYS,
+  var retImage : Boolean = true,
+  var size : Int = RESULT_COUNT_DEFAULT,
 
   // Языки, по которым стоит искать
-  langs : List[String] = List(),
-  fields : List[String] = List(),
+  var langs  : List[String] = Nil,
+  var fields : List[String] = Nil,
 
   // Подсветка результатов
-  hlCtFragmentsCount : Int = 1,
-  hlCtFragmentsSize : Int = 200,
-  hlCtFragmentSeparator : String = hlFragSepDefault,
+  var hlCtFragmentsCount : Int = 1,
+  var hlCtFragmentsSize : Int = 200,
+  var hlCtFragmentSeparator : String = hlFragSepDefault,
+
+  // Фасеты: авто-теги
+  var facetInvlinkSearhInTags: List[String] = Nil,
 
   // Дебажные настройки всякие
-  withDateScoring : Boolean = true,
-  withExplain : Boolean = false
-) {
-  def dkey = domain.dkey
+  var withDateScoring : Boolean = true,
+  var withExplain : Boolean = false
+) extends SioSearchContext {
+
+  def isDebug = withExplain
 }
 
 
@@ -467,6 +485,6 @@ case class SioSearchResult(data: collection.Map[String, AnyRef]) {
   }
 }
 
-case class NoSuchDomainException(dkey: String) extends Exception("Domain '%s' is not installed." format dkey)
-case class EmptySearchQueryException(dkey: String, query: String) extends Exception("Search request is empty.")
+case class NoSuchDomainException(dkeys: Seq[String]) extends Exception(s"Domain ${dkeys.mkString(",")} is not installed.")
+case class EmptySearchQueryException(dkeys: Seq[String], query: String) extends Exception("Search request is empty.")
 case class IndexMdviNotFoundException(dkey: String, vin: String) extends Exception("Internal service error.")

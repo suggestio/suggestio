@@ -258,3 +258,6 @@ a.in.site_not_installed_yet=Site not in db yet. Please, copy code below and past
 
 f.feedback_sent_success=Thank you! Your message is sent to suggest.io developers.
 send=Send
+
+
+c.s.search_query.empty=Empty search query. What are you looking for?
