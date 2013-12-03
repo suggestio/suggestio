@@ -126,6 +126,7 @@ object SiowebEsUtil extends SioEsClient {
     lazy val logPrefix = s"searchIndex(${indices.mkString(",")}, '$queryStr'): "
     trace(logPrefix + s"indices=$indices , types=$types")
     queryStr2Query(queryStr).map { textQuery =>
+      // Собираем нужные фильтры в порядке нарастания важности. Сначала идут самые последние.
       var filters : List[FilterBuilder] = {
         // TODO limit должен также зависеть от индекса.
         val limitFilter = FilterBuilders.limitFilter( queryShardLimit(queryStr) )
@@ -142,14 +143,22 @@ object SiowebEsUtil extends SioEsClient {
           // Запрошено несколько языков. Используем terms-query
           QueryBuilders.termsQuery(FIELD_LANGUAGE, langs: _*)
         }
-        filters = FilterBuilders.queryFilter(termQuery) :: filters
+        filters ::= FilterBuilders.queryFilter(termQuery)
+      }
+
+      // Включена фильтрация по фасетам. Нужно добавить фасетный фильтр.
+      // !!! Этот фильтр должен добавлятся последним, т.е. в самое начало списка фильтров. !!!
+      if (!options.facetInvlinkSearhInTags.isEmpty) {
+        val facetTagFilter = FilterBuilders.termsFilter(FIELD_PAGE_TAGS, options.facetInvlinkSearhInTags : _*)
+        filters ::= facetTagFilter
       }
 
       // Если получилось несколько фильтров, то нужно их объеденить через and-фильтр.
-      val qFilter = if (!filters.tail.isEmpty)
+      val qFilter = if (!filters.tail.isEmpty) {
         FilterBuilders.andFilter(filters : _*)
-      else
+      } else {
         filters.head
+      }
 
       val query : QueryBuilder = QueryBuilders.filteredQuery(textQuery, qFilter)
 
