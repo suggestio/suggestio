@@ -14,6 +14,8 @@ import models.MDomainAuthzT
 
 abstract class AbstractRequestWithPwOpt[A](request: Request[A]) extends WrappedRequest(request) {
   def pwOpt: PwOpt_t
+  def isSuperuser = PersonWrapper isSuperuser pwOpt
+  def isAuth = pwOpt.isDefined
 }
 
 /**

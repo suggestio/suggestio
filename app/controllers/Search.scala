@@ -53,6 +53,7 @@ object Search extends SioController with Logs {
       .verifying("c.s.search_query.empty", !_.isEmpty)
       // TODO Следует научится обнаруживать параметры прямо в поисковой строке. например "site:vasya.com скачать бесплатно без смс"
     ,
+
     // Домены, в которых ищем. Если несколько доменов, то они могут быть склеены через DOMAIN_LIST_SEP. Если не задано,
     // то глобальный поиск. Результат маппинга сразу нормализуется к списку уникальных dkey.
     "h" -> {
@@ -66,9 +67,9 @@ object Search extends SioController with Logs {
                 UrlUtil.host2dkey(domain) :: acc
               } catch { case ex: Exception =>
                 if (isTraceEnabled) {
-                  info(s"${ex.getClass.getSimpleName} while parsing domain string: $domain :: ${ex.getMessage}")
+                  info(s"Suppressed ${ex.getClass.getSimpleName} while parsing domain string: $domain", ex)
                 } else {
-                  info(s"Suppressed exception while parsing domain string: $domain", ex)
+                  info(s"Suppressed ${ex.getClass.getSimpleName} while parsing domain string: $domain :: ${ex.getMessage}")
                 }
                 acc
               }
@@ -86,7 +87,7 @@ object Search extends SioController with Logs {
       }
     },
 
-    /* Разные доп-фичи поиска со времён первой версии. */
+    /* Разные опциональные параметры сайтового поиска. */
 
     // TODO Не помню, локали тут или iso2/iso3 языков?
     "lang"  -> {
@@ -106,6 +107,7 @@ object Search extends SioController with Logs {
       {bool: Boolean => if (bool) Some(bool) else None}
     )
     ,
+
     // Фасеты: автоопределённые теги для страниц в sio.analysis.facet.invlink.
     // Используется list-маппер, поэтому ключ надо кодировать с указанием уникального индекса, т.е. fi.search.tags[222]=Хата%20ок&...
     "fi.search.tags" ->
@@ -116,6 +118,7 @@ object Search extends SioController with Logs {
             identity[List[String]]
           )
       ).transform(optList2ListF, list2OptListF[String])
+
   )
   // apply-фунцкия. Преобразует кучу хлама в некое удобное для работы представление.
   {(queryStr, dkeys, langs, isDebug, fiInTags) =>
@@ -123,18 +126,20 @@ object Search extends SioController with Logs {
       queryStr = queryStr,
       dkeys = dkeys,
       langs = langs,
-      withExplain = isDebug,
-      facetInvlinkSearhInTags = fiInTags
+      isDebug = isDebug,
+      fiSearhInTags = fiInTags
     )
   }
   // unapply
-  {sso => Some(sso.queryStr, sso.dkeys, sso.langs, sso.withExplain, sso.facetInvlinkSearhInTags)}
+  {sso => Some(sso.queryStr, sso.dkeys, sso.langs, sso.isDebug, sso.fiSearhInTags)}
   )
 
 
   /** Привычный GET-запрос поиска. Используется, но с расширением поискового функционала, его стало не хватать.
     * Удалять его в будущем тоже нельзя, ибо при появлении глобального поиска, люди могут захотеть давать в инете ссылки на поиск. */
   def siteSearchGET = MaybeAuth.async { implicit request =>
+    // bindFromRequest(qs) дропает значения повторяющихся ключей и берёт только первое ключ-значение. Т.е. если объявить
+    // несколько значений с одинаковыми ключами, то все кроме первого будут проигнорированы.
     siteSearchRequestFormM.bindFromRequest(request.queryString).fold(
       {formWithErrors =>
         warn {
@@ -153,48 +158,65 @@ object Search extends SioController with Logs {
   /* ========================================= Internal functions ================================================= */
 
   /**
-   * Запрос на поиск по сайту приходит сюда.
+   * Запрос на поиск по сайту (сайтам) приходит сюда.
    * @return Future[Jsonp] с результатом поиска или что-то, описывающее проблему.
    */
   private def siteSearchAsync(sso: SioSearchOptions)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[SimpleResult] = {
     import sso.{dkeys, queryStr, isDebug, langs}
 
-    lazy val logPrefix = s"siteSearch(${dkeys.mkString(",")}): "
-    trace(s"$logPrefix q='$queryStr' debug=$isDebug langs=${langs.mkString(",")}")
+    lazy val logPrefix = s"siteSearch(${dkeys.mkString(",")}, q:$queryStr): "
+    trace(s"$logPrefix debug=$isDebug langs=${langs.mkString(",")}")
     // Нужно перегнать все dkey в MDomain, чтобы отсеять все неустановленные домены, а затем принять решение о поиске.
     if (dkeys.isEmpty) {
-      debug(logPrefix + "No dkeys passed")
       // Запрошен поиск по сайтам, но вместо доменов передана какая-то чехарда или вообще ничего не передано.
+      debug(logPrefix + "No dkeys passed")
       domainsNotFound(dkeys)
 
     } else {
-      MDomain.maybeGetSeveral(dkeys) flatMap { mdomains =>
-        if (mdomains.isEmpty) {
-          // Запрошен поиск по несуществующим доменам. Это ошибочная ситуация.
+      MDomain.maybeGetSeveral(dkeys) flatMap {
+        // Запрошен поиск по несуществующим доменам. Это ошибочная ситуация.
+        case noDomains if noDomains.isEmpty =>
           debug(logPrefix + s"dkeys passed is ${dkeys.mkString(",")}, but they not found in MDomain.")
           domainsNotFound(dkeys)
 
-        } else {
+        // Запрошен поиск по известным доменам.
+        case mdomains =>
           val newDkeys = mdomains.map(_.dkey)
           trace(logPrefix + "some or all domains found: " + newDkeys.mkString(","))
+          // Если не-админ выставил debug-флаг, то надо проигнорить debug
+          if (sso.isDebug && !request.isSuperuser) {
+            sso.isDebug = false
+          }
+
+          // TODO Надо бы как-то выявлять некорректные фасеты
+
           // TODO нужно восстанавливать SearchContext из кукисов реквеста или генерить новый
           // TODO Настройки поиска, заданные юзером, надо извлекать из модели DomainData
           sso.domains = mdomains
           sso.dkeys = newDkeys
           // Отправляем время выполнения поиска в логи, если включен trace'инг.
-          val searchStartedAt: Long = if (isTraceEnabled) System.currentTimeMillis() else -1L
-          SiowebEsUtil.searchDkeys(sso) map { searchResults =>
+          val searchStartedAt: Long = if (isTraceEnabled) System.currentTimeMillis else -1L
+          SiowebEsUtil.searchDkeys(sso) map { searchResult =>
+            import searchResult.hits
+            val currTime = System.currentTimeMillis
             trace {
-              val tookMs = System.currentTimeMillis() - searchStartedAt
-              logPrefix + s"search:'$queryStr' with ${searchResults.size} results. [$tookMs ms]"
+              val tookMs = currTime - searchStartedAt
+              s"${logPrefix}search completed with ${hits.size} results. [$tookMs ms]"
             }
-            // Отрендерить результаты в json-е
-            val jsonResp : Map[String, JsValue] = Map(
-              "status"        -> JsString("ok"),
-              "timestamp"     -> JsNumber(System.currentTimeMillis()),
-              "search_result" -> JsArray(searchResults.map(_.toJsValue))
-            )
-            val jsonp = Jsonp("sio._s_add_result", Json.toJson(jsonResp))
+            // Отрендерить результаты в json-е. Собираем карту (список) ключ-значение.
+            var jsonEntries: List[(String, JsValue)] = Nil
+            // Если есть статистика по фасетам, то надо их отобразить наверное.
+            if (!searchResult.fiTags.isEmpty) {
+              val fiJsMap = searchResult.fiTags.map { case (term, cnt)  =>  term -> JsNumber(cnt) }
+              jsonEntries  ::=  "fiTags" -> JsObject(fiJsMap)
+            }
+            jsonEntries =
+              "status"        -> JsString("ok") ::
+              "timestamp"     -> JsNumber(currTime) ::
+              "search_result" -> JsArray(hits.map(_.toJsValue)) ::
+              jsonEntries
+            
+            val jsonp = Jsonp("sio._s_add_result", JsObject(jsonEntries))
             // TODO Сохранить обновлённый searchContext и серилизовать в кукис ответа
             Ok(jsonp)
 
@@ -206,7 +228,6 @@ object Search extends SioController with Logs {
               case _                            => InternalServerError(ex.getMessage)
             }
           }
-        }
       }
     }
   }

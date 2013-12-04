@@ -15,6 +15,7 @@ import scala.concurrent.Future
 import play.api.Play.{current, configuration}
 import play.api.libs.json._
 import org.elasticsearch.search.facet.FacetBuilders
+import org.elasticsearch.search.facet.terms.TermsFacet
 
 /**
  * Suggest.io
@@ -38,6 +39,8 @@ object SiowebEsUtil extends SioEsClient {
   val RET_NEVER       : RET_T = 'n'
   val RET_IF_NO_IMAGE : RET_T = 'i'
 
+  val FACET_INVLINK_NAME = "tags"
+
   // Макс.число документов, анализируемых на совпадение после чтения из шарды
   val PER_SHARD_DOCUMENTS_LIMIT = 1800
 
@@ -59,7 +62,7 @@ object SiowebEsUtil extends SioEsClient {
    * @param sso Настройки поиска по мнению sioweb21
    * @return Фьючерс с результатом searchIndex или с экзепшеном.
    */
-  def searchDkeys(implicit sso: SioSearchOptions): Future[List[SioSearchResult]] = {
+  def searchDkeys(implicit sso: SioSearchOptions): Future[SioSearchResult] = {
     import sso.{dkeys, queryStr}
     lazy val logPrefix = s"searchDomain(${dkeys.mkString(",")}, $queryStr): "
     trace(logPrefix + "Planning search request...")
@@ -100,6 +103,7 @@ object SiowebEsUtil extends SioEsClient {
         case (acc, None)      => acc
       }
       indices.distinct -> types.distinct
+
     } flatMap { case (indices, types) =>
       // запустить поиск
       if (indices.isEmpty) {
@@ -120,9 +124,9 @@ object SiowebEsUtil extends SioEsClient {
    * @param indices Список индексов, по которым будет идти поиск.
    * @param types Список типов, которые затрагиваются поиском.
    * @param queryStr Буквы, которые ввел юзер
-   * @param options Параметры запроса.
+   * @param sso Параметры запроса.
    */
-  def searchIndex(indices:Seq[String], types:Seq[String], queryStr:String)(implicit options: SioSearchOptions): Future[List[SioSearchResult]] = {
+  def searchIndex(indices:Seq[String], types:Seq[String], queryStr:String)(implicit sso: SioSearchOptions): Future[SioSearchResult] = {
     lazy val logPrefix = s"searchIndex(${indices.mkString(",")}, '$queryStr'): "
     trace(logPrefix + s"indices=$indices , types=$types")
     queryStr2Query(queryStr).map { textQuery =>
@@ -134,8 +138,8 @@ object SiowebEsUtil extends SioEsClient {
       }
 
       // Обработать options.langs, дописав при необходимости дополнительный фильтр.
-      if (!options.langs.isEmpty) {
-        val langs = options.langs
+      if (!sso.langs.isEmpty) {
+        val langs = sso.langs
         val termQuery = if (langs.tail.isEmpty) {
           // Один язык - делаем простой term-фильтр
           QueryBuilders.termQuery(FIELD_LANGUAGE, langs.head)
@@ -148,8 +152,8 @@ object SiowebEsUtil extends SioEsClient {
 
       // Включена фильтрация по фасетам. Нужно добавить фасетный фильтр.
       // !!! Этот фильтр должен добавлятся последним, т.е. в самое начало списка фильтров. !!!
-      if (!options.facetInvlinkSearhInTags.isEmpty) {
-        val facetTagFilter = FilterBuilders.termsFilter(FIELD_PAGE_TAGS, options.facetInvlinkSearhInTags : _*)
+      if (!sso.fiSearhInTags.isEmpty) {
+        val facetTagFilter = FilterBuilders.termsFilter(FIELD_PAGE_TAGS, sso.fiSearhInTags : _*)
         filters ::= facetTagFilter
       }
 
@@ -172,17 +176,26 @@ object SiowebEsUtil extends SioEsClient {
         .prepareSearch(indices : _*)
         .setTypes(types : _*)
         .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-        .setExplain(options.withExplain)
-        .setSize(options.size)
+        .setExplain(sso.isDebug)
+        .setSize(sso.size)
         .setQuery(query)
-        .addFields(FIELD_URL, FIELD_PAGE_TAGS)
+        .addFields(FIELD_URL, FIELD_PAGE_TAGS, FIELD_DKEY)
+
+      // Если выставлен флаг возвращения фасетов, сделать это.
+      if (sso.fiOut) {
+        val facetBuilder = FacetBuilders.termsFacet(FACET_INVLINK_NAME)
+          .field(FIELD_PAGE_TAGS)
+          .global(sso.fiOutGlobal)
+        reqBuilder.addFacet(facetBuilder)
+      }
 
       // Добавить доролнительные поля для запроса, если такие есть.
-      if (!options.fields.isEmpty)
-        reqBuilder.addFields(options.fields : _*)
+      if (!sso.fields.isEmpty) {
+        reqBuilder.addFields(sso.fields : _*)
+      }
 
       // Настраиваем выдачу заголовков и их подсветку
-      if (options.retTitle != RET_NEVER) {
+      if (sso.retTitle != RET_NEVER) {
         val hlField = subfield(FIELD_TITLE, SUBFIELD_ENGRAM)
         reqBuilder
           .addField(FIELD_TITLE)
@@ -190,30 +203,31 @@ object SiowebEsUtil extends SioEsClient {
       }
 
       // Настраиваем выдачу текста страницы.
-      if (options.retContentText != RET_NEVER) {
+      if (sso.retContentText != RET_NEVER) {
         val hlField = subfield(FIELD_CONTENT_TEXT, SUBFIELD_ENGRAM)
         reqBuilder.addHighlightedField(
           hlField,
-          options.hlCtFragmentsSize,
-          options.hlCtFragmentsCount
+          sso.hlCtFragmentsSize,
+          sso.hlCtFragmentsCount
         )
       }
 
       // Возвращать картинки?
-      if (options.retImage)
+      if (sso.retImage)
         reqBuilder.addField(FIELD_IMAGE_ID)
 
       // Выполнить асинхронный запрос.
       reqBuilder
         .execute()
         .map { esResp =>
-          val hits = esResp.getHits.getHits
-          // Функционал причесывания результатов вынесен в отдельную функцию.
-          postprocessSearchHits(hits)
+          SioSearchResult(
+            hits   = postprocessSearchHits(esResp.getHits.getHits),
+            fiTags = esResp.getFacets.facet(classOf[TermsFacet], FACET_INVLINK_NAME).getEntries.toSeq.map {t  =>  t.getTerm.string -> t.getCount}
+          )
         }
 
     } getOrElse {
-      val ex = EmptySearchQueryException(options.dkeys, queryStr)
+      val ex = EmptySearchQueryException(sso.dkeys, queryStr)
       Future.failed(ex)
     }
   }
@@ -240,12 +254,12 @@ object SiowebEsUtil extends SioEsClient {
    * @param hits Результаты поиска в сыром виде.
    * @param sso опции, которые, в частности, описывают параметры выдачи.
    */
-  def postprocessSearchHits(hits:Array[SearchHit])(implicit sso:SioSearchOptions) : List[SioSearchResult] = {
+  def postprocessSearchHits(hits:Array[SearchHit])(implicit sso:SioSearchOptions) : List[SioSearchResultHit] = {
     // Собрать функцию маппинга одного словаря результата
     var mapHitF = { hit: SearchHit =>
       val resultMap = new mutable.ListMap[String, AnyRef]
       val hitFields = hit.getFields
-      lazy val hitDkey = Option(hitFields.get("dkey")) map(_.getValue[String]) getOrElse {
+      lazy val hitDkey = Option(hitFields.get(FIELD_DKEY)) map(_.getValue[String]) getOrElse {
         val url = hitFields.get(FIELD_URL).getValue[String]
         info(s"postprocessSearchHits(): 'dkey' field expected, but not found for doc inx=${hit.getIndex} type=${hit.getType} id=${hit.getId} url=$url")
         UrlUtil.url2dkey(url)
@@ -302,7 +316,7 @@ object SiowebEsUtil extends SioEsClient {
     removeFieldOptF(FIELD_CONTENT_TEXT, sso.retContentText)
 
     // Конечный словарь полей результатов оборачиваем в классы-хелперы для упрощения работы с ними на верхнем уровне.
-    val mapHitF1 = mapHitF andThen { new SioSearchResult(_) }
+    val mapHitF1 = mapHitF andThen { new SioSearchResultHit(_) }
 
     val result = hits.toList.map(mapHitF1)
     result
@@ -456,20 +470,21 @@ final case class SioSearchOptions(
   var hlCtFragmentsSize : Int = 200,
   var hlCtFragmentSeparator : String = hlFragSepDefault,
 
-  // Фасеты: авто-теги
-  var facetInvlinkSearhInTags: List[String] = Nil,
+  // Фасеты: авто-теги.
+  // По каким фасетам фильтровать выдачу? По умолчанию - без них.
+  var fiSearhInTags: List[String] = Nil,
+  // ES должен считать и выдавать список тегов и их кол-во? http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/search-facets.html
+  var fiOut: Boolean = true,
+  var fiOutGlobal: Boolean = false,
 
   // Дебажные настройки всякие
   var withDateScoring : Boolean = true,
-  var withExplain : Boolean = false
-) extends SioSearchContext {
-
-  def isDebug = withExplain
-}
+  var isDebug : Boolean = false
+) extends SioSearchContext
 
 
 /** Объект используется для представления результата поиска. */
-case class SioSearchResult(data: collection.Map[String, AnyRef]) {
+case class SioSearchResultHit(data: collection.Map[String, AnyRef]) {
 
   def title       = data.get(FIELD_TITLE).asInstanceOf[Option[String]]
   def contentText = data.get(FIELD_CONTENT_TEXT).asInstanceOf[Option[String]]
@@ -486,7 +501,9 @@ case class SioSearchResult(data: collection.Map[String, AnyRef]) {
             JsString(v.asInstanceOf[String])
 
           case FIELD_PAGE_TAGS =>
-            JsArray(v.asInstanceOf[Seq[String]].map(JsString))
+            v match {
+              case al: java.util.List[_]  =>  JsArray(al.toSeq.asInstanceOf[Seq[String]].map(JsString))
+            }
         }
         k -> jsV  ::  acc
       }
@@ -497,3 +514,8 @@ case class SioSearchResult(data: collection.Map[String, AnyRef]) {
 case class NoSuchDomainException(dkeys: Seq[String]) extends Exception(s"Domain ${dkeys.mkString(",")} is not installed.")
 case class EmptySearchQueryException(dkeys: Seq[String], query: String) extends Exception("Search request is empty.")
 case class IndexMdviNotFoundException(dkey: String, vin: String) extends Exception("Internal service error.")
+
+case class SioSearchResult(
+  hits: List[SioSearchResultHit],
+  fiTags: Seq[(String, Int)] = Nil
+)

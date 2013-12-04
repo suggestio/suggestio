@@ -24,6 +24,10 @@ object PersonWrapper {
    */
   def getFromSession(implicit session: Session): PwOpt_t = session.get(username).map { new PersonWrapper(_) }
 
+
+  /** Статическая функция проверки на принадлежность к админам вынесена сюда.
+    * Используется обычно напрямую, т.к. у нас нет возможности добавить её напрямую в PwOpt_t. */
+  def isSuperuser(pwOpt: PwOpt_t): Boolean = pwOpt.exists(_.isSuperuser)
 }
 
 /**
