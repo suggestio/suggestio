@@ -200,7 +200,7 @@ object SioEsUtil extends Logs {
   }
 
 
-  protected def jsonGenerator(f: XContentBuilder => _json_object) : XContentBuilder = {
+  protected def jsonGenerator(f: XContentBuilder => JsonObject) : XContentBuilder = {
     val b = jsonBuilder().startObject()
     f(b).builder(b).endObject()
   }
@@ -214,40 +214,40 @@ object SioEsUtil extends Logs {
     val TOKENIZER_NAME = "t_std"
     // Начать генерацию в псевдокоде, затем сразу перегнать в XContentBuilder
     jsonGenerator { implicit b =>
-      new _index_settings(
+      new IndexSettings(
         number_of_shards = shards,
         number_of_replicas = replicas,
         cache_field_type = "soft",
 
         analyzers = Seq(
-          new _analyzer_custom(
+          new AnalyzerCustom(
             id = ANALYZER_MINIMAL,
             tokenizer = TOKENIZER_NAME,
             filters = filters0
           ),
-          new _analyzer_custom(
+          new AnalyzerCustom(
             id = ANALYZER_EDGE_NGRAM,
             tokenizer = TOKENIZER_NAME,
             filters = filters0 ++ List("f_edge_ngram")
           ),
-          new _analyzer_custom(
+          new AnalyzerCustom(
             id = ANALYZER_FTS_RU,
             tokenizer = TOKENIZER_NAME,
             filters = filters0 ++ List("f_stop_en", "f_stop_ru", "f_stem_ru", "f_stem_en")
           )
         ),
 
-        tokenizers = Seq(new _tokenizer_standard(TOKENIZER_NAME)),
+        tokenizers = Seq(new TokenizerStandard(TOKENIZER_NAME)),
 
         filters = Seq(
-          new _filter_standard("f_std"),
-          new _filter_lowercase("f_lowercase"),
-          new _filter_stopwords("f_stop_en", "english"),
-          new _filter_stopwords("f_stop_ru", "russian"),
-          new _filter_word_delimiter("f_word_delim", preserve_original = true),
-          new _filter_stemmer("f_stem_ru", "russian"),
-          new _filter_stemmer("f_stem_en", "english"),
-          new _filter_edge_ngram("f_edge_ngram", min_gram = 1, max_gram = 10, side = "front")
+          new FilterStandard("f_std"),
+          new FilterLowercase("f_lowercase"),
+          new FilterStopwords("f_stop_en", "english"),
+          new FilterStopwords("f_stop_ru", "russian"),
+          new FilterWordDelimiter("f_word_delim", preserve_original = true),
+          new FilterStemmer("f_stem_ru", "russian"),
+          new FilterStemmer("f_stem_en", "english"),
+          new FilterEdgeNgram("f_edge_ngram", min_gram = 1, max_gram = 10, side = "front")
         )
       )
     }
@@ -261,9 +261,9 @@ object SioEsUtil extends Logs {
   def getPageMapping(typeName:String, compressSource:Boolean=true) = {
     // Генератор полей для маппинга страниц
     def multiFieldFtsNgram(name:String, boostFts:Float, boostNGram:Float) = {
-      new _field_multifield(name, fields = Seq(
-        new _field_string(name, include_in_all=true, index="no", boost=Some(boostFts)),
-        new _field_string(
+      new FieldMultifield(name, fields = Seq(
+        new FieldString(name, include_in_all=true, index="no", boost=Some(boostFts)),
+        new FieldString(
           id = "gram",
           index = "analyzed",
           index_analyzer = ANALYZER_EDGE_NGRAM,
@@ -275,21 +275,22 @@ object SioEsUtil extends Logs {
     }
 
     jsonGenerator { implicit b =>
-      new _index_mapping(
+      new IndexMapping(
         typ = typeName,
 
         static_fields = Seq(
-          new _field_source(true),
-          new _field_all(true, analyzer = ANALYZER_FTS_RU)
+          new FieldSource(true),
+          new FieldAll(true, analyzer = ANALYZER_FTS_RU)
         ),
 
         properties = Seq(
-          new _field_string(FIELD_URL, index="no", include_in_all=false),
-          new _field_string(FIELD_IMAGE_ID, index="no", include_in_all=false),   // TODO в старой версии почему-то было true
-          new _field_number(FIELD_DATE_KILOSEC, typ="long", index="no", include_in_all=false),
+          new FieldString(FIELD_URL, index="no", include_in_all=false),
+          new FieldString(FIELD_IMAGE_ID, index="no", include_in_all=false),   // TODO в старой версии почему-то было true
+          new FieldNumber(FIELD_DATE_KILOSEC, typ="long", index="no", include_in_all=false),
           multiFieldFtsNgram(FIELD_TITLE, 4.1f, 2.7f),
           multiFieldFtsNgram(FIELD_CONTENT_TEXT, 1.0f, 0.7f),
-          new _field_string(FIELD_LANGUAGE, index="not_analyzed", include_in_all=false)
+          new FieldString(FIELD_LANGUAGE, index="not_analyzed", include_in_all=false),
+          new FieldString(FIELD_DKEY, index="no", include_in_all=false)
         )
       )
     }
@@ -301,15 +302,15 @@ object SioEsUtil extends Logs {
    * @return
    */
   def getImageMapping(typeName:String) = jsonGenerator { implicit b =>
-    new _index_mapping(
+    new IndexMapping(
       typ = typeName,
       static_fields = Seq(
-        new _field_source(true),
-        new _field_all(false)
+        new FieldSource(true),
+        new FieldAll(false)
       ),
       properties = Seq(
-        new _field_string("url", index="no"),
-        new _field_binary("thumb")
+        new FieldString("url", index="no"),
+        new FieldBinary("thumb")
       )
     )
   }
@@ -362,21 +363,23 @@ object SioEsUtil extends Logs {
 
 // Далее идут классы JSON-DSL-генераторы для упрощения написания всяких вещей.
 
-trait _renderable {
+trait Renderable {
   def builder(implicit b:XContentBuilder) : XContentBuilder
 }
 
 // Классы-записи
 
 // Объявление настроек верхнего уровня
-case class _index_settings(
-  analyzers : Seq[_analyzer] = Nil,
-  tokenizers :Seq[_tokenizer] = Nil,
-  filters : Seq[_filter] = Nil,
+case class IndexSettings(
+  analyzers : Seq[Analyzer] = Nil,
+  tokenizers :Seq[Tokenizer] = Nil,
+  filters : Seq[Filter] = Nil,
   number_of_shards : Int = 5,
   number_of_replicas : Int = 0,
   cache_field_type : String = "soft"
-) extends _json_object(null) {
+) extends JsonObject {
+
+  def id = null
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     // Рендерим настройки всякие
@@ -402,7 +405,7 @@ case class _index_settings(
    * @param b XContentBuilder
    * @return
    */
-  protected def maybeRenderListOf(list:Seq[_renderable], name:String)(implicit b:XContentBuilder) {
+  protected def maybeRenderListOf(list:Seq[Renderable], name:String)(implicit b:XContentBuilder) {
     if (!list.isEmpty) {
       b.startObject(name)
         list map { _.builder }
@@ -414,13 +417,15 @@ case class _index_settings(
 
 
 // Абстрактный json-объект.
-class _json_object(_id:String) extends _renderable {
+trait JsonObject extends Renderable {
+  def id: String
+  
   def builder(implicit b: XContentBuilder): XContentBuilder = {
-    if (_id != null) {
-      b.startObject(_id)
+    if (id != null) {
+      b.startObject(id)
     }
     fieldsBuilder
-    if (_id != null) {
+    if (id != null) {
       b.endObject()
     }
     b
@@ -432,7 +437,9 @@ class _json_object(_id:String) extends _renderable {
 
 // Многие объекты JSON DSL имеют параметр "type".
 // _typed_json_object подходит для описания фильтров, токенизаторов и т.д.
-class _typed_json_object(id:String, typ:String) extends _json_object(id) {
+trait TypedJsonObject extends JsonObject {
+  
+  def typ: String
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder(b)
@@ -443,12 +450,14 @@ class _typed_json_object(id:String, typ:String) extends _json_object(id) {
 
 
 // Анализаторы ---------------------------------------------------------------------------------------------------------
-class _analyzer(_id:String, typ:String) extends _typed_json_object(_id, typ)
-class _analyzer_custom(
+trait Analyzer extends TypedJsonObject
+case class AnalyzerCustom(
   id : String,
   tokenizer: String,
   filters : List[String]
-) extends _analyzer(id, "custom") {
+) extends Analyzer {
+  
+  def typ = "custom"
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -462,13 +471,15 @@ class _analyzer_custom(
 
 // Токенизаторы --------------------------------------------------------------------------------------------------------
 // Абстрактный токенизер
-class _tokenizer(_id : String, typ : String) extends _typed_json_object(_id, typ)
+trait Tokenizer extends TypedJsonObject
 
 // Стандартный токенизер.
-class _tokenizer_standard(
+case class TokenizerStandard(
   id : String,
   max_token_length : Int = 255
-) extends _tokenizer(id, "standard") {
+) extends Tokenizer {
+  
+  def typ = "standard"
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -481,13 +492,15 @@ class _tokenizer_standard(
 
 // Фильтры -------------------------------------------------------------------------------------------------------------
 // объявление абстрактного фильтра в настройках индекса
-class _filter(_id : String, typ : String) extends _typed_json_object(_id, typ)
+trait Filter extends TypedJsonObject
 
 // фильтр стоп-слов
-class _filter_stopwords(
+case class FilterStopwords(
   id : String,
   stopwords : String    // = english, russian, etc
-) extends _filter(id, "stop") {
+) extends Filter {
+
+  def typ = "stop"
 
   override def fieldsBuilder(implicit b:XContentBuilder) {
     super.fieldsBuilder
@@ -498,10 +511,12 @@ class _filter_stopwords(
 
 
 // Фильтр word_delimiter для дележки склеенных слов.
-class _filter_word_delimiter(
+case class FilterWordDelimiter(
   id : String,
   preserve_original : Boolean = false
-) extends _filter(id, "word_delimiter") {
+) extends Filter {
+
+  def typ = "word_delimiter"
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -513,10 +528,12 @@ class _filter_word_delimiter(
 
 
 // Фильтр стемминга слов
-class _filter_stemmer(
+case class FilterStemmer(
   id : String,
   language : String
-) extends _filter(id, "stemmer") {
+) extends Filter {
+
+  def typ = "stemmer"
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -526,16 +543,23 @@ class _filter_stemmer(
 }
 
 // Фильтры lowercase и standard
-class _filter_lowercase(id : String) extends _filter(id, "lowercase")
-class _filter_standard(id: String) extends _filter(id, "standard")
+case class FilterLowercase(id : String) extends Filter{
+  def typ = "lowercase"
+}
+
+case class FilterStandard(id: String) extends Filter {
+  def typ = "standard"
+}
 
 // Фильтр edge-ngram
-class _filter_edge_ngram(
+case class FilterEdgeNgram(
   id: String,
   min_gram : Int = 1,
   max_gram : Int = 2,
   side : String = "front"
-) extends _filter(id, "edgeNGram") {
+) extends Filter {
+
+  def typ = "edgeNGram"
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -554,7 +578,8 @@ class _filter_edge_ngram(
 
 // Поля документа ------------------------------------------------------------------------------------------------------
 // Почти все поля содержат параметр index_name.
-class _field_renameable(id:String, typ:String, index_name:String = null) extends _typed_json_object(id, typ) {
+trait FieldRenameable extends TypedJsonObject {
+  def index_name: String
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder(b)
@@ -566,18 +591,14 @@ class _field_renameable(id:String, typ:String, index_name:String = null) extends
 
 
 // Некое абстрактное индексируемое поле. Сюда не входит binary.
-class _field_indexable(
-  id : String,
-  index_name : String = null,
+trait FieldIndexable extends FieldRenameable {
   // _field_indexable
-  typ : String,
-  store : String = null,          // = [yes] | no
-  index : String = null,          // = [analyzed] | not_analyzed | no
-  boost : Option[Float] = None,
-  include_in_all : Boolean = true,
-  null_value : String = null
-) extends _field_renameable(id, typ, index_name) {
-
+  def store : String            // = [yes] | no
+  def index : String            // = [analyzed] | not_analyzed | no
+  def boost : Option[Float]
+  def include_in_all : Boolean
+  def null_value : String
+  
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
 
@@ -596,7 +617,7 @@ class _field_indexable(
 
 
 // Поле строки
-class _field_string(
+case class FieldString(
   id : String,
   index_name : String = null,
   // _field_indexable
@@ -615,10 +636,9 @@ class _field_string(
   ignore_above : Option[Boolean] = None,
   position_offset_gap : Option[Int] = None
 
-) extends _field_indexable(
-    id=id, typ="string", store=store, index=index, index_name=index_name, boost=boost,
-    include_in_all=include_in_all, null_value=null_value
-) {
+) extends FieldIndexable {
+  
+  def typ = "string"
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -644,23 +664,9 @@ class _field_string(
 
 
 // Абстрактное поле для хранения неточных данных типа даты-времени и чисел.
-class _field_approx(
-  id : String,
-  typ : String,
-  index_name : String = null,
-  // _field_indexable
-  store : String = null,          // = [yes] | no
-  index : String = null,          // = [analyzed] | not_analyzed | no
-  boost : Option[Float] = None,
-  include_in_all : Boolean = true,
-  null_value : String = null,
-  // _field_approx
-  precision_step : Option[Int] = None,
-  ignore_malformed : Option[Boolean] = None
-) extends _field_indexable(
-    id=id, typ=typ, store=store, index=index, index_name=index_name, boost=boost,
-    include_in_all=include_in_all, null_value=null_value
-) {
+trait FieldApprox extends FieldIndexable {
+  def precision_step : Option[Int]
+  def ignore_malformed : Option[Boolean]
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -674,7 +680,7 @@ class _field_approx(
 
 
 // Поле с числом
-class _field_number(
+case class FieldNumber(
   id : String,
   typ : String,                   // = float | double | integer | long | short | byte
   index_name : String = null,
@@ -685,15 +691,11 @@ class _field_number(
   null_value : String = null,
   precision_step : Option[Int] = None,
   ignore_malformed : Option[Boolean] = None
-
-) extends _field_approx(
-    id=id, typ=typ, store=store, index=index, index_name=index_name, boost=boost, include_in_all=include_in_all,
-    null_value=null_value, precision_step=precision_step, ignore_malformed=ignore_malformed
-)
+) extends FieldApprox
 
 
 // Поле с датой.
-class _field_date(
+case class FieldDate(
   id : String,
   index_name : String = null,
   store : String = null,          // = [yes] | no
@@ -703,14 +705,13 @@ class _field_date(
   null_value : String = null,
   precision_step : Option[Int] = None,
   ignore_malformed : Option[Boolean] = None
-) extends _field_approx(
-    id=id, typ="date", store=store, index=index, index_name=index_name, boost=boost, include_in_all=include_in_all,
-    null_value=null_value, precision_step=precision_step, ignore_malformed=ignore_malformed
-)
+) extends FieldApprox {
+  def typ = "date"
+}
 
 
 // Булево значение
-class _field_boolean(
+case class FieldBoolean(
   id : String,
   index_name : String = null,
   store : String = null,          // = [yes] | no
@@ -718,20 +719,23 @@ class _field_boolean(
   boost : Option[Float] = None,
   include_in_all : Boolean = true,
   null_value : String = null
-) extends _field_indexable(
-  id=id, typ="boolean", index_name=index_name, store=store, index=index, boost=boost,
-  include_in_all=include_in_all, null_value=null_value
-)
+) extends FieldIndexable {
+  def typ = "boolean"
+}
 
 
 // Поле типа binary с барахлом в base64
-class _field_binary(
+case class FieldBinary(
   id : String,
   index_name : String = null
-) extends _field_renameable(id=id, typ="binary", index_name=index_name)
+) extends FieldRenameable {
+  def typ = "binary"
+}
 
 
-class _field_enableable(id:String, enabled:Boolean) extends _json_object(id) {
+trait FieldEnableable extends JsonObject {
+  def enabled: Boolean
+  
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
     b.field("enabled", enabled)
@@ -740,7 +744,7 @@ class _field_enableable(id:String, enabled:Boolean) extends _json_object(id) {
 
 
 // Поле _all
-class _field_all(
+case class FieldAll(
   enabled : Boolean = true,
   store : String = null,
   term_vector : String = null,
@@ -748,7 +752,9 @@ class _field_all(
   index_analyzer : String = null,
   search_analyzer : String = null
 
-) extends _field_enableable(FIELD_ALL, enabled) {
+) extends FieldEnableable {
+  
+  def id = FIELD_ALL
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -768,16 +774,20 @@ class _field_all(
 
 
 // Поле _source
-class _field_source(enabled:Boolean = true) extends _field_enableable(FIELD_SOURCE, enabled)
+case class FieldSource(enabled: Boolean = true) extends FieldEnableable {
+  def id = FIELD_SOURCE
+}
 
 
 // Поле _routing
-class _field_routing(
+case class FieldRouting(
   required : Boolean = false,
   store : String = null,
   index : String = null,
   path  : String = null
-) extends _json_object(FIELD_ROUTING) {
+) extends JsonObject {
+  
+  def id = FIELD_ROUTING
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -795,7 +805,9 @@ class _field_routing(
 
 
 // Мультиполе multi_field
-class _field_multifield(id:String, fields:Seq[_json_object]) extends _typed_json_object(id, "multi_field") {
+case class FieldMultifield(id:String, fields:Seq[JsonObject]) extends TypedJsonObject {
+  
+  def typ = "multi_field"
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -810,7 +822,8 @@ class _field_multifield(id:String, fields:Seq[_json_object]) extends _typed_json
 
 
 // Генератор маппинга индекса со всеми полями и блекджеком.
-class _index_mapping(typ:String, static_fields:Seq[_json_object], properties:Seq[_json_object]) extends _json_object(typ) {
+case class IndexMapping(typ:String, static_fields:Seq[JsonObject], properties:Seq[JsonObject]) extends JsonObject {
+  def id = typ
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder(b)
