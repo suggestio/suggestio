@@ -22,6 +22,7 @@ object SioConstants {
   val FIELD_DATE_KILOSEC  = "dateKs"
   val FIELD_DATE          = "date"
   val FIELD_PAGE_TAGS     = "pageTags"
+  val FIELD_DKEY          = "dkey"
 
   // Имена системных полей, все в одном месте.
   def FIELD_ALL           = AllFieldMapper.NAME
