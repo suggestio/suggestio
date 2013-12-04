@@ -31,10 +31,10 @@ object SioConstants {
   def FIELD_ANALYZER      = AnalyzerMapper.NAME
   def FIELD_BOOST         = BoostFieldMapper.NAME
 
-  // Названия анализаторов
-  val ANALYZER_MINIMAL    = "a_minimal"
-  val ANALYZER_EDGE_NGRAM = "a_edge_ngram"
-  val ANALYZER_FTS_RU     = "a_fts_ru"
+  // Названия анализаторов. А зачем они тут, если относятся только к SioEsUtil?
+  val MINIMAL_AN    = "aMinimal"
+  val EDGE_NGRAM_AN = "aEdgeNgram"
+  val FTS_RU_AN     = "aFtsRu"
 
   // Суффиксы multi-полей
   val SUBFIELD_ENGRAM     = "gram"
@@ -52,9 +52,6 @@ object SioConstants {
   // Название ключевого поля: DkeyUrlKey. В HBase название не сохраняется, но глобально в рамках каждого Flow.
   val HBASE_KEY_FN = "hbaseRowKey"
   val HBASE_KEY_FIELDS = new Fields(HBASE_KEY_FN)
-
-  // Префикс таблиц кравлера.
-  val HTABLE_WEBTABLE_NAME_PREFIX = "wt_"
 
   // Время жизни рядов qi, создаваемых в базе на веб-морде.
   val DOMAIN_QI_TTL_SECONDS = (5 hours).toSeconds.toInt

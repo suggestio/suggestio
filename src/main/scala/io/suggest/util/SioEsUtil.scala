@@ -25,6 +25,23 @@ import org.elasticsearch.cluster.ClusterName
 
 object SioEsUtil extends Logs {
 
+  // _FN - Filter Name. _AN - Analyzer Name, _TN - Tokenizer Name
+
+  // Имена стеммеров
+  val STEM_EN_FN    = "fStemEN"
+  val STEM_RU_FN    = "fStemRU"
+
+  // Имена stopwords-фильтров.
+  val STOP_EN_FN    = "fStopEN"
+  val STOP_RU_FN    = "fStopRU"
+
+  val EDGE_NGRAM_FN = "fEdgeNgram"
+  val LOWERCASE_FN  = "fLowercase"
+  val STD_FN        = "fStd"
+  val WORD_DELIM_FN = "fWordDelim"
+
+  val STD_TN        = "tStd"
+
   /**
    * Создать параллельно пачку одинаковых индексов.
    * @param indices Имена индексов.
@@ -210,8 +227,7 @@ object SioEsUtil extends Logs {
    * Билдер настроек для индекса. Тут генерится в представление в виде дерева scala-классов и сразу конвертится в XContent.
    */
   def getNewIndexSettings(shards:Int, replicas:Int=1) = {
-    val filters0 = List("f_std", "f_word_delim", "f_lowercase")
-    val TOKENIZER_NAME = "t_std"
+    val filters0 = List(STD_FN, WORD_DELIM_FN, LOWERCASE_FN)
     // Начать генерацию в псевдокоде, затем сразу перегнать в XContentBuilder
     jsonGenerator { implicit b =>
       new IndexSettings(
@@ -219,38 +235,54 @@ object SioEsUtil extends Logs {
         number_of_replicas = replicas,
         cache_field_type = "soft",
 
+        filters = Seq(
+          new FilterStandard(STD_FN),
+          new FilterLowercase(LOWERCASE_FN),
+          new FilterStopwords(STOP_EN_FN, "english"),
+          new FilterStopwords(STOP_RU_FN, "russian"),
+          new FilterWordDelimiter(WORD_DELIM_FN, preserve_original = true),
+          new FilterStemmer(STEM_RU_FN, "russian"),
+          new FilterStemmer(STEM_EN_FN, "english"),
+          new FilterEdgeNgram(EDGE_NGRAM_FN, min_gram = 1, max_gram = 10, side = "front")
+        ),
+
         analyzers = Seq(
           new AnalyzerCustom(
-            id = ANALYZER_MINIMAL,
-            tokenizer = TOKENIZER_NAME,
+            id = MINIMAL_AN,
+            tokenizer = STD_TN,
             filters = filters0
           ),
           new AnalyzerCustom(
-            id = ANALYZER_EDGE_NGRAM,
-            tokenizer = TOKENIZER_NAME,
-            filters = filters0 ++ List("f_edge_ngram")
+            id = EDGE_NGRAM_AN,
+            tokenizer = STD_TN,
+            filters = filters0 ++ List(EDGE_NGRAM_FN)
           ),
           new AnalyzerCustom(
-            id = ANALYZER_FTS_RU,
-            tokenizer = TOKENIZER_NAME,
-            filters = filters0 ++ List("f_stop_en", "f_stop_ru", "f_stem_ru", "f_stem_en")
+            id = FTS_RU_AN,
+            tokenizer = STD_TN,
+            filters = filters0 ++ List(STOP_EN_FN, STOP_RU_FN, STEM_RU_FN, STEM_EN_FN)
           )
         ),
 
-        tokenizers = Seq(new TokenizerStandard(TOKENIZER_NAME)),
-
-        filters = Seq(
-          new FilterStandard("f_std"),
-          new FilterLowercase("f_lowercase"),
-          new FilterStopwords("f_stop_en", "english"),
-          new FilterStopwords("f_stop_ru", "russian"),
-          new FilterWordDelimiter("f_word_delim", preserve_original = true),
-          new FilterStemmer("f_stem_ru", "russian"),
-          new FilterStemmer("f_stem_en", "english"),
-          new FilterEdgeNgram("f_edge_ngram", min_gram = 1, max_gram = 10, side = "front")
-        )
+        tokenizers = Seq(new TokenizerStandard(STD_TN))
       )
     }
+  }
+
+
+  /** Генератор мульти-полей title и contentText для маппинга страниц. Helper для getPageMapping(). */
+  private def multiFieldFtsNgram(name:String, boostFts:Float, boostNGram:Float) = {
+    new FieldMultifield(name, fields = Seq(
+      new FieldString(name, include_in_all=true, index="no", boost=Some(boostFts)),
+      new FieldString(
+        id = "gram",
+        index = "analyzed",
+        index_analyzer = EDGE_NGRAM_AN,
+        search_analyzer = MINIMAL_AN,
+        term_vector = "with_positions_offsets",
+        boost = Some(boostNGram)
+      )
+    ))
   }
 
 
@@ -259,28 +291,13 @@ object SioEsUtil extends Logs {
    * @return
    */
   def getPageMapping(typeName:String, compressSource:Boolean=true) = {
-    // Генератор полей для маппинга страниц
-    def multiFieldFtsNgram(name:String, boostFts:Float, boostNGram:Float) = {
-      new FieldMultifield(name, fields = Seq(
-        new FieldString(name, include_in_all=true, index="no", boost=Some(boostFts)),
-        new FieldString(
-          id = "gram",
-          index = "analyzed",
-          index_analyzer = ANALYZER_EDGE_NGRAM,
-          search_analyzer = ANALYZER_MINIMAL,
-          term_vector = "with_positions_offsets",
-          boost = Some(boostNGram)
-        )
-      ))
-    }
-
     jsonGenerator { implicit b =>
       new IndexMapping(
         typ = typeName,
 
         static_fields = Seq(
           new FieldSource(true),
-          new FieldAll(true, analyzer = ANALYZER_FTS_RU)
+          new FieldAll(true, analyzer = FTS_RU_AN)
         ),
 
         properties = Seq(
@@ -290,29 +307,13 @@ object SioEsUtil extends Logs {
           multiFieldFtsNgram(FIELD_TITLE, 4.1f, 2.7f),
           multiFieldFtsNgram(FIELD_CONTENT_TEXT, 1.0f, 0.7f),
           new FieldString(FIELD_LANGUAGE, index="not_analyzed", include_in_all=false),
-          new FieldString(FIELD_DKEY, index="no", include_in_all=false)
+          new FieldString(FIELD_DKEY, index="no", include_in_all=false),
+          // Тут array-поле, но для ES одинакого -- одно значение в поле или целый массив.
+          new FieldString(FIELD_PAGE_TAGS, index="not_analyzed", store="no", include_in_all=false)
         )
       )
     }
 
-  }
-
-  /**
-   * Маппинг для эскизов иллюстраций.
-   * @return
-   */
-  def getImageMapping(typeName:String) = jsonGenerator { implicit b =>
-    new IndexMapping(
-      typ = typeName,
-      static_fields = Seq(
-        new FieldSource(true),
-        new FieldAll(false)
-      ),
-      properties = Seq(
-        new FieldString("url", index="no"),
-        new FieldBinary("thumb")
-      )
-    )
   }
 
 
@@ -383,9 +384,9 @@ case class IndexSettings(
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     // Рендерим настройки всякие
-    b .field("number_of_shards", number_of_shards)
+    b .field("number_of_shards",   number_of_shards)
       .field("number_of_replicas", number_of_replicas)
-      .field("cache.field_type", cache_field_type)
+      .field("cache.field_type",   cache_field_type)
 
     // Рендерим параметры анализа
     if (analyzers != Nil || tokenizers != Nil || filters != Nil) {
@@ -837,9 +838,9 @@ case class IndexMapping(typ:String, static_fields:Seq[JsonObject], properties:Se
   }
 }
 
-// END поля документа --------------------------------------------------------------------------------------------------
+// END: DSL полей документа --------------------------------------------------------------------------------------------
 
-}
+} // END: object SioEsUtil
 
 
 /** Неабстрактный трейт для подмешивания клиенского функционала в произольный объект.
