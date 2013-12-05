@@ -84,15 +84,12 @@ trait MImgThumbStaticT extends CascadingFieldNamer {
   def deserializeThumb(thumb: AnyRef) = deserializeBytes(thumb)
 
   // Сериализаторы для работы напрямую с полями кортежа
-  def serializeId(id: Array[Byte]) = serializeBytes(id)
-  val serializeThumb: PartialFunction[AnyRef, ImmutableBytesWritable] = {
-    case ar: Array[Byte]              => serializeBytes(ar)
+  def serializeId(id: AnyRef) = serializeBytes(id)
+  def serializeThumb(thumb: AnyRef) = serializeBytes(thumb)
+  protected val serializeBytes: PartialFunction[AnyRef, ImmutableBytesWritable] = {
+    case null                         => null
+    case ar: Array[Byte]              => new ImmutableBytesWritable(ar)
     case ibw: ImmutableBytesWritable  => ibw
-  }
-
-  protected val serializeBytes:PartialFunction[Array[Byte], ImmutableBytesWritable] = {
-    case null           => null
-    case b: Array[Byte] => new ImmutableBytesWritable(b)
   }
 
   /** Десериализация значения в поле ID в бинарь. */
