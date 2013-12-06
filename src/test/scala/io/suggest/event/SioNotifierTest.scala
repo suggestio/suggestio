@@ -116,25 +116,26 @@ class SioNotifierTest extends FlatSpec with ShouldMatchers with Logs {
     val f = fixture
     import f._
     import snClient._
+    val waitMs = 50
 
     // Просто проверяем act0
     wasEvent(act0)  should equal (0, 0)
 
     publish(Event2(user_id=10, data="asd"))
-    Thread.sleep(40)
+    Thread.sleep(waitMs)
     wasEvent(act0)  should equal (1, 0)
     wasEvent(act20) should equal (0, 0)
 
     // Проверяем act20
     publish(Event2(user_id=20, data="bbb"))
-    Thread.sleep(40)
+    Thread.sleep(waitMs)
     wasEvent(act0)  should equal (0, 1)
     wasEvent(act20) should equal (1, 0)
 
     // Проверяем unsubscribe
     unsubscribe(SnActorRefSubscriber(act0))
     publish(Event2(user_id=10, data="asd"))
-    Thread.sleep(40)
+    Thread.sleep(waitMs)
     wasEvent(act0)  should equal (0, 0)
   }
 
