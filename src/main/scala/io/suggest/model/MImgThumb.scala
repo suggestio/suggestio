@@ -11,6 +11,7 @@ import cascading.tuple.{Tuple, Fields, TupleEntry}
 import io.suggest.util.SerialUtil._
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.commons.codec.binary.Base64
+import java.security.MessageDigest
 
 /**
  * Suggest.io
@@ -72,6 +73,9 @@ trait MImgThumbStaticT extends CascadingFieldNamer {
 
   def CF = MPict.CF_IMG_THUMB
 
+  /** Тип контекста кешируемого генератора. Используется для функций с внешним кешируемым генератором img id. */
+  type ImgIdGen_t = MessageDigest
+
   val ID_FN        = fieldName("id")
   val IMAGE_URL_FN = fieldName("imageUrl")
   val THUMB_FN     = fieldName("thumb")
@@ -100,9 +104,16 @@ trait MImgThumbStaticT extends CascadingFieldNamer {
     case other => throw new IllegalArgumentException("unexpected input[" + other.getClass.getName + "]: " + other)
   }
 
-  /** Сгенерить id картинки на основе её URL. */
+  /** Сгенерить id картинки на основе её URL. Используется одноразовый MessageDigest. */
   def imgUrl2id(url: String): Array[Byte] = imgUrl2id(new URL(url))
   def imgUrl2id(url: URL): Array[Byte]    = CryptoUtil.sha1(UrlUtil.url2rowKey(url))
+
+  /** Сгенерить id картинки с помощью закешированного хешера, полученного через getIdGen.
+    * Такое полезно при массовом выставлении id для снижения размеров мусора до минимума. */
+  def imgUrl2idGen(url: String, gen:ImgIdGen_t): Array[Byte] = imgUrl2idGen(new URL(url), gen)
+  def imgUrl2idGen(url: URL,    gen:ImgIdGen_t): Array[Byte] = gen.digest(UrlUtil.url2rowKey(url).getBytes)
+
+  def getIdGen: ImgIdGen_t = CryptoUtil.sha1Digest
 
   // TODO заюзать implicit?
   def idBin2Str(id: Array[Byte]) = Base64 encodeBase64URLSafeString id

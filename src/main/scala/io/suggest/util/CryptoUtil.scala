@@ -24,7 +24,13 @@ object CryptoUtil {
     HASH_LENS.contains(qv.length) && HASH_PATTERN.matcher(qv).matches
   }
 
-  val _md5digestSrc = MessageDigest.getInstance("md5").clone().asInstanceOf[MessageDigest]
+  // Делаем эталонные экземпляры хеш-генераторов в конструкторе.
+  private val _sha1digestSrc = MessageDigest.getInstance("sha-1").clone().asInstanceOf[MessageDigest]
+  _sha1digestSrc.reset()
+
+  private val _md5digestSrc = MessageDigest.getInstance("md5").clone().asInstanceOf[MessageDigest]
+  _md5digestSrc.reset()
+
   def md5Digest = _md5digestSrc.clone().asInstanceOf[MessageDigest]
 
   /** Сгенерить md5-байты на основе входной строки. */
@@ -44,7 +50,6 @@ object CryptoUtil {
   }
 
 
-  private val _sha1digestSrc = MessageDigest.getInstance("sha-1").clone().asInstanceOf[MessageDigest]
   def sha1Digest = _sha1digestSrc.clone().asInstanceOf[MessageDigest]
 
   def sha1(str: String): Array[Byte]    = sha1(str.getBytes)
