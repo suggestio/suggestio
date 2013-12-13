@@ -324,7 +324,7 @@ object SioEsIndexUtil extends Logs with Serializable {
    * @return Удачный фьючерс, когда всё ок.
    */
   def setReplicasCountFor(indices:Seq[String], replicasCount:Int)(implicit client:Client, executor:ExecutionContext): Future[Unit] = {
-    debug(s"setReplicasCountFor($replicasCount for ${indices.mkString(",")}}) called...")
+    debug(s"setReplicasCountFor($replicasCount for ${indices.mkString(",")}) called...")
     val settings = ImmutableSettings.settingsBuilder()
       .put(SETTING_NUMBER_OF_REPLICAS, replicasCount)
       .build()

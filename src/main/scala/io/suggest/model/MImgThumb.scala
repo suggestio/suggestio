@@ -1,7 +1,7 @@
 package io.suggest.model
 
 import SioHBaseAsyncClient._
-import org.hbase.async.GetRequest
+import org.hbase.async.{PutRequest, GetRequest}
 import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.util.{CascadingFieldNamer, SerialUtil, CryptoUtil, UrlUtil}
@@ -65,6 +65,7 @@ object MImgThumb extends MImgThumbStaticT with MPictSubmodel {
 
   val FIELDS      = new Fields(ID_FN, IMAGE_URL_FN, THUMB_FN, TIMESTAMP_FN)
   val FIELDS_DATA = new Fields(IMAGE_URL_FN, THUMB_FN)
+
 }
 
 
@@ -123,7 +124,7 @@ trait MImgThumbStaticT extends CascadingFieldNamer {
 
 /** Основной экземпляр модели. С ним происходит работа и на веб-морде, и в кравлере. */
 class MImgThumb extends MImgThumbAbstract(MImgThumb) {
-  import MImgThumb.FIELDS_DATA
+  import MImgThumb._
 
   def this(te: TupleEntry) = {
     this()
@@ -143,10 +144,21 @@ class MImgThumb extends MImgThumbAbstract(MImgThumb) {
     setTimestamp(timestamp)
   }
 
+  def this(imageUrl:String, thumb:Array[Byte]) = {
+    this(MImgThumb.imgUrl2id(imageUrl), imageUrl, thumb)
+  }
+
   def serializeDataOnly = MImgThumb serializeDataOnly this
 
   def dataEntry = _tupleEntry selectEntry FIELDS_DATA
   def dataTuple = _tupleEntry selectTuple FIELDS_DATA
+
+  /** Сохранить в таблицу. */
+  def save(implicit ec: ExecutionContext): Future[_] = {
+    val v = SerialUtil.serializeTuple(dataTuple)
+    val putReq = new PutRequest(HTABLE_NAME_BYTES, getId, CF, CF, v)
+    ahclient.put(putReq)
+  }
 }
 
 
@@ -177,5 +189,6 @@ abstract class MImgThumbAbstract(companionObject: MImgThumbStaticT) extends Base
 
   def getTimestamp = _tupleEntry.getLong(TIMESTAMP_FN)
   def setTimestamp(timestamp: Long) = _tupleEntry.setLong(TIMESTAMP_FN, timestamp)
+
 }
 

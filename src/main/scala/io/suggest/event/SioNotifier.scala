@@ -40,14 +40,6 @@ object SioNotifier {
   type Classifier = Seq[ClassifierToken]
   type Subscriber = SnSubscriberT
 
-
-  // Классы-сообщения.
-  case class SnSubscribe(subscriber:Subscriber, classifier:Classifier)
-  case class SnSubscribeSync(subscriber:Subscriber, classifier:Classifier)
-  case class SnUnsubscribe(subscriber:Subscriber, classifier:Classifier)
-  case class SnUnsubscribeAll(subscriber:Subscriber)
-  case class SnReplaceSubscriber(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber)
-  case class SnReplaceSubscriberSync(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber)
 }
 
 
@@ -120,9 +112,9 @@ trait SioNotifierStaticClientI {
 
 trait SioNotifierStaticActorSelection extends SioNotifierStaticClientI {
 
-  def actorName: String = getClass.getSimpleName.replace("$", "")
+  val actorName: String = getClass.getSimpleName.replace("$", "")
   def supPath: ActorPath
-  val actorPath = supPath / actorName
+  def actorPath = supPath / actorName
 
   implicit def SN_ASK_TIMEOUT: Timeout
 
@@ -189,7 +181,7 @@ trait SNStaticSubscriptionManager extends SioNotifierStaticClientI {
 
 
 /** Реализация механизма SioNotifier в виде актора. */
-abstract class SioNotifier extends Actor with LogsAbstract {
+trait SioNotifier extends Actor with LogsAbstract {
 
   // Шина сообщений. Делает все дела.
   protected val bus = new SioNotifierBus
@@ -377,4 +369,13 @@ trait SioEventObjectHelperT {
   // Использование этого кортежа укорачивает логику объекта события на пару строчек.
   val hd = Some(getClass.getSimpleName)
 }
+
+
+// Классы-сообщения.
+case class SnSubscribe(subscriber:Subscriber, classifier:Classifier)
+case class SnSubscribeSync(subscriber:Subscriber, classifier:Classifier)
+case class SnUnsubscribe(subscriber:Subscriber, classifier:Classifier)
+case class SnUnsubscribeAll(subscriber:Subscriber)
+case class SnReplaceSubscriber(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber)
+case class SnReplaceSubscriberSync(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber)
 
