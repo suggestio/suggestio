@@ -148,7 +148,7 @@ trait SioNotifierStaticActorSelection extends SioNotifierStaticClientI {
   }
 
   def replaceSubscriberSync(subscriberOld:Subscriber, classifier:Classifier, subscriberNew:Subscriber) = {
-    (actorSelection ? SnReplaceSubscriber(subscriberOld, classifier, subscriberNew)).asInstanceOf[Future[Boolean]]
+    (actorSelection ? SnReplaceSubscriberSync(subscriberOld, classifier, subscriberNew)).asInstanceOf[Future[Boolean]]
   }
 
 }

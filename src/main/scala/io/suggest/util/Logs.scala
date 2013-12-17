@@ -9,29 +9,35 @@ import org.slf4j.LoggerFactory
  * Description: http://stackoverflow.com/a/2087048
  */
 trait Logs extends LogsAbstract {
-  @transient protected lazy val logger = LoggerFactory.getLogger(getClass.getName)
+  @transient protected val _LOGGER = LoggerFactory.getLogger(getClass.getName)
 
-  protected def trace(message: => String) = if (logger.isTraceEnabled) logger.trace(message)
-  protected def trace(message: => String, ex:Throwable) = if (logger.isTraceEnabled) logger.trace(message, ex)
+  protected def trace(message: => String) = if (_LOGGER.isTraceEnabled) _LOGGER.trace(message)
+  protected def trace(message: => String, ex:Throwable) = if (_LOGGER.isTraceEnabled) _LOGGER.trace(message, ex)
 
-  protected def debug(message: => String) = if (logger.isDebugEnabled) logger.debug(message)
-  protected def debug(message: => String, ex:Throwable) = if (logger.isDebugEnabled) logger.debug(message,ex)
+  protected def debug(message: => String) = if (_LOGGER.isDebugEnabled) _LOGGER.debug(message)
+  protected def debug(message: => String, ex:Throwable) = if (_LOGGER.isDebugEnabled) _LOGGER.debug(message,ex)
 
-  protected def info(message: => String) = if (logger.isInfoEnabled) logger.info(message)
-  protected def info(message: => String, ex:Throwable) = if (logger.isInfoEnabled) logger.info(message,ex)
+  protected def info(message: => String) = if (_LOGGER.isInfoEnabled) _LOGGER.info(message)
+  protected def info(message: => String, ex:Throwable) = if (_LOGGER.isInfoEnabled) _LOGGER.info(message,ex)
 
-  protected def warn(message: => String) = if (logger.isWarnEnabled) logger.warn(message)
-  protected def warn(message: => String, ex:Throwable) = if (logger.isWarnEnabled) logger.warn(message,ex)
+  protected def warn(message: => String) = if (_LOGGER.isWarnEnabled) _LOGGER.warn(message)
+  protected def warn(message: => String, ex:Throwable) = if (_LOGGER.isWarnEnabled) _LOGGER.warn(message,ex)
 
-  protected def error(ex:Throwable) = if (logger.isErrorEnabled) logger.error(ex.toString,ex)
-  protected def error(message: => String) = if (logger.isErrorEnabled) logger.error(message)
-  protected def error(message: => String, ex:Throwable) = if (logger.isErrorEnabled) logger.error(message,ex)
+  protected def error(ex:Throwable) = if (_LOGGER.isErrorEnabled) _LOGGER.error(ex.toString,ex)
+  protected def error(message: => String) = if (_LOGGER.isErrorEnabled) _LOGGER.error(message)
+  protected def error(message: => String, ex:Throwable) = if (_LOGGER.isErrorEnabled) _LOGGER.error(message,ex)
+
+  def isTraceEnabled = _LOGGER.isTraceEnabled
+  def isDebugEnabled = _LOGGER.isDebugEnabled
+  def isInfoEnabled  = _LOGGER.isInfoEnabled
+  def isWarnEnabled  = _LOGGER.isWarnEnabled
+  def isErrorEnabled = _LOGGER.isErrorEnabled
 }
 
 
 // То же самое, что и Logs, но добавляется префикс.
 trait LogsPrefixed extends Logs {
-  protected val logPrefix: String
+  protected def logPrefix: String
 
   override protected def trace(message: => String) = super.trace(logPrefix + message)
   override protected def trace(message: => String, ex: Throwable) = super.trace(logPrefix + message, ex)
@@ -79,35 +85,41 @@ trait LogsAbstract {
 
   protected def trace(message: => String)
   protected def trace(message: => String, ex:Throwable)
+
+  def isTraceEnabled: Boolean
+  def isDebugEnabled: Boolean
+  def isInfoEnabled:  Boolean
+  def isWarnEnabled:  Boolean
+  def isErrorEnabled: Boolean
 }
 
 
 // Бывает, что нужен логгер в виде объекта.
-class LogsImpl(className: String) {
+class LogsImpl(className: String) extends LogsAbstract {
   def this(clazz: Class[_]) = this(clazz.getName)
 
-  @transient val _logger = LoggerFactory.getLogger(className)
+  @transient val _LOGGER = LoggerFactory.getLogger(className)
 
-  def debug(message: => String) = if (_logger.isDebugEnabled) _logger.debug(message)
-  def debug(message: => String, ex:Throwable) = if (_logger.isDebugEnabled) _logger.debug(message,ex)
+  def debug(message: => String) = if (_LOGGER.isDebugEnabled) _LOGGER.debug(message)
+  def debug(message: => String, ex:Throwable) = if (_LOGGER.isDebugEnabled) _LOGGER.debug(message,ex)
 
-  def info(message: => String) = if (_logger.isInfoEnabled) _logger.info(message)
-  def info(message: => String, ex:Throwable) = if (_logger.isInfoEnabled) _logger.info(message,ex)
+  def info(message: => String) = if (_LOGGER.isInfoEnabled) _LOGGER.info(message)
+  def info(message: => String, ex:Throwable) = if (_LOGGER.isInfoEnabled) _LOGGER.info(message,ex)
 
-  def warn(message: => String) = if (_logger.isWarnEnabled) _logger.warn(message)
-  def warn(message: => String, ex:Throwable) = if (_logger.isWarnEnabled) _logger.warn(message,ex)
+  def warn(message: => String) = if (_LOGGER.isWarnEnabled) _LOGGER.warn(message)
+  def warn(message: => String, ex:Throwable) = if (_LOGGER.isWarnEnabled) _LOGGER.warn(message,ex)
 
-  def error(ex:Throwable) = if (_logger.isErrorEnabled) _logger.error(ex.toString,ex)
-  def error(message: => String) = if (_logger.isErrorEnabled) _logger.error(message)
-  def error(message: => String, ex:Throwable) = if (_logger.isErrorEnabled) _logger.error(message,ex)
+  def error(ex:Throwable) = if (_LOGGER.isErrorEnabled) _LOGGER.error(ex.toString,ex)
+  def error(message: => String) = if (_LOGGER.isErrorEnabled) _LOGGER.error(message)
+  def error(message: => String, ex:Throwable) = if (_LOGGER.isErrorEnabled) _LOGGER.error(message,ex)
 
-  def trace(message: => String) = if (_logger.isTraceEnabled) _logger.trace(message)
-  def trace(message: => String, ex:Throwable) = if(_logger.isTraceEnabled) _logger.trace(message, ex)
+  def trace(message: => String) = if (_LOGGER.isTraceEnabled) _LOGGER.trace(message)
+  def trace(message: => String, ex:Throwable) = if(_LOGGER.isTraceEnabled) _LOGGER.trace(message, ex)
 
-  def isTraceEnabled = _logger.isTraceEnabled
-  def isDebugEnabled = _logger.isDebugEnabled
-  def isInfoEnabled  = _logger.isInfoEnabled
-  def isWarnEnabled  = _logger.isWarnEnabled
-  def isErrorEnabled = _logger.isErrorEnabled
+  def isTraceEnabled = _LOGGER.isTraceEnabled
+  def isDebugEnabled = _LOGGER.isDebugEnabled
+  def isInfoEnabled  = _LOGGER.isInfoEnabled
+  def isWarnEnabled  = _LOGGER.isWarnEnabled
+  def isErrorEnabled = _LOGGER.isErrorEnabled
 }
 

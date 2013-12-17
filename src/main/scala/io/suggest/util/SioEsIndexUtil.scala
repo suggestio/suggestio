@@ -19,6 +19,7 @@ import java.util.Date
 import org.elasticsearch.common.settings.ImmutableSettings
 import org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS
 import org.apache.hadoop.fs.FileSystem
+import org.elasticsearch.index.shard.service.InternalIndexShard.INDEX_REFRESH_INTERVAL
 
 /**
  * Suggest.io
@@ -334,6 +335,23 @@ object SioEsIndexUtil extends Logs with Serializable {
       .setSettings(settings)
       .execute()
       .map(_ => Unit)
+  }
+
+
+  /** Обновить интервал авто-рефреша. Интервал нужен для near-realtime-индексации.
+    * @param newIntervalSec Новый интервал в секундах.
+    * @param indices Индексы.
+    * @return Фьючерс для синхронизации.
+    */
+  def setIndexRefreshInterval(newIntervalSec: Int, indices: String*)(implicit client:Client, executor:ExecutionContext): Future[_] = {
+    trace(s"setIndexRefreshInterval($newIntervalSec, ${indices.mkString(", ")}): Starting...")
+    val settings = ImmutableSettings.settingsBuilder()
+      .put(INDEX_REFRESH_INTERVAL, newIntervalSec)
+      .build()
+    client.admin().indices()
+      .prepareUpdateSettings(indices : _*)
+      .setSettings(settings)
+      .execute()
   }
 
 }

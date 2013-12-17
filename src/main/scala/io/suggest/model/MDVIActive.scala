@@ -107,27 +107,13 @@ object MDVIActive {
     val scanner = ahclient.newScanner(HTABLE_NAME)
     scanner.setFamily(CF)
     scanner.setQualifier(column)
-    val p = Promise[List[MDVIActive]]()
-    def foldNextAsync(_acc: List[MDVIActive], _fut: Future[juArrayList[juArrayList[KeyValue]]]) {
-      _fut onComplete {
-        case Success(null) => p success _acc
-
-        case Success(rows) =>
-          val acc1 = rows.foldLeft(_acc) { (__acc, __rows) =>
-            __rows.foldLeft(__acc) { (___acc, row) =>
-              val dkey = row.key()
-              deserializeBytes(vin=vin, dkey=dkey, b=row.value) :: ___acc
-            }
-          }
-          foldNextAsync(acc1, scanner.nextRows)
-
-        case Failure(ex) => p failure ex
+    val folder = new AsyncHbaseScannerFold[List[MDVIActive]] {
+      def fold(acc: List[MDVIActive], kv: KeyValue): List[MDVIActive] = {
+        val dkey = kv.key()
+        deserializeBytes(vin=vin, dkey=dkey, b=kv.value) :: acc
       }
     }
-    foldNextAsync(Nil, scanner.nextRows)
-    val fut = p.future
-    fut onComplete { case _ => scanner.close() }
-    fut
+    folder(Nil, scanner)
   }
 
 
@@ -159,7 +145,9 @@ object MDVIActive {
       if (results.isEmpty) {
         Nil
       } else {
-        results.map { kv => deserializeBytes(dkey=dkey, vin=kv.key, b=kv.value) }
+        results.map { kv =>
+          deserializeBytes(dkey=dkey, vin=kv.qualifier, b=kv.value)
+        }
       }
     }
   }
