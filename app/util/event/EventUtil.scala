@@ -66,7 +66,7 @@ object EventUtil extends Logs {
    * @param timestampMs Перекачивать из очереди новостей только новости новее указанного времени.
    * @param logPrefix Использовать указанный префикс для log-записей. Обычно функция работает без лог-записей, поэтому этот параметр "ленивый".
    */
-  def replaceNqWithWsChannel(classifier:Classifier, uuid:UUID, nqDkey:String, nqTyp:String, channel:Concurrent.Channel[JsValue], nqIsMandatory:Boolean = false, timestampMs:Long = -1L, logPrefix: => String = "???")(implicit pw_opt:PwOpt_t = None) {
+  def replaceNqWithWsChannel(classifier:Classifier, uuid:UUID, nqDkey:String, nqTyp:String, channel:Concurrent.Channel[JsValue], nqIsMandatory:Boolean = false, timestampMs:Long = -1L, logPrefix: => String = "???")(implicit pwOpt:PwOpt_t = None) {
     // TODO вероятно, эту функцию нужно разбить на две.
     NewsQueue4Play.getActorFor(nqDkey, nqTyp).foreach { nqActorRefOpt =>
       LOGGER.debug(logPrefix + "NQ supervisor answered: queue(%s %s) => %s" format(nqDkey, nqTyp, nqActorRefOpt))
@@ -74,7 +74,7 @@ object EventUtil extends Logs {
       val snActionFuture: Future[Boolean] = nqActorRefOpt match {
         // Как и ожидалось, у супервизора уже есть очередь с новостями. Нужно заменить её в SioNotifier на прямой канал SN -> WS.
         case Some(nqActorRef) =>
-          LOGGER.debug(logPrefix + "SN atomic replace: NewsQueue %s -> %s; user=%s" format(nqActorRef, subscriberWs, pw_opt))
+          LOGGER.trace(logPrefix + s"$logPrefix SN atomic replace: NewsQueue $nqActorRef -> $subscriberWs; user=$pwOpt :: SN should be at ${SiowebNotifier.actorPath}")
           SiowebNotifier.replaceSubscriberSync(
             subscriberOld = SnActorRefSubscriber(nqActorRef),
             classifier    = classifier,
@@ -107,7 +107,7 @@ object EventUtil extends Logs {
         // TODO Может нужно обновить страницу сразу? Или отобразить кнопку релоада юзеру?
         case None =>
           if(nqIsMandatory) {
-            LOGGER.error(logPrefix + "NewsQueue doesn't exist, but it should. Possible incorrect behaviour for user %s." format pw_opt)
+            LOGGER.error(logPrefix + "NewsQueue doesn't exist, but it should. Possible incorrect behaviour for user " + pwOpt)
             channel.push(MaybeErrorEvent("It looks like, something went wrong during installation procedure. If errors or problems occurs, please reload the page.").toJson)
           }
           SiowebNotifier.subscribeSync(

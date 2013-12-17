@@ -1,7 +1,7 @@
 package util.event
 
 import io.suggest.event._
-import util.{SioutilLogs, Logs, DomainManager, SiowebSup}
+import util.{SioutilLogs, DomainManager, SiowebSup}
 import akka.actor.{Props, ActorRef, ActorRefFactory}
 import akka.util.Timeout
 import scala.concurrent.duration._

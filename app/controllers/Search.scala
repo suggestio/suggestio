@@ -215,7 +215,7 @@ object Search extends SioController with Logs {
               "timestamp"     -> JsNumber(currTime) ::
               "search_result" -> JsArray(hits.map(_.toJsValue)) ::
               jsonEntries
-            
+
             val jsonp = Jsonp("sio._s_add_result", JsObject(jsonEntries))
             // TODO Сохранить обновлённый searchContext и серилизовать в кукис ответа
             Ok(jsonp)

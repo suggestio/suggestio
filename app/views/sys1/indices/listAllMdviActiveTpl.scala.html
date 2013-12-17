@@ -3,5 +3,7 @@
 @indicesBase("Все виртуальные индексы") {
   @_listMdviActiveTpl(l)
 
-  @_emergencyIndicesDowngradeFormTpl()
+  @if(!l.isEmpty) {
+    @_emergencyIndicesDowngradeFormTpl()
+  }
 }
