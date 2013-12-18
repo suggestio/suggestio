@@ -109,6 +109,9 @@ domain.qi.parse.timeout_ms = 5000
 # Длина qi-идентификатора. Следует менять только при острой необходимости и с осторожностью. [8]
 #domain.qi.id.len = 8
 
+# Для тестирования: в детекторе установленного js на сайтах можно использовать иной домен suggest.io. [["suggest.io"]]
+#siojs.detector.hostnames = ["suggest.io"]
+#siojs.detector.hostnames = ["suggest.io", "test.suggest.io", "localhost:9000"]
 
 
 ###############################################################################

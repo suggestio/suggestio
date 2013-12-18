@@ -6,7 +6,7 @@ import io.suggest.model.JsonDfsBackend
 import util.DfsModelUtil.getPersonPath
 import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits._
-import org.hbase.async.{GetRequest, PutRequest}
+import org.hbase.async.{DeleteRequest, GetRequest, PutRequest}
 import scala.collection.JavaConversions._
 import StorageUtil.StorageType._
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -17,11 +17,15 @@ import com.fasterxml.jackson.annotation.JsonIgnore
  * Created: 18.04.13 18:19
  * Description: Юзер, зареганный на сайте. Как правило, админ одного или нескольких сайтов.
  * Люди различаются по email'ам. Это является их идентификаторами.
+ * @param id Идентификатор юзера, т.е. его email.
+ * @param dkeys Список доменов на панели доменов юзера.
+ * @param langIso2 Язык интерфейса для указанного пользователя.
  */
 
 case class MPerson(
   id : String,
-  var dkeys : List[String] = Nil // список доменов на панели доменов юзера
+  var dkeys : List[String] = Nil,
+  var langIso2: Option[String] = None
 ) extends MPersonLinks {
   import MPerson.BACKEND
 
@@ -75,9 +79,8 @@ object MPerson {
   private val BACKEND: Backend = {
     StorageUtil.STORAGE match {
       case DFS    => new DfsBackend
-      case HBASE  => new HBaseBackend
+      case HBASE  => new HBaseBackendBulk
     }
-    new DfsBackend
   }
 
   // Список емейлов админов suggest.io. Пока преднамеренно захардкожен, потом -- посмотрим.
@@ -132,14 +135,14 @@ object MPerson {
   }
 
 
-  /** Hbase backend для текущей модели */
-  class HBaseBackend extends Backend with ModelSerialJson {
-    import io.suggest.model.MObject.{HTABLE_NAME_BYTES, CF_UPROPS}
-    import io.suggest.model.SioHBaseAsyncClient._
-    import io.suggest.model.HTapConversionsBasic._
+  import io.suggest.model.MObject.{HTABLE_NAME_BYTES, CF_UPROPS}
+  import io.suggest.model.SioHBaseAsyncClient._
+  import io.suggest.model.HTapConversionsBasic._
 
-    val KEYPREFIX = "mperson:"
+  /** Hbase backend для текущей модели, сохраняющий все данные в одну колонку через JSON. */
+  class HBaseBackendBulk extends Backend with ModelSerialJson {
     def QUALIFIER = CF_UPROPS
+    val KEYPREFIX = "u:"
 
     def id2key(id: String): Array[Byte] = KEYPREFIX + id
     def deserialize(data: Array[Byte]) = deserializeTo[MPerson](data)
@@ -155,6 +158,86 @@ object MPerson {
         if (al.isEmpty) None else Some(deserialize(al.head.value()))
       }
     }
+  }
+
+
+  /* TODO Экспериментальный-сырой-неиспользуемый HBase backend, сохраняющий отдельные поля в отдельные колонки.
+   * Теоретически, может помочь в организации ускорения при росте объёмов данных.
+   * Но сначала нужно обдумать асинхронное i/o для удобного доступа к кускам записей.
+   * Возможно, тут поможет apache gora, её маппинги, и PersistenceManager для in-memory записей. */
+  class HBaseBackendQualified extends Backend {
+
+    val Q_DKEYS   = "a"
+    val Q_CREATED = "b"
+    val Q_LANG    = "c"
+
+    def id2key(id: String): Array[Byte] = id
+
+    val DKEY_SER_SEP = ","
+    def serializeDkeys(dkeys: List[String]): Array[Byte] = dkeys.mkString(DKEY_SER_SEP).getBytes
+    def deserializeDkeys(dkeysSer: Array[Byte]): List[String] = {
+      if (dkeysSer.length == 0) {
+        Nil
+      } else {
+        new String(dkeysSer).split(DKEY_SER_SEP).toList
+      }
+    }
+
+    def serializeLang(langIso2: String): Array[Byte]  = langIso2
+    def deserializeLang(langSer: Array[Byte]): String = new String(langSer)
+
+    def save(data: MPerson): Future[MPerson] = {
+      val rowKey = id2key(data.id)
+      val table = HTABLE_NAME_BYTES
+
+      // Отправляем в базу колонку с ключами доменов
+      val dkeysFut: Future[_] = if (!data.dkeys.isEmpty) {
+        val value = serializeDkeys(data.dkeys)
+        val putReq = new PutRequest(table, rowKey, CF_UPROPS, Q_DKEYS.getBytes, value)
+        ahclient.put(putReq)
+      } else {
+        // Доменов нет, возможно юзер их удалил. Удалить надо бы из базы.
+        val delReq = new DeleteRequest(table, rowKey, CF_UPROPS, Q_DKEYS.getBytes)
+        ahclient.delete(delReq)
+      }
+
+      // Язык, если задан.
+      val langFut: Future[_] = if (data.langIso2.isDefined) {
+        val value = serializeLang(data.langIso2.get)
+        val putReq = new PutRequest(table, rowKey, CF_UPROPS, Q_LANG.getBytes, value)
+        ahclient.put(putReq)
+      } else {
+        // Язык внезапно не выставлен.
+        val delReq = new DeleteRequest(table, rowKey, CF_UPROPS, Q_LANG.getBytes)
+        ahclient.delete(delReq)
+      }
+
+      // Асинхронно дождаться выполнения всех реквестов.
+      for {
+        dkeys <- dkeysFut
+        langIso2 <- langFut
+      } yield data
+    }
+
+    def getById(id: String): Future[Option[MPerson]] = {
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, id2key(id)).family(CF_UPROPS)
+      ahclient.get(getReq) map { row =>
+        if (row.isEmpty) {
+          None
+        } else {
+          val result = new MPerson(id)
+          // Такатываем все qualifier'ы на исходную запись.
+          row.foreach { kv =>
+            new String(kv.qualifier()) match {
+              case Q_DKEYS => result.dkeys = deserializeDkeys(kv.value)
+              case Q_LANG  => result.langIso2 = Some(deserializeLang(kv.value))
+            }
+          }
+          Some(result)
+        }
+      }
+    }
+
   }
 
 }
