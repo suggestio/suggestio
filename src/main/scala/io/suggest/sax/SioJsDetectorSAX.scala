@@ -4,6 +4,10 @@ import org.xml.sax.helpers.DefaultHandler
 import org.xml.sax.Attributes
 import io.suggest.util.{LogsImpl, UrlUtil}
 import scala.util.matching.Regex
+import io.suggest.util.MyConfig.CONFIG
+import scala.collection.JavaConversions._
+import com.typesafe.config.ConfigException
+import java.util.regex.Pattern
 
 /**
  * Suggest.io
@@ -21,7 +25,21 @@ object SioJsDetectorSAX extends Serializable {
   }
 
   // TODO Следует отрабатывать автоматический выбор домена поиска.
-  val reStr = "https?://(?:(?:www\\.)?suggest\\.io|localhost:9000)/(?:static/)?js/?(?:v2/([^/]+)/([a-zA-Z0-9]+))?"
+  val reStr = {
+    val hostsConfKey = "siojs.detector.hostnames"
+    val hosts = CONFIG.getStringList(hostsConfKey)
+      .flatMap { l  =>  if (l.isEmpty) None else Some(l) }
+      .map { _.toList }
+      .getOrElse { List("suggest.io") }
+    val hostsStr: String = if (hosts.isEmpty) {
+      throw new ConfigException(hostsConfKey + " is empty or invalid") {}
+    } else if (hosts.tail.isEmpty) {
+      Pattern.quote(hosts.head)
+    } else {
+      "(?:" + hosts.map(Pattern.quote).mkString("|") + ")"
+    }
+    "https?://(?:www\\.)?" + hostsStr + "/(?:static/)?js/?(?:v2/([^/]+)/([a-zA-Z0-9]+))?"
+  }
   val srcReStr = "^\\s*" + reStr + "\\s*$"
 
   // Какие группы экстрактить из регэкспов. Тут две группы, они будут отражены на домен и qi_id.
@@ -36,9 +54,6 @@ object SioJsDetectorSAX extends Serializable {
 
 import SioJsDetectorSAX._
 class SioJsDetectorSAX extends DefaultHandler with Serializable {
-
-  val LOGGER = new LogsImpl(getClass)
-  import LOGGER._
 
   // Скриптов на странице бывает несколько (это ошибочно, но надо это тоже отрабатывать).
   protected var scriptInfoAcc : List[SioJsInfoT] = List()

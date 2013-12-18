@@ -339,11 +339,11 @@ object SioEsIndexUtil extends Logs with Serializable {
 
 
   /** Обновить интервал авто-рефреша. Интервал нужен для near-realtime-индексации.
-    * @param newIntervalSec Новый интервал в секундах.
     * @param indices Индексы.
+    * @param newIntervalSec Новый интервал в секундах.
     * @return Фьючерс для синхронизации.
     */
-  def setIndexRefreshInterval(newIntervalSec: Int, indices: String*)(implicit client:Client, executor:ExecutionContext): Future[_] = {
+  def setIndexRefreshInterval(indices: Seq[String], newIntervalSec: Int)(implicit client:Client, executor:ExecutionContext): Future[_] = {
     trace(s"setIndexRefreshInterval($newIntervalSec, ${indices.mkString(", ")}): Starting...")
     val settings = ImmutableSettings.settingsBuilder()
       .put(INDEX_REFRESH_INTERVAL, newIntervalSec)
