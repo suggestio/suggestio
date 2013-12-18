@@ -9,7 +9,7 @@ import scala.collection.immutable
 import akka.util.Timeout
 import concurrent.duration._
 import io.suggest.proto.bixo.crawler._, MainProto.MajorRebuildReply_t
-import akka.actor.ActorPath
+import io.suggest.util.LogsImpl
 
 /**
  * Suggest.io
@@ -17,22 +17,69 @@ import akka.actor.ActorPath
  * Created: 08.10.13 18:40
  * Description: Статический Akka-клиент для связи с нодой siobix-кравлера.
  */
-object SiobixClient extends Logs {
-
-  import LOGGER._
+object SiobixClient extends SiobixClientWrapperT {
 
   val URL_PREFIX = current.configuration.getString("siobix.akka.url.prefix").get
-  val CRAWLERS_SUP_PATH = current.configuration.getString("siobix.akka.crawler.sup.path").get
+
+  /** Сгенерить селектор относительно akka-корня siobix.
+    * @param actorPath Полный путь до siobix-актора.
+    * @return Селектор, который необязательно верен или существует.
+    */
+  def remoteSelection(actorPath: String) = {
+    val sel = system.actorSelection(URL_PREFIX + actorPath)
+    new AskableActorSelection(sel)
+  }
+
 
   implicit val askTimeout = new Timeout(
     current.configuration.getInt("siobix.akka.bootstrap.ask_timeout_ms").getOrElse(2000) milliseconds
   )
 
-  def remoteSelection(actorPath: String) = new AskableActorSelection(system.actorSelection(URL_PREFIX + actorPath))
-  def getCrawlersSupSelector = remoteSelection(CRAWLERS_SUP_PATH)
+  /** Используемый клиент для siobix. */
+  protected val siobixClientImpl: SiobixClientT = {
+    current.configuration.getString("siobix.client")
+      .map(_.toUpperCase)
+      .flatMap {
+        case "AKKA"  => None
+        case "FAKE+" => Some(new FakePositiveSiobixClient)
+        case other   => throw new IllegalArgumentException("Unknown client type: " + other)
+      }
+      .getOrElse { new AkkaSiobixClient }
+  }
+}
 
+
+/** Базовый интерфейс клиента. */
+sealed trait SiobixClientT {
+  def maybeBootstrapDkey(dkey:String, seedUrls: immutable.Seq[String]): Future[MaybeBootstrapDkeyReply_t]
+  def majorRebuildRequest: Future[MajorRebuildReply_t]
+}
+
+
+/** Трейт враппера клиентов. */
+sealed trait SiobixClientWrapperT extends SiobixClientT {
+  protected def siobixClientImpl: SiobixClientT
+
+  def maybeBootstrapDkey(dkey:String, seedUrls: immutable.Seq[String]) = {
+    siobixClientImpl.maybeBootstrapDkey(dkey, seedUrls)
+  }
+
+  def majorRebuildRequest = siobixClientImpl.majorRebuildRequest
+}
+
+
+/** Клиент к реальному siobix, работающий через Akka. */
+sealed class AkkaSiobixClient extends SiobixClientT {
+
+  private val LOGGER = new LogsImpl(getClass)
+  import LOGGER._
+  import SiobixClient.{remoteSelection, askTimeout}
+
+  val CRAWLERS_SUP_PATH = current.configuration.getString("siobix.akka.crawler.sup.path").get
+  def getCrawlersSupSelector = remoteSelection(CRAWLERS_SUP_PATH)
   val MAIN_CRAWLER_PATH = CRAWLERS_SUP_PATH + "/" + MainProto.NAME
   def getMainCrawlerSelector = remoteSelection(MAIN_CRAWLER_PATH)
+
 
   /**
    * Отправить в кравлер сообщение о запросе бутстрапа домена
@@ -59,5 +106,16 @@ object SiobixClient extends Logs {
 
 }
 
-// TODO Следует использовать один актора для диспетчеризации протокола.
-//      Ибо ask() всегда порождает новый актора в /temp, а тут этого можно и нужно избежать.
+
+/** Фейковый клиент. Всегда отвечает, что всё ок. */
+sealed class FakePositiveSiobixClient extends SiobixClientT {
+  def maybeBootstrapDkey(dkey: String, seedUrls: immutable.Seq[String]): Future[MaybeBootstrapDkeyReply_t] = {
+    Future successful None
+  }
+
+  def majorRebuildRequest: Future[MajorRebuildReply_t] = {
+    Future successful Right("Fake client - OK")
+  }
+
+}
+

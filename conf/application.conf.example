@@ -63,6 +63,11 @@ akka {
 ## akka url до супервизора кравлера. Меняется в зависимости от deployment'а.
 siobix.akka.url.prefix="akka.tcp://siobix@127.0.0.1:2553"
 
+## Используемый клиент к siobix. По умолчанию и почти всегда - akka, но можно использовать fake-клиенты
+## AKKA  - Работает по-настоящему.
+## FAKE+ - Отвечает всем, что всё ок. Подходит для отладки добавления сайтов без запущенного siobix.
+#siobix.client = "FAKE+"
+
 ## Адрес top-level супервизора.
 siobix.akka.sup.path="/user/sup"
 
@@ -111,7 +116,7 @@ domain.qi.parse.timeout_ms = 5000
 
 # Для тестирования: в детекторе установленного js на сайтах можно использовать иной домен suggest.io. [["suggest.io"]]
 #siojs.detector.hostnames = ["suggest.io"]
-#siojs.detector.hostnames = ["suggest.io", "test.suggest.io", "localhost:9000"]
+#siojs.detector.hostnames = ["suggest.io", "test.suggest.io:9000", "localhost:9000"]
 
 
 ###############################################################################
