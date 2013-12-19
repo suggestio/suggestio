@@ -36,10 +36,14 @@ TODO:
 @import ctx._
 @* нельзя import uSettings._ , ибо будет конфликт dkey *@
 @import uSettings.showImages
+@import uSettings.renderer
 @import util.CoffeeScriptTemplate._
 @import views.txt.js._
 
 @coffee{
+
+console.log('@showImages');
+console.log('@renderer');
 
 sio = 
   config :

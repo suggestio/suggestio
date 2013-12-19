@@ -10,21 +10,26 @@
 @import share._
 
 @head_after = {
-   <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/static_about.min.css")"/>
+  <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/static_about.min.css")"/>
 }
 
 @main(title = Messages("s.a.about"), head_after=head_after) {
   
   @_mainHeaderTpl( true )
-  
-  @_aboutLiveSearchTpl()
-  
-  @_aboutInstallTpl()
-  
-  @_aboutPreferencesTpl()
-  
-  @_aboutSupportTpl()
-  
-  @_shareTpl()
-  
+
+  <div class="sio-default-container">
+    <div class="container">
+
+      <div class="col-sm-4">
+        <h1>ЖИВОЙ ПОИСК</h1>
+        <div>Пользователи сайта на котором установлен suggest.io увидят результаты поиска уже после ввода первой буквы поискового запроса.</div>
+      </div>
+
+      <div class="col-sm-8">
+        <img class="img-responsive" src="/assets/images/sio-about-live-search.png"/>
+      </div>
+
+    </div>
+  </div>
+
 }
