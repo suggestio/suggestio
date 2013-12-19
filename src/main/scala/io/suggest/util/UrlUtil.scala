@@ -394,12 +394,7 @@ object UrlUtil extends Serializable {
       url1 = testUrl.toExternalForm
     } catch {
       case ex:MalformedURLException =>
-        // Если включен трейсинг, то выдать бактрейс в логи.
-        if (isTraceEnabled) {
-          debug("normalize(): Malformed URL: " + result, ex)
-        } else {
-          debug(s"normalize(): ${ex.getClass.getSimpleName}: ${ex.getMessage} ;; returning URL as-is: $result")
-        }
+        trace(s"normalize(): ${ex.getClass.getSimpleName}: ${ex.getMessage} ;; returning URL as-is: $result")
         return result
     }
 

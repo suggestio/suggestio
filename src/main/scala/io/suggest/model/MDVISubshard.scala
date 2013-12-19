@@ -153,7 +153,7 @@ case class MDVISubshard(
   def getShardForDaysCount(daysCount: Int): String = {
     val shardIds = getUsedShards
     val shardId = MDVISubshard.getShardId(shardIds, daysCount)
-    trace(s"getShardForDaysCount(dc=$daysCount): shardId=$shardId shardCount=${shardIds.size} subshardData=$subshardData")
+    //trace(s"getShardForDaysCount(dc=$daysCount): shardId=$shardId shardCount=${shardIds.size} subshardData=$subshardData")
     MVirtualIndex.esShardNameFor(dvin.vin, shardId)
   }
 

@@ -4,6 +4,7 @@ import SioHBaseAsyncClient._
 import org.hbase.async.{PutRequest, GetRequest}
 import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
 import io.suggest.util.{CascadingFieldNamer, SerialUtil, CryptoUtil, UrlUtil}
 import java.net.URL
 import com.scaleunlimited.cascading.BaseDatum
@@ -159,6 +160,11 @@ class MImgThumb extends MImgThumbAbstract(MImgThumb) {
     val putReq = new PutRequest(HTABLE_NAME_BYTES, getId, CF, CF, v)
     ahclient.put(putReq)
   }
+
+  override def toString = {
+    val getTimestampHoursAgo = ((System.currentTimeMillis - getTimestamp) milliseconds).toHours
+    s"${getClass.getSimpleName}($getIdStr, ${getThumb.length} bytes, $getTimestampHoursAgo hours ago, $getImageUrl)"
+  }
 }
 
 
@@ -189,6 +195,5 @@ abstract class MImgThumbAbstract(companionObject: MImgThumbStaticT) extends Base
 
   def getTimestamp = _tupleEntry.getLong(TIMESTAMP_FN)
   def setTimestamp(timestamp: Long) = _tupleEntry.setLong(TIMESTAMP_FN, timestamp)
-
 }
 
