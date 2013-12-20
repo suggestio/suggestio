@@ -54,6 +54,6 @@ object SioConstants {
   val HBASE_KEY_FIELDS = new Fields(HBASE_KEY_FN)
 
   // Время жизни рядов qi, создаваемых в базе на веб-морде.
-  val DOMAIN_QI_TTL_SECONDS = (5 hours).toSeconds.toInt
+  val DOMAIN_QI_TTL_SECONDS: Int = MyConfig.CONFIG.getInt("domain.qi.ttl.seconds") getOrElse (5 hours).toSeconds.toInt
 
 }

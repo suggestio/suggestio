@@ -110,7 +110,7 @@ case class MDVISubshard(
     if (shards.isEmpty) {
       dvin.getShards
     } else {
-      val vin = dvin.vin
+      val vin = dvin.getVin
       shards.map(MVirtualIndex.esShardNameFor(vin, _))
     }
   }
@@ -128,7 +128,7 @@ case class MDVISubshard(
    * Вернуть тип, который будет адресоваться в рамках ES.
    * @return Строка типа индекса. Например "suggest.io-123123".
    */
-  def getTypename: String = subshardData.getTypename(dvin.dkey)
+  def getTypename: String = subshardData.getTypename(dvin.getDkey)
 
 
   /**
@@ -154,7 +154,7 @@ case class MDVISubshard(
     val shardIds = getUsedShards
     val shardId = MDVISubshard.getShardId(shardIds, daysCount)
     //trace(s"getShardForDaysCount(dc=$daysCount): shardId=$shardId shardCount=${shardIds.size} subshardData=$subshardData")
-    MVirtualIndex.esShardNameFor(dvin.vin, shardId)
+    MVirtualIndex.esShardNameFor(dvin.getVin, shardId)
   }
 
 

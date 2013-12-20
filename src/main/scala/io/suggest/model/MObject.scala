@@ -22,80 +22,83 @@ import SioHBaseAsyncClient._
 // Бывшая MDomain. Используется для хранения мелких объектов типа метаданным по объектам, юзерам и т.д.
 // Для разграничения используются CF'ки.
 object MObject extends HTableModel {
+
   val HTABLE_NAME = "obj"
 
-  // Column family для хранения произвольных k-v колонок для доменов (ключ - dkey). В значениях идём по алфавиту.
-  val CF_DPROPS      = "a".getBytes   // Пропертисы всякие. js-install и reindex info в частности.
-  val CF_DINX_ACTIVE = "b".getBytes
-  val CF_DSEARCH_PTR = "c".getBytes
+  // Column family для хранения произвольных k-v колонок для доменов (ключ - reversed dkey). В значениях идём по алфавиту.
+  val CF_DPROPS         = "a" // Пропертисы всякие. js-install в частности.
+  val CF_DINX_ACTIVE    = "b"
+  val CF_DSEARCH_PTR    = "c"
+
   // Для моделей веб-морды:
-  val CF_DDATA       = "d".getBytes   // DomainData - сохранение json'а настроек (веб-морда)
-  val CF_DPUBLISH    = "e".getBytes   // Отметки о публикации доменов в галерее.
-  val CF_DQI         = "f".getBytes   // QI-отметки, не привязаные к юзеру. Имеют ttl.
+  val CF_DDATA          = "d" // DomainData - сохранение json'а настроек (веб-морда)
+  val CF_DPUBLISH       = "e" // Отметки о публикации доменов в галерее.
+  val CF_DQI            = "f" // QI-отметки, не привязаные к юзеру. Имеют ttl.
 
   // Инфа по юзерам. Access pattern - веб-морда.
-  val CF_UPROPS      = "g".getBytes   // Юзеры. Тут например хранится предпочтительный язык UI и прочие вещи. Аналог DPROPS.
-  val CF_UAUTHZ      = "h".getBytes   // Данные по авторизациям юзеров в доменах.
+  val CF_UPROPS         = "g" // Юзеры. Тут например хранится предпочтительный язык UI и прочие вещи. Аналог DPROPS.
+  val CF_UAUTHZ         = "h" // Данные по авторизациям юзеров в доменах.
 
   // Другое (веб-морда).
-  val CF_BLOG        = "i".getBytes   // Блог-записи/новости (веб-морда, ключ = некий id).
-  val CF_DOMAIN      = "j".getBytes   // Записи MDomain.
-  val CF_FACET_INVLINK = "k".getBytes // У кравлера есть хранимые данные sio.analysis.facet.invlink.
+  val CF_BLOG           = "i" // Блог-записи/новости (веб-морда, ключ = некий id).
+  val CF_DOMAIN         = "j" // Записи MDomain.
+  val CF_FACET_INVLINK  = "k" // У кравлера есть хранимые данные sio.analysis.facet.invlink.
 
-  //val CF_DKNOWLEDGE  = ???.getBytes   // Записи MDomainKnowledge, заполняемые кравлером. qualifier является ключом, а value - значением.
+  val CF_RA_PROPS       = "l" // Хлам с random-access, не предназначенный для ввода-вывода во flow. Конфиги глобальных процессов например.
+
 
   // /!\ При добавлении новых CF-записей нужно также обновлять/запиливать функции createTable() и updateTable().
-  def CFs = Seq(
+  protected def CFs = Seq(
     CF_DPROPS, CF_DINX_ACTIVE, CF_DSEARCH_PTR,
     CF_DDATA, CF_DPUBLISH, CF_DQI,
     CF_UPROPS, CF_UAUTHZ ,
     CF_BLOG, CF_DOMAIN,
-    CF_FACET_INVLINK
+    CF_FACET_INVLINK,
+    CF_RA_PROPS
   )
 
   def CFs_CRAWLER = Seq(CF_DOMAIN, CF_DPROPS, CF_DINX_ACTIVE, CF_DSEARCH_PTR, CF_FACET_INVLINK)
 
 
-  def getColumnDescriptor(cf: Array[Byte]): HColumnDescriptor = {
-    cf match {
-      case CF_DPROPS      => hcd(cf, 2)
-      case CF_DINX_ACTIVE => MDVIActive.getCFDescriptor
-      case CF_DSEARCH_PTR => MDVISearchPtr.getCFDescriptor
-      case CF_DDATA       => hcd(cf, 2)
-      case CF_DPUBLISH    => hcd(cf, 1)
-      case CF_DQI         => hcd(cf, 1).setTimeToLive(DOMAIN_QI_TTL_SECONDS)
-      case CF_UPROPS      => hcd(cf, 1)
-      case CF_UAUTHZ      => hcd(cf, 2)
-      case CF_BLOG        => hcd(cf, 1)
-      case CF_DOMAIN      => hcd(cf, 2)
-      case CF_FACET_INVLINK => hcd(cf, 1)
-    }
+  def getColumnDescriptor: PartialFunction[String, HColumnDescriptor] = {
+    case cf @ CF_DPROPS          => hcd(cf, 2)
+    case cf @ CF_DINX_ACTIVE     => MDVIActive.getCFDescriptor
+    case cf @ CF_DSEARCH_PTR     => MDVISearchPtr.getCFDescriptor
+    case cf @ CF_DDATA           => hcd(cf, 2)
+    case cf @ CF_DPUBLISH        => hcd(cf, 1)
+    case cf @ CF_DQI             => hcd(cf, 1).setTimeToLive(DOMAIN_QI_TTL_SECONDS)
+    case cf @ CF_UPROPS          => hcd(cf, 1)
+    case cf @ CF_UAUTHZ          => hcd(cf, 2)
+    case cf @ CF_BLOG            => hcd(cf, 1)
+    case cf @ CF_DOMAIN          => hcd(cf, 2)
+    case cf @ CF_FACET_INVLINK   => hcd(cf, 1)
   }
 
-  private def hcd(cf:Array[Byte], maxVsn:Int) = HTableModel.cfDescSimple(cf, maxVsn)
+  private def hcd(cf:String, maxVsn:Int) = HTableModel.cfDescSimple(cf, maxVsn)
 
 
   /** Выставить произвольнон значение для произвольной колонки в CF_PROPS. По идее должно использоваться из других моделей,
    * занимающихся сериализацией.
-   * @param dkey Ключ домена.
    * @param key Ключ.
    * @param value сериализованное значение
+   * @param qualifier опциональное имя колонки.
    * @return Фьючерс для опциональной синхронизации. Любые данные внутри возвращаемого фьючерса не имеют смысла.
    */
-  def setProp(dkey:String, key:String, value: Array[Byte]): Future[AnyRef] = {
-    val putReq = new PutRequest(HTABLE_NAME:Array[Byte], dkey:Array[Byte], CF_DPROPS, key:Array[Byte], value)
+  def setProp(key:String, value:Array[Byte], qualifier:String = CF_RA_PROPS): Future[_] = {
+    val putReq = new PutRequest(HTABLE_NAME_BYTES, key.getBytes, CF_RA_PROPS.getBytes, qualifier.getBytes, value)
     ahclient.put(putReq)
   }
 
 
   /** Прочитать провертис, выставленный через setProp().
-   * @param dkey Ключ домена.
    * @param key Ключ.
+   * @param qualifier опциональный подключ.
    * @return Фьючерс с опциональным значением, если такое найдено.
    */
-  def getProp(dkey: String, key: String)(implicit ec: ExecutionContext): Future[Option[Array[Byte]]] = {
-    val column: Array[Byte] = key
-    val getReq = new GetRequest(HTABLE_NAME, dkey) family CF_DPROPS qualifier column
+  def getProp(key: String, qualifier: String = CF_RA_PROPS)(implicit ec: ExecutionContext): Future[Option[Array[Byte]]] = {
+    val getReq = new GetRequest(HTABLE_NAME, key)
+      .family(CF_RA_PROPS)
+      .qualifier(qualifier)
     ahclient.get(getReq) map { results =>
       if (results.isEmpty) {
         None
@@ -104,6 +107,24 @@ object MObject extends HTableModel {
       }
     }
   }
+
+
+  /**
+   * Удалить ряд из таблицы из CF_RA_PROPS.
+   * @param key Ключ.
+   * @param qualifierOpt Опциональное имя колонки. Если None, то будет удален весь ряд из CF.
+   * @return Фьючерс для синхронизации.
+   */
+  def deleteProp(key: String, qualifierOpt: Option[String] = None)(implicit ec: ExecutionContext): Future[_] = {
+    val delReq: DeleteRequest =
+    if (qualifierOpt.isEmpty) {
+      new DeleteRequest(HTABLE_NAME, key, CF_RA_PROPS)
+    } else {
+      new DeleteRequest(HTABLE_NAME, key, CF_RA_PROPS, qualifierOpt.get)
+    }
+    ahclient.delete(delReq)
+  }
+
 
 
   /** Пересоздать CF-ки, относящиеся к кравлингу (вычистив тем самым их от данных). Обычно используется при reset'е
@@ -117,7 +138,7 @@ object MObject extends HTableModel {
       val folder = new AsyncHbaseScannerFold[Future[AnyRef]] {
         def fold(acc0: Future[AnyRef], kv: KeyValue): Future[AnyRef] = {
           acc0 andThen { case _ =>
-            val delReq = new DeleteRequest(HTABLE_NAME_BYTES, kv.key, cfName)
+            val delReq = new DeleteRequest(HTABLE_NAME_BYTES, kv.key, cfName.getBytes)
             ahclient.delete(delReq)
           }
         }

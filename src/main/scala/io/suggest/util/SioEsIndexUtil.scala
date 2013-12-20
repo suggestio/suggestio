@@ -165,10 +165,10 @@ object SioEsIndexUtil extends Logs with Serializable {
    * @return true, когда всё нормально.
    */
   def move(fromIndex:MDVIUnitAlterable, toIndex:MDVIUnitAlterable, isTolerant:Boolean = IS_TOLERANT_DFLT)(implicit client:Client, fs:FileSystem, executor:ExecutionContext): Future[_] = {
-    lazy val logPrefix = "move(%s -> %s tolerant=%s): " format (fromIndex.vin, toIndex.vin, isTolerant)
+    lazy val logPrefix = "move(%s -> %s tolerant=%s): " format (fromIndex.getVin, toIndex.getVin, isTolerant)
     debug(logPrefix + "Starting copy()...")
     copy(fromIndex, toIndex, isTolerant) flatMap { _ =>
-      debug(logPrefix + "copy() finished. Let's delete old index %s..." format fromIndex.vin)
+      debug(logPrefix + "copy() finished. Let's delete old index %s..." format fromIndex.getVin)
       fromIndex.eraseIndexOrMappings
     }
   }

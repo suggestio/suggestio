@@ -19,12 +19,20 @@ class MDVIActiveTest extends FlatSpec with Matchers {
   private val dkey = "suggest.io"
 
   /** Сериализовать и сразу десериализовать экземплпяр MDVIActive. */
-  private def sd(dvi: MDVIActive) = deserializeFromTupleDkey(dvi.dkey, serializeToDkeylessTuple(dvi))
+  private def sd(dvi: MDVIActive) = {
+    val s = serializeForHBase(dvi)
+    val dsResult = deserializeRaw(rowkey=s.rowkey, qualifier=s.qualifier, value=s.value)
+    dsResult should equal (dvi)
+    deserializeWithDkey(dkey=dvi.getDkey, qualifier=s.qualifier, value=s.value)  should equal (dvi)
+    deserializeWithVin(rowkey=s.rowkey, vin=dvi.getVin, value=s.value)           should equal (dvi)
+    deserializeWithDkeyVin(dkey=dvi.getDkey, vin=dvi.getVin, value=s.value)      should equal (dvi)
+    dsResult
+  }
 
 
   "MDVIActive" should "have proper results from exported methods" in {
     val vin = "asdasdas1"
-    val dvi = MDVIActive(dkey=dkey, vin=vin, generation=123123L)
+    val dvi = new MDVIActive(dkey=dkey, vin=vin, generation=123123L)
     dvi.getShards               should equal (Seq(vin + "_0"))
     dvi.getAllTypes             should equal (Seq(getTypename(dkey, 0)))
     dvi.getVirtualIndex         should equal (MVirtualIndex(vin))
@@ -33,7 +41,7 @@ class MDVIActiveTest extends FlatSpec with Matchers {
 
   "serialize/deserialize()" should "handle single-subshard MDVIActive" in {
     val dkey = "aversimage.ru"
-    val dvi1 = MDVIActive(dkey, "asdasdasd1", 0)
+    val dvi1 = new MDVIActive(dkey, "asdasdasd1", 0)
     sd(dvi1)      should equal (dvi1)
     sd(sd(dvi1))  should equal (dvi1)
   }
@@ -44,14 +52,14 @@ class MDVIActiveTest extends FlatSpec with Matchers {
       MDVISubshardInfo(123123123, List(1,2)),
       MDVISubshardInfo(0,         List(3,4))
     )
-    val dvi1 = MDVIActive(dkey=dkey, vin=vinFor("asdasd", 1), generation=14, subshardsInfo=shards)
+    val dvi1 = new MDVIActive(dkey=dkey, vin=vinFor("asdasd", 1), generation=14, subshardsInfo=shards)
     sd(dvi1)      should equal (dvi1)
     sd(sd(dvi1))  should equal (dvi1)
   }
 
 
   "getInxTypeForDate()" should "return correct inx/types on 1-shard MVI 1-subshard MDVIA" in {
-    val mdvia = MDVIActive(vin="adasdasd1", dkey=dkey, generation=123123L)
+    val mdvia = new MDVIActive(vin="adasdasd1", dkey=dkey, generation=123123L)
     val result = mdvia.getShards.head -> getTypename(dkey, 0L)
     import mdvia.getInxTypeForDate
     getInxTypeForDate(LocalDate.now)                should equal  (result)
@@ -67,10 +75,10 @@ class MDVIActiveTest extends FlatSpec with Matchers {
     val days06 = toDaysCount(new LocalDate(2006, 1, 1))
     val days0  = 0
     val vin = vinFor("asdasd", 1)
-    val mdvia = MDVIActive(
-      dkey = dkey,
-      vin = vin,
-      generation = 123456L,
+    val mdvia = new MDVIActive(
+      dkey          = dkey,
+      vin           = vin,
+      generation    = 123456L,
       subshardsInfo = List(days09, days06, days0) map { MDVISubshardInfo(_) }
     )
     val resultInx = mdvia.getVirtualIndex.getShards.head
@@ -105,7 +113,7 @@ class MDVIActiveTest extends FlatSpec with Matchers {
     val days06 = toDaysCount(new LocalDate(2006, 1, 1))
     val days0  = 0
     val vin = vinFor("bdsm", 3)
-    val mdvia = MDVIActive(
+    val mdvia = new MDVIActive(
       dkey = dkey,
       vin = vin,
       generation = 123456L,

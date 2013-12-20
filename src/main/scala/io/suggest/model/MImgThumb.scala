@@ -157,7 +157,8 @@ class MImgThumb extends MImgThumbAbstract(MImgThumb) {
   /** Сохранить в таблицу. */
   def save(implicit ec: ExecutionContext): Future[_] = {
     val v = SerialUtil.serializeTuple(dataTuple)
-    val putReq = new PutRequest(HTABLE_NAME_BYTES, getId, CF, CF, v)
+    val col = CF.getBytes
+    val putReq = new PutRequest(HTABLE_NAME_BYTES, getId, col, col, v)
     ahclient.put(putReq)
   }
 

@@ -45,6 +45,11 @@ object JacksonWrapper {
     writer.toString
   }
 
+
+  def deserialize[T: Manifest](arr: Array[Byte]) : T = {
+    mapper.readValue(arr, typeReference[T])
+  }
+
   def deserialize[T: Manifest](value: String) : T = {
     mapper.readValue(value, typeReference[T])
   }
@@ -53,9 +58,11 @@ object JacksonWrapper {
     mapper.readValue(stream, typeReference[T])
   }
 
+
   def convert[T: Manifest](fromValue : Any) : T = {
     mapper.convertValue(fromValue, typeReference[T])
   }
+
 
   def typeReference[T: Manifest] = new TypeReference[T] {
     override def getType = typeFromManifest(manifest[T])

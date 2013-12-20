@@ -27,7 +27,7 @@ object VirtualIndexUtil {
     val logPrefix = "downgradeAll():"
     trace(logPrefix + " starting...")
     MDVIActive.getAll.flatMap { mdviActives =>
-      val dkeyInxGroups = mdviActives.groupBy(_.dkey).mapValues(_.sortBy(_.generation))
+      val dkeyInxGroups = mdviActives.groupBy(_.getDkey).mapValues(_.sortBy(_.getGeneration))
       // Параллельно делаем downgrade индексов по доменам
       val fut = Future.traverse(dkeyInxGroups) {
         // Нечего даунгрейдить, если 0 или 1 индекс всего лишь.
@@ -39,9 +39,9 @@ object VirtualIndexUtil {
         case (dkey, mdviGroup) =>
           val restInx = mdviGroup.head
           val toRmInxs = mdviGroup.tail
-          trace(s"$logPrefix Downgrading indices for dkey=$dkey to index=${restInx.vin}. Drop indices (${toRmInxs.size}): ${mdvisAsString(toRmInxs)}")
+          trace(s"$logPrefix Downgrading indices for dkey=$dkey to index=${restInx.getVin}. Drop indices (${toRmInxs.size}): ${mdvisAsString(toRmInxs)}")
           // Сначала обновить inx ptr
-          new MDVISearchPtr(dkey, List(restInx.vin)).save.flatMap { searchPtr =>
+          new MDVISearchPtr(dkey, List(restInx.getVin)).save.flatMap { searchPtr =>
             Future.traverse(toRmInxs) { rmMdviActive =>
               rmMdviActive.eraseBackingIndex.recover {
                 case ex: IndexMissingException =>
@@ -61,7 +61,7 @@ object VirtualIndexUtil {
   }
 
   private def mdvisAsString(indices: Seq[MDVIActive]): String = {
-    indices.map(_.vin).mkString(",")
+    indices.map(_.getVin).mkString(",")
   }
 
 }

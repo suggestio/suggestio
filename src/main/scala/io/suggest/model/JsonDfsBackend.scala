@@ -1,8 +1,10 @@
 package io.suggest.model
 
 import org.apache.hadoop.fs.{Path, FileSystem}
-import io.suggest.util.JacksonWrapper
+import io.suggest.util.{StorageType, SioModelUtil, MyConfig, JacksonWrapper}
 import io.suggest.util.SiobixFs._
+import scala.concurrent.{ExecutionContext, Await, Future, future}
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -111,67 +113,156 @@ object JsonDfsBackend {
 }
 
 
-trait JsonDfsClient {
+trait JsonBackendT {
   protected type ImportExportMap = Map[String,Any]
-  protected def exportState : ImportExportMap
-  protected def importStateElement(key:String, value:Any)
 
-   /**
+  /** Экспорт состояния. Метод реализуется на клиенте. */
+  def exportState : ImportExportMap
+
+  /** Импорт одного элемента из прочитанного состояния. */
+  def importStateElement(key:String, value:Any)
+
+
+  /**
    * Импорт экспортированного состояния.
    * @param map
    */
-  protected def importState(map: ImportExportMap) {
+  protected def applyState(map: ImportExportMap) {
     map.foreach { case (k,v) => importStateElement(k,v) }
   }
 
-  /**
-   * Экспортировать состояние, сериализовать и отправить в DFS.
-   */
-  protected def saveState(implicit fs:FileSystem)
+  protected def saveState(implicit ec: ExecutionContext) = writeState(exportState)
 
-  /**
-   * Восстановить ранее сохраненное состояние из DFS.
-   */
-  protected def loadState(implicit fs:FileSystem): Boolean
-
-  protected def getClassName = getClass.getCanonicalName
-  protected def getStateFileName = getClassName + ".json"
-}
+  /** Экспортировать состояние, сериализовать и отправить в DFS. */
+  def writeState(data: ImportExportMap)(implicit ec: ExecutionContext): Future[_]
 
 
-// Трайт для быстрой интеграции функций JsonDfsBackend в акторы и синглтоны, относящиеся к домену.
-trait JsonDfsClientDkey extends JsonDfsClient {
-
-  protected def dkey : String
-
-  protected def saveState(implicit fs:FileSystem) {
-    JsonDfsBackend.writeToDkeyName(dkey, getClassName, exportState)
+  /** Восстановить ранее сохраненное состояние из DFS. */
+  protected def loadState(implicit ec: ExecutionContext): Future[Boolean] = {
+    readState map maybeApplyState
   }
 
-  protected def loadState(implicit fs:FileSystem) = {
-    JsonDfsBackend.getAs[ImportExportMap](dkey, getStateFileName, fs) exists { data =>
-      importState(data)
+  protected def maybeApplyState(dataOpt: Option[ImportExportMap]): Boolean = {
+    dataOpt exists { data =>
+      applyState(data)
       true
     }
   }
+
+  protected def loadSyncTimeout = 2 seconds
+
+  protected def loadStateSync(implicit ec: ExecutionContext): Boolean = {
+    Await.result(loadState, loadSyncTimeout)
+  }
+
+  /** Прочитать состояние. */
+  def readState(implicit ec: ExecutionContext): Future[Option[ImportExportMap]]
+
+
+  /** Под каким идентификатором сохранять состояние. */
+  protected def getSaveStateId = getClass.getCanonicalName
 
 }
 
 
 // Трайт для быстрой интеграции JsonDfsClient в акторы и синглтоны, работающих вне всех доменов
 // Это например супервизоры верхнего уровня, менеджеры индексов и т.д.
-trait JsonDfsClientGlobal extends JsonDfsClient {
+trait JsonDfsBackendGlobalT extends JsonBackendT {
+
+  protected def getStateFileName = getSaveStateId + ".json"
+
+  protected def getFileSystem = fs
 
   protected def getStatePath = new Path(siobix_conf_path, getStateFileName)
 
-  protected def saveState(implicit fs:FileSystem) {
-    JsonDfsBackend.writeToPath(getStatePath, exportState)
+  def writeState(data: ImportExportMap)(implicit ec: ExecutionContext): Future[_] = future { writeStateSync(data) }
+
+  protected def writeStateSync(data: ImportExportMap) = {
+    JsonDfsBackend.writeToPath(getStatePath, data)(getFileSystem)
   }
 
-  protected def loadState(implicit fs:FileSystem): Boolean = {
-    JsonDfsBackend.getAs[ImportExportMap](getStatePath, fs) exists { data =>
-      importState(data)
-      true
-    }
+
+  def readState(implicit ec: ExecutionContext): Future[Option[ImportExportMap]] = future { readStateSync }
+
+  protected def readStateSync: Option[ImportExportMap] = {
+    JsonDfsBackend.getAs[ImportExportMap](getStatePath, getFileSystem)
+  }
+
+  /** Нанооптимизация: синхронная запись без Future+Await. */
+  override protected def loadStateSync(implicit ec: ExecutionContext): Boolean = {
+    maybeApplyState(readStateSync)
   }
 }
+
+
+/** Бэкэнд для хранения random-access данных в MObject. */
+trait JsonHBaseBackendT extends JsonBackendT {
+
+  /** Экспортировать состояние, сериализовать и отправить в DFS. */
+  def writeState(data: ImportExportMap)(implicit ec: ExecutionContext): Future[_] = {
+    val dataSer = JacksonWrapper.serialize(data).getBytes
+    MObject.setProp(getSaveStateId, dataSer)
+  }
+
+  /** Прочитать состояние. */
+  def readState(implicit ec: ExecutionContext): Future[Option[ImportExportMap]] = {
+    MObject.getProp(getSaveStateId) map {
+      _.map {
+        v => JacksonWrapper.deserialize[ImportExportMap](v)
+      }
+    }
+  }
+
+}
+
+
+trait JsonBackendWrapperT extends JsonBackendT {
+  protected def jsonBackend: JsonBackendT
+
+  /** Экспортировать состояние, сериализовать и отправить в DFS. */
+  def writeState(data: ImportExportMap)(implicit ec: ExecutionContext): Future[_] = {
+    jsonBackend.writeState(data)
+  }
+
+  /** Прочитать состояние. */
+  def readState(implicit ec: ExecutionContext): Future[Option[ImportExportMap]] = {
+    jsonBackend.readState
+  }
+
+  // Остальное наверное можно не врапать, т.к. те функции обычно не меняются в backend'ах.
+}
+
+
+
+/** Json-бэкэнд, умеющий работать без проблем, если ему задать значение бэкэнда. */
+trait JsonBackendSwitchableT extends JsonBackendWrapperT {
+
+  protected def getJsonBackendStorageType: StorageType.StorageType
+
+  /** В зависимости от конфига, выбрать тот или иной backend, пробросив в них абстрактные методы. */
+  protected def getJsonBackend: JsonBackendT = {
+    val me = this
+    getJsonBackendStorageType match {
+      case StorageType.DFS =>
+        new JsonDfsBackendGlobalT {
+          def exportState: ImportExportMap = me.exportState
+          def importStateElement(key: String, value: Any) = me.importStateElement(key, value)
+        }
+
+      case StorageType.HBASE =>
+        new JsonHBaseBackendT {
+          def exportState: ImportExportMap = me.exportState
+          def importStateElement(key: String, value: Any) = me.importStateElement(key, value)
+        }
+    }
+  }
+
+}
+
+
+/** json-бэкэнд, работающий без дополнительных настроек. */
+trait JsonBackendAutoswitchT extends JsonBackendSwitchableT {
+  protected def getJsonBackendStorageType = SioModelUtil.STORAGE
+  protected val jsonBackend = getJsonBackend
+}
+

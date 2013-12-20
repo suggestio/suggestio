@@ -4,7 +4,7 @@ import scala.concurrent.{Future, future}
 import scala.concurrent.ExecutionContext.Implicits._
 import io.suggest.util.SiobixFs.fs
 import org.apache.hadoop.fs.Path
-import io.suggest.util.{JacksonWrapper, SiobixFs}
+import io.suggest.util.{UrlUtil, JacksonWrapper, SiobixFs}
 import org.hbase.async._
 import scala.collection.JavaConversions._
 import org.joda.time.DateTime
@@ -139,19 +139,23 @@ object MDomain {
   }
 
 
-  /** Backend для хранения данных модели в HBase. */
+  /** Backend для хранения данных модели в HBase. Используются reversed-ключи. */
   class HBaseBackend extends Backend {
     import SioHBaseAsyncClient._
-    import HTapConversionsBasic._
     import MObject.{HTABLE_NAME_BYTES, CF_DOMAIN}
 
-    val QUALIFIER = CF_DOMAIN
+    private val cfBytes = CF_DOMAIN.getBytes
+    def QUALIFIER = CF_DOMAIN
+    private def qualifierBytes = cfBytes
 
     def serialize(d: MDomain) = JacksonWrapper.serialize(d).getBytes
     def deserialize(d: Array[Byte]) = JacksonWrapper.deserialize[MDomain](d)
 
     def getForDkey(dkey: String): Future[Option[MDomain]] = {
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, dkey:Array[Byte]).family(CF_DOMAIN).qualifier(QUALIFIER)
+      val dkeyReversed = UrlUtil.reverseDomain(dkey)
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, dkeyReversed.getBytes)
+        .family(CF_DOMAIN)
+        .qualifier(qualifierBytes)
       ahclient.get(getReq).map { kvs =>
         if (kvs.isEmpty) {
           None
@@ -166,12 +170,14 @@ object MDomain {
 
 
     def save(d: MDomain): Future[MDomain] = {
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, d.dkey:Array[Byte], CF_DOMAIN, QUALIFIER, serialize(d))
+      val dkeyReversed = UrlUtil.reverseDomain(d.dkey)
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, dkeyReversed.getBytes, cfBytes, qualifierBytes, serialize(d))
       ahclient.put(putReq).map {_ => d}
     }
 
     def delete(dkey: String): Future[Any] = {
-      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, dkey:Array[Byte], CF_DOMAIN, QUALIFIER)
+      val dkeyReversed = UrlUtil.reverseDomain(dkey)
+      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, dkeyReversed.getBytes, cfBytes, qualifierBytes)
       ahclient.delete(delReq)
     }
 
@@ -188,8 +194,8 @@ object MDomain {
 
     private def getScanner = {
       val scanner = ahclient.newScanner(HTABLE_NAME_BYTES)
-      scanner.setFamily(CF_DOMAIN)
-      scanner.setQualifier(QUALIFIER)
+      scanner.setFamily(cfBytes)
+      scanner.setQualifier(qualifierBytes)
       scanner
     }
 

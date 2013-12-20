@@ -2,6 +2,8 @@ package io.suggest.model
 
 import io.suggest.util.DateParseUtil
 import org.joda.time.LocalDate
+import cascading.tuple.Tuple
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -15,6 +17,36 @@ object MDVISubshardInfo {
   /** Сгенерить имя типа. */
   def getTypename(dkey:String, lowerDateDays:Long): String = {
     dkey + "-" + lowerDateDays
+  }
+
+  /** Сериализация в кортеж, пригодный как для сериализации в байты, так и для переправки по flow. */
+  def serializeToTuple(dsi: MDVISubshardInfo): Tuple = {
+    val t = new Tuple
+    t addInteger dsi.lowerDateDays
+    val shardsSer: Tuple = if (dsi.shards.isEmpty) {
+      null
+    } else {
+      val shardsTuple = new Tuple
+      dsi.shards.foreach(shardsTuple.addInteger)
+      shardsTuple
+    }
+    t add shardsSer
+    t
+  }
+
+
+  /** Десериализация версии 1. Версия сериализованности хранится снаружи, где-то на уровне MDVIActive. */
+  val deserializeV1: PartialFunction[AnyRef, MDVISubshardInfo] = {
+    case t: Tuple =>
+      val ldd = t getInteger 0
+      val shards: List[Int] = t getObject 1 match {
+        case null => Nil
+        case shardsTuple: Tuple =>
+          (0 until shardsTuple.size) map { i =>
+            shardsTuple getInteger i
+          } toList
+      }
+      MDVISubshardInfo(ldd, shards)
   }
 
 }
@@ -41,6 +73,7 @@ case class MDVISubshardInfo(
   /** Сгенерить имя типа. */
   def getTypename(dkey: String) = MDVISubshardInfo.getTypename(dkey, lowerDateDays)
 
+  def serializerToTuple = MDVISubshardInfo.serializeToTuple(this)
 }
 
 

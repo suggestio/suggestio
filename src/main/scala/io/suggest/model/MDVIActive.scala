@@ -1,22 +1,22 @@
 package io.suggest.model
 
 import org.joda.time.LocalDate
-import io.suggest.util.{JacksonWrapper, LogsImpl, SioFutureUtil}
+import io.suggest.util._
 import io.suggest.util.DateParseUtil.toDaysCount
-import scala.concurrent.{Promise, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.{Client => EsClient}
 import io.suggest.index_info.MDVIUnitAlterable
 import org.elasticsearch.common.unit.TimeValue
 import com.fasterxml.jackson.annotation.JsonIgnore
-import java.io.{ByteArrayOutputStream, ByteArrayInputStream}
 import org.apache.hadoop.hbase.HColumnDescriptor
 import scala.collection.JavaConversions._
 import HTapConversionsBasic._
 import SioHBaseAsyncClient._
 import org.hbase.async.{DeleteRequest, PutRequest, KeyValue, GetRequest}
-import scala.util.{Failure, Success}
-import java.util.{ArrayList => juArrayList}
-import cascading.tuple.Tuple
+import cascading.tuple.{TupleEntry, Fields, Tuple}
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable
+import scala.Some
+import com.scaleunlimited.cascading.BaseDatum
 
 /**
  * Suggest.io
@@ -24,15 +24,15 @@ import cascading.tuple.Tuple
  * Created: 16.07.13 12:01
  * Description: Model Dkey Virtual Index Active - модель хранения активных связей между dkey и виртуальными шардами.
  *
- * TODO В этой модели исторически живут два вида сериализации: кусочная в json и полноразмерная в Tuple.
- *      Надо устранить зоопарк сериализаций. При чтении из бд внутрь flow json-представление конвертируется в Tuple-представление.
- *      Tuple-представление быстрое и вроде бы универсальное, однако вопрос эволюции его во времени пока не решен.
+ * В этой модели исторически жили два вида сериализации: кусочная-долгосрочная в json и полноразмерная-промежуточная в dkeyless Tuple (использовалось в flow).
+ * 2013.dec.20 был рассадник сериализаций был заменён новым, менее разнообразным.
+ * Долгосрочное хранение происходит через tuple с номером версии сериализатора в первом поле, и без dkey и vin - они в rowKey и qualifier.
+ * При этом экземпляр MDVIActive является легко сериализуемым, ибо является подклассом BaseDatum, что позволяет гибко
+ * пользоваться им внутри flow.
  *
- *      Вариант: перевести MDVIActive в подкласс BaseDatum (выковырять из bixo), добавить версии,
- *      а subshardsInfo сериализовывать в подкортеж, как это сделано в моделях bixo. Для tap'ов использовать простую
- *      tuple-схему.
+ * Сеттеры модели не публичные, т.к. экземплярым модели изначально разработа чтобы быть неизменяемой.
  */
-object MDVIActive {
+object MDVIActive extends CascadingFieldNamer {
 
   private val LOGGER = new LogsImpl(getClass)
   import LOGGER._
@@ -43,34 +43,141 @@ object MDVIActive {
 
   def CF = MObject.CF_DINX_ACTIVE
 
-  // Ключи для сериализованной карты данных.
-  val SER_KEY_GENERATION = "g"
-  val SER_KEY_SUBSHARDS = "s"
+  val DKEY_FN       = fieldName("dkey")
+  val VIN_FN        = fieldName("vin")
+  val GENERATION_FN = fieldName("generation")
+  val SUBSHARDS_FN  = fieldName("subshards")
+  val FIELDS        = new Fields(DKEY_FN, VIN_FN, GENERATION_FN, SUBSHARDS_FN)
+
 
   // Номер поколения - это миллисекунды, вычтенные и деленные на указанный делитель.
   // Номер поколения точно не будет раньше этого времени. Выкидываем.
+  // После запуска в продакшен, менять эти цифры уже нельзя (понадобится полное удаление всех данных по индексам вместе с оными).
   val GENERATION_SUBSTRACT  = 1381140627123L // 2013/oct/07 14:11 +04:00.
   val GENERATION_RESOLUTION = 10000L         // Округлять мс до 10 секунд.
 
   /** Это поколение выставляется для сабжа, если  */
   val GENERATION_BOOTSTRAP = -1
 
-  /** Десериализовать набор байт в MDVIActive.
-   * @param dkey Ключ домена, ибо массив байт обычно не содержит dkey.
-   * @param vin Id индекса. Обычно является ключом и хранится вне массива байтов.
-   * @param b Массив байтов.
-   * @return Экземпляр MDVIActive.
+  /** Версия, указываемая нулевым полем в сериализуемые кортежи. 16-бит хватит для указания любой возможной версии.
+    * Это необходимо для возможности легкого обновления схемы данных. Версию проверяет десериализатор в deserializeWithDkeyVin(). */
+  val SER_VSN = 1.toShort
+
+
+  /** Десериализовать hbase qualifier в строку vin. */
+  val deserializeQualifier2Vin: PartialFunction[AnyRef, String] = {
+    case bytes: Array[Byte] =>
+      val dkeyRev: String = new String(bytes)
+      deserializeQualifier2Vin(dkeyRev)
+
+    case str: String => str
+
+    case ibw: ImmutableBytesWritable =>
+      deserializeQualifier2Vin(ibw.get)
+  }
+
+
+  /** Десериализовать hbase rowkey в dkey-строку. */
+  def deserializeRowkey2Dkey(rowkey: AnyRef) = {
+    val dkeyRev = deserializeQualifier2Vin(rowkey)
+    UrlUtil.reverseDomain(dkeyRev)
+  }
+
+
+  /** Сериализовать dkey в ключ ряда. Для удобства сортировки поддоменов, dkey разворачивается в "ru.domain.subdomain".
+    * @param dkey Ключ домена.
+    * @return Байты, пригодные для задания ключа в таблице.
+    */
+  def serializeDkey2Rowkey(dkey: String): Array[Byte] = UrlUtil.reverseDomain(dkey).getBytes
+
+  /** Сериализовать vin. По сути просто конвертится строка в байты.
+   * @param vin Строка виртуального индекса.
+   * @return Байты, пригодные для задание qualifier'a.
    */
-  implicit def deserializeBytes(dkey:String, vin:String, b: Array[Byte]): MDVIActive = {
-    val is = new ByteArrayInputStream(b)
-    val data = try {
-      JacksonWrapper.deserialize[Map[String, Any]](is)
-    } finally {
-      is.close()
+  def serializeVin(vin: String): Array[Byte] = vin.getBytes
+
+
+  /** Десериализовать исходную запись из HBase.
+    * @param rowkey Ключ ряда.
+    * @param qualifier Имя колонки (vin).
+    * @param value Значение ячейки.
+    * @return MDVIActive.
+    */
+  def deserializeRaw(rowkey:AnyRef, qualifier:AnyRef, value:Array[Byte]): MDVIActive = {
+    val dkey = deserializeRowkey2Dkey(rowkey)
+    deserializeWithDkey(dkey, qualifier, value=value)
+  }
+
+  /** Десериализовать данные после хранения в HBase. На случай, если dkey уже десериализован.
+    * @param dkey Ключ домена.
+    * @param qualifier Имя колонки (vin).
+    * @param value Значение ячейки.
+    * @return MDVIActive.
+    */
+  def deserializeWithDkey(dkey:String, qualifier:AnyRef, value:Array[Byte]): MDVIActive = {
+    val vin = deserializeQualifier2Vin(qualifier)
+    deserializeWithDkeyVin(dkey=dkey, vin=vin, value=value)
+  }
+
+  /** Десериализовать данные при условии, что vin уже десериализован.
+   * @param rowkey Ключ ряда.
+   * @param vin Строка виртуального индекса.
+   * @param value Значение ячейки.
+   * @return MDVIActive
+   */
+  def deserializeWithVin(rowkey:AnyRef, vin:String, value:Array[Byte]): MDVIActive = {
+    val dkey = deserializeRowkey2Dkey(rowkey)
+    deserializeWithDkeyVin(dkey=dkey, vin=vin, value=value)
+  }
+
+
+  /** Десериализации при наличии готовых vin и dkey.
+    * @param dkey Ключ домена.
+    * @param vin Строка виртуального индекса.
+    * @param value Значение ячейки.
+    * @return MDVIActive.
+    */
+  def deserializeWithDkeyVin(dkey:String, vin:String, value:Array[Byte]): MDVIActive = {
+    val tuple = SerialUtil.deserializeTuple(value)
+    val vsn = tuple getShort 0
+    vsn match {
+      case SER_VSN =>
+        val generation = tuple getLong 1
+        val sisSer = tuple getObject 2
+        new MDVIActive(dkey=dkey, vin=vin, generation=generation, subshardsRaw=sisSer)
     }
-    val generation = data(SER_KEY_GENERATION).asInstanceOf[Int]
-    val subshardsInfo = JacksonWrapper.convert [List[MDVISubshardInfo]] (data(SER_KEY_SUBSHARDS))
-    MDVIActive(dkey=dkey, vin=vin, generation=generation, subshardsInfo=subshardsInfo)
+  }
+
+
+  /** Сериализовать запись в кортеж и реквизиты. Результат пригоден для немедленной отправки в HBase.
+    * @param mdvia Исходный MDVIActive.
+    * @return Контейнер, содержащий готовые данные для отправки в HBase.
+    */
+  def serializeForHBase(mdvia: MDVIActive): MDVIActiveSerialized = {
+    val rowkey = serializeDkey2Rowkey(mdvia.getDkey)
+    val qualifier = deserializeQualifier2Vin(mdvia.getVin)
+    val value = new Tuple
+    value addShort SER_VSN
+    value addLong mdvia.getGeneration
+    value add mdvia.getSubshardsRaw
+    val ssisTuple = new Tuple
+    value add ssisTuple
+    val valBytes = SerialUtil.serializeTuple(value)
+    MDVIActiveSerialized(rowkey=rowkey, qualifier=qualifier, value=valBytes)
+  }
+
+
+  val deserializeSubshardInfo: PartialFunction[AnyRef, List[MDVISubshardInfo]] = {
+    case t: Tuple =>
+      t.toList.map { MDVISubshardInfo.deserializeV1(_) }
+  }
+
+
+  def serializeSubshardInfo(sis: List[MDVISubshardInfo]): Tuple = {
+    val ssisTuple = new Tuple
+    sis.map(_.serializerToTuple)
+       .foreach(ssisTuple add _)
+    ssisTuple
   }
 
 
@@ -82,13 +189,16 @@ object MDVIActive {
    */
   def getForDkeyVin(dkey:String, vin:String)(implicit ec:ExecutionContext): Future[Option[MDVIActive]] = {
     val column: Array[Byte] = vin
-    val getReq = new GetRequest(HTABLE_NAME, dkey).family(CF).qualifier(column)
+    val getReq = new GetRequest(HTABLE_NAME, dkey)
+      .family(CF)
+      .qualifier(column)
     ahclient.get(getReq) map { results =>
       if (results.isEmpty) {
         None
       } else {
         val bytes = results.head.value()
-        Some(deserializeBytes(dkey=dkey, vin=vin, b=bytes))
+        val mdvia = deserializeWithDkeyVin(dkey=dkey, vin=vin, value=bytes)
+        Some(mdvia)
       }
     }
   }
@@ -109,8 +219,7 @@ object MDVIActive {
     scanner.setQualifier(column)
     val folder = new AsyncHbaseScannerFold[List[MDVIActive]] {
       def fold(acc: List[MDVIActive], kv: KeyValue): List[MDVIActive] = {
-        val dkey = kv.key()
-        deserializeBytes(vin=vin, dkey=dkey, b=kv.value) :: acc
+        deserializeWithVin(vin=vin, rowkey=kv.key, value=kv.value) :: acc
       }
     }
     folder(Nil, scanner)
@@ -126,9 +235,7 @@ object MDVIActive {
     scanner.setFamily(CF)
     val folder = new AsyncHbaseScannerFold [List[MDVIActive]] {
       def fold(acc0: List[MDVIActive], kv: KeyValue): List[MDVIActive] = {
-        val dkey = kv.key()
-        val vin = kv.qualifier()
-        deserializeBytes(vin=vin, dkey=dkey, b=kv.value) :: acc0
+        deserializeRaw(rowkey=kv.key, qualifier=kv.qualifier, value=kv.value) :: acc0
       }
     }
     folder(Nil, scanner)
@@ -146,7 +253,7 @@ object MDVIActive {
         Nil
       } else {
         results.map { kv =>
-          deserializeBytes(dkey=dkey, vin=kv.qualifier, b=kv.value)
+          deserializeWithDkey(dkey=dkey, qualifier=kv.qualifier, value=kv.value)
         }
       }
     }
@@ -157,29 +264,6 @@ object MDVIActive {
    * @return Новый экземпляр HColumnDescriptor.
    */
   def getCFDescriptor = new HColumnDescriptor(CF).setMaxVersions(3)
-
-
-  /** Сериализовать данные в tuple.
-   * @param dvi исходные экземпляр сабжа, подлежащий сериализации в переносимый tuple.
-   * @return Tuple, НЕ содержащий dkey.
-   */
-  def serializeToDkeylessTuple(dvi: MDVIActive): Tuple = {
-    val t = new Tuple(dvi.vin)
-    t.addLong(dvi.generation)
-    MDVISubshard.serializeSubshardInfo(dvi.subshardsInfo, t)
-  }
-
-
-  /** Десериализация данных, сгенерированных в serializeToDkeylessTuple() и dkey
-   * @param dkey Ключ домена.
-   * @param t Кортеж.
-   * @return Экземпляр MDVIActive.
-   */
-  def deserializeFromTupleDkey(dkey: String, t: Tuple): MDVIActive = {
-    val vin :: generation :: sii = t.toList
-    val si = MDVISubshard.deserializeSubshardInfo(sii)
-    MDVIActive(dkey, vin.toString, generation.toString.toInt, si)
-  }
 
 
   /**
@@ -206,25 +290,88 @@ import MDVIActive._
 
 /**
  * Класс уровня домена. Хранит информацию по виртуальному индексу в контексте текущего dkey.
- * @param dkey Ключ домена
- * @param vin Имя нижележащего виртуального индекса.
- * @param generation Поколение. При миграции в другой индекс поколение увеличивается.
- * @param subshardsInfo Список подшард. "Новые" всегла левее (ближе к head), чем старые. В последнем хвосте списка
- *                      всегда находится шарда с lowerDaysCount = 0.
  */
-case class MDVIActive(
-  dkey:       String,
-  vin:        String,
-  generation: Long,
-  subshardsInfo: List[MDVISubshardInfo] = MDVIActive.SUBSHARD_INFO_DFLT
-
-) extends MDVIUnitAlterable with Serializable {
+class MDVIActive extends BaseDatum(FIELDS) with MDVIUnitAlterable {
 
   import LOGGER._
 
-  if (subshardsInfo.isEmpty) {
-    throw new IllegalArgumentException("subshardInfo MUST contain at least one shard. See default value for example.")
+  def this(t: Tuple) = {
+    this()
+    setTuple(t)
   }
+
+  def this(te: TupleEntry) = {
+    this()
+    setTupleEntry(te)
+  }
+
+  /** Конструктор.
+   * @param dkey Ключ домена
+   * @param vin Имя нижележащего виртуального индекса.
+   * @param generation Поколение. При миграции в другой индекс поколение увеличивается.
+   * @param subshardsInfo Список подшард. "Новые" всегла левее (ближе к head), чем старые. В последнем хвосте списка
+   *                      всегда находится шарда с lowerDaysCount = 0.
+   */
+  def this(
+    dkey          : String,
+    vin           : String,
+    generation    : Long,
+    subshardsInfo : List[MDVISubshardInfo] = MDVIActive.SUBSHARD_INFO_DFLT
+  ) = {
+    this()
+    if (subshardsInfo.isEmpty) {
+      throw new IllegalArgumentException("subshardInfo MUST contain at least one shard. See default value for example.")
+    }
+    setDkey(dkey)
+    setVin(vin)
+    setGeneration(generation)
+    setSubshardsInfo(subshardsInfo)
+  }
+
+  private def this(dkey:String, vin:String, generation:Long, subshardsRaw:AnyRef) {
+    this()
+    setDkey(dkey)
+    setVin(vin)
+    setGeneration(generation)
+    setSubshardsRaw(subshardsRaw)
+  }
+
+
+  def getDkey = _tupleEntry getString DKEY_FN
+  protected def setDkey(dkey: String) = {
+    _tupleEntry.setString(DKEY_FN, dkey)
+    this
+  }
+
+  def getVin = _tupleEntry getString VIN_FN
+  protected def setVin(vin: String) = {
+    _tupleEntry.setString(VIN_FN, vin)
+    this
+  }
+
+  def getGeneration = _tupleEntry getLong GENERATION_FN
+  protected def setGeneration(generation: Long) = {
+    _tupleEntry.setLong(GENERATION_FN, generation)
+    this
+  }
+
+  def getSubshardsRaw = {
+    (_tupleEntry getObject SUBSHARDS_FN).asInstanceOf[Tuple]
+  }
+  def getSubshardsInfo: List[MDVISubshardInfo] = {
+    val sisSer = getSubshardsRaw
+    deserializeSubshardInfo(sisSer)
+  }
+
+  protected def setSubshardsRaw(sisSer: AnyRef) = {
+    _tupleEntry.setObject(SUBSHARDS_FN, sisSer)
+    this
+  }
+  protected def setSubshardsInfo(sis: List[MDVISubshardInfo]) = {
+    val sisSer = serializeSubshardInfo(sis)
+    setSubshardsRaw(sisSer)
+  }
+
 
   protected implicit def toSubshard(sInfo: MDVISubshardInfo) = new MDVISubshard(this, sInfo)
   protected implicit def toSubshardsList(sInfoList: List[MDVISubshardInfo]) = sInfoList.map(toSubshard)
@@ -234,14 +381,14 @@ case class MDVIActive(
    * @return Список MDVISubshard.
    */
   @JsonIgnore
-  def subshards: List[MDVISubshard] = subshardsInfo
+  def getSubshards: List[MDVISubshard] = getSubshardsInfo
 
   /**
    * Выдать id этого виртуального индекса.
    * @return
    */
   @JsonIgnore
-  def id: String = "%s$%s$%s" format (dkey, vin, generation)
+  def id: String = "%s$%s$%s" format (getDkey, getVin, getGeneration)
 
   /**
    * Нужно сохранить документ. И встает вопрос: в какую именно подшарду.
@@ -261,12 +408,13 @@ case class MDVIActive(
    */
   def getSubshardForDaysCount(daysCount:Int): MDVISubshard = {
     isSingleShard match {
-      case true  => subshards.head
+      case true  => getSubshards.head
 
       // TODO Выбираются все шарды слева направо, однако это может неэффективно.
       //      Следует отбрасывать "свежие" шарды слева, если их многовато.
       case false =>
-        val si = subshardsInfo find { _.lowerDateDays < daysCount } getOrElse subshardsInfo.last
+        val sis = getSubshardsInfo
+        val si = sis find { _.lowerDateDays < daysCount } getOrElse sis.last
         si
     }
   }
@@ -284,14 +432,14 @@ case class MDVIActive(
   }
 
   @JsonIgnore
-  lazy val isSingleShard = subshards.length == 1
+  lazy val isSingleShard = getSubshards.length == 1
 
   /**
    * Выдать все типы, относящиеся ко всем индексам в этой подшарде.
    * @return список типов.
    */
   @JsonIgnore
-  def getAllTypes = subshards.map(_.getTypename)
+  def getAllTypes = getSubshards.map(_.getTypename)
 
 
   /**
@@ -299,7 +447,7 @@ case class MDVIActive(
    * Считаем, что вирт.индекс точно существует, если существует зависимый от него экземпляр сабжа.
    */
   @JsonIgnore
-  lazy val getVirtualIndex = MVirtualIndex(vin)
+  lazy val getVirtualIndex = MVirtualIndex(getVin)
 
 
   /**
@@ -313,20 +461,16 @@ case class MDVIActive(
     getAllTypes  // TODO нужно как-то что-то где-то определять.
   }
 
-  def exportInternalState: Map[String, Any] = Map(
-    SER_KEY_GENERATION -> generation,
-    SER_KEY_SUBSHARDS  -> subshardsInfo
-  )
 
   /**
    * Сохранить текущий экземпляр в хранилище.
    * @return Сохраненные (т.е. текущий) экземпляр сабжа.
    */
   @JsonIgnore
-  def save(implicit ec: ExecutionContext): Future[MDVIActive] = {
-    val v = JacksonWrapper.serialize(exportInternalState)
-    val putReq = new PutRequest(HTABLE_NAME_BYTES, dkey:Array[Byte], CF, vin:Array[Byte], v:Array[Byte])
-    ahclient.put(putReq) map { _ => this }
+  def save(implicit ec: ExecutionContext): Future[_] = {
+    val ser = MDVIActive.serializeForHBase(this)
+    val putReq = new PutRequest(HTABLE_NAME_BYTES, ser.rowkey, CF.getBytes, ser.qualifier, ser.value)
+    ahclient.put(putReq)
   }
 
   /**
@@ -335,23 +479,10 @@ case class MDVIActive(
    * @return Фьючерс для синхронизации.
    */
   def delete(implicit ec: ExecutionContext): Future[Unit] = {
-    val delReq = new DeleteRequest(HTABLE_NAME_BYTES, dkey:Array[Byte], CF, vin:Array[Byte])
+    val delReq = new DeleteRequest(HTABLE_NAME_BYTES, getDkey:Array[Byte], CF.getBytes, getVin:Array[Byte])
     ahclient.delete(delReq) map { _ => () }
   }
 
-  /** Сериализовать этот экземпляр класса в десериализуемое представление.
-   * @return Строка, но по идее должны быть байты.
-   */
-  @JsonIgnore
-  def serialize: Array[Byte] = {
-    val os = new ByteArrayOutputStream(128)
-    try {
-      JacksonWrapper.serialize(os, this)
-    } finally {
-      os.close()
-    }
-    os.toByteArray
-  }
 
   /**
    * Выдать натуральные шарды натурального индекса, обратившись к вирт.индексу.
@@ -368,6 +499,7 @@ case class MDVIActive(
   def setMappings(failOnError:Boolean = true)(implicit esClient:EsClient, ec:ExecutionContext): Future[Boolean] = {
     debug("setMappings(%s): starting" format failOnError)
     // Запустить парралельно загрузку маппингов для всех типов (всех подшард).
+    val subshards = getSubshards
     Future.traverse(subshards) {
       _.setMappings(getShards, failOnError)
     } flatMap { boolSeq =>
@@ -378,7 +510,7 @@ case class MDVIActive(
       if (isEverythingOk || !failOnError) {
         Future.successful(isEverythingOk)
       } else {
-        val msg = "Failed to setMappings on one or more subshards. %s => %s" format (subshards, boolSeq)
+        val msg = s"Failed to setMappings on one or more subshards. $subshards => $boolSeq"
         error(msg)
         Future.failed(new RuntimeException(msg))
       }
@@ -390,7 +522,8 @@ case class MDVIActive(
    * @return Выполненный фьючерс когда всё закончится.
    */
   def deleteMappings(implicit esClient:EsClient, ec:ExecutionContext): Future[Unit] = {
-    debug("deleteMappings(): dkey=%s vin=%s types=%s" format (dkey, vin, subshards map { _.getTypename }))
+    val subshards = getSubshards
+    debug(s"deleteMappings(): dkey=$getDkey vin=$getVin types=${ subshards.map(_.getTypename)}")
     SioFutureUtil
       .mapLeftSequentally(subshards, ignoreErrors=true) { _.deleteMappaings() }
       .map(_ => Unit)
@@ -401,9 +534,9 @@ case class MDVIActive(
    * @return true, если используется.
    */
   def isVinUsedByOtherDkeys(implicit ec:ExecutionContext): Future[Boolean] = {
-    getAllLatestForVin(vin) map { vinUsedBy =>
+    getAllLatestForVin(getVin) map { vinUsedBy =>
       var l = vinUsedBy.size
-      if (vinUsedBy contains dkey)
+      if (vinUsedBy contains getDkey)
         l -= 1
       val result = l > 0
       debug(
@@ -426,7 +559,7 @@ case class MDVIActive(
     val logPrefix = "deleteIndexOrMappings():"
     isVinUsedByOtherDkeys flatMap {
       case true  =>
-        warn(s"$logPrefix vin=$vin used by dkeys, other than '$dkey'. Delete mapping...")
+        warn(s"$logPrefix vin=$getVin used by dkeys, other than '$getDkey'. Delete mapping...")
         deleteMappings
 
       case false => eraseBackingIndex
@@ -436,7 +569,7 @@ case class MDVIActive(
 
   /** Удалить весь индекс целиком, даже если в нём хранятся другие сайты (без проверок). */
   def eraseBackingIndex(implicit esClient: EsClient, ec:ExecutionContext): Future[Boolean] = {
-    warn(s"eraseBackingIndex(): vin=$vin dkey='$dkey' Deleting real index FULLY!")
+    warn(s"eraseBackingIndex(): vin=$getVin dkey='$getDkey' Deleting real index FULLY!")
     getVirtualIndex.eraseShards
   }
 
@@ -453,9 +586,14 @@ case class MDVIActive(
     startFullScrollIn(getShards, getAllTypes, timeout, sizePerShard)
   }
 
-  /** Сериализовать в cascading.tuple без dkey.
-   * @return cascading Tuple, содержащий все необходимые для восстановления данные за искл. поля dkey.
-   */
-  def toDkeylessTuple = serializeToDkeylessTuple(this)
 }
+
+
+/**
+ * Контейнер для результата serializeForHBase().
+ * @param rowkey Ключ ряда.
+ * @param qualifier Имя колонки (qualifier).
+ * @param value Байты payload'а.
+ */
+case class MDVIActiveSerialized(rowkey:Array[Byte], qualifier:Array[Byte], value:Array[Byte])
 

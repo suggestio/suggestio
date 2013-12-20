@@ -14,7 +14,7 @@ import org.apache.hadoop.hbase.{HTableDescriptor, HColumnDescriptor}
 
 object HTableModel {
 
-  def cfDescSimple(name: Array[Byte], maxVersions:Int) = {
+  def cfDescSimple(name: String, maxVersions:Int) = {
     new HColumnDescriptor(name).setMaxVersions(maxVersions)
   }
 
@@ -23,12 +23,12 @@ object HTableModel {
 
 trait HTableModel {
 
-  val HTABLE_NAME: String
+  def HTABLE_NAME: String
 
-  def CFs: Seq[Array[Byte]]
+  protected def CFs: Seq[String]
 
   // TODO Тогда имя получается изменяемое. Это может быть небезопасно для якобы неизменяемого состояния.
-  def HTABLE_NAME_BYTES: Array[Byte] = HTABLE_NAME
+  def HTABLE_NAME_BYTES: Array[Byte] = HTABLE_NAME.getBytes
 
   /** Существует ли указанная таблица? */
   def isTableExists: Future[Boolean] = {
@@ -43,7 +43,7 @@ trait HTableModel {
   }
 
   /** Генератор дескрипторов CFок. */
-  def getColumnDescriptor(cf: Array[Byte]): HColumnDescriptor
+  def getColumnDescriptor: PartialFunction[String, HColumnDescriptor]
 
 
   /** Асинхронно создать таблицу. Полезно при первом запуске. Созданная таблица относится и к подчиненным моделям.

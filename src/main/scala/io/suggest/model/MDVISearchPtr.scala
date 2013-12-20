@@ -131,7 +131,7 @@ case class MDVISearchPtr(
    */
   def save(implicit ec:ExecutionContext): Future[MDVISearchPtr] = {
     val v = serializeVins(vins)
-    val putReq = new PutRequest(HTABLE_NAME:Array[Byte], dkey:Array[Byte], CF_DSEARCH_PTR, columnName, v)
+    val putReq = new PutRequest(HTABLE_NAME:Array[Byte], dkey:Array[Byte], CF_DSEARCH_PTR.getBytes, columnName, v)
     ahclient.put(putReq).map { _ => this }
   }
 
