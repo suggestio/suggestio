@@ -3,6 +3,7 @@ package models
 import util._
 import SiobixFs.fs
 import io.suggest.model.JsonDfsBackend
+import io.suggest.util.StorageType._
 import scala.concurrent.{Future, future}
 import scala.concurrent.duration._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -12,7 +13,6 @@ import org.apache.hadoop.fs.Path
 import org.hbase.async.{GetRequest, PutRequest}
 import scala.Some
 import scala.collection.JavaConversions._
-import StorageUtil.StorageType._
 
 /**
  * Suggest.io
@@ -160,20 +160,22 @@ object MDomainUserSettings extends DfsModelStaticT {
     import io.suggest.model.SioHBaseAsyncClient._
     import io.suggest.model.HTapConversionsBasic._
 
-    val QUALIFIER = CF_DPROPS
+    private def QUALIFIER = CF_DPROPS.getBytes
 
     def dkey2key(dkey: String): Array[Byte] = dkey
     def deserialize(d: Array[Byte]) = deserializeTo[DataMap_t](d)
 
     def save(d: MDomainUserSettings): Future[MDomainUserSettings] = {
       val key = dkey2key(d.dkey)
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, key, CF_DPROPS, QUALIFIER, serialize(d.data))
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, key, CF_DPROPS.getBytes, QUALIFIER, serialize(d.data))
       ahclient.put(putReq) map {_ => d}
     }
 
     def getProps(dkey: String): Future[DataMap_t] = {
       val key = dkey2key(dkey)
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, key).family(CF_DPROPS).qualifier(QUALIFIER)
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, key)
+        .family(CF_DPROPS)
+        .qualifier(QUALIFIER)
       ahclient.get(getReq) map { kvs =>
         if (kvs.isEmpty) emptyDataMap else deserialize(kvs.head.value)
       }

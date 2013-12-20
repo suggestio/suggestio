@@ -6,6 +6,7 @@ import util._
 import SiobixFs.fs
 import org.apache.hadoop.fs.{FileStatus, Path}
 import io.suggest.model.{AsyncHbaseScannerFold, JsonDfsBackend}
+import io.suggest.util.StorageType._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.util.UUID
 import scala.concurrent.duration._
@@ -13,7 +14,6 @@ import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.collection.JavaConversions._
 import org.hbase.async.{KeyValue, GetRequest, DeleteRequest, PutRequest}
-import StorageUtil.StorageType._
 import scala.Some
 import play.api.Logger
 
@@ -381,12 +381,12 @@ object MPersonDomainAuthz {
     def deserialize(data: Array[Byte]) = deserializeTo[MPersonDomainAuthz](data)
 
     def save(data: MPersonDomainAuthz): Future[MPersonDomainAuthz] = {
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, personId2key(data.person_id), CF_UAUTHZ, dkey2qualifier(data.dkey), serialize(data))
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, personId2key(data.person_id), CF_UAUTHZ.getBytes, dkey2qualifier(data.dkey), serialize(data))
       ahclient.put(putReq) map { _ => data }
     }
 
     def delete(person_id: String, dkey: String): Future[Any] = {
-      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, personId2key(person_id), CF_UAUTHZ, dkey2qualifier(dkey))
+      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, personId2key(person_id), CF_UAUTHZ.getBytes, dkey2qualifier(dkey))
       ahclient.delete(delReq)
     }
 

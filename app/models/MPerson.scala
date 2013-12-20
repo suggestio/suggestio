@@ -3,12 +3,12 @@ package models
 import util.{StorageUtil, ModelSerialJson, SiobixFs}
 import SiobixFs.fs
 import io.suggest.model.JsonDfsBackend
+import io.suggest.util.StorageType._
 import util.DfsModelUtil.getPersonPath
 import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits._
 import org.hbase.async.{DeleteRequest, GetRequest, PutRequest}
 import scala.collection.JavaConversions._
-import StorageUtil.StorageType._
 import com.fasterxml.jackson.annotation.JsonIgnore
 
 /**
@@ -141,19 +141,21 @@ object MPerson {
 
   /** Hbase backend для текущей модели, сохраняющий все данные в одну колонку через JSON. */
   class HBaseBackendBulk extends Backend with ModelSerialJson {
-    def QUALIFIER = CF_UPROPS
+    private def QUALIFIER = CF_UPROPS.getBytes   // !!! при изменении надо менять val col в save().
     val KEYPREFIX = "u:"
 
     def id2key(id: String): Array[Byte] = KEYPREFIX + id
     def deserialize(data: Array[Byte]) = deserializeTo[MPerson](data)
 
     def save(data: MPerson): Future[MPerson] = {
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, id2key(data.id), CF_UPROPS, QUALIFIER, serialize(data))
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, id2key(data.id), CF_UPROPS.getBytes, QUALIFIER, serialize(data))
       ahclient.put(putReq).map(_ => data)
     }
 
     def getById(id: String): Future[Option[MPerson]] = {
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, id2key(id)).family(CF_UPROPS).qualifier(QUALIFIER)
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, id2key(id))
+        .family(CF_UPROPS)
+        .qualifier(QUALIFIER)
       ahclient.get(getReq) map { al =>
         if (al.isEmpty) None else Some(deserialize(al.head.value()))
       }
@@ -193,22 +195,22 @@ object MPerson {
       // Отправляем в базу колонку с ключами доменов
       val dkeysFut: Future[_] = if (!data.dkeys.isEmpty) {
         val value = serializeDkeys(data.dkeys)
-        val putReq = new PutRequest(table, rowKey, CF_UPROPS, Q_DKEYS.getBytes, value)
+        val putReq = new PutRequest(table, rowKey, CF_UPROPS.getBytes, Q_DKEYS.getBytes, value)
         ahclient.put(putReq)
       } else {
         // Доменов нет, возможно юзер их удалил. Удалить надо бы из базы.
-        val delReq = new DeleteRequest(table, rowKey, CF_UPROPS, Q_DKEYS.getBytes)
+        val delReq = new DeleteRequest(table, rowKey, CF_UPROPS.getBytes, Q_DKEYS.getBytes)
         ahclient.delete(delReq)
       }
 
       // Язык, если задан.
       val langFut: Future[_] = if (data.langIso2.isDefined) {
         val value = serializeLang(data.langIso2.get)
-        val putReq = new PutRequest(table, rowKey, CF_UPROPS, Q_LANG.getBytes, value)
+        val putReq = new PutRequest(table, rowKey, CF_UPROPS.getBytes, Q_LANG.getBytes, value)
         ahclient.put(putReq)
       } else {
         // Язык внезапно не выставлен.
-        val delReq = new DeleteRequest(table, rowKey, CF_UPROPS, Q_LANG.getBytes)
+        val delReq = new DeleteRequest(table, rowKey, CF_UPROPS.getBytes, Q_LANG.getBytes)
         ahclient.delete(delReq)
       }
 

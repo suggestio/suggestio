@@ -4,7 +4,7 @@ import util.SiobixFs.fs
 import com.google.common.io.CharStreams
 import java.io.{PrintWriter, InputStreamReader}
 import util.{StorageUtil, SiobixFs, DkeyModelT, DfsModelStaticT}
-import StorageUtil.StorageType._
+import io.suggest.util.StorageType._
 import scala.concurrent.{future, Future}
 import org.apache.hadoop.fs.Path
 import play.api.libs.concurrent.Execution.Implicits._
@@ -115,11 +115,11 @@ object MDomainUserJson extends DfsModelStaticT {
     import io.suggest.model.HTapConversionsBasic._
 
     def dkey2key(dkey: String): Array[Byte] = dkey
-    val QUALIFIER: Array[Byte] = "uj"
+    private val QUALIFIER: Array[Byte] = "uj"
     def deserialize(j: Array[Byte]): String = j
 
     def save(j: MDomainUserJson): Future[MDomainUserJson] = {
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, dkey2key(j.dkey), CF_DDATA, QUALIFIER, j.data:Array[Byte])
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, dkey2key(j.dkey), CF_DDATA.getBytes, QUALIFIER, j.data:Array[Byte])
       ahclient.put(putReq).map(_ => j)
     }
 
