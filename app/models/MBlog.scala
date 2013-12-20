@@ -158,7 +158,9 @@ object MBlog extends Logs {
     // TODO проверить и убедится, что таблица существует.
 
     val KEYPREFIX = "mblog:"
-    def QUALIFIER = CF_BLOG
+
+    private val CF_BYTES = CF_BLOG.getBytes
+    private def QUALIFIER = CF_BYTES
 
     // TODO Ключ надо использовать для сортировки по дате.
     def id2key(id: String): Array[Byte] = KEYPREFIX + id
@@ -167,7 +169,7 @@ object MBlog extends Logs {
 
     def save(data: MBlog): Future[MBlog] = {
       val key = id2key(data.id)
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, key, CF_BLOG, QUALIFIER, serialize(data))
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, key, CF_BYTES, QUALIFIER, serialize(data))
       ahclient.put(putReq).map(_ => data)
     }
 
@@ -201,7 +203,7 @@ object MBlog extends Logs {
 
     def delete(id: String): Future[Any] = {
       val key = id2key(id)
-      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, key, CF_BLOG, QUALIFIER)
+      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, key, CF_BYTES, QUALIFIER)
       ahclient.delete(delReq)
     }
   }

@@ -27,57 +27,63 @@ trait SioutilLogs extends LogsAbstract with Logs {
   protected def S4JL = LOGGER.logger
 
   protected def trace(message: => String) {
-    if (LOGGER.isTraceEnabled)
+    if (isTraceEnabled)
       S4JL.trace(message)
   }
 
   protected def trace(message: => String, ex: Throwable) {
-    if (LOGGER.isTraceEnabled)
+    if (isTraceEnabled)
       S4JL.trace(message, ex)
   }
 
   protected def debug(message: => String) {
-    if (LOGGER.isDebugEnabled)
+    if (isDebugEnabled)
       S4JL.debug(message)
   }
 
   protected def debug(message: => String, ex: Throwable) {
-    if (LOGGER.isDebugEnabled)
+    if (isDebugEnabled)
       S4JL.debug(message, ex)
   }
 
   protected def info(message: => String) {
-    if (LOGGER.isInfoEnabled)
+    if (isInfoEnabled)
       S4JL.info(message)
   }
 
   protected def info(message: => String, ex: Throwable) {
-    if (LOGGER.isInfoEnabled)
+    if (isInfoEnabled)
       S4JL.info(message, ex)
   }
 
   protected def warn(message: => String) {
-    if (LOGGER.isWarnEnabled)
+    if (isWarnEnabled)
       S4JL.warn(message)
   }
 
   protected def warn(message: => String, ex: Throwable) {
-    if (LOGGER.isWarnEnabled)
+    if (isWarnEnabled)
       S4JL.warn(message, ex)
   }
 
   protected def error(ex: Throwable) {
-    if (LOGGER.isErrorEnabled)
+    if (isErrorEnabled)
       S4JL.error("Undescribed error: ", ex)
   }
 
   protected def error(message: => String) {
-    if (LOGGER.isErrorEnabled)
+    if (isErrorEnabled)
       S4JL.error(message)
   }
 
   protected def error(message: => String, ex: Throwable) {
-    if (LOGGER.isErrorEnabled)
+    if (isErrorEnabled)
       S4JL.error(message, ex)
   }
+
+  def isTraceEnabled: Boolean = LOGGER.isTraceEnabled
+  def isDebugEnabled: Boolean = LOGGER.isDebugEnabled
+  def isInfoEnabled: Boolean  = LOGGER.isInfoEnabled
+  def isWarnEnabled: Boolean  = LOGGER.isWarnEnabled
+  def isErrorEnabled: Boolean = LOGGER.isErrorEnabled
 }

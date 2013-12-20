@@ -21,19 +21,21 @@
     <tbody>
     @l.map { e =>
       <tr>
-        <td><a href="@routes.Sys.indicesShowActiveFor(dkey=e.dkey, vin=e.vin)">:::</a></td>
-        <td><a href="@routes.Sys.dkeyShow(e.dkey)">@e.dkey</a></td>
+        <td><a href="@routes.Sys.indicesShowActiveFor(dkey=e.getDkey, vin=e.getVin)">:::</a></td>
+        <td><a href="@routes.Sys.dkeyShow(e.getDkey)">@e.getDkey</a></td>
         @* Индекс отображается разным шрифтом в зависимости от кол-ва реальных шард индекса. *@
         @defining(e.getVirtualIndex.shardCount) { esShardCount =>
-          <td><a title="@esShardCount-шардовый индекс." href="@routes.Sys.showVin(e.vin)"><font size="@Math.min(7, esShardCount)">@e.vin</font></a></td>
+          <td><a title="@esShardCount-шардовый индекс." href="@routes.Sys.showVin(e.getVin)"><font size="@Math.min(7, esShardCount)">@e.getVin</font></a></td>
         }
-        <td>@e.generation</td>
+        <td>@e.getGeneration</td>
         <td>
-          <span title="Количество виртуальных подшард">(@e.subshards.size)</span>:
-          @e.subshardsInfo.map { si =>
-            &#123;<span title="lowerDateDays = @si.lowerDateDays">@si.lowerDate</span>
-            =&gt;
-            [@if(si.shards.isEmpty) {*} else {@si.shards.mkString(",")}]&#125;
+          @defining(e.getSubshardsInfo) { ssi =>
+            <span title="Количество виртуальных подшард">(@ssi.size)</span>:
+            @ssi.map { si =>
+              &#123;<span title="lowerDateDays = @si.lowerDateDays">@si.lowerDate</span>
+              =&gt;
+              [@if(si.shards.isEmpty) {*} else {@si.shards.mkString(",")}]&#125;
+            }
           }
         </td>
       </tr>

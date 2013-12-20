@@ -139,18 +139,22 @@ object MPerson {
     import io.suggest.model.HTapConversionsBasic._
 
     val KEYPREFIX = "mperson:"
-    def QUALIFIER = CF_UPROPS
+
+    private val CF_UPROPS_B = CF_UPROPS.getBytes
+    private def QUALIFIER = CF_UPROPS_B
 
     def id2key(id: String): Array[Byte] = KEYPREFIX + id
     def deserialize(data: Array[Byte]) = deserializeTo[MPerson](data)
 
     def save(data: MPerson): Future[MPerson] = {
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, id2key(data.id), CF_UPROPS, QUALIFIER, serialize(data))
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, id2key(data.id), CF_UPROPS_B, QUALIFIER, serialize(data))
       ahclient.put(putReq).map(_ => data)
     }
 
     def getById(id: String): Future[Option[MPerson]] = {
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, id2key(id)).family(CF_UPROPS).qualifier(QUALIFIER)
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, id2key(id))
+        .family(CF_UPROPS_B)
+        .qualifier(QUALIFIER)
       ahclient.get(getReq) map { al =>
         if (al.isEmpty) None else Some(deserialize(al.head.value()))
       }
