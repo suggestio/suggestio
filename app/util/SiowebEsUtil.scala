@@ -84,10 +84,12 @@ object SiowebEsUtil extends SioEsClient {
                 warn("MDVIActive not found for dkey='%s' and vin='%s', but it should (according to %s)" format (dkey, vin, searchPtr))
                 None
             }
-          }.map { listOfIndicesTypesOpt =>
+          } map { listOfIndicesTypesOpt =>
             // Смержить все индексы и типы в два списка. На выходе будет кортеж, который описан аккумулятором: allIndices -> allTypes
             val result = listOfIndicesTypesOpt.foldLeft [(List[String], List[String])] (Nil -> Nil) {
-              case ((_accIndices, _accTypes), Some((_indices, _types))) => (_accIndices ++ _indices) -> (_accTypes ++ _types)
+              case ((_accIndices, _accTypes), Some((_indices, _types))) =>
+                (_accIndices ++ _indices) -> (_accTypes ++ _types)
+
               case (_acc, None) => _acc
             }
             Some(result)

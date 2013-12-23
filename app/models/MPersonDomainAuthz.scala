@@ -1,7 +1,7 @@
 package models
 
 import org.joda.time.{ReadableDuration, DateTime, Duration}
-import io.suggest.util.StringUtil
+import io.suggest.util.{SioModelUtil, StringUtil}
 import util._
 import SiobixFs.fs
 import org.apache.hadoop.fs.{FileStatus, Path}
@@ -245,7 +245,7 @@ object MPersonDomainAuthz {
 
   /** Интерфейс для storage backend'ов этой модели. */
   trait Backend {
-    def save(data: MPersonDomainAuthz): Future[MPersonDomainAuthz]
+    def save(data: MPersonDomainAuthz): Future[_]
     def delete(person_id:String, dkey:String): Future[Any]
     def getForPersonDkey(person_id:String, dkey:String) : Future[Option[MPersonDomainAuthz]]
     def getForPersonDkeys(person_id:String, dkeys:Seq[String]) : Future[List[MPersonDomainAuthz]] = {
@@ -331,11 +331,10 @@ object MPersonDomainAuthz {
     }
 
 
-    def save(data: MPersonDomainAuthz): Future[MPersonDomainAuthz] = {
+    def save(data: MPersonDomainAuthz): Future[_] = {
       val filepath = dkeyPersonPath(dkey = data.dkey,  person_id = data.person_id)
       future {
         JsonDfsBackend.writeToPath(filepath, data)
-        data
       }
     }
 
@@ -374,17 +373,16 @@ object MPersonDomainAuthz {
   class HBaseBackend extends Backend with ModelSerialJson {
     import io.suggest.model.MObject.{CF_UAUTHZ, HTABLE_NAME_BYTES}
     import io.suggest.model.SioHBaseAsyncClient._
-    import io.suggest.model.HTapConversionsBasic._
 
     private val CF_UAUTHZ_B = CF_UAUTHZ.getBytes
 
-    def personId2key(person_id: String): Array[Byte] = person_id
-    def dkey2qualifier(dkey: String): Array[Byte] = dkey
-    def deserialize(data: Array[Byte]) = deserializeTo[MPersonDomainAuthz](data)
+    def personId2key(person_id: String): Array[Byte]  = SioModelUtil.serializeStrForHCellCoord(person_id)
+    def dkey2qualifier(dkey: String): Array[Byte]     = SioModelUtil.dkey2rowkey(dkey)
+    def deserialize(data: Array[Byte])                = deserializeTo[MPersonDomainAuthz](data)
 
-    def save(data: MPersonDomainAuthz): Future[MPersonDomainAuthz] = {
+    def save(data: MPersonDomainAuthz): Future[_] = {
       val putReq = new PutRequest(HTABLE_NAME_BYTES, personId2key(data.person_id), CF_UAUTHZ_B, dkey2qualifier(data.dkey), serialize(data))
-      ahclient.put(putReq) map { _ => data }
+      ahclient.put(putReq)
     }
 
     def delete(person_id: String, dkey: String): Future[Any] = {

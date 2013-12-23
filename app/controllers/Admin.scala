@@ -152,14 +152,16 @@ object Admin extends SioController with Logs {
       ,
       {dkey =>
         val jsonFields0 = dkeyJsProps(dkey)
-        MDomain.getForDkey(dkey) map {
+        MDomain.getForDkey(dkey) flatMap {
           // Есть такой домен в базе
           case Some(_) =>
             val person_id = request.pwOpt.get.id
-            val da = MPersonDomainAuthz.newValidation(dkey=dkey, person_id=person_id).save
-            // Теперь надо сгенерить json ответа
-            val jsonFields1 = "status" -> jsStatusOk :: jsonFields0
-            Created(JsObject(jsonFields1))
+            val da = MPersonDomainAuthz.newValidation(dkey=dkey, person_id=person_id)
+            da.save.map { _ =>
+              // Теперь надо сгенерить json ответа
+              val jsonFields1 = "status" -> jsStatusOk :: jsonFields0
+              Created(JsObject(jsonFields1))
+            }
 
           case None =>
             val json = JsObject("status" -> jsStatusNxDomain :: jsonFields0)
@@ -175,12 +177,14 @@ object Admin extends SioController with Logs {
    * @return 204 No content;
    */
   def deleteDomain = IsAuth.async { implicit request =>
-    addDomainFormM.bindFromRequest().fold(
-      formWithErrors => Future successful NotAcceptable
+    addDomainFormM.bindFromRequest.fold(
+      formWithErrors => NotAcceptable
       ,
       {dkey =>
         val person_id = request.pwOpt.get.id
-        MPersonDomainAuthz.delete(person_id, dkey) map {_ => NoContent}
+        MPersonDomainAuthz.delete(person_id, dkey) map {_ =>
+          NoContent
+        }
       }
     )
   }

@@ -19,7 +19,7 @@ trait MDomainAuthzT extends DkeyModelT {
   def date_created: DateTime
 
   // Доступ к храниищу модели
-  @JsonIgnore def save: Future[MDomainAuthzT]
+  @JsonIgnore def save: Future[_]
   @JsonIgnore def delete: Future[Any]
 
   @JsonIgnore def personIdOpt: Option[String]

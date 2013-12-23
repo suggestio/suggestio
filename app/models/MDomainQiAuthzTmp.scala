@@ -15,6 +15,7 @@ import org.hbase.async.{GetRequest, DeleteRequest, PutRequest}
 import scala.collection.JavaConversions._
 import scala.Some
 import play.api.Logger
+import io.suggest.util.SioModelUtil
 
 /**
  * Suggest.io
@@ -105,7 +106,7 @@ object MDomainQiAuthzTmp {
 
   /** Интерфейс бэкэндов модели. */
   trait Backend {
-    def save(data: MDomainQiAuthzTmp): Future[MDomainQiAuthzTmp]
+    def save(data: MDomainQiAuthzTmp): Future[_]
     def delete(dkey:String, id:String): Future[Any]
     def getForDkeyId(dkey:String, id:String): Future[Option[MDomainQiAuthzTmp]]
     //def listDkey(dkey: String): Future[List[MDomainQiAuthzTmp]]
@@ -125,12 +126,11 @@ object MDomainQiAuthzTmp {
       new Path(tmpDir, dkey + "/" + qi_id)
     }
 
-    def save(data: MDomainQiAuthzTmp): Future[MDomainQiAuthzTmp] = future {
+    def save(data: MDomainQiAuthzTmp): Future[_] = future {
       val filepath = getFilePath(dkey=data.dkey, qi_id=data.id)
       val os = fs.create(filepath)
       try {
         JsonDfsBackend.writeToPath(filepath, data)
-        data
       } finally {
         os.close()
       }
@@ -170,26 +170,26 @@ object MDomainQiAuthzTmp {
     import io.suggest.model.SioHBaseAsyncClient._
     import io.suggest.model.HTapConversionsBasic._
 
-    def dkey2key(dkey: String): Array[Byte] = dkey
-    def id2column(id: String): Array[Byte] = id
-    def deserialize(data: Array[Byte]) = deserializeTo[MDomainQiAuthzTmp](data)
+    private def dkey2rowkey(dkey: String): Array[Byte] = SioModelUtil.dkey2rowkey(dkey)
+    private def id2qualifier(id: String): Array[Byte] = SioModelUtil.serializeStrForHCellCoord(id)
+    private def deserialize(data: Array[Byte]) = deserializeTo[MDomainQiAuthzTmp](data)
 
     private val CF_DQI_B = CF_DQI.getBytes
 
-    def save(data: MDomainQiAuthzTmp): Future[MDomainQiAuthzTmp] = {
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, dkey2key(data.dkey), CF_DQI_B, id2column(data.id), serialize(data))
-      ahclient.put(putReq) map { _ => data }
+    def save(data: MDomainQiAuthzTmp): Future[_] = {
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, dkey2rowkey(data.dkey), CF_DQI_B, id2qualifier(data.id), serialize(data))
+      ahclient.put(putReq)
     }
 
     def delete(dkey: String, id: String): Future[Any] = {
-      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, dkey2key(dkey), CF_DQI_B, id2column(id))
+      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, dkey2rowkey(dkey), CF_DQI_B, id2qualifier(id))
       ahclient.delete(delReq)
     }
 
     def getForDkeyId(dkey: String, id: String): Future[Option[MDomainQiAuthzTmp]] = {
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, dkey2key(dkey))
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, dkey2rowkey(dkey))
         .family(CF_DQI_B)
-        .qualifier(id2column(id))
+        .qualifier(id2qualifier(id))
       ahclient.get(getReq) map { kvs =>
         if (kvs.isEmpty) {
           None

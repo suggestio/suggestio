@@ -10,6 +10,7 @@ import org.apache.hadoop.fs.Path
 import play.api.libs.concurrent.Execution.Implicits._
 import org.hbase.async.{GetRequest, PutRequest}
 import scala.collection.JavaConversions._
+import io.suggest.util.SioModelUtil
 
 /**
  * Suggest.io
@@ -40,7 +41,7 @@ case class MDomainUserJson(
 object MDomainUserJson extends DfsModelStaticT {
 
   private val BACKEND: Backend = StorageUtil.STORAGE match {
-    case DFS => new DfsBackend
+    case DFS   => new DfsBackend
     case HBASE => new HBaseBackend
   }
 
@@ -54,7 +55,7 @@ object MDomainUserJson extends DfsModelStaticT {
 
 
   trait Backend {
-    def save(data: MDomainUserJson): Future[MDomainUserJson]
+    def save(data: MDomainUserJson): Future[_]
     def getForDkey(dkey: String): Future[Option[MDomainUserJson]]
   }
 
@@ -69,7 +70,7 @@ object MDomainUserJson extends DfsModelStaticT {
      */
     private def getPath(dkey:String) : Path = new Path(SiobixFs.dkeyPathConf(dkey), filename)
 
-    def save(j: MDomainUserJson): Future[MDomainUserJson] = future {
+    def save(j: MDomainUserJson): Future[_] = future {
       import j._
       val path = getPath(dkey)
       if (data.isEmpty) {
@@ -83,7 +84,6 @@ object MDomainUserJson extends DfsModelStaticT {
           os.close()
         }
       }
-      j
     }
 
     def getForDkey(dkey: String): Future[Option[MDomainUserJson]] = future {
@@ -114,19 +114,19 @@ object MDomainUserJson extends DfsModelStaticT {
     import io.suggest.model.SioHBaseAsyncClient._
     import io.suggest.model.HTapConversionsBasic._
 
-    def dkey2key(dkey: String): Array[Byte] = dkey
+    private def dkey2rowkey(dkey: String): Array[Byte] = SioModelUtil.dkey2rowkey(dkey)
     private val CF_DDATA_B = CF_DDATA.getBytes
     private val QUALIFIER: Array[Byte] = "uj".getBytes
 
     def deserialize(j: Array[Byte]): String = j
 
-    def save(j: MDomainUserJson): Future[MDomainUserJson] = {
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, dkey2key(j.dkey), CF_DDATA_B, QUALIFIER, j.data:Array[Byte])
-      ahclient.put(putReq).map(_ => j)
+    def save(j: MDomainUserJson): Future[_] = {
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, dkey2rowkey(j.dkey), CF_DDATA_B, QUALIFIER, j.data:Array[Byte])
+      ahclient.put(putReq)
     }
 
     def getForDkey(dkey: String): Future[Option[MDomainUserJson]] = {
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, dkey2key(dkey))
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, dkey2rowkey(dkey))
         .family(CF_DDATA_B)
         .qualifier(QUALIFIER)
       ahclient.get(getReq).map { kvs =>

@@ -13,6 +13,7 @@ import org.apache.hadoop.fs.Path
 import org.hbase.async.{GetRequest, PutRequest}
 import scala.Some
 import scala.collection.JavaConversions._
+import io.suggest.util.SioModelUtil
 
 /**
  * Suggest.io
@@ -117,7 +118,7 @@ object MDomainUserSettings extends DfsModelStaticT {
 
   /** Интерфейс для внутренних бэкэндов модели. */
   trait Backend {
-    def save(d: MDomainUserSettings): Future[MDomainUserSettings]
+    def save(d: MDomainUserSettings): Future[_]
     def getProps(dkey: String): Future[DataMap_t]
   }
 
@@ -137,14 +138,13 @@ object MDomainUserSettings extends DfsModelStaticT {
       new Path(SiobixFs.dkeyPathConf(dkey), filename)
     }
 
-    def save(d: MDomainUserSettings): Future[MDomainUserSettings] = future {
+    def save(d: MDomainUserSettings): Future[_] = future {
       val path = getPath(d.dkey)
       if (!d.data.isEmpty) {
         JsonDfsBackend.writeToPath(path, d.data)
       } else {
         fs.delete(path, false)
       }
-      d
     }
 
     def getProps(dkey: String): Future[MDomainUserSettings.DataMap_t] = future {
@@ -163,17 +163,17 @@ object MDomainUserSettings extends DfsModelStaticT {
     private val CF_DPROPS_B = CF_DPROPS.getBytes
     private def QUALIFIER = CF_DPROPS_B
 
-    def dkey2key(dkey: String): Array[Byte] = dkey
+    def dkey2rowkey(dkey: String): Array[Byte] = SioModelUtil.dkey2rowkey(dkey)
     def deserialize(d: Array[Byte]) = deserializeTo[DataMap_t](d)
 
-    def save(d: MDomainUserSettings): Future[MDomainUserSettings] = {
-      val key = dkey2key(d.dkey)
+    def save(d: MDomainUserSettings): Future[_] = {
+      val key = dkey2rowkey(d.dkey)
       val putReq = new PutRequest(HTABLE_NAME_BYTES, key, CF_DPROPS_B, QUALIFIER, serialize(d.data))
-      ahclient.put(putReq) map {_ => d}
+      ahclient.put(putReq)
     }
 
     def getProps(dkey: String): Future[DataMap_t] = {
-      val key = dkey2key(dkey)
+      val key = dkey2rowkey(dkey)
       val getReq = new GetRequest(HTABLE_NAME_BYTES, key)
         .family(CF_DPROPS_B)
         .qualifier(QUALIFIER)

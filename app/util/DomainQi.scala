@@ -407,7 +407,7 @@ object DomainQi extends Logs {
         MDomainQiAuthzTmp(dkey=dkey, id=qi_id).save
     }
     fut onComplete {
-      case Success(result) => debug(logPrefix + "successfully saved as: " + result)
+      case Success(result) => debug(logPrefix + "Qi successfully saved.")
       case Failure(ex)     => error(logPrefix + "cannot save authz data for user " + pwOpt, ex)
     }
     fut
