@@ -36,6 +36,7 @@ import MDomainUserSettings.{DataMap_t, DataMapKey_t}
  */
 
 object Admin extends SioController with Logs {
+  import LOGGER._
 
   // Под-имя очереди новостей (nq) для админов. Самим именем является email.
   private val NQ_TYPE = "admin"
@@ -65,9 +66,9 @@ object Admin extends SioController with Logs {
       // В итоге получается, что очередь запускается на случай сбора новостей между этим экшеном и окончанием активации WebSocket'а.
       val timestampMs = NewsQueue4Play.getTimestampMs
       if (!pw.isSuperuser && !personDomains.isEmpty) {
-        LOGGER.debug(logPrefix + "Maybe need revalidate %s domains. Starting news queue..." format personDomains.size)
+        debug(logPrefix + "Maybe need revalidate %s domains. Starting news queue..." format personDomains.size)
         NewsQueue4Play.ensureActorFor(pw.id, NQ_TYPE) onSuccess { case nqActorRef =>
-          LOGGER.debug(logPrefix + "NewsQueue started as %s" format nqActorRef)
+          debug(logPrefix + "NewsQueue started as %s" format nqActorRef)
           // Подписать очередь на события SioNotifier
           SiowebNotifier.subscribe(
             subscriber = new SnActorRefSubscriber(nqActorRef),
@@ -80,9 +81,9 @@ object Admin extends SioController with Logs {
           // Если ни один из доменов не начал процедуру валидации, то очередь можно сразу грохнуть.
           if (rdvCount == 0) {
             NewsQueue4Play.stop(nqActorRef)
-            LOGGER.debug(logPrefix + "No revalidations needed. NQ %s stopping..." format nqActorRef)
+            debug(logPrefix + "No revalidations needed. NQ %s stopping..." format nqActorRef)
           } else {
-            LOGGER.debug(logPrefix + "Started %s revalidations" format rdvCount)
+            debug(logPrefix + "Started %s revalidations" format rdvCount)
           }
         }
       }
@@ -99,7 +100,7 @@ object Admin extends SioController with Logs {
     lazy val logPrefix = "ws(%s) user=%s: " format(timestampMs, pwOpt)
     // Проверить права.
     if (pwOpt.isEmpty) {
-      LOGGER.warn(logPrefix + "Unexpected anonymous hacker: " + request.remoteAddress)
+      warn(logPrefix + "Unexpected anonymous hacker: " + request.remoteAddress)
       // Анонимус долбиться на веб-сокет. Выдать ему сообщение о невозможности подобной эксплуатации энтерпрайза.
       EventUtil.wsAccessImpossbleIO("Anonymous users cannot use admin interface: not yet implemented.")
 
@@ -140,30 +141,40 @@ object Admin extends SioController with Logs {
   private val jsStatusNxDomain = JsString("no_such_domain")
 
   /**
-   * Юзер сабмиттит форму добавления домена.
+   * Юзер сабмиттит форму добавления домена в список доменов в админке.
    * @return 201 Created - домен добавлен
    */
   def addDomain = IsAuth.async { implicit request =>
     addDomainFormM.bindFromRequest().fold(
       // Пришла некорректная форма. Вернуть назад.
-      formWithErrors =>
+      {formWithErrors =>
+        warn("addDomain(): Failed to parse request: errors = " + formWithErrors.errorsAsJson.toString())
         // TODO нужно отрендернный шаблон формы возвращать, чтоб юзер мог увидеть ошибку.
         NotAcceptable("TODO")
+      }
       ,
       {dkey =>
+        lazy val logPrefix = s"addDomain($dkey): "
         val jsonFields0 = dkeyJsProps(dkey)
         MDomain.getForDkey(dkey) flatMap {
           // Есть такой домен в базе
-          case Some(_) =>
+          case Some(d) =>
+            trace(s"${logPrefix}Domain exist and added at ${d.addedAt} by ${d.addedBy}")
             val person_id = request.pwOpt.get.id
             val da = MPersonDomainAuthz.newValidation(dkey=dkey, person_id=person_id)
             da.save.map { _ =>
+              trace(logPrefix + "Successfully created new authz for " + person_id)
               // Теперь надо сгенерить json ответа
               val jsonFields1 = "status" -> jsStatusOk :: jsonFields0
               Created(JsObject(jsonFields1))
+            } recover { case ex: Exception =>
+              // Ошибка при сохранении эфемерных данных правам на по сайт. Сделать нормальное добавление сайта проблематично.
+              error(logPrefix + "Cannot save new " + MPersonDomainAuthz.getClass.getSimpleName + " for user " + person_id, ex)
+              InternalServerError(s"Failed to add domain '$dkey'.")
             }
 
           case None =>
+            trace(logPrefix + "Domain not exist.")
             val json = JsObject("status" -> jsStatusNxDomain :: jsonFields0)
             NotFound(json)
         }
@@ -178,12 +189,20 @@ object Admin extends SioController with Logs {
    */
   def deleteDomain = IsAuth.async { implicit request =>
     addDomainFormM.bindFromRequest.fold(
-      formWithErrors => NotAcceptable
+      {formWithErrors =>
+        warn("deleteDomain(): Failed to parse request: " + formWithErrors.errorsAsJson)
+        NotAcceptable("Failed to parse request.")
+      }
       ,
       {dkey =>
         val person_id = request.pwOpt.get.id
         MPersonDomainAuthz.delete(person_id, dkey) map {_ =>
+          // Всё ок - ничего не возвращаем.
           NoContent
+        } recover { case ex: Exception =>
+          // Произошла асинхронная ошибка при удалении ряда из базы.
+          error(s"deleteDomain($dkey): Crash!", ex)
+          InternalServerError(s"Cannot delete domain '$dkey'.")
         }
       }
     )
@@ -206,7 +225,12 @@ object Admin extends SioController with Logs {
 
       // Нет такого домена в списке добавленных юзером
       case None =>
-        NotFound("No such domain in person's domain list.")
+        NotFound("No such domain in person's domain list: " + dkey)
+    } recover { case ex: Exception =>
+      // Ошибка при работе с базой или же при генерации ответа.
+      error(s"getValidationFile($dkey): Failed to retrieve MPersonDomainAuthz for person $person_id", ex)
+      // TODO Надо наверное что-то более весёлое рендерить юзеру.
+      InternalServerError(s"Failed to read data from database and/or generate response.")
     }
   }
 
@@ -274,7 +298,7 @@ object Admin extends SioController with Logs {
   private val applyDUSF: PartialFunction[(DataMapKey_t, String, DataMap_t), DataMap_t] = {
     applyBasicSettingsF orElse {
       case (k, v, data) =>
-        LOGGER.warn("Unknown DUS key=%s => %s SKIPPED" format (k, v))
+        warn("Unknown DUS key=%s => %s SKIPPED" format (k, v))
         data
     }
   }
