@@ -13,7 +13,7 @@ class MDVISearchPtrTest extends FlatSpec with Matchers {
 
   // Проверить сериализацию/десериализацию idOpt в название колонки.
   "idOpt" should "be serializeable/deserializeable as column qualifier" in {
-    idOpt2column(None) should equal(COLUMN_PREFIX.getBytes)
+    idOpt2column(None) should equal (Q_NONE.getBytes)
     column2idOpt(idOpt2column(None)) should equal (None)
     column2idOpt(idOpt2column(Some("ddd"))) should equal (Some("ddd"))
     column2idOpt(idOpt2column(Some("asd.asd123"))) should equal (Some("asd.asd123"))

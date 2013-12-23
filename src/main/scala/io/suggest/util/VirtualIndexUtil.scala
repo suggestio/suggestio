@@ -41,7 +41,8 @@ object VirtualIndexUtil {
           val toRmInxs = mdviGroup.tail
           trace(s"$logPrefix Downgrading indices for dkey=$dkey to index=${restInx.getVin}. Drop indices (${toRmInxs.size}): ${mdvisAsString(toRmInxs)}")
           // Сначала обновить inx ptr
-          new MDVISearchPtr(dkey, List(restInx.getVin)).save.flatMap { searchPtr =>
+          val searchPtr = new MDVISearchPtr(dkey, List(restInx.getVin))
+          searchPtr.save.flatMap { _ =>
             Future.traverse(toRmInxs) { rmMdviActive =>
               rmMdviActive.eraseBackingIndex.recover {
                 case ex: IndexMissingException =>

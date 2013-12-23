@@ -8,6 +8,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor
 import org.hbase.async.{PutRequest, GetRequest}
 import scala.collection.JavaConversions._
 import java.util
+import io.suggest.util.SioModelUtil
 
 /**
  * Suggest.io
@@ -18,7 +19,6 @@ import java.util
  * Тут - модель для задания используемых указателей на активные индексы.
  *
  * Указателей у одного dkey может быть несколько, однако использование их является опциональным.
- *
  */
 
 // TODO В sioutil зачем-то сделана поддержка нескольких vin в рамках alias'a в searchPtr.
@@ -26,20 +26,16 @@ import java.util
 
 object MDVISearchPtr {
 
-  val COLUMN_PREFIX = "_sp"
-  val COLUMN_DFLT: Array[Byte] = COLUMN_PREFIX
-  val COLUMN_ID_SEP = "."
-
-  val COLUMN_ID_PREFIX = COLUMN_PREFIX + COLUMN_ID_SEP
+  val Q_NONE = "?"
   val VINS_SERIAL_SEP = ","
-
   def HTABLE_NAME = MObject.HTABLE_NAME
 
-  def id2column(id: String) = COLUMN_ID_PREFIX + id
+
+  def id2column(id: String) = id
 
   def idOpt2column(id: Option[String]): Array[Byte] = {
     id match {
-      case None      => COLUMN_DFLT
+      case None      => Q_NONE
       case Some(_id) => id2column(_id)
     }
   }
@@ -50,17 +46,14 @@ object MDVISearchPtr {
    * @return idOpt.
    */
   def column2idOpt(c: Array[Byte]): Option[String] = {
-    if (util.Arrays.equals(c, COLUMN_DFLT)) {
+    if (util.Arrays.equals(c, Q_NONE)) {
       None
     } else {
       val cs = new String(c)
-      if (cs startsWith COLUMN_ID_PREFIX) {
-        Some(cs.substring(COLUMN_ID_PREFIX.length))
-      } else {
-        throw new IllegalArgumentException("Column qualifier name must start with '%s'." format COLUMN_ID_PREFIX)
-      }
+      Some(cs)
     }
   }
+
 
   /** Прочитать указатель для dkey и id.
    * @param dkey Ключ домена.
@@ -68,8 +61,11 @@ object MDVISearchPtr {
    * @return Опциональный распрарсенный экземпляр MDVISearchPtr.
    */
   def getForDkeyId(dkey:String, idOpt:Option[String] = None)(implicit ec:ExecutionContext): Future[Option[MDVISearchPtr]] = {
+    val rowkey = SioModelUtil.dkey2rowkey(dkey)
     val column: Array[Byte] = idOpt2column(idOpt)
-    val getReq = new GetRequest(HTABLE_NAME, dkey).family(CF_DSEARCH_PTR).qualifier(column)
+    val getReq = new GetRequest(HTABLE_NAME, rowkey)
+      .family(CF_DSEARCH_PTR)
+      .qualifier(column)
     ahclient.get(getReq) map { results =>
       if (results.isEmpty) {
         None
@@ -87,7 +83,9 @@ object MDVISearchPtr {
    * @return Фьючерс со списком сабжей в произвольном порядке.
    */
   def getAllForDkey(dkey: String)(implicit ec:ExecutionContext): Future[List[MDVISearchPtr]] = {
-    val getReq = new GetRequest(HTABLE_NAME, dkey).family(CF_DSEARCH_PTR)
+    val rowkey = SioModelUtil.dkey2rowkey(dkey)
+    val getReq = new GetRequest(HTABLE_NAME, rowkey)
+      .family(CF_DSEARCH_PTR)
     ahclient.get(getReq) map { results =>
       results.toList.map { kv =>
         val idOpt = column2idOpt(kv.qualifier)
@@ -129,10 +127,11 @@ case class MDVISearchPtr(
    * @return Пустой фьючерс, который исполняется после реального сохранения данных в БД. Объект внутри фьючерса не имеет
    *         никакого потайного смысла, это просто индикатор из клиента.
    */
-  def save(implicit ec:ExecutionContext): Future[MDVISearchPtr] = {
+  def save(implicit ec:ExecutionContext): Future[_] = {
     val v = serializeVins(vins)
-    val putReq = new PutRequest(HTABLE_NAME:Array[Byte], dkey:Array[Byte], CF_DSEARCH_PTR.getBytes, columnName, v)
-    ahclient.put(putReq).map { _ => this }
+    val rowkey = SioModelUtil.dkey2rowkey(dkey)
+    val putReq = new PutRequest(HTABLE_NAME:Array[Byte], rowkey, CF_DSEARCH_PTR.getBytes, columnName, v)
+    ahclient.put(putReq)
   }
 
 

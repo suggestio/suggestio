@@ -64,37 +64,27 @@ object MDVIActive extends CascadingFieldNamer {
   val SER_VSN = 1.toShort
 
 
-  /** Десериализовать hbase qualifier в строку vin. */
-  val deserializeQualifier2Vin: PartialFunction[AnyRef, String] = {
-    case bytes: Array[Byte] =>
-      val dkeyRev: String = new String(bytes)
-      deserializeQualifier2Vin(dkeyRev)
-
-    case str: String => str
-
-    case ibw: ImmutableBytesWritable =>
-      deserializeQualifier2Vin(ibw.get)
-  }
-
-
   /** Десериализовать hbase rowkey в dkey-строку. */
-  def deserializeRowkey2Dkey(rowkey: AnyRef) = {
-    val dkeyRev = deserializeQualifier2Vin(rowkey)
-    UrlUtil.reverseDomain(dkeyRev)
-  }
-
+  def deserializeRowkey2Dkey(rowkey: AnyRef) = SioModelUtil.rowkey2dkey(rowkey)
 
   /** Сериализовать dkey в ключ ряда. Для удобства сортировки поддоменов, dkey разворачивается в "ru.domain.subdomain".
     * @param dkey Ключ домена.
     * @return Байты, пригодные для задания ключа в таблице.
     */
-  def serializeDkey2Rowkey(dkey: String): Array[Byte] = UrlUtil.reverseDomain(dkey).getBytes
+  def serializeDkey2Rowkey(dkey: String): Array[Byte] = SioModelUtil.dkey2rowkey(dkey)
+
+
+  /** Десериализовать hbase qualifier в строку vin.
+    * @param q Квалификатор (колонка) ячейки в каком-то неопределенном формате.
+    * @return Строка, использованная в качестве значения квалификатора.
+    */
+  def deserializeQualifier2Vin(q: AnyRef) = SioModelUtil.deserialzeHCellCoord(q)
 
   /** Сериализовать vin. По сути просто конвертится строка в байты.
    * @param vin Строка виртуального индекса.
    * @return Байты, пригодные для задание qualifier'a.
    */
-  def serializeVin(vin: String): Array[Byte] = vin.getBytes
+  def serializeVin(vin: String): Array[Byte] = SioModelUtil.serializeStrForHCellCoord(vin)
 
 
   /** Десериализовать исходную запись из HBase.
