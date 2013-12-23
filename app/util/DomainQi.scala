@@ -132,7 +132,7 @@ object DomainQi extends Logs {
    * @param session Исходные данные сессии.
    * @return Обновлённые данные сессии.
    */
-  def installFromSession(person_id:String)(implicit session:Session): Future[Session] = {
+  def installFromSession(person_id: String)(implicit session:Session): Future[Session] = {
     lazy val logPrefix = s"installFromSession($person_id): "
     trace(logPrefix + "starting...")
     // Разделить карту сессии на относящихся к qi и остальные.
@@ -144,7 +144,7 @@ object DomainQi extends Logs {
       // Пора распарсить и проанализировать значение по ключу.
       val Array(qi_id, dtQi) = v split qiDtSepCh
       // Надо ли оставить этот элемент сессии (true)? Или стереть?
-      val keepFut = MPersonDomainAuthz.getForPersonDkey(dkey, person_id) flatMap {
+      val keepFut: Future[Boolean] = MPersonDomainAuthz.getForPersonDkey(dkey, person_id) flatMap {
         case Some(da) =>
           // Зареганный юзер проходил qi-проверку. Если прошел, то значит предикат должен вернуть false.
           Future.successful(!da.is_verified)

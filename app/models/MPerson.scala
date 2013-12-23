@@ -10,6 +10,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import org.hbase.async.{DeleteRequest, GetRequest, PutRequest}
 import scala.collection.JavaConversions._
 import com.fasterxml.jackson.annotation.JsonIgnore
+import io.suggest.util.SioModelUtil
 
 /**
  * Suggest.io
@@ -104,18 +105,17 @@ object MPerson {
 
   /** Интерфейс storage backend'а. для данной модели */
   trait Backend {
-    def save(data:MPerson): Future[MPerson]
+    def save(data:MPerson): Future[_]
     def getById(id: String): Future[Option[MPerson]]
   }
 
 
   /** DFS-backend для текущей модели. */
   class DfsBackend extends Backend {
-    def save(data: MPerson): Future[MPerson] = {
+    def save(data: MPerson): Future[_] = {
       val path = getPersonPath(data.id)
       future {
         JsonDfsBackend.writeToPath(path, data)
-        data
       }
     }
 
@@ -141,21 +141,19 @@ object MPerson {
 
   /** Hbase backend для текущей модели, сохраняющий все данные в одну колонку через JSON. */
   class HBaseBackendBulk extends Backend with ModelSerialJson {
-    val KEYPREFIX = "mperson:"
-
     private val CF_UPROPS_B = CF_UPROPS.getBytes
     private def QUALIFIER = CF_UPROPS_B
 
-    def id2key(id: String): Array[Byte] = KEYPREFIX + id
-    def deserialize(data: Array[Byte]) = deserializeTo[MPerson](data)
+    protected def id2rowkey(id: String): Array[Byte] = SioModelUtil.serializeStrForHCellCoord(id)
+    protected def deserialize(data: Array[Byte]) = deserializeTo[MPerson](data)
 
-    def save(data: MPerson): Future[MPerson] = {
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, id2key(data.id), CF_UPROPS_B, QUALIFIER, serialize(data))
-      ahclient.put(putReq).map(_ => data)
+    def save(data: MPerson): Future[_] = {
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, id2rowkey(data.id), CF_UPROPS_B, QUALIFIER, serialize(data))
+      ahclient.put(putReq)
     }
 
     def getById(id: String): Future[Option[MPerson]] = {
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, id2key(id))
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, id2rowkey(id))
         .family(CF_UPROPS_B)
         .qualifier(QUALIFIER)
       ahclient.get(getReq) map { al =>
@@ -190,7 +188,7 @@ object MPerson {
     def serializeLang(langIso2: String): Array[Byte]  = langIso2
     def deserializeLang(langSer: Array[Byte]): String = new String(langSer)
 
-    def save(data: MPerson): Future[MPerson] = {
+    def save(data: MPerson): Future[_] = {
       val rowKey = id2key(data.id)
       val table = HTABLE_NAME_BYTES
 
@@ -220,7 +218,7 @@ object MPerson {
       for {
         dkeys <- dkeysFut
         langIso2 <- langFut
-      } yield data
+      } yield ()
     }
 
     def getById(id: String): Future[Option[MPerson]] = {

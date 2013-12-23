@@ -10,6 +10,7 @@ import akka.util.Timeout
 import concurrent.duration._
 import io.suggest.proto.bixo.crawler._, MainProto.MajorRebuildReply_t
 import io.suggest.util.LogsImpl
+import play.api.Logger
 
 /**
  * Suggest.io
@@ -37,12 +38,19 @@ object SiobixClient extends SiobixClientWrapperT {
 
   /** Используемый клиент для siobix. */
   protected val siobixClientImpl: SiobixClientT = {
-    current.configuration.getString("siobix.client")
+    val confKey = "siobix.client"
+    current.configuration.getString(confKey)
       .map(_.toUpperCase)
       .flatMap {
         case "AKKA"  => None
-        case "FAKE+" => Some(new FakePositiveSiobixClient)
-        case other   => throw new IllegalArgumentException("Unknown client type: " + other)
+
+        case "FAKE+" =>
+          val c = new FakePositiveSiobixClient
+          Logger(getClass).warn(s"siobixClientImpl: Using FAKE ${c.getClass.getSimpleName} as siobix client!!!")
+          Some(c)
+
+        case other =>
+          throw new IllegalArgumentException(s"Invalid client type in application.conf in '$confKey' = $other")
       }
       .getOrElse { new AkkaSiobixClient }
   }

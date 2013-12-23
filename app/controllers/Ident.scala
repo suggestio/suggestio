@@ -79,7 +79,7 @@ object Ident extends SioController with Logs {
         val timeoutFuture = timeout("timeout", verifyReqFutureTimeout)
         Future.firstCompletedOf(Seq(futureVerify, timeoutFuture)) flatMap {
           // Получен ответ от сервера mozilla persona.
-          case resp:Response =>
+          case resp: Response =>
             val respJson = resp.json
             trace(logPrefix + s"MP verifier resp: ${resp.status} ${resp.statusText} :: " + respJson)
             respJson \ "status" match {
@@ -95,9 +95,10 @@ object Ident extends SioController with Logs {
                     // Найти текущего юзера или создать нового:
                     MPerson.getById(email) flatMap { personOpt =>
                       val personFut = personOpt match {
-                        case None    =>
+                        case None =>
                           trace(logPrefix + "Registering new user: " + email)
-                          new MPerson(email).save
+                          val mpersonInst = new MPerson(email)
+                          mpersonInst.save.map { _ => mpersonInst }
 
                         case Some(p) =>
                           trace(logPrefix + "Login already registered user: " + p)
