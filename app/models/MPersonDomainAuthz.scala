@@ -376,22 +376,26 @@ object MPersonDomainAuthz {
     import io.suggest.model.SioHBaseAsyncClient._
     import io.suggest.model.HTapConversionsBasic._
 
+    private val CF_UAUTHZ_B = CF_UAUTHZ.getBytes
+
     def personId2key(person_id: String): Array[Byte] = person_id
     def dkey2qualifier(dkey: String): Array[Byte] = dkey
     def deserialize(data: Array[Byte]) = deserializeTo[MPersonDomainAuthz](data)
 
     def save(data: MPersonDomainAuthz): Future[MPersonDomainAuthz] = {
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, personId2key(data.person_id), CF_UAUTHZ.getBytes, dkey2qualifier(data.dkey), serialize(data))
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, personId2key(data.person_id), CF_UAUTHZ_B, dkey2qualifier(data.dkey), serialize(data))
       ahclient.put(putReq) map { _ => data }
     }
 
     def delete(person_id: String, dkey: String): Future[Any] = {
-      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, personId2key(person_id), CF_UAUTHZ.getBytes, dkey2qualifier(dkey))
+      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, personId2key(person_id), CF_UAUTHZ_B, dkey2qualifier(dkey))
       ahclient.delete(delReq)
     }
 
     def getForPersonDkey(person_id: String, dkey: String): Future[Option[MPersonDomainAuthz]] = {
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, personId2key(person_id)).family(CF_UAUTHZ).qualifier(dkey2qualifier(dkey))
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, personId2key(person_id))
+        .family(CF_UAUTHZ_B)
+        .qualifier(dkey2qualifier(dkey))
       ahclient.get(getReq) map { kvs =>
         if (kvs.isEmpty)  None  else  Some(deserialize(kvs.head.value))
       }

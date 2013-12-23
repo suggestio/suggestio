@@ -160,21 +160,22 @@ object MDomainUserSettings extends DfsModelStaticT {
     import io.suggest.model.SioHBaseAsyncClient._
     import io.suggest.model.HTapConversionsBasic._
 
-    private def QUALIFIER = CF_DPROPS.getBytes
+    private val CF_DPROPS_B = CF_DPROPS.getBytes
+    private def QUALIFIER = CF_DPROPS_B
 
     def dkey2key(dkey: String): Array[Byte] = dkey
     def deserialize(d: Array[Byte]) = deserializeTo[DataMap_t](d)
 
     def save(d: MDomainUserSettings): Future[MDomainUserSettings] = {
       val key = dkey2key(d.dkey)
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, key, CF_DPROPS.getBytes, QUALIFIER, serialize(d.data))
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, key, CF_DPROPS_B, QUALIFIER, serialize(d.data))
       ahclient.put(putReq) map {_ => d}
     }
 
     def getProps(dkey: String): Future[DataMap_t] = {
       val key = dkey2key(dkey)
       val getReq = new GetRequest(HTABLE_NAME_BYTES, key)
-        .family(CF_DPROPS)
+        .family(CF_DPROPS_B)
         .qualifier(QUALIFIER)
       ahclient.get(getReq) map { kvs =>
         if (kvs.isEmpty) emptyDataMap else deserialize(kvs.head.value)

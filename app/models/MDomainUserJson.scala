@@ -115,16 +115,20 @@ object MDomainUserJson extends DfsModelStaticT {
     import io.suggest.model.HTapConversionsBasic._
 
     def dkey2key(dkey: String): Array[Byte] = dkey
-    private val QUALIFIER: Array[Byte] = "uj"
+    private val CF_DDATA_B = CF_DDATA.getBytes
+    private val QUALIFIER: Array[Byte] = "uj".getBytes
+
     def deserialize(j: Array[Byte]): String = j
 
     def save(j: MDomainUserJson): Future[MDomainUserJson] = {
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, dkey2key(j.dkey), CF_DDATA.getBytes, QUALIFIER, j.data:Array[Byte])
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, dkey2key(j.dkey), CF_DDATA_B, QUALIFIER, j.data:Array[Byte])
       ahclient.put(putReq).map(_ => j)
     }
 
     def getForDkey(dkey: String): Future[Option[MDomainUserJson]] = {
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, dkey2key(dkey)).family(CF_DDATA).qualifier(QUALIFIER)
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, dkey2key(dkey))
+        .family(CF_DDATA_B)
+        .qualifier(QUALIFIER)
       ahclient.get(getReq).map { kvs =>
         if (kvs.isEmpty) {
           None

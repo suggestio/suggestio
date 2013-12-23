@@ -3,13 +3,17 @@
 @* Шаблон для полного отображения одного экземпляра MDVIActive *@
 @import m._
 
-@indicesBase(title = s"MDVIActive / $dkey / $vin") {
-    <p>dkey: <b><a href="@routes.Sys.dkeyShow(dkey)">@dkey</a></b></p>
-    <p>vin:  <b><a href="@routes.Sys.showVin(vin)">@vin</a></b></p>
-    <p>generation: <b>@generation</b></p>
+@indicesBase(title = s"MDVIActive / $getDkey / $getVin") {
+    @defining(getDkey) { dkey =>
+        <p>dkey: <b><a href="@routes.Sys.dkeyShow(dkey)">@dkey</a></b></p>
+    }
+    @defining(getVin) { vin =>
+        <p>vin:  <b><a href="@routes.Sys.showVin(vin)">@vin</a></b></p>
+    }
+    <p>generation: <b>@getGeneration</b></p>
     <p>subshards:</p>
     <ul>
-        @subshards.map { ss =>
+        @getSubshards.map { ss =>
             <li>
                 <span title="lowerDateDays = @ss.lowerDateDays">@ss.lowerDate</span>
                 =&gt;
