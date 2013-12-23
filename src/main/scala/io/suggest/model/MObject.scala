@@ -72,6 +72,7 @@ object MObject extends HTableModel {
     case cf @ CF_BLOG            => hcd(cf, 1)
     case cf @ CF_DOMAIN          => hcd(cf, 2)
     case cf @ CF_FACET_INVLINK   => hcd(cf, 1)
+    case cf @ CF_RA_PROPS        => hcd(cf, 1)
   }
 
   private def hcd(cf:String, maxVsn:Int) = HTableModel.cfDescSimple(cf, maxVsn)

@@ -18,24 +18,22 @@ object StorageType extends Enumeration {
 
 import StorageType._
 
-object SioModelUtil extends StorageTypeFromConfigT {
+object SioModelUtil {
 
-  protected def getConfig: Config = MyConfig.CONFIG.underlying
-
-  /** Ключ в конфигах, значение которого описывает испоьлзуемый backend в моделях. */
+  /** Ключ в конфигах, значение которого описывает используемый backend в моделях. */
   val STORAGE_TYPE_CONFIG_KEY = "storage"
 
   private def getLogger = new LogsImpl(getClass)
   private def getStorageDflt = DFS
 
   def getStorageTypeFromConfig(config: Config): StorageType.StorageType = {
-    config.getString(STORAGE_TYPE_CONFIG_KEY) match {
-      case null =>
+    MyConfig(config).getString(STORAGE_TYPE_CONFIG_KEY) match {
+      case None =>
         val v = getStorageDflt
         getLogger.warn(s"Storage backend not defined in application.conf. Using 'storage' = '$v'.")
         v
 
-      case t =>
+      case Some(t) =>
         val t1 = t.toUpperCase
         val result = StorageType.withName(t1)
         getLogger.info(s"$result selected as storage backend for majority of models according to application.conf.")
@@ -43,6 +41,11 @@ object SioModelUtil extends StorageTypeFromConfigT {
     }
   }
 
+}
+
+
+object SioDefaultStorage extends StorageTypeFromConfigT {
+  protected def getConfig: Config = MyConfig.CONFIG.underlying
 }
 
 

@@ -189,7 +189,8 @@ object MDVIActive extends CascadingFieldNamer {
    */
   def getForDkeyVin(dkey:String, vin:String)(implicit ec:ExecutionContext): Future[Option[MDVIActive]] = {
     val column: Array[Byte] = vin
-    val getReq = new GetRequest(HTABLE_NAME, dkey)
+    val rowkey = serializeDkey2Rowkey(dkey)
+    val getReq = new GetRequest(HTABLE_NAME, rowkey)
       .family(CF)
       .qualifier(column)
     ahclient.get(getReq) map { results =>
@@ -247,7 +248,9 @@ object MDVIActive extends CascadingFieldNamer {
    * @return Будущий список MDVIActive.
    */
   def getAllForDkey(dkey: String)(implicit ec:ExecutionContext): Future[Seq[MDVIActive]] = {
-    val getReq = new GetRequest(HTABLE_NAME, dkey).family(CF)
+    val rowkey = serializeDkey2Rowkey(dkey)
+    val getReq = new GetRequest(HTABLE_NAME, rowkey)
+      .family(CF)
     ahclient.get(getReq) map { results =>
       if (results.isEmpty) {
         Nil

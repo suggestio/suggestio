@@ -1,10 +1,11 @@
 package io.suggest.model
 
 import org.apache.hadoop.fs.{Path, FileSystem}
-import io.suggest.util.{StorageType, SioModelUtil, MyConfig, JacksonWrapper}
+import io.suggest.util._
 import io.suggest.util.SiobixFs._
 import scala.concurrent.{ExecutionContext, Await, Future, future}
 import scala.concurrent.duration._
+import scala.Some
 
 /**
  * Suggest.io
@@ -160,7 +161,7 @@ trait JsonBackendT {
 
 
   /** Под каким идентификатором сохранять состояние. */
-  protected def getSaveStateId = getClass.getCanonicalName
+  def getSaveStateId: String
 
 }
 
@@ -206,8 +207,9 @@ trait JsonHBaseBackendT extends JsonBackendT {
 
   /** Прочитать состояние. */
   def readState(implicit ec: ExecutionContext): Future[Option[ImportExportMap]] = {
-    MObject.getProp(getSaveStateId) map {
-      _.map {
+    val key = getSaveStateId
+    MObject.getProp(key) map { resultOpt =>
+      resultOpt.map {
         v => JacksonWrapper.deserialize[ImportExportMap](v)
       }
     }
@@ -239,6 +241,8 @@ trait JsonBackendSwitchableT extends JsonBackendWrapperT {
 
   protected def getJsonBackendStorageType: StorageType.StorageType
 
+  def getSaveStateId: String = getClass.getName
+
   /** В зависимости от конфига, выбрать тот или иной backend, пробросив в них абстрактные методы. */
   protected def getJsonBackend: JsonBackendT = {
     val me = this
@@ -247,12 +251,14 @@ trait JsonBackendSwitchableT extends JsonBackendWrapperT {
         new JsonDfsBackendGlobalT {
           def exportState: ImportExportMap = me.exportState
           def importStateElement(key: String, value: Any) = me.importStateElement(key, value)
+          def getSaveStateId: String = me.getSaveStateId
         }
 
       case StorageType.HBASE =>
         new JsonHBaseBackendT {
           def exportState: ImportExportMap = me.exportState
           def importStateElement(key: String, value: Any) = me.importStateElement(key, value)
+          def getSaveStateId: String = me.getSaveStateId
         }
     }
   }
@@ -262,7 +268,7 @@ trait JsonBackendSwitchableT extends JsonBackendWrapperT {
 
 /** json-бэкэнд, работающий без дополнительных настроек. */
 trait JsonBackendAutoswitchT extends JsonBackendSwitchableT {
-  protected def getJsonBackendStorageType = SioModelUtil.STORAGE
+  protected def getJsonBackendStorageType = SioDefaultStorage.STORAGE
   protected val jsonBackend = getJsonBackend
 }
 
