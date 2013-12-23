@@ -1,6 +1,6 @@
 # Разные полезные функции
 utils =
-  
+
   # Сгенерить рандомное целое число
   rand : () ->
     Math.floor Math.random() * 10000000
@@ -61,7 +61,7 @@ utils =
   hasClass : (element, value) ->
     _class_pattern = new RegExp(value, "gi")
     element.className.match( _class_pattern )
-  
+
   is_retina : () ->
     if window.devicePixelRatio > 1
       true
@@ -87,7 +87,7 @@ utils =
       newClassName += " "
       newClassName += value
       element.className = newClassName
-  
+
   # Удалить указанный класс с элемента
   removeClass : (element, value) ->
     element = ge(element)
