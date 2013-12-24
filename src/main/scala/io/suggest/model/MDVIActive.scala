@@ -579,6 +579,7 @@ class MDVIActive extends BaseDatum(FIELDS) with MDVIUnitAlterable {
     startFullScrollIn(getShards, getAllTypes, timeout, sizePerShard)
   }
 
+  override def toString: String = s"${getClass.getSimpleName}($getDkey, $getVin, $getGeneration, ${getSubshardsRaw.size} subshards)"
 }
 
 
