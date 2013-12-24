@@ -24,6 +24,7 @@ GET  /logout                            controllers.Ident.logout
 POST /js/add_domain                             controllers.Js.addDomain
 POST /js/install_url/:domain/:qi_id             controllers.Js.installUrl(domain, qi_id)
 GET  /js/install_ws/:domain/:qi_id/:timestamp   controllers.Js.installWs(domain, qi_id, timestamp:Long)
+POST /js/ifs/:domain/:qi_id                     controllers.Js.installFromSessionFor(domain, qi_id)
 
 # Пункт меню "О проекте"
 GET     /about                          controllers.Static.about

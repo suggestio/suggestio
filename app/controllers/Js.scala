@@ -1,7 +1,7 @@
 package controllers
 
 import util.event._
-import play.api.mvc.{SimpleResult, WebSocket}
+import play.api.mvc.{Session, SimpleResult, WebSocket}
 import play.api.data._
 import util.FormUtil._
 import util.acl._
@@ -19,6 +19,7 @@ import play.api.libs.json.JsObject
 import scala.concurrent.Future
 import java.util.UUID
 import play.api.libs.iteratee.Concurrent
+import play.api.templates.Txt
 
 
 /**
@@ -246,7 +247,36 @@ object Js extends SioController with Logs {
   }
 
 
-  private def replyJs(respBody:play.api.templates.Txt) = {
+  /**
+   * Инсталлер получил сообщение о том, что системе удалось проверить домен с успехом. Тогда, если юзер залогинен,
+   * ему нужно выкинуть из сессии qi-данные о добавляемом домене. Обновлять кукисы из websocket нельзя, поэтому
+   * инсталлер в таком случае должен сделать асинхронный фоновый запрос к серверу.
+   * В противном случае, инсталлер будет отображаться залогиненному юзеру вновь и вновь.
+   * @param dkey Ключ домена.
+   * @param qi_id qi id
+   * @return 202 Accepted   - Внесены какие-то изменения в сессию. Скорее всего, всё ок.
+   *         204 No content - В сессии нет подходящих qi-данных для обработки.
+   *                          Когда всё будет оттестировано, это можно будет удалить.
+   *         403 Forbidden  - Qi-сессия уже закончилась или не начиналась.
+   */
+  def installFromSessionFor(dkey:String, qi_id:String) = IsAuth.async { implicit request =>
+    val isQi = DomainQi.isQi(dkey, qi_id)
+    if (isQi) {
+      DomainQi.installFromSession(request.pwOpt.get.id, onlyDkeys=List(dkey)) map { session1 =>
+        // На период тестирования
+        if (session.data.size == session1.data.size) {
+          NoContent
+        } else {
+          Accepted withSession session1
+        }
+      }
+    } else {
+      Forbidden("session unknown")
+    }
+  }
+
+
+  private def replyJs(respBody: Txt) = {
     trace("replyJs(): 200 Ok")
     Ok(respBody).as("text/javascript")
   }

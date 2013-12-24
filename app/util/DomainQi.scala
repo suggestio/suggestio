@@ -129,14 +129,31 @@ object DomainQi extends Logs {
    *   Нужно удалить врЕменное разрешение, и создать нормальный MPersonDomainAuthz.
    * - d+qi в сессии не подходят под предыдущие условия. Значит не прошли валидацию. Смотреть дату, и удалить если истекло время хранения.
    * @param person_id id Юзер. Обычно это его e-mail.
+   * @param onlyDkeys Проводить через анализ только указанные домены. Если Nil, то все домены.
    * @param session Исходные данные сессии.
    * @return Обновлённые данные сессии.
    */
-  def installFromSession(person_id: String)(implicit session:Session): Future[Session] = {
+  def installFromSession(person_id: String, onlyDkeys:Seq[String] = Nil)(implicit session:Session): Future[Session] = {
     lazy val logPrefix = s"installFromSession($person_id): "
     trace(logPrefix + "starting...")
+    type GroupF_t = PartialFunction[(String,String), Boolean]
     // Разделить карту сессии на относящихся к qi и остальные.
-    val sesMap = session.data.groupBy { case (k,_) => isSkey(k) }
+    // В зависимости от наличия/отсутствия onlyDkeys использовать разные функции группировки.
+    val groupF = if (onlyDkeys.isEmpty) {
+      // TODO Почему-то компилятор не подхватывает тип, если его объявить снаружи if. Поэтому приходится через val.
+      val pf: GroupF_t = { case (k, _) => isSkey(k) }
+      pf
+
+    } else {
+      // Заданы допустимые dkeys. Нужно дополнительно проверять skey-ключ в сессии по списку допустимых ключей доменов.
+      // TODO конвертить dkey => skey, а затем на след.шаге skey => dkey как-то неправильно.
+      val possibleSKeys = onlyDkeys.map { dkey2skey }
+      val pf: GroupF_t = {
+        case (k, _) => isSkey(k) && possibleSKeys.contains(k)
+      }
+      pf
+    }
+    val sesMap = session.data groupBy groupF
     // Относящиеся к qi данные параллельно проанализировать на профпригодность.
     val skeySession = sesMap.getOrElse(true, Map.empty)
     Future.traverse(skeySession) { case kv @ (k, v) =>
@@ -407,8 +424,8 @@ object DomainQi extends Logs {
         MDomainQiAuthzTmp(dkey=dkey, id=qi_id).save
     }
     fut onComplete {
-      case Success(result) => debug(logPrefix + "Qi successfully saved.")
-      case Failure(ex)     => error(logPrefix + "cannot save authz data for user " + pwOpt, ex)
+      case Success(_)  => debug(logPrefix + "Qi successfully saved.")
+      case Failure(ex) => error(logPrefix + "cannot save authz data for user " + pwOpt, ex)
     }
     fut
   }
