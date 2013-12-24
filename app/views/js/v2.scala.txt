@@ -42,22 +42,24 @@ TODO:
 
 @coffee{
 
-console.log('@showImages');
-console.log('@renderer');
-
-sio = 
+sio =
   config :
     sio_host : "http://@request.host/"
-    sio_css : 'static/css/sio.v8.css'
-    host : window.location
-    searchRequestDelay : 100
-    lang : 'ru'
-    search_field_test_depth : 3
+    sio_css : "assets/stylesheets/sio.v8.min.css"
+    searchRequestDelay : 500
+    search_field_dom_depth : 3
+
+window.sio = sio
 
 @_utils()
-@_templates()
+@_search()
+
+sio.search = search
+
+utils.load_css sio.config.sio_host + sio.config.sio_css
 
 @* Отрендерить инсталлер, если qi_id задан *@
-@qiIdOpt.map { qi_id => @_install(dkey, qi_id, wsTimestamp) }
+@qiIdOpt.map { qi_id =>
+  @_install(dkey, qi_id, wsTimestamp) }
 
 }

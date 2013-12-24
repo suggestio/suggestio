@@ -41,352 +41,6 @@ TODO:
 		config.host = 'http://localhost:8003/';
 	}
 	
-	/* Локализация */
-	var langs = 
-	{
-		'en' : 
-		{
-			'before_unload_message' : 'Unsaved changes! Press &laquo;Save&raquo; button before quit!',
-			'save_label' : 'Save',
-			'saved_label' : 'Saved!',
-			'reset_label' : 'Reset',
-			'preferences_intro' : '<p>Here you can setup all needed stuff</p><p>Before you start, please, type in search request for better admin experience.</p>',
-			'search_field' : 'Search field',
-			'search_layout' : 'Search layout',
-			'colors' : 'Colors',
-			'dimensions' : 'Dimensions',
-			'search_preferences' : 'Search preferences',
-			'use_default_field' : 'Use default field',
-			'use_custom_field' : 'Use great custom field',
-			'use_drop_down_window' : 'Use drop down search',
-			'use_great_t_style' : 'Use awesome t-style search',
-			'color_preferences' : 'Color preferences',
-			'sf_bg_color' :'',
-			'sf_text_color' : '',
-			'border_color' :'Border color',
-			'inner_border_color' :'Inner border color',
-			'bg_color' :'Background color',
-			'title_color' :'Title color',
-			'desc_color' :'Description color',
-			'link_color' :'Link color',
-			'outer_border_color' : 'Outer border color',
-			'save_changes' : 'Save changes',
-			'column_bg' : 'Column background',
-			'result_bg' : 'Result background',
-			'highlight_bg' : 'Highlight background',
-			'open_results_in' : 'Open found pages in',
-			'interface_lang' : 'Interface language',
-			'show_images_in_sr_label' : 'Show images in search results?',
-			'yes' : 'Yes',
-			'no' : 'No',
-			'current_window' : 'Current window',
-			'blank_window' : 'Blank window'
-		},
-		'ru' :
-		{
-			'before_unload_message' : '\u0412\u043d\u0435\u0441\u0435\u043d\u043d\u044b\u0435 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f \u043d\u0435 \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u044b! \u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u043a\u043d\u043e\u043f\u043a\u0443 "\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c" \u043f\u0440\u0435\u0436\u0434\u0435 \u0447\u0435\u043c \u0437\u0430\u043a\u0440\u044b\u0442\u044c \u043e\u043a\u043d\u043e!',
-			'save_label' : '\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c',
-			'saved_label' : 'Ok!',
-			'reset_label' : '\u0421\u0431\u0440\u043e\u0441\u0438\u0442\u044c',
-			'preferences_intro' : '<p>\u0412 \u0434\u0430\u043d\u043d\u043e\u043c \u0440\u0435\u0434\u0430\u043a\u0442\u043e\u0440\u0435 \u0432\u044b \u043c\u043e\u0436\u0435\u0442\u0435 \u043d\u0430\u0441\u0442\u0440\u043e\u0438\u0442\u044c \u0432\u0441\u0435 \u043d\u0435\u043e\u0431\u0445\u043e\u0434\u0438\u043c\u044b\u0435 \u043f\u0430\u0440\u0430\u043c\u0435\u0442\u0440\u044b \u043f\u043e\u0438\u0441\u043a\u0430.<\/p><p>\u041f\u0435\u0440\u0435\u0434 \u043d\u0430\u0447\u0430\u043b\u043e\u043c \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438, \u043f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430, \u0432\u0432\u0435\u0434\u0438\u0442\u0435 \u043f\u043e\u0438\u0441\u043a\u043e\u0432\u044b\u0439 \u0437\u0430\u043f\u0440\u043e\u0441 \u0434\u043b\u044f \u0431\u043e\u043b\u0435\u0435 \u043d\u0430\u0433\u043b\u044f\u0434\u043d\u043e\u0439 \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438.<\/p>',
-			'search_field' : '\u041f\u043e\u043b\u0435 \u043f\u043e\u0438\u0441\u043a\u0430',
-			'search_layout' : '\u0428\u0430\u0431\u043b\u043e\u043d',
-			'colors' : '\u0426\u0432\u0435\u0442\u0430',
-			'dimensions' : '\u0420\u0430\u0437\u043c\u0435\u0440\u044b',
-			'search_preferences' : '\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438 \u043f\u043e\u0438\u0441\u043a\u0430',
-			'use_default_field' : '\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c \u043f\u043e\u043b\u0435 \u043d\u0430 \u0441\u0430\u0439\u0442\u0435',
-			'use_custom_field' : '\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c \u043a\u0440\u0430\u0441\u0438\u0432\u0443\u044e \u0438\u043a\u043e\u043d\u043a\u0443',
-			'use_drop_down_window' : '\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c \u0432\u044b\u043f\u0430\u0434\u0430\u044e\u0449\u0435\u0435 \u043e\u043a\u043d\u043e \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u043e\u0432',
-			'use_great_t_style' : '\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c \u043e\u043a\u043d\u043e \u0422-\u0441\u0442\u0438\u043b\u044f',
-			'color_preferences' : '\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438 \u0446\u0432\u0435\u0442\u0430',
-			'sf_bg_color' :'\u0426\u0432\u0435\u0442 \u0444\u043e\u043d\u0430 \u043f\u043e\u0438\u0441\u043a\u043e\u0432\u043e\u0433\u043e \u043f\u043e\u043b\u044f',
-			'sf_text_color' : '\u0426\u0432\u0435\u0442 \u0442\u0435\u043a\u0441\u0442\u0430 \u043f\u043e\u0438\u0441\u043a\u043e\u0432\u043e\u0433\u043e \u043f\u043e\u043b\u044f',
-			'border_color' :'\u0426\u0432\u0435\u0442 \u043e\u0431\u0432\u043e\u0434\u043a\u0438',
-			'inner_border_color' :'\u0426\u0432\u0435\u0442 \u0432\u043d\u0443\u0442\u0440\u0435\u043d\u043d\u0435\u0439 \u043e\u0431\u0432\u043e\u0434\u043a\u0438',
-			'bg_color' :'\u0426\u0432\u0435\u0442 \u0444\u043e\u043d\u0430',
-			'title_color' :'\u0426\u0432\u0435\u0442 \u0437\u0430\u0433\u043e\u043b\u043e\u0432\u043a\u0430',
-			'desc_color' :'\u0426\u0432\u0435\u0442 \u043e\u043f\u0438\u0441\u0430\u043d\u0438\u044f',
-			'link_color' :'\u0426\u0432\u0435\u0442 \u0441\u0441\u044b\u043b\u043a\u0438',
-			'outer_border_color' : '\u0426\u0432\u0435\u0442 \u0432\u043d\u0435\u0448\u043d\u0435\u0439 \u043e\u0431\u0432\u043e\u0434\u043a\u0438',
-			'save_changes' : '\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438',
-			'column_bg' : '\u0424\u043e\u043d \u043a\u043e\u043b\u043e\u043d\u043a\u0438',
-			'result_bg' : '\u0424\u043e\u043d \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u0430',
-			'highlight_bg' : '\u0426\u0432\u0435\u0442 \u043f\u043e\u0434\u0441\u0432\u0435\u0442\u043a\u0438 \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u0430',
-			
-			'open_results_in' : '\u041e\u0442\u043a\u0440\u044b\u0432\u0430\u0442\u044c \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u044b \u043f\u043e\u0438\u0441\u043a\u0430 \u0432:',
-			'interface_lang' : '\u042f\u0437\u044b\u043a \u0438\u043d\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430',
-			'show_images_in_sr_label' : '\u041f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0442\u044c \u0438\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u044f \u0432 \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u0430\u0445?',
-			'yes' : '\u0414\u0430',
-			'no' : '\u041d\u0435\u0442',
-			
-			'current_window' : '\u0422\u0435\u043a\u0443\u0449\u0435\u043c \u043e\u043a\u043d\u0435',
-			'blank_window' : '\u041d\u043e\u0432\u043e\u043c \u043e\u043a\u043d\u0435'
-		}
-	}
-	
-	var transl = function( what )
-	{
-		var _l = sio.domain_data ? sio.domain_data.lang : config.lang;
-		if( !langs[_l][what] )
-		{
-			return what;
-		}
-		else
-		{
-			return langs[config.lang][what];
-		}
-	}
-	
-	/* Шаблоны */
-	/* Тут нужен адовый рефакторинг например */
-	var templates = 
-	{
-		// Сгенерить цсс для иконки поиска
-		generate_sf_css : function( tpl, _dc )
-		{
-			
-			var _sf_o = templates.search_fields[tpl];
-			
-			if( is_retina() == true )
-			{
-				var _dms = _sf_o.gen_params['ds_retina'].split('x');
-				return '.sio-custom-icon { width: ' + _dms[0]/2 + 'px!important; height: ' + _dms[1]/2 + 'px!important; background: url(\'https://suggest.io/static/images_generated/' + _dc + '-' + tpl + '-retina.png?v=1\') no-repeat!important; background-size: ' + _dms[0]/2 + 'px ' + _dms[1]/2 + 'px!important; }';
-			}
-			else
-			{
-				var _dms = _sf_o.gen_params['ds'].split('x');
-				return '.sio-custom-icon { width: ' + _dms[0] + 'px!important; height: ' + _dms[1] + 'px!important; background: url(\'https://suggest.io/static/images_generated/' + _dc + '-' + tpl + '.png?v=1\') no-repeat!important; }';
-			}
-				
-		},
-		search_fields :
-		{
-			'crnr-1':{
-				gen_params : {'prefix':'crnr-1','ds':'34x34','ds_retina':'66x66'}
-			},
-			'crnr-2':{
-				gen_params : {'prefix':'crnr-2','ds':'37x37','ds_retina':'82x82'}
-			},
-		//	'crnr-3':{
-		//		gen_params : {'prefix':'crnr-3','ds':'37x37','ds_retina':'72x72'}
-		//	},
-			'flag-1':{
-				gen_params : {'prefix':'flag-1','ds':'26x36','ds_retina':'52x72'}
-			},
-			'flag-2':{
-				gen_params : {'prefix':'flag-2','ds':'28x42','ds_retina':'54x82'}
-			},
-			'flag-3':{
-				gen_params : {'prefix':'flag-3','ds':'27x35','ds_retina':'52x70'}
-			},
-			'flag-4':{
-				gen_params : {'prefix':'flag-4','ds':'28x44','ds_retina':'54x92'}
-			},
-			'flag-5':{
-				gen_params : {'prefix':'flag-5','ds':'23x37','ds_retina':'48x74'}
-			},
-			
-			'flag-6':{
-				gen_params : {'prefix':'flag-6','ds':'18x46','ds_retina':'34x88'}
-			},
-			'flag-7':{
-				gen_params : {'prefix':'flag-7','ds':'22x40','ds_retina':'44x80'}
-			},
-			'flag-8':{
-				gen_params : {'prefix':'flag-8','ds':'34x32','ds_retina':'68x64'}
-			},
-			'flag-9':{
-				gen_params : {'prefix':'flag-9','ds':'24x28','ds_retina':'48x56'}
-			}
-		},
-		drop_down_windows :
-		{
-			'default' :
-			{
-				css : '.sio-search-window { margin-left: <<window_margin>>px!important; margin-top: <<window_margin_top>>px!important; width: <<window_width>>px!important; } .sio-sw-cont.default .sio-sw-search-results { max-height: <<window_height>>px!important; } .sio-sw-cont.default .sio-sw-search-results { background-color: #<<bg_color>>!important; } .sio-sw-cont.default .sio-sw-inner, .sio-sw-cont.default .sio-result { border-color : #<<border_color>>!important; } .sio-sw-cont.default .sio-result-title { color: #<<title_color>>!important; } .sio-sw-cont.default .sio-result-desc { color: #<<desc_color>>!important; } .sio-sw-cont.default .sio-result-link { color: #<<link_color>>!important; } .sio-sw-cont.default em { background: #<<highlight_color>>!important; }',
-				params : {'colors' :
-									[{p:'bg_color',n:	transl('bg_color'),d:'ffffff'},
-									 {p:'border_color',n:transl('border_color'),d:'ececec'},
-									 {p:'title_color',n:transl('title_color'),d:'0f0f0f'},
-									 {p:'desc_color',n:transl('desc_color'),d:'868686'},
-									 {p:'highlight_color',n:transl('highlight_bg'),d:'none',z:true},
-									 {p:'link_color',n:transl('link_color'),d:'5bb6d5'}],
-									'dimensions':
-										[{p:'window_width',n:'window_width',d:600},
-										 {p:'window_margin',n:'window_margin',d:0},
-										 {p:'window_margin_top',n:'window_margin_top',d:0},
-										 {p:'window_height',n:'window_height',d:500}
-										]
-									},
-				thumbnail : 'sio-dd-ololo-preview.png'
-			},
-			'fatborder' : 
-			{
-				css : '.sio-search-window { margin-left: <<window_margin>>px!important; margin-top: <<window_margin_top>>px!important; width: <<window_width>>px!important; } .sio-sw-cont.fatborder .sio-sw-search-results { max-height: <<window_height>>px!important; } .sio-sw-cont.fatborder .sio-sw-inner, .sio-sw-cont.fatborder .sio-sw-ads { border-color: #<<stroke_color>>!important; background-color: #<<second_stroke_color>>!important; } .sio-sw-cont.fatborder .sio-sw-search-results, .sio-sw-ads a { background-color: #<<bg_inner>>!important; } .sio-sw-cont.fatborder .sio-result-title { color: #<<title_color>>!important; } .sio-sw-cont.fatborder .sio-result-desc { color: #<<desc_color>>!important; } .sio-sw-cont.fatborder em { color: #<<highlight_bg>>!important; } .sio-sw-cont.fatborder .sio-result-link { color: #<<link_color>>!important; }',
-				params : {'colors' :[{p:'stroke_color',n:transl('border_color'),d:'1f2b2d'},
-														 {p:'second_stroke_color',n:transl('inner_border_color'),d:'ffffff'},
-														 {p:'bg_inner',n:transl('bg_color'),d:'1f2b2d'},
-														 {p:'title_color',n:transl('title_color'),d:'ffffff'},
-														 {p:'desc_color',n:transl('desc_color'),d:'cccccc'},
-														 {p:'highlight_bg',n:transl('highlight_bg'),d:'ffffff'},
-														 {p:'link_color',n:transl('link_color'),d:'5FB6D3'}],
-														'dimensions':
-										[{p:'window_width',n:'window_width',d:600},
-										 {p:'window_margin',n:'window_margin',d:0},
-										 {p:'window_margin_top',n:'window_margin_top',d:0},
-										 {p:'window_height',n:'window_height',d:500}
-										]
-								},
-				thumbnail : 'sio-dd-ololo-preview.png'
-			},
-			'plaintext' :
-			{
-				css : '.sio-search-window { margin-left: <<window_margin>>px!important; margin-top: <<window_margin_top>>px!important; width: <<window_width>>px!important; } .sio-sw-cont.plaintext .sio-sw-search-results { max-height: <<window_height>>px!important; } .sio-sw-cont.plaintext .sio-sw-inner { border-color:#<<border_color>>!important; } .sio-sw-cont.plaintext .sio-sw-inner-2, .sio-sw-cont.plaintext .sio-sw-ads { background-color: #<<bg_color>>!important; } .sio-sw-cont.plaintext .sio-result-title { color: #<<title_color>>!important; }  .sio-sw-cont.plaintext .sio-result-desc { color: #<<desc_color>>!important; }  .sio-sw-cont.plaintext .sio-result-link { color: #<<link_color>>!important; } .sio-sw-cont.plaintext em { color: #<<hightlight_bg>>!important; }',
-				params : {'colors' : [{p:'bg_color',n:transl('bg_color'),d:'FFFFFF'},
-															{p:'border_color',n:transl('border_color'),d:'A4A4A4'},
-															{p:'title_color',n:transl('title_color'),d:'213845'},
-															{p:'highlight_bg',n:transl('highlight_bg'),d:'478BA2'},
-									 						{p:'desc_color',n:transl('desc_color'),d:'478BA2'},
-									 						{p:'link_color',n:transl('link_color'),d:'478BA2'}],
-									'dimensions':
-										[{p:'window_width',n:'window_width',d:600},
-										 {p:'window_margin',n:'window_margin',d:0},
-										 {p:'window_margin_top',n:'window_margin_top',d:0},
-										 {p:'window_height',n:'window_height',d:500}
-										]
-								 },
-				thumbnail : 'sio-dd-ololo-preview.png'
-			}
-			/*
-			'roundcorner' :
-			{
-				css : '.sio-search-window { margin-left: <<window_margin>>px!important; margin-top: <<window_margin_top>>px!important; width: <<window_width>>px!important; } .sio-sw-cont.roundcorner .sio-sw-search-results { max-height: <<window_height>>px!important; }',
-				params : {'colors' :
-									[{p:'bg_color',n:transl('border_color'),d:'213845'},
-									 {p:'title_color',n:transl('title_color'),d:'000000'},
-									 {p:'desc_color',n:transl('result_description_color'),d:'868686'},
-									 {p:'link_color',n:transl('link_color'),d:'5bb6d5'},
-									 {p:'highlight_color',n:transl('highlight_color'),d:'cddae6'}
-									],
-									'dimensions':
-										[{p:'window_width',n:'window_width',d:600},
-										 {p:'window_margin',n:'window_margin',d:0},
-										 {p:'window_margin_top',n:'window_margin_top',d:0},
-										 {p:'window_height',n:'window_height',d:500}
-										]
-									},
-				thumbnail : 'sio-dd-ololo-preview.png'
-			},
-			'normalone' :
-			{
-				css : '.sio-search-window { margin-left: <<window_margin>>px!important; margin-top: <<window_margin_top>>px!important; width: <<window_width>>px!important; } .sio-sw-cont.normalone .sio-sw-ads { background: #<<border_color>>!important; } .sio-sw-cont.normalone .sio-sw-inner { border-color: #<<border_color>>!important; background-color: #<<inner_border_color>>!important; }',
-				params : {'colors' :
-									[{p:'border_color',n:transl('border_color'),d:'00728b'},
-									 {p:'inner_border_color',n:transl('inner_border_color'),d:'003945'},
-									 {p:'title_color',n:transl('title_color'),d:'5bb6d5'},
-									 {p:'em_color',n:transl('highlight_color'),d:'478BA2'},
-									 {p:'link_color',n:transl('link_color'),d:'5bb6d5'},
-									 {p:'desc_color',n:transl('result_description_color'),d:'a4a4a4'}],
-									'dimensions':
-										[{p:'window_width',n:'window_width',d:600},
-										 {p:'window_margin',n:'window_margin',d:0},
-										 {p:'window_margin_top',n:'window_margin_top',d:0},
-										 {p:'window_height',n:'window_height',d:500}
-										]
-									},
-				thumbnail : 'sio-dd-ololo-preview.png'
-			}
-			*/
-			
-			
-			
-		},
-		
-		t_windows :
-		{
-			'sio-kk' :
-			{
-				css : '.sio-custom-field input, .sio-csf-label { line-height: <<font_size>>px!important; font-size: <<font_size>>px!important; } .sio-kk em { color: #<<highlight_bg>>!important; } .sio-t-column.sio-kk .sio-t-c-inner { background: <<column_bg>>!important; } .sio-t-c-inner { width: <<column_width>>px!important; margin-left: <<column_margin>>px!important; } .sio-custom-field input { color: #<<sf_text_color>>!important; } .sio-custom-field { background: #<<sf_bg>>!important; } .sio-kk .sio-result .sio-result-inner { background-color: #<<result_bg>>!important; } .sio-kk .sio-result-title { color: #<<result_title_color>>!important; } .sio-kk .sio-result-desc { color: #<<desc_color>>!important; } .sio-kk .sio-result-link { color: #<<link_color>>!important; }',
-				params : {'colors' :
-										[{p:'sf_bg',n:transl('sf_bg_color'),d:'c0c0c0'},
-										 {p:'sf_text_color',n:transl('sf_text_color'),d:'ffffff'},
-										 {p:'column_bg',n:	transl('column_bg'),d:'rgba(153,153,153,.95)',t:'rgba'},
-										 {p:'result_bg',n:	transl('result_bg'),d:'ffffff'},
-										 {p:'result_title_color',n: transl('title_color'),d:'000000'},
-										 {p:'highlight_bg',n:transl('highlight_bg'),d:'000000'},
-										 {p:'desc_color',n:	transl('desc_color'),d:'868686'},
-										 {p:'link_color',n:	transl('link_color'),d:'5bb6d5'}
-										],
-									'dimensions':
-										[{p:'column_width',n:'Column width',d:550,min:200,max:1000},
-										 {p:'column_margin',n:'Column margin',d:-275,min:-1000,max:0},
-										 {p:'font_size',n:'Font size',d:40}
-										]
-									},
-				thumbnail : 'sio-kk-preview.png'
-			},
-			'sio-dd-def' :
-			{
-				css : '.sio-custom-field input, .sio-csf-label { line-height: <<font_size>>px!important; font-size: <<font_size>>px!important; } .sio-dd-def em { color: #<<highlight_bg>>!important; } .sio-dd-def .sio-result { border-color: #<<border_color>>!important; } .sio-t-column.sio-dd-def .sio-t-c-inner { background: <<column_bg>>!important; } .sio-t-c-inner { width: <<column_width>>px!important; margin-left: <<column_margin>>px!important; } .sio-dd-def .sio-result-title { color: #<<result_title_color>>!important; } .sio-custom-field input { color: #<<sf_text_color>>!important; } .sio-custom-field { background: #<<sf_bg>>!important; } .sio-dd-def .sio-result-desc { color: #<<desc_color>>!important; } .sio-dd-def .sio-result-link { color: #<<link_color>>!important; }',
-				params : {'colors' :
-										[{p:'sf_bg',n:transl('sf_bg_color'),d:'c0c0c0'},
-										 {p:'sf_text_color',n:transl('sf_text_color'),d:'ffffff'},
-										 {p:'column_bg',n:	transl('column_bg'),d:'rgba(0,0,0,.95)',t:'rgba'},
-										 {p:'border_color',n:transl('border_color'),d:'0074ad'},
-										 {p:'result_title_color',n: transl('title_color'),d:'2190af'},
-										 {p:'highlight_bg',n:transl('highlight_bg'),d:'2190af'},
-										 {p:'desc_color',n:	transl('desc_color'),d:'666666'},
-										 {p:'link_color',n:	transl('link_color'),d:'666666'}
-										],
-									'dimensions':
-										[{p:'column_width',n:'Column width',d:550,min:200,max:1000},
-										 {p:'column_margin',n:'Column margin',d:-275,min:-1000,max:0},
-										 {p:'font_size',n:'Font size',d:40}
-										]
-									},
-				thumbnail : 'sio-dd-preview.png'
-			},
-			'sio-bb' :
-			{
-				css : '.sio-custom-field input, .sio-csf-label { line-height: <<font_size>>px!important; font-size: <<font_size>>px!important; } .sio-bb em { color: #<<highlight_bg>>!important; } .sio-t-column.sio-bb .sio-t-c-inner { background: <<column_bg>>!important; } .sio-bb .sio-result { background: <<result_bg>>!important; border-color: #<<border_color>>!important; } .sio-t-c-inner { width: <<column_width>>px!important; margin-left: <<column_margin>>px!important; }  .sio-custom-field input { color: #<<sf_text_color>>!important; } .sio-custom-field { background: #<<sf_bg>>!important; } .sio-bb .sio-result-title { background: #<<border_color>>!important; color: #<<title_color>>!important; } .sio-bb .sio-result-desc { color: #<<desc_color>>!important; } .sio-bb .sio-result-link { color: #<<link_color>>!important; }',
-				params : {'colors' :
-										 [{p:'sf_bg',n:transl('sf_bg_color'),d:'c0c0c0'},
-										 {p:'sf_text_color',n:transl('sf_text_color'),d:'ffffff'},
-										 {p:'border_color',n:	transl('border_color'),d:'2190af'},
-										 {p:'column_bg',n:	transl('column_bg'),d:'rgba(0,0,0,.95)',t:'rgba'},
-										 {p:'result_bg',n:	transl('result_bg'),d:'rgba(255,255,255,.95)',t:'rgba'},
-										 {p:'title_color',n:	transl('title_color'),d:'ffffff'},
-										 {p:'highlight_bg',n:transl('highlight_bg'),d:'ffffff'},
-										 {p:'desc_color',n:	transl('desc_color'),d:'666666'},
-										 {p:'link_color',n:	transl('link_color'),d:'666666'}
-										],
-									'dimensions':
-										[{p:'column_width',n:'column_width',d:550,min:200,max:1000},
-										 {p:'column_margin',n:'column_margin',d:-275,min:-1000,max:0},
-										 {p:'font_size',n:'Font size',d:40}
-										]
-									},
-				thumbnail : 'sio-bb-preview.png'
-			}
-		},
-		
-		t_style_def_tpl : 'sio-kk',
-		drop_down_def_tpl : 'fatborder',
-		drop_down_base_tpl : function( params )
-		{
-			return '<div class="sio-sw-cont ' + params.className + '">' +
-						 	'<div class="sio-sw-inner">' +
-						 		'<div class="sio-sw-inner-2">' +
-						 			'<div class="sio-sw-search-results" id="sio_searchResults">' +
-						 			'</div>' +
-						 		'</div>' +
-						 	'</div>' +
-						 	'<div class="sio-sw-ads"><a href="https://suggest.io/" target="_blank"><img src="https://suggest.io/static/images2/sio-label-ads.png"></a></div>'
-						 '</div>'
-		}
-	};
-	sio.templates = templates;
-	
 	/* Полезные функции */
 	/* Создать DOM элемент */
 	var ce = function ( tag, attributes, inhtml )
@@ -512,7 +166,7 @@ TODO:
 	var bind = function (o, type, listener)
 	{
 		if( typeof( o ) == 'undefined' || o == null ) return false;
-		
+
 		if( is_array( o ) )
 		{
 			siomap( function( _obj )
@@ -528,7 +182,7 @@ TODO:
 					addListener(_obj,type,listener);
 				}
 			},o);
-			
+
 		}
 		else
 		{
@@ -543,9 +197,9 @@ TODO:
 				addListener(o,type,listener);
 			}
 		}
-		
+
 	};
-	
+
 	/* Повесить листнер на объект */
 	var addListener = function(o,type,listener)
 	{
@@ -597,11 +251,7 @@ TODO:
 		return {'left':cl,'top':ct}
 	};
 	
-	/* Является ли переданный объект массивом? */
-	var is_array = function(o)
-	{
-		return Object.prototype.toString.call( o ) == '[object Array]';
-	};
+
 	
 	/* Отмапить список с  указанной функцией */
 	var siomap = function( fun, list )
@@ -619,11 +269,7 @@ TODO:
 		ge_tag('head')[0].appendChild( script_tag );
 	};
 	
-	var _include_css = function( url )
-	{
-		var c = ce( 'link', {'rel':'stylesheet','type':'text/css','id':'sio_css', 'href' : url} );
-		ge_tag('head')[0].appendChild( c );
-	}
+
 	
 	var disableSelection = function(target)
 	{
@@ -862,46 +508,7 @@ TODO:
 	/* Тут все что касается непосредственно процесса поиска */
 	var search =
 	{
-		/* Инициализация поиска */
-		/* если preferences_reveived == 1 — значит настройки получены, можно стартовать поиск */
-		init : function( got_prefs )
-		{
-			
-			if( typeof( document.getElementsByTagName('body')[0] ) == 'undefined' )
-			{
-				setTimeout(function()
-				{
-					sio.search.init();
-				}, 100);
-				return false;
-			}
-			
-			var got_prefs = got_prefs || 0;
-			
-			// если настроек для домена у нас еще нет — запросить их, после чего вернуть false
-			if( !got_prefs )
-			{
-				_get_domain_data();
-				// заодно можно подключить css, чтобы время не тратить зря
-				_include_css( config.sio_host + config.sio_css );
-				return false;
-			}
-			
-			// если настройки есть, значит все ок и можно жарить дальше
-			// найдем поле поиска
-			sio.search_field = this.get_search_field();
-			
-			/* проверяем, какой тип поиска надо заюзать
-				 возможные варианты:
-				 - в настройках явно указан тип
-				 - в настройках пусто — 
-			*/
-			
-			this.init_layout();
-			
-			sio.search._generate_custom_template_style();
-			
-		},
+
 		/* Инициализация поискового контейнера */
 		init_layout : function()
 		{
@@ -938,63 +545,7 @@ TODO:
 			if( typeof( sio.preferences ) != 'undefined' ) sio.preferences.forbid_auto_complete = false;
 			
 		},
-		/* Нарисовать выпадающее окошко */
-		drop_down_search_window : {
-			init: function()
-			{
-				if( ge('sio_search_window') != null ) return false;
-				
-				var sf = ce('div',{'class':'sio-search-window','id':'sio_search_window'});
-				
-				if ( typeof( sio.domain_data.drop_down_template ) != 'undefined' )
-				{
-					var cn = sio.domain_data.drop_down_template;
-				}
-				else
-				{
-					var cn = typeof( sio.domain_data.search_window ) != 'undefined' ? sio.domain_data.search_window : templates.drop_down_def_tpl;
-				}
-				sio.domain_data.drop_down_template = cn;
-				
-				sf.innerHTML = templates.drop_down_base_tpl({'className': cn });
-				
-				ge_tag('body')[0].appendChild( sf );
-				this.set_position();
-				
-				bind(window, 'resize', function()
-				{
-					sio.search.drop_down_search_window.set_position();
-				});
-				
-				bind(window, 'click', function()
-				{
-					sio.search.drop_down_search_window.set_position();
-				});
-				
-				bind(window, 'click', function()
-				{
-					if( sio.is_preferences_active == true ) return false;
-					sio.search.hideSearch();
-				});
-				
-				bind(ge('sio_search_window'), 'click', function( event )
-				{
-					event.stopPropagation();
-				});
-				
-				bind(sio.search_field, 'focus', function()
-				{
-					this.value = '';
-					this.style.outline = 'none';
-					sio.search.drop_down_search_window.set_position();
-				});
-				
-				bind(sio.search_field, 'keydown', function()
-				{
-					sio.search.search_field_keydown_event();
-				});
-				
-			},
+
 			/* Отпозиционировать окошка */
 			set_position : function()
 			{
@@ -1019,14 +570,7 @@ TODO:
 		t_style_search_window : {
 			init : function()
 			{
-				if( typeof( sio.domain_data.t_style_template ) == 'undefined' ) sio.domain_data.t_style_template = templates.t_style_def_tpl;
-				if( ge('sio_search_window') != null ) return false;
-				var sf = ce('div',{'class':'sio-t-window','id':'sio_search_window'});
-				
-				var cn = typeof( sio.domain_data.t_style_template ) != 'undefined' ? sio.domain_data.t_style_template : templates.t_style_def_tpl;
-				
-				sf.innerHTML = '<div class="sio-t-column ' + cn + '"><div class="sio-t-c-inner" id="sio_searchResults"></div></div>';
-				ge_tag('body')[0].appendChild( sf );
+
 				
 				bind(sio.search_field, 'keydown', function()
 				{
@@ -1111,40 +655,8 @@ TODO:
 			_b.className = _b.className.replace(' sio-fixed-body', '');
 			
 		},
-		// Функция поиска поискового поля на странице
-		get_search_field : function()
-		{
-			
-			// Если поле ввода в настройках не указано, или указано как default
-			if( ( typeof( sio.domain_data.search_field ) != 'undefined' && sio.domain_data.search_field === 'default' ) || typeof( sio.domain_data.search_field ) == 'undefined' )
-			{
-				
-				// Если у нас используется тешечаа — нужно кастомное поле
-				if( typeof( sio.domain_data.search_layout ) != 'undefined' && sio.domain_data.search_layout != 'default' )
-				{
-					sio.domain_data.search_field = 'crnr-1';
-					return this.get_search_field();
-				}
-				
-				// ищем поле на странице
-				var _field_on_page = this.locate_field_on_page();
-				if( _field_on_page != null ) return _field_on_page;
-				
-				// если все же полей нету — запилить кастомное дефолтовое
-				sio.domain_data.search_field = 'crnr-1';
-				return this.get_search_field();
-		
-			
-			}
-			else
-			{
-				this.render_search_field();
-				f = ge('sio_search_field');
-				sio.csf = ge('sio_csf');
-				
-				return f;
-				}
-		},
+
+
 		locate_field_on_page : function()
 		{
 			
@@ -1183,69 +695,12 @@ TODO:
 			return null;
 			
 		},
-		// определить, является ли DOM объект поисковым полем
-		is_search_field : function(e)
-		{
-			var search_pattern = new RegExp('search', "gi");
-			var r = false;
-			
-			try
-			{
-				
-				if( e.type == 'search') r = true;
-				if( typeof( e.className ) != 'undefined' && e.className.match(search_pattern)) r = true;
-				if( typeof( e.action ) != 'undefined' && e.action.match(search_pattern)) r = true;
-				if( typeof( e.name ) != 'undefined' && e.name != '' && e.name.match(search_pattern)) r = true;
-				if( typeof( e.id ) != 'undefined' && e.id.match(search_pattern)) r = true;
-				if( typeof( e.placeholder ) != 'undefined' && e.placeholder.match(search_pattern)) r = true;
-				
-				if( typeof( e.value ) != 'undefined' && e.value.match(search_pattern)) r = true;
-				
-			}catch(err){}
-			
-			return r;
-			
-		},
-		
-		// функиця для отрисовки кастомного поля
-		render_search_field : function( with_trigger )
-		{
-			if( ge('sio_csf') != null ) return false;
-			
-			// кастомное поле
-			var sf = ce('div',{'class':'sio-custom-field','id':'sio_csf'});
-			sf.innerHTML = '<div class="sio-csf-inner"><div class="sio-search-icon"></div><a class="lsbs-ads" href="https://suggest.io"></a><div id="sio_csf_label" class="sio-csf-label">\u0438\u0441\u043a\u0430\u0442\u044c...</div><div class="sio-close-search-icon"><a onclick="sio.search.hideSearch(); return false;" href=""></a></div><input type="text" id="sio_search_field"></div>';
-			ge_tag('body')[0].appendChild( sf );
-			
-			// Кастомная иконка для поиска
-			var si = ce('div',{'class':'sio-custom-icon sio-' + sio.domain_data.search_field,'id':'sio_csi'});
-			si.innerHTML = '<div class="sio-csi"></div>';
-			ge_tag('body')[0].appendChild( si );
-			
-			bind(ge("sio_csf_label"), "click", function()
-			{
-				ge('sio_csf_label').style.display = 'none';
-				sio.search_field.focus();
-			});
-			
-			bind(ge("sio_csi"), "click", function()
-			{
-				sio.search.showSearch();
-			});
-			
-		},
-		
-		// функция для обработки нажатия клавиш
-		search_field_keydown_event : function()
-		{
-			if( typeof( sio.search_timer ) != 'undefined' ) clearTimeout( sio.search_timer );
-			sio.search_timer = setTimeout("sio.search.process_query()",config.searchRequestDelay);
-		},
-		
+
+
 		//
 		process_query : function()
 		{
-			
+
 			if( sio.search_field.value == '' )
 			{
 				if( ge('sio_csf_label') != null ) ge('sio_csf_label').style.display = 'block';
@@ -1254,7 +709,7 @@ TODO:
 			{
 				if( ge('sio_csf_label') != null ) ge('sio_csf_label').style.display = 'none';
 			}
-			
+
 			// запилить значение поискового запроса
 			var _sr = sio.search_field.value;
 			if( _sr == '' )
@@ -1262,7 +717,7 @@ TODO:
 				hide("sio_search_window");
 				return false;
 			}
-			
+
 			// проерить есть ли чо в кеше
 			if( typeof( cache[_sr] ) != 'undefined' )
 			{
@@ -1270,33 +725,33 @@ TODO:
 				show("sio_search_window");
 				return false;
 			}
-			
+
 			// определить кодировку
 			docCharset = document.inputEncoding ? document.inputEncoding : document.charset;
 			if( typeof( docCharset ) == 'undefined' ) docCharset = document.characterSet;
-			
+
 			_sr = encodeURIComponent(_sr);
 			var _h = window.location.hostname;
-			
+
 			// пофиксить кодировку
 			if(docCharset == 'windows-1251'){
 				_sr = unescape( _sr );
 				_sr = sio.win2unicode( _sr );
-				
+
 				_h = encodeURIComponent( _h );
 				_h = unescape( _h );
 				_h = sio.win2unicode( _h );
 			}
-			
+
 			sio.selected_result = null;
-			
+
 			// TODO: тут что-то с языком — надо вспомнить
 			/*
 			if( typeof(_sio_params) != 'undefined' && typeof( _sio_params.search_lang ) != 'undefined' )
 			{
-			
+
 			var l = _sio_params.search_lang;
-			
+
 			if( is_array(l) ) {
 				_sl = l.slice(0,3);
 				_sl = _sl.join(",");
@@ -1305,102 +760,56 @@ TODO:
 			{
 				_sl = l;
 			}
-			
+
 			}*/
-			
+
 			var _lrp = typeof(_sl) != 'undefined' ? "&l=" + _sl : '';
-			
+
 			this.sendRequest( config.sio_host + 'search?h=' + _h + '&q=' + _sr + _lrp );
-			
-		},
-		// отправить запрос на сервак
-		sendRequest : function( request_url )
-		{
-			var script = document.createElement('script');
-			script.type = 'text/javascript'
-			script.src = request_url;
-			script.id = 'sio_search_request';
-			
-			document.getElementsByTagName('head')[0].appendChild( script );
-		},
-		_s_add_result : function(data)
-		{
-			
-			try
-			{
-				var query = data.q;
-				var search_results = data.search_result;
-				var status = data.status;
-				
-				if( status == 'found_none' )
-				{
-					//set_sio_window_state('found_none');
-					
-					//cache[query] = [];
-					//query = query.length > 10 ? query.substring(0,10) + '...' : query;
-					//var no_results_message =  config.no_results_label + '<span class="found-none-highlight sio-highlight">' + query + '</span>';
-					
-					//ge('sioNotFoundQ').innerHTML = query;
-					hide("sio_search_window");
-					
-				}
-				else
-				{
-					//set_sio_window_state('results');
-					//cache[query] = search_results;
-					show("sio_search_window");
-					sio.search._draw_result( search_results, query );
-				}
-				
-			}
-				catch(err)
-			{
-				
-			}
-			
+
 		},
 		_draw_result : function( _sr, _q)
 		{
-			
+
 			if( _q != '' ) cache[_q] = _sr;
-			
+
 			var _sr_container = document.getElementById('sio_searchResults')
-			
+
 			document.getElementById('sio_searchResults').scrollTop = 0;
 			_sr_container.innerHTML = '';
-			
+
 			var _res_target = typeof( sio.domain_data.search_preferences ) != 'undefined' ? sio.domain_data.search_preferences['results_target'] : '_self';
 			var _res_link = typeof( sio.domain_data.search_preferences ) != 'undefined' ? sio.domain_data.search_preferences['results_links'] : 'true';
-			
+
 			siomap(function( x )
 			{
 				if( typeof( x ) != 'object' ) return false;
-				
+
 				if( document.location.protocol == 'https:' && x.url.substring(0,6) != 'https:' ) x.url = x.url.replace('http://','https://');
-				
+
 				var shorten_url = x.url.length > 35 ? x.url.substring(0,35) + '...' : x.url;
-				
+
 				var r_n = '<div class="sio-result"><div class="sio-result-inner">';
-				
+
 				var r_image = typeof( x.image_rel_url ) != 'undefined' ? x.image_rel_url : '';
-				
+
 				r_n += '<a class="sio-result-title" href="' + x.url + '" target="' + _res_target + '">' + x.title + '</a>'
-				
+
 				r_n += '<div class="sio-result-desc">';
-				
+
 				if( r_image != '' ) r_n += '<img class="sio-result-image" width="100" src="' + config.sio_host + r_image + '"/>';
-				
+
 				if( x.content_text ) r_n += x.content_text;
-				
+
 				r_n += '</div>'
-				
+
 				if( _res_link == "true" )
 					r_n += '<div class="sio-clear"></div><div class="sio-result-link">' + shorten_url + '</div></div>';
 					else
 					r_n += '<div class="sio-clear"></div></div></div>';
-					
+
 					_sr_container.innerHTML += r_n;
-					
+
 			}, _sr);
 		},
 		
