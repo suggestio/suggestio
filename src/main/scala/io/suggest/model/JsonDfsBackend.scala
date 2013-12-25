@@ -6,6 +6,7 @@ import io.suggest.util.SiobixFs._
 import scala.concurrent.{ExecutionContext, Await, Future, future}
 import scala.concurrent.duration._
 import scala.Some
+import scala.util.Success
 
 /**
  * Suggest.io
@@ -170,13 +171,19 @@ trait JsonBackendT {
 // Это например супервизоры верхнего уровня, менеджеры индексов и т.д.
 trait JsonDfsBackendGlobalT extends JsonBackendT {
 
+  // Защита от параллельной асинхронной записи в один и тот же файл.
+  protected var jsonDfsWriteFut: Future[_] = Future.successful()
+
   protected def getStateFileName = getSaveStateId + ".json"
 
   protected def getFileSystem = fs
 
   protected def getStatePath = new Path(siobix_conf_path, getStateFileName)
 
-  def writeState(data: ImportExportMap)(implicit ec: ExecutionContext): Future[_] = future { writeStateSync(data) }
+  def writeState(data: ImportExportMap)(implicit ec: ExecutionContext): Future[_] = {
+    jsonDfsWriteFut = jsonDfsWriteFut map { _ => writeStateSync(data) }
+    jsonDfsWriteFut
+  }
 
   protected def writeStateSync(data: ImportExportMap) = {
     JsonDfsBackend.writeToPath(getStatePath, data)(getFileSystem)
