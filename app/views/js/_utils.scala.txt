@@ -160,6 +160,9 @@ utils =
     
     ge(element).style.display = 'none'
 
+  remove_first_slash : ( str ) ->
+    str.replace(/^\/|\/$/g, '');
+
   load_css : ( href ) ->
     style_elt = utils.ce 'link', {'rel':'stylesheet','type':'text/css','id':'sio_css', 'href' : href}
     utils.ge_tag('head')[0].appendChild style_elt

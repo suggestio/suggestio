@@ -48,6 +48,7 @@ sio =
     sio_css : "assets/stylesheets/sio.v8.min.css"
     searchRequestDelay : 500
     search_field_dom_depth : 3
+    test_dkey : 'ldpr.ru'
 
 window.sio = sio
 

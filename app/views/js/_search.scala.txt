@@ -8,7 +8,7 @@ search =
       if utils.ge "sio_search_window"
         return false
 
-      rw = utils.ce 'div', {'class':'sio-t-window','id':'sio_search_window'}
+      rw = utils.ce 'div', {'class':'sio-t-window sio-tpl-semitransparent','id':'sio_search_window'}
 
       rw.innerHTML = '<div class="sio-t-column"><div class="sio-t-c-inner" id="sio_searchResults"></div></div>'
       utils.ge_tag('body')[0].appendChild rw
@@ -61,13 +61,26 @@ search =
       sf.innerHTML = search.search_field.tpl
       utils.ge_tag("body")[0].appendChild sf
 
+    toggle_label : () ->
+
+      cb = () ->
+        sf = utils.ge("sio_search_field")
+        if typeof sf.value == 'undefined' || sf.value == ''
+          utils.ge("sio_csf_label").style.display = 'block'
+        else
+          utils.ge("sio_csf_label").style.display = 'none'
+
+      setTimeout cb, 5
     ##
     # назначить события
     init : () ->
 
-      sf = utils.ge("sio_csf")
+      sf = utils.ge("sio_search_field")
 
       utils.bind sf, "keydown", () ->
+
+        sio.search.search_field.toggle_label()
+
         if typeof sio.search.requestTimer != 'undefined'
           clearTimeout sio.search.requestTimer
 
@@ -105,6 +118,14 @@ search =
         utils.bind _o, "click", () ->
           search.show()
 
+    onload : () ->
+
+      # На случай, если какой-то из триггеров уже активен
+      for _o in this.list
+        if _o == document.activeElement
+          search.show()
+
+
   show : () ->
     utils.ge("sio_csf").style.display = "block"
     utils.ge("sio_search_field").focus()
@@ -126,6 +147,10 @@ search =
     sr = utils.ge("sio_search_field").value
 
     dkey = window.location.hostname
+
+    if typeof sio.config.test_dkey != 'undefined'
+      dkey = sio.config.test_dkey
+
     search.send_request sio.config.sio_host + 'search/site?h=' + dkey + '&q=' + sr
 
   ##
@@ -142,27 +167,36 @@ search =
       sio.search.render_results search_results, query
 
   render_results : ( results, query) ->
+
     if  query != ''
       sio.search.cache[query] = results
+      results_container = utils.ge "sio_searchResults"
+      results_container.scrollTop = 0
+      results_container.innerHTML = ''
+      r_n = ''
 
-    results_container = utils.ge "sio_searchResults"
+      for x in results
 
-    results_container.scrollTop = 0
-    results_container.innerHTML = ''
+        if typeof x != 'object'
+          return false
 
-    for x in results
-      if typeof x != 'object'
-        return false
+        if typeof x.image_rel_url != 'undefined'
 
-      console.log x
+          r_n += '<div class="sio-result"><div class="sio-result-inner">'
+          r_n += '<div class="sio-image-container"><img src="' + sio.config.sio_host + utils.remove_first_slash x.image_rel_url + '"/></div>'
+          r_n += '<div class="sio-right-container"><a class="sio-result-title" href="' + x.url + '" target="_blank">' + x.title + '</a>'
+          r_n += '<div class="sio-result-desc">' + x.contentText + '</div></div><div class="sio-clear"></div>'
+          r_n += '</div></div>'
 
-  	  r_n = '<div class="sio-result"><div class="sio-result-inner">'
-  	  r_n += '<a class="sio-result-title" href="' + x.url + '" target="_blank">' + x.title + '</a>'
-  	  r_n += '<div class="sio-result-desc">' + x.contentText
-      
-  	  r_n += '</div>'
+        else
 
-  	  results_container.innerHTML += r_n
+          r_n += '<div class="sio-result"><div class="sio-result-inner">'
+          r_n += '<div class="sio-left-c"><a class="sio-result-title" href="' + x.url + '" target="_blank">' + x.title + '</a></div>'
+          r_n += '<div class="sio-result-desc">' + x.contentText + '</div>'
+          r_n += '</div></div>'
+
+      results_container.innerHTML = r_n
+
 
   ##
   # Инициализация поиск
@@ -181,6 +215,9 @@ search =
     # и окошко с результатами
     search.results_window.draw()
 
+    # После полной загрузки всего
+    # проверяем, нет ли уже активных триггеров
+    search.triggers.onload()
 
 
 search.init()
