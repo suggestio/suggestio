@@ -76,7 +76,7 @@ object SiowebEsUtil extends SioEsClient {
               case Some(dviActive) =>
                 val indices = dviActive.getShards
                 val types = dviActive.getTypesForRequest(sso)
-                trace(logPrefix + s"found index: $dviActive :: indices -> $indices ;; types -> $types")
+                trace(logPrefix + s"found index: $dviActive :: indices -> ${indices.mkString(", ")} ;; types -> $types")
                 Some(indices -> types)
 
               // Внезапно нет индекса, на который указывает указатель.
