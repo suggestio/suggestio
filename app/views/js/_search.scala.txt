@@ -1,0 +1,223 @@
+## Непосредственно ворквлоу поиска
+search =
+
+  cache : {}
+
+  results_window :
+    draw : () ->
+      if utils.ge "sio_search_window"
+        return false
+
+      rw = utils.ce 'div', {'class':'sio-t-window sio-tpl-semitransparent','id':'sio_search_window'}
+
+      rw.innerHTML = '<div class="sio-t-column"><div class="sio-t-c-inner" id="sio_searchResults"></div></div>'
+      utils.ge_tag('body')[0].appendChild rw
+
+  ##
+  ## Все что касается работы с
+  ## полем ввода поискового запроса
+  search_field :
+    get : () ->
+      utils.ge "sio_csf"
+    ##
+    # Шаблон
+    tpl : '<div class="sio-csf-inner"><div class="sio-search-icon"></div><a class="lsbs-ads" href="https://suggest.io"></a><div id="sio_csf_label" class="sio-csf-label">\u0438\u0441\u043a\u0430\u0442\u044c...</div><div class="sio-close-search-icon"><a onclick="sio.search.hide(); return false;" href=""></a></div><input type="text" id="sio_search_field"></div>'
+
+    ##
+    # определить, является ли DOM объект поисковым полем
+    test : (e) ->
+      search_pattern = new RegExp 'search', "gi"
+      rv = false
+
+      try
+        if e.type == 'search'
+          rv = true
+        if( typeof( e.className ) != 'undefined' && e.className.match(search_pattern))
+          rv = true
+        if( typeof( e.action ) != 'undefined' && e.action.match(search_pattern))
+          rv = true
+        if( typeof( e.name ) != 'undefined' && e.name != '' && e.name.match(search_pattern))
+          rv = true
+        if( typeof( e.id ) != 'undefined' && e.id.match(search_pattern))
+          rv = true
+        if( typeof( e.placeholder ) != 'undefined' && e.placeholder.match(search_pattern))
+          rv = true
+        if( typeof( e.value ) != 'undefined' && e.value.match(search_pattern))
+          rv = true
+      catch err
+        console.log "not valid"
+
+      return rv
+
+    ##
+    # функиця для отрисовки кастомного поля
+    draw : () ->
+
+      if utils.ge "sio_csf"
+        console.log "sio field exists"
+        return false
+
+      sf = utils.ce "div", {'class':'sio-custom-field','id':'sio_csf'}
+      sf.innerHTML = search.search_field.tpl
+      utils.ge_tag("body")[0].appendChild sf
+
+    toggle_label : () ->
+
+      cb = () ->
+        sf = utils.ge("sio_search_field")
+        if typeof sf.value == 'undefined' || sf.value == ''
+          utils.ge("sio_csf_label").style.display = 'block'
+        else
+          utils.ge("sio_csf_label").style.display = 'none'
+
+      setTimeout cb, 5
+    ##
+    # назначить события
+    init : () ->
+
+      sf = utils.ge("sio_search_field")
+
+      utils.bind sf, "keydown", () ->
+
+        sio.search.search_field.toggle_label()
+
+        if typeof sio.search.requestTimer != 'undefined'
+          clearTimeout sio.search.requestTimer
+
+        search_cb = () ->
+          sio.search.process_query()
+        sio.search.requestTimer = setTimeout search_cb, sio.config.searchRequestDelay
+
+
+  # Инициализация триггеров, вызывающих поиск Suggest.io
+  # сначала делаем попытку найти поисковое поле на странице
+  # если ничего не нашли — рисуем иконку Sio
+  triggers :
+
+    ##
+    # Список триггеров
+    list : []
+
+    ##
+    # Найти на странице dom объект, который может быть триггером
+    locate : () ->
+
+      # Ищем dom элементы с тегом input
+      # Нас интересуют либо type="search"
+      # либо type="text" с каким-нибудь подходящим по смыслу классом
+      input_fields = utils.ge_tag "input"
+
+      for f in input_fields
+        if search.search_field.test f
+          this.list.push f
+
+    init : () ->
+      this.locate()
+
+      for _o in this.list
+        utils.bind _o, "click", () ->
+          search.show()
+
+    onload : () ->
+
+      # На случай, если какой-то из триггеров уже активен
+      for _o in this.list
+        if _o == document.activeElement
+          search.show()
+
+
+  show : () ->
+    utils.ge("sio_csf").style.display = "block"
+    utils.ge("sio_search_field").focus()
+
+  hide : () ->
+    utils.ge("sio_csf").style.display = "none"
+
+  ##
+  # Обработка поисковых запросов
+  send_request : ( url ) ->
+    script = document.createElement "script"
+    script.type = "text/javascript"
+    script.src = url;
+    script.id = "sio_search_request"
+
+    document.getElementsByTagName('head')[0].appendChild script
+
+  process_query : () ->
+    sr = utils.ge("sio_search_field").value
+
+    dkey = window.location.hostname
+
+    if typeof sio.config.test_dkey != 'undefined'
+      dkey = sio.config.test_dkey
+
+    search.send_request sio.config.sio_host + 'search/site?h=' + dkey + '&q=' + sr
+
+  ##
+  # Обработка результата
+  process_results : ( data ) ->
+    query = data.q
+    search_results = data.search_result
+    status = data.status
+
+    if status == 'found_none' || search_results.length == 0
+      console.log "found none"
+    else
+      utils.ge("sio_search_window").style.display = "block"
+      sio.search.render_results search_results, query
+
+  render_results : ( results, query) ->
+
+    if  query != ''
+      sio.search.cache[query] = results
+      results_container = utils.ge "sio_searchResults"
+      results_container.scrollTop = 0
+      results_container.innerHTML = ''
+      r_n = ''
+
+      for x in results
+
+        if typeof x != 'object'
+          return false
+
+        if typeof x.image_rel_url != 'undefined'
+
+          r_n += '<div class="sio-result"><div class="sio-result-inner">'
+          r_n += '<div class="sio-image-container"><img src="' + sio.config.sio_host + utils.remove_first_slash x.image_rel_url + '"/></div>'
+          r_n += '<div class="sio-right-container"><a class="sio-result-title" href="' + x.url + '" target="_blank">' + x.title + '</a>'
+          r_n += '<div class="sio-result-desc">' + x.contentText + '</div></div><div class="sio-clear"></div>'
+          r_n += '</div></div>'
+
+        else
+
+          r_n += '<div class="sio-result"><div class="sio-result-inner">'
+          r_n += '<div class="sio-left-c"><a class="sio-result-title" href="' + x.url + '" target="_blank">' + x.title + '</a></div>'
+          r_n += '<div class="sio-result-desc">' + x.contentText + '</div>'
+          r_n += '</div></div>'
+
+      results_container.innerHTML = r_n
+
+
+  ##
+  # Инициализация поиск
+  init : () ->
+
+    console.log "init sio search"
+
+    # инициализируем триггеры
+    search.triggers.init()
+
+    # нарисовать поисковое поле
+    # и повесить на него нужные события
+    search.search_field.draw()
+    search.search_field.init()
+
+    # и окошко с результатами
+    search.results_window.draw()
+
+    # После полной загрузки всего
+    # проверяем, нет ли уже активных триггеров
+    search.triggers.onload()
+
+
+search.init()

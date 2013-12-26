@@ -1,31 +1,12 @@
+
 @css {
 
 @font-face {
-	font-family: "pt_sans_narrowbold";
-		src: url('/assets/fonts/ptn77f-webfont.eot');
-		src: url('/assets/fonts/ptn77f-webfont.eot?#iefix') format('embedded-opentype'),
-				 url('/assets/fonts/ptn77f-webfont.woff') format('woff'),
-				 url('/assets/fonts/ptn77f-webfont.ttf') format('truetype');
-				 font-weight: normal;
-				 font-style: normal;
-}
-
-@font-face {
-	font-family: "pt_sans_narrowregular";
-		src: url('/assets/fonts/ptn57f_regular-webfont.eot');
-		src: url('/assets/fonts/ptn57f_regular-webfont.eot?#iefix') format('embedded-opentype'),
-				 url('/assets/fonts/ptn57f_regular-webfont.woff') format('woff'),
-				 url('/assets/fonts/ptn57f_regular-webfont.ttf') format('truetype');
-				 font-weight: normal;
-				 font-style: normal;
-}
-
-@font-face {
-	font-family: "helios";
-		src: url('/assets/fonts/heliosthin-webfont.eot');
-		src: url('/assets/fonts/heliosthin-webfont.eot?#iefix') format('embedded-opentype'),
-				 url('/assets/fonts/heliosthin-webfont.woff') format('woff'),
-				 url('/assets/fonts/heliosthin-webfont.ttf') format('truetype');
+	font-family: "helios_cond_thin";
+		src: url('/assets/fonts/helioscondthin-webfont.eot');
+		src: url('/assets/fonts/helioscondthin-webfont.eot?#iefix') format('embedded-opentype'),
+				 url('/assets/fonts/helioscondthin-webfont.woff') format('woff'),
+				 url('/assets/fonts/helioscondthin-webfont.ttf') format('truetype');
 				 font-weight: normal;
 				 font-style: normal;
 }
@@ -41,35 +22,13 @@
 }
 
 }
+
 body
   background: #ececec url('/assets/images/bg.png') center top
 
-form
-  label
-    font-size: 12px
-  input
-    width: 100%
-    padding: 10px
-    border: 1px #ccc solid
-  
-  .info,
-  .error
-    color: #999
-    font-size: 12px
-    padding: 5px 0px
-  
-  .error
-    color: red
+.hidden
+  display: none
 
-.sio-label
-  padding: 12px 0px 10px 0px!important
-  font-size: 16px
-
-.sio-blue-label
-  color: #328fb0
-  font-size: 14px!important
-  max-width: 420px
-  
 .relative
   position: relative
 
@@ -148,10 +107,10 @@ form
 .menu
   padding-top: 15px
   float: left
-  
+
   .menu-inner
   	padding-left: 28px
-  
+
   a,
   span
     text-decoration: none
@@ -159,11 +118,11 @@ form
     font-size: 13px!important
     color: #969696
     text-shadow: 0px 1px 1px #fff
-  
+
   a:hover
     color: #328fb0
     text-decoration: underline
-  
+
   .menu-link,
   .active-link
     float: left
@@ -174,7 +133,7 @@ form
     background: #ccc
     -webkit-box-shadow: 0px 1px 1px #fff
     margin: 0px 15px
-  
+
   .active-link
   	color: #c7c7c7!important
 
@@ -201,15 +160,15 @@ form
   width: 100%
   z-index: 10000!important
   background: #23313d!important
-  
+
   .menu
     display: none
     padding-bottom: 10px
   .menu,
   .menu a
     float: none
-  
-  a 
+
+  a
     display: block
     text-shadow: none!important
     padding: 5px 0px 5px 39px
@@ -238,22 +197,22 @@ form
   margin-bottom: 50px
   .row
     margin: 0px!important
-  
+
   .input
     position: relative
     border: 1px #b4b3b3 solid
     padding: 1px
     background: #fff
-    
+
     .shadow
       border-left: 1px #fbfbfb solid
       border-right: 1px #fbfbfb solid
       border-top: 1px #d2d3d3 solid
       -webkit-border-radius: 2px
-    
+
     .col-xs-11
       padding: 0px!important
-    
+
     input,
     textarea
       width: 100%
@@ -262,16 +221,16 @@ form
       color: #328fb0
       padding: 15px 10px
       background: #f6f6f6
-    
+
     textarea
       height: 200px
-    
+
     .input-shadow
       border-left: 1px #fbfbfb solid
       border-right: 1px #fbfbfb solid
       border-top: 1px #d2d3d3 solid
       -webkit-border-radius: 2px
-    
+
     .http-prefix
       color: #969696
       background: #fff
@@ -283,7 +242,7 @@ form
   width: 50px
   height: 50px
   margin-top: 22px
-  
+
   a
     display: block
     width: 50px
@@ -299,7 +258,7 @@ form
   height: 55px
   padding: 0px!important
   margin-left: 32px!important
-  
+
   a
     display: block
     width: 135px
@@ -309,7 +268,7 @@ form
 .common-info
   .delimiter
     padding: 0px 10px
-    
+
 .common-info,
 .social
   z-index: 20000
@@ -347,12 +306,68 @@ form
 /* Стандартный контейнер с инфой, используется почти на всех статических страницах */
 .sio-default-container
   height: 458px
+
+  h1
+    font-family: "helios_cond_thin"
+    font-size: 48px
+    color: #23313d
+
+.slideable-container
+  position: relative
+  height: 458px
+  overflow: hidden
+  min-height: 100px
+  background: red
   margin-top: 90px
-  background: #e1e1e1 url('/assets/images/sio-default-container.jpg') no-repeat center top
+  background: #e1e1e1 url('/assets/images/sio-default-container.jpg') no-repeat center bottom
   border-top: 1px #d2d2d2 solid
   border-bottom: 1px #d2d2d2 solid
 
-  h1
-    font-family: "helios"
-    font-size: 48px
-    color: #23313d
+
+  .sio-default-container
+    width: 100%
+    position: absolute
+    left: 0px
+    top: 0px
+
+  .hidden-right
+    left: 100%
+
+.about-controls
+  height: 100px
+
+  div
+    margin: 30px auto
+    width: 145px
+    height: 17px
+
+    span
+      display: block
+      float: left
+      margin-right: 15px
+      width: 17px
+      height: 17px
+      background: url('/assets/images/about-slide-switch.png') no-repeat left top
+      cursor: pointer
+
+    span.active
+      background-position: -31px top
+      cursor: default
+    span.no-margin
+      margin-right: 0px
+
+@media screen and (max-width: 767px)
+  .sio-default-container
+    height: auto
+
+    .left-col
+      padding-top: 30px!important
+
+    .right-col
+      padding-top: 15px!important
+      padding-left: 50px!important
+      padding-bottom: 50px!important
+
+  .sio-footer-container,
+  .login-button
+    display: none

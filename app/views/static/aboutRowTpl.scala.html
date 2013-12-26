@@ -1,13 +1,15 @@
-@(left_column_content:Html = Html(""), center_column_content:Html = Html(""), right_column_content:Html = Html(""), row_class:String="")
+@(left_column_content:Html = Html(""), right_column_content:Html = Html(""), row_class:String="", row_id:String="")
 
-<div class="@row_class sio-about-row">
+<div class="sio-default-container sio-about-container @row_class" id="@row_id">
   <div class="container">
-  
-    <div class="col-sm-3 lcc">@left_column_content</div>
-    
-    <div class="col-sm-5 ccc">@center_column_content</div>
-    
-    <div class="col-sm-4 rcc">@right_column_content</div>
-  
+
+    <div class="col-sm-5 col left-col">
+      @left_column_content
+    </div>
+
+    <div class="col-sm-7 col right-col">
+      @right_column_content
+    </div>
+
   </div>
 </div>

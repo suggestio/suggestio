@@ -1,8 +1,6 @@
 sio = 
-  
-  config :
-    host: 'http://localhost:9000'
-  
+
+  config : {}
   index :
     
     js_code_tpl : ( js_url ) ->

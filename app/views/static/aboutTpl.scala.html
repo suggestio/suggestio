@@ -1,9 +1,5 @@
 @()(implicit c:util.Context)
 
-@* Страница "О проекте".
-   TODO: нужно её перевести на анлийский язык.
-*@
-
 @import c.lang
 @import stuff._
 @import crawl._
@@ -17,19 +13,36 @@
   
   @_mainHeaderTpl( true )
 
-  <div class="sio-default-container">
-    <div class="container">
+  @* Слайды *@
 
-      <div class="col-sm-4">
-        <h1>ЖИВОЙ ПОИСК</h1>
-        <div>Пользователи сайта на котором установлен suggest.io увидят результаты поиска уже после ввода первой буквы поискового запроса.</div>
-      </div>
+  <div class="slideable-container">
+  @* Живой поиск — первый слайд *@
+  @_aboutLiveSearchTpl()
 
-      <div class="col-sm-8">
-        <img class="img-responsive" src="/assets/images/sio-about-live-search.png"/>
-      </div>
+  @* Простая установка — второй слайд *@
+  @_aboutInstallTpl()
 
+  @* Настройки дизайна — третий слайд *@
+  @_aboutPreferencesTpl()
+
+  @* Личный кабинет — четвертый слайд *@
+  @_aboutAdminTpl()
+
+  @* Настройки дизайна — третий слайд *@
+  @_aboutSupportTpl()
+
+  </div>
+
+  <div class="about-controls" id="aboutControls">
+    <div>
+      <span data-slide-index="1" data-slide="aboutLiveSearch" class="active"></span>
+      <span data-slide-index="2" data-slide="aboutInstall"></span>
+      <span data-slide-index="3" data-slide="aboutPreferences"></span>
+      <span data-slide-index="4" data-slide="aboutAdmin"></span>
+      <span data-slide-index="5" data-slide="aboutSupport" class="no-margin"></span>
     </div>
   </div>
+
+  <script src="@routes.Assets.at("javascripts/about.min.js")"></script>
 
 }

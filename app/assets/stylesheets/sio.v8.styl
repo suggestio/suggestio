@@ -1,7 +1,6 @@
 /* Стили элементов для поискового взаимодействия
-  
   TODO нужно пофиксить закоменченные строки filter:progid:DXImageTransform.Microsoft.gradient - они не парсятся stylus'ом
- */
+*/
 
 .sio-fixed-body
     position: relative
@@ -9,6 +8,8 @@
     text-align: left
     direction: ltr
 
+.sio-clear
+  clear: both
 
 .sio-custom-field
     display: none
@@ -634,386 +635,42 @@
 
 /* Templates */
 
-
-/**/
-.sio-sw-cont.default
-    background: rgba(0,0,0,0.6)!important
-    padding: 20px 20px 0px 20px
-
-.sio-sw-cont.default
-    .sio-sw-inner
-        border: 1px #ececec solid
-    .sio-sw-search-results 
-        background: #fff
-        padding: 20px
-    .sio-result
-        background: none!important
-        margin: 0px; padding: 0px
-        margin-bottom: 10px
-        border-bottom: 2px #ececec dotted
-
-.sio-sw-cont.default .sio-result-inner { background: none!important; }
-
-.sio-sw-cont.default .sio-result-title
-    display: block
-    color: #0f0f0f
-    font-family: Arial
-    font-size: 15px
-    font-weight: bold
-    padding-bottom: 10px
-
-.sio-sw-cont.default em { font-style: normal; }
-
-.sio-sw-cont.default .sio-result-desc
-    font-family: Arial
-    color: #868686
-    font-size: 13px
-    line-height: 17px
-
-
-.sio-sw-cont.default .sio-result-link
-    color: #5bb6d5
-    font-family: Arial
-    font-size: 12px
-    padding-top: 5px
-    margin-bottom: 10px
-
-
-.sio-sw-cont.default .sio-sw-ads
-    padding-top: 5px
-    text-align: center
-
-
-.sio-result-desc img
-    float: left
-    margin-right: 10px
-    margin-bottom: 10px
-
-
-/* Fatborder */
-.sio-sw-cont.fatborder
-    .sio-sw-inner, .sio-sw-ads
-        border: 1px #0074b3 solid
-        background: #ccc
-        padding: 2px
-    .sio-sw-inner
-        border-bottom: 0px
-    .sio-sw-search-results
-        background: #fff
-        padding: 14px 20px
-
-.sio-sw-cont.fatborder .sio-result-title
-    display: block
-    color: #0074b3!important
-    font-family: Arial
-    font-size: 14px
-    font-weight: bold
-    padding-bottom: 7px
-
-
-.sio-sw-cont.fatborder em 
-    font-style: normal
-
-.sio-sw-cont.fatborder .sio-result
-    background: none
-    border-bottom: 1px #333333 solid
-    padding: 0px
-    margin-bottom: 10px
-
-
-.sio-sw-cont.fatborder .sio-result-desc
-    color: #868686
-    font-family: Arial
-    padding: 10px 0px!important
-    font-size: 12px!important
-    line-height: 16px!important
-
-
-.sio-sw-cont.fatborder .sio-result-link
-    color: #5bb6d5
-    font-family: Arial
-    font-size: 12px
-    padding-top: 5px
-    margin-bottom: 10px
-
-.sio-sw-cont.fatborder .sio-sw-ads
-    padding-top: 0px
-    border-top: 0px
-    a
-        display: block
-        background: #fff
-        text-align: center
-        padding-top: 3px
-
-
-/* Plaintext */
-.sio-sw-cont.plaintext
-    .sio-sw-inner
-        border: 2px #ecebeb solid
-        background: #ccc
-        padding: 1px
-    .sio-sw-inner-2
-        background: #cbcbcb
-        padding: 2px
-    .sio-sw-search-results
-        background: #fff
-        padding: 14px 20px
-
-.sio-sw-cont.plaintext .sio-result-title
-    color: #213845
-    font-size: 16px!important
-    display: block
-    padding-bottom: 10px
-    font-weight: bold
-    font-style: normal
-
-
-.sio-sw-cont.plaintext em { font-style: normal; }
-
-.sio-sw-cont.plaintext .sio-result
-    background: none
-    border-bottom: 1px #ccc solid
-    padding: 0px
-    margin-bottom: 10px
-
-
-.sio-sw-cont.plaintext .sio-result-desc
-    color: #868686
-    font-family: Arial
-    font-size: 12px
-
-
-.sio-sw-cont.plaintext .sio-result-link
-    color: #5bb6d5
-    font-family: Arial
-    font-size: 12px
-    padding-top: 5px
-    margin-bottom: 10px
-
-.sio-sw-cont.plaintext .sio-sw-ads
-    background: #ccc
-    position: absolute
-    padding: 4px 10px 0px 10px
-    right: 10px; bottom: -20px
-
-
-/* Roundcorner */
-.sio-sw-cont.roundcorner
-    .sio-sw-inner 
-        border: 0px
-        background: #ccc
-        padding: 7px
-    .sio-sw-inner-2
-        background: #eeeeee
-    .sio-sw-search-results
-        background: #eeeeee
-        padding: 0px
-
-
-.sio-sw-cont.roundcorner .sio-result-title
-    display: block
-    color: #333
-    font-family: Arial
-    background: none
-    font-size: 14px
-    font-weight: bold
-    padding-bottom: 7px
-
-
-.sio-sw-cont.roundcorner em
-    font-style: normal
-
-.sio-sw-cont.roundcorner .sio-result
-    background: #eeeeee
-    padding: 15px
-    border-bottom: 1px #e1e1e1 solid
-    border-top: 1px #fbfbfb solid
-
-
-.sio-sw-cont.roundcorner .sio-result-desc
-    background: none
-    color: #868686
-    font-family: Arial
-    font-size: 14px
-
-
-.sio-sw-cont.roundcorner .sio-result-link
-    background: none
-    color: #5bb6d5
-    font-family: Arial
-    font-size: 12px
-    padding-top: 5px
-    margin-bottom: 10px
-
-.sio-sw-cont.roundcorner .sio-sw-ads
-    background: #ccc
-    text-align: center
-    padding: 4px 10px 0px 10px
-
-
-/* Normalone */
-.sio-sw-cont.normalone
-    .sio-sw-inner
-        border: 10px #ccc solid
-        background: #ccc
-        padding: 1px
-    .sio-sw-inner-2
-        background: #ccc
-        padding: 4px
-    .sio-sw-search-results
-        background: #fff
-        padding: 12px
-
-.sio-sw-cont.normalone .sio-result-title
-    display: block
-    color: #0074b3!important
-    font-family: Arial
-    font-size: 14px
-    font-weight: bold
-    padding-bottom: 7px
-
-
-.sio-sw-cont.normalone em 
-    font-style: normal
-
-.sio-sw-cont.normalone .sio-result
-    background: #eeeeee
-    border-bottom: 1px #0074b3 solid
-    padding: 10px
-    margin-bottom: 10px
-
-
-.sio-sw-cont.normalone .sio-result-desc
-    color: #868686
-    font-family: Arial
-    font-size: 13px
-
-
-.sio-sw-cont.normalone .sio-result-link
-    color: #5bb6d5
-    font-family: Arial
-    font-size: 12px
-    padding-top: 5px
-    margin-bottom: 10px
-
-.sio-sw-cont.normalone .sio-sw-ads
-    padding-top: 0px
-    border-top: 0px
-    text-align: center
-    padding-bottom: 3px
-
-/* sio-kk, t-window */
-.sio-t-column.sio-kk .sio-t-c-inner
-    // FIXME filter:progid:DXImageTransform.Microsoft.gradient (startColorstr=#cc999999, endColorstr=#cc999999, GradientType=1)
-    background: rgba(153,155,153,0.8)
-
-.sio-kk .sio-result
-    margin: 10px 0px
-    padding: 0px
-    background: none
-
-.sio-kk .sio-result .sio-result-inner
-    background: #fff
-    -webkit-border-radius: 10px
-    -moz-border-radius: 10px
-    border-radius: 10px
-    margin: 0px
-
-
-.sio-kk .sio-result-title
-    display: block
-    font-family: Arial
-    font-size: 18px
-    padding: 20px
-    color: #000
-
-.sio-kk em
-    background: none
-    font-style: normal
-
-
-.sio-kk .sio-result-desc,
-.sio-kk .sio-result-link
-    font-family: Arial
-    font-size: 12px
-    padding: 10px 20px
-
-
-.sio-kk .sio-result-desc
-    color: #868686
-    background: url('/assets/images/sio-kk-desc-bg.png') repeat-x left top
-
-.sio-kk .sio-result-link
-    color: #5bb6d5
-
-
-/* sio-bb, t-window */
-.sio-t-column.sio-bb .sio-t-c-inner
-    // FIXME filter:progid:DXImageTransform.Microsoft.gradient (startColorstr=#cc000000, endColorstr=#cc000000, GradientType=1)
-    background: rgba(0,0,0,0.8)
-
-.sio-bb .sio-result
-    margin: 9px 0px
-    border: 2px #2190af solid
-    padding: 25px
-    background: rgba(255,255,255,0.8)
-
-.sio-bb .sio-result .sio-result-inner
-    background: none
-
-
-.sio-bb .sio-result-title
-    background: #2190af
-    color: #fff
-    font-family: Arial
-    font-size: 18px
-
-.sio-bb em
-    background: none
-    font-style: normal
-
-
-.sio-bb .sio-result-desc,
-.sio-bb .sio-result-link
-    margin: 10px 0px
-    font-family: Arial
-    font-size: 12px
-
-.sio-bb .sio-result-link { color: #666; }
-
-/* sio-dd, t-window */
-.sio-t-column.sio-dd-def .sio-t-c-inner
-    // FIXME filter:progid:DXImageTransform.Microsoft.gradient (startColorstr=#cc000000, endColorstr=#cc000000, GradientType=1)
-    background: rgba(0,0,0,0.8)
-
-.sio-dd-def .sio-result
-    background: none!important
-    border: 1px #696969 dashed
-    border-top: 0px
-    padding: 20px 30px
-
-.sio-dd-def .sio-result-inner
-    background: none
-
-.sio-dd-def .sio-result-title
-    font-size: 18px
-    color: #2190af
-    text-decoration: underline
-
-.sio-dd-def em
-    font-style: normal
-    background: none
-    color: #fff
-
-.sio-dd-def .sio-result-desc
-    padding: 10px 0px
-    color: #fff
-    font-size: 13px
-
-.sio-dd-def .sio-result-link
-    color: #787878
-    font-size: 13px
-
+.sio-tpl-semitransparent
+  background: rgba(0,0,0,0.5)
+
+  .sio-t-c-inner
+    width: 560px
+    background: rgba(0,0,0,0.1)
+
+  .sio-result
+    margin: 6px 0px
+    border: 2px #ededed solid
+    background: rgba(0,0,0,0.6)
+
+
+    .sio-image-container
+      float: left
+      width: 256px
+      height: 187px
+      border-right: 2px #ededed solid
+      overflow: hidden
+
+      img
+        min-width: 256px
+        min-height: 187px
+
+    .sio-right-container
+      float: left
+      width: 290px
+
+    .sio-result-title
+      color: #fff
+      font-family: Arial
+      font-size: 14px
+    .sio-result-desc
+      color: #858585
+      font-family: Arial
+      font-size: 12px
 
 /* Sio installation */
 .sio-install-steps
