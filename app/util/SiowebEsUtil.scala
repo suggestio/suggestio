@@ -51,7 +51,7 @@ object SiowebEsUtil extends SioEsClient {
   // Только эти поля могут быть в карте результата
   val resultAllowedFields = Set(FIELD_URL, FIELD_TITLE, FIELD_CONTENT_TEXT, FIELD_LANGUAGE, FIELD_THUMB_REL_URL, FIELD_PAGE_TAGS)
 
-  val hlFragSepDefault    = " "
+  val hlFragSepDefault = " "
 
   /** Имя кластера elasticsearch, к которому будет коннектиться клиент. */
   override def getEsClusterName = configuration.getString("es.cluster.name") getOrElse super.getEsClusterName

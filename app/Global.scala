@@ -21,7 +21,7 @@ object Global extends GlobalSettings {
    */
   override def onStart(app: Application) {
     super.onStart(app)
-    SiowebSup.ensureStarted
+    SiowebSup.startLink
     // Запускать es-клиент при старте, ибо подключение к кластеру ES это занимает некоторое время.
     import scala.concurrent.ExecutionContext.Implicits._
     future { SiowebEsUtil.ensureNode() }

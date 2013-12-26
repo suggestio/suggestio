@@ -1,10 +1,16 @@
 @()(implicit ctx: util.Context)
 
+@import util.AkkaSiobixClient._
+
 @sysSiobixBase("index") {
     <p>Тут работа с системой кравлинга.</p>
 
-    <p></p><a href="@routes.Sys.siobixActor("sup")">Supervisor</a></p>
+    <p><a href="@routes.Sys.siobixActor(SIOBIX_SUP_PATH)">Дерево супервизора</a></p>
 
-    <hr/>
-    @_majorRebuildButtonTpl()
+    <br/>
+    <br/>
+
+    <h3><a href="@routes.Sys.siobixActor(MAIN_CRAWLER_PATH)">MainCrawler</a></h3>
+
+    <p><a href="@routes.Sys.siobixRebuild">Управление ребилдом</a></p>
 }

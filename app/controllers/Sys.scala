@@ -121,11 +121,17 @@ object Sys extends SioController with Logs {
     Ok(siobix.indexTpl())
   }
 
+  /** Отрендерить страницу с управлением ребилда. */
+  def siobixRebuild = IsSuperuser { implicit request =>
+    Ok(siobix.rebuildTpl())
+  }
+
+
   /** Гуляем по дереву акторов (TalkitiveActor) в siobix. */
   def siobixActor(path: String) = IsSuperuser.async { implicit request =>
     val logPrefix = s"siobixActor($path): "
     val actorPath = if (path startsWith "/") path else "/" + path
-    val sel = SiobixClient.remoteSelection("/user" + actorPath)
+    val sel = SiobixClient.remoteAskSelection("/user" + actorPath)
     trace(logPrefix + s"actorPath -> $actorPath ;; asking selection -> ${sel.actorSel}")
     val childFut = (sel ? TA_GetDirectChildren).asInstanceOf[Future[List[String]]]
     for {

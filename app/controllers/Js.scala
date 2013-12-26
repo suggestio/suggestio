@@ -1,5 +1,6 @@
 package controllers
 
+import _root_.util.urls_supply.SeedUrlsSupplier
 import util.event._
 import play.api.mvc.{Session, SimpleResult, WebSocket}
 import play.api.data._
@@ -20,6 +21,7 @@ import scala.concurrent.Future
 import java.util.UUID
 import play.api.libs.iteratee.Concurrent
 import play.api.templates.Txt
+import play.api.mvc.RequestHeader
 
 
 /**
@@ -112,6 +114,7 @@ object Js extends SioController with Logs {
       // Есть домен такой в базе. Нужно выдать js-скрипт для поиска, т.е. всё как обычно. Эта ветвь выполняется в 99.9% случаев.
       case Some(domain) if !isQi =>
         trace(logPrefix + s"dkey=$dkey found, no Qi flow => normal activity.")
+        maybeHandleReferrer(dkey)
         jsServingAction(dkey)
 
 
@@ -359,4 +362,17 @@ object Js extends SioController with Logs {
   /** Сгенерить ссылку на главную для указанного домена. */
   private def firstCheckUrl(dkey: String) = "http://" + dkey + "/"
 
+
+  private def maybeHandleReferrer(dkey: String)(implicit req: RequestHeader) {
+    req.headers.get(REFERER).foreach { refUrl =>
+      // Есть реферрер. Нужно бегло проверить его на профпригодность и отправить в сторону кравлера
+      try {
+        if (UrlUtil.url2dkey(refUrl) == dkey) {
+          SeedUrlsSupplier.sendReferrer(refUrl)
+        }
+      } catch {
+        case ex: Exception => // Do nothing
+      }
+    }
+  }
 }

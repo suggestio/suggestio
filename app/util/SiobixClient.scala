@@ -27,7 +27,11 @@ object SiobixClient extends SiobixClientWrapperT {
     * @return Селектор, который необязательно верен или существует.
     */
   def remoteSelection(actorPath: String) = {
-    val sel = system.actorSelection(URL_PREFIX + actorPath)
+    system.actorSelection(URL_PREFIX + actorPath)
+  }
+
+  def remoteAskSelection(actorPath: String) = {
+    val sel = remoteSelection(actorPath)
     new AskableActorSelection(sel)
   }
 
@@ -76,18 +80,30 @@ sealed trait SiobixClientWrapperT extends SiobixClientT {
 }
 
 
+import SiobixClient._
+
+
+object AkkaSiobixClient {
+
+  def SIOBIX_SUP_PATH   = current.configuration.getString("siobix.akka.sup.path") getOrElse "sup"
+  def CRAWLERS_SUP_PATH = current.configuration.getString("siobix.akka.crawler.sup.path").get
+  val CRAWLERS_SUP_ABSPATH = "/user/" + CRAWLERS_SUP_PATH
+  def MAIN_CRAWLER_PATH = CRAWLERS_SUP_PATH + "/" + MainProto.NAME
+  val MAIN_CRAWLER_ABSPATH = "/user/" + MAIN_CRAWLER_PATH
+
+  def getCrawlersSupAskSelector = remoteAskSelection(CRAWLERS_SUP_PATH)
+  def getMainCrawlerAskSelector = remoteAskSelection(MAIN_CRAWLER_ABSPATH)
+  def getMainCrawlerSelector    = remoteSelection(MAIN_CRAWLER_ABSPATH)
+  
+}
+
 /** Клиент к реальному siobix, работающий через Akka. */
 sealed class AkkaSiobixClient extends SiobixClientT {
 
   private val LOGGER = new LogsImpl(getClass)
   import LOGGER._
-  import SiobixClient.{remoteSelection, askTimeout}
-
-  val CRAWLERS_SUP_PATH = current.configuration.getString("siobix.akka.crawler.sup.path").get
-  def getCrawlersSupSelector = remoteSelection(CRAWLERS_SUP_PATH)
-  val MAIN_CRAWLER_PATH = CRAWLERS_SUP_PATH + "/" + MainProto.NAME
-  def getMainCrawlerSelector = remoteSelection(MAIN_CRAWLER_PATH)
-
+  import SiobixClient.askTimeout
+  import AkkaSiobixClient._
 
   /**
    * Отправить в кравлер сообщение о запросе бутстрапа домена
@@ -96,8 +112,8 @@ sealed class AkkaSiobixClient extends SiobixClientT {
    * @return
    */
   def maybeBootstrapDkey(dkey:String, seedUrls: immutable.Seq[String]) = {
-    val sel = getCrawlersSupSelector
-    trace(s"maybeBootstrapDkey($dkey, $seedUrls): crawlersSup URL = " + CRAWLERS_SUP_PATH)
+    val sel = getCrawlersSupAskSelector
+    trace(s"maybeBootstrapDkey($dkey, $seedUrls): crawlersSup URL = " + CRAWLERS_SUP_ABSPATH)
     (sel ? MaybeBootstrapDkey(dkey, seedUrls))
       .asInstanceOf[Future[MaybeBootstrapDkeyReply_t]]
   }
@@ -107,7 +123,7 @@ sealed class AkkaSiobixClient extends SiobixClientT {
    * @return Фьючерс с ответом.
    */
   def majorRebuildRequest = {
-    val sel = getMainCrawlerSelector
+    val sel = getMainCrawlerAskSelector
     trace(s"majorRebuildRequest(): " + "main crawler selection = " + sel)
     (sel ? MajorRebuildMsg).asInstanceOf[Future[MajorRebuildReply_t]]
   }

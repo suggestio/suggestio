@@ -71,6 +71,7 @@ POST /sys/dkey/:dkey/delete             controllers.Sys.dkeyDelete(dkey)
 POST /sys/majorRebuild                  controllers.Sys.majorRebuild
 GET  /sys/siobix/actorTree/*path        controllers.Sys.siobixActor(path: String)
 GET  /sys/siobix                        controllers.Sys.siobixIndex
+GET  /sys/siobix/rebuild                controllers.Sys.siobixRebuild
 
 GET  /sys/indices                       controllers.Sys.indicesIndex
 GET  /sys/indices/active/ALL            controllers.Sys.indicesListAllActive

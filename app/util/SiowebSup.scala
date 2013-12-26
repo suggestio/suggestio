@@ -11,6 +11,7 @@ import akka.util.Timeout
 import akka.actor.OneForOneStrategy
 import DomainRequester.{ACTOR_NAME => DOMAIN_REQUESTER_NAME}
 import util.event.SiowebNotifier
+import util.urls_supply.SeedUrlsSupplier
 
 /**
  * Suggest.io
@@ -29,9 +30,10 @@ object SiowebSup {
   val actorName = "siowebSup"
   val actorPath = Akka.system / actorName
 
-  private val supRef = {
-    val props = Props[SiowebSup]
-    Akka.system.actorOf(props, name=actorName)
+
+  /** Запуск супервизора в top-level. */
+  def startLink: ActorRef = {
+    Akka.system.actorOf(Props[SiowebSup], name=actorName)
   }
 
   type GetChildRefReply_t = Option[ActorRef]    // Тип возвращаемого значения getChildRef.
@@ -42,8 +44,8 @@ object SiowebSup {
    * @return
    */
   def getChildRef(childName: String) = {
-    Akka.system.actorSelection(actorPath)
-    Await.result(supRef ? GetChildRef(childName), timeoutSec).asInstanceOf[GetChildRefReply_t]
+    val sel = Akka.system.actorSelection(actorPath)
+    Await.result(sel ? GetChildRef(childName), timeoutSec).asInstanceOf[GetChildRefReply_t]
   }
 
   /**
@@ -52,10 +54,6 @@ object SiowebSup {
    */
   def getDomainRequesterRef = getChildRef(DOMAIN_REQUESTER_NAME).get
 
-
-  def ensureStarted = {
-    !supRef.isTerminated
-  }
 
   // Сообщение запроса дочернего процесса
   sealed case class GetChildRef(childName: String)
@@ -79,6 +77,7 @@ class SiowebSup extends Actor with Logs {
     DomainRequester.startLink(context)
     NewsQueue4Play.startLinkSup(context)
     SiowebNotifier.startLink(context)
+    SeedUrlsSupplier.startLink(context)
   }
 
 

@@ -69,10 +69,10 @@ siobix.akka.url.prefix="akka.tcp://siobix@127.0.0.1:2553"
 #siobix.client = "FAKE+"
 
 ## Адрес top-level супервизора.
-siobix.akka.sup.path="/user/sup"
+siobix.akka.sup.path="sup"
 
 ## akka путь до супервизора кравлеров.
-siobix.akka.crawler.sup.path="/user/sup/CrawlersSup"
+siobix.akka.crawler.sup.path="sup/CrawlersSup"
 
 ## Сколько времени ждать ответа от кравлера по поводу добавления нового сайта. [2000]
 siobix.akka.bootstrap.ask_timeout_ms = 2500
