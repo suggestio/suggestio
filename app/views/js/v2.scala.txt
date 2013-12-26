@@ -59,6 +59,10 @@ sio.search = search
 
 utils.load_css sio.config.sio_host + sio.config.sio_css
 
+@if(isSiteAdmin){
+  @_preferences()
+}
+
 @* Отрендерить инсталлер, если qi_id задан *@
 @qiIdOpt.map { qi_id =>
   @_install(dkey, qi_id, wsTimestamp) }

@@ -1,0 +1,7 @@
+search_field =
+
+  draw : () ->
+
+    'search_field'
+
+preferences.search_field = search_field

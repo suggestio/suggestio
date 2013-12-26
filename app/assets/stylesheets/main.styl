@@ -306,10 +306,6 @@ body
 /* Стандартный контейнер с инфой, используется почти на всех статических страницах */
 .sio-default-container
   height: 458px
-  margin-top: 90px
-  background: #e1e1e1 url('/assets/images/sio-default-container.jpg') no-repeat center bottom
-  border-top: 1px #d2d2d2 solid
-  border-bottom: 1px #d2d2d2 solid
 
   h1
     font-family: "helios_cond_thin"
@@ -318,8 +314,15 @@ body
 
 .slideable-container
   position: relative
-  height: 550px
+  height: 458px
   overflow: hidden
+  min-height: 100px
+  background: red
+  margin-top: 90px
+  background: #e1e1e1 url('/assets/images/sio-default-container.jpg') no-repeat center bottom
+  border-top: 1px #d2d2d2 solid
+  border-bottom: 1px #d2d2d2 solid
+
 
   .sio-default-container
     width: 100%
@@ -345,8 +348,11 @@ body
       width: 17px
       height: 17px
       background: url('/assets/images/about-slide-switch.png') no-repeat left top
+      cursor: pointer
+
     span.active
       background-position: -31px top
+      cursor: default
     span.no-margin
       margin-right: 0px
 
