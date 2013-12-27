@@ -6,7 +6,7 @@ import io.suggest.util.SiobixFs._
 import scala.concurrent.{ExecutionContext, Await, Future, future}
 import scala.concurrent.duration._
 import scala.Some
-import scala.util.Success
+import MyConfig.CONFIG
 
 /**
  * Suggest.io
@@ -151,7 +151,9 @@ trait JsonBackendT {
     }
   }
 
-  protected def loadSyncTimeout = 2 seconds
+  protected def loadSyncTimeout: FiniteDuration = {
+    (CONFIG.getInt("json.dfs.load.sync.timeout_sec") getOrElse 10) seconds
+  }
 
   protected def loadStateSync(implicit ec: ExecutionContext): Boolean = {
     Await.result(loadState, loadSyncTimeout)

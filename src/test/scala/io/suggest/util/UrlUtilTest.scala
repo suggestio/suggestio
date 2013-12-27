@@ -78,6 +78,7 @@ class UrlUtilTest extends FlatSpec with Matchers {
     normalize("https://kill.me/?s=132072df690933835eb8b6ad0b77e7b6f14acad7#!asd/asd") should equal ("https://kill.me/#!asd/asd")
     normalize("http://президент.рф/путен") should equal ("http://xn--d1abbgf6aiiy.xn--p1ai/%D0%BF%D1%83%D1%82%D0%B5%D0%BD")
     normalize("http://ya.ru/asd/asd?q=aasd+ads&hg=1&ie=utf-8") should equal ("http://ya.ru/asd/asd?hg=1&ie=utf-8&q=aasd+ads")
+    normalize("http://www.aklugovoy.ru/personal_information/blog/Intervention.") should equal ("http://www.aklugovoy.ru/personal_information/blog/Intervention.")
   }
 
 
