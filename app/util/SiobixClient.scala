@@ -27,7 +27,8 @@ object SiobixClient extends SiobixClientWrapperT {
     * @return Селектор, который необязательно верен или существует.
     */
   def remoteSelection(actorPath: String) = {
-    system.actorSelection(URL_PREFIX + actorPath)
+    val url = URL_PREFIX + actorPath
+    system.actorSelection(url)
   }
 
   def remoteAskSelection(actorPath: String) = {
@@ -91,7 +92,7 @@ object AkkaSiobixClient {
   def MAIN_CRAWLER_PATH = CRAWLERS_SUP_PATH + "/" + MainProto.NAME
   val MAIN_CRAWLER_ABSPATH = "/user/" + MAIN_CRAWLER_PATH
 
-  def getCrawlersSupAskSelector = remoteAskSelection(CRAWLERS_SUP_PATH)
+  def getCrawlersSupAskSelector = remoteAskSelection(CRAWLERS_SUP_ABSPATH)
   def getMainCrawlerAskSelector = remoteAskSelection(MAIN_CRAWLER_ABSPATH)
   def getMainCrawlerSelector    = remoteSelection(MAIN_CRAWLER_ABSPATH)
   
@@ -113,7 +114,7 @@ sealed class AkkaSiobixClient extends SiobixClientT {
    */
   def maybeBootstrapDkey(dkey:String, seedUrls: immutable.Seq[String]) = {
     val sel = getCrawlersSupAskSelector
-    trace(s"maybeBootstrapDkey($dkey, $seedUrls): crawlersSup URL = " + CRAWLERS_SUP_ABSPATH)
+    trace(s"maybeBootstrapDkey($dkey, $seedUrls): crawlersSup URL = " + sel)
     (sel ? MaybeBootstrapDkey(dkey, seedUrls))
       .asInstanceOf[Future[MaybeBootstrapDkeyReply_t]]
   }
