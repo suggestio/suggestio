@@ -1,4 +1,4 @@
-@(title: String, headAfter:Html = Html.empty)(content: Html)(implicit c:util.Context)
+@(title: String, hPathAfter:Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit c:util.Context)
 @import stuff._
 
 @* base-шаблон для системной панели suggest.io. *@
@@ -16,6 +16,9 @@
 	<div class="sio-db-logo">
 		<a href="@routes.Sys.index"><img src="@routes.Assets.at("images/sio-dark-logo.png")"></a>
 	</div>
-	<div class="sio-db-layout">@content</div>
+	<div class="sio-db-layout">
+	    <h1>/ <a href="@routes.Sys.index">system</a> @hPathAfter</h1>
+	    @content
+	</div>
 </body>
 </html>

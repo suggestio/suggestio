@@ -3,7 +3,11 @@
 @* Отобразить админу уведомление об успешном добавлении сайта с предложением перейти на страницу сайта.
    Делаем всё по шагам, т.к. часть установки сайта идёт параллельно отображению этой странице. *@
 
-@sysBase(title = "Сайт добавлен") {
+@hPathAfter1 = {
+  / success / <a href="@routes.Sys.dkeyShow(dkey)">@dkey</a>
+}
+
+@addSiteBase(title = "Сайт добавлен", hPathAfter = Some(hPathAfter1)) {
 
   @crawlerOpt match {
     case Some(crawler) => {

@@ -113,9 +113,10 @@ object Js extends SioController with Logs {
 
       // Есть домен такой в базе. Нужно выдать js-скрипт для поиска, т.е. всё как обычно. Эта ветвь выполняется в 99.9% случаев.
       case Some(domain) if !isQi =>
+        val asyncResult = jsServingAction(dkey)
         trace(logPrefix + s"dkey=$dkey found, no Qi flow => normal activity.")
         maybeHandleReferrer(dkey)
-        jsServingAction(dkey)
+        asyncResult
 
 
       // Домен уже есть в базе, а в сессии есть установка Qi. Такое бывает, когда во время установки на сайте гуляют юзеры.

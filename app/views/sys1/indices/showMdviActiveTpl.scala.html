@@ -3,6 +3,10 @@
 @* Шаблон для полного отображения одного экземпляра MDVIActive *@
 @import m._
 
+@hPathAfter1 = {
+  / @getDkey / @getVin
+}
+
 @indicesBase(title = s"MDVIActive / $getDkey / $getVin") {
     @defining(getDkey) { dkey =>
         <p>dkey: <b><a href="@routes.Sys.dkeyShow(dkey)">@dkey</a></b></p>

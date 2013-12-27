@@ -3,7 +3,7 @@
 
 @* Отобразить список всех установленных в системе доменов. *@
 
-@sysBase("sites list") {
+@domainsBase("Все сайты") {
   @if(!domains.isEmpty) {
     <table>
       <tr>
@@ -16,6 +16,7 @@
       }
     </table>
 
+    <br/>
     <hr/>
 
     <a href="@routes.Sys.addSiteForm">Добавить новый сайт</a>

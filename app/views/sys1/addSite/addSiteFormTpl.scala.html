@@ -4,9 +4,7 @@
 
 @import helper._
 
-@sysBase("add new site") {
-  <h1>Добавить новый сайт в систему</h1>
-
+@addSiteBase("Добавить новый сайт") {
   @form(routes.Sys.addSiteFormSubmit) {
     Домен (адрес сайта без http):
     @inputText(f("domain"), 'placeholder -> "aversimage.ru")

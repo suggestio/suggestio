@@ -1,0 +1,16 @@
+@(titleOpt:Option[String], dkey:String, headAfter: Option[Html] = None)(content: Html)(implicit ctx:util.Context)
+
+@* Base-шаблон для dkey-страниц (страниц в рамках домена).
+   В v1 это было шаблон db/dkey_base.html.
+*@
+
+@hPathAfter1 = {
+    / <a href="@routes.Sys.dkeyShow(dkey)">@dkey</a>
+    @if(titleOpt.isDefined) {/} @titleOpt
+}
+
+@domainsBase(
+  title = titleOpt.map(_ + " | ").getOrElse("") + dkey,
+  headAfter = headAfter,
+  hPathAfter = Some(hPathAfter1)
+)(content)

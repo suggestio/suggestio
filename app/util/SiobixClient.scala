@@ -43,18 +43,18 @@ object SiobixClient extends SiobixClientWrapperT {
   /** Используемый клиент для siobix. */
   protected val siobixClientImpl: SiobixClientT = {
     val confKey = "siobix.client"
-    current.configuration.getString(confKey)
+    val CLIENT_AKKA = "AKKA"
+    val CLIENT_FAKE_POS = "FAKE+"
+    current.configuration
+      .getString(confKey, Some(Set(CLIENT_AKKA, CLIENT_FAKE_POS)))
       .map(_.toUpperCase)
       .flatMap {
-        case "AKKA"  => None
+        case CLIENT_AKKA => None
 
-        case "FAKE+" =>
+        case CLIENT_FAKE_POS =>
           val c = new FakePositiveSiobixClient
           Logger(getClass).warn(s"siobixClientImpl: Using FAKE ${c.getClass.getSimpleName} as siobix client!!!")
           Some(c)
-
-        case other =>
-          throw new IllegalArgumentException(s"Invalid client type in application.conf in '$confKey' = $other")
       }
       .getOrElse { new AkkaSiobixClient }
   }

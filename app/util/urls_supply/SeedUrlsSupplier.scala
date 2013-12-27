@@ -68,17 +68,19 @@ class SeedUrlsSupplier extends TalkativeActor {
   private val LOGGER = new LogsImpl(getClass)
   import LOGGER._
 
+  /** Текущее FSM-состояние актора. Новое значение присваивается через this.become(). */
+  protected var fsmState: FsmState = null
+
 
   override def preStart() = {
     super.preStart()
+    become(WaitingForFirstUrlState)
     // Самоконтроль. Проверяем, что static client будет правильно слать сообщения.
     if (self.path != actorPath) {
       throw new IllegalStateException(s"Invalid self actor path: expected = $actorPath , but real = ${self.path}")
     }
+    info(getClass.getSimpleName + ": Started OK. FSM State is " + fsmState.name)
   }
-
-  /** Динамический буфер ссылок, поставленных для отправки в кравлер. */
-  protected var fsmState: FsmState = WaitingForFirstUrlState
 
   protected def allStatesReceiver: Actor.Receive = super.receive
 
@@ -88,13 +90,17 @@ class SeedUrlsSupplier extends TalkativeActor {
 
 
   def become(nextState: FsmState) {
-    trace(s"become(): ${fsmState.name} -> ${nextState.name}")
+    trace {
+      val oldStateName: String = if (fsmState == null) "null" else fsmState.name
+      s"become(): $oldStateName -> ${nextState.name}"
+    }
     fsmState = nextState
     context.become(nextState.receiver, discardOld = true)
   }
 
 
   def sendReferrers(urls: List[String]) {
+    trace(fsmState.logPrefix + s"Sending packet with ${urls.size} to MainCrawler...")
     getMainCrawlerSelector ! ReferrersBulk(urls)
   }
 
@@ -104,7 +110,7 @@ class SeedUrlsSupplier extends TalkativeActor {
     def superReceiver = allStatesReceiver
     def receiverPart: Actor.Receive
     def receiver: Actor.Receive = receiverPart orElse superReceiver
-    def name = getClass.getSimpleName
+    def name: String = getClass.getSimpleName.replace("$", "")
     val logPrefix = s"[$name] "
   }
 
@@ -114,9 +120,11 @@ class SeedUrlsSupplier extends TalkativeActor {
     def receiverPart: Actor.Receive = {
       case rm: ReferrerMsg =>
         val nextState = AccumulatingPacketState(rm.url)
+        trace(logPrefix + rm + " :: Switching to next state: " + nextState.name)
         become(nextState)
 
       case rm: HiPrioReferrerMsg =>
+        trace(logPrefix + rm)
         sendReferrers(List(rm.url))
     }
   }
@@ -139,6 +147,7 @@ class SeedUrlsSupplier extends TalkativeActor {
   ) extends FsmState {
     def receiverPart: Actor.Receive = {
       case rm: ReferrerMsg =>
+        trace(logPrefix + rm)
         urlsBuf += rm.url
         // Определение размера хэш-множества - это мгновенная операция.
         if (urlsBuf.size >= TARGET_PACKET_SIZE) {
@@ -147,11 +156,13 @@ class SeedUrlsSupplier extends TalkativeActor {
         }
 
       case rm: HiPrioReferrerMsg =>
+        trace(logPrefix + rm)
         urlsBuf += rm.url
         forceFlushTimer.cancel()
         doFlush()
 
-      case PacketFlushMsg =>
+      case msg @ PacketFlushMsg =>
+        trace(logPrefix + msg)
         doFlush()
     }
 
@@ -159,6 +170,8 @@ class SeedUrlsSupplier extends TalkativeActor {
       sendReferrers(urlsBuf.toList)
       become(WaitingForFirstUrlState)
     }
+
+    override def name: String = getClass.getSimpleName
   }
 
 

@@ -1,6 +1,12 @@
-@(title: String, headAfter:Html = Html.empty)(content: Html)(implicit c:util.Context)
+@(title: String, headAfter: Option[Html] = None)(content: Html)(implicit c:util.Context)
 
-@sys1.sysBase(title = title + " | siobix", headAfter=headAfter) {
-<h2><a href="@routes.Sys.siobixIndex">Кравлер</a> / @title</h2>
-    @content
+@hPathAfter1 = {
+    / <a href="@routes.Sys.siobixIndex">Кравлер</a>
+    / @title
 }
+
+@sys1.sysBase(
+  title	      = title + " | siobix",
+  hPathAfter  = Some(hPathAfter1),
+  headAfter   = headAfter
+)(content)

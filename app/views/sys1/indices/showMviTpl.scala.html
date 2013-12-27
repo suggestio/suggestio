@@ -1,8 +1,11 @@
 @(mvi: io.suggest.model.MVirtualIndex, mviUsers: Seq[io.suggest.model.MDVIActive])(implicit ctx: util.Context)
 
 @* Отображение данных о мульти-индексе. *@
+@hPathAfter1 = {
+  / mvi / @mvi.vin
+}
 
-@indicesBase(mvi.vin + " | mvi") {
+@indicesBase(title = mvi.vin + " | mvi",  hPathAfter = Some(hPathAfter1)) {
   <p>vin: <b>@mvi.vin</b></p>
   <p>phys. shard count: <b>@mvi.shardCount</b></p>
   <p>vin prefix: <b>@mvi.vinPrefix</b></p>

@@ -1,9 +1,16 @@
-@(title:String, headAfter:Html = Html.empty)(content:Html)(implicit ctx:util.Context)
+@(title:String, hPathAfter: Option[Html] = None, headAfter: Option[Html] = None)(content:Html)(implicit ctx:util.Context)
 
 @* Базовый шаблон (довольно примитивный) для остальных sys1.indices.* шаблонов. *@
 
-@sys1.sysBase(title = title + " | indices", headAfter=headAfter) {
-  <h2><a href="@routes.Sys.indicesIndex">Индексы</a> / @title</h2>
-  <br/>
-  @content
+@hPathAfter1 = {
+  / <a href="@routes.Sys.indicesIndex">Индексы</a>
+  @hPathAfter.getOrElse {
+    / @title
+  }
 }
+
+@sys1.sysBase(
+  title = title + " | indices",
+  hPathAfter = Some(hPathAfter1),
+  headAfter  = headAfter
+)(content)

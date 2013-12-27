@@ -14,6 +14,7 @@ import io.suggest.proto.bixo._
 import io.suggest.model.{MVirtualIndexVin, MDVIActive}
 import io.suggest.util.VirtualIndexUtil
 import util.SiowebEsUtil.client
+import util.urls_supply.SeedUrlsSupplier
 
 /**
  * Suggest.io
@@ -40,7 +41,7 @@ object Sys extends SioController with Logs {
   /** Список всех доменов (всех ключей доменов). */
   def dkeysListAll = IsSuperuser.async { implicit request =>
     MDomain.getAll.map { list =>
-      Ok(dkeysListAllTpl(list))
+      Ok(domain.dkeysListAllTpl(list))
     }
   }
 
@@ -48,9 +49,9 @@ object Sys extends SioController with Logs {
   /** Страница "обзор домена" со общей информацией. */
   def dkeyShow(dkey: String) = IsSuperuser.async { implicit request =>
     MDomain.getForDkey(dkey) flatMap {
-      case Some(domain) =>
-        domain.allPersonAuthz map { authzList =>
-          Ok(dkeyShowTpl(domain, authzList))
+      case Some(mdomain) =>
+        mdomain.allPersonAuthz map { authzList =>
+          Ok(domain.dkeyShowTpl(mdomain, authzList))
         }
 
       case None => NotFound("No such domain: " + dkey)
@@ -65,15 +66,15 @@ object Sys extends SioController with Logs {
    */
   def dkeySearch(dkey: String) = IsSuperuser.async { implicit request =>
     MDomain.getForDkey(dkey: String) map {
-      case Some(domain) => Ok(dkeySearchTpl(dkey))
-      case None         => NotFound("No such domain: " + dkey)
+      case Some(mdomain) => Ok(domain.dkeySearchTpl(dkey))
+      case None          => NotFound("No such domain: " + dkey)
     }
   }
 
 
   /** Рендер формы добавления домена. */
   def addSiteForm = IsSuperuser { implicit request =>
-    Ok(addSiteFormTpl(addSiteFormM))
+    Ok(addSite.addSiteFormTpl(addSiteFormM))
   }
 
   /** Сабмит формы, отрендеренной в addSiteForm(). */
@@ -82,7 +83,7 @@ object Sys extends SioController with Logs {
     addSiteFormM.bindFromRequest.fold(
       {formWithErrors =>
         trace(logPrefix + "form parse failed: " + formWithErrors.errors)
-        Future successful BadRequest(formWithErrors.errorsAsJson)
+        BadRequest(formWithErrors.errorsAsJson)
       }
       ,
       {dkey =>
@@ -94,7 +95,7 @@ object Sys extends SioController with Logs {
             case None             => "Crawler successfully notified about new domain."
           }
           info(logPrefix + msg)
-          Ok(addSiteSuccessTpl(dkey, result.map(_.toString())))
+          Ok(addSite.addSiteSuccessTpl(dkey, result.map(_.toString())))
         }
       }
     )
@@ -186,6 +187,39 @@ object Sys extends SioController with Logs {
     VirtualIndexUtil.downgradeAll.map { _ =>
       Redirect(routes.Sys.indicesListAllActive())
     }
+  }
+
+
+  // ==============================================================
+  // referrers
+
+
+  val pushRefFormM = Form(tuple(
+    "refUrl"    -> nonEmptyText,
+    "isHiPrio"  -> boolean
+  ))
+
+
+  /** Отрендерить клиенту форму отправки произвольного реферрера в MainCrawler. */
+  def pushReferrerForm = IsSuperuser { implicit request =>
+    Ok(siobix.pushReferrerFormTpl(pushRefFormM))
+  }
+
+  /** Сабмит вышеотрендеренной формы. */
+  def pushReferrerFormSubmit = IsSuperuser { implicit request =>
+    pushRefFormM.bindFromRequest.fold(
+      {formWithErrors =>
+        NotAcceptable(siobix.pushReferrerFormTpl(formWithErrors, withResult=Some(false)))
+      },
+      {case (refUrl, isHiPrio) =>
+        if (isHiPrio) {
+          SeedUrlsSupplier.sendReferrerNow(refUrl)
+        } else {
+          SeedUrlsSupplier.sendReferrer(refUrl)
+        }
+        Ok(siobix.pushReferrerFormTpl(pushRefFormM, withResult=Some(true)))
+      }
+    )
   }
 
 }
