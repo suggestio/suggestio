@@ -8,7 +8,7 @@ search =
       if utils.ge "sio_search_window"
         return false
 
-      rw = utils.ce 'div', {'class':'sio-t-window sio-tpl-semitransparent','id':'sio_search_window'}
+      rw = utils.ce 'div', {'class':'sio-t-window simple_semi_transparent','id':'sio_search_window'}
 
       rw.innerHTML = '<div class="sio-t-column"><div class="sio-t-c-inner" id="sio_searchResults"></div></div>'
       utils.ge_tag('body')[0].appendChild rw
@@ -133,6 +133,9 @@ search =
   hide : () ->
     utils.ge("sio_csf").style.display = "none"
 
+  set_class : ( _class ) ->
+    utils.ge("sio_csf").className = 'sio-custom-field ' + _class
+
   ##
   # Обработка поисковых запросов
   send_request : ( url ) ->
@@ -151,18 +154,21 @@ search =
     if typeof sio.config.test_dkey != 'undefined'
       dkey = sio.config.test_dkey
 
-    search.send_request sio.config.sio_host + 'search/site?h=' + dkey + '&q=' + sr
+    search.send_request sio.config.sio_host + '/search/site?h=' + dkey + '&q=' + sr
 
   ##
   # Обработка результата
   process_results : ( data ) ->
+
     query = data.q
     search_results = data.search_result
     status = data.status
 
     if status == 'found_none' || search_results.length == 0
-      console.log "found none"
+      # Если ничего не найдено
+      sio.search.set_class "found-none"
     else
+      sio.search.set_class ""
       utils.ge("sio_search_window").style.display = "block"
       sio.search.render_results search_results, query
 
@@ -170,9 +176,11 @@ search =
 
     if  query != ''
       sio.search.cache[query] = results
+
       results_container = utils.ge "sio_searchResults"
       results_container.scrollTop = 0
       results_container.innerHTML = ''
+
       r_n = ''
 
       for x in results
@@ -180,20 +188,9 @@ search =
         if typeof x != 'object'
           return false
 
-        if typeof x.image_rel_url != 'undefined'
+        _template = 'simple_semi_transparent'
 
-          r_n += '<div class="sio-result"><div class="sio-result-inner">'
-          r_n += '<div class="sio-image-container"><img src="' + sio.config.sio_host + utils.remove_first_slash x.image_rel_url + '"/></div>'
-          r_n += '<div class="sio-right-container"><a class="sio-result-title" href="' + x.url + '" target="_blank">' + x.title + '</a>'
-          r_n += '<div class="sio-result-desc">' + x.contentText + '</div></div><div class="sio-clear"></div>'
-          r_n += '</div></div>'
-
-        else
-
-          r_n += '<div class="sio-result"><div class="sio-result-inner">'
-          r_n += '<div class="sio-left-c"><a class="sio-result-title" href="' + x.url + '" target="_blank">' + x.title + '</a></div>'
-          r_n += '<div class="sio-result-desc">' + x.contentText + '</div>'
-          r_n += '</div></div>'
+        r_n += sio.search.templates.results[_template].result_tpl x
 
       results_container.innerHTML = r_n
 

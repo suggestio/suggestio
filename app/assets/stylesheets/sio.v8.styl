@@ -37,6 +37,9 @@
         background: url('/assets/images/lsbs-small.png?v=1') no-repeat left top
 
 
+.sio-custom-field.found-none
+  border-bottom-color: red
+
 .sio-custom-field
     .sio-close-search-icon
         position: absolute
@@ -236,7 +239,8 @@
     height: 150px
 
 .sio-pfs-blocks
-    background: #f0f0f0
+  display: none
+  background: #f0f0f0
 
 .sio-pfs-blocks .sio-pfs-left-column
     position: relative
@@ -635,12 +639,11 @@
 
 /* Templates */
 
-.sio-tpl-semitransparent
+.simple_semi_transparent
   background: rgba(0,0,0,0.5)
 
   .sio-t-c-inner
     width: 560px
-    background: rgba(0,0,0,0.1)
 
   .sio-result
     margin: 6px 0px
@@ -648,7 +651,7 @@
     background: rgba(0,0,0,0.6)
 
 
-    .sio-image-container
+    .image-container
       float: left
       width: 256px
       height: 187px
@@ -659,18 +662,20 @@
         min-width: 256px
         min-height: 187px
 
-    .sio-right-container
-      float: left
-      width: 290px
-
-    .sio-result-title
+    .title-container
+      display: block
       color: #fff
-      font-family: Arial
-      font-size: 14px
-    .sio-result-desc
-      color: #858585
-      font-family: Arial
-      font-size: 12px
+      float: left
+      padding: 25px
+
+      a
+        color: #fff
+        font-family: Arial
+        font-size: 14px
+
+    .content-container
+      display: block
+      padding: 10px 25px
 
 /* Sio installation */
 .sio-install-steps
