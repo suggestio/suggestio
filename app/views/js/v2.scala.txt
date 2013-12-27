@@ -44,8 +44,8 @@ TODO:
 
 sio =
   config :
-    sio_host : "http://@request.host/"
-    sio_css : "assets/stylesheets/sio.v8.min.css"
+    sio_host : "http://@request.host"
+    sio_css : "/assets/stylesheets/sio.v8.min.css"
     searchRequestDelay : 500
     search_field_dom_depth : 3
     test_dkey : 'ldpr.ru'
@@ -54,6 +54,7 @@ window.sio = sio
 
 @_utils()
 @_search()
+@_templates()
 
 sio.search = search
 

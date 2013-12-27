@@ -3,10 +3,12 @@
 console.log "sio v2 installer"
 
 _qi_complete = () ->
-  
+
   dkey = "@dkey"
   qi_id = "@qi_id"
   timestamp = "@wsTimestamp"
+
+  _qi_render_ui()
 
   ## Подготовить iframe для отправки POST запросов на suggest.io
   iframe_params = 
@@ -20,7 +22,7 @@ _qi_complete = () ->
   
   form_params = 
     id : 'sio-install-post-form'
-    action : sio.config.sio_host + 'js/install_url/' + dkey + '/' + qi_id
+    action : sio.config.sio_host + '/js/install_url/' + dkey + '/' + qi_id
     method : 'post'
     target : 'sio-install-post-iframe'
   
@@ -30,8 +32,6 @@ _qi_complete = () ->
   
   _sio_install_form.submit()
 
-  _qi_render_ui()
-
   cb = () ->
     _listen_qi_events dkey, qi_id, timestamp
     
@@ -39,14 +39,14 @@ _qi_complete = () ->
   
 _listen_qi_events = ( dkey, qi_id, timestamp ) ->
   
-  socket_url = sio.config.sio_host.replace('http','ws') + 'js/install_ws/' + dkey+ '/' + qi_id + '/' + timestamp
-  
+  socket_url = sio.config.sio_host.replace('http','ws') + '/js/install_ws/' + dkey+ '/' + qi_id + '/' + timestamp
   socket = new WebSocket socket_url
   
   socket.onopen = () ->
-    utils.ge("qi_status_message")[0].innerHTML = "ws connection established"
+    utils.ge("qi_status_message").innerHTML = "ws connection established"
   
   socket.onclose = (event) ->
+
     if event.wasClean
       console.log "ws connection closed"
     else
@@ -57,9 +57,13 @@ _listen_qi_events = ( dkey, qi_id, timestamp ) ->
     ws_json_parsed = JSON.parse event.data
 
     if ws_json_parsed.type == "qi.success"
-      utils.ge("qi_status_message")[0].innerHTML = "sio script found, ok"
+      utils.ge("qi_status_message").innerHTML = "sio script found, ok"
+
+    if ws_json_parsed.type == "qi.error"
+      utils.ge("qi_status_message").innerHTML = "sio error : " + ws_json_parsed.error
   
   socket.onerror = (error) ->
+    console.log event
     console.log "ws error : " + error.message
 
 _qi_render_ui = () ->

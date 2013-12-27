@@ -1,90 +1,24 @@
-# Шаблоны
-# Тут нужен адовый рефакторинг например
+# Шаблоны поисковой выдачи
 
 templates =
-  
-  #Сгенерить цсс для иконки поиска
-  generate_sf_css : ( tpl, _dc ) ->
-    
-    _sf_o = templates.search_fields[tpl]
-    
-    if is_retina() == true
-      _dms = _sf_o.gen_params['ds_retina'].split('x')
-      '.sio-custom-icon { width: ' + _dms[0]/2 + 'px!important; height: ' + _dms[1]/2 + 'px!important; background: url(\'https://suggest.io/static/images_generated/' + _dc + '-' + tpl + '-retina.png?v=1\') no-repeat!important; background-size: ' + _dms[0]/2 + 'px ' + _dms[1]/2 + 'px!important; }';
-    else
-      _dms = _sf_o.gen_params['ds'].split('x');
-      '.sio-custom-icon { width: ' + _dms[0] + 'px!important; height: ' + _dms[1] + 'px!important; background: url(\'https://suggest.io/static/images_generated/' + _dc + '-' + tpl + '.png?v=1\') no-repeat!important; }';
-      
-      
-  search_fields :
-    
-    'crnr-1':
-      gen_params :
-        'prefix': 'crnr-1'
-        'ds':'34x34'
-        'ds_retina':'66x66'
-    
-    'crnr-2':
-      gen_params :
-        'prefix':'crnr-2'
-        'ds':'37x37'
-        'ds_retina':'82x82'
-    
-    'flag-1':
-      gen_params :
-        'prefix':'flag-1'
-        'ds':'26x36'
-        'ds_retina':'52x72'
-      
-    'flag-2':
-      gen_params :
-        'prefix':'flag-2'
-        'ds':'28x42'
-        'ds_retina':'54x82'
-    
-    'flag-3':
-      gen_params :
-        'prefix':'flag-3'
-        'ds':'27x35'
-        'ds_retina':'52x70'
-    
-    'flag-4':
-      gen_params :
-        'prefix':'flag-4'
-        'ds':'28x44'
-        'ds_retina':'54x92'
-        
-    'flag-5':
-      gen_params :
-        'prefix':'flag-5'
-        'ds':'23x37'
-        'ds_retina':'48x74'
-      
-    'flag-6':
-      gen_params :
-        'prefix':'flag-6'
-        'ds':'18x46'
-        'ds_retina':'34x88'
-    
-    'flag-7':
-      gen_params :
-        'prefix':'flag-7'
-        'ds':'22x40'
-        'ds_retina':'44x80'
-    
-    'flag-8':
-      gen_params :
-        'prefix':'flag-8'
-        'ds':'34x32'
-        'ds_retina':'68x64'
-    
-    'flag-9':
-      gen_params :
-        'prefix':'flag-9'
-        'ds':'24x28'
-        'ds_retina':'48x56'
-  
-  drop_down_windows :
-    default :
-      css : '.sio-search-window { margin-left: <<window_margin>>px!important; margin-top: <<window_margin_top>>px!important; width: <<window_width>>px!important; } .sio-sw-cont.default .sio-sw-search-results { max-height: <<window_height>>px!important; } .sio-sw-cont.default .sio-sw-search-results { background-color: #<<bg_color>>!important; } .sio-sw-cont.default .sio-sw-inner, .sio-sw-cont.default .sio-result { border-color : #<<border_color>>!important; } .sio-sw-cont.default .sio-result-title { color: #<<title_color>>!important; } .sio-sw-cont.default .sio-result-desc { color: #<<desc_color>>!important; } .sio-sw-cont.default .sio-result-link { color: #<<link_color>>!important; } .sio-sw-cont.default em { background: #<<highlight_color>>!important; }',
-      
+
+  results :
+
+    simple_semi_transparent :
+      result_tpl : ( x ) ->
+
+        tpl = '<div class="sio-result">'
+
+        if typeof x.image_rel_url != 'undefined'
+          tpl += '<div class="image-container"><img src="' + sio.config.sio_host + x.image_rel_url + '"/></div>'
+
+        if typeof x.title != 'undefined'
+          tpl += '<div class="title-container"><a href="' + x.url + '">' + x.title + '</a></div>'
+
+        if typeof x.contentText != 'undefined'
+          tpl += '<div class="content-container">' + x.contentText + '</div>'
+
+        tpl += '<div class="sio-clear"></div></div>'
+
+
+search.templates = templates
