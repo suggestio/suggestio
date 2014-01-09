@@ -161,7 +161,7 @@ object Admin extends SioController with Logs {
           case Some(d) =>
             trace(s"${logPrefix}Domain exist and added at ${d.addedAt} by ${d.addedBy}")
             val person_id = request.pwOpt.get.id
-            val da = MPersonDomainAuthz.newValidation(dkey=dkey, person_id=person_id)
+            val da = MPersonDomainAuthz.newValidation(dkey=dkey, personId=person_id)
             da.save.map { _ =>
               trace(logPrefix + "Successfully created new authz for " + person_id)
               // Теперь надо сгенерить json ответа

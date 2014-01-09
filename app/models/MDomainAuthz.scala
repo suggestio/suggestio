@@ -16,7 +16,7 @@ import scala.concurrent.Future
 trait MDomainAuthzT extends DkeyModelT {
   def id: String
   def dkey: String
-  def date_created: DateTime
+  def dateCreated: DateTime
 
   // Доступ к храниищу модели
   @JsonIgnore def save: Future[_]
@@ -40,7 +40,7 @@ case class MPersonDomainAuthzAdmin(
 ) extends MDomainAuthzT {
 
   def id: String = ""
-  lazy val date_created: DateTime = DateTime.now()
+  lazy val dateCreated: DateTime = DateTime.now()
 
   def save = Future.successful(this)
   def delete = Future.successful(false)

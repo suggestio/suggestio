@@ -23,9 +23,9 @@ import scala.collection.JavaConversions._
 case class MBlog(
   id            : String,               // Имя файла в ФС. Нельзя переименовывать. Юзеру не отображается.
   var title     : String,
-  var description: String,
-  var bg_image  : String,
-  var bg_color  : String,
+  var descr     : String,
+  var bgImage   : String,
+  var bgColor   : String,
   var text      : String,
   date          : DateTime = DateTime.now   // ctime не поддерживается в fs, поэтому дата хранится внутри файла
 ) {
@@ -91,7 +91,7 @@ object MBlog extends Logs {
      * @param data Данные - экземпляр MBlog.
      * @return Фьючес с сохраненным MBlog. Обычно, это тот же экземпляр, что и исходный data.
      */
-    def save(data:MBlog): Future[MBlog]
+    def save(data: MBlog): Future[_]
 
     /**
      * Чтения элемента по id.
@@ -124,9 +124,8 @@ object MBlog extends Logs {
     def readOne(path:Path) : Option[MBlog] = DfsModelUtil.readOne[MBlog](path)
     def readOneAcc(acc:List[MBlog], path:Path) : List[MBlog] = DfsModelUtil.readOneAcc[MBlog](acc, path)
 
-    def save(data:MBlog): Future[MBlog] = future {
+    def save(data:MBlog): Future[_] = future {
       JsonDfsBackend.writeToPath(getFilePath(data.id), data)
-      data
     }
 
     def getById(id: String): Future[Option[MBlog]] = future {
@@ -167,10 +166,10 @@ object MBlog extends Logs {
 
     def deserialize(data: Array[Byte]) = deserializeTo[MBlog](data)
 
-    def save(data: MBlog): Future[MBlog] = {
+    def save(data: MBlog): Future[_] = {
       val key = id2key(data.id)
       val putReq = new PutRequest(HTABLE_NAME_BYTES, key, CF_BYTES, QUALIFIER, serialize(data))
-      ahclient.put(putReq).map(_ => data)
+      ahclient.put(putReq)
     }
 
     def getById(id: String): Future[Option[MBlog]] = {

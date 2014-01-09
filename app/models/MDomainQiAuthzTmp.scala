@@ -28,7 +28,7 @@ import io.suggest.util.SioModelUtil
 case class MDomainQiAuthzTmp(
   dkey : String,
   id: String,
-  date_created: DateTime = DateTime.now()
+  dateCreated: DateTime = DateTime.now()
 ) extends MDomainAuthzT with DkeyModelT {
 
   import MDomainQiAuthzTmp.{BACKEND, VERIFY_DURATION_HARD, VERIFY_DURATION_SOFT, LOGGER}
@@ -36,10 +36,10 @@ case class MDomainQiAuthzTmp(
 
   @JsonIgnore def personIdOpt: Option[String] = None
   @JsonIgnore def isValid: Boolean = {
-    date_created.minus(VERIFY_DURATION_HARD).isAfterNow
+    dateCreated.minus(VERIFY_DURATION_HARD).isAfterNow
   }
   @JsonIgnore def isNeedRevalidation: Boolean = {
-    date_created.minus(VERIFY_DURATION_SOFT).isAfterNow
+    dateCreated.minus(VERIFY_DURATION_SOFT).isAfterNow
   }
 
   /**

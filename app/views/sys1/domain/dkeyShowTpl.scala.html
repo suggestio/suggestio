@@ -15,11 +15,11 @@
   @if(authzList.isEmpty) {
     У данного домена пока нет зарегистрированных пользователей, доказавших свою принадлежность к домену.
   } else {
-    @authzList.sortBy(_.is_verified).map { az =>
-      @if(!az.is_verified) {<strike>}
+    @authzList.sortBy(_.isVerified).map { az =>
+      @if(!az.isVerified) {<strike>}
       @* TODO когда будет страница для юзера, перевести это в ссылку. *@
-      @az.person_id 
-      @if(!az.is_verified) {</strike>}
+      @az.personId
+      @if(!az.isVerified) {</strike>}
     }
   }
 

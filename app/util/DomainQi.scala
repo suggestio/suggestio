@@ -164,7 +164,7 @@ object DomainQi extends Logs {
       val keepFut: Future[Boolean] = MPersonDomainAuthz.getForPersonDkey(dkey, person_id) flatMap {
         case Some(da) =>
           // Зареганный юзер проходил qi-проверку. Если прошел, то значит предикат должен вернуть false.
-          Future.successful(!da.is_verified)
+          Future.successful(!da.isVerified)
 
         case None =>
           MDomainQiAuthzTmp.getForDkeyId(dkey, qi_id) flatMap {
@@ -172,7 +172,7 @@ object DomainQi extends Logs {
             case Some(dqia) =>
               debug(logPrefix + s" approving qi($dkey $qi_id): will replace MDomainQiAuthzTmp with non-anon MPersonDomainAuthz...")
               // side-effects:
-              MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, person_id=person_id, is_verified=true).save flatMap {_ =>
+              MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, personId=person_id, isVerified=true).save flatMap {_ =>
                 trace(logPrefix + "domain authz saved for " + dkey)
                 // Удалить анонимный qi из базы и из сессии, ибо больше не нужен.
                 dqia.delete map { _ =>
@@ -416,7 +416,7 @@ object DomainQi extends Logs {
     val fut = pwOpt match {
       case Some(pw) =>
         debug(logPrefix + "Registering user as domain owner.")
-        MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, person_id=pw.id, is_verified=true).save
+        MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, personId=pw.id, isVerified=true).save
 
       // Анонимус. Нужно поместить данные о профите во временное хранилище. Когда юзер зарегается, будет вызван installFromSession, который оттуда всё извлечет.
       case None =>

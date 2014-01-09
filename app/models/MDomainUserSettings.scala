@@ -52,7 +52,7 @@ case class MDomainUserSettings(
    * @param newData Обновлённая карта данных.
    * @return Новый экземпляр класса с обновлённой картой данных.
    */
-  def withData(newData:DataMap_t) = MDomainUserSettings(dkey, newData)
+  def withData(newData: DataMap_t) = MDomainUserSettings(dkey, newData)
 
   /**
    * Динамическая читалка значений из настроек или списка дефолтовых значений, если ничего не найдено.

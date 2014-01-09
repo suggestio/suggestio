@@ -4,21 +4,19 @@
 
 @indexTpl {
   
-  
-    
     <div class="container">
       
-      @blogs.zipWithIndex.map { case (b, index) =>
+      @blogs.iterator.zipWithIndex.map { case (b, index) =>
       <div class="col-sm-@if( index == 0 ){12}else{@if( index == 1 || index == 2 ){6}else{3}}">
         <div class="blog-preview blog-preview-@index">
           @if( index == 0 ){
-          <div class="bg-image" style="background: url('@b.bg_image');">
+          <div class="bg-image" style="background: url('@b.bgImage');">
             <div class="date">@b.date</div><br/>
             <h1>@Html( b.title )</h1>
           </div>
           }else{
             @if( index < 3 ){
-            <div class="bg-image" style="background: url('@b.bg_image');"></div>
+            <div class="bg-image" style="background: url('@b.bgImage');"></div>
             }else{
               <div class="blog-preview-border"></div>
             }

@@ -24,7 +24,8 @@ object ApplicationBuild extends Build {
       // for domain validation:
       "net.databinder.dispatch" %% "dispatch-core" % "0.10.0",
       "org.apache.httpcomponents" % "httpcore" % "4.1.3",
-      "com.google.guava" % "guava" % "14.0.1"
+      "com.google.guava" % "guava" % "14.0.1",
+      "org.erlang.otp" % "jinterface" % "1.5.6"              // Для импорт данных из sio v1 кластера. Выпилить вместе с util.compat.v1 после запуска
     )
   }
  

@@ -19,47 +19,23 @@ import io.suggest.util.SioModelUtil
  * Description: Юзер, зареганный на сайте. Как правило, админ одного или нескольких сайтов.
  * Люди различаются по email'ам. Это является их идентификаторами.
  * @param id Идентификатор юзера, т.е. его email.
- * @param dkeys Список доменов на панели доменов юзера.
  * @param langIso2 Язык интерфейса для указанного пользователя.
  */
 
 case class MPerson(
   id : String,
-  var dkeys : List[String] = Nil,
   var langIso2: Option[String] = None
 ) extends MPersonLinks {
   import MPerson.BACKEND
 
   // Линки в другие модели.
-  @JsonIgnore def authz = MPersonDomainAuthz.getForPersonDkeys(id, dkeys)
+  @JsonIgnore def authz = MPersonDomainAuthz.getForPerson(id)
 
   /**
    * Сохранить отметку о таком юзере
    * @return Фьючерс с сохраненным экземпляром MPerson.
    */
   @JsonIgnore def save = BACKEND.save(this)
-
-
-  /**
-   * Добавить домен в список доменов, относящихся к юзеру. Затем нужно вызвать save.
-   * @param dkey Ключ домена.
-   * @return
-   */
-  def addDkey(dkey: String) : MPerson = {
-    dkeys = dkey :: dkeys
-    this
-  }
-
-
-  /**
-   * Удалить указанный домен из списка доменов.
-   * @param dkey ключ домена.
-   * @return
-   */
-  def deleteDkey(dkey:String) : MPerson = {
-    dkeys = dkeys.filter { _ != dkey }
-    this
-  }
 
 }
 
@@ -192,17 +168,6 @@ object MPerson {
       val rowKey = id2key(data.id)
       val table = HTABLE_NAME_BYTES
 
-      // Отправляем в базу колонку с ключами доменов
-      val dkeysFut: Future[_] = if (!data.dkeys.isEmpty) {
-        val value = serializeDkeys(data.dkeys)
-        val putReq = new PutRequest(table, rowKey, CF_UPROPS.getBytes, Q_DKEYS.getBytes, value)
-        ahclient.put(putReq)
-      } else {
-        // Доменов нет, возможно юзер их удалил. Удалить надо бы из базы.
-        val delReq = new DeleteRequest(table, rowKey, CF_UPROPS.getBytes, Q_DKEYS.getBytes)
-        ahclient.delete(delReq)
-      }
-
       // Язык, если задан.
       val langFut: Future[_] = if (data.langIso2.isDefined) {
         val value = serializeLang(data.langIso2.get)
@@ -216,7 +181,6 @@ object MPerson {
 
       // Асинхронно дождаться выполнения всех реквестов.
       for {
-        dkeys <- dkeysFut
         langIso2 <- langFut
       } yield ()
     }
@@ -231,7 +195,6 @@ object MPerson {
           // Такатываем все qualifier'ы на исходную запись.
           row.foreach { kv =>
             new String(kv.qualifier()) match {
-              case Q_DKEYS => result.dkeys = deserializeDkeys(kv.value)
               case Q_LANG  => result.langIso2 = Some(deserializeLang(kv.value))
             }
           }

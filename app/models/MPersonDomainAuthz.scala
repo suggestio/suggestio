@@ -29,20 +29,20 @@ case class MPersonDomainAuthz(
   id                    : String,
   // dkey и person_id хранятся в пути к файлу json, а тут дублируются для упрощения работы (сериализации/десериализации).
   dkey                  : String,
-  person_id             : String,
+  personId              : String,
   typ                   : String, // "Тип" - это или qi, или va (validation). См. TYPE_* у объекта-компаньона.
-  body_code             : String, // пустая строка для qi или случайная строка с кодом для validation
-  date_created          : DateTime = DateTime.now,
-  var dt_last_checked   : DateTime = MPersonDomainAuthz.dtDefault, // Не используем Option для облегчения сериализации + тут почти всегда будет Some().
-  var is_verified       : Boolean = false,
-  var last_errors       : List[String] = Nil
+  bodyCode              : String, // пустая строка для qi или случайная строка с кодом для validation
+  dateCreated           : DateTime = DateTime.now,
+  var dtLastChecked     : DateTime = MPersonDomainAuthz.dtDefault, // Не используем Option для облегчения сериализации + тут почти всегда будет Some().
+  var isVerified        : Boolean = false,
+  var lastErrors        : List[String] = Nil
 ) extends MDomainAuthzT {
 
   import MPersonDomainAuthz._
   import LOGGER._
 
   // Связи с другими моделями и компонентами системы.
-  @JsonIgnore def person = MPerson.getById(person_id)
+  @JsonIgnore def person = MPerson.getById(personId)
   def maybeRevalidate(sendEvents:Boolean = true) = DomainValidator.maybeRevalidate(this, sendEvents)
   def revalidate(sendEvents:Boolean = true)      = DomainValidator.revalidate(this, sendEvents)
 
@@ -51,7 +51,7 @@ case class MPersonDomainAuthz(
    * Сохранить текущий экземпляр класса в базу.
    */
   def save = {
-    trace(s"save(): Saving authz id=$id dkey=$dkey for person=$person_id.")
+    trace(s"save(): Saving authz id=$id dkey=$dkey for person=$personId.")
     BACKEND.save(this)
   }
 
@@ -72,11 +72,11 @@ case class MPersonDomainAuthz(
     if (isValidationType)
       this
     else if (isQiType) {
-      val body_code1 = if (body_code == "")
+      val body_code1 = if (bodyCode == "")
         genBodyCodeValidation
       else
-        body_code
-      new MPersonDomainAuthz(id=id, dkey=dkey, person_id=person_id, typ=TYPE_VALIDATION, body_code=body_code1, date_created=date_created)
+        bodyCode
+      new MPersonDomainAuthz(id=id, dkey=dkey, personId=personId, typ=TYPE_VALIDATION, bodyCode=body_code1, dateCreated=dateCreated)
 
     } else ???
   }
@@ -86,30 +86,30 @@ case class MPersonDomainAuthz(
    * Обернуть body_code в option.
    * @return для qi-ключей обычно None. Для Validation-ключей всегда Some()
    */
-  def bodyCodeOpt = if (body_code == "") None  else  Some(body_code)
+  def bodyCodeOpt = if (bodyCode == "") None  else  Some(bodyCode)
 
 
   /**
    * Верифицировано ли? И если да, то является ли верификация актуальной?
    * @return true, если всё ок.
    */
-  def isValid = is_verified && !breaksHardLimit
+  def isValid = isVerified && !breaksHardLimit
 
   /**
    * Пора ли проводить повторную переверификацию? Да, если is_verified=false или время true истекло.
    * @return true, если пора пройти валидацию.
    */
-  def isNeedRevalidation = !is_verified || breaksSoftLimit
+  def isNeedRevalidation = !isVerified || breaksSoftLimit
 
   @JsonIgnore def breaksHardLimit = breaksLimit(VERIFY_DURATION_HARD)
   @JsonIgnore def breaksSoftLimit = breaksLimit(VERIFY_DURATION_SOFT)
   def breaksLimit(limit:ReadableDuration): Boolean = {
-    dt_last_checked.minus(limit) isAfter DateTime.now
+    dtLastChecked.minus(limit) isAfter DateTime.now
   }
 
 
-  def delete = MPersonDomainAuthz.delete(person_id=person_id, dkey=dkey)
-  def personIdOpt: Option[String] = Some(person_id)
+  def delete = MPersonDomainAuthz.delete(personId=personId, dkey=dkey)
+  def personIdOpt: Option[String] = Some(personId)
 
   /**
    * Сгенерить проверочную ссылку на удаленном сервере.
@@ -124,10 +124,10 @@ case class MPersonDomainAuthz(
   def remoteFilename: String = id + ".txt"
 
   override def authzForPerson(_person_id: String): Future[Option[MPersonDomainAuthz]] = {
-    if (person_id == _person_id) {
+    if (personId == _person_id) {
       Future.successful(Some(this))
     } else {
-      super.authzForPerson(person_id)
+      super.authzForPerson(personId)
     }
   }
 }
@@ -163,26 +163,26 @@ object MPersonDomainAuthz {
   /**
    * Прочитать из хранилища json-файл по данным юзера.
    * @param dkey ключ домена
-   * @param person_id id юзера
+   * @param personId id юзера
    * @return
    */
-  def getForPersonDkey(dkey:String, person_id:String) = BACKEND.getForPersonDkey(dkey=dkey, person_id=person_id)
+  def getForPersonDkey(dkey:String, personId:String) = BACKEND.getForPersonDkey(dkey=dkey, personId=personId)
 
 
   /**
    * Выдать домены, которые юзер админит или хотел бы админить.
-   * @param person_id id юзера
+   * @param personId id юзера
    * @return Список сохраненных авторизаций, в т.ч. пустой. В алфавитном порядке.
    */
-  def getForPerson(person_id:String) = BACKEND.getForPerson(person_id) map { _.sortBy(_.dkey) }
+  def getForPerson(personId: String) = BACKEND.getForPerson(personId) map { _.sortBy(_.dkey) }
 
 
   /**
    * Собрать все идентификационные данные в доменах для указанного юзера.
-   * @param person_id мыльник
+   * @param personId мыльник
    * @return
    */
-  def getForPersonDkeys(person_id:String, dkeys:Seq[String]) = BACKEND.getForPersonDkeys(person_id, dkeys)
+  def getForPersonDkeys(personId:String, dkeys:Seq[String]) = BACKEND.getForPersonDkeys(personId, dkeys)
 
 
 
@@ -196,16 +196,16 @@ object MPersonDomainAuthz {
    * Сгенерить экземпляр сабжа для нужд qi.
    * @param id qi_id
    * @param dkey ключ домена
-   * @param person_id id юзера
-   * @param is_verified Проверены ли эти данные на сайте клиента?
-   * @param last_errors Список ошибок в ходе проверки. По умолчанию - пустой список.
+   * @param personId id юзера
+   * @param isVerified Проверены ли эти данные на сайте клиента?
+   * @param lastErrors Список ошибок в ходе проверки. По умолчанию - пустой список.
    * @return Экземпляр MPersonDomainAuthz типа TYPE_QI.
    */
-  def newQi(id:String, dkey:String, person_id:String, is_verified:Boolean, last_errors:List[String] = Nil): MPersonDomainAuthz = {
-    new MPersonDomainAuthz(id=id, dkey=dkey, person_id=person_id, typ=TYPE_QI, body_code="",
-      is_verified = is_verified,
-      dt_last_checked = DateTime.now(),
-      last_errors = last_errors
+  def newQi(id:String, dkey:String, personId:String, isVerified:Boolean, lastErrors:List[String] = Nil): MPersonDomainAuthz = {
+    new MPersonDomainAuthz(id=id, dkey=dkey, personId=personId, typ=TYPE_QI, bodyCode="",
+      isVerified = isVerified,
+      dtLastChecked = DateTime.now(),
+      lastErrors = lastErrors
     )
   }
 
@@ -214,31 +214,37 @@ object MPersonDomainAuthz {
    * Сгенерить экземпляр сабжа для нужд validation.
    * @param id ключ. По дефолту - рандомный UUID.
    * @param dkey id домена.
-   * @param person_id id юзера.
-   * @param body_code код в теле файла валидации.
-   * @param is_verified проверена ли инфа? Обычно, нет.
-   * @param last_errors Список ошибок. По умолчанию - пустой.
+   * @param personId id юзера.
+   * @param bodyCode код в теле файла валидации.
+   * @param isVerified проверена ли инфа? Обычно, нет.
+   * @param lastErrors Список ошибок. По умолчанию - пустой.
    * @return Экземпляр MPersonDomainAuthz типа TYPE_VALIDATION.
    */
-  def newValidation(id:String = UUID.randomUUID().toString, dkey:String, person_id:String, body_code:String = genBodyCodeValidation,
-                    is_verified:Boolean = false, last_errors:List[String] = Nil, date_last_checked:Option[DateTime] = None): MPersonDomainAuthz = {
-    new MPersonDomainAuthz(id=id, dkey=dkey, person_id=person_id, typ=TYPE_VALIDATION, body_code=body_code, is_verified=is_verified, last_errors=last_errors)
+  def newValidation(id:String = UUID.randomUUID().toString, dkey:String, personId:String,
+                    bodyCode:String = genBodyCodeValidation, isVerified:Boolean = false, lastErrors:List[String] = Nil,
+                    dtLastChecked:Option[DateTime] = None): MPersonDomainAuthz = {
+    new MPersonDomainAuthz(
+      id=id, dkey=dkey, personId=personId, typ=TYPE_VALIDATION, bodyCode=bodyCode,
+      isVerified = isVerified,
+      lastErrors = lastErrors,
+      dtLastChecked = dtLastChecked getOrElse dtDefault
+    )
   }
 
 
   /**
    * Удалить файл с сериализованными данными сабжа из хранилища.
-   * @param person_id id юзера.
+   * @param personId id юзера.
    * @param dkey id ключа.
    * @return true, если файл удален. Иначе - false
    */
-  def delete(person_id:String, dkey:String) = BACKEND.delete(person_id=person_id, dkey=dkey)
+  def delete(personId:String, dkey:String) = BACKEND.delete(personId=personId, dkey=dkey)
 
   /**
    * Найти все авторизации для указанного домена. Не такая быстрая функция, и только для целевого использования:
    * в /sys/ или для других нечастых задач.
    * @param dkey Ключ домена
-   * @return Фьючерс с найденными Authz. Возможно, в порядке (прямом или обратном) поля person_id.
+   * @return Фьючерс с найденными Authz. Возможно, в порядке (прямом или обратном) поля personId.
    */
   def getForDkey(dkey: String) = BACKEND.getForDkey(dkey)
 
@@ -246,15 +252,15 @@ object MPersonDomainAuthz {
   /** Интерфейс для storage backend'ов этой модели. */
   trait Backend {
     def save(data: MPersonDomainAuthz): Future[_]
-    def delete(person_id:String, dkey:String): Future[Any]
-    def getForPersonDkey(person_id:String, dkey:String) : Future[Option[MPersonDomainAuthz]]
-    def getForPersonDkeys(person_id:String, dkeys:Seq[String]) : Future[List[MPersonDomainAuthz]] = {
+    def delete(personId:String, dkey:String): Future[Any]
+    def getForPersonDkey(personId:String, dkey:String) : Future[Option[MPersonDomainAuthz]]
+    def getForPersonDkeys(personId:String, dkeys:Seq[String]) : Future[List[MPersonDomainAuthz]] = {
       // По дефолту фильтрануть getForPerson на предмет желаемых dkey.
-      getForPerson(person_id) map { authz =>
+      getForPerson(personId) map { authz =>
         authz.filter { dkeys contains _.dkey }
       }
     }
-    def getForPerson(person_id: String): Future[List[MPersonDomainAuthz]]
+    def getForPerson(personId: String): Future[List[MPersonDomainAuthz]]
     def getForDkey(dkey:String) : Future[List[MPersonDomainAuthz]]
   }
 
@@ -269,24 +275,24 @@ object MPersonDomainAuthz {
 
     /**
      * Путь к поддиректории юзера с доменами. Вероятно, следует вынести в отдельную модель.
-     * @param person_id id юзера
+     * @param personId id юзера
      * @return Путь к поддиректории domains в директории указанного юзера.
      */
-    private def personPath(person_id:String) = new Path(DfsModelUtil.getPersonPath(person_id), personSubdir)
+    private def personPath(personId:String) = new Path(DfsModelUtil.getPersonPath(personId), personSubdir)
 
     /**
      * Путь к файлу данных по указанному юзеру в рамках домена. Имеет вид m_person/putin@kremlin.ru/sugggest.io/authz
      * @param dkey ключ домена
-     * @param person_id id юзера, т.е. email
+     * @param personId id юзера, т.е. email
      * @return Путь, указывающий на файл авторизации в папке доменов юзера. Часть этой функции имеет смысл вынести в MPersonDomain.
      */
-    private def dkeyPersonPath(person_id:String, dkey:String) = {
-      val personDir = personPath(person_id)
+    private def dkeyPersonPath(personId:String, dkey:String) = {
+      val personDir = personPath(personId)
       val personDkeyDir = new Path(personDir, dkey)
       authzFilePath(personDkeyDir)
     }
 
-    private def dkeyAllPath(dkey: String) = dkeyPersonPath(person_id="*", dkey=dkey)
+    private def dkeyAllPath(dkey: String) = dkeyPersonPath(personId="*", dkey=dkey)
 
     /**
      * Выдать путь к файлу с данными авторизации.
@@ -332,31 +338,31 @@ object MPersonDomainAuthz {
 
 
     def save(data: MPersonDomainAuthz): Future[_] = {
-      val filepath = dkeyPersonPath(dkey = data.dkey,  person_id = data.person_id)
+      val filepath = dkeyPersonPath(dkey = data.dkey,  personId = data.personId)
       future {
         JsonDfsBackend.writeToPath(filepath, data)
       }
     }
 
-    def delete(person_id: String, dkey: String): Future[Any] = {
-      val path = dkeyPersonPath(dkey=dkey, person_id=person_id)
+    def delete(personId: String, dkey: String): Future[Any] = {
+      val path = dkeyPersonPath(dkey=dkey, personId=personId)
       future { fs.delete(path, false) }
     }
 
-    def getForPersonDkey(person_id: String, dkey: String): Future[Option[MPersonDomainAuthz]] = {
-      val path = dkeyPersonPath(dkey=dkey, person_id=person_id)
+    def getForPersonDkey(personId: String, dkey: String): Future[Option[MPersonDomainAuthz]] = {
+      val path = dkeyPersonPath(dkey=dkey, personId=personId)
       future { readOne(path) }
     }
 
-    override def getForPersonDkeys(person_id: String, dkeys: Seq[String]): Future[List[MPersonDomainAuthz]] = future {
+    override def getForPersonDkeys(personId: String, dkeys: Seq[String]): Future[List[MPersonDomainAuthz]] = future {
       dkeys
-        .map { _dkey => dkeyPersonPath(dkey = _dkey, person_id=person_id) }
+        .map { _dkey => dkeyPersonPath(dkey = _dkey, personId=personId) }
         .filter { fs.exists }
         .foldLeft[List[MPersonDomainAuthz]] (Nil) { readOneAcc }
     }
 
-    def getForPerson(person_id: String): Future[List[MPersonDomainAuthz]] = future {
-      val personDomainsDir = personPath(person_id)
+    def getForPerson(personId: String): Future[List[MPersonDomainAuthz]] = future {
+      val personDomainsDir = personPath(personId)
       fs.listStatus(personDomainsDir).foldLeft[List[MPersonDomainAuthz]] (Nil) { (acc, fstatus) =>
         if (fstatus.isDir) {
           val authzPath = authzFilePath(fstatus.getPath)
@@ -376,22 +382,22 @@ object MPersonDomainAuthz {
 
     private val CF_UAUTHZ_B = CF_UAUTHZ.getBytes
 
-    def personId2key(person_id: String): Array[Byte]  = SioModelUtil.serializeStrForHCellCoord(person_id)
+    def personId2key(personId: String): Array[Byte]  = SioModelUtil.serializeStrForHCellCoord(personId)
     def dkey2qualifier(dkey: String): Array[Byte]     = SioModelUtil.dkey2rowkey(dkey)
     def deserialize(data: Array[Byte])                = deserializeTo[MPersonDomainAuthz](data)
 
     def save(data: MPersonDomainAuthz): Future[_] = {
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, personId2key(data.person_id), CF_UAUTHZ_B, dkey2qualifier(data.dkey), serialize(data))
+      val putReq = new PutRequest(HTABLE_NAME_BYTES, personId2key(data.personId), CF_UAUTHZ_B, dkey2qualifier(data.dkey), serialize(data))
       ahclient.put(putReq)
     }
 
-    def delete(person_id: String, dkey: String): Future[Any] = {
-      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, personId2key(person_id), CF_UAUTHZ_B, dkey2qualifier(dkey))
+    def delete(personId: String, dkey: String): Future[Any] = {
+      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, personId2key(personId), CF_UAUTHZ_B, dkey2qualifier(dkey))
       ahclient.delete(delReq)
     }
 
-    def getForPersonDkey(person_id: String, dkey: String): Future[Option[MPersonDomainAuthz]] = {
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, personId2key(person_id))
+    def getForPersonDkey(personId: String, dkey: String): Future[Option[MPersonDomainAuthz]] = {
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, personId2key(personId))
         .family(CF_UAUTHZ_B)
         .qualifier(dkey2qualifier(dkey))
       ahclient.get(getReq) map { kvs =>
@@ -399,8 +405,8 @@ object MPersonDomainAuthz {
       }
     }
 
-    def getForPerson(person_id: String): Future[List[MPersonDomainAuthz]] = {
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, personId2key(person_id)).family(CF_UAUTHZ)
+    def getForPerson(personId: String): Future[List[MPersonDomainAuthz]] = {
+      val getReq = new GetRequest(HTABLE_NAME_BYTES, personId2key(personId)).family(CF_UAUTHZ)
       ahclient.get(getReq) map { kvs =>
         kvs.map { kv => deserialize(kv.value) }.toList
       }

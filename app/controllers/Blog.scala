@@ -21,17 +21,17 @@ object Blog extends SioController {
   /** Определение параметров формы для создания записи в блоге. */
   val postFormM = Form(
     mapping(
-      "id" ->   nonEmptyText,
-      "title" ->  nonEmptyText,
-      "description" ->   nonEmptyText,
-      "bg_image" -> text,
-      "bg_color" -> text,
-      "text"  -> text
+      "id"      -> nonEmptyText,
+      "title"   -> nonEmptyText,
+      "descr"   -> nonEmptyText,
+      "bgImage" -> text,
+      "bgColor" -> text,
+      "text"    -> text
     )
-    {(id, title, description, bg_image, bg_color, text) =>
-      MBlog(id, title, description, bg_image, bg_color, text) }
+    {(id, title, descr, bgImage, bgColor, text) =>
+      MBlog(id=id, title=title, descr=descr, bgImage=bgImage, bgColor=bgColor, text=text) }
     {rec: MBlog =>
-      Some(rec.id, rec.title, rec.description, rec.bg_image, rec.bg_color, rec.text) }
+      Some(rec.id, rec.title, rec.descr, rec.bgImage, rec.bgColor, rec.text) }
   )
 
 

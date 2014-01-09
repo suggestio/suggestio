@@ -49,19 +49,19 @@ object DUS_Basic {
 
   /** Хелпер для комбинируемых функций applyDomainSettings. */
   val applyBasicSettingsF: PartialFunction[(DataMapKey_t, String, DataMap_t), DataMap_t] = {
-    case (k, v, data) if k == KEY_SHOW_IMAGES =>
+    case (k @ KEY_SHOW_IMAGES, v, data) =>
       boolean.bind(Map(k -> v)) match {
         case Left(_)  => data
         case Right(b) => data + (k -> b)
       }
 
-    case (k, v, data) if k == KEY_SHOW_TITLE || k == KEY_SHOW_CONTENT_TEXT =>
+    case (k @ (KEY_SHOW_TITLE | KEY_SHOW_CONTENT_TEXT), v, data) =>
       showMapper.bind(Map(k -> v)) match {
         case Left(_)   => data
         case Right(v1) => data + (k -> v1)
       }
 
-    case (k, v, data) if k == KEY_RENDERER =>
+    case (k @ KEY_RENDERER, v, data) =>
       rrrMapper.bind(Map(k -> v)) match {
         case Left(_)    => data
         case Right(rrr) => data + (k -> rrr)
