@@ -1,8 +1,9 @@
-@()
+@()(implicit c:util.Context)
+@import c.lang
 
 @lcc ={
-  <h1>ЖИВОЙ ПОИСК</h1>
-  <div><p>Пользователи сайта на котором установлен suggest.io увидят результаты поиска уже после ввода первой буквы поискового запроса.</p></div>
+  <h1>@Messages("s.a.live_search")</h1>
+  <div><p>@Messages("s.a.live_search_desc")</p></div>
 }
 
 @rcc = {

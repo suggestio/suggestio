@@ -7,7 +7,12 @@ templates =
     simple_semi_transparent :
       result_tpl : ( x ) ->
 
-        tpl = '<div class="sio-result">'
+        if typeof x.image_rel_url != 'undefined'
+          _class = ' sio-regular'
+        else
+          _class = ' sio-no-image'
+
+        tpl = '<div class="sio-result ' + _class + '">'
 
         if typeof x.image_rel_url != 'undefined'
           tpl += '<div class="image-container"><img src="' + sio.config.sio_host + x.image_rel_url + '"/></div>'
@@ -16,7 +21,7 @@ templates =
           tpl += '<div class="title-container"><a href="' + x.url + '">' + x.title + '</a></div>'
 
         if typeof x.contentText != 'undefined'
-          tpl += '<div class="content-container">' + x.contentText + '</div>'
+          tpl += '<div class="content-container">' + x.contentText + '<span class="content-link">' + x.url + '</span></div>'
 
         tpl += '<div class="sio-clear"></div></div>'
 

@@ -125,7 +125,6 @@ search =
         if _o == document.activeElement
           search.show()
 
-
   show : () ->
     utils.ge("sio_csf").style.display = "block"
     utils.ge("sio_search_field").focus()
@@ -163,6 +162,8 @@ search =
     query = data.q
     search_results = data.search_result
     status = data.status
+
+    console.log data
 
     if status == 'found_none' || search_results.length == 0
       # Если ничего не найдено

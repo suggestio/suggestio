@@ -1,21 +1,35 @@
-error.email=Необходимо ввести настоящий e-mail
 error.invalid=Неверное значение
-error.invalid.java.util.Date=Неверное значение даты
+error.invalid.java.util.Date=Неверный формат даты
 error.required=Поле обязательно для заполнения
-error.number=Необходимо ввести числовое значение
-error.min=Должно быть больше или равно {0}
-error.min.strict=Должно быть больше {0}
-error.max=Должно быть меньше или равно {0}
-error.max.strict=Должно быть меньше {0}
-error.minLength=Минимальная длина {0}
-error.maxLength=Максимальная длина {0}
+error.number=Введите число
+error.real=Введите число
+error.real.precision=Real number value with no more than {0} digit(s) including {1} decimal(s) expected
+error.min=Значение должно быть больше или равно {0}
+error.min.strict=Значение должно быть больше {0}
+error.max=Значение должно быть меньше, либо равно {0}
+error.max.strict=Значение должно быть меньше {0}
+error.minLength=Минимум {0} символов
+error.maxLength=Максимальная длина — {0} символов
 
-constraint.required=Обязетально
+constraint.required=Обязательно
 constraint.min=Минимальное значение: {0}
 constraint.max=Максимальное значение: {0}
 constraint.minLength=Минимальная длина: {0}
 constraint.maxLength=Максимальная длина: {0}
 constraint.email=Email
+
+stuff.menu.ABOUT=О ПРОЕКТЕ
+stuff.menu.BLOG=БЛОГ
+stuff.menu.HELP=ПОМОЩЬ
+stuff.menu.LIVE=ВЖИВУЮ
+stuff.menu.CONTACTS=КОНТАКТЫ
+
+s.a.about=О проекте
+s.a.live_search=ЖИВОЙ ПОИСК
+s.a.live_search_desc=Пользователи сайта на котором установлен suggest.io увидят результаты поиска уже после ввода первой буквы поискового запроса.
+s.a.install=ПРОСТАЯ УСТАНОВКА
+s.a.install_desc_first_line=Установка поиска не требует специальных навыков и занимает несколько минут.
+s.a.install_desc_second_line=Один клик и вы в поисковой системе! Suggest.io автоматически сгенерирует код для установки на ваш сайт и сразу начнет его индексацию.
 
 live_search_for_your_website=Живой поиск для вашего сайта
 provide_site_url_to_init_search=Введите адрес вашего сайта, чтобы присоединиться к поисковой системе
@@ -114,12 +128,6 @@ copy_js_code_to_your_site=Скопируйте JavaScript код и добавь
 code_must_be_on_all_site_pages=Обратите внимание, код должен присутствовать на всех страницах вашего сайта.
 go_to_your_site_after_install=После установки кода, зайдите на свой сайт для окончания установки и настройки поиска.
 custom_search_solutions_br=разработка<br/>индивидуальных<br/>поисковых<br/>решений.
-
-stuff.menu.ABOUT=О ПРОЕКТЕ
-stuff.menu.BLOG=БЛОГ
-stuff.menu.HELP=ПОМОЩЬ
-stuff.menu.LIVE=ВЖИВУЮ
-stuff.menu.CONTACTS=КОНТАКТЫ
 
 blog=Blog
 b.a.record_id=Идентификатор записи (id)

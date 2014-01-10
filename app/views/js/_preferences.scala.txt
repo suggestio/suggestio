@@ -5,8 +5,16 @@ preferences =
   list : ["search_field"]
 
   ##
+  # Развернуть нужный блок
+  toggle_block : ( preference ) ->
+
+    utils.ge('sioPfsBlocks').style.display = 'block'
+    utils.ge('sio_pfs_block_' + preference).style.display = 'block'
+
+  ##
   # Иниаицлизация настроек поиска
   init : () ->
+
     ##
     # Готовим табы и контейнеры с настройками
     _tabs = ''
@@ -17,16 +25,16 @@ preferences =
       _preferences_block_id = 'sio_pfs_block_' + preference
       _preferences_block_content = preferences[preference].draw()
 
-      _tabs += '<div class="sio-tab" id="sio_pfs_tab_' + preference + '" onclick="sio.preferences.toggle_block(\'' + preference + '\')">' + preference + '</div>'
+      _tabs += '<div class="sio-tab" id="sio_pfs_tab_' + preference + '" onclick="sio.preferences.toggle_block(\'' + preference + '\'); return false;">' + preference + '</div>'
       _blocks += '<div class="sio-block sio-block-' + _preferences_block_id + '" id="' + _preferences_block_id + '">' + _preferences_block_content + '</div>'
 
     ##
     # И сам контейнер
     preferences_container = utils.ce 'div', {'class':'sio-preferences-container','id':'sio_spf'}
-    preferences_container.innerHTML = '<div class="sio-pfs-tabs"><div class="sio-logo sio-pfs-left-column"><a href="" onclick="sio.preferences.hide(); return false;"></a></div>' +
+    preferences_container.innerHTML = '<div class="sio-pfs-tabs"><div class="sio-logo sio-pfs-left-column"><a target="_blank" href="' + sio.config.sio_host + '/"></a></div>' +
       _tabs +
       '</div>'+
-      '<div class="sio-pfs-blocks"><div class="sio-pfs-left-column">'+
+      '<div class="sio-pfs-blocks" id="sioPfsBlocks"><div class="sio-pfs-left-column">'+
       '<div id="sio_save_button" class="sio-pfs-save-button" onclick="sio._set_domain_data(); return false;"><a href="" onclick="return false;">' + 'Save' + '</a></div>' +
       '<div id="sio_reset_button" class="sio-pfs-reset-button"><a href="" onclick="return false;">' + 'Reset' + '</a></div>' +
       '</div>' + _blocks + '</div>';
