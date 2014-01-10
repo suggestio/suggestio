@@ -147,8 +147,8 @@ object MPersonDomainAuthz {
   private val BODY_CODE_LEN = 16
 
   // Допустимые значения поля typ класса.
-  private val TYPE_QI         = "qi"
-  private val TYPE_VALIDATION = "va"
+  val TYPE_QI         = "qi"
+  val TYPE_VALIDATION = "va"
 
   // Нужно периодически обновлять данные по валидности доступа. Софт и хард лимиты описывают периодичность проверок.
   // Софт-лимит не ломает верификацию, однако намекает что надо бы сделать повторную проверку.
