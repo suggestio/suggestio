@@ -12,7 +12,7 @@ resolvers ++= Seq(
 
 // Use the Play sbt plugin for Play projects
 //addSbtPlugin("play" % "sbt-plugin" % "2.1.3")
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.2.0")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.2.2-RC1")
 
 // stylus assets
 addSbtPlugin("patience" % "play-stylus" % "0.2.0")

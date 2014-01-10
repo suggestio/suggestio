@@ -4,32 +4,19 @@ import play.api.mvc._
 import util.ContextImpl
 import util.acl._
 import views.html.crawl._
-import play.api.data._
-import play.api.data.Forms._
-import java.net.URL
 import play.api.i18n.Lang
-import play.api.Logger
-import gnu.inet.encoding.IDNA
-import io.suggest.util.UrlUtil
+import io.suggest.util.LogsImpl
 import play.api.Play.current
 import scala.concurrent.Future
+import models.MPerson
+import play.api.libs.concurrent.Execution.Implicits._
 
 object Application extends SioController {
 
-  val addSiteFormM = Form(
-    "url" -> nonEmptyText(minLength = 7, maxLength = 40)
-      .verifying("Invalid URL", {result => result match {
-        case url =>
-          try {
-            new URL(url)
-            true
-          } catch {
-            case ex:Exception => false
-          }
-      }})
-  )
- 
-  /** 
+  private val LOGGER = new LogsImpl(getClass)
+  import LOGGER._
+
+  /**
    * Выдача главной страницы
    */
   def index = MaybeAuth { implicit request =>
@@ -45,36 +32,30 @@ object Application extends SioController {
   def change_locale(locale: String) = MaybeAuth { implicit request =>
     val referrer = request.headers.get(REFERER).getOrElse("/")
     
-    Logger.logger.debug("Change user lang to : " + locale)
-    Redirect(referrer).withLang(Lang(locale))
-    // TODO Check if the lang is handled by the application
-    // TODO нужно сохранять это в БД если юзер залогинен.
-  }
-  
-  /**
-   * Добавление сайта, шаг 1. Нужно подготовить qi и сгенерить данные для генерации js-кода.
-   * @return Переменные для генерации js-кода на клиенте.
-   */
-  def siteAddGenerateJs = MaybeAuth { implicit request =>
-    val bindedForm = addSiteFormM.bindFromRequest
-    bindedForm.fold(
-      formWithErrors =>
-        NotAcceptable("cannot parse POST")
-      ,
-      {url =>
-        val u = new URL(url)
-        val host = u.getHost
-        val hostIDN = IDNA.toASCII(host)
-        if (UrlUtil.isHostnameValid(hostIDN)) {
-          // Хостнейм валиден
+    debug("Change user lang to : " + locale)
+    val lang1 = Lang(locale)
 
-        } else {
-          // Хостнейм невалиден.
-          "hostname_prohibited"
+    // Нужно сохранять смену языка в БД, если юзер залогинен.
+    if (request.isAuth) {
+      val pw = request.pwOpt.get
+      val langCode = lang1.language
+      pw.personOptFut.flatMap { result =>
+        val result1 = result match {
+          case Some(person) =>
+            person.lang = langCode
+            person
+
+          case None => MPerson(pw.id, lang = langCode)
         }
-        ???
+        result1.save
+
+      } onFailure {
+        case ex => warn("Failed to save lang settings for user " + pw.id, ex)
       }
-    )
+    }
+
+    Redirect(referrer).withLang(lang1)
+    // TODO Check if the lang is handled by the application
   }
 
 

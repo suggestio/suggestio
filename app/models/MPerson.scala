@@ -19,12 +19,13 @@ import io.suggest.util.SioModelUtil
  * Description: Юзер, зареганный на сайте. Как правило, админ одного или нескольких сайтов.
  * Люди различаются по email'ам. Это является их идентификаторами.
  * @param id Идентификатор юзера, т.е. его email.
- * @param langIso2 Язык интерфейса для указанного пользователя.
+ * @param lang Язык интерфейса для указанного пользователя.
+ *             Формат четко неопределён, и соответствует коду выхлопа Controller.lang().
  */
 
 case class MPerson(
   id : String,
-  var langIso2: Option[String] = None
+  var lang: String
 ) extends MPersonLinks {
   import MPerson.BACKEND
 
@@ -168,15 +169,11 @@ object MPerson {
       val rowKey = id2key(data.id)
       val table = HTABLE_NAME_BYTES
 
-      // Язык, если задан.
-      val langFut: Future[_] = if (data.langIso2.isDefined) {
-        val value = serializeLang(data.langIso2.get)
+      // Язык, всегда задан.
+      val langFut: Future[_] = {
+        val value = serializeLang(data.lang)
         val putReq = new PutRequest(table, rowKey, CF_UPROPS.getBytes, Q_LANG.getBytes, value)
         ahclient.put(putReq)
-      } else {
-        // Язык внезапно не выставлен.
-        val delReq = new DeleteRequest(table, rowKey, CF_UPROPS.getBytes, Q_LANG.getBytes)
-        ahclient.delete(delReq)
       }
 
       // Асинхронно дождаться выполнения всех реквестов.
@@ -191,11 +188,12 @@ object MPerson {
         if (row.isEmpty) {
           None
         } else {
-          val result = new MPerson(id)
+          val result = new MPerson(id, lang=null)
           // Такатываем все qualifier'ы на исходную запись.
+          // TODO lang всегда задан, поэтому тут должна быть его десериализация без вариантов.
           row.foreach { kv =>
             new String(kv.qualifier()) match {
-              case Q_LANG  => result.langIso2 = Some(deserializeLang(kv.value))
+              case Q_LANG  => result.lang = deserializeLang(kv.value)
             }
           }
           Some(result)

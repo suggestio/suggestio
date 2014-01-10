@@ -37,5 +37,5 @@ object PersonWrapper {
 case class PersonWrapper(id: String) extends MPersonLinks {
   // TODO Надо будет это оптимизировать. Если .person будет нужен почти везде, то надо запрос фьючерса отделить от Await
   //      в отдельный val класса. На текущий момент этот вызов нигде не используется, поэтому целиком lazy.
-  lazy val person = Await.result(MPerson.getById(id), 5 seconds).get
+  lazy val personOptFut = MPerson getById id
 }

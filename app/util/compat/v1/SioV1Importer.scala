@@ -308,7 +308,7 @@ object SioV1Importer extends JavaTokenParsers {
 
       ensureEmptyIter(rowIter)
 
-      val rec = MPerson(id = personId)
+      val rec = MPerson(id = personId, lang = "en")
       rec.save.onComplete {
         case scala.util.Success(_)  => trace(logPrefix + "Person saved OK: " + personId)
         case scala.util.Failure(ex) => error(logPrefix + "Failed to save person " + personId, ex)

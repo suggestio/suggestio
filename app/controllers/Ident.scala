@@ -15,6 +15,7 @@ import scala.concurrent.Future
 import play.api.libs.json.JsString
 import models.MPerson
 import play.api.mvc.Security.username
+import play.api.i18n.Lang
 
 /**
  * Suggest.io
@@ -97,21 +98,22 @@ object Ident extends SioController with Logs {
                       val personFut = personOpt match {
                         case None =>
                           trace(logPrefix + "Registering new user: " + email)
-                          // TODO Выставить по кукисам язык в сессию. Для этого надо определить язык где-то в другом месте.
-                          val mpersonInst = new MPerson(email)
+                          val mpersonInst = new MPerson(email, lang=lang.code)
                           mpersonInst.save.map { _ => mpersonInst }
 
                         case Some(p) =>
                           trace(logPrefix + "Login already registered user: " + p)
+                          // Восстановить язык из сохранненого добра
                           Future successful p
                       }
                       personFut flatMap { person =>
                         // Заапрувить анонимно-добавленные и подтвержденные домены (qi)
                         DomainQi.installFromSession(person.id) map { session1 =>
                           // Делаем info чтобы в логах мониторить логины пользователей.
-                          info(logPrefix + "successfully logged in as " + email)
-                          // залогинить юзера наконец.
+                          trace(logPrefix + "successfully logged in as " + email)
+                          // залогинить юзера наконец, выставив язык, сохранённый ранее в состоянии.
                           rdrToAdmin
+                            .withLang(Lang(person.lang))
                             .withSession(session1)
                             .withSession(username -> person.id)
                         }
