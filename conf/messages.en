@@ -18,6 +18,19 @@ constraint.minLength=Minimum length: {0}
 constraint.maxLength=Maximum length: {0}
 constraint.email=Email
 
+stuff.menu.ABOUT=ABOUT
+stuff.menu.BLOG=BLOG
+stuff.menu.HELP=HELP
+stuff.menu.LIVE=LIVE
+stuff.menu.CONTACTS=CONTACTS
+
+s.a.about=About
+s.a.live_search=LIVE SEARCH
+s.a.live_search_desc=Users of websites, that use suggest.io will see search results after typing the first letter of search request.
+s.a.install=SIMPLE INSTALLATION
+s.a.install_desc_first_line=Search installation process doesn't require any special skills and takes just few minutes.
+s.a.install_desc_second_line=One click brings you to the search system! Suggest.io automatically generates JS code to insert into your website templates and start indexation process.
+
 live_search_for_your_website=Live search for your website
 provide_site_url_to_init_search=Type in your website address to join search system
 install_search=INSTALL SEARCH
@@ -110,13 +123,6 @@ code_must_be_on_all_site_pages=Ensure that code present on all pages of your sit
 go_to_your_site_after_install=After code copy-paste, visit your site for finishing installation and accessing search settings.
 custom_search_solutions_br=Custom<br/>search<br/>solutions<br/>development.
 
-stuff.menu.ABOUT=ABOUT
-stuff.menu.BLOG=BLOG
-stuff.menu.HELP=HELP
-stuff.menu.LIVE=LIVE
-stuff.menu.CONTACTS=CONTACTS
-
-
 blog=Blog
 b.a.record_id=Record id (id)
 b.a.new_blog_record=New blog record
@@ -186,7 +192,6 @@ h.r.sio_robo_will_recheck_v_flag_appers=Suggest.io system will verify the file o
 h.r.register_and_verify_done_settings_available=Creating an account and site verification are finished. In <a href="{0}">admin page</a> all search settings become available.
 h.r.removing_txt_will_remove_validation=If someone will remove txt-file from your site in future, all user rights will be revoked in a half of hour.
 h.r.use_other_fmt_if_txt_unavailable=txt-file contains comments and some code. Suggest.io system expects to see at least this code in the validation URL response. If you cannot just copy-paste txt-file as-is, you can always create some html-page or other plain-text file and copy-paste verification code into it.
-
 
 h.ss.search_settings=Search settings
 multilingual_site=Multilingual site

@@ -2,6 +2,20 @@ search_field =
 
   draw : () ->
 
-    'search_field'
+    html = ''
+    html += sio.preferences.checkbox(transl('use_default_field'), 'onclick="sio.preferences.search_field.set(\'default\');"',is_def_sf,"spf_sf_def_cb","sio-spf-sf-checkbox");
+    html += sio.preferences.checkbox(transl('use_custom_field'), 'onclick="sio.preferences.search_field.set(\'custom\');"',is_cust_sf,"spf_sf_cust_cb", "sio-spf-sf-checkbox");
+
+    html += '<div class="sio-clear"></div>';
+
+    html += '<div id="sioPfsNoFieldExplanation" class="sio-pfs-text" style="display: none;"><p>К сожалению, Suggest.io не удалось найти поискового поля на странице. Если поле на странице все же есть, ознакомьтесь с нашими рекомендациями по насройке.</p><p><a onclick="sio.preferences.search_field.set(\'custom\'); return false;" href="">Ясно, понятно, вернуться к выбору иконок</a></p></div>';
+
+    html += '<div class="sio-spf-sf-icons" id="sioSpfSfIcons" style="' + _disp + '">';
+    for t in templates.search_fields
+      _cls = t == 'default' ? 'def' : t;
+    	_is_active = t == sio.domain_data.search_field ? 'sio-pfs-sf-select-active' : '';
+    	html += "<div id=\"sioPfsSfSelect" + t + "\" class=\"" + _is_active + " sio-pfs-sf-select sio-field-prev-" + _cls + "\" onClick=\"sio.preferences.search_field.set('" + t + "')\">" + '</div>'
+    html += '</div>';
+    html
 
 preferences.search_field = search_field

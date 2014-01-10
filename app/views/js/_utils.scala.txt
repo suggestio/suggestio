@@ -107,6 +107,12 @@ utils =
     element.className.match( _class_pattern )
 
   ##
+  is_visible : ( e ) ->
+
+    elem = utils.ge e
+    elem.style.display != 'none' && elem.style.visibility != 'hidden'
+
+  ##
   is_retina : () ->
     if window.devicePixelRatio > 1
       true
@@ -146,7 +152,7 @@ utils =
     else
       newClassName = element.className.replace(value,'').replace(/\s{2,}/g, ' ')
       element.className = newClassName
-  
+
   # Показать объект
   show : ( element ) ->
     if ge element == null
@@ -166,4 +172,3 @@ utils =
   load_css : ( href ) ->
     style_elt = utils.ce 'link', {'rel':'stylesheet','type':'text/css','id':'sio_css', 'href' : href}
     utils.ge_tag('head')[0].appendChild style_elt
-  	

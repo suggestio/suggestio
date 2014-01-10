@@ -1,8 +1,12 @@
-@()
+@()(implicit c:util.Context)
+@import c.lang
 
 @lcc ={
-<h1>ПРОСТАЯ УСТАНОВКА</h1>
-<div><p>Установка поиска не требует специальных навыков и занимает несколько минут.</p><p>Один клик и вы в поисковой системе!<br/>Suggest.io автоматически сгенерирует код для установки на ваш сайт и сразу начнет его индексацию.</p></div>
+<h1>@Messages("s.a.install")</h1>
+<div>
+  <p>@Messages("s.a.install_desc_first_line")</p>
+  <p>@Messages("s.a.install_desc_second_line")</p>
+</div>
 }
 
 @rcc = {
