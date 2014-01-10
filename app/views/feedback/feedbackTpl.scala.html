@@ -1,6 +1,7 @@
 @(feedbackFormM: Form[_])(implicit ctx:util.Context)
 
-@* Страница с формой отзыва/обратной связи. *@
+@* Страница с формой отзыва/обратной связи.
+   TODO: Добавить сюда поля для ввода URL. *@
 
 @import ctx._
 @import stuff._
@@ -14,15 +15,19 @@
   
   <div class="row">
     <div class="col-sm-12">
-      <div class="sio-slogo-@ctx.lang_str"></div>
+      <div class="sio-slogo-@ctx.langStr"></div>
     </div>
   </div>
   
   <div class="row">
     
     <div class="feedback-row">
-      <div class="feedback-message feedback-message-@lang_str">
-        <span id="feedbackIntroMessage">@Messages("email_us_at") <a href="mailto:support@@suggest.io">support@@suggest.io</a>, @Messages("or_fill_the_form"):</span>
+      <div class="feedback-message feedback-message-@langStr">
+        <span id="feedbackIntroMessage">
+            @Messages("email_us_at")
+            <a href="mailto:support@@suggest.io">support@@suggest.io</a>,
+            @Messages("or_fill_the_form"):
+        </span>
       </div>
       
       @_feedbackFormTpl(feedbackFormM)

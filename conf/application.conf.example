@@ -139,24 +139,9 @@ application.secret="t6]=<]3/5pf19dTae_K?_DemwXGVK12<:6tnlL^7vVV9q>ZW<]jhh8[pH]YI
 # The application languages
 application.langs="en,ru"
 
-# Global object class
-# ~~~~~
-# Define the Global object class for this application.
-# Default to Global in the root package.
 #application.global=Global
 
-# Router 
-# ~~~~~
-# Define the Router object to use for this application.
-# This router will be looked up first when the application is starting up,
-# so make sure this is the entry point. 
-# Furthermore, it's assumed your route file is named properly. 
-# So for an application router like `my.application.Router`,
-# you may need to define a router file `conf/my.application.routes`.
-# Default to Routes in the root package (and conf/routes)
-#application.router=my.application.Routes
-
-# You can disable evolutions if needed
+# Эволюция схем БД как всегда не нужна.
 evolutionplugin=disabled
 
 # name of username session key
@@ -164,4 +149,7 @@ session.username = "p"
 
 # name of session cookie
 session.cookieName = "s"
+
+# Переименовать длинный палевный "PLAY_LANG" в "l". Это скроет play.
+application.lang.cookie = "l"
 

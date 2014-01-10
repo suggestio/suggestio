@@ -42,16 +42,16 @@ trait ContextT {
   */
 trait Context {
 
-  implicit def pw_opt: PwOpt_t
+  implicit def pwOpt: PwOpt_t
   implicit def request: RequestHeader
   implicit def lang: Lang
 
   implicit lazy val now : DateTime = DateTime.now
 
-  def isAuth:  Boolean = pw_opt.isDefined
-  def isSuperuser: Boolean = pw_opt.exists(_.isSuperuser)
+  def isAuth:  Boolean = pwOpt.isDefined
+  def isSuperuser: Boolean = pwOpt.exists(_.isSuperuser)
 
-  def lang_str = lang.language
+  def langStr = lang.language
 
   lazy val canAddSites: Boolean = current.configuration.getBoolean("can_add_sites") getOrElse true
   lazy val isDebug: Boolean     = request.getQueryString("debug").isDefined
@@ -68,10 +68,10 @@ case class Context2(
   implicit val lang: Lang
 ) extends Context {
 
-  implicit def pw_opt = request.pwOpt
+  implicit def pwOpt = request.pwOpt
 }
 
 /** Упрощенная версия контекста, используемая в минимальных условиях и вручную. */
 case class ContextImpl(implicit val request: RequestHeader, val lang: Lang) extends Context {
-  def pw_opt = PersonWrapper.getFromRequest(request)
+  def pwOpt = PersonWrapper.getFromRequest(request)
 }

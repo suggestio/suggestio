@@ -1,8 +1,9 @@
 package controllers
 
-import play.api.mvc.{SimpleResult, Controller}
+import play.api.mvc.{RequestHeader, SimpleResult, Controller}
 import util.ContextT
 import scala.concurrent.Future
+import play.api.i18n.Lang
 
 /**
  * Suggest.io

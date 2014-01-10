@@ -10,8 +10,7 @@ import controllers.routes
 import play.api.libs.concurrent.Execution.Implicits._
 import java.util.UUID
 import util.{QiCheckException, DomainQi}
-import util.event.QiError
-import io.suggest.sax.{SioJsV1, SioJsV2}
+import io.suggest.sax.SioJsV1
 
 /**
  * Suggest.io
@@ -68,9 +67,8 @@ object SioV1Importer extends JavaTokenParsers {
       importDomainData
       importPersonDomainAuthz
       importDomainQi
-      // Может не импортировать? Полезных данных нет всё равно, а залогиненные юзеры будут созданы там автоматом.
-      // А новым юзерам будет выставлен язык по geoip.
-      importPerson
+      // Можно не импортировать юзеров. Полезных данных в person нет всё равно, а залогиненные юзеры будут созданы автоматом.
+      //importPerson
       // В финале, заливаем сайты. Хотя это можно сделать и в начале.
       importDomains
 
@@ -295,7 +293,7 @@ object SioV1Importer extends JavaTokenParsers {
 
 
   /** Импорт таблицы person. Там ничего конкретного по юзерам так и не появилось. */
-  def importPerson(implicit conn: OtpConnection) {
+  private def importPerson(implicit conn: OtpConnection) {
     // [Id, Info], Второе поле вроде всегда -- пустой список. Создано было, т.к. ChicagoBoss глючил от модели без полей-значений.
     // {person, <<"dmitriy2512@gmail.com">>, []}
     val personTN = "person"

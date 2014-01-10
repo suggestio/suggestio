@@ -97,6 +97,7 @@ object Ident extends SioController with Logs {
                       val personFut = personOpt match {
                         case None =>
                           trace(logPrefix + "Registering new user: " + email)
+                          // TODO Выставить по кукисам язык в сессию. Для этого надо определить язык где-то в другом месте.
                           val mpersonInst = new MPerson(email)
                           mpersonInst.save.map { _ => mpersonInst }
 
