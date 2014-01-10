@@ -178,11 +178,10 @@ object MDVIActive extends CascadingFieldNamer {
    * @return Опциональный сабж.
    */
   def getForDkeyVin(dkey:String, vin:String)(implicit ec:ExecutionContext): Future[Option[MDVIActive]] = {
-    val column: Array[Byte] = vin
     val rowkey = serializeDkey2Rowkey(dkey)
     val getReq = new GetRequest(HTABLE_NAME, rowkey)
       .family(CF)
-      .qualifier(column)
+      .qualifier(serializeVin(vin))
     ahclient.get(getReq) map { results =>
       if (results.isEmpty) {
         None
@@ -471,9 +470,11 @@ class MDVIActive extends BaseDatum(FIELDS) with MDVIUnitAlterable {
    * вспомогательной в рамках flow величиной.
    * @return Фьючерс для синхронизации.
    */
-  def delete(implicit ec: ExecutionContext): Future[Unit] = {
-    val delReq = new DeleteRequest(HTABLE_NAME_BYTES, getDkey:Array[Byte], CF.getBytes, getVin:Array[Byte])
-    ahclient.delete(delReq) map { _ => () }
+  def delete(implicit ec: ExecutionContext): Future[_] = {
+    val rowKey = serializeDkey2Rowkey(getDkey)
+    val qualifier = serializeVin(getVin)
+    val delReq = new DeleteRequest(HTABLE_NAME_BYTES, rowKey, CF.getBytes, qualifier)
+    ahclient.delete(delReq)
   }
 
 

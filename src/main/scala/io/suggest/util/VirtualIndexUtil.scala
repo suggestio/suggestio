@@ -27,7 +27,11 @@ object VirtualIndexUtil {
     val logPrefix = "downgradeAll():"
     trace(logPrefix + " starting...")
     MDVIActive.getAll.flatMap { mdviActives =>
-      val dkeyInxGroups = mdviActives.groupBy(_.getDkey).mapValues(_.sortBy(_.getGeneration))
+      val dkeyInxGroups = mdviActives
+        .groupBy(_.getDkey)
+        .mapValues {
+          _.sortBy(_.getGeneration)
+        }
       // Параллельно делаем downgrade индексов по доменам
       val fut = Future.traverse(dkeyInxGroups) {
         // Нечего даунгрейдить, если 0 или 1 индекс всего лишь.
@@ -44,12 +48,14 @@ object VirtualIndexUtil {
           val searchPtr = new MDVISearchPtr(dkey, List(restInx.getVin))
           searchPtr.save.flatMap { _ =>
             Future.traverse(toRmInxs) { rmMdviActive =>
-              rmMdviActive.eraseBackingIndex.recover {
-                case ex: IndexMissingException =>
-                  debug(s"$logPrefix Ignoring ${ex.getClass.getSimpleName} while deleting index ${searchPtr.vins.head} :: ${ex.getMessage}")
-                  true
-              }
-                .map { _ =>  rmMdviActive.delete }
+              rmMdviActive
+                .eraseBackingIndex.recover {
+                  case ex: IndexMissingException =>
+                    debug(s"$logPrefix Ignoring ${ex.getClass.getSimpleName} while deleting index ${searchPtr.vins.head} :: ${ex.getMessage}")
+                    true
+                } flatMap {
+                  _ => rmMdviActive.delete
+                }
             }
           }
       }
