@@ -17,6 +17,9 @@ logger.util=${logger.application}
 logger.model=${logger.application}
 #logger.org.elasticsearch=WARN	# не помогает :(
 
+# Протокол, используемый при генерации ссылок на сайт suggest.io.
+sio.proto.dflt = http
+
 
 ###############################################################################
 ## Storage

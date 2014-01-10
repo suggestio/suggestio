@@ -17,7 +17,10 @@ import io.suggest.util.UrlUtil
  */
 
 object Context {
-  val LANG_DFLT = Lang("ru")
+
+  /** Протокол, используемый при генерации ссылок на suggest.io. Обычно на локалхостах нет https вообще, в
+    * то же время, на мастере только https. */
+  val SIO_PROTO_DFLT = current.configuration.getString("sio.proto.dflt") getOrElse "https"
 }
 
 
@@ -45,6 +48,7 @@ trait Context {
   implicit def pwOpt: PwOpt_t
   implicit def request: RequestHeader
   implicit def lang: Lang
+  def myProto = Context.SIO_PROTO_DFLT
 
   implicit lazy val now : DateTime = DateTime.now
 
