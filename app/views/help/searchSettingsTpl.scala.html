@@ -5,8 +5,8 @@
 @import c.lang
 
 @* Определяем элемент списка примеров локалей и языков со странами *@
-@li_locale(locale:String, lang:String, country:String) = {
-  <li>@locale - @Messages(lang), @Messages(country)</li>
+@li_locale(_locale:String, _lang:String, _country:String) = {
+  <li>@_locale - @Messages(_lang), @Messages(_country)</li>
 }
 
 @defining(Messages("h.ss.search_settings")) { title =>
@@ -41,7 +41,7 @@
 @* Указание языка страниц на страницах сайта *@
 <h2>@Messages("h.ss.specifing_lang_descriptor_to_site_pages")</h2>
 <p>@Messages("h.ss.you_need_to_specify_lang_pages_add_head_tag"):
-	<code>&lt;meta property="og:locale" content="ru_RU"/&gt;</code>
+	<code>&lt;meta property="og:locale" content="@Messages("locale")"/&gt;</code>
 </p>
 
 <p>@Messages("h.ss.pay_attention_to_meta_content_locale_format"):
@@ -59,11 +59,12 @@
 		@* В случае ошибочной локали будет автоопределение, но это будет инфа меньше 100% *@
 		<li>@Messages("h.ss.sio_on_locale_error_auto")</li>
 		@* Указание тега локали также поможет другим поисковым система более лучше работать. *@
-		<li>@Messages("h.ss.about_og_locale_and_other_search_systems")</li>
+		
+		<li>@Html(Messages("h.ss.about_og_locale_and_other_search_systems", """<a href="http://ogp.me/">Open Graph Protocol</a>"""))</li>
 	</ul>
 </p>
 
-<h2>Настройка скрипта suggest.io</h2>
+<h2>@Messages("h.ss.sio_script_tweak")</h2>
 
 @* Чтобы lang-поиск заработал, нужно настроить js-скрипт sio *@
 <p>@Messages("h.ss.need_to_alter_script_to_force_search_lang_depend")</p>

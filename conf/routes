@@ -44,7 +44,7 @@ GET     /blog/edit/:id                  controllers.Blog.editRec(id:String)
 POST    /blog/edit/:id                  controllers.Blog.editRecSubmit(id:String)
 
 GET     /help                           controllers.Static.help
-GET     /help/:page                     controllers.Static.helpPage(page:String)
+GET     /help/:page                     controllers.Static.helpPage(page)
 
 
 # Админка. Адресация первого sioweb почти сохранена.

@@ -28,7 +28,7 @@
 	<h2>@Messages("h.r.add_verify_sites")</h2>
 	<p>
 		<ul>
-			<li>@Messages("h.r.press_add_site_in_lk", "/admin")</li>@* нажмите "добавить сайт" в админке по ссылке *@
+			<li>@Html(Messages("h.r.press_add_site_in_lk", s"<a href='${routes.Admin.index}'>", "</a>"))</li>  @* нажмите "добавить сайт" в админке по ссылке *@
 			<li>@Messages("h.r.type_site_addr_in_field", "1")</li>	@* введите адрес сайта в поле 1*@
 		</ul>
 	</p>
@@ -36,8 +36,8 @@
 	@* После пункта 4, сайт отображается в списке; предлагается скачать txt для проверки прав на сайт *@
 	<p>@Messages("h.r.after_addr_shown_next_copy_txt_file", "4"):
 		<ul>
-			<li>@Messages("h.r.download_validation_txt", "2").</li> @* скачайте txt из раскрывшегося окна 2 *@
-			<li>@Messages("h.r.save_txt_to_site_root").</li>	@* сохраните txt в корень сайта *@
+			<li>@Messages("h.r.download_validation_txt", "2")</li> @* скачайте txt из раскрывшегося окна 2 *@
+			<li>@Messages("h.r.save_txt_to_site_root")</li>	@* сохраните txt в корень сайта *@
 		</ul>
 	</p>
 	
@@ -46,11 +46,13 @@
 	
 	<p>
 		<ul>
-			<li>@Messages("h.r.press_recheck_in_lk", "/admin")</li> @* Нажмите recheck в админке *@
+			<li>@Html(Messages("h.r.press_recheck_in_lk", s"<a href='${routes.Admin.index}'>", "</a>"))</li> @* Нажмите recheck в админке *@
 			<li>@Messages("h.r.sio_robo_will_recheck_v_flag_appers")</li> @* Робот Suggest.io произведет проверку файла и выставит значек V *@
 		</ul>
 	</p>
-	<p>@Messages("h.r.register_and_verify_done_settings_available", "/admin")</p> @* Создание учетки и верификаця завершены. Функции доступны в админке *@
+
+	@* Создание учетки и верификаця завершены. Функции доступны в админке *@
+	<p>@Html(Messages("h.r.register_and_verify_done_settings_available", s"<a href='${routes.Admin.index}'>", "</a>"))</p>
 	<p>@Messages("please_note"):
 		<ul>
 			<li>@Messages("h.r.removing_txt_will_remove_validation")</li> @* Что будет если удалить txt файл с сайта *@

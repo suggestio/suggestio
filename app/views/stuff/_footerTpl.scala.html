@@ -1,4 +1,6 @@
-@(lang:String)
+@()(implicit ctx: util.Context)
+
+@import ctx._
 
 <div class="sio-footer-container">
 <div class="container">
@@ -12,8 +14,8 @@
       Retina-ready
       <span class="delimiter">|</span>
       </span>
-      <a @if(lang=="ru"){ class="active" } href="/change_locale/ru">Ru</a>  @* TODO выставить ссылку routes *@
-      <a @if(lang=="en"){ class="active" } href="/change_locale/en">En</a>  @* TODO выставить ссылку routes *@
+      <a @if(langStr == "ru"){ class="active" } href="/change_locale/ru">Ru</a>  @* TODO выставить ссылку routes *@
+      <a @if(langStr == "en"){ class="active" } href="/change_locale/en">En</a>  @* TODO выставить ссылку routes *@
       
     </div>
     

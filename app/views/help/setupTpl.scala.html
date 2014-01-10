@@ -36,7 +36,8 @@
 	<p>@Messages("h.sp.setup_finished_with_default_settings")</p>
 	<p>@Messages("h.sp.next"): @* Далее *@
 	<ul>
-		<li>@Messages("h.sp.sio_going_to_index_site", "/admin")</li> @* Система приступает к индексации вашего сайта. Ход индексации можно посмотреть в админке *@
+		@* Система приступает к индексации вашего сайта. Ход индексации можно посмотреть в админке *@
+		<li>@Html(Messages("h.sp.sio_going_to_index_site", s"<a href='${routes.Admin.index}'>", "</a>"))</li>
 		<li>@Messages("h.sp.if_inputText_exist_sio_will_use_it")</li> @* Если на сайте есть поисковое поле... *@
 		<li>@Messages("h.sp.if_no_inputText_then_sio_icon_appears_on_the_corner")</li> @* Если поля нет, то будет уголок *@
 	</ul>
