@@ -8,12 +8,14 @@ object ApplicationBuild extends Build {
 
   val appName         = "sioweb21"
   val appVersion      = "1.0-SNAPSHOT"
+
+  // play-framework local SNAPSHOTs
   
   val appDependencies = {
     Seq(
-      jdbc,
-      anorm,
-      cache,    // play 2.2.x +
+      cache,      // play-2.2+
+      json,       // play-2.3+
+      ws,
       "com.typesafe" %% "play-plugins-mailer" % "2.2.0",
       "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
       // io.suggest stuff
@@ -68,6 +70,5 @@ object ApplicationBuild extends Build {
       gzippableAssets <<= (resourceManaged in (ThisProject))(dir => ((dir ** "*.js") +++ (dir ** "*.css"))),
       gzipAssetsSetting
     )
-
 }
 

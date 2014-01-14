@@ -135,7 +135,7 @@ object MBlog extends Logs {
     def getAll: Future[List[MBlog]] = future {
       // Читаем и парсим все файлы из папки model_path.
       fs.listStatus(modelPath).foldLeft(List[MBlog]()) { (acc, fstatus) =>
-        if (!fstatus.isDir) {
+        if (!fstatus.isDirectory) {
           readOneAcc(acc, fstatus.getPath)
         } else acc
       }

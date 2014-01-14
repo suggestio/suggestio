@@ -364,7 +364,7 @@ object MPersonDomainAuthz {
     def getForPerson(personId: String): Future[List[MPersonDomainAuthz]] = future {
       val personDomainsDir = personPath(personId)
       fs.listStatus(personDomainsDir).foldLeft[List[MPersonDomainAuthz]] (Nil) { (acc, fstatus) =>
-        if (fstatus.isDir) {
+        if (fstatus.isDirectory) {
           val authzPath = authzFilePath(fstatus.getPath)
           readOneAcc(acc, authzPath)
         } else {

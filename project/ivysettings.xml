@@ -13,6 +13,12 @@
 	<artifact pattern="${env.HOME}/.ivy2/local/[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"/>
       </filesystem>
 
+      <!-- play snapshots publish-local produces this output: -->
+      <filesystem name="local-play" changingPattern="-SNAPSHOT" local="true" cache="cache-origin">
+        <ivy pattern="${env.HOME}/.ivy2/local/[organization]/[module]/[revision]/ivys/ivy.xml" />
+        <artifact pattern="${env.HOME}/.ivy2/local/[organization]/[module]/[revision]/[type]s/[module](-[classifier]).[ext]" />
+      </filesystem>
+
       <filesystem name="play-repo" local="true">
         <ivy pattern="${env.PLAY_HOME}/repository/local/[organization]/[module]/[revision]/ivys/ivy.xml" />
         <artifact pattern="${env.PLAY_HOME}/repository/local/[organization]/[module]/[revision]/[type]s/[module](-[classifier]).[ext]" />
@@ -21,13 +27,14 @@
       <url name="cbca ivy2-internal" changingPattern="-SNAPSHOT">
 	<ivy pattern="http://ivy2-internal.cbca.ru/sbt/[orgPath]/[module]/[revision]/[type]-[revision].xml"/>
 	<artifact pattern="http://ivy2-internal.cbca.ru/sbt/[orgPath]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"/>
-    </url>
+      </url>
 
+      <ibiblio name="sbt-plugin-snapshots" root="http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-snapshots"/>
       <ibiblio name="conjas-releases" m2compatible="true" root="http://conjars.org/repo/"/>
       <ibiblio name="typesafe-releases" m2compatible="true" root="http://repo.typesafe.com/typesafe/releases" />
       <ibiblio name="sonatype-oss-releases" m2compatible="true" root="http://oss.sonatype.org/content/repositories/releases" />
       <ibiblio name="central-uk" m2compatible="true" root="http://uk.maven.org/maven2" />
-      <ibiblio name="typesafe-snapshots" m2compatible="true" root="http://repo.typesafe.com/typesafe/snapshots" />
+      <!--ibiblio name="typesafe-snapshots" m2compatible="true" root="http://repo.typesafe.com/typesafe/snapshots" /-->
       <ibiblio name="sonatype-oss-snapshots" m2compatible="true" root="http://oss.sonatype.org/content/repositories/snapshots"/>
       <ibiblio name="local m2" m2compatible="true" root="file://${env.HOME}/.m2/repository"/>
     </chain>

@@ -1,7 +1,7 @@
 package controllers
 
 import play.api.Play.current
-import play.api.libs.ws.{Response, WS}
+import play.api.libs.ws._
 import play.api.data._
 import play.api.data.Forms._
 import util.acl._
@@ -80,7 +80,7 @@ object Ident extends SioController with Logs {
         val timeoutFuture = timeout("timeout", verifyReqFutureTimeout)
         Future.firstCompletedOf(Seq(futureVerify, timeoutFuture)) flatMap {
           // Получен ответ от сервера mozilla persona.
-          case resp: Response =>
+          case resp: WSResponse =>
             val respJson = resp.json
             trace(logPrefix + s"MP verifier resp: ${resp.status} ${resp.statusText} :: " + respJson)
             respJson \ "status" match {
