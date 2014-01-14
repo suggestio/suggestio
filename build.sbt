@@ -24,14 +24,15 @@ publishTo := Some("cbca ivy2-internal" at  "https://ivy2-internal.cbca.ru/sbt/")
 externalIvySettings(baseDirectory(_ / "project" / "ivysettings.xml"))
 
 libraryDependencies ++= {
-  val slf4jVsn      = "1.7.2"
-  val hadoopVsn     = "1.2.1"
-  val akkaVsn       = "2.2.0"
-  val jacksonVsn    = "2.2.1"
+  val slf4jVsn      = "1.7.5"
+  //val hadoopVsn   = "1.2.1"
+  val hadoopVsn     = "2.2.0"
+  //val hbaseVsn      = "0.94.11"
+  val hbaseVsn      = "0.96.1.1-hadoop2"
+  val akkaVsn       = "2.3-M2"
+  val jacksonVsn    = "2.2.2"
   val tikaVsn       = "1.4"
-  val cascadingVsn  = "2.2.1"
-  //val hbaseVsn      = "0.95.1-hadoop1"
-  val hbaseVsn      = "0.94.11"
+  val cascadingVsn  = "2.5.1"
   Seq(
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
@@ -46,14 +47,16 @@ libraryDependencies ++= {
     // akka
     "com.typesafe.akka" %% "akka-actor"  % akkaVsn,
     "com.typesafe.akka" %% "akka-remote" % akkaVsn,
-    // hadoop
-    "org.apache.hadoop" % "hadoop-core" % hadoopVsn,
+    // hadoop 1.x
+    //"org.apache.hadoop" % "hadoop-core" % hadoopVsn,
+    //"org.apache.hadoop" % "hadoop-client" % hadoopVsn,
+    "org.apache.hadoop" % "hadoop-main" % hadoopVsn,
     "org.apache.hadoop" % "hadoop-client" % hadoopVsn,
     // hbase
-    //"org.apache.hbase" % "hbase-server" % hbaseVsn,
-    //"org.apache.hbase" % "hbase-common" % hbaseVsn,
     "org.apache.hbase" % "hbase" % hbaseVsn,
-    "org.hbase" % "asynchbase" % "1.4.1", // java-oriented async client
+    "org.apache.hbase" % "hbase-server" % hbaseVsn,
+    "org.apache.hbase" % "hbase-common" % hbaseVsn,
+    "org.hbase" % "asynchbase" % "1.5.0A-SNAPSHOT",
     // cascading
     "cascading" % "cascading-core" % cascadingVsn,
     "cascading" % "cascading-hadoop" % cascadingVsn,

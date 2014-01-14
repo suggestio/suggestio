@@ -115,7 +115,7 @@ object MDomain {
     def getAll: Future[List[MDomain]] = future {
       val globPath = dkeyPath("*")
       fs.globStatus(globPath).foldLeft[List[MDomain]] (Nil) { (acc, fstatus) =>
-        if (!fstatus.isDir) {
+        if (!fstatus.isDirectory) {
           JsonDfsBackend.getAs[MDomain](fstatus.getPath, fs) match {
             case Some(mdomain) => mdomain :: acc
             case None => acc
