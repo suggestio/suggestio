@@ -41,7 +41,7 @@ libraryDependencies ++= {
     "commons-lang" % "commons-lang" % "2.4",
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVsn,
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % jacksonVsn,
-    "org.elasticsearch" % "elasticsearch" % "0.90.7",
+    "org.elasticsearch" % "elasticsearch" % "0.90.10",
     "org.apache.tika" % "tika-core" % tikaVsn,
     "org.apache.tika" % "tika-parsers" % tikaVsn,
     // akka
