@@ -25,9 +25,7 @@ externalIvySettings(baseDirectory(_ / "project" / "ivysettings.xml"))
 
 libraryDependencies ++= {
   val slf4jVsn      = "1.7.5"
-  //val hadoopVsn   = "1.2.1"
   val hadoopVsn     = "2.2.0"
-  //val hbaseVsn      = "0.94.11"
   val hbaseVsn      = "0.96.1.1-hadoop2"
   val akkaVsn       = "2.3-M2"
   val jacksonVsn    = "2.2.2"
@@ -43,13 +41,10 @@ libraryDependencies ++= {
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % jacksonVsn,
     "org.elasticsearch" % "elasticsearch" % "0.90.10",
     "org.apache.tika" % "tika-core" % tikaVsn,
-    "org.apache.tika" % "tika-parsers" % tikaVsn,
+    "org.apache.tika" % "tika-parsers" % tikaVsn exclude("xerces", "xercesImpl"),
     // akka
     "com.typesafe.akka" %% "akka-actor"  % akkaVsn,
     "com.typesafe.akka" %% "akka-remote" % akkaVsn,
-    // hadoop 1.x
-    //"org.apache.hadoop" % "hadoop-core" % hadoopVsn,
-    //"org.apache.hadoop" % "hadoop-client" % hadoopVsn,
     "org.apache.hadoop" % "hadoop-main" % hadoopVsn,
     "org.apache.hadoop" % "hadoop-client" % hadoopVsn,
     // hbase
