@@ -872,10 +872,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     }
 
     /** Обработчик размерностей товара в формате: длина/ширина/высота. */
-    class DimensionsHandler extends StringHandler {
+    class DimensionsHandler extends SimpleValueHandler {
       def myTag = AnyOfferFields.dimensions.toString
-      def handleString(s: String) {
-        dimensionsOpt = Option(parse(DIMENSIONS_PARSER, s) getOrElse null)
+      def handleRawValue(sb: StringBuilder) {
+        dimensionsOpt = Option(parse(DIMENSIONS_PARSER, sb) getOrElse null)
       }
     }
   }
@@ -891,6 +891,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     protected val sb = new StringBuilder
     protected var sbLen = 0
     def myAttrs: Attributes = EmptyAttrs
+    def handleRawValue(sb: StringBuilder)
 
     /** Сброс переменных накопления данных в исходное состояние. */
     def reset() {
@@ -916,17 +917,20 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
         }
       }
     }
+
+    /** Выход из текущего элемента. Вызвать функцию, обрабатывающую собранный результат. */
+    override def endElement(uri: String, localName: String, qName: String) {
+      handleRawValue(sb)
+      super.endElement(uri, localName, qName)
+    }
   }
 
   /** Абстрактный обработчик поля, которое содержит какой-то текст. */
   trait StringHandler extends SimpleValueHandler {
     def handleString(s: String)
 
-    /** Выход из текущего элемента у всех одинаковый. */
-    override def endElement(uri: String, localName: String, qName: String) {
-      val resultStr = sb.toString()
-      handleString(resultStr)
-      super.endElement(uri, localName, qName)
+    def handleRawValue(sb: StringBuilder) {
+      handleString(sb.toString)
     }
   }
 
@@ -947,11 +951,11 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
 
   /** Хелпер для разбора поля с информацией о гарантии. */
-  trait WarrantyHandler extends StringHandler {
+  trait WarrantyHandler extends SimpleValueHandler {
     override def maxLen: Int = OFFER_WARRANTY_MAXLEN
     def handleWarranty(wv: Warranty)
-    def handleString(s: String) {
-      val parseResult = parse(WARRANTY_PARSER, s)
+    def handleRawValue(sb: StringBuilder) {
+      val parseResult = parse(WARRANTY_PARSER, sb)
       if (parseResult.successful) {
         handleWarranty(parseResult.get)
       }
@@ -962,13 +966,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
   /** Хелпер для парсинга boolean-значений в телах тегов. */
   trait BooleanHandler extends SimpleValueHandler {
     def handleBoolean(b: Boolean)
-
     override def maxLen: Int = BOOLEAN_MAXLEN
-
-    /** Выход из текущего элемента у всех одинаковый. */
-    override def endElement(uri: String, localName: String, qName: String) {
+    def handleRawValue(sb: StringBuilder) {
       handleBoolean(sb.toBoolean)
-      super.endElement(uri, localName, qName)
     }
   }
 
@@ -985,27 +985,18 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
   /** Абстрактный обработчки полей, содержащий integer-значения. */
   trait IntHandler extends SimpleValueHandler {
     def handleInt(i: Int)
-
     override def maxLen: Int = INT_MAXLEN
-
-    /** Выход из текущего элемента у всех одинаковый. */
-    override def endElement(uri: String, localName: String, qName: String) {
+    def handleRawValue(sb: StringBuilder) {
       handleInt(sb.toInt)
-      super.endElement(uri, localName, qName)
     }
   }
   
   /** Абстрактный обработчик полей, которые содержат float-значения. */
   trait FloatHandler extends SimpleValueHandler {
     def handleFloat(f: Float)
-
-    /** Максимальная кол-во байт, которые будут сохранены в аккамулятор. */
     override def maxLen: Int = FLOAT_MAXLEN
-
-    /** Выход из текущего элемента у всех одинаковый. */
-    override def endElement(uri: String, localName: String, qName: String) {
+    def handleRawValue(sb: StringBuilder) {
       handleFloat(sb.toFloat)
-      super.endElement(uri, localName, qName)
     }
   }
 
