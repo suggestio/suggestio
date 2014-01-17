@@ -11,6 +11,8 @@ import io.suggest.util.MyConfig.CONFIG
 import org.joda.time.Period
 import org.joda.time.format.ISOPeriodFormat
 import io.suggest.ym.OfferTypes.OfferType
+import scala.util.parsing.combinator._
+import YmParsers._
 
 /**
  * Suggest.io
@@ -75,7 +77,7 @@ object YmlSax {
   val SHOP_CURRENCIES_COUNT_MAX = CONFIG.getInt("ym.sax.shop.currencies.count.max") getOrElse 32
   val SHOP_CURRENCY_ID_MAXLEN = CONFIG.getInt("ym.sax.shop.currency.id.len.max") getOrElse 32
 
-  val OFFER_MANUF_WARRANTY_MAXLEN = CONFIG.getInt("ym.sax.offer.manuf_warranty.len.max") getOrElse 32
+  val OFFER_WARRANTY_MAXLEN = CONFIG.getInt("ym.sax.offer.warranty.len.max") getOrElse 32
   val COUNTRY_MAXLEN = CONFIG.getInt("ym.sax.country.len.max") getOrElse 32
 
   val VENDOR_MAXLEN = CONFIG.getInt("ym.sax.vendor.len.max") getOrElse SHOP_COMPANY_MAXLEN
@@ -86,6 +88,17 @@ object YmlSax {
   val OFFER_PARAMS_COUNT_MAX = CONFIG.getInt("ym.sax.offer.params.count.max") getOrElse 16
 
   val OFFER_TYPE_PREFIX_MAXLEN = CONFIG.getInt("ym.sax.offer.type_prefix.len.max") getOrElse 128
+  
+  val REC_LIST_MAX_CHARLEN = CONFIG.getInt("ym.sax.offer.rec.charlen.max") getOrElse 128
+  val REC_LIST_MAX_LEN     = CONFIG.getInt("ym.sax.offer.rec.len.max") getOrElse 10
+  val REC_LIST_SPLIT_RE = "\\s*,\\s*".r
+
+  /** Регэксп для ключа offer.seller_warranty. В доках этот ключ написан с разными орф.ошибками,
+    * поэтому его надо матчить по регэкспу. */
+  val SELLER_WARRANTY_RE = "sell?er_[wv]arr?anty".r
+
+  val OFFER_DIMENSIONS_MAXLEN = CONFIG.getInt("ym.sax.offer.dimensions.len.max") getOrElse 64
+
 }
 
 
@@ -422,7 +435,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     /** Краткие дополнительные сведения по покупке/доставке. */
     var salesNotesOpt: Option[String] = None
     /** Гарантия производителя: true, false или P1Y2M10DT2H30M. */
-    var manufacturerWarrantyOpt: Option[ManufacturerWarrantyValue] = None
+    var manufacturerWarrantyOpt: Option[Warranty] = None
     /** Страна-производитель товара. */
     var countryOfOriginOpt: Option[String] = None
     /** Можно ли скачать указанный нематериальный товар? */
@@ -592,8 +605,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
       override def maxLen: Int = DESCRIPTION_LEN_MAX
       override def ellipsis: String = DESCRIPTION_ELLIPSIS
 
-      def handleString(s: String) {
-        val desc = StringHandler.shortenString(s, DESCRIPTION_LEN_MAX, DESCRIPTION_ELLIPSIS)
+      def handleString(desc: String) {
         descriptionOpt = Some(desc)
       }
     }
@@ -612,19 +624,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     }
 
     /** manufacturer_warranty: Поле с информацией о гарантии производителя. */
-    class ManufacturerWarrantyHandler extends StringHandler {
+    class ManufacturerWarrantyHandler extends WarrantyHandler {
       def myTag = AnyOfferFields.manufacturer_warranty.toString
-      override def maxLen: Int = OFFER_MANUF_WARRANTY_MAXLEN
-      def handleString(s: String) {
-        val mw = s.trim.toUpperCase match {
-          case "TRUE"  => ManufacturerWarrantyValue(hasWarranty = true)
-          case "FALSE" => ManufacturerWarrantyValue(hasWarranty = false)
-          case iso8601p if iso8601p startsWith "P" =>
-            // TODO Есть проблема с этим парсером: https://stackoverflow.com/questions/17966339/joda-time-iso8601-standard-isoperiodformat-cannot-parse-decimal-fraction
-            val period = Period.parse(iso8601p, ISOPeriodFormat.standard())
-            ManufacturerWarrantyValue(hasWarranty = true, warrantyPeriod = Some(period))
-        }
-        manufacturerWarrantyOpt = Some(mw)
+      def handleWarranty(wv: Warranty) {
+        manufacturerWarrantyOpt = Some(wv)
       }
     }
 
@@ -751,15 +754,14 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     /** name обозначает какое-то отображаемое имя в зависимости от контекста. Везде оно обязательно. */
     var name: String = null
 
-
-    /** Тут базовый комбинируемый обработчик полей комерческого предложения.
-      * Тут, в trait'е, нужно использовать def вместо val, т.к. это точно будет переопределено в под-классах. */
-    override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = {
+    /** Обработчик полей коммерческого предложения, который также умеет name. */
+    override val getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = {
       super.getFieldsHandler orElse {
         case (AnyOfferFields.name, _) => new NameHandler
       }
     }
 
+    /** name: Поле описывает название комерческого предложения в зависимости от контекста. */
     class NameHandler extends StringHandler {
       def myTag = AnyOfferFields.name.toString
       override def maxLen: Int = OFFER_NAME_MAXLEN
@@ -785,19 +787,43 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     def offerType = OfferTypes.`vendor.model`
     /** Описание очень краткое. "Группа товаров / категория". Хз что тут и как. */
     var typePrefix: Option[String] = None
-    /** Модель товара, хотя судя по примерам, там больше категория, чем сама модель. "Женская куртка" например. */
+    /** Модель товара, хотя судя по примерам, там может быть и категория, а сама "модель". "Женская куртка" например. */
     var model: String = null
+    /** Гарантия от продавца. Аналогично manufacturer_warranty. */
+    var sellerWarrantyOpt: Option[Warranty] = None
+    /** Список id рекомендуемых товаров к этому товару. */
+    var recIdsList: List[String] = Nil
+    /** Вес товара с учётом упаковки. */
+    var weightKgOpt: Option[Float] = None
+    /** Размерности товара. */
+    var dimensionsOpt: Option[Dimensions] = None
 
-
-    /** Тут базовый комбинируемый обработчик полей комерческого предложения.
-      * Тут, в trait'е, нужно использовать def вместо val, т.к. это точно будет переопределено в под-классах. */
-    override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = {
+    /** Дополненный для vendor.model обработчик полей комерческого предложения. */
+    override val getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = {
       super.getFieldsHandler orElse {
-        case (AnyOfferFields.typePrefix, _) => new TypePrefixHandler
-        case (AnyOfferFields.model, _)      => new ModelHandler
-        case (f @ (AnyOfferFields.tarifplan | AnyOfferFields.provider), attrs) => MyDummyHandler(f.toString, attrs)
+        case (f @ (AnyOfferFields.tarifplan | AnyOfferFields.provider | AnyOfferFields.cpa), attrs) =>
+          MyDummyHandler(f.toString, attrs)
+        case (AnyOfferFields.typePrefix, _)           => new TypePrefixHandler
+        case (AnyOfferFields.model, _)                => new ModelHandler
+        case (AnyOfferFields.seller_warranty, _)      => new SellerWarrantyHandler
+        case (AnyOfferFields.rec, _)                  => new RecommendedOffersHandler
+        case (AnyOfferFields.expiry, _)               => ???
+        case (AnyOfferFields.weight, _)               => new WeightHandler
       }
     }
+
+
+    /** Начинается поле оффера. Нужно исправить ошибки в некоторых полях. */
+    override def startElement(uri: String, localName: String, qName: String, attributes: Attributes) {
+      // Костыль из-за ошибок в правописании названия ключа seller_warranty
+      val ln1 = if (SELLER_WARRANTY_RE.pattern.matcher(localName).matches()) {
+        AnyOfferFields.seller_warranty.toString
+      } else {
+        localName
+      }
+      super.startElement(uri, ln1, qName, attributes)
+    }
+
 
     /** typePrefix: Поле с необязательным типом. "Принтер" например. */
     class TypePrefixHandler extends StringHandler {
@@ -815,12 +841,50 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
         model = s.trim
       }
     }
+
+    /** Поле, описывающее гарантию от продавца. */
+    class SellerWarrantyHandler extends WarrantyHandler {
+      def myTag = AnyOfferFields.seller_warranty.toString
+      def handleWarranty(wv: Warranty) {
+        sellerWarrantyOpt = Some(wv)
+      }
+    }
+
+    /** rec: Список id рекомендуемых к покупке товаров вместе с этим товаром. */
+    class RecommendedOffersHandler extends StringHandler {
+      def myTag = AnyOfferFields.rec.toString
+      override def maxLen: Int = REC_LIST_MAX_CHARLEN
+      def handleString(s: String) {
+        var recIds: Seq[String] = REC_LIST_SPLIT_RE.split(s).toSeq
+        if (recIds.size > REC_LIST_MAX_LEN) {
+          recIds = recIds.slice(0, REC_LIST_MAX_LEN - 1)
+        }
+        recIdsList ++= recIds
+      } 
+    }
+
+    /** weight: Обработчик поля, содержащего полный вес товара. */
+    class WeightHandler extends FloatHandler {
+      def myTag = AnyOfferFields.weight.toString
+      def handleFloat(f: Float) {
+        weightKgOpt = Some(f)
+      }
+    }
+
+    /** Обработчик размерностей товара в формате: длина/ширина/высота. */
+    class DimensionsHandler extends StringHandler {
+      def myTag = AnyOfferFields.dimensions.toString
+      def handleString(s: String) {
+        dimensionsOpt = Option(parse(DIMENSIONS_PARSER, s) getOrElse null)
+      }
+    }
   }
+
 
 
   /** Враппер для дедубликации кода хандлеров, которые читают текст из тега и что-то делают с накопленным буффером. */
   trait SimpleValueHandler extends MyHandler {
-    /** Максимальная кол-во байт, которые будут сохранены в аккамулятор. */
+    /** Максимальная кол-во символов, которые будут сохранены в аккамулятор будущей строки. */
     def maxLen: Int = STRING_MAXLEN
     def ellipsis: String = ELLIPSIS_DFLT
     protected var hadOverflow: Boolean = false
@@ -828,13 +892,15 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     protected var sbLen = 0
     def myAttrs: Attributes = EmptyAttrs
 
+    /** Сброс переменных накопления данных в исходное состояние. */
     def reset() {
       sbLen = 0
       sb.clear()
       hadOverflow = false
     }
 
-    /** Считываем символы в буфер с ограничением по максимальной длине буффера. */
+    /** Считываем символы в буфер с ограничением по максимальной длине буффера. Иными словами, не считываем
+      * ничего лишнего. Если переполнение, то выставить флаг и многоточие вместо последнего символа. */
     override def characters(ch: Array[Char], start: Int, length: Int) {
       val _maxLen = maxLen
       if (sbLen < _maxLen) {
@@ -848,17 +914,6 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
           sb.appendAll(ch, start, length)
           sbLen += length
         }
-      }
-    }
-  }
-
-
-  object StringHandler {
-    def shortenString(s: String, maxLen: Int, ellipsis: String): String = {
-      if (s.length > maxLen) {
-        s.substring(0, maxLen - ellipsis.length) + ellipsis
-      } else {
-        s
       }
     }
   }
@@ -891,6 +946,20 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
   }
 
 
+  /** Хелпер для разбора поля с информацией о гарантии. */
+  trait WarrantyHandler extends StringHandler {
+    override def maxLen: Int = OFFER_WARRANTY_MAXLEN
+    def handleWarranty(wv: Warranty)
+    def handleString(s: String) {
+      val parseResult = parse(WARRANTY_PARSER, s)
+      if (parseResult.successful) {
+        handleWarranty(parseResult.get)
+      }
+    }
+  }
+
+
+  /** Хелпер для парсинга boolean-значений в телах тегов. */
   trait BooleanHandler extends SimpleValueHandler {
     def handleBoolean(b: Boolean)
 

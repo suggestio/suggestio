@@ -14,29 +14,7 @@ import io.suggest.ym.OfferCategoryIdTypes.OfferCategoryIdType
 
 /** Словарь для работы с данными, подготовленными для отправки в маркет. */
 object YmConstants {
-  val TAG_YML_CATALOG           = "yml_catalog"
-  val TAG_SHOP                  = "shop"
-
-  val TAG_NAME                  = "name"
-  val TAG_COMPANY               = "company"
-  val TAG_URL                   = "url"
-  val TAG_PHONE                 = "phone"
-  val TAG_PLATFORM              = "platform"
-  val TAG_VERSION               = "version"
-  val TAG_AGENCY                = "agency"
-  val TAG_EMAIL                 = "email"
-  val TAG_CURRENCIES            = "currencies"
   val TAG_CURRENCY              = "currency"
-  val TAG_CATEGORIES            = "categories"
-  val TAG_CATEGORY              = "category"
-  val TAG_STORE                 = "store"
-  val TAG_PICKUP                = "pickup"
-  val TAG_DELIVERY              = "delivery"
-  val TAG_DELIVERY_INCLUDED     = "deliveryIncluded"        // TODO Сделать toLowerCase?
-  val TAG_LOCAL_DELIVERY_COST   = "local_delivery_cost"
-  val TAG_ADULT                 = "adult"
-  val TAG_OFFERS                = "offers"
-  val TAG_OFFER                 = "offer"
 
   val ATTR_ID                   = "id"
   val ATTR_RATE                 = "rate"
@@ -47,7 +25,6 @@ object YmConstants {
   val ATTR_AVAILABLE            = "available"
   val ATTR_UNIT                 = "unit"
   //val ATTR_BID                = "bid"   // oсновная ставка товара для выборки по маркету.
-
 }
 
 
@@ -92,7 +69,7 @@ object AnyOfferFields extends Enumeration {
       aliases, additional, description, sales_notes, promo, manufacturer_warranty,
       country_of_origin, downloadable, adult, age, barcode, param, related_offer,
       // vendor.model
-      typePrefix, vendor, vendorCode, model, provider, tarifplan,
+      typePrefix, vendor, vendorCode, model, provider, tarifplan, seller_warranty, cpa, rec, expiry, weight, dimensions,
       // *book
       author, name, publisher, series, year, ISBN, volume, part, language, table_of_contents,
       // book
@@ -140,7 +117,7 @@ case class MarketCategory(catPath: List[String])
  * @param hasWarranty Есть ли гарантия вообще?
  * @param warrantyPeriod Срок гарантии. Если гарантии нет, то тут должно быть None.
  */
-case class ManufacturerWarrantyValue(
+case class Warranty(
   hasWarranty: Boolean,
   warrantyPeriod: Option[Period] = None
 )
@@ -182,4 +159,12 @@ object OfferCategoryIdTypes extends Enumeration {
   def default = Own
 }
 
+
+/**
+ * Распарсенные размеры товара записываются в этот класс.
+ * @param lenCm Длина в сантиметрах.
+ * @param widthCm Ширина в сантиметрах.
+ * @param heightCm Высота в сантиметрах.
+ */
+case class Dimensions(lenCm:Float, widthCm:Float, heightCm:Float) extends Serializable
 
