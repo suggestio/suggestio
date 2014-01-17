@@ -1,5 +1,9 @@
 package io.suggest.ym
 
+import io.suggest.ym.OfferAgeUnits.OfferAgeUnit
+import org.joda.time.Period
+import io.suggest.ym.OfferCategoryIdTypes.OfferCategoryIdType
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -28,7 +32,7 @@ object YmConstants {
   val TAG_STORE                 = "store"
   val TAG_PICKUP                = "pickup"
   val TAG_DELIVERY              = "delivery"
-  val TAG_DELIVERY_INCLUDED     = "deliveryIncluded"
+  val TAG_DELIVERY_INCLUDED     = "deliveryIncluded"        // TODO Сделать toLowerCase?
   val TAG_LOCAL_DELIVERY_COST   = "local_delivery_cost"
   val TAG_ADULT                 = "adult"
   val TAG_OFFERS                = "offers"
@@ -37,31 +41,24 @@ object YmConstants {
   val ATTR_ID                   = "id"
   val ATTR_RATE                 = "rate"
   val ATTR_PLUS                 = "plus"
-  val ATTR_PARENT_ID            = "parentId"
+  val ATTR_PARENT_ID            = "parentId"                // TODO Сделать toLowerCase?
   val ATTR_GROUP_ID             = "group_id"
   val ATTR_TYPE                 = "type"
   val ATTR_AVAILABLE            = "available"
-  //val ATTR_BID                = "bid"   // bid (oсновная ставка)
+  val ATTR_UNIT                 = "unit"
+  //val ATTR_BID                = "bid"   // oсновная ставка товара для выборки по маркету.
 
-  // Значения для аттрибута type тега offer, описывающего товар в одной из нескольких форм.
-  val ATTRV_OFTYPE_VENDOR_MODEL = "vendor.model"
-  val ATTRV_OFTYPE_BOOK         = "book"
-  val ATTRV_OFTYPE_AUDIOBOOK    = "audiobook"
-  val ATTRV_OFTYPE_ARTIST_TITLE = "artist.title"
-  val ATTRV_OFTYPE_TOUR         = "tour"
-  val ATTRV_OFTYPE_TICKET       = "ticket"
-  val ATTRV_OFTYPE_EVENT_TICKET = "event-ticket"
 }
 
 
 object TopLevelFields extends Enumeration {
-  type TopLevelFields = Value
+  type TopLevelField = Value
   val yml_catalog = Value
 }
 
 
 object YmlCatalogFields extends Enumeration {
-  type YmlCatalogFields = Value
+  type YmlCatalogField = Value
   val shop = Value
 }
 
@@ -75,13 +72,114 @@ object ShopFields extends Enumeration {
 }
 
 
+object ShopCategoriesFields extends Enumeration {
+  type ShopCategoriesField = Value
+  val category = Value
+}
+
+
 object OffersFields extends Enumeration {
-  type OffersFields = Value
+  type OffersField = Value
   val offer = Value
 }
 
-object SimpleOfferFields extends Enumeration {
-  type SimpleOfferFields = Value
-  val url, price, currencyId, categoryId, picture, store, pickup, delivery, local_delivery_cost, name, vendorCode,
-  description, sales_notes, manufacturer_warranty, country_of_origin, barcode = Value
+/** Все возможные поля всех офферов. Используется как словарь. Для всех handler'ов.
+  * Описания конкретных наборов допустимых полей находятся на уровне конкретных реализаций. */
+object AnyOfferFields extends Enumeration {
+  type AnyOfferField = Value
+  val url, buyurl, price, wprice, currencyId, xCategory, categoryId, market_category,
+      picture, store, pickup, delivery, deliveryIncluded, local_delivery_cost, orderingTime,
+      aliases, additional, description, sales_notes, promo, manufacturer_warranty,
+      country_of_origin, downloadable, adult, age, barcode, param, related_offer,
+      // vendor.model
+      typePrefix, vendor, vendorCode, model, provider, tarifplan,
+      // *book
+      author, name, publisher, series, year, ISBN, volume, part, language, table_of_contents,
+      // book
+      binding, page_extent,
+      // audiobook
+      performed_by, performance_type, storage, format, recording_length,
+      // artist.title (без year)
+      artist, title, media, starring, director, originalName, country,
+      // tour (без name, country)
+      worldRegion, region, days, dataTour, hotel_stars, room, meal, included, transport, price_min, price_max, options,
+      // ticket (deprecated by event-ticket) и сам event-ticket. Без name.
+      place, hall, hall_part, date, is_premiere, is_kids
+      = Value
+
+  // TODO orderingTime в ignored потому что синтаксис поля нигде не описан.
+  val ignoredFields = ValueSet(
+    buyurl, wprice, xCategory, orderingTime, aliases, additional, promo, related_offer, barcode
+  )
+
+  /**
+   * Является ли указанное поле игнорируемым?
+   * @param fn Поле.
+   * @return true, если поле есть в списке игнорируемых полей.
+   */
+  def isIgnoredField(fn: AnyOfferField) = ignoredFields contains fn
 }
+
+
+/**
+ * Контейнер для прочитанного поля offer.categoryId.
+ * @param categoryId id категории
+ * @param idType Устаревший атрибут, описывающий тип задания категории.
+ */
+case class OfferCategoryId(categoryId: String, idType: OfferCategoryIdType)
+
+/** Экземпляр, описывающий значение поля market category. Нужно ознакомиться с
+  * [[http://help.yandex.ru/partnermarket/docs/market_categories.xls таблицей категорий маркета]]
+  * @param catPath Путь в дереве категорий. Например List(Книги, Бизнес и экономика, ...)
+  */
+case class MarketCategory(catPath: List[String])
+
+
+/**
+ * Гарантия производителя на товар.
+ * @param hasWarranty Есть ли гарантия вообще?
+ * @param warrantyPeriod Срок гарантии. Если гарантии нет, то тут должно быть None.
+ */
+case class ManufacturerWarrantyValue(
+  hasWarranty: Boolean,
+  warrantyPeriod: Option[Period] = None
+)
+
+
+object OfferAgeUnits extends Enumeration {
+  type OfferAgeUnit = Value
+  val year, month = Value
+}
+
+case class OfferAge(units: OfferAgeUnit, value: Int)
+
+
+object OfferParamAttrs extends Enumeration {
+  type OfferParamAttr = Value
+  val name, unit = Value
+}
+
+
+/** Типы описаний предложений магазинам. SIMPLE используется для null-значения аттрибута типа. */
+object OfferTypes extends Enumeration {
+  type OfferType = Value
+  val SIMPLE, `vendor.model`, book, audiobook, `artist.title`, tour, ticket, `event-ticket` = Value
+
+  def default = SIMPLE
+}
+
+
+/** Тип задания categoryId в рамках предложения. Магазин может использовать свои категории (Own),
+  * либо дерево категорий яндекса (Own), или некий Torg (доку найти не удалось).
+  * Вроде бы это устаревшая вещь, и оставлена для совместимости. В актуальных случаях, надо использовать разные поля:
+  * - categoryId для задания категории в рамках дерева категорий магазина
+  * - market_category для задания категории из дерева категорий Yandex.Market.
+  */
+object OfferCategoryIdTypes extends Enumeration {
+  type OfferCategoryIdType = Value
+  val Yandex, Torg, Own = Value
+
+  def default = Own
+}
+
+
