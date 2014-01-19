@@ -8,10 +8,7 @@ import YmConstants._
 import io.suggest.util.UrlUtil
 import io.suggest.ym.AnyOfferFields.AnyOfferField
 import io.suggest.util.MyConfig.CONFIG
-import org.joda.time.Period
-import org.joda.time.format.ISOPeriodFormat
 import io.suggest.ym.OfferTypes.OfferType
-import scala.util.parsing.combinator._
 import YmParsers._
 
 /**
