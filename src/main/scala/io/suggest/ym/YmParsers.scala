@@ -2,7 +2,6 @@ package io.suggest.ym
 
 import scala.util.parsing.combinator._
 import org.joda.time._
-import org.joda.time.format._
 
 /**
  * Suggest.io
@@ -13,20 +12,51 @@ import org.joda.time.format._
  */
 object YmParsers extends JavaTokenParsers {
 
+  /** Функция перегона строки в целое. Используется в date/time-парсерах. */
+  private val str2IntF = {s: String => s.toInt }
+
+  /** Функция перегона строки в число с плавающей точкой. */
+  private val str2FloatF = {s: String => s.toFloat }
+  
+  
   /** Парсер измерений (размерности) товара в формате "длина/ширина/высота". */
   val DIMENSIONS_PARSER = {
     val sepParser: Parser[String] = "/"
-    val dn = decimalNumber ^^ { _.toFloat }
+    val dn = decimalNumber ^^ str2FloatF
     dn ~ (sepParser ~> dn) ~ (sepParser ~> dn) ^^ {
-      case ls ~ ws ~ hs  =>  Dimensions(ls, ws, hs)
+      case ls~ws~hs => Dimensions(ls, ws, hs)
     }
   }
 
   /** Парсер периода времени в формате iso8601. Используется, например, для описания гарантии на товар. */
   val ISO_TIMEPERIOD_PARSER: Parser[Period] = {
-    val isoRe = "(?i)[P]([0-9.]+[YMWDHMST]){1,}".r
-    isoRe ^^ {
-      iso8601 => Period.parse(iso8601.toUpperCase, ISOPeriodFormat.standard)
+    // Дата
+    val mmRe: Parser[String] = "[MmМм]".r
+    val yearsParser   = ("\\d{1,2}".r ^^ str2IntF) ~ ("[Yy]".r ^^^ PeriodUnits.Year)
+    val monthsParser  = ("\\d{1,3}".r ^^ str2IntF) ~ (mmRe ^^^ PeriodUnits.Month)
+    val weekParser    = ("\\d{1,3}".r ^^ str2IntF) ~ ("[Ww]".r ^^^ PeriodUnits.Week)
+    val daysParser    = ("\\d{1,4}".r ^^ str2IntF) ~ ("[Dd]".r ^^^ PeriodUnits.Day)
+    val datePeriodParser = rep(yearsParser | monthsParser | weekParser | daysParser)
+    // время
+    val hoursParser   = ("\\d{1,6}".r ^^ str2IntF) ~ ("[HhНн]".r ^^^ PeriodUnits.hour)
+    val minutesParser = ("\\d{1,9}".r ^^ str2IntF) ~ (mmRe ^^^ PeriodUnits.minute)
+    val secondsParser = ("\\d{1,9}".r ^^ str2IntF) ~ ("[Ss]".r ^^^ PeriodUnits.second)
+    val timePeriodParser = rep(hoursParser | minutesParser | secondsParser)
+    val dtDelim = "[TtТт]".r
+    // Время может быть не задано вообще, или же после "T" ничего не задано.
+    val timePeriodOptParser = opt(dtDelim ~> opt(timePeriodParser)) ^^ { _.flatten getOrElse Nil }
+    // Собираем период в кучу
+    val periodHead: Parser[String] = "[PpРр]"
+    periodHead ~> datePeriodParser ~ timePeriodOptParser ^^ { case datePeriods ~ timePeriods =>
+      (datePeriods ++ timePeriods).foldLeft(new Period) {
+        case (acc0, y ~ PeriodUnits.Year)   => acc0.withYears(y)
+        case (acc0, m ~ PeriodUnits.Month)  => acc0.withMonths(m)
+        case (acc0, w ~ PeriodUnits.Week)   => acc0.withWeeks(w)
+        case (acc0, d ~ PeriodUnits.Day)    => acc0.withDays(d)
+        case (acc0, h ~ PeriodUnits.hour)   => acc0.withHours(h)
+        case (acc0, m ~ PeriodUnits.minute) => acc0.withMinutes(m)
+        case (acc0, s ~ PeriodUnits.second) => acc0.withSeconds(s)
+      }
     }
   }
 
@@ -48,18 +78,15 @@ object YmParsers extends JavaTokenParsers {
   }
 
 
-  // Функция перегона строки в целое. Используется в date/time-парсерах.
-  private val toIntF = {s: String => s.toInt }
-
   // Дата-время. В YM много форматов даты-времени, но все они строго числовые со строгим кол-вом знаков.
   // Поддерживаются даты, даты со временем и даты со временем в таймзоне.
-  import io.suggest.util.DateParseUtil._
 
   /** Парсер даты. Описан отдельно для облегчения тестирования. */
   val NUMERIC_DATE_PARSER: Parser[LocalDate] = {
-    val yearParser = RE_YEAR4 ^^ toIntF
-    val monthParser = RE_MONTH_I2 ^^ toIntF
-    val dayParser = RE_DAY2 ^^ toIntF
+    import io.suggest.util.DateParseUtil._
+    val yearParser = RE_YEAR4 ^^ str2IntF
+    val monthParser = RE_MONTH_I2 ^^ str2IntF
+    val dayParser = RE_DAY2 ^^ str2IntF
     val dateTokensDelim = opt("[-/.]".r)
     val dateYmdParser = yearParser ~ (dateTokensDelim ~> monthParser) ~ (dateTokensDelim ~> dayParser) ^^ {
       case yyyy~mm~dd => new LocalDate(yyyy, mm, dd)
@@ -72,8 +99,8 @@ object YmParsers extends JavaTokenParsers {
 
   /** Парсер времени. Опциональные поля - это секунды и tz. */
   val TIME_PARSER: Parser[LocalTime] = {
-    val hoursParser = "(([0-1][0-9])|2[0-3])".r ^^ toIntF
-    val minutesParser = "[0-5][0-9]" ^^ toIntF
+    val hoursParser = "(([0-1][0-9])|2[0-3])".r ^^ str2IntF
+    val minutesParser = "[0-5][0-9]" ^^ str2IntF
     val secondsParser = minutesParser
     val timeSepParser = opt(":")
     val hourMinutesParser = hoursParser ~ (timeSepParser ~> minutesParser)
@@ -107,4 +134,10 @@ object YmParsers extends JavaTokenParsers {
     }
   }
 
+}
+
+
+object PeriodUnits extends Enumeration {
+  type PeriodUnit = Value
+  val Year, Month, Week, Day, hour, minute, second = Value
 }
