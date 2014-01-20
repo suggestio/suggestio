@@ -50,13 +50,12 @@ class YmParsersTest extends FlatSpec with Matchers {
 
   "ISO_TIMEPERIOD_PARSER" should "parse ISO 8601 periods" in {
     val f = getF(ISO_PERIOD_PARSER)
-    f("P1Y").get             should be (new Period().withYears(1))
-    f("P1Y2M10DT").get       should be (new Period().withYears(1).withMonths(2).withDays(10))
-    f("P1Y2M10D").get        should be (new Period().withYears(1).withMonths(2).withDays(10))
-    f("PT2H30M").get         should be (new Period().withHours(2).withMinutes(30))
-    f("P1Y2M10DT2H30M").get  should be (new Period().withYears(1).withMonths(2).withDays(10).withHours(2).withMinutes(30))
-    f("P")                   should equal (None)
-    f("")                    should equal (None)
+    f("P1Y")                 should be (new Period().withYears(1))
+    f("P1Y2M10DT")           should be (new Period().withYears(1).withMonths(2).withDays(10))
+    f("P1Y2M10D")            should be (new Period().withYears(1).withMonths(2).withDays(10))
+    f("PT2H30M")             should be (new Period().withHours(2).withMinutes(30))
+    f("P1Y2M10DT2H30M")      should be (new Period().withYears(1).withMonths(2).withDays(10).withHours(2).withMinutes(30))
+    f("P")                   should equal (new Period())
   }
 
 
@@ -92,11 +91,16 @@ class YmParsersTest extends FlatSpec with Matchers {
 
   "DT_PARSER" should "parse datetime in different formats" in {
     val f = getF(DT_PARSER)
-    // Preferred format
     f("2013-02-25 12:03:14") should be (new DateTime(2013, 2, 25, 12, 3, 14, 0))
     f("2013-02-25T12:03:14") should be (new DateTime(2013, 2, 25, 12, 3, 14, 0))
     f("20130225T120314")     should be (new DateTime(2013, 2, 25, 12, 3, 14, 0))
-    // Сравниваем через toString из-за того, что почему-то DateTime не совпадают 1:1 при указании любой timezone.
+    // TODO Сравниваем через toString из-за того, что почему-то DateTime не совпадают 1:1 при указании любой timezone. Возможно, где-то есть скрытая ошибка.
     f("2013-02-25 12:03:14+04:00").toString() should be (new DateTime(2013, 2, 25, 12, 3, 14, 0, DateTimeZone.forOffsetHours(4)).toString())
+  }
+
+  "RECORDING_LEN_PARSER" should "parse mm.ss duration" in {
+    val f = getF(RECORDING_LEN_PARSER)
+    f("60.00") should be (new Period().withMinutes(60))
+    f("90.15") should be (new Period().withMinutes(90).withSeconds(15))
   }
 }

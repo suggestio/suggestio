@@ -10,6 +10,7 @@ import io.suggest.ym.AnyOfferFields.AnyOfferField
 import io.suggest.util.MyConfig.CONFIG
 import io.suggest.ym.OfferTypes.OfferType
 import YmParsers._
+import org.joda.time._
 
 /**
  * Suggest.io
@@ -96,12 +97,18 @@ object YmlSax {
 
   val OFFER_DIMENSIONS_MAXLEN = CONFIG.getInt("ym.sax.offer.dimensions.len.max") getOrElse 64
 
+  /** Регэксп, описывающий повторяющиеся пробелы. */
+  private val MANY_SPACES_RE = "[ \\t]{2,}".r
 }
 
 
 import YmlSax._
 
 class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrapper {
+
+  /** Дата старта парсера. Используется для определения длительности работы и для определения каких-либо параметров
+    * настоящего времени во вспомогательных парсерах, связанных с датами и временем. */
+  val startedAt = DateTime.now()
 
   /** Стопка, которая удлиняется по мере погружения в XML теги. Текущий хэндлер наверху. */
   private var handlersStack: List[MyHandler] = Nil
@@ -374,6 +381,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
       offerType match {
         case OfferTypes.SIMPLE          => new SimpleOfferHandler(attrs, myShop)
         case OfferTypes.`vendor.model`  => new VendorModelOfferHandler(attrs, myShop)
+        case OfferTypes.book            => new BookOfferHandler(attrs, myShop)
+        case OfferTypes.audiobook       => new AudioBookOfferHandler(attrs, myShop)
       }
     }
   }
@@ -386,7 +395,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     def myTag = OffersFields.offer.toString
     def myShop: ShopHandler
 
-    /** Сырое значение типа аттрибута. Для simple это null, в остальных случаях - это одна из ATTRV_OFTYPE_*. */
+    /** Распарсенное значение аттрибута типа предложения. Для simple это SIMPLE. */
     def offerType: OfferType
 
     /** Опциональный уникальный идентификатор комерческого предложения. */
@@ -521,7 +530,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
         val catIdType = Option(attrs.getValue(ATTR_TYPE)) map {OfferCategoryIdTypes.withName} getOrElse OfferCategoryIdTypes.default
         // TODO Возможно, надо для типа Yandex закидывать эту категорию в market_category, а не в categoryIds.
         // Из-за дефицита документации по устаревшим фичам, этот момент остается не яснен.
-        categoryIds ::= OfferCategoryId(s.trim, catIdType)
+        categoryIds ::= OfferCategoryId(s, catIdType)
       }
     }
 
@@ -537,7 +546,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
         // При превышении длины строки, нельзя выставлять категорию
         if (hadOverflow) {
           // TODO Категорию маркета надо парсить и выверять согласно вышеуказанной доке. Все токены пути должны быть выставлены строго согласно таблице категорий.
-          val catPath = MARKET_CATEGORY_PATH_SPLIT_RE.split(s.trim).toList.filter(!_.isEmpty)
+          val catPath = MARKET_CATEGORY_PATH_SPLIT_RE.split(s).toList.filter(!_.isEmpty)
           marketCategoryOpt = Some(MarketCategory(catPath))
         } else {
           throw MarketCategoryTooLongException(s)
@@ -693,14 +702,13 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
           if (paramName == null) {
             ex(s"Mandatory attribute '$nameAttrKey' missing.")
           }
-          val s1 = s.trim
-          if (s1.isEmpty) {
+          if (s.isEmpty) {
             ex(s"Param '$paramName' value is empty.")
           }
           val unitOpt = Option(attrs.getValue(OfferParamAttrs.unit.toString)) map(_.trim) flatMap { str =>
             if (str.isEmpty)  None  else  Some(str)
           }
-          params ::= OfferParam(name=paramName, unitRawOpt=unitOpt, rawValue=s1)
+          params ::= OfferParam(name=paramName, unitRawOpt=unitOpt, rawValue=s)
         } else {
           ex("Too many params for one offer. Max is " + OFFER_PARAMS_COUNT_MAX)
         }
@@ -731,7 +739,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
       def handleString(s: String) {
         // Базовая нормализация нужна, т.к. это поле не отображается юзеру и используется для группировки по брендам.
         // TODO Надо бы нормализовывать с синонимами, чтобы HP и Hewlett-packard были эквивалентны.
-        val vendor = s.trim.toLowerCase
+        val vendor = s.toLowerCase
         vendorOpt = Some(vendor)
       }
     }
@@ -740,7 +748,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     class VendorCodeHandler extends StringHandler {
       def myTag = AnyOfferFields.vendorCode.toString
       def handleString(s: String) {
-        vendorCodeOpt = Some(s.trim)
+        vendorCodeOpt = Some(s)
       }
     }
   }
@@ -790,6 +798,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     var sellerWarrantyOpt: Option[Warranty] = None
     /** Список id рекомендуемых товаров к этому товару. */
     var recIdsList: List[String] = Nil
+    /** Истечение срока годности: период или же дата. */
+    var expiryOpt: Option[Either[DateTime, Period]] = None
     /** Вес товара с учётом упаковки. */
     var weightKgOpt: Option[Float] = None
     /** Размерности товара. */
@@ -804,8 +814,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
         case (AnyOfferFields.model, _)                => new ModelHandler
         case (AnyOfferFields.seller_warranty, _)      => new SellerWarrantyHandler
         case (AnyOfferFields.rec, _)                  => new RecommendedOffersHandler
-        case (AnyOfferFields.expiry, _)               => ???
+        case (AnyOfferFields.expiry, _)               => new ExpiryHandler
         case (AnyOfferFields.weight, _)               => new WeightHandler
+        case (AnyOfferFields.dimensions, _)           => new DimensionsHandler
       }
     }
 
@@ -827,7 +838,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
       def myTag = AnyOfferFields.typePrefix.toString
       override def maxLen: Int = OFFER_TYPE_PREFIX_MAXLEN
       def handleString(s: String) {
-        typePrefix = Some(s.trim)
+        typePrefix = Some(s)
       }
     }
 
@@ -835,7 +846,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     class ModelHandler extends StringHandler {
       def myTag = AnyOfferFields.model.toString
       def handleString(s: String) {
-        model = s.trim
+        model = s
       }
     }
 
@@ -860,6 +871,18 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
       } 
     }
 
+    /** expiry: Истечение срока годности/службы или чего-то подобного. Может быть как период, так и дата. */
+    class ExpiryHandler extends StringHandler {
+      def myTag = AnyOfferFields.expiry.toString
+      override def maxLen: Int = 30
+      def handleString(s: String) {
+        val pr = parse(EXPIRY_PARSER, s)
+        if (pr.successful) {
+          expiryOpt = Some(pr.get)
+        }
+      }
+    }
+
     /** weight: Обработчик поля, содержащего полный вес товара. */
     class WeightHandler extends FloatHandler {
       def myTag = AnyOfferFields.weight.toString
@@ -877,6 +900,243 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     }
   }
 
+  /** Добавка с годом издания указанной продукции народного творчества. */
+  trait OfferYearH extends AnyOfferHandler {
+    /** Год издания. */
+    var yearOpt: Option[Int] = None
+
+    override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
+      case (AnyOfferFields.year, _) => new YearHandler
+    }
+
+    class YearHandler extends IntHandler {
+      def myTag = AnyOfferFields.year.toString
+      def handleInt(i: Int) {
+        if (i > 200 && i <= startedAt.getYear) {
+          yearOpt = Some(i)
+        }
+      }
+    }
+  }
+
+
+  /** Типы book и audiobook имеют много обищих полей:
+   * author?, name, publisher?, series?, year?, ISBN?, volume?, part?, language?, table_of_contents?.
+   * Тут трейт, который обеспечивает поддержку общих полей для обоих типов книг. */
+  trait AnyBookOfferHandler extends AnyOfferHandler with OfferYearH {
+    def offerType = OfferTypes.book
+    /** Автор произведения, если есть. */
+    var authorOpt: Option[String] = None
+    /** Название произведения. */
+    var name: String = null
+    /** Издательство. */
+    var publisherOpt: Option[String] = None
+    /** Серия. */
+    var seriesOpt: Option[String] = None
+    /** Код ISBN. */
+    var isbnOpt: Option[String] = None
+    /** Кол-во томов. */
+    var volumesCountOpt: Option[Int] = None
+    /** Номер тома. */
+    var volumeOpt: Option[Int] = None
+    /** Язык произведения. Пока что строка. */
+    var languageOpt: Option[String] = None
+    /** Краткое оглавление. Для сборника рассказов: список рассказов. */
+    var tableOfContentsOpt: Option[String] = None
+
+    override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
+      case (AnyOfferFields.author, _)             => new AuthorHandler
+      case (AnyOfferFields.name, _)               => new NameHandler
+      case (AnyOfferFields.publisher, _)          => new PublisherHandler
+      case (AnyOfferFields.series, _)             => new SeriesHandler
+      case (AnyOfferFields.ISBN, _)               => new ISBNHandler
+      case (AnyOfferFields.volume, _)             => new VolumesCountHandler
+      case (AnyOfferFields.part, _)               => new VolumesPartHandler
+      case (AnyOfferFields.language, _)           => new LanguageHandler
+      case (AnyOfferFields.table_of_contents, _)  => new TableOfContentsHandler
+    }
+
+    class AuthorHandler extends StringHandler {
+      def myTag = AnyOfferFields.author.toString
+      def handleString(s: String) {
+        authorOpt = Some(s)
+      }
+    }
+
+    class NameHandler extends StringHandler {
+      def myTag = AnyOfferFields.name.toString
+      def handleString(s: String) {
+        name = s
+      }
+    }
+
+    class PublisherHandler extends StringHandler {
+      def myTag = AnyOfferFields.publisher.toString
+      def handleString(s: String) {
+        publisherOpt = Some(s)
+      }
+    }
+
+    class SeriesHandler extends StringHandler {
+      def myTag = AnyOfferFields.series.toString
+      def handleString(s: String) {
+        seriesOpt = Some(s)
+      }
+    }
+
+    class ISBNHandler extends StringHandler {
+      def myTag = AnyOfferFields.ISBN.toString
+      def handleString(s: String) {
+        isbnOpt = Some(s)
+      }
+    }
+
+    class VolumesCountHandler extends IntHandler {
+      def myTag = AnyOfferFields.volume.toString
+      def handleInt(i: Int) {
+        volumesCountOpt = Some(i)
+      }
+    }
+    
+    class VolumesPartHandler extends IntHandler {
+      def myTag = AnyOfferFields.part.toString
+      def handleInt(i: Int) {
+        volumeOpt = Some(i)
+      } 
+    }
+
+    class LanguageHandler extends StringHandler {
+      def myTag = AnyOfferFields.language.toString
+      def handleString(s: String) {
+        languageOpt = Some(s)
+      }
+    }
+
+    class TableOfContentsHandler extends StringHandler {
+      def myTag = AnyOfferFields.table_of_contents.toString
+      def handleString(s: String) {
+        tableOfContentsOpt = Some(s)
+      }
+    }
+  }
+
+  /**
+   * Обработчик для типа book, т.е. бумажных книженций.
+   * @param myAttrs Аттрибуты оффера.
+   * @param myShop Текущий магазин.
+   */
+  case class BookOfferHandler(myAttrs:Attributes, myShop:ShopHandler) extends AnyBookOfferHandler {
+    /** Переплёт. */
+    var bindingOpt: Option[String] = None
+    /** Кол-во страниц в книге. */
+    var pageExtentOpt: Option[Int] = None
+
+    override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
+      case (AnyOfferFields.binding, _)      => new BindingHandler
+      case (AnyOfferFields.page_extent, _)  => new PageExtentHandler
+    }
+
+    class BindingHandler extends StringHandler {
+      def myTag = AnyOfferFields.binding.toString
+      def handleString(s: String) {
+        bindingOpt = Some(s)
+      }
+    }
+
+    class PageExtentHandler extends IntHandler {
+      def myTag = AnyOfferFields.page_extent.toString
+      def handleInt(i: Int) {
+        pageExtentOpt = Some(i)
+      }
+    }
+  }
+
+
+  /**
+   * Аудиокнига.
+   * @param myAttrs Атрибуты оффера.
+   * @param myShop Текущий магазин.
+   */
+  case class AudioBookOfferHandler(myAttrs:Attributes, myShop:ShopHandler) extends AnyBookOfferHandler {
+    /** Исполнитель. Если их несколько, перечисляются через запятую. */
+    var performedByOpt: Option[String] = None
+    /** Тип аудиокниги (радиоспектакль, произведение начитано, ...). */
+    var performanceTypeOpt: Option[String] = None
+    /** Носитель, на котором поставляется аудиокнига. */
+    var storageOpt: Option[String] = None
+    /** Формат аудиокниги. */
+    var formatOpt: Option[String] = None
+    /** Время звучания задается в формате mm.ss (минуты.секунды). */
+    var recordingLenOpt: Option[Period] = None
+
+    override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
+      case (AnyOfferFields.performed_by, _)     => new PerformedByHandler
+      case (AnyOfferFields.performance_type, _) => new PerformanceTypeHandler
+      case (AnyOfferFields.storage, _)          => new StorageHandler
+      case (AnyOfferFields.recording_length, _) => new RecordingLenHandler
+    }
+
+    class PerformedByHandler extends StringHandler {
+      def myTag = AnyOfferFields.performed_by.toString
+      def handleString(s: String) {
+        performedByOpt = Some(s)
+      }
+    }
+
+    class PerformanceTypeHandler extends StringHandler {
+      def myTag = AnyOfferFields.performance_type.toString
+      def handleString(s: String) {
+        performanceTypeOpt = Some(s)
+      }
+    }
+
+    class StorageHandler extends StringHandler {
+      def myTag = AnyOfferFields.storage.toString
+      def handleString(s: String) {
+        storageOpt = Some(s)
+      }
+    }
+
+    class RecordingLenHandler extends StringHandler {
+      def myTag = AnyOfferFields.recording_length.toString
+      def handleString(s: String) {
+        val parseResult = parse(RECORDING_LEN_PARSER, s)
+        if (parseResult.successful) {
+          recordingLenOpt = Some(parseResult.get)
+        }
+      }
+    }
+  }
+
+
+  trait OfferCountryOptH extends AnyOfferHandler {
+    var countryOpt: Option[String] = None
+
+    /** Тут базовый комбинируемый обработчик полей комерческого предложения.
+      * Тут, в trait'е, нужно использовать def вместо val, т.к. это точно будет переопределено в под-классах. */
+    override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
+      case (AnyOfferFields.country, _) => new CountryHandler
+    }
+
+    class CountryHandler extends StringHandler {
+      def myTag = AnyOfferFields.country.toString
+      def handleString(s: String) {
+        // TODO Нужно проверять страну по списку оных.
+        countryOpt = Some(s)
+      }
+    }
+  }
+
+
+  /**
+   * Обработчик artist.title-офферов, содержащих аудио/видео хлам.
+   * @param myAttrs Аттрибуты этого оффера.
+   * @param myShop Текущий магазин.
+   */
+  case class ArtistTitleHandler(myAttrs:Attributes, myShop:ShopHandler) extends AnyOfferHandler with OfferCountryOptH {
+    def offerType = OfferTypes.`artist.title`
+    ???
+  }
 
 
   /** Враппер для дедубликации кода хандлеров, которые читают текст из тега и что-то делают с накопленным буффером. */
@@ -927,7 +1187,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     def handleString(s: String)
 
     def handleRawValue(sb: StringBuilder) {
-      handleString(sb.toString)
+      // TODO Нужно удалять из строки ненужные пробелы: проблемы около концов строк, например.
+      val s = MANY_SPACES_RE.replaceAllIn(sb.toString().trim, " ")
+      handleString(s)
     }
   }
 

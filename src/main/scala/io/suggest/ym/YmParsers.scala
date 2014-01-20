@@ -52,29 +52,24 @@ object YmParsers extends JavaTokenParsers {
   }
 
   /** Парсер периода времени в формате iso8601. Используется, например, для описания гарантии на товар. */
-  val ISO_PERIOD_PARSER: Parser[Option[Period]] = {
+  val ISO_PERIOD_PARSER: Parser[Period] = {
     val dtDelim = "[TtТт]".r
     // Время может быть не задано вообще, или же после "T" ничего не задано.
     val timePeriodOptParser = opt(dtDelim ~> ISO_PERIOD_TIME_PARSER) ^^ { _ getOrElse Nil }
     // Собираем период в кучу
     val periodHead: Parser[String] = "[PpРр]".r
     val parser = periodHead ~> ISO_PERIOD_DATE_PARSER ~ timePeriodOptParser ^^ { case datePeriods ~ timePeriods =>
-      if (datePeriods.isEmpty && timePeriods.isEmpty) {
-        None
-      } else {
-        val period = (datePeriods ++ timePeriods).foldLeft(new Period) {
-          case (acc0, y ~ PeriodUnits.Year)   => acc0.withYears(y)
-          case (acc0, m ~ PeriodUnits.Month)  => acc0.withMonths(m)
-          case (acc0, w ~ PeriodUnits.Week)   => acc0.withWeeks(w)
-          case (acc0, d ~ PeriodUnits.Day)    => acc0.withDays(d)
-          case (acc0, h ~ PeriodUnits.hour)   => acc0.withHours(h)
-          case (acc0, m ~ PeriodUnits.minute) => acc0.withMinutes(m)
-          case (acc0, s ~ PeriodUnits.second) => acc0.withSeconds(s)
-        }
-        Some(period)
+      (datePeriods ++ timePeriods).foldLeft(new Period) {
+        case (acc0, y ~ PeriodUnits.Year)   => acc0.withYears(y)
+        case (acc0, m ~ PeriodUnits.Month)  => acc0.withMonths(m)
+        case (acc0, w ~ PeriodUnits.Week)   => acc0.withWeeks(w)
+        case (acc0, d ~ PeriodUnits.Day)    => acc0.withDays(d)
+        case (acc0, h ~ PeriodUnits.hour)   => acc0.withHours(h)
+        case (acc0, m ~ PeriodUnits.minute) => acc0.withMinutes(m)
+        case (acc0, s ~ PeriodUnits.second) => acc0.withSeconds(s)
       }
     }
-    parser | success(None)
+    parser
   }
 
 
@@ -89,7 +84,7 @@ object YmParsers extends JavaTokenParsers {
   val WARRANTY_PARSER: Parser[Warranty] = {
     val bp = PLAIN_BOOL_PARSER ^^ { Warranty(_) }
     val pp = ISO_PERIOD_PARSER ^^ {
-      periodOpt => Warranty(hasWarranty=true, warrantyPeriod=periodOpt)
+      period => Warranty(hasWarranty=true, warrantyPeriod=Some(period))
     }
     bp | pp
   }
@@ -114,10 +109,12 @@ object YmParsers extends JavaTokenParsers {
     dateYmdParser | dateDmyParser
   }
 
+  private val SIXTY_PARSER = "[0-5][0-9]".r ^^ str2IntF
+
   /** Парсер времени. Опциональные поля - это секунды и tz. */
   val TIME_PARSER: Parser[LocalTime] = {
     val hoursParser = "(([0-1][0-9])|2[0-3])".r ^^ str2IntF
-    val minutesParser = "[0-5][0-9]".r ^^ str2IntF
+    val minutesParser = SIXTY_PARSER
     val secondsParser = minutesParser
     val timeSepParser = opt(":")
     val hourMinutesParser = hoursParser ~ (timeSepParser ~> minutesParser)
@@ -151,6 +148,22 @@ object YmParsers extends JavaTokenParsers {
     }
   }
 
+
+  val EXPIRY_PARSER: Parser[Either[DateTime, Period]] = {
+    val pp = ISO_PERIOD_PARSER ^^ { Right(_) }
+    val dp = DT_PARSER ^^ { Left(_) }
+    pp | dp
+  }
+
+  /** Парсер длительности звучания аудиозаписи. Задаётся в формате "mm.ss". */
+  val RECORDING_LEN_PARSER: Parser[Period] = {
+    val mmParser = "[0-9]{1,3}".r ^^ str2IntF
+    val sep: Parser[String] = "."
+    val ssParser = SIXTY_PARSER
+    mmParser ~ (sep ~> ssParser) ^^ {
+      case mm~ss => new Period().withMinutes(mm).withSeconds(ss)
+    }
+  }
 }
 
 
