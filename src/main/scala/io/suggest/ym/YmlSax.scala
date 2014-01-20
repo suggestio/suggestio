@@ -383,6 +383,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
         case OfferTypes.`vendor.model`  => new VendorModelOfferHandler(attrs, myShop)
         case OfferTypes.book            => new BookOfferHandler(attrs, myShop)
         case OfferTypes.audiobook       => new AudioBookOfferHandler(attrs, myShop)
+        case OfferTypes.`artist.title`  => new ArtistTitleHandler(attrs, myShop)
       }
     }
   }
@@ -483,6 +484,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
       case (AnyOfferFields.downloadable, _)                 => new DownloadableHandler
       case (AnyOfferFields.adult, _)                        => new OfferAdultHandler
       case (AnyOfferFields.age, attrs)                      => new AgeHandler(attrs)
+      // Поля param указываются у SIMPLE и vendor.model, но не запрещены для остальных типов офферов.
       case (AnyOfferFields.param, attrs)                    => new ParamHandler(attrs)
       // barcode: ignored
     }
@@ -1133,10 +1135,75 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
    * @param myAttrs Аттрибуты этого оффера.
    * @param myShop Текущий магазин.
    */
-  case class ArtistTitleHandler(myAttrs:Attributes, myShop:ShopHandler) extends AnyOfferHandler with OfferCountryOptH {
+  case class ArtistTitleHandler(myAttrs:Attributes, myShop:ShopHandler) extends AnyOfferHandler with OfferCountryOptH with OfferYearH {
     def offerType = OfferTypes.`artist.title`
-    ???
+
+    /** Исполнитель, если есть. */
+    var artistOpt: Option[String] = None
+    /** Заголовок. */
+    var title: String = null
+    /** Носитель. */
+    var mediaOpt: Option[String] = None
+    /** Актёры. */
+    var starringOpt: Option[String] = None
+    /** Режиссер. */
+    var directorOpt: Option[String] = None
+    /** Оригинальное название. */
+    var originalNameOpt: Option[String] = None
+
+
+    override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
+      case (AnyOfferFields.artist, _)       => new ArtistHandler
+      case (AnyOfferFields.title, _)        => new TitleHandler
+      case (AnyOfferFields.media, _)        => new MediaHandler
+      case (AnyOfferFields.starring, _)     => new StarringHandler
+      case (AnyOfferFields.director, _)     => new DirectorHandler
+      case (AnyOfferFields.originalName, _) => new OriginalNameHandler
+    }
+
+    class ArtistHandler extends StringHandler {
+      def myTag = AnyOfferFields.artist.toString
+      def handleString(s: String) {
+        artistOpt = Some(s)
+      }
+    }
+
+    class TitleHandler extends StringHandler {
+      def myTag = AnyOfferFields.title.toString
+      def handleString(s: String) {
+        title = s
+      }
+    }
+
+    class MediaHandler extends StringHandler {
+      def myTag = AnyOfferFields.media.toString
+      def handleString(s: String) {
+        mediaOpt = Some(s)
+      }
+    }
+
+    class StarringHandler extends StringHandler {
+      def myTag = AnyOfferFields.starring.toString
+      def handleString(s: String) {
+        starringOpt = Some(s)
+      }
+    }
+
+    class DirectorHandler extends StringHandler {
+      def myTag = AnyOfferFields.director.toString
+      def handleString(s: String) {
+        directorOpt = Some(s)
+      }
+    }
+    
+    class OriginalNameHandler extends StringHandler {
+      def myTag = AnyOfferFields.originalName.toString
+      def handleString(s: String) {
+        originalNameOpt = Some(s)
+      } 
+    }
   }
+
 
 
   /** Враппер для дедубликации кода хандлеров, которые читают текст из тега и что-то делают с накопленным буффером. */
