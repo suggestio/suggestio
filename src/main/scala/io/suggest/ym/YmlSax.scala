@@ -13,6 +13,7 @@ import YmParsers._
 import org.joda.time._
 import io.suggest.ym.HotelMealTypes.HotelMealType
 import io.suggest.ym.HotelStarsLevels.HotelStarsLevel
+import java.net.URL
 
 /**
  * Suggest.io
@@ -133,6 +134,7 @@ object YmlSax extends Serializable {
 
   // event-ticket
   val PLACE_MAXLEN          = CONFIG.getInt("ym.sax.offer.place.len.max")       getOrElse 512
+  val HALL_MAXLEN           = CONFIG.getInt("ym.sax.offer.hall.len.max")        getOrElse 128
 
   val DATE_TIME_MAXLEN      = CONFIG.getInt("ym.sax.offer.dt.len.max")          getOrElse 40
 
@@ -197,9 +199,11 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     def myTag: String = ???
     def myAttrs: Attributes = ???
 
+    override def endElement(uri: String, localName: String, qName: String) {}
+
     override def startElement(uri: String, localName: String, qName: String, attributes: Attributes) {
-      TopLevelFields.withName(localName) match {
-        case TopLevelFields.yml_catalog => become(YmlCatalogHandler())
+      if (localName == TopLevelFields.yml_catalog.toString) {
+        become(YmlCatalogHandler())
       }
     }
   }
@@ -211,6 +215,16 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
    */
   case class YmlCatalogHandler(myAttrs: Attributes = EmptyAttrs) extends MyHandler {
     def myTag = TopLevelFields.yml_catalog.toString
+
+    /** Дата генерации прайс-листа, заданного в аттрибутах. */
+    val dateOpt: Option[DateTime] = Option(myAttrs.getValue(ATTR_DATE)) flatMap { dateStr =>
+      val parseResult = parse(DT_PARSER, dateStr)
+      if (parseResult.successful) {
+        Some(parseResult.get)
+      } else {
+        None
+      }
+    }
 
     override def startElement(uri: String, localName: String, qName: String, attributes: Attributes) {
       YmlCatalogFields.withName(localName) match {
@@ -424,6 +438,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
         case OfferTypes.audiobook       => new AudioBookOfferHandler(attrs, myShop)
         case OfferTypes.`artist.title`  => new ArtistTitleHandler(attrs, myShop)
         case OfferTypes.tour            => new TourHandler(attrs, myShop)
+        case OfferTypes.`event-ticket`  => new EventTicketOfferHandler(attrs, myShop)
       }
     }
   }
@@ -1389,7 +1404,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     /** Место проведения мероприятия. */
     var placeOpt: Option[String] = None
-    /** Ссылка на изображение с планом зала. */
+    /** Название зала и ссылка на изображение с планом зала. */
+    var hallOpt: Option[String] = None
     var hallPlanUrlOpt: Option[String] = None
     /** Дата и время сеанса. */
     var date: DateTime = null
@@ -1402,7 +1418,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     /** Обработчик полей коммерческого предложения, который также умеет name. */
     override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
       case (AnyOfferFields.place, _)        => new PlaceHandler
-      case (AnyOfferFields.hall_plan, _)    => new HallPlanHandler
+      case (AnyOfferFields.hall, attrs)     => new HallPlanHandler(attrs)
       case (AnyOfferFields.date, _)         => new EventDateHandler
       case (AnyOfferFields.is_premiere, _)  => new IsPremiereHandler
       case (AnyOfferFields.is_kids, _)      => new IsKidsHandler
@@ -1419,10 +1435,23 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
       }
     }
 
-    class HallPlanHandler extends UrlHandler {
-      def myTag = AnyOfferFields.hall_plan.toString
-      def handleUrl(url: String) {
-        hallPlanUrlOpt = Some(url)
+    class HallPlanHandler(attrs: Attributes) extends StringHandler {
+      def myTag = AnyOfferFields.hall.toString
+      def maxLen: Int = HALL_MAXLEN
+      def handleString(s: String) {
+        if (!s.isEmpty) {
+          hallOpt = Some(s)
+        }
+        hallPlanUrlOpt = Option(attrs.getValue(ATTR_PLAN))
+          .map(_.trim)
+          .filter { maybeUrl =>
+            try {
+              new URL(maybeUrl)
+              true
+            } catch {
+              case ex: Exception => false
+            }
+          }.map { UrlUtil.normalize }
       }
     }
 

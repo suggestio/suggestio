@@ -155,9 +155,10 @@ class YmParsersTest extends FlatSpec with Matchers {
     import HotelStarsLevels._
     f("***")  should equal (S3)
     f("hv-1") should equal (HV1)
+    f("HV-2") should equal (HV2)
     f("*1")   should equal (S1)
     f("1*")   should equal (S1)
-    f("4 *")   should equal (S4)
+    f("4 *")  should equal (S4)
   }
 
 }

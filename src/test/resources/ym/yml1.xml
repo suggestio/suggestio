@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<yml_catalog date="2010-04-01 17:00">
+<shop>
+    <name>BestShop</name>
+    <company>Best online seller Inc.</company>
+    <url>http://best.seller.ru/</url>
+    <platform>CMS</platform>
+    <version>2.3</version>
+    <agency>Agency</agency>
+    <email>CMS@CMS.ru</email>
+    <currencies>
+        <currency id="RUR" rate="1"/>
+        <currency id="USD" rate="23.98"/>
+        <currency id="EUR" rate="CBRF"/>
+        <currency id="UAH" rate="NBU"/>
+        <currency id="KZT" rate="CB"/>
+    </currencies>
+    <categories>
+        <category id="1">Книги</category>
+        <category id="2" parentId="1">Детективы</category>
+        <category id="3" parentId="1">Боевики</category>
+        <category id="4">Видео</category>
+        <category id="5" parentId="4">Комедии</category>
+        <category id="6">Принтеры</category>
+        <category id="7">Оргтехника</category>
+    </categories>
+
+    <offers>
+        <!-- Упрощенное описание -->
+        <offer id="12346" available="true" bid="21">
+            <url>http://best.seller.ru/product_page.asp?pid=12348</url>
+            <price>699.54</price>
+            <currencyId>USD</currencyId>
+            <categoryId>6</categoryId>
+            <picture>http://best.seller.ru/img/device12345.jpg</picture>
+            <store>false</store>
+            <pickup>true</pickup>
+            <delivery>false</delivery>
+            <local_delivery_cost>300</local_delivery_cost>
+            <name>Наручные часы Casio A1234567B</name>
+            <vendorCode>A1234567B</vendorCode>
+            <description>Изящные наручные часы.</description>
+            <sales_notes>Необходима предоплата.</sales_notes>
+            <manufacturer_warranty>P2Y</manufacturer_warranty>
+            <country_of_origin>Швейцария</country_of_origin>
+            <barcode>0123456789012</barcode>
+        </offer>
+
+        <!-- Произвольный товар (vendor.model) -->
+        <offer id="12341" type="vendor.model" available="true" bid="13">
+            <url>http://best.seller.ru/product_page.asp?pid=12344</url>
+            <price>700</price>
+            <currencyId>USD</currencyId>
+            <categoryId>6</categoryId>
+            <picture>http://best.seller.ru/img/device12345.jpg</picture>
+            <store>false</store>
+            <pickup>false</pickup>
+            <delivery>true</delivery>
+            <local_delivery_cost>300</local_delivery_cost>
+            <typePrefix>Принтер</typePrefix>
+            <vendor>НP</vendor>
+            <vendorCode>CH366C</vendorCode>
+            <model>Deskjet D2663</model>
+            <description>Серия принтеров для людей, которым нужен надежный, простой в использовании
+                цветной принтер для повседневной печати. Формат А4. Технология печати: 4-цветная термальная струйная.
+                Разрешение при печати: 4800х1200 т/д.
+            </description>
+            <sales_notes>Необходима предоплата.</sales_notes>
+            <manufacturer_warranty>true</manufacturer_warranty>
+            <seller_waranty>P3Y</seller_waranty>
+            <country_of_origin>Япония</country_of_origin>
+            <barcode>1234567890120</barcode>
+            <cpa>1</cpa>
+            <param name="Максимальный формат">А4</param>
+            <param name="Технология печати">термическая струйная</param>
+            <param name="Тип печати">Цветная</param>
+            <param name="Количество страниц в месяц" unit="стр">1000</param>
+            <param name="Потребляемая мощность" unit="Вт">20</param>
+            <param name="Вес" unit="кг">2.73</param>
+            <rec>123123,1214,243</rec>
+            <expiry>P5Y</expiry>;
+            <weight>2.07</weight>
+            <dimensions>100/25.45/11.112</dimensions>
+        </offer>
+
+        <!-- Книги (book) -->
+        <offer id="12342" type="book" available="true" bid="17">
+            <url>http://best.seller.ru/product_page.asp?pid=14345</url>
+            <price>80</price>
+            <currencyId>RUR</currencyId>
+            <categoryId>3</categoryId>
+            <picture>http://best.seller.ru/product_page.asp?pid=14345.jpg</picture>
+            <store>false</store>
+            <pickup>false</pickup>
+            <delivery>true</delivery>
+            <local_delivery_cost>300</local_delivery_cost>
+            <author>Александра Маринина</author>
+            <name>Все не так. В 2 томах. Том 1</name>
+            <publisher>Эксмо</publisher>
+            <series>А. Маринина — королева детектива</series>
+            <year>2007</year>
+            <ISBN>978-5-699-23647-3</ISBN>
+            <volume>2</volume>
+            <part>1</part>
+            <language>rus</language>
+            <binding>70x90/32</binding>
+            <page_extent>288</page_extent>
+            <description>Все прекрасно в большом патриархальном семействе
+                Руденко. Но — увы! — впечатление это обманчиво: каждого из
+                многочисленных представителей семьи обуревают свои потаенные
+                страсти и запретные желания.</description>
+            <downloadable>false</downloadable>
+        </offer>
+
+        <!-- Аудиокниги (audiobook) -->
+        <offer id="12342" type="audiobook" available="true" bid="17">
+            <url>http://best.seller.ru/product_page.asp?pid=14345</url>
+            <price>200</price>
+            <currencyId>RUR</currencyId>
+            <categoryId>3</categoryId>
+            <picture>http://best.seller.ru/product_page.asp?pid=14345.jpg</picture>
+            <author>Владимир Кунин</author>
+            <name>Иваnов и Rабинович, или Аj'гоу ту 'Хаjфа!</name>
+            <publisher>1С-Паблишинг, Союз</publisher>
+            <year>2008</year>
+            <ISBN>978-5-9677-0757-5</ISBN>
+            <language>ru</language>
+            <performed_by>Николай Фоменко</performed_by>
+            <performance_type>начитана </performance_type>
+            <storage>CD</storage>
+            <format>mp3</format>
+            <description>Перу Владимира Кунина принадлежат десятки сценариев к
+                кинофильмам, серия книг про КЫСЮ и многое, многое другое.</description>
+            <downloadable>true</downloadable>
+        </offer>
+
+        <!-- Музыкальная и видео продукция (artist.title) -->
+        <offer id="12345" type="artist.title" available="true" bid="11">
+            <url>http://best.seller.ru/product_page.asp?pid=12946</url>
+            <price>15</price>
+            <currencyId>USD</currencyId>
+            <categoryId>2</categoryId>
+            <picture>http://best.seller.ru/product_page.asp?pid=14345.jpg</picture>
+            <store>false</store>
+            <pickup>false</pickup>
+            <delivery>true</delivery>
+            <artist>Pink Floyd</artist>
+            <title>Dark Side Of The Moon, Platinum Disc</title>
+            <year>1999</year>
+            <media>CD</media>
+            <description> Dark Side Of The Moon, поставивший мир на уши
+                невиданным сочетанием звуков, — это всего-навсего девять
+                треков, и даже не все они писались специально для альбома.
+                Порывшись по сусекам, участники Pink Floyd мудро сделали
+                новое из хорошо забытого старого — песен, которые
+                почему-либо не пошли в дело или остались незаконченными.
+                Одним из источников вдохновения стали саундтреки
+                для кинофильмов, которые группа производила в больших количествах.</description>
+            <barcode>2345678901234</barcode>
+        </offer>
+
+        <!-- Туры (tour) -->
+        <offer id="12341" type="tour" available="true" bid="71">
+            <url>http://best.seller.ru/product_page.asp?pid=12344</url>
+            <price>958</price>
+            <currencyId>USD</currencyId>
+            <categoryId>6</categoryId>
+            <picture>http://best.seller.ru/img/device12345.jpg</picture>
+            <store>false</store>
+            <pickup>true</pickup>
+            <delivery>false</delivery>
+            <local_delivery_cost>300</local_delivery_cost>
+            <worldRegion>Африка</worldRegion>
+            <country>Египет</country>
+            <region>Хургада</region>
+            <days>7</days>
+            <dataTour>2012-01-01 12:00:00</dataTour>
+            <dataTour>2012-01-08 12:00:00</dataTour>
+            <name>Hilton</name>
+            <hotel_stars>5*****</hotel_stars>
+            <room>SNG</room>
+            <meal>ALL</meal>
+            <included>авиаперелет, трансфер, проживание, питание, страховка</included>
+            <transport>Авиа</transport>
+            <description>Отдых в Египте.</description>
+        </offer>
+
+        <!-- Билеты на мероприятие (event-ticket) -->
+        <offer id="1234" type="event-ticket"  available="true" bid="13">
+            <url>http://best.seller.ru/product_page.asp?pid=57384</url>
+            <price>1000</price>
+            <currencyId>RUR</currencyId>
+            <categoryId>3</categoryId>
+            <picture>http://best.seller.ru/product_page.asp?pid=72945.jpg</picture>
+            <store>false</store>
+            <pickup>false</pickup>
+            <delivery>true</delivery>
+            <local_delivery_cost>300</local_delivery_cost>
+            <name>Дмитрий Хворостовский и Национальный филармонический
+                оркестр России. Дирижер — Владимир Спиваков.</name>
+            <place>Московский  международный Дом музыки</place>
+            <hall plan="http://ya.ru/1.png">Большой зал</hall>
+            <hall_part>Партер р. 1-5</hall_part>
+            <date>2012-02-25 12:03:14</date>
+            <is_premiere>0</is_premiere>
+            <is_kids>0</is_kids>
+            <description>Концерт Дмитрия Хворостовского и Национального филармонического
+                оркестра России</description>
+            <age>6</age>
+        </offer>
+
+    </offers>
+</shop>
+</yml_catalog>

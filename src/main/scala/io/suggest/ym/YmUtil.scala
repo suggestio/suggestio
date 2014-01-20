@@ -25,6 +25,8 @@ object YmConstants {
   val ATTR_TYPE                 = "type"
   val ATTR_AVAILABLE            = "available"
   val ATTR_UNIT                 = "unit"
+  val ATTR_DATE                 = "date"
+  val ATTR_PLAN                 = "plan"
   //val ATTR_BID                = "bid"   // oсновная ставка товара для выборки по маркету.
 }
 
@@ -82,7 +84,7 @@ object AnyOfferFields extends Enumeration {
       // tour (без name, country)
       worldRegion, region, days, dataTour, hotel_stars, room, meal, included, transport, price_min, price_max, options,
       // ticket (deprecated by event-ticket) и сам event-ticket. Без name.
-      place, hall, hall_plan, hall_part, date, is_premiere, is_kids
+      place, hall, hall_part, date, is_premiere, is_kids
       = Value
 
   // TODO orderingTime в ignored потому что синтаксис поля нигде не описан.
