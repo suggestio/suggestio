@@ -103,4 +103,61 @@ class YmParsersTest extends FlatSpec with Matchers {
     f("60.00") should be (new Period().withMinutes(60))
     f("90.15") should be (new Period().withMinutes(90).withSeconds(15))
   }
+
+
+  "MEAL_TYPE_PARSER" should "parse hotel meal types in different formats" in {
+    val f = getF(HOTEL_MEAL_PARSER)
+    import HotelMealTypes._
+    f("HB+") should equal (`HB+`)
+    f("all inclusive ultra") should equal (UAI)
+    f("all inclusive") should equal (AI)
+    f("UAL") should equal (UAI)
+    f("HCAI") should equal (HCAL)
+    f("ALL INCLUDED ULTRO") should equal (UAI)
+    f("RO") should equal (OB)
+    f("OB") should equal (OB)
+    f("FB+") should equal (`FB+`)
+    f("ALL included HI- CLASs") should equal (HCAL)
+    f("ExtFB") should equal (`FB+`)
+    f("ExFB")  should equal (`FB+`)
+    f("FB extended") should equal (`FB+`)
+    f("FB") should equal (FB)
+    f("full board") should equal (FB)
+    f("bad & breakfast") should equal (BB)
+    f("miniAI")   should equal (MiniAI)
+    f("miniALL")  should equal (MiniAI)
+    f("ALL mini") should equal (MiniAI)
+    f("mini ALL included") should equal (MiniAI)
+    f("всё включено") should equal (AI)
+    f("ALL INCLUDED") should equal (AI)
+    f("ALL IN") should equal (AI)
+    f("ALL-IN") should equal (AI)
+    f("ALL-IN ULTRA") should equal (UAI)
+    f("All") should equal (AI)
+    f("AI")  should equal (AI)
+  }
+
+
+  "HOTEL_ROOM_PARSER" should "parse hotel room specs of different configurations" in {
+    val f = getF(HOTEL_ROOM_PARSER)
+    import HotelRoomTypes._
+    f("SGL") should equal (HotelRoomInfo(SGL))
+    f("Dbl+2CHild")  should equal (HotelRoomInfo(DBL, childrenCnt = 2))
+    f("DBL + 2Chld") should equal (HotelRoomInfo(DBL, childrenCnt = 2))
+    f("Double + 2 children") should equal (HotelRoomInfo(DBL, childrenCnt = 2))
+    f("Triple + ExBed") should equal (HotelRoomInfo(TRPL, exBedCnt = 1))
+    f("QDPL+Chld") should equal (HotelRoomInfo(QDPL, childrenCnt = 1))
+  }
+
+
+  "HOTEL_STARS_PARSER" should "parse hotel starring" in {
+    val f = getF(HOTEL_STARS_PARSER)
+    import HotelStarsLevels._
+    f("***")  should equal (S3)
+    f("hv-1") should equal (HV1)
+    f("*1")   should equal (S1)
+    f("1*")   should equal (S1)
+    f("4 *")   should equal (S4)
+  }
+
 }

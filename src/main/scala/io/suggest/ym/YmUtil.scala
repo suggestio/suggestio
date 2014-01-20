@@ -3,6 +3,7 @@ package io.suggest.ym
 import io.suggest.ym.OfferAgeUnits.OfferAgeUnit
 import org.joda.time.Period
 import io.suggest.ym.OfferCategoryIdTypes.OfferCategoryIdType
+import io.suggest.ym.HotelRoomTypes.HotelRoomType
 
 /**
  * Suggest.io
@@ -81,7 +82,7 @@ object AnyOfferFields extends Enumeration {
       // tour (без name, country)
       worldRegion, region, days, dataTour, hotel_stars, room, meal, included, transport, price_min, price_max, options,
       // ticket (deprecated by event-ticket) и сам event-ticket. Без name.
-      place, hall, hall_part, date, is_premiere, is_kids
+      place, hall, hall_plan, hall_part, date, is_premiere, is_kids
       = Value
 
   // TODO orderingTime в ignored потому что синтаксис поля нигде не описан.
@@ -167,4 +168,46 @@ object OfferCategoryIdTypes extends Enumeration {
  * @param heightCm Высота в сантиметрах.
  */
 case class Dimensions(lenCm:Float, widthCm:Float, heightCm:Float) extends Serializable
+
+
+/** Тип гостиничной пещеры. Надо по-лучше разобраться в этом.
+ * [[http://www.uatourist.com/docs/info.htm Нормальный словарь терминов]].
+ */
+object HotelRoomTypes extends Enumeration {
+  type HotelRoomType = Value
+  val SGL, DBL, TWN, TRPL, QDPL = Value
+}
+
+case class HotelRoomInfo(roomType: HotelRoomType, childrenCnt:Int = 0, exBedCnt:Int = 0) extends Serializable
+
+
+/**
+ * Типы питания в гостиницах.
+ * [[http://www.spikatour-egypt.ru/pitanie_egypt.php Жрачка в египетских гостиницах.]]
+ * [[http://www.uatourist.com/docs/info.htm Обозначения жратвы по мнению салоедов.]]
+ */
+object HotelMealTypes extends Enumeration {
+  type HotelMealType = Value
+  val OB, Menu, HB, `HB+`, BB, FB, `FB+`, MiniAI, AI, UAI, HCAL = Value
+}
+
+
+/** Звездатость отеля. HV1 и 2 - это некие коттеджи. */
+object HotelStarsLevels extends Enumeration {
+  type HotelStarsLevel = Value
+  val S1, S2, S3, S4, S5, HV1, HV2 = Value
+
+  val forStarCount: PartialFunction[Int, HotelStarsLevel] = {
+    case 1 => S1
+    case 2 => S2
+    case 3 => S3
+    case 4 => S4
+    case 5 => S5
+  }
+
+  val forHvLevel: PartialFunction[Int, HotelStarsLevel] = {
+    case 1 => HV1
+    case 2 => HV2
+  }
+}
 

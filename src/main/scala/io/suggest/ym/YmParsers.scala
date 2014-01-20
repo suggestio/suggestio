@@ -3,6 +3,9 @@ package io.suggest.ym
 import scala.util.parsing.combinator._
 import org.joda.time._
 import io.suggest.ym.PeriodUnits.PeriodUnit
+import io.suggest.ym.HotelMealTypes.HotelMealType
+import io.suggest.ym.HotelRoomTypes.HotelRoomType
+import io.suggest.ym.HotelStarsLevels.HotelStarsLevel
 
 /**
  * Suggest.io
@@ -163,6 +166,107 @@ object YmParsers extends JavaTokenParsers {
     mmParser ~ (sep ~> ssParser) ^^ {
       case mm~ss => new Period().withMinutes(mm).withSeconds(ss)
     }
+  }
+
+
+  // Гостиницы. Тут много терминов, вариантов обозначений и их комбинаций.
+
+  /** Парсер типа питания в гостинице. Обозначения варьируются между конторами, но в целом они похожи. */
+  val HOTEL_MEAL_PARSER: Parser[HotelMealType] = {
+    import HotelMealTypes._
+    // Вспомогательные словечки
+    val rest: Parser[String] = "(?i)rest".r
+    val breakfast: Parser[String] = "(?i)br[ea]+[kc]+f[ae]st".r
+    val bed:  Parser[String] = "(?i)[db][ae][db]".r
+    val only: Parser[String] = "(?i)onl[yi]".r
+    val half: Parser[String] = "(?i)h[ae]lf".r
+    val board: Parser[String] = "(?i)b[oa]{1,2}rd".r
+    val sep: Parser[_] = "([&,\\s-]+|and)".r
+    val extended = "(?i)ex(t(en[dt][ei]+[dt])?)?\\.?".r | "+"
+    val full: Parser[String] = "(?i)f+ul+".r
+    val mini: Parser[String] = "(?i)mini".r
+    val all: Parser[String] = "(?i)(a(i|l+)|everything|вс[её])".r
+    val inclusive: Parser[String] = "(?i)(in(c(l(u(de[dt]|sive?)?)?)?)?|вкл(ючено)?)\\.*".r
+    val high: Parser[String] = "(?i)hi([hg][ghn]|-|\\s)?".r
+    val clazz: Parser[String] = "(?i)clas+".r
+    val ultra: Parser[String] = "(?i)ultr[ao]".r
+    // a-la carte, menu
+    val ala = "(?i)a[-_]?la".r
+    val carte = "(?i)cart[ey]*".r
+    val menu = "(?i)men[uy]".r
+    val hb: Parser[String] = "HB"
+    val fb: Parser[String] = "FB"
+    // Готовые наборы буков.
+    val onlyBed = ("OB" | "NA" | "RO" | (only ~> bed) | (rest ~> only)) ^^^ OB
+    val mealMenu = (ala ~ carte | menu) ^^^ Menu
+    val halfBoard = (hb | (half ~ board)) ^^^ HB
+    val bedBreakfast = ("BB" | (bed <~ sep ~> breakfast)) ^^^ BB
+    // HB+ означает, что это HB, но можно бухать весь день, но закуска платная.
+    val extHB = ("HB+" | extended <~ half <~ board | half ~> board ~> extended | extended ~ hb | hb ~ extended) ^^^ `HB+`
+    // Вся жратва по расписанию, в т.ч. обед и полдник
+    val fullBoard = (fb | full ~ board) ^^^ FB
+    val extFB = ("FB+" | full ~ board ~ extended | extended ~ full ~ board | extended ~ fb | fb ~ extended) ^^^ `FB+`
+    // AI/ALL - всё включено, mini - всё с ограничениями
+    val ai: Parser[String] = "AI"
+    val miniAI = (mini ~ all <~ inclusive | all <~ inclusive ~> mini | mini <~ all | all ~> mini) ^^^ MiniAI
+    val normAI = ((all <~ opt(sep) <~ inclusive) | all) ^^^ AI
+    // жратва вся нахаляву в любое время дня и ночи, и вообще многое бесплатно
+    val hcAI = ("HCA[LI]+".r | (high ~> clazz ~> all ~> inclusive) | (all ~> inclusive ~> high ~> clazz)) ^^^ HCAL
+    // Ultra All inclusive. Это для самых упоротых, либо это гостиница-город.
+    val ualRe: Parser[String] = "UA[IL]".r
+    val uAI = (ualRe | ultra <~ all <~ opt(sep) <~ opt(inclusive) | all ~> opt(sep) ~> opt(inclusive) ~> ultra | ultra <~ ai | ai ~> ultra) ^^^ UAI
+    // Собираем конечный парсер на основе готовых сборок
+    onlyBed | mealMenu | extHB | halfBoard | miniAI | uAI | hcAI | normAI | extFB | fullBoard | bedBreakfast
+  }
+
+
+  /** Парсер базового описания номера.
+   * [[http://www.uatourist.com/docs/info.htm Дока с термами и примерами описаний хат]]. */
+  val HOTEL_ROOM_PARSER: Parser[HotelRoomInfo] = {
+    import HotelRoomTypes._
+    val singleRoom = ("(?i)si?n?gle?".r | "SNG") ^^^ SGL
+    val doubleRoom = "(?i)do?u?ble?".r ^^^ DBL
+    val twinRoom = "(?i)twi?n".r ^^^ TWN
+    val tripleRoom = "(?i)tri?ple?".r ^^^ TRPL
+    val quadroRoom = "(?i)qu?a?dr?i?ple?".r ^^^ QDPL
+    val exBedSym = 'exbed
+    val exBed = "(?i)ex(t(ra)?)?B(ed)?".r ^^^ exBedSym
+    val childSym = 'child
+    val child = "(?i)chi?ld(ren)?".r ^^^ childSym
+    // Счетчик опций: кол-ва детей или доп.кроватей.
+    val optCnt: Parser[Int] = opt("\\d+".r) ^^ { _.map(str2IntF) getOrElse 1 }
+    val sep: Parser[String] = "([-+\\s]+|with)".r
+    // Собираем финальный парсер наконец
+    val roomBaseParser = singleRoom | doubleRoom | tripleRoom | twinRoom | quadroRoom
+    roomBaseParser ~ rep(sep ~> optCnt ~ (exBed | child)) ^^ {
+      case hrt ~ opts =>
+        val (childrenCnt, exBedCnt) = opts.foldLeft [(Int,Int)] (0 -> 0) {
+          case ((childCount, exBedCount), cnt ~ opt) => 
+            opt match {
+              case s if s == exBedSym  =>  childCount -> (exBedCount + cnt)
+              case s if s == childSym  =>  (childCount + cnt) -> exBedCount
+            }
+        }
+        HotelRoomInfo(hrt, childrenCnt=childrenCnt, exBedCnt=exBedCnt)
+    }
+  }
+
+
+  val HOTEL_STARS_PARSER: Parser[HotelStarsLevel] = {
+    import HotelStarsLevels._
+    // Собираем звёзды
+    val star: Parser[String] = "([*★☆]|[\\s-]*stars?)".r
+    val starCount: Parser[Int] = "[1-5]".r ^^ str2IntF
+    val hotelStarsCnt = ((star ~> starCount) | (starCount <~ star)) ^^ { forStarCount }
+    val hotelStarsLen = rep1(star) ^^ { stars => forStarCount(Math.min(5, stars.size)) }
+    val hotelStars = hotelStarsCnt | hotelStarsLen
+    // HV-отели
+    val hv: Parser[String] = "(?i)hv".r
+    val hvSep: Parser[String] = "[-+_/]".r
+    val hvLvl: Parser[Int] = "[12]".r ^^ str2IntF
+    val hvHotel = (hv ~> opt(hvSep) ~> hvLvl) ^^ { forHvLevel }
+    // Финальный парсер звездатости
+    hotelStars | hvHotel
   }
 }
 

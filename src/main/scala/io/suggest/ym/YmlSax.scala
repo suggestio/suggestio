@@ -11,6 +11,8 @@ import io.suggest.util.MyConfig.CONFIG
 import io.suggest.ym.OfferTypes.OfferType
 import YmParsers._
 import org.joda.time._
+import io.suggest.ym.HotelMealTypes.HotelMealType
+import io.suggest.ym.HotelStarsLevels.HotelStarsLevel
 
 /**
  * Suggest.io
@@ -27,7 +29,7 @@ import org.joda.time._
  * $ - [[http://help.yandex.ru/partnermarket/export/date-format.xml Форматы дат]]
  */
 
-object YmlSax {
+object YmlSax extends Serializable {
   
   /** Регэксп токенизации пути в общем дереве категорий маркета. */
   protected val MARKET_CATEGORY_PATH_SPLIT_RE = "\\s*/\\s*".r
@@ -84,6 +86,7 @@ object YmlSax {
   val OFFER_NAME_MAXLEN = CONFIG.getInt("ym.sax.offer.name.len.max") getOrElse 128
   val OFFER_PARAM_MAXLEN = CONFIG.getInt("ym.sax.offer.param.len.max") getOrElse 128
   val OFFER_PARAMS_COUNT_MAX = CONFIG.getInt("ym.sax.offer.params.count.max") getOrElse 16
+  val OFFER_MODEL_MAXLEN = CONFIG.getInt("ym.sax.offer.model.len.max") getOrElse 40
 
   val OFFER_TYPE_PREFIX_MAXLEN = CONFIG.getInt("ym.sax.offer.type_prefix.len.max") getOrElse 128
   
@@ -96,6 +99,42 @@ object YmlSax {
   val SELLER_WARRANTY_RE = "sell?er_[wv]arr?anty".r
 
   val OFFER_DIMENSIONS_MAXLEN = CONFIG.getInt("ym.sax.offer.dimensions.len.max") getOrElse 64
+
+  // book
+  val OFFER_AUTHOR_MAXLEN = CONFIG.getInt("ym.sax.offer.author.len.max") getOrElse 128
+  val OFFER_PUBLISHER_MAXLEN = CONFIG.getInt("ym.sax.offer.publisher.len.max") getOrElse 40
+  val OFFER_SERIES_MAXLEN = CONFIG.getInt("ym.sax.offer.series.len.max") getOrElse OFFER_NAME_MAXLEN
+  val OFFER_ISBN_MAXLEN = CONFIG.getInt("ym.sax.offer.isbn.len.max") getOrElse 20
+  val OFFER_LANGUAGE_MAXLEN = CONFIG.getInt("ym.sax.offer.language.len.max") getOrElse 30
+  val OFFER_TOC_MAXLEN = CONFIG.getInt("ym.sax.offer.tableOfContents.len.max") getOrElse 4096
+  val OFFER_BINDING_MAXLEN = CONFIG.getInt("ym.sax.offer.binding.len.max") getOrElse 32
+
+  // audiobook
+  val OFFER_PERFORMED_BY_MAXLEN = CONFIG.getInt("ym.sax.offer.performedBy.len.max") getOrElse 64
+  val OFFER_PERFORMANCE_TYPE_MAXLEN = CONFIG.getInt("ym.sax.offer.performanceType.len.max") getOrElse 32
+  val OFFER_STORAGE_MAXLEN = CONFIG.getInt("ym.sax.offer.storage.len.max") getOrElse 20
+  val OFFER_REC_LEN_MAXLEN = CONFIG.getInt("ym.sax.offer.recordingLen.len.max") getOrElse 8
+
+  // artist.title
+  val OFFER_ARTIST_MAXLEN   = CONFIG.getInt("ym.sax.offer.artist.len.max")    getOrElse OFFER_NAME_MAXLEN
+  val OFFER_TITLE_MAXLEN    = CONFIG.getInt("ym.sax.offer.title.len.max")     getOrElse OFFER_NAME_MAXLEN
+  val OFFER_MEDIA_MAXLEN    = CONFIG.getInt("ym.sax.offer.media.len.max")     getOrElse OFFER_STORAGE_MAXLEN
+  val OFFER_STARRING_MAXLEN = CONFIG.getInt("ym.sax.offer.starring.len.max")  getOrElse 1024
+  val OFFER_DIRECTOR_MAXLEN = CONFIG.getInt("ym.sax.offer.director.len.max")  getOrElse 64
+
+  // tour
+  val WORLD_REGION_MAXLEN   = CONFIG.getInt("ym.sax.offer.worldRegion.len.max") getOrElse 40
+  val REGION_MAXLEN         = CONFIG.getInt("ym.sax.offer.region.len.max")      getOrElse WORLD_REGION_MAXLEN
+  val HOTEL_STARS_MAXLEN    = CONFIG.getInt("ym.sax.offer.hotelStars.len.max")  getOrElse 10
+  val ROOM_TYPE_MAXLEN      = CONFIG.getInt("ym.sax.offer.room.len.max")        getOrElse 20
+  val MEAL_MAXLEN           = CONFIG.getInt("ym.sax.offer.meal.len.max")        getOrElse 32
+  val TOUR_INCLUDED_MAXLEN  = CONFIG.getInt("ym.sax.offer.included.len.max")    getOrElse 2048
+  val TRANSPORT_MAXLEN      = CONFIG.getInt("ym.sax.offer.transport.len.max")   getOrElse 128
+
+  // event-ticket
+  val PLACE_MAXLEN          = CONFIG.getInt("ym.sax.offer.place.len.max")       getOrElse 512
+
+  val DATE_TIME_MAXLEN      = CONFIG.getInt("ym.sax.offer.dt.len.max")          getOrElse 40
 
   /** Регэксп, описывающий повторяющиеся пробелы. */
   private val MANY_SPACES_RE = "[ \\t]{2,}".r
@@ -232,13 +271,13 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class ShopNameHandler extends StringHandler {
       def myTag = ShopFields.email.toString
-      override def maxLen: Int = SHOP_NAME_MAXLEN
+      def maxLen: Int = SHOP_NAME_MAXLEN
       def handleString(s: String) { name = s }
     }
 
     class ShopCompanyHandler extends StringHandler {
       def myTag = ShopFields.company.toString
-      override def maxLen: Int = SHOP_COMPANY_MAXLEN
+      def maxLen: Int = SHOP_COMPANY_MAXLEN
       def handleString(s: String) { company = s }
     }
 
@@ -250,7 +289,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class PhoneHandler extends StringHandler {
       def myTag = ShopFields.phone.toString
-      override def maxLen: Int = PHONE_MAXLEN
+      def maxLen: Int = PHONE_MAXLEN
       def handleString(phoneStr: String) {
         // TODO Парсить телефон, проверять и сохранять в нормальном формате.
         phoneOpt = Some(phoneStr)
@@ -259,7 +298,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     object EmailsHandler extends StringHandler {
       def myTag = ShopFields.email.toString
-      override def maxLen: Int = EMAIL_MAXLEN
+      def maxLen: Int = EMAIL_MAXLEN
       def handleString(email: String) { emails ::= email }
     }
 
@@ -384,6 +423,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
         case OfferTypes.book            => new BookOfferHandler(attrs, myShop)
         case OfferTypes.audiobook       => new AudioBookOfferHandler(attrs, myShop)
         case OfferTypes.`artist.title`  => new ArtistTitleHandler(attrs, myShop)
+        case OfferTypes.tour            => new TourHandler(attrs, myShop)
       }
     }
   }
@@ -738,6 +778,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     /** vendor: поле содержит производителя товара. */
     class VendorHandler extends StringHandler {
       def myTag = AnyOfferFields.vendor.toString
+      def maxLen: Int = VENDOR_MAXLEN
       def handleString(s: String) {
         // Базовая нормализация нужна, т.к. это поле не отображается юзеру и используется для группировки по брендам.
         // TODO Надо бы нормализовывать с синонимами, чтобы HP и Hewlett-packard были эквивалентны.
@@ -749,6 +790,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     /** vendorCode: Номер изделия по мнению производителя. Не индексируется, не используется для группировки. */
     class VendorCodeHandler extends StringHandler {
       def myTag = AnyOfferFields.vendorCode.toString
+      def maxLen: Int = VENDOR_CODE_MAXLEN
       def handleString(s: String) {
         vendorCodeOpt = Some(s)
       }
@@ -762,7 +804,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     var name: String = null
 
     /** Обработчик полей коммерческого предложения, который также умеет name. */
-    override val getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = {
+    override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = {
       super.getFieldsHandler orElse {
         case (AnyOfferFields.name, _) => new NameHandler
       }
@@ -847,6 +889,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     /** model: Некая модель товара, т.е. правая часть названия. Например "Женская куртка" или "Deskjet D31337". */
     class ModelHandler extends StringHandler {
       def myTag = AnyOfferFields.model.toString
+      def maxLen: Int = OFFER_MODEL_MAXLEN
       def handleString(s: String) {
         model = s
       }
@@ -896,6 +939,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     /** Обработчик размерностей товара в формате: длина/ширина/высота. */
     class DimensionsHandler extends SimpleValueHandler {
       def myTag = AnyOfferFields.dimensions.toString
+      override def maxLen: Int = OFFER_DIMENSIONS_MAXLEN
       def handleRawValue(sb: StringBuilder) {
         dimensionsOpt = Option(parse(DIMENSIONS_PARSER, sb) getOrElse null)
       }
@@ -925,12 +969,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
   /** Типы book и audiobook имеют много обищих полей:
    * author?, name, publisher?, series?, year?, ISBN?, volume?, part?, language?, table_of_contents?.
    * Тут трейт, который обеспечивает поддержку общих полей для обоих типов книг. */
-  trait AnyBookOfferHandler extends AnyOfferHandler with OfferYearH {
+  trait AnyBookOfferHandler extends AnyOfferHandler with OfferYearH with OfferNameH {
     def offerType = OfferTypes.book
     /** Автор произведения, если есть. */
     var authorOpt: Option[String] = None
-    /** Название произведения. */
-    var name: String = null
     /** Издательство. */
     var publisherOpt: Option[String] = None
     /** Серия. */
@@ -948,7 +990,6 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
       case (AnyOfferFields.author, _)             => new AuthorHandler
-      case (AnyOfferFields.name, _)               => new NameHandler
       case (AnyOfferFields.publisher, _)          => new PublisherHandler
       case (AnyOfferFields.series, _)             => new SeriesHandler
       case (AnyOfferFields.ISBN, _)               => new ISBNHandler
@@ -960,20 +1001,15 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class AuthorHandler extends StringHandler {
       def myTag = AnyOfferFields.author.toString
+      override def maxLen: Int = OFFER_AUTHOR_MAXLEN
       def handleString(s: String) {
         authorOpt = Some(s)
       }
     }
 
-    class NameHandler extends StringHandler {
-      def myTag = AnyOfferFields.name.toString
-      def handleString(s: String) {
-        name = s
-      }
-    }
-
     class PublisherHandler extends StringHandler {
       def myTag = AnyOfferFields.publisher.toString
+      override def maxLen: Int = OFFER_PUBLISHER_MAXLEN
       def handleString(s: String) {
         publisherOpt = Some(s)
       }
@@ -981,6 +1017,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class SeriesHandler extends StringHandler {
       def myTag = AnyOfferFields.series.toString
+      override def maxLen: Int = OFFER_SERIES_MAXLEN
       def handleString(s: String) {
         seriesOpt = Some(s)
       }
@@ -988,7 +1025,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class ISBNHandler extends StringHandler {
       def myTag = AnyOfferFields.ISBN.toString
+      override def maxLen: Int = OFFER_ISBN_MAXLEN
       def handleString(s: String) {
+        // TODO В конце номера контрольная цифра, её следует проверять. Также, следует выверять весь остальной формат.
         isbnOpt = Some(s)
       }
     }
@@ -1009,6 +1048,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class LanguageHandler extends StringHandler {
       def myTag = AnyOfferFields.language.toString
+      override def maxLen: Int = OFFER_LANGUAGE_MAXLEN
       def handleString(s: String) {
         languageOpt = Some(s)
       }
@@ -1016,6 +1056,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class TableOfContentsHandler extends StringHandler {
       def myTag = AnyOfferFields.table_of_contents.toString
+      override def maxLen: Int = OFFER_TOC_MAXLEN
       def handleString(s: String) {
         tableOfContentsOpt = Some(s)
       }
@@ -1033,13 +1074,14 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     /** Кол-во страниц в книге. */
     var pageExtentOpt: Option[Int] = None
 
-    override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
+    override val getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
       case (AnyOfferFields.binding, _)      => new BindingHandler
       case (AnyOfferFields.page_extent, _)  => new PageExtentHandler
     }
 
     class BindingHandler extends StringHandler {
       def myTag = AnyOfferFields.binding.toString
+      override def maxLen: Int = OFFER_BINDING_MAXLEN
       def handleString(s: String) {
         bindingOpt = Some(s)
       }
@@ -1071,7 +1113,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     /** Время звучания задается в формате mm.ss (минуты.секунды). */
     var recordingLenOpt: Option[Period] = None
 
-    override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
+    override val getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
       case (AnyOfferFields.performed_by, _)     => new PerformedByHandler
       case (AnyOfferFields.performance_type, _) => new PerformanceTypeHandler
       case (AnyOfferFields.storage, _)          => new StorageHandler
@@ -1080,6 +1122,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class PerformedByHandler extends StringHandler {
       def myTag = AnyOfferFields.performed_by.toString
+      override def maxLen: Int = OFFER_PERFORMED_BY_MAXLEN
       def handleString(s: String) {
         performedByOpt = Some(s)
       }
@@ -1087,6 +1130,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class PerformanceTypeHandler extends StringHandler {
       def myTag = AnyOfferFields.performance_type.toString
+      override def maxLen: Int = OFFER_PERFORMANCE_TYPE_MAXLEN
       def handleString(s: String) {
         performanceTypeOpt = Some(s)
       }
@@ -1094,6 +1138,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class StorageHandler extends StringHandler {
       def myTag = AnyOfferFields.storage.toString
+      override def maxLen: Int = OFFER_STORAGE_MAXLEN
       def handleString(s: String) {
         storageOpt = Some(s)
       }
@@ -1101,6 +1146,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class RecordingLenHandler extends StringHandler {
       def myTag = AnyOfferFields.recording_length.toString
+      override def maxLen: Int = OFFER_REC_LEN_MAXLEN
       def handleString(s: String) {
         val parseResult = parse(RECORDING_LEN_PARSER, s)
         if (parseResult.successful) {
@@ -1122,6 +1168,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class CountryHandler extends StringHandler {
       def myTag = AnyOfferFields.country.toString
+      override def maxLen: Int = COUNTRY_MAXLEN
       def handleString(s: String) {
         // TODO Нужно проверять страну по списку оных.
         countryOpt = Some(s)
@@ -1163,6 +1210,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class ArtistHandler extends StringHandler {
       def myTag = AnyOfferFields.artist.toString
+      override def maxLen: Int = OFFER_ARTIST_MAXLEN
       def handleString(s: String) {
         artistOpt = Some(s)
       }
@@ -1170,6 +1218,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class TitleHandler extends StringHandler {
       def myTag = AnyOfferFields.title.toString
+      override def maxLen: Int = OFFER_TITLE_MAXLEN
       def handleString(s: String) {
         title = s
       }
@@ -1177,6 +1226,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class MediaHandler extends StringHandler {
       def myTag = AnyOfferFields.media.toString
+      override def maxLen: Int = OFFER_MEDIA_MAXLEN
       def handleString(s: String) {
         mediaOpt = Some(s)
       }
@@ -1184,6 +1234,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class StarringHandler extends StringHandler {
       def myTag = AnyOfferFields.starring.toString
+      override def maxLen: Int = OFFER_STARRING_MAXLEN
       def handleString(s: String) {
         starringOpt = Some(s)
       }
@@ -1191,6 +1242,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
     class DirectorHandler extends StringHandler {
       def myTag = AnyOfferFields.director.toString
+      override def maxLen: Int = OFFER_DIRECTOR_MAXLEN
       def handleString(s: String) {
         directorOpt = Some(s)
       }
@@ -1198,18 +1250,209 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     
     class OriginalNameHandler extends StringHandler {
       def myTag = AnyOfferFields.originalName.toString
+      override def maxLen: Int = OFFER_NAME_MAXLEN
       def handleString(s: String) {
         originalNameOpt = Some(s)
-      } 
+      }
     }
   }
 
+
+  case class TourHandler(myAttrs:Attributes, myShop:ShopHandler) extends AnyOfferHandler with OfferCountryOptH {
+    def offerType = OfferTypes.tour
+
+    /** Регион мира (часть света, материк планеты и т.д.), к которому относится путёвка. "Африка" например. */
+    var worldRegionOpt: Option[String] = None
+    /** Курорт и город */
+    var regionOpt: Option[String] = None
+    /** Количество дней тура. */
+    var days: Int = -1
+    /** Даты заездов. */
+    var tourDates: List[DateTime] = Nil
+    /** Название путёвки. */
+    var name: String = null
+    /** Звёзды гостиницы. Формат - хз, поэтому возвращаем всырую. */
+    var hotelStartsOpt: Option[HotelStarsLevel] = None
+    /** Тип комнаты в гостинице (SGL, DBL, ...) */
+    var roomOpt: Option[HotelRoomInfo] = None
+    /** Тип питания в гостинице. */
+    var mealOpt: Option[HotelMealType] = None
+    /** Что включено в стоимость тура. Обязательнах. */
+    var included: String = null
+    /** Транспорт. Тоже обязательно. */
+    var transport: String = null
+
+
+    /** Тут базовый комбинируемый обработчик полей комерческого предложения.
+      * Тут, в trait'е, нужно использовать def вместо val, т.к. это точно будет переопределено в под-классах. */
+    override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
+      case (AnyOfferFields.worldRegion, _)  => new WorldRegionHandler
+      case (AnyOfferFields.region, _)       => new RegionHandler
+      case (AnyOfferFields.days, _)         => new DaysHandler
+      case (AnyOfferFields.dataTour, _)     => new TourDatesHandler
+      case (AnyOfferFields.hotel_stars, _)  => new HotelStarsHandler
+      case (AnyOfferFields.room, _)         => new RoomHandler
+      case (AnyOfferFields.meal, _)         => new MealHandler
+      case (AnyOfferFields.included, _)     => new IncludedHandler
+      case (AnyOfferFields.transport, _)    => new TransportHandler
+      // Описания этих цен в доках нет, да и сложно это для нас. Поэтому их пропускаем.
+      case (f @ (AnyOfferFields.price_min | AnyOfferFields.price_max), attrs) =>
+        MyDummyHandler(f.toString, attrs)
+    }
+
+    class WorldRegionHandler extends StringHandler {
+      def myTag = AnyOfferFields.worldRegion.toString
+      override def maxLen: Int = WORLD_REGION_MAXLEN
+      def handleString(s: String) {
+        worldRegionOpt = Some(s)
+      }
+    }
+    
+    class RegionHandler extends StringHandler {
+      override def maxLen: Int = REGION_MAXLEN
+      def myTag = AnyOfferFields.region.toString
+      def handleString(s: String) {
+        regionOpt = Some(s)
+      }
+    }
+
+    class DaysHandler extends IntHandler {
+      def myTag = AnyOfferFields.days.toString
+      def handleInt(i: Int) {
+        days = i
+      }
+    }
+
+    class TourDatesHandler extends DateTimeHandler {
+      def myTag = AnyOfferFields.dataTour.toString
+      def handleDateTime(dt: DateTime) {
+        tourDates ::= dt
+      }
+    }
+
+    class HotelStarsHandler extends StringHandler {
+      def myTag = AnyOfferFields.hotel_stars.toString
+      override def maxLen: Int = HOTEL_STARS_MAXLEN
+      def handleString(s: String) {
+        val parseResult = parse(HOTEL_STARS_PARSER, s)
+        if (parseResult.successful) {
+          hotelStartsOpt = Some(parseResult.get)
+        }
+      }
+    }
+
+    class RoomHandler extends StringHandler {
+      def myTag = AnyOfferFields.room.toString
+      def maxLen: Int = ROOM_TYPE_MAXLEN
+      def handleString(s: String) {
+        val parseResult = parse(HOTEL_ROOM_PARSER, s)
+        if (parseResult.successful)
+          roomOpt = Some(parseResult.get)
+      }
+    }
+
+    class MealHandler extends StringHandler {
+      def myTag = AnyOfferFields.meal.toString
+      def maxLen: Int = MEAL_MAXLEN
+      def handleString(s: String) {
+        val parseResult = parse(HOTEL_MEAL_PARSER, s)
+        if (parseResult.successful)
+          mealOpt = Some(parseResult.get)
+      } 
+    }
+
+    class IncludedHandler extends StringHandler {
+      def myTag: String = AnyOfferFields.included.toString
+      def maxLen: Int = TOUR_INCLUDED_MAXLEN
+      def handleString(s: String) {
+        included = s
+      }
+    }
+
+    class TransportHandler extends StringHandler {
+      def myTag = AnyOfferFields.transport.toString
+      def maxLen: Int = TRANSPORT_MAXLEN
+      def handleString(s: String) {
+        transport = s
+      }
+    }
+  }
+
+
+  /**
+   * Билет на мероприятие.
+   * @param myAttrs Аттрибуты тега оффера.
+   * @param myShop Магазин.
+   */
+  case class EventTicketOfferHandler(myAttrs:Attributes, myShop:ShopHandler) extends AnyOfferHandler with OfferNameH {
+    def offerType = OfferTypes.`event-ticket`
+
+    /** Место проведения мероприятия. */
+    var placeOpt: Option[String] = None
+    /** Ссылка на изображение с планом зала. */
+    var hallPlanUrlOpt: Option[String] = None
+    /** Дата и время сеанса. */
+    var date: DateTime = null
+    /** Признак премьерности мероприятия. */
+    var isPremiereOpt: Option[Boolean] = None
+    /** Признак детского мероприятия. */
+    var isKidsOpt: Option[Boolean] = None
+
+
+    /** Обработчик полей коммерческого предложения, который также умеет name. */
+    override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
+      case (AnyOfferFields.place, _)        => new PlaceHandler
+      case (AnyOfferFields.hall_plan, _)    => new HallPlanHandler
+      case (AnyOfferFields.date, _)         => new EventDateHandler
+      case (AnyOfferFields.is_premiere, _)  => new IsPremiereHandler
+      case (AnyOfferFields.is_kids, _)      => new IsKidsHandler
+      // Поля из dtd, не упомянутые в offers.xml, пропускаем, ибо описания от них всё равно нет.
+      case (f @ (AnyOfferFields.hall | AnyOfferFields.hall_part), attrs) => MyDummyHandler(f.toString, attrs)
+    }
+
+    class PlaceHandler extends StringHandler {
+      def myTag = AnyOfferFields.place.toString
+      def maxLen: Int = PLACE_MAXLEN
+      def handleString(s: String) {
+        // TODO Нужна география.
+        placeOpt = Some(s)
+      }
+    }
+
+    class HallPlanHandler extends UrlHandler {
+      def myTag = AnyOfferFields.hall_plan.toString
+      def handleUrl(url: String) {
+        hallPlanUrlOpt = Some(url)
+      }
+    }
+
+    class EventDateHandler extends DateTimeHandler {
+      def myTag = AnyOfferFields.date.toString
+      def handleDateTime(dt: DateTime) {
+        date = dt
+      }
+    }
+
+    class IsPremiereHandler extends BooleanHandler {
+      def myTag = AnyOfferFields.is_premiere.toString
+      def handleBoolean(b: Boolean) {
+        isPremiereOpt = Some(b)
+      }
+    }
+
+    class IsKidsHandler extends BooleanHandler {
+      def myTag = AnyOfferFields.is_kids.toString
+      def handleBoolean(b: Boolean) {
+        isKidsOpt = Some(b)
+      }
+    }
+  }
 
 
   /** Враппер для дедубликации кода хандлеров, которые читают текст из тега и что-то делают с накопленным буффером. */
   trait SimpleValueHandler extends MyHandler {
     /** Максимальная кол-во символов, которые будут сохранены в аккамулятор будущей строки. */
-    def maxLen: Int = STRING_MAXLEN
+    def maxLen: Int
     def ellipsis: String = ELLIPSIS_DFLT
     protected var hadOverflow: Boolean = false
     protected val sb = new StringBuilder
@@ -1240,7 +1483,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
           sbLen += length
         }
       }
-    }
+     }
 
     /** Выход из текущего элемента. Вызвать функцию, обрабатывающую собранный результат. */
     override def endElement(uri: String, localName: String, qName: String) {
@@ -1275,6 +1518,17 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     }
   }
 
+  /** Абстрактный обработчик полей, содержащих дату-время (или только дату). */
+  trait DateTimeHandler extends StringHandler {
+    override def maxLen: Int = DATE_TIME_MAXLEN
+    def handleDateTime(dt: DateTime)
+    def handleString(s: String) {
+      val parseResult = parse(DT_PARSER, s)
+      if (parseResult.successful) {
+        handleDateTime(parseResult.get)
+      }
+    }
+  }
 
   /** Хелпер для разбора поля с информацией о гарантии. */
   trait WarrantyHandler extends SimpleValueHandler {
