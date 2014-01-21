@@ -2,9 +2,9 @@ package io.suggest.ym
 
 import scala.util.parsing.combinator._
 import org.joda.time._
-import io.suggest.ym.PeriodUnits.PeriodUnit
 import io.suggest.ym.HotelMealTypes.HotelMealType
 import io.suggest.ym.HotelStarsLevels.HotelStarsLevel
+import io.suggest.ym.YmParsers.PeriodUnits.PeriodUnit
 
 /**
  * Suggest.io
@@ -83,8 +83,14 @@ object YmParsers extends JavaTokenParsers {
 
   /** true/false можно задавать через 1/0, on/off и т.д. Тут комплексный парсер булевых значений. */
   val BOOL_PARSER: Parser[Boolean] = {
-    val trueParser   = ("(?i)o[nk]".r | "(?i)yes".r | "[1-9]\\d*".r | "+") ^^^ true
-    val falseParser  = ("(?i)off".r | "(?i)no".r  | "0+".r | "-") ^^^ false
+    val enTrue = "(?i)o[nk]".r | "(?i)yes".r
+    val enFalse = "(?i)off".r | "(?i)no".r
+    val ruTrue: Parser[String] = "(?iu)(есть|да)".r
+    val ruFalse: Parser[String] = "(?iu)(отсу[тсц]{1,3}вует|нету?)".r
+    val digiTrue: Parser[String] = "0*[1-9]\\d*".r
+    val digiFalse: Parser[String] = "0+".r
+    val trueParser   = (enTrue | digiTrue | "+" | ruTrue) ^^^ true
+    val falseParser  = (enFalse | digiFalse | "-" | ruFalse) ^^^ false
     PLAIN_BOOL_PARSER | trueParser | falseParser
   }
 
@@ -191,15 +197,15 @@ object YmParsers extends JavaTokenParsers {
     val extended = "(?i)ex(t(en[dt][ei]+[dt])?)?\\.?".r | "+"
     val full: Parser[String] = "(?i)f+ul+".r
     val mini: Parser[String] = "(?i)mini".r
-    val all: Parser[String] = "(?i)(a(i|l+)|everything|вс[её])".r
-    val inclusive: Parser[String] = "(?i)(in(c(l(u(de[dt]|sive?)?)?)?)?|вкл(ючено)?)\\.*".r
+    val all: Parser[String] = "(?i)(a(i|l+)|everything)".r | "(?iu)вс[её]".r
+    val inclusive = "(?i)in(c(l(u(de[dt]|sive?)?)?)?)?\\.*".r | "(?iu)вкл(ючено)?\\.*".r
     val high: Parser[String] = "(?i)hi([hg][ghn]|-|\\s)?".r
     val clazz: Parser[String] = "(?i)clas+".r
     val ultra: Parser[String] = "(?i)ultr[ao]".r
     // a-la carte, menu
     val ala = "(?i)a[-_]?la".r
     val carte = "(?i)cart[eya]*".r
-    val menu = "(?i)men[uy]e?".r
+    val menu = "(?i)men[uy]e?".r | "(?iu)меню"
     val hb: Parser[String] = "HB"
     val fb: Parser[String] = "FB"
     // Готовые наборы буков.
@@ -208,15 +214,16 @@ object YmParsers extends JavaTokenParsers {
     val halfBoard = (hb | (half ~ board)) ^^^ HB
     val bedBreakfast = ("BB" | (bed <~ sep ~> breakfast)) ^^^ BB
     // HB+ означает, что это HB, но можно бухать весь день, но закуска платная.
-    val extHB = ("HB+" | extended <~ half <~ board | half ~> board ~> extended | extended ~ hb | hb ~ extended) ^^^ `HB+`
+    val extHB = ("HB+" | extended <~ half <~ board | half ~> board ~> extended | extended ~ hb | hb ~ extended) ^^^ ExHB
     // Вся жратва по расписанию, в т.ч. обед и полдник
     val fullBoard = (fb | full ~ board) ^^^ FB
-    val extFB = ("FB+" | full ~ board ~ extended | extended ~ full ~ board | extended ~ fb | fb ~ extended) ^^^ `FB+`
+    val extFB = ("FB+" | full ~ board ~ extended | extended ~ full ~ board | extended ~ fb | fb ~ extended) ^^^ ExFB
     // AI/ALL - всё включено, mini - всё с ограничениями
     val ai: Parser[String] = "AI"
     val miniAI = (mini ~ all <~ inclusive | all <~ inclusive ~> mini | mini <~ all | all ~> mini) ^^^ MiniAI
     val normAI = ((all <~ opt(sep) <~ inclusive) | all) ^^^ AI
     // жратва вся нахаляву в любое время дня и ночи, и вообще многое бесплатно
+    // TODO Нужно распихать всякие местечковые vip/imperial обозначения между UAI и HCAL
     val hcAI = ("HCA[LI]+".r | (high ~> clazz ~> all ~> inclusive) | (all ~> inclusive ~> high ~> clazz)) ^^^ HCAL
     // Ultra All inclusive. Это для самых упоротых, либо это гостиница-город.
     val ualRe: Parser[String] = "UA[IL]".r
@@ -261,7 +268,7 @@ object YmParsers extends JavaTokenParsers {
   val HOTEL_STARS_PARSER: Parser[HotelStarsLevel] = {
     import HotelStarsLevels._
     // Собираем звёзды
-    val star: Parser[String] = "([*★☆]|[\\s-]*stars?)".r
+    val star: Parser[String] = "(?i)([*★☆]|[\\s-]*stars?)".r
     val starCount: Parser[Int] = "[1-5]".r ^^ str2IntF
     val hotelStarsCnt = ((star ~> starCount) | (starCount <~ star)) ^^ { forStarCount }
     val hotelStarsLen = rep1(star) ^^ { stars => forStarCount(Math.min(5, stars.size)) }
@@ -274,10 +281,13 @@ object YmParsers extends JavaTokenParsers {
     // Финальный парсер звездатости
     hotelStars | hvHotel
   }
-}
 
 
-object PeriodUnits extends Enumeration {
-  type PeriodUnit = Value
-  val Year, Month, Week, Day, hour, minute, second = Value
+  /** Внутренние единицы периода */
+  object PeriodUnits extends Enumeration {
+    type PeriodUnit = Value
+    val Year, Month, Week, Day, hour, minute, second = Value
+  }
+
 }
+

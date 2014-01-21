@@ -313,7 +313,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
         case ShopFields.deliveryIncluded    => new ShopDeliveryIncludedHandler
         case ShopFields.local_delivery_cost => new ShopLocalDeliveryCostHandler
         case ShopFields.adult               => new ShopAdultHandler
-        case ShopFields.offers              => new OffersHandler(attributes, this)
+        case ShopFields.offers              => new OffersHandler(attributes)
       }
       become(nextHandler)
     }
@@ -433,22 +433,28 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class ShopStoreHandler extends BooleanHandler {
+    trait ShopBooleanHandler extends BooleanHandler {
+      def booleanNotParsed(s: String) {
+        throw YmShopFieldException("Failed to parse boolean value from " + s)
+      }
+    }
+
+    class ShopStoreHandler extends ShopBooleanHandler {
       def myTag = ShopFields.store.toString
       def handleBoolean(b: Boolean) { storeOpt = Some(b) }
     }
 
-    class ShopDeliveryHandler extends BooleanHandler {
+    class ShopDeliveryHandler extends ShopBooleanHandler {
       def myTag = ShopFields.delivery.toString
       def handleBoolean(b: Boolean) { deliveryOpt = Some(b) }
     }
 
-    class ShopPickupHandler extends BooleanHandler {
+    class ShopPickupHandler extends ShopBooleanHandler {
       def myTag = ShopFields.pickup.toString
       def handleBoolean(b: Boolean) { pickupOpt = Some(b) }
     }
 
-    class ShopDeliveryIncludedHandler extends BooleanHandler {
+    class ShopDeliveryIncludedHandler extends ShopBooleanHandler {
       def myTag = ShopFields.deliveryIncluded.toString
       def handleBoolean(b: Boolean) { deliveryIncludedOpt = Some(b) }
     }
@@ -458,19 +464,19 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def handleFloat(f: Float) { localDeliveryCostOpt = Some(f) }
     }
 
-    class ShopAdultHandler extends BooleanHandler {
+    class ShopAdultHandler extends ShopBooleanHandler {
       def myTag = ShopFields.adult.toString
       def handleBoolean(b: Boolean) { adultOpt = Some(b) }
     }
   }
 
 
-  case class OffersHandler(myAttrs: Attributes = EmptyAttrs, myShop: ShopHandler) extends MyHandler {
+  case class OffersHandler(myAttrs: Attributes = EmptyAttrs)(implicit myShop: ShopHandler) extends MyHandler {
     def myTag = ShopFields.offers.toString
 
     override def startTag(tagName: String, attributes: Attributes) {
       val nextHandler: MyHandler = OffersFields.withName(tagName) match {
-        case OffersFields.offer => AnyOfferHandler(attributes, myShop)
+        case OffersFields.offer => AnyOfferHandler(attributes)
       }
       become(nextHandler)
     }
@@ -486,19 +492,20 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
      * @param attrs Исходные аттрибуты тега offer.
      * @return Какой-то хандлер, пригодный для парсинга указанного коммерческого предложения.
      */
-    def apply(attrs: Attributes, myShop: ShopHandler): AnyOfferHandler = {
+    def apply(attrs: Attributes)(implicit myShop: ShopHandler): AnyOfferHandler = {
       val offerTypeRaw = attrs.getValue(ATTR_TYPE)
       val offerType = Option(offerTypeRaw)
-        .flatMap {OfferTypes.maybeWithName}
+        .map {OfferTypes.withName}
         .getOrElse {OfferTypes.default}
+      // TODO Надо как-то от warning тут избавится!
       offerType match {
-        case OfferTypes.SIMPLE          => new SimpleOfferHandler(attrs, myShop)
-        case OfferTypes.VendorModel     => new VendorModelOfferHandler(attrs, myShop)
-        case OfferTypes.Book            => new BookOfferHandler(attrs, myShop)
-        case OfferTypes.AudioBook       => new AudioBookOfferHandler(attrs, myShop)
-        case OfferTypes.ArtistTitle     => new ArtistTitleHandler(attrs, myShop)
-        case OfferTypes.Tour            => new TourHandler(attrs, myShop)
-        case OfferTypes.EventTicket     => new EventTicketOfferHandler(attrs, myShop)
+        case OfferTypes.Simple          => new SimpleOfferHandler(attrs)
+        case OfferTypes.VendorModel     => new VendorModelOfferHandler(attrs)
+        case OfferTypes.Book            => new BookOfferHandler(attrs)
+        case OfferTypes.AudioBook       => new AudioBookOfferHandler(attrs)
+        case OfferTypes.ArtistTitle     => new ArtistTitleHandler(attrs)
+        case OfferTypes.Tour            => new TourHandler(attrs)
+        case OfferTypes.EventTicket     => new EventTicketOfferHandler(attrs)
       }
     }
   }
@@ -609,6 +616,12 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       become(handler)
     }
 
+    trait OfferBooleanHandler extends BooleanHandler {
+      def booleanNotParsed(s: String) {
+        throw YmOfferFieldException("Failed to parse boolean value from " + s)
+      }
+    }
+
     trait OfferAnyUrlHandler extends UrlHandler {
       def urlTooLong(s: String) {
         throw YmOfferFieldException(s"Url too long. Max len is $maxLen.")
@@ -687,7 +700,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** store: Парсим поле store, которое говорит, можно ли купить этот товар в магазине. */
-    class OfferStoreHandler extends BooleanHandler {
+    class OfferStoreHandler extends OfferBooleanHandler {
       def myTag = AnyOfferFields.store.toString
       def handleBoolean(b: Boolean) {
         storeOpt = Some(b)
@@ -695,7 +708,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** pickup: Парсим поле, говорящее нам о том, возможно ли зарезервировать и самовывезти указанный товар. */
-    class OfferPickupHandler extends BooleanHandler {
+    class OfferPickupHandler extends OfferBooleanHandler {
       def myTag = AnyOfferFields.pickup.toString
       def handleBoolean(b: Boolean) {
         pickupOpt = Some(b)
@@ -703,7 +716,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** delivery: Поле указывает, возможна ли доставка указанного товара? */
-    class OfferDeliveryHandler extends BooleanHandler {
+    class OfferDeliveryHandler extends OfferBooleanHandler {
       def myTag = AnyOfferFields.delivery.toString
       def handleBoolean(b: Boolean) {
         deliveryOpt = Some(b)
@@ -772,7 +785,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
 
     /** downloadable предназначен для обозначения товара, который можно скачать. Нормальной документации маловато,
       * поэтому считаем что тут boolean. */
-    class DownloadableHandler extends BooleanHandler {
+    class DownloadableHandler extends OfferBooleanHandler {
       def myTag = AnyOfferFields.downloadable.toString
       def handleBoolean(b: Boolean) {
         downloadableOpt = Some(b)
@@ -782,7 +795,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     /** adult: обязателен для обозначения товара, имеющего отношение к удовлетворению сексуальных потребностей, либо
       * иным образом эксплуатирующего интерес к сексу.
       * [[http://help.yandex.ru/partnermarket/adult.xml Документация по тегу adult]]. */
-    class OfferAdultHandler extends BooleanHandler {
+    class OfferAdultHandler extends OfferBooleanHandler {
       def myTag = AnyOfferFields.adult.toString
       def handleBoolean(b: Boolean) {
         adultOpt = Some(b)
@@ -792,17 +805,17 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     /** Возрастая категория товара. Единицы измерения заданы в аттрибутах. */
     class AgeHandler(attrs: Attributes) extends IntHandler {
       def myTag = AnyOfferFields.age.toString
-      private def ex(msg: String) = throw YmOfferFieldException(msg)
       def handleInt(i: Int) {
         val unitV1 = Option(attrs.getValue(ATTR_UNIT)) map { unitV =>
-            OfferAgeUnits.withName(unitV.trim.toLowerCase)
+          OfferAgeUnits.withName(unitV.trim.toLowerCase)
         } getOrElse OfferAgeUnits.year
+        // Проверить значения, чтобы соответствовали интервалам допустимых значений.
         val possibleValues = unitV1 match {
           case OfferAgeUnits.month => OFFER_AGE_MONTH_VALUES
           case OfferAgeUnits.year  => OFFER_AGE_YEAR_VALUES
         }
         if (!(possibleValues contains i)) {
-          ex(s"Invalid value for unit=$unitV1: $i ; Possible values are: ${possibleValues.mkString(", ")}")
+          throw YmOfferFieldException(s"Invalid value for unit=$unitV1: $i ; Possible values are: ${possibleValues.mkString(", ")}")
         }
         ageOpt = Some(OfferAge(units = unitV1, value = i))
       }
@@ -902,16 +915,18 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /** "Упрощенное описание" - исторический перво-формат яндекс-маркета.
     * Поле type ещё не заимплеменчено, и есть некоторый ограниченный и фиксированный набор полей.
     * Доп.поля: vendor, vendorCode. */
-  case class SimpleOfferHandler(myAttrs: Attributes, myShop: ShopHandler) extends VendorInfoH with OfferNameH {
-    def offerType = OfferTypes.SIMPLE
+  case class SimpleOfferHandler(myAttrs: Attributes)(implicit shop: ShopHandler) extends VendorInfoH with OfferNameH {
+    def offerType = OfferTypes.Simple
+    def myShop = shop
   }
 
   /** Произвольный товар (vendor.model)
     * Этот тип описания является наиболее удобным и универсальным, он рекомендован для описания товаров из
     * большинства категорий Яндекс.Маркета.
     * Доп.поля: typePrefix, [vendor, vendorCode], model, provider, tarifPlan. */
-  case class VendorModelOfferHandler(myAttrs: Attributes, myShop: ShopHandler) extends VendorInfoH {
+  case class VendorModelOfferHandler(myAttrs: Attributes)(implicit shop: ShopHandler) extends VendorInfoH {
     def offerType = OfferTypes.VendorModel
+    def myShop = shop
     /** Описание очень краткое. "Группа товаров / категория". Хз что тут и как. */
     var typePrefix: Option[String] = None
     /** Модель товара, хотя судя по примерам, там может быть и категория, а сама "модель". "Женская куртка" например. */
@@ -983,7 +998,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
         val tagName1 = if (SELLER_WARRANTY_RE.pattern.matcher(tagName).matches()) {
           myTag
         } else {
-          ???
+          throw YmOfferFieldException("Unexpected closing tag.")
         }
         super.endTag(tagName1)
       }
@@ -1152,9 +1167,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /**
    * Обработчик для типа book, т.е. бумажных книженций.
    * @param myAttrs Аттрибуты оффера.
-   * @param myShop Текущий магазин.
+   * @param shop Текущий магазин.
    */
-  case class BookOfferHandler(myAttrs:Attributes, myShop:ShopHandler) extends AnyBookOfferHandler {
+  case class BookOfferHandler(myAttrs:Attributes)(implicit shop:ShopHandler) extends AnyBookOfferHandler {
+    def myShop = shop
     /** Переплёт. */
     var bindingOpt: Option[String] = None
     /** Кол-во страниц в книге. */
@@ -1185,9 +1201,11 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /**
    * Аудиокнига.
    * @param myAttrs Атрибуты оффера.
-   * @param myShop Текущий магазин.
+   * @param shop Текущий магазин.
    */
-  case class AudioBookOfferHandler(myAttrs:Attributes, myShop:ShopHandler) extends AnyBookOfferHandler {
+  case class AudioBookOfferHandler(myAttrs:Attributes)(implicit shop:ShopHandler) extends AnyBookOfferHandler {
+    def myShop = shop
+
     /** Исполнитель. Если их несколько, перечисляются через запятую. */
     var performedByOpt: Option[String] = None
     /** Тип аудиокниги (радиоспектакль, произведение начитано, ...). */
@@ -1275,10 +1293,11 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /**
    * Обработчик artist.title-офферов, содержащих аудио/видео хлам.
    * @param myAttrs Аттрибуты этого оффера.
-   * @param myShop Текущий магазин.
+   * @param shop Текущий магазин.
    */
-  case class ArtistTitleHandler(myAttrs:Attributes, myShop:ShopHandler) extends AnyOfferHandler with OfferCountryOptH with OfferYearH {
+  case class ArtistTitleHandler(myAttrs:Attributes)(implicit shop:ShopHandler) extends AnyOfferHandler with OfferCountryOptH with OfferYearH {
     def offerType = OfferTypes.ArtistTitle
+    def myShop = shop
 
     /** Исполнитель, если есть. */
     var artistOpt: Option[String] = None
@@ -1353,8 +1372,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   }
 
 
-  case class TourHandler(myAttrs:Attributes, myShop:ShopHandler) extends AnyOfferHandler with OfferCountryOptH with OfferNameH {
+  case class TourHandler(myAttrs:Attributes)(implicit shop:ShopHandler) extends AnyOfferHandler with OfferCountryOptH with OfferNameH {
     def offerType = OfferTypes.Tour
+    def myShop = shop
 
     /** Регион мира (часть света, материк планеты и т.д.), к которому относится путёвка. "Африка" например. */
     var worldRegionOpt: Option[String] = None
@@ -1475,10 +1495,11 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /**
    * Билет на мероприятие.
    * @param myAttrs Аттрибуты тега оффера.
-   * @param myShop Магазин.
+   * @param shop Магазин.
    */
-  case class EventTicketOfferHandler(myAttrs:Attributes, myShop:ShopHandler) extends AnyOfferHandler with OfferNameH {
+  case class EventTicketOfferHandler(myAttrs:Attributes)(implicit shop:ShopHandler) extends AnyOfferHandler with OfferNameH {
     def offerType = OfferTypes.EventTicket
+    def myShop = shop
 
     /** Место проведения мероприятия. */
     var placeOpt: Option[String] = None
@@ -1549,14 +1570,14 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class IsPremiereHandler extends BooleanHandler {
+    class IsPremiereHandler extends OfferBooleanHandler {
       def myTag = AnyOfferFields.is_premiere.toString
       def handleBoolean(b: Boolean) {
         isPremiereOpt = Some(b)
       }
     }
 
-    class IsKidsHandler extends BooleanHandler {
+    class IsKidsHandler extends OfferBooleanHandler {
       def myTag = AnyOfferFields.is_kids.toString
       def handleBoolean(b: Boolean) {
         isKidsOpt = Some(b)
@@ -1670,9 +1691,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       if (parseResult.successful) {
         handleBoolean(parseResult.get)
       } else {
-        ???
+        booleanNotParsed(sb.toString())
       }
     }
+    def booleanNotParsed(s: String)
   }
 
   trait BooleanTagFlagHandler extends MyHandler {
