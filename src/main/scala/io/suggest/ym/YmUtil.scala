@@ -4,7 +4,6 @@ import io.suggest.ym.OfferAgeUnits.OfferAgeUnit
 import org.joda.time.Period
 import io.suggest.ym.OfferCategoryIdTypes.OfferCategoryIdType
 import io.suggest.ym.HotelRoomTypes.HotelRoomType
-import org.xml.sax.Attributes
 import io.suggest.sax.EmptyAttributes
 
 /**
@@ -143,11 +142,42 @@ object OfferParamAttrs extends Enumeration {
 
 
 /** Типы описаний предложений магазинам. SIMPLE используется для null-значения аттрибута типа. */
-object OfferTypes extends Enumeration {
-  type OfferType = Value
-  val SIMPLE, `vendor.model`, book, audiobook, `artist.title`, tour, ticket, `event-ticket` = Value
+// TODO Переписать это через Enumeration, чтобы каждый элемент мог выдавать корректное rawName()
+object OfferTypes {
+  sealed case class OfferType(name: String) {
+    override def toString = name 
+  }
+
+  val SIMPLE_RAW: String = null
+  val VendorModelRAW  = "vendor.model"
+  val BookRAW         = "book"
+  val AudioBookRAW    = "audiobook"
+  val ArtistTitleRAW  = "artist.title"
+  val TourRAW         = "tour"
+  val EventTicketRAW  = "event-ticket"
+  
+  val SIMPLE        = OfferType(SIMPLE_RAW)
+  val VendorModel   = OfferType(VendorModelRAW)
+  val Book          = OfferType(BookRAW)
+  val AudioBook     = OfferType(AudioBookRAW)
+  val ArtistTitle   = OfferType(ArtistTitleRAW)
+  val Tour          = OfferType(TourRAW)
+  val EventTicket   = OfferType(EventTicketRAW)
 
   def default = SIMPLE
+
+  val raw2parsedMap = Map[String, OfferType](
+    SIMPLE_RAW      -> SIMPLE,
+    VendorModelRAW  -> VendorModel,
+    BookRAW         -> Book,
+    AudioBookRAW    -> AudioBook,
+    ArtistTitleRAW  -> ArtistTitle,
+    TourRAW         -> Tour,
+    EventTicketRAW  -> EventTicket
+  )
+
+  def withName(s: String): OfferType = raw2parsedMap(s)
+  def maybeWithName(s: String): Option[OfferType] = raw2parsedMap.get(s)
 }
 
 
@@ -224,18 +254,14 @@ case object EmptyAttrs extends EmptyAttributes
 
 
 object ShopCurrency {
-  val RATE_DFLT = 1.0F
-  val PLUS_DFLT = 0F
-
-  def parseCurrencyAttr(attrs:Attributes, attrKey: String, default: Float): Float = {
-    Option(attrs.getValue(attrKey)) map { _.toFloat } getOrElse default
-  }
+  val RATE_DFLT = "1.0"
+  val PLUS_DFLT = "0.0"
 }
 
 case class ShopCurrency(
   id    : String,
-  rate  : Float = ShopCurrency.RATE_DFLT,
-  plus  : Float = ShopCurrency.PLUS_DFLT
+  rate  : String = ShopCurrency.RATE_DFLT,
+  plus  : String = ShopCurrency.PLUS_DFLT
 ) extends Serializable
 
 

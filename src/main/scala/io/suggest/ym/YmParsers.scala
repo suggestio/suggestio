@@ -81,6 +81,13 @@ object YmParsers extends JavaTokenParsers {
     boolRe ^^ { _.toBoolean }
   }
 
+  /** true/false можно задавать через 1/0, on/off и т.д. Тут комплексный парсер булевых значений. */
+  val BOOL_PARSER: Parser[Boolean] = {
+    val trueParser   = ("(?i)o[nk]".r | "(?i)yes".r | "[1-9]\\d*".r | "+") ^^^ true
+    val falseParser  = ("(?i)off".r | "(?i)no".r  | "0+".r | "-") ^^^ false
+    PLAIN_BOOL_PARSER | trueParser | falseParser
+  }
+
 
   /** Для парсинга гарантии применяется комбинация из boolean-парсера и парсера периода времени. */
   val WARRANTY_PARSER: Parser[Warranty] = {
@@ -191,8 +198,8 @@ object YmParsers extends JavaTokenParsers {
     val ultra: Parser[String] = "(?i)ultr[ao]".r
     // a-la carte, menu
     val ala = "(?i)a[-_]?la".r
-    val carte = "(?i)cart[ey]*".r
-    val menu = "(?i)men[uy]".r
+    val carte = "(?i)cart[eya]*".r
+    val menu = "(?i)men[uy]e?".r
     val hb: Parser[String] = "HB"
     val fb: Parser[String] = "FB"
     // Готовые наборы буков.

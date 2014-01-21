@@ -65,6 +65,21 @@ class YmParsersTest extends FlatSpec with Matchers {
     assert(!f("fAlSe"))
   }
 
+  "BOOL_PARSER" should "parse different data into booleans" in {
+    val f = getF(BOOL_PARSER)
+    f("true")       shouldBe true
+    f("FALSE")      shouldBe false
+    f("tRuE")       shouldBe true
+    f("1")          shouldBe true
+    f("0")          shouldBe false
+    f("111")        shouldBe true
+    f("yes")        shouldBe true
+    f("No")         shouldBe false
+    f("YeS")        shouldBe true
+    f("+")          shouldBe true
+    f("-")          shouldBe false
+  }
+
   "WARRANTY_PARSER" should "parse warranty value in different formats" in {
     val f = getF(WARRANTY_PARSER)
     f("true")  should be (Warranty(hasWarranty = true, warrantyPeriod = None))
