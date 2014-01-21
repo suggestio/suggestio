@@ -4,7 +4,6 @@ import scala.util.parsing.combinator._
 import org.joda.time._
 import io.suggest.ym.PeriodUnits.PeriodUnit
 import io.suggest.ym.HotelMealTypes.HotelMealType
-import io.suggest.ym.HotelRoomTypes.HotelRoomType
 import io.suggest.ym.HotelStarsLevels.HotelStarsLevel
 
 /**

@@ -4,6 +4,8 @@ import io.suggest.ym.OfferAgeUnits.OfferAgeUnit
 import org.joda.time.Period
 import io.suggest.ym.OfferCategoryIdTypes.OfferCategoryIdType
 import io.suggest.ym.HotelRoomTypes.HotelRoomType
+import org.xml.sax.Attributes
+import io.suggest.sax.EmptyAttributes
 
 /**
  * Suggest.io
@@ -212,4 +214,40 @@ object HotelStarsLevels extends Enumeration {
     case 2 => HV2
   }
 }
+
+
+case class ShopCategory(id: String, parentId: Option[String], text: String) extends Serializable
+
+
+/** Неизменяемый объект, описывающий пустые аттрибуты. Полезен как заглушка для пустых аттрибутов. */
+case object EmptyAttrs extends EmptyAttributes
+
+
+object ShopCurrency {
+  val RATE_DFLT = 1.0F
+  val PLUS_DFLT = 0F
+
+  def parseCurrencyAttr(attrs:Attributes, attrKey: String, default: Float): Float = {
+    Option(attrs.getValue(attrKey)) map { _.toFloat } getOrElse default
+  }
+}
+
+case class ShopCurrency(
+  id    : String,
+  rate  : Float = ShopCurrency.RATE_DFLT,
+  plus  : Float = ShopCurrency.PLUS_DFLT
+) extends Serializable
+
+
+/** Параметр предложения, специфичный для конкретной категории предложений. Потом надо будет сконвертить в трейт.
+  * @param name Имя параметра.
+  * @param unitRawOpt Единицы измерения значения, сырые, если заданы.
+  * @param rawValue Сырое значение параметра в виде строки.
+  */
+case class OfferParam(
+  name: String,
+  unitRawOpt: Option[String],
+  rawValue: String
+) extends Serializable
+
 

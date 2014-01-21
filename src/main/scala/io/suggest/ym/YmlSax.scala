@@ -1,9 +1,9 @@
 package io.suggest.ym
 
 import org.xml.sax.helpers.DefaultHandler
-import org.xml.sax.Attributes
+import org.xml.sax.{Locator, Attributes}
 import cascading.tuple.TupleEntryCollector
-import io.suggest.sax.{EmptyAttributes, SaxContentHandlerWrapper}
+import io.suggest.sax.SaxContentHandlerWrapper
 import YmConstants._
 import io.suggest.util.UrlUtil
 import io.suggest.ym.AnyOfferFields.AnyOfferField
@@ -145,11 +145,14 @@ object YmlSax extends Serializable {
 
 import YmlSax._
 
-class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrapper {
+class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with SaxContentHandlerWrapper {
 
   /** Дата старта парсера. Используется для определения длительности работы и для определения каких-либо параметров
     * настоящего времени во вспомогательных парсерах, связанных с датами и временем. */
   val startedAt = DateTime.now()
+
+  /** Экземпляр локатора, который позволяет определить координаты парсера в документе. */
+  implicit var locator: Locator = null
 
   /** Стопка, которая удлиняется по мере погружения в XML теги. Текущий хэндлер наверху. */
   private var handlersStack: List[MyHandler] = Nil
@@ -174,6 +177,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     result
   }
 
+  override def setDocumentLocator(l: Locator) {
+    locator = l
+  }
+
 
   //------------------------------------------- FSM States ------------------------------------------------
 
@@ -181,7 +188,6 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
   trait MyHandler extends DefaultHandler {
     def myTag: String
     def myAttrs: Attributes
-
     /** Выход из текущего элемента у всех одинаковый. */
     override def endElement(uri: String, localName: String, qName: String) {
       if (localName == myTag  &&  handlersStack.head == this) {
@@ -239,16 +245,17 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
    * Обработчик содержимого тега shop.
    * @param myAttrs Атрибуты тега shop, которые вроде бы всегда пустые.
    */
-  case class ShopHandler(myAttrs: Attributes = EmptyAttrs) extends MyHandler {
+  case class ShopHandler(myAttrs: Attributes = EmptyAttrs) extends MyHandler with ShopHandlerState {
     def myTag = YmlCatalogFields.shop.toString
+    implicit protected def myShop = this
 
     var name                : String = null
     var company             : String = null
     var url                 : String = null
     var phoneOpt            : Option[String] = None
-    //var platformOpt         : Option[String] = None
-    //var versionOpt          : Option[String] = None
-    //var agencyOpt           : Option[String] = None
+    //var platformOpt       : Option[String] = None
+    //var versionOpt        : Option[String] = None
+    //var agencyOpt         : Option[String] = None
     var emails              : List[String] = Nil
     var currencies          : List[ShopCurrency] = Nil
     var categories          : List[ShopCategory] = Nil
@@ -299,6 +306,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
       def myTag  = ShopFields.url.toString
       override def maxLen: Int = SHOP_URL_MAXLEN
       def handleUrl(_url: String) { url = _url }
+      def urlTooLong(s: String) {
+        throw YmShopFieldException(s"Shop URL too long. Max length is $maxLen.")
+      }
     }
 
     class PhoneHandler extends StringHandler {
@@ -323,22 +333,30 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
       def myAttrs = EmptyAttrs
       var currCounter = 0
 
-      // TODO Надо парсить валюты по-нормальному
-      // TODO Надо проверять курс валют, чтобы он отклонялся не более на 30% от курса ЦБ.
-
       override def startElement(uri: String, localName: String, qName: String, attributes: Attributes) {
         if ((localName equalsIgnoreCase TAG_CURRENCY)  &&  currCounter < SHOP_CURRENCIES_COUNT_MAX) {
-          val maybeId = attributes.getValue(ATTR_ID)
-          if (maybeId != null) {
-            var id = maybeId.trim
-            if (id.length > SHOP_CURRENCY_ID_MAXLEN)
-              throw CurrencyIdTooLongException(id)
-            id = id.toUpperCase
-            val rate = ShopCurrency.parseCurrencyAttr(attributes, ATTR_RATE, ShopCurrency.RATE_DFLT)
-            val plus = ShopCurrency.parseCurrencyAttr(attributes, ATTR_PLUS, ShopCurrency.PLUS_DFLT)
-            currencies ::= ShopCurrency(id, rate=rate, plus=plus)
-            currCounter += 1
+          become(new ShopCurrencyHandler(attributes))
+          currCounter += 1
+        }
+      }
+    }
+
+    /** Парсер одной валюты. */
+    class ShopCurrencyHandler(attrs: Attributes) extends StringHandler {
+      def myTag = TAG_CURRENCY
+      def maxLen: Int = SHOP_CURRENCY_ID_MAXLEN
+      def handleString(s: String) {
+        // TODO Надо проверять курс валют, чтобы он отклонялся не более на 30% от курса ЦБ.
+        val maybeId = attrs.getValue(ATTR_ID)
+        if (maybeId != null) {
+          var id = maybeId.trim
+          if (id.length > SHOP_CURRENCY_ID_MAXLEN) {
+            throw YmShopFieldException(s"Currency id too long. Max length is $SHOP_CURRENCY_ID_MAXLEN.")
           }
+          id = id.toUpperCase
+          val rate = ShopCurrency.parseCurrencyAttr(attrs, ATTR_RATE, ShopCurrency.RATE_DFLT)
+          val plus = ShopCurrency.parseCurrencyAttr(attrs, ATTR_PLUS, ShopCurrency.PLUS_DFLT)
+          currencies ::= ShopCurrency(id, rate=rate, plus=plus)
         }
       }
     }
@@ -362,18 +380,27 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
       override def maxLen: Int = SHOP_CAT_VALUE_MAXLEN
 
       def handleString(s: String) {
-        if (hadOverflow) {
-          throw ShopCategoryTooLongException(s)
-        }
+        if (hadOverflow)
+          throw YmShopFieldException(s"Category name too long. Max.length is $maxLen.")
+        // Парсим id
         val maybeId = attrs.getValue(ATTR_ID)
         if (maybeId != null) {
           val idCur = maybeId.trim
-          if (idCur.length > SHOP_CAT_ID_LEN_MAX)
-            throw ShopCategoryTooLongException(idCur)
-          val parentIdOptCur = Option(attrs.getValue(ATTR_PARENT_ID)).map(_.toInt)
-          categories ::= ShopCategory(id=idCur, parentId = parentIdOptCur, text=sb.toString())
-        } else
-          throw ExpectedAttrNotFoundException(tag=myTag, attr=ATTR_ID)
+          verifyIdLen(ATTR_ID, idCur, s)
+          // Парсим опциональный parent_id
+          val parentIdOptCur = Option(attrs.getValue(ATTR_PARENT_ID))
+          parentIdOptCur foreach {
+            verifyIdLen(ATTR_PARENT_ID, _, s)
+          }
+          categories ::= ShopCategory(id=idCur, parentId = parentIdOptCur, text=s)
+        } else {
+          throw YmShopFieldException(s"Attribute '$ATTR_ID' undefined, but it should.")
+        }
+      }
+
+      def verifyIdLen(attrName: String, id: String, catName:String) {
+        if (id.length > SHOP_CAT_ID_LEN_MAX)
+          throw YmShopFieldException(s"Category attribute '$attrName' too long. Max.length is $SHOP_CAT_ID_LEN_MAX. Category name is '$catName' and it is ok.")
       }
     }
 
@@ -447,12 +474,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
   /** Базовый класс для обработчиков коммерческих предложений.
     * Разные типы предложений имеют между собой много общего, поэтому основная часть
     * логики разборки предложений находится здесь. */
-  trait AnyOfferHandler extends MyHandler {
+  trait AnyOfferHandler extends MyHandler with OfferHandlerState {
     def myTag = OffersFields.offer.toString
-    def myShop: ShopHandler
-
-    /** Распарсенное значение аттрибута типа предложения. Для simple это SIMPLE. */
-    def offerType: OfferType
+    implicit def myShop: ShopHandler
+    implicit protected def selfOfferHandler = this
 
     /** Опциональный уникальный идентификатор комерческого предложения. */
     val idOpt = Option(myAttrs.getValue(ATTR_ID))
@@ -550,8 +575,14 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
       become(handler)
     }
 
+    trait OfferAnyUrlHandler extends UrlHandler {
+      def urlTooLong(s: String) {
+        throw YmOfferFieldException(s"Url too long. Max len is $maxLen.")
+      }
+    }
+
     /** Обработчик тега url, вставляющий в состояние результирующую ссылку. */
-    class OfferUrlHandler extends UrlHandler {
+    class OfferUrlHandler extends OfferAnyUrlHandler {
       def myTag = AnyOfferFields.url.toString
       override def maxLen: Int = OFFER_URL_MAXLEN
       def handleUrl(url: String) { urlOpt = Some(url) }
@@ -570,9 +601,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
       def handleString(s: String) {
         // Проверяем валюту по списку валют магазина.
         if (!myShop.currencies.exists(_.id == s))
-          throw UndefinedCurrencyIdException(s, myShop.currencies)
+          throw YmOfferFieldException(s"Unexpected currencyId: '$s'. Defined shop's currencies are: ${myShop.currencies.map(_.id).mkString(", ")}")
         if (hadOverflow)
-          throw CurrencyIdTooLongException(s)
+          throw YmOfferFieldException(s"Too long currency id. Max length is $maxLen.")
         currencyId = s
       }
     }
@@ -606,14 +637,14 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
           val catPath = MARKET_CATEGORY_PATH_SPLIT_RE.split(s).toList.filter(!_.isEmpty)
           marketCategoryOpt = Some(MarketCategory(catPath))
         } else {
-          throw MarketCategoryTooLongException(s)
+          throw YmOfferFieldException("Value too long.")
         }
       }
     }
 
     /** Аккамулирование ссылок на картинки в pictures. Картинок может быть много, и хотя бы одна почти всегда имеется,
       * поэтому блокируем многократное конструирование этого объекта. */
-    object PictureUrlHandler extends UrlHandler {
+    object PictureUrlHandler extends OfferAnyUrlHandler {
       def myTag = AnyOfferFields.picture.toString
       override def maxLen: Int = OFFER_PICTURE_URL_MAXLEN
       def handleUrl(pictureUrl: String) {
@@ -727,7 +758,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     /** Возрастая категория товара. Единицы измерения заданы в аттрибутах. */
     class AgeHandler(attrs: Attributes) extends IntHandler {
       def myTag = AnyOfferFields.age.toString
-      private def ex(msg: String) = throw OfferAgeInvalidException(myShop.name, idOpt, msg)
+      private def ex(msg: String) = throw YmOfferFieldException(msg)
       def handleInt(i: Int) {
         attrs.getValue(ATTR_UNIT) match {
           case null => ex("Attribute 'unit' missing.")
@@ -751,7 +782,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     class ParamHandler(attrs: Attributes) extends StringHandler {
       def myTag = AnyOfferFields.param.toString
       override def maxLen: Int = OFFER_PARAM_MAXLEN
-      private def ex(msg: String) = throw OfferParamInvalidException(myShop.name, idOpt, msg)
+      private def ex(msg: String) = throw YmOfferFieldException(msg)
       def handleString(s: String) {
         if (paramsCounter <= OFFER_PARAMS_COUNT_MAX) {
           val nameAttrKey = OfferParamAttrs.name.toString
@@ -1479,7 +1510,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 
 
   /** Враппер для дедубликации кода хандлеров, которые читают текст из тега и что-то делают с накопленным буффером. */
-  trait SimpleValueHandler extends MyHandler {
+  trait SimpleValueHandler extends MyHandler with SimpleValueT {
+    implicit protected def selfFieldHandler: SimpleValueT = this
     /** Максимальная кол-во символов, которые будут сохранены в аккамулятор будущей строки. */
     def maxLen: Int
     def ellipsis: String = ELLIPSIS_DFLT
@@ -1538,13 +1570,14 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
     override def maxLen: Int = URL_MAXLEN
     def handleString(s: String) {
       if (hadOverflow) {
-        throw UrlTooLongException(s, maxLen)
+        urlTooLong(s)
       } else {
         // Необходимо сверять домен ссылки? По идее магазин платит деньги, значит кривая ссылка - это его проблема, и сверять не надо.
         val url1 = UrlUtil.normalize(s)
         handleUrl(url1)
       }
     }
+    def urlTooLong(s: String)
   }
 
   /** Абстрактный обработчик полей, содержащих дату-время (или только дату). */
@@ -1612,38 +1645,86 @@ class YmlSax(outputCollector: TupleEntryCollector) extends SaxContentHandlerWrap
 }
 
 
-/** Неизменяемый объект, описывающий пустые аттрибуты. Полезен как заглушка для пустых аттрибутов. */
-case object EmptyAttrs extends EmptyAttributes
-
-
-object ShopCurrency {
-  val RATE_DFLT = 1.0F
-  val PLUS_DFLT = 0F
-
-  def parseCurrencyAttr(attrs:Attributes, attrKey: String, default: Float): Float = {
-    Option(attrs.getValue(attrKey)) map { _.toFloat } getOrElse default
-  }
+/** Экспорт интерфейса ShopHandler для возможности работы с ним извне. */
+trait ShopHandlerState {
+  def name                : String
+  def company             : String
+  def url                 : String
+  def phoneOpt            : Option[String]
+  def emails              : List[String]
+  def currencies          : List[ShopCurrency]
+  def categories          : List[ShopCategory]
+  def storeOpt            : Option[Boolean]
+  def pickupOpt           : Option[Boolean]
+  def deliveryOpt         : Option[Boolean]
+  def deliveryIncludedOpt : Option[Boolean]
+  def localDeliveryCostOpt: Option[Float]
+  def adultOpt            : Option[Boolean]
 }
 
-case class ShopCurrency(
-  id    : String,
-  rate  : Float = ShopCurrency.RATE_DFLT,
-  plus  : Float = ShopCurrency.PLUS_DFLT
-) extends Serializable
+
+/** Экспорт состояния оффера для возможности взаимодействия с ним извне. */
+trait OfferHandlerState {
+  /** Расaпарсенное значение аттрибута типа предложения. Для simple это SIMPLE. */
+  def offerType: OfferType
+  /** Опциональный уникальный идентификатор комерческого предложения. */
+  def idOpt: Option[String]
+  /**
+   * Для корректного соотнесения всех вариантов товара с карточкой модели необходимо в описании каждого
+   * товарного предложения использовать атрибут group_id. Значение атрибута числовое, задается произвольно.
+   * Для всех предложений, которые необходимо отнести к одной карточке товара, должно быть указано одинаковое
+   * значение атрибута group_id.
+   * [[http://partner.market.yandex.ru/legal/clothes/ Цитата взята отсюда]]
+   */
+  def groupIdOpt: Option[String]
+  /** Значение необязательного флага available, если таков выставлен. */
+  def availableOpt: Option[Boolean]
+  /** Ссылка на коммерческое предложение на сайте магазина. */
+  def urlOpt: Option[String]
+  /** Цена коммерческого предложения. */
+  def price: Float
+  /** Валюта цены коммерческого предложения */
+  def currencyId: String
+  /** Список категорий магазина, который должен быть непустым. */
+  def categoryIds: List[OfferCategoryId]
+  /** Необязательная категория в общем дереве категорий яндекс-маркета. */
+  def marketCategoryOpt: Option[MarketCategory]
+  /** Ссылки на картинки. Их может и не быть. */
+  def pictures: List[String]
+  /** store: Элемент позволяет указать возможность купить соответствующий товар в розничном магазине. */
+  def storeOpt: Option[Boolean]
+  /** pickup: Доступность резервирования с самовывозом. */
+  def pickupOpt: Option[Boolean]
+  /** delivery: Допустима ли доставка для указанного товара? */
+  def deliveryOpt: Option[Boolean]
+  /** Включена ли доставка в стоимость товара? */
+  def deliveryIncludedOpt: Option[Boolean]
+  /** Стоимость доставки данного товара в своем регионе. */
+  def localDeliveryCostOpt: Option[Float]
+  /** Описание товара. */
+  def descriptionOpt: Option[String]
+  /** Краткие дополнительные сведения по покупке/доставке. */
+  def salesNotesOpt: Option[String]
+  /** Гарантия производителя: true, false или P1Y2M10DT2H30M. */
+  def manufacturerWarrantyOpt: Option[Warranty]
+  /** Страна-производитель товара. */
+  def countryOfOriginOpt: Option[String]
+  /** Можно ли скачать указанный нематериальный товар? */
+  def downloadableOpt: Option[Boolean]
+  /** Это товар "для взрослых"? */
+  def adultOpt: Option[Boolean]
+  /** Возрастная категория товара. Есть немного противоречивой документации, но суть в том,
+    * что есть аттрибут units и набор допустимых целочисленное значений для указанных единиц измерения. */
+  def ageOpt: Option[OfferAge]
+  /** Параметры, специфичные для конкретного товара. */
+  def params: List[OfferParam]
+  def paramsCounter: Int
+}
 
 
-/** Параметр предложения, специфичный для конкретной категории предложений. Потом надо будет сконвертить в трейт.
-  * @param name Имя параметра.
-  * @param unitRawOpt Единицы измерения значения, сырые, если заданы.
-  * @param rawValue Сырое значение параметра в виде строки.
-  */
-case class OfferParam(
-  name: String,
-  unitRawOpt: Option[String],
-  rawValue: String
-) extends Serializable
-
-
-case class ShopCategory(id: String, parentId: Option[Int], text: String) extends Serializable
-
+trait SimpleValueT {
+  def maxLen: Int
+  def myTag: String
+  def myAttrs: Attributes
+}
 

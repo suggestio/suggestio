@@ -98,7 +98,7 @@ trait AttributesWithIgnoreCase extends Attributes {
 case class RichAttributesWrapper(wrappedAttributes: Attributes) extends AttributesWrapper with AttributesWithIgnoreCase
 
 
-
+/** Реализация Attributes, которая отражает пустые аттрибуты. */
 trait EmptyAttributes extends Attributes {
   def getLength: Int = 0
   def getURI(index: Int): String = null

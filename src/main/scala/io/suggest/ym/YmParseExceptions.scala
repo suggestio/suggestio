@@ -1,66 +1,84 @@
 package io.suggest.ym
 
-import io.suggest.ym.AnyOfferFields.AnyOfferField
-import YmlSax._
+import org.xml.sax.Locator
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 17.01.14 18:38
  * Description: Исключения парсеров форматов яндекс-маркета.
+ * В экзепшенах избегаем какого-либо хранения рантаймовых значений и переменных.
  */
 
 /** Исключение верхнего уровня для всех парсеров sio.ym.*. */
-class YmParseException extends IllegalArgumentException
+abstract class YmParseException extends IllegalArgumentException {
+  def lineNumber: Int
+  def columnNumber: Int
+  def getMessageBuilder: StringBuilder = {
+    new StringBuilder()
+      .append('(')
+      .append(lineNumber)
+      .append(';')
+      .append(columnNumber)
+      .append(") ")
+  }
+  override final lazy val getMessage: String = getMessageBuilder.toString()
+}
+
 
 abstract class YmShopException extends YmParseException {
   def shopName: String
-  override def getMessage: String = shopName
-}
-
-abstract class YmOfferException extends YmShopException {
-  def offerIdOpt: Option[String]
-  override def getMessage: String = {
-    val msg0 = super.getMessage
-    if (offerIdOpt.isDefined) {
-      msg0 + "[" + offerIdOpt.get + "]"
-    } else {
-      msg0
-    }
+  override def getMessageBuilder: StringBuilder = {
+    val sb = super.getMessageBuilder
+    if (shopName != null)
+      sb.append(shopName).append(' ')
+    sb
   }
 }
 
-abstract class YmOfferFieldException extends YmOfferException {
-  def offerField: AnyOfferField
-  def offerFieldName = offerField.toString
-  def msg: String
-  override def getMessage: String = super.getMessage + "." + offerFieldName + ": " + msg
+
+object YmShopFieldException {
+  def apply(msg: String)(implicit shop:ShopHandlerState, locator:Locator, fh:SimpleValueT): YmShopFieldException = {
+    YmShopFieldException(
+      lineNumber = locator.getLineNumber,
+      columnNumber = locator.getColumnNumber,
+      shopName = shop.name,
+      fn = fh.myTag,
+      msg = msg
+    )
+  }
+}
+case class YmShopFieldException(lineNumber:Int, columnNumber:Int, shopName:String, fn:String, msg:String)
+  extends YmShopException
+
+
+abstract class YmOfferException extends YmShopException {
+  def offerIdOpt: Option[String]
+  override def getMessageBuilder = {
+    val sb0 = super.getMessageBuilder
+    if (offerIdOpt.isDefined)
+      sb0.append('[').append(offerIdOpt.get).append(']')
+    else
+      sb0
+  }
 }
 
-case class OfferAgeInvalidException(shopName:String, offerIdOpt:Option[String], msg: String) extends YmOfferFieldException {
-  def offerField = AnyOfferFields.age
+
+object YmOfferFieldException {
+  def apply(msg: String)(implicit shop:ShopHandlerState, offer:OfferHandlerState, locator:Locator, fh:SimpleValueT): YmOfferException = {
+    YmOfferFieldException(
+      lineNumber = locator.getLineNumber,
+      columnNumber = locator.getColumnNumber,
+      shopName = if (shop == null) null else shop.name,
+      offerIdOpt = offer.idOpt,
+      fn = fh.myTag,
+      msg = msg
+    )
+  }
 }
+case class YmOfferFieldException(lineNumber:Int, columnNumber:Int, shopName:String, offerIdOpt: Option[String], fn:String, msg:String)
+  extends YmOfferException {
 
-case class OfferParamInvalidException(shopName:String, offerIdOpt: Option[String], msg: String) extends YmOfferFieldException {
-  def offerField = AnyOfferFields.param
+  override def getMessageBuilder = super.getMessageBuilder.append('.').append(fn).append(": ").append(msg)
 }
-
-// TODO Перегнать остальные исключения куда надо.
-case class ExpectedAttrNotFoundException(tag:String, attr:String)
-  extends IllegalArgumentException(s"Expected attribute '$attr' not found in tag '$tag'.")
-
-case class UndefinedCurrencyIdException(id: String, definedCurrencies: List[ShopCurrency])
-  extends IllegalArgumentException(s"Unexpected currencyId: '$id'. Defined shop's currencies are: ${definedCurrencies.map(_.id).mkString(", ")}")
-
-case class UrlTooLongException(url:String, maxLen:Int)
-  extends IllegalArgumentException("URL too long. MaxLen = " + maxLen)
-
-case class MarketCategoryTooLongException(str: String)
-  extends IllegalArgumentException("Market category too long for reading: " + str)
-
-case class ShopCategoryTooLongException(cat: String)
-  extends IllegalArgumentException("Shop category name or id too long. maxLen=" + SHOP_CAT_VALUE_MAXLEN + " : " + cat)
-
-case class CurrencyIdTooLongException(currId: String)
-  extends IllegalArgumentException("Shop currency has too long id: " + currId + " ;; max str length = " + SHOP_CURRENCY_ID_MAXLEN)
 

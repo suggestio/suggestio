@@ -1,9 +1,7 @@
 package io.suggest.ym
 
 import org.scalatest._
-import org.apache.tika.metadata.{HttpHeaders, Metadata}
-import org.apache.tika.parser.xml.XMLParser
-import org.apache.tika.parser.ParseContext
+import javax.xml.parsers.SAXParserFactory
 
 /**
  * Suggest.io
@@ -16,12 +14,11 @@ class YmlSaxTest extends FlatSpec with Matchers {
   "yml1.xml" should "success parsing via YmlSax" in {
     val is = getClass.getClassLoader.getResourceAsStream("ym/yml1.xml")
     try {
-      val metadata = new Metadata
-      metadata.add(HttpHeaders.CONTENT_TYPE, "text/xml")
+      val factory = SAXParserFactory.newInstance()
+      factory.setValidating(false)
+      val parser = factory.newSAXParser()
       val cHandler = new YmlSax(null)
-      val parser = new XMLParser
-      val parseContext = new ParseContext
-      parser.parse(is, cHandler, metadata, parseContext)
+      parser.parse(is, cHandler)
 
     } finally {
       is.close()
