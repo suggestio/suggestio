@@ -44,11 +44,13 @@ TODO:
 
 sio =
   config :
-    sio_host : "http://@request.host"
-    sio_css : "/assets/stylesheets/sio.v8.min.css"
+    host : "http://@request.host"
+    css_href : "/assets/stylesheets/sio.v8.min.css"
     searchRequestDelay : 500
     search_field_dom_depth : 3
-    test_dkey : 'ldpr.ru'
+    debug_hash : 'sio_debug'
+    dkey : window.location.hostname
+    dkey_debug : 'ldpr.ru'
 
 window.sio = sio
 
@@ -56,10 +58,10 @@ window.sio = sio
 @_search()
 @_templates()
 
-sio.search = search
+## Загрузить css
+utils.load_css sio.config.host + sio.config.css_href
 
-utils.load_css sio.config.sio_host + sio.config.sio_css
-
+## Если юзер является админом — отрендерить настройки
 @if(isSiteAdmin){
   @_preferences()
 }
@@ -67,5 +69,4 @@ utils.load_css sio.config.sio_host + sio.config.sio_css
 @* Отрендерить инсталлер, если qi_id задан *@
 @qiIdOpt.map { qi_id =>
   @_install(dkey, qi_id, wsTimestamp) }
-
 }
