@@ -4,6 +4,7 @@ import com.scaleunlimited.cascading.BaseDatum
 import io.suggest.util.CascadingFieldNamer
 import cascading.tuple.{TupleEntry, Tuple, Fields}
 import scala.collection.JavaConversions._
+import io.suggest.ym.ShopHandlerState
 
 /**
  * Suggest.io
@@ -80,7 +81,7 @@ object YmShopDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT {
 
 import YmShopDatum._
 
-class YmShopDatum extends BaseDatum(FIELDS) with YmDatumDeliveryT {
+class YmShopDatum extends BaseDatum(FIELDS) with ShopHandlerState with YmDatumDeliveryT {
 
   def companion = YmShopDatum
 
@@ -116,8 +117,8 @@ class YmShopDatum extends BaseDatum(FIELDS) with YmDatumDeliveryT {
     _tupleEntry.setString(URL_FN, url)
   }
 
-  def phone = Option(_tupleEntry getString PHONE_FN)
-  def phone_=(phoneOpt: Option[String]) {
+  def phoneOpt = Option(_tupleEntry getString PHONE_FN)
+  def phoneOpt_=(phoneOpt: Option[String]) {
     _tupleEntry.setString(PHONE_FN, phoneOpt getOrElse null)
   }
 

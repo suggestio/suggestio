@@ -274,26 +274,15 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
    * Обработчик содержимого тега shop.
    * @param myAttrs Атрибуты тега shop, которые вроде бы всегда пустые.
    */
-  case class ShopHandler(myAttrs: Attributes) extends MyHandler with ShopHandlerState {
+  case class ShopHandler(myAttrs: Attributes) extends MyHandler {
     def myTag = YmlCatalogFields.shop.toString
-    implicit protected def myShop = this
 
-    var name                : String = null
-    var company             : String = null
-    var url                 : String = null
-    var phoneOpt            : Option[String] = None
-    //var platformOpt       : Option[String] = None
-    //var versionOpt        : Option[String] = None
-    //var agencyOpt         : Option[String] = None
+    implicit val shopDatum = new YmShopDatum()
+    import shopDatum._
+
     var emails              : List[String] = Nil
     var currencies          : List[YmShopCurrency] = Nil
     var categories          : List[YmShopCategory] = Nil
-    var storeOpt            : Option[Boolean] = None
-    var pickupOpt           : Option[Boolean] = None
-    var deliveryOpt         : Option[Boolean] = None
-    var deliveryIncludedOpt : Option[Boolean] = None
-    var localDeliveryCostOpt: Option[Float]   = None
-    var adultOpt            : Option[Boolean] = None
 
     /** Обход элементов shop'а. */
     override def startTag(tagName: String, attributes: Attributes) {
@@ -314,7 +303,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
         case ShopFields.deliveryIncluded    => new ShopDeliveryIncludedHandler
         case ShopFields.local_delivery_cost => new ShopLocalDeliveryCostHandler
         case ShopFields.adult               => new ShopAdultHandler
-        case ShopFields.offers              => new OffersHandler(attributes)
+        case ShopFields.offers              => new OffersHandler(attributes)(this)
       }
       become(nextHandler)
     }
@@ -442,22 +431,22 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
 
     class ShopStoreHandler extends ShopBooleanHandler {
       def myTag = ShopFields.store.toString
-      def handleBoolean(b: Boolean) { storeOpt = Some(b) }
+      def handleBoolean(b: Boolean) { isStore = b }
     }
 
     class ShopDeliveryHandler extends ShopBooleanHandler {
       def myTag = ShopFields.delivery.toString
-      def handleBoolean(b: Boolean) { deliveryOpt = Some(b) }
+      def handleBoolean(b: Boolean) { isDelivery = b }
     }
 
     class ShopPickupHandler extends ShopBooleanHandler {
       def myTag = ShopFields.pickup.toString
-      def handleBoolean(b: Boolean) { pickupOpt = Some(b) }
+      def handleBoolean(b: Boolean) { isPickup = b }
     }
 
     class ShopDeliveryIncludedHandler extends ShopBooleanHandler {
       def myTag = ShopFields.deliveryIncluded.toString
-      def handleBoolean(b: Boolean) { deliveryIncludedOpt = Some(b) }
+      def handleBoolean(b: Boolean) { isDeliveryIncluded = b }
     }
 
     class ShopLocalDeliveryCostHandler extends FloatHandler {
@@ -467,7 +456,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
 
     class ShopAdultHandler extends ShopBooleanHandler {
       def myTag = ShopFields.adult.toString
-      def handleBoolean(b: Boolean) { adultOpt = Some(b) }
+      def handleBoolean(b: Boolean) { isAdult = b }
     }
   }
 
@@ -517,7 +506,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     * логики разборки предложений находится здесь. */
   trait AnyOfferHandler extends MyHandler with OfferHandlerState {
     def myTag = OffersFields.offer.toString
+
     implicit val myShop: ShopHandler
+    import myShop.shopDatum
+
     implicit protected def selfOfferHandler = this
 
     /** Опциональный уникальный идентификатор комерческого предложения. */
@@ -925,6 +917,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     * большинства категорий Яндекс.Маркета.
     * Доп.поля: typePrefix, [vendor, vendorCode], model, provider, tarifPlan. */
   case class VendorModelOfferHandler(myAttrs: Attributes)(implicit val myShop: ShopHandler) extends VendorInfoH {
+    import myShop.shopDatum
+
     def offerType = OfferTypes.VendorModel
 
     /** Описание очень краткое. "Группа товаров / категория". Хз что тут и как. */
@@ -1736,15 +1730,6 @@ trait ShopHandlerState {
   def company             : String
   def url                 : String
   def phoneOpt            : Option[String]
-  def emails              : List[String]
-  def currencies          : List[YmShopCurrency]
-  def categories          : List[YmShopCategory]
-  def storeOpt            : Option[Boolean]
-  def pickupOpt           : Option[Boolean]
-  def deliveryOpt         : Option[Boolean]
-  def deliveryIncludedOpt : Option[Boolean]
-  def localDeliveryCostOpt: Option[Float]
-  def adultOpt            : Option[Boolean]
 }
 
 
