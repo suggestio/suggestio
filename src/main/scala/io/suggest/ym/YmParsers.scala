@@ -97,10 +97,13 @@ object YmParsers extends JavaTokenParsers {
 
 
   /** Для парсинга гарантии применяется комбинация из boolean-парсера и парсера периода времени. */
-  val WARRANTY_PARSER: Parser[YmWarranty] = {
-    val bp = PLAIN_BOOL_PARSER ^^ { new YmWarranty(_) }
+  val WARRANTY_PARSER: Parser[Warranty] = {
+    val bp = PLAIN_BOOL_PARSER ^^ {
+      case true  => WarrantyNoPeriod
+      case false => NoWarranty
+    }
     val pp = ISO_PERIOD_PARSER ^^ {
-      period => new YmWarranty(true, Some(period))
+      period => HasWarranty(period)
     }
     bp | pp
   }

@@ -23,6 +23,7 @@ object YmOfferDatum extends CascadingFieldNamer with Serializable with YmDatumDe
   val ID_FN                     = fieldName("id")
   val OFFER_TYPE_FN             = fieldName("offerType")
   val GROUP_ID_FN               = fieldName("groupId")
+  val AVAILABLE_FN              = fieldName("available")
   /** Поле с метаданными магазина. Заполняется кортежем из YmShopDatum. */
   val SHOP_META_FN              = fieldName("shopMeta")  // TODO Надо бы хранить это дело отдельно. Это будет более оптимально.
   /** id магазина. Генерируется на основе предыдущего поля. Удобно для группировки. */
@@ -47,7 +48,7 @@ object YmOfferDatum extends CascadingFieldNamer with Serializable with YmDatumDe
 
   val FIELDS = {
     val thisFields = new Fields(
-      URL_FN, ID_FN, OFFER_TYPE_FN, GROUP_ID_FN, SHOP_META_FN, SHOP_ID_FN, PRICE_FN, CURRENCY_ID_FN,
+      URL_FN, ID_FN, OFFER_TYPE_FN, GROUP_ID_FN, AVAILABLE_FN, SHOP_META_FN, SHOP_ID_FN, PRICE_FN, CURRENCY_ID_FN,
       CATEGORY_IDS_FN, MARKET_CATEGORY_FN, PICTURES_FN,
       STORE_FN, PICKUP_FN, DELIVERY_FN, DELIVERY_INCLUDED_FN, LOCAL_DELIVERY_COST_FN,
       DESCRIPTION_FN, SALES_NOTES_FN, COUNTRY_OF_ORIGIN, MANUFACTURER_WARRANTY_FN, DOWNLOADABLE_FN, ADULT_FN, AGE_FN
@@ -91,18 +92,10 @@ object YmOfferDatum extends CascadingFieldNamer with Serializable with YmDatumDe
     case t: Tuple => t.toSeq.asInstanceOf[Seq[String]]
   }
 
-  def serializeManufacturerWarranty(mwOpt: Option[YmWarranty]): Tuple = {
-    if (mwOpt.isEmpty) null else {
-      if (mwOpt.get.hasWarranty) {
-        mwOpt.get.getTuple
-      } else {
-        null
-      }
-    }
-  }
-  val deserializeManufacturerWarranty: PartialFunction[AnyRef, YmWarranty] = {
-    case null     => new YmWarranty(false)
-    case t: Tuple => new YmWarranty(t)
+  def serializeManufacturerWarranty(mw: Warranty): String = mw.raw
+  val deserializeManufacturerWarranty: PartialFunction[AnyRef, Warranty] = {
+    case null      => NoWarranty
+    case s: String => Warranty(s)
   }
 
   def serializeAge(ageOpt: Option[YmOfferAge]) = {
@@ -133,19 +126,19 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with YmDatumDeliveryT {
 
   def this(url: String, offerType:OfferType, shop: YmShopDatum) = {
     this
-    this.url = url
+    this.urlOpt = Some(url)
     this.offerType = offerType
     this.shopMeta = shop
   }
 
 
-  def url = _tupleEntry getString URL_FN
-  def url_=(url: String) {
-    _tupleEntry.setString(URL_FN, url)
+  def urlOpt = Option(_tupleEntry getString URL_FN)
+  def urlOpt_=(urlOpt: Option[String]) {
+    _tupleEntry.setString(URL_FN, urlOpt getOrElse null)
   }
 
-  def id = Option(_tupleEntry getString ID_FN)
-  def id_=(id: Option[String]) {
+  def idOpt = Option(_tupleEntry getString ID_FN)
+  def idOpt_=(id: Option[String]) {
     _tupleEntry.setString(ID_FN, id getOrElse null)
   }
 
@@ -155,9 +148,14 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with YmDatumDeliveryT {
     _tupleEntry.setInteger(OFFER_TYPE_FN, i)
   }
 
-  def groupId = Option(_tupleEntry getString GROUP_ID_FN)
-  def groupId_=(groupIdOpt: Option[String]) {
+  def groupIdOpt = Option(_tupleEntry getString GROUP_ID_FN)
+  def groupIdOpt_=(groupIdOpt: Option[String]) {
     _tupleEntry.setString(GROUP_ID_FN, groupIdOpt getOrElse null)
+  }
+
+  def isAvailable = _tupleEntry getBoolean AVAILABLE_FN
+  def isAvailable_=(isAvailable: Boolean) = {
+    _tupleEntry.setBoolean(AVAILABLE_FN, isAvailable)
   }
 
   def shopMeta: YmShopDatum = {
@@ -194,11 +192,11 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with YmDatumDeliveryT {
     _tupleEntry.setObject(CATEGORY_IDS_FN, t)
   }
 
-  def marketCategory = {
+  def marketCategoryOpt = {
     val raw = _tupleEntry getObject MARKET_CATEGORY_FN
     deserializeMarketCategory(raw)
   }
-  def marketCategory_=(mcOpt: Option[Seq[String]]) {
+  def marketCategoryOpt_=(mcOpt: Option[Seq[String]]) {
     val t = serializeMarketCategory(mcOpt)
     _tupleEntry.setObject(MARKET_CATEGORY_FN, t)
   }
@@ -212,28 +210,28 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with YmDatumDeliveryT {
     _tupleEntry.setObject(PICTURES_FN, t)
   }
 
-  def description = Option(_tupleEntry getString DESCRIPTION_FN)
-  def description_=(descOpt: Option[String]) {
+  def descriptionOpt = Option(_tupleEntry getString DESCRIPTION_FN)
+  def descriptionOpt_=(descOpt: Option[String]) {
     _tupleEntry.setString(DESCRIPTION_FN, descOpt getOrElse null)
   }
 
-  def salesNotes = Option(_tupleEntry getString SALES_NOTES_FN)
-  def salesNotes_=(salesNotesOpt: Option[String]) {
+  def salesNotesOpt = Option(_tupleEntry getString SALES_NOTES_FN)
+  def salesNotesOpt_=(salesNotesOpt: Option[String]) {
     _tupleEntry.setString(SALES_NOTES_FN, salesNotesOpt getOrElse null)
   }
 
-  def countryOfOrigin = Option(_tupleEntry getString COUNTRY_OF_ORIGIN)
-  def countryOfOrigin_=(cooOpt: Option[String]) {
+  def countryOfOriginOpt = Option(_tupleEntry getString COUNTRY_OF_ORIGIN)
+  def countryOfOriginOpt_=(cooOpt: Option[String]) {
     _tupleEntry.setString(COUNTRY_OF_ORIGIN, cooOpt getOrElse null)
   }
 
-  def manufacturerWarranty: YmWarranty = {
-    val raw = _tupleEntry getObject MANUFACTURER_WARRANTY_FN
+  def manufacturerWarranty: Warranty = {
+    val raw = _tupleEntry getString MANUFACTURER_WARRANTY_FN
     deserializeManufacturerWarranty(raw)
   }
-  def manufacturerWarranty_=(mw: Option[YmWarranty]) {
-    val t = serializeManufacturerWarranty(mw)
-    _tupleEntry.setObject(MANUFACTURER_WARRANTY_FN, t)
+  def manufacturerWarranty_=(mw: Warranty) {
+    val s = serializeManufacturerWarranty(mw)
+    _tupleEntry.setString(MANUFACTURER_WARRANTY_FN, s)
   }
 
   def isDownloadable = _tupleEntry getBoolean DOWNLOADABLE_FN
@@ -241,8 +239,8 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with YmDatumDeliveryT {
     _tupleEntry.setBoolean(DOWNLOADABLE_FN, isDownloadable)
   }
 
-  def age = deserializeAge(_tupleEntry getObject AGE_FN)
-  def age_=(ageOpt: Option[YmOfferAge]) {
+  def ageOpt = deserializeAge(_tupleEntry getObject AGE_FN)
+  def ageOpt_=(ageOpt: Option[YmOfferAge]) {
     val t = serializeAge(ageOpt)
     _tupleEntry.setObject(AGE_FN, t)
   }
