@@ -1,6 +1,6 @@
 package io.suggest.ym.model
 
-import cascading.tuple.TupleEntry
+import cascading.tuple.{Fields, TupleEntry}
 
 /**
  * Suggest.io
@@ -16,33 +16,40 @@ trait YmDatumDeliveryStaticT {
   val DELIVERY_INCLUDED_FN: String
   val LOCAL_DELIVERY_COST_FN: String
   val ADULT_FN: String
+
+  def FIELDS = new Fields(STORE_FN, PICKUP_FN, DELIVERY_FN, DELIVERY_INCLUDED_FN, LOCAL_DELIVERY_COST_FN, ADULT_FN)
 }
 
 trait YmDatumDeliveryT {
   def companion: YmDatumDeliveryStaticT
-  // Напрямую запользовать _tupleEntry раньше было нельзя, ибо он java protected.
+  // Напрямую запользовать _tupleEntry нельзя, ибо он java protected.
   def getTupleEntry: TupleEntry
 
+  /** store: Элемент позволяет указать возможность купить товар в розничном магазине. */
   def isStore = getTupleEntry getBoolean companion.STORE_FN
   def isStore_=(store: Boolean) {
     getTupleEntry.setBoolean(companion.STORE_FN, store)
   }
 
+  /** pickup: Доступность резервирования с самовывозом. */
   def isPickup = getTupleEntry getBoolean companion.PICKUP_FN
   def isPickup_=(pickup: Boolean) {
     getTupleEntry.setBoolean(companion.PICKUP_FN, pickup)
   }
 
+  /** delivery: Допустима ли доставка для указанного товара? */
   def isDelivery = getTupleEntry getBoolean companion.DELIVERY_FN
   def isDelivery_=(delivery: Boolean) {
     getTupleEntry.setBoolean(companion.DELIVERY_FN, delivery)
   }
 
+  /** Включена ли доставка в стоимость товара/товаров магазина? */
   def isDeliveryIncluded = getTupleEntry getBoolean companion.DELIVERY_INCLUDED_FN
   def isDeliveryIncluded_=(deliveryIncluded: Boolean) {
     getTupleEntry.setBoolean(companion.DELIVERY_INCLUDED_FN, deliveryIncluded)
   }
 
+  /** Стоимость доставки товара в своем регионе. */
   def localDeliveryCostOpt: Option[Float] = {
     val raw = getTupleEntry.getFloat(companion.LOCAL_DELIVERY_COST_FN)
     if (raw < 0) None else Some(raw)
@@ -51,6 +58,7 @@ trait YmDatumDeliveryT {
     getTupleEntry.setFloat(companion.LOCAL_DELIVERY_COST_FN, ldcOpt getOrElse -1F)
   }
 
+  /** Это товар/магазин "для взрослых"? */
   def isAdult: Boolean = getTupleEntry getBoolean companion.ADULT_FN
   def isAdult_=(adult: Boolean) {
     getTupleEntry.setBoolean(companion.ADULT_FN, adult)

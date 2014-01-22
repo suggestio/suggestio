@@ -25,7 +25,7 @@ object YmParsers extends JavaTokenParsers {
   
   /** Парсер измерений (размерности) товара в формате "длина/ширина/высота". */
   val DIMENSIONS_PARSER = {
-    val sepParser: Parser[String] = "/"
+    val sepParser: Parser[String] = "[/xх*]".r
     val dn = decimalNumber ^^ str2FloatF
     dn ~ (sepParser ~> dn) ~ (sepParser ~> dn) ^^ {
       case ls~ws~hs => Dimensions(ls, ws, hs)

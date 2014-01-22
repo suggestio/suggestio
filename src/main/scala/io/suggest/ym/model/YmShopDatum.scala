@@ -29,10 +29,9 @@ object YmShopDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT {
   val LOCAL_DELIVERY_COST_FN  = fieldName("localDeliveryCost")
   val ADULT_FN                = fieldName("adult")
 
-  val FIELDS = new Fields(
-    NAME_FN, COMPANY_FN, URL_FN, PHONE_FN, EMAILS_FN, CURRENCIES_FN, CATEGORIES_FN,
-    STORE_FN, PICKUP_FN, DELIVERY_FN, DELIVERY_INCLUDED_FN, LOCAL_DELIVERY_COST_FN, ADULT_FN
-  )
+  override val FIELDS = new Fields(
+    NAME_FN, COMPANY_FN, URL_FN, PHONE_FN, EMAILS_FN, CURRENCIES_FN, CATEGORIES_FN
+  ) append super.FIELDS
 
 
   /** Сериализовать список email'ов. */

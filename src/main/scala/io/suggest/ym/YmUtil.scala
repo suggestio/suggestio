@@ -107,12 +107,6 @@ object AnyOfferFields extends Enumeration {
  */
 case class OfferCategoryId(categoryId: String, idType: OfferCategoryIdType)
 
-/** Экземпляр, описывающий значение поля market category. Нужно ознакомиться с
-  * [[http://help.yandex.ru/partnermarket/docs/market_categories.xls таблицей категорий маркета]]
-  * @param catPath Путь в дереве категорий. Например List(Книги, Бизнес и экономика, ...)
-  */
-case class MarketCategory(catPath: List[String])
-
 
 object OfferAgeUnits extends Enumeration {
   type OfferAgeUnit = Value
@@ -165,7 +159,10 @@ object OfferCategoryIdTypes extends Enumeration {
  * @param widthCm Ширина в сантиметрах.
  * @param heightCm Высота в сантиметрах.
  */
-case class Dimensions(lenCm:Float, widthCm:Float, heightCm:Float) extends Serializable
+case class Dimensions(lenCm:Float, widthCm:Float, heightCm:Float) extends Serializable {
+  /** Для сериализации, можно использовать исходный формат. */
+  def toRaw = s"$lenCm/$widthCm/$heightCm"
+}
 
 
 /** Тип гостиничной пещеры. Надо по-лучше разобраться в этом.

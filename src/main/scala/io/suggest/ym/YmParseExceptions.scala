@@ -64,6 +64,18 @@ abstract class YmOfferException extends YmShopException {
 }
 
 
+object YmOfferAttributeException {
+  def apply(attr:String, msg:String)(implicit shop:ShopHandlerState, offer:OfferHandlerState, locator:Locator) = {
+    YmOfferFieldException(
+      lineNumber = locator.getLineNumber,
+      columnNumber = locator.getColumnNumber,
+      shopName = if (shop == null) null else shop.name,
+      offerIdOpt = offer.idOpt,
+      fn = attr,
+      msg = msg
+    )
+  }
+}
 object YmOfferFieldException {
   def apply(msg: String)(implicit shop:ShopHandlerState, offer:OfferHandlerState, locator:Locator, fh:SimpleValueT): YmOfferException = {
     YmOfferFieldException(

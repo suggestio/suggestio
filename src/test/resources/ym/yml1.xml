@@ -27,12 +27,12 @@
 
     <offers>
         <!-- Упрощенное описание -->
-        <offer id="12346" available="true" bid="21">
-            <url>http://best.seller.ru/product_page.asp?pid=12348</url>
+        <offer id="12340" available="true" bid="21">
+            <url>http://best.seller.ru/product_page.asp?pid=12340</url>
             <price>699.54</price>
             <currencyId>USD</currencyId>
             <categoryId>6</categoryId>
-            <picture>http://best.seller.ru/img/device12345.jpg</picture>
+            <picture>http://best.seller.ru/img/device12340.jpg</picture>
             <store>false</store>
             <pickup>true</pickup>
             <delivery>false</delivery>
@@ -48,11 +48,11 @@
 
         <!-- Произвольный товар (vendor.model) -->
         <offer id="12341" type="vendor.model" available="true" bid="13">
-            <url>http://best.seller.ru/product_page.asp?pid=12344</url>
+            <url>http://best.seller.ru/product_page.asp?pid=12341</url>
             <price>700</price>
             <currencyId>USD</currencyId>
             <categoryId>6</categoryId>
-            <picture>http://best.seller.ru/img/device12345.jpg</picture>
+            <picture>http://best.seller.ru/img/device12341.jpg</picture>
             <store>false</store>
             <pickup>false</pickup>
             <delivery>true</delivery>
@@ -85,11 +85,11 @@
 
         <!-- Книги (book) -->
         <offer id="12342" type="book" available="true" bid="17">
-            <url>http://best.seller.ru/product_page.asp?pid=14345</url>
+            <url>http://best.seller.ru/product_page.asp?pid=12342</url>
             <price>80</price>
             <currencyId>RUR</currencyId>
             <categoryId>3</categoryId>
-            <picture>http://best.seller.ru/product_page.asp?pid=14345.jpg</picture>
+            <picture>http://best.seller.ru/product_page.asp?pid=12342.jpg</picture>
             <store>false</store>
             <pickup>false</pickup>
             <delivery>true</delivery>
@@ -113,12 +113,12 @@
         </offer>
 
         <!-- Аудиокниги (audiobook) -->
-        <offer id="12342" type="audiobook" available="true" bid="17">
-            <url>http://best.seller.ru/product_page.asp?pid=14345</url>
+        <offer id="12343" type="audiobook" available="true" bid="17">
+            <url>http://best.seller.ru/product_page.asp?pid=12343</url>
             <price>200</price>
             <currencyId>RUR</currencyId>
             <categoryId>3</categoryId>
-            <picture>http://best.seller.ru/product_page.asp?pid=14345.jpg</picture>
+            <picture>http://best.seller.ru/product_page.asp?pid=12343.jpg</picture>
             <author>Владимир Кунин</author>
             <name>Иваnов и Rабинович, или Аj'гоу ту 'Хаjфа!</name>
             <publisher>1С-Паблишинг, Союз</publisher>
@@ -136,11 +136,11 @@
 
         <!-- Музыкальная и видео продукция (artist.title) -->
         <offer id="12345" type="artist.title" available="true" bid="11">
-            <url>http://best.seller.ru/product_page.asp?pid=12946</url>
+            <url>http://best.seller.ru/product_page.asp?pid=12345</url>
             <price>15</price>
             <currencyId>USD</currencyId>
             <categoryId>2</categoryId>
-            <picture>http://best.seller.ru/product_page.asp?pid=14345.jpg</picture>
+            <picture>http://best.seller.ru/product_page.asp?pid=12345.jpg</picture>
             <store>false</store>
             <pickup>false</pickup>
             <delivery>true</delivery>
@@ -160,12 +160,12 @@
         </offer>
 
         <!-- Туры (tour) -->
-        <offer id="12341" type="tour" available="true" bid="71">
-            <url>http://best.seller.ru/product_page.asp?pid=12344</url>
+        <offer id="12346" type="tour" available="true" bid="71">
+            <url>http://best.seller.ru/product_page.asp?pid=12346</url>
             <price>958</price>
             <currencyId>USD</currencyId>
             <categoryId>6</categoryId>
-            <picture>http://best.seller.ru/img/device12345.jpg</picture>
+            <picture>http://best.seller.ru/img/device12346.jpg</picture>
             <store>false</store>
             <pickup>true</pickup>
             <delivery>false</delivery>
@@ -186,12 +186,12 @@
         </offer>
 
         <!-- Билеты на мероприятие (event-ticket) -->
-        <offer id="1234" type="event-ticket"  available="true" bid="13">
-            <url>http://best.seller.ru/product_page.asp?pid=57384</url>
+        <offer id="12347" type="event-ticket"  available="true" bid="13">
+            <url>http://best.seller.ru/product_page.asp?pid=12347</url>
             <price>1000</price>
             <currencyId>RUR</currencyId>
             <categoryId>3</categoryId>
-            <picture>http://best.seller.ru/product_page.asp?pid=72945.jpg</picture>
+            <picture>http://best.seller.ru/product_page.asp?pid=12347.jpg</picture>
             <store>false</store>
             <pickup>false</pickup>
             <delivery>true</delivery>
