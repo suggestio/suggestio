@@ -648,8 +648,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       override def maxLen: Int = SHOP_CURRENCY_ID_MAXLEN
       def handleString(s: String) {
         // Проверяем валюту по списку валют магазина.
-        if (!myShop.currencies.exists(_.getId == s))
-          throw YmOfferFieldException(s"Unexpected currencyId: '$s'. Defined shop's currencies are: ${myShop.currencies.map(_.getId).mkString(", ")}")
+        if (!myShop.currencies.exists(_.id == s))
+          throw YmOfferFieldException(s"Unexpected currencyId: '$s'. Defined shop's currencies are: ${myShop.currencies.map(_.id).mkString(", ")}")
         if (hadOverflow)
           throw YmOfferFieldException(s"Too long currency id. Max length is $maxLen.")
         currencyId = s

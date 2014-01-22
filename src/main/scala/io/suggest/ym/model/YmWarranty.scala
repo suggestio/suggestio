@@ -47,24 +47,22 @@ class YmWarranty extends BaseDatum(FIELDS) {
    */
   def this(hasWarranty:Boolean, periodOpt: Option[Period] = None) = {
     this
-    setWarranty(hasWarranty)
-    setPeriod(periodOpt)
+    this.hasWarranty = hasWarranty
+    this.periodOpt = periodOpt
   }
 
 
   def hasWarranty: Boolean = _tupleEntry getBoolean HAS_WARRANTY_FN
-  def setWarranty(hasWarranty: Boolean) = {
+  def hasWarranty_=(hasWarranty: Boolean) {
     _tupleEntry.setBoolean(HAS_WARRANTY_FN, hasWarranty)
-    this
   }
 
-  def getPeriod: Option[Period] = {
+  def periodOpt: Option[Period] = {
     val raw = _tupleEntry getString PERIOD_FN
     deserializePeriod(raw)
   }
-  def setPeriod(p: Option[Period]) = {
+  def periodOpt_=(p: Option[Period]) {
     val str = serializePeriod(p)
     _tupleEntry.setString(PERIOD_FN, str)
-    this
   }
 }

@@ -23,42 +23,36 @@ trait YmDatumDeliveryT {
   // Напрямую запользовать _tupleEntry раньше было нельзя, ибо он java protected.
   def getTupleEntry: TupleEntry
 
-  def getStore = getTupleEntry getBoolean companion.STORE_FN
-  def setStore(store: Boolean) = {
+  def store = getTupleEntry getBoolean companion.STORE_FN
+  def store_=(store: Boolean) {
     getTupleEntry.setBoolean(companion.STORE_FN, store)
-    this
   }
 
   def isPickup = getTupleEntry getBoolean companion.PICKUP_FN
-  def setPickup(pickup: Boolean) = {
+  def isPickup_=(pickup: Boolean) {
     getTupleEntry.setBoolean(companion.PICKUP_FN, pickup)
-    this
   }
 
   def isDelivery = getTupleEntry getBoolean companion.DELIVERY_FN
-  def setDelivery(delivery: Boolean) = {
+  def isDelivery_=(delivery: Boolean) {
     getTupleEntry.setBoolean(companion.DELIVERY_FN, delivery)
-    this
   }
 
   def isDeliveryIncluded = getTupleEntry getBoolean companion.DELIVERY_INCLUDED_FN
-  def setDeliveryIncluded(deliveryIncluded: Boolean) = {
+  def isDeliveryIncluded_=(deliveryIncluded: Boolean) {
     getTupleEntry.setBoolean(companion.DELIVERY_INCLUDED_FN, deliveryIncluded)
-    this
   }
 
-  def getLocalDeliveryCost: Option[Float] = {
+  def localDeliveryCost: Option[Float] = {
     val raw = getTupleEntry.getFloat(companion.LOCAL_DELIVERY_COST_FN)
     if (raw < 0) None else Some(raw)
   }
-  def setLocalDeliveryCost(ldcOpt: Option[Float]) = {
+  def localDeliveryCost_=(ldcOpt: Option[Float]) {
     getTupleEntry.setFloat(companion.LOCAL_DELIVERY_COST_FN, ldcOpt getOrElse -1F)
-    this
   }
 
   def isAdult: Boolean = getTupleEntry getBoolean companion.ADULT_FN
-  def setAdult(adult: Boolean) = {
+  def isAdult_=(adult: Boolean) {
     getTupleEntry.setBoolean(companion.ADULT_FN, adult)
-    this
   }
 }

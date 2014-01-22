@@ -36,28 +36,26 @@ class YmShopCategory extends BaseDatum(FIELDS) {
 
   def this(id:String, name:String, parentIdOpt:Option[String] = None) = {
     this
-    setId(id)
-    setName(name)
-    setParentId(parentIdOpt)
+    this.id = id
+    this.name = name
+    this.parentIdOpt = parentIdOpt
   }
 
 
-  def getId = _tupleEntry getString ID_FN
-  def setId(id: String) = {
+  def id = _tupleEntry getString ID_FN
+  def id_=(id: String) = {
     _tupleEntry.setString(ID_FN, id)
     this
   }
 
-  def getName = _tupleEntry getString NAME_FN
-  def setName(name: String) = {
+  def name = _tupleEntry getString NAME_FN
+  def name_=(name: String) {
     _tupleEntry.setString(NAME_FN, name)
-    this
   }
 
-  def getParentId = Option(_tupleEntry getString PARENT_ID_FN)
-  def setParentId(parentIdOpt: Option[String]) = {
+  def parentIdOpt = Option(_tupleEntry getString PARENT_ID_FN)
+  def parentIdOpt_=(parentIdOpt: Option[String]) {
     _tupleEntry.setString(PARENT_ID_FN, parentIdOpt getOrElse null)
-    this
   }
 
 }

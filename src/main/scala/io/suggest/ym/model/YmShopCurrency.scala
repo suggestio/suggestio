@@ -35,27 +35,24 @@ class YmShopCurrency extends BaseDatum(FIELDS) {
 
   def this(id:String, rate:String, plus:String) {
     this
-    setId(id)
-    setRate(rate)
-    setPlus(plus)
+    this.id = id
+    this.rate = rate
+    this.plus = plus
   }
 
-  def getId = _tupleEntry getString ID_FN
-  def setId(id: String) = {
+  def id = _tupleEntry getString ID_FN
+  def id_=(id: String) {
     _tupleEntry.setString(ID_FN, id)
-    this
   }
 
-  def getRate = _tupleEntry getString RATE_FN
-  def setRate(rate: String) = {
+  def rate = _tupleEntry getString RATE_FN
+  def rate_=(rate: String) {
     _tupleEntry.setString(RATE_FN, rate)
-    this
   }
 
-  def getPlus = _tupleEntry getString PLUS_FN
-  def setPlus(plus: String) = {
+  def plus = _tupleEntry getString PLUS_FN
+  def plus_=(plus: String) {
     _tupleEntry.setString(PLUS_FN, plus)
-    this
   }
 
 }

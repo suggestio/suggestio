@@ -96,63 +96,56 @@ class YmShopDatum extends BaseDatum(FIELDS) with YmDatumDeliveryT {
 
   def this(name: String, url:String) = {
     this
-    setName(name)
-    setUrl(url)
+    this.name = name
+    this.url = url
   }
 
 
-  def getName = _tupleEntry getString NAME_FN
-  def setName(name: String) = {
+  def name = _tupleEntry getString NAME_FN
+  def name_=(name: String) {
     _tupleEntry.setString(NAME_FN, name)
-    this
   }
 
-  def getCompany = _tupleEntry getString COMPANY_FN
-  def setCompany(company: String) = {
+  def company = _tupleEntry getString COMPANY_FN
+  def company_=(company: String) {
     _tupleEntry.setString(COMPANY_FN, company)
-    this
   }
 
-  def getUrl = _tupleEntry getString URL_FN
-  def setUrl(url: String) = {
+  def url = _tupleEntry getString URL_FN
+  def url_=(url: String) {
     _tupleEntry.setString(URL_FN, url)
-    this
   }
 
-  def getPhone = Option(_tupleEntry getString PHONE_FN)
-  def setPhone(phoneOpt: Option[String]) = {
+  def phone = Option(_tupleEntry getString PHONE_FN)
+  def phone_=(phoneOpt: Option[String]) {
     _tupleEntry.setString(PHONE_FN, phoneOpt getOrElse null)
-    this
   }
 
-  def getEmails: Seq[String] = {
+  def emails: Seq[String] = {
     val raw = _tupleEntry.getObject(EMAILS_FN)
     deserializeEmails(raw)
   }
-  def setEmails(emails: Seq[String]) = {
+  def emails_=(emails: Seq[String]) {
     val t = serializeEmails(emails)
     _tupleEntry.setObject(EMAILS_FN, t)
-    this
   }
 
-  def getCurrencies: Seq[YmShopCurrency] = {
+  def currencies: Seq[YmShopCurrency] = {
     val raw = _tupleEntry getObject CURRENCIES_FN
     deserializeCurrencies(raw)
   }
-  def setCurrencies(currencies: Seq[YmShopCurrency]) = {
+  def currencies_=(currencies: Seq[YmShopCurrency]) {
     val t = serializeCurrencies(currencies)
     _tupleEntry.setObject(CURRENCIES_FN, t)
-    this
   }
 
-  def getCategories: Seq[YmShopCategory] = {
+  def categories: Seq[YmShopCategory] = {
     val raw = _tupleEntry getObject CATEGORIES_FN
     deserializeCategories(raw)
   }
-  def setCategories(categories: Seq[YmShopCategory]) = {
+  def categories_=(categories: Seq[YmShopCategory]) {
     val t = serializeCategories(categories)
     _tupleEntry.setObject(CATEGORIES_FN, t)
-    this
   }
 
 }

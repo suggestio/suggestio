@@ -38,20 +38,20 @@ class YmOfferAge extends BaseDatum(FIELDS) {
 
   def this(units: OfferAgeUnit, value: Int) = {
     this
-    setUnits(units)
-    setValue(value)
+    this.units = units
+    this.value = value
   }
 
 
-  def getUnits = deserializeUnits(_tupleEntry getInteger UNITS_FN)
-  def setUnits(units: OfferAgeUnit) = {
+  def units = deserializeUnits(_tupleEntry getInteger UNITS_FN)
+  def units_=(units: OfferAgeUnit) = {
     val i = serializeUnits(units)
     _tupleEntry.setInteger(UNITS_FN, i)
     this
   }
 
-  def getValue = _tupleEntry getInteger VALUE_FN
-  def setValue(value: Int) = {
+  def value = _tupleEntry getInteger VALUE_FN
+  def value_=(value: Int) = {
     _tupleEntry.setInteger(VALUE_FN, value)
     this
   }

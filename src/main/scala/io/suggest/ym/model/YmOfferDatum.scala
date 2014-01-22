@@ -131,136 +131,120 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with YmDatumDeliveryT {
     setTupleEntry(te)
   }
 
-  def this(url: String, ysd: YmShopDatum) = {
+  def this(url: String, offerType:OfferType, shop: YmShopDatum) = {
     this
-    setUrl(url)
-    setShopMeta(ysd)
+    this.url = url
+    this.offerType = offerType
+    this.shopMeta = shop
   }
 
 
-  def getUrl = _tupleEntry getString URL_FN
-  def setUrl(url: String) = {
+  def url = _tupleEntry getString URL_FN
+  def url_=(url: String) {
     _tupleEntry.setString(URL_FN, url)
-    this
   }
 
-  def getId = Option(_tupleEntry getString ID_FN)
-  def setId(id: Option[String]) = {
+  def id = Option(_tupleEntry getString ID_FN)
+  def id_=(id: Option[String]) {
     _tupleEntry.setString(ID_FN, id getOrElse null)
-    this
   }
 
-  def getOfferType: OfferType = deserializeType(_tupleEntry getInteger OFFER_TYPE_FN)
-  def setOfferType(ot: OfferType) = {
+  def offerType: OfferType = deserializeType(_tupleEntry getInteger OFFER_TYPE_FN)
+  def offerType_=(ot: OfferType) {
     val i = serializeType(ot)
     _tupleEntry.setInteger(OFFER_TYPE_FN, i)
-    this
   }
 
-  def getGroupId = Option(_tupleEntry getString GROUP_ID_FN)
-  def setGroupId(groupIdOpt: Option[String]) = {
+  def groupId = Option(_tupleEntry getString GROUP_ID_FN)
+  def groupId_=(groupIdOpt: Option[String]) {
     _tupleEntry.setString(GROUP_ID_FN, groupIdOpt getOrElse null)
-    null
   }
 
-  def getShopMeta: YmShopDatum = {
+  def shopMeta: YmShopDatum = {
     val raw = _tupleEntry.getObject(SHOP_META_FN)
     deserializeShopMeta(raw)
   }
-  def setShopMeta(ysd: YmShopDatum) = {
+  def shopMeta_=(ysd: YmShopDatum) {
     val t = serializeShopMeta(ysd)
     _tupleEntry.setObject(SHOP_META_FN, t)
     // TODO Обновлять тут поле shop_id?
-    this
   }
 
-  def getShopId = _tupleEntry getString SHOP_ID_FN
-  def setShopId(shopId: String) = {
+  def shopId = _tupleEntry getString SHOP_ID_FN
+  def shopId_=(shopId: String) {
     _tupleEntry.setString(SHOP_ID_FN, shopId)
-    this
   }
 
-  def getPrice = _tupleEntry getFloat PRICE_FN
-  def setPrice(price: Float) = {
+  def price = _tupleEntry getFloat PRICE_FN
+  def price_=(price: Float) {
     _tupleEntry.setFloat(PRICE_FN, price)
-    this
   }
 
-  def getCurrencyId = _tupleEntry getString CURRENCY_ID_FN
-  def setCurrencyId(currencyId: String) = {
+  def currencyId = _tupleEntry getString CURRENCY_ID_FN
+  def currencyId_=(currencyId: String) {
     _tupleEntry.setString(CURRENCY_ID_FN, currencyId)
-    this
   }
 
-  def getCategoryIds = {
+  def categoryIds = {
     val raw = _tupleEntry getObject CATEGORY_IDS_FN
     deserializeCategoryIds(raw)
   }
-  def setCategoryId(categoryIds: Seq[String]) = {
+  def categoryId_=(categoryIds: Seq[String]) {
     val t = serializeCategoryIds(categoryIds)
     _tupleEntry.setObject(CATEGORY_IDS_FN, t)
-    this
   }
 
-  def getMarketCategory = {
+  def marketCategory = {
     val raw = _tupleEntry getObject MARKET_CATEGORY_FN
     deserializeMarketCategory(raw)
   }
-  def setMarketCategory(mcOpt: Option[Seq[String]]) = {
+  def marketCategory_=(mcOpt: Option[Seq[String]]) {
     val t = serializeMarketCategory(mcOpt)
     _tupleEntry.setObject(MARKET_CATEGORY_FN, t)
-    this
   }
 
-  def getPictures: Seq[String] = {
+  def pictures: Seq[String] = {
     val raw = _tupleEntry getObject PICTURES_FN
     deserializePictures(raw)
   }
-  def setPictures(pictures: Seq[String]) = {
+  def pictures_=(pictures: Seq[String]) {
     val t = serializePictures(pictures)
     _tupleEntry.setObject(PICTURES_FN, t)
-    this
   }
 
-  def getDescription = Option(_tupleEntry getString DESCRIPTION_FN)
-  def setDescription(descOpt: Option[String]) = {
+  def description = Option(_tupleEntry getString DESCRIPTION_FN)
+  def description_=(descOpt: Option[String]) {
     _tupleEntry.setString(DESCRIPTION_FN, descOpt getOrElse null)
-    this
   }
 
-  def getSalesNotes = Option(_tupleEntry getString SALES_NOTES_FN)
-  def setSalesNotes(salesNotesOpt: Option[String]) = {
+  def salesNotes = Option(_tupleEntry getString SALES_NOTES_FN)
+  def salesNotes_=(salesNotesOpt: Option[String]) {
     _tupleEntry.setString(SALES_NOTES_FN, salesNotesOpt getOrElse null)
-    this
   }
 
-  def getCountryOfOrigin = Option(_tupleEntry getString COUNTRY_OF_ORIGIN)
-  def setCountryOfOrigin(cooOpt: Option[String]) = {
+  def countryOfOrigin = Option(_tupleEntry getString COUNTRY_OF_ORIGIN)
+  def countryOfOrigin_=(cooOpt: Option[String]) {
     _tupleEntry.setString(COUNTRY_OF_ORIGIN, cooOpt getOrElse null)
-    this
   }
 
-  def getManufacturerWarranty: YmWarranty = {
+  def manufacturerWarranty: YmWarranty = {
     val raw = _tupleEntry getObject MANUFACTURER_WARRANTY_FN
     deserializeManufacturerWarranty(raw)
   }
-  def setManufacturerWarranty(mw: Option[YmWarranty]) = {
+  def manufacturerWarranty_=(mw: Option[YmWarranty]) {
     val t = serializeManufacturerWarranty(mw)
     _tupleEntry.setObject(MANUFACTURER_WARRANTY_FN, t)
-    this
   }
 
   def isDownloadable = _tupleEntry getBoolean DOWNLOADABLE_FN
-  def setDownloadable(isDownloadable: Boolean) = {
+  def isDownloadable_=(isDownloadable: Boolean) {
     _tupleEntry.setBoolean(DOWNLOADABLE_FN, isDownloadable)
-    this
   }
 
-  def getAge = deserializeAge(_tupleEntry getObject AGE_FN)
-  def setAge(ageOpt: Option[YmOfferAge]) = {
+  def age = deserializeAge(_tupleEntry getObject AGE_FN)
+  def age_=(ageOpt: Option[YmOfferAge]) {
     val t = serializeAge(ageOpt)
     _tupleEntry.setObject(AGE_FN, t)
-    this
   }
 
 }
