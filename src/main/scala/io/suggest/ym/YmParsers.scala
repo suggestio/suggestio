@@ -2,9 +2,10 @@ package io.suggest.ym
 
 import scala.util.parsing.combinator._
 import org.joda.time._
-import io.suggest.ym.HotelMealTypes.HotelMealType
-import io.suggest.ym.HotelStarsLevels.HotelStarsLevel
-import io.suggest.ym.YmParsers.PeriodUnits.PeriodUnit
+import model._
+import HotelMealTypes.HotelMealType
+import HotelStarsLevels.HotelStarsLevel
+import YmParsers.PeriodUnits.PeriodUnit
 
 /**
  * Suggest.io
@@ -85,8 +86,8 @@ object YmParsers extends JavaTokenParsers {
   val BOOL_PARSER: Parser[Boolean] = {
     val enTrue = "(?i)o[nk]".r | "(?i)yes".r
     val enFalse = "(?i)off".r | "(?i)no".r
-    val ruTrue: Parser[String] = "(?iu)(есть|да)".r
-    val ruFalse: Parser[String] = "(?iu)(отсу[тсц]{1,3}вует|нету?)".r
+    val ruTrue: Parser[String] = "(?iu)(есть|да|в\\s*наличи[ие]|ист[ие]на)".r
+    val ruFalse: Parser[String] = "(?iu)(отсу[тсц]{1,3}вует|нету?|лож[ьъ]?)".r
     val digiTrue: Parser[String] = "0*[1-9]\\d*".r
     val digiFalse: Parser[String] = "0+".r
     val trueParser   = (enTrue | digiTrue | "+" | ruTrue) ^^^ true
@@ -96,10 +97,10 @@ object YmParsers extends JavaTokenParsers {
 
 
   /** Для парсинга гарантии применяется комбинация из boolean-парсера и парсера периода времени. */
-  val WARRANTY_PARSER: Parser[Warranty] = {
-    val bp = PLAIN_BOOL_PARSER ^^ { Warranty(_) }
+  val WARRANTY_PARSER: Parser[YmWarranty] = {
+    val bp = PLAIN_BOOL_PARSER ^^ { new YmWarranty(_) }
     val pp = ISO_PERIOD_PARSER ^^ {
-      period => Warranty(hasWarranty=true, warrantyPeriod=Some(period))
+      period => new YmWarranty(true, Some(period))
     }
     bp | pp
   }

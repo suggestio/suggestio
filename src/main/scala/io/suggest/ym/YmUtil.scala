@@ -1,7 +1,5 @@
 package io.suggest.ym
 
-import io.suggest.ym.OfferAgeUnits.OfferAgeUnit
-import org.joda.time.Period
 import io.suggest.ym.OfferCategoryIdTypes.OfferCategoryIdType
 import io.suggest.ym.HotelRoomTypes.HotelRoomType
 import io.suggest.sax.EmptyAttributes
@@ -116,23 +114,11 @@ case class OfferCategoryId(categoryId: String, idType: OfferCategoryIdType)
 case class MarketCategory(catPath: List[String])
 
 
-/**
- * Гарантия производителя на товар.
- * @param hasWarranty Есть ли гарантия вообще?
- * @param warrantyPeriod Срок гарантии. Если гарантии нет, то тут должно быть None.
- */
-case class Warranty(
-  hasWarranty: Boolean,
-  warrantyPeriod: Option[Period] = None
-)
-
-
 object OfferAgeUnits extends Enumeration {
   type OfferAgeUnit = Value
-  val year, month = Value
+  // Порядок менять нельзя, удалять нельзя.
+  val Year, Month = Value
 }
-
-case class OfferAge(units: OfferAgeUnit, value: Int)
 
 
 object OfferParamAttrs extends Enumeration {
@@ -145,6 +131,7 @@ object OfferParamAttrs extends Enumeration {
 object OfferTypes extends Enumeration {
   type OfferType = Value
 
+  // /!\ Порядок менять нельзя! Можно только добавлять элементы в конец или немного обновлять эти.
   val Simple        = Value
   val VendorModel   = Value("vendor.model")
   val Book          = Value("book")
@@ -152,6 +139,7 @@ object OfferTypes extends Enumeration {
   val ArtistTitle   = Value("artist.title")
   val Tour          = Value("tour")
   val EventTicket   = Value("event-ticket")
+  // /!\ Порядок менять нельзя! Можно только добавлять элементы в конец или немного обновлять эти.
 
   def default = Simple
 }
@@ -222,9 +210,6 @@ object HotelStarsLevels extends Enumeration {
 }
 
 
-case class ShopCategory(id: String, parentId: Option[String], text: String) extends Serializable
-
-
 /** Неизменяемый объект, описывающий пустые аттрибуты. Полезен как заглушка для пустых аттрибутов. */
 case object EmptyAttrs extends EmptyAttributes
 
@@ -233,12 +218,6 @@ object ShopCurrency {
   val RATE_DFLT = "1.0"
   val PLUS_DFLT = "0.0"
 }
-
-case class ShopCurrency(
-  id    : String,
-  rate  : String = ShopCurrency.RATE_DFLT,
-  plus  : String = ShopCurrency.PLUS_DFLT
-) extends Serializable
 
 
 /** Параметр предложения, специфичный для конкретной категории предложений. Потом надо будет сконвертить в трейт.

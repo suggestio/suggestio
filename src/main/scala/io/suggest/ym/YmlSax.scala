@@ -14,6 +14,7 @@ import org.joda.time._
 import io.suggest.ym.HotelMealTypes.HotelMealType
 import io.suggest.ym.HotelStarsLevels.HotelStarsLevel
 import java.net.URL
+import io.suggest.ym.model._
 
 /**
  * Suggest.io
@@ -164,16 +165,16 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
 
   /** Начало работы с документом. Нужно выставить дефолтовый обработчик в стек. */
   override def startDocument() {
-    handlersStack ::= TopLevelHandler()
+    become(TopLevelHandler())
   }
 
   /** Стековое переключение состояние этого ContentHandler'а. */
-  protected def become(h: MyHandler) {
+  def become(h: MyHandler) {
     handlersStack ::= h
   }
 
   /** Извлечение текущего состояния из стека состояний. */
-  protected def unbecome(): MyHandler = {
+  def unbecome(): MyHandler = {
     val result = handlersStack.head
     handlersStack = handlersStack.tail
     result
@@ -273,7 +274,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
    * Обработчик содержимого тега shop.
    * @param myAttrs Атрибуты тега shop, которые вроде бы всегда пустые.
    */
-  case class ShopHandler(myAttrs: Attributes = EmptyAttrs) extends MyHandler with ShopHandlerState {
+  case class ShopHandler(myAttrs: Attributes) extends MyHandler with ShopHandlerState {
     def myTag = YmlCatalogFields.shop.toString
     implicit protected def myShop = this
 
@@ -285,8 +286,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     //var versionOpt        : Option[String] = None
     //var agencyOpt         : Option[String] = None
     var emails              : List[String] = Nil
-    var currencies          : List[ShopCurrency] = Nil
-    var categories          : List[ShopCategory] = Nil
+    var currencies          : List[YmShopCurrency] = Nil
+    var categories          : List[YmShopCategory] = Nil
     var storeOpt            : Option[Boolean] = None
     var pickupOpt           : Option[Boolean] = None
     var deliveryOpt         : Option[Boolean] = None
@@ -385,7 +386,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
           id = id.toUpperCase
           val rate = Option(attrs.getValue(ATTR_RATE)) getOrElse ShopCurrency.RATE_DFLT
           val plus = Option(attrs.getValue(ATTR_PLUS)) getOrElse ShopCurrency.PLUS_DFLT
-          currencies ::= ShopCurrency(id, rate=rate, plus=plus)
+          currencies ::= new YmShopCurrency(id, rate=rate, plus=plus)
         }
       }
     }
@@ -421,7 +422,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
           parentIdOptCur foreach {
             verifyIdLen(ATTR_PARENT_ID, _, s)
           }
-          categories ::= ShopCategory(id=idCur, parentId = parentIdOptCur, text=s)
+          categories ::= new YmShopCategory(id=idCur, name=s, parentIdOpt=parentIdOptCur)
         } else {
           throw YmShopFieldException(s"Attribute '$ATTR_ID' undefined, but it should.")
         }
@@ -471,7 +472,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   }
 
 
-  case class OffersHandler(myAttrs: Attributes = EmptyAttrs)(implicit myShop: ShopHandler) extends MyHandler {
+  case class OffersHandler(myAttrs: Attributes = EmptyAttrs)(implicit val myShop: ShopHandler) extends MyHandler {
     def myTag = ShopFields.offers.toString
 
     override def startTag(tagName: String, attributes: Attributes) {
@@ -503,8 +504,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
         case OfferTypes.VendorModel     => new VendorModelOfferHandler(attrs)
         case OfferTypes.Book            => new BookOfferHandler(attrs)
         case OfferTypes.AudioBook       => new AudioBookOfferHandler(attrs)
-        case OfferTypes.ArtistTitle     => new ArtistTitleHandler(attrs)
-        case OfferTypes.Tour            => new TourHandler(attrs)
+        case OfferTypes.ArtistTitle     => new ArtistTitleOfferHandler(attrs)
+        case OfferTypes.Tour            => new TourOfferHandler(attrs)
         case OfferTypes.EventTicket     => new EventTicketOfferHandler(attrs)
       }
     }
@@ -516,7 +517,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     * логики разборки предложений находится здесь. */
   trait AnyOfferHandler extends MyHandler with OfferHandlerState {
     def myTag = OffersFields.offer.toString
-    implicit def myShop: ShopHandler
+    implicit val myShop: ShopHandler
     implicit protected def selfOfferHandler = this
 
     /** Опциональный уникальный идентификатор комерческого предложения. */
@@ -562,7 +563,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     /** Краткие дополнительные сведения по покупке/доставке. */
     var salesNotesOpt: Option[String] = None
     /** Гарантия производителя: true, false или P1Y2M10DT2H30M. */
-    var manufacturerWarrantyOpt: Option[Warranty] = None
+    var manufacturerWarrantyOpt: Option[YmWarranty] = None
     /** Страна-производитель товара. */
     var countryOfOriginOpt: Option[String] = None
     /** Можно ли скачать указанный нематериальный товар? */
@@ -571,7 +572,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     var adultOpt: Option[Boolean] = None
     /** Возрастная категория товара. Есть немного противоречивой документации, но суть в том,
       * что есть аттрибут units и набор допустимых целочисленное значений для указанных единиц измерения. */
-    var ageOpt: Option[OfferAge] = None
+    var ageOpt: Option[YmOfferAge] = None
     /** Параметры, специфичные для конкретного товара. */
     var params: List[OfferParam] = Nil
     var paramsCounter = 0
@@ -647,8 +648,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       override def maxLen: Int = SHOP_CURRENCY_ID_MAXLEN
       def handleString(s: String) {
         // Проверяем валюту по списку валют магазина.
-        if (!myShop.currencies.exists(_.id == s))
-          throw YmOfferFieldException(s"Unexpected currencyId: '$s'. Defined shop's currencies are: ${myShop.currencies.map(_.id).mkString(", ")}")
+        if (!myShop.currencies.exists(_.getId == s))
+          throw YmOfferFieldException(s"Unexpected currencyId: '$s'. Defined shop's currencies are: ${myShop.currencies.map(_.getId).mkString(", ")}")
         if (hadOverflow)
           throw YmOfferFieldException(s"Too long currency id. Max length is $maxLen.")
         currencyId = s
@@ -767,7 +768,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     /** manufacturer_warranty: Поле с информацией о гарантии производителя. */
     class ManufacturerWarrantyHandler extends WarrantyHandler {
       def myTag = AnyOfferFields.manufacturer_warranty.toString
-      def handleWarranty(wv: Warranty) {
+      def handleWarranty(wv: YmWarranty) {
         manufacturerWarrantyOpt = Some(wv)
       }
     }
@@ -808,16 +809,16 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def handleInt(i: Int) {
         val unitV1 = Option(attrs.getValue(ATTR_UNIT)) map { unitV =>
           OfferAgeUnits.withName(unitV.trim.toLowerCase)
-        } getOrElse OfferAgeUnits.year
+        } getOrElse OfferAgeUnits.Year
         // Проверить значения, чтобы соответствовали интервалам допустимых значений.
         val possibleValues = unitV1 match {
-          case OfferAgeUnits.month => OFFER_AGE_MONTH_VALUES
-          case OfferAgeUnits.year  => OFFER_AGE_YEAR_VALUES
+          case OfferAgeUnits.Month => OFFER_AGE_MONTH_VALUES
+          case OfferAgeUnits.Year  => OFFER_AGE_YEAR_VALUES
         }
         if (!(possibleValues contains i)) {
           throw YmOfferFieldException(s"Invalid value for unit=$unitV1: $i ; Possible values are: ${possibleValues.mkString(", ")}")
         }
-        ageOpt = Some(OfferAge(units = unitV1, value = i))
+        ageOpt = Some(new YmOfferAge(units = unitV1, value = i))
       }
     }
 
@@ -915,24 +916,23 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /** "Упрощенное описание" - исторический перво-формат яндекс-маркета.
     * Поле type ещё не заимплеменчено, и есть некоторый ограниченный и фиксированный набор полей.
     * Доп.поля: vendor, vendorCode. */
-  case class SimpleOfferHandler(myAttrs: Attributes)(implicit shop: ShopHandler) extends VendorInfoH with OfferNameH {
+  case class SimpleOfferHandler(myAttrs: Attributes)(implicit val myShop: ShopHandler) extends VendorInfoH with OfferNameH {
     def offerType = OfferTypes.Simple
-    def myShop = shop
   }
 
   /** Произвольный товар (vendor.model)
     * Этот тип описания является наиболее удобным и универсальным, он рекомендован для описания товаров из
     * большинства категорий Яндекс.Маркета.
     * Доп.поля: typePrefix, [vendor, vendorCode], model, provider, tarifPlan. */
-  case class VendorModelOfferHandler(myAttrs: Attributes)(implicit shop: ShopHandler) extends VendorInfoH {
+  case class VendorModelOfferHandler(myAttrs: Attributes)(implicit val myShop: ShopHandler) extends VendorInfoH {
     def offerType = OfferTypes.VendorModel
-    def myShop = shop
+
     /** Описание очень краткое. "Группа товаров / категория". Хз что тут и как. */
     var typePrefix: Option[String] = None
     /** Модель товара, хотя судя по примерам, там может быть и категория, а сама "модель". "Женская куртка" например. */
     var model: String = null
     /** Гарантия от продавца. Аналогично manufacturer_warranty. */
-    var sellerWarrantyOpt: Option[Warranty] = None
+    var sellerWarrantyOpt: Option[YmWarranty] = None
     /** Список id рекомендуемых товаров к этому товару. */
     var recIdsList: List[String] = Nil
     /** Истечение срока годности: период или же дата. */
@@ -991,7 +991,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     /** Поле, описывающее гарантию от продавца. */
     class SellerWarrantyHandler extends WarrantyHandler {
       def myTag = AnyOfferFields.seller_warranty.toString
-      def handleWarranty(wv: Warranty) {
+      def handleWarranty(wv: YmWarranty) {
         sellerWarrantyOpt = Some(wv)
       }
       override def endTag(tagName: String) {
@@ -1071,7 +1071,6 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
    * author?, name, publisher?, series?, year?, ISBN?, volume?, part?, language?, table_of_contents?.
    * Тут трейт, который обеспечивает поддержку общих полей для обоих типов книг. */
   trait AnyBookOfferHandler extends AnyOfferHandler with OfferYearH with OfferNameH {
-    def offerType = OfferTypes.Book
     /** Автор произведения, если есть. */
     var authorOpt: Option[String] = None
     /** Издательство. */
@@ -1167,10 +1166,11 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /**
    * Обработчик для типа book, т.е. бумажных книженций.
    * @param myAttrs Аттрибуты оффера.
-   * @param shop Текущий магазин.
+   * @param myShop Текущий магазин.
    */
-  case class BookOfferHandler(myAttrs:Attributes)(implicit shop:ShopHandler) extends AnyBookOfferHandler {
-    def myShop = shop
+  case class BookOfferHandler(myAttrs: Attributes)(implicit val myShop:ShopHandler) extends AnyBookOfferHandler {
+    def offerType = OfferTypes.Book
+
     /** Переплёт. */
     var bindingOpt: Option[String] = None
     /** Кол-во страниц в книге. */
@@ -1201,10 +1201,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /**
    * Аудиокнига.
    * @param myAttrs Атрибуты оффера.
-   * @param shop Текущий магазин.
+   * @param myShop Текущий магазин.
    */
-  case class AudioBookOfferHandler(myAttrs:Attributes)(implicit shop:ShopHandler) extends AnyBookOfferHandler {
-    def myShop = shop
+  case class AudioBookOfferHandler(myAttrs: Attributes)(implicit val myShop:ShopHandler) extends AnyBookOfferHandler {
+    def offerType = OfferTypes.AudioBook
 
     /** Исполнитель. Если их несколько, перечисляются через запятую. */
     var performedByOpt: Option[String] = None
@@ -1293,11 +1293,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /**
    * Обработчик artist.title-офферов, содержащих аудио/видео хлам.
    * @param myAttrs Аттрибуты этого оффера.
-   * @param shop Текущий магазин.
+   * @param myShop Текущий магазин.
    */
-  case class ArtistTitleHandler(myAttrs:Attributes)(implicit shop:ShopHandler) extends AnyOfferHandler with OfferCountryOptH with OfferYearH {
+  case class ArtistTitleOfferHandler(myAttrs: Attributes)(implicit val myShop:ShopHandler) extends AnyOfferHandler with OfferCountryOptH with OfferYearH {
     def offerType = OfferTypes.ArtistTitle
-    def myShop = shop
 
     /** Исполнитель, если есть. */
     var artistOpt: Option[String] = None
@@ -1372,9 +1371,13 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   }
 
 
-  case class TourHandler(myAttrs:Attributes)(implicit shop:ShopHandler) extends AnyOfferHandler with OfferCountryOptH with OfferNameH {
+  /**
+   * Предложени тур-путёвки в далёкие края.
+   * @param myAttrs Аттрибуты тега.
+   * @param myShop Магазин.
+   */
+  case class TourOfferHandler(myAttrs: Attributes)(implicit val myShop:ShopHandler) extends AnyOfferHandler with OfferCountryOptH with OfferNameH {
     def offerType = OfferTypes.Tour
-    def myShop = shop
 
     /** Регион мира (часть света, материк планеты и т.д.), к которому относится путёвка. "Африка" например. */
     var worldRegionOpt: Option[String] = None
@@ -1495,11 +1498,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /**
    * Билет на мероприятие.
    * @param myAttrs Аттрибуты тега оффера.
-   * @param shop Магазин.
+   * @param myShop Магазин.
    */
-  case class EventTicketOfferHandler(myAttrs:Attributes)(implicit shop:ShopHandler) extends AnyOfferHandler with OfferNameH {
+  case class EventTicketOfferHandler(myAttrs: Attributes)(implicit val myShop:ShopHandler) extends AnyOfferHandler with OfferNameH {
     def offerType = OfferTypes.EventTicket
-    def myShop = shop
 
     /** Место проведения мероприятия. */
     var placeOpt: Option[String] = None
@@ -1672,7 +1674,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /** Хелпер для разбора поля с информацией о гарантии. */
   trait WarrantyHandler extends SimpleValueHandler {
     override def maxLen: Int = OFFER_WARRANTY_MAXLEN
-    def handleWarranty(wv: Warranty)
+    def handleWarranty(wv: YmWarranty)
     def handleRawValue(sb: StringBuilder) {
       val parseResult = parse(WARRANTY_PARSER, sb)
       if (parseResult.successful) {
@@ -1735,8 +1737,8 @@ trait ShopHandlerState {
   def url                 : String
   def phoneOpt            : Option[String]
   def emails              : List[String]
-  def currencies          : List[ShopCurrency]
-  def categories          : List[ShopCategory]
+  def currencies          : List[YmShopCurrency]
+  def categories          : List[YmShopCategory]
   def storeOpt            : Option[Boolean]
   def pickupOpt           : Option[Boolean]
   def deliveryOpt         : Option[Boolean]
@@ -1789,7 +1791,7 @@ trait OfferHandlerState {
   /** Краткие дополнительные сведения по покупке/доставке. */
   def salesNotesOpt: Option[String]
   /** Гарантия производителя: true, false или P1Y2M10DT2H30M. */
-  def manufacturerWarrantyOpt: Option[Warranty]
+  def manufacturerWarrantyOpt: Option[YmWarranty]
   /** Страна-производитель товара. */
   def countryOfOriginOpt: Option[String]
   /** Можно ли скачать указанный нематериальный товар? */
@@ -1798,7 +1800,7 @@ trait OfferHandlerState {
   def adultOpt: Option[Boolean]
   /** Возрастная категория товара. Есть немного противоречивой документации, но суть в том,
     * что есть аттрибут units и набор допустимых целочисленное значений для указанных единиц измерения. */
-  def ageOpt: Option[OfferAge]
+  def ageOpt: Option[YmOfferAge]
   /** Параметры, специфичные для конкретного товара. */
   def params: List[OfferParam]
   def paramsCounter: Int

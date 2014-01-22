@@ -3,6 +3,7 @@ package io.suggest.ym
 import org.scalatest._
 import YmParsers._
 import org.joda.time._
+import io.suggest.ym.model.YmWarranty
 
 /**
  * Suggest.io
@@ -86,9 +87,9 @@ class YmParsersTest extends FlatSpec with Matchers {
 
   "WARRANTY_PARSER" should "parse warranty value in different formats" in {
     val f = getF(WARRANTY_PARSER)
-    f("true")  shouldBe Warranty(hasWarranty = true, warrantyPeriod = None)
-    f("FALSE") shouldBe Warranty(hasWarranty = false, warrantyPeriod = None)
-    f("P2Y")   shouldBe Warranty(hasWarranty = true, warrantyPeriod = Some(new Period().withYears(2)))
+    f("true")  shouldBe new YmWarranty(true, None)
+    f("FALSE") shouldBe new YmWarranty(false, None)
+    f("P2Y")   shouldBe new YmWarranty(true, Some(new Period().withYears(2)))
   }
 
   "NUMERIC_DATE_PARSER" should "parse dates in different formats" in {
