@@ -351,7 +351,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def maxLen: Int = PHONE_MAXLEN
       def handleString(phoneStr: String) {
         // TODO Парсить телефон, проверять и сохранять в нормальном формате.
-        phoneOpt = Some(phoneStr)
+        phone = phoneStr
       }
     }
 
@@ -632,7 +632,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     class OfferUrlHandler extends OfferAnyUrlHandler {
       def myTag = AnyOfferFields.url.toString
       override def maxLen: Int = OFFER_URL_MAXLEN
-      def handleUrl(url: String) { urlOpt = Some(url) }
+      def handleUrl(_url: String) { url = _url }
     }
 
     /** Обработчик количественной цены товара/услуги. */
@@ -682,7 +682,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
         if (hadOverflow) {
           // TODO Категорию маркета надо парсить и выверять согласно вышеуказанной доке. Все токены пути должны быть выставлены строго согласно таблице категорий.
           val catPath = MARKET_CATEGORY_PATH_SPLIT_RE.split(s).toList.filter(!_.isEmpty)
-          marketCategoryOpt = Some(catPath)
+          marketCategory = Some(catPath)
         } else {
           throw YmOfferFieldException("Value too long.")
         }
@@ -747,7 +747,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       override def ellipsis: String = DESCRIPTION_ELLIPSIS
 
       def handleString(desc: String) {
-        descriptionOpt = Some(desc)
+        description = desc
       }
     }
 
@@ -759,8 +759,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       override def ellipsis: String = SALES_NOTES_ELLIPSIS
       override def maxLen: Int = SALES_NOTES_MAXLEN
 
-      def handleString(salesNotes: String) {
-        salesNotesOpt = Some(salesNotes)
+      def handleString(_salesNotes: String) {
+        salesNotes = _salesNotes
       }
     }
 
@@ -779,7 +779,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       override def maxLen: Int = COUNTRY_MAXLEN
       def handleString(s: String) {
         // TODO Нужно брать список стран, проверять по нему страну (желательно через триграммы), с поддержкой стран на иных языках.
-        countryOfOriginOpt = Some(s)
+        countryOfOrigin = s
       }
     }
 
@@ -1176,18 +1176,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
    * @param myShop Текущий магазин.
    */
   case class AudioBookOfferHandler(myAttrs: Attributes)(implicit val myShop:ShopHandler) extends AnyBookOfferHandler {
+    import offerDatum._
+    import myShop.shopDatum
     def myOfferType = OfferTypes.AudioBook
-
-    /** Исполнитель. Если их несколько, перечисляются через запятую. */
-    var performedByOpt: Option[String] = None
-    /** Тип аудиокниги (радиоспектакль, произведение начитано, ...). */
-    var performanceTypeOpt: Option[String] = None
-    /** Носитель, на котором поставляется аудиокнига. */
-    var storageOpt: Option[String] = None
-    /** Формат аудиокниги. */
-    var formatOpt: Option[String] = None
-    /** Время звучания задается в формате mm.ss (минуты.секунды). */
-    var recordingLenOpt: Option[Period] = None
 
     override val getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
       case (AnyOfferFields.performed_by, _)     => new PerformedByHandler
@@ -1201,7 +1192,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def myTag = AnyOfferFields.performed_by.toString
       override def maxLen: Int = OFFER_PERFORMED_BY_MAXLEN
       def handleString(s: String) {
-        performedByOpt = Some(s)
+        performedBy = s
       }
     }
 
@@ -1209,7 +1200,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def myTag = AnyOfferFields.performance_type.toString
       override def maxLen: Int = OFFER_PERFORMANCE_TYPE_MAXLEN
       def handleString(s: String) {
-        performanceTypeOpt = Some(s)
+        performanceType = s
       }
     }
 
@@ -1217,7 +1208,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def myTag = AnyOfferFields.storage.toString
       override def maxLen: Int = OFFER_STORAGE_MAXLEN
       def handleString(s: String) {
-        storageOpt = Some(s)
+        storage = s
       }
     }
 
@@ -1225,7 +1216,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def myTag = AnyOfferFields.format.toString
       def maxLen: Int = OFFER_FORMAT_MAXLEN
       def handleString(s: String) {
-        formatOpt = Some(s)
+        format = s
       }
     }
 
@@ -1233,9 +1224,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def myTag = AnyOfferFields.recording_length.toString
       override def maxLen: Int = OFFER_REC_LEN_MAXLEN
       def handleString(s: String) {
-        val parseResult = parse(RECORDING_LEN_PARSER, s)
-        if (parseResult.successful) {
-          recordingLenOpt = Some(parseResult.get)
+        if (parse(RECORDING_LEN_PARSER, s).successful) {
+          rawRecordingLen = s
+        } else {
+          throw YmOfferFieldException("Recording length is unreadable. Please use 'mm.ss' format.")
         }
       }
     }
@@ -1243,7 +1235,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
 
 
   trait OfferCountryOptH extends AnyOfferHandler {
-    var countryOpt: Option[String] = None
+    import offerDatum._
 
     /** Тут базовый комбинируемый обработчик полей комерческого предложения.
       * Тут, в trait'е, нужно использовать def вместо val, т.к. это точно будет переопределено в под-классах. */
@@ -1256,7 +1248,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       override def maxLen: Int = COUNTRY_MAXLEN
       def handleString(s: String) {
         // TODO Нужно проверять страну по списку оных.
-        countryOpt = Some(s)
+        country = s
       }
     }
   }
@@ -1268,21 +1260,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
    * @param myShop Текущий магазин.
    */
   case class ArtistTitleOfferHandler(myAttrs: Attributes)(implicit val myShop:ShopHandler) extends AnyOfferHandler with OfferCountryOptH with OfferYearH {
+    import offerDatum._
+
     def myOfferType = OfferTypes.ArtistTitle
-
-    /** Исполнитель, если есть. */
-    var artistOpt: Option[String] = None
-    /** Заголовок. */
-    var title: String = null
-    /** Носитель. */
-    var mediaOpt: Option[String] = None
-    /** Актёры. */
-    var starringOpt: Option[String] = None
-    /** Режиссер. */
-    var directorOpt: Option[String] = None
-    /** Оригинальное название. */
-    var originalNameOpt: Option[String] = None
-
 
     override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
       case (AnyOfferFields.artist, _)       => new ArtistHandler
@@ -1297,7 +1277,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def myTag = AnyOfferFields.artist.toString
       override def maxLen: Int = OFFER_ARTIST_MAXLEN
       def handleString(s: String) {
-        artistOpt = Some(s)
+        artist = s
       }
     }
 
@@ -1313,7 +1293,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def myTag = AnyOfferFields.media.toString
       override def maxLen: Int = OFFER_MEDIA_MAXLEN
       def handleString(s: String) {
-        mediaOpt = Some(s)
+        media = s
       }
     }
 
@@ -1321,7 +1301,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def myTag = AnyOfferFields.starring.toString
       override def maxLen: Int = OFFER_STARRING_MAXLEN
       def handleString(s: String) {
-        starringOpt = Some(s)
+        starring = s
       }
     }
 
@@ -1329,7 +1309,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def myTag = AnyOfferFields.director.toString
       override def maxLen: Int = OFFER_DIRECTOR_MAXLEN
       def handleString(s: String) {
-        directorOpt = Some(s)
+        director = s
       }
     }
     
@@ -1337,7 +1317,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def myTag = AnyOfferFields.originalName.toString
       override def maxLen: Int = OFFER_NAME_MAXLEN
       def handleString(s: String) {
-        originalNameOpt = Some(s)
+        originalName = s
       }
     }
   }
@@ -1707,7 +1687,7 @@ trait ShopHandlerState {
   def name                : String
   def company             : String
   def url                 : String
-  def phoneOpt            : Option[String]
+  def phone               : Option[String]
 }
 
 

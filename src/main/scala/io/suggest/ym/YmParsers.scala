@@ -85,7 +85,7 @@ object YmParsers extends JavaTokenParsers {
   /** true/false можно задавать через 1/0, on/off и т.д. Тут комплексный парсер булевых значений. */
   val BOOL_PARSER: Parser[Boolean] = {
     val enTrue = "(?i)o[nk]".r | "(?i)yes".r
-    val enFalse = "(?i)off".r | "(?i)no".r
+    val enFalse = "(?i)off+".r | "(?i)no+([np]e)?".r
     val ruTrue: Parser[String] = "(?iu)(есть|да|в\\s*наличи[ие]|ист[ие]на)".r
     val ruFalse: Parser[String] = "(?iu)(отсу[тсц]{1,3}вует|нету?|лож[ьъ]?)".r
     val digiTrue: Parser[String] = "0*[1-9]\\d*".r

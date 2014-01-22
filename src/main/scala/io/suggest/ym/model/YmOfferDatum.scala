@@ -83,6 +83,20 @@ object YmOfferDatum extends CascadingFieldNamer with Serializable with YmDatumDe
   val TABLE_OF_CONTENTS_PFN     = fieldName("toc")
   val BINDING_PFN               = fieldName("binding")
   val PAGE_EXTENT_PFN           = fieldName("pageExtent")
+  // audiobook
+  val PERFORMED_BY_PFN          = fieldName("performedBy")
+  val PERFORMANCE_TYPE_PFN      = fieldName("performanceType")
+  val STORAGE_PFN               = fieldName("storage")
+  val FORMAT_PFN                = fieldName("format")
+  val RECORDING_LEN_PFN         = fieldName("recordLen")
+  // artist.title
+  val COUNTRY_PFN               = fieldName("country")
+  val ARTIST_PFN                = fieldName("artist")
+  val TITLE_PFN                 = fieldName("title")
+  val MEDIA_PFN                 = fieldName("media")
+  val STARRING_PFN              = fieldName("starring")
+  val DIRECTOR_PFN              = fieldName("director")
+  val ORIGINAL_NAME_PFN         = fieldName("origName")
 
   def serializeType(t: OfferType) = t.id
   def deserializeType(tid: Int): OfferType = OfferTypes(tid)
@@ -159,16 +173,16 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
 
   def this(url: String, offerType:OfferType, shop: YmShopDatum) = {
     this
-    this.urlOpt = Some(url)
+    this.url = url
     this.offerType = offerType
     this.shopMeta = shop
   }
 
 
   /** Ссылка на коммерческое предложение на сайте магазина. */
-  def urlOpt = Option(_tupleEntry getString URL_FN)
-  def urlOpt_=(urlOpt: Option[String]) {
-    _tupleEntry.setString(URL_FN, urlOpt getOrElse null)
+  def url = Option(_tupleEntry getString URL_FN)
+  def url_=(url: String) {
+    _tupleEntry.setString(URL_FN, url)
   }
 
   def idOpt = Option(_tupleEntry getString ID_FN)
@@ -237,11 +251,11 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
   }
 
   /** Необязательная категория в общем дереве категорий яндекс-маркета. */
-  def marketCategoryOpt = {
+  def marketCategory = {
     val raw = _tupleEntry getObject MARKET_CATEGORY_FN
     deserializeMarketCategory(raw)
   }
-  def marketCategoryOpt_=(mcOpt: Option[Seq[String]]) {
+  def marketCategory_=(mcOpt: Option[Seq[String]]) {
     val t = serializeMarketCategory(mcOpt)
     _tupleEntry.setObject(MARKET_CATEGORY_FN, t)
   }
@@ -257,21 +271,21 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
   }
 
   /** Описание товара. */
-  def descriptionOpt = Option(_tupleEntry getString DESCRIPTION_FN)
-  def descriptionOpt_=(descOpt: Option[String]) {
-    _tupleEntry.setString(DESCRIPTION_FN, descOpt getOrElse null)
+  def description = Option(_tupleEntry getString DESCRIPTION_FN)
+  def description_=(desc: String) {
+    _tupleEntry.setString(DESCRIPTION_FN, desc)
   }
 
   /** Краткие дополнительные сведения по покупке/доставке. */
-  def salesNotesOpt = Option(_tupleEntry getString SALES_NOTES_FN)
-  def salesNotesOpt_=(salesNotesOpt: Option[String]) {
-    _tupleEntry.setString(SALES_NOTES_FN, salesNotesOpt getOrElse null)
+  def salesNotes = Option(_tupleEntry getString SALES_NOTES_FN)
+  def salesNotes_=(salesNotes: String) {
+    _tupleEntry.setString(SALES_NOTES_FN, salesNotes)
   }
 
   /** Страна-производитель товара. */
-  def countryOfOriginOpt = Option(_tupleEntry getString COUNTRY_OF_ORIGIN)
-  def countryOfOriginOpt_=(cooOpt: Option[String]) {
-    _tupleEntry.setString(COUNTRY_OF_ORIGIN, cooOpt getOrElse null)
+  def countryOfOrigin = Option(_tupleEntry getString COUNTRY_OF_ORIGIN)
+  def countryOfOrigin_=(coo: String) {
+    _tupleEntry.setString(COUNTRY_OF_ORIGIN, coo)
   }
 
   /** Гарантия производителя: true, false или P1Y2M10DT2H30M. */
@@ -396,4 +410,55 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
   /** book: Кол-во страниц в книге. */
   def pageExtent = getPayloadInt(PAGE_EXTENT_PFN)
   def pageExtent_=(peOpt: Option[Int]) = setPayloadValue(PAGE_EXTENT_PFN, peOpt getOrElse null)
+
+
+  /** audiobook: Исполнитель. Если их несколько, перечисляются через запятую. */
+  def performedBy = getPayloadString(PERFORMED_BY_PFN)
+  def performedBy_=(by: String) = setPayloadValue(PERFORMED_BY_PFN, by)
+
+  /** audiobook: Тип аудиокниги (радиоспектакль, произведение начитано, ...). */
+  def performanceType = getPayloadString(PERFORMANCE_TYPE_PFN)
+  def performanceType_=(pt: String) = setPayloadValue(PERFORMANCE_TYPE_PFN, pt)
+
+  /** audiobook: Носитель, на котором поставляется аудиокнига. */
+  def storage = getPayloadString(STORAGE_PFN)
+  def storage_=(storage: String) = setPayloadValue(STORAGE_PFN, storage)
+
+  /** audiobook: Формат аудиокниги. */
+  def format = getPayloadString(FORMAT_PFN)
+  def format_=(fmt: String) = setPayloadValue(FORMAT_PFN, fmt)
+
+  /** audiobook: Время звучания задается в формате mm.ss (минуты.секунды). */
+  def recordingLen = rawRecordingLen.map { parse(RECORDING_LEN_PARSER, _).get }
+  def rawRecordingLen = getPayloadString(RECORDING_LEN_PFN)
+  def rawRecordingLen_=(rawRl: String) = setPayloadValue(RECORDING_LEN_PFN, rawRl)
+
+
+  /** artist.title, tour: Страна, с которой связан сий товар. */
+  def country = getPayloadString(COUNTRY_PFN)
+  def country_=(c: String) = setPayloadValue(COUNTRY_PFN, c)
+
+  /** artist.title: Исполнитель, если есть. */
+  def artist = getPayloadString(ARTIST_PFN)
+  def artist_=(artist: String) = setPayloadValue(ARTIST_PFN, artist)
+
+  /** artist.title: Название альбома/кина/etc. */
+  def title = getPayloadString(TITLE_PFN)
+  def title_=(title: String) = setPayloadValue(TITLE_PFN, title)
+
+  /** artist.title: Носитель, на котором записан альбом или распространяется кино. */
+  def media = getPayloadString(MEDIA_PFN)
+  def media_=(m: String) = setPayloadValue(MEDIA_PFN, m)
+
+  /** artist.title: Актёры или исполнители. */
+  def starring = getPayloadString(STARRING_PFN)
+  def starring_=(s: String) = setPayloadValue(STARRING_PFN, s)
+
+  /** artist.title: Режиссер. */
+  def director = getPayloadString(DIRECTOR_PFN)
+  def director_=(d: String) = setPayloadValue(DIRECTOR_PFN, d)
+
+  /** artist.title: Оригинальное название. */
+  def originalName = getPayloadString(ORIGINAL_NAME_PFN)
+  def originalName_=(on: String) = setPayloadValue(ORIGINAL_NAME_PFN, on)
 }

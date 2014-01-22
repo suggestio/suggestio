@@ -116,9 +116,9 @@ class YmShopDatum extends BaseDatum(FIELDS) with ShopHandlerState with YmDatumDe
     _tupleEntry.setString(URL_FN, url)
   }
 
-  def phoneOpt = Option(_tupleEntry getString PHONE_FN)
-  def phoneOpt_=(phoneOpt: Option[String]) {
-    _tupleEntry.setString(PHONE_FN, phoneOpt getOrElse null)
+  def phone = Option(_tupleEntry getString PHONE_FN)
+  def phone_=(phone: String) {
+    _tupleEntry.setString(PHONE_FN, phone)
   }
 
   def emails: Seq[String] = {

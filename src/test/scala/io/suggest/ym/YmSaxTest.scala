@@ -47,7 +47,7 @@ class YmlSaxTest extends FlatSpec with Matchers {
             case id @ "12340" =>
               offerType shouldEqual OfferTypes.Simple
               isAvailable shouldEqual true
-              assert( urlOpt.exists(_ endsWith id) )
+              assert( url.exists(_ endsWith id) )
               price shouldBe 699.54F +- 0.50F
               currencyId shouldBe "USD"
               categoryIds should contain ("6")
