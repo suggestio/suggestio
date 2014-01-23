@@ -113,6 +113,14 @@ object YmOfferDatum extends CascadingFieldNamer with Serializable with YmDatumDe
   val HOTEL_MEAL_PFN            = fieldName("meal")
   val TOUR_INCLUDED_PFN         = fieldName("included")
   val TOUR_TRANSPORT_PFN        = fieldName("transport")
+  // event.ticket
+  val ET_PLACE_PFN              = fieldName("place")
+  val ET_HALL_PFN               = fieldName("hall")
+  val ET_HALL_PLAN_URL_PFN      = fieldName("hallPlan")
+  val ET_HALL_PART_PFN          = fieldName("hallPart")
+  val ET_DATE_PFN               = fieldName("date")
+  val ET_IS_PREMIERE_PFN        = fieldName("isPremiere")
+  val ET_IS_KIDS_PFN            = fieldName("isKids")
 
 
   def serializeType(t: OfferType) = t.id
@@ -231,6 +239,13 @@ object YmOfferDatum extends CascadingFieldNamer with Serializable with YmDatumDe
       case other      => STRING.coerce(other)
     }
     parse(HOTEL_MEAL_PARSER, mStr).get
+  }
+
+
+  def serializeDateTime(dt: DateTime): java.lang.Long = dt.getMillis
+  val deserializeDateTime: PartialFunction[AnyRef, Option[DateTime]] = {
+    case null  => None 
+    case other => Some(new DateTime(LONG coerce other))
   }
 }
 
@@ -586,4 +601,35 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
   /** tour: Транспорт. Обязательно. */
   def tourTransport = getPayloadString(TOUR_TRANSPORT_PFN)
   def tourTransport_=(tt: String) = setPayloadValue(TOUR_TRANSPORT_PFN, tt)
+
+
+  /** event.ticket: Место проведения мероприятия. */
+  def etPlace = getPayloadString(ET_PLACE_PFN)
+  def etPlace_=(place: String) = setPayloadValue(ET_PLACE_PFN, place)
+
+  /** event.ticket: Название зала и ссылка на изображение с планом зала. */
+  def etHall = getPayloadString(ET_HALL_PFN)
+  def etHall_=(hall: String) = setPayloadValue(ET_HALL_PFN, hall)
+
+  /** event.ticket: Ссылка на изображение с планом зала. */
+  def etHallPlanUrl = getPayloadString(ET_HALL_PLAN_URL_PFN)
+  def etHallPlanUrl_=(hallPlanUrl: String) = setPayloadValue(ET_HALL_PLAN_URL_PFN, hallPlanUrl)
+
+  /** event.ticket: hall_part - К какой части зала относится этот билет. */
+  def etHallPart = getPayloadString(ET_HALL_PART_PFN)
+  def etHallPart_=(hallPart: String) = setPayloadValue(ET_HALL_PART_PFN, hallPart)
+
+  /** event.ticket: Дата сеанса/мероприятия/события/перфоманса. */
+  def etDateRaw = getPayloadJLong(ET_DATE_PFN)
+  def etDateRaw_=(millis: java.lang.Long) = setPayloadValue(ET_DATE_PFN, millis)
+  def etDate = etDateRaw flatMap deserializeDateTime
+  def etDate_=(dt: DateTime) { etDateRaw = serializeDateTime(dt) }
+
+  /** event.ticket: Признак премьерности мероприятия. */
+  def etIsPremiere = getPayloadBoolean(ET_IS_PREMIERE_PFN)
+  def etIsPremiere_=(isPremiere: Boolean) = setPayloadValue(ET_IS_PREMIERE_PFN, isPremiere)
+
+  /** event.ticket: Признак детского мероприятия. */
+  def etIsKids = getPayloadBoolean(ET_IS_KIDS_PFN)
+  def etIsKids_=(isKids: Boolean) = setPayloadValue(ET_IS_KIDS_PFN, isKids)
 }

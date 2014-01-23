@@ -135,7 +135,14 @@ object OfferTypes extends Enumeration {
   val EventTicket   = Value("event-ticket")
   // /!\ Порядок менять нельзя! Можно только добавлять элементы в конец или немного обновлять эти.
 
-  def default = Simple
+  def default: OfferType = Simple
+
+  /** Обработка сырого значения аттрибута*/
+  def withRawName: PartialFunction[String, OfferType] = {
+    case null     => Simple
+    case t if t equalsIgnoreCase "ticket" => EventTicket
+    case other    => withName(other.toLowerCase)
+  }
 }
 
 

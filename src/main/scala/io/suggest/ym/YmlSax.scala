@@ -500,10 +500,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
      */
     def apply(attrs: Attributes)(implicit myShop: YmShopDatum): AnyOfferHandler = {
       val offerTypeRaw = attrs.getValue(ATTR_TYPE)
-      val offerType = Option(offerTypeRaw)
-        .map {OfferTypes.withName}
-        .getOrElse {OfferTypes.default}
-      // TODO Надо как-то от warning тут избавится!
+      val offerType = OfferTypes.withRawName(offerTypeRaw)
       offerType match {
         case OfferTypes.Simple          => new SimpleOfferHandler(attrs)
         case OfferTypes.VendorModel     => new VendorModelOfferHandler(attrs)
@@ -1452,22 +1449,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
    * @param myShop Магазин.
    */
   case class EventTicketOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends AnyOfferHandler with OfferNameH {
+    import offerDatum._
+
     def myOfferType = OfferTypes.EventTicket
-
-    /** Место проведения мероприятия. */
-    var placeOpt: Option[String] = None
-    /** Название зала и ссылка на изображение с планом зала. */
-    var hallOpt: Option[String] = None
-    var hallPlanUrlOpt: Option[String] = None
-    /** hall_part: К какой части зала относится билет. */
-    var hallPartOpt: Option[String] = None
-    /** Дата и время сеанса. */
-    var date: DateTime = null
-    /** Признак премьерности мероприятия. */
-    var isPremiereOpt: Option[Boolean] = None
-    /** Признак детского мероприятия. */
-    var isKidsOpt: Option[Boolean] = None
-
 
     /** Обработчик полей коммерческого предложения, который также умеет name. */
     override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
@@ -1484,7 +1468,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def maxLen: Int = PLACE_MAXLEN
       def handleString(s: String) {
         // TODO Нужна география.
-        placeOpt = Some(s)
+        etPlace = s
       }
     }
 
@@ -1493,9 +1477,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def maxLen: Int = HALL_MAXLEN
       def handleString(s: String) {
         if (!s.isEmpty) {
-          hallOpt = Some(s)
+          etHall = s
         }
-        hallPlanUrlOpt = Option(attrs.getValue(ATTR_PLAN))
+        // В аттрибуте тега может быть задана ссылка на план зала.
+        Option(attrs.getValue(ATTR_PLAN))
           .map(_.trim)
           .filter { maybeUrl =>
             try {
@@ -1504,7 +1489,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
             } catch {
               case ex: Exception => false
             }
-          }.map { UrlUtil.normalize }
+          } foreach {
+            url  =>  etHallPlanUrl = UrlUtil.normalize(url)
+          }
       }
     }
 
@@ -1512,28 +1499,28 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def myTag = AnyOfferFields.hall_part.toString
       def maxLen: Int = HALL_PART_MAXLEN
       def handleString(s: String) {
-        hallPartOpt = Some(s)
+        etHallPart = s
       }
     }
 
     class EventDateHandler extends DateTimeHandler {
       def myTag = AnyOfferFields.date.toString
       def handleDateTime(dt: DateTime) {
-        date = dt
+        etDate = dt
       }
     }
 
     class IsPremiereHandler extends OfferBooleanHandler {
       def myTag = AnyOfferFields.is_premiere.toString
       def handleBoolean(b: Boolean) {
-        isPremiereOpt = Some(b)
+        etIsPremiere = b
       }
     }
 
     class IsKidsHandler extends OfferBooleanHandler {
       def myTag = AnyOfferFields.is_kids.toString
       def handleBoolean(b: Boolean) {
-        isKidsOpt = Some(b)
+        etIsKids = b
       }
     }
   }
