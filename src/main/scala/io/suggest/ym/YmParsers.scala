@@ -252,7 +252,7 @@ object YmParsers extends JavaTokenParsers {
     val child = "(?i)chi?ld(ren)?".r ^^^ childSym
     // Счетчик опций: кол-ва детей или доп.кроватей.
     val optCnt: Parser[Int] = opt("\\d+".r) ^^ { _.map(str2IntF) getOrElse 1 }
-    val sep: Parser[String] = "([-+\\s]+|with)".r
+    val sep: Parser[String] = "([-+\\s]+|with|and)".r
     // Собираем финальный парсер наконец
     val roomBaseParser = singleRoom | doubleRoom | tripleRoom | twinRoom | quadroRoom
     roomBaseParser ~ rep(sep ~> optCnt ~ (exBed | child)) ^^ {

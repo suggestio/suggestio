@@ -173,7 +173,18 @@ object HotelRoomTypes extends Enumeration {
   val SGL, DBL, TWN, TRPL, QDPL = Value
 }
 
-case class HotelRoomInfo(roomType: HotelRoomType, childrenCnt:Int = 0, exBedCnt:Int = 0) extends Serializable
+case class HotelRoomInfo(roomType: HotelRoomType, childrenCnt:Int = 0, exBedCnt:Int = 0) extends Serializable {
+  def raw: String = {
+    val sb = new StringBuilder(12, roomType.toString)
+    if (childrenCnt > 0) {
+      sb.append('-').append(childrenCnt).append("Child")
+    }
+    if (exBedCnt > 0) {
+      sb.append('-').append(exBedCnt).append("ExB")
+    }
+    sb.toString()
+  }
+}
 
 
 /**
@@ -190,6 +201,7 @@ object HotelMealTypes extends Enumeration {
 /** Звездатость отеля. HV1 и 2 - это некие коттеджи. */
 object HotelStarsLevels extends Enumeration {
   type HotelStarsLevel = Value
+  // !!! ПЕРЕИМЕНОВЫВАТЬ СУЩЕСТВУЮЩИЕ УРОВНИ НЕЛЬЗЯ !!!
   val S1, S2, S3, S4, S5, HV1, HV2 = Value
 
   val forStarCount: PartialFunction[Int, HotelStarsLevel] = {

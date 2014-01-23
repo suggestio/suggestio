@@ -4,9 +4,15 @@ import com.scaleunlimited.cascading.{BaseDatum, PayloadDatum}
 import io.suggest.util.CascadingFieldNamer
 import cascading.tuple.{TupleEntry, Tuple, Fields}
 import scala.collection.JavaConversions._
-import io.suggest.ym.{Dimensions, OfferHandlerState, OfferTypes}, OfferTypes.OfferType
+import io.suggest.ym._, OfferTypes.OfferType
 import io.suggest.model.PayloadHelpers
 import io.suggest.ym.YmParsers._
+import org.joda.time.DateTime
+import cascading.tuple.coerce.Coercions.{LONG, STRING}
+import io.suggest.ym.HotelStarsLevels.HotelStarsLevel
+import scala.Some
+import io.suggest.ym.Dimensions
+import io.suggest.ym.HotelMealTypes.HotelMealType
 
 /**
  * Suggest.io
@@ -97,6 +103,17 @@ object YmOfferDatum extends CascadingFieldNamer with Serializable with YmDatumDe
   val STARRING_PFN              = fieldName("starring")
   val DIRECTOR_PFN              = fieldName("director")
   val ORIGINAL_NAME_PFN         = fieldName("origName")
+  // tour
+  val WORLD_REGION_PFN          = fieldName("worldRegion")
+  val REGION_PFN                = fieldName("region")
+  val DAYS_PFN                  = fieldName("days")
+  val TOUR_DATES_PFN            = fieldName("tourDates")
+  val HOTEL_STARS_PFN           = fieldName("hotelStars")
+  val HOTEL_ROOM_PFN            = fieldName("room")
+  val HOTEL_MEAL_PFN            = fieldName("meal")
+  val TOUR_INCLUDED_PFN         = fieldName("included")
+  val TOUR_TRANSPORT_PFN        = fieldName("transport")
+
 
   def serializeType(t: OfferType) = t.id
   def deserializeType(tid: Int): OfferType = OfferTypes(tid)
@@ -105,10 +122,14 @@ object YmOfferDatum extends CascadingFieldNamer with Serializable with YmDatumDe
     case null     => null
     case t: Tuple => new YmShopDatum(t)
   }
-  def serializeShopMeta(ysd: YmShopDatum) = ysd.getTuple
+  def serializeShopMeta(ysd: YmShopDatum) = {
+    if (ysd == null)  null  else  ysd.getTuple
+  }
 
 
-  def serializeCategoryIds(catIds: Seq[String]) = new Tuple(catIds : _*)
+  def serializeCategoryIds(catIds: Seq[String]) = {
+    if (catIds == null || catIds.isEmpty)  null  else  new Tuple(catIds : _*)
+  }
   val deserializeCategoryIds: PartialFunction[AnyRef, Seq[String]] = {
     case null     => Nil
     case t: Tuple => t.toSeq.asInstanceOf[Seq[String]]
@@ -116,10 +137,11 @@ object YmOfferDatum extends CascadingFieldNamer with Serializable with YmDatumDe
 
 
   def serializeMarketCategory(mcOpt: Option[Seq[String]]) = {
-    if (mcOpt.isDefined && !mcOpt.get.isEmpty)
-      new Tuple(mcOpt.get : _*)
-    else
+    if (mcOpt == null || mcOpt.isEmpty || mcOpt.get.isEmpty) {
       null
+    } else {
+      new Tuple(mcOpt.get : _*)
+    }
   }
   val deserializeMarketCategory: PartialFunction[AnyRef, Option[Seq[String]]] = {
     case null     => None
@@ -127,30 +149,88 @@ object YmOfferDatum extends CascadingFieldNamer with Serializable with YmDatumDe
   }
 
 
-  def serializePictures(pictures: Seq[String]) = new Tuple(pictures : _*)
+  def serializePictures(pictures: Seq[String]) = {
+    if (pictures == null || pictures.isEmpty)  null  else  new Tuple(pictures : _*)
+  }
   val deserializePictures: PartialFunction[AnyRef, Seq[String]] = {
     case null     => Nil
     case t: Tuple => t.toSeq.asInstanceOf[Seq[String]]
   }
 
-  def serializeManufacturerWarranty(mw: Warranty): String = mw.raw
+
+  def serializeManufacturerWarranty(mw: Warranty): String = {
+    if (mw == null || !mw.hasWarranty)  null  else  mw.raw
+  }
   val deserializeManufacturerWarranty: PartialFunction[AnyRef, Warranty] = {
     case null      => NoWarranty
     case s: String => Warranty(s)
   }
 
+
   def serializeAge(ageOpt: Option[YmOfferAge]) = {
-    if (ageOpt.isDefined)  ageOpt.get.getTuple  else  null
+    if (ageOpt == null || ageOpt.isEmpty)  null  else  ageOpt.get.getTuple
   }
   val deserializeAge: PartialFunction[AnyRef, Option[YmOfferAge]] = {
     case null     => None
     case t: Tuple => Some(new YmOfferAge(t))
   }
 
-  def serializeRecommendedIds(rec: Seq[String]) = new Tuple(rec : _*)
+
+  def serializeRecommendedIds(rec: Seq[String]) = {
+    if (rec == null || rec.isEmpty)  null  else  new Tuple(rec : _*)
+  }
   val deserializeRecommendedIds: PartialFunction[AnyRef, Seq[String]] = {
     case null     => Nil
     case t: Tuple => t.toSeq.asInstanceOf[Seq[String]]
+  }
+
+
+  def serializeTourDates(tourDates: Seq[DateTime]): Tuple = {
+    if (tourDates == null || tourDates.isEmpty) {
+      null
+    } else {
+      val t = new Tuple
+      tourDates foreach { td =>
+        t addLong td.getMillis
+      }
+      t
+    }
+  }
+  val deserializeTourDates: PartialFunction[AnyRef, Seq[DateTime]] = {
+    case null     => Nil
+    case t: Tuple => t.toSeq.map { ts => new DateTime(LONG.coerce(ts)) }
+  }
+
+
+  def serializeHotelStars(hsl: HotelStarsLevel): String = {
+    if (hsl == null)  null  else  hsl.toString
+  }
+  def deserializeHotelStars(hslRaw: AnyRef): HotelStarsLevel = {
+    val hslStr = hslRaw match {
+      case s: String  => s
+      case other      => STRING.coerce(hslRaw)
+    }
+    HotelStarsLevels.withName(hslStr)
+  }
+
+
+  def serializeHotelRoom(hr: HotelRoomInfo): String = {
+    if (hr == null)  null  else  hr.raw
+  }
+  val deserializeHotelRoom: PartialFunction[AnyRef, HotelRoomInfo] = {
+    case s: String => parse(HOTEL_ROOM_PARSER, s).get
+  }
+
+
+  def serializeHotelMeal(m: HotelMealType): String = {
+    if (m == null)  null  else  m.toString
+  }
+  def deserializeHotelMeal(mRaw: AnyRef): HotelMealType = {
+    val mStr = mRaw match {
+      case s: String  => s
+      case other      => STRING.coerce(other)
+    }
+    parse(HOTEL_MEAL_PARSER, mStr).get
   }
 }
 
@@ -359,14 +439,14 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
   def weightKgOpt_=(weightOpt: Option[Float]) = setPayloadValue(WEIGHT_KG_PFN, weightOpt getOrElse null)
 
   /** vendor.model: Истечение срока годности: период или же дата. */
-  def rawExpiryOpt = getPayloadString(EXPIRY_PFN)
-  def rawExpiryOpt_=(rawExpiry: String) = setPayloadValue(EXPIRY_PFN, rawExpiry)
-  def expiryOpt = rawExpiryOpt.map(parse(EXPIRY_PARSER, _).get)
+  def expiryOptRaw = getPayloadString(EXPIRY_PFN)
+  def expiryOptRaw_=(rawExpiry: String) = setPayloadValue(EXPIRY_PFN, rawExpiry)
+  def expiryOpt = expiryOptRaw.map(parse(EXPIRY_PARSER, _).get)
 
   /** vendor.model: Размерности товара: ширина, длина и высота. */
-  def rawDimensions = getPayloadString(DIMENSIONS_PFN)
-  def rawDimensions_=(rawDims: String) = setPayloadValue(DIMENSIONS_PFN, rawDims)
-  def dimensions = rawDimensions.map(parse(DIMENSIONS_PARSER, _).get)
+  def dimensionsRaw = getPayloadString(DIMENSIONS_PFN)
+  def dimensionsRaw_=(rawDims: String) = setPayloadValue(DIMENSIONS_PFN, rawDims)
+  def dimensions = dimensionsRaw.map(parse(DIMENSIONS_PARSER, _).get)
   def dimensions_=(dims: Dimensions) = setPayloadValue(DIMENSIONS_PFN, dims.toRaw)
 
 
@@ -429,9 +509,9 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
   def format_=(fmt: String) = setPayloadValue(FORMAT_PFN, fmt)
 
   /** audiobook: Время звучания задается в формате mm.ss (минуты.секунды). */
-  def recordingLen = rawRecordingLen.map { parse(RECORDING_LEN_PARSER, _).get }
-  def rawRecordingLen = getPayloadString(RECORDING_LEN_PFN)
-  def rawRecordingLen_=(rawRl: String) = setPayloadValue(RECORDING_LEN_PFN, rawRl)
+  def recordingLen = recordingLenRaw.map { parse(RECORDING_LEN_PARSER, _).get }
+  def recordingLenRaw = getPayloadString(RECORDING_LEN_PFN)
+  def recordingLenRaw_=(rawRl: String) = setPayloadValue(RECORDING_LEN_PFN, rawRl)
 
 
   /** artist.title, tour: Страна, с которой связан сий товар. */
@@ -461,4 +541,49 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
   /** artist.title: Оригинальное название. */
   def originalName = getPayloadString(ORIGINAL_NAME_PFN)
   def originalName_=(on: String) = setPayloadValue(ORIGINAL_NAME_PFN, on)
+
+
+  /** tour: Регион мира (часть света, материк планеты и т.д.), к которому относится путёвка. "Африка" например. */
+  def worldRegion = getPayloadString(WORLD_REGION_PFN)
+  def worldRegion_=(wr: String) = setPayloadValue(WORLD_REGION_PFN, wr)
+
+  /** tour: Курорт и город */
+  def region = getPayloadString(REGION_PFN)
+  def region_=(r: String) = setPayloadValue(REGION_PFN, r)
+
+  /** tour: Количество дней тура. */
+  def days = getPayloadInt(DAYS_PFN)
+  def days_=(daysOpt: Option[Int]) = setPayloadValue(DAYS_PFN, daysOpt getOrElse null)
+
+  /** tour: Даты заездов в прямом (исходном) порядке. */
+  def tourDatesRaw = getPayloadValue(TOUR_DATES_PFN)
+  def tourDatesRaw_=(t: Tuple) = setPayloadValue(TOUR_DATES_PFN, t)
+  def tourDates = deserializeTourDates(tourDatesRaw)
+  def tourDates_=(tds: Seq[DateTime]) { tourDatesRaw = serializeTourDates(tds) }
+
+  /** tour: Звёзды гостиницы. Базовый формат взят [[http://www.uatourist.com/docs/info.htm отсюда]] и немного расширен. */
+  def hotelStarsRaw = getPayloadString(HOTEL_STARS_PFN)
+  def hotelStarsRaw_=(hslRaw: String) = setPayloadValue(HOTEL_STARS_PFN, hslRaw)
+  def hotelStars = hotelStarsRaw map deserializeHotelStars
+  def hotelStars_=(hsl: HotelStarsLevel) { hotelStarsRaw = serializeHotelStars(hsl) }
+
+  /** tour: Тип комнаты в гостинице (SGL, DBL+1Chld, ...) */
+  def hotelRoomRaw = getPayloadString(HOTEL_ROOM_PFN)
+  def hotelRoomRaw_=(hrRaw: String) = setPayloadValue(HOTEL_ROOM_PFN, hrRaw)
+  def hotelRoom = hotelRoomRaw map deserializeHotelRoom
+  def hotelRoom_=(hr: HotelRoomInfo) { hotelRoomRaw = serializeHotelRoom(hr) }
+
+  /** tour: Тип питания в гостинице. */
+  def hotelMealRaw = getPayloadString(HOTEL_MEAL_PFN)
+  def hotelMealRaw_=(hmRaw: String) = setPayloadValue(HOTEL_MEAL_PFN, hmRaw)
+  def hotelMeal = hotelMealRaw map deserializeHotelMeal
+  def hotelMeal_=(hm: HotelMealType) { hotelMealRaw = serializeHotelMeal(hm) }
+  
+  /** tour: Что включено в стоимость тура. По спекам яндекса, это -- обязательное значение. */
+  def tourIncluded = getPayloadString(TOUR_INCLUDED_PFN)
+  def tourIncluded_=(ti: String) = setPayloadValue(TOUR_INCLUDED_PFN, ti)
+
+  /** tour: Транспорт. Обязательно. */
+  def tourTransport = getPayloadString(TOUR_TRANSPORT_PFN)
+  def tourTransport_=(tt: String) = setPayloadValue(TOUR_TRANSPORT_PFN, tt)
 }

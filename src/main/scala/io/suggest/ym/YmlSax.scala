@@ -293,9 +293,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
 
     /** Сброс всех аккамуляторов накопленных данных в текущий shop datum. */
     def commit() {
-      shopDatum.emails     = emailsAcc
-      shopDatum.currencies = currenciesAcc
-      shopDatum.categories = categoriesAcc
+      shopDatum.emails     = emailsAcc.reverse
+      shopDatum.currencies = currenciesAcc.reverse
+      shopDatum.categories = categoriesAcc.reverse
       shopDatum.commit()
     }
 
@@ -320,7 +320,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
         case ShopFields.adult               => new ShopAdultHandler
         case ShopFields.offers              =>
           commit()
-          new OffersHandler(attributes)(this)
+          new OffersHandler(attributes)
       }
       become(nextHandler)
     }
@@ -477,7 +477,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   }
 
 
-  case class OffersHandler(myAttrs: Attributes = EmptyAttrs)(implicit val myShop: ShopHandler) extends MyHandler {
+  case class OffersHandler(myAttrs: Attributes = EmptyAttrs)(implicit val myShop: YmShopDatum) extends MyHandler {
     def myTag = ShopFields.offers.toString
 
     override def startTag(tagName: String, attributes: Attributes) {
@@ -498,7 +498,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
      * @param attrs Исходные аттрибуты тега offer.
      * @return Какой-то хандлер, пригодный для парсинга указанного коммерческого предложения.
      */
-    def apply(attrs: Attributes)(implicit myShop: ShopHandler): AnyOfferHandler = {
+    def apply(attrs: Attributes)(implicit myShop: YmShopDatum): AnyOfferHandler = {
       val offerTypeRaw = attrs.getValue(ATTR_TYPE)
       val offerType = Option(offerTypeRaw)
         .map {OfferTypes.withName}
@@ -523,11 +523,12 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   trait AnyOfferHandler extends MyHandler {
     def myTag = OffersFields.offer.toString
 
-    implicit val myShop: ShopHandler
-    import myShop.shopDatum
+    implicit val myShop: YmShopDatum
 
     implicit val offerDatum = new YmOfferDatum()
     import offerDatum._
+
+    val shopCurrencies = myShop.currencies
 
     def myOfferType: OfferType
 
@@ -535,7 +536,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     idOpt       = Option(myAttrs.getValue(ATTR_ID)).map(_.trim)
     groupIdOpt  = Option(myAttrs.getValue(ATTR_GROUP_ID)).map(_.trim)
     offerType   = myOfferType
-    shopMeta    = shopDatum
+    shopMeta    = myShop
     // TODO Надо выставит shopId, предварительно поняв, как надо вычислять id магазина.
     isAvailable = {
       val maybeAvailable = myAttrs.getValue(ATTR_AVAILABLE)
@@ -557,6 +558,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     var picturesAcc: List[String] = Nil
 
     /** Работа с параметрами. paramsAcc можно будет выпилить апосля. */
+    // TODO Нужны нормальные handler'ы и парсеры, а не это бесполезное добро.
     var paramsAcc: List[OfferParam] = Nil
     var paramsAccCounter = 0
 
@@ -600,10 +602,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       become(handler)
     }
 
-    /** Сброс накопленных аккамуляторов в датум. */
+    /** Сброс накопленных аккамуляторов в датум. При override, нужно дергать super.commit() в конце, а не в начале. */
     def commit() {
       categoryIds = categoryIdsAcc.map(_.categoryId)
-      pictures = picturesAcc
+      pictures = picturesAcc.reverse
       // PAYLOAD внутри датума тоже требует отдельного коммита.
       offerDatum.commit()
     }
@@ -647,8 +649,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       override def maxLen: Int = SHOP_CURRENCY_ID_MAXLEN
       def handleString(s: String) {
         // Проверяем валюту по списку валют магазина.
-        if (!myShop.currenciesAcc.exists(_.id == s))
-          throw YmOfferFieldException(s"Unexpected currencyId: '$s'. Defined shop's currencies are: ${myShop.currenciesAcc.map(_.id).mkString(", ")}")
+        if (!shopCurrencies.exists(_.id == s))
+          throw YmOfferFieldException(s"Unexpected currencyId: '$s'. Defined shop's currencies are: ${shopCurrencies.map(_.id).mkString(", ")}")
         if (hadOverflow)
           throw YmOfferFieldException(s"Too long currency id. Max length is $maxLen.")
         currencyId = s
@@ -909,7 +911,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /** "Упрощенное описание" - исторический перво-формат яндекс-маркета.
     * Поле type ещё не заимплеменчено, и есть некоторый ограниченный и фиксированный набор полей.
     * Доп.поля: vendor, vendorCode. */
-  case class SimpleOfferHandler(myAttrs: Attributes)(implicit val myShop: ShopHandler) extends VendorInfoH with OfferNameH {
+  case class SimpleOfferHandler(myAttrs: Attributes)(implicit val myShop: YmShopDatum) extends VendorInfoH with OfferNameH {
     def myOfferType = OfferTypes.Simple
   }
 
@@ -917,14 +919,19 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     * Этот тип описания является наиболее удобным и универсальным, он рекомендован для описания товаров из
     * большинства категорий Яндекс.Маркета.
     * Доп.поля: typePrefix, [vendor, vendorCode], model, provider, tarifPlan. */
-  case class VendorModelOfferHandler(myAttrs: Attributes)(implicit val myShop: ShopHandler) extends VendorInfoH {
-    import myShop.shopDatum
+  case class VendorModelOfferHandler(myAttrs: Attributes)(implicit val myShop: YmShopDatum) extends VendorInfoH {
     import offerDatum._
 
     def myOfferType = OfferTypes.VendorModel
 
     /** Список id рекомендуемых товаров к этому товару. */
     var recIdsListAcc: List[String] = Nil
+
+    /** Сброс накопленных аккамуляторов в датум. */
+    override def commit() {
+      recIds = recIdsListAcc
+      super.commit()
+    }
 
     /** Дополненный для vendor.model обработчик полей комерческого предложения. */
     override val getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
@@ -937,12 +944,6 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       case (AnyOfferFields.expiry, _)               => new ExpiryHandler
       case (AnyOfferFields.weight, _)               => new WeightHandler
       case (AnyOfferFields.dimensions, _)           => new DimensionsHandler
-    }
-
-    /** Фунция вызывается, когда наступает пора завершаться. В этот момент обычно отпавляются в коллектор накопленные данные. */
-    override def handlerFinish(tagName: String) {
-      super.handlerFinish(tagName)
-      recIds = recIdsListAcc
     }
 
     /** Начинается поле оффера. Нужно исправить ошибки в некоторых полях. */
@@ -1010,7 +1011,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       override def maxLen: Int = 30
       def handleString(s: String) {
         if (parse(EXPIRY_PARSER, s).successful) {
-          rawExpiryOpt = s
+          expiryOptRaw = s
         } else {
           throw YmOfferFieldException(s"Cannot understand expiration date or period: '$s'.")
         }
@@ -1031,7 +1032,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       override def maxLen: Int = OFFER_DIMENSIONS_MAXLEN
       def handleString(s: String) {
         if (parse(DIMENSIONS_PARSER, s).successful) {
-          rawDimensions = s
+          dimensionsRaw = s
         } else {
           throw YmOfferFieldException(s"Cannot understand this dimensions: '$s'. Please use 'length/width/height' (centimeters) format.")
         }
@@ -1144,7 +1145,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
    * @param myAttrs Аттрибуты оффера.
    * @param myShop Текущий магазин.
    */
-  case class BookOfferHandler(myAttrs: Attributes)(implicit val myShop:ShopHandler) extends AnyBookOfferHandler {
+  case class BookOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends AnyBookOfferHandler {
     import offerDatum._
     def myOfferType = OfferTypes.Book
 
@@ -1175,9 +1176,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
    * @param myAttrs Атрибуты оффера.
    * @param myShop Текущий магазин.
    */
-  case class AudioBookOfferHandler(myAttrs: Attributes)(implicit val myShop:ShopHandler) extends AnyBookOfferHandler {
+  case class AudioBookOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends AnyBookOfferHandler {
     import offerDatum._
-    import myShop.shopDatum
     def myOfferType = OfferTypes.AudioBook
 
     override val getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
@@ -1225,7 +1225,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       override def maxLen: Int = OFFER_REC_LEN_MAXLEN
       def handleString(s: String) {
         if (parse(RECORDING_LEN_PARSER, s).successful) {
-          rawRecordingLen = s
+          recordingLenRaw = s
         } else {
           throw YmOfferFieldException("Recording length is unreadable. Please use 'mm.ss' format.")
         }
@@ -1259,7 +1259,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
    * @param myAttrs Аттрибуты этого оффера.
    * @param myShop Текущий магазин.
    */
-  case class ArtistTitleOfferHandler(myAttrs: Attributes)(implicit val myShop:ShopHandler) extends AnyOfferHandler with OfferCountryOptH with OfferYearH {
+  case class ArtistTitleOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends AnyOfferHandler with OfferCountryOptH with OfferYearH {
     import offerDatum._
 
     def myOfferType = OfferTypes.ArtistTitle
@@ -1328,28 +1328,19 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
    * @param myAttrs Аттрибуты тега.
    * @param myShop Магазин.
    */
-  case class TourOfferHandler(myAttrs: Attributes)(implicit val myShop:ShopHandler) extends AnyOfferHandler with OfferCountryOptH with OfferNameH {
+  case class TourOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends AnyOfferHandler with OfferCountryOptH with OfferNameH {
+    import offerDatum._
+
     def myOfferType = OfferTypes.Tour
 
-    /** Регион мира (часть света, материк планеты и т.д.), к которому относится путёвка. "Африка" например. */
-    var worldRegionOpt: Option[String] = None
-    /** Курорт и город */
-    var regionOpt: Option[String] = None
-    /** Количество дней тура. */
-    var days: Int = -1
-    /** Даты заездов. */
-    var tourDates: List[DateTime] = Nil
-    /** Звёзды гостиницы. Формат - хз, поэтому возвращаем всырую. */
-    var hotelStartsOpt: Option[HotelStarsLevel] = None
-    /** Тип комнаты в гостинице (SGL, DBL, ...) */
-    var roomOpt: Option[HotelRoomInfo] = None
-    /** Тип питания в гостинице. */
-    var mealOpt: Option[HotelMealType] = None
-    /** Что включено в стоимость тура. Обязательнах. */
-    var included: String = null
-    /** Транспорт. Тоже обязательно. */
-    var transport: String = null
+    /** Аккамулятор дат заездов. */
+    var tourDatesAcc: List[DateTime] = Nil
 
+    /** Сброс накопленных аккамуляторов в датум. При override, нужно дергать super.commit() в конце, а не в начале. */
+    override def commit() {
+      tourDates = tourDatesAcc.reverse
+      super.commit()
+    }
 
     /** Тут базовый комбинируемый обработчик полей комерческого предложения.
       * Тут, в trait'е, нужно использовать def вместо val, т.к. это точно будет переопределено в под-классах. */
@@ -1372,7 +1363,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def myTag = AnyOfferFields.worldRegion.toString
       override def maxLen: Int = WORLD_REGION_MAXLEN
       def handleString(s: String) {
-        worldRegionOpt = Some(s)
+        worldRegion = s
       }
     }
     
@@ -1380,21 +1371,21 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       override def maxLen: Int = REGION_MAXLEN
       def myTag = AnyOfferFields.region.toString
       def handleString(s: String) {
-        regionOpt = Some(s)
+        region = s
       }
     }
 
     class DaysHandler extends IntHandler {
       def myTag = AnyOfferFields.days.toString
       def handleInt(i: Int) {
-        days = i
+        days = Some(i)
       }
     }
 
     class TourDatesHandler extends DateTimeHandler {
       def myTag = AnyOfferFields.dataTour.toString
       def handleDateTime(dt: DateTime) {
-        tourDates ::= dt
+        tourDatesAcc ::= dt
       }
     }
 
@@ -1404,7 +1395,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def handleString(s: String) {
         val parseResult = parse(HOTEL_STARS_PARSER, s)
         if (parseResult.successful) {
-          hotelStartsOpt = Some(parseResult.get)
+          hotelStars = parseResult.get
+        } else {
+          throw YmOfferFieldException("Cannot understand hotel_stars value: " + s)
         }
       }
     }
@@ -1414,8 +1407,11 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def maxLen: Int = ROOM_TYPE_MAXLEN
       def handleString(s: String) {
         val parseResult = parse(HOTEL_ROOM_PARSER, s)
-        if (parseResult.successful)
-          roomOpt = Some(parseResult.get)
+        if (parseResult.successful) {
+          hotelRoom = parseResult.get
+        } else {
+          throw YmOfferFieldException("Cannot understand 'room' field value: " + s)
+        }
       }
     }
 
@@ -1424,8 +1420,11 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def maxLen: Int = MEAL_MAXLEN
       def handleString(s: String) {
         val parseResult = parse(HOTEL_MEAL_PARSER, s)
-        if (parseResult.successful)
-          mealOpt = Some(parseResult.get)
+        if (parseResult.successful) {
+          hotelMeal = parseResult.get
+        } else {
+          throw YmOfferFieldException("Cannot understand 'meal' field value: " + s)
+        }
       } 
     }
 
@@ -1433,7 +1432,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def myTag: String = AnyOfferFields.included.toString
       def maxLen: Int = TOUR_INCLUDED_MAXLEN
       def handleString(s: String) {
-        included = s
+        tourIncluded = s
       }
     }
 
@@ -1441,7 +1440,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def myTag = AnyOfferFields.transport.toString
       def maxLen: Int = TRANSPORT_MAXLEN
       def handleString(s: String) {
-        transport = s
+        tourTransport = s
       }
     }
   }
@@ -1452,7 +1451,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
    * @param myAttrs Аттрибуты тега оффера.
    * @param myShop Магазин.
    */
-  case class EventTicketOfferHandler(myAttrs: Attributes)(implicit val myShop:ShopHandler) extends AnyOfferHandler with OfferNameH {
+  case class EventTicketOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends AnyOfferHandler with OfferNameH {
     def myOfferType = OfferTypes.EventTicket
 
     /** Место проведения мероприятия. */
