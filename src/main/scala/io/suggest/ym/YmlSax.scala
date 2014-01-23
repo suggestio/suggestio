@@ -908,7 +908,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /** "Упрощенное описание" - исторический перво-формат яндекс-маркета.
     * Поле type ещё не заимплеменчено, и есть некоторый ограниченный и фиксированный набор полей.
     * Доп.поля: vendor, vendorCode. */
-  case class SimpleOfferHandler(myAttrs: Attributes)(implicit val myShop: YmShopDatum) extends VendorInfoH with OfferNameH {
+  case class SimpleOfferHandler(myAttrs: Attributes)(implicit val myShop: YmShopDatum) extends OfferNameH {
     def myOfferType = OfferTypes.Simple
   }
 
@@ -1059,7 +1059,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /** Типы book и audiobook имеют много обищих полей:
    * author?, name, publisher?, series?, year?, ISBN?, volume?, part?, language?, table_of_contents?.
    * Тут трейт, который обеспечивает поддержку общих полей для обоих типов книг. */
-  trait AnyBookOfferHandler extends AnyOfferHandler with OfferYearH with OfferNameH {
+  trait AnyBookOfferHandler extends OfferYearH with OfferNameH {
     import offerDatum._
 
     override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
@@ -1256,7 +1256,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
    * @param myAttrs Аттрибуты этого оффера.
    * @param myShop Текущий магазин.
    */
-  case class ArtistTitleOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends AnyOfferHandler with OfferCountryOptH with OfferYearH {
+  case class ArtistTitleOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends OfferCountryOptH with OfferYearH {
     import offerDatum._
 
     def myOfferType = OfferTypes.ArtistTitle
@@ -1325,7 +1325,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
    * @param myAttrs Аттрибуты тега.
    * @param myShop Магазин.
    */
-  case class TourOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends AnyOfferHandler with OfferCountryOptH with OfferNameH {
+  case class TourOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends OfferCountryOptH with OfferNameH {
     import offerDatum._
 
     def myOfferType = OfferTypes.Tour
@@ -1448,7 +1448,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
    * @param myAttrs Аттрибуты тега оффера.
    * @param myShop Магазин.
    */
-  case class EventTicketOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends AnyOfferHandler with OfferNameH {
+  case class EventTicketOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends OfferNameH {
     import offerDatum._
 
     def myOfferType = OfferTypes.EventTicket
