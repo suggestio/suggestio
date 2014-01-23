@@ -9,11 +9,11 @@
 @* Если забыть импорт текущего языка, то всё будет на дефолтовом инглише. *@
 @import ctx._
 
-@head_after = {
+@headAfter = {
 	<link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/admin_index.min.css")"/>
 }
 
-@adminBaseTpl(title=Messages("domain_admin_title"), head_after=head_after) {
+@adminBaseTpl(title=Messages("domain_admin_title"), headAfter=Some(headAfter)) {
 <div class="admin-layout">
 	<div class="admin-container">
 

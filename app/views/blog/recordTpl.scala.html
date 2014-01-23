@@ -1,6 +1,6 @@
 @(r: models.MBlog)(implicit c:util.Context)
 
-@indexTpl {
+@indexTpl() {
 <a class="blog-all-records" href="{@routes.Blog.recordList}"></a>
  @* @_blogRecordTpl(r, preview = true)  { *@
 <div class="blog-delimiter"></div>

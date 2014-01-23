@@ -4,12 +4,12 @@
 
 @import admin.adminBaseTpl
 
-@head_after = {
+@headAfter = {
     <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/ident_persona.min.css")"/>
 }
 
 
-@adminBaseTpl(title=" | Login", head_after=head_after) {
+@adminBaseTpl(title=" | Login", headAfter=Some(headAfter)) {
 
 <div class="admin-layout">
 	<div class="login-page-content-@c.langStr">

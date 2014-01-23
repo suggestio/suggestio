@@ -1,8 +1,10 @@
-@(postFormM:Form[_], isEdit: Boolean = true, call: Call)(implicit c:util.Context)
+@(postFormM:Form[_], isEdit: Boolean = true, call: Call, headAfter:Option[Html] = None)(implicit c:util.Context)
 @import helper._
 @import c.lang
 
-@indexTpl {
+@* TODO Кто-то тут прошляпил title. *@
+
+@indexTpl(headAfter=headAfter) {
 
 <div class="container">
   

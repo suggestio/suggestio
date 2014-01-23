@@ -5,11 +5,11 @@
 @import crawl._
 @import share._
 
-@head_after = {
+@headAfter = {
   <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/static_about.min.css")"/>
 }
 
-@main(title = Messages("s.a.about"), head_after=head_after) {
+@main(title = Messages("s.a.about"), headAfter=Some(headAfter)) {
   
   @_mainHeaderTpl( true )
 

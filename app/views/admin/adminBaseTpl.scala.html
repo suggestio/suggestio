@@ -1,10 +1,10 @@
-@(title:String = "Admin", head_after:Html = Html(""))(content: Html)(implicit c:util.Context)
+@(title:String = "Admin", headAfter:Option[Html] = None)(content: Html)(implicit c:util.Context)
 
-@head_after1 = {
+@headAfter1 = {
   <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/admin_base.min.css")"/>
-  @head_after
+  @headAfter
 }
 
-@main(title, head_after=head_after1, withHeadCommon=false, withAnalytics=false) {
+@main(title, headAfter=Some(headAfter1), withHeadCommon=false, withAnalytics=false) {
   @content
 }

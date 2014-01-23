@@ -4,18 +4,18 @@
 
 @import c.lang
 
-@head_after = {
+@headAfter = {
     <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/badbrowser.min.css")"/>
 }
 
-@browser_check = {
+@browserCheck = {
 <script type="text/javascript">
 	window.location = '/';
 </script>
 }
 
 
-@main(title=" | " + Messages("s.bb.title"), head_after=head_after, browser_check=Some(browser_check)) {
+@main(title=" | " + Messages("s.bb.title"), headAfter=Some(headAfter), browserCheck=Some(browserCheck)) {
 <div class="bad-browser-message">
 	<div class="logo"><a href=""></a></div>
 	<div class="message">

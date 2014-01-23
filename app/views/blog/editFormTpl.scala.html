@@ -1,9 +1,10 @@
 @(b: models.MBlog, editRec:Form[_])(implicit c:util.Context)
 
-@head_after = {
-<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js"></script>
+@* TODO Что это тут висит-болтается, никуда не прилинковано? *@
+@headAfter = {
+  <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js"></script>
 }
 
-@postFormTpl(editRec, call=routes.Blog.editRecSubmit(b.id)), isEdit=true)
+@postFormTpl(editRec, call=routes.Blog.editRecSubmit(b.id)), isEdit=true, headAfter=Some(headAfter))
 
 

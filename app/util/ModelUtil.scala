@@ -5,6 +5,8 @@ import io.suggest.model.JsonDfsBackend
 import SiobixFs.fs
 import io.suggest.util.JacksonWrapper
 import java.io.{ObjectInputStream, ObjectOutputStream, ByteArrayOutputStream, ByteArrayInputStream}
+import java.sql.Connection
+import anorm.Pk
 
 /**
  * Suggest.io
@@ -137,3 +139,37 @@ trait ModelSerialJava extends ModelSerialT {
     }
   }
 }
+
+
+/** Чтобы не писать везде def save() с логикой выборки между saveInsert() и saveUpdate(),
+  * подмешиваем к классам моделей этот трейт.
+  * @tparam T Тип записи.
+  */
+trait SqlModelSave[T <: SqlModelSave[_]] {
+  /** Ключ ряда в таблице. */
+  def id: Pk[_]
+
+  /** Добавить в базу текущую запись.
+    * @return Новый экземпляр сабжа.
+    */
+  def saveInsert(implicit c:Connection): T
+
+  /** Обновлить в таблице текущую запись.
+    * @return Кол-во обновлённых рядов. Обычно 0 либо 1.
+    */
+  def saveUpdate(implicit c:Connection): Int
+
+  /** Сохранить в базу текущую запись.
+    * @return Вернуть текущую или новую запись.
+    */
+  def save(implicit c: Connection): T = {
+    id match {
+      case anorm.NotAssigned => saveInsert
+      case _ => saveUpdate match {
+        case 0 => saveInsert
+        case 1 => this.asInstanceOf[T]
+      }
+    }
+  }
+}
+

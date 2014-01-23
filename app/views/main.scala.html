@@ -1,4 +1,4 @@
-@(title: String, head_after:Html = Html.empty, browser_check:Option[Html] = None, withHeadCommon:Boolean = true, withAnalytics:Boolean = true)(content: Html)(implicit c:util.Context)
+@(title: String, headAfter: Option[Html] = None, browserCheck:Option[Html] = None, withHeadCommon:Boolean = true, withAnalytics:Boolean = true)(content: Html)(implicit c:util.Context)
 @import stuff._
 @import ident._
 
@@ -18,10 +18,10 @@
       <script src="@routes.Assets.at("javascripts/bootstrap/respond.min.js")"></script>
     <![endif]-->
     
-    @if(!browser_check.isDefined) {
+    @if(!browserCheck.isDefined) {
       <noscript><meta http-equiv="refresh" content="0; URL=/badbrowser"></noscript>
     } else {
-      @browser_check.get
+      @browserCheck.get
     }
 
     <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
@@ -32,7 +32,7 @@
       <link href="@routes.Assets.at("images/favicon.png")" rel="shortcut icon" type="image/x-icon">
     }
     
-    @head_after
+    @headAfter
     
   </head>
 

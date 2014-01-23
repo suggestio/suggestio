@@ -1,14 +1,15 @@
-@(content:Html)(implicit c:util.Context)
+@(headAfter:Option[Html] = None)(content: Html)(implicit c:util.Context)
 
 @import c.lang
 @import stuff._
 
-@head_after = {
+@headAfter1 = {
    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/static_blog.min.css")"/>
+   @headAfter
 }
 
 
-@main(title=Messages("blog"), head_after=head_after) {
+@main(title=Messages("blog"), headAfter=Some(headAfter1)) {
   
   @_mainHeaderTpl(isFixed=true)
   

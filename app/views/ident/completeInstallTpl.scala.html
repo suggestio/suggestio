@@ -4,11 +4,11 @@
 @import stuff._
 
 
-@head_after = {
+@headAfter = {
 	<link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/person_complete_install.min.css")"/>
 }
 
-@main(title=Messages("i.ci.login"), head_after=head_after) {
+@main(title=Messages("i.ci.login"), headAfter=Some(headAfter)) {
 <div class="page-wrapper" id="pageWrapper">
 	<div class="razduv-top" id="razduvTop"></div>
 	@_topMenuTpl()

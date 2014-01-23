@@ -1,15 +1,18 @@
-@(title:String = "", currentAction:String = null, head_after:Html = Html(""), withH1:Boolean = true)(content:Html)(implicit c:util.Context)
+@(title:String = "", currentAction:String = null, headAfter:Option[Html] = None, withH1:Boolean = true)(content:Html)(implicit c:util.Context)
 
 @import stuff._
 @import c.lang
 @import crawl._
 
-@head_after1 = {
+@headAfter1 = {
     <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/help_base.min.css")"/>
-    @head_after
+    @headAfter
 }
 
-@main(title=Messages("help") + " | " + title, head_after=head_after1) {
+@main(
+  title = Messages("help") + " | " + title,
+  headAfter = Some(headAfter1)
+) {
 
     <div class="page-wrapper" id="pageWrapper">
 	<div class="razduv-top" id="razduvTop"></div>

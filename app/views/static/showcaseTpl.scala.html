@@ -6,12 +6,12 @@
 @import c.lang
 @import crawl._
 
-@head_after = {
+@headAfter = {
     <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/static_showcase.min.css")"/>
 }
 
 
-@main(title=Messages("s.sc.live"), head_after=head_after) {
+@main(title=Messages("s.sc.live"), headAfter=Some(headAfter)) {
   
   @_mainHeaderTpl( true )
   

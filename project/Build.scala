@@ -13,9 +13,12 @@ object ApplicationBuild extends Build {
   
   val appDependencies = {
     Seq(
+      jdbc,
+      anorm,
       cache,      // play-2.2+
       json,       // play-2.3+
       ws,
+      "org.postgresql" % "postgresql" % "9.3-1100-jdbc41",
       "com.typesafe" %% "play-plugins-mailer" % "2.2.0",
       "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
       // io.suggest stuff
