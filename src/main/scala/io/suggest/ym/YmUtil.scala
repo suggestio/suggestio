@@ -248,3 +248,9 @@ case class OfferParam(
 ) extends Serializable
 
 
+object ParamNames extends Enumeration {
+  type ParamName = Value
+  val Color, Size, Gender, Age, Material, Hood, Length, JacketLength, Height, HeelHeight, Cup, Chest, PantsSize, Width,
+      Weight, Volume, Growth, Waist, Sleeve, Cuff, Shoulder = Value
+}
+

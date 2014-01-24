@@ -1,5 +1,3 @@
-import eu.diversit.sbt.plugin.WebDavPlugin._
-
 name := "util"
 
 organization := "io.suggest"
@@ -12,14 +10,11 @@ scalaVersion := "2.10.3"
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
 
-seq(WebDav.globalSettings : _*)
-
 publishMavenStyle := false
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
-publishTo := Some("cbca ivy2-internal" at  "https://ivy2-internal.cbca.ru/sbt/")
-
+publishTo := Some("cbca-corp-repo" at "https://ivy2-internal.cbca.ru/artifactory/corp-repo/")
 
 externalIvySettings(baseDirectory(_ / "project" / "ivysettings.xml"))
 

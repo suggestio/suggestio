@@ -11,8 +11,6 @@ import io.suggest.util.MyConfig.CONFIG
 import io.suggest.ym.OfferTypes.OfferType
 import YmParsers._
 import org.joda.time._
-import io.suggest.ym.HotelMealTypes.HotelMealType
-import io.suggest.ym.HotelStarsLevels.HotelStarsLevel
 import java.net.URL
 import io.suggest.ym.model._
 
@@ -841,6 +839,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
             if (str.isEmpty)  None  else  Some(str)
           }
           paramsAcc ::= OfferParam(name=paramName, unitRawOpt=unitOpt, rawValue=s)
+          paramsAccCounter += 1
         } else {
           ex("Too many params for one offer. Max is " + OFFER_PARAMS_COUNT_MAX)
         }
