@@ -87,7 +87,6 @@ case class MMart(
 
 trait MMartSel {
   def mart_id: Int
-
   def mart(implicit c:Connection) = getById(mart_id)
 }
 
@@ -95,3 +94,4 @@ trait CompanyMartsSel {
   def company_id: Int
   def companyMarts(implicit c:Connection) = getByCompanyId(company_id)
 }
+

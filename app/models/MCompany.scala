@@ -69,6 +69,5 @@ case class MCompany(
 
 trait MCompanySel {
   def company_id: Int
-
   def company(implicit c: Connection) = getById(company_id)
 }
