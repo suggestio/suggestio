@@ -55,6 +55,18 @@ object MShop {
       .on('company_id -> company_id)
       .as(rowParser *)
   }
+
+  /**
+   * Найти все магазины, принадлежащие конторе и расположенные в указанном ТЦ.
+   * @param company_id id компании-владельца магазина.
+   * @param mart_id id торгового центра.
+   * @return Список MShop в неопределённом порядке.
+   */
+  def getByCompanyAndMart(company_id:Int, mart_id:Int)(implicit c:Connection): List[MShop] = {
+    SQL("SELECT * FROM shop WHERE company_id = {company_id} AND mart_id = {mart_id}")
+      .on('company_id -> company_id, 'mart_id -> mart_id)
+      .as(rowParser *)
+  }
 }
 
 
