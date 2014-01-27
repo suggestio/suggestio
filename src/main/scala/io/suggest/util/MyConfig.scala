@@ -106,40 +106,6 @@ case class MyConfig(underlying: Config) {
   def getBoolean(path: String): Option[Boolean] = readValue(path, underlying.getBoolean(path))
 
   /**
-   * Retrieves a configuration value as `Milliseconds`.
-   *
-   * For example:
-   * {{{
-   * val configuration = Configuration.load()
-   * val timeout = configuration.getMilliseconds("engine.timeout")
-   * }}}
-   *
-   * The configuration must be provided as:
-   *
-   * {{{
-   * engine.timeout = 1 second
-   * }}}
-   */
-  def getMilliseconds(path: String): Option[Long] = readValue(path, underlying.getMilliseconds(path))
-
-  /**
-   * Retrieves a configuration value as `Nanoseconds`.
-   *
-   * For example:
-   * {{{
-   * val configuration = Configuration.load()
-   * val timeout = configuration.getNanoseconds("engine.timeout")
-   * }}}
-   *
-   * The configuration must be provided as:
-   *
-   * {{{
-   * engine.timeout = 1 second
-   * }}}
-   */
-  def getNanoseconds(path: String): Option[Long] = readValue(path, underlying.getNanoseconds(path))
-
-  /**
    * Retrieves a configuration value as `Bytes`.
    *
    * For example:
@@ -337,40 +303,6 @@ case class MyConfig(underlying: Config) {
    * }}}
    */
   def getLongList(path: String): Option[java.util.List[java.lang.Long]] = readValue(path, underlying.getLongList(path))
-
-  /**
-   * Retrieves a configuration value as List of `Milliseconds`.
-   *
-   * For example:
-   * {{{
-   * val configuration = Configuration.load()
-   * val timeouts = configuration.getMillisecondsList("engine.timeouts")
-   * }}}
-   *
-   * The configuration must be provided as:
-   *
-   * {{{
-   * engine.timeouts = [1 second, 1 second]
-   * }}}
-   */
-  def getMillisecondsList(path: String): Option[java.util.List[java.lang.Long]] = readValue(path, underlying.getMillisecondsList(path))
-
-  /**
-   * Retrieves a configuration value as List of `Nanoseconds`.
-   *
-   * For example:
-   * {{{
-   * val configuration = Configuration.load()
-   * val timeouts = configuration.getNanosecondsList("engine.timeouts")
-   * }}}
-   *
-   * The configuration must be provided as:
-   *
-   * {{{
-   * engine.timeouts = [1 second, 1 second]
-   * }}}
-   */
-  def getNanosecondsList(path: String): Option[java.util.List[java.lang.Long]] = readValue(path, underlying.getNanosecondsList(path))
 
   /**
    * Retrieves a configuration value as a List of `Number`.

@@ -5,12 +5,8 @@ import org.joda.time._
 import model._
 import HotelMealTypes.HotelMealType
 import HotelStarsLevels.HotelStarsLevel
-import org.apache.lucene.util.{Version => LuceneVersion}
-import YmParsers.PeriodUnits.PeriodUnit
 import io.suggest.ym.ParamNames.ParamName
-import org.apache.lucene.analysis.standard.StandardAnalyzer
-import org.apache.lucene.analysis.ru.RussianAnalyzer
-import org.apache.lucene.analysis.en.EnglishAnalyzer
+import YmParsers.PeriodUnits.PeriodUnit
 
 /**
  * Suggest.io
@@ -293,78 +289,6 @@ object YmParsers extends JavaTokenParsers {
   }
 
 
-  /** Парсим название параметра.
-    * <param name="Цвет">красный</param>
-    */
-  val PARAM_NAME_PARSER: Parser[ParamName] = {
-    import ParamNames._
-    // TODO Тут quick-and-dirty парсеры имён параметров. Но они сделаны совсем неправильно как-то.
-    // Надо использовать для нормализации имён lucene, чтобы все окончания и стоп-слова срезала.
-    // Использование нормализации ru/en упростит эти уродливые регэкспы.
-    // Можно также использовать Spellchecker, который по триграммам будет исправлять проблемы через используемый словарь слов.
-    // TODO Следует toLowerCase вызывать и убрать отсюда все (?i) и (?iu)
-    val of         = opt("of".r)
-    // Одежда
-    val color      = ("(?i)[ck]ol+ou?rs?".r | "(?iu)цвета?".r) ^^^ Color
-    // Размер
-    val sizeW      = "(?i)(sizes?|sz)".r | "(?iu)р[ао][зс]меры?".r
-    val size       = sizeW ^^^ Size
-    // Пол, возраст
-    val gender     = ("(?i)(gender|sex)".r | "(?iu)пол".r) ^^^ Gender
-    val age        = ("(?i)age".r | "(?iu)возр[ао]ст".r) ^^^ Age
-    val material   = ("(?i)materials?".r | "(?iu)мат[еи]рь?и?[ая]лы?".r) ^^^ Material
-    // Капюшон
-    val hood       = ("(?i)(hoo+d|cowl|tipp?et|c[ao]put?che+)s?".r | "(?iu)к[ао]п[юуи]ш[оёе]н+".r) ^^^ Hood
-    // Длина
-    val lengthW    = "(?i)leng[th]+s?".r | "(?iu)длин+[аы]".r
-    val length     = lengthW ^^^ Length
-    // высота
-    val heightW    = "(?i)heig[th]+".r | "(?iu)высот[аые]?".r
-    val height     = heightW ^^^ Height
-    // Каблук
-    val heelW      = "(?i)heel(piece?)?s?".r | "(?iu)каблук([аи]|ов)?".r
-    val heelHeight = ((heelW ~> heightW) | (heightW ~> of ~> heelW)) ^^^ HeelHeight
-    // Размер куртки
-    val jacketW    = "(?i)ja[ck]+ets?".r | "(?iu)куртк[аие]".r
-    val jacketLen  = ((jacketW <~ lengthW) | (lengthW ~> of ~> jacketW)) ^^^ JacketLength
-    // Вес, рост
-    val weight     = ("(?i)(weig[ht]+|mas+)".r | "(?iu)(веса?|масс?[аы])".r) ^^^ Weight
-    val growth     = ("(?i)grou?w[th]+".r | "(?iu)рост".r) ^^^ Growth
-    // Талия
-    val obhvatW: Parser[String] = "(?iu)обхват".r
-    val taliaW: Parser[String]  = "(?iu)тали[ия]".r
-    val waist      = ("(?i)waist(line)?s?".r | (obhvatW ~> taliaW) | taliaW) ^^^ Waist
-    // ширина
-    val widthW     = "(?i)wid[th]+".r | "(?iu)ширин[аы]".r
-    val width      = widthW ^^^ Width
-    // Обхват груди
-    val chestW     = "(?i)(chest|bust)s?".r | "(?iu)груд(и|ей)".r
-    val chest      = (opt(obhvatW) ~> chestW) ^^^ Chest
-    // Рукав
-    val sleevW     = "(?i)sle+ve?'?s?".r | "(?iu)рукав([аы]|ов)?".r
-    val sleeve     = ((lengthW ~> of ~> sleevW) | (sleevW <~ opt(lengthW))) ^^^ Sleeve
-    // Плечо
-    val shoulderW  = "(?i)shou?lders?".r | "(?iu)плеч([ои]|ами|ей)?".r
-    val shoulder   = (shoulderW | (widthW ~> of ~> shoulderW)) ^^^ Shoulder
-    // Манжет
-    val cuff       = ("(?i)cuf+".r | "(?iu)манжет([аы]|ов)".r) ^^^ Cuff
-    // Одежда: нижнее бельё
-    val cupW       = "(?i)cups?".r | "(?iu)чаш(к[аиу]|ек)".r
-    val cupSize    = ((sizeW ~> of ~> cupW) | (cupW <~ sizeW) | cupW) ^^^ Cup
-    val pantsW     = "(?i)(under)?pants?".r | "(?iu)трус(ы|ов)".r
-    val pantsSize  = ((sizeW ~> of ~> pantsW) | (pantsW ~> sizeW)) ^^^ PantsSize
-    // Красота
-    val volumeW    = "(?i)vol(umes?)?".r | "(?iu)об[ъь][её]м".r
-    val volume     = volumeW ^^^ Volume
-    // TODO Надо описать больше параметров вместе с тестами.
-    color | gender | material | hood |
-      jacketLen | sleeve | cuff | shoulder |
-      heelHeight | waist |
-      cupSize | chest | pantsSize |
-      size | width | length | height | weight | growth | volume | age
-  }
-
-
   /** Внутренние единицы периода. Используются в промежуточных результатах парсинга из-за отсутствия fold-парсинга. */
   object PeriodUnits extends Enumeration {
     type PeriodUnit = Value
@@ -372,4 +296,5 @@ object YmParsers extends JavaTokenParsers {
   }
 
 }
+
 

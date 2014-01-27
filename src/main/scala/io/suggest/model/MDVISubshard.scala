@@ -1,14 +1,15 @@
 package io.suggest.model
 
 import scala.concurrent.{ExecutionContext, Future}
-import io.suggest.util.{LogsImpl, DateParseUtil, LogsPrefixed, SioEsIndexUtil}
+import io.suggest.util.{LogsImpl, SioEsIndexUtil}
 import org.elasticsearch.client.Client
 import io.suggest.index_info.MDVIUnit
 import scala.util.{Failure, Success}
 import org.joda.time.LocalDate
 import io.suggest.util.DateParseUtil.toDaysCount
-import cascading.tuple.{Tuples, Tuple}
+import cascading.tuple.Tuple
 import scala.collection.JavaConversions._
+import cascading.tuple.coerce.Coercions.INTEGER
 
 /**
  * Suggest.io
@@ -33,7 +34,7 @@ object MDVISubshard {
       val ts: Tuple = if (si.shards.isEmpty) {
         null
       } else {
-        new Tuple(si.shards.map(Tuples.toIntegerObject) : _*)
+        new Tuple(si.shards.map(INTEGER.coerce) : _*)
       }
       t.add(ts)
     }
@@ -52,7 +53,7 @@ object MDVISubshard {
     val (None, si) = sii.foldLeft[(Option[Int], List[MDVISubshardInfo])] (None -> Nil) {
       // Нечетный шаг. Текущий элемент - это сериализованный lowerDateDays.
       case ((None, acc), ldd) =>
-        val lddInt = Tuples.toInteger(ldd)
+        val lddInt = INTEGER.coerce(ldd).intValue()
         Some(lddInt) -> acc
 
       // Четный шаг. Текущий элемент - сериализованный список id шард mvi.
@@ -60,7 +61,7 @@ object MDVISubshard {
         val shardsIds = if (ts == null) {
           Nil
         } else {
-          ts.asInstanceOf[Tuple].toList.map(Tuples.toInteger)
+          ts.asInstanceOf[Tuple].toList.map { INTEGER.coerce(_).intValue }
         }
         val acc1 = MDVISubshardInfo(ldd, shardsIds) :: acc
         None -> acc1
