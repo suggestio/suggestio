@@ -17,6 +17,7 @@ object YmConstants {
   val TAG_CURRENCY              = "currency"
 
   val ATTR_ID                   = "id"
+  val ATTR_NAME                 = "name"
   val ATTR_RATE                 = "rate"
   val ATTR_PLUS                 = "plus"
   val ATTR_PARENT_ID            = "parentId"                // TODO Сделать toLowerCase?
@@ -254,3 +255,28 @@ object ParamNames extends Enumeration {
       Weight, Volume, Growth, Waist, Sleeve, Cuff, Shoulder = Value
 }
 
+
+/** Единицы массы (товара). */
+object MassUnits extends Enumeration {
+  type MassUnit = Value
+  val ton, centner, kg, gramm, mg,
+      carat /* 200 мг */,
+      lbs /* 0,45359237 кг */,
+      troyOunce /* 31,1034768 грамма */
+      = Value
+
+  val toGramms: PartialFunction[(Float, MassUnit), Float] = {
+    case (n, units) if units == kg        => 1000F * n
+    case (n, units) if units == gramm     => n
+    case (n, units) if units == mg        => n / 1000F
+    case (n, units) if units == ton       => toGramms(10F * n, centner)
+    case (n, units) if units == centner   => toGramms(100F * n, kg)
+    case (n, units) if units == carat     => toGramms(200F * n, mg)
+    case (n, units) if units == lbs       => toGramms(0.45359237F * n, kg)
+    case (n, units) if units == troyOunce => 31.1034768F * n
+  }
+
+  def toKg(n:Float, units:MassUnit): Float = {
+    if (units == kg)  n  else  toGramms(n, units) / 1000F
+  }
+}

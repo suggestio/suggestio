@@ -16,6 +16,7 @@ import java.util
 import scala.collection.JavaConversions._
 import io.suggest.ym.ParamNames.ParamName
 import scala.util.parsing.combinator.JavaTokenParsers
+import io.suggest.ym.MassUnits.MassUnit
 
 /**
  * Suggest.io
@@ -88,7 +89,7 @@ object YmStringsAnalyzer extends JavaTokenParsers {
     // Талия
     val obhvatW: Parser[String] = "обхват"
     val taliaW: Parser[String]  = "тал"
-    val waist      = (("waist" <~ opt("line")) | (opt(obhvatW) ~> taliaW)) ^^^ Waist
+    val waist      = ("wai(st|ts?)(line?)?".r | (opt(obhvatW) ~> taliaW)) ^^^ Waist
     // ширина
     val widthW     = "wid[th]+".r | "ширин"
     val width      = widthW ^^^ Width
@@ -102,14 +103,14 @@ object YmStringsAnalyzer extends JavaTokenParsers {
     val shoulderW  = "shou?lders?".r | "плеч"
     val shoulder   = (shoulderW | (widthW ~> shoulderW)) ^^^ Shoulder
     // Манжет
-    val cuff       = ("cuf+".r | "манжет+".r) ^^^ Cuff
+    val cuff       = ("cuf+".r | "м[ао]нж[еэ]т+".r) ^^^ Cuff
     // Одежда: нижнее бельё
     val cupW       = "cup" | "чаш(еч?)?к+".r
     val cupSize    = ((sizeW ~> cupW) | (cupW <~ sizeW) | cupW) ^^^ Cup
     val pantsW     = "(underp(ant)?|pant)".r | "трус"
     val pantsSize  = ((sizeW ~> pantsW) | (pantsW ~> sizeW)) ^^^ PantsSize
     // Объём.
-    val volumeW    = "vol(um)?".r | "об(ъ([её]м)?)?".r    // TODO Есть серьезные проблемы с нормализацией слова "объем" во всех стеммерах.
+    val volumeW    = "vol(um)?".r | "об([ъь]([её]м)?)?".r    // TODO Есть серьезные проблемы с нормализацией слова "объем" во всех стеммерах.
     val volume     = volumeW ^^^ Volume
     // TODO Надо описать больше параметров вместе с тестами.
     color | gender | material | hood |
@@ -118,6 +119,23 @@ object YmStringsAnalyzer extends JavaTokenParsers {
       cupSize | chest | pantsSize |
       size | width | length | height | weight | growth | volume | age
   }
+
+
+
+  /** Парсер */
+  val MASS_NORM_UNITS_PARSER: Parser[MassUnit] = {
+    import MassUnits._
+    val kgP       = ("кг" | "килограм+".r | "kg" | "kilogram+".r) ^^^ kg
+    val gP        = ("г(р(амм?)?)?".r | "g(ram+)".r) ^^^ gramm
+    val mgP       = ("мг" | "мил+иг(р(ам+)?)?".r | "mg" | "mil+igram+".r) ^^^ mg
+    val tonP      = ("т(он+)?".r | "ton+".r) ^^^ ton
+    // TODO Выпилить центнер? Это не стандартизированная историческая единица, она зависит от страны употребления.
+    val centnerP  = ("ц(ей?нтнер)?".r | "цт" | "quintal" | "[zc]entner".r | "кв[iи]нтал[ъь]?") ^^^ centner
+    val caratP    = ("кар(ат)?".r | "ct" | "carat") ^^^ carat
+    val lbP       = ("lbs?".r | "фунт" | "pound") ^^^ lbs
+    kgP | gP | mgP | tonP | centnerP | caratP | lbP
+  }
+
 }
 
 
@@ -154,6 +172,19 @@ class YmStringsAnalyzer extends Analyzer(Analyzer.GLOBAL_REUSE_STRATEGY) {
     readyTokens
   }
 
+
+  /** Нормализовать и попытаться распарсить значение имени параметра. */
+  def parseParamName(pn: String) = {
+    val pnNorm = normalizeParamName(pn)
+    parse(NORM_PARAM_NAME_PARSER, pnNorm)
+  }
+
+
+  /** Распарсить единицы измерения массы. */
+  def parseMassUnit(muStr: String) = {
+    val muStrNorm = normalizeParamName(muStr)
+    parse(MASS_NORM_UNITS_PARSER, muStrNorm)
+  }
 }
 
 

@@ -5,8 +5,8 @@ import org.joda.time._
 import model._
 import HotelMealTypes.HotelMealType
 import HotelStarsLevels.HotelStarsLevel
-import io.suggest.ym.ParamNames.ParamName
 import YmParsers.PeriodUnits.PeriodUnit
+import io.suggest.ym.MassUnits.MassUnit
 
 /**
  * Suggest.io
@@ -287,6 +287,7 @@ object YmParsers extends JavaTokenParsers {
     // Финальный парсер звездатости
     hotelStars | hvHotel
   }
+
 
 
   /** Внутренние единицы периода. Используются в промежуточных результатах парсинга из-за отсутствия fold-парсинга. */

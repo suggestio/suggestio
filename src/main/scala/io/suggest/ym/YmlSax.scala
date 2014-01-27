@@ -13,6 +13,7 @@ import YmParsers._
 import org.joda.time._
 import java.net.URL
 import io.suggest.ym.model._
+import io.suggest.ym.ParamNames.ParamName
 
 /**
  * Suggest.io
@@ -136,8 +137,10 @@ object YmlSax extends Serializable {
   val PLACE_MAXLEN          = CONFIG.getInt("ym.sax.offer.place.len.max")       getOrElse 512
   val HALL_MAXLEN           = CONFIG.getInt("ym.sax.offer.hall.len.max")        getOrElse 128
   val HALL_PART_MAXLEN      = CONFIG.getInt("ym.sax.offer.hall_part.len.max")   getOrElse 64
-
   val DATE_TIME_MAXLEN      = CONFIG.getInt("ym.sax.offer.dt.len.max")          getOrElse 40
+
+  // param
+  val PARAM_VALUE_MAXLEN    = CONFIG.getInt("ym.sax.offer.param.len.max")       getOrElse 200
 
   /** Регэксп, описывающий повторяющиеся пробелы. */
   private val MANY_SPACES_RE = "[ \\t]{2,}".r
@@ -147,6 +150,9 @@ object YmlSax extends Serializable {
 import YmlSax._
 
 class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with SaxContentHandlerWrapper {
+
+  /** Используемый анализатор имён параметров. */
+  val paramStrAnalyzer = new YmStringsAnalyzer
 
   /** Дата старта парсера. Используется для определения длительности работы и для определения каких-либо параметров
     * настоящего времени во вспомогательных парсерах, связанных с датами и временем. */
@@ -208,7 +214,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     def endTag(tagName: String) {
-      if (tagName == myTag  &&  handlersStack.head == this) {
+      if (tagName == myTag && handlersStack.head == this) {
         handlerFinish(tagName)
         unbecome()
       }
@@ -552,11 +558,6 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     /** Ссылки на картинки. Их может и не быть. */
     var picturesAcc: List[String] = Nil
 
-    /** Работа с параметрами. paramsAcc можно будет выпилить апосля. */
-    // TODO Нужны нормальные handler'ы и парсеры, а не это бесполезное добро.
-    var paramsAcc: List[OfferParam] = Nil
-    var paramsAccCounter = 0
-
 
     /** Тут базовый комбинируемый обработчик полей комерческого предложения.
       * Тут, в trait'е, нужно использовать def вместо val, т.к. это точно будет переопределено в под-классах. */
@@ -586,7 +587,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       case (AnyOfferFields.adult, _)                        => new OfferAdultHandler
       case (AnyOfferFields.age, attrs)                      => new AgeHandler(attrs)
       // Поля param указываются у SIMPLE и vendor.model, но не запрещены для остальных типов офферов.
-      case (AnyOfferFields.param, attrs)                    => new ParamHandler(attrs)
+      case (AnyOfferFields.param, attrs)                    => getParamHandlerOrIgnore(attrs)
       // barcode: ignored
     }
 
@@ -818,30 +819,57 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    // TODO Надо параметры как-то по-лучше парсить. Параметры также используются для фасетных группировок.
-    // TODO Надо проверять нормализовать параметры по списку готовых названий параметров.
-    // TODO Надо парсить значения согласно заданным механизам.
-    class ParamHandler(attrs: Attributes) extends StringHandler {
-      def myTag = AnyOfferFields.param.toString
-      override def maxLen: Int = OFFER_PARAM_MAXLEN
-      private def ex(msg: String) = throw YmOfferFieldException(msg)
-      def handleString(s: String) {
-        if (paramsAccCounter <= OFFER_PARAMS_COUNT_MAX) {
-          val nameAttrKey = OfferParamAttrs.name.toString
-          val paramName = attrs.getValue(nameAttrKey)
-          if (paramName == null) {
-            ex(s"Mandatory attribute '$nameAttrKey' missing.")
+
+    trait AnyParamHandler extends SimpleValueHandler {
+      override def myTag: String = AnyOfferFields.param.toString
+      override def maxLen: Int = PARAM_VALUE_MAXLEN
+    }
+
+    /** Масса может задаваться через param "вес" с указанием единиц измерения. Тут обработчик этого дела. */
+    class WeightParamHandler(attrs: Attributes) extends FloatHandler with AnyParamHandler {
+      def handleFloat(f: Float) {
+        Option(attrs.getValue(ATTR_UNIT))
+          .map { _.trim }
+          .flatMap { str => if (str.isEmpty)  None  else  Some(str) }
+          .flatMap { unitsStr =>
+            val pmResult = paramStrAnalyzer.parseMassUnit(unitsStr)
+            if (pmResult.successful)  Some(pmResult.get)  else  None
           }
-          if (s.isEmpty) {
-            ex(s"Param '$paramName' value is empty.")
+          .foreach { units =>
+            weightKgOpt = Some(MassUnits.toKg(f, units))
           }
-          val unitOpt = Option(attrs.getValue(OfferParamAttrs.unit.toString)) map(_.trim) flatMap { str =>
-            if (str.isEmpty)  None  else  Some(str)
-          }
-          paramsAcc ::= OfferParam(name=paramName, unitRawOpt=unitOpt, rawValue=s)
-          paramsAccCounter += 1
+      }
+    }
+
+
+    /** Partial-фунцкия, которая переопределяется в под-классах, чтобы добавить обработчиков. */
+    def handleParam: PartialFunction[(ParamName, Attributes), MyHandler] = {
+      case (ParamNames.Weight, attrs) => new WeightParamHandler(attrs)
+    }
+
+    /** Результирующая функция обработки параметров. */
+    private lazy val paramHandler: PartialFunction[(ParamName, Attributes), MyHandler] = {
+      handleParam orElse {
+        case (pn, attrs) => MyDummyHandler(pn.toString, attrs)     // TODO Нужно репортить это всё наверх
+      }
+    }
+
+    /**
+     * Предложить обработчик указанного param-тега или заглушку, если параметр неизвестен.
+     * @param attrs Аттрибуты тега param.
+     * @return Обработчик тега.
+     */
+    def getParamHandlerOrIgnore(attrs: Attributes): MyHandler = {
+      val paramName = attrs.getValue(ATTR_NAME)
+      if (paramName == null || paramName.isEmpty) {
+        MyDummyHandler(AnyOfferFields.param.toString, attrs)
+        // TODO Нужен механизм репортинга наверх, чтобы на веб-морде могли увидеть сообщение о проблеме.
+      } else {
+        val nameParseResult = paramStrAnalyzer.parseParamName(paramName)
+        if (nameParseResult.successful) {
+          paramHandler(nameParseResult.get, attrs)
         } else {
-          ex("Too many params for one offer. Max is " + OFFER_PARAMS_COUNT_MAX)
+          MyDummyHandler(AnyOfferFields.param.toString, attrs) // TODO см.выше
         }
       }
     }
@@ -907,7 +935,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /** "Упрощенное описание" - исторический перво-формат яндекс-маркета.
     * Поле type ещё не заимплеменчено, и есть некоторый ограниченный и фиксированный набор полей.
     * Доп.поля: vendor, vendorCode. */
-  case class SimpleOfferHandler(myAttrs: Attributes)(implicit val myShop: YmShopDatum) extends OfferNameH {
+  case class SimpleOfferHandler(myAttrs: Attributes)(implicit val myShop: YmShopDatum) extends VendorInfoH with OfferNameH {
     def myOfferType = OfferTypes.Simple
   }
 
