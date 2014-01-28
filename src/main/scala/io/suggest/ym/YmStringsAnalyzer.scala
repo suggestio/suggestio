@@ -27,21 +27,22 @@ import io.suggest.ym.MassUnits.MassUnit
  */
 object YmStringsAnalyzer extends JavaTokenParsers {
 
+  /** Дефолтовые русские и английские стоп-слова содержат лишние слова. Тут отфильтровываем их из исходного списка. */
+  private def filterStops(cas: CharArraySet, nonStop:List[String]) = {
+    val nonStopCh = nonStop.map(_.toCharArray)
+    val stopSetFilterF: PartialFunction[AnyRef, Boolean] = {
+      case dfltStopword: Array[Char] =>
+        !nonStopCh.exists {
+          chsNS  =>  util.Arrays.equals(dfltStopword, chsNS)
+        }
+    }
+    cas.iterator()
+      .filter(stopSetFilterF)
+      .asInstanceOf[Iterator[Array[Char]]]
+  }
+
   /** Неизменяемое потоко-безопасное множество стоп-слов. Используется при сборке анализатора текстов. */
   val PARAM_TEXT_STOPWORD_SET = {
-    // Дефолтовые русские и английские стоп-слова содержат лишние слова. Тут отфильтровываем их из исходного списка.
-    def filterStops(cas: CharArraySet, nonStop:List[String]) = {
-      val nonStopCh = nonStop.map(_.toCharArray)
-      val stopSetFilterF: PartialFunction[AnyRef, Boolean] = {
-        case dfltStopword: Array[Char] =>
-          !nonStopCh.exists {
-            chsNS  =>  util.Arrays.equals(dfltStopword, chsNS)
-          }
-      }
-      cas.iterator()
-        .filter(stopSetFilterF)
-        .asInstanceOf[Iterator[Array[Char]]]
-    }
     val ruNonStopCh = List(
       "все", "только", "когда", "человек", "раз", "жизнь", "два", "другой", "больше", "всего", "всегда"
     )
@@ -121,8 +122,7 @@ object YmStringsAnalyzer extends JavaTokenParsers {
   }
 
 
-
-  /** Парсер */
+  /** Парсер единиц измерения массы, которые указываются в теге param аттрибуте unit. */
   val MASS_NORM_UNITS_PARSER: Parser[MassUnit] = {
     import MassUnits._
     val kgP       = ("кг" | "килограм+".r | "kg" | "kilogram+".r) ^^^ kg
@@ -130,7 +130,7 @@ object YmStringsAnalyzer extends JavaTokenParsers {
     val mgP       = ("мг" | "мил+иг(р(ам+)?)?".r | "mg" | "mil+igram+".r) ^^^ mg
     val tonP      = ("т(он+)?".r | "ton+".r) ^^^ ton
     // TODO Выпилить центнер? Это не стандартизированная историческая единица, она зависит от страны употребления.
-    val centnerP  = ("ц(ей?нтнер)?".r | "цт" | "quintal" | "[zc]entner".r | "кв[iи]нтал[ъь]?") ^^^ centner
+    val centnerP  = ("ц(ей?нтнер|т)?".r | "quintal" | "[zc]entner".r | "кв[iи]нтал[ъь]?".r) ^^^ centner
     val caratP    = ("кар(ат)?".r | "ct" | "carat") ^^^ carat
     val lbP       = ("lbs?".r | "фунт" | "pound") ^^^ lbs
     kgP | gP | mgP | tonP | centnerP | caratP | lbP
@@ -141,6 +141,7 @@ object YmStringsAnalyzer extends JavaTokenParsers {
 
 import YmStringsAnalyzer._
 
+/** thread-local class для маломусорной lucene-нормализации коротких строчек. */
 class YmStringsAnalyzer extends Analyzer(Analyzer.GLOBAL_REUSE_STRATEGY) {
 
   def createComponents(fieldName: String, reader: Reader): TokenStreamComponents = {
@@ -154,7 +155,6 @@ class YmStringsAnalyzer extends Analyzer(Analyzer.GLOBAL_REUSE_STRATEGY) {
     // Стеммеры для отбрасывания окончаний.
     filtered = new SnowballFilter(filtered, new RussianStemmer)
     filtered = new SnowballFilter(filtered, new EnglishStemmer)
-    //filtered.getAttribute(classOf[CharTermAttribute]).toString
     new TokenStreamComponents(tokens, filtered)
   }
 

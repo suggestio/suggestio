@@ -37,6 +37,7 @@ libraryDependencies ++= {
     "org.elasticsearch" % "elasticsearch" % "0.90.10",
     "org.apache.tika" % "tika-core" % tikaVsn,
     "org.apache.tika" % "tika-parsers" % tikaVsn exclude("xerces", "xercesImpl"),
+    "com.github.tototoshi" %% "scala-csv" % "1.0.0-SNAPSHOT",
     // akka
     "com.typesafe.akka" %% "akka-actor"  % akkaVsn,
     "com.typesafe.akka" %% "akka-remote" % akkaVsn,
@@ -55,5 +56,35 @@ libraryDependencies ++= {
     "net.databinder.dispatch" %% "dispatch-core" % "0.11.0" % "test",
     "org.scalatest" %% "scalatest" % "2.0" % "test"
   )
+}
+
+// Нужно генерить текстовое дерево категорий на основе xls-списка категорий маркета.
+// Для этого надо скачать и распарсить xls-файл. Для работы нужна xls2csv.
+resourceGenerators in Compile <+= Def.task {
+  // Подготовка к созданию csv-файла
+  val csvFileDir = (resourceManaged in Compile).value / "ym" / "cat"
+  val csvFile = csvFileDir / "market_category.csv"
+  if (!csvFile.exists) {
+    val xlsFilename = "market_categories.xls"
+    val xlsFile = target.value / xlsFilename
+    if (!xlsFile.exists) {
+      // xls-файл ещё не скачан. Нужно вызвать download сначала
+      // Ссылка взята из http://help.yandex.ru/partnermarket/guides/clothes.xml
+      val xlsUrl = "http://help.yandex.ru/partnermarket/docs/market_categories.xls" 
+      println("Downloading " + xlsUrl + " ...")
+      IO.download(new URL(xlsUrl), xlsFile)
+      println("Downloaded " + xlsFile.toString + " OK")
+    }
+    // Сгенерить на основе вендового xls-файла хороший годный csv-ресурс
+    if (!csvFileDir.isDirectory) {
+      csvFileDir.mkdirs()
+      println(csvFileDir.toString + " dirs created")
+    }
+    // TODO Надо что-то с ковычками вокруг аргументов тут решить. Если любой путь содержит пробел, то будет ошибка.
+    val cmd = s"xls2csv -q -x ${xlsFile.toString} -b WINDOWS-1251 -c ${csvFile.toString} -a UTF-8"
+    println("Creating CSV categories tree from. Executing shell command:\n " + cmd)
+    cmd.!!
+  }
+  Seq(csvFile)
 }
 

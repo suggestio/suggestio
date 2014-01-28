@@ -8,3 +8,5 @@ lib/
 .idea_modules/
 .ensime
 .ensime_lucene
+util/ym/market_categories/
+src/src/main/resources/ym/cat/

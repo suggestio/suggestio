@@ -217,6 +217,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       if (tagName == myTag && handlersStack.head == this) {
         handlerFinish(tagName)
         unbecome()
+      } else {
+        ???   // TODO Надо остановиться и выругаться на неправильно закрытый тег.
       }
     }
 

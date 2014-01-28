@@ -6,7 +6,6 @@ import model._
 import HotelMealTypes.HotelMealType
 import HotelStarsLevels.HotelStarsLevel
 import YmParsers.PeriodUnits.PeriodUnit
-import io.suggest.ym.MassUnits.MassUnit
 
 /**
  * Suggest.io
@@ -62,16 +61,17 @@ object YmParsers extends JavaTokenParsers {
     val timePeriodOptParser = opt(dtDelim ~> ISO_PERIOD_TIME_PARSER) ^^ { _ getOrElse Nil }
     // Собираем период в кучу
     val periodHead: Parser[String] = "[PpРр]".r
-    val parser = periodHead ~> ISO_PERIOD_DATE_PARSER ~ timePeriodOptParser ^^ { case datePeriods ~ timePeriods =>
-      (datePeriods ++ timePeriods).foldLeft(new Period) {
-        case (acc0, y ~ PeriodUnits.Year)   => acc0.withYears(y)
-        case (acc0, m ~ PeriodUnits.Month)  => acc0.withMonths(m)
-        case (acc0, w ~ PeriodUnits.Week)   => acc0.withWeeks(w)
-        case (acc0, d ~ PeriodUnits.Day)    => acc0.withDays(d)
-        case (acc0, h ~ PeriodUnits.hour)   => acc0.withHours(h)
-        case (acc0, m ~ PeriodUnits.minute) => acc0.withMinutes(m)
-        case (acc0, s ~ PeriodUnits.second) => acc0.withSeconds(s)
-      }
+    val parser = (periodHead ~> ISO_PERIOD_DATE_PARSER ~ timePeriodOptParser) ^^ {
+      case datePeriods ~ timePeriods =>
+        (datePeriods ++ timePeriods).foldLeft(new Period) {
+          case (acc0, y ~ PeriodUnits.Year)   => acc0.withYears(y)
+          case (acc0, m ~ PeriodUnits.Month)  => acc0.withMonths(m)
+          case (acc0, w ~ PeriodUnits.Week)   => acc0.withWeeks(w)
+          case (acc0, d ~ PeriodUnits.Day)    => acc0.withDays(d)
+          case (acc0, h ~ PeriodUnits.hour)   => acc0.withHours(h)
+          case (acc0, m ~ PeriodUnits.minute) => acc0.withMinutes(m)
+          case (acc0, s ~ PeriodUnits.second) => acc0.withSeconds(s)
+        }
     }
     parser
   }
