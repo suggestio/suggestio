@@ -1,7 +1,12 @@
 ## Непосредственно ворквлоу поиска
 search =
 
+  ## Объект для хранения кеша
+  ## поисковой выдачи
+
   cache : {}
+
+  ## Окно с результатами поиска
 
   results_window :
     draw : () ->
@@ -13,9 +18,9 @@ search =
       rw.innerHTML = '<div class="sio-t-column"><div class="sio-t-c-inner" id="sio_searchResults"></div></div>'
       utils.ge_tag('body')[0].appendChild rw
 
-  ##
   ## Все что касается работы с
   ## полем ввода поискового запроса
+
   search_field :
     get : () ->
       utils.ge "sio_csf"
@@ -94,17 +99,16 @@ search =
   # если ничего не нашли — рисуем иконку Sio
   triggers :
 
-    ##
-    # Список триггеров
+    ## Список триггеров
+
     list : []
 
-    ##
-    # Найти на странице dom объект, который может быть триггером
+    ## Найти на странице dom объект, который может быть триггером
     locate : () ->
 
-      # Ищем dom элементы с тегом input
-      # Нас интересуют либо type="search"
-      # либо type="text" с каким-нибудь подходящим по смыслу классом
+      ## Ищем dom элементы с тегом input
+      ## и проверим, нет ли среди них поисковых полей
+
       input_fields = utils.ge_tag "input"
 
       for f in input_fields
@@ -112,6 +116,7 @@ search =
           this.list.push f
 
     init : () ->
+
       this.locate()
 
       for _o in this.list
@@ -148,7 +153,7 @@ search =
   process_query : () ->
     sr = utils.ge("sio_search_field").value
 
-    dkey = window.location.hostname
+    dkey =
 
     if typeof sio.config.test_dkey != 'undefined'
       dkey = sio.config.test_dkey
@@ -196,26 +201,33 @@ search =
       results_container.innerHTML = r_n
 
 
-  ##
-  # Инициализация поиск
+  #######################
+  ## Инициализация поиска
+  #######################
+
   init : () ->
 
     console.log "init sio search"
 
-    # инициализируем триггеры
+    ## Debug
+    if window.location.hash == '#' + sio.config.debug_hash
+      console.log "debug mode"
+      sio.config.dkey = sio.config.dkey_debug
+
+    ## инициализируем триггеры
     search.triggers.init()
 
-    # нарисовать поисковое поле
-    # и повесить на него нужные события
+    ## нарисовать поисковое поле sio
+    ## повесить на него нужные события
     search.search_field.draw()
     search.search_field.init()
 
-    # и окошко с результатами
+    ## нарисовать окошко с результатами
     search.results_window.draw()
 
     # После полной загрузки всего
     # проверяем, нет ли уже активных триггеров
     search.triggers.onload()
 
-
+##
 search.init()
