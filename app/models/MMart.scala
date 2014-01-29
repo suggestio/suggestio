@@ -78,7 +78,7 @@ case class MMart(
    */
   def saveUpdate(implicit c: Connection): Int = {
     SQL("UPDATE mart SET name = {name}, address = {address}, site_url = {site_url} WHERE id = {id}")
-      .on('id -> id, 'name -> name, 'address -> address, 'site_url -> site_url)
+      .on('id -> id.get, 'name -> name, 'address -> address, 'site_url -> site_url)
       .executeUpdate()
   }
 

@@ -61,7 +61,7 @@ case class MCompany(
   /** Обновить в таблице существующую запись. */
   def saveUpdate(implicit c: Connection) = {
     SQL("UPDATE company SET name = {name} WHERE id = {id}")
-      .on('name -> name, 'id -> id)
+      .on('name -> name, 'id -> id.get)
       .executeUpdate()
   }
 }

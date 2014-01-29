@@ -25,8 +25,8 @@
       </filesystem>
 
       <url name="cbca-corp-repo" changingPattern="-SNAPSHOT">
-	<ivy pattern="http://ivy2-internal.cbca.ru/artifactory/corp-repo/[orgPath]/[module]/[revision]/[type]-[revision].xml"/>
-	<artifact pattern="http://ivy2-internal.cbca.ru/artifactory/corp-repo/[orgPath]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"/>
+	<ivy pattern="https://ivy2-internal.cbca.ru/artifactory/corp-repo/[orgPath]/[module]/[revision]/[type]-[revision].xml"/>
+	<artifact pattern="https://ivy2-internal.cbca.ru/artifactory/corp-repo/[orgPath]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"/>
       </url>
 
       <ibiblio name="sbt-plugin-snapshots" root="http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-snapshots"/>

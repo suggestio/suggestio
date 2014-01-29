@@ -95,7 +95,7 @@ case class MShop(
     */
   def saveUpdate(implicit c: Connection): Int = {
     SQL("UPDATE shop SET name={name}, inmart_addr={inmart_addr} WHERE id={id}")
-      .on('id -> id, 'name -> name, 'inmart_addr -> inmart_addr)
+      .on('id -> id.get, 'name -> name, 'inmart_addr -> inmart_addr)
       .executeUpdate()
   }
 }

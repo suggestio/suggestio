@@ -10,7 +10,8 @@ resolvers ++= Seq(
   "typesafe-releases"   at "http://repo.typesafe.com/typesafe/releases/",
   "typesafe-snapshots"  at "http://repo.typesafe.com/typesafe/snapshots/",
   Resolver.url("sbt-snapshot-plugins", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots"))(Resolver.ivyStylePatterns),
-  "cbca-repo"           at "http://ivy2-internal.cbca.ru/sbt/"
+  "cbca-repo"           at "http://ivy2-internal.cbca.ru/sbt/",
+ "Patience Releases" at "http://repo.patience.io/" 
 )
 
 // Comment it out, on non-snapshot releases
