@@ -138,7 +138,7 @@ object DateParseUtil extends Logs {
 
   // Список локалей, которые поддерживаются системой распознования дат
   // Можно завернуть внутрь генератора datesTrgmMap.
-  val locales : Array[Locale] = Array(
+  def locales : Array[Locale] = Array(
     Locale.ENGLISH,
     new Locale("ru", "RU"),
     Locale.GERMAN
@@ -176,7 +176,7 @@ object DateParseUtil extends Logs {
     val monthTrgms = 1 to 12 map { _monthNumInt =>
       val _monthNum = _monthNumInt.toShort
       val trgms = monthNamesLocalized(_monthNum, locale)
-        .flatMap {_monthName => TextUtil.trgm_token_full(_monthName) }
+        .flatMap {_monthName => TextUtil.trgmTokenFull(_monthName) }
         .distinct
       (_monthNum, trgms)
     }
@@ -192,7 +192,7 @@ object DateParseUtil extends Logs {
    * @return Номер месяца (1..12) если найден.
    */
   def detectMonth(word:String) : Option[Short] = {
-    val wordTrgms = TextUtil.trgm_token_full(TextUtil.normalize(word))
+    val wordTrgms = TextUtil.trgmTokenFull(TextUtil.normalize(word))
     // Сгенерить словарь вида Map(1->3, 2->1, ... monthNum -> rating).
     // Используем mutable collection для упрощения алгоритма
     val mutMap = mutable.Map[Short, Int]()

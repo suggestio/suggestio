@@ -14,9 +14,8 @@ import java.io.Reader
 import org.apache.lucene.analysis.util.CharArraySet
 import java.util
 import scala.collection.JavaConversions._
-import io.suggest.ym.ParamNames.ParamName
 import scala.util.parsing.combinator.JavaTokenParsers
-import io.suggest.ym.MassUnits.MassUnit
+import parsers._
 
 /**
  * Suggest.io
@@ -24,6 +23,7 @@ import io.suggest.ym.MassUnits.MassUnit
  * Created: 27.01.14 14:54
  * Description: Поля param имеют локализованное названия в довольно свободной форме.
  * Нужно применить знания языка и нормализовать эти строковые выхлопы, а затем распарсить.
+ * Для расширения фунционала используется пакет parse, содержимое которого подмешивается в тутошние анализаторы.
  */
 object YmStringsAnalyzer extends JavaTokenParsers {
 
@@ -58,92 +58,24 @@ object YmStringsAnalyzer extends JavaTokenParsers {
   }
 
 
-  /** Парсер нормализованных названий параметров. Нормализация идёт через экземпляр YmStringsAnalyzer. */
-  val NORM_PARAM_NAME_PARSER: Parser[ParamName] = {
-    import ParamNames._
-    // Одежда
-    val color      = ("[ck]ol+ou?r".r | "цвет") ^^^ Color
-    // Размер
-    val sizeW      = "size" | "размер"
-    val size       = sizeW ^^^ Size
-    // Пол, возраст
-    val gender     = ("gender" | "sex" | "пол") ^^^ Gender
-    val age        = ("age" | "возраст") ^^^ Age
-    val material   = ("materi" | "мат[еи]рь?и?[ая]л?".r) ^^^ Material
-    // Капюшон
-    val hood       = ("(hoo+d|cowl|tipp?et|c[ao]put?ch)".r | "к[ао]п[юуи]ш[оёе]н+".r) ^^^ Hood
-    // Длина
-    val lengthW    = "leng[th]+".r | "длин"
-    val length     = lengthW ^^^ Length
-    // высота
-    val heightW    = "heig[th]+".r | "высот"
-    val height     = heightW ^^^ Height
-    // Каблук
-    val heelW      = ("heel" <~ opt("piece")) | "каблук"
-    val heelHeight = ((heelW <~ heightW) | (heightW ~> heelW)) ^^^ HeelHeight
-    // Размер куртки
-    val jacketW    = "ja[ck]+et".r | "куртк"
-    val jacketLen  = ((jacketW <~ lengthW) | (lengthW ~> jacketW)) ^^^ JacketLength
-    // Вес, рост
-    val weight     = ("(weig[ht]+|mas+)".r | "вес" | "масс") ^^^ Weight
-    val growth     = ("grou?w[th]+".r | "рост") ^^^ Growth
-    // Талия
-    val obhvatW: Parser[String] = "обхват"
-    val taliaW: Parser[String]  = "тал"
-    val waist      = ("wai(st|ts?)(line?)?".r | (opt(obhvatW) ~> taliaW)) ^^^ Waist
-    // ширина
-    val widthW     = "wid[th]+".r | "ширин"
-    val width      = widthW ^^^ Width
-    // Обхват груди
-    val chestW     = "chest" | "bust" | "груд"
-    val chest      = (opt(obhvatW) ~> chestW) ^^^ Chest
-    // Рукав
-    val sleevW     = "sle+ve?".r | "рукав?".r
-    val sleeve     = ((lengthW ~> sleevW) | (sleevW <~ opt(lengthW))) ^^^ Sleeve
-    // Плечо
-    val shoulderW  = "shou?lders?".r | "плеч"
-    val shoulder   = (shoulderW | (widthW ~> shoulderW)) ^^^ Shoulder
-    // Манжет
-    val cuff       = ("cuf+".r | "м[ао]нж[еэ]т+".r) ^^^ Cuff
-    // Одежда: нижнее бельё
-    val cupW       = "cup" | "чаш(еч?)?к+".r
-    val cupSize    = ((sizeW ~> cupW) | (cupW <~ sizeW) | cupW) ^^^ Cup
-    val pantsW     = "(underp(ant)?|pant)".r | "трус"
-    val pantsSize  = ((sizeW ~> pantsW) | (pantsW ~> sizeW)) ^^^ PantsSize
-    // Объём.
-    val volumeW    = "vol(um)?".r | "об([ъь]([её]м)?)?".r    // TODO Есть серьезные проблемы с нормализацией слова "объем" во всех стеммерах.
-    val volume     = volumeW ^^^ Volume
-    // TODO Надо описать больше параметров вместе с тестами.
-    color | gender | material | hood |
-      jacketLen | sleeve | cuff | shoulder |
-      heelHeight | waist |
-      cupSize | chest | pantsSize |
-      size | width | length | height | weight | growth | volume | age
+  def token2string(stream: TokenStream): String = {
+    stream.getAttribute(classOf[CharTermAttribute]).toString
   }
-
-
-  /** Парсер единиц измерения массы, которые указываются в теге param аттрибуте unit. */
-  val MASS_NORM_UNITS_PARSER: Parser[MassUnit] = {
-    import MassUnits._
-    val kgP       = ("кг" | "килограм+".r | "kg" | "kilogram+".r) ^^^ kg
-    val gP        = ("г(р(амм?)?)?".r | "g(ram+)".r) ^^^ gramm
-    val mgP       = ("мг" | "мил+иг(р(ам+)?)?".r | "mg" | "mil+igram+".r) ^^^ mg
-    val tonP      = ("т(он+)?".r | "ton+".r) ^^^ ton
-    // TODO Выпилить центнер? Это не стандартизированная историческая единица, она зависит от страны употребления.
-    val centnerP  = ("ц(ей?нтнер|т)?".r | "quintal" | "[zc]entner".r | "кв[iи]нтал[ъь]?".r) ^^^ centner
-    val caratP    = ("кар(ат)?".r | "ct" | "carat") ^^^ carat
-    val lbP       = ("lbs?".r | "фунт" | "pound") ^^^ lbs
-    kgP | gP | mgP | tonP | centnerP | caratP | lbP
-  }
-
 }
 
 
 import YmStringsAnalyzer._
 
 /** thread-local class для маломусорной lucene-нормализации коротких строчек. */
-class YmStringsAnalyzer extends Analyzer(Analyzer.GLOBAL_REUSE_STRATEGY) {
+class YmStringsAnalyzer
+extends Analyzer(Analyzer.GLOBAL_REUSE_STRATEGY)
+// статически-вкомпиленные плагины добавляются тут:
+with TextNormalizerAn
+with NormTokensOutAn
+with ParamNameParserAn
+with MassUnitParserAn {
 
+  /** Сборка анализатора текстов происходит здесь. */
   def createComponents(fieldName: String, reader: Reader): TokenStreamComponents = {
     // Заменить букву ё на е.
     val tokens = new StandardTokenizer(luceneVsn, reader)
@@ -157,34 +89,47 @@ class YmStringsAnalyzer extends Analyzer(Analyzer.GLOBAL_REUSE_STRATEGY) {
     filtered = new SnowballFilter(filtered, new EnglishStemmer)
     new TokenStreamComponents(tokens, filtered)
   }
-
-
-  /** Нормализовать имя параметра, заданного в произвольной форме. */
-  def normalizeParamName(pn: String): StringBuilder = {
-    val readyTokens = new StringBuilder
-    val stream = tokenStream(null, pn)
-    stream.reset()
-    while (stream.incrementToken()) {
-      val resultToken = stream.getAttribute(classOf[CharTermAttribute]).toString
-      readyTokens append resultToken
-    }
-    stream.close()
-    readyTokens
-  }
-
-
-  /** Нормализовать и попытаться распарсить значение имени параметра. */
-  def parseParamName(pn: String) = {
-    val pnNorm = normalizeParamName(pn)
-    parse(NORM_PARAM_NAME_PARSER, pnNorm)
-  }
-
-
-  /** Распарсить единицы измерения массы. */
-  def parseMassUnit(muStr: String) = {
-    val muStrNorm = normalizeParamName(muStr)
-    parse(MASS_NORM_UNITS_PARSER, muStrNorm)
-  }
 }
 
+
+trait NormTokensOutAn extends Analyzer {
+ 
+  /** Собрать набор токенов из строки в виде списка. Список в обратном порядке. */
+  def toNormTokensRev(src: String): List[String] = {
+    var acc: List[String] = Nil
+    val stream = tokenStream(null, src)
+    try {
+      stream.reset()
+      while (stream.incrementToken()) {
+        val resultToken = token2string(stream)
+        acc ::= resultToken
+      }
+    } finally {
+      stream.close()
+    }
+    acc
+  }
+
+  /** Тоже самое, что и toNormTokensRev(String), но токены в прямом порядке. */
+  def toNormTokensDirect(src: String) = toNormTokensRev(src).reverse
+}
+
+
+trait TextNormalizerAn extends Analyzer {
+  /** Нормализовать имя параметра, заданного в произвольной форме. */
+  def normalizeText(pn: String): StringBuilder = {
+    val readyTokens = new StringBuilder
+    val stream = tokenStream(null, pn)
+    try {
+      stream.reset()
+      while (stream.incrementToken()) {
+        val resultToken = token2string(stream)
+        readyTokens append resultToken
+      }
+    } finally {
+      stream.close()
+    }
+    readyTokens
+  }
+}
 

@@ -17,16 +17,16 @@ object TextUtil {
    * @param chars список символов. Для строки используется метод toCharArray.
    * @return вернуть список токенов типа char[].
    */
-  def trgm_chars_std(chars:Array[Char], start:Int=0, len:Int, acc0:List[String] = List()) : List[String] = {
+  def trgmCharsStd(chars:Array[Char], start:Int=0, len:Int, acc0:List[String] = List()) : List[String] = {
     // Нужен дополнительный элемент, описывающий пробел в начале слова.
     val acc1 = if (len > 1)
       Array(' ', chars(start), chars(start+1)).mkString :: acc0
     else
       acc0
-    trgm_chars(chars, start, len, acc1)
+    trgmChars(chars, start, len, acc1)
   }
 
-  def trgm_token_std(token:String) = trgm_chars_std(token.toCharArray, len = token.length)
+  def trgmTokenStd(token:String) = trgmCharsStd(token.toCharArray, len = token.length)
 
 
   /**
@@ -36,18 +36,18 @@ object TextUtil {
    * @param len кол-во символов до конца
    * @return
    */
-  def trgm_chars_full(chars:Array[Char], start:Int=0, len:Int) : List[String] = {
+  def trgmCharsFull(chars:Array[Char], start:Int=0, len:Int) : List[String] = {
     // full-trgm - это дописать два пробела в начале для усиления начала слова
     if (len > 0) {
       val acc0 = List(
         Array(' ', ' ', chars(start)).mkString
       )
-      trgm_chars_std(chars, start, len, acc0)
+      trgmCharsStd(chars, start, len, acc0)
     } else
       List()
   }
 
-  def trgm_token_full(token:String) = trgm_chars_full(token.toCharArray, len = token.length)
+  def trgmTokenFull(token:String) = trgmCharsFull(token.toCharArray, len = token.length)
 
 
   /**
@@ -57,11 +57,11 @@ object TextUtil {
    * @param len длина
    * @return список триграмм
    */
-  def trgm_chars_min_end(chars:Array[Char], start:Int=0, len:Int) : List[String] = {
-    trgm_chars(chars, start, len, List())
+  def trgmCharsMinEnd(chars:Array[Char], start:Int=0, len:Int) : List[String] = {
+    trgmChars(chars, start, len, List())
   }
 
-  def trgm_token_min_end(token:String) = trgm_chars_min_end(token.toCharArray, len = token.length)
+  def trgmTokenMinEnd(token:String) = trgmCharsMinEnd(token.toCharArray, len = token.length)
 
 
   /**
@@ -72,7 +72,7 @@ object TextUtil {
    * @param len длина
    * @return список триграмм
    */
-  def trgm_chars_min(chars:Array[Char], start:Int=0, len:Int) : List[String] = {
+  def trgmCharsMin(chars:Array[Char], start:Int=0, len:Int) : List[String] = {
     @tailrec def trgm_token_min1(_start:Int, _len:Int, _acc:List[String]) : List[String] = {
       if (_len > 2) {
         val _start1 = _start+1
@@ -85,7 +85,7 @@ object TextUtil {
     trgm_token_min1(start, len, List())
   }
 
-  def trgm_token_min(token:String) = trgm_chars_min(token.toCharArray, len = token.length)
+  def trgmTokenMin(token:String) = trgmCharsMin(token.toCharArray, len = token.length)
 
 
   /**
@@ -96,13 +96,13 @@ object TextUtil {
    * @param acc начальный аккамулятор
    * @return список триграмм
    */
-  @tailrec protected final def trgm_chars(chars:Array[Char], start:Int, len:Int, acc:List[String]) : List[String] = {
+  @tailrec protected final def trgmChars(chars:Array[Char], start:Int, len:Int, acc:List[String]) : List[String] = {
     len match {
       // Выполняется обход слова, которое ещё не кончается.
       case l if l > 2 =>
         val start1 = start+1
         val trgm = Array(chars(start), chars(start1), chars(start+2)).mkString
-        trgm_chars(chars, start1, len-1, trgm::acc)
+        trgmChars(chars, start1, len-1, trgm::acc)
 
       // Конец токена. Завершить рекурсию.
       case 2 => Array(chars(start), chars(start+1), ' ').mkString :: acc

@@ -1,19 +1,20 @@
-package io.suggest.ym
+package io.suggest.ym.parsers
 
 import org.scalatest._
-import YmStringsAnalyzer._
+import io.suggest.ym.{YmStringsAnalyzer, ParamNames}
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 27.01.14 16:05
- * Description: Тесты для распознавалки ключевых слов и словосочетаний, используемых в ключах и значениях YML-данных.
+ * Created: 29.01.14 16:21
+ * Description:
  */
-class YmStringsAnalyzerTest extends FlatSpec with Matchers {
+class ParamNameParserTest extends FlatSpec with Matchers {
+  import ParamNameParser._
 
-  private def getF[T](p: Parser[T], analyzer:YmStringsAnalyzer = new YmStringsAnalyzer): String => T = {
+  private def getF[T](p: Parser[T], analyzer:YmStringsAnalyzer): String => T = {
     {pn: String =>
-      val pn1 = analyzer.normalizeParamName(pn)
+      val pn1 = analyzer.normalizeText(pn)
       parseAll(p, pn1).get
     }
   }
@@ -78,24 +79,6 @@ class YmStringsAnalyzerTest extends FlatSpec with Matchers {
     f("Shoulder")         shouldEqual Shoulder
     f("Ширина плеч")      shouldEqual Shoulder
     f("Плечо")            shouldEqual Shoulder
-  }
-
-  "WEIGHT_NORM_UNITS_PARSER" should "understand standard units of mass measurments" in {
-    import MassUnits._
-    val f = getF(MASS_NORM_UNITS_PARSER)
-    f("КГ.")              shouldEqual kg
-    f("килограммов")      shouldEqual kg
-    f("г")                shouldEqual gramm
-    f("гр.")              shouldEqual gramm
-    f("grams")            shouldEqual gramm
-    f("ц.")               shouldEqual centner
-    f("centner")          shouldEqual centner
-    f("ct.")              shouldEqual carat
-    f("кар.")             shouldEqual carat
-    f("караты")           shouldEqual carat
-    f("lbs")              shouldEqual lbs
-    f("pounds")           shouldEqual lbs
-    f("фунтов")           shouldEqual lbs
   }
 
 }

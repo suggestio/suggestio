@@ -14,6 +14,7 @@ import org.joda.time._
 import java.net.URL
 import io.suggest.ym.model._
 import io.suggest.ym.ParamNames.ParamName
+import io.suggest.ym.parsers._
 
 /**
  * Suggest.io
@@ -152,7 +153,7 @@ import YmlSax._
 class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with SaxContentHandlerWrapper {
 
   /** Используемый анализатор имён параметров. */
-  val paramStrAnalyzer = new YmStringsAnalyzer
+  implicit val paramStrAnalyzer = new YmStringsAnalyzer
 
   /** Дата старта парсера. Используется для определения длительности работы и для определения каких-либо параметров
     * настоящего времени во вспомогательных парсерах, связанных с датами и временем. */
@@ -332,7 +333,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     class ShopNameHandler extends StringHandler {
-      def myTag = ShopFields.email.toString
+      def myTag = ShopFields.name.toString
       def maxLen: Int = SHOP_NAME_MAXLEN
       def handleString(s: String) { name = s }
     }
@@ -834,7 +835,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
           .map { _.trim }
           .flatMap { str => if (str.isEmpty)  None  else  Some(str) }
           .flatMap { unitsStr =>
-            val pmResult = paramStrAnalyzer.parseMassUnit(unitsStr)
+            val pmResult = implicitly[MassUnitParserAn].parseMassUnit(unitsStr)
             if (pmResult.successful)  Some(pmResult.get)  else  None
           }
           .foreach { units =>
@@ -867,7 +868,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
         MyDummyHandler(AnyOfferFields.param.toString, attrs)
         // TODO Нужен механизм репортинга наверх, чтобы на веб-морде могли увидеть сообщение о проблеме.
       } else {
-        val nameParseResult = paramStrAnalyzer.parseParamName(paramName)
+        val nameParseResult = implicitly[ParamNameParserAn].parseParamName(paramName)
         if (nameParseResult.successful) {
           paramHandler(nameParseResult.get, attrs)
         } else {

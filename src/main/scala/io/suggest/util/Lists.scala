@@ -1,6 +1,7 @@
 package io.suggest.util
 
 import collection.mutable
+import scala.annotation.tailrec
 
 /**
  * Suggest.io
@@ -47,6 +48,41 @@ object Lists {
   def mergeMutableMaps[K,V](ms:mutable.Map[K,V] *)(f: (K,V,V) => V) : mutable.Map[K,V] = {
     (mutable.Map[K, V]() /: (for (m <- ms; kv <- m) yield kv)) { (a, kv) =>
       a + (if (a.contains(kv._1)) kv._1 -> f(kv._1, a(kv._1), kv._2) else kv)
+    }
+  }
+
+
+  /** Получение n-ного хвоста от списка. Если длина списка недостаточна, то будет ошибка.
+    * Функция не генерирует мусора, и аналогична erlang lists:nthtail/2.
+    * @param l Исходный список.
+    * @param nth Сколько хвоство скинуть.
+    * @tparam T Тип элемента, для самой функции значения никакого не имеет.
+    * @return Один из хвостов списка.
+    */
+  @tailrec def nthTail[T](l: List[T], nth:Int): List[T] = {
+    if (nth > 0) {
+      nthTail(l.tail, nth - 1)
+    } else {
+      l
+    }
+  }
+
+
+  /**
+   * Поиск общего хвоста между двумя списками одинаковой длины.
+   * Если длина списков отличается, то будет IllegialArgumentException.
+   * @param l1 Один список.
+   * @param l2 Другой список.
+   * @tparam T Тип элементов в списках.
+   * @return Общий хвост. Если такого нет, то будет Nil. Если длины списков разные, то IllegialArgumentException.
+   */
+  def getCommonTail[T](l1:List[T], l2:List[T]): List[T] = {
+    if (l1 == l2) {
+      l1
+    } else if (l1.isEmpty || l2.isEmpty) {
+      throw new IllegalArgumentException("List arguments must have same length. Rests are: " + l1 + " and " + l2)
+    } else {
+      getCommonTail(l1.tail, l2.tail)
     }
   }
 
