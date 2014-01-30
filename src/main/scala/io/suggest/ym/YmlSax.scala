@@ -61,6 +61,7 @@ object YmlSax extends Serializable {
   val SHOP_URL_MAXLEN = CONFIG.getInt("ym.sax.shop.url.len.max") getOrElse 128
   val OFFER_URL_MAXLEN = CONFIG.getInt("ym.sax.offer.url.len.max") getOrElse URL_MAXLEN
   val OFFER_PICTURE_URL_MAXLEN = CONFIG.getInt("ym.sax.offer.picture.len.max") getOrElse URL_MAXLEN
+  val OFFER_PICTURES_MAXCOUNT  = CONFIG.getInt("ym.sax.offer.pictures.count.max") getOrElse 10
 
   val SHOP_CAT_VALUE_MAXLEN = CONFIG.getInt("ym.sax.shop.category.name.len.max") getOrElse 48
   val SHOP_CAT_COUNT_MAX    = CONFIG.getInt("ym.sax.shop.categories.count.max") getOrElse 2048
@@ -73,6 +74,7 @@ object YmlSax extends Serializable {
   val FLOAT_MAXLEN = CONFIG.getInt("ym.sax.float.len.max") getOrElse 25
   val PHONE_MAXLEN = CONFIG.getInt("ym.sax.phone.len.max") getOrElse 18
   val EMAIL_MAXLEN = CONFIG.getInt("ym.sax.email.len.max") getOrElse 128
+  val EMAIL_MAXCOUNT = CONFIG.getInt("ym.sax.emails.count.max") getOrElse 3
   val SHOP_NAME_MAXLEN = CONFIG.getInt("ym.sax.shop.name.len.max") getOrElse 64
   val SHOP_COMPANY_MAXLEN = CONFIG.getInt("ym.sax.shop.company.len.max") getOrElse SHOP_NAME_MAXLEN
 
@@ -89,6 +91,7 @@ object YmlSax extends Serializable {
   val OFFER_PARAM_MAXLEN = CONFIG.getInt("ym.sax.offer.param.len.max") getOrElse 128
   val OFFER_PARAMS_COUNT_MAX = CONFIG.getInt("ym.sax.offer.params.count.max") getOrElse 16
   val OFFER_MODEL_MAXLEN = CONFIG.getInt("ym.sax.offer.model.len.max") getOrElse 40
+  val OFFER_CATEGORY_IDS_MAX_COUNT = CONFIG.getInt("ym.sax.offer.category_ids.count.max") getOrElse 3
 
   val OFFER_TYPE_PREFIX_MAXLEN = CONFIG.getInt("ym.sax.offer.type_prefix.len.max") getOrElse 128
   
@@ -133,6 +136,7 @@ object YmlSax extends Serializable {
   val MEAL_MAXLEN           = CONFIG.getInt("ym.sax.offer.meal.len.max")        getOrElse 32
   val TOUR_INCLUDED_MAXLEN  = CONFIG.getInt("ym.sax.offer.included.len.max")    getOrElse 2048
   val TRANSPORT_MAXLEN      = CONFIG.getInt("ym.sax.offer.transport.len.max")   getOrElse 128
+  val TOUR_DATES_MAXCOUNT   = CONFIG.getInt("ym.sax.offer.tour_dates.count.max") getOrElse 15
 
   // event-ticket
   val PLACE_MAXLEN          = CONFIG.getInt("ym.sax.offer.place.len.max")       getOrElse 512
@@ -294,15 +298,34 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     import shopDatum._
 
     // Аккамуляторы повторяющихся значений. В commit() происходит сброс оных в датум.
-    var emailsAcc       : List[String] = Nil
-    var currenciesAcc   : List[YmShopCurrency] = Nil
-    var categoriesAcc   : List[YmShopCategory] = Nil
+    var emailsAcc: List[String] = Nil
+    var emailsAccLen = emailsAcc.size
+
+    var currenciesAcc: List[YmShopCurrency] = Nil
+    var currenciesAccLen = currenciesAcc.size
+
+    var categoriesAcc: List[YmShopCategory] = Nil
+    var categoriesAccLen = categoriesAcc.size
 
     /** Сброс всех аккамуляторов накопленных данных в текущий shop datum. */
     def commit() {
       shopDatum.emails     = emailsAcc.reverse
       shopDatum.currencies = currenciesAcc.reverse
-      shopDatum.categories = categoriesAcc.reverse
+      shopDatum.categories = {
+        val catsMap = categoriesAcc
+          .map { cat => cat.id -> cat}
+          .toMap
+        // Нужно обнулить parent_id, которые указывают на несуществующие категории.
+        // Данные категорий изменяемы, поэтому проходимся через foreach
+        categoriesAcc.foreach { cat =>
+          cat.parentIdOpt.foreach { parentId =>
+            if (catsMap.get(parentId).isEmpty || parentId == cat.id)
+              cat.parentIdOpt = None
+          }
+        }
+        // TODO Надо ли устранить циклы в дереве и делать другие проверки тут?
+        categoriesAcc.reverse
+      }
       shopDatum.commit()
     }
 
@@ -317,7 +340,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
         case e @ (ShopFields.platform | ShopFields.version | ShopFields.agency) =>
           new MyDummyHandler(e.toString, attributes)
         case ShopFields.email               => EmailsHandler
-        case ShopFields.currencies          => new CurrenciesHandler
+        case ShopFields.currencies          => new ShopCurrenciesHandler
         case ShopFields.categories          => new ShopCategoriesHandler
         case ShopFields.store               => new ShopStoreHandler
         case ShopFields.delivery            => new ShopDeliveryHandler
@@ -365,20 +388,24 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     object EmailsHandler extends StringHandler {
       def myTag = ShopFields.email.toString
       def maxLen: Int = EMAIL_MAXLEN
-      def handleString(email: String) { emailsAcc ::= email }
+      def handleString(email: String) {
+        if (emailsAccLen < EMAIL_MAXCOUNT) {
+          emailsAcc ::= email
+          emailsAccLen += 1
+        }
+      }
     }
 
     /** Парсер списка валют магазина.
       * [[http://help.yandex.ru/partnermarket/currencies.xml Документация по списку валют магазина]]. */
-    class CurrenciesHandler extends MyHandler {
+    class ShopCurrenciesHandler extends MyHandler {
       def myTag = ShopFields.currencies.toString
       def myAttrs = EmptyAttrs
-      var currCounter = 0
 
       override def startTag(tagName: String, attributes: Attributes) {
-        if ((tagName equalsIgnoreCase TAG_CURRENCY)  &&  currCounter < SHOP_CURRENCIES_COUNT_MAX) {
+        if ((tagName equalsIgnoreCase TAG_CURRENCY)  &&  currenciesAccLen < SHOP_CURRENCIES_COUNT_MAX) {
           become(new ShopCurrencyHandler(attributes))
-          currCounter += 1
+          currenciesAccLen += 1
         }
       }
     }
@@ -407,11 +434,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     class ShopCategoriesHandler extends MyHandler {
       def myTag = ShopFields.categories.toString
       override def myAttrs = EmptyAttrs
-      var categoriesCount = 0
 
       override def startTag(tagName: String, attributes: Attributes) {
-        if ((tagName equalsIgnoreCase ShopCategoriesFields.category.toString)  &&  categoriesCount < SHOP_CAT_COUNT_MAX) {
-          categoriesCount += 1
+        if ((tagName equalsIgnoreCase ShopCategoriesFields.category.toString)  &&  categoriesAccLen < SHOP_CAT_COUNT_MAX) {
+          categoriesAccLen += 1
           become(new ShopCategoryHandler(attributes))
         }
       }
@@ -558,8 +584,11 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
 
     /** Аккамулятор списка категорий магазина, который должен быть непустым. */
     var categoryIdsAcc: List[OfferCategoryId] = Nil
+    var categoryIdsAccLen = categoryIdsAcc.size
+
     /** Ссылки на картинки. Их может и не быть. */
     var picturesAcc: List[String] = Nil
+    var picturesAccLen = picturesAcc.size
 
 
     /** Тут базовый комбинируемый обработчик полей комерческого предложения.
@@ -663,10 +692,13 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       /** Максимальная кол-во байт, которые будут сохранены в аккамулятор. */
       override def maxLen: Int = SHOP_CAT_ID_LEN_MAX
       def handleString(s: String) {
-        val catIdType = Option(attrs.getValue(ATTR_TYPE)) map {OfferCategoryIdTypes.withName} getOrElse OfferCategoryIdTypes.default
-        // TODO Возможно, надо для типа Yandex закидывать эту категорию в market_category, а не в categoryIdsAcc.
-        // Из-за дефицита документации по устаревшим фичам, этот момент остается не яснен.
-        categoryIdsAcc ::= OfferCategoryId(s, catIdType)
+        if (categoryIdsAccLen < OFFER_CATEGORY_IDS_MAX_COUNT) {
+          val catIdType = Option(attrs.getValue(ATTR_TYPE)) map {OfferCategoryIdTypes.withName} getOrElse OfferCategoryIdTypes.default
+          // TODO Возможно, надо для типа Yandex закидывать эту категорию в market_category, а не в categoryIdsAcc.
+          // Из-за дефицита документации по устаревшим фичам, этот момент остается не яснен.
+          categoryIdsAcc ::= OfferCategoryId(s, catIdType)
+          categoryIdsAccLen += 1
+        }
       }
     }
 
@@ -696,7 +728,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       def myTag = AnyOfferFields.picture.toString
       override def maxLen: Int = OFFER_PICTURE_URL_MAXLEN
       def handleUrl(pictureUrl: String) {
-        picturesAcc ::= pictureUrl
+        if (picturesAccLen < OFFER_PICTURES_MAXCOUNT) {
+          picturesAcc ::= pictureUrl
+          picturesAccLen += 1
+        }
       }
     }
 
@@ -952,11 +987,12 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     def myOfferType = OfferTypes.VendorModel
 
     /** Список id рекомендуемых товаров к этому товару. */
-    var recIdsListAcc: List[String] = Nil
+    var recIdsAcc: List[String] = Nil
+    var recIdsAccLen = recIdsAcc.size
 
     /** Сброс накопленных аккамуляторов в датум. */
     override def commit() {
-      recIds = recIdsListAcc
+      recIds = recIdsAcc
       super.commit()
     }
 
@@ -1025,10 +1061,11 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       override def maxLen: Int = REC_LIST_MAX_CHARLEN
       def handleString(s: String) {
         var recIds: Seq[String] = REC_LIST_SPLIT_RE.split(s).toSeq
-        if (recIds.size > REC_LIST_MAX_LEN) {
-          recIds = recIds.slice(0, REC_LIST_MAX_LEN - 1)
+        while (recIdsAccLen < REC_LIST_MAX_LEN && !recIds.isEmpty) {
+          recIdsAcc ::= recIds.head
+          recIdsAccLen += 1
+          recIds = recIds.tail
         }
-        recIdsListAcc ++= recIds
       } 
     }
 
@@ -1362,6 +1399,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
 
     /** Аккамулятор дат заездов. */
     var tourDatesAcc: List[DateTime] = Nil
+    var tourDatesAccLen = tourDatesAcc.size
 
     /** Сброс накопленных аккамуляторов в датум. При override, нужно дергать super.commit() в конце, а не в начале. */
     override def commit() {
@@ -1412,7 +1450,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     class TourDatesHandler extends DateTimeHandler {
       def myTag = AnyOfferFields.dataTour.toString
       def handleDateTime(dt: DateTime) {
-        tourDatesAcc ::= dt
+        if (tourDatesAccLen < TOUR_DATES_MAXCOUNT) {
+          tourDatesAcc ::= dt
+          tourDatesAccLen += 1
+        }
       }
     }
 

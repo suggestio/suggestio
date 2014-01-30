@@ -26,6 +26,7 @@ libraryDependencies ++= {
   val jacksonVsn    = "2.2.2"
   val tikaVsn       = "1.4"
   val cascadingVsn  = "2.5.1"
+  val morphVsn      = "1.2-SNAPSHOT"
   Seq(
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
@@ -52,6 +53,9 @@ libraryDependencies ++= {
     "cascading" % "cascading-core" % cascadingVsn,
     "cascading" % "cascading-hadoop" % cascadingVsn,
     "com.scaleunlimited" % "cascading.utils" % "2.2sio-SNAPSHOT", // нужно для HadoopUtils.
+    // Морфология
+    "org.apache.lucene.morphology" % "russian" % morphVsn,
+    "org.apache.lucene.morphology" % "english" % morphVsn,
     // TEST
     "net.databinder.dispatch" %% "dispatch-core" % "0.11.0" % "test",
     "org.scalatest" %% "scalatest" % "2.0" % "test"

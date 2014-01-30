@@ -5,6 +5,7 @@ import scala.collection.mutable
 import scala.annotation.tailrec
 import io.suggest.ym.NormTokensOutAn
 import YmCategory.{CAT_TRGM_MAP, CAT_TREE}
+import io.suggest.util.LogsImpl
 
 /**
  * Suggest.io
@@ -28,17 +29,29 @@ import YmCategory.{CAT_TRGM_MAP, CAT_TREE}
  * Но это уже за пределами этого модуля.
  */
 
-object YmCatTranslator {
+object YmCatTranslator extends Serializable {
+  private val LOGGER = new LogsImpl(classOf[YmCatTranslator])
+
+  /** Если совпадение меньше чем на n%, то результат не считаем кандидатом (результат недостоверен). */
+  val CAT_TRGM_SIM_MIN = 0.25F
+
   /** Сколько отбирать категорий-кандидатов для маппинга максимум. (1) */
-  val EARLY_PREFILTER_CAT_MAX = 3
+  val EARLY_PREFILTER_CAT_MAX = 15
 
   /** Отбрасывать кандидата, пережившего (1), если у того рейтинг ниже предыдущего кандидата, %. */
-  val EARLY_CANDIDATE_FILTER_FALL = 0.49
+  val EARLY_CANDIDATE_FILTER_FALL = 0.40F
+
+  /** Когда категория и подкатегория одновременно идут на кандидатуры, то подкатегория может быть выброшена, если она близка по рейтингу. */
+  val PARENT_CATEGORY_RATING_DOMINATION = 1.10F
+
+  val SHOP_CAT_MAX_PATH_LEN_DFLT = 5
 }
 
 import YmCatTranslator._
 
-class YmCatTranslator {
+
+class YmCatTranslator extends Serializable {
+  import LOGGER._
 
   /** Внутренняя карта категорий: cat_id -> category. */
   protected val shopCatsMap = mutable.HashMap[String, YmShopCategory]()
@@ -50,13 +63,16 @@ class YmCatTranslator {
     shopCatsMap(shopCat.id) = shopCat
   }
 
-  /** Вызывается когда магазинных категорий больше нет. Возвращает карту cat_id -> market_category. */
-  def getResultMap(implicit an: NormTokensOutAn) = {
+  /** Вызывается когда магазинных категорий больше нет. Возвращает карту cat_id -> market_category.
+    * @param an Неявно передаваемый текстовый анализатор.
+    * @return Карту для маппинга исходный id категорий на валидные market_category.
+    */
+  def getResultMap(implicit an: NormTokensOutAn): Map[String, YmCategoryT] = {
     // Пора начать сбор данных по категориям. Сначала надо бегло прикинуть, какие категории куда пихать:
     // Нужно брать название вышестоящей категории и присоединять к текущей, затем делать триграммы.
     // Затем опрашивать словарь, и исходя из концентрации совпадений брать сверху несколько наиболее вероятных категорий.
     val shopCatsCandidates = shopCatsMap.map { case (shopCatId, shopCat) =>
-      val fullPath = getFullCatPath(shopCat)
+      val fullPath = getFullCatPath(shopCat, acc=Nil, maxPathLen=SHOP_CAT_MAX_PATH_LEN_DFLT)
       val trgms = fullPath.foldLeft[Set[String]] (Set.empty) { (acc0, pathToken) =>
         val pathTokensNorm = an.toNormTokensRev(pathToken)
         YmCategory.getTrgmSet(pathTokensNorm, acc0)
@@ -79,25 +95,44 @@ class YmCatTranslator {
           case None =>  // Do nothing
         }
       }
-      // accMap содержит инфу о категории и её рейтинге. Нужно высеять из карты лишние категории
-      // -1 из to-индекса вычетать не надо из-за особенностей работы Seq.slice()
-      val maxRating = trgms.size
-      val catCandidates = accMap.toSeq
-        // Сортировать по убыванию рейтинга (т.е. макс рейтинг - воглаве списка)
-        .sortBy(_._2)
-        .reverse
-        // Надо выкинуть слишком "выпадающие" по рейтингу категории-кандидаты.
-        .foldLeft[(List[(YmCategoryT, Float)], Int)] (Nil -> -1) {
-          case (acc0 @ (accL0, lastCatRating), (cat, catRating)) =>
-            if (catRating < lastCatRating * EARLY_CANDIDATE_FILTER_FALL) acc0 else {
-              val catRatingNorm = catRating.toFloat / maxRating.toFloat
-              val acc1 = cat -> catRatingNorm :: accL0
-              acc1 -> catRating
+      val maxPossiblePoints = trgms.size.toFloat
+      val accMapNorm = accMap
+        .mapValues { _ / maxPossiblePoints }   // Нормируем рейтинги категорий
+        .filter { _._2 >= CAT_TRGM_SIM_MIN }   // Оставить только категории с рейтингом не ниже минимума.
+      val catCandidates = if (!accMapNorm.isEmpty) {
+        val maxRating = accMapNorm.maxBy(_._2)._2
+        // accMapNorm содержит инфу о категории и её рейтинге. Нужно высеять из карты лишние категории
+        val allCandidatesMap = accMapNorm
+          // Если спад рейтинга слишком резок относительно лидера, то тоже отсеиваем
+          .filter { case (_, catRating)  =>  catRating >= maxRating * EARLY_CANDIDATE_FILTER_FALL }
+          // На след.шаге нужен доступ ко всем категориям по их идентификаторам
+          .map { case e @ (cat, _)  =>  cat.pathRev -> e }
+        // Если в кандидатурах есть категория и её подкатегория, и они близки по рейтингу, то нужно выкинуть одну из них.
+        if (!allCandidatesMap.isEmpty) {
+          allCandidatesMap
+            .filter { case (_, (cat, catRating)) =>
+              allCandidatesMap.get(cat.parentPathRev) match {
+                // Нет родительской категории в списках. Волноваться не о чем.
+                case None => true
+                // Есть родительская категория в карте кандидатов.
+                case Some((parentCat, parentCatRating)) =>
+                  // Если рейтинг категории близок к родительскому или ниже его, то надо выкинуть эту подкатегорию из кандидатов
+                  val result = catRating > parentCatRating * PARENT_CATEGORY_RATING_DOMINATION
+                  trace(s"Parent2child cat.filter: Found parent category: ${cat.pathStr} $catRating ==>> ${parentCat.pathStr} $parentCatRating :: keepChild=$result")
+                  result
+              }
             }
+            .toSeq                  // Отбросить карту и врЕменные ключи, которые создавались ради предыдущего фильтра.
+            .map(_._2)
+            .sortBy(_._2)                       // Нужно оставить только несколько лидирующих кандидатов. Сортируем по убыв.
+            .reverse
+            .slice(0, EARLY_PREFILTER_CAT_MAX)  // -1 из to-индекса вычетать не надо из-за особенностей работы Seq.slice()
+        } else {
+          Nil
         }
-        ._1
-        .reverse                                // После foldLeft порядок был инвертирован
-        .slice(0, EARLY_PREFILTER_CAT_MAX)      // Оставить не более указанного числа кандидатов.
+      } else {
+        Nil
+      }
       // Категории-кандидаты для текущей магазинной категории надо вернуть наверх
       shopCatId -> catCandidates
     }.toMap
@@ -145,16 +180,42 @@ class YmCatTranslator {
   }
 
 
-  @tailrec final protected def getFullCatPath(shopCat: YmShopCategory, acc: List[String] = Nil): List[String] = {
+  /** Вычисление полного поути shop-категории.
+    * @param shopCat Исходная категория.
+    * @param acc Аккамулятор названий категорий.
+    * @param maxPathLen Максимальная длина пути в дереве. Позволяет справится с рядом возможных атак.
+    * @return Список токенов в пути в прямом порядке.
+    */
+  @tailrec final protected def getFullCatPath(shopCat: YmShopCategory, acc: List[String], maxPathLen: Int): List[String] = {
+    val shopCatId = shopCat.id
+    lazy val logPrefix = s"getFullCatPath($shopCatId): "
     val acc1 = shopCat.name :: acc
-    val parentIdOpt = shopCat.parentIdOpt
-    if (parentIdOpt.isDefined) {
-      shopCatsMap.get(parentIdOpt.get) match {
-        case Some(catParent) => getFullCatPath(catParent, acc1)
-        case None => acc1
-      }
-    } else {
+    if (maxPathLen <= 0) {
+      trace(logPrefix + "Too long category path: stopping traverse. Current path is " + acc)
       acc1
+    } else {
+      val parentIdOpt = shopCat.parentIdOpt
+      if (parentIdOpt.isDefined) {
+        // Запрещаем parent_id указывать на саму себя.
+        val parentId = parentIdOpt.get
+        if (parentId == shopCatId) {
+          trace(logPrefix + "Suppressed parent category self-reference: " + shopCatId)
+          acc1
+        } else {
+          // Проверка на валидность parent_id делается в YmlSax, но тут мы её также делаем.
+          shopCatsMap.get(parentId) match {
+            case Some(catParent) =>
+              getFullCatPath(catParent, acc1, maxPathLen - 1)
+
+            // id категории есть, но он указывает вникуда. Игнорируем.
+            case None =>
+              trace(s"${logPrefix}parent_id=$parentId is invalid: no such category. Ignoring.")
+              acc1
+          }
+        }
+      } else {
+        acc1
+      }
     }
   }
 

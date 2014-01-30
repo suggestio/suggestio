@@ -188,6 +188,7 @@ sealed case class YmCategory(name: String, subcatsOpt: Option[CatTreeMap_t], lev
   val pathStr = path mkString "/"
   def isRealCategory = true
   def topLevelCatName = pathRev.last
+  override def toString = s"${getClass.getSimpleName}($name)"
 }
 
 /**
