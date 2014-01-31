@@ -153,6 +153,7 @@ case class MyConfig(underlying: Config) {
    * @return a configuration value
    */
   def getDouble(path: String): Option[Double] = readValue(path, underlying.getDouble(path))
+  def getFloat(path: String): Option[Float] = getDouble(path).map(_.toFloat)
 
   /**
    * Retrieves a configuration value as a `Long`.

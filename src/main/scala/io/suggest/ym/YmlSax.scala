@@ -1,11 +1,11 @@
 package io.suggest.ym
 
 import org.xml.sax.helpers.DefaultHandler
-import org.xml.sax.{Locator, Attributes}
+import org.xml.sax.{SAXParseException, Locator, Attributes}
 import cascading.tuple.TupleEntryCollector
 import io.suggest.sax.SaxContentHandlerWrapper
 import YmConstants._
-import io.suggest.util.UrlUtil
+import io.suggest.util.{LogsImpl, UrlUtil}
 import io.suggest.ym.AnyOfferFields.AnyOfferField
 import io.suggest.util.MyConfig.CONFIG
 import io.suggest.ym.OfferTypes.OfferType
@@ -15,6 +15,7 @@ import java.net.URL
 import io.suggest.ym.model._
 import io.suggest.ym.ParamNames.ParamName
 import io.suggest.ym.parsers._
+import io.suggest.ym.cat.YmCatTranslator
 
 /**
  * Suggest.io
@@ -149,12 +150,20 @@ object YmlSax extends Serializable {
 
   /** Регэксп, описывающий повторяющиеся пробелы. */
   private val MANY_SPACES_RE = "[ \\t]{2,}".r
+
+
+  implicit def saxParseEx2ymParseEx(e: SAXParseException) = new YmSaxException(e)
 }
 
 
 import YmlSax._
 
-class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with SaxContentHandlerWrapper {
+/**
+ * SAX-парсер для прайсов в формате YML.
+ * @param outputCollector Выходной коллектор, куда будут отправляться результаты.
+ * @param errHandler Обработчик ошибок. Для веб-морды полезно его сделать таким, чтобы юзер видел все ошибки.
+ */
+class YmlSax(outputCollector: TupleEntryCollector, errHandler: YmSaxErrorsHandler) extends DefaultHandler with SaxContentHandlerWrapper {
 
   /** Используемый анализатор имён параметров. */
   implicit val paramStrAnalyzer = new YmStringsAnalyzer
@@ -193,6 +202,17 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     locator = l
   }
 
+  // Ошибки из JAXP или иного парсера надо перенаправлять в errHandler.
+  override def fatalError(e: SAXParseException) {
+    errHandler.fatalError(e)
+  }
+  override def error(e: SAXParseException) {
+    errHandler.error(e)
+  }
+  override def warning(e: SAXParseException) {
+    errHandler.warn(e)
+  }
+
 
   //------------------------------------------- FSM States ------------------------------------------------
 
@@ -203,7 +223,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
 
     def getTagNameFor(uri:String, localName:String, qName:String): String = {
       if (localName.isEmpty) {
-        if (uri.isEmpty)  qName  else  ???
+        if (uri.isEmpty)  qName  else  throw YmOtherException("Internal parser error. Cannot understand tag name: " + qName)
       } else {
         localName
       }
@@ -223,7 +243,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
         handlerFinish(tagName)
         unbecome()
       } else {
-        ???   // TODO Надо остановиться и выругаться на неправильно закрытый тег.
+        // Надо остановиться и выругаться на неправильно закрытый тег. Наверху оно будет обработано через try-catch
+        throw YmOtherException(s"Unexpected closing tag: '$tagName', but close-tag '$myTag' expected.")
       }
     }
 
@@ -254,7 +275,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       if (tagName == TopLevelFields.yml_catalog.toString) {
         become(YmlCatalogHandler(attributes))
       } else {
-        ???
+        throw YmOtherException(s"Unexpected tag: '$tagName'. 'yml_catalog' expected.")
       }
     }
   }
@@ -294,7 +315,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   case class ShopHandler(myAttrs: Attributes) extends MyHandler {
     def myTag = YmlCatalogFields.shop.toString
 
-    implicit val shopDatum = new YmShopDatum()
+    val shopDatum = new YmShopDatum()
     import shopDatum._
 
     // Аккамуляторы повторяющихся значений. В commit() происходит сброс оных в датум.
@@ -306,6 +327,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
 
     var categoriesAcc: List[YmShopCategory] = Nil
     var categoriesAccLen = categoriesAcc.size
+    var catTransMap: Option[YmCatTranslator.ResultMap_t] = None
 
     /** Сброс всех аккамуляторов накопленных данных в текущий shop datum. */
     def commit() {
@@ -323,11 +345,28 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
               cat.parentIdOpt = None
           }
         }
+        // Отмаппить shop-категории на наше дерево категорий.
+        if (!categoriesAcc.isEmpty) {
+          val catTranslator = new YmCatTranslator
+          try {
+            categoriesAcc.foreach { catTranslator learn }
+            catTransMap = Some(catTranslator.getResultMap)
+          } catch {
+            case ex: Exception =>
+              errHandler.warn(YmOtherException("Cannot compile category tree. Offers may be inproperly categorized.", ex))
+          }
+        }
         // TODO Надо ли устранить циклы в дереве и делать другие проверки тут?
         categoriesAcc.reverse
       }
       shopDatum.commit()
     }
+
+    implicit def getShopContext = new ShopContext(
+      datum = shopDatum,
+      catTransMap = catTransMap,
+      currencies = currenciesAcc.map { c => c.id -> c }.toMap
+    )
 
     /** Обход элементов shop'а. */
     override def startTag(tagName: String, attributes: Attributes) {
@@ -460,7 +499,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
           parentIdOptCur foreach {
             verifyIdLen(ATTR_PARENT_ID, _, s)
           }
-          categoriesAcc ::= new YmShopCategory(id=idCur, name=s, parentIdOpt=parentIdOptCur)
+          val ysc = new YmShopCategory(id=idCur, name=s, parentIdOpt=parentIdOptCur)
+          categoriesAcc ::= ysc
         } else {
           throw YmShopFieldException(s"Attribute '$ATTR_ID' undefined, but it should.")
         }
@@ -510,10 +550,13 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   }
 
 
-  case class OffersHandler(myAttrs: Attributes = EmptyAttrs)(implicit val myShop: YmShopDatum) extends MyHandler {
+  case class OffersHandler(myAttrs: Attributes = EmptyAttrs)(implicit shopCtx: ShopContext) extends MyHandler {
     def myTag = ShopFields.offers.toString
 
     override def startTag(tagName: String, attributes: Attributes) {
+      // Подготовить маппер категорий на market_category.
+
+      // Включить обработчик offer-тега.
       val nextHandler: MyHandler = OffersFields.withName(tagName) match {
         case OffersFields.offer => AnyOfferHandler(attributes)
       }
@@ -531,7 +574,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
      * @param attrs Исходные аттрибуты тега offer.
      * @return Какой-то хандлер, пригодный для парсинга указанного коммерческого предложения.
      */
-    def apply(attrs: Attributes)(implicit myShop: YmShopDatum): AnyOfferHandler = {
+    def apply(attrs: Attributes)(implicit shopCtx: ShopContext): AnyOfferHandler = {
       val offerTypeRaw = attrs.getValue(ATTR_TYPE)
       val offerType = OfferTypes.withRawName(offerTypeRaw)
       offerType match {
@@ -553,12 +596,12 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   trait AnyOfferHandler extends MyHandler {
     def myTag = OffersFields.offer.toString
 
-    implicit val myShop: YmShopDatum
+    implicit val shopCtx: ShopContext
 
     implicit val offerDatum = new YmOfferDatum()
     import offerDatum._
 
-    val shopCurrencies = myShop.currencies
+    def shopCurrencies = shopCtx.currencies
 
     def myOfferType: OfferType
 
@@ -566,7 +609,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     idOpt       = Option(myAttrs.getValue(ATTR_ID)).map(_.trim)
     groupIdOpt  = Option(myAttrs.getValue(ATTR_GROUP_ID)).map(_.trim)
     offerType   = myOfferType
-    shopMeta    = myShop
+    shopMeta    = shopCtx.datum
     // TODO Надо выставит shopId, предварительно поняв, как надо вычислять id магазина.
     isAvailable = {
       val maybeAvailable = myAttrs.getValue(ATTR_AVAILABLE)
@@ -582,6 +625,16 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
+    /** Если есть ошибки парсинга, то они могут переопределеить эту переменную,
+      * чтобы избежать обработки последующих данных. */
+    protected var isSkipping: Boolean = false
+
+    /** Возникла какая-то проблема, нивелирующая весь труд по парсингу этого оффера. */
+    protected def skipCurrentOffer(reason: YmParserException) {
+      isSkipping = true
+      errHandler.error(reason)
+    }
+
     /** Аккамулятор списка категорий магазина, который должен быть непустым. */
     var categoryIdsAcc: List[OfferCategoryId] = Nil
     var categoryIdsAccLen = categoryIdsAcc.size
@@ -589,6 +642,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     /** Ссылки на картинки. Их может и не быть. */
     var picturesAcc: List[String] = Nil
     var picturesAccLen = picturesAcc.size
+
+    var _marketCatPathOpt: Option[Seq[String]] = None
 
 
     /** Тут базовый комбинируемый обработчик полей комерческого предложения.
@@ -626,7 +681,11 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     /** Начинается поле оффера. В зависимости от тега, выбрать обработчик. */
     override def startTag(tagName: String, attributes: Attributes) {
       val offerField = AnyOfferFields.withName(tagName)
-      val handler = getFieldsHandler(offerField, attributes)
+      val handler = if (!isSkipping) {
+        getFieldsHandler(offerField, attributes)
+      } else {
+        MyDummyHandler(tagName, attributes)
+      }
       become(handler)
     }
 
@@ -636,14 +695,17 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       pictures = picturesAcc.reverse
       // PAYLOAD внутри датума тоже требует отдельного коммита.
       offerDatum.commit()
+      marketCategoryPath = _marketCatPathOpt
     }
 
     /** Фунция вызывается, когда наступает пора завершаться. В этот момент обычно отпавляются в коллектор накопленные данные. */
     override def handlerFinish(tagName: String) {
       super.handlerFinish(tagName)
-      commit()
-      // И вот та команда, ради которой написаны все остальные строки:
-      outputCollector add offerDatum.getTuple
+      if (!isSkipping) {
+        commit()
+        // И вот та команда, ради которой написаны все остальные строки:
+        outputCollector add offerDatum.getTuple
+      }
     }
 
     trait OfferBooleanHandler extends BooleanHandler {
@@ -658,46 +720,74 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
+
+    trait SVHOfferFailureControl extends SimpleValueHandler {
+      override def wrapValueFailureException(ex: Throwable) = {
+        YmOfferFieldException("Cannot parse offer field.", ex)
+      }
+    }
+
+    trait SkipOfferOnFailure extends SVHOfferFailureControl {
+      override def handleValueFailure(ex: Throwable) {
+        skipCurrentOffer(maybeWrapFailureException(ex))
+      }
+    }
+
+    trait IgnoreFieldFailure extends SVHOfferFailureControl {
+      override def handleValueFailure(ex: Throwable) {
+        errHandler.warn(maybeWrapFailureException(ex))
+      }
+    }
+
     /** Обработчик тега url, вставляющий в состояние результирующую ссылку. */
-    class OfferUrlHandler extends OfferAnyUrlHandler {
+    class OfferUrlHandler extends OfferAnyUrlHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.url.toString
       override def maxLen: Int = OFFER_URL_MAXLEN
       def handleUrl(_url: String) { url = _url }
     }
 
     /** Обработчик количественной цены товара/услуги. */
-    class PriceHandler extends FloatHandler {
+    class PriceHandler extends FloatHandler with SkipOfferOnFailure {
       def myTag: String = AnyOfferFields.price.toString
       def handleFloat(f: Float) { price = f }
     }
 
     /** Обработчик валюты цены предложения. */
-    class CurrencyIdHandler extends StringHandler {
+    class CurrencyIdHandler extends StringHandler with SkipOfferOnFailure {
       def myTag = AnyOfferFields.currencyId.toString
       override def maxLen: Int = SHOP_CURRENCY_ID_MAXLEN
       def handleString(s: String) {
         // Проверяем валюту по списку валют магазина.
-        if (!shopCurrencies.exists(_.id == s))
-          throw YmOfferFieldException(s"Unexpected currencyId: '$s'. Defined shop's currencies are: ${shopCurrencies.map(_.id).mkString(", ")}")
+        if (!(shopCurrencies contains s))
+          skipCurrentOffer( YmOfferFieldException(s"Unexpected currencyId: '$s'. Defined shop's currencies are: ${shopCurrencies.keys.mkString(", ")}") )
         if (hadOverflow)
-          throw YmOfferFieldException(s"Too long currency id. Max length is $maxLen.")
+          skipCurrentOffer( YmOfferFieldException(s"Too long currency id. Max length is $maxLen.") )
         currencyId = s
       }
     }
 
     /** Чтение поля categoryId, которое может иметь устаревший аттрибут type. */
-    class CategoryIdHandler(attrs: Attributes) extends StringHandler {
+    class CategoryIdHandler(attrs: Attributes) extends StringHandler with SkipOfferOnFailure {
       def myTag: String = AnyOfferFields.categoryId.toString
 
       /** Максимальная кол-во байт, которые будут сохранены в аккамулятор. */
       override def maxLen: Int = SHOP_CAT_ID_LEN_MAX
-      def handleString(s: String) {
+      def handleString(catId: String) {
         if (categoryIdsAccLen < OFFER_CATEGORY_IDS_MAX_COUNT) {
-          val catIdType = Option(attrs.getValue(ATTR_TYPE)) map {OfferCategoryIdTypes.withName} getOrElse OfferCategoryIdTypes.default
-          // TODO Возможно, надо для типа Yandex закидывать эту категорию в market_category, а не в categoryIdsAcc.
+          val catIdType = Option(attrs.getValue(ATTR_TYPE))
+            .map { OfferCategoryIdTypes.withName }
+            .getOrElse { OfferCategoryIdTypes.default }
           // Из-за дефицита документации по устаревшим фичам, этот момент остается не яснен.
-          categoryIdsAcc ::= OfferCategoryId(s, catIdType)
+          if (_marketCatPathOpt.isEmpty  &&  shopCtx.catTransMap.isDefined) {
+            shopCtx.catTransMap.get.get(catId) match {
+              case Some(cat)  => _marketCatPathOpt = Some(cat.path)
+              case None       => errHandler.warn(YmOfferFieldException("Unknown category id: " + catId))
+            }
+          }
+          categoryIdsAcc ::= OfferCategoryId(catId, catIdType)
           categoryIdsAccLen += 1
+        } else {
+          errHandler.warn(YmOfferFieldException("Too many categories."))
         }
       }
     }
@@ -706,16 +796,15 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       * [[http://help.yandex.ru/partnermarket/docs/market_categories.xls таблице категорий маркета]].
       * Пример значения: Одежда/Женская одежда/Верхняя одежда/Куртки
       */
-    class MarketCategoryHandler extends StringHandler {
+    class MarketCategoryHandler extends StringHandler with SkipOfferOnFailure {
       def myTag = AnyOfferFields.market_category.toString
       override def maxLen: Int = MARKET_CAT_VALUE_MAXLEN
-
       def handleString(s: String) {
         // При превышении длины строки, нельзя выставлять категорию
         if (hadOverflow) {
           // TODO Категорию маркета надо парсить и выверять согласно вышеуказанной доке. Все токены пути должны быть выставлены строго согласно таблице категорий.
           val catPath = MARKET_CATEGORY_PATH_SPLIT_RE.split(s).toList.filter(!_.isEmpty)
-          marketCategory = Some(catPath)
+          _marketCatPathOpt = Some(catPath)
         } else {
           throw YmOfferFieldException("Value too long.")
         }
@@ -724,19 +813,21 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
 
     /** Аккамулирование ссылок на картинки в pictures. Картинок может быть много, и хотя бы одна почти всегда имеется,
       * поэтому блокируем многократное конструирование этого объекта. */
-    object PictureUrlHandler extends OfferAnyUrlHandler {
+    object PictureUrlHandler extends OfferAnyUrlHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.picture.toString
       override def maxLen: Int = OFFER_PICTURE_URL_MAXLEN
       def handleUrl(pictureUrl: String) {
         if (picturesAccLen < OFFER_PICTURES_MAXCOUNT) {
           picturesAcc ::= pictureUrl
           picturesAccLen += 1
+        } else {
+          errHandler.warn(YmOfferFieldException("Too many pictures. Some pictures ignored."))
         }
       }
     }
 
     /** store: Парсим поле store, которое говорит, можно ли купить этот товар в магазине. */
-    class OfferStoreHandler extends OfferBooleanHandler {
+    class OfferStoreHandler extends OfferBooleanHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.store.toString
       def handleBoolean(b: Boolean) {
         isStore = b
@@ -744,7 +835,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** pickup: Парсим поле, говорящее нам о том, возможно ли зарезервировать и самовывезти указанный товар. */
-    class OfferPickupHandler extends OfferBooleanHandler {
+    class OfferPickupHandler extends OfferBooleanHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.pickup.toString
       def handleBoolean(b: Boolean) {
         isPickup = b
@@ -752,7 +843,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** delivery: Поле указывает, возможна ли доставка указанного товара? */
-    class OfferDeliveryHandler extends OfferBooleanHandler {
+    class OfferDeliveryHandler extends OfferBooleanHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.delivery.toString
       def handleBoolean(b: Boolean) {
         isDelivery = b
@@ -768,7 +859,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** local_delivery_cost: Поле описывает стоимость доставки с своём регионе. */
-    class OfferLocalDeliveryCostHandler extends FloatHandler {
+    class OfferLocalDeliveryCostHandler extends FloatHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.local_delivery_cost.toString
       def handleFloat(f: Float) {
         localDeliveryCostOpt = Some(f)
@@ -776,7 +867,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** description: Поле с описанием товара. Возможно, multiline-поле. */
-    class DescriptionHandler extends StringHandler {
+    class DescriptionHandler extends StringHandler with IgnoreFieldFailure {
       // TODO Нужно убедится, что переносы строк отрабатываются корректно. Возможно, их надо подхватывать через ignorableWhitespace().
       def myTag = AnyOfferFields.description.toString
       override def maxLen: Int = DESCRIPTION_LEN_MAX
@@ -790,7 +881,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     /** sales_notes: Какие-то доп.данные по товару, которые НЕ индексируются, но отображаются юзеру.
       * Например "Минимальное кол-во единиц в заказе: 4 шт.".
       * Допустимая длина текста в элементе — 50 символов. */
-    class SalesNotesHandler extends StringHandler {
+    class SalesNotesHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.sales_notes.toString
       override def ellipsis: String = SALES_NOTES_ELLIPSIS
       override def maxLen: Int = SALES_NOTES_MAXLEN
@@ -801,7 +892,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** manufacturer_warranty: Поле с информацией о гарантии производителя. */
-    class ManufacturerWarrantyHandler extends WarrantyHandler {
+    class ManufacturerWarrantyHandler extends WarrantyHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.manufacturer_warranty.toString
       def handleWarranty(wv: Warranty) {
         manufacturerWarranty = wv
@@ -810,7 +901,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
 
     /** Страна-производитель из [[http://partner.market.yandex.ru/pages/help/Countries.pdf таблицы стран маркета]].
       * Например "Бразилия". */
-    class CountryOfOriginHandler extends StringHandler {
+    class CountryOfOriginHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.country_of_origin.toString
       override def maxLen: Int = COUNTRY_MAXLEN
       def handleString(s: String) {
@@ -821,7 +912,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
 
     /** downloadable предназначен для обозначения товара, который можно скачать. Нормальной документации маловато,
       * поэтому считаем что тут boolean. */
-    class DownloadableHandler extends OfferBooleanHandler {
+    class DownloadableHandler extends OfferBooleanHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.downloadable.toString
       def handleBoolean(b: Boolean) {
         isDownloadable = b
@@ -831,7 +922,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     /** adult: обязателен для обозначения товара, имеющего отношение к удовлетворению сексуальных потребностей, либо
       * иным образом эксплуатирующего интерес к сексу.
       * [[http://help.yandex.ru/partnermarket/adult.xml Документация по тегу adult]]. */
-    class OfferAdultHandler extends OfferBooleanHandler {
+    class OfferAdultHandler extends OfferBooleanHandler with SkipOfferOnFailure {
       def myTag = AnyOfferFields.adult.toString
       def handleBoolean(b: Boolean) {
         isAdult = b
@@ -839,7 +930,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** Возрастая категория товара. Единицы измерения заданы в аттрибутах. */
-    class AgeHandler(attrs: Attributes) extends IntHandler {
+    class AgeHandler(attrs: Attributes) extends IntHandler with SkipOfferOnFailure {
       def myTag = AnyOfferFields.age.toString
       def handleInt(i: Int) {
         val unitV1 = Option(attrs.getValue(ATTR_UNIT)) map { unitV =>
@@ -858,13 +949,10 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
 
-    trait AnyParamHandler extends SimpleValueHandler {
+    /** Масса может задаваться через param "вес" с указанием единиц измерения. Тут обработчик этого дела. */
+    class WeightParamHandler(attrs: Attributes) extends FloatHandler with IgnoreFieldFailure {
       override def myTag: String = AnyOfferFields.param.toString
       override def maxLen: Int = PARAM_VALUE_MAXLEN
-    }
-
-    /** Масса может задаваться через param "вес" с указанием единиц измерения. Тут обработчик этого дела. */
-    class WeightParamHandler(attrs: Attributes) extends FloatHandler with AnyParamHandler {
       def handleFloat(f: Float) {
         Option(attrs.getValue(ATTR_UNIT))
           .map { _.trim }
@@ -921,13 +1009,12 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       * Тут, в trait'е, нужно использовать def вместо val, т.к. это точно будет переопределено в под-классах. */
     override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = {
       super.getFieldsHandler orElse {
-        case (AnyOfferFields.vendor, _)     => new VendorHandler
         case (AnyOfferFields.vendorCode, _) => new VendorCodeHandler
       }
     }
 
-    /** vendor: поле содержит производителя товара. */
-    class VendorHandler extends StringHandler {
+    /** vendor: поле содержит производителя товара. В зависимости от типа товара, он может быть обязательным или нет. */
+    abstract class VendorHandler extends StringHandler {
       def myTag = AnyOfferFields.vendor.toString
       def maxLen: Int = VENDOR_MAXLEN
       def handleString(s: String) {
@@ -938,7 +1025,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** vendorCode: Номер изделия по мнению производителя. Не индексируется, не используется для группировки. */
-    class VendorCodeHandler extends StringHandler {
+    class VendorCodeHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.vendorCode.toString
       def maxLen: Int = VENDOR_CODE_MAXLEN
       def handleString(s: String) {
@@ -960,7 +1047,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** name: Поле описывает название комерческого предложения в зависимости от контекста. */
-    class NameHandler extends StringHandler {
+    class NameHandler extends StringHandler with SkipOfferOnFailure {
       def myTag = AnyOfferFields.name.toString
       override def maxLen: Int = OFFER_NAME_MAXLEN
       def handleString(s: String) {
@@ -973,15 +1060,21 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /** "Упрощенное описание" - исторический перво-формат яндекс-маркета.
     * Поле type ещё не заимплеменчено, и есть некоторый ограниченный и фиксированный набор полей.
     * Доп.поля: vendor, vendorCode. */
-  case class SimpleOfferHandler(myAttrs: Attributes)(implicit val myShop: YmShopDatum) extends VendorInfoH with OfferNameH {
+  case class SimpleOfferHandler(myAttrs: Attributes)(implicit val shopCtx: ShopContext) extends VendorInfoH with OfferNameH {
     def myOfferType = OfferTypes.Simple
+
+    /** Обработчик полей коммерческого предложения, который также умеет name. */
+    override def getFieldsHandler: PartialFunction[(AnyOfferField, Attributes), MyHandler] = super.getFieldsHandler orElse {
+      // vendor тут не обязательный, согласно dtd.
+      case (AnyOfferFields.vendor, _)  => new VendorHandler with IgnoreFieldFailure
+    }
   }
 
   /** Произвольный товар (vendor.model)
     * Этот тип описания является наиболее удобным и универсальным, он рекомендован для описания товаров из
     * большинства категорий Яндекс.Маркета.
     * Доп.поля: typePrefix, [vendor, vendorCode], model, provider, tarifPlan. */
-  case class VendorModelOfferHandler(myAttrs: Attributes)(implicit val myShop: YmShopDatum) extends VendorInfoH {
+  case class VendorModelOfferHandler(myAttrs: Attributes)(implicit val shopCtx: ShopContext) extends VendorInfoH {
     import offerDatum._
 
     def myOfferType = OfferTypes.VendorModel
@@ -1007,6 +1100,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       case (AnyOfferFields.expiry, _)               => new ExpiryHandler
       case (AnyOfferFields.weight, _)               => new WeightHandler
       case (AnyOfferFields.dimensions, _)           => new DimensionsHandler
+      case (AnyOfferFields.vendor, _)               => new VendorHandler with SkipOfferOnFailure
     }
 
     /** Начинается поле оффера. Нужно исправить ошибки в некоторых полях. */
@@ -1022,7 +1116,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
 
 
     /** typePrefix: Поле с необязательным типом. "Принтер" например. */
-    class TypePrefixHandler extends StringHandler {
+    class TypePrefixHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.typePrefix.toString
       override def maxLen: Int = OFFER_TYPE_PREFIX_MAXLEN
       def handleString(s: String) {
@@ -1031,7 +1125,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** model: Некая модель товара, т.е. правая часть названия. Например "Женская куртка" или "Deskjet D31337". */
-    class ModelHandler extends StringHandler {
+    class ModelHandler extends StringHandler with SkipOfferOnFailure {
       def myTag = AnyOfferFields.model.toString
       def maxLen: Int = OFFER_MODEL_MAXLEN
       def handleString(s: String) {
@@ -1040,7 +1134,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** Поле, описывающее гарантию от продавца. */
-    class SellerWarrantyHandler extends WarrantyHandler {
+    class SellerWarrantyHandler extends WarrantyHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.seller_warranty.toString
       def handleWarranty(wv: Warranty) {
         sellerWarrantyOpt = wv
@@ -1056,7 +1150,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** rec: Список id рекомендуемых к покупке товаров вместе с этим товаром. */
-    class RecommendedOffersHandler extends StringHandler {
+    class RecommendedOffersHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.rec.toString
       override def maxLen: Int = REC_LIST_MAX_CHARLEN
       def handleString(s: String) {
@@ -1070,7 +1164,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** expiry: Истечение срока годности/службы или чего-то подобного. Может быть как период, так и дата. */
-    class ExpiryHandler extends StringHandler {
+    class ExpiryHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.expiry.toString
       override def maxLen: Int = 30
       def handleString(s: String) {
@@ -1083,7 +1177,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** weight: Обработчик поля, содержащего полный вес товара. */
-    class WeightHandler extends FloatHandler {
+    class WeightHandler extends FloatHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.weight.toString
       def handleFloat(f: Float) {
         weightKgOpt = Some(f)
@@ -1091,7 +1185,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
     }
 
     /** Обработчик размерностей товара в формате: длина/ширина/высота. */
-    class DimensionsHandler extends StringHandler {
+    class DimensionsHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.dimensions.toString
       override def maxLen: Int = OFFER_DIMENSIONS_MAXLEN
       def handleString(s: String) {
@@ -1112,7 +1206,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       case (AnyOfferFields.year, _) => new YearHandler
     }
 
-    class YearHandler extends IntHandler {
+    class YearHandler extends IntHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.year.toString
       def handleInt(i: Int) {
         if (i > 200 && i <= startedAt.getYear) {
@@ -1140,7 +1234,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       case (AnyOfferFields.table_of_contents, _)  => new TableOfContentsHandler
     }
 
-    class AuthorHandler extends StringHandler {
+    class AuthorHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.author.toString
       override def maxLen: Int = OFFER_AUTHOR_MAXLEN
       def handleString(s: String) {
@@ -1148,7 +1242,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class PublisherHandler extends StringHandler {
+    class PublisherHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.publisher.toString
       override def maxLen: Int = OFFER_PUBLISHER_MAXLEN
       def handleString(s: String) {
@@ -1156,7 +1250,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class SeriesHandler extends StringHandler {
+    class SeriesHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.series.toString
       override def maxLen: Int = OFFER_SERIES_MAXLEN
       def handleString(s: String) {
@@ -1164,7 +1258,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class ISBNHandler extends StringHandler {
+    class ISBNHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.ISBN.toString
       override def maxLen: Int = OFFER_ISBN_MAXLEN
       def handleString(s: String) {
@@ -1173,21 +1267,21 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class VolumesCountHandler extends IntHandler {
+    class VolumesCountHandler extends IntHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.volume.toString
       def handleInt(i: Int) {
         volumesCount = Some(i)
       }
     }
     
-    class VolumesPartHandler extends IntHandler {
+    class VolumesPartHandler extends IntHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.part.toString
       def handleInt(i: Int) {
         volume = Some(i)
       } 
     }
 
-    class LanguageHandler extends StringHandler {
+    class LanguageHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.language.toString
       override def maxLen: Int = OFFER_LANGUAGE_MAXLEN
       def handleString(s: String) {
@@ -1195,7 +1289,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class TableOfContentsHandler extends StringHandler {
+    class TableOfContentsHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.table_of_contents.toString
       override def maxLen: Int = OFFER_TOC_MAXLEN
       def handleString(s: String) {
@@ -1207,9 +1301,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /**
    * Обработчик для типа book, т.е. бумажных книженций.
    * @param myAttrs Аттрибуты оффера.
-   * @param myShop Текущий магазин.
+   * @param shopCtx Контекст текущего магазина.
    */
-  case class BookOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends AnyBookOfferHandler {
+  case class BookOfferHandler(myAttrs: Attributes)(implicit val shopCtx:ShopContext) extends AnyBookOfferHandler {
     import offerDatum._
     def myOfferType = OfferTypes.Book
 
@@ -1218,7 +1312,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       case (AnyOfferFields.page_extent, _)  => new PageExtentHandler
     }
 
-    class BindingHandler extends StringHandler {
+    /** Переплёт. */
+    class BindingHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.binding.toString
       override def maxLen: Int = OFFER_BINDING_MAXLEN
       def handleString(s: String) {
@@ -1226,7 +1321,8 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class PageExtentHandler extends IntHandler {
+    /** Кол-во страниц. */
+    class PageExtentHandler extends IntHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.page_extent.toString
       def handleInt(i: Int) {
         pageExtent = Some(i)
@@ -1238,9 +1334,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /**
    * Аудиокнига.
    * @param myAttrs Атрибуты оффера.
-   * @param myShop Текущий магазин.
+   * @param shopCtx Контекст текущего магазина.
    */
-  case class AudioBookOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends AnyBookOfferHandler {
+  case class AudioBookOfferHandler(myAttrs: Attributes)(implicit val shopCtx:ShopContext) extends AnyBookOfferHandler {
     import offerDatum._
     def myOfferType = OfferTypes.AudioBook
 
@@ -1252,7 +1348,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       case (AnyOfferFields.recording_length, _) => new RecordingLenHandler
     }
 
-    class PerformedByHandler extends StringHandler {
+    class PerformedByHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.performed_by.toString
       override def maxLen: Int = OFFER_PERFORMED_BY_MAXLEN
       def handleString(s: String) {
@@ -1260,7 +1356,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class PerformanceTypeHandler extends StringHandler {
+    class PerformanceTypeHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.performance_type.toString
       override def maxLen: Int = OFFER_PERFORMANCE_TYPE_MAXLEN
       def handleString(s: String) {
@@ -1268,7 +1364,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class StorageHandler extends StringHandler {
+    class StorageHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.storage.toString
       override def maxLen: Int = OFFER_STORAGE_MAXLEN
       def handleString(s: String) {
@@ -1276,7 +1372,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class FormatHandler extends StringHandler {
+    class FormatHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.format.toString
       def maxLen: Int = OFFER_FORMAT_MAXLEN
       def handleString(s: String) {
@@ -1284,7 +1380,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class RecordingLenHandler extends StringHandler {
+    class RecordingLenHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.recording_length.toString
       override def maxLen: Int = OFFER_REC_LEN_MAXLEN
       def handleString(s: String) {
@@ -1307,7 +1403,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       case (AnyOfferFields.country, _) => new CountryHandler
     }
 
-    class CountryHandler extends StringHandler {
+    class CountryHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.country.toString
       override def maxLen: Int = COUNTRY_MAXLEN
       def handleString(s: String) {
@@ -1321,9 +1417,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /**
    * Обработчик artist.title-офферов, содержащих аудио/видео хлам.
    * @param myAttrs Аттрибуты этого оффера.
-   * @param myShop Текущий магазин.
+   * @param shopCtx Контекст текущего магазина.
    */
-  case class ArtistTitleOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends OfferCountryOptH with OfferYearH {
+  case class ArtistTitleOfferHandler(myAttrs: Attributes)(implicit val shopCtx:ShopContext) extends OfferCountryOptH with OfferYearH {
     import offerDatum._
 
     def myOfferType = OfferTypes.ArtistTitle
@@ -1337,7 +1433,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       case (AnyOfferFields.originalName, _) => new OriginalNameHandler
     }
 
-    class ArtistHandler extends StringHandler {
+    class ArtistHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.artist.toString
       override def maxLen: Int = OFFER_ARTIST_MAXLEN
       def handleString(s: String) {
@@ -1345,7 +1441,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class TitleHandler extends StringHandler {
+    class TitleHandler extends StringHandler with SkipOfferOnFailure {
       def myTag = AnyOfferFields.title.toString
       override def maxLen: Int = OFFER_TITLE_MAXLEN
       def handleString(s: String) {
@@ -1353,7 +1449,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class MediaHandler extends StringHandler {
+    class MediaHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.media.toString
       override def maxLen: Int = OFFER_MEDIA_MAXLEN
       def handleString(s: String) {
@@ -1361,7 +1457,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class StarringHandler extends StringHandler {
+    class StarringHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.starring.toString
       override def maxLen: Int = OFFER_STARRING_MAXLEN
       def handleString(s: String) {
@@ -1369,7 +1465,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class DirectorHandler extends StringHandler {
+    class DirectorHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.director.toString
       override def maxLen: Int = OFFER_DIRECTOR_MAXLEN
       def handleString(s: String) {
@@ -1377,7 +1473,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
     
-    class OriginalNameHandler extends StringHandler {
+    class OriginalNameHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.originalName.toString
       override def maxLen: Int = OFFER_NAME_MAXLEN
       def handleString(s: String) {
@@ -1390,9 +1486,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /**
    * Предложени тур-путёвки в далёкие края.
    * @param myAttrs Аттрибуты тега.
-   * @param myShop Магазин.
+   * @param shopCtx Контекст текущего магазина.
    */
-  case class TourOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends OfferCountryOptH with OfferNameH {
+  case class TourOfferHandler(myAttrs: Attributes)(implicit val shopCtx:ShopContext) extends OfferCountryOptH with OfferNameH {
     import offerDatum._
 
     def myOfferType = OfferTypes.Tour
@@ -1424,7 +1520,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
         MyDummyHandler(f.toString, attrs)
     }
 
-    class WorldRegionHandler extends StringHandler {
+    class WorldRegionHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.worldRegion.toString
       override def maxLen: Int = WORLD_REGION_MAXLEN
       def handleString(s: String) {
@@ -1432,7 +1528,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
     
-    class RegionHandler extends StringHandler {
+    class RegionHandler extends StringHandler with IgnoreFieldFailure {
       override def maxLen: Int = REGION_MAXLEN
       def myTag = AnyOfferFields.region.toString
       def handleString(s: String) {
@@ -1440,14 +1536,14 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class DaysHandler extends IntHandler {
+    class DaysHandler extends IntHandler with SkipOfferOnFailure {
       def myTag = AnyOfferFields.days.toString
       def handleInt(i: Int) {
         days = Some(i)
       }
     }
 
-    class TourDatesHandler extends DateTimeHandler {
+    class TourDatesHandler extends DateTimeHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.dataTour.toString
       def handleDateTime(dt: DateTime) {
         if (tourDatesAccLen < TOUR_DATES_MAXCOUNT) {
@@ -1457,7 +1553,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class HotelStarsHandler extends StringHandler {
+    class HotelStarsHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.hotel_stars.toString
       override def maxLen: Int = HOTEL_STARS_MAXLEN
       def handleString(s: String) {
@@ -1470,7 +1566,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class RoomHandler extends StringHandler {
+    class RoomHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.room.toString
       def maxLen: Int = ROOM_TYPE_MAXLEN
       def handleString(s: String) {
@@ -1483,7 +1579,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class MealHandler extends StringHandler {
+    class MealHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.meal.toString
       def maxLen: Int = MEAL_MAXLEN
       def handleString(s: String) {
@@ -1496,7 +1592,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       } 
     }
 
-    class IncludedHandler extends StringHandler {
+    class IncludedHandler extends StringHandler with SkipOfferOnFailure {
       def myTag: String = AnyOfferFields.included.toString
       def maxLen: Int = TOUR_INCLUDED_MAXLEN
       def handleString(s: String) {
@@ -1504,7 +1600,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class TransportHandler extends StringHandler {
+    class TransportHandler extends StringHandler with SkipOfferOnFailure {
       def myTag = AnyOfferFields.transport.toString
       def maxLen: Int = TRANSPORT_MAXLEN
       def handleString(s: String) {
@@ -1517,9 +1613,9 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
   /**
    * Билет на мероприятие.
    * @param myAttrs Аттрибуты тега оффера.
-   * @param myShop Магазин.
+   * @param shopCtx Контекст текущего магазина.
    */
-  case class EventTicketOfferHandler(myAttrs: Attributes)(implicit val myShop:YmShopDatum) extends OfferNameH {
+  case class EventTicketOfferHandler(myAttrs: Attributes)(implicit val shopCtx:ShopContext) extends OfferNameH {
     import offerDatum._
 
     def myOfferType = OfferTypes.EventTicket
@@ -1534,7 +1630,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       case (AnyOfferFields.is_kids, _)      => new IsKidsHandler
     }
 
-    class PlaceHandler extends StringHandler {
+    class PlaceHandler extends StringHandler with SkipOfferOnFailure {
       def myTag = AnyOfferFields.place.toString
       def maxLen: Int = PLACE_MAXLEN
       def handleString(s: String) {
@@ -1543,7 +1639,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class HallPlanHandler(attrs: Attributes) extends StringHandler {
+    class HallPlanHandler(attrs: Attributes) extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.hall.toString
       def maxLen: Int = HALL_MAXLEN
       def handleString(s: String) {
@@ -1566,7 +1662,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class HallPartHandler extends StringHandler {
+    class HallPartHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.hall_part.toString
       def maxLen: Int = HALL_PART_MAXLEN
       def handleString(s: String) {
@@ -1574,21 +1670,21 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
       }
     }
 
-    class EventDateHandler extends DateTimeHandler {
+    class EventDateHandler extends DateTimeHandler with SkipOfferOnFailure {
       def myTag = AnyOfferFields.date.toString
       def handleDateTime(dt: DateTime) {
         etDate = dt
       }
     }
 
-    class IsPremiereHandler extends OfferBooleanHandler {
+    class IsPremiereHandler extends OfferBooleanHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.is_premiere.toString
       def handleBoolean(b: Boolean) {
         etIsPremiere = b
       }
     }
 
-    class IsKidsHandler extends OfferBooleanHandler {
+    class IsKidsHandler extends OfferBooleanHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.is_kids.toString
       def handleBoolean(b: Boolean) {
         etIsKids = b
@@ -1636,8 +1732,31 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
 
     /** Выход из текущего элемента. Вызвать функцию, обрабатывающую собранный результат. */
     override def endTag(tagName: String) {
-      handleRawValue(sb)
+      try {
+        handleRawValue(sb)
+      } catch {
+        case ex: Throwable => handleValueFailure(ex)
+      }
       super.endTag(tagName)
+    }
+
+    def wrapValueFailureException(ex: Throwable): YmParserException = {
+      YmOtherException("Failed to parse simple value.", ex)
+    }
+
+    def maybeWrapFailureException(ex: Throwable): YmParserException = {
+      ex match {
+        case ymEx: YmParserException =>
+          ymEx
+
+        case _ =>
+          wrapValueFailureException(ex)
+      }
+    }
+
+    /** Возника ошибка при обработке значения. */
+    def handleValueFailure(ex: Throwable) {
+      throw maybeWrapFailureException(ex)
     }
   }
 
@@ -1741,10 +1860,7 @@ class YmlSax(outputCollector: TupleEntryCollector) extends DefaultHandler with S
 
 /** Экспорт интерфейса ShopHandler для возможности работы с ним извне. */
 trait ShopHandlerState {
-  def name                : String
-  def company             : String
-  def url                 : String
-  def phone               : Option[String]
+  def name: String
 }
 
 
@@ -1763,5 +1879,41 @@ trait SimpleValueT {
   def maxLen: Int
   def myTag: String
   def myAttrs: Attributes
+}
+
+
+/** Интерфейс обработчика ошибок SAX-парсеров ym-прайслистов. */
+trait YmSaxErrorsHandler {
+  def warn(ex:  YmParserException)
+  def error(ex: YmParserException)
+  def fatalError(ex: YmParserException)
+}
+
+/** Реализация логгера, который ругается в log4j об ошибках. */
+class YmSaxErrorLogger(prefix: String) extends YmSaxErrorsHandler {
+  private val LOGGER = new LogsImpl(getClass)
+  def warn(ex: YmParserException) {
+    LOGGER.warn(prefix, ex)
+  }
+  def error(ex: YmParserException) {
+    LOGGER.error(prefix, ex)
+  }
+  def fatalError(ex: YmParserException) {
+    LOGGER.error(prefix + " FATAL", ex)
+  }
+}
+
+
+/** Контекст текущего магазина. Служит для раскрытия магазина в офферах и других местах.
+  * @param datum Датум.
+  * @param catTransMap Карта отражения категорий.
+  * @param currencies Карта валют магазина.
+  */
+case class ShopContext(
+  datum: YmShopDatum,
+  catTransMap: Option[YmCatTranslator.ResultMap_t],
+  currencies: Map[String, YmShopCurrency]
+) extends ShopHandlerState {
+  lazy val name: String = datum.name
 }
 

@@ -1,7 +1,6 @@
 package io.suggest.util
 
 import annotation.tailrec
-import scala.util.matching.Regex
 
 /**
  * Suggest.io
@@ -20,12 +19,14 @@ object TextUtil {
    * @param chars список символов. Для строки используется метод toCharArray.
    * @return вернуть список токенов типа char[].
    */
-  def trgmCharsStd(chars:Array[Char], start:Int=0, len:Int, acc0:List[String] = List()) : List[String] = {
+  def trgmCharsStd(chars:Array[Char], start:Int=0, len:Int, acc0:List[String] = Nil) : List[String] = {
     // Нужен дополнительный элемент, описывающий пробел в начале слова.
-    val acc1 = if (len > 1)
-      Array(' ', chars(start), chars(start+1)).mkString :: acc0
-    else
+    val acc1 = if (len > 1) {
+      val chArr = Array(' ', chars(start), chars(start+1))
+      new String(chArr) :: acc0
+    } else {
       acc0
+    }
     trgmChars(chars, start, len, acc1)
   }
 
@@ -42,9 +43,8 @@ object TextUtil {
   def trgmCharsFull(chars:Array[Char], start:Int=0, len:Int) : List[String] = {
     // full-trgm - это дописать два пробела в начале для усиления начала слова
     if (len > 0) {
-      val acc0 = List(
-        Array(' ', ' ', chars(start)).mkString
-      )
+      val chArr = Array(' ', ' ', chars(start))
+      val acc0 = List(new String(chArr))
       trgmCharsStd(chars, start, len, acc0)
     } else
       List()
@@ -61,7 +61,7 @@ object TextUtil {
    * @return список триграмм
    */
   def trgmCharsMinEnd(chars:Array[Char], start:Int=0, len:Int) : List[String] = {
-    trgmChars(chars, start, len, List())
+    trgmChars(chars, start, len, Nil)
   }
 
   def trgmTokenMinEnd(token:String) = trgmCharsMinEnd(token.toCharArray, len = token.length)
@@ -75,18 +75,17 @@ object TextUtil {
    * @param len длина
    * @return список триграмм
    */
-  def trgmCharsMin(chars:Array[Char], start:Int=0, len:Int) : List[String] = {
-    @tailrec def trgm_token_min1(_start:Int, _len:Int, _acc:List[String]) : List[String] = {
-      if (_len > 2) {
-        val _start1 = _start+1
-        val _trgm   = Array(chars(_start), chars(_start1), chars(_start+2)).mkString
-        trgm_token_min1(_start1, _len-1, _trgm::_acc)
-      }
-      else _acc
+  @tailrec final def trgmCharsMin(chars:Array[Char], start:Int=0, len:Int, acc:List[String] = Nil) : List[String] = {
+    if (len > 2) {
+      val start1 = start+1
+      val chArr = Array(chars(start), chars(start1), chars(start+2))
+      val trgm  = new String(chArr)
+      trgmCharsMin(chars, start1, len-1, trgm::acc)
+    } else {
+      acc
     }
-
-    trgm_token_min1(start, len, List())
   }
+
 
   def trgmTokenMin(token:String) = trgmCharsMin(token.toCharArray, len = token.length)
 
@@ -99,22 +98,25 @@ object TextUtil {
    * @param acc начальный аккамулятор
    * @return список триграмм
    */
-  @tailrec protected final def trgmChars(chars:Array[Char], start:Int, len:Int, acc:List[String]) : List[String] = {
-    len match {
+  @tailrec private def trgmChars(chars:Array[Char], start:Int, len:Int, acc:List[String]) : List[String] = {
+    if (len > 2) {
       // Выполняется обход слова, которое ещё не кончается.
-      case l if l > 2 =>
-        val start1 = start+1
-        val trgm = Array(chars(start), chars(start1), chars(start+2)).mkString
-        trgmChars(chars, start1, len-1, trgm::acc)
-
-      // Конец токена. Завершить рекурсию.
-      case 2 => Array(chars(start), chars(start+1), ' ').mkString :: acc
-
-      // какой-то предлог внезапный.
-      case 1 => Array(' ', chars(start), ' ').mkString :: acc
-
+      val start1 = start+1
+      val chArr = Array(chars(start), chars(start1), chars(start+2))
+      val trgm = new String(chArr)
+      trgmChars(chars, start1, len-1, trgm::acc)
+    } else if (len == 0) {
       // Пустое барахло - остановить обход.
-      case 0 => acc
+      acc
+    } else {
+      val trgmChArr: Array[Char] = if (len == 2) {
+        // Конец токена. Завершить рекурсию.
+        Array(chars(start), chars(start+1), ' ')
+      } else {
+        // len == 1 -- Какой-то предлог внезапный.
+        Array(' ', chars(start), ' ')
+      }
+      new String(trgmChArr) :: acc
     }
   }
 
@@ -127,126 +129,213 @@ object TextUtil {
   def normalize(text: String) = text.toLowerCase
 
 
+  /* Исправление неправильных символов (но внешне - правильных) в словах. */
+
+  type MischarMapperPf_t = Char => Char
+
   /** Костыль для транляции скрытых символов визуальной транслитерации. Обычно ошибки в букве с,
-    * которая русская и английская на на одной кнопке. */
-  val untranslitInvisibleCharRu: PartialFunction[Char, Char] = {
-    case 'c' => 'с'
-    case 'C' => 'С'
-    case 'a' => 'а'
-    case 'e' => 'е'
-    case 'o' => 'о'
-    case 'p' => 'р'
-    case 'B' => 'В'
-    case 'r' => 'г'
-    case 'R' => 'Я'  // Бывает, что "R" -- это русская "р".
-    case 'b' => 'ь'
-    case 'M' => 'М'
-    case 'x' => 'х'
-    case 'u' => 'и'
-    case 'H' => 'Н'
-    case 'T' => 'Т'
-    case 'N' => 'И'
-    case 'k' => 'к'
-    case 'K' => 'К'
-    case 'D' => 'Д'
-    case 'y' => 'у'
-    case 'Y' => 'У'
-    case 'W' => 'Ш'
-    case 'w' => 'ш'
-    case '@' => 'а'
-    // Видимые и преднамеренные замены букв.
-    case 'Z' => 'З'
-    case 'z' => 'з'
-    // Костыль против поехавших расовых хохлов и некоторых особо упоротых змагаров
-    case 'Ґ' => 'Г'
-    case 'ґ' => 'г'
-    // Цифры, каракули и т.д. => RU в необходимом регистре.
-    case '3' => 'з'
-    case '0' => 'О'
-    case '6' => 'б'
-    case '7' => 'T'
-    // Когда будет поддержка разных наборов костылей, надо это выкинуть для возможности комбинирования.
-    case ch  => ch
+    * которая русская и английская на на одной кнопке.
+    * НЕЛЬЗЯ делать через PartialFunction, т.к. там постоянный box-unbox порождает огромные кучи мусора. */
+  def mischarFixRu(ch: Char): Char = {
+    ch match {
+      case 'c' => 'с'
+      case 'C' => 'С'
+      case 'a' => 'а'
+      case 'e' => 'е'
+      case 'o' => 'о'
+      case 'p' => 'р'
+      case 'B' => 'В'
+      case 'r' => 'г'
+      case 'R' => 'Я'  // Бывает, что "R" -- это русская "р".
+      case 'b' => 'ь'
+      case 'M' => 'М'
+      case 'x' => 'х'
+      case 'u' => 'и'
+      case 'H' => 'Н'
+      case 'T' => 'Т'
+      case 'N' => 'И'
+      case 'k' => 'к'
+      case 'K' => 'К'
+      case 'D' => 'Д'
+      case 'y' => 'у'
+      case 'Y' => 'У'
+      case 'W' => 'Ш'
+      case 'w' => 'ш'
+      case '@' => 'а'
+      // Видимые и преднамеренные замены букв.
+      case 'Z' => 'З'
+      case 'z' => 'з'
+      // Костыль против поехавших расовых хохлов и некоторых особо упоротых змагаров
+      case 'Ґ' => 'Г'
+      case 'ґ' => 'г'
+      // Цифры, каракули и т.д. => RU в необходимом регистре.
+      case '3' => 'з'
+      case '0' => 'О'
+      case '6' => 'б'
+      case '7' => 'Т'
+      case _   => ch
+    }
   }
 
-  /** Костыль для отката скрытой визуальной транслитерации на english. */
-  val untranslitInvisibleCharEn: PartialFunction[Char, Char] = {
-    case 'с' => 'c'
-    case 'С' => 'c'
-    case 'Т' => 'Т'
-    case 'о' => 'o'
-    case 'О' => 'O'
-    case 'a' => 'а'
-    case 'А' => 'A'
-    case 'е' => 'e'
-    case 'Е' => 'E'
-    case 'р' => 'p'
-    case 'Р' => 'P'
-    case 'Я' => 'R'
-    case 'я' => 'R'
-    case 'ш' => 'w'
-    case 'Ш' => 'W'
-    case 'у' => 'y'
-    case 'У' => 'Y'
-    case 'и' => 'u'
-    case 'к' => 'k'
-    case 'К' => 'K'
-    case 'Н' => 'H'
-    case 'в' => 'B'
-    case 'В' => 'B'
-    case 'З' => 'E'
-    case 'М' => 'M'
-    case 'И' => 'N'
-    case 'г' => 'r'
-    case 'ь' => 'b'
-    // цифры
-    case '0' => 'O'
-    case '1' => 'l'
-    case '3' => 'E'
-    case '7' => 'T'
-    // Усё
-    case ch  => ch
+  /** Костыль для отката скрытой визуальной транслитерации на english.
+   * НЕЛЬЗЯ делать через PartialFunction, т.к. там постоянный box-unbox порождает огромные кучи мусора. */
+  def mischarFixEn(ch: Char): Char = {
+    ch match {
+      case 'с' => 'c'
+      case 'С' => 'c'
+      case 'Т' => 'T'
+      case 'о' => 'o'
+      case 'О' => 'O'
+      case 'а' => 'a'
+      case 'А' => 'A'
+      case 'е' => 'e'
+      case 'Е' => 'E'
+      case 'р' => 'p'
+      case 'Р' => 'P'
+      case 'Я' => 'R'
+      case 'я' => 'R'
+      case 'ш' => 'w'
+      case 'Ш' => 'W'
+      case 'у' => 'y'
+      case 'У' => 'Y'
+      case 'и' => 'u'
+      case 'к' => 'k'
+      case 'К' => 'K'
+      case 'Н' => 'H'
+      case 'в' => 'B'
+      case 'В' => 'B'
+      case 'З' => 'E'
+      case 'М' => 'M'
+      case 'И' => 'N'
+      case 'г' => 'r'
+      case 'ь' => 'b'
+      // цифры
+      case '0' => 'O'
+      case '1' => 'l'
+      case '3' => 'E'
+      case '7' => 'T'
+      case _   => ch
+    }
   }
 
-  private type TranslitMap_t = List[(Regex, PartialFunction[Char,Char])]
-  private val translitInvMap: TranslitMap_t = List(
-    "(?iu)[а-я]+".r -> untranslitInvisibleCharRu,
-    "(?i)[a-z]+".r  -> untranslitInvisibleCharEn
+
+  private type AlpChPeriods_t = List[(Char, Char)]
+  private type MischarChPeriodMap_t = List[(AlpChPeriods_t, MischarMapperPf_t)]
+
+  /** Неизменяемая карта диапазонов алфавитов и repair-функций для этих алфавитов. Можно без private. */
+  private val mischarChPeriodMap: MischarChPeriodMap_t = List(
+    // TODO Периоды можно расширить через карты https://en.wikipedia.org/wiki/Plane_(Unicode)
+    List('а' -> 'я', 'А' -> 'Я') -> mischarFixRu,
+    List('a' -> 'z', 'A' -> 'Z') -> mischarFixEn
   )
 
-  /** Слово может иметь ошибочно (или намеренно) вставленные символы в иной раскладке, которые выглядят как натуральные.
-    * Такое является особенно касается буквы c. */
-  def fixMischaractersInWord(word: String): String = {
-    detectAndApplyLangFix(word, translitInvMap)
+
+  /**
+   * Эта функция используется как враппер над mischarFixChArr(). Эта функция тут в основном для удобства тестирования.
+   * В Lucene-фильтрах mischarFixChArr() используется напрямую, которая работает с массивами символов и без мусора.
+   * @param word Исходная строка.
+   * @return Новая строка, которая состоит из исправленных символов.
+   */
+  def mischarFixString(word: String): String = {
+    val chArr = word.toCharArray
+    mischarFixChArr(chArr, start=0, len=chArr.length)
+    new String(chArr)
   }
 
-  @tailrec final def detectAndApplyLangFix(word: String, tMapRest: TranslitMap_t): String = {
-    if (!tMapRest.isEmpty) {
-      // Продолжаем обрабатывать карту фиксов.
-      val (re, charFixer) = tMapRest.head
-      val cc = countCharsForRe(word, re)
-      val ccRel = cc.toFloat / word.length.toFloat
-      val isMixChar = ccRel < 1.0F
-      if (isMixChar && ccRel > WORD_MISCHAR_THRESHOLD) {
-        // Что-то в слове не так
-        word.map(charFixer)
+  /**
+   * Слово может иметь ошибочно (или намеренно) вставленные символы в иной раскладке, которые выглядят как натуральные.
+   * Такое является особенно касается буквы c. Исправление строки, заданной в массиве символов с нулевым
+   * порождением мусора. Исправление происходит прямо внутри переданного массива.
+   * @param chArr Массив символов.
+   * @param start Начало массива.
+   * @param len Длина массива.
+   */
+  def mischarFixChArr(chArr: Array[Char], start:Int, len:Int) {
+    mischarDetectRepairChArr(chArr, start=start, len=len, mischarChPeriodMap)
+  }
+
+  /**
+   * Рекурсивная фунцкия для обнаружения и исправлея в строках ошибок, связанных с использованием неправильных, но
+   * визуально корректных, символов.
+   * @param chArr Исходный массив символов.
+   * @param start Индекс начала строки.
+   * @param len Кол-во символов для обработки.
+   * @param mischarChPeriodRest Карта-список для обнаружения и исправления проблем.
+   */
+  @tailrec private def mischarDetectRepairChArr(chArr: Array[Char], start:Int, len:Int, mischarChPeriodRest: MischarChPeriodMap_t) {
+    if (!mischarChPeriodRest.isEmpty) {
+      val e = mischarChPeriodRest.head
+      val cc = countCharsForChPeriod(chArr, start=start, len=len, alpChPeriods=e._1)
+      val ccRel = cc.toFloat / len.toFloat
+      val isMixChars = ccRel < 1.0F
+      if (isMixChars && ccRel > WORD_MISCHAR_THRESHOLD) {
+        // В слове есть смесь символов, но текущий язык доминирует. Чиним слово с помощью текущей функции исправления.
+        repairChArrUsing(chArr, start=start, len=len, e._2)
       } else {
-        // Этот словарь фиксов не относится к этому слову. Перейти к следующем фикс-словарику.
-        detectAndApplyLangFix(word, tMapRest.tail)
+        // Текущий алфавит не доминирует в кривом слове. Поискать в другом алфавите.
+        mischarDetectRepairChArr(chArr, start=start, len=len, mischarChPeriodRest.tail)
       }
-    } else {
-      // Нечего исправлять. Возвращаем слово наверх "как есть".
-      word
     }
   }
 
-  def countCharsForRe(s: String, re:Regex): Int = {
-    val matcher = re.pattern.matcher(s)
-    var i = 0
-    while(matcher.find()) {
-      i += matcher.end() - matcher.start()
+
+  /** Подсчет кол-ва символов, относящихся к указанному диапазону без порождения мусора.
+    * Исключением может являться сама tailrec-функция, которую компилятор нередко оборачивает в отдельный класс.
+    * @param chArr Исходный массив символов.
+    * @param start Стартовый (и текущий) индекс в массиве.
+    * @param len Оставшееся кол-во символов до окончания обработки.
+    * @param alpChPeriods Алфавит символов, заданный списком периодов.
+    * @param sum Аккамулятор-счетчик результата.
+    * @return Кол-во символов в исходном массиве, которые лежат в пределах указанного алфавита.
+    */
+  @tailrec private def countCharsForChPeriod(chArr:Array[Char], start:Int, len:Int, alpChPeriods:AlpChPeriods_t, sum:Int = 0): Int = {
+    if (len > 0) {
+      val ch = chArr(start)
+      val sum1 = if (matchChAgainstPeriods(ch, alpChPeriods)) {
+        sum + 1
+      } else {
+        sum
+      }
+      countCharsForChPeriod(chArr, start+1, len-1, alpChPeriods, sum1)
+    } else {
+      // Остаток длины равен нулю, значит обход массива закончен.
+      sum
     }
-    i
+  }
+
+  /**
+   * Проверить символ на соответствие списку диапазонов без порождения мусора.
+   * @param ch Символ.
+   * @param alpChPeriods Список диапазонов символов алфавита.
+   * @return true - если символ удовлетворяет хотя бы одному диапазону. Иначе false.
+   */
+  @tailrec private def matchChAgainstPeriods(ch:Char, alpChPeriods: AlpChPeriods_t): Boolean = {
+    if (alpChPeriods.isEmpty) {
+      false
+    } else {
+      val (chStart, chEnd) = alpChPeriods.head
+      if (ch >= chStart && ch <= chEnd) {
+        true
+      } else {
+        matchChAgainstPeriods(ch, alpChPeriods.tail)
+      }
+    }
+  }
+
+  /**
+   * Фунция "ремонтирует" строку, заданную в виде массива символов. Изменения происходят прямо в массиве.
+   * @param chArr Исходный массив символов.
+   * @param start Начало подстроки в массиве.
+   * @param len Конец подстроки в массиве.
+   * @param fixF Функция исправления ошибок.
+   */
+  @tailrec private def repairChArrUsing(chArr:Array[Char], start:Int, len:Int, fixF:MischarMapperPf_t) {
+    if (len > 0) {
+      val ch0 = chArr(start)
+      val ch1 = fixF(ch0)
+      chArr(start) = ch1
+      repairChArrUsing(chArr, start + 1, len - 1, fixF)
+    }
   }
 
 }

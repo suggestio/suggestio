@@ -56,14 +56,14 @@ class TextUtilTest extends FlatSpec with Matchers {
 
 
   "fixMischaractersInWord()" should "fix mischars in russian words" in {
-    fixMischaractersInWord("Аксеccуары")            shouldEqual "Аксессуары"
-    fixMischaractersInWord("3ашибись").toLowerCase  shouldEqual "зашибись"
-    fixMischaractersInWord("Ра6ота")                shouldEqual "Работа"
+    mischarFixString("Аксеccуары")            shouldEqual "Аксессуары"
+    mischarFixString("3ашибись").toLowerCase  shouldEqual "зашибись"
+    mischarFixString("Ра6ота")                shouldEqual "Работа"
   }
 
   it should "fix mischars in english words" in {
-    fixMischaractersInWord("H0use")                 shouldEqual "HOuse" // ноль вместо О
-    fixMischaractersInWord("Ноuse")                 shouldEqual "House" // Рус. "но" вместо "ho"
+    mischarFixString("H0use")                 shouldEqual "HOuse" // ноль вместо О
+    mischarFixString("Ноuse")                 shouldEqual "House" // Рус. "но" вместо "ho"
   }
 
 }

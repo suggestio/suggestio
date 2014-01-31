@@ -25,23 +25,33 @@ class SioJsDetectorSAXTest extends FlatSpec with Matchers {
   val parseTimeoutMs = 5000
   val awaitDuration = (parseTimeoutMs + 100) milliseconds
 
-  lazy val httpClient = new Http {
-    override val client = {
-      val builder = new AsyncHttpClientConfig.Builder()
-        .setCompressionEnabled(true)
-        .setAllowPoolingConnection(true)
-        .setRequestTimeoutInMs(parseTimeoutMs)
-        .setMaximumConnectionsPerHost(2)
-        .setMaximumConnectionsTotal(10)
-        .setFollowRedirects(true)
-        .setMaximumNumberOfRedirects(2)
-        .setIdleConnectionTimeoutInMs(10000)
-      new AsyncHttpClient(builder.build())
+  private val lock = new {}
+
+  var httpClient: Http = null
+
+  private def setClient() {
+    httpClient = new Http {
+      override val client = {
+        val builder = new AsyncHttpClientConfig.Builder()
+          .setCompressionEnabled(true)
+          .setAllowPoolingConnection(true)
+          .setRequestTimeoutInMs(parseTimeoutMs)
+          .setMaximumConnectionsPerHost(2)
+          .setMaximumConnectionsTotal(10)
+          .setFollowRedirects(true)
+          .setMaximumNumberOfRedirects(2)
+          .setIdleConnectionTimeoutInMs(10000)
+        new AsyncHttpClient(builder.build())
+      }
     }
+  }
+  private def shutdownClient() {
+    httpClient.shutdown()
+    httpClient = null
   }
 
 
-  def testUrl(_url: String): List[SioJsInfoT] = {
+  private def testUrl(_url: String): List[SioJsInfoT] = {
     val req = url(_url)
     val r = httpClient(req OK as.Bytes)
     val fut = r map { bytes =>
@@ -67,7 +77,7 @@ class SioJsDetectorSAXTest extends FlatSpec with Matchers {
 
 
   // Анализ вынесен в отдельный поток для возможности слежения за его выполнением и принудительной остановкой по таймауту.
-  class TikaCallable(md:Metadata, input:InputStream) extends Callable[List[SioJsInfoT]] {
+  private class TikaCallable(md:Metadata, input:InputStream) extends Callable[List[SioJsInfoT]] {
     /**
      * Запуск tika для парсинга запроса
      * @return
@@ -126,4 +136,14 @@ class SioJsDetectorSAXTest extends FlatSpec with Matchers {
     testUrl("http://test.sio.cbca.ru/") should equal (List(SioJsV2("test.sio.cbca.ru", "tTAOv2R2")))
   }*/
 
+  override protected def withFixture(test: NoArgTest): Outcome = {
+    lock synchronized {
+      try {
+        setClient()
+        super.withFixture(test)
+      } finally {
+        shutdownClient()
+      }
+    }
+  }
 }

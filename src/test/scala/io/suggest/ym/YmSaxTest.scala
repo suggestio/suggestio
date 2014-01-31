@@ -30,7 +30,7 @@ class YmlSaxTest extends FlatSpec with Matchers {
         val factory = SAXParserFactory.newInstance()
         factory.setValidating(false)
         val parser = factory.newSAXParser()
-        val cHandler = new YmlSax(outCollector)
+        val cHandler = new YmlSax(outCollector, new YmSaxErrorLogger("test"))
         parser.parse(is, cHandler)
       } finally {
         outCollector.close()

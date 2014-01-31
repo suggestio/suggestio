@@ -16,6 +16,8 @@ import java.util
 import scala.collection.JavaConversions._
 import scala.util.parsing.combinator.JavaTokenParsers
 import parsers._
+import io.suggest.an.ReplaceMischarsAnalyzer
+import io.suggest.util.MyConfig.CONFIG
 
 /**
  * Suggest.io
@@ -26,6 +28,9 @@ import parsers._
  * Для расширения фунционала используется пакет parse, содержимое которого подмешивается в тутошние анализаторы.
  */
 object YmStringsAnalyzer extends JavaTokenParsers {
+
+  /** Фильтровать слова из названия категорий, если длина слова длинее n символов. */
+  val MAX_TOKEN_LEN = CONFIG.getInt("ym.string.an.token.len.max") getOrElse 40
 
   /** Дефолтовые русские и английские стоп-слова содержат лишние слова. Тут отфильтровываем их из исходного списка. */
   private def filterStops(cas: CharArraySet, nonStop:List[String]) = {
@@ -79,8 +84,9 @@ with MassUnitParserAn {
   def createComponents(fieldName: String, reader: Reader): TokenStreamComponents = {
     // Заменить букву ё на е.
     val tokens = new StandardTokenizer(luceneVsn, reader)
-    tokens.setMaxTokenLength(15)
+    tokens.setMaxTokenLength(MAX_TOKEN_LEN)
     var filtered: TokenStream = new StandardFilter(luceneVsn, tokens)  // https://stackoverflow.com/a/16965481
+    filtered = new ReplaceMischarsAnalyzer(luceneVsn, filtered)
     filtered = new LowerCaseFilter(luceneVsn, filtered)
     // Выкинуть стоп-слова.
     filtered = new StopFilter(luceneVsn, filtered, PARAM_TEXT_STOPWORD_SET)

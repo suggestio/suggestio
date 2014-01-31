@@ -144,14 +144,14 @@ object YmOfferDatum extends CascadingFieldNamer with Serializable with YmDatumDe
   }
 
 
-  def serializeMarketCategory(mcOpt: Option[Seq[String]]) = {
+  def serializeMarketCategoryPath(mcOpt: Option[Seq[String]]) = {
     if (mcOpt == null || mcOpt.isEmpty || mcOpt.get.isEmpty) {
       null
     } else {
       new Tuple(mcOpt.get : _*)
     }
   }
-  val deserializeMarketCategory: PartialFunction[AnyRef, Option[Seq[String]]] = {
+  val deserializeMarketCategoryPath: PartialFunction[AnyRef, Option[Seq[String]]] = {
     case null     => None
     case t: Tuple => if (t.isEmpty)  None  else  Some(t.toSeq.asInstanceOf[Seq[String]])
   }
@@ -346,12 +346,12 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
   }
 
   /** Необязательная категория в общем дереве категорий яндекс-маркета. */
-  def marketCategory = {
+  def marketCategoryPath = {
     val raw = _tupleEntry getObject MARKET_CATEGORY_FN
-    deserializeMarketCategory(raw)
+    deserializeMarketCategoryPath(raw)
   }
-  def marketCategory_=(mcOpt: Option[Seq[String]]) {
-    val t = serializeMarketCategory(mcOpt)
+  def marketCategoryPath_=(mcOpt: Option[Seq[String]]) {
+    val t = serializeMarketCategoryPath(mcOpt)
     _tupleEntry.setObject(MARKET_CATEGORY_FN, t)
   }
 

@@ -21,6 +21,8 @@ object YmCategory {
   /** Разделитель категорий в пути market_category. */
   val CAT_PATH_SEP = "/"
 
+  val SERVICE_CAT_NAME = "Услуги"
+
   /** Тип рекурсирвного дерева категорий. */
   type CatTreeMap_t = Map[String, YmCategory]
   private type MutCatTreeMap_t = mutable.HashMap[String, YmMutCategory]
@@ -31,7 +33,7 @@ object YmCategory {
   /** Скрытый метод, вызываемый в конструкторе, изменяющий карту-аккамулятор, чтобы указанная категория там точно была. */
   @tailrec private def ensureCatPath(path: List[String], mapAcc1: MutCatTreeMap_t, currLevel:Int) {
     if (!path.isEmpty) {
-      val h = path.head
+      val h = TextUtil.mischarFixString(path.head.trim)
       val subLevel = currLevel + 1
       val sub = mapAcc1.getOrElseUpdate(h, new YmMutCategory(h, new mutable.HashMap, subLevel))
       ensureCatPath(path.tail, sub.subcats, subLevel)
@@ -175,6 +177,7 @@ sealed trait YmCategoryT {
   def getCommonPathRevWith(e: YmCategoryT) = getCommonPathRev(this, e)
   def topLevelCatName: String
   def topLevelCat = CAT_TREE / topLevelCatName
+  def isService: Boolean
 }
 
 /**
@@ -189,6 +192,7 @@ sealed case class YmCategory(name: String, subcatsOpt: Option[CatTreeMap_t], lev
   def isRealCategory = true
   def topLevelCatName = pathRev.last
   override def toString = s"${getClass.getSimpleName}($name)"
+  val isService = topLevelCatName == SERVICE_CAT_NAME
 }
 
 /**
@@ -205,5 +209,6 @@ sealed case class YmCategoryRoot(cats: CatTreeMap_t) extends YmCategoryT {
   val pathStr = ""
   def isRealCategory = false
   def topLevelCatName: String = ???
+  def isService = false
 }
 

@@ -6,6 +6,7 @@ import scala.annotation.tailrec
 import io.suggest.ym.NormTokensOutAn
 import YmCategory.{CAT_TRGM_MAP, CAT_TREE}
 import io.suggest.util.LogsImpl
+import io.suggest.util.MyConfig.CONFIG
 
 /**
  * Suggest.io
@@ -32,19 +33,51 @@ import io.suggest.util.LogsImpl
 object YmCatTranslator extends Serializable {
   private val LOGGER = new LogsImpl(classOf[YmCatTranslator])
 
+  type ResultMap_t = Map[String, YmCategoryT]
+
   /** Если совпадение меньше чем на n%, то результат не считаем кандидатом (результат недостоверен). */
-  val CAT_TRGM_SIM_MIN = 0.25F
+  val CAT_TRGM_SIM_MIN: Float = CONFIG.getFloat("ym.cat.trans.trgm.sim.min") getOrElse 0.25F
 
   /** Сколько отбирать категорий-кандидатов для маппинга максимум. (1) */
-  val EARLY_PREFILTER_CAT_MAX = 15
+  val EARLY_PREFILTER_CAT_MAX: Int = CONFIG.getInt("ym.cat.trans.filter.early.count.max") getOrElse 15
 
   /** Отбрасывать кандидата, пережившего (1), если у того рейтинг ниже предыдущего кандидата, %. */
-  val EARLY_CANDIDATE_FILTER_FALL = 0.40F
+  val EARLY_CANDIDATE_FILTER_FALL: Float = CONFIG.getFloat("ym.cat.trans.candidate.fall.max") getOrElse 0.40F
 
   /** Когда категория и подкатегория одновременно идут на кандидатуры, то подкатегория может быть выброшена, если она близка по рейтингу. */
-  val PARENT_CATEGORY_RATING_DOMINATION = 1.10F
+  val PARENT_CATEGORY_RATING_DOMINATION: Float = CONFIG.getFloat("ym.cat.trans.parent.rating.domination") getOrElse 1.10F
 
-  val SHOP_CAT_MAX_PATH_LEN_DFLT = 5
+  /** Защита от длинных/бесконечных цепочек категорий. Максимальное количество категорий в дереве категорий. */
+  val SHOP_CAT_MAX_PATH_LEN_DFLT: Int = CONFIG.getInt("ym.cat.trans.path.len.max") getOrElse 5
+
+  /** Для сглаживания влияния сегментов рынка в выбор в спорных категориях, используется подавление роста через
+    * возведение в степень, которая < 1 (т.е. взятие корня). */
+  val PARENT_CAT_RATING_GROW_PRESSURE: Double = CONFIG.getDouble("ym.cat.trans.parent.grow.pressure") getOrElse 1/3.5
+
+  /** Для категорий услуг нужно повышение приоритета, чтобы не терялись. */
+  val SERVICE_CAT_INCR_REL: Float = CONFIG.getFloat("ym.cat.trans.parent.service.incr_by") getOrElse 1.5F
+
+
+  /**
+   * Найти все индексы подстроки substr в указанной строке str.
+   * По сути - рекурсивный враппер надо [[java.lang.String.indexOf()]].
+   * Функция полезна для уточнения позиций триграмм в исходных данных.
+   * @param str Исходная строка.
+   * @param substr Искомая подстрока.
+   * @param acc Аккамулятор. По дефолту - пустой список.
+   * @return Результирующий аккамулятор, содержащий список позиций подстроки от последнего к первому.
+   *         Если ничего не найдено, то пустой список.
+   */
+  @tailrec private def tokenAllIndicesOfTrgm(str:String, substr:String, acc:List[Int] = Nil): List[Int] = {
+    val startOffset = if (acc.isEmpty) 0 else acc.head + 1
+    val nextOffset  = str.indexOf(substr, startOffset)
+    if (nextOffset < 0) {
+      acc
+    } else {
+      tokenAllIndicesOfTrgm(str, substr, nextOffset :: acc)
+    }
+  }
+
 }
 
 import YmCatTranslator._
@@ -67,7 +100,7 @@ class YmCatTranslator extends Serializable {
     * @param an Неявно передаваемый текстовый анализатор.
     * @return Карту для маппинга исходный id категорий на валидные market_category.
     */
-  def getResultMap(implicit an: NormTokensOutAn): Map[String, YmCategoryT] = {
+  def getResultMap(implicit an: NormTokensOutAn): ResultMap_t = {
     // Пора начать сбор данных по категориям. Сначала надо бегло прикинуть, какие категории куда пихать:
     // Нужно брать название вышестоящей категории и присоединять к текущей, затем делать триграммы.
     // Затем опрашивать словарь, и исходя из концентрации совпадений брать сверху несколько наиболее вероятных категорий.
@@ -79,14 +112,16 @@ class YmCatTranslator extends Serializable {
       }
       // Пора опросить trgm-словарь на предмет наличия подходящих категорий.
       // Для аккамулятора используем словарь с рейтингами для категорий-кандидатов.
-      val accMap = mutable.HashMap[YmCategoryT, Int]()
+      // TODO Нужно как-то усиливать инкремент для последовательных trgm-токенов. Если tokenAllIndicesOfTrgm() не понадобится для этого, то её можно удалить.
+      val accMap = mutable.HashMap[YmCategoryT, Float]()
       trgms.foreach { trgm =>
         CAT_TRGM_MAP.get(trgm) match {
           case Some(mcCats) =>
             mcCats.foreach { mcCat =>
+              val incr = 1F
               val counter1 = accMap.get(mcCat) match {
-                case Some(counter) => counter + 1
-                case None          => 1
+                case Some(counter) => counter + incr
+                case None          => incr
               }
               accMap(mcCat) = counter1
             }
@@ -152,13 +187,24 @@ class YmCatTranslator extends Serializable {
       }
     }
     // Теперь есть на руках раскладка по сегментам рынка. Надо её пронормировать:
-    val parentRatingTotal = parentCatsMapAcc.valuesIterator.sum.toFloat
-    val parentCatsNormMap = parentCatsMapAcc.mapValues(_ / parentRatingTotal)
-    val topCatName = parentCatsNormMap.maxBy { _._2 }._1
+    var parentCatsMapFloat = parentCatsMapAcc mapValues { count =>
+      Math.pow(count, PARENT_CAT_RATING_GROW_PRESSURE).toFloat
+    }
+    //val parentRatingTotal = parentCatsMap1.valuesIterator.sum
+    val (topCatName, topCatRating) = parentCatsMapFloat.maxBy { _._2 }
+    parentCatsMapFloat = parentCatsMapFloat.mapValues { _ / topCatRating }
+    // Для "услуг" немного повышаемый рейтинг, чтобы не терялись среди товаров.
+    val serviceCatInfoOpt = parentCatsMapFloat.get(YmCategory.SERVICE_CAT_NAME)
+    if (serviceCatInfoOpt.isDefined) { 
+      parentCatsMapFloat = parentCatsMapFloat.updated(YmCategory.SERVICE_CAT_NAME, serviceCatInfoOpt.get * SERVICE_CAT_INCR_REL)
+    }
+    // Когда нет кандидатов в категории, надо выбрать основную категорию магазина
     val topCat = CAT_TREE / topCatName
-    // Теперь можно накатить эту раскладку на списки кандидатов в shopCatsCandidates
-    shopCatsCandidates.mapValues { candidatesList =>
-      if (candidatesList.isEmpty) {
+    // Теперь можно накатить эту раскладку на списки кандидатов в shopCatsCandidates.
+    // Используем map() вместо mapValues(), чтобы иметь доступ к текущей категории для нужд логгера.
+    shopCatsCandidates.map { case (catName, candidatesList) =>
+      val v1 = if (candidatesList.isEmpty) {
+        debug(s"$catName: No candidates found. Returning default '$topCat'.")
         topCat
       } else if (candidatesList.tail.isEmpty) {
         candidatesList.head._1
@@ -166,7 +212,7 @@ class YmCatTranslator extends Serializable {
         // Есть спорность в выборе категорий. Домножаем рейтинги категорий в списке на основное направление деятельности магазина.
         candidatesList
           .map { case (cat, catRating) =>
-            val catRating1 = parentCatsNormMap(cat.topLevelCatName) * catRating
+            val catRating1 = parentCatsMapFloat(cat.topLevelCatName) * catRating
             cat -> catRating1
           }
           .sortBy { _._2 }
@@ -174,6 +220,7 @@ class YmCatTranslator extends Serializable {
           .head
           ._1
       }
+      catName -> v1
     }.toMap
     // TODO Ещё: магазинная подкатегория должна быть и подкатегорией (или той же самой категорией) в результирующем market_category.
     //      Группа магазинных подкатегорий может указать правильную категорию для своей над-категории.
