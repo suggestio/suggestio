@@ -30,6 +30,7 @@ libraryDependencies ++= {
   Seq(
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
+    "com.typesafe" %% "scalalogging-slf4j" % "1.1.0",
     "org.gnu.inet" % "libidn" % "1.15",
     "com.github.nscala-time" %% "nscala-time" % "0.2.0",
     "commons-lang" % "commons-lang" % "2.4",
@@ -62,7 +63,7 @@ libraryDependencies ++= {
   )
 }
 
-// Нужно генерить текстовое дерево категорий на основе xls-списка категорий маркета.
+// Нужно генерить текстовое дерево категорий на основе xls-списка категорий яндекс-маркета.
 // Для этого надо скачать и распарсить xls-файл. Для работы нужна xls2csv.
 resourceGenerators in Compile <+= Def.task {
   // Подготовка к созданию csv-файла

@@ -30,7 +30,7 @@ object TextUtil {
     trgmChars(chars, start, len, acc1)
   }
 
-  def trgmTokenStd(token:String) = trgmCharsStd(token.toCharArray, len = token.length)
+  def trgmTokenStd(token:String, acc0:List[String] = Nil) = trgmCharsStd(token.toCharArray, len=token.length, acc0=acc0)
 
 
   /**
@@ -38,19 +38,30 @@ object TextUtil {
    * @param chars буквы
    * @param start сдвиг от начала
    * @param len кол-во символов до конца
-   * @return
+   * @param acc0 Необязательный начальный аккамулятор токенов.
+   * @return Список trgm-токенов в обратном порядке (самый левый токен в самом конце списка).
    */
-  def trgmCharsFull(chars:Array[Char], start:Int=0, len:Int) : List[String] = {
+  def trgmCharsFull(chars:Array[Char], start:Int=0, len:Int, acc0:List[String] = Nil) : List[String] = {
     // full-trgm - это дописать два пробела в начале для усиления начала слова
     if (len > 0) {
       val chArr = Array(' ', ' ', chars(start))
-      val acc0 = List(new String(chArr))
-      trgmCharsStd(chars, start, len, acc0)
-    } else
-      List()
+      val acc1 = new String(chArr) :: acc0
+      trgmCharsStd(chars, start, len, acc1)
+    } else {
+      Nil
+    }
   }
 
-  def trgmTokenFull(token:String) = trgmCharsFull(token.toCharArray, len = token.length)
+  /**
+   * Полная триграммизация строки. По сути - тут враппер над [[io.suggest.util.TextUtil.trgmCharsFull]].
+   * @param token Исходная строка, подлежащая перегонке в триграммы. Обычно это слово-токен, т.к. триграммизация строки
+   *              с несколькими словами через эту функцию имеет мало смысла.
+   * @param acc0 Необязательный начальный аккамулятор.
+   * @return Список trgm-токенов в обратном порядке.
+   */
+  def trgmTokenFull(token:String, acc0:List[String] = Nil) = {
+    trgmCharsFull(token.toCharArray, len=token.length, acc0=acc0)
+  }
 
 
   /**
@@ -60,11 +71,13 @@ object TextUtil {
    * @param len длина
    * @return список триграмм
    */
-  def trgmCharsMinEnd(chars:Array[Char], start:Int=0, len:Int) : List[String] = {
-    trgmChars(chars, start, len, Nil)
+  def trgmCharsMinEnd(chars:Array[Char], start:Int=0, len:Int, acc0:List[String] = Nil) : List[String] = {
+    trgmChars(chars, start, len, acc0)
   }
 
-  def trgmTokenMinEnd(token:String) = trgmCharsMinEnd(token.toCharArray, len = token.length)
+  def trgmTokenMinEnd(token:String, acc0:List[String] = Nil) = {
+    trgmCharsMinEnd(token.toCharArray, len=token.length, acc0=acc0)
+  }
 
 
   /**

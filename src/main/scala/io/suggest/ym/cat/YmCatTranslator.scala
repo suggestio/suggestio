@@ -5,7 +5,7 @@ import scala.collection.mutable
 import scala.annotation.tailrec
 import io.suggest.ym.NormTokensOutAn
 import YmCategory.{CAT_TRGM_MAP, CAT_TREE}
-import io.suggest.util.LogsImpl
+import io.suggest.util.{Lists, MacroLogsImplMin}
 import io.suggest.util.MyConfig.CONFIG
 
 /**
@@ -30,9 +30,10 @@ import io.suggest.util.MyConfig.CONFIG
  * Но это уже за пределами этого модуля.
  */
 
-object YmCatTranslator extends Serializable {
-  private val LOGGER = new LogsImpl(classOf[YmCatTranslator])
+object YmCatTranslator extends MacroLogsImplMin with Serializable {
 
+  /** Тип карты-результата, который возвращается после окончания работы этой подсистемы.
+    * Карта описывает, как сырой category_id надо отмаппить на какой элемент дерева категорий. */
   type ResultMap_t = Map[String, YmCategoryT]
 
   /** Если совпадение меньше чем на n%, то результат не считаем кандидатом (результат недостоверен). */
@@ -52,15 +53,18 @@ object YmCatTranslator extends Serializable {
 
   /** Для сглаживания влияния сегментов рынка в выбор в спорных категориях, используется подавление роста через
     * возведение в степень, которая < 1 (т.е. взятие корня). */
-  val PARENT_CAT_RATING_GROW_PRESSURE: Double = CONFIG.getDouble("ym.cat.trans.parent.grow.pressure") getOrElse 1/3.5
+  val PARENT_CAT_RATING_GROW_PRESSURE: Double = CONFIG.getDouble("ym.cat.trans.parent.grow.pressure") getOrElse 0.27
 
   /** Для категорий услуг нужно повышение приоритета, чтобы не терялись. */
   val SERVICE_CAT_INCR_REL: Float = CONFIG.getFloat("ym.cat.trans.parent.service.incr_by") getOrElse 1.5F
 
+  /** Усиление рейтинга при последовательном совпадении последовательных trgm-токенов нормируется тут: */
+  val SEQUENTAL_MATCH_NORM: Float = CONFIG.getFloat("ym.cat.trans.seq.match.norm") getOrElse 100F
+
 
   /**
    * Найти все индексы подстроки substr в указанной строке str.
-   * По сути - рекурсивный враппер надо [[java.lang.String.indexOf()]].
+   * По сути - рекурсивный враппер над [[java.lang.String.indexOf()]].
    * Функция полезна для уточнения позиций триграмм в исходных данных.
    * @param str Исходная строка.
    * @param substr Искомая подстрока.
@@ -106,10 +110,12 @@ class YmCatTranslator extends Serializable {
     // Затем опрашивать словарь, и исходя из концентрации совпадений брать сверху несколько наиболее вероятных категорий.
     val shopCatsCandidates = shopCatsMap.map { case (shopCatId, shopCat) =>
       val fullPath = getFullCatPath(shopCat, acc=Nil, maxPathLen=SHOP_CAT_MAX_PATH_LEN_DFLT)
-      val trgms = fullPath.foldLeft[Set[String]] (Set.empty) { (acc0, pathToken) =>
-        val pathTokensNorm = an.toNormTokensRev(pathToken)
-        YmCategory.getTrgmSet(pathTokensNorm, acc0)
+      val trgmsListRev = fullPath.foldLeft [List[String]] (Nil) { (acc0, pathToken) =>
+        an.toNormTokensRev(pathToken).foldLeft(acc0) {
+          (acc1, pathTokWord) => YmCategory.getTrgmList(pathTokWord, acc1)
+        }
       }
+      val trgms = trgmsListRev.toSet
       // Пора опросить trgm-словарь на предмет наличия подходящих категорий.
       // Для аккамулятора используем словарь с рейтингами для категорий-кандидатов.
       // TODO Нужно как-то усиливать инкремент для последовательных trgm-токенов. Если tokenAllIndicesOfTrgm() не понадобится для этого, то её можно удалить.
@@ -130,14 +136,31 @@ class YmCatTranslator extends Serializable {
           case None =>  // Do nothing
         }
       }
+      // Нормируем
       val maxPossiblePoints = trgms.size.toFloat
-      val accMapNorm = accMap
+      val accMap1 = accMap
         .mapValues { _ / maxPossiblePoints }   // Нормируем рейтинги категорий
         .filter { _._2 >= CAT_TRGM_SIM_MIN }   // Оставить только категории с рейтингом не ниже минимума.
-      val catCandidates = if (!accMapNorm.isEmpty) {
-        val maxRating = accMapNorm.maxBy(_._2)._2
+            // Базовые сырые коэффициенты готовы. Надо теперь внести поправки на порядок токенов. Если trgm-токены совпадают по порядку: то это очень хорошо.
+      val trgmsArrayRev = trgmsListRev.toArray
+      val accMap2 = accMap1.foldLeft[List[(YmCategoryT, Float)]] (Nil) { case (acc, (cat, catRating)) =>
+        val catPathRev = cat.pathRev
+        val pathToken = catPathRev.head
+        val pathTokenWordsRev = an.toNormTokensRev(pathToken)
+        val catPathTokTrgmListRev = pathTokenWordsRev.reverse.foldLeft[List[String]] (Nil) {
+          (trgmAcc, pathTokenWord) => YmCategory.getTrgmList(pathTokenWord, trgmAcc)
+        }
+        // TODO Надо использовать findRaggedLCS, но там бесконечный цикл и длинный Stack
+        val lcs = Lists.findRaggedLCS(trgmsArrayRev, catPathTokTrgmListRev.toArray)
+        val lcsLen = lcs.size - 1
+        val catRatingIncr = lcsLen*lcsLen / SEQUENTAL_MATCH_NORM
+        val catRating1 = catRating + catRatingIncr
+        cat -> catRating1 :: acc
+      } toMap
+      val catCandidates = if (!accMap2.isEmpty) {
+        val maxRating = accMap2.maxBy(_._2)._2
         // accMapNorm содержит инфу о категории и её рейтинге. Нужно высеять из карты лишние категории
-        val allCandidatesMap = accMapNorm
+        val allCandidatesMap = accMap2
           // Если спад рейтинга слишком резок относительно лидера, то тоже отсеиваем
           .filter { case (_, catRating)  =>  catRating >= maxRating * EARLY_CANDIDATE_FILTER_FALL }
           // На след.шаге нужен доступ ко всем категориям по их идентификаторам

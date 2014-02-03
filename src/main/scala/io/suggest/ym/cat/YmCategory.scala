@@ -33,7 +33,7 @@ object YmCategory {
   /** Скрытый метод, вызываемый в конструкторе, изменяющий карту-аккамулятор, чтобы указанная категория там точно была. */
   @tailrec private def ensureCatPath(path: List[String], mapAcc1: MutCatTreeMap_t, currLevel:Int) {
     if (!path.isEmpty) {
-      val h = TextUtil.mischarFixString(path.head.trim)
+      val h = path.head.trim
       val subLevel = currLevel + 1
       val sub = mapAcc1.getOrElseUpdate(h, new YmMutCategory(h, new mutable.HashMap, subLevel))
       ensureCatPath(path.tail, sub.subcats, subLevel)
@@ -149,7 +149,7 @@ object YmCategory {
     * @param token Исходная строка. Обычно одно слово из имени.
     * @return Список триграмм в неопределённом порядке.
     */
-  def getTrgmList(token: String): List[String] = TextUtil.trgmTokenFull(token)
+  def getTrgmList(token: String, acc0:List[String] = Nil): List[String] = TextUtil.trgmTokenFull(token, acc0=acc0)
   def getTrgmSet(token: String) = getTrgmList(token).toSet
   def getTrgmSet(tokens: Seq[String], acc0: Set[String] = Set.empty): Set[String] = {
     tokens.foldLeft(acc0) {

@@ -14,7 +14,6 @@ import HTapConversionsBasic._
 import SioHBaseAsyncClient._
 import org.hbase.async.{DeleteRequest, PutRequest, KeyValue, GetRequest}
 import cascading.tuple.{TupleEntry, Fields, Tuple}
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import scala.Some
 import com.scaleunlimited.cascading.BaseDatum
 
@@ -32,9 +31,7 @@ import com.scaleunlimited.cascading.BaseDatum
  *
  * Сеттеры модели не публичные, т.к. экземплярым модели изначально разработа чтобы быть неизменяемой.
  */
-object MDVIActive extends CascadingFieldNamer {
-
-  private val LOGGER = new LogsImpl(getClass)
+object MDVIActive extends CascadingFieldNamer with MacroLogsImplMin {
   import LOGGER._
 
   // Короткие подсказки для модели и её внешних пользователей, которым не важно внутреннее устройство модели.

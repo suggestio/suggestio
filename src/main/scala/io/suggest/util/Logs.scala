@@ -59,7 +59,7 @@ trait LogsPrefixed extends Logs {
 
 /**
  * Абстрактный логгер появился как костыль для play-framework,
- * где не осилили интерфейс логгеров и изобрели свой уникальный LoggerLike.
+ * где, из-за проблем с интерфейсами логгеров, используется изобрели свой интерфейс LoggerLike.
  */
 trait LogsAbstract {
 
@@ -94,24 +94,24 @@ trait LogsAbstract {
 }
 
 
-// Бывает, что нужен логгер в виде объекта.
+/** Бывает, что нужен логгер в виде собственного объекта. */
 class LogsImpl(className: String) extends LogsAbstract {
   def this(clazz: Class[_]) = this(clazz.getName)
 
   @transient val _LOGGER = LoggerFactory.getLogger(className)
 
   def debug(message: => String) = if (_LOGGER.isDebugEnabled) _LOGGER.debug(message)
-  def debug(message: => String, ex:Throwable) = if (_LOGGER.isDebugEnabled) _LOGGER.debug(message,ex)
+  def debug(message: => String, ex:Throwable) = if (_LOGGER.isDebugEnabled) _LOGGER.debug(message, ex)
 
   def info(message: => String) = if (_LOGGER.isInfoEnabled) _LOGGER.info(message)
-  def info(message: => String, ex:Throwable) = if (_LOGGER.isInfoEnabled) _LOGGER.info(message,ex)
+  def info(message: => String, ex:Throwable) = if (_LOGGER.isInfoEnabled) _LOGGER.info(message, ex)
 
   def warn(message: => String) = if (_LOGGER.isWarnEnabled) _LOGGER.warn(message)
-  def warn(message: => String, ex:Throwable) = if (_LOGGER.isWarnEnabled) _LOGGER.warn(message,ex)
+  def warn(message: => String, ex:Throwable) = if (_LOGGER.isWarnEnabled) _LOGGER.warn(message, ex)
 
-  def error(ex:Throwable) = if (_LOGGER.isErrorEnabled) _LOGGER.error(ex.toString,ex)
+  def error(ex:Throwable) = if (_LOGGER.isErrorEnabled) _LOGGER.error(ex.toString, ex)
   def error(message: => String) = if (_LOGGER.isErrorEnabled) _LOGGER.error(message)
-  def error(message: => String, ex:Throwable) = if (_LOGGER.isErrorEnabled) _LOGGER.error(message,ex)
+  def error(message: => String, ex:Throwable) = if (_LOGGER.isErrorEnabled) _LOGGER.error(message, ex)
 
   def trace(message: => String) = if (_LOGGER.isTraceEnabled) _LOGGER.trace(message)
   def trace(message: => String, ex:Throwable) = if(_LOGGER.isTraceEnabled) _LOGGER.trace(message, ex)
@@ -121,5 +121,21 @@ class LogsImpl(className: String) extends LogsAbstract {
   def isInfoEnabled  = _LOGGER.isInfoEnabled
   def isWarnEnabled  = _LOGGER.isWarnEnabled
   def isErrorEnabled = _LOGGER.isErrorEnabled
+}
+
+
+/** Используем scala macros логгирование, которое НЕ порождает вообще лишнего мусора и куч анонимных функций.
+  * Трейт подмешивается в класс, и затем нужно сделать "import LOGGER._". Это импортнёт scala-макросы как методы. */
+trait MacroLogsImplMin {
+  val LOGGER = com.typesafe.scalalogging.slf4j.Logger(LoggerFactory.getLogger(getClass))
+}
+
+/** Враппер над [[io.suggest.util.MacroLogsImplMin]], который добавляется короткие вызовы для isXXXXEnabled(). */
+trait MacroLogsImpl extends MacroLogsImplMin {
+  def isTraceEnabled = LOGGER.underlying.isTraceEnabled
+  def isDebugEnabled = LOGGER.underlying.isDebugEnabled
+  def isInfoEnabled  = LOGGER.underlying.isInfoEnabled
+  def isWarnEnabled  = LOGGER.underlying.isWarnEnabled
+  def isErrorEnabled = LOGGER.underlying.isErrorEnabled
 }
 

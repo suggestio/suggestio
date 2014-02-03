@@ -5,7 +5,7 @@ import org.xml.sax.{SAXParseException, Locator, Attributes}
 import cascading.tuple.TupleEntryCollector
 import io.suggest.sax.SaxContentHandlerWrapper
 import YmConstants._
-import io.suggest.util.{LogsImpl, UrlUtil}
+import io.suggest.util.{MacroLogsImplMin, UrlUtil}
 import io.suggest.ym.AnyOfferFields.AnyOfferField
 import io.suggest.util.MyConfig.CONFIG
 import io.suggest.ym.OfferTypes.OfferType
@@ -1890,8 +1890,7 @@ trait YmSaxErrorsHandler {
 }
 
 /** Реализация логгера, который ругается в log4j об ошибках. */
-class YmSaxErrorLogger(prefix: String) extends YmSaxErrorsHandler {
-  private val LOGGER = new LogsImpl(getClass)
+class YmSaxErrorLogger(prefix: String) extends YmSaxErrorsHandler with MacroLogsImplMin {
   def warn(ex: YmParserException) {
     LOGGER.warn(prefix, ex)
   }
