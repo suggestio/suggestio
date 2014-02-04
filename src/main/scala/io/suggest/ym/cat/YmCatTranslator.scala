@@ -5,7 +5,7 @@ import scala.collection.mutable
 import scala.annotation.tailrec
 import io.suggest.ym.NormTokensOutAn
 import YmCategory.{CAT_TRGM_MAP, CAT_TREE}
-import io.suggest.util.{Lists, MacroLogsImplMin}
+import io.suggest.util.{MacroLogsImpl, Lists}
 import io.suggest.util.MyConfig.CONFIG
 
 /**
@@ -30,7 +30,7 @@ import io.suggest.util.MyConfig.CONFIG
  * Но это уже за пределами этого модуля.
  */
 
-object YmCatTranslator extends MacroLogsImplMin with Serializable {
+object YmCatTranslator extends MacroLogsImpl with Serializable {
 
   /** Тип карты-результата, который возвращается после окончания работы этой подсистемы.
     * Карта описывает, как сырой category_id надо отмаппить на какой элемент дерева категорий. */

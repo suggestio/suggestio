@@ -1,6 +1,9 @@
 package io.suggest.util
 
 import org.slf4j.LoggerFactory
+import cascading.operation.{OperationCall, Operation}
+import cascading.flow.FlowProcess
+import com.typesafe.scalalogging.slf4j.{Logger => MacroLogger}
 
 /**
  * Suggest.io
@@ -124,18 +127,46 @@ class LogsImpl(className: String) extends LogsAbstract {
 }
 
 
-/** Используем scala macros логгирование, которое НЕ порождает вообще лишнего мусора и куч анонимных функций.
-  * Трейт подмешивается в класс, и затем нужно сделать "import LOGGER._". Это импортнёт scala-макросы как методы. */
-trait MacroLogsImplMin {
-  val LOGGER = com.typesafe.scalalogging.slf4j.Logger(LoggerFactory.getLogger(getClass))
+
+object MacroLogsImpl extends Serializable {
+  def getMacroLogger(clazz: Class[_]) = MacroLogger(LoggerFactory.getLogger(clazz))
 }
 
-/** Враппер над [[io.suggest.util.MacroLogsImplMin]], который добавляется короткие вызовы для isXXXXEnabled(). */
-trait MacroLogsImpl extends MacroLogsImplMin {
+import MacroLogsImpl._
+
+/** Используем scala macros логгирование, которое НЕ порождает вообще лишнего мусора и куч анонимных функций.
+  * Трейт подмешивается в класс, и затем нужно сделать "import LOGGER._". Это импортнёт scala-макросы как методы. */
+trait MacroLogsImpl {
+  @transient val LOGGER = getMacroLogger(getClass)
+}
+trait MacroLogsImplLazy {
+  @transient lazy val LOGGER = getMacroLogger(getClass)
+}
+
+
+
+/** Доп-функции для [[io.suggest.util.MacroLogsImpl]], который добавляется короткие вызовы для isXXXXEnabled(). */
+trait MacroLogsUtil {
+  def LOGGER: MacroLogger
   def isTraceEnabled = LOGGER.underlying.isTraceEnabled
   def isDebugEnabled = LOGGER.underlying.isDebugEnabled
   def isInfoEnabled  = LOGGER.underlying.isInfoEnabled
   def isWarnEnabled  = LOGGER.underlying.isWarnEnabled
   def isErrorEnabled = LOGGER.underlying.isErrorEnabled
+}
+
+
+/** Если нужно добавить MacroLogger в Cascading Operation, то можно использовать этот трейт. */
+trait CascadingMacroLoggerOp[Context] extends Operation[Context] {
+  var LOGGER: MacroLogger = null
+
+  abstract override def prepare(flowProcess: FlowProcess[_], operationCall: OperationCall[Context]) {
+    super.prepare(flowProcess, operationCall)
+    synchronized {
+      if (LOGGER == null) {
+        LOGGER = MacroLogger(LoggerFactory.getLogger(getClass))
+      }
+    }
+  }
 }
 

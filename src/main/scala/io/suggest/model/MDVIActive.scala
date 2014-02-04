@@ -31,7 +31,7 @@ import com.scaleunlimited.cascading.BaseDatum
  *
  * Сеттеры модели не публичные, т.к. экземплярым модели изначально разработа чтобы быть неизменяемой.
  */
-object MDVIActive extends CascadingFieldNamer with MacroLogsImplMin {
+object MDVIActive extends CascadingFieldNamer with MacroLogsImpl {
   import LOGGER._
 
   // Короткие подсказки для модели и её внешних пользователей, которым не важно внутреннее устройство модели.

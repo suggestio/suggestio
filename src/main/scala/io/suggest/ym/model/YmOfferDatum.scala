@@ -318,10 +318,9 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
     // TODO Обновлять тут поле shop_id?
   }
 
-  def shopId = _tupleEntry getString SHOP_ID_FN
-  def shopId_=(shopId: String) {
-    _tupleEntry.setString(SHOP_ID_FN, shopId)
-  }
+  /** id магазина генерится силами RDBMS, а тут его целый id. */
+  def shopId: Int = _tupleEntry getInteger SHOP_ID_FN
+  def shopId_=(shopId: Int) =_tupleEntry.setInteger(SHOP_ID_FN, shopId)
 
   /** Цена коммерческого предложения. */
   def price = _tupleEntry getFloat PRICE_FN

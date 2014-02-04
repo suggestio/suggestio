@@ -5,7 +5,7 @@ import org.xml.sax.{SAXParseException, Locator, Attributes}
 import cascading.tuple.TupleEntryCollector
 import io.suggest.sax.SaxContentHandlerWrapper
 import YmConstants._
-import io.suggest.util.{MacroLogsImplMin, UrlUtil}
+import io.suggest.util.{MacroLogsImpl, UrlUtil}
 import io.suggest.ym.AnyOfferFields.AnyOfferField
 import io.suggest.util.MyConfig.CONFIG
 import io.suggest.ym.OfferTypes.OfferType
@@ -163,7 +163,11 @@ import YmlSax._
  * @param outputCollector Выходной коллектор, куда будут отправляться результаты.
  * @param errHandler Обработчик ошибок. Для веб-морды полезно его сделать таким, чтобы юзер видел все ошибки.
  */
-class YmlSax(outputCollector: TupleEntryCollector, errHandler: YmSaxErrorsHandler) extends DefaultHandler with SaxContentHandlerWrapper {
+class YmlSax(
+  outputCollector: TupleEntryCollector,
+  errHandler: YmSaxErrorsHandler,
+  shopIdOpt: Option[Int] = None
+) extends DefaultHandler with SaxContentHandlerWrapper {
 
   /** Используемый анализатор имён параметров. */
   implicit val paramStrAnalyzer = new YmStringsAnalyzer
@@ -610,7 +614,11 @@ class YmlSax(outputCollector: TupleEntryCollector, errHandler: YmSaxErrorsHandle
     groupIdOpt  = Option(myAttrs.getValue(ATTR_GROUP_ID)).map(_.trim)
     offerType   = myOfferType
     shopMeta    = shopCtx.datum
-    // TODO Надо выставит shopId, предварительно поняв, как надо вычислять id магазина.
+    // Выставить переданный shop_id в состояние.
+    if (shopIdOpt.isDefined) {
+      shopId    = shopIdOpt.get
+    }
+
     isAvailable = {
       val maybeAvailable = myAttrs.getValue(ATTR_AVAILABLE)
       if (maybeAvailable == null) {
@@ -1890,7 +1898,7 @@ trait YmSaxErrorsHandler {
 }
 
 /** Реализация логгера, который ругается в log4j об ошибках. */
-class YmSaxErrorLogger(prefix: String) extends YmSaxErrorsHandler with MacroLogsImplMin {
+class YmSaxErrorLogger(prefix: String) extends YmSaxErrorsHandler with MacroLogsImpl {
   def warn(ex: YmParserException) {
     LOGGER.warn(prefix, ex)
   }
