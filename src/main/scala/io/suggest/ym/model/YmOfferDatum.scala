@@ -1,7 +1,7 @@
 package io.suggest.ym.model
 
-import com.scaleunlimited.cascading.{BaseDatum, PayloadDatum}
-import io.suggest.util.CascadingFieldNamer
+import com.scaleunlimited.cascading.{Payload, BaseDatum, PayloadDatum}
+import io.suggest.util.{MacroLogsImpl, CascadingFieldNamer}
 import cascading.tuple.{TupleEntry, Tuple, Fields}
 import scala.collection.JavaConversions._
 import io.suggest.ym._, OfferTypes.OfferType
@@ -13,6 +13,7 @@ import io.suggest.ym.HotelStarsLevels.HotelStarsLevel
 import scala.Some
 import io.suggest.ym.Dimensions
 import io.suggest.ym.HotelMealTypes.HotelMealType
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -22,43 +23,74 @@ import io.suggest.ym.HotelMealTypes.HotelMealType
  * Каждый оффер содержит информацию о своём магазине и об одном товаре/услуге.
  * Офферы имеют динамическое число полей, поэтому часть полей (в т.ч. все param-поля) живут внутри Payload'а.
  */
-object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with Serializable {
+object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with MacroLogsImpl with Serializable {
+  import LOGGER._
 
-  // Выбираем поля из AnyOfferHandler, которые скорее всего есть в любых офферах.
+  /** Чтобы не дублировать используемый промежуточный тип карты json-объекта, выносим его сюда. */
+  type JsFields_t = List[(String, JsValue)]
+
+  // На верхний уровень выносим поля из AnyOfferHandler, которые скорее всего есть в любых офферах.
+  // Т.к. бОльшуя часть полей надо будет отправить в elasticsearch, то учитываем это в именовании полей:
+  // - *_ESFN - короткое, оригинальное имя поле, под которым будет сохранение в ES и генерация полного имени (*_FN)
+  // - *_FN - Полное имя, используемое в именование полей cascading-кортежей.
+  // - Payload-ключи: Пока что используем короткие названия полей.
+
   /** Ссылка на оффер. Необязательно, это уникальная ссылка. */
-  val URL_FN                    = fieldName("url")
+  val URL_ESFN                  = "url"
+  val URL_FN                    = fieldName(URL_ESFN)
   /** Необязательный id товара по мнению магазина. */
   val ID_FN                     = fieldName("id")
-  val OFFER_TYPE_FN             = fieldName("offerType")
-  val GROUP_ID_FN               = fieldName("groupId")
-  val AVAILABLE_FN              = fieldName("available")
+  val OFFER_TYPE_ESFN           = "offerType"
+  val OFFER_TYPE_FN             = fieldName(OFFER_TYPE_ESFN)
+  val GROUP_ID_ESFN             = "groupId"
+  val GROUP_ID_FN               = fieldName(GROUP_ID_ESFN)
+  val AVAILABLE_ESFN            = "available"
+  val AVAILABLE_FN              = fieldName(AVAILABLE_ESFN)
   /** Поле с метаданными магазина. Заполняется кортежем из YmShopDatum. */
   val SHOP_META_FN              = fieldName("shopMeta")  // TODO Надо бы хранить это дело отдельно. Это будет более оптимально.
   /** id магазина. Генерируется на основе предыдущего поля. Удобно для группировки. */
-  val SHOP_ID_FN                = fieldName("shopId")
-  val PRICE_FN                  = fieldName("price")
-  val CURRENCY_ID_FN            = fieldName("currencyId")
-  val CATEGORY_IDS_FN           = fieldName("categoryId")
-  val MARKET_CATEGORY_FN        = fieldName("marketCategory")
-  val PICTURES_FN               = fieldName("pictures")
-  val STORE_FN                  = fieldName("store")
-  val PICKUP_FN                 = fieldName("pickup")
-  val DELIVERY_FN               = fieldName("delivery")
-  val DELIVERY_INCLUDED_FN      = fieldName("deliveryIncluded")
-  val LOCAL_DELIVERY_COST_FN    = fieldName("localDeliveryCost")
-  val DESCRIPTION_FN            = fieldName("description")
-  val SALES_NOTES_FN            = fieldName("salesNotes")
-  val COUNTRY_OF_ORIGIN         = fieldName("countryOfOrigin")
-  val MANUFACTURER_WARRANTY_FN  = fieldName("manufacturerWarranty")
-  val DOWNLOADABLE_FN           = fieldName("downloadable")
-  val ADULT_FN                  = fieldName("adult")
-  val AGE_FN                    = fieldName("age")
+  val SHOP_ID_ESFN              = "shopId"
+  val SHOP_ID_FN                = fieldName(SHOP_ID_ESFN)
+  val PRICE_ESFN                = "price"
+  val PRICE_FN                  = fieldName(PRICE_ESFN)
+  val CURRENCY_ID_ESFN          = "currencyId"
+  val CURRENCY_ID_FN            = fieldName(CURRENCY_ID_ESFN)
+  val CATEGORY_IDS_FN           = fieldName("categoryIds")
+  val MARKET_CATEGORY_ESFN      = "marketCategory"
+  val MARKET_CATEGORY_FN        = fieldName(MARKET_CATEGORY_ESFN)
+  val PICTURES_ESFN             = "pictures"
+  val PICTURES_FN               = fieldName(PICTURES_ESFN)
+  val STORE_ESFN                = "store"
+  val STORE_FN                  = fieldName(STORE_ESFN)
+  val PICKUP_ESFN               = "pickup"
+  val PICKUP_FN                 = fieldName(PICKUP_ESFN)
+  val DELIVERY_ESFN             = "delivery"
+  val DELIVERY_FN               = fieldName(DELIVERY_ESFN)
+  val DELIVERY_INCLUDED_ESFN    = "deliveryIncluded"
+  val DELIVERY_INCLUDED_FN      = fieldName(DELIVERY_INCLUDED_ESFN)
+  val LOCAL_DELIVERY_COST_ESFN  = "localDeliveryCost"
+  val LOCAL_DELIVERY_COST_FN    = fieldName(LOCAL_DELIVERY_COST_ESFN)
+  val DESCRIPTION_ESFN          = "description"
+  val DESCRIPTION_FN            = fieldName(DESCRIPTION_ESFN)
+  val SALES_NOTES_ESFN          = "salesNotes"
+  val SALES_NOTES_FN            = fieldName(SALES_NOTES_ESFN)
+  val COUNTRY_OF_ORIGIN_ESFN    = "countryOfOrigin"
+  val COUNTRY_OF_ORIGIN_FN      = fieldName(COUNTRY_OF_ORIGIN_ESFN)
+  val MANUFACTURER_WARRANTY_ESFN= "manufacturerWarranty"
+  val MANUFACTURER_WARRANTY_FN  = fieldName(MANUFACTURER_WARRANTY_ESFN)
+  val DOWNLOADABLE_ESFN         = "downloadable"
+  val DOWNLOADABLE_FN           = fieldName(DOWNLOADABLE_ESFN)
+  val ADULT_ESFN                = "adult"
+  val ADULT_FN                  = fieldName(ADULT_ESFN)
+  val AGE_ESFN                  = "age"
+  val AGE_FN                    = fieldName(AGE_ESFN)
+
 
   override val FIELDS = {
     var fieldsAcc = new Fields(
       URL_FN, ID_FN, OFFER_TYPE_FN, GROUP_ID_FN, AVAILABLE_FN, SHOP_META_FN, SHOP_ID_FN, PRICE_FN, CURRENCY_ID_FN,
       CATEGORY_IDS_FN, MARKET_CATEGORY_FN, PICTURES_FN,
-      DESCRIPTION_FN, SALES_NOTES_FN, COUNTRY_OF_ORIGIN, MANUFACTURER_WARRANTY_FN, DOWNLOADABLE_FN, AGE_FN
+      DESCRIPTION_FN, SALES_NOTES_FN, COUNTRY_OF_ORIGIN_FN, MANUFACTURER_WARRANTY_FN, DOWNLOADABLE_FN, AGE_FN
     )
     fieldsAcc = fieldsAcc append super.FIELDS
     fieldsAcc = fieldsAcc append BaseDatum.getSuperFields(classOf[YmOfferDatum])
@@ -66,65 +98,73 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
   }
 
   // Payload-поля, хранящиеся в PAYLOAD_FN, т.к. допустимы не для каждого товара или редко используются
-  val NAME_PFN                  = fieldName("name")
-  val VENDOR_PFN                = fieldName("vendor")
-  val VENDOR_CODE_PFN           = fieldName("vendorCode")
-  val YEAR_PFN                  = fieldName("year")
+  val NAME_PFN                  = payloadFieldName("name")
+  val VENDOR_PFN                = payloadFieldName("vendor")
+  val VENDOR_CODE_PFN           = payloadFieldName("vendorCode")
+  val YEAR_PFN                  = payloadFieldName("year")
   // vendor.model
-  val TYPE_PREFIX_PFN           = fieldName("typePrefix")
-  val MODEL_PFN                 = fieldName("model")
-  val SELLER_WARRANTY_PFN       = fieldName("sellerWarranty")
-  val REC_LIST_PFN              = fieldName("rec")
-  val WEIGHT_KG_PFN             = fieldName("weight")
-  val EXPIRY_PFN                = fieldName("expiry")
-  val DIMENSIONS_PFN            = fieldName("dimensions")
+  val TYPE_PREFIX_PFN           = payloadFieldName("typePrefix")
+  val MODEL_PFN                 = payloadFieldName("model")
+  val SELLER_WARRANTY_PFN       = payloadFieldName("sellerWarranty")
+  val REC_LIST_PFN              = payloadFieldName("rec")
+  val WEIGHT_KG_PFN             = payloadFieldName("weight")
+  val EXPIRY_PFN                = payloadFieldName("expiry")
+  val DIMENSIONS_PFN            = payloadFieldName("dimensions")
   // *book
-  val AUTHOR_PFN                = fieldName("author")
-  val PUBLISHER_PFN             = fieldName("publisher")
-  val SERIES_PFN                = fieldName("series")
-  val ISBN_PFN                  = fieldName("isbn")
-  val VOLUMES_COUNT_PFN         = fieldName("volumesCounta")
-  val VOLUME_PFN                = fieldName("volume")
-  val LANGUAGE_PFN              = fieldName("lang")
-  val TABLE_OF_CONTENTS_PFN     = fieldName("toc")
-  val BINDING_PFN               = fieldName("binding")
-  val PAGE_EXTENT_PFN           = fieldName("pageExtent")
+  val AUTHOR_PFN                = payloadFieldName("author")
+  val PUBLISHER_PFN             = payloadFieldName("publisher")
+  val SERIES_PFN                = payloadFieldName("series")
+  val ISBN_PFN                  = payloadFieldName("isbn")
+  val VOLUMES_COUNT_PFN         = payloadFieldName("volumesCount")
+  val VOLUME_PFN                = payloadFieldName("volume")
+  val LANGUAGE_PFN              = payloadFieldName("lang")
+  val TABLE_OF_CONTENTS_PFN     = payloadFieldName("toc")
+  // book
+  val BINDING_PFN               = payloadFieldName("binding")
+  val PAGE_EXTENT_PFN           = payloadFieldName("pageExtent")
   // audiobook
-  val PERFORMED_BY_PFN          = fieldName("performedBy")
-  val PERFORMANCE_TYPE_PFN      = fieldName("performanceType")
-  val STORAGE_PFN               = fieldName("storage")
-  val FORMAT_PFN                = fieldName("format")
-  val RECORDING_LEN_PFN         = fieldName("recordLen")
+  val PERFORMED_BY_PFN          = payloadFieldName("performedBy")
+  val PERFORMANCE_TYPE_PFN      = payloadFieldName("performanceType")
+  val STORAGE_PFN               = payloadFieldName("storage")
+  val FORMAT_PFN                = payloadFieldName("format")
+  val RECORDING_LEN_PFN         = payloadFieldName("recordLen")
   // artist.title
-  val COUNTRY_PFN               = fieldName("country")
-  val ARTIST_PFN                = fieldName("artist")
-  val TITLE_PFN                 = fieldName("title")
-  val MEDIA_PFN                 = fieldName("media")
-  val STARRING_PFN              = fieldName("starring")
-  val DIRECTOR_PFN              = fieldName("director")
-  val ORIGINAL_NAME_PFN         = fieldName("origName")
+  val COUNTRY_PFN               = payloadFieldName("country")
+  val ARTIST_PFN                = payloadFieldName("artist")
+  val TITLE_PFN                 = payloadFieldName("title")
+  val MEDIA_PFN                 = payloadFieldName("media")
+  val STARRING_PFN              = payloadFieldName("starring")
+  val DIRECTOR_PFN              = payloadFieldName("director")
+  val ORIGINAL_NAME_PFN         = payloadFieldName("origName")
   // tour
-  val WORLD_REGION_PFN          = fieldName("worldRegion")
-  val REGION_PFN                = fieldName("region")
-  val DAYS_PFN                  = fieldName("days")
-  val TOUR_DATES_PFN            = fieldName("tourDates")
-  val HOTEL_STARS_PFN           = fieldName("hotelStars")
-  val HOTEL_ROOM_PFN            = fieldName("room")
-  val HOTEL_MEAL_PFN            = fieldName("meal")
-  val TOUR_INCLUDED_PFN         = fieldName("included")
-  val TOUR_TRANSPORT_PFN        = fieldName("transport")
+  val WORLD_REGION_PFN          = payloadFieldName("worldRegion")
+  val REGION_PFN                = payloadFieldName("region")
+  val DAYS_PFN                  = payloadFieldName("days")
+  val TOUR_DATES_PFN            = payloadFieldName("tourDates")
+  val HOTEL_STARS_PFN           = payloadFieldName("hotelStars")
+  val HOTEL_ROOM_PFN            = payloadFieldName("room")
+  val HOTEL_MEAL_PFN            = payloadFieldName("meal")
+  val TOUR_INCLUDED_PFN         = payloadFieldName("included")
+  val TOUR_TRANSPORT_PFN        = payloadFieldName("transport")
   // event.ticket
-  val ET_PLACE_PFN              = fieldName("place")
-  val ET_HALL_PFN               = fieldName("hall")
-  val ET_HALL_PLAN_URL_PFN      = fieldName("hallPlan")
-  val ET_HALL_PART_PFN          = fieldName("hallPart")
-  val ET_DATE_PFN               = fieldName("date")
-  val ET_IS_PREMIERE_PFN        = fieldName("isPremiere")
-  val ET_IS_KIDS_PFN            = fieldName("isKids")
+  val ET_PLACE_PFN              = payloadFieldName("place")
+  val ET_HALL_PFN               = payloadFieldName("hall")
+  val ET_HALL_PLAN_URL_PFN      = payloadFieldName("hallPlan")
+  val ET_HALL_PART_PFN          = payloadFieldName("hallPart")
+  val ET_DATE_PFN               = payloadFieldName("date")
+  val ET_IS_PREMIERE_PFN        = payloadFieldName("isPremiere")
+  val ET_IS_KIDS_PFN            = payloadFieldName("isKids")
+
+  /** Генератор имён для payload-полей. Имена таких полей сохраняются прямо в payload-кортеж,
+    * поэтому имеет смысл их сделать по-короче. */
+  def payloadFieldName(fn: String) = fn
 
 
+  /** Сериализация типа оффера. Используется int id, т.к. тут крайне редко изменяемая сущность. */
   def serializeType(t: OfferType) = t.id
+  /** Десериализация id типа оффера, сгенеренного через serializeType(). */
   def deserializeType(tid: Int): OfferType = OfferTypes(tid)
+
 
   val deserializeShopMeta: PartialFunction[AnyRef, YmShopDatum] = {
     case null     => null
@@ -247,6 +287,58 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
     case null  => None 
     case other => Some(new DateTime(LONG coerce other))
   }
+
+
+  /** Булёвы значения в json обычно представлены как null/true. Тут - экземпляр true. */
+  private val JS_TRUE = JsBoolean(true)
+
+
+  /** Перегнать содержимое payload'а в json-заготовку. Полезно при перегонке датума в json для отправки в ES.
+    * @param payload Исходное содержимое поля payload.
+    * @param acc0 Необязательный исходный аккамулятор.
+    * @return Новый аккамулятор, пригодный для оборачивания в JsObject.
+    */
+  def payload2json(payload: Payload, acc0: JsFields_t = Nil): JsFields_t = {
+    var acc1 = acc0
+    val it = payload.iterator
+    while(it.hasNext) {
+      val kv @ (payloadKey, _) = it.next()
+      val jsV = payloadV2jsV(kv)
+      if (jsV != null) {
+        acc1 = payloadKey -> jsV :: acc0
+      }
+    }
+    acc1
+  }
+
+  /** Функция конвертации элементов payload в куски json'а. На вход название поля и исходное значение.
+    * На выход js-строка или null, если значение не надо сохранять в json-результате. */
+  val payloadV2jsV: PartialFunction[(String, AnyRef), JsValue] = {
+    val strPfns = Set(
+      NAME_PFN, VENDOR_PFN, VENDOR_CODE_PFN,
+      /* vendor.model */  TYPE_PREFIX_PFN, MODEL_PFN, SELLER_WARRANTY_PFN, EXPIRY_PFN, DIMENSIONS_PFN,
+      /* *book */         AUTHOR_PFN, PUBLISHER_PFN, SERIES_PFN, ISBN_PFN, LANGUAGE_PFN,
+      /* book */          TABLE_OF_CONTENTS_PFN, BINDING_PFN,
+      /* audiobook */     PERFORMED_BY_PFN, PERFORMANCE_TYPE_PFN, STORAGE_PFN, FORMAT_PFN, RECORDING_LEN_PFN,
+      /* artist.title */  COUNTRY_PFN, ARTIST_PFN, TITLE_PFN, MEDIA_PFN, STARRING_PFN, DIRECTOR_PFN, ORIGINAL_NAME_PFN,
+      /* tour */          WORLD_REGION_PFN, REGION_PFN, HOTEL_STARS_PFN, HOTEL_ROOM_PFN, HOTEL_MEAL_PFN, TOUR_INCLUDED_PFN, TOUR_TRANSPORT_PFN,
+      /* event.ticket */  ET_PLACE_PFN, ET_HALL_PFN, ET_HALL_PLAN_URL_PFN, ET_HALL_PART_PFN
+    )
+    // Заинлайнить это добро? Использовать Set ради пяти элементов как-то непрактично.
+    val intPfns = Set(YEAR_PFN, VOLUMES_COUNT_PFN, VOLUME_PFN, PAGE_EXTENT_PFN, DAYS_PFN)
+    import cascading.tuple.coerce.Coercions._
+    val resultF: PartialFunction[(String, AnyRef), JsValue] = {
+      case (pfn, v) if strPfns contains pfn => JsString(STRING.coerce(v))
+      case (pfn, v) if intPfns contains pfn => JsNumber(INTEGER.coerce(v).intValue)
+      case (REC_LIST_PFN, v: Tuple)         => JsArray(v.toSeq.map { vo => JsString(STRING.coerce(vo)) })
+      case (TOUR_DATES_PFN, v: Tuple)       => JsArray(v.toSeq.map { vl => JsNumber(LONG.coerce(vl).longValue)})
+      case (ET_DATE_PFN, v)                 => JsNumber(LONG.coerce(v).longValue)
+      case (k, v) =>
+        warn(s"payloadV2jsV(): Skipping entry: $k -> $v")
+        null
+    }
+    resultF
+  }
 }
 
 
@@ -285,10 +377,11 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
     _tupleEntry.setString(ID_FN, id getOrElse null)
   }
 
-  def offerType: OfferType = deserializeType(_tupleEntry getInteger OFFER_TYPE_FN)
+  def offerTypeRaw = _tupleEntry getInteger OFFER_TYPE_FN
+  def offerTypeRaw_=(otId: Int) = _tupleEntry.setInteger(OFFER_TYPE_FN, otId)
+  def offerType: OfferType = deserializeType(offerTypeRaw)
   def offerType_=(ot: OfferType) {
-    val i = serializeType(ot)
-    _tupleEntry.setInteger(OFFER_TYPE_FN, i)
+    offerTypeRaw = serializeType(ot)
   }
 
   /**
@@ -377,9 +470,9 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
   }
 
   /** Страна-производитель товара. */
-  def countryOfOrigin = Option(_tupleEntry getString COUNTRY_OF_ORIGIN)
+  def countryOfOrigin = Option(_tupleEntry getString COUNTRY_OF_ORIGIN_FN)
   def countryOfOrigin_=(coo: String) {
-    _tupleEntry.setString(COUNTRY_OF_ORIGIN, coo)
+    _tupleEntry.setString(COUNTRY_OF_ORIGIN_FN, coo)
   }
 
   /** Гарантия производителя: true, false или P1Y2M10DT2H30M. */
@@ -631,4 +724,80 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
   /** event.ticket: Признак детского мероприятия. */
   def etIsKids = getPayloadBoolean(ET_IS_KIDS_PFN)
   def etIsKids_=(isKids: Boolean) = setPayloadValue(ET_IS_KIDS_PFN, isKids)
+
+
+  /** Потребности сохранения в ES покрываются поддержкой генерации es-документов прямо в этом классе. */
+  def toJsonFields: JsFields_t = {
+    var acc: JsFields_t = Nil
+    // url
+    val urlOpt = url
+    if (urlOpt.isDefined)
+      acc ::= URL_ESFN -> JsString(urlOpt.get)
+    // offerType
+    acc ::= OFFER_TYPE_ESFN -> JsNumber(offerTypeRaw)
+    // groupId
+    val groupIdOpt = this.groupIdOpt
+    if (groupIdOpt.isDefined)
+      acc ::= GROUP_ID_ESFN -> JsString(groupIdOpt.get)
+    // available, shopId, price, currencyId
+    acc = AVAILABLE_ESFN -> JsBoolean(isAvailable) ::
+      SHOP_ID_ESFN -> JsNumber(shopId) ::
+      PRICE_ESFN   -> JsNumber(price) ::
+      CURRENCY_ID_ESFN -> JsString(currencyId) ::   // TODO Нужно какой-то гарантированно нормализованный id, а не магазинный.
+      acc
+    // market_category
+    val mcOpt = marketCategoryPath
+    if (mcOpt.isDefined)
+      acc ::= MARKET_CATEGORY_ESFN -> JsString(mcOpt.get.mkString("/"))
+    // pictures
+    val picts = pictures
+    if (!picts.isEmpty)
+      acc ::= PICTURES_ESFN -> JsArray(picts map JsString)
+    // store, pickup, delivery, deliveryIncluded
+    if (isStore)
+      acc ::= STORE_ESFN -> JS_TRUE
+    if (isPickup)
+      acc ::= PICKUP_ESFN -> JS_TRUE
+    if (isDelivery)
+      acc ::= DELIVERY_ESFN -> JS_TRUE
+    if (isDeliveryIncluded)
+      acc ::= DELIVERY_INCLUDED_ESFN -> JS_TRUE
+    // localDeliveryCost
+    val ldcOpt = localDeliveryCostOpt
+    if (ldcOpt.isDefined)
+      acc ::= LOCAL_DELIVERY_COST_ESFN -> JsNumber(ldcOpt.get)
+    // description
+    val descr = description
+    if (description.isDefined)
+      acc ::= DESCRIPTION_ESFN -> JsString(descr.get)
+    // sales_notes
+    val snOpt = salesNotes
+    if (snOpt.isDefined)
+      acc ::= SALES_NOTES_ESFN -> JsString(snOpt.get)
+    // country of origin
+    val cofOpt = countryOfOrigin
+    if (cofOpt.isDefined)
+      acc ::= COUNTRY_OF_ORIGIN_ESFN -> JsString(cofOpt.get)
+    // manufacturer warranty
+    val mw = manufacturerWarranty
+    if (mw.hasWarranty)
+      acc ::= MANUFACTURER_WARRANTY_ESFN -> JsString(mw.raw)
+    // downloadable
+    val isDl = isDownloadable
+    if (isDl)
+      acc ::= DOWNLOADABLE_ESFN -> JS_TRUE
+    // adult
+    if (isAdult)
+      acc ::= ADULT_ESFN -> JS_TRUE
+    // age
+    val age = this.ageOpt
+    if (age.isDefined)
+      acc ::= AGE_ESFN -> JsString(age.get.toString)
+    // Основные поля в аккамуляторе. Теперь пора запилить payload. Там всё проще: берешь и заливаешь.
+    acc = payload2json(getPayload, acc)
+    acc
+  }
+
+  def toJson = JsObject(toJsonFields)
 }
+

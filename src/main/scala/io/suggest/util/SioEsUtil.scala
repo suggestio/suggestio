@@ -15,6 +15,7 @@ import org.elasticsearch.action.admin.indices.open.OpenIndexRequestBuilder
 import io.suggest.model.MVirtualIndex
 import org.elasticsearch.node.{NodeBuilder, Node}
 import org.elasticsearch.cluster.ClusterName
+import cascading.tuple.TupleEntry
 
 /**
  * Suggest.io
@@ -273,8 +274,8 @@ object SioEsUtil extends Logs {
   /** Генератор мульти-полей title и contentText для маппинга страниц. Helper для getPageMapping(). */
   private def multiFieldFtsNgram(name:String, boostFts:Float, boostNGram:Float) = {
     new FieldMultifield(name, fields = Seq(
-      new FieldString(name, include_in_all=true, index="no", boost=Some(boostFts)),
-      new FieldString(
+      FieldString(name, include_in_all=true, index="no", boost=Some(boostFts)),
+      FieldString(
         id = "gram",
         index = "analyzed",
         index_analyzer = EDGE_NGRAM_AN,
@@ -296,38 +297,23 @@ object SioEsUtil extends Logs {
         typ = typeName,
 
         static_fields = Seq(
-          new FieldSource(true),
-          new FieldAll(true, analyzer = FTS_RU_AN)
+          FieldSource(true),
+          FieldAll(true, analyzer = FTS_RU_AN)
         ),
 
         properties = Seq(
-          new FieldString(FIELD_URL, index="no", include_in_all=false),
-          new FieldString(FIELD_IMAGE_ID, index="no", include_in_all=false),   // TODO в старой версии почему-то было true
-          new FieldNumber(FIELD_DATE_KILOSEC, typ="long", index="no", include_in_all=false),
+          FieldString(FIELD_URL, index="no", include_in_all=false),
+          FieldString(FIELD_IMAGE_ID, index="no", include_in_all=false),   // TODO в старой версии почему-то было true
+          FieldNumber(FIELD_DATE_KILOSEC, typ="long", index="no", include_in_all=false),
           multiFieldFtsNgram(FIELD_TITLE, 4.1f, 2.7f),
           multiFieldFtsNgram(FIELD_CONTENT_TEXT, 1.0f, 0.7f),
-          new FieldString(FIELD_LANGUAGE, index="not_analyzed", include_in_all=false),
-          new FieldString(FIELD_DKEY, index="no", include_in_all=false),
+          FieldString(FIELD_LANGUAGE, index="not_analyzed", include_in_all=false),
+          FieldString(FIELD_DKEY, index="no", include_in_all=false),
           // Тут array-поле, но для ES одинакого -- одно значение в поле или целый массив.
-          new FieldString(FIELD_PAGE_TAGS, index="not_analyzed", store="no", include_in_all=false)
+          FieldString(FIELD_PAGE_TAGS, index="not_analyzed", store="no", include_in_all=false)
         )
       )
     }
-
-  }
-
-
-  /**
-   * Запрос асинхронной оптимизации индекса.
-   * @param req
-   * @param client
-   * @return
-   */
-  def optimize(req: OptimizeRequest)(implicit client:Client) : Future[OptimizeResponse] = {
-    val p = Promise[OptimizeResponse]()
-    val listener = actionListener(p)
-    client.admin().indices().optimize(req, listener)
-    p.future
   }
 
 
@@ -339,27 +325,9 @@ object SioEsUtil extends Logs {
    */
   implicit def laFuture2sFuture[T](laf: ListenableActionFuture[T]): Future[T] = {
     val p = Promise[T]()
-    laf.addListener(actionListener(p))
+    laf.addListener(new EsAction2Promise(p))
     p.future
   }
-
-
-  /**
-   * Листенер для scala promise. Отражает результат работы ListenableActionFuture[T] на Promise[T]
-   * @param promise Обещалко.
-   * @tparam T Тип значения.
-   * @return ActionListener[T] пригодный для навешивания на ListenableActionFuture.
-   */
-  private def actionListener[T](promise: Promise[T]) = new ActionListener[T] {
-    def onResponse(response: T) {
-      promise.success(response)
-    }
-
-    def onFailure(e: Throwable) {
-      promise.failure(e)
-    }
-  }
-
 
 
 // Далее идут классы JSON-DSL-генераторы для упрощения написания всяких вещей.
@@ -417,7 +385,7 @@ case class IndexSettings(
 }
 
 
-// Абстрактный json-объект.
+/** Абстрактный json-объект в рамках DSL. */
 trait JsonObject extends Renderable {
   def id: String
   
@@ -436,8 +404,8 @@ trait JsonObject extends Renderable {
 }
 
 
-// Многие объекты JSON DSL имеют параметр "type".
-// _typed_json_object подходит для описания фильтров, токенизаторов и т.д.
+/** Многие объекты JSON DSL имеют параметр "type".
+ * _typed_json_object подходит для описания фильтров, токенизаторов и т.д. */
 trait TypedJsonObject extends JsonObject {
   
   def typ: String
@@ -471,10 +439,10 @@ case class AnalyzerCustom(
 
 
 // Токенизаторы --------------------------------------------------------------------------------------------------------
-// Абстрактный токенизер
+/** Абстрактный токенизер. */
 trait Tokenizer extends TypedJsonObject
 
-// Стандартный токенизер.
+/** Стандартный токенизер. */
 case class TokenizerStandard(
   id : String,
   max_token_length : Int = 255
@@ -492,7 +460,7 @@ case class TokenizerStandard(
 
 
 // Фильтры -------------------------------------------------------------------------------------------------------------
-// объявление абстрактного фильтра в настройках индекса
+/** Объявление абстрактного фильтра в настройках индекса. */
 trait Filter extends TypedJsonObject
 
 // фильтр стоп-слов
@@ -511,7 +479,7 @@ case class FilterStopwords(
 }
 
 
-// Фильтр word_delimiter для дележки склеенных слов.
+/** Фильтр word_delimiter для дележки склеенных слов. */
 case class FilterWordDelimiter(
   id : String,
   preserve_original : Boolean = false
@@ -528,7 +496,7 @@ case class FilterWordDelimiter(
 }
 
 
-// Фильтр стемминга слов
+/** Фильтр стемминга слов. */
 case class FilterStemmer(
   id : String,
   language : String
@@ -543,16 +511,17 @@ case class FilterStemmer(
 
 }
 
-// Фильтры lowercase и standard
+/** Фильтр lowercase. */
 case class FilterLowercase(id : String) extends Filter{
   def typ = "lowercase"
 }
 
+/** Фильтр standard. */
 case class FilterStandard(id: String) extends Filter {
   def typ = "standard"
 }
 
-// Фильтр edge-ngram
+/** Фильтр edge-ngram. */
 case class FilterEdgeNgram(
   id: String,
   min_gram : Int = 1,
@@ -578,7 +547,7 @@ case class FilterEdgeNgram(
 
 
 // Поля документа ------------------------------------------------------------------------------------------------------
-// Почти все поля содержат параметр index_name.
+/** Почти все поля содержат параметр index_name. */
 trait FieldRenameable extends TypedJsonObject {
   def index_name: String
 
@@ -591,7 +560,7 @@ trait FieldRenameable extends TypedJsonObject {
 }
 
 
-// Некое абстрактное индексируемое поле. Сюда не входит binary.
+/** Некое абстрактное индексируемое поле. Сюда не входит binary. */
 trait FieldIndexable extends FieldRenameable {
   // _field_indexable
   def store : String            // = [yes] | no
@@ -617,7 +586,7 @@ trait FieldIndexable extends FieldRenameable {
 }
 
 
-// Поле строки
+/** Поле строки. */
 case class FieldString(
   id : String,
   index_name : String = null,
@@ -664,7 +633,7 @@ case class FieldString(
 }
 
 
-// Абстрактное поле для хранения неточных данных типа даты-времени и чисел.
+/** Абстрактное поле для хранения неточных данных типа даты-времени и чисел. */
 trait FieldApprox extends FieldIndexable {
   def precision_step : Option[Int]
   def ignore_malformed : Option[Boolean]
@@ -680,7 +649,7 @@ trait FieldApprox extends FieldIndexable {
 }
 
 
-// Поле с числом
+/** Поле с числом. */
 case class FieldNumber(
   id : String,
   typ : String,                   // = float | double | integer | long | short | byte
@@ -695,7 +664,7 @@ case class FieldNumber(
 ) extends FieldApprox
 
 
-// Поле с датой.
+/** Поле с датой. */
 case class FieldDate(
   id : String,
   index_name : String = null,
@@ -711,7 +680,7 @@ case class FieldDate(
 }
 
 
-// Булево значение
+/** Булево значение. */
 case class FieldBoolean(
   id : String,
   index_name : String = null,
@@ -725,7 +694,7 @@ case class FieldBoolean(
 }
 
 
-// Поле типа binary с барахлом в base64
+/** Поле типа binary с барахлом в base64. */
 case class FieldBinary(
   id : String,
   index_name : String = null
@@ -744,7 +713,7 @@ trait FieldEnableable extends JsonObject {
 }
 
 
-// Поле _all
+/** Поле _all */
 case class FieldAll(
   enabled : Boolean = true,
   store : String = null,
@@ -774,13 +743,13 @@ case class FieldAll(
 }
 
 
-// Поле _source
+/** Поле _source */
 case class FieldSource(enabled: Boolean = true) extends FieldEnableable {
   def id = FIELD_SOURCE
 }
 
 
-// Поле _routing
+/** Поле _routing. */
 case class FieldRouting(
   required : Boolean = false,
   store : String = null,
@@ -805,7 +774,7 @@ case class FieldRouting(
 }
 
 
-// Мультиполе multi_field
+/** Мультиполе multi_field. */
 case class FieldMultifield(id:String, fields:Seq[JsonObject]) extends TypedJsonObject {
   
   def typ = "multi_field"
@@ -822,7 +791,7 @@ case class FieldMultifield(id:String, fields:Seq[JsonObject]) extends TypedJsonO
 }
 
 
-// Генератор маппинга индекса со всеми полями и блекджеком.
+/** Генератор маппинга индекса со всеми полями и блекджеком. */
 case class IndexMapping(typ:String, static_fields:Seq[JsonObject], properties:Seq[JsonObject]) extends JsonObject {
   def id = typ
 
@@ -847,8 +816,8 @@ case class IndexMapping(typ:String, static_fields:Seq[JsonObject], properties:Se
   * Для управления именем кластера, нужно переопределить метод getEsClusterName.  */
 trait SioEsClient {
 
-  // Тут хранится клиент к кластеру. В инициализаторе класса надо закинуть сюда начальный экземпляр клиент.
-  // Это переменная для возможности остановки клиента.
+  /** Тут хранится клиент к кластеру. В инициализаторе класса надо закинуть сюда начальный экземпляр клиент.
+    * Это переменная для возможности остановки клиента. */
   protected var _node: Node = createNode
 
   /** Имя кластера elasticsearch, к которому будет коннектиться клиент. */
@@ -887,6 +856,24 @@ trait SioEsClient {
     * Маловероятно, что от этой функции есть какой-то толк. */
   override def finalize() {
     _node.stop()
+  }
+}
+
+
+
+/**
+ * ES-листенер, отражающий результат работы ListenableActionFuture[T] на Promise[T].
+ * @param promise Пустой объект обещания.
+ * @tparam T Тип будущего значения.
+ * @return ActionListener[T] пригодный для навешивания на ListenableActionFuture.
+ */
+class EsAction2Promise[T](promise: Promise[T]) extends ActionListener[T] {
+  def onResponse(response: T) {
+    promise success response
+  }
+
+  def onFailure(ex: Throwable) {
+    promise failure ex
   }
 }
 

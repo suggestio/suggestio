@@ -10,12 +10,6 @@ scalaVersion := "2.10.3"
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
 
-publishMavenStyle := false
-
-credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
-
-publishTo := Some("cbca-corp-repo" at "https://ivy2-internal.cbca.ru/artifactory/corp-repo/")
-
 externalIvySettings(baseDirectory(_ / "project" / "ivysettings.xml"))
 
 libraryDependencies ++= {
@@ -23,10 +17,11 @@ libraryDependencies ++= {
   val hadoopVsn     = "2.2.0"
   val hbaseVsn      = "0.96.1.1-hadoop2"
   val akkaVsn       = "2.3.0-RC1"
-  val jacksonVsn    = "2.2.2"
+  val jacksonVsn    = "2.3.0"
   val tikaVsn       = "1.4"
   val cascadingVsn  = "2.5.1"
   val morphVsn      = "1.2-SNAPSHOT"
+  val playVsn       = "2.3-SNAPSHOT"
   Seq(
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
@@ -34,9 +29,13 @@ libraryDependencies ++= {
     "org.gnu.inet" % "libidn" % "1.15",
     "com.github.nscala-time" %% "nscala-time" % "0.2.0",
     "commons-lang" % "commons-lang" % "2.4",
+    // JSON
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVsn,
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % jacksonVsn,
+    "com.typesafe.play" %% "play-json" % playVsn,  // Нужно для генерации json'а.
+    // ES
     "org.elasticsearch" % "elasticsearch" % "0.90.10",
+    // Parsers
     "org.apache.tika" % "tika-core" % tikaVsn,
     "org.apache.tika" % "tika-parsers" % tikaVsn exclude("xerces", "xercesImpl"),
     "com.github.tototoshi" %% "scala-csv" % "1.0.0-SNAPSHOT",

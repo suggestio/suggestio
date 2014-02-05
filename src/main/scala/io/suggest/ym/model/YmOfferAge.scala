@@ -19,6 +19,13 @@ object YmOfferAge extends CascadingFieldNamer with Serializable {
 
   def serializeUnits(u: OfferAgeUnit) = u.id
   def deserializeUnits(uid: Int) = OfferAgeUnits(uid)
+
+  def deserializeFromString(s: String): YmOfferAge = {
+    val Array(v, u) = s.split("\\s")
+    val age = v.toInt
+    val units = OfferAgeUnits.withName(u)
+    new YmOfferAge(value=age, units=units)
+  }
 }
 
 
@@ -55,4 +62,6 @@ class YmOfferAge extends BaseDatum(FIELDS) {
     _tupleEntry.setInteger(VALUE_FN, value)
     this
   }
+
+  override def toString: String = value.toString + " " + units
 }
