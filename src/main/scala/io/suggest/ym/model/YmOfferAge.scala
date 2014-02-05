@@ -11,7 +11,7 @@ import com.scaleunlimited.cascading.BaseDatum
  * Created: 22.01.14 14:51
  * Description: Поле age нередко указано, в месяцах или годах.
  */
-object YmOfferAge extends CascadingFieldNamer {
+object YmOfferAge extends CascadingFieldNamer with Serializable {
   val UNITS_FN = fieldName("units")
   val VALUE_FN = fieldName("value")
 

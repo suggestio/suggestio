@@ -25,7 +25,7 @@ abstract class YmParserException extends Exception {
       .append(columnNumber)
       .append(") ")
   }
-  override final lazy val getMessage: String = getMessageBuilder.toString()
+  @transient override final lazy val getMessage: String = getMessageBuilder.toString()
 }
 
 /** Какой-то экзепшен во внешнем SAX-парсере. */
@@ -77,7 +77,7 @@ object YmShopFieldException {
   }
 }
 case class YmShopFieldException(lineNumber:Int, columnNumber:Int, shopName:String, fn:String, msg:String)
-  extends YmShopException {
+  extends YmShopException with Serializable {
   override def getMessageBuilder: StringBuilder = super.getMessageBuilder.append(msg)
 }
 
@@ -120,6 +120,7 @@ object YmOfferFieldException {
     )
   }
 }
+// TODO Этот экзепшен не-serializeable из-за поля cause. Надо что-то придумать, чтобы всё тут было Serializeable.
 case class YmOfferFieldException(lineNumber:Int, columnNumber:Int, shopName:String, offerIdOpt: Option[String], fn:String, msg:String, cause:Throwable)
   extends YmOfferException {
   override def getMessageBuilder = super.getMessageBuilder.append('.').append(fn).append(": ").append(msg)

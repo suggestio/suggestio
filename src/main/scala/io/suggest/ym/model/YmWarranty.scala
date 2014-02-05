@@ -10,12 +10,12 @@ import org.joda.time.Period
  * Description: Тут различные режимы предоставления гарантии.
  */
 
-object Warranty {
+object Warranty extends Serializable {
   import YmParsers._
   def apply(s: String): Warranty = parse(WARRANTY_PARSER, s).get
 }
 
-sealed trait Warranty {
+sealed trait Warranty extends Serializable {
   def hasWarranty: Boolean
   def periodOpt: Option[Period]
   def raw: String

@@ -10,7 +10,7 @@ import cascading.tuple.{TupleEntry, Tuple, Fields}
  * Created: 22.01.14 10:56
  * Description: Хранилище одной валюты одного магазина.
  */
-object YmShopCurrency extends CascadingFieldNamer {
+object YmShopCurrency extends CascadingFieldNamer with Serializable {
   val ID_FN   = fieldName("id")
   val RATE_FN = fieldName("rate")
   val PLUS_FN = fieldName("plus")

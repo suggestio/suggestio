@@ -10,7 +10,7 @@ import com.scaleunlimited.cascading.BaseDatum
  * Created: 04.02.14 14:01
  * Description: Данные по логину-паролю для запроса прайса хранятся в этом датуме.
  */
-object AuthInfoDatum extends CascadingFieldNamer {
+object AuthInfoDatum extends CascadingFieldNamer with Serializable {
 
   val VERSION_FN  = fieldName("version")
   val USERNAME_FN = fieldName("username")

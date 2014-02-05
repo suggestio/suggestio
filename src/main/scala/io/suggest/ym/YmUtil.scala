@@ -13,7 +13,7 @@ import io.suggest.sax.EmptyAttributes
  */
 
 /** Словарь для работы с данными, подготовленными для отправки в маркет. */
-object YmConstants {
+object YmConstants extends Serializable {
   val TAG_CURRENCY              = "currency"
 
   val ATTR_ID                   = "id"
@@ -106,7 +106,7 @@ object AnyOfferFields extends Enumeration {
  * @param categoryId id категории
  * @param idType Устаревший атрибут, описывающий тип задания категории.
  */
-case class OfferCategoryId(categoryId: String, idType: OfferCategoryIdType)
+case class OfferCategoryId(categoryId: String, idType: OfferCategoryIdType) extends Serializable
 
 
 object OfferAgeUnits extends Enumeration {
@@ -228,10 +228,10 @@ object HotelStarsLevels extends Enumeration {
 
 
 /** Неизменяемый объект, описывающий пустые аттрибуты. Полезен как заглушка для пустых аттрибутов. */
-case object EmptyAttrs extends EmptyAttributes
+case object EmptyAttrs extends EmptyAttributes with Serializable
 
 
-object ShopCurrency {
+object ShopCurrency extends Serializable {
   val RATE_DFLT = "1.0"
   val PLUS_DFLT = "0.0"
 }

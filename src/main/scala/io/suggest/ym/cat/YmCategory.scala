@@ -162,7 +162,7 @@ object YmCategory {
 
 import YmCategory._
 
-sealed trait YmCategoryT {
+sealed trait YmCategoryT extends Serializable {
   val subcatsOpt: Option[CatTreeMap_t]
   val level: Int
   def parentPathRev: List[String]

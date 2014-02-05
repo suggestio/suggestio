@@ -10,7 +10,7 @@ import com.scaleunlimited.cascading.BaseDatum
  * Created: 22.01.14 11:17
  * Description: Категория уровня магазина.
  */
-object YmShopCategory extends CascadingFieldNamer {
+object YmShopCategory extends CascadingFieldNamer with Serializable {
   val ID_FN         = fieldName("id")
   val NAME_FN       = fieldName("name")
   val PARENT_ID_FN  = fieldName("parentId")

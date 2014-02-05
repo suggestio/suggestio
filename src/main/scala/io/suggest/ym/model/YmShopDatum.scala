@@ -13,7 +13,7 @@ import io.suggest.ym.ShopHandlerState
  * Description: Кортеж с кратким описанием магазина, который предоставляет оффер.
  * Много необязательных полей, но они всё равно все в основном кортеже.
  */
-object YmShopDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT {
+object YmShopDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with Serializable {
 
   val NAME_FN                 = fieldName("name")
   val COMPANY_FN              = fieldName("company")

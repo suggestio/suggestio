@@ -10,7 +10,7 @@ import com.scaleunlimited.cascading.BaseDatum
  * Created: 04.02.14 13:55
  * Description: Для хранения и представления информации о расположении прайсов на сайтах используется этот датум.
  */
-object YmShopPriceUrlDatum extends CascadingFieldNamer {
+object YmShopPriceUrlDatum extends CascadingFieldNamer with Serializable {
 
   val SHOP_ID_FN    = fieldName("shopId")
   val PRICE_URL_FN  = fieldName("priceUrl")

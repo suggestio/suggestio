@@ -22,7 +22,7 @@ import io.suggest.ym.HotelMealTypes.HotelMealType
  * Каждый оффер содержит информацию о своём магазине и об одном товаре/услуге.
  * Офферы имеют динамическое число полей, поэтому часть полей (в т.ч. все param-поля) живут внутри Payload'а.
  */
-object YmOfferDatum extends CascadingFieldNamer with Serializable with YmDatumDeliveryStaticT {
+object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with Serializable {
 
   // Выбираем поля из AnyOfferHandler, которые скорее всего есть в любых офферах.
   /** Ссылка на оффер. Необязательно, это уникальная ссылка. */
