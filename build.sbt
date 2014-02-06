@@ -4,9 +4,6 @@ organization := "io.suggest"
 
 version := "0.6.0-SNAPSHOT"
 
-
-scalaVersion := "2.10.3"
-
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
 resolvers ++= Seq(
@@ -36,7 +33,6 @@ libraryDependencies ++= {
     // JSON
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVsn,
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % jacksonVsn,
-    "com.typesafe.play" %% "play-json" % playVsn,  // Нужно для генерации json'а.
     // ES
     "org.elasticsearch" % "elasticsearch" % "0.90.10",
     // Parsers

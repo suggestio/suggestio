@@ -13,7 +13,7 @@ import io.suggest.ym.HotelStarsLevels.HotelStarsLevel
 import scala.Some
 import io.suggest.ym.Dimensions
 import io.suggest.ym.HotelMealTypes.HotelMealType
-import play.api.libs.json._
+import org.elasticsearch.common.xcontent.{XContentFactory, XContentBuilder}
 
 /**
  * Suggest.io
@@ -25,9 +25,6 @@ import play.api.libs.json._
  */
 object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with MacroLogsImpl with Serializable {
   import LOGGER._
-
-  /** Чтобы не дублировать используемый промежуточный тип карты json-объекта, выносим его сюда. */
-  type JsFields_t = List[(String, JsValue)]
 
   // На верхний уровень выносим поля из AnyOfferHandler, которые скорее всего есть в любых офферах.
   // Т.к. бОльшуя часть полей надо будет отправить в elasticsearch, то учитываем это в именовании полей:
@@ -289,31 +286,23 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
   }
 
 
-  /** Булёвы значения в json обычно представлены как null/true. Тут - экземпляр true. */
-  private val JS_TRUE = JsBoolean(true)
-
-
   /** Перегнать содержимое payload'а в json-заготовку. Полезно при перегонке датума в json для отправки в ES.
     * @param payload Исходное содержимое поля payload.
-    * @param acc0 Необязательный исходный аккамулятор.
-    * @return Новый аккамулятор, пригодный для оборачивания в JsObject.
+    * @param acc Исходный аккамулятор.
+    * @return Аккамулятор.
     */
-  def payload2json(payload: Payload, acc0: JsFields_t = Nil): JsFields_t = {
-    var acc1 = acc0
+  def payload2json(payload: Payload, acc: XContentBuilder): XContentBuilder = {
     val it = payload.iterator
     while(it.hasNext) {
-      val kv @ (payloadKey, _) = it.next()
-      val jsV = payloadV2jsV(kv)
-      if (jsV != null) {
-        acc1 = payloadKey -> jsV :: acc0
-      }
+      val (payloadKey, payloadValue) = it.next()
+      payloadV2jsV(payloadKey, payloadValue, acc)
     }
-    acc1
+    acc
   }
 
   /** Функция конвертации элементов payload в куски json'а. На вход название поля и исходное значение.
     * На выход js-строка или null, если значение не надо сохранять в json-результате. */
-  val payloadV2jsV: PartialFunction[(String, AnyRef), JsValue] = {
+  val payloadV2jsV: PartialFunction[(String, AnyRef, XContentBuilder), XContentBuilder] = {
     val strPfns = Set(
       NAME_PFN, VENDOR_PFN, VENDOR_CODE_PFN,
       /* vendor.model */  TYPE_PREFIX_PFN, MODEL_PFN, SELLER_WARRANTY_PFN, EXPIRY_PFN, DIMENSIONS_PFN,
@@ -327,15 +316,21 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
     // Заинлайнить это добро? Использовать Set ради пяти элементов как-то непрактично.
     val intPfns = Set(YEAR_PFN, VOLUMES_COUNT_PFN, VOLUME_PFN, PAGE_EXTENT_PFN, DAYS_PFN)
     import cascading.tuple.coerce.Coercions._
-    val resultF: PartialFunction[(String, AnyRef), JsValue] = {
-      case (pfn, v) if strPfns contains pfn => JsString(STRING.coerce(v))
-      case (pfn, v) if intPfns contains pfn => JsNumber(INTEGER.coerce(v).intValue)
-      case (REC_LIST_PFN, v: Tuple)         => JsArray(v.toSeq.map { vo => JsString(STRING.coerce(vo)) })
-      case (TOUR_DATES_PFN, v: Tuple)       => JsArray(v.toSeq.map { vl => JsNumber(LONG.coerce(vl).longValue)})
-      case (ET_DATE_PFN, v)                 => JsNumber(LONG.coerce(v).longValue)
-      case (k, v) =>
+    val resultF: PartialFunction[(String, AnyRef, XContentBuilder), XContentBuilder] = {
+      case (pfn, v, acc) if strPfns contains pfn => acc.field(pfn, STRING.coerce(v))
+      case (pfn, v, acc) if intPfns contains pfn => acc.field(pfn, INTEGER.coerce(v))
+      case (pfn @ REC_LIST_PFN, v: Tuple, acc)   => acc.array(pfn, v.toSeq.map { vo => STRING.coerce(vo) } : _*)
+      case (pfn @ TOUR_DATES_PFN, v: Tuple, acc) =>
+        acc.startArray(pfn)
+        v.foreach { vl =>
+          acc.value(LONG.coerce(vl))
+        }
+        acc.endArray()
+
+      case (pfn @ ET_DATE_PFN, v, acc)           => acc.field(pfn, LONG.coerce(v))
+      case (k, v, acc) =>
         warn(s"payloadV2jsV(): Skipping entry: $k -> $v")
-        null
+        acc
     }
     resultF
   }
@@ -727,77 +722,76 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
 
 
   /** Потребности сохранения в ES покрываются поддержкой генерации es-документов прямо в этом классе. */
-  def toJsonFields: JsFields_t = {
-    var acc: JsFields_t = Nil
+  def toJsonBuilder: XContentBuilder = {
+    var acc = XContentFactory.jsonBuilder().startObject()
     // url
     val urlOpt = url
     if (urlOpt.isDefined)
-      acc ::= URL_ESFN -> JsString(urlOpt.get)
+      acc.field(URL_ESFN, urlOpt.get)
     // offerType
-    acc ::= OFFER_TYPE_ESFN -> JsNumber(offerTypeRaw)
+    acc.field(OFFER_TYPE_ESFN, offerTypeRaw)
     // groupId
     val groupIdOpt = this.groupIdOpt
     if (groupIdOpt.isDefined)
-      acc ::= GROUP_ID_ESFN -> JsString(groupIdOpt.get)
+      acc.field(GROUP_ID_ESFN, groupIdOpt.get)
     // available, shopId, price, currencyId
-    acc = AVAILABLE_ESFN -> JsBoolean(isAvailable) ::
-      SHOP_ID_ESFN -> JsNumber(shopId) ::
-      PRICE_ESFN   -> JsNumber(price) ::
-      CURRENCY_ID_ESFN -> JsString(currencyId) ::   // TODO Нужно какой-то гарантированно нормализованный id, а не магазинный.
-      acc
+    acc.field(AVAILABLE_ESFN, isAvailable)
+       .field(SHOP_ID_ESFN, shopId)
+       .field(PRICE_ESFN, price)
+       .field(CURRENCY_ID_ESFN, currencyId)   // TODO Нужно какой-то гарантированно нормализованный id, а не магазинный.
     // market_category
     val mcOpt = marketCategoryPath
     if (mcOpt.isDefined)
-      acc ::= MARKET_CATEGORY_ESFN -> JsString(mcOpt.get.mkString("/"))
+      acc.field(MARKET_CATEGORY_ESFN, mcOpt.get.mkString("/"))
     // pictures
     val picts = pictures
     if (!picts.isEmpty)
-      acc ::= PICTURES_ESFN -> JsArray(picts map JsString)
+      acc.array(PICTURES_ESFN, picts : _*)
     // store, pickup, delivery, deliveryIncluded
     if (isStore)
-      acc ::= STORE_ESFN -> JS_TRUE
+      acc.field(STORE_ESFN, true)
     if (isPickup)
-      acc ::= PICKUP_ESFN -> JS_TRUE
+      acc.field(PICKUP_ESFN, true)
     if (isDelivery)
-      acc ::= DELIVERY_ESFN -> JS_TRUE
+      acc.field(DELIVERY_ESFN, true)
     if (isDeliveryIncluded)
-      acc ::= DELIVERY_INCLUDED_ESFN -> JS_TRUE
+      acc.field(DELIVERY_INCLUDED_ESFN, true)
     // localDeliveryCost
     val ldcOpt = localDeliveryCostOpt
     if (ldcOpt.isDefined)
-      acc ::= LOCAL_DELIVERY_COST_ESFN -> JsNumber(ldcOpt.get)
+      acc.field(LOCAL_DELIVERY_COST_ESFN, ldcOpt.get)
     // description
     val descr = description
     if (description.isDefined)
-      acc ::= DESCRIPTION_ESFN -> JsString(descr.get)
+      acc.field(DESCRIPTION_ESFN, descr.get)
     // sales_notes
     val snOpt = salesNotes
     if (snOpt.isDefined)
-      acc ::= SALES_NOTES_ESFN -> JsString(snOpt.get)
+      acc.field(SALES_NOTES_ESFN, snOpt.get)
     // country of origin
     val cofOpt = countryOfOrigin
     if (cofOpt.isDefined)
-      acc ::= COUNTRY_OF_ORIGIN_ESFN -> JsString(cofOpt.get)
+      acc.field(COUNTRY_OF_ORIGIN_ESFN, cofOpt.get)
     // manufacturer warranty
     val mw = manufacturerWarranty
     if (mw.hasWarranty)
-      acc ::= MANUFACTURER_WARRANTY_ESFN -> JsString(mw.raw)
+      acc.field(MANUFACTURER_WARRANTY_ESFN, mw.raw)
     // downloadable
     val isDl = isDownloadable
     if (isDl)
-      acc ::= DOWNLOADABLE_ESFN -> JS_TRUE
+      acc.field(DOWNLOADABLE_ESFN, true)
     // adult
     if (isAdult)
-      acc ::= ADULT_ESFN -> JS_TRUE
+      acc.field(ADULT_ESFN, true)
     // age
     val age = this.ageOpt
     if (age.isDefined)
-      acc ::= AGE_ESFN -> JsString(age.get.toString)
+      acc.field(AGE_ESFN, age.get.toString)
     // Основные поля в аккамуляторе. Теперь пора запилить payload. Там всё проще: берешь и заливаешь.
     acc = payload2json(getPayload, acc)
-    acc
+    acc.endObject()
   }
 
-  def toJson = JsObject(toJsonFields)
+  def toJson = toJsonBuilder.bytes()
 }
 
