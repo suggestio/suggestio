@@ -106,9 +106,13 @@ trait CompanyShopsSel {
   def companyShops(implicit c:Connection) = getByCompanyId(company_id)
 }
 
-
 trait MartShopsSel {
   def mart_id: Int
   def martShops(implicit c:Connection) = getByMartId(mart_id)
+}
+
+trait MShopSel {
+  def shop_id: Int
+  def shop(implicit c:Connection) = getById(shop_id)
 }
 

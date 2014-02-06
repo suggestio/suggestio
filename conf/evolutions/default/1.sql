@@ -69,3 +69,25 @@ COMMENT ON COLUMN sio2.shop.name IS 'Отображаемое название �
 COMMENT ON COLUMN sio2.shop.inmart_addr IS 'Адрес внутри торгового помещения. Внутри ТЦ указывается этаж и номер помещения, а в собственных помещениях NULL.';
 
 
+-- Список ссылок на прайсы.
+CREATE TABLE sio2.shop_pricelist
+(
+  id serial NOT NULL,
+  shop_id integer NOT NULL,
+  url character varying(255) NOT NULL, -- Ссылка на прайс-лист магазина.
+  auth_info character varying(127), -- Имя:пароль либо NULL.
+  CONSTRAINT shop_pricelist_pkey PRIMARY KEY (id),
+  CONSTRAINT shop_pricelist_shop_id_fkey FOREIGN KEY (shop_id)
+      REFERENCES sio2.shop (id) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE sio2.shop_pricelist
+  OWNER TO sio2;
+COMMENT ON TABLE sio2.shop_pricelist
+  IS 'Прайс-листы магазинов.';
+COMMENT ON COLUMN sio2.shop_pricelist.url IS 'Ссылка на прайс-лист магазина.';
+COMMENT ON COLUMN sio2.shop_pricelist.auth_info IS 'Имя:пароль либо NULL.';
+
