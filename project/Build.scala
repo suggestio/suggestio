@@ -54,24 +54,26 @@ object ApplicationBuild extends Build {
     }
   }
 
-  // Компилировать эти less-файлы через Lessc вместо Rhino.
-  //def customLessEntryPoints(base: File): PathFinder = (
-  //    (base / "app" / "assets" / "stylesheets" * "*.less")
-  //)
+  // Проект энтерпрайза.
+  lazy val sioweb21 = {
+    play.Project(appName, appVersion, appDependencies)
+      .settings(
+        // Удалить из резолверов исходный резолвер play чтобы можно было задействовать кэш artifactory.
+        resolvers ~= {
+          rs => rs filter {_.name != "Typesafe Releases Repository" }
+        },
+        // Добавить резолверы, в т.ч. кэш-резолвер для отфильтрованной выше репы.
+        resolvers ++= Seq(
+          "typesafe-releases" at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
+          "sonatype-oss-releases" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots",
+          "apache-releases" at "https://ivy2-internal.cbca.ru/artifactory/apache-releases",
+          "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo"
+        ),
+        // Сжимать текстовые asset'ы при сборке проекта.
+        gzippableAssets <<= (resourceManaged in ThisProject)(dir => ((dir ** "*.js") +++ (dir ** "*.css"))),
+        gzipAssetsSetting
+      )
+  }
 
-  val main = play.Project(appName, appVersion, appDependencies)
-    //.settings(lesscSettings: _*)
-    .settings(
-      // резолверы определены цепочкой в этом конфиге:
-      externalIvySettings(baseDirectory(_ / "project" / "ivysettings.xml")),
-
-      // использовать lessc вместо встроенного less-компилятора.
-      //lessEntryPoints := Nil,
-      //lesscEntryPoints in Compile <<= baseDirectory(customLessEntryPoints)
-
-      // Сжимать текстовые asset'ы при сборке проекта.
-      gzippableAssets <<= (resourceManaged in (ThisProject))(dir => ((dir ** "*.js") +++ (dir ** "*.css"))),
-      gzipAssetsSetting
-    )
 }
 

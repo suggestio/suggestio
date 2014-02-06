@@ -1,17 +1,14 @@
 // Comment to get more information during initialization
-logLevel := Level.Warn
+//logLevel := Level.Warn
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
 resolvers ++= Seq(
-  //"JMParsons Releases" at "http://jmparsons.github.io/releases/",
-  //"DiversIT repo" at "http://repository-diversit.forge.cloudbees.com/release",
-  Resolver.file("Local Repository", file("/home/user/.ivy/local"))(Resolver.ivyStylePatterns),
-  "typesafe-releases"   at "http://repo.typesafe.com/typesafe/releases/",
-  "typesafe-snapshots"  at "http://repo.typesafe.com/typesafe/snapshots/",
-  Resolver.url("sbt-snapshot-plugins", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots"))(Resolver.ivyStylePatterns),
-  "cbca-repo"           at "http://ivy2-internal.cbca.ru/sbt/",
- "Patience Releases" at "http://repo.patience.io/" 
+  "typesafe-releases"       at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
+  //"typesafe-snapshots"    at "https://ivy2-internal.cbca.ru/artifactory/typesafe-snapshots",
+  "typesafe-snapshots"      at "http://repo.typesafe.com/typesafe/snapshots/",
+  //"sbt-snapshot-plugins"  at "https://ivy2-internal.cbca.ru/artifactory/sbt-plugin-snapshots"
+  Resolver.url("sbt-snapshot-plugins", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots"))(Resolver.ivyStylePatterns)
 )
 
 // Comment it out, on non-snapshot releases
@@ -27,7 +24,7 @@ addSbtPlugin("com.typesafe" % "sbt-js-engine" % "1.0.0-SNAPSHOT")
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.3-SNAPSHOT")
 
 // stylus assets
-addSbtPlugin("patience" % "play-stylus" % "0.2.0")
+addSbtPlugin("patience" % "play-stylus" % "1.0.0-SNAPSHOT")
 
 //addSbtPlugin("eu.diversit.sbt.plugin" % "webdav4sbt" % "1.3")
 

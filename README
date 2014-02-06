@@ -3,11 +3,15 @@ sioweb3
 
 Вёб-морда для suggest.io на базе play 2.
 
-2014.jan.15: В связи с переездом на hadoop2, который использует protobuf-2.5, необходимо собрать на
+2014.feb.06: Надо обновить настройки sbt согласно странице в wiki:
+ http://wiki.cbca.ru/dokuwiki/doku.php/sbt
+
+2014.jan.27: В связи с переездом на hadoop2, который использует protobuf-2.5, необходимо собрать на
  локалхосте и использовать snapshot-версию play. Для сборки play-2.3-SNAPSHOT на локалхосте необходимо
  следовать инструкциям в последнем абзаце первого коммента http://trac.cbca.ru:88/ticket/109#comment:1
- и покурить второй коммент. Когда play будет готов, надо зайти в директорию проекта,
- вызвать sbt (не play!), clean, update, run и поехали.
+ Патч из вторго коммента трогать НЕ НАДО. Вместо этого, надо в файле framework/src/anorm/src/main/scala/anorm/ToStatement.scala
+ заменить "sealed trait ToStatement" на "trait ToStatement".
+ Затем собрать проект и publish-local. Проект запускать через команду sbt, а НЕ через play.
 
 2.2: Только npm install -g stylish. Для LESS используется Rhino (встроен в play).
 
