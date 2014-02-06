@@ -9,8 +9,12 @@ scalaVersion := "2.10.3"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
+resolvers ++= Seq(
+  "sonatype-oss-releases" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots",
+  "apache-releases" at "https://ivy2-internal.cbca.ru/artifactory/apache-releases",
+  "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo"
+)
 
-externalIvySettings(baseDirectory(_ / "project" / "ivysettings.xml"))
 
 libraryDependencies ++= {
   val slf4jVsn      = "1.7.5"
@@ -38,7 +42,7 @@ libraryDependencies ++= {
     // Parsers
     "org.apache.tika" % "tika-core" % tikaVsn,
     "org.apache.tika" % "tika-parsers" % tikaVsn exclude("xerces", "xercesImpl"),
-    "com.github.tototoshi" %% "scala-csv" % "1.0.0-SNAPSHOT",
+    "com.github.tototoshi" %% "scala-csv" % "1.0.0",
     // akka
     "com.typesafe.akka" %% "akka-actor"  % akkaVsn,
     "com.typesafe.akka" %% "akka-remote" % akkaVsn,
@@ -52,7 +56,7 @@ libraryDependencies ++= {
     // cascading
     "cascading" % "cascading-core" % cascadingVsn,
     "cascading" % "cascading-hadoop" % cascadingVsn,
-    "com.scaleunlimited" % "cascading.utils" % "2.2sio-SNAPSHOT", // нужно для HadoopUtils.
+    "com.scaleunlimited" % "cascading-utils" % "2.2sio-SNAPSHOT", // нужно для HadoopUtils.
     // Морфология
     "org.apache.lucene.morphology" % "russian" % morphVsn,
     "org.apache.lucene.morphology" % "english" % morphVsn,
@@ -84,10 +88,9 @@ resourceGenerators in Compile <+= Def.task {
       csvFileDir.mkdirs()
       println(csvFileDir.toString + " dirs created")
     }
-    // TODO Надо что-то с ковычками вокруг аргументов тут решить. Если любой путь содержит пробел, то будет ошибка.
-    val cmd = s"xls2csv -q -x ${xlsFile.toString} -b WINDOWS-1251 -c ${csvFile.toString} -a UTF-8"
-    println("Creating CSV categories tree from. Executing shell command:\n " + cmd)
-    cmd.!!
+    val cmd = List("xls2csv", "-q", "-x", xlsFile.toString, "-b", "WINDOWS-1251", "-c", csvFile.toString, "-a", "UTF-8")
+    println("Creating CSV categories tree from. Executing shell command:\n " + cmd.mkString(" "))
+    cmd !
   }
   Seq(csvFile)
 }

@@ -1921,6 +1921,6 @@ case class ShopContext(
   catTransMap: Option[YmCatTranslator.ResultMap_t],
   currencies: Map[String, YmShopCurrency]
 ) extends ShopHandlerState {
-  lazy val name: String = datum.name
+  def name: String = datum.name
 }
 

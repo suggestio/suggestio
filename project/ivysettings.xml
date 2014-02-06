@@ -10,7 +10,7 @@
     <chain name="chain1">
       <filesystem name="local" changingPattern="-SNAPSHOT" local="true" cache="cache-origin">
 	<ivy pattern="${env.HOME}/.ivy2/local/[organisation]/[module]/[revision]/ivy.xml"/>
-	<artifact pattern="${env.HOME}/.ivy2/local/[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"/>
+	<artifact pattern="${env.HOME}/.ivy2/local/[organisation]/[module]/[revision]/[artifact](-[revision])(-[classifier]).[ext]"/>
       </filesystem>
        
       <url name="cbca-corp-repo" changingPattern="-SNAPSHOT">
