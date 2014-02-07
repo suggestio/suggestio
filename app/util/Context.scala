@@ -6,6 +6,7 @@ import play.api.mvc.{RequestHeader, Request}
 import play.api.Play.current
 import util.acl._, PersonWrapper.PwOpt_t
 import io.suggest.util.UrlUtil
+import java.sql.Connection
 
 /**
  * Suggest.io
@@ -37,6 +38,9 @@ trait ContextT {
     Context2()
   }
 
+  implicit final def getCtxWithSqlConn(implicit req:AbstractRequestWithPwOpt[_], lang:Lang, connection: Connection): CtxWithSqlConn = {
+    CtxWithSqlConnImpl()
+  }
 }
 
 
@@ -45,8 +49,8 @@ trait ContextT {
   */
 trait Context {
 
-  implicit def pwOpt: PwOpt_t
   implicit def request: RequestHeader
+  implicit def pwOpt: PwOpt_t
   implicit def lang: Lang
   def myProto = Context.SIO_PROTO_DFLT
 
@@ -71,11 +75,25 @@ case class Context2(
   implicit val request: AbstractRequestWithPwOpt[_],
   implicit val lang: Lang
 ) extends Context {
-
-  implicit def pwOpt = request.pwOpt
+  implicit def pwOpt: PwOpt_t = request.pwOpt
 }
+
 
 /** Упрощенная версия контекста, используемая в минимальных условиях и вручную. */
 case class ContextImpl(implicit val request: RequestHeader, val lang: Lang) extends Context {
   def pwOpt = PersonWrapper.getFromRequest(request)
+}
+
+
+/** Бывает необходимость в контексте, который содержит коннекшен к базе. */
+trait CtxWithSqlConn extends Context {
+  implicit def connection: Connection
+}
+
+case class CtxWithSqlConnImpl(
+  implicit val request: AbstractRequestWithPwOpt[_],
+  implicit val lang: Lang,
+  implicit val connection: Connection
+) extends CtxWithSqlConn {
+  override implicit def pwOpt: PwOpt_t = request.pwOpt
 }

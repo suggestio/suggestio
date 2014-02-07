@@ -1,0 +1,9 @@
+@(cf: Form[_])(implicit ctx: util.Context)
+
+@* Рендер страницы с формой добавления новой компании. *@
+
+@companyFormTpl(
+  title = "Добавить компанию",
+  cf = cf,
+  call = routes.SysMarket.companyAddFormSubmit
+)

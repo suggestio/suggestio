@@ -1,0 +1,35 @@
+@(mc: MCompany)(implicit ctx: util.CtxWithSqlConn)
+
+@* Отобразить данные по одной компании. *@
+@import sys1.market._
+@import ctx._
+@import helper._
+
+@marketBase(mc.name + " | " + Messages("Companies")) {
+  @* Отображаем данные по компании. *@
+  <h2>@mc.name</h2>
+
+  <p><a href="@routes.SysMarket.companyEditForm(mc.id.get)">Редактировать</a>
+  @form(routes.SysMarket.companyDeleteSubmit(mc.id.get)) {
+    <input type="submit" value="@Messages("Delete")"/>
+  }</p>
+
+  @* Отображаем список ТЦ, которыми владеет компания. *@
+  @defining(mc.companyMarts) { marts =>
+    @if(!marts.isEmpty) {
+      <h3>Торговые центры компании (@marts.size)</h3>
+      (В порядке добавления, новые снизу)
+      @mart._martsListTpl(marts, withCompany = None)
+    }
+  }
+
+  @* Отображаем список магазинов, которыми владеет/управляет компания. *@
+  @defining(mc.companyShops) { shops =>
+    @if(!shops.isEmpty) {
+      <h3>Магазины и торговые павильоны компании (@shops.size)</h3>
+      (В порядке добавления, новые снизу)
+      @shop._shopsListTpl(shops, withCompany = None)
+    }
+  }
+
+}

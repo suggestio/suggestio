@@ -1,0 +1,10 @@
+@()(implicit ctx: util.Context)
+
+@* Список ссылок на страницы управления магазинной частью. *@
+
+@marketBase("index") {
+  Страница маркета содержит ссылки на административные страницы, касающие магазинной части.
+  <br/><br/>
+  <p><a href="@routes.SysMarket.companiesList">Все компании</a>,
+     <a href="@routes.SysMarket.companyAddForm">+добавить</a></p>
+}

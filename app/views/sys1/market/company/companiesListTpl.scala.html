@@ -1,0 +1,18 @@
+@(companies: Seq[MCompany])(implicit ctx:util.Context)
+
+@* Выдать все компании, зарегистрированные в системе, списком. *@
+@import ctx._
+@import sys1.market._
+
+@marketBase(Messages("All") + " | " + Messages("Companies")) {
+  <h1>Все компании</h1>
+  @if(!companies.isEmpty) {
+    @_companyListTpl(companies)
+  } else {
+    Пока нет компаний в системе.
+  }
+
+  <hr/>
+  <a href="@routes.SysMarket.companyAddForm">Добавить компанию</a>
+}
+

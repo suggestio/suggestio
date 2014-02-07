@@ -4,8 +4,6 @@ import play.Project._
 import java.io.File
 import patience.assets.StylusPlugin.stylusSettings
 
-//import com.jmparsons.plugin.LesscPlugin._
-
 object ApplicationBuild extends Build {
 
   val appName         = "sioweb21"

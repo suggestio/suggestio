@@ -1,3 +1,10 @@
+-- Создать схему
+CREATE SCHEMA sio2 AUTHORIZATION sio2;
+
+COMMENT ON SCHEMA sio2
+  IS 'Схемота для suggest.io v2.';
+
+
 -- В этом файле происходит базовое создание начальной схемы, связанной с магазинами.
 CREATE TABLE sio2.le_ids (
   id serial NOT NULL

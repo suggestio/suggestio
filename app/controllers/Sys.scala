@@ -7,12 +7,12 @@ import util.FormUtil._
 import views.html.sys1._
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
-import util.{SiobixClient, Logs, DomainManager}
+import util.{SiobixClient, DomainManager}
 import scala.concurrent.Future
 import SiobixClient.askTimeout
 import io.suggest.proto.bixo._
 import io.suggest.model.{MVirtualIndexVin, MDVIActive}
-import io.suggest.util.VirtualIndexUtil
+import io.suggest.util.{MacroLogsImpl, VirtualIndexUtil}
 import util.SiowebEsUtil.client
 import util.urls_supply.SeedUrlsSupplier
 
@@ -24,7 +24,7 @@ import util.urls_supply.SeedUrlsSupplier
  * В прошлой версии sioweb был /db/ контроллер для этого. Для экшенов этого контроллера всегда используется isSuperuser.
  */
 
-object Sys extends SioController with Logs {
+object Sys extends SioController with MacroLogsImpl {
 
   import LOGGER._
 

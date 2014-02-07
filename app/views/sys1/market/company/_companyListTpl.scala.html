@@ -1,0 +1,18 @@
+@(companies: Seq[MCompany])(implicit ctx: util.Context)
+
+@* Рендер списка компаний. *@
+@import ctx._
+
+<table>
+  <tr>
+    <th>@Messages("Name")</th>
+  </tr>
+  @companies.map { company =>
+    <tr>
+      <td><a href="@routes.SysMarket.companyShow(company.id.get)">@company.name</a></td>
+    </tr>
+  }
+</table>
+
+
+

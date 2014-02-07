@@ -1,3 +1,10 @@
+All=Все
+Companies=Компании
+Company=Компания
+Name=Название
+Address=Адрес
+Delete=Удалить
+
 error.invalid=Неверное значение
 error.invalid.java.util.Date=Неверный формат даты
 error.required=Поле обязательно для заполнения

@@ -1,0 +1,25 @@
+@(shops: Seq[MShop], withCompany:Option[Option[MCompany]] = None)(implicit ctx: util.CtxWithSqlConn)
+
+@* Рендер списка магазинов. *@
+@import ctx._
+
+<table>
+  <tr>
+    <th>@Messages("Name")</th>
+    @if(withCompany.isDefined) { <th>@Messages("Company")</th> }
+  </tr>
+  @shops.map { shop =>
+    <tr>
+      <td>@shop.name</td>
+      @withCompany.map { maybeCompany =>
+        <td>
+          <a href="@routes.SysMarket.companyShow(shop.company_id)">
+            @maybeCompany.getOrElse(shop.company.name)
+          </a>
+        </td>
+      }
+    </tr>
+  }
+</table>
+
+

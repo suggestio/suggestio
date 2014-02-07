@@ -1,0 +1,14 @@
+@(title:String, hPathAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: util.Context)
+
+@* Подложка для шаблонов системной админки магазинной части. *@
+
+@hPathAfter1 = {
+  / <a href="@routes.SysMarket.index">market</a>
+  @if(hPathAfter.isEmpty) {/ @title} else {@hPathAfter}
+}
+
+@sys1.sysBase(
+  title = title + " | market",
+  hPathAfter = Some(hPathAfter1),
+  headAfter = headAfter
+)(content)

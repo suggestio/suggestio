@@ -1,0 +1,26 @@
+@(marts: Seq[MMart], withCompany:Option[Option[MCompany]] = None)(implicit ctx: util.CtxWithSqlConn)
+
+@* Рендер списка торговых центров. Вставляется из других шаблонов. *@
+@import ctx._
+
+<table>
+  <tr>
+    <th>@Messages("Name")</th>
+    <th>@Messages("Address")</th>
+    @if(withCompany.isDefined) { <th>@Messages("Company")</th> }
+  </tr>
+  @marts.map { mart =>
+    <tr>
+      <td>@mart.name</td>
+      <td>@mart.address</td>
+      @withCompany.map { maybeCompany =>
+        <td>
+          <a href="@routes.SysMarket.companyShow(mart.company_id)">
+              @maybeCompany.getOrElse(mart.company.name)
+          </a>
+        </td>
+      }
+    </tr>
+  }
+</table>
+

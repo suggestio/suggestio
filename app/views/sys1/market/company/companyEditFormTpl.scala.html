@@ -1,0 +1,9 @@
+@(companyId:Int, cf:Form[_])(implicit ctx: util.Context)
+
+@* Рендер страницы с формой редактирования компании. *@
+
+@companyFormTpl(
+  title = "Редактировать компанию",
+  cf = cf,
+  call = routes.SysMarket.companyEditFormSubmit(companyId)
+)

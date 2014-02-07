@@ -33,6 +33,24 @@ object MCompany {
       .headOption
   }
 
+
+  /** Выдать все компании, зареганные в системе. Полезно при администрировании. */
+  def allById(implicit c:Connection): List[MCompany] = {
+    SQL("SELECT * FROM company ORDER BY id DESC")
+      .as(rowParser *)
+  }
+
+
+  /**
+   * Удалить ряд из таблицы по id.
+   * @param companyId Номер ряда компании.
+   * @return Кол-во удалённых рядов, т.е. 0 или 1.
+   */
+  def deleteById(companyId: Int)(implicit c:Connection): Int = {
+    SQL("DELETE FROM company WHERE id = {company_id}")
+      .on('company_id -> companyId)
+      .executeUpdate()
+  }
 }
 
 
@@ -64,10 +82,21 @@ case class MCompany(
       .on('name -> name, 'id -> id.get)
       .executeUpdate()
   }
+
+  /**
+   * Удалить текущую запись из таблицы, если она там есть.
+   * @return Кол-во удалённых рядов: 0 или 1.
+   */
+  def delete(implicit c:Connection) = {
+    id match {
+      case Id(_id)      => deleteById(_id)
+      case NotAssigned  => 0
+    }
+  }
 }
 
 
 trait MCompanySel {
   def company_id: Int
-  def company(implicit c: Connection) = getById(company_id)
+  def company(implicit c: Connection) = getById(company_id).get
 }

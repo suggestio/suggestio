@@ -43,7 +43,7 @@ object MMart {
    * @return Список ТЦ в неопределённом порядке.
    */
   def getByCompanyId(company_id: Int)(implicit c:Connection): List[MMart] = {
-    SQL("SELECT * FROM mart WHERE company_id = {company_id}")
+    SQL("SELECT * FROM mart WHERE company_id = {company_id} ORDER BY id ASC")
       .on('company_id -> company_id)
       .as(rowParser *)
   }

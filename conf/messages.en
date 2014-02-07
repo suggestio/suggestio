@@ -1,3 +1,10 @@
+All=All
+Companies=Companies
+Company=Company
+Name=Name
+Address=Address
+Delete=Delete
+
 error.invalid=Invalid value
 error.invalid.java.util.Date=Invalid date value
 error.required=This field is required
