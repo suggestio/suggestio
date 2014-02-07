@@ -20,6 +20,8 @@ object AuthInfoDatum extends CascadingFieldNamer with Serializable {
 
   val VERSION_DFLT = 1
 
+  val USERNAME_PW_SEP = ":"
+
   /** Сборка кортежей на случай появления разных версий в хранилищах. */
   def apply(t: Tuple) = {
     val vsn: Int = t getInteger 0
@@ -27,6 +29,18 @@ object AuthInfoDatum extends CascadingFieldNamer with Serializable {
       new AuthInfoDatum(t)
     } else {
       throw new IllegalArgumentException(s"Unknown ${classOf[AuthInfoDatum].getSimpleName} version: $vsn")
+    }
+  }
+
+  /** Распарсить имя-пароль из строки. */
+  def parseFromString(s: String): Option[AuthInfoDatum] = {
+    s match {
+      case null => None
+      case _ =>
+        s.split(USERNAME_PW_SEP, 2) match {
+          case Array(username, password)  => Some(new AuthInfoDatum(username=username, password=password))
+          case _                          => None
+        }
     }
   }
 }
@@ -60,4 +74,6 @@ class AuthInfoDatum extends BaseDatum(FIELDS) {
 
   def password = _tupleEntry getString PASSWORD_FN
   def password_=(password: String) = _tupleEntry.setString(PASSWORD_FN, password)
+
+  def serializeToString = username + USERNAME_PW_SEP + password
 }

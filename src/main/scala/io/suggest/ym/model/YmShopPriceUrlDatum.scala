@@ -26,11 +26,11 @@ object YmShopPriceUrlDatum extends CascadingFieldNamer with Serializable {
   }
 
   /** Сериализовать auth info в значение для поля AUTH_INFO_FN. */
-  def serializeAuthInfo(aid: AuthInfoDatum): Tuple = {
-    if (aid == null) {
+  def serializeAuthInfo(aid: Option[AuthInfoDatum]): Tuple = {
+    if (aid == null || aid.isEmpty || aid.get == null) {
       null
     } else {
-      aid.getTuple
+      aid.get.getTuple
     }
   }
 
@@ -50,12 +50,17 @@ class YmShopPriceUrlDatum extends BaseDatum(FIELDS) {
     setTupleEntry(te)
   }
 
-  def this(shopId:Int, priceUrl:String, authInfo:AuthInfoDatum) = {
+  def this(shopId:Int, priceUrl:String, authInfo:Option[AuthInfoDatum]) = {
     this
     this.shopId = shopId
     this.priceUrl = priceUrl
     this.authInfo = authInfo
   }
+
+  def this(shopId:Int, priceUrl:String, authInfoStr: String) = {
+    this(shopId, priceUrl, AuthInfoDatum.parseFromString(authInfoStr))
+  }
+
 
   def shopId: Int = _tupleEntry getInteger SHOP_ID_FN
   def shopId_=(shopId: Int) = _tupleEntry.setInteger(SHOP_ID_FN, shopId)
@@ -67,6 +72,6 @@ class YmShopPriceUrlDatum extends BaseDatum(FIELDS) {
     val maybeDatum = _tupleEntry.getObject(AUTH_INFO_FN)
     deserializeAuthInfo(maybeDatum)
   }
-  def authInfo_=(aid: AuthInfoDatum) = _tupleEntry.setObject(AUTH_INFO_FN, serializeAuthInfo(aid))
+  def authInfo_=(aid: Option[AuthInfoDatum]) = _tupleEntry.setObject(AUTH_INFO_FN, serializeAuthInfo(aid))
 }
 
