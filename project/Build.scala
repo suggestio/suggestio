@@ -2,6 +2,8 @@ import sbt._
 import Keys._
 import play.Project._
 import java.io.File
+import patience.assets.StylusPlugin.stylusSettings
+
 //import com.jmparsons.plugin.LesscPlugin._
 
 object ApplicationBuild extends Build {
@@ -55,25 +57,27 @@ object ApplicationBuild extends Build {
   }
 
   // Проект энтерпрайза.
-  lazy val sioweb21 = {
-    play.Project(appName, appVersion, appDependencies)
-      .settings(
-        // Удалить из резолверов исходный резолвер play чтобы можно было задействовать кэш artifactory.
-        resolvers ~= {
-          rs => rs filter {_.name != "Typesafe Releases Repository" }
-        },
-        // Добавить резолверы, в т.ч. кэш-резолвер для отфильтрованной выше репы.
-        resolvers ++= Seq(
-          "typesafe-releases" at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
-          "sonatype-oss-releases" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots",
-          "apache-releases" at "https://ivy2-internal.cbca.ru/artifactory/apache-releases",
-          "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo"
-        ),
-        // Сжимать текстовые asset'ы при сборке проекта.
-        gzippableAssets <<= (resourceManaged in ThisProject)(dir => ((dir ** "*.js") +++ (dir ** "*.css"))),
-        gzipAssetsSetting
-      )
-  }
+  lazy val sioweb21 = play.Project(
+    name = appName,
+    applicationVersion = appVersion,
+    dependencies = appDependencies,
+    settings = stylusSettings ++ Seq(
+      // Удалить из резолверов исходный резолвер play чтобы можно было задействовать кэш artifactory.
+      resolvers ~= {
+        rs => rs filter {_.name != "Typesafe Releases Repository" }
+      },
+      // Добавить резолверы, в т.ч. кэш-резолвер для отфильтрованной выше репы.
+      resolvers ++= Seq(
+        "typesafe-releases" at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
+        "sonatype-oss-releases" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots",
+        "apache-releases" at "https://ivy2-internal.cbca.ru/artifactory/apache-releases",
+        "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo"
+      ),
+      // Сжимать текстовые asset'ы при сборке проекта.
+      gzippableAssets <<= (resourceManaged in ThisProject)(dir => ((dir ** "*.js") +++ (dir ** "*.css"))),
+      gzipAssetsSetting
+    )
+  )
 
 }
 
