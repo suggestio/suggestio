@@ -20,7 +20,7 @@
       <p>В этом торговом центре нет зарегистрированных магазинов.</p>
     } else {
       <h3>Магазины в торговом центре (@shops.size)</h3>
-      @_shopsListTpl(shops, withCompany=Some(None))
+      @_shopsListTpl(shops, withCompany=Some(None), withMart=Some(Some(mmart)))
     }
   }
 
