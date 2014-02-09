@@ -21,6 +21,8 @@ object MCompany {
     case id ~ name ~ date_created  =>  MCompany(id=id, name=name, date_created=date_created)
   }
 
+  val isExistsParser = get[Boolean]("is_exists")
+
   /**
    * Прочитать из БД одну контору.
    * @param id id'шник компании.
@@ -31,6 +33,18 @@ object MCompany {
       .on('id -> id)
       .as(rowParser *)
       .headOption
+  }
+
+
+  /**
+   * Узнать, существует ли компания с указанным id.
+   * @param id id компании.
+   * @return true, если есть компания, т.е. есть ряд с таким id. Иначе false.
+   */
+  def isExists(id: Int)(implicit c:Connection): Boolean = {
+    SQL("SELECT count(*) > 0 FROM company WHERE id = {id}")
+      .on('id -> id)
+      .as(isExistsParser single)
   }
 
 

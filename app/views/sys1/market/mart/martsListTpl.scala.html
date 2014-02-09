@@ -1,0 +1,17 @@
+@(marts: Seq[MMart], withCompany:Option[Option[MCompany]] = None)(implicit ctx: util.CtxWithSqlConn)
+
+@* Страница со списком торговых центров. *@
+
+@import sys1.market._
+@import ctx._
+
+@marketBase("Торговые центры") {
+  <h1>Торговые центы (@marts.size)</h1>
+
+  @if(marts.isEmpty) {
+    Торговых центров пока нет.
+  } else {
+    @_martsListTpl(marts, withCompany=withCompany)
+  }
+}
+

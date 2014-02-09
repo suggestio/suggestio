@@ -47,6 +47,16 @@ object MMart {
       .on('company_id -> company_id)
       .as(rowParser *)
   }
+
+  /**
+   * Выдать все известные торговые центы. В перспективе -- малополезная функция,
+   * т.к. не привязана к географии.
+   * @return Список ТЦ в порядке создания, старые сверху.
+   */
+  def getAll(implicit c:Connection): List[MMart] = {
+    SQL("SELECT * FROM mart ORDER BY id ASC")
+      .as(rowParser *)
+  }
 }
 
 

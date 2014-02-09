@@ -35,14 +35,16 @@ object FormUtil {
   def optList2ListF[T] = { optList: Option[List[T]] => optList getOrElse Nil }
   def list2OptListF[T] = { l:List[T] =>  if (l.isEmpty) None else Some(l) }
 
-
-  // Маппер form-поля URL
-  val urlMapper = nonEmptyText(minLength = 8)
+  /** Маппер form-поля URL в строку URL */
+  val urlStrMapper = nonEmptyText(minLength = 8)
     .transform(_.trim, strIdentityF)
     .verifying("mappers.url.invalid_url", isValidUrl(_))
+
+  /** Маппер form-поля с ссылкой в java.net.URL. */
+  val urlMapper = urlStrMapper
     .transform(new URL(_), {url:URL => url.toExternalForm})
 
-  // Проверить ссылку на возможность добавления сайта в индексацию.
+  /** Проверить ссылку на возможность добавления сайта в индексацию. */
   val urlAllowedMapper = urlMapper
     .verifying("mappers.url.only_http_https_allowed", { url =>
       allowedProtocolRePattern.pattern.matcher(url.getProtocol).matches()

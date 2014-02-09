@@ -84,6 +84,7 @@ POST /sys/indices/downgrade/ALL         controllers.Sys.indicesDowngradeAll
 
 # sys.market
 GET  /sys/market                        controllers.SysMarket.index
+# sys.market.company
 GET  /sys/market/companies              controllers.SysMarket.companiesList
 GET  /sys/market/company/add            controllers.SysMarket.companyAddForm
 POST /sys/market/company/add            controllers.SysMarket.companyAddFormSubmit
@@ -91,4 +92,8 @@ GET  /sys/market/company/:id/edit       controllers.SysMarket.companyEditForm(id
 POST /sys/market/company/:id/edit       controllers.SysMarket.companyEditFormSubmit(id: Int)
 POST /sys/market/company/:id/delete     controllers.SysMarket.companyDeleteSubmit(id: Int)
 GET  /sys/market/company/:id            controllers.SysMarket.companyShow(id: Int)
+# sys.market.mart
+GET  /sys/market/marts                  controllers.SysMarket.martsList
+GET  /sys/market/mart/add/:company_id   controllers.SysMarket.martAddForm(company_id: Int)
+POST /sys/market/mart/add/:company_id   controllers.SysMarket.martAddFormSubmit(company_id: Int)
 

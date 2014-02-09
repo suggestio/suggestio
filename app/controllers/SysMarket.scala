@@ -7,6 +7,8 @@ import util.acl.IsSuperuser
 import models._
 import views.html.sys1.market._
 import play.api.data._, Forms._
+import util.FormUtil._
+import java.net.URL
 
 /**
  * Suggest.io
@@ -113,12 +115,62 @@ object SysMarket extends SioController with MacroLogsImpl {
 
         case 0 => companyNotFound(companyId)
 
-        case rc => throw new IllegalStateException(s"Too many rows deleteted ($rc). Rollback.")
+        case rc => throw new IllegalStateException(s"Too many rows deleted ($rc). Rollback.")
       }
     }
   }
 
 
+  /** Реакция на ошибку обращения к несуществующей компании. Эта логика расшарена между несколькими экшенами. */
   private def companyNotFound(companyId: Int) = NotFound("Company not found: " + companyId)
 
+
+  /** Рендер страницы со списком торговых центров. */
+  def martsList = IsSuperuser { implicit request =>
+    DB.withConnection { implicit c =>
+      val allMarts = MMart.getAll
+      Ok(mart.martsListTpl(allMarts, withCompany=Some(None)))
+    }
+  }
+
+  /** Маппинг для формы добавления/редактирования торгового центра. */
+  val martFormM = Form(mapping(
+    "company_id" -> number
+      .verifying("Company not found", { company_id =>
+        DB.withConnection { implicit c =>
+          MCompany.isExists(company_id)
+        }
+      }),
+    "name" -> nonEmptyText(maxLength = 64)
+      .transform(strTrimF, strIdentityF),
+    "address" -> nonEmptyText(minLength = 10, maxLength = 128)
+      .transform(strTrimF, strIdentityF),
+    "site_url" -> optional(urlStrMapper)
+  )
+  // apply()
+  { (company_id, name, address, site_url) =>
+    MMart(company_id=company_id, name=name, address=address, site_url=site_url)
+  }
+  // unapply()
+  { mmart =>
+    Some(mmart.company_id, mmart.name, mmart.address, mmart.site_url) }
+  )
+
+  /** Рендер страницы с формой добавления торгового центра. */
+  def martAddForm(company_id: Int) = IsSuperuser { implicit request =>
+    val isCompanyExist = DB.withConnection { implicit c =>
+      MCompany.isExists(company_id)
+    }
+    if (isCompanyExist) {
+      Ok(mart.martAddFormTpl(martFormM, company_id))
+    } else {
+      companyNotFound(company_id)
+    }
+  }
+
+  /** Сабмит формы добавления торгового центра. */
+  def martAddFormSubmit(company_id: Int) = IsSuperuser { implicit request =>
+    ???
+    NotFound
+  }
 }
