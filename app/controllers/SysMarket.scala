@@ -134,27 +134,13 @@ object SysMarket extends SioController with MacroLogsImpl {
   }
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
-  val martFormM = Form(mapping(
-    "company_id" -> number
-      .verifying("Company not found", { company_id =>
-        DB.withConnection { implicit c =>
-          MCompany.isExists(company_id)
-        }
-      }),
+  val martFormM = Form(tuple(
     "name" -> nonEmptyText(maxLength = 64)
       .transform(strTrimF, strIdentityF),
     "address" -> nonEmptyText(minLength = 10, maxLength = 128)
       .transform(strTrimF, strIdentityF),
     "site_url" -> optional(urlStrMapper)
-  )
-  // apply()
-  { (company_id, name, address, site_url) =>
-    MMart(company_id=company_id, name=name, address=address, site_url=site_url)
-  }
-  // unapply()
-  { mmart =>
-    Some(mmart.company_id, mmart.name, mmart.address, mmart.site_url) }
-  )
+  ))
 
   /** Рендер страницы с формой добавления торгового центра. */
   def martAddForm(company_id: Int) = IsSuperuser { implicit request =>
@@ -162,7 +148,7 @@ object SysMarket extends SioController with MacroLogsImpl {
       MCompany.isExists(company_id)
     }
     if (isCompanyExist) {
-      Ok(mart.martAddFormTpl(martFormM, company_id))
+      Ok(mart.martAddFormTpl(company_id, martFormM))
     } else {
       companyNotFound(company_id)
     }
@@ -170,7 +156,67 @@ object SysMarket extends SioController with MacroLogsImpl {
 
   /** Сабмит формы добавления торгового центра. */
   def martAddFormSubmit(company_id: Int) = IsSuperuser { implicit request =>
-    ???
-    NotFound
+    martFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        NotAcceptable(mart.martAddFormTpl(company_id, formWithErrors))
+      },
+      {case (name, address, site_url) =>
+        val mmart = MMart(name=name, company_id=company_id, address=address, site_url=site_url)
+        val mmartSaved = DB.withConnection { implicit c =>
+          mmart.save
+        }
+        Redirect(routes.SysMarket.martShow(mmartSaved.id.get))
+      }
+    )
   }
+
+  /** Отображение одного ТЦ. */
+  def martShow(mart_id: Int) = IsSuperuser { implicit request =>
+    DB.withConnection { implicit c =>
+      MMart.getById(mart_id) match {
+        case Some(mmart) => Ok(mart.martShowTpl(mmart))
+        case None => martNotFound(mart_id)
+      }
+    }
+  }
+
+  private def martNotFound(mart_id: Int) = NotFound("Mart not found: " + mart_id)
+
+  /** Рендер страницы с формой редактирования торгового центра. */
+  def martEditForm(mart_id: Int) = IsSuperuser { implicit request =>
+    DB.withConnection { implicit c =>
+      MMart.getById(mart_id) match {
+        case Some(mmart) =>
+          val form = martFormM.fill((mmart.name, mmart.address, mmart.site_url))
+          Ok(mart.martEditFormTpl(mart_id, form))
+
+        case None => martNotFound(mart_id)
+      }
+    }
+  }
+
+  /** Сабмит формы редактирования торгового центра. */
+  def martEditFormSubmit(mart_id:Int) = IsSuperuser { implicit request =>
+    martFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        NotAcceptable(mart.martEditFormTpl(mart_id, formWithErrors))
+      },
+      {case (name, address, site_url) =>
+        DB.withTransaction { implicit c =>
+          MMart.getById(mart_id) match {
+            case Some(mmart) =>
+              mmart.name = name
+              mmart.address = address
+              mmart.site_url = site_url
+              mmart.saveUpdate
+              // Результат saveUpdate не проверяем, т.к. withTransaction().
+              Redirect(routes.SysMarket.martShow(mart_id))
+
+            case None => martNotFound(mart_id)
+          }
+        }
+      }
+    )
+  }
+
 }

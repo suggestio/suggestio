@@ -1,0 +1,28 @@
+@(mmart: MMart)(implicit ctx: util.CtxWithSqlConn)
+
+@* Страница, отображающая информацию по торговому центру. *@
+@import sys1.market._, shop._
+@import ctx._
+@import datetime._
+
+@marketBase(mmart.name + " | Торговые центры") {
+  <h2>@mmart.name</h2>
+  <p>Торговый центр. <a href="@routes.SysMarket.martEditForm(mmart.id.get)">Редактировать</a></p>
+  <p>Адрес: @mmart.address</p>
+  <p>Владелец: <a href="routes.SysMarket.companyShow(mmart.company_id)">@mmart.company.name</a></p>
+  @mmart.site_url.map { siteUrl =>
+    <p>Ссылка на сайт: <a href="@siteUrl">@siteUrl</a></p>
+  }
+  <p>Создан: @_prettyDate(mmart.date_created, withSpan = true)</p>
+
+  @defining(mmart.martShops) { shops =>
+    @if(shops.isEmpty) {
+      <p>В этом торговом центре нет зарегистрированных магазинов.</p>
+    } else {
+      <h3>Магазины в торговом центре (@shops.size)</h3>
+      @_shopsListTpl(shops, withCompany=Some(None))
+    }
+  }
+
+  @* TODO: Нужна ссылка на создание магазина. *@
+}

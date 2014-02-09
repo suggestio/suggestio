@@ -1,11 +1,9 @@
-@(btnText: String, mf: Form[_], call:Call, company_id:Int)
+@(btnText: String, mf: Form[_], call:Call)
 
 @* Форма для создания/редактирования торгового центра. *@
 @import helper._
 
-
 @form(call) {
-  <input type="hidden" name="company_id" value="@company_id"/>
   @inputText(mf("name"))
   @inputText(mf("address"))
   @inputText(mf("site_url"))

@@ -96,4 +96,7 @@ GET  /sys/market/company/:id            controllers.SysMarket.companyShow(id: In
 GET  /sys/market/marts                  controllers.SysMarket.martsList
 GET  /sys/market/mart/add/:company_id   controllers.SysMarket.martAddForm(company_id: Int)
 POST /sys/market/mart/add/:company_id   controllers.SysMarket.martAddFormSubmit(company_id: Int)
+GET  /sys/market/mart/:id               controllers.SysMarket.martShow(id: Int)
+GET  /sys/market/mart/:id/edit          controllers.SysMarket.martEditForm(id: Int)
+POST /sys/market/mart/:id/edit          controllers.SysMarket.martEditFormSubmit(id: Int)
 

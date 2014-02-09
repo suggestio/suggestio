@@ -11,7 +11,7 @@
   </tr>
   @marts.map { mart =>
     <tr>
-      <td>@mart.name</td>
+      <td><a href="@routes.SysMarket.martShow(mart.id.get)">@mart.name</a></td>
       <td>@mart.address</td>
       @withCompany.map { maybeCompany =>
         <td>
