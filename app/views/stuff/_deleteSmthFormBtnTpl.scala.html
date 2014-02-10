@@ -1,0 +1,9 @@
+@(call: Call)(implicit ctx: util.Context)
+
+@* Форма-кнопка удаления чего-либо. *@
+@import helper._
+@import ctx._
+
+@form(call) {
+  <input type="submit" value="@Messages("Delete")">
+}

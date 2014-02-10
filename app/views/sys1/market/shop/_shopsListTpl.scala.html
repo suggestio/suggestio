@@ -11,7 +11,7 @@
   </tr>
   @shops.map { shop =>
     <tr>
-      <td>@shop.name</td>
+      <td><a href="@routes.SysMarket.shopShow(shop.id.get)">@shop.name</a></td>
       @withCompany.map { maybeCompany =>
         <td>
           <a href="@routes.SysMarket.companyShow(shop.company_id)">

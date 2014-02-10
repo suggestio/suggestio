@@ -1,0 +1,19 @@
+@(title:String, mshop:MShop, hPathAfter:Option[Html] = None)(content: Html)(implicit ctx: util.CtxWithSqlConn)
+
+@* Подложка для шаблонов, которые как внутри конкретного магазина. *@
+@import ctx._
+
+@hPathAfter1 = {
+  / ТЦ <a href="@routes.SysMarket.martShow(mshop.mart_id)">@mshop.mart.name</a>
+  / <a href="@routes.SysMarket.shopShow(mshop.id.get)">@mshop.name</a>
+  @hPathAfter
+}
+
+@shopBase(
+  title = title,
+  hPathAfter = Some(hPathAfter1)
+)(content)
+
+
+
+

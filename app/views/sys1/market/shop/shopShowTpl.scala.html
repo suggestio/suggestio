@@ -1,22 +1,23 @@
-@(shop: MShop)(implicit ctx: util.CtxWithSqlConn)
+@(mshop: MShop)(implicit ctx: util.CtxWithSqlConn)
 
 @* Страница с информацией по одному магазину. *@
 @import datetime._
 @import ctx._
 
-@shopBase(shop.name) {
-  <h2>Магазин "@shop.name"</h2>
-  <a href="@routes.SysMarket.shopEditForm(shop.id.get)">@Messages("Edit")</a>
-  @_shopDeleteFormTpl(shop.id.get)
 
-  <p>Компания-владелец: <a href="@routes.SysMarket.companyShow(shop.company_id)">@shop.company.name</a></p>
+@thisShopBase(title=mshop.name, mshop=mshop) {
+  <h2>Магазин "@mshop.name"</h2>
+  <a href="@routes.SysMarket.shopEditForm(mshop.id.get)">@Messages("Edit")</a>
+  @_shopDeleteFormTpl(mshop.id.get)
 
-  @defining(shop.mart) { mmart =>
-    <p>ТЦ <a href="@routes.SysMarket.martShow(shop.mart_id)">@mmart.name</a> по адресу @mmart.address.</p>
+  <p>Компания-владелец: <a href="@routes.SysMarket.companyShow(mshop.company_id)">@mshop.company.name</a></p>
+
+  @defining(mshop.mart) { mmart =>
+    <p>ТЦ <a href="@routes.SysMarket.martShow(mshop.mart_id)">@mmart.name</a> по адресу @mmart.address.</p>
   }
 
   <br/>
-  Этаж @shop.mart_floor match {
+  Этаж @mshop.mart_floor match {
     case Some(floor) => {
       @floor.
     }
@@ -25,7 +26,7 @@
     }
   }
 
-  Секция @shop.mart_section match {
+  Секция @mshop.mart_section match {
     case Some(section) => {
       @section.
     }
@@ -34,8 +35,19 @@
     }
   }
 
-  <p>Магазин создан @_prettyDate(shop.date_created, isCap = false, withSpan = true).</p>
+  <p>Магазин создан @_prettyDate(mshop.date_created, isCap = false, withSpan = true).</p>
 
   <h3>Описание</h3>
-  @shop.description
+  @mshop.description
+
+  <h3>Внешние прайс-листы</h3>
+
+  @defining(mshop.priceLists) { spls =>
+    @if(spls.isEmpty) {
+      У магазина нет внешних прайс-листов.
+    } else {
+      @pricelist._splsListTpl(spls, withShop=None)
+    }
+  }
+  <a href="@routes.SysMarket.splAddForm(mshop.id.get)">Добавить источник прайс-листа.</a>
 }

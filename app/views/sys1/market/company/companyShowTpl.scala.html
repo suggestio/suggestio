@@ -3,16 +3,13 @@
 @* Отобразить данные по одной компании. *@
 @import sys1.market._
 @import ctx._
-@import helper._
 
 @companyBase(title = mc.name) {
   @* Отображаем данные по компании. *@
   <h2>@mc.name</h2>
 
   <p><a href="@routes.SysMarket.companyEditForm(mc.id.get)">@Messages("Edit")</a></p>
-  @form(routes.SysMarket.companyDeleteSubmit(mc.id.get)) {
-    <input type="submit" value="@Messages("Delete")"/>
-  }
+  @stuff._deleteSmthFormBtnTpl(routes.SysMarket.companyDeleteSubmit(mc.id.get))
 
   @* Отображаем список ТЦ, которыми владеет компания. *@
   @defining(mc.companyMarts) { marts =>

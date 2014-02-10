@@ -85,7 +85,7 @@ CREATE TABLE sio2.shop_pricelist
   id serial NOT NULL,
   shop_id integer NOT NULL,
   url character varying(255) NOT NULL, -- Ссылка на прайс-лист магазина.
-  auth_info character varying(127), -- Имя:пароль либо NULL.
+  auth_info character varying(128), -- Имя:пароль либо NULL.
   CONSTRAINT shop_pricelist_pkey PRIMARY KEY (id),
   CONSTRAINT shop_pricelist_shop_id_fkey FOREIGN KEY (shop_id)
       REFERENCES sio2.shop (id) MATCH SIMPLE

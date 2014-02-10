@@ -1,0 +1,11 @@
+@(mshop:MShop, splForm: Form[_])(implicit ctx: util.CtxWithSqlConn)
+
+@* Страница с формой добавления ссылки на прайс-лист для магазина. *@
+
+@splBase("Добавить", mshop=mshop) {
+  @_splFormTpl(
+    call = routes.SysMarket.splAddFormSubmit(mshop.id.get),
+    splForm = splForm,
+    btnText = "Добавить"
+  )
+}

@@ -58,6 +58,18 @@ object MShopPriceList {
       .on('shop_id -> shopId)
       .as(rowParser *)
   }
+
+
+  /**
+   * Удалить ряд прайс-листа по ключу.
+   * @param id Ключ ряда.
+   * @return Кол-во удалённых рядов, т.е. 0 или 1.
+   */
+  def deleteById(id: Int)(implicit c: Connection): Int = {
+    SQL("DELETE FROM shop_pricelist WHERE id = {id}")
+      .on('id -> id)
+      .executeUpdate()
+  }
 }
 
 
@@ -89,6 +101,12 @@ case class MShopPriceList(
       .on('id -> id, 'url -> url, 'auth_info -> auth_info)
       .executeUpdate()
   }
+
+  /** Удалить текущий ряд из базы, если он там есть. Вернуть кол-во удалённых рядов. */
+  def delete(implicit c:Connection) = id match {
+    case NotAssigned => None
+    case Id(_id)     => deleteById(_id)
+  }
 }
 
 /** Легковесное представление пары UsernamePw для распарсенного значения колонки auth_info.
@@ -98,5 +116,10 @@ case class MShopPriceList(
 case class UsernamePw(username: String, password: String) {
   def toDatum = new AuthInfoDatum(username=username, password=password)
   def serialize = username + AUTH_INFO_SEP + password
+}
+
+trait ShopPriceListSel {
+  def shop_id: Int
+  def priceLists(implicit c: Connection) = getForShop(shop_id)
 }
 

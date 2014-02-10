@@ -306,6 +306,7 @@ object SysMarket extends SioController with MacroLogsImpl {
     }
   }
 
+  /** Рендер ошибки, если магазин не найден в базе. */
   private def shopNotFound(shop_id: Int) = NotFound("Shop not found: " + shop_id)
 
   /** Отрендерить страницу с формой редактирования магазина. */
@@ -357,5 +358,74 @@ object SysMarket extends SioController with MacroLogsImpl {
       }
     }
   }
+
+
+  /* Ссылки на прайс-листы магазинов, а именно их изменение. */
+
+  /** Маппинг для формы добавления/редактирования ссылок на прайс-листы. */
+  val splFormM = Form(mapping(
+    "url"       -> urlStrMapper,
+    "username"  -> optional(text(maxLength = 64)),
+    "password"  -> optional(text(maxLength = 64))
+  )
+  // apply()
+  {(url, usernameOpt, passwordOpt) =>
+    val auth_info = if (usernameOpt.isDefined) {
+      Some(UsernamePw(usernameOpt.get, password=passwordOpt.getOrElse("")))
+    } else {
+      None
+    }
+    url -> auth_info
+  }
+  // unapply()
+  {case (url, auth_info) =>
+    Some(url, auth_info.map(_.username), auth_info.map(_.password))
+  })
+
+
+  /** Рендер формы добавления ссылки на прайс-лист к магазину. */
+  def splAddForm(shop_id: Int) = IsSuperuser { implicit request =>
+    DB.withConnection { implicit c =>
+      MShop.getById(shop_id) match {
+        case Some(mshop) =>
+          Ok(shop.pricelist.splAddFormTpl(mshop, splFormM))
+
+        case None => shopNotFound(shop_id)
+      }
+    }
+  }
+
+  /** Сабмит формы добавления прайс-листа. */
+  def splAddFormSubmit(shop_id: Int) = IsSuperuser { implicit request =>
+    DB.withConnection { implicit c =>
+      splFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          MShop.getById(shop_id) match {
+            case Some(mshop) => NotAcceptable(shop.pricelist.splAddFormTpl(mshop, formWithErrors))
+            case None => shopNotFound(shop_id)
+          }
+        },
+        {case (url, auth_info) =>
+          val mspl = MShopPriceList(shop_id=shop_id, url=url, auth_info=auth_info).save
+          Redirect(routes.SysMarket.shopShow(shop_id))
+            .flashing("success" -> "Pricelist added.")
+        }
+      )
+    }
+  }
+
+  /** Удалить ранее созданный прайс лист по его id. */
+  def splDeleteSubmit(spl_id: Int) = IsSuperuser { implicit request =>
+    DB.withTransaction { implicit c =>
+      MShopPriceList.getById(spl_id) match {
+        case Some(mspl) =>
+          mspl.delete
+          Redirect(routes.SysMarket.shopShow(mspl.shop_id))
+
+        case None => NotFound("No such shop pricelist with id = " + spl_id)
+      }
+    }
+  }
+
 }
 

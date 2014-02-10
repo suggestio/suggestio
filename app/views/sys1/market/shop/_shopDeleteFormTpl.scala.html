@@ -1,9 +1,3 @@
 @(shop_id: Int)(implicit ctx: util.Context)
-
 @* Форма-кнопка удаления магазина. *@
-@import helper._
-@import ctx._
-
-@form(routes.SysMarket.shopDeleteSubmit(shop_id)) {
-  <input type="submit" value="@Messages("Delete")">
-}
+@stuff._deleteSmthFormBtnTpl(routes.SysMarket.shopDeleteSubmit(shop_id))

@@ -102,7 +102,8 @@ case class MShop(
   var mart_section: Option[Int] = None,
   id              : Pk[Int] = NotAssigned,
   date_created    : DateTime = null
-) extends SqlModelSave[MShop] with MCompanySel with MMartSel with CompanyMartsSel {
+) extends SqlModelSave[MShop] with MCompanySel with MMartSel with CompanyMartsSel with ShopPriceListSel {
+  def shop_id = id.get
 
   /** Добавить в базу текущую запись.
     * @return Новый экземпляр сабжа.
@@ -161,6 +162,6 @@ trait MartShopsSel {
 
 trait MShopSel {
   def shop_id: Int
-  def shop(implicit c:Connection) = getById(shop_id)
+  def shop(implicit c:Connection) = getById(shop_id).get
 }
 

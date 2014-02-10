@@ -1,0 +1,32 @@
+@(spls: Seq[MShopPriceList], withShop:Option[MShop] = None, withAuth:Boolean = false, withDeleteBtn:Boolean = true)(implicit ctx: util.CtxWithSqlConn)
+
+@* Отрендерить список прайс-листов. *@
+@import ctx._
+
+<table>
+  <tr>
+    <th>#</th>
+    <th>URL</th>
+    @if(withShop.isDefined) { <th>@Messages("Shop")</th> }
+    @if(withAuth) { <th>Auth</th> }
+    @if(withDeleteBtn) { <th>Delete</th> }
+  </tr>
+  @spls.map { spl =>
+    <tr>
+      <td>@spl.id.get</td>
+      <td>@spl.url</td>
+
+      @withShop.map { mshop =>
+        <td><a href="@routes.SysMarket.shopShow(spl.shop_id)">@mshop.name</a></td>
+      }
+
+      @if(withAuth) {
+        <td>@spl.auth_info.map { authInfo => @authInfo.username : @authInfo.password }</td>
+      }
+
+      @if(withDeleteBtn) {
+        <td>@_splDeleteFormTpl(spl.id.get)</td>
+      }
+    </tr>
+  }
+</table>

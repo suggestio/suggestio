@@ -108,4 +108,8 @@ GET  /sys/market/shop/:id               controllers.SysMarket.shopShow(id: Int)
 GET  /sys/market/shop/:id/edit          controllers.SysMarket.shopEditForm(id: Int)
 POST /sys/market/shop/:id/edit          controllers.SysMarket.shopEditFormSubmit(id: Int)
 POST /sys/market/shop/:id/delete        controllers.SysMarket.shopDeleteSubmit(id: Int)
+# sys.market.shop.pricelist
+GET  /sys/market/spl/add/:shop_id       controllers.SysMarket.splAddForm(shop_id: Int)
+POST /sys/market/spl/add/:shop_id       controllers.SysMarket.splAddFormSubmit(shop_id: Int)
+POST /sys/market/spl/:id/delete         controllers.SysMarket.splDeleteSubmit(id: Int)
 
