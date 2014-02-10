@@ -16,12 +16,12 @@ COMMENT ON TABLE sio2.le_ids
 
 
 CREATE TABLE sio2.company (
-  -- Унаследована from table sio2.ids:  id integer NOT NULL DEFAULT nextval('sio2.ids_id_seq'::regclass),
+  -- Унаследована from table sio2.le_ids:  id integer NOT NULL DEFAULT nextval('sio2.le_ids_id_seq'::regclass),
   name character varying(64), -- Название конторы.
   date_created timestamp(0) with time zone NOT NULL DEFAULT now(), -- Дата добавления этого ряда в таблицу.
   CONSTRAINT company_pkey PRIMARY KEY (id)
 )
-INHERITS (sio2.ids);
+INHERITS (sio2.le_ids);
 ALTER TABLE sio2.company OWNER TO sio2;
 COMMENT ON TABLE sio2.company
   IS 'Список контор, которые зареганы в системе. Конторы могут владель магазинами и торговыми центрами, которые содержат эти или другие магазины.';
@@ -42,7 +42,7 @@ CREATE TABLE sio2.mart (
       REFERENCES sio2.company (id) MATCH SIMPLE
       ON UPDATE RESTRICT ON DELETE RESTRICT
 )
-INHERITS (sio2.ids);
+INHERITS (sio2.le_ids);
 ALTER TABLE sio2.mart OWNER TO sio2;
 COMMENT ON TABLE sio2.mart
   IS 'Торговые центры и помещения, предназначенные для размещения торговых площадок (магазинов)';
@@ -53,7 +53,7 @@ COMMENT ON COLUMN sio2.mart.site_url IS 'Ссылка на сайт магази
 
 
 CREATE TABLE sio2.shop (
-  -- Унаследована from table sio2.ids:  id integer NOT NULL DEFAULT nextval('sio2.ids_id_seq'::regclass),
+  -- Унаследована from table sio2.le_ids:  id integer NOT NULL DEFAULT nextval('sio2.le_ids_id_seq'::regclass),
   company_id integer NOT NULL,
   mart_id integer NOT NULL,
   name character varying(64) NOT NULL, -- Отображаемое название магазина.
@@ -67,7 +67,7 @@ CREATE TABLE sio2.shop (
       REFERENCES sio2.mart (id) MATCH SIMPLE
       ON UPDATE CASCADE ON DELETE CASCADE
 )
-INHERITS (sio2.ids);
+INHERITS (sio2.le_ids);
 ALTER TABLE sio2.shop OWNER TO sio2;
 COMMENT ON TABLE sio2.shop
   IS 'Список магазинов, которые находятся в торговых центрах или соотв.площадях.
@@ -87,9 +87,6 @@ CREATE TABLE sio2.shop_pricelist
   CONSTRAINT shop_pricelist_shop_id_fkey FOREIGN KEY (shop_id)
       REFERENCES sio2.shop (id) MATCH SIMPLE
       ON UPDATE CASCADE ON DELETE CASCADE
-)
-WITH (
-  OIDS=FALSE
 );
 ALTER TABLE sio2.shop_pricelist
   OWNER TO sio2;

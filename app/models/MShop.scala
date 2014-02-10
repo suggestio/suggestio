@@ -67,6 +67,15 @@ object MShop {
       .on('company_id -> company_id, 'mart_id -> mart_id)
       .as(rowParser *)
   }
+
+  /**
+   * Выдать все магазины. Метод подходит только для административных задач.
+   * @return Список магазинов в порядке их создания.
+   */
+  def getAll(implicit c: Connection): List[MShop] = {
+    SQL("SELECT * FROM shop ORDER BY id ASC")
+      .as(rowParser *)
+  }
 }
 
 
