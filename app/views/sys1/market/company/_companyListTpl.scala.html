@@ -1,4 +1,4 @@
-@(companies: Seq[MCompany])(implicit ctx: util.Context)
+@(companies: Seq[MCompany], withDateCreated: Boolean = true)(implicit ctx: util.Context)
 
 @* Рендер списка компаний. *@
 @import ctx._
@@ -6,10 +6,14 @@
 <table>
   <tr>
     <th>@Messages("Name")</th>
+    <th>@if(withDateCreated) {Создана}</th>
   </tr>
   @companies.map { company =>
     <tr>
       <td><a href="@routes.SysMarket.companyShow(company.id.get)">@company.name</a></td>
+      @if(withDateCreated) {
+        <td>@datetime._prettyDate(company.date_created)</td>
+      }
     </tr>
   }
 </table>

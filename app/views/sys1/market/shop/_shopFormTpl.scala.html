@@ -39,9 +39,8 @@
   <label for="martSectionInput">Номер секции</label>
   @inputText(sf("mart_section"), 'placeholder -> 101, 'id -> "martSectionInput")
 
-  @* TODO Тут нужен label. *@
-  Необязательный адрес внутри ТЦ, если ТЦ мультимагазинный. Например "3 этаж, кабинет 314".
-  @textarea(sf("description"))
+  <label for="descrInput">Описание магазина</label>
+  @textarea(sf("description"), 'id -> "descrInput")
 
   <input type="submit" value="@btnText"/>
 }
