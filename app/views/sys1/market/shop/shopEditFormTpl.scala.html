@@ -1,0 +1,19 @@
+@(mshop: MShop, sf: Form[_], companies:Seq[MCompany], marts:Seq[MMart])(implicit ctx: util.Context)
+
+@* Страница с формой редактирования магазина. *@
+@import ctx._
+
+@hPathAfter1 = {
+  / <a href="@routes.SysMarket.shopShow(mshop.id.get)">@mshop.name</a>
+  / @Messages("Edit")
+}
+
+@shopBase("Изменить") {
+  @_shopFormTpl(
+    call = routes.SysMarket.shopEditFormSubmit(mshop.id.get),
+    sf = sf,
+    btnText = "Сохранить",
+    companies = companies,
+    marts = marts
+  )
+}

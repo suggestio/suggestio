@@ -99,7 +99,13 @@ POST /sys/market/mart/add/:company_id   controllers.SysMarket.martAddFormSubmit(
 GET  /sys/market/mart/:id               controllers.SysMarket.martShow(id: Int)
 GET  /sys/market/mart/:id/edit          controllers.SysMarket.martEditForm(id: Int)
 POST /sys/market/mart/:id/edit          controllers.SysMarket.martEditFormSubmit(id: Int)
+POST /sys/market/mart/:id/delete        controllers.SysMarket.martDeleteSubmit(id: Int)
 # sys.market.shop
 GET  /sys/market/shops                  controllers.SysMarket.shopsList
-
+GET  /sys/market/shop/add               controllers.SysMarket.shopAddForm
+POST /sys/market/shop/add               controllers.SysMarket.shopAddFormSubmit
+GET  /sys/market/shop/:id               controllers.SysMarket.shopShow(id: Int)
+GET  /sys/market/shop/:id/edit          controllers.SysMarket.shopEditForm(id: Int)
+POST /sys/market/shop/:id/edit          controllers.SysMarket.shopEditFormSubmit(id: Int)
+POST /sys/market/shop/:id/delete        controllers.SysMarket.shopDeleteSubmit(id: Int)
 

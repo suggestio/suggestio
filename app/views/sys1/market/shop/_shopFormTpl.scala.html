@@ -1,4 +1,4 @@
-@(call:Call, sf: Form[_], btnText:String)(implicit ctx: util.Context)
+@(call:Call, sf: Form[_], btnText:String, companies:Seq[MCompany], marts:Seq[MMart])(implicit ctx: util.Context)
 
 @* Форма для добавления/редактирования магазинов в системной админке. *@
 @import helper._
@@ -7,9 +7,41 @@
 @form(call) {
   @inputText(sf("name"))
 
+  @* Компания, к которой принадлежит магазин. В продакшене это будет задаваться неявно. *@
+  @defining(sf("company_id")) { ciField =>
+    <select name="@ciField.name">
+      <option disabled>@Messages("Company")-@Messages("Owner")</option>
+      @defining(ciField.value.orElse(request.getQueryString("company_id")).map(_.toInt).getOrElse(-1)) { currCompanyId =>
+        @companies.map { mcompany =>
+          <option value="@mcompany.id.get"@if(currCompanyId == mcompany.id.get) {selected}>@mcompany.name</option>
+        }
+      }
+    </select>
+  }
+
+  @* Торговый центр, к которому привязан магазин. В продакшене это будет задаваться неявно. *@
+  @defining(sf("mart_id")) { miField =>
+    <select name="@miField.name">
+      <option disabled>@Messages("Mart")</option>
+      @defining(miField.value.orElse(request.getQueryString("mart_id")).map(_.toInt).getOrElse(-1)) { currMartId =>
+        @marts.map { mmart =>
+          <option value="@mmart.id.get"@if(currMartId == mmart.id.get) {selected}>@mmart.name</option>
+        }
+      }
+    </select>
+  }
+
+  @* Опциональный номер этажа в ТЦ. *@
+  <label for="martFloorInput">Этаж</label>
+  @inputText(sf("mart_floor"), 'placeholder -> 1, 'id -> "martFloorInput")
+
+  @* Опциональный номер секции в ТЦ. *@
+  <label for="martSectionInput">Номер секции</label>
+  @inputText(sf("mart_section"), 'placeholder -> 101, 'id -> "martSectionInput")
+
   @* TODO Тут нужен label. *@
   Необязательный адрес внутри ТЦ, если ТЦ мультимагазинный. Например "3 этаж, кабинет 314".
-  @inputText(sf("inmart_addr"))
+  @textarea(sf("description"))
 
   <input type="submit" value="@btnText"/>
 }

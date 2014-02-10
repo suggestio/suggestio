@@ -49,7 +49,7 @@ object MCompany {
 
 
   /** Выдать все компании, зареганные в системе. Полезно при администрировании. */
-  def allById(implicit c:Connection): List[MCompany] = {
+  def getAll(implicit c:Connection): List[MCompany] = {
     SQL("SELECT * FROM company ORDER BY id DESC")
       .as(rowParser *)
   }

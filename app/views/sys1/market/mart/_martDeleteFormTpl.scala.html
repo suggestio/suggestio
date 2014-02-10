@@ -1,0 +1,10 @@
+@(mart_id: Int)(implicit ctx: util.Context)
+
+@* Форма-кнопка удаления ТЦ. *@
+
+@import helper._
+@import ctx._
+
+@form(routes.SysMarket.martDeleteSubmit(mart_id)) {
+  <input type="submit" value="@Messages("Delete")"/>
+}

@@ -9,6 +9,7 @@ import views.html.sys1.market._
 import play.api.data._, Forms._
 import util.FormUtil._
 import java.net.URL
+import java.sql.Connection
 
 /**
  * Suggest.io
@@ -31,7 +32,7 @@ object SysMarket extends SioController with MacroLogsImpl {
   /** Отрендерить sio-админу список всех компаний, зарегистрированных в системе. */
   def companiesList = IsSuperuser { implicit request =>
     val allCompanies = DB.withConnection { implicit c =>
-      MCompany.allById
+      MCompany.getAll
     }
     val render = company.companiesListTpl(allCompanies)
     Ok(render)
@@ -221,6 +222,18 @@ object SysMarket extends SioController with MacroLogsImpl {
     }
   }
 
+  /** Удалить торговый центр из системы. */
+  def martDeleteSubmit(mart_id: Int) = IsSuperuser { implicit request =>
+    DB.withTransaction { implicit c =>
+      MMart.deleteById(mart_id) match {
+        case 0 => martNotFound(mart_id)
+        case 1 => Redirect(routes.SysMarket.martsList())
+          .flashing("success" -> s"Mart $mart_id deleted.")
+        case rc => throw new IllegalStateException(s"Too many rows deleted ($rc) for mart_id=$mart_id. Rollback...")
+      }
+    }
+  }
+
 
   /* Магазины (арендаторы ТЦ). */
 
@@ -232,7 +245,117 @@ object SysMarket extends SioController with MacroLogsImpl {
     }
   }
 
-  //def shopAddForm(mart_id: Int) = IsSuperuser { implicit request =>
-  //}
+  /** Форма добавления/редактирования магазина. */
+  val shopFormM = Form(mapping(
+    "name"         -> nonEmptyText(minLength = 1, maxLength = 64),
+    "mart_id"      -> number(min=1),
+    "company_id"   -> number(min=1),
+    "description"  -> optional(text(maxLength = 2048)),
+    "mart_floor"   -> optional(number(min = -10, max=200)),
+    "mart_section" -> optional(number(min=0, max=200000))
+  )
+  // apply()
+  {(name, mart_id, company_id, description, mart_floor, mart_section) =>
+    MShop(name=name, mart_id=mart_id, company_id=company_id, description=description, mart_floor=mart_floor, mart_section=mart_section)
+  }
+  // unapply()
+  {mshop =>
+    Some((mshop.name, mshop.mart_id, mshop.company_id, mshop.description, mshop.mart_floor, mshop.mart_section))
+  })
 
+
+  private def getAllCompaniesAndMarts(implicit c:Connection) = {
+    val _companies = MCompany.getAll
+    val _marts = MMart.getAll
+    (_companies, _marts)
+  }
+
+  /** Рендер страницы добавления нового магазина. */
+  def shopAddForm = IsSuperuser { implicit request =>
+    val (companies, marts) = DB.withConnection { implicit c =>
+      getAllCompaniesAndMarts
+    }
+    Ok(shop.shopAddFormTpl(shopFormM, companies, marts))
+  }
+
+  /** Сабмит формы добавления нового магазина. */
+  def shopAddFormSubmit = IsSuperuser { implicit request =>
+    shopFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        val (companies, marts) = DB.withConnection { implicit c =>
+          getAllCompaniesAndMarts
+        }
+        NotAcceptable(shop.shopAddFormTpl(formWithErrors, companies, marts))
+      },
+      {mshop =>
+        val mshopSaved = DB.withConnection { implicit c =>
+          mshop.save
+        }
+        Redirect(routes.SysMarket.shopShow(mshopSaved.id.get))
+      }
+    )
+  }
+
+  /** Рендер страницы, содержащей информацию по указанному магазину. */
+  def shopShow(shop_id: Int) = IsSuperuser { implicit request =>
+    DB.withConnection { implicit c =>
+      MShop.getById(shop_id) match {
+        case Some(mshop)  => Ok(shop.shopShowTpl(mshop))
+        case None         => shopNotFound(shop_id)
+      }
+    }
+  }
+
+  private def shopNotFound(shop_id: Int) = NotFound("Shop not found: " + shop_id)
+
+  /** Отрендерить страницу с формой редактирования магазина. */
+  def shopEditForm(shop_id: Int) = IsSuperuser { implicit request =>
+    DB.withConnection { implicit c =>
+      MShop.getById(shop_id) match {
+        case Some(mshop) =>
+          val (companies, marts) = getAllCompaniesAndMarts
+          val form = shopFormM.fill(mshop)
+          Ok(shop.shopEditFormTpl(mshop, form, companies, marts))
+
+        case None => shopNotFound(shop_id)
+      }
+    }
+  }
+
+  /** Сабмит формы редактирования магазина. */
+  def shopEditFormSubmit(shop_id: Int) = IsSuperuser { implicit request =>
+    DB.withTransaction { implicit c =>
+      MShop.getById(shop_id) match {
+        case Some(mshop) =>
+          shopFormM.bindFromRequest().fold(
+            {formWithErrors =>
+              val (companies, marts) = getAllCompaniesAndMarts
+              NotAcceptable(shop.shopEditFormTpl(mshop, formWithErrors, companies, marts))
+            },
+            {newShop =>
+              mshop.loadFrom(newShop)
+              mshop.saveUpdate
+              // Не проверяем результат saveUpdate(), т.к. withTransaction().
+              Redirect(routes.SysMarket.shopShow(shop_id))
+                .flashing("success" -> "Changes saved.")
+            }
+          )
+
+        case None => shopNotFound(shop_id)
+      }
+    }
+  }
+
+  /** Админ нажал кнопку удаления магазина. Сделать это. */
+  def shopDeleteSubmit(shop_id: Int) = IsSuperuser { implicit request =>
+    DB.withTransaction { implicit c =>
+      MShop.deleteById(shop_id) match {
+        case 1 => Redirect(routes.SysMarket.shopsList())
+          .flashing("success" -> "Shop deleted")
+        case 0 => shopNotFound(shop_id)
+        case rc => throw new IllegalStateException(s"Too many shop rows deleted($rc) for shop_id=$shop_id. Rollback...")
+      }
+    }
+  }
 }
+

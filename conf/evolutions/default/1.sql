@@ -57,8 +57,10 @@ CREATE TABLE sio2.shop (
   company_id integer NOT NULL,
   mart_id integer NOT NULL,
   name character varying(64) NOT NULL, -- Отображаемое название магазина.
-  inmart_addr character varying(64), -- Адрес внутри торгового помещения. Внутри ТЦ указывается этаж и номер помещения, а в собственных помещениях NULL.
   date_created timestamp(0) with time zone NOT NULL DEFAULT now(),
+  description character varying(2048),   --ALTER TABLE sio2.shop ADD COLUMN description character varying(2048);
+  mart_floor integer,
+  mart_section integer,
   CONSTRAINT shop_pkey PRIMARY KEY (id),
   CONSTRAINT shop_company_id_fkey FOREIGN KEY (company_id)
       REFERENCES sio2.company (id) MATCH SIMPLE
@@ -74,6 +76,7 @@ COMMENT ON TABLE sio2.shop
 Если магазин находится в своём помещении, то inmart_addr не надо указывать.';
 COMMENT ON COLUMN sio2.shop.name IS 'Отображаемое название магазина.';
 COMMENT ON COLUMN sio2.shop.inmart_addr IS 'Адрес внутри торгового помещения. Внутри ТЦ указывается этаж и номер помещения, а в собственных помещениях NULL.';
+COMMENT ON COLUMN sio2.shop.mart_section IS 'Номер секции/павильона в ТЦ.';
 
 
 -- Список ссылок на прайсы.

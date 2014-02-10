@@ -4,10 +4,15 @@
 @import sys1.market._, shop._
 @import ctx._
 @import datetime._
+@import helper._
 
 @martBase(mmart.name) {
   <h2>@mmart.name</h2>
   <p>@Messages("Mart"). <a href="@routes.SysMarket.martEditForm(mmart.id.get)">@Messages("Edit")</a></p>
+  @_martDeleteFormTpl(mmart.id.get)
+
+  <br/>
+
   <p>@Messages("Address"): @mmart.address</p>
   <p>@Messages("Owner"): <a href="@routes.SysMarket.companyShow(mmart.company_id)">@mmart.company.name</a></p>
   @mmart.site_url.map { siteUrl =>

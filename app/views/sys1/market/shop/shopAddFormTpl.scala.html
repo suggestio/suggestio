@@ -1,0 +1,13 @@
+@(sf: Form[_], companies:Seq[MCompany], marts:Seq[MMart])(implicit ctx: util.Context)
+
+@* Страница с формой добавления нового магазина. *@
+
+@shopBase("Новый магазин") {
+  @_shopFormTpl(
+    call = routes.SysMarket.shopAddFormSubmit,
+    sf = sf,
+    btnText = "Создать",
+    companies=companies,
+    marts=marts
+  )
+}

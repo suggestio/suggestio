@@ -57,6 +57,17 @@ object MMart {
     SQL("SELECT * FROM mart ORDER BY id ASC")
       .as(rowParser *)
   }
+
+  /**
+   * Удалить ТЦ с указанными id.
+   * @param id Идентификатор.
+   * @return Кол-во удалённых рядов. Т.е. 0 или 1.
+   */
+  def deleteById(id: Int)(implicit c:Connection): Int = {
+    SQL("DELETE FROM mart WHERE id = {id}")
+      .on('id -> id)
+      .executeUpdate()
+  }
 }
 
 
@@ -92,6 +103,12 @@ case class MMart(
       .executeUpdate()
   }
 
+  /** Удалить из базы текущий ряд, если есть.
+    * @return Кол-во удалённых рядов. Т.е. 0 или 1. */
+  def delete(implicit c:Connection): Int = id match {
+    case Id(_id) => deleteById(_id)
+    case NotAssigned => 0
+  }
 }
 
 

@@ -1,0 +1,41 @@
+@(shop: MShop)(implicit ctx: util.CtxWithSqlConn)
+
+@* Страница с информацией по одному магазину. *@
+@import datetime._
+@import ctx._
+
+@shopBase(shop.name) {
+  <h2>Магазин "@shop.name"</h2>
+  <a href="@routes.SysMarket.shopEditForm(shop.id.get)">@Messages("Edit")</a>
+  @_shopDeleteFormTpl(shop.id.get)
+
+  <p>Компания-владелец: <a href="@routes.SysMarket.companyShow(shop.company_id)">@shop.company.name</a></p>
+
+  @defining(shop.mart) { mmart =>
+    <p>ТЦ <a href="@routes.SysMarket.martShow(shop.mart_id)">@mmart.name</a> по адресу @mmart.address.</p>
+  }
+
+  <br/>
+  Этаж @shop.mart_floor match {
+    case Some(floor) => {
+      @floor.
+    }
+    case None => {
+      не указан.
+    }
+  }
+
+  Секция @shop.mart_section match {
+    case Some(section) => {
+      @section.
+    }
+    case None => {
+      не указана.
+    }
+  }
+
+  <p>Магазин создан @_prettyDate(shop.date_created, isCap = false, withSpan = true).</p>
+
+  <h3>Описание</h3>
+  @shop.description
+}
