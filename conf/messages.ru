@@ -10,6 +10,8 @@ Marts=Торговые центы
 Address=Адрес
 Created=Создан
 Edit=Редактировать
+Shop=Магазин
+Shops=Магазины
 
 error.invalid=Неверное значение
 error.invalid.java.util.Date=Неверный формат даты

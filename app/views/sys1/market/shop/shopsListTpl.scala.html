@@ -1,0 +1,8 @@
+@(shops: Seq[MShop], withMart:Option[Option[MMart]] = None)(implicit ctx: util.CtxWithSqlConn)
+
+@* Страница со списком магазинов/арендаторов. *@
+@import ctx._
+
+@shopBase("Все") {
+  @_shopsListTpl(shops, withMart)
+}

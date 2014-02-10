@@ -10,6 +10,8 @@ Marts=Shopping centers
 Address=Address
 Created=Created
 Edit=Edit
+Shop=Shop
+Shops=Shops
 
 error.invalid=Invalid value
 error.invalid.java.util.Date=Invalid date value

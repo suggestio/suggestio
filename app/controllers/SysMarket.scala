@@ -125,6 +125,8 @@ object SysMarket extends SioController with MacroLogsImpl {
   private def companyNotFound(companyId: Int) = NotFound("Company not found: " + companyId)
 
 
+  /* Торговые центры и площади. */
+
   /** Рендер страницы со списком торговых центров. */
   def martsList = IsSuperuser { implicit request =>
     DB.withConnection { implicit c =>
@@ -218,5 +220,19 @@ object SysMarket extends SioController with MacroLogsImpl {
       }
     }
   }
+
+
+  /* Магазины (арендаторы ТЦ). */
+
+  /** Выдать страницу со списком всех магазинов в порядке их создания. */
+  def shopsList = IsSuperuser { implicit request =>
+    DB.withConnection { implicit c =>
+      val shops = MShop.getAll
+      Ok(shop.shopsListTpl(shops, withMart=Some(None)))
+    }
+  }
+
+  //def shopAddForm(mart_id: Int) = IsSuperuser { implicit request =>
+  //}
 
 }
