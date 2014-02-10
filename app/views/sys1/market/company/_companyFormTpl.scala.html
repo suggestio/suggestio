@@ -5,9 +5,7 @@
 
 @* Форма добавления/изменения компании. *@
 
-@marketBase(title) {
-  @form(call) {
-    @inputText(cf("name"))
-    <input type="submit" value="@title"/>
-  }
+@form(call) {
+  @inputText(cf("name"))
+  <input type="submit" value="@title"/>
 }

@@ -4,6 +4,12 @@ Company=Компания
 Name=Название
 Address=Адрес
 Delete=Удалить
+Owner=Владелец
+Mart=Торговый центр
+Marts=Торговые центы
+Address=Адрес
+Created=Создан
+Edit=Редактировать
 
 error.invalid=Неверное значение
 error.invalid.java.util.Date=Неверный формат даты

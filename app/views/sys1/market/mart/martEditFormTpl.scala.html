@@ -1,11 +1,14 @@
-@(mart_id: Int, mf: Form[_])(implicit ctx: util.Context)
+@(mmart: MMart, mf: Form[_])(implicit ctx: util.Context)
 
 @* Рендер страницы редактирования существующего ТЦ. *@
 @import sys1.market._
 @import ctx._
 
-@marketBase("Редактировать ТЦ") {
-  <h2>Редактирование торгового центра</h2>
-  <a href="@routes.SysMarket.martShow(mart_id)">Вернутся назад к просмотру ТЦ</a>
-  @_martFormTpl("Сохранить", mf, routes.SysMarket.martEditFormSubmit(mart_id))
+@hPathAfter1 = {
+  / <a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.name</a>
+  / Изменить
+}
+
+@martBase("Редактировать ТЦ", hPathAfter = Some(hPathAfter1)) {
+  @_martFormTpl("Сохранить", mf, routes.SysMarket.martEditFormSubmit(mmart.id.get))
 }

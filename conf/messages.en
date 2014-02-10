@@ -4,6 +4,12 @@ Company=Company
 Name=Name
 Address=Address
 Delete=Delete
+Owner=Owner
+Mart=Shopping center
+Marts=Shopping centers
+Address=Address
+Created=Created
+Edit=Edit
 
 error.invalid=Invalid value
 error.invalid.java.util.Date=Invalid date value

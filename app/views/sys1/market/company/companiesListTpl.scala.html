@@ -2,9 +2,8 @@
 
 @* Выдать все компании, зарегистрированные в системе, списком. *@
 @import ctx._
-@import sys1.market._
 
-@marketBase(Messages("All") + " | " + Messages("Companies")) {
+@companyBase(Messages("All")) {
   <h1>Все компании</h1>
   @if(!companies.isEmpty) {
     @_companyListTpl(companies)
@@ -12,7 +11,7 @@
     Пока нет компаний в системе.
   }
 
-  <hr/>
+  <hr/><br/>
   <a href="@routes.SysMarket.companyAddForm">Добавить компанию</a>
 }
 

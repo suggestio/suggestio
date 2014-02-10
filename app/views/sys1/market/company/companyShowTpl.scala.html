@@ -5,29 +5,29 @@
 @import ctx._
 @import helper._
 
-@marketBase(mc.name + " | " + Messages("Companies")) {
+@companyBase(title = mc.name) {
   @* Отображаем данные по компании. *@
   <h2>@mc.name</h2>
 
-  <p><a href="@routes.SysMarket.companyEditForm(mc.id.get)">Редактировать</a>
+  <p><a href="@routes.SysMarket.companyEditForm(mc.id.get)">@Messages("Edit")</a></p>
   @form(routes.SysMarket.companyDeleteSubmit(mc.id.get)) {
     <input type="submit" value="@Messages("Delete")"/>
-  }</p>
+  }
 
   @* Отображаем список ТЦ, которыми владеет компания. *@
   @defining(mc.companyMarts) { marts =>
     @if(!marts.isEmpty) {
-      <h3>Торговые центры компании (@marts.size)</h3>
-      (В порядке добавления, новые снизу)
+      <h3 title="В порядке добавления, новые снизу.">Торговые центры компании (@marts.size)</h3>
       @mart._martsListTpl(marts, withCompany = None)
     }
   }
 
+  <p><a href="@routes.SysMarket.martAddForm(mc.id.get)">Добавить ТЦ</a></p>
+
   @* Отображаем список магазинов, которыми владеет/управляет компания. *@
   @defining(mc.companyShops) { shops =>
     @if(!shops.isEmpty) {
-      <h3>Магазины и торговые павильоны компании (@shops.size)</h3>
-      (В порядке добавления, новые снизу)
+      <h3 title="В порядке добавления, новые снизу.">Магазины и торговые павильоны компании (@shops.size)</h3>
       @shop._shopsListTpl(shops, withCompany = None)
     }
   }

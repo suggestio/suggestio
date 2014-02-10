@@ -1,0 +1,17 @@
+@(title: String, hPathAfter:Option[Html] = None)(content: Html)(implicit ctx: util.Context)
+
+@* Шаблон-подложка для страниц, отображающих компании. *@
+@import sys1.market._
+@import ctx._
+
+@hPathAfter1 = {
+  / <a href="@routes.SysMarket.companiesList">@Messages("Companies")</a>
+  @hPathAfter.getOrElse {
+    / @title
+  }
+}
+
+@marketBase(
+  title = title + " | " + Messages("Companies"),
+  hPathAfter = Some(hPathAfter1)
+)(content)

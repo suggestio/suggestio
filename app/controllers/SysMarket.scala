@@ -78,7 +78,7 @@ object SysMarket extends SioController with MacroLogsImpl {
     companyOpt match {
       case Some(mc)  =>
         val form = companyFormM.fill(mc.name)
-        Ok(company.companyEditFormTpl(companyId, form))
+        Ok(company.companyEditFormTpl(mc, form))
 
       case None => companyNotFound(companyId)
     }
@@ -86,23 +86,23 @@ object SysMarket extends SioController with MacroLogsImpl {
 
   /** Сабмит формы редактирования компании. */
   def companyEditFormSubmit(companyId: Int) = IsSuperuser { implicit request =>
-    companyFormM.bindFromRequest.fold(
-      {formWithErrors =>
-        NotAcceptable(company.companyEditFormTpl(companyId, formWithErrors))
-      },
-      {name =>
-        DB.withConnection { implicit c =>
-          MCompany.getById(companyId) match {
-            case Some(mc) =>
+    DB.withConnection { implicit c =>
+      MCompany.getById(companyId) match {
+        case Some(mc) =>
+          companyFormM.bindFromRequest.fold(
+            {formWithErrors =>
+              NotAcceptable(company.companyEditFormTpl(mc, formWithErrors))
+            },
+            {name =>
               mc.name = name
               mc.saveUpdate
               Redirect(routes.SysMarket.companyShow(companyId))
+            }
+          )
 
-            case None => companyNotFound(companyId)
-          }
-        }
+        case None => companyNotFound(companyId)
       }
-    )
+    }
   }
 
   /** Админ приказал удалить указанную компанию. */
@@ -188,7 +188,7 @@ object SysMarket extends SioController with MacroLogsImpl {
       MMart.getById(mart_id) match {
         case Some(mmart) =>
           val form = martFormM.fill((mmart.name, mmart.address, mmart.site_url))
-          Ok(mart.martEditFormTpl(mart_id, form))
+          Ok(mart.martEditFormTpl(mmart, form))
 
         case None => martNotFound(mart_id)
       }
@@ -196,29 +196,27 @@ object SysMarket extends SioController with MacroLogsImpl {
   }
 
   /** Сабмит формы редактирования торгового центра. */
-  def martEditFormSubmit(mart_id:Int) = IsSuperuser { implicit request =>
-    martFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        NotAcceptable(mart.martEditFormTpl(mart_id, formWithErrors))
-      },
-      {case (name, address, site_url) =>
-        DB.withTransaction { implicit c =>
-          MMart.getById(mart_id) match {
-            case Some(mmart) =>
+  def martEditFormSubmit(mart_id: Int) = IsSuperuser { implicit request =>
+    DB.withTransaction { implicit c =>
+      MMart.getById(mart_id) match {
+        case Some(mmart) =>
+          martFormM.bindFromRequest().fold(
+            {formWithErrors =>
+              NotAcceptable(mart.martEditFormTpl(mmart, formWithErrors))
+            },
+            {case (name, address, site_url) =>
               mmart.name = name
               mmart.address = address
               mmart.site_url = site_url
               mmart.saveUpdate
               // Результат saveUpdate не проверяем, т.к. withTransaction().
               Redirect(routes.SysMarket.martShow(mart_id))
+            }
+          )
 
-            case None => martNotFound(mart_id)
-          }
-        }
+        case None => martNotFound(mart_id)
       }
-    )
+    }
   }
-
-
 
 }

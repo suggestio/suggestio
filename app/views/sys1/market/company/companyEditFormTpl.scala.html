@@ -1,9 +1,16 @@
-@(companyId:Int, cf:Form[_])(implicit ctx: util.Context)
+@(company:MCompany, cf:Form[_])(implicit ctx: util.Context)
 
 @* Рендер страницы с формой редактирования компании. *@
 
-@companyFormTpl(
-  title = "Редактировать компанию",
-  cf = cf,
-  call = routes.SysMarket.companyEditFormSubmit(companyId)
-)
+@hPathAfter1 = {
+  / <a href="@routes.SysMarket.companyShow(company.id.get)">@company.name</a>
+  / Изменить
+}
+
+@companyBase("Изменить", hPathAfter=Some(hPathAfter1)) {
+  @_companyFormTpl(
+    title = "Изменить",
+    cf = cf,
+    call = routes.SysMarket.companyEditFormSubmit(company.id.get)
+  )
+}

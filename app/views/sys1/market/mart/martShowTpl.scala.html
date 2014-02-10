@@ -5,15 +5,15 @@
 @import ctx._
 @import datetime._
 
-@marketBase(mmart.name + " | Торговые центры") {
+@martBase(mmart.name) {
   <h2>@mmart.name</h2>
-  <p>Торговый центр. <a href="@routes.SysMarket.martEditForm(mmart.id.get)">Редактировать</a></p>
-  <p>Адрес: @mmart.address</p>
-  <p>Владелец: <a href="routes.SysMarket.companyShow(mmart.company_id)">@mmart.company.name</a></p>
+  <p>@Messages("Mart"). <a href="@routes.SysMarket.martEditForm(mmart.id.get)">@Messages("Edit")</a></p>
+  <p>@Messages("Address"): @mmart.address</p>
+  <p>@Messages("Owner"): <a href="@routes.SysMarket.companyShow(mmart.company_id)">@mmart.company.name</a></p>
   @mmart.site_url.map { siteUrl =>
     <p>Ссылка на сайт: <a href="@siteUrl">@siteUrl</a></p>
   }
-  <p>Создан: @_prettyDate(mmart.date_created, withSpan = true)</p>
+  <p>@Messages("Created"): @_prettyDate(mmart.date_created, withSpan = true)</p>
 
   @defining(mmart.martShops) { shops =>
     @if(shops.isEmpty) {

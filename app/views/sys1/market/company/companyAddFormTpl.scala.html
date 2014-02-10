@@ -2,8 +2,10 @@
 
 @* Рендер страницы с формой добавления новой компании. *@
 
-@companyFormTpl(
-  title = "Добавить компанию",
-  cf = cf,
-  call = routes.SysMarket.companyAddFormSubmit
-)
+@companyBase("Новая компания") {
+  @_companyFormTpl(
+    title = "Создать",
+    cf = cf,
+    call = routes.SysMarket.companyAddFormSubmit
+  )
+}
