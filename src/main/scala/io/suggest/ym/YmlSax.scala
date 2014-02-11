@@ -2,7 +2,6 @@ package io.suggest.ym
 
 import org.xml.sax.helpers.DefaultHandler
 import org.xml.sax.{SAXParseException, Locator, Attributes}
-import cascading.tuple.TupleEntryCollector
 import io.suggest.sax.SaxContentHandlerWrapper
 import YmConstants._
 import io.suggest.util.{MacroLogsImpl, UrlUtil}
@@ -16,6 +15,7 @@ import io.suggest.ym.model._
 import io.suggest.ym.ParamNames.ParamName
 import io.suggest.ym.parsers._
 import io.suggest.ym.cat.YmCatTranslator
+import javax.xml.parsers.SAXParserFactory
 
 /**
  * Suggest.io
@@ -33,7 +33,7 @@ import io.suggest.ym.cat.YmCatTranslator
  */
 
 object YmlSax extends Serializable {
-  
+
   /** Регэксп токенизации пути в общем дереве категорий маркета. */
   protected val MARKET_CATEGORY_PATH_SPLIT_RE = "\\s*/\\s*".r
 
@@ -95,7 +95,7 @@ object YmlSax extends Serializable {
   val OFFER_CATEGORY_IDS_MAX_COUNT = CONFIG.getInt("ym.sax.offer.category_ids.count.max") getOrElse 3
 
   val OFFER_TYPE_PREFIX_MAXLEN = CONFIG.getInt("ym.sax.offer.type_prefix.len.max") getOrElse 128
-  
+
   val REC_LIST_MAX_CHARLEN = CONFIG.getInt("ym.sax.offer.rec.charlen.max") getOrElse 128
   val REC_LIST_MAX_LEN     = CONFIG.getInt("ym.sax.offer.rec.len.max") getOrElse 10
   val REC_LIST_SPLIT_RE = "\\s*,\\s*".r
@@ -153,24 +153,45 @@ object YmlSax extends Serializable {
 
 
   implicit def saxParseEx2ymParseEx(e: SAXParseException) = new YmSaxException(e)
+
+
+  /** Собрать и настроить sax parser factory для парсеров, используемых в работе по
+    * разбору всех этих кривых yml-файлов. */
+  def getSaxFactory: SAXParserFactory = {
+    val saxfac = SAXParserFactory.newInstance()
+    saxfac.setValidating(false)
+    saxfac.setFeature("http://xml.org/sax/features/validation", false)
+    saxfac.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false)
+    saxfac.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+    saxfac.setFeature("http://xml.org/sax/features/external-general-entities", false)
+    saxfac.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
+    saxfac
+  }
+
 }
 
 
 import YmlSax._
 
-/**
- * SAX-парсер для прайсов в формате YML.
- * @param outputCollector Выходной коллектор, куда будут отправляться результаты.
- * @param errHandler Обработчик ошибок. Для веб-морды полезно его сделать таким, чтобы юзер видел все ошибки.
- */
-class YmlSax(
-  outputCollector: TupleEntryCollector,
-  errHandler: YmSaxErrorsHandler,
-  shopIdOpt: Option[Int] = None
-) extends DefaultHandler with SaxContentHandlerWrapper {
+/** SAX-парсер для прайсов в формате YML. Имеет абстрактные методы, которые зависят от контекста выполнения 
+  * парсера: тесты, отладка через web, продакшен и т.д.
+  * Реализован в виде трайта, т.к. функционал этого добра может в будущем неограничено расширятся и аргументы
+  * типа priceShopId -- это далеко не предел.
+  * Абстрактные методы сгруппированы в интерфейсы для возможности реализации их через другие подмешиваемые под-трайты.
+  */
+trait YmlSax extends DefaultHandler with SaxContentHandlerWrapper with YmSaxErrorHandler with YmSaxResultsHandler {
+
+  /** id магазина. Вписывается в датумы. */
+  def priceShopId: Int
+
+  /** Счетчик пройденных офферов. Даже если оффер зафейлился, тут будет инкремент. */
+  var totalOffersCounter = 0
+
+  /** Счетчик пройденных магазинов. Как правило, тут после работы хранится число 1. */
+  var totalShopCounter = 0
 
   /** Используемый анализатор имён параметров. */
-  implicit val paramStrAnalyzer = new YmStringsAnalyzer
+  implicit protected val paramStrAnalyzer = new YmStringsAnalyzer
 
   /** Дата старта парсера. Используется для определения длительности работы и для определения каких-либо параметров
     * настоящего времени во вспомогательных парсерах, связанных с датами и временем. */
@@ -180,7 +201,7 @@ class YmlSax(
   implicit var locator: Locator = null
 
   /** Стопка, которая удлиняется по мере погружения в XML теги. Текущий хэндлер наверху. */
-  private var handlersStack: List[MyHandler] = Nil
+  protected var handlersStack: List[MyHandler] = Nil
 
   /** Вернуть текущий ContentHandler. */
   def contentHandler = handlersStack.head
@@ -207,15 +228,9 @@ class YmlSax(
   }
 
   // Ошибки из JAXP или иного парсера надо перенаправлять в errHandler.
-  override def fatalError(e: SAXParseException) {
-    errHandler.fatalError(e)
-  }
-  override def error(e: SAXParseException) {
-    errHandler.error(e)
-  }
-  override def warning(e: SAXParseException) {
-    errHandler.warn(e)
-  }
+  override def fatalError(e: SAXParseException) = handleParsingFatalError(e)
+  override def error(e: SAXParseException)      = handleParsingError(e)
+  override def warning(e: SAXParseException)    = handleParsingWarn(e)
 
 
   //------------------------------------------- FSM States ------------------------------------------------
@@ -248,8 +263,12 @@ class YmlSax(
         unbecome()
       } else {
         // Надо остановиться и выругаться на неправильно закрытый тег. Наверху оно будет обработано через try-catch
-        throw YmOtherException(s"Unexpected closing tag: '$tagName', but close-tag '$myTag' expected.")
+        unexpectedClosingTag(tagName)
       }
+    }
+
+    def unexpectedClosingTag(tagName: String) {
+      throw YmOtherException(s"Unexpected closing tag: '$tagName', but close-tag '$myTag' expected.")
     }
 
     /** Фунция вызывается, когда наступает пора завершаться.
@@ -305,7 +324,9 @@ class YmlSax(
     override def startTag(tagName: String, attributes: Attributes) {
       super.startTag(tagName, attributes)
       val nextHandler = YmlCatalogFields.withName(tagName) match {
-        case YmlCatalogFields.shop => new ShopHandler(attributes)
+        case YmlCatalogFields.shop =>
+          totalShopCounter += 1
+          new ShopHandler(attributes)
       }
       become(nextHandler)
     }
@@ -357,7 +378,7 @@ class YmlSax(
             catTransMap = Some(catTranslator.getResultMap)
           } catch {
             case ex: Exception =>
-              errHandler.warn(YmOtherException("Cannot compile category tree. Offers may be inproperly categorized.", ex))
+              handleParsingWarn(YmOtherException("Cannot compile category tree. Offers may be inproperly categorized.", ex))
           }
         }
         // TODO Надо ли устранить циклы в дереве и делать другие проверки тут?
@@ -382,7 +403,7 @@ class YmlSax(
         case ShopFields.phone               => new PhoneHandler
         case e @ (ShopFields.platform | ShopFields.version | ShopFields.agency) =>
           new MyDummyHandler(e.toString, attributes)
-        case ShopFields.email               => EmailsHandler
+        case ShopFields.email               => new EmailsHandler
         case ShopFields.currencies          => new ShopCurrenciesHandler
         case ShopFields.categories          => new ShopCategoriesHandler
         case ShopFields.store               => new ShopStoreHandler
@@ -398,19 +419,33 @@ class YmlSax(
       become(nextHandler)
     }
 
+    trait ShopSVHIgnoreFailure extends SVHIgnoreFailure {
+      /** Возника ошибка при разборке значения. */
+      override def handleValueFailure(ex: Throwable) {
+        handleParsingWarn(YmShopFieldException("Failed to parse value of tag: " + ex.getMessage))
+        super.handleValueFailure(ex)
+      }
+
+      /** Начало тега, а SVH не ожидает подтегов внутри значения. Игнорим весь тег. */
+      override def startTag(tagName: String, attributes: Attributes) {
+        handleParsingWarn(YmShopFieldException(s"Unexpected inner tag '$tagName', but value expected."))
+        super.startTag(tagName, attributes)
+      }
+    }
+
     class ShopNameHandler extends StringHandler {
       def myTag = ShopFields.name.toString
       def maxLen: Int = SHOP_NAME_MAXLEN
       def handleString(s: String) { name = s }
     }
 
-    class ShopCompanyHandler extends StringHandler {
+    class ShopCompanyHandler extends StringHandler with ShopSVHIgnoreFailure {
       def myTag = ShopFields.company.toString
       def maxLen: Int = SHOP_COMPANY_MAXLEN
       def handleString(s: String) { company = s }
     }
 
-    class ShopUrlHandler extends UrlHandler {
+    class ShopUrlHandler extends UrlHandler with ShopSVHIgnoreFailure {
       def myTag  = ShopFields.url.toString
       override def maxLen: Int = SHOP_URL_MAXLEN
       def handleUrl(_url: String) { url = _url }
@@ -419,7 +454,7 @@ class YmlSax(
       }
     }
 
-    class PhoneHandler extends StringHandler {
+    class PhoneHandler extends StringHandler with ShopSVHIgnoreFailure {
       def myTag = ShopFields.phone.toString
       def maxLen: Int = PHONE_MAXLEN
       def handleString(phoneStr: String) {
@@ -428,7 +463,7 @@ class YmlSax(
       }
     }
 
-    object EmailsHandler extends StringHandler {
+    class EmailsHandler extends StringHandler with ShopSVHIgnoreFailure {
       def myTag = ShopFields.email.toString
       def maxLen: Int = EMAIL_MAXLEN
       def handleString(email: String) {
@@ -454,7 +489,7 @@ class YmlSax(
     }
 
     /** Парсер одной валюты. */
-    class ShopCurrencyHandler(attrs: Attributes) extends StringHandler {
+    class ShopCurrencyHandler(attrs: Attributes) extends StringHandler with ShopSVHIgnoreFailure {
       def myTag = TAG_CURRENCY
       def maxLen: Int = SHOP_CURRENCY_ID_MAXLEN
       def handleString(s: String) {
@@ -485,8 +520,8 @@ class YmlSax(
         }
       }
     }
-    
-    class ShopCategoryHandler(attrs: Attributes) extends StringHandler {
+
+    class ShopCategoryHandler(attrs: Attributes) extends StringHandler with ShopSVHIgnoreFailure {
       def myTag = ShopCategoriesFields.category.toString
       override def maxLen: Int = SHOP_CAT_VALUE_MAXLEN
 
@@ -522,31 +557,34 @@ class YmlSax(
       }
     }
 
-    class ShopStoreHandler extends ShopBooleanHandler {
+    class ShopStoreHandler extends ShopBooleanHandler with ShopSVHIgnoreFailure {
       def myTag = ShopFields.store.toString
       def handleBoolean(b: Boolean) { isStore = b }
     }
 
-    class ShopDeliveryHandler extends ShopBooleanHandler {
+    class ShopDeliveryHandler extends ShopBooleanHandler with ShopSVHIgnoreFailure {
       def myTag = ShopFields.delivery.toString
       def handleBoolean(b: Boolean) { isDelivery = b }
     }
 
-    class ShopPickupHandler extends ShopBooleanHandler {
+    class ShopPickupHandler extends ShopBooleanHandler with ShopSVHIgnoreFailure {
       def myTag = ShopFields.pickup.toString
       def handleBoolean(b: Boolean) { isPickup = b }
     }
 
-    class ShopDeliveryIncludedHandler extends ShopBooleanHandler {
+    class ShopDeliveryIncludedHandler extends ShopBooleanHandler with ShopSVHIgnoreFailure {
       def myTag = ShopFields.deliveryIncluded.toString
       def handleBoolean(b: Boolean) { isDeliveryIncluded = b }
     }
 
-    class ShopLocalDeliveryCostHandler extends FloatHandler {
+    class ShopLocalDeliveryCostHandler extends FloatHandler with ShopSVHIgnoreFailure {
       def myTag = ShopFields.local_delivery_cost.toString
       def handleFloat(f: Float) { localDeliveryCostOpt = Some(f) }
     }
 
+    /** Обработка магазинного флага adult. Если оператор не смог ввести значение true/face,
+      * вероятно он упорот или обе руки были заняты из-за созерцания ассортимента магазина. Следует споткнуться
+      * тут, чтобы уточнили или удалили значение из этого поля. */
     class ShopAdultHandler extends ShopBooleanHandler {
       def myTag = ShopFields.adult.toString
       def handleBoolean(b: Boolean) { isAdult = b }
@@ -562,7 +600,9 @@ class YmlSax(
 
       // Включить обработчик offer-тега.
       val nextHandler: MyHandler = OffersFields.withName(tagName) match {
-        case OffersFields.offer => AnyOfferHandler(attributes)
+        case OffersFields.offer =>
+          totalOffersCounter += 1
+          AnyOfferHandler(attributes)
       }
       become(nextHandler)
     }
@@ -614,10 +654,7 @@ class YmlSax(
     groupIdOpt  = Option(myAttrs.getValue(ATTR_GROUP_ID)).map(_.trim)
     offerType   = myOfferType
     shopMeta    = shopCtx.datum
-    // Выставить переданный shop_id в состояние.
-    if (shopIdOpt.isDefined) {
-      shopId    = shopIdOpt.get
-    }
+    shopId      = priceShopId
 
     isAvailable = {
       val maybeAvailable = myAttrs.getValue(ATTR_AVAILABLE)
@@ -640,7 +677,7 @@ class YmlSax(
     /** Возникла какая-то проблема, нивелирующая весь труд по парсингу этого оффера. */
     protected def skipCurrentOffer(reason: YmParserException) {
       isSkipping = true
-      errHandler.error(reason)
+      handleParsingError(reason)
     }
 
     /** Аккамулятор списка категорий магазина, который должен быть непустым. */
@@ -666,7 +703,7 @@ class YmlSax(
       // xCategory ignored
       case (AnyOfferFields.categoryId, attrs)               => new CategoryIdHandler(attrs)
       case (AnyOfferFields.market_category, _)              => new MarketCategoryHandler
-      case (AnyOfferFields.picture, _)                      => PictureUrlHandler
+      case (AnyOfferFields.picture, _)                      => new PictureUrlHandler
       case (AnyOfferFields.store, _)                        => new OfferStoreHandler
       case (AnyOfferFields.pickup, _)                       => new OfferPickupHandler
       case (AnyOfferFields.delivery, _)                     => new OfferDeliveryHandler
@@ -712,7 +749,7 @@ class YmlSax(
       if (!isSkipping) {
         commit()
         // И вот та команда, ради которой написаны все остальные строки:
-        outputCollector add offerDatum.getTuple
+        handleOfferDatum(offerDatum, shopCtx.datum)
       }
     }
 
@@ -741,9 +778,16 @@ class YmlSax(
       }
     }
 
-    trait IgnoreFieldFailure extends SVHOfferFailureControl {
+    trait IgnoreFieldFailure extends SVHOfferFailureControl with SVHIgnoreFailure {
+      /** Начало тега, а SVH не ожидает подтегов внутри значения. Игнорим весь тег. */
+      override def startTag(tagName: String, attributes: Attributes) {
+        handleParsingWarn(YmOtherException(s"Unexpected tag $tagName, but value expected."))
+        super.startTag(tagName, attributes)
+      }
+
       override def handleValueFailure(ex: Throwable) {
-        errHandler.warn(maybeWrapFailureException(ex))
+        handleParsingWarn(maybeWrapFailureException(ex))
+        super.handleValueFailure(ex)
       }
     }
 
@@ -789,13 +833,13 @@ class YmlSax(
           if (_marketCatPathOpt.isEmpty  &&  shopCtx.catTransMap.isDefined) {
             shopCtx.catTransMap.get.get(catId) match {
               case Some(cat)  => _marketCatPathOpt = Some(cat.path)
-              case None       => errHandler.warn(YmOfferFieldException("Unknown category id: " + catId))
+              case None       => handleParsingWarn(YmOfferFieldException("Unknown category id: " + catId))
             }
           }
           categoryIdsAcc ::= OfferCategoryId(catId, catIdType)
           categoryIdsAccLen += 1
         } else {
-          errHandler.warn(YmOfferFieldException("Too many categories."))
+          handleParsingWarn(YmOfferFieldException("Too many categories."))
         }
       }
     }
@@ -821,7 +865,7 @@ class YmlSax(
 
     /** Аккамулирование ссылок на картинки в pictures. Картинок может быть много, и хотя бы одна почти всегда имеется,
       * поэтому блокируем многократное конструирование этого объекта. */
-    object PictureUrlHandler extends OfferAnyUrlHandler with IgnoreFieldFailure {
+    class PictureUrlHandler extends OfferAnyUrlHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.picture.toString
       override def maxLen: Int = OFFER_PICTURE_URL_MAXLEN
       def handleUrl(pictureUrl: String) {
@@ -829,7 +873,7 @@ class YmlSax(
           picturesAcc ::= pictureUrl
           picturesAccLen += 1
         } else {
-          errHandler.warn(YmOfferFieldException("Too many pictures. Some pictures ignored."))
+          handleParsingWarn(YmOfferFieldException("Too many pictures. Some pictures ignored."))
         }
       }
     }
@@ -1168,7 +1212,7 @@ class YmlSax(
           recIdsAccLen += 1
           recIds = recIds.tail
         }
-      } 
+      }
     }
 
     /** expiry: Истечение срока годности/службы или чего-то подобного. Может быть как период, так и дата. */
@@ -1281,12 +1325,12 @@ class YmlSax(
         volumesCount = Some(i)
       }
     }
-    
+
     class VolumesPartHandler extends IntHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.part.toString
       def handleInt(i: Int) {
         volume = Some(i)
-      } 
+      }
     }
 
     class LanguageHandler extends StringHandler with IgnoreFieldFailure {
@@ -1480,7 +1524,7 @@ class YmlSax(
         director = s
       }
     }
-    
+
     class OriginalNameHandler extends StringHandler with IgnoreFieldFailure {
       def myTag = AnyOfferFields.originalName.toString
       override def maxLen: Int = OFFER_NAME_MAXLEN
@@ -1535,7 +1579,7 @@ class YmlSax(
         worldRegion = s
       }
     }
-    
+
     class RegionHandler extends StringHandler with IgnoreFieldFailure {
       override def maxLen: Int = REGION_MAXLEN
       def myTag = AnyOfferFields.region.toString
@@ -1597,7 +1641,7 @@ class YmlSax(
         } else {
           throw YmOfferFieldException("Cannot understand 'meal' field value: " + s)
         }
-      } 
+      }
     }
 
     class IncludedHandler extends StringHandler with SkipOfferOnFailure {
@@ -1713,6 +1757,8 @@ class YmlSax(
     def myAttrs: Attributes = EmptyAttrs
     def handleRawValue(sb: StringBuilder)
 
+    protected var isIgnore = false
+
     /** Сброс переменных накопления данных в исходное состояние. */
     def reset() {
       sbLen = 0
@@ -1723,27 +1769,31 @@ class YmlSax(
     /** Считываем символы в буфер с ограничением по максимальной длине буффера. Иными словами, не считываем
       * ничего лишнего. Если переполнение, то выставить флаг и многоточие вместо последнего символа. */
     override def characters(ch: Array[Char], start: Int, length: Int) {
-      val _maxLen = maxLen
-      if (sbLen < _maxLen) {
-        if (sbLen + length >= _maxLen) {
-          val copyLen = _maxLen - sbLen - ellipsis.length
-          sb.appendAll(ch, start, copyLen)
-          sbLen = _maxLen
-          sb append ellipsis
-          hadOverflow = true
-        } else {
-          sb.appendAll(ch, start, length)
-          sbLen += length
+      if (!isIgnore) {
+        val _maxLen = maxLen
+        if (sbLen < _maxLen) {
+          if (sbLen + length >= _maxLen) {
+            val copyLen = _maxLen - sbLen - ellipsis.length
+            sb.appendAll(ch, start, copyLen)
+            sbLen = _maxLen
+            sb append ellipsis
+            hadOverflow = true
+          } else {
+            sb.appendAll(ch, start, length)
+            sbLen += length
+          }
         }
       }
-     }
+    }
 
     /** Выход из текущего элемента. Вызвать функцию, обрабатывающую собранный результат. */
     override def endTag(tagName: String) {
-      try {
-        handleRawValue(sb)
-      } catch {
-        case ex: Throwable => handleValueFailure(ex)
+      if (!isIgnore) {
+        try {
+          handleRawValue(sb)
+        } catch {
+          case ex: Throwable => handleValueFailure(ex)
+        }
       }
       super.endTag(tagName)
     }
@@ -1767,6 +1817,25 @@ class YmlSax(
       throw maybeWrapFailureException(ex)
     }
   }
+
+  /** Добавить в SimpleValueHandler функционал подавления ошибок. */
+  trait SVHIgnoreFailure extends SimpleValueHandler {
+    /** Начало тега, а SVH не ожидает подтегов внутри значения. Игнорим весь тег. */
+    override def startTag(tagName: String, attributes: Attributes) {
+      isIgnore = true
+    }
+
+    /** Возника ошибка при разборке значения. */
+    override def handleValueFailure(ex: Throwable) {
+      isIgnore = true
+    }
+
+    /** Возникла проблема при закрытии тега. Подавляем ошибку в ожидании нормального закрывающего тега. */
+    override def unexpectedClosingTag(tagName: String) {
+      isIgnore = true
+    }
+  }
+
 
   /** Абстрактный обработчик поля, которое содержит какой-то текст. */
   trait StringHandler extends SimpleValueHandler {
@@ -1853,7 +1922,7 @@ class YmlSax(
       handleInt(sb.toInt)
     }
   }
-  
+
   /** Абстрактный обработчик полей, которые содержат float-значения. */
   trait FloatHandler extends SimpleValueHandler {
     def handleFloat(f: Float)
@@ -1891,23 +1960,57 @@ trait SimpleValueT {
 
 
 /** Интерфейс обработчика ошибок SAX-парсеров ym-прайслистов. */
-trait YmSaxErrorsHandler {
-  def warn(ex:  YmParserException)
-  def error(ex: YmParserException)
-  def fatalError(ex: YmParserException)
+trait YmSaxErrorHandler {
+  def handleParsingWarn(ex:  YmParserException)
+  def handleParsingError(ex: YmParserException)
+  def handleParsingFatalError(ex: YmParserException)
 }
 
-/** Реализация логгера, который ругается в log4j об ошибках. */
-class YmSaxErrorLogger(prefix: String) extends YmSaxErrorsHandler with MacroLogsImpl {
-  def warn(ex: YmParserException) {
-    LOGGER.warn(prefix, ex)
+/** Реализация логгера, который ругается в log4j об ошибках вместе с длинными бактрейсами.
+  * Бывает полезно при тестах. */
+trait YmSaxErrorLogger extends YmSaxErrorHandler with MacroLogsImpl {
+  def logPrefix: String
+
+  def handleParsingWarn(ex: YmParserException) {
+    LOGGER.warn(logPrefix, ex)
   }
-  def error(ex: YmParserException) {
-    LOGGER.error(prefix, ex)
+  def handleParsingError(ex: YmParserException) {
+    LOGGER.error(logPrefix, ex)
   }
-  def fatalError(ex: YmParserException) {
-    LOGGER.error(prefix + " FATAL", ex)
+  def handleParsingFatalError(ex: YmParserException) {
+    LOGGER.error(logPrefix + " FATAL", ex)
   }
+}
+
+/** Логгер, который пишет в логи, но без бактрейсов. */
+trait YmSaxOnlyMsgErrorLogger extends YmSaxErrorHandler with MacroLogsImpl {
+  def logPrefix: String
+
+  override def handleParsingFatalError(ex: YmParserException) {
+    LOGGER.error(logPrefix + " FATAL " + ex.getMessage)
+  }
+
+  override def handleParsingError(ex: YmParserException) {
+    LOGGER.error(logPrefix + ex.getMessage)
+  }
+
+  override def handleParsingWarn(ex: YmParserException) {
+    LOGGER.warn(logPrefix + ex.getMessage)
+  }
+}
+
+
+trait YmSaxResultsHandler {
+  /** Завершена сборка одного датума комерческого предложения.
+    * @param offerDatum Датум комерческого предложения.
+    * @param currenShopDatum Текущий, ещё не законченный экземпляр [[io.suggest.ym.model.YmShopDatum]].
+    */
+  def handleOfferDatum(offerDatum: YmOfferDatum, currenShopDatum: YmShopDatum)
+
+  /** Обработка тега shop завершена. Есть готовый [[io.suggest.ym.model.YmShopDatum]] и его можно отработать.
+   * @param shopDatum Датум магазина.
+   */
+  def handleShopDatum(shopDatum: YmShopDatum)
 }
 
 

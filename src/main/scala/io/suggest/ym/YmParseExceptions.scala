@@ -59,7 +59,7 @@ abstract class YmShopException extends YmParserException {
   override def getMessageBuilder: StringBuilder = {
     val sb = super.getMessageBuilder
     if (shopName != null)
-      sb.append(shopName).append(' ')
+      sb.append('[').append(shopName).append(']').append(' ')
     sb
   }
 }

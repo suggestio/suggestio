@@ -4,7 +4,7 @@ import org.scalatest._
 import javax.xml.parsers.SAXParserFactory
 import cascading.tap.hadoop.Hfs
 import cascading.scheme.hadoop.SequenceFile
-import io.suggest.ym.model.YmOfferDatum
+import io.suggest.ym.model.{YmShopDatum, YmOfferDatum}
 import cascading.flow.hadoop.HadoopFlowProcess
 import io.suggest.util.SiobixFs.fs
 import org.apache.hadoop.fs.Path
@@ -27,10 +27,16 @@ class YmlSaxTest extends FlatSpec with Matchers {
     try {
       val outCollector = outTap.openForWrite(hfp)
       try {
-        val factory = SAXParserFactory.newInstance()
-        factory.setValidating(false)
+        val factory = YmlSax.getSaxFactory
         val parser = factory.newSAXParser()
-        val cHandler = new YmlSax(outCollector, new YmSaxErrorLogger("test"))
+        val cHandler = new YmlSax with YmSaxErrorLogger {
+          override def priceShopId: Int = -1
+          override val logPrefix: String = "test"
+          override def handleShopDatum(shopDatum: YmShopDatum) {}
+          override def handleOfferDatum(offerDatum: YmOfferDatum, currenShopDatum: YmShopDatum) {
+            outCollector add offerDatum.getTuple
+          }
+        }
         parser.parse(is, cHandler)
       } finally {
         outCollector.close()

@@ -18,10 +18,10 @@ libraryDependencies ++= {
   val slf4jVsn      = "1.7.5"
   val hadoopVsn     = "2.2.0"
   val hbaseVsn      = "0.96.1.1-hadoop2"
-  val akkaVsn       = "2.3.0-RC1"
+  val akkaVsn       = "2.3.0-RC2"
   val jacksonVsn    = "2.3.0"
   val tikaVsn       = "1.4"
-  val cascadingVsn  = "2.5.1"
+  val cascadingVsn  = "2.5.2"
   val morphVsn      = "1.2-SNAPSHOT"
   val playVsn       = "2.3-SNAPSHOT"
   Seq(
@@ -52,7 +52,8 @@ libraryDependencies ++= {
     "org.hbase" % "asynchbase" % "1.5.0A-SNAPSHOT",
     // cascading
     "cascading" % "cascading-core" % cascadingVsn,
-    "cascading" % "cascading-hadoop" % cascadingVsn,
+    //"cascading" % "cascading-hadoop" % cascadingVsn,      // hadoop <= 1.x
+    "cascading" % "cascading-hadoop2-mr1" % cascadingVsn,   // hadoop >= 2.x
     "com.scaleunlimited" % "cascading-utils" % "2.2sio-SNAPSHOT", // нужно для HadoopUtils.
     // Морфология
     "org.apache.lucene.morphology" % "russian" % morphVsn,
