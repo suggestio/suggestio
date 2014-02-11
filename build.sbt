@@ -9,7 +9,8 @@ scalacOptions ++= Seq("-unchecked", "-deprecation")
 resolvers ++= Seq(
   "sonatype-oss-releases" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots",
   "apache-releases" at "https://ivy2-internal.cbca.ru/artifactory/apache-releases",
-  "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo"
+  "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo",
+  "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com"
 )
 
 
