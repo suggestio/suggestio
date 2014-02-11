@@ -98,7 +98,7 @@ case class MShopPriceList(
     */
   def saveUpdate(implicit c: Connection): Int = {
     SQL("UPDATE shop_pricelist SET url = {url}, auth_info = {auth_info} WHERE id = {id}")
-      .on('id -> id, 'url -> url, 'auth_info -> auth_info)
+      .on('id -> id, 'url -> url, 'auth_info -> authInfoStr)
       .executeUpdate()
   }
 
