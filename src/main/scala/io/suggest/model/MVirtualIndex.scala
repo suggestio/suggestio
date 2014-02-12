@@ -181,7 +181,7 @@ case class MVirtualIndexVin(@JsonIgnore vin: String) extends MVirtualIndex {
 
 trait MVirtualIndex extends Serializable {
 
-  import LOGGER._
+  import MVirtualIndex.LOGGER._
 
 
   @JsonIgnore def vinPrefix:  String

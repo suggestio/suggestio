@@ -15,19 +15,19 @@ resolvers ++= Seq(
 
 
 libraryDependencies ++= {
-  val slf4jVsn      = "1.7.5"
-  val hadoopVsn     = "2.2.0"
+  val slf4jVsn      = "1.7.+"
+  val hadoopVsn     = "2.2.+"
   val hbaseVsn      = "0.96.1.1-hadoop2"
   val akkaVsn       = "2.3.0-RC2"
-  val jacksonVsn    = "2.3.0"
+  val jacksonVsn    = "2.3.+"
   val tikaVsn       = "1.4"
-  val cascadingVsn  = "2.5.2"
+  val cascadingVsn  = "2.5.+"
   val morphVsn      = "1.2-SNAPSHOT"
   val playVsn       = "2.3-SNAPSHOT"
   Seq(
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
-    "com.typesafe" %% "scalalogging-slf4j" % "1.1.0",
+    "com.typesafe" %% "scalalogging-slf4j" % "1.1.+",
     "org.gnu.inet" % "libidn" % "1.15",
     "com.github.nscala-time" %% "nscala-time" % "0.2.0",
     "commons-lang" % "commons-lang" % "2.4",

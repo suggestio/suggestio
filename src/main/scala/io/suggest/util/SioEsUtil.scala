@@ -7,15 +7,12 @@ import org.elasticsearch.common.xcontent.XContentBuilder
 import SioConstants._
 import scala.concurrent.{Future, Promise}
 import org.elasticsearch.action.{ActionListener, ListenableActionFuture}
-import org.elasticsearch.action.admin.indices.optimize.{OptimizeResponse, OptimizeRequest}
 import scala.concurrent.ExecutionContext
 import scala.util.{Success, Failure}
 import org.elasticsearch.action.admin.indices.close.CloseIndexRequestBuilder
-import org.elasticsearch.action.admin.indices.open.OpenIndexRequestBuilder
 import io.suggest.model.MVirtualIndex
 import org.elasticsearch.node.{NodeBuilder, Node}
 import org.elasticsearch.cluster.ClusterName
-import cascading.tuple.TupleEntry
 
 /**
  * Suggest.io
@@ -24,7 +21,12 @@ import cascading.tuple.TupleEntry
  * Description: Функции для работы с ElasticSearch. В основном - функции генерации json-спек индексов.
  */
 
-object SioEsUtil extends Logs {
+object SioEsUtil extends MacroLogsImpl {
+
+  import LOGGER._
+  import FieldIndexingVariants.FieldIndexingVariant
+  import TermVectorVariants.TermVectorVariant
+  import DocFieldTypes.DocFieldType
 
   // _FN - Filter Name. _AN - Analyzer Name, _TN - Tokenizer Name
 
@@ -141,7 +143,7 @@ object SioEsUtil extends Logs {
    * @return true, если всё нормально
    */
   def openIndex(indexName:String)(implicit client:Client, executor:ExecutionContext): Future[Boolean] = {
-    lazy val logPrefix = "openIndex(%s): " format indexName
+    lazy val logPrefix = s"openIndex($indexName): "
     trace(logPrefix + "Sending open request...")
     client.admin().indices()
       .prepareOpen(indexName)
@@ -149,11 +151,11 @@ object SioEsUtil extends Logs {
       .transform(
         {resp =>
           val result = resp.isAcknowledged
-          debug(logPrefix + "Open index finished: %s" format result)
+          debug(logPrefix + "Open index finished: " + result)
           result
         },
         {ex =>
-          error(logPrefix + "Failed to open index '%s'" format indexName, ex)
+          error(logPrefix + "Failed to open index: " + indexName, ex)
           ex}
       )
   }
@@ -218,7 +220,12 @@ object SioEsUtil extends Logs {
   }
 
 
-  protected def jsonGenerator(f: XContentBuilder => JsonObject) : XContentBuilder = {
+  /**
+   * Метод для вызова генератора json'а.
+   * @param f Функция заполнения json-объекта данными.
+   * @return Билдер с уже выстроенной структурой.
+   */
+  def jsonGenerator(f: XContentBuilder => JsonObject) : XContentBuilder = {
     val b = jsonBuilder().startObject()
     f(b).builder(b).endObject()
   }
@@ -274,14 +281,20 @@ object SioEsUtil extends Logs {
   /** Генератор мульти-полей title и contentText для маппинга страниц. Helper для getPageMapping(). */
   private def multiFieldFtsNgram(name:String, boostFts:Float, boostNGram:Float) = {
     new FieldMultifield(name, fields = Seq(
-      FieldString(name, include_in_all=true, index="no", boost=Some(boostFts)),
+      FieldString(
+        id = name,
+        include_in_all = true,
+        index = FieldIndexingVariants.no,
+        boost = Some(boostFts)
+      ),
       FieldString(
         id = "gram",
-        index = "analyzed",
+        index = FieldIndexingVariants.analyzed,
         index_analyzer = EDGE_NGRAM_AN,
         search_analyzer = MINIMAL_AN,
-        term_vector = "with_positions_offsets",
-        boost = Some(boostNGram)
+        term_vector = TermVectorVariants.with_positions_offsets,
+        boost = Some(boostNGram),
+        include_in_all = false
       )
     ))
   }
@@ -297,20 +310,46 @@ object SioEsUtil extends Logs {
         typ = typeName,
 
         static_fields = Seq(
-          FieldSource(true),
-          FieldAll(true, analyzer = FTS_RU_AN)
+          FieldSource(enabled = true),
+          FieldAll(enabled = true, analyzer = FTS_RU_AN)
         ),
 
         properties = Seq(
-          FieldString(FIELD_URL, index="no", include_in_all=false),
-          FieldString(FIELD_IMAGE_ID, index="no", include_in_all=false),   // TODO в старой версии почему-то было true
-          FieldNumber(FIELD_DATE_KILOSEC, typ="long", index="no", include_in_all=false),
+          FieldString(
+            id = FIELD_URL,
+            index = FieldIndexingVariants.no,
+            include_in_all = false
+          ),
+          FieldString(
+            id = FIELD_IMAGE_ID,
+            index = FieldIndexingVariants.no,
+            include_in_all = false
+          ),
+          FieldNumber(
+            id = FIELD_DATE_KILOSEC,
+            fieldType = DocFieldTypes.long,
+            index = FieldIndexingVariants.no,
+            include_in_all = false
+          ),
           multiFieldFtsNgram(FIELD_TITLE, 4.1f, 2.7f),
           multiFieldFtsNgram(FIELD_CONTENT_TEXT, 1.0f, 0.7f),
-          FieldString(FIELD_LANGUAGE, index="not_analyzed", include_in_all=false),
-          FieldString(FIELD_DKEY, index="no", include_in_all=false),
+          FieldString(
+            id = FIELD_LANGUAGE,
+            index = FieldIndexingVariants.not_analyzed,
+            include_in_all = false
+          ),
+          FieldString(
+            id = FIELD_DKEY,
+            index = FieldIndexingVariants.no,
+            include_in_all = false
+          ),
           // Тут array-поле, но для ES одинакого -- одно значение в поле или целый массив.
-          FieldString(FIELD_PAGE_TAGS, index="not_analyzed", store="no", include_in_all=false)
+          FieldString(
+            id = FIELD_PAGE_TAGS,
+            index = FieldIndexingVariants.not_analyzed,
+            store = false,
+            include_in_all = false
+          )
         )
       )
     }
@@ -328,6 +367,25 @@ object SioEsUtil extends Logs {
     laf.addListener(new EsAction2Promise(p))
     p.future
   }
+
+
+object FieldIndexingVariants extends Enumeration {
+  type FieldIndexingVariant = Value
+  val analyzed, not_analyzed, no = Value
+  def default = analyzed
+}
+
+object TermVectorVariants extends Enumeration {
+  type TermVectorVariant = Value
+  val no, yes, with_offsets, with_positions, with_positions_offsets = Value
+  def default = no
+}
+
+object DocFieldTypes extends Enumeration {
+  type DocFieldType = Value
+  val string, integer, long, float, double, boolean, `null`,
+      multi_field, ip, geo_point, geo_shape, attachment, date, binary = Value
+}
 
 
 // Далее идут классы JSON-DSL-генераторы для упрощения написания всяких вещей.
@@ -407,7 +465,6 @@ trait JsonObject extends Renderable {
 /** Многие объекты JSON DSL имеют параметр "type".
  * _typed_json_object подходит для описания фильтров, токенизаторов и т.д. */
 trait TypedJsonObject extends JsonObject {
-  
   def typ: String
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
@@ -547,35 +604,51 @@ case class FilterEdgeNgram(
 
 
 // Поля документа ------------------------------------------------------------------------------------------------------
+trait Field extends JsonObject
+
+trait DocField extends Field with TypedJsonObject {
+  def fieldType: DocFieldType
+  override def typ: String = fieldType.toString
+}
+
 /** Почти все поля содержат параметр index_name. */
-trait FieldRenameable extends TypedJsonObject {
+trait FieldInxName extends Field {
   def index_name: String
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder(b)
-
     if (index_name != null)
       b.field("index_name", index_name)
   }
 }
 
+trait FieldStoreable extends Field {
+  def store: Boolean
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    if (store)
+      b.field("store", "yes")
+  }
+}
+
+trait FieldIndexable extends Field {
+  def index : FieldIndexingVariant
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    if (index != null)
+      b.field("index", index.toString)
+  }
+}
 
 /** Некое абстрактное индексируемое поле. Сюда не входит binary. */
-trait FieldIndexable extends FieldRenameable {
-  // _field_indexable
-  def store : String            // = [yes] | no
-  def index : String            // = [analyzed] | not_analyzed | no
+trait DocFieldIndexable extends DocField with FieldInxName with FieldStoreable with FieldIndexable {
   def boost : Option[Float]
   def include_in_all : Boolean
   def null_value : String
   
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
-
-    if (store != null)
-      b.field("store", store)
-    if (index != null)
-      b.field("index", index)
     if (boost.isDefined)
       b.field("boost", boost.get)
     if (!include_in_all)
@@ -585,19 +658,18 @@ trait FieldIndexable extends FieldRenameable {
   }
 }
 
-
 /** Поле строки. */
 case class FieldString(
   id : String,
+  index : FieldIndexingVariant,
+  include_in_all : Boolean,
   index_name : String = null,
   // _field_indexable
-  store : String = null,          // = [yes] | no
-  index : String = null,          // = [analyzed] | not_analyzed | no
+  store : Boolean = false,
   boost : Option[Float] = None,
-  include_in_all : Boolean = true,
   null_value : String = null,
   // _field_string
-  term_vector : String = null,    // = [no] | yes | with_offsets | with_positions | with_positions_offsets
+  term_vector : TermVectorVariant = null,
   omit_norms : Option[Boolean] = None,
   index_options : String = null,  // = docs | freqs | positions
   analyzer : String = null,
@@ -606,25 +678,17 @@ case class FieldString(
   ignore_above : Option[Boolean] = None,
   position_offset_gap : Option[Int] = None
 
-) extends FieldIndexable {
-  
-  def typ = "string"
+) extends DocFieldIndexable with TextField {
+
+  def fieldType = DocFieldTypes.string
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
 
-    if (term_vector != null)
-      b.field("term_vector", term_vector)
     if (omit_norms.isDefined)
       b.field("omit_norms", omit_norms.get)
     if (index_options != null)
       b.field("index_options", index_options)
-    if (analyzer != null)
-      b.field("analyzer", analyzer)
-    if (index_analyzer != null)
-      b.field("index_analyzer", index_analyzer)
-    if (search_analyzer != null)
-      b.field("search_analyzer", search_analyzer)
     if (ignore_above.isDefined)
       b.field("ignore_above", ignore_above.get)
     if (position_offset_gap.isDefined)
@@ -634,7 +698,7 @@ case class FieldString(
 
 
 /** Абстрактное поле для хранения неточных данных типа даты-времени и чисел. */
-trait FieldApprox extends FieldIndexable {
+trait FieldApprox extends DocFieldIndexable {
   def precision_step : Option[Int]
   def ignore_malformed : Option[Boolean]
 
@@ -652,12 +716,12 @@ trait FieldApprox extends FieldIndexable {
 /** Поле с числом. */
 case class FieldNumber(
   id : String,
-  typ : String,                   // = float | double | integer | long | short | byte
+  fieldType : DocFieldType,
+  index : FieldIndexingVariant,
+  include_in_all : Boolean,
   index_name : String = null,
-  store : String = null,          // = [yes] | no
-  index : String = null,          // = [analyzed] | not_analyzed | no
+  store : Boolean = false,
   boost : Option[Float] = None,
-  include_in_all : Boolean = true,
   null_value : String = null,
   precision_step : Option[Int] = None,
   ignore_malformed : Option[Boolean] = None
@@ -667,30 +731,30 @@ case class FieldNumber(
 /** Поле с датой. */
 case class FieldDate(
   id : String,
+  index : FieldIndexingVariant,
+  include_in_all : Boolean,
   index_name : String = null,
-  store : String = null,          // = [yes] | no
-  index : String = null,          // = [analyzed] | not_analyzed | no
+  store : Boolean = false,
   boost : Option[Float] = None,
-  include_in_all : Boolean = true,
   null_value : String = null,
   precision_step : Option[Int] = None,
   ignore_malformed : Option[Boolean] = None
 ) extends FieldApprox {
-  def typ = "date"
+  def fieldType = DocFieldTypes.date
 }
 
 
 /** Булево значение. */
 case class FieldBoolean(
   id : String,
+  index : FieldIndexingVariant,
+  include_in_all : Boolean,
   index_name : String = null,
-  store : String = null,          // = [yes] | no
-  index : String = null,          // = [analyzed] | not_analyzed | no
+  store : Boolean = false,
   boost : Option[Float] = None,
-  include_in_all : Boolean = true,
   null_value : String = null
-) extends FieldIndexable {
-  def typ = "boolean"
+) extends DocFieldIndexable {
+  def fieldType = DocFieldTypes.boolean
 }
 
 
@@ -698,12 +762,12 @@ case class FieldBoolean(
 case class FieldBinary(
   id : String,
   index_name : String = null
-) extends FieldRenameable {
-  def typ = "binary"
+) extends DocField with FieldInxName {
+  def fieldType = DocFieldTypes.binary
 }
 
 
-trait FieldEnableable extends JsonObject {
+trait FieldEnableable extends Field {
   def enabled: Boolean
   
   override def fieldsBuilder(implicit b: XContentBuilder) {
@@ -712,34 +776,36 @@ trait FieldEnableable extends JsonObject {
   }
 }
 
+trait TextField extends Field {
+  def term_vector: TermVectorVariant
+  def search_analyzer: String
+  def index_analyzer : String
+  def analyzer : String
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    if (term_vector != null)
+      b.field("term_vector", term_vector.toString)
+    if (search_analyzer != null)
+      b.field("search_analyzer", search_analyzer)
+    if (index_analyzer != null)
+      b.field("index_analyzer", index_analyzer)
+    if (analyzer != null)
+      b.field("analyzer", analyzer)
+  }
+}
+
 
 /** Поле _all */
 case class FieldAll(
   enabled : Boolean = true,
-  store : String = null,
-  term_vector : String = null,
+  store : Boolean = false,
+  term_vector : TermVectorVariant = null,
   analyzer : String = null,
   index_analyzer : String = null,
   search_analyzer : String = null
-
-) extends FieldEnableable {
-  
+) extends FieldEnableable with TextField with FieldStoreable {
   def id = FIELD_ALL
-
-  override def fieldsBuilder(implicit b: XContentBuilder) {
-    super.fieldsBuilder
-
-    if (store != null)
-      b.field("store", store)
-    if (term_vector != null)
-      b.field("term_vector", term_vector)
-    if (analyzer != null)
-      b.field("analyzer", analyzer)
-    if (index_analyzer != null)
-      b.field("index_analyzer", index_analyzer)
-    if (search_analyzer != null)
-      b.field("search_analyzer", search_analyzer)
-  }
 }
 
 
@@ -752,22 +818,16 @@ case class FieldSource(enabled: Boolean = true) extends FieldEnableable {
 /** Поле _routing. */
 case class FieldRouting(
   required : Boolean = false,
-  store : String = null,
-  index : String = null,
+  store : Boolean = false,
+  index : FieldIndexingVariant = null,
   path  : String = null
-) extends JsonObject {
-  
+) extends FieldStoreable with FieldIndexable {
   def id = FIELD_ROUTING
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
-
     if (required)
       b.field("required", required)
-    if (store != null)
-      b.field("store", store)
-    if (index != null)
-      b.field("index", index)
     if (path != null)
       b.field("path", path)
   }
@@ -775,7 +835,7 @@ case class FieldRouting(
 
 
 /** Мультиполе multi_field. */
-case class FieldMultifield(id:String, fields:Seq[JsonObject]) extends TypedJsonObject {
+case class FieldMultifield(id:String, fields:Seq[JsonObject]) extends Field {
   
   def typ = "multi_field"
 
@@ -876,4 +936,5 @@ class EsAction2Promise[T](promise: Promise[T]) extends ActionListener[T] {
     promise failure ex
   }
 }
+
 

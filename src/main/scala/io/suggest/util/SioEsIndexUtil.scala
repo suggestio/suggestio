@@ -28,7 +28,9 @@ import org.elasticsearch.index.shard.service.InternalIndexShard.INDEX_REFRESH_IN
  * Description:
  */
 
-object SioEsIndexUtil extends Logs with Serializable {
+object SioEsIndexUtil extends MacroLogsImpl with Serializable {
+
+  import LOGGER._
 
   // Описание идентификатор типов
   type IITYPE_t = String

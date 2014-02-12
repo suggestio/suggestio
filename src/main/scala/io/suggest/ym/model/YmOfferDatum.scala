@@ -95,7 +95,7 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
     fieldsAcc
   }
 
-  // Payload-поля, хранящиеся в PAYLOAD_FN, т.к. допустимы не для каждого товара или редко используются
+  // Payload-поля, хранящиеся в PAYLOAD_FN, т.к. допустимы далеко не для каждого товара или редко используются
   val NAME_PFN                  = payloadFieldName("name")
   val VENDOR_PFN                = payloadFieldName("vendor")
   val VENDOR_CODE_PFN           = payloadFieldName("vendorCode")

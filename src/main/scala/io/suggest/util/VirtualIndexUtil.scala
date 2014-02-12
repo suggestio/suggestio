@@ -12,9 +12,8 @@ import org.elasticsearch.indices.IndexMissingException
  * Created: 27.11.13 14:51
  * Description: Утиль для управления виртуальными индексами через соответствующие модели. Расчитано на работу извне flow.
  */
-object VirtualIndexUtil {
+object VirtualIndexUtil extends MacroLogsImpl {
 
-  private val LOGGER = new LogsImpl(getClass)
   import LOGGER._
 
   /**
