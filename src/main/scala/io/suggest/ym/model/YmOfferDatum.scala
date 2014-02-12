@@ -81,6 +81,7 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
   val ADULT_FN                  = fieldName(ADULT_ESFN)
   val AGE_ESFN                  = "age"
   val AGE_FN                    = fieldName(AGE_ESFN)
+  // При добавлении/изменении полей надо вносить коррективы в toJsonBuilder()
 
 
   override val FIELDS = {
@@ -151,6 +152,8 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
   val ET_DATE_PFN               = payloadFieldName("date")
   val ET_IS_PREMIERE_PFN        = payloadFieldName("isPremiere")
   val ET_IS_KIDS_PFN            = payloadFieldName("isKids")
+  // При добавлении/изменении полей надо вносить коррективы в функцию payloadV2jsonV().
+
 
   /** Генератор имён для payload-полей. Имена таких полей сохраняются прямо в payload-кортеж,
     * поэтому имеет смысл их сделать по-короче. */
@@ -792,6 +795,7 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
     acc.endObject()
   }
 
-  def toJson = toJsonBuilder.bytes()
+  /** Собрать байтовое представление JSON'а, описывающего текущий документ. */
+  def toJsonBytes = toJsonBuilder.bytes()
 }
 

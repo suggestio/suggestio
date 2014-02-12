@@ -1072,7 +1072,7 @@ trait YmlSax extends DefaultHandler with SaxContentHandlerWrapper with YmSaxErro
       def handleString(s: String) {
         // Базовая нормализация нужна, т.к. это поле не отображается юзеру и используется для группировки по брендам.
         // TODO Надо бы нормализовывать с синонимами, чтобы HP и Hewlett-packard были эквивалентны.
-        vendor = s.toLowerCase
+        vendor = s
       }
     }
 
