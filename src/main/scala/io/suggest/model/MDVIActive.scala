@@ -27,7 +27,7 @@ import io.suggest.model.MVIUnit._
  *
  * Сеттеры модели не публичные: модель должна быть (или хотя бы выглядеть) неизменяемой. Она там спроектирована.
  */
-object MDVIActive extends MVIUnitStatic with MacroLogsImpl {
+object MDVIActive extends MVIUnitStatic[MDVIActive] with MacroLogsImpl {
   import LOGGER._
 
   val DKEY_FN       = fieldName("dkey")
@@ -38,7 +38,6 @@ object MDVIActive extends MVIUnitStatic with MacroLogsImpl {
   /** Версия, указываемая нулевым полем в сериализуемые кортежи. 16-бит хватит для указания любой возможной версии.
     * Это необходимо для возможности легкого обновления схемы данных. Версию проверяет десериализатор в [[deserializeWithDkeyVin]]. */
   val SER_VSN = 1.toShort
-
 
   /** Десериализовать hbase rowkey в dkey-строку. */
   def deserializeRowkey2Dkey(rowkey: AnyRef) = SioModelUtil.rowkey2dkey(rowkey)
@@ -92,11 +91,22 @@ object MDVIActive extends MVIUnitStatic with MacroLogsImpl {
     */
   def deserializeWithDkeyVin(dkey:String, vin:String, value:Array[Byte]): MDVIActive = {
     val tuple = SerialUtil.deserializeTuple(value)
-    val vsn = tuple getShort 0
-    vsn match {
+    finalDeserializer(dkey=dkey, vin=vin, value=tuple)
+  }
+
+  override def deserializeSemiRaw(rowkey: Array[Byte], vin:String, value: Tuple, serVsn: Short): MDVIActive = {
+    val dkey = deserializeRowkey2Dkey(rowkey)
+    finalDeserializer(dkey=dkey, vin=vin, value=value, serVsn=serVsn)
+  }
+
+  def finalDeserializer(dkey:String, vin:String, value: Tuple): MDVIActive = {
+    finalDeserializer(dkey=dkey, vin=vin, value=value, serVsn = value.getShort(0))
+  }
+  def finalDeserializer(dkey:String, vin:String, value: Tuple, serVsn: Short): MDVIActive = {
+    serVsn match {
       case SER_VSN =>
-        val generation = tuple getLong 1
-        val sisSer = tuple getObject 2
+        val generation = value getLong 1
+        val sisSer = value getObject 2
         new MDVIActive(dkey=dkey, vin=vin, generation=generation, subshardsRaw=sisSer)
     }
   }
@@ -225,8 +235,9 @@ import MDVIActive._
 
 /** Класс уровня домена. Хранит информацию по виртуальному индексу в контексте текущего dkey. */
 class MDVIActive extends BaseDatum(FIELDS) with MVIUnit {
-
   import this.LOGGER._
+
+  override def companion = MDVIActive
 
   def this(t: Tuple) = {
     this()
@@ -283,18 +294,6 @@ class MDVIActive extends BaseDatum(FIELDS) with MVIUnit {
     this
   }
 
-  def vin = _tupleEntry getString VIN_FN
-  protected def vin_=(vin: String) = {
-    _tupleEntry.setString(VIN_FN, vin)
-    this
-  }
-
-  def generation = _tupleEntry getLong GENERATION_FN
-  protected def generation_=(generation: Long) = {
-    _tupleEntry.setLong(GENERATION_FN, generation)
-    this
-  }
-
   @JsonIgnore
   def subshardsRaw = (_tupleEntry getObject SUBSHARDS_FN).asInstanceOf[Tuple]
 
@@ -340,7 +339,7 @@ class MDVIActive extends BaseDatum(FIELDS) with MVIUnit {
    * @return название шарды.
    */
   def getSubshardForDaysCount(daysCount: Int): MDVISubshard = {
-    isSingleShard match {
+    isSingleSubshard match {
       case true  => getSubshards.head
 
       // TODO Выбираются все шарды слева направо, однако это может неэффективно.
@@ -351,6 +350,9 @@ class MDVIActive extends BaseDatum(FIELDS) with MVIUnit {
         si
     }
   }
+
+  /** Выдать ключ ряда в таблице в виде строки. */
+  override def getRowKeyStr = dkey
 
   /**
    * Когда настало время сохранять что-то, то нужно выбрать шарду подходящую.
@@ -364,7 +366,7 @@ class MDVIActive extends BaseDatum(FIELDS) with MVIUnit {
     inx -> ss.getTypename
   }
 
-  def isSingleShard = getSubshards.length == 1
+  def isSingleSubshard: Boolean = subshardsRaw.size > 1
 
   /**
    * Выдать все типы, относящиеся ко всем индексам в этой подшарде.
@@ -418,12 +420,11 @@ class MDVIActive extends BaseDatum(FIELDS) with MVIUnit {
    * Удалить маппинги позволяет удалить данные.
    * @return Выполненный фьючерс когда всё закончится.
    */
-  def deleteMappings(implicit esClient:EsClient, ec:ExecutionContext): Future[Unit] = {
+  def deleteMappings(implicit esClient:EsClient, ec:ExecutionContext): Future[_] = {
     val subshards = getSubshards
     debug(s"deleteMappings(): dkey=$dkey vin=$vin types=${ subshards.map(_.getTypename)}")
     SioFutureUtil
       .mapLeftSequentally(subshards, ignoreErrors=true) { _.deleteMappaings() }
-      .map(_ => Unit)
   }
 
 

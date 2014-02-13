@@ -2,11 +2,12 @@ package io.suggest.model
 
 import org.elasticsearch.client.Client
 import scala.concurrent.{ExecutionContext, Future}
-import io.suggest.util.{CascadingFieldNamer, SioModelUtil, MacroLogsImpl}
+import io.suggest.util.{SerialUtil, CascadingFieldNamer, SioModelUtil, MacroLogsImpl}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.hbase.async.{DeleteRequest, PutRequest}
 import SioHBaseAsyncClient._
 import org.apache.hadoop.hbase.HColumnDescriptor
+import cascading.tuple.{Tuple, TupleEntry}
 
 /**
  * Suggest.io
@@ -23,6 +24,17 @@ object MVIUnit {
   def HTABLE_NAME = MObject.HTABLE_NAME
   def HTABLE_NAME_BYTES = MObject.HTABLE_NAME_BYTES
 
+  val MVI_COMPANIONS = List(MDVIActive, MVIMart)
+
+  def deserializeRaw(rowkey: Array[Byte], qualifier: Array[Byte], value: Array[Byte]): Option[MVIUnit] = {
+    val tuple = SerialUtil.deserializeTuple(value)
+    val serVsn = tuple getShort 0
+    MVI_COMPANIONS.find { _.isSerVsnMatches(serVsn) }
+      .map { companion =>
+        val vin = deserializeQualifier2Vin(qualifier)
+        companion.deserializeSemiRaw(rowkey, vin, tuple, serVsn)
+      }
+  }
 
   /** Десериализовать hbase qualifier в строку vin.
     * @param q Квалификатор (колонка) ячейки в каком-то неопределенном формате.
@@ -68,7 +80,7 @@ object MVIUnit {
 }
 
 
-trait MVIUnitStatic extends CascadingFieldNamer {
+trait MVIUnitStatic[T <: MVIUnit] extends CascadingFieldNamer {
 
   def CF = MVIUnit.CF
   def HTABLE_NAME = MVIUnit.HTABLE_NAME
@@ -76,6 +88,19 @@ trait MVIUnitStatic extends CascadingFieldNamer {
 
   val VIN_FN        = fieldName("vin")
   val GENERATION_FN = fieldName("generation")
+
+  /** Этот десериализатор вызывается из [[MVIUnit.deserializeRaw]] при наличии частично-десериализованных данных. */
+
+  def deserializeSemiRaw(rowkey:Array[Byte], vin:String, value:Tuple, serVsn:Short): T
+
+  /** Текущие тип+версия сериализации. Используется для дефолтового [[isSerVsnMatches]], выкинуть можно в любое время. */
+  def SER_VSN: Short
+
+  /** [[SER_VSN]] используется как для указания версии сохранённых данных, так и для принадлежности данных к тому
+    * или иному типу. Для угадывания типа используется эта функция: MVIUnit опрашивает с помощью фунцкии
+    * наследуемые модули на предмет попадания обнаруженного SER_VSN в их диапазон.
+    * Если несколько версий, то функцию можно переопределить на более сложную логику. */
+  def isSerVsnMatches(serVsn: Short): Boolean = SER_VSN == serVsn
 }
 
 
@@ -84,6 +109,11 @@ import MVIUnit._
 // Базовый интерфейс для классов, исповедующих доступ к dkey-индексам.
 trait MVIUnit extends MacroLogsImpl {
   import LOGGER._
+
+  def getTupleEntry: TupleEntry
+
+  /** Указатель на объект-компаньон, чтобы получить доступ к статическим данным модели. */
+  def companion: MVIUnitStatic[_]
 
   /** Выдать реальный ключ ряда в таблице хранилища. */
   @JsonIgnore
@@ -94,20 +124,22 @@ trait MVIUnit extends MacroLogsImpl {
   def getRowKeyStr: String = new String(getRowKey)
 
   @JsonIgnore
-  def vin: String
+  def vin = getTupleEntry getString companion.VIN_FN
+  protected def vin_=(vin: String) = {
+    getTupleEntry.setString(companion.VIN_FN, vin)
+    this
+  }
 
   @JsonIgnore
-  def generation: Long
-  
+  def generation = getTupleEntry getLong companion.GENERATION_FN
+  protected def generation_=(generation: Long) = {
+    getTupleEntry.setLong(companion.GENERATION_FN, generation)
+    this
+  }
+
   /** Эквивалент toString, выдающий максимально короткую строку. Используется для некоторых задач логгинга. */
   @JsonIgnore
   def toShortString: String
-
-  @JsonIgnore
-  def isSingleShard: Boolean
-
-  @JsonIgnore
-  def getAllTypes: List[String]
 
   /**
    * Выдать экземпляр модели MVirtualIndex. Линк между моделями по ключу.
@@ -116,6 +148,7 @@ trait MVIUnit extends MacroLogsImpl {
   @JsonIgnore
   def getVirtualIndex = MVirtualIndex(vin)
 
+  /** В каких типа индекса производить поиск? */
   def getTypesForRequest(sc: SioSearchContext): List[String]
 
   /**
@@ -138,7 +171,7 @@ trait MVIUnit extends MacroLogsImpl {
 
 
   def setMappings(failOnError:Boolean = true)(implicit client:Client, executor:ExecutionContext): Future[Boolean]
-  def deleteMappings(implicit client:Client, executor:ExecutionContext): Future[Unit]
+  def deleteMappings(implicit client:Client, executor:ExecutionContext): Future[_]
 
   /** Узнать, не используется ли текущий индекс другими субъектами.
     * В случае доменного мультииндекса - другими доменами. */
@@ -169,6 +202,7 @@ trait MVIUnit extends MacroLogsImpl {
   @JsonIgnore
   def getQualifier: Array[Byte] = serializeVin(vin)
 
+  /** Сериализовать данные из кортежа в ключ-колонку-значение для HBase. */
   @JsonIgnore
   def serializeForHbase: MVIUnitHBaseSerialized
 
