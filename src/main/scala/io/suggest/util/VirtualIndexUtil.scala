@@ -27,9 +27,9 @@ object VirtualIndexUtil extends MacroLogsImpl {
     trace(logPrefix + " starting...")
     MDVIActive.getAll.flatMap { mdviActives =>
       val dkeyInxGroups = mdviActives
-        .groupBy(_.getDkey)
+        .groupBy(_.dkey)
         .mapValues {
-          _.sortBy(_.getGeneration)
+          _.sortBy(_.generation)
         }
       // Параллельно делаем downgrade индексов по доменам
       val fut = Future.traverse(dkeyInxGroups) {
@@ -42,9 +42,9 @@ object VirtualIndexUtil extends MacroLogsImpl {
         case (dkey, mdviGroup) =>
           val restInx = mdviGroup.head
           val toRmInxs = mdviGroup.tail
-          trace(s"$logPrefix Downgrading indices for dkey=$dkey to index=${restInx.getVin}. Drop indices (${toRmInxs.size}): ${mdvisAsString(toRmInxs)}")
+          trace(s"$logPrefix Downgrading indices for dkey=$dkey to index=${restInx.vin}. Drop indices (${toRmInxs.size}): ${mdvisAsString(toRmInxs)}")
           // Сначала обновить inx ptr
-          val searchPtr = new MDVISearchPtr(dkey, List(restInx.getVin))
+          val searchPtr = new MDVISearchPtr(dkey, List(restInx.vin))
           searchPtr.save.flatMap { _ =>
             Future.traverse(toRmInxs) { rmMdviActive =>
               rmMdviActive
@@ -67,7 +67,7 @@ object VirtualIndexUtil extends MacroLogsImpl {
   }
 
   private def mdvisAsString(indices: Seq[MDVIActive]): String = {
-    indices.map(_.getVin).mkString(",")
+    indices.map(_.vin).mkString(",")
   }
 
 }

@@ -5,17 +5,14 @@ import io.suggest.util._
 import io.suggest.util.DateParseUtil.toDaysCount
 import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.{Client => EsClient}
-import io.suggest.index_info.MDVIUnitAlterable
-import org.elasticsearch.common.unit.TimeValue
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.apache.hadoop.hbase.HColumnDescriptor
 import scala.collection.JavaConversions._
 import HTapConversionsBasic._
 import SioHBaseAsyncClient._
-import org.hbase.async.{DeleteRequest, PutRequest, KeyValue, GetRequest}
+import org.hbase.async.{KeyValue, GetRequest}
 import cascading.tuple.{TupleEntry, Fields, Tuple}
-import scala.Some
 import com.scaleunlimited.cascading.BaseDatum
+import io.suggest.model.MVIUnit._
 
 /**
  * Suggest.io
@@ -23,41 +20,23 @@ import com.scaleunlimited.cascading.BaseDatum
  * Created: 16.07.13 12:01
  * Description: Model Dkey Virtual Index Active - модель хранения активных связей между dkey и виртуальными шардами.
  *
- * В этой модели исторически жили два вида сериализации: кусочная-долгосрочная в json и полноразмерная-промежуточная в dkeyless Tuple (использовалось в flow).
- * 2013.dec.20 был рассадник сериализаций был заменён новым, менее разнообразным.
- * Долгосрочное хранение происходит через tuple с номером версии сериализатора в первом поле, и без dkey и vin - они в rowKey и qualifier.
- * При этом экземпляр MDVIActive является легко сериализуемым, ибо является подклассом BaseDatum, что позволяет гибко
- * пользоваться им внутри flow.
+ * Долгосрочное хранение экземпляра происходит через tuple с номером версии сериализатора в первом поле,
+ * и без dkey и vin - они в rowKey и qualifier.
+ * При этом экземпляр MDVIActive является сам по себе легко сериализуемым напрямую, ибо является подклассом BaseDatum,
+ * что позволяет прозрачно передавать MDVIActive внутри flow.
  *
- * Сеттеры модели не публичные, т.к. экземплярым модели изначально разработа чтобы быть неизменяемой.
+ * Сеттеры модели не публичные: модель должна быть (или хотя бы выглядеть) неизменяемой. Она там спроектирована.
  */
-object MDVIActive extends CascadingFieldNamer with MacroLogsImpl {
+object MDVIActive extends MVIUnitStatic with MacroLogsImpl {
   import LOGGER._
 
-  // Короткие подсказки для модели и её внешних пользователей, которым не важно внутреннее устройство модели.
-  def HTABLE_NAME = MObject.HTABLE_NAME
-  def HTABLE_NAME_BYTES = MObject.HTABLE_NAME_BYTES
-
-  def CF = MObject.CF_DINX_ACTIVE
-
   val DKEY_FN       = fieldName("dkey")
-  val VIN_FN        = fieldName("vin")
-  val GENERATION_FN = fieldName("generation")
   val SUBSHARDS_FN  = fieldName("subshards")
   val FIELDS        = new Fields(DKEY_FN, VIN_FN, GENERATION_FN, SUBSHARDS_FN)
 
 
-  // Номер поколения - это миллисекунды, вычтенные и деленные на указанный делитель.
-  // Номер поколения точно не будет раньше этого времени. Выкидываем.
-  // После запуска в продакшен, менять эти цифры уже нельзя (понадобится полное удаление всех данных по индексам вместе с оными).
-  val GENERATION_SUBSTRACT  = 1381140627123L // 2013/oct/07 14:11 +04:00.
-  val GENERATION_RESOLUTION = 10000L         // Округлять мс до 10 секунд.
-
-  /** Это поколение выставляется для сабжа, если  */
-  val GENERATION_BOOTSTRAP = -1
-
   /** Версия, указываемая нулевым полем в сериализуемые кортежи. 16-бит хватит для указания любой возможной версии.
-    * Это необходимо для возможности легкого обновления схемы данных. Версию проверяет десериализатор в deserializeWithDkeyVin(). */
+    * Это необходимо для возможности легкого обновления схемы данных. Версию проверяет десериализатор в [[deserializeWithDkeyVin]]. */
   val SER_VSN = 1.toShort
 
 
@@ -69,19 +48,6 @@ object MDVIActive extends CascadingFieldNamer with MacroLogsImpl {
     * @return Байты, пригодные для задания ключа в таблице.
     */
   def serializeDkey2Rowkey(dkey: String): Array[Byte] = SioModelUtil.dkey2rowkey(dkey)
-
-
-  /** Десериализовать hbase qualifier в строку vin.
-    * @param q Квалификатор (колонка) ячейки в каком-то неопределенном формате.
-    * @return Строка, использованная в качестве значения квалификатора.
-    */
-  def deserializeQualifier2Vin(q: AnyRef) = SioModelUtil.deserialzeHCellCoord(q)
-
-  /** Сериализовать vin. По сути просто конвертится строка в байты.
-   * @param vin Строка виртуального индекса.
-   * @return Байты, пригодные для задание qualifier'a.
-   */
-  def serializeVin(vin: String): Array[Byte] = SioModelUtil.serializeStrForHCellCoord(vin)
 
 
   /** Десериализовать исходную запись из HBase.
@@ -99,7 +65,7 @@ object MDVIActive extends CascadingFieldNamer with MacroLogsImpl {
     * @param dkey Ключ домена.
     * @param qualifier Имя колонки (vin).
     * @param value Значение ячейки.
-    * @return MDVIActive.
+    * @return [[MDVIActive]].
     */
   def deserializeWithDkey(dkey:String, qualifier:AnyRef, value:Array[Byte]): MDVIActive = {
     val vin = deserializeQualifier2Vin(qualifier)
@@ -110,7 +76,7 @@ object MDVIActive extends CascadingFieldNamer with MacroLogsImpl {
    * @param rowkey Ключ ряда.
    * @param vin Строка виртуального индекса.
    * @param value Значение ячейки.
-   * @return MDVIActive
+   * @return [[MDVIActive]].
    */
   def deserializeWithVin(rowkey:AnyRef, vin:String, value:Array[Byte]): MDVIActive = {
     val dkey = deserializeRowkey2Dkey(rowkey)
@@ -122,7 +88,7 @@ object MDVIActive extends CascadingFieldNamer with MacroLogsImpl {
     * @param dkey Ключ домена.
     * @param vin Строка виртуального индекса.
     * @param value Значение ячейки.
-    * @return MDVIActive.
+    * @return [[MDVIActive]].
     */
   def deserializeWithDkeyVin(dkey:String, vin:String, value:Array[Byte]): MDVIActive = {
     val tuple = SerialUtil.deserializeTuple(value)
@@ -137,20 +103,20 @@ object MDVIActive extends CascadingFieldNamer with MacroLogsImpl {
 
 
   /** Сериализовать запись в кортеж и реквизиты. Результат пригоден для немедленной отправки в HBase.
-    * @param mdvia Исходный MDVIActive.
+    * @param mdvia Исходный [[MDVIActive]].
     * @return Контейнер, содержащий готовые данные для отправки в HBase.
     */
-  def serializeForHBase(mdvia: MDVIActive): MDVIActiveSerialized = {
-    val rowkey = serializeDkey2Rowkey(mdvia.getDkey)
-    val qualifier = deserializeQualifier2Vin(mdvia.getVin)
+  def serializeForHBase(mdvia: MDVIActive): MVIUnitHBaseSerialized = {
+    val rowkey = serializeDkey2Rowkey(mdvia.dkey)
+    val qualifier = deserializeQualifier2Vin(mdvia.vin)
     val value = new Tuple
     value addShort SER_VSN
-    value addLong mdvia.getGeneration
-    value add mdvia.getSubshardsRaw
+    value addLong mdvia.generation
+    value add mdvia.subshardsRaw
     val ssisTuple = new Tuple
     value add ssisTuple
     val valBytes = SerialUtil.serializeTuple(value)
-    MDVIActiveSerialized(rowkey=rowkey, qualifier=qualifier, value=valBytes)
+    MVIUnitHBaseSerialized(rowkey=rowkey, qualifier=qualifier, value=valBytes)
   }
 
 
@@ -195,11 +161,11 @@ object MDVIActive extends CascadingFieldNamer with MacroLogsImpl {
    * только когда всё-всё готово.
    * Ресурсоемкая операция, т.к. для этого нужно просмотреть все dkey.
    * @param vin имя индекса, для которого проводится поиск.
-   * @return Список dkey->MDVIActive без повторяющихся элементов в произвольном порядке.
+   * @return Список (dkey, [[MDVIActive]]) без повторяющихся элементов в произвольном порядке.
    *         При желании можно сконвертить в карту через .toMap()
    */
   def getAllLatestForVin(vin: String)(implicit ec:ExecutionContext): Future[List[MDVIActive]] = {
-    trace("getAllForVin(%s)" format vin)
+    trace(s"getAllForVin($vin): Starting...")
     val column: Array[Byte] = vin
     val scanner = ahclient.newScanner(HTABLE_NAME)
     scanner.setFamily(CF)
@@ -215,7 +181,7 @@ object MDVIActive extends CascadingFieldNamer with MacroLogsImpl {
 
   /**
    * Прочитать всю CF из таблицы.
-   * @return Будущий список MDVIActive.
+   * @return Будущий список [[MDVIActive]].
    */
   def getAll(implicit ec:ExecutionContext): Future[List[MDVIActive]] = {
     val scanner = ahclient.newScanner(HTABLE_NAME)
@@ -231,7 +197,7 @@ object MDVIActive extends CascadingFieldNamer with MacroLogsImpl {
 
   /** Асинхронно прочитать все активные индексы для указанного dkey. Быстрая операция.
    * @param dkey Ключ домена.
-   * @return Будущий список MDVIActive.
+   * @return Будущий список [[MDVIActive]].
    */
   def getAllForDkey(dkey: String)(implicit ec:ExecutionContext): Future[Seq[MDVIActive]] = {
     val rowkey = serializeDkey2Rowkey(dkey)
@@ -249,40 +215,18 @@ object MDVIActive extends CascadingFieldNamer with MacroLogsImpl {
   }
 
 
-  /** Выдать CF-дескриптор для используемого CF
-   * @return Новый экземпляр HColumnDescriptor.
-   */
-  def getCFDescriptor = new HColumnDescriptor(CF).setMaxVersions(3)
-
-
-  /**
-   * Сгенерить id текущего поколения с точностью до 10 секунд.
-   * @return Long.
-   */
-  def currentGeneration: Long  = (System.currentTimeMillis() - GENERATION_SUBSTRACT) / GENERATION_RESOLUTION
-
-  /**
-   * Перевести поколение во время в миллисекундах с учетом точности/округления.
-   * @param g Генерейшен, произведенный ранее функцией currentGeneration().
-   * @return Число миллисекунд с 1970/1/1 0:00:00 округленной согласно GENERATION_SUBSTRACT.
-   */
-  def generationToMillis(g: Long): Long = g * GENERATION_RESOLUTION + GENERATION_SUBSTRACT
-
-
   /** Дефолтовое значение поля subshardsInfo. */
-  val SUBSHARD_INFO_DFLT = List(new MDVISubshardInfo(0))
+  def SUBSHARD_INFO_DFLT = List(new MDVISubshardInfo(0))
 
 }
 
 
 import MDVIActive._
 
-/**
- * Класс уровня домена. Хранит информацию по виртуальному индексу в контексте текущего dkey.
- */
-class MDVIActive extends BaseDatum(FIELDS) with MDVIUnitAlterable {
+/** Класс уровня домена. Хранит информацию по виртуальному индексу в контексте текущего dkey. */
+class MDVIActive extends BaseDatum(FIELDS) with MVIUnit {
 
-  import LOGGER._
+  import this.LOGGER._
 
   def this(t: Tuple) = {
     this()
@@ -294,8 +238,16 @@ class MDVIActive extends BaseDatum(FIELDS) with MDVIUnitAlterable {
     setTupleEntry(te)
   }
 
-  /** Конструктор.
-   * @param dkey Ключ домена
+  /** Вспомогательный конструктор, дедублицирующий функции между другими конструкторами. */
+  protected def this(dkey: String, vin: String, generation: Long) = {
+    this()
+    this.dkey = dkey
+    this.vin = vin
+    this.generation = generation
+  }
+
+  /** Основной конструктор датума на основе данных полей.
+   * @param dkey Ключ домена. Поиск в хранилище происходит именно по этому dkey.
    * @param vin Имя нижележащего виртуального индекса.
    * @param generation Поколение. При миграции в другой индекс поколение увеличивается.
    * @param subshardsInfo Список подшард. "Новые" всегла левее (ближе к head), чем старые. В последнем хвосте списка
@@ -307,58 +259,60 @@ class MDVIActive extends BaseDatum(FIELDS) with MDVIUnitAlterable {
     generation    : Long,
     subshardsInfo : List[MDVISubshardInfo] = MDVIActive.SUBSHARD_INFO_DFLT
   ) = {
-    this()
+    this(dkey, vin, generation)
     if (subshardsInfo.isEmpty) {
       throw new IllegalArgumentException("subshardInfo MUST contain at least one shard. See default value for example.")
+    } else {
+      subshardsInfo_=(subshardsInfo)
     }
-    setDkey(dkey)
-    setVin(vin)
-    setGeneration(generation)
-    setSubshardsInfo(subshardsInfo)
   }
 
   private def this(dkey:String, vin:String, generation:Long, subshardsRaw:AnyRef) {
-    this()
-    setDkey(dkey)
-    setVin(vin)
-    setGeneration(generation)
-    setSubshardsRaw(subshardsRaw)
+    this(dkey, vin, generation)
+    subshardsRaw_=(subshardsRaw)
   }
 
 
-  def getDkey = _tupleEntry getString DKEY_FN
-  protected def setDkey(dkey: String) = {
+  /** Выдать реальный ключ ряда в таблице хранилища. */
+  override def getRowKey: Array[Byte] = serializeDkey2Rowkey(dkey)
+
+  @JsonIgnore
+  def dkey = _tupleEntry getString DKEY_FN
+  protected def dkey_=(dkey: String) = {
     _tupleEntry.setString(DKEY_FN, dkey)
     this
   }
 
-  def getVin = _tupleEntry getString VIN_FN
-  protected def setVin(vin: String) = {
+  def vin = _tupleEntry getString VIN_FN
+  protected def vin_=(vin: String) = {
     _tupleEntry.setString(VIN_FN, vin)
     this
   }
 
-  def getGeneration = _tupleEntry getLong GENERATION_FN
-  protected def setGeneration(generation: Long) = {
+  def generation = _tupleEntry getLong GENERATION_FN
+  protected def generation_=(generation: Long) = {
     _tupleEntry.setLong(GENERATION_FN, generation)
     this
   }
 
-  def getSubshardsRaw = {
-    (_tupleEntry getObject SUBSHARDS_FN).asInstanceOf[Tuple]
-  }
-  def getSubshardsInfo: List[MDVISubshardInfo] = {
-    val sisSer = getSubshardsRaw
-    deserializeSubshardInfo(sisSer)
-  }
+  @JsonIgnore
+  def subshardsRaw = (_tupleEntry getObject SUBSHARDS_FN).asInstanceOf[Tuple]
 
-  protected def setSubshardsRaw(sisSer: AnyRef) = {
+  protected def subshardsRaw_=(sisSer: AnyRef) = {
     _tupleEntry.setObject(SUBSHARDS_FN, sisSer)
     this
   }
-  protected def setSubshardsInfo(sis: List[MDVISubshardInfo]) = {
+  
+  
+  @JsonIgnore
+  def subshardsInfo: List[MDVISubshardInfo] = {
+    val sisSer = subshardsRaw
+    deserializeSubshardInfo(sisSer)
+  }
+
+  protected def subshardsInfo_=(sis: List[MDVISubshardInfo]) = {
     val sisSer = serializeSubshardInfo(sis)
-    setSubshardsRaw(sisSer)
+    subshardsRaw_=(sisSer)
   }
 
 
@@ -367,27 +321,17 @@ class MDVIActive extends BaseDatum(FIELDS) with MDVIUnitAlterable {
 
   /**
    * Отразить список подшард в виде полноценных объектов Subshard, ссылкающихся на своего родителя.
-   * @return Список MDVISubshard.
+   * @return Список [[MDVISubshard]].
    */
   @JsonIgnore
-  def getSubshards: List[MDVISubshard] = getSubshardsInfo
+  def getSubshards: List[MDVISubshard] = subshardsInfo
 
   /**
    * Выдать id этого виртуального индекса.
-   * @return
+   * @return Короткая идентификационная строка, пригодная для отправки в логи.
    */
   @JsonIgnore
-  def id: String = "%s$%s$%s" format (getDkey, getVin, getGeneration)
-
-  /**
-   * Нужно сохранить документ. И встает вопрос: в какую именно подшарду.
-   * @param d дата документа.
-   * @return подшарду для указанной даты. Из неё можно получить название типа при необходимости.
-   */
-  def getSubshardForDate(d: LocalDate): MDVISubshard = {
-    val days = toDaysCount(d)
-    getSubshardForDaysCount(days)
-  }
+  def toShortString: String = "%s/%s/%s" format (dkey, vin, generation)
 
 
   /**
@@ -395,14 +339,14 @@ class MDVIActive extends BaseDatum(FIELDS) with MDVIUnitAlterable {
    * @param daysCount кол-во дней.
    * @return название шарды.
    */
-  def getSubshardForDaysCount(daysCount:Int): MDVISubshard = {
+  def getSubshardForDaysCount(daysCount: Int): MDVISubshard = {
     isSingleShard match {
       case true  => getSubshards.head
 
       // TODO Выбираются все шарды слева направо, однако это может неэффективно.
       //      Следует отбрасывать "свежие" шарды слева, если их многовато.
       case false =>
-        val sis = getSubshardsInfo
+        val sis = subshardsInfo
         val si = sis find { _.lowerDateDays < daysCount } getOrElse sis.last
         si
     }
@@ -420,23 +364,13 @@ class MDVIActive extends BaseDatum(FIELDS) with MDVIUnitAlterable {
     inx -> ss.getTypename
   }
 
-  @JsonIgnore
-  lazy val isSingleShard = getSubshards.length == 1
+  def isSingleShard = getSubshards.length == 1
 
   /**
    * Выдать все типы, относящиеся ко всем индексам в этой подшарде.
    * @return список типов.
    */
-  @JsonIgnore
   def getAllTypes = getSubshards.map(_.getTypename)
-
-
-  /**
-   * Выдать экземпляр модели MVirtualIndex. Линк между моделями по ключу.
-   * Считаем, что вирт.индекс точно существует, если существует зависимый от него экземпляр сабжа.
-   */
-  @JsonIgnore
-  lazy val getVirtualIndex = MVirtualIndex(getVin)
 
 
   /**
@@ -451,36 +385,8 @@ class MDVIActive extends BaseDatum(FIELDS) with MDVIUnitAlterable {
   }
 
 
-  /**
-   * Сохранить текущий экземпляр в хранилище.
-   * @return Сохраненные (т.е. текущий) экземпляр сабжа.
-   */
-  @JsonIgnore
-  def save(implicit ec: ExecutionContext): Future[_] = {
-    val ser = MDVIActive.serializeForHBase(this)
-    val putReq = new PutRequest(HTABLE_NAME_BYTES, ser.rowkey, CF.getBytes, ser.qualifier, ser.value)
-    ahclient.put(putReq)
-  }
+  def serializeForHbase: MVIUnitHBaseSerialized = MDVIActive.serializeForHBase(this)
 
-  /**
-   * Удалить ряд из хранилища. Проверку по generation не делаем, ибо оно неразрывно связано с dkey+vin и является
-   * вспомогательной в рамках flow величиной.
-   * @return Фьючерс для синхронизации.
-   */
-  def delete(implicit ec: ExecutionContext): Future[_] = {
-    val rowKey = serializeDkey2Rowkey(getDkey)
-    val qualifier = serializeVin(getVin)
-    val delReq = new DeleteRequest(HTABLE_NAME_BYTES, rowKey, CF.getBytes, qualifier)
-    ahclient.delete(delReq)
-  }
-
-
-  /**
-   * Выдать натуральные шарды натурального индекса, обратившись к вирт.индексу.
-   * @return Список названий индексов.
-   */
-  @JsonIgnore
-  def getShards = getVirtualIndex.getShards
 
   /**
    * Выставить маппинги для всех подшард.
@@ -514,20 +420,21 @@ class MDVIActive extends BaseDatum(FIELDS) with MDVIUnitAlterable {
    */
   def deleteMappings(implicit esClient:EsClient, ec:ExecutionContext): Future[Unit] = {
     val subshards = getSubshards
-    debug(s"deleteMappings(): dkey=$getDkey vin=$getVin types=${ subshards.map(_.getTypename)}")
+    debug(s"deleteMappings(): dkey=$dkey vin=$vin types=${ subshards.map(_.getTypename)}")
     SioFutureUtil
       .mapLeftSequentally(subshards, ignoreErrors=true) { _.deleteMappaings() }
       .map(_ => Unit)
   }
 
+
   /**
    * Используется ли указанный vin другими доменами?
    * @return true, если используется.
    */
-  def isVinUsedByOtherDkeys(implicit ec:ExecutionContext): Future[Boolean] = {
-    getAllLatestForVin(getVin) map { vinUsedBy =>
+  def isVinUsedByOthers(implicit esClient:EsClient, ec:ExecutionContext): Future[Boolean] = {
+    getAllLatestForVin(vin) map { vinUsedBy =>
       var l = vinUsedBy.size
-      if (vinUsedBy contains getDkey)
+      if (vinUsedBy contains dkey)
         l -= 1
       val result = l > 0
       debug(
@@ -542,50 +449,7 @@ class MDVIActive extends BaseDatum(FIELDS) with MDVIUnitAlterable {
   }
 
 
-  /**
-   * Бывает, что можно удалить всё вместе с физическим индексом. А бывает, что наоборот.
-   * Тут функция, которая делает либо первое, либо второе в зависимости от обстоятельств.
-   */
-  def eraseIndexOrMappings(implicit esClient: EsClient, ec: ExecutionContext): Future[_] = {
-    val logPrefix = "deleteIndexOrMappings():"
-    isVinUsedByOtherDkeys flatMap {
-      case true  =>
-        warn(s"$logPrefix vin=$getVin used by dkeys, other than '$getDkey'. Delete mapping...")
-        deleteMappings
-
-      case false => eraseBackingIndex
-    }
-  }
-
-
-  /** Удалить весь индекс целиком, даже если в нём хранятся другие сайты (без проверок). */
-  def eraseBackingIndex(implicit esClient: EsClient, ec:ExecutionContext): Future[Boolean] = {
-    warn(s"eraseBackingIndex(): vin=$getVin dkey='$getDkey' Deleting real index FULLY!")
-    getVirtualIndex.eraseShards
-  }
-
-
-  import io.suggest.util.SioEsIndexUtil._
-
-  /**
-   * Запуск полного скроллинга по индексу.
-   * @param timeout Время жизни курсора на стороне ES.
-   * @param sizePerShard Сколько брать из шарды за один шаг.
-   * @return Фьючес ответа, содержащего скроллер и прочую инфу.
-   */
-  def startFullScroll(timeout:TimeValue = SCROLL_TIMEOUT_INIT_DFLT, sizePerShard:Int = SCROLL_PER_SHARD_DFLT)(implicit esClient:EsClient) = {
-    startFullScrollIn(getShards, getAllTypes, timeout, sizePerShard)
-  }
-
-  override def toString: String = s"${getClass.getSimpleName}($getDkey, $getVin, $getGeneration, ${getSubshardsRaw.size} subshards)"
+  @JsonIgnore
+  override def toString: String = s"${getClass.getSimpleName}($dkey, $vin, $generation, ${subshardsRaw.size} subshards)"
 }
-
-
-/**
- * Контейнер для результата serializeForHBase().
- * @param rowkey Ключ ряда.
- * @param qualifier Имя колонки (qualifier).
- * @param value Байты payload'а.
- */
-case class MDVIActiveSerialized(rowkey:Array[Byte], qualifier:Array[Byte], value:Array[Byte])
 

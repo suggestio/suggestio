@@ -23,9 +23,9 @@ class MDVIActiveTest extends FlatSpec with Matchers {
     val s = serializeForHBase(dvi)
     val dsResult = deserializeRaw(rowkey=s.rowkey, qualifier=s.qualifier, value=s.value)
     dsResult should equal (dvi)
-    deserializeWithDkey(dkey=dvi.getDkey, qualifier=s.qualifier, value=s.value)  should equal (dvi)
-    deserializeWithVin(rowkey=s.rowkey, vin=dvi.getVin, value=s.value)           should equal (dvi)
-    deserializeWithDkeyVin(dkey=dvi.getDkey, vin=dvi.getVin, value=s.value)      should equal (dvi)
+    deserializeWithDkey(dkey=dvi.dkey, qualifier=s.qualifier, value=s.value)  should equal (dvi)
+    deserializeWithVin(rowkey=s.rowkey, vin=dvi.vin, value=s.value)           should equal (dvi)
+    deserializeWithDkeyVin(dkey=dvi.dkey, vin=dvi.vin, value=s.value)      should equal (dvi)
     dsResult
   }
 

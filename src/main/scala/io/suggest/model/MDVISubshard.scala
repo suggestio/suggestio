@@ -3,7 +3,6 @@ package io.suggest.model
 import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.util.{LogsImpl, SioEsIndexUtil}
 import org.elasticsearch.client.Client
-import io.suggest.index_info.MDVIUnit
 import scala.util.{Failure, Success}
 import org.joda.time.LocalDate
 import io.suggest.util.DateParseUtil.toDaysCount
@@ -93,7 +92,7 @@ object MDVISubshard {
 
 
 case class MDVISubshard(
-  dvin:         MDVIUnit,
+  dvin:         MDVIActive,
   subshardData: MDVISubshardInfo
 ) extends MDVISubshardInfoT {
 
@@ -102,7 +101,7 @@ case class MDVISubshard(
 
   import subshardData._
 
-  protected val logPrefix: String = dvin.id + "-" + lowerDateDays
+  protected val logPrefix: String = dvin.toShortString + "-" + lowerDateDays
 
   /**
    * Получить список названий шард на основе их id'шников.
@@ -111,7 +110,7 @@ case class MDVISubshard(
     if (shards.isEmpty) {
       dvin.getShards
     } else {
-      val vin = dvin.getVin
+      val vin = dvin.vin
       shards.map(MVirtualIndex.esShardNameFor(vin, _))
     }
   }
@@ -129,7 +128,7 @@ case class MDVISubshard(
    * Вернуть тип, который будет адресоваться в рамках ES.
    * @return Строка типа индекса. Например "suggest.io-123123".
    */
-  def getTypename: String = subshardData.getTypename(dvin.getDkey)
+  def getTypename: String = subshardData.getTypename(dvin.dkey)
 
 
   /**
@@ -155,7 +154,7 @@ case class MDVISubshard(
     val shardIds = getUsedShards
     val shardId = MDVISubshard.getShardId(shardIds, daysCount)
     //trace(s"getShardForDaysCount(dc=$daysCount): shardId=$shardId shardCount=${shardIds.size} subshardData=$subshardData")
-    MVirtualIndex.esShardNameFor(dvin.getVin, shardId)
+    MVirtualIndex.esShardNameFor(dvin.vin, shardId)
   }
 
 

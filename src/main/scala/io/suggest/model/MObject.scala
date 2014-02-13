@@ -27,7 +27,7 @@ object MObject extends HTableModel {
 
   // Column family для хранения произвольных k-v колонок для доменов (ключ - reversed dkey). В значениях идём по алфавиту.
   val CF_DPROPS         = "a" // Пропертисы всякие. js-install в частности.
-  val CF_DINX_ACTIVE    = "b"
+  val CF_MVI    = "b"
   val CF_DSEARCH_PTR    = "c"
 
   // Для моделей веб-морды:
@@ -49,7 +49,7 @@ object MObject extends HTableModel {
 
   // /!\ При добавлении новых CF-записей нужно также обновлять/запиливать функции createTable() и updateTable().
   protected def CFs = Seq(
-    CF_DPROPS, CF_DINX_ACTIVE, CF_DSEARCH_PTR,
+    CF_DPROPS, CF_MVI, CF_DSEARCH_PTR,
     CF_DDATA, CF_DPUBLISH, CF_DQI,
     CF_UPROPS, CF_UAUTHZ ,
     CF_BLOG, CF_DOMAIN,
@@ -57,12 +57,12 @@ object MObject extends HTableModel {
     CF_RA_PROPS
   )
 
-  def CFs_CRAWLER = Seq(CF_DOMAIN, CF_DPROPS, CF_DINX_ACTIVE, CF_DSEARCH_PTR, CF_FACET_INVLINK)
+  def CFs_CRAWLER = Seq(CF_DOMAIN, CF_DPROPS, CF_MVI, CF_DSEARCH_PTR, CF_FACET_INVLINK)
 
 
   def getColumnDescriptor: PartialFunction[String, HColumnDescriptor] = {
     case cf @ CF_DPROPS          => hcd(cf, 2)
-    case cf @ CF_DINX_ACTIVE     => MDVIActive.getCFDescriptor
+    case cf @ CF_MVI             => MVIUnit.getCFDescriptor
     case cf @ CF_DSEARCH_PTR     => MDVISearchPtr.getCFDescriptor
     case cf @ CF_DDATA           => hcd(cf, 2)
     case cf @ CF_DPUBLISH        => hcd(cf, 1)
