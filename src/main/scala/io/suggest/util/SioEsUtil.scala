@@ -373,6 +373,7 @@ object FieldIndexingVariants extends Enumeration {
   type FieldIndexingVariant = Value
   val analyzed, not_analyzed, no = Value
   def default = analyzed
+  def isIndexed(fiv: FieldIndexingVariant) = fiv != no
 }
 
 object TermVectorVariants extends Enumeration {
