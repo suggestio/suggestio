@@ -30,7 +30,8 @@ libraryDependencies ++= {
     "com.typesafe" %% "scalalogging-slf4j" % "1.1.+",
     "org.gnu.inet" % "libidn" % "1.15",
     "com.github.nscala-time" %% "nscala-time" % "0.2.0",
-    "commons-lang" % "commons-lang" % "2.4",
+    "commons-lang" % "commons-lang" % "2.+",
+    "net.iharder" % "base64" % "2.3.+",
     // JSON
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVsn,
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % jacksonVsn,
