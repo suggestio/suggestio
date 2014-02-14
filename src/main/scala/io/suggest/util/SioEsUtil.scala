@@ -163,7 +163,6 @@ object SioEsUtil extends MacroLogsImpl {
 
   // Кол-во попыток поиска свободного имени для будущего индекса.
   val FREE_INDEX_NAME_MAX_FIND_ATTEMPTS = 8
-  val RANDOM_INDEX_PREFIX_LEN = 8
 
   /**
    * Совсем асинхронно найти свободное имя индекса (не занятое другими индексами).
@@ -174,9 +173,9 @@ object SioEsUtil extends MacroLogsImpl {
     trace(logPrefix + "Starting...")
     val p = Promise[MVirtualIndex]()
     // Тут как бы рекурсивный неблокирующий фьючерс.
-    def freeIndexNameLookup(n:Int) {
+    def freeIndexNameLookup(n: Int) {
       if (n < maxAttempts) {
-        val vinPrefix = StringUtil.randomIdLatLc(RANDOM_INDEX_PREFIX_LEN)
+        val vinPrefix = MVirtualIndex.generateVinPrefix
         debug(logPrefix + "Trying vinPrefix = %s" format vinPrefix)
         val mvi = MVirtualIndex(vinPrefix, shardCount)
         val firstEsShard = mvi.head

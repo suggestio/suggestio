@@ -1,4 +1,4 @@
-package io.suggest.model
+package io.suggest.ym.model
 
 import org.elasticsearch.client.Client
 import scala.concurrent.{Future, ExecutionContext}
@@ -6,8 +6,11 @@ import cascading.tuple.{Tuple, TupleEntry, Fields}
 import com.scaleunlimited.cascading.BaseDatum
 import io.suggest.util.{SioModelUtil, SerialUtil}
 import org.hbase.async.GetRequest
-import SioHBaseAsyncClient._
 import scala.collection.JavaConversions._
+import io.suggest.model.{MVIUnitStatic, SioSearchContext, MVIUnit}
+import io.suggest.model.SioHBaseAsyncClient._
+import io.suggest.model.MVIUnitHBaseSerialized
+import scala.Some
 
 /**
  * Suggest.io
@@ -37,7 +40,7 @@ object MVIMart extends MVIUnitStatic[MVIMart] {
    * @param mvim Экземпляр сабжа.
    * @return Сериализованный набор данных, готовый к отправке в HBase.
    */
-  def serializeForHbase(mvim: MVIMart): MVIUnitHBaseSerialized = {
+  def serializeForHBase(mvim: MVIMart): MVIUnitHBaseSerialized = {
     val value = new Tuple
     value addShort SER_VSN
     value addLong mvim.generation
@@ -68,7 +71,7 @@ object MVIMart extends MVIUnitStatic[MVIMart] {
     * @param rowkey Ключ ряда.
     * @param qualifier Имя колонки (vin).
     * @param value Значение ячейки.
-    * @return MDVIActive.
+    * @return Экземпляр [[MVIMart]].
     */
   def deserializeRaw(rowkey:AnyRef, qualifier:AnyRef, value:Array[Byte]): MVIMart = {
     val martId = deserializeRowKey2MartId(rowkey)
@@ -79,7 +82,7 @@ object MVIMart extends MVIUnitStatic[MVIMart] {
     * @param martId id торгового центра.
     * @param qualifier Имя колонки (vin).
     * @param value Значение ячейки.
-    * @return [[MDVIActive]].
+    * @return Экземпляр [[MVIMart]].
     */
   def deserializeWithMartId(martId: Int, qualifier:AnyRef, value:Array[Byte]): MVIMart = {
     val vin = MVIUnit.deserializeQualifier2Vin(qualifier)
@@ -90,7 +93,7 @@ object MVIMart extends MVIUnitStatic[MVIMart] {
    * @param rowkey Ключ ряда.
    * @param vin Строка виртуального индекса.
    * @param value Значение ячейки.
-   * @return [[MDVIActive]].
+   * @return Экземпляр [[MVIMart]].
    */
   def deserializeWithVin(rowkey:AnyRef, vin:String, value:Array[Byte]): MVIMart = {
     val martId = deserializeRowKey2MartId(rowkey)
@@ -102,7 +105,7 @@ object MVIMart extends MVIUnitStatic[MVIMart] {
     * @param martId id торгового центра.
     * @param vin Строка виртуального индекса.
     * @param value Значение ячейки.
-    * @return [[MDVIActive]].
+    * @return Экземпляр [[MVIMart]].
     */
   def deserializeWithMartIdVin(martId:Int, vin:String, value:Array[Byte]): MVIMart = {
     val tuple = SerialUtil.deserializeTuple(value)
@@ -168,6 +171,7 @@ object MVIMart extends MVIUnitStatic[MVIMart] {
     }
   }
 
+  override def isMyType(obj: MVIUnit): Boolean = obj.isInstanceOf[MVIMart]
 }
 
 
@@ -204,10 +208,10 @@ class MVIMart extends BaseDatum(FIELDS) with MVIUnit {
   /** Выдать реальный ключ ряда в таблице хранилища. */
   override def getRowKey: Array[Byte] = martId2rowKey(martId)
 
-  def serializeForHbase: MVIUnitHBaseSerialized = MVIMart.serializeForHbase(this)
+  def serializeForHbase: MVIUnitHBaseSerialized = MVIMart.serializeForHBase(this)
 
   /** Узнать, не используется ли текущий индекс другими субъектами?
-    * Всегда нет, т.к. этот индекс принадлежит ТЦ целиком. */
+    * Нужно найти всех, кто использует этот индекс (vin) и проверить. */
   override def isVinUsedByOthers(implicit esClient: Client, ec: ExecutionContext) = {
     Future successful false
   }

@@ -4,11 +4,12 @@ import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.Client
 import io.suggest.util.SioEsUtil._
 import org.apache.lucene.index.IndexNotFoundException
-import io.suggest.util.{LogsImpl, SioEsIndexUtil}
+import io.suggest.util.{MacroLogsImpl, StringUtil, LogsImpl, SioEsIndexUtil}
 import org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.collection.JavaConversions._
 import org.elasticsearch.action.admin.indices.settings.UpdateSettingsResponse
+import java.util.regex.Pattern
 
 /**
  * Suggest.io
@@ -23,23 +24,40 @@ import org.elasticsearch.action.admin.indices.settings.UpdateSettingsResponse
  * abcdefgh3 - означает, что имеет место виртуальный индекс, состоящий из трех шард с именами abcdefgh3_0, abcdefgh3_1 и abcdefgh3_2
  * Префикс - это просто префикс, состоящий из букв латинского алфавита и нужен просто для именования.
  */
-object MVirtualIndex {
+object MVirtualIndex extends MacroLogsImpl {
 
-  private val LOGGER = new LogsImpl(getClass)
+  /** Отделять префикс vin'а от полей, входящих в название с помощью этого символа. */
+  val VIN_PREFIX_SEP = "."
 
   // Регэксп для парсинга vin на vinPrefix и shardCount.
-  val vin2prefixCountRe = "^([a-z]+)([0-9]+)$".r
+  val vin2prefixCountRe = {
+    val sepQuotedStr = Pattern.quote(VIN_PREFIX_SEP)
+    val reStr = "^([a-z0-9]+)" + sepQuotedStr + "([0-9]+)$"
+    reStr.r
+  }
 
   val INDEX_REFRESH_INTERVAL = "index.refresh_interval"
   val INDEX_REFRESH_INTERVAL_BULK = Integer.valueOf(-1)
   val INDEX_REFRESH_INTERVAL_SECONDS_DFLT = Integer.valueOf(16)
+
+  /**
+   * Генерируем псевдослучайные id-шники, и чтобы сортировка по времени их создания работала исходя из самого префикса.
+   * Сортировка нужна, чтобы вычислять какие vin'ы появились раньше, а какие позже.
+   * Сортировка позволяет избежать хранения дополнительного указателя на текущий индекс. Так поиск будет работаеть при
+   * rebuild'е без использования дополнительных костылей.
+   * Используется b32+hex. b64+ordered нельзя, т.к. ES не поддерживает upper-case названия.
+   * TODO Через (44*11) лет произойдёт сбой сортировки из-за повышения разрядности b32-идентификатора.
+   *      Тогда возможно, будет не работать поиск на веб-морде какое-то небольшое время, если кеш будет включен и будет длинный.
+   * @return lowerCase набор цифр и латинских букв, входящие в алфавит Base32+HEX.
+   */
+  def generateVinPrefix = StringUtil.longAsB32hLc(System.currentTimeMillis)
 
   /** Сгенерить vin по префиксу и общему числу шард.
    * @param vinPrefix Префикс. Обычно случайная строка из [a-z].
    * @param shardCount Общее кол-во шард в виртуальном индексе.
    * @return Строка, которая может быть использована для сохранения как id индекса.
    */
-  def vinFor(vinPrefix: String, shardCount: Int): String = vinPrefix + shardCount
+  def vinFor(vinPrefix: String, shardCount: Int): String = vinPrefix + "." + shardCount
 
   /** Имя физической es-шарды (es-индекса) на основе данных виртуального индекса и номера шарды.
    * @param vinPrefix Префикс. Обычно случайная строка из [a-z].
@@ -281,7 +299,7 @@ trait MVirtualIndex extends Serializable {
   /** Выдать домены, официально использующие этот индекс. Ресурсоемкая операция, перебирающая всю таблицу.
    * @return Коллекция сабжей, в т.ч. пустая.
    */
-  def getUsers(implicit ec: ExecutionContext) = MDVIActive.getAllLatestForVin(vin)
+  def getUsers(implicit ec: ExecutionContext) = MDVIActive.getAllForVin(vin)
 
 
   /**

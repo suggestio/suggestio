@@ -23,7 +23,7 @@ import io.suggest.util.SioModelUtil
 
 // TODO В sioutil зачем-то сделана поддержка нескольких vin в рамках alias'a в searchPtr.
 //      Надо бы вспомнить зачем...
-
+@deprecated("Should be removed ASAP. New vin format supports sorting to detect current index w/o any MDVISearchPtr", "2014.feb.14")
 object MDVISearchPtr {
 
   val Q_NONE = "?"
@@ -113,6 +113,7 @@ object MDVISearchPtr {
 
 import MDVISearchPtr._
 
+@deprecated("Should be removed ASAP. New vin format supports sorting to detect current index w/o any MDVISearchPtr", "2014.feb.14")
 case class MDVISearchPtr(
   dkey: String,
   vins: List[String],

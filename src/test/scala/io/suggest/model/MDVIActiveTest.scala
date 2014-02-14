@@ -13,6 +13,8 @@ import MDVISubshardInfo.getTypename
  * Created: 18.09.13 19:19
  * Description: Тесты для модели MDVIActive.
  */
+// TODO Исправить тесты!!!
+
 class MDVIActiveTest extends FlatSpec with Matchers {
 
   // Тестируется выборка хранилища в виртуальном индексе
@@ -25,13 +27,13 @@ class MDVIActiveTest extends FlatSpec with Matchers {
     dsResult should equal (dvi)
     deserializeWithDkey(dkey=dvi.dkey, qualifier=s.qualifier, value=s.value)  should equal (dvi)
     deserializeWithVin(rowkey=s.rowkey, vin=dvi.vin, value=s.value)           should equal (dvi)
-    deserializeWithDkeyVin(dkey=dvi.dkey, vin=dvi.vin, value=s.value)      should equal (dvi)
+    deserializeWithDkeyVin(dkey=dvi.dkey, vin=dvi.vin, value=s.value)         should equal (dvi)
     dsResult
   }
 
 
   "MDVIActive" should "have proper results from exported methods" in {
-    val vin = "asdasdas1"
+    val vin = "asda123as.1"
     val dvi = new MDVIActive(dkey=dkey, vin=vin, generation=123123L)
     dvi.getShards               should equal (Seq(vin + "_0"))
     dvi.getAllTypes             should equal (Seq(getTypename(dkey, 0)))
@@ -52,14 +54,14 @@ class MDVIActiveTest extends FlatSpec with Matchers {
       MDVISubshardInfo(123123123, List(1,2)),
       MDVISubshardInfo(0,         List(3,4))
     )
-    val dvi1 = new MDVIActive(dkey=dkey, vin=vinFor("asdasd", 1), generation=14, subshardsInfo=shards)
+    val dvi1 = new MDVIActive(dkey=dkey, vin=vinFor("asd12sd", 1), generation=14, subshardsInfo=shards)
     sd(dvi1)      should equal (dvi1)
     sd(sd(dvi1))  should equal (dvi1)
   }
 
 
   "getInxTypeForDate()" should "return correct inx/types on 1-shard MVI 1-subshard MDVIA" in {
-    val mdvia = new MDVIActive(vin="adasdasd1", dkey=dkey, generation=123123L)
+    val mdvia = new MDVIActive(vin="1da4d5s6.1", dkey=dkey, generation=123123L)
     val result = mdvia.getShards.head -> getTypename(dkey, 0L)
     import mdvia.getInxTypeForDate
     getInxTypeForDate(LocalDate.now)                should equal  (result)
@@ -74,7 +76,7 @@ class MDVIActiveTest extends FlatSpec with Matchers {
     val days09 = toDaysCount(new LocalDate(2009, 1, 1))
     val days06 = toDaysCount(new LocalDate(2006, 1, 1))
     val days0  = 0
-    val vin = vinFor("asdasd", 1)
+    val vin = vinFor("asda132sd", 1)
     val mdvia = new MDVIActive(
       dkey          = dkey,
       vin           = vin,

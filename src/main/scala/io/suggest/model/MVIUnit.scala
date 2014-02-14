@@ -4,10 +4,11 @@ import org.elasticsearch.client.Client
 import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.util.{SerialUtil, CascadingFieldNamer, SioModelUtil, MacroLogsImpl}
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.hbase.async.{DeleteRequest, PutRequest}
+import org.hbase.async.{KeyValue, DeleteRequest, PutRequest}
 import SioHBaseAsyncClient._
 import org.apache.hadoop.hbase.HColumnDescriptor
 import cascading.tuple.{Tuple, TupleEntry}
+import io.suggest.ym.model.{MVIShop, MVIMart}
 
 /**
  * Suggest.io
@@ -16,7 +17,9 @@ import cascading.tuple.{Tuple, TupleEntry}
  * Description: Интерфейсы для системы виртуальных индексов.
  */
 
-object MVIUnit {
+object MVIUnit extends MacroLogsImpl {
+
+  import LOGGER._
 
   def CF = MObject.CF_MVI
 
@@ -24,14 +27,17 @@ object MVIUnit {
   def HTABLE_NAME = MObject.HTABLE_NAME
   def HTABLE_NAME_BYTES = MObject.HTABLE_NAME_BYTES
 
-  val MVI_COMPANIONS = List(MDVIActive, MVIMart)
+  val MVI_COMPANIONS = List(MDVIActive, MVIMart, MVIShop)
 
   def deserializeRaw(rowkey: Array[Byte], qualifier: Array[Byte], value: Array[Byte]): Option[MVIUnit] = {
+    val vin = deserializeQualifier2Vin(qualifier)
+    deserializeWithVin(rowkey, vin, value=value)
+  }
+  def deserializeWithVin(rowkey:Array[Byte], vin:String, value: Array[Byte]): Option[MVIUnit] = {
     val tuple = SerialUtil.deserializeTuple(value)
     val serVsn = tuple getShort 0
     MVI_COMPANIONS.find { _.isSerVsnMatches(serVsn) }
       .map { companion =>
-        val vin = deserializeQualifier2Vin(qualifier)
         companion.deserializeSemiRaw(rowkey, vin, tuple, serVsn)
       }
   }
@@ -77,8 +83,47 @@ object MVIUnit {
    */
   def generationToMillis(g: Long): Long = g * GENERATION_RESOLUTION + GENERATION_SUBSTRACT
 
+
+  /** Найти все dkey, которые используют указанный индекс. Неблокирующая непоточная операция, завершается лишь
+   * только когда всё-всё готово.
+   * Ресурсоемкая операция, т.к. для этого нужно просмотреть все dkey.
+   * @param vin имя индекса, для которого проводится поиск.
+   * @return Список (dkey, [[MDVIActive]]) без повторяющихся элементов в произвольном порядке.
+   *         При желании можно сконвертить в карту через .toMap()
+   */
+  def getAllUnitsForVin(vin: String)(implicit ec:ExecutionContext): Future[List[MVIUnit]] = {
+    trace(s"getAllForVin($vin): Starting...")
+    val column: Array[Byte] = vin.getBytes
+    val scanner = ahclient.newScanner(HTABLE_NAME)
+    scanner.setFamily(CF)
+    scanner.setQualifier(column)
+    val folder = new AsyncHbaseScannerFold[List[MVIUnit]] {
+      def fold(acc: List[MVIUnit], kv: KeyValue): List[MVIUnit] = {
+        deserializeWithVin(vin=vin, rowkey=kv.key, value=kv.value).get :: acc
+      }
+    }
+    folder(Nil, scanner)
+  }
+
+
+  /**
+   * Прочитать всю CF из таблицы.
+   * @return Будущий список [[MDVIActive]].
+   */
+  def getAllUnits(implicit ec:ExecutionContext): Future[List[MVIUnit]] = {
+    val scanner = ahclient.newScanner(HTABLE_NAME)
+    scanner.setFamily(CF)
+    val folder = new AsyncHbaseScannerFold [List[MVIUnit]] {
+      def fold(acc0: List[MVIUnit], kv: KeyValue): List[MVIUnit] = {
+        deserializeRaw(rowkey=kv.key, qualifier=kv.qualifier, value=kv.value).get :: acc0
+      }
+    }
+    folder(Nil, scanner)
+  }
+
 }
 
+import MVIUnit._
 
 trait MVIUnitStatic[T <: MVIUnit] extends CascadingFieldNamer {
 
@@ -101,10 +146,32 @@ trait MVIUnitStatic[T <: MVIUnit] extends CascadingFieldNamer {
     * наследуемые модули на предмет попадания обнаруженного SER_VSN в их диапазон.
     * Если несколько версий, то функцию можно переопределить на более сложную логику. */
   def isSerVsnMatches(serVsn: Short): Boolean = SER_VSN == serVsn
+
+  def isMyType(obj: MVIUnit): Boolean
+
+  /** Внутренняя фунция для фильтрации юнитов по типу. */
+  def filterUnitsByType(units: List[MVIUnit]): List[T] = {
+    units.foldLeft (List[T]()) { (acc, e) =>
+      if (isMyType(e))
+        e.asInstanceOf[T] :: acc
+      else
+        acc
+    }
+  }
+
+  /** Выдать все значения для указанного типа. */
+  def getAllForVin(vin: String)(implicit ec:ExecutionContext): Future[List[T]] = {
+    getAllUnitsForVin(vin) map {
+      filterUnitsByType
+    }
+  }
+
+  def getAll(implicit ec:ExecutionContext): Future[List[T]] = {
+    getAllUnits map {
+      filterUnitsByType
+    }
+  }
 }
-
-
-import MVIUnit._
 
 // Базовый интерфейс для классов, исповедующих доступ к dkey-индексам.
 trait MVIUnit extends MacroLogsImpl {
@@ -161,7 +228,6 @@ trait MVIUnit extends MacroLogsImpl {
     ahclient.put(putReq)
   }
 
-
   /**
    * Выдать натуральные шарды натурального индекса, обратившись к вирт.индексу.
    * @return Список названий индексов.
@@ -217,6 +283,7 @@ trait MVIUnit extends MacroLogsImpl {
     ahclient.delete(delReq)
   }
 
+  def isSameTypeAs(e: MVIUnit): Boolean = getClass == e.getClass
 }
 
 

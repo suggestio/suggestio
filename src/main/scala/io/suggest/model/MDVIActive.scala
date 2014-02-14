@@ -167,43 +167,6 @@ object MDVIActive extends MVIUnitStatic[MDVIActive] with MacroLogsImpl {
   }
 
 
-  /** Найти все dkey, которые используют указанный индекс. Неблокирующая непоточная операция, завершается лишь
-   * только когда всё-всё готово.
-   * Ресурсоемкая операция, т.к. для этого нужно просмотреть все dkey.
-   * @param vin имя индекса, для которого проводится поиск.
-   * @return Список (dkey, [[MDVIActive]]) без повторяющихся элементов в произвольном порядке.
-   *         При желании можно сконвертить в карту через .toMap()
-   */
-  def getAllLatestForVin(vin: String)(implicit ec:ExecutionContext): Future[List[MDVIActive]] = {
-    trace(s"getAllForVin($vin): Starting...")
-    val column: Array[Byte] = vin
-    val scanner = ahclient.newScanner(HTABLE_NAME)
-    scanner.setFamily(CF)
-    scanner.setQualifier(column)
-    val folder = new AsyncHbaseScannerFold[List[MDVIActive]] {
-      def fold(acc: List[MDVIActive], kv: KeyValue): List[MDVIActive] = {
-        deserializeWithVin(vin=vin, rowkey=kv.key, value=kv.value) :: acc
-      }
-    }
-    folder(Nil, scanner)
-  }
-
-
-  /**
-   * Прочитать всю CF из таблицы.
-   * @return Будущий список [[MDVIActive]].
-   */
-  def getAll(implicit ec:ExecutionContext): Future[List[MDVIActive]] = {
-    val scanner = ahclient.newScanner(HTABLE_NAME)
-    scanner.setFamily(CF)
-    val folder = new AsyncHbaseScannerFold [List[MDVIActive]] {
-      def fold(acc0: List[MDVIActive], kv: KeyValue): List[MDVIActive] = {
-        deserializeRaw(rowkey=kv.key, qualifier=kv.qualifier, value=kv.value) :: acc0
-      }
-    }
-    folder(Nil, scanner)
-  }
-
 
   /** Асинхронно прочитать все активные индексы для указанного dkey. Быстрая операция.
    * @param dkey Ключ домена.
@@ -224,10 +187,10 @@ object MDVIActive extends MVIUnitStatic[MDVIActive] with MacroLogsImpl {
     }
   }
 
-
   /** Дефолтовое значение поля subshardsInfo. */
   def SUBSHARD_INFO_DFLT = List(new MDVISubshardInfo(0))
 
+  override def isMyType(obj: MVIUnit): Boolean = obj.isInstanceOf[MDVIActive]
 }
 
 
@@ -433,7 +396,7 @@ class MDVIActive extends BaseDatum(FIELDS) with MVIUnit {
    * @return true, если используется.
    */
   def isVinUsedByOthers(implicit esClient:EsClient, ec:ExecutionContext): Future[Boolean] = {
-    getAllLatestForVin(vin) map { vinUsedBy =>
+    getAllForVin(vin) map { vinUsedBy =>
       var l = vinUsedBy.size
       if (vinUsedBy contains dkey)
         l -= 1

@@ -25,36 +25,34 @@ object VirtualIndexUtil extends MacroLogsImpl {
   def downgradeAll(implicit ec:ExecutionContext, client:Client): Future[_] = {
     val logPrefix = "downgradeAll():"
     trace(logPrefix + " starting...")
-    MDVIActive.getAll.flatMap { mdviActives =>
-      val dkeyInxGroups = mdviActives
-        .groupBy(_.dkey)
+    MVIUnit.getAllUnits.flatMap { mvis =>
+      val rowkeyInxGroups = mvis
+        .groupBy(_.getRowKeyStr)
         .mapValues {
           _.sortBy(_.generation)
         }
       // Параллельно делаем downgrade индексов по доменам
-      val fut = Future.traverse(dkeyInxGroups) {
+      val fut = Future.traverse(rowkeyInxGroups) {
         // Нечего даунгрейдить, если 0 или 1 индекс всего лишь.
-        case (dkey, mdviGroup) if mdviGroup.isEmpty || mdviGroup.tail.isEmpty =>
-          trace(s"$logPrefix Nothing to downgrade on dkey=$dkey indices=${mdvisAsString(mdviGroup)}")
-          Future.successful(())
+        case (rowKey, mviGroup) if mviGroup.isEmpty || mviGroup.tail.isEmpty =>
+          trace(s"$logPrefix Nothing to downgrade on rowKey=$rowKey indices=${mdvisAsString(mviGroup)}")
+          Future successful ()
 
         // Есть чего поудалять.
-        case (dkey, mdviGroup) =>
-          val restInx = mdviGroup.head
-          val toRmInxs = mdviGroup.tail
-          trace(s"$logPrefix Downgrading indices for dkey=$dkey to index=${restInx.vin}. Drop indices (${toRmInxs.size}): ${mdvisAsString(toRmInxs)}")
-          // Сначала обновить inx ptr
-          val searchPtr = new MDVISearchPtr(dkey, List(restInx.vin))
-          searchPtr.save.flatMap { _ =>
-            Future.traverse(toRmInxs) { rmMdviActive =>
-              rmMdviActive
-                .eraseBackingIndex.recover {
-                  case ex: IndexMissingException =>
-                    debug(s"$logPrefix Ignoring ${ex.getClass.getSimpleName} while deleting index ${searchPtr.vins.head} :: ${ex.getMessage}")
-                    true
-                } flatMap {
-                  _ => rmMdviActive.delete
-                }
+        case (rowKey, mviGroup) =>
+          val restInx = mviGroup.head
+          val toRmInxs = mviGroup.tail
+          trace(s"$logPrefix Downgrading indices for rowKey=$rowKey to index=${restInx.vin}. Drop indices (${toRmInxs.size}): ${mdvisAsString(toRmInxs)}")
+          Future.traverse(toRmInxs) { rmMvi =>
+            rmMvi.eraseBackingIndex.recover {
+              case ex: IndexMissingException =>
+                debug(s"$logPrefix Ignoring ${ex.getClass.getSimpleName}: Already deleted index ${rmMvi.toShortString} :: ${ex.getMessage}")
+                true
+              case ex: UnsupportedOperationException =>
+                debug(s"$logPrefix ${ex.getClass.getSimpleName} for index ${rmMvi.toShortString}")
+                true
+            } flatMap {
+              _ => rmMvi.delete
             }
           }
       }
@@ -66,7 +64,7 @@ object VirtualIndexUtil extends MacroLogsImpl {
     }
   }
 
-  private def mdvisAsString(indices: Seq[MDVIActive]): String = {
+  private def mdvisAsString(indices: Seq[MVIUnit]): String = {
     indices.map(_.vin).mkString(",")
   }
 
