@@ -4,17 +4,17 @@
 @import m._
 
 @hPathAfter1 = {
-  / @getDkey / @getVin
+  / @dkey / @vin
 }
 
-@indicesBase(title = s"MDVIActive / $getDkey / $getVin") {
-    @defining(getDkey) { dkey =>
+@indicesBase(title = s"MDVIActive / $dkey / $vin") {
+    @defining(dkey) { dkey =>
         <p>dkey: <b><a href="@routes.Sys.dkeyShow(dkey)">@dkey</a></b></p>
     }
-    @defining(getVin) { vin =>
+    @defining(vin) { vin =>
         <p>vin:  <b><a href="@routes.Sys.showVin(vin)">@vin</a></b></p>
     }
-    <p>generation: <b>@getGeneration</b></p>
+    <p>generation: <b>@generation</b></p>
     <p>subshards:</p>
     <ul>
         @getSubshards.map { ss =>
