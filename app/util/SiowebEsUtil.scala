@@ -68,50 +68,35 @@ object SiowebEsUtil extends SioEsClient {
     trace(logPrefix + "Planning search request...")
     // TODO потом нужно добавить поддержку переключения searchPtr в каком-либо виде.
     Future.traverse(dkeys) { dkey =>
-      MDVISearchPtr.getForDkeyId(dkey).flatMap {
-        // Есть указатель поиска для домена. Найти метаданные для индекса.
-        case Some(searchPtr) =>
-          Future.traverse(searchPtr.vins) { vin =>
-            MDVIActive.getForDkeyVin(dkey, vin) map {
-              case Some(dviActive) =>
-                val indices = dviActive.getShards
-                val types = dviActive.getTypesForRequest(sso)
-                trace(logPrefix + s"found index: $dviActive :: indices -> ${indices.mkString(", ")} ;; types -> $types")
-                Some(indices -> types)
+      MDVIActive.getStableForDkey(dkey).map {
+        case Some(mdviActive) =>
+          // Есть указатель поиска для домена. Возможно, их там несколько, и если так, то нужно выбрать current-указатель, т.е. старейший из них.
+          val indices = mdviActive.getShards
+          val types = mdviActive.getTypesForRequest(sso)
+          trace(logPrefix + s"found index: $mdviActive :: indices -> ${indices.mkString(", ")} ;; types -> $types")
+          Some(indices -> types)
 
-              // Внезапно нет индекса, на который указывает указатель.
-              case None =>
-                warn("MDVIActive not found for dkey='%s' and vin='%s', but it should (according to %s)" format (dkey, vin, searchPtr))
-                None
-            }
-          } map { listOfIndicesTypesOpt =>
-            // Смержить все индексы и типы в два списка. На выходе будет кортеж, который описан аккумулятором: allIndices -> allTypes
-            val result = listOfIndicesTypesOpt.foldLeft [(List[String], List[String])] (Nil -> Nil) {
-              case ((_accIndices, _accTypes), Some((_indices, _types))) =>
-                (_accIndices ++ _indices) -> (_accTypes ++ _types)
-
-              case (_acc, None) => _acc
-            }
-            Some(result)
-          }
-
-        case None => Future.successful(None)
+        // Нет индекса для указанного dkey.
+        case None =>
+          warn(s"No MDVIActive not found for dkey '$dkey'! Suppressing any exception...")
+          None
       }
-    } map { optList =>
-      val (indices, types) = optList.foldLeft[(List[String], List[String])] (Nil -> Nil) {
-        case ((indicesAcc, typesAcc), Some((_indices, _types))) =>
-          (indicesAcc ++ _indices) -> (typesAcc ++ _types)
+    }
+    // Смержить все индексы и типы в два списка. На выходе будет кортеж, который описан аккумулятором: allIndices -> allTypes
+    .map { listOfIndicesTypesOpt =>
+      val result = listOfIndicesTypesOpt.foldLeft [(List[String], List[String])] (Nil -> Nil) {
+        case ((_accIndices, _accTypes), Some((_indices, _types))) =>
+          (_accIndices ++ _indices) -> (_accTypes ++ _types)
 
-        case (acc, None)      => acc
+        case (_acc, None) => _acc
       }
-      indices.distinct -> types.distinct
-
-    } flatMap { case (indices, types) =>
+      result
+    }
+    .flatMap { case (indices, types) =>
       // запустить поиск
       if (indices.isEmpty) {
-        // Нет метаданных для выполнения поиска. Скорее всего, домен не установлен.
-        // TODO Возможно, домен установлен, а тут какая-то другая проблема. Нужно разбираццо и/или удалить этот TODO.
-        warn(logPrefix + "no indices found for search. allTypes -> " + types)
+        // Нет метаданных для выполнения поиска. Скорее всего, запрошенный домен не установлен в системе.
+        warn(s"${logPrefix}No indices found for search in dkeys = [${dkeys.mkString(", ")}]. allTypes -> ${types.mkString(", ")}")
         Future.failed(NoSuchDomainException(dkeys))
       } else {
         searchIndex(indices, types, queryStr)

@@ -7,12 +7,13 @@ import play.api.test._
 import play.api.test.Helpers._
 import play.api.libs.json._
 import play.api.libs.ws.WS
+import scala.concurrent.ExecutionContext.Implicits.global // TODO Почему play EC не подходит сюда, принимается только штатный EC.
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 21.06.13 17:13
- * Description:
+ * Description: Тесты для проверки валидации сайта. Имитируется взятие кода suggest.io и установка его на тестовый сайт.
  */
 class JsControllerFunSpec extends Specification {
 
@@ -27,61 +28,62 @@ class JsControllerFunSpec extends Specification {
       val selfUrlPrefix = "http://localhost:" + port
       // TODO fake-запросы надо переписать через WS.url.get с использованием вышеуказанного профикса, иначе сессии не пашут.
 
-        val addDomainResult = controllers.Js.addDomain()(FakeRequest().withFormUrlEncodedBody("url" -> testSiteUrl))
-        // Проверяем возвращаемый статус. Если ошибка, то напечатать в консоли тело ошибки для облегчения исправления ошибки.
-        status(addDomainResult) match {
-          case code if code != 200 =>
-            println(contentAsString(addDomainResult))
-            code must beEqualTo(200)
+      val addDomainResult = controllers.Js.addDomain()(FakeRequest().withFormUrlEncodedBody("url" -> testSiteUrl))
+      // Проверяем возвращаемый статус. Если ошибка, то напечатать в консоли тело ошибки для облегчения исправления ошибки.
+      status(addDomainResult) match {
+        case code if code != 200 =>
+          println(contentAsString(addDomainResult))
+          code must beEqualTo(200)
 
-          case _ =>
-        }
-        val addDomainJsonJsString = Json.parse(contentAsBytes(addDomainResult))
-        addDomainJsonJsString must beAnInstanceOf[JsObject]
-        val addDomainJson = addDomainJsonJsString.asInstanceOf[JsObject]
+        case _ =>
+      }
+      val addDomainJsonJsString = Json.parse(contentAsBytes(addDomainResult))
+      addDomainJsonJsString must beAnInstanceOf[JsObject]
+      val addDomainJson = addDomainJsonJsString.asInstanceOf[JsObject]
 
-        // Извлекаем ключ домена и проверяем
-        val dkey = (addDomainJson \ "domain").asInstanceOf[JsString].value
-        dkey must beEqualTo("test0.sio.cbca.ru")
+      // Извлекаем ключ домена и проверяем
+      val dkey = (addDomainJson \ "domain").asInstanceOf[JsString].value
+      dkey must beEqualTo("test0.sio.cbca.ru")
 
-        // Извлекаем ссылку на js с qi_id и слегка проверяем по регэкспу
-        val jsUrl = (addDomainJson \ "js_url").asInstanceOf[JsString].value
-        val jsUrlRegex = routes.Js.v2(dkey, "RRRR").url.replace("RRRR", "[\\w]{" + qiIdLen + "}").r
-        jsUrlRegex.pattern.matcher(jsUrl).matches() must beTrue
+      // Извлекаем ссылку на js с qi_id и слегка проверяем по регэкспу
+      val jsUrl = (addDomainJson \ "js_url").asInstanceOf[JsString].value
+      val jsUrlRegex = routes.Js.v2(dkey, "RRRR").url.replace("RRRR", "[\\w]{" + qiIdLen + "}").r
+      jsUrlRegex.pattern.matcher(jsUrl).matches() must beTrue
 
-        // Генерим приблизительный скрипт, который "увидит" детектор SioJs.
-        val script = """<script type="text/javascript">
+      // Генерим приблизительный скрипт, который "увидит" детектор SioJs.
+      val script = """<script type="text/javascript">
           (function() {
 	          var _sw = document.createElement("script");
 	          _sw.type = "text/javascript";
 	          _sw.async = true;_sw.src = "https://suggest.io%s";var _sh = document.getElementsByTagName("head")[0]; _sh.appendChild(_sw);})();
         </script>""" format jsUrl
 
-        // Отправить "полученный" скрипт на тестовый сайт (через WebServices API).
-        val saveCodeResult = await(WS.url(testSetCodeUrl).post(Map(
-          "code"                -> Seq(script),
-          "domain_id"           -> Seq("68"),
-          "is_show_charset"     -> Seq("on"),
-          "validation_content"  -> Seq(""),
-          "validation_filename" -> Seq("")
-        )))
-        saveCodeResult.status must beEqualTo(200)
+      // Отправить "полученный" скрипт на тестовый сайт (через WebServices API).
+      val saveCodeBody = Map(
+        "code"                -> Seq(script),
+        "domain_id"           -> Seq("68"),
+        "is_show_charset"     -> Seq("on"),
+        "validation_content"  -> Seq(""),
+        "validation_filename" -> Seq("")
+      )
+      val saveCodeFut = WS.url(testSetCodeUrl).post(saveCodeBody)
+      saveCodeFut.map(_.status) must beEqualTo(200)
 
-        // Код установлен на сайт. Ход установки можно наблюдать через SioNotifier (или через WebSocket на клиенте).
-        
+      // Код установлен на сайт. Ход установки можно наблюдать через SioNotifier (или через WebSocket на клиенте).
 
-        // Теперь надо сымитировать запрос к suggest.io к /js/v2/....
-        val jsReqResultOpt = route(FakeRequest(GET, jsUrl).withSession(
-          session(addDomainResult).data.toList : _*))
-        jsReqResultOpt must beSome
 
-        val jsReqResult = jsReqResultOpt.get
-        status(jsReqResult) must beEqualTo(200)
-        contentAsString(jsReqResult) must contain("install")
+      // Теперь надо сымитировать запрос к suggest.io к /js/v2/....
+      val jsReqResultOpt = route(FakeRequest(GET, jsUrl).withSession(
+        session(addDomainResult).data.toList : _*))
+      jsReqResultOpt must beSome
 
-        // Тут пошла асинхронная проверка сайта на наличие скрипта. Результаты накапливаются в очереди новостей и придут клиенту по web socket.
-        // TODO Пройти процедуру валидации. Тут нужен вебсокет видимо... А значит и работать надо через htmlunit и browser.
-        // TODO Очистить тестовый сайт.
+      val jsReqResult = jsReqResultOpt.get
+      status(jsReqResult) must beEqualTo(200)
+      contentAsString(jsReqResult) must contain("install")
+
+      // Тут пошла асинхронная проверка сайта на наличие скрипта. Результаты накапливаются в очереди новостей и придут клиенту по web socket.
+      // TODO Пройти процедуру валидации. Тут нужен вебсокет видимо... А значит и работать надо через htmlunit и browser.
+      // TODO Очистить тестовый сайт.
     }
 
 

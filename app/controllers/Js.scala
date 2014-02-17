@@ -2,7 +2,7 @@ package controllers
 
 import _root_.util.urls_supply.SeedUrlsSupplier
 import util.event._
-import play.api.mvc.{Session, SimpleResult, WebSocket}
+import play.api.mvc.{SimpleResult, WebSocket}
 import play.api.data._
 import util.FormUtil._
 import util.acl._
