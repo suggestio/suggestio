@@ -13,6 +13,8 @@ import org.hbase.async.{KeyValue, GetRequest}
 import cascading.tuple.{TupleEntry, Fields, Tuple}
 import com.scaleunlimited.cascading.BaseDatum
 import io.suggest.model.MVIUnit._
+import java.util
+import com.google.common.primitives.UnsignedBytes
 
 /**
  * Suggest.io
@@ -183,6 +185,45 @@ object MDVIActive extends MVIUnitStatic[MDVIActive] with MacroLogsImpl {
         results.map { kv =>
           deserializeWithDkey(dkey=dkey, qualifier=kv.qualifier, value=kv.value)
         }
+      }
+    }
+  }
+
+  /**
+   * Для выявления "стабильного" индекса для домена, используется эта функция. Новый генератор vin подразумевает, что
+   * старейший vin -- это и есть тот vin, который текущий. Подразумевается, что все vin'ы старше -- это заготовки,
+   * ещё только готовящиеся к использованию (когда идёт ребилд, например).
+   * @param dkey Ключ домена.
+   * @return Индекс для использования, если такой имеется.
+   */
+  def getStableForDkey(dkey: String)(implicit ec: ExecutionContext): Future[Option[MDVIActive]] = {
+    val rowkey = serializeDkey2Rowkey(dkey)
+    val getReq = new GetRequest(HTABLE_NAME, rowkey)
+      .family(CF)
+    ahclient.get(getReq) map { results =>
+      // Выносим обработку isEmpty отдельно для снижения мусора в empty-ветке.
+      if (results.isEmpty) {
+        None
+      } else {
+        // Нужно пройтись по результатам и выбрать старейший по vin'у (колонке) индекс. И только его десериализовать в итоге.
+        // Без lazy, т.к. фунцкия lexicographicalComparator() раздаёт статическую константу.
+        val comparator = UnsignedBytes.lexicographicalComparator()
+        val choosenKv = results.reduceLeft { (currKv, kv) =>
+          val cmpResult = comparator.compare(currKv.qualifier(), kv.qualifier())
+          if (cmpResult < 0) {
+            currKv
+          } else if (cmpResult > 0) {
+            kv
+          } else if (currKv.timestamp() >= kv.timestamp()) {
+            // Теоретически возможно, что пришло два значения ячейки разных версий. Побеждает последняя версия
+            // Если timestamp'ы совпадают, то значит внутри одно и тоже, и дальше сравнивать смысла нет.
+            currKv
+          } else {
+            kv
+          }
+        }
+        val result = deserializeWithDkey(dkey=dkey, qualifier=choosenKv.qualifier, value=choosenKv.value)
+        Some(result)
       }
     }
   }

@@ -240,4 +240,5 @@ class MVIMart extends BaseDatum(FIELDS) with MVIUnit {
   /** Эквивалент toString, выдающий максимально короткую строку. Используется для некоторых задач логгинга. */
   override def toShortString: String = s"mart/$martId/$vin"
 
+  override def toString: String = s"${getClass.getSimpleName}($martId, $vin, $generation)"
 }

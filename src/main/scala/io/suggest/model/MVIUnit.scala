@@ -284,6 +284,8 @@ trait MVIUnit extends MacroLogsImpl {
   }
 
   def isSameTypeAs(e: MVIUnit): Boolean = getClass == e.getClass
+
+  override def toString: String = s"${getClass.getSimpleName}(rk=$getRowKeyStr, $vin, $generation)"
 }
 
 

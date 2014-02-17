@@ -261,5 +261,6 @@ class MVIShop extends BaseDatum(FIELDS) with MVIUnit {
     * Но в случае с магазином - внешний индекс ТЦ отделён от метаданных индекса магазина. */
   override def eraseIndexOrMappings(implicit esClient: Client, ec: ExecutionContext) = deleteMappings
 
+  override def toString: String = s"${getClass.getSimpleName}($shopId, $martId, $vin, $generation)"
 }
 
