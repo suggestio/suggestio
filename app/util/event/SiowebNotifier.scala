@@ -1,7 +1,7 @@
 package util.event
 
 import io.suggest.event._
-import util.{SioutilLogs, DomainManager, SiowebSup}
+import util._
 import akka.actor.{Props, ActorRef, ActorRefFactory}
 import akka.util.Timeout
 import scala.concurrent.duration._
@@ -31,7 +31,8 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
   /** Набор модулей, которые необходимо статически подписать на события. */
   // TODO Вынести это отсюда?
   protected def getStaticSubscribers: Seq[SNStaticSubscriber] = List(
-    DomainManager
+    DomainManager,
+    SiobixClient
   )
 
   /** SiowebSup собирается запустить сие. */

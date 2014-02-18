@@ -5,6 +5,7 @@ import util.AnormJodaTime._
 import org.joda.time.DateTime
 import util.SqlModelSave
 import java.sql.Connection
+import util.event._
 
 /**
  * Suggest.io
@@ -15,8 +16,10 @@ import java.sql.Connection
 
 object MShop {
 
+  val martIdParser = get[Int]("mart_id")
+
   /** Парсер полного ряда таблицы. */
-  val rowParser = get[Pk[Int]]("id") ~ get[Int]("company_id") ~ get[Int]("mart_id") ~ get[String]("name") ~ get[DateTime]("date_created") ~
+  val rowParser = get[Pk[Int]]("id") ~ get[Int]("company_id") ~ martIdParser ~ get[String]("name") ~ get[DateTime]("date_created") ~
     get[Option[String]]("description") ~ get[Option[Int]]("mart_floor") ~ get[Option[Int]]("mart_section") map {
     case id ~ company_id ~ mart_id ~ name ~ date_created ~ description ~ mart_floor ~ mart_section =>
       MShop(id=id, company_id=company_id, mart_id=mart_id, name=name, date_created=date_created,
@@ -79,14 +82,31 @@ object MShop {
   }
 
   /**
-   * Удалить один ряд из таблицы по id.
+   * Прочитать значение martId для указанного магазина.
+   * @param id id магазина.
+   * @return id тц если такой магазин существует.
+   */
+  def getMartIdFor(id: Int)(implicit c:Connection): Option[Int] = {
+    SQL("SELECT mart_id FROM shop WHERE id = {id}")
+      .on('id -> id)
+      .as(martIdParser *)
+      .headOption
+  }
+
+  /**
+   * Удалить один ряд из таблицы по id и породить системное сообщение об этом.
    * @param id Ключ ряда.
    * @return Кол-во удалённых рядов. Т.е. 0 или 1.
    */
   def deleteById(id: Int)(implicit c:Connection): Int = {
-    SQL("DELETE FROM shop WHERE id = {id}")
+    val martIdOpt = getMartIdFor(id)
+    val rowsDeleted = SQL("DELETE FROM shop WHERE id = {id}")
       .on('id -> id)
       .executeUpdate()
+    if (rowsDeleted > 0) {
+      SiowebNotifier publish YmShopDeletedEvent(martId=martIdOpt.get, shopId=id)
+    }
+    rowsDeleted
   }
 }
 
@@ -109,11 +129,13 @@ case class MShop(
     * @return Новый экземпляр сабжа.
     */
   def saveInsert(implicit c: Connection): MShop = {
-    SQL("INSERT INTO shop(company_id, mart_id, name, description, mart_floor, mart_section)" +
+    val result = SQL("INSERT INTO shop(company_id, mart_id, name, description, mart_floor, mart_section)" +
         " VALUES({company_id}, {mart_id}, {name}, {description}, {mart_floor}, {mart_section})")
       .on('company_id -> company_id,   'mart_id -> mart_id,       'name -> name,
           'description -> description, 'mart_floor -> mart_floor, 'mart_section -> mart_section)
       .executeInsert(rowParser single)
+    SiowebNotifier publish YmShopAddedEvent(martId=mart_id, shopId=result.id.get)
+    result
   }
 
   /** Обновлить в таблице текущую запись.

@@ -163,7 +163,7 @@ object MDomainUserSettings extends DfsModelStaticT {
     private val CF_DPROPS_B = CF_DPROPS.getBytes
     private def QUALIFIER = CF_DPROPS_B
 
-    def dkey2rowkey(dkey: String): Array[Byte] = SioModelUtil.dkey2rowkey(dkey)
+    def dkey2rowkey(dkey: String): Array[Byte] = SioModelUtil.dkey2rowKey(dkey)
     def deserialize(d: Array[Byte]) = deserializeTo[DataMap_t](d)
 
     def save(d: MDomainUserSettings): Future[_] = {

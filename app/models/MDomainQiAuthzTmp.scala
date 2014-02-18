@@ -170,7 +170,7 @@ object MDomainQiAuthzTmp {
     import io.suggest.model.SioHBaseAsyncClient._
     import io.suggest.model.HTapConversionsBasic._
 
-    private def dkey2rowkey(dkey: String): Array[Byte] = SioModelUtil.dkey2rowkey(dkey)
+    private def dkey2rowkey(dkey: String): Array[Byte] = SioModelUtil.dkey2rowKey(dkey)
     private def id2qualifier(id: String): Array[Byte] = SioModelUtil.serializeStrForHCellCoord(id)
     private def deserialize(data: Array[Byte]) = deserializeTo[MDomainQiAuthzTmp](data)
 

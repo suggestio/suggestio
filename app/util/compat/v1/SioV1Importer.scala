@@ -107,7 +107,7 @@ object SioV1Importer extends JavaTokenParsers {
 
       // Пора прочухать дату, которая идёт вслед за id. Используем парсер дат, т.к. она в исходнике в убогом формате.
       val dateAsStr = nextStr
-      val date = DateParseUtil.extractDates(dateAsStr).head.toDateMidnight(TZ_DFLT).toDateTime(TZ_DFLT)
+      val date = DateParseUtil.extractDates(dateAsStr).head.toDateTimeAtStartOfDay(TZ_DFLT).toDateTime(TZ_DFLT)
 
       // Далее идёт заголовок записи (title) и description
       val title = nextStr

@@ -114,7 +114,7 @@ object MDomainUserJson extends DfsModelStaticT {
     import io.suggest.model.SioHBaseAsyncClient._
     import io.suggest.model.HTapConversionsBasic._
 
-    private def dkey2rowkey(dkey: String): Array[Byte] = SioModelUtil.dkey2rowkey(dkey)
+    private def dkey2rowkey(dkey: String): Array[Byte] = SioModelUtil.dkey2rowKey(dkey)
     private val CF_DDATA_B = CF_DDATA.getBytes
     private val QUALIFIER: Array[Byte] = "uj".getBytes
 

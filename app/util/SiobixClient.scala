@@ -9,8 +9,11 @@ import scala.collection.immutable
 import akka.util.Timeout
 import concurrent.duration._
 import io.suggest.proto.bixo.crawler._, MainProto.MajorRebuildReply_t
-import io.suggest.util.LogsImpl
 import play.api.Logger
+import io.suggest.event.{SioNotifier, SNStaticSubscriber}
+import util.event._
+import io.suggest.event.subscriber.SnClassSubscriber
+import akka.actor.ActorContext
 
 /**
  * Suggest.io
@@ -18,7 +21,7 @@ import play.api.Logger
  * Created: 08.10.13 18:40
  * Description: Статический Akka-клиент для связи с нодой siobix-кравлера.
  */
-object SiobixClient extends SiobixClientWrapperT {
+object SiobixClient extends SiobixClientWrapperT with SNStaticSubscriber {
 
   val URL_PREFIX = current.configuration.getString("siobix.akka.url.prefix").get
 
@@ -59,11 +62,19 @@ object SiobixClient extends SiobixClientWrapperT {
       }
       .getOrElse { new AkkaSiobixClient }
   }
+  
+  siobixClientImpl.install()
+
+  // Костыль, чтобы akka-клиент загрузился в память и проинициализировался по-скорее.
+  override def snMap: Seq[(SioNotifier.Classifier, Seq[SioNotifier.Subscriber])] = Nil
 }
 
 
 /** Базовый интерфейс клиента. */
 sealed trait SiobixClientT {
+  /** Вызывается, когда клиент входит в работу. Обычно сразу по завершению конструктора.
+    * Здесь должны делаться действия, вызывающие сайд-эффекты, необходимые для работы клиента. */
+  def install() {}
   def maybeBootstrapDkey(dkey:String, seedUrls: immutable.Seq[String]): Future[MaybeBootstrapDkeyReply_t]
   def majorRebuildRequest: Future[MajorRebuildReply_t]
 }
@@ -95,16 +106,21 @@ object AkkaSiobixClient {
   def getCrawlersSupAskSelector = remoteAskSelection(CRAWLERS_SUP_ABSPATH)
   def getMainCrawlerAskSelector = remoteAskSelection(MAIN_CRAWLER_ABSPATH)
   def getMainCrawlerSelector    = remoteSelection(MAIN_CRAWLER_ABSPATH)
-  
+
 }
 
-/** Клиент к реальному siobix, работающий через Akka. */
-sealed class AkkaSiobixClient extends SiobixClientT {
+/** Клиент к реальному siobix, работающий через Akka.
+  * Часть событий приходит из SioNotifier, поэтому тут заодно и слушалка действий, и static-подписчик в одном флаконе. */
+sealed class AkkaSiobixClient extends SiobixClientT with PlayMacroLogsImpl with SNStaticSubscriber with SnClassSubscriber {
 
-  private val LOGGER = new LogsImpl(getClass)
   import LOGGER._
   import SiobixClient.askTimeout
   import AkkaSiobixClient._
+
+  override def install() {
+    trace("Subscribing crawler for events...")
+    SiowebNotifier.subscribeStatic(this)
+  }
 
   /**
    * Отправить в кравлер сообщение о запросе бутстрапа домена
@@ -129,6 +145,53 @@ sealed class AkkaSiobixClient extends SiobixClientT {
     (sel ? MajorRebuildMsg).asInstanceOf[Future[MajorRebuildReply_t]]
   }
 
+  /**
+   * Произошло событие создания нового торгового центра.
+   * @param martId id ТЦ.
+   */
+  def handleMartAdd(martId: Int) {
+    getMainCrawlerSelector ! MartAdd(martId)
+  }
+
+  def handleMartDelete(martId: Int) {
+    getMainCrawlerSelector ! MartDelete(martId)
+  }
+
+  def handleShopAdd(martId: Int, shopId: Int) {
+    getMainCrawlerSelector ! ShopAdd(mart_id=martId, shop_id=shopId)
+  }
+
+  def handleShopDelete(martId: Int, shopId: Int) {
+    getMainCrawlerSelector ! ShopDelete(mart_id=martId, shop_id=shopId)
+  }
+
+  /** Карта статических подписок на события. */
+  override def snMap: Seq[(SioNotifier.Classifier, Seq[SioNotifier.Subscriber])] = {
+    // Сюда входит реакция на события управления списками магазинов и торговых центров.
+    // Сами события обычно возникают в соотв. моделях, а сюда форвардятся через SioNotifier.
+    // Это помогает избежать привязки конкретных моделей к кускам системы, которая к этим моделям не относится никак.
+    val subscribers = List(this)
+    Seq(
+      YmMartAddedEvent.getClassifier()    -> subscribers,
+      YmShopAddedEvent.getClassifier()    -> subscribers,
+      YmShopDeletedEvent.getClassifier()  -> subscribers,
+      YmMartDeletedEvent.getClassifier()  -> subscribers
+    )
+  }
+
+  /**
+   * Обработать событие в контексте sio_notifier'а.
+   * @param event Cобытие.
+   * @param ctx контекст sio-notifier.
+   */
+  override def publish(event: SioNotifier.Event)(implicit ctx: ActorContext) {
+    event match {
+      case sae: YmShopAddedEvent      => handleShopAdd(shopId=sae.shopId, martId=sae.martId)
+      case sde: YmShopDeletedEvent    => handleShopDelete(martId=sde.martId, shopId=sde.shopId)
+      case YmMartAddedEvent(martId)   => handleMartAdd(martId)
+      case YmMartDeletedEvent(martId) => handleMartDelete(martId)
+    }
+  }
 }
 
 

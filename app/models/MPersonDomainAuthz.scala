@@ -383,8 +383,8 @@ object MPersonDomainAuthz {
     private val CF_UAUTHZ_B = CF_UAUTHZ.getBytes
 
     def personId2key(personId: String): Array[Byte]  = SioModelUtil.serializeStrForHCellCoord(personId)
-    def dkey2qualifier(dkey: String): Array[Byte]     = SioModelUtil.dkey2rowkey(dkey)
-    def deserialize(data: Array[Byte])                = deserializeTo[MPersonDomainAuthz](data)
+    def dkey2qualifier(dkey: String): Array[Byte]    = SioModelUtil.dkey2rowKey(dkey)
+    def deserialize(data: Array[Byte])               = deserializeTo[MPersonDomainAuthz](data)
 
     def save(data: MPersonDomainAuthz): Future[_] = {
       val putReq = new PutRequest(HTABLE_NAME_BYTES, personId2key(data.personId), CF_UAUTHZ_B, dkey2qualifier(data.dkey), serialize(data))

@@ -2,6 +2,7 @@ package util
 
 import play.api.Logger
 import io.suggest.util.LogsAbstract
+import com.typesafe.scalalogging.slf4j.{Logger => MacroLogger}
 
 /**
  * Suggest.io
@@ -18,6 +19,16 @@ trait Logs {
 
 trait LazyLogger {
   protected lazy val LOGGER = Logger(getClass)
+}
+
+/** Аналог MacroLogsImpl, но использует плеевский генератор slf4j-логгеров. Скорее всего эквивалентен исходному логгеру.
+  * Создан для проверки некоторых вещей, касающихся логгирования, потом можно будет безопасно удалить. */
+trait PlayMacroLogsImpl {
+  val LOGGER = {
+    val playLogger = Logger(getClass)
+    val slf4jLogger = playLogger.logger
+    MacroLogger(slf4jLogger)
+  }
 }
 
 /** trait-костыль. Подмешивается к abstract-классам из библиотек, ибо они не совместимы с play-логгером. */

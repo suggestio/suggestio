@@ -5,6 +5,7 @@ import util.AnormJodaTime._
 import org.joda.time.DateTime
 import java.sql.Connection
 import util.SqlModelSave
+import util.event._
 
 /**
  * Suggest.io
@@ -59,14 +60,19 @@ object MMart {
   }
 
   /**
-   * Удалить ТЦ с указанными id.
+   * Удалить ТЦ с указанными id. Центральная фунцкия удаления, остальные должны дергать её из-за
+   * сайд-эффектов на кравлер.
    * @param id Идентификатор.
    * @return Кол-во удалённых рядов. Т.е. 0 или 1.
    */
   def deleteById(id: Int)(implicit c:Connection): Int = {
-    SQL("DELETE FROM mart WHERE id = {id}")
+    val result = SQL("DELETE FROM mart WHERE id = {id}")
       .on('id -> id)
       .executeUpdate()
+    if (result > 0) {
+      SiowebNotifier publish YmMartDeletedEvent(id)
+    }
+    result
   }
 }
 
@@ -88,9 +94,11 @@ case class MMart(
    * @return Вернуть новый экземпляр сабжа с новыми id и date_created.
    */
   def saveInsert(implicit c: Connection): MMart = {
-    SQL("INSERT INTO mart(company_id, name, address, site_url) VALUES({company_id}, {name}, {address}, {site_url})")
+    val result = SQL("INSERT INTO mart(company_id, name, address, site_url) VALUES({company_id}, {name}, {address}, {site_url})")
       .on('company_id -> company_id, 'name -> name, 'address -> address, 'site_url -> site_url)
       .executeInsert(rowParser single)
+    SiowebNotifier publish YmMartAddedEvent(result.mart_id)    // Раз уж всё добавлено ок, то сразу сгенерить событие.
+    result
   }
 
   /**
