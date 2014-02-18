@@ -78,7 +78,7 @@ object MVIMart extends MVIUnitStatic[MVIMart] {
     deserializeWithMartId(martId, qualifier, value=value)
   }
 
-  /** Десериализовать данные после хранения в HBase. На случай, если dkey уже десериализован.
+  /** Десериализовать данные после хранения в HBase. На случай, если mart_id уже десериализован.
     * @param martId id торгового центра.
     * @param qualifier Имя колонки (vin).
     * @param value Значение ячейки.
@@ -101,7 +101,7 @@ object MVIMart extends MVIUnitStatic[MVIMart] {
   }
 
 
-  /** Десериализации при наличии готовых vin и dkey.
+  /** Десериализации при наличии готовых vin и mart_id.
     * @param martId id торгового центра.
     * @param vin Строка виртуального индекса.
     * @param value Значение ячейки.
@@ -113,7 +113,8 @@ object MVIMart extends MVIUnitStatic[MVIMart] {
   }
 
 
-  /** Этот десериализатор вызывается из [[MVIUnit.deserializeRaw]] при наличии частично-десериализованных данных. */
+  /** Этот десериализатор вызывается из [[io.suggest.model.MVIUnit.deserializeRaw]]
+    * при наличии частично-десериализованных данных. */
   override def deserializeSemiRaw(rowkey: Array[Byte], vin: String, value: Tuple, serVsn: Short): MVIMart = {
     val martId = deserializeRowKey2MartId(rowkey)
     finalDeserializer(martId, vin, value, serVsn)
@@ -219,7 +220,7 @@ class MVIMart extends BaseDatum(FIELDS) with MVIUnit {
   /**
    * Удалить маппинги. Т.к. вызов относится к ТЦ, который хранит весь индекс целиком, то удалять надо все маппинги.
    * Удаление всех маппингов из индекса не поддерживается, т.к. в этом нет смысла. Либо удалять индекс, либо не удалять вообще.
-   * @return Всегда [[UnsupportedOperationException]].
+   * @return Всегда UnsupportedOperationException.
    */
   override def deleteMappings(implicit client: Client, executor: ExecutionContext): Future[_] = {
     throw new UnsupportedOperationException(s"deleteMappings() for full mart index never be implemented, because it have no sense.")

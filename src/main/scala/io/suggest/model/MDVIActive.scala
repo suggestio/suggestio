@@ -32,6 +32,8 @@ import com.google.common.primitives.UnsignedBytes
 object MDVIActive extends MVIUnitStatic[MDVIActive] with MacroLogsImpl {
   import LOGGER._
 
+  val ROW_KEY_PREFIX = "#"
+
   val DKEY_FN       = fieldName("dkey")
   val SUBSHARDS_FN  = fieldName("subshards")
   val FIELDS        = new Fields(DKEY_FN, VIN_FN, GENERATION_FN, SUBSHARDS_FN)
@@ -42,13 +44,25 @@ object MDVIActive extends MVIUnitStatic[MDVIActive] with MacroLogsImpl {
   val SER_VSN = 1.toShort
 
   /** Десериализовать hbase rowkey в dkey-строку. */
-  def deserializeRowkey2Dkey(rowkey: AnyRef) = SioModelUtil.rowkey2dkey(rowkey)
+  def deserializeRowkey2Dkey(rowkey: AnyRef): String = {
+    val rowKeyStr = SioModelUtil.deserialzeHCellCoord(rowkey)
+    if (rowKeyStr startsWith ROW_KEY_PREFIX) {
+      val rowKeyRoot = rowKeyStr substring ROW_KEY_PREFIX.length
+      SioModelUtil.rowKeyStr2dkey(rowKeyRoot)
+    } else {
+      throw new IllegalArgumentException("Unable to deserialize prefix")
+    }
+  }
 
   /** Сериализовать dkey в ключ ряда. Для удобства сортировки поддоменов, dkey разворачивается в "ru.domain.subdomain".
     * @param dkey Ключ домена.
     * @return Байты, пригодные для задания ключа в таблице.
     */
-  def serializeDkey2Rowkey(dkey: String): Array[Byte] = SioModelUtil.dkey2rowkey(dkey)
+  def serializeDkey2Rowkey(dkey: String): Array[Byte] = {
+    val rowKeyRootStr = SioModelUtil.dkey2rowKeyStr(dkey)
+    val rowKeyStr = ROW_KEY_PREFIX + rowKeyRootStr
+    SioModelUtil.serializeStrForHCellCoord(rowKeyStr)
+  }
 
 
   /** Десериализовать исходную запись из HBase.

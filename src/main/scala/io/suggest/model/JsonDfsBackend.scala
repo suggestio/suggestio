@@ -116,7 +116,7 @@ object JsonDfsBackend {
 
 
 trait JsonBackendT {
-  protected type ImportExportMap = Map[String,Any]
+  protected type ImportExportMap = Map[String, Any]
 
   /** Экспорт состояния. Метод реализуется на клиенте. */
   def exportState : ImportExportMap

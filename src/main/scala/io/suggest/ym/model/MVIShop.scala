@@ -44,7 +44,7 @@ object MVIShop extends MVIUnitStatic[MVIShop] {
   /**
    * Сериализовать экземпляр сабжа в экземпляр данных, пригодных для отправки в HBase.
    * @param mviShop Экземпляр [[MVIShop]].
-   * @return Экземпляр [[MVIUnitHBaseSerialized]].
+   * @return Экземпляр [[io.suggest.model.MVIUnitHBaseSerialized]].
    */
   def serializeForHBase(mviShop: MVIShop): MVIUnitHBaseSerialized = {
     val value = new Tuple
@@ -105,7 +105,8 @@ object MVIShop extends MVIUnitStatic[MVIShop] {
   }
 
 
-  /** Этот десериализатор вызывается из [[MVIUnit.deserializeRaw]] при наличии частично-десериализованных данных. */
+  /** Этот десериализатор вызывается из [[io.suggest.model.MVIUnit.deserializeRaw]] при наличии
+    * частично-десериализованных данных. */
   override def deserializeSemiRaw(rowkey: Array[Byte], vin: String, value: Tuple, serVsn: Short): MVIShop = {
     val shopId = deserializeRowKey2ShopId(rowkey)
     finalDeserializer(shopId, vin, value, serVsn)
@@ -138,7 +139,6 @@ object MVIShop extends MVIUnitStatic[MVIShop] {
       throw new IllegalArgumentException("Cannot parse row key: unexpected key prefix: " + rkStr)
     }
   }
-
 
 
   /**

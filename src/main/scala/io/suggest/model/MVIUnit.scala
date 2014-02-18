@@ -127,6 +127,13 @@ import MVIUnit._
 
 trait MVIUnitStatic[T <: MVIUnit] extends CascadingFieldNamer {
 
+  def ROW_KEY_PREFIX: String
+
+  def isMyRowKey(rowkey: AnyRef): Boolean = {
+    val rowkeyStr = SioModelUtil.deserialzeHCellCoord(rowkey)
+    rowkeyStr startsWith ROW_KEY_PREFIX
+  }
+
   def CF = MVIUnit.CF
   def HTABLE_NAME = MVIUnit.HTABLE_NAME
   def HTABLE_NAME_BYTES = MVIUnit.HTABLE_NAME_BYTES
@@ -251,7 +258,7 @@ trait MVIUnit extends MacroLogsImpl {
     val logPrefix = "deleteIndexOrMappings():"
     isVinUsedByOthers flatMap {
       case true  =>
-        warn(s"$logPrefix vin=$vin used by dkeys, other than '$getRowKeyStr'. Delete mapping...")
+        warn(s"$logPrefix vin=$vin used by others, other than '$getRowKeyStr'. Delete mapping...")
         deleteMappings
 
       case false => eraseBackingIndex
@@ -261,7 +268,7 @@ trait MVIUnit extends MacroLogsImpl {
 
   /** Удалить весь индекс целиком, даже если в нём хранятся другие сайты (без проверок). */
   def eraseBackingIndex(implicit esClient: Client, ec:ExecutionContext): Future[Boolean] = {
-    warn(s"eraseBackingIndex(): vin=$vin dkey='$getRowKeyStr' Deleting real index FULLY!")
+    warn(s"eraseBackingIndex(): vin=$vin rowKey='$getRowKeyStr' :: Deleting real index FULLY!")
     getVirtualIndex.eraseShards
   }
 

@@ -171,10 +171,21 @@ trait SNStaticSubscriptionManager extends SioNotifierStaticClientI {
   protected def staticUnsubscribeAllSync() = applyForeachSC(unsubscribe)    // TODO а надо ли оно вообще?
 
   protected def applyForeachSC(f: (Subscriber, Classifier) => Unit) {
-    getStaticSubscribers foreach { ssObject =>
-      ssObject.snMap foreach { case (c, sss) =>
-        sss foreach { ss => f(ss, c) }
-      }
+    getStaticSubscribers foreach { snss =>
+      applyOneSC(snss, f)
+    }
+  }
+
+  def subscribeStatic(snss: SNStaticSubscriber) {
+    applyOneSC(snss, subscribe)
+  }
+  def unsubscribeStatic(snss: SNStaticSubscriber) {
+    applyOneSC(snss, unsubscribe)
+  }
+
+  protected def applyOneSC(snss: SNStaticSubscriber, f: (Subscriber, Classifier) => Unit) {
+    snss.snMap foreach { case (c, sss) =>
+      sss foreach { ss => f(ss, c) }
     }
   }
 }

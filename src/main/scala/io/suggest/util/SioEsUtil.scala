@@ -213,7 +213,7 @@ object SioEsUtil extends MacroLogsImpl {
     trace(logPrefix + "starting")
     findFreeVirtualIndex(shardCount, maxAttempts)
       .flatMap { mvi =>
-        info(logPrefix + "Esuring shards for mvi=%s" format mvi)
+        info(logPrefix + "Ensuring shards for mvi=%s" format mvi)
         mvi.ensureShards(replicasCount) map { _ => mvi }
       }
   }

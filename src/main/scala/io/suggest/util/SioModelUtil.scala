@@ -64,9 +64,13 @@ object SioModelUtil {
    * @param dkey Ключ домена.
    * @return Байты, пригодные для значения rowkey.
    */
-  def dkey2rowkey(dkey: String): Array[Byte] = {
+  def dkey2rowKey(dkey: String): Array[Byte] = {
     serializeStrForHCellCoord(
-      UrlUtil.reverseDomain(dkey))
+      dkey2rowKeyStr(dkey)
+    )
+  }
+  def dkey2rowKeyStr(dkey: String): String = {
+    UrlUtil.reverseDomain(dkey)
   }
 
   /**
@@ -74,9 +78,12 @@ object SioModelUtil {
    * @param rowkey Ключ ряда, сгенеренный в dkey2rowkey()
    * @return dkey, т.е. исходный ключ домена.
    */
-  def rowkey2dkey(rowkey: AnyRef): String = {
+  def rowKey2dkey(rowkey: AnyRef): String = {
     val dkeyRev = deserialzeHCellCoord(rowkey)
-    UrlUtil.reverseDomain(dkeyRev)
+    rowKeyStr2dkey(dkeyRev)
+  }
+  def rowKeyStr2dkey(rowKeyStr: String): String = {
+    UrlUtil.reverseDomain(rowKeyStr)
   }
 
 }
