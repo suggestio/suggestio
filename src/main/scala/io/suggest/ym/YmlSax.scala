@@ -650,7 +650,7 @@ trait YmlSax extends DefaultHandler with SaxContentHandlerWrapper with YmSaxErro
     def myOfferType: OfferType
 
     // Заливаем данные аттрибутов в датум сразу в конструкторе.
-    idOpt       = Option(myAttrs.getValue(ATTR_ID)).map(_.trim)
+    shopOfferIdOpt       = Option(myAttrs.getValue(ATTR_ID)).map(_.trim)
     groupIdOpt  = Option(myAttrs.getValue(ATTR_GROUP_ID)).map(_.trim)
     offerType   = myOfferType
     shopMeta    = shopCtx.datum
@@ -698,6 +698,7 @@ trait YmlSax extends DefaultHandler with SaxContentHandlerWrapper with YmSaxErro
       case (AnyOfferFields.url, _)                          => new OfferUrlHandler
       // buyurl ignored
       case (AnyOfferFields.price, _)                        => new PriceHandler
+      case (AnyOfferFields.wprice, _)                       => ???
       // wprice ignored
       case (AnyOfferFields.currencyId, _)                   => new CurrencyIdHandler
       // xCategory ignored
@@ -796,6 +797,20 @@ trait YmlSax extends DefaultHandler with SaxContentHandlerWrapper with YmSaxErro
       def myTag = AnyOfferFields.url.toString
       override def maxLen: Int = OFFER_URL_MAXLEN
       def handleUrl(_url: String) { url = _url }
+    }
+
+    /** Обработчик старой цены, которая в рамках yml задаётся как wprice.
+      * Цитата из [[http://discontmart.ru/partners/]]:
+      * | ... поддерживаем XML-файлы стандарта YML (Yandex Market Language).
+      * | Для описания причины уценки используется элемент  < additional > с параметром 'name'.
+      * | Пример описания причины уценки: < additional name="Причина уценки" >Описание< /additional >
+      * | Для расчета скидки, необходимо в элемент < wprice > передавать цену товара до уценки.
+      */
+    class WPriceHandler extends FloatHandler with IgnoreFieldFailure {
+      override def myTag: String = AnyOfferFields.wprice.toString
+      override def handleFloat(f: Float) {
+        oldPrices = Seq(f)
+      }
     }
 
     /** Обработчик количественной цены товара/услуги. */
@@ -1945,8 +1960,8 @@ trait ShopHandlerState {
 trait OfferHandlerState {
   /** Расaпарсенное значение аттрибута типа предложения. Для simple это SIMPLE. */
   def offerType: OfferType
-  /** Опциональный уникальный идентификатор комерческого предложения. */
-  def idOpt: Option[String]
+  /** Опциональный уникальный идентификатор комерческого предложения по мнению магазина. */
+  def shopOfferIdOpt: Option[String]
   /** Значение необязательного флага available, если таков выставлен. */
   def isAvailable: Boolean
 }

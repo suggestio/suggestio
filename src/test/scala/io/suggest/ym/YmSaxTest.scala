@@ -48,7 +48,7 @@ class YmlSaxTest extends FlatSpec with Matchers {
         results.foreach { te =>
           val datum = new YmOfferDatum(te)
           import datum._
-          idOpt.get match {
+          shopOfferIdOpt.get match {
             // simple-товар: Наручные часы casio
             case id @ "12340" =>
               offerType shouldEqual OfferTypes.Simple

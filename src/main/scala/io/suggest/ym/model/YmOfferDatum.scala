@@ -8,7 +8,7 @@ import io.suggest.ym._, OfferTypes.OfferType
 import io.suggest.model.PayloadHelpers
 import io.suggest.ym.YmParsers._
 import org.joda.time.DateTime
-import cascading.tuple.coerce.Coercions.{LONG, STRING}
+import cascading.tuple.coerce.Coercions.{LONG, STRING, FLOAT, INTEGER}
 import io.suggest.ym.HotelStarsLevels.HotelStarsLevel
 import scala.Some
 import io.suggest.ym.Dimensions
@@ -35,8 +35,8 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
   /** Ссылка на оффер. Необязательно, это уникальная ссылка. */
   val URL_ESFN                  = "url"
   val URL_FN                    = fieldName(URL_ESFN)
-  /** Необязательный id товара по мнению магазина. */
-  val ID_FN                     = fieldName("id")
+  /** Необязательный id товара по мнению магазина. Обычно число из базы, обычно уникальное в рамках прайса. */
+  val SHOP_OFFER_ID_FN          = fieldName("soId")
   val OFFER_TYPE_ESFN           = "offerType"
   val OFFER_TYPE_FN             = fieldName(OFFER_TYPE_ESFN)
   val GROUP_ID_ESFN             = "groupId"
@@ -48,6 +48,8 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
   /** id магазина. Генерируется на основе предыдущего поля. Удобно для группировки. */
   val SHOP_ID_ESFN              = "shopId"
   val SHOP_ID_FN                = fieldName(SHOP_ID_ESFN)
+  val OLD_PRICES_ESFN           = "oldPrices"
+  val OLD_PRICES_FN             = fieldName(OLD_PRICES_ESFN)  // Старые цены [promo]. Часто используются.
   val PRICE_ESFN                = "price"
   val PRICE_FN                  = fieldName(PRICE_ESFN)
   val CURRENCY_ID_ESFN          = "currencyId"
@@ -86,7 +88,8 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
 
   override val FIELDS = {
     var fieldsAcc = new Fields(
-      URL_FN, ID_FN, OFFER_TYPE_FN, GROUP_ID_FN, AVAILABLE_FN, SHOP_META_FN, SHOP_ID_FN, PRICE_FN, CURRENCY_ID_FN,
+      URL_FN, SHOP_OFFER_ID_FN, OFFER_TYPE_FN, GROUP_ID_FN, AVAILABLE_FN, SHOP_META_FN, SHOP_ID_FN,
+      OLD_PRICES_FN, PRICE_FN, CURRENCY_ID_FN,
       CATEGORY_IDS_FN, MARKET_CATEGORY_FN, PICTURES_FN,
       DESCRIPTION_FN, SALES_NOTES_FN, COUNTRY_OF_ORIGIN_FN, MANUFACTURER_WARRANTY_FN, DOWNLOADABLE_FN, AGE_FN
     )
@@ -193,7 +196,9 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
   }
   val deserializeMarketCategoryPath: PartialFunction[AnyRef, Option[Seq[String]]] = {
     case null     => None
-    case t: Tuple => if (t.isEmpty)  None  else  Some(t.toSeq.asInstanceOf[Seq[String]])
+    case t: java.lang.Iterable[_] =>
+      val t1 = t.toSeq.map(STRING.coerce)
+      if (t1.isEmpty)  None  else  Some(t1)
   }
 
 
@@ -202,7 +207,7 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
   }
   val deserializePictures: PartialFunction[AnyRef, Seq[String]] = {
     case null     => Nil
-    case t: Tuple => t.toSeq.asInstanceOf[Seq[String]]
+    case t: java.lang.Iterable[_] => t.toSeq.map(STRING.coerce)
   }
 
 
@@ -219,8 +224,9 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
     if (ageOpt == null || ageOpt.isEmpty)  null  else  ageOpt.get.getTuple
   }
   val deserializeAge: PartialFunction[AnyRef, Option[YmOfferAge]] = {
-    case null     => None
-    case t: Tuple => Some(new YmOfferAge(t))
+    case null       => None
+    case t: Tuple   => Some(new YmOfferAge(t))
+    case s: String  => Some(YmOfferAge.deserializeFromString(s))
   }
 
 
@@ -288,6 +294,26 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
     case other => Some(new DateTime(LONG coerce other))
   }
 
+  /** Сериализация списка старых цен. */
+  def serializeOldPrices(oldPrices: Seq[Float]): Tuple = {
+    if (oldPrices == null || oldPrices.isEmpty) {
+      null
+    } else {
+      val t = new Tuple
+      oldPrices.foreach { oldPrice =>
+        t addFloat oldPrice
+      }
+      t
+    }
+  }
+  /** Десериализация списка старых цен. */
+  val deserializeOldPrices: PartialFunction[AnyRef, List[Float]] = {
+    case null => Nil
+    case t: java.lang.Iterable[_] =>
+      t.foldLeft [List[Float]] (Nil) { (acc, e) =>
+        FLOAT.coerce(e).floatValue() :: acc
+      }.reverse
+  }
 
   /** Перегнать содержимое payload'а в json-заготовку. Полезно при перегонке датума в json для отправки в ES.
     * @param payload Исходное содержимое поля payload.
@@ -318,7 +344,6 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
     )
     // Заинлайнить это добро? Использовать Set ради пяти элементов как-то непрактично.
     val intPfns = Set(YEAR_PFN, VOLUMES_COUNT_PFN, VOLUME_PFN, PAGE_EXTENT_PFN, DAYS_PFN)
-    import cascading.tuple.coerce.Coercions._
     val resultF: PartialFunction[(String, AnyRef, XContentBuilder), XContentBuilder] = {
       case (pfn, v, acc) if strPfns contains pfn => acc.field(pfn, STRING.coerce(v))
       case (pfn, v, acc) if intPfns contains pfn => acc.field(pfn, INTEGER.coerce(v))
@@ -337,32 +362,76 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
     }
     resultF
   }
+
+
+  /**
+   * Накатить JSON-выхлоп на новый или существующий экземпляр [[YmOfferDatum]].
+   * @param jsonMap Исходная карта JSON.
+   * @param srcDatum Исходый датум. Если не задан, то будет сгенерен новый.
+   * @return srcDatum, заполненный данными из JSON'а.
+   */
+  def fromJson[T <: AbstractYmOfferDatum](jsonMap: collection.Map[String, AnyRef], srcDatum: T = new YmOfferDatum()): T = {
+    import io.suggest.util.ImplicitTupleCoercions._
+    import srcDatum._
+    jsonMap foreach {
+      case (URL_ESFN, value)          => url = value
+      case (OFFER_TYPE_ESFN, value)   => offerType = OfferTypes(value)
+      case (GROUP_ID_ESFN, value)     => groupIdOpt = Some(value)
+      case (AVAILABLE_ESFN, value)    => isAvailable = value
+      case (SHOP_ID_ESFN, value)      => shopId = value
+      case (PRICE_ESFN, value)        => price = value
+      case (CURRENCY_ID_ESFN, value)  => currencyId = value
+      case (OLD_PRICES_ESFN, value)   => oldPrices = deserializeOldPrices(value)
+      case (MARKET_CATEGORY_ESFN, value) =>
+        marketCategoryPath = deserializeMarketCategoryPath(value)
+      case (PICTURES_ESFN, value)     => pictures = deserializePictures(value)
+      case (STORE_ESFN, value)        => isStore = value
+      case (PICKUP_ESFN, value)       => isPickup = value
+      case (DELIVERY_ESFN, value)     => isDelivery = value
+      case (DELIVERY_INCLUDED_ESFN, value) =>
+        isDeliveryIncluded = value
+      case (LOCAL_DELIVERY_COST_ESFN, value) =>
+        localDeliveryCostOpt = Some(value)
+      case (DESCRIPTION_ESFN, value)  => description = value
+      case (SALES_NOTES_ESFN, value)  => salesNotes = value
+      case (COUNTRY_OF_ORIGIN_ESFN, value) =>
+        countryOfOrigin = value
+      case (DOWNLOADABLE_ESFN, value) => isDownloadable = value
+      case (ADULT_ESFN, value)        => isAdult = value
+      case (AGE_ESFN, value)          => ageOpt = deserializeAge(value)
+      // Дальше идут Payload-поля.
+      // simple
+      case (NAME_PFN, value)          => name = value
+      case (VENDOR_PFN, value)        => vendor = value
+      case (VENDOR_CODE_PFN, value)   => vendorCode = value
+      case (YEAR_PFN, value)          => yearOpt = Some(value)
+      // vendor.model
+      case (TYPE_PREFIX_PFN, value)   => typePrefix = value
+      case (MODEL_PFN, value)         => model = value
+      case (SELLER_WARRANTY_PFN, value) => sellerWarrantyOpt = Warranty(value)
+      case (REC_LIST_PFN, value)      => recIds = deserializeRecommendedIds(value)
+      case (WEIGHT_KG_PFN, value)     => weightKgOpt = Some(value)
+      case (EXPIRY_PFN, value)        => expiryOptRaw = value
+      case (DIMENSIONS_PFN, value)    => dimensionsRaw = value
+      // *book
+      // TODO Дописать импорт данных из остальных payload-полей.
+      case (key, value) =>
+        warn(s"Skipping json offer field: '$key'. Not yet implemented. Value was $value")
+    }
+    srcDatum
+  }
 }
 
 
 import YmOfferDatum._
 
-class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDatumDeliveryT with PayloadHelpers {
+
+/**
+ * Абстрактный базовый датум оффера. Выделен из YmOfferDatum для возможности определения Promo-офферов, т.е.
+ * офферов, имеющих вместо полей размеров и цветов поля диапазонов этих самых размеров и цветов.
+ */
+abstract class AbstractYmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDatumDeliveryT with PayloadHelpers {
   def companion = YmOfferDatum
-
-  def this(t: Tuple) = {
-    this
-    setTuple(t)
-    getTupleEntry
-  }
-
-  def this(te: TupleEntry) = {
-    this
-    setTupleEntry(te)
-  }
-
-  def this(url: String, offerType:OfferType, shop: YmShopDatum) = {
-    this
-    this.url = url
-    this.offerType = offerType
-    this.shopMeta = shop
-  }
-
 
   /** Ссылка на коммерческое предложение на сайте магазина. */
   def url = Option(_tupleEntry getString URL_FN)
@@ -370,9 +439,9 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
     _tupleEntry.setString(URL_FN, url)
   }
 
-  def idOpt = Option(_tupleEntry getString ID_FN)
-  def idOpt_=(id: Option[String]) {
-    _tupleEntry.setString(ID_FN, id getOrElse null)
+  def shopOfferIdOpt = Option(_tupleEntry getString SHOP_OFFER_ID_FN)
+  def shopOfferIdOpt_=(id: Option[String]) {
+    _tupleEntry.setString(SHOP_OFFER_ID_FN, id getOrElse null)
   }
 
   def offerTypeRaw = _tupleEntry getInteger OFFER_TYPE_FN
@@ -412,6 +481,16 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
   /** id магазина генерится силами RDBMS, а тут его целый id. */
   def shopId: Int = _tupleEntry getInteger SHOP_ID_FN
   def shopId_=(shopId: Int) =_tupleEntry.setInteger(SHOP_ID_FN, shopId)
+
+  /**
+   * Список "старых" цен в хронологическом порядке. Уценка может идти как promo/скидка, так и по какой-то причине,
+   * например если повреждение товара. В любом случае, история цен или их часть - тут.
+   */
+  def oldPrices = deserializeOldPrices(_tupleEntry getObject OLD_PRICES_FN)
+  def oldPrices_=(oldPrices: Seq[Float]) = {
+    val t = serializeOldPrices(oldPrices)
+    _tupleEntry.setObject(OLD_PRICES_FN, t)
+  }
 
   /** Цена коммерческого предложения. */
   def price = _tupleEntry getFloat PRICE_FN
@@ -726,7 +805,14 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
 
   /** Потребности сохранения в ES покрываются поддержкой генерации es-документов прямо в этом классе. */
   def toJsonBuilder: XContentBuilder = {
-    var acc = XContentFactory.jsonBuilder().startObject()
+    val acc = XContentFactory.jsonBuilder().startObject()
+    jsonWriteFields(acc)
+    acc.endObject()
+  }
+
+  /** Базовая фунцкия записи полей датума в json-генератор.
+    * Может дополнятся снизу/сверху новыми в функциями (полями) в зависимости от конкретной реализации. */
+  def jsonWriteFields(acc: XContentBuilder) {
     // url
     val urlOpt = url
     if (urlOpt.isDefined)
@@ -742,6 +828,15 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
        .field(SHOP_ID_ESFN, shopId)
        .field(PRICE_ESFN, price)
        .field(CURRENCY_ID_ESFN, currencyId)   // TODO Нужно какой-то гарантированно нормализованный id, а не магазинный.
+    // old prices
+    val _oldPrices = oldPrices
+    if (!_oldPrices.isEmpty) {
+      acc.startArray(OLD_PRICES_ESFN)
+      _oldPrices.foreach { _oldPrice =>
+        acc.value(_oldPrice)
+      }
+      acc.endArray()
+    }
     // market_category
     val mcOpt = marketCategoryPath
     if (mcOpt.isDefined)
@@ -791,11 +886,33 @@ class YmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDa
     if (age.isDefined)
       acc.field(AGE_ESFN, age.get.toString)
     // Основные поля в аккамуляторе. Теперь пора запилить payload. Там всё проще: берешь и заливаешь.
-    acc = payload2json(getPayload, acc)
-    acc.endObject()
+    payload2json(getPayload, acc)
   }
 
-  /** Собрать байтовое представление JSON'а, описывающего текущий документ. */
-  def toJsonBytes = toJsonBuilder.bytes()
 }
+
+
+/** Точный конкретный датум коммерческого предложения. В отличии от promo, содержит конкретные значения в полях
+  * размеров и цветов. И поля эти имеют соотвестствующие названия в единственном числе. */
+class YmOfferDatum extends AbstractYmOfferDatum {
+
+  def this(t: Tuple) = {
+    this
+    setTuple(t)
+    getTupleEntry
+  }
+
+  def this(te: TupleEntry) = {
+    this
+    setTupleEntry(te)
+  }
+
+  def this(url: String, offerType:OfferType, shop: YmShopDatum) = {
+    this
+    this.url = url
+    this.offerType = offerType
+    this.shopMeta = shop
+  }
+}
+
 

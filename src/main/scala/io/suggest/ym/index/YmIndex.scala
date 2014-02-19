@@ -55,6 +55,12 @@ object YmIndex {
           include_in_all = false
         ),
         FieldNumber(
+          id = OLD_PRICES_ESFN,
+          fieldType = DocFieldTypes.float,
+          index = FieldIndexingVariants.no,
+          include_in_all = false
+        ),
+        FieldNumber(
           id = PRICE_ESFN,
           fieldType = DocFieldTypes.float,
           index = FieldIndexingVariants.no,

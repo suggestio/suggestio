@@ -210,7 +210,7 @@ object YmParsers extends JavaTokenParsers {
     // a-la carte, menu
     val ala = "(?i)a[-_]?la".r
     val carte = "(?i)cart[eya]*".r
-    val menu = "(?i)men[uy]e?".r | "(?iu)меню"
+    val menu = "(?i)men[uy]e?".r | "(?iu)меню".r
     val hb: Parser[String] = "HB"
     val fb: Parser[String] = "FB"
     // Готовые наборы буков.

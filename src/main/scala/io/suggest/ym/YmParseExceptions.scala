@@ -100,7 +100,7 @@ object YmOfferAttributeException {
       lineNumber = locator.getLineNumber,
       columnNumber = locator.getColumnNumber,
       shopName = if (shop == null) null else shop.name,
-      offerIdOpt = offer.idOpt,
+      offerIdOpt = offer.shopOfferIdOpt,
       fn = attr,
       msg = msg,
       cause = cause
@@ -113,7 +113,7 @@ object YmOfferFieldException {
       lineNumber = locator.getLineNumber,
       columnNumber = locator.getColumnNumber,
       shopName = if (shop == null) null else shop.name,
-      offerIdOpt = offer.idOpt,
+      offerIdOpt = offer.shopOfferIdOpt,
       fn = fh.myTag,
       msg = msg,
       cause = cause
