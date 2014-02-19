@@ -14,8 +14,9 @@ logger.application=TRACE
 ## Кастомные логгеры в конкретных классах попадают в root где срезаются. Переопределяем их.
 logger.controllers=${logger.application}
 logger.util=${logger.application}
-logger.model=${logger.application}
-#logger.org.elasticsearch=WARN	# не помогает :(
+logger.models=${logger.application}
+## TODO Тут какая-то хрень: после второй точки всё как будто игнорируется, а elasticsearch не подхватывает logback.
+#logger.org.elasticsearch=WARN
 
 # Протокол, используемый при генерации ссылок на сайт suggest.io.
 sio.proto.dflt = http

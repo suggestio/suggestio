@@ -14,8 +14,14 @@ libraryDependencies ++= Seq(
   "com.typesafe" %% "play-plugins-mailer" % "2.2.+",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   // io.suggest stuff
-  "io.suggest" %% "util"      % "0.6.0-SNAPSHOT" changing() exclude("org.jruby", "jruby-complete"),
-  "io.suggest" %% "util-play" % "0.6.0-SNAPSHOT" exclude("org.jruby", "jruby-complete"),
+  "io.suggest" %% "util"      % "0.6.0-SNAPSHOT" changing()
+    exclude("org.jruby", "jruby-complete")
+    exclude("org.slf4j", "slf4j-log4j12")
+    ,
+  "io.suggest" %% "util-play" % "0.6.0-SNAPSHOT"
+    exclude("org.jruby", "jruby-complete")
+    exclude("org.slf4j", "slf4j-log4j12")
+    ,
   // coffeescript-компилятор используем свой заместо компилятора play по ряду причин (последний прибит гвоздями к sbt-plugin, например).
   "org.jcoffeescript" % "jcoffeescript" % "1.6-SNAPSHOT",
   // for domain validation:

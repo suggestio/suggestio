@@ -2,7 +2,7 @@ package util.acl
 
 import play.api.mvc._
 import scala.concurrent.Future
-import util.Logs
+import util.{PlayMacroLogsImpl, Logs}
 import scala.Some
 import play.api.mvc.SimpleResult
 import controllers.Application.http404Fut
@@ -14,7 +14,7 @@ import util.acl.PersonWrapper.PwOpt_t
  * Created: 16.10.13 13:48
  * Description: Суперпользователи сервиса имеют все необходимые права, в т.ч. для доступа в /sys/.
  */
-object IsSuperuser extends ActionBuilder[AbstractRequestWithPwOpt] with Logs {
+object IsSuperuser extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
   import LOGGER._
   
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[SimpleResult]): Future[SimpleResult] = {

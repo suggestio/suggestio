@@ -3,6 +3,7 @@ import scala.concurrent.{Future, future}
 import util.{SiowebEsUtil, SiowebSup}
 import play.api.Play._
 import play.api._
+import models._
 
 /**
  * Suggest.io
@@ -15,6 +16,11 @@ import play.api._
 
 object Global extends GlobalSettings {
 
+  // Логгеры тут работают через вызов Logger.*
+  import Logger._
+
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   /**
    * При запуске нужно все перечисленные действия.
    * @param app Экземпляр класса Application.
@@ -23,8 +29,30 @@ object Global extends GlobalSettings {
     super.onStart(app)
     SiowebSup.startLink
     // Запускать es-клиент при старте, ибо подключение к кластеру ES это занимает некоторое время.
-    import scala.concurrent.ExecutionContext.Implicits._
-    future { SiowebEsUtil.ensureNode() }
+    future {
+      SiowebEsUtil.ensureNode()
+    } onSuccess { case _ =>
+      initializeEsModels
+    }
+  }
+
+
+  def initializeEsModels: Future[_] = {
+    val fut1 = EsModel.ensureIndex.flatMap { _ =>
+      trace("ensureIndex() finished. Checking for mapping of " + MShopPromoOffer.ES_TYPE_NAME)
+      MShopPromoOffer.isMappingExists
+    } flatMap {
+      case false =>
+        info("Index do not have mappings for type=" + MShopPromoOffer.ES_TYPE_NAME)
+        MShopPromoOffer.putMapping
+      case true  =>
+        trace("Index already has mapping " + MShopPromoOffer.ES_TYPE_NAME)
+        Future.successful(false)
+    }
+    fut1 onComplete {
+      case tryResult => debug("Set MShopOffer index mapping completed with " + tryResult)
+    }
+    fut1
   }
 
 

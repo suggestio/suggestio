@@ -122,7 +122,7 @@ case class MShop(
   var mart_section: Option[Int] = None,
   id              : Pk[Int] = NotAssigned,
   date_created    : DateTime = null
-) extends SqlModelSave[MShop] with MCompanySel with MMartSel with CompanyMartsSel with ShopPriceListSel {
+) extends SqlModelSave[MShop] with MCompanySel with MMartSel with CompanyMartsSel with ShopPriceListSel with MShopOffersSel {
   def shop_id = id.get
 
   /** Добавить в базу текущую запись.

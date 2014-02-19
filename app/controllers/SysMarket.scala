@@ -8,14 +8,13 @@ import models._
 import views.html.sys1.market._
 import play.api.data._, Forms._
 import util.FormUtil._
-import java.net.URL
 import java.sql.Connection
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 07.02.14 17:21
- * Description: Все продажно-купле-продажные дела вынесены из Sys-контроллера в этот контроллер.
+ * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
 object SysMarket extends SioController with MacroLogsImpl {
 

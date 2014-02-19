@@ -1,0 +1,22 @@
+@(offers: Seq[MShopPromoOffer])(implicit ctx: util.Context)
+
+@* Страница с отображением списка товаров магазина. *@
+
+@offersBase("Коммерческие предложения магазина") {
+  @if(offers.isEmpty) {
+    У магазина пока нет коммерческих предложений.
+  } else {
+    <table>
+      <tr>
+        <td>Название</td>
+        <td>Цена</td>
+      </tr>
+      @offers.map { offer =>
+        <tr>
+          <td>@offer.anyNameIolist</td>
+          <td>@offer.datum.price</td>
+        </tr>
+      }
+    </table>
+  }
+}

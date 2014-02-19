@@ -49,5 +49,10 @@
       @pricelist._splsListTpl(spls, withShop=None)
     }
   }
-  <a href="@routes.SysMarket.splAddForm(mshop.id.get)">Добавить источник прайс-листа.</a>
+  <p>
+      <a href="@routes.SysMarket.splAddForm(mshop.id.get)">Добавить источник прайс-листа.</a>
+  </p>
+  <p>
+      <a href="@routes.MarketOffer.showShopOffers(mshop.id.get)">ЛК: Товары магазина</a>
+  </p>
 }

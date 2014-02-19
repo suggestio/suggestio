@@ -82,6 +82,9 @@ GET  /sys/indices/active/:dkey/:vin     controllers.Sys.indicesShowActiveFor(dke
 GET  /sys/indices/vin/:vin              controllers.Sys.showVin(vin)
 POST /sys/indices/downgrade/ALL         controllers.Sys.indicesDowngradeAll
 
+# личный кабинет купца
+GET  /market/lk/:shopId/offers          controllers.MarketOffer.showShopOffers(shopId: Int)
+
 # sys.market
 GET  /sys/market                        controllers.SysMarket.index
 # sys.market.company
