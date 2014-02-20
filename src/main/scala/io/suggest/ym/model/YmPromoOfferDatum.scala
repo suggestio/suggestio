@@ -95,7 +95,7 @@ object YmPromoOfferDatum extends YmOfferDatumStaticT[YmPromoOfferDatum] with Ser
     import ImplicitTupleCoercions._
     val applyF: PartialFunction[(String, AnyRef), Unit] = {
       case (SIZES_ORIG_PFN, value)      => sizesOrig = deserializeSizes(value)
-      case (SIZES_UNIT_ORIG_PFN, value) => sizesUnitsOrig = value
+      case (SIZES_UNIT_ORIG_PFN, value) => sizeUnitsOrig = value
       case (COLORS_PFN, value)          => colors = deserializeColors(value)
     }
     applyF orElse super.fromJsonMapper(srcDatum)
@@ -141,8 +141,8 @@ class YmPromoOfferDatum extends AbstractYmOfferDatum(FIELDS) {
   }
 
 
-  def sizesUnitsOrig = getPayloadString(SIZES_UNIT_ORIG_PFN)
-  def sizesUnitsOrig_=(units: String) = {
+  def sizeUnitsOrig = getPayloadString(SIZES_UNIT_ORIG_PFN)
+  def sizeUnitsOrig_=(units: String) = {
     setPayloadValue(SIZES_UNIT_ORIG_PFN, units)
   }
 
