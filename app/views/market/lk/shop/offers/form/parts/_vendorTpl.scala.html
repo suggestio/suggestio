@@ -1,0 +1,9 @@
+@(f: Form[_])(implicit ctx: util.Context)
+
+@* Поле выбора поставщика/производителя продукции. *@
+@import ctx._
+@helper.inputText(
+  f("vendor"),
+  'id -> "vendorInput",
+  '_label -> Messages("Manufacturer")
+)

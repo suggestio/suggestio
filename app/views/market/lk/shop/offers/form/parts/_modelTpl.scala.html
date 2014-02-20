@@ -1,0 +1,9 @@
+@(f: Form[_])(implicit ctx: util.Context)
+
+@* Кусок формы для поля model, описывающего модель товара. *@
+@import ctx._
+
+@helper.inputText(
+  f("model"),
+  '_label -> "Модель товара"
+)

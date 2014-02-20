@@ -8,10 +8,16 @@ Owner=Owner
 Mart=Shopping center
 Marts=Shopping centers
 Address=Address
+Created=Create
 Created=Created
 Edit=Edit
 Shop=Shop
 Shops=Shops
+
+Colors=Colors
+Manufacturer=Manufacturer
+Sizes=Sizes
+
 
 error.invalid=Invalid value
 error.invalid.java.util.Date=Invalid date value

@@ -1,8 +1,8 @@
-@(offers: Seq[MShopPromoOffer])(implicit ctx: util.Context)
+@(shopId:Int, offers: Seq[MShopPromoOffer])(implicit ctx: util.Context)
 
 @* Страница с отображением списка товаров магазина. *@
 
-@offersBase("Коммерческие предложения магазина") {
+@offersBase("Коммерческие предложения магазина", shopId=shopId) {
   @if(offers.isEmpty) {
     У магазина пока нет коммерческих предложений.
   } else {
@@ -19,4 +19,6 @@
       }
     </table>
   }
+
+  <a href="@routes.MarketOffer.addPromoOfferForm(shopId)">Создать новый промо-оффер</a>
 }

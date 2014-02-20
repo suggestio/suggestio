@@ -1,0 +1,10 @@
+@(f: Form[_])(implicit ctx: util.Context)
+
+@* Поле название товара. *@
+@import ctx._
+
+@helper.inputText(
+  f("name"),
+  'id -> "nameInput",
+  '_label -> Messages("Name")
+)

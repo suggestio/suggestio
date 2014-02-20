@@ -1,0 +1,7 @@
+@(f: Form[_])(implicit ctx: util.Context)
+
+@* Задание цены товара. *@
+@import ctx._
+@import helper._
+
+@inputText(f("price"), '_label -> "Цена")

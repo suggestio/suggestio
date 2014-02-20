@@ -1,7 +1,7 @@
 package models
 
 import util.SiowebEsUtil.client
-import io.suggest.ym.model.{YmPromoOfferDatum, YmOfferDatum}
+import io.suggest.ym.model.{YmOfferDatumFields, YmPromoOfferDatum, YmOfferDatum}
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import scala.concurrent.Future
 import scala.collection.JavaConversions._
@@ -65,7 +65,7 @@ object MShopPromoOffer {
    * @return Фьючерс со списком результатов в неопределённом порядке.
    */
   def getAllForShop(shopId: Int): Future[Seq[MShopPromoOffer]] = {
-    val shopIdQuery = QueryBuilders.fieldQuery(YmOfferDatum.SHOP_ID_ESFN, shopId)
+    val shopIdQuery = QueryBuilders.fieldQuery(YmOfferDatumFields.SHOP_ID_ESFN, shopId)
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(shopIdQuery)

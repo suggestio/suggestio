@@ -83,7 +83,9 @@ GET  /sys/indices/vin/:vin              controllers.Sys.showVin(vin)
 POST /sys/indices/downgrade/ALL         controllers.Sys.indicesDowngradeAll
 
 # личный кабинет купца
-GET  /market/lk/:shopId/offers          controllers.MarketOffer.showShopOffers(shopId: Int)
+GET  /market/lk/:shopId/offers          controllers.MarketOffer.showShopPromoOffers(shopId: Int)
+GET  /market/lk/offer/promo/add/:shopId controllers.MarketOffer.addPromoOfferForm(shopId: Int)
+POST /market/lk/offer/promo/add/:shopId controllers.MarketOffer.addPromoOfferFormSubmit(shopId: Int)
 
 # sys.market
 GET  /sys/market                        controllers.SysMarket.index

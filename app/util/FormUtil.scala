@@ -62,4 +62,10 @@ object FormUtil {
   // Маппер домена с конвертором в dkey.
   val domain2dkeyMapper = domainMapper
     .transform(UrlUtil.normalizeHostname, {dkey:String => IDNA.toUnicode(dkey)})
+
+  // Маппер для float-значений.
+  val floatRe = "[0-9]{1,7}([,.][0-9]{1,2})?".r
+  val float = nonEmptyText(maxLength = 15)
+    .verifying(floatRe.pattern.matcher(_).matches())
+    .transform(_.toFloat, {f: Float => f.toString})
 }

@@ -1,0 +1,16 @@
+@(f: Form[_], call: Call)(implicit ctx: util.Context)
+
+@* Базовый шаблон формы добавления предложения неточного товара. *@
+@import ctx._
+@import helper._
+@import parts._
+
+@form(call) {
+  @_vendorTpl(f)
+  @_modelTpl(f)
+  @_colorsTpl(f)
+  @_sizesTpl(f)
+  @_priceTpl(f)
+
+  <input type="submit" value="@Messages("Create")"/>
+}

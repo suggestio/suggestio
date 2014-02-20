@@ -1,0 +1,21 @@
+@(f: Form[_])(implicit ctx: util.Context)
+
+@* Поле формы для задания доступных размеров изделия. *@
+
+@import ctx._
+@import helper._
+
+
+@* Выбор единиц измерения размеров. *@
+@select(
+  f("sizesUnit"),
+  options = options(List("RU")),
+  '_label -> "Единицы измерения"
+)
+
+
+@* Доступные размеры. Пока через запятую, с необязательными пробелами. Примеры:
+ * - "44, 46, 45, ..."
+ * - "70D/XL, 85D/XXL, ..."
+ *@
+@inputText(f("sizes"), '_label -> Messages("Sizes"))

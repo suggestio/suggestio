@@ -8,10 +8,16 @@ Owner=Владелец
 Mart=Торговый центр
 Marts=Торговые центы
 Address=Адрес
+Create=Создать
 Created=Создан
 Edit=Редактировать
 Shop=Магазин
 Shops=Магазины
+
+Colors=Цвета
+Manufacturer=Производитель
+Sizes=Размеры
+
 
 error.invalid=Неверное значение
 error.invalid.java.util.Date=Неверный формат даты
