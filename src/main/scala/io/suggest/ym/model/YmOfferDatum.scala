@@ -10,10 +10,11 @@ import io.suggest.ym.YmParsers._
 import org.joda.time.DateTime
 import cascading.tuple.coerce.Coercions.{LONG, STRING, FLOAT, INTEGER}
 import io.suggest.ym.HotelStarsLevels.HotelStarsLevel
-import scala.Some
+import scala.{collection, Some}
 import io.suggest.ym.Dimensions
 import io.suggest.ym.HotelMealTypes.HotelMealType
 import org.elasticsearch.common.xcontent.{XContentFactory, XContentBuilder}
+import scala.collection
 
 /**
  * Suggest.io
@@ -23,8 +24,9 @@ import org.elasticsearch.common.xcontent.{XContentFactory, XContentBuilder}
  * Каждый оффер содержит информацию о своём магазине и об одном товаре/услуге.
  * Офферы имеют динамическое число полей, поэтому часть полей (в т.ч. все param-поля) живут внутри Payload'а.
  */
-object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with MacroLogsImpl with Serializable {
-  import LOGGER._
+
+/** Общие и статические данные по полям для всех [[YmOfferDatum]]'ов, десериализаторы и т.д. */
+object YmOfferDatumFields extends CascadingFieldNamer with Serializable {
 
   // На верхний уровень выносим поля из AnyOfferHandler, которые скорее всего есть в любых офферах.
   // Т.к. бОльшуя часть полей надо будет отправить в elasticsearch, то учитываем это в именовании полей:
@@ -85,18 +87,6 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
   val AGE_FN                    = fieldName(AGE_ESFN)
   // При добавлении/изменении полей надо вносить коррективы в toJsonBuilder()
 
-
-  override val FIELDS = {
-    var fieldsAcc = new Fields(
-      URL_FN, SHOP_OFFER_ID_FN, OFFER_TYPE_FN, GROUP_ID_FN, AVAILABLE_FN, SHOP_META_FN, SHOP_ID_FN,
-      OLD_PRICES_FN, PRICE_FN, CURRENCY_ID_FN,
-      CATEGORY_IDS_FN, MARKET_CATEGORY_FN, PICTURES_FN,
-      DESCRIPTION_FN, SALES_NOTES_FN, COUNTRY_OF_ORIGIN_FN, MANUFACTURER_WARRANTY_FN, DOWNLOADABLE_FN, AGE_FN
-    )
-    fieldsAcc = fieldsAcc append super.FIELDS
-    fieldsAcc = fieldsAcc append BaseDatum.getSuperFields(classOf[YmOfferDatum])
-    fieldsAcc
-  }
 
   // Payload-поля, хранящиеся в PAYLOAD_FN, т.к. допустимы далеко не для каждого товара или редко используются
   val NAME_PFN                  = payloadFieldName("name")
@@ -182,8 +172,8 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
     if (catIds == null || catIds.isEmpty)  null  else  new Tuple(catIds : _*)
   }
   val deserializeCategoryIds: PartialFunction[AnyRef, Seq[String]] = {
-    case null     => Nil
-    case t: Tuple => t.toSeq.asInstanceOf[Seq[String]]
+    case null => Nil
+    case t: java.lang.Iterable[_] => t.toSeq.asInstanceOf[Seq[String]]
   }
 
 
@@ -195,7 +185,7 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
     }
   }
   val deserializeMarketCategoryPath: PartialFunction[AnyRef, Option[Seq[String]]] = {
-    case null     => None
+    case null => None
     case t: java.lang.Iterable[_] =>
       val t1 = t.toSeq.map(STRING.coerce)
       if (t1.isEmpty)  None  else  Some(t1)
@@ -206,7 +196,7 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
     if (pictures == null || pictures.isEmpty)  null  else  new Tuple(pictures : _*)
   }
   val deserializePictures: PartialFunction[AnyRef, Seq[String]] = {
-    case null     => Nil
+    case null => Nil
     case t: java.lang.Iterable[_] => t.toSeq.map(STRING.coerce)
   }
 
@@ -234,8 +224,8 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
     if (rec == null || rec.isEmpty)  null  else  new Tuple(rec : _*)
   }
   val deserializeRecommendedIds: PartialFunction[AnyRef, Seq[String]] = {
-    case null     => Nil
-    case t: Tuple => t.toSeq.asInstanceOf[Seq[String]]
+    case null => Nil
+    case t: java.lang.Iterable[_] => t.toSeq.asInstanceOf[Seq[String]]
   }
 
 
@@ -252,7 +242,8 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
   }
   val deserializeTourDates: PartialFunction[AnyRef, Seq[DateTime]] = {
     case null     => Nil
-    case t: Tuple => t.toSeq.map { ts => new DateTime(LONG.coerce(ts)) }
+    case t: java.lang.Iterable[_] =>
+      t.toSeq.map { ts => new DateTime(LONG.coerce(ts)) }
   }
 
 
@@ -290,7 +281,7 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
 
   def serializeDateTime(dt: DateTime): java.lang.Long = dt.getMillis
   val deserializeDateTime: PartialFunction[AnyRef, Option[DateTime]] = {
-    case null  => None 
+    case null  => None
     case other => Some(new DateTime(LONG coerce other))
   }
 
@@ -315,6 +306,45 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
       }.reverse
   }
 
+}
+
+import YmOfferDatumFields._
+
+
+object YmOfferDatum extends YmOfferDatumStaticT[YmOfferDatum] with Serializable {
+  // Фиксируем наглухо неизменяемые значения статических no-arg функций.
+  override val payloadV2jsV = super.payloadV2jsV
+  override val FIELDS = super.FIELDS
+
+  override def fromJson(jsonMap: collection.Map[String, AnyRef], srcDatum: YmOfferDatum = new YmOfferDatum) = {
+    super.fromJson(jsonMap, srcDatum)
+  }
+}
+
+
+trait YmOfferDatumStaticT[T <: AbstractYmOfferDatum] extends YmDatumDeliveryStaticT with MacroLogsImpl {
+  import LOGGER._
+
+  // Костыли для YmDatumDeliveryStaticT, который используется для дедубликации кода.
+  override def ADULT_FN               = YmOfferDatumFields.ADULT_FN
+  override def LOCAL_DELIVERY_COST_FN = YmOfferDatumFields.LOCAL_DELIVERY_COST_FN
+  override def DELIVERY_INCLUDED_FN   = YmOfferDatumFields.DELIVERY_INCLUDED_FN
+  override def DELIVERY_FN            = YmOfferDatumFields.DELIVERY_FN
+  override def PICKUP_FN              = YmOfferDatumFields.PICKUP_FN
+  override def STORE_FN               = YmOfferDatumFields.STORE_FN
+
+  /** Список собственных (не наследованных) полей датума. */
+  protected def FIELDS_MY = new Fields(
+    URL_FN, SHOP_OFFER_ID_FN, OFFER_TYPE_FN, GROUP_ID_FN, AVAILABLE_FN, SHOP_META_FN, SHOP_ID_FN,
+    OLD_PRICES_FN, PRICE_FN, CURRENCY_ID_FN,
+    CATEGORY_IDS_FN, MARKET_CATEGORY_FN, PICTURES_FN,
+    DESCRIPTION_FN, SALES_NOTES_FN, COUNTRY_OF_ORIGIN_FN, MANUFACTURER_WARRANTY_FN, DOWNLOADABLE_FN, AGE_FN
+  )
+
+  /** Базовый список полей конкретного датума.
+   * На верхнем уровне (в object) надобно оверрайдить def на val. */
+  override def FIELDS = FIELDS_MY append super.FIELDS append PayloadDatum.FIELDS
+
   /** Перегнать содержимое payload'а в json-заготовку. Полезно при перегонке датума в json для отправки в ES.
     * @param payload Исходное содержимое поля payload.
     * @param acc Исходный аккамулятор.
@@ -329,9 +359,11 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
     acc
   }
 
+  type Payload2JsF_t = PartialFunction[(String, AnyRef, XContentBuilder), Unit]
+
   /** Функция конвертации элементов payload в куски json'а. На вход название поля и исходное значение.
     * На выход js-строка или null, если значение не надо сохранять в json-результате. */
-  val payloadV2jsV: PartialFunction[(String, AnyRef, XContentBuilder), XContentBuilder] = {
+  def payloadV2jsV: Payload2JsF_t = {
     val strPfns = Set(
       NAME_PFN, VENDOR_PFN, VENDOR_CODE_PFN,
       /* vendor.model */  TYPE_PREFIX_PFN, MODEL_PFN, SELLER_WARRANTY_PFN, EXPIRY_PFN, DIMENSIONS_PFN,
@@ -344,7 +376,7 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
     )
     // Заинлайнить это добро? Использовать Set ради пяти элементов как-то непрактично.
     val intPfns = Set(YEAR_PFN, VOLUMES_COUNT_PFN, VOLUME_PFN, PAGE_EXTENT_PFN, DAYS_PFN)
-    val resultF: PartialFunction[(String, AnyRef, XContentBuilder), XContentBuilder] = {
+    val resultF: Payload2JsF_t = {
       case (pfn, v, acc) if strPfns contains pfn => acc.field(pfn, STRING.coerce(v))
       case (pfn, v, acc) if intPfns contains pfn => acc.field(pfn, INTEGER.coerce(v))
       case (pfn @ REC_LIST_PFN, v: Tuple, acc)   => acc.array(pfn, v.toSeq.map { vo => STRING.coerce(vo) } : _*)
@@ -358,11 +390,9 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
       case (pfn @ ET_DATE_PFN, v, acc)           => acc.field(pfn, LONG.coerce(v))
       case (k, v, acc) =>
         warn(s"payloadV2jsV(): Skipping entry: $k -> $v")
-        acc
     }
     resultF
   }
-
 
   /**
    * Накатить JSON-выхлоп на новый или существующий экземпляр [[YmOfferDatum]].
@@ -370,10 +400,25 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
    * @param srcDatum Исходый датум. Если не задан, то будет сгенерен новый.
    * @return srcDatum, заполненный данными из JSON'а.
    */
-  def fromJson[T <: AbstractYmOfferDatum](jsonMap: collection.Map[String, AnyRef], srcDatum: T = new YmOfferDatum()): T = {
+  def fromJson(jsonMap: collection.Map[String, AnyRef], srcDatum: T): T = {
+    val applyF: PartialFunction[(String, AnyRef), Unit] = fromJsonMapper(srcDatum) orElse {
+      case (key, value) =>
+        warn(s"Skipping json offer field: '$key'. Not yet implemented. Value was $value")
+    }
+    jsonMap foreach applyF
+    srcDatum
+  }
+
+  type FromJsonMapperF_t = PartialFunction[(String, AnyRef), Unit]
+
+  /** Переопределяемый генератор функций накатывания значений на исходный датум.
+    * @param srcDatum Датум, на который накатываются значения.
+    * @return Partial-функцию для накатывания json-полей на указанный датум.
+    */
+  def fromJsonMapper(srcDatum: T): FromJsonMapperF_t = {
     import io.suggest.util.ImplicitTupleCoercions._
     import srcDatum._
-    jsonMap foreach {
+    {
       case (URL_ESFN, value)          => url = value
       case (OFFER_TYPE_ESFN, value)   => offerType = OfferTypes(value)
       case (GROUP_ID_ESFN, value)     => groupIdOpt = Some(value)
@@ -415,13 +460,10 @@ object YmOfferDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with
       case (DIMENSIONS_PFN, value)    => dimensionsRaw = value
       // *book
       // TODO Дописать импорт данных из остальных payload-полей.
-      case (key, value) =>
-        warn(s"Skipping json offer field: '$key'. Not yet implemented. Value was $value")
     }
-    srcDatum
   }
-}
 
+}
 
 import YmOfferDatum._
 
@@ -430,7 +472,7 @@ import YmOfferDatum._
  * Абстрактный базовый датум оффера. Выделен из YmOfferDatum для возможности определения Promo-офферов, т.е.
  * офферов, имеющих вместо полей размеров и цветов поля диапазонов этих самых размеров и цветов.
  */
-abstract class AbstractYmOfferDatum extends PayloadDatum(FIELDS) with OfferHandlerState with YmDatumDeliveryT with PayloadHelpers {
+abstract class AbstractYmOfferDatum(fields: Fields) extends PayloadDatum(fields) with OfferHandlerState with YmDatumDeliveryT with PayloadHelpers {
   def companion = YmOfferDatum
 
   /** Ссылка на коммерческое предложение на сайте магазина. */
@@ -894,7 +936,7 @@ abstract class AbstractYmOfferDatum extends PayloadDatum(FIELDS) with OfferHandl
 
 /** Точный конкретный датум коммерческого предложения. В отличии от promo, содержит конкретные значения в полях
   * размеров и цветов. И поля эти имеют соотвестствующие названия в единственном числе. */
-class YmOfferDatum extends AbstractYmOfferDatum {
+class YmOfferDatum extends AbstractYmOfferDatum(FIELDS) {
 
   def this(t: Tuple) = {
     this

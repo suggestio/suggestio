@@ -1,6 +1,6 @@
 package io.suggest.ym.index
 
-import io.suggest.ym.model.YmOfferDatum._
+import io.suggest.ym.model.YmOfferDatumFields._
 import io.suggest.util.{SioEsUtil, SioConstants}, SioEsUtil._
 import SioConstants._
 

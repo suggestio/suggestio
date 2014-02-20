@@ -122,7 +122,10 @@ object OfferParamAttrs extends Enumeration {
 }
 
 
-/** Типы описаний предложений магазинам. SIMPLE используется для null-значения аттрибута типа. */
+/** Типы описаний предложений магазинам. SIMPLE используется для null-значения аттрибута типа.
+  * @see [[http://help.yandex.ru/partnermarket/offers.xml]]
+  * @see [[https://4.hidemyass.com/ip-2/encoded/Oi8vcGFydG5lci5tYXJrZXQueWFuZGV4LnJ1L3BhZ2VzL2hlbHAvc2hvcHMuZHRk&f=norefer]]
+  */
 object OfferTypes extends Enumeration {
   type OfferType = Value
 
@@ -278,5 +281,21 @@ object MassUnits extends Enumeration {
 
   def toKg(n:Float, units:MassUnit): Float = {
     if (units == kg)  n  else  toGramms(n, units) / 1000F
+  }
+}
+
+
+/** Доступные цвета. */
+object YmColors extends Enumeration {
+  type YmColor = Value
+  // Известные цвета в алфавитном порядке.
+  val BLACK, BLUE, BROWN, GOLD, GRAY, GREEN, PINK, RED, SILVER, WHITE, YELLOW = Value
+
+  def maybeWithName(colorRaw: String) : Option[YmColor] = {
+    try {
+      Some(withName(colorRaw))
+    } catch {
+      case ex: NoSuchElementException => None
+    }
   }
 }

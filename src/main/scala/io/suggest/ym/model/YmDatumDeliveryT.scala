@@ -10,12 +10,12 @@ import cascading.tuple.{Fields, TupleEntry}
  * датумах. Тут общий код поддержки этого, подмешиваемый в эти датумы.
  */
 trait YmDatumDeliveryStaticT {
-  val STORE_FN: String
-  val PICKUP_FN: String
-  val DELIVERY_FN: String
-  val DELIVERY_INCLUDED_FN: String
-  val LOCAL_DELIVERY_COST_FN: String
-  val ADULT_FN: String
+  def STORE_FN: String
+  def PICKUP_FN: String
+  def DELIVERY_FN: String
+  def DELIVERY_INCLUDED_FN: String
+  def LOCAL_DELIVERY_COST_FN: String
+  def ADULT_FN: String
 
   def FIELDS = new Fields(STORE_FN, PICKUP_FN, DELIVERY_FN, DELIVERY_INCLUDED_FN, LOCAL_DELIVERY_COST_FN, ADULT_FN)
 }
