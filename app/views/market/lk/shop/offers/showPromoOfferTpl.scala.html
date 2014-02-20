@@ -1,0 +1,18 @@
+@(offer: MShopPromoOffer)(implicit ctx: util.Context)
+
+@* Страница с отображением тела промо-оффера и кнопками управления оным. *@
+@import ctx._
+
+@offersBase(offer.anyNameIolist.mkString(" "), shopId=offer.shop_id) {
+  <h1>@offer.anyNameIolist / @offer.datum.price руб.</h1>
+
+  <p>Производитель: @offer.datum.vendor</p>
+  <p>Модель: @offer.datum.model</p>
+  <p>Цена: @offer.datum.price</p>
+  <p>Доступно в размерах: @offer.datum.sizesOrig.mkString(", ") (@offer.datum.sizeUnitsOrig)</p>
+  <p>Доступно в цветах: @offer.datum.colors.mkString(", ")</p>
+
+  @* Кнопка немедленного удаления оффера. *@
+  @stuff._deleteSmthFormBtnTpl(routes.MarketOffer.deletePromoOfferSubmit(offer.id.get))
+  <a href="@routes.MarketOffer.editPromoOfferForm(offer.id.get)">@Messages("Edit")</a>
+}

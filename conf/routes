@@ -86,6 +86,10 @@ POST /sys/indices/downgrade/ALL         controllers.Sys.indicesDowngradeAll
 GET  /market/lk/:shopId/offers          controllers.MarketOffer.showShopPromoOffers(shopId: Int)
 GET  /market/lk/offer/promo/add/:shopId controllers.MarketOffer.addPromoOfferForm(shopId: Int)
 POST /market/lk/offer/promo/add/:shopId controllers.MarketOffer.addPromoOfferFormSubmit(shopId: Int)
+POST /market/lk/offer/:offerId/delete   controllers.MarketOffer.deletePromoOfferSubmit(offerId)
+GET  /market/lk/offer/:offerId          controllers.MarketOffer.showPromoOffer(offerId)
+GET  /market/lk/offer/:offerId/edit     controllers.MarketOffer.editPromoOfferForm(offerId)
+POST /market/lk/offer/:offerId/edit     controllers.MarketOffer.editPromoOfferFormSubmit(offerId)
 
 # sys.market
 GET  /sys/market                        controllers.SysMarket.index

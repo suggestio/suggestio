@@ -42,3 +42,17 @@ abstract class AbstractRequestWithDAuthz[A](request: Request[A]) extends Abstrac
  * @tparam A Подтип реквеста.
  */
 case class RequestWithDAuthz[A](pwOpt: PwOpt_t, dAuthz: MDomainAuthzT, request: Request[A]) extends AbstractRequestWithDAuthz(request)
+
+
+/** Админство магазина. */
+abstract class AbstractRequestForShopAdm[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
+  def shopId: Int
+}
+case class RequestForShopAdm[A](shopId: Int, pwOpt:PwOpt_t, request: Request[A]) extends AbstractRequestForShopAdm(request)
+
+
+/** Админство промо-оффера в магазине. */
+abstract class AbstractRequestForPromoOfferAdm[A](request: Request[A]) extends AbstractRequestForShopAdm(request) {
+  def offerId: String
+}
+case class RequestForPromoOfferAdm[A](shopId:Int, offerId:String, pwOpt:PwOpt_t, request: Request[A]) extends AbstractRequestForPromoOfferAdm(request)

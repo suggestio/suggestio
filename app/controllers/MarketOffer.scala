@@ -1,7 +1,7 @@
 package controllers
 
 import io.suggest.util.MacroLogsImpl
-import util.acl.IsSuperuser
+import util.acl._
 import models._
 import views.html.market.lk.shop.offers._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -17,8 +17,6 @@ import util.FormUtil._
  * или кто-то ещё могут вносить коррективы в список представленных товаров.
  * Следует помнить, что предложения носят неточный характер и носят промо-характер.
  */
-
-// TODO Когда будут юзеры, тут не должно быть никаких IsSuperuser
 
 object MarketOffer extends SioController with MacroLogsImpl {
   import LOGGER._
@@ -73,30 +71,30 @@ object MarketOffer extends SioController with MacroLogsImpl {
     datum.model = model
     datum.colors = colors
     datum.sizesOrig = sizes
-    datum.sizesUnitsOrig = sizeUnits
+    datum.sizeUnitsOrig = sizeUnits
     datum.price = price
     offer
   }
   // unapply()
   {mOffer =>
     import mOffer.datum._
-    Some((vendor getOrElse "",  model getOrElse "",  colors.toList,  sizesOrig,  sizesUnitsOrig getOrElse "",  price))
+    Some((vendor getOrElse "",  model getOrElse "",  colors.toList,  sizesOrig,  sizeUnitsOrig getOrElse "",  price))
   })
 
   /** Показать список офферов указанного магазина. */
-  def showShopPromoOffers(shopId: Int) = IsSuperuser.async { implicit request =>
+  def showShopPromoOffers(shopId: Int) = IsMartShopAdmin(shopId).async { implicit request =>
     MShopPromoOffer.getAllForShop(shopId).map { offers =>
       Ok(listOffersTpl(shopId, offers))
     }
   }
 
   /** Рендер страницы с формой добавления оффера. */
-  def addPromoOfferForm(shopId: Int) = IsSuperuser { implicit request =>
+  def addPromoOfferForm(shopId: Int) = IsMartShopAdmin(shopId) { implicit request =>
     Ok(form.addPromoOfferFormTpl(shopId, vmPromoOfferFormM))
   }
 
   /** Сабмит формы добавления оффера. Надо отправить оффер в хранилище. */
-  def addPromoOfferFormSubmit(shopId: Int) = IsSuperuser.async { implicit request =>
+  def addPromoOfferFormSubmit(shopId: Int) = IsMartShopAdmin(shopId).async { implicit request =>
     vmPromoOfferFormM.bindFromRequest().fold(
       {formWithErrors =>
         NotAcceptable(form.addPromoOfferFormTpl(shopId, formWithErrors))
@@ -112,4 +110,54 @@ object MarketOffer extends SioController with MacroLogsImpl {
     )
   }
 
+  /** Отобразить страницу с указанным оффером. */
+  def showPromoOffer(offerId: String) = IsPromoOfferAdmin(offerId).async { implicit request =>
+    MShopPromoOffer.getById(offerId) map {
+      case Some(offer) => Ok(showPromoOfferTpl(offer))
+      case None        => noSuchOffer(offerId)
+    }
+  }
+
+  /** Юзер нажал кнопку удаления оффера. */
+  def deletePromoOfferSubmit(offerId: String) = IsPromoOfferAdmin(offerId).async { implicit request =>
+    MShopPromoOffer.deleteById(offerId) map {
+      case true  => Redirect(routes.MarketOffer.showShopPromoOffers(request.shopId))
+      case false => InternalServerError(s"Offer $offerId not found, but it should! Already deleted?")
+    }
+  }
+
+  /** Рендер страницы редактирования промо-оффера. */
+  def editPromoOfferForm(offerId: String) = IsPromoOfferAdmin(offerId).async { implicit request =>
+    MShopPromoOffer.getById(offerId) map {
+      case Some(offer) =>
+        val f = vmPromoOfferFormM fill offer
+        Ok(form.editPromoOfferTpl(offer, f))
+
+      case None => noSuchOffer(offerId)
+    }
+  }
+
+  /** Самбит формы редактирования оффера.  */
+  def editPromoOfferFormSubmit(offerId: String) = IsPromoOfferAdmin(offerId).async { implicit request =>
+    MShopPromoOffer.getById(offerId) flatMap {
+      case Some(offer) =>
+        vmPromoOfferFormM.bindFromRequest().fold(
+          {formWithErrors =>
+            NotAcceptable(form.editPromoOfferTpl(offer, formWithErrors))
+          },
+          {mpo =>
+            mpo.datum.offerType = OfferTypes.VendorModel
+            mpo.datum.shopId = request.shopId
+            mpo.id = offer.id
+            mpo.save.map { _ =>
+              Redirect(routes.MarketOffer.showPromoOffer(offerId))
+            }
+          }
+        )
+
+      case None => noSuchOffer(offerId)
+    }
+  }
+
+  private def noSuchOffer(offerId: String) = NotFound("No such offer: " + offerId)
 }

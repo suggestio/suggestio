@@ -22,7 +22,7 @@ object IsAuth extends IsAuthAbstract {
 }
 
 
-abstract class IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
+trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
 
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
@@ -37,6 +37,7 @@ abstract class IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
 
   // Действия, когда персонаж не идентифицирован.
   def onUnauth(req: RequestHeader): Future[SimpleResult]
+
 }
 
 

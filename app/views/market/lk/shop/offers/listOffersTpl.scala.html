@@ -13,7 +13,7 @@
       </tr>
       @offers.map { offer =>
         <tr>
-          <td>@offer.anyNameIolist</td>
+          <td><a href="@routes.MarketOffer.showPromoOffer(offer.id.get)">@offer.anyNameIolist</a></td>
           <td>@offer.datum.price</td>
         </tr>
       }

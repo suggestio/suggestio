@@ -10,6 +10,7 @@ import org.elasticsearch.index.query.QueryBuilders
 import EsModel.ES_INDEX_NAME
 import io.suggest.ym.index.YmIndex
 import io.suggest.ym.OfferTypes
+import io.suggest.util.ImplicitTupleCoercions
 
 /**
  * Suggest.io
@@ -80,6 +81,20 @@ object MShopPromoOffer {
       }
   }
 
+   /** Прочитать только shopId для указанного оффера, если такой вообще имеется. */
+  def getShopIdFor(offerId: String): Future[Option[Int]] = {
+    client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, offerId)
+      .setFields(YmOfferDatumFields.SHOP_ID_ESFN)
+      .execute()
+      .map { getResp =>
+        if (getResp.isExists) {
+          val value = getResp.getField(YmOfferDatumFields.SHOP_ID_ESFN).getValue
+          val shopId = ImplicitTupleCoercions.coerceInt(value)
+          Some(shopId)
+        } else None
+      }
+  }
+
   /**
    * Удалить из хранилища указанный элемент.
    * @param id id элемента.
@@ -111,20 +126,20 @@ import MShopPromoOffer._
 case class MShopPromoOffer(
   // TODO Нужно использовать облегчённую модель датума, без постоянной сериализации-десериализации. Можно просто через набор одноимённых var + парсер json в над-трейте.
   datum: YmPromoOfferDatum = new YmPromoOfferDatum(),
-  id: Option[String] = None
+  var id: Option[String] = None
 ) extends MShopSel with MShopOffersSel {
 
   def shop_id = datum.shopId
 
   /**
-   * Предложить имя на основе полей.
+   * Предложить имя товара на основе указанных полей.
    * @return
    */
   def anyNameIolist: Seq[_] = {
     import datum._
     datum.offerType match {
-      case OfferTypes.VendorModel => List(typePrefix, vendor, model)
-      case OfferTypes.ArtistTitle => List(artist, title, yearOpt.map("(" + _ + ")"))
+      case OfferTypes.VendorModel => List(typePrefix, " ", vendor, " ", model)
+      case OfferTypes.ArtistTitle => List(artist, " ", title, yearOpt.map(" (" + _ + ")"))
       case _                      => List(name)
     }
   }

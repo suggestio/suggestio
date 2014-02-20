@@ -18,12 +18,21 @@ object MShop {
 
   val martIdParser = get[Int]("mart_id")
 
+  val isExistParser = get[Boolean]("is_exist")
+
   /** Парсер полного ряда таблицы. */
   val rowParser = get[Pk[Int]]("id") ~ get[Int]("company_id") ~ martIdParser ~ get[String]("name") ~ get[DateTime]("date_created") ~
     get[Option[String]]("description") ~ get[Option[Int]]("mart_floor") ~ get[Option[Int]]("mart_section") map {
     case id ~ company_id ~ mart_id ~ name ~ date_created ~ description ~ mart_floor ~ mart_section =>
       MShop(id=id, company_id=company_id, mart_id=mart_id, name=name, date_created=date_created,
             description=description, mart_floor=mart_floor, mart_section=mart_section)
+  }
+
+  /** Существует ли указанный магазин в базе? */
+  def isExist(id: Int)(implicit c: Connection): Boolean = {
+    SQL("SELECT count(*) > 0 AS is_exist FROM shop WHERE id = {id}")
+      .on('id -> id)
+      .as(isExistParser single)
   }
 
   /**
