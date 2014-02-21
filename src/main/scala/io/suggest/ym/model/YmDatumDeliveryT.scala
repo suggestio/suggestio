@@ -1,6 +1,8 @@
 package io.suggest.ym.model
 
 import cascading.tuple.{Fields, TupleEntry}
+import com.scaleunlimited.cascading.Payload
+import org.elasticsearch.common.xcontent.XContentBuilder
 
 /**
  * Suggest.io

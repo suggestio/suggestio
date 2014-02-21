@@ -1,10 +1,11 @@
 package io.suggest.ym.model
 
-import com.scaleunlimited.cascading.BaseDatum
+import com.scaleunlimited.cascading.{Payload, BaseDatum}
 import io.suggest.util.CascadingFieldNamer
 import cascading.tuple.{TupleEntry, Tuple, Fields}
 import scala.collection.JavaConversions._
 import io.suggest.ym.ShopHandlerState
+import org.elasticsearch.common.xcontent.XContentBuilder
 
 /**
  * Suggest.io
@@ -32,7 +33,6 @@ object YmShopDatum extends CascadingFieldNamer with YmDatumDeliveryStaticT with 
   override val FIELDS = new Fields(
     NAME_FN, COMPANY_FN, URL_FN, PHONE_FN, EMAILS_FN, CURRENCIES_FN, CATEGORIES_FN
   ) append super.FIELDS
-
 
   /** Сериализовать список email'ов. */
   def serializeEmails(emails: Seq[String]): Tuple = {

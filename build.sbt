@@ -23,7 +23,6 @@ libraryDependencies ++= {
   val tikaVsn       = "1.4"
   val cascadingVsn  = "2.5.+"
   val morphVsn      = "1.2-SNAPSHOT"
-  val playVsn       = "2.3-SNAPSHOT"
   Seq(
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
@@ -31,6 +30,7 @@ libraryDependencies ++= {
     "org.gnu.inet" % "libidn" % "1.15",
     "com.github.nscala-time" %% "nscala-time" % "0.2.0",
     "commons-lang" % "commons-lang" % "2.+",
+    "org.im4java" % "im4java" % "1.+",
     // JSON
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVsn,
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % jacksonVsn,

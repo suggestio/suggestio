@@ -473,7 +473,7 @@ import YmOfferDatum._
  * офферов, имеющих вместо полей размеров и цветов поля диапазонов этих самых размеров и цветов.
  */
 abstract class AbstractYmOfferDatum(fields: Fields) extends PayloadDatum(fields) with OfferHandlerState with YmDatumDeliveryT with PayloadHelpers {
-  def companion = YmOfferDatum
+  override def companion: YmOfferDatumStaticT[_]
 
   /** Ссылка на коммерческое предложение на сайте магазина. */
   def url = Option(_tupleEntry getString URL_FN)
@@ -928,15 +928,15 @@ abstract class AbstractYmOfferDatum(fields: Fields) extends PayloadDatum(fields)
     if (age.isDefined)
       acc.field(AGE_ESFN, age.get.toString)
     // Основные поля в аккамуляторе. Теперь пора запилить payload. Там всё проще: берешь и заливаешь.
-    payload2json(getPayload, acc)
+    companion.payload2json(getPayload, acc)
   }
-
 }
 
 
 /** Точный конкретный датум коммерческого предложения. В отличии от promo, содержит конкретные значения в полях
   * размеров и цветов. И поля эти имеют соотвестствующие названия в единственном числе. */
 class YmOfferDatum extends AbstractYmOfferDatum(FIELDS) {
+  def companion = YmOfferDatum
 
   def this(t: Tuple) = {
     this

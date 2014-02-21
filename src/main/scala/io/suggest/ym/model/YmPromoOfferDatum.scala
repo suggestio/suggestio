@@ -111,6 +111,7 @@ import YmPromoOfferDatum._
 
 /** Тут промо-оффер. Такой оффер содержит в некоторых полях (размер, цвет) множественные значения. */
 class YmPromoOfferDatum extends AbstractYmOfferDatum(FIELDS) {
+  def companion = YmPromoOfferDatum
 
   def this(t: Tuple) = {
     this
@@ -154,3 +155,4 @@ class YmPromoOfferDatum extends AbstractYmOfferDatum(FIELDS) {
   }
 
 }
+
