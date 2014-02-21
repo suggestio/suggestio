@@ -85,11 +85,14 @@ POST /sys/indices/downgrade/ALL         controllers.Sys.indicesDowngradeAll
 # личный кабинет купца
 GET  /market/lk/:shopId/offers          controllers.MarketOffer.showShopPromoOffers(shopId: Int)
 GET  /market/lk/offer/promo/add/:shopId controllers.MarketOffer.addPromoOfferForm(shopId: Int)
-POST /market/lk/offer/promo/add/:shopId controllers.MarketOffer.addPromoOfferFormSubmit(shopId: Int)
-POST /market/lk/offer/:offerId/delete   controllers.MarketOffer.deletePromoOfferSubmit(offerId)
-GET  /market/lk/offer/:offerId          controllers.MarketOffer.showPromoOffer(offerId)
-GET  /market/lk/offer/:offerId/edit     controllers.MarketOffer.editPromoOfferForm(offerId)
-POST /market/lk/offer/:offerId/edit     controllers.MarketOffer.editPromoOfferFormSubmit(offerId)
+# promo-offer'ы (poffer)
+POST /market/lk/poffer/add/:shopId      controllers.MarketOffer.addPromoOfferFormSubmit(shopId: Int)
+POST /market/lk/poffer/:offerId/delete  controllers.MarketOffer.deletePromoOfferSubmit(offerId)
+GET  /market/lk/poffer/:offerId         controllers.MarketOffer.showPromoOffer(offerId)
+GET  /market/lk/poffer/:offerId/edit    controllers.MarketOffer.editPromoOfferForm(offerId)
+POST /market/lk/poffer/:offerId/edit    controllers.MarketOffer.editPromoOfferFormSubmit(offerId)
+POST /market/lk/poffer/img/prepare      controllers.MarketOffer.handleTempPicture
+GET  /market/lk/poffer/img/:key         controllers.MarketOffer.getTempPicture(key)
 
 # sys.market
 GET  /sys/market                        controllers.SysMarket.index

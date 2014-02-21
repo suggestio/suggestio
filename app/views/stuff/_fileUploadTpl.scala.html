@@ -1,0 +1,11 @@
+@(call: Call)(implicit ctx: util.Context)
+
+@* Рендер формы для отправки картинки на сервер для её кадрирования. *@
+@import ctx._
+@import helper._
+
+@form(call) {
+  @* inputFile() не используем т.к. исходная форма не доступна. *@
+  <input type="file" name="picture"/>
+  <input type="submit"/>
+}

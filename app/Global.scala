@@ -1,6 +1,7 @@
+import akka.actor.Cancellable
 import play.api.mvc.{SimpleResult, RequestHeader}
 import scala.concurrent.{Future, future}
-import util.{SiowebEsUtil, SiowebSup}
+import util.{Crontab, SiowebEsUtil, SiowebSup}
 import play.api.Play._
 import play.api._
 import models._
@@ -21,6 +22,8 @@ object Global extends GlobalSettings {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
+  private var cronTimers : List[Cancellable] = null
+
   /**
    * При запуске нужно все перечисленные действия.
    * @param app Экземпляр класса Application.
@@ -34,6 +37,7 @@ object Global extends GlobalSettings {
     } onSuccess { case _ =>
       initializeEsModels
     }
+    cronTimers = Crontab.startTimers
   }
 
 
@@ -62,6 +66,9 @@ object Global extends GlobalSettings {
    */
   override def onStop(app: Application) {
     super.onStop(app)
+    // Остановить таймеры
+    Crontab.stopTimers(cronTimers)
+    cronTimers = null
     // При девелопменте: ES-клиент сам по себе не остановится, поэтому нужно его грохать вручную, иначе будет куча инстансов.
     SiowebEsUtil.stopNode()
   }

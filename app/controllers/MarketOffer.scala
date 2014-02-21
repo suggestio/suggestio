@@ -8,6 +8,10 @@ import play.api.libs.concurrent.Execution.Implicits._
 import play.api.data._, Forms._
 import io.suggest.ym.{OfferTypes, YmColors, YmlSax}, YmColors.YmColor
 import util.FormUtil._
+import util.img.{TempImgActions, ImgPromoOfferUtil}
+import play.api.libs.json.{JsString, JsObject}
+import io.suggest.img.SioImageUtilT
+import play.api.mvc.Call
 
 /**
  * Suggest.io
@@ -18,7 +22,7 @@ import util.FormUtil._
  * Следует помнить, что предложения носят неточный характер и носят промо-характер.
  */
 
-object MarketOffer extends SioController with MacroLogsImpl {
+object MarketOffer extends SioController with MacroLogsImpl with TempImgActions {
   import LOGGER._
 
   // Мапперы полей сборных форм.
@@ -108,15 +112,15 @@ object MarketOffer extends SioController with MacroLogsImpl {
         mpo.datum.shopId = shopId
         mpo.datum.offerType = OfferTypes.VendorModel
         mpo.save.map { mpoSaved =>
-          // TODO Нужен редирект на сохранённый товар.
-          Ok("Saved")
+          // Редирект на созданный промо-оффер.
+          rdrToOffer(mpoSaved.id.get).flashing("success" -> "Created ok.")
         }
       }
     )
   }
 
   /** Отобразить страницу с указанным оффером. */
-  def showPromoOffer(offerId: String) = IsPromoOfferAdminFull(offerId).async { implicit request =>
+  def showPromoOffer(offerId: String) = IsPromoOfferAdminFull(offerId) { implicit request =>
     Ok(showPromoOfferTpl(request.offer))
   }
 
@@ -152,10 +156,18 @@ object MarketOffer extends SioController with MacroLogsImpl {
         mpo.datum.shopId = offer.datum.shopId
         mpo.id = offer.id
         mpo.save.map { _ =>
-          Redirect(routes.MarketOffer.showPromoOffer(offerId))
+          rdrToOffer(offerId).flashing("success" -> "Saved ok.")
         }
       }
     )
   }
+
+  private def rdrToOffer(offerId: String) = Redirect(routes.MarketOffer.showPromoOffer(offerId))
+
+  // Картинки: используется подход, как на альтерраше: двухшаговая загрузка с кадрированием.
+  // Temp-картинки, подлежащие кадрированию или иной предварительной обработке. Сами экшены в отдельном трейте.
+  override protected def imgUtil = ImgPromoOfferUtil
+  override protected def reverseGetTempPicture(key: String) = routes.MarketOffer.getTempPicture(key)
+
 
 }
