@@ -14,12 +14,14 @@ object MPict extends HTableModel {
   val HTABLE_NAME = "pict"
 
   val CF_IMG_THUMB   = "a"   // Записи превьюшек для поисковой выдачи
+  val CF_USER_IMG    = "b"   // Пользовательские картинки
 
-  def CFs = Seq(CF_IMG_THUMB)
+  def CFs = Seq(CF_IMG_THUMB, CF_USER_IMG)
 
   /** Генератор дескрипторов CFок. */
   def getColumnDescriptor: PartialFunction[String, HColumnDescriptor] = {
     case cf @ CF_IMG_THUMB => cfDescSimple(cf, 1)
+    case cf @ CF_USER_IMG  => cfDescSimple(cf, 1)
   }
 
 }
