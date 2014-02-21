@@ -2,7 +2,7 @@ package util.acl
 
 import util.acl.PersonWrapper._
 import play.api.mvc.{WrappedRequest, Request}
-import models.MDomainAuthzT
+import models.{MShopPromoOffer, MDomainAuthzT}
 
 /*
   Используется комбинация из абстрактных классов и их реализаций case class'ов. Это необходимо из-за невозможности
@@ -50,9 +50,3 @@ abstract class AbstractRequestForShopAdm[A](request: Request[A]) extends Abstrac
 }
 case class RequestForShopAdm[A](shopId: Int, pwOpt:PwOpt_t, request: Request[A]) extends AbstractRequestForShopAdm(request)
 
-
-/** Админство промо-оффера в магазине. */
-abstract class AbstractRequestForPromoOfferAdm[A](request: Request[A]) extends AbstractRequestForShopAdm(request) {
-  def offerId: String
-}
-case class RequestForPromoOfferAdm[A](shopId:Int, offerId:String, pwOpt:PwOpt_t, request: Request[A]) extends AbstractRequestForPromoOfferAdm(request)

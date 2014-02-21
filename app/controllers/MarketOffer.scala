@@ -111,53 +111,46 @@ object MarketOffer extends SioController with MacroLogsImpl {
   }
 
   /** Отобразить страницу с указанным оффером. */
-  def showPromoOffer(offerId: String) = IsPromoOfferAdmin(offerId).async { implicit request =>
-    MShopPromoOffer.getById(offerId) map {
-      case Some(offer) => Ok(showPromoOfferTpl(offer))
-      case None        => noSuchOffer(offerId)
-    }
+  def showPromoOffer(offerId: String) = IsPromoOfferAdminFull(offerId).async { implicit request =>
+    Ok(showPromoOfferTpl(request.offer))
   }
 
   /** Юзер нажал кнопку удаления оффера. */
   def deletePromoOfferSubmit(offerId: String) = IsPromoOfferAdmin(offerId).async { implicit request =>
-    MShopPromoOffer.deleteById(offerId) map {
-      case true  => Redirect(routes.MarketOffer.showShopPromoOffers(request.shopId))
-      case false => InternalServerError(s"Offer $offerId not found, but it should! Already deleted?")
+    MShopPromoOffer.deleteById(offerId) map { isDeleted =>
+      val flash = if (isDeleted) {
+        "success" -> "Deleted ok."
+      } else {
+        "error"   -> s"Unexpectedly not found: offer $offerId"
+      }
+      Redirect(routes.MarketOffer.showShopPromoOffers(request.shopId))
+        .flashing(flash)
     }
   }
 
   /** Рендер страницы редактирования промо-оффера. */
-  def editPromoOfferForm(offerId: String) = IsPromoOfferAdmin(offerId).async { implicit request =>
-    MShopPromoOffer.getById(offerId) map {
-      case Some(offer) =>
-        val f = vmPromoOfferFormM fill offer
-        Ok(form.editPromoOfferTpl(offer, f))
-
-      case None => noSuchOffer(offerId)
-    }
+  def editPromoOfferForm(offerId: String) = IsPromoOfferAdminFull(offerId) { implicit request =>
+    import request.offer
+    val f = vmPromoOfferFormM fill offer
+    Ok(form.editPromoOfferTpl(offer, f))
   }
 
   /** Самбит формы редактирования оффера.  */
-  def editPromoOfferFormSubmit(offerId: String) = IsPromoOfferAdmin(offerId).async { implicit request =>
-    MShopPromoOffer.getById(offerId) flatMap {
-      case Some(offer) =>
-        vmPromoOfferFormM.bindFromRequest().fold(
-          {formWithErrors =>
-            NotAcceptable(form.editPromoOfferTpl(offer, formWithErrors))
-          },
-          {mpo =>
-            mpo.datum.offerType = OfferTypes.VendorModel
-            mpo.datum.shopId = request.shopId
-            mpo.id = offer.id
-            mpo.save.map { _ =>
-              Redirect(routes.MarketOffer.showPromoOffer(offerId))
-            }
-          }
-        )
-
-      case None => noSuchOffer(offerId)
-    }
+  def editPromoOfferFormSubmit(offerId: String) = IsPromoOfferAdminFull(offerId).async { implicit request =>
+    import request.offer
+    vmPromoOfferFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        NotAcceptable(form.editPromoOfferTpl(offer, formWithErrors))
+      },
+      {mpo =>
+        mpo.datum.offerType = offer.datum.offerType
+        mpo.datum.shopId = offer.datum.shopId
+        mpo.id = offer.id
+        mpo.save.map { _ =>
+          Redirect(routes.MarketOffer.showPromoOffer(offerId))
+        }
+      }
+    )
   }
 
-  private def noSuchOffer(offerId: String) = NotFound("No such offer: " + offerId)
 }
