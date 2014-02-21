@@ -59,12 +59,16 @@ object MarketOffer extends SioController with MacroLogsImpl {
   /** Маппер для цены товара. */
   val priceM = "price" -> float
 
+  /** Маппер "старых" цен. Старых цен может быть 0, 1 или более. Для упрощения пока только одна цена максимум. */
+  val oldPriceM = "oldPrice" -> optional(float)
+    .transform(_.toList, {l: List[Float] => l.headOption})
+
   /** Маппер формы создания/редактирования промо-оффера в режиме vendor.model. */
   val vmPromoOfferFormM = Form(mapping(
-    vendorM, modelM, colorsM, sizesM, sizeUnitsM, priceM
+    vendorM, modelM, colorsM, sizesM, sizeUnitsM, priceM, oldPriceM
   )
   // apply()
-  {(vendor, model, colors, sizes, sizeUnits, price) =>
+  {(vendor, model, colors, sizes, sizeUnits, price, oldPriceOpt) =>
     val offer = new MShopPromoOffer
     import offer.datum
     datum.vendor = vendor
@@ -73,12 +77,13 @@ object MarketOffer extends SioController with MacroLogsImpl {
     datum.sizesOrig = sizes
     datum.sizeUnitsOrig = sizeUnits
     datum.price = price
+    datum.oldPrices = oldPriceOpt
     offer
   }
   // unapply()
   {mOffer =>
     import mOffer.datum._
-    Some((vendor getOrElse "",  model getOrElse "",  colors.toList,  sizesOrig,  sizeUnitsOrig getOrElse "",  price))
+    Some((vendor getOrElse "",  model getOrElse "",  colors.toList,  sizesOrig,  sizeUnitsOrig getOrElse "",  price,  oldPrices))
   })
 
   /** Показать список офферов указанного магазина. */

@@ -8,5 +8,5 @@
 @offersBase(Messages("New offer"), shopId=offer.shop_id) {
   <h1>Редактирование комерческого предложения</h1>
   <p>Вернутся назад к <a href="@routes.MarketOffer.showPromoOffer(offer.id.get)">@offer.anyNameIolist</a></p>
-  @_promoOfferFormTpl(f, call=routes.MarketOffer.editPromoOfferFormSubmit(offer.id.get))
+  @_promoOfferFormTpl(f, call=routes.MarketOffer.editPromoOfferFormSubmit(offer.id.get), Messages("Edit"))
 }

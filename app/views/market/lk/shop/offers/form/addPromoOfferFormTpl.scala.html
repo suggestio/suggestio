@@ -8,5 +8,5 @@
 @offersBase(Messages("New offer"), shopId=shopId) {
   <h1>Создание нового комерческого предложения</h1>
 
-  @_promoOfferFormTpl(f, call=routes.MarketOffer.addPromoOfferFormSubmit(shopId))
+  @_promoOfferFormTpl(f, call=routes.MarketOffer.addPromoOfferFormSubmit(shopId), Messages("Create"))
 }
