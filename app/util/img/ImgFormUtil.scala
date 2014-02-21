@@ -15,6 +15,10 @@ import io.suggest.img.SioImageUtilT
 object ImgFormUtil {
   import play.api.data.Forms._
 
+  /** Маппер для поля с картинкой. */
+  val pictureM  = nonEmptyText(minLength=5, maxLength=64)
+    .verifying("Invalid image id.", MPictureTmp.isKeyValid(_))
+    .verifying("Expired image id.", MPictureTmp.find(_).isDefined)
 
 }
 
