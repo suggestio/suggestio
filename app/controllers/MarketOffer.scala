@@ -11,7 +11,7 @@ import util.FormUtil._
 import util.img.{TempImgActions, ImgPromoOfferUtil}
 import play.api.libs.json.{JsString, JsObject}
 import io.suggest.img.SioImageUtilT
-import play.api.mvc.Call
+import play.api.mvc.{Request, ActionBuilder, Call}
 
 /**
  * Suggest.io
@@ -167,7 +167,6 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
   // Картинки: используется подход, как на альтерраше: двухшаговая загрузка с кадрированием.
   // Temp-картинки, подлежащие кадрированию или иной предварительной обработке. Сами экшены в отдельном трейте.
   override protected def imgUtil = ImgPromoOfferUtil
-  override protected def reverseGetTempPicture(key: String) = routes.MarketOffer.getTempPicture(key)
-
-
+  override protected def reverseGetTempImg(key: String) = routes.MarketOffer.getTempImg(key)
+  //override protected def tempImgActionBuilder[A]: ActionBuilder[Request[A]] = IsAuth
 }

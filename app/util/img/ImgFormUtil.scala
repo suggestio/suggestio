@@ -21,10 +21,11 @@ object ImgFormUtil {
 trait TempImgActions extends Controller {
 
   protected def imgUtil: SioImageUtilT
-  protected def reverseGetTempPicture(key: String): Call
+  protected def reverseGetTempImg(key: String): Call
+  // TODO Надо абстрагировать ActionBuilder[R[_]] от экшенов. Для этого надо сначала [[https://github.com/playframework/playframework/pull/1844]]
 
   /** Загрузка сырой картинки для дальнейшей базовой обработки. */
-  def handleTempPicture = IsAuth(parse.multipartFormData) { implicit request =>
+  def handleTempImg = IsAuth(parse.multipartFormData) { implicit request =>
     request.body.file("picture") match {
       case Some(pictureFile) =>
         val fileRef = pictureFile.ref
@@ -38,7 +39,7 @@ trait TempImgActions extends Controller {
         val reply = JsObject(List(
           "status"     -> JsString("ok"),
           "image_key"  -> JsString(mptmp.key),
-          "image_link" -> JsString(reverseGetTempPicture(mptmp.key).url)
+          "image_link" -> JsString(reverseGetTempImg(mptmp.key).url)
         ))
         Ok(reply)
 
@@ -48,8 +49,8 @@ trait TempImgActions extends Controller {
   }
 
 
-  /** Раздавалка картинок, созданных в [[handleTempPicture()]]. */
-  def getTempPicture(key: String) = IsAuth { implicit request =>
+  /** Раздавалка картинок, созданных в [[handleTempImg()]]. */
+  def getTempImg(key: String) = IsAuth { implicit request =>
     MPictureTmp.find(key) match {
       case Some(mptmp) => Ok.sendFile(mptmp.file, inline=true)
       case None        => NotFound("No such image.")

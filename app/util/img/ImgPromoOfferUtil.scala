@@ -1,9 +1,8 @@
 package util.img
 
-import io.suggest.img.{PicCrop, ConvertModes, SioImageUtilT}
+import io.suggest.img.SioImageUtilT
 import io.suggest.util.MacroLogsImpl
 import play.api.Play.current
-import java.io.File
 
 /**
  * Suggest.io

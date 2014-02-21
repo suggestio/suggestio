@@ -91,8 +91,8 @@ POST /market/lk/poffer/:offerId/delete  controllers.MarketOffer.deletePromoOffer
 GET  /market/lk/poffer/:offerId         controllers.MarketOffer.showPromoOffer(offerId)
 GET  /market/lk/poffer/:offerId/edit    controllers.MarketOffer.editPromoOfferForm(offerId)
 POST /market/lk/poffer/:offerId/edit    controllers.MarketOffer.editPromoOfferFormSubmit(offerId)
-POST /market/lk/poffer/img/prepare      controllers.MarketOffer.handleTempPicture
-GET  /market/lk/poffer/img/:key         controllers.MarketOffer.getTempPicture(key)
+POST /market/lk/poffer/img/prepare      controllers.MarketOffer.handleTempImg
+GET  /market/lk/poffer/img/:key         controllers.MarketOffer.getTempImg(key)
 
 # sys.market
 GET  /sys/market                        controllers.SysMarket.index

@@ -14,22 +14,15 @@ import concurrent.duration._
  */
 object MPictureTmp {
 
-  // Корневая папка
-  val ROOT_DIR = "picture"
-
   // Директория для складывания файлов, приготовленных для кадрирования
-  val TEMP_SUBDIR = "tmp"
-  val TEMP_DIR = {
-    val d = ROOT_DIR + "/" + TEMP_SUBDIR
-    new File(d).mkdirs()
-    d
-  }
-  private val TEMP_DIR_F = new File(TEMP_DIR)
+  val TEMP_DIR_REL = "picture/tmp"
+  val TEMP_DIR = current.getFile(TEMP_DIR_REL)
 
   private val deleteTmpAfterMs = current.configuration.getInt("picture.temp.delete_after_minutes").getOrElse(60).minutes.toMillis
 
   private val GET_RND_RE = "[0-9]+".r
 
+  TEMP_DIR.mkdirs()
 
   /**
    * Приготовиться к отправке файла во временное хранилище, сгенерив путь до него.
@@ -45,12 +38,11 @@ object MPictureTmp {
   /** Удалить файлы, которые старше deleteTmpAfterMs. Обычно вызывается из util.Cron по таймеру. */
   def cleanupOld() {
     val epoch = System.currentTimeMillis() - deleteTmpAfterMs
-    TEMP_DIR_F.listFiles().foreach { f =>
+    TEMP_DIR.listFiles().foreach { f =>
       if (f.isFile && f.lastModified() <= epoch)
         f.delete()
     }
   }
-
 
   /**
    * Вернуть временный файл, если такой имеется.
@@ -59,13 +51,13 @@ object MPictureTmp {
    */
   def find(key: String) : Option[MPictureTmp] = {
     if (isKeyValid(key)) {
-      None
-    } else {
       val mptmp = MPictureTmp(key)
       if (mptmp.file.isFile)
         Some(mptmp)
       else
         None
+    } else {
+      None
     }
   }
 
@@ -79,7 +71,6 @@ case class MPictureTmp(key: String) {
   if (!isKeyValid(key))
     throw new IllegalStateException("Invalid image key: " + key)
 
-  def relPath = TEMP_DIR + "/" + key + ".jpg"
-  lazy val file = current.getFile(relPath)
+  lazy val file = new File(TEMP_DIR, key + ".jpg")
 }
 

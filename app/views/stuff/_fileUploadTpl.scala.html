@@ -4,7 +4,7 @@
 @import ctx._
 @import helper._
 
-@form(call) {
+@form(call, 'enctype -> "multipart/form-data") {
   @* inputFile() не используем т.к. исходная форма не доступна. *@
   <input type="file" name="picture"/>
   <input type="submit"/>
