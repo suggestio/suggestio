@@ -203,7 +203,6 @@ trait EsModelStaticT[T <: EsModelT[T]] {
 }
 
 /** Шаблон для динамических частей ES-моделей. */
-// TODO Тут проблема с параметрами типов: T и E не совмещаются никак.
 trait EsModelT[E <: EsModelT[E]] {
   def companion: EsModelStaticT[E]
 
