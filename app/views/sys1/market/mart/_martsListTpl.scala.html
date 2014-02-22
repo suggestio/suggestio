@@ -1,23 +1,25 @@
-@(marts: Seq[MMart], withCompany:Option[Option[MCompany]] = None)(implicit ctx: util.CtxWithSqlConn)
+@(marts: Seq[MMart], companies: Option[Map[MCompany.CompanyId_t, MCompany]] = None)(implicit ctx: util.Context)
 
-@* Рендер списка торговых центров. Вставляется из других шаблонов. *@
+@* Рендер списка торговых центров. Вставляется из других шаблонов.
+   Если передана карта компаний, то будет вставлена колонка с указанием названия конторы-владельца ТЦ
+   и ссылки на неё. *@
 @import ctx._
 
 <table>
   <tr>
     <th>@Messages("Name")</th>
     <th>@Messages("Address")</th>
-    @if(withCompany.isDefined) { <th>@Messages("Company")</th> }
+    @if(companies.isDefined) { <th>@Messages("Company")</th> }
   </tr>
   @marts.map { mart =>
     <tr>
       <td><a href="@routes.SysMarket.martShow(mart.id.get)">@mart.name</a></td>
       <td>@mart.address</td>
-      @withCompany.map { maybeCompany =>
+      @companies.map { _companies =>
         <td>
-          <a href="@routes.SysMarket.companyShow(mart.company_id)">
-              @maybeCompany.getOrElse(mart.company.name)
-          </a>
+          @_companies.get(mart.company_id).map { mc =>
+            <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a>
+          }
         </td>
       }
     </tr>

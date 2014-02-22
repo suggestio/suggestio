@@ -2,7 +2,8 @@ package util.acl
 
 import util.acl.PersonWrapper._
 import play.api.mvc.{WrappedRequest, Request}
-import models.{MShopPromoOffer, MDomainAuthzT}
+import models._
+import MShop.ShopId_t, MMart.MartId_t, MCompany.CompanyId_t
 
 /*
   Используется комбинация из абстрактных классов и их реализаций case class'ов. Это необходимо из-за невозможности
@@ -46,7 +47,7 @@ case class RequestWithDAuthz[A](pwOpt: PwOpt_t, dAuthz: MDomainAuthzT, request: 
 
 /** Админство магазина. */
 abstract class AbstractRequestForShopAdm[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
-  def shopId: Int
+  def shopId: ShopId_t
 }
-case class RequestForShopAdm[A](shopId: Int, pwOpt:PwOpt_t, request: Request[A]) extends AbstractRequestForShopAdm(request)
+case class RequestForShopAdm[A](shopId: ShopId_t, pwOpt:PwOpt_t, request: Request[A]) extends AbstractRequestForShopAdm(request)
 

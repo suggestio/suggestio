@@ -12,6 +12,7 @@ import util.img.{TempImgActions, ImgPromoOfferUtil}
 import play.api.libs.json.{JsString, JsObject}
 import io.suggest.img.SioImageUtilT
 import play.api.mvc.{Request, ActionBuilder, Call}
+import MShop.ShopId_t
 
 /**
  * Suggest.io
@@ -91,25 +92,33 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
   })
 
   /** Показать список офферов указанного магазина. */
-  def showShopPromoOffers(shopId: Int) = IsMartShopAdmin(shopId).async { implicit request =>
-    MShopPromoOffer.getAllForShop(shopId).map { offers =>
-      Ok(listOffersTpl(shopId, offers))
+  def showShopPromoOffers(shopId: ShopId_t) = IsMartShopAdmin(shopId).async { implicit request =>
+    val shopOptFut = MShop.getById(shopId)
+    for {
+      offers <- MShopPromoOffer.getAllForShop(shopId)
+      shopOpt <- shopOptFut
+    } yield {
+      if (shopOpt.isDefined) {
+        Ok(listOffersTpl(shopOpt.get, offers))
+      } else {
+        NotFound("Shop not found: " + shopId)
+      }
     }
   }
 
   /** Рендер страницы с формой добавления оффера. */
-  def addPromoOfferForm(shopId: Int) = IsMartShopAdmin(shopId) { implicit request =>
+  def addPromoOfferForm(shopId: ShopId_t) = IsMartShopAdmin(shopId) { implicit request =>
     Ok(form.addPromoOfferFormTpl(shopId, vmPromoOfferFormM))
   }
 
   /** Сабмит формы добавления оффера. Надо отправить оффер в хранилище. */
-  def addPromoOfferFormSubmit(shopId: Int) = IsMartShopAdmin(shopId).async { implicit request =>
+  def addPromoOfferFormSubmit(shopId: ShopId_t) = IsMartShopAdmin(shopId).async { implicit request =>
     vmPromoOfferFormM.bindFromRequest().fold(
       {formWithErrors =>
         NotAcceptable(form.addPromoOfferFormTpl(shopId, formWithErrors))
       },
       {mpo =>
-        mpo.datum.shopId = shopId
+        ??? //mpo.datum.shopId = shopId // TODO Надо исправить датум
         mpo.datum.offerType = OfferTypes.VendorModel
         mpo.save.map { mpoSaved =>
           // Редирект на созданный промо-оффер.

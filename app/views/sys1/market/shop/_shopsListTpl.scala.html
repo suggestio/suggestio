@@ -1,4 +1,4 @@
-@(shops: Seq[MShop], withCompany:Option[Option[MCompany]] = None, withMart:Option[Option[MMart]] = None)(implicit ctx: util.CtxWithSqlConn)
+@(shops: Seq[MShop], companies: Option[Map[MCompany.CompanyId_t, MCompany]] = None, marts:Option[Map[MMart.MartId_t, MMart]] = None)(implicit ctx: util.Context)
 
 @* Рендер списка магазинов. *@
 @import ctx._
@@ -6,22 +6,22 @@
 <table>
   <tr>
     <th>@Messages("Name")</th>
-    @if(withCompany.isDefined) { <th>@Messages("Company")</th> }
-    @if(withMart.isDefined) { <th>ТЦ</th> }
+    @if(companies.isDefined) { <th>@Messages("Company")</th> }
+    @if(marts.isDefined) { <th>ТЦ</th> }
   </tr>
   @shops.map { shop =>
     <tr>
       <td><a href="@routes.SysMarket.shopShow(shop.id.get)">@shop.name</a></td>
-      @withCompany.map { maybeCompany =>
+      @companies.map { _companies =>
         <td>
-          <a href="@routes.SysMarket.companyShow(shop.company_id)">
-            @maybeCompany.getOrElse(shop.company).name
-          </a>
+          @_companies.get(shop.company_id).map { mc =>
+            <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a>
+          }
         </td>
       }
-      @withMart.map { maybeMart =>
+      @marts.map { _marts =>
         <td>
-          @defining(maybeMart.getOrElse(shop.mart)) { mmart =>
+          @_marts.get(shop.mart_id).map { mmart =>
             @* a.title: Нужно экранировать/срезать ковычки, чтобы разметка не поехала. *@
             <a href="@routes.SysMarket.martShow(shop.mart_id)" title="@mmart.address">@mmart.name</a>
             @mmart.site_url.map { siteUrl =>

@@ -3,9 +3,7 @@ package util.acl
 import play.api.mvc.{SimpleResult, Request, ActionBuilder}
 import scala.concurrent.Future
 import util.acl.PersonWrapper.PwOpt_t
-import play.api.Play.current
-import play.api.db.DB
-import models.MShop
+import models.MShop, MShop.ShopId_t
 import util.PlayMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits._
 
@@ -24,24 +22,25 @@ object IsMartShopAdmin extends PlayMacroLogsImpl {
    * @param pwOpt Юзер.
    * @return Фьючерс, т.к. модели магазинов будут перегнаны на асинхронных ES.
    */
-  def isShopAdmin(shopId: Int, pwOpt: PwOpt_t): Future[Boolean] = {
-    val result = pwOpt.exists(_.isSuperuser) || {
-      pwOpt.isDefined && {
+  def isShopAdmin(shopId: ShopId_t, pwOpt: PwOpt_t): Future[Boolean] = {
+    if (pwOpt.exists(_.isSuperuser)) {
+      Future successful true
+    } else {
+      if (pwOpt.isDefined) {
         // Нужно узнать, существует ли магазин и TODO есть ли права у юзера на магазин
         warn("Check ACL for shop: NOT YET IMPLEMENTED. Allowing " + shopId + " for " + pwOpt)
-        DB.withConnection { implicit c =>
-          MShop.isExist(shopId)
-        }
+        MShop.isExist(shopId)
+      } else {
+        Future successful false
       }
     }
-    Future successful result
   }
 
 }
 
 import IsMartShopAdmin._
 
-case class IsMartShopAdmin(shopId: Int) extends ActionBuilder[AbstractRequestForShopAdm] {
+case class IsMartShopAdmin(shopId: ShopId_t) extends ActionBuilder[AbstractRequestForShopAdm] {
   override protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForShopAdm[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     isShopAdmin(shopId, pwOpt) flatMap {

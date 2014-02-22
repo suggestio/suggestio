@@ -1,4 +1,4 @@
-@(shops: Seq[MShop], withCompany:Option[Option[MCompany]] = None, withMart:Option[Option[MMart]] = None)(implicit ctx: util.CtxWithSqlConn)
+@(shops: Seq[MShop], companies: Option[Map[MCompany.CompanyId_t, MCompany]] = None, marts:Option[Map[MMart.MartId_t, MMart]] = None)(implicit ctx: util.Context)
 
 @* Страница со списком магазинов/арендаторов. *@
 @import ctx._
@@ -7,7 +7,7 @@
   @if(shops.isEmpty) {
     В системе нет магазинов.
   } else {
-    @_shopsListTpl(shops, withCompany, withMart)
+    @_shopsListTpl(shops, companies, marts)
     <br/><hr/>
   }
 

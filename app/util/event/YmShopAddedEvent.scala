@@ -2,6 +2,8 @@ package util.event
 
 import io.suggest.event.SioEventT
 import io.suggest.event.SioNotifier.Classifier
+import models._
+import MMart.MartId_t, MShop.ShopId_t
 
 /**
  * Suggest.io
@@ -13,14 +15,14 @@ object YmShopAddedEvent {
 
   def headSneToken: Option[String] = Some(getClass.getSimpleName)
 
-  def getClassifier(martId: Option[Int] = None, shopId: Option[Int] = None): Classifier = {
+  def getClassifier(martId: Option[MartId_t] = None, shopId: Option[ShopId_t] = None): Classifier = {
     List(headSneToken, martId, shopId)
   }
 
 }
 
 
-case class YmShopAddedEvent(martId: Int, shopId: Int) extends SioEventT {
+case class YmShopAddedEvent(martId: MartId_t, shopId: ShopId_t) extends SioEventT {
   override def getClassifier: Classifier = {
     YmShopAddedEvent.getClassifier(
       martId = Some(martId),

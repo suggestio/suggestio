@@ -1,11 +1,15 @@
 package models
 
-import anorm._, SqlParser._
-import util.AnormJodaTime._
 import org.joda.time.DateTime
-import util.SqlModelSave
-import java.sql.Connection
 import util.event._
+import EsModel._
+import util.SiowebEsUtil.client
+import io.suggest.util.SioEsUtil.laFuture2sFuture
+import scala.concurrent.Future
+import MMart.MartId_t, MCompany.CompanyId_t
+import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
+import org.elasticsearch.common.xcontent.XContentBuilder
+import play.api.libs.concurrent.Execution.Implicits._
 
 /**
  * Suggest.io
@@ -14,80 +18,75 @@ import util.event._
  * Description: Таблица с магазинами, зарегистрированными в системе.
  */
 
-object MShop {
+object MShop extends EsModelStaticT[MShop] {
 
-  val martIdParser = get[Int]("mart_id")
+  type ShopId_t = String
 
-  val isExistParser = get[Boolean]("is_exist")
+  val ES_TYPE_NAME = "shop"
 
-  /** Парсер полного ряда таблицы. */
-  val rowParser = get[Pk[Int]]("id") ~ get[Int]("company_id") ~ martIdParser ~ get[String]("name") ~ get[DateTime]("date_created") ~
-    get[Option[String]]("description") ~ get[Option[Int]]("mart_floor") ~ get[Option[Int]]("mart_section") map {
-    case id ~ company_id ~ mart_id ~ name ~ date_created ~ description ~ mart_floor ~ mart_section =>
-      MShop(id=id, company_id=company_id, mart_id=mart_id, name=name, date_created=date_created,
-            description=description, mart_floor=mart_floor, mart_section=mart_section)
-  }
+  protected def dummy(id: String) = MShop(
+    id = Some(id),
+    mart_id = null,
+    company_id = null,
+    name = null
+  )
 
-  /** Существует ли указанный магазин в базе? */
-  def isExist(id: Int)(implicit c: Connection): Boolean = {
-    SQL("SELECT count(*) > 0 AS is_exist FROM shop WHERE id = {id}")
-      .on('id -> id)
-      .as(isExistParser single)
-  }
-
-  /**
-   * Выбрать ряд из таблицы по id.
-   * @param id Номер ряда.
-   * @return Экземпляр сабжа, если такой существует.
-   */
-  def getById(id: Int)(implicit c:Connection): Option[MShop] = {
-    SQL("SELECT * FROM shop WHERE id = {id}")
-      .on('id -> id)
-      .as(rowParser *)
-      .headOption
+  def applyMap(m: collection.Map[String, AnyRef], acc: MShop): MShop = {
+    m.foreach {
+      case (COMPANY_ID_ESFN, value)   => acc.company_id   = companyIdParser(value)
+      case (MART_ID_ESFN, value)      => acc.mart_id      = martIdParser(value)
+      case (NAME_ESFN, value)         => acc.name         = nameParser(value)
+      case (DATE_CREATED_ESFN, value) => acc.date_created = dateCreatedParser(value)
+      case (DESCRIPTION_ESFN, value)  => acc.description  = Some(descriptionParser(value))
+      case (MART_FLOOR_ESFN, value)   => acc.mart_floor   = Some(martFloorParser(value))
+      case (MART_SECTION_ESFN, value) => acc.mart_section = Some(martSectionParser(value))
+    }
+    acc
   }
 
   /**
    * Найти все магазины, относящиеся к указанному ТЦ.
-   * @param mart_id id торгового центра.
+   * @param martId id торгового центра.
    * @return Список MShop в неопределённом порядке.
    */
-  def getByMartId(mart_id: Int)(implicit c:Connection): List[MShop] = {
-    SQL("SELECT * FROM shop WHERE mart_id = {mart_id}")
-      .on('mart_id -> mart_id)
-      .as(rowParser *)
+  def getByMartId(martId: MartId_t): Future[Seq[MShop]] = {
+    val martIdQuery = QueryBuilders.fieldQuery(MART_ID_ESFN, martId)
+    client.prepareSearch(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(martIdQuery)
+      .execute()
+      .map { searchResp2list }
   }
 
   /**
    * Выдать все магазины, находящиеся во владении указанной компании.
-   * @param company_id id компании.
+   * @param companyId id компании.
    * @return Список MShop в неопределённом порядке.
    */
-  def getByCompanyId(company_id: Int)(implicit c:Connection): List[MShop] = {
-    SQL("SELECT * FROM shop WHERE company_id = {company_id}")
-      .on('company_id -> company_id)
-      .as(rowParser *)
+  def getByCompanyId(companyId: CompanyId_t): Future[Seq[MShop]] = {
+    val companyIdQuery = QueryBuilders.fieldQuery(COMPANY_ID_ESFN, companyId)
+    client.prepareSearch(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(companyIdQuery)
+      .execute()
+      .map { searchResp2list }
   }
 
   /**
    * Найти все магазины, принадлежащие конторе и расположенные в указанном ТЦ.
-   * @param company_id id компании-владельца магазина.
-   * @param mart_id id торгового центра.
+   * @param companyId id компании-владельца магазина.
+   * @param martId id торгового центра.
    * @return Список MShop в неопределённом порядке.
    */
-  def getByCompanyAndMart(company_id:Int, mart_id:Int)(implicit c:Connection): List[MShop] = {
-    SQL("SELECT * FROM shop WHERE company_id = {company_id} AND mart_id = {mart_id}")
-      .on('company_id -> company_id, 'mart_id -> mart_id)
-      .as(rowParser *)
-  }
-
-  /**
-   * Выдать все магазины. Метод подходит только для административных задач.
-   * @return Список магазинов в порядке их создания.
-   */
-  def getAll(implicit c: Connection): List[MShop] = {
-    SQL("SELECT * FROM shop ORDER BY id ASC")
-      .as(rowParser *)
+  def getByCompanyAndMart(companyId: CompanyId_t, martId:MartId_t): Future[Seq[MShop]] = {
+    val companyIdQuery = QueryBuilders.fieldQuery(COMPANY_ID_ESFN, companyId)
+    val martIdFilter = FilterBuilders.termFilter(MART_ID_ESFN, martId)
+    val query = QueryBuilders.filteredQuery(companyIdQuery, martIdFilter)
+    client.prepareSearch(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(query)
+      .execute()
+      .map { searchResp2list }
   }
 
   /**
@@ -95,27 +94,37 @@ object MShop {
    * @param id id магазина.
    * @return id тц если такой магазин существует.
    */
-  def getMartIdFor(id: Int)(implicit c:Connection): Option[Int] = {
-    SQL("SELECT mart_id FROM shop WHERE id = {id}")
-      .on('id -> id)
-      .as(martIdParser *)
-      .headOption
+  def getMartIdFor(id: String): Future[Option[MartId_t]] = {
+    client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
+      .setFields(MART_ID_ESFN)
+      .execute()
+      .map { getResp =>
+        if (getResp.isExists) {
+          Option(getResp.getField(MART_ID_ESFN))
+            .map { field => martIdParser(field.getValue) }
+        } else {
+          None
+        }
+      }
   }
 
   /**
-   * Удалить один ряд из таблицы по id и породить системное сообщение об этом.
+   * Удалить один магазин по id и породить системное сообщение об этом.
    * @param id Ключ ряда.
    * @return Кол-во удалённых рядов. Т.е. 0 или 1.
    */
-  def deleteById(id: Int)(implicit c:Connection): Int = {
-    val martIdOpt = getMartIdFor(id)
-    val rowsDeleted = SQL("DELETE FROM shop WHERE id = {id}")
-      .on('id -> id)
-      .executeUpdate()
-    if (rowsDeleted > 0) {
-      SiowebNotifier publish YmShopDeletedEvent(martId=martIdOpt.get, shopId=id)
+  override def deleteById(id: ShopId_t): Future[Boolean] = {
+    getMartIdFor(id) flatMap {
+      case Some(martId) =>
+        // TODO Безопасно ли вызывать super-методы из анонимных классов? Оно вроде работает, но всё же...
+        val deleteFut = super.deleteById(id)
+        deleteFut onSuccess {
+          case true => SiowebNotifier publish YmShopDeletedEvent(martId=martId, shopId=id)
+        }
+        deleteFut
+
+      case None => ???  // TODO хз что тут нужно делать, но это невероятная ситуация.
     }
-    rowsDeleted
   }
 }
 
@@ -123,39 +132,44 @@ object MShop {
 import MShop._
 
 case class MShop(
-  var company_id  : Int,
-  var mart_id     : Int,
+  var company_id  : CompanyId_t,
+  var mart_id     : MartId_t,
   var name        : String,
   var description : Option[String] = None,
   var mart_floor  : Option[Int] = None,
   var mart_section: Option[Int] = None,
-  id              : Pk[Int] = NotAssigned,
-  date_created    : DateTime = null
-) extends SqlModelSave[MShop] with MCompanySel with MMartSel with CompanyMartsSel with ShopPriceListSel with MShopOffersSel {
+  var id          : Option[MShop.ShopId_t] = None,
+  var date_created : DateTime = null
+) extends EsModelT[MShop] with MCompanySel with MMartSel with CompanyMartsSel with ShopPriceListSel with MShopOffersSel {
+
+  def companion = MShop
   def shop_id = id.get
 
-  /** Добавить в базу текущую запись.
-    * @return Новый экземпляр сабжа.
-    */
-  def saveInsert(implicit c: Connection): MShop = {
-    val result = SQL("INSERT INTO shop(company_id, mart_id, name, description, mart_floor, mart_section)" +
-        " VALUES({company_id}, {mart_id}, {name}, {description}, {mart_floor}, {mart_section})")
-      .on('company_id -> company_id,   'mart_id -> mart_id,       'name -> name,
-          'description -> description, 'mart_floor -> mart_floor, 'mart_section -> mart_section)
-      .executeInsert(rowParser single)
-    SiowebNotifier publish YmShopAddedEvent(martId=mart_id, shopId=result.id.get)
-    result
+  override def writeJsonFields(acc: XContentBuilder) {
+    acc.field(COMPANY_ID_ESFN, company_id)
+      .field(MART_ID_ESFN, mart_id)
+      .field(NAME_ESFN, name)
+    if (description.isDefined)
+      acc.field(DESCRIPTION_ESFN, description.get)
+    if (mart_floor.isDefined)
+      acc.field(MART_FLOOR_ESFN, mart_floor.get)
+    if (mart_section.isDefined)
+      acc.field(MART_SECTION_ESFN, mart_section.get)
+    if (date_created == null)
+      date_created = DateTime.now()
+    acc.field(DATE_CREATED_ESFN, date_created)
   }
 
-  /** Обновлить в таблице текущую запись.
-    * @return Кол-во обновлённых рядов. Обычно 0 либо 1.
-    */
-  def saveUpdate(implicit c: Connection): Int = {
-    SQL("UPDATE shop SET company_id={company_id}, mart_id={mart_id}, name={name}, description={description}, mart_floor={mart_floor}, mart_section={mart_section} WHERE id={id}")
-      .on('company_id -> company_id, 'mart_id -> mart_id, 'name -> name, 'description -> description, 'mart_floor -> mart_floor, 'mart_section -> mart_section, 'id -> id.get)
-      .executeUpdate()
+  override def save: Future[String] = {
+    val fut = super.save
+    // Если создан новый магазин, то надо уведомлять о создании нового магазина.
+    if (id.isEmpty) {
+      fut onSuccess { case newId =>
+        SiowebNotifier publish YmShopAddedEvent(martId=mart_id, shopId=newId)
+      }
+    }
+    fut
   }
-
 
   /** Обновить переменные текущего класса с помощью другого класса.
     * @param newMshop Другой экземпляр MShop, содержащий все необходимые данные.
@@ -171,28 +185,21 @@ case class MShop(
     }
   }
 
-  /** Удалить текущий ряд из таблицы. Если ключ не выставлен, то будет 0.
-    * @return Кол-во удалённых рядов, т.е. 0 или 1.
-    */
-  def delete(implicit c:Connection) = id match {
-    case NotAssigned  => 0
-    case Id(_id)      => deleteById(_id)
-  }
 }
 
 
 trait CompanyShopsSel {
-  def company_id: Int
-  def companyShops(implicit c:Connection) = getByCompanyId(company_id)
+  def company_id: CompanyId_t
+  def companyShops = getByCompanyId(company_id)
 }
 
 trait MartShopsSel {
-  def mart_id: Int
-  def martShops(implicit c:Connection) = getByMartId(mart_id)
+  def mart_id: MartId_t
+  def martShops = getByMartId(mart_id)
 }
 
 trait MShopSel {
-  def shop_id: Int
-  def shop(implicit c:Connection) = getById(shop_id).get
+  def shop_id: ShopId_t
+  def shop = getById(shop_id)
 }
 

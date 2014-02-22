@@ -68,4 +68,7 @@ object FormUtil {
   val float = nonEmptyText(maxLength = 15)
     .verifying(floatRe.pattern.matcher(_).matches())
     .transform(_.toFloat, {f: Float => f.toString})
+
+  /** id'шники в ES-моделях генерятся силами ES. Тут маппер для полей, содержащих ES-id. */
+  val esIdM = nonEmptyText(minLength=6, maxLength=64)
 }

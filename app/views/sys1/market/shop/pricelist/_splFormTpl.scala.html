@@ -5,14 +5,9 @@
 @import helper._
 
 @form(call) {
-  <label for="urlInput">URL</label>
-  @inputText(splForm("url"), 'id -> "urlInput")
-
-  <label for="usernameInput"></label>
-  @inputText(splForm("username"), 'id -> "usernameInput")
-
-  <label for="passwordInput"></label>
-  @inputText(splForm("password"), 'id -> "passwordInput")
+  @inputText(splForm("url"), 'id -> "urlInput", '_label -> "URL")
+  @inputText(splForm("username"), 'id -> "usernameInput", '_label -> "Имя пользователя")
+  @inputText(splForm("password"), 'id -> "passwordInput", '_label -> "Пароль")
 
   <input type="submit" value="@btnText"/>
 }

@@ -1,4 +1,4 @@
-@(marts: Seq[MMart], withCompany:Option[Option[MCompany]] = None)(implicit ctx: util.CtxWithSqlConn)
+@(marts: Seq[MMart], companies: Option[Map[MCompany.CompanyId_t, MCompany]] = None)(implicit ctx: util.Context)
 
 @* Страница со списком торговых центров. *@
 
@@ -11,7 +11,7 @@
   @if(marts.isEmpty) {
     Торговых центров пока нет.
   } else {
-    @_martsListTpl(marts, withCompany=withCompany)
+    @_martsListTpl(marts, companies=companies)
   }
 }
 

@@ -1,9 +1,14 @@
 package models
 
-import anorm._, SqlParser._
 import io.suggest.ym.model.AuthInfoDatum
-import util.SqlModelSave
-import java.sql.Connection
+import MShop.ShopId_t
+import EsModel._
+import util.SiowebEsUtil.client
+import io.suggest.util.SioEsUtil.laFuture2sFuture
+import scala.concurrent.Future
+import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.common.xcontent.XContentBuilder
+import play.api.libs.concurrent.Execution.Implicits._
 
 /**
  * Suggest.io
@@ -13,100 +18,67 @@ import java.sql.Connection
  * [[io.suggest.ym.model.YmShopPriceUrlDatum]].
  */
 
-object MShopPriceList {
+object MShopPriceList extends EsModelStaticT[MShopPriceList] {
 
   /** Разделитель имени и пароля в строке auth_info. */
   val AUTH_INFO_SEP = ":"
 
-  /** Парсер колонки auth_info, которая содержит комплексное значение. */
-  val authInfoParser = {
-    get[Option[String]]("auth_info") map {
-      case None     => None
-      case Some(s)  =>
-        val Array(username, pw) = s.split("::", 2)
-        Some(UsernamePw(username, pw))
+  val ES_TYPE_NAME = "shopPriceList"
+
+  protected def dummy(id: String) = MShopPriceList(
+    id = Some(id),
+    shop_id = null,
+    url = null,
+    auth_info = None
+  )
+
+  def applyMap(m: collection.Map[String, AnyRef], acc: MShopPriceList): MShopPriceList = {
+    m foreach {
+      case (SHOP_ID_ESFN, value)   => acc.shop_id = shopIdParser(value)
+      case (URL_ESFN, value)       => acc.url = urlParser(value)
+      case (AUTH_INFO_ESFN, value) => acc.auth_info = authInfoParser(value)
     }
+    acc
   }
-
-  /** Парсер ряда из таблицы. */
-  val rowParser = get[Pk[Int]]("id") ~ get[Int]("shop_id") ~ get[String]("url") ~ authInfoParser map {
-    case id ~ shop_id ~ url ~ auth_info =>
-      MShopPriceList(id=id, shop_id=shop_id, url=url, auth_info=auth_info)
-  }
-
-
-  /**
-   * Прочитать ряд по ключу (по id).
-   * @param id Номер ряда.
-   * @return Распарсенный ряд, если найден. 
-   */
-  def getById(id: Int)(implicit c:Connection): Option[MShopPriceList] = {
-    SQL("SELECT * FROM shop_pricelist WHERE id = {id}")
-      .on('id -> id)
-      .as(rowParser *)
-      .headOption
-  }
-
 
   /**
    * Прочитать все прайс-листы, относящиеся к указанному магазину.
    * @param shopId id магазина.
    * @return Список прайслистов, относящихся к магазину.
    */
-  def getForShop(shopId: Int)(implicit c:Connection): List[MShopPriceList] = {
-    SQL("SELECT * FROM shop_pricelist WHERE shop_id = {shop_id}")
-      .on('shop_id -> shopId)
-      .as(rowParser *)
+  def getForShop(shopId: ShopId_t): Future[Seq[MShopPriceList]] = {
+    val shopIdQuery = QueryBuilders.fieldQuery(SHOP_ID_ESFN, shopId)
+    client.prepareSearch(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(shopIdQuery)
+      .execute()
+      .map { searchResp2list }
   }
 
-
-  /**
-   * Удалить ряд прайс-листа по ключу.
-   * @param id Ключ ряда.
-   * @return Кол-во удалённых рядов, т.е. 0 или 1.
-   */
-  def deleteById(id: Int)(implicit c: Connection): Int = {
-    SQL("DELETE FROM shop_pricelist WHERE id = {id}")
-      .on('id -> id)
-      .executeUpdate()
-  }
 }
 
 
 import MShopPriceList._
 
 case class MShopPriceList(
-  shop_id   : Int,
-  url       : String,
-  auth_info : Option[UsernamePw],
-  id        : Pk[Int] = NotAssigned
-) extends SqlModelSave[MShopPriceList] with MShopSel {
+  var shop_id   : ShopId_t,
+  var url       : String,
+  var auth_info : Option[UsernamePw],
+  id            : Option[String] = None
+) extends EsModelT[MShopPriceList] with MShopSel {
 
+  def companion = MShopPriceList
   def authInfoStr: Option[String] = auth_info map { _.serialize }
 
-  /** Добавить в базу текущую запись.
-    * @return Новый экземпляр сабжа.
-    */
-  def saveInsert(implicit c: Connection): MShopPriceList = {
-    SQL("INSERT INTO shop_pricelist(shop_id, url, auth_info) VALUES ({shop_id}, {url}, {auth_info})")
-      .on('shop_id -> shop_id, 'url -> url, 'auth_info -> authInfoStr)
-      .executeInsert(rowParser single)
+  override def writeJsonFields(acc: XContentBuilder) = {
+    acc.startObject()
+      .field(SHOP_ID_ESFN, shop_id)
+      .field(URL_ESFN, url)
+    if (auth_info.isDefined)
+      acc.field(AUTH_INFO_ESFN, auth_info.get)
+    acc.endObject()
   }
 
-  /** Обновлить в таблице текущую запись.
-    * @return Кол-во обновлённых рядов. Обычно 0 либо 1.
-    */
-  def saveUpdate(implicit c: Connection): Int = {
-    SQL("UPDATE shop_pricelist SET url = {url}, auth_info = {auth_info} WHERE id = {id}")
-      .on('id -> id.get, 'url -> url, 'auth_info -> authInfoStr)
-      .executeUpdate()
-  }
-
-  /** Удалить текущий ряд из базы, если он там есть. Вернуть кол-во удалённых рядов. */
-  def delete(implicit c:Connection) = id match {
-    case NotAssigned => None
-    case Id(_id)     => deleteById(_id)
-  }
 }
 
 /** Легковесное представление пары UsernamePw для распарсенного значения колонки auth_info.
@@ -119,7 +91,7 @@ case class UsernamePw(username: String, password: String) {
 }
 
 trait ShopPriceListSel {
-  def shop_id: Int
-  def priceLists(implicit c: Connection) = getForShop(shop_id)
+  def shop_id: MShop.ShopId_t
+  def priceLists = getForShop(shop_id)
 }
 

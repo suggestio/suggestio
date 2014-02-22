@@ -1,16 +1,17 @@
 package models
 
 import util.SiowebEsUtil.client
-import io.suggest.ym.model.{YmOfferDatumFields, YmPromoOfferDatum, YmOfferDatum}
+import io.suggest.ym.model.{YmOfferDatumFields, YmPromoOfferDatum}
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import scala.concurrent.Future
 import scala.collection.JavaConversions._
-import play.api.libs.concurrent.Execution.Implicits._
 import org.elasticsearch.index.query.QueryBuilders
 import EsModel.ES_INDEX_NAME
 import io.suggest.ym.index.YmIndex
 import io.suggest.ym.OfferTypes
 import io.suggest.util.ImplicitTupleCoercions
+import models.MShop.ShopId_t
+import play.api.libs.concurrent.Execution.Implicits._
 
 /**
  * Suggest.io
@@ -65,7 +66,7 @@ object MShopPromoOffer {
    * @param shopId id магазина.
    * @return Фьючерс со списком результатов в неопределённом порядке.
    */
-  def getAllForShop(shopId: Int): Future[Seq[MShopPromoOffer]] = {
+  def getAllForShop(shopId: MShop.ShopId_t): Future[Seq[MShopPromoOffer]] = {
     val shopIdQuery = QueryBuilders.fieldQuery(YmOfferDatumFields.SHOP_ID_ESFN, shopId)
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
@@ -82,14 +83,14 @@ object MShopPromoOffer {
   }
 
    /** Прочитать только shopId для указанного оффера, если такой вообще имеется. */
-  def getShopIdFor(offerId: String): Future[Option[Int]] = {
+  def getShopIdFor(offerId: String): Future[Option[ShopId_t]] = {
     client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, offerId)
       .setFields(YmOfferDatumFields.SHOP_ID_ESFN)
       .execute()
       .map { getResp =>
         if (getResp.isExists) {
           val value = getResp.getField(YmOfferDatumFields.SHOP_ID_ESFN).getValue
-          val shopId = ImplicitTupleCoercions.coerceInt(value)
+          val shopId = EsModel.shopIdParser(value)
           Some(shopId)
         } else None
       }
@@ -129,7 +130,11 @@ case class MShopPromoOffer(
   var id: Option[String] = None
 ) extends MShopSel with MShopOffersSel {
 
-  def shop_id = datum.shopId
+  def shop_id = {
+    // TODO Надо перегнать датум на ShopId: String
+    //datum.shopId
+    ???
+  }
 
   /**
    * Предложить имя товара на основе указанных полей.
@@ -168,6 +173,6 @@ case class MShopPromoOffer(
 
 /** Межмодельный линк для моделей, содержащих поле shop-id. */
 trait MShopOffersSel {
-  def shop_id: Int
+  def shop_id: MShop.ShopId_t
   def allShopOffers = getAllForShop(shop_id)
 }

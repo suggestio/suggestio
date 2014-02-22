@@ -1,4 +1,4 @@
-@(spls: Seq[MShopPriceList], withShop:Option[MShop] = None, withAuth:Boolean = false, withDeleteBtn:Boolean = true)(implicit ctx: util.CtxWithSqlConn)
+@(spls: Seq[MShopPriceList], withShop:Option[MShop] = None, withAuth:Boolean = false, withDeleteBtn:Boolean = true)(implicit ctx: util.Context)
 
 @* Отрендерить список прайс-листов. *@
 @import ctx._

@@ -1,11 +1,15 @@
 package models
 
-import anorm._, SqlParser._
-import util.AnormJodaTime._
 import org.joda.time.DateTime
-import java.sql.Connection
-import util.SqlModelSave
 import util.event._
+import scala.concurrent.Future
+import util.SiowebEsUtil.client
+import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.common.xcontent.XContentBuilder
+import EsModel._
+import MCompany.CompanyId_t
+import io.suggest.util.SioEsUtil.laFuture2sFuture
+import play.api.libs.concurrent.Execution.Implicits._
 
 /**
  * Suggest.io
@@ -17,46 +21,41 @@ import util.event._
  * - Собственное помещение единственного мазагина.
  */
 
-object MMart {
+object MMart extends EsModelStaticT[MMart] {
 
-  /** Парсер ряда, выделенного из таблицы через "SELECT * FROM mart" */
-  val rowParser = get[Pk[Int]]("id") ~ get[Int]("company_id") ~ get[String]("name") ~ get[String]("address") ~
-    get[Option[String]]("site_url") ~ get[DateTime]("date_created") map {
-    case id ~ company_id ~ name ~ address ~ site_url ~ date_created =>
-      MMart(id=id, company_id=company_id, name=name, address=address, site_url=site_url, date_created=date_created)
+  type MartId_t = String
+
+  val ES_TYPE_NAME = "mart"
+
+  def applyMap(m: collection.Map[String, AnyRef], acc: MMart): MMart = {
+    m foreach {
+      case (COMPANY_ID_ESFN, value)   => acc.company_id = companyIdParser(value)
+      case (NAME_ESFN, value)         => acc.name = nameParser(value)
+      case (ADDRESS_ESFN, value)      => acc.address = addressParser(value)
+      case (SITE_URL_FN, value)       => acc.site_url = Some(siteUrlParser(value))
+      case (DATE_CREATED_ESFN, value) => acc.date_created = dateCreatedParser(value)
+    }
+    acc
   }
 
-  /**
-   * Прочитать ряд торгового центра из таблицы, если есть такой.
-   * @param id Номер ряда (номер ТЦ).
-   * @return Экземпляр MMart, если такой ряд есть.
-   */
-  def getById(id: Int)(implicit c:Connection): Option[MMart] = {
-    SQL("SELECT * FROM mart WHERE id = {id}")
-      .on('id -> id)
-      .as(rowParser *)
-      .headOption
-  }
+  protected def dummy(id: String) = MMart(
+    company_id = null,
+    name = null,
+    address = null,
+    site_url = None
+  )
 
   /**
    * Вернуть все ТЦ, находящиеся во владении указанной конторы.
-   * @param company_id id конторы.
+   * @param companyId id конторы.
    * @return Список ТЦ в неопределённом порядке.
    */
-  def getByCompanyId(company_id: Int)(implicit c:Connection): List[MMart] = {
-    SQL("SELECT * FROM mart WHERE company_id = {company_id} ORDER BY id ASC")
-      .on('company_id -> company_id)
-      .as(rowParser *)
-  }
-
-  /**
-   * Выдать все известные торговые центы. В перспективе -- малополезная функция,
-   * т.к. не привязана к географии.
-   * @return Список ТЦ в порядке создания, старые сверху.
-   */
-  def getAll(implicit c:Connection): List[MMart] = {
-    SQL("SELECT * FROM mart ORDER BY id ASC")
-      .as(rowParser *)
+  def getByCompanyId(companyId: CompanyId_t): Future[Seq[MMart]] = {
+    val companyIdQuery = QueryBuilders.fieldQuery(ES_TYPE_NAME, companyId)
+    client.prepareSearch(ES_INDEX_NAME)
+      .setQuery(companyIdQuery)
+      .execute()
+      .map { searchResp2list }
   }
 
   /**
@@ -65,14 +64,12 @@ object MMart {
    * @param id Идентификатор.
    * @return Кол-во удалённых рядов. Т.е. 0 или 1.
    */
-  def deleteById(id: Int)(implicit c:Connection): Int = {
-    val result = SQL("DELETE FROM mart WHERE id = {id}")
-      .on('id -> id)
-      .executeUpdate()
-    if (result > 0) {
-      SiowebNotifier publish YmMartDeletedEvent(id)
+  override def deleteById(id: String): Future[Boolean] = {
+    val fut = super.deleteById(id)
+    fut onSuccess {
+      case true => SiowebNotifier publish YmMartDeletedEvent(id)
     }
-    result
+    fut
   }
 }
 
@@ -80,53 +77,50 @@ object MMart {
 import MMart._
 
 case class MMart(
-  company_id    : Int,
-  var name      : String,
-  var address   : String,
-  var site_url  : Option[String],
-  id            : Pk[Int] = NotAssigned,
-  date_created  : DateTime = null
-) extends SqlModelSave[MMart] with MCompanySel with CompanyShopsSel with MartShopsSel {
+  var company_id    : CompanyId_t,
+  var name          : String,
+  var address       : String,
+  var site_url      : Option[String],
+  id                : Option[MMart.MartId_t] = None,
+  var date_created  : DateTime = null
+) extends EsModelT[MMart] with MCompanySel with CompanyShopsSel with MartShopsSel {
   def mart_id = id.get
+  def companion = MMart
 
-  /**
-   * Добавить новый ряд в базе.
-   * @return Вернуть новый экземпляр сабжа с новыми id и date_created.
-   */
-  def saveInsert(implicit c: Connection): MMart = {
-    val result = SQL("INSERT INTO mart(company_id, name, address, site_url) VALUES({company_id}, {name}, {address}, {site_url})")
-      .on('company_id -> company_id, 'name -> name, 'address -> address, 'site_url -> site_url)
-      .executeInsert(rowParser single)
-    SiowebNotifier publish YmMartAddedEvent(result.mart_id)    // Раз уж всё добавлено ок, то сразу сгенерить событие.
-    result
+  def writeJsonFields(acc: XContentBuilder) {
+    acc.field(COMPANY_ID_ESFN, company_id)
+      .field(NAME_ESFN, name)
+      .field(ADDRESS_ESFN, address)
+    if (site_url.isDefined)
+      acc.field(SITE_URL_FN, site_url)
+    if (date_created == null)
+      date_created = DateTime.now()
+    acc.field(DATE_CREATED_ESFN, date_created)
   }
 
   /**
-   * Обновить данные по текущему ТЦ в базе.
-   * @return Кол-во обновлённых рядов, т.е. 0 или 1.
+   * Сохранить экземпляр в хранилище ES и сгенерить уведомление, если экземпляр обновлён.
+   * @return Фьючерс с новым/текущим id
    */
-  def saveUpdate(implicit c: Connection): Int = {
-    SQL("UPDATE mart SET name = {name}, address = {address}, site_url = {site_url} WHERE id = {id}")
-      .on('id -> id.get, 'name -> name, 'address -> address, 'site_url -> site_url)
-      .executeUpdate()
-  }
-
-  /** Удалить из базы текущий ряд, если есть.
-    * @return Кол-во удалённых рядов. Т.е. 0 или 1. */
-  def delete(implicit c:Connection): Int = id match {
-    case Id(_id) => deleteById(_id)
-    case NotAssigned => 0
+  override def save: Future[String] = {
+    val fut = super.save
+    if (id.isEmpty) {
+      fut onSuccess { case martId =>
+        SiowebNotifier publish YmMartAddedEvent(martId)
+      }
+    }
+    fut
   }
 }
 
 
 trait MMartSel {
-  def mart_id: Int
-  def mart(implicit c:Connection) = getById(mart_id).get
+  def mart_id: MartId_t
+  def mart = getById(mart_id)
 }
 
 trait CompanyMartsSel {
-  def company_id: Int
-  def companyMarts(implicit c:Connection) = getByCompanyId(company_id)
+  def company_id: CompanyId_t
+  def companyMarts = getByCompanyId(company_id)
 }
 

@@ -14,6 +14,7 @@ import io.suggest.event.{SioNotifier, SNStaticSubscriber}
 import util.event._
 import io.suggest.event.subscriber.SnClassSubscriber
 import akka.actor.ActorContext
+import models._, MMart.MartId_t, MShop.ShopId_t
 
 /**
  * Suggest.io
@@ -149,20 +150,20 @@ sealed class AkkaSiobixClient extends SiobixClientT with PlayMacroLogsImpl with 
    * Произошло событие создания нового торгового центра.
    * @param martId id ТЦ.
    */
-  def handleMartAdd(martId: Int) {
-    getMainCrawlerSelector ! MartAdd(martId)
+  def handleMartAdd(martId: MartId_t) {
+    ??? //getMainCrawlerSelector ! MartAdd(martId)
   }
 
-  def handleMartDelete(martId: Int) {
-    getMainCrawlerSelector ! MartDelete(martId)
+  def handleMartDelete(martId: MartId_t) {
+    ??? //getMainCrawlerSelector ! MartDelete(martId)
   }
 
-  def handleShopAdd(martId: Int, shopId: Int) {
-    getMainCrawlerSelector ! ShopAdd(mart_id=martId, shop_id=shopId)
+  def handleShopAdd(martId: MartId_t, shopId: ShopId_t) {
+    ??? //getMainCrawlerSelector ! ShopAdd(mart_id=martId, shop_id=shopId)
   }
 
-  def handleShopDelete(martId: Int, shopId: Int) {
-    getMainCrawlerSelector ! ShopDelete(mart_id=martId, shop_id=shopId)
+  def handleShopDelete(martId: MartId_t, shopId: ShopId_t) {
+    ??? //getMainCrawlerSelector ! ShopDelete(mart_id=martId, shop_id=shopId)
   }
 
   /** Карта статических подписок на события. */

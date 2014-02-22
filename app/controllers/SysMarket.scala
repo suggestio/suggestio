@@ -1,14 +1,13 @@
 package controllers
 
-import play.api.Play.current
-import play.api.db.DB
 import io.suggest.util.MacroLogsImpl
-import util.acl.IsSuperuser
+import util.acl.{IsMartShopAdmin, IsSuperuser}
 import models._
 import views.html.sys1.market._
 import play.api.data._, Forms._
 import util.FormUtil._
-import java.sql.Connection
+import MShop.ShopId_t, MMart.MartId_t, MCompany.CompanyId_t
+import play.api.libs.concurrent.Execution.Implicits._
 
 /**
  * Suggest.io
@@ -17,6 +16,8 @@ import java.sql.Connection
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
 object SysMarket extends SioController with MacroLogsImpl {
+
+  import LOGGER._
 
   /** Маппинг для формы добавления/редактирования компании. */
   val companyFormM = Form(
@@ -29,12 +30,11 @@ object SysMarket extends SioController with MacroLogsImpl {
   }
 
   /** Отрендерить sio-админу список всех компаний, зарегистрированных в системе. */
-  def companiesList = IsSuperuser { implicit request =>
-    val allCompanies = DB.withConnection { implicit c =>
-      MCompany.getAll
+  def companiesList = IsSuperuser.async { implicit request =>
+    MCompany.getAll.map { allCompanies =>
+      val render = company.companiesListTpl(allCompanies)
+      Ok(render)
     }
-    val render = company.companiesListTpl(allCompanies)
-    Ok(render)
   }
 
   /** Отрендерить страницу с формой добавления новой компании. */
@@ -43,16 +43,15 @@ object SysMarket extends SioController with MacroLogsImpl {
   }
 
   /** Самбит формы добавления новой компании. */
-  def companyAddFormSubmit = IsSuperuser { implicit request =>
+  def companyAddFormSubmit = IsSuperuser.async { implicit request =>
     companyFormM.bindFromRequest.fold(
       {formWithErrors =>
         NotAcceptable(company.companyAddFormTpl(formWithErrors))
       },
       {name =>
-        val company = DB.withConnection { implicit c =>
-          MCompany(name).save
+        MCompany(name).save.map { companyId =>
+          Redirect(routes.SysMarket.companyShow(companyId))
         }
-        Redirect(routes.SysMarket.companyShow(company.id.get))
       }
     )
   }
@@ -60,22 +59,26 @@ object SysMarket extends SioController with MacroLogsImpl {
   /** Отобразить информацию по указанной компании.
     * @param companyId Числовой id компании.
     */
-  def companyShow(companyId: Int) = IsSuperuser { implicit request =>
-    DB.withConnection { implicit c =>
-      MCompany.getById(companyId) match {
-        case Some(mc) => Ok(company.companyShowTpl(mc))
-        case None     => companyNotFound(companyId)
-      }
+  def companyShow(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
+    val companyMartsFut = MMart.getByCompanyId(companyId)
+    val companyShopsFut = MShop.getByCompanyId(companyId)
+    MCompany.getById(companyId) flatMap {
+      case Some(mc) =>
+        for {
+          marts <- companyMartsFut
+          shops <- companyShopsFut
+        } yield {
+          Ok(company.companyShowTpl(mc, marts, shops))
+        }
+
+      case None => companyNotFound(companyId)
     }
   }
 
 
   /** Отрендерить страницу с формой редактирования компании. */
-  def companyEditForm(companyId: Int) = IsSuperuser { implicit request =>
-    val companyOpt = DB.withConnection { implicit c =>
-      MCompany.getById(companyId)
-    }
-    companyOpt match {
+  def companyEditForm(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
+    MCompany.getById(companyId) map {
       case Some(mc)  =>
         val form = companyFormM.fill(mc.name)
         Ok(company.companyEditFormTpl(mc, form))
@@ -85,53 +88,59 @@ object SysMarket extends SioController with MacroLogsImpl {
   }
 
   /** Сабмит формы редактирования компании. */
-  def companyEditFormSubmit(companyId: Int) = IsSuperuser { implicit request =>
-    DB.withConnection { implicit c =>
-      MCompany.getById(companyId) match {
-        case Some(mc) =>
-          companyFormM.bindFromRequest.fold(
-            {formWithErrors =>
-              NotAcceptable(company.companyEditFormTpl(mc, formWithErrors))
-            },
-            {name =>
-              mc.name = name
-              mc.saveUpdate
+  def companyEditFormSubmit(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
+    MCompany.getById(companyId) flatMap {
+      case Some(mc) =>
+        companyFormM.bindFromRequest.fold(
+          {formWithErrors =>
+            NotAcceptable(company.companyEditFormTpl(mc, formWithErrors))
+          },
+          {name =>
+            mc.name = name
+            mc.save map { _ =>
               Redirect(routes.SysMarket.companyShow(companyId))
             }
-          )
+          }
+        )
 
-        case None => companyNotFound(companyId)
-      }
+      case None => companyNotFound(companyId)
     }
   }
 
   /** Админ приказал удалить указанную компанию. */
-  def companyDeleteSubmit(companyId: Int) = IsSuperuser { implicit request =>
-    DB.withTransaction { implicit c =>
-      MCompany.deleteById(companyId) match {
-        case 1 =>
-          Redirect(routes.SysMarket.companiesList())
-            .flashing("success" -> s"Company $companyId deleted.")
+  def companyDeleteSubmit(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
+    MCompany.deleteById(companyId) map {
+      case true =>
+        Redirect(routes.SysMarket.companiesList())
+          .flashing("success" -> s"Company $companyId deleted.")
 
-        case 0 => companyNotFound(companyId)
-
-        case rc => throw new IllegalStateException(s"Too many rows deleted ($rc). Rollback.")
-      }
+      case false => companyNotFound(companyId)
     }
   }
 
 
   /** Реакция на ошибку обращения к несуществующей компании. Эта логика расшарена между несколькими экшенами. */
-  private def companyNotFound(companyId: Int) = NotFound("Company not found: " + companyId)
+  private def companyNotFound(companyId: CompanyId_t) = NotFound("Company not found: " + companyId)
 
+  /** Бывает надо передать в шаблон карту всех контор. Тут фьючерс, который этим занимается. */
+  private def allCompaniesMap = MCompany.getAll.map {
+    _.map { mc => mc.id.get -> mc }.toMap
+  }
+
+  private def allMartsMap = MMart.getAll.map {
+    _.map { mmart => mmart.id.get -> mmart }.toMap
+  }
 
   /* Торговые центры и площади. */
 
   /** Рендер страницы со списком торговых центров. */
-  def martsList = IsSuperuser { implicit request =>
-    DB.withConnection { implicit c =>
-      val allMarts = MMart.getAll
-      Ok(mart.martsListTpl(allMarts, withCompany=Some(None)))
+  def martsList = IsSuperuser.async { implicit request =>
+    val allCompaniesMapFut = allCompaniesMap
+    for {
+      allMarts  <- MMart.getAll
+      companies <- allCompaniesMapFut
+    } yield {
+      Ok(mart.martsListTpl(allMarts, companies=Some(companies)))
     }
   }
 
@@ -145,91 +154,86 @@ object SysMarket extends SioController with MacroLogsImpl {
   ))
 
   /** Рендер страницы с формой добавления торгового центра. */
-  def martAddForm(company_id: Int) = IsSuperuser { implicit request =>
-    val isCompanyExist = DB.withConnection { implicit c =>
-      MCompany.isExists(company_id)
-    }
-    if (isCompanyExist) {
-      Ok(mart.martAddFormTpl(company_id, martFormM))
-    } else {
-      companyNotFound(company_id)
+  def martAddForm(company_id: CompanyId_t) = IsSuperuser.async { implicit request =>
+    MCompany.isExist(company_id) map {
+      case true  => Ok(mart.martAddFormTpl(company_id, martFormM))
+      case false => companyNotFound(company_id)
     }
   }
 
   /** Сабмит формы добавления торгового центра. */
-  def martAddFormSubmit(company_id: Int) = IsSuperuser { implicit request =>
+  def martAddFormSubmit(company_id: CompanyId_t) = IsSuperuser.async { implicit request =>
     martFormM.bindFromRequest().fold(
       {formWithErrors =>
         NotAcceptable(mart.martAddFormTpl(company_id, formWithErrors))
       },
       {case (name, address, site_url) =>
         val mmart = MMart(name=name, company_id=company_id, address=address, site_url=site_url)
-        val mmartSaved = DB.withConnection { implicit c =>
-          mmart.save
+        mmart.save map { mmartSavedId =>
+          Redirect(routes.SysMarket.martShow(mmartSavedId))
         }
-        Redirect(routes.SysMarket.martShow(mmartSaved.id.get))
       }
     )
   }
 
   /** Отображение одного ТЦ. */
-  def martShow(mart_id: Int) = IsSuperuser { implicit request =>
-    DB.withConnection { implicit c =>
-      MMart.getById(mart_id) match {
-        case Some(mmart) => Ok(mart.martShowTpl(mmart))
-        case None => martNotFound(mart_id)
-      }
+  def martShow(mart_id: MartId_t) = IsSuperuser.async { implicit request =>
+    MMart.getById(mart_id) flatMap {
+      case Some(mmart) =>
+        val martShopsFut = MShop.getByMartId(mart_id)
+        for {
+          ownerCompanyOpt <- mmart.company
+          martShops       <- martShopsFut
+        } yield {
+          Ok(mart.martShowTpl(mmart, martShops, ownerCompanyOpt))
+        }
+
+      case None => martNotFound(mart_id)
     }
   }
 
-  private def martNotFound(mart_id: Int) = NotFound("Mart not found: " + mart_id)
+  private def martNotFound(mart_id: MartId_t) = NotFound("Mart not found: " + mart_id)
 
   /** Рендер страницы с формой редактирования торгового центра. */
-  def martEditForm(mart_id: Int) = IsSuperuser { implicit request =>
-    DB.withConnection { implicit c =>
-      MMart.getById(mart_id) match {
-        case Some(mmart) =>
-          val form = martFormM.fill((mmart.name, mmart.address, mmart.site_url))
-          Ok(mart.martEditFormTpl(mmart, form))
+  def martEditForm(mart_id: MartId_t) = IsSuperuser.async { implicit request =>
+    MMart.getById(mart_id) map {
+      case Some(mmart) =>
+        val form = martFormM.fill((mmart.name, mmart.address, mmart.site_url))
+        Ok(mart.martEditFormTpl(mmart, form))
 
-        case None => martNotFound(mart_id)
-      }
+      case None => martNotFound(mart_id)
     }
   }
 
   /** Сабмит формы редактирования торгового центра. */
-  def martEditFormSubmit(mart_id: Int) = IsSuperuser { implicit request =>
-    DB.withTransaction { implicit c =>
-      MMart.getById(mart_id) match {
-        case Some(mmart) =>
-          martFormM.bindFromRequest().fold(
-            {formWithErrors =>
-              NotAcceptable(mart.martEditFormTpl(mmart, formWithErrors))
-            },
-            {case (name, address, site_url) =>
-              mmart.name = name
-              mmart.address = address
-              mmart.site_url = site_url
-              mmart.saveUpdate
-              // Результат saveUpdate не проверяем, т.к. withTransaction().
-              Redirect(routes.SysMarket.martShow(mart_id))
+  def martEditFormSubmit(mart_id: MartId_t) = IsSuperuser.async { implicit request =>
+    MMart.getById(mart_id) flatMap {
+      case Some(mmart) =>
+        martFormM.bindFromRequest().fold(
+          {formWithErrors =>
+            NotAcceptable(mart.martEditFormTpl(mmart, formWithErrors))
+          },
+          {case (name, address, site_url) =>
+            mmart.name = name
+            mmart.address = address
+            mmart.site_url = site_url
+            mmart.save map { _martId =>
+              Redirect(routes.SysMarket.martShow(_martId))
             }
-          )
+          }
+        )
 
-        case None => martNotFound(mart_id)
-      }
+      case None => martNotFound(mart_id)
     }
   }
 
   /** Удалить торговый центр из системы. */
-  def martDeleteSubmit(mart_id: Int) = IsSuperuser { implicit request =>
-    DB.withTransaction { implicit c =>
-      MMart.deleteById(mart_id) match {
-        case 0 => martNotFound(mart_id)
-        case 1 => Redirect(routes.SysMarket.martsList())
+  def martDeleteSubmit(mart_id: MartId_t) = IsSuperuser.async { implicit request =>
+    MMart.deleteById(mart_id) map {
+      case false => martNotFound(mart_id)
+      case true =>
+        Redirect(routes.SysMarket.martsList())
           .flashing("success" -> s"Mart $mart_id deleted.")
-        case rc => throw new IllegalStateException(s"Too many rows deleted ($rc) for mart_id=$mart_id. Rollback...")
-      }
     }
   }
 
@@ -237,18 +241,23 @@ object SysMarket extends SioController with MacroLogsImpl {
   /* Магазины (арендаторы ТЦ). */
 
   /** Выдать страницу со списком всех магазинов в порядке их создания. */
-  def shopsList = IsSuperuser { implicit request =>
-    DB.withConnection { implicit c =>
-      val shops = MShop.getAll
-      Ok(shop.shopsListTpl(shops, withMart=Some(None)))
+  def shopsList = IsSuperuser.async { implicit request =>
+    val mcsFut = allCompaniesMap
+    val mmsFut = allMartsMap
+    for {
+      shops <- MShop.getAll
+      mcs   <- mcsFut
+      mms   <- mmsFut
+    } yield {
+      Ok(shop.shopsListTpl(shops, marts=Some(mms), companies=Some(mcs)))
     }
   }
 
   /** Форма добавления/редактирования магазина. */
   val shopFormM = Form(mapping(
     "name"         -> nonEmptyText(minLength = 1, maxLength = 64),
-    "mart_id"      -> number(min=1),
-    "company_id"   -> number(min=1),
+    "mart_id"      -> esIdM,
+    "company_id"   -> esIdM,
     "description"  -> optional(text(maxLength = 2048)),
     "mart_floor"   -> optional(number(min = -10, max=200)),
     "mart_section" -> optional(number(min=0, max=200000))
@@ -263,98 +272,100 @@ object SysMarket extends SioController with MacroLogsImpl {
   })
 
 
-  private def getAllCompaniesAndMarts(implicit c:Connection) = {
-    val _companies = MCompany.getAll
-    val _marts = MMart.getAll
-    (_companies, _marts)
+  private def getAllCompaniesAndMarts = {
+    val companiesFut = MCompany.getAll
+    for {
+      marts <- MMart.getAll
+      companies <- companiesFut
+    } yield (companies, marts)
   }
 
   /** Рендер страницы добавления нового магазина. */
-  def shopAddForm = IsSuperuser { implicit request =>
-    val (companies, marts) = DB.withConnection { implicit c =>
-      getAllCompaniesAndMarts
+  def shopAddForm = IsSuperuser.async { implicit request =>
+    getAllCompaniesAndMarts map { case (companies, marts) =>
+      Ok(shop.shopAddFormTpl(shopFormM, companies, marts))
     }
-    Ok(shop.shopAddFormTpl(shopFormM, companies, marts))
   }
 
   /** Сабмит формы добавления нового магазина. */
-  def shopAddFormSubmit = IsSuperuser { implicit request =>
+  def shopAddFormSubmit = IsSuperuser.async { implicit request =>
     shopFormM.bindFromRequest().fold(
       {formWithErrors =>
-        val (companies, marts) = DB.withConnection { implicit c =>
-          getAllCompaniesAndMarts
+        getAllCompaniesAndMarts map { case (companies, marts) =>
+          NotAcceptable(shop.shopAddFormTpl(formWithErrors, companies, marts))
         }
-        NotAcceptable(shop.shopAddFormTpl(formWithErrors, companies, marts))
       },
       {mshop =>
-        val mshopSaved = DB.withConnection { implicit c =>
-          mshop.save
+        mshop.save map { mshopSavedId =>
+          Redirect(routes.SysMarket.shopShow(mshopSavedId))
         }
-        Redirect(routes.SysMarket.shopShow(mshopSaved.id.get))
       }
     )
   }
 
   /** Рендер страницы, содержащей информацию по указанному магазину. */
-  def shopShow(shop_id: Int) = IsSuperuser { implicit request =>
-    DB.withConnection { implicit c =>
-      MShop.getById(shop_id) match {
-        case Some(mshop)  => Ok(shop.shopShowTpl(mshop))
-        case None         => shopNotFound(shop_id)
-      }
+  def shopShow(shop_id: ShopId_t) = IsSuperuser.async { implicit request =>
+    MShop.getById(shop_id) flatMap {
+      case Some(mshop) =>
+        val splsFut = mshop.priceLists
+        val martOptFut = mshop.mart
+        for {
+          ownerOpt <- mshop.company
+          spls     <- splsFut
+          mmartOpt <- martOptFut
+        } yield {
+          Ok(shop.shopShowTpl(mshop, spls, ownerOpt, mmartOpt))
+        }
+
+      case None => shopNotFound(shop_id)
     }
   }
 
   /** Рендер ошибки, если магазин не найден в базе. */
-  private def shopNotFound(shop_id: Int) = NotFound("Shop not found: " + shop_id)
+  private def shopNotFound(shop_id: ShopId_t) = NotFound("Shop not found: " + shop_id)
 
   /** Отрендерить страницу с формой редактирования магазина. */
-  def shopEditForm(shop_id: Int) = IsSuperuser { implicit request =>
-    DB.withConnection { implicit c =>
-      MShop.getById(shop_id) match {
-        case Some(mshop) =>
-          val (companies, marts) = getAllCompaniesAndMarts
+  def shopEditForm(shop_id: ShopId_t) = IsMartShopAdmin(shop_id).async { implicit request =>
+    MShop.getById(shop_id) flatMap {
+      case Some(mshop) =>
+        getAllCompaniesAndMarts map { case (companies, marts) =>
           val form = shopFormM.fill(mshop)
           Ok(shop.shopEditFormTpl(mshop, form, companies, marts))
+        }
 
-        case None => shopNotFound(shop_id)
-      }
+      case None => shopNotFound(shop_id)
     }
   }
 
   /** Сабмит формы редактирования магазина. */
-  def shopEditFormSubmit(shop_id: Int) = IsSuperuser { implicit request =>
-    DB.withTransaction { implicit c =>
-      MShop.getById(shop_id) match {
-        case Some(mshop) =>
-          shopFormM.bindFromRequest().fold(
-            {formWithErrors =>
-              val (companies, marts) = getAllCompaniesAndMarts
+  def shopEditFormSubmit(shop_id: ShopId_t) = IsSuperuser.async { implicit request =>
+    MShop.getById(shop_id) flatMap {
+      case Some(mshop) =>
+        shopFormM.bindFromRequest().fold(
+          {formWithErrors =>
+            getAllCompaniesAndMarts map { case (companies, marts) =>
               NotAcceptable(shop.shopEditFormTpl(mshop, formWithErrors, companies, marts))
-            },
-            {newShop =>
-              mshop.loadFrom(newShop)
-              mshop.saveUpdate
-              // Не проверяем результат saveUpdate(), т.к. withTransaction().
+            }
+          },
+          {newShop =>
+            mshop.loadFrom(newShop)
+            mshop.save map { _ =>
               Redirect(routes.SysMarket.shopShow(shop_id))
                 .flashing("success" -> "Changes saved.")
             }
-          )
+          }
+        )
 
-        case None => shopNotFound(shop_id)
-      }
+      case None => shopNotFound(shop_id)
     }
   }
 
   /** Админ нажал кнопку удаления магазина. Сделать это. */
-  def shopDeleteSubmit(shop_id: Int) = IsSuperuser { implicit request =>
-    DB.withTransaction { implicit c =>
-      MShop.deleteById(shop_id) match {
-        case 1 => Redirect(routes.SysMarket.shopsList())
-          .flashing("success" -> "Shop deleted")
-        case 0 => shopNotFound(shop_id)
-        case rc => throw new IllegalStateException(s"Too many shop rows deleted($rc) for shop_id=$shop_id. Rollback...")
-      }
+  def shopDeleteSubmit(shop_id: ShopId_t) = IsSuperuser.async { implicit request =>
+    MShop.deleteById(shop_id) map {
+      case true => Redirect(routes.SysMarket.shopsList())
+        .flashing("success" -> "Shop deleted")
+      case false => shopNotFound(shop_id)
     }
   }
 
@@ -383,46 +394,43 @@ object SysMarket extends SioController with MacroLogsImpl {
 
 
   /** Рендер формы добавления ссылки на прайс-лист к магазину. */
-  def splAddForm(shop_id: Int) = IsSuperuser { implicit request =>
-    DB.withConnection { implicit c =>
-      MShop.getById(shop_id) match {
-        case Some(mshop) =>
-          Ok(shop.pricelist.splAddFormTpl(mshop, splFormM))
+  def splAddForm(shop_id: ShopId_t) = IsSuperuser.async { implicit request =>
+    MShop.getById(shop_id) map {
+      case Some(mshop) =>
+        Ok(shop.pricelist.splAddFormTpl(mshop, splFormM))
 
-        case None => shopNotFound(shop_id)
-      }
+      case None => shopNotFound(shop_id)
     }
   }
 
   /** Сабмит формы добавления прайс-листа. */
-  def splAddFormSubmit(shop_id: Int) = IsSuperuser { implicit request =>
-    DB.withConnection { implicit c =>
-      splFormM.bindFromRequest().fold(
-        {formWithErrors =>
-          MShop.getById(shop_id) match {
-            case Some(mshop) => NotAcceptable(shop.pricelist.splAddFormTpl(mshop, formWithErrors))
-            case None => shopNotFound(shop_id)
-          }
-        },
-        {case (url, auth_info) =>
-          val mspl = MShopPriceList(shop_id=shop_id, url=url, auth_info=auth_info).save
-          Redirect(routes.SysMarket.shopShow(shop_id))
-            .flashing("success" -> "Pricelist added.")
+  def splAddFormSubmit(shop_id: ShopId_t) = IsSuperuser.async { implicit request =>
+    splFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        MShop.getById(shop_id) map {
+          case Some(mshop) => NotAcceptable(shop.pricelist.splAddFormTpl(mshop, formWithErrors))
+          case None => shopNotFound(shop_id)
         }
-      )
-    }
+      },
+      {case (url, auth_info) =>
+        MShopPriceList(shop_id=shop_id, url=url, auth_info=auth_info).save map { mspl =>
+          Redirect(routes.SysMarket.shopShow(shop_id))
+           .flashing("success" -> "Pricelist added.")
+        }
+      }
+    )
   }
 
   /** Удалить ранее созданный прайс лист по его id. */
-  def splDeleteSubmit(spl_id: Int) = IsSuperuser { implicit request =>
-    DB.withTransaction { implicit c =>
-      MShopPriceList.getById(spl_id) match {
-        case Some(mspl) =>
-          mspl.delete
-          Redirect(routes.SysMarket.shopShow(mspl.shop_id))
+  def splDeleteSubmit(spl_id: String) = IsSuperuser.async { implicit request =>
+    MShopPriceList.getById(spl_id) map {
+      case Some(mspl) =>
+        mspl.delete onFailure {
+          case ex => error("Unable to delete MSPL id=" + spl_id, ex)
+        }
+        Redirect(routes.SysMarket.shopShow(mspl.shop_id))
 
-        case None => NotFound("No such shop pricelist with id = " + spl_id)
-      }
+      case None => NotFound("No such shop pricelist with id = " + spl_id)
     }
   }
 

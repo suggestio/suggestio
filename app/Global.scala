@@ -81,7 +81,7 @@ object Global extends GlobalSettings {
     // TODO логгер тут не работает почему-то...
     println(request.path + " - 404")
     maybeApplication match {
-      case Some(app) if app.mode == Mode.Prod => controllers.Application.http404Fut(request)
+      case Some(app) if app.mode == Mode.Prod => _root_.controllers.Application.http404Fut(request)
       // При разработке следует выводить нормальное 404.
       case _ => super.onHandlerNotFound(request)
     }

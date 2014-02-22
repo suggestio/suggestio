@@ -3,8 +3,9 @@ package util.acl
 import play.api.mvc.{SimpleResult, Request, ActionBuilder}
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
-import models.MShopPromoOffer
+import models._
 import util.acl.PersonWrapper.PwOpt_t
+import MShop.ShopId_t
 
 /**
  * Suggest.io
@@ -17,7 +18,7 @@ case class IsPromoOfferAdmin(offerId: String) extends ActionBuilder[AbstractRequ
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForPromoOfferAdm[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     // Проверяем есть ли права на магазин. Если из глубин вернулся shopId, то да.
-    val shopIdOptFut: Future[Option[Int]] = if (pwOpt.isDefined) {
+    val shopIdOptFut: Future[Option[ShopId_t]] = if (pwOpt.isDefined) {
       MShopPromoOffer.getShopIdFor(offerId) flatMap {
         case r @ Some(shopId) =>
           IsMartShopAdmin.isShopAdmin(shopId, pwOpt) map {
@@ -43,7 +44,7 @@ case class IsPromoOfferAdmin(offerId: String) extends ActionBuilder[AbstractRequ
 abstract class AbstractRequestForPromoOfferAdm[A](request: Request[A]) extends AbstractRequestForShopAdm(request) {
   def offerId: String
 }
-case class RequestForPromoOfferAdm[A](shopId:Int, offerId:String, pwOpt:PwOpt_t, request: Request[A]) extends AbstractRequestForPromoOfferAdm(request)
+case class RequestForPromoOfferAdm[A](shopId:ShopId_t, offerId:String, pwOpt:PwOpt_t, request: Request[A]) extends AbstractRequestForPromoOfferAdm(request)
 
 
 

@@ -37,10 +37,6 @@ trait ContextT {
     //      Это позволит кравелрам сопоставлять ссылку и страницу с конкретным языком. Нужно также не забыть link rel=canonical в шаблонах.
     Context2()
   }
-
-  implicit final def getCtxWithSqlConn(implicit req:AbstractRequestWithPwOpt[_], lang:Lang, connection: Connection): CtxWithSqlConn = {
-    CtxWithSqlConnImpl()
-  }
 }
 
 
@@ -84,16 +80,3 @@ case class ContextImpl(implicit val request: RequestHeader, val lang: Lang) exte
   def pwOpt = PersonWrapper.getFromRequest(request)
 }
 
-
-/** Бывает необходимость в контексте, который содержит коннекшен к базе. */
-trait CtxWithSqlConn extends Context {
-  implicit def connection: Connection
-}
-
-case class CtxWithSqlConnImpl(
-  implicit val request: AbstractRequestWithPwOpt[_],
-  implicit val lang: Lang,
-  implicit val connection: Connection
-) extends CtxWithSqlConn {
-  override implicit def pwOpt: PwOpt_t = request.pwOpt
-}

@@ -1,18 +1,20 @@
-@(mshop: MShop)(implicit ctx: util.CtxWithSqlConn)
+@(mshop: MShop, spls: Seq[MShopPriceList], ownerOpt:Option[MCompany] = None, mmartOpt: Option[MMart] = None)(implicit ctx: util.Context)
 
 @* Страница с информацией по одному магазину. *@
 @import datetime._
 @import ctx._
 
 
-@thisShopBase(title=mshop.name, mshop=mshop) {
+@thisShopBase(title=mshop.name, mshop=mshop, mmartOpt=mmartOpt) {
   <h2>Магазин "@mshop.name"</h2>
   <a href="@routes.SysMarket.shopEditForm(mshop.id.get)">@Messages("Edit")</a>
   @_shopDeleteFormTpl(mshop.id.get)
 
-  <p>Компания-владелец: <a href="@routes.SysMarket.companyShow(mshop.company_id)">@mshop.company.name</a></p>
+  @ownerOpt.map { mc =>
+    <p>Компания-владелец: <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a></p>
+  }
 
-  @defining(mshop.mart) { mmart =>
+  @mmartOpt.map { mmart =>
     <p>ТЦ <a href="@routes.SysMarket.martShow(mshop.mart_id)">@mmart.name</a> по адресу @mmart.address.</p>
   }
 
@@ -38,17 +40,16 @@
   <p>Магазин создан @_prettyDate(mshop.date_created, isCap = false, withSpan = true).</p>
 
   <h3>Описание</h3>
-  @mshop.description
+  <p>@mshop.description</p>
 
   <h3>Внешние прайс-листы</h3>
 
-  @defining(mshop.priceLists) { spls =>
-    @if(spls.isEmpty) {
-      У магазина нет внешних прайс-листов.
-    } else {
-      @pricelist._splsListTpl(spls, withShop=None)
-    }
+  @if(spls.isEmpty) {
+    У магазина нет внешних прайс-листов.
+  } else {
+    @pricelist._splsListTpl(spls, withShop=None)
   }
+
   <p>
       <a href="@routes.SysMarket.splAddForm(mshop.id.get)">Добавить источник прайс-листа.</a>
   </p>

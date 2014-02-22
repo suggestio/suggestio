@@ -1,4 +1,4 @@
-@(mmart: MMart)(implicit ctx: util.CtxWithSqlConn)
+@(mmart: MMart, shops:Seq[MShop], owner: Option[MCompany] = None)(implicit ctx: util.Context)
 
 @* Страница, отображающая информацию по торговому центру. *@
 @import sys1.market._, shop._
@@ -14,19 +14,19 @@
   <br/>
 
   <p>@Messages("Address"): @mmart.address</p>
-  <p>@Messages("Owner"): <a href="@routes.SysMarket.companyShow(mmart.company_id)">@mmart.company.name</a></p>
+  @owner.map { mc =>
+    <p>@Messages("Owner"): <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a></p>
+  }
   @mmart.site_url.map { siteUrl =>
     <p>Ссылка на сайт: <a href="@siteUrl">@siteUrl</a></p>
   }
   <p>@Messages("Created"): @_prettyDate(mmart.date_created, withSpan = true)</p>
 
-  @defining(mmart.martShops) { shops =>
-    @if(shops.isEmpty) {
-      <p>В этом торговом центре нет зарегистрированных магазинов.</p>
-    } else {
-      <h3>Магазины в торговом центре (@shops.size)</h3>
-      @_shopsListTpl(shops, withCompany=Some(None), withMart=Some(Some(mmart)))
-    }
+  @if(shops.isEmpty) {
+    <p>В этом торговом центре нет зарегистрированных магазинов.</p>
+  } else {
+    <h3>Магазины в торговом центре (@shops.size)</h3>
+    @_shopsListTpl(shops, marts=Some(Map(mmart.id.get -> mmart)))
   }
 
   <a href="@routes.SysMarket.shopAddForm">Создать новый магазин</a>

@@ -1,70 +1,35 @@
 package models
 
-import anorm._, SqlParser._
 import org.joda.time.DateTime
-import util.AnormJodaTime._
-import java.sql.Connection
-import util.SqlModelSave
+import EsModel._
+import scala.collection.Map
+import org.elasticsearch.common.xcontent.XContentBuilder
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 23.01.14 17:40
- * Description: Компания - верхний элемент иерархии структуры юр.лиц. Компания может владеть магазинами и торговыми
- * центрами.
+ * Description: Компания - верхний элемент иерархии структуры юр.лиц.
+ * Компания может владеть магазинами и торговыми центрами.
  */
 
-object MCompany {
+object MCompany extends EsModelStaticT[MCompany] {
 
-  /** Парсер полного ряда, выделенного через "SELECT * FROM company ...". */
-  val rowParser = get[Pk[Int]]("id") ~ get[String]("name") ~ get[DateTime]("date_created") map {
-    case id ~ name ~ date_created  =>  MCompany(id=id, name=name, date_created=date_created)
+  type CompanyId_t = String
+
+  override val ES_TYPE_NAME: String = "company"
+
+  override def applyMap(m: Map[String, AnyRef], acc: MCompany): MCompany = {
+    m foreach {
+      case (NAME_ESFN, value) =>
+        acc.name = nameParser(value)
+      case (DATE_CREATED_ESFN, value) =>
+        acc.date_created = dateCreatedParser(value)
+    }
+    acc
   }
 
-  val isExistParser = get[Boolean]("is_exist")
-
-  /**
-   * Прочитать из БД одну контору.
-   * @param id id'шник компании.
-   * @return Распарсенный ряд компании, если найден.
-   */
-  def getById(id: Int)(implicit c:Connection): Option[MCompany] = {
-    SQL("SELECT * FROM company WHERE id = {id}")
-      .on('id -> id)
-      .as(rowParser *)
-      .headOption
-  }
-
-
-  /**
-   * Узнать, существует ли компания с указанным id.
-   * @param id id компании.
-   * @return true, если есть компания, т.е. есть ряд с таким id. Иначе false.
-   */
-  def isExists(id: Int)(implicit c:Connection): Boolean = {
-    SQL("SELECT count(*) > 0 AS is_exist FROM company WHERE id = {id}")
-      .on('id -> id)
-      .as(isExistParser single)
-  }
-
-
-  /** Выдать все компании, зареганные в системе. Полезно при администрировании. */
-  def getAll(implicit c:Connection): List[MCompany] = {
-    SQL("SELECT * FROM company ORDER BY id DESC")
-      .as(rowParser *)
-  }
-
-
-  /**
-   * Удалить ряд из таблицы по id.
-   * @param companyId Номер ряда компании.
-   * @return Кол-во удалённых рядов, т.е. 0 или 1.
-   */
-  def deleteById(companyId: Int)(implicit c:Connection): Int = {
-    SQL("DELETE FROM company WHERE id = {company_id}")
-      .on('company_id -> companyId)
-      .executeUpdate()
-  }
+  override protected def dummy(id: String) = MCompany(name = null)
 }
 
 
@@ -77,40 +42,23 @@ import MCompany._
  * @param date_created Дата создания ряда/компании.
  */
 case class MCompany(
-  var name      : String,
-  id            : Pk[Int] = NotAssigned,
-  date_created  : DateTime = null
-) extends SqlModelSave[MCompany] with CompanyShopsSel with CompanyMartsSel {
+  var name          : String,
+  id                : Option[MCompany.CompanyId_t] = None,
+  var date_created  : DateTime = null
+) extends EsModelT[MCompany] with CompanyShopsSel with CompanyMartsSel {
   def company_id = id.get
+  def companion = MCompany
 
-  /** Добавить в таблицу новую запись. */
-  def saveInsert(implicit c: Connection) = {
-    SQL("INSERT INTO company(name) VALUES ({name})")
-      .on('name -> name)
-      .executeInsert(rowParser single)
-  }
-
-  /** Обновить в таблице существующую запись. */
-  def saveUpdate(implicit c: Connection) = {
-    SQL("UPDATE company SET name = {name} WHERE id = {id}")
-      .on('name -> name, 'id -> id.get)
-      .executeUpdate()
-  }
-
-  /**
-   * Удалить текущую запись из таблицы, если она там есть.
-   * @return Кол-во удалённых рядов: 0 или 1.
-   */
-  def delete(implicit c:Connection) = {
-    id match {
-      case Id(_id)      => deleteById(_id)
-      case NotAssigned  => 0
-    }
+  override def writeJsonFields(acc: XContentBuilder) {
+    acc.field(NAME_ESFN, name)
+    if (date_created == null)
+      date_created = DateTime.now()
+    acc.field(DATE_CREATED_ESFN, date_created)
   }
 }
 
 
 trait MCompanySel {
-  def company_id: Int
-  def company(implicit c: Connection) = getById(company_id).get
+  def company_id: CompanyId_t
+  def company = getById(company_id)
 }
