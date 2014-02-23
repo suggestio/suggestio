@@ -38,7 +38,7 @@ object EsModel extends PlayMacroLogsImpl {
   val AUTH_INFO_ESFN    = "authInfo"
   val URL_ESFN          = "url"
   val ADDRESS_ESFN      = "address"
-  val SITE_URL_FN       = "siteUrl"
+  val SITE_URL_ESFN       = "siteUrl"
 
   def companyIdParser = stringParser
   def martIdParser = stringParser
@@ -129,24 +129,32 @@ object EsModel extends PlayMacroLogsImpl {
 
 import EsModel._
 
-/** Шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelT]]. */
-trait EsModelStaticT[T <: EsModelT[T]] {
+/** Базовый шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelMinimalT]].
+  * Здесь десериализация полностью выделена в отдельную функцию. */
+trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
   val ES_TYPE_NAME: String
 
-  protected def dummy(id: String): T
-  def applyMap(m: collection.Map[String, AnyRef], acc: T): T
+  def generateMapping: XContentBuilder
+
+  def putMapping: Future[Boolean] = {
+    client.admin().indices()
+      .preparePutMapping(ES_INDEX_NAME)
+      .setType(ES_TYPE_NAME)
+      .setSource(generateMapping)
+      .execute()
+      .map { _.isAcknowledged }
+  }
+
+  def isMappingExists = EsModel.isMappingExists(ES_TYPE_NAME)
 
   /**
-   * Существует ли указанный магазин в хранилище?
-   * @param id id магазина.
-   * @return true/false
+   * Десериализация одного элементам модели.
+   * @param id id документа.
+   * @param m Карта, распарсенное json-тело документа.
+   * @return Экземпляр модели.
    */
-  def isExist(id: String): Future[Boolean] = {
-    client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
-      .setFields()
-      .execute()
-      .map { _.isExists }
-  }
+  def deserializeOne(id: String, m: collection.Map[String, AnyRef]): T
+
 
   /**
    * Выбрать ряд из таблицы по id.
@@ -158,9 +166,8 @@ trait EsModelStaticT[T <: EsModelT[T]] {
       .execute()
       .map { getResp =>
         if (getResp.isExists) {
-          val acc = dummy(getResp.getId)
-          applyMap(getResp.getSourceAsMap, acc)
-          Some(acc)
+          val result = deserializeOne(getResp.getId, getResp.getSourceAsMap)
+          Some(result)
         } else {
           None
         }
@@ -170,8 +177,7 @@ trait EsModelStaticT[T <: EsModelT[T]] {
   /** Список результатов с source внутри перегнать в распарсенный список. */
   protected def searchResp2list(searchResp: SearchResponse): Seq[T] = {
     searchResp.getHits.getHits.toSeq.map { hit =>
-      val acc = dummy(hit.getId)
-      applyMap(hit.getSource, acc)
+      deserializeOne(hit.getId, hit.getSource)
     }
   }
 
@@ -202,9 +208,37 @@ trait EsModelStaticT[T <: EsModelT[T]] {
 
 }
 
-/** Шаблон для динамических частей ES-моделей. */
-trait EsModelT[E <: EsModelT[E]] {
-  def companion: EsModelStaticT[E]
+/** Шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelT]]. */
+trait EsModelStaticT[T <: EsModelT[T]] extends EsModelMinimalStaticT[T] {
+
+  protected def dummy(id: String): T
+  def applyMap(m: collection.Map[String, AnyRef], acc: T): T
+
+  /**
+   * Существует ли указанный магазин в хранилище?
+   * @param id id магазина.
+   * @return true/false
+   */
+  def isExist(id: String): Future[Boolean] = {
+    client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
+      .setFields()
+      .execute()
+      .map { _.isExists }
+  }
+
+  def deserializeOne(id: String, m: collection.Map[String, AnyRef]): T = {
+    val acc = dummy(id)
+    applyMap(m, acc)
+  }
+
+}
+
+/** Шаблон для динамических частей ES-моделей.
+ * В минимальной редакции механизм десериализации полностью абстрактен. */
+trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
+  def companion: EsModelMinimalStaticT[E]
+
+  def toJson: XContentBuilder
 
   def id: Option[String]
 
@@ -214,14 +248,6 @@ trait EsModelT[E <: EsModelT[E]] {
     else
       null
   }
-
-  def toJson: XContentBuilder = {
-    val acc = XContentFactory.jsonBuilder()
-      .startObject()
-    writeJsonFields(acc)
-    acc.endObject()
-  }
-  def writeJsonFields(acc: XContentBuilder)
 
   /**
    * Сохранить экземпляр в хранилище ES.
@@ -242,5 +268,18 @@ trait EsModelT[E <: EsModelT[E]] {
     case Some(_id)  => companion.deleteById(_id)
     case None       => Future failed new IllegalStateException("id is not set")
   }
+}
+
+/** Шаблон для динамических частей ES-моделей. */
+trait EsModelT[E <: EsModelT[E]] extends EsModelMinimalT[E] {
+  override def companion: EsModelStaticT[E]
+
+  def toJson: XContentBuilder = {
+    val acc = XContentFactory.jsonBuilder()
+      .startObject()
+    writeJsonFields(acc)
+    acc.endObject()
+  }
+  def writeJsonFields(acc: XContentBuilder)
 }
 

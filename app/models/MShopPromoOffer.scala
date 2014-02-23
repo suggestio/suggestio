@@ -9,9 +9,10 @@ import org.elasticsearch.index.query.QueryBuilders
 import EsModel.ES_INDEX_NAME
 import io.suggest.ym.index.YmIndex
 import io.suggest.ym.OfferTypes
-import io.suggest.util.ImplicitTupleCoercions
 import models.MShop.ShopId_t
 import play.api.libs.concurrent.Execution.Implicits._
+import scala.collection.Map
+import org.elasticsearch.common.xcontent.XContentBuilder
 
 /**
  * Suggest.io
@@ -24,40 +25,17 @@ import play.api.libs.concurrent.Execution.Implicits._
  * Этот оффер привязан к магазину -- это избавляет от кучи головной боли, хоть и бывает не оптимально.
  */
 
-object MShopPromoOffer {
+object MShopPromoOffer extends EsModelMinimalStaticT[MShopPromoOffer] {
 
   val ES_TYPE_NAME  = "shopPromoOffers"
 
   def generateMapping = YmIndex.getIndexMapping(ES_TYPE_NAME)
 
-  def putMapping: Future[Boolean] = {
-    client.admin().indices()
-      .preparePutMapping(ES_INDEX_NAME)
-      .setType(ES_TYPE_NAME)
-      .setSource(generateMapping)
-      .execute()
-      .map { _.isAcknowledged }
-  }
-
-  def isMappingExists = EsModel.isMappingExists(ES_TYPE_NAME)
-
-  /**
-   * Прочитать из хранилища по id один элемент.
-   * @param id id элемента.
-   * @return Фьючерс с оффером, если такой имеется.
-   */
-  def getById(id: String): Future[Option[MShopPromoOffer]] = {
-    client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
-      .execute()
-      .map { getResponse =>
-        if (getResponse.isExists) {
-          val result = MShopPromoOffer(
-            id    = Some(getResponse.getId),
-            datum = YmPromoOfferDatum.fromJson(getResponse.getSourceAsMap)
-          )
-          Some(result)
-        } else None
-      }
+  override def deserializeOne(id: String, m: Map[String, AnyRef]): MShopPromoOffer = {
+    MShopPromoOffer(
+      id    = Some(id),
+      datum = YmPromoOfferDatum.fromJson(m)
+    )
   }
 
   /**
@@ -72,14 +50,7 @@ object MShopPromoOffer {
       .setTypes(ES_TYPE_NAME)
       .setQuery(shopIdQuery)
       .execute()
-      .map { searchResp =>
-        searchResp.getHits.getHits.map { hit =>
-          MShopPromoOffer(
-            id    = Some(hit.getId),
-            datum = YmPromoOfferDatum.fromJson(hit.getSource)
-          )
-        }
-      }
+      .map { searchResp2list }
   }
 
    /** Прочитать только shopId для указанного оффера, если такой вообще имеется. */
@@ -94,17 +65,6 @@ object MShopPromoOffer {
           Some(shopId)
         } else None
       }
-  }
-
-  /**
-   * Удалить из хранилища указанный элемент.
-   * @param id id элемента.
-   * @return Фьючерс, содержащий истину, если всё ок, false если элемент не найден.
-   */
-  def deleteById(id: String): Future[Boolean] = {
-    client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
-      .execute()
-      .map { !_.isNotFound }
   }
 
   private def optSeq2string(tokens: Option[Any]*): String = {
@@ -128,7 +88,9 @@ case class MShopPromoOffer(
   // TODO Нужно использовать облегчённую модель датума, без постоянной сериализации-десериализации. Можно просто через набор одноимённых var + парсер json в над-трейте.
   datum: YmPromoOfferDatum = new YmPromoOfferDatum(),
   var id: Option[String] = None
-) extends MShopSel with MShopOffersSel {
+) extends EsModelMinimalT[MShopPromoOffer] with MShopSel with MShopOffersSel {
+
+  def companion = MShopPromoOffer
 
   def shop_id = {
     // TODO Надо перегнать датум на ShopId: String
@@ -149,25 +111,7 @@ case class MShopPromoOffer(
     }
   }
 
-  /** Сохранить в хранилище текущий экземпляр данных. */
-  def save: Future[MShopPromoOffer] = {
-    client.prepareIndex(ES_INDEX_NAME, ES_TYPE_NAME, id getOrElse null)
-      .setSource(datum.toJsonBuilder)
-      .execute()
-      .map {
-        inxResp => MShopPromoOffer(id=Some(inxResp.getId), datum=datum)
-      }
-  }
-
-  /** Удалить из хранилища модели указанный документ. */
-  def delete: Future[Boolean] = {
-    if (id.isEmpty) {
-      Future failed new IllegalStateException("Cannot delete: document id is not defined.")
-    } else {
-      deleteById(id.get)
-    }
-  }
-
+  def toJson: XContentBuilder = datum.toJsonBuilder
 }
 
 

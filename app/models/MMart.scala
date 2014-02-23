@@ -10,6 +10,8 @@ import EsModel._
 import MCompany.CompanyId_t
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import play.api.libs.concurrent.Execution.Implicits._
+import io.suggest.util.SioEsUtil._
+import io.suggest.util.SioConstants._
 
 /**
  * Suggest.io
@@ -27,12 +29,49 @@ object MMart extends EsModelStaticT[MMart] {
 
   val ES_TYPE_NAME = "mart"
 
+  override def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
+    IndexMapping(
+      typ = ES_TYPE_NAME,
+      static_fields = Seq(
+        FieldSource(enabled = true),
+        FieldAll(enabled = false, analyzer = FTS_RU_AN)
+      ),
+      properties = Seq(
+        FieldString(
+          id = COMPANY_ID_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.not_analyzed
+        ),
+        FieldString(
+          id = NAME_ESFN,
+          include_in_all = true,
+          index = FieldIndexingVariants.no
+        ),
+        FieldString(
+          id = ADDRESS_ESFN,
+          include_in_all = true,
+          index = FieldIndexingVariants.no
+        ),
+        FieldString(
+          id = SITE_URL_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.no
+        ),
+        FieldDate(
+          id = DATE_CREATED_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.no
+        )
+      )
+    )
+  }
+
   def applyMap(m: collection.Map[String, AnyRef], acc: MMart): MMart = {
     m foreach {
       case (COMPANY_ID_ESFN, value)   => acc.company_id = companyIdParser(value)
       case (NAME_ESFN, value)         => acc.name = nameParser(value)
       case (ADDRESS_ESFN, value)      => acc.address = addressParser(value)
-      case (SITE_URL_FN, value)       => acc.site_url = Some(siteUrlParser(value))
+      case (SITE_URL_ESFN, value)     => acc.site_url = Some(siteUrlParser(value))
       case (DATE_CREATED_ESFN, value) => acc.date_created = dateCreatedParser(value)
     }
     acc
@@ -92,7 +131,7 @@ case class MMart(
       .field(NAME_ESFN, name)
       .field(ADDRESS_ESFN, address)
     if (site_url.isDefined)
-      acc.field(SITE_URL_FN, site_url)
+      acc.field(SITE_URL_ESFN, site_url)
     if (date_created == null)
       date_created = DateTime.now()
     acc.field(DATE_CREATED_ESFN, date_created)

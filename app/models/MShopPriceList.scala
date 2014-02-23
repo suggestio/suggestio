@@ -9,6 +9,8 @@ import scala.concurrent.Future
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.common.xcontent.XContentBuilder
 import play.api.libs.concurrent.Execution.Implicits._
+import io.suggest.util.SioEsUtil._
+import io.suggest.util.SioConstants._
 
 /**
  * Suggest.io
@@ -24,6 +26,33 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
   val AUTH_INFO_SEP = ":"
 
   val ES_TYPE_NAME = "shopPriceList"
+
+  override def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
+    IndexMapping(
+      typ = ES_TYPE_NAME,
+      static_fields = Seq(
+        FieldSource(enabled = true),
+        FieldAll(enabled = false, analyzer = FTS_RU_AN)
+      ),
+      properties = Seq(
+        FieldString(
+          id = SHOP_ID_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.not_analyzed
+        ),
+        FieldString(
+          id = URL_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.no
+        ),
+        FieldString(
+          id = AUTH_INFO_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.no
+        )
+      )
+    )
+  }
 
   protected def dummy(id: String) = MShopPriceList(
     id = Some(id),

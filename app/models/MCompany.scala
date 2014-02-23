@@ -4,6 +4,8 @@ import org.joda.time.DateTime
 import EsModel._
 import scala.collection.Map
 import org.elasticsearch.common.xcontent.XContentBuilder
+import io.suggest.util.SioEsUtil._
+import io.suggest.util.SioConstants._
 
 /**
  * Suggest.io
@@ -18,6 +20,28 @@ object MCompany extends EsModelStaticT[MCompany] {
   type CompanyId_t = String
 
   override val ES_TYPE_NAME: String = "company"
+
+  override def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
+    new IndexMapping(
+      typ = ES_TYPE_NAME,
+      static_fields = Seq(
+        FieldSource(enabled = true),
+        FieldAll(enabled = false, analyzer = FTS_RU_AN)
+      ),
+      properties = Seq(
+        FieldString(
+          id = NAME_ESFN,
+          include_in_all = true,
+          index = FieldIndexingVariants.no
+        ),
+        FieldDate(
+          id = DATE_CREATED_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.no
+        )
+      )
+    )
+  }
 
   override def applyMap(m: Map[String, AnyRef], acc: MCompany): MCompany = {
     m foreach {

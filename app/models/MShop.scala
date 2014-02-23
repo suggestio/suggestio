@@ -10,6 +10,8 @@ import MMart.MartId_t, MCompany.CompanyId_t
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import play.api.libs.concurrent.Execution.Implicits._
+import io.suggest.util.SioEsUtil._
+import io.suggest.util.SioConstants._
 
 /**
  * Suggest.io
@@ -23,6 +25,55 @@ object MShop extends EsModelStaticT[MShop] {
   type ShopId_t = String
 
   val ES_TYPE_NAME = "shop"
+
+  override def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
+    IndexMapping(
+      typ = ES_TYPE_NAME,
+      static_fields = Seq(
+        FieldSource(enabled = true),
+        FieldAll(enabled = false, analyzer = FTS_RU_AN)
+      ),
+      properties = Seq(
+        FieldString(
+          id = COMPANY_ID_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.not_analyzed
+        ),
+        FieldString(
+          id = MART_ID_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.not_analyzed
+        ),
+        FieldString(
+          id = NAME_ESFN,
+          include_in_all = true,
+          index = FieldIndexingVariants.no
+        ),
+        FieldDate(
+          id = DATE_CREATED_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.no
+        ),
+        FieldString(
+          id = DESCRIPTION_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.no
+        ),
+        FieldNumber(
+          id = MART_FLOOR_ESFN,
+          fieldType = DocFieldTypes.integer,
+          include_in_all = true,
+          index = FieldIndexingVariants.no
+        ),
+        FieldNumber(
+          id = MART_SECTION_ESFN,
+          fieldType = DocFieldTypes.integer,
+          include_in_all = true,
+          index = FieldIndexingVariants.no
+        )
+      )
+    )
+  }
 
   protected def dummy(id: String) = MShop(
     id = Some(id),

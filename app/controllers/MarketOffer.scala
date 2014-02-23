@@ -120,9 +120,9 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
       {mpo =>
         ??? //mpo.datum.shopId = shopId // TODO Надо исправить датум
         mpo.datum.offerType = OfferTypes.VendorModel
-        mpo.save.map { mpoSaved =>
+        mpo.save.map { mpoSavedId =>
           // Редирект на созданный промо-оффер.
-          rdrToOffer(mpoSaved.id.get).flashing("success" -> "Created ok.")
+          rdrToOffer(mpoSavedId).flashing("success" -> "Created ok.")
         }
       }
     )
