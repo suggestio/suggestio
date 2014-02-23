@@ -127,7 +127,7 @@ object SioV1Importer extends JavaTokenParsers {
       // По идее, всё. Но если остались ещё элементы, то это означает, что запись прочиталась неправильно.
       ensureEmptyIter(rowIter)
 
-      val rec = MBlog(id=blogId, date=date, title=title, descr=desc, bgImage=bgImage, bgColor=bgColor, text=text)
+      val rec = MBlog(id=Some(blogId), date=date, title=title, description=desc, bgImage=bgImage, bgColor=bgColor, text=text)
       rec.save.onComplete {
         case scala.util.Success(_)  => trace(logPrefix + "Saved ok: " + blogId)
         case scala.util.Failure(ex) => error(logPrefix + "Failed to write record into DB: " + rec, ex)

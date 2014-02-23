@@ -21,17 +21,16 @@ object Blog extends SioController {
   /** Определение параметров формы для создания записи в блоге. */
   val postFormM = Form(
     mapping(
-      "id"      -> nonEmptyText,
       "title"   -> nonEmptyText,
       "descr"   -> nonEmptyText,
       "bgImage" -> text,
       "bgColor" -> text,
       "text"    -> text
     )
-    {(id, title, descr, bgImage, bgColor, text) =>
-      MBlog(id=id, title=title, descr=descr, bgImage=bgImage, bgColor=bgColor, text=text) }
+    {(title, descr, bgImage, bgColor, text) =>
+      MBlog(title=title, description=descr, bgImage=bgImage, bgColor=bgColor, text=text) }
     {rec: MBlog =>
-      Some(rec.id, rec.title, rec.descr, rec.bgImage, rec.bgColor, rec.text) }
+      Some(rec.title, rec.description, rec.bgImage, rec.bgColor, rec.text) }
   )
 
 
@@ -67,10 +66,12 @@ object Blog extends SioController {
    * @param blog_id
    * @return
    */
-  def deleteRecAdmin(blog_id: String) = MaybeAuth { implicit request =>
+  def deleteRecAdmin(blog_id: String) = IsSuperuser.async { implicit request =>
     // TODO пока для тестов используется maybeAuthenticated потом заменить на  isAdminAction (раскоментировать абзац ниже! а следующий удалить)
-    val deleteRec = MBlog.delete(blog_id)
-    Ok(deleteRec.toString)
+    MBlog.deleteById(blog_id) map {
+      case true  => Redirect(routes.Blog.recordList())
+      case false => NotFound("blog record not found: " + blog_id)
+    }
   }
 
 
@@ -79,14 +80,16 @@ object Blog extends SioController {
    * Сабмит формы добавления новой бложной записи в базу
    * @return
    */
-  def newRecSubmit = MaybeAuth { implicit request =>
+  def newRecSubmit = IsSuperuser.async { implicit request =>
     // TODO пока для тестов используется maybeAuthenticated потом заменить на  isAdminAction (раскоментировать абзац ниже! а следующий удалить)
     postFormM.bindFromRequest.fold(
-      formWithErrors => NotAcceptable(addRecordTpl(formWithErrors))
+      formWithErrors =>
+        NotAcceptable(addRecordTpl(formWithErrors))
       ,
       {rec =>
-        rec.save
-        Redirect(routes.Blog.readOne(rec.id))
+        rec.save map { id =>
+          Redirect(routes.Blog.readOne(id))
+        }
       }
     )
   }
@@ -97,7 +100,7 @@ object Blog extends SioController {
    * @param blog_id id записи блога.
    * @return 200 + Форма редакторования записи блога или 404
    */
-  def editRec (blog_id: String) = MaybeAuth.async { implicit request =>
+  def editRec(blog_id: String) = IsSuperuser.async { implicit request =>
     // TODO пока для тестов используется maybeAuthenticated потом заменить на  isAdminAction (раскоментировать абзац ниже! а следующий удалить)
     MBlog.getById(blog_id) map {
       case Some(record) =>
@@ -114,7 +117,7 @@ object Blog extends SioController {
    * @param blog_id id записи блога.
    * @return Редирект на запись или 404.
    */
-  def editRecSubmit (blog_id: String) = MaybeAuth.async { implicit request =>
+  def editRecSubmit(blog_id: String) = IsSuperuser.async { implicit request =>
     // TODO пока для тестов используется maybeAuthenticated потом заменить на  isAdminAction (раскоментировать абзац ниже! а следующий удалить)
     MBlog.getById(blog_id) map {
       case Some(record) =>

@@ -2,15 +2,13 @@ package models
 
 import org.joda.time.DateTime
 import util._
-import org.apache.hadoop.fs.Path
-import io.suggest.model._
-import io.suggest.util.StorageType._
-import util.DateTimeUtil.dateTimeOrdering
-import com.fasterxml.jackson.annotation.JsonIgnore
-import scala.concurrent.{Future, future}
+import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
-import org.hbase.async.{KeyValue, DeleteRequest, GetRequest, PutRequest}
-import scala.collection.JavaConversions._
+import scala.collection.Map
+import org.elasticsearch.common.xcontent.XContentBuilder
+import EsModel._
+import io.suggest.util.SioEsUtil._
+import io.suggest.util.SioConstants._
 
 /**
  * Suggest.io
@@ -20,194 +18,101 @@ import scala.collection.JavaConversions._
  * Порт модели blog_record из старого sioweb.
  */
 
+object MBlog extends EsModelStaticT[MBlog] {
+  override val ES_TYPE_NAME: String = "blog"
+
+  val TITLE_ESFN    = "title"
+  val BG_IMAGE_ESFN = "bgImage"
+  val BG_COLOR_ESFN = "bgColor"
+  val TEXT_ESFN     = "text"
+  val DATE_ESFN     = "date"
+
+  override def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
+    IndexMapping(
+      typ = ES_TYPE_NAME,
+      static_fields = Seq(
+        FieldSource(enabled = true),
+        FieldAll(enabled = false, analyzer = FTS_RU_AN)
+      ),
+      properties = Seq(
+        FieldString(
+          id = TITLE_ESFN,
+          include_in_all = true,
+          index = FieldIndexingVariants.no
+        ),
+        FieldString(
+          id = DESCRIPTION_ESFN,
+          include_in_all = true,
+          index = FieldIndexingVariants.no
+        ),
+        FieldString(
+          id = BG_IMAGE_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.no
+        ),
+        FieldString(
+          id = BG_COLOR_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.no
+        ),
+        FieldString(
+          id = TEXT_ESFN,
+          include_in_all = true,
+          index = FieldIndexingVariants.no
+        ),
+        FieldDate(
+          id = DATE_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.no
+        )
+      )
+    )
+  }
+
+  override def applyMap(m: Map[String, AnyRef], acc: MBlog): MBlog = {
+    m foreach {
+      case (TITLE_ESFN, value)        => acc.title = stringParser(value)
+      case (DESCRIPTION_ESFN, value)  => acc.description = stringParser(value)
+      case (BG_IMAGE_ESFN, value)     => acc.bgImage = stringParser(value)
+      case (BG_COLOR_ESFN, value)     => acc.bgColor = stringParser(value)
+      case (TEXT_ESFN, value)         => acc.text = stringParser(value)
+      case (DATE_ESFN, value)         => acc.date = dateTimeParser(value)
+    }
+    acc
+  }
+
+  override protected def dummy(id: String) = MBlog(
+    title = null,
+    description = null,
+    bgImage = null,
+    bgColor = null,
+    text = null
+  )
+}
+
+import MBlog._
+
 case class MBlog(
-  id            : String,               // Имя файла в ФС. Нельзя переименовывать. Юзеру не отображается.
   var title     : String,
-  var descr     : String,
+  var description : String,
   var bgImage   : String,
   var bgColor   : String,
   var text      : String,
-  date          : DateTime = DateTime.now   // ctime не поддерживается в fs, поэтому дата хранится внутри файла
-) {
-  import MBlog.BACKEND
+  id            : Option[String] = None,
+  var date      : DateTime = null
+) extends EsModelT[MBlog] {
 
-  /**
-   * Сохранить запись блога в хранилище.
-   * @return саму себя для удобства method chaining.
-   */
-  @JsonIgnore
-  def save = BACKEND.save(this)
+  def companion = MBlog
 
-  /**
-   * Удалить текущий ряд их хранилища
-   */
-  @JsonIgnore
-  def delete = MBlog.delete(id)
-
-}
-
-
-object MBlog extends Logs {
-
-  // Выбираем storage backend этой модели.
-  private val BACKEND: Backend = {
-    StorageUtil.STORAGE match {
-      case DFS    => new DfsBackend
-      case HBASE  => new HBaseBackend
-    }
+  override def writeJsonFields(acc: XContentBuilder) {
+    acc.field(TITLE_ESFN, title)
+      .field(DESCRIPTION_ESFN, description)
+      .field(BG_IMAGE_ESFN, bgImage)
+      .field(BG_COLOR_ESFN, bgColor)
+      .field(TEXT_ESFN, text)
+    if (date == null)
+      date = DateTime.now()
+    acc.field(DATE_ESFN, date)
   }
-
-  /**
-   * Прочитать все записи из папки-хранилища.
-   * @return Список распарсенных записей в виде классов MBlog.
-   */
-  def getAll = {
-    BACKEND.getAll
-      // Отсортировать записи в порядке убывания.
-      .map { _.sortBy(_.date).reverse }
-  }
-
-
-  /**
-   * Удалить файл с записью блога из хранилища.
-   * @param id id записи.
-   * @return
-   */
-  def delete(id: String) = BACKEND.delete(id)
-
-  /**
-   * Прочитать запись блога из базы по id
-   * @param id id записи
-   * @return запись блога, если есть.
-   */
-  def getById(id: String) = BACKEND.getById(id)
-
-
-  /** Интерфейс для storage-backend'ов этой модели. */
-  trait Backend {
-    /**
-     * Сохранение экземпляра MBlog в хранилище. Если запись уже существует, то она будет перезаписана
-     * (или появится её новая версия в случае с HBase).
-     * @param data Данные - экземпляр MBlog.
-     * @return Фьючес с сохраненным MBlog. Обычно, это тот же экземпляр, что и исходный data.
-     */
-    def save(data: MBlog): Future[_]
-
-    /**
-     * Чтения элемента по id.
-     * @param id id записи блога.
-     * @return Фьючерс с найденной записью, если такая существует.
-     */
-    def getById(id: String): Future[Option[MBlog]]
-
-    /**
-     * Прочитать все данные блога.
-     * @return Фьючерс со списком записей, новые в начале.
-     */
-    def getAll: Future[List[MBlog]]
-
-    /**
-     * Удалить запись блога.
-     * @param id id записи блога.
-     * @return Фьючерс без значения.
-     */
-    def delete(id: String): Future[Any]
-  }
-
-
-  /** Backend для хранения в DFS. */
-  class DfsBackend extends Backend {
-    import SiobixFs.fs
-
-    val modelPath = new Path(SiobixFs.siobix_conf_path, "blog")
-    def getFilePath(id: String) = new Path(modelPath, id)
-    def readOne(path:Path) : Option[MBlog] = DfsModelUtil.readOne[MBlog](path)
-    def readOneAcc(acc:List[MBlog], path:Path) : List[MBlog] = DfsModelUtil.readOneAcc[MBlog](acc, path)
-
-    def save(data:MBlog): Future[_] = future {
-      JsonDfsBackend.writeToPath(getFilePath(data.id), data)
-    }
-
-    def getById(id: String): Future[Option[MBlog]] = future {
-      readOne(getFilePath(id))
-    }
-
-    def getAll: Future[List[MBlog]] = future {
-      // Читаем и парсим все файлы из папки model_path.
-      fs.listStatus(modelPath).foldLeft(List[MBlog]()) { (acc, fstatus) =>
-        if (!fstatus.isDirectory) {
-          readOneAcc(acc, fstatus.getPath)
-        } else acc
-      }
-    }
-
-    def delete(id: String): Future[Any] = future {
-      val path = getFilePath(id)
-      fs.delete(path, false)
-    }
-  }
-
-
-  /** Backend для хранения в HBase. Используем таблицу obj. */
-  class HBaseBackend extends Backend with ModelSerialJson {
-    import SioHBaseAsyncClient._
-    import MObject.{HTABLE_NAME_BYTES, CF_BLOG}
-    import io.suggest.model.HTapConversionsBasic._
-
-    // TODO проверить и убедится, что таблица существует.
-
-    val KEYPREFIX = "mblog:"
-
-    private val CF_BYTES = CF_BLOG.getBytes
-    private def QUALIFIER = CF_BYTES
-
-    // TODO Ключ надо использовать для сортировки по дате.
-    def id2key(id: String): Array[Byte] = KEYPREFIX + id
-
-    def deserialize(data: Array[Byte]) = deserializeTo[MBlog](data)
-
-    def save(data: MBlog): Future[_] = {
-      val key = id2key(data.id)
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, key, CF_BYTES, QUALIFIER, serialize(data))
-      ahclient.put(putReq)
-    }
-
-    def getById(id: String): Future[Option[MBlog]] = {
-      val key = id2key(id)
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, key).family(CF_BLOG).qualifier(QUALIFIER)
-      ahclient.get(getReq) map { r =>
-        if (r.isEmpty) {
-          None
-        } else {
-          val vb = r.head.value()
-          val v = deserialize(vb)
-          Some(v)
-        }
-      }
-    }
-
-    def getAll: Future[List[MBlog]] = {
-      val scanner = ahclient.newScanner(HTABLE_NAME_BYTES)
-      scanner.setFamily(CF_BLOG)
-      scanner.setQualifier(QUALIFIER)
-      val folder = new AsyncHbaseScannerFold[List[MBlog]] {
-        def fold(acc0: List[MBlog], kv: KeyValue): List[MBlog] = {
-          deserialize(kv.value()) :: acc0
-        }
-
-        override def mapThrowable(acc: List[MBlog], ex: Throwable): Throwable = MBlogAsyncFoldException(ex, acc)
-      }
-      folder(Nil, scanner)
-    }
-
-    def delete(id: String): Future[Any] = {
-      val key = id2key(id)
-      val delReq = new DeleteRequest(HTABLE_NAME_BYTES, key, CF_BYTES, QUALIFIER)
-      ahclient.delete(delReq)
-    }
-  }
-
-
-  case class MBlogAsyncFoldException(ex:Throwable, accLast:List[MBlog]) extends RuntimeException
 }
 

@@ -22,14 +22,6 @@
 @form(call) {
 
 <fieldset>
-  @if(!isEdit) {
-    @inputText(postFormM("id"), '_label -> Messages("b.a.record_id"))
-  } else {
-    @inputText(postFormM("id"), 'readonly -> "true")
-  }
-</fieldset>
-
-<fieldset>
   @inputText(postFormM("title"))
 </fieldset>
 
