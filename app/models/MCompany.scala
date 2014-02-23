@@ -6,6 +6,8 @@ import scala.collection.Map
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.SioConstants._
+import scala.concurrent.Future
+import play.api.libs.concurrent.Execution.Implicits._
 
 /**
  * Suggest.io
@@ -54,6 +56,28 @@ object MCompany extends EsModelStaticT[MCompany] {
   }
 
   override protected def dummy(id: String) = MCompany(name = null)
+
+  /**
+   * Удалить документ по id.
+   * @param id id документа.
+   * @return true, если документ найден и удалён. Если не найден, то false
+   */
+  override def deleteById(id: String): Future[Boolean] = {
+    val martsCountFut = MMart.countByCompanyId(id)
+    val fkFut = for {
+      shopsCount <- MShop.countByCompanyId(id)
+      martsCount <- martsCountFut
+    } yield {
+      martsCount -> shopsCount
+    }
+    fkFut flatMap {
+      case (0L, 0L) =>
+        super.deleteById(id)
+
+      case (martsCount, shopsCount) =>
+        Future failed new ForeignKeyException(s"Cannot delete company with $martsCount marts and $shopsCount shops.")
+    }
+  }
 }
 
 

@@ -101,13 +101,23 @@ object MShop extends EsModelStaticT[MShop] {
    * @return Список MShop в неопределённом порядке.
    */
   def getByMartId(martId: MartId_t): Future[Seq[MShop]] = {
-    val martIdQuery = QueryBuilders.fieldQuery(MART_ID_ESFN, martId)
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
-      .setQuery(martIdQuery)
+      .setQuery(martIdQuery(martId))
       .execute()
       .map { searchResp2list }
   }
+
+  def martIdQuery(martId: MartId_t) = QueryBuilders.fieldQuery(MART_ID_ESFN, martId)
+
+  def countByMartId(martId: MartId_t): Future[Long] = {
+    client.prepareCount(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(martIdQuery(martId))
+      .execute()
+      .map { _.getCount }
+  }
+
 
   /**
    * Выдать все магазины, находящиеся во владении указанной компании.
@@ -115,12 +125,21 @@ object MShop extends EsModelStaticT[MShop] {
    * @return Список MShop в неопределённом порядке.
    */
   def getByCompanyId(companyId: CompanyId_t): Future[Seq[MShop]] = {
-    val companyIdQuery = QueryBuilders.fieldQuery(COMPANY_ID_ESFN, companyId)
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
-      .setQuery(companyIdQuery)
+      .setQuery(companyIdQuery(companyId))
       .execute()
       .map { searchResp2list }
+  }
+
+  def companyIdQuery(companyId: CompanyId_t) = QueryBuilders.fieldQuery(COMPANY_ID_ESFN, companyId)
+
+  def countByCompanyId(companyId: CompanyId_t): Future[Long] = {
+    client.prepareCount(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(companyIdQuery(companyId))
+      .execute()
+      .map { _.getCount }
   }
 
   /**
@@ -171,6 +190,10 @@ object MShop extends EsModelStaticT[MShop] {
         val deleteFut = super.deleteById(id)
         deleteFut onSuccess {
           case true => SiowebNotifier publish YmShopDeletedEvent(martId=martId, shopId=id)
+        }
+        deleteFut onSuccess {
+          // TODO Вынести это в SioNotifer?
+          case _ => MShopPriceList.deleteByShop(id)
         }
         deleteFut
 

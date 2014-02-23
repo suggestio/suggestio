@@ -76,14 +76,21 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
    * @return Список прайслистов, относящихся к магазину.
    */
   def getForShop(shopId: ShopId_t): Future[Seq[MShopPriceList]] = {
-    val shopIdQuery = QueryBuilders.fieldQuery(SHOP_ID_ESFN, shopId)
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
-      .setQuery(shopIdQuery)
+      .setQuery(shopIdQuery(shopId))
       .execute()
       .map { searchResp2list }
   }
 
+  def shopIdQuery(shopId: ShopId_t) = QueryBuilders.fieldQuery(SHOP_ID_ESFN, shopId)
+
+  def deleteByShop(shopId: ShopId_t): Future[_] = {
+    client.prepareDeleteByQuery(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(shopIdQuery(shopId))
+      .execute()
+  }
 }
 
 

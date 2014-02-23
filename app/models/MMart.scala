@@ -84,31 +84,48 @@ object MMart extends EsModelStaticT[MMart] {
     site_url = None
   )
 
+  def companyIdQuery(companyId: CompanyId_t) = QueryBuilders.fieldQuery(ES_TYPE_NAME, companyId)
+
   /**
    * Вернуть все ТЦ, находящиеся во владении указанной конторы.
    * @param companyId id конторы.
    * @return Список ТЦ в неопределённом порядке.
    */
   def getByCompanyId(companyId: CompanyId_t): Future[Seq[MMart]] = {
-    val companyIdQuery = QueryBuilders.fieldQuery(ES_TYPE_NAME, companyId)
     client.prepareSearch(ES_INDEX_NAME)
-      .setQuery(companyIdQuery)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(companyIdQuery(companyId))
       .execute()
       .map { searchResp2list }
+  }
+
+  def countByCompanyId(companyId: CompanyId_t): Future[Long] = {
+    client.prepareCount(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(companyIdQuery(companyId))
+      .execute()
+      .map { _.getCount }
   }
 
   /**
    * Удалить ТЦ с указанными id. Центральная фунцкия удаления, остальные должны дергать её из-за
    * сайд-эффектов на кравлер.
+   * Перед удалением проверяется, нет ли магазинов в этом ТЦ.
    * @param id Идентификатор.
    * @return Кол-во удалённых рядов. Т.е. 0 или 1.
    */
   override def deleteById(id: String): Future[Boolean] = {
-    val fut = super.deleteById(id)
-    fut onSuccess {
-      case true => SiowebNotifier publish YmMartDeletedEvent(id)
+    MShop.countByMartId(id) flatMap {
+      case 0L =>
+        val fut = super.deleteById(id)
+        fut onSuccess {
+          case true => SiowebNotifier publish YmMartDeletedEvent(id)
+        }
+        fut
+
+      case martShopCount =>
+        Future failed new ForeignKeyException(s"Cannot delete mart with $martShopCount shops. Delete shops first.")
     }
-    fut
   }
 }
 

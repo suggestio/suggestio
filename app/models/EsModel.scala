@@ -283,3 +283,8 @@ trait EsModelT[E <: EsModelT[E]] extends EsModelMinimalT[E] {
   def writeJsonFields(acc: XContentBuilder)
 }
 
+
+class ForeignKeyException(msg: String) extends RuntimeException {
+  override def getMessage: String = msg
+}
+
