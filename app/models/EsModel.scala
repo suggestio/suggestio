@@ -1,9 +1,8 @@
 package models
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import util.SiowebEsUtil.client
 import io.suggest.util.SioEsUtil.laFuture2sFuture
-import play.api.libs.concurrent.Execution.Implicits._
 import io.suggest.util.SioEsUtil
 import util.PlayMacroLogsImpl
 import org.joda.time.{ReadableInstant, DateTime}
@@ -11,6 +10,7 @@ import org.elasticsearch.action.search.SearchResponse
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.common.xcontent.{XContentBuilder, XContentFactory}
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -21,6 +21,34 @@ import org.elasticsearch.common.xcontent.{XContentBuilder, XContentFactory}
 object EsModel extends PlayMacroLogsImpl {
 
   import LOGGER._
+
+  /** Список ES-моделей. Нужен для удобства массовых maintance-операций. Расширяется по мере роста числа ES-моделей. */
+  def ES_MODELS: Seq[EsModelMinimalStaticT[_]] = {
+    Seq(MCompany, MMart, MShop, MShopPriceList, MShopPromoOffer)
+  }
+
+  /** Отправить маппинги всех моделей в ES. */
+  def putAllMappings(implicit ec: ExecutionContext): Future[Boolean] = {
+    Future.traverse(ES_MODELS) { esModelStatic =>
+      val logPrefix = esModelStatic.getClass.getSimpleName + ".putMapping(): "
+      esModelStatic.isMappingExists flatMap {
+        case false =>
+          val fut = esModelStatic.putMapping
+          fut onComplete {
+            case Success(true)  => debug(logPrefix + "-> OK" )
+            case Success(false) => warn(logPrefix  + "NOT ACK!!! Possibly out-of-sync.")
+            case Failure(ex)    => error(logPrefix + "FAILed", ex)
+          }
+          fut
+
+        case true =>
+          trace(logPrefix + "Mapping already exists in index. Skipping...")
+          Future successful true
+      }
+    } map {
+      _.reduceLeft { _ && _ }
+    }
+  }
 
   /** Имя индекса, который будет использоваться для хранения данных остальных моделей.
     * Имя должно быть коротким и лексикографически предшествовать именам остальных временных индексов. */
@@ -38,7 +66,7 @@ object EsModel extends PlayMacroLogsImpl {
   val AUTH_INFO_ESFN    = "authInfo"
   val URL_ESFN          = "url"
   val ADDRESS_ESFN      = "address"
-  val SITE_URL_ESFN       = "siteUrl"
+  val SITE_URL_ESFN     = "siteUrl"
 
   def companyIdParser = stringParser
   def martIdParser = stringParser
@@ -90,7 +118,7 @@ object EsModel extends PlayMacroLogsImpl {
    * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
    *         Если индекс уже существует, то false.
    */
-  def ensureIndex: Future[Boolean] = {
+  def ensureSioIndex(implicit ec:ExecutionContext): Future[Boolean] = {
     val adm = client.admin().indices()
     adm.prepareExists(ES_INDEX_NAME).execute().flatMap { existsResp =>
       if (existsResp.isExists) {
@@ -110,7 +138,7 @@ object EsModel extends PlayMacroLogsImpl {
    * @param typename Имя типа.
    * @return Да/нет.
    */
-  def isMappingExists(typename: String): Future[Boolean] = {
+  def isMappingExists(typename: String)(implicit ec:ExecutionContext): Future[Boolean] = {
     client.admin().cluster()
       .prepareState()
       .setFilterIndices(ES_INDEX_NAME)
@@ -136,7 +164,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
 
   def generateMapping: XContentBuilder
 
-  def putMapping: Future[Boolean] = {
+  def putMapping(implicit ec:ExecutionContext): Future[Boolean] = {
     client.admin().indices()
       .preparePutMapping(ES_INDEX_NAME)
       .setType(ES_TYPE_NAME)
@@ -145,7 +173,8 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
       .map { _.isAcknowledged }
   }
 
-  def isMappingExists = EsModel.isMappingExists(ES_TYPE_NAME)
+  // TODO Нужно проверять, что текущий маппинг не устарел, и обновлять его.
+  def isMappingExists(implicit ec:ExecutionContext) = EsModel.isMappingExists(ES_TYPE_NAME)
 
   /**
    * Десериализация одного элементам модели.
@@ -161,7 +190,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    * @param id Ключ магазина.
    * @return Экземпляр сабжа, если такой существует.
    */
-  def getById(id: String): Future[Option[T]] = {
+  def getById(id: String)(implicit ec:ExecutionContext): Future[Option[T]] = {
     client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
       .execute()
       .map { getResp =>
@@ -186,7 +215,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    * Выдать все магазины. Метод подходит только для административных задач.
    * @return Список магазинов в порядке их создания.
    */
-  def getAll: Future[Seq[T]] = {
+  def getAll(implicit ec:ExecutionContext): Future[Seq[T]] = {
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(QueryBuilders.matchAllQuery())
@@ -200,7 +229,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    * @param id id документа.
    * @return true, если документ найден и удалён. Если не найден, то false
    */
-  def deleteById(id: String): Future[Boolean] = {
+  def deleteById(id: String)(implicit ec:ExecutionContext): Future[Boolean] = {
     client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
       .execute()
       .map { !_.isNotFound }
@@ -219,7 +248,7 @@ trait EsModelStaticT[T <: EsModelT[T]] extends EsModelMinimalStaticT[T] {
    * @param id id магазина.
    * @return true/false
    */
-  def isExist(id: String): Future[Boolean] = {
+  def isExist(id: String)(implicit ec:ExecutionContext): Future[Boolean] = {
     client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
       .setFields()
       .execute()
@@ -253,7 +282,7 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
    * Сохранить экземпляр в хранилище ES.
    * @return Фьючерс с новым/текущим id
    */
-  def save: Future[String] = {
+  def save(implicit ec:ExecutionContext): Future[String] = {
     client.prepareIndex(ES_INDEX_NAME, companion.ES_TYPE_NAME, idOrNull)
       .setSource(toJson)
       .execute()
@@ -264,7 +293,7 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
   /** Удалить текущий ряд из таблицы. Если ключ не выставлен, то сразу будет экзепшен.
     * @return true - всё ок, false - документ не найден.
     */
-  def delete: Future[Boolean] = id match {
+  def delete(implicit ec:ExecutionContext): Future[Boolean] = id match {
     case Some(_id)  => companion.deleteById(_id)
     case None       => Future failed new IllegalStateException("id is not set")
   }

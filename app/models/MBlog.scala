@@ -1,9 +1,6 @@
 package models
 
 import org.joda.time.DateTime
-import util._
-import scala.concurrent.Future
-import play.api.libs.concurrent.Execution.Implicits._
 import scala.collection.Map
 import org.elasticsearch.common.xcontent.XContentBuilder
 import EsModel._

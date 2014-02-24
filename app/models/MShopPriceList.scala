@@ -5,10 +5,9 @@ import MShop.ShopId_t
 import EsModel._
 import util.SiowebEsUtil.client
 import io.suggest.util.SioEsUtil.laFuture2sFuture
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.common.xcontent.XContentBuilder
-import play.api.libs.concurrent.Execution.Implicits._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.SioConstants._
 
@@ -75,7 +74,7 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
    * @param shopId id магазина.
    * @return Список прайслистов, относящихся к магазину.
    */
-  def getForShop(shopId: ShopId_t): Future[Seq[MShopPriceList]] = {
+  def getForShop(shopId: ShopId_t)(implicit ec:ExecutionContext): Future[Seq[MShopPriceList]] = {
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(shopIdQuery(shopId))
@@ -85,7 +84,7 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
 
   def shopIdQuery(shopId: ShopId_t) = QueryBuilders.fieldQuery(SHOP_ID_ESFN, shopId)
 
-  def deleteByShop(shopId: ShopId_t): Future[_] = {
+  def deleteByShop(shopId: ShopId_t)(implicit ec:ExecutionContext): Future[_] = {
     client.prepareDeleteByQuery(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(shopIdQuery(shopId))
@@ -128,6 +127,6 @@ case class UsernamePw(username: String, password: String) {
 
 trait ShopPriceListSel {
   def shop_id: MShop.ShopId_t
-  def priceLists = getForShop(shop_id)
+  def priceLists(implicit ec:ExecutionContext) = getForShop(shop_id)
 }
 

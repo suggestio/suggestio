@@ -151,19 +151,19 @@ sealed class AkkaSiobixClient extends SiobixClientT with PlayMacroLogsImpl with 
    * @param martId id ТЦ.
    */
   def handleMartAdd(martId: MartId_t) {
-    ??? //getMainCrawlerSelector ! MartAdd(martId)
+    getMainCrawlerSelector ! MartAdd(martId)
   }
 
   def handleMartDelete(martId: MartId_t) {
-    ??? //getMainCrawlerSelector ! MartDelete(martId)
+    getMainCrawlerSelector ! MartDelete(martId)
   }
 
   def handleShopAdd(martId: MartId_t, shopId: ShopId_t) {
-    ??? //getMainCrawlerSelector ! ShopAdd(mart_id=martId, shop_id=shopId)
+    getMainCrawlerSelector ! ShopAdd(mart_id=martId, shop_id=shopId)
   }
 
   def handleShopDelete(martId: MartId_t, shopId: ShopId_t) {
-    ??? //getMainCrawlerSelector ! ShopDelete(mart_id=martId, shop_id=shopId)
+    getMainCrawlerSelector ! ShopDelete(mart_id=martId, shop_id=shopId)
   }
 
   /** Карта статических подписок на события. */

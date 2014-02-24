@@ -1,6 +1,7 @@
 import akka.actor.Cancellable
 import play.api.mvc.{SimpleResult, RequestHeader}
 import scala.concurrent.{Future, future}
+import scala.util.{Failure, Success}
 import util.{Crontab, SiowebEsUtil, SiowebSup}
 import play.api.Play._
 import play.api._
@@ -41,22 +42,21 @@ object Global extends GlobalSettings {
   }
 
 
+  /** Проинициализировать все ES-модели и основной индекс. */
   def initializeEsModels: Future[_] = {
-    val fut1 = EsModel.ensureIndex.flatMap { _ =>
-      trace("ensureIndex() finished. Checking for mapping of " + MShopPromoOffer.ES_TYPE_NAME)
-      MShopPromoOffer.isMappingExists
-    } flatMap {
-      case false =>
-        info("Index do not have mappings for type=" + MShopPromoOffer.ES_TYPE_NAME)
-        MShopPromoOffer.putMapping
-      case true  =>
-        trace("Index already has mapping " + MShopPromoOffer.ES_TYPE_NAME)
-        Future.successful(false)
+    val futInx = EsModel.ensureSioIndex
+    futInx onComplete {
+      case Success(result) => debug("ensureIndex() -> " + result)
+      case Failure(ex)     => error("ensureIndex() failed", ex)
     }
-    fut1 onComplete {
-      case tryResult => debug("Set MShopOffer index mapping completed with " + tryResult)
+    val futMappings = futInx flatMap { _ =>
+      info("Index do not have mappings for type=" + MShopPromoOffer.ES_TYPE_NAME)
+      EsModel.putAllMappings
     }
-    fut1
+    futMappings onComplete {
+      case tryResult => debug("Set index mappings completed with " + tryResult)
+    }
+    futMappings
   }
 
 
@@ -74,9 +74,7 @@ object Global extends GlobalSettings {
   }
 
 
-  /**
-   * Вызов страницы 404. В продакшене надо выводить специальную страницу 404.
-   */
+  /** Вызов страницы 404. В продакшене надо выводить специальную страницу 404. */
   override def onHandlerNotFound(request: RequestHeader): Future[SimpleResult] = {
     // TODO логгер тут не работает почему-то...
     println(request.path + " - 404")

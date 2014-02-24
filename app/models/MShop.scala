@@ -5,13 +5,13 @@ import util.event._
 import EsModel._
 import util.SiowebEsUtil.client
 import io.suggest.util.SioEsUtil.laFuture2sFuture
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import MMart.MartId_t, MCompany.CompanyId_t
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
 import org.elasticsearch.common.xcontent.XContentBuilder
-import play.api.libs.concurrent.Execution.Implicits._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.SioConstants._
+import io.suggest.proto.bixo.crawler.MainProto
 
 /**
  * Suggest.io
@@ -22,7 +22,7 @@ import io.suggest.util.SioConstants._
 
 object MShop extends EsModelStaticT[MShop] {
 
-  type ShopId_t = String
+  type ShopId_t = MainProto.ShopId_t
 
   val ES_TYPE_NAME = "shop"
 
@@ -100,7 +100,7 @@ object MShop extends EsModelStaticT[MShop] {
    * @param martId id торгового центра.
    * @return Список MShop в неопределённом порядке.
    */
-  def getByMartId(martId: MartId_t): Future[Seq[MShop]] = {
+  def getByMartId(martId: MartId_t)(implicit ec:ExecutionContext): Future[Seq[MShop]] = {
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(martIdQuery(martId))
@@ -110,7 +110,7 @@ object MShop extends EsModelStaticT[MShop] {
 
   def martIdQuery(martId: MartId_t) = QueryBuilders.fieldQuery(MART_ID_ESFN, martId)
 
-  def countByMartId(martId: MartId_t): Future[Long] = {
+  def countByMartId(martId: MartId_t)(implicit ec:ExecutionContext): Future[Long] = {
     client.prepareCount(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(martIdQuery(martId))
@@ -124,7 +124,7 @@ object MShop extends EsModelStaticT[MShop] {
    * @param companyId id компании.
    * @return Список MShop в неопределённом порядке.
    */
-  def getByCompanyId(companyId: CompanyId_t): Future[Seq[MShop]] = {
+  def getByCompanyId(companyId: CompanyId_t)(implicit ec:ExecutionContext): Future[Seq[MShop]] = {
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(companyIdQuery(companyId))
@@ -134,7 +134,7 @@ object MShop extends EsModelStaticT[MShop] {
 
   def companyIdQuery(companyId: CompanyId_t) = QueryBuilders.fieldQuery(COMPANY_ID_ESFN, companyId)
 
-  def countByCompanyId(companyId: CompanyId_t): Future[Long] = {
+  def countByCompanyId(companyId: CompanyId_t)(implicit ec:ExecutionContext): Future[Long] = {
     client.prepareCount(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(companyIdQuery(companyId))
@@ -148,7 +148,7 @@ object MShop extends EsModelStaticT[MShop] {
    * @param martId id торгового центра.
    * @return Список MShop в неопределённом порядке.
    */
-  def getByCompanyAndMart(companyId: CompanyId_t, martId:MartId_t): Future[Seq[MShop]] = {
+  def getByCompanyAndMart(companyId: CompanyId_t, martId:MartId_t)(implicit ec:ExecutionContext): Future[Seq[MShop]] = {
     val companyIdQuery = QueryBuilders.fieldQuery(COMPANY_ID_ESFN, companyId)
     val martIdFilter = FilterBuilders.termFilter(MART_ID_ESFN, martId)
     val query = QueryBuilders.filteredQuery(companyIdQuery, martIdFilter)
@@ -164,7 +164,7 @@ object MShop extends EsModelStaticT[MShop] {
    * @param id id магазина.
    * @return id тц если такой магазин существует.
    */
-  def getMartIdFor(id: String): Future[Option[MartId_t]] = {
+  def getMartIdFor(id: String)(implicit ec:ExecutionContext): Future[Option[MartId_t]] = {
     client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
       .setFields(MART_ID_ESFN)
       .execute()
@@ -183,7 +183,7 @@ object MShop extends EsModelStaticT[MShop] {
    * @param id Ключ ряда.
    * @return Кол-во удалённых рядов. Т.е. 0 или 1.
    */
-  override def deleteById(id: ShopId_t): Future[Boolean] = {
+  override def deleteById(id: ShopId_t)(implicit ec:ExecutionContext): Future[Boolean] = {
     getMartIdFor(id) flatMap {
       case Some(martId) =>
         // TODO Безопасно ли вызывать super-методы из анонимных классов? Оно вроде работает, но всё же...
@@ -234,7 +234,7 @@ case class MShop(
     acc.field(DATE_CREATED_ESFN, date_created)
   }
 
-  override def save: Future[String] = {
+  override def save(implicit ec:ExecutionContext): Future[String] = {
     val fut = super.save
     // Если создан новый магазин, то надо уведомлять о создании нового магазина.
     if (id.isEmpty) {
@@ -264,16 +264,16 @@ case class MShop(
 
 trait CompanyShopsSel {
   def company_id: CompanyId_t
-  def companyShops = getByCompanyId(company_id)
+  def companyShops(implicit ec:ExecutionContext) = getByCompanyId(company_id)
 }
 
 trait MartShopsSel {
   def mart_id: MartId_t
-  def martShops = getByMartId(mart_id)
+  def martShops(implicit ec:ExecutionContext) = getByMartId(mart_id)
 }
 
 trait MShopSel {
   def shop_id: ShopId_t
-  def shop = getById(shop_id)
+  def shop(implicit ec:ExecutionContext) = getById(shop_id)
 }
 
