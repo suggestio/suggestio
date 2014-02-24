@@ -15,6 +15,7 @@ import io.suggest.ym.Dimensions
 import io.suggest.ym.HotelMealTypes.HotelMealType
 import org.elasticsearch.common.xcontent.{XContentFactory, XContentBuilder}
 import scala.collection
+import io.suggest.proto.bixo.crawler.MainProto.ShopId_t
 
 /**
  * Suggest.io
@@ -521,8 +522,8 @@ abstract class AbstractYmOfferDatum(fields: Fields) extends PayloadDatum(fields)
   }
 
   /** id магазина генерится силами RDBMS, а тут его целый id. */
-  def shopId: Int = _tupleEntry getInteger SHOP_ID_FN
-  def shopId_=(shopId: Int) =_tupleEntry.setInteger(SHOP_ID_FN, shopId)
+  def shopId: ShopId_t = _tupleEntry getString SHOP_ID_FN
+  def shopId_=(shopId: ShopId_t) =_tupleEntry.setString(SHOP_ID_FN, shopId)
 
   /**
    * Список "старых" цен в хронологическом порядке. Уценка может идти как promo/скидка, так и по какой-то причине,

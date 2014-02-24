@@ -885,8 +885,10 @@ trait SioEsClient {
 
   /** Убедиться, что клиент запущен. Обычно вызывается при запуске системы. */
   def ensureNode() {
-    if (_node == null) {
-      _node = createNode
+    synchronized {
+      if (_node == null) {
+        _node = createNode
+      }
     }
     _node.start()
   }

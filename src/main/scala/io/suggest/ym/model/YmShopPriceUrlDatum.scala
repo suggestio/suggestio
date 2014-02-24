@@ -3,6 +3,7 @@ package io.suggest.ym.model
 import io.suggest.util.CascadingFieldNamer
 import cascading.tuple.{TupleEntry, Tuple, Fields}
 import com.scaleunlimited.cascading.BaseDatum
+import io.suggest.proto.bixo.crawler.MainProto.ShopId_t
 
 /**
  * Suggest.io
@@ -50,20 +51,20 @@ class YmShopPriceUrlDatum extends BaseDatum(FIELDS) {
     setTupleEntry(te)
   }
 
-  def this(shopId:Int, priceUrl:String, authInfo:Option[AuthInfoDatum]) = {
+  def this(shopId:ShopId_t, priceUrl:String, authInfo:Option[AuthInfoDatum]) = {
     this
     this.shopId = shopId
     this.priceUrl = priceUrl
     this.authInfo = authInfo
   }
 
-  def this(shopId:Int, priceUrl:String, authInfoStr: String) = {
+  def this(shopId:ShopId_t, priceUrl:String, authInfoStr: String) = {
     this(shopId, priceUrl, AuthInfoDatum.parseFromString(authInfoStr))
   }
 
 
-  def shopId: Int = _tupleEntry getInteger SHOP_ID_FN
-  def shopId_=(shopId: Int) = _tupleEntry.setInteger(SHOP_ID_FN, shopId)
+  def shopId: ShopId_t = _tupleEntry getString SHOP_ID_FN
+  def shopId_=(shopId: ShopId_t) = _tupleEntry.setString(SHOP_ID_FN, shopId)
 
   def priceUrl = _tupleEntry getString PRICE_URL_FN
   def priceUrl_=(priceUrl: String) = _tupleEntry.setString(PRICE_URL_FN, priceUrl)

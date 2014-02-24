@@ -182,7 +182,7 @@ import YmlSax._
 trait YmlSax extends DefaultHandler with SaxContentHandlerWrapper with YmSaxErrorHandler with YmSaxResultsHandler {
 
   /** id магазина. Вписывается в датумы. */
-  def priceShopId: Int
+  def priceShopId: String
 
   /** Счетчик пройденных офферов. Даже если оффер зафейлился, тут будет инкремент. */
   var totalOffersCounter = 0

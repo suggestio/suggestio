@@ -30,7 +30,7 @@ class YmlSaxTest extends FlatSpec with Matchers {
         val factory = YmlSax.getSaxFactory
         val parser = factory.newSAXParser()
         val cHandler = new YmlSax with YmSaxErrorLogger {
-          override def priceShopId: Int = -1
+          override def priceShopId: String = "asdasd1234123"
           override val logPrefix: String = "test"
           override def handleShopDatum(shopDatum: YmShopDatum) {}
           override def handleOfferDatum(offerDatum: YmOfferDatum, currenShopDatum: YmShopDatum) {

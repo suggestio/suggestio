@@ -12,9 +12,16 @@ object MainProto {
 
   type MajorRebuildReply_t = Either[String, String]
 
+  type MartId_t = String
+  type ShopId_t = String
+
   // Сигналы об изменении конфигурации магазинной части
 
 }
+
+import MainProto.MartId_t
+import io.suggest.proto.bixo.crawler.MainProto.ShopId_t
+
 
 /** Сообщение о необходимости начать процедуру полного ребилда на ближайшей итерации. */
 case object MajorRebuildMsg extends Serializable
@@ -34,8 +41,8 @@ case class ReferrersBulk(urls: List[String]) extends Serializable
  * Сообщение о добавлении нового торгового центра. Кравлер должен подготовится к добавлению магазинов.
  * @param mart_id id торгового центра.
  */
-case class MartAdd(mart_id: Int) extends Serializable
-case class MartDelete(mart_id: Int) extends Serializable
+case class MartAdd(mart_id: MartId_t) extends Serializable
+case class MartDelete(mart_id: MartId_t) extends Serializable
 
 
 /**
@@ -44,5 +51,5 @@ case class MartDelete(mart_id: Int) extends Serializable
  * @param mart_id ID торг.центра, к которому относится магазин.
  * @param shop_id ID Нового магазина.
  */
-case class ShopAdd(mart_id:Int, shop_id:Int) extends Serializable
-case class ShopDelete(mart_id:Int, shop_id:Int) extends Serializable
+case class ShopAdd(mart_id:MartId_t, shop_id:ShopId_t) extends Serializable
+case class ShopDelete(mart_id:MartId_t, shop_id:ShopId_t) extends Serializable
