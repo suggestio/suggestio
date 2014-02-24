@@ -3,7 +3,6 @@ package models
 import org.joda.time.DateTime
 import util.event._
 import scala.concurrent.{ExecutionContext, Future}
-import util.SiowebEsUtil.client
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.common.xcontent.XContentBuilder
 import EsModel._
@@ -12,6 +11,7 @@ import io.suggest.util.SioEsUtil.laFuture2sFuture
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.SioConstants._
 import io.suggest.proto.bixo.crawler.MainProto
+import org.elasticsearch.client.Client
 
 /**
  * Suggest.io
@@ -91,7 +91,7 @@ object MMart extends EsModelStaticT[MMart] {
    * @param companyId id конторы.
    * @return Список ТЦ в неопределённом порядке.
    */
-  def getByCompanyId(companyId: CompanyId_t)(implicit ec:ExecutionContext): Future[Seq[MMart]] = {
+  def getByCompanyId(companyId: CompanyId_t)(implicit ec:ExecutionContext, client: Client): Future[Seq[MMart]] = {
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(companyIdQuery(companyId))
@@ -99,7 +99,7 @@ object MMart extends EsModelStaticT[MMart] {
       .map { searchResp2list }
   }
 
-  def countByCompanyId(companyId: CompanyId_t)(implicit ec:ExecutionContext): Future[Long] = {
+  def countByCompanyId(companyId: CompanyId_t)(implicit ec:ExecutionContext, client: Client): Future[Long] = {
     client.prepareCount(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(companyIdQuery(companyId))
@@ -114,7 +114,7 @@ object MMart extends EsModelStaticT[MMart] {
    * @param id Идентификатор.
    * @return Кол-во удалённых рядов. Т.е. 0 или 1.
    */
-  override def deleteById(id: String)(implicit ec:ExecutionContext): Future[Boolean] = {
+  override def deleteById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     MShop.countByMartId(id) flatMap {
       case 0L =>
         val fut = super.deleteById(id)
@@ -158,7 +158,7 @@ case class MMart(
    * Сохранить экземпляр в хранилище ES и сгенерить уведомление, если экземпляр обновлён.
    * @return Фьючерс с новым/текущим id
    */
-  override def save(implicit ec:ExecutionContext): Future[String] = {
+  override def save(implicit ec:ExecutionContext, client: Client): Future[String] = {
     val fut = super.save
     if (id.isEmpty) {
       fut onSuccess { case martId =>
@@ -172,11 +172,11 @@ case class MMart(
 
 trait MMartSel {
   def mart_id: MartId_t
-  def mart(implicit ec:ExecutionContext) = getById(mart_id)
+  def mart(implicit ec:ExecutionContext, client: Client) = getById(mart_id)
 }
 
 trait CompanyMartsSel {
   def company_id: CompanyId_t
-  def companyMarts(implicit ec:ExecutionContext) = getByCompanyId(company_id)
+  def companyMarts(implicit ec:ExecutionContext, client: Client) = getByCompanyId(company_id)
 }
 

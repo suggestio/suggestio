@@ -1,4 +1,5 @@
 import akka.actor.Cancellable
+import org.elasticsearch.client.Client
 import play.api.mvc.{SimpleResult, RequestHeader}
 import scala.concurrent.{Future, future}
 import scala.util.{Failure, Success}
@@ -6,6 +7,7 @@ import util.{Crontab, SiowebEsUtil, SiowebSup}
 import play.api.Play._
 import play.api._
 import models._
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
  * Suggest.io
@@ -35,15 +37,15 @@ object Global extends GlobalSettings {
     // Запускать es-клиент при старте, ибо подключение к кластеру ES это занимает некоторое время.
     future {
       SiowebEsUtil.ensureNode()
-    } onSuccess { case _ =>
-      initializeEsModels
+    } onSuccess { case esNode =>
+      initializeEsModels(esNode.client)
     }
     cronTimers = Crontab.startTimers
   }
 
 
   /** Проинициализировать все ES-модели и основной индекс. */
-  def initializeEsModels: Future[_] = {
+  def initializeEsModels(implicit client: Client): Future[_] = {
     val futInx = EsModel.ensureSioIndex
     futInx onComplete {
       case Success(result) => debug("ensureIndex() -> " + result)

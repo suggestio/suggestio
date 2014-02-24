@@ -6,6 +6,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import models._
 import util.acl.PersonWrapper.PwOpt_t
 import MShop.ShopId_t
+import util.SiowebEsUtil.client
 
 /**
  * Suggest.io

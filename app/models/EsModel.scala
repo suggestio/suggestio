@@ -1,16 +1,15 @@
 package models
 
 import scala.concurrent.{ExecutionContext, Future}
-import util.SiowebEsUtil.client
 import io.suggest.util.SioEsUtil.laFuture2sFuture
-import io.suggest.util.SioEsUtil
-import util.PlayMacroLogsImpl
+import io.suggest.util.{MacroLogsImpl, SioEsUtil}
 import org.joda.time.{ReadableInstant, DateTime}
 import org.elasticsearch.action.search.SearchResponse
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.common.xcontent.{XContentBuilder, XContentFactory}
 import scala.util.{Failure, Success}
+import org.elasticsearch.client.Client
 
 /**
  * Suggest.io
@@ -18,7 +17,7 @@ import scala.util.{Failure, Success}
  * Created: 19.02.14 14:41
  * Description: Общее для elasticsearch-моделей лежит в этом файле. Обычно используется общий индекс для хранилища.
  */
-object EsModel extends PlayMacroLogsImpl {
+object EsModel extends MacroLogsImpl {
 
   import LOGGER._
 
@@ -28,7 +27,7 @@ object EsModel extends PlayMacroLogsImpl {
   }
 
   /** Отправить маппинги всех моделей в ES. */
-  def putAllMappings(implicit ec: ExecutionContext): Future[Boolean] = {
+  def putAllMappings(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
     Future.traverse(ES_MODELS) { esModelStatic =>
       val logPrefix = esModelStatic.getClass.getSimpleName + ".putMapping(): "
       esModelStatic.isMappingExists flatMap {
@@ -118,7 +117,7 @@ object EsModel extends PlayMacroLogsImpl {
    * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
    *         Если индекс уже существует, то false.
    */
-  def ensureSioIndex(implicit ec:ExecutionContext): Future[Boolean] = {
+  def ensureSioIndex(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     val adm = client.admin().indices()
     adm.prepareExists(ES_INDEX_NAME).execute().flatMap { existsResp =>
       if (existsResp.isExists) {
@@ -138,7 +137,7 @@ object EsModel extends PlayMacroLogsImpl {
    * @param typename Имя типа.
    * @return Да/нет.
    */
-  def isMappingExists(typename: String)(implicit ec:ExecutionContext): Future[Boolean] = {
+  def isMappingExists(typename: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     client.admin().cluster()
       .prepareState()
       .setFilterIndices(ES_INDEX_NAME)
@@ -164,7 +163,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
 
   def generateMapping: XContentBuilder
 
-  def putMapping(implicit ec:ExecutionContext): Future[Boolean] = {
+  def putMapping(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     client.admin().indices()
       .preparePutMapping(ES_INDEX_NAME)
       .setType(ES_TYPE_NAME)
@@ -174,7 +173,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
   }
 
   // TODO Нужно проверять, что текущий маппинг не устарел, и обновлять его.
-  def isMappingExists(implicit ec:ExecutionContext) = EsModel.isMappingExists(ES_TYPE_NAME)
+  def isMappingExists(implicit ec:ExecutionContext, client: Client) = EsModel.isMappingExists(ES_TYPE_NAME)
 
   /**
    * Десериализация одного элементам модели.
@@ -190,7 +189,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    * @param id Ключ магазина.
    * @return Экземпляр сабжа, если такой существует.
    */
-  def getById(id: String)(implicit ec:ExecutionContext): Future[Option[T]] = {
+  def getById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Option[T]] = {
     client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
       .execute()
       .map { getResp =>
@@ -215,7 +214,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    * Выдать все магазины. Метод подходит только для административных задач.
    * @return Список магазинов в порядке их создания.
    */
-  def getAll(implicit ec:ExecutionContext): Future[Seq[T]] = {
+  def getAll(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(QueryBuilders.matchAllQuery())
@@ -229,7 +228,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    * @param id id документа.
    * @return true, если документ найден и удалён. Если не найден, то false
    */
-  def deleteById(id: String)(implicit ec:ExecutionContext): Future[Boolean] = {
+  def deleteById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
       .execute()
       .map { !_.isNotFound }
@@ -248,7 +247,7 @@ trait EsModelStaticT[T <: EsModelT[T]] extends EsModelMinimalStaticT[T] {
    * @param id id магазина.
    * @return true/false
    */
-  def isExist(id: String)(implicit ec:ExecutionContext): Future[Boolean] = {
+  def isExist(id: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
       .setFields()
       .execute()
@@ -282,7 +281,7 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
    * Сохранить экземпляр в хранилище ES.
    * @return Фьючерс с новым/текущим id
    */
-  def save(implicit ec:ExecutionContext): Future[String] = {
+  def save(implicit ec:ExecutionContext, client: Client): Future[String] = {
     client.prepareIndex(ES_INDEX_NAME, companion.ES_TYPE_NAME, idOrNull)
       .setSource(toJson)
       .execute()
@@ -293,7 +292,7 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
   /** Удалить текущий ряд из таблицы. Если ключ не выставлен, то сразу будет экзепшен.
     * @return true - всё ок, false - документ не найден.
     */
-  def delete(implicit ec:ExecutionContext): Future[Boolean] = id match {
+  def delete(implicit ec:ExecutionContext, client: Client): Future[Boolean] = id match {
     case Some(_id)  => companion.deleteById(_id)
     case None       => Future failed new IllegalStateException("id is not set")
   }

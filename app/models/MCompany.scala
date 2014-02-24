@@ -7,6 +7,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.SioConstants._
 import scala.concurrent.{ExecutionContext, Future}
+import org.elasticsearch.client.Client
 
 /**
  * Suggest.io
@@ -61,7 +62,7 @@ object MCompany extends EsModelStaticT[MCompany] {
    * @param id id документа.
    * @return true, если документ найден и удалён. Если не найден, то false
    */
-  override def deleteById(id: String)(implicit ec:ExecutionContext): Future[Boolean] = {
+  override def deleteById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     val martsCountFut = MMart.countByCompanyId(id)
     val fkFut = for {
       shopsCount <- MShop.countByCompanyId(id)
@@ -107,5 +108,5 @@ case class MCompany(
 
 trait MCompanySel {
   def company_id: CompanyId_t
-  def company(implicit ec:ExecutionContext) = getById(company_id)
+  def company(implicit ec:ExecutionContext, client: Client) = getById(company_id)
 }

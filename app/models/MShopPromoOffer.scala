@@ -1,6 +1,5 @@
 package models
 
-import util.SiowebEsUtil.client
 import io.suggest.ym.model.{YmOfferDatumFields, YmPromoOfferDatum}
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import scala.concurrent.{ExecutionContext, Future}
@@ -12,6 +11,7 @@ import io.suggest.ym.OfferTypes
 import models.MShop.ShopId_t
 import scala.collection.Map
 import org.elasticsearch.common.xcontent.XContentBuilder
+import org.elasticsearch.client.Client
 
 /**
  * Suggest.io
@@ -43,7 +43,7 @@ object MShopPromoOffer extends EsModelMinimalStaticT[MShopPromoOffer] {
    * @param shopId id магазина.
    * @return Фьючерс со списком результатов в неопределённом порядке.
    */
-  def getAllForShop(shopId: MShop.ShopId_t)(implicit ec:ExecutionContext): Future[Seq[MShopPromoOffer]] = {
+  def getAllForShop(shopId: MShop.ShopId_t)(implicit ec:ExecutionContext, client: Client): Future[Seq[MShopPromoOffer]] = {
     val shopIdQuery = QueryBuilders.fieldQuery(YmOfferDatumFields.SHOP_ID_ESFN, shopId)
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
@@ -53,7 +53,7 @@ object MShopPromoOffer extends EsModelMinimalStaticT[MShopPromoOffer] {
   }
 
    /** Прочитать только shopId для указанного оффера, если такой вообще имеется. */
-  def getShopIdFor(offerId: String)(implicit ec:ExecutionContext): Future[Option[ShopId_t]] = {
+  def getShopIdFor(offerId: String)(implicit ec:ExecutionContext, client: Client): Future[Option[ShopId_t]] = {
     client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, offerId)
       .setFields(YmOfferDatumFields.SHOP_ID_ESFN)
       .execute()
@@ -112,5 +112,5 @@ case class MShopPromoOffer(
 /** Межмодельный линк для моделей, содержащих поле shop-id. */
 trait MShopOffersSel {
   def shop_id: MShop.ShopId_t
-  def allShopOffers(implicit ec:ExecutionContext) = getAllForShop(shop_id)
+  def allShopOffers(implicit ec:ExecutionContext, client: Client) = getAllForShop(shop_id)
 }

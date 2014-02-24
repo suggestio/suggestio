@@ -14,6 +14,7 @@ import util.acl._
 import views.html.blog._
 import play.api.libs.concurrent.Execution.Implicits._
 import Application.http404
+import util.SiowebEsUtil.client
 
 
 object Blog extends SioController {

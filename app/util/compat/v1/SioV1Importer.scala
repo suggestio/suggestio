@@ -11,6 +11,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import java.util.UUID
 import util.{QiCheckException, DomainQi}
 import io.suggest.sax.SioJsV1
+import util.SiowebEsUtil.client
 
 /**
  * Suggest.io

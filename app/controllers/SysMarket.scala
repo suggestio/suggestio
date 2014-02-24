@@ -8,6 +8,7 @@ import play.api.data._, Forms._
 import util.FormUtil._
 import MShop.ShopId_t, MMart.MartId_t, MCompany.CompanyId_t
 import play.api.libs.concurrent.Execution.Implicits._
+import util.SiowebEsUtil.client
 
 /**
  * Suggest.io
