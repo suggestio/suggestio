@@ -4,7 +4,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.Client
 import io.suggest.util.SioEsUtil._
 import org.apache.lucene.index.IndexNotFoundException
-import io.suggest.util.{MacroLogsImpl, StringUtil, LogsImpl, SioEsIndexUtil}
+import io.suggest.util.{MacroLogsImpl, StringUtil, SioEsIndexUtil}
 import org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.collection.JavaConversions._
@@ -22,7 +22,8 @@ import java.util.regex.Pattern
  * Вся информация хранится без dkey. Информация проста: кол-во шард. Вся инфа содержится в имени индекса, поэтому
  * не требуется какого-либо хранилища для данных этой модели.
  * abcdefgh3 - означает, что имеет место виртуальный индекс, состоящий из трех шард с именами abcdefgh3_0, abcdefgh3_1 и abcdefgh3_2
- * Префикс - это просто префикс, состоящий из букв латинского алфавита и нужен просто для именования.
+ * vin-префикс - это какбы generation на момент создания, состоящий из base32+hex lowercase алфавита и нужен
+ * для именования, но также служит для сортировки во времени.
  */
 object MVirtualIndex extends MacroLogsImpl {
 
@@ -48,9 +49,10 @@ object MVirtualIndex extends MacroLogsImpl {
    * Используется b32+hex. b64+ordered нельзя, т.к. ES не поддерживает upper-case названия.
    * TODO Через (44*11) лет произойдёт сбой сортировки из-за повышения разрядности b32-идентификатора.
    *      Тогда возможно, будет не работать поиск на веб-морде какое-то небольшое время, если кеш будет включен и будет длинный.
+   * @param l Опорный timestamp. По умолчанию - текущий таймштамп.
    * @return lowerCase набор цифр и латинских букв, входящие в алфавит Base32+HEX.
    */
-  def generateVinPrefix = StringUtil.longAsB32hLc(System.currentTimeMillis)
+  def generateVinPrefix(l: Long = System.currentTimeMillis) = StringUtil.longAsB32hLc(l)
 
   /** Сгенерить vin по префиксу и общему числу шард.
    * @param vinPrefix Префикс. Обычно случайная строка из [a-z].

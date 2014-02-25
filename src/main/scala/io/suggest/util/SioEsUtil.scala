@@ -175,7 +175,7 @@ object SioEsUtil extends MacroLogsImpl {
     // Тут как бы рекурсивный неблокирующий фьючерс.
     def freeIndexNameLookup(n: Int) {
       if (n < maxAttempts) {
-        val vinPrefix = MVirtualIndex.generateVinPrefix
+        val vinPrefix = MVirtualIndex.generateVinPrefix()
         debug(logPrefix + "Trying vinPrefix = %s" format vinPrefix)
         val mvi = MVirtualIndex(vinPrefix, shardCount)
         val firstEsShard = mvi.head

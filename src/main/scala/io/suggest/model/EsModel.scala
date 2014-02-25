@@ -92,25 +92,31 @@ object EsModel extends MacroLogsImpl {
   // ES-выхлопы страдают динамической типизацией, поэтому нужна коллекция парсеров для примитивных типов.
   // Следует помнить, что любое поле может быть списком значений.
   val intParser: PartialFunction[AnyRef, Int] = {
-    case null       => ???
+    case null => ???
+    case is: jlIterable[_] =>
+      intParser(is.head.asInstanceOf[AnyRef])
     case i: Integer => i.intValue()
   }
   val floatParser: PartialFunction[AnyRef, Float] = {
     case null               => ???
+    case fs: jlIterable[_] =>
+      floatParser(fs.head.asInstanceOf[AnyRef])
     case f: java.lang.Float => f.floatValue()
   }
   val stringParser: PartialFunction[AnyRef, String] = {
-    case null       => null
+    case null => null
     case strings: jlIterable[_] =>
       stringParser(strings.head.asInstanceOf[AnyRef])
     case s: String  => s
   }
   val booleanParser: PartialFunction[AnyRef, Boolean] = {
-    case null                 => ???
+    case null => ???
+    case bs: jlIterable[_] =>
+      booleanParser(bs.head.asInstanceOf[AnyRef])
     case b: java.lang.Boolean => b.booleanValue()
   }
   val dateTimeParser: PartialFunction[AnyRef, DateTime] = {
-    case null                => null
+    case null => null
     case dates: jlIterable[_] =>
       dateTimeParser(dates.head.asInstanceOf[AnyRef])
     case s: String           => new DateTime(s)
