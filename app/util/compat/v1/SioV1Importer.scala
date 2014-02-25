@@ -12,6 +12,8 @@ import java.util.UUID
 import util.{QiCheckException, DomainQi}
 import io.suggest.sax.SioJsV1
 import util.SiowebEsUtil.client
+import io.suggest.event.SioNotifierStaticClientI
+import util.event.SiowebNotifier
 
 /**
  * Suggest.io
@@ -31,6 +33,8 @@ import util.SiowebEsUtil.client
  */
 
 object SioV1Importer extends JavaTokenParsers {
+
+  implicit private def sn: SioNotifierStaticClientI = SiowebNotifier
 
   private val LOGGER = new LogsImpl(getClass)
   import LOGGER._

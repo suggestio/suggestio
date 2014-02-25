@@ -3,6 +3,7 @@ package util.acl
 import util.acl.PersonWrapper._
 import play.api.mvc.{WrappedRequest, Request}
 import models._
+import io.suggest.ym.model.MCompany
 import MShop.ShopId_t, MMart.MartId_t, MCompany.CompanyId_t
 
 /*

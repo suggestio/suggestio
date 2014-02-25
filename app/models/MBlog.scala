@@ -3,6 +3,7 @@ package models
 import org.joda.time.DateTime
 import scala.collection.Map
 import org.elasticsearch.common.xcontent.XContentBuilder
+import io.suggest.model.{EsModelT, EsModel, EsModelStaticT}
 import EsModel._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.SioConstants._

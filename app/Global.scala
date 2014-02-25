@@ -1,4 +1,5 @@
 import akka.actor.Cancellable
+import io.suggest.model.EsModel
 import org.elasticsearch.client.Client
 import play.api.mvc.{SimpleResult, RequestHeader}
 import scala.concurrent.{Future, future}
@@ -7,7 +8,7 @@ import util.{Crontab, SiowebEsUtil, SiowebSup}
 import play.api.Play._
 import play.api._
 import models._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.concurrent.Execution.Implicits._
 
 /**
  * Suggest.io
@@ -42,6 +43,7 @@ object Global extends GlobalSettings {
     }
     cronTimers = Crontab.startTimers
   }
+
 
 
   /** Проинициализировать все ES-модели и основной индекс. */

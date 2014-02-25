@@ -10,11 +10,17 @@ import akka.util.Timeout
 import concurrent.duration._
 import io.suggest.proto.bixo.crawler._, MainProto.MajorRebuildReply_t
 import play.api.Logger
-import io.suggest.event.{SioNotifier, SNStaticSubscriber}
+import io.suggest.event._
 import util.event._
 import io.suggest.event.subscriber.SnClassSubscriber
 import akka.actor.ActorContext
 import models._, MMart.MartId_t, MShop.ShopId_t
+import io.suggest.proto.bixo.crawler.MartAdd
+import scala.Some
+import io.suggest.proto.bixo.crawler.MartDelete
+import io.suggest.proto.bixo.crawler.ShopDelete
+import io.suggest.proto.bixo.CrawlersSupProto.MaybeBootstrapDkey
+import io.suggest.proto.bixo.crawler.ShopAdd
 
 /**
  * Suggest.io

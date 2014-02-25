@@ -118,7 +118,7 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
         NotAcceptable(form.addPromoOfferFormTpl(shopId, formWithErrors))
       },
       {mpo =>
-        ??? //mpo.datum.shopId = shopId // TODO Надо исправить датум
+        mpo.datum.shopId = shopId // TODO Надо исправить датум
         mpo.datum.offerType = OfferTypes.VendorModel
         mpo.save.map { mpoSavedId =>
           // Редирект на созданный промо-оффер.

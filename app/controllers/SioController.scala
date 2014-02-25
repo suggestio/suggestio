@@ -4,6 +4,7 @@ import play.api.mvc.{RequestHeader, SimpleResult, Controller}
 import util.ContextT
 import scala.concurrent.Future
 import play.api.i18n.Lang
+import util.event.SiowebNotifier
 
 /**
  * Suggest.io
@@ -16,5 +17,7 @@ trait SioController extends Controller with ContextT {
   implicit protected def simpleResult2async(sr: SimpleResult): Future[SimpleResult] = {
     Future.successful(sr)
   }
+
+  implicit def sn = SiowebNotifier
 }
 

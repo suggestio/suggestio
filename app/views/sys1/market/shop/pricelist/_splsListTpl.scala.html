@@ -13,7 +13,7 @@
   </tr>
   @spls.map { spl =>
     <tr>
-      <td>@spl.id.get</td>
+      <td>@if(spl.id.isDefined) { <span title="@spl.id.get">#</span> } else { ? }</td>
       <td>@spl.url</td>
 
       @withShop.map { mshop =>

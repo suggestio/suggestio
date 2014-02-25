@@ -6,6 +6,7 @@ import models._
 import views.html.sys1.market._
 import play.api.data._, Forms._
 import util.FormUtil._
+import io.suggest.ym.model.{UsernamePw, MCompany}
 import MShop.ShopId_t, MMart.MartId_t, MCompany.CompanyId_t
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
@@ -382,6 +383,7 @@ object SysMarket extends SioController with MacroLogsImpl {
   // apply()
   {(url, usernameOpt, passwordOpt) =>
     val auth_info = if (usernameOpt.isDefined) {
+      // TODO Убрать второй UserNamePw и использовать датум?
       Some(UsernamePw(usernameOpt.get, password=passwordOpt.getOrElse("")))
     } else {
       None
