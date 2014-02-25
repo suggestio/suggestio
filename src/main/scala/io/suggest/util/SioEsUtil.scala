@@ -884,13 +884,14 @@ trait SioEsClient {
   def getEsClusterName: String = ClusterName.DEFAULT.value()
 
   /** Убедиться, что клиент запущен. Обычно вызывается при запуске системы. */
-  def ensureNode() {
+  def ensureNode() = {
     synchronized {
       if (_node == null) {
         _node = createNode
       }
     }
     _node.start()
+    _node
   }
 
   /** Собрать и запустить клиентскую ноду. */

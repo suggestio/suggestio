@@ -48,9 +48,8 @@ object YmIndex {
           // Не индексировать, т.к. можно через ранний filter всё это фильтровать.
           index = FieldIndexingVariants.no
         ),
-        FieldNumber(
+        FieldString(
           id = SHOP_ID_ESFN,
-          fieldType = DocFieldTypes.integer,
           index = FieldIndexingVariants.not_analyzed,
           include_in_all = false
         ),
