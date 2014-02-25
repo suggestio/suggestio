@@ -52,7 +52,7 @@ object MCompany extends EsModelStaticT[MCompany] {
       case (NAME_ESFN, value) =>
         acc.name = nameParser(value)
       case (DATE_CREATED_ESFN, value) =>
-        acc.date_created = dateCreatedParser(value)
+        acc.dateCreated = dateCreatedParser(value)
     }
     acc
   }
@@ -89,26 +89,26 @@ import MCompany._
  * Экземпляр распарсенного ряда БД.
  * @param name Название конторы.
  * @param id id по базе.
- * @param date_created Дата создания ряда/компании.
+ * @param dateCreated Дата создания ряда/компании.
  */
 case class MCompany(
   var name          : String,
   id                : Option[MCompany.CompanyId_t] = None,
-  var date_created  : DateTime = null
+  var dateCreated   : DateTime = null
 ) extends EsModelT[MCompany] with CompanyShopsSel with CompanyMartsSel {
-  def company_id = id.get
+  def companyId = id.get
   def companion = MCompany
 
   override def writeJsonFields(acc: XContentBuilder) {
     acc.field(NAME_ESFN, name)
-    if (date_created == null)
-      date_created = DateTime.now()
-    acc.field(DATE_CREATED_ESFN, date_created)
+    if (dateCreated == null)
+      dateCreated = DateTime.now()
+    acc.field(DATE_CREATED_ESFN, dateCreated)
   }
 }
 
 
 trait MCompanySel {
-  def company_id: CompanyId_t
-  def company(implicit ec:ExecutionContext, client: Client) = getById(company_id)
+  def companyId: CompanyId_t
+  def company(implicit ec:ExecutionContext, client: Client) = getById(companyId)
 }

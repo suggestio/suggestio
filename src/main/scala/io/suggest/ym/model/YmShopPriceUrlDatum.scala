@@ -134,16 +134,16 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
 
   protected def dummy(id: String) = MShopPriceList(
     id = Some(id),
-    shop_id = null,
+    shopId = null,
     url = null,
-    auth_info = None
+    authInfo = None
   )
 
   def applyMap(m: collection.Map[String, AnyRef], acc: MShopPriceList): MShopPriceList = {
     m foreach {
-      case (SHOP_ID_ESFN, value)   => acc.shop_id = shopIdParser(value)
+      case (SHOP_ID_ESFN, value)   => acc.shopId = shopIdParser(value)
       case (URL_ESFN, value)       => acc.url = urlParser(value)
-      case (AUTH_INFO_ESFN, value) => acc.auth_info = authInfoParser(value)
+      case (AUTH_INFO_ESFN, value) => acc.authInfo = authInfoParser(value)
     }
     acc
   }
@@ -175,20 +175,20 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
 import MShopPriceList._
 
 case class MShopPriceList(
-  var shop_id   : ShopId_t,
-  var url       : String,
-  var auth_info : Option[UsernamePw],
-  id            : Option[String] = None
+  var shopId   : ShopId_t,
+  var url      : String,
+  var authInfo : Option[UsernamePw],
+  id           : Option[String] = None
 ) extends EsModelT[MShopPriceList] with MShopSel {
 
   def companion = MShopPriceList
-  def authInfoStr: Option[String] = auth_info map { _.serialize }
+  def authInfoStr: Option[String] = authInfo map { _.serialize }
 
   override def writeJsonFields(acc: XContentBuilder) = {
-    acc.field(SHOP_ID_ESFN, shop_id)
+    acc.field(SHOP_ID_ESFN, shopId)
       .field(URL_ESFN, url)
-    if (auth_info.isDefined)
-      acc.field(AUTH_INFO_ESFN, auth_info.get.serialize)
+    if (authInfo.isDefined)
+      acc.field(AUTH_INFO_ESFN, authInfo.get.serialize)
   }
 
 }
@@ -203,7 +203,7 @@ case class UsernamePw(username: String, password: String) {
 }
 
 trait ShopPriceListSel {
-  def shop_id: MShop.ShopId_t
-  def priceLists(implicit ec:ExecutionContext, client: Client) = getForShop(shop_id)
+  def shopId: MShop.ShopId_t
+  def priceLists(implicit ec:ExecutionContext, client: Client) = getForShop(shopId)
 }
 

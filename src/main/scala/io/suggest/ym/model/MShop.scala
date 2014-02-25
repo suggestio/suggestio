@@ -77,20 +77,20 @@ object MShop extends EsModelStaticT[MShop] {
 
   protected def dummy(id: String) = MShop(
     id = Some(id),
-    mart_id = null,
-    company_id = null,
+    martId = null,
+    companyId = null,
     name = null
   )
 
   def applyMap(m: collection.Map[String, AnyRef], acc: MShop): MShop = {
     m.foreach {
-      case (COMPANY_ID_ESFN, value)   => acc.company_id   = companyIdParser(value)
-      case (MART_ID_ESFN, value)      => acc.mart_id      = martIdParser(value)
+      case (COMPANY_ID_ESFN, value)   => acc.companyId   = companyIdParser(value)
+      case (MART_ID_ESFN, value)      => acc.martId      = martIdParser(value)
       case (NAME_ESFN, value)         => acc.name         = nameParser(value)
-      case (DATE_CREATED_ESFN, value) => acc.date_created = dateCreatedParser(value)
+      case (DATE_CREATED_ESFN, value) => acc.dateCreated = dateCreatedParser(value)
       case (DESCRIPTION_ESFN, value)  => acc.description  = Some(descriptionParser(value))
-      case (MART_FLOOR_ESFN, value)   => acc.mart_floor   = Some(martFloorParser(value))
-      case (MART_SECTION_ESFN, value) => acc.mart_section = Some(martSectionParser(value))
+      case (MART_FLOOR_ESFN, value)   => acc.martFloor   = Some(martFloorParser(value))
+      case (MART_SECTION_ESFN, value) => acc.martSection = Some(martSectionParser(value))
     }
     acc
   }
@@ -206,32 +206,32 @@ object MShop extends EsModelStaticT[MShop] {
 import MShop._
 
 case class MShop(
-  var company_id  : CompanyId_t,
-  var mart_id     : MartId_t,
+  var companyId   : CompanyId_t,
+  var martId      : MartId_t,
   var name        : String,
   var description : Option[String] = None,
-  var mart_floor  : Option[Int] = None,
-  var mart_section: Option[Int] = None,
+  var martFloor   : Option[Int] = None,
+  var martSection : Option[Int] = None,
   var id          : Option[MShop.ShopId_t] = None,
-  var date_created : DateTime = null
+  var dateCreated : DateTime = null
 ) extends EsModelT[MShop] with MCompanySel with MMartSel with CompanyMartsSel with ShopPriceListSel with MShopOffersSel {
 
   def companion = MShop
-  def shop_id = id.get
+  def shopId = id.get
 
   override def writeJsonFields(acc: XContentBuilder) {
-    acc.field(COMPANY_ID_ESFN, company_id)
-      .field(MART_ID_ESFN, mart_id)
+    acc.field(COMPANY_ID_ESFN, companyId)
+      .field(MART_ID_ESFN, martId)
       .field(NAME_ESFN, name)
     if (description.isDefined)
       acc.field(DESCRIPTION_ESFN, description.get)
-    if (mart_floor.isDefined)
-      acc.field(MART_FLOOR_ESFN, mart_floor.get)
-    if (mart_section.isDefined)
-      acc.field(MART_SECTION_ESFN, mart_section.get)
-    if (date_created == null)
-      date_created = DateTime.now()
-    acc.field(DATE_CREATED_ESFN, date_created)
+    if (martFloor.isDefined)
+      acc.field(MART_FLOOR_ESFN, martFloor.get)
+    if (martSection.isDefined)
+      acc.field(MART_SECTION_ESFN, martSection.get)
+    if (dateCreated == null)
+      dateCreated = DateTime.now()
+    acc.field(DATE_CREATED_ESFN, dateCreated)
   }
 
   override def save(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
@@ -239,7 +239,7 @@ case class MShop(
     // Если создан новый магазин, то надо уведомлять о создании нового магазина.
     if (id.isEmpty) {
       fut onSuccess { case newId =>
-        sn publish YmShopAddedEvent(martId=mart_id, shopId=newId)
+        sn publish YmShopAddedEvent(martId=martId, shopId=newId)
       }
     }
     fut
@@ -250,12 +250,12 @@ case class MShop(
     */
   def loadFrom(newMshop: MShop) {
     if (!(newMshop eq this)) {
-      this.company_id = newMshop.company_id
-      this.mart_id = newMshop.mart_id
+      this.companyId = newMshop.companyId
+      this.martId = newMshop.martId
       this.name = newMshop.name
       this.description = newMshop.description
-      this.mart_floor = newMshop.mart_floor
-      this.mart_section = newMshop.mart_section
+      this.martFloor = newMshop.martFloor
+      this.martSection = newMshop.martSection
     }
   }
 
@@ -263,17 +263,17 @@ case class MShop(
 
 
 trait CompanyShopsSel {
-  def company_id: CompanyId_t
-  def companyShops(implicit ec:ExecutionContext, client: Client) = getByCompanyId(company_id)
+  def companyId: CompanyId_t
+  def companyShops(implicit ec:ExecutionContext, client: Client) = getByCompanyId(companyId)
 }
 
 trait MartShopsSel {
-  def mart_id: MartId_t
-  def martShops(implicit ec:ExecutionContext, client: Client) = getByMartId(mart_id)
+  def martId: MartId_t
+  def martShops(implicit ec:ExecutionContext, client: Client) = getByMartId(martId)
 }
 
 trait MShopSel {
-  def shop_id: ShopId_t
-  def shop(implicit ec:ExecutionContext, client: Client) = getById(shop_id)
+  def shopId: ShopId_t
+  def shop(implicit ec:ExecutionContext, client: Client) = getById(shopId)
 }
 

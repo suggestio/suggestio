@@ -68,21 +68,21 @@ object MMart extends EsModelStaticT[MMart] {
 
   def applyMap(m: collection.Map[String, AnyRef], acc: MMart): MMart = {
     m foreach {
-      case (COMPANY_ID_ESFN, value)   => acc.company_id = companyIdParser(value)
+      case (COMPANY_ID_ESFN, value)   => acc.companyId = companyIdParser(value)
       case (NAME_ESFN, value)         => acc.name = nameParser(value)
       case (ADDRESS_ESFN, value)      => acc.address = addressParser(value)
-      case (SITE_URL_ESFN, value)     => acc.site_url = Some(siteUrlParser(value))
-      case (DATE_CREATED_ESFN, value) => acc.date_created = dateCreatedParser(value)
+      case (SITE_URL_ESFN, value)     => acc.siteUrl = Some(siteUrlParser(value))
+      case (DATE_CREATED_ESFN, value) => acc.dateCreated = dateCreatedParser(value)
     }
     acc
   }
 
   protected def dummy(id: String) = MMart(
     id = Some(id),
-    company_id = null,
+    companyId = null,
     name = null,
     address = null,
-    site_url = None
+    siteUrl = None
   )
 
   def companyIdQuery(companyId: CompanyId_t) = QueryBuilders.fieldQuery(ES_TYPE_NAME, companyId)
@@ -134,25 +134,25 @@ object MMart extends EsModelStaticT[MMart] {
 import MMart._
 
 case class MMart(
-  var company_id    : CompanyId_t,
+  var companyId     : CompanyId_t,
   var name          : String,
   var address       : String,
-  var site_url      : Option[String],
+  var siteUrl       : Option[String],
   id                : Option[MMart.MartId_t] = None,
-  var date_created  : DateTime = null
+  var dateCreated   : DateTime = null
 ) extends EsModelT[MMart] with MCompanySel with CompanyShopsSel with MartShopsSel {
-  def mart_id = id.get
+  def martId = id.get
   def companion = MMart
 
   def writeJsonFields(acc: XContentBuilder) {
-    acc.field(COMPANY_ID_ESFN, company_id)
+    acc.field(COMPANY_ID_ESFN, companyId)
       .field(NAME_ESFN, name)
       .field(ADDRESS_ESFN, address)
-    if (site_url.isDefined)
-      acc.field(SITE_URL_ESFN, site_url.get)
-    if (date_created == null)
-      date_created = DateTime.now()
-    acc.field(DATE_CREATED_ESFN, date_created)
+    if (siteUrl.isDefined)
+      acc.field(SITE_URL_ESFN, siteUrl.get)
+    if (dateCreated == null)
+      dateCreated = DateTime.now()
+    acc.field(DATE_CREATED_ESFN, dateCreated)
   }
 
   /**
@@ -172,12 +172,12 @@ case class MMart(
 
 
 trait MMartSel {
-  def mart_id: MartId_t
-  def mart(implicit ec:ExecutionContext, client: Client) = getById(mart_id)
+  def martId: MartId_t
+  def mart(implicit ec:ExecutionContext, client: Client) = getById(martId)
 }
 
 trait CompanyMartsSel {
-  def company_id: CompanyId_t
-  def companyMarts(implicit ec:ExecutionContext, client: Client) = getByCompanyId(company_id)
+  def companyId: CompanyId_t
+  def companyMarts(implicit ec:ExecutionContext, client: Client) = getByCompanyId(companyId)
 }
 

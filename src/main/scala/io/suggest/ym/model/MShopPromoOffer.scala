@@ -89,7 +89,7 @@ case class MShopPromoOffer(
 ) extends EsModelMinimalT[MShopPromoOffer] with MShopSel with MShopOffersSel {
 
   def companion = MShopPromoOffer
-  def shop_id   = datum.shopId
+  def shopId   = datum.shopId
 
   /**
    * Предложить имя товара на основе указанных полей.
@@ -110,6 +110,6 @@ case class MShopPromoOffer(
 
 /** Межмодельный линк для моделей, содержащих поле shop-id. */
 trait MShopOffersSel {
-  def shop_id: MShop.ShopId_t
-  def allShopOffers(implicit ec:ExecutionContext, client: Client) = getAllForShop(shop_id)
+  def shopId: MShop.ShopId_t
+  def allShopOffers(implicit ec:ExecutionContext, client: Client) = getAllForShop(shopId)
 }
