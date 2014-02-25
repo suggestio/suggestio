@@ -57,7 +57,7 @@ case class IsPromoOfferAdminFull(offerId: String) extends ActionBuilder[RequestF
     val offerOptFut: Future[Option[MShopPromoOffer]] = if (pwOpt.isDefined) {
       MShopPromoOffer.getById(offerId) flatMap {
         case r @ Some(offer) =>
-          IsMartShopAdmin.isShopAdmin(offer.shop_id, pwOpt) map {
+          IsMartShopAdmin.isShopAdmin(offer.shopId, pwOpt) map {
             case true  => r
             case false => None
           }
@@ -77,6 +77,6 @@ case class IsPromoOfferAdminFull(offerId: String) extends ActionBuilder[RequestF
 
 case class RequestForPromoOfferAdmFull[A](offer:MShopPromoOffer, pwOpt:PwOpt_t, request: Request[A]) extends AbstractRequestForPromoOfferAdm(request) {
   def offerId = offer.id.get
-  def shopId = offer.shop_id
+  def shopId = offer.shopId
 }
 

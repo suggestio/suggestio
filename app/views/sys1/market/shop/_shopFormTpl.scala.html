@@ -20,10 +20,10 @@
   }
 
   @* Торговый центр, к которому привязан магазин. В продакшене это будет задаваться неявно. *@
-  @defining(sf("mart_id")) { miField =>
+  @defining(sf("martId")) { miField =>
     <select name="@miField.name">
       <option disabled>@Messages("Mart")</option>
-      @defining(miField.value.orElse(request.getQueryString("mart_id")).getOrElse("")) { currMartId =>
+      @defining(miField.value.orElse(request.getQueryString("martId")).getOrElse("")) { currMartId =>
         @marts.map { mmart =>
           <option value="@mmart.id.get"@if(currMartId == mmart.id.get) {selected}>@mmart.name</option>
         }

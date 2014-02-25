@@ -107,15 +107,23 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
   }
 
   /** Рендер страницы с формой добавления оффера. */
-  def addPromoOfferForm(shopId: ShopId_t) = IsMartShopAdmin(shopId) { implicit request =>
-    Ok(form.addPromoOfferFormTpl(shopId, vmPromoOfferFormM))
+  def addPromoOfferForm(shopId: ShopId_t) = IsMartShopAdmin(shopId).async { implicit request =>
+    MShop.getById(request.shopId) map {
+      case Some(mshop) =>
+        Ok(form.addPromoOfferFormTpl(shopId, vmPromoOfferFormM, mshop))
+
+      case None => shopNotFound(request.shopId)
+    }
   }
 
   /** Сабмит формы добавления оффера. Надо отправить оффер в хранилище. */
   def addPromoOfferFormSubmit(shopId: ShopId_t) = IsMartShopAdmin(shopId).async { implicit request =>
     vmPromoOfferFormM.bindFromRequest().fold(
       {formWithErrors =>
-        NotAcceptable(form.addPromoOfferFormTpl(shopId, formWithErrors))
+        MShop.getById(request.shopId) map {
+          case Some(mshop) => NotAcceptable(form.addPromoOfferFormTpl(shopId, formWithErrors, mshop))
+          case None        => shopNotFound(shopId)
+        }
       },
       {mpo =>
         mpo.datum.shopId = shopId // TODO Надо исправить датум
@@ -129,8 +137,12 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
   }
 
   /** Отобразить страницу с указанным оффером. */
-  def showPromoOffer(offerId: String) = IsPromoOfferAdminFull(offerId) { implicit request =>
-    Ok(showPromoOfferTpl(request.offer))
+  def showPromoOffer(offerId: String) = IsPromoOfferAdminFull(offerId).async { implicit request =>
+    MShop.getById(request.shopId) map {
+      case Some(mshop) =>
+        Ok(showPromoOfferTpl(request.offer, mshop))
+      case None => shopNotFound(request.shopId)
+    }
   }
 
   /** Юзер нажал кнопку удаления оффера. */
@@ -147,10 +159,15 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
   }
 
   /** Рендер страницы редактирования промо-оффера. */
-  def editPromoOfferForm(offerId: String) = IsPromoOfferAdminFull(offerId) { implicit request =>
-    import request.offer
-    val f = vmPromoOfferFormM fill offer
-    Ok(form.editPromoOfferTpl(offer, f))
+  def editPromoOfferForm(offerId: String) = IsPromoOfferAdminFull(offerId).async { implicit request =>
+    MShop.getById(request.shopId) map {
+      case Some(mshop) =>
+        import request.offer
+        val f = vmPromoOfferFormM fill offer
+        Ok(form.editPromoOfferTpl(offer, f, mshop))
+
+      case None => shopNotFound(request.shopId)
+    }
   }
 
   /** Самбит формы редактирования оффера.  */
@@ -158,7 +175,10 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
     import request.offer
     vmPromoOfferFormM.bindFromRequest().fold(
       {formWithErrors =>
-        NotAcceptable(form.editPromoOfferTpl(offer, formWithErrors))
+        MShop.getById(request.shopId) map {
+          case Some(mshop) => NotAcceptable(form.editPromoOfferTpl(offer, formWithErrors, mshop))
+          case None        => shopNotFound(request.shopId)
+        }
       },
       {mpo =>
         mpo.datum.offerType = offer.datum.offerType
@@ -171,6 +191,7 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
     )
   }
 
+  private def shopNotFound(shopId: ShopId_t) = NotFound("Shop not found: " + shopId)
   private def rdrToOffer(offerId: String) = Redirect(routes.MarketOffer.showPromoOffer(offerId))
 
   // Картинки: используется подход, как на альтерраше: двухшаговая загрузка с кадрированием.

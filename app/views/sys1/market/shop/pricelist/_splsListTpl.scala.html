@@ -17,11 +17,11 @@
       <td>@spl.url</td>
 
       @withShop.map { mshop =>
-        <td><a href="@routes.SysMarket.shopShow(spl.shop_id)">@mshop.name</a></td>
+        <td><a href="@routes.SysMarket.shopShow(spl.shopId)">@mshop.name</a></td>
       }
 
       @if(withAuth) {
-        <td>@spl.auth_info.map { authInfo => @authInfo.username : @authInfo.password }</td>
+        <td>@spl.authInfo.map { authInfo => @authInfo.username : @authInfo.password }</td>
       }
 
       @if(withDeleteBtn) {

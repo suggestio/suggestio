@@ -1,9 +1,9 @@
-@(company_id:MCompany.CompanyId_t, mf: Form[_])(implicit ctx: util.Context)
+@(companyId:MCompany.CompanyId_t, mf: Form[_])(implicit ctx: util.Context)
 
 @* Рендер страницы добавления нового ТЦ. *@
 @import ctx._
 
 @martBase("Создать ТЦ") {
   <h2>Создать торговый центр</h2>
-  @_martFormTpl("Создать", mf, routes.SysMarket.martAddFormSubmit(company_id))
+  @_martFormTpl("Создать", mf, routes.SysMarket.martAddFormSubmit(companyId))
 }

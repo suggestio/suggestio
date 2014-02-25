@@ -17,10 +17,10 @@
   @owner.map { mc =>
     <p>@Messages("Owner"): <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a></p>
   }
-  @mmart.site_url.map { siteUrl =>
+  @mmart.siteUrl.map { siteUrl =>
     <p>Ссылка на сайт: <a href="@siteUrl">@siteUrl</a></p>
   }
-  <p>@Messages("Created"): @_prettyDate(mmart.date_created, withSpan = true)</p>
+  <p>@Messages("Created"): @_prettyDate(mmart.dateCreated, withSpan = true)</p>
 
   @if(shops.isEmpty) {
     <p>В этом торговом центре нет зарегистрированных магазинов.</p>

@@ -17,7 +17,7 @@
       <td>@mart.address</td>
       @companies.map { _companies =>
         <td>
-          @_companies.get(mart.company_id).map { mc =>
+          @_companies.get(mart.companyId).map { mc =>
             <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a>
           }
         </td>

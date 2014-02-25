@@ -1,10 +1,13 @@
-@(title: String, shopId: MShop.ShopId_t)(content: Html)(implicit ctx: util.Context)
+@(title: String, mshopOpt: Option[MShop] = None, hPathAfter: Option[Html] = None)(content: Html)(implicit ctx: util.Context)
 
 @* Подложка для просмотра комерческих предложений магазина. *@
 @import sys1.market.shop._
 
 @hPathAfter1 = {
-  / <a href="@routes.SysMarket.shopShow(shopId)">@shopId</a>
+  @mshopOpt.map { mshop =>
+    / <a href="@routes.SysMarket.shopShow(mshop.id.get)">@mshop.name</a>
+  }
+  @hPathAfter
 }
 
 @* TODO Пока что используется шаблон подложки магазина из /sys/. *@

@@ -1,11 +1,11 @@
-@(shopId: MShop.ShopId_t, f: Form[_])(implicit ctx: util.Context)
+@(shopId: MShop.ShopId_t, f: Form[_], mshop: MShop)(implicit ctx: util.Context)
 
 @* Страница с формой добавления коммерческого предложения. *@
 
 @import ctx._
 @import market.lk.shop.offers._
 
-@offersBase(Messages("New offer"), shopId=shopId) {
+@offersBase(Messages("New offer"), Some(mshop)) {
   <h1>Создание нового комерческого предложения</h1>
 
   @_promoOfferFormTpl(f, call=routes.MarketOffer.addPromoOfferFormSubmit(shopId), Messages("Create"))

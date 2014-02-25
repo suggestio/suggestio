@@ -2,7 +2,7 @@
 
 @* Страница с отображением списка товаров магазина. *@
 
-@offersBase("Коммерческие предложения магазина " + mshop.name, shopId=mshop.id.get) {
+@offersBase("Коммерческие предложения магазина " + mshop.name, Some(mshop)) {
   <h3>@mshop.name</h3>
   @if(offers.isEmpty) {
     У магазина пока нет коммерческих предложений.

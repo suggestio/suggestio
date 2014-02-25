@@ -170,7 +170,7 @@ object SysMarket extends SioController with MacroLogsImpl {
         NotAcceptable(mart.martAddFormTpl(company_id, formWithErrors))
       },
       {case (name, address, site_url) =>
-        val mmart = MMart(name=name, company_id=company_id, address=address, site_url=site_url)
+        val mmart = MMart(name=name, companyId=company_id, address=address, siteUrl=site_url)
         mmart.save map { mmartSavedId =>
           Redirect(routes.SysMarket.martShow(mmartSavedId))
         }
@@ -200,7 +200,7 @@ object SysMarket extends SioController with MacroLogsImpl {
   def martEditForm(mart_id: MartId_t) = IsSuperuser.async { implicit request =>
     MMart.getById(mart_id) map {
       case Some(mmart) =>
-        val form = martFormM.fill((mmart.name, mmart.address, mmart.site_url))
+        val form = martFormM.fill((mmart.name, mmart.address, mmart.siteUrl))
         Ok(mart.martEditFormTpl(mmart, form))
 
       case None => martNotFound(mart_id)
@@ -218,7 +218,7 @@ object SysMarket extends SioController with MacroLogsImpl {
           {case (name, address, site_url) =>
             mmart.name = name
             mmart.address = address
-            mmart.site_url = site_url
+            mmart.siteUrl = site_url
             mmart.save map { _martId =>
               Redirect(routes.SysMarket.martShow(_martId))
             }
@@ -266,11 +266,11 @@ object SysMarket extends SioController with MacroLogsImpl {
   )
   // apply()
   {(name, mart_id, company_id, description, mart_floor, mart_section) =>
-    MShop(name=name, mart_id=mart_id, company_id=company_id, description=description, mart_floor=mart_floor, mart_section=mart_section)
+    MShop(name=name, martId=mart_id, companyId=company_id, description=description, martFloor=mart_floor, martSection=mart_section)
   }
   // unapply()
   {mshop =>
-    Some((mshop.name, mshop.mart_id, mshop.company_id, mshop.description, mshop.mart_floor, mshop.mart_section))
+    Some((mshop.name, mshop.martId, mshop.companyId, mshop.description, mshop.martFloor, mshop.martSection))
   })
 
 
@@ -416,7 +416,7 @@ object SysMarket extends SioController with MacroLogsImpl {
         }
       },
       {case (url, auth_info) =>
-        MShopPriceList(shop_id=shop_id, url=url, auth_info=auth_info).save map { mspl =>
+        MShopPriceList(shopId=shop_id, url=url, authInfo=auth_info).save map { mspl =>
           Redirect(routes.SysMarket.shopShow(shop_id))
            .flashing("success" -> "Pricelist added.")
         }
@@ -431,7 +431,7 @@ object SysMarket extends SioController with MacroLogsImpl {
         mspl.delete onFailure {
           case ex => error("Unable to delete MSPL id=" + spl_id, ex)
         }
-        Redirect(routes.SysMarket.shopShow(mspl.shop_id))
+        Redirect(routes.SysMarket.shopShow(mspl.shopId))
 
       case None => NotFound("No such shop pricelist with id = " + spl_id)
     }

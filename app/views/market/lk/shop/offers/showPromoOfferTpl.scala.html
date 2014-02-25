@@ -1,9 +1,9 @@
-@(offer: MShopPromoOffer)(implicit ctx: util.Context)
+@(offer: MShopPromoOffer, mshop: MShop)(implicit ctx: util.Context)
 
 @* Страница с отображением тела промо-оффера и кнопками управления оным. *@
 @import ctx._
 
-@offersBase(offer.anyNameIolist.mkString(" "), shopId=offer.shop_id) {
+@offersBase(offer.anyNameIolist.mkString(" "), Some(mshop)) {
   <h1>@offer.anyNameIolist / @offer.datum.price руб.</h1>
 
   <p>Производитель: @offer.datum.vendor</p>

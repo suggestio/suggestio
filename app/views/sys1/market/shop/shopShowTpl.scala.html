@@ -15,11 +15,11 @@
   }
 
   @mmartOpt.map { mmart =>
-    <p>ТЦ <a href="@routes.SysMarket.martShow(mshop.mart_id)">@mmart.name</a> по адресу @mmart.address.</p>
+    <p>ТЦ <a href="@routes.SysMarket.martShow(mshop.martId)">@mmart.name</a> по адресу @mmart.address.</p>
   }
 
   <br/>
-  Этаж @mshop.mart_floor match {
+  Этаж @mshop.martFloor match {
     case Some(floor) => {
       @floor.
     }
@@ -28,7 +28,7 @@
     }
   }
 
-  Секция @mshop.mart_section match {
+  Секция @mshop.martSection match {
     case Some(section) => {
       @section.
     }
@@ -37,7 +37,7 @@
     }
   }
 
-  <p>Магазин создан @_prettyDate(mshop.date_created, isCap = false, withSpan = true).</p>
+  <p>Магазин создан @_prettyDate(mshop.dateCreated, isCap = false, withSpan = true).</p>
 
   <h3>Описание</h3>
   <p>@mshop.description</p>
