@@ -1,6 +1,7 @@
 package io.suggest.model
 
 import org.scalatest._
+import MPict._
 
 /**
  * Suggest.io
@@ -11,7 +12,6 @@ import org.scalatest._
 class MImgThumbTest extends FlatSpec with Matchers {
 
   "MImgThumb" should "statically convert URLs into b64-ids" in {
-    import MImgThumb._
     val f = { url:String => idBin2Str(imgUrl2id(url)) }
     // TODO нужно запускать их всех паралелльно
     f("http://aversimage.ru/images/2222222222222222222222222222222222222.jpg") should equal ("AsTyP-AsNJ0WvHVVzshkpRXJ6Tc")

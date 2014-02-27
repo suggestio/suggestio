@@ -5,14 +5,10 @@ import org.hbase.async.{PutRequest, GetRequest}
 import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
-import io.suggest.util.{CascadingFieldNamer, SerialUtil, CryptoUtil, UrlUtil}
-import java.net.URL
+import io.suggest.util.CascadingFieldNamer
 import com.scaleunlimited.cascading.BaseDatum
 import cascading.tuple.{Tuple, Fields, TupleEntry}
-import io.suggest.util.SerialUtil._
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable
-import org.apache.commons.codec.binary.Base64
-import java.security.MessageDigest
+import MPict._
 
 /**
  * Suggest.io
@@ -20,63 +16,93 @@ import java.security.MessageDigest
  * Created: 21.10.13 14:56
  * Description: Модель доступа к превьюшкам-картинкам, которые исползуются в поисковой выдаче.
  * HBase-Cascading-схема осуществляет запись данных и лежит в сорцах кравлера вместе с остальной MR-логикой.
- * Ключ - md5(imageURL). Qualifier = dkey. CF=const
+ * Ключ - md5(imageURL). CF=const
  *
- * 2013.dec.05: Статические и динамические части этой модели разбиты для дедубликации кода с ImgFetched-датумами siobix.
+ * 2013.dec.05:
+ *  Статические и динамические части этой модели разбиты для дедубликации кода с ImgFetched-датумами siobix.
+ *
+ * 2014.feb.27:
+ *  Реорганизация модели MPict в связи с добавлением MUserImg.
+ *  В основном кортеже есть поля для:
+ *  - Метаданные (т.е. ссылка) теперь в отдельном поле с отдельным Qualifier'ом.
+ *  - thumb в отдельном поле.
  */
+
 object MImgThumb extends MImgThumbStaticT with MPictSubmodel {
+  
+  val FIELDS      = new Fields(ID_FN, IMAGE_URL_FN, THUMB_FN, TIMESTAMP_FN)
 
   /**
    * Прочитать по hex id и dkey.
    * @param idStr Ключ ряда в виде hex-строки.
    * @return Фьючерс с опциональным результатом.
    */
-  def getById(idStr: String)(implicit ec:ExecutionContext): Future[Option[MImgThumb]] = getById(idStr2Bin(idStr))
+  def getFullById(idStr: String)(implicit ec:ExecutionContext): Future[Option[MImgThumb]] = {
+    getFullById(idStr2Bin(idStr))
+  }
 
   /**
    * Прочитать по бинарном id и dkey.
    * @param idBin Бинарный id (ключ ряда, row key).
    * @return Фьючерс с опциональным результом.
    */
-  def getById(idBin: Array[Byte])(implicit ec:ExecutionContext): Future[Option[MImgThumb]] = {
-    val q = CF
-    val getReq = new GetRequest(HTABLE_NAME, idBin).family(CF).qualifier(q)
-    ahclient.get(getReq).map { kvs =>
-      kvs.headOption.map { kv =>
-        val t = new Tuple(idBin) append deserializeTuple(kv.value())
-        t addLong kv.timestamp
-        new MImgThumb(t)
+  def getFullById(idBin: Array[Byte])(implicit ec:ExecutionContext): Future[Option[MImgThumb]] = {
+    val getMdReq = new GetRequest(HTABLE_NAME, idBin)
+      .family(CF_METADATA)
+      .qualifier(Q_IMAGE_URL)
+    val getThumbFut = getThumbById(idBin)
+    for {
+      mdResp        <- ahclient.get(getMdReq)
+      thumbRespOpt  <- getThumbFut
+    } yield {
+      thumbRespOpt map { thumbResp =>
+        val it = new MImgThumb(idBin)
+        // Заливаем thumb в датум
+        it.thumb = thumbResp.img
+        it.timestamp = thumbResp.timestamp
+        // Заливаем image url
+        if (!mdResp.isEmpty) {
+          it.imageUrl = new String(mdResp.head.value)
+        }
+        // Вернуть результат
+        it
       }
     }
   }
 
 
-  /** Сериализовать только полезные данные (без dkey и id, которые будут хранится в ключе и колонке). */
-  def serializeDataOnly(t: MImgThumb) = {
-    val data = t.getTupleEntry.selectEntry(FIELDS_DATA).getTuple
-    SerialUtil.serializeTuple(data)
+  /**
+   * Прочитать thumb по id. Вернуть только thumb. Для веб-морды этого достаточно.
+   * @param idStr Строковой id по MPict.
+   * @return Фьючерс с опциональным результатом.
+   */
+  def getThumbById(idStr: String)(implicit ec: ExecutionContext): Future[Option[ImgWithTimestamp]] = {
+    getThumbById(idStr2Bin(idStr))
   }
 
-  /** Десериализовать данные, собранные в serializeDataOnly(). */
-  def deserializeDataOnly(id:Array[Byte], data:Array[Byte]): MImgThumb = {
-    val t = new Tuple(id)
-    SerialUtil.deserializeTuple(data, t)
-    new MImgThumb(t)
+  /**
+   * Прочитать thumb по id. Вернуть только thumb. Для веб-морды этого достаточно.
+   * @param id Бинарный id по MPict.
+   * @return Фьючерс с опциональным результатом (thumb -> timestamp).
+   */
+  def getThumbById(id: Array[Byte])(implicit ec: ExecutionContext): Future[Option[ImgWithTimestamp]] = {
+    val getReq = new GetRequest(HTABLE_NAME_BYTES, id).family(CF_METADATA).qualifier(Q_THUMB)
+    ahclient.get(getReq).map { kvs =>
+      if (kvs.isEmpty) {
+        None
+      } else {
+        val cell = kvs.head
+        val result = ImgWithTimestamp(cell.value, cell.timestamp)
+        Some(result)
+      }
+    }
   }
-
-  val FIELDS      = new Fields(ID_FN, IMAGE_URL_FN, THUMB_FN, TIMESTAMP_FN)
-  val FIELDS_DATA = new Fields(IMAGE_URL_FN, THUMB_FN)
 
 }
 
 
 /** Обычный код объекта вынесен за скобки для возможности легкого порождения дочерних моделей. */
 trait MImgThumbStaticT extends CascadingFieldNamer {
-
-  def CF = MPict.CF_IMG_THUMB
-
-  /** Тип контекста кешируемого генератора. Используется для функций с внешним кешируемым генератором img id. */
-  type ImgIdGen_t = MessageDigest
 
   val ID_FN        = fieldName("id")
   val IMAGE_URL_FN = fieldName("imageUrl")
@@ -85,47 +111,11 @@ trait MImgThumbStaticT extends CascadingFieldNamer {
 
   val FIELDS: Fields
 
-  // Десериализаторы для работы напрямую с полями кортежа
-  def deserializeId(id: AnyRef) = deserializeBytes(id)
-  def deserializeThumb(thumb: AnyRef) = deserializeBytes(thumb)
-
-  // Сериализаторы для работы напрямую с полями кортежа
-  def serializeId(id: AnyRef) = serializeBytes(id)
-  def serializeThumb(thumb: AnyRef) = serializeBytes(thumb)
-  protected val serializeBytes: PartialFunction[AnyRef, ImmutableBytesWritable] = {
-    case null                         => null
-    case ar: Array[Byte]              => new ImmutableBytesWritable(ar)
-    case ibw: ImmutableBytesWritable  => ibw
-  }
-
-  /** Десериализация значения в поле ID в бинарь. */
-  protected val deserializeBytes: PartialFunction[AnyRef, Array[Byte]] = {
-    case ibw: ImmutableBytesWritable => ibw.get   // 2013.dec.05: Оставлено для совместимости. Можно удалить перед первым релизом.
-    case a: Array[Byte] => a
-    case null  => null
-    case other => throw new IllegalArgumentException("unexpected input[" + other.getClass.getName + "]: " + other)
-  }
-
-  /** Сгенерить id картинки на основе её URL. Используется одноразовый MessageDigest. */
-  def imgUrl2id(url: String): Array[Byte] = imgUrl2id(new URL(url))
-  def imgUrl2id(url: URL): Array[Byte]    = CryptoUtil.sha1(UrlUtil.url2rowKey(url))
-
-  /** Сгенерить id картинки с помощью закешированного хешера, полученного через getIdGen.
-    * Такое полезно при массовом выставлении id для снижения размеров мусора до минимума. */
-  def imgUrl2idGen(url: String, gen:ImgIdGen_t): Array[Byte] = imgUrl2idGen(new URL(url), gen)
-  def imgUrl2idGen(url: URL,    gen:ImgIdGen_t): Array[Byte] = gen.digest(UrlUtil.url2rowKey(url).getBytes)
-
-  def getIdGen: ImgIdGen_t = CryptoUtil.sha1Digest
-
-  // TODO заюзать implicit?
-  def idBin2Str(id: Array[Byte]) = Base64 encodeBase64URLSafeString id
-  def idStr2Bin(idStr: String)   = Base64 decodeBase64 idStr
 }
 
 
 /** Основной экземпляр модели. С ним происходит работа и на веб-морде, и в кравлере. */
-class MImgThumb extends MImgThumbAbstract(MImgThumb) {
-  import MImgThumb._
+class MImgThumb extends MImgThumbAbstract(MImgThumb) with MImgThumbSaver {
 
   def this(te: TupleEntry) = {
     this()
@@ -137,34 +127,25 @@ class MImgThumb extends MImgThumbAbstract(MImgThumb) {
     setTuple(t)
   }
 
-  def this(id:Array[Byte], imageUrl:String, thumb:Array[Byte], timestamp:Long = System.currentTimeMillis) = {
+  def this(id: Array[Byte]) = {
     this()
-    setId(id)
-    setImageUrl(imageUrl)
-    setThumb(thumb)
-    setTimestamp(timestamp)
+    this.id = id
+  }
+
+  def this(id:Array[Byte], imageUrl:String, thumb:Array[Byte], timestamp:Long = System.currentTimeMillis) = {
+    this(id)
+    this.imageUrl = imageUrl
+    this.thumb = thumb
+    this.timestamp = timestamp
   }
 
   def this(imageUrl:String, thumb:Array[Byte]) = {
-    this(MImgThumb.imgUrl2id(imageUrl), imageUrl, thumb)
-  }
-
-  def serializeDataOnly = MImgThumb serializeDataOnly this
-
-  def dataEntry = _tupleEntry selectEntry FIELDS_DATA
-  def dataTuple = _tupleEntry selectTuple FIELDS_DATA
-
-  /** Сохранить в таблицу. */
-  def save(implicit ec: ExecutionContext): Future[_] = {
-    val v = SerialUtil.serializeTuple(dataTuple)
-    val col = CF.getBytes
-    val putReq = new PutRequest(HTABLE_NAME_BYTES, getId, col, col, v)
-    ahclient.put(putReq)
+    this(imgUrl2id(imageUrl), imageUrl, thumb)
   }
 
   override def toString = {
-    val getTimestampHoursAgo = ((System.currentTimeMillis - getTimestamp) milliseconds).toHours
-    s"${getClass.getSimpleName}($getIdStr, ${getThumb.length} bytes, $getTimestampHoursAgo hours ago, $getImageUrl)"
+    val getTimestampHoursAgo = ((System.currentTimeMillis - timestamp) milliseconds).toHours
+    s"${getClass.getSimpleName}($idStr, ${thumb.length} bytes, $getTimestampHoursAgo hours ago, $imageUrl)"
   }
 }
 
@@ -172,29 +153,81 @@ class MImgThumb extends MImgThumbAbstract(MImgThumb) {
 /** Базовый код экземпляра модели и её родственников, отвязанный от своего объекта-компаньона.
   * @param companionObject Экземпляр объекта-компаньона. Это позволяет управлять статическими именами полей и сериализацией.
   */
-abstract class MImgThumbAbstract(companionObject: MImgThumbStaticT) extends BaseDatum(companionObject.FIELDS) {
+abstract class MImgThumbAbstract(val companionObject: MImgThumbStaticT) extends BaseDatum(companionObject.FIELDS) {
 
   import companionObject._
+  import cascading.tuple.coerce.Coercions.LONG
 
-  def getId = deserializeId(_tupleEntry getObject ID_FN)
-  def setId(id: Array[Byte]) = {
+  def id = deserializeId(_tupleEntry getObject ID_FN)
+  def id_=(id: Array[Byte]) {
     _tupleEntry.setObject(ID_FN, serializeId(id))
-    this
   }
 
-  def getIdStr = idBin2Str(getId)
-  def setIdStr(idStr: String) = _tupleEntry.setObject(ID_FN, idStr2Bin(idStr))
+  def idStr = MPict idBin2Str id
+  def idStr_=(idStr: String) {
+    _tupleEntry.setObject(ID_FN, MPict.idStr2Bin(idStr))
+  }
 
-  def getImageUrl = _tupleEntry.getString(IMAGE_URL_FN)
-  def setImageUrl(imageUrl: String) = _tupleEntry.setString(IMAGE_URL_FN, imageUrl)
+  def imageUrl = _tupleEntry getString IMAGE_URL_FN
+  def imageUrl_=(imageUrl: String) {
+    _tupleEntry.setString(IMAGE_URL_FN, imageUrl)
+  }
+  def imageUrlOpt = Option(imageUrl)
 
-  def getThumb = deserializeThumb(_tupleEntry.getObject(THUMB_FN))
-  def setThumb(thumb: Array[Byte]) = {
+  def thumb = deserializeThumb(_tupleEntry getObject THUMB_FN)
+  def thumb_=(thumb: Array[Byte]) {
     _tupleEntry.setObject(THUMB_FN, serializeThumb(thumb))
-    this
   }
 
-  def getTimestamp = _tupleEntry.getLong(TIMESTAMP_FN)
-  def setTimestamp(timestamp: Long) = _tupleEntry.setLong(TIMESTAMP_FN, timestamp)
+  def timestamp = _tupleEntry getLong TIMESTAMP_FN
+  def timestamp_=(timestamp: Long) {
+    _tupleEntry.setLong(TIMESTAMP_FN, timestamp)
+  }
+  def timestampOpt = {
+    _tupleEntry.getObject(TIMESTAMP_FN) match {
+      case null   => None
+      case tstamp => Some(LONG coerce tstamp)
+    }
+  }
+}
+
+
+/** Подмешиваемая функция сохранения MImgThumb. Не для всех потомков MImgThumbAbstract это необходимо. */
+trait MImgThumbSaver {
+
+  def companionObject: MImgThumbStaticT
+  def id: Array[Byte]
+  def thumb: Array[Byte]
+  def imageUrl: String
+
+  // TODO Надо timestamp выставлять?
+
+  def saveThumb: Future[_] = {
+    val qT = Q_THUMB.getBytes
+    val thumbPutReq = new PutRequest(HTABLE_NAME_BYTES, id, CF_THUMBS.getBytes, qT, thumb)
+    ahclient.put(thumbPutReq)
+  }
+
+  def maybeSaveImgUrl: Future[_] = {
+    val maybeUrl = imageUrl
+    if (maybeUrl != null) {
+      val qIT = Q_IMAGE_URL.getBytes
+      val iuPutReq = new PutRequest(HTABLE_NAME_BYTES, id, CF_METADATA.getBytes, qIT, maybeUrl.getBytes)
+      ahclient.put(iuPutReq)
+    } else {
+      Future successful null
+    }
+  }
+
+  /** Сохранить в таблицу. */
+  def save(implicit ec: ExecutionContext): Future[_] = {
+    val saveImgUrlFut = maybeSaveImgUrl
+    // Возможно, не стоит инзертить параллельно из-за проблем в прошлом asynchbase?
+    // https://groups.google.com/forum/#!msg/asynchbase/jOlYz1l5Ehs/zyeiWxgy4XYJ (2012 год)
+    saveThumb flatMap { _ =>
+      saveImgUrlFut
+    }
+  }
+
 }
 

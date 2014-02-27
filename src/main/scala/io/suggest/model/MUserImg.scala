@@ -1,34 +1,40 @@
 package io.suggest.model
 
-import io.suggest.util.{SerialUtil, CascadingFieldNamer}
-import cascading.tuple.{TupleEntry, Tuple, Fields}
-import com.scaleunlimited.cascading.BaseDatum
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable
+import io.suggest.util.SerialUtil
+import cascading.tuple.Tuple
 import scala.concurrent.{Future, ExecutionContext}
 import SioHBaseAsyncClient._
 import org.hbase.async.{DeleteRequest, GetRequest, PutRequest}
 import scala.collection.JavaConversions._
+import MPict._
+import io.suggest.util.CascadingTupleUtil._
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 21.02.14 18:15
- * Description:
+ * Description: Пользовательские картинки. Юзер заливает картинки, а тут хранится всё необходимое.
+ * Модель используется совместно с MImgThumb, но она абстрагирована от URL. Есть поле,
+ * описывающее тип главного элемента, и есть значение. Если картинка имеет url, то это задаётся в MImgThumb.
  */
-object MUserImg extends CascadingFieldNamer with MPictSubmodel {
+object MUserImgMetadata extends MPictSubmodel {
+  
+  val deserializeMetaData: PartialFunction[AnyRef, Option[Map[String, String]]] = {
+    case null             => None
+    case t: Tuple         => Some(convertTupleToMap(t))
+    case ab: Array[Byte]  => deserializeMetaData(SerialUtil.deserializeTuple(ab))
+    case ibw: ImmutableBytesWritable => deserializeMetaData(ibw.get)
+  }
 
-  def CF = MPict.CF_USER_IMG
+  def serializeMetaData(md: Map[String,String]): Array[Byte] = {
+    val t = convertMapToTuple(md)
+    SerialUtil.serializeTuple(t)
+  }
 
-  val ID_FN  = fieldName("id")
-  val IMG_FN = fieldName("img")
 
-  val FIELDS = new Fields(ID_FN, IMG_FN)
-  val FIELDS_DATA = new Fields(IMG_FN)
-
-  val deserializeImg: PartialFunction[AnyRef, Array[Byte]] = {
-    case null => null
-    case ibw: ImmutableBytesWritable => ibw.get()
-    case a: Array[Byte] => a
+  def getById(idStr: String)(implicit ec: ExecutionContext): Future[Option[MUserImgMetadata]] = {
+    getById(idStr2Bin(idStr))
   }
 
   /**
@@ -36,15 +42,20 @@ object MUserImg extends CascadingFieldNamer with MPictSubmodel {
    * @param id id картинки.
    * @return Фьючерс с результатом.
    */
-  def getById(id: String)(implicit ec: ExecutionContext): Future[Option[MUserImg]] = {
-    val col = CF.getBytes
-    val getReq = new GetRequest(HTABLE_NAME_BYTES, id.getBytes, col, col)
+  def getById(id: Array[Byte])(implicit ec: ExecutionContext): Future[Option[MUserImgMetadata]] = {
+    val getReq = new GetRequest(HTABLE_NAME_BYTES, id, CF_METADATA.getBytes, Q_IMG_META.getBytes)
     ahclient.get(getReq).map { kvs =>
-      kvs.headOption.map { kv =>
-        val t = new Tuple(id) append SerialUtil.deserializeTuple(kv.value)
-        new MUserImg(t)
+      kvs.headOption.flatMap { kv =>
+        deserializeMetaData(kv.value) map { md =>
+          MUserImgMetadata(new String(id), md)
+        }
       }
     }
+  }
+
+
+  def deleteById(idStr: String): Future[_] = {
+    deleteById(idStr2Bin(idStr))
   }
 
   /**
@@ -52,61 +63,76 @@ object MUserImg extends CascadingFieldNamer with MPictSubmodel {
    * @param id id картинки == ключ ряда.
    * @return Фьючерс для синхронизации.
    */
-  def deleteById(id: String): Future[_] = {
-    val col = CF.getBytes
-    val deleteReq = new DeleteRequest(HTABLE_NAME_BYTES, id.getBytes, col, col)
+  def deleteById(id: Array[Byte]): Future[_] = {
+    val deleteReq = new DeleteRequest(HTABLE_NAME_BYTES, id, CF_METADATA.getBytes, Q_IMG_META.getBytes)
     ahclient.delete(deleteReq)
   }
 
 }
 
-import MUserImg._
 
-class MUserImg extends BaseDatum(FIELDS) {
+case class MUserImgMetadata(idStr: String, md: Map[String, String]) {
 
-  def this(t: Tuple) = {
-    this()
-    setTuple(t)
-  }
+  def id = idStr2Bin(idStr)
 
-  def this(te: TupleEntry) = {
-    this()
-    setTupleEntry(te)
-  }
-
-  def this(id: String, img: ImmutableBytesWritable) = {
-    this()
-    this.id = id
-    this.img = img
-  }
-
-
-  def id = _tupleEntry getString ID_FN
-  def id_=(id: String) = _tupleEntry.setString(ID_FN, id)
-
-  def img = deserializeImg(_tupleEntry getObject IMG_FN)
-  def img_=(img: Array[Byte]) {
-    val ibw = new ImmutableBytesWritable(img)
-    this.img = ibw
-  }
-  def img_=(ibw: ImmutableBytesWritable) {
-    _tupleEntry.setObject(IMG_FN, ibw)
-  }
-
-  def dataTuple = _tupleEntry selectTuple FIELDS_DATA
-
-  def save(implicit ec: ExecutionContext): Future[_] = {
-    val v = SerialUtil.serializeTuple(dataTuple)
-    val col = CF.getBytes
-    val putReq = new PutRequest(HTABLE_NAME_BYTES, id.getBytes, col, col, v)
+  /** Сохранить метаданные в хранилище. */
+  def save: Future[_] = {
+    val ser = MUserImgMetadata.serializeMetaData(md)
+    val putReq = new PutRequest(HTABLE_NAME_BYTES, id, CF_METADATA.getBytes, Q_IMG_META.getBytes, ser)
     ahclient.put(putReq)
   }
 
-  def delete: Future[_] = {
-    val maybeId = id
-    if (maybeId == null)
-      throw new IllegalStateException("id field is not set")
-    else
-      deleteById(maybeId)
-  }
+  def delete = MUserImgMetadata.deleteById(id)
 }
+
+
+
+/** Оригиналы картинок хранятся в CF-ке метаданных, т.к. далеко не всегда нужно обращаться к оригиналу. */
+object MUserImgOrig extends MPictSubmodel {
+
+  def getById(idStr: String)(implicit ec: ExecutionContext): Future[Option[ImgWithTimestamp]] = {
+    getById(idStr2Bin(idStr))
+  }
+
+  /**
+   * Получить оригинал картинки.
+   * @param id Ключ картинки.
+   * @return Фьючерс с будущем результатом.
+   */
+  def getById(id: Array[Byte])(implicit ec: ExecutionContext): Future[Option[ImgWithTimestamp]] = {
+    val getReq = new GetRequest(HTABLE_NAME_BYTES, id, CF_ORIGINALS.getBytes, Q_USER_IMG_ORIG.getBytes)
+    ahclient.get(getReq) map { kvs =>
+      if (kvs.isEmpty) {
+        None
+      } else {
+        val cell = kvs.head
+        val result = ImgWithTimestamp(cell.value, cell.timestamp)
+        Some(result)
+      }
+    }
+  }
+
+
+  def deleteById(idStr: String): Future[_] = {
+    deleteById(idStr2Bin(idStr))
+  }
+
+  def deleteById(id: Array[Byte]): Future[_] = {
+    val delReq = new DeleteRequest(HTABLE_NAME_BYTES, id, CF_ORIGINALS.getBytes, Q_USER_IMG_ORIG.getBytes)
+    ahclient.delete(delReq)
+  }
+
+}
+
+case class MUserImgOrig(idStr: String, orig: Array[Byte]) {
+
+  def id = idStr2Bin(idStr)
+
+  def save: Future[_] = {
+    val putReq = new PutRequest(HTABLE_NAME_BYTES, id, CF_ORIGINALS.getBytes, Q_USER_IMG_ORIG.getBytes, orig)
+    ahclient.put(putReq)
+  }
+
+  def delete = MUserImgOrig.deleteById(id)
+}
+
