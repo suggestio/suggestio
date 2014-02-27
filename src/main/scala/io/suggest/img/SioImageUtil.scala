@@ -151,7 +151,7 @@ trait SioImageUtilT {
    * @param mode Режим работы конвертера. По умолчанию - RESIZE.
    * @param crop Опциональный кроп картинки.
    */
-  def convert(fileOld:File, fileNew:File, mode:ConvertMode = ConvertModes.RESIZE, crop: Option[PicCrop] = None) {
+  def convert(fileOld:File, fileNew:File, mode:ConvertMode = ConvertModes.RESIZE, crop: Option[ImgCrop] = None) {
     val cmd = new ConvertCmd
     val op = new IMOperation()
     // TODO Нужно брать рандомный кадр из gif вместо нулевого, который может быть пустым.
@@ -183,14 +183,26 @@ object ConvertModes extends Enumeration {
 }
 
 
-object PicCrop {
+object ImgCrop {
 
   val CROP_MATCHER = "^(\\d+)x(\\d+)([+-]\\d+)([+-]\\d+)$".r
 
-  def apply(cropStr: String) : PicCrop = {
+  def apply(cropStr: String) : ImgCrop = {
     val CROP_MATCHER(w, h, offX, offY) = cropStr
-    new PicCrop(w = w.toInt,  h = h.toInt,  offX = offX.toInt,  offY = offY.toInt)
+    ImgCrop(w = w.toInt,  h = h.toInt,  offX = offX.toInt,  offY = offY.toInt)
   }
+
+  def maybeParse(cropStr: String): Option[ImgCrop] = {
+    cropStr match {
+      case CROP_MATCHER(w, h, offX, offY) =>
+        val result = ImgCrop(w = w.toInt,  h = h.toInt,  offX = offX.toInt,  offY = offY.toInt)
+        Some(result)
+
+      case _ => None
+    }
+  }
+
+  def isValidCropStr(cropStr: String): Boolean = CROP_MATCHER.pattern.matcher(cropStr).matches()
 
   private def optSign(v: Int) : String = {
     if (v < 0)
@@ -200,9 +212,9 @@ object PicCrop {
   }
 }
 
-import PicCrop._
+import ImgCrop._
 
-case class PicCrop(w:Int, h:Int, offX:Int, offY:Int) {
+case class ImgCrop(w:Int, h:Int, offX:Int, offY:Int) {
 
   /**
    * Сконвертить в строку cropStr.
