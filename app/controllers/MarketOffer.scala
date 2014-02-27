@@ -9,6 +9,7 @@ import play.api.data._, Forms._
 import io.suggest.ym.{OfferTypes, YmColors, YmlSax}, YmColors.YmColor
 import util.FormUtil._
 import util.img.{TempImgActions, ImgPromoOfferUtil}
+import util.img.ImgFormUtil._
 import io.suggest.img.SioImageUtilT
 import play.api.mvc._
 import MShop.ShopId_t
@@ -70,10 +71,12 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
 
   /** Маппер формы создания/редактирования промо-оффера в режиме vendor.model. */
   val vmPromoOfferFormM = Form(mapping(
-    vendorM, modelM, colorsM, sizesM, sizeUnitsM, priceM, oldPriceM
+    vendorM, modelM, colorsM, sizesM, sizeUnitsM, priceM, oldPriceM,
+    "imgs"  -> list(nonEmptyText(maxLength = 128)),
+    "crops" -> list(imgCropM)
   )
   // apply()
-  {(vendor, model, colors, sizes, sizeUnits, price, oldPriceOpt) =>
+  {(vendor, model, colors, sizes, sizeUnits, price, oldPriceOpt, tempImgIds, tempImgCrops) =>
     val offer = new MShopPromoOffer
     import offer.datum
     datum.vendor = vendor
@@ -83,12 +86,13 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
     datum.sizeUnitsOrig = sizeUnits
     datum.price = price
     datum.oldPrices = oldPriceOpt
+    ??? // TODO Надо подхватывать тут tempImg*
     offer
   }
   // unapply()
   {mOffer =>
     import mOffer.datum._
-    Some((vendor getOrElse "",  model getOrElse "",  colors.toList,  sizesOrig,  sizeUnitsOrig getOrElse "",  price,  oldPrices))
+    Some((vendor getOrElse "",  model getOrElse "",  colors.toList,  sizesOrig,  sizeUnitsOrig getOrElse "",  price,  oldPrices, ???, ???))
   })
 
   /** Показать список офферов указанного магазина. */
@@ -170,7 +174,7 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
     }
   }
 
-  /** Самбит формы редактирования оффера.  */
+  /** Самбит формы редактирования оффера. */
   def editPromoOfferFormSubmit(offerId: String) = IsPromoOfferAdminFull(offerId).async { implicit request =>
     import request.offer
     vmPromoOfferFormM.bindFromRequest().fold(

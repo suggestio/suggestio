@@ -1,10 +1,13 @@
 package util.img
 
+import _root_.util.DateTimeUtil
 import play.api.mvc.{Call, Controller}
 import util.acl.IsAuth
 import models.MPictureTmp
 import play.api.libs.json._
-import io.suggest.img.SioImageUtilT
+import io.suggest.img.{ImgCrop, SioImageUtilT}
+import play.api.Play.current
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -20,7 +23,24 @@ object ImgFormUtil {
     .verifying("Invalid image id.", MPictureTmp.isKeyValid(_))
     .verifying("Expired image id.", MPictureTmp.find(_).isDefined)
 
+
+  /** Сколько времени кешировать temp-картинки на клиенте. */
+  val TEMP_IMG_CACHE_SECONDS = {
+    val cacheMinutes = current.configuration.getInt("img.temp.cache.client.minutes") getOrElse 30
+    val cacheDuration = cacheMinutes.minutes
+    cacheDuration.toSeconds.toInt
+  }
+
+  /** Маппинг обязательного параметра кропа на реальность. */
+  val imgCropM = nonEmptyText(maxLength = 16)
+    .verifying("crop.invalid", ImgCrop.isValidCropStr(_))
+    .transform(ImgCrop(_), {ic: ImgCrop => ic.toCropStr})
+
+  val imgCropOptM = optional(imgCropM)
+
 }
+
+import ImgFormUtil._
 
 trait TempImgActions extends Controller {
 
@@ -53,11 +73,18 @@ trait TempImgActions extends Controller {
   }
 
 
-  /** Раздавалка картинок, созданных в [[handleTempImg()]]. */
+  /** Раздавалка картинок, созданных в [[handleTempImg]]. */
   def getTempImg(key: String) = IsAuth { implicit request =>
     MPictureTmp.find(key) match {
-      case Some(mptmp) => Ok.sendFile(mptmp.file, inline=true)
-      case None        => NotFound("No such image.")
+      case Some(mptmp) =>
+        val f = mptmp.file
+        Ok.sendFile(f, inline=true)
+          .withHeaders(
+            LAST_MODIFIED -> DateTimeUtil.df.print(f.lastModified),
+            CACHE_CONTROL -> ("public, max-age=" + TEMP_IMG_CACHE_SECONDS)
+          )
+
+      case None => NotFound("No such image.")
     }
   }
 

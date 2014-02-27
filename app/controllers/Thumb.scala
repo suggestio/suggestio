@@ -9,6 +9,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 import io.suggest.model.MImgThumb
 import util.DateTimeUtil
 import org.joda.time.Instant
+import play.api.Play.current
 
 /**
  * Suggest.io
@@ -24,12 +25,9 @@ object Thumb extends Controller with Logs {
   val domainsRoot   = SiobixFs.siobix_out_path
   val thumbsSubpath = new Path(THUMBS_SUBDIR)
 
-  // Хидер Cache-Control для всех одинаковый
-  val cacheControlHdr = {
-    val hdrValue = "public, max-age=" + 10.days.toSeconds
-    "Cache-Control" -> hdrValue
+  val CACHE_THUMB_CLIENT_SECONDS = {
+    current.configuration.getInt("thumb.cache.client.seconds") getOrElse 36000
   }
-
 
   /**
    * Выдать картинку из HDFS. Используется для визуализации выдачи.
@@ -40,9 +38,9 @@ object Thumb extends Controller with Logs {
    */
   def getThumb(dkey:String, imageId:String) = Action.async { request =>
     lazy val logPrefix = s"getThumb($dkey, $imageId): "
-    MImgThumb.getById(imageId) map {
-      case Some(t) =>
-        val ts0 = new Instant(t.getTimestamp) // не lazy, ибо всё равно понадобиться хотя бы в одной из веток.
+    MImgThumb.getThumbById(imageId) map {
+      case Some(result) =>
+        val ts0 = new Instant(result.timestamp) // не lazy, ибо всё равно понадобиться хотя бы в одной из веток.
         val isCached = request.headers.get(IF_MODIFIED_SINCE) flatMap {
           DateTimeUtil.parseRfcDate
         } exists { dt =>
@@ -53,13 +51,12 @@ object Thumb extends Controller with Logs {
           NotModified
 
         } else {
-          val data = t.getThumb
-          trace(logPrefix + s"200 Ok. size = ${data.length} bytes")
-          Ok(data)
+          trace(s"${logPrefix}200 Ok. size = ${result.img.length} bytes")
+          Ok(result.img)
             .as("image/jpeg")
             .withHeaders(
               LAST_MODIFIED -> DateTimeUtil.df.print(ts0),
-              CACHE_CONTROL -> "public, max-age=36000"
+              CACHE_CONTROL -> ("public, max-age=" + CACHE_THUMB_CLIENT_SECONDS)
             )
         }
 
