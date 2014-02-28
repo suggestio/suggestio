@@ -20,6 +20,7 @@ object MMartCategory extends EsModelStaticT[MMartCategory] {
 
   val YM_CAT_ID_ESFN = "ymCatId"
   val CSS_CLASS_ESFN = "cssClass"
+  val POSITION_ESFN  = "position"
 
   override def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
@@ -44,6 +45,12 @@ object MMartCategory extends EsModelStaticT[MMartCategory] {
           index = FieldIndexingVariants.no,
           include_in_all = false
         ),
+        FieldNumber(
+          id = POSITION_ESFN,
+          fieldType = DocFieldTypes.integer,
+          index = FieldIndexingVariants.no,
+          include_in_all = false
+        ),
         FieldString(
           id = CSS_CLASS_ESFN,
           index = FieldIndexingVariants.no,
@@ -58,13 +65,14 @@ object MMartCategory extends EsModelStaticT[MMartCategory] {
       case (NAME_ESFN, value)       => acc.name = stringParser(value)
       case (YM_CAT_ID_ESFN, value)  => acc.ymCatId = stringParser(value)
       case (PARENT_ID_ESFN, value)  => acc.parentId = Some(stringParser(value))
+      case (POSITION_ESFN,  value)  => acc.position = intParser(value)
       case (CSS_CLASS_ESFN, value)  => acc.cssClass = Some(stringParser(value))
     }
     acc
   }
 
   override protected def dummy(id: String) = {
-    MMartCategory(name = null, ymCatId = null, parentId = None)
+    MMartCategory(name = null, ymCatId = null, parentId = None, position = Int.MaxValue)
   }
 }
 
@@ -74,6 +82,7 @@ case class MMartCategory(
   var name      : String,
   var ymCatId   : String,
   var parentId  : Option[String],
+  var position  : Int,
   var cssClass  : Option[String] = None,
   var id        : Option[String] = None
 ) extends EsModelT[MMartCategory] {
@@ -81,6 +90,7 @@ case class MMartCategory(
   override def writeJsonFields(acc: XContentBuilder) {
     acc.field(NAME_ESFN, name)
       .field(YM_CAT_ID_ESFN, ymCatId)
+      .field(POSITION_ESFN, position)
     if (parentId.isDefined)
       acc.field(PARENT_ID_ESFN, parentId.get)
     if (cssClass.isDefined)
