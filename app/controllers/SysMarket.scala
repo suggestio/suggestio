@@ -293,6 +293,7 @@ object SysMarket extends SioController with MacroLogsImpl {
   def shopAddFormSubmit = IsSuperuser.async { implicit request =>
     shopFormM.bindFromRequest().fold(
       {formWithErrors =>
+        debug(s"shopAddFormSubmit(): " + formWithErrors.errors)
         getAllCompaniesAndMarts map { case (companies, marts) =>
           NotAcceptable(shop.shopAddFormTpl(formWithErrors, companies, marts))
         }
@@ -345,6 +346,7 @@ object SysMarket extends SioController with MacroLogsImpl {
       case Some(mshop) =>
         shopFormM.bindFromRequest().fold(
           {formWithErrors =>
+            debug(s"shopEditFormSubmit($shop_id): form bind failed: " + formWithErrors.errors)
             getAllCompaniesAndMarts map { case (companies, marts) =>
               NotAcceptable(shop.shopEditFormTpl(mshop, formWithErrors, companies, marts))
             }
@@ -410,6 +412,7 @@ object SysMarket extends SioController with MacroLogsImpl {
   def splAddFormSubmit(shop_id: ShopId_t) = IsSuperuser.async { implicit request =>
     splFormM.bindFromRequest().fold(
       {formWithErrors =>
+        debug(s"splAddFormSubmit($shop_id): form bind failed: " + formWithErrors.errors)
         MShop.getById(shop_id) map {
           case Some(mshop) => NotAcceptable(shop.pricelist.splAddFormTpl(mshop, formWithErrors))
           case None => shopNotFound(shop_id)

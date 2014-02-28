@@ -9,21 +9,21 @@
 
   @* Компания, к которой принадлежит магазин. В продакшене это будет задаваться неявно. *@
   @defining(sf("company_id")) { ciField =>
+    @defining(ciField.value.orElse(request.getQueryString("company_id")).getOrElse("")) { currCompanyId =>
     <select name="@ciField.name">
       <option disabled>@Messages("Company")-@Messages("Owner")</option>
-      @defining(ciField.value.orElse(request.getQueryString("company_id")).getOrElse("")) { currCompanyId =>
-        @companies.map { mcompany =>
-          <option value="@mcompany.id.get"@if(currCompanyId == mcompany.id.get) {selected}>@mcompany.name</option>
-        }
+      @companies.map { mcompany =>
+        <option value="@mcompany.id.get"@if(currCompanyId == mcompany.id.get) {selected}>@mcompany.name</option>
       }
     </select>
+    }
   }
 
   @* Торговый центр, к которому привязан магазин. В продакшене это будет задаваться неявно. *@
-  @defining(sf("martId")) { miField =>
+  @defining(sf("mart_id")) { miField =>
     <select name="@miField.name">
       <option disabled>@Messages("Mart")</option>
-      @defining(miField.value.orElse(request.getQueryString("martId")).getOrElse("")) { currMartId =>
+      @defining(miField.value.orElse(request.getQueryString("mart_id")).getOrElse("")) { currMartId =>
         @marts.map { mmart =>
           <option value="@mmart.id.get"@if(currMartId == mmart.id.get) {selected}>@mmart.name</option>
         }

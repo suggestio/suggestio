@@ -100,6 +100,25 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
 
+  /**
+   * Асинхронное удаление отработанных времененных файлов.
+   * @param imgs Поюзанные картинки.
+   * @return Фьючерс для синхронизации.
+   */
+  def rmTmpImgs(imgs: Seq[TmpImgReadyForCrop]): Future[_] = {
+    future {
+      imgs.foreach { img =>
+        try {
+          img.tmpImgFile.delete()
+        } catch {
+          case ex: FileNotFoundException =>
+            trace("File already deleted: " + img.tmpImgFile.getAbsolutePath)
+          case ex: Throwable => error("Failed to delete file " + img.tmpImgFile.getAbsolutePath, ex)
+        }
+      }
+    }
+  }
+
 }
 
 
@@ -187,4 +206,4 @@ case class OrigImgIdKey(key: String) extends ImgIdKey {
 case class ImgInfo(iik: ImgIdKey, crop: ImgCrop)
 
 
-case class TmpImgReadyForCrop(idStr:String, imgFile:File)
+case class TmpImgReadyForCrop(idStr:String, tmpImgFile:File)

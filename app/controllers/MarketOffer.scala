@@ -10,11 +10,10 @@ import io.suggest.ym.{OfferTypes, YmColors, YmlSax}, YmColors.YmColor
 import util.FormUtil._
 import util.img._
 import ImgFormUtil._
-import io.suggest.img.SioImageUtilT
 import play.api.mvc._
 import MShop.ShopId_t
 import util.SiowebEsUtil.client
-import scala.concurrent.Future
+import scala.concurrent.{Future, future}
 
 /**
  * Suggest.io
@@ -130,6 +129,7 @@ object MarketOffer extends SioController with MacroLogsImpl {
   def addPromoOfferFormSubmit(shopId: ShopId_t) = IsMartShopAdmin(shopId).async { implicit request =>
     vmPromoOfferFormM.bindFromRequest().fold(
       {formWithErrors =>
+        debug(s"addPromoOfferFormSubmit($shopId): " + formWithErrors.errors)
         MShop.getById(request.shopId) map {
           case Some(mshop) => NotAcceptable(form.addPromoOfferFormTpl(shopId, formWithErrors, mshop))
           case None        => shopNotFound(shopId)
@@ -139,12 +139,18 @@ object MarketOffer extends SioController with MacroLogsImpl {
         mpo.datum.shopId = shopId
         mpo.datum.offerType = OfferTypes.VendorModel
         // Картинки: нужно их перегнать в постоянное хранилище.
-        Future.traverse(imgInfos) { case ImgInfo(iik, crop) =>
-          ???
-        }
-        mpo.save.map { mpoSavedId =>
-          // Редирект на созданный промо-оффер.
-          rdrToOffer(mpoSavedId).flashing("success" -> "Created ok.")
+        Future.traverse(imgInfos) { img =>
+          ImgFormUtil.handleImageForStoring(img)
+        } flatMap { imgSaved =>
+          // Удалить tmp-картинки в фоне
+          ImgFormUtil.rmTmpImgs(imgSaved)
+          // Выставить сохраненные картинки в датум и сохранить его.
+          mpo.datum.pictures = imgSaved.map(_.idStr)
+          mpo.save.map { mpoSavedId =>
+            // Редирект на созданный промо-оффер.
+            rdrToOffer(mpoSavedId)
+              .flashing("success" -> "Created ok.")
+          }
         }
       }
     )
@@ -190,6 +196,7 @@ object MarketOffer extends SioController with MacroLogsImpl {
     import request.offer
     vmPromoOfferFormM.bindFromRequest().fold(
       {formWithErrors =>
+        debug(s"editPromoOfferFormSubmit($offerId): " + formWithErrors.errors)
         MShop.getById(request.shopId) map {
           case Some(mshop) => NotAcceptable(form.editPromoOfferTpl(offer, formWithErrors, mshop))
           case None        => shopNotFound(request.shopId)
