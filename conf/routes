@@ -13,7 +13,7 @@ GET  /                                  controllers.Application.index
 GET  /search                            controllers.Application.search
 GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
 
-GET  /thumb/get/$dkey<[-_\w\d~.]+>/$imageId<[-_\w\d]+>     controllers.Thumb.getThumb(dkey, imageId)
+GET  /thumb/get/$dkey<[-_\w\d~.]+>/$imageId<[-_\w\d]+>     controllers.Img.getThumb(dkey, imageId)
 GET  /search/site                       controllers.Search.siteSearchGET
 
 GET  /login/persona                     controllers.Ident.persona
@@ -91,8 +91,8 @@ POST /market/lk/poffer/:offerId/delete  controllers.MarketOffer.deletePromoOffer
 GET  /market/lk/poffer/:offerId         controllers.MarketOffer.showPromoOffer(offerId)
 GET  /market/lk/poffer/:offerId/edit    controllers.MarketOffer.editPromoOfferForm(offerId)
 POST /market/lk/poffer/:offerId/edit    controllers.MarketOffer.editPromoOfferFormSubmit(offerId)
-POST /market/lk/poffer/img/prepare      controllers.MarketOffer.handleTempImg
-GET  /market/lk/poffer/img/:key         controllers.MarketOffer.getTempImg(key)
+POST /img/tmp/prepare                   controllers.Img.handleTempImg
+GET  /img/tmp/:key                      controllers.Img.getTempImg(key)
 
 # sys.market
 GET  /sys/market                        controllers.SysMarket.index

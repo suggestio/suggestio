@@ -62,7 +62,7 @@ object MPerson {
   }
 
   // Список емейлов админов suggest.io. Пока преднамеренно захардкожен, потом -- посмотрим.
-  private val suEmails = Set("konstantin.nikiforov@cbca.ru", "ilya@shuma.ru", "sasha@cbca.ru")
+  private val suEmails = Set("konstantin.nikiforov@cbca.ru", "ilya@shuma.ru", "sasha@cbca.ru", "maksim.sharipov@cbca.ru")
 
   /**
    * Прочитать объект Person из хранилища.

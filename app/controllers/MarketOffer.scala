@@ -8,12 +8,13 @@ import play.api.libs.concurrent.Execution.Implicits._
 import play.api.data._, Forms._
 import io.suggest.ym.{OfferTypes, YmColors, YmlSax}, YmColors.YmColor
 import util.FormUtil._
-import util.img.{TempImgActions, ImgPromoOfferUtil}
-import util.img.ImgFormUtil._
+import util.img._
+import ImgFormUtil._
 import io.suggest.img.SioImageUtilT
 import play.api.mvc._
 import MShop.ShopId_t
 import util.SiowebEsUtil.client
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -24,7 +25,7 @@ import util.SiowebEsUtil.client
  * Следует помнить, что предложения носят неточный характер и носят промо-характер.
  */
 
-object MarketOffer extends SioController with MacroLogsImpl with TempImgActions {
+object MarketOffer extends SioController with MacroLogsImpl {
   import LOGGER._
 
   // Мапперы полей сборных форм.
@@ -72,11 +73,11 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
   /** Маппер формы создания/редактирования промо-оффера в режиме vendor.model. */
   val vmPromoOfferFormM = Form(mapping(
     vendorM, modelM, colorsM, sizesM, sizeUnitsM, priceM, oldPriceM,
-    "imgs"  -> list(nonEmptyText(maxLength = 128)),
+    "imgs"  -> list(tmpImgIdM),
     "crops" -> list(imgCropM)
   )
   // apply()
-  {(vendor, model, colors, sizes, sizeUnits, price, oldPriceOpt, tempImgIds, tempImgCrops) =>
+  {(vendor, model, colors, sizes, sizeUnits, price, oldPriceOpt, iiks, iCrops) =>
     val offer = new MShopPromoOffer
     import offer.datum
     datum.vendor = vendor
@@ -86,14 +87,19 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
     datum.sizeUnitsOrig = sizeUnits
     datum.price = price
     datum.oldPrices = oldPriceOpt
-    ??? // TODO Надо подхватывать тут tempImg*
-    offer
+    // Подхватываем тут tempImg*. Сначала мержим id картинок и их кропы
+    val imgInfos = ImgFormUtil.mergeListMappings(iiks, iCrops)
+    (offer, imgInfos)
   }
   // unapply()
-  {mOffer =>
+  {case (mOffer, imgInfos)=>
     import mOffer.datum._
-    Some((vendor getOrElse "",  model getOrElse "",  colors.toList,  sizesOrig,  sizeUnitsOrig getOrElse "",  price,  oldPrices, ???, ???))
+    val iiks   = imgInfos.map(_.iik)
+    val iCrops = imgInfos.map(_.crop)
+    Some((vendor getOrElse "",  model getOrElse "",  colors.toList,  sizesOrig,  sizeUnitsOrig getOrElse "",  price,  oldPrices, iiks, iCrops))
   })
+
+
 
   /** Показать список офферов указанного магазина. */
   def showShopPromoOffers(shopId: ShopId_t) = IsMartShopAdmin(shopId).async { implicit request =>
@@ -129,9 +135,13 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
           case None        => shopNotFound(shopId)
         }
       },
-      {mpo =>
-        mpo.datum.shopId = shopId // TODO Надо исправить датум
+      {case (mpo, imgInfos) =>
+        mpo.datum.shopId = shopId
         mpo.datum.offerType = OfferTypes.VendorModel
+        // Картинки: нужно их перегнать в постоянное хранилище.
+        Future.traverse(imgInfos) { case ImgInfo(iik, crop) =>
+          ???
+        }
         mpo.save.map { mpoSavedId =>
           // Редирект на созданный промо-оффер.
           rdrToOffer(mpoSavedId).flashing("success" -> "Created ok.")
@@ -167,7 +177,8 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
     MShop.getById(request.shopId) map {
       case Some(mshop) =>
         import request.offer
-        val f = vmPromoOfferFormM fill offer
+        val imgInfos = Nil    // TODO
+        val f = vmPromoOfferFormM fill (offer, imgInfos)
         Ok(form.editPromoOfferTpl(offer, f, mshop))
 
       case None => shopNotFound(request.shopId)
@@ -184,7 +195,7 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
           case None        => shopNotFound(request.shopId)
         }
       },
-      {mpo =>
+      {case (mpo, imgInfos) =>
         mpo.datum.offerType = offer.datum.offerType
         mpo.datum.shopId = offer.datum.shopId
         mpo.id = offer.id
@@ -198,9 +209,4 @@ object MarketOffer extends SioController with MacroLogsImpl with TempImgActions 
   private def shopNotFound(shopId: ShopId_t) = NotFound("Shop not found: " + shopId)
   private def rdrToOffer(offerId: String) = Redirect(routes.MarketOffer.showPromoOffer(offerId))
 
-  // Картинки: используется подход, как на альтерраше: двухшаговая загрузка с кадрированием.
-  // Temp-картинки, подлежащие кадрированию или иной предварительной обработке. Сами экшены в отдельном трейте.
-  override protected def imgUtil = ImgPromoOfferUtil
-  override protected def reverseGetTempImg(key: String) = routes.MarketOffer.getTempImg(key)
-  //override protected def tempImgActionBuilder[A]: ActionBuilder[Request[A]] = IsAuth
 }

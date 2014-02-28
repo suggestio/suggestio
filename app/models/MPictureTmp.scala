@@ -24,13 +24,23 @@ object MPictureTmp {
 
   TEMP_DIR.mkdirs()
 
+  /** Префикс для ключей модели. Нужно чтобы различать tmpid'шники от других моделей
+    * (от [[io.suggest.model.MUserImgOrig]] в частности) */
+  val KEY_PREFIX = "itmp-"
+
+  val KEY_RE = (KEY_PREFIX + GET_RND_RE).r
+
+
+  /** Источник идентификаторов в модели. */
+  def getKeyFromUploadedTmpfileName(fn: String) = KEY_PREFIX + GET_RND_RE.findFirstIn(fn).get
+
   /**
    * Приготовиться к отправке файла во временное хранилище, сгенерив путь до него.
    * Будет адрес на несуществующий файл вида picture/tmp/234512341234123412341234.jpg
    */
-  def getForTempFile(tempfile: TemporaryFile) = {
+  def getForTempFile(tempfile: TemporaryFile): MPictureTmp = {
     val file = tempfile.file
-    val key  = GET_RND_RE.findFirstIn(file.getName).get
+    val key  = getKeyFromUploadedTmpfileName(file.getName)
     MPictureTmp(key)
   }
 
@@ -61,16 +71,38 @@ object MPictureTmp {
     }
   }
 
-  def isKeyValid(key: String) = GET_RND_RE.pattern.matcher(key).matches()
+  def isExist(key: String): Boolean = {
+    if (isKeyValid(key)) {
+      val mptmp = MPictureTmp(key)
+      mptmp.file.isFile
+    } else {
+      throw new IllegalArgumentException("Not valid key: " + key)
+    }
+  }
+
+  /**
+   * Корректен ли внешне переданных ключ tmp-картинки?
+   * @param key Ключ картинки.
+   * @return true, если ключ выглядит верно.
+   */
+  def isKeyValid(key: String) = {
+    KEY_RE.pattern.matcher(key).matches()
+  }
+
+
+  /** Опциональная версия apply. */
+  def maybeApply(key: String): Option[MPictureTmp] = {
+    if (isKeyValid(key))
+      Some(MPictureTmp(key))
+    else
+      None
+  }
 
 }
 
 import MPictureTmp._
 
 case class MPictureTmp(key: String) {
-  if (!isKeyValid(key))
-    throw new IllegalStateException("Invalid image key: " + key)
-
-  lazy val file = new File(TEMP_DIR, key + ".jpg")
+  val file = new File(TEMP_DIR, key + ".jpg")
 }
 
