@@ -69,6 +69,7 @@ object EsModel extends MacroLogsImpl {
   val URL_ESFN          = "url"
   val ADDRESS_ESFN      = "address"
   val SITE_URL_ESFN     = "siteUrl"
+  val PARENT_ID_ESFN    = "parentId"
 
   def companyIdParser = stringParser
   def martIdParser = stringParser

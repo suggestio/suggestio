@@ -30,7 +30,26 @@ import MPict._
 
 object MImgThumb extends MImgThumbStaticT with MPictSubmodel {
   
-  val FIELDS      = new Fields(ID_FN, IMAGE_URL_FN, THUMB_FN, TIMESTAMP_FN)
+  val FIELDS = new Fields(ID_FN, IMAGE_URL_FN, THUMB_FN, TIMESTAMP_FN)
+
+  /**
+   * Прочитать значения поля url со ссылкой на исходную картинку.
+   * @param idStr id картинки.
+   * @return Фьючерс со строкой, если такая найдена.
+   */
+  def getUrl(idStr: String)(implicit ec: ExecutionContext): Future[Option[String]] = {
+    getUrl(idStr2Bin(idStr))
+  }
+  def getUrl(id: Array[Byte])(implicit ec: ExecutionContext): Future[Option[String]] = {
+    val getUrlReq = new GetRequest(HTABLE_NAME, id)
+      .family(CF_METADATA)
+      .qualifier(Q_IMAGE_URL)
+    ahclient.get(getUrlReq) map { kvs =>
+      kvs.headOption.map {
+        kv => new String(kv.value)
+      }
+    }
+  }
 
   /**
    * Прочитать по hex id и dkey.
@@ -47,12 +66,9 @@ object MImgThumb extends MImgThumbStaticT with MPictSubmodel {
    * @return Фьючерс с опциональным результом.
    */
   def getFullById(idBin: Array[Byte])(implicit ec:ExecutionContext): Future[Option[MImgThumb]] = {
-    val getMdReq = new GetRequest(HTABLE_NAME, idBin)
-      .family(CF_METADATA)
-      .qualifier(Q_IMAGE_URL)
     val getThumbFut = getThumbById(idBin)
     for {
-      mdResp        <- ahclient.get(getMdReq)
+      mdResp        <- getUrl(idBin)
       thumbRespOpt  <- getThumbFut
     } yield {
       thumbRespOpt map { thumbResp =>
@@ -62,7 +78,7 @@ object MImgThumb extends MImgThumbStaticT with MPictSubmodel {
         it.timestamp = thumbResp.timestamp
         // Заливаем image url
         if (!mdResp.isEmpty) {
-          it.imageUrl = new String(mdResp.head.value)
+          it.imageUrl = mdResp.get
         }
         // Вернуть результат
         it
@@ -86,7 +102,9 @@ object MImgThumb extends MImgThumbStaticT with MPictSubmodel {
    * @return Фьючерс с опциональным результатом (thumb -> timestamp).
    */
   def getThumbById(id: Array[Byte])(implicit ec: ExecutionContext): Future[Option[ImgWithTimestamp]] = {
-    val getReq = new GetRequest(HTABLE_NAME_BYTES, id).family(CF_METADATA).qualifier(Q_THUMB)
+    val getReq = new GetRequest(HTABLE_NAME_BYTES, id)
+      .family(CF_THUMBS)
+      .qualifier(Q_THUMB)
     ahclient.get(getReq).map { kvs =>
       if (kvs.isEmpty) {
         None

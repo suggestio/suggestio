@@ -7,6 +7,7 @@ import io.suggest.util.{UrlUtil, CryptoUtil}
 import java.net.URL
 import java.security.MessageDigest
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
+import java.util.Random
 
 /**
  * Suggest.io
@@ -20,8 +21,7 @@ object MPict extends HTableModel {
 
   val CF_METADATA     = "a"   // Метаданные картинок. Маленькие, с переменным доступом.
   val CF_THUMBS       = "b"   // Превьюшки к картинкам. Имеют регулярный доступ.
-  val CF_TMP_IMGS     = "c"   // ВрЕменные превьюшки разных размеров сбрасываются сюда. Это относится к MUserImg.
-  val CF_ORIGINALS    = "d"   // Оригиналы, большие и толстые оригиналы.
+  val CF_ORIGINALS    = "c"   // Оригиналы, большие и толстые оригиналы.
 
   // MImgThumb
   val Q_THUMB         = "t"   // Картинка-превьюшка. CF_THUMBS
@@ -30,14 +30,29 @@ object MPict extends HTableModel {
   val Q_IMG_META = "m"   // Сериализованный кусок датума MImgThumb. CF_METADATA
   val Q_USER_IMG_ORIG = "o"   // Бинарник, содержащий оригинал изображения. CF_ORIGINALS
 
-  def CFs = Seq(CF_METADATA, CF_THUMBS, CF_TMP_IMGS, CF_ORIGINALS)
+  private val rnd = {
+    val _rnd = new Random
+    _rnd.setSeed(System.currentTimeMillis)
+    _rnd
+  }
+
+  def CFs = Seq(CF_METADATA, CF_THUMBS, CF_ORIGINALS)
 
   /** Генератор дескрипторов CF'ок. */
   def getColumnDescriptor: PartialFunction[String, HColumnDescriptor] = {
-    case cf @ (CF_METADATA | CF_THUMBS | CF_TMP_IMGS | CF_ORIGINALS) =>
+    case cf @ (CF_METADATA | CF_THUMBS | CF_ORIGINALS) =>
       cfDescSimple(cf, 1)
   }
+  
+  /** Длина рандомного id картинки. У sha1 длина 20, желательно чтобы длина рандома была иной. */
+  val RANDOM_ID_BYTELEN = 18
 
+  /** Генерация рандомного id картинки. */
+  def randomId: Array[Byte] = {
+    val b = Array.ofDim[Byte](RANDOM_ID_BYTELEN)
+    rnd.nextBytes(b)
+    b
+  }
 
   /** Тип контекста кешируемого генератора. Используется для функций с внешним кешируемым генератором img id. */
   type ImgIdGen_t = MessageDigest
@@ -57,6 +72,14 @@ object MPict extends HTableModel {
   def idBin2Str(id: Array[Byte]) = Base64 encodeBase64URLSafeString id
   def idStr2Bin(idStr: String)   = Base64 decodeBase64 idStr
 
+  def isStrIdValid(idStr: String): Boolean = {
+    try {
+      idStr2Bin(idStr)
+      true
+    } catch {
+      case ex: Exception => false
+    }
+  }
 
   // Десериализаторы для работы напрямую с полями кортежа
   def deserializeId(id: AnyRef) = deserializeBytes(id)
