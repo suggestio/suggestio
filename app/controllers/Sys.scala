@@ -88,7 +88,7 @@ object Sys extends SioController with PlayMacroLogsImpl {
       ,
       {dkey =>
         trace(logPrefix + "POST parsed. dkey found = " + dkey)
-        val addedBy = request.pwOpt.get.id + " (без проверки)"
+        val addedBy = request.pwOpt.get.personId + " (без проверки)"    // TODO Выставлять почту тут, а не сырой id
         DomainManager.installDkey(dkey=dkey, addedBy=addedBy) map { result =>
           val msg = result match {
             case Some(crawlerRef) => "Domain already in crawler: " + crawlerRef

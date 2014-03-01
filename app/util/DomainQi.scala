@@ -128,13 +128,13 @@ object DomainQi extends Logs {
    * - d+qi в сессии и в MDomainQiAuthzTmp. Это происходит, когда анонимус проходит qi, и затем логинится.
    *   Нужно удалить врЕменное разрешение, и создать нормальный MPersonDomainAuthz.
    * - d+qi в сессии не подходят под предыдущие условия. Значит не прошли валидацию. Смотреть дату, и удалить если истекло время хранения.
-   * @param person_id id Юзер. Обычно это его e-mail.
+   * @param personId id Юзер. Обычно это его e-mail.
    * @param onlyDkeys Проводить через анализ только указанные домены. Если Nil, то все домены.
    * @param session Исходные данные сессии.
    * @return Обновлённые данные сессии.
    */
-  def installFromSession(person_id: String, onlyDkeys:Seq[String] = Nil)(implicit session:Session): Future[Session] = {
-    lazy val logPrefix = s"installFromSession($person_id): "
+  def installFromSession(personId: String, onlyDkeys:Seq[String] = Nil)(implicit session:Session): Future[Session] = {
+    lazy val logPrefix = s"installFromSession($personId): "
     trace(logPrefix + "starting...")
     type GroupF_t = PartialFunction[(String,String), Boolean]
     // Разделить карту сессии на относящихся к qi и остальные.
@@ -161,7 +161,7 @@ object DomainQi extends Logs {
       // Пора распарсить и проанализировать значение по ключу.
       val Array(qi_id, dtQi) = v split qiDtSepCh
       // Надо ли оставить этот элемент сессии (true)? Или стереть?
-      val keepFut: Future[Boolean] = MPersonDomainAuthz.getForPersonDkey(dkey, person_id) flatMap {
+      val keepFut: Future[Boolean] = MPersonDomainAuthz.getForPersonDkey(dkey, personId) flatMap {
         case Some(da) =>
           // Зареганный юзер проходил qi-проверку. Если прошел, то значит предикат должен вернуть false.
           Future.successful(!da.isVerified)
@@ -172,11 +172,11 @@ object DomainQi extends Logs {
             case Some(dqia) =>
               debug(logPrefix + s" approving qi($dkey $qi_id): will replace MDomainQiAuthzTmp with non-anon MPersonDomainAuthz...")
               // side-effects:
-              MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, personId=person_id, isVerified=true).save flatMap {_ =>
+              MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, personId=personId, isVerified=true).save flatMap {_ =>
                 trace(logPrefix + "domain authz saved for " + dkey)
                 // Удалить анонимный qi из базы и из сессии, ибо больше не нужен.
                 dqia.delete map { _ =>
-                  trace(logPrefix + s"rights takeover done for qi($dkey $qi_id) to person_id=$person_id. Delete it from session.")
+                  trace(logPrefix + s"rights takeover done for qi($dkey $qi_id) to personId=$personId. Delete it from session.")
                   false
                 }
               }
@@ -416,7 +416,7 @@ object DomainQi extends Logs {
     val fut = pwOpt match {
       case Some(pw) =>
         debug(logPrefix + "Registering user as domain owner.")
-        MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, personId=pw.id, isVerified=true).save
+        MPersonDomainAuthz.newQi(id=qi_id, dkey=dkey, personId=pw.personId, isVerified=true).save
 
       // Анонимус. Нужно поместить данные о профите во временное хранилище. Когда юзер зарегается, будет вызван installFromSession, который оттуда всё извлечет.
       case None =>

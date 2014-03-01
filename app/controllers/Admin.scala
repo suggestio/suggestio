@@ -57,7 +57,8 @@ object Admin extends SioController with Logs {
    */
   def index = IsAuth.async { implicit request =>
     val pw = request.pwOpt.get
-    lazy val logPrefix = "index() user=%s: " format pw.id
+    import pw.personId
+    lazy val logPrefix = s"index() user=$personId: "
     // Опрос DFS может быть долгим, поэтому дальше всё делать надо бы асинхронно.
     pw.allDomainsAuthz map { personDomains =>
       // Т.к. в фоне будет запущена валидация доменов, надо ещё запустить очередь новостей, которая потом будет подцеплена
@@ -67,12 +68,12 @@ object Admin extends SioController with Logs {
       val timestampMs = NewsQueue4Play.getTimestampMs
       if (!pw.isSuperuser && !personDomains.isEmpty) {
         debug(logPrefix + "Maybe need revalidate %s domains. Starting news queue..." format personDomains.size)
-        NewsQueue4Play.ensureActorFor(pw.id, NQ_TYPE) onSuccess { case nqActorRef =>
+        NewsQueue4Play.ensureActorFor(personId, NQ_TYPE) onSuccess { case nqActorRef =>
           debug(logPrefix + "NewsQueue started as %s" format nqActorRef)
           // Подписать очередь на события SioNotifier
           SiowebNotifier.subscribe(
             subscriber = new SnActorRefSubscriber(nqActorRef),
-            classifier = getUserValidationClassifier(pw.id)
+            classifier = getUserValidationClassifier(personId)
           )
           // Запустить валидацию доменов. Сразу подсчитываем число доменов, которые начали процедуру ревалидации.
           val rdvCount = personDomains.foldLeft(0) { (counter, pd) =>
@@ -108,13 +109,14 @@ object Admin extends SioController with Logs {
       // Это зареганный юзер зашел в админку. Пока он входил, уже возможно запустилась очередь новостями перевалидации.
       val pw = pwOpt.get
       // Нужно найти очередь с новостями валидации (если она существует), и вытащить из неё данные,
-      val classifier = getUserValidationClassifier(pw.id)
+      import pw.personId
+      val classifier = getUserValidationClassifier(personId)
       val uuid = UUID.randomUUID()
       val (in0, out0) = EventUtil.globalUserEventIO
       // Подписаться на события валидации
       val out1 = out0 >- Concurrent.unicast(onStart = {
         channel: Concurrent.Channel[JsValue] =>
-          EventUtil.replaceNqWithWsChannel(classifier, uuid, nqDkey=pw.id, nqTyp=NQ_TYPE, channel=channel, nqIsMandatory=false, timestampMs=timestampMs, logPrefix=logPrefix)
+          EventUtil.replaceNqWithWsChannel(classifier, uuid, nqDkey=personId, nqTyp=NQ_TYPE, channel=channel, nqIsMandatory=false, timestampMs=timestampMs, logPrefix=logPrefix)
       })
       // При закрытии канала отписаться от событий, подписанных выше.
       val in1 = EventUtil.inIterateeSnUnsubscribeWsOnEOF(in0, uuid, classifier)
@@ -160,16 +162,16 @@ object Admin extends SioController with Logs {
           // Есть такой домен в базе
           case Some(d) =>
             trace(s"${logPrefix}Domain exist and added at ${d.addedAt} by ${d.addedBy}")
-            val person_id = request.pwOpt.get.id
-            val da = MPersonDomainAuthz.newValidation(dkey=dkey, personId=person_id)
+            val personId = request.pwOpt.get.personId
+            val da = MPersonDomainAuthz.newValidation(dkey=dkey, personId=personId)
             da.save.map { _ =>
-              trace(logPrefix + "Successfully created new authz for " + person_id)
+              trace(logPrefix + "Successfully created new authz for " + personId)
               // Теперь надо сгенерить json ответа
               val jsonFields1 = "status" -> jsStatusOk :: jsonFields0
               Created(JsObject(jsonFields1))
             } recover { case ex: Exception =>
               // Ошибка при сохранении эфемерных данных правам на по сайт. Сделать нормальное добавление сайта проблематично.
-              error(logPrefix + "Cannot save new " + MPersonDomainAuthz.getClass.getSimpleName + " for user " + person_id, ex)
+              error(logPrefix + "Cannot save new " + MPersonDomainAuthz.getClass.getSimpleName + " for user " + personId, ex)
               InternalServerError(s"Failed to add domain '$dkey'.")
             }
 
@@ -195,7 +197,7 @@ object Admin extends SioController with Logs {
       }
       ,
       {dkey =>
-        val person_id = request.pwOpt.get.id
+        val person_id = request.pwOpt.get.personId
         MPersonDomainAuthz.delete(person_id, dkey) map {_ =>
           // Всё ок - ничего не возвращаем.
           NoContent
@@ -215,7 +217,7 @@ object Admin extends SioController with Logs {
    */
   def getValidationFile(domain: String) = IsAuth.async { implicit request =>
     val dkey = UrlUtil.normalizeHostname(domain)
-    val person_id = request.pwOpt.get.id
+    val person_id = request.pwOpt.get.personId
     MPersonDomainAuthz.getForPersonDkey(person_id, dkey) map {
       // Отрендерить файлик валидации и вернуть его юзеру.
       case Some(da) =>

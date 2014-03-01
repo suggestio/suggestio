@@ -266,7 +266,7 @@ object Js extends SioController with Logs {
   def installFromSessionFor(dkey:String, qi_id:String) = IsAuth.async { implicit request =>
     val isQi = DomainQi.isQi(dkey, qi_id)
     if (isQi) {
-      DomainQi.installFromSession(request.pwOpt.get.id, onlyDkeys=List(dkey)) map { session1 =>
+      DomainQi.installFromSession(request.pwOpt.get.personId, onlyDkeys=List(dkey)) map { session1 =>
         // На период тестирования
         if (session.data.size == session1.data.size) {
           NoContent

@@ -6,16 +6,18 @@ import play.api.data._
 import play.api.data.Forms._
 import util.acl._
 import util._
-import play.api.mvc.Action
+import play.api.mvc._
 import views.html.ident._
 import play.api.libs.concurrent.Promise.timeout
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.duration._
 import scala.concurrent.Future
 import play.api.libs.json.JsString
-import models.MPerson
+import models._
 import play.api.mvc.Security.username
 import play.api.i18n.Lang
+import SiowebEsUtil.client
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -41,9 +43,7 @@ object Ident extends SioController with Logs {
   protected val verifyReqTimeoutMs = verifyReqTimeout.toMillis.toInt
   protected val verifyReqFutureTimeout = verifyReqTimeout + 200.milliseconds
 
-  /**
-   * Начало логина через Mozilla Persona. Нужно отрендерить страницу со скриптами.
-   */
+  /** Начало логина через Mozilla Persona. Нужно отрендерить страницу со скриптами. */
   def persona = MaybeAuth { implicit request =>
     request.pwOpt match {
       // Уже залогинен -- отправить в админку
@@ -94,28 +94,37 @@ object Ident extends SioController with Logs {
                     val email = (respJson \ "email").as[String].trim
                     trace(logPrefix + "found email: " + email)
                     // Найти текущего юзера или создать нового:
-                    MPerson.getById(email) flatMap { personOpt =>
-                      val personFut = personOpt match {
+                    MozillaPersonaIdent.getById(email) flatMap { mpIdOpt =>
+                      val personFut: Future[MPerson] = mpIdOpt match {
                         case None =>
                           trace(logPrefix + "Registering new user: " + email)
-                          val mpersonInst = new MPerson(email, lang=lang.code)
-                          mpersonInst.save.map { _ => mpersonInst }
+                          val mperson = new MPerson(lang=lang.code)
+                          mperson.save.flatMap { personId =>
+                            MozillaPersonaIdent(email=email, personId=personId).save.map { _ =>
+                              mperson.id = Some(personId)
+                              mperson
+                            }
+                          }
 
-                        case Some(p) =>
-                          trace(logPrefix + "Login already registered user: " + p)
+                        case Some(mpId) =>
+                          trace(logPrefix + "Login already registered user with ident: " + mpId)
                           // Восстановить язык из сохранненого добра
-                          Future successful p
+                          mpId.person.flatMap {
+                            case Some(p) => Future successful p
+                            // Невероятный сценарий: из MPerson слетела запись.
+                            case None => recreatePersonIdFor(mpId)
+                          }
                       }
                       personFut flatMap { person =>
                         // Заапрувить анонимно-добавленные и подтвержденные домены (qi)
-                        DomainQi.installFromSession(person.id) map { session1 =>
+                        DomainQi.installFromSession(person.personId) map { session1 =>
                           // Делаем info чтобы в логах мониторить логины пользователей.
                           trace(logPrefix + "successfully logged in as " + email)
                           // залогинить юзера наконец, выставив язык, сохранённый ранее в состоянии.
                           rdrToAdmin
                             .withLang(Lang(person.lang))
                             .withSession(session1)
-                            .withSession(username -> person.id)
+                            .withSession(username -> person.personId)
                         }
                       }
                     }
@@ -159,7 +168,29 @@ object Ident extends SioController with Logs {
   }
 
 
+  /** Функция обхода foreign-key ошибок */
+  private def recreatePersonIdFor(mpi: MPersonIdent[_])(implicit request: RequestHeader): Future[MPerson] = {
+    val logPrefix = s"recreatePersonIdFor($mpi): "
+    error(logPrefix + s"MPerson not found for ident $mpi. Suppressing internal error: creating new one...")
+    val p = MPerson(id=Some(mpi.personId), lang=lang.code)
+    p.save.map {
+      case _personId if _personId == mpi.personId =>
+        warn(logPrefix + s"Emergency recreated MPerson(${_personId}) for identity $mpi")
+        p
+      case _personId =>
+        // [Невозможный сценарий] Не удаётся пересоздать запись MPerson с корректным id.
+        error(s"Unable to recreate MPerson record for ident $mpi. oldPersonId=${mpi.personId} != newPersonId=${_personId}")
+        // rollback создания записи.
+        MPerson.deleteById(_personId) onComplete {
+          case Success(isDeleted) => warn(logPrefix + s"Deleted recreated $p for zombie ident $mpi")
+          case Failure(ex) => error("Failed to rollback. Storage failure!", ex)
+        }
+        p
+    }
+  }
+
   // TODO выставить нормальный routing тут
   protected def rdrToAdmin = Redirect(routes.Application.index())
 
 }
+

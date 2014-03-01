@@ -1,19 +1,18 @@
 package controllers
 
 import play.api.mvc._
-import util.ContextImpl
+import util.{PlayMacroLogsImpl, ContextImpl}
 import util.acl._
 import views.html.crawl._
 import play.api.i18n.Lang
-import io.suggest.util.LogsImpl
 import play.api.Play.current
 import scala.concurrent.Future
 import models.MPerson
 import play.api.libs.concurrent.Execution.Implicits._
+import util.SiowebEsUtil.client
 
-object Application extends SioController {
+object Application extends SioController with PlayMacroLogsImpl {
 
-  private val LOGGER = new LogsImpl(getClass)
   import LOGGER._
 
   /**
@@ -29,33 +28,30 @@ object Application extends SioController {
   }
 
   /** Запрос смены языка UI. */
-  def change_locale(locale: String) = MaybeAuth { implicit request =>
+  def change_locale(locale: String) = MaybeAuth.async { implicit request =>
     val referrer = request.headers.get(REFERER).getOrElse("/")
-    
-    debug("Change user lang to : " + locale)
+    trace("Change user lang to : " + locale)
+    // TODO Проверять язык по списку доступных.
     val lang1 = Lang(locale)
-
+    val resp0 = Redirect(referrer).withLang(lang1)
     // Нужно сохранять смену языка в БД, если юзер залогинен.
     if (request.isAuth) {
       val pw = request.pwOpt.get
       val langCode = lang1.language
-      pw.personOptFut.flatMap { result =>
-        val result1 = result match {
-          case Some(person) =>
-            person.lang = langCode
-            person
+      pw.personOptFut.flatMap {
+        case Some(person) =>
+          person.lang = langCode
+          person.save.map {_ => resp0 }
 
-          case None => MPerson(pw.id, lang = langCode)
-        }
-        result1.save
-
-      } onFailure {
-        case ex => warn("Failed to save lang settings for user " + pw.id, ex)
+        case None =>
+          // TODO Внезапно неизвесный юзер с правильными кукисами в сессии.
+          // Нужно сбросить ему сессию и выставить куку с иной локалью.
+          warn(s"User with valid session personId=${pw.personId} not found in DB! Resetting session...")
+          resp0.withNewSession
       }
+    } else {
+      resp0
     }
-
-    Redirect(referrer).withLang(lang1)
-    // TODO Check if the lang is handled by the application
   }
 
 

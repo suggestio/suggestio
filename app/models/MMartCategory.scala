@@ -16,13 +16,13 @@ import io.suggest.util.SioConstants._
  */
 object MMartCategory extends EsModelStaticT[MMartCategory] {
 
-  override val ES_TYPE_NAME = "martCat"
+  val ES_TYPE_NAME = "martCat"
 
   val YM_CAT_ID_ESFN = "ymCatId"
   val CSS_CLASS_ESFN = "cssClass"
   val POSITION_ESFN  = "position"
 
-  override def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
+  def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
       typ = ES_TYPE_NAME,
       static_fields = Seq(
@@ -60,18 +60,16 @@ object MMartCategory extends EsModelStaticT[MMartCategory] {
     )
   }
 
-  override def applyMap(m: Map[String, AnyRef], acc: MMartCategory): MMartCategory = {
-    m foreach {
-      case (NAME_ESFN, value)       => acc.name = stringParser(value)
-      case (YM_CAT_ID_ESFN, value)  => acc.ymCatId = stringParser(value)
-      case (PARENT_ID_ESFN, value)  => acc.parentId = Some(stringParser(value))
-      case (POSITION_ESFN,  value)  => acc.position = intParser(value)
-      case (CSS_CLASS_ESFN, value)  => acc.cssClass = Some(stringParser(value))
-    }
-    acc
+
+  def applyKeyValue(acc: MMartCategory): PartialFunction[(String, AnyRef), Unit] = {
+    case (NAME_ESFN, value)         => acc.name = stringParser(value)
+    case (YM_CAT_ID_ESFN, value)    => acc.ymCatId = stringParser(value)
+    case (PARENT_ID_ESFN, value)    => acc.parentId = Some(stringParser(value))
+    case (POSITION_ESFN,  value)    => acc.position = intParser(value)
+    case (CSS_CLASS_ESFN, value)    => acc.cssClass = Some(stringParser(value))
   }
 
-  override protected def dummy(id: String) = {
+  protected def dummy(id: String) = {
     MMartCategory(name = null, ymCatId = null, parentId = None, position = Int.MaxValue)
   }
 }

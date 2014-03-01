@@ -21,7 +21,7 @@ object IsSuperuser extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacr
     val pwOpt = PersonWrapper.getFromRequest(request)
     pwOpt match {
       case Some(pw) if pw.isSuperuser =>
-        trace(s"for user ${pw.id} :: ${request.method} ${request.path}")
+        trace(s"for user ${pw.personId} :: ${request.method} ${request.path}")
         block(new RequestWithPwOpt[A](pwOpt, request))
 
       case _ => onUnauthFut(request, pwOpt)

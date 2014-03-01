@@ -16,6 +16,7 @@ import scala.collection.JavaConversions._
 import org.hbase.async.{KeyValue, GetRequest, DeleteRequest, PutRequest}
 import scala.Some
 import play.api.Logger
+import org.elasticsearch.client.Client
 
 /**
  * Suggest.io
@@ -27,7 +28,7 @@ import play.api.Logger
 
 case class MPersonDomainAuthz(
   id                    : String,
-  // dkey и person_id хранятся в пути к файлу json, а тут дублируются для упрощения работы (сериализации/десериализации).
+  // dkey и personId хранятся в пути к файлу json, а тут дублируются для упрощения работы (сериализации/десериализации).
   dkey                  : String,
   personId              : String,
   typ                   : String, // "Тип" - это или qi, или va (validation). См. TYPE_* у объекта-компаньона.
@@ -42,7 +43,7 @@ case class MPersonDomainAuthz(
   import LOGGER._
 
   // Связи с другими моделями и компонентами системы.
-  @JsonIgnore def person = MPerson.getById(personId)
+  @JsonIgnore def person(implicit client: Client) = MPerson.getById(personId)
   def maybeRevalidate(sendEvents:Boolean = true) = DomainValidator.maybeRevalidate(this, sendEvents)
   def revalidate(sendEvents:Boolean = true)      = DomainValidator.revalidate(this, sendEvents)
 

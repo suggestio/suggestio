@@ -297,7 +297,7 @@ sealed trait DVEvent extends SioEventTJSable with DkeyContainerT {
   implicit def toJson: JsValue = {
     val jsonFields0 = jsonProps
     val jsonFields1 = personIdOpt match {
-      case Some(person_id) => "person_id"   -> JsString(person_id) :: jsonFields0
+      case Some(person_id) => "personId"   -> JsString(person_id) :: jsonFields0
       case None => jsonFields0
     }
     val jsonFields2 = {

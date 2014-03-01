@@ -2,8 +2,8 @@ package util.acl
 
 import models.{MPerson, MPersonLinks}
 import play.api.mvc._, Security.username
-import scala.concurrent.Await
-import scala.concurrent.duration._
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.SiowebEsUtil.client
 
 object PersonWrapper {
 
@@ -32,10 +32,11 @@ object PersonWrapper {
 
 /**
  * PersonWrapper нужен для ленивого доступа к данным. Часто содержимое MPerson не нужно, поэтому зачем его читать сразу?
- * @param id id юзера
+ * @param personId id юзера
  */
-case class PersonWrapper(id: String) extends MPersonLinks {
+case class PersonWrapper(personId: String) extends MPersonLinks {
+
   // TODO Надо будет это оптимизировать. Если .person будет нужен почти везде, то надо запрос фьючерса отделить от Await
   //      в отдельный val класса. На текущий момент этот вызов нигде не используется, поэтому целиком lazy.
-  lazy val personOptFut = MPerson getById id
+  lazy val personOptFut = MPerson getById personId
 }

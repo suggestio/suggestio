@@ -62,7 +62,7 @@ object Feedback extends Controller with Logs with ContextT {
         val mail = use[MailerPlugin].email
         // Разделять сабжи в зависимости от залогиненности юзеров.
         val subjectEnd = pwOpt match {
-          case Some(pw) => "клиента " + pw.id
+          case Some(pw) => "клиента " + pw.personId
           case None     => "посетителя сайта"
         }
         mail.setSubject("Сообщение от " + subjectEnd)

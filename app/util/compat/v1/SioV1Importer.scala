@@ -308,15 +308,16 @@ object SioV1Importer extends JavaTokenParsers {
       val rowIter = row.elements().iterator
       ensureTableAtom(rowIter.next(), personTN)
 
-      val personId = new String(rowIter.next().asInstanceOf[OtpErlangBinary].binaryValue())
+      val personEmail = new String(rowIter.next().asInstanceOf[OtpErlangBinary].binaryValue())
       rowIter.next()  // Сброс поля Info
 
       ensureEmptyIter(rowIter)
-
-      val rec = MPerson(id = personId, lang = "en")
-      rec.save.onComplete {
-        case scala.util.Success(_)  => trace(logPrefix + "Person saved OK: " + personId)
-        case scala.util.Failure(ex) => error(logPrefix + "Failed to save person " + personId, ex)
+      val saveFut = MPerson(lang = "en").save.flatMap { personId =>
+        MozillaPersonaIdent(email=personEmail, personId=personId).save
+      }
+      saveFut onComplete {
+        case scala.util.Success(_)  => trace(logPrefix + "Person saved OK: " + personEmail)
+        case scala.util.Failure(ex) => error(logPrefix + "Failed to save person " + personEmail, ex)
       }
     }
   }

@@ -1,206 +1,115 @@
 package models
 
-import util.{StorageUtil, ModelSerialJson, SiobixFs}
-import SiobixFs.fs
-import io.suggest.model.JsonDfsBackend
-import io.suggest.util.StorageType._
-import util.DfsModelUtil.getPersonPath
-import scala.concurrent.{Future, future}
-import play.api.libs.concurrent.Execution.Implicits._
-import org.hbase.async.{DeleteRequest, GetRequest, PutRequest}
-import scala.collection.JavaConversions._
+import io.suggest.model.{EsModelStaticT, EsModelT}
 import com.fasterxml.jackson.annotation.JsonIgnore
-import io.suggest.util.SioModelUtil
+import org.elasticsearch.common.xcontent.XContentBuilder
+import play.api.Play.current
+import io.suggest.util.SioEsUtil._
+import io.suggest.util.SioConstants._
+import io.suggest.model.EsModel._
+import scala.concurrent.ExecutionContext
+import org.elasticsearch.client.Client
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 18.04.13 18:19
  * Description: Юзер, зареганный на сайте. Как правило, админ одного или нескольких сайтов.
- * Люди различаются по email'ам. Это является их идентификаторами.
- * @param id Идентификатор юзера, т.е. его email.
+ * Люди различаются по email'ам и/или по номерам телефона.
+ * 01.03.2014 Вместо hbase использовать EsModel. Добавлен phone. id вместо email теперь
+ * генерится силами ES.
+ */
+
+// Статическая часть модели.
+object MPerson extends EsModelStaticT[MPerson] {
+
+  val ES_TYPE_NAME = "person"
+
+  val LANG_ESFN   = "lang"
+  val IDENTS_ESFN = "idents"
+
+  // Список емейлов админов suggest.io.
+  val SU_IDS: Set[String] = {
+    // id'шники суперюзеров sio можно указыват через конфиг, но мыльники должны быть в известных доменах.
+    current.configuration.getStringSeq("sio.superuser.emails")
+      .map {
+        _.view.filter {
+          email => email.endsWith("@cbca.ru") || email.endsWith("@shuma.ru")
+        }.toSet
+      }
+      .getOrElse(Set(
+        "konstantin.nikiforov@cbca.ru",
+        "ilya@shuma.ru",
+        "sasha@cbca.ru",
+        "maksim.sharipov@cbca.ru"
+      ))
+  }
+
+  /**
+   * Принадлежит ли указанный мыльник суперюзеру suggest.io?
+   * @param email емейл.
+   * @return true, если это почта админа. Иначе false.
+   */
+  def isSuperuserId(email: String) = SU_IDS contains email
+
+  /** Сгенерить маппинг для индекса. */
+  def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
+    IndexMapping(
+      typ = ES_TYPE_NAME,
+      static_fields = Seq(
+        FieldAll(enabled = false, analyzer = FTS_RU_AN),
+        FieldSource(enabled = true)
+      ),
+      properties = Seq(
+        FieldString(
+          id = LANG_ESFN,
+          index = FieldIndexingVariants.analyzed,
+          include_in_all = false
+        )
+      )
+    )
+  }
+
+
+  def applyKeyValue(acc: MPerson): PartialFunction[(String, AnyRef), Unit] = {
+    case (LANG_ESFN, value)     => acc.lang = stringParser(value)
+  }
+
+  protected def dummy(id: String) = MPerson(id = Some(id), lang = null)
+}
+
+import MPerson._
+
+/**
+ * Экземпляр модели MPerson.
  * @param lang Язык интерфейса для указанного пользователя.
  *             Формат четко неопределён, и соответствует коду выхлопа Controller.lang().
  */
-
 case class MPerson(
-  id : String,
-  var lang: String
-) extends MPersonLinks {
-  import MPerson.BACKEND
+  var lang  : String,
+  var id    : Option[String] = None
+) extends EsModelT[MPerson] with MPersonLinks {
 
-  // Линки в другие модели.
-  @JsonIgnore def authz = MPersonDomainAuthz.getForPerson(id)
+  def personId = id.get
 
-  /**
-   * Сохранить отметку о таком юзере
-   * @return Фьючерс с сохраненным экземпляром MPerson.
-   */
-  @JsonIgnore def save = BACKEND.save(this)
+  override def companion = MPerson
 
+  override def writeJsonFields(acc: XContentBuilder) {
+    acc.field(LANG_ESFN, lang)
+  }
 }
 
 
-// Трайт ссылок с юзера на другие модели. Это хорошо
+/** Трайт ссылок с юзера для других моделей. */
 trait MPersonLinks {
-  val id : String
+  def personId: String
 
-  @JsonIgnore def isSuperuser = MPerson isSuperuserId id
-  def authzForDomain(dkey:String) = MPersonDomainAuthz.getForPersonDkey(dkey, id)
-  @JsonIgnore def allDomainsAuthz = MPersonDomainAuthz.getForPerson(id)
+  @JsonIgnore def person(implicit ec:ExecutionContext, client: Client) = {
+    MPerson getById personId
+  }
+  @JsonIgnore def isSuperuser = MPerson isSuperuserId personId
+  def authzForDomain(dkey: String) = MPersonDomainAuthz.getForPersonDkey(dkey, personId)
+  @JsonIgnore def allDomainsAuthz = MPersonDomainAuthz.getForPerson(personId)
 }
 
 
-// Статическая часть модели.
-object MPerson {
-
-  private val BACKEND: Backend = {
-    StorageUtil.STORAGE match {
-      case DFS    => new DfsBackend
-      case HBASE  => new HBaseBackendBulk
-    }
-  }
-
-  // Список емейлов админов suggest.io. Пока преднамеренно захардкожен, потом -- посмотрим.
-  private val suEmails = Set("konstantin.nikiforov@cbca.ru", "ilya@shuma.ru", "sasha@cbca.ru", "maksim.sharipov@cbca.ru")
-
-  /**
-   * Прочитать объект Person из хранилища.
-   * @param id адрес эл.почты, который вернула Mozilla Persona и который используется для идентификации юзеров.
-   * @return Фьючерс с опциональным MPerson.
-   */
-  def getById(id: String) = BACKEND.getById(id)
-
-
-  /**
-   * Принадлежит ли указанный мыльник админу suggest.io?
-   * @param email емейл
-   * @return
-   */
-  def isSuperuserId(email:String) = suEmails.contains(email)
-
-
-  /** Интерфейс storage backend'а. для данной модели */
-  trait Backend {
-    def save(data:MPerson): Future[_]
-    def getById(id: String): Future[Option[MPerson]]
-  }
-
-
-  /** DFS-backend для текущей модели. */
-  class DfsBackend extends Backend {
-    def save(data: MPerson): Future[_] = {
-      val path = getPersonPath(data.id)
-      future {
-        JsonDfsBackend.writeToPath(path, data)
-      }
-    }
-
-    def getById(id: String): Future[Option[MPerson]] = {
-      val filePath = getPersonPath(id)
-      future {
-        fs.exists(filePath) match {
-          // Файл с данными по юзеру пуст - поэтому можно его не читать, а просто сделать необходимый объект.
-          case true =>
-            val person = JsonDfsBackend.getAs[MPerson](filePath, fs).get
-            Some(person)
-
-          case false => None
-        }
-      }
-    }
-  }
-
-
-  import io.suggest.model.MObject.{HTABLE_NAME_BYTES, CF_UPROPS}
-  import io.suggest.model.SioHBaseAsyncClient._
-  import io.suggest.model.HTapConversionsBasic._
-
-  /** Hbase backend для текущей модели, сохраняющий все данные в одну колонку через JSON. */
-  class HBaseBackendBulk extends Backend with ModelSerialJson {
-    private val CF_UPROPS_B = CF_UPROPS.getBytes
-    private def QUALIFIER = CF_UPROPS_B
-
-    protected def id2rowkey(id: String): Array[Byte] = SioModelUtil.serializeStrForHCellCoord(id)
-    protected def deserialize(data: Array[Byte]) = deserializeTo[MPerson](data)
-
-    def save(data: MPerson): Future[_] = {
-      val putReq = new PutRequest(HTABLE_NAME_BYTES, id2rowkey(data.id), CF_UPROPS_B, QUALIFIER, serialize(data))
-      ahclient.put(putReq)
-    }
-
-    def getById(id: String): Future[Option[MPerson]] = {
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, id2rowkey(id))
-        .family(CF_UPROPS_B)
-        .qualifier(QUALIFIER)
-      ahclient.get(getReq) map { al =>
-        if (al.isEmpty) None else Some(deserialize(al.head.value()))
-      }
-    }
-  }
-
-
-  /* TODO Экспериментальный-сырой-неиспользуемый HBase backend, сохраняющий отдельные поля в отдельные колонки.
-   * Теоретически, может помочь в организации ускорения при росте объёмов данных.
-   * Но сначала нужно обдумать асинхронное i/o для удобного доступа к кускам записей.
-   * Возможно, тут поможет apache gora, её маппинги, и PersistenceManager для in-memory записей. */
-  class HBaseBackendQualified extends Backend {
-
-    val Q_DKEYS   = "a"
-    val Q_CREATED = "b"
-    val Q_LANG    = "c"
-
-    def id2key(id: String): Array[Byte] = id
-
-    val DKEY_SER_SEP = ","
-    def serializeDkeys(dkeys: List[String]): Array[Byte] = dkeys.mkString(DKEY_SER_SEP).getBytes
-    def deserializeDkeys(dkeysSer: Array[Byte]): List[String] = {
-      if (dkeysSer.length == 0) {
-        Nil
-      } else {
-        new String(dkeysSer).split(DKEY_SER_SEP).toList
-      }
-    }
-
-    def serializeLang(langIso2: String): Array[Byte]  = langIso2
-    def deserializeLang(langSer: Array[Byte]): String = new String(langSer)
-
-    def save(data: MPerson): Future[_] = {
-      val rowKey = id2key(data.id)
-      val table = HTABLE_NAME_BYTES
-
-      // Язык, всегда задан.
-      val langFut: Future[_] = {
-        val value = serializeLang(data.lang)
-        val putReq = new PutRequest(table, rowKey, CF_UPROPS.getBytes, Q_LANG.getBytes, value)
-        ahclient.put(putReq)
-      }
-
-      // Асинхронно дождаться выполнения всех реквестов.
-      for {
-        langIso2 <- langFut
-      } yield ()
-    }
-
-    def getById(id: String): Future[Option[MPerson]] = {
-      val getReq = new GetRequest(HTABLE_NAME_BYTES, id2key(id)).family(CF_UPROPS)
-      ahclient.get(getReq) map { row =>
-        if (row.isEmpty) {
-          None
-        } else {
-          val result = new MPerson(id, lang=null)
-          // Такатываем все qualifier'ы на исходную запись.
-          // TODO lang всегда задан, поэтому тут должна быть его десериализация без вариантов.
-          row.foreach { kv =>
-            new String(kv.qualifier()) match {
-              case Q_LANG  => result.lang = deserializeLang(kv.value)
-            }
-          }
-          Some(result)
-        }
-      }
-    }
-
-  }
-
-}

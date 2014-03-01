@@ -50,10 +50,10 @@ object IsDomainAdmin {
         // TODO Надо проверить случай, когда у админа suggest.io есть добавленный домен. Всё ли нормально работает?
         // Если нет, то надо обращение к модели вынести на первый план, а только потом уже проверять isAdmin.
         if (pw.isSuperuser) {
-          val result = Some(MPersonDomainAuthzAdmin(person_id=pw.id, dkey=dkey))
+          val result = Some(MPersonDomainAuthzAdmin(person_id=pw.personId, dkey=dkey))
           Future.successful(result)
         } else {
-          MPersonDomainAuthz.getForPersonDkey(dkey, pw.id)
+          MPersonDomainAuthz.getForPersonDkey(dkey, pw.personId)
         }
     }
   }

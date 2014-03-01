@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.hadoop.fs.Path
 import org.joda.time.DateTime
 import util.DkeyModelT
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
+import org.elasticsearch.client.Client
 
 /**
  * Suggest.io
@@ -28,7 +29,9 @@ trait MDomainAuthzT extends DkeyModelT {
   @JsonIgnore def isQiType: Boolean
   @JsonIgnore def isValidationType: Boolean
 
-  @JsonIgnore def personOpt = personIdOpt.map(MPerson.getById)
+  @JsonIgnore def personOpt(implicit ec: ExecutionContext, c: Client) = {
+    personIdOpt.map(MPerson.getById)
+  }
   @JsonIgnore def bodyCodeOpt: Option[String]
 }
 

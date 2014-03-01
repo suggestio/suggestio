@@ -25,7 +25,7 @@ object MBlog extends EsModelStaticT[MBlog] {
   val TEXT_ESFN     = "text"
   val DATE_ESFN     = "date"
 
-  override def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
+  def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
       typ = ES_TYPE_NAME,
       static_fields = Seq(
@@ -67,19 +67,17 @@ object MBlog extends EsModelStaticT[MBlog] {
     )
   }
 
-  override def applyMap(m: Map[String, AnyRef], acc: MBlog): MBlog = {
-    m foreach {
-      case (TITLE_ESFN, value)        => acc.title = stringParser(value)
-      case (DESCRIPTION_ESFN, value)  => acc.description = stringParser(value)
-      case (BG_IMAGE_ESFN, value)     => acc.bgImage = stringParser(value)
-      case (BG_COLOR_ESFN, value)     => acc.bgColor = stringParser(value)
-      case (TEXT_ESFN, value)         => acc.text = stringParser(value)
-      case (DATE_ESFN, value)         => acc.date = dateTimeParser(value)
-    }
-    acc
+
+  def applyKeyValue(acc: MBlog): PartialFunction[(String, AnyRef), Unit] = {
+    case (TITLE_ESFN, value)          => acc.title = stringParser(value)
+    case (DESCRIPTION_ESFN, value)    => acc.description = stringParser(value)
+    case (BG_IMAGE_ESFN, value)       => acc.bgImage = stringParser(value)
+    case (BG_COLOR_ESFN, value)       => acc.bgColor = stringParser(value)
+    case (TEXT_ESFN, value)           => acc.text = stringParser(value)
+    case (DATE_ESFN, value)           => acc.date = dateTimeParser(value)
   }
 
-  override protected def dummy(id: String) = MBlog(
+  protected def dummy(id: String) = MBlog(
     title = null,
     description = null,
     bgImage = null,

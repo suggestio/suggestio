@@ -23,7 +23,7 @@ object DomainManager extends SNStaticSubscriber with Logs {
     val c = SioJsFoundOnSite.getClassifier(isValidOpt = Some(true))
     val s = SnFunSubscriber {
       case ValidSioJsFoundOnSite(_dkey, _pwOpt) =>
-        val addedBy = _pwOpt.map(_.id) getOrElse "anonymous"
+        val addedBy = _pwOpt.map(_.personId) getOrElse "anonymous"
         maybeInstallDkey(_dkey, addedBy)
     }
     Seq(c -> Seq(s))
