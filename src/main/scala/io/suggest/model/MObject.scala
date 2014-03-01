@@ -31,11 +31,9 @@ object MObject extends HTableModel {
 
   // Для моделей веб-морды:
   val CF_DDATA          = "d" // DomainData - сохранение json'а настроек (веб-морда)
-  val CF_DPUBLISH       = "e" // Отметки о публикации доменов в галерее.
   val CF_DQI            = "f" // QI-отметки, не привязаные к юзеру. Имеют ttl.
 
   // Инфа по юзерам. Access pattern - веб-морда.
-  val CF_UPROPS         = "g" // Юзеры. Тут например хранится предпочтительный язык UI и прочие вещи. Аналог DPROPS.
   val CF_UAUTHZ         = "h" // Данные по авторизациям юзеров в доменах.
 
   // Другое (веб-морда).
@@ -49,8 +47,8 @@ object MObject extends HTableModel {
   // /!\ При добавлении новых CF-записей нужно также обновлять/запиливать функции createTable() и updateTable().
   protected def CFs = Seq(
     CF_DPROPS, CF_MVI,
-    CF_DDATA, CF_DPUBLISH, CF_DQI,
-    CF_UPROPS, CF_UAUTHZ ,
+    CF_DDATA, CF_DQI,
+    CF_UAUTHZ ,
     CF_BLOG, CF_DOMAIN,
     CF_FACET_INVLINK,
     CF_RA_PROPS
@@ -63,9 +61,7 @@ object MObject extends HTableModel {
     case cf @ CF_DPROPS          => hcd(cf, 2)
     case cf @ CF_MVI             => MVIUnit.getCFDescriptor
     case cf @ CF_DDATA           => hcd(cf, 2)
-    case cf @ CF_DPUBLISH        => hcd(cf, 1)
     case cf @ CF_DQI             => hcd(cf, 1).setTimeToLive(DOMAIN_QI_TTL_SECONDS)
-    case cf @ CF_UPROPS          => hcd(cf, 1)
     case cf @ CF_UAUTHZ          => hcd(cf, 2)
     case cf @ CF_BLOG            => hcd(cf, 1)
     case cf @ CF_DOMAIN          => hcd(cf, 2)
