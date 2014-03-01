@@ -42,10 +42,6 @@ trait DkeyModelT extends DkeyContainerT {
   @JsonIgnore
   def domainUserSettings = MDomainUserSettings.getForDkey(dkey)
 
-  def authzForPerson(person_id:String) = MPersonDomainAuthz.getForPersonDkey(dkey, person_id)
-  //def qiTmpAuth = MDomainQiAuthzTmp.listDkey(dkey)  // unused
-  def qiTmpAuthPerson(qi_id: String) = MDomainQiAuthzTmp.getForDkeyId(dkey=dkey, id=qi_id)
-
   @JsonIgnore
   def allPersonAuthz = MPersonDomainAuthz.getForDkey(dkey)
 

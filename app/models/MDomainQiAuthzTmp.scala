@@ -63,24 +63,11 @@ case class MDomainQiAuthzTmp(
   @JsonIgnore def isQiType: Boolean = true
   @JsonIgnore def isValidationType: Boolean = false
 
-
-  override def qiTmpAuthPerson(qi_id: String): Future[Option[MDomainQiAuthzTmp]] = {
-    if (qi_id == id) {
-      Future.successful(Some(this))
-    } else {
-      super.qiTmpAuthPerson(qi_id)
-    }
-  }
-
-
   def bodyCodeOpt: Option[String] = None
 }
 
 
-object MDomainQiAuthzTmp {
-
-  // Не используем extends Logs т.к. этот логгер вызывается из класса-компаньона в том числе.
-  private val LOGGER = Logger(getClass.getName)
+object MDomainQiAuthzTmp extends PlayMacroLogsImpl {
 
   private val BACKEND: Backend = {
     StorageUtil.STORAGE match {

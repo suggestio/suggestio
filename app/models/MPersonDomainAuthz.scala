@@ -124,13 +124,6 @@ case class MPersonDomainAuthz(
 
   def remoteFilename: String = id + ".txt"
 
-  override def authzForPerson(_person_id: String): Future[Option[MPersonDomainAuthz]] = {
-    if (personId == _person_id) {
-      Future.successful(Some(this))
-    } else {
-      super.authzForPerson(personId)
-    }
-  }
 }
 
 
