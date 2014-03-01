@@ -29,7 +29,7 @@ object MMart extends EsModelStaticT[MMart] {
 
   val ES_TYPE_NAME = "mart"
 
-  override def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
+  def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
       typ = ES_TYPE_NAME,
       static_fields = Seq(
@@ -66,15 +66,13 @@ object MMart extends EsModelStaticT[MMart] {
     )
   }
 
-  def applyMap(m: collection.Map[String, AnyRef], acc: MMart): MMart = {
-    m foreach {
-      case (COMPANY_ID_ESFN, value)   => acc.companyId = companyIdParser(value)
-      case (NAME_ESFN, value)         => acc.name = nameParser(value)
-      case (ADDRESS_ESFN, value)      => acc.address = addressParser(value)
-      case (SITE_URL_ESFN, value)     => acc.siteUrl = Some(siteUrlParser(value))
-      case (DATE_CREATED_ESFN, value) => acc.dateCreated = dateCreatedParser(value)
-    }
-    acc
+
+  def applyKeyValue(acc: MMart): PartialFunction[(String, AnyRef), Unit] = {
+    case (COMPANY_ID_ESFN, value)     => acc.companyId = companyIdParser(value)
+    case (NAME_ESFN, value)           => acc.name = nameParser(value)
+    case (ADDRESS_ESFN, value)        => acc.address = addressParser(value)
+    case (SITE_URL_ESFN, value)       => acc.siteUrl = Some(siteUrlParser(value))
+    case (DATE_CREATED_ESFN, value)   => acc.dateCreated = dateCreatedParser(value)
   }
 
   protected def dummy(id: String) = MMart(

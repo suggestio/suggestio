@@ -26,7 +26,7 @@ object MShop extends EsModelStaticT[MShop] {
 
   val ES_TYPE_NAME = "shop"
 
-  override def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
+  def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
       typ = ES_TYPE_NAME,
       static_fields = Seq(
@@ -82,17 +82,15 @@ object MShop extends EsModelStaticT[MShop] {
     name = null
   )
 
-  def applyMap(m: collection.Map[String, AnyRef], acc: MShop): MShop = {
-    m.foreach {
-      case (COMPANY_ID_ESFN, value)   => acc.companyId   = companyIdParser(value)
-      case (MART_ID_ESFN, value)      => acc.martId      = martIdParser(value)
-      case (NAME_ESFN, value)         => acc.name         = nameParser(value)
-      case (DATE_CREATED_ESFN, value) => acc.dateCreated = dateCreatedParser(value)
-      case (DESCRIPTION_ESFN, value)  => acc.description  = Some(descriptionParser(value))
-      case (MART_FLOOR_ESFN, value)   => acc.martFloor   = Some(martFloorParser(value))
-      case (MART_SECTION_ESFN, value) => acc.martSection = Some(martSectionParser(value))
-    }
-    acc
+
+  def applyKeyValue(acc: MShop): PartialFunction[(String, AnyRef), Unit] = {
+    case (COMPANY_ID_ESFN, value)     => acc.companyId   = companyIdParser(value)
+    case (MART_ID_ESFN, value)        => acc.martId      = martIdParser(value)
+    case (NAME_ESFN, value)           => acc.name         = nameParser(value)
+    case (DATE_CREATED_ESFN, value)   => acc.dateCreated = dateCreatedParser(value)
+    case (DESCRIPTION_ESFN, value)    => acc.description  = Some(descriptionParser(value))
+    case (MART_FLOOR_ESFN, value)     => acc.martFloor   = Some(martFloorParser(value))
+    case (MART_SECTION_ESFN, value)   => acc.martSection = Some(martSectionParser(value))
   }
 
   /**

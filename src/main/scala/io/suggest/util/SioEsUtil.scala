@@ -641,22 +641,48 @@ trait FieldIndexable extends Field {
   }
 }
 
-/** Некое абстрактное индексируемое поле. Сюда не входит binary. */
-trait DocFieldIndexable extends DocField with FieldInxName with FieldStoreable with FieldIndexable {
-  def boost : Option[Float]
-  def include_in_all : Boolean
+
+trait FieldNullable extends Field {
   def null_value : String
   
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
-    if (boost.isDefined)
-      b.field("boost", boost.get)
-    if (!include_in_all)
-      b.field("include_in_all", include_in_all)
     if (null_value != null)
       b.field("null_value", null_value)
   }
 }
+  
+  
+trait FieldIncludeInAll extends Field {
+  def include_in_all : Boolean
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    if (!include_in_all)
+      b.field("include_in_all", include_in_all)
+  }
+}
+  
+
+trait FieldBoostable extends Field {
+  def boost : Option[Float]
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    if (boost.isDefined)
+      b.field("boost", boost.get)
+  }
+}
+
+ 
+/** Некое абстрактное индексируемое поле. Сюда не входит binary. */
+trait DocFieldIndexable extends DocField
+with FieldInxName
+with FieldStoreable
+with FieldIndexable
+with FieldIncludeInAll
+with FieldBoostable
+with FieldNullable
+
 
 /** Поле строки. */
 case class FieldString(
@@ -809,11 +835,29 @@ case class FieldAll(
 }
 
 
+case class FieldId(
+  index: FieldIndexingVariant = null,
+  store: Boolean = false,
+  path: String = null
+) extends FieldStoreable with FieldIndexable with FieldWithPath {
+  def id = FIELD_ID
+}
+
+
 /** Поле _source */
 case class FieldSource(enabled: Boolean = true) extends FieldEnableable {
   def id = FIELD_SOURCE
 }
 
+trait FieldWithPath extends Field {
+  def path: String
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    if (path != null)
+      b.field("path", path)
+  }
+}
 
 /** Поле _routing. */
 case class FieldRouting(
@@ -821,15 +865,13 @@ case class FieldRouting(
   store : Boolean = false,
   index : FieldIndexingVariant = null,
   path  : String = null
-) extends FieldStoreable with FieldIndexable {
+) extends FieldStoreable with FieldIndexable with FieldWithPath {
   def id = FIELD_ROUTING
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
     if (required)
       b.field("required", required)
-    if (path != null)
-      b.field("path", path)
   }
 }
 

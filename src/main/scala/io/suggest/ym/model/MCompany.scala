@@ -23,9 +23,9 @@ object MCompany extends EsModelStaticT[MCompany] {
 
   type CompanyId_t = String
 
-  override val ES_TYPE_NAME: String = "company"
+  val ES_TYPE_NAME: String = "company"
 
-  override def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
+  def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
     new IndexMapping(
       typ = ES_TYPE_NAME,
       static_fields = Seq(
@@ -47,17 +47,13 @@ object MCompany extends EsModelStaticT[MCompany] {
     )
   }
 
-  override def applyMap(m: Map[String, AnyRef], acc: MCompany): MCompany = {
-    m foreach {
-      case (NAME_ESFN, value) =>
-        acc.name = nameParser(value)
-      case (DATE_CREATED_ESFN, value) =>
-        acc.dateCreated = dateCreatedParser(value)
-    }
-    acc
+
+  def applyKeyValue(acc: MCompany): PartialFunction[(String, AnyRef), Unit] = {
+    case (NAME_ESFN, value)           => acc.name = nameParser(value)
+    case (DATE_CREATED_ESFN, value)   => acc.dateCreated = dateCreatedParser(value)
   }
 
-  override protected def dummy(id: String) = MCompany(id = Some(id), name = null)
+  protected def dummy(id: String) = MCompany(id = Some(id), name = null)
 
   /**
    * Удалить документ по id.

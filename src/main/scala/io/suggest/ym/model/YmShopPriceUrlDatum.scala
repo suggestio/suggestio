@@ -105,7 +105,7 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
 
   val ES_TYPE_NAME = "shopPriceList"
 
-  override def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
+  def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
       typ = ES_TYPE_NAME,
       static_fields = Seq(
@@ -139,13 +139,11 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
     authInfo = None
   )
 
-  def applyMap(m: collection.Map[String, AnyRef], acc: MShopPriceList): MShopPriceList = {
-    m foreach {
-      case (SHOP_ID_ESFN, value)   => acc.shopId = shopIdParser(value)
-      case (URL_ESFN, value)       => acc.url = urlParser(value)
-      case (AUTH_INFO_ESFN, value) => acc.authInfo = authInfoParser(value)
-    }
-    acc
+
+  def applyKeyValue(acc: MShopPriceList): PartialFunction[(String, AnyRef), Unit] = {
+    case (SHOP_ID_ESFN, value)      => acc.shopId = shopIdParser(value)
+    case (URL_ESFN, value)          => acc.url = urlParser(value)
+    case (AUTH_INFO_ESFN, value)    => acc.authInfo = authInfoParser(value)
   }
 
   /**

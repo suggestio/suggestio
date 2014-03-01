@@ -30,6 +30,7 @@ object SioConstants {
   def FIELD_ROUTING       = RoutingFieldMapper.NAME
   def FIELD_ANALYZER      = AnalyzerMapper.NAME
   def FIELD_BOOST         = BoostFieldMapper.NAME
+  def FIELD_ID            = IdFieldMapper.NAME
 
   // Названия анализаторов. А зачем они тут, если относятся только к SioEsUtil?
   val MINIMAL_AN    = "aMinimal"

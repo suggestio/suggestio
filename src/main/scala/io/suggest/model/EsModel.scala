@@ -70,6 +70,10 @@ object EsModel extends MacroLogsImpl {
   val ADDRESS_ESFN      = "address"
   val SITE_URL_ESFN     = "siteUrl"
   val PARENT_ID_ESFN    = "parentId"
+  val PERSON_ID_ESFN    = "personId"
+  val KEY_ESFN          = "key"
+  val VALUE_ESFN        = "value"
+  val IS_VERIFIED_ESFN  = "isVerified"
 
   def companyIdParser = stringParser
   def martIdParser = stringParser
@@ -256,7 +260,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
 trait EsModelStaticT[T <: EsModelT[T]] extends EsModelMinimalStaticT[T] {
 
   protected def dummy(id: String): T
-  def applyMap(m: collection.Map[String, AnyRef], acc: T): T
+  def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit]
 
   /**
    * Существует ли указанный магазин в хранилище?
@@ -272,7 +276,8 @@ trait EsModelStaticT[T <: EsModelT[T]] extends EsModelMinimalStaticT[T] {
 
   def deserializeOne(id: String, m: collection.Map[String, AnyRef]): T = {
     val acc = dummy(id)
-    applyMap(m, acc)
+    m foreach applyKeyValue(acc)
+    acc
   }
 
 }
@@ -316,8 +321,6 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
 
 /** Шаблон для динамических частей ES-моделей. */
 trait EsModelT[E <: EsModelT[E]] extends EsModelMinimalT[E] {
-  override def companion: EsModelStaticT[E]
-
   def toJson: XContentBuilder = {
     val acc = XContentFactory.jsonBuilder()
       .startObject()
