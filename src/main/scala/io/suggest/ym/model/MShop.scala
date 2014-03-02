@@ -18,6 +18,8 @@ import io.suggest.event._
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 23.01.14 19:23
  * Description: Таблица с магазинами, зарегистрированными в системе.
+ * Модель денормализованна по полю mart_id: оно может быть пустым, и это значит, что магазин
+ * не привязан к конкретному ТЦ. В дальнейшем, при необходимости можно будет
  */
 
 object MShop extends EsModelStaticT[MShop] {
@@ -31,7 +33,7 @@ object MShop extends EsModelStaticT[MShop] {
       typ = ES_TYPE_NAME,
       static_fields = Seq(
         FieldSource(enabled = true),
-        FieldAll(enabled = false, analyzer = FTS_RU_AN)
+        FieldAll(enabled = true, analyzer = FTS_RU_AN)
       ),
       properties = Seq(
         FieldString(
@@ -56,7 +58,7 @@ object MShop extends EsModelStaticT[MShop] {
         ),
         FieldString(
           id = DESCRIPTION_ESFN,
-          include_in_all = false,
+          include_in_all = true,
           index = FieldIndexingVariants.no
         ),
         FieldNumber(
@@ -85,10 +87,10 @@ object MShop extends EsModelStaticT[MShop] {
 
   def applyKeyValue(acc: MShop): PartialFunction[(String, AnyRef), Unit] = {
     case (COMPANY_ID_ESFN, value)     => acc.companyId   = companyIdParser(value)
-    case (MART_ID_ESFN, value)        => acc.martId      = martIdParser(value)
-    case (NAME_ESFN, value)           => acc.name         = nameParser(value)
+    case (MART_ID_ESFN, value)        => acc.martId      = Some(martIdParser(value))
+    case (NAME_ESFN, value)           => acc.name        = nameParser(value)
     case (DATE_CREATED_ESFN, value)   => acc.dateCreated = dateCreatedParser(value)
-    case (DESCRIPTION_ESFN, value)    => acc.description  = Some(descriptionParser(value))
+    case (DESCRIPTION_ESFN, value)    => acc.description = Some(descriptionParser(value))
     case (MART_FLOOR_ESFN, value)     => acc.martFloor   = Some(martFloorParser(value))
     case (MART_SECTION_ESFN, value)   => acc.martSection = Some(martSectionParser(value))
   }
@@ -96,13 +98,18 @@ object MShop extends EsModelStaticT[MShop] {
   /**
    * Найти все магазины, относящиеся к указанному ТЦ.
    * @param martId id торгового центра.
+   * @param sortField Название поля, по которому надо сортировать результаты.
+   * @param isReversed Если true, то сортировать будем в обратном порядке.
+   *                   Игнорируется, если sortField не задано.
    * @return Список MShop в неопределённом порядке.
    */
-  def getByMartId(martId: MartId_t)(implicit ec:ExecutionContext, client: Client): Future[Seq[MShop]] = {
-    client.prepareSearch(ES_INDEX_NAME)
+  def findByMartId(martId: MartId_t, sortField: Option[String] = None, isReversed:Boolean = false)(implicit ec:ExecutionContext, client: Client): Future[Seq[MShop]] = {
+    val req = client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(martIdQuery(martId))
-      .execute()
+    if (sortField.isDefined)
+      req.addSort(sortField.get, isReversed2sortOrder(isReversed))
+    req.execute()
       .map { searchResp2list }
   }
 
@@ -205,14 +212,14 @@ import MShop._
 
 case class MShop(
   var companyId   : CompanyId_t,
-  var martId      : MartId_t,
+  var martId      : Option[MartId_t] = None,
   var name        : String,
   var description : Option[String] = None,
   var martFloor   : Option[Int] = None,
   var martSection : Option[Int] = None,
   var id          : Option[MShop.ShopId_t] = None,
   var dateCreated : DateTime = null
-) extends EsModelT[MShop] with MCompanySel with MMartSel with CompanyMartsSel with ShopPriceListSel with MShopOffersSel {
+) extends EsModelT[MShop] with MCompanySel with MMartOptSel with CompanyMartsSel with ShopPriceListSel with MShopOffersSel {
 
   def companion = MShop
   def shopId = id.get
@@ -235,9 +242,9 @@ case class MShop(
   override def save(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
     val fut = super.save
     // Если создан новый магазин, то надо уведомлять о создании нового магазина.
-    if (id.isEmpty) {
+    if (id.isEmpty && martId.isDefined) {
       fut onSuccess { case newId =>
-        sn publish YmShopAddedEvent(martId=martId, shopId=newId)
+        sn publish YmShopAddedEvent(martId=martId.get, shopId=newId)
       }
     }
     fut
@@ -267,7 +274,7 @@ trait CompanyShopsSel {
 
 trait MartShopsSel {
   def martId: MartId_t
-  def martShops(implicit ec:ExecutionContext, client: Client) = getByMartId(martId)
+  def martShops(implicit ec:ExecutionContext, client: Client) = findByMartId(martId)
 }
 
 trait MShopSel {

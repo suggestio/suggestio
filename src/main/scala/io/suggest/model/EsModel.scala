@@ -13,6 +13,7 @@ import scala.util.{Failure, Success}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model._
 import java.lang.{Iterable => jlIterable}
+import org.elasticsearch.search.sort.SortOrder
 
 /**
  * Suggest.io
@@ -52,6 +53,12 @@ object EsModel extends MacroLogsImpl {
     }
   }
 
+  /** Сконвертить флаг reversed-сортировки в параметр для ES типа SortOrder. */
+  val isReversed2sortOrder: PartialFunction[Boolean, SortOrder] = {
+    case false => SortOrder.ASC
+    case true  => SortOrder.DESC
+  }
+
   /** Имя индекса, который будет использоваться для хранения данных остальных моделей.
     * Имя должно быть коротким и лексикографически предшествовать именам остальных временных индексов. */
   val ES_INDEX_NAME = "-sio"
@@ -74,6 +81,8 @@ object EsModel extends MacroLogsImpl {
   val KEY_ESFN          = "key"
   val VALUE_ESFN        = "value"
   val IS_VERIFIED_ESFN  = "isVerified"
+  val TOWN_ESFN         = "town"
+  val COUNTRY_ESFN      = "country"
 
   def companyIdParser = stringParser
   def martIdParser = stringParser

@@ -48,6 +48,11 @@ object MMart extends EsModelStaticT[MMart] {
           index = FieldIndexingVariants.no
         ),
         FieldString(
+          id = TOWN_ESFN,
+          include_in_all = true,
+          index = FieldIndexingVariants.no
+        ),
+        FieldString(
           id = ADDRESS_ESFN,
           include_in_all = true,
           index = FieldIndexingVariants.no
@@ -73,6 +78,7 @@ object MMart extends EsModelStaticT[MMart] {
     case (ADDRESS_ESFN, value)        => acc.address = addressParser(value)
     case (SITE_URL_ESFN, value)       => acc.siteUrl = Some(siteUrlParser(value))
     case (DATE_CREATED_ESFN, value)   => acc.dateCreated = dateCreatedParser(value)
+    case (TOWN_ESFN, value)           => acc.town = stringParser(value)
   }
 
   protected def dummy(id: String) = MMart(
@@ -80,6 +86,7 @@ object MMart extends EsModelStaticT[MMart] {
     companyId = null,
     name = null,
     address = null,
+    town = null,
     siteUrl = None
   )
 
@@ -134,6 +141,7 @@ import MMart._
 case class MMart(
   var companyId     : CompanyId_t,
   var name          : String,
+  var town          : String,
   var address       : String,
   var siteUrl       : Option[String],
   id                : Option[MMart.MartId_t] = None,
@@ -143,8 +151,12 @@ case class MMart(
   def companion = MMart
 
   def writeJsonFields(acc: XContentBuilder) {
+    if (companyId == null || name == null || town == null || address == null) {
+      throw new IllegalStateException("companyId or name is null")
+    }
     acc.field(COMPANY_ID_ESFN, companyId)
       .field(NAME_ESFN, name)
+      .field(TOWN_ESFN, town)
       .field(ADDRESS_ESFN, address)
     if (siteUrl.isDefined)
       acc.field(SITE_URL_ESFN, siteUrl.get)
@@ -169,9 +181,14 @@ case class MMart(
 }
 
 
-trait MMartSel {
-  def martId: MartId_t
-  def mart(implicit ec:ExecutionContext, client: Client) = getById(martId)
+trait MMartOptSel {
+  def martId: Option[MartId_t]
+  def mart(implicit ec:ExecutionContext, client: Client) = {
+    martId match {
+      case Some(_martId)  => getById(_martId)
+      case None           => Future successful None
+    }
+  }
 }
 
 trait CompanyMartsSel {
