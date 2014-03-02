@@ -1,0 +1,30 @@
+@(call:Call, sf: Form[_], btnText:String)(implicit ctx: util.Context)
+
+@* Форма для создания приглашения на доступ к админке магазина. *@
+
+@import helper._
+@import ctx._
+
+@form(call) {
+  @* Название будущего магазина. *@
+  @inputText(sf("name"))
+
+  @* Электропочта, на которую надо высылать уведомление. *@
+  @inputText(sf("email"))
+
+  @* Номер этажа в ТЦ. *@
+  @inputText(
+    sf("mart_floor"),
+    'placeholder -> 1,
+    '_label -> "Этаж"
+  )
+
+  @* Номер секции в ТЦ. *@
+  @inputText(
+    sf("mart_section"),
+    'placeholder -> 101,
+    '_label -> "Номер секции"
+  )
+
+  <input type="submit" value="@btnText"/>
+}

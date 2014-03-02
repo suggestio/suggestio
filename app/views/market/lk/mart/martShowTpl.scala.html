@@ -1,0 +1,26 @@
+@(mmart: MMart, shops: Seq[MShop])(implicit ctx: util.Context)
+
+@* Страница с отображением торгового центра. Рисунок 1 в дизайне. *@
+
+@import controllers.MarketMartLk.ShopSort._
+@import routes.MarketMartLk._
+
+@market.lk.lkBase(mmart.name) {
+  <h1>@mmart.name</h1>
+
+  @* Адрес и кнопка редактировать *@
+  <p>Полный адрес @mmart.town, @mmart.address</p>
+  <a href="@martEditForm(mmart.id.get)">Редактировать</a>
+
+  <h2>Арендаторы</h2>
+
+  <a href="@martEditForm(mmart.id.get)">Выдать личный кабинет</a>
+
+  @* Заголовок таблицы магазинов (кнопки сортировки) пока тут. Ещё есть флаг isReversed=true|false. *@
+  <p>Сортировка:</p>
+  <a href="@martShow(mmart.id.get, SORT_BY_A_Z.toString)">А-Я</a>
+  <a href="@martShow(mmart.id.get, SORT_BY_CAT.toString)">Категория</a>
+  <a href="@martShow(mmart.id.get, SORT_BY_FLOOR.toString)">Этаж</a>
+
+  @_martShopsTpl(martId=mmart.id.get, shops=shops)
+}

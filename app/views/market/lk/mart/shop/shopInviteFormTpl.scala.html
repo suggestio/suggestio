@@ -1,0 +1,15 @@
+@(mmart: MMart, sf: Form[_])(implicit ctx: util.Context)
+
+@* Страница с формой добавления нового магазина с отсылкой инвайта по email владельца. *@
+
+@market.lk.lkBase("Добавить магазин") {
+
+  <h1>@mmart.name</h1>
+  @mmart.town @mmart.address
+
+  @_shopInviteFormTpl(
+    call = routes.MarketMartLk.inviteShopFormSubmit(mmart.id.get),
+    sf = sf,
+    btnText = "Создать"
+  )
+}

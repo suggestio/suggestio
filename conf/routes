@@ -82,15 +82,24 @@ GET  /sys/indices/active/:dkey/:vin     controllers.Sys.indicesShowActiveFor(dke
 GET  /sys/indices/vin/:vin              controllers.Sys.showVin(vin)
 POST /sys/indices/downgrade/ALL         controllers.Sys.indicesDowngradeAll
 
+# Личный кабинет владельца ТЦ
+GET  /m/lk/mart/:martId                 controllers.MarketMartLk.martShow(martId, sortByRaw: Option[String] = None, isReversed: Boolean ?= false)
+GET  /m/lk/mart/:id/edit                controllers.MarketMartLk.martEditForm(id: String)
+POST /m/lk/mart/:id/edit                controllers.MarketMartLk.martEditFormSubmit(id: String)
+POST /m/lk/mart/:martId/shop/:shopId/delete controllers.MarketMartLk.martShopDeleteSubmit(martId, shopId)
+GET  /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopForm(martId)
+POST /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopFormSubmit(martId)
+
 # личный кабинет купца
-GET  /market/lk/:shopId/offers          controllers.MarketOffer.showShopPromoOffers(shopId: String)
-GET  /market/lk/offer/promo/add/:shopId controllers.MarketOffer.addPromoOfferForm(shopId: String)
+GET  /m/lk/:shopId/offers               controllers.MarketOffer.showShopPromoOffers(shopId: String)
+GET  /m/lk/offer/promo/add/:shopId      controllers.MarketOffer.addPromoOfferForm(shopId: String)
 # promo-offer'ы (poffer)
-POST /market/lk/poffer/add/:shopId      controllers.MarketOffer.addPromoOfferFormSubmit(shopId: String)
-POST /market/lk/poffer/:offerId/delete  controllers.MarketOffer.deletePromoOfferSubmit(offerId)
-GET  /market/lk/poffer/:offerId         controllers.MarketOffer.showPromoOffer(offerId)
-GET  /market/lk/poffer/:offerId/edit    controllers.MarketOffer.editPromoOfferForm(offerId)
-POST /market/lk/poffer/:offerId/edit    controllers.MarketOffer.editPromoOfferFormSubmit(offerId)
+POST /m/lk/poffer/add/:shopId           controllers.MarketOffer.addPromoOfferFormSubmit(shopId: String)
+POST /m/lk/poffer/:offerId/delete       controllers.MarketOffer.deletePromoOfferSubmit(offerId)
+GET  /m/lk/poffer/:offerId              controllers.MarketOffer.showPromoOffer(offerId)
+GET  /m/lk/poffer/:offerId/edit         controllers.MarketOffer.editPromoOfferForm(offerId)
+POST /m/lk/poffer/:offerId/edit         controllers.MarketOffer.editPromoOfferFormSubmit(offerId)
+
 POST /img/tmp/prepare                   controllers.Img.handleTempImg
 GET  /img/tmp/:key                      controllers.Img.getTempImg(key)
 

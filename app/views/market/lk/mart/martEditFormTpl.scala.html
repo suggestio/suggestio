@@ -1,0 +1,8 @@
+@(mmart: MMart, mf: Form[_])(implicit ctx: util.Context)
+
+@* Рендер страницы редактирования существующего ТЦ. *@
+@import ctx._
+
+@market.lk.lkBase("Редактировать ТЦ") {
+  @_martFormTpl("Сохранить", mf, routes.MarketMartLk.martEditFormSubmit(mmart.id.get))
+}

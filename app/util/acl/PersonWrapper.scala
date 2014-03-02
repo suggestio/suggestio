@@ -15,7 +15,7 @@ object PersonWrapper {
    * @tparam A Подтип реквеста (не важен).
    * @return Option[PersonWrapper].
    */
-  def getFromRequest[A](implicit request: RequestHeader) = getFromSession(request.session)
+  def getFromRequest(implicit request: RequestHeader) = getFromSession(request.session)
 
   /**
    * Извечь данные о залогиненности юзера из сессии.

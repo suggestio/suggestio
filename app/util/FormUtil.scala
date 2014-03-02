@@ -30,6 +30,11 @@ object FormUtil {
     }
   }
 
+  /** Маппинг для номера этажа в ТЦ. */
+  val martFloorM = number(min = -10, max = 200)
+
+  /** Маппинг для секции в ТЦ. */
+  val martSectionM = number(min=0, max=200000)
 
   // Трансформеры для optional-списков.
   def optList2ListF[T] = { optList: Option[List[T]] => optList getOrElse Nil }

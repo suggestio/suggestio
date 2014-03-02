@@ -1,0 +1,14 @@
+@(martId: MMart.MartId_t, shops: Seq[MShop])(implicit ctx: util.Context)
+
+@* Рендер списка магазинов для торгового центра (только сам список, без обрамления и т.д.). *@
+
+<ul>
+@shops.map { shop =>
+  <li>
+    @shop.name
+
+    @* Кнопка удаления *@
+    @stuff._deleteSmthFormBtnTpl(routes.MarketMartLk.martShopDeleteSubmit(martId=martId, shopId=shop.id.get))
+  </li>
+}
+</ul>

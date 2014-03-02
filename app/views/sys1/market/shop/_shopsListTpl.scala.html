@@ -19,16 +19,18 @@
           }
         </td>
       }
-      @marts.map { _marts =>
-        <td>
-          @_marts.get(shop.martId).map { mmart =>
-            @* a.title: Нужно экранировать/срезать ковычки, чтобы разметка не поехала. *@
-            <a href="@routes.SysMarket.martShow(shop.martId)" title="@mmart.address">@mmart.name</a>
-            @mmart.siteUrl.map { siteUrl =>
-              <a href="@siteUrl">&#x1f30d;</a> @* Тут символ глобуса, который почти ни у кого нормально не отображается. *@
+      @shop.martId.map { shopMartId =>
+        @marts.map { _marts =>
+          <td>
+            @_marts.get(shopMartId).map { mmart =>
+              @* a.title: Нужно экранировать/срезать ковычки, чтобы разметка не поехала. *@
+              <a href="@routes.SysMarket.martShow(shopMartId)" title="@mmart.address">@mmart.name</a>
+              @mmart.siteUrl.map { siteUrl =>
+                <a href="@siteUrl">&#x1f30d;</a> @* Тут символ глобуса, который почти ни у кого нормально не отображается. *@
+              }
             }
-          }
-        </td>
+          </td>
+        }
       }
     </tr>
   }

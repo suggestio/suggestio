@@ -15,7 +15,7 @@
   }
 
   @mmartOpt.map { mmart =>
-    <p>ТЦ <a href="@routes.SysMarket.martShow(mshop.martId)">@mmart.name</a> по адресу @mmart.address.</p>
+    <p>ТЦ <a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.name</a> по адресу @mmart.address.</p>
   }
 
   <br/>

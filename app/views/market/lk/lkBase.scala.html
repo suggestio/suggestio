@@ -1,0 +1,9 @@
+@(title: String, headAfter:Option[Html] = None)(content: Html)(implicit ctx: util.Context)
+
+@* Базовый шаблон для личного кабинета sio-маркета (не важно: ТЦ или магазин).
+   - Параметр headAfter содержит дополнения к телу тега head.
+*@
+
+@* TODO Нужно сделать тут верстку для личного кабинета, а не использовать служебный sysBase. *@
+
+@sys1.sysBase(title=title, headAfter=headAfter)(content)
