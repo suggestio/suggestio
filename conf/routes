@@ -89,6 +89,9 @@ POST /m/lk/mart/:id/edit                controllers.MarketMartLk.martEditFormSub
 POST /m/lk/mart/:martId/shop/:shopId/delete controllers.MarketMartLk.martShopDeleteSubmit(martId, shopId)
 GET  /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopForm(martId)
 POST /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopFormSubmit(martId)
+GET  /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopForm(shopId)
+POST /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopFormSubmit(shopId)
+GET  /m/lk/mart/shop/:shopId            controllers.MarketMartLk.showShop(shopId)
 
 # личный кабинет купца
 GET  /m/lk/:shopId/offers               controllers.MarketOffer.showShopPromoOffers(shopId: String)

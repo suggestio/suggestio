@@ -1,0 +1,19 @@
+@(mshop: MShop, editCall: Call)(implicit ctx: util.Context)
+
+@* Админ ТЦ смотрит карточку магазина. Или владелец магазина смотрит на свой магазин.
+   У них разные шаблоны, однако отображение данных по магазину - одно.
+*@
+@import ctx._
+
+<h1>@mshop.name</h1>
+
+@* Кнопка "редактировать". *@
+<a href="@editCall">@Messages("Edit")</a>
+
+<p>@mshop.description</p>
+
+<p>Этаж @mshop.martFloor</p>
+<p>Секция @mshop.martSection</p>
+
+<h2>Каталог продукции</h2>
+TODO Шаблоны лежат в market/lk/shop/offers/

@@ -1,0 +1,15 @@
+@(mmart: MMart, mshop:MShop)(implicit ctx:util.Context)
+
+@* Шаблон отображения магазина для админа ТЦ. *@
+@import market.lk._
+
+@lkBase(mshop.name) {
+  <h1>Карточка арендатора</h1>
+
+  @* Отобразить основное описание магазина с кнопкой редактирования. *@
+  @shop._shopShowTpl(
+    mshop=mshop,
+    editCall=routes.MarketMartLk.editShopForm(mshop.id.get)
+  )
+
+}

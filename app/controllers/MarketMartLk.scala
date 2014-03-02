@@ -27,6 +27,18 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
     val SORT_BY_A_Z   = Value("a-z")
     val SORT_BY_CAT   = Value("cat")
     val SORT_BY_FLOOR = Value("floor")
+
+    def handleShopsSortBy(sortRaw: String): String = {
+      if (SORT_BY_A_Z.toString equalsIgnoreCase sortRaw) {
+        EsModel.NAME_ESFN
+      } else if (SORT_BY_CAT.toString equalsIgnoreCase sortRaw) {
+        ???
+      } else if (SORT_BY_FLOOR.toString equalsIgnoreCase sortRaw) {
+        EsModel.MART_FLOOR_ESFN
+      } else {
+        null
+      }
+    }
   }
 
   import ShopSort._
@@ -179,6 +191,41 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
   }
 
   /**
+   * Рендер страницы с формой редактирования магазина-арендатора.
+   * Владельцу ТЦ доступны различные опции формы, недоступные для редактирования арендатору.
+   * @param shopId id магазина.
+   */
+  def editShopForm(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
+    ???
+  }
+
+  /**
+   * Сабмит формы редактирования магазина-арендатора.
+   * @param shopId id магазина.
+   */
+  def editShopFormSubmit(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
+    ???
+  }
+
+  /**
+   * Отобразить страницу по магазину.
+   * @param shopId id магазина.
+   */
+  def showShop(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
+    val martId = request.martId
+    val mmartOptFut = MMart.getById(martId)
+    MShop.getById(shopId) flatMap {
+      case Some(mshop) =>
+        mmartOptFut.map {
+          case Some(mmart) => Ok(shop.shopShowTpl(mmart, mshop))
+          case None => martNotFound(martId)
+        }
+
+      case None => shopNotFound(shopId)
+    }
+  }
+
+  /**
    * Сабмит формы удаления магазина из торгового центра.
    * @param martId id ТЦ.
    * @param shopId id Магазина.
@@ -197,17 +244,6 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
 
 
   private def martNotFound(martId: MartId_t) = NotFound("mart not found: " + martId)  // TODO Нужно дергать 404-шаблон.
-
-  private def handleShopsSortBy(sortRaw: String): String = {
-    if (SORT_BY_A_Z.toString equalsIgnoreCase sortRaw) {
-      EsModel.NAME_ESFN
-    } else if (SORT_BY_CAT.toString equalsIgnoreCase sortRaw) {
-      ???
-    } else if (SORT_BY_FLOOR.toString equalsIgnoreCase sortRaw) {
-      EsModel.MART_FLOOR_ESFN
-    } else {
-      null
-    }
-  }
+  private def shopNotFound(shopId: ShopId_t) = NotFound("Shop not found: " + shopId)  // TODO
 
 }
