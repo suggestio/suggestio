@@ -6,4 +6,123 @@
 
 @* TODO Нужно сделать тут верстку для личного кабинета, а не использовать служебный sysBase. *@
 
-@sys1.sysBase(title=title, headAfter=headAfter)(content)
+@* sys1.sysBase(title=title, headAfter=headAfter)(content) *@
+
+<html>
+<head>
+    <title>@title | system | s.io</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
+	<link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/common.min.css")'/>
+	<link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/base.min.css")'/>
+</head>
+
+<body class="lk">
+
+  <div class="header-wrap">
+    <div class="center">
+      <a class="logo" href="#">
+        <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" />
+      </a>
+      <div class="auth">
+        <span class="gray">Welcome,</span>&nbsp;
+        <span class="user hover">
+          Константинопольский&nbsp;Константин<span class="select-but">&nbsp;</span>
+          <ul class="drop-menu">
+            <li>
+              <a href="#">Мой профиль</a>
+            </li>
+            <li>
+              <a href="#">Выйти</a>
+            </li>
+          </ul>
+        </span>
+      </div>
+    </div>
+    <div class="title-wrap">
+      <div class="center">
+        <img class="market-logo" src='@routes.Assets.at("images/market/lk/market-logo.png")' alt="market-logo" />
+        <div class="title">
+          <h1>ТЦ Стокманн в ТРЦ Золотой Вавилон</h1>
+          <a class="edit" href="#">Редактировать</a>
+          <div class="descr">
+            Москва, пр-т Мира 211, ТРЦ Золотой Вавилон м. ВДНХ, м. Отрадное, м. Свиблово
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="body-wrap">
+    <div class="body">
+
+        <form class="search">
+          <div style="position: relative;" class="input">
+            <div class="input-shadow">
+              <input type="text" value="fr" />
+            </div>
+          </div>
+          <input class="submit" type="submit" value="" />
+          <div class="descr">Ищите по имени компании, номеру секции</div>
+        </form>
+
+        <div class="renters">
+          <div class="ovh">
+            <span class="title">
+              АРЕНДАТОРЫ
+            </span>
+            <a class="new-lk" href="#">&nbsp;</a>
+          </div>
+
+          <div class="renters-list">
+            <div class="hat">
+              Управление личным кабинетом
+            </div>
+            <div class="odd enabled">
+              <div class="left">
+                <a href="#">1C Интерес</a>
+              </div>
+              <div class="right">
+                <span class="disaable-but">Выкл</span>
+                <!--<div class="slider">
+                  <div class="circle"></div>
+                </div>-->
+                <span class="enable-but">Вкл</span>
+              </div>
+            </div>
+            <div class="even enabled">
+              <div class="left">
+                <a href="#">Alex Fitness</a><span class="type">&nbsp;/&nbsp;фитнес клуб</span>
+              </div>
+              <div class="right">
+                <span class="disaable-but">Выкл</span>
+                <!--<div class="slider">
+                  <div class="circle"></div>
+                </div>-->
+                <span class="enable-but">Вкл</span>
+              </div>
+            </div>
+            <div class="odd disabled">
+              <div class="left">
+                <a href="#">Andrey Silchenko</a><span class="type">&nbsp;/&nbsp;салон красоты</span>
+              </div>
+              <div class="right">
+                <span class="disaable-but">Выкл</span>
+                <!--<div class="slider">
+                  <div class="circle"></div>
+                </div>-->
+                <span class="enable-but">Вкл</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+    </div>
+  </div>
+
+  <div class="footer-wrap">
+
+  </div>
+
+</body>
+</html>
