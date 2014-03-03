@@ -20,15 +20,15 @@ import play.api.Play.current
 object MPersonIdent {
 
   /** Список емейлов админов suggest.io. */
-  private val SU_EMAILS: Set[String] = {
+  def SU_EMAILS: Seq[String] = {
     // id'шники суперюзеров sio можно указыват через конфиг, но мыльники должны быть в известных доменах.
-    current.configuration.getStringSeq("sio.superuser.ids")
+    current.configuration.getStringSeq("sio.superuser.emails")
       .map {
         _.view.filter {
           email => email.endsWith("@cbca.ru") || email.endsWith("@shuma.ru")
-        }.toSet
+        }
       }
-      .getOrElse(Set(
+      .getOrElse(Seq(
         "konstantin.nikiforov@cbca.ru",
         "ilya@shuma.ru",
         "sasha@cbca.ru",
