@@ -40,7 +40,7 @@ object MPersonIdent {
   def generateMapping(typ: String): XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
       typ = typ,
-      static_fields = Seq(
+      staticFields = Seq(
         FieldSource(enabled = true),
         FieldAll(enabled = false, analyzer = FTS_RU_AN),
         FieldId(path = KEY_ESFN)  // Для надежной защиты от двойных добавлений.

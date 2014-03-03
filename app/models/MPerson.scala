@@ -46,7 +46,7 @@ object MPerson extends EsModelStaticT[MPerson] {
   def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
       typ = ES_TYPE_NAME,
-      static_fields = Seq(
+      staticFields = Seq(
         FieldAll(enabled = false, analyzer = FTS_RU_AN),
         FieldSource(enabled = true)
       ),

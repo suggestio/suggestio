@@ -29,15 +29,15 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
     val SORT_BY_CAT   = Value("cat")
     val SORT_BY_FLOOR = Value("floor")
 
-    def handleShopsSortBy(sortRaw: String): String = {
+    def handleShopsSortBy(sortRaw: String): Option[String] = {
       if (SORT_BY_A_Z.toString equalsIgnoreCase sortRaw) {
-        EsModel.NAME_ESFN
+        Some(EsModel.NAME_ESFN)
       } else if (SORT_BY_CAT.toString equalsIgnoreCase sortRaw) {
         ???
       } else if (SORT_BY_FLOOR.toString equalsIgnoreCase sortRaw) {
-        EsModel.MART_FLOOR_ESFN
+        Some(EsModel.MART_FLOOR_ESFN)
       } else {
-        null
+        None
       }
     }
   }
@@ -87,9 +87,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
    */
   def martShow(martId: MartId_t, sortByRaw: Option[String], isReversed: Boolean) = IsMartAdmin(martId).async { implicit request =>
     val mmartOptFut = MMart.getById(martId)
-    val sortBy = sortByRaw flatMap {
-      _sortByRaw => Option(handleShopsSortBy(_sortByRaw))
-    }
+    val sortBy = sortByRaw flatMap handleShopsSortBy
     val shopsFut = MShop.findByMartId(martId, sortBy, isReversed)
     mmartOptFut flatMap {
       case Some(mmart) =>
