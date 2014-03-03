@@ -4,7 +4,7 @@ import play.api.data.Forms._
 import java.net.URL
 import io.suggest.util.UrlUtil
 import gnu.inet.encoding.IDNA
-import models._
+import HtmlSanitizer._
 
 /**
  * Suggest.io
@@ -15,10 +15,16 @@ import models._
 object FormUtil {
 
   val strIdentityF = {s:String => s}
-  val strTrimF = {s:String => s.trim}
-  val strTrimLowerF = {s:String => s.trim.toLowerCase}
+  val strTrimF = {s: String => s.trim }
+  val strTrimSanitizeF = {s:String =>
+    stripAllPolicy.sanitize(s).trim
+  }
+  val strTrimSanitizeLowerF = strTrimSanitizeF andThen {_.toLowerCase}
+  val strFmtTrimF = {s: String =>
+    textFmtPolicy.sanitize(s).trim
+  }
 
-  private val allowedProtocolRePattern = "(?i)https?".r
+  private val allowedProtocolRE = "(?i)https?".r
 
   def isValidUrl(urlStr: String): Boolean = {
     try {
@@ -36,13 +42,30 @@ object FormUtil {
   /** Маппинг для секции в ТЦ. */
   val martSectionM = number(min=0, max=200000)
 
+  val nameM = nonEmptyText(maxLength = 64)
+    .transform(strTrimSanitizeF, strIdentityF)
+  def shopNameM = nameM
+  def martNameM = nameM
+  def companyNameM = nameM
+
+  val publishedTextM = text(maxLength = 2048)
+    .transform(strFmtTrimF, strIdentityF)
+  val publishedTextOptM = optional(publishedTextM)
+
+  val townM = nonEmptyText(maxLength = 32)
+    .transform(strTrimSanitizeF, strIdentityF)
+
+  val addressM = nonEmptyText(minLength = 10, maxLength = 128)
+    .transform(strTrimSanitizeF, strIdentityF)
+  def martAddressM = addressM
+
   // Трансформеры для optional-списков.
   def optList2ListF[T] = { optList: Option[List[T]] => optList getOrElse Nil }
   def list2OptListF[T] = { l:List[T] =>  if (l.isEmpty) None else Some(l) }
 
   /** Маппер form-поля URL в строку URL */
   val urlStrMapper = nonEmptyText(minLength = 8)
-    .transform(_.trim, strIdentityF)
+    .transform(strTrimF, strIdentityF)
     .verifying("mappers.url.invalid_url", isValidUrl(_))
 
   /** Маппер form-поля с ссылкой в java.net.URL. */
@@ -52,7 +75,7 @@ object FormUtil {
   /** Проверить ссылку на возможность добавления сайта в индексацию. */
   val urlAllowedMapper = urlMapper
     .verifying("mappers.url.only_http_https_allowed", { url =>
-      allowedProtocolRePattern.pattern.matcher(url.getProtocol).matches()
+      allowedProtocolRE.pattern.matcher(url.getProtocol).matches()
     })
     .verifying("mappers.url.hostname_prohibited", { url =>
       UrlUtil.isHostnameValid(url.getHost)
@@ -61,7 +84,7 @@ object FormUtil {
 
   // Маппер домена. Формат ввода тут пока не проверяется.
   val domainMapper = nonEmptyText(minLength = 4, maxLength = 128)
-    .transform(strTrimLowerF, strIdentityF)
+    .transform(strTrimSanitizeLowerF, strIdentityF)
     .verifying("mappers.url.hostname_prohibited", UrlUtil.isHostnameValid(_))
 
   // Маппер домена с конвертором в dkey.
@@ -76,4 +99,6 @@ object FormUtil {
 
   /** id'шники в ES-моделях генерятся силами ES. Тут маппер для полей, содержащих ES-id. */
   val esIdM = nonEmptyText(minLength=6, maxLength=64)
+    .transform(strTrimSanitizeF, strIdentityF)
 }
+

@@ -157,5 +157,3 @@ session.cookieName = "s"
 # Переименовать длинный палевный "PLAY_LANG" в "l". Это скроет play.
 application.lang.cookie = "l"
 
-sio.superuser.ids = ["ECzryIDwR6SSJyD_M4IFdw"]
-

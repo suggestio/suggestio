@@ -1,0 +1,7 @@
+@(mspos: Seq[MShopPromoOffer])(implicit ctx: util.Context)
+
+@* Рендер списка офферов магазина в личном кабинете. *@
+
+@mspos.map { mspo =>
+  @_offerSmallTpl(mspo)
+}

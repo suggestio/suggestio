@@ -7,6 +7,9 @@
 
 @thisShopBase(title=mshop.name, mshop=mshop, mmartOpt=mmartOpt) {
   <h2>Магазин "@mshop.name"</h2>
+
+  <p><a href="@routes.MarketShopLk.showShop(mshop.id.get)"><b>-&gt; Личный кабинет арендатора</b></a></p>
+
   <a href="@routes.SysMarket.shopEditForm(mshop.id.get)">@Messages("Edit")</a>
   @_shopDeleteFormTpl(mshop.id.get)
 

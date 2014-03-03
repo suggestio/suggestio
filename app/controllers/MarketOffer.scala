@@ -60,7 +60,7 @@ object MarketOffer extends SioController with MacroLogsImpl {
 
   /** Ввод единиц измерения. */
   val sizeUnitsM = "sizeUnits" -> text(maxLength = 4)
-    .transform(strTrimF, strIdentityF)   // TODO Юниты надо проверять по множеству допустимых.
+    .transform(strTrimSanitizeF, strIdentityF)   // TODO Юниты надо проверять по множеству допустимых.
 
   /** Маппер для цены товара. */
   val priceM = "price" -> float

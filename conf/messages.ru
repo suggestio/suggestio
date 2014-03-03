@@ -13,9 +13,12 @@ Created=Создан
 Edit=Редактировать
 Shop=Магазин
 Shops=Магазины
+Save=Сохранить
 
+Color=Цвет
 Colors=Цвета
 Manufacturer=Производитель
+Size=Размер
 Sizes=Размеры
 
 

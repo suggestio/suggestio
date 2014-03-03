@@ -2,7 +2,6 @@ package models
 
 import io.suggest.model.{EsModel, EsModelStaticT, EsModelT}
 import org.elasticsearch.common.xcontent.XContentBuilder
-import scala.collection.Map
 import EsModel._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.SioConstants._
@@ -25,7 +24,7 @@ object MMartCategory extends EsModelStaticT[MMartCategory] {
   def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
       typ = ES_TYPE_NAME,
-      static_fields = Seq(
+      staticFields = Seq(
         FieldAll(enabled = false, analyzer = FTS_RU_AN),
         FieldSource(enabled = true)
       ),

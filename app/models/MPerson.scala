@@ -3,13 +3,11 @@ package models
 import io.suggest.model.{EsModelStaticT, EsModelT}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.common.xcontent.XContentBuilder
-import play.api.Play.current
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.SioConstants._
 import io.suggest.model.EsModel._
 import scala.concurrent.ExecutionContext
 import org.elasticsearch.client.Client
-import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -29,22 +27,26 @@ object MPerson extends EsModelStaticT[MPerson] {
   val LANG_ESFN   = "lang"
   val IDENTS_ESFN = "idents"
 
-  private val SU_IDS = {
-    current.configuration.getStringList("sio.superuser.ids").map(_.toSeq) getOrElse Seq("ECzryIDwR6SSJyD_M4IFdw")
+  /** PersonId суперпользователей sio. */
+  private var SU_IDS: Set[String] = null
+
+  /** Выставление personId для суперпользователей. Вызывается из Global при старте. */
+  def setSuIds(suIds: Set[String]) {
+    SU_IDS = suIds
   }
 
   /**
-   * Принадлежит ли указанный мыльник суперюзеру suggest.io?
-   * @param email емейл.
-   * @return true, если это почта админа. Иначе false.
+   * Принадлежит ли указанный id суперюзеру suggest.io?
+   * @param personId Реальный id юзера.
+   * @return true, если это админ. Иначе false.
    */
-  def isSuperuserId(email: String) = true //SU_EMAILS contains email
+  def isSuperuserId(personId: String) = SU_IDS contains personId
 
   /** Сгенерить маппинг для индекса. */
   def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
       typ = ES_TYPE_NAME,
-      static_fields = Seq(
+      staticFields = Seq(
         FieldAll(enabled = false, analyzer = FTS_RU_AN),
         FieldSource(enabled = true)
       ),

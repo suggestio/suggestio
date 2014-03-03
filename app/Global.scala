@@ -2,11 +2,12 @@ import akka.actor.Cancellable
 import io.suggest.model.EsModel
 import org.elasticsearch.client.Client
 import play.api.mvc.{SimpleResult, RequestHeader}
-import scala.concurrent.{Future, future}
+import scala.concurrent.{Await, Future, future}
 import scala.util.{Failure, Success}
 import util.{Crontab, SiowebEsUtil, SiowebSup}
 import play.api.Play._
 import play.api._
+import scala.concurrent.duration._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
 
@@ -26,6 +27,8 @@ object Global extends GlobalSettings {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
+  implicit private def sioNotifier = util.event.SiowebNotifier
+
   private var cronTimers : List[Cancellable] = null
 
   /**
@@ -36,11 +39,17 @@ object Global extends GlobalSettings {
     super.onStart(app)
     SiowebSup.startLink
     // Запускать es-клиент при старте, ибо подключение к кластеру ES это занимает некоторое время.
-    future {
+    val fut = future {
       SiowebEsUtil.ensureNode()
-    } onSuccess { case esNode =>
-      initializeEsModels(esNode.client)
+    } map {
+      _.client()
+    } flatMap { implicit esClient =>
+      initializeEsModels map { _ => esClient }
+    } flatMap { implicit esClient =>
+      resetSuperuserIds map { _ => esClient }
     }
+    // Блокируемся, чтобы не было ошибок в браузере и консоли из-за асинхронной работы с ещё не запущенной системой.
+    Await.ready(fut, 20 seconds)
     cronTimers = Crontab.startTimers
   }
 
@@ -49,16 +58,18 @@ object Global extends GlobalSettings {
   /** Проинициализировать все ES-модели и основной индекс. */
   def initializeEsModels(implicit client: Client): Future[_] = {
     val futInx = EsModel.ensureSioIndex
+    val logPrefix = "initializeEsModels(): "
     futInx onComplete {
-      case Success(result) => debug("ensureIndex() -> " + result)
-      case Failure(ex)     => error("ensureIndex() failed", ex)
+      case Success(result) => debug(logPrefix + "ensure() -> " + result)
+      case Failure(ex)     => error(logPrefix + "ensureIndex() failed", ex)
     }
     val futMappings = futInx flatMap { _ =>
-      info("Index do not have mappings for type=" + MShopPromoOffer.ES_TYPE_NAME)
+      info(logPrefix + "Index do not have mappings for type=" + MShopPromoOffer.ES_TYPE_NAME)
       EsModel.putAllMappings
     }
     futMappings onComplete {
-      case tryResult => debug("Set index mappings completed with " + tryResult)
+      case Success(_)  => info(logPrefix + "Finishied successfully.")
+      case Failure(ex) => error(logPrefix + "Failure", ex)
     }
     futMappings
   }
@@ -83,9 +94,42 @@ object Global extends GlobalSettings {
     // TODO логгер тут не работает почему-то...
     println(request.path + " - 404")
     maybeApplication match {
-      case Some(app) if app.mode == Mode.Prod => _root_.controllers.Application.http404Fut(request)
+      case Some(app) if app.mode == Mode.Prod =>
+        _root_.controllers.Application.http404Fut(request)
+
       // При разработке следует выводить нормальное 404.
       case _ => super.onHandlerNotFound(request)
+    }
+  }
+
+  /** Выставить в MPerson id'шники суперпользователей. Для этого надо убедится, что все админские MPersonIdent'ы
+    * существуют. Затем, сохранить в глобальную переменную в MPerson этот списочек. */
+  def resetSuperuserIds(implicit client: Client): Future[_] = {
+    import _root_.models._
+    val logPrefix = "resetSuperuserIds(): "
+    Future.traverse(MPersonIdent.SU_EMAILS) { email =>
+      MozillaPersonaIdent.getById(email) flatMap {
+        // Суперюзер ещё не сделан. Создать MPerson и MPI для текущего email.
+        case None =>
+          val logPrefix1 = s"$logPrefix[$email] "
+          info(logPrefix1 + "Installing new sio superuser...")
+          MPerson(lang = "ru").save.flatMap { personId =>
+            MozillaPersonaIdent(email=email, personId=personId).save.map { mpiId =>
+              info(logPrefix1 + s"New superuser installed as $personId. mpi=$mpiId")
+              personId
+            }
+          }
+
+        // Суперюзер уже существует. Просто возвращаем его id.
+        case Some(mpi) => Future successful mpi.personId
+      }
+    } andThen {
+      case Success(suPersonIds) =>
+        MPerson.setSuIds(suPersonIds.toSet)
+        info(logPrefix + suPersonIds.length + " superusers installed successfully")
+
+      case Failure(ex) =>
+        error(logPrefix + "Failed to install superusers", ex)
     }
   }
 
