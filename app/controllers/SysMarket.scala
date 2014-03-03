@@ -23,7 +23,7 @@ object SysMarket extends SioController with MacroLogsImpl {
 
   /** Маппинг для формы добавления/редактирования компании. */
   val companyFormM = Form(
-    "name" -> nonEmptyText(maxLength = 64)
+    "name" -> companyNameM
   )
 
   /** Индексная страница продажной части. Тут ссылки на дальнейшие страницы. */
@@ -148,13 +148,10 @@ object SysMarket extends SioController with MacroLogsImpl {
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
   val martFormM = Form(tuple(
-    "name" -> nonEmptyText(maxLength = 64)
-      .transform(strTrimF, strIdentityF),
-    "town" -> nonEmptyText(maxLength = 32)
-      .transform(strTrimF, strIdentityF),
-    "address" -> nonEmptyText(minLength = 10, maxLength = 128)
-      .transform(strTrimF, strIdentityF),
-    "site_url" -> optional(urlStrMapper)
+    "name"      -> martNameM,
+    "town"      -> townM,
+    "address"   -> martAddressM,
+    "site_url"  -> optional(urlStrMapper)
   ))
 
   /** Рендер страницы с формой добавления торгового центра. */
@@ -260,10 +257,10 @@ object SysMarket extends SioController with MacroLogsImpl {
 
   /** Форма добавления/редактирования магазина. */
   val shopFormM = Form(mapping(
-    "name"         -> nonEmptyText(minLength = 1, maxLength = 64),
+    "name"         -> shopNameM,
     "mart_id"      -> optional(esIdM),
     "company_id"   -> esIdM,
-    "description"  -> optional(text(maxLength = 2048)),
+    "description"  -> publishedTextOptM,
     "mart_floor"   -> optional(martFloorM),
     "mart_section" -> optional(martSectionM)
   )

@@ -1,0 +1,24 @@
+@(mmart: MMart, mshop:MShop, sf: Form[_])(implicit ctx: util.Context)
+
+@* Страница с формой редактировния магазина для владельца ТЦ.
+   Отличается от формы для владельца магазина доступом на редактирование ко всем полям, а не только
+   к описаниям/названиям. *@
+
+@import market.lk._
+@import routes.MarketMartLk._
+@import ctx._
+
+@lkBase(Messages("Edit") + " " + mshop.name) {
+
+  <h1>Профайл магазина</h1>
+
+  <a href="@showShop(mshop.id.get)">Назад к просмотру магазина</a>
+
+  @shop._shopFormTpl(
+    call = editShopFormSubmit(mshop.id.get),
+    sf = sf,
+    btnText = Messages("Save"),
+    isLimited = false
+  )
+
+}

@@ -11,6 +11,7 @@ import io.suggest.model.EsModel
 import views.html.market.lk.mart._
 import play.api.data._, Forms._
 import util.FormUtil._
+import MarketShopLk.shopFormM
 
 /**
  * Suggest.io
@@ -45,13 +46,10 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
   val martFormM = Form(mapping(
-    "name" -> nonEmptyText(maxLength = 64)
-      .transform(strTrimF, strIdentityF),
-    "town" -> nonEmptyText(maxLength = 32)
-      .transform(strTrimF, strIdentityF),
-    "address" -> nonEmptyText(minLength = 10, maxLength = 128)
-      .transform(strTrimF, strIdentityF),
-    "site_url" -> optional(urlStrMapper)
+    "name"      -> martNameM,
+    "town"      -> townM,
+    "address"   -> martAddressM,
+    "site_url"  -> optional(urlStrMapper)
   )
   // applyF()
   {(name, town, address, siteUrlOpt) =>
@@ -65,8 +63,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
 
   /** Маппинг формы приглашения магазина в систему. */
   val inviteShopFormM = Form(mapping(
-    "name" -> nonEmptyText(maxLength = 64)
-      .transform(strTrimF, strIdentityF),
+    "name"          -> shopNameM,
     "email"         -> email,
     "mart_floor"    -> martFloorM,
     "mart_section"  -> martSectionM
@@ -192,19 +189,57 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
 
   /**
    * Рендер страницы с формой редактирования магазина-арендатора.
-   * Владельцу ТЦ доступны различные опции формы, недоступные для редактирования арендатору.
+   * Владельцу ТЦ доступны различные опции формы, недоступные для редактирования арендатору, поэтому для биндинга
+   * используется именно расширенная форма.
    * @param shopId id магазина.
    */
   def editShopForm(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
-    ???
+    val martId = request.martId
+    val mmartOptFut = MMart.getById(martId)
+    MShop.getById(shopId) flatMap {
+      case Some(mshop) =>
+        mmartOptFut.map {
+          case Some(mmart) =>
+            Ok(shop.shopEditFormTpl(mmart, mshop, shopFormM))
+
+          case None => martNotFound(martId)
+        }
+
+      case None => shopNotFound(shopId)
+    }
   }
 
   /**
    * Сабмит формы редактирования магазина-арендатора.
-   * @param shopId id магазина.
+   * @param shopId id редактируемого магазина.
    */
   def editShopFormSubmit(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
-    ???
+    MShop.getById(shopId) flatMap {
+      case Some(mshop) =>
+        shopFormM.bindFromRequest().fold(
+          {formWithErrors =>
+            debug(s"editShopFormSubmit($shopId): Form bind failed: " + formWithErrors.errors)
+            val martId = request.martId
+            MMart.getById(martId) map {
+              case Some(mmart) => NotAcceptable(shop.shopEditFormTpl(mmart, mshop, formWithErrors))
+              case None => martNotFound(martId)
+            }
+          },
+          {mshop2 =>
+            // Пора накатить изменения на текущий магазин и сохранить
+            mshop.name = mshop2.name
+            mshop.description = mshop2.description
+            mshop.martFloor = mshop2.martFloor
+            mshop.martSection = mshop2.martSection
+            mshop.save.map { _ =>
+              Redirect(routes.MarketMartLk.showShop(shopId))
+                .flashing("success" -> "Изменения сохранены.")
+            }
+          }
+        )
+
+      case None => shopNotFound(shopId)
+    }
   }
 
   /**

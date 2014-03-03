@@ -1,0 +1,36 @@
+@(call:Call, sf: Form[_], btnText:String, isLimited: Boolean)(implicit ctx: util.Context)
+
+@* Форма для добавления/редактирования магазинов в MarketLk.
+   - Если isLimited, то некоторые поля будут заблокированы. *@
+@import helper._
+@import ctx._
+
+@form(call) {
+  @inputText(sf("name"))
+
+  @* Поля этажа/секции доступны только владельцу ТЦ, т.е. если !isLimited. Задаём атрибут через хвост-список. *@
+  @defining(if(isLimited) List('disabled -> "") else Nil) { attrsRest =>
+    @* Номер этажа в ТЦ. *@
+    @inputText(
+      sf("mart_floor"),
+      'placeholder -> 1 ::
+      '_label -> "Этаж" ::
+      attrsRest : _*
+    )
+
+    @* Номер секции в ТЦ. *@
+    @inputText(
+      sf("mart_section"),
+      'placeholder -> 101 ::
+      '_label -> "Номер секции" ::
+      attrsRest : _*
+    )
+  }
+
+  @textarea(
+    sf("description"),
+    '_label -> "Описание магазина"
+  )
+
+  <input type="submit" value="@btnText"/>
+}

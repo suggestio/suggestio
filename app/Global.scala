@@ -48,7 +48,7 @@ object Global extends GlobalSettings {
     } flatMap { implicit esClient =>
       resetSuperuserIds map { _ => esClient }
     }
-    // Блокируемся, чтобы не было ошибок на экране из-за асинхронной работы с ещё не запущенной системой.
+    // Блокируемся, чтобы не было ошибок в браузере и консоли из-за асинхронной работы с ещё не запущенной системой.
     Await.ready(fut, 20 seconds)
     cronTimers = Crontab.startTimers
   }
@@ -58,17 +58,18 @@ object Global extends GlobalSettings {
   /** Проинициализировать все ES-модели и основной индекс. */
   def initializeEsModels(implicit client: Client): Future[_] = {
     val futInx = EsModel.ensureSioIndex
+    val logPrefix = "initializeEsModels(): "
     futInx onComplete {
-      case Success(result) => debug("ensureIndex() -> " + result)
-      case Failure(ex)     => error("ensureIndex() failed", ex)
+      case Success(result) => debug(logPrefix + "ensure() -> " + result)
+      case Failure(ex)     => error(logPrefix + "ensureIndex() failed", ex)
     }
     val futMappings = futInx flatMap { _ =>
-      info("Index do not have mappings for type=" + MShopPromoOffer.ES_TYPE_NAME)
+      info(logPrefix + "Index do not have mappings for type=" + MShopPromoOffer.ES_TYPE_NAME)
       EsModel.putAllMappings
     }
     futMappings onComplete {
-      case Success(_)  => info("onStart() finishied successfully.")
-      case Failure(ex) => error("onStart() Failed", ex)
+      case Success(_)  => info(logPrefix + "Finishied successfully.")
+      case Failure(ex) => error(logPrefix + "Failure", ex)
     }
     futMappings
   }

@@ -13,6 +13,7 @@ Created=Создан
 Edit=Редактировать
 Shop=Магазин
 Shops=Магазины
+Save=Сохранить
 
 Colors=Цвета
 Manufacturer=Производитель

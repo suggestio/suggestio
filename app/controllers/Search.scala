@@ -49,7 +49,7 @@ object Search extends SioController with Logs {
 
     // Поисковый запрос. Вся суть тут.
     "q" -> nonEmptyText(maxLength = 127)
-      .transform(strTrimLowerF, strIdentityF)
+      .transform(strTrimSanitizeLowerF, strIdentityF)
       .verifying("c.s.search_query.empty", !_.isEmpty)
       // TODO Следует научится обнаруживать параметры прямо в поисковой строке. например "site:vasya.com скачать бесплатно без смс"
     ,
