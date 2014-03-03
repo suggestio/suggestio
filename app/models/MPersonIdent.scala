@@ -6,6 +6,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder
 import EsModel._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.SioConstants._
+import play.api.Play.current
 
 /**
  * Suggest.io
@@ -17,6 +18,24 @@ import io.suggest.util.SioConstants._
  * Все PersonIdent имеют общий формат, однако хранятся в разных типах в рамках одного индекса.
  */
 object MPersonIdent {
+
+  /** Список емейлов админов suggest.io. */
+  private val SU_EMAILS: Set[String] = {
+    // id'шники суперюзеров sio можно указыват через конфиг, но мыльники должны быть в известных доменах.
+    current.configuration.getStringSeq("sio.superuser.ids")
+      .map {
+        _.view.filter {
+          email => email.endsWith("@cbca.ru") || email.endsWith("@shuma.ru")
+        }.toSet
+      }
+      .getOrElse(Set(
+        "konstantin.nikiforov@cbca.ru",
+        "ilya@shuma.ru",
+        "sasha@cbca.ru",
+        "maksim.sharipov@cbca.ru"
+      ))
+  }
+
 
   def generateMapping(typ: String): XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(

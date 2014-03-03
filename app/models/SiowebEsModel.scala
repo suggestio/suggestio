@@ -11,7 +11,7 @@ import io.suggest.model.{EsModel, EsModelMinimalStaticT}
 object SiowebEsModel {
 
   def ES_MODELS: Seq[EsModelMinimalStaticT[_]] = {
-    Seq(MBlog, MMartCategory) ++ EsModel.ES_MODELS
+    Seq(MBlog, MMartCategory, MPerson, MozillaPersonaIdent) ++ EsModel.ES_MODELS
   }
 
 }

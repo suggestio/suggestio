@@ -9,6 +9,7 @@ import io.suggest.util.SioConstants._
 import io.suggest.model.EsModel._
 import scala.concurrent.ExecutionContext
 import org.elasticsearch.client.Client
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -28,21 +29,8 @@ object MPerson extends EsModelStaticT[MPerson] {
   val LANG_ESFN   = "lang"
   val IDENTS_ESFN = "idents"
 
-  // Список емейлов админов suggest.io.
-  val SU_IDS: Set[String] = {
-    // id'шники суперюзеров sio можно указыват через конфиг, но мыльники должны быть в известных доменах.
-    current.configuration.getStringSeq("sio.superuser.emails")
-      .map {
-        _.view.filter {
-          email => email.endsWith("@cbca.ru") || email.endsWith("@shuma.ru")
-        }.toSet
-      }
-      .getOrElse(Set(
-        "konstantin.nikiforov@cbca.ru",
-        "ilya@shuma.ru",
-        "sasha@cbca.ru",
-        "maksim.sharipov@cbca.ru"
-      ))
+  private val SU_IDS = {
+    current.configuration.getStringList("sio.superuser.ids").map(_.toSeq) getOrElse Seq("ECzryIDwR6SSJyD_M4IFdw")
   }
 
   /**
@@ -50,7 +38,7 @@ object MPerson extends EsModelStaticT[MPerson] {
    * @param email емейл.
    * @return true, если это почта админа. Иначе false.
    */
-  def isSuperuserId(email: String) = SU_IDS contains email
+  def isSuperuserId(email: String) = true //SU_EMAILS contains email
 
   /** Сгенерить маппинг для индекса. */
   def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
