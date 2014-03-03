@@ -21,7 +21,7 @@ object YmIndex {
     new IndexMapping(
       typ = typeName,
 
-      static_fields = Seq(
+      staticFields = Seq(
         FieldSource(enabled = true),
         FieldAll(enabled = true, analyzer = FTS_RU_AN)
       ),

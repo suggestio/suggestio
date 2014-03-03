@@ -31,7 +31,7 @@ object MShop extends EsModelStaticT[MShop] {
   def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
       typ = ES_TYPE_NAME,
-      static_fields = Seq(
+      staticFields = Seq(
         FieldSource(enabled = true),
         FieldAll(enabled = true, analyzer = FTS_RU_AN)
       ),
@@ -226,8 +226,9 @@ case class MShop(
 
   override def writeJsonFields(acc: XContentBuilder) {
     acc.field(COMPANY_ID_ESFN, companyId)
-      .field(MART_ID_ESFN, martId)
       .field(NAME_ESFN, name)
+    if (martId.isDefined)
+      acc.field(MART_ID_ESFN, martId.get)
     if (description.isDefined)
       acc.field(DESCRIPTION_ESFN, description.get)
     if (martFloor.isDefined)

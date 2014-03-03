@@ -308,7 +308,7 @@ object SioEsUtil extends MacroLogsImpl {
       new IndexMapping(
         typ = typeName,
 
-        static_fields = Seq(
+        staticFields = Seq(
           FieldSource(enabled = true),
           FieldAll(enabled = true, analyzer = FTS_RU_AN)
         ),
@@ -384,7 +384,8 @@ object TermVectorVariants extends Enumeration {
 object DocFieldTypes extends Enumeration {
   type DocFieldType = Value
   val string, integer, long, float, double, boolean, `null`,
-      multi_field, ip, geo_point, geo_shape, attachment, date, binary = Value
+      multi_field, ip, geo_point, geo_shape, attachment, date, binary,
+      nested, `object` = Value
 }
 
 
@@ -877,9 +878,9 @@ case class FieldRouting(
 
 
 /** Мультиполе multi_field. */
-case class FieldMultifield(id:String, fields:Seq[JsonObject]) extends Field {
+case class FieldMultifield(id:String, fields:Seq[JsonObject]) extends DocField {
   
-  def typ = "multi_field"
+  def fieldType = DocFieldTypes.multi_field
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -892,21 +893,36 @@ case class FieldMultifield(id:String, fields:Seq[JsonObject]) extends Field {
   }
 }
 
-
-/** Генератор маппинга индекса со всеми полями и блекджеком. */
-case class IndexMapping(typ:String, static_fields:Seq[JsonObject], properties:Seq[JsonObject]) extends JsonObject {
-  def id = typ
+trait FieldWithProperties extends Field {
+  def properties: Seq[DocField]
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
-    super.fieldsBuilder(b)
-    static_fields map { _.builder }
-
+    super.fieldsBuilder
     if (!properties.isEmpty) {
       b.startObject("properties")
         properties map { _.builder }
       b.endObject()
     }
   }
+}
+
+/** Генератор маппинга индекса со всеми полями и блекджеком. */
+case class IndexMapping(typ:String, staticFields:Seq[Field], properties:Seq[DocField]) extends FieldWithProperties {
+  def id = typ
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder(b)
+    staticFields map { _.builder }
+  }
+}
+
+/** Nested-объекты описаны тут. */
+case class FieldNestedObject(
+  id          : String,
+  properties  : Seq[DocField],
+  enabled     : Boolean = true
+) extends DocField with FieldWithProperties with FieldEnableable {
+  override def fieldType = DocFieldTypes.nested
 }
 
 // END: DSL полей документа --------------------------------------------------------------------------------------------
