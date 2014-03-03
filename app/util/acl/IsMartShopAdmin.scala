@@ -12,7 +12,7 @@ import util.SiowebEsUtil.client
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 20.02.14 18:38
- * Description:
+ * Description: Проверка прав на управление магазином, находящимся внутри ТЦ.
  */
 object IsMartShopAdmin extends PlayMacroLogsImpl {
   import LOGGER._

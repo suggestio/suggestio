@@ -1,0 +1,15 @@
+@(mmart: MMart, mshop:MShop)(implicit ctx:util.Context)
+
+@* Страница отображения магазина для арендатора ТЦ (т.е. для владельца этого магазина). *@
+@import market.lk._
+
+@lkBase(mshop.name) {
+  <h1>Мой очень чОткий магазин</h1>
+
+  @* Отобразить основное описание магазина с кнопкой редактирования. *@
+  @shop._shopShowTpl(
+    mshop=mshop,
+    editCall=routes.MarketShopLk.editShopForm(mshop.id.get)
+  )
+
+}

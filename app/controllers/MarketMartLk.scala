@@ -200,7 +200,8 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
       case Some(mshop) =>
         mmartOptFut.map {
           case Some(mmart) =>
-            Ok(shop.shopEditFormTpl(mmart, mshop, shopFormM))
+            val formBinded = shopFormM.fill(mshop)
+            Ok(shop.shopEditFormTpl(mmart, mshop, formBinded))
 
           case None => martNotFound(martId)
         }

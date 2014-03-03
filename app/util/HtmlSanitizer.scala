@@ -30,8 +30,8 @@ object HtmlSanitizer {
   /** Из оформления стрипать html, оставляя только базовое форматирование. */
   val textFmtPolicy =  new HtmlPolicyBuilder()
     .allowCommonBlockElements()
-    .allowElements("a","em","i","ul","li","ol")
-    .allowAttributes("href","target").onElements("a")
+    .allowElements("a", "em", "i", "ul", "li", "ol")
+    .allowAttributes("href", "target").onElements("a")
     .requireRelNofollowOnLinks()
     .allowUrlProtocols("http", "https")
     .allowCommonInlineFormattingElements()

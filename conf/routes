@@ -93,8 +93,13 @@ GET  /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopForm(sh
 POST /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopFormSubmit(shopId)
 GET  /m/lk/mart/shop/:shopId            controllers.MarketMartLk.showShop(shopId)
 
-# личный кабинет купца
-GET  /m/lk/:shopId/offers               controllers.MarketOffer.showShopPromoOffers(shopId: String)
+# личный кабинет купца-арендатора ТЦ.
+GET  /m/lk/s/:shopId                    controllers.MarketShopLk.showShop(shopId)
+GET  /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopForm(shopId)
+POST /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopFormSubmit(shopId)
+
+# Управление промо-офферами (для арендатора и для владельца ТЦ).
+GET  /m/lk/s/:shopId/offers             controllers.MarketOffer.showShopPromoOffers(shopId: String)
 GET  /m/lk/offer/promo/add/:shopId      controllers.MarketOffer.addPromoOfferForm(shopId: String)
 # promo-offer'ы (poffer)
 POST /m/lk/poffer/add/:shopId           controllers.MarketOffer.addPromoOfferFormSubmit(shopId: String)
@@ -102,6 +107,7 @@ POST /m/lk/poffer/:offerId/delete       controllers.MarketOffer.deletePromoOffer
 GET  /m/lk/poffer/:offerId              controllers.MarketOffer.showPromoOffer(offerId)
 GET  /m/lk/poffer/:offerId/edit         controllers.MarketOffer.editPromoOfferForm(offerId)
 POST /m/lk/poffer/:offerId/edit         controllers.MarketOffer.editPromoOfferFormSubmit(offerId)
+
 
 POST /img/tmp/prepare                   controllers.Img.handleTempImg
 GET  /img/tmp/:key                      controllers.Img.getTempImg(key)
