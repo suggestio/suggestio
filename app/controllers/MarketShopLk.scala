@@ -49,13 +49,16 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
    * @param shopId id магазина.
    */
   def showShop(shopId: ShopId_t) = IsMartShopAdmin(shopId).async { implicit request =>
+    val offersFut = MShopPromoOffer.getAllForShop(shopId)
     MShop.getById(shopId) flatMap {
       case Some(mshop) =>
         // TODO Если магазин удалён из ТЦ, то это как должно выражаться?
         val martId = mshop.martId.get
-        MMart.getById(martId).map {
+        MMart.getById(martId).flatMap {
           case Some(mmart) =>
-            Ok(shopShowTpl(mmart, mshop))
+            offersFut.map { offers =>
+              Ok(shopShowTpl(mmart, mshop, offers))
+            }
 
           case None => martNotFound(martId)
         }

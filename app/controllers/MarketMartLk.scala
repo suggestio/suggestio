@@ -278,6 +278,28 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
     }
   }
 
+  /**
+   * Страница со списком товаров магазина.
+   * @param shopId id магазина.
+   */
+  def showShopOffers(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
+    val martId = request.martId
+    val mmartOptFut = MMart.getById(martId)
+    val moffersFut = MShopPromoOffer.getAllForShop(shopId)
+    MShop.getById(shopId) flatMap {
+      case Some(mshop) =>
+        mmartOptFut flatMap {
+          case Some(mmart) =>
+            moffersFut.map { moffers =>
+              Ok(shop.shopOffersTpl(mmart, mshop, moffers))
+            }
+
+          case None => martNotFound(martId)
+        }
+
+      case None => shopNotFound(shopId)
+    }
+  }
 
   private def martNotFound(martId: MartId_t) = NotFound("mart not found: " + martId)  // TODO Нужно дергать 404-шаблон.
   private def shopNotFound(shopId: ShopId_t) = NotFound("Shop not found: " + shopId)  // TODO

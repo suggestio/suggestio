@@ -5,7 +5,7 @@
 @* TODO Пока что используется шаблон подложки магазина из /sys/. *@
 @market.lk.lkBase(title, headAfter=headAfter) {
   @mshopOpt.map { mshop =>
-    <a href="@routes.SysMarket.shopShow(mshop.id.get)">SYS: @mshop.name</a>
+    <a href="@routes.MarketShopLk.showShop(mshop.id.get)">Вернутся назад в магазин @mshop.name</a>
   }
   @content
 }

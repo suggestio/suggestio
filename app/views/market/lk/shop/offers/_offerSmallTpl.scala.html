@@ -1,0 +1,49 @@
+@(mspo: MShopPromoOffer)(implicit ctx: util.Context)
+
+@* Рендер одного маленького блока с оффером (товара с описанием в частности). Используется в списках товаров. *@
+
+@import mspo.datum.{pictures, colors, sizesOrig}
+@import ctx._
+
+@* Пока используется неоптимальный cascading-datum вместо нормального класса, нужно кешировать
+значения полей прямо в шаблоне. *@
+
+@defining(mspo.anyNameIolist) { name =>
+  @* Главная картинка товара. *@
+  @defining(pictures.headOption) { maybePicture =>
+    @maybePicture.map { pictureId =>
+      <img src="@routes.Img.getThumb("TODO", pictureId)" alt="@name"/>
+    }
+  }
+
+  <h2>@name</h2>
+}
+
+<br/>
+@* Цвета товара, если указаны. *@
+@defining(colors) { _colors =>
+  @if(!_colors.isEmpty) {
+    @Messages("Color"):
+    @_colors.map { color =>
+      @* Тут должны быть квадратики с цветами. Далее пример использования цветов.
+         Надо не забыть атрибут title через Messages() (для слабовидящих). *@
+      <span class="color-@color">@Messages("color." + color.toString)</span>
+    }
+  }
+}
+<br/>
+@* Размеры *@
+@defining(sizesOrig) { _sizes =>
+  @if(!_sizes.isEmpty) {
+    @Messages("Size"):
+    @_sizes.map { size =>
+      @* Тут маленькие штучки указанными с размерами. Пока БЕЗ неуказанных размеров, которые есть в дизайне. *@
+      <span>@size</span>
+    }
+  }
+}
+
+<br/>
+
+@* Кнопка-ссылка "подробнее". Она вроде должна через ajax работать с возможностью работы без него. *@
+<a href="TODO">Подробнее</a>
