@@ -4,12 +4,37 @@
 
 @market.lk.lkBase("Добавить магазин") {
 
-  <h1>@mmart.name</h1>
-  @mmart.town @mmart.address
+  <div class="title-wrap">
+    <div class="center">
+      <a class="back-but" href="#">&nbsp;</a>
+      <div class="title-inner">
+        ВЫДАТЬ ЛИЧНЫЙ КАБИНЕТ
+      </div>
+    </div>
+  </div>
 
-  @_shopInviteFormTpl(
-    call = routes.MarketMartLk.inviteShopFormSubmit(mmart.id.get),
-    sf = sf,
-    btnText = "Создать"
-  )
+  <div class="body">
+
+    <div class="market-info">
+      <div class="name">
+        @mmart.name
+      </div>
+      <div class="border-line"></div>
+      <div class="descr">
+        @mmart.town, @mmart.address
+        <br/>
+        Телефон:  +7 (495) 988-18-84
+        <br/>
+        Часы работы: ежедневно с 10:00 до 22:00
+      </div>
+      <div class="border-line"></div>
+    </div>
+
+    @_shopInviteFormTpl(
+      call = routes.MarketMartLk.inviteShopFormSubmit(mmart.id.get),
+      sf = sf,
+      btnText = "Создать"
+    )
+
+  </div>
 }

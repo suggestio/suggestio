@@ -1,16 +1,8 @@
-border-radius(v)
-  -webkit-border-radius:v
-  border-radius:v
-
-@css {
-  @import url(http://fonts.googleapis.com/css?family=PT+Sans+Narrow:700,400&subset=cyrillic-ext,latin-ext);
-}
-
 .lk
   .header-wrap
     background: #23313d
     position: relative
-    margin-bottom: -170px
+    margin-bottom: -90px
     .center
       height: 90px
       width: 1000px
@@ -43,7 +35,8 @@ border-radius(v)
             width: 8px
             display: block
             float: right
-            background: url('/assets/images/market/lk/select-but.png') no-repeat center center
+            background: url('/assets/images/market/lk/select-but.png') no-repeat
+            background-position: 2px -56px
             border-top: 1px solid #23313d
             border-right: 1px solid #23313d
             border-left: 1px solid #23313d
@@ -55,7 +48,7 @@ border-radius(v)
           color: #949494
           .select-but
             padding: 5px 4px 4px
-            background: url('/assets/images/market/lk/select-but.hover.png') no-repeat center center #b5b8bb
+            background: url('/assets/images/market/lk/select-but.png') no-repeat 4px 3px #b5b8bb
             border-top: 1px solid white
             border-right: 1px solid white
             border-left: 1px solid white
@@ -81,147 +74,57 @@ border-radius(v)
             li:hover
               color: #676666
               text-decoration: underline
+  .body-wrap
+    min-height: 100%
+    background: #e1e1e1
     .title-wrap
       height: 80px
+      padding-top: 90px
+      margin-bottom: -170px
       background: #efefef
+      border-bottom: 1px solid #9a9b9b
       .center
-        padding-top: 15px
+        padding-top: 20px
         width: 1000px
         margin: 0 auto
-        .market-logo
-          display: block
-          float: left
-          padding-right: 20px
-        .title
-          overflow: hidden
-          padding-left: 20px
-          border-left: 1px solid #BABABA
-          h1
-            display: inline-block
-            font-family: 'PT Sans Narrow', 'sans-serif'
-            font-size: 24px
-            font-weight: bold
-            padding-right: 20px
-          .edit
-            font-size: 10px
-            color: #959595
-            font-family: 'Arial'
-            text-decoration: none
-            background: url('/assets/images/market/lk/edit-but.png') no-repeat left center
-            padding-left: 15px
-            padding-top: 5px
-          .edit:hover
-            background: url('/assets/images/market/lk/edit-but.hover.png') no-repeat left center
-            color:#5088aa
-          .descr
-            padding-top: 5px
-            font-size: 14px
-            font-family: 'Arial'
-            color: #959595
-  .body-wrap
-    height: 100%
-    background: #e1e1e1
     .body
       width: 870px
       margin: 0 auto
       padding-bottom: 60px
-      padding-top: 190px
+      padding-top: 210px
       padding-left: 130px
-      .search
-        display: block
-        .input
-          background: none repeat scroll 0 0 #FFFFFF
-          border: 1px solid #B4B3B3
-          padding: 1px
-          float: left
-          width: 830px
-          .input-shadow
-            border-left: 1px solid #FBFBFB
-            border-right: 1px solid #FBFBFB
-            border-top: 1px solid #D2D3D3
-            border-radius(5px)
-            input
-              padding: 0 10px
-              width: 100%
-              height: 35px
-              font-size: 16px
-              color: #959595
-              font-family: 'Arial'
-        .submit
-          width: 40px
-          height: 40px
-          display: block
-          cursor: pointer
-          background: url('/assets/images/market/lk/search-but.png') no-repeat center center
-        .submit:hover
-          background: url('/assets/images/market/lk/search-but.hover.png') no-repeat center center
-        .submit:active
-          background: url('/assets/images/market/lk/search-but.active.png') no-repeat center center
-        .descr
-          padding-top: 5px
-          text-align: center
-          font-size: 12px
-          color: gray
-          font-family: 'Arial'
-      .renters
-        padding-top: 20px
-        .title
-          color: #676666
-          font-family: 'ParagNorCIta'
-          font-size: 30px
-        .new-lk
-          display: block
-          cursor: pointer
-          text-decoration: none
-          float: right
-          width: 210px
-          height: 40px
-          background: url('/assets/images/market/lk/new-lk-but.png') no-repeat center center
-        .new-lk:hover
-           background: url('/assets/images/market/lk/new-lk-but.hover.png') no-repeat center center
-        .new-lk:active
-           background: url('/assets/images/market/lk/new-lk-but.active.png') no-repeat center center
-        .renters-list
-          margin-top: 10px
-          border: 1px solid #b2b2b2
-          .hat
-            padding: 12px
-            background: #cbcbcb
-            font-size: 12px
-            line-height: 12px
-            font-family: 'Arial'
-            color: #efefef
-            text-align: right
-          .even,
-          .odd
-            overflow: hidden
-            padding: 11px 12px
-          .even
-            background: #f5f5f5
-          .odd
-            background: white
-          .left
-            float: left
-            a
-              font-family: 'Arial'
-              color: #4f88a9
-              font-weight: bold
-              text-decoration: none
-              font-size: 16px
-            a:hover
-              text-decoration: underline
-            .type
-              font-family: 'Arial'
-              font-size: 16px
-              color: #959595
-          .right
-            float: right
-          .disabled
-            .left
-              a
-                color: #959595
+
   .footer-wrap
     height: 60px
     position: relative
     margin-top: -60px
     background: #23313d
+    .footer
+      width: 910px
+      margin: 0 auto
+      padding-left: 90px
+      padding-top: 25px
+      .copyright-block
+        padding-right: 5px
+        border-right: 1px solid #a8c3cb
+        color: #a8c3cb
+        font-size: 12px
+        font-family: 'Arial'
+      .socials
+        float: right
+        a
+          display: inline-block
+          line-height: 16px
+          color: #a8c3cb
+          font-size: 12px
+          font-family: 'Arial'
+          padding-left: 20px
+          margin-left: 10px
+          text-decoration: none
+          background: url('/assets/images/market/lk/soc-footer.png') no-repeat
+        a:hover
+          text-decoration: underline
+        .fb
+          background-position: 0 0
+        .tw
+          background-position: 0 -65px

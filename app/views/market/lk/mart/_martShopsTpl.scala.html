@@ -4,12 +4,29 @@
 @import routes.MarketMartLk._
 
 <ul>
-@shops.map { shop =>
-  <li>
+@shops.zipWithIndex.map { case (shop, i) =>
+  <!--<li class="@if(i == 0) {odd} else {even}">
+
+    @shop.toJson.string
+
     <a href="@showShop(shop.id.get)">@shop.name</a>
 
     @* Кнопка удаления магазина *@
     @stuff._deleteSmthFormBtnTpl(martShopDeleteSubmit(martId=martId, shopId=shop.id.get))
-  </li>
+  </li>-->
+
+
+  <div class="@if(i == 0) {odd} else {even} enabled">
+    <div class="left">
+      <a href="@showShop(shop.id.get)">@shop.name</a>
+    </div>
+    <div class="right">
+      <span class="disable-but">Выкл</span>
+      <div class="triger">
+        <div class="circle"></div>
+      </div>
+      <span class="enable-but">Вкл</span>
+    </div>
+  </div>
 }
 </ul>
