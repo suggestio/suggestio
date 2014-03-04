@@ -4,7 +4,7 @@ import io.suggest.ym.model.YmShopCategory
 import scala.collection.mutable
 import scala.annotation.tailrec
 import io.suggest.ym.NormTokensOutAn
-import YmCategory.{CAT_TRGM_MAP, CAT_TREE}
+import YmCategory.{CAT_TRGM_MAP, CAT_TREE_CORE}
 import io.suggest.util.{MacroLogsImpl, Lists}
 import io.suggest.util.MyConfig.CONFIG
 
@@ -222,7 +222,7 @@ class YmCatTranslator extends Serializable {
       parentCatsMapFloat = parentCatsMapFloat.updated(YmCategory.SERVICE_CAT_NAME, serviceCatInfoOpt.get * SERVICE_CAT_INCR_REL)
     }
     // Когда нет кандидатов в категории, надо выбрать основную категорию магазина
-    val topCat = CAT_TREE / topCatName
+    val topCat = CAT_TREE_CORE / topCatName
     // Теперь можно накатить эту раскладку на списки кандидатов в shopCatsCandidates.
     // Используем map() вместо mapValues(), чтобы иметь доступ к текущей категории для нужд логгера.
     shopCatsCandidates.map { case (catName, candidatesList) =>

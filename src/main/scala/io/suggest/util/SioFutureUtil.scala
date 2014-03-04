@@ -22,7 +22,7 @@ object SioFutureUtil extends Logs {
    * @tparam B Тип возвращаемых элементов.
    * @return Фьючерс с последовательностью результатов последовательно вызванных фьючерсов.
    */
-  def mapLeftSequentally[A, B](in:TraversableOnce[A], ignoreErrors:Boolean = false)(f: A => Future[B])(implicit executor:ExecutionContext): Future[List[B]] = {
+  def mapLeftSequentally[A, B](in:Seq[A], ignoreErrors:Boolean = false)(f: A => Future[B])(implicit executor:ExecutionContext): Future[List[B]] = {
     val acc0: List[B] = Nil
     val foldF: (List[B], A) => Future[List[B]] = {
       case (acc, a) => f(a) map( _ :: acc)
@@ -42,22 +42,23 @@ object SioFutureUtil extends Logs {
    * @tparam Acc Тип аккамулятора.
    * @return Конечных аккамулятор.
    */
-  def foldLeftSequental[A, Acc](in:TraversableOnce[A], acc0:Acc, ignoreErrors:Boolean = false)(f: (Acc, A) => Future[Acc])(implicit executor:ExecutionContext): Future[Acc] = {
+  def foldLeftSequental[A, Acc](in:Seq[A], acc0:Acc, ignoreErrors:Boolean = false)(f: (Acc, A) => Future[Acc])(implicit executor:ExecutionContext): Future[Acc] = {
     val p = Promise[Acc]()
     lazy val hash = in.hashCode() * f.hashCode() + acc0.hashCode()
-    def foldLeftStep(acc:Acc, inRest:TraversableOnce[A]) {
+    def foldLeftStep(acc:Acc, inRest:Seq[A]) {
       if (inRest.isEmpty) {
         // Закончить обход. Вернуть результат
         p success acc
 
       } else {
-        // Продолжаем обход.
-        val h :: t = inRest
+        // Продолжаем обход
+        val h = inRest.head
         val fut: Future[Acc] = try {
           f(acc, h)
         } catch {
           case ex:Throwable => Future.failed(ex)
         }
+        val t = inRest.tail
         fut onComplete {
           case Success(acc1) => foldLeftStep(acc1, t)
 
@@ -104,6 +105,6 @@ object SioFutureUtil extends Logs {
 }
 
 
-case class TraverseSequentallyException(inRest:TraversableOnce[Any], resultsAcc:Any, cause:Throwable)
+case class TraverseSequentallyException(inRest:Seq[Any], resultsAcc:Any, cause:Throwable)
   extends Exception("Traversing future exception", cause)
 

@@ -1,6 +1,6 @@
 package io.suggest.ym.cat
 
-import com.github.tototoshi.csv.CSVReader
+import com.github.tototoshi.csv.{DefaultCSVFormat, CSVReader}
 import java.io.{FileNotFoundException, InputStreamReader}
 import scala.collection.mutable
 import scala.annotation.tailrec
@@ -63,6 +63,9 @@ object YmCategory {
     }
     val reader = new InputStreamReader(is, "UTF-8")
     try {
+      implicit val csvFormat = new DefaultCSVFormat {
+        override val delimiter: Char = '/'
+      }
       val csvReader = CSVReader.open(reader)
       val it = csvReader.iterator
       if (!it.hasNext) {
@@ -83,6 +86,9 @@ object YmCategory {
       reader.close()
     }
   }
+
+  /** Совместимое дерево категорий без "Всех товаров". */
+  val CAT_TREE_CORE = YmCategoryRoot(CAT_TREE.cats.head._2.subcatsOpt.get)
 
 
   /** Поиск общего пути между несколькими списками списками.
@@ -138,7 +144,8 @@ object YmCategory {
     // Для нормализации писанины используем обычный анализатор, используемый в других Ym-парсерах.
     implicit val an = getAnalyzer
     val acc: MutCatTrgmAcc_t = mutable.HashMap()
-    loadCatTreeTrgm(CAT_TREE.cats, acc, Set.empty)
+    // "Все товары" верхнего выкидываем, оставляя только основную карту.
+    loadCatTreeTrgm(CAT_TREE_CORE.cats, acc, Set.empty)
     // Сделать из изменяемого аккумулятора нормальную потоко-безопасную одномерную карту.
     acc.mapValues(_.toSet).toMap
   }

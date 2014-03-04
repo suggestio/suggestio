@@ -15,6 +15,8 @@ import org.apache.commons.codec.binary.Base32
 object StringUtil {
 
   val LONG_BYTESIZE = 8
+  val INT_BYTESIZE  = 4
+
   /** Ненужные padding-символы в конце base64 выхлопов. */
   val BASEN_PADDING_BYTE  = '='.toByte
   /** Если нулевые байты, то в начале будут дефисы в случае Base64+ordered. */
@@ -72,6 +74,24 @@ object StringUtil {
    */
   def longAsB32hLc(l: Long, buf: ByteBuffer = getLongBuffer, encoder: Base32 = getB32Encoder): String = {
     buf.putLong(l)
+    mkB32hLc(buf, encoder)
+  }
+
+  def getIntBuffer = ByteBuffer.allocate(INT_BYTESIZE)
+
+  /**
+   * Перегнать int-число в сортируемую b32-строку.
+   * @param i целое число.
+   * @param buf Буффер для байт.
+   * @param encoder b32-кодек.
+   * @return Строка содержащая URL_SAFE-символы алфавита base32+HEX. Строки можно сравнивать как и int-значения.
+   */
+  def intAsB32hLc(i: Int, buf: ByteBuffer = getIntBuffer, encoder: Base32 = getB32Encoder): String = {
+    buf.putInt(i)
+    mkB32hLc(buf, encoder)
+  }
+
+  def mkB32hLc(buf: ByteBuffer, encoder: Base32): String = {
     val bytes32 = encoder.encode(buf.array())
     // Надо срезать с начала - все дефисы, с конца - все padding'и, т.е. '='
     val startIndex = basenPaddingIndex(0, bytes32, B32HEX_ZERO_BYTE, +1)

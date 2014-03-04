@@ -14,6 +14,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model._
 import java.lang.{Iterable => jlIterable}
 import org.elasticsearch.search.sort.SortOrder
+import org.elasticsearch.action.index.IndexRequestBuilder
 
 /**
  * Suggest.io
@@ -27,12 +28,12 @@ object EsModel extends MacroLogsImpl {
 
   /** Список ES-моделей. Нужен для удобства массовых maintance-операций. Расширяется по мере роста числа ES-моделей. */
   def ES_MODELS: Seq[EsModelMinimalStaticT[_]] = {
-    Seq(MMart, MShop, MShopPriceList, MShopPromoOffer)
+    Seq(MMart, MShop, MShopPriceList, MShopPromoOffer, MYmCategory)
   }
 
   /** Отправить маппинги всех моделей в ES. */
-  def putAllMappings(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
-    Future.traverse(ES_MODELS) { esModelStatic =>
+  def putAllMappings(models: Seq[EsModelMinimalStaticT[_]] = ES_MODELS)(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
+    Future.traverse(models) { esModelStatic =>
       val logPrefix = esModelStatic.getClass.getSimpleName + ".putMapping(): "
       esModelStatic.isMappingExists flatMap {
         case false =>
@@ -63,7 +64,7 @@ object EsModel extends MacroLogsImpl {
     * Имя должно быть коротким и лексикографически предшествовать именам остальных временных индексов. */
   val ES_INDEX_NAME = "-sio"
 
-  // Имена полей в разных хранилищах
+  // Имена полей в разных хранилищах. НЕЛЬЗЯ менять их значения.
   val COMPANY_ID_ESFN   = "companyId"
   val MART_ID_ESFN      = "martId"
   val NAME_ESFN         = "name"
@@ -83,6 +84,9 @@ object EsModel extends MacroLogsImpl {
   val IS_VERIFIED_ESFN  = "isVerified"
   val TOWN_ESFN         = "town"
   val COUNTRY_ESFN      = "country"
+  val CATEGORY_ESFN     = "cat"
+  val CATEGORY_ID_ESFN  = "catId"
+  val PRIO_ESFN         = "prio"
 
   def companyIdParser = stringParser
   def martIdParser = stringParser
@@ -192,6 +196,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
 
   def generateMapping: XContentBuilder
 
+  /** Отправить маппинг в elasticsearch. */
   def putMapping(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     client.admin().indices()
       .preparePutMapping(ES_INDEX_NAME)
@@ -199,6 +204,19 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
       .setSource(generateMapping)
       .execute()
       .map { _.isAcknowledged }
+  }
+
+  /** Удалить маппинг из elasticsearch. */
+  def deleteMapping(implicit client: Client): Future[_] = {
+    client.admin().indices()
+      .prepareDeleteMapping(ES_INDEX_NAME)
+      .setType(ES_TYPE_NAME)
+      .execute()
+  }
+
+  /** Пересоздать маппинг удаляется и создаётся заново. */
+  def resetMapping(implicit ec: ExecutionContext, client: Client): Future[_] = {
+    deleteMapping flatMap { _ => putMapping }
   }
 
   // TODO Нужно проверять, что текущий маппинг не устарел, и обновлять его.
@@ -312,12 +330,15 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
    * @return Фьючерс с новым/текущим id
    */
   def save(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
-    client.prepareIndex(ES_INDEX_NAME, companion.ES_TYPE_NAME, idOrNull)
+    val irb = client.prepareIndex(ES_INDEX_NAME, companion.ES_TYPE_NAME, idOrNull)
       .setSource(toJson)
-      .execute()
+    saveBuilder(irb)
+    irb.execute()
       .map { _.getId }
   }
 
+  /** Дополнительные параметры сохранения (parent, ttl, etc) можно выставить через эту функцию. */
+  def saveBuilder(irb: IndexRequestBuilder) {}
 
   /** Удалить текущий ряд из таблицы. Если ключ не выставлен, то сразу будет экзепшен.
     * @return true - всё ок, false - документ не найден.

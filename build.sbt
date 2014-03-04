@@ -90,7 +90,7 @@ resourceGenerators in Compile <+= Def.task {
     println("Creating CSV categories tree from. Executing shell command:\n " + cmd0.mkString(" "))
     cmd0 !
     // 2014.02.28: Яндекс поменял формат своей доки. Теперь всё добро свалено в одном столбце, и появилась корневая категория "Все товары".
-    val cmd1 = List("sed", "-e", "s@ / @,@g", "-e", "s/^\"//", "-e", "s/\"$//", "-i", csvFile.toString)
+    val cmd1 = List("sed", "-e", "s@ / @/@g", "-e", "s/^\"//", "-e", "s/\"$//", "-i", csvFile.toString)
     cmd1 !
   }
   Seq(csvFile)
