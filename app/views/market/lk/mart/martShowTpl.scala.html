@@ -6,21 +6,167 @@
 @import routes.MarketMartLk._
 
 @market.lk.lkBase(mmart.name) {
-  <h1>@mmart.name</h1>
 
-  @* Адрес и кнопка редактировать *@
-  <p>Полный адрес @mmart.town, @mmart.address</p>
-  <a href="@martEditForm(mmart.id.get)">Редактировать</a>
+  <div class="title-wrap">
+    <div class="center">
+      <img class="market-logo" src='@routes.Assets.at("images/market/lk/main/market-logo.png")' alt="market-logo" />
+      <div class="title">
+        <h1>@mmart.name</h1>
+        <a class="edit" href="@martEditForm(mmart.id.get)">Редактировать</a>
+        <div class="descr">
+          @mmart.town, @mmart.address
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <h2>Арендаторы</h2>
+    <div class="body">
+      <form class="search">
+        <div style="position: relative;" class="input" style="width: 830px;">
+          <div class="input-shadow">
+            <input type="text" value="" />
+          </div>
+        </div>
+        <input class="submit" type="submit" value="" />
+        <div class="descr">Ищите по имени компании, номеру секции</div>
+      </form>
 
-  <a href="@martEditForm(mmart.id.get)">Выдать личный кабинет</a>
+      <div class="renters">
+        <div class="ovh">
+          <span class="title">
+            АРЕНДАТОРЫ
+          </span>
+          <a class="new-lk" href="@inviteShopForm(mmart.id.get)">&nbsp;</a>
+        </div>
 
-  @* Заголовок таблицы магазинов (кнопки сортировки) пока тут. Ещё есть флаг isReversed=true|false. *@
-  <p>Сортировка:</p>
-  <a href="@martShow(mmart.id.get, SORT_BY_A_Z.toString)">А-Я</a>
-  <a href="@martShow(mmart.id.get, SORT_BY_CAT.toString)">Категория</a>
-  <a href="@martShow(mmart.id.get, SORT_BY_FLOOR.toString)">Этаж</a>
+        <div class="renters-list">
+          <div class="hat">
+            Управление личным кабинетом
+          </div>
 
-  @_martShopsTpl(martId=mmart.id.get, shops=shops)
+          @_martShopsTpl(martId=mmart.id.get, shops=shops)
+
+          <!--<div class="odd enabled">
+            <div class="left">
+              <a href="#">1C Интерес</a>
+            </div>
+            <div class="right">
+              <span class="disable-but">Выкл</span>
+              <div class="triger">
+                <div class="circle"></div>
+              </div>
+              <span class="enable-but">Вкл</span>
+            </div>
+          </div>
+
+          <div class="even enabled">
+            <div class="left">
+              <a href="#">Alex Fitness</a><span class="type">&nbsp;/&nbsp;фитнес клуб</span>
+            </div>
+            <div class="right">
+              <span class="disable-but">Выкл</span>
+              <div class="triger">
+                <div class="circle"></div>
+              </div>
+              <span class="enable-but">Вкл</span>
+            </div>
+          </div>
+
+          <div class="odd">
+            <div class="left">
+              <a href="#">Andrey Silchenko</a><span class="type">&nbsp;/&nbsp;салон красоты</span>
+            </div>
+            <div class="right">
+              <span class="disable-but">Выкл</span>
+              <div class="triger">
+                <div class="circle"></div>
+              </div>
+              <span class="enable-but">Вкл</span>
+            </div>
+          </div>
+
+          <div class="even enabled">
+            <div class="left">
+              <a href="#">Anna Verdi</a>
+            </div>
+            <div class="right">
+              <span class="disable-but">Выкл</span>
+              <div class="triger">
+                <div class="circle"></div>
+              </div>
+              <span class="enable-but">Вкл</span>
+            </div>
+          </div>
+
+          <div class="odd enabled">
+            <div class="left">
+              <a href="#">Apetta</a><span class="type">&nbsp;/&nbsp;химчистка</span>
+            </div>
+            <div class="right">
+              <span class="disable-but">Выкл</span>
+              <div class="triger">
+                <div class="circle"></div>
+              </div>
+              <span class="enable-but">Вкл</span>
+            </div>
+          </div>
+
+          <div class="even enabled">
+            <div class="left">
+              <a href="#">Aveda</a><span class="type">&nbsp;/&nbsp;салон красоты</span>
+            </div>
+            <div class="right">
+              <span class="disable-but">Выкл</span>
+              <div class="triger">
+                <div class="circle"></div>
+              </div>
+              <span class="enable-but">Вкл</span>
+            </div>
+          </div>
+
+          <div class="odd enabled">
+            <div class="left">
+              <a href="#">Baden</a><span class="type">&nbsp;/&nbsp;ателье, ремонт обуви</span>
+            </div>
+            <div class="right">
+              <span class="disable-but">Выкл</span>
+              <div class="triger">
+                <div class="circle"></div>
+              </div>
+              <span class="enable-but">Вкл</span>
+            </div>
+          </div>
+
+          <div class="even enabled">
+            <div class="left">
+              <a href="#">Baskin Robbins</a>
+            </div>
+            <div class="right">
+              <span class="disable-but">Выкл</span>
+              <div class="triger">
+                <div class="circle"></div>
+              </div>
+              <span class="enable-but">Вкл</span>
+            </div>
+          </div>-->
+
+        </div><!-- renters-list end -->
+      </div>
+
+      <!--<h2>Арендаторы</h2>
+
+      <a href="@martEditForm(mmart.id.get)">Выдать личный кабинет</a>
+
+      @* Заголовок таблицы магазинов (кнопки сортировки) пока тут. Ещё есть флаг isReversed=true|false. *@
+      <p>Сортировка:</p>
+      <a href="@martShow(mmart.id.get, SORT_BY_A_Z.toString)">А-Я</a>
+      <a href="@martShow(mmart.id.get, SORT_BY_CAT.toString)">Категория</a>
+      <a href="@martShow(mmart.id.get, SORT_BY_FLOOR.toString)">Этаж</a>-->
+
+
+
+    </div>
+
+
+
 }

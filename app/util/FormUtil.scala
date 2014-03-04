@@ -5,6 +5,8 @@ import java.net.URL
 import io.suggest.util.UrlUtil
 import gnu.inet.encoding.IDNA
 import HtmlSanitizer._
+import views.html.helper.FieldConstructor
+import views.html.market.lk._
 
 /**
  * Suggest.io
@@ -100,5 +102,12 @@ object FormUtil {
   /** id'шники в ES-моделях генерятся силами ES. Тут маппер для полей, содержащих ES-id. */
   val esIdM = nonEmptyText(minLength=6, maxLength=64)
     .transform(strTrimSanitizeF, strIdentityF)
+}
+
+
+object FormHelpers {
+
+  implicit val myFields = FieldConstructor(lkFieldConstructor.f)
+
 }
 
