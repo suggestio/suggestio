@@ -22,4 +22,6 @@ package object models {
   type MShopPromoOffer  = io.suggest.ym.model.MShopPromoOffer
   val  MShopPromoOffer  = io.suggest.ym.model.MShopPromoOffer
 
+  type MYmCategory      = io.suggest.ym.model.MYmCategory
+  val  MYmCategory      = io.suggest.ym.model.MYmCategory
 }

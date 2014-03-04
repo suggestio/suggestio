@@ -1,0 +1,27 @@
+@(cats: Seq[MYmCategory])(implicit ctx: util.Context)
+
+@* Управление деревом категорий яндекс-маркета. *@
+@import ctx._
+@import helper._
+
+@sys1.market.marketBase("YM-категории") {
+  <h1>YM-категории</h1>
+  Список категорий яндекс-маркета. После запуска эти кнопки надо удалить и добавить редактор категорий:
+  @form(routes.SysMarket.resetYmCatsSubmit) {
+    <input type="submit" value="RESET"/>
+  }
+  @form(routes.SysMarket.importYmCatsSubmit) {
+    <input type="submit" value="IMPORT"/>
+  }
+
+  <h2>Все категории YM</h2>
+  @if(cats.isEmpty) {
+    Нет категорий o_O
+  } else {
+    @cats.map { cat =>
+      <p>@cat.id | @cat.name</p>
+    }
+    <br/><hr/>
+    <b>Total: @cats.size</b>
+  }
+}

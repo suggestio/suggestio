@@ -143,4 +143,8 @@ POST /sys/market/shop/:id/delete        controllers.SysMarket.shopDeleteSubmit(i
 GET  /sys/market/spl/add/:shopId        controllers.SysMarket.splAddForm(shopId)
 POST /sys/market/spl/add/:shopId        controllers.SysMarket.splAddFormSubmit(shopId)
 POST /sys/market/spl/:id/delete         controllers.SysMarket.splDeleteSubmit(id: String)
+# sys.market.cats
+GET  /sys/market/cats                   controllers.SysMarket.showYmCats
+POST /sys/market/cats/reset             controllers.SysMarket.resetYmCatsSubmit
+POST /sys/market/cats/import            controllers.SysMarket.importYmCatsSubmit
 

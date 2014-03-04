@@ -6,7 +6,7 @@ import models._
 import views.html.sys1.market._
 import play.api.data._, Forms._
 import util.FormUtil._
-import io.suggest.ym.model.{UsernamePw, MCompany}
+import io.suggest.ym.model.UsernamePw
 import MShop.ShopId_t, MMart.MartId_t, MCompany.CompanyId_t
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
@@ -437,6 +437,34 @@ object SysMarket extends SioController with MacroLogsImpl {
         Redirect(routes.SysMarket.shopShow(mspl.shopId))
 
       case None => NotFound("No such shop pricelist with id = " + spl_id)
+    }
+  }
+
+
+  /** Отображение категорий яндекс-маркета */
+  def showYmCats = IsSuperuser.async { implicit request =>
+    MYmCategory.getAllTree.map { cats =>
+      Ok(cat.ymCatsTpl(cats))
+    }
+  }
+
+  /** Полный сброс дерева категорий YM. */
+  def resetYmCatsSubmit = IsSuperuser.async { implicit request =>
+    // TODO WARNING DANGER ACHTUNG Эту функцию надо выпилить после запуска.
+    warn("Resetting MYmCategories...")
+    MYmCategory.resetMapping map { _ =>
+      Redirect(routes.SysMarket.showYmCats())
+        .flashing("success" -> "Все категории удалены.")
+    }
+  }
+
+  /** Импорт дерева категорий из [[io.suggest.ym.cat.YmCategory.CAT_TREE]]. */
+  def importYmCatsSubmit = IsSuperuser.async { implicit request =>
+    // TODO WARNING DANGER ACHTUNG Эту функцию надо выпилить после запуска.
+    warn("Inserting categories into MYmCategories...")
+    MYmCategory.insertYmCats.map { _ =>
+      Redirect(routes.SysMarket.showYmCats())
+        .flashing("succes" -> "Импорт сделан.")
     }
   }
 
