@@ -5,32 +5,54 @@
 @import helper._
 @import ctx._
 
+@import util.FormHelpers._
+
+
 @form(call) {
-  @inputText(sf("name"))
 
-  @* Поля этажа/секции доступны только владельцу ТЦ, т.е. если !isLimited. Задаём атрибут через хвост-список. *@
-  @defining(if(isLimited) List('disabled -> "") else Nil) { attrsRest =>
-    @* Номер этажа в ТЦ. *@
-    @inputText(
-      sf("mart_floor"),
-      'placeholder -> 1 ::
-      '_label -> "Этаж" ::
-      attrsRest : _*
-    )
+  <div class="fields">
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      @inputText(
+      sf("name"),
+      '_label -> "Название магазина:")
+    </table>
 
-    @* Номер секции в ТЦ. *@
-    @inputText(
-      sf("mart_section"),
-      'placeholder -> 101 ::
-      '_label -> "Номер секции" ::
-      attrsRest : _*
-    )
-  }
+    @* Поля этажа/секции доступны только владельцу ТЦ, т.е. если !isLimited. Задаём атрибут через хвост-список. *@
+    @defining(if(isLimited) List('disabled -> "") else Nil) { attrsRest =>
+      @* Номер этажа в ТЦ. *@
+      <table cellpadding="0" cellspacing="0" class="input-wrap small">
+        @inputText(
+          sf("mart_floor"),
+          'placeholder -> 1 ::
+          '_label -> "Этаж:" ::
+          attrsRest : _*
+        )
+      </table>
 
-  @textarea(
-    sf("description"),
-    '_label -> "Описание магазина"
-  )
+      @* Номер секции в ТЦ. *@
+      <table cellpadding="0" cellspacing="0" class="input-wrap small">
+        @inputText(
+          sf("mart_section"),
+          'placeholder -> 101 ::
+          '_label -> "Номер секции:" ::
+          attrsRest : _*
+        )
+      </table>
 
-  <input type="submit" value="@btnText"/>
+    }
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
+      @textarea(
+        sf("description"),
+        '_label -> "Описание магазина:"
+      )
+    </table>
+  </div>
+
+  <div class="border-line"></div>
+  <div class="submit-wrap">
+    <input class="blue-but-small" type="submit" value="@btnText"/>
+  </div>
+
+
 }

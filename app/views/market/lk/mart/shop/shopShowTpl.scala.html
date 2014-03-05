@@ -2,16 +2,30 @@
 
 @* Шаблон отображения магазина для админа ТЦ. *@
 @import market.lk._
+@import routes.MarketMartLk._
 
 @lkBase(mshop.name) {
-  <h1>Карточка арендатора</h1>
 
-  @* Отобразить основное описание магазина с кнопкой редактирования. *@
-  @shop._shopShowTpl(
-    mshop=mshop,
-    editCall=routes.MarketMartLk.editShopForm(mshop.id.get)
-  )
+  <div class="title-wrap">
+    <div class="center">
+      <a class="back-but" href="@martShow(mmart.id.get)">&nbsp;</a>
+      <div class="title-inner">
+        КАРТОЧКА АРЕНДАТОРА
+      </div>
+    </div>
+  </div>
 
-  @* Тут надо ссылку на страницу с каталогом продукции *@
-  <a href="@routes.MarketMartLk.showShopOffers(mshop.id.get)">Каталог продукции</a>
+  <div class="body">
+
+    @* Отобразить основное описание магазина с кнопкой редактирования. *@
+    @shop._shopShowTpl(
+      mshop=mshop,
+      editCall=routes.MarketMartLk.editShopForm(mshop.id.get)
+    )
+
+    @* Тут надо ссылку на страницу с каталогом продукции *@
+    <a href="@routes.MarketMartLk.showShopOffers(mshop.id.get)">Каталог продукции</a>
+
+  </div>
+
 }
