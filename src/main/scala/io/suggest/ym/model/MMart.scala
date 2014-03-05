@@ -66,6 +66,11 @@ object MMart extends EsModelStaticT[MMart] {
           id = DATE_CREATED_ESFN,
           include_in_all = false,
           index = FieldIndexingVariants.no
+        ),
+        FieldString(
+          id = PHONE_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.no
         )
       )
     )
@@ -79,6 +84,7 @@ object MMart extends EsModelStaticT[MMart] {
     case (SITE_URL_ESFN, value)       => acc.siteUrl = Some(siteUrlParser(value))
     case (DATE_CREATED_ESFN, value)   => acc.dateCreated = dateCreatedParser(value)
     case (TOWN_ESFN, value)           => acc.town = stringParser(value)
+    case (PHONE_ESFN, value)          => acc.phone = Some(stringParser(value))
   }
 
   protected def dummy(id: String) = MMart(
@@ -87,7 +93,8 @@ object MMart extends EsModelStaticT[MMart] {
     name = null,
     address = null,
     town = null,
-    siteUrl = None
+    siteUrl = None,
+    phone = None
   )
 
   def companyIdQuery(companyId: CompanyId_t) = QueryBuilders.fieldQuery(ES_TYPE_NAME, companyId)
@@ -144,6 +151,7 @@ case class MMart(
   var town          : String,
   var address       : String,
   var siteUrl       : Option[String],
+  var phone         : Option[String],
   id                : Option[MMart.MartId_t] = None,
   var dateCreated   : DateTime = null
 ) extends EsModelT[MMart] with MCompanySel with CompanyShopsSel with MartShopsSel {
@@ -160,6 +168,8 @@ case class MMart(
       .field(ADDRESS_ESFN, address)
     if (siteUrl.isDefined)
       acc.field(SITE_URL_ESFN, siteUrl.get)
+    if (phone.isDefined)
+      acc.field(PHONE_ESFN, phone.get)
     if (dateCreated == null)
       dateCreated = DateTime.now()
     acc.field(DATE_CREATED_ESFN, dateCreated)

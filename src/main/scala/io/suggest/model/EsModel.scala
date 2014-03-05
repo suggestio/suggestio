@@ -15,6 +15,7 @@ import io.suggest.ym.model._
 import java.lang.{Iterable => jlIterable}
 import org.elasticsearch.search.sort.SortOrder
 import org.elasticsearch.action.index.IndexRequestBuilder
+import scala.annotation.tailrec
 
 /**
  * Suggest.io
@@ -30,6 +31,8 @@ object EsModel extends MacroLogsImpl {
   def ES_MODELS: Seq[EsModelMinimalStaticT[_]] = {
     Seq(MMart, MShop, MShopPriceList, MShopPromoOffer, MYmCategory)
   }
+
+  implicit def listCmpOrdering[T <: Comparable[T]] = new ListCmpOrdering[T]
 
   /** Отправить маппинги всех моделей в ES. */
   def putAllMappings(models: Seq[EsModelMinimalStaticT[_]] = ES_MODELS)(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
@@ -87,6 +90,7 @@ object EsModel extends MacroLogsImpl {
   val CATEGORY_ESFN     = "cat"
   val CATEGORY_ID_ESFN  = "catId"
   val PRIO_ESFN         = "prio"
+  val PHONE_ESFN        = "phone"
 
   def companyIdParser = stringParser
   def martIdParser = stringParser
@@ -106,6 +110,39 @@ object EsModel extends MacroLogsImpl {
       Some(UsernamePw(username, pw))
   }
 
+  /**
+   * Сортировка последовательности экземпляров ES-модели с учетом древовидности через parent-child связи.
+   * Это сравнительно ресурсоёмкая функция, поэтому использовать её следует только для административных задач,
+   * например отображения полного списка категорий.
+   * @param elems Исходные элементы в неопределённом порядке.
+   * @tparam T Тип элементов.
+   * @return Новая последовательности элементов и их уровней в дереве (level, T) в порядке для отображения дерева.
+   */
+  def seqTreeSort[T <: TreeSortable](elems: Seq[T]): Seq[(Int, T)] = {
+    // Самый простой метод для сортировки: сгенерить List[String]-ключи на основе цепочек id и всех parent_id, затем отсортировать.
+    val srcMap = elems.iterator.map { e => e.idOrNull -> e }.toMap
+    def collectParentsRev(eOpt: Option[T], acc:List[String]): List[String] = {
+      eOpt match {
+        case Some(e) =>
+          val acc1 = e.name :: acc
+          if (e.parentId.isDefined) {
+            val parentEOpt = srcMap get e.parentId.get
+            collectParentsRev(parentEOpt, acc1)
+          } else {
+            acc1
+          }
+
+        case None => acc
+      }
+    }
+    elems
+      .map { e =>
+        val eKey = collectParentsRev(Some(e), Nil)
+        eKey -> e
+      }
+      .sortBy(_._1)
+      .map { case (k, v) => k.size -> v }
+  }
 
   // ES-выхлопы страдают динамической типизацией, поэтому нужна коллекция парсеров для примитивных типов.
   // Следует помнить, что любое поле может быть списком значений.
@@ -363,5 +400,30 @@ trait EsModelT[E <: EsModelT[E]] extends EsModelMinimalT[E] {
 
 class ForeignKeyException(msg: String) extends RuntimeException {
   override def getMessage: String = msg
+}
+
+
+trait TreeSortable {
+  def name: String
+  def idOrNull: String
+  def parentId: Option[String]
+}
+
+
+class ListCmpOrdering[T <: Comparable[T]] extends Ordering[List[T]] {
+  @tailrec final def compare(x: List[T], y: List[T]): Int = {
+    if (x.isEmpty) {
+      -1
+    } else if (y.isEmpty) {
+      1
+    } else {
+      val headCmpResult = x.head compareTo y.head
+      if (headCmpResult == 0) {
+        compare(x.tail, y.tail)
+      } else {
+        headCmpResult
+      }
+    }
+  }
 }
 

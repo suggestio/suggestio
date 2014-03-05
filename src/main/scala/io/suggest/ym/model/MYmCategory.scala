@@ -42,7 +42,10 @@ object MYmCategory extends EsModelStaticT[MYmCategory] with MacroLogsImpl {
       .map { searchResp2list(_).sortBy(_.id.get) }
   }
 
-  /** Кодируется целочисленный id чтобы была максимально-короткая строка. */
+  /** Кодируется целочисленный id чтобы была максимально-короткая строка. В будущем его можно его расширить до [A-Z_-]
+    * с помощью окостыливания.
+    * @param i id и порядковый номер на текущем уровне в текущей ветке.
+    */
   private def encodeId(i: Int) = Integer.toString(i, Character.MAX_RADIX)
 
   /** Залить дерево категорий в таблицу, сгенерив корректные id-шники. */
