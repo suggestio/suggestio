@@ -144,7 +144,13 @@ GET  /sys/market/spl/add/:shopId        controllers.SysMarket.splAddForm(shopId)
 POST /sys/market/spl/add/:shopId        controllers.SysMarket.splAddFormSubmit(shopId)
 POST /sys/market/spl/:id/delete         controllers.SysMarket.splDeleteSubmit(id: String)
 # sys.market.cats
-GET  /sys/market/cats                   controllers.SysMarket.showYmCats
-POST /sys/market/cats/reset             controllers.SysMarket.resetYmCatsSubmit
-POST /sys/market/cats/import            controllers.SysMarket.importYmCatsSubmit
+GET  /sys/market/cats/ym                controllers.SysMarket.showYmCats
+POST /sys/market/cats/ym/reset          controllers.SysMarket.resetYmCatsSubmit
+POST /sys/market/cats/ym/import         controllers.SysMarket.importYmCatsSubmit
+GET  /sys/market/cats/usr/add           controllers.MarketCategory.addUserCatForm(ownerId: Option[String], parentId: Option[String])
+POST /sys/market/cats/usr/add           controllers.MarketCategory.addUserCatFormSubmit(ownerId: Option[String], parentId: Option[String])
+GET  /sys/market/cats/usr/c/:catId      controllers.MarketCategory.showUserCat(catId)
+GET  /sys/market/cats/usr/:ownerId      controllers.MarketCategory.showCatsFor(ownerId)
+GET  /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatForm(catId)
+POST /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatFormSubmit(catId)
 

@@ -1,0 +1,9 @@
+@(title: String)(content: Html)(implicit ctx: util.Context)
+
+@* Подложка для шаблонов категорий. *@
+
+@hPathAfter = {
+  / usrCats / @title  @* TODO Нужно owner'а отображать как-то. *@
+}
+
+@sys1.market.marketBase(title)(content)

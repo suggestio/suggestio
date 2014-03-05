@@ -1,0 +1,17 @@
+@(ownerId: String, cf: Form[_], parentOpt: Option[MMartCategory])(implicit ctx: util.Context)
+
+@* Страница с формой создания новой категории. Аргумент call содержит адрес для сабмита. *@
+@import ctx._
+
+@userCatBase("Создать новую категорию") {
+
+  @parentOpt.map { parent =>
+    Родительская категория:
+    <a href="@routes.MarketCategory.showUserCat(parent.id.get)">@parent.name</a>
+  }
+
+  @_userCatFormTpl(
+    cf = cf,
+    call = routes.MarketCategory.addUserCatFormSubmit(Some(ownerId), parentOpt.map(_.id.get)),
+    btnText = Messages("Create"))
+}

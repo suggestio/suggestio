@@ -3,10 +3,6 @@
 @import play.api.i18n._
 @import views.html.helper._
 
-@**************************************************
-* Generate input according twitter bootsrap rules *
-**************************************************@
-
 <div class="input-wrap clearfix @elements.args.get('_class) @if(elements.hasErrors) {error}" id="@elements.args.get('_id).getOrElse(elements.id + "_field")">
   <label for="@elements.id">@elements.label(elements.lang)</label>
   <div class="input">
