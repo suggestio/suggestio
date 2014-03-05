@@ -99,6 +99,10 @@ GET  /m/lk/s/:shopId                    controllers.MarketShopLk.showShop(shopId
 GET  /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopForm(shopId)
 POST /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopFormSubmit(shopId)
 
+# Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
+GET  /m/c/usr/o/:ownerId/top            controllers.MarketCategory.topCatsOf(ownerId)
+GET  /m/c/usr/c/:catId/dc               controllers.MarketCategory.directSubcatsOf(catId)
+
 # Управление промо-офферами (для арендатора и для владельца ТЦ).
 GET  /m/lk/s/:shopId/offers             controllers.MarketOffer.showShopPromoOffers(shopId: String)
 GET  /m/lk/offer/promo/add/:shopId      controllers.MarketOffer.addPromoOfferForm(shopId: String)
@@ -153,6 +157,4 @@ GET  /sys/market/cats/usr/c/:catId      controllers.MarketCategory.showUserCat(c
 GET  /sys/market/cats/usr/:ownerId      controllers.MarketCategory.showCatsFor(ownerId)
 GET  /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatForm(catId)
 POST /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatFormSubmit(catId)
-GET  /m/c/usr/o/:ownerId/top            controllers.MarketCategory.topCatsOf(ownerId)
-GET  /m/c/usr/c/:catId/dc               controllers.MarketCategory.directSubcatsOf(catId)
 

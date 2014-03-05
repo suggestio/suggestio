@@ -49,16 +49,17 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
     "name"      -> martNameM,
     "town"      -> townM,
     "address"   -> martAddressM,
-    "site_url"  -> optional(urlStrMapper)
+    "site_url"  -> optional(urlStrMapper),
+    "phone"     -> optional(phoneM)
   )
   // applyF()
-  {(name, town, address, siteUrlOpt) =>
-    MMart(name=name, town=town, address=address, siteUrl=siteUrlOpt, companyId=null)
+  {(name, town, address, siteUrlOpt, phoneOpt) =>
+    MMart(name=name, town=town, address=address, siteUrl=siteUrlOpt, companyId=null, phone=phoneOpt)
   }
   // unapplyF()
   {mmart =>
     import mmart._
-    Some((name, town, address, siteUrl))}
+    Some((name, town, address, siteUrl, phone))}
   )
 
   /** Маппинг формы приглашения магазина в систему. */
@@ -131,6 +132,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
             mmart.town = mmart2.town
             mmart.address = mmart2.address
             mmart.siteUrl = mmart2.siteUrl
+            mmart.phone = mmart2.phone
             mmart.save.map { _ =>
               Redirect(routes.MarketMartLk.martShow(martId))
                 .flashing("success" -> "Изменения сохранены.")
