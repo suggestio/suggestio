@@ -79,7 +79,6 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
     Some((name, _email, martFloor.get, martSection.get))
   })
 
-
   /**
    * Рендер раздачи страницы с личным кабинетом торгового центра.
    * @param martId id ТЦ

@@ -2,11 +2,13 @@
 
 @* Страница с формой добавления нового магазина с отсылкой инвайта по email владельца. *@
 
+@import routes.MarketMartLk._
+
 @market.lk.lkBase("Добавить магазин") {
 
   <div class="title-wrap">
     <div class="center">
-      <a class="back-but" href="#">&nbsp;</a>
+      <a class="back-but" href="@martShow(mmart.id.get)">&nbsp;</a>
       <div class="title-inner">
         ВЫДАТЬ ЛИЧНЫЙ КАБИНЕТ
       </div>
@@ -30,11 +32,13 @@
       <div class="border-line"></div>
     </div>
 
-    @_shopInviteFormTpl(
-      call = routes.MarketMartLk.inviteShopFormSubmit(mmart.id.get),
-      sf = sf,
-      btnText = "Создать"
-    )
+    <div class="form-wrap">
+      @_shopInviteFormTpl(
+        call = routes.MarketMartLk.inviteShopFormSubmit(mmart.id.get),
+        sf = sf,
+        btnText = "Выдать"
+      )
+    </div>
 
   </div>
 }

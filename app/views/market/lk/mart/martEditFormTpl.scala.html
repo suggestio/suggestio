@@ -2,7 +2,22 @@
 
 @* Рендер страницы редактирования существующего ТЦ. *@
 @import ctx._
+@import routes.MarketMartLk._
 
 @market.lk.lkBase("Редактировать ТЦ") {
-  @_martFormTpl("Сохранить", mf, routes.MarketMartLk.martEditFormSubmit(mmart.id.get))
+
+  <div class="title-wrap">
+    <div class="center">
+      <a class="back-but" href="@martShow(mmart.id.get)">&nbsp;</a>
+      <div class="title-inner">
+        РЕДАКТИРОВАНИЕ ПРОФАЙЛА ТЦ
+      </div>
+    </div>
+  </div>
+
+  <div class="body">
+    @_martFormTpl("Сохранить", mf, routes.MarketMartLk.martEditFormSubmit(mmart.id.get))
+  </div>
+
 }
+

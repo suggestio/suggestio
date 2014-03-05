@@ -10,15 +10,24 @@
 
 @lkBase(Messages("Edit") + " " + mshop.name) {
 
-  <h1>Профайл магазина</h1>
+  <div class="title-wrap">
+    <div class="center">
+      <a class="back-but" href="@showShop(mshop.id.get)">&nbsp;</a>
+      <div class="title-inner">
+        ПРОФАЙЛ МАГАЗИНА
+      </div>
+    </div>
+  </div>
 
-  <a href="@showShop(mshop.id.get)">Назад к просмотру магазина</a>
+  <div class="body">
 
-  @shop._shopFormTpl(
-    call = editShopFormSubmit(mshop.id.get),
-    sf = sf,
-    btnText = Messages("Save"),
-    isLimited = false
-  )
+    @shop._shopFormTpl(
+      call = editShopFormSubmit(mshop.id.get),
+      sf = sf,
+      btnText = Messages("Сохранить"),
+      isLimited = false
+    )
+
+  </div>
 
 }
