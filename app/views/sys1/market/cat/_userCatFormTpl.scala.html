@@ -1,0 +1,42 @@
+@(cf: Form[_], call: Call, btnText: String)(implicit ctx: util.Context)
+
+@* Форма для добавления/редактирования пользовательских категорий. *@
+@import helper._
+
+@form(call) {
+  @inputText(
+    cf("name"),
+    'placeholder -> "Калоши",
+    '_label -> "Название категории"
+  )
+
+  @inputText(
+    cf("ymCatId"),
+    'placeholder -> "z1x4c5x",
+    '_label -> "ID YM-категории"
+  )
+
+  @checkbox(
+    cf("ymCatInherit"),
+    '_label -> "Наследовать YM-подкатегории?"
+  )
+
+  @inputText(
+    cf("position"),
+    'placeholder -> "2",
+    '_label -> "Позиция в отображении (ручная сортировка)"
+  )
+
+  @inputText(
+    cf("cssClass"),
+    'placeholder -> "clearfix kaloshi sapogi",
+    '_label -> "CSS-класс"
+  )
+
+  @checkbox(
+    cf("includeInAll"),
+    '_label -> "Включать в индекс других моделей?"
+  )
+
+  <input type="submit" value="@btnText">
+}

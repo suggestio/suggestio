@@ -59,6 +59,10 @@ object FormUtil {
 
   val addressM = nonEmptyText(minLength = 10, maxLength = 128)
     .transform(strTrimSanitizeF, strIdentityF)
+
+  // TODO Нужен нормальный валидатор телефонов.
+  val phoneM = nonEmptyText(minLength = 5, maxLength = 16)
+
   def martAddressM = addressM
 
   // Трансформеры для optional-списков.

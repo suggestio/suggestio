@@ -151,7 +151,8 @@ object SysMarket extends SioController with MacroLogsImpl {
     "name"      -> martNameM,
     "town"      -> townM,
     "address"   -> martAddressM,
-    "site_url"  -> optional(urlStrMapper)
+    "site_url"  -> optional(urlStrMapper),
+    "phone"     -> optional(phoneM)
   ))
 
   /** Рендер страницы с формой добавления торгового центра. */
@@ -168,8 +169,8 @@ object SysMarket extends SioController with MacroLogsImpl {
       {formWithErrors =>
         NotAcceptable(mart.martAddFormTpl(company_id, formWithErrors))
       },
-      {case (name, town, address, site_url) =>
-        val mmart = MMart(name=name, town=town, companyId=company_id, address=address, siteUrl=site_url)
+      {case (name, town, address, siteUrlOpt, phoneOpt) =>
+        val mmart = MMart(name=name, town=town, companyId=company_id, address=address, siteUrl=siteUrlOpt, phone=phoneOpt)
         mmart.save map { mmartSavedId =>
           Redirect(routes.SysMarket.martShow(mmartSavedId))
         }
@@ -199,7 +200,7 @@ object SysMarket extends SioController with MacroLogsImpl {
   def martEditForm(mart_id: MartId_t) = IsSuperuser.async { implicit request =>
     MMart.getById(mart_id) map {
       case Some(mmart) =>
-        val form = martFormM.fill((mmart.name, mmart.town, mmart.address, mmart.siteUrl))
+        val form = martFormM.fill((mmart.name, mmart.town, mmart.address, mmart.siteUrl, mmart.phone))
         Ok(mart.martEditFormTpl(mmart, form))
 
       case None => martNotFound(mart_id)
@@ -214,11 +215,12 @@ object SysMarket extends SioController with MacroLogsImpl {
           {formWithErrors =>
             NotAcceptable(mart.martEditFormTpl(mmart, formWithErrors))
           },
-          {case (name, town, address, site_url) =>
+          {case (name, town, address, siteUrlOpt, phoneOpt) =>
             mmart.name = name
             mmart.town = town
             mmart.address = address
-            mmart.siteUrl = site_url
+            mmart.siteUrl = siteUrlOpt
+            mmart.phone = phoneOpt
             mmart.save map { _martId =>
               Redirect(routes.SysMarket.martShow(_martId))
             }

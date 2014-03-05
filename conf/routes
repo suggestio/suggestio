@@ -99,6 +99,10 @@ GET  /m/lk/s/:shopId                    controllers.MarketShopLk.showShop(shopId
 GET  /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopForm(shopId)
 POST /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopFormSubmit(shopId)
 
+# Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
+GET  /m/c/usr/o/:ownerId/top            controllers.MarketCategory.topCatsOf(ownerId)
+GET  /m/c/usr/c/:catId/dc               controllers.MarketCategory.directSubcatsOf(catId)
+
 # Управление промо-офферами (для арендатора и для владельца ТЦ).
 GET  /m/lk/s/:shopId/offers             controllers.MarketOffer.showShopPromoOffers(shopId: String)
 GET  /m/lk/offer/promo/add/:shopId      controllers.MarketOffer.addPromoOfferForm(shopId: String)
@@ -147,7 +151,13 @@ GET  /sys/market/spl/add/:shopId        controllers.SysMarket.splAddForm(shopId)
 POST /sys/market/spl/add/:shopId        controllers.SysMarket.splAddFormSubmit(shopId)
 POST /sys/market/spl/:id/delete         controllers.SysMarket.splDeleteSubmit(id: String)
 # sys.market.cats
-GET  /sys/market/cats                   controllers.SysMarket.showYmCats
-POST /sys/market/cats/reset             controllers.SysMarket.resetYmCatsSubmit
-POST /sys/market/cats/import            controllers.SysMarket.importYmCatsSubmit
+GET  /sys/market/cats/ym                controllers.SysMarket.showYmCats
+POST /sys/market/cats/ym/reset          controllers.SysMarket.resetYmCatsSubmit
+POST /sys/market/cats/ym/import         controllers.SysMarket.importYmCatsSubmit
+GET  /sys/market/cats/usr/add           controllers.MarketCategory.addUserCatForm(ownerId: Option[String], parentId: Option[String])
+POST /sys/market/cats/usr/add           controllers.MarketCategory.addUserCatFormSubmit(ownerId: Option[String], parentId: Option[String])
+GET  /sys/market/cats/usr/c/:catId      controllers.MarketCategory.showUserCat(catId)
+GET  /sys/market/cats/usr/:ownerId      controllers.MarketCategory.showCatsFor(ownerId)
+GET  /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatForm(catId)
+POST /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatFormSubmit(catId)
 

@@ -1,0 +1,23 @@
+@(ownerId: String, treeCats: Seq[(Int, MMartCategory)])(implicit ctx: util.Context)
+
+@* Список пользовательских категорий (в частости ТЦ-категорий). *@
+@import org.apache.commons.lang3.StringUtils.leftPad
+
+@userCatBase("Категории") {
+  <h2>Управление деревом</h2>
+  <a href="@routes.MarketCategory.addUserCatForm(Some(ownerId), parentId = None)">Создать новую категорию верхнего уровня</a>
+
+  <h2>Категории</h2>
+
+  @treeCats.map { case (level, cat) =>
+    <p>
+        @leftPad("", level, "=")
+        <a href="@routes.MarketCategory.showUserCat(cat.id.get)" title="Просмотр категории">@cat.name</a>
+        <a href="@routes.MarketCategory.addUserCatForm(None, parentId = Some(cat.id.get))" title="Добавить подкатегорию">[+]</a>
+        <a href="@routes.MarketCategory.editUserCatForm(cat.id.get)" title="@Messages("Edit")">[~]</a>
+    </p>
+  }
+
+  <h2>JSON API</h2>
+  <p><a href="@routes.MarketCategory.topCatsOf(ownerId)">topCatsOf()</a></p>
+}

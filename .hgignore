@@ -25,3 +25,6 @@ dout/
 ._*
 hg-checkexec-*
 picture
+*.zip
+*.rar
+*.gz
