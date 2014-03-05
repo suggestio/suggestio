@@ -9,6 +9,8 @@ import play.api.libs.concurrent.Execution.Implicits._
 import util.acl._
 import views.html.sys1.market.cat._
 import scala.concurrent.Future
+import play.api.mvc.Action
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -127,6 +129,37 @@ object MarketCategory extends SioController with PlayMacroLogsImpl {
       }
     )
   }
+
+  /** JSON: Выдать прямые подкатегории для указанной категории либо категории верхнего уровня для
+    * указанного ТЦ/магазина/etc. Вернуть json array со списком необходимых категорий. */
+  def topCatsOf(ownerId: String) = Action.async { implicit request =>
+    MMartCategory.findTopForOwner(ownerId).map { cats =>
+      Ok(renderCatsJson(cats))
+    }
+  }
+
+  /**
+   * Найти прямые подкатегории по отношению к указанной.
+   * @param catId id родительской категории.
+   * @return json массив.
+   */
+  def directSubcatsOf(catId: String) = Action.async { implicit request =>
+    MMartCategory.findDirectSubcatsOf(catId).map { subcats =>
+      Ok(renderCatsJson(subcats))
+    }
+  }
+
+  /** Отрендерить в JSON список категорий. */
+  private def renderCatsJson(cats: Seq[MMartCategory]): JsArray = {
+    val jsonCats = cats.map { cat =>
+      JsObject(Seq(
+        "name" -> JsString(cat.name),
+        "id"   -> JsString(cat.id.get)
+      ))
+    }
+    JsArray(jsonCats)
+  }
+
 
   /** Маппер parentIdOpt на Future[Option[parentCategory] ].  */
   private def maybeGetParentCat(parentIdOpt: Option[String]): Future[Option[MMartCategory]] = {

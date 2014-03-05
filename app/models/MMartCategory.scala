@@ -5,11 +5,13 @@ import org.elasticsearch.common.xcontent.XContentBuilder
 import EsModel._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.SioConstants._
-import io.suggest.util.JacksonWrapper
+import io.suggest.util.{SioConstants, JacksonWrapper}
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
-import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
+import org.elasticsearch.search.sort.SortOrder
+import org.elasticsearch.action.search.SearchResponse
 
 /**
  * Suggest.io
@@ -59,6 +61,38 @@ object MMartCategory extends EsModelStaticT[MMartCategory] {
     }
   }
 
+  /**
+   * Выдать top-level категории для указанной сущности.
+   * @param ownerId id сущности-владельца.
+   * @return Список top-level-категорий в порядке position и затем name.
+   */
+  def findTopForOwner(ownerId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartCategory]] = {
+    val ownerQuery = ownerIdQuery(ownerId)
+    val noParentFilter = FilterBuilders.missingFilter(PARENT_ID_ESFN)
+    val query = QueryBuilders.filteredQuery(ownerQuery, noParentFilter)
+    client.prepareSearch(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(query)
+      .execute()
+      .map { searchResp2listSortLex }
+  }
+
+  def findDirectSubcatsOf(parentCatId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartCategory]] = {
+    val query = QueryBuilders.fieldQuery(PARENT_ID_ESFN, parentCatId)
+    client.prepareSearch(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(query)
+      .execute()
+      .map { searchResp2listSortLex }
+  }
+
+  // TODO Надо бы заставить работать сортировку на стороне ES.
+  private def searchResp2listSortLex(searchResp: SearchResponse)(implicit ec:ExecutionContext, client:Client) : Seq[MMartCategory] = {
+    searchResp2list(searchResp)
+      .sortBy(sortByMmcat)
+  }
+
+  private def sortByMmcat(mmcat: MMartCategory) = mmcat.position + mmcat.name
 
   def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
@@ -96,7 +130,8 @@ object MMartCategory extends EsModelStaticT[MMartCategory] {
         ),
         FieldString(
           id = PARENT_ID_ESFN,
-          index = FieldIndexingVariants.no,
+          // Индексируем, чтобы искать в рамках под-уровня без has_child велосипеда и чтобы missing filter работал.
+          index = FieldIndexingVariants.not_analyzed,
           include_in_all = false
         ),
         FieldNumber(

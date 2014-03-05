@@ -59,6 +59,8 @@ case class UserCatAdm(catId: String) extends ActionBuilder[RequestUserCatAdm] {
   }
 }
 
+
+
 /** Статический ActionBuilder на случай, если заведомо у юзера нет прав доступа. Такое бывает при неправильном вызове.
   * Реализован в виде класса из-за музейной редкости подобных запросов. */
 class UnauthCatAdm extends ActionBuilder[RequestUserCatAdm] {

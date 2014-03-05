@@ -153,4 +153,6 @@ GET  /sys/market/cats/usr/c/:catId      controllers.MarketCategory.showUserCat(c
 GET  /sys/market/cats/usr/:ownerId      controllers.MarketCategory.showCatsFor(ownerId)
 GET  /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatForm(catId)
 POST /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatFormSubmit(catId)
+GET  /m/c/usr/o/:ownerId/top            controllers.MarketCategory.topCatsOf(ownerId)
+GET  /m/c/usr/c/:catId/dc               controllers.MarketCategory.directSubcatsOf(catId)
 
