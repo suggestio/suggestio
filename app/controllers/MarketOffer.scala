@@ -72,11 +72,12 @@ object MarketOffer extends SioController with MacroLogsImpl {
   /** Маппер формы создания/редактирования промо-оффера в режиме vendor.model. */
   val vmPromoOfferFormM = Form(mapping(
     vendorM, modelM, colorsM, sizesM, sizeUnitsM, priceM, oldPriceM,
-    "imgs"  -> list(tmpImgIdM),
-    "crops" -> list(imgCropM)
+    // TODO Изначально была поддержка list(tmpImgIdM), но эта форма стала тестовым полигоном для картинок сразу после 6b6694f83444, поэтому пока работа идёт с одной картинкой.
+    "image_key"  -> tmpImgIdM,
+    "crop"  -> optional(imgCropM)
   )
   // apply()
-  {(vendor, model, colors, sizes, sizeUnits, price, oldPriceOpt, iiks, iCrops) =>
+  {(vendor, model, colors, sizes, sizeUnits, price, oldPriceOpt, iik, cropOpt) =>
     val offer = new MShopPromoOffer
     import offer.datum
     datum.vendor = vendor
@@ -87,15 +88,14 @@ object MarketOffer extends SioController with MacroLogsImpl {
     datum.price = price
     datum.oldPrices = oldPriceOpt
     // Подхватываем тут tempImg*. Сначала мержим id картинок и их кропы
-    val imgInfos = ImgFormUtil.mergeListMappings(iiks, iCrops)
-    (offer, imgInfos)
+    val imgInfo = ImgInfo(iik, cropOpt)
+    (offer, imgInfo)
   }
   // unapply()
-  {case (mOffer, imgInfos)=>
+  {case (mOffer, imgInfo)=>
     import mOffer.datum._
-    val iiks   = imgInfos.map(_.iik)
-    val iCrops = imgInfos.map(_.crop)
-    Some((vendor getOrElse "",  model getOrElse "",  colors.toList,  sizesOrig,  sizeUnitsOrig getOrElse "",  price,  oldPrices, iiks, iCrops))
+    import imgInfo._
+    Some((vendor getOrElse "",  model getOrElse "",  colors.toList,  sizesOrig,  sizeUnitsOrig getOrElse "",  price,  oldPrices, iik, cropOpt))
   })
 
 
@@ -135,11 +135,11 @@ object MarketOffer extends SioController with MacroLogsImpl {
           case None        => shopNotFound(shopId)
         }
       },
-      {case (mpo, imgInfos) =>
+      {case (mpo, imgInfo) =>
         mpo.datum.shopId = shopId
         mpo.datum.offerType = OfferTypes.VendorModel
         // Картинки: нужно их перегнать в постоянное хранилище.
-        Future.traverse(imgInfos) { img =>
+        Future.traverse(List(imgInfo)) { img =>
           ImgFormUtil.handleImageForStoring(img)
         } flatMap { imgSaved =>
           // Удалить tmp-картинки в фоне
@@ -183,8 +183,9 @@ object MarketOffer extends SioController with MacroLogsImpl {
     MShop.getById(request.shopId) map {
       case Some(mshop) =>
         import request.offer
-        val imgInfos = Nil    // TODO
-        val f = vmPromoOfferFormM fill (offer, imgInfos)
+        val iik = OrigImgIdKey(offer.datum.pictures.head)
+        val imgInfo = ImgInfo(iik, None)
+        val f = vmPromoOfferFormM fill (offer, imgInfo)
         Ok(form.editPromoOfferTpl(offer, f, mshop))
 
       case None => shopNotFound(request.shopId)
@@ -196,7 +197,7 @@ object MarketOffer extends SioController with MacroLogsImpl {
     import request.offer
     vmPromoOfferFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"editPromoOfferFormSubmit($offerId): " + formWithErrors.errors)
+        debug(s"editPromoOfferFormSubmit($offerId): Failed to bind form: ${formWithErrors.errors}")
         MShop.getById(request.shopId) map {
           case Some(mshop) => NotAcceptable(form.editPromoOfferTpl(offer, formWithErrors, mshop))
           case None        => shopNotFound(request.shopId)

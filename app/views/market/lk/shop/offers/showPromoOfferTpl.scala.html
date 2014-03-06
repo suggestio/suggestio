@@ -16,4 +16,8 @@
   @* Кнопка немедленного удаления оффера. *@
   @stuff._deleteSmthFormBtnTpl(routes.MarketOffer.deletePromoOfferSubmit(offer.id.get))
   <a href="@routes.MarketOffer.editPromoOfferForm(offer.id.get)">@Messages("Edit")</a>
+
+  @offer.datum.pictures.map { pictureId =>
+    <img src="@routes.Img.getOrig(pictureId)"/>
+  }
 }

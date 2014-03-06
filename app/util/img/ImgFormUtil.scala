@@ -38,7 +38,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   /** Нередко бывает несколько картинок при сабмите. */
   def mergeListMappings(iiks: List[ImgIdKey], iCrops: List[ImgCrop]): List[ImgInfo] = {
     iiks.zip(iCrops) map {
-      case (iik, crop) => ImgInfo(iik, crop)
+      case (iik, crop) => ImgInfo(iik, Some(crop))
     }
   }
 
@@ -60,7 +60,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
             val saveOrigFut = future {
               OrigImageUtil.maybeReadFromFile(mptmp.file)
             } flatMap { imgBytes =>
-              val idStr = new String(id)
+              val idStr = MPict.idBin2Str(id)
               MUserImgOrig(idStr, imgBytes).save.map { _ =>
                 TmpImgReadyForCrop(idStr, mptmp.file)
               }
@@ -69,7 +69,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
             val saveThumbFut = future {
               val tmpThumbFile = File.createTempFile("origThumb", ".jpeg")
               val thumbBytes = try {
-                ThumbImageUtil.convert(mptmp.file, tmpThumbFile, mode = ConvertModes.THUMB)
+                ThumbImageUtil.convert(mptmp.file, tmpThumbFile, mode = ConvertModes.THUMB, crop = img.cropOpt)
                 // Прочитать файл в памяти и сохранить в MImgThumb
                 FileUtils.readFileToByteArray(tmpThumbFile)
               } finally {
@@ -155,7 +155,7 @@ object ThumbImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
   override def MAX_OUT_FILE_SIZE_BYTES: Option[Int] = None
 
   /** Картинка считается слишком маленькой для обработки, если хотя бы одна сторона не превышает этот порог. */
-  override def MIN_SZ_PX: Int = DOWNSIZE_HORIZ_PX
+  override def MIN_SZ_PX: Int = DOWNSIZE_HORIZ_PX.intValue()
 
   /** Если исходный jpeg после стрипа больше этого размера, то сделать resize.
     * Иначе попытаться стрипануть icc-профиль по jpegtran, чтобы снизить размер без пересжатия. */
@@ -204,7 +204,7 @@ case class OrigImgIdKey(key: String) extends ImgIdKey {
 
 
 /** Класс для объединения кропа и id картинки (чтобы не использовать Tuple2 с числовыми названиями полей) */
-case class ImgInfo(iik: ImgIdKey, crop: ImgCrop)
+case class ImgInfo(iik: ImgIdKey, cropOpt: Option[ImgCrop])
 
 
 case class TmpImgReadyForCrop(idStr:String, tmpImgFile:File)

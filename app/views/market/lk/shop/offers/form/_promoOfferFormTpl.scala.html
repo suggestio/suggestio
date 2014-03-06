@@ -15,7 +15,7 @@
   @_priceTpl(f)
   @_oldPricesTpl(f)
 
-  <input type="hidden" name="image_key" value=""/>
+  <input type="hidden" name="image_key" value="@f("image_key").value"/>
   <img class="image-preview" width="200"  style="display: none" src=""/>
 
   <input type="submit" value="@btnText"/>
