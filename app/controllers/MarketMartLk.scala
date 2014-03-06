@@ -59,8 +59,8 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
   // unapplyF()
   {mmart =>
     import mmart._
-    Some((name, town, address, siteUrl, phone))}
-  )
+    Some((name, town, address, siteUrl, phone))
+  })
 
   /** Маппинг формы приглашения магазина в систему. */
   val inviteShopFormM = Form(mapping(

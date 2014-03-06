@@ -18,7 +18,9 @@ import play.api.Logger
  * По мотивам http://stackoverflow.com/a/13469308
  */
 
-object Crontab {
+object Crontab extends PlayMacroLogsImpl {
+
+  import LOGGER._
 
   def sched: Scheduler = {
     try
@@ -37,7 +39,13 @@ object Crontab {
     import _sched.schedule
     List(
       // Чистить tmp-картинки
-      schedule(10 seconds, 5 minutes) { MPictureTmp.cleanupOld() }
+      schedule(10 seconds, 5 minutes) {
+        try {
+          MPictureTmp.cleanupOld()
+        } catch {
+          case ex: Throwable => error(s"Cron: MPictureTmp.cleanupOld() failed", ex)
+        }
+      }
     )
   }
 
