@@ -5,7 +5,6 @@
 
 });
 
-
 function CbcaSelect() {
   var self = this,
   animationTime = 200;
@@ -15,15 +14,12 @@ function CbcaSelect() {
 
     $('.cbca-select').each(function() {
       var $this = $(this),
-      $dropDown = $this.find('.dropdown')
-      initHeight = $dropDown.height();
+      $dropDown = $this.find('.dropdown');
 
       $this.data({
-        'open': false,
-        'initHeight': initHeight
+        'open': false
       });
 
-      console.log(initHeight);
       $dropDown.css('height', 0);
     });
 
@@ -64,17 +60,13 @@ function CbcaSelect() {
 
 
   self.close = function($select) {
-    $select.find('.dropdown').animate({
-      'height': 0
-    }, animationTime);
+    $select.find('.dropdown').height(0);
     $select.data('open', false);
   }//self.close end
 
 
   self.open = function($select) {
-    $select.find('.dropdown').animate({
-      'height': $select.data('initHeight')
-    }, animationTime);
+    $select.find('.dropdown').height('');
     $select.data('open', true);
   }//self.open end
 
