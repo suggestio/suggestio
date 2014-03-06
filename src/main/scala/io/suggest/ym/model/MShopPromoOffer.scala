@@ -11,6 +11,9 @@ import org.elasticsearch.client.Client
 import io.suggest.model._
 import io.suggest.model.EsModel._
 import io.suggest.ym.model.MShop.ShopId_t
+import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.util.MacroLogsImpl
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -23,7 +26,9 @@ import io.suggest.ym.model.MShop.ShopId_t
  * Этот оффер привязан к магазину -- это избавляет от кучи головной боли, хоть и бывает не оптимально.
  */
 
-object MShopPromoOffer extends EsModelMinimalStaticT[MShopPromoOffer] {
+object MShopPromoOffer extends EsModelMinimalStaticT[MShopPromoOffer] with MacroLogsImpl {
+
+  import LOGGER._
 
   val ES_TYPE_NAME  = "shopPromoOffers"
 
@@ -72,6 +77,27 @@ object MShopPromoOffer extends EsModelMinimalStaticT[MShopPromoOffer] {
     }.toString()
   }
 
+  /**
+   * Удалить документ по id.
+   * @param id id документа.
+   * @return true, если документ найден и удалён. Если не найден, то false
+   */
+  override def deleteById(id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    // Нужно удалить картинки, ассоциированные с этой рекламой
+    getById(id) flatMap {
+      case Some(mspo) =>
+        mspo.datum.pictures foreach { pictureId =>
+          MPict.deleteFully(pictureId) onComplete {
+            case Success(_)  => trace(s"deleteById($id): Deleted associated picture: $pictureId")
+            case Failure(ex) => error(s"deleteById($id): Unable to delete picture: $pictureId", ex)
+          }
+        }
+        // Асинхронно удалить текущий документ из ES.
+        super.deleteById(id)
+
+      case None => Future successful false
+    }
+  }
 }
 
 import MShopPromoOffer._

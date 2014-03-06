@@ -8,6 +8,9 @@ import java.net.URL
 import java.security.MessageDigest
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import java.util.Random
+import scala.concurrent.Future
+import SioHBaseAsyncClient._
+import org.hbase.async.DeleteRequest
 
 /**
  * Suggest.io
@@ -100,6 +103,23 @@ object MPict extends HTableModel {
     case a: Array[Byte] => a
     case null  => null
     case other => throw new IllegalArgumentException("unexpected input[" + other.getClass.getName + "]: " + other)
+  }
+
+  /**
+   * Удалить весь ряд целиком из таблицы.
+   * @param idStr строковой id ряда
+   * @return Фьючерс для синхронизации.
+   */
+  def deleteFully(idStr: String): Future[_] = deleteFully(idStr2Bin(idStr))
+
+  /**
+   * Удалить весь ряд с картинкой из таблицы.
+   * @param id id ряда.
+   * @return Фьючерс для синхронизации.
+   */
+  def deleteFully(id: Array[Byte]): Future[_] = {
+    val delReq = new DeleteRequest(HTABLE_NAME_BYTES, id)
+    ahclient.delete(delReq)
   }
 
 }

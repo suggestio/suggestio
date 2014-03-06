@@ -163,8 +163,8 @@ trait SioImageUtilT {
     }
     mode match {
       case ConvertModes.STRIP  => op.strip()
-      case ConvertModes.THUMB  => op.thumbnail(DOWNSIZE_HORIZ_PX, DOWNSIZE_VERT_PX)
-      case ConvertModes.RESIZE => op.resize(DOWNSIZE_HORIZ_PX, DOWNSIZE_VERT_PX)
+      case ConvertModes.THUMB  => op.thumbnail(DOWNSIZE_HORIZ_PX, DOWNSIZE_VERT_PX, '>')
+      case ConvertModes.RESIZE => op.resize(DOWNSIZE_HORIZ_PX, DOWNSIZE_VERT_PX, '>')
     }
     op.quality(JPEG_QUALITY_PC)
     op.samplingFactor(2.0, 1.0)

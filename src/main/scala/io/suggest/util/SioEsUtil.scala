@@ -921,13 +921,23 @@ case class IndexMapping(typ:String, staticFields:Seq[Field], properties:Seq[DocF
   }
 }
 
+// TODO Нужно объеденить nested и обычные object, чтобы просто флаг был isNested = (true | false)
+/** Просто object */
+case class FieldObject(
+  id          : String,
+  properties  : Seq[DocField],
+  enabled     : Boolean = true
+) extends DocField with FieldWithProperties with FieldEnableable {
+  def fieldType = DocFieldTypes.`object`
+}
+
 /** Nested-объекты описаны тут. */
 case class FieldNestedObject(
   id          : String,
   properties  : Seq[DocField],
   enabled     : Boolean = true
 ) extends DocField with FieldWithProperties with FieldEnableable {
-  override def fieldType = DocFieldTypes.nested
+  def fieldType = DocFieldTypes.nested
 }
 
 // END: DSL полей документа --------------------------------------------------------------------------------------------
