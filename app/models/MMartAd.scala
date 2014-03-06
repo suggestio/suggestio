@@ -6,6 +6,7 @@ import io.suggest.util.SioEsUtil._
 import io.suggest.util.SioConstants._
 import EsModel._
 import io.suggest.util.JacksonWrapper
+import MShop.ShopId_t, MMart.MartId_t
 
 /**
  * Suggest.io
@@ -25,10 +26,12 @@ object MMartAd extends EsModelStaticT[MMartAd] {
   val MODEL_ESFN        = "model"
   val PRICE_ESFN        = "price"
   val OLD_PRICE_ESFN    = "oldPrice"
+  val PANEL_ESFN        = "panel"
 
   val FONT_ESFN         = "font"
   val SIZE_ESFN         = "size"
   val COLOR_ESFN        = "color"
+  val IS_SHOWN_ESFN     = "isShown"
 
   protected def dummy(id: String) = {
     MMartAd(id=Some(id), offers=Nil, picture=null, martId=null)
@@ -36,11 +39,13 @@ object MMartAd extends EsModelStaticT[MMartAd] {
 
   def applyKeyValue(acc: MMartAd): PartialFunction[(String, AnyRef), Unit] = {
     case (MART_ID_ESFN, value)  => acc.martId = martIdParser(value)
+    case (SHOP_ID_ESFN, value)  => acc.shopId = Some(shopIdParser(value))
     case (PICTURE_ESFN, value)  => acc.picture = stringParser(value)
     case (PRIO_ESFN, value)     => acc.prio = Some(intParser(value))
     // TODO Opt: Стоит использоваться вместо java-reflections ускоренные scala-json парсеры на базе case-class'ов.
     case (CATEGORY_ESFN, value) => acc.category = Some(JacksonWrapper.convert[IndexableCategory](value))
-    case (OFFER_ESFN, value)    => acc.offers = JacksonWrapper.convert[List[MMartAdOffer]](value)
+    case (OFFER_ESFN, value)    => acc.offers = JacksonWrapper.convert[List[MMartAdProduct]](value)
+    case (PANEL_ESFN, value)    => acc.panel = Some(JacksonWrapper.convert[MMartAdPanelSettings](value))
   }
 
   def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
@@ -111,6 +116,7 @@ object MMartAd extends EsModelStaticT[MMartAd] {
         )
       )   // offer.properties
     )
+
     val pictureField = FieldString(
       id = PICTURE_ESFN,
       index = FieldIndexingVariants.no,
@@ -163,12 +169,16 @@ import MMartAd._
  * @param id id товара.
  */
 case class MMartAd(
-  var martId  : String,
-  var offers  : List[MMartAdOffer],
-  var picture : String,
-  var prio    : Option[Int] = None,
-  var category: Option[IndexableCategory] = None,
-  id          : Option[String] = None
+  var martId      : MartId_t,
+  var offers      : List[MMartAdOfferT],
+  var picture     : String,
+  var shopId      : Option[ShopId_t] = None,
+  var panel       : Option[MMartAdPanelSettings] = None,
+  var prio        : Option[Int] = None,
+  var category    : Option[IndexableCategory] = None,
+  var taMobile    : Option[String] = None,
+  var taTablet    : Option[String] = None,
+  id              : Option[String] = None
 ) extends EsModelT[MMartAd] {
   def companion = MMartAd
 
@@ -177,32 +187,54 @@ case class MMartAd(
       .field(PICTURE_ESFN, picture)
     if (prio.isDefined)
       acc.field(PRIO_ESFN, prio.get)
+    if (shopId.isDefined)
+      acc.field(SHOP_ID_ESFN, shopId.get)
     if (category.isDefined)
       category.get.render(acc)
+    if (panel.isDefined)
+      panel.get.render(acc)
     // Загружаем офферы
     acc.startArray(OFFER_ESFN)
       offers foreach { offer =>
-        offer.render(acc)
+        offer.renderJson(acc)
       }
     acc.endArray()
   }
 }
 
+trait MMartAdOfferT {
+  def renderFields(acc: XContentBuilder)
+  def renderJson(acc: XContentBuilder) {
+    acc.startObject()
+    renderFields(acc)
+    acc.endObject()
+  }
+}
 
-case class MMartAdOffer(
+case class MMartAdProduct(
   vendor:   StringField,
   model:    StringField,
   oldPrice: Option[FloatField],
   price:    FloatField
-) {
-  def render(acc: XContentBuilder) {
-    acc.startObject()
-      vendor.render(acc)
-      model.render(acc)
-      if (oldPrice.isDefined)
-        oldPrice.get.render(acc)
-      price.render(acc)
-    acc.endObject()
+) extends MMartAdOfferT {
+  def renderFields(acc: XContentBuilder) {
+    vendor.render(acc)
+    model.render(acc)
+    if (oldPrice.isDefined)
+      oldPrice.get.render(acc)
+    price.render(acc)
+  }
+}
+
+case class MMartAdDiscount(
+  text1: StringField,
+  discount: FloatField,
+  text2: StringField
+) extends MMartAdOfferT {
+  def renderFields(acc: XContentBuilder) {
+    text1.render(acc)
+    discount.render(acc)
+    text2.renderFields(acc)
   }
 }
 
@@ -245,3 +277,14 @@ case class IndexableCategory(name: String, ids: List[String]) {
     .endObject()
   }
 }
+
+
+case class MMartAdPanelSettings(color: String, isShown: Boolean) {
+  def render(acc: XContentBuilder) {
+    acc.startObject(PANEL_ESFN)
+      .field(IS_SHOWN_ESFN, isShown)
+      .field(COLOR_ESFN, color)
+    .endObject()
+  }
+}
+
