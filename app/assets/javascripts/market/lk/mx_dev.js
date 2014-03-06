@@ -22,6 +22,8 @@ function CbcaSelect() {
         'open': false,
         'initHeight': initHeight
       });
+
+      console.log(initHeight);
       $dropDown.css('height', 0);
     });
 
@@ -61,36 +63,29 @@ function CbcaSelect() {
   }//self.init end
 
 
-  self.close = function($wrap) {
-
-    $wrap.find('.dropdown').animate({
+  self.close = function($select) {
+    $select.find('.dropdown').animate({
       'height': 0
     }, animationTime);
-    $wrap.data('open', false);
-
+    $select.data('open', false);
   }//self.close end
 
 
-  self.open = function($wrap) {
-
-    $wrap.find('.dropdown').animate({
-      'height': $wrap.data('initHeight')
+  self.open = function($select) {
+    $select.find('.dropdown').animate({
+      'height': $select.data('initHeight')
     }, animationTime);
-    $wrap.data('open', true);
-
+    $select.data('open', true);
   }//self.open end
 
 
-  self.setValue = function($wrap, title, value) {
-
-    $wrap.find('.selected').html(title);
-    $wrap.find('.result').val(value);
-
+  self.setValue = function($select, title, value) {
+    $select.find('.selected').html(title);
+    $select.find('.result').val(value);
   }//self.setValue end
 
 
   self.closeAll = function() {
-
     $('.cbca-select').each(
     function() {
       var $this = $(this);
@@ -99,7 +94,6 @@ function CbcaSelect() {
         self.close($this);
       }
     });
-
   }//self.closeAll end
 
 }
