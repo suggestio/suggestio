@@ -1,7 +1,6 @@
 ;$(function() {
 
-  var cbcaSelect = new CbcaSelect();
-  cbcaSelect.init();
+  CbcaSelect();
 
 });
 
@@ -87,5 +86,7 @@ function CbcaSelect() {
       }
     });
   }//self.closeAll end
+
+  self.init();
 
 }
