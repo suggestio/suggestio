@@ -1,10 +1,8 @@
 ;$(function() {
 
-  var cbcaSelect = new CbcaSelect();
-  cbcaSelect.init();
+  CbcaSelect();
 
 });
-
 
 function CbcaSelect() {
   var self = this,
@@ -15,13 +13,12 @@ function CbcaSelect() {
 
     $('.cbca-select').each(function() {
       var $this = $(this),
-      $dropDown = $this.find('.dropdown')
-      initHeight = $dropDown.height();
+      $dropDown = $this.find('.dropdown');
 
       $this.data({
-        'open': false,
-        'initHeight': initHeight
+        'open': false
       });
+
       $dropDown.css('height', 0);
     });
 
@@ -61,36 +58,25 @@ function CbcaSelect() {
   }//self.init end
 
 
-  self.close = function($wrap) {
-
-    $wrap.find('.dropdown').animate({
-      'height': 0
-    }, animationTime);
-    $wrap.data('open', false);
-
+  self.close = function($select) {
+    $select.find('.dropdown').height(0);
+    $select.data('open', false);
   }//self.close end
 
 
-  self.open = function($wrap) {
-
-    $wrap.find('.dropdown').animate({
-      'height': $wrap.data('initHeight')
-    }, animationTime);
-    $wrap.data('open', true);
-
+  self.open = function($select) {
+    $select.find('.dropdown').height('');
+    $select.data('open', true);
   }//self.open end
 
 
-  self.setValue = function($wrap, title, value) {
-
-    $wrap.find('.selected').html(title);
-    $wrap.find('.result').val(value);
-
+  self.setValue = function($select, title, value) {
+    $select.find('.selected').html(title);
+    $select.find('.result').val(value);
   }//self.setValue end
 
 
   self.closeAll = function() {
-
     $('.cbca-select').each(
     function() {
       var $this = $(this);
@@ -99,7 +85,8 @@ function CbcaSelect() {
         self.close($this);
       }
     });
-
   }//self.closeAll end
+
+  self.init();
 
 }
