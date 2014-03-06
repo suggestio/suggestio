@@ -32,7 +32,7 @@ object Sys extends SioController with PlayMacroLogsImpl {
   val addSiteFormM = Form("domain" -> domain2dkeyMapper)
 
 
-  /** index.html для системной панели. */
+  /** indexTpl.scala.html для системной панели. */
   def index = IsSuperuser { implicit request =>
     Ok(indexTpl())
   }
