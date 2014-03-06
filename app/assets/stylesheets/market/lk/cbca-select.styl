@@ -1,0 +1,51 @@
+border-radius(v)
+  -webkit-border-radius:  v
+  border-radius:          v
+
+box-shadow(v)
+  -webkit-box-shadow: v
+  -moz-box-shadow:    v
+  box-shadow:         v
+
+.cbca-select
+  display: inline-block
+  font-size: 12px
+  line-height: 12px
+  font-family: 'Arial'
+  color: #959595
+  position: absolute
+  .selectbox
+    cursor: pointer
+    overflow: hidden
+    background: #efefef
+    border: 1px solid #cbcbcb
+    border-radius(10px)
+    box-shadow(1px 1px 2px 0px rgba(50, 50, 50, 0.75))
+    .value
+      letter-spacing: 1px
+      float: left
+      .selected
+        border-right: 1px solid #cbcbcb
+        padding: 5px 14px 5px 15px
+      .dropdown
+        margin-right: -23px
+        .option
+          cursor: pointer
+          padding: 5px 38px 5px 15px
+        .option.odd
+          background: #e1e1e1
+        .option.even
+          background: #efefef
+        .option:hover
+          color: #5088aa
+          background: #ccd6dc
+    .triger
+      cursor: pointer
+      float: right
+      background: url('/assets/images/market/lk/triangle.png') no-repeat center center
+      width: 22px
+      height: 22px
+      border-left: 1px solid white
+    .triger:active
+      background-position: center 9px
+
