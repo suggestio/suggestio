@@ -168,7 +168,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
    * @param shopId id магазина.
    */
   def createShopAd(shopId: String) = IsShopAdmFull(shopId).async { implicit request =>
-    Ok(createAdTpl(request.mshop, adFormM))
+    MMartCategory.findTopForOwner(shopId) map { mmcats1 =>
+      Ok(createAdTpl(request.mshop, mmcats1, adFormM))
+    }
   }
 
   /** Сабмит формы добавления рекламной карточки товара/скидки. */
@@ -176,7 +178,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     adFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"createShopAdSubmit($shopId): Bind failed: ${formWithErrors.errors}")
-        NotAcceptable(createAdTpl(request.mshop, formWithErrors))
+        MMartCategory.findTopForOwner(shopId) map { mmcats1 =>
+          NotAcceptable(createAdTpl(request.mshop, mmcats1, formWithErrors))
+        }
       },
       {case (imgKey, mmad) =>
         // TODO Нужно проверить картинку. Нужно сохранить картинку.
@@ -200,11 +204,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     import request.mad
     mad.shopId match {
       case Some(_shopId) =>
-        MShop.getById(_shopId) map {
+        MShop.getById(_shopId) flatMap {
           case Some(mshop) =>
-            val imgIdKey = OrigImgIdKey(mad.picture)
-            val formFilled = adFormM fill (imgIdKey, mad)
-            Ok(editAdTpl(mshop, mad, formFilled))
+            MMartCategory.findTopForOwner(_shopId) map { mmcats1 =>
+              val imgIdKey = OrigImgIdKey(mad.picture)
+              val formFilled = adFormM fill (imgIdKey, mad)
+              Ok(editAdTpl(mshop, mad, mmcats1, formFilled))
+            }
 
           // TODO: Отсутсвие магазина не должно быть помехой
           case None => shopNotFound(_shopId)
@@ -225,8 +231,11 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
         debug(s"editShopAdSubmit($adId): Failed to bind form: " + formWithErrors.errors)
         mad.shopId match {
           case Some(_shopId) =>
-            MShop.getById(_shopId) map {
-              case Some(mshop) => NotAcceptable(editAdTpl(mshop, mad, formWithErrors))
+            MShop.getById(_shopId) flatMap {
+              case Some(mshop) =>
+                MMartCategory.findTopForOwner(_shopId) map { mmcats1 =>
+                  NotAcceptable(editAdTpl(mshop, mad, mmcats1, formWithErrors))
+                }
               case None        => shopNotFound(_shopId)
             }
 
