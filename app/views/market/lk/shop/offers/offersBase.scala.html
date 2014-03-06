@@ -4,8 +4,13 @@
 
 @* TODO Пока что используется шаблон подложки магазина из /sys/. *@
 @market.lk.lkBase(title, headAfter=headAfter) {
+
+  <div class="body">
+
   @mshopOpt.map { mshop =>
     <a href="@routes.MarketShopLk.showShop(mshop.id.get)">Вернутся назад в магазин @mshop.name</a>
   }
   @content
+
+  </div>
 }
