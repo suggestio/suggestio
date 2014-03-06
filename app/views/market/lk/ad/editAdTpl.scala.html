@@ -1,0 +1,16 @@
+@(mshop: MShop, mad: MMartAd, af: Form[_])(implicit ctx: util.Context)
+
+@* Страница с формой редактирования рекламной карточки. *@
+@import ctx._
+@import market.lk._
+
+@lkBase("Редактирование рекламной карточки") {
+
+  @_adFormTpl(
+    af = af,
+    call = routes.MarketAd.editShopAdSubmit(mad.id.get),
+    btnText = Messages("Save"),
+    dfltIsProduct = mad.offers.head.isProduct
+  )
+
+}

@@ -24,7 +24,7 @@ object IsMartShopAdmin extends PlayMacroLogsImpl {
    * @return Фьючерс, т.к. модели магазинов будут перегнаны на асинхронных ES.
    */
   def isShopAdmin(shopId: ShopId_t, pwOpt: PwOpt_t): Future[Boolean] = {
-    if (pwOpt.exists(_.isSuperuser)) {
+    if (PersonWrapper isSuperuser pwOpt) {
       Future successful true
     } else {
       if (pwOpt.isDefined) {
@@ -37,12 +37,32 @@ object IsMartShopAdmin extends PlayMacroLogsImpl {
     }
   }
 
+  /**
+   * Вернуть магазин, если с правами всё ок. Иначе None.
+   * @param shopId id магазина.
+   * @param pwOpt Текущий юзер.
+   * @return Option[MShop].
+   */
+  def isShopAdminFull(shopId: ShopId_t, pwOpt: PwOpt_t): Future[Option[MShop]] = {
+    if (PersonWrapper isSuperuser pwOpt) {
+      MShop getById shopId
+    } else {
+      if (pwOpt.isDefined) {
+        // Нужно узнать, существует ли магазин и TODO есть ли права у юзера на магазин
+        warn("Check ACL for shop: NOT YET IMPLEMENTED. Allowing " + shopId + " for " + pwOpt)
+        MShop getById shopId
+      } else {
+        Future successful None
+      }
+    }
+  }
+
 }
 
 import IsMartShopAdmin._
 
 case class IsMartShopAdmin(shopId: ShopId_t) extends ActionBuilder[AbstractRequestForShopAdm] {
-  override protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForShopAdm[A]) => Future[SimpleResult]): Future[SimpleResult] = {
+  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForShopAdm[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     isShopAdmin(shopId, pwOpt) flatMap {
       case true =>
@@ -52,4 +72,23 @@ case class IsMartShopAdmin(shopId: ShopId_t) extends ActionBuilder[AbstractReque
       case false => IsAuth.onUnauth(request)
     }
   }
+}
+
+
+/** В реквесте содержится магазин, если всё ок. */
+case class IsShopAdmFull(shopId: ShopId_t) extends ActionBuilder[RequestForShopAdmFull] {
+  protected def invokeBlock[A](request: Request[A], block: (RequestForShopAdmFull[A]) => Future[SimpleResult]): Future[SimpleResult] = {
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    isShopAdminFull(shopId, pwOpt) flatMap {
+      case Some(mshop) =>
+        val req1 = RequestForShopAdmFull(mshop, request, pwOpt)
+        block(req1)
+
+      case None => IsAuth onUnauth request
+    }
+  }
+}
+
+case class RequestForShopAdmFull[A](mshop: MShop, request: Request[A], pwOpt: PwOpt_t) extends AbstractRequestForShopAdm(request) {
+  def shopId: ShopId_t = mshop.id.get
 }

@@ -99,6 +99,9 @@ GET  /m/lk/s/:shopId                    controllers.MarketShopLk.showShop(shopId
 GET  /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopForm(shopId)
 POST /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopFormSubmit(shopId)
 GET  /m/lk/s/:shopId/ad/new             controllers.MarketAd.createShopAd(shopId)
+POST /m/lk/s/:shopId/ad/new             controllers.MarketAd.createShopAdSubmit(shopId)
+GET  /m/lk/a/:adId/edit                 controllers.MarketAd.editShopAd(adId)
+POST /m/lk/a/:adId/edit                 controllers.MarketAd.editShopAdSubmit(adId)
 
 # Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
 GET  /m/c/usr/o/:ownerId/top            controllers.MarketCategory.topCatsOf(ownerId)

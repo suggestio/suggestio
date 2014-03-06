@@ -1,0 +1,18 @@
+@(af: Form[_])(implicit ctx: util.Context)
+
+@* Discount-часть формы: текст и скидка. *@
+
+@import ctx._
+@import helper._
+
+@* Надпись над скидкой *@
+@inputText(af("ad.discount.text1.value"), '_label -> "Первая строка текста")
+@inputText(af("ad.discount.text1.color"), '_label -> "Цвет первой строки")
+
+@* Скидка *@
+@inputText(af("ad.discount.discount.value"), '_label -> "Скидка")
+@inputText(af("ad.discount.discount.color"), '_label -> "Цвет скидки")
+
+@* Подпись под скидкой *@
+@inputText(af("ad.discount.discount.value"), '_label -> "Вторая строка текста")
+@inputText(af("ad.discount.discount.color"), '_label -> "Цвет второй строки")

@@ -21,6 +21,9 @@ object FormUtil {
   val strTrimSanitizeF = {s:String =>
     stripAllPolicy.sanitize(s).trim
   }
+  val strTrimBrOnlyF = {s: String =>
+    brOnlyPolicy.sanitize(s).trim
+  }
   val strTrimSanitizeLowerF = strTrimSanitizeF andThen {_.toLowerCase}
   val strFmtTrimF = {s: String =>
     textFmtPolicy.sanitize(s).trim
@@ -59,6 +62,8 @@ object FormUtil {
 
   val addressM = nonEmptyText(minLength = 10, maxLength = 128)
     .transform(strTrimSanitizeF, strIdentityF)
+
+  def userCatIdM = esIdM
 
   // TODO Нужен нормальный валидатор телефонов.
   val phoneM = nonEmptyText(minLength = 5, maxLength = 16)

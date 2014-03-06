@@ -1,4 +1,4 @@
-@(mshop:MShop)(implicit ctx: util.Context)
+@(mshop: MShop, af: Form[_])(implicit ctx: util.Context)
 
 @* Рендер страницы редактирования существующего ТЦ. *@
 @import ctx._
@@ -54,4 +54,9 @@
 
   </div>
 
+  @_adFormTpl(
+    af = af,
+    call = routes.MarketAd.createShopAdSubmit(mshop.id.get),
+    btnText = Messages("Create")
+  )
 }

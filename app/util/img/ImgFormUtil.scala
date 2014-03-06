@@ -25,6 +25,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     .transform(ImgIdKey(_), {iik: ImgIdKey => iik.key})
     .verifying("img.id.invalid.", { _.isValid })
 
+  val imgIdM = tmpImgIdM  // TODO Нужно устаканить временные и хранимые картинки.
 
   /** Маппинг обязательного параметра кропа на реальность. */
   val imgCropM = nonEmptyText(maxLength = 16)
