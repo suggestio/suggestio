@@ -1,11 +1,12 @@
-@(call: Call)(implicit ctx: util.Context)
+@(call: Call, formId:String="", jsCallback:String="")(implicit ctx: util.Context)
 
 @* Рендер формы для отправки картинки на сервер для её кадрирования. *@
 @import ctx._
 @import helper._
 
-@form(call, 'enctype -> "multipart/form-data") {
+@form(call, 'enctype -> "multipart/form-data", 'class -> "file-upload-form", 'id -> formId ) {
   @* inputFile() не используем т.к. исходная форма не доступна. *@
   <input type="file" name="picture"/>
+  <input id="formJsCallback" type="hidden" value="@jsCallback"/>
   <input type="submit"/>
 }

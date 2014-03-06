@@ -5,7 +5,7 @@
 @import helper._
 @import parts._
 
-@form(call) {
+@form(call, 'id -> "promoOfferForm") {
   <p>@f.errorsAsJson</p>
 
   @_vendorTpl(f)
@@ -15,8 +15,11 @@
   @_priceTpl(f)
   @_oldPricesTpl(f)
 
+  <input type="hidden" name="image_key" value=""/>
+  <img class="image-preview" width="200"  style="display: none" src=""/>
+
   <input type="submit" value="@btnText"/>
 }
 
 @* Картинки - это фактически отдельная форма, и её надо в отдельный файл. *@
-@stuff._fileUploadTpl(routes.Img.handleTempImg)
+@stuff._fileUploadTpl(routes.Img.handleTempImg, formId="promoOfferUploadForm", jsCallback="market_image_form_upload")
