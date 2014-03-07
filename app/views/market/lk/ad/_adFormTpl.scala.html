@@ -8,7 +8,7 @@
 @form(call, 'id -> "promoOfferForm") {
 
   @* Input для id выбранной категории. *@
-  <input class="result" id="cat-input" data-curr-cat="cat" type="hidden" name="catId" value="@af("catId").value" />
+  <input data-curr-cat="cat" type="hidden" name="catId" value="@af("catId").value" />
 
   @* Input для цвета верхней плашки. *@
   <input type="hidden" name="panel.color" value="@af("panel.color").value.getOrElse("#000000")"/>

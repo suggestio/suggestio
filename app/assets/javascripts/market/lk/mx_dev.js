@@ -2,19 +2,21 @@ var cbca = {};
 
 ;$(function() {
 
-  cbca.select = new CbcaSelect();
-  cbca.select.init('cat-input');
-
   ChooseCategory();
+  cbca.selectCat = new CbcaSelect('cat-select');
 
 });
 
-function CbcaSelect() {
+function CbcaSelect(containerId) {
   var self = this,
-  animationTime = 200;
+  animationTime = 200,
+  $container = $('#'+containerId),
+  $input = $container.find('input');
+
+  self.currIndex = 0;
 
 
-  self.init = function(inputId) {
+  self.initDropDown = function() {
 
     $('.cbca-select').each(function() {
       var $this = $(this),
@@ -23,14 +25,18 @@ function CbcaSelect() {
       if(!$this.data('init')) {
         $this.data({
           'open': false,
-          'init': true,
-          'inputId': inputId
+          'init': true
         });
         $dropDown.css('height', 0);
+
+        var $selected = $this.find('.option[data-selected]');
+        if($selected.length) {
+          self.setValue($selected.attr('data-value'));
+        }
       }
     });
 
-   }//self.init end
+  }//self.init end
 
 
   self.bindEvents = function() {
@@ -53,11 +59,9 @@ function CbcaSelect() {
     $(document).on('click', '.cbca-select .option',
     function(e) {
       var $this = $(this),
-      title = $this.html(),
-      value = $this.attr('data-value'),
-      $thisWrap = $this.closest('.cbca-select');
+      value = $this.attr('data-value');
 
-      self.setValue($thisWrap, title, value);
+      self.setValue(value);
     });
 
 
@@ -81,24 +85,22 @@ function CbcaSelect() {
   }//self.open end
 
 
-  self.setValue = function($select, title, value) {
-    var catId = $select.attr('id');
+  self.setValue = function(value) {
+    var $option = $container.find('.option[data-value = "'+value+'"]'),
+    $select = $option.closest('.cbca-select');
 
-    $select.find('.selected').html(title);
-    if($select.data('inputId')) {
-      $('#'+$select.data('inputId'))
-      .val(value)
-      .attr('data-curr-cat', catId)
-      .trigger('change');
-    }
-    else {
-      $select.find('.result')
-      .val(value)
-      .attr('data-curr-cat', catId)
-      .trigger('change');
-    }
+    self.currIndex = $container.find('.cbca-select').index($select);
+    self.clearSelects();
+
+    $select.find('.selected').html($option.html());
+    $input.val(value).trigger('change');
+
   }//self.setValue end
 
+
+  self.clearSelects = function() {
+    $container.find('.cbca-select:gt('+self.currIndex+')').remove();
+  }//self.clearSelects end
 
 
   self.closeAll = function() {
@@ -116,20 +118,12 @@ function CbcaSelect() {
 
     var defaults = {
       data: '',
-      id: '',
-      preText: '',
-      style: '',
-      inputId: false,
-      counter: ''
+      preHtml: '',
+      style: ''
     },
     options = $.extend(defaults, options),
-    html = '<span class="cbca-select" id="'+options.id+'" data-counter="'+options.counter+'" style="'+options.style+'">'+options.preText;
-
-    if(options.inputId && !$('#'+options.inputId).length) {
-      html += '<input type="hidden" value="" id="'+options.inputId+'" class="result"  />';
-    }
-
-    html += '<div class="selectbox"><div class="value"><div class="selected">--------</div><div class="dropdown">';
+    html = '<span class="cbca-select" style="'+options.style+'">'+options.preHtml+
+    '<div class="selectbox"><div class="value"><div class="selected">--------</div><div class="dropdown">';
 
     for(key in options.data) {
       var obj = options.data[key],
@@ -149,6 +143,7 @@ function CbcaSelect() {
     return html;
   }
 
+  self.initDropDown();
   self.bindEvents();
 
 }
@@ -158,36 +153,24 @@ function ChooseCategory() {
 
     self.init = function() {
 
-      $(document).on('change', '#cat-input',
+      $(document).on('change', '#cat-select input',
       function(e) {
         var $this = $(this),
         catId = $this.val();
 
-
         jsRoutes.controllers.MarketCategory.directSubcatsOf(catId).ajax({
           success: function(data) {
-            var wrapId = $this.attr('data-curr-cat'),
-            $wrap = $('#'+wrapId),
-            counter = 1 + parseInt($wrap.attr('data-counter'), 10),
-            nextCatId =  'cat-' + counter,
+            $wrap = $('#cat-select').find('.cbca-select').eq(cbca.selectCat.currIndex),
             left = $wrap.position().left + $wrap.width();
 
-            for (var i = counter; i <= 3; i++) {
-              $('#cat-'+i).remove();
-            }
-
-
             if(data.length) {
-              var html = cbca.select.generateSubCat({
+              var html = cbca.selectCat.generateSubCat({
                 data:    data,
-                id:      nextCatId,
-                preText: '<span class="pre-span">&nbsp;/&nbsp;</span>',
-                style:   'top: 0; left: '+left+'px;',
-                inputId:   'cat-input',
-                counter: counter
+                preHtml: '<span class="pre-span">&nbsp;/&nbsp;</span>',
+                style:   'top: 0; left: '+left+'px;'
               });
-              $('.categories').append(html);
-              cbca.select.init('cat-input');
+              $('#cat-select').append(html);
+              cbca.selectCat.initDropDown();
             }
           },
           error: function(error) {

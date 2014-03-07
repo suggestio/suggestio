@@ -23,9 +23,11 @@
   <div class="body">
 
     <div class="create-ad">
-      <div class="categories">
 
-        <span class="cbca-select" id="cat-1" data-counter="1">
+      <!-- Активной категории нужно добавлять атрибут data-selected="selected" -->
+      <div class="categories" id="cat-select">
+        <input type="hidden" value="" />
+        <span class="cbca-select">
 
           <div class="selectbox">
             <div class="value">
@@ -47,7 +49,6 @@
             </div>
           </div>
         </span>
-
 
       </div><!-- categories end -->
 
