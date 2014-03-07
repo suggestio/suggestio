@@ -125,10 +125,8 @@ object Img extends SioController with PlayMacroLogsImpl {
 
         } catch {
           case ex: Throwable =>
-            val reply = JsObject(Seq(
-              "status" -> JsString("error"),
-              "msg"    -> JsString("Unsupported picture format.")
-            ))
+            debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
+            val reply = jsonImgError("Unsupported picture format.")
             BadRequest(reply)
 
         } finally {
@@ -136,14 +134,10 @@ object Img extends SioController with PlayMacroLogsImpl {
         }
 
       case None =>
-        val reply = JsObject(Seq(
-          "status" -> JsString("error"),
-          "msg"    -> JsString("Picture not found in request.")
-        ))
+        val reply = jsonImgError("Picture not found in request.")
         NotAcceptable(reply)
     }
   }
-
 
   /** Раздавалка картинок, созданных в [[handleTempImg]]. */
   def getTempImg(key: String) = IsAuth { implicit request =>
@@ -161,5 +155,10 @@ object Img extends SioController with PlayMacroLogsImpl {
     }
   }
 
+  /** Выдать json ошибку по поводу картинки. */
+  private def jsonImgError(msg: String) = JsObject(Seq(
+    "status" -> JsString("error"),
+    "msg"    -> JsString(msg) // TODO Добавить бы поддержку lang.
+  ))
 
 }

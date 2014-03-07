@@ -73,7 +73,7 @@ object MarketOffer extends SioController with MacroLogsImpl {
   val vmPromoOfferFormM = Form(mapping(
     vendorM, modelM, colorsM, sizesM, sizeUnitsM, priceM, oldPriceM,
     // TODO Изначально была поддержка list(tmpImgIdM), но эта форма стала тестовым полигоном для картинок сразу после 6b6694f83444, поэтому пока работа идёт с одной картинкой.
-    "image_key"  -> tmpImgIdM,
+    "image_key"  -> imgIdM,
     "crop"  -> optional(imgCropM)
   )
   // apply()
@@ -139,13 +139,9 @@ object MarketOffer extends SioController with MacroLogsImpl {
         mpo.datum.shopId = shopId
         mpo.datum.offerType = OfferTypes.VendorModel
         // Картинки: нужно их перегнать в постоянное хранилище.
-        Future.traverse(List(imgInfo)) { img =>
-          ImgFormUtil.handleImageForStoring(img)
-        } flatMap { imgSaved =>
-          // Удалить tmp-картинки в фоне
-          ImgFormUtil.rmTmpImgs(imgSaved)
+        ImgFormUtil.updateOrigImg(List(imgInfo), oldImgs = Nil) flatMap { imgsIdsSaved =>
           // Выставить сохраненные картинки в датум и сохранить его.
-          mpo.datum.pictures = imgSaved.map(_.idStr)
+          mpo.datum.pictures = imgsIdsSaved
           mpo.save.map { mpoSavedId =>
             // Редирект на созданный промо-оффер.
             rdrToOffer(mpoSavedId)
@@ -183,9 +179,9 @@ object MarketOffer extends SioController with MacroLogsImpl {
     MShop.getById(request.shopId) map {
       case Some(mshop) =>
         import request.offer
-        val iik = OrigImgIdKey(offer.datum.pictures.head)
-        val imgInfo = ImgInfo(iik, None)
-        val f = vmPromoOfferFormM fill (offer, imgInfo)
+        val oiik = OrigImgIdKey(offer.datum.pictures.head)
+        val imgInfo = ImgInfo(oiik, None)
+        val f = vmPromoOfferFormM fill (offer -> imgInfo)
         Ok(form.editPromoOfferTpl(offer, f, mshop))
 
       case None => shopNotFound(request.shopId)
@@ -203,12 +199,15 @@ object MarketOffer extends SioController with MacroLogsImpl {
           case None        => shopNotFound(request.shopId)
         }
       },
-      {case (mpo, imgInfos) =>
-        mpo.datum.offerType = offer.datum.offerType
-        mpo.datum.shopId = offer.datum.shopId
-        mpo.id = offer.id
-        mpo.save.map { _ =>
-          rdrToOffer(offerId).flashing("success" -> "Saved ok.")
+      {case (mpo, imgInfo) =>
+        ImgFormUtil.updateOrigImgIds(Seq(imgInfo), offer.datum.pictures) flatMap { updatedImgIds =>
+          mpo.datum.offerType = offer.datum.offerType
+          mpo.datum.shopId = offer.datum.shopId
+          mpo.id = offer.id
+          mpo.datum.pictures = updatedImgIds
+          mpo.save.map { _ =>
+            rdrToOffer(offerId).flashing("success" -> "Saved ok.")
+          }
         }
       }
     )
