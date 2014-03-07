@@ -4,6 +4,7 @@ var cbca = {};
 
   cbca.select = new CbcaSelect();
   cbca.select.init('cat-input');
+
   ChooseCategory();
 
 });
@@ -97,6 +98,7 @@ function CbcaSelect() {
       .trigger('change');
     }
   }//self.setValue end
+
 
 
   self.closeAll = function() {
