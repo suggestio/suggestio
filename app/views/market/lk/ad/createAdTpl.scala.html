@@ -4,6 +4,11 @@
 @import ctx._
 @import routes.MarketMartLk._
 
+@helper.javascriptRouter("jsRoutes")(
+  routes.javascript.MarketCategory.topCatsOf,
+  routes.javascript.MarketCategory.directSubcatsOf
+)
+
 @market.lk.lkBase("Создание рекламной карточки товара") {
 
   <div class="title-wrap">
@@ -19,8 +24,9 @@
 
     <div class="create-ad">
       <div class="categories">
+
         <span class="cbca-select">
-          <input type="hidden" value="" class="result" />
+          <input type="hidden" value="" class="result" id="first-cat" />
           <div class="selectbox">
             <div class="value">
               <div class="selected">--------</div>
@@ -41,6 +47,8 @@
             </div>
           </div>
         </span>
+
+
       </div><!-- categories end -->
 
     </div><!-- create-ad end-->
