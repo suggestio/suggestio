@@ -51,14 +51,15 @@
 
       </div><!-- categories end -->
 
+      @_adFormTpl(
+        af = af,
+        call = routes.MarketAd.createShopAdSubmit(mshop.id.get),
+        btnText = Messages("Create")
+      )
+
     </div><!-- create-ad end-->
 
 
   </div>
 
-  @_adFormTpl(
-    af = af,
-    call = routes.MarketAd.createShopAdSubmit(mshop.id.get),
-    btnText = Messages("Create")
-  )
 }
