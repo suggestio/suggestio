@@ -10,7 +10,7 @@
   @af.globalError
 
   @* Input для id выбранной категории. *@
-  <input type="hidden" name="catId" value="@af("catId").value"/>
+  <input data-curr-cat="cat" type="hidden" name="catId" value="@af("catId").value" />
 
   @* Input для цвета верхней плашки. *@
   <input type="hidden" name="panelColor" value="@af("panel.color").value.getOrElse("#000000")"/>

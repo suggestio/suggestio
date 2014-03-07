@@ -4,17 +4,29 @@
 @import market.lk._
 
 @lkBase(mshop.name) {
-  <h1>Мой очень чОткий магазин</h1>
 
-  @* Отобразить основное описание магазина с кнопкой редактирования. *@
-  @shop._shopShowTpl(
-    mshop=mshop,
-    editCall=routes.MarketShopLk.editShopForm(mshop.id.get)
-  )
+  <div class="title-wrap">
+    <div class="center">
+      <a class="back-but" href="#">&nbsp;</a>
+      <div class="title-inner">
+        Мой очень чОткий магазин
+      </div>
+    </div>
+  </div>
 
-  <h2>Каталог рекламы</h2>
-  @market.lk.ad._showAdsTpl(mads)
+  <div class="body">
 
-  <a href="@routes.MarketAd.createShopAd(mshop.id.get)">Создать рекламную карточку</a>
+    <h2>Каталог продукции</h2>
+    @market.lk.ad._showAdsTpl(mads)
+
+    @* Отобразить основное описание магазина с кнопкой редактирования. *@
+    @shop._shopShowTpl(
+      mshop=mshop,
+      editCall=routes.MarketShopLk.editShopForm(mshop.id.get)
+    )
+
+    <a href="@routes.MarketAd.createShopAd(mshop.id.get)">Создать рекламную карточку</a>
+
+  </div>
 
 }
