@@ -11,7 +11,7 @@
   <input type="hidden" name="catId" value="@af("catId").value"/>
 
   @* Input для цвета верхней плашки. *@
-  <input type="hidden" name="panel.color" value="@af("panel.color").value"/>
+  <input type="hidden" name="panel.color" value="@af("panel.color").value.getOrElse("#000000")"/>
 
   @* TODO Сейчас рендерится только один кусок формы. Нужно сделать js-переключение между двумя вариантами формы.
           Сервер в POST должен получать только один вариант формы, иначе будет ошибка. *@

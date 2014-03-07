@@ -21,6 +21,11 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
+  object FormModes extends Enumeration {
+    type FormMode = Value
+    val PRODUCT, DISCOUNT = Value
+  }
+
   /** Маппер для поля, содержащего код цвета. */
   // TODO Нужно добавить верификацию тут какую-то. Например через YmColors.
   val colorM = nonEmptyText(maxLength = 16)
@@ -111,6 +116,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   /** Маппинг-маршрутизатор, который отвечает за выборку того, какую подформу надо выбирать из засабмиченного. */
   val adBodyM = tuple(
+   // "mode"     -> nonEmptyText(),
     "product"  -> optional(adProductM),
     "discount" -> optional(adDiscountM)
   )
