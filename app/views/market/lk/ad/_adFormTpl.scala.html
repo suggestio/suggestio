@@ -5,13 +5,10 @@
 @import ctx._
 @import helper._
 
-@form(call) {
+@form(call, 'id -> "promoOfferForm") {
 
   @* Input для id выбранной категории. *@
   <input type="hidden" name="catId" value="@af("catId").value"/>
-
-  @* Input для id картинки загруженной. *@
-  <input type="hidden" name="imgId" value="@af("imgId").value"/>
 
   @* Input для цвета верхней плашки. *@
   <input type="hidden" name="panel.color" value="@af("panel.color").value"/>
@@ -23,11 +20,13 @@
   } else {
     @_adFormDiscountTpl(af)
   }
-  <input type="hidden" name="imgId" value="@af("imgId").value"/>
+
+  @* Данные по картинке загруженной. *@
+  <input type="hidden" name="image_key" value="@af("image_key").value"/>
   <img class="image-preview" width="200"  style="display: none" src=""/>
 
   <input type="submit" value="@btnText"/>
 }
 
 @* Картинки - это фактически отдельная форма, и её надо в отдельный файл. *@
-@stuff._fileUploadTpl(routes.Img.handleTempImg, formId="promoOfferUploadForm", jsCallback="market_image_form_upload")
+@stuff._fileUploadTpl(routes.Img.handleTempImg, relatedFormId="promoOfferForm")

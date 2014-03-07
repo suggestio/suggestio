@@ -1,17 +1,9 @@
 market =
-  market_image_form_upload : ( data ) ->
-
-    $('#promoOfferForm input[name=image_key]').val data.image_key
-    $('#promoOfferForm .image-preview').show().attr "src", data.image_link
-
-
   init_upload_forms : () ->
-    window.market_image_form_upload = market.market_image_form_upload
 
     $('.file-upload-form').bind "submit", () ->
-
-      js_callback_input = jQuery "#formJsCallback", this
-      js_callback_input = js_callback_input.val()
+      related_form_id_input = jQuery ".related-form-id", this
+      related_form_id = related_form_id_input.val()
 
       form_data = new FormData()
       for input in jQuery('input', this)
@@ -25,7 +17,8 @@ market =
         contentType: false
         processData: false
         success : ( resp_data ) ->
-          window[js_callback_input](resp_data)
+          $('#' + related_form_id + ' input[name=image_key]').val resp_data.image_key
+          $('#' + related_form_id + ' .image-preview').show().attr "src", resp_data.image_link
 
       $.ajax request_params
 
