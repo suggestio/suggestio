@@ -31,7 +31,7 @@ object MMartCategory extends EsModelStaticT[MMartCategory] {
   val POSITION_ESFN         = "position"
   val INCLUDE_IN_ALL_ESFN   = "iia"
 
-  private def ownerIdQuery(ownerId: String) = QueryBuilders.fieldQuery(OWNER_ID_ESFN, ownerId)
+  private def ownerIdQuery(ownerId: String) = QueryBuilders.termQuery(OWNER_ID_ESFN, ownerId)
 
   /**
    * Получить список пользовательских категорий в неопределённом порядке.
@@ -77,7 +77,7 @@ object MMartCategory extends EsModelStaticT[MMartCategory] {
   }
 
   def findDirectSubcatsOf(parentCatId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartCategory]] = {
-    val query = QueryBuilders.fieldQuery(PARENT_ID_ESFN, parentCatId)
+    val query = QueryBuilders.termQuery(PARENT_ID_ESFN, parentCatId)
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(query)
