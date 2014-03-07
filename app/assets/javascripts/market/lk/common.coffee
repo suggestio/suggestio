@@ -24,7 +24,6 @@ market =
 
       return false
 
-
   init: () ->
     $(document).ready () ->
       market.init_upload_forms()
