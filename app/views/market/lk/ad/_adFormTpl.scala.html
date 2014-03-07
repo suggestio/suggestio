@@ -7,11 +7,13 @@
 
 @form(call, 'id -> "promoOfferForm") {
 
+  @af.errorsAsJson
+
   @* Input для id выбранной категории. *@
   <input type="hidden" name="catId" value="@af("catId").value"/>
 
   @* Input для цвета верхней плашки. *@
-  <input type="hidden" name="panel.color" value="@af("panel.color").value.getOrElse("#000000")"/>
+  <input type="hidden" name="panelColor" value="@af("panel.color").value.getOrElse("#000000")"/>
 
   @* TODO Сейчас рендерится только один кусок формы. Нужно сделать js-переключение между двумя вариантами формы.
           Сервер в POST должен получать только один вариант формы, иначе будет ошибка. *@
@@ -22,8 +24,14 @@
   }
 
   @* Данные по картинке загруженной. *@
-  <input type="hidden" name="image_key" value="@af("image_key").value"/>
-  <img class="image-preview" width="200"  style="display: none" src=""/>
+  @defining(af("image_key").value) { imgIdOpt =>
+    <input type="hidden" name="image_key" value="@imgIdOpt"/>
+    <img class="image-preview" width="200" src="@if(imgIdOpt.isDefined) {@routes.Img.getImg(imgIdOpt.get)}" style="@if(imgIdOpt.isEmpty) {display: none}"/>
+  }
+
+  @* Положение текста на разных устройствах. Как оно задаётся - хз, пока в виде произвольной строки. *@
+  @inputText(af("textAlign.phone"), '_label -> "iphone")
+  @inputText(af("textAlign.tablet"), '_label -> "ipad")
 
   <input type="submit" value="@btnText"/>
 }

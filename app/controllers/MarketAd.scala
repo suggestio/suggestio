@@ -134,13 +134,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   /** Форма добавления/редактирования рекламируемого продукта. */
   val adFormM = Form(mapping(
     "catId" -> userCatIdM,
-    "imgId" -> imgIdM,
-    "panel" -> colorM.transform(
+    "image_key"  -> imgIdM,
+    "panelColor" -> colorM.transform(
       { MMartAdPanelSettings.apply },
       {mmaps: MMartAdPanelSettings => mmaps.color }
     ),
     "ad"    -> adBodyM,
-    "textAligns" -> textAlignsM
+    "textAlign" -> textAlignsM
   )
   // applyF()
   {(userCatId, imgKey, panelSettings, adBody, textAligns) =>

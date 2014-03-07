@@ -5,14 +5,15 @@ import util.{PlayMacroLogsImpl, SiobixFs, DateTimeUtil}
 import org.apache.hadoop.fs.Path
 import io.suggest.util.SioConstants._
 import play.api.libs.concurrent.Execution.Implicits._
-import io.suggest.model.{ImgWithTimestamp, MUserImgOrig, MImgThumb}
+import io.suggest.model.{MUserImgOrig, MImgThumb}
 import org.joda.time.Instant
 import play.api.Play.current
 import util.acl.IsAuth
-import util.img.OrigImageUtil
+import _root_.util.img._
 import play.api.libs.json._
 import scala.concurrent.duration._
 import models.MPictureTmp
+import io.suggest.model.ImgWithTimestamp
 
 /**
  * Suggest.io
@@ -61,7 +62,7 @@ object Img extends SioController with PlayMacroLogsImpl {
 
       case None =>
         info(s"getThumb($dkey, $imageId): 404 Not found")
-        NotFound
+        imgNotFound
     }
   }
 
@@ -78,7 +79,7 @@ object Img extends SioController with PlayMacroLogsImpl {
 
       case None =>
         info(s"getOrig($imageId): 404")
-        NotFound
+        imgNotFound
     }
   }
 
@@ -151,9 +152,30 @@ object Img extends SioController with PlayMacroLogsImpl {
             CACHE_CONTROL -> ("public, max-age=" + TEMP_IMG_CACHE_SECONDS)
           )
 
-      case None => NotFound("No such image.")
+      case None => imgNotFound
     }
   }
+
+  /**
+   * Раздача произвольных картинок без проверки прав.
+   * @param key ключ картинки
+   * @return Один из различных экшенов обработки.
+   */
+  def getImg(key: String): Action[AnyContent] = {
+    val iik = ImgIdKey(key)
+    if (iik.isValid) {
+      iik match {
+        case tiik: TmpImgIdKey  => getTempImg(key)
+        case oiik: OrigImgIdKey => getOrig(key)
+      }
+    } else {
+      trace(s"invalid img id: " + iik)
+      actionImgNotFound
+    }
+  }
+
+  private def actionImgNotFound = Action { imgNotFound }
+  private def imgNotFound = NotFound("No such image")
 
   /** Выдать json ошибку по поводу картинки. */
   private def jsonImgError(msg: String) = JsObject(Seq(

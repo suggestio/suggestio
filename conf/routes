@@ -121,6 +121,7 @@ POST /m/lk/poffer/:offerId/edit         controllers.MarketOffer.editPromoOfferFo
 POST /img/tmp/prepare                   controllers.Img.handleTempImg
 GET  /img/tmp/:key                      controllers.Img.getTempImg(key)
 GET  /img/orig/:imgId                   controllers.Img.getOrig(imgId)
+GET  /img/any/:imgId                    controllers.Img.getImg(imgId)
 
 #market
 GET  /market                            controllers.Market.index

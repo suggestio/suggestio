@@ -103,9 +103,9 @@ object FormUtil {
     .transform(UrlUtil.normalizeHostname, {dkey:String => IDNA.toUnicode(dkey)})
 
   // Маппер для float-значений.
-  val floatRe = "[0-9]{1,7}([,.][0-9]{1,2})?".r
+  val floatRe = "[0-9]{0,8}([,.][0-9]{0,4})?".r
   val float = nonEmptyText(maxLength = 15)
-    .verifying(floatRe.pattern.matcher(_).matches())
+    .verifying("float.invalid", floatRe.pattern.matcher(_).matches())
     .transform(_.toFloat, {f: Float => f.toString})
 
   /** id'шники в ES-моделях генерятся силами ES. Тут маппер для полей, содержащих ES-id. */

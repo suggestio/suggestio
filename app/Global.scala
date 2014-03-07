@@ -64,7 +64,6 @@ object Global extends GlobalSettings {
       case Failure(ex)     => error(logPrefix + "ensureIndex() failed", ex)
     }
     val futMappings = futInx flatMap { _ =>
-      info(logPrefix + "Index do not have mappings for type=" + MShopPromoOffer.ES_TYPE_NAME)
       SiowebEsModel.putAllMappings
     }
     futMappings onComplete {

@@ -34,6 +34,11 @@ object MMartAd extends EsModelStaticT[MMartAd] {
   val COLOR_ESFN        = "color"
   val IS_SHOWN_ESFN     = "isShown"
   val TEXT_ALIGN_ESFN   = "textAlign"
+  val ALIGN_ESFN        = "align"
+
+  val TEXT1_ESFN        = "text1"
+  val TEXT2_ESFN        = "text2"
+  val DISCOUNT_ESFN     = "discount"
 
   protected def dummy(id: String) = {
     MMartAd(id=Some(id), offers=Nil, picture=null, martId=null, companyId = null)
@@ -54,16 +59,10 @@ object MMartAd extends EsModelStaticT[MMartAd] {
   }
 
   def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
-    val fontField = FieldNestedObject(
+    val fontField = FieldObject(
       id = FONT_ESFN,
       enabled = false,
-      properties = Seq(
-        FieldString(
-          id = COLOR_ESFN,
-          index = FieldIndexingVariants.no,
-          include_in_all = false
-        )
-      )
+      properties = Nil
     )
     val stringValueField = FieldString(
       id = VALUE_ESFN,
@@ -243,11 +242,17 @@ case class MMartAdProduct(
   def isProduct = true
 
   def renderFields(acc: XContentBuilder) {
+    acc.field(VENDOR_ESFN)
     vendor.render(acc)
-    if (model.isDefined)
+    if (model.isDefined) {
+      acc.field(MODEL_ESFN)
       model.get.render(acc)
-    if (oldPrice.isDefined)
+    }
+    if (oldPrice.isDefined) {
+      acc.field(OLD_PRICE_ESFN)
       oldPrice.get.render(acc)
+    }
+    acc.field(PRICE_ESFN)
     price.render(acc)
   }
 }
@@ -261,11 +266,16 @@ case class MMartAdDiscount(
   def isProduct = false
 
   def renderFields(acc: XContentBuilder) {
-    if (text1.isDefined)
+    if (text1.isDefined) {
+      acc.field(TEXT1_ESFN)
       text1.get.render(acc)
+    }
+    acc.field(DISCOUNT_ESFN)
     discount.render(acc)
-    if (text2.isDefined)
+    if (text2.isDefined) {
+      acc.field(TEXT2_ESFN)
       text2.get.renderFields(acc)
+    }
   }
 }
 
@@ -273,7 +283,7 @@ sealed trait MMAdValueField {
   def renderFields(acc: XContentBuilder)
   def font: MMAdFieldFont
   def render(acc: XContentBuilder) {
-    acc.startObject(VENDOR_ESFN)
+    acc.startObject()
       renderFields(acc)
       font.render(acc)
     acc.endObject()
@@ -311,8 +321,9 @@ case class MMartAdPanelSettings(color: String) {
 
 case class MMartAdTextAlign(id: String, align: String) {
   def render(acc: XContentBuilder) {
-    acc.startObject(id)
-      .field(TEXT_ALIGN_ESFN, align)
+    acc.startObject()
+      .field("id", id)
+      .field(ALIGN_ESFN, align)
     .endObject()
   }
 }
