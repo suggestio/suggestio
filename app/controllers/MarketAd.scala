@@ -1,6 +1,6 @@
 package controllers
 
-import util.PlayMacroLogsImpl
+import util.{Context, PlayMacroLogsImpl}
 import views.html.market.lk.ad._
 import models._, MShop.ShopId_t
 import play.api.libs.concurrent.Execution.Implicits._
@@ -9,7 +9,8 @@ import util.img.ImgFormUtil._
 import util.FormUtil._
 import play.api.data._, Forms._
 import util.acl._
-import util.img.OrigImgIdKey
+import util.img.{ImgInfo, TmpImgIdKey, ImgFormUtil, OrigImgIdKey}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -181,26 +182,69 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   /** Сабмит формы добавления рекламной карточки товара/скидки. */
   def createShopAdSubmit(shopId: ShopId_t) = IsShopAdmFull(shopId).async { implicit request =>
-    adFormM.bindFromRequest().fold(
+    val catOwnerId = request.mshop.martId getOrElse shopId
+    val formBinded = adFormM.bindFromRequest()
+    formBinded.fold(
       {formWithErrors =>
         debug(s"createShopAdSubmit($shopId): Bind failed: ${formWithErrors.errors}")
-        MMartCategory.findTopForOwner(shopId) map { mmcats1 =>
-          NotAcceptable(createAdTpl(request.mshop, mmcats1, formWithErrors))
+        renderCreateFormWith(formWithErrors, catOwnerId, request.mshop) map {
+          Ok(_)
         }
       },
       {case (imgKey, mmad) =>
-        // TODO Нужно проверить картинку. Нужно сохранить картинку.
-        // TODO Нужно проверить категорию.
-        mmad.shopId = Some(shopId)
-        mmad.companyId = request.mshop.companyId
-        mmad.martId = request.mshop.martId.get
-        // Сохранить изменения в базу
-        mmad.save.map { adId =>
-          Redirect(routes.MarketShopLk.showShop(shopId))
-            .flashing("success" -> "Рекламная карточка создана.")
+        val needImgs = Seq(ImgInfo(imgKey, cropOpt = None))
+        val imgFut = ImgFormUtil.updateOrigImg(needImgs, oldImgs = Nil)
+        imgFut.flatMap {
+          case List(imgIdSaved) =>
+            // TODO Нужно проверить категорию.
+            mmad.shopId = Some(shopId)
+            mmad.companyId = request.mshop.companyId
+            mmad.martId = request.mshop.martId.get
+            mmad.picture = imgIdSaved
+            // Сохранить изменения в базу
+            mmad.save.map { adId =>
+              Redirect(routes.MarketShopLk.showShop(shopId))
+                .flashing("success" -> "Рекламная карточка создана.")
+            }
+
+          case Nil =>
+            debug("Failed to handle img key: " + imgKey)
+            val formWithError = formBinded.withGlobalError("error.image.save")
+            renderCreateFormWith(formWithError, catOwnerId, request.mshop) map { render =>
+              NotAcceptable(render)
+            }
         }
       }
     )
+  }
+
+  /** Общий код рендера createAdTpl с запросом необходимых категорий. */
+  private def renderCreateFormWith(af: Form[_], catOwnerId: String, mshop: MShop)(implicit ctx: Context) = {
+    MMartCategory.findTopForOwner(catOwnerId) map { mmcats1 =>
+      createAdTpl(mshop, mmcats1, af)
+    }
+  }
+
+  private def renderEditFormWith(af: Form[_], catOwnerId:String, mshopFut: Future[Option[MShop]], mad: MMartAd)(implicit ctx: Context) = {
+    for {
+      mmcats1  <- MMartCategory.findTopForOwner(catOwnerId)
+      mshopOpt <- mshopFut
+    } yield {
+      mshopOpt match {
+        case Some(mshop) => Some(editAdTpl(mshop, mad, mmcats1, af))
+        case None => None
+      }
+    }
+  }
+
+  private def renderFailedEditFormWith(af: Form[_], mad: MMartAd)(implicit ctx: Context) = {
+    val shopId = mad.shopId.get
+    // TODO Надо фетчить магазин и категории одновременно.
+    val mshopFut = MShop.getById(shopId)
+    renderEditFormWith(af, mad.martId, mshopFut, mad) map {
+      case Some(render) => NotAcceptable(render)
+      case None => shopNotFound(shopId)
+    }
   }
 
   /** Рендер страницы с формой редактирования рекламной карточки магазина.
@@ -210,15 +254,11 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     import request.mad
     mad.shopId match {
       case Some(_shopId) =>
-        MShop.getById(_shopId) flatMap {
-          case Some(mshop) =>
-            MMartCategory.findTopForOwner(_shopId) map { mmcats1 =>
-              val imgIdKey = OrigImgIdKey(mad.picture)
-              val formFilled = adFormM fill (imgIdKey, mad)
-              Ok(editAdTpl(mshop, mad, mmcats1, formFilled))
-            }
-
-          // TODO: Отсутсвие магазина не должно быть помехой
+        val imgIdKey = OrigImgIdKey(mad.picture)
+        val formFilled = adFormM fill (imgIdKey, mad)
+        val mshopFut = MShop.getById(_shopId)
+        renderEditFormWith(formFilled, mad.martId, mshopFut, mad) map {
+          case Some(render) => Ok(render)
           case None => shopNotFound(_shopId)
         }
 
@@ -232,33 +272,33 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     */
   def editShopAdSubmit(adId: String) = IsAdEditor(adId).async { implicit request =>
     import request.mad
-    adFormM.bindFromRequest().fold(
+    val formBinded = adFormM.bindFromRequest()
+    formBinded.fold(
       {formWithErrors =>
         debug(s"editShopAdSubmit($adId): Failed to bind form: " + formWithErrors.errors)
-        mad.shopId match {
-          case Some(_shopId) =>
-            MShop.getById(_shopId) flatMap {
-              case Some(mshop) =>
-                MMartCategory.findTopForOwner(_shopId) map { mmcats1 =>
-                  NotAcceptable(editAdTpl(mshop, mad, mmcats1, formWithErrors))
-                }
-              case None        => shopNotFound(_shopId)
-            }
-
-          // Магазин в карточке не указан. Вероятно, это карточка должна редактироваться через какой-то другой экшен
-          case None => adEditWrong
-        }
+        renderFailedEditFormWith(formWithErrors, mad)
       },
       {case (iik, mad2) =>
-        // TODO Нужно проверить картинку. И если прислана Orig-картинка, то нужно проверить её по исходному mad, чтобы не было подмены.
         // TODO Проверить категорию.
         // TODO И наверное надо проверить shopId-существование в исходной рекламе.
-        mad2.martId = mad.martId
-        mad2.shopId = mad.shopId
-        mad2.companyId = mad.companyId
-        mad2.save.map { _ =>
-          Redirect(routes.MarketShopLk.showShop(mad.shopId.get))
-            .flashing("success" -> "Изменения сохранены")
+        val needImgs = Seq(ImgInfo(iik, cropOpt = None))
+        ImgFormUtil.updateOrigImgIds(needImgs, oldImgIds = Seq(mad.picture)) flatMap {
+          case List(savedImgId) =>
+            mad2.id = mad.id
+            mad2.martId = mad.martId
+            mad2.shopId = mad.shopId
+            mad2.companyId = mad.companyId
+            mad2.picture = savedImgId
+            mad2.save.map { _ =>
+              Redirect(routes.MarketShopLk.showShop(mad.shopId.get))
+                .flashing("success" -> "Изменения сохранены")
+            }
+
+          // Не удалось обработать картинку. Вернуть форму назад
+          case Nil =>
+            debug(s"editShopAdSubmit($adId): Failed to update iik = " + iik)
+            val formWithError = formBinded.withGlobalError("error.image.save")
+            renderFailedEditFormWith(formWithError, mad)
         }
       }
     )

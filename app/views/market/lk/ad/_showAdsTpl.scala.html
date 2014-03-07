@@ -1,0 +1,33 @@
+@(ads: Seq[MMartAd])(implicit ctx: util.Context)
+
+@* Инлайновый список рекламных карточек в личном кабинете ТЦ или магазина. *@
+
+@ads.map { ad =>
+
+  <img src="@routes.Img.getThumb("asdasd", ad.picture)"/>
+  <br/>
+  <a href="@routes.MarketAd.editShopAd(ad.id.get)">@Messages("Edit")</a>
+
+  @ad.offers.map {
+    case prodOffer: MMartAdProduct => {
+      @* Рендерим карточку с товаром и ценой *@
+      <p>Производитель: @prodOffer.vendor.value</p>
+      @prodOffer.oldPrice.map { oldPrice =>
+        <p>Старая цена: @oldPrice.value</p>
+      }
+      <p>Новая цена: @prodOffer.price.value</p>
+    }
+
+    case discountOffer: MMartAdDiscount => {
+      @* Рендерим карточку с указанием скидочной акции *@
+      @discountOffer.text1.map { text1 =>
+        <p>@text1.value</p>
+      }
+      <p>@discountOffer.discount.value</p>
+      @discountOffer.text2.map { text2 =>
+        <p>@text2.value</p>
+      }
+    }
+  }
+
+}

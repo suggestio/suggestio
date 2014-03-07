@@ -7,6 +7,10 @@ import io.suggest.util.SioConstants._
 import EsModel._
 import io.suggest.util.JacksonWrapper
 import MShop.ShopId_t, MMart.MartId_t
+import scala.concurrent.{Future, ExecutionContext}
+import org.elasticsearch.client.Client
+import org.elasticsearch.index.query.QueryBuilders
+import io.suggest.event.SioNotifierStaticClientI
 
 /**
  * Suggest.io
@@ -39,9 +43,25 @@ object MMartAd extends EsModelStaticT[MMartAd] {
   val TEXT1_ESFN        = "text1"
   val TEXT2_ESFN        = "text2"
   val DISCOUNT_ESFN     = "discount"
+  val DISCOUNT_TPL_ESFN = "discoTpl"
 
   protected def dummy(id: String) = {
-    MMartAd(id=Some(id), offers=Nil, picture=null, martId=null, companyId = null)
+    MMartAd(id=Some(id), offers=Nil, picture=null, martId=null, companyId = null, shopId = null)
+  }
+
+  private def shopIdQuery(shopId: ShopId_t) = QueryBuilders.fieldQuery(SHOP_ID_ESFN, shopId)
+
+  /**
+   * Найти все рекламные карточки магазина.
+   * @param shopId id магазина
+   * @return Список результатов.
+   */
+  def findForShop(shopId: ShopId_t)(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartAd]] = {
+    client.prepareSearch(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(shopIdQuery(shopId))
+      .execute()
+      .map { searchResp2list }
   }
 
   def applyKeyValue(acc: MMartAd): PartialFunction[(String, AnyRef), Unit] = {
@@ -101,6 +121,7 @@ object MMartAd extends EsModelStaticT[MMartAd] {
       id = OFFER_ESFN,
       enabled = true,
       properties = Seq(
+        // product-поля
         FieldNestedObject(
           id = VENDOR_ESFN,
           properties = Seq(
@@ -118,7 +139,7 @@ object MMartAd extends EsModelStaticT[MMartAd] {
         FieldNestedObject(
           id = PRICE_ESFN,
           properties = Seq(
-            floatValueField(iia = true),  // Вероятно, стоит всё-таки инклюдить эту цену в индекс
+            floatValueField(iia = true),  // TODO нужно как-то проанализировать цифры эти, округлять например.
             fontField
           )
         ),
@@ -126,6 +147,33 @@ object MMartAd extends EsModelStaticT[MMartAd] {
           id = OLD_PRICE_ESFN,
           properties = Seq(
             floatValueField(iia = false),
+            fontField
+          )
+        ),
+        // discount-поля
+        FieldNestedObject(
+          id = TEXT1_ESFN,
+          properties = Seq(
+            stringValueField,
+            fontField
+          )
+        ),
+        FieldNestedObject(
+          id = DISCOUNT_ESFN,
+          properties = Seq(
+            floatValueField(iia = true),
+            fontField
+          )
+        ),
+        FieldNestedObject(
+          id = DISCOUNT_TPL_ESFN,
+          enabled = false,
+          properties = Nil
+        ),
+        FieldNestedObject(
+          id = TEXT2_ESFN,
+          properties = Seq(
+            stringValueField,
             fontField
           )
         )
@@ -191,7 +239,7 @@ case class MMartAd(
   var userCatId   : Option[String] = None,
   var textAligns  : List[MMartAdTextAlign] = Nil,
   var isShown     : Boolean = false,
-  id              : Option[String] = None
+  var id          : Option[String] = None
 ) extends EsModelT[MMartAd] {
   def companion = MMartAd
 
@@ -218,6 +266,18 @@ case class MMartAd(
       acc.startArray(TEXT_ALIGN_ESFN)
         textAligns foreach { _ render acc }
       acc.endArray()
+    }
+  }
+
+  /**
+   * Сохранить экземпляр в хранилище ES, проверив важные поля.
+   * @return Фьючерс с новым/текущим id
+   */
+  override def save(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
+    if (picture == null || offers.isEmpty || shopId == null || companyId == null || martId == null) {
+      throw new IllegalStateException("Some or all important fields have invalid values: " + this)
+    } else {
+      super.save
     }
   }
 }
@@ -260,6 +320,7 @@ case class MMartAdProduct(
 case class MMartAdDiscount(
   text1: Option[MMAdStringField],
   discount: MMAdFloatField,
+  // TODO Добавить discount: id шаблона + цвет
   text2: Option[MMAdStringField]
 ) extends MMartAdOfferT {
 

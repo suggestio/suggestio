@@ -1,4 +1,4 @@
-@(mmart: MMart, mshop:MShop, moffers:Seq[MShopPromoOffer])(implicit ctx:util.Context)
+@(mmart: MMart, mshop:MShop, mads:Seq[MMartAd])(implicit ctx:util.Context)
 
 @* Страница отображения магазина для арендатора ТЦ (т.е. для владельца этого магазина). *@
 @import market.lk._
@@ -12,10 +12,8 @@
     editCall=routes.MarketShopLk.editShopForm(mshop.id.get)
   )
 
-  <h2>Каталог продукции</h2>
-  @offers._offersSmallListTpl(moffers)
-
-  <a href="@routes.MarketOffer.addPromoOfferForm(mshop.id.get)">Добавить товар</a>
+  <h2>Каталог рекламы</h2>
+  @market.lk.ad._showAdsTpl(mads)
 
   <a href="@routes.MarketAd.createShopAd(mshop.id.get)">Создать рекламную карточку</a>
 

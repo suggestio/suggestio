@@ -7,7 +7,7 @@
 
 @form(call, 'id -> "promoOfferForm") {
 
-  @af.errorsAsJson
+  @af.globalError
 
   @* Input для id выбранной категории. *@
   <input type="hidden" name="catId" value="@af("catId").value"/>
@@ -28,6 +28,7 @@
     <input type="hidden" name="image_key" value="@imgIdOpt"/>
     <img class="image-preview" width="200" src="@if(imgIdOpt.isDefined) {@routes.Img.getImg(imgIdOpt.get)}" style="@if(imgIdOpt.isEmpty) {display: none}"/>
   }
+  @*  *@
 
   @* Положение текста на разных устройствах. Как оно задаётся - хз, пока в виде произвольной строки. *@
   @inputText(af("textAlign.phone"), '_label -> "iphone")
