@@ -23,6 +23,11 @@
   } else {
     @_adFormDiscountTpl(af)
   }
+  <input type="hidden" name="imgId" value="@af("imgId").value"/>
+  <img class="image-preview" width="200"  style="display: none" src=""/>
 
   <input type="submit" value="@btnText"/>
 }
+
+@* Картинки - это фактически отдельная форма, и её надо в отдельный файл. *@
+@stuff._fileUploadTpl(routes.Img.handleTempImg, formId="promoOfferUploadForm", jsCallback="market_image_form_upload")
