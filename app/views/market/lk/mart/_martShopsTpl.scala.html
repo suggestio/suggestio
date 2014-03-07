@@ -3,17 +3,8 @@
 @* Рендер списка магазинов для торгового центра (только сам список, без обрамления и т.д.). *@
 @import routes.MarketMartLk._
 
-<ul>
+
 @shops.zipWithIndex.map { case (shop, i) =>
-  <!--<li class="@if(i == 0) {odd} else {even}">
-
-    @shop.toJson.string
-
-    <a href="@showShop(shop.id.get)">@shop.name</a>
-
-    @* Кнопка удаления магазина *@
-    @stuff._deleteSmthFormBtnTpl(martShopDeleteSubmit(martId=martId, shopId=shop.id.get))
-  </li>-->
 
 
   <div class="@if(i%2 == 0) {odd} else {even} enabled">
@@ -28,5 +19,5 @@
       <span class="enable-but">Вкл</span>
     </div>
   </div>
+
 }
-</ul>

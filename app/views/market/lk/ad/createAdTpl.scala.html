@@ -17,24 +17,33 @@
 
   <div class="body">
 
+    <div class="create-ad">
+      <div class="categories">
+        <span class="cbca-select">
+          <input type="hidden" value="" class="result" />
+          <div class="selectbox">
+            <div class="value">
+              <div class="selected">--------</div>
+              <div class="dropdown">
 
-            <span class="cbca-select">
-              <input type="hidden" value="" class="result" />
-              <div class="selectbox">
-                <div class="value">
-                  <div class="selected">--------</div>
-                  <div class="dropdown">
-                    <div class="option odd" data-value="a2">Женская одежда</div>
-                    <div class="option even" data-value="a4">Мужская одежда</div>
-                    <div class="option odd" data-value="h">Электроника</div>
+                @mmcats1.zipWithIndex.map { case (mmcat, i) =>
+
+                  <div class="@if(i%2 == 0) {odd} else {even} option" data-value="@mmcat.id">
+                    @mmcat.name
                   </div>
-                </div>
-                <div class="triger">
 
-                </div>
+                }
+
               </div>
-            </span>
+            </div>
+            <div class="triger">
 
+            </div>
+          </div>
+        </span>
+      </div><!-- categories end -->
+
+    </div><!-- create-ad end-->
 
 
   </div>
