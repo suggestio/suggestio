@@ -3,6 +3,7 @@ var cbca = {};
 ;$(function() {
 
   cbca.select = new CbcaSelect();
+  cbca.select.init('cat-input');
   ChooseCategory();
 
 });
@@ -12,7 +13,7 @@ function CbcaSelect() {
   animationTime = 200;
 
 
-  self.init = function() {
+  self.init = function(inputId) {
 
     $('.cbca-select').each(function() {
       var $this = $(this),
@@ -21,7 +22,8 @@ function CbcaSelect() {
       if(!$this.data('init')) {
         $this.data({
           'open': false,
-          'init': true
+          'init': true,
+          'inputId': inputId
         });
         $dropDown.css('height', 0);
       }
@@ -79,8 +81,21 @@ function CbcaSelect() {
 
 
   self.setValue = function($select, title, value) {
+    var catId = $select.attr('id');
+
     $select.find('.selected').html(title);
-    $select.find('.result').val(value).trigger('change');
+    if($select.data('inputId')) {
+      $('#'+$select.data('inputId'))
+      .val(value)
+      .attr('data-curr-cat', catId)
+      .trigger('change');
+    }
+    else {
+      $select.find('.result')
+      .val(value)
+      .attr('data-curr-cat', catId)
+      .trigger('change');
+    }
   }//self.setValue end
 
 
@@ -95,17 +110,24 @@ function CbcaSelect() {
     });
   }//self.closeAll end
 
-  self.generateCbcaSelect = function(options) {
+  self.generateSubCat = function(options) {
 
     var defaults = {
       data: '',
       id: '',
       preText: '',
-      style: ''
+      style: '',
+      inputId: false,
+      counter: ''
     },
     options = $.extend(defaults, options),
-    html = '<span class="cbca-select" id="'+options.id+'" style="'+options.style+'">'+options.preText+'<input type="hidden" value="" class="result"  />'+
-    '<div class="selectbox"><div class="value"><div class="selected">--------</div><div class="dropdown">';
+    html = '<span class="cbca-select" id="'+options.id+'" data-counter="'+options.counter+'" style="'+options.style+'">'+options.preText;
+
+    if(options.inputId && !$('#'+options.inputId).length) {
+      html += '<input type="hidden" value="" id="'+options.inputId+'" class="result"  />';
+    }
+
+    html += '<div class="selectbox"><div class="value"><div class="selected">--------</div><div class="dropdown">';
 
     for(key in options.data) {
       var obj = options.data[key],
@@ -125,7 +147,6 @@ function CbcaSelect() {
     return html;
   }
 
-  self.init();
   self.bindEvents();
 
 }
@@ -135,7 +156,7 @@ function ChooseCategory() {
 
     self.init = function() {
 
-      $(document).on('change', '#first-cat',
+      $(document).on('change', '#cat-input',
       function(e) {
         var $this = $(this),
         catId = $this.val();
@@ -143,18 +164,28 @@ function ChooseCategory() {
 
         jsRoutes.controllers.MarketCategory.directSubcatsOf(catId).ajax({
           success: function(data) {
-            if(data.length) {
-              var $wrap = $this.closest('.cbca-select'),
-              left = $wrap.width();
+            var wrapId = $this.attr('data-curr-cat'),
+            $wrap = $('#'+wrapId),
+            counter = 1 + parseInt($wrap.attr('data-counter'), 10),
+            nextCatId =  'cat-' + counter,
+            left = $wrap.position().left + $wrap.width();
 
-              var html = cbca.select.generateCbcaSelect({
-                'data': data,
-                'id': 'second-cat',
-                'preText': '<span class="pre-span">&nbsp;/&nbsp;</span>',
-                'style':  'top: 0; left: '+left+'px;'
+            for (var i = counter; i <= 3; i++) {
+              $('#cat-'+i).remove();
+            }
+
+
+            if(data.length) {
+              var html = cbca.select.generateSubCat({
+                data:    data,
+                id:      nextCatId,
+                preText: '<span class="pre-span">&nbsp;/&nbsp;</span>',
+                style:   'top: 0; left: '+left+'px;',
+                inputId:   'cat-input',
+                counter: counter
               });
               $('.categories').append(html);
-              cbca.select.init();
+              cbca.select.init('cat-input');
             }
           },
           error: function(error) {
@@ -163,6 +194,8 @@ function ChooseCategory() {
         });
 
       });
+
+
     }//self.init end
 
 
