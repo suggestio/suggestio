@@ -8,8 +8,8 @@ import io.suggest.util.{MacroLogsImpl, StringUtil, SioEsIndexUtil}
 import org.elasticsearch.cluster.metadata.IndexMetaData.SETTING_NUMBER_OF_REPLICAS
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.collection.JavaConversions._
-import org.elasticsearch.action.admin.indices.settings.UpdateSettingsResponse
 import java.util.regex.Pattern
+import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsResponse
 
 /**
  * Suggest.io
@@ -103,8 +103,8 @@ object MVirtualIndex extends MacroLogsImpl {
   def getReplicasCountFor(indices: Seq[String])(implicit client:Client, executor:ExecutionContext): Future[Int] = {
     client.admin().cluster()
       .prepareState()
-      .setFilterIndices(indices: _*)
-      .setFilterMetaData(true)
+      .setIndices(indices: _*)
+      .setMetaData(true)
       .execute()
       .flatMap { resp =>
         val md = resp.getState.getMetaData

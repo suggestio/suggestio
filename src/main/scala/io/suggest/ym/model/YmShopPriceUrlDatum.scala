@@ -159,7 +159,7 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
       .map { searchResp2list }
   }
 
-  def shopIdQuery(shopId: ShopId_t) = QueryBuilders.fieldQuery(SHOP_ID_ESFN, shopId)
+  def shopIdQuery(shopId: ShopId_t) = QueryBuilders.termQuery(SHOP_ID_ESFN, shopId)
 
   def deleteByShop(shopId: ShopId_t)(implicit ec:ExecutionContext, client: Client): Future[_] = {
     client.prepareDeleteByQuery(ES_INDEX_NAME)

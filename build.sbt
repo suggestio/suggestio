@@ -16,9 +16,9 @@ resolvers ++= Seq(
 
 libraryDependencies ++= {
   val slf4jVsn      = "1.7.+"
-  val hadoopVsn     = "2.2.+"
-  val hbaseVsn      = "0.96.1.1-hadoop2"
-  val akkaVsn       = "2.3.0-RC2"
+  val hadoopVsn     = "2.3.+"
+  val hbaseVsn      = "0.98.0-hadoop2"
+  val akkaVsn       = "2.3.+"
   val jacksonVsn    = "2.3.+"
   val tikaVsn       = "1.4"
   val cascadingVsn  = "2.5.+"
@@ -27,7 +27,7 @@ libraryDependencies ++= {
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
     "com.typesafe" %% "scalalogging-slf4j" % "1.1.+",
-    "org.gnu.inet" % "libidn" % "1.15",
+    "org.gnu.inet" % "libidn" % "1.1+",
     "com.github.nscala-time" %% "nscala-time" % "0.2.0",
     "commons-lang" % "commons-lang" % "2.+",
     "org.im4java" % "im4java" % "1.+",
@@ -35,7 +35,7 @@ libraryDependencies ++= {
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVsn,
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % jacksonVsn,
     // ES
-    "org.elasticsearch" % "elasticsearch" % "0.90.10",
+    "org.elasticsearch" % "elasticsearch" % "1.0.1",
     // Parsers
     "org.apache.tika" % "tika-core" % tikaVsn,
     "org.apache.tika" % "tika-parsers" % tikaVsn exclude("xerces", "xercesImpl"),
@@ -59,7 +59,7 @@ libraryDependencies ++= {
     "org.apache.lucene.morphology" % "russian" % morphVsn,
     "org.apache.lucene.morphology" % "english" % morphVsn,
     // TEST
-    "net.databinder.dispatch" %% "dispatch-core" % "0.11.0" % "test",
+    "net.databinder.dispatch" %% "dispatch-core" % "0.11.+" % "test",
     "org.scalatest" %% "scalatest" % "2.0" % "test"
   )
 }

@@ -40,6 +40,7 @@ object EsModel extends MacroLogsImpl {
       val logPrefix = esModelStatic.getClass.getSimpleName + ".putMapping(): "
       esModelStatic.isMappingExists flatMap {
         case false =>
+          info(logPrefix + "Trying to push mapping for model...")
           val fut = esModelStatic.putMapping
           fut onComplete {
             case Success(true)  => debug(logPrefix + "-> OK" )
@@ -210,7 +211,7 @@ object EsModel extends MacroLogsImpl {
   def isMappingExists(typename: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     client.admin().cluster()
       .prepareState()
-      .setFilterIndices(ES_INDEX_NAME)
+      .setIndices(ES_INDEX_NAME)
       .execute()
       .map { cmd =>
         val imd = cmd.getState
@@ -315,7 +316,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
   def deleteById(id: String)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
     client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
       .execute()
-      .map { !_.isNotFound }
+      .map { _.isFound }
   }
 
 }

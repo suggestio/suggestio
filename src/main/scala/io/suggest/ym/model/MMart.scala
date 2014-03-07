@@ -97,7 +97,7 @@ object MMart extends EsModelStaticT[MMart] {
     phone = None
   )
 
-  def companyIdQuery(companyId: CompanyId_t) = QueryBuilders.fieldQuery(ES_TYPE_NAME, companyId)
+  def companyIdQuery(companyId: CompanyId_t) = QueryBuilders.termQuery(ES_TYPE_NAME, companyId)
 
   /**
    * Вернуть все ТЦ, находящиеся во владении указанной конторы.

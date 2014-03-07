@@ -18,7 +18,7 @@ import java.util
  */
 
 object SioHBaseClient {
-  val QUORUM_SPEC = "localhost"
+  val QUORUM_SPEC = "upload.lan"
 }
 
 

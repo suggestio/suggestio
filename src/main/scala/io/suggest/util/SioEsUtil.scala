@@ -125,7 +125,7 @@ object SioEsUtil extends MacroLogsImpl {
     lazy val logPrefix = "closeIndex(%s): " format indexName
     trace(logPrefix + "Starting close ...")
     val adm = client.admin().indices()
-    new CloseIndexRequestBuilder(adm).setIndex(indexName).execute().transform(
+    new CloseIndexRequestBuilder(adm).setIndices(indexName).execute().transform(
       {resp =>
         val result = resp.isAcknowledged
         debug(logPrefix + "Close index result = %s" format result)
@@ -658,8 +658,7 @@ trait FieldIncludeInAll extends Field {
   def include_in_all : Boolean
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
-    if (!include_in_all)
-      b.field("include_in_all", include_in_all)
+    b.field("include_in_all", include_in_all)
   }
 }
   
@@ -916,8 +915,8 @@ case class IndexMapping(typ:String, staticFields:Seq[Field], properties:Seq[DocF
   def id = typ
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
-    super.fieldsBuilder(b)
     staticFields map { _.builder }
+    super.fieldsBuilder(b)
   }
 }
 

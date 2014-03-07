@@ -48,7 +48,7 @@ object MShopPromoOffer extends EsModelMinimalStaticT[MShopPromoOffer] with Macro
    * @return Фьючерс со списком результатов в неопределённом порядке.
    */
   def getAllForShop(shopId: MShop.ShopId_t)(implicit ec:ExecutionContext, client: Client): Future[Seq[MShopPromoOffer]] = {
-    val shopIdQuery = QueryBuilders.fieldQuery(YmOfferDatumFields.SHOP_ID_ESFN, shopId)
+    val shopIdQuery = QueryBuilders.termQuery(YmOfferDatumFields.SHOP_ID_ESFN, shopId)
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(shopIdQuery)

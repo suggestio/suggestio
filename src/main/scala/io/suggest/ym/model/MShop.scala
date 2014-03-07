@@ -113,7 +113,7 @@ object MShop extends EsModelStaticT[MShop] {
       .map { searchResp2list }
   }
 
-  def martIdQuery(martId: MartId_t) = QueryBuilders.fieldQuery(MART_ID_ESFN, martId)
+  def martIdQuery(martId: MartId_t) = QueryBuilders.termQuery(MART_ID_ESFN, martId)
 
   def countByMartId(martId: MartId_t)(implicit ec:ExecutionContext, client: Client): Future[Long] = {
     client.prepareCount(ES_INDEX_NAME)
@@ -137,7 +137,7 @@ object MShop extends EsModelStaticT[MShop] {
       .map { searchResp2list }
   }
 
-  def companyIdQuery(companyId: CompanyId_t) = QueryBuilders.fieldQuery(COMPANY_ID_ESFN, companyId)
+  def companyIdQuery(companyId: CompanyId_t) = QueryBuilders.termQuery(COMPANY_ID_ESFN, companyId)
 
   def countByCompanyId(companyId: CompanyId_t)(implicit ec:ExecutionContext, client: Client): Future[Long] = {
     client.prepareCount(ES_INDEX_NAME)
@@ -154,9 +154,8 @@ object MShop extends EsModelStaticT[MShop] {
    * @return Список MShop в неопределённом порядке.
    */
   def getByCompanyAndMart(companyId: CompanyId_t, martId:MartId_t)(implicit ec:ExecutionContext, client: Client): Future[Seq[MShop]] = {
-    val companyIdQuery = QueryBuilders.fieldQuery(COMPANY_ID_ESFN, companyId)
     val martIdFilter = FilterBuilders.termFilter(MART_ID_ESFN, martId)
-    val query = QueryBuilders.filteredQuery(companyIdQuery, martIdFilter)
+    val query = QueryBuilders.filteredQuery(companyIdQuery(companyId), martIdFilter)
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(query)

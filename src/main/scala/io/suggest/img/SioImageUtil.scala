@@ -41,6 +41,12 @@ trait SioImageUtilT {
   /** Если на выходе получилась слишком жирная превьюшка, то отсеять её. */
   def MAX_OUT_FILE_SIZE_BYTES: Option[Int]
 
+  /** Размывка для сокрытия артифактов. */
+  val GAUSSIAN_BLUG: Option[java.lang.Double] = None
+
+  /** Некое цветовое переплетение.
+    * @see [[http://www.imagemagick.org/script/command-line-options.php#interlace]] */
+  val INTERLACING: Option[String] = Some("Plane")
 
   /**
    * Является ли файл картинкой?
@@ -156,6 +162,9 @@ trait SioImageUtilT {
     val op = new IMOperation()
     // TODO Нужно брать рандомный кадр из gif вместо нулевого, который может быть пустым.
     op.addImage(fileOld.getAbsolutePath + "[0]")   // (#117) Без указания кадра, будет ошибка и куча неудаленных файлов в /tmp.
+    if (INTERLACING.isDefined) {
+      op.interlace(INTERLACING.get)
+    }
     // Кроп, задаваемый юзером: портирован из альтерраши.
     if (crop.isDefined) {
       val c = crop.get
@@ -164,7 +173,10 @@ trait SioImageUtilT {
     mode match {
       case ConvertModes.STRIP  => op.strip()
       case ConvertModes.THUMB  => op.thumbnail(DOWNSIZE_HORIZ_PX, DOWNSIZE_VERT_PX, '>')
-      case ConvertModes.RESIZE => op.resize(DOWNSIZE_HORIZ_PX, DOWNSIZE_VERT_PX, '>')
+      case ConvertModes.RESIZE => op.strip().resize(DOWNSIZE_HORIZ_PX, DOWNSIZE_VERT_PX, '>')
+    }
+    if (GAUSSIAN_BLUG.isDefined) {
+      op.gaussianBlur(GAUSSIAN_BLUG.get)
     }
     op.quality(JPEG_QUALITY_PC)
     op.samplingFactor(2.0, 1.0)
