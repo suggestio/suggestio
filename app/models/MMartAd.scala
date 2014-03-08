@@ -49,7 +49,7 @@ object MMartAd extends EsModelStaticT[MMartAd] {
     MMartAd(id=Some(id), offers=Nil, picture=null, martId=null, companyId = null, shopId = null)
   }
 
-  private def shopIdQuery(shopId: ShopId_t) = QueryBuilders.fieldQuery(SHOP_ID_ESFN, shopId)
+  private def shopIdQuery(shopId: ShopId_t) = QueryBuilders.termQuery(SHOP_ID_ESFN, shopId)
 
   /**
    * Найти все рекламные карточки магазина.

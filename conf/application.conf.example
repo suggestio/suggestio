@@ -127,7 +127,7 @@ domain.qi.parse.timeout_ms = 5000
 ## Search
 ###############################################################################
 # Название кластера, к которму должен коннктится ES-клиент. [o.es.cluster.ClusterName.DEFAULT]
-#es.cluster.name = "suggest.io"
+es.cluster.name = "elasticsearch"
 
 # Макс кол-во тегов, которое пользователь может указать к одному запросу. [5]
 search.facet.invlink.request.tags.max = 5
