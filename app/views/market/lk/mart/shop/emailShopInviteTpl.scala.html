@@ -1,0 +1,9 @@
+@(mmart: MMart, mshop: MShop, epwAct: EmailActivation)(implicit ctx: util.Context)
+
+@* Шаблон рендера html-части письма-приглашения, отправляемого владельцу магазина. *@
+
+Ваш магазин пригласили участвовать в поисковой системе suggest.io.
+
+<p>Магазин: @mshop.name</p>
+<p>Торговый центр: @mmart.name</p>
+<p>Ссылка для активации: TODO</p>

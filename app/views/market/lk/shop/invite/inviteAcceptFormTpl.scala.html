@@ -1,0 +1,27 @@
+@(mshop: MShop, eAct: EmailActivation, iaf: Form[_])(implicit ctx: util.Context)
+
+@* Страница с формой окончания invite-регистрации магазина. Тут можно ввести пароль и подправить имя магазина. *@
+@import ctx._
+@import market.lk._
+@import helper._
+
+@lkBase("Подтверждение регистрации") {
+  @form(routes.MarketShopLk.inviteAcceptSubmit(eaId=eAct.id.get)) {
+    @* Имя магазина *@
+    @inputText(iaf("shopName"))
+
+    <label for="emailTextField">Электронная почта</label>
+    <input id="emailTextField" type="text" disabled value="@eAct.email"/>
+
+    <label>Номер этажа</label>
+    <input id="floorTextField" type="text" disabled value="@mshop.martFloor"/>
+
+    <label>Номер секции</label>
+    <input id="sectionTextField" type="text" disabled value="@mshop.martSection"/>
+
+    @* Юзер вводит пароли *@
+    @inputPassword(iaf("password.pw1"))
+    @inputPassword(iaf("password.pw2"))
+    <input type="submit" value="@Messages("Continue")"/>
+  }
+}

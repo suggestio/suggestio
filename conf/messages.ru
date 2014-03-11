@@ -14,6 +14,7 @@ Edit=Редактировать
 Shop=Магазин
 Shops=Магазины
 Save=Сохранить
+Continue=Продолжить
 
 Color=Цвет
 Colors=Цвета

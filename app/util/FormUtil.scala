@@ -47,6 +47,11 @@ object FormUtil {
   /** Маппинг для секции в ТЦ. */
   val martSectionM = number(min=0, max=200000)
 
+  /** Парсим текст, введённый в поле с паролем. */
+  val passwordM = nonEmptyText
+    .verifying("password.too.short", {_.length > 5})
+    .verifying("password.too.long", {_.length <= 1024})
+
   val nameM = nonEmptyText(maxLength = 64)
     .transform(strTrimSanitizeF, strIdentityF)
   def shopNameM = nameM

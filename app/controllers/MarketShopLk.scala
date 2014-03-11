@@ -8,6 +8,7 @@ import util.FormUtil._
 import util.acl._
 import models._, MShop.ShopId_t, MMart.MartId_t
 import views.html.market.lk.shop._
+import play.api.mvc.Action
 
 /**
  * Suggest.io
@@ -118,6 +119,62 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
     }
   }
 
+  /** Маппинг формы, которая рендерится владельцу магазина, когда тот проходит по ссылки из письма-инвайта. */
+  val inviteAcceptFormM = {
+    val passwordsM = tuple(
+      "pw1" -> passwordM,
+      "pw2" -> passwordM
+    )
+    .verifying("passwords.do.not.match", { pws => pws match {
+      case (pw1, pw2) => pw1 == pw2
+    }})
+    .transform(
+      { case (pw1, pw2) => pw1 },
+      { _: AnyRef =>
+        // Назад пароли не возвращаем никогда.
+        val pw = ""
+        (pw, pw)
+      }
+    )
+    Form(tuple(
+      "shopName" -> shopNameM,
+      "password" -> passwordsM
+    ))
+  }
+
+  /**
+   * Юзер (владелец магазина) приходит через ссылку в письме.
+   * @param eaId Ключ активации.
+   * @return Рендер начальной формы, где можно ввести пароль.
+   */
+  def inviteAccept(eaId: String) = MaybeAuth.async { implicit request =>
+    EmailActivation.getById(eaId) flatMap {
+      case Some(eAct) =>
+        // Всё норм как бы. Но до сабмита нельзя менять состояние - просто рендерим форму для активации учетки.
+        // Можно также продлить жизнь записи активации. Но сценарий нужности этого маловероятен.
+        MShop.getById(eAct.key) map {
+          case Some(mshop) =>
+            Ok(invite.inviteAcceptFormTpl(mshop, eAct, inviteAcceptFormM))
+
+          case None => shopNotFound(eAct.key)
+        }
+
+      case None =>
+        // Неверный email. Вероятно, что-то не так
+        ???
+    }
+  }
+
+  def inviteAcceptSubmit(eaId: String) = MaybeAuth.async { implicit request =>
+    EmailActivation.getById(eaId) map {
+      case Some(epwAct) =>
+        // Всё ок, создать юзера и всё такое
+        ???
+
+      case None =>
+        ???
+    }
+  }
 
   private def martNotFound(martId: MartId_t) = NotFound("mart not found: " + martId)  // TODO Нужно дергать 404-шаблон.
   private def shopNotFound(shopId: ShopId_t) = NotFound("Shop not found: " + shopId)  // TODO

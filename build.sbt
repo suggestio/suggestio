@@ -25,6 +25,7 @@ libraryDependencies ++= Seq(
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.+",
   "org.apache.httpcomponents" % "httpcore" % "4.1.+",
   "com.google.guava" % "guava" % "14.+",
+  "com.lambdaworks" % "scrypt" % "1.4.0",     // Чтобы хешировать пароли (models.EmailPwIdent например)
   // Для импорт данных из sio v1 кластера. Выпилить вместе с util.compat.v1 после запуска
   "org.erlang.otp" % "jinterface" % "1.5.+"
 )

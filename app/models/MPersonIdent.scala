@@ -1,12 +1,14 @@
 package models
 
 import MPersonIdent.IdTypes.MPersonIdentType
-import io.suggest.model.{EsModelStaticT, EsModel, EsModelT}
+import io.suggest.model._
 import org.elasticsearch.common.xcontent.XContentBuilder
 import EsModel._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.SioConstants._
 import play.api.Play.current
+import com.lambdaworks.crypto.SCryptUtil
+import io.suggest.util.StringUtil
 
 /**
  * Suggest.io
@@ -37,10 +39,10 @@ object MPersonIdent {
   }
 
 
-  def generateMapping(typ: String): XContentBuilder = jsonGenerator { implicit b =>
+  def generateMapping(typ: String, withStaticFields: Seq[Field] = Nil): XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
       typ = typ,
-      staticFields = Seq(
+      staticFields = withStaticFields ++ Seq(
         FieldSource(enabled = true),
         FieldAll(enabled = false, analyzer = FTS_RU_AN),
         FieldId(path = KEY_ESFN)  // Для надежной защиты от двойных добавлений.
@@ -73,9 +75,36 @@ object MPersonIdent {
   /** Типы поддерживаемых алгоритмов идентификаций. В базу пока не сохраняются. */
   object IdTypes extends Enumeration {
     type MPersonIdentType = Value
-    val MOZ_PERSONA       = Value
+    val MOZ_PERSONA, EMAIL_PW, EMAIL_ACT = Value
   }
 
+
+  // Настройки генерации хешей. Используется scrypt. Это влияет только на новые создаваемые хеши, не ломая совместимость
+  // с уже сохранёнными. Размер потребляемой памяти можно рассчитать (128 * COMPLEXITY * RAM_BLOCKSIZE) bytes.
+  // По дефолту жрём 16 метров с запретом параллелизации.
+  /** Cложность хеша scrypt. */
+  val SCRYPT_COMPLEXITY     = current.configuration.getInt("ident.pw.scrypt.complexity") getOrElse 16384
+  /** Размер блока памяти. */
+  val SCRYPT_RAM_BLOCKSIZE  = current.configuration.getInt("ident.pw.scrypt.ram.blocksize") getOrElse 8
+  /** Параллелизация. Позволяет ускорить вычисление функции. */
+  val SCRYPT_PARALLEL       = current.configuration.getInt("ident.pw.scrypt.parallel") getOrElse 1
+
+  /** Генерировать новый хеш с указанными выше дефолтовыми параметрами.
+    * @param password Пароль, который надо захешировать.
+    * @return Текстовый хеш в стандартном формате $s0$params$salt$key.
+    */
+  def mkHash(password: String): String = {
+    SCryptUtil.scrypt(password, SCRYPT_COMPLEXITY, SCRYPT_RAM_BLOCKSIZE, SCRYPT_PARALLEL)
+  }
+
+  /** Проверить хеш scrypt с помощью переданного пароля.
+    * @param password Проверяемый пароль.
+    * @param hash Уже готовый хеш.
+    * @return true, если пароль ок. Иначе false.
+    */
+  def checkHash(password: String, hash: String): Boolean = {
+    SCryptUtil.check(password, hash)
+  }
 }
 
 import MPersonIdent._
@@ -132,4 +161,112 @@ case class MozillaPersonaIdent(
   def companion = MozillaPersonaIdent
 }
 
+
+/** Статическая под-модель для хранения юзеров, живущих вне mozilla persona. */
+object EmailPwIdent extends EsModelStaticT[EmailPwIdent] {
+  val ES_TYPE_NAME: String = "mpiEmailPw"
+
+  def generateMapping: XContentBuilder = MPersonIdent.generateMapping(ES_TYPE_NAME)
+
+  def applyKeyValue(acc: EmailPwIdent): PartialFunction[(String, AnyRef), Unit] = {
+    case (KEY_ESFN, value)          => acc.email = stringParser(value)
+    case (VALUE_ESFN, value)        => acc.pwHash = stringParser(value)
+    case (IS_VERIFIED_ESFN, value)  => acc.isVerified = booleanParser(value)
+    case (PERSON_ID_ESFN, value)    => acc.personId = stringParser(value)
+  }
+
+  protected def dummy(id: String): EmailPwIdent = EmailPwIdent(email=id, personId=null, pwHash=null)
+
+  /** По дефолту email'ы считать проверенными или нет? */
+  def IS_VERIFIED_DFLT = false
+
+  /**
+   * Собрать экземпляр [[EmailPwIdent]].
+   * @param email Электропочта.
+   * @param personId id юзера.
+   * @param password Пароль как он есть.
+   * @param isVerified Флаг проверенности пароля.
+   * @return Экземпляр [[EmailPwIdent]] с захешированным паролем.
+   */
+  def applyWithPw(email: String, personId:String, password:String, isVerified:Boolean = IS_VERIFIED_DFLT): EmailPwIdent = {
+    EmailPwIdent(
+      email = email,
+      personId = personId,
+      pwHash = mkHash(password),
+      isVerified = isVerified
+    )
+  }
+}
+
+/**
+ * Идентификация по email и паролю.
+ * @param email Электропочта.
+ * @param personId id юзера.
+ * @param pwHash Хеш от пароля.
+ * @param isVerified false по умолчанию, true если почта выверена.
+ */
+case class EmailPwIdent(
+  var email     : String,
+  var personId  : String,
+  var pwHash    : String,
+  var isVerified: Boolean = EmailPwIdent.IS_VERIFIED_DFLT
+) extends MPersonIdent[EmailPwIdent] with MPersonLinks {
+  def id: Option[String] = Some(email)
+  def idType: MPersonIdentType = IdTypes.EMAIL_PW
+  def key: String = email
+  def companion = EmailPwIdent
+  def writeVerifyInfo: Boolean = true
+  def value: Option[String] = Some(pwHash)
+  def checkPassword(password: String) = checkHash(password, pwHash)
+}
+
+
+/** Статическая часть модели [[EmailActivation]].
+  * Модель нужна для хранения ключей для проверки/активации почтовых ящиков. */
+object EmailActivation extends EsModelStaticT[EmailActivation] {
+
+  val ES_TYPE_NAME: String = "mpiEmailAct"
+
+  /** Длина генерируемых ключей для активации. */
+  val KEY_LEN = current.configuration.getInt("ident.email.act.key.len") getOrElse 16
+
+  /** Период ttl, если иное не указано в документе. Записывается в маппинг. */
+  val TTL_DFLT = current.configuration.getString("ident.email.act.ttl.period") getOrElse "2d"
+
+  /** Сгенерить новый рандомный ключ активации.
+    * @return Строка из символов [a-zA-Z0-9].
+    */
+  def randomActivationKey = StringUtil.randomId(len = KEY_LEN)
+
+  protected def dummy(id: String) = EmailActivation(id = Some(id), email = null, key = null)
+
+  /** Сборка маппинга. В этом маппинге должен быть ttl, чтобы старые записи автоматически выпиливались. */
+  def generateMapping: XContentBuilder = {
+    val ttlField = FieldTtl(enabled = true, default = TTL_DFLT)
+    MPersonIdent.generateMapping(ES_TYPE_NAME, withStaticFields = Seq(ttlField))
+  }
+
+  def applyKeyValue(acc: EmailActivation): PartialFunction[(String, AnyRef), Unit] = {
+    case (KEY_ESFN, value)          => acc.email = stringParser(value)
+    case (VALUE_ESFN, value)        => acc.key = stringParser(value)
+  }
+}
+
+/**
+ * Запись об активации почты.
+ * @param email Почта.
+ * @param key Ключ содержит какие-то данные, необходимые для активации. Например, id магазина.
+ */
+case class EmailActivation(
+  var email     : String,
+  var key       : String = EmailActivation.randomActivationKey,
+  id            : Option[String] = None
+) extends MPersonIdent[EmailActivation] with MPersonLinks {
+  val personId = ""
+  def companion = EmailActivation
+  def writeVerifyInfo: Boolean = false
+  def idType = IdTypes.EMAIL_ACT
+  def isVerified = true
+  def value: Option[String] = Some(key)
+}
 

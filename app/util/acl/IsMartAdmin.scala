@@ -8,6 +8,7 @@ import play.api.mvc.{SimpleResult, Request, ActionBuilder}
 import io.suggest.ym.model.MShop, MShop.ShopId_t
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
+import models._
 
 /**
  * Suggest.io
@@ -29,8 +30,13 @@ object IsMartAdmin extends PlayMacroLogsImpl {
     val pwOpt = PersonWrapper.getFromRequest(request)
     isMartAdmin(martId, pwOpt) flatMap {
       case true =>
-        val req1 = RequestForMartAdm(martId, request, pwOpt)
-        block(req1)
+        MMart.getById(martId).flatMap {
+          case Some(mmart) =>
+            val req1 = RequestForMartAdm(mmart, request, pwOpt)
+            block(req1)
+
+          case None => IsAuth.onUnauth(request)
+        }
 
       case false =>
         IsAuth.onUnauth(request)
@@ -65,6 +71,10 @@ case class IsMartAdminShop(shopId: ShopId_t) extends ActionBuilder[AbstractReque
 
 abstract class AbstractRequestForMartAdm[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
   def martId: MartId_t
+  def mmart: MMart
 }
-case class RequestForMartAdm[A](martId: MartId_t, request: Request[A], pwOpt: PwOpt_t)
-  extends AbstractRequestForMartAdm(request)
+case class RequestForMartAdm[A](mmart: MMart, request: Request[A], pwOpt: PwOpt_t)
+  extends AbstractRequestForMartAdm(request) {
+  def martId: MartId_t = mmart.id.get
+}
+
