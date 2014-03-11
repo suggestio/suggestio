@@ -5,15 +5,18 @@ var cbca = {};
   ChooseCategory();
   cbca.selectCat = new CbcaSelect('cat-select');
 
+
   $(document).on('click', '.block .toggle',
   function(e) {
     e.preventDefault();
 
-    var $this = $(this);
+    var $this = $(this),
+    slideContentId = $this.attr('data-content');
 
-    $this.closest('.block').toggleClass('open');
-    $this.text( $this.text()=="Свернуть"?"Развернуть":"Свернуть");
+    $this.toggleClass('open').text( $this.text()=="Свернуть"?"Развернуть":"Свернуть");
+    $('#'+slideContentId).slideToggle();
   });
+
 
 });
 
