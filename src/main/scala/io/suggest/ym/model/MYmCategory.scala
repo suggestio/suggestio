@@ -31,6 +31,8 @@ object MYmCategory extends EsModelStaticT[MYmCategory] with MacroLogsImpl {
 
   val ES_TYPE_NAME = "ymCat"
 
+  val ROUTING_KEY = "0"
+
   /** Выдать все элемены в порядке иерархии. */
   def getAllTree(implicit ec: ExecutionContext, client: Client): Future[Seq[MYmCategory]] = {
     client.prepareSearch(ES_INDEX_NAME)
@@ -127,6 +129,7 @@ object MYmCategory extends EsModelStaticT[MYmCategory] with MacroLogsImpl {
 
 }
 
+import MYmCategory._
 
 case class MYmCategory(
   var name      : String,
@@ -151,7 +154,7 @@ case class MYmCategory(
     } else {
       // https://groups.google.com/forum/#!topic/elasticsearch/8GVuq4OYsEw
       // Всегда должен быть задан хотя бы один из _parent или _routing, если активен parent-child.
-      irb.setRouting("0")
+      irb.setRouting(ROUTING_KEY)
     }
   }
 

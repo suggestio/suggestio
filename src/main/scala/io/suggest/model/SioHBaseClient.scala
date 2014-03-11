@@ -9,12 +9,13 @@ import com.stumbleupon.async.{Callback, Deferred}
 import scala.concurrent.{ExecutionContext, Promise, Future, future}
 import scala.util.{Failure, Success}
 import java.util
+import org.apache.hadoop.conf.Configuration
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 10.09.13 17:37
- * Description:
+ * Description: Клиенты для hbase: официальный для админства и асинхронный для дела.
  */
 
 object SioHBaseClient {
@@ -35,7 +36,11 @@ trait SioHBaseSyncClientT {
    * ресурсы HConnection и pool между разными задачами.
    * @return Дефолтовый экземпляр HBaseConfiguration.
    */
-  val getConf = HBaseConfiguration.create()
+  val getConf: Configuration = {
+    val conf = HBaseConfiguration.create()
+    conf.set("hbase.zookeeper.quorum", SioHBaseClient.QUORUM_SPEC)
+    conf
+  }
 
   /**
    * Выдать готовый к работе admin-клиент. Одноразовый, т.к. по доке так рекомендовано.

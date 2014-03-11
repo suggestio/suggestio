@@ -252,6 +252,12 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
       .execute()
   }
 
+  /** Если модели требуется выставлять routing для ключа, то можно делать это через эту функцию.
+    * @param idOrNull id или null, если id отсутствует.
+    * @return None если routing не требуется, иначе Some(String).
+    */
+  def getRoutingKey(idOrNull: String): Option[String] = None
+
   /** Пересоздать маппинг удаляется и создаётся заново. */
   def resetMapping(implicit ec: ExecutionContext, client: Client): Future[_] = {
     deleteMapping flatMap { _ => putMapping }
@@ -275,8 +281,11 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    * @return Экземпляр сабжа, если такой существует.
    */
   def getById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Option[T]] = {
-    client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
-      .execute()
+    val maybeRk = getRoutingKey(id)
+    val req = client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
+    if (maybeRk.isDefined)
+      req.setRouting(maybeRk.get)
+    req.execute()
       .map { getResp =>
         if (getResp.isExists) {
           val result = deserializeOne(getResp.getId, getResp.getSourceAsMap)
@@ -314,8 +323,11 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    * @return true, если документ найден и удалён. Если не найден, то false
    */
   def deleteById(id: String)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
-      .execute()
+    val req = client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
+    val rk = getRoutingKey(id)
+    if (rk.isDefined)
+      req.setRouting(rk.get)
+    req.execute()
       .map { _.isFound }
   }
 
@@ -333,8 +345,11 @@ trait EsModelStaticT[T <: EsModelT[T]] extends EsModelMinimalStaticT[T] {
    * @return true/false
    */
   def isExist(id: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
-    client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
-      .setFields()
+    val req = client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
+    val rk = getRoutingKey(id)
+    if (rk.isDefined)
+      req.setRouting(rk.get)
+    req.setFields()
       .execute()
       .map { _.isExists }
   }
@@ -368,9 +383,13 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
    * @return Фьючерс с новым/текущим id
    */
   def save(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
-    val irb = client.prepareIndex(ES_INDEX_NAME, companion.ES_TYPE_NAME, idOrNull)
+    val _idOrNull = idOrNull
+    val irb = client.prepareIndex(ES_INDEX_NAME, companion.ES_TYPE_NAME, _idOrNull)
       .setSource(toJson)
     saveBuilder(irb)
+    val rkOpt = companion.getRoutingKey(_idOrNull)
+    if (rkOpt.isDefined)
+      irb.setRouting(rkOpt.get)
     irb.execute()
       .map { _.getId }
   }
