@@ -821,6 +821,22 @@ trait TextField extends Field {
   }
 }
 
+/** Задание времени жизни документов в маппинге.
+  * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html]] */
+case class FieldTtl(
+  enabled: Boolean = false,
+  default: String = null,
+  store: Boolean = true,
+  index: FieldIndexingVariant = null    // По дефолту not_analyzed - это техническая необходимость.
+) extends FieldEnableable with FieldStoreable with FieldIndexable {
+  def id: String = FIELD_TTL
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    if (default != null)
+      b.field("default", default)
+  }
+}
 
 /** Поле _all */
 case class FieldAll(

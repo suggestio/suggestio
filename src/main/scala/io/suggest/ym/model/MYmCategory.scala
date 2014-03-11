@@ -31,6 +31,7 @@ object MYmCategory extends EsModelStaticT[MYmCategory] with MacroLogsImpl {
 
   val ES_TYPE_NAME = "ymCat"
 
+  /** parent-child связи между документами требуют налючия routing. Тут задаём ключ-константу для rk. */
   val ROUTING_KEY = "0"
 
   /** Выдать все элемены в порядке иерархии. */
@@ -38,7 +39,7 @@ object MYmCategory extends EsModelStaticT[MYmCategory] with MacroLogsImpl {
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(QueryBuilders.matchAllQuery())
-      //.addSort(FIELD_ID, SortOrder.ASC)
+      //.addSort(FIELD_ID, SortOrder.ASC)   // Почему-то не работает сортировка
       .setSize(2500)
       .execute()
       .map { searchResp2list(_).sortBy(_.id.get) }
@@ -64,7 +65,7 @@ object MYmCategory extends EsModelStaticT[MYmCategory] with MacroLogsImpl {
       SioFutureUtil.mapLeftSequentally(YmCategory.CAT_TREE_CORE.cats.values.toSeq.sortBy(_.name)) { l1Cat =>
         val l1Id = i.incrementAndGet()
         // Слишком много категорий 1-го уровня. Это опасность, надо переписывать этот кусок.
-        if (l1Id >= Character.MAX_RADIX) ???
+        if (l1Id > Character.MAX_RADIX) ???
         MYmCategory(name=l1Cat.name, parentId=Some(tlCatId), id=Some(encodeId(l1Id))).save.map { l1CatId =>
           l1CatId -> l1Cat
         }
@@ -78,7 +79,7 @@ object MYmCategory extends EsModelStaticT[MYmCategory] with MacroLogsImpl {
         val parentIdOpt = Some(parentId)
         SioFutureUtil.mapLeftSequentally(catTree.values.toSeq.sortBy(_.name)) { ymCat =>
           val lnId = subcatI.incrementAndGet()
-          if (lnId >= Character.MAX_RADIX) ???
+          if (lnId > Character.MAX_RADIX) ???
           val id = Some(parentId + encodeId(lnId))
           val fut = MYmCategory(name=ymCat.name, parentId=parentIdOpt, id=id).save
           fut flatMap { ymCatId =>
@@ -119,7 +120,7 @@ object MYmCategory extends EsModelStaticT[MYmCategory] with MacroLogsImpl {
           include_in_all = true
         ),
         FieldString(
-          id = NAME_ESFN,
+          id = PARENT_ID_ESFN,
           index = FieldIndexingVariants.no,
           include_in_all = false
         )
@@ -127,9 +128,13 @@ object MYmCategory extends EsModelStaticT[MYmCategory] with MacroLogsImpl {
     )
   }
 
+  /** Этой модели требуется выставлять routing для ключа, но ключ всегда один и тот же.
+    * @param idOrNull id или null, если id отсутствует.
+    * @return const Some(String).
+    */
+  override def getRoutingKey(idOrNull: String): Option[String] = someRk
+  private val someRk = Some(ROUTING_KEY)
 }
-
-import MYmCategory._
 
 case class MYmCategory(
   var name      : String,
@@ -151,10 +156,6 @@ case class MYmCategory(
     super.saveBuilder(irb)
     if (parentId.isDefined) {
       irb.setParent(parentId.get)
-    } else {
-      // https://groups.google.com/forum/#!topic/elasticsearch/8GVuq4OYsEw
-      // Всегда должен быть задан хотя бы один из _parent или _routing, если активен parent-child.
-      irb.setRouting(ROUTING_KEY)
     }
   }
 
