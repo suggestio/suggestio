@@ -39,7 +39,7 @@ transform(v)
     overflow: hidden
     width: 100%
     border-top: 1px solid #cbcbcb
-    border-bottom: 1px solid #f0f0f0
+    border-bottom: 1px solid #f8f8f8
 
   .input-wrap
     margin-top: 10px
@@ -53,6 +53,22 @@ transform(v)
         font-size: 12px
         color: #959595
         font-family: 'Arial'
+    .select-color
+      vertical-align: middle
+      font-size: 12px
+      color: #959595
+      font-family: 'Arial'
+      padding-left: 20px
+      width: 80px
+      .color
+        margin-left: 10px
+        display: inline-block
+        width: 27px
+        line-height: 27px
+        border: 1px solid #b2b2b2
+        border-radius(2px)
+      .color.custom
+        background: url('/assets/images/market/lk/custom-color.png') no-repeat
   .input-wrap.textarea
     .left
       vertical-align: top
@@ -140,52 +156,51 @@ transform(v)
     overflow: hidden
     .preview
       float: left
-      border: 1px solid #b2b2b2
-    .select-file
-      position: relative
-      float: left
-      width: 188px
-      height: 27px
-      margin-left: 20px
-      overflow: hidden
-      input
-        outline: 0
-        position: absolute
-        z-index: 2
-        cursor: pointer
-        top: 0
-        left: 0
-        display: block
-        opacity: 0
-        width: 188px
-        height: 27px
-      .bg
-        padding-top: 6px
-        position: absolute
-        top: 0
-        left: 0
-        width: 188px
-        height: 27px
-        background: url('/assets/images/market/lk/gray-but.png') no-repeat
-        background-position: 0 -154px
-        font-size: 12px
-        font-family: 'Arial'
-        color: #959595
-        text-align: center
-    .select-file:hover
-      .bg
-        background-position: 0 -77px
-    .select-file:active
-       .bg
-        background-position: 0 0
-    .descr
-      padding-top: 5px
+      img
+        border: 1px solid #b2b2b2
+    .selectbox
       width: 200px
       float: left
-      font-size: 12px
-      font-family: 'Arial'
-      color: #b4b4b4
-      margin-left: 20px
+      padding-left: 20px
+      .select-file
+        position: relative
+        height: 27px
+        overflow: hidden
+        input
+          outline: 0
+          position: absolute
+          z-index: 2
+          cursor: pointer
+          top: 0
+          left: 0
+          display: block
+          opacity: 0
+          width: 188px
+          height: 27px
+        .bg
+          padding-top: 6px
+          position: absolute
+          top: 0
+          left: 0
+          width: 188px
+          height: 27px
+          background: url('/assets/images/market/lk/gray-but.png') no-repeat
+          background-position: 0 -154px
+          font-size: 12px
+          font-family: 'Arial'
+          color: #959595
+          text-align: center
+      .select-file:hover
+        .bg
+          background-position: 0 -77px
+      .select-file:active
+         .bg
+          background-position: 0 0
+      .descr
+        padding-top: 5px
+        font-size: 12px
+        font-family: 'Arial'
+        color: #b4b4b4
 
   .body-wrap
     .title-wrap
