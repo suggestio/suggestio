@@ -6,6 +6,9 @@
 
 @lkBase("Редактирование рекламной карточки") {
 
+  @* Кнопка стирания рекламной карточки пока лежит тут. До лучших времён. *@
+  @stuff._deleteSmthFormBtnTpl(routes.MarketAd.deleteSubmit(mad.id.get))
+
   @_adFormTpl(
     af = af,
     call = routes.MarketAd.editShopAdSubmit(mad.id.get),
