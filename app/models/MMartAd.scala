@@ -107,6 +107,16 @@ object MMartAd extends EsModelStaticT[MMartAd] {
       index = FieldIndexingVariants.no,
       include_in_all = false
     )
+    val shopIdField = FieldString(
+      id = SHOP_ID_ESFN,
+      index = FieldIndexingVariants.not_analyzed,
+      include_in_all = false
+    )
+    val martIdField = FieldString(
+      id = MART_ID_ESFN,
+      index = FieldIndexingVariants.not_analyzed,
+      include_in_all = false
+    )
     val textAlignsField = FieldObject(
       id = TEXT_ALIGN_ESFN,
       enabled = false,
@@ -203,6 +213,8 @@ object MMartAd extends EsModelStaticT[MMartAd] {
       ),
       properties = Seq(
         pictureField,
+        shopIdField,
+        martIdField,
         companyIdField,
         categoryField,
         offerField,
