@@ -4,6 +4,7 @@
    * dfltIsProduct обозначает дефолтовый режим работы формы. true - с ценами, false - реклама со скидками. *@
 @import ctx._
 @import helper._
+@import controllers.MarketAd.FormModes._
 
 @form(call, 'id -> "promoOfferForm") {
 
@@ -15,8 +16,10 @@
   @* Input для цвета верхней плашки. *@
   <input type="hidden" name="panelColor" value="@af("panel.color").value.getOrElse("#000000")"/>
 
-  @* TODO Сейчас рендерится только один кусок формы. Нужно сделать js-переключение между двумя вариантами формы.
-          Сервер в POST должен получать только один вариант формы, иначе будет ошибка. *@
+  @* Режим формы. Должен переключаться при переключении вкладки. *@
+  <input type="hidden" name="ad.mode" value="@if(dfltIsProduct) {@PRODUCT} else {@DISCOUNT}"/>
+
+  @* TODO Сейчас рендерится только один кусок формы. Нужно сделать js-переключение между двумя вариантами формы. *@
   @if(dfltIsProduct) {
     @_adFormProductTpl(af)
   } else {

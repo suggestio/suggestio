@@ -11,6 +11,8 @@ import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
 import io.suggest.event.SioNotifierStaticClientI
+import scala.util.{Failure, Success}
+import util.PlayMacroLogsImpl
 
 /**
  * Suggest.io
@@ -20,7 +22,9 @@ import io.suggest.event.SioNotifierStaticClientI
  * prio используется для задания приоритета в отображении в рамках магазина. На текущий момент там всё просто:
  * если null, то приоритета нет, если 1 то он есть.
  */
-object MMartAd extends EsModelStaticT[MMartAd] {
+object MMartAd extends EsModelStaticT[MMartAd] with PlayMacroLogsImpl {
+
+  import LOGGER._
 
   val ES_TYPE_NAME      = "martAd"
 
@@ -226,6 +230,42 @@ object MMartAd extends EsModelStaticT[MMartAd] {
     )
   }
 
+  /**
+   * Прочитать pictureId для указанного элемента.
+   * @param adId id рекламного документа.
+   * @return id картинки, если такая реклама вообще существует.
+   */
+  def getPictureIdFor(adId: String)(implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
+    client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, adId)
+      .setFields(PICTURE_ESFN)
+      .execute()
+      .map { getResp =>
+        Option(getResp.getField(PICTURE_ESFN))
+          .map(_.getValue.asInstanceOf[String])
+      }
+  }
+
+  /**
+   * Удалить документ по id.
+   * @param id id документа.
+   * @return true, если документ найден и удалён. Если не найден, то false
+   */
+  override def deleteById(id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    // удалить связанную картинку из хранилища
+    val getPictFut = getPictureIdFor(id)
+    getPictFut onSuccess {
+      case Some(pictureId) =>
+        MPict.deleteFully(pictureId) onComplete {
+          case Success(_)  => trace("Successfuly erased picture: " + pictureId)
+          case Failure(ex) => error("Failed to delete associated picture: " + pictureId, ex)
+        }
+
+      case None => debug("PictureId unexpectedly not found for adId = " + id)
+    }
+    getPictFut flatMap { _ =>
+      super.deleteById(id)
+    }
+  }
 }
 
 import MMartAd._
