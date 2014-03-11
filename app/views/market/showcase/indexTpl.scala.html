@@ -1,6 +1,6 @@
 @()(implicit ctx:util.Context)
 
-@market.showcase.baseTpl("Sio mraket") {
+@market.showcase.baseTpl("sio.market") {
 
   <div class="sio-market-showcase">
 
@@ -15,14 +15,16 @@
 
       </div>
 
-      <img id="poster-photo" class="poster-photo" data-width="795" data-height="551" src="https://stockmann.com/docs/export/sites/default/10202/fi/free/images/767x510-1403-etuvihko-keyvisu.jpg">
+      <img id="poster-photo" class="poster-photo" data-width="1446" data-height="1446" src="http://1.bp.blogspot.com/-W00f_IOwo_o/Uhs5U-JXufI/AAAAAAAARsA/CoEUkLI3bRs/s1600/IMG_8549.JPG">
 
       <div class="index-navigation">
-        <a href="">Я ЗНАЮ, ЧТО ИЩУ</a>
-        <a href="">ПОМОГИТЕ МНЕ С ВЫБОРОМ</a>
+        <a class="siom-button" href="">Я ЗНАЮ, ЧТО ИЩУ</a>
+        <a class="siom-button" href="">ПОМОГИТЕ МНЕ С ВЫБОРОМ</a>
       </div>
 
     </div>
+
+    @market.showcase._exit_screen()
 
   </div>
 

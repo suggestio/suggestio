@@ -9,7 +9,7 @@ import util.img.ImgFormUtil._
 import util.FormUtil._
 import play.api.data._, Forms._
 import util.acl._
-import util.img.{ImgInfo, TmpImgIdKey, ImgFormUtil, OrigImgIdKey}
+import util.img.{ImgInfo, ImgFormUtil, OrigImgIdKey}
 import scala.concurrent.Future
 
 /**
@@ -24,8 +24,21 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   object FormModes extends Enumeration {
     type FormMode = Value
-    val PRODUCT, DISCOUNT = Value
+    val PRODUCT  = Value("p")
+    val DISCOUNT = Value("d")
+
+    /** Безопасная форма withName(). */
+    def maybeWithName(n: String): Option[FormMode] = {
+      try {
+        Some(withName(n))
+      } catch {
+        case ex: Exception =>
+          debug("Failed to parse form mode from string: " + n)
+          None
+      }
+    }
   }
+  import FormModes.FormMode
 
   /** Маппер для поля, содержащего код цвета. */
   // TODO Нужно добавить верификацию тут какую-то. Например через YmColors.
@@ -86,9 +99,11 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     "price"     -> mmaFloatPriceM,
     "oldPrice"  -> optional(mmaFloatPriceM)
   )
+  // applyF()
   {(vendor, price, oldPriceOpt) =>
     MMartAdProduct(vendor=vendor, model = None, oldPrice=oldPriceOpt, price=price)
   }
+  // unapplyF()
   {product =>
     import product._
     Some((vendor, price, oldPrice))
@@ -117,29 +132,40 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   /** Маппинг-маршрутизатор, который отвечает за выборку того, какую подформу надо выбирать из засабмиченного. */
   val adBodyM = tuple(
-   // "mode"     -> nonEmptyText(),
+    "mode" -> nonEmptyText()
+      .transform(
+        FormModes.maybeWithName(_),
+        {fmOpt: Option[FormMode] => fmOpt.map(_.toString) getOrElse "" }
+      )
+      .verifying("form.mode.unknown", _.isDefined)
+      .transform(_.get, { fm: FormMode => Some(fm) }),
     "product"  -> optional(adProductM),
     "discount" -> optional(adDiscountM)
   )
   // Убедится, что задан ровно один из вариантов заполнения.
-  .verifying("ad.undefined.or.bothdefined", { t => t match {
-    case (pOpt, dOpt) => pOpt.isDefined ^ dOpt.isDefined
+  .verifying("ad.bad.defined", { t => t match {
+    case (FormModes.PRODUCT, pOpt @ Some(p), _)  => true
+    case (FormModes.DISCOUNT, _, dOpt @ Some(d)) => true
+    case _ => false
   }})
-  // Выбрать из двух вариантов единственный заданный
+  // Выбрать только один из результатов.
   .transform[MMartAdOfferT](
-    { case (pOpt, dOpt)       => (pOpt orElse dOpt).get },
-    { case p: MMartAdProduct  => (Some(p), None)
-      case d: MMartAdDiscount => (None, Some(d)) }
+    { case (m @ FormModes.PRODUCT, pOpt @ Some(p), _)  => p
+      case (m @ FormModes.DISCOUNT, _, dOpt @ Some(d)) => d
+      case other => throw new IllegalArgumentException("Unexpected input: " + other) },   // Should never occur
+    { case p: MMartAdProduct  => (FormModes.PRODUCT, Some(p), None)
+      case d: MMartAdDiscount => (FormModes.DISCOUNT, None, Some(d)) }
   )
 
   /** Форма добавления/редактирования рекламируемого продукта. */
   val adFormM = Form(mapping(
     "catId" -> userCatIdM,
     "image_key"  -> imgIdM,
-    "panelColor" -> colorM.transform(
-      { MMartAdPanelSettings.apply },
-      {mmaps: MMartAdPanelSettings => mmaps.color }
-    ),
+    "panelColor" -> colorM
+      .transform(
+        { MMartAdPanelSettings.apply },
+        { mmaps: MMartAdPanelSettings => mmaps.color }
+      ),
     "ad"    -> adBodyM,
     "textAlign" -> textAlignsM
   )
@@ -180,7 +206,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
   }
 
-  /** Сабмит формы добавления рекламной карточки товара/скидки. */
+  /** Сабмит формы добавления рекламной карточки товара/скидки.
+    * @param shopId id магазина.
+    */
   def createShopAdSubmit(shopId: ShopId_t) = IsShopAdmFull(shopId).async { implicit request =>
     val catOwnerId = request.mshop.martId getOrElse shopId
     val formBinded = adFormM.bindFromRequest()
@@ -302,6 +330,23 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
         }
       }
     )
+  }
+
+  /**
+   * POST для удаления рекламной карточки.
+   * @param adId id рекламы.
+   * @return Редирект в магазин или ТЦ.
+   */
+  def deleteSubmit(adId: String) = IsAdEditor(adId).async { implicit request =>
+    MMartAd.deleteById(adId) map { _ =>
+      val route = request.mad.shopId match {
+        // Невсегда ясно, куда редиректить. Поэтому угадываем истинного владельца рекламы (магазин или ТЦ).
+        case Some(shopId) => routes.MarketShopLk.showShop(shopId)
+        case None         => routes.MarketMartLk.martShow(request.mad.martId)
+      }
+      Redirect(route)
+        .flashing("success" -> "Рекламная карточка удалена")
+    }
   }
 
   private def shopNotFound(shopId: ShopId_t) = NotFound("shop not found: " + shopId)
