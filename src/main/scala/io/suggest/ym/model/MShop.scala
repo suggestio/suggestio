@@ -12,14 +12,21 @@ import io.suggest.util.SioConstants._
 import io.suggest.proto.bixo.crawler.MainProto
 import org.elasticsearch.client.Client
 import io.suggest.event._
+import io.suggest.util.JacksonWrapper
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 23.01.14 19:23
  * Description: Таблица с магазинами, зарегистрированными в системе.
+ *
  * Модель денормализованна по полю mart_id: оно может быть пустым, и это значит, что магазин
  * не привязан к конкретному ТЦ. В дальнейшем, при необходимости можно будет
+ *
+ * Модель денормализована по полю personId: оно содержит список пользователей, которые могут управлять магазином.
+ * Новые пользователи добавляются в начало списка. Последний пользователь списка списка имеет повышенный статус.
+ * Например, можно считать его админом, и тогда он как бы может управлять оставшимся списком пользователей и
+ * делать прочие административные действия.
  */
 
 object MShop extends EsModelStaticT[MShop] {
@@ -51,6 +58,11 @@ object MShop extends EsModelStaticT[MShop] {
           include_in_all = true,
           index = FieldIndexingVariants.no
         ),
+        FieldString(
+          id = PERSON_ID_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.not_analyzed
+        ),
         FieldDate(
           id = DATE_CREATED_ESFN,
           include_in_all = false,
@@ -81,7 +93,8 @@ object MShop extends EsModelStaticT[MShop] {
     id = Some(id),
     martId = null,
     companyId = null,
-    name = null
+    name = null,
+    personIds = Nil
   )
 
 
@@ -93,6 +106,7 @@ object MShop extends EsModelStaticT[MShop] {
     case (DESCRIPTION_ESFN, value)    => acc.description = Some(descriptionParser(value))
     case (MART_FLOOR_ESFN, value)     => acc.martFloor   = Some(martFloorParser(value))
     case (MART_SECTION_ESFN, value)   => acc.martSection = Some(martSectionParser(value))
+    case (PERSON_ID_ESFN, value)      => acc.personIds   = JacksonWrapper.convert[List[String]](value)
   }
 
   /**
@@ -213,6 +227,7 @@ case class MShop(
   var companyId   : CompanyId_t,
   var martId      : Option[MartId_t] = None,
   var name        : String,
+  var personIds   : List[String],
   var description : Option[String] = None,
   var martFloor   : Option[Int] = None,
   var martSection : Option[Int] = None,
@@ -226,6 +241,8 @@ case class MShop(
   override def writeJsonFields(acc: XContentBuilder) {
     acc.field(COMPANY_ID_ESFN, companyId)
       .field(NAME_ESFN, name)
+    if (!personIds.isEmpty)
+      acc.array(PERSON_ID_ESFN, personIds : _*)
     if (martId.isDefined)
       acc.field(MART_ID_ESFN, martId.get)
     if (description.isDefined)
@@ -238,6 +255,8 @@ case class MShop(
       dateCreated = DateTime.now()
     acc.field(DATE_CREATED_ESFN, dateCreated)
   }
+
+  def mainPersonId = personIds.lastOption
 
   override def save(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
     val fut = super.save
