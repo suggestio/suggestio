@@ -346,9 +346,8 @@ trait MMartAdOfferT extends Serializable {
 
 case class MMartAdProduct(
   vendor:   MMAdStringField,
-  model:    Option[MMAdStringField],
-  oldPrice: Option[MMAdFloatField],
-  price:    MMAdFloatField
+  price:    MMAdFloatField,
+  oldPrice: Option[MMAdFloatField]
 ) extends MMartAdOfferT {
 
   def isProduct = true
@@ -356,10 +355,6 @@ case class MMartAdProduct(
   def renderFields(acc: XContentBuilder) {
     acc.field(VENDOR_ESFN)
     vendor.render(acc)
-    if (model.isDefined) {
-      acc.field(MODEL_ESFN)
-      model.get.render(acc)
-    }
     if (oldPrice.isDefined) {
       acc.field(OLD_PRICE_ESFN)
       oldPrice.get.render(acc)

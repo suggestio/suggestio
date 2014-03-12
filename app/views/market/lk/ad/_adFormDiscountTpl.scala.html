@@ -7,105 +7,77 @@
 @import util.FormHelpers.myFields
 @import controllers.MarketAd.{DISCOUNT_TPL_ID_MIN, DISCOUNT_TPL_ID_MAX}
 
-<div class="tab-content"@if(!isShown) {style="display: none;"}>
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
-      <tr>
+@mkField(isBig: Boolean)(content: Html) = {
+  <table cellpadding="0" cellspacing="0" class="input-wrap@if(isBig){ big}">
+    <tr>@content</tr>
+  </table>
+}
 
-        @inputText(
-        af("ad.discount.text1.value"),
-        '_label -> "Текст сверху:",
-        'id -> "text1ValueInput")
+@* Подшаблон для выбора цвета фона discount-шаблона. *@
+@tplColorItem(color: String) = {
+  <div class="item">
+    <input type="checkbox" class="one-checkbox" data-name="mask-color" data-value="@color"/>
+    <div class="color" style="background: #@color;">&nbsp;</div>
+  </div>
+}
 
-        <td class="select-color">
-          @Messages("Color"):
-          <div class="color custom">&nbsp;
-            @defining("ad.discount.text1.color") { colorFN =>
-              <input type="hidden" name="@colorFN" value="@af(colorFN).value"/>
-            }
+<div class="tab-content"@if(!isShown) { style="display: none;"}>
+  @mkField(true) {
+    @inputText(
+      af("ad.text1.value"),
+      '_label -> "Текст сверху:",
+      'id     -> "text1ValueInput"
+    )
+    @_selectColorTpl("ad.text1.color", af)
+  }
+
+  @mkField(false) {
+    @inputText(
+      af("ad.discount.value"),
+      '_label -> "Скидка в процентах:",
+      'id     -> "discountValueInput"
+    )
+    @_selectColorTpl("ad.discount.color", af)
+  }
+
+  @mkField(true) {
+    @inputText(
+      af("ad.discount.value"),
+      '_label -> "Текст снизу:",
+      'id -> "text2ValueInput"
+    )
+    @_selectColorTpl("ad.discount.color", af)
+  }
+
+  <table cellpadding="0" cellspacing="0" class="mask-list input-wrap big">
+    <tr>
+      <td class="left">
+        <label>Шаблон:</label>
+      </td>
+
+      <td class="right">
+        @defining(DISCOUNT_TPL_ID_MIN to DISCOUNT_TPL_ID_MAX) { is => @is.map { i =>
+          <div class="item mask-@i">
+            <input type="checkbox" class="one-checkbox" data-name="mask"/>
           </div>
-        </td>
-      </tr>
-    </table>
+        }}
+      </td>
+    </tr>
+  </table>
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap">
-      <tr>
+  <table cellpadding="0" cellspacing="0" class="color-list input-wrap big">
+    <tr>
+      <td class="left">
+        <label>Цвет шаблона:</label>
+      </td>
 
-        @inputText(
-        af("ad.discount.discount.value"),
-        '_label -> "Скидка в процентах:",
-        'id -> "discountValueInput")
-
-        <td class="select-color">
-          @Messages("Color"):
-          <div class="color custom">&nbsp;
-            @defining("ad.discount.discount.color") { colorFN =>
-              <input type="hidden" name="@colorFN" value="@af(colorFN).value"/>
-            }
-          </div>
-        </td>
-      </tr>
-    </table>
-
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
-      <tr>
-
-        @inputText(
-        af("ad.discount.discount.value"),
-        '_label -> "Текст снизу:",
-        'id -> "text2ValueInput")
-
-        <td class="select-color">
-          @Messages("Color"):
-          <div class="color custom">&nbsp;
-            @defining("ad.discount.discount.color") { colorFN =>
-              <input type="hidden" name="@colorFN" value="@af(colorFN).value"/>
-            }
-          </div>
-        </td>
-      </tr>
-    </table>
-
-    <table cellpadding="0" cellspacing="0" class="mask-list input-wrap big">
-      <tr>
-        <td class="left">
-          <label>Шаблон:</label>
-        </td>
-
-        <td class="right">
-          @defining(DISCOUNT_TPL_ID_MIN to DISCOUNT_TPL_ID_MAX) { is => @is.map { i =>
-            <div class="item mask-@i">
-              <input type="checkbox" class="one-checkbox" data-name="mask"/>
-            </div>
-          }}
-        </td>
-      </tr>
-    </table>
-
-    <table cellpadding="0" cellspacing="0" class="color-list input-wrap big">
-      <tr>
-        <td class="left">
-          <label>Цвет шаблона:</label>
-        </td>
-
-        <td class="right">
-          <div class="item">
-            <input type="checkbox" class="one-checkbox" data-name="mask-color" data-value="ce2222"/>
-            <div class="color" style="background: #ce2222;">&nbsp;</div>
-          </div>
-          <div class="item">
-            <input type="checkbox" class="one-checkbox" data-name="mask-color" data-value="fee800"/>
-            <div class="color" style="background: #fee800;">&nbsp;</div>
-          </div>
-          <div class="item">
-            <input type="checkbox" class="one-checkbox" data-name="mask-color" data-value="e3a51a"/>
-            <div class="color" style="background: #e3a51a;">&nbsp;</div>
-          </div>
-          <div class="item">
-            <input type="checkbox" class="one-checkbox" data-name="mask-color" data-value="#4fce22"/>
-            <div class="color" style="background: #4fce22;">&nbsp;</div>
-          </div>
-        </td>
-      </tr>
-    </table>
+      <td class="right">
+        @tplColorItem("ce2222")
+        @tplColorItem("fee800")
+        @tplColorItem("e3a51a")
+        @tplColorItem("4fce22")
+      </td>
+    </tr>
+  </table>
 
 </div><!-- .tab-content end -->

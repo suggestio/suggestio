@@ -127,15 +127,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     "price"     -> mmaFloatPriceM,
     "oldPrice"  -> optional(mmaFloatPriceM)
   )
-  // applyF()
-  {(vendor, price, oldPriceOpt) =>
-    MMartAdProduct(vendor=vendor, model = None, oldPrice=oldPriceOpt, price=price)
-  }
-  // unapplyF()
-  {product =>
-    import product._
-    Some((vendor, price, oldPrice))
-  }
+  { MMartAdProduct.apply }
+  { MMartAdProduct.unapply }
 
   /** Кусок формы, ориентированный на оформление скидочной рекламы. */
   val adDiscountM = {
