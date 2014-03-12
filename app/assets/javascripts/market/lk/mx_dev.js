@@ -18,32 +18,6 @@ var cbca = {};
   });
 
 
-  $('.color.custom').each(
-  function() {
-
-    var $this = $(this),
-    $wrap = $this.closest('.item');
-
-    $this.ColorPicker({
-      color: '#000000',
-      onShow: function (colpkr) {
-        $(colpkr).fadeIn(500);
-        return false;
-      },
-      onHide: function (colpkr) {
-        $(colpkr).fadeOut(500);
-        return false;
-      },
-      onChange: function (hsb, hex, rgb) {
-        $wrap.find('.one-checkbox').attr('data-value', hex);
-      }
-    });
-
-  });
-
-
-
-
 });
 
 function CbcaSelect(containerId) {
