@@ -21,6 +21,7 @@ Colors=Цвета
 Manufacturer=Производитель
 Size=Размер
 Sizes=Размеры
+Price=Цена
 
 
 error.invalid=Неверное значение

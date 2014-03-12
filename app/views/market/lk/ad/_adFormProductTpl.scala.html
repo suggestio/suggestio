@@ -1,18 +1,65 @@
-@(af: Form[_])(implicit ctx: util.Context)
+@(af: Form[_], isShown:Boolean = false)(implicit ctx: util.Context)
 
 @* Product-часть формы: вендор, цены и их настройки. *@
 @import ctx._
 @import helper._
+@import util.FormHelpers.myFields
 
-@* Строка "производитель" *@
-@inputText(af("ad.product.vendor.value"), '_label -> "Производитель")
-@inputText(af("ad.product.vendor.color"), '_label -> "Цвет текста производителя")
+<div class="tab-content"@if(!isShown) {style="display: none;"}>
 
-@* Строка "Цена" *@
-@inputText(af("ad.product.price.value"), '_label -> "Цена")
-@inputText(af("ad.product.price.color"), '_label -> "Цвет текста цены")
+  @* Строка "производитель" и её цвет. *@
+  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    <tr>
+      <td class="left">
+        <label for="vendorValueInput">@Messages("Manufacturer"):</label>
+      </td>
+      <td class="right">
+        <div class="input clearfix">
+          <div class="input-shadow">
+            @inputText(af("ad.product.vendor.value"), 'id -> "vendorValueInput")
+          </div>
+        </div>
+      </td>
+      <td class="select-color">
+        @Messages("Color"):
+        <div class="color custom">&nbsp;
+          @defining("ad.product.vendor.color") { colorFN =>
+            <input type="hidden" name="@colorFN" value="@af(colorFN).value"/>
+          }
+        </div>
+      </td>
+    </tr>
+  </table>
 
-@* Старая цена *@
-@inputText(af("ad.product.oldPrice.value"), '_label -> "Старая цена")
-@inputText(af("ad.product.oldPrice.color"), '_label -> "Цвет старой цены")
+  @* Строка цены и её цвет. *@
+  <table cellpadding="0" cellspacing="0" class="input-wrap">
+    <tr>
+      <td class="left">
+        <label for="priceValueInput">@Messages("Price"):</label>
+      </td>
+
+      <td class="right">
+        <div class="input clearfix">
+          <div class="input-shadow">
+            @inputText(af("ad.product.price.value"), 'id -> "priceValueInput")
+          </div>
+        </div>
+      </td>
+
+      <td class="select-color">
+        @Messages("Color"):
+        <div class="color custom">&nbsp;
+          @defining("ad.product.price.color") { colorFN =>
+            <input type="hidden" name="@colorFN" value="@af(colorFN).value"/>
+          }
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  @* Старая цена *@
+  @inputText(af("ad.product.oldPrice.value"), '_label -> "Старая цена")
+  @inputText(af("ad.product.oldPrice.color"), '_label -> "Цвет старой цены")
+</div>
+
 

@@ -1,18 +1,137 @@
-@(af: Form[_])(implicit ctx: util.Context)
+@(af: Form[_], isShown:Boolean = false)(implicit ctx: util.Context)
 
 @* Discount-часть формы: текст и скидка. *@
 
 @import ctx._
 @import helper._
+@import util.FormHelpers.myFields
 
-@* Надпись над скидкой *@
-@inputText(af("ad.discount.text1.value"), '_label -> "Первая строка текста")
-@inputText(af("ad.discount.text1.color"), '_label -> "Цвет первой строки")
+<div class="tab-content"@if(!isShown) {style="display: none;"}>
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      <tr>
+        <td class="left">
+          <label for="text1ValueInput">Текст сверху:</label>
+        </td>
+        <td class="right">
+          <div class="input clearfix">
+            <div class="input-shadow">
+              @inputText(af("ad.discount.text1.value"), 'id -> "text1ValueInput")
+            </div>
+          </div>
+        </td>
+        <td class="select-color">
+          @Messages("Color"):
+          <div class="color custom">&nbsp;
+            @defining("ad.discount.text1.color") { colorFN =>
+              <input type="hidden" name="@colorFN" value="@af(colorFN).value"/>
+            }
+          </div>
+        </td>
+      </tr>
+    </table>
 
-@* Скидка *@
-@inputText(af("ad.discount.discount.value"), '_label -> "Скидка")
-@inputText(af("ad.discount.discount.color"), '_label -> "Цвет скидки")
+    <table cellpadding="0" cellspacing="0" class="input-wrap">
+      <tr>
+        <td class="left">
+          <label for="discountValueInput">Скидка в процентах:</label>
+        </td>
 
-@* Подпись под скидкой *@
-@inputText(af("ad.discount.discount.value"), '_label -> "Вторая строка текста")
-@inputText(af("ad.discount.discount.color"), '_label -> "Цвет второй строки")
+        <td class="right">
+          <div class="input clearfix">
+            <div class="input-shadow">
+              @inputText(af("ad.discount.discount.value"), 'id -> "discountValueInput")
+            </div>
+          </div>
+        </td>
+
+        <td class="select-color">
+          @Messages("Color"):
+          <div class="color custom">&nbsp;
+            @defining("ad.discount.discount.color") { colorFN =>
+              <input type="hidden" name="@colorFN" value="@af(colorFN).value"/>
+            }
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      <tr>
+        <td class="left">
+          <label for="text2ValueInput">Текст снизу:</label>
+        </td>
+        <td class="right">
+          <div class="input clearfix">
+            <div class="input-shadow">
+              @inputText(af("ad.discount.discount.value"), 'id -> "text2ValueInput")
+            </div>
+          </div>
+        </td>
+        <td class="select-color">
+          @Messages("Color"):
+          <div class="color custom">&nbsp;
+            @defining("ad.discount.discount.color") { colorFN =>
+              <input type="hidden" name="@colorFN" value="@af(colorFN).value"/>
+            }
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="mask-list input-wrap big">
+      <tr>
+        <td class="left">
+          <label>Шаблон:</label>
+        </td>
+
+        <td class="right">
+          <div class="item mask-1">
+            <input type="checkbox" />
+          </div>
+          <div class="item mask-2">
+            <input type="checkbox" />
+          </div>
+          <div class="item mask-3">
+            <input type="checkbox" />
+          </div>
+          <div class="item mask-4">
+            <input type="checkbox" />
+          </div>
+          <div class="item mask-5">
+            <input type="checkbox" />
+          </div>
+          <div class="item mask-6">
+            <input type="checkbox" />
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="color-list input-wrap big">
+      <tr>
+        <td class="left">
+          <label>Цвет шаблона:</label>
+        </td>
+
+        <td class="right">
+          <div class="item">
+            <input type="checkbox"/>
+            <div class="color" style="background: #ce2222;">&nbsp;</div>
+          </div>
+          <div class="item">
+            <input type="checkbox"/>
+            <div class="color" style="background: #fee800;">&nbsp;</div>
+          </div>
+          <div class="item">
+            <input type="checkbox"/>
+            <div class="color" style="background: #e3a51a;">&nbsp;</div>
+          </div>
+          <div class="item">
+            <input type="checkbox"/>
+            <div class="color" style="background: #4fce22;">&nbsp;</div>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+</div><!-- .tab-content end -->
