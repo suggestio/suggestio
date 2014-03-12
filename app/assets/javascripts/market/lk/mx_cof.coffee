@@ -6,6 +6,7 @@ $(document).on 'click', '.select-iphone .iphone-block', ->
   if(!$this.hasClass 'act')
     $('.iphone-block.act').removeClass 'act'
     $this.addClass 'act'
+    $('#textAlign-phone').val($this.attr('data-value'))
 
 $(document).on 'click', '.select-ipad .ipad-block', ->
     $this = $(this)
@@ -14,6 +15,7 @@ $(document).on 'click', '.select-ipad .ipad-block', ->
     if(!$this.hasClass 'act')
       $('.ipad-block.act[data-group = "'+dataGroup+'"]').removeClass 'act'
       $this.addClass 'act'
+      $('#'+dataGroup).val($this.attr('data-value'))
 
 $(document).on 'click', '.block .tab', ->
   $this = $(this)
