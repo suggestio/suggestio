@@ -18,6 +18,31 @@ var cbca = {};
   });
 
 
+  $('.color.custom').each(
+  function() {
+
+    var $this = $(this);
+
+    $this.ColorPicker({
+      color: '#000000',
+      onShow: function (colpkr) {
+        $(colpkr).fadeIn(500);
+        return false;
+      },
+      onHide: function (colpkr) {
+        $(colpkr).fadeOut(500);
+        return false;
+      },
+      onChange: function (hsb, hex, rgb) {
+          $this.find('input').val(hex);
+      }
+    });
+
+  });
+
+
+
+
 });
 
 function CbcaSelect(containerId) {
