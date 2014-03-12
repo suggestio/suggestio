@@ -246,6 +246,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
             // Неверный код активации или id магазина. Если None, то код скорее всего истёк. Либо кто-то брутфорсит.
             debug(s"inviteAcceptCommon($shopId, eaId=$eaId): Invalid activation code (eaId): code not found. Expired?")
             // TODO Надо проверить, есть ли у юзера права на магазин, и если есть, то значит юзер дважды засабмиттил форму, и надо его сразу отредиректить в его магазин.
+            // TODO Может и быть ситуация, что юзер всё ещё не залогинен, а второй сабмит уже тут. Нужно это тоже как-то обнаруживать. Например через временную сессионную куку из формы.
             warn(s"TODO I need to handle already activated requests!!!")
             NotFound(invite.inviteInvalidTpl("shop.activation.expired.or.invalid.code"))
         }
