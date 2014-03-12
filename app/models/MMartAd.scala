@@ -372,7 +372,7 @@ case class MMartAdProduct(
 case class MMartAdDiscount(
   text1: Option[MMAdStringField],
   discount: MMAdFloatField,
-  // TODO Добавить discount: id шаблона + цвет
+  template: DiscountTemplate,
   text2: Option[MMAdStringField]
 ) extends MMartAdOfferT {
 
@@ -385,6 +385,7 @@ case class MMartAdDiscount(
     }
     acc.field(DISCOUNT_ESFN)
     discount.render(acc)
+    template.render(acc)
     if (text2.isDefined) {
       acc.field(TEXT2_ESFN)
       text2.get.renderFields(acc)
@@ -392,11 +393,20 @@ case class MMartAdDiscount(
   }
 }
 
+case class DiscountTemplate(id: Int, color: String) {
+  def render(acc: XContentBuilder) {
+    acc.startObject(DISCOUNT_TPL_ESFN)
+      .field("id", id)
+      .field(COLOR_ESFN, color)
+    .startObject()
+  }
+}
+
 sealed trait MMAdValueField {
   def renderFields(acc: XContentBuilder)
   def font: MMAdFieldFont
   def render(acc: XContentBuilder) {
-    acc.startObject()
+    acc.startObject(DISCOUNT_ESFN)
       renderFields(acc)
       font.render(acc)
     acc.endObject()

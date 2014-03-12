@@ -12,6 +12,7 @@ import util.acl._
 import util.img.{ImgIdKey, ImgInfo, ImgFormUtil, OrigImgIdKey}
 import scala.concurrent.Future
 import play.api.mvc.Request
+import play.api.Play.current
 
 /**
  * Suggest.io
@@ -63,6 +64,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   import FormModes.FormMode
 
+  // Есть шаблоны для шаблона скидки. Они различаются по id. Тут min и max для допустимых id.
+  val DISCOUNT_TPL_ID_MIN = current.configuration.getInt("ad.discount.tpl.id.min") getOrElse 1
+  val DISCOUNT_TPL_ID_MAX = current.configuration.getInt("ad.discount.tpl.id.max") getOrElse 6
 
   /** Маппер для поля, содержащего код цвета. */
   // TODO Нужно добавить верификацию тут какую-то. Например через YmColors.
@@ -140,18 +144,21 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     val discountValueM = float
       .verifying("discount.too.low", { _ <= 0F })
       .verifying("discount.too.big", { _ >= 200F })
+    val discountTplM = mapping(
+      "id"    -> number(min = DISCOUNT_TPL_ID_MIN, max = DISCOUNT_TPL_ID_MAX),
+      "color" -> colorM
+    )
+    { DiscountTemplate.apply }
+    { DiscountTemplate.unapply }
+    // Собираем итоговый маппинг для MMartAdDiscount.
     mapping(
       "text1"     -> optional(mmaStringFieldM(discountTextM)),
       "discount"  -> mmaFloatFieldM(discountValueM),
+      "template"  -> discountTplM,
       "text2"     -> optional(mmaStringFieldM(discountTextM))
     )
-    {(text1, discount, text2) =>
-      MMartAdDiscount(text1=text1, discount=discount, text2=text2)
-    }
-    {mmadd =>
-      import mmadd._
-      Some((text1, discount, text2))
-    }
+    { MMartAdDiscount.apply }
+    { MMartAdDiscount.unapply }
   }
 
   // Дублирующиеся куски маппина выносим за пределы метода.
