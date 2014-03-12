@@ -85,24 +85,13 @@
         </td>
 
         <td class="right">
-          <div class="item mask-1">
-            <input type="checkbox" />
-          </div>
-          <div class="item mask-2">
-            <input type="checkbox" />
-          </div>
-          <div class="item mask-3">
-            <input type="checkbox" />
-          </div>
-          <div class="item mask-4">
-            <input type="checkbox" />
-          </div>
-          <div class="item mask-5">
-            <input type="checkbox" />
-          </div>
-          <div class="item mask-6">
-            <input type="checkbox" />
-          </div>
+          @defining(1 to 6) { is =>
+            @is.map { i =>
+              <div class="item mask-@i">
+                <input type="checkbox" value="mask-@i"/>
+              </div>
+            }
+          }
         </td>
       </tr>
     </table>
