@@ -10,6 +10,422 @@
 
   @af.globalError
 
+
+  <div class="block">
+    <div class="border-line"></div>
+    <div class="hat">
+      <span class="title">Брендированая шапка</span>
+      <a class="toggle open" href="#" data-content="brand-hat">Свернуть</a>
+    </div>
+    <div class="border-line"></div>
+    <div class="slide-content" id="brand-hat">
+      <div class="subhat">
+        <span class="title">Редактирование логотипа</span>
+        <a class="toggle open" href="#" data-content="brand-hat-logo">Свернуть</a>
+      </div>
+      <div class="border-line"></div>
+
+      <div class="slide-content" id="brand-hat-logo">
+        <table cellpadding="0" cellspacing="0" class="input-wrap big img-with-preview">
+          <tr>
+            <td class="left">
+              <label>Логотип:</label>
+            </td>
+            <td class="right">
+              <div class="select-file-wrap">
+                <div class="preview">
+                  <img src="" width="59" height="59"/>
+                </div>
+                <div class="selectbox">
+                  <div class="select-file">
+                    <input type="file" value="Выбрать файл для загрузки" />
+                    <div class="bg">Выбрать файл для загрузки</div>
+                  </div>
+                  <div class="descr">
+                    Файл должен быть на прозрачном
+                    фоне и иметь формат .png
+                  </div>
+                </div>
+                <a href="#" class="close">&nbsp;</a>
+              </div>
+            </td>
+          </tr>
+        </table>
+        <div class="border-line"></div>
+      </div>
+
+      <table cellpadding="0" cellspacing="0" class="color-list input-wrap big">
+        <tr>
+          <td class="left">
+            <label>Цвет плашки:</label>
+          </td>
+
+          <td class="right">
+            <div class="item">
+              <input type="checkbox" data-name="panelColor"/>
+              <div class="color" style="background: black;">&nbsp;</div>
+            </div>
+            <div class="item">
+              <input type="checkbox" data-name="panelColor"/>
+              <div class="color" style="background: white;">&nbsp;</div>
+            </div>
+            <div class="item">
+              <input type="checkbox" data-name="panelColor"/>
+              <div class="color" style="background: gray;">&nbsp;</div>
+            </div>
+            <div class="item">
+              <input type="checkbox" data-name="panelColor"/>
+              <div class="color custom">&nbsp;
+                <input type="hidden" value="" />
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="border-line"></div>
+    <div class="hat">
+      <span class="title">Рекламная фотография</span>
+      <a class="toggle open" href="#" data-content="ad-photo">Свернуть</a>
+    </div>
+    <div class="border-line"></div>
+    <div class="slide-content" id="ad-photo">
+      <table cellpadding="0" cellspacing="0" class="input-wrap big img-with-preview">
+        <tr>
+          <td class="left">
+            <label>Фотография товара:</label>
+          </td>
+          <td class="right">
+            <div class="select-file-wrap">
+              <div class="preview">
+                <img src="" width="59" height="59"/>
+              </div>
+              <div class="selectbox">
+                <div class="select-file">
+                  <input type="file" value="Выбрать файл для загрузки" data-action="#" />
+                  <div class="bg">Выбрать файл для загрузки</div>
+                </div>
+                <div class="descr">
+                  Файл должен быть на прозрачном
+                  фоне и иметь формат .png
+                </div>
+              </div>
+              <a href="#" class="close">&nbsp;</a>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="block">
+  <div class="border-line"></div>
+  <div class="hat">
+    <span class="title">Шаблоны</span>
+    <a class="toggle open" href="#" data-content="templates">Свернуть</a>
+  </div>
+  <div class="border-line"></div>
+
+  <div class="tabs">
+    <div class="tab act">
+      ТЕКСТОВОЙ
+    </div>
+    <div class="tab">
+      СКИДОЧНЫЙ
+    </div>
+  </div>
+  <div class="blue-line"></div>
+
+  <div class="slide-content" id="templates">
+  <div class="tab-content">
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      <tr>
+        <td class="left">
+          <label for="#">Производитель:</label>
+        </td>
+        <td class="right">
+          <div class="input clearfix">
+            <div class="input-shadow">
+              <input type="text" value="" >
+            </div>
+          </div>
+        </td>
+        <td class="select-color">
+          Цвет:
+          <div class="color custom">&nbsp;
+            <input type="hidden" value="" />
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap">
+      <tr>
+        <td class="left">
+          <label for="#">Цена:</label>
+        </td>
+
+        <td class="right">
+          <div class="input clearfix">
+            <div class="input-shadow">
+              <input type="text" value="" >
+            </div>
+          </div>
+        </td>
+
+        <td class="select-color">
+          Цвет:
+          <div class="color custom">&nbsp;
+            <input type="hidden" value="" />
+          </div>
+        </td>
+      </tr>
+    </table>
+
+
+  </div><!-- .tab-content end -->
+
+
+  <div class="tab-content" style="display: none;">
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      <tr>
+        <td class="left">
+          <label for="#">Текст сверху:</label>
+        </td>
+        <td class="right">
+          <div class="input clearfix">
+            <div class="input-shadow">
+              <input type="text" value="" >
+            </div>
+          </div>
+        </td>
+        <td class="select-color">
+          Цвет:
+          <div class="color custom">&nbsp;
+            <input type="hidden" value="" />
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap">
+      <tr>
+        <td class="left">
+          <label for="#">Скидка в процентах:</label>
+        </td>
+
+        <td class="right">
+          <div class="input clearfix">
+            <div class="input-shadow">
+              <input type="text" value="" >
+            </div>
+          </div>
+        </td>
+
+        <td class="select-color">
+          Цвет:
+          <div class="color custom">&nbsp;
+            <input type="hidden" value="" />
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      <tr>
+        <td class="left">
+          <label for="#">Текст снизу:</label>
+        </td>
+        <td class="right">
+          <div class="input clearfix">
+            <div class="input-shadow">
+              <input type="text" value="" >
+            </div>
+          </div>
+        </td>
+        <td class="select-color">
+          Цвет:
+          <div class="color custom">&nbsp;
+            <input type="hidden" value="" />
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="mask-list input-wrap big">
+      <tr>
+        <td class="left">
+          <label>Шаблон:</label>
+        </td>
+
+        <td class="right">
+          <div class="item mask-1">
+            <input type="checkbox" />
+          </div>
+          <div class="item mask-2">
+            <input type="checkbox" />
+          </div>
+          <div class="item mask-3">
+            <input type="checkbox" />
+          </div>
+          <div class="item mask-4">
+            <input type="checkbox" />
+          </div>
+          <div class="item mask-5">
+            <input type="checkbox" />
+          </div>
+          <div class="item mask-6">
+            <input type="checkbox" />
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="color-list input-wrap big">
+      <tr>
+        <td class="left">
+          <label>Цвет шаблона:</label>
+        </td>
+
+        <td class="right">
+          <div class="item">
+            <input type="checkbox"/>
+            <div class="color" style="background: #ce2222;">&nbsp;</div>
+          </div>
+          <div class="item">
+            <input type="checkbox"/>
+            <div class="color" style="background: #fee800;">&nbsp;</div>
+          </div>
+          <div class="item">
+            <input type="checkbox"/>
+            <div class="color" style="background: #e3a51a;">&nbsp;</div>
+          </div>
+          <div class="item">
+            <input type="checkbox"/>
+            <div class="color" style="background: #4fce22;">&nbsp;</div>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+  </div><!-- .tab-content end -->
+
+  <div class="border-line"></div>
+  <div class="subhat">
+    <span class="title">Контактная информация</span>
+    <a class="toggle open" href="#" data-content="contact-info">Свернуть</a>
+  </div>
+  <div class="border-line"></div>
+
+  <div class="slide-content" id="contact-info">
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      <tr>
+        <td class="left">
+          <label for="#">Название вашего бутика:</label>
+        </td>
+        <td class="right">
+          <div class="input clearfix">
+            <div class="input-shadow">
+              <input type="text" value="" >
+            </div>
+          </div>
+        </td>
+        <td class="select-color">
+          Цвет:
+          <div class="color custom">&nbsp;
+            <input type="hidden" value="" />
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap">
+      <tr>
+        <td class="left">
+          <label for="#">Номер этажа:</label>
+        </td>
+
+        <td class="right">
+          <div class="input clearfix">
+            <div class="input-shadow">
+              <input type="text" value="" >
+            </div>
+          </div>
+        </td>
+
+        <td class="select-color">
+          Цвет:
+          <div class="color custom">&nbsp;
+            <input type="hidden" value="" />
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap">
+      <tr>
+        <td class="left">
+          <label for="#">Номер секции:</label>
+        </td>
+
+        <td class="right">
+          <div class="input clearfix">
+            <div class="input-shadow">
+              <input type="text" value="" >
+            </div>
+          </div>
+        </td>
+
+        <td class="select-color">
+          Цвет:
+          <div class="color custom">&nbsp;
+            <input type="hidden" value="" />
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <div class="border-line"></div>
+
+  </div>
+
+  <table cellpadding="0" cellspacing="0" class="input-wrap">
+    <tr>
+      <td class="left">
+        <label for="#">Положение текста:</label>
+      </td>
+      <td class="select-iphone">
+        <span>iPhone</span>
+        <div class="iphone-block act">&nbsp;</div>
+        <div class="iphone-block">&nbsp;</div>
+      </td>
+      <td class="select-ipad">
+        <span>iPad</span>
+        <div class="ipad-wrap">
+          <div class="ipad-block act" data-group="info">&nbsp;</div>
+          <div class="ipad-block" data-group="info">&nbsp;</div>
+          <span>— информация</span>
+          <div class="ipad-block" data-group="contacts">&nbsp;</div>
+          <div class="ipad-block act" data-group="contacts">&nbsp;</div>
+          <span>— контакты</span>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="border-line"></div>
+
+
+  </div>
+  </div>
+
+
+
+
   @* Input для id выбранной категории. *@
   <input data-curr-cat="cat" type="hidden" name="catId" value="@af("catId").value" />
 
@@ -37,7 +453,11 @@
   @inputText(af("textAlign.phone"), '_label -> "iphone")
   @inputText(af("textAlign.tablet"), '_label -> "ipad")
 
-  <input type="submit" value="@btnText"/>
+  <div class="submit-wrap">
+    <input class="green-but-small" type="submit" value="@btnText"/>
+  </div>
+
+
 }
 
 @* Картинки - это фактически отдельная форма, и её надо в отдельный файл. *@
