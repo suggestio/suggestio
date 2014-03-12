@@ -10,16 +10,12 @@
   @* Строка "производитель" и её цвет. *@
   <table cellpadding="0" cellspacing="0" class="input-wrap big">
     <tr>
-      <td class="left">
-        <label for="vendorValueInput">@Messages("Manufacturer"):</label>
-      </td>
-      <td class="right">
-        <div class="input clearfix">
-          <div class="input-shadow">
-            @inputText(af("ad.product.vendor.value"), 'id -> "vendorValueInput")
-          </div>
-        </div>
-      </td>
+
+      @inputText(
+      af("ad.product.vendor.value"),
+      '_label -> "Производитель:",
+      'id -> "vendorValueInput")
+
       <td class="select-color">
         @Messages("Color"):
         <div class="color custom">&nbsp;
@@ -32,19 +28,12 @@
   </table>
 
   @* Строка цены и её цвет. *@
-  <table cellpadding="0" cellspacing="0" class="input-wrap">
-    <tr>
-      <td class="left">
-        <label for="priceValueInput">@Messages("Price"):</label>
-      </td>
+  <table cellpadding="0" cellspacing="0" class="input-wrap" style="margin-bottom: 0;">
 
-      <td class="right">
-        <div class="input clearfix">
-          <div class="input-shadow">
-            @inputText(af("ad.product.price.value"), 'id -> "priceValueInput")
-          </div>
-        </div>
-      </td>
+    @inputText(
+    af("ad.product.price.value"),
+    '_label -> "Цена:",
+    'id -> "priceValueInput")
 
       <td class="select-color">
         @Messages("Color"):
@@ -57,9 +46,32 @@
     </tr>
   </table>
 
-  @* Старая цена *@
-  @inputText(af("ad.product.oldPrice.value"), '_label -> "Старая цена")
-  @inputText(af("ad.product.oldPrice.color"), '_label -> "Цвет старой цены")
+  <table cellpadding="0" cellspacing="0" class="input-wrap" style="margin-top: 10px;">
+
+    <td class="left">&nbsp;</td>
+    <td class="right">
+      <input type="checkbox" id="old-price-status" />
+      <span class="gray">Перечеркнуть</span>
+    </td>
+  </table>
+
+  <table cellpadding="0" cellspacing="0" class="input-wrap old-price">
+
+    @inputText(
+    af("ad.product.oldPrice.value"),
+    '_label -> "Старая цена")
+
+    <td class="select-color">
+      @Messages("Color"):
+      <div class="color custom">&nbsp;
+        @defining("ad.product.oldPrice.color") { colorFN =>
+        <input type="hidden" name="@colorFN" value="@af(colorFN).value"/>
+        }
+      </div>
+    </td>
+    </tr>
+  </table>
+
 </div>
 
 

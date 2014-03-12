@@ -1,3 +1,6 @@
+$(document).ready ->
+  document.getElementById('old-price-status').checked = false
+
 $(document).on 'click', '.select-iphone .iphone-block', ->
   $this = $(this)
   if(!$this.hasClass 'act')
@@ -22,3 +25,17 @@ $(document).on 'click', '.block .tab', ->
     $this.addClass 'act'
     $wrap.find('.tab-content').hide()
     $wrap.find('.tab-content').eq(index).show()
+    $('#ad-mode').val($this.attr('data-mode'))
+
+$(document).on 'click', '.create-ad .one-checkbox', ->
+  $this = $(this)
+  dataName = $this.attr('data-name')
+  dataFor = $this.attr('data-for')
+  value = $this.attr('data-value')
+
+  $('.create-ad .one-checkbox[data-name = "'+dataName+'"]').filter(':checked').not(this).removeAttr('checked')
+  this.checked = 'checked'
+  $('#'+dataFor).val(value)
+
+$(document).on 'click', '#old-price-status', ->
+  $('.create-ad .old-price').toggle()

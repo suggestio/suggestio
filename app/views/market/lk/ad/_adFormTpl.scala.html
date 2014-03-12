@@ -25,7 +25,7 @@
       </div>
       <div class="border-line"></div>
 
-      <div class="slide-content" id="brand-hat-logo">
+      <div class="slide-content" id="brand-hat-logo" style="display: none;">
         <table cellpadding="0" cellspacing="0" class="input-wrap big img-with-preview">
           <tr>
             <td class="left">
@@ -62,21 +62,22 @@
 
           <td class="right">
             <div class="item">
-              <input type="checkbox" data-name="panelColor"/>
+              <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="000000"/>
               <div class="color" style="background: black;">&nbsp;</div>
             </div>
             <div class="item">
-              <input type="checkbox" data-name="panelColor"/>
+              <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="ffffff"/>
               <div class="color" style="background: white;">&nbsp;</div>
             </div>
             <div class="item">
-              <input type="checkbox" data-name="panelColor"/>
+              <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="959595"/>
               <div class="color" style="background: gray;">&nbsp;</div>
             </div>
             <div class="item">
-              <input type="checkbox" data-name="panelColor"/>
+              <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="000000"/>
               <div class="color custom">&nbsp;
-                <input type="hidden" value="" />
+                @* Input для цвета верхней плашки. *@
+                <input id="panelColor" type="hidden" name="panelColor" value="@af("panel.color").value.getOrElse("#000000")"/>
               </div>
             </div>
           </td>
@@ -102,7 +103,11 @@
           <td class="right">
             <div class="select-file-wrap">
               <div class="preview">
-                <img src="" width="59" height="59"/>
+                @* Данные по картинке загруженной. *@
+                @defining(af("image_key").value) { imgIdOpt =>
+                <input type="hidden" name="image_key" value="@imgIdOpt"/>
+                <img class="image-preview" width="59" height="59" src="@if(imgIdOpt.isDefined) {@routes.Img.getImg(imgIdOpt.get)}" style="@if(imgIdOpt.isEmpty) {display: none}"/>
+                }
               </div>
               <div class="selectbox">
                 <div class="select-file">
@@ -132,10 +137,10 @@
     <div class="border-line"></div>
 
     <div class="tabs">
-      <div class="tab act">
+      <div class="tab act" data-mode="p">
         ТЕКСТОВОЙ
       </div>
-      <div class="tab">
+      <div class="tab" data-mode="d">
         СКИДОЧНЫЙ
       </div>
     </div>
@@ -146,51 +151,49 @@
       @_adFormProductTpl(af, isShown = dfltIsProduct)
       @_adFormDiscountTpl(af, isShown = !dfltIsProduct)
 
-      <table cellpadding="0" cellspacing="0" class="input-wrap">
-        <tr>
-          <td class="left">
-            <label for="#">Положение текста:</label>
-          </td>
-          <td class="select-iphone">
-            <span>iPhone</span>
-            <div class="iphone-block act">&nbsp;</div>
-            <div class="iphone-block">&nbsp;</div>
-          </td>
-          <td class="select-ipad">
-            <span>iPad</span>
-            <div class="ipad-wrap">
-              <div class="ipad-block act" data-group="info">&nbsp;</div>
-              <div class="ipad-block" data-group="info">&nbsp;</div>
-              <span>— информация</span>
-              <div class="ipad-block" data-group="contacts">&nbsp;</div>
-              <div class="ipad-block act" data-group="contacts">&nbsp;</div>
-              <span>— контакты</span>
-            </div>
-          </td>
-        </tr>
-      </table>
+
 
       <div class="border-line"></div>
 
-
     </div>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap">
+      <tr>
+        <td class="left">
+          <label for="#">Положение текста:</label>
+        </td>
+        <td class="select-iphone">
+          <span>iPhone</span>
+          <div class="iphone-block act">&nbsp;</div>
+          <div class="iphone-block">&nbsp;</div>
+        </td>
+        <td class="select-ipad">
+          <span>iPad</span>
+          <div class="ipad-wrap">
+            <div class="ipad-block act" data-group="info">&nbsp;</div>
+            <div class="ipad-block" data-group="info">&nbsp;</div>
+            <span>— информация</span>
+            <div class="ipad-block" data-group="contacts">&nbsp;</div>
+            <div class="ipad-block act" data-group="contacts">&nbsp;</div>
+            <span>— контакты</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <div class="border-line"></div>
+
   </div>
 
 
   @* Input для id выбранной категории. *@
   <input data-curr-cat="cat" type="hidden" name="catId" value="@af("catId").value" />
 
-  @* Input для цвета верхней плашки. *@
-  <input type="hidden" name="panelColor" value="@af("panel.color").value.getOrElse("#000000")"/>
 
   @* Режим формы. Должен переключаться при переключении вкладки. *@
-  <input type="hidden" name="ad.mode" value="@if(dfltIsProduct) {@PRODUCT} else {@DISCOUNT}"/>
+  <input id="ad-mode" type="hidden" name="ad.mode" value="@if(dfltIsProduct) {@PRODUCT} else {@DISCOUNT}"/>
 
-  @* Данные по картинке загруженной. *@
-  @defining(af("image_key").value) { imgIdOpt =>
-    <input type="hidden" name="image_key" value="@imgIdOpt"/>
-    <img class="image-preview" width="200" src="@if(imgIdOpt.isDefined) {@routes.Img.getImg(imgIdOpt.get)}" style="@if(imgIdOpt.isEmpty) {display: none}"/>
-  }
+
 
   @* Положение текста на разных устройствах. Как оно задаётся - хз, пока в виде произвольной строки. *@
   @inputText(af("textAlign.phone"), '_label -> "iphone")
