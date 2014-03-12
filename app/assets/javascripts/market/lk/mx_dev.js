@@ -26,6 +26,9 @@ var cbca = {};
 
     $this.ColorPicker({
       color: '#000000',
+      onBeforeShow: function() {
+        $wrap.find('.one-checkbox').trigger('click');
+      },
       onShow: function (colpkr) {
         $(colpkr).fadeIn(500);
         return false;
@@ -35,7 +38,7 @@ var cbca = {};
         return false;
       },
       onChange: function (hsb, hex, rgb) {
-        $wrap.find('.one-checkbox').attr('data-value', hex);
+        $wrap.find('.one-checkbox').attr('data-value', hex).trigger('click');
       }
     });
 

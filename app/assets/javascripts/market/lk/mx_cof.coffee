@@ -41,3 +41,14 @@ $(document).on 'click', '.create-ad .one-checkbox', ->
 
 $(document).on 'click', '#old-price-status', ->
   $('.create-ad .old-price').toggle()
+
+$(document).on 'click', '.create-ad .color-list .color', ->
+  $this = $(this)
+  $wrap = $this.closest('.item')
+
+  $wrap.find('.one-checkbox').trigger('click')
+
+$(document).on 'click', '.create-ad .mask-list .item', ->
+  $this = $(this)
+
+  $this.find('.one-checkbox').trigger('click')
