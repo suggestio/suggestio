@@ -160,21 +160,21 @@
     <table cellpadding="0" cellspacing="0" class="input-wrap">
       <tr>
         <td class="left">
-          <label for="#">Положение текста:</label>
+          <label>Положение текста:</label>
         </td>
         <td class="select-iphone">
           <span>iPhone</span>
-          <div class="iphone-block act">&nbsp;</div>
-          <div class="iphone-block">&nbsp;</div>
+          <div class="iphone-block act" data-value="left">&nbsp;</div>
+          <div class="iphone-block" data-value="right">&nbsp;</div>
         </td>
         <td class="select-ipad">
           <span>iPad</span>
           <div class="ipad-wrap">
-            <div class="ipad-block act" data-group="info">&nbsp;</div>
-            <div class="ipad-block" data-group="info">&nbsp;</div>
+            <div class="ipad-block act" data-group="textAlign-tablet-top" data-value="left">&nbsp;</div>
+            <div class="ipad-block" data-group="textAlign-tablet-top" data-value="right">&nbsp;</div>
             <span>— информация</span>
-            <div class="ipad-block" data-group="contacts">&nbsp;</div>
-            <div class="ipad-block act" data-group="contacts">&nbsp;</div>
+            <div class="ipad-block" data-group="textAlign-tablet-bottom" data-value="left">&nbsp;</div>
+            <div class="ipad-block act" data-group="textAlign-tablet-bottom" data-value="right">&nbsp;</div>
             <span>— контакты</span>
           </div>
         </td>
@@ -196,8 +196,10 @@
 
 
   @* Положение текста на разных устройствах. Как оно задаётся - хз, пока в виде произвольной строки. *@
-  @inputText(af("textAlign.phone"), '_label -> "iphone")
-  @inputText(af("textAlign.tablet"), '_label -> "ipad")
+  <input id="textAlign-phone" type="hidden" value="left" name="textAlign.phone">
+  <input id="textAlign-tablet-top" type="hidden" value="left" name="textAlign.tablet.top">
+  <input id="textAlign-tablet-bottom" type="hidden" value="right" name="textAlign.tablet.bottom">
+
 
   <div class="submit-wrap">
     <input class="green-but-small" type="submit" value="@btnText"/>
