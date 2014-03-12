@@ -21,7 +21,8 @@ var cbca = {};
   $('.color.custom').each(
   function() {
 
-    var $this = $(this);
+    var $this = $(this),
+    $wrap = $this.closest('.item');
 
     $this.ColorPicker({
       color: '#000000',
@@ -34,7 +35,7 @@ var cbca = {};
         return false;
       },
       onChange: function (hsb, hex, rgb) {
-          $this.find('input').val(hex);
+        $wrap.find('.one-checkbox').attr('data-value', hex);
       }
     });
 

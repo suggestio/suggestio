@@ -9,16 +9,12 @@
 <div class="tab-content"@if(!isShown) {style="display: none;"}>
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
       <tr>
-        <td class="left">
-          <label for="text1ValueInput">Текст сверху:</label>
-        </td>
-        <td class="right">
-          <div class="input clearfix">
-            <div class="input-shadow">
-              @inputText(af("ad.discount.text1.value"), 'id -> "text1ValueInput")
-            </div>
-          </div>
-        </td>
+
+        @inputText(
+        af("ad.discount.text1.value"),
+        '_label -> "Текст сверху:",
+        'id -> "text1ValueInput")
+
         <td class="select-color">
           @Messages("Color"):
           <div class="color custom">&nbsp;
@@ -32,17 +28,11 @@
 
     <table cellpadding="0" cellspacing="0" class="input-wrap">
       <tr>
-        <td class="left">
-          <label for="discountValueInput">Скидка в процентах:</label>
-        </td>
 
-        <td class="right">
-          <div class="input clearfix">
-            <div class="input-shadow">
-              @inputText(af("ad.discount.discount.value"), 'id -> "discountValueInput")
-            </div>
-          </div>
-        </td>
+        @inputText(
+        af("ad.discount.discount.value"),
+        '_label -> "Скидка в процентах:",
+        'id -> "discountValueInput")
 
         <td class="select-color">
           @Messages("Color"):
@@ -57,16 +47,12 @@
 
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
       <tr>
-        <td class="left">
-          <label for="text2ValueInput">Текст снизу:</label>
-        </td>
-        <td class="right">
-          <div class="input clearfix">
-            <div class="input-shadow">
-              @inputText(af("ad.discount.discount.value"), 'id -> "text2ValueInput")
-            </div>
-          </div>
-        </td>
+
+        @inputText(
+        af("ad.discount.discount.value"),
+        '_label -> "Текст снизу:",
+        'id -> "text2ValueInput")
+
         <td class="select-color">
           @Messages("Color"):
           <div class="color custom">&nbsp;
@@ -86,22 +72,22 @@
 
         <td class="right">
           <div class="item mask-1">
-            <input type="checkbox" />
+            <input type="checkbox" class="one-checkbox" data-name="mask"/>
           </div>
           <div class="item mask-2">
-            <input type="checkbox" />
+            <input type="checkbox" class="one-checkbox" data-name="mask"/>
           </div>
           <div class="item mask-3">
-            <input type="checkbox" />
+            <input type="checkbox" class="one-checkbox" data-name="mask"/>
           </div>
           <div class="item mask-4">
-            <input type="checkbox" />
+            <input type="checkbox" class="one-checkbox" data-name="mask"/>
           </div>
           <div class="item mask-5">
-            <input type="checkbox" />
+            <input type="checkbox" class="one-checkbox" data-name="mask"/>
           </div>
           <div class="item mask-6">
-            <input type="checkbox" />
+            <input type="checkbox" class="one-checkbox" data-name="mask"/>
           </div>
         </td>
       </tr>
@@ -115,19 +101,19 @@
 
         <td class="right">
           <div class="item">
-            <input type="checkbox"/>
+            <input type="checkbox" class="one-checkbox" data-name="mask-color" data-value="ce2222"/>
             <div class="color" style="background: #ce2222;">&nbsp;</div>
           </div>
           <div class="item">
-            <input type="checkbox"/>
+            <input type="checkbox" class="one-checkbox" data-name="mask-color" data-value="fee800"/>
             <div class="color" style="background: #fee800;">&nbsp;</div>
           </div>
           <div class="item">
-            <input type="checkbox"/>
+            <input type="checkbox" class="one-checkbox" data-name="mask-color" data-value="e3a51a"/>
             <div class="color" style="background: #e3a51a;">&nbsp;</div>
           </div>
           <div class="item">
-            <input type="checkbox"/>
+            <input type="checkbox" class="one-checkbox" data-name="mask-color" data-value="#4fce22"/>
             <div class="color" style="background: #4fce22;">&nbsp;</div>
           </div>
         </td>
