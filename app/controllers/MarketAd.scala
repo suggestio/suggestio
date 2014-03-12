@@ -200,7 +200,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
    * Страница, занимающаяся создание рекламной карточки.
    * @param shopId id магазина.
    */
-  def createShopAd(shopId: String) = IsShopAdmFull(shopId).async { implicit request =>
+  def createShopAd(shopId: String) = IsShopAdm(shopId).async { implicit request =>
     MMartCategory.findTopForOwner(shopId) map { mmcats1 =>
       Ok(createAdTpl(request.mshop, mmcats1, adFormM))
     }
@@ -209,7 +209,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   /** Сабмит формы добавления рекламной карточки товара/скидки.
     * @param shopId id магазина.
     */
-  def createShopAdSubmit(shopId: ShopId_t) = IsShopAdmFull(shopId).async { implicit request =>
+  def createShopAdSubmit(shopId: ShopId_t) = IsShopAdm(shopId).async { implicit request =>
     val catOwnerId = request.mshop.martId getOrElse shopId
     val formBinded = adFormM.bindFromRequest()
     formBinded.fold(

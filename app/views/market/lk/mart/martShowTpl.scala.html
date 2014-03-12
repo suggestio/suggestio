@@ -13,6 +13,9 @@
       <div class="title">
         <h1>@mmart.name</h1>
         <a class="edit" href="@martEditForm(mmart.id.get)">Редактировать</a>
+        @if(ctx.isSuperuser) {
+          <a href="@routes.SysMarket.martShow(mmart.id.get)" style="color: red">/sys/mart</a>
+        }
         <div class="descr">
           @mmart.town, @mmart.address
         </div>

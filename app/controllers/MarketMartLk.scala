@@ -73,7 +73,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
   )
   // applyF()
   {(name, email, martFloor, martSection) =>
-    email -> MShop(name=name, martFloor=Some(martFloor), martSection=Some(martSection), companyId=null)
+    email -> MShop(name=name, martFloor=Some(martFloor), martSection=Some(martSection), companyId=null, personIds=Nil)
   }
   // unapplyF()
   {case (_email, mshop) =>
@@ -158,13 +158,15 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
         mcFut.flatMap { companyId =>
           mshop.companyId = companyId
           mshop.save.flatMap { shopId =>
+            mshop.id = Some(shopId)
             val eAct = EmailActivation(email = _email, key = shopId)
             eAct.save.map { eaId =>
-            // Пора отправлять письмо юзеру с ссылкой для активации.
+              eAct.id = Some(eaId)
+              // Пора отправлять письмо юзеру с ссылкой для активации.
               trace(s"inviteShopFormSubmit($martId): shopId=$shopId companyId=$companyId eAct=$eAct :: Sending message to ${_email} ...")
               val mail = use[MailerPlugin].email
               mail.setSubject("Suggest.io | Подтверждение регистрации")
-              mail.setFrom("market@suggest.io")
+              mail.setFrom("no-reply@suggest.io")
               mail.setRecipient(_email)
               val bodyHtml = views.html.market.lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct).toString().trim
               val bodyText = views.txt.market.lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct).toString().trim

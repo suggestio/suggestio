@@ -13,29 +13,10 @@ import util.SiowebEsUtil.client
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 20.02.14 18:38
  * Description: Проверка прав на управление магазином, находящимся внутри ТЦ.
+ * Следует различать случаи, когда на магазин влияет владелец ТЦ, а когда - владелец самого магазина.
  */
-object IsMartShopAdmin extends PlayMacroLogsImpl {
+object IsShopAdm extends PlayMacroLogsImpl {
   import LOGGER._
-
-  /**
-   * Асинхронная проверка прав на управление магазином.
-   * @param shopId Магазин.
-   * @param pwOpt Юзер.
-   * @return Фьючерс, т.к. модели магазинов будут перегнаны на асинхронных ES.
-   */
-  def isShopAdmin(shopId: ShopId_t, pwOpt: PwOpt_t): Future[Boolean] = {
-    if (PersonWrapper isSuperuser pwOpt) {
-      Future successful true
-    } else {
-      if (pwOpt.isDefined) {
-        // Нужно узнать, существует ли магазин и TODO есть ли права у юзера на магазин
-        warn("Check ACL for shop: NOT YET IMPLEMENTED. Allowing " + shopId + " for " + pwOpt)
-        MShop.isExist(shopId)
-      } else {
-        Future successful false
-      }
-    }
-  }
 
   /**
    * Вернуть магазин, если с правами всё ок. Иначе None.
@@ -49,8 +30,15 @@ object IsMartShopAdmin extends PlayMacroLogsImpl {
     } else {
       if (pwOpt.isDefined) {
         // Нужно узнать, существует ли магазин и TODO есть ли права у юзера на магазин
-        warn("Check ACL for shop: NOT YET IMPLEMENTED. Allowing " + shopId + " for " + pwOpt)
-        MShop getById shopId
+        MShop.getById(shopId) map { mshopOpt =>
+          mshopOpt filter { mshop =>
+            val result = mshop.personIds contains pwOpt.get.personId
+            if (!result) {
+              warn(s"isShopAdminFull($shopId, pwOpt=$pwOpt): Refused to admin unOwned shop=$shopId for user=$pwOpt")
+            }
+            result
+          }
+        }
       } else {
         Future successful None
       }
@@ -59,24 +47,10 @@ object IsMartShopAdmin extends PlayMacroLogsImpl {
 
 }
 
-import IsMartShopAdmin._
-
-case class IsMartShopAdmin(shopId: ShopId_t) extends ActionBuilder[AbstractRequestForShopAdm] {
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForShopAdm[A]) => Future[SimpleResult]): Future[SimpleResult] = {
-    val pwOpt = PersonWrapper.getFromRequest(request)
-    isShopAdmin(shopId, pwOpt) flatMap {
-      case true =>
-        val req1 = RequestForShopAdm(shopId, pwOpt, request)
-        block(req1)
-
-      case false => IsAuth.onUnauth(request)
-    }
-  }
-}
-
+import IsShopAdm._
 
 /** В реквесте содержится магазин, если всё ок. */
-case class IsShopAdmFull(shopId: ShopId_t) extends ActionBuilder[RequestForShopAdmFull] {
+case class IsShopAdm(shopId: ShopId_t) extends ActionBuilder[RequestForShopAdmFull] {
   protected def invokeBlock[A](request: Request[A], block: (RequestForShopAdmFull[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     isShopAdminFull(shopId, pwOpt) flatMap {

@@ -100,40 +100,27 @@ object MarketOffer extends SioController with MacroLogsImpl {
 
 
 
-  /** Показать список офферов указанного магазина. */
-  def showShopPromoOffers(shopId: ShopId_t) = IsMartShopAdmin(shopId).async { implicit request =>
-    val shopOptFut = MShop.getById(shopId)
-    for {
-      offers <- MShopPromoOffer.getAllForShop(shopId)
-      shopOpt <- shopOptFut
-    } yield {
-      if (shopOpt.isDefined) {
-        Ok(listOffersTpl(shopOpt.get, offers))
-      } else {
-        NotFound("Shop not found: " + shopId)
-      }
+  /** Показать список офферов указанного магазина для владельца магазина. (или владельца ТЦ?)
+    * TODO Нужно разобраться с этой фунцией и тут пофиксить ACL: смотреть офферы в ЛК могут как админы ТЦ, так и владелец магазина.
+    * TODO Эту функцию надо перепилить для владельца ТЦ: они могут видеть лишь опубликованные офферы. */
+  def showShopPromoOffers(shopId: ShopId_t) = IsShopAdm(shopId).async { implicit request =>
+    MShopPromoOffer.getAllForShop(shopId) map { offers =>
+      Ok(listOffersTpl(request.mshop, offers))
     }
   }
 
   /** Рендер страницы с формой добавления оффера. */
-  def addPromoOfferForm(shopId: ShopId_t) = IsMartShopAdmin(shopId).async { implicit request =>
-    MShop.getById(request.shopId) map {
-      case Some(mshop) =>
-        Ok(form.addPromoOfferFormTpl(shopId, vmPromoOfferFormM, mshop))
-
-      case None => shopNotFound(request.shopId)
-    }
+  def addPromoOfferForm(shopId: ShopId_t) = IsShopAdm(shopId).async { implicit request =>
+    import request.mshop
+    Ok(form.addPromoOfferFormTpl(shopId, vmPromoOfferFormM, mshop))
   }
 
   /** Сабмит формы добавления оффера. Надо отправить оффер в хранилище. */
-  def addPromoOfferFormSubmit(shopId: ShopId_t) = IsMartShopAdmin(shopId).async { implicit request =>
+  def addPromoOfferFormSubmit(shopId: ShopId_t) = IsShopAdm(shopId).async { implicit request =>
     vmPromoOfferFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"addPromoOfferFormSubmit($shopId): " + formWithErrors.errors)
-        MShop.getById(request.shopId) map {
-          case Some(mshop) => NotAcceptable(form.addPromoOfferFormTpl(shopId, formWithErrors, mshop))
-          case None        => shopNotFound(shopId)
-        }
+        NotAcceptable(form.addPromoOfferFormTpl(shopId, formWithErrors, request.mshop))
       },
       {case (mpo, imgInfo) =>
         mpo.datum.shopId = shopId

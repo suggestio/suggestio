@@ -1,4 +1,4 @@
-@(mshop: MShop, eAct: EmailActivation, iaf: Form[_])(implicit ctx: util.Context)
+@(mshop: MShop, eAct: EmailActivation, iaf: Form[_], withRegister:Boolean)(implicit ctx: util.Context)
 
 @* Страница с формой окончания invite-регистрации магазина. Тут можно ввести пароль и подправить имя магазина. *@
 @import ctx._
@@ -6,7 +6,8 @@
 @import helper._
 
 @lkBase("Подтверждение регистрации") {
-  @form(routes.MarketShopLk.inviteAcceptSubmit(eaId=eAct.id.get)) {
+  <br/><br/><br/><br/><br/><br/>
+  @form(routes.MarketShopLk.inviteAcceptSubmit(eaId=eAct.id.get, shopId=eAct.key)) {
     @* Имя магазина *@
     @inputText(iaf("shopName"))
 
@@ -19,9 +20,13 @@
     <label>Номер секции</label>
     <input id="sectionTextField" type="text" disabled value="@mshop.martSection"/>
 
-    @* Юзер вводит пароли *@
-    @inputPassword(iaf("password.pw1"))
-    @inputPassword(iaf("password.pw2"))
+    @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
+    @if(withRegister) {
+      @* Юзер вводит пароли *@
+      @inputPassword(iaf("password.pw1"))
+      @inputPassword(iaf("password.pw2"))
+      @* TODO Нужна ссылка с формой для логина в систему, если юзер уже зареган, но ещё не залогинен. *@
+    }
     <input type="submit" value="@Messages("Continue")"/>
   }
 }

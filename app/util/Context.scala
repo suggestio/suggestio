@@ -49,6 +49,7 @@ trait Context {
   implicit def pwOpt: PwOpt_t
   implicit def lang: Lang
   def myProto = Context.SIO_PROTO_DFLT
+  def myAudienceUrl = controllers.Ident.AUDIENCE_URL
 
   implicit lazy val now : DateTime = DateTime.now
 

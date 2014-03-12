@@ -80,7 +80,7 @@ object MPersonIdent {
 
 
   // Настройки генерации хешей. Используется scrypt. Это влияет только на новые создаваемые хеши, не ломая совместимость
-  // с уже сохранёнными. Размер потребляемой памяти можно рассчитать (128 * COMPLEXITY * RAM_BLOCKSIZE) bytes.
+  // с уже сохранёнными. Размер потребляемой памяти можно рассчитать Size = (128 * COMPLEXITY * RAM_BLOCKSIZE) bytes.
   // По дефолту жрём 16 метров с запретом параллелизации.
   /** Cложность хеша scrypt. */
   val SCRYPT_COMPLEXITY     = current.configuration.getInt("ident.pw.scrypt.complexity") getOrElse 16384
@@ -247,8 +247,8 @@ object EmailActivation extends EsModelStaticT[EmailActivation] {
   }
 
   def applyKeyValue(acc: EmailActivation): PartialFunction[(String, AnyRef), Unit] = {
-    case (KEY_ESFN, value)          => acc.email = stringParser(value)
-    case (VALUE_ESFN, value)        => acc.key = stringParser(value)
+    case (KEY_ESFN, value)          => acc.key = stringParser(value)
+    case (PERSON_ID_ESFN, value)    => acc.email = stringParser(value)
   }
 }
 
@@ -260,13 +260,13 @@ object EmailActivation extends EsModelStaticT[EmailActivation] {
 case class EmailActivation(
   var email     : String,
   var key       : String = EmailActivation.randomActivationKey,
-  id            : Option[String] = None
+  var id        : Option[String] = None
 ) extends MPersonIdent[EmailActivation] with MPersonLinks {
-  val personId = ""
+  def personId = email
   def companion = EmailActivation
   def writeVerifyInfo: Boolean = false
   def idType = IdTypes.EMAIL_ACT
   def isVerified = true
-  def value: Option[String] = Some(key)
+  def value: Option[String] = None
 }
 

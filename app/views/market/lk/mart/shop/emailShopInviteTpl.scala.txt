@@ -1,4 +1,4 @@
-@(mmart: MMart, mshop: MShop, epwAct: EmailActivation)(implicit ctx: util.Context)
+@(mmart: MMart, mshop: MShop, eAct: EmailActivation)(implicit ctx: util.Context)
 
 @* Шаблон рендера txt-части письма-приглашения, отправляемого владельцу магазина. *@
 
@@ -6,4 +6,7 @@
 
 Магазин: @mshop.name
 Торговый центр: @mmart.name
-Ссылка для активации: TODO
+Ссылка для активации:
+@ctx.myAudienceUrl@routes.MarketShopLk.inviteAccept(shopId=eAct.key, eaId=eAct.id.get)
+
+Это сообщение отправлено автоматически. Пожалуйста, не отвечайте на это сообщение.

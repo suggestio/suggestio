@@ -1,7 +1,7 @@
 package controllers
 
 import io.suggest.util.MacroLogsImpl
-import util.acl.{IsMartShopAdmin, IsSuperuser}
+import util.acl.{IsShopAdm, IsSuperuser}
 import models._
 import views.html.sys1.market._
 import play.api.data._, Forms._
@@ -268,7 +268,7 @@ object SysMarket extends SioController with MacroLogsImpl {
   )
   // apply()
   {(name, martId, companyId, description, martFloor, martSection) =>
-    MShop(name=name, martId=martId, companyId=companyId, description=description, martFloor=martFloor, martSection=martSection)
+    MShop(name=name, martId=martId, companyId=companyId, description=description, martFloor=martFloor, martSection=martSection, personIds=null)
   }
   // unapply()
   {mshop =>
@@ -301,6 +301,7 @@ object SysMarket extends SioController with MacroLogsImpl {
         }
       },
       {mshop =>
+        mshop.personIds = List(request.pwOpt.get.personId)
         mshop.save map { mshopSavedId =>
           Redirect(routes.SysMarket.shopShow(mshopSavedId))
         }
@@ -330,15 +331,11 @@ object SysMarket extends SioController with MacroLogsImpl {
   private def shopNotFound(shop_id: ShopId_t) = NotFound("Shop not found: " + shop_id)
 
   /** Отрендерить страницу с формой редактирования магазина. */
-  def shopEditForm(shop_id: ShopId_t) = IsMartShopAdmin(shop_id).async { implicit request =>
-    MShop.getById(shop_id) flatMap {
-      case Some(mshop) =>
-        getAllCompaniesAndMarts map { case (companies, marts) =>
-          val form = shopFormM.fill(mshop)
-          Ok(shop.shopEditFormTpl(mshop, form, companies, marts))
-        }
-
-      case None => shopNotFound(shop_id)
+  def shopEditForm(shop_id: ShopId_t) = IsShopAdm(shop_id).async { implicit request =>
+    getAllCompaniesAndMarts map { case (companies, marts) =>
+      import request.mshop
+      val form = shopFormM.fill(mshop)
+      Ok(shop.shopEditFormTpl(mshop, form, companies, marts))
     }
   }
 
