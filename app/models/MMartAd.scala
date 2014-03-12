@@ -50,7 +50,15 @@ object MMartAd extends EsModelStaticT[MMartAd] with PlayMacroLogsImpl {
   val DISCOUNT_TPL_ESFN = "discoTpl"
 
   protected def dummy(id: String) = {
-    MMartAd(id=Some(id), offers=Nil, picture=null, martId=null, companyId = null, shopId = null)
+    MMartAd(
+      id = Some(id),
+      offers = Nil,
+      picture = null,
+      martId = null,
+      companyId = null,
+      shopId = null,
+      textAlign = null
+    )
   }
 
   private def shopIdQuery(shopId: ShopId_t) = QueryBuilders.termQuery(SHOP_ID_ESFN, shopId)
@@ -79,7 +87,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with PlayMacroLogsImpl {
     case (OFFER_ESFN, value)        => acc.offers = JacksonWrapper.convert[List[MMartAdProduct]](value)
     case (PANEL_ESFN, value)        => acc.panel = Some(JacksonWrapper.convert[MMartAdPanelSettings](value))
     case (IS_SHOWN_ESFN, value)     => acc.isShown = booleanParser(value)
-    case (TEXT_ALIGN_ESFN, value)   => acc.textAligns = JacksonWrapper.convert[List[MMartAdTextAlign]](value)
+    case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = JacksonWrapper.convert[MMartAdTextAlign](value)
   }
 
   def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
@@ -284,12 +292,12 @@ case class MMartAd(
   var martId      : MartId_t,
   var offers      : List[MMartAdOfferT],
   var picture     : String,
+  var textAlign   : MMartAdTextAlign,
   var shopId      : Option[ShopId_t] = None,
   var companyId   : MCompany.CompanyId_t,
   var panel       : Option[MMartAdPanelSettings] = None,
   var prio        : Option[Int] = None,
   var userCatId   : Option[String] = None,
-  var textAligns  : List[MMartAdTextAlign] = Nil,
   var isShown     : Boolean = false,
   var id          : Option[String] = None
 ) extends EsModelT[MMartAd] {
@@ -314,11 +322,8 @@ case class MMartAd(
       acc.endArray()
     }
     // Также рендерим данные по textAlign на устройствах.
-    if (!textAligns.isEmpty) {
-      acc.startArray(TEXT_ALIGN_ESFN)
-        textAligns foreach { _ render acc }
-      acc.endArray()
-    }
+    acc.field(TEXT_ALIGN_ESFN)
+    textAlign.render(acc)
   }
 
   /**
@@ -437,12 +442,49 @@ case class MMartAdPanelSettings(color: String) {
 }
 
 
-case class MMartAdTextAlign(id: String, align: String) {
+case class MMartAdTAPhone(align: String) {
   def render(acc: XContentBuilder) {
     acc.startObject()
-      .field("id", id)
-      .field(ALIGN_ESFN, align)
+      .field("align", align)
     .endObject()
   }
 }
+
+case class MMartAdTATablet(alignTop: String, alignBottom: String) {
+  def render(acc: XContentBuilder) {
+    acc.startObject()
+      .field("alignTop", alignTop)
+      .field("alignBottom", alignBottom)
+    .endObject()
+  }
+}
+
+case class MMartAdTextAlign(phone: MMartAdTAPhone, tablet: MMartAdTATablet) {
+  def render(acc: XContentBuilder) {
+    acc.startObject()
+      // телефон
+      acc.field("phone")
+      phone render acc
+      // планшет
+      acc.field("tablet")
+      tablet render acc
+    .endObject()
+  }
+}
+
+
+/** Допустимые значения textAlign-полей. */
+object TextAlignValues extends Enumeration {
+  type TextAlignValue = Value
+  val left, right = Value
+
+  def maybeWithName(n: String): Option[TextAlignValue] = {
+    try {
+      Some(withName(n))
+    } catch {
+      case _: Exception => None
+    }
+  }
+}
+
 

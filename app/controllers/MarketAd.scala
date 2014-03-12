@@ -13,6 +13,7 @@ import util.img.{ImgIdKey, ImgInfo, ImgFormUtil, OrigImgIdKey}
 import scala.concurrent.Future
 import play.api.mvc.Request
 import play.api.Play.current
+import TextAlignValues.TextAlignValue
 
 /**
  * Suggest.io
@@ -61,7 +62,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       getForm(getForClass(c))
     }
   }
-
   import FormModes.FormMode
 
   // Есть шаблоны для шаблона скидки. Они различаются по id. Тут min и max для допустимых id.
@@ -101,24 +101,44 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   val mmaFloatPriceM = mmaFloatFieldM(priceM)
 
-
+  // Мапперы для textAlign'ов
   /** Какие-то данные для text-align'a. */
-  val textAlignRawM = nonEmptyText(maxLength = 16) // TODO Нужен валидатор.
-  private def textAlignM(id: String) = {
-    id -> textAlignRawM
-      .transform(
-        {ta: String => MMartAdTextAlign(id=id, align=ta) },
-        {mmata: MMartAdTextAlign => mmata.align }
-      )
-  }
+  val textAlignRawM = nonEmptyText(maxLength = 16)
+    .transform(strTrimSanitizeLowerF, strIdentityF)
+    .transform(
+      { TextAlignValues.maybeWithName },
+      { tavOpt: Option[TextAlignValue] => tavOpt.map(_.toString) getOrElse "" }
+    )
+    .verifying("text.align.value.invalid", { _.isDefined })
+    // Переводим результаты обратно в строки для более надежной работы reflections в TA-моделях.
+    .transform(
+      _.get.toString,
+      //{ tavStr: String => TextAlignValues.maybeWithName(tavStr) }
+      { TextAlignValues.maybeWithName }
+    )
 
-  /** Расположение текста. Пока в виде строки. */
-  val textAlignsM = mapping(
-    textAlignM("phone"),
-    textAlignM("tablet")
+  /** Маппинг для textAlign.phone -- параметры размещения текста на экране телефона. */
+  val taPhoneM = textAlignRawM
+    .transform(
+      { MMartAdTAPhone.apply },
+      { taPhone: MMartAdTAPhone => taPhone.align }
+    )
+
+  /** Маппинг для textAlign.tablet -- параметров размещения текста на планшете. */
+  val taTabletM = mapping(
+    "top"    -> textAlignRawM,
+    "bottom" -> textAlignRawM
   )
-  {(phoneTA, tabletTA) => List(phoneTA, tabletTA) }
-  { case List(phoneTA, tabletTA) => Some((phoneTA, tabletTA)) }
+  { MMartAdTATablet.apply }
+  { MMartAdTATablet.unapply }
+
+  /** Маппинг для всего textAlign. */
+  val textAlignM = mapping(
+    "phone"  -> taPhoneM,
+    "tablet" -> taTabletM
+  )
+  { MMartAdTextAlign.apply }
+  { MMartAdTextAlign.unapply }
 
 
   // Общие для ad-форм мапперы закончились. Пора запилить сами формы и формоспецифичные элементы.
@@ -162,7 +182,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       { MMartAdPanelSettings.apply },
       { mmaps: MMartAdPanelSettings => mmaps.color }
     )
-  private val textAlignKM = "textAlign" -> textAlignsM
+  private val textAlignKM = "textAlign" -> textAlignM
 
   type AdFormM = Form[(ImgIdKey, MMartAd)]
 
@@ -175,7 +195,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     textAlignKM
   )
   // applyF()
-  {(userCatId, imgKey, panelSettings, adBody, textAligns) =>
+  {(userCatId, imgKey, panelSettings, adBody, textAlign) =>
     val mmad = MMartAd(
       martId      = null,
       offers      = List(adBody),
@@ -183,7 +203,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       shopId      = null,
       panel       = Some(panelSettings),
       userCatId   = Some(userCatId),
-      textAligns  = textAligns,
+      textAlign   = textAlign,
       companyId   = null
     )
     (imgKey, mmad)
@@ -193,7 +213,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     import mmad._
     if (panel.isDefined && userCatId.isDefined && !offers.isEmpty) {
       val adBody = offers.head.asInstanceOf[T]  // TODO Надо что-то решать с подтипами офферов. Параметризация типов MMartAd - геморрой.
-      Some((userCatId.get, imgKey, panel.get, adBody, textAligns))
+      Some((userCatId.get, imgKey, panel.get, adBody, textAlign))
     } else {
       warn("Unexpected ad object received into ad-product form: " + mmad)
       None

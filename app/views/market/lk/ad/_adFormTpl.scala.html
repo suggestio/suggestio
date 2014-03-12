@@ -8,6 +8,7 @@
 
 @form(call, 'id -> "promoOfferForm") {
 
+  @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@
   @af.globalError
 
 
@@ -54,36 +55,7 @@
         <div class="border-line"></div>
       </div>
 
-      <table cellpadding="0" cellspacing="0" class="color-list input-wrap big">
-        <tr>
-          <td class="left">
-            <label>Цвет плашки:</label>
-          </td>
-
-          <td class="right">
-            <div class="item">
-              <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="000000"/>
-              <div class="color" style="background: black;">&nbsp;</div>
-            </div>
-            <div class="item">
-              <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="ffffff"/>
-              <div class="color" style="background: white;">&nbsp;</div>
-            </div>
-            <div class="item">
-              <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="959595"/>
-              <div class="color" style="background: gray;">&nbsp;</div>
-            </div>
-            <div class="item">
-              <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="000000"/>
-              <div class="color custom">&nbsp;
-                @* Input для цвета верхней плашки. *@
-                <input id="panelColor" type="hidden" name="panelColor" value="@af("panel.color").value.getOrElse("#000000")"/>
-              </div>
-            </div>
-          </td>
-        </tr>
-      </table>
-
+      @_adFormPanelColorTpl(af)
     </div>
   </div>
 
@@ -147,11 +119,8 @@
     <div class="blue-line"></div>
 
     <div class="slide-content" id="templates">
-      @* TODO Сейчас рендерится только один кусок формы. Нужно сделать js-переключение между двумя вариантами формы. *@
       @_adFormProductTpl(af, isShown = dfltIsProduct)
       @_adFormDiscountTpl(af, isShown = !dfltIsProduct)
-
-
 
       <div class="border-line"></div>
 
