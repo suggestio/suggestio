@@ -103,7 +103,11 @@
           <td class="right">
             <div class="select-file-wrap">
               <div class="preview">
-                <img src="" width="59" height="59"/>
+                @* Данные по картинке загруженной. *@
+                @defining(af("image_key").value) { imgIdOpt =>
+                <input type="hidden" name="image_key" value="@imgIdOpt"/>
+                <img class="image-preview" width="59" height="59" src="@if(imgIdOpt.isDefined) {@routes.Img.getImg(imgIdOpt.get)}" style="@if(imgIdOpt.isEmpty) {display: none}"/>
+                }
               </div>
               <div class="selectbox">
                 <div class="select-file">
@@ -189,11 +193,7 @@
   @* Режим формы. Должен переключаться при переключении вкладки. *@
   <input id="ad-mode" type="hidden" name="ad.mode" value="@if(dfltIsProduct) {@PRODUCT} else {@DISCOUNT}"/>
 
-  @* Данные по картинке загруженной. *@
-  @defining(af("image_key").value) { imgIdOpt =>
-    <input type="hidden" name="image_key" value="@imgIdOpt"/>
-    <img class="image-preview" width="200" src="@if(imgIdOpt.isDefined) {@routes.Img.getImg(imgIdOpt.get)}" style="@if(imgIdOpt.isEmpty) {display: none}"/>
-  }
+
 
   @* Положение текста на разных устройствах. Как оно задаётся - хз, пока в виде произвольной строки. *@
   @inputText(af("textAlign.phone"), '_label -> "iphone")
