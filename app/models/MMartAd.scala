@@ -84,7 +84,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with PlayMacroLogsImpl {
     case (PRIO_ESFN, value)         => acc.prio = Some(intParser(value))
     // TODO Opt: Стоит использоваться вместо java-reflections ускоренные scala-json парсеры на базе case-class'ов.
     case (USER_CAT_ID_ESFN, value)  => acc.userCatId = Some(stringParser(value))
-    case (OFFER_ESFN, value)        => acc.offers = JacksonWrapper.convert[List[MMartAdProduct]](value)
+    case (OFFER_ESFN, value)        => acc.offers = JacksonWrapper.convert[List[MMartAdProduct]](value) // TODO Нужно разбираться между product и discount
     case (PANEL_ESFN, value)        => acc.panel = Some(JacksonWrapper.convert[MMartAdPanelSettings](value))
     case (IS_SHOWN_ESFN, value)     => acc.isShown = booleanParser(value)
     case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = JacksonWrapper.convert[MMartAdTextAlign](value)
@@ -322,8 +322,8 @@ case class MMartAd(
       acc.endArray()
     }
     // Также рендерим данные по textAlign на устройствах.
-    acc.field(TEXT_ALIGN_ESFN)
-    textAlign.render(acc)
+    // TODO Используем reflections из-за феноменальной глючности XCB на уровнях вложенности > 2
+    acc.rawField(TEXT_ALIGN_ESFN, JacksonWrapper.serialize(textAlign).getBytes())
   }
 
   /**
@@ -406,7 +406,7 @@ sealed trait MMAdValueField {
   def renderFields(acc: XContentBuilder)
   def font: MMAdFieldFont
   def render(acc: XContentBuilder) {
-    acc.startObject(DISCOUNT_ESFN)
+    acc.startObject()
       renderFields(acc)
       font.render(acc)
     acc.endObject()
@@ -442,35 +442,9 @@ case class MMartAdPanelSettings(color: String) {
 }
 
 
-case class MMartAdTAPhone(align: String) {
-  def render(acc: XContentBuilder) {
-    acc.startObject()
-      .field("align", align)
-    .endObject()
-  }
-}
-
-case class MMartAdTATablet(alignTop: String, alignBottom: String) {
-  def render(acc: XContentBuilder) {
-    acc.startObject()
-      .field("alignTop", alignTop)
-      .field("alignBottom", alignBottom)
-    .endObject()
-  }
-}
-
-case class MMartAdTextAlign(phone: MMartAdTAPhone, tablet: MMartAdTATablet) {
-  def render(acc: XContentBuilder) {
-    acc.startObject()
-      // телефон
-      acc.field("phone")
-      phone render acc
-      // планшет
-      acc.field("tablet")
-      tablet render acc
-    .endObject()
-  }
-}
+case class MMartAdTAPhone(align: String)
+case class MMartAdTATablet(alignTop: String, alignBottom: String)
+case class MMartAdTextAlign(phone: MMartAdTAPhone, tablet: MMartAdTATablet)
 
 
 /** Допустимые значения textAlign-полей. */
