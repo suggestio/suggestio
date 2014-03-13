@@ -1,5 +1,6 @@
 $(document).ready ->
-  document.getElementById('old-price-status').checked = false
+  if(document.getElementById('old-price-status') != null)
+    document.getElementById('old-price-status').checked = false
 
 $(document).on 'click', '.select-iphone .iphone-block', ->
   $this = $(this)
@@ -51,4 +52,4 @@ $(document).on 'click', '.create-ad .color-list .color', ->
 $(document).on 'click', '.create-ad .mask-list .item', ->
   $this = $(this)
 
-  $this.find('.one-checkbox').trigger('click')
+  $this.find('.one-checkbox').trigger('click' )
