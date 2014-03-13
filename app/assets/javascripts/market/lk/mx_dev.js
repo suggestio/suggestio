@@ -22,12 +22,13 @@ var cbca = {};
   function() {
 
     var $this = $(this),
-    $wrap = $this.closest('.item');
+    $wrap = $this.parent(),
+    $checkbox = $wrap.find('.one-checkbox');
 
     $this.ColorPicker({
       color: '#000000',
       onBeforeShow: function() {
-        $wrap.find('.one-checkbox').trigger('click');
+        $checkbox.trigger('click');
       },
       onShow: function (colpkr) {
         $(colpkr).fadeIn(500);
@@ -38,7 +39,12 @@ var cbca = {};
         return false;
       },
       onChange: function (hsb, hex, rgb) {
-        $wrap.find('.one-checkbox').attr('data-value', hex).trigger('click');
+        if($checkbox.size()) {
+          $checkbox.attr('data-value', hex).trigger('click');
+        }
+        else {
+          $this.find('input').val(hex);
+        }
       }
     });
 
@@ -53,7 +59,7 @@ function CbcaSelect(containerId) {
   var self = this,
   animationTime = 200,
   $container = $('#'+containerId),
-  $input = $container.find('input');
+  $input = $('#catId');
 
   self.currIndex = 0;
 
