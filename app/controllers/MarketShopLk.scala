@@ -56,19 +56,27 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
 
   private val shopKM = "shop" -> shopM
 
-  /** Форма на которой нельзя менять логотип. */
+  /** Форма на которой нельзя менять логотип, но можно настраивать разные поля.
+    * Подходит для редактирования из ТЦ-аккаунта */
   val shopFormM = Form(shopKM)
 
-  val shopWithLogoFormM = Form(tuple(
+  private val logoImgIdKM = "logoImgId" -> optional(imgIdM)
+
+  /** Форма для заполнения страницы. */
+  val shopFullFormM = Form(tuple(
     shopKM,
-    "logoImgId" -> optional(imgIdM)
+    logoImgIdKM
   ))
 
-  /** Ограниченный маппинг магазина. Используется редактировании оного для имитации неизменяемых полей на форме.
-    * Некоторые поля не доступны для редактирования владельцу магазина, и эта форма как раз для него. */
+  /** Ограниченный маппинг магазина. Используется при сабмите редактирования профиля магазина для имитации
+    * неизменяемых полей на форме. Некоторые поля не доступны для редактирования владельцу магазина. */
   val limitedShopFormM = Form(tuple(
-    "name"         -> shopNameM,
-    "description"  -> publishedTextOptM
+    // Вложенный маппинг для совместимости с исходным шаблоном.
+    "shop" -> tuple(
+      "name"         -> shopNameM,
+      "description"  -> publishedTextOptM
+    ),
+    logoImgIdKM
   ))
 
 
@@ -101,7 +109,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
     val martId = mshop.martId.get
     MMart.getById(martId).map {
       case Some(mmart) =>
-        val formBinded = shopWithLogoFormM fill (mshop, None)
+        val formBinded = shopFullFormM fill (mshop, None)
         Ok(shopEditFormTpl(mmart, mshop, formBinded))
 
       case None => martNotFound(martId)
@@ -123,7 +131,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
           case None        => martNotFound(martId)
         }
       },
-      {case (name, description) =>
+      {case ((name, description), imgIdOpt) =>
         mshop.name = name
         mshop.description = description
         mshop.save.map { _ =>
