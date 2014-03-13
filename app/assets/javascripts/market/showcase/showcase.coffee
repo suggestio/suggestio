@@ -1,4 +1,46 @@
-showcase =
+siomart =
+
+  config :
+    css : '/assets/stylesheets/market/showcase.min.css'
+
+  utils :
+
+    ######################
+    ## Создать DOM элемент
+    ######################
+    ce : ( tag, attributes, inhtml ) ->
+      ne = document.createElement tag
+
+      for k,v of attributes
+        ne.setAttribute k, v
+
+      if( typeof( inhtml ) != 'undefined' )
+        ne.innerHTML = inhtml
+      ne
+
+    ############################
+    ## Найти DOM элемент по тегу
+    ############################
+    ge_tag : ( tag ) ->
+      document.getElementsByTagName tag
+
+    ##############################
+    ## Найти DOM элемент/ы по тегу
+    ##############################
+    ge : () ->
+      for e in arguments
+        if typeof e == 'string' || typeof e == 'number'
+          e = document.getElementById e
+
+        if arguments.length == 1
+          return e
+
+        if (!ea)
+          ea = new Array()
+
+        ea.push e
+
+      ea
 
   set_window_size : () ->
     ww = wh = 0
@@ -37,13 +79,62 @@ showcase =
     photo.style.marginLeft = - nw / 2 + 'px'
     photo.style.marginTop = - nh / 2 + 'px'
 
+  ####################################
+  ## Загрузить все нужные стили цсс'ки
+  ####################################
+  load_stylesheets : () ->
+    stylesheet_attrs =
+      type : 'text/css'
+      rel : 'stylesheet'
+      href : this.config.css
+
+    stylesheet = this.utils.ce "link", stylesheet_attrs
+    this.utils.ge_tag("head")[0].appendChild stylesheet
+
+  #####################################################
+  ## Добавить в DOM необходимую разметку для Sio.Market
+  #####################################################
+  draw_layout : () ->
+    sm_layout_attrs =
+      class : 'sio-mart-layout'
+      id : 'sioMartLayout'
+    sm_layout = this.utils.ce "div", sm_layout_attrs
+
+    this.utils.ge_tag("body")[0].appendChild sm_layout
+
+  perform_request : ( url ) ->
+    js_request_attrs =
+      type : 'text/javascript'
+      src : url
+
+    js_request = this.utils.ce "script", js_request_attrs
+    this.utils.ge_tag("head")[0].appendChild js_request
+
+  ##################################################
+  ## Получить результаты по последнему отправленному
+  ## зпросу и передать их в нужный callback
+  ##################################################
+  receive_response : ( data ) ->
+    container = this.utils.ge "sioMartLayout"
+    container.innerHTML = data.html
+
+  ######################################
+  ## Загрузить индексную страницу для ТЦ
+  ######################################
+  load_mart_index_page : () ->
+    this.perform_request '/market/index'
+
+
   init : () ->
-    this.set_window_size()
-    this.fit_image()
+    this.load_stylesheets()
+    this.draw_layout()
 
-    $(window).bind "resize", () ->
-      sio_showcase.set_window_size()
-      sio_showcase.fit_image()
+    this.load_mart_index_page()
 
-window.sio_showcase = showcase
-showcase.init()
+
+window.siomart = siomart
+
+siomart_init_cb = () ->
+  siomart.init()
+
+setTimeout siomart_init_cb, 150

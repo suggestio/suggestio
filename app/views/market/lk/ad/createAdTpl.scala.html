@@ -9,11 +9,12 @@
   shopId = mshop.id.get
 ) {
 
-  @_adFormTpl(
-    af = af,
-    call = routes.MarketAd.createShopAdSubmit(mshop.id.get),
-    btnText = Messages("Create"),
-    mmcats = mmcats
-  )
+
+@_adFormTpl(
+  af = af,
+  call = routes.MarketAd.createShopAdSubmit(mshop.id.get),
+  btnText = Messages("Create"),
+  mmcats = mmcats
+)
 
 }

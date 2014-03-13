@@ -1,23 +1,56 @@
-@import "fonts.styl"
+@import 'fonts.styl'
 
-.sio-market-showcase,
-.sm-screen
+.sio-mart-layout,
+.sio-mart-layout .sm-screen
   position: absolute
   left: 0px
   top: 0px
   width: 100%
   height: 100%
+  z-index: 1000
 
-.sio-market-showcase
-  background: #ccc
+.sio-mart-layout
+  position: fixed
+  background: rgba(200,200,200,0.95)
+
+  .sm-button
+    display: block
+    color: #fff
+    border: 5px #fff solid
+    font-size: 30px
+    padding: 15px 10px
+    font-family: 'pfdintextcomppro-medium-webfont'
+    text-decoration: none
+    text-align: center
+
+  .sio-market-exit-screen
+    position: absolute
+    display: none
+    width: 100%
+    height: 100%
+    left: 0px
+    top: 0px
+    background: rgba(0,0,0,0.7)
+    z-index: 100
+
+    .es-container
+      position: absolute
+      width: 300px
+      height: 300px
+      left: 50%
+      top: 50%
+      margin-left: -150px
+      margin-top: -150px
+      color : #fff
 
   .sm-header
     position: absolute
     z-index: 100
     width: 100%
     height: 50px
-    border-top: 1px #79b3ac solid
-    background: #007366
+    border-top: 1px rgba(255,255,255,0.5) solid
+    border-bottom: 1px rgba(0,0,0,0.5) solid
+    background: #cf3737
 
   .sm-screen
     overflow: hidden
@@ -26,17 +59,22 @@
       left: 50%
       top: 50%
 
-  .index-navigation
+  .sm-navigation
     width: 100%
+    height: 129px
     position: absolute
     left: 0px
     bottom: 0px
-    background: rgba(255,255,255,0.5)
+    background: rgba(255,255,255,0.8)
 
-    a
-      margin: 10px 20px
-      display: block
-      color: #007366
-      border: 5px #007366 solid
-      font-family: "futuracondensed_medium"
-      text-decoration: none
+    .sm-buttons
+      width: 680px
+      height: 100px
+      margin: 0px auto
+
+      .sm-button
+        width: 282px
+        margin: 20px 12px
+        float: left
+        border-color: #cf3737
+        color: #cf3737
