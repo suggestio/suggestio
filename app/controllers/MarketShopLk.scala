@@ -287,7 +287,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
    * Загрузка картинки для логотипа магазина. Права на доступ к магазину проверяем просто для галочки.
    * @return Тот же формат ответа, что и для просто temp-картинок.
    */
-  def handleShopTempLogo(shopId: String) = IsShopAdm(shopId)(parse.multipartFormData) { implicit request =>
+  def handleShopTempLogo = IsAuth(parse.multipartFormData) { implicit request =>
     request.body.file("picture") match {
       case Some(pictureFile) =>
         val fileRef = pictureFile.ref
