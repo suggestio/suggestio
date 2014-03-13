@@ -115,10 +115,10 @@
     <div class="border-line"></div>
 
     <div class="tabs">
-      <div class="tab act" data-mode="p">
+      <div class="tab @if(dfltIsProduct) {act}" data-mode="@PRODUCT">
         ТЕКСТОВОЙ
       </div>
-      <div class="tab" data-mode="d">
+      <div class="tab @if(!dfltIsProduct) {act}" data-mode="@DISCOUNT">
         СКИДОЧНЫЙ
       </div>
     </div>
@@ -178,7 +178,10 @@
 
   <div class="submit-wrap">
     <input class="green-but-small" type="submit" value="@btnText"/>
+
+    <a href="#remove-ad" class="red-but-small popup-but">Удалить</a>
   </div>
+
 
 }
 
