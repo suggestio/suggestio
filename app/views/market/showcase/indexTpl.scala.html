@@ -3,6 +3,7 @@
 @market.showcase.baseTpl() {
 
   <div class="sm-screen">
+
     <div class="sm-header" style="background-color: ;">
       <a class="close-label" href=""></a>
 
@@ -12,7 +13,12 @@
 
     </div>
 
-    <img id="poster-photo" class="poster-photo" data-width="1446" data-height="1446" src="">
+    <div class="sm-offers">
+
+      @* Тут выводим офферы списком *@
+      @_single_offer()
+
+    </div>
 
     <div class="sm-navigation">
       <div class="sm-buttons">
