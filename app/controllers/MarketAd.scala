@@ -77,27 +77,28 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     .verifying("price.mustbe.nonneg", { _ >= 0F })
     .verifying("price.too.much", { _ < 100000000F })
 
+  /** Шрифт пока что характеризуется только цветом. Поэтому маппим поле цвета на шрифт. */
+  private val fontColorM = colorM
+    .transform(
+      { MMAdFieldFont.apply },
+      { mmAdFont: MMAdFieldFont => mmAdFont.color }
+    )
+
   /** Маппим строковое поле с настройками шрифта. */
   private def mmaStringFieldM(m : Mapping[String]) = mapping(
     "value" -> m,
-    "color" -> colorM
+    "color" -> fontColorM
   )
-  {(name, color) =>
-    val font = MMAdFieldFont(color)
-    MMAdStringField(name, font)
-  }
-  {mmasf => Some((mmasf.value, mmasf.font.color)) }
+  { MMAdStringField.apply }
+  { MMAdStringField.unapply }
   
   /** Маппим числовое (Float) поле. */
   private def mmaFloatFieldM(m: Mapping[Float]) = mapping(
     "value" -> m,
-    "color" -> colorM
+    "color" -> fontColorM
   )
-  {(value, color) =>
-    val font = MMAdFieldFont(color)
-    MMAdFloatField(value, font)
-  }
-  {mmaff => Some((mmaff.value, mmaff.font.color)) }
+  { MMAdFloatField.apply }
+  { MMAdFloatField.unapply }
 
   val mmaFloatPriceM = mmaFloatFieldM(priceM)
 
@@ -249,8 +250,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
   }
 
-  /** Рендер ошибки в create-форме. Довольно общий, но асинхронный код. */
-  private def createShopAdFormError(formWithErrors: AdFormM, catOwnerId: ShopId_t, mshop: MShop)(implicit ctx: util.Context) = {
+  /** Рендер ошибки в create-форме. Довольно общий, но асинхронный код.
+    * @param formWithErrors Форма для рендера.
+    * @param catOwnerId id владельца категории. Обычно id ТЦ.
+    * @param mshop Магазин, с которым происходит сейчас работа.
+    * @return NotAcceptable со страницей с create-формой.
+    */
+  private def createShopAdFormError(formWithErrors: AdFormM, catOwnerId: String, mshop: MShop)(implicit ctx: util.Context) = {
     renderCreateFormWith(formWithErrors, catOwnerId, mshop) map {
       NotAcceptable(_)
     }
