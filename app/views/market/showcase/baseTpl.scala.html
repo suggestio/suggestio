@@ -1,23 +1,9 @@
-@(title: String="", headAfter:Option[Html] = None)(content: Html)(implicit ctx: util.Context)
+@(title: String="", headAfter:Html = Html(""))(content: Html)(implicit ctx: util.Context)
 
-@* Базовый шаблон для выдачи siomarket.
+@* Базовый шаблон для выдачи siomarket
+  TODO: если не пригодится — удалить
 *@
 
-<html>
-<head>
-  <title>@title</title>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-  <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/market/showcase.min.css")"/>
-  @headAfter
-</head>
-
-<body>
-
-@content
-
-<script src="@routes.Assets.at("javascripts/market/showcase/showcase.min.js")"></script>
-
-</body>
-
-</html>
+<div class="siomart-screen">
+  @content
+</div>

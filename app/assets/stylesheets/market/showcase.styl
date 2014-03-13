@@ -1,15 +1,17 @@
 @import 'fonts.styl'
 
-.sio-market-showcase,
-.sm-screen
+.sio-mart-layout,
+.sio-mart-layout .sm-screen
   position: absolute
   left: 0px
   top: 0px
   width: 100%
   height: 100%
+  z-index: 1000
 
-.sio-market-showcase
-  background: #ccc
+.sio-mart-layout
+  position: fixed
+  background: rgba(200,200,200,0.9)
 
   .siom-button
     display: block
@@ -21,6 +23,7 @@
 
   .sio-market-exit-screen
     position: absolute
+    display: none
     width: 100%
     height: 100%
     left: 0px

@@ -1,30 +1,23 @@
 @()(implicit ctx:util.Context)
 
-@market.showcase.baseTpl("sio.market") {
+@market.showcase.baseTpl() {
 
-  <div class="sio-market-showcase">
+  <div class="sm-screen">
+    <div class="sm-header" style="background-color: ;">
+      <a class="close-label" href=""></a>
 
-    <div class="sm-screen">
-      <div class="sm-header" style="background-color: ;">
+      <img src="">
 
-        <a class="close-label" href=""></a>
-
-        <img src="">
-
-        <a class="categories-label" href=""></a>
-
-      </div>
-
-      <img id="poster-photo" class="poster-photo" data-width="1446" data-height="1446" src="http://1.bp.blogspot.com/-W00f_IOwo_o/Uhs5U-JXufI/AAAAAAAARsA/CoEUkLI3bRs/s1600/IMG_8549.JPG">
-
-      <div class="index-navigation">
-        <a class="siom-button" href="">Я ЗНАЮ, ЧТО ИЩУ</a>
-        <a class="siom-button" href="">ПОМОГИТЕ МНЕ С ВЫБОРОМ</a>
-      </div>
+      <a class="categories-label" href=""></a>
 
     </div>
 
-    @market.showcase._exit_screen()
+    <img id="poster-photo" class="poster-photo" data-width="1446" data-height="1446" src="">
+
+    <div class="index-navigation">
+      <a class="siom-button" href="">Я ЗНАЮ, ЧТО ИЩУ</a>
+      <a class="siom-button" href="">ПОМОГИТЕ МНЕ С ВЫБОРОМ</a>
+    </div>
 
   </div>
 
