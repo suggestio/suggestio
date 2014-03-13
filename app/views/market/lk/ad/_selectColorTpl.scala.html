@@ -1,0 +1,11 @@
+@(colorFN: String, af: Form[_])(implicit ctx: util.Context)
+
+@* Селектор цветов для различных полей формы. *@
+@import ctx._
+
+<td class="select-color">
+  @Messages("Color"):
+  <div class="color custom">&nbsp;
+    <input type="hidden" name="@colorFN" value="@af(colorFN).value"/>
+  </div>
+</td>

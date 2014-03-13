@@ -18,13 +18,49 @@ var cbca = {};
   });
 
 
+  $('.color.custom').each(
+  function() {
+
+    var $this = $(this),
+    $wrap = $this.parent(),
+    $checkbox = $wrap.find('.one-checkbox');
+
+    $this.ColorPicker({
+      color: '#'+$this.find('input').val(),
+      onBeforeShow: function() {
+        $checkbox.trigger('click');
+      },
+      onShow: function (colpkr) {
+        $(colpkr).fadeIn(500);
+        return false;
+      },
+      onHide: function (colpkr) {
+        $(colpkr).fadeOut(500);
+        return false;
+      },
+      onChange: function (hsb, hex, rgb) {
+        if($checkbox.size()) {
+          $checkbox.attr('data-value', hex).trigger('click');
+        }
+        else {
+          $this.find('input').val(hex);
+        }
+      }
+    });
+
+  });
+
+
+
+
+
 });
 
 function CbcaSelect(containerId) {
   var self = this,
   animationTime = 200,
   $container = $('#'+containerId),
-  $input = $container.find('input');
+  $input = $('#catId');
 
   self.currIndex = 0;
 
@@ -166,7 +202,7 @@ function ChooseCategory() {
 
     self.init = function() {
 
-      $(document).on('change', '#cat-select input',
+      $(document).on('change', '#catId',
       function(e) {
         var $this = $(this),
         catId = $this.val();

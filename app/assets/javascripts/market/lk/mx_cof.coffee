@@ -1,5 +1,10 @@
 $(document).ready ->
-  document.getElementById('old-price-status').checked = false
+  if(document.getElementById('old-price-status') != null)
+    document.getElementById('old-price-status').checked = false
+
+  cbca.popup = new CbcaPopup();
+
+
 
 $(document).on 'click', '.select-iphone .iphone-block', ->
   $this = $(this)
@@ -41,3 +46,52 @@ $(document).on 'click', '.create-ad .one-checkbox', ->
 
 $(document).on 'click', '#old-price-status', ->
   $('.create-ad .old-price').toggle()
+
+$(document).on 'click', '.create-ad .color-list .color', ->
+  $this = $(this)
+  $wrap = $this.closest('.item')
+
+  $wrap.find('.one-checkbox').trigger('click')
+
+$(document).on 'click', '.create-ad .mask-list .item', ->
+  $this = $(this)
+
+  $this.find('.one-checkbox').trigger('click' )
+
+##popup##
+$(document).on 'click', '.popup-but', ->
+  $this = $(this)
+
+  cbca.popup.showPopup($this.attr('href'))
+
+$(document).on 'click', '.popup .close', (e)->
+  e.preventDefault()
+  cbca.popup.hidePopup()
+
+$(document).on 'click', '#overlay', ->
+    cbca.popup.hidePopup()
+
+$(document).on 'click', '.popup .cancel', (e)->
+    e.preventDefault()
+    cbca.popup.hidePopup()
+
+CbcaPopup = () ->
+
+  showOverlay: ->
+    $('#overlay').show()
+
+  hideOverlay: ->
+    $('#overlay').hide()
+
+  showPopup: (popup) ->
+    this.showOverlay()
+    $popup = $(popup)
+    $popup.show()
+    marginTop = 0 - parseInt($popup.height()/2) + $(window).scrollTop()
+    $popup.css('margin-top', marginTop)
+
+
+  hidePopup: (popup) ->
+    popup = '.popup' || popup
+    this.hideOverlay()
+    $(popup).hide()

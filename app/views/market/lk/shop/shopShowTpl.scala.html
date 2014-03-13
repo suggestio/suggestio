@@ -7,17 +7,13 @@
 
   <div class="title-wrap">
     <div class="center">
-      <a class="back-but" href="#">&nbsp;</a>
       <div class="title-inner">
-        @mshop.name
+        КАРТОЧКА АРЕНДАТОРА
       </div>
     </div>
   </div>
 
   <div class="body">
-
-    <h2>Каталог продукции</h2>
-    @market.lk.ad._showAdsTpl(mads)
 
     @* Отобразить основное описание магазина с кнопкой редактирования. *@
     @shop._shopShowTpl(
@@ -25,7 +21,14 @@
       editCall=routes.MarketShopLk.editShopForm(mshop.id.get)
     )
 
-    <a href="@routes.MarketAd.createShopAd(mshop.id.get)">Создать рекламную карточку</a>
+
+
+    <div class="ads-list">
+      <span class="title">Рекламные плакаты</span>
+      <a class="add" href="@routes.MarketAd.createShopAd(mshop.id.get)">&nbsp;</a>
+      @market.lk.ad._showAdsTpl(mads)
+    </div>
+
 
   </div>
 

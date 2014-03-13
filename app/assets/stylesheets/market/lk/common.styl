@@ -174,6 +174,49 @@ transform(v)
     color: #a8bdc9
     background-position: 0 0
 
+  .red-but-small
+    outline: 0
+    display: inline-block
+    width: 107px
+    height: 14px
+    padding: 13px 0
+    color: white
+    cursor: pointer
+    font-size: 14px
+    line-height: 14px
+    text-align: center
+    text-decoration: none
+    font-family: 'Arial'
+    background: url('/assets/images/market/lk/red-but.small.png') no-repeat
+    background-position: 0 -180px
+  .red-but-small:hover
+    background-position: 0 -90px
+  .red-but-small:active
+    color: #dcea8
+    background-position: 0 0
+
+  .gray-but-small
+      outline: 0
+      display: inline-block
+      width: 121px
+      height: 14px
+      padding: 13px 0
+      color: white
+      cursor: pointer
+      font-size: 14px
+      line-height: 14px
+      text-align: center
+      text-decoration: none
+      font-family: 'Arial'
+      background: url('/assets/images/market/lk/gray-but.small.png') no-repeat
+      background-position: 0 -180px
+    .gray-but-small:hover
+      background-position: 0 0
+    .gray-but-small:active
+      color: #dcea8
+      background-position: 0 -90px
+
+
   .select-file-wrap
     width: 300px
     overflow: hidden
@@ -245,6 +288,23 @@ transform(v)
         .back-but:hover
           background-position: 0 0
 
+  .popup
+    display: none
+    position: absolute
+    left: 50%
+    top: 50%
+    z-index: 6
+  .overlay
+    display: none
+    position: fixed
+    top: 0
+    left: 0
+    z-index: 5
+    width: 100%
+    height: 100%
+    background: black
+    opacity: 0.5
+
 
 @import "../reset"
 @import "base"
@@ -253,3 +313,4 @@ transform(v)
 @import "edit-mart"
 @import "edit-shop"
 @import "cbca-select"
+@import "ads-list"

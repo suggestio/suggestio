@@ -4,6 +4,7 @@ import java.io.File
 import play.api.libs.Files.TemporaryFile
 import play.api.Play.current
 import concurrent.duration._
+import util.img.OutImgFmts, OutImgFmts.OutImgFmt
 
 /**
  * Suggest.io
@@ -20,7 +21,7 @@ object MPictureTmp {
 
   private val deleteTmpAfterMs = current.configuration.getInt("picture.temp.delete_after_minutes").getOrElse(60).minutes.toMillis
 
-  private val GET_RND_RE = "[0-9]+".r
+  private val GET_RND_RE = "([0-9]{16,22})".r
 
   TEMP_DIR.mkdirs()
 
@@ -28,20 +29,24 @@ object MPictureTmp {
     * (от [[io.suggest.model.MUserImgOrig]] в частности) */
   val KEY_PREFIX = "itmp-"
 
-  val KEY_RE = (KEY_PREFIX + GET_RND_RE).r
+  val FILENAME_RE = (KEY_PREFIX + GET_RND_RE + "([a-zA-Z0-9]+)?\\.([a-z]+)").r
 
 
   /** Источник идентификаторов в модели. */
-  def getKeyFromUploadedTmpfileName(fn: String) = KEY_PREFIX + GET_RND_RE.findFirstIn(fn).get
+  private def getKeyFromUploadedTmpfileName(fn: String) = GET_RND_RE.findFirstIn(fn).get
+
+  /** Дефолтовый формат картинки. */
+  def fmtDflt = OutImgFmts.JPEG
 
   /**
-   * Приготовиться к отправке файла во временное хранилище, сгенерив путь до него.
+   * Приготовиться к отправке файла во временное хранилище, сгенерив путь до него. По сути враппер на apply().
    * Будет адрес на несуществующий файл вида picture/tmp/234512341234123412341234.jpg
    */
-  def getForTempFile(tempfile: TemporaryFile): MPictureTmp = {
+  def getForTempFile(tempfile: TemporaryFile, outFmt: OutImgFmt = fmtDflt, marker: Option[String] = None): MPictureTmp = {
     val file = tempfile.file
     val key  = getKeyFromUploadedTmpfileName(file.getName)
-    MPictureTmp(key)
+    val newTmpFilename = mkFilename(key, outFmt, marker)
+    MPictureTmp(newTmpFilename)
   }
 
 
@@ -56,53 +61,60 @@ object MPictureTmp {
 
   /**
    * Вернуть временный файл, если такой имеется.
-   * @param key ключ временного хранилища.
+   * @param filename ключ временного хранилища.
    * @return Option[File]
    */
-  def find(key: String) : Option[MPictureTmp] = {
-    if (isKeyValid(key)) {
-      val mptmp = MPictureTmp(key)
-      if (mptmp.file.isFile)
-        Some(mptmp)
-      else
-        None
+  def find(filename: String): Option[MPictureTmp] = {
+    if (isFilenameValid(filename)) {
+      val mptmp = MPictureTmp(filename)
+      if (mptmp.isExist) Some(mptmp) else None
     } else {
       None
     }
   }
 
-  def isExist(key: String): Boolean = {
-    if (isKeyValid(key)) {
-      val mptmp = MPictureTmp(key)
-      mptmp.file.isFile
-    } else {
-      throw new IllegalArgumentException("Not valid key: " + key)
-    }
-  }
 
-  /**
-   * Корректен ли внешне переданных ключ tmp-картинки?
-   * @param key Ключ картинки.
-   * @return true, если ключ выглядит верно.
-   */
-  def isKeyValid(key: String) = {
-    KEY_RE.pattern.matcher(key).matches()
+  def isFilenameValid(serId: String) = {
+    FILENAME_RE.pattern.matcher(serId).matches()
   }
 
 
   /** Опциональная версия apply. */
-  def maybeApply(key: String): Option[MPictureTmp] = {
-    if (isKeyValid(key))
-      Some(MPictureTmp(key))
+  def maybeApply(filename: String): Option[MPictureTmp] = {
+    if (isFilenameValid(filename))
+      Some(MPictureTmp(filename))
     else
       None
+  }
+
+  def mkFilename(key: String, fmt: OutImgFmt = fmtDflt, marker: Option[String] = None): String = {
+    val markerStr = marker getOrElse ""
+    val filename = KEY_PREFIX + key + markerStr + "." + fmt
+    if (isFilenameValid(filename))
+      filename
+    else
+      throw new IllegalArgumentException("Invalid filename: " + filename)
   }
 
 }
 
 import MPictureTmp._
 
-case class MPictureTmp(key: String) {
-  val file = new File(TEMP_DIR, key + ".jpg")
+case class MPictureTmp(filename: String) {
+
+  // Все параметры разом.
+  val (key, fmt, markerOpt) = {
+    val Some(List(_key, fmtStrOrNull, markerStr)) = FILENAME_RE.unapplySeq(filename)
+    val _fmt = if(fmtStrOrNull == null || fmtStrOrNull.isEmpty)  fmtDflt  else  OutImgFmts.withName(fmtStrOrNull)
+    val _marker = if (markerStr.isEmpty) None else Some(markerStr)
+    (_key, _fmt, _marker)
+  }
+
+  val file = {
+    new File(TEMP_DIR, filename)
+  }
+
+  def isExist = file.isFile
+
 }
 

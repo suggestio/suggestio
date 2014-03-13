@@ -13,6 +13,7 @@ import org.elasticsearch.index.query.QueryBuilders
 import io.suggest.event.SioNotifierStaticClientI
 import scala.util.{Failure, Success}
 import util.PlayMacroLogsImpl
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -50,7 +51,15 @@ object MMartAd extends EsModelStaticT[MMartAd] with PlayMacroLogsImpl {
   val DISCOUNT_TPL_ESFN = "discoTpl"
 
   protected def dummy(id: String) = {
-    MMartAd(id=Some(id), offers=Nil, picture=null, martId=null, companyId = null, shopId = null)
+    MMartAd(
+      id = Some(id),
+      offers = Nil,
+      picture = null,
+      martId = null,
+      companyId = null,
+      shopId = null,
+      textAlign = null
+    )
   }
 
   private def shopIdQuery(shopId: ShopId_t) = QueryBuilders.termQuery(SHOP_ID_ESFN, shopId)
@@ -74,12 +83,19 @@ object MMartAd extends EsModelStaticT[MMartAd] with PlayMacroLogsImpl {
     case (COMPANY_ID_ESFN, value)   => acc.companyId = companyIdParser(value)
     case (PICTURE_ESFN, value)      => acc.picture = stringParser(value)
     case (PRIO_ESFN, value)         => acc.prio = Some(intParser(value))
-    // TODO Opt: Стоит использоваться вместо java-reflections ускоренные scala-json парсеры на базе case-class'ов.
     case (USER_CAT_ID_ESFN, value)  => acc.userCatId = Some(stringParser(value))
-    case (OFFER_ESFN, value)        => acc.offers = JacksonWrapper.convert[List[MMartAdProduct]](value)
+    case (OFFER_ESFN, value: java.util.ArrayList[_]) =>
+      acc.offers = value.toList.map {
+        case jsObject: java.util.HashMap[_, _] =>
+          if (jsObject containsKey VENDOR_ESFN)
+            JacksonWrapper.convert[MMartAdProduct](jsObject)
+          else if (jsObject containsKey DISCOUNT_ESFN)
+            JacksonWrapper.convert[MMartAdDiscount](jsObject)
+          else ???
+      }
     case (PANEL_ESFN, value)        => acc.panel = Some(JacksonWrapper.convert[MMartAdPanelSettings](value))
     case (IS_SHOWN_ESFN, value)     => acc.isShown = booleanParser(value)
-    case (TEXT_ALIGN_ESFN, value)   => acc.textAligns = JacksonWrapper.convert[List[MMartAdTextAlign]](value)
+    case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = JacksonWrapper.convert[MMartAdTextAlign](value)
   }
 
   def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
@@ -284,12 +300,12 @@ case class MMartAd(
   var martId      : MartId_t,
   var offers      : List[MMartAdOfferT],
   var picture     : String,
+  var textAlign   : MMartAdTextAlign,
   var shopId      : Option[ShopId_t] = None,
   var companyId   : MCompany.CompanyId_t,
   var panel       : Option[MMartAdPanelSettings] = None,
   var prio        : Option[Int] = None,
   var userCatId   : Option[String] = None,
-  var textAligns  : List[MMartAdTextAlign] = Nil,
   var isShown     : Boolean = false,
   var id          : Option[String] = None
 ) extends EsModelT[MMartAd] {
@@ -314,11 +330,8 @@ case class MMartAd(
       acc.endArray()
     }
     // Также рендерим данные по textAlign на устройствах.
-    if (!textAligns.isEmpty) {
-      acc.startArray(TEXT_ALIGN_ESFN)
-        textAligns foreach { _ render acc }
-      acc.endArray()
-    }
+    // TODO Используем reflections из-за феноменальной глючности XCB на уровнях вложенности > 2
+    acc.rawField(TEXT_ALIGN_ESFN, JacksonWrapper.serialize(textAlign).getBytes())
   }
 
   /**
@@ -346,9 +359,8 @@ trait MMartAdOfferT extends Serializable {
 
 case class MMartAdProduct(
   vendor:   MMAdStringField,
-  model:    Option[MMAdStringField],
-  oldPrice: Option[MMAdFloatField],
-  price:    MMAdFloatField
+  price:    MMAdFloatField,
+  oldPrice: Option[MMAdFloatField]
 ) extends MMartAdOfferT {
 
   def isProduct = true
@@ -356,10 +368,6 @@ case class MMartAdProduct(
   def renderFields(acc: XContentBuilder) {
     acc.field(VENDOR_ESFN)
     vendor.render(acc)
-    if (model.isDefined) {
-      acc.field(MODEL_ESFN)
-      model.get.render(acc)
-    }
     if (oldPrice.isDefined) {
       acc.field(OLD_PRICE_ESFN)
       oldPrice.get.render(acc)
@@ -372,7 +380,7 @@ case class MMartAdProduct(
 case class MMartAdDiscount(
   text1: Option[MMAdStringField],
   discount: MMAdFloatField,
-  // TODO Добавить discount: id шаблона + цвет
+  template: DiscountTemplate,
   text2: Option[MMAdStringField]
 ) extends MMartAdOfferT {
 
@@ -385,10 +393,20 @@ case class MMartAdDiscount(
     }
     acc.field(DISCOUNT_ESFN)
     discount.render(acc)
+    template.render(acc)
     if (text2.isDefined) {
       acc.field(TEXT2_ESFN)
       text2.get.renderFields(acc)
     }
+  }
+}
+
+case class DiscountTemplate(id: Int, color: String) {
+  def render(acc: XContentBuilder) {
+    acc.startObject(DISCOUNT_TPL_ESFN)
+      .field("id", id)
+      .field(COLOR_ESFN, color)
+    .startObject()
   }
 }
 
@@ -432,12 +450,23 @@ case class MMartAdPanelSettings(color: String) {
 }
 
 
-case class MMartAdTextAlign(id: String, align: String) {
-  def render(acc: XContentBuilder) {
-    acc.startObject()
-      .field("id", id)
-      .field(ALIGN_ESFN, align)
-    .endObject()
+case class MMartAdTAPhone(align: String)
+case class MMartAdTATablet(alignTop: String, alignBottom: String)
+case class MMartAdTextAlign(phone: MMartAdTAPhone, tablet: MMartAdTATablet)
+
+
+/** Допустимые значения textAlign-полей. */
+object TextAlignValues extends Enumeration {
+  type TextAlignValue = Value
+  val left, right = Value
+
+  def maybeWithName(n: String): Option[TextAlignValue] = {
+    try {
+      Some(withName(n))
+    } catch {
+      case _: Exception => None
+    }
   }
 }
+
 

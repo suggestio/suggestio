@@ -18,7 +18,13 @@ libraryDependencies ++= Seq(
   "io.suggest" %% "util-play" % "0.6.0-SNAPSHOT"
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
-    ,
+  ,
+  // для разбора upload-частей, нужна помощь mime magic bytes
+  "jmimemagic" % "jmimemagic" % "0.1.2"
+    exclude("xml-apis", "xml-apis")
+    exclude("xml-apis", "xmlParserAPIs")
+    exclude("xerces",   "xerces")
+  ,
   // coffeescript-компилятор используем свой заместо компилятора play по ряду причин (последний прибит гвоздями к sbt-plugin, например).
   "org.jcoffeescript" % "jcoffeescript" % "1.6-SNAPSHOT",
   // for domain validation:

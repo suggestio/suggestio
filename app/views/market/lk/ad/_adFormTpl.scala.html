@@ -1,4 +1,4 @@
-@(af: Form[_], call: Call, btnText: String, dfltIsProduct: Boolean = true)(implicit ctx: util.Context)
+@(af: Form[_], call: Call, btnText: String, mmcats: MMartCategory.CollectMMCatsAcc_t, dfltIsProduct: Boolean = true)(implicit ctx: util.Context)
 
 @* Рендер формы редактирования произвольной рекламы.
  * dfltIsProduct обозначает дефолтовый режим работы формы. true - с ценами, false - реклама со скидками. *@
@@ -6,10 +6,17 @@
 @import helper._
 @import controllers.MarketAd.FormModes._
 
+@helper.javascriptRouter("jsRoutes")(
+  routes.javascript.MarketCategory.topCatsOf,
+  routes.javascript.MarketCategory.directSubcatsOf
+)
+
 @form(call, 'id -> "promoOfferForm") {
 
+  @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@
   @af.globalError
 
+  @_adFormCatSelectorsTpl(mmcats)
 
   <div class="block">
     <div class="border-line"></div>
@@ -21,7 +28,7 @@
     <div class="slide-content" id="brand-hat">
       <div class="subhat">
         <span class="title">Редактирование логотипа</span>
-        <a class="toggle open" href="#" data-content="brand-hat-logo">Свернуть</a>
+        <a class="toggle" href="#" data-content="brand-hat-logo">Развернуть</a>
       </div>
       <div class="border-line"></div>
 
@@ -54,36 +61,7 @@
         <div class="border-line"></div>
       </div>
 
-      <table cellpadding="0" cellspacing="0" class="color-list input-wrap big">
-        <tr>
-          <td class="left">
-            <label>Цвет плашки:</label>
-          </td>
-
-          <td class="right">
-            <div class="item">
-              <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="000000"/>
-              <div class="color" style="background: black;">&nbsp;</div>
-            </div>
-            <div class="item">
-              <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="ffffff"/>
-              <div class="color" style="background: white;">&nbsp;</div>
-            </div>
-            <div class="item">
-              <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="959595"/>
-              <div class="color" style="background: gray;">&nbsp;</div>
-            </div>
-            <div class="item">
-              <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="000000"/>
-              <div class="color custom">&nbsp;
-                @* Input для цвета верхней плашки. *@
-                <input id="panelColor" type="hidden" name="panelColor" value="@af("panel.color").value.getOrElse("#000000")"/>
-              </div>
-            </div>
-          </td>
-        </tr>
-      </table>
-
+      @_adFormPanelColorTpl(af)
     </div>
   </div>
 
@@ -137,21 +115,18 @@
     <div class="border-line"></div>
 
     <div class="tabs">
-      <div class="tab act" data-mode="p">
+      <div class="tab @if(dfltIsProduct) {act}" data-mode="@PRODUCT">
         ТЕКСТОВОЙ
       </div>
-      <div class="tab" data-mode="d">
+      <div class="tab @if(!dfltIsProduct) {act}" data-mode="@DISCOUNT">
         СКИДОЧНЫЙ
       </div>
     </div>
     <div class="blue-line"></div>
 
     <div class="slide-content" id="templates">
-      @* TODO Сейчас рендерится только один кусок формы. Нужно сделать js-переключение между двумя вариантами формы. *@
       @_adFormProductTpl(af, isShown = dfltIsProduct)
       @_adFormDiscountTpl(af, isShown = !dfltIsProduct)
-
-
 
       <div class="border-line"></div>
 
@@ -187,7 +162,7 @@
 
 
   @* Input для id выбранной категории. *@
-  <input data-curr-cat="cat" type="hidden" name="catId" value="@af("catId").value" />
+  <input id="catId" data-curr-cat="cat" type="hidden" name="catId" value="@af("catId").value" />
 
 
   @* Режим формы. Должен переключаться при переключении вкладки. *@
@@ -203,7 +178,10 @@
 
   <div class="submit-wrap">
     <input class="green-but-small" type="submit" value="@btnText"/>
+
+    <a href="#remove-ad" class="red-but-small popup-but">Удалить</a>
   </div>
+
 
 }
 

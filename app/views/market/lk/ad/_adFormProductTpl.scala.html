@@ -5,73 +5,48 @@
 @import helper._
 @import util.FormHelpers.myFields
 
-<div class="tab-content"@if(!isShown) {style="display: none;"}>
+@mkField(clazz: String = "", style:String = "")(content: Html) = {
+  <table cellpadding="0" cellspacing="0" class="input-wrap @clazz" @if(!style.isEmpty) { style="@style" }>
+    <tr>@content</tr>
+  </table>
+}
+
+<div class="tab-content"@if(!isShown) { style="display: none;"}>
 
   @* Строка "производитель" и её цвет. *@
-  <table cellpadding="0" cellspacing="0" class="input-wrap big">
-    <tr>
-
-      @inputText(
-      af("ad.product.vendor.value"),
+  @mkField("big") {
+    @inputText(
+      af("ad.vendor.value"),
       '_label -> "Производитель:",
-      'id -> "vendorValueInput")
-
-      <td class="select-color">
-        @Messages("Color"):
-        <div class="color custom">&nbsp;
-          @defining("ad.product.vendor.color") { colorFN =>
-            <input type="hidden" name="@colorFN" value="@af(colorFN).value"/>
-          }
-        </div>
-      </td>
-    </tr>
-  </table>
+      'id -> "vendorValueInput"
+    )
+    @_selectColorTpl("ad.vendor.color", af)
+  }
 
   @* Строка цены и её цвет. *@
-  <table cellpadding="0" cellspacing="0" class="input-wrap" style="margin-bottom: 0;">
-
+  @mkField(style = "margin-bottom: 0;") {
     @inputText(
-    af("ad.product.price.value"),
-    '_label -> "Цена:",
-    'id -> "priceValueInput")
+      af("ad.price.value"),
+      '_label -> "Цена:",
+      'id -> "priceValueInput"
+    )
+    @_selectColorTpl("ad.price.color", af)
+  }
 
-      <td class="select-color">
-        @Messages("Color"):
-        <div class="color custom">&nbsp;
-          @defining("ad.product.price.color") { colorFN =>
-            <input type="hidden" name="@colorFN" value="@af(colorFN).value"/>
-          }
-        </div>
-      </td>
-    </tr>
-  </table>
-
-  <table cellpadding="0" cellspacing="0" class="input-wrap" style="margin-top: 10px;">
-
+  @mkField(style = "margin-top: 10px;") {
     <td class="left">&nbsp;</td>
     <td class="right">
       <input type="checkbox" id="old-price-status" />
       <label for="old-price-status" class="gray">Перечеркнуть</label>
     </td>
-  </table>
+  }
 
-  <table cellpadding="0" cellspacing="0" class="input-wrap old-price">
-
+  @mkField("old-price") {
     @inputText(
-    af("ad.product.oldPrice.value"),
-    '_label -> "Старая цена")
-
-    <td class="select-color">
-      @Messages("Color"):
-      <div class="color custom">&nbsp;
-        @defining("ad.product.oldPrice.color") { colorFN =>
-        <input type="hidden" name="@colorFN" value="@af(colorFN).value"/>
-        }
-      </div>
-    </td>
-    </tr>
-  </table>
-
+      af("ad.oldPrice.value"),
+      '_label -> "Старая цена"
+    )
+    @_selectColorTpl("ad.oldPrice.color", af)
+  }
 </div>
-
 

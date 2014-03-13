@@ -14,6 +14,9 @@ import concurrent.duration._
 import play.api.libs.concurrent.Akka
 import scala.concurrent.{Future, Promise}
 import play.api.mvc.Security.username
+import util.img._
+import ImgFormUtil.imgIdM
+import net.sf.jmimemagic.Magic
 
 /**
  * Suggest.io
@@ -31,8 +34,11 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
     lagMs milliseconds
   }
 
+  /** Маркер картинки для logo-вещичек */
+  val SHOP_TMP_LOGO_MARKER = "shopLogo"
+
   /** Форма добавления/редактирования магазина. */
-  val shopFormM = Form(mapping(
+  val shopM = mapping(
     "name"         -> shopNameM,
     "description"  -> publishedTextOptM,
     "mart_floor"   -> optional(martFloorM),
@@ -46,13 +52,31 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
   {mshop =>
     import mshop._
     Some((name, description, martFloor, martSection))
-  })
+  }
 
-  /** Ограниченный маппинг магазина. Используется редактировании оного для имитации неизменяемых полей на форме.
-    * Некоторые поля не доступны для редактирования владельцу магазина, и эта форма как раз для него. */
+  private val shopKM = "shop" -> shopM
+
+  /** Форма на которой нельзя менять логотип, но можно настраивать разные поля.
+    * Подходит для редактирования из ТЦ-аккаунта */
+  val shopFormM = Form(shopKM)
+
+  private val logoImgIdKM = "logoImgId" -> optional(imgIdM)
+
+  /** Форма для заполнения страницы. */
+  val shopFullFormM = Form(tuple(
+    shopKM,
+    logoImgIdKM
+  ))
+
+  /** Ограниченный маппинг магазина. Используется при сабмите редактирования профиля магазина для имитации
+    * неизменяемых полей на форме. Некоторые поля не доступны для редактирования владельцу магазина. */
   val limitedShopFormM = Form(tuple(
-    "name"         -> shopNameM,
-    "description"  -> publishedTextOptM
+    // Вложенный маппинг для совместимости с исходным шаблоном.
+    "shop" -> tuple(
+      "name"         -> shopNameM,
+      "description"  -> publishedTextOptM
+    ),
+    logoImgIdKM
   ))
 
 
@@ -85,7 +109,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
     val martId = mshop.martId.get
     MMart.getById(martId).map {
       case Some(mmart) =>
-        val formBinded = shopFormM.fill(mshop)
+        val formBinded = shopFullFormM fill (mshop, None)
         Ok(shopEditFormTpl(mmart, mshop, formBinded))
 
       case None => martNotFound(martId)
@@ -107,7 +131,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
           case None        => martNotFound(martId)
         }
       },
-      {case (name, description) =>
+      {case ((name, description), imgIdOpt) =>
         mshop.name = name
         mshop.description = description
         mshop.save.map { _ =>
@@ -266,7 +290,40 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
     lagPromise.future
   }
 
+
+  /**
+   * Загрузка картинки для логотипа магазина. Права на доступ к магазину проверяем просто для галочки.
+   * @return Тот же формат ответа, что и для просто temp-картинок.
+   */
+  def handleShopTempLogo = IsAuth(parse.multipartFormData) { implicit request =>
+    request.body.file("picture") match {
+      case Some(pictureFile) =>
+        val fileRef = pictureFile.ref
+        val srcFile = fileRef.file
+        // Если на входе png/gif, то надо эти форматы выставить в outFmt. Иначе jpeg.
+        val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
+        val outFmt = OutImgFmts.forImageMime(srcMagicMatch.getMimeType)
+        val mptmp = MPictureTmp.getForTempFile(fileRef, outFmt, Some(SHOP_TMP_LOGO_MARKER))
+        try {
+          ShopLogoImageUtil.convert(srcFile, mptmp.file)
+          Ok(Img.jsonTempOk(mptmp.filename))
+        } catch {
+          case ex: Throwable =>
+            debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
+            val reply = Img.jsonImgError("Unsupported picture format.")
+            BadRequest(reply)
+        } finally {
+          srcFile.delete()
+        }
+
+      case None =>
+        val reply = Img.jsonImgError("Picture not found in request.")
+        NotAcceptable(reply)
+    }
+  }
+
+
   private def martNotFound(martId: MartId_t) = NotFound("mart not found: " + martId)  // TODO Нужно дергать 404-шаблон.
-  private def shopNotFound(shopId: ShopId_t) = NotFound("Shop not found: " + shopId)  // TODO
+  private def shopNotFound(shopId: ShopId_t) = NotFound("Shop not found: " + shopId)
 
 }

@@ -95,6 +95,7 @@ GET  /m/lk/mart/shop/:shopId            controllers.MarketMartLk.showShop(shopId
 GET  /m/lk/mart/shop/:shopId/offers     controllers.MarketMartLk.showShopOffers(shopId)
 
 # личный кабинет купца-арендатора ТЦ.
+POST /m/lk/s/logo                       controllers.MarketShopLk.handleShopTempLogo
 GET  /m/lk/s/:shopId                    controllers.MarketShopLk.showShop(shopId)
 GET  /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopForm(shopId)
 POST /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopFormSubmit(shopId)
@@ -102,6 +103,7 @@ GET  /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAccept(sh
 POST /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAcceptSubmit(shopId, eaId)
 GET  /m/lk/s/:shopId/ad/new             controllers.MarketAd.createShopAd(shopId)
 POST /m/lk/s/:shopId/ad/new             controllers.MarketAd.createShopAdSubmit(shopId)
+
 GET  /m/lk/a/:adId/edit                 controllers.MarketAd.editShopAd(adId)
 POST /m/lk/a/:adId/edit                 controllers.MarketAd.editShopAdSubmit(adId)
 POST /m/lk/a/:adId/delete               controllers.MarketAd.deleteSubmit(adId)
@@ -122,7 +124,7 @@ POST /m/lk/poffer/:offerId/edit         controllers.MarketOffer.editPromoOfferFo
 
 
 POST /img/tmp/prepare                   controllers.Img.handleTempImg
-GET  /img/tmp/:key                      controllers.Img.getTempImg(key)
+GET  /img/tmp/:filename                 controllers.Img.getTempImg(filename)
 GET  /img/orig/:imgId                   controllers.Img.getOrig(imgId)
 GET  /img/any/:imgId                    controllers.Img.getImg(imgId)
 
