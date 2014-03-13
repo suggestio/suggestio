@@ -329,7 +329,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     val catIdOpt = af(CAT_ID_K).value.filter { _ => af.errors(CAT_ID_K).isEmpty }
     val mmcatsFut: Future[CollectMMCatsAcc_t] = catIdOpt match {
       case Some(catId) =>
-        MMartCategory.collectCatListsUpTo(catOwnerId=catOwnerId, currCatId=catId)
+        nearCatsList(catOwnerId=catOwnerId, catId=catId)
           .filter { _.isEmpty }
           .recoverWith { case ex: NoSuchElementException => topCatsAsAcc(catOwnerId) }
 
@@ -345,21 +345,26 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       topCats => List(None -> topCats)
     }
   }
+  
+
+  /** Выдать над и под-категории по отношению к указанной категории. */
+  private def nearCatsList(catOwnerId: String, catId: String): Future[CollectMMCatsAcc_t] = {
+    val subcatsFut = MMartCategory.findDirectSubcatsOf(catId)
+    for {
+      upCats  <- MMartCategory.collectCatListsUpTo(catOwnerId=catOwnerId, currCatId=catId)
+      subcats <- subcatsFut
+    } yield {
+      if (!subcats.isEmpty)
+        upCats ++ List(None -> subcats)
+      else
+        upCats
+    }
+  }
 
   private def renderEditFormWith(af: AdFormM, mshopFut: Future[Option[MShop]], mad: MMartAd)(implicit ctx: Context) = {
     val catOwnerId = mad.martId
     val mmcatsFut: Future[CollectMMCatsAcc_t] = mad.userCatId match {
-      case Some(catId) =>
-        val subcatsFut = MMartCategory.findDirectSubcatsOf(catId)
-        for {
-          upCats  <- MMartCategory.collectCatListsUpTo(catOwnerId=catOwnerId, currCatId=catId)
-          subcats <- subcatsFut
-        } yield {
-          if (!subcats.isEmpty)
-            upCats ++ List(None -> subcats)
-          else
-            upCats
-        }
+      case Some(catId) => nearCatsList(catOwnerId=catOwnerId, catId=catId)
       case None => topCatsAsAcc(catOwnerId)
     }
     for {
