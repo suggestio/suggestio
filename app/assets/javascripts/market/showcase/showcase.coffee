@@ -137,4 +137,4 @@ window.siomart = siomart
 siomart_init_cb = () ->
   siomart.init()
 
-setTimeout siomart_init_cb, 1500
+setTimeout siomart_init_cb, 150

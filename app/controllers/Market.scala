@@ -19,8 +19,10 @@ object Market extends SioController with MacroLogsImpl {
 
   def index = MaybeAuth { implicit request =>
 
+    val html = indexTpl().toString.split("\n").map(_.trim.filter(_ >= ' ')).mkString
+
     val JsonObject = Json.toJson(
-      Map("html" -> indexTpl().toString)
+      Map("html" -> html)
     )
 
     Ok( Jsonp(JSONP_CB_FUN, JsonObject ) )
