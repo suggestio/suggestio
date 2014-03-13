@@ -14,6 +14,7 @@ import scala.concurrent.Future
 import play.api.mvc.Request
 import play.api.Play.current
 import TextAlignValues.TextAlignValue
+import MMartCategory.CollectMMCatsAcc_t
 
 /**
  * Suggest.io
@@ -176,7 +177,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   }
 
   // Дублирующиеся куски маппина выносим за пределы метода.
-  private val catIdKM = "catId" -> userCatIdM
+  private val CAT_ID_K = "catId"
+  private val catIdKM = CAT_ID_K -> userCatIdM
   private val adImgIdKM = "image_key"  -> imgIdM
   private val panelColorKM = "panelColor" -> colorM
     .transform(
@@ -245,8 +247,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
    * @param shopId id магазина.
    */
   def createShopAd(shopId: String) = IsShopAdm(shopId).async { implicit request =>
-    MMartCategory.findTopForOwner(shopId) map { mmcats1 =>
-      Ok(createAdTpl(request.mshop, mmcats1, adProductFormM))
+    import request.mshop
+    renderCreateFormWith(
+      af = adProductFormM,
+      catOwnerId = mshop.martId getOrElse shopId,
+      mshop = mshop
+    ) map {
+      Ok(_)
     }
   }
 
@@ -315,19 +322,40 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   /** Общий код рендера createAdTpl с запросом необходимых категорий. */
   private def renderCreateFormWith(af: AdFormM, catOwnerId: String, mshop: MShop)(implicit ctx: Context) = {
-    MMartCategory.findTopForOwner(catOwnerId) map { mmcats1 =>
-      createAdTpl(mshop, mmcats1, af)
+    val catIdOpt = af(CAT_ID_K).value.filter { _ => af.errors(CAT_ID_K).isEmpty }
+    val mmcatsFut: Future[CollectMMCatsAcc_t] = catIdOpt match {
+      case Some(catId) =>
+        MMartCategory.collectCatListsUpTo(catOwnerId=catOwnerId, currCatId=catId)
+          .filter { _.isEmpty }
+          .recoverWith { case ex: NoSuchElementException => topCatsAsAcc(catOwnerId) }
+
+      case None => topCatsAsAcc(catOwnerId)
+    }
+    mmcatsFut map { mmcats =>
+      createAdTpl(mshop, mmcats, af)
     }
   }
 
-  private def renderEditFormWith(af: AdFormM, catOwnerId:String, mshopFut: Future[Option[MShop]], mad: MMartAd)(implicit ctx: Context) = {
+  private def topCatsAsAcc(catOwnerId: String): Future[CollectMMCatsAcc_t] = {
+    MMartCategory.findTopForOwner(catOwnerId) map {
+      topCats => List(None -> topCats)
+    }
+  }
+
+  private def renderEditFormWith(af: AdFormM, mshopFut: Future[Option[MShop]], mad: MMartAd)(implicit ctx: Context) = {
+    val catOwnerId = mad.martId
+    val mmcatsFut: Future[CollectMMCatsAcc_t] = mad.userCatId match {
+      case Some(catId)  =>
+        MMartCategory.collectCatListsUpTo(catOwnerId=catOwnerId, currCatId=catId)
+      case None => topCatsAsAcc(catOwnerId)
+    }
     for {
       mmcats1  <- MMartCategory.findTopForOwner(catOwnerId)
       mshopOpt <- mshopFut
+      mmcats   <- mmcatsFut
     } yield {
-      mshopOpt match {
-        case Some(mshop) => Some(editAdTpl(mshop, mad, mmcats1, af))
-        case None => None
+      mshopOpt map { mshop =>
+        editAdTpl(mshop, mad, mmcats, af)
       }
     }
   }
@@ -336,7 +364,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     val shopId = mad.shopId.get
     // TODO Надо фетчить магазин и категории одновременно.
     val mshopFut = MShop.getById(shopId)
-    renderEditFormWith(af, mad.martId, mshopFut, mad) map {
+    renderEditFormWith(af, mshopFut, mad) map {
       case Some(render) => NotAcceptable(render)
       case None => shopNotFound(shopId)
     }
@@ -352,7 +380,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
         val imgIdKey = OrigImgIdKey(mad.picture)
         val formFilled = FormModes.getFormForClass(mad.offers.head) fill (imgIdKey, mad)
         val mshopFut = MShop.getById(_shopId)
-        renderEditFormWith(formFilled, mad.martId, mshopFut, mad) map {
+        renderEditFormWith(formFilled, mshopFut, mad) map {
           case Some(render) => Ok(render)
           case None => shopNotFound(_shopId)
         }

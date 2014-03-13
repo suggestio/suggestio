@@ -1,0 +1,28 @@
+@(mmcats: MMartCategory.CollectMMCatsAcc_t)(implicit ctx: util.Context)
+
+@* Механизм задания/изменения категории рекламной карточки. *@
+
+<div class="categories" id="cat-select">
+  @mmcats.map { case (selectedIdOpt, mmcats1) =>
+    <span class="cbca-select">
+      <div class="selectbox">
+        <div class="value">
+          <div class="selected">--------</div>
+          <div class="dropdown">
+
+            @* Выводим список категорий на текущем уровне.
+               Для активной категории нужно добавлять атрибут data-selected="selected" *@
+            @mmcats1.zipWithIndex.map { case (mmcat, i) =>
+              <div class="@if(i%2 == 0) {odd} else {even} option" data-value="@mmcat.id"@if(selectedIdOpt.isDefined && selectedIdOpt.get == mmcat.id.get) { data-selected="selected"}>
+                @mmcat.name
+              </div>
+            }
+
+          </div>
+        </div>
+        <div class="triger">
+        </div>
+      </div>
+    </span>
+  }
+</div><!-- categories end -->

@@ -1,66 +1,18 @@
-@(mshop: MShop, mmcats1: Seq[MMartCategory], af: Form[_])(implicit ctx: util.Context)
+@(mshop: MShop, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_])(implicit ctx: util.Context)
 
 @* Рендер страницы редактирования существующего ТЦ. *@
 @import ctx._
-@import routes.MarketMartLk._
 
-@helper.javascriptRouter("jsRoutes")(
-  routes.javascript.MarketCategory.topCatsOf,
-  routes.javascript.MarketCategory.directSubcatsOf
-)
+@adFormBase(
+  title = "Создание рекламной карточки товара",
+  shopId = mshop.id.get
+) {
 
-@market.lk.lkBase("Создание рекламной карточки товара") {
-
-  <div class="title-wrap">
-    <div class="center">
-      <a class="back-but" href="@showShop(mshop.id.get)">&nbsp;</a>
-      <div class="title-inner">
-        СОЗДАНИЕ РЕКЛАМНОЙ КАРТОЧКИ ТОВАРА
-      </div>
-    </div>
-  </div>
-
-  <div class="body">
-
-    <div class="create-ad">
-
-      @* Для активной категории нужно добавлять атрибут data-selected="selected" *@
-      <div class="categories" id="cat-select">
-        <!--<input type="hidden" value="" />-->
-          <span class="cbca-select">
-
-            <div class="selectbox">
-              <div class="value">
-                <div class="selected">--------</div>
-                <div class="dropdown">
-
-                  @mmcats1.zipWithIndex.map { case (mmcat, i) =>
-
-                  <div class="@if(i%2 == 0) {odd} else {even} option" data-value="@mmcat.id">
-                    @mmcat.name
-                  </div>
-
-                  }
-
-                </div>
-              </div>
-              <div class="triger">
-
-              </div>
-            </div>
-          </span>
-
-      </div><!-- categories end -->
-
-      @_adFormTpl(
-        af = af,
-        call = routes.MarketAd.createShopAdSubmit(mshop.id.get),
-        btnText = Messages("Create")
-      )
-
-    </div><!-- create-ad end-->
-
-
-  </div>
+  @_adFormTpl(
+    af = af,
+    call = routes.MarketAd.createShopAdSubmit(mshop.id.get),
+    btnText = Messages("Create"),
+    mmcats = mmcats
+  )
 
 }

@@ -1,10 +1,12 @@
-@(mshop: MShop, mad: MMartAd, mmcats1: Seq[MMartCategory], af: Form[_])(implicit ctx: util.Context)
+@(mshop: MShop, mad: MMartAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_])(implicit ctx: util.Context)
 
 @* Страница с формой редактирования рекламной карточки. *@
 @import ctx._
-@import market.lk._
 
-@lkBase("Редактирование рекламной карточки") {
+@adFormBase(
+  title = "Редактирование рекламной карточки",
+  shopId = mshop.id.get
+) {
 
   @* Кнопка стирания рекламной карточки пока лежит тут. До лучших времён. *@
   @stuff._deleteSmthFormBtnTpl(routes.MarketAd.deleteSubmit(mad.id.get))
@@ -13,6 +15,7 @@
     af = af,
     call = routes.MarketAd.editShopAdSubmit(mad.id.get),
     btnText = Messages("Save"),
+    mmcats = mmcats,
     dfltIsProduct = mad.offers.head.isProduct
   )
 
