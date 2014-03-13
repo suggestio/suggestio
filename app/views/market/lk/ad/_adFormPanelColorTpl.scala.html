@@ -11,16 +11,16 @@
 
     @defining(af("panelColor").value) { currColorOpt =>
     @defining(currColorOpt.getOrElse("000000")) { currColorHex =>
-    @defining(Map("000000" -> "gray", "ffffff" -> "white", "959595" -> "gray")) { panelColors =>
+    @defining(Map("000000" -> "black", "ffffff" -> "white", "959595" -> "gray")) { panelColors =>
       <td class="right">
         @panelColors.map { case (colorHex, colorStyle) =>
           <div class="item">
-            <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="@colorHex" @if(colorHex == currColorHex) {checked}/>
+            <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="@colorHex" @if(colorHex == currColorHex) {checked="checked"}/>
             <div class="color" style="background: @colorStyle;">&nbsp;</div>
           </div>
         }
         <div class="item">
-          <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="000000" @if(!panelColors.contains(currColorHex) && currColorOpt.isDefined) {checked}/>
+          <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="@currColorOpt.getOrElse("000000")" @if(!panelColors.contains(currColorHex) && currColorOpt.isDefined) {checked}/>
           <div class="color custom">&nbsp;
             @* Input для цвета верхней плашки. *@
             <input id="panelColor" type="hidden" name="panelColor" value="@currColorOpt"/>

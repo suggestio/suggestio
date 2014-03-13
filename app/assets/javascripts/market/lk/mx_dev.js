@@ -26,7 +26,7 @@ var cbca = {};
     $checkbox = $wrap.find('.one-checkbox');
 
     $this.ColorPicker({
-      color: '#000000',
+      color: '#'+$this.find('input').val(),
       onBeforeShow: function() {
         $checkbox.trigger('click');
       },
