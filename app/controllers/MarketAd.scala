@@ -9,7 +9,7 @@ import util.img.ImgFormUtil._
 import util.FormUtil._
 import play.api.data._, Forms._
 import util.acl._
-import util.img.{ImgIdKey, ImgInfo, ImgFormUtil, OrigImgIdKey}
+import util.img._
 import scala.concurrent.Future
 import play.api.mvc.Request
 import play.api.Play.current
@@ -179,7 +179,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   // Дублирующиеся куски маппина выносим за пределы метода.
   private val CAT_ID_K = "catId"
   private val catIdKM = CAT_ID_K -> userCatIdM
-  private val adImgIdKM = "image_key"  -> imgIdM
+  private val AD_IMG_ID_K = "image_key"
+  private val adImgIdKM = AD_IMG_ID_K  -> imgIdJpegM
+
   private val panelColorKM = "panelColor" -> colorM
     .transform(
       { MMartAdPanelSettings.apply },
@@ -225,6 +227,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   
   val adProductFormM  = getAdFormM(adProductM)
   val adDiscountFormM = getAdFormM(adDiscountM)
+
+
 
   /** Выбрать форму в зависимости от содержимого реквеста. Если ad.mode не валиден, то будет Left с формой с global error. */
   private def detectAdForm(implicit request: Request[collection.Map[String, Seq[String]]]): Either[AdFormM, (FormMode, AdFormM)] = {
@@ -304,7 +308,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
               case Nil =>
                 debug(logPrefix + "Failed to handle img key: " + imgKey)
-                val formWithError = formBinded.withGlobalError("error.image.save")
+                val formWithError = formBinded.withError(AD_IMG_ID_K, "error.image.save")
                 renderCreateFormWith(formWithError, catOwnerId, request.mshop) map { render =>
                   NotAcceptable(render)
                 }
@@ -422,7 +426,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
               // Не удалось обработать картинку. Вернуть форму назад
               case Nil =>
                 debug(s"editShopAdSubmit($adId): Failed to update iik = " + iik)
-                val formWithError = formBinded.withGlobalError("error.image.save")
+                val formWithError = formBinded.withError(AD_IMG_ID_K, "error.image.save")
                 renderFailedEditFormWith(formWithError, mad)
             }
           }

@@ -11,6 +11,7 @@ import java.io.{File, FileNotFoundException}
 import org.apache.commons.io.FileUtils
 import scala.util.{Failure, Success}
 import java.lang
+import io.suggest.util.MacroLogsImplLazy
 
 /**
  * Suggest.io
@@ -27,6 +28,15 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   val imgIdM  = nonEmptyText(minLength = 8, maxLength = 42)
     .transform(ImgIdKey.apply, {iik: ImgIdKey => iik.key})
     .verifying("img.id.invalid.", { _.isValid })
+
+  /** Проверяем tmp-файл на использование jpeg. Уже сохраненные id не проверяются. */
+  val imgIdJpegM = imgIdM
+    .verifying("img.fmt.invalid", { iik => iik match {
+      case tiik: TmpImgIdKey =>
+        import tiik.mptmpOpt
+        mptmpOpt.isDefined  &&  mptmpOpt.get.fmt == OutImgFmts.JPEG
+      case oiik: OrigImgIdKey => true
+    }})
 
   /** Маппинг обязательного параметра кропа на реальность. */
   val imgCropM = nonEmptyText(minLength = 4, maxLength = 16)
@@ -78,7 +88,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     Future.traverse(newTmpImgs) { tii =>
       val fut = handleTmpImageForStoring(tii)
       fut onComplete { case tryResult =>
-        tii.iik.getFile.foreach(_.file.delete())
+        tii.iik.mptmpOpt.foreach(_.file.delete())
       }
       fut onFailure {
         case ex =>  error(s"Failed to store picture " + tii, ex)
@@ -103,7 +113,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
    * @return Фьючерс, содержащий imgId в виде строки.
    */
   def handleTmpImageForStoring(tii: ImgInfo[TmpImgIdKey]): Future[SavedTmpImg] = {
-    tii.iik.getFile match {
+    tii.iik.mptmpOpt match {
       case Some(mptmp) =>
         val id = MPict.randomId
         // Запустить чтение из уже отрезайзенного tmp-файла и сохранение как-бы-исходного материала в HBase
@@ -204,6 +214,29 @@ object ThumbImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
 }
 
 
+/** Обработка логотипов для магазинов. */
+object ShopLogoImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
+
+  /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
+    * прямоугольник с указанныыми сторонами). */
+  val DOWNSIZE_HORIZ_PX: Integer = Integer valueOf (current.configuration.getInt("img.logo.shop.maxsize.h.px") getOrElse 512)
+  val DOWNSIZE_VERT_PX: Integer  = Integer valueOf (current.configuration.getInt("img.logo.shop.maxsize.v.px") getOrElse 128)
+
+  /** Качество сжатия jpeg. */
+  val JPEG_QUALITY_PC: Double = current.configuration.getDouble("img.logo.shop.jpeg.quality") getOrElse 0.95
+
+  /** Если исходный jpeg после стрипа больше этого размера, то сделать resize.
+    * Иначе попытаться стрипануть icc-профиль по jpegtran, чтобы снизить размер без пересжатия. */
+  def MAX_SOURCE_JPEG_NORSZ_BYTES: Option[Long] = None
+
+  /** Картинка считается слишком маленькой для обработки, если хотя бы одна сторона не превышает этот порог. */
+  val MIN_SZ_PX: Int = current.configuration.getInt("img.logo.shop.side.min.px") getOrElse 30
+
+  /** Если на выходе получилась слишком жирная превьюшка, то отсеять её. */
+  def MAX_OUT_FILE_SIZE_BYTES: Option[Int] = None
+}
+
+
 object ImgIdKey {
   def apply(key: String): ImgIdKey = {
     if (key startsWith MPictureTmp.KEY_PREFIX) {
@@ -222,20 +255,25 @@ sealed trait ImgIdKey {
   override def hashCode = key.hashCode
 }
 
-case class TmpImgIdKey(key: String) extends ImgIdKey {
+case class TmpImgIdKey(filename: String) extends ImgIdKey with MacroLogsImplLazy {
+  import LOGGER._
+
+  val mptmpOpt = try {
+    Some(MPictureTmp(filename))
+  } catch {
+    case ex: Throwable =>
+      debug("Failed to bind filename: " + filename, ex)
+      None
+  }
 
   def isTmp: Boolean = true
+  def key = filename
 
-  def isExists: Future[Boolean] = {
-    Future successful MPictureTmp.isExist(key)
-  }
+  def isExists: Future[Boolean] = Future successful mptmpOpt.exists(_.isExist)
 
-  def isValid: Boolean = {
-    MPictureTmp.isKeyValid(key)
-  }
-  
-  def getFile = MPictureTmp.find(key)
+  def isValid = mptmpOpt.isDefined
 }
+
 
 case class OrigImgIdKey(key: String) extends ImgIdKey {
 
@@ -251,8 +289,45 @@ case class OrigImgIdKey(key: String) extends ImgIdKey {
 }
 
 
-/** Класс для объединения кропа и id картинки (чтобы не использовать Tuple2 с числовыми названиями полей) */
-case class ImgInfo[+T <: ImgIdKey](iik: T, cropOpt: Option[ImgCrop])
+/** Выходные форматы картинок. */
+object OutImgFmts extends Enumeration {
+  type OutImgFmt = Value
+  val JPEG = Value("jpeg")
+  val PNG  = Value("png")
+  val GIF  = Value("gif")
+
+  /**
+   * Предложить формат для mime-типа.
+   * @param mime Строка mime-типа.
+   * @return OutImgFmt. Если не-image тип, то будет IllegalArgumentException.
+   */
+  def forImageMime(mime: String): OutImgFmt = {
+    if (mime equalsIgnoreCase "image/png") {
+      PNG
+    } else if (mime equalsIgnoreCase "image/gif") {
+      GIF
+    } else if (mime startsWith "image/") {
+      JPEG
+    } else {
+      throw new IllegalArgumentException("Unknown/unsupported MIME type: " + mime)
+    }
+  }
+}
+
+import OutImgFmts._
+
+/**
+ * Класс для объединения кропа и id картинки (чтобы не использовать Tuple2 с числовыми названиями полей)
+ * @param iik Указатель на картинку.
+ * @param cropOpt Данные по желаемому кадрированию.
+ * @param outFmt Какой формат на выходе надо получить.
+ * @tparam T Реальный тип iik.
+ */
+case class ImgInfo[+T <: ImgIdKey](
+  iik     : T,
+  cropOpt : Option[ImgCrop],
+  outFmt  : OutImgFmt = JPEG
+)
 
 
 case class SavedTmpImg(idStr:String, tmpImgFile:File)

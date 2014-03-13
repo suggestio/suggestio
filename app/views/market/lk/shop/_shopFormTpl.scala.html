@@ -13,7 +13,7 @@
   <div class="fields">
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
       @inputText(
-      sf("name"),
+      sf("shop.name"),
       '_label -> "Название магазина:")
     </table>
 
@@ -22,7 +22,7 @@
       @* Номер этажа в ТЦ. *@
       <table cellpadding="0" cellspacing="0" class="input-wrap small">
         @inputText(
-          sf("mart_floor"),
+          sf("shop.mart_floor"),
           'placeholder -> 1 ::
           '_label -> "Этаж:" ::
           attrsRest : _*
@@ -32,7 +32,7 @@
       @* Номер секции в ТЦ. *@
       <table cellpadding="0" cellspacing="0" class="input-wrap small">
         @inputText(
-          sf("mart_section"),
+          sf("shop.mart_section"),
           'placeholder -> 101 ::
           '_label -> "Номер секции:" ::
           attrsRest : _*
@@ -43,7 +43,7 @@
 
     <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
       @textarea(
-        sf("description"),
+        sf("shop.description"),
         '_label -> "Описание магазина:"
       )
     </table>

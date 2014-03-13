@@ -14,6 +14,7 @@ import play.api.libs.json._
 import scala.concurrent.duration._
 import models.MPictureTmp
 import io.suggest.model.ImgWithTimestamp
+import net.sf.jmimemagic.Magic
 
 /**
  * Suggest.io
@@ -69,16 +70,16 @@ object Img extends SioController with PlayMacroLogsImpl {
 
   /**
    * Раздача оригиналов сохраненных в HBase картинок.
-   * @param imageId id картинки.
+   * @param imgId id картинки.
    * @return Оригинал картинки.
    */
-  def getOrig(imageId: String) = Action.async { implicit request =>
-    MUserImgOrig.getById(imageId) map {
+  def getOrig(imgId: String) = Action.async { implicit request =>
+    MUserImgOrig.getById(imgId) map {
       case Some(its) =>
         serveImgBytes(its, CACHE_ORIG_CLIENT_SECONDS)
 
       case None =>
-        info(s"getOrig($imageId): 404")
+        info(s"getOrig($imgId): 404")
         imgNotFound
     }
   }
@@ -97,15 +98,16 @@ object Img extends SioController with PlayMacroLogsImpl {
 
     } else {
       trace(s"serveImg(): 200 OK. size = ${its.img.length} bytes")
+      // Бывает, что в базе лежит не jpeg, а картинка в другом формате. Это тоже учитываем:.
+      val magicMatch = Magic.getMagicMatch(its.img)
       Ok(its.img)
-        .as("image/jpeg")
+        .as(magicMatch.getMimeType)
         .withHeaders(
           LAST_MODIFIED -> DateTimeUtil.df.print(ts0),
           CACHE_CONTROL -> ("public, max-age=" + cacheSeconds)
         )
     }
   }
-
 
   /** Загрузка сырой картинки для дальнейшей базовой обработки (кадрирования).
     * Картинка загружается в tmp-хранилище, чтобы её можно было оттуда оперативно удалить и иметь реалтаймовый доступ к ней. */
@@ -117,12 +119,7 @@ object Img extends SioController with PlayMacroLogsImpl {
         val mptmp = MPictureTmp.getForTempFile(fileRef)
         try {
           OrigImageUtil.convert(srcFile, mptmp.file)
-          val reply = JsObject(List(
-            "status"     -> JsString("ok"),
-            "image_key"  -> JsString(mptmp.key),
-            "image_link" -> JsString(routes.Img.getTempImg(mptmp.key).url)
-          ))
-          Ok(reply)
+          Ok(jsonTempOk(mptmp.filename))
 
         } catch {
           case ex: Throwable =>
@@ -141,9 +138,9 @@ object Img extends SioController with PlayMacroLogsImpl {
   }
 
   /** Раздавалка картинок, созданных в [[handleTempImg]]. */
-  def getTempImg(key: String) = IsAuth { implicit request =>
+  def getTempImg(filename: String) = IsAuth { implicit request =>
     // Надо бы добавить сюда поддержку if-modifier-since...
-    MPictureTmp.find(key) match {
+    MPictureTmp.find(filename) match {
       case Some(mptmp) =>
         val f = mptmp.file
         Ok.sendFile(f, inline=true)
@@ -158,15 +155,15 @@ object Img extends SioController with PlayMacroLogsImpl {
 
   /**
    * Раздача произвольных картинок без проверки прав.
-   * @param key ключ картинки
+   * @param imgId ключ картинки
    * @return Один из различных экшенов обработки.
    */
-  def getImg(key: String): Action[AnyContent] = {
-    val iik = ImgIdKey(key)
+  def getImg(imgId: String): Action[AnyContent] = {
+    val iik = ImgIdKey(imgId)
     if (iik.isValid) {
       iik match {
-        case tiik: TmpImgIdKey  => getTempImg(key)
-        case oiik: OrigImgIdKey => getOrig(key)
+        case tiik: TmpImgIdKey  => getTempImg(imgId)
+        case oiik: OrigImgIdKey => getOrig(imgId)
       }
     } else {
       trace(s"invalid img id: " + iik)
@@ -178,9 +175,19 @@ object Img extends SioController with PlayMacroLogsImpl {
   private def imgNotFound = NotFound("No such image")
 
   /** Выдать json ошибку по поводу картинки. */
-  private def jsonImgError(msg: String) = JsObject(Seq(
+  def jsonImgError(msg: String) = JsObject(Seq(
     "status" -> JsString("error"),
     "msg"    -> JsString(msg) // TODO Добавить бы поддержку lang.
   ))
+
+
+  /** Ответ на присланную для предобработки картинку. */
+  def jsonTempOk(filename: String) = {
+    JsObject(List(
+      "status"     -> JsString("ok"),
+      "image_key"  -> JsString(filename),
+      "image_link" -> JsString(routes.Img.getTempImg(filename).url)
+    ))
+  }
 
 }
