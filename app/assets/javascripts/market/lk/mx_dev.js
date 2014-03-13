@@ -201,7 +201,7 @@ function ChooseCategory() {
 
     self.init = function() {
 
-      $(document).on('change', '#cat-select input',
+      $(document).on('change', '#catId',
       function(e) {
         var $this = $(this),
         catId = $this.val();
