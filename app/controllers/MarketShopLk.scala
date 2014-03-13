@@ -61,6 +61,10 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
   val shopFormM = Form(shopKM)
 
   private val logoImgIdKM = "logoImgId" -> optional(imgIdM)
+    /*.transform(
+      { ImgInfo(_, cropOpt = None, withThumb = false) },
+      { ii: ImgInfo => Some(ii.iik) }
+    )*/
 
   /** Форма для заполнения страницы. */
   val shopFullFormM = Form(tuple(

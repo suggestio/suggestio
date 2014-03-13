@@ -125,18 +125,22 @@ object ImgFormUtil extends PlayMacroLogsImpl {
             SavedTmpImg(idStr, mptmp.file)
           }
         }
-        // Пора сгенерить thumbnail без учёта кропов всяких.
-        val saveThumbFut = future {
-          val tmpThumbFile = File.createTempFile("origThumb", ".jpeg")
-          val thumbBytes = try {
-            ThumbImageUtil.convert(mptmp.file, tmpThumbFile, mode = ConvertModes.THUMB, crop = tii.cropOpt)
-            // Прочитать файл в памяти и сохранить в MImgThumb
-            FileUtils.readFileToByteArray(tmpThumbFile)
-          } finally {
-            tmpThumbFile.delete()
+        // Если укаазно withThumb, то пора сгенерить thumbnail без учёта кропов всяких.
+        val saveThumbFut = if (tii.withThumb) {
+          future {
+            val tmpThumbFile = File.createTempFile("origThumb", ".jpeg")
+            val thumbBytes = try {
+              ThumbImageUtil.convert(mptmp.file, tmpThumbFile, mode = ConvertModes.THUMB, crop = tii.cropOpt)
+              // Прочитать файл в памяти и сохранить в MImgThumb
+              FileUtils.readFileToByteArray(tmpThumbFile)
+            } finally {
+              tmpThumbFile.delete()
+            }
+            val thumbDatum = new MImgThumb(id=id, thumb=thumbBytes, imageUrl=null)
+            thumbDatum.save
           }
-          val thumbDatum = new MImgThumb(id=id, thumb=thumbBytes, imageUrl=null)
-          thumbDatum.save
+        } else {
+          Future successful ()
         }
         // Связываем оба фьючерса
         saveThumbFut flatMap { _ => saveOrigFut }
@@ -320,13 +324,12 @@ import OutImgFmts._
  * Класс для объединения кропа и id картинки (чтобы не использовать Tuple2 с числовыми названиями полей)
  * @param iik Указатель на картинку.
  * @param cropOpt Данные по желаемому кадрированию.
- * @param outFmt Какой формат на выходе надо получить.
  * @tparam T Реальный тип iik.
  */
 case class ImgInfo[+T <: ImgIdKey](
   iik     : T,
   cropOpt : Option[ImgCrop],
-  outFmt  : OutImgFmt = JPEG
+  withThumb: Boolean = true
 )
 
 

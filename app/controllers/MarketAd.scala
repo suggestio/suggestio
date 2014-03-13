@@ -349,12 +349,20 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   private def renderEditFormWith(af: AdFormM, mshopFut: Future[Option[MShop]], mad: MMartAd)(implicit ctx: Context) = {
     val catOwnerId = mad.martId
     val mmcatsFut: Future[CollectMMCatsAcc_t] = mad.userCatId match {
-      case Some(catId)  =>
-        MMartCategory.collectCatListsUpTo(catOwnerId=catOwnerId, currCatId=catId)
+      case Some(catId) =>
+        val subcatsFut = MMartCategory.findDirectSubcatsOf(catId)
+        for {
+          upCats  <- MMartCategory.collectCatListsUpTo(catOwnerId=catOwnerId, currCatId=catId)
+          subcats <- subcatsFut
+        } yield {
+          if (!subcats.isEmpty)
+            upCats ++ List(None -> subcats)
+          else
+            upCats
+        }
       case None => topCatsAsAcc(catOwnerId)
     }
     for {
-      mmcats1  <- MMartCategory.findTopForOwner(catOwnerId)
       mshopOpt <- mshopFut
       mmcats   <- mmcatsFut
     } yield {
