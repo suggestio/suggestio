@@ -2,9 +2,8 @@ var cbca = {};
 
 ;$(function() {
 
-  ChooseCategory();
   cbca.selectCat = new CbcaSelect('cat-select');
-
+  ChooseCategory();
 
   $(document).on('click', '.block .toggle',
   function(e) {
