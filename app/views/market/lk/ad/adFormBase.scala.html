@@ -1,0 +1,25 @@
+@(title:String, shopId: MShop.ShopId_t)(content: Html)(implicit ctx: util.Context)
+
+@* Страница с внешней версткой для формы _adFormTpl. *@
+
+@market.lk.lkBase(title=title) {
+
+  <div class="title-wrap">
+    <div class="center">
+      <a class="back-but" href="@routes.MarketShopLk.showShop(shopId)" title="Вернуться назад в магазин">&nbsp;</a>
+      <div class="title-inner">
+        @title.toUpperCase
+      </div>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="create-ad">
+      @content
+    </div><!-- create-ad end -->
+  </div>
+}
+
+
+
+

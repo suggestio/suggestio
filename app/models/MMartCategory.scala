@@ -11,6 +11,7 @@ import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
 import org.elasticsearch.action.search.SearchResponse
+import util.PlayMacroLogsImpl
 
 /**
  * Suggest.io
@@ -19,7 +20,9 @@ import org.elasticsearch.action.search.SearchResponse
  * Description: Дерево пользовательских категорий конкретного ТЦ либо магазина (модель не различает владельцев).
  * Хранится в ES.
  */
-object MMartCategory extends EsModelStaticT[MMartCategory] {
+object MMartCategory extends EsModelStaticT[MMartCategory] with PlayMacroLogsImpl {
+
+  import LOGGER._
 
   val ES_TYPE_NAME = "usrCat"
 
@@ -76,6 +79,11 @@ object MMartCategory extends EsModelStaticT[MMartCategory] {
       .map { searchResp2listSortLex }
   }
 
+  /**
+   * Найти прямых потомков указанной категории.
+   * @param parentCatId id категории.
+   * @return Список подкатегорий без потомков.
+   */
   def findDirectSubcatsOf(parentCatId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartCategory]] = {
     val query = QueryBuilders.termQuery(PARENT_ID_ESFN, parentCatId)
     client.prepareSearch(ES_INDEX_NAME)
@@ -84,6 +92,72 @@ object MMartCategory extends EsModelStaticT[MMartCategory] {
       .execute()
       .map { searchResp2listSortLex }
   }
+
+  /** Узнать parentId для указанной категории.
+    * @param catId id категории.
+    * @return None, если нет такой категории вообще.
+    *         Some(None) если parentId пуст.
+    *         Some(Some(parentId)) когда есть parentId.
+    */
+  def getParentIdOf(catId: String)(implicit ec: ExecutionContext, client: Client): Future[Option[Option[String]]] = {
+    // TODO Следует использовать прямой доступ к полям, а не getById()
+    getById(catId).map { catOpt =>
+      catOpt.map { cat =>
+        cat.parentId
+      }
+    }
+  }
+
+  /**
+   * Найти категории на текущем уровне указанной категории.
+   * @param catOwnerId id владельца дерева категорий. Используется если это категорий 1 уровня.
+   * @param catId id текущей категории.
+   * @return Nil если дерево отсуствует. Иначе Seq[MMC].
+   */
+  private def findAllOnSameLevel(catOwnerId: String, catId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartCategory]] = {
+    getParentIdOf(catId) flatMap {
+      findAllOnSameLevelParent(catOwnerId, _)
+    }
+  }
+
+  private def findAllOnSameLevelParent(catOwnerId: String, maybeParentCat: Option[Option[String]])(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartCategory]] = {
+    maybeParentCat match {
+      // Вообще нет такой категории в хранилище. Это странная ситуация.
+      case None =>
+        debug(s"findAllOnSameLevelParent(own=$catOwnerId): catId not found, but it should!")
+        Future successful Nil
+
+      // Это категория верхнего уровня. Используем catOwnerId для доступа к списку категорий на текущем уровне.
+      case Some(None) =>
+        findTopForOwner(catOwnerId)
+
+      // Это категория уровня >= 1. Берем id её родителя и находим категории на этом уровне.
+      case Some(Some(parentCatId)) =>
+        findDirectSubcatsOf(parentCatId)
+    }
+  }
+
+  type CollectMMCatsAcc_t = List[(Option[String], Seq[MMartCategory])]
+
+  /** Рекурсивная сборка иерархии списка категорий от указанной категории наверх до самого top level.
+    * Используется, чтобы сгенерить селекторы категорий на всех уровнях необходимых (начиная от top и заканчивая текущей
+    * категорией). Используется восходящий траверс.
+    */
+  def collectCatListsUpTo(catOwnerId: String, currCatId: String, acc: CollectMMCatsAcc_t = Nil)(implicit ec: ExecutionContext, client: Client): Future[CollectMMCatsAcc_t] = {
+    getParentIdOf(currCatId) flatMap { maybeParentId =>
+      findAllOnSameLevelParent(catOwnerId, maybeParentId) flatMap { lCats =>
+        // Нужно решить: надо ли подниматься ещё выше или это уже вершина?
+        val acc1 = (Some(currCatId), lCats) :: acc
+        maybeParentId match {
+          case Some(Some(parentId)) =>
+            collectCatListsUpTo(catOwnerId, currCatId=parentId, acc1)
+
+          case _ => Future successful acc1
+        }
+      }
+    }
+  }
+
 
   // TODO Надо бы заставить работать сортировку на стороне ES.
   private def searchResp2listSortLex(searchResp: SearchResponse)(implicit ec:ExecutionContext, client:Client) : Seq[MMartCategory] = {

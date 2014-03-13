@@ -13,6 +13,7 @@ import org.elasticsearch.index.query.QueryBuilders
 import io.suggest.event.SioNotifierStaticClientI
 import scala.util.{Failure, Success}
 import util.PlayMacroLogsImpl
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -82,9 +83,16 @@ object MMartAd extends EsModelStaticT[MMartAd] with PlayMacroLogsImpl {
     case (COMPANY_ID_ESFN, value)   => acc.companyId = companyIdParser(value)
     case (PICTURE_ESFN, value)      => acc.picture = stringParser(value)
     case (PRIO_ESFN, value)         => acc.prio = Some(intParser(value))
-    // TODO Opt: Стоит использоваться вместо java-reflections ускоренные scala-json парсеры на базе case-class'ов.
     case (USER_CAT_ID_ESFN, value)  => acc.userCatId = Some(stringParser(value))
-    case (OFFER_ESFN, value)        => acc.offers = JacksonWrapper.convert[List[MMartAdProduct]](value) // TODO Нужно разбираться между product и discount
+    case (OFFER_ESFN, value: java.util.ArrayList[_]) =>
+      acc.offers = value.toList.map {
+        case jsObject: java.util.HashMap[_, _] =>
+          if (jsObject containsKey VENDOR_ESFN)
+            JacksonWrapper.convert[MMartAdProduct](jsObject)
+          else if (jsObject containsKey DISCOUNT_ESFN)
+            JacksonWrapper.convert[MMartAdDiscount](jsObject)
+          else ???
+      }
     case (PANEL_ESFN, value)        => acc.panel = Some(JacksonWrapper.convert[MMartAdPanelSettings](value))
     case (IS_SHOWN_ESFN, value)     => acc.isShown = booleanParser(value)
     case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = JacksonWrapper.convert[MMartAdTextAlign](value)
