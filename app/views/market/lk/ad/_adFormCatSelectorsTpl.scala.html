@@ -1,6 +1,9 @@
-@(mmcats: MMartCategory.CollectMMCatsAcc_t)(implicit ctx: util.Context)
+@(mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_])(implicit ctx: util.Context)
 
 @* Механизм задания/изменения категории рекламной карточки. *@
+
+@* Input для id выбранной категории. *@
+<input id="catId" data-curr-cat="cat" type="hidden" name="ad.catId" value="@af("ad.catId").value" />
 
 <div class="categories" id="cat-select">
   @mmcats.map { case (selectedIdOpt, mmcats1) =>

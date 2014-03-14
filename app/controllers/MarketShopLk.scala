@@ -15,7 +15,7 @@ import play.api.libs.concurrent.Akka
 import scala.concurrent.{Future, Promise}
 import play.api.mvc.Security.username
 import util.img._
-import ImgFormUtil.imgIdM
+import ImgFormUtil.imgInfoM
 import net.sf.jmimemagic.Magic
 
 /**
@@ -60,18 +60,16 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
     * Подходит для редактирования из ТЦ-аккаунта */
   val shopFormM = Form(shopKM)
 
+  /** Картинка логотипа-бренда задаётся через это поле. */
+  def logoImgIdM = imgInfoM
+
   /** Маппер для необязательного логотипа магазина. */
-  private val logoImgIdKM = "logoImgId" -> optional(
-    imgIdM.transform(
-      { ImgInfo(_, cropOpt = None, withThumb = false) },
-      { ii: ImgInfo[ImgIdKey] => ii.iik }
-    )
-  )
+  private val logoImgOptIdKM = "logoImgId" -> optional(logoImgIdM)
 
   /** Форма для заполнения страницы, но НЕ для сабмита. */
   val shopFullFormM = Form(tuple(
     shopKM,
-    logoImgIdKM
+    logoImgOptIdKM
   ))
 
   /** Ограниченный маппинг магазина. Используется при сабмите редактирования профиля магазина для имитации
@@ -82,7 +80,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
       "name"         -> shopNameM,
       "description"  -> publishedTextOptM
     ),
-    logoImgIdKM
+    logoImgOptIdKM
   ))
 
 
@@ -137,12 +135,20 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
           case None        => martNotFound(martId)
         }
       },
-      {case ((name, description), imgIdOpt) =>
+      {case ((name, description), logoImgIdOpt) =>
+        val updateImgsFut = ImgFormUtil.updateOrigImgIds(
+          needImgs  = logoImgIdOpt.toSeq,
+          oldImgIds = mshop.logoImgId.toSeq
+        )
         mshop.name = name
         mshop.description = description
-        mshop.save.map { _ =>
-          Redirect(routes.MarketShopLk.showShop(shopId))
-            .flashing("success" -> "Изменения сохранены.")
+        // Для обновления shop'а надо дождаться генерации нового id логотипа.
+        updateImgsFut.flatMap { newImgIds =>
+          mshop.logoImgId = newImgIds.headOption
+          mshop.save map { _shopId =>
+            Redirect(routes.MarketShopLk.showShop(shopId))
+              .flashing("success" -> "Изменения сохранены.")
+          }
         }
       }
     )
@@ -178,7 +184,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
   /** Маппинг формы, которая для уже залогиненного будущего владельца магазина, когда тот проходит по ссылке инвайта. */
   val inviteAcceptAuthFormM: InviteAcceptFormM = Form(
     "shopName" -> shopNameM
-      // Чтобы сохранить совместимость с anon-формой, добавляем в маппинг пустое поле пароля с null.
+      // Чтобы сохранить совместимость с anon-формой, добавляем в маппинг пустое поле пароля с None вместо нового пароля.
       .transform(
         { shopName => (shopName, None.asInstanceOf[Option[String]]) },
         { c: (String, Option[String]) => c._1 }

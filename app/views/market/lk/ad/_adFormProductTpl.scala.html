@@ -16,21 +16,21 @@
   @* Строка "производитель" и её цвет. *@
   @mkField("big") {
     @inputText(
-      af("ad.vendor.value"),
+      af("ad.offer.vendor.value"),
       '_label -> "Производитель:",
       'id -> "vendorValueInput"
     )
-    @_selectColorTpl("ad.vendor.color", af)
+    @_selectColorTpl("ad.offer.vendor.color", af)
   }
 
   @* Строка цены и её цвет. *@
   @mkField(style = "margin-bottom: 0;") {
     @inputText(
-      af("ad.price.value"),
+      af("ad.offer.price.value"),
       '_label -> "Цена:",
       'id -> "priceValueInput"
     )
-    @_selectColorTpl("ad.price.color", af)
+    @_selectColorTpl("ad.offer.price.color", af)
   }
 
   @mkField(style = "margin-top: 10px;") {
@@ -43,10 +43,10 @@
 
   @mkField("old-price") {
     @inputText(
-      af("ad.oldPrice.value"),
+      af("ad.offer.oldPrice.value"),
       '_label -> "Старая цена"
     )
-    @_selectColorTpl("ad.oldPrice.color", af)
+    @_selectColorTpl("ad.offer.oldPrice.color", af)
   }
 </div>
 

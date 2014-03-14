@@ -159,7 +159,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     val discountValueM = float
       .verifying("discount.too.low", { _ <= 0F })
       .verifying("discount.too.big", { _ >= 200F })
-    val discountTplM = mapping(
+    val tplM = mapping(
       "id"    -> number(min = DISCOUNT_TPL_ID_MIN, max = DISCOUNT_TPL_ID_MAX),
       "color" -> colorM
     )
@@ -169,7 +169,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     mapping(
       "text1"     -> optional(mmaStringFieldM(discountTextM)),
       "discount"  -> mmaFloatFieldM(discountValueM),
-      "template"  -> discountTplM,
+      "template"  -> tplM,
       "text2"     -> optional(mmaStringFieldM(discountTextM))
     )
     { MMartAdDiscount.apply }
@@ -191,17 +191,16 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   type AdFormM = Form[(ImgIdKey, MMartAd)]
 
-  /** Генератор форм добавления/редактирования рекламируемого продукта в зависимости от вкладок. */
-  private def getAdFormM[T <: MMartAdOfferT](adBodyM: Mapping[T]): AdFormM = Form(mapping(
+  /** Генератор маппинга для MMartAd-части общей формы. */
+  private def getAdM[T <: MMartAdOfferT](offerM: Mapping[T]) = mapping(
     catIdKM,
-    adImgIdKM,
     panelColorKM,
-    "ad" -> adBodyM,
+    "offer" -> offerM,
     textAlignKM
   )
   // applyF()
-  {(userCatId, imgKey, panelSettings, adBody, textAlign) =>
-    val mmad = MMartAd(
+  {(userCatId, panelSettings, adBody, textAlign) =>
+    MMartAd(
       martId      = null,
       offers      = List(adBody),
       picture     = null,
@@ -211,28 +210,33 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       textAlign   = textAlign,
       companyId   = null
     )
-    (imgKey, mmad)
   }
   // unapplyF()
-  {case (imgKey, mmad) =>
+  {mmad =>
     import mmad._
     if (panel.isDefined && userCatId.isDefined && !offers.isEmpty) {
       val adBody = offers.head.asInstanceOf[T]  // TODO Надо что-то решать с подтипами офферов. Параметризация типов MMartAd - геморрой.
-      Some((userCatId.get, imgKey, panel.get, adBody, textAlign))
+      Some((userCatId.get, panel.get, adBody, textAlign))
     } else {
       warn("Unexpected ad object received into ad-product form: " + mmad)
       None
     }
-  })
-  
+  }
+
+  /** Генератор форм добавления/редактирования рекламируемого продукта в зависимости от вкладок. */
+  private def getAdFormM[T <: MMartAdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
+    adImgIdKM,
+    "ad" -> getAdM(offerM)
+  ))
+
   val adProductFormM  = getAdFormM(adProductM)
   val adDiscountFormM = getAdFormM(adDiscountM)
 
 
 
-  /** Выбрать форму в зависимости от содержимого реквеста. Если ad.mode не валиден, то будет Left с формой с global error. */
+  /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
   private def detectAdForm(implicit request: Request[collection.Map[String, Seq[String]]]): Either[AdFormM, (FormMode, AdFormM)] = {
-    val adModes = request.body.get("ad.mode") getOrElse Nil
+    val adModes = request.body.get("ad.offer.mode") getOrElse Nil
     adModes.headOption.flatMap { adMode =>
       FormModes.maybeFormWithName(adMode)
     } match {
@@ -423,6 +427,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           {case (iik, mad2) =>
             // TODO Проверить категорию.
             // TODO И наверное надо проверить shopId-существование в исходной рекламе.
+            // TODO Надо обработать логотип, который приходит в составе формы
             val needImgs = Seq(ImgInfo(iik, cropOpt = None))
             ImgFormUtil.updateOrigImgIds(needImgs, oldImgIds = Seq(mad.picture)) flatMap {
               case List(savedImgId) =>

@@ -23,7 +23,7 @@
           <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="@currColorOpt.getOrElse("000000")" @if(!panelColors.contains(currColorHex) && currColorOpt.isDefined) {checked}/>
           <div class="color custom">&nbsp;
             @* Input для цвета верхней плашки. *@
-            <input id="panelColor" type="hidden" name="panelColor" value="@currColorOpt"/>
+            <input id="panelColor" type="hidden" name="ad.panelColor" value="@currColorOpt"/>
           </div>
         </div>
       </td>

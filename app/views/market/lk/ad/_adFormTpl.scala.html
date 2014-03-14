@@ -16,7 +16,7 @@
   @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@
   @af.globalError
 
-  @_adFormCatSelectorsTpl(mmcats)
+  @_adFormCatSelectorsTpl(mmcats, af)
 
   <div class="block">
     <div class="border-line"></div>
@@ -161,19 +161,16 @@
   </div>
 
 
-  @* Input для id выбранной категории. *@
-  <input id="catId" data-curr-cat="cat" type="hidden" name="catId" value="@af("catId").value" />
-
 
   @* Режим формы. Должен переключаться при переключении вкладки. *@
-  <input id="ad-mode" type="hidden" name="ad.mode" value="@if(dfltIsProduct) {@PRODUCT} else {@DISCOUNT}"/>
+  <input id="ad-mode" type="hidden" name="ad.offer.mode" value="@if(dfltIsProduct) {@PRODUCT} else {@DISCOUNT}"/>
 
 
 
   @* Положение текста на разных устройствах. Как оно задаётся - хз, пока в виде произвольной строки. *@
-  <input id="textAlign-phone" type="hidden" value="left" name="textAlign.phone">
-  <input id="textAlign-tablet-top" type="hidden" value="left" name="textAlign.tablet.top">
-  <input id="textAlign-tablet-bottom" type="hidden" value="right" name="textAlign.tablet.bottom">
+  <input id="textAlign-phone" type="hidden" name="ad.textAlign.phone" value="left">
+  <input id="textAlign-tablet-top" type="hidden" name="ad.textAlign.tablet.top" value="left">
+  <input id="textAlign-tablet-bottom" type="hidden" name="ad.textAlign.tablet.bottom" value="right">
 
 
   <div class="submit-wrap">

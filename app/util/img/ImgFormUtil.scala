@@ -29,6 +29,13 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     .transform(ImgIdKey.apply, {iik: ImgIdKey => iik.key})
     .verifying("img.id.invalid.", { _.isValid })
 
+  /** Маппер для поля с id картинки, но результат конвертируется в ImgInfo с абстрактным параметром типа. */
+  val imgInfoM = imgIdM
+    .transform(
+      { ImgInfo(_, cropOpt = None, withThumb = false) },
+      { ii: ImgInfo[ImgIdKey] => ii.iik }
+    )
+
   /** Проверяем tmp-файл на использование jpeg. Уже сохраненные id не проверяются. */
   val imgIdJpegM = imgIdM
     .verifying("img.fmt.invalid", { iik => iik match {
@@ -102,6 +109,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         .map { _.idStr }
       val preservedIds = needOrigImgs.map { _.iik.key }
       // TODO Нужно восстанавливать исходный порядок! Сейчас пока плевать на это, но надо это как-то исправлять.
+      // Как вариант: можно уйти от порядка и от работы со списками картинок. А работать только с максимум одной картинкой через Option[] вместо Seq[].
       newSavedIds ++ preservedIds
     }
   }

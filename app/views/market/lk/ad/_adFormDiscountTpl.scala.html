@@ -16,7 +16,7 @@
 @* Подшаблон для выбора цвета фона discount-шаблона. *@
 @tplColorItem(color: String) = {
   <div class="item">
-    <input type="checkbox" class="one-checkbox" data-name="mask-color" data-value="@color"/>
+    <input type="checkbox" class="one-checkbox" name="ad.offer.template.color" value="@color" data-name="mask-color" data-value="@color"/>
     <div class="color" style="background: #@color;">&nbsp;</div>
   </div>
 }
@@ -24,29 +24,29 @@
 <div class="tab-content"@if(!isShown) { style="display: none;"}>
   @mkField(true) {
     @inputText(
-      af("ad.text1.value"),
+      af("ad.offer.text1.value"),
       '_label -> "Текст сверху:",
       'id     -> "text1ValueInput"
     )
-    @_selectColorTpl("ad.text1.color", af)
+    @_selectColorTpl("ad.offer.text1.color", af)
   }
 
   @mkField(false) {
     @inputText(
-      af("ad.discount.value"),
+      af("ad.offer.discount.value"),
       '_label -> "Скидка в процентах:",
       'id     -> "discountValueInput"
     )
-    @_selectColorTpl("ad.discount.color", af)
+    @_selectColorTpl("ad.offer.discount.color", af)
   }
 
   @mkField(true) {
     @inputText(
-      af("ad.discount.value"),
+      af("ad.offer.discount.value"),
       '_label -> "Текст снизу:",
       'id -> "text2ValueInput"
     )
-    @_selectColorTpl("ad.discount.color", af)
+    @_selectColorTpl("ad.offer.discount.color", af)
   }
 
   <table cellpadding="0" cellspacing="0" class="mask-list input-wrap big">
@@ -58,7 +58,7 @@
       <td class="right">
         @defining(DISCOUNT_TPL_ID_MIN to DISCOUNT_TPL_ID_MAX) { is => @is.map { i =>
           <div class="item mask-@i">
-            <input type="checkbox" class="one-checkbox" data-name="mask"/>
+            <input type="checkbox" class="one-checkbox" name="ad.offer.template.id" value="@i" data-name="mask"/>
           </div>
         }}
       </td>
