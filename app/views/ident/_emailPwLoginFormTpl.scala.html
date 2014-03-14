@@ -1,0 +1,14 @@
+@(lf: Form[_])(implicit ctx: util.Context)
+
+@* Форма для логина по email и паролю. *@
+@import ctx._
+@import helper._
+
+@form(null) {
+  @lf.globalError.map { ge =>
+    Ошибка: @Messages(ge.message)
+  }
+  @inputText(lf("email"))
+  @inputPassword(lf("password"))
+  <input type="submit" value="Login"/>
+}

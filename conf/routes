@@ -18,6 +18,8 @@ GET  /search/site                       controllers.Search.siteSearchGET
 
 GET  /login/persona                     controllers.Ident.persona
 POST /login/persona                     controllers.Ident.persona_submit
+GET  /login/email_pw                    controllers.Ident.emailPwLoginForm
+POST /login/email_pw                    controllers.Ident.emailPwLoginFormSubmit
 GET  /logout                            controllers.Ident.logout
 
 ## Callback'и инсталляторов и валидаторов сайтов.

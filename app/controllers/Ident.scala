@@ -52,6 +52,15 @@ object Ident extends SioController with Logs {
     }
   }
 
+  type EmailPwLoginForm_t = Form[(String, String)]
+
+  /** Форма логина по email и паролю. */
+  val emailPwLoginFormM: EmailPwLoginForm_t = Form(tuple(
+    "email"    -> email,
+    "password" -> FormUtil.passwordM
+  ))
+
+
   /**
    * Юзер завершает логин через persona. Нужно тут принять значения audience, проверить, залогинить юзера
    * и отправить в админку
@@ -167,6 +176,34 @@ object Ident extends SioController with Logs {
       .withSession(session - username)
   }
 
+
+  /** Рендер страницы с возможностью логина по email и паролю. */
+  def emailPwLoginForm = MaybeAuth { implicit request =>
+    Ok(emailPwLoginFormTpl(emailPwLoginFormM))
+  }
+
+  /** Самбит формы логина по email и паролю. */
+  def emailPwLoginFormSubmit = MaybeAuth.async { implicit request =>
+    emailPwLoginFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug("emailPwLoginFormSubmit(): Form bind failed " + formWithErrors.errors)
+        NotAcceptable(emailPwLoginFormTpl(formWithErrors))
+      },
+      {case (email1, pw1) =>
+        EmailPwIdent.getByEmail(email1) map { epwOpt =>
+          if (epwOpt.exists(_.checkPassword(pw1))) {
+            // логин удался. TODO Надо редиректить куда-то в sio-маркет.
+            Redirect(routes.Admin.index())
+              .withSession(username -> epwOpt.get.personId)
+          } else {
+            val lf = emailPwLoginFormM.fill(email1 -> "")
+            val lfe = lf.withGlobalError("invalid.login.credentials")
+            Forbidden(emailPwLoginFormTpl(lfe))
+          }
+        }
+      }
+    )
+  }
 
   /** Функция обхода foreign-key ошибок */
   private def recreatePersonIdFor(mpi: MPersonIdent[_])(implicit request: RequestHeader): Future[MPerson] = {

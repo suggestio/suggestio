@@ -120,7 +120,8 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
     val martId = mshop.martId.get
     MMart.getById(martId).map {
       case Some(mmart) =>
-        val formBinded = shopFullFormM fill (mshop, None)
+        val imgId = mshop.logoImgId.map { imgId => ImgInfo(ImgIdKey(imgId)) }
+        val formBinded = shopFullFormM fill (mshop, imgId)
         Ok(shopEditFormTpl(mmart, mshop, formBinded))
 
       case None => martNotFound(martId)

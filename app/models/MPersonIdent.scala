@@ -9,6 +9,8 @@ import io.suggest.util.SioConstants._
 import play.api.Play.current
 import com.lambdaworks.crypto.SCryptUtil
 import io.suggest.util.StringUtil
+import scala.concurrent.ExecutionContext
+import org.elasticsearch.client.Client
 
 /**
  * Suggest.io
@@ -176,6 +178,10 @@ object EmailPwIdent extends EsModelStaticT[EmailPwIdent] {
   }
 
   protected def dummy(id: String): EmailPwIdent = EmailPwIdent(email=id, personId=null, pwHash=null)
+
+  def getByEmail(email: String)(implicit ec: ExecutionContext, client: Client) = {
+    getById(email)
+  }
 
   /** По дефолту email'ы считать проверенными или нет? */
   def IS_VERIFIED_DFLT = false
