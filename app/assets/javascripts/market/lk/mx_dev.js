@@ -17,7 +17,7 @@ var cbca = {};
   });
 
 
- /*$('.color.custom').each(
+ $('.color.custom').each(
   function() {
 
     var $this = $(this),
@@ -47,7 +47,7 @@ var cbca = {};
       }
     });
 
-  });*/
+  });
 
 
 
