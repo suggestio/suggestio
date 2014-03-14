@@ -11,7 +11,7 @@ import io.suggest.model.EsModel
 import views.html.market.lk.mart._
 import play.api.data._, Forms._
 import util.FormUtil._
-import MarketShopLk.shopFormM
+import MarketShopLk.{shopFormM, shopFullFormM}
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.current
 import util.img._
@@ -64,7 +64,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
   )
   // applyF()
   {(name, town, address, siteUrlOpt, phoneOpt) =>
-    MMart(name=name, town=town, address=address, siteUrl=siteUrlOpt, companyId=null, phone=phoneOpt)
+    MMart(name=name, town=town, address=address, siteUrl=siteUrlOpt, companyId=null, phone=phoneOpt, personIds=null)
   }
   // unapplyF()
   {mmart =>
@@ -225,10 +225,11 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
    */
   def editShopForm(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
     import request.mmart
-    MShop.getById(shopId) map {
+    MShop.getById(shopId) flatMap {
       case Some(mshop) =>
-        val formBinded = shopFormM.fill(mshop)
-        Ok(shop.shopEditFormTpl(mmart, mshop, formBinded))
+        MarketShopLk.fillFullForm(mshop) map { formBinded =>
+          Ok(shop.shopEditFormTpl(mmart, mshop, formBinded))
+        }
 
       case None => shopNotFound(shopId)
     }
@@ -244,7 +245,10 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
         shopFormM.bindFromRequest().fold(
           {formWithErrors =>
             debug(s"editShopFormSubmit($shopId): Form bind failed: " + formWithErrors.errors)
-            NotAcceptable(shop.shopEditFormTpl(request.mmart, mshop, formWithErrors))
+            MarketShopLk.fillFullForm(mshop) map { formWithErrors2 =>
+              val fwe3 = formWithErrors2.bindFromRequest()
+              NotAcceptable(shop.shopEditFormTpl(request.mmart, mshop, fwe3))
+            }
           },
           {mshop2 =>
             // Пора накатить изменения на текущий магазин и сохранить

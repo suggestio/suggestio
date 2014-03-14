@@ -16,6 +16,7 @@ GET  /change_locale/:locale             controllers.Application.change_locale(lo
 GET  /thumb/get/$dkey<[-_\w\d~.]+>/$imageId<[-_\w\d]+>     controllers.Img.getThumb(dkey, imageId)
 GET  /search/site                       controllers.Search.siteSearchGET
 
+# ident: логины/логауты
 GET  /login/persona                     controllers.Ident.persona
 POST /login/persona                     controllers.Ident.persona_submit
 GET  /login/email_pw                    controllers.Ident.emailPwLoginForm

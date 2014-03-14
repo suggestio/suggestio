@@ -48,6 +48,10 @@
       </tr>
     </table>
 
+    @sf("email").value.map { ownerEmail =>
+      <p>Email: @ownerEmail</p>
+    }
+
     @* Поля этажа/секции доступны только владельцу ТЦ, т.е. если !isLimited. Задаём атрибут через хвост-список. *@
     @defining(if(isLimited) List('disabled -> "") else Nil) { attrsRest =>
 

@@ -75,6 +75,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
 
   /** Форма для заполнения страницы, но НЕ для сабмита. */
   val shopFullFormM = Form(tuple(
+    "email" -> optional(email),
     shopKM,
     logoImgOptIdKM
   ))
@@ -110,6 +111,26 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
     }
   }
 
+
+  /** Асинхронно заполнить full форму с помощью указанного магазина. */
+  def fillFullForm(mshop: MShop) = {
+    val shopOwnerEmailFut: Future[Option[String]] = mshop.mainPersonId match {
+      case Some(personId) =>
+        MPersonIdent.findAllEmails(personId)
+          .map { _.headOption }
+
+      // Нет почты, магазин не активирован. Но юзеру надо что-то отобразить, поэтому ищем в активациях.
+      case None =>
+        EmailActivation.findByKey(mshop.id.get)
+          .map { _.headOption.map(_.email) }
+    }
+    val imgId = mshop.logoImgId.map { imgId => ImgInfo(ImgIdKey(imgId)) }
+    shopOwnerEmailFut map { shopOwnerEmail =>
+      shopFullFormM fill (shopOwnerEmail, mshop, imgId)
+    }
+  }
+
+
   /**
    * Страница с формой редактирования магазина. Арендатору не доступны некоторые поля.
    * @param shopId id магазина.
@@ -118,11 +139,12 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
     import request.mshop
     // TODO Если магазин удалён из ТЦ, то это как должно выражаться?
     val martId = mshop.martId.get
-    MMart.getById(martId).map {
+    val formBindedFut = fillFullForm(mshop)
+    MMart.getById(martId) flatMap {
       case Some(mmart) =>
-        val imgId = mshop.logoImgId.map { imgId => ImgInfo(ImgIdKey(imgId)) }
-        val formBinded = shopFullFormM fill (mshop, imgId)
-        Ok(shopEditFormTpl(mmart, mshop, formBinded))
+        formBindedFut map { formBinded =>
+          Ok(shopEditFormTpl(mmart, mshop, formBinded))
+        }
 
       case None => martNotFound(martId)
     }
@@ -136,10 +158,14 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
     import request.mshop
     limitedShopFormM.bindFromRequest().fold(
       {formWithErrors =>
+        val fullFormBindedFut = fillFullForm(mshop) map { _.bindFromRequest }
         debug(s"editShopFormSubmit($shopId): Bind failed: " + formWithErrors.errors)
         val martId = mshop.martId.get
-        MMart.getById(martId).map {
-          case Some(mmart) => NotAcceptable(shopEditFormTpl(mmart, mshop, formWithErrors))
+        MMart.getById(martId) flatMap {
+          case Some(mmart) =>
+            fullFormBindedFut map { formWithErrors2 =>
+              NotAcceptable(shopEditFormTpl(mmart, mshop, formWithErrors2))
+            }
           case None        => martNotFound(martId)
         }
       },

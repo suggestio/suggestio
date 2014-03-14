@@ -147,30 +147,48 @@ object SysMarket extends SioController with MacroLogsImpl {
   }
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
-  val martFormM = Form(tuple(
+  val martFormM = Form(mapping(
     "name"      -> martNameM,
     "town"      -> townM,
     "address"   -> martAddressM,
     "site_url"  -> optional(urlStrMapper),
     "phone"     -> optional(phoneM)
-  ))
+  )
+  {(name, town, address, siteUrlOpt, phoneOpt) =>
+    MMart(
+      name = name,
+      town = town,
+      companyId = null,
+      address = address,
+      siteUrl = siteUrlOpt,
+      phone = phoneOpt,
+      personIds = null 
+    )
+  }
+  {mmart =>
+    import mmart._
+    Some((name, town, address, siteUrl, phone))
+  })
+
 
   /** Рендер страницы с формой добавления торгового центра. */
-  def martAddForm(company_id: CompanyId_t) = IsSuperuser.async { implicit request =>
-    MCompany.isExist(company_id) map {
-      case true  => Ok(mart.martAddFormTpl(company_id, martFormM))
-      case false => companyNotFound(company_id)
+  def martAddForm(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
+    MCompany.isExist(companyId) map {
+      case true  => Ok(mart.martAddFormTpl(companyId, martFormM))
+      case false => companyNotFound(companyId)
     }
   }
 
   /** Сабмит формы добавления торгового центра. */
-  def martAddFormSubmit(company_id: CompanyId_t) = IsSuperuser.async { implicit request =>
+  def martAddFormSubmit(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
     martFormM.bindFromRequest().fold(
       {formWithErrors =>
-        NotAcceptable(mart.martAddFormTpl(company_id, formWithErrors))
+        debug(s"martAddFormSubmt($companyId): Form bind failed: " + formWithErrors.errors)
+        NotAcceptable(mart.martAddFormTpl(companyId, formWithErrors))
       },
-      {case (name, town, address, siteUrlOpt, phoneOpt) =>
-        val mmart = MMart(name=name, town=town, companyId=company_id, address=address, siteUrl=siteUrlOpt, phone=phoneOpt)
+      {mmart =>
+        mmart.companyId = companyId
+        mmart.personIds = Nil
         mmart.save map { mmartSavedId =>
           Redirect(routes.SysMarket.martShow(mmartSavedId))
         }
@@ -200,7 +218,7 @@ object SysMarket extends SioController with MacroLogsImpl {
   def martEditForm(mart_id: MartId_t) = IsSuperuser.async { implicit request =>
     MMart.getById(mart_id) map {
       case Some(mmart) =>
-        val form = martFormM.fill((mmart.name, mmart.town, mmart.address, mmart.siteUrl, mmart.phone))
+        val form = martFormM fill mmart
         Ok(mart.martEditFormTpl(mmart, form))
 
       case None => martNotFound(mart_id)
@@ -215,12 +233,12 @@ object SysMarket extends SioController with MacroLogsImpl {
           {formWithErrors =>
             NotAcceptable(mart.martEditFormTpl(mmart, formWithErrors))
           },
-          {case (name, town, address, siteUrlOpt, phoneOpt) =>
-            mmart.name = name
-            mmart.town = town
-            mmart.address = address
-            mmart.siteUrl = siteUrlOpt
-            mmart.phone = phoneOpt
+          {mmart2 =>
+            mmart.name = mmart2.name
+            mmart.town = mmart2.town
+            mmart.address = mmart2.address
+            mmart.siteUrl = mmart2.siteUrl
+            mmart.phone = mmart2.phone
             mmart.save map { _martId =>
               Redirect(routes.SysMarket.martShow(_martId))
             }

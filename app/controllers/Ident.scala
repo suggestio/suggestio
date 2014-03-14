@@ -190,11 +190,15 @@ object Ident extends SioController with Logs {
         NotAcceptable(emailPwLoginFormTpl(formWithErrors))
       },
       {case (email1, pw1) =>
-        EmailPwIdent.getByEmail(email1) map { epwOpt =>
+        EmailPwIdent.getByEmail(email1) flatMap { epwOpt =>
           if (epwOpt.exists(_.checkPassword(pw1))) {
-            // логин удался. TODO Надо редиректить куда-то в sio-маркет.
-            Redirect(routes.Admin.index())
-              .withSession(username -> epwOpt.get.personId)
+            // Логин удался.
+            // TODO Нужно дать возможность режима сессии "чужой компьютер".
+            val personId = epwOpt.get.personId
+            getMarketRdrCallFor(personId) map { call =>
+              Redirect(call)
+                .withSession(username -> personId)
+            }
           } else {
             val lf = emailPwLoginFormM.fill(email1 -> "")
             val lfe = lf.withGlobalError("invalid.login.credentials")
@@ -223,6 +227,27 @@ object Ident extends SioController with Logs {
           case Failure(ex) => error("Failed to rollback. Storage failure!", ex)
         }
         p
+    }
+  }
+
+  /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */
+  private def getMarketRdrCallFor(personId: String): Future[Call] = {
+    val mshopsFut = MShop.findByPersonId(personId)
+    val mmartsFut = MMart.findByPersonId(personId)
+    // TODO Если несколько результатов, то нужна какая-то отдельная страница с выбором ЛК
+    for {
+      mshops <- mshopsFut
+      mmarts <- mmartsFut
+    } yield {
+      if (!mmarts.isEmpty && !mshops.isEmpty) {
+        ???
+      } else if (!mshops.isEmpty) {
+        routes.MarketShopLk.showShop(mshops.head.id.get)
+      } else if (!mmarts.isEmpty) {
+        routes.MarketMartLk.martShow(mmarts.head.id.get)
+      } else {
+        routes.Admin.index()
+      }
     }
   }
 

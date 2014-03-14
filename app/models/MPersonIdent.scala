@@ -9,8 +9,10 @@ import io.suggest.util.SioConstants._
 import play.api.Play.current
 import com.lambdaworks.crypto.SCryptUtil
 import io.suggest.util.StringUtil
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
+import org.elasticsearch.index.query.QueryBuilders
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -52,12 +54,12 @@ object MPersonIdent {
       properties = Seq(
         FieldString(
           id = PERSON_ID_ESFN,
-          index = FieldIndexingVariants.no,
+          index = FieldIndexingVariants.not_analyzed,
           include_in_all = false
         ),
         FieldString(
           id = KEY_ESFN,
-          index = FieldIndexingVariants.no,
+          index = FieldIndexingVariants.not_analyzed,
           include_in_all = true
         ),
         FieldString(
@@ -72,6 +74,27 @@ object MPersonIdent {
         )
       )
     )
+  }
+
+  /** Собрать все мыльники указанного юзера во всех подмоделях.
+    * @param personId id юзера
+    * @return Список email'ов юзера в неопределённом порядке, возможно даже с дубликатами.
+    */
+  def findAllEmails(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
+    val personIdQuery = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
+    client.prepareSearch(ES_INDEX_NAME)
+      .setTypes(MozillaPersonaIdent.ES_TYPE_NAME, EmailPwIdent.ES_TYPE_NAME)
+      .setQuery(personIdQuery)
+      // TODO ограничить возвращаемые поля только необходимыми
+      .execute()
+      .map { searchResp =>
+        searchResp.getHits.getHits.map { hit =>
+          hit.getType match {
+            case MozillaPersonaIdent.ES_TYPE_NAME => MozillaPersonaIdent.deserializeOne(hit.getId, hit.getSource).email
+            case EmailPwIdent.ES_TYPE_NAME        => EmailPwIdent.deserializeOne(hit.getId, hit.getSource).email
+          }
+        }
+      }
   }
 
   /** Типы поддерживаемых алгоритмов идентификаций. В базу пока не сохраняются. */
@@ -149,10 +172,14 @@ object MozillaPersonaIdent extends EsModelStaticT[MozillaPersonaIdent] {
 
 }
 
+trait MPIWithEmail {
+  def email: String
+}
+
 case class MozillaPersonaIdent(
   var email     : String,
   var personId  : String
-) extends MPersonIdent[MozillaPersonaIdent] with MPersonLinks {
+) extends MPersonIdent[MozillaPersonaIdent] with MPersonLinks with MPIWithEmail {
   /** Сгенерить id. Если допустить, что тут None, то _id будет из взят из поля key согласно маппингу. */
   def id: Option[String] = Some(email)
   def key = email
@@ -216,7 +243,7 @@ case class EmailPwIdent(
   var personId  : String,
   var pwHash    : String,
   var isVerified: Boolean = EmailPwIdent.IS_VERIFIED_DFLT
-) extends MPersonIdent[EmailPwIdent] with MPersonLinks {
+) extends MPersonIdent[EmailPwIdent] with MPersonLinks with MPIWithEmail {
   def id: Option[String] = Some(email)
   def idType: MPersonIdentType = IdTypes.EMAIL_PW
   def key: String = email
@@ -255,6 +282,16 @@ object EmailActivation extends EsModelStaticT[EmailActivation] {
   def applyKeyValue(acc: EmailActivation): PartialFunction[(String, AnyRef), Unit] = {
     case (KEY_ESFN, value)          => acc.key = stringParser(value)
     case (PERSON_ID_ESFN, value)    => acc.email = stringParser(value)
+  }
+
+  /** Найти элементы по ключу. */
+  def findByKey(key: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[EmailActivation]] = {
+    val keyQuery = QueryBuilders.termQuery(KEY_ESFN, key)
+    client.prepareSearch(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(keyQuery)
+      .execute()
+      .map { searchResp2list }
   }
 }
 
