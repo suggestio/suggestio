@@ -63,6 +63,7 @@ siomart =
     ## Забиндить на ОДИН DOM объект ОДНО событие
     ############################################
     add_single_listener : (elt, eventType, listener) ->
+
       if elt.addEventListener
         elt.addEventListener eventType, listener, false
       else
@@ -173,9 +174,12 @@ siomart =
 
     this.load_mart_index_page()
 
-    this.utils.add_listener window, 'resize', () ->
+    resize_cb = () ->
+      console.log "resize"
       siomart.utils.set_window_size()
       siomart.fit_images()
+
+    this.utils.add_single_listener window, 'resize', resize_cb
 
 
 window.siomart = siomart
