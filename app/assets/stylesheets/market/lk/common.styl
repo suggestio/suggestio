@@ -69,6 +69,9 @@ transform(v)
         border-radius(2px)
       .color.custom
         background: url('/assets/images/market/lk/custom-color.png') no-repeat
+    .close
+      margin-top: 5px
+      margin-right: 10px
   .input-wrap.textarea
     .left
       vertical-align: top
@@ -222,6 +225,7 @@ transform(v)
 
   .select-file-wrap
     width: 300px
+    float: left
     overflow: hidden
     .preview
       float: left
@@ -290,6 +294,18 @@ transform(v)
           background-position: 0 -85px
         .back-but:hover
           background-position: 0 0
+
+  .close
+    float: right
+    width: 17px
+    height: 17px
+    text-decoration: none
+    background: url('/assets/images/market/lk/close-icon.png') no-repeat
+    background-position: 0 -67px
+  .close:hover
+    background-position: 0 0
+  .close:active
+    background-position: 0 1px
 
   .popup
     display: none
