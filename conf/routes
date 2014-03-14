@@ -84,18 +84,18 @@ POST /sys/indices/downgrade/ALL         controllers.Sys.indicesDowngradeAll
 
 # Личный кабинет владельца ТЦ
 GET  /m/lk/mart/:martId                 controllers.MarketMartLk.martShow(martId, sortByRaw: Option[String] = None, isReversed: Boolean ?= false)
-GET  /m/lk/mart/:id/edit                controllers.MarketMartLk.martEditForm(id: String)
-POST /m/lk/mart/:id/edit                controllers.MarketMartLk.martEditFormSubmit(id: String)
+GET  /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditForm(martId: String)
+POST /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditFormSubmit(martId: String)
 POST /m/lk/mart/:martId/shop/:shopId/delete controllers.MarketMartLk.martShopDeleteSubmit(martId, shopId)
 GET  /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopForm(martId)
 POST /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopFormSubmit(martId)
+POST /m/lk/mart/:martId/logo            controllers.MarketMartLk.handleMartTempLogo(martId)
 GET  /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopForm(shopId)
 POST /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopFormSubmit(shopId)
 GET  /m/lk/mart/shop/:shopId            controllers.MarketMartLk.showShop(shopId)
 GET  /m/lk/mart/shop/:shopId/offers     controllers.MarketMartLk.showShopOffers(shopId)
 
 # личный кабинет купца-арендатора ТЦ.
-POST /m/lk/s/:shopId/logo               controllers.MarketShopLk.handleShopTempLogo(shopId)
 GET  /m/lk/s/:shopId                    controllers.MarketShopLk.showShop(shopId)
 GET  /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopForm(shopId)
 POST /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopFormSubmit(shopId)
@@ -103,6 +103,7 @@ GET  /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAccept(sh
 POST /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAcceptSubmit(shopId, eaId)
 GET  /m/lk/s/:shopId/ad/new             controllers.MarketAd.createShopAd(shopId)
 POST /m/lk/s/:shopId/ad/new             controllers.MarketAd.createShopAdSubmit(shopId)
+POST /m/lk/s/:shopId/logo               controllers.MarketShopLk.handleShopTempLogo(shopId)
 
 GET  /m/lk/a/:adId/edit                 controllers.MarketAd.editShopAd(adId)
 POST /m/lk/a/:adId/edit                 controllers.MarketAd.editShopAdSubmit(adId)

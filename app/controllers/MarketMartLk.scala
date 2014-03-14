@@ -14,6 +14,12 @@ import util.FormUtil._
 import MarketShopLk.shopFormM
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.current
+import util.img._
+import net.sf.jmimemagic.Magic
+import scala.Some
+import util.acl.IsMartAdminShop
+import util.img.ImgInfo
+import util.img.OrigImgIdKey
 
 /**
  * Suggest.io
@@ -24,6 +30,9 @@ import play.api.Play.current
 object MarketMartLk extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
+
+  /** Маркер картинки для использования в качестве логотипа. */
+  val MART_TMP_LOGO_MARKER = "martLogo"
 
   // Допустимые значения сортировки при выдаче магазинов.
   object ShopSort extends Enumeration {
@@ -46,8 +55,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
 
   import ShopSort._
 
-  /** Маппинг для формы добавления/редактирования торгового центра. */
-  val martFormM = Form(mapping(
+  val martM = mapping(
     "name"      -> martNameM,
     "town"      -> townM,
     "address"   -> martAddressM,
@@ -62,7 +70,29 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
   {mmart =>
     import mmart._
     Some((name, town, address, siteUrl, phone))
-  })
+  }
+
+
+  /** Маппер для необязательного логотипа магазина. */
+  val martLogoImgIdOptKM = {
+    val imgIdM = ImgFormUtil.imgIdM
+      .verifying("mart.logo.invalid", { iik => iik match {
+        case tiik: TmpImgIdKey =>
+          val m = tiik.mptmpOpt.get.markerOpt
+          m.isDefined && m.get == MART_TMP_LOGO_MARKER
+
+        case _ => true
+      }})
+    val logoImgInfoM = ImgFormUtil.logoImgIdM(imgIdM)
+    "martLogoImgId" -> optional(logoImgInfoM)
+  }
+
+  /** Маппинг для формы добавления/редактирования торгового центра. */
+  val martFormM = Form(tuple(
+    "mart" -> martM,
+    martLogoImgIdOptKM
+  ))
+
 
   /** Маппинг формы приглашения магазина в систему. */
   val inviteShopFormM = Form(mapping(
@@ -100,7 +130,8 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
    */
   def martEditForm(martId: MartId_t) = IsMartAdmin(martId).apply { implicit request =>
     import request.mmart
-    val formFilled = martFormM.fill(mmart)
+    val martLogoOpt = mmart.logoImgId.map { imgId => ImgInfo(OrigImgIdKey(imgId)) }
+    val formFilled = martFormM.fill((mmart, martLogoOpt))
     Ok(martEditFormTpl(mmart, formFilled))
   }
 
@@ -116,15 +147,20 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
         NotAcceptable(martEditFormTpl(mmart, formWithErrors))
           .flashing("error" -> "Ошибка заполнения формы.")
       },
-      {mmart2 =>
+      {case (mmart2, logoImgIdOpt) =>
+        // В фоне обновляем логотип ТЦ
+        val savedLogoFut = ImgFormUtil.updateOrigImgId(logoImgIdOpt, oldImgId = mmart2.logoImgId)
         mmart.name = mmart2.name
         mmart.town = mmart2.town
         mmart.address = mmart2.address
         mmart.siteUrl = mmart2.siteUrl
         mmart.phone = mmart2.phone
-        mmart.save.map { _ =>
-          Redirect(routes.MarketMartLk.martShow(martId))
-            .flashing("success" -> "Изменения сохранены.")
+        savedLogoFut flatMap { savedLogos =>
+          mmart.logoImgId = savedLogos.headOption
+          mmart.save.map { _ =>
+            Redirect(routes.MarketMartLk.martShow(martId))
+              .flashing("success" -> "Изменения сохранены.")
+          }
         }
       }
     )
@@ -274,6 +310,40 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
       case None => shopNotFound(shopId)
     }
   }
+
+
+  /**
+   * Загрузка картинки для логотипа магазина.
+   * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
+   * @return Тот же формат ответа, что и для просто temp-картинок.
+   */
+  def handleMartTempLogo(martId: MartId_t) = IsMartAdmin(martId)(parse.multipartFormData) { implicit request =>
+    request.body.file("picture") match {
+      case Some(pictureFile) =>
+        val fileRef = pictureFile.ref
+        val srcFile = fileRef.file
+        // Если на входе png/gif, то надо эти форматы выставить в outFmt. Иначе jpeg.
+        val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
+        val outFmt = OutImgFmts.forImageMime(srcMagicMatch.getMimeType)
+        val mptmp = MPictureTmp.getForTempFile(fileRef, outFmt, Some(MART_TMP_LOGO_MARKER))
+        try {
+          MartLogoImageUtil.convert(srcFile, mptmp.file)
+          Ok(Img.jsonTempOk(mptmp.filename))
+        } catch {
+          case ex: Throwable =>
+            debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
+            val reply = Img.jsonImgError("Unsupported picture format.")
+            BadRequest(reply)
+        } finally {
+          srcFile.delete()
+        }
+
+      case None =>
+        val reply = Img.jsonImgError("Picture not found in request.")
+        NotAcceptable(reply)
+    }
+  }
+
 
   private def martNotFound(martId: MartId_t) = NotFound("mart not found: " + martId)  // TODO Нужно дергать 404-шаблон.
   private def shopNotFound(shopId: ShopId_t) = NotFound("Shop not found: " + shopId)  // TODO

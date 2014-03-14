@@ -1,4 +1,4 @@
-@(btnText: String, mf: Form[_], call:Call)
+@(martId:MMart.MartId_t, btnText: String, mf: Form[_], call:Call)(implicit ctx: util.Context)
 
 @* Форма для создания/редактирования торгового центра через личный кабинет. *@
 @import helper._
@@ -15,13 +15,15 @@
           <label>Логотип</label>
         </td>
         <td class="right">
-          <div class="select-file-wrap">
+          <div class="select-file-wrap" id="martLogoImgInput">
+            @defining(mf("martLogoImgId").value) { martLogoImgIdOpt =>
             <div class="preview">
-              <img src="" width="59" height="59"/>
+              <img src="@martLogoImgIdOpt.map { imgId => routes.Img.getImg(imgId)}" width="59" height="59"/>
             </div>
             <div class="selectbox">
               <div class="select-file">
-                <input type="file" value="Выбрать файл для загрузки" />
+                @stuff._fileUploadTpl(routes.MarketMartLk.handleMartTempLogo(martId), relatedFieldId="martLogoImgInput")
+                <input type="hidden" name="martLogoImgId" value="@martLogoImgIdOpt"/>
                 <div class="bg">Выбрать файл для загрузки</div>
               </div>
               <div class="descr">
@@ -29,6 +31,7 @@
                 фоне и иметь формат .png
               </div>
             </div>
+            }
           </div>
         </td>
       </tr>
@@ -36,29 +39,29 @@
 
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
       @inputText(
-      mf("name"),
-      '_label -> "Название ТЦ:"
+        mf("name"),
+        '_label -> "Название ТЦ:"
       )
     </table>
 
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
       @inputText(
-      mf("town"),
-      '_label -> "Город:"
+        mf("town"),
+        '_label -> "Город:"
       )
     </table>
 
     <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
       @textarea(
-      mf("address"),
-      '_label -> "Адрес:"
+        mf("address"),
+        '_label -> "Адрес:"
       )
     </table>
 
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
       @inputText(
-      mf("site_url"),
-      '_label -> "Сайт ТЦ:"
+        mf("site_url"),
+        '_label -> "Сайт ТЦ:"
       )
     </table>
   </div>

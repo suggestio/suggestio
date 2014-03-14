@@ -27,8 +27,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
-  type ShopLogo_t = Option[ImgInfo[ImgIdKey]]
-  type AdFormM = Form[(ImgIdKey, ShopLogo_t, MMartAd)]
+  type AdFormM = Form[(ImgIdKey, LogoOpt_t, MMartAd)]
 
   /** Режимы работы формы добавления рекламной карточки. Режимы отражают возможные варианты офферов. */
   object FormModes extends Enumeration {
@@ -227,12 +226,10 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
   }
 
-  private val shopLogoOptKM = "shopLogoImgId" -> MarketShopLk.logoImgOptM
-
   /** Генератор форм добавления/редактирования рекламируемого продукта в зависимости от вкладок. */
   private def getAdFormM[T <: MMartAdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
     adImgIdKM,
-    shopLogoOptKM,
+    MarketShopLk.logoImgOptIdKM,
     "ad" -> getAdM(offerM)
   ))
 
@@ -303,9 +300,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           },
           {case (imgKey, logoImgIdOpt, mmad) =>
             // Асинхронно обрабатываем логотип.
-            if (hasNewShopLogo(logoImgIdOpt)) {
-              updateShopLogo(logoImgIdOpt, mshop) onComplete shopLogoUpdatePf(shopId)
-            }
+            updateShopLogo(logoImgIdOpt, mshop) onComplete shopLogoUpdatePf(shopId)
             ImgFormUtil.updateOrigImg(Some(ImgInfo(imgKey)), oldImgs = None) flatMap {
               case imgIdsSaved if !imgIdsSaved.isEmpty =>
                 // TODO Нужно проверить категорию.
@@ -424,18 +419,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
   }
 
-  /** Есть ли обновлённый логотип в результате соответствующего маппера. */
-  private def hasNewShopLogo(logoImgIdOpt: ShopLogo_t): Boolean = {
-    logoImgIdOpt.exists(_.iik.isTmp)
-  }
-
   /** Асинхронно обновить логотип магазина-бренда. */
-  private def updateShopLogo(logoImgIdOpt: ShopLogo_t, mshop: MShop): Future[_] = {
+  private def updateShopLogo(logoImgIdOpt: LogoOpt_t, mshop: MShop): Future[_] = {
     ImgFormUtil.updateOrigImgId(
       needImg = logoImgIdOpt,
       oldImgId = mshop.logoImgId
     ) flatMap {
-      case Nil =>
+      case Nil if logoImgIdOpt.isDefined =>
         Future failed new NoSuchElementException(s"Cannot save new logo for shop=${mshop.id.get} . Ignoring...")
       case savedImgIds =>
         mshop.logoImgId = savedImgIds.headOption
@@ -464,13 +454,11 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           {case (iik, logoImgIdOpt, mad2) =>
             // Надо обработать логотип, который приходит в составе формы. Это можно делать независимо от самой MMartAd.
             // Если выставлен tmp-логотип, то надо запустить обновление mshop.
-            if (hasNewShopLogo(logoImgIdOpt)) {
-              val shopId = mad.shopId.get
-              MShop.getById(shopId) flatMap {
-                case Some(mshop)  => updateShopLogo(logoImgIdOpt, mshop)
-                case None         => Future failed new NoSuchElementException(s"Shop not found: " + shopId)
-              } onComplete shopLogoUpdatePf(shopId)
-            }
+            val shopId = mad.shopId.get
+            MShop.getById(shopId) flatMap {
+              case Some(mshop)  => updateShopLogo(logoImgIdOpt, mshop)
+              case None         => Future failed new NoSuchElementException(s"Shop not found: " + shopId)
+            } onComplete shopLogoUpdatePf(shopId)
             // TODO Проверить категорию.
             // TODO И наверное надо проверить shopId-существование в исходной рекламе.
             ImgFormUtil.updateOrigImgId(

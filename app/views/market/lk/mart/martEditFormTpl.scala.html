@@ -16,7 +16,12 @@
   </div>
 
   <div class="body">
-    @_martFormTpl("Сохранить", mf, routes.MarketMartLk.martEditFormSubmit(mmart.id.get))
+    @_martFormTpl(
+      martId = mmart.id.get,
+      btnText = Messages("Save"),
+      mf = mf,
+      call = routes.MarketMartLk.martEditFormSubmit(mmart.id.get)
+    )
   </div>
 
 }
