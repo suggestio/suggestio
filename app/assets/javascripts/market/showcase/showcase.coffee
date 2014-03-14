@@ -42,23 +42,30 @@ siomart =
 
       ea
 
-  set_window_size : () ->
-    ww = wh = 0
+    ##############################################
+    ## Определить и сохранить размер окна браузера
+    ##############################################
+    set_window_size : () ->
+      ww = wh = 0
+      if typeof window.innerWidth == 'number'
+        ww = window.innerWidth
+        wh = window.innerHeight
+      else if document.documentElement && ( document.documentElement.clientWidth || document.documentElement.clientHeight )
+        ww = document.documentElement.clientWidth
+        wh = document.documentElement.clientHeight
+      else if document.body && ( document.body.clientWidth || document.body.clientHeight )
+        ww = document.body.clientWidth
+        wh = document.body.clientHeight
 
-    if typeof window.innerWidth == 'number'
-      ww = window.innerWidth
-      wh = window.innerHeight
+      this.ww = ww
+      this.wh = wh
 
-    else if document.documentElement && ( document.documentElement.clientWidth || document.documentElement.clientHeight )
-      ww = document.documentElement.clientWidth
-      wh = document.documentElement.clientHeight
+  ############################
+  ## Откадрировать изображения
+  ############################
 
-    else if document.body && ( document.body.clientWidth || document.body.clientHeight )
-      ww = document.body.clientWidth
-      wh = document.body.clientHeight
-
-    this.ww = ww
-    this.wh = wh
+  fit_images : () ->
+    images = this.uril.ge_tag
 
   fit_image : () ->
 
@@ -97,11 +104,13 @@ siomart =
   draw_layout : () ->
     sm_layout_attrs =
       class : 'sio-mart-layout'
-      id : 'sioMartLayout'
-    sm_layout = this.utils.ce "div", sm_layout_attrs
+    sm_layout = this.utils.ce "div", sm_layout_attrs, '<div id="sioMartLayout"></div>'
 
     this.utils.ge_tag("body")[0].appendChild sm_layout
 
+  ###################################
+  ## Осуществить запрос к серверу sio
+  ###################################
   perform_request : ( url ) ->
     js_request_attrs =
       type : 'text/javascript'
@@ -126,11 +135,11 @@ siomart =
 
 
   init : () ->
+    this.utils.set_window_size()
     this.load_stylesheets()
     this.draw_layout()
 
     this.load_mart_index_page()
-
 
 window.siomart = siomart
 
