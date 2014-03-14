@@ -58,6 +58,16 @@ $(document).on 'click', '.create-ad .mask-list .item', ->
 
   $this.find('.one-checkbox').trigger('click' )
 
+
+##СКРЫТЬ ВЫБРАННОЕ ФОТО##
+$(document).on 'click', '.input-wrap .close', (e)->
+  e.preventDefault()
+
+  $this =$(this)
+  $wrap = $this.closest('.input-wrap')
+  $wrap.find('.image-key').val('')
+  $wrap.find('.image-preview').attr('src', '')
+
 ##ПРЕВЬЮ РЕКЛАМНОЙ КАРТОЧКИ##
 $(document).on 'click', '.device', ->
   $this = $(this)
