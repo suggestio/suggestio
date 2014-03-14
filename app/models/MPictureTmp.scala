@@ -104,9 +104,9 @@ case class MPictureTmp(filename: String) {
 
   // Все параметры разом.
   val (key, fmt, markerOpt) = {
-    val Some(List(_key, markerStr, fmtStrOrNull)) = FILENAME_RE.unapplySeq(filename)
-    val _fmt = if(fmtStrOrNull == null || fmtStrOrNull.isEmpty)  fmtDflt  else  OutImgFmts.withName(fmtStrOrNull)
-    val _marker = if (markerStr.isEmpty) None else Some(markerStr)
+    val Some(List(_key, markerStrOrNull, fmtStr)) = FILENAME_RE.unapplySeq(filename)
+    val _fmt = if(fmtStr.isEmpty)  fmtDflt  else  OutImgFmts.withName(fmtStr)
+    val _marker = if (markerStrOrNull == null || markerStrOrNull.isEmpty) None else Some(markerStrOrNull)
     (_key, _fmt, _marker)
   }
 
