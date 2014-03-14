@@ -60,13 +60,15 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
     * Подходит для редактирования из ТЦ-аккаунта */
   val shopFormM = Form(shopKM)
 
-  private val logoImgIdKM = "logoImgId" -> optional(imgIdM)
-    /*.transform(
+  /** Маппер для необязательного логотипа магазина. */
+  private val logoImgIdKM = "logoImgId" -> optional(
+    imgIdM.transform(
       { ImgInfo(_, cropOpt = None, withThumb = false) },
-      { ii: ImgInfo => Some(ii.iik) }
-    )*/
+      { ii: ImgInfo[ImgIdKey] => ii.iik }
+    )
+  )
 
-  /** Форма для заполнения страницы. */
+  /** Форма для заполнения страницы, но НЕ для сабмита. */
   val shopFullFormM = Form(tuple(
     shopKM,
     logoImgIdKM
@@ -296,10 +298,11 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
 
 
   /**
-   * Загрузка картинки для логотипа магазина. Права на доступ к магазину проверяем просто для галочки.
+   * Загрузка картинки для логотипа магазина.
+   * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
    * @return Тот же формат ответа, что и для просто temp-картинок.
    */
-  def handleShopTempLogo = IsAuth(parse.multipartFormData) { implicit request =>
+  def handleShopTempLogo(shopId: ShopId_t) = IsShopAdm(shopId)(parse.multipartFormData) { implicit request =>
     request.body.file("picture") match {
       case Some(pictureFile) =>
         val fileRef = pictureFile.ref

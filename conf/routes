@@ -95,7 +95,7 @@ GET  /m/lk/mart/shop/:shopId            controllers.MarketMartLk.showShop(shopId
 GET  /m/lk/mart/shop/:shopId/offers     controllers.MarketMartLk.showShopOffers(shopId)
 
 # личный кабинет купца-арендатора ТЦ.
-POST /m/lk/s/logo                       controllers.MarketShopLk.handleShopTempLogo
+POST /m/lk/s/:shopId/logo               controllers.MarketShopLk.handleShopTempLogo(shopId)
 GET  /m/lk/s/:shopId                    controllers.MarketShopLk.showShop(shopId)
 GET  /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopForm(shopId)
 POST /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopFormSubmit(shopId)

@@ -351,7 +351,7 @@ object SysMarket extends SioController with MacroLogsImpl {
             }
           },
           {newShop =>
-            mshop.loadFrom(newShop)
+            mshop.loadStringsFrom(newShop)
             mshop.save map { _ =>
               Redirect(routes.SysMarket.shopShow(shop_id))
                 .flashing("success" -> "Changes saved.")
