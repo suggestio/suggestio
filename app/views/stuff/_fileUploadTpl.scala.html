@@ -1,12 +1,7 @@
-@(call: Call, relatedFormId:String="")(implicit ctx: util.Context)
+@(call: Call, relatedFieldId:String="")(implicit ctx: util.Context)
 
-@* Рендер формы для отправки картинки на сервер для её кадрирования. *@
+@* Рендер field type=input для отправки картинки на сервер для её кадрирования. *@
 @import ctx._
 @import helper._
 
-@form(call, 'enctype -> "multipart/form-data", 'class -> "file-upload-form" ) {
-  @* inputFile() не используем т.к. исходная форма не доступна. *@
-  <input type="file" name="picture"/>
-  <input class="related-form-id" type="hidden" value="@relatedFormId"/>
-  <input type="submit"/>
-}
+<input type="file" class="w-async-image-upload" data-related-field-id="@relatedFieldId" data-action="@call" name="picture"/>

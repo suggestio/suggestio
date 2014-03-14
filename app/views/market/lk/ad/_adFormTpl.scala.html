@@ -80,7 +80,7 @@
           </td>
           <td class="right">
             <div class="select-file-wrap">
-              <div class="preview">
+              <div class="preview" id="promoOfferGoodPreview">
                 @* Данные по картинке загруженной. *@
                 @defining(af("image_key").value) { imgIdOpt =>
                 <input type="hidden" name="image_key" value="@imgIdOpt"/>
@@ -89,7 +89,9 @@
               </div>
               <div class="selectbox">
                 <div class="select-file">
-                  <input type="file" value="Выбрать файл для загрузки" data-action="#" />
+
+                  @stuff._fileUploadTpl(routes.Img.handleTempImg, relatedFieldId="promoOfferGoodPreview")
+
                   <div class="bg">Выбрать файл для загрузки</div>
                 </div>
                 <div class="descr">
@@ -181,6 +183,3 @@
 
 
 }
-
-@* Картинки - это фактически отдельная форма, и её надо в отдельный файл. *@
-@stuff._fileUploadTpl(routes.Img.handleTempImg, relatedFormId="promoOfferForm")
