@@ -39,15 +39,16 @@
               <label>Логотип:</label>
             </td>
             <td class="right">
+
               <div class="select-file-wrap" id="shopLogoImgInput">
-		@defining(af("shopLogoImgId").value) { shopLogoImgIdOpt =>
+                @defining(af("shopLogoImgId").value) { shopLogoImgIdOpt =>
                 <div class="preview">
-		  <img src="@shopLogoImgIdOpt.map { imgId => routes.Img.getImg(imgId) }" width="59" height="59"/>
+                  <img class="image-preview" src="@shopLogoImgIdOpt.map { imgId => routes.Img.getImg(imgId) }" width="59"/>
                 </div>
                 <div class="selectbox">
                   <div class="select-file">
-		    @stuff._fileUploadTpl(routes.MarketShopLk.handleShopTempLogo(shopId), relatedFieldId="shopLogoImgInput")
-		    <input type="hidden" name="shopLogoImgId" value="@shopLogoImgIdOpt"/>
+		                @stuff._fileUploadTpl(routes.MarketShopLk.handleShopTempLogo(shopId), relatedFieldId="shopLogoImgInput")
+                    <input class="image-key" type="hidden" name="shopLogoImgId" value="@shopLogoImgIdOpt"/>
                     <div class="bg">Выбрать файл для загрузки</div>
                   </div>
                   <div class="descr">
