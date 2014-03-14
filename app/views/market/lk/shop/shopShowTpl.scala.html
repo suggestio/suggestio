@@ -2,24 +2,45 @@
 
 @* Страница отображения магазина для арендатора ТЦ (т.е. для владельца этого магазина). *@
 @import market.lk._
+@import routes.MarketShopLk._
 
 @lkBase(mshop.name) {
 
   <div class="title-wrap">
     <div class="center">
       <div class="title-inner">
-        КАРТОЧКА АРЕНДАТОРА
+        ЛИЧНЫЙ КАБИНЕТ АРЕНДАТОРА
       </div>
     </div>
   </div>
 
   <div class="body">
 
-    @* Отобразить основное описание магазина с кнопкой редактирования. *@
-    @shop._shopShowTpl(
-      mshop=mshop,
-      editCall=routes.MarketShopLk.editShopForm(mshop.id.get)
-    )
+    <div class="shop-info">
+
+      <div class="name-wrap">
+        <span class="name">@mshop.name</span>
+        <a class="edit" href="@editShopForm(mshop.id.get)">Редактировать</a>
+      </div>
+      <div class="border-line"></div>
+
+      <table class="block">
+        <tr>
+          <td class="right" style="border-left: none; padding-left: 0;">
+            <div class="shop-descr">
+              @mshop.description
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      @* Отобразить основное описание магазина с кнопкой редактирования. *@
+      @shop._shopShowTpl(
+        mshop=mshop,
+        editCall=routes.MarketShopLk.editShopForm(mshop.id.get)
+      )
+
+    </div>
 
 
 
