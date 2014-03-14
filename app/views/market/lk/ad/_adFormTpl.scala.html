@@ -118,7 +118,7 @@
           </td>
           <td class="right">
             <div class="select-file-wrap">
-              <div class="preview" id="shopLogoImgInput">
+              <div class="preview" id="adImagePreview">
                 @* Данные по картинке загруженной. *@
                 @defining(af("image_key").value) { imgIdOpt =>
                 <input class="image-key" type="hidden" name="image_key" value="@imgIdOpt"/>
@@ -127,7 +127,7 @@
               </div>
               <div class="selectbox">
                 <div class="select-file">
-                  @stuff._fileUploadTpl(routes.Img.handleTempImg, relatedFieldId="shopLogoImgInput")
+                  @stuff._fileUploadTpl(routes.Img.handleTempImg, relatedFieldId="adImagePreview")
                   <div class="bg">Выбрать файл для загрузки</div>
                 </div>
                 <div class="descr">
