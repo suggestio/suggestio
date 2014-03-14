@@ -1,5 +1,7 @@
 @import 'fonts.styl'
 
+spriteurl = url('/assets/images/sio-market-sprite.png')
+
 .sio-mart-layout,
 .sio-mart-layout .sm-screen,
 .sio-mart-layout .sm-offers
@@ -14,6 +16,17 @@
   position: fixed
   background: rgba(200,200,200,0.95)
 
+  .back-close-button
+    position: absolute
+    left: 0px
+    top: 0px
+    z-index: 1002
+    a
+      display: block
+      width: 50px
+      height: 40px
+      background: spriteurl no-repeat left top
+      background-size: 25px 20px
   .sm-button
     display: block
     color: #fff
@@ -44,7 +57,12 @@
       margin-top: -150px
       color : #fff
 
-  .sm-header
+  .sm-offer
+    position: relative
+    width: 100%
+    height: 100%
+
+  .offer-header
     position: absolute
     z-index: 1001
     width: 100%
