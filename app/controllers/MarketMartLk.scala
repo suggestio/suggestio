@@ -235,6 +235,30 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
     }
   }
 
+  val searchFormM = Form(
+    "q" -> nonEmptyText(maxLength = 64)
+  )
+
+  /**
+   * Поиск по магазинам в рамках ТЦ.
+   * @param martId id ТЦ.
+   * @return 200 Отрендеренный список магазинов для отображения поверх существующей страницы.
+   *         406 С сообщением об ошибке.
+   */
+  def searchShops(martId: MartId_t) = IsMartAdmin(martId).async { implicit request =>
+    searchFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"searchShops($martId): Failed to bind search form: " + formWithErrors.errors)
+        NotAcceptable("Bad search request")
+      },
+      {q =>
+        MShop.searchAll(q + "*", martId = Some(martId)) map { result =>
+          Ok(_martShopsTpl(martId, result))
+        }
+      }
+    )
+  }
+
   /**
    * Сабмит формы редактирования магазина-арендатора.
    * @param shopId id редактируемого магазина.

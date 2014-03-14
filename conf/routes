@@ -87,6 +87,7 @@ POST /sys/indices/downgrade/ALL         controllers.Sys.indicesDowngradeAll
 
 # Личный кабинет владельца ТЦ
 GET  /m/lk/mart/:martId                 controllers.MarketMartLk.martShow(martId, sortByRaw: Option[String] = None, isReversed: Boolean ?= false)
+POST /m/lk/mart/:martId/search          controllers.MarketMartLk.searchShops(martId)
 GET  /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditForm(martId: String)
 POST /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditFormSubmit(martId: String)
 POST /m/lk/mart/:martId/shop/:shopId/delete controllers.MarketMartLk.martShopDeleteSubmit(martId, shopId)
