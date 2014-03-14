@@ -17,7 +17,7 @@ var cbca = {};
   });
 
 
-  $('.color.custom').each(
+ /*$('.color.custom').each(
   function() {
 
     var $this = $(this),
@@ -47,7 +47,7 @@ var cbca = {};
       }
     });
 
-  });
+  });*/
 
 
 
@@ -66,9 +66,13 @@ function CbcaSelect(containerId) {
 
   self.initDropDown = function() {
 
-    $('.cbca-select').each(function() {
+    $('.cbca-select').each(
+    function() {
       var $this = $(this),
-      $dropDown = $this.find('.dropdown');
+      $dropDown = $this.find('.dropdown'),
+      $wrap = $this.parent(),
+      index = $wrap.find('.cbca-select').index(this),
+      left = 0;
 
       if(!$this.data('init')) {
         $this.data({
@@ -77,9 +81,19 @@ function CbcaSelect(containerId) {
         });
         $dropDown.css('height', 0);
 
+        $wrap.find('.cbca-select:lt('+index+')').each(
+        function() {
+          left += $(this).position().left + $(this).width();
+        });
+        $this.css('left', left);
+        if(index > 0) {
+          $this.prepend('<span class="pre-span">&nbsp;/&nbsp;</span>');
+        }
+
         var $selected = $this.find('.option[data-selected]');
         if($selected.length) {
-          self.setValue($selected.attr('data-value'));
+           $this.find('.selected').html($selected.html());
+           $input.val($selected.attr('data-value'));
         }
       }
     });
