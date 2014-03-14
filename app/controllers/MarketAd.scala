@@ -189,7 +189,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     )
   private val textAlignKM = "textAlign" -> textAlignM
 
-  type AdFormM = Form[(ImgIdKey, MMartAd)]
+  type AdFormM = Form[(ImgIdKey, Option[ImgInfo[ImgIdKey]], MMartAd)]
 
   /** Генератор маппинга для MMartAd-части общей формы. */
   private def getAdM[T <: MMartAdOfferT](offerM: Mapping[T]) = mapping(
@@ -223,9 +223,12 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
   }
 
+  private val shopLogoOptKM = "shopLogoImgId" -> MarketShopLk.logoImgOptM
+
   /** Генератор форм добавления/редактирования рекламируемого продукта в зависимости от вкладок. */
   private def getAdFormM[T <: MMartAdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
     adImgIdKM,
+    shopLogoOptKM,
     "ad" -> getAdM(offerM)
   ))
 
@@ -294,7 +297,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
               formWithErrors.errors.map { e => "  " + e.key + " -> " + e.message }.mkString("\n"))
             createShopAdFormError(formWithErrors, catOwnerId, mshop)
           },
-          {case (imgKey, mmad) =>
+          {case (imgKey, logoImgIdOpt, mmad) =>
             val needImgs = Seq(ImgInfo(imgKey, cropOpt = None))
             val imgFut = ImgFormUtil.updateOrigImg(needImgs, oldImgs = Nil)
             imgFut.flatMap {
@@ -365,14 +368,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
   }
 
-  private def renderEditFormWith(af: AdFormM, mshopFut: Future[Option[MShop]], mad: MMartAd)(implicit ctx: Context) = {
+  private def renderEditFormWith(af: AdFormM, mshopOpt: Option[MShop], mad: MMartAd)(implicit ctx: Context) = {
     val catOwnerId = mad.martId
     val mmcatsFut: Future[CollectMMCatsAcc_t] = mad.userCatId match {
       case Some(catId) => nearCatsList(catOwnerId=catOwnerId, catId=catId)
       case None => topCatsAsAcc(catOwnerId)
     }
     for {
-      mshopOpt <- mshopFut
       mmcats   <- mmcatsFut
     } yield {
       mshopOpt map { mshop =>
@@ -384,10 +386,11 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   private def renderFailedEditFormWith(af: AdFormM, mad: MMartAd)(implicit ctx: Context) = {
     val shopId = mad.shopId.get
     // TODO Надо фетчить магазин и категории одновременно.
-    val mshopFut = MShop.getById(shopId)
-    renderEditFormWith(af, mshopFut, mad) map {
-      case Some(render) => NotAcceptable(render)
-      case None => shopNotFound(shopId)
+    MShop.getById(shopId) flatMap { mshopOpt =>
+      renderEditFormWith(af, mshopOpt, mad) map {
+        case Some(render) => NotAcceptable(render)
+        case None => shopNotFound(shopId)
+      }
     }
   }
 
@@ -399,11 +402,15 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     mad.shopId match {
       case Some(_shopId) =>
         val imgIdKey = OrigImgIdKey(mad.picture)
-        val formFilled = FormModes.getFormForClass(mad.offers.head) fill (imgIdKey, mad)
-        val mshopFut = MShop.getById(_shopId)
-        renderEditFormWith(formFilled, mshopFut, mad) map {
-          case Some(render) => Ok(render)
-          case None => shopNotFound(_shopId)
+        MShop.getById(_shopId) flatMap { mshopOpt =>
+          val logoImgId = mshopOpt
+            .flatMap { _.logoImgId }
+            .map { logoImgId => ImgInfo(OrigImgIdKey(logoImgId), cropOpt = None) }
+          val formFilled = FormModes.getFormForClass(mad.offers.head) fill ((imgIdKey, logoImgId, mad))
+          renderEditFormWith(formFilled, mshopOpt, mad) map {
+            case Some(render) => Ok(render)
+            case None => shopNotFound(_shopId)
+          }
         }
 
       // Магазин в карточке не указан. Вероятно, это карточка должна редактироваться через какой-то другой экшен
@@ -424,7 +431,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             debug(s"editShopAdSubmit($adId): Failed to bind form: " + formWithErrors.errors)
             renderFailedEditFormWith(formWithErrors, mad)
           },
-          {case (iik, mad2) =>
+          {case (iik, logoImgIdOpt, mad2) =>
             // TODO Проверить категорию.
             // TODO И наверное надо проверить shopId-существование в исходной рекламе.
             // TODO Надо обработать логотип, который приходит в составе формы

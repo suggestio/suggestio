@@ -62,9 +62,10 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
 
   /** Картинка логотипа-бренда задаётся через это поле. */
   def logoImgIdM = imgInfoM
+  val logoImgOptM = optional(logoImgIdM)
 
   /** Маппер для необязательного логотипа магазина. */
-  private val logoImgOptIdKM = "logoImgId" -> optional(logoImgIdM)
+  private val logoImgOptIdKM = "logoImgId" -> logoImgOptM
 
   /** Форма для заполнения страницы, но НЕ для сабмита. */
   val shopFullFormM = Form(tuple(

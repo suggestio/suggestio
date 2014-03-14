@@ -9,7 +9,7 @@
       <label>Цвет плашки:</label>
     </td>
 
-    @defining(af("panelColor").value) { currColorOpt =>
+    @defining(af("ad.panelColor").value) { currColorOpt =>
     @defining(currColorOpt.getOrElse("000000")) { currColorHex =>
     @defining(Map("000000" -> "black", "ffffff" -> "white", "959595" -> "gray")) { panelColors =>
       <td class="right">
