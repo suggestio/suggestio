@@ -22,15 +22,22 @@ import io.suggest.util.MacroLogsImplLazy
 
 object ImgFormUtil extends PlayMacroLogsImpl {
   import play.api.data.Forms._
+  import play.api.data.Mapping
   import LOGGER._
 
+  type LogoOpt_t = Option[ImgInfo[ImgIdKey]]
+  
   /** Маппер для поля с id картинки. Используется обертка над id чтобы прозрачно различать tmp и orig картинки. */
   val imgIdM  = nonEmptyText(minLength = 8, maxLength = 42)
     .transform(ImgIdKey.apply, {iik: ImgIdKey => iik.key})
     .verifying("img.id.invalid.", { _.isValid })
 
-  /** Маппер для поля с id картинки, но результат конвертируется в ImgInfo с абстрактным параметром типа. */
-
+  /** Маппер для поля с id картинки-логотипа, но результат конвертируется в ImgInfo. */
+  def logoImgIdM(_imgIdM: Mapping[ImgIdKey]) = _imgIdM
+    .transform(
+      { ImgInfo(_, cropOpt = None, withThumb = false) },
+      { ii: ImgInfo[ImgIdKey] => ii.iik }
+    )
 
   /** Проверяем tmp-файл на использование jpeg. Уже сохраненные id не проверяются. */
   val imgIdJpegM = imgIdM
@@ -246,6 +253,30 @@ object ShopLogoImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
 }
 
 
+/** Конвертор картинок в логотипы ТЦ. */
+object MartLogoImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
+
+  /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
+    * прямоугольник с указанныыми сторонами). */
+  val DOWNSIZE_HORIZ_PX: Integer = Integer valueOf (current.configuration.getInt("img.logo.mart.maxsize.h.px") getOrElse 512)
+  val DOWNSIZE_VERT_PX: Integer  = current.configuration.getInt("img.logo.mart.maxsize.v.px").map(Integer valueOf) getOrElse DOWNSIZE_HORIZ_PX
+
+  /** Качество сжатия jpeg. */
+  val JPEG_QUALITY_PC: Double = current.configuration.getDouble("img.logo.mart.jpeg.quality") getOrElse 0.95
+
+  /** Картинка считается слишком маленькой для обработки, если хотя бы одна сторона не превышает этот порог. */
+  val MIN_SZ_PX: Int = current.configuration.getInt("img.logo.mart.side.min.px") getOrElse 70
+
+  /** Если на выходе получилась слишком жирная превьюшка, то отсеять её. */
+  val MAX_OUT_FILE_SIZE_BYTES: Option[Int] = current.configuration.getInt("img.logo.mart.result.size.max")
+
+  /** Если исходный jpeg после стрипа больше этого размера, то сделать resize.
+    * Иначе попытаться стрипануть icc-профиль по jpegtran, чтобы снизить размер без пересжатия. */
+  def MAX_SOURCE_JPEG_NORSZ_BYTES: Option[Long] = None
+
+}
+
+
 object ImgIdKey {
   def apply(key: String): ImgIdKey = {
     if (key startsWith MPictureTmp.KEY_PREFIX) {
@@ -278,9 +309,9 @@ case class TmpImgIdKey(filename: String) extends ImgIdKey with MacroLogsImplLazy
   def isTmp: Boolean = true
   def key = filename
 
-  def isExists: Future[Boolean] = Future successful mptmpOpt.exists(_.isExist)
+  def isExists: Future[Boolean] = Future successful isValid
 
-  def isValid = mptmpOpt.isDefined
+  def isValid = mptmpOpt.isDefined && mptmpOpt.exists(_.isExist)
 }
 
 

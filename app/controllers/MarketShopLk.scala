@@ -15,7 +15,6 @@ import play.api.libs.concurrent.Akka
 import scala.concurrent.{Future, Promise}
 import play.api.mvc.Security.username
 import util.img._
-import ImgFormUtil.imgIdM
 import net.sf.jmimemagic.Magic
 
 /**
@@ -60,16 +59,19 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
     * Подходит для редактирования из ТЦ-аккаунта */
   val shopFormM = Form(shopKM)
 
-  /** Картинка логотипа-бренда задаётся через это поле. */
-  val logoImgIdM = imgIdM
-    .transform(
-      { ImgInfo(_, cropOpt = None, withThumb = false) },
-      { ii: ImgInfo[ImgIdKey] => ii.iik }
-    )
-  val logoImgOptM = optional(logoImgIdM)
-
   /** Маппер для необязательного логотипа магазина. */
-  private val logoImgOptIdKM = "logoImgId" -> logoImgOptM
+  val logoImgOptIdKM = {
+    val imgIdM = ImgFormUtil.imgIdM
+      .verifying("shop.logo.invalid", { iik => iik match {
+        case tiik: TmpImgIdKey =>
+          val m = tiik.mptmpOpt.get.markerOpt
+          m.isDefined && m.get == SHOP_TMP_LOGO_MARKER
+
+        case _ => true
+      }})
+    val logoImgInfoM = ImgFormUtil.logoImgIdM(imgIdM)
+    "shopLogoImgId" -> optional(logoImgInfoM)
+  }
 
   /** Форма для заполнения страницы, но НЕ для сабмита. */
   val shopFullFormM = Form(tuple(
