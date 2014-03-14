@@ -12,6 +12,7 @@ import io.suggest.event._
 import io.suggest.model._
 import io.suggest.model.EsModel._
 import io.suggest.util.SioEsUtil._
+import io.suggest.util.JacksonWrapper
 
 /**
  * Suggest.io
@@ -71,6 +72,16 @@ object MMart extends EsModelStaticT[MMart] {
           id = PHONE_ESFN,
           include_in_all = false,
           index = FieldIndexingVariants.no
+        ),
+        FieldString(
+          id = PERSON_ID_ESFN,
+          include_in_all = false,
+          index = FieldIndexingVariants.not_analyzed
+        ),
+        FieldString(
+          id = LOGO_IMG_ID,
+          include_in_all = false,
+          index = FieldIndexingVariants.no
         )
       )
     )
@@ -85,6 +96,8 @@ object MMart extends EsModelStaticT[MMart] {
     case (DATE_CREATED_ESFN, value)   => acc.dateCreated = dateCreatedParser(value)
     case (TOWN_ESFN, value)           => acc.town = stringParser(value)
     case (PHONE_ESFN, value)          => acc.phone = Some(stringParser(value))
+    case (PERSON_ID_ESFN, value)      => acc.personIds = JacksonWrapper.convert[List[String]](value)
+    case (LOGO_IMG_ID, value)         => acc.logoImgId = Some(stringParser(value))
   }
 
   protected def dummy(id: String) = MMart(
@@ -94,6 +107,7 @@ object MMart extends EsModelStaticT[MMart] {
     address = null,
     town = null,
     siteUrl = None,
+    personIds = null,
     phone = None
   )
 
@@ -118,6 +132,20 @@ object MMart extends EsModelStaticT[MMart] {
       .setQuery(companyIdQuery(companyId))
       .execute()
       .map { _.getCount }
+  }
+
+  /**
+   * Найти ТЦ, относящиеся к указанному юзеру.
+   * @param personId id юзера.
+   * @return Список найденных результатов.
+   */
+  def findByPersonId(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[MMart]] = {
+    val personIdQuery = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
+    client.prepareSearch(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(personIdQuery)
+      .execute()
+      .map { searchResp2list }
   }
 
   /**
@@ -152,11 +180,15 @@ case class MMart(
   var address       : String,
   var siteUrl       : Option[String],
   var phone         : Option[String],
+  var personIds     : List[String],
+  var logoImgId     : Option[String] = None,
   id                : Option[MMart.MartId_t] = None,
   var dateCreated   : DateTime = null
 ) extends EsModelT[MMart] with MCompanySel with CompanyShopsSel with MartShopsSel {
   def martId = id.get
   def companion = MMart
+
+  def mainPersonId = personIds.lastOption
 
   def writeJsonFields(acc: XContentBuilder) {
     if (companyId == null || name == null || town == null || address == null) {
@@ -172,6 +204,10 @@ case class MMart(
       acc.field(PHONE_ESFN, phone.get)
     if (dateCreated == null)
       dateCreated = DateTime.now()
+    if (logoImgId.isDefined)
+      acc.field(LOGO_IMG_ID, logoImgId.get)
+    if (!personIds.isEmpty)
+      acc.array(PERSON_ID_ESFN, personIds : _*)
     acc.field(DATE_CREATED_ESFN, dateCreated)
   }
 

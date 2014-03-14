@@ -92,6 +92,7 @@ object EsModel extends MacroLogsImpl {
   val CATEGORY_ID_ESFN  = "catId"
   val PRIO_ESFN         = "prio"
   val PHONE_ESFN        = "phone"
+  val LOGO_IMG_ID       = "logoImgId"
 
   def companyIdParser = stringParser
   def martIdParser = stringParser

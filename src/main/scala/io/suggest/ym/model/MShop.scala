@@ -5,7 +5,7 @@ import io.suggest.model._
 import EsModel._
 import scala.concurrent.{ExecutionContext, Future}
 import MMart.MartId_t, MCompany.CompanyId_t
-import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
+import org.elasticsearch.index.query.{QueryBuilder, FilterBuilders, QueryBuilders}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.SioConstants._
@@ -13,6 +13,7 @@ import io.suggest.proto.bixo.crawler.MainProto
 import org.elasticsearch.client.Client
 import io.suggest.event._
 import io.suggest.util.JacksonWrapper
+import com.fasterxml.jackson.annotation.JsonIgnore
 
 /**
  * Suggest.io
@@ -84,10 +85,22 @@ object MShop extends EsModelStaticT[MShop] {
           fieldType = DocFieldTypes.integer,
           include_in_all = true,
           index = FieldIndexingVariants.no
+        ),
+        FieldString(
+          id = LOGO_IMG_ID,
+          include_in_all = false,
+          index = FieldIndexingVariants.no
+        ),
+        FieldNestedObject(
+          id = DISABLED_BY_ESFN,
+          enabled = false,
+          properties = Nil
         )
       )
     )
   }
+
+  val DISABLED_BY_ESFN = "disabledBy"
 
   protected def dummy(id: String) = MShop(
     id = Some(id),
@@ -107,6 +120,26 @@ object MShop extends EsModelStaticT[MShop] {
     case (MART_FLOOR_ESFN, value)     => acc.martFloor   = Some(martFloorParser(value))
     case (MART_SECTION_ESFN, value)   => acc.martSection = Some(martSectionParser(value))
     case (PERSON_ID_ESFN, value)      => acc.personIds   = JacksonWrapper.convert[List[String]](value)
+    case (LOGO_IMG_ID, value)         => acc.logoImgId   = Some(stringParser(value))
+    case (DISABLED_BY_ESFN, value)    => acc.disabledBy  = Some(JacksonWrapper.convert[MShopDisabledBy](value))
+  }
+
+  /**
+   * Поиск по указанному запросу.
+   * @param searchQuery Поисковый запрос.
+   * @return Список результатов в порядке релевантности.
+   */
+  def searchAll(searchQuery: String, martId: Option[String] = None)(implicit ec: ExecutionContext, client: Client): Future[Seq[MShop]] = {
+    var textQuery: QueryBuilder = QueryBuilders.matchQuery("_all", searchQuery)
+    if (martId.isDefined) {
+      val martIdFilter = FilterBuilders.termFilter(MART_ID_ESFN, martId.get)
+      textQuery = QueryBuilders.filteredQuery(textQuery, martIdFilter)
+    }
+    client.prepareSearch(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(textQuery)
+      .execute()
+      .map { searchResp2list }
   }
 
   /**
@@ -137,7 +170,6 @@ object MShop extends EsModelStaticT[MShop] {
       .map { _.getCount }
   }
 
-
   /**
    * Выдать все магазины, находящиеся во владении указанной компании.
    * @param companyId id компании.
@@ -159,6 +191,21 @@ object MShop extends EsModelStaticT[MShop] {
       .setQuery(companyIdQuery(companyId))
       .execute()
       .map { _.getCount }
+  }
+
+
+  /**
+   * Найти магазины, относящиеся к указанному юзеру.
+   * @param personId id юзера.
+   * @return Список найденных результатов.
+   */
+  def findByPersonId(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[MShop]] = {
+    val personIdQuery = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
+    client.prepareSearch(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(personIdQuery)
+      .execute()
+      .map { searchResp2list }
   }
 
   /**
@@ -232,6 +279,8 @@ case class MShop(
   var martFloor   : Option[Int] = None,
   var martSection : Option[Int] = None,
   var id          : Option[MShop.ShopId_t] = None,
+  var logoImgId   : Option[String] = None,
+  var disabledBy  : Option[MShopDisabledBy] = None,
   var dateCreated : DateTime = null
 ) extends EsModelT[MShop] with MCompanySel with MMartOptSel with CompanyMartsSel with ShopPriceListSel with MShopOffersSel {
 
@@ -253,6 +302,11 @@ case class MShop(
       acc.field(MART_SECTION_ESFN, martSection.get)
     if (dateCreated == null)
       dateCreated = DateTime.now()
+    // Если disabledBy не содержит никаких данных, то он выкидывается при записи.
+    if (disabledBy.isDefined && disabledBy.get.isDisabled)
+      acc.rawField(DISABLED_BY_ESFN, disabledBy.get.toJson.getBytes)
+    if (logoImgId.isDefined)
+      acc.field(LOGO_IMG_ID, logoImgId.get)
     acc.field(DATE_CREATED_ESFN, dateCreated)
   }
 
@@ -269,10 +323,10 @@ case class MShop(
     fut
   }
 
-  /** Обновить переменные текущего класса с помощью другого класса.
+  /** Обновить текстовые переменные текущего класса с помощью другого класса.
     * @param newMshop Другой экземпляр MShop, содержащий все необходимые данные.
     */
-  def loadFrom(newMshop: MShop) {
+  def loadStringsFrom(newMshop: MShop) {
     if (!(newMshop eq this)) {
       this.companyId = newMshop.companyId
       this.martId = newMshop.martId
@@ -299,5 +353,17 @@ trait MartShopsSel {
 trait MShopSel {
   def shopId: ShopId_t
   def shop(implicit ec:ExecutionContext, client: Client) = getById(shopId)
+}
+
+
+/** Поле, описывающее блокировку магазина со стороны ТЦ или операторов s.io или ещё кого-то.
+  * в String - записана причина отключения. Если None, то блокировки нет.
+  * В Json сериализуется как raw-поле и десериализуется так же через Jackson и reflections. */
+case class MShopDisabledBy(
+  mart: Option[String] = None,
+  su: Option[String] = None
+) {
+  @JsonIgnore def isDisabled = mart.isDefined || su.isDefined
+  @JsonIgnore def toJson = JacksonWrapper.serialize(this)
 }
 
