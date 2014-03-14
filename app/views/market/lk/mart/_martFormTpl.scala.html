@@ -18,12 +18,12 @@
           <div class="select-file-wrap" id="martLogoImgInput">
             @defining(mf("martLogoImgId").value) { martLogoImgIdOpt =>
             <div class="preview">
-              <img src="@martLogoImgIdOpt.map { imgId => routes.Img.getImg(imgId)}" width="59" height="59"/>
+              <img class="image-preview" src="@martLogoImgIdOpt.map { imgId => routes.Img.getImg(imgId)}" width="59" height="59"/>
             </div>
             <div class="selectbox">
               <div class="select-file">
                 @stuff._fileUploadTpl(routes.MarketMartLk.handleMartTempLogo(martId), relatedFieldId="martLogoImgInput")
-                <input type="hidden" name="martLogoImgId" value="@martLogoImgIdOpt"/>
+                <input class="image-key" type="hidden" name="martLogoImgId" value="@martLogoImgIdOpt"/>
                 <div class="bg">Выбрать файл для загрузки</div>
               </div>
               <div class="descr">

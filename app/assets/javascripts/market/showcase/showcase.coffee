@@ -42,6 +42,34 @@ siomart =
 
       ea
 
+    ##########################################
+    ## Является ли переданный объект массивом?
+    ##########################################
+    is_array : (o) ->
+      Object.prototype.toString.call o == '[object Array]'
+
+    ############################################
+    ## Прицепить собтие(-я) к DOM элементу(-там)
+    ############################################
+    add_listener: (elt, eventType, listener) ->
+
+      if this.is_array elt
+        for s_elt in elt
+          this.add_single_listener s_elt, eventType, listener
+      else
+        this.add_single_listener elt, eventType, listener
+
+    ############################################
+    ## Забиндить на ОДИН DOM объект ОДНО событие
+    ############################################
+    add_single_listener : (elt, eventType, listener) ->
+      if elt.addEventListener
+        elt.addEventListener eventType, listener, false
+      else
+        if elt.attachEvent
+          elt.attachEvent 'on' + eventType, () ->
+            listener.apply elt
+
     ##############################################
     ## Определить и сохранить размер окна браузера
     ##############################################
@@ -57,22 +85,24 @@ siomart =
         ww = document.body.clientWidth
         wh = document.body.clientHeight
 
-      this.ww = ww
-      this.wh = wh
+      siomart.ww = ww
+      siomart.wh = wh
 
   ############################
   ## Откадрировать изображения
   ############################
 
   fit_images : () ->
-    images = this.uril.ge_tag
+    images = this.utils.ge_tag 'img'
 
-  fit_image : () ->
+    for image in images
+      if image.className == 'poster-photo'
+        this.fit_image image
 
-    photo = document.getElementById 'poster-photo'
+  fit_image : ( image ) ->
 
-    image_w = parseInt photo.getAttribute "data-width"
-    image_h = parseInt photo.getAttribute "data-height"
+    image_w = parseInt image.getAttribute "data-width"
+    image_h = parseInt image.getAttribute "data-height"
 
     if image_w / image_h < this.ww / this.wh
       nw = this.ww
@@ -81,10 +111,10 @@ siomart =
       nh = this.wh
       nw = nh * image_w / image_h
 
-    photo.style.width = nw + 'px'
-    photo.style.height = nh + 'px'
-    photo.style.marginLeft = - nw / 2 + 'px'
-    photo.style.marginTop = - nh / 2 + 'px'
+    image.style.width = nw + 'px'
+    image.style.height = nh + 'px'
+    image.style.marginLeft = - nw / 2 + 'px'
+    image.style.marginTop = - nh / 2 + 'px'
 
   ####################################
   ## Загрузить все нужные стили цсс'ки
@@ -127,6 +157,8 @@ siomart =
     container = this.utils.ge "sioMartLayout"
     container.innerHTML = data.html
 
+    this.fit_images()
+
   ######################################
   ## Загрузить индексную страницу для ТЦ
   ######################################
@@ -140,6 +172,11 @@ siomart =
     this.draw_layout()
 
     this.load_mart_index_page()
+
+    this.utils.add_listener window, 'resize', () ->
+      siomart.utils.set_window_size()
+      siomart.fit_images()
+
 
 window.siomart = siomart
 
