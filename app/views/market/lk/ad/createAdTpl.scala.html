@@ -10,11 +10,12 @@
 ) {
 
 
-@_adFormTpl(
-  af = af,
-  call = routes.MarketAd.createShopAdSubmit(mshop.id.get),
-  btnText = Messages("Create"),
-  mmcats = mmcats
-)
+  @_adFormTpl(
+    shopId = mshop.id.get,
+    af = af,
+    call = routes.MarketAd.createShopAdSubmit(mshop.id.get),
+    btnText = Messages("Create"),
+    mmcats = mmcats
+  )
 
 }

@@ -27,6 +27,10 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
+  type ShopLogo_t = Option[ImgInfo[ImgIdKey]]
+  type AdFormM = Form[(ImgIdKey, ShopLogo_t, MMartAd)]
+
+  /** Режимы работы формы добавления рекламной карточки. Режимы отражают возможные варианты офферов. */
   object FormModes extends Enumeration {
     type FormMode = Value
     val PRODUCT  = Value("p")
@@ -190,8 +194,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     )
   private val textAlignKM = "textAlign" -> textAlignM
 
-  type ShopLogo_t = Option[ImgInfo[ImgIdKey]]
-  type AdFormM = Form[(ImgIdKey, ShopLogo_t, MMartAd)]
 
   /** Генератор маппинга для MMartAd-части общей формы. */
   private def getAdM[T <: MMartAdOfferT](offerM: Mapping[T]) = mapping(
