@@ -118,16 +118,16 @@
           </td>
           <td class="right">
             <div class="select-file-wrap">
-              <div class="preview">
+              <div class="preview" id="shopLogoImgInput">
                 @* Данные по картинке загруженной. *@
                 @defining(af("image_key").value) { imgIdOpt =>
-                <input type="hidden" name="image_key" value="@imgIdOpt"/>
+                <input class="image-key" type="hidden" name="image_key" value="@imgIdOpt"/>
                 <img class="image-preview" width="59" height="59" src="@if(imgIdOpt.isDefined) {@routes.Img.getImg(imgIdOpt.get)}" style="@if(imgIdOpt.isEmpty) {display: none}"/>
                 }
               </div>
               <div class="selectbox">
                 <div class="select-file">
-                  <input type="file" value="Выбрать файл для загрузки" data-action="#" />
+                  @stuff._fileUploadTpl(routes.Img.handleTempImg, relatedFieldId="shopLogoImgInput")
                   <div class="bg">Выбрать файл для загрузки</div>
                 </div>
                 <div class="descr">
