@@ -15,7 +15,7 @@ import play.api.libs.concurrent.Akka
 import scala.concurrent.{Future, Promise}
 import play.api.mvc.Security.username
 import util.img._
-import ImgFormUtil.imgInfoM
+import ImgFormUtil.imgIdM
 import net.sf.jmimemagic.Magic
 
 /**
@@ -61,7 +61,11 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
   val shopFormM = Form(shopKM)
 
   /** Картинка логотипа-бренда задаётся через это поле. */
-  def logoImgIdM = imgInfoM
+  val logoImgIdM = imgIdM
+    .transform(
+      { ImgInfo(_, cropOpt = None, withThumb = false) },
+      { ii: ImgInfo[ImgIdKey] => ii.iik }
+    )
   val logoImgOptM = optional(logoImgIdM)
 
   /** Маппер для необязательного логотипа магазина. */
@@ -137,9 +141,9 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
         }
       },
       {case ((name, description), logoImgIdOpt) =>
-        val updateImgsFut = ImgFormUtil.updateOrigImgIds(
-          needImgs  = logoImgIdOpt.toSeq,
-          oldImgIds = mshop.logoImgId.toSeq
+        val updateImgsFut = ImgFormUtil.updateOrigImgId(
+          needImg  = logoImgIdOpt,
+          oldImgId = mshop.logoImgId
         )
         mshop.name = name
         mshop.description = description

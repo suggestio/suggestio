@@ -30,11 +30,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     .verifying("img.id.invalid.", { _.isValid })
 
   /** Маппер для поля с id картинки, но результат конвертируется в ImgInfo с абстрактным параметром типа. */
-  val imgInfoM = imgIdM
-    .transform(
-      { ImgInfo(_, cropOpt = None, withThumb = false) },
-      { ii: ImgInfo[ImgIdKey] => ii.iik }
-    )
+
 
   /** Проверяем tmp-файл на использование jpeg. Уже сохраненные id не проверяются. */
   val imgIdJpegM = imgIdM
@@ -60,8 +56,8 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     }
   }
 
-  def updateOrigImgIds(needImgs: Seq[ImgInfo[ImgIdKey]], oldImgIds: Seq[String]): Future[Seq[String]] = {
-    updateOrigImg(needImgs, oldImgIds.map(OrigImgIdKey.apply))
+  def updateOrigImgId(needImg: Option[ImgInfo[ImgIdKey]], oldImgId: Option[String]): Future[List[String]] = {
+    updateOrigImg(needImg, oldImgId.map(OrigImgIdKey.apply))
   }
   
   /**
@@ -69,9 +65,10 @@ object ImgFormUtil extends PlayMacroLogsImpl {
    * @param needImgs Необходимые в результате набор картинок. Тут могут быть как уже сохранённыя картинка,
    *                 так и новая из tmp. Если Nil, то старые картинки будут удалены.
    * @param oldImgs Уже сохранённые ранее картинки, если есть.
-   * @return Список id новых и уже сохранённых картинок TODO в исходном порядке.
+   * @return Список id новых и уже сохранённых картинок.
    */
-  def updateOrigImg(needImgs: Seq[ImgInfo[ImgIdKey]], oldImgs: Seq[OrigImgIdKey]): Future[Seq[String]] = {
+  def updateOrigImg(needImgs: Option[ImgInfo[ImgIdKey]], oldImgs: Option[OrigImgIdKey]): Future[List[String]] = {
+    // TODO Эту фунцию можно быстро переделать с Option[] на Seq[]. Изначально она и работала через Seq. Но они не совместимы. Надо как-то это устаканить.
     val oldImgsSet = oldImgs.toSet
     val newTmpImgs = needImgs.iterator
       .filter { _.iik.isInstanceOf[TmpImgIdKey] }
@@ -82,7 +79,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       .map { _.asInstanceOf[ImgInfo[OrigImgIdKey]] }
       .filter { oii => oldImgsSet contains oii.iik }  // Отбросить orig-картинки, которых не было среди старых оригиналов.
       .toList
-    val delOldImgs = oldImgsSet -- needOrigImgs.map(_.iik)
+    val delOldImgs = oldImgsSet -- needOrigImgs.map(_.iik)  // TODO Раньше были списки, теперь их нет. Надо убрать множество.
     // Запускаем в фоне удаление старых картинок. TODO Возможно, надо этот фьючерс подвязывать к фьючерсу сохранения?
     Future.traverse(delOldImgs) { oldOiik =>
       val fut = MPict.deleteFully(oldOiik.key)
@@ -336,7 +333,7 @@ import OutImgFmts._
  */
 case class ImgInfo[+T <: ImgIdKey](
   iik     : T,
-  cropOpt : Option[ImgCrop],
+  cropOpt : Option[ImgCrop] = None,
   withThumb: Boolean = true
 )
 
