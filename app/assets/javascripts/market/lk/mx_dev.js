@@ -180,11 +180,10 @@ function CbcaSelect(containerId) {
 
     var defaults = {
       data: '',
-      preHtml: '',
       style: ''
     },
     options = $.extend(defaults, options),
-    html = '<span class="cbca-select" style="'+options.style+'">'+options.preHtml+
+    html = '<span class="cbca-select" style="'+options.style+'">'+
     '<div class="selectbox"><div class="value"><div class="selected">--------</div><div class="dropdown">';
 
     for(key in options.data) {
@@ -228,7 +227,6 @@ function ChooseCategory() {
             if(data.length) {
               var html = cbca.selectCat.generateSubCat({
                 data:    data,
-                preHtml: '<span class="pre-span">&nbsp;/&nbsp;</span>',
                 style:   'top: 0; left: '+left+'px;'
               });
               $('#cat-select').append(html);
