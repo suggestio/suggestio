@@ -58,6 +58,14 @@ $(document).on 'click', '.create-ad .mask-list .item', ->
 
   $this.find('.one-checkbox').trigger('click' )
 
+##ПРЕВЬЮ РЕКЛАМНОЙ КАРТОЧКИ##
+$(document).on 'click', '.device', ->
+  $this = $(this)
+
+  if(!$this.hasClass('selected'))
+    $('.device.selected').removeClass('selected')
+    $this.addClass('selected')
+
 
 ##ФОТО ТОВАРА##
 $(document).on 'change', '#product-photo', ->
