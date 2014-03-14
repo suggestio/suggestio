@@ -58,7 +58,16 @@ $(document).on 'click', '.create-ad .mask-list .item', ->
 
   $this.find('.one-checkbox').trigger('click' )
 
-##popup##
+
+##ФОТО ТОВАРА##
+$(document).on 'change', '#product-photo', ->
+  value = $(this).val()
+  console.log(value)
+  $('#upload-product-photo').find('input[type = "file"]').val(value)
+  ##$('#upload-product-photo').find('form').trigger('submit')##
+
+
+##ПОПАПЫ##
 $(document).on 'click', '.popup-but', ->
   $this = $(this)
 

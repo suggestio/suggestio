@@ -21,6 +21,40 @@
   <div class="block">
     <div class="border-line"></div>
     <div class="hat">
+      <span class="title">Отображение на устройстве</span>
+      <a class="toggle open" href="#" data-content="ad-preview">Свернуть</a>
+    </div>
+    <div class="border-line"></div>
+    <div class="slide-content" id="ad-preview">
+      <table  class="ad-preview" cellpadding="0" cellsapcing="0">
+        <tr>
+          <td class="left">
+            <div>
+              <span class="gray">iPhone</span>
+              <span class="device iphone">&nbsp;</span>
+            </div>
+            <div>
+              <span class="gray">iPad</span>
+              <span class="device ipad selected">&nbsp;</span>
+            </div>
+            <div>
+              <span class="gray">Desktop</span>
+              <span class="device desktop" href="#">&nbsp;</span>
+            </div>
+          </td>
+          <td class="right">
+            <div class="preview">
+
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="border-line"></div>
+    <div class="hat">
       <span class="title">Брендированая шапка</span>
       <a class="toggle open" href="#" data-content="brand-hat">Свернуть</a>
     </div>
@@ -80,7 +114,7 @@
           </td>
           <td class="right">
             <div class="select-file-wrap">
-              <div class="preview" id="promoOfferGoodPreview">
+              <div class="preview">
                 @* Данные по картинке загруженной. *@
                 @defining(af("image_key").value) { imgIdOpt =>
                 <input type="hidden" name="image_key" value="@imgIdOpt"/>
@@ -89,9 +123,7 @@
               </div>
               <div class="selectbox">
                 <div class="select-file">
-
-                  @stuff._fileUploadTpl(routes.Img.handleTempImg, relatedFieldId="promoOfferGoodPreview")
-
+                  <input type="file" value="Выбрать файл для загрузки" data-action="#" />
                   <div class="bg">Выбрать файл для загрузки</div>
                 </div>
                 <div class="descr">
@@ -183,3 +215,4 @@
 
 
 }
+
