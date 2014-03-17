@@ -183,6 +183,7 @@ object Ident extends SioController with Logs {
   }
 
   /** Самбит формы логина по email и паролю. */
+  // TODO Нужно отрабатывать уже залогиненных юзеров?
   def emailPwLoginFormSubmit = MaybeAuth.async { implicit request =>
     emailPwLoginFormM.bindFromRequest().fold(
       {formWithErrors =>

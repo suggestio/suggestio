@@ -1,0 +1,15 @@
+@(mshop: MShop, oof: Form[_])(implicit ctx: util.Context)
+
+@* Черновик формы сабмита включения-отключения магазина из выдачи. Используется при отключения магазина. *@
+@import helper._
+@import ctx._
+
+<h1>Отключение магазина @mshop.name</h1>
+
+@form(routes.MarketMartLk.shopOnOffSubmit(mshop.shopId)) {
+  <input type="hidden" name="isEnabled" value="@oof("isEnabled").value.getOrElse("false")"/>
+
+  @inputText(oof("reason"), '_label -> "Причина:")
+
+  <input type="submit"/>
+}

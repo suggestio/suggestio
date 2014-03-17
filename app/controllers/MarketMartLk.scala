@@ -235,6 +235,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
     }
   }
 
+  /** Поисковая форма. Сейчас в шаблонах она не используется, только в контроллере. */
   val searchFormM = Form(
     "q" -> nonEmptyText(maxLength = 64)
   )
@@ -372,6 +373,50 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
     }
   }
 
+
+  /** Маппинг формы включения/выключения магазина. */
+  val shopOnOffFormM = Form(tuple(
+    "isEnabled" -> boolean,
+    "reason"    -> optional(
+      nonEmptyText(maxLength = 512)
+        .transform(strTrimSanitizeF, strIdentityF)
+    )
+  ))
+
+  /**
+   * Рендер блока с формой отключения магазина.
+   * @param shopId id отключаемого магазина.
+   * @return 200 с формой указания причины отключения магазина.
+   *         404 если магазин не найден.
+   */
+  def shopOnOffForm(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
+    MShop.getById(shopId).map {
+      case Some(mshop) =>
+        val formBinded = shopOnOffFormM.fill((false, mshop.settings.supDisableReason))
+        Ok(shop._onOffFormTpl(mshop, formBinded))
+
+      case None => shopNotFound(shopId)
+    }
+  }
+
+  /**
+   * Владелец ТЦ включает/выключает состояние магазина.
+   * @param shopId id магазина.
+   * @return 200 Ok если всё ок.
+   */
+  def shopOnOffSubmit(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
+    shopOnOffFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"shopOnOffSubmit($shopId): Bind form failed: " + formWithErrors.errors)
+        NotAcceptable("Bad request body.")
+      },
+      {case (isEnabled, reason) =>
+        MShop.setIsEnabled(shopId, isEnabled = isEnabled, reason = reason) map { _ =>
+          Ok("isEnabled -> " + isEnabled)
+        }
+      }
+    )
+  }
 
   private def martNotFound(martId: MartId_t) = NotFound("mart not found: " + martId)  // TODO Нужно дергать 404-шаблон.
   private def shopNotFound(shopId: ShopId_t) = NotFound("Shop not found: " + shopId)  // TODO
