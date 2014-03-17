@@ -1,0 +1,27 @@
+@(mshop: MShop, ad: MMartAd, sahf: Form[_])(implicit ctx: util.Context)
+
+@* Форма сокрытия рекламы магазина силами магазина (SioWeb/4.psd). *@
+@import ctx._
+@import helper._
+@import controllers.MarketMartLk.HideShopAdActions._
+
+<h1>Рекламная карточка будет удалена из поисковой выдачи</h1>
+
+@form(routes.MarketMartLk.shopAdHideFormSubmit(ad.id.get)) {
+  @* Допустимые значения: @HIDE, @DELETE. *@
+  <input type="hidden" name="action" value="@HIDE"/>
+
+  @* Причина сокрытия/удаления. *@
+  @textarea(
+    sahf("reason"),
+    '_label -> "Причина",
+    'placeholder -> "Напишите причину удаления"
+  )
+
+  Копия уведомления будет отправлена арендатору
+  <a href="@routes.MarketMartLk.showShop(mshop.id.get)">@mshop.name</a>
+  на почту, указанную при регистрации.
+
+  @* Видимо, надо две кнопки, которые будут сабмиттить одну и ту же форму с разными значениями поля action. *@
+  <input type="submit"/>
+}

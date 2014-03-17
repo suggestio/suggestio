@@ -373,14 +373,14 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
     }
   }
 
+  /** Маппинг для задания причины при сокрытии сущности. */
+  val hideEntityReasonM = nonEmptyText(maxLength = 512)
+    .transform(strTrimSanitizeF, strIdentityF)
 
   /** Маппинг формы включения/выключения магазина. */
   val shopOnOffFormM = Form(tuple(
     "isEnabled" -> boolean,
-    "reason"    -> optional(
-      nonEmptyText(maxLength = 512)
-        .transform(strTrimSanitizeF, strIdentityF)
-    )
+    "reason"    -> optional(hideEntityReasonM)
   ))
 
   /**
@@ -417,6 +417,72 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
       }
     )
   }
+
+
+  object HideShopAdActions extends Enumeration {
+    type HideShopAdAction = Value
+    val HIDE, DELETE = Value
+
+    def maybeWithName(n: String): Option[HideShopAdAction] = {
+      try {
+        Some(withName(n))
+      } catch {
+        case e: Exception => None
+      }
+    }
+  }
+
+  import HideShopAdActions.HideShopAdAction
+
+  /** Форма сокрытия рекламы подчинённого магазина. */
+  val shopAdHideFormM = Form(tuple(
+    "action" -> nonEmptyText(maxLength = 10)
+      .transform(
+        strTrimF andThen { _.toUpperCase } andThen HideShopAdActions.maybeWithName,
+        {aOpt: Option[HideShopAdAction] => (aOpt getOrElse "").toString }
+      )
+      .verifying("hide.action.invalid", { _.isDefined })
+      .transform(
+        _.get,
+        { hsaa: HideShopAdAction => Some(hsaa) }
+      ),
+    "reason" -> hideEntityReasonM
+  ))
+
+
+  /** Рендер формы сокрытия какой-то рекламы. */
+  def shopAdHideForm(adId: String) = IsMartAdminShopAd(adId).async { implicit request =>
+    import request.ad
+    val shopId = ad.shopId.get
+    MShop.getById(shopId) map {
+      case Some(mshop) =>
+        Ok(shop._shopAdHideFormTpl(mshop, ad, shopAdHideFormM))
+
+      case None => shopNotFound(shopId)
+    }
+  }
+
+  /** Сабмит формы сокрытия/удаления формы. */
+  def shopAdHideFormSubmit(adId: String) = IsMartAdminShopAd(adId).async { implicit request =>
+    // TODO Надо поразмыслить над ответами. Вероятно, тут нужны редиректы или jsonp-команды.
+    shopAdHideFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"shopAdHideFormSubmit($adId): Form bind failed: " + formWithErrors.errors)
+        NotAcceptable("Form bind failed")
+      },
+      {case (HideShopAdActions.DELETE, reason) =>
+        MMartAd.deleteById(adId) map { _ =>
+          Ok("deleted")
+        }
+
+      case (HideShopAdActions.HIDE, reason) =>
+        MMartAd.setShowLevels(adId, Set.empty) map { _ =>
+          Ok("hidden")
+        }
+      }
+    )
+  }
+
 
   private def martNotFound(martId: MartId_t) = NotFound("mart not found: " + martId)  // TODO Нужно дергать 404-шаблон.
   private def shopNotFound(shopId: ShopId_t) = NotFound("Shop not found: " + shopId)  // TODO

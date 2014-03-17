@@ -1,7 +1,7 @@
 package models
 
 import io.suggest.model._
-import org.elasticsearch.common.xcontent.XContentBuilder
+import org.elasticsearch.common.xcontent.{XContentFactory, XContentBuilder}
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.SioConstants._
 import EsModel._
@@ -14,6 +14,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import scala.util.{Failure, Success}
 import util.PlayMacroLogsImpl
 import scala.collection.JavaConversions._
+import models.AdShowLevels.AdShowLevel
 
 /**
  * Suggest.io
@@ -37,11 +38,11 @@ object MMartAd extends EsModelStaticT[MMartAd] with PlayMacroLogsImpl {
   val OLD_PRICE_ESFN    = "oldPrice"
   val PANEL_ESFN        = "panel"
   val USER_CAT_ID_ESFN  = "userCatId"
+  val SHOW_LEVELS_ESFN  = "showLevels"
 
   val FONT_ESFN         = "font"
   val SIZE_ESFN         = "size"
   val COLOR_ESFN        = "color"
-  val IS_SHOWN_ESFN     = "isShown"
   val TEXT_ALIGN_ESFN   = "textAlign"
   val ALIGN_ESFN        = "align"
 
@@ -94,8 +95,16 @@ object MMartAd extends EsModelStaticT[MMartAd] with PlayMacroLogsImpl {
           else ???
       }
     case (PANEL_ESFN, value)        => acc.panel = Some(JacksonWrapper.convert[MMartAdPanelSettings](value))
-    case (IS_SHOWN_ESFN, value)     => acc.isShown = booleanParser(value)
     case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = JacksonWrapper.convert[MMartAdTextAlign](value)
+    case (SHOW_LEVELS_ESFN, sls: java.lang.Iterable[_]) =>
+      acc.showLevels = sls.foldLeft[List[AdShowLevel]] (Nil) { (acc, slRaw) =>
+        AdShowLevels.maybeWithName(slRaw.toString) match {
+          case Some(sl) => sl :: acc
+          case None =>
+            warn(s"Failed to deserialize level id from string: '$slRaw' . Possible levels are: [${AdShowLevels.values.mkString(", ")}]")
+            acc
+        }
+      }.toSet
   }
 
   def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
@@ -209,11 +218,6 @@ object MMartAd extends EsModelStaticT[MMartAd] with PlayMacroLogsImpl {
         )
       )   // offer.properties
     )
-    val isShownField = FieldBoolean(
-      id = IS_SHOWN_ESFN,
-      index = FieldIndexingVariants.no,
-      include_in_all = false
-    )
     val pictureField = FieldString(
       id = PICTURE_ESFN,
       index = FieldIndexingVariants.no,
@@ -221,6 +225,11 @@ object MMartAd extends EsModelStaticT[MMartAd] with PlayMacroLogsImpl {
     )
     val categoryField = FieldString(
       id = USER_CAT_ID_ESFN,
+      include_in_all = false,
+      index = FieldIndexingVariants.not_analyzed
+    )
+    val showLevelsField = FieldString(
+      id = SHOW_LEVELS_ESFN,
       include_in_all = false,
       index = FieldIndexingVariants.not_analyzed
     )
@@ -241,7 +250,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with PlayMacroLogsImpl {
         prioField,
         panelField,
         textAlignsField,
-        isShownField
+        showLevelsField
       )
     )
   }
@@ -282,6 +291,27 @@ object MMartAd extends EsModelStaticT[MMartAd] with PlayMacroLogsImpl {
       super.deleteById(id)
     }
   }
+
+
+  /**
+   * Обновить допустимые уровни отображения рекламы на указанное значение.
+   * @param adId id рекламы.
+   * @param showLevels Новое значение showLevels.
+   * @return Фьючерс для синхронизации.
+   */
+  def setShowLevels(adId: String, showLevels: collection.Set[AdShowLevel])(implicit ec: ExecutionContext, client: Client): Future[_] = {
+    val newDocFieldsXCB = XContentFactory.jsonBuilder()
+      .startObject()
+      .startArray(SHOW_LEVELS_ESFN)
+    showLevels.foreach { sl =>
+      newDocFieldsXCB.value(sl.toString)
+    }
+    newDocFieldsXCB.endArray()
+    client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, adId)
+      .setDoc(newDocFieldsXCB)
+      .execute()
+  }
+
 }
 
 import MMartAd._
@@ -294,6 +324,7 @@ import MMartAd._
  * @param prio Приоритет. На первом этапе null или минимальное значение для обозначения главного и вторичных плакатов.
  * @param userCatId Индексируемые данные по категории рекламируемого товара.
  * @param companyId id компании-владельца в рамках модели MCompany.
+ * @param showLevels Список уровней, на которых должна отображаться эта реклама.
  * @param id id товара.
  */
 case class MMartAd(
@@ -305,8 +336,8 @@ case class MMartAd(
   var companyId   : MCompany.CompanyId_t,
   var panel       : Option[MMartAdPanelSettings] = None,
   var prio        : Option[Int] = None,
+  var showLevels  : Set[AdShowLevel] = Set.empty,
   var userCatId   : Option[String] = None,
-  var isShown     : Boolean = false,
   var id          : Option[String] = None
 ) extends EsModelT[MMartAd] {
   def companion = MMartAd
@@ -327,6 +358,13 @@ case class MMartAd(
     if (!offers.isEmpty) {
       acc.startArray(OFFER_ESFN)
         offers foreach { _ renderJson acc }
+      acc.endArray()
+    }
+    if (!showLevels.isEmpty) {
+      acc.startArray(SHOW_LEVELS_ESFN)
+      showLevels.foreach { sl =>
+        acc.value(sl.toString)
+      }
       acc.endArray()
     }
     // Также рендерим данные по textAlign на устройствах.
@@ -469,4 +507,27 @@ object TextAlignValues extends Enumeration {
   }
 }
 
+
+/** Уровни отображения рекламы. Используется как bitmask, но через денормализацию поля. */
+object AdShowLevels extends Enumeration {
+  type AdShowLevel = Value
+
+  /** Отображать на нулевом уровне, т.е. при входе в магазин. */
+  val MART_SHOWCASE = Value("d")
+
+  /** Отображать на списке витрин ТЦ. */
+  val MART_SHOPS = Value("h")
+
+  /** Отображать эту рекламу внутри магазина. */
+  val MART_SHOP = Value("m")
+
+  def maybeWithName(n: String): Option[AdShowLevel] = {
+    try {
+      Some(withName(n))
+    } catch {
+      case _: Exception => None
+    }
+  }
+
+}
 
