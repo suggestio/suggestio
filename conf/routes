@@ -98,6 +98,8 @@ GET  /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopForm(sh
 POST /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopFormSubmit(shopId)
 GET  /m/lk/mart/shop/:shopId            controllers.MarketMartLk.showShop(shopId)
 GET  /m/lk/mart/shop/:shopId/offers     controllers.MarketMartLk.showShopOffers(shopId)
+GET  /m/lk/mart/shop/:shopId/on-off     controllers.MarketMartLk.shopOnOffForm(shopId)
+POST /m/lk/mart/shop/:shopId/on-off     controllers.MarketMartLk.shopOnOffSubmit(shopId)
 
 # личный кабинет купца-арендатора ТЦ.
 GET  /m/lk/s/:shopId                    controllers.MarketShopLk.showShop(shopId)
