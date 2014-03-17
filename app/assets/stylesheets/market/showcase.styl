@@ -1,6 +1,10 @@
 @import 'fonts.styl'
 
 spriteurl = url('/assets/images/sio-market-sprite.png')
+spritesize = 75px 75px
+
+border-radius( param )
+  -webkit-border-radius : param
 
 .sio-mart-layout,
 .sio-mart-layout .sm-screen,
@@ -16,17 +20,33 @@ spriteurl = url('/assets/images/sio-market-sprite.png')
   position: fixed
   background: rgba(200,200,200,0.95)
 
+  /*************************/
+  /* Общие кнопки в хидере */
+  /*************************/
   .back-close-button
     position: absolute
-    left: 0px
-    top: 0px
+    left: 15px
+    top: 15px
     z-index: 1002
     a
       display: block
-      width: 50px
-      height: 40px
+      width: 25px
+      height: 20px
       background: spriteurl no-repeat left top
-      background-size: 25px 20px
+      background-size: spritesize
+
+  .categories-button
+    position: absolute
+    right: 15px
+    top: 15px
+    z-index: 1002
+    a
+      display: block
+      width: 25px
+      height: 25px
+      background: spriteurl no-repeat left top
+      background-size: spritesize
+      background-position: -27px 0px
   .sm-button
     display: block
     color: #fff
@@ -37,6 +57,9 @@ spriteurl = url('/assets/images/sio-market-sprite.png')
     text-decoration: none
     text-align: center
 
+  /*******************************************/
+  /* Кнопочки-контроллеры слайдов в офферами */
+  /*******************************************/
   .sm-offers-controller
     position: absolute
     width: 28px
@@ -44,7 +67,6 @@ spriteurl = url('/assets/images/sio-market-sprite.png')
     left: 50%
     bottom: 10px
     margin-left: -14px
-    background: red
     z-index: 1002
 
     a
@@ -59,7 +81,15 @@ spriteurl = url('/assets/images/sio-market-sprite.png')
         margin-left: 3px
         margin-top: 3px
         background: #000
+        border-radius( 50px )
 
+    a.active
+      span
+        background: red
+
+  /**************************************************/
+  /* Экран с предупредлением о выходе из Sio.Market */
+  /**************************************************/
   .sio-market-exit-screen
     position: absolute
     display: none
@@ -94,7 +124,7 @@ spriteurl = url('/assets/images/sio-market-sprite.png')
 
   .offer-header
     position: absolute
-    z-index: 1001
+    z-index: 1002
     width: 100%
     height: 50px
     border-top: 1px rgba(255,255,255,0.5) solid
@@ -102,6 +132,14 @@ spriteurl = url('/assets/images/sio-market-sprite.png')
     background: #cf3737
     opacity: 0.9
 
+  .offer-details
+    position: absolute
+    left: 0px
+    top: 0px
+    width: 350px
+    height: 100%
+    background: rgba(0,0,0,0.8)
+    z-index: 1001
   .sm-screen
     overflow: hidden
     .poster-photo
@@ -109,6 +147,9 @@ spriteurl = url('/assets/images/sio-market-sprite.png')
       left: 50%
       top: 50%
 
+  /*******************************************/
+  /* Навигация для главного экрана выдачи ТЦ */
+  /*******************************************/
   .sm-navigation
     z-index: 1001
     width: 100%
