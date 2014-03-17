@@ -7,7 +7,7 @@
 @shops.zipWithIndex.map { case (shop, i) =>
 
 
-  <div class="@if(i%2 == 0) {odd} else {even} enabled">
+  <div class="item @if(i%2 == 0) {odd} else {even} enabled">
     <div class="left">
       <a href="@showShop(shop.id.get)">@shop.name</a>
     </div>
