@@ -5,28 +5,104 @@
 @import market.lk._
 @import helper._
 
+@import util.FormHelpers._
+
 @lkBase("Подтверждение регистрации") {
-  <br/><br/><br/><br/><br/><br/>
-  @form(routes.MarketShopLk.inviteAcceptSubmit(eaId=eAct.id.get, shopId=eAct.key)) {
-    @* Имя магазина *@
-    @inputText(iaf("shopName"))
 
-    <label for="emailTextField">Электронная почта</label>
-    <input id="emailTextField" type="text" disabled value="@eAct.email"/>
 
-    <label>Номер этажа</label>
-    <input id="floorTextField" type="text" disabled value="@mshop.martFloor"/>
+  <div class="title-wrap">
+    <div class="center">
+      <a class="back-but" href="#">&nbsp;</a>
+      <div class="title-inner">
+        СОЗДАНИЕ ПРОФАЙЛА БУТИКА
+      </div>
+    </div>
+  </div>
 
-    <label>Номер секции</label>
-    <input id="sectionTextField" type="text" disabled value="@mshop.martSection"/>
+  <div class="body">
 
-    @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
-    @if(withRegister) {
-      @* Юзер вводит пароли *@
-      @inputPassword(iaf("password.pw1"))
-      @inputPassword(iaf("password.pw2"))
-      @* TODO Нужна ссылка с формой для логина в систему, если юзер уже зареган, но ещё не залогинен. *@
+    @form(routes.MarketShopLk.inviteAcceptSubmit(eaId=eAct.id.get, shopId=eAct.key)) {
+      @* Имя магазина *@
+      <table cellpadding="0" cellspacing="0" class="input-wrap big">
+        @inputText(
+        iaf("shopName"),
+        '_label -> "Название бутика:"
+        )
+      </table>
+
+      <table cellpadding="0" cellspacing="0" class="input-wrap big disabled">
+        <td class="left">
+          <label for="emailTextField">E-mail:</label>
+        </td>
+
+        <td class="right">
+          <div class="input clearfix">
+          <div class="input-shadow">
+            <input id="emailTextField" type="text" disabled value="@eAct.email"/>
+          </div>
+          </div>
+        </td>
+      </table>
+
+
+      <table cellpadding="0" cellspacing="0" class="input-wrap small disabled">
+        <td class="left">
+          <label for="floorTextField">Номер этажа:</label>
+        </td>
+
+        <td class="right">
+          <div class="input clearfix">
+            <div class="input-shadow">
+              <input id="floorTextField" type="text" disabled="disabled" value="@mshop.martFloor"/>
+            </div>
+          </div>
+        </td>
+      </table>
+
+      <table cellpadding="0" cellspacing="0" class="input-wrap small disabled">
+        <td class="left">
+          <label for="floorTextField">Номер секции:</label>
+        </td>
+
+        <td class="right">
+          <div class="input clearfix">
+            <div class="input-shadow">
+              <input id="floorTextField" type="text" disabled="disabled" value="@mshop.martSection"/>
+            </div>
+          </div>
+        </td>
+      </table>
+
+
+      @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
+      @if(withRegister) {
+        @* Юзер вводит пароли *@
+
+        <table cellpadding="0" cellspacing="0" class="input-wrap pass">
+          <tr>
+            @inputPassword(
+            iaf("password.pw1"),
+            '_label -> "Пароль:"
+            )
+            <td class="pass-text" rowspan="2">
+              Используйте адрес электронной почты
+              и пароль для следующего входа.
+            </td>
+          </tr>
+          <tr>
+            @inputPassword(
+            iaf("password.pw2"),
+            '_label -> "Подтверждение пароля:"
+            )
+          </tr>
+        </table>
+
+
+        @* TODO Нужна ссылка с формой для логина в систему, если юзер уже зареган, но ещё не залогинен. *@
+      }
+      <input class="gray-but-transp" type="submit" value="@Messages("ПРОДОЛЖИТЬ")"/>
     }
-    <input type="submit" value="@Messages("Continue")"/>
-  }
+
+  </div>
+
 }

@@ -48,9 +48,6 @@
       </tr>
     </table>
 
-    @sf("email").value.map { ownerEmail =>
-      <p>Email: @ownerEmail</p>
-    }
 
     @* Поля этажа/секции доступны только владельцу ТЦ, т.е. если !isLimited. Задаём атрибут через хвост-список. *@
     @defining(if(isLimited) List('disabled -> "") else Nil) { attrsRest =>
@@ -60,6 +57,13 @@
         @textarea(
         sf("shop.description"),
         '_label -> "Описание магазина11:"
+        )
+      </table>
+
+      <table cellpadding="0" cellspacing="0" class="input-wrap big disabled">
+        @inputText(
+          sf("email"),
+          '_label -> "E-mail:"
         )
       </table>
 
