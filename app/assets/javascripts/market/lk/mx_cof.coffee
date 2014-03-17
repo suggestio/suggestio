@@ -2,7 +2,8 @@ $(document).ready ->
   if(document.getElementById('old-price-status') != null)
     document.getElementById('old-price-status').checked = false
 
-  cbca.popup = new CbcaPopup();
+  cbca.popup = new CbcaPopup()
+  cbca.search = new CbcaSearch()
 
 
 
@@ -122,3 +123,28 @@ CbcaPopup = () ->
     popup = '.popup' || popup
     this.hideOverlay()
     $(popup).hide()
+
+
+##поисковая строка##
+CbcaSearch = () ->
+
+  self = this
+
+  self.search = (martId, searchString) ->
+    jsRoutes.controllers.MarketMartLk.searchShops(martId).ajax(
+      type: "POST",
+      data:
+        'q': searchString
+      success: (data) ->
+       console.log(data)
+      error: (error) ->
+        console.log(error)
+    )
+
+
+  self.init = () ->
+    $(document).on 'keyup', '#searchShop', ->
+       $this = $(this)
+       self.search($this.attr('data-mart-id'), $this.val())
+
+  self.init()
