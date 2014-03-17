@@ -5,6 +5,13 @@
 @import controllers.MarketMartLk.ShopSort._
 @import routes.MarketMartLk._
 
+@import ctx._
+@import helper._
+
+@helper.javascriptRouter("jsRoutes")(
+  routes.javascript.MarketMartLk.searchShops
+)
+
 @market.lk.lkBase(mmart.name) {
 
   <div class="title-wrap">
@@ -49,8 +56,10 @@
             Управление личным кабинетом
           </div>
 
-          @_martShopsTpl(martId=mmart.id.get, shops=shops)
-
+          <div id="shop-list">
+            @_martShopsTpl(martId=mmart.id.get, shops=shops)
+          </div>
+          <div id="search-results"></div>
 
         </div><!-- renters-list end -->
       </div>

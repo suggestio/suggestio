@@ -136,7 +136,10 @@ CbcaSearch = () ->
       data:
         'q': searchString
       success: (data) ->
-       console.log(data)
+        if(data.trim().length)
+          $('#search-results').html(data.trim())
+        else
+          $('#search-results').html('')
       error: (error) ->
         console.log(error)
     )
@@ -144,7 +147,11 @@ CbcaSearch = () ->
 
   self.init = () ->
     $(document).on 'keyup', '#searchShop', ->
-       $this = $(this)
-       self.search($this.attr('data-mart-id'), $this.val())
+      $this = $(this)
+      if($this.val().trim())
+        $('#shop-list').hide()
+        self.search($this.attr('data-mart-id'), $this.val())
+      else
+        $('#shop-list').show()
 
   self.init()
