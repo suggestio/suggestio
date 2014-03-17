@@ -116,6 +116,7 @@ POST /m/lk/s/:shopId/logo               controllers.MarketShopLk.handleShopTempL
 GET  /m/lk/a/:adId/edit                 controllers.MarketAd.editShopAd(adId)
 POST /m/lk/a/:adId/edit                 controllers.MarketAd.editShopAdSubmit(adId)
 POST /m/lk/a/:adId/delete               controllers.MarketAd.deleteSubmit(adId)
+POST /m/lk/a/:adId/update/show          controllers.MarketAd.updateShowLevelSubmit(adId)
 
 # Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
 GET  /m/c/usr/o/:ownerId/top            controllers.MarketCategory.topCatsOf(ownerId)

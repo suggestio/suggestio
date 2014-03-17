@@ -16,6 +16,7 @@ import scala.concurrent.{Future, Promise}
 import play.api.mvc.Security.username
 import util.img._
 import net.sf.jmimemagic.Magic
+import models.AdShowLevels.AdShowLevel
 
 /**
  * Suggest.io

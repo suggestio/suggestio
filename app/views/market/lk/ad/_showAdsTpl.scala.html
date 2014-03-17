@@ -1,6 +1,8 @@
 @(ads: Seq[MMartAd])(implicit ctx: util.Context)
 
 @* Инлайновый список рекламных карточек в личном кабинете ТЦ или магазина. *@
+@import ctx._
+@import AdShowLevels._
 
 @* Это сообщение для отладки. Удалить при первой необходимости. *@
 @if(ads.isEmpty) {
@@ -40,13 +42,13 @@
 
     <div class="controls">
       <label>
-        <input type="checkbox"/>Выводить в общем каталоге
+        <input type="checkbox" data-level="@LVL_MART_SHOPS"/>Выводить в общем каталоге
       </label>
       <label>
-        <input type="checkbox"/>Выводить в моём магазине
+        <input type="checkbox" data-level="@LVL_SHOP"/>Выводить в моём магазине
       </label>
       <label class="inactive">
-        <input type="checkbox" disabled="disabled"/>Размещение на первом экране
+        <input type="checkbox" data-level="@LVL_MART_SHOWCASE" disabled="disabled"/>Размещение на первом экране
       </label>
     </div>
 

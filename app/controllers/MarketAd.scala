@@ -16,6 +16,7 @@ import play.api.Play.current
 import TextAlignValues.TextAlignValue
 import MMartCategory.CollectMMCatsAcc_t
 import scala.util.{Try, Failure, Success}
+import models.AdShowLevels.AdShowLevel
 
 /**
  * Suggest.io
@@ -510,6 +511,51 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
         .flashing("success" -> "Рекламная карточка удалена")
     }
   }
+
+
+  /** Форма для маппинга результатов  */
+  val adShowLevelFormM = Form(tuple(
+    // id уровня, прописано в чекбоксе
+    "levelId" -> nonEmptyText(maxLength = 1)
+      .transform(
+        { AdShowLevels.maybeWithName },
+        { slOpt: Option[AdShowLevel] => slOpt match {
+          case Some(sl) => sl.toString
+          case None => ""
+        }}
+      )
+      .verifying("ad.show.level.undefined", { _.isDefined })
+      .transform(_.get, { sl: AdShowLevel => Some(sl) })
+    ,
+    "levelEnabled" -> boolean   // Новое состояние чекбокса.
+  ))
+
+  /** Включение/выключение какого-то уровня отображения указанной рекламы.
+    * Сабмит сюда должен отсылаться при нажатии на чекбоксы отображения на тех или иных экранах в _showAdsTpl:
+    * [x] Выводить в общем каталоге
+    * [x] Выводить в моём магазине
+    * [x] Размещение на первом экране
+    */
+  def updateShowLevelSubmit(adId: String) = IsAdEditor(adId).async { implicit request =>
+    adShowLevelFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"updateShowLevelSubmit($adId): Failed to bind form: " + formWithErrors.errors)
+        NotAcceptable("Request body invalid.")
+      },
+      {case (levelId, isLevelEnabled) =>
+        import request.mad.showLevels
+        val showLevels1 = if(isLevelEnabled) {
+          showLevels + levelId
+        } else {
+          showLevels - levelId
+        }
+        MMartAd.setShowLevels(adId, showLevels1) map { _ =>
+          Ok("Updated ok.")
+        }
+      }
+    )
+  }
+
 
   private def shopNotFound(shopId: ShopId_t) = NotFound("shop not found: " + shopId)
   private def adEditWrong = Forbidden("Nobody cat edit this ad using this action.")

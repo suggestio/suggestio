@@ -513,13 +513,13 @@ object AdShowLevels extends Enumeration {
   type AdShowLevel = Value
 
   /** Отображать на нулевом уровне, т.е. при входе в магазин. */
-  val MART_SHOWCASE = Value("d")
+  val LVL_MART_SHOWCASE = Value("d")
 
   /** Отображать на списке витрин ТЦ. */
-  val MART_SHOPS = Value("h")
+  val LVL_MART_SHOPS = Value("h")
 
   /** Отображать эту рекламу внутри магазина. */
-  val MART_SHOP = Value("m")
+  val LVL_SHOP = Value("m")
 
   def maybeWithName(n: String): Option[AdShowLevel] = {
     try {
