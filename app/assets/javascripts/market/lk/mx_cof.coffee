@@ -4,8 +4,9 @@ $(document).ready ->
 
   cbca.popup = new CbcaPopup()
   cbca.search = new CbcaSearch()
-  cbca.common = new CbcaCommon()
 
+  cbca.shop = CbcaShop
+  cbca.common = new CbcaCommon()
 
 
 $(document).on 'click', '.select-iphone .iphone-block', ->
@@ -170,7 +171,9 @@ CbcaCommon = () ->
       $(this).closest('.input-wrap').removeClass('focus')
 
     $(document).on 'click', '#shop-list .disable-but', ->
-      $(this).closest('.item').removeClass('enabled')
+      $shop = $(this).closest('.item')
+      $shop.closest('.item').removeClass('enabled')
+      cbca.shop.disableShop($shop.attr('data-shop'))
 
     $(document).on 'click', '#shop-list .enable-but', ->
       $(this).closest('.item').addClass('enabled')
@@ -188,3 +191,17 @@ CbcaCommon = () ->
       $('#'+formId).trigger('submit')
 
   self.init()
+
+
+##CbcaShop##
+CbcaShop =
+  disableShop : (shopId) ->
+    console.log(shopId)
+
+    jsRoutes.controllers.MarketMartLk.shopOnOffForm(shopId).ajax(
+      type: "GET",
+      success:  (data) ->
+        console.log(data)
+      error: (error) ->
+        console.log(error)
+    )
