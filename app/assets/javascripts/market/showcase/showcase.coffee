@@ -159,6 +159,8 @@ siomart =
     container.innerHTML = data.html
 
     this.fit_images()
+    this.init_navigation()
+
 
   ######################################
   ## Загрузить индексную страницу для ТЦ
@@ -166,6 +168,19 @@ siomart =
   load_mart_index_page : () ->
     this.perform_request '/market/index'
 
+  ######################################################
+  ## Открыть экран с предупреждением о выходе из маркета
+  ######################################################
+  open_close_screen : ( event ) ->
+    siomart.utils.ge('smCloseScreen').style.display = 'block'
+    event.preventDefault()
+    return false
+
+  #############################################
+  ## Забиндить события на навигационные кнопари
+  #############################################
+  init_navigation : () ->
+    this.utils.add_single_listener this.utils.ge('smCloseButton'), 'click', siomart.open_close_screen
 
   init : () ->
     this.utils.set_window_size()
@@ -187,4 +202,4 @@ window.siomart = siomart
 siomart_init_cb = () ->
   siomart.init()
 
-setTimeout siomart_init_cb, 150
+setTimeout siomart_init_cb, 100

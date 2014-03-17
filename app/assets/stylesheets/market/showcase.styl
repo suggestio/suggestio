@@ -1,7 +1,7 @@
 @import 'fonts.styl'
 
 spriteurl = url('/assets/images/sio-market-sprite.png')
-spritesize = 75px 75px
+spritesize = 150px 75px
 
 border-radius( param )
   -webkit-border-radius : param
@@ -26,14 +26,26 @@ border-radius( param )
   .back-close-button
     position: absolute
     left: 15px
-    top: 15px
+    top: 14px
     z-index: 1002
+    overflow: hidden
+    width: 25px
+    height: 27px
+    .cb-i
+      width: 50px
+      height: 27px
     a
       display: block
+      float: left
       width: 25px
-      height: 20px
-      background: spriteurl no-repeat left top
+      height: 27px
+      background: spriteurl no-repeat left 3px
       background-size: spritesize
+    a:active
+      margin-top: 1px
+
+    a.close
+      background-position: -54px top
 
   .categories-button
     position: absolute
@@ -47,6 +59,8 @@ border-radius( param )
       background: spriteurl no-repeat left top
       background-size: spritesize
       background-position: -27px 0px
+    a:active
+      margin-top: 1px
   .sm-button
     display: block
     color: #fff
@@ -87,18 +101,37 @@ border-radius( param )
       span
         background: red
 
+  /*****************************/
+  /* Экран с выбором категории */
+  /*****************************/
+  .sm-categories-screen
+    display: none
+    position: absolute
+    left: 0px
+    top: 0px
+    width: 100%
+    height: 100%
+    background: #ce2222
+    background-color: rgba(206, 34, 34, 0.9)
+    z-index: 1003
+
+    .search-bar
+      background: #fff
+      height: 44px
+      border-bottom: rgba(0,0,0,0.5)
+
   /**************************************************/
   /* Экран с предупредлением о выходе из Sio.Market */
   /**************************************************/
-  .sio-market-exit-screen
-    position: absolute
+  .sm-close-screen
     display: none
+    position: absolute
     width: 100%
     height: 100%
     left: 0px
     top: 0px
     background: rgba(0,0,0,0.7)
-    z-index: 100
+    z-index: 10004
 
     .es-container
       position: absolute

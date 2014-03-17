@@ -6,7 +6,10 @@
 
     @* Кнопка назад / выход *@
     <div class="back-close-button">
-      <a href=""></a>
+      <div class="cb-i">
+        <a class="close" id="smCloseButton" href=""></a>
+        <a class="back" href=""></a>
+      </div>
     </div>
 
     @* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
@@ -21,10 +24,19 @@
       @_single_offer(isHidden=true)
     </div>
 
+    @* Кнопочки-кружочки для перелистывания слайдов с офферами *@
     <div class="sm-offers-controller">
       <a class="active"><span></span></a>
       <a class=""><span></span></a>
     </div>
+
+    @* Окно с выбором категорий *@
+    <div class="sm-categories-screen">
+      <div class="search-bar"></div>
+    </div>
+
+    @* Окно с предупреждением о выходе из Sio.Market *@
+    @_exit_screen()
 
     <div class="sm-navigation">
       <div class="sm-buttons">
