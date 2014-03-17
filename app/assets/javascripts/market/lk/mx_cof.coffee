@@ -4,6 +4,7 @@ $(document).ready ->
 
   cbca.popup = new CbcaPopup()
   cbca.search = new CbcaSearch()
+  cbca.common = new CbcaCommon()
 
 
 
@@ -153,5 +154,31 @@ CbcaSearch = () ->
         self.search($this.attr('data-mart-id'), $this.val())
       else
         $('#shop-list').show()
+
+  self.init()
+
+##CbcaInputStyle##
+CbcaCommon = () ->
+
+  self = this
+
+  self.init = () ->
+    $(document).on 'focus', '.input-wrap input, .input-wrap textarea', ->
+      $(this).closest('.input-wrap').toggleClass('focus', true)
+
+    $(document).on 'blur', '.input-wrap input, .input-wrap textarea', ->
+      $(this).closest('.input-wrap').removeClass('focus')
+
+    $(document).on 'click', '#shop-list .disable-but', ->
+      $(this).closest('.item').removeClass('enabled')
+
+    $(document).on 'click', '#shop-list .enable-but', ->
+      $(this).closest('.item').addClass('enabled')
+
+    $(document).on 'click', '.big-triger .disable-but', ->
+      $(this).closest('.big-triger').removeClass('enabled')
+
+    $(document).on 'click', '.big-triger .enable-but', ->
+      $(this).closest('.big-triger').addClass('enabled')
 
   self.init()

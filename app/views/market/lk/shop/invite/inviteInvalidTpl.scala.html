@@ -15,6 +15,8 @@
 
   <div class="body">
 
+    <div class="error-label"></div>
+
     <p> Произошла непредвиденная ошибка при обработке вашего ключа регистрации.
         Возможно, ваш ключ истёк, невернен или произошла внутренняя ошибка системы suggest.io</p>
 
@@ -24,6 +26,12 @@
     <p>Если вам требуется помощь, <a href="@routes.Feedback.feedbackForm(isAsync = false)">напишите нам</a>,
       скопировав причину возникновения проблемы, укажите данные о магазине
       и любую другую информацию, которая может помочь в устранении проблемы.</p>
+
+  <div class="gray-but-wrap" style="margin-top: 50px;">
+    <div class="white-border-top">
+      <a class="btn" href="@routes.Feedback.feedbackForm(isAsync = false)">НАПИШИТЕ НАМ</a>
+    </div>
+  </div>
 
   </div>
 
