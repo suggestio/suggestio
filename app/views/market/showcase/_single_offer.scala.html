@@ -1,6 +1,6 @@
-@()(implicit ctx:util.Context)
+@(isHidden:Boolean=false)(implicit ctx:util.Context)
 
-<div class="sm-offer">
+<div class="sm-offer @if( isHidden == true ){ sm-hidden-offer }">
 
   <div class="offer-header" style="background-color: ;">
   </div>

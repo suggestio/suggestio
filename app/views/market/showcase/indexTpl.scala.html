@@ -4,15 +4,26 @@
 
   <div class="sm-screen">
 
+    @* Кнопка назад / выход *@
     <div class="back-close-button">
       <a href=""></a>
     </div>
 
-    <div class="sm-offers">
+    @* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
+    <div class="categories-button">
+      <a href=""></a>
+    </div>
 
+    @* Список офферов, подгружается динамически *@
+    <div class="sm-offers">
       @* Тут выводим офферы списком *@
       @_single_offer()
+      @_single_offer(isHidden=true)
+    </div>
 
+    <div class="sm-offers-controller">
+      <a class="button"><span></span></a>
+      <a class="button"><span></span></a>
     </div>
 
     <div class="sm-navigation">
