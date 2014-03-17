@@ -484,6 +484,39 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
   }
 
 
+  /** Форма, которая используется при обработке сабмита о переключении доступности магазину функции отображения рекламы
+    * на верхнем уровне ТЦ. */
+  val shopTopLevelFormM = Form(
+    "isEnabled" -> boolean
+  )
+
+  /** Владелец ТЦ дергает за переключатель доступности top-level выдачи для магазина. */
+  def setShopTopLevelAvailable(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
+    shopTopLevelFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"shopSetTopLevel($shopId): Form bind failed: " + formWithErrors.errors)
+        NotAcceptable("Cannot parse req body.")
+      },
+      {isTopEnabled =>
+        // TODO Заменить тут на remote-update через mvel-скриптинг
+        MShop.getById(shopId) flatMap {
+          case Some(mshop) =>
+            val levels1 = if (isTopEnabled)
+              mshop.settings.supWithLevels - AdShowLevels.LVL_MART_SHOWCASE
+            else
+              mshop.settings.supWithLevels + AdShowLevels.LVL_MART_SHOWCASE
+            mshop.settings.supWithLevels = levels1
+            mshop.save map { _ =>
+              Ok("updated ok")
+            }
+
+          case None => shopNotFound(shopId)
+        }
+      }
+    )
+  }
+
+
   private def martNotFound(martId: MartId_t) = NotFound("mart not found: " + martId)  // TODO Нужно дергать 404-шаблон.
   private def shopNotFound(shopId: ShopId_t) = NotFound("Shop not found: " + shopId)  // TODO
 

@@ -14,7 +14,6 @@ import io.suggest.event.SioNotifierStaticClientI
 import scala.util.{Failure, Success}
 import util.PlayMacroLogsImpl
 import scala.collection.JavaConversions._
-import models.AdShowLevels.AdShowLevel
 
 /**
  * Suggest.io
@@ -97,14 +96,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with PlayMacroLogsImpl {
     case (PANEL_ESFN, value)        => acc.panel = Some(JacksonWrapper.convert[MMartAdPanelSettings](value))
     case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = JacksonWrapper.convert[MMartAdTextAlign](value)
     case (SHOW_LEVELS_ESFN, sls: java.lang.Iterable[_]) =>
-      acc.showLevels = sls.foldLeft[List[AdShowLevel]] (Nil) { (acc, slRaw) =>
-        AdShowLevels.maybeWithName(slRaw.toString) match {
-          case Some(sl) => sl :: acc
-          case None =>
-            warn(s"Failed to deserialize level id from string: '$slRaw' . Possible levels are: [${AdShowLevels.values.mkString(", ")}]")
-            acc
-        }
-      }.toSet
+      acc.showLevels = AdShowLevels.deserializeLevelsFrom(sls)
   }
 
   def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
@@ -507,27 +499,4 @@ object TextAlignValues extends Enumeration {
   }
 }
 
-
-/** Уровни отображения рекламы. Используется как bitmask, но через денормализацию поля. */
-object AdShowLevels extends Enumeration {
-  type AdShowLevel = Value
-
-  /** Отображать на нулевом уровне, т.е. при входе в магазин. */
-  val LVL_MART_SHOWCASE = Value("d")
-
-  /** Отображать на списке витрин ТЦ. */
-  val LVL_MART_SHOPS = Value("h")
-
-  /** Отображать эту рекламу внутри магазина. */
-  val LVL_SHOP = Value("m")
-
-  def maybeWithName(n: String): Option[AdShowLevel] = {
-    try {
-      Some(withName(n))
-    } catch {
-      case _: Exception => None
-    }
-  }
-
-}
 

@@ -24,4 +24,7 @@ package object models {
 
   type MYmCategory      = io.suggest.ym.model.MYmCategory
   val  MYmCategory      = io.suggest.ym.model.MYmCategory
+
+  val  AdShowLevels     = io.suggest.ym.model.AdShowLevels
+  type AdShowLevel      = AdShowLevels.AdShowLevel
 }
