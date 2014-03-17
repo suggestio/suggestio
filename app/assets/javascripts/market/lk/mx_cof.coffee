@@ -181,4 +181,10 @@ CbcaCommon = () ->
     $(document).on 'click', '.big-triger .enable-but', ->
       $(this).closest('.big-triger').addClass('enabled')
 
+    $(document).on 'click', '.submit', ->
+      $this = $(this)
+      formId = $this.attr('data-for')
+
+      $('#'+formId).trigger('submit')
+
   self.init()
