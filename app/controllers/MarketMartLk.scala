@@ -414,7 +414,8 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
       {case (isEnabled, reason) =>
         MShop.setIsEnabled(shopId, isEnabled = isEnabled, reason = reason) map { _ =>
           val reply = JsObject(Seq(
-            "isEnabled" -> JsBoolean(isEnabled)
+            "isEnabled" -> JsBoolean(isEnabled),
+            "shopId" -> JsString(shopId)
           ))
           Ok(reply)
         }

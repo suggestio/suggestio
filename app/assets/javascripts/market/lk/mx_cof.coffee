@@ -159,7 +159,7 @@ CbcaSearch = () ->
 
   self.init()
 
-##CbcaInputStyle##
+##Общее оформление##
 CbcaCommon = () ->
 
   self = this
@@ -173,13 +173,6 @@ CbcaCommon = () ->
 
 
 
-
-    $(document).on 'click', '.big-triger .disable-but', ->
-      $(this).closest('.big-triger').removeClass('enabled')
-
-    $(document).on 'click', '.big-triger .enable-but', ->
-      $(this).closest('.big-triger').addClass('enabled')
-
     $(document).on 'click', '.submit', ->
       $this = $(this)
       formId = $this.attr('data-for')
@@ -189,7 +182,7 @@ CbcaCommon = () ->
   self.init()
 
 
-##CbcaShop##
+##Работа с магазинами##
 CbcaShop =
   disableShop: (shopId) ->
     jsRoutes.controllers.MarketMartLk.shopOnOffForm(shopId).ajax(
@@ -218,7 +211,7 @@ CbcaShop =
       $shop = $(this).closest('.item')
 
       if(!$shop.hasClass('enabled'))
-        $shop.closest('.item').addClass('enabled')
+        $shop.addClass('enabled')
         cbca.shop.enableShop($shop.attr('data-shop'))
 
 
@@ -226,6 +219,19 @@ CbcaShop =
       $shop = $(this).closest('.item')
       if($shop.hasClass('enabled'))
         cbca.shop.disableShop($shop.attr('data-shop'))
+
+
+    $(document).on 'click', '#shop-control .disable-but', ->
+      $shop = $(this).closest('.big-triger')
+      if($shop.hasClass('enabled'))
+        cbca.shop.disableShop($shop.attr('data-shop'))
+
+    $(document).on 'click', '#shop-control .enable-but', ->
+      $shop = $(this).closest('.big-triger')
+
+      if(!$shop.hasClass('enabled'))
+        $shop.addClass('enabled')
+        cbca.shop.enableShop($shop.attr('data-shop'))
 
 
     $(document).on 'submit', '#disable-shop form', (e) ->
@@ -242,6 +248,5 @@ CbcaShop =
           if(!data.isEnabled)
             cbca.popup.hidePopup('#disable-shop')
             $('#disable-shop').remove()
-            shopId = $this.find('.shop-id').val()
-            $('#shop-list').find('.item[data-shop = "'+shopId+'"]').removeClass('enabled')
+            $('*[data-shop = "'+data.shopId+'"]').removeClass('enabled')
       )

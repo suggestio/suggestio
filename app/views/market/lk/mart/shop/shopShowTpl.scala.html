@@ -4,6 +4,13 @@
 @import market.lk._
 @import routes.MarketMartLk._
 
+@import ctx._
+@import helper._
+@helper.javascriptRouter("jsRoutes")(
+  routes.javascript.MarketMartLk.shopOnOffForm,
+  routes.javascript.MarketMartLk.shopOnOffSubmit
+)
+
 @lkBase(mshop.name) {
 
   <div class="title-wrap">
@@ -30,7 +37,7 @@
           <td class="left">
             <div class="big-triger-wrap">
               <div class="title">Личный кабинет:</div>
-              <div class="big-triger">
+              <div class="big-triger @if(mshop.settings.supIsEnabled) {enabled}" data-shop="@mshop.id.get" id="shop-control">
                 <span class="disable-but">Выкл</span>
                 <div class="triger">
                   <div class="circle"></div>
