@@ -20,6 +20,7 @@ import scala.Some
 import util.acl.IsMartAdminShop
 import util.img.ImgInfo
 import util.img.OrigImgIdKey
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -412,7 +413,10 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
       },
       {case (isEnabled, reason) =>
         MShop.setIsEnabled(shopId, isEnabled = isEnabled, reason = reason) map { _ =>
-          Ok("isEnabled -> " + isEnabled)
+          val reply = JsObject(Seq(
+            "isEnabled" -> JsBoolean(isEnabled)
+          ))
+          Ok(reply)
         }
       }
     )
