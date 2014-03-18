@@ -176,17 +176,21 @@ CbcaCommon = () ->
       $(this).closest('.input-wrap').removeClass('focus')
 
 
-
     $(document).on 'click', '.submit', ->
       $this = $(this)
       formId = $this.attr('data-for')
 
       $('#'+formId).trigger('submit')
 
+
+
+
+
   self.init()
 
-
-##Работа с магазинами##
+#########################
+## Работа с магазинами ##
+#########################
 CbcaShop =
   disableShop: (shopId) ->
     jsRoutes.controllers.MarketMartLk.shopOnOffForm(shopId).ajax(
@@ -275,3 +279,6 @@ CbcaShop =
             $('#disable-shop').remove()
             $('*[data-shop = "'+data.shopId+'"]').removeClass('enabled')
       )
+##################
+## CbcaShop end ##
+##################
