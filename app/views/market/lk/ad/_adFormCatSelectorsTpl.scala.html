@@ -31,3 +31,7 @@
 
   }
 </div><!-- categories end -->
+
+@if(!af.errors("ad.catId").isEmpty) {
+  <div style="color: #E23131; font-size: 12px; font-family: 'Arial'; padding: 5px;">Выберите категорию</div>
+}

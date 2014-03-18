@@ -4,23 +4,32 @@
 @import ctx._
 
 
-@adFormBase(
-  title = "Создание рекламной карточки товара",
-  shopId = mshop.id.get
-) {
+    @adFormBase(
+      title = "Создание рекламной карточки товара",
+      shopId = mshop.id.get
+    ) {
+
+    <!--<div class="status-bar bad"></div>-->
+
+    <div class="body">
+      <div class="create-ad">
 
 
-  @_adFormTpl(
-    shopId = mshop.id.get,
-    af = af,
-    call = routes.MarketAd.createShopAdSubmit(mshop.id.get),
-    btnText = Messages("Create"),
-    mmcats = mmcats
-  )
+          @_adFormTpl(
+            shopId = mshop.id.get,
+            af = af,
+            call = routes.MarketAd.createShopAdSubmit(mshop.id.get),
+            btnText = Messages("Create"),
+            mmcats = mmcats
+          )
 
-  <div class="submit-wrap">
-    <a class="green-but-small submit" data-for="promoOfferForm">Создать</a>
+          <div class="submit-wrap">
+            <a class="green-but-small submit" data-for="promoOfferForm">Создать</a>
 
-  </div>
+          </div>
 
-}
+      </div><!-- create-ad end -->
+    </div>
+
+    }
+
