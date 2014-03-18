@@ -180,7 +180,27 @@ siomart =
   ## Забиндить события на навигационные кнопари
   #############################################
   init_navigation : () ->
+
+    ## Кнопка выхода
     this.utils.add_single_listener this.utils.ge('smCloseButton'), 'click', siomart.open_close_screen
+
+    ## Кнопка возвращения на шаг назад
+
+
+    ## Кнопка вызова окна с категориями
+    this.utils.add_single_listener this.utils.ge('smCategoriesButton'), 'click'
+
+    ## Контроллеры слайдов с офферами
+    _i = 0
+    _as = this.utils.ge('smOffersController').getElementsByTagName 'a'
+
+    for _a in _as
+      _a.setAttribute 'data-index', _i
+      this.utils.add_single_listener _a, 'click', () ->
+        alert this.getAttribute 'data-index'
+
+      _i++
+
 
   init : () ->
     this.utils.set_window_size()

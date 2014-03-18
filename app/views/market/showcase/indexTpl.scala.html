@@ -14,7 +14,7 @@
 
     @* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
     <div class="categories-button">
-      <a href=""></a>
+      <a href="" id="smCategoriesButton"></a>
     </div>
 
     @* Список офферов, подгружается динамически *@
@@ -25,15 +25,13 @@
     </div>
 
     @* Кнопочки-кружочки для перелистывания слайдов с офферами *@
-    <div class="sm-offers-controller">
-      <a class="active"><span></span></a>
-      <a class=""><span></span></a>
+    <div class="sm-offers-controller" id="smOffersController">
+      <a href="" class="active"><span></span></a>
+      <a href="" class=""><span></span></a>
     </div>
 
     @* Окно с выбором категорий *@
-    <div class="sm-categories-screen">
-      <div class="search-bar"></div>
-    </div>
+    @_categories()
 
     @* Окно с предупреждением о выходе из Sio.Market *@
     @_exit_screen()
