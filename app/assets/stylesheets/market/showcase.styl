@@ -159,8 +159,14 @@ border-radius( param )
     width: 100%
     height: 100%
 
+  .sm-offer.animated
+    -webkit-transition: all 1s linear
+    -moz-transition: all 1s linear
+    -o-transition: all 1s linear
+    transition: all 1s linear
+
   .sm-hidden-offer
-    display: none
+    left: -100%
 
   .offer-header
     position: absolute
@@ -171,7 +177,7 @@ border-radius( param )
     border-bottom: 1px rgba(0,0,0,0.5) solid
     background: #cf3737
     opacity: 0.9
-
+    
   .offer-details
     position: absolute
     left: 0px
@@ -198,10 +204,11 @@ border-radius( param )
       background-size: spritesize
       padding-left: 39px
       margin: 15px 0px 35px 0px
+      min-height: 60px
 
     .sm-button
       font-size: 24px
-      
+
   .sm-screen
     overflow: hidden
     .poster-photo
