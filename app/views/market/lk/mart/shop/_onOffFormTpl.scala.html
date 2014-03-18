@@ -4,12 +4,37 @@
 @import helper._
 @import ctx._
 
-<h1>Отключение магазина @mshop.name</h1>
+@import util.FormHelpers._
 
-@form(routes.MarketMartLk.shopOnOffSubmit(mshop.shopId)) {
-  <input type="hidden" name="isEnabled" value="@oof("isEnabled").value.getOrElse("false")"/>
 
-  @inputText(oof("reason"), '_label -> "Причина:")
+  @* Кнопка стирания рекламной карточки пока лежит тут. До лучших времён. *@
+  <div class="popup disable-shop" id="disable-shop">
+    <div class="hat">
+      <a href="#" class="close">&nbsp;</a>
+    </div>
 
-  <input type="submit"/>
-}
+    <div class="content">
+      <div class="title">
+        Отключение магазина @mshop.name
+      </div>
+
+        @form(routes.MarketMartLk.shopOnOffSubmit(mshop.shopId)) {
+          <input type="hidden" name="isEnabled" value="@oof("isEnabled").value.getOrElse("false")"/>
+          <input type="hidden" class="shop-id" value="@mshop.id.get"/>
+
+          <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
+            @textarea(oof("reason"), '_label -> "Причина:")
+          </table>
+
+
+          <div class="controls">
+            <a class="gray-but-small cancel">Отменить</a>
+            <input class="red-but-small" type="submit" value="Выключить"/>
+          </div>
+        }
+
+
+    </div>
+  </div>
+
+

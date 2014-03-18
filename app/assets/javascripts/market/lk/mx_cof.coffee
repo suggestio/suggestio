@@ -6,6 +6,7 @@ $(document).ready ->
   cbca.search = new CbcaSearch()
 
   cbca.shop = CbcaShop
+  cbca.shop.init()
   cbca.common = new CbcaCommon()
 
 
@@ -170,13 +171,8 @@ CbcaCommon = () ->
     $(document).on 'blur', '.input-wrap input, .input-wrap textarea', ->
       $(this).closest('.input-wrap').removeClass('focus')
 
-    $(document).on 'click', '#shop-list .disable-but', ->
-      $shop = $(this).closest('.item')
-      $shop.closest('.item').removeClass('enabled')
-      cbca.shop.disableShop($shop.attr('data-shop'))
 
-    $(document).on 'click', '#shop-list .enable-but', ->
-      $(this).closest('.item').addClass('enabled')
+
 
     $(document).on 'click', '.big-triger .disable-but', ->
       $(this).closest('.big-triger').removeClass('enabled')
@@ -195,13 +191,57 @@ CbcaCommon = () ->
 
 ##CbcaShop##
 CbcaShop =
-  disableShop : (shopId) ->
-    console.log(shopId)
-
+  disableShop: (shopId) ->
     jsRoutes.controllers.MarketMartLk.shopOnOffForm(shopId).ajax(
       type: "GET",
       success:  (data) ->
-        console.log(data)
+        if(data.toString().trim())
+          $('.body-wrap').append(data)
+          cbca.popup.showPopup('#disable-shop')
       error: (error) ->
         console.log(error)
     )
+
+  enableShop: (shopId) ->
+    jsRoutes.controllers.MarketMartLk.shopOnOffSubmit(shopId).ajax(
+      type: 'POST'
+      dataType: 'JSON'
+      data:
+        'isEnabled': true
+      error: (error) ->
+        console.log(error)
+    )
+
+  init: () ->
+
+    $(document).on 'click', '#shop-list .enable-but', ->
+      $shop = $(this).closest('.item')
+
+      if(!$shop.hasClass('enabled'))
+        $shop.closest('.item').addClass('enabled')
+        cbca.shop.enableShop($shop.attr('data-shop'))
+
+
+    $(document).on 'click', '#shop-list .disable-but', ->
+      $shop = $(this).closest('.item')
+      if($shop.hasClass('enabled'))
+        cbca.shop.disableShop($shop.attr('data-shop'))
+
+
+    $(document).on 'submit', '#disable-shop form', (e) ->
+      e.preventDefault()
+      $this = $(this)
+      data = $this.serialize()
+
+      $.ajax(
+        type: 'POST'
+        dataType: 'JSON'
+        url: $this.attr('action')
+        data: data
+        success: (data) ->
+          if(!data.isEnabled)
+            cbca.popup.hidePopup('#disable-shop')
+            $('#disable-shop').remove()
+            shopId = $this.find('.shop-id').val()
+            $('#shop-list').find('.item[data-shop = "'+shopId+'"]').removeClass('enabled')
+      )
