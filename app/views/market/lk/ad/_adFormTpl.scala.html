@@ -18,7 +18,7 @@
 
   @_adFormCatSelectorsTpl(mmcats, af)
 
-  <div class="block">
+  <div class="block" style="margin-top: 30px;">
     <div class="border-line"></div>
     <div class="hat">
       <span class="title">Отображение на устройстве</span>
@@ -70,7 +70,7 @@
         <table cellpadding="0" cellspacing="0" class="input-wrap big img-with-preview">
           <tr>
             <td class="left">
-              <label>Логотип:</label>
+              <label @if(!af.errors("shopLogoImgId").isEmpty) {style="color: #E23131;"}>Логотип:</label>
             </td>
             <td class="right">
 
@@ -111,10 +111,10 @@
     </div>
     <div class="border-line"></div>
     <div class="slide-content" id="ad-photo">
-      <table cellpadding="0" cellspacing="0" class="input-wrap big img-with-preview">
+      <table cellpadding="0" cellspacing="0" class="input-wrap big img-with-preview ">
         <tr>
           <td class="left">
-            <label>Фотография товара:</label>
+            <label @if(!af.errors("image_key").isEmpty) {style="color: #E23131;"}>Фотография товара:</label>
           </td>
           <td class="right">
             <div class="select-file-wrap">

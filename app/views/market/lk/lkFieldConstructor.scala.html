@@ -5,7 +5,7 @@
 
 
   <td class="left">
-    <label for="@elements.id">@elements.label(elements.lang)</label>
+    <label for="@elements.id" @if(elements.hasErrors) {style="color: #E23131;"}>@elements.label(elements.lang)</label>
   </td>
 
   <td class="right">

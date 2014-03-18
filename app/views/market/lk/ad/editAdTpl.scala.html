@@ -3,10 +3,10 @@
 @* Страница с формой редактирования рекламной карточки. *@
 @import ctx._
 
-@adFormBase(
-  title = "Редактирование рекламной карточки",
-  shopId = mshop.id.get
-) {
+  @adFormBase(
+    title = "Редактирование рекламной карточки",
+    shopId = mshop.id.get
+  ) {
 
   @* Кнопка стирания рекламной карточки пока лежит тут. До лучших времён. *@
   <div class="popup remove-ad" id="remove-ad">
@@ -27,6 +27,10 @@
     </div>
   </div>
 
+<div class="body">
+  <div class="create-ad">
+
+
   @_adFormTpl(
     shopId = mshop.id.get,
     af = af,
@@ -41,5 +45,9 @@
 
     <a href="#remove-ad" class="red-but-small popup-but">Удалить</a>
   </div>
+
+  </div><!-- create-ad end -->
+</div>
+
 
 }
