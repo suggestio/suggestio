@@ -10,6 +10,8 @@ import io.suggest.ym.model.UsernamePw
 import MShop.ShopId_t, MMart.MartId_t, MCompany.CompanyId_t
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
+import io.suggest.model.inx2.MMartInx
+import util.IndicesUtil
 
 /**
  * Suggest.io
@@ -482,6 +484,23 @@ object SysMarket extends SioController with MacroLogsImpl {
     MYmCategory.insertYmCats.map { _ =>
       Redirect(routes.SysMarket.showYmCats())
         .flashing("succes" -> "Импорт сделан.")
+    }
+  }
+
+  // ======================================================================
+  // inx2
+
+  /** Имитация действий системы в IndicesUtil при добавлении нового ТЦ (без реального добавления. ТЦ уже добавлен). */
+  def inx2handleMartAdd(martId: MartId_t) = IsSuperuser.async { implicit request =>
+    IndicesUtil.handleMartAdd(martId) map { inx2 =>
+      Ok("OK: " + inx2)
+    }
+  }
+
+  /** Имитация действий системы в IndicesUtil при удалении указанного ТЦ (без реального удаления). */
+  def inx2handleMartDelete(martId: MartId_t) = IsSuperuser.async { implicit request =>
+    IndicesUtil.handleMartDelete(martId) map { _ =>
+      Ok("Deleted ok.")
     }
   }
 

@@ -13,10 +13,10 @@ import util.img._
 import scala.concurrent.Future
 import play.api.mvc.Request
 import play.api.Play.current
+import models.AdShowLevels.AdShowLevel
 import TextAlignValues.TextAlignValue
 import MMartCategory.CollectMMCatsAcc_t
 import scala.util.{Try, Failure, Success}
-import models.AdShowLevels.AdShowLevel
 
 /**
  * Suggest.io

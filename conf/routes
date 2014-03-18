@@ -84,6 +84,10 @@ GET  /sys/indices/active/ALL            controllers.Sys.indicesListAllActive
 GET  /sys/indices/active/:dkey/:vin     controllers.Sys.indicesShowActiveFor(dkey:String, vin:String)
 GET  /sys/indices/vin/:vin              controllers.Sys.showVin(vin)
 POST /sys/indices/downgrade/ALL         controllers.Sys.indicesDowngradeAll
+GET  /sys/inx2/ALL                      controllers.Sys.inx2AllIndices
+POST /sys/inx2/create/dflt/mart         controllers.Sys.inx2createDfltMart
+POST /sys/inx2/im/mart/:martId/add      controllers.SysMarket.inx2handleMartAdd(martId)
+POST /sys/inx2/im/mart/:martId/del      controllers.SysMarket.inx2handleMartDelete(martId)
 
 # Личный кабинет владельца ТЦ
 GET  /m/lk/mart/:martId                 controllers.MarketMartLk.martShow(martId, sortByRaw: Option[String] = None, isReversed: Boolean ?= false)

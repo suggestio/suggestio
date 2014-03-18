@@ -34,4 +34,15 @@
 
   <a href="@routes.SysMarket.shopAddForm">Создать новый магазин</a>
   <p><a href="@routes.MarketCategory.showCatsFor(mmart.id.get)">Категории ТЦ</a></p>
+
+
+  @* Кнопки для имитиации добавления/удаления уже существующего ТЦ. Потом надо будет их наверное удалить или запретить их трогать через доп.ACL. *@
+  <br/><br/>
+  @form(routes.SysMarket.inx2handleMartAdd(mmart.id.get)) {
+    <input type="submit" value="IndicesUtil.handleMartAdd()" title="Имитация реакции индексов на добавление указанного ТЦ"/>
+  }
+  @form(routes.SysMarket.inx2handleMartDelete(mmart.id.get)) {
+    <input type="submit" value="IndicesUtil.handleMartDelete()" title="Имитация реакции индексов на добавление указанного ТЦ"/>
+  }
+
 }

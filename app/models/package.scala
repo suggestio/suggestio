@@ -27,4 +27,45 @@ package object models {
 
   val  AdShowLevels     = io.suggest.ym.model.AdShowLevels
   type AdShowLevel      = AdShowLevels.AdShowLevel
+
+  val  MMartAd          = io.suggest.ym.model.MMartAd
+  type MMartAd          = io.suggest.ym.model.MMartAd
+
+  type MMartAdOfferT    = io.suggest.ym.model.MMartAdOfferT
+
+  val  MMartAdProduct   = io.suggest.ym.model.MMartAdProduct
+  type MMartAdProduct   = io.suggest.ym.model.MMartAdProduct
+
+  val  MMartAdDiscount  = io.suggest.ym.model.MMartAdDiscount
+  type MMartAdDiscount  = io.suggest.ym.model.MMartAdDiscount
+
+  val TextAlignValues   = io.suggest.ym.model.TextAlignValues
+
+  val  MMartAdTextAlign = io.suggest.ym.model.MMartAdTextAlign
+  type MMartAdTextAlign = io.suggest.ym.model.MMartAdTextAlign
+
+  val  DiscountTemplate = io.suggest.ym.model.DiscountTemplate
+  type DiscountTemplate = io.suggest.ym.model.DiscountTemplate
+
+  val MMAdFloatField    = io.suggest.ym.model.MMAdFloatField
+  val MMAdStringField   = io.suggest.ym.model.MMAdStringField
+
+  val  MMartAdTAPhone   = io.suggest.ym.model.MMartAdTAPhone
+  type MMartAdTAPhone   = io.suggest.ym.model.MMartAdTAPhone
+
+  val  MMartAdTATablet  = io.suggest.ym.model.MMartAdTATablet
+  type MMartAdTATablet  = io.suggest.ym.model.MMartAdTATablet
+
+  val  MMAdFieldFont    = io.suggest.ym.model.MMAdFieldFont
+  type MMAdFieldFont    = io.suggest.ym.model.MMAdFieldFont
+
+  val  MMartAdPanelSettings = io.suggest.ym.model.MMartAdPanelSettings
+  type MMartAdPanelSettings = io.suggest.ym.model.MMartAdPanelSettings
+
+  val  MInx             = io.suggest.model.inx2.MInx
+  type MInxT            = io.suggest.model.inx2.MInxT
+
+  val  MMartInx         = io.suggest.model.inx2.MMartInx
+  type MMartInx         = io.suggest.model.inx2.MMartInx
+
 }

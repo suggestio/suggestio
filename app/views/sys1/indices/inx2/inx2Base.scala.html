@@ -1,0 +1,12 @@
+@(title: String)(content: Html)(implicit ctx: util.Context)
+
+@* Базовый шаблон для шаблонов в пакете inx2. *@
+
+@hPathAfter1 = {
+  / <a href="@routes.Sys.inx2AllIndices">inx2</a>
+}
+
+@sys1.indices.indicesBase(
+  title = title,
+  hPathAfter = Some(hPathAfter1)
+)(content)
