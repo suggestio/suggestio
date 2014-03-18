@@ -12,7 +12,7 @@ import io.suggest.event._
 import io.suggest.model._
 import io.suggest.model.EsModel._
 import io.suggest.util.SioEsUtil._
-import io.suggest.util.JacksonWrapper
+import io.suggest.util.{MacroLogsImpl, JacksonWrapper}
 
 /**
  * Suggest.io

@@ -58,7 +58,6 @@ object SioEsUtil extends MacroLogsImpl {
     }
   }
 
-
   /**
    * Убедиться, что есть такой индекс
    * @param indexName имя индекса
@@ -237,34 +236,34 @@ object SioEsUtil extends MacroLogsImpl {
     val filters0 = List(STD_FN, WORD_DELIM_FN, LOWERCASE_FN)
     // Начать генерацию в псевдокоде, затем сразу перегнать в XContentBuilder
     jsonGenerator { implicit b =>
-      new IndexSettings(
+      IndexSettings(
         number_of_shards = shards,
         number_of_replicas = replicas,
         cache_field_type = "soft",
 
         filters = Seq(
-          new FilterStandard(STD_FN),
-          new FilterLowercase(LOWERCASE_FN),
-          new FilterStopwords(STOP_EN_FN, "english"),
-          new FilterStopwords(STOP_RU_FN, "russian"),
-          new FilterWordDelimiter(WORD_DELIM_FN, preserve_original = true),
-          new FilterStemmer(STEM_RU_FN, "russian"),
-          new FilterStemmer(STEM_EN_FN, "english"),
-          new FilterEdgeNgram(EDGE_NGRAM_FN, min_gram = 1, max_gram = 10, side = "front")
+          FilterStandard(STD_FN),
+          FilterLowercase(LOWERCASE_FN),
+          FilterStopwords(STOP_EN_FN, "english"),
+          FilterStopwords(STOP_RU_FN, "russian"),
+          FilterWordDelimiter(WORD_DELIM_FN, preserve_original = true),
+          FilterStemmer(STEM_RU_FN, "russian"),
+          FilterStemmer(STEM_EN_FN, "english"),
+          FilterEdgeNgram(EDGE_NGRAM_FN, min_gram = 1, max_gram = 10, side = "front")
         ),
 
         analyzers = Seq(
-          new AnalyzerCustom(
+          AnalyzerCustom(
             id = MINIMAL_AN,
             tokenizer = STD_TN,
             filters = filters0
           ),
-          new AnalyzerCustom(
+          AnalyzerCustom(
             id = EDGE_NGRAM_AN,
             tokenizer = STD_TN,
             filters = filters0 ++ List(EDGE_NGRAM_FN)
           ),
-          new AnalyzerCustom(
+          AnalyzerCustom(
             id = FTS_RU_AN,
             tokenizer = STD_TN,
             filters = filters0 ++ List(STOP_EN_FN, STOP_RU_FN, STEM_RU_FN, STEM_EN_FN)
@@ -272,6 +271,41 @@ object SioEsUtil extends MacroLogsImpl {
         ),
 
         tokenizers = Seq(new TokenizerStandard(STD_TN))
+      )
+    }
+  }
+
+  /**
+   * Сборка индекса по архитектуре второго поколения: без edgeNgram, который жрёт как не в себя.
+   * Используется единственный анализатор.
+   * @param shards Кол-во шард.
+   * @param replicas Кол-во реплик.
+   * @return XCB с сеттингами.
+   */
+  def getIndexSettingsV2(shards: Int, replicas: Int = 1) = {
+    jsonGenerator { implicit b =>
+      IndexSettings(
+        number_of_replicas = replicas,
+        number_of_shards = shards,
+        cache_field_type = "soft",
+
+        filters = Seq(
+          FilterStandard(STD_FN),
+          FilterLowercase(LOWERCASE_FN),
+          FilterStopwords(STOP_EN_FN, "english"),
+          FilterStopwords(STOP_RU_FN, "russian"),
+          FilterWordDelimiter(WORD_DELIM_FN, preserve_original = true),
+          FilterStemmer(STEM_RU_FN, "russian"),
+          FilterStemmer(STEM_EN_FN, "english")
+        ),
+        tokenizers = Seq(new TokenizerStandard(STD_TN)),
+        analyzers = Seq(
+          AnalyzerCustom(
+            id = "default",
+            tokenizer = STD_TN,
+            filters = Seq(STD_FN, WORD_DELIM_FN, LOWERCASE_FN, STOP_EN_FN, STOP_RU_FN, STEM_RU_FN, STEM_EN_FN)
+          )
+        )
       )
     }
   }
@@ -481,7 +515,7 @@ trait Analyzer extends TypedJsonObject
 case class AnalyzerCustom(
   id : String,
   tokenizer: String,
-  filters : List[String]
+  filters : Seq[String]
 ) extends Analyzer {
   
   def typ = "custom"

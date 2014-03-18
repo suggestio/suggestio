@@ -6,14 +6,13 @@ import EsModel._
 import scala.concurrent.{ExecutionContext, Future}
 import MMart.MartId_t, MCompany.CompanyId_t
 import org.elasticsearch.index.query.{QueryBuilder, FilterBuilders, QueryBuilders}
-import org.elasticsearch.common.xcontent.XContentBuilder
+import org.elasticsearch.common.xcontent.{XContentFactory, XContentBuilder}
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.SioConstants._
 import io.suggest.proto.bixo.crawler.MainProto
 import org.elasticsearch.client.Client
 import io.suggest.event._
 import io.suggest.util.JacksonWrapper
-import com.fasterxml.jackson.annotation.JsonIgnore
 
 /**
  * Suggest.io
@@ -35,6 +34,11 @@ object MShop extends EsModelStaticT[MShop] {
   type ShopId_t = MainProto.ShopId_t
 
   val ES_TYPE_NAME = "shop"
+
+  // Ключи настроек, никогда не индексируются и не анализируются.
+  val SETTING_SUP_IS_ENABLED      = SETTINGS_ESFN + ".sup.isEnabled"
+  val SETTING_SUP_DISABLE_REASON  = SETTINGS_ESFN + ".sup.disableReason"
+  val SETTING_SUP_WITH_LEVELS     = SETTINGS_ESFN + ".sup.withLevels"
 
   def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
@@ -92,15 +96,13 @@ object MShop extends EsModelStaticT[MShop] {
           index = FieldIndexingVariants.no
         ),
         FieldNestedObject(
-          id = DISABLED_BY_ESFN,
+          id = SETTINGS_ESFN,
           enabled = false,
           properties = Nil
         )
       )
     )
   }
-
-  val DISABLED_BY_ESFN = "disabledBy"
 
   protected def dummy(id: String) = MShop(
     id = Some(id),
@@ -121,7 +123,13 @@ object MShop extends EsModelStaticT[MShop] {
     case (MART_SECTION_ESFN, value)   => acc.martSection = Some(martSectionParser(value))
     case (PERSON_ID_ESFN, value)      => acc.personIds   = JacksonWrapper.convert[List[String]](value)
     case (LOGO_IMG_ID, value)         => acc.logoImgId   = Some(stringParser(value))
-    case (DISABLED_BY_ESFN, value)    => acc.disabledBy  = Some(JacksonWrapper.convert[MShopDisabledBy](value))
+    // Парсеры конкретных сеттингов.
+    case (SETTING_SUP_IS_ENABLED, v)  =>
+      acc.settings.supIsEnabled = booleanParser(v)
+    case (SETTING_SUP_DISABLE_REASON, v) =>
+      acc.settings.supDisableReason = Some(stringParser(v))
+    case (SETTING_SUP_WITH_LEVELS, v: java.lang.Iterable[_]) =>
+      acc.settings.supWithLevels = AdShowLevels.deserializeLevelsFrom(v)
   }
 
   /**
@@ -265,6 +273,72 @@ object MShop extends EsModelStaticT[MShop] {
       case None => ???  // TODO хз что тут нужно делать, но это невероятная ситуация.
     }
   }
+
+  /**
+   * Статическое обновление сеттингов isEnabled и disabledReason.
+   * @param shopId id изменяемого магазина
+   * @param isEnabled Новое значение поля isEnabled.
+   * @param reason Причина изменения статуса.
+   * @return Фьючерс. Внутри, скорее всего, лежит UpdateResponse.
+   */
+  def setIsEnabled(shopId: ShopId_t, isEnabled: Boolean, reason: Option[String])(implicit ec: ExecutionContext, client: Client): Future[_] = {
+    val updatedXCB = XContentFactory.jsonBuilder()
+      .startObject()
+        .field(SETTING_SUP_IS_ENABLED, isEnabled)
+        .field(SETTING_SUP_DISABLE_REASON, reason getOrElse null)
+      .endObject()
+    client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, shopId)
+      .setDoc(updatedXCB)
+      .execute()
+    // TODO Надо бы влиять тут на выдачу по магазину/ТЦ. Через sio_notifier + подписчиков например.
+  }
+
+  /**
+   * Обновить в магазине поле с разрешенными дополнительными уровнями отображения.
+   * @param shopId id магазина.
+   * @param levels Новое значение premium-уровней.
+   * @return Фьючерс для синхронизации.
+   */
+  // TODO Нужен апдейт массива уровней через mvel-скрипт
+  def setShowLevels(shopId: ShopId_t, levels: Set[AdShowLevel])(implicit ec: ExecutionContext, client: Client): Future[_] = {
+    val updateXCB = XContentFactory.jsonBuilder()
+      .startObject()
+        .startArray(SETTING_SUP_WITH_LEVELS)
+        levels foreach { sl => updateXCB value sl.toString }
+        updateXCB.endArray()
+      .endObject()
+    client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, shopId)
+      .setDoc(updateXCB)
+      .execute()
+    // TODO надо что-то делать, чтобы это повлияло на выдачу как можно скорее.
+  }
+
+  /**
+   * Включить/выключить один из разрешенных уровней отображения в сохранённом магазине с помощью скрипта.
+   * По сравнению с [[setShowLevels()]], этот метод предназначен для изменения только одного уровня и обновляет документ
+   * лениво и более точно. Этот метод ощутимо сложнее в плане логики работы.
+   * @param shopId id магазина
+   * @param level id уровня
+   * @param isSet true - добавить уровень. false - удалить его.
+   * @return Фьючерс для синхронизации.
+   */
+  // private - пока не тестирован, и пока не используется.
+  private def setShowLevel(shopId: ShopId_t, level: AdShowLevel, isSet: Boolean)(implicit ec: ExecutionContext, client: Client): Future[_] = {
+    // Максимально ленивый скрипт для апдейта списка уровней. Старается по возможности не изменять уже сохранённый документ.
+    // Проверка на null по мотивам http://elasticsearch-users.115913.n3.nabble.com/partial-update-and-nested-type-td3959065.html
+    val script = if (isSet) {
+      """sls = ctx._source[fn]; if (sls == null) { ctx._source[fn] = sl } else { !sls.values.contains(sl) ? (ctx._source[fn] += sl) : (ctx.op = "none") }"""
+    } else {
+      """sls = ctx._source[fn]; if (sls == null) { ctx.op = "none" } else { sls.values.contains(sl) ? (ctx._source[fn] -= sl) : (ctx.op = "none") }"""
+    }
+    client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, shopId)
+      .setScript(script)
+      .addScriptParam("fn", SETTING_SUP_WITH_LEVELS)
+      .addScriptParam("sl", level.toString)
+      .execute()
+    // TODO надо что-то делать, чтобы это повлияло на выдачу как можно скорее.
+  }
+
 }
 
 
@@ -280,7 +354,7 @@ case class MShop(
   var martSection : Option[Int] = None,
   var id          : Option[MShop.ShopId_t] = None,
   var logoImgId   : Option[String] = None,
-  var disabledBy  : Option[MShopDisabledBy] = None,
+  var settings    : MShopSettings = new MShopSettings,
   var dateCreated : DateTime = null
 ) extends EsModelT[MShop] with MCompanySel with MMartOptSel with CompanyMartsSel with ShopPriceListSel with MShopOffersSel {
 
@@ -302,11 +376,9 @@ case class MShop(
       acc.field(MART_SECTION_ESFN, martSection.get)
     if (dateCreated == null)
       dateCreated = DateTime.now()
-    // Если disabledBy не содержит никаких данных, то он выкидывается при записи.
-    if (disabledBy.isDefined && disabledBy.get.isDisabled)
-      acc.rawField(DISABLED_BY_ESFN, disabledBy.get.toJson.getBytes)
     if (logoImgId.isDefined)
       acc.field(LOGO_IMG_ID, logoImgId.get)
+    settings writeXContent acc
     acc.field(DATE_CREATED_ESFN, dateCreated)
   }
 
@@ -356,14 +428,24 @@ trait MShopSel {
 }
 
 
-/** Поле, описывающее блокировку магазина со стороны ТЦ или операторов s.io или ещё кого-то.
-  * в String - записана причина отключения. Если None, то блокировки нет.
-  * В Json сериализуется как raw-поле и десериализуется так же через Jackson и reflections. */
-case class MShopDisabledBy(
-  mart: Option[String] = None,
-  su: Option[String] = None
+/** Представление распарсенных настроек MShop. */
+case class MShopSettings(
+  var supIsEnabled: Boolean = true,
+  var supDisableReason: Option[String] = None,
+  var supWithLevels: Set[AdShowLevel] = Set.empty
 ) {
-  @JsonIgnore def isDisabled = mart.isDefined || su.isDefined
-  @JsonIgnore def toJson = JacksonWrapper.serialize(this)
+  /** writer json'а в аккумулятор. Сеттинги записываются прямо в текущем объекте по ключам "setting.*". */
+  def writeXContent(acc: XContentBuilder) {
+    acc.field(SETTING_SUP_IS_ENABLED, supIsEnabled)
+    if (supDisableReason.isDefined)
+      acc.field(SETTING_SUP_DISABLE_REASON, supDisableReason.get)
+    if (!supWithLevels.isEmpty) {
+      acc.startArray(SETTING_SUP_WITH_LEVELS)
+      supWithLevels.foreach { i =>
+        acc.value(i.toString)
+      }
+      acc.endArray()
+    }
+  }
 }
 

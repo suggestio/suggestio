@@ -16,6 +16,7 @@ import java.lang.{Iterable => jlIterable}
 import org.elasticsearch.search.sort.SortOrder
 import org.elasticsearch.action.index.IndexRequestBuilder
 import scala.annotation.tailrec
+import com.fasterxml.jackson.annotation.JsonIgnore
 
 /**
  * Suggest.io
@@ -93,6 +94,9 @@ object EsModel extends MacroLogsImpl {
   val PRIO_ESFN         = "prio"
   val PHONE_ESFN        = "phone"
   val LOGO_IMG_ID       = "logoImgId"
+  /** Настройки. Это под-объект, чьё содержимое никогда не анализируется никем. */
+  val SETTINGS_ESFN     = "settings"
+
 
   def companyIdParser = stringParser
   def martIdParser = stringParser
@@ -366,13 +370,17 @@ trait EsModelStaticT[T <: EsModelT[T]] extends EsModelMinimalStaticT[T] {
 /** Шаблон для динамических частей ES-моделей.
  * В минимальной редакции механизм десериализации полностью абстрактен. */
 trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
-  def companion: EsModelMinimalStaticT[E]
 
-  def toJson: XContentBuilder
+  @JsonIgnore def companion: EsModelMinimalStaticT[E]
+
+  @JsonIgnore def esTypeName = companion.ES_TYPE_NAME
+  @JsonIgnore def esIndexName = ES_INDEX_NAME
+
+  @JsonIgnore def toJson: XContentBuilder
 
   def id: Option[String]
 
-  def idOrNull = {
+  @JsonIgnore def idOrNull = {
     if (id.isDefined)
       id.get
     else
@@ -385,7 +393,7 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
    */
   def save(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
     val _idOrNull = idOrNull
-    val irb = client.prepareIndex(ES_INDEX_NAME, companion.ES_TYPE_NAME, _idOrNull)
+    val irb = client.prepareIndex(esIndexName, esTypeName, _idOrNull)
       .setSource(toJson)
     saveBuilder(irb)
     val rkOpt = companion.getRoutingKey(_idOrNull)
