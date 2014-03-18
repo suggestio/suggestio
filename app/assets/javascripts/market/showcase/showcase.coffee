@@ -176,6 +176,19 @@ siomart =
     event.preventDefault()
     return false
 
+  ####################################
+  ## Инициировать слайдеры для офферов
+  ####################################
+  initialize_offers : () ->
+    _i = 0
+    _as = this.utils.ge('smOffersController').getElementsByTagName 'a'
+
+    for _a in _as
+      _a.setAttribute 'data-index', _i
+      this.utils.add_single_listener _a, 'click', () ->
+        alert this.getAttribute 'data-index'
+      _i++
+
   #############################################
   ## Забиндить события на навигационные кнопари
   #############################################
@@ -191,16 +204,7 @@ siomart =
     this.utils.add_single_listener this.utils.ge('smCategoriesButton'), 'click'
 
     ## Контроллеры слайдов с офферами
-    _i = 0
-    _as = this.utils.ge('smOffersController').getElementsByTagName 'a'
-
-    for _a in _as
-      _a.setAttribute 'data-index', _i
-      this.utils.add_single_listener _a, 'click', () ->
-        alert this.getAttribute 'data-index'
-
-      _i++
-
+    this.initialize_offers()
 
   init : () ->
     this.utils.set_window_size()

@@ -1,7 +1,7 @@
 @import 'fonts.styl'
 
 spriteurl = url('/assets/images/sio-market-sprite.png')
-spritesize = 150px 75px
+spritesize = 150px 100px
 
 border-radius( param )
   -webkit-border-radius : param
@@ -72,7 +72,7 @@ border-radius( param )
     text-align: center
 
   /*******************************************/
-  /* Кнопочки-контроллеры слайдов в офферами */
+  /* Кнопочки-контроллеры слайдов с офферами */
   /*******************************************/
   .sm-offers-controller
     position: absolute
@@ -180,11 +180,23 @@ border-radius( param )
     height: 100%
     background: rgba(0,0,0,0.8)
     z-index: 1001
-    padding: 50px 20px
     color: #fff
     font-size: 30px
-    font-family: 'pfdintextcomppro-medium-webfont'
+    font-family: 'futurfutc-webfont'
 
+    .od-inner
+      padding: 84px 40px
+
+    .old-price
+      font-size: 48px
+    .new-price
+      font-size: 72px
+
+    .offer-location
+      font-size: 15px
+      background: spriteurl no-repeat left -27px
+      background-size: spritesize
+      padding-left: 39px
 
   .sm-screen
     overflow: hidden
