@@ -4,6 +4,12 @@
 @import ctx._
 @import AdShowLevels._
 
+@import ctx._
+
+@helper.javascriptRouter("jsRoutes")(
+  routes.javascript.MarketAd.updateShowLevelSubmit
+)
+
 @* Это сообщение для отладки. Удалить при первой необходимости. *@
 @if(ads.isEmpty) {
   Нет рекламных карточек.
@@ -42,13 +48,13 @@
 
     <div class="controls">
       <label>
-        <input type="checkbox" data-level="@LVL_MART_SHOPS"/>Выводить в общем каталоге
+        <input class="one-checkbox" type="checkbox" data-level="@LVL_MART_SHOPS" data-adid="@ad.id.get" data-name="lvl-mart-shops"/>Выводить в общем каталоге
       </label>
       <label>
-        <input type="checkbox" data-level="@LVL_SHOP"/>Выводить в моём магазине
+        <input type="checkbox" data-level="@LVL_SHOP" data-adid="@ad.id.get" />Выводить в моём магазине
       </label>
       <label class="inactive">
-        <input type="checkbox" data-level="@LVL_MART_SHOWCASE" disabled="disabled"/>Размещение на первом экране
+        <input type="checkbox" data-level="@LVL_MART_SHOWCASE" data-adid="@ad.id.get" disabled="disabled" />Размещение на первом экране
       </label>
     </div>
 

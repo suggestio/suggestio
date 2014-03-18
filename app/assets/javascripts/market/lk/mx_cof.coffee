@@ -38,15 +38,19 @@ $(document).on 'click', '.block .tab', ->
     $wrap.find('.tab-content').eq(index).show()
     $('#ad-mode').val($this.attr('data-mode'))
 
-$(document).on 'click', '.create-ad .one-checkbox', ->
+$(document).on 'click', '.one-checkbox', ->
   $this = $(this)
   dataName = $this.attr('data-name')
   dataFor = $this.attr('data-for')
   value = $this.attr('data-value')
 
-  $('.create-ad .one-checkbox[data-name = "'+dataName+'"]').filter(':checked').not(this).removeAttr('checked')
-  this.checked = 'checked'
-  $('#'+dataFor).val(value)
+
+  if(this.checked)
+    $('.one-checkbox[data-name = "'+dataName+'"]').filter(':checked').removeAttr('checked')
+    this.checked = true
+    $('#'+dataFor).val(value)
+  else
+    $(this).removeAttr('checked')
 
 $(document).on 'click', '#old-price-status', ->
   $('.create-ad .old-price').toggle()
@@ -205,8 +209,29 @@ CbcaShop =
         console.log(error)
     )
 
+
   init: () ->
 
+    #########################
+    ## Работа с чекбоксами ##
+    #########################
+    $(document).on 'change', '.ads-list .controls input[type = "checkbox"]', ->
+      $this = $(this)
+
+      jsRoutes.controllers.MarketAd.updateShowLevelSubmit($this.attr('data-adid')).ajax(
+        type: 'POST'
+        data:
+          'levelId': $this.attr('data-level')
+          'levelEnabled': this.checked
+        success: (data) ->
+          console.log(data)
+        error: (data) ->
+          console.log(data)
+      )
+
+    ###################################
+    ## Включение/выключение магазина ##
+    ###################################
     $(document).on 'click', '#shop-list .enable-but', ->
       $shop = $(this).closest('.item')
 

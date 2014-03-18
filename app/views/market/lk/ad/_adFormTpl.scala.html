@@ -77,7 +77,7 @@
               <div class="select-file-wrap" id="shopLogoImgInput">
                 @defining(af("shopLogoImgId").value) { shopLogoImgIdOpt =>
                 <div class="preview">
-                  <img class="image-preview" src="@shopLogoImgIdOpt.map { imgId =>@routes.Img.getImg(imgId) }" width="59"/>
+                  <img class="image-preview" src="@shopLogoImgIdOpt.map { imgId =>@routes.Img.getImg(imgId) } @if(shopLogoImgIdOpt.isEmpty) {/assets/images/market/lk/empty-image.gif}" width="59" />
                 </div>
                 <div class="selectbox">
                   <div class="select-file">
@@ -122,7 +122,7 @@
                 @* Данные по картинке загруженной. *@
                 @defining(af("image_key").value) { imgIdOpt =>
                 <input class="image-key" type="hidden" name="image_key" value="@imgIdOpt"/>
-                <img class="image-preview" width="59" height="59" src="@if(imgIdOpt.isDefined) {@routes.Img.getImg(imgIdOpt.get)}" style="@if(imgIdOpt.isEmpty) {display: none}"/>
+                <img class="image-preview" width="59" height="59" src="@if(imgIdOpt.isDefined) {@routes.Img.getImg(imgIdOpt.get)} else {/assets/images/market/lk/empty-image.gif}" />
                 }
               </div>
               <div class="selectbox">
