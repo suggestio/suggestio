@@ -970,8 +970,9 @@ case class IndexMapping(typ:String, staticFields:Seq[Field], properties:Seq[DocF
   }
 }
 
-// TODO Нужно объеденить nested и обычные object, чтобы просто флаг был isNested = (true | false)
-/** Просто object */
+/** Просто object. Хранятся внутри исходного документа.
+  * Имена полей обычного object распрямляются в "object.id", "someObj.someField.someSubfied" и т.д.
+  * Гуглить по elasticsearch is flat. */
 case class FieldObject(
   id          : String,
   properties  : Seq[DocField],
@@ -980,7 +981,7 @@ case class FieldObject(
   def fieldType = DocFieldTypes.`object`
 }
 
-/** Nested-объекты описаны тут. */
+/** Nested-объекты описаны тут. Nested хранятся как отдельные документы. */
 case class FieldNestedObject(
   id          : String,
   properties  : Seq[DocField],

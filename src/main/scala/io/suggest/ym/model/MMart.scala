@@ -30,78 +30,39 @@ object MMart extends EsModelStaticT[MMart] {
 
   val ES_TYPE_NAME = "mart"
 
-  def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
-    IndexMapping(
-      typ = ES_TYPE_NAME,
-      staticFields = Seq(
-        FieldSource(enabled = true),
-        FieldAll(enabled = false, analyzer = FTS_RU_AN)
-      ),
-      properties = Seq(
-        FieldString(
-          id = COMPANY_ID_ESFN,
-          include_in_all = false,
-          index = FieldIndexingVariants.not_analyzed
-        ),
-        FieldString(
-          id = NAME_ESFN,
-          include_in_all = true,
-          index = FieldIndexingVariants.no
-        ),
-        FieldString(
-          id = TOWN_ESFN,
-          include_in_all = true,
-          index = FieldIndexingVariants.no
-        ),
-        FieldString(
-          id = ADDRESS_ESFN,
-          include_in_all = true,
-          index = FieldIndexingVariants.no
-        ),
-        FieldString(
-          id = SITE_URL_ESFN,
-          include_in_all = false,
-          index = FieldIndexingVariants.no
-        ),
-        FieldDate(
-          id = DATE_CREATED_ESFN,
-          include_in_all = false,
-          index = FieldIndexingVariants.no
-        ),
-        FieldString(
-          id = PHONE_ESFN,
-          include_in_all = false,
-          index = FieldIndexingVariants.no
-        ),
-        FieldString(
-          id = PERSON_ID_ESFN,
-          include_in_all = false,
-          index = FieldIndexingVariants.not_analyzed
-        ),
-        FieldString(
-          id = LOGO_IMG_ID,
-          include_in_all = false,
-          index = FieldIndexingVariants.no
-        )
-      )
-    )
-  }
+
+  def generateMappingStaticFields: List[Field] = List(
+    FieldSource(enabled = true),
+    FieldAll(enabled = false, analyzer = FTS_RU_AN)
+  )
+
+  def generateMappingProps: List[DocField] = List(
+    FieldString(COMPANY_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
+    FieldString(NAME_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
+    FieldString(TOWN_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
+    FieldString(ADDRESS_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
+    FieldString(SITE_URL_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
+    FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
+    FieldString(PHONE_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
+    FieldString(PERSON_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
+    FieldString(LOGO_IMG_ID, include_in_all = false, index = FieldIndexingVariants.no)
+  )
 
 
   def applyKeyValue(acc: MMart): PartialFunction[(String, AnyRef), Unit] = {
     case (COMPANY_ID_ESFN, value)     => acc.companyId = companyIdParser(value)
     case (NAME_ESFN, value)           => acc.name = nameParser(value)
     case (ADDRESS_ESFN, value)        => acc.address = addressParser(value)
-    case (SITE_URL_ESFN, value)       => acc.siteUrl = Some(siteUrlParser(value))
+    case (SITE_URL_ESFN, value)       => acc.siteUrl = Option(siteUrlParser(value))
     case (DATE_CREATED_ESFN, value)   => acc.dateCreated = dateCreatedParser(value)
     case (TOWN_ESFN, value)           => acc.town = stringParser(value)
-    case (PHONE_ESFN, value)          => acc.phone = Some(stringParser(value))
+    case (PHONE_ESFN, value)          => acc.phone = Option(stringParser(value))
     case (PERSON_ID_ESFN, value)      => acc.personIds = JacksonWrapper.convert[List[String]](value)
-    case (LOGO_IMG_ID, value)         => acc.logoImgId = Some(stringParser(value))
+    case (LOGO_IMG_ID, value)         => acc.logoImgId = Option(stringParser(value))
   }
 
   protected def dummy(id: String) = MMart(
-    id = Some(id),
+    id = Option(id),
     companyId = null,
     name = null,
     address = null,

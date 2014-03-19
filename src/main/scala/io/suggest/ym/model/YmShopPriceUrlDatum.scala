@@ -105,35 +105,21 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
 
   val ES_TYPE_NAME = "shopPriceList"
 
-  def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
-    IndexMapping(
-      typ = ES_TYPE_NAME,
-      staticFields = Seq(
-        FieldSource(enabled = true),
-        FieldAll(enabled = false, analyzer = FTS_RU_AN)
-      ),
-      properties = Seq(
-        FieldString(
-          id = SHOP_ID_ESFN,
-          include_in_all = false,
-          index = FieldIndexingVariants.not_analyzed
-        ),
-        FieldString(
-          id = URL_ESFN,
-          include_in_all = false,
-          index = FieldIndexingVariants.no
-        ),
-        FieldString(
-          id = AUTH_INFO_ESFN,
-          include_in_all = false,
-          index = FieldIndexingVariants.no
-        )
-      )
-    )
-  }
+
+  def generateMappingStaticFields: List[Field] = List(
+    FieldSource(enabled = true),
+    FieldAll(enabled = false, analyzer = FTS_RU_AN)
+  )
+
+  def generateMappingProps: List[DocField] = List(
+    FieldString(SHOP_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
+    FieldString(URL_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
+    FieldString(AUTH_INFO_ESFN, include_in_all = false, index = FieldIndexingVariants.no)
+  )
+
 
   protected def dummy(id: String) = MShopPriceList(
-    id = Some(id),
+    id = Option(id),
     shopId = null,
     url = null,
     authInfo = None

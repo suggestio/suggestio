@@ -10,9 +10,11 @@ import MShop.ShopId_t, MMart.MartId_t
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
-import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.event.{AdSavedEvent, SioNotifierStaticClientI}
 import scala.collection.JavaConversions._
 import scala.util.{Failure, Success}
+import io.suggest.model.inx2.MMartInx
+import org.elasticsearch.action.search.SearchResponse
 
 /**
  * Suggest.io
@@ -51,9 +53,9 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
   val DISCOUNT_ESFN     = "discount"
   val DISCOUNT_TPL_ESFN = "discoTpl"
 
-  protected def dummy(id: String) = {
+  def dummy(id: String) = {
     MMartAd(
-      id = Some(id),
+      id = Option(id),
       offers = Nil,
       picture = null,
       martId = null,
@@ -80,12 +82,12 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
 
   def applyKeyValue(acc: MMartAd): PartialFunction[(String, AnyRef), Unit] = {
     case (MART_ID_ESFN, value)      => acc.martId = martIdParser(value)
-    case (SHOP_ID_ESFN, value)      => acc.shopId = Some(shopIdParser(value))
+    case (SHOP_ID_ESFN, value)      => acc.shopId = Option(shopIdParser(value))
     case (COMPANY_ID_ESFN, value)   => acc.companyId = companyIdParser(value)
     case (PICTURE_ESFN, value)      => acc.picture = stringParser(value)
-    case (PRIO_ESFN, value)         => acc.prio = Some(intParser(value))
-    case ("userCatId", value)       => acc.userCatId = Some(stringParser(value))    // TODO Удалить после 2014.apr.01
-    case (USER_CAT_ID_ESFN, value)  => acc.userCatId = Some(stringParser(value))
+    case (PRIO_ESFN, value)         => acc.prio = Option(intParser(value))
+    case ("userCatId", value)       => acc.userCatId = Option(stringParser(value))    // TODO Удалить после 2014.apr.01
+    case (USER_CAT_ID_ESFN, value)  => acc.userCatId = Option(stringParser(value))
     case (OFFER_ESFN, value: java.util.ArrayList[_]) =>
       acc.offers = value.toList.map {
         case jsObject: java.util.HashMap[_, _] =>
@@ -95,28 +97,19 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
             JacksonWrapper.convert[MMartAdDiscount](jsObject)
           else ???
       }
-    case (PANEL_ESFN, value)        => acc.panel = Some(JacksonWrapper.convert[MMartAdPanelSettings](value))
+    case (PANEL_ESFN, value)        => acc.panel = Option(JacksonWrapper.convert[MMartAdPanelSettings](value))
     case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = JacksonWrapper.convert[MMartAdTextAlign](value)
     case (SHOW_LEVELS_ESFN, sls: java.lang.Iterable[_]) =>
       acc.showLevels = AdShowLevels.deserializeLevelsFrom(sls)
   }
 
-
-  def generateMapping: XContentBuilder = generateMappingFor(ES_TYPE_NAME)
-  def generateMappingFor(typeName: String): XContentBuilder = jsonGenerator { implicit b =>
-    // Собираем маппинг индекса.
-    IndexMapping(
-      typ = typeName,
-      staticFields = Seq(
-        FieldAll(enabled = true, analyzer = FTS_RU_AN),
-        FieldSource(enabled = true)
-      ),
-      properties = generateMappingProps
-    )
-  }
+  def generateMappingStaticFields = List(
+    FieldAll(enabled = true, analyzer = FTS_RU_AN),
+    FieldSource(enabled = true)
+  )
 
   /** Генератор пропертисов для маппигов индексов этой модели. */
-  def generateMappingProps: Seq[DocField] = {
+  def generateMappingProps: List[DocField] = {
     val fontField = FieldObject(FONT_ESFN, enabled = false, properties = Nil)
     def stringValueField(boost: Float = 1.0F) = FieldString(
       VALUE_ESFN,
@@ -141,7 +134,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       FieldObject(DISCOUNT_TPL_ESFN, enabled = false, properties = Nil),
       FieldObject(TEXT2_ESFN, properties = Seq(stringValueField(0.9F), fontField))
     ))
-    Seq(
+    List(
       FieldString(COMPANY_ID_ESFN,  index = FieldIndexingVariants.no,  include_in_all = false),
       FieldString(MART_ID_ESFN, index = FieldIndexingVariants.not_analyzed,  include_in_all = false),
       FieldString(SHOP_ID_ESFN, index = FieldIndexingVariants.not_analyzed,  include_in_all = false),
@@ -239,9 +232,8 @@ case class MMartAd(
   var prio        : Option[Int] = None,
   var showLevels  : Set[AdShowLevel] = Set.empty,
   var userCatId   : Option[String] = None,
-  var userCatStr  : Option[String] = None,
   var id          : Option[String] = None
-) extends EsModelT[MMartAd] {
+) extends MMartAdT[MMartAd] {
   def companion = MMartAd
 
   def writeJsonFields(acc: XContentBuilder) {
@@ -273,18 +265,65 @@ case class MMartAd(
     acc.rawField(TEXT_ALIGN_ESFN, JacksonWrapper.serialize(textAlign).getBytes())
   }
 
+
+  /** Перед сохранением можно проверять состояние экземпляра. */
+  override def isFieldsValid: Boolean = {
+    super.isFieldsValid &&
+      picture != null && !offers.isEmpty && shopId != null && companyId != null && martId != null
+  }
+
   /**
-   * Сохранить экземпляр в хранилище ES, проверив важные поля.
+   * Сохранить экземпляр в хранилище ES и сгенерить уведомление, если всё ок.
    * @return Фьючерс с новым/текущим id
    */
   override def save(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
-    if (picture == null || offers.isEmpty || shopId == null || companyId == null || martId == null) {
-      throw new IllegalStateException("Some or all important fields have invalid values: " + this)
-    } else {
-      super.save
+    val resultFut = super.save
+    resultFut onSuccess { case adId =>
+      this.id = Option(adId)
+      sn publish AdSavedEvent(this)
     }
+    resultFut
   }
 }
+
+/** Интерфейс экземпляра модели для возможности создания классов-врапперов. */
+trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
+  def martId      : MartId_t
+  def offers      : List[MMartAdOfferT]
+  def picture     : String
+  def textAlign   : MMartAdTextAlign
+  def shopId      : Option[ShopId_t]
+  def companyId   : MCompany.CompanyId_t
+  def panel       : Option[MMartAdPanelSettings]
+  def prio        : Option[Int]
+  def showLevels  : Set[AdShowLevel]
+  def userCatId   : Option[String]
+}
+
+
+/** Враппер для моделей [[MMartAdT]]. Позволяет легко и быстро написать wrap-модель над уже готовым
+  * экземпляром [[MMartAdT]]. Полезно на экспорт-моделях, которые занимаются сохранением расширенных экземпляров
+  * [[MMartAdT]] в другие ES-индексы. */
+trait MMartAdWrapperT[T <: MMartAdT[T]] extends MMartAdT[T] {
+  def mmartAd: MMartAdT[T]
+
+  def userCatId = mmartAd.userCatId
+  def showLevels = mmartAd.showLevels
+  def prio = mmartAd.prio
+  def panel = mmartAd.panel
+  def companyId = mmartAd.companyId
+  def shopId = mmartAd.shopId
+  def textAlign = mmartAd.textAlign
+  def picture = mmartAd.picture
+  def offers = mmartAd.offers
+  def martId = mmartAd.martId
+  def id = mmartAd.id
+
+  def writeJsonFields(acc: XContentBuilder) = mmartAd.writeJsonFields(acc)
+  def companion: EsModelMinimalStaticT[T] = mmartAd.companion
+  override def isFieldsValid: Boolean = super.isFieldsValid && mmartAd.isFieldsValid
+}
+
 
 trait MMartAdOfferT extends Serializable {
   def isProduct: Boolean
@@ -444,6 +483,124 @@ object AdShowLevels extends Enumeration with MacroLogsImpl {
             acc
         }
       }.toSet
+  }
+
+}
+
+
+/** MMartAdIndexed - экспорт-модель для MMartAd. Нужна для сохранения MMartAd при индексации. */
+object MMartAdIndexed extends MacroLogsImpl {
+  import LOGGER._
+
+  private def dummy(id: String, inx2: MMartInx) = MMartAdIndexed(MMartAd.dummy(id), null, inx2)
+
+  /**
+   * Десериализация одного элементам модели.
+   * @param id id документа.
+   * @param m Карта, распарсенное json-тело документа.
+   * @return Экземпляр модели.
+   */
+  private def deserializeOne(id: String, m: collection.Map[String, AnyRef], inx2: MMartInx): MMartAdIndexed = {
+    val acc = dummy(id, inx2)
+    m foreach applyKeyValue(acc)
+    acc
+  }
+
+  def applyKeyValue(acc: MMartAdIndexed): PartialFunction[(String, AnyRef), Unit] = {
+    // Собираем partial-функцию, которая будет всё делать как надо. Чтобы типы аккамуляторов и врапперов были совместимы, тут небольшой велосипед:
+    val fm = MMartAd.applyKeyValue(acc.mmartAd)
+    val pf: PartialFunction[(String, AnyRef), Unit] = {
+      case (USER_CAT_STR_ESFN, value) => acc.userCatStr = Option(stringParser(value))
+      case other => fm(other)
+    }
+    pf
+  }
+
+  /**
+   * Выбрать ряд из таблицы по id.
+   * @param id Ключ магазина.
+   * @return Экземпляр сабжа, если такой существует.
+   */
+  def getById(id: String, inx2: MMartInx)(implicit ec:ExecutionContext, client: Client): Future[Option[MMartAdIndexed]] = {
+    val maybeRk = getRoutingKey(id)
+    val req = client.prepareGet(inx2.targetEsInxName, inx2.esType, id)
+    if (maybeRk.isDefined)
+      req.setRouting(maybeRk.get)
+    req.execute()
+      .map { getResp =>
+        if (getResp.isExists) {
+          val result = deserializeOne(getResp.getId, getResp.getSourceAsMap, inx2)
+          Some(result)
+        } else {
+          None
+        }
+      }
+  }
+
+  /** Список результатов с source внутри перегнать в распарсенный список. */
+  protected def searchResp2list(searchResp: SearchResponse, inx2: MMartInx): Seq[MMartAdIndexed] = {
+    searchResp.getHits.getHits.toSeq.map { hit =>
+      deserializeOne(hit.getId, hit.getSource, inx2)
+    }
+  }
+
+
+  /**
+   * Выдать все магазины. Метод подходит только для административных задач.
+   * @return Список магазинов в порядке их создания.
+   */
+  def getAll(inx2: MMartInx)(implicit ec:ExecutionContext, client: Client): Future[Seq[MMartAdIndexed]] = {
+    client.prepareSearch(inx2.targetEsInxName)
+      .setTypes(inx2.esType)
+      .setQuery(QueryBuilders.matchAllQuery())
+      .execute()
+      .map { searchResp2list(_, inx2) }
+  }
+
+
+  /**
+   * Удалить документ по id.
+   * @param id id документа.
+   * @return true, если документ найден и удалён. Если не найден, то false
+   */
+  def deleteById(id: String, inx2: MMartInx)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    client.prepareDelete(inx2.targetEsInxName, inx2.esType, id)
+      .execute()
+      .map { _.isFound }
+  }
+
+}
+
+/**
+ * Экземпляр хорошо индексируемого [[MMartAd]]. Обладает полями, содержащими данные об индексе и индексируемом
+ * названии категории.
+ * @param mmartAd Исходный [[MMartAd]].
+ * @param userCatStr Строка, собранная из названий индексируемых категорий.
+ * @param inx2 Данные об используемом индексе. НЕ сохраняются в БД.
+ */
+case class MMartAdIndexed(
+  mmartAd: MMartAd,
+  var userCatStr: Option[String],
+  inx2: MMartInx
+) extends MMartAdWrapperT[MMartAd] {
+
+  override def isFieldsValid: Boolean = super.isFieldsValid && inx2 != null
+
+  override def writeJsonFields(acc: XContentBuilder) {
+    super.writeJsonFields(acc)
+    if (userCatStr.isDefined)
+      acc.field(USER_CAT_STR_ESFN, userCatStr.get)
+  }
+
+  override def esIndexName: String = inx2.targetEsInxName
+  override def esTypeName: String  = inx2.esTypeName
+
+  /**
+   * Удалить текущий ряд из таблицы. Если ключ не выставлен, то сразу будет экзепшен.
+   * @return true - всё ок, false - документ не найден.
+   */
+  override def delete(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    MMartAdIndexed.deleteById(id.get, inx2)
   }
 
 }

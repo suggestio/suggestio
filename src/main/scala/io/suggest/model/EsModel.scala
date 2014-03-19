@@ -1,8 +1,8 @@
 package io.suggest.model
 
 import scala.concurrent.{ExecutionContext, Future}
-import io.suggest.util.SioEsUtil.laFuture2sFuture
-import io.suggest.util.{MacroLogsImpl, SioEsUtil}
+import io.suggest.util.MacroLogsImpl
+import io.suggest.util.SioEsUtil, SioEsUtil._
 import org.joda.time.{ReadableInstant, DateTime}
 import org.elasticsearch.action.search.SearchResponse
 import scala.collection.JavaConversions._
@@ -30,7 +30,7 @@ object EsModel extends MacroLogsImpl {
 
   /** Список ES-моделей. Нужен для удобства массовых maintance-операций. Расширяется по мере роста числа ES-моделей. */
   def ES_MODELS: Seq[EsModelMinimalStaticT[_]] = {
-    Seq(MMart, MShop, MShopPriceList, MShopPromoOffer, MYmCategory)
+    Seq(MMart, MShop, MShopPriceList, MShopPromoOffer, MYmCategory, MMartAd)
   }
 
   implicit def listCmpOrdering[T <: Comparable[T]] = new ListCmpOrdering[T]
@@ -237,7 +237,19 @@ import EsModel._
 trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
   val ES_TYPE_NAME: String
 
-  def generateMapping: XContentBuilder
+  def generateMapping: XContentBuilder = generateMappingFor(ES_TYPE_NAME)
+  def generateMappingFor(typeName: String): XContentBuilder = jsonGenerator { implicit b =>
+    // Собираем маппинг индекса.
+    IndexMapping(
+      typ = typeName,
+      staticFields = generateMappingStaticFields,
+      properties = generateMappingProps
+    )
+  }
+
+  def generateMappingStaticFields: List[Field]
+  def generateMappingProps: List[DocField]
+
 
   /** Отправить маппинг в elasticsearch. */
   def putMapping(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
@@ -387,20 +399,27 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
       null
   }
 
+  /** Перед сохранением можно проверять состояние экземпляра. */
+  def isFieldsValid: Boolean = true
+
   /**
    * Сохранить экземпляр в хранилище ES.
    * @return Фьючерс с новым/текущим id
    */
   def save(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
-    val _idOrNull = idOrNull
-    val irb = client.prepareIndex(esIndexName, esTypeName, _idOrNull)
-      .setSource(toJson)
-    saveBuilder(irb)
-    val rkOpt = companion.getRoutingKey(_idOrNull)
-    if (rkOpt.isDefined)
-      irb.setRouting(rkOpt.get)
-    irb.execute()
-      .map { _.getId }
+    if (isFieldsValid) {
+      val _idOrNull = idOrNull
+      val irb = client.prepareIndex(esIndexName, esTypeName, _idOrNull)
+        .setSource(toJson)
+      saveBuilder(irb)
+      val rkOpt = companion.getRoutingKey(_idOrNull)
+      if (rkOpt.isDefined)
+        irb.setRouting(rkOpt.get)
+      irb.execute()
+        .map { _.getId }
+    } else {
+      throw new IllegalStateException("Some or all important fields have invalid values: " + this)
+    }
   }
 
   /** Дополнительные параметры сохранения (parent, ttl, etc) можно выставить через эту функцию. */

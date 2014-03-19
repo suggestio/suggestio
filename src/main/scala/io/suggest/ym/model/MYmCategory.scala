@@ -98,35 +98,25 @@ object MYmCategory extends EsModelStaticT[MYmCategory] with MacroLogsImpl {
   }
 
 
-  protected def dummy(id: String) = MYmCategory(id = Some(id), name = null, parentId = None)
+  protected def dummy(id: String) = MYmCategory(id = Option(id), name = null, parentId = None)
 
   def applyKeyValue(acc: MYmCategory): PartialFunction[(String, AnyRef), Unit] = {
     case (NAME_ESFN, value)         => acc.name = nameParser(value)
-    case (PARENT_ID_ESFN, value)    => acc.parentId = Some(stringParser(value))
+    case (PARENT_ID_ESFN, value)    => acc.parentId = Option(stringParser(value))
   }
 
-  def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
-    IndexMapping(
-      typ = ES_TYPE_NAME,
-      staticFields = Seq(
-        FieldAll(enabled = false, analyzer = FTS_RU_AN),
-        FieldSource(enabled = true),
-        FieldParent(ES_TYPE_NAME) // _routing включается автоматом.
-      ),
-      properties = Seq(
-        FieldString(
-          id = NAME_ESFN,
-          index = FieldIndexingVariants.no,
-          include_in_all = true
-        ),
-        FieldString(
-          id = PARENT_ID_ESFN,
-          index = FieldIndexingVariants.no,
-          include_in_all = false
-        )
-      )
-    )
-  }
+
+  def generateMappingStaticFields: List[Field] = List(
+    FieldAll(enabled = false, analyzer = FTS_RU_AN),
+    FieldSource(enabled = true),
+    FieldParent(ES_TYPE_NAME) // _routing включается автоматом.
+  )
+
+  def generateMappingProps: List[DocField] = List(
+    FieldString(NAME_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
+    FieldString(PARENT_ID_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
+  )
+
 
   /** Этой модели требуется выставлять routing для ключа, но ключ всегда один и тот же.
     * @param idOrNull id или null, если id отсутствует.

@@ -22,21 +22,19 @@ object MMartInx extends EsModelStaticT[MMartInx] {
 
   val ES_TYPE_NAME: String = "inxMart"
 
-  protected def dummy(id: String) = MMartInx(martId = null, targetEsInxName = null)
+  protected def dummy(martId: String) = MMartInx(martId = martId, targetEsInxName = null)
 
-  def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
-    IndexMapping(
-      typ = ES_TYPE_NAME,
-      staticFields = Seq(
-        FieldSource(enabled = true),
-        FieldAll(enabled = false)
-      ),
-      properties = Seq(
-        FieldString(MART_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-        FieldString(ES_INX_NAME_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
-      )
-    )
-  }
+
+  def generateMappingStaticFields: List[Field] = List(
+    FieldSource(enabled = true),
+    FieldAll(enabled = false)
+  )
+
+  def generateMappingProps: List[DocField] = List(
+    FieldString(MART_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldString(ES_INX_NAME_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+  )
+
 
   def applyKeyValue(acc: MMartInx): PartialFunction[(String, AnyRef), Unit] = {
     case (MART_ID_ESFN, value)      => acc.martId = martIdParser(value)

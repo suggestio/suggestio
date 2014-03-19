@@ -19,5 +19,5 @@ object YmMartAddedEvent {
 
 
 case class YmMartAddedEvent(martId: MartId_t) extends SioEventT {
-  override def getClassifier: Classifier = YmMartAddedEvent.getClassifier(martId = Some(martId))
+  override def getClassifier: Classifier = YmMartAddedEvent.getClassifier(martId = Option(martId))
 }

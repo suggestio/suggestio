@@ -1,6 +1,6 @@
 package io.suggest.ym.model
 
-import io.suggest.util.SioEsUtil.laFuture2sFuture
+import io.suggest.util.SioEsUtil.{DocField, Field, laFuture2sFuture}
 import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.index.query.QueryBuilders
 import io.suggest.ym.index.YmIndex
@@ -32,7 +32,10 @@ object MShopPromoOffer extends EsModelMinimalStaticT[MShopPromoOffer] with Macro
 
   val ES_TYPE_NAME  = "shopPromoOffers"
 
-  def generateMapping = YmIndex.getIndexMapping(ES_TYPE_NAME)
+  // TODO Надо бы это запилить по-нормальному, отрефакторив YmIndex.
+  override def generateMapping = YmIndex.getIndexMapping(ES_TYPE_NAME)
+  def generateMappingProps: List[DocField] = ???
+  def generateMappingStaticFields: List[Field] = ???
 
   override def deserializeOne(id: String, m: Map[String, AnyRef]): MShopPromoOffer = {
     MShopPromoOffer(

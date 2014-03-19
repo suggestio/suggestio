@@ -40,72 +40,28 @@ object MShop extends EsModelStaticT[MShop] {
   val SETTING_SUP_DISABLE_REASON  = SETTINGS_ESFN + ".sup.disableReason"
   val SETTING_SUP_WITH_LEVELS     = SETTINGS_ESFN + ".sup.withLevels"
 
-  def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
-    IndexMapping(
-      typ = ES_TYPE_NAME,
-      staticFields = Seq(
-        FieldSource(enabled = true),
-        FieldAll(enabled = true, analyzer = FTS_RU_AN)
-      ),
-      properties = Seq(
-        FieldString(
-          id = COMPANY_ID_ESFN,
-          include_in_all = false,
-          index = FieldIndexingVariants.not_analyzed
-        ),
-        FieldString(
-          id = MART_ID_ESFN,
-          include_in_all = false,
-          index = FieldIndexingVariants.not_analyzed
-        ),
-        FieldString(
-          id = NAME_ESFN,
-          include_in_all = true,
-          index = FieldIndexingVariants.no
-        ),
-        FieldString(
-          id = PERSON_ID_ESFN,
-          include_in_all = false,
-          index = FieldIndexingVariants.not_analyzed
-        ),
-        FieldDate(
-          id = DATE_CREATED_ESFN,
-          include_in_all = false,
-          index = FieldIndexingVariants.no
-        ),
-        FieldString(
-          id = DESCRIPTION_ESFN,
-          include_in_all = true,
-          index = FieldIndexingVariants.no
-        ),
-        FieldNumber(
-          id = MART_FLOOR_ESFN,
-          fieldType = DocFieldTypes.integer,
-          include_in_all = true,
-          index = FieldIndexingVariants.no
-        ),
-        FieldNumber(
-          id = MART_SECTION_ESFN,
-          fieldType = DocFieldTypes.integer,
-          include_in_all = true,
-          index = FieldIndexingVariants.no
-        ),
-        FieldString(
-          id = LOGO_IMG_ID,
-          include_in_all = false,
-          index = FieldIndexingVariants.no
-        ),
-        FieldNestedObject(
-          id = SETTINGS_ESFN,
-          enabled = false,
-          properties = Nil
-        )
-      )
-    )
-  }
+
+  def generateMappingStaticFields: List[Field] = List(
+    FieldSource(enabled = true),
+    FieldAll(enabled = true, analyzer = FTS_RU_AN)
+  )
+
+  def generateMappingProps: List[DocField] = List(
+    FieldString(COMPANY_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
+    FieldString(MART_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
+    FieldString(NAME_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
+    FieldString(PERSON_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
+    FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
+    FieldString(DESCRIPTION_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
+    FieldNumber(MART_FLOOR_ESFN, fieldType = DocFieldTypes.integer, include_in_all = true, index = FieldIndexingVariants.no),
+    FieldNumber(MART_SECTION_ESFN, fieldType = DocFieldTypes.integer, include_in_all = true, index = FieldIndexingVariants.no),
+    FieldString(LOGO_IMG_ID, include_in_all = false, index = FieldIndexingVariants.no),
+    FieldObject(id = SETTINGS_ESFN, enabled = false, properties = Nil)
+  )
+
 
   protected def dummy(id: String) = MShop(
-    id = Some(id),
+    id = Option(id),
     martId = null,
     companyId = null,
     name = null,
@@ -115,19 +71,19 @@ object MShop extends EsModelStaticT[MShop] {
 
   def applyKeyValue(acc: MShop): PartialFunction[(String, AnyRef), Unit] = {
     case (COMPANY_ID_ESFN, value)     => acc.companyId   = companyIdParser(value)
-    case (MART_ID_ESFN, value)        => acc.martId      = Some(martIdParser(value))
+    case (MART_ID_ESFN, value)        => acc.martId      = Option(martIdParser(value))
     case (NAME_ESFN, value)           => acc.name        = nameParser(value)
     case (DATE_CREATED_ESFN, value)   => acc.dateCreated = dateCreatedParser(value)
-    case (DESCRIPTION_ESFN, value)    => acc.description = Some(descriptionParser(value))
-    case (MART_FLOOR_ESFN, value)     => acc.martFloor   = Some(martFloorParser(value))
-    case (MART_SECTION_ESFN, value)   => acc.martSection = Some(martSectionParser(value))
+    case (DESCRIPTION_ESFN, value)    => acc.description = Option(descriptionParser(value))
+    case (MART_FLOOR_ESFN, value)     => acc.martFloor   = Option(martFloorParser(value))
+    case (MART_SECTION_ESFN, value)   => acc.martSection = Option(martSectionParser(value))
     case (PERSON_ID_ESFN, value)      => acc.personIds   = JacksonWrapper.convert[List[String]](value)
-    case (LOGO_IMG_ID, value)         => acc.logoImgId   = Some(stringParser(value))
+    case (LOGO_IMG_ID, value)         => acc.logoImgId   = Option(stringParser(value))
     // Парсеры конкретных сеттингов.
     case (SETTING_SUP_IS_ENABLED, v)  =>
       acc.settings.supIsEnabled = booleanParser(v)
     case (SETTING_SUP_DISABLE_REASON, v) =>
-      acc.settings.supDisableReason = Some(stringParser(v))
+      acc.settings.supDisableReason = Option(stringParser(v))
     case (SETTING_SUP_WITH_LEVELS, v: java.lang.Iterable[_]) =>
       acc.settings.supWithLevels = AdShowLevels.deserializeLevelsFrom(v)
   }

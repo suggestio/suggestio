@@ -25,27 +25,16 @@ object MCompany extends EsModelStaticT[MCompany] {
 
   val ES_TYPE_NAME: String = "company"
 
-  def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
-    new IndexMapping(
-      typ = ES_TYPE_NAME,
-      staticFields = Seq(
-        FieldSource(enabled = true),
-        FieldAll(enabled = false, analyzer = FTS_RU_AN)
-      ),
-      properties = Seq(
-        FieldString(
-          id = NAME_ESFN,
-          include_in_all = true,
-          index = FieldIndexingVariants.no
-        ),
-        FieldDate(
-          id = DATE_CREATED_ESFN,
-          include_in_all = false,
-          index = FieldIndexingVariants.no
-        )
-      )
-    )
-  }
+
+  def generateMappingStaticFields: List[Field] = List(
+    FieldSource(enabled = true),
+    FieldAll(enabled = false, analyzer = FTS_RU_AN)
+  )
+
+  def generateMappingProps: List[DocField] = List(
+    FieldString(NAME_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
+    FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no)
+  )
 
 
   def applyKeyValue(acc: MCompany): PartialFunction[(String, AnyRef), Unit] = {
@@ -53,7 +42,7 @@ object MCompany extends EsModelStaticT[MCompany] {
     case (DATE_CREATED_ESFN, value)   => acc.dateCreated = dateCreatedParser(value)
   }
 
-  protected def dummy(id: String) = MCompany(id = Some(id), name = null)
+  protected def dummy(id: String) = MCompany(id = Option(id), name = null)
 
   /**
    * Удалить документ по id.
