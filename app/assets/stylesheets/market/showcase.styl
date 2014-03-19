@@ -160,10 +160,20 @@ border-radius( param )
     height: 100%
 
   .sm-offer.animated
-    -webkit-transition: all 1s linear
-    -moz-transition: all 1s linear
-    -o-transition: all 1s linear
-    transition: all 1s linear
+    -webkit-transition: all 0.5s ease
+    -moz-transition: all 0.5s ease
+    -o-transition: all 0.5s ease
+    transition: all 0.5s ease
+
+  .sm-offer.rtl-in
+    -webkit-transform: translate3d(100%,0,0)
+  .sm-offer.rtl-out
+    -webkit-transform: translate3d(-100%,0,0)
+
+  .sm-offer.ltr-in
+    -webkit-transform: translate3d(-100%,0,0)
+  .sm-offer.ltr-out
+    -webkit-transform: translate3d(100%,0,0)
 
   .sm-hidden-offer
     left: -100%
