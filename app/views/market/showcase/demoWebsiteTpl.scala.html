@@ -1,4 +1,4 @@
-@()(implicit ctx: util.Context)
+@(mmart: MMart)(implicit ctx: util.Context)
 
 @* Временный шаблон. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
 @import ctx._
@@ -42,7 +42,9 @@
 
 <body>
 
-<iframe src="http://www.stockmann.ru/"></iframe>
+@mmart.siteUrl.map { siteUrl =>
+  <iframe src="@siteUrl"></iframe>
+}
 
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.Market.martIndex

@@ -38,8 +38,11 @@ object Market extends SioController with PlayMacroLogsImpl {
   }
 
   /** Временный экшн, рендерит демо страничку предполагаемого сайта ТЦ, на которой вызывается Sio.Market */
-  def demoWebsite = MaybeAuth { implicit request =>
-    Ok(demoWebsiteTpl())
+  def demoWebSite(martId: MartId_t) = MaybeAuth.async { implicit request =>
+    MMart.getById(martId) map {
+      case Some(mmart) => Ok(demoWebsiteTpl(mmart))
+      case None => NotFound("martNotFound")
+    }
   }
 
 }
