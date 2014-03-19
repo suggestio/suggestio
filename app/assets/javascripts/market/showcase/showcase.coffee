@@ -237,13 +237,42 @@ siomart =
     ## Открыть слайд с оффером по указанному индексу
     show_offer : ( index ) ->
 
-      siomart.utils.addClass 'smOffer' + this.active_offer, 'sm-hidden-offer'
+      if index == this.active_offer
+        return false
+
+      if index > this.active_offer
+        direction = 'rtl'
+      else
+        direction = 'ltr'
+
+      # установить входящий слайд в нужную позицию
       siomart.utils.removeClass 'smOffer' + index, 'sm-hidden-offer'
+      siomart.utils.addClass 'smOffer' + index, direction + '-in'
 
-      siomart.utils.removeClass 'smOfferButton' + this.active_offer, 'active'
-      siomart.utils.addClass 'smOfferButton' + index, 'active'
+      # включить анимацию для слайдов и перегнать на новые места базирования
+      cb = () ->
+        siomart.utils.addClass 'smOffer' + index, 'animated'
+        siomart.utils.removeClass 'smOffer' + index, direction + '-in'
 
-      this.active_offer = index
+        siomart.utils.addClass 'smOffer' + siomart.offers.active_offer, direction + '-out animated'
+
+      setTimeout cb, 1
+
+      cb1 = () ->
+        #Расставить нужные классы для слайдов
+        siomart.utils.removeClass 'smOffer' + siomart.offers.active_offer, 'animated'
+        siomart.utils.removeClass 'smOffer' + siomart.offers.active_offer, direction + '-out'
+        siomart.utils.addClass 'smOffer' + siomart.offers.active_offer, 'sm-hidden-offer'
+
+        siomart.utils.removeClass 'smOffer' + index, 'animated'
+
+        # выделить активную кнопку
+        siomart.utils.removeClass 'smOfferButton' + siomart.offers.active_offer, 'active'
+        siomart.utils.addClass 'smOfferButton' + index, 'active'
+
+        siomart.offers.active_offer = index
+
+      setTimeout cb1, 1000
 
   #############################################
   ## Забиндить события на навигационные кнопари
