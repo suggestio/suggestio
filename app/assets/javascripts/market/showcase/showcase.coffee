@@ -211,6 +211,8 @@ siomart =
   #########
   offers :
 
+    auto_change_delay : 3000
+
     ## Инициализация слайдов и кнопок-контроллов
     initialize : () ->
 
@@ -233,6 +235,18 @@ siomart =
           event.preventDefault()
           siomart.offers.show_offer this.getAttribute 'data-index'
         _i++
+
+      this.total_offers = _i
+      this.next_offer()
+
+    next_offer : () ->
+      cb = () ->
+        next_offer_index = if siomart.offers.active_offer == siomart.offers.total_offers - 1 then 0 else siomart.offers.active_offer + 1
+
+        siomart.offers.show_offer next_offer_index
+        siomart.offers.next_offer()
+
+      setTimeout cb, this.auto_change_delay
 
     ## Открыть слайд с оффером по указанному индексу
     show_offer : ( index ) ->
@@ -272,7 +286,7 @@ siomart =
 
         siomart.offers.active_offer = index
 
-      setTimeout cb1, 1000
+      setTimeout cb1, 600
 
   #############################################
   ## Забиндить события на навигационные кнопари
