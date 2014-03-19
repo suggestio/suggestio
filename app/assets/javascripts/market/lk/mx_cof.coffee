@@ -1,6 +1,10 @@
 $(document).ready ->
   if(document.getElementById('old-price-status') != null)
-    document.getElementById('old-price-status').checked = false
+    if($('#ad_offer_oldPrice_value').val())
+      $('#old-price-status').trigger('click')
+      document.getElementById('old-price-status').checked = true
+    else
+      document.getElementById('old-price-status').checked = false
 
   cbca.emptyPhoto = '/assets/images/market/lk/empty-image.gif'
 
