@@ -52,6 +52,32 @@ siomart =
       else
         return false
 
+    ############################
+    ## Удалить класс для объекта
+    ############################
+    removeClass : (element, value) ->
+      element = this.ge element
+
+      if element==null
+        return 0
+
+      if !element.className
+        element.className = ''
+      else
+        newClassName = element.className.replace(value,'').replace(/\s{2,}/g, ' ')
+        element.className = newClassName
+
+    ############################
+    ## Удалить класс для объекта
+    ############################
+    addClass : (element, value) ->
+      element = this.ge element
+
+      if element==null
+        return 0
+
+      element.className += ' ' + value
+
     ############################################
     ## Прицепить собтие(-я) к DOM элементу(-там)
     ############################################
@@ -187,6 +213,9 @@ siomart =
 
     ## Инициализация слайдов и кнопок-контроллов
     initialize : () ->
+
+      this.active_offer = 0
+
       _i = 0
       _offers0 = siomart.utils.ge('smOffers').getElementsByTagName 'div'
       for _o in _offers0
@@ -199,6 +228,7 @@ siomart =
       _as = siomart.utils.ge('smOffersController').getElementsByTagName 'a'
       for _a in _as
         _a.setAttribute 'data-index', _i
+        _a.id = 'smOfferButton' + _i
         siomart.utils.add_single_listener _a, 'click', ( event ) ->
           event.preventDefault()
           siomart.offers.show_offer this.getAttribute 'data-index'
@@ -206,7 +236,14 @@ siomart =
 
     ## Открыть слайд с оффером по указанному индексу
     show_offer : ( index ) ->
-      alert "show offer" + index
+
+      siomart.utils.addClass 'smOffer' + this.active_offer, 'sm-hidden-offer'
+      siomart.utils.removeClass 'smOffer' + index, 'sm-hidden-offer'
+
+      siomart.utils.removeClass 'smOfferButton' + this.active_offer, 'active'
+      siomart.utils.addClass 'smOfferButton' + index, 'active'
+
+      this.active_offer = index
 
   #############################################
   ## Забиндить события на навигационные кнопари
