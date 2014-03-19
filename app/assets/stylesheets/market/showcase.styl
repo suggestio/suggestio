@@ -5,6 +5,21 @@ spritesize = 150px 100px
 
 border-radius( param )
   -webkit-border-radius : param
+  -moz-border-radius : param
+  -o-border-radius : param
+  border-radius : param
+
+transform( param )
+  -webkit-transform : param
+  -moz-transform : param
+  -o-transform : param
+  transform : param
+
+transition( param )
+  -webkit-transition: param
+  -moz-transition: param
+  -o-transition: param
+  transition: param
 
 .sio-mart-layout,
 .sio-mart-layout .sm-screen,
@@ -160,10 +175,17 @@ border-radius( param )
     height: 100%
 
   .sm-offer.animated
-    -webkit-transition: all 1s linear
-    -moz-transition: all 1s linear
-    -o-transition: all 1s linear
-    transition: all 1s linear
+    transition( all 0.5s ease )
+
+  .sm-offer.rtl-in
+    transform( translate3d(100%,0,0) )
+  .sm-offer.rtl-out
+    transform( translate3d(-100%,0,0) )
+
+  .sm-offer.ltr-in
+    transform( translate3d(-100%,0,0) )
+  .sm-offer.ltr-out
+    transform( translate3d(100%,0,0) )
 
   .sm-hidden-offer
     left: -100%
@@ -176,7 +198,7 @@ border-radius( param )
     border-top: 1px rgba(255,255,255,0.5) solid
     border-bottom: 1px rgba(0,0,0,0.5) solid
     background: #cf3737
-    opacity: 0.9
+    /*opacity: 0.9*/
     
   .offer-details
     position: absolute

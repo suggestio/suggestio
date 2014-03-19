@@ -17,6 +17,7 @@ import models.AdShowLevels.AdShowLevel
 import TextAlignValues.TextAlignValue
 import MMartCategory.CollectMMCatsAcc_t
 import scala.util.{Try, Failure, Success}
+import io.suggest.event.AdSavedEvent
 
 /**
  * Suggest.io
@@ -114,9 +115,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   {(valueOpt, color) =>
     valueOpt map { MMAdFloatField(_, color) }
   }
-  {_.map {
-    mmaff => (Option(mmaff.value), mmaff.font) }
-  }
+  {_.map { mmaff =>
+    (Option(mmaff.value), mmaff.font)
+  }}
 
 
   // Мапперы для textAlign'ов
@@ -440,8 +441,12 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       case Nil if logoImgIdOpt.isDefined =>
         Future failed new NoSuchElementException(s"Cannot save new logo for shop=${mshop.id.get} . Ignoring...")
       case savedImgIds =>
-        mshop.logoImgId = savedImgIds.headOption
-        mshop.save
+        if (mshop.logoImgId != savedImgIds.headOption) {
+          mshop.logoImgId = savedImgIds.headOption
+          mshop.save
+        } else {
+          Future successful ()
+        }
     }
   }
 
@@ -554,13 +559,17 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
         NotAcceptable("Request body invalid.")
       },
       {case (levelId, isLevelEnabled) =>
-        import request.mad.showLevels
+        import request.mad
+        // Нужно, чтобы настройки отображения также повлияли на выдачу:
         val showLevels1 = if(isLevelEnabled) {
-          showLevels + levelId
+          mad.showLevels + levelId
         } else {
-          showLevels - levelId
+          mad.showLevels - levelId
         }
-        MMartAd.setShowLevels(adId, showLevels1) map { _ =>
+        mad.showLevels = showLevels1
+        val ssFut = mad.saveShowLevels
+        // Вернуть результат
+        ssFut map { _ =>
           Ok("Updated ok.")
         }
       }

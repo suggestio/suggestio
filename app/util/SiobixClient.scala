@@ -164,11 +164,11 @@ sealed class AkkaSiobixClient extends SiobixClientT with PlayMacroLogsImpl with 
     getMainCrawlerSelector ! MartDelete(martId)
   }
 
-  def handleShopAdd(martId: MartId_t, shopId: ShopId_t) {
+  def handleYmShopAdd(martId: MartId_t, shopId: ShopId_t) {
     getMainCrawlerSelector ! ShopAdd(mart_id=martId, shop_id=shopId)
   }
 
-  def handleShopDelete(martId: MartId_t, shopId: ShopId_t) {
+  def handleYmShopDelete(martId: MartId_t, shopId: ShopId_t) {
     getMainCrawlerSelector ! ShopDelete(mart_id=martId, shop_id=shopId)
   }
 
@@ -193,8 +193,8 @@ sealed class AkkaSiobixClient extends SiobixClientT with PlayMacroLogsImpl with 
    */
   override def publish(event: SioNotifier.Event)(implicit ctx: ActorContext) {
     event match {
-      case sae: YmShopAddedEvent      => handleShopAdd(shopId=sae.shopId, martId=sae.martId)
-      case sde: YmShopDeletedEvent    => handleShopDelete(martId=sde.martId, shopId=sde.shopId)
+      case sae: YmShopAddedEvent      => handleYmShopAdd(shopId=sae.shopId, martId=sae.martId)
+      case sde: YmShopDeletedEvent    => handleYmShopDelete(martId=sde.martId, shopId=sde.shopId)
       case YmMartAddedEvent(martId)   => handleMartAdd(martId)
       case YmMartDeletedEvent(martId) => handleMartDelete(martId)
     }

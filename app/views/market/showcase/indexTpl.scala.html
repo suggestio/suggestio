@@ -1,4 +1,6 @@
-@()(implicit ctx:util.Context)
+@(ads: Seq[MMartAdIndexed])(implicit ctx: util.Context)
+
+@* Начальная страница для sio-market. *@
 
 @market.showcase.baseTpl() {
 
@@ -20,8 +22,15 @@
     @* Список офферов, подгружается динамически *@
     <div class="sm-offers" id="smOffers">
       @* Тут выводим офферы списком *@
-      @_single_offer()
-      @_single_offer(isHidden=true)
+      @if(ads.isEmpty) {
+        @* TODO Надо что-то отобразить, когда нет рекламы в ТЦ. *@
+        Нет рекламы
+      } else {
+        @_single_offer(ads.head)
+        @ads.map { ad =>
+          @_single_offer(ad, isHidden=true)
+        }
+      }
     </div>
 
     @* Кнопочки-кружочки для перелистывания слайдов с офферами *@
