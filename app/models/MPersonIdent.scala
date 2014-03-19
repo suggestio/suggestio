@@ -41,38 +41,40 @@ object MPersonIdent {
         "maksim.sharipov@cbca.ru"
       ))
   }
-
+  
+  def generateMappingStaticFields: List[Field] = List(
+    FieldSource(enabled = true),
+    FieldAll(enabled = false, analyzer = FTS_RU_AN),
+    FieldId(path = KEY_ESFN)  // Для надежной защиты от двойных добавлений.
+  )
+  def generateMappingProps: List[DocField] = List(
+    FieldString(
+      id = PERSON_ID_ESFN,
+      index = FieldIndexingVariants.not_analyzed,
+      include_in_all = false
+    ),
+    FieldString(
+      id = KEY_ESFN,
+      index = FieldIndexingVariants.not_analyzed,
+      include_in_all = true
+    ),
+    FieldString(
+      id = VALUE_ESFN,
+      index = FieldIndexingVariants.no,
+      include_in_all = false
+    ),
+    FieldBoolean(
+      id = IS_VERIFIED_ESFN,
+      index = FieldIndexingVariants.no,
+      include_in_all = false
+    )
+  )
 
   def generateMapping(typ: String, withStaticFields: Seq[Field] = Nil): XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
       typ = typ,
-      staticFields = withStaticFields ++ Seq(
-        FieldSource(enabled = true),
-        FieldAll(enabled = false, analyzer = FTS_RU_AN),
-        FieldId(path = KEY_ESFN)  // Для надежной защиты от двойных добавлений.
-      ),
-      properties = Seq(
-        FieldString(
-          id = PERSON_ID_ESFN,
-          index = FieldIndexingVariants.not_analyzed,
-          include_in_all = false
-        ),
-        FieldString(
-          id = KEY_ESFN,
-          index = FieldIndexingVariants.not_analyzed,
-          include_in_all = true
-        ),
-        FieldString(
-          id = VALUE_ESFN,
-          index = FieldIndexingVariants.no,
-          include_in_all = false
-        ),
-        FieldBoolean(
-          id = IS_VERIFIED_ESFN,
-          index = FieldIndexingVariants.no,
-          include_in_all = false
-        )
-      )
+      staticFields = withStaticFields ++ generateMappingStaticFields,
+      properties = generateMappingProps
     )
   }
 
@@ -156,12 +158,15 @@ trait MPersonIdent[E <: MPersonIdent[E]] extends EsModelT[E] {
 }
 
 
+trait MPersonIdentSubmodelStatic {
+  def generateMappingProps: List[DocField] = MPersonIdent.generateMappingProps
+  def generateMappingStaticFields: List[Field] = MPersonIdent.generateMappingStaticFields
+}
+
 /** Идентификации от mozilla-persona. */
-object MozillaPersonaIdent extends EsModelStaticT[MozillaPersonaIdent] {
+object MozillaPersonaIdent extends EsModelStaticT[MozillaPersonaIdent] with MPersonIdentSubmodelStatic {
 
   val ES_TYPE_NAME = "mpiMozPersona"
-
-  def generateMapping = MPersonIdent.generateMapping(ES_TYPE_NAME)
 
   def applyKeyValue(acc: MozillaPersonaIdent): PartialFunction[(String, AnyRef), Unit] = {
     case (KEY_ESFN, value)        => acc.email = stringParser(value)
@@ -192,10 +197,8 @@ case class MozillaPersonaIdent(
 
 
 /** Статическая под-модель для хранения юзеров, живущих вне mozilla persona. */
-object EmailPwIdent extends EsModelStaticT[EmailPwIdent] {
+object EmailPwIdent extends EsModelStaticT[EmailPwIdent] with MPersonIdentSubmodelStatic {
   val ES_TYPE_NAME: String = "mpiEmailPw"
-
-  def generateMapping: XContentBuilder = MPersonIdent.generateMapping(ES_TYPE_NAME)
 
   def applyKeyValue(acc: EmailPwIdent): PartialFunction[(String, AnyRef), Unit] = {
     case (KEY_ESFN, value)          => acc.email = stringParser(value)
@@ -256,7 +259,7 @@ case class EmailPwIdent(
 
 /** Статическая часть модели [[EmailActivation]].
   * Модель нужна для хранения ключей для проверки/активации почтовых ящиков. */
-object EmailActivation extends EsModelStaticT[EmailActivation] {
+object EmailActivation extends EsModelStaticT[EmailActivation] with MPersonIdentSubmodelStatic {
 
   val ES_TYPE_NAME: String = "mpiEmailAct"
 
@@ -271,12 +274,11 @@ object EmailActivation extends EsModelStaticT[EmailActivation] {
     */
   def randomActivationKey = StringUtil.randomId(len = KEY_LEN)
 
-  protected def dummy(id: String) = EmailActivation(id = Some(id), email = null, key = null)
+  protected def dummy(id: String) = EmailActivation(id = Option(id), email = null, key = null)
 
-  /** Сборка маппинга. В этом маппинге должен быть ttl, чтобы старые записи автоматически выпиливались. */
-  def generateMapping: XContentBuilder = {
-    val ttlField = FieldTtl(enabled = true, default = TTL_DFLT)
-    MPersonIdent.generateMapping(ES_TYPE_NAME, withStaticFields = Seq(ttlField))
+  /** Сборка static-полей маппинга. В этом маппинге должен быть ttl, чтобы старые записи автоматически выпиливались. */
+  override def generateMappingStaticFields: List[Field] = {
+    FieldTtl(enabled = true, default = TTL_DFLT) :: super.generateMappingStaticFields
   }
 
   def applyKeyValue(acc: EmailActivation): PartialFunction[(String, AnyRef), Unit] = {

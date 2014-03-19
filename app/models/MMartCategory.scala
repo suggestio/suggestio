@@ -167,78 +167,40 @@ object MMartCategory extends EsModelStaticT[MMartCategory] with PlayMacroLogsImp
 
   private def sortByMmcat(mmcat: MMartCategory) = mmcat.position + mmcat.name
 
-  def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
-    IndexMapping(
-      typ = ES_TYPE_NAME,
-      staticFields = Seq(
-        FieldAll(enabled = false, analyzer = FTS_RU_AN),
-        FieldSource(enabled = true)
-      ),
-      properties = Seq(
-        FieldString(
-          id = NAME_ESFN,
-          index = FieldIndexingVariants.no,
-          include_in_all = true
-        ),
-        // Поле id компонента-владельца. По сути тут может быть любой id из любой модели, но обычно id ТЦ или id магазина.
-        FieldString(
-          id = OWNER_ID_ESFN,
-          index = FieldIndexingVariants.not_analyzed,
-          include_in_all = false
-        ),
-        FieldNestedObject(
-          id = YM_CAT_ESFN,
-          properties = Seq(
-            FieldString(
-              id = YM_CAT_ID_ESFN,
-              index = FieldIndexingVariants.no,
-              include_in_all = false
-            ),
-            FieldBoolean(
-              id = YM_CAT_INHERIT_ESFT,
-              index = FieldIndexingVariants.no,
-              include_in_all = false
-            )
-          )
-        ),
-        FieldString(
-          id = PARENT_ID_ESFN,
-          // Индексируем, чтобы искать в рамках под-уровня без has_child велосипеда и чтобы missing filter работал.
-          index = FieldIndexingVariants.not_analyzed,
-          include_in_all = false
-        ),
-        FieldNumber(
-          id = POSITION_ESFN,
-          fieldType = DocFieldTypes.integer,
-          index = FieldIndexingVariants.no,
-          include_in_all = false
-        ),
-        FieldString(
-          id = CSS_CLASS_ESFN,
-          index = FieldIndexingVariants.no,
-          include_in_all = false
-        ),
-        FieldBoolean(
-          id = INCLUDE_IN_ALL_ESFN,
-          index = FieldIndexingVariants.no,
-          include_in_all = false
-        )
-      )
-    )
-  }
+
+  def generateMappingProps: List[DocField] = List(
+    FieldString(NAME_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
+    // Поле id компонента-владельца. По сути тут может быть любой id из любой модели, но обычно id ТЦ или id магазина.
+    FieldString(OWNER_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldObject(YM_CAT_ESFN, properties = Seq(
+      FieldString(YM_CAT_ID_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
+      FieldBoolean(YM_CAT_INHERIT_ESFT, index = FieldIndexingVariants.no, include_in_all = false)
+    )),
+    // Индексируем, чтобы искать в рамках под-уровня без has_child велосипеда и чтобы missing filter работал.
+    FieldString(PARENT_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldNumber(POSITION_ESFN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.no, include_in_all = false),
+    FieldString(CSS_CLASS_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
+    FieldBoolean(INCLUDE_IN_ALL_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
+  )
+
+  def generateMappingStaticFields: List[Field] = List(
+    FieldAll(enabled = false, analyzer = FTS_RU_AN),
+    FieldSource(enabled = true)
+  )
+
 
   def applyKeyValue(acc: MMartCategory): PartialFunction[(String, AnyRef), Unit] = {
     case (NAME_ESFN, value)         => acc.name = stringParser(value)
     case (OWNER_ID_ESFN, value)     => acc.ownerId = stringParser(value)
     case (YM_CAT_ESFN, value)       => acc.ymCatPtr = JacksonWrapper.convert[MMartYmCatPtr](value)
-    case (PARENT_ID_ESFN, value)    => acc.parentId = Some(stringParser(value))
+    case (PARENT_ID_ESFN, value)    => acc.parentId = Option(stringParser(value))
     case (POSITION_ESFN,  value)    => acc.position = intParser(value)
-    case (CSS_CLASS_ESFN, value)    => acc.cssClass = Some(stringParser(value))
+    case (CSS_CLASS_ESFN, value)    => acc.cssClass = Option(stringParser(value))
     case (INCLUDE_IN_ALL_ESFN, value) => acc.includeInAll = booleanParser(value)
   }
 
   protected def dummy(id: String) = {
-    MMartCategory(id = Some(id), name = null, ymCatPtr = null, ownerId = null, parentId = None, position = Int.MaxValue)
+    MMartCategory(id = Option(id), name = null, ymCatPtr = null, ownerId = null, parentId = None, position = Int.MaxValue)
   }
 }
 

@@ -25,47 +25,20 @@ object MBlog extends EsModelStaticT[MBlog] {
   val TEXT_ESFN     = "text"
   val DATE_ESFN     = "date"
 
-  def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
-    IndexMapping(
-      typ = ES_TYPE_NAME,
-      staticFields = Seq(
-        FieldSource(enabled = true),
-        FieldAll(enabled = false, analyzer = FTS_RU_AN)
-      ),
-      properties = Seq(
-        FieldString(
-          id = TITLE_ESFN,
-          include_in_all = true,
-          index = FieldIndexingVariants.no
-        ),
-        FieldString(
-          id = DESCRIPTION_ESFN,
-          include_in_all = true,
-          index = FieldIndexingVariants.no
-        ),
-        FieldString(
-          id = BG_IMAGE_ESFN,
-          include_in_all = false,
-          index = FieldIndexingVariants.no
-        ),
-        FieldString(
-          id = BG_COLOR_ESFN,
-          include_in_all = false,
-          index = FieldIndexingVariants.no
-        ),
-        FieldString(
-          id = TEXT_ESFN,
-          include_in_all = true,
-          index = FieldIndexingVariants.no
-        ),
-        FieldDate(
-          id = DATE_ESFN,
-          include_in_all = false,
-          index = FieldIndexingVariants.no
-        )
-      )
-    )
-  }
+
+  def generateMappingStaticFields: List[Field] = List(
+    FieldSource(enabled = true),
+    FieldAll(enabled = false, analyzer = FTS_RU_AN)
+  )
+
+  def generateMappingProps: List[DocField] = List(
+    FieldString(TITLE_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
+    FieldString(DESCRIPTION_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
+    FieldString(BG_IMAGE_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
+    FieldString(BG_COLOR_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
+    FieldString(TEXT_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
+    FieldDate(DATE_ESFN, include_in_all = false, index = FieldIndexingVariants.no)
+  )
 
 
   def applyKeyValue(acc: MBlog): PartialFunction[(String, AnyRef), Unit] = {
@@ -78,6 +51,7 @@ object MBlog extends EsModelStaticT[MBlog] {
   }
 
   protected def dummy(id: String) = MBlog(
+    id = Option(id),
     title = null,
     description = null,
     bgImage = null,

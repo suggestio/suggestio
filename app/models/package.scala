@@ -68,4 +68,7 @@ package object models {
   val  MMartInx         = io.suggest.model.inx2.MMartInx
   type MMartInx         = io.suggest.model.inx2.MMartInx
 
+  val  MMartAdIndexed   = io.suggest.ym.model.MMartAdIndexed
+  type MMartAdIndexed   = io.suggest.ym.model.MMartAdIndexed
+
 }
