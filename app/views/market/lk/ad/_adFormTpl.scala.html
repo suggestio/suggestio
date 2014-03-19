@@ -157,6 +157,9 @@
       <div class="tab @if(dfltIsProduct) {act}" data-mode="@PRODUCT">
         ТЕКСТОВОЙ
       </div>
+      <div class="tab @if(dfltIsProduct) {act}" data-mode="@PRODUCT">
+        ЦЕНОВОЙ
+      </div>
       <div class="tab @if(!dfltIsProduct) {act}" data-mode="@DISCOUNT">
         СКИДОЧНЫЙ
       </div>
@@ -164,6 +167,23 @@
     <div class="blue-line"></div>
 
     <div class="slide-content" id="templates">
+
+      <div class="tab-content">
+        <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
+          <td class="left">
+            <label>Текст</label>
+          </td>
+
+          <td class="right">
+            <div class="input clearfix">
+              <div class="input-shadow">
+                <textarea class="tiny-mce"></textarea>
+              </div>
+            </div>
+          </td>
+        </table>
+      </div>
+
       @_adFormProductTpl(af, isShown = dfltIsProduct)
       @_adFormDiscountTpl(af, isShown = !dfltIsProduct)
 
