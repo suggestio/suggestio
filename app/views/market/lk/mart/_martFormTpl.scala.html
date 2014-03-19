@@ -18,7 +18,7 @@
           <div class="select-file-wrap" id="martLogoImgInput">
             @defining(mf("martLogoImgId").value) { martLogoImgIdOpt =>
             <div class="preview">
-              <img class="image-preview" src="@martLogoImgIdOpt.map { imgId =>@routes.Img.getImg(imgId)}" width="59" height="59"/>
+              <img class="image-preview" src="@martLogoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" width="59" height="59"/>
             </div>
             <div class="selectbox">
               <div class="select-file">
@@ -33,6 +33,7 @@
             </div>
             }
           </div>
+          <a href="#" class="close">&nbsp;</a>
         </td>
       </tr>
     </table>
