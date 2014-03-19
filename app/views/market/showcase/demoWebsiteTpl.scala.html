@@ -1,6 +1,7 @@
-@()(implicit ctx:util.Context)
+@()(implicit ctx: util.Context)
 
 @* Временный шаблон. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
+@import ctx._
 
 <html>
 <head>
@@ -42,6 +43,10 @@
 <body>
 
 <iframe src="http://www.stockmann.ru/"></iframe>
+
+@helper.javascriptRouter("jsRoutes")(
+  routes.javascript.Market.martIndex
+)
 
 <script type="text/javascript">
 	  (function() {

@@ -1,10 +1,14 @@
 package controllers
 
-import io.suggest.util.MacroLogsImpl
+import util._
 import util.acl._
 import views.html.market.showcase._
 import play.api.libs.json._
 import play.api.libs.Jsonp
+import models._
+import MMart.MartId_t, MShop.ShopId_t
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import SiowebEsUtil.client
 
 /**
  * Suggest.io
@@ -13,20 +17,24 @@ import play.api.libs.Jsonp
  * Description: Выдача sio market
  */
 
-object Market extends SioController with MacroLogsImpl {
+object Market extends SioController with PlayMacroLogsImpl {
 
   val JSONP_CB_FUN = "siomart.receive_response"
 
-  def index = MaybeAuth { implicit request =>
+  /** Входная страница для sio-market для ТЦ. */
+  def martIndex(martId: MartId_t) = MaybeAuth.async { implicit request =>
+    IndicesUtil.getInxFormMartCached(martId) flatMap {
+      case Some(mmartInx) =>
+        MMartAdIndexed.findForLevel(AdShowLevels.LVL_MART_SHOWCASE, mmartInx) map { ads =>
+          val html = indexTpl(ads).toString.split("\n").map(_.trim.filter(_ >= ' ')).mkString
+          val jsonHtml = JsObject(Seq(
+            "html" -> JsString(html)
+          ))
+          Ok( Jsonp(JSONP_CB_FUN, jsonHtml) )
+        }
 
-    val html = indexTpl().toString.split("\n").map(_.trim.filter(_ >= ' ')).mkString
-
-    val JsonObject = Json.toJson(
-      Map("html" -> html)
-    )
-
-    Ok( Jsonp(JSONP_CB_FUN, JsonObject ) )
-
+      case None => NotFound("mart not indexed")
+    }
   }
 
   /** Временный экшн, рендерит демо страничку предполагаемого сайта ТЦ, на которой вызывается Sio.Market */

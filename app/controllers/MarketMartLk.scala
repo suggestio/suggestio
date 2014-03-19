@@ -503,13 +503,13 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
         NotAcceptable("Cannot parse req body.")
       },
       {isTopEnabled =>
-        // TODO Заменить тут на remote-update через mvel-скриптинг
         MShop.getById(shopId) flatMap {
           case Some(mshop) =>
-            val levels1 = if (isTopEnabled)
+            val levels1 = if (isTopEnabled) {
               mshop.settings.supWithLevels - AdShowLevels.LVL_MART_SHOWCASE
-            else
+            } else {
               mshop.settings.supWithLevels + AdShowLevels.LVL_MART_SHOWCASE
+            }
             mshop.settings.supWithLevels = levels1
             mshop.saveShopLevels map { _ =>
               Ok("updated ok")
