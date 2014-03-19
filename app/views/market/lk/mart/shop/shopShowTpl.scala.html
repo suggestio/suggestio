@@ -62,7 +62,7 @@
         mshop=mshop,
         editCall=routes.MarketMartLk.editShopForm(mshop.id.get)
       )
-
+     
       <div>
         <div class="white-board">
           <div class="white-border-top">
@@ -74,7 +74,7 @@
                     Первая<br/>страница
                   </td>
                   <td class="right">
-                    <div class="triger-wrap" id="first-page-triger" data-shop="@mshop.id.get">
+                    <div class="triger-wrap @if(mshop.settings.supWithLevels.contains(AdShowLevels.LVL_MART_SHOWCASE)) {enabled}" id="first-page-triger" data-shop="@mshop.id.get">
                       <span class="disable-but">Выкл</span>
                       <div class="triger">
                         <div class="circle"></div>
