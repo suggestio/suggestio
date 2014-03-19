@@ -6,7 +6,7 @@ import io.suggest.ym.model.MMart.MartId_t
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
 import MInx._
-import io.suggest.ym.model.MMartAd
+import io.suggest.ym.model.{MMartAdIndexed, MMartAd}
 import io.suggest.util.SioEsUtil
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.action.search.SearchRequestBuilder
@@ -78,7 +78,7 @@ case class MMartInx(
         FieldSource(enabled = true),
         FieldAll(enabled = true)
       ),
-      properties = MMartAd.generateMappingProps
+      properties = MMartAdIndexed.generateMappingProps
     )
   }
 

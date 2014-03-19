@@ -237,16 +237,20 @@ object MShop extends EsModelStaticT[MShop] {
    * @param reason Причина изменения статуса.
    * @return Фьючерс. Внутри, скорее всего, лежит UpdateResponse.
    */
-  def setIsEnabled(shopId: ShopId_t, isEnabled: Boolean, reason: Option[String])(implicit ec: ExecutionContext, client: Client): Future[_] = {
+  def setIsEnabled(shopId: ShopId_t, isEnabled: Boolean, reason: Option[String])(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
     val updatedXCB = XContentFactory.jsonBuilder()
       .startObject()
         .field(SETTING_SUP_IS_ENABLED, isEnabled)
         .field(SETTING_SUP_DISABLE_REASON, reason getOrElse null)
       .endObject()
-    client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, shopId)
+    val fut = client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, shopId)
       .setDoc(updatedXCB)
       .execute()
-    // TODO Надо бы влиять тут на выдачу по магазину/ТЦ. Через sio_notifier + подписчиков например.
+    // Уведомить о переключении состояния магазина
+    fut onSuccess { case _ =>
+      sn publish MShopOnOffEvent(shopId, isEnabled, reason)
+    }
+    fut
   }
 
   /**
@@ -256,7 +260,7 @@ object MShop extends EsModelStaticT[MShop] {
    * @return Фьючерс для синхронизации.
    */
   // TODO Нужен апдейт массива уровней через mvel-скрипт
-  def setShowLevels(shopId: ShopId_t, levels: Set[AdShowLevel])(implicit ec: ExecutionContext, client: Client): Future[_] = {
+  private def setShowLevels(shopId: ShopId_t, levels: Set[AdShowLevel])(implicit ec: ExecutionContext, client: Client): Future[_] = {
     val updateXCB = XContentFactory.jsonBuilder()
       .startObject()
         .startArray(SETTING_SUP_WITH_LEVELS)
@@ -342,11 +346,9 @@ case class MShop(
 
   override def save(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
     val fut = super.save
-    // Если создан новый магазин, то надо уведомлять о создании нового магазина.
-    if (id.isEmpty && martId.isDefined) {
-      fut onSuccess { case newId =>
-        sn publish YmShopAddedEvent(martId=martId.get, shopId=newId)
-      }
+    fut onSuccess { case newId =>
+      this.id = Option(newId)
+      sn publish MShopSavedEvent(this)
     }
     fut
   }
@@ -365,6 +367,20 @@ case class MShop(
     }
   }
 
+  def getAllShowLevels: Set[AdShowLevel] = {
+    if (settings.supIsEnabled)
+      settings.supWithLevels ++ MMartAd.SHOP_ALWAYS_SHOW_LEVELS
+    else
+      Set.empty
+  }
+
+  def saveShopLevels(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    val fut = MShop.setShowLevels(shopId, settings.supWithLevels)
+    fut onSuccess { case _ =>
+      sn publish MShopSavedEvent(this)
+    }
+    fut
+  }
 }
 
 

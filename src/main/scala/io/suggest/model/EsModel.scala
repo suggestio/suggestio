@@ -17,6 +17,7 @@ import org.elasticsearch.search.sort.SortOrder
 import org.elasticsearch.action.index.IndexRequestBuilder
 import scala.annotation.tailrec
 import com.fasterxml.jackson.annotation.JsonIgnore
+import org.elasticsearch.action.delete.DeleteRequestBuilder
 
 /**
  * Suggest.io
@@ -333,6 +334,18 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
       .map { searchResp2list }
   }
 
+  /**
+   * Генератор delete-реквеста. Используется при bulk-request'ах.
+   * @param id adId
+   * @return Новый экземпляр DeleteRequestBuilder.
+   */
+  def deleteRequestBuilder(id: String)(implicit client: Client): DeleteRequestBuilder = {
+    val req = client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
+    val rk = getRoutingKey(id)
+    if (rk.isDefined)
+      req.setRouting(rk.get)
+    req
+  }
 
   /**
    * Удалить документ по id.
@@ -340,11 +353,8 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    * @return true, если документ найден и удалён. Если не найден, то false
    */
   def deleteById(id: String)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    val req = client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
-    val rk = getRoutingKey(id)
-    if (rk.isDefined)
-      req.setRouting(rk.get)
-    req.execute()
+    deleteRequestBuilder(id)
+      .execute()
       .map { _.isFound }
   }
 
@@ -402,20 +412,29 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
   /** Перед сохранением можно проверять состояние экземпляра. */
   def isFieldsValid: Boolean = true
 
+  /** Генератор indexRequestBuilder'ов. Помогает при построении bulk-реквестов. */
+  def indexRequestBuilder(implicit client: Client): IndexRequestBuilder = {
+    val _idOrNull = idOrNull
+    val irb = client.prepareIndex(esIndexName, esTypeName, _idOrNull)
+      .setSource(toJson)
+    saveBuilder(irb)
+    val rkOpt = companion.getRoutingKey(_idOrNull)
+    if (rkOpt.isDefined)
+      irb.setRouting(rkOpt.get)
+    irb
+  }
+
+  /** Генератор delete-реквеста. Полезно при построении bulk-реквестов. */
+  def deleteRequestBuilder(implicit client: Client) = companion.deleteRequestBuilder(id.get)
+
   /**
    * Сохранить экземпляр в хранилище ES.
    * @return Фьючерс с новым/текущим id
    */
   def save(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
     if (isFieldsValid) {
-      val _idOrNull = idOrNull
-      val irb = client.prepareIndex(esIndexName, esTypeName, _idOrNull)
-        .setSource(toJson)
-      saveBuilder(irb)
-      val rkOpt = companion.getRoutingKey(_idOrNull)
-      if (rkOpt.isDefined)
-        irb.setRouting(rkOpt.get)
-      irb.execute()
+      indexRequestBuilder
+        .execute()
         .map { _.getId }
     } else {
       throw new IllegalStateException("Some or all important fields have invalid values: " + this)
