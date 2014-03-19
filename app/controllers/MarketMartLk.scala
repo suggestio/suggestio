@@ -511,7 +511,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
             else
               mshop.settings.supWithLevels + AdShowLevels.LVL_MART_SHOWCASE
             mshop.settings.supWithLevels = levels1
-            mshop.save map { _ =>
+            mshop.saveShopLevels map { _ =>
               Ok("updated ok")
             }
 

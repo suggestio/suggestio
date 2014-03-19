@@ -12,6 +12,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
 import org.elasticsearch.action.search.SearchResponse
 import util.PlayMacroLogsImpl
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -156,6 +157,31 @@ object MMartCategory extends EsModelStaticT[MMartCategory] with PlayMacroLogsImp
         }
       }
     }
+  }
+
+  /**
+   * Асинхронно пройти категории с помощью фунцкии от текущей категории до вершины дерева.
+   * @param currCatId id стартовой категории.
+   * @param acc0 Начальный аккамулятор.
+   * @return
+   */
+  def foldUpChain[AccT](currCatId: String, acc0: AccT)(f: (AccT, MMartCategory) => AccT)(implicit ec: ExecutionContext, client: Client): Future[AccT] = {
+    client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, currCatId)
+      .execute()
+      .flatMap { getResp =>
+        if (getResp.isExists) {
+          val mmc = deserializeOne(getResp.getId, getResp.getSourceAsMap)
+          val acc1 = f(acc0, mmc)
+          mmc.parentId match {
+            case Some(parentId) => foldUpChain(parentId, acc1)(f)
+            case None => Future successful acc1
+          }
+
+        } else {
+          warn(s"traverseUp($currCatId): Category not found, but it should. Stopping traverse.")
+          Future successful acc0
+        }
+      }
   }
 
 

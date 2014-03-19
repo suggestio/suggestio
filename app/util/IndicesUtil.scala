@@ -3,7 +3,7 @@ package util
 import io.suggest.event._, SioNotifier.{Classifier, Subscriber}
 import io.suggest.event.subscriber.SnClassSubscriber
 import akka.actor.ActorContext
-import models._, MMart.MartId_t
+import models._, MMart.MartId_t, MShop.ShopId_t
 import SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.util.{Failure, Success}
@@ -11,6 +11,7 @@ import util.event.SiowebNotifier
 import scala.concurrent.Future
 import play.api.cache.Cache
 import play.api.Play.current
+import io.suggest.util.SioEsUtil.laFuture2sFuture
 
 /**
  * Suggest.io
@@ -28,6 +29,9 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
   /** Сколько времени надо кешировать в памяти частоиспользуемые метаданные по индексу ТЦ. */
   val MART_INX_CACHE_SECONDS = current.configuration.getInt("inx2.mart.cache.seconds") getOrElse 60
 
+  /** Сколько секунд кешировать в памяти магазин. */
+  val SHOP_CACHE_SECONDS = current.configuration.getInt("mshop.cache.seconds") getOrElse 60
+
   /** Имя дефолтового индекса для индексации MMart. Используется пока нет менеджера индексов,
     * и одного индекса на всех достаточно. */
   val MART_INX_NAME_DFLT = "--1siomart"
@@ -42,6 +46,9 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
     event match {
       case YmMartAddedEvent(martId)   => handleMartAdd(martId)
       case YmMartDeletedEvent(martId) => handleMartDelete(martId)
+      case ase: AdSavedEvent          => handleAdSaved(ase.mmartAd)
+      case msse: MShopSavedEvent      => handleShopSaved(msse.mshop)
+      case soe: MShopOnOffEvent       => handleShopOnOff(soe)
     }
   }
 
@@ -49,7 +56,10 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
     val subscribers = List(this)
     Seq(
       YmMartAddedEvent.getClassifier()    -> subscribers,
-      YmMartDeletedEvent.getClassifier()  -> subscribers
+      YmMartDeletedEvent.getClassifier()  -> subscribers,
+      AdSavedEvent.getClassifier()        -> subscribers,
+      MShopSavedEvent.getClassifier()     -> subscribers,
+      MShopOnOffEvent.getClassifier()     -> subscribers
     )
   }
 
@@ -102,10 +112,157 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
     }
   }
 
+  /**
+   * Оригинал экземпляра MMartAd сохранен в хранилище.
+   * Нужно посмотреть в настройки публикации картинки и магазина, и добавить/удалить из выдачи эту рекламу.
+   * @param mmartAd Экземпляр рекламной карточки.
+   */
+  private def handleAdSaved(mmartAd: MMartAd) {
+    lazy val logPrefix = s"handleAdSave(${mmartAd.id.get}): "
+    val martInx2Fut = getInxFormMartCached(mmartAd.martId).map(_.get)
+    val userCatStrFut = maybeCollectUserCatStr(mmartAd.userCatId)
+    // Реклама бывает на уровне ТЦ и на уровне магазина. Если на уровне магазина, то надо определить допустимые уровни отображения.
+    // Нужно пропатчить showLevels согласно допустимым уровням магазина.
+    val allowedDisplayLevelsFut: Future[Set[AdShowLevel]] = mmartAd.shopId match {
+      // Это реклама от магазина.
+      case Some(_shopId) =>
+        getShopByIdCached(_shopId) map {
+          case Some(mshop)  => mshop.getAllShowLevels
+          case None         => Set.empty
+        }
+
+      // Это реклама от ТЦ. Пока её можно отображать всегда.
+      case None => Future successful MMartAd.MART_ALWAYS_SHOW_LEVELS
+    }
+    for {
+      allowedDisplayLevels <- allowedDisplayLevelsFut
+      mmartInx2 <- martInx2Fut
+    } yield {
+      val shownLevels = mmartAd.showLevels intersect allowedDisplayLevels
+      if (shownLevels.isEmpty) {
+        MMartAdIndexed.deleteById(mmartAd.id.get, mmartInx2) onComplete {
+          case Success(result)  => trace(logPrefix + "Ad deleted/hidden from indexing -> " + result)
+          case Failure(ex)      => error(logPrefix + "Failed to erase/hide AD from indexing", ex)
+        }
+      } else {
+        userCatStrFut map { userCatStrs =>
+          MMartAdIndexed(mmartAd, userCatStrs, allowedDisplayLevels, mmartInx2).save onComplete {
+            case Success(savedAdId) => trace(logPrefix + "Ad inserted/updated into indexing: " + savedAdId)
+            case Failure(ex)        => error(logPrefix + "Faild to save AD into index", ex)
+          }
+        }
+      }
+    }
+  }
+
+  /** Реакция на включение/отключение магазина. */
+  private def handleShopOnOff(soe: MShopOnOffEvent) {
+    val mshopFut = getShopByIdCached(soe.shopId).map(_.get)
+    val mmartInxFut = mshopFut flatMap { mshop =>
+      getInxFormMartCached(mshop.martId.get)
+    }
+    // В зависимости от нового состояния магазина, залить или выпилить его выдачу.
+    val fut = if (soe.isEnabled) {
+      mshopFut flatMap { mshop =>
+        handleShopEnable(mshop, mmartInxFut)
+      }
+    } else {
+      handleShopDisable(soe.shopId, mmartInxFut)
+    }
+    lazy val logPrefix = s"handleShopOnOff($soe): "
+    fut onComplete {
+      case Success(adsProcessed) => trace(logPrefix + s"shop on/off: OK. $adsProcessed ads processed.")
+      case Failure(ex) => error(logPrefix + "Shop on/off failed.", ex)
+    }
+  }
+
+  /** Реакция на сохранение магазина. */
+  private def handleShopSaved(mshop: MShop) {
+    Cache.set(cacheKeyForShop(mshop.id.get), mshop, SHOP_CACHE_SECONDS)
+    lazy val logPrefix = s"handleShopSaved(${mshop.idOrNull}): "
+    // При изменении сеттингов магазина надо пересохранять все рекламы магазина.
+    // TODO Имеет смысл как-то определять ситуации, когда сеттинги не изменены. Это поможет избежать лишних переиндексаций.
+    val mmartInxFut = getInxFormMartCached(mshop.martId.get)
+    val itemsReadyFut: Future[Int] = if (mshop.settings.supIsEnabled) {
+      handleShopEnable(mshop, mmartInxFut)
+    } else {
+      // Магазин отключен. Надо удалить все рекламные карточки этого магазина из выдачи.
+      handleShopDisable(mshop.id.get, mmartInxFut)
+    }
+    itemsReadyFut onComplete {
+      case Success(itemsProcessed) =>
+        trace(logPrefix + s"Shop ads processing finished. $itemsProcessed items processed.")
+      case Failure(ex) =>
+        error(logPrefix + "Failed to process shop ads", ex)
+    }
+  }
+
+  /** Реакция на выключение магазина. */
+  def handleShopDisable(shopId: ShopId_t, mmartInxFut: Future[Option[MMartInx]]): Future[Int] = {
+    mmartInxFut flatMap {
+      case Some(mmartInx) =>
+        MMartAdIndexed.deleteByShop(shopId, mmartInx)
+      case None =>
+        Future successful 0
+    }
+  }
+
+  /** Реакция на включение магазина. Надо залить карточки магазина в выдачу. */
+  def handleShopEnable(mshop: MShop, mmartInxFut: Future[Option[MMartInx]]): Future[Int] = {
+    val logPrefix = s"handleShopEnable(${mshop.id.get}): "
+    val showShowLevels = mshop.getAllShowLevels
+    // Нужно залить в хранилище карточки магазина
+    MMartAd.findForShop(mshop.id.get) flatMap { ads =>
+      mmartInxFut flatMap { mmartInxOpt =>
+        Future.traverse(ads) { mad =>
+          // Нужно сделать примерно тоже, что и в handleAdSaved
+          maybeCollectUserCatStr(mad.userCatId) map { userCatsStrs =>
+            val adShowLevels = mad.showLevels intersect showShowLevels
+            MMartAdIndexed(mad, userCatsStrs, adShowLevels, mmartInxOpt.get).indexRequestBuilder
+          }
+        } flatMap { adsIrbs =>
+          // Набор index-реквестов обернуть в bulk и отправить.
+          if (adsIrbs.isEmpty) {
+            trace(logPrefix + "Shop has no ads. Nothing to reindex.")
+            Future successful 0
+          } else {
+            val adsTotal = adsIrbs.size
+            trace(logPrefix + s"Bulk indexing of $adsTotal ads...")
+            val bulk = client.prepareBulk()
+            adsIrbs foreach { bulk.add }
+            bulk.execute().map { brr =>
+              if (brr.hasFailures)
+                error(logPrefix + s"Bulk request ($adsTotal items) finished with errors:\n  " + brr.buildFailureMessage)
+              else
+                trace(logPrefix + s"Bulk request finished ok. $adsTotal ads indexed ok. Took ${brr.getTookInMillis} ms.")
+              adsTotal
+            }
+          }
+        }
+      }
+    }
+  }
+
+
+  /** Сформулировать строку для индексируемого поля userCatStr. */
+  // TODO Перенести в MMartAd, когда MMartCat будет вынесена в sioutil.
+  private def collectUserCatStr(baseCatId: String): Future[List[String]] = {
+    MMartCategory.foldUpChain [List[String]] (baseCatId, Nil) { (acc, mmc) =>
+      if (mmc.includeInAll)
+        mmc.name :: acc
+      else
+        acc
+    } map { _.reverse }
+  }
+
+  private def maybeCollectUserCatStr: PartialFunction[Option[String], Future[List[String]]] = {
+    case Some(catId) => collectUserCatStr(catId)
+    case None        => Future successful Nil
+  }
+
 
   /** Генератор cache-ключа для сохранения считанного MMartInx. */
   private def cacheKeyForMartInx(martId: MartId_t) = martId + ".martInx"
-
 
   /**
    * Асинхронно узнать метаданные индекса ТЦ, кешируя результат.
@@ -116,12 +273,35 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
     val cacheKey = cacheKeyForMartInx(martId)
     Cache.getAs[MMartInx](cacheKey) match {
       case Some(mmartInx) =>
-        Future successful Some(mmartInx)
+        Future successful Option(mmartInx)
 
       case None =>
         val resultFut = MMartInx.getById(martId)
         resultFut onSuccess {
           case Some(mmartInx) => Cache.set(cacheKey, mmartInx, MART_INX_CACHE_SECONDS)
+        }
+        resultFut
+    }
+  }
+
+
+  private def cacheKeyForShop(shopId: ShopId_t) = shopId + ".shop"
+
+  /**
+   * Асинхронно прочитать MShop из кеша или из хранилища.
+   * @param shopId id магазина.
+   * @return Тоже самое, что и [[io.suggest.ym.model.MShop.getById()]].
+   */
+  def getShopByIdCached(shopId: ShopId_t): Future[Option[MShop]] = {
+    val cacheKey = cacheKeyForShop(shopId)
+    Cache.getAs[MShop](cacheKey) match {
+      case Some(mshop) =>
+        Future successful Option(mshop)
+
+      case None =>
+        val resultFut = MShop.getById(shopId)
+        resultFut onSuccess {
+          case Some(mshop) => Cache.set(cacheKey, mshop, SHOP_CACHE_SECONDS)
         }
         resultFut
     }
