@@ -46,7 +46,11 @@ siomart =
     ## Является ли переданный объект массивом?
     ##########################################
     is_array : (o) ->
-      Object.prototype.toString.call o == '[object Array]'
+      _t = Object.prototype.toString.call o
+      if _t == "[object Array]"
+        return true
+      else
+        return false
 
     ############################################
     ## Прицепить собтие(-я) к DOM элементу(-там)
@@ -176,18 +180,33 @@ siomart =
     event.preventDefault()
     return false
 
-  ####################################
-  ## Инициировать слайдеры для офферов
-  ####################################
-  initialize_offers : () ->
-    _i = 0
-    _as = this.utils.ge('smOffersController').getElementsByTagName 'a'
+  #########
+  ## Офферы
+  #########
+  offers :
 
-    for _a in _as
-      _a.setAttribute 'data-index', _i
-      this.utils.add_single_listener _a, 'click', () ->
-        alert this.getAttribute 'data-index'
-      _i++
+    ## Инициализация слайдов и кнопок-контроллов
+    initialize : () ->
+      _i = 0
+      _offers0 = siomart.utils.ge('smOffers').getElementsByTagName 'div'
+      for _o in _offers0
+        is_offer = _o.className.match /sm-offer/g
+        if siomart.utils.is_array _o.className.match /sm-offer/g
+          _o.id = 'smOffer' + _i
+          _i++
+
+      _i = 0
+      _as = siomart.utils.ge('smOffersController').getElementsByTagName 'a'
+      for _a in _as
+        _a.setAttribute 'data-index', _i
+        siomart.utils.add_single_listener _a, 'click', ( event ) ->
+          event.preventDefault()
+          siomart.offers.show_offer this.getAttribute 'data-index'
+        _i++
+
+    ## Открыть слайд с оффером по указанному индексу
+    show_offer : ( index ) ->
+      alert "show offer" + index
 
   #############################################
   ## Забиндить события на навигационные кнопари
@@ -204,7 +223,7 @@ siomart =
     this.utils.add_single_listener this.utils.ge('smCategoriesButton'), 'click'
 
     ## Контроллеры слайдов с офферами
-    this.initialize_offers()
+    this.offers.initialize()
 
   init : () ->
     this.utils.set_window_size()
