@@ -8,7 +8,8 @@
 @import helper._
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.MarketMartLk.shopOnOffForm,
-  routes.javascript.MarketMartLk.shopOnOffSubmit
+  routes.javascript.MarketMartLk.shopOnOffSubmit,
+  routes.javascript.MarketMartLk.setShopTopLevelAvailable
 )
 
 @lkBase(mshop.name) {
@@ -54,11 +55,40 @@
         </tr>
       </table>
 
+
+
       @* Отобразить основное описание магазина с кнопкой редактирования. *@
       @shop._shopShowTpl(
         mshop=mshop,
         editCall=routes.MarketMartLk.editShopForm(mshop.id.get)
       )
+
+      <div>
+        <div class="white-board">
+          <div class="white-border-top">
+            <div class="gray-border-bottom">
+
+              <div class="first-page-triger">
+                <table>
+                  <td class="left">
+                    Первая<br/>страница
+                  </td>
+                  <td class="right">
+                    <div class="triger-wrap" id="first-page-triger" data-shop="@mshop.id.get">
+                      <span class="disable-but">Выкл</span>
+                      <div class="triger">
+                        <div class="circle"></div>
+                      </div>
+                      <span class="enable-but">Вкл</span>
+                    </div>
+                  </td>
+                </table>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
 
     </div>
 

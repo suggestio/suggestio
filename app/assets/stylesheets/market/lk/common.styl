@@ -142,7 +142,7 @@ transform(v)
       padding-left: 45px
   .mce-container
     font-size: 16px !important
-    color: #959595 !important 
+    color: #959595 !important
     font-family: 'Arial' !important
 
   .green-but-big
@@ -165,28 +165,6 @@ transform(v)
     background-position: 0 -90px
   .green-but-big:active
     color: #dcea8
-    background-position: 0 0
-
-  .gray-but-transp
-    margin-top: 60px
-    margin-left: 120px
-    outline: 0
-    display: block
-    width: 195px
-    height: 67px
-    color: #676666
-    cursor: pointer
-    font-size: 30px
-    text-decoration: none
-    text-align: center
-    font-family: 'ParagNorCIta'
-    background: url('/assets/images/market/lk/gray-but-transp.png') no-repeat
-    background-position: 0 -234px
-  .gray-but-transp:hover
-    color: #4f88a9
-    background-position: 0 -117px
-  .gray-but-transp:active
-    color: #676666
     background-position: 0 0
 
 
@@ -453,6 +431,56 @@ transform(v)
     .input-wrap
       .left
         display: none
+
+  .white-board
+    margin: 20px 0
+    position: relative
+    display: inline-block
+    border-radius(6px)
+    background: #efefef
+    box-shadow(1px 1px 2px 0 #959595)
+    .white-border-top
+      border-radius(6px)
+      box-shadow(0 -2px 0 0 white)
+      overflow: hidden
+      .gray-border-bottom
+        overflow: hidden
+        border-radius(6px)
+        box-shadow(0 1px 0 0 gray)
+
+  .triger-wrap
+    text-align: center
+    span
+      font-family: 'Arial'
+      font-size: 10px
+    span:hover
+      cursor: pointer
+      color: #5088aa
+    .disable-but
+      color: #cbcbcb
+    .triger
+      position: relative
+      display: inline-block
+      width: 44px
+      height: 6px
+      background: url('/assets/images/market/lk/triger-bg.png') no-repeat center center
+      .circle
+        transition( -webkit-transform linear 0.1s )
+        transition( transform linear 0.1s )
+        position: absolute
+        width: 20px
+        height: 18px
+        top: -6px
+        transform( translate3d(-3px, 0, 0))
+        background: url('/assets/images/market/lk/circle.png') no-repeat
+        background-position: 0 -68px
+      .circle:hover
+        cursor: pointer
+        background-position: 0 0
+  .triger-wrap.enabled
+    .circle
+      transform( translate3d(27px, 0, 0))
+
 
 
 @import "../reset"
