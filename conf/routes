@@ -144,7 +144,7 @@ GET  /img/orig/:imgId                   controllers.Img.getOrig(imgId)
 GET  /img/any/:imgId                    controllers.Img.getImg(imgId)
 
 #market
-GET  /market/index                      controllers.Market.index
+GET  /market/index/:martId              controllers.Market.martIndex(martId)
 GET  /market/demo_website               controllers.Market.demoWebsite
 
 # sys.market

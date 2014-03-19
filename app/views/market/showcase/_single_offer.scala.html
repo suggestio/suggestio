@@ -1,4 +1,4 @@
-@(isHidden:Boolean=false)(implicit ctx:util.Context)
+@(ad: MMartAdIndexed, isHidden: Boolean = false)(implicit ctx: util.Context)
 
 <div class="sm-offer @if( isHidden == true ){ sm-hidden-offer }">
 
@@ -9,16 +9,34 @@
   <div class="offer-details">
     <div class="od-inner discount">
 
-      <div class="top-text">Франко Морелли</div>
+      @ad.offers.map {
+        case adProd: MMartAdProduct => {
+          <div class="top-text">@adProd.vendor.value</div>
 
-      <div class="old-price"><s>9999 р</s></div>
-      <div class="new-price">59999 р</div>
+          @adProd.oldPrice.map { oldPrice =>
+            <div class="old-price"><s>@oldPrice.value р</s></div>
+          }
+          <div class="new-price">@adProd.price.value р</div>
 
-      <div class="offer-location">
-        Этаж 5<br/>
-        Бутик 345<br/>
-        &laquo;Пространство уюта&raquo;
-      </div>
+          <div class="offer-location">
+            Этаж 5<br/>
+            Бутик 345<br/>
+            &laquo;Пространство уюта&raquo;
+          </div>
+        }
+
+        case adDisco: MMartAdDiscount => {
+          text1: @adDisco.text1.map { text1 =>
+            @text1.value @text1.font.color
+          }
+          text2: @adDisco.text2.map { text2 =>
+            @text2.value @text2.font.color
+          }
+          template: id=@adDisco.template.id color=@adDisco.template.color
+          disco: @adDisco.discount.value % color=@adDisco.discount.font.color
+        }
+      }
+
 
       <a class="sm-button" href="">ПРЕДЛОЖЕНИЯ МАГАЗИНА</a>
 
