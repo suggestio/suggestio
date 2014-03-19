@@ -106,7 +106,18 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   { MMAdFloatField.apply }
   { MMAdFloatField.unapply }
 
-  val mmaFloatPriceM = mmaFloatFieldM(priceM)
+  /** Маппим необязательное Float-поле. */
+  private def mmaFloatFieldOptM(m: Mapping[Float]) = mapping(
+    "value" -> optional(m),
+    "color" -> fontColorM
+  )
+  {(valueOpt, color) =>
+    valueOpt map { MMAdFloatField(_, color) }
+  }
+  {_.map {
+    mmaff => (Option(mmaff.value), mmaff.font) }
+  }
+
 
   // Мапперы для textAlign'ов
   /** Какие-то данные для text-align'a. */
@@ -151,8 +162,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   // Общие для ad-форм мапперы закончились. Пора запилить сами формы и формоспецифичные элементы.
   val adProductM = mapping(
     "vendor"    -> mmaStringFieldM(nonEmptyText(maxLength = 32)),
-    "price"     -> mmaFloatPriceM,
-    "oldPrice"  -> optional(mmaFloatPriceM)
+    "price"     -> mmaFloatFieldM(priceM),
+    "oldPrice"  -> mmaFloatFieldOptM(priceM)
   )
   { MMartAdProduct.apply }
   { MMartAdProduct.unapply }

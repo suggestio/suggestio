@@ -42,23 +42,15 @@ object MPerson extends EsModelStaticT[MPerson] {
    */
   def isSuperuserId(personId: String) = SU_IDS contains personId
 
-  /** Сгенерить маппинг для индекса. */
-  def generateMapping: XContentBuilder = jsonGenerator { implicit b =>
-    IndexMapping(
-      typ = ES_TYPE_NAME,
-      staticFields = Seq(
-        FieldAll(enabled = false, analyzer = FTS_RU_AN),
-        FieldSource(enabled = true)
-      ),
-      properties = Seq(
-        FieldString(
-          id = LANG_ESFN,
-          index = FieldIndexingVariants.analyzed,
-          include_in_all = false
-        )
-      )
-    )
-  }
+
+  def generateMappingStaticFields: List[Field] = List(
+    FieldAll(enabled = false, analyzer = FTS_RU_AN),
+    FieldSource(enabled = true)
+  )
+
+  def generateMappingProps: List[DocField] = List(
+    FieldString(LANG_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = false)
+  )
 
 
   def applyKeyValue(acc: MPerson): PartialFunction[(String, AnyRef), Unit] = {
