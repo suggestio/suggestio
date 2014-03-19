@@ -211,7 +211,7 @@ siomart =
   #########
   offers :
 
-    auto_change_delay : 3000
+    auto_change_delay : 8000
 
     ## Инициализация слайдов и кнопок-контроллов
     initialize : () ->
@@ -270,7 +270,7 @@ siomart =
 
         siomart.utils.addClass 'smOffer' + siomart.offers.active_offer, direction + '-out animated'
 
-      setTimeout cb, 1
+      setTimeout cb, 10
 
       cb1 = () ->
         #Расставить нужные классы для слайдов
