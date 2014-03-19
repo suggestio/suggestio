@@ -2,6 +2,8 @@ $(document).ready ->
   if(document.getElementById('old-price-status') != null)
     document.getElementById('old-price-status').checked = false
 
+  cbca.emptyPhoto = '/assets/images/market/lk/empty-image.gif'
+
   cbca.popup = new CbcaPopup()
   cbca.search = new CbcaSearch()
 
@@ -74,7 +76,7 @@ $(document).on 'click', '.input-wrap .close', (e)->
   $this =$(this)
   $wrap = $this.closest('.input-wrap')
   $wrap.find('.image-key').val('')
-  $wrap.find('.image-preview').attr('src', '')
+  $wrap.find('.image-preview').attr('src', cbca.emptyPhoto)
 
 ##ПРЕВЬЮ РЕКЛАМНОЙ КАРТОЧКИ##
 $(document).on 'click', '.device', ->

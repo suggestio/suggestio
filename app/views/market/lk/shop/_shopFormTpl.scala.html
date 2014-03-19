@@ -5,6 +5,7 @@
 @import helper._
 @import ctx._
 
+
 @import util.FormHelpers._
 
 
@@ -27,7 +28,7 @@
           <div class="select-file-wrap" id="shopLogoImgInput">
             @defining(sf("shopLogoImgId").value) { shopLogoImgIdOpt =>
             <div class="preview">
-              <img class="image-preview" src="@shopLogoImgIdOpt.map { imgId =>@routes.Img.getImg(imgId) } @if(shopLogoImgIdOpt.isEmpty) {/assets/images/market/lk/empty-image.gif}" width="59"/>
+              <img class="image-preview" src="@shopLogoImgIdOpt.filter(!_.isEmpty).getOrElse {@routes.Assets.at("images/market/lk/empty-image.gif")}" width="59"/>
             </div>
             <div class="selectbox">
               <div class="select-file">
