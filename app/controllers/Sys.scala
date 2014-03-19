@@ -7,14 +7,18 @@ import util.FormUtil._
 import views.html.sys1._
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
-import util.{PlayMacroLogsImpl, SiobixClient, DomainManager}
+import util._
 import scala.concurrent.Future
 import SiobixClient.askTimeout
 import io.suggest.proto.bixo._
-import io.suggest.model.{MVirtualIndexVin, MDVIActive}
-import io.suggest.util.{MacroLogsImpl, VirtualIndexUtil}
+import io.suggest.model.MDVIActive
+import io.suggest.util.VirtualIndexUtil
 import util.SiowebEsUtil.client
 import util.urls_supply.SeedUrlsSupplier
+import io.suggest.model.inx2.MMartInx
+import scala.Some
+import io.suggest.model.MVirtualIndexVin
+import io.suggest.ym.model.MMart.MartId_t
 
 /**
  * Suggest.io
@@ -220,6 +224,28 @@ object Sys extends SioController with PlayMacroLogsImpl {
         Ok(siobix.pushReferrerFormTpl(pushRefFormM, withResult=Some(true)))
       }
     )
+  }
+
+
+  // ======================================================================
+  // inx2
+
+  /** Выдать страницу со всеми индексами из inx2 моделей. */
+  def inx2AllIndices = IsSuperuser.async { implicit request =>
+    val allMartsMapFut = MMart.getAll.map { all => all.map { mmart => mmart.id.get -> mmart }.toMap }
+    MMartInx.getAll.flatMap { minxs =>
+      val minxsGrouped = minxs.groupBy(_.targetEsInxName)
+      allMartsMapFut map { allMartsMap =>
+        Ok(indices.inx2.listByEsInxTpl(minxsGrouped, allMartsMap))
+      }
+    }
+  }
+
+  /** Суперюзер приказал создать дефолтовый индекс для магазина. */
+  def inx2createDfltMart = IsSuperuser.async { implicit request =>
+    MMartInx(martId = "TODO", targetEsInxName = IndicesUtil.MART_INX_NAME_DFLT).createIndex() map { result =>
+      Ok(s"Create index: ${IndicesUtil.MART_INX_NAME_DFLT} :: result -> $result")
+    }
   }
 
 }
