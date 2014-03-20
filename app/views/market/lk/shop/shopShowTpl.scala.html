@@ -2,10 +2,9 @@
 
 @* Страница отображения магазина для арендатора ТЦ (т.е. для владельца этого магазина). *@
 @import market.lk._
-@import routes.MarketShopLk._
 
+@import routes.MarketShopLk._
 @import ctx._
-@import AdShowLevels._
 
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.MarketAd.updateShowLevelSubmit
@@ -50,40 +49,13 @@
     </div>
 
 
-
-    <div class="ads-list">
-      <span class="title">Рекламные плакаты</span>
-      <a class="add" href="@routes.MarketAd.createShopAd(mshop.id.get)">&nbsp;</a>
-      @* market.lk.ad._showAdsTpl(mads) *@
-
-      @mads.zipWithIndex.map { case (ad, i) =>
-
-        <div class="item" style="@if(i%3 != 1) {margin-right: 30px;}">
-          <div class="preview">
-            <a class="hover" href="@routes.MarketAd.editShopAd(ad.id.get)">&nbsp;</a>
-
-            @market.showcase._single_offer(ad, mmart, Some(mshop))
-          </div>
-
-          <div class="controls">
-            <label>
-              <input class="one-checkbox" type="checkbox" data-level="@LVL_MART_SHOPS" data-adid="@ad.id.get" data-name="lvl-mart-shops"/>Выводить в общем каталоге
-            </label>
-            <label>
-              <input type="checkbox" data-level="@LVL_SHOP" data-adid="@ad.id.get" />Выводить в моём магазине
-            </label>
-            @defining(mshop.hasTopLevelAccess) { htl =>
-              <label@if(!htl){ class="inactive"}>
-                <input type="checkbox" data-level="@LVL_MART_SHOWCASE" data-adid="@ad.id.get"@if(!htl){ disabled="disabled"}/>Размещение на первом экране
-              </label>
-            }
-          </div>
-
-
-        </div>
-      }
-    </div>
-
+    @market.lk.ad._adsEditableListTpl(
+      mads = mads,
+      mmart = mmart,
+      addCall = routes.MarketAd.createShopAd(mshop.id.get),
+      editCall = routes.MarketAd.editShopAd(_),
+      mshopOpt = Some(mshop)
+    )
 
   </div>
 
