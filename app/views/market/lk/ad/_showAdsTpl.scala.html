@@ -44,6 +44,11 @@
             <p>@text2.value</p>
           }
         }
+
+        case textOffer: MMartAdText => {
+          TODO Надо это как-то отображать. Ещё есть поле .color
+          @Html(textOffer.text.value)
+        }
       }
     </div>
 

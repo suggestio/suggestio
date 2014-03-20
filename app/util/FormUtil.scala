@@ -58,6 +58,10 @@ object FormUtil {
   def martNameM = nameM
   def companyNameM = nameM
 
+  /** Маппер для поля, содержащего код цвета. */
+  // TODO Нужно добавить верификацию тут какую-то. Например через YmColors.
+  val colorM = nonEmptyText(maxLength = 16)
+
   val publishedTextM = text(maxLength = 2048)
     .transform(strFmtTrimF, strIdentityF)
   val publishedTextOptM = optional(publishedTextM)

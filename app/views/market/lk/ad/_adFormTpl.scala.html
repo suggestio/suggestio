@@ -1,16 +1,18 @@
-@(shopId: ShopId_t, af: Form[_], call: Call, btnText: String, mmcats: MMartCategory.CollectMMCatsAcc_t, dfltIsProduct: Boolean = true)(implicit ctx: util.Context)
+@(shopId: ShopId_t, af: Form[_], call: Call, btnText: String, mmcats: MMartCategory.CollectMMCatsAcc_t, offerType: MMartAdOfferType)(implicit ctx: util.Context)
 
 @* Рендер формы редактирования произвольной рекламы.
- * dfltIsProduct обозначает дефолтовый режим работы формы. true - с ценами, false - реклама со скидками. *@
+ * offerType - предпочитаемый тип оффера, когда он неизвестен. *@
 @import ctx._
 @import helper._
-@import controllers.MarketAd.FormModes._
+@import MMartAdOfferTypes._
 
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.MarketCategory.topCatsOf,
   routes.javascript.MarketCategory.directSubcatsOf
 )
 
+@* Определяем текущий тип оффера (тип формы). Используем данные формы и аргумент offerType как fallback. *@
+@defining(af("ad.offer.mode").value.flatMap(MMartAdOfferTypes.maybeWithName).getOrElse(offerType)) { offerType1 =>
 @form(call, 'id -> "promoOfferForm") {
 
   @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@
@@ -154,38 +156,23 @@
     <div class="border-line"></div>
 
     <div class="tabs">
-      <div class="tab @if(dfltIsProduct) {act}" data-mode="@PRODUCT">
+      <div class="tab @if(offerType1 == PRODUCT) {act}" data-mode="@PRODUCT">
         ЦЕНОВОЙ
       </div>
-      <div class="tab @if(!dfltIsProduct) {act}" data-mode="@DISCOUNT">
+      <div class="tab @if(offerType1 == DISCOUNT) {act}" data-mode="@DISCOUNT">
         СКИДОЧНЫЙ
       </div>
-      <div class="tab" data-mode="#">
+      <div class="tab @if(offerType1 == TEXT) {act}" data-mode="@TEXT">
         ТЕКСТОВОЙ
       </div>
     </div>
     <div class="blue-line"></div>
 
     <div class="slide-content" id="templates">
-
-      @_adFormProductTpl(af, isShown = dfltIsProduct)
-      @_adFormDiscountTpl(af, isShown = !dfltIsProduct)
-
-      <div class="tab-content" style="display: none;">
-        <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
-          <td class="left">
-            <label>Текст</label>
-          </td>
-
-          <td class="right">
-            <div class="input clearfix">
-              <div class="input-shadow">
-                <textarea class="tiny-mce"></textarea>
-              </div>
-            </div>
-          </td>
-        </table>
-      </div>
+      @* Вкладки формы. *@
+      @_adFormProductTpl(af,  isShown = offerType1 == PRODUCT)
+      @_adFormDiscountTpl(af, isShown = offerType1 == PRODUCT)
+      @_adFormTextTpl(af,     isShown = offerType1 == TEXT)
 
       <div class="border-line"></div>
 
@@ -220,10 +207,8 @@
   </div>
 
 
-
-  @* Режим формы. Должен переключаться при переключении вкладки. *@
-  <input id="ad-mode" type="hidden" name="ad.offer.mode" value="@if(dfltIsProduct) {@PRODUCT} else {@DISCOUNT}"/>
-
+  @* Режим формы (тип рекламного оффера). Должен переключаться при переключении вкладки. *@
+  <input id="ad-mode" type="hidden" name="ad.offer.mode" value="@af("ad.offer.mode").value.getOrElse(offerType1.toString)"/>
 
 
   @* Положение текста на разных устройствах. Как оно задаётся - хз, пока в виде произвольной строки. *@
@@ -231,9 +216,5 @@
   <input id="textAlign-tablet-top" type="hidden" name="ad.textAlign.tablet.top" value="left">
   <input id="textAlign-tablet-bottom" type="hidden" name="ad.textAlign.tablet.bottom" value="right">
 
-
-
-
-
 }
-
+}

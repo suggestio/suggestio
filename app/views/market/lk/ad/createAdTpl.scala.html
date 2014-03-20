@@ -1,4 +1,4 @@
-@(mshop: MShop, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_])(implicit ctx: util.Context)
+@(mshop: MShop, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], dfltOfferType: MMartAdOfferType)(implicit ctx: util.Context)
 
 @* Рендер страницы редактирования существующего ТЦ. *@
 @import ctx._
@@ -20,7 +20,8 @@
             af = af,
             call = routes.MarketAd.createShopAdSubmit(mshop.id.get),
             btnText = Messages("Create"),
-            mmcats = mmcats
+            mmcats = mmcats,
+            offerType = dfltOfferType
           )
 
           <div class="submit-wrap">

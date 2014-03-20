@@ -2,7 +2,7 @@ package controllers
 
 import util.{Context, PlayMacroLogsImpl}
 import views.html.market.lk.ad._
-import models._, MShop.ShopId_t
+import models._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
 import util.img.ImgFormUtil._
@@ -17,7 +17,6 @@ import models.AdShowLevels.AdShowLevel
 import TextAlignValues.TextAlignValue
 import MMartCategory.CollectMMCatsAcc_t
 import scala.util.{Try, Failure, Success}
-import io.suggest.event.AdSavedEvent
 
 /**
  * Suggest.io
@@ -31,53 +30,37 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   type AdFormM = Form[(ImgIdKey, LogoOpt_t, MMartAd)]
 
-  /** Режимы работы формы добавления рекламной карточки. Режимы отражают возможные варианты офферов. */
-  object FormModes extends Enumeration {
-    type FormMode = Value
-    val PRODUCT  = Value("p")
-    val DISCOUNT = Value("d")
+  /** Режимы работы формы добавления рекламной карточки. Режимы перенесены в MMartAdOfferTypes. */
+  object FormModes {
+    import MMartAdOfferTypes._
 
-    /** Безопасная форма withName(). */
-    def maybeWithName(n: String): Option[FormMode] = {
-      try {
-        Some(withName(n))
-      } catch {
-        case ex: Exception =>
-          debug("Failed to parse form mode from string: " + n)
-          None
-      }
-    }
-
-    def maybeFormWithName(n: String): Option[(FormMode, AdFormM)] = {
+    def maybeFormWithName(n: String): Option[(MMartAdOfferType, AdFormM)] = {
       maybeWithName(n).map { m =>
         val form = getForm(m)
         m -> form
       }
     }
 
-    val getForm: PartialFunction[FormMode, AdFormM] = {
+    val getForm: PartialFunction[MMartAdOfferType, AdFormM] = {
       case PRODUCT  => adProductFormM
       case DISCOUNT => adDiscountFormM
+      case TEXT     => ???
     }
 
-    val getForClass: PartialFunction[MMartAdOfferT, FormMode] = {
+    val getForClass: PartialFunction[MMartAdOfferT, MMartAdOfferType] = {
       case _: MMartAdProduct  => PRODUCT
       case _: MMartAdDiscount => DISCOUNT
+      case _: MMartAdText     => TEXT
     }
 
     def getFormForClass(c: MMartAdOfferT): AdFormM = {
       getForm(getForClass(c))
     }
   }
-  import FormModes.FormMode
 
   // Есть шаблоны для шаблона скидки. Они различаются по id. Тут min и max для допустимых id.
   val DISCOUNT_TPL_ID_MIN = current.configuration.getInt("ad.discount.tpl.id.min") getOrElse 1
   val DISCOUNT_TPL_ID_MAX = current.configuration.getInt("ad.discount.tpl.id.max") getOrElse 6
-
-  /** Маппер для поля, содержащего код цвета. */
-  // TODO Нужно добавить верификацию тут какую-то. Например через YmColors.
-  val colorM = nonEmptyText(maxLength = 16)
 
   /** Маппинг для задания цены. */
   val priceM = float
@@ -193,6 +176,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     { MMartAdDiscount.unapply }
   }
 
+
   // Дублирующиеся куски маппина выносим за пределы метода.
   private val CAT_ID_K = "catId"
   private val catIdKM = CAT_ID_K -> userCatIdM
@@ -250,9 +234,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   val adDiscountFormM = getAdFormM(adDiscountM)
 
 
-
   /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
-  private def detectAdForm(implicit request: Request[collection.Map[String, Seq[String]]]): Either[AdFormM, (FormMode, AdFormM)] = {
+  private def detectAdForm(implicit request: Request[collection.Map[String, Seq[String]]]): Either[AdFormM, (MMartAdOfferType, AdFormM)] = {
     val adModes = request.body.get("ad.offer.mode") getOrElse Nil
     adModes.headOption.flatMap { adMode =>
       FormModes.maybeFormWithName(adMode)
@@ -357,7 +340,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       case None => topCatsAsAcc(catOwnerId)
     }
     mmcatsFut map { mmcats =>
-      createAdTpl(mshop, mmcats, af)
+      createAdTpl(mshop, mmcats, af, MMartAdOfferTypes.PRODUCT)
     }
   }
 

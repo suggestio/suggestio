@@ -30,8 +30,12 @@ package object models {
   val  AdShowLevels     = io.suggest.ym.model.AdShowLevels
   type AdShowLevel      = AdShowLevels.AdShowLevel
 
+  // Начинаем MMartAd и смежные объекты.
   val  MMartAd          = io.suggest.ym.model.MMartAd
   type MMartAd          = io.suggest.ym.model.MMartAd
+
+  val MMartAdOfferTypes = io.suggest.ym.model.MMartAdOfferTypes
+  type MMartAdOfferType = io.suggest.ym.model.MMartAdOfferType
 
   type MMartAdOfferT    = io.suggest.ym.model.MMartAdOfferT
 
@@ -41,13 +45,16 @@ package object models {
   val  MMartAdDiscount  = io.suggest.ym.model.MMartAdDiscount
   type MMartAdDiscount  = io.suggest.ym.model.MMartAdDiscount
 
+  val  MMartAdText      = io.suggest.ym.model.MMartAdText
+  type MMartAdText      = io.suggest.ym.model.MMartAdText
+
   val TextAlignValues   = io.suggest.ym.model.TextAlignValues
 
   val  MMartAdTextAlign = io.suggest.ym.model.MMartAdTextAlign
   type MMartAdTextAlign = io.suggest.ym.model.MMartAdTextAlign
 
-  val  DiscountTemplate = io.suggest.ym.model.DiscountTemplate
-  type DiscountTemplate = io.suggest.ym.model.DiscountTemplate
+  val  DiscountTemplate = io.suggest.ym.model.MMartAdDiscountTemplate
+  type DiscountTemplate = io.suggest.ym.model.MMartAdDiscountTemplate
 
   val MMAdFloatField    = io.suggest.ym.model.MMAdFloatField
   val MMAdStringField   = io.suggest.ym.model.MMAdStringField
@@ -63,6 +70,7 @@ package object models {
 
   val  MMartAdPanelSettings = io.suggest.ym.model.MMartAdPanelSettings
   type MMartAdPanelSettings = io.suggest.ym.model.MMartAdPanelSettings
+
 
   val  MInx             = io.suggest.model.inx2.MInx
   type MInxT            = io.suggest.model.inx2.MInxT
