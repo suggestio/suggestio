@@ -165,7 +165,7 @@ object SysMarket extends SioController with MacroLogsImpl {
       address = address,
       siteUrl = siteUrlOpt,
       phone = phoneOpt,
-      personIds = null 
+      personIds = Nil
     )
   }
   {mmart =>
