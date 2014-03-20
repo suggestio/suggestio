@@ -4,6 +4,14 @@
 
 @import routes.MarketMartLk._
 
+@import ctx._
+@import helper._
+
+@helper.javascriptRouter("jsRoutes")(
+  routes.javascript.MarketMartLk.searchShops,
+  routes.javascript.MarketMartLk.shopOnOffForm,
+  routes.javascript.MarketMartLk.shopOnOffSubmit
+)
 
 @market.lk.lkBase(mmart.name) {
 

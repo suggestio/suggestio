@@ -15,27 +15,29 @@ $(document).ready ->
   cbca.shop.init()
   cbca.common = new CbcaCommon()
 
-  tinymce.init(
-    selector:'textarea.tiny-mce',
-    ode: "textareas",
-    menubar : false,
-    plugins: "textcolor",
-    statusbar : false,
-    content_css: "/assets/javascripts/lib/tinymce/style-formats.css",
-    toolbar: "undo redo | styleselect | forecolor",
-    style_formats: [
-      {
-        title: 'Custom format 1'
-        inline: 'span'
-        classes: "custom-format-1"
-      }
-      {
-        title: 'Custom format 2'
-        inline: 'span'
-        classes: "custom-format-2"
-      }
-    ]
-  )
+
+  if (typeof tinymce != 'undefined')
+    tinymce.init(
+      selector:'textarea.tiny-mce',
+      ode: "textareas",
+      menubar : false,
+      plugins: "textcolor",
+      statusbar : false,
+      content_css: "/assets/javascripts/lib/tinymce/style-formats.css",
+      toolbar: "undo redo | styleselect | forecolor",
+      style_formats: [
+        {
+          title: 'Custom format 1'
+          inline: 'span'
+          classes: "custom-format-1"
+        }
+        {
+          title: 'Custom format 2'
+          inline: 'span'
+          classes: "custom-format-2"
+        }
+      ]
+    )
 
 
 $(document).on 'click', '.select-iphone .iphone-block', ->
