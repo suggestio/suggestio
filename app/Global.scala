@@ -6,7 +6,7 @@ import org.elasticsearch.client.Client
 import play.api.mvc.{WithFilters, SimpleResult, RequestHeader}
 import scala.concurrent.{Await, Future, future}
 import scala.util.{Failure, Success}
-import util.{Crontab, SiowebEsUtil, SiowebSup}
+import util.{HtmlCompressUtil, Crontab, SiowebEsUtil, SiowebSup}
 import play.api.Play._
 import play.api._
 import scala.concurrent.duration._
@@ -144,15 +144,6 @@ object SioHTMLCompressorFilter {
    * Сборка сжимающего html-фильтра.
    * @return The HTML compressor filter.
    */
-  def apply() = new HTMLCompressorFilter({
-    val compressor = new HtmlCompressor()
-    compressor.setPreserveLineBreaks(Play.isDev)
-    compressor.setRemoveComments(!Play.isDev)
-    compressor.setRemoveIntertagSpaces(true)
-    compressor.setRemoveHttpProtocol(true)
-    compressor.setRemoveHttpsProtocol(true)
-    // Для сжатия инлайновых css/js блоков надо переместить их в соответствующие файлы в /app/assets/.
-    compressor
-  })
+  def apply() = new HTMLCompressorFilter(HtmlCompressUtil.compressor)
 }
 

@@ -1,10 +1,12 @@
 package controllers
 
 import play.api.mvc.{RequestHeader, SimpleResult, Controller}
-import util.ContextT
+import util.{HtmlCompressUtil, ContextT}
 import scala.concurrent.Future
 import play.api.i18n.Lang
 import util.event.SiowebNotifier
+import play.api.templates.HtmlFormat
+import play.api.libs.json.{JsString, JsValue}
 
 /**
  * Suggest.io
@@ -19,5 +21,13 @@ trait SioController extends Controller with ContextT {
   }
 
   implicit def sn = SiowebNotifier
+
+  implicit def html2string(html: HtmlFormat.Appendable): String = {
+    HtmlCompressUtil.compressor.compress(html.body)
+  }
+
+  implicit def html2jsStr(html: HtmlFormat.Appendable): JsString = {
+    JsString(html)
+  }
 }
 
