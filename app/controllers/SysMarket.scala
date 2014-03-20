@@ -509,7 +509,7 @@ object SysMarket extends SioController with MacroLogsImpl {
   // ======================================================================
   // отладка email-сообщений
 
-  /** Отобразить html-email-сообщение без отправки куда-либо. */
+  /** Отобразить html/txt email-сообщение активации без отправки куда-либо чего-либо. Нужно для отладки. */
   def showShopEmailActMsgHtml(shopId: ShopId_t, isHtml: Boolean) = IsSuperuser.async { implicit request =>
     for {
       mshop <- MShop.getById(shopId).map(_.get)
@@ -519,7 +519,7 @@ object SysMarket extends SioController with MacroLogsImpl {
       if (isHtml)
         Ok(lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct))
       else
-        Ok(views.txt.market.lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct))
+        Ok(views.txt.market.lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct) : String)
     }
   }
 

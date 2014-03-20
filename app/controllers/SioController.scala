@@ -5,7 +5,7 @@ import util.{HtmlCompressUtil, ContextT}
 import scala.concurrent.Future
 import play.api.i18n.Lang
 import util.event.SiowebNotifier
-import play.api.templates.HtmlFormat
+import play.api.templates.{TxtFormat, HtmlFormat}
 import play.api.libs.json.{JsString, JsValue}
 
 /**
@@ -26,8 +26,10 @@ trait SioController extends Controller with ContextT {
     HtmlCompressUtil.compressor.compress(html.body)
   }
 
-  implicit def html2jsStr(html: HtmlFormat.Appendable): JsString = {
-    JsString(html)
-  }
+  implicit def html2jsStr(html: HtmlFormat.Appendable) = JsString(html)
+
+  implicit def txt2str(txt: TxtFormat.Appendable): String = txt.body.trim
+
+  implicit def txt2jsStr(txt: TxtFormat.Appendable) = JsString(txt)
 }
 
