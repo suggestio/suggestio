@@ -115,14 +115,21 @@ GET  /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopForm(sh
 POST /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopFormSubmit(shopId)
 GET  /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAccept(shopId, eaId)
 POST /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAcceptSubmit(shopId, eaId)
+# ЛК: Рекламные карточки
+POST /m/lk/a/:adId/delete               controllers.MarketAd.deleteSubmit(adId)
+## ЛК: Рекламные карточки: shop
 GET  /m/lk/s/:shopId/ad/new             controllers.MarketAd.createShopAd(shopId)
 POST /m/lk/s/:shopId/ad/new             controllers.MarketAd.createShopAdSubmit(shopId)
 POST /m/lk/s/:shopId/logo               controllers.MarketShopLk.handleShopTempLogo(shopId)
+GET  /m/lk/sa/:adId/edit                controllers.MarketAd.editShopAd(adId)
+POST /m/lk/sa/:adId/edit                controllers.MarketAd.editShopAdSubmit(adId)
+POST /m/lk/sa/:adId/update/show         controllers.MarketAd.updateShowLevelSubmit(adId)
+## ЛК: Рекламные карточки: ТЦ
+GET  /m/lk/m/:martId/ad/new             controllers.MarketAd.createMartAd(martId)
+POST /m/lk/m/:martId/ad/new             controllers.MarketAd.createMartAdSubmit(martId)
+GET  /m/lk/ma/:adId/edit                controllers.MarketAd.editMartAd(adId)
+POST /m/lk/ma/:adId/edit                controllers.MarketAd.editMartAdSubmit(adId)
 
-GET  /m/lk/a/:adId/edit                 controllers.MarketAd.editShopAd(adId)
-POST /m/lk/a/:adId/edit                 controllers.MarketAd.editShopAdSubmit(adId)
-POST /m/lk/a/:adId/delete               controllers.MarketAd.deleteSubmit(adId)
-POST /m/lk/a/:adId/update/show          controllers.MarketAd.updateShowLevelSubmit(adId)
 
 # Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
 GET  /m/c/usr/o/:ownerId/top            controllers.MarketCategory.topCatsOf(ownerId)

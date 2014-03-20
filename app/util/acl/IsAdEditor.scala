@@ -20,7 +20,7 @@ case class IsAdEditor(adId: String) extends ActionBuilder[RequestWithAd] {
     val pwOpt = PersonWrapper.getFromRequest(request)
     MMartAd.getById(adId) flatMap {
       case Some(mad) =>
-        // TODO Нужно проверять права доступа как-то
+        // TODO Нужно проверять права доступа как-то: для ТЦ и для магазина
         if (PersonWrapper isSuperuser pwOpt) {
           val req1 = RequestWithAd(mad, request, pwOpt)
           block(req1)

@@ -1,0 +1,10 @@
+@(mmart: MMart, mad: MMartAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_])(implicit ctx: util.Context)
+
+@editAdTpl(
+  mad = mad,
+  af = af,
+  mmcats = mmcats,
+  backCall = routes.MarketMartLk.martShow(mmart.id.get),
+  logoUploadCall = routes.MarketMartLk.handleMartTempLogo(mmart.id.get),
+  submitCall = ???
+)

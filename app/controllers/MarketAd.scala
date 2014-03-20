@@ -13,11 +13,11 @@ import util.img._
 import scala.concurrent.Future
 import play.api.mvc.Request
 import play.api.Play.current
-import models.AdShowLevels.AdShowLevel
 import TextAlignValues.TextAlignValue
 import MMartCategory.CollectMMCatsAcc_t
 import scala.util.{Try, Failure, Success}
 import util.HtmlSanitizer.adTextFmtPolicy
+import io.suggest.ym.model.BuyPlaceT
 
 /**
  * Suggest.io
@@ -249,6 +249,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   val adTextFormM     = getAdFormM(adTextM)
 
 
+  /** Извлекатель данных по логотипу из MShop/MMart. */
+  implicit private def entityOpt2logoOpt(ent: Option[BuyPlaceT[_]]): LogoOpt_t = {
+    ent.flatMap { _.logoImgId }
+      .map { logoImgId => ImgInfo(OrigImgIdKey(logoImgId)) }
+  }
+
+
   /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
   private def detectAdForm(implicit request: Request[collection.Map[String, Seq[String]]]): Either[AdFormM, (MMartAdOfferType, AdFormM)] = {
     val adModes = request.body.get("ad.offer.mode") getOrElse Nil
@@ -269,9 +276,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
    * Страница, занимающаяся создание рекламной карточки.
    * @param shopId id магазина.
    */
-  def createShopAd(shopId: String) = IsShopAdm(shopId).async { implicit request =>
+  def createShopAd(shopId: ShopId_t) = IsShopAdm(shopId).async { implicit request =>
     import request.mshop
-    renderCreateFormWith(
+    renderCreateShopFormWith(
       af = adProductFormM,
       catOwnerId = mshop.martId getOrElse shopId,
       mshop = mshop
@@ -287,7 +294,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     * @return NotAcceptable со страницей с create-формой.
     */
   private def createShopAdFormError(formWithErrors: AdFormM, catOwnerId: String, mshop: MShop)(implicit ctx: util.Context) = {
-    renderCreateFormWith(formWithErrors, catOwnerId, mshop) map {
+    renderCreateShopFormWith(formWithErrors, catOwnerId, mshop) map {
       NotAcceptable(_)
     }
   }
@@ -311,7 +318,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           },
           {case (imgKey, logoImgIdOpt, mmad) =>
             // Асинхронно обрабатываем логотип.
-            updateShopLogo(logoImgIdOpt, mshop) onComplete shopLogoUpdatePf(shopId)
+            updateLogo(logoImgIdOpt, mshop) onComplete entityLogoUpdatePf("shop", shopId)
             ImgFormUtil.updateOrigImg(Some(ImgInfo(imgKey)), oldImgs = None) flatMap {
               case imgIdsSaved if !imgIdsSaved.isEmpty =>
                 // TODO Нужно проверить категорию.
@@ -328,7 +335,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
               case _ =>
                 debug(logPrefix + "Failed to handle img key: " + imgKey)
                 val formWithError = formBinded.withError(AD_IMG_ID_K, "error.image.save")
-                renderCreateFormWith(formWithError, catOwnerId, request.mshop) map { render =>
+                renderCreateShopFormWith(formWithError, catOwnerId, request.mshop) map { render =>
                   NotAcceptable(render)
                 }
             }
@@ -344,17 +351,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   }
 
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
-  private def renderCreateFormWith(af: AdFormM, catOwnerId: String, mshop: MShop)(implicit ctx: Context) = {
-    val catIdOpt = af(CAT_ID_K).value.filter { _ => af.errors(CAT_ID_K).isEmpty }
-    val mmcatsFut: Future[CollectMMCatsAcc_t] = catIdOpt match {
-      case Some(catId) =>
-        nearCatsList(catOwnerId=catOwnerId, catId=catId)
-          .filter { _.isEmpty }
-          .recoverWith { case ex: NoSuchElementException => topCatsAsAcc(catOwnerId) }
-
-      case None => topCatsAsAcc(catOwnerId)
-    }
-    mmcatsFut map { mmcats =>
+  private def renderCreateShopFormWith(af: AdFormM, catOwnerId: String, mshop: MShop)(implicit ctx: Context) = {
+    getMMCatsForCreate(af, catOwnerId) map { mmcats =>
       createShopAdTpl(mshop, mmcats, af, MMartAdOfferTypes.PRODUCT)
     }
   }
@@ -380,26 +378,19 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
   }
 
-  private def renderEditFormWith(af: AdFormM, mshopOpt: Option[MShop], mad: MMartAd)(implicit ctx: Context) = {
-    val catOwnerId = mad.martId
-    val mmcatsFut: Future[CollectMMCatsAcc_t] = mad.userCatId match {
-      case Some(catId) => nearCatsList(catOwnerId=catOwnerId, catId=catId)
-      case None => topCatsAsAcc(catOwnerId)
-    }
-    for {
-      mmcats   <- mmcatsFut
-    } yield {
+  private def renderEditShopFormWith(af: AdFormM, mshopOpt: Option[MShop], mad: MMartAd)(implicit ctx: Context) = {
+    getMMCatsForEdit(af, mad) map { mmcats =>
       mshopOpt map { mshop =>
         editShopAdTpl(mshop, mad, mmcats, af)
       }
     }
   }
 
-  private def renderFailedEditFormWith(af: AdFormM, mad: MMartAd)(implicit ctx: Context) = {
+  private def renderFailedEditShopFormWith(af: AdFormM, mad: MMartAd)(implicit ctx: Context) = {
     val shopId = mad.shopId.get
     // TODO Надо фетчить магазин и категории одновременно.
     MShop.getById(shopId) flatMap { mshopOpt =>
-      renderEditFormWith(af, mshopOpt, mad) map {
+      renderEditShopFormWith(af, mshopOpt, mad) map {
         case Some(render) => NotAcceptable(render)
         case None => shopNotFound(shopId)
       }
@@ -415,11 +406,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       case Some(_shopId) =>
         val imgIdKey = OrigImgIdKey(mad.picture)
         MShop.getById(_shopId) flatMap { mshopOpt =>
-          val logoImgId = mshopOpt
-            .flatMap { _.logoImgId }
-            .map { logoImgId => ImgInfo(OrigImgIdKey(logoImgId)) }
-          val formFilled = FormModes.getFormForClass(mad.offers.head) fill ((imgIdKey, logoImgId, mad))
-          renderEditFormWith(formFilled, mshopOpt, mad) map {
+          val formFilled = FormModes.getFormForClass(mad.offers.head) fill ((imgIdKey, mshopOpt, mad))
+          renderEditShopFormWith(formFilled, mshopOpt, mad) map {
             case Some(render) => Ok(render)
             case None => shopNotFound(_shopId)
           }
@@ -430,28 +418,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
   }
 
-  /** Асинхронно обновить логотип магазина-бренда. */
-  private def updateShopLogo(logoImgIdOpt: LogoOpt_t, mshop: MShop): Future[_] = {
-    ImgFormUtil.updateOrigImgId(
-      needImg = logoImgIdOpt,
-      oldImgId = mshop.logoImgId
-    ) flatMap {
-      case Nil if logoImgIdOpt.isDefined =>
-        Future failed new NoSuchElementException(s"Cannot save new logo for shop=${mshop.id.get} . Ignoring...")
-      case savedImgIds =>
-        if (mshop.logoImgId != savedImgIds.headOption) {
-          mshop.logoImgId = savedImgIds.headOption
-          mshop.save
-        } else {
-          Future successful ()
-        }
-    }
-  }
-
-  private def shopLogoUpdatePf(shopId: ShopId_t): PartialFunction[Try[_], Unit] = {
-    case Success(_)  => trace(s"Logo for shop=$shopId updated ok")
-    case Failure(ex) => error(s"Cannot update logo for shop=$shopId", ex)
-  }
 
   /** Сабмит формы рендера страницы редактирования рекламной карточки.
     * @param adId id рекламной карточки.
@@ -464,16 +430,16 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
         formBinded.fold(
           {formWithErrors =>
             debug(s"editShopAdSubmit($adId): Failed to bind form: " + formWithErrors.errors)
-            renderFailedEditFormWith(formWithErrors, mad)
+            renderFailedEditShopFormWith(formWithErrors, mad)
           },
           {case (iik, logoImgIdOpt, mad2) =>
             // Надо обработать логотип, который приходит в составе формы. Это можно делать независимо от самой MMartAd.
             // Если выставлен tmp-логотип, то надо запустить обновление mshop.
             val shopId = mad.shopId.get
             MShop.getById(shopId) flatMap {
-              case Some(mshop)  => updateShopLogo(logoImgIdOpt, mshop)
+              case Some(mshop)  => updateLogo(logoImgIdOpt, mshop)
               case None         => Future failed new NoSuchElementException(s"Shop not found: " + shopId)
-            } onComplete shopLogoUpdatePf(shopId)
+            } onComplete entityLogoUpdatePf("shop", shopId)
             // TODO Проверить категорию.
             // TODO И наверное надо проверить shopId-существование в исходной рекламе.
             ImgFormUtil.updateOrigImgId(
@@ -488,7 +454,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                 mad2.companyId = mad.companyId
                 mad2.picture = savedImgIds.head
                 mad2.save.map { _ =>
-                  Redirect(routes.MarketShopLk.showShop(mad.shopId.get))
+                  Redirect(routes.MarketShopLk.showShop(shopId))
                     .flashing("success" -> "Изменения сохранены")
                 }
 
@@ -496,7 +462,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                 // Не удалось обработать картинку. Вернуть форму назад
                 debug(s"editShopAdSubmit($adId): Failed to update iik = " + iik)
                 val formWithError = formBinded.withError(AD_IMG_ID_K, "error.image.save")
-                renderFailedEditFormWith(formWithError, mad)
+                renderFailedEditShopFormWith(formWithError, mad)
               }
             }
           }
@@ -504,7 +470,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
       case Left(formWithGlobalError) =>
         val formWithErrors = formWithGlobalError.bindFromRequest()
-        renderFailedEditFormWith(formWithErrors, mad)
+        renderFailedEditShopFormWith(formWithErrors, mad)
     }
 
   }
@@ -575,6 +541,238 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   }
 
 
-  private def shopNotFound(shopId: ShopId_t) = NotFound("shop not found: " + shopId)
+
+  // ============================ ТЦ ================================
+
+  /**
+   * Экшен Страницы, которая занимается созданием рекламной карточки для ТЦ.
+   * @param martId id ТЦ.
+   */
+  def createMartAd(martId: MartId_t) = IsMartAdmin(martId).async { implicit request =>
+    renderCreateMartFormWith(
+      af = adProductFormM,
+      catOwnerId = martId,
+      mmart = request.mmart
+    ) map {
+      Ok(_)
+    }
+  }
+
+
+  /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
+  private def renderCreateMartFormWith(af: AdFormM, catOwnerId: String, mmart: MMart)(implicit ctx: Context) = {
+    getMMCatsForCreate(af, catOwnerId) map { mmcats =>
+      createMartAdTpl(mmart, mmcats, af, MMartAdOfferTypes.PRODUCT)
+    }
+  }
+ 
+  /** Сабмит формы добавления рекламной карточки товара/скидки.
+    * @param martId id ТЦ
+    */
+  def createMartAdSubmit(martId: MartId_t) = IsMartAdmin(martId).async(parse.urlFormEncoded) { implicit request =>
+    import request.mmart
+    val catOwnerId = mmart.id.get 
+    lazy val logPrefix = s"createMartAdSubmit($martId): "
+    detectAdForm match {
+      // Как маппить форму - ясно. Теперь надо это сделать.
+      case Right((formMode, formM)) =>
+        val formBinded = formM.bindFromRequest()
+        formBinded.fold(
+          {formWithErrors =>
+            debug(logPrefix + "Bind failed: \n" +
+              formWithErrors.errors.map { e => "  " + e.key + " -> " + e.message }.mkString("\n"))
+            createMartAdFormError(formWithErrors, catOwnerId, mmart)
+          },
+          {case (imgKey, logoImgIdOpt, mmad) =>
+            // Асинхронно обрабатываем логотип.
+            updateLogo(logoImgIdOpt, mmart) onComplete entityLogoUpdatePf("mart", martId)
+            ImgFormUtil.updateOrigImg(Some(ImgInfo(imgKey)), oldImgs = None) flatMap {
+              case imgIdsSaved if !imgIdsSaved.isEmpty =>
+                // TODO Нужно проверить категорию.
+                mmad.shopId = None
+                mmad.companyId = mmart.companyId
+                mmad.martId = martId
+                mmad.picture = imgIdsSaved.head
+                // Сохранить изменения в базу
+                mmad.save.map { adId =>
+                  Redirect(routes.MarketMartLk.martShow(martId))
+                    .flashing("success" -> "Рекламная карточка создана.")
+                }
+
+              case _ =>
+                debug(logPrefix + "Failed to handle img key: " + imgKey)
+                val formWithError = formBinded.withError(AD_IMG_ID_K, "error.image.save")
+                renderCreateMartFormWith(formWithError, catOwnerId, mmart) map { render =>
+                  NotAcceptable(render)
+                }
+            }
+          }
+        )
+
+      // Не ясно, как именно надо биндить тело реквеста на маппинг формы.
+      case Left(formWithGlobalError) =>
+        warn(logPrefix + "AD mode is undefined or invalid. Returning form back.")
+        val formWithErrors = formWithGlobalError.bindFromRequest()
+        createMartAdFormError(formWithErrors, catOwnerId, mmart)
+    }
+  }
+ 
+  
+
+
+  /** Рендер ошибки в create-форме. Довольно общий, но асинхронный код.
+    * @param formWithErrors Форма для рендера.
+    * @param catOwnerId id владельца категории. Обычно id ТЦ.
+    * @param mmart ТЦ, с которым происходит сейчас работа.
+    * @return NotAcceptable со страницей с create-формой.
+    */
+  private def createMartAdFormError(formWithErrors: AdFormM, catOwnerId: String, mmart: MMart)(implicit ctx: util.Context) = {
+    renderCreateMartFormWith(formWithErrors, catOwnerId, mmart) map {
+      NotAcceptable(_)
+    }
+  }
+  
+  
+  private def renderEditMartFormWith(af: AdFormM, mmartOpt: Option[MMart], mad: MMartAd)(implicit ctx: Context) = {
+    getMMCatsForEdit(af, mad) map { mmcats =>
+      mmartOpt map { mmart =>
+        editMartAdTpl(mmart, mad, mmcats, af)
+      }
+    }
+  }
+
+  private def renderFailedEditMartFormWith(af: AdFormM, mad: MMartAd)(implicit ctx: Context) = {
+    MMart.getById(mad.martId) flatMap { mmartOpt =>
+      renderEditMartFormWith(af, mmartOpt, mad) map {
+        case Some(render) => NotAcceptable(render)
+        case None => martNotFound(mad.martId)
+      }
+    }
+  }
+
+  /** Рендер страницы с формой редактирования рекламной карточки магазина.
+    * @param adId id рекламной карточки.
+    */
+  def editMartAd(adId: String) = IsAdEditor(adId).async { implicit request =>
+    import request.mad
+    val imgIdKey = OrigImgIdKey(mad.picture)
+    MMart.getById(mad.martId) flatMap { mmartOpt =>
+      val formFilled = FormModes.getFormForClass(mad.offers.head) fill ((imgIdKey, mmartOpt, mad))
+      renderEditMartFormWith(formFilled, mmartOpt, mad) map {
+        case Some(render) => Ok(render)
+        case None => martNotFound(mad.martId)
+      }
+    }
+  }
+
+
+  /** Сабмит формы рендера страницы редактирования рекламной карточки.
+    * @param adId id рекламной карточки.
+    */
+  def editMartAdSubmit(adId: String) = IsAdEditor(adId).async(parse.urlFormEncoded) { implicit request =>
+    import request.mad
+    detectAdForm match {
+      case Right((formMode, formM)) =>
+        val formBinded = formM.bindFromRequest()
+        formBinded.fold(
+          {formWithErrors =>
+            debug(s"editMartAdSubmit($adId): Failed to bind form: " + formWithErrors.errors)
+            renderFailedEditMartFormWith(formWithErrors, mad)
+          },
+          {case (iik, logoImgIdOpt, mad2) =>
+            // Надо обработать логотип, который приходит в составе формы. Это можно делать независимо от самой MMartAd.
+            // Если выставлен tmp-логотип, то надо запустить обновление mshop.
+            val martId = mad.martId
+            MMart.getById(martId) flatMap {
+              case Some(mmart)  => updateLogo(logoImgIdOpt, mmart)
+              case None         => Future failed new NoSuchElementException(s"Mart not found: " + martId)
+            } onComplete entityLogoUpdatePf("mart", martId)
+            // TODO Проверить категорию.
+            ImgFormUtil.updateOrigImgId(
+              needImg = Some(ImgInfo(iik)),
+              oldImgId = Some(mad.picture)
+            ) flatMap { savedImgIds =>
+              // В списке сохраненных id картинок либо 1 либо 0 картинок.
+              if (!savedImgIds.isEmpty) {
+                mad2.id = mad.id
+                mad2.martId = mad.martId
+                mad2.shopId = mad.shopId
+                mad2.companyId = mad.companyId
+                mad2.picture = savedImgIds.head
+                mad2.save.map { _ =>
+                  Redirect(routes.MarketMartLk.martShow(martId))
+                    .flashing("success" -> "Изменения сохранены")
+                }
+
+              } else {
+                // Не удалось обработать картинку. Вернуть форму назад
+                debug(s"editShopAdSubmit($adId): Failed to update iik = " + iik)
+                val formWithError = formBinded.withError(AD_IMG_ID_K, "error.image.save")
+                renderFailedEditMartFormWith(formWithError, mad)
+              }
+            }
+          }
+        )
+
+      case Left(formWithGlobalError) =>
+        val formWithErrors = formWithGlobalError.bindFromRequest()
+        renderFailedEditShopFormWith(formWithErrors, mad)
+    }
+  }
+
+
+
+  // ========================== common-методы для Shop и ТЦ ==============================
+
+
+  /** Получение списков категорий на основе формы и владельца категорий. */
+  private def getMMCatsForCreate(af: AdFormM, catOwnerId: String): Future[MMartCategory.CollectMMCatsAcc_t] = {
+    val catIdOpt = af(CAT_ID_K).value.filter { _ => af.errors(CAT_ID_K).isEmpty }
+    catIdOpt match {
+      case Some(catId) =>
+        nearCatsList(catOwnerId=catOwnerId, catId=catId)
+          .filter { _.isEmpty }
+          .recoverWith { case ex: NoSuchElementException => topCatsAsAcc(catOwnerId) }
+
+      case None => topCatsAsAcc(catOwnerId)
+    }
+  }
+
+
+  private def getMMCatsForEdit(af: AdFormM, mad: MMartAd): Future[CollectMMCatsAcc_t] = {
+    val catOwnerId = mad.martId
+    mad.userCatId match {
+      case Some(catId) => nearCatsList(catOwnerId=catOwnerId, catId=catId)
+      case None => topCatsAsAcc(catOwnerId)
+    }
+  }
+
+  /** Асинхронно обновить логотип магазина или ТЦ. */
+  private def updateLogo(logoImgIdOpt: LogoOpt_t, entity: BuyPlaceT[_]): Future[_] = {
+    ImgFormUtil.updateOrigImgId(
+      needImg = logoImgIdOpt,
+      oldImgId = entity.logoImgId
+    ) flatMap {
+      case Nil if logoImgIdOpt.isDefined =>
+        Future failed new NoSuchElementException(s"Cannot save new logo for mart=${entity.id.get} . Ignoring...")
+      case savedImgIds =>
+        if (entity.logoImgId != savedImgIds.headOption) {
+          entity.logoImgId = savedImgIds.headOption
+          entity.save
+        } else {
+          Future successful ()
+        }
+    }
+  }
+
+  /** Логгинг для результатов асинхронного обновления логотипов. */
+  private def entityLogoUpdatePf(ent: String, entId: String): PartialFunction[Try[_], Unit] = {
+    case Success(_)  => trace(s"Logo for $ent=$entId updated ok")
+    case Failure(ex) => error(s"Cannot update logo for $ent=$entId", ex)
+  }
+
+  private def shopNotFound(shopId: ShopId_t) = NotFound("Shop not found: " + shopId)
+  private def martNotFound(martId: MartId_t) = NotFound("Mart not found: " + martId)
   private def adEditWrong = Forbidden("Nobody cat edit this ad using this action.")
+
 }

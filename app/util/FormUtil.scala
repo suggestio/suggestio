@@ -19,13 +19,16 @@ object FormUtil {
   val strIdentityF = {s:String => s}
   val strTrimF = {s: String => s.trim }
   val strTrimSanitizeF = {s:String =>
+    // TODO Исключить двойные пробелы
     stripAllPolicy.sanitize(s).trim
   }
   val strTrimBrOnlyF = {s: String =>
+    // TODO прогонять через HtmlCompressor
     brOnlyPolicy.sanitize(s).trim
   }
-  val strTrimSanitizeLowerF = strTrimSanitizeF andThen {_.toLowerCase}
+  val strTrimSanitizeLowerF = strTrimSanitizeF andThen { _.toLowerCase }
   val strFmtTrimF = {s: String =>
+    // TODO прогонять через HtmlCompressor
     textFmtPolicy.sanitize(s).trim
   }
 
