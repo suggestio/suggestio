@@ -167,8 +167,8 @@ case class MMartAdIndexed(
       acc.array(USER_CAT_STR_ESFN, userCatStr : _*)
   }
 
-  override def esIndexName: String = inx2.targetEsInxName
-  override def esTypeName: String  = inx2.esTypeName
+  override protected def esIndexName: String = inx2.targetEsInxName
+  override protected def esTypeName: String  = inx2.esType
 
   /**
    * Удалить текущий документ из хранилища. Если ключ не выставлен, то сразу будет экзепшен.

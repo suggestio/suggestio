@@ -9,5 +9,5 @@ package io.suggest.ym
 package object model {
 
   type AdShowLevel = AdShowLevels.AdShowLevel
-
+  type MMartAdOfferType = MMartAdOfferTypes.MMartAdOfferType
 }

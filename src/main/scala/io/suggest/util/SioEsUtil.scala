@@ -44,6 +44,7 @@ object SioEsUtil extends MacroLogsImpl {
   val WORD_DELIM_FN = "fWordDelim"
 
   val STD_TN        = "tStd"
+  val DFLT_AN       = "default"
 
   /**
    * Создать параллельно пачку одинаковых индексов.
@@ -301,9 +302,10 @@ object SioEsUtil extends MacroLogsImpl {
         tokenizers = Seq(new TokenizerStandard(STD_TN)),
         analyzers = Seq(
           AnalyzerCustom(
-            id = "default",
+            id = DFLT_AN,
+            charFilters = Seq("html_strip"),
             tokenizer = STD_TN,
-            filters = Seq(STD_FN, WORD_DELIM_FN, LOWERCASE_FN, STOP_EN_FN, STOP_RU_FN, STEM_RU_FN, STEM_EN_FN)
+            filters = List(STD_FN, WORD_DELIM_FN, LOWERCASE_FN, STOP_EN_FN, STOP_RU_FN, STEM_RU_FN, STEM_EN_FN)
           )
         )
       )
@@ -433,6 +435,7 @@ trait Renderable {
 
 // Объявление настроек верхнего уровня
 case class IndexSettings(
+  charFilters: Seq[CharFilter] = Nil,
   analyzers : Seq[Analyzer] = Nil,
   tokenizers :Seq[Tokenizer] = Nil,
   filters : Seq[Filter] = Nil,
@@ -514,6 +517,7 @@ trait TypedJsonObject extends JsonObject {
 trait Analyzer extends TypedJsonObject
 case class AnalyzerCustom(
   id : String,
+  charFilters: Seq[String] = Nil,
   tokenizer: String,
   filters : Seq[String]
 ) extends Analyzer {
@@ -522,8 +526,12 @@ case class AnalyzerCustom(
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
-    b.field("tokenizer", tokenizer)
-     .array("filter", filters : _*)
+    if (!charFilters.isEmpty)
+      b.array("char_filter", charFilters : _*)
+    if (tokenizer != null)
+      b.field("tokenizer", tokenizer)
+    if (!filters.isEmpty)
+     b.array("filter", filters : _*)
   }
 }
 // END анализаторы -----------------------------------------------------------------------------------------------------
@@ -633,6 +641,10 @@ case class FilterEdgeNgram(
       b.field("side", side)
   }
 }
+
+
+trait CharFilter extends TypedJsonObject
+
 
 // END фильтры ---------------------------------------------------------------------------------------------------------
 

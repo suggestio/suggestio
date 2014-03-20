@@ -395,8 +395,8 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
 
   @JsonIgnore def companion: EsModelMinimalStaticT[E]
 
-  @JsonIgnore def esTypeName = companion.ES_TYPE_NAME
-  @JsonIgnore def esIndexName = ES_INDEX_NAME
+  @JsonIgnore protected def esTypeName = companion.ES_TYPE_NAME
+  @JsonIgnore protected def esIndexName = ES_INDEX_NAME
 
   @JsonIgnore def toJson: XContentBuilder
 

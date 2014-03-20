@@ -68,7 +68,7 @@ object MMart extends EsModelStaticT[MMart] {
     address = null,
     town = null,
     siteUrl = None,
-    personIds = null,
+    personIds = Nil,
     phone = None
   )
 
@@ -145,16 +145,20 @@ case class MMart(
   var logoImgId     : Option[String] = None,
   id                : Option[MMart.MartId_t] = None,
   var dateCreated   : DateTime = null
-) extends EsModelT[MMart] with MCompanySel with CompanyShopsSel with MartShopsSel {
+) extends EsModelT[MMart] with BuyPlaceT[MMart] with MCompanySel with CompanyShopsSel with MartShopsSel {
   def martId = id.get
   def companion = MMart
 
   def mainPersonId = personIds.lastOption
 
+
+  /** Перед сохранением можно проверять состояние экземпляра. */
+  override def isFieldsValid: Boolean = {
+    super.isFieldsValid &&
+      companyId != null && name != null && town != null && address != null && personIds != null
+  }
+
   def writeJsonFields(acc: XContentBuilder) {
-    if (companyId == null || name == null || town == null || address == null) {
-      throw new IllegalStateException("companyId or name is null")
-    }
     acc.field(COMPANY_ID_ESFN, companyId)
       .field(NAME_ESFN, name)
       .field(TOWN_ESFN, town)

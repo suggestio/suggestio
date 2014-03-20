@@ -5,7 +5,7 @@ import org.elasticsearch.common.xcontent.{XContentFactory, XContentBuilder}
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.SioConstants._
 import EsModel._
-import io.suggest.util.{MacroLogsImpl, JacksonWrapper}
+import io.suggest.util.{SioEsUtil, MacroLogsImpl, JacksonWrapper}
 import MShop.ShopId_t, MMart.MartId_t
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
@@ -15,6 +15,7 @@ import scala.collection.JavaConversions._
 import scala.util.{Failure, Success}
 import io.suggest.model.inx2.MMartInx
 import org.elasticsearch.action.search.SearchResponse
+import com.fasterxml.jackson.annotation.JsonIgnore
 
 /**
  * Suggest.io
@@ -31,7 +32,8 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
   val ES_TYPE_NAME      = "martAd"
 
   val PICTURE_ESFN      = "picture"
-  val OFFER_ESFN        = "offers"
+  val OFFERS_ESFN       = "offers"
+  val OFFER_BODY_ESFN   = "offerBody"
   val VENDOR_ESFN       = "vendor"
   val MODEL_ESFN        = "model"
   val PRICE_ESFN        = "price"
@@ -40,6 +42,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
   // Категория по дефолту задана через id. Но при индексации заполняется ещё str, который include in all и помогает в поиске.
   val USER_CAT_ID_ESFN  = "userCat.id"
   val SHOW_LEVELS_ESFN  = "showLevels"
+  val OFFER_TYPE_ESFN   = "offerType"
 
   val FONT_ESFN         = "font"
   val SIZE_ESFN         = "size"
@@ -47,6 +50,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
   val TEXT_ALIGN_ESFN   = "textAlign"
   val ALIGN_ESFN        = "align"
 
+  val TEXT_ESFN         = "text"
   val TEXT1_ESFN        = "text1"
   val TEXT2_ESFN        = "text2"
   val DISCOUNT_ESFN     = "discount"
@@ -94,14 +98,32 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
     case (PRIO_ESFN, value)         => acc.prio = Option(intParser(value))
     case ("userCatId", value)       => acc.userCatId = Option(stringParser(value))    // TODO Удалить после 2014.apr.01
     case (USER_CAT_ID_ESFN, value)  => acc.userCatId = Option(stringParser(value))
-    case (OFFER_ESFN, value: java.util.ArrayList[_]) =>
+    case (OFFERS_ESFN, value: java.util.ArrayList[_]) =>
       acc.offers = value.toList.map {
         case jsObject: java.util.HashMap[_, _] =>
-          if (jsObject containsKey VENDOR_ESFN)
-            JacksonWrapper.convert[MMartAdProduct](jsObject)
-          else if (jsObject containsKey DISCOUNT_ESFN)
-            JacksonWrapper.convert[MMartAdDiscount](jsObject)
-          else ???
+          jsObject.get(OFFER_TYPE_ESFN) match {
+            case ots: String =>
+              MMartAdOfferTypes.maybeWithName(ots) match {
+                case Some(ot) =>
+                  val offerBody = jsObject.get(OFFER_BODY_ESFN)
+                  import MMartAdOfferTypes._
+                  ot match {
+                    case PRODUCT  => MMartAdProduct.deserialize(offerBody)
+                    case DISCOUNT => MMartAdDiscount.deserialize(offerBody)
+                    case TEXT     => MMartAdText.deserialize(offerBody)
+                  }
+
+                case None => ???
+              }
+            // совместимость со старыми объектами, когда не было поля типа оффера. TODO Удалить после 2014.mart.25
+            case null =>
+              if (jsObject containsKey VENDOR_ESFN)
+                JacksonWrapper.convert[MMartAdProduct](jsObject)
+              else if (jsObject containsKey DISCOUNT_ESFN)
+                JacksonWrapper.convert[MMartAdDiscount](jsObject)
+              else ???
+          }
+
       }
     case (PANEL_ESFN, value)        => acc.panel = Option(JacksonWrapper.convert[MMartAdPanelSettings](value))
     case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = JacksonWrapper.convert[MMartAdTextAlign](value)
@@ -127,7 +149,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       FieldNumber(VALUE_ESFN,  fieldType = DocFieldTypes.float,  index = FieldIndexingVariants.no,  include_in_all = iia)
     }
     // Поле приоритета. На первом этапе null или число.
-    val offerField = FieldNestedObject(OFFER_ESFN,  enabled = true, properties = Seq(
+    val offerBodyProps = Seq(
       // product-поля
       FieldObject(VENDOR_ESFN, properties = Seq(stringValueField(1.5F), fontField)),
       FieldObject(MODEL_ESFN, properties = Seq(stringValueField(), fontField)),
@@ -138,7 +160,18 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       FieldObject(TEXT1_ESFN, properties = Seq(stringValueField(1.1F), fontField)),
       FieldObject(DISCOUNT_ESFN, properties = Seq(floatValueField(iia = true), fontField)),
       FieldObject(DISCOUNT_TPL_ESFN, enabled = false, properties = Nil),
-      FieldObject(TEXT2_ESFN, properties = Seq(stringValueField(0.9F), fontField))
+      FieldObject(TEXT2_ESFN, properties = Seq(stringValueField(0.9F), fontField)),
+      // text-поля
+      FieldObject(TEXT_ESFN, properties = Seq(
+        // HTML будет пострипан тут автоматом.
+        FieldString(VALUE_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
+        stringValueField(),
+        fontField
+      ))
+    )
+    val offersField = FieldNestedObject(OFFERS_ESFN, enabled = true, properties = Seq(
+      FieldString(OFFER_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldObject(OFFER_BODY_ESFN, enabled = true, properties = offerBodyProps)
     ))
     List(
       FieldString(COMPANY_ID_ESFN,  index = FieldIndexingVariants.no,  include_in_all = false),
@@ -149,7 +182,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       FieldString(USER_CAT_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
       FieldObject(PANEL_ESFN,  enabled = false,  properties = Nil),
       FieldNumber(PRIO_ESFN,  fieldType = DocFieldTypes.integer,  index = FieldIndexingVariants.not_analyzed,  include_in_all = false),
-      offerField,
+      offersField,
       FieldString(SHOW_LEVELS_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed)
     )
   }
@@ -299,7 +332,7 @@ trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
       panel.get.render(acc)
     // Загружаем офферы
     if (!offers.isEmpty) {
-      acc.startArray(OFFER_ESFN)
+      acc.startArray(OFFERS_ESFN)
         offers foreach { _ renderJson acc }
       acc.endArray()
     }
@@ -339,14 +372,37 @@ trait MMartAdWrapperT[T <: MMartAdT[T]] extends MMartAdT[T] {
 }
 
 
-trait MMartAdOfferT extends Serializable {
-  def isProduct: Boolean
-  def renderFields(acc: XContentBuilder)
+sealed trait MMartAdOfferT extends Serializable {
+  @JsonIgnore def offerType: MMartAdOfferType
   def renderJson(acc: XContentBuilder) {
     acc.startObject()
-    renderFields(acc)
+    acc.field(OFFER_TYPE_ESFN, offerType.toString)
+    val offerBodyJson = JacksonWrapper.serialize(this)
+    acc.rawField(OFFER_BODY_ESFN, offerBodyJson.getBytes)
     acc.endObject()
   }
+}
+
+/** Известные системе типы офферов. */
+object MMartAdOfferTypes extends Enumeration {
+  type MMartAdOfferType = Value
+
+  val PRODUCT   = Value("p")
+  val DISCOUNT  = Value("d")
+  val TEXT      = Value("t")
+
+  def maybeWithName(n: String): Option[MMartAdOfferType] = {
+    try {
+      Some(withName(n))
+    } catch {
+      case ex: Exception => None
+    }
+  }
+}
+
+
+object MMartAdProduct {
+  def deserialize(jsObject: Any) = JacksonWrapper.convert[MMartAdProduct](jsObject)
 }
 
 case class MMartAdProduct(
@@ -354,46 +410,30 @@ case class MMartAdProduct(
   price:    MMAdFloatField,
   oldPrice: Option[MMAdFloatField]
 ) extends MMartAdOfferT {
-
-  def isProduct = true
-
-  def renderFields(acc: XContentBuilder) {
-    acc.field(VENDOR_ESFN)
-    vendor.render(acc)
-    if (oldPrice.isDefined) {
-      acc.field(OLD_PRICE_ESFN)
-      oldPrice.get.render(acc)
-    }
-    acc.field(PRICE_ESFN)
-    price.render(acc)
-  }
+  @JsonIgnore def offerType = MMartAdOfferTypes.PRODUCT
 }
 
+object MMartAdDiscount {
+  def deserialize(jsObject: Any) = JacksonWrapper.convert[MMartAdDiscount](jsObject)
+}
 case class MMartAdDiscount(
   text1: Option[MMAdStringField],
   discount: MMAdFloatField,
-  template: DiscountTemplate,
+  template: MMartAdDiscountTemplate,
   text2: Option[MMAdStringField]
 ) extends MMartAdOfferT {
-
-  def isProduct = false
-
-  def renderFields(acc: XContentBuilder) {
-    if (text1.isDefined) {
-      acc.field(TEXT1_ESFN)
-      text1.get.render(acc)
-    }
-    acc.field(DISCOUNT_ESFN)
-    discount.render(acc)
-    template.render(acc)
-    if (text2.isDefined) {
-      acc.field(TEXT2_ESFN)
-      text2.get.renderFields(acc)
-    }
-  }
+  @JsonIgnore def offerType = MMartAdOfferTypes.DISCOUNT
 }
 
-case class DiscountTemplate(id: Int, color: String) {
+object MMartAdText {
+  def deserialize(jsObject: Any) = JacksonWrapper.convert[MMartAdText](jsObject)
+}
+case class MMartAdText(text: MMAdStringField) extends MMartAdOfferT {
+  @JsonIgnore def offerType = MMartAdOfferTypes.TEXT
+}
+
+
+case class MMartAdDiscountTemplate(id: Int, color: String) {
   def render(acc: XContentBuilder) {
     acc.startObject(DISCOUNT_TPL_ESFN)
       .field("id", id)

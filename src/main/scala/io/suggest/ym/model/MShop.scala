@@ -112,12 +112,18 @@ object MShop extends EsModelStaticT[MShop] {
    * @param sortField Название поля, по которому надо сортировать результаты.
    * @param isReversed Если true, то сортировать будем в обратном порядке.
    *                   Игнорируется, если sortField не задано.
+   * @param onlyEnabled Если true, то будет фильтр settings.supIsEnabled = true.
    * @return Список MShop в неопределённом порядке.
    */
-  def findByMartId(martId: MartId_t, sortField: Option[String] = None, isReversed:Boolean = false)(implicit ec:ExecutionContext, client: Client): Future[Seq[MShop]] = {
+  def findByMartId(martId: MartId_t, sortField: Option[String] = None, isReversed:Boolean = false, onlyEnabled: Boolean = false)(implicit ec:ExecutionContext, client: Client): Future[Seq[MShop]] = {
+    var query: QueryBuilder = martIdQuery(martId)
+    if (onlyEnabled) {
+      val isEnabledFilter = FilterBuilders.termFilter(SETTING_SUP_IS_ENABLED, true)
+      query = QueryBuilders.filteredQuery(query, isEnabledFilter)
+    }
     val req = client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
-      .setQuery(martIdQuery(martId))
+      .setQuery(query)
     if (sortField.isDefined)
       req.addSort(sortField.get, isReversed2sortOrder(isReversed))
     req.execute()
@@ -316,7 +322,7 @@ case class MShop(
   var logoImgId   : Option[String] = None,
   var settings    : MShopSettings = new MShopSettings,
   var dateCreated : DateTime = null
-) extends EsModelT[MShop] with MCompanySel with MMartOptSel with CompanyMartsSel with ShopPriceListSel with MShopOffersSel {
+) extends EsModelT[MShop] with BuyPlaceT[MShop] with MCompanySel with MMartOptSel with CompanyMartsSel with ShopPriceListSel with MShopOffersSel {
 
   def companion = MShop
   def shopId = id.get
@@ -381,6 +387,9 @@ case class MShop(
     }
     fut
   }
+
+
+  def hasTopLevelAccess = settings.supWithLevels contains AdShowLevels.LVL_MART_SHOWCASE
 }
 
 
