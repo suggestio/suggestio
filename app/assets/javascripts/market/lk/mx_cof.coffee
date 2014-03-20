@@ -187,6 +187,7 @@ CbcaSearch = () ->
         $('#shop-list').hide()
         self.search($this.attr('data-mart-id'), $this.val())
       else
+        $('#search-results').html('')
         $('#shop-list').show()
 
   self.init()
@@ -280,16 +281,20 @@ CbcaShop =
     ###################################
     ## Включение/выключение магазина ##
     ###################################
-    $(document).on 'click', '#shop-list .enable-but', ->
-      $shop = $(this).closest('.item')
+    $(document).on 'click', '.renters-list .enable-but', ->
+      shopId = $(this).closest('.item').attr('data-shop')
+      $shop = $('#shop-list').find('.item[data-shop = "'+shopId+'"]')
 
       if(!$shop.hasClass('enabled'))
         $shop.addClass('enabled')
+        $(this).closest('.item').addClass('enabled')
         cbca.shop.enableShop($shop.attr('data-shop'))
 
 
-    $(document).on 'click', '#shop-list .disable-but', ->
-      $shop = $(this).closest('.item')
+    $(document).on 'click', '.renters-list .disable-but', ->
+      shopId = $(this).closest('.item').attr('data-shop')
+      $shop = $('#shop-list').find('.item[data-shop = "'+shopId+'"]')
+
       if($shop.hasClass('enabled'))
         cbca.shop.disableShop($shop.attr('data-shop'))
 

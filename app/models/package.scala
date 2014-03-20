@@ -33,6 +33,7 @@ package object models {
   // Начинаем MMartAd и смежные объекты.
   val  MMartAd          = io.suggest.ym.model.MMartAd
   type MMartAd          = io.suggest.ym.model.MMartAd
+  type MMartAdT         = io.suggest.ym.model.MMartAdT[_]
 
   val MMartAdOfferTypes = io.suggest.ym.model.MMartAdOfferTypes
   type MMartAdOfferType = io.suggest.ym.model.MMartAdOfferType

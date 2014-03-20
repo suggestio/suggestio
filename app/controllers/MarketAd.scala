@@ -50,7 +50,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     val getForClass: PartialFunction[MMartAdOfferT, MMartAdOfferType] = {
       case _: MMartAdProduct  => PRODUCT
       case _: MMartAdDiscount => DISCOUNT
-      case _: MMartAdText     => TEXT
+      case _: MMartAdText     => MMartAdOfferTypes.TEXT
     }
 
     def getFormForClass(c: MMartAdOfferT): AdFormM = {
