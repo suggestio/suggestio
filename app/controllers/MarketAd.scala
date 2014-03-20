@@ -17,6 +17,7 @@ import models.AdShowLevels.AdShowLevel
 import TextAlignValues.TextAlignValue
 import MMartCategory.CollectMMCatsAcc_t
 import scala.util.{Try, Failure, Success}
+import util.HtmlSanitizer.adTextFmtPolicy
 
 /**
  * Suggest.io
@@ -179,7 +180,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   /** Форма для задания текстовой рекламы. */
   val adTextM = {
     val textM = nonEmptyText(maxLength = 200)
-      .transform(strFmtTrimF, strIdentityF)
+      .transform({ adTextFmtPolicy.sanitize }, strIdentityF)
       .verifying("text.too.len", { _.length <= 160 })
 
     mapping(

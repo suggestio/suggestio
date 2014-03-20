@@ -37,4 +37,11 @@ object HtmlSanitizer {
     .allowCommonInlineFormattingElements()
     .toFactory
 
+  /** Политика текстового форматирования для MMartAdText офферов. */
+  val adTextFmtPolicy = new HtmlPolicyBuilder()
+    .allowElements("span")
+    // TODO нужно добавить .matching с указанием допустимых значений span.class
+    .allowAttributes("class").onElements("span")
+    .toFactory
+
 }
