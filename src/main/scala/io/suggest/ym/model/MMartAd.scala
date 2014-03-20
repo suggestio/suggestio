@@ -9,7 +9,7 @@ import io.suggest.util.{SioEsUtil, MacroLogsImpl, JacksonWrapper}
 import MShop.ShopId_t, MMart.MartId_t
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
 import io.suggest.event.{AdSavedEvent, SioNotifierStaticClientI}
 import scala.collection.JavaConversions._
 import scala.util.{Failure, Success}
@@ -90,13 +90,34 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       .map { searchResp2list }
   }
 
+  /**
+   * Поиск карточек в рамках ТЦ.
+   * @param martId id ТЦ
+   * @param shopMustMiss true, если нужно найти карточки, не относящиеся к магазинам. Т.е. собственные
+   *                     карточки ТЦ.
+   *                     false - в выдачу также попадут карточки магазинов.
+   * @return Список карточек, относящихся к ТЦ.
+   */
+  def findForMart(martId: MartId_t, shopMustMiss: Boolean)(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartAd]] = {
+    var query: QueryBuilder = QueryBuilders.termQuery(MART_ID_ESFN, martId)
+    if (shopMustMiss) {
+      val shopMissingFilter = FilterBuilders.missingFilter(SHOP_ID_ESFN)
+      query = QueryBuilders.filteredQuery(query, shopMissingFilter)
+    }
+    client.prepareSearch(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(query)
+      .execute()
+      .map { searchResp2list }
+  }
+
+
   def applyKeyValue(acc: MMartAd): PartialFunction[(String, AnyRef), Unit] = {
     case (MART_ID_ESFN, value)      => acc.martId = martIdParser(value)
     case (SHOP_ID_ESFN, value)      => acc.shopId = Option(shopIdParser(value))
     case (COMPANY_ID_ESFN, value)   => acc.companyId = companyIdParser(value)
     case (PICTURE_ESFN, value)      => acc.picture = stringParser(value)
     case (PRIO_ESFN, value)         => acc.prio = Option(intParser(value))
-    case ("userCatId", value)       => acc.userCatId = Option(stringParser(value))    // TODO Удалить после 2014.apr.01
     case (USER_CAT_ID_ESFN, value)  => acc.userCatId = Option(stringParser(value))
     case (OFFERS_ESFN, value: java.util.ArrayList[_]) =>
       acc.offers = value.toList.map {
