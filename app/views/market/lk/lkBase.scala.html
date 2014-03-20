@@ -29,6 +29,11 @@
 
 <body class="lk">
 
+  @* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
+  @ctx.flashMap.map { case (flashStatus, flashMsg) =>
+    @flashStatus -> @flashMsg
+  }
+
   <div class="header-wrap">
 
     <div class="center">
