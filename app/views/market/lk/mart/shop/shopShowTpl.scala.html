@@ -6,13 +6,14 @@
 
 @import ctx._
 @import helper._
+
+@lkBase(mshop.name) {
+
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.MarketMartLk.shopOnOffForm,
   routes.javascript.MarketMartLk.shopOnOffSubmit,
   routes.javascript.MarketMartLk.setShopTopLevelAvailable
 )
-
-@lkBase(mshop.name) {
 
   <div class="title-wrap">
     <div class="center">

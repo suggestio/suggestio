@@ -1,7 +1,8 @@
 import akka.actor.Cancellable
+import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
 import io.suggest.model.EsModel
 import org.elasticsearch.client.Client
-import play.api.mvc.{SimpleResult, RequestHeader}
+import play.api.mvc.{WithFilters, SimpleResult, RequestHeader}
 import scala.concurrent.{Await, Future, future}
 import scala.util.{Failure, Success}
 import util.{Crontab, SiowebEsUtil, SiowebSup}
@@ -20,7 +21,7 @@ import play.api.libs.concurrent.Execution.Implicits._
  * http://www.playframework.com/documentation/2.1.0/ScalaGlobal
  */
 
-object Global extends GlobalSettings {
+object Global extends WithFilters(HTMLCompressorFilter()) {
 
   // Логгеры тут работают через вызов Logger.*
   import Logger._

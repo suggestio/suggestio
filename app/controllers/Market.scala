@@ -26,7 +26,7 @@ object Market extends SioController with PlayMacroLogsImpl {
     IndicesUtil.getInxFormMartCached(martId) flatMap {
       case Some(mmartInx) =>
         MMartAdIndexed.findForLevel(AdShowLevels.LVL_MART_SHOWCASE, mmartInx) map { ads =>
-          val html = indexTpl(ads).toString.split("\n").map(_.trim.filter(_ >= ' ')).mkString
+          val html = indexTpl(ads).toString
           val jsonHtml = JsObject(Seq(
             "html" -> JsString(html)
           ))

@@ -1,6 +1,6 @@
 @(ad: MMartAdIndexed, isHidden: Boolean = false)(implicit ctx: util.Context)
 
-<div class="sm-offer @if( isHidden == true ){ sm-hidden-offer }">
+<div class="sm-offer @if(isHidden){ sm-hidden-offer }">
 
   <div class="offer-header">
     <img src="">
@@ -43,6 +43,6 @@
     </div>
   </div>
 
-  <img class="poster-photo" data-width="1575" data-height="1181" src="http://www.peoples.ru/art/fashion/brands/frankie_morello/frankie_5.jpg">
+  <img class="poster-photo" data-width="1575" data-height="1181" src="@routes.Img.getOrig(ad.picture)"/>
 
 </div>
