@@ -1,4 +1,5 @@
 import akka.actor.Cancellable
+import com.googlecode.htmlcompressor.compressor.HtmlCompressor
 import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
 import io.suggest.model.EsModel
 import org.elasticsearch.client.Client
@@ -10,7 +11,6 @@ import play.api.Play._
 import play.api._
 import scala.concurrent.duration._
 import models._
-import play.api.libs.concurrent.Execution.Implicits._
 
 /**
  * Suggest.io
@@ -21,11 +21,10 @@ import play.api.libs.concurrent.Execution.Implicits._
  * http://www.playframework.com/documentation/2.1.0/ScalaGlobal
  */
 
-object Global extends WithFilters(HTMLCompressorFilter()) {
+object Global extends WithFilters(SioHTMLCompressorFilter()) {
 
   // Логгеры тут работают через вызов Logger.*
   import Logger._
-
   import scala.concurrent.ExecutionContext.Implicits.global
 
   implicit private def sioNotifier = util.event.SiowebNotifier
@@ -133,5 +132,27 @@ object Global extends WithFilters(HTMLCompressorFilter()) {
     }
   }
 
+}
+
+
+/**
+ * Defines a user-defined HTML compressor filter.
+ */
+object SioHTMLCompressorFilter {
+
+  /**
+   * Сборка сжимающего html-фильтра.
+   * @return The HTML compressor filter.
+   */
+  def apply() = new HTMLCompressorFilter({
+    val compressor = new HtmlCompressor()
+    compressor.setPreserveLineBreaks(Play.isDev)
+    compressor.setRemoveComments(!Play.isDev)
+    compressor.setRemoveIntertagSpaces(true)
+    compressor.setRemoveHttpProtocol(true)
+    compressor.setRemoveHttpsProtocol(true)
+    // Для сжатия инлайновых css/js блоков надо переместить их в соответствующие файлы в /app/assets/.
+    compressor
+  })
 }
 
