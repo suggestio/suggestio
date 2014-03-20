@@ -2,11 +2,49 @@
 
 @* Шаблон рендера html-части письма-приглашения, отправляемого владельцу магазина. *@
 
-Ваш магазин пригласили участвовать в поисковой системе suggest.io.
 
-<p>Магазин: @mshop.name</p>
-<p>Торговый центр: @mmart.name</p>
-<p>Для подтверждения регистрации пройдите по
-   <a href="@ctx.myAudienceUrl@routes.MarketShopLk.inviteAccept(shopId=eAct.key, eaId=eAct.id.get)">этой ссылке</a>.</p>
-
-<p>Это письмо отправлено автоматически. Пожалуйста, не отвечайте на это сообщение.</p>
+<table border="0" cellpadding="0" cellspacing="0" style="width: 540px;">
+  <tr>
+    <td>
+      <a href="https://suggest.io" style="display: block; width: 120px; height: 124px; margin: 0 auto;
+      text-decoration: none; background: url('http://@ctx.request.host/assets/images/market/mail/logo.png') no-repeat center center">&nbsp;</a>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 20px 0; border-bottom: 1px solid #9A9B9B; text-align: center; background: #EFEFEF;">
+      <div style="background: url('http://@ctx.request.host/assets/images/market/mail/title.png') no-repeat center center;
+      display: inline-block; width: 262px; height: 25px;">&nbsp;</div>
+    </td>
+  </tr>
+  <tr>
+    <td style="background: #E1E1E1;">
+      <div style="padding-left: 82px; background: url('http://@ctx.request.host/assets/images/market/mail/ok.png') no-repeat 25px center;
+      font-family: 'Arial'; font-size: 18px; color: #48ab38; text-shadow: 1px 1px 1px #FFFFFF;
+      padding-top: 30px; padding-bottom: 30px;">
+         ТК Stokmann одобрил ваше подключение.
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td style="background: #E1E1E1;">
+      <div style="padding-left: 90px; padding-bottom: 30px; font-size: 14px; color: #232323; font-family: 'Arial'; ">
+        Для начала работы перейдите
+        <a style="color: #4f88a9; text-decoration: none;" href="@ctx.myAudienceUrl@routes.MarketShopLk.inviteAccept(shopId=eAct.key, eaId=eAct.id.get)">по ссылке →</a>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td style="background: #E1E1E1;">
+      <div style="padding-left: 90px; padding-bottom: 40px; font-size: 14px; font-family: 'Arial'; color: #979797;">
+        Если вы получили это письмо по ошибке, удалите его, не предпринимая никаких действий.
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div style="padding-left: 90px; padding-top: 20px; font-size: 10px; font-family: 'Arial'; color: #a3a3a3;">
+         © 2011-2014 Suggest.io. Все права защищены
+      </div>
+    </td>
+  </tr>
+</table>
