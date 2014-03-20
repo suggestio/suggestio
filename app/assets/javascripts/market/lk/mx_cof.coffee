@@ -212,23 +212,7 @@ CbcaCommon = () ->
 
       $('#'+formId).trigger('submit')
 
-    $(document).on 'click', '#first-page-triger .enable-but', ->
-      $shop = $(this).closest('.triger-wrap')
-      $shop.addClass('enabled')
-      jsRoutes.controllers.MarketMartLk.setShopTopLevelAvailable($shop.attr('data-shop')).ajax(
-        type: 'POST'
-        data:
-          'isEnabled': true
-      )
 
-    $(document).on 'click', '#first-page-triger .disable-but', ->
-      $shop = $(this).closest('.triger-wrap')
-      $shop.removeClass('enabled')
-      jsRoutes.controllers.MarketMartLk.setShopTopLevelAvailable($shop.attr('data-shop')).ajax(
-        type: 'POST'
-        data:
-          'isEnabled': false
-      )
 
 
 
@@ -329,6 +313,31 @@ CbcaShop =
             $('#disable-shop').remove()
             $('*[data-shop = "'+data.shopId+'"]').removeClass('enabled')
       )
+
+    ###################################################
+    ## Включение/выключение первой страницы магазина ##
+    ###################################################
+    $(document).on 'click', '#first-page-triger .enable-but', ->
+      $shop = $(this).closest('.triger-wrap')
+      if(!$shop.hasClass('enabled'))
+        $shop.addClass('enabled')
+        jsRoutes.controllers.MarketMartLk.setShopTopLevelAvailable($shop.attr('data-shop')).ajax(
+          type: 'POST'
+          data:
+            'isEnabled': true
+        )
+
+    $(document).on 'click', '#first-page-triger .disable-but', ->
+      $shop = $(this).closest('.triger-wrap')
+      if($shop.hasClass('enabled'))
+        $shop.removeClass('enabled')
+        jsRoutes.controllers.MarketMartLk.setShopTopLevelAvailable($shop.attr('data-shop')).ajax(
+          type: 'POST'
+          data:
+            'isEnabled': false
+        )
+
+
 ##################
 ## CbcaShop end ##
 ##################
