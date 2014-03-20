@@ -1,4 +1,4 @@
-@(ads: Seq[MMartAdIndexed])(implicit ctx: util.Context)
+@(mmart: MMart, ads: Seq[MMartAdIndexed], shops: Map[ShopId_t, MShop])(implicit ctx: util.Context)
 
 @* Начальная страница для sio-market. *@
 
@@ -26,9 +26,10 @@
         @* TODO Надо что-то отобразить, когда нет рекламы в ТЦ. *@
         Нет рекламы
       } else {
-        @_single_offer(ads.head)
         @ads.map { ad =>
-          @_single_offer(ad, isHidden=true)
+          shops.get(shopId) map {
+            @_single_offer(ad, mmart, ad.shopId.flatMap(shops.get), isHidden = ad eq ads.head)
+          }
         }
       }
     </div>

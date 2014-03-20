@@ -12,9 +12,11 @@ package object models {
 
   type MMart            = io.suggest.ym.model.MMart
   val  MMart            = io.suggest.ym.model.MMart
+  type MartId_t         = MMart.MartId_t
 
   type MShop            = io.suggest.ym.model.MShop
   val  MShop            = io.suggest.ym.model.MShop
+  type ShopId_t         = MShop.ShopId_t
 
   type MShopPriceList   = io.suggest.ym.model.MShopPriceList
   val  MShopPriceList   = io.suggest.ym.model.MShopPriceList

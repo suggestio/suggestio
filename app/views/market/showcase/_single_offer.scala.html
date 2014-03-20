@@ -1,9 +1,11 @@
-@(ad: MMartAdIndexed, isHidden: Boolean = false)(implicit ctx: util.Context)
+@(ad: MMartAdIndexed, mmart: MMart, mshopOpt: Option[MShop], isHidden: Boolean = false)(implicit ctx: util.Context)
 
 <div class="sm-offer @if(isHidden){ sm-hidden-offer }">
 
   <div class="offer-header">
-    <img src="">
+    @mshopOpt.flatMap(_.logoImgId).orElse(mmart.logoImgId).map { logoImgId =>
+      <img src="@routes.Img.getOrig(logoImgId)" alt="Logo"/>
+    }
   </div>
 
   <div class="offer-details">
@@ -18,11 +20,18 @@
           }
           <div class="new-price">@adProd.price.value р</div>
 
-          <div class="offer-location">
-            Этаж 5<br/>
-            Бутик 345<br/>
-            &laquo;Пространство уюта&raquo;
-          </div>
+          @* Если магазин не указан, то значит это рекламная карточка ТЦ. *@
+          @mshopOpt.map { mshop =>
+            <div class="offer-location">
+              @mshop.martFloor.map { martFloor =>
+                Этаж @martFloor<br/>
+              }
+              @mshop.martSection.map { martSection =>
+                Бутик @martSection<br/>
+              }
+              &laquo;@mshop.name&raquo;
+            </div>
+          }
         }
 
         case adDisco: MMartAdDiscount => {

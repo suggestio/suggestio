@@ -11,14 +11,15 @@ import play.api.Play, Play.current
  */
 object HtmlCompressUtil {
 
-  // Для сжатия инлайновых css/js блоков надо переместить их в соответствующие файлы в /app/assets/.
-  // Включение сжатия css/js прямо здесь приведёт к тормозам.
+  /** Компрессор. Используется в Global, но лучше бы его сделать private, т.к. он изменяемый. */
   val compressor = new HtmlCompressor()
   compressor.setPreserveLineBreaks(Play.isDev)
   compressor.setRemoveComments(!Play.isDev)
   compressor.setRemoveIntertagSpaces(true)
   compressor.setRemoveHttpProtocol(true)
   compressor.setRemoveHttpsProtocol(true)
+  // !!! Для сжатия инлайновых css/js блоков надо переместить их в соответствующие файлы в /app/assets/.
+  // !!! Включение сжатия css/js прямо здесь приведёт к тормозам.
 
 }
 
