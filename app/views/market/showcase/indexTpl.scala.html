@@ -28,7 +28,7 @@
       } else {
         @ads.map { ad =>
           shops.get(shopId) map {
-            @_single_offer(ad, mmart, ad.shopId.flatMap(shops.get), isHidden = ad eq ads.head)
+            @_single_offer(ad, mmart, ad.shopId.flatMap(shops.get), isHidden = !(ad eq ads.head))
           }
         }
       }
