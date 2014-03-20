@@ -21,10 +21,9 @@ $(document).ready ->
       selector:'textarea.tiny-mce',
       ode: "textareas",
       menubar : false,
-      plugins: "textcolor",
       statusbar : false,
       content_css: "/assets/javascripts/lib/tinymce/style-formats.css",
-      toolbar: "undo redo | styleselect | forecolor",
+      toolbar: "undo redo | styleselect",
       style_formats: [
         {
           title: 'Custom format 1'
