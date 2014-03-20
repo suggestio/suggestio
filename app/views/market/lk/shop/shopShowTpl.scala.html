@@ -5,6 +5,7 @@
 
 @import routes.MarketShopLk._
 @import ctx._
+@import AdShowLevels._
 
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.MarketAd.updateShowLevelSubmit
@@ -55,7 +56,22 @@
       addCall = routes.MarketAd.createShopAd(mshop.id.get),
       editCall = routes.MarketAd.editShopAd(_),
       mshopOpt = Some(mshop)
-    )
+    ) { mad =>
+      @* Галочки для управления отображением рекламной карточки магазина *@
+      <div class="controls">
+        <label>
+          <input class="one-checkbox" type="checkbox" data-level="@LVL_MART_SHOPS" data-adid="@mad.id.get" data-name="lvl-mart-shops"/>Выводить в общем каталоге
+        </label>
+        <label>
+          <input type="checkbox" data-level="@LVL_SHOP" data-adid="@mad.id.get" />Выводить в моём магазине
+        </label>
+        @defining(mshop.hasTopLevelAccess) { htl =>
+          <label@if(!htl){ class="inactive"}>
+            <input type="checkbox" data-level="@LVL_MART_SHOWCASE" data-adid="@mad.id.get"@if(!htl){ disabled="disabled"}/>Размещение на первом экране
+          </label>
+        }
+      </div>
+    }
 
   </div>
 
