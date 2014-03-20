@@ -72,9 +72,11 @@
             <label>
               <input type="checkbox" data-level="@LVL_SHOP" data-adid="@ad.id.get" />Выводить в моём магазине
             </label>
-            <label class="inactive">
-              <input type="checkbox" data-level="@LVL_MART_SHOWCASE" data-adid="@ad.id.get" disabled="disabled" />Размещение на первом экране
-            </label>
+            @defining(mshop.hasTopLevelAccess) { htl =>
+              <label@if(!htl){ class="inactive"}>
+                <input type="checkbox" data-level="@LVL_MART_SHOWCASE" data-adid="@ad.id.get"@if(!htl){ disabled="disabled"}/>Размещение на первом экране
+              </label>
+            }
           </div>
 
 
