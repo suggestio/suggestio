@@ -59,7 +59,11 @@
       @mads.zipWithIndex.map { case (ad, i) =>
 
         <div class="item" style="@if(i%3 != 1) {margin-right: 30px;}">
-          @market.showcase._single_offer(ad, mmart, Some(mshop))
+          <div class="preview">
+            <a class="hover" href="@routes.MarketAd.editShopAd(ad.id.get)">&nbsp;</a>
+
+            @market.showcase._single_offer(ad, mmart, Some(mshop))
+          </div>
 
           <div class="controls">
             <label>
