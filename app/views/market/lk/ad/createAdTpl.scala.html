@@ -1,11 +1,11 @@
 @(mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], dfltOfferType: MMartAdOfferType, backCall: Call, logoUploadCall: Call, submitCall: Call)(implicit ctx: util.Context)
 
-@* Рендер страницы редактирования существующего ТЦ. *@
+@* Рендер страницы с формой создания рекламы. *@
 @import ctx._
 
 
 @adFormBase(
-  title = "Создание рекламной карточки товара",
+  title = "Создание рекламной карточки",
   backCall = backCall
 ) {
 
