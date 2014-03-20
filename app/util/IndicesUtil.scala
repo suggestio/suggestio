@@ -147,7 +147,7 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
       } else {
         userCatStrFut map { userCatStrs =>
           val mmai = MMartAdIndexed(mmartAd, userCatStrs, shownLevels, mmartInx2)
-          trace(logPrefix + "Saving to index: " + mmai)
+          //trace(logPrefix + "Saving to index: " + mmai)
           mmai.save onComplete {
             case Success(savedAdId) => trace(logPrefix + "Ad inserted/updated into indexing: " + mmartInx2)
             case Failure(ex)        => error(logPrefix + "Faild to save AD into index", ex)
