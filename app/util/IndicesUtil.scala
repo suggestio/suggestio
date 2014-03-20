@@ -146,8 +146,10 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
         }
       } else {
         userCatStrFut map { userCatStrs =>
-          MMartAdIndexed(mmartAd, userCatStrs, allowedDisplayLevels, mmartInx2).save onComplete {
-            case Success(savedAdId) => trace(logPrefix + "Ad inserted/updated into indexing: " + savedAdId)
+          val mmai = MMartAdIndexed(mmartAd, userCatStrs, allowedDisplayLevels, mmartInx2)
+          //trace(logPrefix + "Saving to index: " + mmai)
+          mmai.save onComplete {
+            case Success(savedAdId) => trace(logPrefix + "Ad inserted/updated into indexing: " + mmartInx2)
             case Failure(ex)        => error(logPrefix + "Faild to save AD into index", ex)
           }
         }
@@ -218,7 +220,8 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
           // Нужно сделать примерно тоже, что и в handleAdSaved
           maybeCollectUserCatStr(mad.userCatId) map { userCatsStrs =>
             val adShowLevels = mad.showLevels intersect showShowLevels
-            MMartAdIndexed(mad, userCatsStrs, adShowLevels, mmartInxOpt.get).indexRequestBuilder
+            val mmadI = MMartAdIndexed(mad, userCatsStrs, adShowLevels, mmartInxOpt.get)
+            mmadI.indexRequestBuilder
           }
         } flatMap { adsIrbs =>
           // Набор index-реквестов обернуть в bulk и отправить.
