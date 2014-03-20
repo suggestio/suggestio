@@ -1,4 +1,4 @@
-@(mshop: MShop, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], dfltOfferType: MMartAdOfferType)(implicit ctx: util.Context)
+@(mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], dfltOfferType: MMartAdOfferType, backCall: Call, logoUploadCall: Call, submitCall: Call)(implicit ctx: util.Context)
 
 @* Рендер страницы редактирования существующего ТЦ. *@
 @import ctx._
@@ -6,7 +6,7 @@
 
 @adFormBase(
   title = "Создание рекламной карточки товара",
-  shopId = mshop.id.get
+  backCall = backCall
 ) {
 
     <!--<div class="status-bar bad"></div>-->
@@ -16,12 +16,12 @@
 
 
           @_adFormTpl(
-            shopId = mshop.id.get,
-            af = af,
-            call = routes.MarketAd.createShopAdSubmit(mshop.id.get),
+            af      = af,
+            call    = submitCall,
             btnText = Messages("Create"),
-            mmcats = mmcats,
-            offerType = dfltOfferType
+            mmcats  = mmcats,
+            offerType = dfltOfferType,
+            logoUploadCall = logoUploadCall
           )
 
           <div class="submit-wrap">
@@ -33,4 +33,3 @@
     </div>
 
 }
-
