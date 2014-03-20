@@ -4,10 +4,11 @@ import io.suggest.util.MacroLogsImpl
 import util.acl.{IsShopAdm, IsSuperuser}
 import models._
 import views.html.sys1.market._
+import views.html.market.lk
 import play.api.data._, Forms._
 import util.FormUtil._
 import io.suggest.ym.model.UsernamePw
-import MShop.ShopId_t, MMart.MartId_t, MCompany.CompanyId_t
+import MCompany.CompanyId_t
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
 import io.suggest.model.inx2.MMartInx
@@ -501,6 +502,24 @@ object SysMarket extends SioController with MacroLogsImpl {
   def inx2handleMartDelete(martId: MartId_t) = IsSuperuser.async { implicit request =>
     IndicesUtil.handleMartDelete(martId) map { _ =>
       Ok("Deleted ok.")
+    }
+  }
+
+
+  // ======================================================================
+  // отладка email-сообщений
+
+  /** Отобразить html-email-сообщение без отправки куда-либо. */
+  def showShopEmailActMsgHtml(shopId: ShopId_t, isHtml: Boolean) = IsSuperuser.async { implicit request =>
+    for {
+      mshop <- MShop.getById(shopId).map(_.get)
+      mmart <- MMart.getById(mshop.martId.get).map(_.get)
+    } yield {
+      val eAct = EmailActivation("test@test.com", id = Some("asdQE123_"))
+      if (isHtml)
+        Ok(lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct))
+      else
+        Ok(views.txt.market.lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct))
     }
   }
 

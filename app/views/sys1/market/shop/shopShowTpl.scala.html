@@ -60,4 +60,8 @@
       <a href="@routes.MarketOffer.showShopPromoOffers(mshop.id.get)">ЛК: Товары магазина</a>
   </p>
   <p><a href="@routes.MarketCategory.showCatsFor(mshop.id.get)">Категории магазина</a></p>
+  <p>Отобразить email-письмо активации:
+      <a href="@routes.SysMarket.showShopEmailActMsgHtml(mshop.id.get, isHtml=true)">HTML</a>
+      <a href="@routes.SysMarket.showShopEmailActMsgHtml(mshop.id.get, isHtml=false)">TXT</a>
+  </p>
 }
