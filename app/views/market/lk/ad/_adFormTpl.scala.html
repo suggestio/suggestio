@@ -208,7 +208,7 @@
 
 
   @* Режим формы (тип рекламного оффера). Должен переключаться при переключении вкладки. *@
-  <input id="ad-mode" type="hidden" name="ad.offer.mode" value="@af("ad.offer.mode").value.getOrElse(offerType1.toString)"/>
+  <input id="ad-mode" type="hidden" name="ad.offer.mode" value="@offerType1.toString"/>
 
 
   @* Положение текста на разных устройствах. Как оно задаётся - хз, пока в виде произвольной строки. *@

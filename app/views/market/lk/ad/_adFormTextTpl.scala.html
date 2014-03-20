@@ -13,7 +13,8 @@
         <td class="right">
             <div class="input clearfix">
                 <div class="input-shadow">
-                    @textarea(af("ad.offer.text"), 'class -> "tiny-mce")
+                    @textarea(af("ad.offer.text.value"), 'class -> "tiny-mce")
+                    @_selectColorTpl("ad.offer.text.color", af)
                 </div>
             </div>
         </td>

@@ -44,7 +44,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     val getForm: PartialFunction[MMartAdOfferType, AdFormM] = {
       case PRODUCT  => adProductFormM
       case DISCOUNT => adDiscountFormM
-      case TEXT     => ???
+      case TEXT     => adTextFormM
     }
 
     val getForClass: PartialFunction[MMartAdOfferT, MMartAdOfferType] = {
@@ -176,6 +176,19 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     { MMartAdDiscount.unapply }
   }
 
+  /** Форма для задания текстовой рекламы. */
+  val adTextM = {
+    val textM = nonEmptyText(maxLength = 200)
+      .transform(strFmtTrimF, strIdentityF)
+      .verifying("text.too.len", { _.length <= 160 })
+
+    mapping(
+      "text" -> mmaStringFieldM(textM)
+    )
+    { MMartAdText.apply }
+    { MMartAdText.unapply }
+  }
+
 
   // Дублирующиеся куски маппина выносим за пределы метода.
   private val CAT_ID_K = "catId"
@@ -232,6 +245,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   val adProductFormM  = getAdFormM(adProductM)
   val adDiscountFormM = getAdFormM(adDiscountM)
+  val adTextFormM     = getAdFormM(adTextM)
 
 
   /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
