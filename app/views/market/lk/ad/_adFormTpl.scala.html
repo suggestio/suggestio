@@ -1,4 +1,4 @@
-@(shopId: ShopId_t, af: Form[_], call: Call, btnText: String, mmcats: MMartCategory.CollectMMCatsAcc_t, offerType: MMartAdOfferType)(implicit ctx: util.Context)
+@(af: Form[_], call: Call, btnText: String, mmcats: MMartCategory.CollectMMCatsAcc_t, offerType: MMartAdOfferType, logoUploadCall: Call)(implicit ctx: util.Context)
 
 @* Рендер формы редактирования произвольной рекламы.
  * offerType - предпочитаемый тип оффера, когда он неизвестен. *@
@@ -83,7 +83,7 @@
                 </div>
                 <div class="selectbox">
                   <div class="select-file">
-                    @stuff._fileUploadTpl(routes.MarketShopLk.handleShopTempLogo(shopId), relatedFieldId="shopLogoImgInput")
+                    @stuff._fileUploadTpl(logoUploadCall, relatedFieldId="shopLogoImgInput")
                     <input class="image-key" type="hidden" name="shopLogoImgId" value="@shopLogoImgIdOpt"/>
                     <div class="bg">Выбрать файл для загрузки</div>
                   </div>

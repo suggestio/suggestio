@@ -1,0 +1,10 @@
+@(mshop: MShop, mad: MMartAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_])(implicit ctx: util.Context)
+
+@editAdTpl(
+  mad = mad,
+  af = af,
+  mmcats = mmcats,
+  backCall = routes.MarketShopLk.showShop(mshop.id.get),
+  submitCall = routes.MarketAd.editShopAdSubmit(mad.id.get),
+  logoUploadCall = routes.MarketShopLk.handleShopTempLogo(mshop.id.get)
+)

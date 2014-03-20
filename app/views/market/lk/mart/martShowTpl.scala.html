@@ -18,7 +18,7 @@
 
   <div class="title-wrap">
     <div class="center">
-      <img class="market-logo" src='@routes.Assets.at("images/market/lk/main/market-logo.png")' alt="market-logo" />
+      @*<img class="market-logo" src='@routes.Assets.at("images/market/lk/main/market-logo.png")' alt="market-logo" />
       <div class="title">
         <h1>@mmart.name</h1>
         <a class="edit" href="@martEditForm(mmart.id.get)">Редактировать</a>
@@ -27,45 +27,42 @@
         }
         <div class="descr">
           @mmart.town, @mmart.address
+          <a href="@shopsShow(mmart.id.get)">test</a>
+        </div>
+      </div>*@
+
+      <div class="title-inner" style="float: left;">
+        ЛИЧНЫЙ КАБИНЕТ ТЦ
+      </div>
+      <div class="gray-but-wrap" style="float: right; margin-top: -16px;">
+        <div class="white-border-top">
+          <a class="btn" href="@shopsShow(mmart.id.get)">АРЕНДАТОРЫ</a>
         </div>
       </div>
     </div>
   </div>
 
     <div class="body">
-      <form class="search">
-        <div class="input" style="width: 830px; float: left;">
-          <div class="input-shadow">
-            <input id="searchShop" type="text" value="" data-mart-id="@mmart.id.get" />
-          </div>
+      <div class="shop-info">
+
+        <div class="name-wrap">
+          <span class="name">@mmart.name</span>
+          <a class="edit" href="@martEditForm(mmart.id.get)">Редактировать</a>
         </div>
-        <input class="submit" type="submit" value="" />
-        <div class="descr">Ищите по имени компании, номеру секции</div>
-      </form>
-
-      <div class="renters">
-        <div class="ovh">
-          <span class="title">
-            АРЕНДАТОРЫ
-          </span>
-          <a class="green-but-big" href="@inviteShopForm(mmart.id.get)">Выдать личный кабинет</a>
+        <div class="border-line"></div>
+        <div class="name-wrap">
+          @mmart.town, @mmart.address
         </div>
+        <div class="border-line"></div>
 
-        <div class="renters-list">
-          <div class="hat">
-            Управление личным кабинетом
-          </div>
+      </div>
 
-          <div id="shop-list">
-            @_martShopsTpl(martId=mmart.id.get, shops=shops)
-          </div>
-          <div id="search-results"></div>
+      <div class="ads-list">
+        <span class="title">Рекламные плакаты</span>
 
-        </div><!-- renters-list end -->
       </div>
 
     </div><!-- .body end -->
-
 
 
 }

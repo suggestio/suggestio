@@ -3,21 +3,18 @@
 @* Вкладка формы _adFormTpl с обычным html-редактором. *@
 @import helper._
 @import ctx._
+@import util.FormHelpers.myFields
 
 <div class="tab-content" @if(!isShown) {style="display: none;"}>
     <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
-        <td class="left">
-            <label>Текст</label>
-        </td>
 
-        <td class="right">
-            <div class="input clearfix">
-                <div class="input-shadow">
-                    @textarea(af("ad.offer.text.value"), 'class -> "tiny-mce")
-                    @_selectColorTpl("ad.offer.text.color", af)
-                </div>
-            </div>
-        </td>
+      @textarea(
+        af("ad.offer.text.value"),
+        'class -> "tiny-mce",
+        '_label -> "Текст: "
+        )
+      @_selectColorTpl("ad.offer.text.color", af)
+
     </table>
 </div>
 

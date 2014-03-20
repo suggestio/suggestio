@@ -1,0 +1,62 @@
+@(mmart: MMart, shops: Seq[MShop])(implicit ctx: util.Context)
+
+@* Страница с отображением списка магазинов. *@
+
+@import routes.MarketMartLk._
+
+@import ctx._
+@import helper._
+
+@helper.javascriptRouter("jsRoutes")(
+  routes.javascript.MarketMartLk.searchShops,
+  routes.javascript.MarketMartLk.shopOnOffForm,
+  routes.javascript.MarketMartLk.shopOnOffSubmit
+)
+
+@market.lk.lkBase(mmart.name) {
+
+    <div class="title-wrap">
+      <div class="center">
+        <a class="back-but" href="@martShow(mmart.id.get)">&nbsp;</a>
+        <div class="title-inner">
+          АРЕНДАТОРЫ
+        </div>
+      </div>
+    </div>
+
+    <div class="body">
+      <form class="search">
+        <div class="input" style="width: 830px; float: left;">
+          <div class="input-shadow">
+            <input id="searchShop" type="text" value="" data-mart-id="@mmart.id.get" />
+          </div>
+        </div>
+        <input class="submit" type="submit" value="" />
+        <div class="descr">Ищите по имени компании, номеру секции</div>
+      </form>
+
+      <div class="renters">
+        <div class="ovh">
+              <span class="title">
+                АРЕНДАТОРЫ
+              </span>
+          <a class="green-but-big" href="@inviteShopForm(mmart.id.get)">Выдать личный кабинет</a>
+        </div>
+
+        <div class="renters-list">
+          <div class="hat">
+            Управление личным кабинетом
+          </div>
+
+          <div id="shop-list">
+            @_martShopsTpl(martId=mmart.id.get, shops=shops)
+          </div>
+          <div id="search-results"></div>
+
+        </div><!-- renters-list end -->
+      </div>
+
+    </div><!-- .body end -->
+
+
+}

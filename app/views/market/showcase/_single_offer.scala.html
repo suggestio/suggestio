@@ -44,6 +44,11 @@
           template: id=@adDisco.template.id color=@adDisco.template.color
           disco: @adDisco.discount.value % color=@adDisco.discount.font.color
         }
+
+        case adText: MMartAdText => {
+          text: @Html(adText.text.value)
+          color: @adText.text.font.color
+        }
       }
 
 

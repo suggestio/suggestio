@@ -1,12 +1,12 @@
-@(mshop: MShop, mad: MMartAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_])(implicit ctx: util.Context)
+@(mad: MMartAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], backCall:Call, submitCall:Call, logoUploadCall:Call)(implicit ctx: util.Context)
 
 @* Страница с формой редактирования рекламной карточки. *@
 @import ctx._
 
-  @adFormBase(
-    title = "Редактирование рекламной карточки",
-    shopId = mshop.id.get
-  ) {
+@adFormBase(
+  title = "Редактирование рекламной карточки",
+  backCall = backCall
+) {
 
   @* Кнопка стирания рекламной карточки пока лежит тут. До лучших времён. *@
   <div class="popup remove-ad" id="remove-ad">
@@ -32,12 +32,12 @@
 
 
   @_adFormTpl(
-    shopId = mshop.id.get,
     af = af,
-    call = routes.MarketAd.editShopAdSubmit(mad.id.get),
+    call = submitCall,
     btnText = Messages("Save"),
     mmcats = mmcats,
-    offerType = mad.offers.head.offerType
+    offerType = mad.offers.head.offerType,
+    logoUploadCall = logoUploadCall
   )
 
   <div class="submit-wrap">

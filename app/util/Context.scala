@@ -56,16 +56,16 @@ trait Context {
   def isAuth:  Boolean = pwOpt.isDefined
   def isSuperuser: Boolean = pwOpt.exists(_.isSuperuser)
 
+  def flashMap = request.flash.data
+
   def userAgent:  Option[String] = request.headers.get("User-Agent")
 
   val mobileUaPattern = "(iPhone|webOS|iPod|Android|BlackBerry|mobile|SAMSUNG|IEMobile|OperaMobi)".r.unanchored
   def isMobile : Boolean = {
-    userAgent.exists(agent => {
-      agent match {
-        case mobileUaPattern(a) => true
-        case _ => false
-      }
-    })
+    userAgent.exists {
+      case mobileUaPattern(a) => true
+      case _ => false
+    }
   }
 
 

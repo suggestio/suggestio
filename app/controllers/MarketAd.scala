@@ -342,7 +342,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
   }
 
-  /** Общий код рендера createAdTpl с запросом необходимых категорий. */
+  /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
   private def renderCreateFormWith(af: AdFormM, catOwnerId: String, mshop: MShop)(implicit ctx: Context) = {
     val catIdOpt = af(CAT_ID_K).value.filter { _ => af.errors(CAT_ID_K).isEmpty }
     val mmcatsFut: Future[CollectMMCatsAcc_t] = catIdOpt match {
@@ -354,7 +354,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       case None => topCatsAsAcc(catOwnerId)
     }
     mmcatsFut map { mmcats =>
-      createAdTpl(mshop, mmcats, af, MMartAdOfferTypes.PRODUCT)
+      createShopAdTpl(mshop, mmcats, af, MMartAdOfferTypes.PRODUCT)
     }
   }
 
@@ -389,7 +389,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       mmcats   <- mmcatsFut
     } yield {
       mshopOpt map { mshop =>
-        editAdTpl(mshop, mad, mmcats, af)
+        editShopAdTpl(mshop, mad, mmcats, af)
       }
     }
   }

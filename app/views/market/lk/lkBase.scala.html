@@ -20,7 +20,6 @@
   <script src="@routes.Assets.at("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/colorpicker/css/colorpicker.css")'/>
 
-  <script src="@routes.Assets.at("javascripts/lib/tinymce/tinymce.min.js")"></script>
 
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/common.min.css")'/>
 	<link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/create-ad.min.css")'/>
@@ -28,6 +27,11 @@
 </head>
 
 <body class="lk">
+
+  @* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
+  @ctx.flashMap.map { case (flashStatus, flashMsg) =>
+    @flashStatus -> @flashMsg
+  }
 
   <div class="header-wrap">
 
