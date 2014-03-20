@@ -126,6 +126,19 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
   }
 
   /**
+   * Рендер страницы со списком арендаторов.
+   * @param martId id ТЦ
+   * @param sortByRaw Сортировка магазинов по указанному полю. Если не задано, то порядок не определён.
+   * @param isReversed Если true, то будет сортировка в обратном порядке. Иначе в прямом.
+   */
+  def shopsShow(martId: MartId_t, sortByRaw: Option[String], isReversed: Boolean) = IsMartAdmin(martId).async { implicit request =>
+    val sortBy = sortByRaw flatMap handleShopsSortBy
+    MShop.findByMartId(martId, sortBy, isReversed) map { shops =>
+      Ok(shopsShowTpl(request.mmart, shops))
+    }
+  }
+
+  /**
    * Рендер страницы с формой редактирования ТЦ в личном кабинете.
    * @param martId id ТЦ.
    */
