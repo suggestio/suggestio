@@ -205,9 +205,10 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
               mail.setSubject("Suggest.io | Подтверждение регистрации")
               mail.setFrom("no-reply@suggest.io")
               mail.setRecipient(_email)
-              val bodyHtml = views.html.market.lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct).toString().trim
-              val bodyText = views.txt.market.lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct).toString().trim
-              mail.send(bodyText=bodyText, bodyHtml=bodyHtml)
+              mail.send(
+                bodyHtml = shop.emailShopInviteTpl(mmart, mshop, eAct),
+                bodyText = views.txt.market.lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct)
+              )
               // Собственно, результат работы.
               Redirect(routes.MarketMartLk.martShow(martId))
                 .flashing("success" -> s"Добавлен магазин: '${mshop.name}'.")
