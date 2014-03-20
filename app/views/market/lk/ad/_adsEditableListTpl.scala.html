@@ -1,0 +1,42 @@
+@(mads: Seq[MMartAd], addCall: Call, editCall: String => Call, mmart: MMart, mshopOpt: Option[MShop])(implicit ctx: util.Context)
+
+@* Встраиваемый список изменяемых рекламных карточек. *@
+
+@import AdShowLevels._
+@import ctx._
+
+<div class="ads-list">
+    <span class="title">Рекламные плакаты</span>
+    <a class="add" href="@addCall">&nbsp;</a>
+
+    @mads.zipWithIndex.map { case (ad, i) =>
+
+      <div class="item" style="@if(i%3 != 1) {margin-right: 30px;}">
+        <div class="preview">
+            <a class="hover" href="@editCall(ad.id.get)">&nbsp;</a>
+            @market.showcase._single_offer(ad, mmart, mshopOpt)
+        </div>
+
+        @* Галочки только у магазина. *@
+        @mshopOpt.map { mshop =>
+          <div class="controls">
+            <label>
+                <input class="one-checkbox" type="checkbox" data-level="@LVL_MART_SHOPS" data-adid="@ad.id.get" data-name="lvl-mart-shops"/>Выводить в общем каталоге
+            </label>
+            <label>
+                <input type="checkbox" data-level="@LVL_SHOP" data-adid="@ad.id.get" />Выводить в моём магазине
+            </label>
+            @defining(mshop.hasTopLevelAccess) { htl =>
+            <label@if(!htl){ class="inactive"}>
+            <input type="checkbox" data-level="@LVL_MART_SHOWCASE" data-adid="@ad.id.get"@if(!htl){ disabled="disabled"}/>Размещение на первом экране
+            </label>
+            }
+          </div>
+        }
+
+
+      </div>
+    }
+</div>
+
+

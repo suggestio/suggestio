@@ -120,8 +120,9 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
    */
   def martShow(martId: MartId_t, sortByRaw: Option[String], isReversed: Boolean) = IsMartAdmin(martId).async { implicit request =>
     val sortBy = sortByRaw flatMap handleShopsSortBy
+    val mads = Nil // TODO Нужно делать запрос с missing-shop_id
     MShop.findByMartId(martId, sortBy, isReversed) map { shops =>
-      Ok(martShowTpl(request.mmart, shops))
+      Ok(martShowTpl(request.mmart, shops, mads))
     }
   }
 
