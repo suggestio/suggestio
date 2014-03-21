@@ -185,6 +185,12 @@ siomart =
 
     this.utils.ge_tag("body")[0].appendChild sm_layout
 
+    meta_viewport_attrs =
+      name : 'viewport'
+      content : 'width=320,initial-scale=1,user-scalable=no'
+    meta_viewport = this.utils.ce "meta", meta_viewport_attrs
+    this.utils.ge_tag('head')[0].appendChild meta_viewport
+
   ###################################
   ## Осуществить запрос к серверу sio
   ###################################
@@ -338,9 +344,9 @@ siomart =
     this.offers.initialize()
 
   init : () ->
-    this.utils.set_window_size()
     this.load_stylesheets()
     this.draw_layout()
+    this.utils.set_window_size()
 
     this.load_mart_index_page()
 
@@ -356,4 +362,4 @@ window.siomart = siomart
 siomart_init_cb = () ->
   siomart.init()
 
-setTimeout siomart_init_cb, 100
+setTimeout siomart_init_cb, 1000
