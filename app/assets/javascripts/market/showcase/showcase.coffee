@@ -3,6 +3,7 @@ siomart =
   config :
     css : '/assets/stylesheets/market/showcase.min.css'
     index_action : window.siomart_index
+    sm_layout_class : 'sio-mart-layout'
 
   utils :
 
@@ -120,6 +121,19 @@ siomart =
       siomart.ww = ww
       siomart.wh = wh
 
+      siomart_layout = siomart.utils.ge 'sioMartRoot'
+      if siomart_layout == null
+        return false
+      layout_class = 'large'
+
+      if ww < 1024
+        layout_class = 'medium'
+
+      if ww < 640
+        layout_class = 'small'
+
+      siomart_layout.className = siomart.config.sm_layout_class + ' ' + layout_class
+
   ############################
   ## Откадрировать изображения
   ############################
@@ -165,7 +179,8 @@ siomart =
   #####################################################
   draw_layout : () ->
     sm_layout_attrs =
-      class : 'sio-mart-layout'
+      class : this.config.sm_layout_class
+      id : 'sioMartRoot'
     sm_layout = this.utils.ce "div", sm_layout_attrs, '<div id="sioMartLayout"></div>'
 
     this.utils.ge_tag("body")[0].appendChild sm_layout
@@ -191,7 +206,7 @@ siomart =
 
     this.fit_images()
     this.init_navigation()
-
+    this.utils.set_window_size()
 
   ######################################
   ## Загрузить индексную страницу для ТЦ
@@ -251,8 +266,6 @@ siomart =
 
       cb = () ->
         next_offer_index = if siomart.offers.active_offer == siomart.offers.total_offers - 1 then 0 else siomart.offers.active_offer + 1
-
-        console.log next_offer_index
 
         siomart.offers.show_offer next_offer_index
         siomart.offers.next_offer()
@@ -332,7 +345,6 @@ siomart =
     this.load_mart_index_page()
 
     resize_cb = () ->
-      console.log "resize"
       siomart.utils.set_window_size()
       siomart.fit_images()
 
