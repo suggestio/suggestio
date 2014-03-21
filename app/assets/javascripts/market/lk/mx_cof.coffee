@@ -360,13 +360,15 @@ StatusBar =
   init: ()->
 
     $('.status-bar').each ()->
-      $this = $(this)
 
-      StatusBar.showBar($this)
-      setTimeout 'StatusBar.closeBar('+$this+')', 5000
+      _this = $(this)
+
+      StatusBar.showBar _this
+      close_cb = () ->
+        StatusBar.closeBar _this
+
+      setTimeout close_cb, 5000
 
 
     $(document).on 'click', '.status-bar', ->
-      $this = $(this)
-
-      StatusBar.closeBar($this)
+      StatusBar.closeBar $(this)
