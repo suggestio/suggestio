@@ -15,7 +15,7 @@ import play.api.mvc.SimpleResult
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 19.02.14 11:37
- * Description: Выдача sio market
+ * Description: Выдача sio market.
  */
 
 object Market extends SioController with PlayMacroLogsImpl {
@@ -24,15 +24,8 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   /** Входная страница для sio-market для ТЦ. */
   def martIndex(martId: MartId_t) = MaybeAuth.async { implicit request =>
-    // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
-    val shopsFut = shopsMap(martId)
-    // Читаем из основной базы текущий ТЦ
-    val mmartFut = MMart.getById(martId).map(_.get)
-    // Текущие категории ТЦ
-    val mmcatsFut = MMartCategory.findTopForOwner(martId)
-    // Смотрим метаданные по индексу маркета. Они обычно в кеше.
-    IndicesUtil.getInxFormMartCached(martId) flatMap {
-      case Some(mmartInx) =>
+    new MarketAction(martId) {
+      def execute(mmartInx: models.MMartInx): Future[SimpleResult] = {
         for {
           ads    <- MMartAdIndexed.find(mmartInx, level = AdShowLevels.LVL_MART_SHOWCASE)
           shops  <- shopsFut
@@ -44,9 +37,8 @@ object Market extends SioController with PlayMacroLogsImpl {
           ))
           Ok( Jsonp(JSONP_CB_FUN, jsonHtml) )
         }
-
-      case None => NotFound("mart not indexed")
-    }
+      }
+    }.apply
   }
 
   /** Временный экшн, рендерит демо страничку предполагаемого сайта ТЦ, на которой вызывается Sio.Market */
@@ -61,11 +53,8 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
   def findAds(martId: MartId_t, shopIdOpt: Option[ShopId_t], catIdOpt: Option[String]) = MaybeAuth.async { implicit request =>
-    val shopsFut = shopsMap(martId)
-    val mmartFut = MMart.getById(martId).map(_.get)
-    val mmcatsFut = MMartCategory.findTopForOwner(martId)
-    IndicesUtil.getInxFormMartCached(martId) flatMap {
-      case Some(mmartInx) =>
+    new MarketAction(martId) {
+      def execute(mmartInx: models.MMartInx): Future[SimpleResult] = {
         val searchLevel = if (shopIdOpt.isDefined) {
           AdShowLevels.LVL_SHOP
         } else {
@@ -79,9 +68,8 @@ object Market extends SioController with PlayMacroLogsImpl {
         } yield {
           Ok(indexTpl(mmart, mads, mshops, mmcats))
         }
-
-      case None => martNotFound(martId)
-    }
+      }
+    }.apply
   }
 
 
@@ -93,5 +81,27 @@ object Market extends SioController with PlayMacroLogsImpl {
   private def martNotFound(martId: MartId_t) = NotFound("Mart not found")
 
 
+  /** Общий код разных экшенов, которые полностью рендерят интерфейс целиком. */
+  abstract class MarketAction(martId: MartId_t) {
+    // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
+    val shopsFut = shopsMap(martId)
+    // Читаем из основной базы текущий ТЦ
+    val mmartFut = MMart.getById(martId).map(_.get)
+    // Текущие категории ТЦ
+    val mmcatsFut = MMartCategory.findTopForOwner(martId)
+    // Смотрим метаданные по индексу маркета. Они обычно в кеше.
+    val mmartInxOptFut = IndicesUtil.getInxFormMartCached(martId)
+
+    def execute(mmartInx: MMartInx): Future[SimpleResult]
+
+    def apply: Future[SimpleResult] = {
+      mmartInxOptFut flatMap {
+        case Some(mmartInx) =>
+          execute(mmartInx)
+
+        case None => martNotFound(martId)
+      }
+    }
+  }
 
 }
