@@ -89,6 +89,8 @@ POST /sys/inx2/create/dflt/mart         controllers.Sys.inx2createDfltMart
 POST /sys/inx2/im/mart/:martId/add      controllers.SysMarket.inx2handleMartAdd(martId)
 POST /sys/inx2/im/mart/:martId/del      controllers.SysMarket.inx2handleMartDelete(martId)
 
+# Входы в личные кабинеты
+GET  /m/lk                              controllers.MarketLk.lkList
 # Личный кабинет владельца ТЦ
 GET  /m/lk/mart/:martId                 controllers.MarketMartLk.martShow(martId)
 GET  /m/lk/mart/:martId/shops           controllers.MarketMartLk.shopsShow(martId, sortByRaw: Option[String] = None, isReversed: Boolean ?= false)

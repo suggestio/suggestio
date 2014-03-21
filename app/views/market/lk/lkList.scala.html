@@ -1,0 +1,19 @@
+@(mmarts: Seq[MMart], mshops: Seq[MShop])(implicit ctx: util.Context)
+
+@* Список личных кабинетов юзера. *@
+
+@lkBase("Моё") {
+  @if(!mmarts.isEmpty) {
+    <h2>Мои торговые центры</h2>
+    @mmarts.map { mmart =>
+      <p><a href="@routes.MarketMartLk.martShow(mmart.id.get)">@mmart.name</a></p>
+    }
+  }
+
+  @if(!mshops.isEmpty) {
+    <h2>Мои магазины</h2>
+    @mshops.map { mshop =>
+      <p><a href="@routes.MarketShopLk.showShop(mshop.id.get)">@mshop.name</a></p>
+    }
+  }
+}
