@@ -2,7 +2,7 @@ siomart =
 
   config :
     css : '/assets/stylesheets/market/showcase.min.css'
-    index_action : '/market/index/W1WWI4ZMRiOFdf90lxWtyg'
+    index_action : window.siomart_index
 
   utils :
 
@@ -211,8 +211,8 @@ siomart =
   ## Офферы
   #########
   offers :
-
-    auto_change_delay : 8000
+    is_locked : false
+    auto_change_delay : 5000
 
     ## Инициализация слайдов и кнопок-контроллов
     initialize : () ->
@@ -234,23 +234,40 @@ siomart =
         _a.id = 'smOfferButton' + _i
         siomart.utils.add_single_listener _a, 'click', ( event ) ->
           event.preventDefault()
+          siomart.offers.next_offer()
           siomart.offers.show_offer this.getAttribute 'data-index'
         _i++
 
       this.total_offers = _i
       this.next_offer()
 
+    clear_auto_change_timer : () ->
+      if typeof siomart.offers.auto_change_timer != 'undefined'
+        clearTimeout siomart.offers.auto_change_timer
+
     next_offer : () ->
+
+      this.clear_auto_change_timer()
+
       cb = () ->
         next_offer_index = if siomart.offers.active_offer == siomart.offers.total_offers - 1 then 0 else siomart.offers.active_offer + 1
+
+        console.log next_offer_index
 
         siomart.offers.show_offer next_offer_index
         siomart.offers.next_offer()
 
-      setTimeout cb, this.auto_change_delay
+      siomart.offers.auto_change_timer = setTimeout cb, this.auto_change_delay
 
     ## Открыть слайд с оффером по указанному индексу
     show_offer : ( index ) ->
+
+      if this.is_locked == true
+        return false
+
+      this.is_locked = true
+
+      index = parseInt index
 
       if index == this.active_offer
         return false
@@ -286,6 +303,7 @@ siomart =
         siomart.utils.addClass 'smOfferButton' + index, 'active'
 
         siomart.offers.active_offer = index
+        siomart.offers.is_locked = false
 
       setTimeout cb1, 600
 

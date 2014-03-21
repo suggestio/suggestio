@@ -4,7 +4,7 @@
 
   <div class="offer-header">
     @mshopOpt.flatMap(_.logoImgId).orElse(mmart.logoImgId).map { logoImgId =>
-      <img src="@routes.Img.getOrig(logoImgId)" alt="Logo"/>
+      <img class="sm-offer-logo" height="30" src="@routes.Img.getOrig(logoImgId)"/>
     }
   </div>
 
@@ -12,7 +12,9 @@
     <div class="od-inner discount">
 
       @ad.offers.map {
+
         case adProd: MMartAdProduct => {
+
           <div class="top-text">@adProd.vendor.value</div>
 
           @adProd.oldPrice.map { oldPrice =>
