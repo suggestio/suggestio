@@ -17,7 +17,8 @@ object SiowebEsModel {
    * @return Список EsModelMinimalStaticT.
    */
   def ES_MODELS: Seq[EsModelMinimalStaticT[_]] = {
-    Seq(MBlog, MPerson, MozillaPersonaIdent, MMartCategory) ++ EsModel.ES_MODELS
+    Seq(MBlog, MPerson, MozillaPersonaIdent, EmailPwIdent, EmailActivation, MMartCategory) ++
+      EsModel.ES_MODELS
   }
 
   def putAllMappings(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {

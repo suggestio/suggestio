@@ -265,7 +265,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
         NotAcceptable("Bad search request")
       },
       {q =>
-        MShop.searchAll(q + "*", martId = Some(martId)) map { result =>
+        MShop.searchAll(q, martId = Some(martId)) map { result =>
           Ok(_martShopsTpl(martId, result))
         }
       }
