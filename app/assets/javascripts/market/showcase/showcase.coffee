@@ -2,6 +2,7 @@ siomart =
 
   config :
     css : '/assets/stylesheets/market/showcase.min.css'
+    index_action : '/market/index/77YzkDJyQN6Gyo8WkHqo-A'
 
   utils :
 
@@ -196,7 +197,7 @@ siomart =
   ## Загрузить индексную страницу для ТЦ
   ######################################
   load_mart_index_page : () ->
-    this.perform_request '/market/index'
+    this.perform_request siomart.config.index_action
 
   ######################################################
   ## Открыть экран с предупреждением о выходе из маркета

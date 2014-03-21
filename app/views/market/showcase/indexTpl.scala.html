@@ -21,21 +21,12 @@
 
     @* Список офферов, подгружается динамически *@
     <div class="sm-offers" id="smOffers">
-      @* Тут выводим офферы списком *@
-      @if(ads.isEmpty) {
-        @* TODO Надо что-то отобразить, когда нет рекламы в ТЦ. *@
-        Нет рекламы
-      } else {
-        @ads.map { ad =>
-          @_single_offer(ad, mmart, ad.shopId.flatMap(shops.get), isHidden = !(ad eq ads.head))
-        }
-      }
+      @_offers_list(mmart, ads, shops)
     </div>
 
     @* Кнопочки-кружочки для перелистывания слайдов с офферами *@
     <div class="sm-offers-controller" id="smOffersController">
-      <a href="" class="active"><span></span></a>
-      <a href="" class=""><span></span></a>
+      @_offers_list(mmart, ads, shops, isNav=true)
     </div>
 
     @* Окно с выбором категорий *@

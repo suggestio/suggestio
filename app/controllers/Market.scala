@@ -26,7 +26,7 @@ object Market extends SioController with PlayMacroLogsImpl {
   /** Входная страница для sio-market для ТЦ. */
   def martIndex(martId: MartId_t) = MaybeAuth.async { implicit request =>
     // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
-    val shopsFut = MShop.findByMartId(martId, onlyEnabled = true)
+    val shopsFut = MShop.findByMartId(martId, onlyEnabled=true)
       .map { _.map { shop => shop.id.get -> shop }.toMap }
     // Читаем из основной базы текущий ТЦ
     val mmartFut = MMart.getById(martId).map(_.get)
