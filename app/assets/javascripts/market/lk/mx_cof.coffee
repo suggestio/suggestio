@@ -11,9 +11,14 @@ $(document).ready ->
   cbca.popup = new CbcaPopup()
   cbca.search = new CbcaSearch()
 
+  cbca.statusBar = StatusBar
+  cbca.statusBar.init()
+
   cbca.shop = CbcaShop
   cbca.shop.init()
+
   cbca.common = new CbcaCommon()
+
 
 
   if (typeof tinymce != 'undefined')
@@ -337,7 +342,26 @@ CbcaShop =
             'isEnabled': false
         )
 
+#################
+## Уведомления ##
+#################
+StatusBar =
+  init: ()->
 
-##################
-## CbcaShop end ##
-##################
+    $('.status-bar').each ()->
+      $this = $(this)
+      $this.data('open', true)
+
+      cb = () ->
+        if($this.data('open'))
+          $this.slideUp()
+
+      setTimeout cb, 5000
+
+
+    $(document).on 'click', '.status-bar', ->
+      $this = $(this)
+      console.log('click')
+
+      $this.slideUp()
+      $this.data('open', false)
