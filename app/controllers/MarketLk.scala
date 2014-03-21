@@ -59,7 +59,7 @@ object MarketLk extends SioController {
         routes.MarketMartLk.martShow(mmarts.head.id.get)
       } else {
         // У юзера есть несколько market-сущностей в персональном пользовании. Нужно отправить его на страницу со списком этого всего.
-        ???
+        routes.MarketLk.lkList()
       }
       Option(rdrOrNull)
     }
