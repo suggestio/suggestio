@@ -347,12 +347,13 @@ CbcaShop =
 #################
 StatusBar =
 
-  closeBar: ($bar) ->
+  close: ($bar) ->
     if($bar.data('open'))
+      console.log('111')
       $bar.data('open', false)
       $bar.slideUp()
 
-  showBar: ($bar) ->
+  show: ($bar) ->
     if(!$bar.data('open'))
       $bar.data('open', true)
       $bar.slideDown()
@@ -360,15 +361,15 @@ StatusBar =
   init: ()->
 
     $('.status-bar').each ()->
-
       _this = $(this)
 
-      StatusBar.showBar _this
+      StatusBar.show _this
       close_cb = () ->
-        StatusBar.closeBar _this
+        StatusBar.close _this
 
       setTimeout close_cb, 5000
 
 
+
     $(document).on 'click', '.status-bar', ->
-      StatusBar.closeBar $(this)
+      StatusBar.close($(this))
