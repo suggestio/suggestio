@@ -297,17 +297,27 @@ object SioEsUtil extends MacroLogsImpl {
           FilterStopwords(STOP_RU_FN, "russian"),
           FilterWordDelimiter(WORD_DELIM_FN, preserve_original = true),
           FilterStemmer(STEM_RU_FN, "russian"),
-          FilterStemmer(STEM_EN_FN, "english")
+          FilterStemmer(STEM_EN_FN, "english"),
+          FilterEdgeNgram(EDGE_NGRAM_FN, min_gram = 2, max_gram = 10, side = "front")
         ),
         tokenizers = Seq(new TokenizerStandard(STD_TN)),
-        analyzers = Seq(
-          AnalyzerCustom(
-            id = DFLT_AN,
-            charFilters = Seq("html_strip"),
-            tokenizer = STD_TN,
-            filters = List(STD_FN, WORD_DELIM_FN, LOWERCASE_FN, STOP_EN_FN, STOP_RU_FN, STEM_RU_FN, STEM_EN_FN)
+        analyzers = {
+          val filters0 = List(STD_FN, WORD_DELIM_FN, LOWERCASE_FN, STOP_EN_FN, STOP_RU_FN, STEM_RU_FN, STEM_EN_FN)
+          Seq(
+            AnalyzerCustom(
+              id = DFLT_AN,
+              charFilters = Seq("html_strip"),
+              tokenizer = STD_TN,
+              filters = filters0
+            ),
+            AnalyzerCustom(
+              id = EDGE_NGRAM_AN,
+              charFilters = Seq("html_strip"),
+              tokenizer = STD_TN,
+              filters = filters0 ++ List(EDGE_NGRAM_FN)
+            )
           )
-        )
+        }
       )
     }
   }

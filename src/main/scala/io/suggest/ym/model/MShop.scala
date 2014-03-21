@@ -13,6 +13,7 @@ import io.suggest.proto.bixo.crawler.MainProto
 import org.elasticsearch.client.Client
 import io.suggest.event._
 import io.suggest.util.JacksonWrapper
+import org.elasticsearch.common.unit.Fuzziness
 
 /**
  * Suggest.io
@@ -43,7 +44,7 @@ object MShop extends EsModelStaticT[MShop] {
 
   def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
-    FieldAll(enabled = true, analyzer = FTS_RU_AN)
+    FieldAll(enabled = true, index_analyzer = EDGE_NGRAM_AN, search_analyzer = FTS_RU_AN)
   )
 
   def generateMappingProps: List[DocField] = List(
@@ -56,7 +57,7 @@ object MShop extends EsModelStaticT[MShop] {
     FieldNumber(MART_FLOOR_ESFN, fieldType = DocFieldTypes.integer, include_in_all = true, index = FieldIndexingVariants.no),
     FieldNumber(MART_SECTION_ESFN, fieldType = DocFieldTypes.integer, include_in_all = true, index = FieldIndexingVariants.no),
     FieldString(LOGO_IMG_ID, include_in_all = false, index = FieldIndexingVariants.no),
-    FieldObject(id = SETTINGS_ESFN, enabled = false, properties = Nil)
+    FieldObject(SETTINGS_ESFN, enabled = false, properties = Nil)
   )
 
 
@@ -94,7 +95,10 @@ object MShop extends EsModelStaticT[MShop] {
    * @return Список результатов в порядке релевантности.
    */
   def searchAll(searchQuery: String, martId: Option[String] = None)(implicit ec: ExecutionContext, client: Client): Future[Seq[MShop]] = {
-    var textQuery: QueryBuilder = QueryBuilders.matchQuery("_all", searchQuery)
+    var textQuery: QueryBuilder = QueryBuilders.fuzzyQuery("_all", searchQuery)
+      .fuzziness(Fuzziness.AUTO)
+      .prefixLength(2)
+      .maxExpansions(20)
     if (martId.isDefined) {
       val martIdFilter = FilterBuilders.termFilter(MART_ID_ESFN, martId.get)
       textQuery = QueryBuilders.filteredQuery(textQuery, martIdFilter)
