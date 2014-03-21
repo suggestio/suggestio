@@ -21,20 +21,8 @@
 
   <div class="title-wrap">
     <div class="center">
-      @*<img class="market-logo" src='@routes.Assets.at("images/market/lk/main/market-logo.png")' alt="market-logo" />
-      <div class="title">
-        <h1>@mmart.name</h1>
-        <a class="edit" href="@martEditForm(mmart.id.get)">Редактировать</a>
-        @if(ctx.isSuperuser) {
-          <a href="@routes.SysMarket.martShow(mmart.id.get)" style="color: red">/sys/mart</a>
-        }
-        <div class="descr">
-          @mmart.town, @mmart.address
-          <a href="@shopsShow(mmart.id.get)">test</a>
-        </div>
-      </div>*@
-
-      <div class="title-inner" style="float: left;">
+      <a class="back-but" href="@routes.MarketLk.lkList">&nbsp;</a>
+      <div class="title-inner" style="float: left; padding: 0;">
         ЛИЧНЫЙ КАБИНЕТ ТЦ
       </div>
       <div class="gray-but-wrap" style="float: right; margin-top: -16px;">

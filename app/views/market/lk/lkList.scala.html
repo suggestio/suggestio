@@ -3,17 +3,44 @@
 @* Список личных кабинетов юзера. *@
 
 @lkBase("Моё") {
-  @if(!mmarts.isEmpty) {
-    <h2>Мои торговые центры</h2>
-    @mmarts.map { mmart =>
-      <p><a href="@routes.MarketMartLk.martShow(mmart.id.get)">@mmart.name</a></p>
-    }
-  }
 
-  @if(!mshops.isEmpty) {
-    <h2>Мои магазины</h2>
-    @mshops.map { mshop =>
-      <p><a href="@routes.MarketShopLk.showShop(mshop.id.get)">@mshop.name</a></p>
+  <div class="title-wrap">
+    <div class="center">
+      <div class="title-inner">
+        ВЫБОР МАГАЗИНА
+      </div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    @if(!mmarts.isEmpty) {
+      <h2>Мои торговые центры</h2>
+      @mmarts.map { mmart =>
+        <p><a href="@routes.MarketMartLk.martShow(mmart.id.get)">@mmart.name</a></p>
+      }
     }
-  }
+
+    @if(!mshops.isEmpty) {
+
+      <div class="lk-list">
+        @mshops.zipWithIndex.map { case (mshop, i) =>
+
+
+          <a href="@routes.MarketShopLk.showShop(mshop.id.get)" class="item">
+            <span class="number">@(i+1)</span>
+            <span class="name">@mshop.name</span>
+            @mshop.martId.flatMap(martsMap.get).map { mmart =>
+              <span class="mmart-name">&nbsp;/&nbsp;@mmart.name</span>
+            }
+
+          </a>
+          <div class="border-line"></div>
+        }
+      </div>
+
+    }
+
+  </div>
+
 }
