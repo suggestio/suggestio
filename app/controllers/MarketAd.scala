@@ -386,13 +386,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
   }
 
-  private def renderFailedEditShopFormWith(af: AdFormM, mad: MMartAd)(implicit ctx: Context) = {
-    val shopId = mad.shopId.get
+  private def renderFailedEditShopFormWith(af: AdFormM)(implicit request: RequestWithAd[_]) = {
+    import request.mad
     // TODO Надо фетчить магазин и категории одновременно.
-    MShop.getById(shopId) flatMap { mshopOpt =>
+    request.mshopOptFut flatMap { mshopOpt =>
       renderEditShopFormWith(af, mshopOpt, mad) map {
         case Some(render) => NotAcceptable(render)
-        case None => shopNotFound(shopId)
+        case None => shopNotFound(mad.shopId.get)
       }
     }
   }
@@ -402,19 +402,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     */
   def editShopAd(adId: String) = IsAdEditor(adId).async { implicit request =>
     import request.mad
-    mad.shopId match {
-      case Some(_shopId) =>
-        val imgIdKey = OrigImgIdKey(mad.picture)
-        MShop.getById(_shopId) flatMap { mshopOpt =>
-          val formFilled = FormModes.getFormForClass(mad.offers.head) fill ((imgIdKey, mshopOpt, mad))
-          renderEditShopFormWith(formFilled, mshopOpt, mad) map {
-            case Some(render) => Ok(render)
-            case None => shopNotFound(_shopId)
-          }
-        }
-
-      // Магазин в карточке не указан. Вероятно, это карточка должна редактироваться через какой-то другой экшен
-      case None => adEditWrong
+    request.mshopOptFut flatMap { mshopOpt =>
+      val imgIdKey = OrigImgIdKey(mad.picture)
+      val formFilled = FormModes.getFormForClass(mad.offers.head) fill ((imgIdKey, mshopOpt, mad))
+      renderEditShopFormWith(formFilled, mshopOpt, mad) map {
+        case Some(render) => Ok(render)
+        case None => shopNotFound(mad.shopId.get)
+      }
     }
   }
 
@@ -430,13 +424,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
         formBinded.fold(
           {formWithErrors =>
             debug(s"editShopAdSubmit($adId): Failed to bind form: " + formWithErrors.errors)
-            renderFailedEditShopFormWith(formWithErrors, mad)
+            renderFailedEditShopFormWith(formWithErrors)
           },
           {case (iik, logoImgIdOpt, mad2) =>
             // Надо обработать логотип, который приходит в составе формы. Это можно делать независимо от самой MMartAd.
             // Если выставлен tmp-логотип, то надо запустить обновление mshop.
             val shopId = mad.shopId.get
-            MShop.getById(shopId) flatMap {
+            request.mshopOptFut flatMap {
               case Some(mshop)  => updateLogo(logoImgIdOpt, mshop)
               case None         => Future failed new NoSuchElementException(s"Shop not found: " + shopId)
             } onComplete entityLogoUpdatePf("shop", shopId)
@@ -462,7 +456,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                 // Не удалось обработать картинку. Вернуть форму назад
                 debug(s"editShopAdSubmit($adId): Failed to update iik = " + iik)
                 val formWithError = formBinded.withError(AD_IMG_ID_K, "error.image.save")
-                renderFailedEditShopFormWith(formWithError, mad)
+                renderFailedEditShopFormWith(formWithError)
               }
             }
           }
@@ -470,7 +464,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
       case Left(formWithGlobalError) =>
         val formWithErrors = formWithGlobalError.bindFromRequest()
-        renderFailedEditShopFormWith(formWithErrors, mad)
+        renderFailedEditShopFormWith(formWithErrors)
     }
 
   }
@@ -633,7 +627,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   }
   
   
-  private def renderEditMartFormWith(af: AdFormM, mmartOpt: Option[MMart], mad: MMartAd)(implicit ctx: Context) = {
+  private def renderEditMartFormWith(af: AdFormM, mmartOpt: Option[MMart])(implicit request: RequestWithAd[_]) = {
+    import request.mad
     getMMCatsForEdit(af, mad) map { mmcats =>
       mmartOpt map { mmart =>
         editMartAdTpl(mmart, mad, mmcats, af)
@@ -641,11 +636,11 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
   }
 
-  private def renderFailedEditMartFormWith(af: AdFormM, mad: MMartAd)(implicit ctx: Context) = {
-    MMart.getById(mad.martId) flatMap { mmartOpt =>
-      renderEditMartFormWith(af, mmartOpt, mad) map {
+  private def renderFailedEditMartFormWith(af: AdFormM)(implicit request: RequestWithAd[_]) = {
+    request.mmartOptFut flatMap { mmartOpt =>
+      renderEditMartFormWith(af, mmartOpt) map {
         case Some(render) => NotAcceptable(render)
-        case None => martNotFound(mad.martId)
+        case None => martNotFound(request.mad.martId)
       }
     }
   }
@@ -656,9 +651,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   def editMartAd(adId: String) = IsAdEditor(adId).async { implicit request =>
     import request.mad
     val imgIdKey = OrigImgIdKey(mad.picture)
-    MMart.getById(mad.martId) flatMap { mmartOpt =>
+    request.mmartOptFut flatMap { mmartOpt =>
       val formFilled = FormModes.getFormForClass(mad.offers.head) fill ((imgIdKey, mmartOpt, mad))
-      renderEditMartFormWith(formFilled, mmartOpt, mad) map {
+      renderEditMartFormWith(formFilled, mmartOpt) map {
         case Some(render) => Ok(render)
         case None => martNotFound(mad.martId)
       }
@@ -677,13 +672,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
         formBinded.fold(
           {formWithErrors =>
             debug(s"editMartAdSubmit($adId): Failed to bind form: " + formWithErrors.errors)
-            renderFailedEditMartFormWith(formWithErrors, mad)
+            renderFailedEditMartFormWith(formWithErrors)
           },
           {case (iik, logoImgIdOpt, mad2) =>
             // Надо обработать логотип, который приходит в составе формы. Это можно делать независимо от самой MMartAd.
             // Если выставлен tmp-логотип, то надо запустить обновление mshop.
             val martId = mad.martId
-            MMart.getById(martId) flatMap {
+            request.mmartOptFut flatMap {
               case Some(mmart)  => updateLogo(logoImgIdOpt, mmart)
               case None         => Future failed new NoSuchElementException(s"Mart not found: " + martId)
             } onComplete entityLogoUpdatePf("mart", martId)
@@ -708,7 +703,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                 // Не удалось обработать картинку. Вернуть форму назад
                 debug(s"editShopAdSubmit($adId): Failed to update iik = " + iik)
                 val formWithError = formBinded.withError(AD_IMG_ID_K, "error.image.save")
-                renderFailedEditMartFormWith(formWithError, mad)
+                renderFailedEditMartFormWith(formWithError)
               }
             }
           }
@@ -716,7 +711,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
       case Left(formWithGlobalError) =>
         val formWithErrors = formWithGlobalError.bindFromRequest()
-        renderFailedEditShopFormWith(formWithErrors, mad)
+        renderFailedEditShopFormWith(formWithErrors)
     }
   }
 
