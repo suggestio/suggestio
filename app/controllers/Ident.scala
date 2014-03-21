@@ -196,7 +196,8 @@ object Ident extends SioController with Logs {
             // Логин удался.
             // TODO Нужно дать возможность режима сессии "чужой компьютер".
             val personId = epwOpt.get.personId
-            getMarketRdrCallFor(personId) map { call =>
+            MarketLk.getMarketRdrCallFor(personId) map { callOpt =>
+              val call = callOpt getOrElse routes.Admin.index()
               Redirect(call)
                 .withSession(username -> personId)
             }
@@ -228,27 +229,6 @@ object Ident extends SioController with Logs {
           case Failure(ex) => error("Failed to rollback. Storage failure!", ex)
         }
         p
-    }
-  }
-
-  /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */
-  private def getMarketRdrCallFor(personId: String): Future[Call] = {
-    val mshopsFut = MShop.findByPersonId(personId)
-    val mmartsFut = MMart.findByPersonId(personId)
-    // TODO Если несколько результатов, то нужна какая-то отдельная страница с выбором ЛК
-    for {
-      mshops <- mshopsFut
-      mmarts <- mmartsFut
-    } yield {
-      if (!mmarts.isEmpty && !mshops.isEmpty) {
-        ???
-      } else if (!mshops.isEmpty) {
-        routes.MarketShopLk.showShop(mshops.head.id.get)
-      } else if (!mmarts.isEmpty) {
-        routes.MarketMartLk.martShow(mmarts.head.id.get)
-      } else {
-        routes.Admin.index()
-      }
     }
   }
 
