@@ -346,22 +346,27 @@ CbcaShop =
 ## Уведомления ##
 #################
 StatusBar =
+
+  closeBar: ($bar) ->
+    if($bar.data('open'))
+      $bar.data('open', false)
+      $bar.slideUp()
+
+  showBar: ($bar) ->
+    if(!$bar.data('open'))
+      $bar.data('open', true)
+      $bar.slideDown()
+
   init: ()->
 
     $('.status-bar').each ()->
       $this = $(this)
-      $this.data('open', true)
 
-      cb = () ->
-        if($this.data('open'))
-          $this.slideUp()
-
-      setTimeout cb, 5000
+      StatusBar.showBar($this)
+      setTimeout 'StatusBar.closeBar('+$this+')', 5000
 
 
     $(document).on 'click', '.status-bar', ->
       $this = $(this)
-      console.log('click')
 
-      $this.slideUp()
-      $this.data('open', false)
+      StatusBar.closeBar($this)
