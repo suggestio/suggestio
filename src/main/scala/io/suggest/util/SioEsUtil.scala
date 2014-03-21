@@ -250,7 +250,7 @@ object SioEsUtil extends MacroLogsImpl {
           FilterWordDelimiter(WORD_DELIM_FN, preserve_original = true),
           FilterStemmer(STEM_RU_FN, "russian"),
           FilterStemmer(STEM_EN_FN, "english"),
-          FilterEdgeNgram(EDGE_NGRAM_FN, min_gram = 1, max_gram = 10, side = "front")
+          FilterEdgeNgram(EDGE_NGRAM_FN, min_gram = 2, max_gram = 10, side = "front")
         ),
 
         analyzers = Seq(

@@ -70,7 +70,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       picture = null,
       martId = null,
       companyId = null,
-      shopId = null,
+      shopId = None,
       textAlign = null
     )
   }
@@ -91,7 +91,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
   }
 
   /**
-   * Поиск карточек в рамках ТЦ.
+   * Поиск карточек в рамках ТЦ для отображения в ТЦ.
    * @param martId id ТЦ
    * @param shopMustMiss true, если нужно найти карточки, не относящиеся к магазинам. Т.е. собственные
    *                     карточки ТЦ.

@@ -12,9 +12,10 @@ import org.joda.time.DateTime
  */
 trait BuyPlaceT[T <: BuyPlaceT[T]] extends EsModelMinimalT[T] {
 
-  var logoImgId: Option[String]
-  var name: String
-  var companyId: CompanyId_t
-  var dateCreated   : DateTime
+  var logoImgId   : Option[String]
+  var name        : String
+  var companyId   : CompanyId_t
+  var dateCreated : DateTime
+  var personIds   : List[String]
 
 }

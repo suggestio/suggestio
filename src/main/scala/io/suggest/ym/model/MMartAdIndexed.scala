@@ -5,14 +5,15 @@ import io.suggest.model.inx2.MMartInx
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.action.search.SearchResponse
-import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.index.query.{QueryBuilder, FilterBuilders, QueryBuilders}
 import io.suggest.util.SioEsUtil._
 import scala.collection.JavaConversions._
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model.MShop.ShopId_t
 import io.suggest.ym.model.MMart.MartId_t
 import org.elasticsearch.common.xcontent.XContentBuilder
-import MMartAd.SHOW_LEVELS_ESFN
+import MMartAd.{SHOW_LEVELS_ESFN, USER_CAT_ID_ESFN}
+import io.suggest.model.EsModel.{SHOP_ID_ESFN, MART_ID_ESFN}
 
 /**
  * Suggest.io
@@ -124,17 +125,43 @@ object MMartAdIndexed extends MacroLogsImpl {
       .map { _.iterator().size }
   }
 
+
+  private def levelQuery(level: AdShowLevel)  = QueryBuilders.termQuery(SHOW_LEVELS_ESFN, level.toString)
+  private def levelFilter(level: AdShowLevel) = FilterBuilders.termFilter(SHOW_LEVELS_ESFN, level.toString)
+
   /**
-   * Поиск в рамках inx2 (т.е. в рамках ТЦ) с указанием уровня.
-   * @param level Уровень.
-   * @param inx2 Данные об индексе ТЦ.
-   * @return Список рекламных карточек.
+   * Поиск карточек в ТЦ по критериям.
+   * @param shopIdOpt Необязательный id магазина.
+   * @param catIdOpt Необязательный id категории
+   * @param level Какого уровня требуются карточки.
+   * @param inx2 Метаданные об индексе ТЦ.
+   * @return Список рекламных карточек, подходящих под требования.
    */
-  def findForLevel(level: AdShowLevel, inx2: MMartInx)(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartAdIndexed]] = {
-    val levelQuery = QueryBuilders.termQuery(SHOW_LEVELS_ESFN, level.toString)
-    client.prepareSearch(inx2.targetEsInxName)
-      .setTypes(inx2.esType)
-      .setQuery(levelQuery)
+  def find(inx2: MMartInx, shopIdOpt: Option[ShopId_t] = None, catIdOpt: Option[String] = None, level: AdShowLevel)(implicit ec:ExecutionContext, client: Client): Future[Seq[MMartAdIndexed]] = {
+    // Собираем запрос в функциональном стиле, иначе получается многовато вложенных if-else.
+    val query = shopIdOpt.map { shopId =>
+      // Есть shopId. Собираем запрос по магазину.
+      var shopIdQuery: QueryBuilder = QueryBuilders.termQuery(SHOP_ID_ESFN, shopId)
+      if (catIdOpt.isDefined) {
+        val catIdFilter = FilterBuilders.termFilter(USER_CAT_ID_ESFN, catIdOpt.get)
+        shopIdQuery = QueryBuilders.filteredQuery(shopIdQuery, catIdFilter)
+      }
+      shopIdQuery
+    } orElse {
+      // Собрать запрос по shopId не удалось. Пробуем собрать запрос с catIdOpt.
+      catIdOpt.map { catId =>
+        QueryBuilders.termQuery(USER_CAT_ID_ESFN, catId)
+      }
+    } map { query1 =>
+      // Добавить фильтрацию по уровню
+      QueryBuilders.filteredQuery(query1, levelFilter(level))
+    } getOrElse {
+      // Сборка запроса не удалась, значит catIdOpt тоже не задан. Просто ищем по уровню.
+      levelQuery(level)
+    }
+    // Запускаем собранный запрос.
+    inx2.prepareSearchRequest(client.prepareSearch())
+      .setQuery(query)
       .execute()
       .map { searchResp2list(_, inx2) }
   }
