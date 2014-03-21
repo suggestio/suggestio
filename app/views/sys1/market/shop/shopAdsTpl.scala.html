@@ -1,0 +1,12 @@
+@(mads: Seq[MMartAd], mshop: MShop)(implicit ctx: util.Context)
+
+@* Список реклам и сервисных функций. *@
+
+@thisShopBase("Рекламные карточки", mshop) {
+  @mads.map { mad =>
+    <a href="@routes.MarketAd.editShopAd(mad.id.get)">@mad.id.get</a>
+    Отобразить email-сообщение о деактивации: <a href="@routes.SysMarket.showShopEmailAdDisableMsg(mad.id.get)">HTML</a>
+
+    <br/><br/>
+  }
+}

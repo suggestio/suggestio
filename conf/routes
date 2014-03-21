@@ -186,6 +186,8 @@ GET  /sys/market/shop/:id/edit          controllers.SysMarket.shopEditForm(id)
 POST /sys/market/shop/:id/edit          controllers.SysMarket.shopEditFormSubmit(id)
 POST /sys/market/shop/:id/delete        controllers.SysMarket.shopDeleteSubmit(id)
 GET  /sys/market/shop/:id/eact          controllers.SysMarket.showShopEmailActMsgHtml(id, isHtml: Boolean)
+GET  /sys/market/shop/:id/ads           controllers.SysMarket.showShopAds(id)
+GET  /sys/market/s/ad/:adId/email       controllers.SysMarket.showShopEmailAdDisableMsg(adId)
 # sys.market.shop.pricelist
 GET  /sys/market/spl/add/:shopId        controllers.SysMarket.splAddForm(shopId)
 POST /sys/market/spl/add/:shopId        controllers.SysMarket.splAddFormSubmit(shopId)
@@ -200,5 +202,4 @@ GET  /sys/market/cats/usr/c/:catId      controllers.MarketCategory.showUserCat(c
 GET  /sys/market/cats/usr/:ownerId      controllers.MarketCategory.showCatsFor(ownerId)
 GET  /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatForm(catId)
 POST /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatFormSubmit(catId)
-
 

@@ -523,5 +523,34 @@ object SysMarket extends SioController with MacroLogsImpl {
     }
   }
 
+
+  /** Отобразить технический список реклам магазина. */
+  def showShopAds(shopId: ShopId_t) = IsSuperuser.async { implicit request =>
+    val madsFut = MMartAd.findForShop(shopId)
+    for {
+      mshopOpt <- MShop.getById(shopId)
+      mads     <- madsFut
+    } yield {
+      Ok(shop.shopAdsTpl(mads, mshopOpt.get))
+    }
+  }
+
+  /** Отобразить email-уведомление об отключении указанной рекламы. */
+  def showShopEmailAdDisableMsg(adId: String) = IsSuperuser.async { implicit request =>
+    MMartAd.getById(adId) flatMap {
+      case Some(mad) =>
+        val mmartFut = MMart.getById(mad.martId)
+        for {
+          mshopOpt <- MShop.getById(mad.shopId.get)
+          mmartOpt <- mmartFut
+        } yield {
+          val reason = "Причина отключения ТЕСТ причина отключения 123123 ТЕСТ причина отключения."
+          Ok(views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, mshopOpt.get, mad, reason))
+        }
+
+      case None => NotFound("ad not found: " + adId)
+    }
+  }
+
 }
 
