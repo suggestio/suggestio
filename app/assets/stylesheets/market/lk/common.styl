@@ -229,8 +229,7 @@ transform(v)
 
   .blue-but-small
     outline: 0
-    display: block
-    float: right
+    display: inline-block
     width: 122px
     height: 40px
     color: white
@@ -350,7 +349,7 @@ transform(v)
         .title-inner
           font-size: 30px
           color: #676666
-          font-family: 'PT Sans Narrow', 'sans-serif'
+          font-family: 'ParagNorCIta'
           padding-left: 50px
         .back-but
           display: block
@@ -478,12 +477,36 @@ transform(v)
         transform( translate3d(-3px, 0, 0))
         background: url('/assets/images/market/lk/circle.png') no-repeat
         background-position: 0 -68px
-      .circle:hover 
+      .circle:hover
         cursor: pointer
         background-position: 0 0
   .triger-wrap.enabled
     .circle
       transform( translate3d(27px, 0, 0))
+
+  .login-page
+    font-size: 14px
+    font-family: "Arial"
+    width: 600px
+    p
+      margin: 13px 0
+    .lp-title
+      font-size: 30px
+      color: #676666
+      font-family: 'ParagNorCIta'
+      text-align: center
+      padding: 20px 0 10px
+    .block-480
+      padding-left: 120px
+    .recover-password
+      display: inline-block
+      float: right
+      color: #07a1ca
+      text-decoration: none
+    .recover-password:hover
+      text-decoration: underline
+
+
 
 
 @import "../reset"
