@@ -2,7 +2,7 @@ siomart =
 
   config :
     css : '/assets/stylesheets/market/showcase.min.css'
-    index_action : '/market/index/77YzkDJyQN6Gyo8WkHqo-A'
+    index_action : '/market/index/W1WWI4ZMRiOFdf90lxWtyg'
 
   utils :
 
