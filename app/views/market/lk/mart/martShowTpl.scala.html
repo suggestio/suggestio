@@ -8,12 +8,15 @@
 @import ctx._
 @import helper._
 
+@import AdShowLevels._
+
 @market.lk.lkBase(mmart.name) {
 
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.MarketMartLk.searchShops,
   routes.javascript.MarketMartLk.shopOnOffForm,
-  routes.javascript.MarketMartLk.shopOnOffSubmit
+  routes.javascript.MarketMartLk.shopOnOffSubmit,
+  routes.javascript.MarketAd.updateShowLevelSubmit
 )
 
   <div class="title-wrap">
@@ -66,6 +69,13 @@
       mshopOpt = None
     ) { mad =>
       @* Наверное нужны галочки управления отображением карточек ТЦ. *@
+
+      <div class="controls">
+        <label>
+         <input type="checkbox" data-level="@LVL_MART_SHOWCASE" data-adid="@mad.id.get"/>Выключить объявление
+        </label>
+      </div>
+
     }
 
     </div><!-- .body end -->
