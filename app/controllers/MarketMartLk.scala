@@ -514,9 +514,9 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
               mail.setSubject("Suggest.io | Отключена ваша рекламная карточка")
               mail.setFrom("no-reply@suggest.io")
               mail.setRecipient(emails : _*)
-              mail.sendHtml(
-                bodyHtml = views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(mmart, mshop, ad, reason)
-                //bodyText = views.txt.market.lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct)
+              mail.send(
+                bodyHtml = views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(mmart, mshop, ad, reason),
+                bodyText = views.txt.market.lk.shop.ad.emailAdDisabledByMartTpl(mmart, mshop, ad, reason)
               )
             }
           }

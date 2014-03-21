@@ -187,7 +187,7 @@ POST /sys/market/shop/:id/edit          controllers.SysMarket.shopEditFormSubmit
 POST /sys/market/shop/:id/delete        controllers.SysMarket.shopDeleteSubmit(id)
 GET  /sys/market/shop/:id/eact          controllers.SysMarket.showShopEmailActMsgHtml(id, isHtml: Boolean)
 GET  /sys/market/shop/:id/ads           controllers.SysMarket.showShopAds(id)
-GET  /sys/market/s/ad/:adId/email       controllers.SysMarket.showShopEmailAdDisableMsg(adId)
+GET  /sys/market/s/ad/:adId/email       controllers.SysMarket.showShopEmailAdDisableMsg(adId, isHtml: Boolean ?= true)
 # sys.market.shop.pricelist
 GET  /sys/market/spl/add/:shopId        controllers.SysMarket.splAddForm(shopId)
 POST /sys/market/spl/add/:shopId        controllers.SysMarket.splAddFormSubmit(shopId)

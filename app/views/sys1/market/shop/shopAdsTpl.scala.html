@@ -5,8 +5,10 @@
 @thisShopBase("Рекламные карточки", mshop) {
   @mads.map { mad =>
     <a href="@routes.MarketAd.editShopAd(mad.id.get)">@mad.id.get</a>
-    Отобразить email-сообщение о деактивации: <a href="@routes.SysMarket.showShopEmailAdDisableMsg(mad.id.get)">HTML</a>
-
+    <p>Отобразить email-сообщение о деактивации:
+      <a href="@routes.SysMarket.showShopEmailAdDisableMsg(mad.id.get, isHtml = true)">HTML</a>
+      <a href="@routes.SysMarket.showShopEmailAdDisableMsg(mad.id.get, isHtml = false)">TXT</a>
+    </p>
     <br/><br/>
   }
 }

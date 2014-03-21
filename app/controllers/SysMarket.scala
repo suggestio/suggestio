@@ -536,7 +536,7 @@ object SysMarket extends SioController with MacroLogsImpl {
   }
 
   /** Отобразить email-уведомление об отключении указанной рекламы. */
-  def showShopEmailAdDisableMsg(adId: String) = IsSuperuser.async { implicit request =>
+  def showShopEmailAdDisableMsg(adId: String, isHtml: Boolean) = IsSuperuser.async { implicit request =>
     MMartAd.getById(adId) flatMap {
       case Some(mad) =>
         val mmartFut = MMart.getById(mad.martId)
@@ -545,7 +545,11 @@ object SysMarket extends SioController with MacroLogsImpl {
           mmartOpt <- mmartFut
         } yield {
           val reason = "Причина отключения ТЕСТ причина отключения 123123 ТЕСТ причина отключения."
-          Ok(views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, mshopOpt.get, mad, reason))
+          if (isHtml) {
+            Ok(views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, mshopOpt.get, mad, reason))
+          } else {
+            Ok(views.txt.market.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, mshopOpt.get, mad, reason))
+          }
         }
 
       case None => NotFound("ad not found: " + adId)
