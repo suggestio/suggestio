@@ -23,6 +23,7 @@
 
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/common.min.css")'/>
 	<link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/create-ad.min.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase.min.css")'/>
   @headAfter
 </head>
 
@@ -58,7 +59,7 @@
 
     @* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
     @ctx.flashMap.map { case (flashStatus, flashMsg) =>
-      <div class="status-bar @if(flashStatus == "success") {good} else {bad}">
+      <div style="display: none;" class="status-bar @if(flashStatus == "success") {good} else {bad}">
         @flashMsg
       </div>
     }
