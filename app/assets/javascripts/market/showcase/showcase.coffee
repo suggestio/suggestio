@@ -301,7 +301,7 @@ siomart =
 
         siomart.utils.addClass 'smOffer' + siomart.offers.active_offer, direction + '-out animated'
 
-      setTimeout cb, 10
+      setTimeout cb, 100
 
       cb1 = () ->
         #Расставить нужные классы для слайдов
@@ -318,7 +318,7 @@ siomart =
         siomart.offers.active_offer = index
         siomart.offers.is_locked = false
 
-      setTimeout cb1, 600
+      setTimeout cb1, 700
 
   #############################################
   ## Забиндить события на навигационные кнопари
