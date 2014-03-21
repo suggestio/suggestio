@@ -1,4 +1,4 @@
-@(mmart: MMart, ads: Seq[MMartAdIndexed], shops: Map[ShopId_t, MShop])(implicit ctx: util.Context)
+@(mmart: MMart, ads: Seq[MMartAdIndexed], shops: Map[ShopId_t, MShop], mmcats: Seq[MMartCategory])(implicit ctx: util.Context)
 
 @* Начальная страница для sio-market. *@
 
@@ -39,7 +39,7 @@
     </div>
 
     @* Окно с выбором категорий *@
-    @_categories()
+    @_categories(mmcats)
 
     @* Окно с предупреждением о выходе из Sio.Market *@
     @_exit_screen()
