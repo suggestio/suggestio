@@ -211,6 +211,7 @@ object Ident extends SioController with Logs {
     )
   }
 
+
   /** Функция обхода foreign-key ошибок */
   private def recreatePersonIdFor(mpi: MPersonIdent[_])(implicit request: RequestHeader): Future[MPerson] = {
     val logPrefix = s"recreatePersonIdFor($mpi): "

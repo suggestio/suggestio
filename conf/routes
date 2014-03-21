@@ -90,6 +90,7 @@ POST /sys/inx2/im/mart/:martId/add      controllers.SysMarket.inx2handleMartAdd(
 POST /sys/inx2/im/mart/:martId/del      controllers.SysMarket.inx2handleMartDelete(martId)
 
 # Входы в личные кабинеты
+GET  /m                                 controllers.MarketLk.lkIndex
 GET  /m/lk                              controllers.MarketLk.lkList
 # Личный кабинет владельца ТЦ
 GET  /m/lk/mart/:martId                 controllers.MarketMartLk.martShow(martId)

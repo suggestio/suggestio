@@ -29,11 +29,18 @@ object MarketLk extends SioController {
   def lkIndex = MaybeAuth.async { implicit request =>
     request.pwOpt match {
       case Some(pw) =>
+        getMarketRdrCallFor(pw.personId) map {
+          case Some(call) => Redirect(call)
+          // Юзер залогинен, но попал в маркет, где у него нет прав. Отобразить обычную форму.
+          case None => renderDfltPage
+        }
 
-      case None =>
+      case None => renderDfltPage
     }
-    ???
   }
+
+  /** Рендер дефолтовой страницы. */
+  private def renderDfltPage(implicit ctx: util.Context) = Ok(lk.lkIndexTpl(Ident.emailPwLoginFormM))
 
 
   /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */
