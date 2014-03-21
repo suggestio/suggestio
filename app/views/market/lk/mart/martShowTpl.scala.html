@@ -1,4 +1,4 @@
-@(mmart: MMart, shops: Seq[MShop], mads: Seq[MMartAd])(implicit ctx: util.Context)
+@(mmart: MMart, mads: Seq[MMartAd])(implicit ctx: util.Context)
 
 @* Страница с отображением торгового центра. Рисунок 1 в дизайне. *@
 
@@ -64,7 +64,9 @@
       addCall = routes.MarketAd.createMartAd(mmart.id.get),
       editCall = routes.MarketAd.editMartAd(_),
       mshopOpt = None
-    )
+    ) { mad =>
+      @* Наверное нужны галочки управления отображением карточек ТЦ. *@
+    }
 
     </div><!-- .body end -->
 

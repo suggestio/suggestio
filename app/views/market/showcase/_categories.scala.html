@@ -1,5 +1,9 @@
-@()(implicit ctx:util.Context)
+@(mmcats: Seq[MMartCategory])(implicit ctx:util.Context)
 
 <div class="sm-categories-screen">
   <div class="search-bar"></div>
+  @mmcats.map { mmcat =>
+    <p>name = @mmcat.name</p>
+    <p>class = @mmcat.cssClass</p>
+  }
 </div>
