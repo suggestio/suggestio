@@ -2,12 +2,54 @@
 
 @* Шаблон для HTML-почтового сообщения об отключении рекламного сообщения из выдачи модератором ТЦ. *@
 
-Ваша рекламная карточка была отключена модератором.
+<table border="0" cellpadding="0" cellspacing="0" style="width: 540px;">
+  <tr>
+    <td colspan="2">
+      <a href="https://suggest.io" style="display: block; width: 120px; height: 124px; margin: 0 auto;
+      text-decoration: none; background: url('http://@ctx.request.host/assets/images/market/mail/logo.png') no-repeat center center">&nbsp;</a>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 20px 0; border-bottom: 1px solid #9A9B9B; text-align: center; background: #EFEFEF;" colspan="2">
+      <div style="background: url('http://@ctx.request.host/assets/images/market/mail/title.disable.png') no-repeat center center;
+      display: inline-block; width: 262px; height: 25px;">&nbsp;</div>
+    </td>
+  </tr>
+  <tr>
+    <td rowspan="3" style="background: #E1E1E1; padding-left: 20px; padding-top: 20px; padding-bottom: 20px;">
+      <img src="#" width="135" height="170"/>
+    </td>
+    <td style="background: #E1E1E1; padding-left: 20px; padding-top: 20px; padding-right: 20px;
+      font-size: 18px; font-family: 'Arial'; color: #e24a4a; font-weight: bold;
+      text-shadow: 1px 1px 1px #FFFFFF; ">
+      @mmart.name скрыл Вашу карточку
+      товара из выдачи
+    </td>
+  </tr>
+  <tr>
+    <td style="background: #E1E1E1; padding-left: 20px; padding-right: 20px; padding-top: 20px;">
+      <div style="font-size: 14px; color: #979797; font-family: 'Arial'; padding-bottom: 5px;">Причина:</div>
+      <div style="overflow: hidden; border-top: 1px solid #cbcbcb; border-bottom: 1px solid #f8f8f8;"></div>
+      <div style="padding-top: 5px; padding-bottom:5px; color: #232323; font-size: 14px; font-family: 'Arial';">
+        @reason
+      </div>
+      <div style="overflow: hidden; border-top: 1px solid #cbcbcb; border-bottom: 1px solid #f8f8f8;"></div>
+    </td>
+  </tr>
+  <tr>
+    <td style="background: #E1E1E1; padding-top: 15px; padding-bottom: 30px; padding-left: 20px; padding-right: 20px;">
+      <span style="color: #979797; font-family: 'Arial'; font-size: 14px;">Для редактирования перейдите</span>
+      <a style="color: #4f88a9; font-size: 14px; font-family: 'Arial'; text-decoration: none;" target="_blank" href="@routes.MarketAd.editShopAd(ad.id.get)">по ссылке →</a>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <div style="padding-left: 90px; padding-top: 20px; font-size: 10px; font-family: 'Arial'; color: #a3a3a3;">
+        © 2011-2014 Suggest.io. Все права защищены
+      </div>
+    </td>
+  </tr>
+</table>
 
-Указанная причина: @reason
-
-ТЦ: @mmart.name
-Заблокированная карточка: <a href="@routes.MarketAd.editShopAd(ad.id.get)">@ad.id.get</a>
-Ваш магазин: <a href="@routes.MarketShopLk.showShop(mshop.id.get)">@mshop.name</a>
 
 
