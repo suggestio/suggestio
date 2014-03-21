@@ -369,7 +369,5 @@ StatusBar =
 
       setTimeout close_cb, 5000
 
-
-
     $(document).on 'click', '.status-bar', ->
       StatusBar.close($(this))

@@ -60,7 +60,7 @@
     @* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
     @ctx.flashMap.map { case (flashStatus, flashMsg) =>
       <div style="display: none;" class="status-bar @if(flashStatus == "success") {good} else {bad}">
-        @flashMsg
+        <p>@flashMsg</p>
       </div>
     }
 
