@@ -437,7 +437,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
 
   object HideShopAdActions extends Enumeration {
     type HideShopAdAction = Value
-    val HIDE, DELETE = Value
+    val HIDE = Value
 
     def maybeWithName(n: String): Option[HideShopAdAction] = {
       try {
@@ -486,17 +486,43 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
         debug(s"shopAdHideFormSubmit($adId): Form bind failed: " + formWithErrors.errors)
         NotAcceptable("Form bind failed")
       },
-      {case (HideShopAdActions.DELETE, reason) =>
-        MMartAd.deleteById(adId) map { _ =>
-          Ok("deleted")
-        }
-
-      case (HideShopAdActions.HIDE, reason) =>
-        MMartAd.setShowLevels(adId, Set.empty) map { _ =>
+      {case (HideShopAdActions.HIDE, reason) =>
+        request.ad.showLevels = Set.empty
+        request.ad.saveShowLevels map { _ =>
+          // Отправить письмо магазину-владельцу рекламы
+          notyfyAdDisabled(reason)
           Ok("hidden")
         }
       }
     )
+  }
+
+  /**
+   * Сообщить владельцу магазина, что его рекламу отключили.
+   * @param reason Указанная причина отключения.
+   */
+  private def notyfyAdDisabled(reason: String)(implicit request: ShopMartAdRequest[_]) {
+    import request.{mmart, ad}
+    ad.shopId.foreach { shopId =>
+      MShop.getById(shopId) onSuccess { case Some(mshop) =>
+        mshop.mainPersonId.foreach { personId =>
+          MPersonIdent.findAllEmails(personId) onSuccess { case emails =>
+            if (emails.isEmpty) {
+              warn(s"notifyAdDisabled(${ad.id.get}): No notify emails found for shop ${mshop.id.get}")
+            } else {
+              val mail = use[MailerPlugin].email
+              mail.setSubject("Suggest.io | Отключена ваша рекламная карточка")
+              mail.setFrom("no-reply@suggest.io")
+              mail.setRecipient(emails : _*)
+              mail.sendHtml(
+                bodyHtml = views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(mmart, mshop, ad, reason)
+                //bodyText = views.txt.market.lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct)
+              )
+            }
+          }
+        }
+      }
+    }
   }
 
 

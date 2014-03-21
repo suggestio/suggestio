@@ -339,19 +339,21 @@ object SiowebEsUtil extends SioEsClient {
 
       case Array(words) =>
         // Нужно проверить words на наличие \\s внутри. Если есть, то это fts words. Иначе, engram-часть.
-        val result = if (endsWithSpace.matcher(queryStr).find())
+        val result = if (endsWithSpace.matcher(queryStr).find()) {
           (words, "")
-        else
+        } else {
           ("", words)
+        }
         Some(result)
 
       case Array(fts, ngram:String) =>
         // Бывает, что fts-часть состоит из одного предлога или слова, которое кажется сейчас предлогом.
         // Если отправить в ES в качестве запроса предлог, то, очевидно, будет ноль результатов на выходе.
-        val fts1 = if (Stopwords.ALL_STOPS.contains(ngram))
+        val fts1 = if (Stopwords.ALL_STOPS contains ngram) {
           ""
-        else
+        } else {
           fts
+        }
         Some((fts1, ngram))
     }
   }
@@ -362,7 +364,7 @@ object SiowebEsUtil extends SioEsClient {
    * на её основе.
    * @param queryStr Строка, которую набирает в поиске юзер.
    */
-  def queryStr2Query(queryStr:String) : Option[QueryBuilder] = {
+  def queryStr2Query(queryStr: String) : Option[QueryBuilder] = {
     // Дробим исходный запрос на куски
     val topQueriesOpt = splitQueryStr(queryStr).map { case (ftsQS, engramQS) =>
 
@@ -370,32 +372,32 @@ object SiowebEsUtil extends SioEsClient {
       val engramLen = engramQS.length
 
       // Отрабатываем edge-ngram часть запроса.
-      var queries : List[QueryBuilder] = if (engramLen == 0)
-        List()
+      var queries : List[QueryBuilder] = if (engramLen == 0) {
+        Nil
 
-      else {
+      } else {
         // Если запрос короткий, то искать только по title
         val fields = if (ftsLen + engramLen <= 1)
           FIELDS_ONLY_TITLE
         else
           FIELDS_TEXT_ALL
         // Генерим базовый engram-запрос
-        var engramQueries = fields.map { _field =>
+        var queries1 = fields.map { _field =>
           val _subfield = subfield(_field, SUBFIELD_ENGRAM)
           QueryBuilders.matchQuery(_subfield, engramQS)
         }
         // Если чел уже набрал достаточное кол-во символов, то искать парралельно в fts
         if (engramLen >= 4) {
-          val _query = QueryBuilders.matchQuery(FIELD_ALL, engramQS)
-          engramQueries = _query :: engramQueries
+          val ftsQuery = QueryBuilders.matchQuery(FIELD_ALL, engramQS)
+          queries1 = ftsQuery :: queries1
         }
         // Если получилось несколько запросов, то обернуть их в bool-query
-        val finalEngramQuery = if (engramQueries.tail == Nil)
-          engramQueries.head
-        else {
+        val finalEngramQuery = if (queries1.tail == Nil) {
+          queries1.head
+        } else {
           val minShouldMatch = 1
           val boolQB = QueryBuilders.boolQuery().minimumNumberShouldMatch(minShouldMatch)
-          engramQueries.foreach { boolQB.should(_) }
+          queries1.foreach { boolQB.should }
           boolQB
         }
         List(finalEngramQuery)

@@ -108,6 +108,7 @@ object Search extends SioController with Logs {
     )
     ,
 
+    // TODO Заменить точки на вложенные маппинги?
     // Фасеты: автоопределённые теги для страниц в sio.analysis.facet.invlink.
     // Используется list-маппер, поэтому ключ надо кодировать с указанием уникального индекса, т.е. fi.search.tags[222]=Хата%20ок&...
     "fi.search.tags" ->
