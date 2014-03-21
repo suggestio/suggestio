@@ -11,10 +11,19 @@ import util.SiowebEsUtil.client
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 06.03.14 16:39
- * Description: Управление рекламной карточкой.
+ * Description: Проверка прав на управление рекламной карточкой.
  */
 
 object IsAdEditor {
+
+  /**
+   * Определить, можно ли пропускать реквест на исполнение экшена.
+   * @param pwOpt Данные о текущем юзере.
+   * @param mad Рекламная карточка.
+   * @param request Реквест.
+   * @tparam A Параметр типа реквеста.
+   * @return None если нельзя. Some([[RequestWithAd]]) если можно исполнять реквест.
+   */
   private def maybeAllowed[A](pwOpt: PwOpt_t, mad: MMartAd, request: Request[A]): Future[Option[RequestWithAd[A]]] = {
     if (PersonWrapper isSuperuser pwOpt) {
       Future successful Some(RequestWithAd(mad, request, pwOpt))
@@ -22,8 +31,8 @@ object IsAdEditor {
       pwOpt match {
         case Some(pw) =>
           mad.shopId match {
+            // Это реклама магазина. Редактировать может владелец магазина.
             case Some(shopId) =>
-              // Это реклама магазина. Редактировать может владелец магазина.
               MShop.getById(shopId) map { mshopOpt =>
                 mshopOpt flatMap { mshop =>
                   if (mshop.personIds contains pw.personId) {
@@ -34,8 +43,8 @@ object IsAdEditor {
                 }
               }
 
+            // Это реклама ТЦ. Редактировать может только владелец ТЦ.
             case None =>
-              // Это реклама ТЦ. Редактировать может только владелец ТЦ.
               MMart.getById(mad.martId) map { mmartOpt =>
                 mmartOpt flatMap { mmart =>
                   if (mmart.personIds contains pw.personId) {
@@ -51,6 +60,7 @@ object IsAdEditor {
       }
     }
   }
+
 }
 
 
@@ -78,8 +88,8 @@ case class IsAdEditor(adId: String) extends ActionBuilder[RequestWithAd] {
  * @param mad Рекламная карточка.
  * @param request Реквест
  * @param pwOpt Данные по юзеру.
- * @param mshopOpt Данные по магазину, если есть.
- * @param mmartOpt Данные по ТЦ, если есть.
+ * @param mshopOpt Закешированные данные по магазину, если было чтение.
+ * @param mmartOpt Закешированные данные по ТЦ, если было чтение.
  * @tparam A Параметр типа реквеста.
  */
 case class RequestWithAd[A](

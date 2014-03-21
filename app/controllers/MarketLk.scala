@@ -19,8 +19,14 @@ object MarketLk extends SioController {
   /** Список личных кабинетов юзера. */
   def lkList = IsAuth.async { implicit request =>
     val personId = request.pwOpt.get.personId
-    martsAndShopsFut(personId) map { case (mmarts, mshops) =>
-      Ok(lk.lkList(mmarts, mshops))
+    val allMartsMapFut = MMart.getAll
+      .map { mmarts => mmarts.map {mmart => mmart.id.get -> mmart}.toMap }
+    for {
+      martsAndShops <- martsAndShopsFut(personId)
+      allMartsMap <- allMartsMapFut
+    } yield {
+      val (mmarts, mshops) = martsAndShops
+      Ok(lk.lkList(mmarts, mshops, allMartsMap))
     }
   }
 
