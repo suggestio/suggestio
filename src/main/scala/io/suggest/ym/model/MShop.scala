@@ -44,7 +44,7 @@ object MShop extends EsModelStaticT[MShop] {
 
   def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
-    FieldAll(enabled = true, index_analyzer = EDGE_NGRAM_AN, search_analyzer = FTS_RU_AN)
+    FieldAll(enabled = true, /*analyzer = FTS_RU_AN)*/ index_analyzer = EDGE_NGRAM_AN, search_analyzer = FTS_RU_AN)
   )
 
   def generateMappingProps: List[DocField] = List(
