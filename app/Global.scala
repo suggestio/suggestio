@@ -144,6 +144,6 @@ object SioHTMLCompressorFilter {
    * Сборка сжимающего html-фильтра.
    * @return The HTML compressor filter.
    */
-  def apply() = new HTMLCompressorFilter(HtmlCompressUtil.compressor)
+  def apply() = new HTMLCompressorFilter(HtmlCompressUtil.getForGlobalUsing)
 }
 

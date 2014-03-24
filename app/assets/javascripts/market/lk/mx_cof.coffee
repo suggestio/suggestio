@@ -8,6 +8,8 @@ $(document).ready ->
 
   cbca.emptyPhoto = '/assets/images/market/lk/empty-image.gif'
 
+  cbca.common = new CbcaCommon()
+
   cbca.popup = new CbcaPopup()
   cbca.search = new CbcaSearch()
 
@@ -17,7 +19,7 @@ $(document).ready ->
   cbca.shop = CbcaShop
   cbca.shop.init()
 
-  cbca.common = new CbcaCommon()
+
 
 
 

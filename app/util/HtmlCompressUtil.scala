@@ -2,6 +2,7 @@ package util
 
 import com.googlecode.htmlcompressor.compressor.HtmlCompressor
 import play.api.Play, Play.current
+import play.api.templates.HtmlFormat
 
 /**
  * Suggest.io
@@ -11,15 +12,40 @@ import play.api.Play, Play.current
  */
 object HtmlCompressUtil {
 
-  /** Компрессор. Используется в Global, но лучше бы его сделать private, т.к. он изменяемый. */
-  val compressor = new HtmlCompressor()
-  compressor.setPreserveLineBreaks(Play.isDev)
-  compressor.setRemoveComments(!Play.isDev)
-  compressor.setRemoveIntertagSpaces(true)
-  compressor.setRemoveHttpProtocol(true)
-  compressor.setRemoveHttpsProtocol(true)
-  // !!! Для сжатия инлайновых css/js блоков надо переместить их в соответствующие файлы в /app/assets/.
-  // !!! Включение сжатия css/js прямо здесь приведёт к тормозам.
+  def getForGlobalUsing = {
+    val compressor = new HtmlCompressor()
+    compressor.setPreserveLineBreaks(Play.isDev)
+    compressor.setRemoveComments(!Play.isDev)
+    compressor.setRemoveIntertagSpaces(true)
+    compressor.setRemoveHttpProtocol(true)
+    compressor.setRemoveHttpsProtocol(true)
+    compressor
+  }
+
+
+  private val html4jsonCompressor = {
+    val compressor = getForGlobalUsing
+    compressor.setPreserveLineBreaks(false)
+    compressor.setRemoveHttpProtocol(true)
+    compressor.setRemoveHttpsProtocol(false)
+    compressor
+  }
+
+  def compressForJson(html: HtmlFormat.Appendable) = html4jsonCompressor.compress(html.body)
+
+
+  private val html4emailCompressor = {
+    val compressor = getForGlobalUsing
+    compressor.setRemoveIntertagSpaces(false)
+    compressor.setRemoveMultiSpaces(true)
+    compressor.setRemoveHttpProtocol(false)
+    compressor.setRemoveHttpsProtocol(false)
+    //compressor.setCompressCss(true)
+    compressor.setPreserveLineBreaks(false)
+    compressor
+  }
+
+  def compressForEmail(html: HtmlFormat.Appendable) = html4emailCompressor.compress(html.body)
 
 }
 

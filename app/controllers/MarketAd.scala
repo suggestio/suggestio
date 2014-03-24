@@ -11,13 +11,12 @@ import play.api.data._, Forms._
 import util.acl._
 import util.img._
 import scala.concurrent.Future
-import play.api.mvc.Request
+import play.api.mvc.{Action, Request}
 import play.api.Play.current
 import TextAlignValues.TextAlignValue
 import MMartCategory.CollectMMCatsAcc_t
 import scala.util.{Try, Failure, Success}
 import util.HtmlSanitizer.adTextFmtPolicy
-import io.suggest.ym.model.BuyPlaceT
 
 /**
  * Suggest.io
@@ -143,23 +142,30 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   { MMartAdTextAlign.apply }
   { MMartAdTextAlign.unapply }
 
+  private val VENDOR_MAXLEN = 32
 
   // Общие для ad-форм мапперы закончились. Пора запилить сами формы и формоспецифичные элементы.
   val adProductM = mapping(
-    "vendor"    -> mmaStringFieldM(nonEmptyText(maxLength = 32)),
+    "vendor"    -> mmaStringFieldM(nonEmptyText(maxLength = VENDOR_MAXLEN)),
     "price"     -> mmaFloatFieldM(priceM),
     "oldPrice"  -> mmaFloatFieldOptM(priceM)
   )
   { MMartAdProduct.apply }
   { MMartAdProduct.unapply }
 
+
+  private val DISCOUNT_TEXT_MAXLEN = 64
+  private val DISCOUNT_MIN = 0F
+  private val DISCOUNT_MAX = 200F
+
   /** Кусок формы, ориентированный на оформление скидочной рекламы. */
   val adDiscountM = {
-    val discountTextM = nonEmptyText(maxLength = 64)
+    val discountTextM = nonEmptyText(maxLength = DISCOUNT_TEXT_MAXLEN)
       .transform(strTrimBrOnlyF, strIdentityF)
     val discountValueM = float
-      .verifying("discount.too.low", { _ <= 0F })
-      .verifying("discount.too.big", { _ >= 200F })
+      // TODO Нужно разрешать текст в виде "10%", он не должен вызывать проблем.
+      .verifying("discount.too.low", { _ <= DISCOUNT_MIN })
+      .verifying("discount.too.big", { _ >= DISCOUNT_MAX })
     val tplM = mapping(
       "id"    -> number(min = DISCOUNT_TPL_ID_MIN, max = DISCOUNT_TPL_ID_MAX),
       "color" -> colorM
@@ -177,11 +183,12 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     { MMartAdDiscount.unapply }
   }
 
+  private val AD_TEXT_MAXLEN = 160
   /** Форма для задания текстовой рекламы. */
   val adTextM = {
     val textM = nonEmptyText(maxLength = 200)
       .transform({ adTextFmtPolicy.sanitize }, strIdentityF)
-      .verifying("text.too.len", { _.length <= 160 })
+      .verifying("text.too.len", { _.length <= AD_TEXT_MAXLEN })
 
     mapping(
       "text" -> mmaStringFieldM(textM)
@@ -193,27 +200,21 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   // Дублирующиеся куски маппина выносим за пределы метода.
   private val CAT_ID_K = "catId"
-  private val catIdKM = CAT_ID_K -> userCatIdM
   private val AD_IMG_ID_K = "image_key"
-  private val adImgIdKM = AD_IMG_ID_K  -> imgIdJpegM
 
-  private val panelColorKM = "panelColor" -> colorM
+  private val panelColorM = colorM
     .transform(
       { MMartAdPanelSettings.apply },
       { mmaps: MMartAdPanelSettings => mmaps.color }
     )
+  private val PANEL_COLOR_K = "panelColor"
+  private val OFFER_K = "offer"
   private val textAlignKM = "textAlign" -> textAlignM
 
 
-  /** Генератор маппинга для MMartAd-части общей формы. */
-  private def getAdM[T <: MMartAdOfferT](offerM: Mapping[T]) = mapping(
-    catIdKM,
-    panelColorKM,
-    "offer" -> offerM,
-    textAlignKM
-  )
-  // applyF()
-  {(userCatId, panelSettings, adBody, textAlign) =>
+  /** apply-функция для формы добавления/редактировать рекламной карточки.
+    * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
+  private def adFormApply[T <: MMartAdOfferT](userCatId: String, panelSettings: MMartAdPanelSettings, adBody: T, textAlign: MMartAdTextAlign) = {
     MMartAd(
       martId      = null,
       offers      = List(adBody),
@@ -225,8 +226,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       companyId   = null
     )
   }
-  // unapplyF()
-  {mmad =>
+
+  /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
+  private def adFormUnapply[T <: MMartAdOfferT](mmad: MMartAd) = {
     import mmad._
     if (panel.isDefined && userCatId.isDefined && !offers.isEmpty) {
       val adBody = offers.head.asInstanceOf[T]  // TODO Надо что-то решать с подтипами офферов. Параметризация типов MMartAd - геморрой.
@@ -237,11 +239,19 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
   }
 
+  private val catIdKM = CAT_ID_K -> userCatIdM
+  private val panelColorKM = PANEL_COLOR_K -> panelColorM
+
   /** Генератор форм добавления/редактирования рекламируемого продукта в зависимости от вкладок. */
   private def getAdFormM[T <: MMartAdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
-    adImgIdKM,
+    AD_IMG_ID_K -> imgIdJpegM,
     MarketShopLk.logoImgOptIdKM,
-    "ad" -> getAdM(offerM)
+    "ad" -> mapping(
+      catIdKM,
+      panelColorKM,
+      OFFER_K -> offerM,
+      textAlignKM
+    )(adFormApply[T])(adFormUnapply[T])
   ))
 
   val adProductFormM  = getAdFormM(adProductM)
@@ -770,4 +780,232 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   private def martNotFound(martId: MartId_t) = NotFound("Mart not found: " + martId)
   private def adEditWrong = Forbidden("Nobody cat edit this ad using this action.")
 
+
+  // ================================== preview-фунционал ========================================
+
+  /** Объект, содержащий дефолтовые значения для preview-формы. Нужен для возможности простого импорта значений
+    * в шаблон формы и для изоляции области видимости от другого кода. */
+  object PreviewFormDefaults {
+    /** Дефолтовый id картинки, когда она не задана. */
+    val IMG_ID = "TODO_IMG_ID"   // TODO Нужен id для дефолтовой картинки.
+
+    val TEXT_COLOR = "000000"
+    val TEXT_FONT  = MMAdFieldFont(TEXT_COLOR)
+    
+    object Product {
+      val PRICE_VALUE = 100F
+      val OLDPRICE_VALUE = 200F
+    }
+
+    object Discount {
+      val TPL_ID    = DISCOUNT_TPL_ID_MIN
+      val DISCOUNT  = 50F
+    }
+
+    object Text {
+      val TEXT = "Низкие цены в этом месяце"
+    }
+  }
+
+
+  private val prevCatIdKM = CAT_ID_K -> default(userCatIdM, "")
+  /** Генератор preview-формы. Форма совместима с основной формой, но более толерантна к исходным данным. */
+  private def getPreviewAdFormM[T <: MMartAdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
+    AD_IMG_ID_K -> default(
+      mapping = imgIdJpegM,
+      value = OrigImgIdKey(PreviewFormDefaults.IMG_ID)
+    ),
+    MarketShopLk.logoImgOptIdKM,
+    "ad" -> mapping(
+      prevCatIdKM,
+      panelColorKM,
+      OFFER_K -> offerM,
+      textAlignKM
+    )(adFormApply[T])(adFormUnapply[T])
+  ))
+
+  private val floatInvalidIgnored = -1F
+  private val priceFieldTolerantM = text.transform(
+    { txt =>
+      try {
+        Math.max(txt.toFloat, 0F)
+      } catch {
+        case _: Exception => floatInvalidIgnored
+      }
+    },
+    { value: Float =>
+      if (value < 0F) "???" else value.toString }
+  )
+
+  // offer-mapping'и
+  /** Толерантный к значениям маппинг для рекламной карточки продукта с ценой. */
+  private def previewProductM(vendorDflt: String) = {
+    mapping(
+      "vendor"    -> default(
+        mapping = mmaStringFieldM(
+          text.transform(
+            strTrimSanitizeF andThen { vendor =>
+              if(vendor.isEmpty)
+                vendorDflt
+              else if (vendor.length > VENDOR_MAXLEN)
+                vendor.substring(0, VENDOR_MAXLEN)
+              else vendor
+            },
+            strIdentityF
+          )
+        ),
+        value = MMAdStringField(vendorDflt, PreviewFormDefaults.TEXT_FONT)
+      ),
+
+      "price" -> mapping(
+        "value" -> default(
+          mapping = priceFieldTolerantM,
+          value = PreviewFormDefaults.Product.PRICE_VALUE
+        ),
+        "font" -> fontColorM
+      )
+      { MMAdFloatField.apply }
+      { MMAdFloatField.unapply },
+
+      "oldPrice"  -> mmaFloatFieldOptM(priceFieldTolerantM)
+    )
+    { MMartAdProduct.apply }
+    { MMartAdProduct.unapply }
+  }
+
+
+  /** Кусок формы, ориентированный на оформление скидочной рекламы. */
+  private val previewAdDiscountM = {
+    val discountTextM = nonEmptyText(maxLength = DISCOUNT_TEXT_MAXLEN)
+      .transform(strTrimBrOnlyF, strIdentityF)
+    val discountValueM = priceFieldTolerantM
+      .transform(
+        { dc => if (dc < DISCOUNT_MIN || dc > DISCOUNT_MAX) floatInvalidIgnored else dc },
+        { dc: Float => dc }
+      )
+    val tplM = mapping(
+      "id"    -> default(
+        mapping = number(min = DISCOUNT_TPL_ID_MIN, max = DISCOUNT_TPL_ID_MAX),
+        value   = PreviewFormDefaults.Discount.TPL_ID
+      ),
+      "color" -> colorM
+    )
+    { DiscountTemplate.apply }
+    { DiscountTemplate.unapply }
+    // Собираем итоговый маппинг для MMartAdDiscount.
+    mapping(
+      "text1"     -> optional(mmaStringFieldM(discountTextM)),
+      "discount"  -> mmaFloatFieldOptM(discountValueM).transform(
+        {dcOpt => dcOpt getOrElse MMAdFloatField(PreviewFormDefaults.Discount.DISCOUNT, PreviewFormDefaults.TEXT_FONT) },
+        {dc: MMAdFloatField => Some(dc) }
+      ),
+      "template"  -> tplM,
+      "text2"     -> optional(mmaStringFieldM(discountTextM))
+    )
+    { MMartAdDiscount.apply }
+    { MMartAdDiscount.unapply }
+  }
+
+
+  /** Форма для задания текстовой рекламы. */
+  private val previewAdTextM = {
+    val textM = default(
+      mapping = text
+        .transform({ adTextFmtPolicy.sanitize }, strIdentityF)
+        .transform(
+          { s => if (s.length > AD_TEXT_MAXLEN) s.substring(0, AD_TEXT_MAXLEN) else s},
+          strIdentityF
+        ),
+      value = PreviewFormDefaults.Text.TEXT
+    )
+    mapping(
+      "text" -> mmaStringFieldM(textM)
+    )
+    { MMartAdText.apply }
+    { MMartAdText.unapply }
+  }
+
+
+  private def previewAdProductFormM(vendorDflt: String) = getPreviewAdFormM(previewProductM(vendorDflt))
+  private val previewAdDiscountFormM = getPreviewAdFormM(previewAdDiscountM)
+  private val previewAdTextFormM = getPreviewAdFormM(previewAdTextM)
+
+  /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
+  private def detectAdPreviewForm(vendorDflt: String)(implicit request: Request[collection.Map[String, Seq[String]]]): Either[AdFormM, (MMartAdOfferType, AdFormM)] = {
+    val adModes = request.body.get("ad.offer.mode") getOrElse Nil
+    adModes.headOption.flatMap { adModeStr =>
+      MMartAdOfferTypes.maybeWithName(adModeStr)
+    } map { adMode =>
+      val adForm = adMode match {
+        case MMartAdOfferTypes.PRODUCT  => previewAdProductFormM(vendorDflt)
+        case MMartAdOfferTypes.DISCOUNT => previewAdDiscountFormM
+        case MMartAdOfferTypes.TEXT     => previewAdTextFormM
+      }
+      adMode -> adForm
+    } match {
+      case Some(result) =>
+        Right(result)
+
+      case None =>
+        warn("detectAdForm(): valid AD mode not present in request body. AdModes found: " + adModes)
+        val form = adProductFormM.withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
+        Left(form)
+    }
+  }
+
+  import views.html.market.showcase._single_offer
+
+  /** Магазин сабмиттит форму для preview. */
+  def adFormPreviewShopSubmit(shopId: ShopId_t) = IsMartAdminShop(shopId).async(parse.urlFormEncoded) { implicit request =>
+    MShop.getById(shopId) map {
+      case Some(mshop) =>
+        detectAdPreviewForm(mshop.name) match {
+          case Right((offerType, adFormM)) =>
+            adFormM.bindFromRequest().fold(
+              {formWithErrors =>
+                debug(s"adFormPreviewShopSubmit($shopId): form bind failed: " + formWithErrors.errors)
+                NotAcceptable("Preview form bind failed.")
+              },
+              {case (iik, logoOpt, mad) =>
+                mad.picture = iik.key
+                mshop.logoImgId = logoOpt.map(_.iik.key)
+                mad.shopId = Some(shopId)
+                mad.martId = request.martId
+                Ok(_single_offer(mad, request.mmart, Some(mshop)))
+              }
+            )
+
+          case Left(formWithGlobalError) =>
+            NotAcceptable("Form mode invalid")
+      }
+
+      case None => shopNotFound(shopId)
+    }
+  }
+
+  /** ТЦ сабмиттит форму для preview. */
+  def adFormPreviewMartSubmit(martId: MartId_t) = IsMartAdmin(martId).async(parse.urlFormEncoded) { implicit request =>
+    import request.mmart
+    detectAdPreviewForm(mmart.name) match {
+      case Right((offerType, adFormM)) =>
+        adFormM.bindFromRequest().fold(
+          {formWithErrors =>
+            debug(s"adFormPreviewMartSubmit($martId): form bind failed: " + formWithErrors.errors)
+            NotAcceptable("Form bind failed")
+          },
+          {case (iik, logoOpt, mad) =>
+            mad.picture = iik.key
+            mmart.logoImgId = logoOpt.map(_.iik.key)
+            mad.shopId = None
+            mad.martId = martId
+            Ok(_single_offer(mad, mmart, None))
+          }
+        )
+
+      case Left(formWithErrors) =>
+        NotAcceptable("Form mode invalid.")
+    }
+  }
+
 }
+

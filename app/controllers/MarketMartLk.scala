@@ -323,10 +323,11 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
 
   /**
    * Сабмит формы удаления магазина из торгового центра.
+   * Пока что отключено.
    * @param martId id ТЦ.
    * @param shopId id Магазина.
    */
-  def martShopDeleteSubmit(martId: MartId_t, shopId: ShopId_t) = IsMartAdmin(martId).async { implicit request =>
+  private def martShopDeleteSubmit(martId: MartId_t, shopId: ShopId_t) = IsMartAdmin(martId).async { implicit request =>
     MShop.getMartIdFor(shopId) flatMap {
       case Some(shopMartId) if shopMartId == martId =>
         MShop.deleteById(shopId) map { _ =>
@@ -334,7 +335,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
             .flashing("success" -> "Магазин удалён.")
         }
 
-      case None => NotFound("Shop not found or unrelated.")
+      case _ => NotFound("Shop not found or unrelated.")
     }
   }
 
@@ -469,19 +470,18 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
   /** Сабмит формы сокрытия/удаления формы. */
   def shopAdHideFormSubmit(adId: String) = IsMartAdminShopAd(adId).async { implicit request =>
     // TODO Надо поразмыслить над ответами. Вероятно, тут нужны редиректы или jsonp-команды.
+    val rdr = Redirect(routes.MarketMartLk.showShop(request.ad.shopId.get))
     shopAdHideFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"shopAdHideFormSubmit($adId): Form bind failed: " + formWithErrors.errors)
-        Redirect(routes.MarketMartLk.showShop(request.ad.shopId.get))
-          .flashing("error" -> "Необходимо указать причину")
+        rdr.flashing("error" -> "Необходимо указать причину")
       },
       {case (HideShopAdActions.HIDE, reason) =>
         request.ad.showLevels = Set.empty
         request.ad.saveShowLevels map { _ =>
           // Отправить письмо магазину-владельцу рекламы
           notyfyAdDisabled(reason)
-          Redirect(routes.MarketMartLk.showShop(request.ad.shopId.get))
-            .flashing("success" -> "Объявление выключено")
+          rdr.flashing("success" -> "Объявление выключено")
         }
       }
     )

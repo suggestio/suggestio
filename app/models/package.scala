@@ -57,8 +57,10 @@ package object models {
   val  DiscountTemplate = io.suggest.ym.model.MMartAdDiscountTemplate
   type DiscountTemplate = io.suggest.ym.model.MMartAdDiscountTemplate
 
-  val MMAdFloatField    = io.suggest.ym.model.MMAdFloatField
-  val MMAdStringField   = io.suggest.ym.model.MMAdStringField
+  val  MMAdFloatField   = io.suggest.ym.model.MMAdFloatField
+  type MMAdFloatField   = io.suggest.ym.model.MMAdFloatField
+  val  MMAdStringField  = io.suggest.ym.model.MMAdStringField
+  type MMAdStringField  = io.suggest.ym.model.MMAdStringField
 
   val  MMartAdTAPhone   = io.suggest.ym.model.MMartAdTAPhone
   type MMartAdTAPhone   = io.suggest.ym.model.MMartAdTAPhone
@@ -82,4 +84,5 @@ package object models {
   val  MMartAdIndexed   = io.suggest.ym.model.MMartAdIndexed
   type MMartAdIndexed   = io.suggest.ym.model.MMartAdIndexed
 
+  type BuyPlaceT[T <: BuyPlaceT[T]]  = io.suggest.ym.model.BuyPlaceT[T]
 }
