@@ -25,7 +25,7 @@
     </div>
 
     @* Кнопочки-кружочки для перелистывания слайдов с офферами *@
-    <div class="sm-offers-controller" id="smOffersController">
+    <div class="sm-offers-controller" id="smOffersController" style="width: @(ads.length*14)px">
       @_offers_list(mmart, ads, shops, isNav=true)
     </div>
 
