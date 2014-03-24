@@ -15,7 +15,7 @@
       <td class="right">
         @panelColors.map { case (colorHex, colorStyle) =>
           <div class="item">
-            <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="@colorHex" @if(colorHex == currColorHex) {checked="checked"}/>
+            <input type="checkbox" class="one-checkbox" data-name="panelColor" data-for="panelColor" data-value="@colorHex" @if(colorHex == currColorHex) {data-checked="checked"}/>
             <div class="color" style="background: @colorStyle;">&nbsp;</div>
           </div>
         }
