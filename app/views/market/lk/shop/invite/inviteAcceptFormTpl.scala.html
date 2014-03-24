@@ -12,7 +12,6 @@
 
   <div class="title-wrap">
     <div class="center">
-      <a class="back-but" href="#">&nbsp;</a>
       <div class="title-inner">
         СОЗДАНИЕ ПРОФАЙЛА БУТИКА
       </div>
@@ -21,95 +20,137 @@
 
   <div class="body">
 
-    @form(routes.MarketShopLk.inviteAcceptSubmit(eaId=eAct.id.get, shopId=eAct.key)) {
-      @* Имя магазина *@
-      <table cellpadding="0" cellspacing="0" class="input-wrap big">
-        @inputText(
-        iaf("shopName"),
-        '_label -> "Название бутика:"
-        )
-      </table>
 
-      <table cellpadding="0" cellspacing="0" class="input-wrap big disabled">
-        <td class="left">
-          <label for="emailTextField">E-mail:</label>
-        </td>
+    <div class="hello-message" id="hello-message">
+      <div class="accept">
+        Одобрил ваше подключение к системе SIOMARKET
+      </div>
+      <h2>
+        Правила
+      </h2>
+      <p>
+        При покупке одежды и обуви в интернете есть свои особенности: чтобы не ошибиться с выбором, покупателю нужны
+        качественные фотографии каждой вещи, возможность увидеть ее в разных ракурсах и рассмотреть детали, информация
+        о доступных цветах и размерах, состав материала, рекомендации по уходу и т.д. Чтобы учесть эти особенности и
+        сделать покупку и продажу одежды в интернете удобнее, в соответствующих категориях Яндекс.Маркета (одежда,
+        обувь, сумки, аксессуары) используется специальный интерфейс выбора товара, а также проводится более критичный
+        отбор предложений для этих категорий.
+        В категориях одежды, как и в других популярных категориях, используются карточки модели (например, джинсы
+        Levi's 501). В карточку собираются все возможные цвето-размерные сочетания модели, а также предложения из
+        различных магазинов.
+        Чтобы товарные предложения были размещены в правильные категории раздела Одежда, обувь и аксессуары на
+        Яндекс.Маркете, а также были соотнесены с нужными карточками моделей, необходимо соблюдать следующие рекомендации:
+      </p>
+      <h2>
+        Формат передачи данных
+      </h2>
+      <p>
+        Данные о товарных предложениях, относящиеся к категории Одежда, обувь и аксессуары, необходимо передавать
+        в формате YML. Подробное описание формата YML приведено в разделе Формат YML.
+        Остальные форматы передачи данных не поддерживают возможность передачи характеристик товара,
+        используемых для фильтрации товарных предложений в результатах поиска Яндекс.Маркета. Поэтому товарные
+        предложения, переданные не в формате YML, будут размещены и доступны в поиске Яндекс.Маркета, но не будут
+        соотнесены с карточками моделей.
+      </p>
 
-        <td class="right">
-          <div class="input clearfix">
-          <div class="input-shadow">
-            <input id="emailTextField" type="text" disabled value="@eAct.email"/>
-          </div>
-          </div>
-        </td>
-      </table>
+      <div class="gray-but-wrap" style="margin-top: 50px;">
+        <div class="white-border-top">
+          <a class="btn" href="#" id="create-your-market-btn">СОЗДАЙТЕ СВОЙ МАРКЕТ</a>
+        </div>
+      </div>
+    </div>
 
+    <div class="create-your-market" id="create-your-market" style="display: none;">
+      @form(routes.MarketShopLk.inviteAcceptSubmit(eaId=eAct.id.get, shopId=eAct.key)) {
+        @* Имя магазина *@
+        <table cellpadding="0" cellspacing="0" class="input-wrap big">
+          @inputText(
+          iaf("shopName"),
+          '_label -> "Название бутика:"
+          )
+        </table>
 
-      <table cellpadding="0" cellspacing="0" class="input-wrap small disabled">
-        <td class="left">
-          <label for="floorTextField">Номер этажа:</label>
-        </td>
+        <table cellpadding="0" cellspacing="0" class="input-wrap big disabled">
+          <td class="left">
+            <label for="emailTextField">E-mail:</label>
+          </td>
 
-        <td class="right">
-          <div class="input clearfix">
+          <td class="right">
+            <div class="input clearfix">
             <div class="input-shadow">
-              <input id="floorTextField" type="text" disabled="disabled" value="@mshop.martFloor"/>
+              <input id="emailTextField" type="text" disabled value="@eAct.email"/>
             </div>
-          </div>
-        </td>
-      </table>
-
-      <table cellpadding="0" cellspacing="0" class="input-wrap small disabled">
-        <td class="left">
-          <label for="floorTextField">Номер секции:</label>
-        </td>
-
-        <td class="right">
-          <div class="input clearfix">
-            <div class="input-shadow">
-              <input id="floorTextField" type="text" disabled="disabled" value="@mshop.martSection"/>
             </div>
-          </div>
-        </td>
-      </table>
-
-
-      @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
-      @if(withRegister) {
-        @* Юзер вводит пароли *@
-
-        <table cellpadding="0" cellspacing="0" class="input-wrap pass">
-          <tr>
-            @inputPassword(
-            iaf("password.pw1"),
-            '_label -> "Пароль:"
-            )
-            <td class="pass-text" rowspan="2">
-              Используйте адрес электронной почты
-              и пароль для следующего входа.
-            </td>
-          </tr>
-          <tr>
-            @inputPassword(
-            iaf("password.pw2"),
-            '_label -> "Подтверждение пароля:"
-            )
-          </tr>
+          </td>
         </table>
 
 
-        @* TODO Нужна ссылка с формой для логина в систему, если юзер уже зареган, но ещё не залогинен. *@
-      }
+        <table cellpadding="0" cellspacing="0" class="input-wrap small disabled">
+          <td class="left">
+            <label for="floorTextField">Номер этажа:</label>
+          </td>
 
-      <div class="submit-wrap">
-        <div class="gray-but-wrap" style="margin-top: 50px; margin-left: 120px;">
-          <div class="white-border-top">
-            <input class="btn" type="submit" value="@Messages("ПРОДОЛЖИТЬ")"/>
+          <td class="right">
+            <div class="input clearfix">
+              <div class="input-shadow">
+                <input id="floorTextField" type="text" disabled="disabled" value="@mshop.martFloor"/>
+              </div>
+            </div>
+          </td>
+        </table>
+
+        <table cellpadding="0" cellspacing="0" class="input-wrap small disabled">
+          <td class="left">
+            <label for="floorTextField">Номер секции:</label>
+          </td>
+
+          <td class="right">
+            <div class="input clearfix">
+              <div class="input-shadow">
+                <input id="floorTextField" type="text" disabled="disabled" value="@mshop.martSection"/>
+              </div>
+            </div>
+          </td>
+        </table>
+
+
+        @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
+        @if(withRegister) {
+          @* Юзер вводит пароли *@
+
+          <table cellpadding="0" cellspacing="0" class="input-wrap pass">
+            <tr>
+              @inputPassword(
+              iaf("password.pw1"),
+              '_label -> "Пароль:"
+              )
+              <td class="pass-text" rowspan="2">
+                Используйте адрес электронной почты
+                и пароль для следующего входа.
+              </td>
+            </tr>
+            <tr>
+              @inputPassword(
+              iaf("password.pw2"),
+              '_label -> "Подтверждение пароля:"
+              )
+            </tr>
+          </table>
+
+
+          @* TODO Нужна ссылка с формой для логина в систему, если юзер уже зареган, но ещё не залогинен. *@
+        }
+
+        <div class="submit-wrap">
+          <div class="gray-but-wrap" style="margin-top: 50px; margin-left: 120px;">
+            <div class="white-border-top">
+              <input class="btn" type="submit" value="@Messages("ПРОДОЛЖИТЬ")"/>
+            </div>
           </div>
         </div>
-      </div>
 
-    }
+      }
+    </div>
 
   </div>
 

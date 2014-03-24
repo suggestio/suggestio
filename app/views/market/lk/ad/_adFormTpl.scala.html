@@ -18,9 +18,19 @@
   @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@
   @af.globalError
 
-  @_adFormCatSelectorsTpl(mmcats, af)
-
   <div class="block" style="margin-top: 30px;">
+    <div class="border-line"></div>
+      <div class="hat">
+        <span class="title">Выбор категории</span>
+        <a class="toggle open" href="#" data-content="cat-select-wrap">Свернуть</a>
+      </div>
+    <div class="border-line"></div>
+    <div class="slide-content" id="cat-select-wrap">
+      @_adFormCatSelectorsTpl(mmcats, af)
+    </div>
+  </div>
+
+  <div class="block">
     <div class="border-line"></div>
     <div class="hat">
       <span class="title">Отображение на устройстве</span>
