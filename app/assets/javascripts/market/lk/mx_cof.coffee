@@ -304,14 +304,23 @@ CbcaShop =
     #########################
     $(document).on 'change', '.ads-list .controls input[type = "checkbox"]', ->
       $this = $(this)
+      lvlEnabled = this.checked
 
       jsRoutes.controllers.MarketAd.updateShowLevelSubmit($this.attr('data-adid')).ajax(
         type: 'POST'
         data:
           'levelId': $this.attr('data-level')
-          'levelEnabled': this.checked
+          'levelEnabled': lvlEnabled
         success: (data) ->
-          console.log(data)
+          if(lvlEnabled)
+            $this.closest('.item').removeClass('disabled')
+          else
+            check = true
+            $this.closest('.item').find('input[type = "checkbox"]').each ()->
+              if(this.checked)
+                check = false
+            if(check)
+              $this.closest('.item').toggleClass('disabled', true)
         error: (data) ->
           console.log(data)
       )
@@ -397,7 +406,6 @@ StatusBar =
 
   close: ($bar) ->
     if($bar.data('open'))
-      console.log('111')
       $bar.data('open', false)
       $bar.slideUp()
 
