@@ -4,6 +4,7 @@ siomart =
     css : '/assets/stylesheets/market/showcase.min.css'
     index_action : window.siomart_index
     sm_layout_class : 'sio-mart-layout'
+    sm_trigger_class : 'sio-mart-trigger'
 
   utils :
 
@@ -178,12 +179,21 @@ siomart =
   ## Добавить в DOM необходимую разметку для Sio.Market
   #####################################################
   draw_layout : () ->
+    ## Интерфейс маркета
     sm_layout_attrs =
       class : this.config.sm_layout_class
       id : 'sioMartRoot'
     sm_layout = this.utils.ce "div", sm_layout_attrs, '<div id="sioMartLayout"></div>'
 
     this.utils.ge_tag("body")[0].appendChild sm_layout
+
+    ## Иконка для быстрого вызова маркета
+    sm_trigger_attrs =
+      class : this.config.sm_trigger_class
+      id : 'sioMartTrigger'
+    sm_trigger = this.utils.ce "div", sm_trigger_attrs, 'Sio.Market'
+
+    this.utils.ge_tag("body")[0].appendChild sm_trigger
 
     meta_viewport_attrs =
       name : 'viewport'
@@ -238,6 +248,7 @@ siomart =
   ###############################
   close_mart : ( event ) ->
     siomart.utils.ge('sioMartRoot').style.display = 'none'
+    siomart.utils.ge('smCloseScreen').style.display = 'none'
     event.preventDefault()
     return false
 
@@ -353,6 +364,8 @@ siomart =
     this.utils.add_single_listener this.utils.ge('smCloseButton'), 'click', siomart.open_close_screen
     this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), 'click', siomart.close_mart
     this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), 'click', siomart.exit_close_screen
+
+    this.utils.add_single_listener this.utils.ge('sioMartTrigger'), 'click', siomart.open_mart
 
     ## Кнопка возвращения на шаг назад
 

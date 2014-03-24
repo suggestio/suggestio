@@ -2,15 +2,16 @@
 
 <div class="sm-offer @if(isHidden){ sm-hidden-offer }">
 
-  <div class="offer-header">
+  @ad.panel.map { panelSettings =>
+  <div class="offer-header" style="background-color: #@panelSettings.color">
     @mshopOpt.flatMap(_.logoImgId).orElse(mmart.logoImgId).map { logoImgId =>
       <img class="sm-offer-logo" height="30" src="@routes.Img.getOrig(logoImgId)"/>
     }
   </div>
+  }
 
   <div class="offer-details">
     <div class="od-inner discount">
-
       @ad.offers.map {
 
         case adProd: MMartAdProduct => {
