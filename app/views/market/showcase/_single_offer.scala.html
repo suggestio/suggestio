@@ -4,7 +4,7 @@
 
   <div class="offer-header">
     @mshopOpt.flatMap(_.logoImgId).orElse(mmart.logoImgId).map { logoImgId =>
-      <img class="sm-offer-logo" height="30" src="@routes.Img.getOrig(logoImgId)"/>
+      <img class="sm-offer-logo" height="30" src="@routes.Img.getImg(logoImgId)"/>
     }
   </div>
 
