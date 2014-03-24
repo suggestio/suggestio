@@ -953,6 +953,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
   }
 
+  import views.html.market.showcase._single_offer
+
   /** Магазин сабмиттит форму для preview. */
   def adFormPreviewShopSubmit(shopId: ShopId_t) = IsMartAdminShop(shopId).async(parse.urlFormEncoded) { implicit request =>
     MShop.getById(shopId) map {
@@ -969,7 +971,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                 mshop.logoImgId = logoOpt.map(_.iik.key)
                 mad.shopId = Some(shopId)
                 mad.martId = request.martId
-                Ok(views.html.market.showcase._single_offer(mad, request.mmart, Some(mshop)))
+                Ok(_single_offer(mad, request.mmart, Some(mshop)))
               }
             )
 
@@ -981,8 +983,28 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
   }
 
+  /** ТЦ сабмиттит форму для preview. */
   def adFormPreviewMartSubmit(martId: MartId_t) = IsMartAdmin(martId).async(parse.urlFormEncoded) { implicit request =>
-    ???
+    import request.mmart
+    detectAdPreviewForm(mmart.name) match {
+      case Right((offerType, adFormM)) =>
+        adFormM.bindFromRequest().fold(
+          {formWithErrors =>
+            debug(s"adFormPreviewMartSubmit($martId): form bind failed: " + formWithErrors.errors)
+            NotAcceptable("Form bind failed")
+          },
+          {case (iik, logoOpt, mad) =>
+            mad.picture = iik.key
+            mmart.logoImgId = logoOpt.map(_.iik.key)
+            mad.shopId = None
+            mad.martId = martId
+            Ok(_single_offer(mad, mmart, None))
+          }
+        )
+
+      case Left(formWithErrors) =>
+        NotAcceptable("Form mode invalid.")
+    }
   }
 
 }
