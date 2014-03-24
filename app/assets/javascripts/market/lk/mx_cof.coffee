@@ -245,6 +245,9 @@ CbcaCommon = () ->
         return false
       else
         $form = $(this).closest('form')
+        if(!$.trim($form.find('textarea').val()))
+          $form.find('.input').addClass('error')
+          return false
         $.ajax(
           url: $form.attr('action')
           type: 'POST'
@@ -254,6 +257,14 @@ CbcaCommon = () ->
           error: (error) ->
             console.log(error)
         )
+
+    $('input[type = "checkbox"]').each ()->
+      $this = $(this)
+      if($this.attr('data-checked') == 'checked')
+        this.checked = true
+      else
+        $this.removeAttr('checked')
+
 
 
   self.init()

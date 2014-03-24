@@ -7,7 +7,7 @@
 Указанная причина: @reason
 
 ТЦ: @mmart.name
-Заблокированная карточка: <a href="@routes.MarketAd.editShopAd(ad.id.get)">@ad.id.get</a>
-Ваш магазин: <a href="@ctx.myAudienceUrl@routes.MarketShopLk.showShop(mshop.id.get)">@mshop.name</a>
+Ссылка на заблокированную карточку: @ctx.myAudienceUrl@routes.MarketAd.editShopAd(ad.id.get)
+Ссылка на Ваш магазин: @ctx.myAudienceUrl@routes.MarketShopLk.showShop(mshop.id.get)
 
 
