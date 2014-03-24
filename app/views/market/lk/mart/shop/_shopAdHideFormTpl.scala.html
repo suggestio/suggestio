@@ -4,24 +4,47 @@
 @import ctx._
 @import helper._
 @import controllers.MarketMartLk.HideShopAdActions._
+@import util.FormHelpers._
 
-<h1>Рекламная карточка будет удалена из поисковой выдачи</h1>
+<div class="popup disable-ad" id="disable-ad">
+  <div class="hat">
+    <a href="#" class="close">&nbsp;</a>
+  </div>
 
-@form(routes.MarketMartLk.shopAdHideFormSubmit(ad.id.get)) {
-  @* Допустимые значения: @HIDE, @DELETE. *@
-  <input type="hidden" name="action" value="@HIDE"/>
+  <div class="content">
 
-  @* Причина сокрытия/удаления. *@
-  @textarea(
-    sahf("reason"),
-    '_label -> "Причина",
-    'placeholder -> "Напишите причину удаления"
-  )
+    <div class="ad-preview" style="height: 500px;"></div>
 
-  Копия уведомления будет отправлена арендатору
-  <a href="@routes.MarketMartLk.showShop(mshop.id.get)">@mshop.name</a>
-  на почту, указанную при регистрации.
+    @form(routes.MarketMartLk.shopAdHideFormSubmit(ad.id.get)) {
+      @* Допустимые значения: @HIDE, @DELETE. *@
+      <input type="hidden" name="action" value="@HIDE"/>
 
-  @* Видимо, надо две кнопки, которые будут сабмиттить одну и ту же форму с разными значениями поля action. *@
-  <input type="submit"/>
-}
+      @if(!ad.showLevels.isEmpty) {
+        <div class="hide-content">
+          @* Причина сокрытия/удаления. *@
+          <table cellpadding="0" cellspacing="0" class="input-wrap big textarea hide-label" style="margin-top: 20px;">
+            @textarea(
+              sahf("reason"),
+              '_label -> "Причина",
+              'placeholder -> "Напишите причину удаления"
+            )
+          </table>
+
+          <div class="descr">
+            Копия уведомления будет отправлена арендатору
+            «<a href="@routes.MarketMartLk.showShop(mshop.id.get)">@mshop.name</a>» на почту, указанную при регистрации.
+          </div>
+        </div>
+
+        @* Видимо, надо две кнопки, которые будут сабмиттить одну и ту же форму с разными значениями поля action. *@
+
+        <div class="ovh" style="text-align: center; margin-top: 20px;">
+          <input class="blue-but-small" type="submit" value="Выключить" />
+        </div>
+      }
+
+    }
+
+  </div>
+
+</div>

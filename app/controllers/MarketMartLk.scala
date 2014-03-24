@@ -472,14 +472,16 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
     shopAdHideFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"shopAdHideFormSubmit($adId): Form bind failed: " + formWithErrors.errors)
-        NotAcceptable("Form bind failed")
+        Redirect(routes.MarketMartLk.showShop(request.ad.shopId.get))
+          .flashing("error" -> "Необходимо указать причину")
       },
       {case (HideShopAdActions.HIDE, reason) =>
         request.ad.showLevels = Set.empty
         request.ad.saveShowLevels map { _ =>
           // Отправить письмо магазину-владельцу рекламы
           notyfyAdDisabled(reason)
-          Ok("hidden")
+          Redirect(routes.MarketMartLk.showShop(request.ad.shopId.get))
+            .flashing("success" -> "Объявление выключено")
         }
       }
     )

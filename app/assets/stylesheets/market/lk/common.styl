@@ -92,6 +92,9 @@ transform(v)
     width: 260px
     float: left
     margin-right: 60px
+  .input-wrap.hide-label
+    .left
+      display: none
   .input
     background: none repeat scroll 0 0 #FFFFFF
     border: 1px solid #B4B3B3
@@ -387,7 +390,7 @@ transform(v)
     position: absolute
     left: 50%
     top: 50%
-    z-index: 6
+    z-index: 20000
   .overlay
     display: none
     position: fixed
@@ -423,8 +426,7 @@ transform(v)
         font-family: 'ParagNorCIta'
         text-align: center
       .ad-preview
-        width: 140px
-        height: 180px
+        border: 2px solid #b2b2b2
         background: gray
         margin: 0 auto
       .controls
@@ -435,6 +437,21 @@ transform(v)
     .input-wrap
       .left
         display: none
+
+  .disable-ad
+    .descr
+      text-align: center
+      font-size: 12px
+      font-family: 'Arial'
+      color: #b4b4b4
+    a
+      color: #4f88a9
+      text-decoration: none
+    a:hover
+      text-decoration: underline
+
+  .hide-content
+    display: none
 
   .white-board
     position: relative

@@ -225,6 +225,37 @@ CbcaCommon = () ->
       $('#create-your-market').show()
 
 
+    $(document).on 'click', '.ads-list .tc-edit', (e)->
+      e.preventDefault()
+
+      $this = $(this)
+      $.ajax(
+        url: $this.attr('href')
+        success: (data) ->
+          $('#disable-ad').remove()
+          $('.body-wrap').append(data)
+          cbca.popup.showPopup('#disable-ad')
+        error: (error) ->
+          console.log(error)
+      )
+
+    $(document).on 'click', '#disable-ad .blue-but-small', ()->
+      if($('#disable-ad .hide-content').css('display') == 'none')
+        $('#disable-ad .hide-content').show()
+        return false
+      else
+        $form = $(this).closest('form')
+        $.ajax(
+          url: $form.attr('action')
+          type: 'POST'
+          data: $form.serialize()
+          success: (data) ->
+            cbca.popup.hidePopup('#disable-ad')
+          error: (error) ->
+            console.log(error)
+        )
+
+
   self.init()
 
 #########################

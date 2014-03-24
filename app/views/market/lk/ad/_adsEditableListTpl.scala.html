@@ -10,8 +10,9 @@
 
     @mads.zipWithIndex.map { case (ad, i) =>
 
-      <div class="item" style="@if(i%3 != 1) {margin-right: 30px;}">
+      <div class="item @if(ad.showLevels.isEmpty) {disabled}" style="@if(i%3 != 1) {margin-right: 30px;}">
         <div class="preview">
+            <div class="disabled-ad"></div>
             <a class="hover" href="@editCall(ad.id.get)">&nbsp;</a>
             @market.showcase._single_offer(ad, mmart, mshopOpt)
         </div>

@@ -8,6 +8,6 @@
 
 ТЦ: @mmart.name
 Заблокированная карточка: <a href="@routes.MarketAd.editShopAd(ad.id.get)">@ad.id.get</a>
-Ваш магазин: <a href="@routes.MarketShopLk.showShop(mshop.id.get)">@mshop.name</a>
+Ваш магазин: <a href="@ctx.myAudienceUrl@routes.MarketShopLk.showShop(mshop.id.get)">@mshop.name</a>
 
 

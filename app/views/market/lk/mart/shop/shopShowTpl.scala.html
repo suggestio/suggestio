@@ -104,14 +104,23 @@
     </div>
 
 
-    @* Каталог продукции арендатора. У карточек должны быть кнопки сокрытия объявы, неактивные карточки должны выделятся как-то. *@
-    @mads.zipWithIndex.map { case (mad, i) =>
-      <div class="item" style="@if(i%3 != 1) {margin-right: 30px;}">
-        <div class="preview">
-            <a href="@routes.MarketMartLk.shopAdHideForm(mad.id.get)">&nbsp;</a>
-            @market.showcase._single_offer(mad, mmart, Some(mshop))
+    <div class="ads-list small">
+      <span class="title">Рекламные плакаты</span>
+
+      @* Каталог продукции арендатора. У карточек должны быть кнопки сокрытия объявы, неактивные карточки должны выделятся как-то. *@
+      @mads.zipWithIndex.map { case (mad, i) =>
+        <div class="item @if(mad.showLevels.isEmpty) {disabled}" style="@if(i%3 != 1) {margin-right: 30px;}">
+          <div class="preview">
+              <div class="disabled-ad"></div>
+              <a class="hover tc-edit" href="@routes.MarketMartLk.shopAdHideForm(mad.id.get)">&nbsp;</a>
+              @market.showcase._single_offer(mad, mmart, Some(mshop))
+          </div>
         </div>
-    }
+
+
+      }
+
+    </div>
 
   </div>
 
