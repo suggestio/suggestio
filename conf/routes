@@ -105,7 +105,6 @@ POST /m/lk/mart/:martId/logo            controllers.MarketMartLk.handleMartTempL
 GET  /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopForm(shopId)
 POST /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopFormSubmit(shopId)
 GET  /m/lk/mart/shop/:shopId            controllers.MarketMartLk.showShop(shopId)
-GET  /m/lk/mart/shop/:shopId/offers     controllers.MarketMartLk.showShopOffers(shopId)
 GET  /m/lk/mart/shop/:shopId/on-off     controllers.MarketMartLk.shopOnOffForm(shopId)
 POST /m/lk/mart/shop/:shopId/on-off     controllers.MarketMartLk.shopOnOffSubmit(shopId)
 POST /m/lk/mart/shop/:shopId/set/tla    controllers.MarketMartLk.setShopTopLevelAvailable(shopId)

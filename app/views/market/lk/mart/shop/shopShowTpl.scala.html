@@ -1,4 +1,4 @@
-@(mmart: MMart, mshop:MShop)(implicit ctx:util.Context)
+@(mmart: MMart, mshop:MShop, mads: Seq[MMartAd])(implicit ctx:util.Context)
 
 @* Шаблон отображения магазина для админа ТЦ. *@
 @import market.lk._
@@ -103,8 +103,15 @@
 
     </div>
 
-    @* Тут надо ссылку на страницу с каталогом продукции *@
-    <a href="@routes.MarketMartLk.showShopOffers(mshop.id.get)">Каталог продукции</a>
+
+    @* Каталог продукции арендатора. У карточек должны быть кнопки сокрытия объявы, неактивные карточки должны выделятся как-то. *@
+    @mads.zipWithIndex.map { case (mad, i) =>
+      <div class="item" style="@if(i%3 != 1) {margin-right: 30px;}">
+        <div class="preview">
+            <a href="@routes.MarketMartLk.shopAdHideForm(mad.id.get)">&nbsp;</a>
+            @market.showcase._single_offer(mad, mmart, Some(mshop))
+        </div>
+    }
 
   </div>
 

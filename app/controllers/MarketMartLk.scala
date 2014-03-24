@@ -310,9 +310,12 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
    */
   def showShop(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
     import request.mmart
-    MShop.getById(shopId) map {
+    val madsFut = MMartAd.findForShop(shopId)
+    MShop.getById(shopId) flatMap {
       case Some(mshop) =>
-        Ok(shop.shopShowTpl(mmart, mshop))
+        madsFut map { mads =>
+          Ok(shop.shopShowTpl(mmart, mshop, mads))
+        }
 
       case None => shopNotFound(shopId)
     }
@@ -332,23 +335,6 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
         }
 
       case None => NotFound("Shop not found or unrelated.")
-    }
-  }
-
-  /**
-   * Страница со списком товаров магазина.
-   * @param shopId id магазина.
-   */
-  def showShopOffers(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
-    import request.mmart
-    val moffersFut = MShopPromoOffer.getAllForShop(shopId)
-    MShop.getById(shopId) flatMap {
-      case Some(mshop) =>
-        moffersFut.map { moffers =>
-          Ok(shop.shopOffersTpl(mmart, mshop, moffers))
-        }
-
-      case None => shopNotFound(shopId)
     }
   }
 
@@ -437,6 +423,8 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
 
   object HideShopAdActions extends Enumeration {
     type HideShopAdAction = Value
+    // Тут пока только один вариант отключения карточки. Когда был ещё и DELETE.
+    // Потом можно будет спилить варианты отключения вообще, если не понадобятся.
     val HIDE = Value
 
     def maybeWithName(n: String): Option[HideShopAdAction] = {
