@@ -228,6 +228,24 @@ siomart =
     event.preventDefault()
     return false
 
+  exit_close_screen : ( event ) ->
+    siomart.utils.ge('smCloseScreen').style.display = 'none'
+    event.preventDefault()
+    return false
+
+  ###############################
+  ## Скрыть / показать sio.market
+  ###############################
+  close_mart : ( event ) ->
+    siomart.utils.ge('sioMartRoot').style.display = 'none'
+    event.preventDefault()
+    return false
+
+  open_mart : ( event ) ->
+    siomart.utils.ge('sioMartRoot').style.display = 'block'
+    event.preventDefault()
+    return false
+
   #########
   ## Офферы
   #########
@@ -333,6 +351,8 @@ siomart =
 
     ## Кнопка выхода
     this.utils.add_single_listener this.utils.ge('smCloseButton'), 'click', siomart.open_close_screen
+    this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), 'click', siomart.close_mart
+    this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), 'click', siomart.exit_close_screen
 
     ## Кнопка возвращения на шаг назад
 
