@@ -218,7 +218,11 @@ CbcaCommon = () ->
       $('#'+formId).trigger('submit')
 
 
+    $(document).on 'click', '#create-your-market-btn', (e)->
+      e.preventDefault()
 
+      $('#hello-message').hide()
+      $('#create-your-market').show()
 
 
   self.init()

@@ -32,7 +32,7 @@
       </div>
       <div class="border-line"></div>
 
-      <table class="block">
+      <table class="bloc
         <tr>
           <td class="right" style="border-left: none; padding-left: 0;">
             <div class="shop-descr">
@@ -61,14 +61,14 @@
       @* Галочки для управления отображением рекламной карточки магазина *@
       <div class="controls">
         <label>
-          <input class="one-checkbox" type="checkbox" data-level="@LVL_MART_SHOPS" data-adid="@mad.id.get" data-name="lvl-mart-shops"/>Выводить в общем каталоге
+          <input class="one-checkbox" type="checkbox" data-level="@LVL_MART_SHOPS" data-adid="@mad.id.get" data-name="lvl-mart-shops" @if(mad.showLevels contains LVL_MART_SHOPS) {checked}/>Выводить в общем каталоге
         </label>
         <label>
-          <input type="checkbox" data-level="@LVL_SHOP" data-adid="@mad.id.get" />Выводить в моём магазине
+          <input type="checkbox" data-level="@LVL_SHOP" data-adid="@mad.id.get" @if(mad.showLevels contains LVL_SHOP) {checked}/>Выводить в моём магазине
         </label>
         @defining(mshop.hasTopLevelAccess) { htl =>
           <label@if(!htl){ class="inactive"}>
-            <input type="checkbox" data-level="@LVL_MART_SHOWCASE" data-adid="@mad.id.get"@if(!htl){ disabled="disabled"}/>Размещение на первом экране
+            <input type="checkbox" data-level="@LVL_MART_SHOWCASE" data-adid="@mad.id.get" @if(!htl){disabled="disabled"} @if(mad.showLevels contains LVL_MART_SHOWCASE) {checked}/>Размещение на первом экране
           </label>
         }
       </div>

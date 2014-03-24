@@ -1,9 +1,0 @@
-@(mmart:MMart, mshop:MShop, moffers:Seq[MShopPromoOffer])(implicit ctx: util.Context)
-
-@* Страница с барахлом магазина. *@
-
-<a href="@routes.MarketMartLk.showShop(mshop.id.get)">Назад к магазину @mshop.name</a>
-
-@market.lk.shop.offers._offersSmallListTpl(moffers)
-
-
