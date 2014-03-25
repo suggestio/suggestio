@@ -26,14 +26,14 @@
         <td class="right">
 
           <div class="select-file-wrap" id="logoImgInput">
-            @defining(sf("shopLogoImgId").value) { shopLogoImgIdOpt =>
+            @defining(sf("logoImgId").value) { logoImgIdOpt =>
             <div class="preview">
-              <img class="image-preview" src="@shopLogoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" width="59"/>
+              <img class="image-preview" src="@logoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" width="59"/>
             </div>
             <div class="selectbox">
               <div class="select-file">
                 @stuff._fileUploadTpl(routes.MarketShopLk.handleShopTempLogo(shopId), relatedFieldId="logoImgInput")
-                <input class="image-key" type="hidden" name="shopLogoImgId" value="@shopLogoImgIdOpt"/>
+                <input class="image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
                 <div class="bg">Выбрать файл для загрузки</div>
               </div>
               <div class="descr">

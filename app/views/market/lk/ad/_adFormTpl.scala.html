@@ -109,7 +109,7 @@
               <a href="#" class="close">&nbsp;</a>
             </td>
           </tr>
-          @if(!af.errors("shopLogoImgId").isEmpty) {
+          @if(af("logoImgId").hasErrors) {
             <tr>
               <td class="left">&nbsp;</td>
               <td class="err-msg">
