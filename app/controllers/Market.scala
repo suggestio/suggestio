@@ -1,5 +1,6 @@
 package controllers
 
+import _root_.util.qsb.AdSearch
 import util._
 import util.acl._
 import views.html.market.showcase._
@@ -52,7 +53,8 @@ object Market extends SioController with PlayMacroLogsImpl {
   // TODO Нужно как-то дедублицировать повторяющийся код тут
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
-  def findAds(martId: MartId_t, shopIdOpt: Option[ShopId_t], catIdOpt: Option[String]) = MaybeAuth.async { implicit request =>
+  def findAds(martId: MartId_t, adSearch: AdSearch) = MaybeAuth.async { implicit request =>
+    import adSearch._
     new MarketAction(martId) {
       def execute(mmartInx: models.MMartInx): Future[SimpleResult] = {
         val searchLevel = if (shopIdOpt.isDefined) {

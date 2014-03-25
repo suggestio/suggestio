@@ -116,7 +116,7 @@ object SiowebEsUtil extends SioEsClient {
   def searchIndex(indices:Seq[String], types:Seq[String], queryStr:String)(implicit sso: SioSearchOptions): Future[SioSearchResult] = {
     lazy val logPrefix = s"searchIndex(${indices.mkString(",")}, '$queryStr'): "
     trace(logPrefix + s"indices=$indices , types=$types")
-    queryStr2Query(queryStr).map { textQuery =>
+    queryStr2QueryV1(queryStr).map { textQuery =>
       // Собираем нужные фильтры в порядке нарастания важности. Сначала идут самые последние.
       var filters : List[FilterBuilder] = {
         // TODO limit должен также зависеть от индекса.
@@ -364,7 +364,7 @@ object SiowebEsUtil extends SioEsClient {
    * на её основе.
    * @param queryStr Строка, которую набирает в поиске юзер.
    */
-  def queryStr2Query(queryStr: String) : Option[QueryBuilder] = {
+  def queryStr2QueryV1(queryStr: String) : Option[QueryBuilder] = {
     // Дробим исходный запрос на куски
     val topQueriesOpt = splitQueryStr(queryStr).map { case (ftsQS, engramQS) =>
 
@@ -430,6 +430,78 @@ object SiowebEsUtil extends SioEsClient {
     }
   }
 
+
+  /**
+   * Взять queryString, вбитую юзером, распилить на куски, проанализировать и сгенерить запрос или комбинацию запросов
+   * на её основе. Версия для новых индексов, которые содержат ngram в _all.
+   * @param queryStr Строка, которую набирает в поиске юзер.
+   */
+  def queryStr2QueryV2(queryStr: String) : Option[QueryBuilder] = {
+    ??? // TODO Переписать сплиттер и используемые для поиска поля (_all).
+    // Дробим исходный запрос на куски
+    val topQueriesOpt = splitQueryStr(queryStr).map { case (ftsQS, engramQS) =>
+
+      val ftsLen = ftsQS.length
+      val engramLen = engramQS.length
+
+      // Отрабатываем edge-ngram часть запроса.
+      var queries : List[QueryBuilder] = if (engramLen == 0) {
+        Nil
+
+      } else {
+        // Если запрос короткий, то искать только по title
+        val fields = if (ftsLen + engramLen <= 1)
+          FIELDS_ONLY_TITLE
+        else
+          FIELDS_TEXT_ALL
+        // Генерим базовый engram-запрос
+        var queries1 = fields.map { _field =>
+          val _subfield = subfield(_field, SUBFIELD_ENGRAM)
+          QueryBuilders.matchQuery(_subfield, engramQS)
+        }
+        // Если чел уже набрал достаточное кол-во символов, то искать парралельно в fts
+        if (engramLen >= 4) {
+          val ftsQuery = QueryBuilders.matchQuery(FIELD_ALL, engramQS)
+          queries1 = ftsQuery :: queries1
+        }
+        // Если получилось несколько запросов, то обернуть их в bool-query
+        val finalEngramQuery = if (queries1.tail == Nil) {
+          queries1.head
+        } else {
+          val minShouldMatch = 1
+          val boolQB = QueryBuilders.boolQuery().minimumNumberShouldMatch(minShouldMatch)
+          queries1.foreach { boolQB.should }
+          boolQB
+        }
+        List(finalEngramQuery)
+      }
+
+      // Обработать fts-часть исходного запроса.
+      if (ftsLen > 1) {
+        val queryFts = QueryBuilders.matchQuery(FIELD_ALL, ftsQS)
+        queries = queryFts :: queries
+      }
+
+      queries
+    }
+
+    // Если получилось несколько запросов верхнего уровня, то обернуть их bool-query must
+    topQueriesOpt match {
+      case None => None
+
+      case Some(topQueries) =>
+        topQueries match {
+
+          case List(query) => Some(query)
+          case Nil => None
+
+          case _ =>
+            val queryBool = QueryBuilders.boolQuery()
+            topQueries.foreach { queryBool.must }
+            Some(queryBool)
+        }
+    }
+  }
 
   protected def subfield(field:String, subfield:String) = field + "." + subfield
 }
