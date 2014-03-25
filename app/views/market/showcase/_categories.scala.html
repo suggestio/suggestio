@@ -1,9 +1,15 @@
 @(mmcats: Seq[MMartCategory])(implicit ctx:util.Context)
 
 <div class="sm-categories-screen" id="smCategoriesScreen">
+
+  @* Поле ввода поиска *@
   <div class="search-bar"></div>
+
+  <div class="sm-categories-list">
   @mmcats.map { mmcat =>
-    <p>name = @mmcat.name</p>
-    <p>class = @mmcat.cssClass</p>
+    <div class="sm-single-categorie sm-@mmcat.cssClass">
+      <p>@mmcat.name</p>
+    </div>
   }
+  </div>
 </div>
