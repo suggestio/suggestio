@@ -94,8 +94,7 @@ $(document).on 'click', '#old-price-status', ->
 $(document).on 'click', '.create-ad .color-list .color', ->
   $this = $(this)
   $wrap = $this.closest('.item')
-
-  $wrap.find('.one-checkbox').trigger('click')
+  $wrap.find('.one-checkbox').trigger('click').get(0).checked = true
 
 $(document).on 'click', '.create-ad .mask-list .item', ->
   $this = $(this)
@@ -119,6 +118,7 @@ $(document).on 'click', '.device', ->
   if(!$this.hasClass('selected'))
     $('.device.selected').removeClass('selected')
     $this.addClass('selected')
+    $('#preview').width($this.attr('data-width')).height($this.attr('data-height'))
 
 
 ##ФОТО ТОВАРА##
@@ -268,6 +268,19 @@ CbcaCommon = () ->
         $this.removeAttr('checked')
 
 
+    $(document).on 'change', '#promoOfferForm input', ()->
+      $form = $(this).closest('form')
+      action = $form.find('#preview-action').val()
+      $.ajax(
+        type: 'POST'
+        url: action
+        data: $form.serialize()
+        success: (data)->
+          $('#preview').html(data)
+        error: (error)->
+          console.log(error)
+      )
+
 
   self.init()
 
@@ -362,13 +375,12 @@ CbcaShop =
     $(document).on 'submit', '#disable-shop form', (e) ->
       e.preventDefault()
       $this = $(this)
-      data = $this.serialize()
 
       $.ajax(
         type: 'POST'
         dataType: 'JSON'
         url: $this.attr('action')
-        data: data
+        data: $this.serialize()
         success: (data) ->
           if(!data.isEnabled)
             cbca.popup.hidePopup('#disable-shop')

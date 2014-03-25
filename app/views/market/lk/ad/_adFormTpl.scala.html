@@ -18,6 +18,8 @@
   @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@
   @af.globalError
 
+  <input type="hidden" id="preview-action" value="@previewCall" />
+
   <div class="block" style="margin-top: 30px;">
     <div class="border-line"></div>
       <div class="hat">
@@ -43,21 +45,19 @@
           <td class="left">
             <div>
               <span class="gray">iPhone</span>
-              <span class="device iphone">&nbsp;</span>
+              <span class="device iphone" data-width="100" data-height="140">&nbsp;</span>
             </div>
             <div>
               <span class="gray">iPad</span>
-              <span class="device ipad selected">&nbsp;</span>
+              <span class="device ipad selected" data-width="210" data-height="290">&nbsp;</span>
             </div>
             <div>
               <span class="gray">Desktop</span>
-              <span class="device desktop" href="#">&nbsp;</span>
+              <span class="device desktop" href="#"  data-width="335" data-height="235">&nbsp;</span>
             </div>
           </td>
           <td class="right">
-            <div class="preview">
-
-            </div>
+            <div class="preview" id="preview" style="width: 210px; height: 290px;"></div>
           </td>
         </tr>
       </table>

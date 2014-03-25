@@ -27,7 +27,9 @@ var cbca = {};
     $this.ColorPicker({
       color: '#'+$this.find('input').val(),
       onBeforeShow: function() {
-        $checkbox.trigger('click');
+        if($checkbox.size()) {
+          $checkbox.trigger('click').get(0).checked = true;
+        }
       },
       onShow: function (colpkr) {
         $(colpkr).fadeIn(500);
@@ -39,11 +41,9 @@ var cbca = {};
       },
       onChange: function (hsb, hex, rgb) {
         if($checkbox.size()) {
-          $checkbox.attr('data-value', hex).trigger('click');
+          $checkbox.attr('data-value', hex).trigger('click').get(0).checked = true;
         }
-        else {
-          $this.find('input').val(hex);
-        }
+        $this.find('input').val(hex).trigger('change');
       }
     });
 

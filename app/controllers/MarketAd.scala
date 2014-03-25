@@ -862,7 +862,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           mapping = priceFieldTolerantM,
           value = PreviewFormDefaults.Product.PRICE_VALUE
         ),
-        "font" -> fontColorM
+        "color" -> fontColorM
       )
       { MMAdFloatField.apply }
       { MMAdFloatField.unapply },
