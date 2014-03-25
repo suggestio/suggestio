@@ -208,6 +208,20 @@ CbcaCommon = () ->
 
   self = this
 
+  self.updatePreview = () ->
+    $form = $('#promoOfferForm')
+    if($form.size())
+      action = $form.find('#preview-action').val()
+      $.ajax(
+        type: 'POST'
+        url: action
+        data: $form.serialize()
+        success: (data)->
+          $('#preview').html(data)
+        error: (error)->
+          console.log(error)
+      )
+
   self.init = () ->
     $(document).on 'focus', '.input-wrap input, .input-wrap textarea', ->
       $(this).closest('.input-wrap').toggleClass('focus', true)
@@ -272,20 +286,17 @@ CbcaCommon = () ->
 
 
     $(document).on 'change', '#promoOfferForm input', ()->
-      $form = $(this).closest('form')
-      action = $form.find('#preview-action').val()
-      $.ajax(
-        type: 'POST'
-        url: action
-        data: $form.serialize()
-        success: (data)->
-          $('#preview').html(data)
-        error: (error)->
-          console.log(error)
-      )
+      self.updatePreview()
+
+    $('.slide-content').each ()->
+      $this = $(this)
+
+      if($this.find('.err-msg').size())
+        $this.slideDown()
 
 
   self.init()
+  self.updatePreview()
 
 #########################
 ## Работа с магазинами ##

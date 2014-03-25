@@ -15,6 +15,15 @@
         )
       @_selectColorTpl("ad.offer.text.color", af)
 
+      @if(!af.errors("ad.offer.text.value").isEmpty) {
+        <tr>
+          <td class="left">&nbsp;</td>
+          <td class="err-msg" colspan="2">
+            Поле заполнено некорректно!
+          </td>
+        </tr>
+      }
+
     </table>
 </div>
 

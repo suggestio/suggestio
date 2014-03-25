@@ -31,6 +31,16 @@
       'id     -> "text1ValueInput"
     )
     @_selectColorTpl("ad.offer.text1.color", af)
+
+    @if(!af.errors("ad.offer.text1.value").isEmpty) {
+      <tr>
+        <td class="left">&nbsp;</td>
+        <td class="err-msg" colspan="2">
+          Поле заполнено некорректно!
+        </td>
+      </tr>
+    }
+
   }
 
   @mkField(false) {
@@ -40,15 +50,35 @@
       'id     -> "discountValueInput"
     )
     @_selectColorTpl("ad.offer.discount.color", af)
+
+    @if(!af.errors("ad.offer.discount.value").isEmpty) {
+      <tr>
+        <td class="left">&nbsp;</td>
+        <td class="err-msg" colspan="2">
+          Поле заполнено некорректно!
+        </td>
+      </tr>
+    }
+
   }
 
   @mkField(true) {
     @inputText(
-      af("ad.offer.discount.value"),
+      af("ad.offer.text2.value"),
       '_label -> "Текст снизу:",
       'id -> "text2ValueInput"
     )
-    @_selectColorTpl("ad.offer.discount.color", af)
+    @_selectColorTpl("ad.offer.text2.color", af)
+
+    @if(!af.errors("ad.offer.text2.value").isEmpty) {
+      <tr>
+        <td class="left">&nbsp;</td>
+        <td class="err-msg" colspan="2">
+          Поле заполнено некорректно!
+        </td>
+      </tr>
+    }
+
   }
 
   <table cellpadding="0" cellspacing="0" class="mask-list input-wrap big">
