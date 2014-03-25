@@ -6,10 +6,11 @@
   <div class="search-bar"></div>
 
   <div class="sm-categories-list">
-  @mmcats.map { mmcat =>
-    <div class="sm-single-categorie sm-@mmcat.cssClass">
-      <p>@mmcat.name</p>
-    </div>
-  }
+    @mmcats.map { mmcat =>
+      <a class="sm-single-categorie sm-@mmcat.cssClass">
+        <div class="icon"></div>
+        <div class="name">@mmcat.name</div>
+      </a>
+    }
   </div>
 </div>
