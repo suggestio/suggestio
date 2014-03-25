@@ -230,6 +230,14 @@ siomart =
   load_mart_index_page : () ->
     this.perform_request siomart.config.index_action
 
+  #########################################
+  ## Показать экран с категориями и поиском
+  #########################################
+  open_categories_screen : ( event ) ->
+    siomart.utils.ge('smCategoriesScreen').style.display = 'block'
+    event.preventDefault()
+    return false
+
   ######################################################
   ## Открыть экран с предупреждением о выходе из маркета
   ######################################################
@@ -363,6 +371,7 @@ siomart =
     ## Кнопка выхода
     this.utils.add_single_listener this.utils.ge('smCloseButton'), 'click', siomart.open_close_screen
     this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), 'click', siomart.close_mart
+    this.utils.add_single_listener this.utils.ge('smCategoriesButton'), 'click', siomart.open_categories_screen
     this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), 'click', siomart.exit_close_screen
 
     this.utils.add_single_listener this.utils.ge('sioMartTrigger'), 'click', siomart.open_mart
