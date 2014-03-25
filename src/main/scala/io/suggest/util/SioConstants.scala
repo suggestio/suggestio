@@ -34,15 +34,24 @@ object SioConstants {
   def FIELD_TTL           = TTLFieldMapper.NAME
 
   // Названия анализаторов. А зачем они тут, если относятся только к SioEsUtil?
+  /** Минимальный анализатор, без излишеств. */
   val MINIMAL_AN    = "aMinimal"
-  val EDGE_NGRAM_AN = "aEdgeNgram"
+
+  /** Делает n-граммы с первой буквы. */
+  val EDGE_NGRAM_AN_1 = "aEdgeNgram1"
+
+  /** Делает n-граммы со второй буквы. */
+  val EDGE_NGRAM_AN_2 = "aEdgeNgram2"
+
+  /** Дробит тексты и слова для обычной индексации. */
   val FTS_RU_AN     = "aFtsRu"
 
-  // Суффиксы multi-полей
+
+  //v1: Суффиксы multi-полей
   val SUBFIELD_ENGRAM     = "gram"
   val SUBFIELD_FTS        = "fts"
 
-  // Дата храниться в виде инстанта. Нужно убирать лишние нули.
+  //v1: Дата храниться в виде инстанта. Нужно убирать лишние нули.
   val DATE_INSTANT_ZEROES = 1000000
 
   // Имя директории в папке домена, в которой сохраняются картинки, нагенеренные кравлером.

@@ -1,9 +1,7 @@
 package io.suggest.ym.model
 
 import org.joda.time.DateTime
-import scala.collection.Map
 import org.elasticsearch.common.xcontent.XContentBuilder
-import io.suggest.util.SioConstants._
 import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
@@ -28,7 +26,7 @@ object MCompany extends EsModelStaticT[MCompany] {
 
   def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
-    FieldAll(enabled = false, analyzer = FTS_RU_AN)
+    FieldAll(enabled = false)
   )
 
   def generateMappingProps: List[DocField] = List(

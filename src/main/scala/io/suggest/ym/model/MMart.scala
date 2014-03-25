@@ -5,14 +5,13 @@ import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.common.xcontent.XContentBuilder
 import MCompany.CompanyId_t
-import io.suggest.util.SioConstants._
 import io.suggest.proto.bixo.crawler.MainProto
 import org.elasticsearch.client.Client
 import io.suggest.event._
 import io.suggest.model._
 import io.suggest.model.EsModel._
 import io.suggest.util.SioEsUtil._
-import io.suggest.util.{MacroLogsImpl, JacksonWrapper}
+import io.suggest.util.JacksonWrapper
 
 /**
  * Suggest.io
@@ -33,7 +32,7 @@ object MMart extends EsModelStaticT[MMart] {
 
   def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
-    FieldAll(enabled = false, analyzer = FTS_RU_AN)
+    FieldAll(enabled = false)
   )
 
   def generateMappingProps: List[DocField] = List(

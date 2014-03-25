@@ -44,7 +44,7 @@ object MShop extends EsModelStaticT[MShop] {
 
   def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
-    FieldAll(enabled = true, /*analyzer = FTS_RU_AN)*/ index_analyzer = EDGE_NGRAM_AN, search_analyzer = FTS_RU_AN)
+    FieldAll(enabled = true, index_analyzer = EDGE_NGRAM_AN_1)
   )
 
   def generateMappingProps: List[DocField] = List(
@@ -283,15 +283,6 @@ object MShop extends EsModelStaticT[MShop] {
     // TODO надо что-то делать, чтобы это повлияло на выдачу как можно скорее.
   }
 
-  /**
-   * Включить/выключить один из разрешенных уровней отображения в сохранённом магазине с помощью скрипта.
-   * По сравнению с [[setShowLevels()]], этот метод предназначен для изменения только одного уровня и обновляет документ
-   * лениво и более точно. Этот метод ощутимо сложнее в плане логики работы.
-   * @param shopId id магазина
-   * @param level id уровня
-   * @param isSet true - добавить уровень. false - удалить его.
-   * @return Фьючерс для синхронизации.
-   */
   // private - пока не тестирован, и пока не используется.
   private def setShowLevel(shopId: ShopId_t, level: AdShowLevel, isSet: Boolean)(implicit ec: ExecutionContext, client: Client): Future[_] = {
     // Максимально ленивый скрипт для апдейта списка уровней. Старается по возможности не изменять уже сохранённый документ.

@@ -23,7 +23,7 @@ object YmIndex {
 
       staticFields = Seq(
         FieldSource(enabled = true),
-        FieldAll(enabled = true, analyzer = FTS_RU_AN)
+        FieldAll(enabled = true)
       ),
 
       properties = Seq(

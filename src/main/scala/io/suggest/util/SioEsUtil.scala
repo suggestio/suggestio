@@ -38,7 +38,8 @@ object SioEsUtil extends MacroLogsImpl {
   val STOP_EN_FN    = "fStopEN"
   val STOP_RU_FN    = "fStopRU"
 
-  val EDGE_NGRAM_FN = "fEdgeNgram"
+  val EDGE_NGRAM_FN_2 = "fEdgeNgram2"
+  val EDGE_NGRAM_FN_1 = "fEdgeNgram1"
   val LOWERCASE_FN  = "fLowercase"
   val STD_FN        = "fStd"
   val WORD_DELIM_FN = "fWordDelim"
@@ -250,7 +251,7 @@ object SioEsUtil extends MacroLogsImpl {
           FilterWordDelimiter(WORD_DELIM_FN, preserve_original = true),
           FilterStemmer(STEM_RU_FN, "russian"),
           FilterStemmer(STEM_EN_FN, "english"),
-          FilterEdgeNgram(EDGE_NGRAM_FN, min_gram = 2, max_gram = 10, side = "front")
+          FilterEdgeNgram(EDGE_NGRAM_FN_2, min_gram = 2, max_gram = 10, side = "front")
         ),
 
         analyzers = Seq(
@@ -260,9 +261,9 @@ object SioEsUtil extends MacroLogsImpl {
             filters = filters0
           ),
           AnalyzerCustom(
-            id = EDGE_NGRAM_AN,
+            id = EDGE_NGRAM_AN_2,
             tokenizer = STD_TN,
-            filters = filters0 ++ List(EDGE_NGRAM_FN)
+            filters = filters0 ++ List(EDGE_NGRAM_FN_2)
           ),
           AnalyzerCustom(
             id = FTS_RU_AN,
@@ -298,7 +299,8 @@ object SioEsUtil extends MacroLogsImpl {
           FilterWordDelimiter(WORD_DELIM_FN, preserve_original = true),
           FilterStemmer(STEM_RU_FN, "russian"),
           FilterStemmer(STEM_EN_FN, "english"),
-          FilterEdgeNgram(EDGE_NGRAM_FN, min_gram = 2, max_gram = 10, side = "front")
+          FilterEdgeNgram(EDGE_NGRAM_FN_1, min_gram = 1, max_gram = 10, side = "front"),
+          FilterEdgeNgram(EDGE_NGRAM_FN_2, min_gram = 2, max_gram = 10, side = "front")
         ),
         tokenizers = Seq(new TokenizerStandard(STD_TN)),
         analyzers = {
@@ -311,10 +313,16 @@ object SioEsUtil extends MacroLogsImpl {
               filters = filters0
             ),
             AnalyzerCustom(
-              id = EDGE_NGRAM_AN,
+              id = EDGE_NGRAM_AN_1,
               charFilters = Seq("html_strip"),
               tokenizer = STD_TN,
-              filters = filters0 ++ List(EDGE_NGRAM_FN)
+              filters = filters0 ++ List(EDGE_NGRAM_FN_1)
+            ),
+            AnalyzerCustom(
+              id = EDGE_NGRAM_AN_2,
+              charFilters = Seq("html_strip"),
+              tokenizer = STD_TN,
+              filters = filters0 ++ List(EDGE_NGRAM_FN_2)
             )
           )
         }
@@ -335,7 +343,7 @@ object SioEsUtil extends MacroLogsImpl {
       FieldString(
         id = "gram",
         index = FieldIndexingVariants.analyzed,
-        index_analyzer = EDGE_NGRAM_AN,
+        index_analyzer = EDGE_NGRAM_AN_2,
         search_analyzer = MINIMAL_AN,
         term_vector = TermVectorVariants.with_positions_offsets,
         boost = Some(boostNGram),

@@ -10,10 +10,10 @@ import io.suggest.util.SioEsUtil._
 import scala.collection.JavaConversions._
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model.MShop.ShopId_t
-import io.suggest.ym.model.MMart.MartId_t
 import org.elasticsearch.common.xcontent.XContentBuilder
 import MMartAd.{SHOW_LEVELS_ESFN, USER_CAT_ID_ESFN}
-import io.suggest.model.EsModel.{SHOP_ID_ESFN, MART_ID_ESFN}
+import io.suggest.model.EsModel.SHOP_ID_ESFN
+import io.suggest.util.SioConstants._
 
 /**
  * Suggest.io
@@ -26,6 +26,11 @@ object MMartAdIndexed extends MacroLogsImpl {
   import LOGGER._
 
   val USER_CAT_STR_ESFN = "userCat.str"
+
+  def generateMappingStaticFields = List(
+    FieldAll(enabled = true, index_analyzer = EDGE_NGRAM_AN_1, search_analyzer = DFLT_AN),
+    FieldSource(enabled = true)
+  )
 
   def generateMappingProps: List[DocField] = {
     FieldString(USER_CAT_STR_ESFN, include_in_all = true, boost = Some(0.5F), index = FieldIndexingVariants.no) ::
@@ -131,15 +136,13 @@ object MMartAdIndexed extends MacroLogsImpl {
 
   /**
    * Поиск карточек в ТЦ по критериям.
-   * @param shopIdOpt Необязательный id магазина.
-   * @param catIdOpt Необязательный id категории
-   * @param level Какого уровня требуются карточки.
    * @param inx2 Метаданные об индексе ТЦ.
    * @return Список рекламных карточек, подходящих под требования.
    */
-  def find(inx2: MMartInx, shopIdOpt: Option[ShopId_t] = None, catIdOpt: Option[String] = None, level: AdShowLevel)(implicit ec:ExecutionContext, client: Client): Future[Seq[MMartAdIndexed]] = {
+  def find(inx2: MMartInx, adSearch: AdsSearchT)(implicit ec:ExecutionContext, client: Client): Future[Seq[MMartAdIndexed]] = {
+    import adSearch._
     // Собираем запрос в функциональном стиле, иначе получается многовато вложенных if-else.
-    val query = shopIdOpt.map { shopId =>
+    val query: QueryBuilder = shopIdOpt.map { shopId =>
       // Есть shopId. Собираем запрос по магазину.
       var shopIdQuery: QueryBuilder = QueryBuilders.termQuery(SHOP_ID_ESFN, shopId)
       if (catIdOpt.isDefined) {
@@ -153,11 +156,17 @@ object MMartAdIndexed extends MacroLogsImpl {
         QueryBuilders.termQuery(USER_CAT_ID_ESFN, catId)
       }
     } map { query1 =>
-      // Добавить фильтрацию по уровню
-      QueryBuilders.filteredQuery(query1, levelFilter(level))
-    } getOrElse {
+      // Добавить фильтрацию по уровню, если он указан.
+      if (levelOpt.isDefined)
+        QueryBuilders.filteredQuery(query1, levelFilter(levelOpt.get))
+      else
+        query1
+    } orElse {
       // Сборка запроса не удалась, значит catIdOpt тоже не задан. Просто ищем по уровню.
-      levelQuery(level)
+      levelOpt map levelQuery
+    } getOrElse {
+      // Сборка реквеста не удалась. Возвращаем все объявы.
+      QueryBuilders.matchAllQuery()
     }
     // Запускаем собранный запрос.
     inx2.prepareSearchRequest(client.prepareSearch())
@@ -208,3 +217,20 @@ case class MMartAdIndexed(
     }
   }
 }
+
+
+/** Интерфейс для передачи параметров поиска объявлений в индексе/типе. */
+trait AdsSearchT {
+  /** Необязательный id магазина. */
+  def shopIdOpt: Option[ShopId_t]
+
+  /** Необязательный id категории */
+  def catIdOpt: Option[String]
+
+  /** Какого уровня требуются карточки. */
+  def levelOpt: Option[AdShowLevel]
+
+  /** Произвольный текстовый запрос, если есть. */
+  def qOpt: Option[String]
+}
+

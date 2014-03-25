@@ -2,18 +2,15 @@ package io.suggest.ym.model
 
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
-import io.suggest.util.SioConstants._
 import io.suggest.model._, EsModel._
 import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.ym.cat.YmCategory
-import scala.util.{Failure, Success}
 import io.suggest.util.{SioFutureUtil, MacroLogsImpl}
 import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
 import java.util.concurrent.atomic.AtomicInteger
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.index.query.QueryBuilders
-import org.elasticsearch.search.sort.SortOrder
 
 /**
  * Suggest.io
@@ -107,7 +104,7 @@ object MYmCategory extends EsModelStaticT[MYmCategory] with MacroLogsImpl {
 
 
   def generateMappingStaticFields: List[Field] = List(
-    FieldAll(enabled = false, analyzer = FTS_RU_AN),
+    FieldAll(enabled = false),
     FieldSource(enabled = true),
     FieldParent(ES_TYPE_NAME) // _routing включается автоматом.
   )

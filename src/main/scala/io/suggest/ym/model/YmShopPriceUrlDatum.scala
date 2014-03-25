@@ -108,7 +108,7 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
 
   def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
-    FieldAll(enabled = false, analyzer = FTS_RU_AN)
+    FieldAll(enabled = false)
   )
 
   def generateMappingProps: List[DocField] = List(

@@ -74,10 +74,7 @@ case class MMartInx(
   def esAdMapping(esTypeSuffix: String): XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
       typ = if (esTypeSuffix startsWith esTypePrefix) esTypeSuffix else esTypePrefix + esTypeSuffix,
-      staticFields = Seq(
-        FieldSource(enabled = true),
-        FieldAll(enabled = true)
-      ),
+      staticFields = MMartAdIndexed.generateMappingStaticFields,
       properties = MMartAdIndexed.generateMappingProps
     )
   }

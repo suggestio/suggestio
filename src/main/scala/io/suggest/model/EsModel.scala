@@ -187,7 +187,7 @@ object EsModel extends MacroLogsImpl {
     case ri: ReadableInstant => new DateTime(ri)
   }
 
-  def generateIndexSettings = SioEsUtil.getNewIndexSettings(shards=1, replicas=1)
+  def generateIndexSettings = SioEsUtil.getIndexSettingsV2(shards=1, replicas=1)
 
   /**
    * Убедиться, что индекс существует.

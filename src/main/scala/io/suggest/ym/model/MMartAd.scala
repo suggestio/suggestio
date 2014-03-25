@@ -3,9 +3,8 @@ package io.suggest.ym.model
 import io.suggest.model._
 import org.elasticsearch.common.xcontent.{XContentFactory, XContentBuilder}
 import io.suggest.util.SioEsUtil._
-import io.suggest.util.SioConstants._
 import EsModel._
-import io.suggest.util.{SioEsUtil, MacroLogsImpl, JacksonWrapper}
+import io.suggest.util.{MacroLogsImpl, JacksonWrapper}
 import MShop.ShopId_t, MMart.MartId_t
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
@@ -13,9 +12,8 @@ import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilder
 import io.suggest.event.{AdSavedEvent, SioNotifierStaticClientI}
 import scala.collection.JavaConversions._
 import scala.util.{Failure, Success}
-import io.suggest.model.inx2.MMartInx
-import org.elasticsearch.action.search.SearchResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
+import org.elasticsearch.action.update.UpdateResponse
 
 /**
  * Suggest.io
@@ -59,6 +57,9 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
 
   /** Перманентные уровни отображения для рекламных карточек магазина. Если магазин включен, то эти уровни всегда доступны. */
   val SHOP_ALWAYS_SHOW_LEVELS: Set[AdShowLevel] = Set(AdShowLevels.LVL_SHOP, AdShowLevels.LVL_MART_SHOPS)
+
+  /** Список уровней, которые могут быть активны только у одной карточки в рамках магазина. */
+  val SHOP_LEVELS_SINGLETON: Set[AdShowLevel] = Set(AdShowLevels.LVL_MART_SHOWCASE, AdShowLevels.LVL_MART_SHOPS)
 
   /** Перманентные уровни отображения для рекламных карточек ТЦ. */
   val MART_ALWAYS_SHOW_LEVELS: Set[AdShowLevel] = Set(AdShowLevels.LVL_MART_SHOWCASE)
@@ -153,7 +154,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
   }
 
   def generateMappingStaticFields = List(
-    FieldAll(enabled = true, analyzer = FTS_RU_AN),
+    FieldAll(enabled = true),
     FieldSource(enabled = true)
   )
 
@@ -246,23 +247,62 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
   }
 
 
-  /**
-   * Обновить допустимые уровни отображения рекламы на указанное значение.
-   * @param adId id рекламы.
-   * @param showLevels Новое значение showLevels.
-   * @return Фьючерс для синхронизации.
-   */
-  def setShowLevels(adId: String, showLevels: collection.Set[AdShowLevel])(implicit ec: ExecutionContext, client: Client): Future[_] = {
+  /** Для апдейта уровней необходимо использовать json, описывающий изменённые поля документа. Тут идёт сборка такого JSON. */
+  private def mkLevelsUpdateDoc(newLevels: Iterable[AdShowLevel]): XContentBuilder = {
     val newDocFieldsXCB = XContentFactory.jsonBuilder()
       .startObject()
       .startArray(SHOW_LEVELS_ESFN)
-    showLevels.foreach { sl =>
+    newLevels.foreach { sl =>
       newDocFieldsXCB.value(sl.toString)
     }
-    newDocFieldsXCB.endArray()
-    client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, adId)
-      .setDoc(newDocFieldsXCB)
-      .execute()
+    newDocFieldsXCB.endArray().endObject()
+  }
+
+  /**
+   * Обновить допустимые уровни отображения рекламы на указанное значение.
+   * @return Фьючерс для синхронизации.
+   */
+  private def setShowLevels(thisAd: MMartAd)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    // Если в новый уровнях нет уровней, относящихся к singleton-уровням, то обновляем по-быстрому.
+    val singletonLevels = thisAd.showLevels intersect SHOP_LEVELS_SINGLETON
+    val adId = thisAd.id.get
+    if (!thisAd.isShopAd || singletonLevels.isEmpty) {
+      val resultFut: Future[UpdateResponse] = client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, adId)
+        .setDoc(mkLevelsUpdateDoc(thisAd.showLevels))
+        .execute()
+      // Уведомить всех о том, что в текущей рекламе были изменения.
+      resultFut onSuccess { case updateResp =>
+        sn publish AdSavedEvent(thisAd)
+      }
+      resultFut
+    } else {
+      trace(s"setShowLevels(${thisAd.id.get}): Singleton level(s) enabled: ${singletonLevels.mkString(", ")}")
+      // Это магазинная реклама, и в текущем adId есть [новые] уровни, которые затрагивают singleton-ограничение. Нужно сделать апдейт во всех рекламах магазина, убрав их оттуда.
+      findForShop(thisAd.shopId.get) flatMap { allShopsAds =>
+        val (brb, mads) = allShopsAds.iterator
+          .map { mad =>
+            val lvls1 = if (mad.idOrNull == adId) {
+              mad.showLevels ++ singletonLevels
+            } else {
+              mad.showLevels -- singletonLevels
+            }
+            mad.showLevels = lvls1
+            val urb = client.prepareUpdate(mad.esIndexName, mad.esTypeName, mad.id.get)
+              .setDoc(mkLevelsUpdateDoc(lvls1))
+            mad -> urb
+          }.foldLeft (client.prepareBulk() -> List.empty[MMartAd]) {
+            case ((bulk1, madsAcc), (mad, urb))  =>  bulk1.add(urb) -> (mad :: madsAcc)
+          }
+        val resultFut = laFuture2sFuture(brb.execute())
+        resultFut onSuccess { case bulkResp =>
+          // Сообщить всем, что имело место обновления записей.
+          mads foreach { mad =>
+            sn publish AdSavedEvent(mad)
+          }
+        }
+        resultFut
+      }
+    }
   }
 
 }
@@ -315,13 +355,9 @@ case class MMartAd(
     resultFut
   }
 
-  /** Короткий враппер над статическим [[io.suggest.ym.model.MMartAd.setShowLevels()]]. */
-  def saveShowLevels(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI) = {
-    val fut = MMartAd.setShowLevels(id.get, showLevels)
-    fut onSuccess { case _ =>
-      sn publish AdSavedEvent(this)
-    }
-    fut
+  /** Короткий враппер над статическим [[MMartAd.setShowLevels]]. */
+  def saveShowLevels(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    MMartAd.setShowLevels(this)
   }
 }
 
@@ -338,6 +374,8 @@ trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
   def prio        : Option[Int]
   def showLevels  : Set[AdShowLevel]
   def userCatId   : Option[String]
+
+  def isShopAd = shopId.isDefined
 
   def writeJsonFields(acc: XContentBuilder) {
     acc.field(MART_ID_ESFN, martId)
