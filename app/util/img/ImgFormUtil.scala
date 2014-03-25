@@ -48,6 +48,20 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       case oiik: OrigImgIdKey => true
     }})
 
+  /** Генератор logo-маппингов. */
+  def getLogoKM(errorMsg: String, marker: String) = {
+    val imgIdM = ImgFormUtil.imgIdM
+      .verifying(errorMsg, { iik => iik match {
+        case tiik: TmpImgIdKey =>
+          val m = tiik.mptmpOpt.get.markerOpt
+          m.isDefined && m.get == marker
+
+        case _ => true
+      }})
+    val logoImgInfoM = ImgFormUtil.logoImgIdM(imgIdM)
+    "logoImgId" -> optional(logoImgInfoM)
+  }
+
   /** Маппинг обязательного параметра кропа на реальность. */
   val imgCropM = nonEmptyText(minLength = 4, maxLength = 16)
     .verifying("crop.invalid", ImgCrop.isValidCropStr(_))

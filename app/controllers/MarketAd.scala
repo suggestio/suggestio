@@ -258,7 +258,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   val adDiscountFormM = getAdFormM(adDiscountM)
   val adTextFormM     = getAdFormM(adTextM)
 
-
   /** Извлекатель данных по логотипу из MShop/MMart. */
   implicit private def entityOpt2logoOpt(ent: Option[BuyPlaceT[_]]): LogoOpt_t = {
     ent.flatMap { _.logoImgId }
@@ -729,10 +728,14 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   // ========================== common-методы для Shop и ТЦ ==============================
 
+  private def maybeAfCatId(af: AdFormM) = {
+    val catIdK = "ad." + CAT_ID_K
+    af(catIdK).value.filter { _ => af.errors(catIdK).isEmpty }
+  }
 
   /** Получение списков категорий на основе формы и владельца категорий. */
   private def getMMCatsForCreate(af: AdFormM, catOwnerId: String): Future[MMartCategory.CollectMMCatsAcc_t] = {
-    val catIdOpt = af("ad." + CAT_ID_K).value.filter { _ => af.errors(CAT_ID_K).isEmpty }
+    val catIdOpt = maybeAfCatId(af)
     catIdOpt match {
       case Some(catId) =>
         nearCatsList(catOwnerId=catOwnerId, catId=catId)
@@ -746,7 +749,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   private def getMMCatsForEdit(af: AdFormM, mad: MMartAd): Future[CollectMMCatsAcc_t] = {
     val catOwnerId = mad.martId
-    mad.userCatId match {
+    maybeAfCatId(af).orElse(mad.userCatId) match {
       case Some(catId) => nearCatsList(catOwnerId=catOwnerId, catId=catId)
       case None => topCatsAsAcc(catOwnerId)
     }

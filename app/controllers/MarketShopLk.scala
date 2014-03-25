@@ -60,18 +60,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
   val shopFormM = Form(shopKM)
 
   /** Маппер для необязательного логотипа магазина. */
-  val logoImgOptIdKM = {
-    val imgIdM = ImgFormUtil.imgIdM
-      .verifying("shop.logo.invalid", { iik => iik match {
-        case tiik: TmpImgIdKey =>
-          val m = tiik.mptmpOpt.get.markerOpt
-          m.isDefined && m.get == SHOP_TMP_LOGO_MARKER
-
-        case _ => true
-      }})
-    val logoImgInfoM = ImgFormUtil.logoImgIdM(imgIdM)
-    "shopLogoImgId" -> optional(logoImgInfoM)
-  }
+  val logoImgOptIdKM = ImgFormUtil.getLogoKM("shop.logo.invalid", marker=SHOP_TMP_LOGO_MARKER)
 
   /** Форма для заполнения страницы, но НЕ для сабмита. */
   val shopFullFormM = Form(tuple(

@@ -1,7 +1,9 @@
-@(af: Form[_], call: Call, btnText: String, mmcats: MMartCategory.CollectMMCatsAcc_t, offerType: MMartAdOfferType, logoUploadCall: Call, previewCall: Call)(implicit ctx: util.Context)
+@(af: Form[_], call: Call, btnText: String, mmcats: MMartCategory.CollectMMCatsAcc_t, offerType: MMartAdOfferType, logoUploadCall: Call, previewCall: Call, bp: BuyPlaceT[_])(implicit ctx: util.Context)
 
 @* Рендер формы редактирования произвольной рекламы.
- * offerType - предпочитаемый тип оффера, когда он неизвестен. *@
+ * offerType - предпочитаемый тип оффера, когда он неизвестен.
+ * bp - экземпляр MMart или MShop (или ещё чего-то) для доступа к некоторым полям (logoImgId например).
+*@
 @import ctx._
 @import helper._
 @import MMartAdOfferTypes._
@@ -82,19 +84,19 @@
         <table cellpadding="0" cellspacing="0" class="input-wrap big img-with-preview">
           <tr>
             <td class="left">
-              <label @if(!af.errors("shopLogoImgId").isEmpty) {style="color: #E23131;"}>Логотип:</label>
+              <label @if(af("logoImgId").hasErrors) {style="color: #E23131;"}>Логотип:</label>
             </td>
             <td class="right">
 
-              <div class="select-file-wrap" id="shopLogoImgInput">
-                @defining(af("shopLogoImgId").value) { shopLogoImgIdOpt =>
+              <div class="select-file-wrap" id="logoImgInput">
+                @defining(af("logoImgId").value.orElse(bp.logoImgId)) { logoImgIdOpt =>
                 <div class="preview">
-                  <img class="image-preview" src="@shopLogoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" width="59" />
+                  <img class="image-preview" src="@logoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" width="59" />
                 </div>
                 <div class="selectbox">
                   <div class="select-file">
-                    @stuff._fileUploadTpl(logoUploadCall, relatedFieldId="shopLogoImgInput")
-                    <input class="image-key" type="hidden" name="shopLogoImgId" value="@shopLogoImgIdOpt"/>
+                    @stuff._fileUploadTpl(logoUploadCall, relatedFieldId="logoImgInput")
+                    <input class="image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
                     <div class="bg">Выбрать файл для загрузки</div>
                   </div>
                   <div class="descr">
@@ -102,7 +104,7 @@
                     фоне и иметь формат .png
                   </div>
                 </div>
-		            }
+		        }
               </div>
               <a href="#" class="close">&nbsp;</a>
             </td>

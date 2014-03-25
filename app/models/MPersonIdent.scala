@@ -5,7 +5,6 @@ import io.suggest.model._
 import org.elasticsearch.common.xcontent.XContentBuilder
 import EsModel._
 import io.suggest.util.SioEsUtil._
-import io.suggest.util.SioConstants._
 import play.api.Play.current
 import com.lambdaworks.crypto.SCryptUtil
 import io.suggest.util.StringUtil
@@ -44,7 +43,7 @@ object MPersonIdent {
   
   def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
-    FieldAll(enabled = false, analyzer = FTS_RU_AN),
+    FieldAll(enabled = false),
     FieldId(path = KEY_ESFN)  // Для надежной защиты от двойных добавлений.
   )
   def generateMappingProps: List[DocField] = List(

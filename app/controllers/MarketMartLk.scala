@@ -75,18 +75,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
 
 
   /** Маппер для необязательного логотипа магазина. */
-  val martLogoImgIdOptKM = {
-    val imgIdM = ImgFormUtil.imgIdM
-      .verifying("mart.logo.invalid", { iik => iik match {
-        case tiik: TmpImgIdKey =>
-          val m = tiik.mptmpOpt.get.markerOpt
-          m.isDefined && m.get == MART_TMP_LOGO_MARKER
-
-        case _ => true
-      }})
-    val logoImgInfoM = ImgFormUtil.logoImgIdM(imgIdM)
-    "martLogoImgId" -> optional(logoImgInfoM)
-  }
+  val martLogoImgIdOptKM = ImgFormUtil.getLogoKM("mart.logo.invalid", marker=MART_TMP_LOGO_MARKER)
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
   val martFormM = Form(tuple(

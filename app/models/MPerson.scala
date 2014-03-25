@@ -4,7 +4,6 @@ import io.suggest.model.{EsModelStaticT, EsModelT}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
-import io.suggest.util.SioConstants._
 import io.suggest.model.EsModel._
 import scala.concurrent.ExecutionContext
 import org.elasticsearch.client.Client
@@ -44,7 +43,7 @@ object MPerson extends EsModelStaticT[MPerson] {
 
 
   def generateMappingStaticFields: List[Field] = List(
-    FieldAll(enabled = false, analyzer = FTS_RU_AN),
+    FieldAll(enabled = false),
     FieldSource(enabled = true)
   )
 

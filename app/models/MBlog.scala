@@ -1,12 +1,10 @@
 package models
 
 import org.joda.time.DateTime
-import scala.collection.Map
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.model.{EsModelT, EsModel, EsModelStaticT}
 import EsModel._
 import io.suggest.util.SioEsUtil._
-import io.suggest.util.SioConstants._
 
 /**
  * Suggest.io
@@ -28,7 +26,7 @@ object MBlog extends EsModelStaticT[MBlog] {
 
   def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
-    FieldAll(enabled = false, analyzer = FTS_RU_AN)
+    FieldAll(enabled = false)
   )
 
   def generateMappingProps: List[DocField] = List(

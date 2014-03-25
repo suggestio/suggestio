@@ -15,15 +15,15 @@
           <label>Логотип</label>
         </td>
         <td class="right">
-          <div class="select-file-wrap" id="martLogoImgInput">
-            @defining(mf("martLogoImgId").value) { martLogoImgIdOpt =>
+          <div class="select-file-wrap" id="logoImgInput">
+            @defining(mf("logoImgId").value) { logoImgIdOpt =>
             <div class="preview">
-              <img class="image-preview" src="@martLogoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" width="59" height="59"/>
+              <img class="image-preview" src="@logoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" width="59" height="59"/>
             </div>
             <div class="selectbox">
               <div class="select-file">
-                @stuff._fileUploadTpl(routes.MarketMartLk.handleMartTempLogo(martId), relatedFieldId="martLogoImgInput")
-                <input class="image-key" type="hidden" name="martLogoImgId" value="@martLogoImgIdOpt"/>
+                @stuff._fileUploadTpl(routes.MarketMartLk.handleMartTempLogo(martId), relatedFieldId="logoImgInput")
+                <input class="image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
                 <div class="bg">Выбрать файл для загрузки</div>
               </div>
               <div class="descr">
