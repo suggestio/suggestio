@@ -118,7 +118,10 @@ $(document).on 'click', '.device', ->
   if(!$this.hasClass('selected'))
     $('.device.selected').removeClass('selected')
     $this.addClass('selected')
-    $('#preview').width($this.attr('data-width')).height($this.attr('data-height'))
+    $('#preview')
+    .width($this.attr('data-width'))
+    .height($this.attr('data-height'))
+    .closest('table').attr('class', 'ad-preview ' + $this.attr('data-class'))
 
 
 ##ФОТО ТОВАРА##
