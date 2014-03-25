@@ -21,6 +21,7 @@ var cbca = {};
   function() {
 
     var $this = $(this),
+    updatePreview = false,
     $wrap = $this.parent(),
     $checkbox = $wrap.find('.one-checkbox');
 
@@ -41,9 +42,15 @@ var cbca = {};
       },
       onChange: function (hsb, hex, rgb) {
         if($checkbox.size()) {
-          $checkbox.attr('data-value', hex).trigger('click').get(0).checked = true;
+          $checkbox.attr('data-value', hex).get(0).checked = true;
         }
-        $this.find('input').val(hex).trigger('change');
+        $this.find('input').val(hex);
+        clearTimeout(updatePreview);
+        updatePreview = setTimeout(
+        function() {
+          $this.find('input').trigger('change');
+        }, 500);
+
       }
     });
 
