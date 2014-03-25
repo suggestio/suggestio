@@ -732,11 +732,11 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   /** Получение списков категорий на основе формы и владельца категорий. */
   private def getMMCatsForCreate(af: AdFormM, catOwnerId: String): Future[MMartCategory.CollectMMCatsAcc_t] = {
-    val catIdOpt = af(CAT_ID_K).value.filter { _ => af.errors(CAT_ID_K).isEmpty }
+    val catIdOpt = af("ad." + CAT_ID_K).value.filter { _ => af.errors(CAT_ID_K).isEmpty }
     catIdOpt match {
       case Some(catId) =>
         nearCatsList(catOwnerId=catOwnerId, catId=catId)
-          .filter { _.isEmpty }
+          .filter { !_.isEmpty }
           .recoverWith { case ex: NoSuchElementException => topCatsAsAcc(catOwnerId) }
 
       case None => topCatsAsAcc(catOwnerId)
@@ -984,7 +984,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   }
 
   /** ТЦ сабмиттит форму для preview. */
-  def adFormPreviewMartSubmit(martId: MartId_t) = IsMartAdmin(martId).async(parse.urlFormEncoded) { implicit request =>
+  def adFormPreviewMartSubmit(martId: MartId_t) = IsMartAdmin(martId)(parse.urlFormEncoded) { implicit request =>
     import request.mmart
     detectAdPreviewForm(mmart.name) match {
       case Right((offerType, adFormM)) =>

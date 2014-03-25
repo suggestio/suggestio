@@ -3,7 +3,7 @@ package util
 import io.suggest.event._, SioNotifier.{Classifier, Subscriber}
 import io.suggest.event.subscriber.SnClassSubscriber
 import akka.actor.ActorContext
-import models._, MMart.MartId_t, MShop.ShopId_t
+import models._
 import SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.util.{Failure, Success}
@@ -65,20 +65,43 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
 
   /** Асинхронные действия с индексами при создании ТЦ. */
   def handleMartAdd(martId: MartId_t): Future[MMartInx] = {
+    val logPrefix = s"handleMartAdd($martId): "
     // Создать индекс для указанного ТЦ
     val inxName = MART_INX_NAME_DFLT
     val inx = MMartInx(martId, inxName)
     val isFut = inx.save
     isFut onComplete {
-      case Success(_)  => trace(s"inx2.MMartInx saved ok for mart=$martId at index $inxName")
-      case Failure(ex) =>
-        error(s"Failed to save inx2.MMartInx from mart=$martId at index $inxName", ex)
+      case Success(_)  => trace(logPrefix + "inx2.MMartInx saved ok for index " + inxName)
+      case Failure(ex) => error(logPrefix + "Failed to save inx2.MMartInx from index " + inxName, ex)
     }
     val smFut = inx.setMappings
     smFut onComplete {
-      case Success(_)  => trace(s"Inx mapping set ok for mart=$martId")
-      case Failure(ex) => error(s"Failed to set mapping for mart=$martId", ex)
+      case Success(_)  => trace(logPrefix + "Inx mapping set ok for mart")
+      case Failure(ex) => error(logPrefix + "Failed to set mapping for mart", ex)
       // TODO при ошибке надо сносить маппинг (или заливать с ignoreConflicts и снова сносить), а затем заливать заново по-нормальному.
+    }
+    // Возможно, в ТЦ уже есть данные для индексации. Нужно пробежаться по включенным магазинам и сымитировать shopEnabled
+    smFut flatMap { _ =>
+      MShop.findByMartId(martId) flatMap { mshops =>
+        if (!mshops.isEmpty) {
+          trace(logPrefix + "added mart already has shops. Loading enabled shops into index " + inxName)
+          val inxOptFut = Future successful Some(inx)
+          Future.traverse(mshops) { mshop =>
+            if (mshop.settings.supIsEnabled) {
+              handleShopEnable(mshop, inxOptFut)
+            } else {
+              Future successful 0
+            }
+          }
+        } else {
+          Future successful Nil
+        }
+      }
+    } onComplete {
+      case Success(results) if !results.isEmpty =>
+        debug(s"${logPrefix}Successfully processed ${results.size} mart's shops, loaded ${results.count(_ != 0)} shops with ${results.sum} ads total.")
+      case Failure(ex) => error(logPrefix + "Failed to load pre-existing mart's shops into index.", ex)
+      case _ => // Do nothing
     }
     for {
       _ <- isFut
