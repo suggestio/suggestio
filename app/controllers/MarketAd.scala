@@ -17,6 +17,7 @@ import TextAlignValues.TextAlignValue
 import MMartCategory.CollectMMCatsAcc_t
 import scala.util.{Try, Failure, Success}
 import util.HtmlSanitizer.adTextFmtPolicy
+import io.suggest.ym.model.MImgInfo
 
 /**
  * Suggest.io
@@ -142,7 +143,18 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   { MMartAdTextAlign.apply }
   { MMartAdTextAlign.unapply }
 
+
   private val VENDOR_MAXLEN = 32
+
+  /** apply() для product-маппингов. */
+  private def adProductMApply(vendor: MMAdStringField, price: MMAdFloatField, oldPrice: Option[MMAdFloatField]) = {
+    MMartAdProduct.apply(vendor, price, oldPrice)
+  }
+
+  /** unapply() для product-маппингов. */
+  private def adProductMUnapply(adProduct: MMartAdProduct) = {
+    Some((adProduct.vendor, adProduct.price, adProduct.oldPrice))
+  }
 
   // Общие для ad-форм мапперы закончились. Пора запилить сами формы и формоспецифичные элементы.
   val adProductM = mapping(
@@ -150,8 +162,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     "price"     -> mmaFloatFieldM(priceM),
     "oldPrice"  -> mmaFloatFieldOptM(priceM)
   )
-  { MMartAdProduct.apply }
-  { MMartAdProduct.unapply }
+  { adProductMApply }
+  { adProductMUnapply }
 
 
   private val DISCOUNT_TEXT_MAXLEN = 64
@@ -218,7 +230,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     MMartAd(
       martId      = null,
       offers      = List(adBody),
-      picture     = null,
+      img         = null,
       shopId      = null,
       panel       = Some(panelSettings),
       userCatId   = Some(userCatId),
@@ -261,7 +273,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   /** Извлекатель данных по логотипу из MShop/MMart. */
   implicit private def entityOpt2logoOpt(ent: Option[BuyPlaceT[_]]): LogoOpt_t = {
     ent.flatMap { _.logoImgId }
-      .map { logoImgId => ImgInfo(OrigImgIdKey(logoImgId)) }
+      .map { logoImgId => ImgInfo4Save(OrigImgIdKey(logoImgId)) }
   }
 
 
@@ -328,13 +340,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           {case (imgKey, logoImgIdOpt, mmad) =>
             // Асинхронно обрабатываем логотип.
             updateLogo(logoImgIdOpt, mshop) onComplete entityLogoUpdatePf("shop", shopId)
-            ImgFormUtil.updateOrigImg(Some(ImgInfo(imgKey)), oldImgs = None) flatMap {
+            ImgFormUtil.updateOrigImg(Some(ImgInfo4Save(imgKey)), oldImgs = None) flatMap {
               case imgIdsSaved if !imgIdsSaved.isEmpty =>
                 // TODO Нужно проверить категорию.
                 mmad.shopId = Some(shopId)
                 mmad.companyId = request.mshop.companyId
                 mmad.martId = request.mshop.martId.get
-                mmad.picture = imgIdsSaved.head
+                mmad.img = MImgInfo(imgIdsSaved.head)
                 // Сохранить изменения в базу
                 mmad.save.map { adId =>
                   Redirect(routes.MarketShopLk.showShop(shopId, newAdId = Some(adId)))
@@ -412,7 +424,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   def editShopAd(adId: String) = IsAdEditor(adId).async { implicit request =>
     import request.mad
     request.mshopOptFut flatMap { mshopOpt =>
-      val imgIdKey = OrigImgIdKey(mad.picture)
+      val imgIdKey = OrigImgIdKey(mad.img.id)
       val formFilled = FormModes.getFormForClass(mad.offers.head) fill ((imgIdKey, mshopOpt, mad))
       renderEditShopFormWith(formFilled, mshopOpt, mad) map {
         case Some(render) => Ok(render)
@@ -446,8 +458,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             // TODO Проверить категорию.
             // TODO И наверное надо проверить shopId-существование в исходной рекламе.
             ImgFormUtil.updateOrigImgId(
-              needImg = Some(ImgInfo(iik)),
-              oldImgId = Some(mad.picture)
+              needImg = Some(ImgInfo4Save(iik)),
+              oldImgId = Some(mad.img.id)
             ) flatMap { savedImgIds =>
               // В списке сохраненных id картинок либо 1 либо 0 картинок.
               if (!savedImgIds.isEmpty) {
@@ -455,7 +467,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                 mad2.martId = mad.martId
                 mad2.shopId = mad.shopId
                 mad2.companyId = mad.companyId
-                mad2.picture = savedImgIds.head
+                mad2.img = MImgInfo(savedImgIds.head)
                 mad2.save.map { _ =>
                   Redirect(routes.MarketShopLk.showShop(shopId))
                     .flashing("success" -> "Изменения сохранены")
@@ -589,13 +601,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           {case (imgKey, logoImgIdOpt, mmad) =>
             // Асинхронно обрабатываем логотип.
             updateLogo(logoImgIdOpt, mmart) onComplete entityLogoUpdatePf("mart", martId)
-            ImgFormUtil.updateOrigImg(Some(ImgInfo(imgKey)), oldImgs = None) flatMap {
+            ImgFormUtil.updateOrigImg(Some(ImgInfo4Save(imgKey)), oldImgs = None) flatMap {
               case imgIdsSaved if !imgIdsSaved.isEmpty =>
                 // TODO Нужно проверить категорию.
                 mmad.shopId = None
                 mmad.companyId = mmart.companyId
                 mmad.martId = martId
-                mmad.picture = imgIdsSaved.head
+                mmad.img = MImgInfo(imgIdsSaved.head)
                 // Сохранить изменения в базу
                 mmad.save.map { adId =>
                   Redirect(routes.MarketMartLk.martShow(martId, newAdId = Some(adId)))
@@ -659,7 +671,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     */
   def editMartAd(adId: String) = IsAdEditor(adId).async { implicit request =>
     import request.mad
-    val imgIdKey = OrigImgIdKey(mad.picture)
+    val imgIdKey = OrigImgIdKey(mad.img.id)
     request.mmartOptFut flatMap { mmartOpt =>
       val formFilled = FormModes.getFormForClass(mad.offers.head) fill ((imgIdKey, mmartOpt, mad))
       renderEditMartFormWith(formFilled, mmartOpt) map {
@@ -693,8 +705,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             } onComplete entityLogoUpdatePf("mart", martId)
             // TODO Проверить категорию.
             ImgFormUtil.updateOrigImgId(
-              needImg = Some(ImgInfo(iik)),
-              oldImgId = Some(mad.picture)
+              needImg = Some(ImgInfo4Save(iik)),
+              oldImgId = Some(mad.img.id)
             ) flatMap { savedImgIds =>
               // В списке сохраненных id картинок либо 1 либо 0 картинок.
               if (!savedImgIds.isEmpty) {
@@ -702,7 +714,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                 mad2.martId = mad.martId
                 mad2.shopId = mad.shopId
                 mad2.companyId = mad.companyId
-                mad2.picture = savedImgIds.head
+                mad2.img = MImgInfo(savedImgIds.head)
                 mad2.save.map { _ =>
                   Redirect(routes.MarketMartLk.martShow(martId))
                     .flashing("success" -> "Изменения сохранены")
@@ -872,8 +884,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
       "oldPrice"  -> mmaFloatFieldOptM(priceFieldTolerantM)
     )
-    { MMartAdProduct.apply }
-    { MMartAdProduct.unapply }
+    { adProductMApply }
+    { adProductMUnapply }
   }
 
 
@@ -970,7 +982,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                 NotAcceptable("Preview form bind failed.")
               },
               {case (iik, logoOpt, mad) =>
-                mad.picture = iik.key
+                mad.img = MImgInfo(iik.key)
                 mshop.logoImgId = logoOpt.map(_.iik.key)
                 mad.shopId = Some(shopId)
                 mad.martId = request.martId
@@ -997,7 +1009,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             NotAcceptable("Form bind failed")
           },
           {case (iik, logoOpt, mad) =>
-            mad.picture = iik.key
+            mad.img = MImgInfo(iik.key)
             mmart.logoImgId = logoOpt.map(_.iik.key)
             mad.shopId = None
             mad.martId = martId

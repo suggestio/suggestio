@@ -12,6 +12,7 @@ import org.apache.commons.io.FileUtils
 import scala.util.{Failure, Success}
 import java.lang
 import io.suggest.util.MacroLogsImplLazy
+import io.suggest.ym.model.{MImgInfoMeta, MImgInfo}
 
 /**
  * Suggest.io
@@ -25,7 +26,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   import play.api.data.Mapping
   import LOGGER._
 
-  type LogoOpt_t = Option[ImgInfo[ImgIdKey]]
+  type LogoOpt_t = Option[ImgInfo4Save[ImgIdKey]]
   
   /** Маппер для поля с id картинки. Используется обертка над id чтобы прозрачно различать tmp и orig картинки. */
   val imgIdM  = nonEmptyText(minLength = 8, maxLength = 42)
@@ -35,8 +36,8 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   /** Маппер для поля с id картинки-логотипа, но результат конвертируется в ImgInfo. */
   def logoImgIdM(_imgIdM: Mapping[ImgIdKey]) = _imgIdM
     .transform(
-      { ImgInfo(_, cropOpt = None, withThumb = false) },
-      { ii: ImgInfo[ImgIdKey] => ii.iik }
+      { ImgInfo4Save(_, cropOpt = None, withThumb = false) },
+      { ii: ImgInfo4Save[ImgIdKey] => ii.iik }
     )
 
   /** Проверяем tmp-файл на использование jpeg. Уже сохраненные id не проверяются. */
@@ -71,14 +72,14 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
 
   /** Нередко бывает несколько картинок при сабмите. */
-  def mergeListMappings(iiks: List[ImgIdKey], iCrops: List[ImgCrop]): List[ImgInfo[ImgIdKey]] = {
+  def mergeListMappings(iiks: List[ImgIdKey], iCrops: List[ImgCrop]): List[ImgInfo4Save[ImgIdKey]] = {
     iiks.zip(iCrops) map {
-      case (iik, crop) => ImgInfo(iik, Some(crop))
+      case (iik, crop) => ImgInfo4Save(iik, Some(crop))
     }
   }
 
-  def updateOrigImgId(needImg: Option[ImgInfo[ImgIdKey]], oldImgId: Option[String]): Future[List[String]] = {
-    updateOrigImg(needImg, oldImgId.map(OrigImgIdKey.apply))
+  def updateOrigImgId(needImg: Option[ImgInfo4Save[ImgIdKey]], oldImgId: Option[String]): Future[List[String]] = {
+    updateOrigImg(needImg, oldImgId.map(OrigImgIdKey(_)))
   }
   
   /**
@@ -88,16 +89,16 @@ object ImgFormUtil extends PlayMacroLogsImpl {
    * @param oldImgs Уже сохранённые ранее картинки, если есть.
    * @return Список id новых и уже сохранённых картинок.
    */
-  def updateOrigImg(needImgs: Option[ImgInfo[ImgIdKey]], oldImgs: Option[OrigImgIdKey]): Future[List[String]] = {
+  def updateOrigImg(needImgs: Option[ImgInfo4Save[ImgIdKey]], oldImgs: Option[OrigImgIdKey]): Future[List[String]] = {
     // TODO Эту фунцию можно быстро переделать с Option[] на Seq[]. Изначально она и работала через Seq. Но они не совместимы. Надо как-то это устаканить.
     val oldImgsSet = oldImgs.toSet
     val newTmpImgs = needImgs.iterator
       .filter { _.iik.isInstanceOf[TmpImgIdKey] }
-      .map { _.asInstanceOf[ImgInfo[TmpImgIdKey]] }
+      .map { _.asInstanceOf[ImgInfo4Save[TmpImgIdKey]] }
       .toList
     val needOrigImgs = needImgs.iterator
       .filter { _.iik.isInstanceOf[OrigImgIdKey] }
-      .map { _.asInstanceOf[ImgInfo[OrigImgIdKey]] }
+      .map { _.asInstanceOf[ImgInfo4Save[OrigImgIdKey]] }
       .filter { oii => oldImgsSet contains oii.iik }  // Отбросить orig-картинки, которых не было среди старых оригиналов.
       .toList
     val delOldImgs = oldImgsSet -- needOrigImgs.map(_.iik)  // TODO Раньше были списки, теперь их нет. Надо убрать множество.
@@ -138,7 +139,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
    * @param tii Исходная tmp-картинка.
    * @return Фьючерс, содержащий imgId в виде строки.
    */
-  def handleTmpImageForStoring(tii: ImgInfo[TmpImgIdKey]): Future[SavedTmpImg] = {
+  def handleTmpImageForStoring(tii: ImgInfo4Save[TmpImgIdKey]): Future[SavedTmpImg] = {
     tii.iik.mptmpOpt match {
       case Some(mptmp) =>
         val id = MPict.randomId
@@ -329,7 +330,7 @@ case class TmpImgIdKey(filename: String) extends ImgIdKey with MacroLogsImplLazy
 }
 
 
-case class OrigImgIdKey(key: String) extends ImgIdKey {
+case class OrigImgIdKey(key: String, meta: Option[MImgInfoMeta] = None) extends ImgIdKey {
 
   def isTmp: Boolean = false
 
@@ -376,7 +377,7 @@ import OutImgFmts._
  * @param cropOpt Данные по желаемому кадрированию.
  * @tparam T Реальный тип iik.
  */
-case class ImgInfo[+T <: ImgIdKey](
+case class ImgInfo4Save[+T <: ImgIdKey](
   iik     : T,
   cropOpt : Option[ImgCrop] = None,
   withThumb: Boolean = true

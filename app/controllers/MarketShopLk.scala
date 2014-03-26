@@ -127,7 +127,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
         EmailActivation.findByKey(mshop.id.get)
           .map { _.headOption.map(_.email) }
     }
-    val imgId = mshop.logoImgId.map { imgId => ImgInfo(ImgIdKey(imgId)) }
+    val imgId = mshop.logoImgId.map { imgId => ImgInfo4Save(ImgIdKey(imgId)) }
     shopOwnerEmailFut map { shopOwnerEmail =>
       shopFullFormM fill (shopOwnerEmail, mshop, imgId)
     }

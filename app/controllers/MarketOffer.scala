@@ -88,7 +88,7 @@ object MarketOffer extends SioController with MacroLogsImpl {
     datum.price = price
     datum.oldPrices = oldPriceOpt
     // Подхватываем тут tempImg*. Сначала мержим id картинок и их кропы
-    val imgInfo = ImgInfo(iik, cropOpt)
+    val imgInfo = ImgInfo4Save(iik, cropOpt)
     (offer, imgInfo)
   }
   // unapply()
@@ -167,7 +167,7 @@ object MarketOffer extends SioController with MacroLogsImpl {
       case Some(mshop) =>
         import request.offer
         val oiik = OrigImgIdKey(offer.datum.pictures.head)
-        val imgInfo = ImgInfo(oiik)
+        val imgInfo = ImgInfo4Save(oiik)
         val f = vmPromoOfferFormM fill (offer -> imgInfo)
         Ok(form.editPromoOfferTpl(offer, f, mshop))
 

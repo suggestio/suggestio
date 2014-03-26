@@ -154,10 +154,11 @@ object SysMarket extends SioController with MacroLogsImpl {
     "name"      -> martNameM,
     "town"      -> townM,
     "address"   -> martAddressM,
-    "site_url"  -> optional(urlStrMapper),
+    "siteUrl"   -> optional(urlStrMapper),
+    "color"     -> optional(colorM),
     "phone"     -> optional(phoneM)
   )
-  {(name, town, address, siteUrlOpt, phoneOpt) =>
+  {(name, town, address, siteUrlOpt, colorOpt, phoneOpt) =>
     MMart(
       name = name,
       town = town,
@@ -165,12 +166,13 @@ object SysMarket extends SioController with MacroLogsImpl {
       address = address,
       siteUrl = siteUrlOpt,
       phone = phoneOpt,
-      personIds = Nil
+      personIds = Nil,
+      color = colorOpt
     )
   }
   {mmart =>
     import mmart._
-    Some((name, town, address, siteUrl, phone))
+    Some((name, town, address, siteUrl, color, phone))
   })
 
 
@@ -242,6 +244,7 @@ object SysMarket extends SioController with MacroLogsImpl {
             mmart.address = mmart2.address
             mmart.siteUrl = mmart2.siteUrl
             mmart.phone = mmart2.phone
+            mmart.color = mmart2.color
             mmart.save map { _martId =>
               Redirect(routes.SysMarket.martShow(_martId))
             }

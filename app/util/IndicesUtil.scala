@@ -47,6 +47,7 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
       case YmMartAddedEvent(martId)   => handleMartAdd(martId)
       case YmMartDeletedEvent(martId) => handleMartDelete(martId)
       case ase: AdSavedEvent          => handleAdSaved(ase.mmartAd)
+      case ade: AdDeletedEvent        => handleAdDeleted(ade.mmartAd)
       case msse: MShopSavedEvent      => handleShopSaved(msse.mshop)
       case soe: MShopOnOffEvent       => handleShopOnOff(soe)
     }
@@ -177,6 +178,13 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
           }
         }
       }
+    }
+  }
+
+  /** Реакция на удаление рекламной карточки: нужно её удалить из индекса карточек. */
+  private def handleAdDeleted(mmartAd: MMartAd) {
+    getInxFormMartCached(mmartAd.martId) onSuccess {
+      case Some(mmartInx) => MMartAdIndexed.deleteById(mmartAd.id.get, mmartInx)
     }
   }
 

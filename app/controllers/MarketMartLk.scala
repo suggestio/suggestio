@@ -18,7 +18,7 @@ import util.img._
 import net.sf.jmimemagic.Magic
 import scala.Some
 import util.acl.IsMartAdminShop
-import util.img.ImgInfo
+import util.img.ImgInfo4Save
 import util.img.OrigImgIdKey
 import play.api.libs.json._
 import scala.concurrent.Future
@@ -147,7 +147,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
    */
   def martEditForm(martId: MartId_t) = IsMartAdmin(martId).apply { implicit request =>
     import request.mmart
-    val martLogoOpt = mmart.logoImgId.map { imgId => ImgInfo(OrigImgIdKey(imgId)) }
+    val martLogoOpt = mmart.logoImgId.map { imgId => ImgInfo4Save(OrigImgIdKey(imgId)) }
     val formFilled = martFormM.fill((mmart, martLogoOpt))
     Ok(martEditFormTpl(mmart, formFilled))
   }

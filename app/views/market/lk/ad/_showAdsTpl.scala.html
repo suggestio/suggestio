@@ -19,7 +19,7 @@
   <div class="item" style="@if(i%3 != 1) {margin-right: 30px;}">
     <div class="preview">
       <a class="hover" href="@routes.MarketAd.editShopAd(ad.id.get)">&nbsp;</a>
-      <img src="@routes.Img.getThumb("asdasd", ad.picture)"/>
+      <img src="@routes.Img.getThumb("asdasd", ad.img.id)"/>
       <br/>
       <a href="@routes.MarketAd.editShopAd(ad.id.get)">@Messages("Edit")</a>
 

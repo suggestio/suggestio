@@ -1,6 +1,7 @@
 package util
 
 import java.text.NumberFormat
+import java.util.Currency
 
 /**
  * Suggest.io
@@ -10,10 +11,12 @@ import java.text.NumberFormat
  */
 object TplDataFormatUtil {
 
-  def formatPrice(price: Float)(implicit ctx: Context): String = {
+  def formatPrice(price: Float, currency: Currency)(implicit ctx: Context): String = {
     // TODO следует залезать в локаль клиента и форматировать через неё?
     // TODO Нужна поддержка валют в ценах?
-    NumberFormat.getCurrencyInstance.format(price)
+    val currFmt = NumberFormat.getCurrencyInstance
+    currFmt.setCurrency(currency)
+    currFmt.format(price)
   }
 
 }
