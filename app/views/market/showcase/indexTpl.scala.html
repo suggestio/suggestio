@@ -19,6 +19,7 @@
       <a href="" id="smCategoriesButton"></a>
     </div>
 
+    <div id="smOffersList">
     @* Список офферов, подгружается динамически *@
     <div class="sm-offers" id="smOffers">
       @_offers_list(mmart, ads, shops)
@@ -27,6 +28,7 @@
     @* Кнопочки-кружочки для перелистывания слайдов с офферами *@
     <div class="sm-offers-controller" id="smOffersController" style="width: @(ads.length*14)px">
       @_offers_list(mmart, ads, shops, isNav=true)
+    </div>
     </div>
 
     @* Окно с выбором категорий *@

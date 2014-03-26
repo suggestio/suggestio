@@ -244,14 +244,16 @@ siomart =
     if data.action == 'martIndex'
       container = this.utils.ge 'sioMartLayout'
       container.innerHTML = data.html
-      this.init_navigation()
+
       this.utils.set_window_size()
 
     if data.action == 'findAds'
-      siomart.utils.ge('smCategoriesScreen').style.display = 'none'
-      container = siomart.utils.ge 'smOffers'
+      container = siomart.utils.ge 'smOffersList'
       container.innerHTML = data.html
 
+      siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+
+    this.init_navigation()
     this.fit_images()
 
   ######################################

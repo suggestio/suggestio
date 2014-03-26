@@ -64,7 +64,7 @@ object Market extends SioController with PlayMacroLogsImpl {
           mmcats <- mmcatsFut
         } yield {
           val jsonHtml = JsObject(Seq(
-            "html" -> indexTpl(mmart, mads, mshops, mmcats),
+            "html" -> findAdsTpl(mmart, mads, mshops, mmcats),
             "action" -> JsString("findAds")
           ))
           Ok( Jsonp(JSONP_CB_FUN, jsonHtml) )
