@@ -16,7 +16,7 @@ market =
         contentType: false
         processData: false
         success : ( resp_data ) ->
-          $('#' + relatedFieldId + ' .image-key').val resp_data.image_key
+          $('#' + relatedFieldId + ' .image-key').val(resp_data.image_key).trigger('change')
           $('#' + relatedFieldId + ' .image-preview').show().attr "src", resp_data.image_link
 
       $.ajax request_params

@@ -109,7 +109,7 @@
 
       @* Каталог продукции арендатора. У карточек должны быть кнопки сокрытия объявы, неактивные карточки должны выделятся как-то. *@
       @mads.zipWithIndex.map { case (mad, i) =>
-        <div class="item @if(mad.showLevels.isEmpty) {disabled}" style="@if(i%3 != 1) {margin-right: 30px;}">
+        <div class="item @if(mad.showLevels.isEmpty) {disabled}" style="@if(i%3 != 0) {margin-left: 30px;}">
           <div class="preview">
               <div class="disabled-ad"></div>
               <a class="hover tc-edit" href="@routes.MarketMartLk.shopAdHideForm(mad.id.get)">&nbsp;</a>
