@@ -459,7 +459,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             // TODO И наверное надо проверить shopId-существование в исходной рекламе.
             ImgFormUtil.updateOrigImg(
               needImgs = Some(ImgInfo4Save(iik)),
-              oldImgs  = Some(OrigImgIdKey(mad.img.id, mad.img.meta))
+              oldImgs  = Some(mad.img)
             ) flatMap { savedImgIds =>
               // В списке сохраненных id картинок либо 1 либо 0 картинок.
               if (!savedImgIds.isEmpty) {
