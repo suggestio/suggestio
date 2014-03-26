@@ -1,5 +1,16 @@
-spriteurl = url('/assets/images/market/categories/icons.png')
-spritesize = 112px 937px
+spriteUrl = url('/assets/images/market/categories/icons.png')
+smallSpriteUrl = url('/assets/images/market/categories/icons.small.png')
+spriteSize = 112px 937px
+smallSpriteSize = 54px 570px
+
+.sm-categories-body-wrap
+  min-height: 100%
+  .sm-categories-body
+    padding-bottom: 130px
+.sm-categories-footer
+  overflow: hidden
+  position: relative
+  margin-top: -130px
 
 
 .sm-categories-list
@@ -10,6 +21,7 @@ spritesize = 112px 937px
   text-align: center
   overflow: hidden
 
+
 .or-title
   color: white
   font-family: 'futurfutc-webfont'
@@ -19,7 +31,7 @@ spritesize = 112px 937px
   span
     background: #CE2222
     left: 50%
-    margin-left: -16px
+    margin-left: -27px
     padding: 0 10px
     position: absolute
     top: -9px
@@ -43,10 +55,11 @@ spritesize = 112px 937px
   overflow: hidden
   float: left
   width: 171px
-  margin: 22px 22px 0 0
+  margin-top: 20px
+  padding: 0 10px
   .icon
-    background: spriteurl no-repeat
-    background-size: spritesize
+    background: spriteUrl no-repeat
+    background-size: spriteSize
     height: 100px
   .name
     height: 46px
@@ -90,3 +103,65 @@ spritesize = 112px 937px
   .name
     padding-top: 15px
     height: 56px
+
+.medium
+  .sm-categories-list
+    padding: 0 40px
+
+.small
+  .sm-categories-list
+    padding: 0 10px
+  .sm-single-categorie
+    width: 90px
+    margin-top: 15px
+    padding: 0 5px
+  .icon
+    background: smallSpriteUrl no-repeat
+    background-size: smallSpriteSize
+    margin-top: 5px
+    height: 50px
+  .name
+    padding-top: 10px
+    height: 25px
+    font-size: 12px
+  .sm-single-categorie.sm-clothing
+    .icon
+      background-position: 23px -70px
+  .sm-single-categorie.sm-boots
+    .icon
+      margin-top: 5px
+      height: 50px
+      background-position: 23px -400px
+  .sm-single-categorie.sm-travel
+    .icon
+      background-position: 23px -530px
+    .name
+      padding-top: 5px
+      height: 30px
+  .sm-single-categorie.sm-electronics
+    .icon
+      background-position: 23px -208px
+  .sm-single-categorie.sm-sports
+    .icon
+      background-position: 23px -459px
+  .sm-single-categorie.sm-cosmetics
+    .icon
+      background-position: 23px -137px
+  .sm-single-categorie.sm-for-home
+    .icon
+      background-position: 23px -278px
+    .name
+      padding-top: 5px
+      height: 30px
+  .sm-single-categorie.sm-restraunts
+    .icon
+      background-position: 28px 0px
+    .name
+      padding-top: 5px
+      height: 30px
+  .sm-single-categorie.sm-food
+    .icon
+      background-position: 23px -342px
+
+  .white-border-btn
+    font-size: 16px
