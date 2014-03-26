@@ -467,7 +467,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
     val shopId = ad.shopId.get
     MShop.getById(shopId) map {
       case Some(mshop) =>
-        Ok(shop._shopAdHideFormTpl(mshop, ad, shopAdHideFormM))
+        Ok(shop._shopAdHideFormTpl(mshop, ad, request.mmart, shopAdHideFormM))
 
       case None => shopNotFound(shopId)
     }
