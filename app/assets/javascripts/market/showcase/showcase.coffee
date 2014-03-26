@@ -136,6 +136,23 @@ siomart =
 
       siomart_layout.className = siomart.config.sm_layout_class + ' ' + layout_class
 
+  ########################
+  ## Обработка тач событий
+  ########################
+  touch_events :
+
+    touchstart : ( event ) ->
+      this.page_x = event.pageX
+
+    touchmove : ( event ) ->
+      _delta = this.page_x - event.pageX
+
+      if _delta > 150
+        siomart.offers.next_offer(true)
+
+      if _delta < 150
+        siomart.offers.next_offer(true, true)
+
   ########
   ## Поиск
   ########
@@ -352,17 +369,27 @@ siomart =
       if typeof siomart.offers.auto_change_timer != 'undefined'
         clearTimeout siomart.offers.auto_change_timer
 
-    next_offer : () ->
+    next_offer : ( is_without_delay, is_backward ) ->
+
+      is_backward = is_backward || false
+      is_without_delay = is_without_delay || false
 
       this.clear_auto_change_timer()
 
       cb = () ->
-        next_offer_index = if siomart.offers.active_offer == siomart.offers.total_offers - 1 then 0 else siomart.offers.active_offer + 1
+
+        if is_backward == true
+          next_offer_index = if siomart.offers.active_offer == 0 then siomart.offers.total_offers - 1 else siomart.offers.active_offer - 1
+        else
+          next_offer_index = if siomart.offers.active_offer == siomart.offers.total_offers - 1 then 0 else siomart.offers.active_offer + 1
 
         siomart.offers.show_offer next_offer_index
         siomart.offers.next_offer()
 
-      siomart.offers.auto_change_timer = setTimeout cb, this.auto_change_delay
+      if is_without_delay == true
+        cb()
+      else
+        siomart.offers.auto_change_timer = setTimeout cb, this.auto_change_delay
 
     ## Открыть слайд с оффером по указанному индексу
     show_offer : ( index ) ->
@@ -431,8 +458,13 @@ siomart =
     ## поле ввода поискового запроса
     this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', siomart.search.queue_request
 
-    ## Кнопка возвращения на шаг назад
+    ## Тач события
+    sm_layout = this.utils.ge('sioMartLayout')
 
+    this.utils.add_single_listener sm_layout, 'touchstart', siomart.touch_events.touchstart
+    this.utils.add_single_listener sm_layout, 'touchmove', siomart.touch_events.touchmove
+
+    ## Кнопка возвращения на шаг назад
 
     ## Кнопка вызова окна с категориями
     this.utils.add_single_listener this.utils.ge('smCategoriesButton'), 'click'
