@@ -776,8 +776,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       case Nil if logoImgIdOpt.isDefined =>
         Future failed new NoSuchElementException(s"Cannot save new logo for mart=${entity.id.get} . Ignoring...")
       case savedImgIds =>
-        if (entity.logoImgId != savedImgIds.headOption) {
-          entity.logoImgId = savedImgIds.headOption.map(_.id)
+        val maybeNewLogo = savedImgIds.headOption.map(_.id)
+        if (entity.logoImgId != maybeNewLogo) {
+          entity.logoImgId = maybeNewLogo
           entity.save
         } else {
           Future successful ()
