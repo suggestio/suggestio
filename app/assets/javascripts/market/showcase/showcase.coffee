@@ -135,6 +135,30 @@ siomart =
 
       siomart_layout.className = siomart.config.sm_layout_class + ' ' + layout_class
 
+  ########
+  ## Поиск
+  ########
+
+  search :
+
+    request_delay : 1000
+
+    perform : ( request ) ->
+      url = '/market/ads/1zCeGm9jQbCHhU_PXITk7A'
+      siomart.perform_request url
+
+    queue_request : ( event ) ->
+
+      if typeof siomart.search.search_timer != 'undefined'
+        clearTimeout siomart.search.search_timer
+
+      search_request = this.value
+
+      search_cb = () ->
+        siomart.search.perform search_request
+
+      siomart.search.search_timer = setTimeout search_cb, siomart.search.request_delay
+
   ############################
   ## Откадрировать изображения
   ############################
@@ -217,12 +241,18 @@ siomart =
   ## зпросу и передать их в нужный callback
   ##################################################
   receive_response : ( data ) ->
-    container = this.utils.ge "sioMartLayout"
-    container.innerHTML = data.html
+    if data.action == 'martIndex'
+      container = this.utils.ge 'sioMartLayout'
+      container.innerHTML = data.html
+      this.init_navigation()
+      this.utils.set_window_size()
+
+    if data.action == 'findAds'
+      siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+      container = siomart.utils.ge 'smOffers'
+      container.innerHTML = data.html
 
     this.fit_images()
-    this.init_navigation()
-    this.utils.set_window_size()
 
   ######################################
   ## Загрузить индексную страницу для ТЦ
@@ -383,6 +413,9 @@ siomart =
     this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), 'click', siomart.exit_close_screen
 
     this.utils.add_single_listener this.utils.ge('sioMartTrigger'), 'click', siomart.open_mart
+
+    ## поле ввода поискового запроса
+    this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', siomart.search.queue_request
 
     ## Кнопка возвращения на шаг назад
 
