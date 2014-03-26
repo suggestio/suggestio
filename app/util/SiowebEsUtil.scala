@@ -436,7 +436,7 @@ object SiowebEsUtil extends SioEsClient {
    * на её основе. Версия для новых индексов, которые содержат ngram в _all.
    * @param queryStr Строка, которую набирает в поиске юзер.
    */
-  def queryStr2QueryV2(queryStr: String) : Option[QueryBuilder] = {
+  def queryStr2QueryV2m(queryStr: String) : Option[QueryBuilder] = {
     ??? // TODO Переписать сплиттер и используемые для поиска поля (_all).
     // Дробим исходный запрос на куски
     val topQueriesOpt = splitQueryStr(queryStr).map { case (ftsQS, engramQS) =>

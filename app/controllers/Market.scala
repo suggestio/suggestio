@@ -28,7 +28,7 @@ object Market extends SioController with PlayMacroLogsImpl {
     new MarketAction(martId) {
       def execute(mmartInx: models.MMartInx): Future[SimpleResult] = {
         for {
-          ads    <- MMartAdIndexed.find(mmartInx, level = AdShowLevels.LVL_MART_SHOWCASE)
+          ads    <- MMartAdIndexed.find(mmartInx, AdSearch(levelOpt = Some(AdShowLevels.LVL_MART_SHOWCASE)))
           shops  <- shopsFut
           mmart  <- mmartFut
           mmcats <- mmcatsFut
@@ -63,7 +63,7 @@ object Market extends SioController with PlayMacroLogsImpl {
           AdShowLevels.LVL_MART_SHOPS
         }
         for {
-          mads   <- MMartAdIndexed.find(mmartInx, shopIdOpt = shopIdOpt, catIdOpt = catIdOpt, level = searchLevel)
+          mads   <- MMartAdIndexed.find(mmartInx, adSearch)
           mshops <- shopsFut
           mmart  <- mmartFut
           mmcats <- mmcatsFut

@@ -216,7 +216,8 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
     }
     itemsReadyFut onComplete {
       case Success(itemsProcessed) =>
-        trace(logPrefix + s"Shop ads processing finished. $itemsProcessed items processed.")
+        if (itemsProcessed > 0)
+          trace(logPrefix + s"Shop ads processing finished. $itemsProcessed items processed.")
       case Failure(ex) =>
         error(logPrefix + "Failed to process shop ads", ex)
     }
