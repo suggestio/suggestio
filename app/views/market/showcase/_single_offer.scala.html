@@ -13,15 +13,15 @@
   }
 
   <div class="offer-details">
-    <div class="od-inner discount">
+    <div class="od-inner">
 
       @ad.offers.map {
         case adProd: MMartAdProduct => {
 
-          <div class="top-text">@adProd.vendor.value</div>
+          <div class="vendor">@adProd.vendor.value</div>
 
           @adProd.oldPrice.map { oldPrice =>
-            <div class="old-price"><s>@formatPrice(oldPrice.value)</s></div>
+          <div class="old-price"><s>@formatPrice(oldPrice.value)</s></div>
           }
           <div class="new-price">@formatPrice(adProd.price.value)</div>
 
@@ -40,14 +40,14 @@
         }
 
         case adDisco: MMartAdDiscount => {
-          text1: @adDisco.text1.map { text1 =>
-            @text1.value @text1.font.color
+          @adDisco.text1.map { text1 =>
+            <div style="color: #@text1.font.color">@text1.value</div>
           }
           text2: @adDisco.text2.map { text2 =>
-            @text2.value @text2.font.color
+            <div style="color: #@text2.font.color">@text2.value</div>
           }
-          template: id=@adDisco.template.id color=@adDisco.template.color
-          disco: @adDisco.discount.value % color=@adDisco.discount.font.color
+          @*template: id=@adDisco.template.id color=@adDisco.template.color*@
+          @*disco: @adDisco.discount.value % color=@adDisco.discount.font.color*@
         }
 
         case adText: MMartAdText => {
