@@ -2,7 +2,7 @@
 @import 'categories.styl'
 
 spriteurl = url('/assets/images/sio-market-sprite.png')
-spritesize = 150px 100px
+spritesize = 300px 100px
 
 
 border-radius( param )
@@ -139,9 +139,35 @@ transition( param )
     z-index: 1003
 
     .search-bar
-      background: #fff
       height: 44px
       border-bottom: rgba(0,0,0,0.5)
+
+      .sb-back-icon,
+      .sb-search-icon
+        background: spriteurl -85px -2px
+        background-size: spritesize
+        width: 44px
+        height: 44px
+        float: left
+        cursor: pointer
+
+      .sb-search-field
+        height: 44px
+        background: #fff
+        margin-left: 44px
+        margin-right: 44px
+
+      .sb-search-icon
+        float: right
+        margin-top: -44px
+        background: spriteurl -130px -2px
+        background-size: spritesize
+
+      .sb-back-icon:active
+        background-position: -85px -1px
+      .sb-search-icon:active
+        background-position: -130px -1px
+
 
     .sm-categories-list
       .sm-single-categorie
