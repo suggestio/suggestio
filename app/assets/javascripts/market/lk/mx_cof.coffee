@@ -90,10 +90,13 @@ $(document).on 'click', '.device', ->
   if(!$this.hasClass('selected'))
     $('.device.selected').removeClass('selected')
     $this.addClass('selected')
+
     $('#preview')
     .width($this.attr('data-width'))
     .height($this.attr('data-height'))
     .closest('table').attr('class', 'ad-preview ' + $this.attr('data-class'))
+
+    market.resize_preview_photos()
 
 
 ##ФОТО ТОВАРА##
@@ -267,6 +270,7 @@ EditAdPage =
         data: $form.serialize()
         success: (data)->
           $('#preview').html(data)
+          market.resize_preview_photos()
         error: (error)->
           console.log(error)
       )
@@ -492,3 +496,66 @@ StatusBar =
 
     $(document).on 'click', '.status-bar', ->
       StatusBar.close($(this))
+
+######################
+## TODO: отрефакторить
+######################
+market =
+  init_images_upload : () ->
+
+    $('.w-async-image-upload').bind "change", () ->
+
+      relatedFieldId = $(this).attr "data-related-field-id"
+      form_data = new FormData()
+
+      if $(this)[0].type == 'file'
+        form_data.append $(this)[0].name, $(this)[0].files[0]
+
+      request_params =
+        url : $(this).attr "data-action"
+        method : 'post'
+        data : form_data
+        contentType: false
+        processData: false
+        success : ( resp_data ) ->
+          $('#' + relatedFieldId + ' .image-key').val(resp_data.image_key).trigger('change')
+          $('#' + relatedFieldId + ' .image-preview').show().attr "src", resp_data.image_link
+
+      $.ajax request_params
+
+      return false
+
+  resize_preview_photos : () ->
+    $('.poster-photo').each () ->
+
+      $this = $(this)
+
+      image_w = parseInt $this.attr "data-width"
+      image_h = parseInt $this.attr "data-height"
+
+      cw = $this.closest('.preview').width()
+      ch = $this.closest('.preview').height()
+
+      if image_w / image_h < cw / ch
+        nw = cw
+        nh = nw * image_h / image_w
+      else
+        nh = ch
+        nw = nh * image_w / image_h
+
+      css_params =
+        'width' : nw + 'px'
+        'height' : nh + 'px'
+        'margin-left' : - nw / 2 + 'px'
+        'margin-top' : - nh / 2 + 'px'
+
+      $this.css css_params
+
+
+
+  init: () ->
+    $(document).ready () ->
+      market.init_images_upload()
+
+market.init()
+window.market=market

@@ -13,7 +13,6 @@
   <div class="offer-details">
     <div class="od-inner discount">
       @ad.offers.map {
-
         case adProd: MMartAdProduct => {
 
           <div class="top-text">@adProd.vendor.value</div>
@@ -49,7 +48,7 @@
         }
 
         case adText: MMartAdText => {
-          <div class="color: #@adText.text.font.color">@Html(adText.text.value)</div>
+          <div style="color: #@adText.text.font.color">@Html(adText.text.value)</div>
         }
       }
 
