@@ -145,7 +145,7 @@ siomart =
     request_delay : 1000
 
     perform : ( request ) ->
-      url = '/market/ads/' + siomart.config.mart_id
+      url = '/market/ads/' + siomart.config.mart_id + '?a.q=' + request
       siomart.perform_request url
 
     queue_request : ( event ) ->
