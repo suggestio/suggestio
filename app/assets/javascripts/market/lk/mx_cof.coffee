@@ -1,14 +1,5 @@
 $(document).ready ->
-  if(document.getElementById('old-price-status') != null)
-    if($('#ad_offer_oldPrice_value').val())
-      $('#old-price-status').trigger('click')
-      document.getElementById('old-price-status').checked = true
-    else
-      document.getElementById('old-price-status').checked = false
-
   cbca.emptyPhoto = '/assets/images/market/lk/empty-image.gif'
-
-  cbca.common = new CbcaCommon()
 
   cbca.popup = new CbcaPopup()
   cbca.search = new CbcaSearch()
@@ -19,8 +10,12 @@ $(document).ready ->
   cbca.shop = CbcaShop
   cbca.shop.init()
 
+  cbca.editAdPage = EditAdPage
+  cbca.editAdPage.init()
+  cbca.editAdPage.updatePreview()
 
 
+  cbca.common = new CbcaCommon()
 
 
   if (typeof tinymce != 'undefined')
@@ -42,37 +37,16 @@ $(document).ready ->
           inline: 'span'
           classes: "custom-format-2"
         }
-      ]
+      ],
+      setup: (editor)->
+        editor.on 'keyup', (e)->
+          clearTimeout(upd)
+          updTextarea = ()->
+            $('#ad_offer_text_value').val(editor.getContent()).trigger('change')
+          upd = setTimeout(updTextarea, 500)
     )
 
 
-$(document).on 'click', '.select-iphone .iphone-block', ->
-  $this = $(this)
-  if(!$this.hasClass 'act')
-    $('.iphone-block.act').removeClass 'act'
-    $this.addClass 'act'
-    $('#textAlign-phone').val($this.attr('data-value')).trigger('change')
-
-$(document).on 'click', '.select-ipad .ipad-block', ->
-    $this = $(this)
-    dataGroup = $this.attr 'data-group'
-
-    if(!$this.hasClass 'act')
-      $('.ipad-block.act[data-group = "'+dataGroup+'"]').removeClass 'act'
-      $this.addClass 'act'
-      $('#'+dataGroup).val($this.attr('data-value')).trigger('change')
-
-$(document).on 'click', '.block .tab', ->
-  $this = $(this)
-  $wrap = $this.closest '.block'
-  index = $wrap.find('.tabs .tab').index(this)
-
-  if(!$this.hasClass 'act')
-    $wrap.find('.tabs .act').removeClass 'act'
-    $this.addClass 'act'
-    $wrap.find('.tab-content').hide()
-    $wrap.find('.tab-content').eq(index).show()
-    $('#ad-mode').val($this.attr('data-mode'))
 
 $(document).on 'click', '.one-checkbox', ->
   $this = $(this)
@@ -88,8 +62,6 @@ $(document).on 'click', '.one-checkbox', ->
   else
     $(this).removeAttr('checked')
 
-$(document).on 'click', '#old-price-status', ->
-  $('.create-ad .old-price').toggle()
 
 $(document).on 'click', '.create-ad .color-list .color', ->
   $this = $(this)
@@ -208,20 +180,6 @@ CbcaCommon = () ->
 
   self = this
 
-  self.updatePreview = () ->
-    $form = $('#promoOfferForm')
-    if($form.size())
-      action = $form.find('#preview-action').val()
-      $.ajax(
-        type: 'POST'
-        url: action
-        data: $form.serialize()
-        success: (data)->
-          $('#preview').html(data)
-        error: (error)->
-          console.log(error)
-      )
-
   self.init = () ->
     $(document).on 'focus', '.input-wrap input, .input-wrap textarea', ->
       $(this).closest('.input-wrap').toggleClass('focus', true)
@@ -285,9 +243,6 @@ CbcaCommon = () ->
         $this.removeAttr('checked')
 
 
-    $(document).on 'change', '#promoOfferForm input', ()->
-      self.updatePreview()
-
     $('.slide-content').each ()->
       $this = $(this)
 
@@ -296,7 +251,91 @@ CbcaCommon = () ->
 
 
   self.init()
-  self.updatePreview()
+
+#########################################################
+## Страница создания/редактирования рекламной карточки ##
+#########################################################
+EditAdPage =
+
+  updatePreview: () ->
+    $form = $('#promoOfferForm')
+    if($form.size())
+      action = $form.find('#preview-action').val()
+      $.ajax(
+        type: 'POST'
+        url: action
+        data: $form.serialize()
+        success: (data)->
+          $('#preview').html(data)
+        error: (error)->
+          console.log(error)
+      )
+
+  init: () ->
+    #################
+    ## Старая цена ##
+    #################
+    if($('#ad_offer_oldPrice_value').val())
+      $('#old-price-status').attr('data-checked', 'checked')
+      $('.create-ad .old-price').show()
+
+    $(document).on 'click', '#old-price-status', ->
+      if(!$('#ad_offer_oldPrice_value').val())
+        oldPrice = $('#priceValueInput').val()
+        $('#ad_offer_oldPrice_value').val(oldPrice)
+      $('.create-ad .old-price').toggle()
+      cbca.editAdPage.updatePreview()
+
+    ############
+    ## Превью ##
+    ############
+    $(document).on 'change', '#promoOfferForm input', ()->
+      cbca.editAdPage.updatePreview()
+
+    $(document).on 'change', '#promoOfferForm textarea', ()->
+      cbca.editAdPage.updatePreview()
+
+    $(document).on 'keyup', '#promoOfferForm input', ()->
+      clearTimeout(updatePreview)
+      selfUpdatePreview = ()->
+        cbca.editAdPage.updatePreview()
+      updatePreview = setTimeout(selfUpdatePreview, 500)
+
+    ########################################
+    ## Положение элементов на iphone/ipad ##
+    ########################################
+    $(document).on 'click', '.select-iphone .iphone-block', ->
+      $this = $(this)
+      if(!$this.hasClass 'act')
+        $('.iphone-block.act').removeClass 'act'
+        $this.addClass 'act'
+        $('#textAlign-phone').val($this.attr('data-value')).trigger('change')
+
+    $(document).on 'click', '.select-ipad .ipad-block', ->
+        $this = $(this)
+        dataGroup = $this.attr 'data-group'
+
+        if(!$this.hasClass 'act')
+          $('.ipad-block.act[data-group = "'+dataGroup+'"]').removeClass 'act'
+          $this.addClass 'act'
+          $('#'+dataGroup).val($this.attr('data-value')).trigger('change')
+
+    ##########################
+    ## Переключение вкладок ##
+    ##########################
+    $(document).on 'click', '.block .tab', ->
+      $this = $(this)
+      $wrap = $this.closest '.block'
+      index = $wrap.find('.tabs .tab').index(this)
+
+      if(!$this.hasClass 'act')
+        $wrap.find('.tabs .act').removeClass 'act'
+        $this.addClass 'act'
+        $wrap.find('.tab-content').hide()
+        $wrap.find('.tab-content').eq(index).show()
+        $('#ad-mode').val($this.attr('data-mode'))
+        cbca.editAdPage.updatePreview()
+
 
 #########################
 ## Работа с магазинами ##
