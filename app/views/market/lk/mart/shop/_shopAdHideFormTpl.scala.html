@@ -1,4 +1,4 @@
-@(mshop: MShop, ad: MMartAd, sahf: Form[_])(implicit ctx: util.Context)
+@(mshop: MShop, ad: MMartAd, mmart: MMart, sahf: Form[_])(implicit ctx: util.Context)
 
 @* Форма сокрытия рекламы магазина силами магазина (SioWeb/4.psd). *@
 @import ctx._
@@ -13,7 +13,9 @@
 
   <div class="content">
 
-    <div class="ad-preview" style="height: 500px;"></div>
+    <div class="ad-preview preview-medium" style="height: 500px;">
+      @market.showcase._single_offer(ad, mmart, Some(mshop))
+    </div>
 
     @form(routes.MarketMartLk.shopAdHideFormSubmit(ad.id.get)) {
       @* Допустимые значения: @HIDE, @DELETE. *@
