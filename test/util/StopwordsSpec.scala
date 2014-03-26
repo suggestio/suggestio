@@ -1,7 +1,8 @@
 package util
 
 import org.specs2.mutable._
-import util.Stopwords._
+import io.suggest.util.text.Stopwords
+import Stopwords._
 
 /**
  * Suggest.io

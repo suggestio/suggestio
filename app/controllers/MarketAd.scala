@@ -164,8 +164,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       .transform(strTrimBrOnlyF, strIdentityF)
     val discountValueM = float
       // TODO Нужно разрешать текст в виде "10%", он не должен вызывать проблем.
-      .verifying("discount.too.low", { _ <= DISCOUNT_MIN })
-      .verifying("discount.too.big", { _ >= DISCOUNT_MAX })
+      .verifying("discount.too.low", { _ > DISCOUNT_MIN })
+      .verifying("discount.too.big", { _ < DISCOUNT_MAX })
     val tplM = mapping(
       "id"    -> number(min = DISCOUNT_TPL_ID_MIN, max = DISCOUNT_TPL_ID_MAX),
       "color" -> colorM

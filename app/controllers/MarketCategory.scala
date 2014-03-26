@@ -149,6 +149,7 @@ object MarketCategory extends SioController with PlayMacroLogsImpl {
     }
   }
 
+
   /** Отрендерить в JSON список категорий. */
   private def renderCatsJson(cats: Seq[MMartCategory]): JsArray = {
     val jsonCats = cats.map { cat =>

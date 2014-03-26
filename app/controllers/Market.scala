@@ -54,14 +54,8 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
   def findAds(martId: MartId_t, adSearch: AdSearch) = MaybeAuth.async { implicit request =>
-    import adSearch._
     new MarketAction(martId) {
       def execute(mmartInx: models.MMartInx): Future[SimpleResult] = {
-        val searchLevel = if (shopIdOpt.isDefined) {
-          AdShowLevels.LVL_SHOP
-        } else {
-          AdShowLevels.LVL_MART_SHOPS
-        }
         for {
           mads   <- MMartAdIndexed.find(mmartInx, adSearch)
           mshops <- shopsFut
