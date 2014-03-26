@@ -304,25 +304,31 @@ object SioEsUtil extends MacroLogsImpl {
         ),
         tokenizers = Seq(new TokenizerStandard(STD_TN)),
         analyzers = {
-          val filters0 = List(STD_FN, WORD_DELIM_FN, LOWERCASE_FN, STOP_EN_FN, STOP_RU_FN, STEM_RU_FN, STEM_EN_FN)
+          val filters0 = List(STD_FN, WORD_DELIM_FN, LOWERCASE_FN)
+          val filters1 = filters0 ++ List(STOP_EN_FN, STOP_RU_FN, STEM_RU_FN, STEM_EN_FN)
           Seq(
             AnalyzerCustom(
               id = DFLT_AN,
               charFilters = Seq("html_strip"),
               tokenizer = STD_TN,
-              filters = filters0
+              filters = filters1
             ),
             AnalyzerCustom(
               id = EDGE_NGRAM_AN_1,
               charFilters = Seq("html_strip"),
               tokenizer = STD_TN,
-              filters = filters0 ++ List(EDGE_NGRAM_FN_1)
+              filters = filters1 ++ List(EDGE_NGRAM_FN_1)
             ),
             AnalyzerCustom(
               id = EDGE_NGRAM_AN_2,
               charFilters = Seq("html_strip"),
               tokenizer = STD_TN,
-              filters = filters0 ++ List(EDGE_NGRAM_FN_2)
+              filters = filters1 ++ List(EDGE_NGRAM_FN_2)
+            ),
+            AnalyzerCustom(
+              id = MINIMAL_AN,
+              tokenizer = STD_TN,
+              filters = filters0
             )
           )
         }

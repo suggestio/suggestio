@@ -6,7 +6,7 @@ import io.suggest.util.SioEsUtil, SioEsUtil._
 import org.joda.time.{ReadableInstant, DateTime}
 import org.elasticsearch.action.search.SearchResponse
 import scala.collection.JavaConversions._
-import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.common.xcontent.{XContentBuilder, XContentFactory}
 import org.elasticsearch.client.Client
 import scala.util.{Failure, Success}
@@ -18,6 +18,7 @@ import org.elasticsearch.action.index.IndexRequestBuilder
 import scala.annotation.tailrec
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.action.delete.DeleteRequestBuilder
+import org.elasticsearch.common.unit.Fuzziness
 
 /**
  * Suggest.io
@@ -228,6 +229,7 @@ object EsModel extends MacroLogsImpl {
         imd != null
       }
   }
+
 
 }
 

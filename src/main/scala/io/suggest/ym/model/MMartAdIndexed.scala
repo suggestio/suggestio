@@ -14,6 +14,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder
 import MMartAd.{SHOW_LEVELS_ESFN, USER_CAT_ID_ESFN}
 import io.suggest.model.EsModel.SHOP_ID_ESFN
 import io.suggest.util.SioConstants._
+import io.suggest.util.text.TextQueryV2Util
 
 /**
  * Suggest.io
@@ -142,35 +143,47 @@ object MMartAdIndexed extends MacroLogsImpl {
   def find(inx2: MMartInx, adSearch: AdsSearchT)(implicit ec:ExecutionContext, client: Client): Future[Seq[MMartAdIndexed]] = {
     import adSearch._
     // Собираем запрос в функциональном стиле, иначе получается многовато вложенных if-else.
-    val query: QueryBuilder = shopIdOpt.map { shopId =>
-      // Есть shopId. Собираем запрос по магазину.
-      var shopIdQuery: QueryBuilder = QueryBuilders.termQuery(SHOP_ID_ESFN, shopId)
-      if (catIdOpt.isDefined) {
-        val catIdFilter = FilterBuilders.termFilter(USER_CAT_ID_ESFN, catIdOpt.get)
-        shopIdQuery = QueryBuilders.filteredQuery(shopIdQuery, catIdFilter)
+    val query: QueryBuilder = adSearch.qOpt.flatMap { q =>
+      TextQueryV2Util.queryStr2QueryMarket(q)
+    } map { qstrQB =>
+      // Если shopId задан, то навешиваем фильтр.
+      shopIdOpt.fold(qstrQB) { shopId =>
+        val shopIdFilter = FilterBuilders.termFilter(SHOP_ID_ESFN, shopId)
+        QueryBuilders.filteredQuery(qstrQB, shopIdFilter)
       }
-      shopIdQuery
     } orElse {
-      // Собрать запрос по shopId не удалось. Пробуем собрать запрос с catIdOpt.
+      // Не удалось собрать текстовый запрос. Если задан shopId, то собираем query по магазину.
+      shopIdOpt.map { shopId =>
+        QueryBuilders.termQuery(SHOP_ID_ESFN, shopId)
+      }
+    } map { qb =>
+      // Если есть q или shopId и указана catId, то добавляем catId-фильтр.
+      catIdOpt.fold(qb) { catId =>
+        val catIdFilter = FilterBuilders.termFilter(USER_CAT_ID_ESFN, catId)
+        QueryBuilders.filteredQuery(qb, catIdFilter)
+      }
+    } orElse {
+      // Запроса всё ещё нет, т.е. собрать запрос по shopId тоже не удалось. Пробуем собрать запрос с catIdOpt...
       catIdOpt.map { catId =>
         QueryBuilders.termQuery(USER_CAT_ID_ESFN, catId)
       }
-    } map { query1 =>
+    } map { qb =>
       // Добавить фильтрацию по уровню, если он указан.
-      if (levelOpt.isDefined)
-        QueryBuilders.filteredQuery(query1, levelFilter(levelOpt.get))
-      else
-        query1
+      levelOpt.fold(qb) { level =>
+        QueryBuilders.filteredQuery(qb, levelFilter(level))
+      }
     } orElse {
-      // Сборка запроса не удалась, значит catIdOpt тоже не задан. Просто ищем по уровню.
+      // Сборка запроса по catId тоже не удалась. Просто ищем по уровню:
       levelOpt map levelQuery
     } getOrElse {
-      // Сборка реквеста не удалась. Возвращаем все объявы.
+      // Сборка реквеста не удалась: все параметры не заданы. Просто возвращаем все объявы в рамках индекса.
       QueryBuilders.matchAllQuery()
     }
     // Запускаем собранный запрос.
     inx2.prepareSearchRequest(client.prepareSearch())
       .setQuery(query)
+      .setSize(maxResults)
+      .setFrom(offset)
       .execute()
       .map { searchResp2list(_, inx2) }
   }
@@ -232,5 +245,11 @@ trait AdsSearchT {
 
   /** Произвольный текстовый запрос, если есть. */
   def qOpt: Option[String]
+
+  /** Макс.кол-во результатов. */
+  def maxResults: Int
+
+  /** Абсолютный сдвиг в результатах (постраничный вывод). */
+  def offset: Int
 }
 

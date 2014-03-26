@@ -282,7 +282,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
         val (brb, mads) = allShopsAds.iterator
           .map { mad =>
             val lvls1 = if (mad.idOrNull == adId) {
-              mad.showLevels ++ singletonLevels
+              thisAd.showLevels
             } else {
               mad.showLevels -- singletonLevels
             }
