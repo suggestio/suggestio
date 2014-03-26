@@ -109,12 +109,22 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
    *                была добавлена на предыдущей странице.
    */
   def martShow(martId: MartId_t, newAdIdOpt: Option[String]) = IsMartAdmin(martId).async { implicit request =>
-    newAdIdOpt match {
+    // Бывает, что есть дополнительная реклама, которая появится в выдаче только по наступлению index refresh. Тут костыль для отработки этого.
+    val extAdOptFut = newAdIdOpt match {
       case Some(newAdId) => MMartAd.getById(newAdId).map { _.filter { mad => mad.martId == martId } }
       case None => Future successful None
     }
-    MMartAd.findForMartRt(martId, shopMustMiss = true) map { mads =>
-      Ok(martShowTpl(request.mmart, mads))
+    for {
+      mads      <- MMartAd.findForMartRt(martId, shopMustMiss = true)
+      extAdOpt  <- extAdOptFut
+    } yield {
+      // Если есть карточка в extAdOpt, то надо добавить её в начало списка, который отсортирован по дате создания.
+      val mads2 = if (extAdOpt.isDefined  &&  mads.headOption.flatMap(_.id) != newAdIdOpt) {
+        extAdOpt.get :: mads
+      } else {
+        mads
+      }
+      Ok(martShowTpl(request.mmart, mads2))
     }
   }
 

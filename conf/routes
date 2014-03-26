@@ -93,8 +93,8 @@ POST /sys/inx2/im/mart/:martId/del      controllers.SysMarket.inx2handleMartDele
 GET  /m                                 controllers.MarketLk.lkIndex
 GET  /m/lk                              controllers.MarketLk.lkList
 # Личный кабинет владельца ТЦ
-GET  /m/lk/mart/:martId                 controllers.MarketMartLk.martShow(martId, newAdId: Option[String] = None)
-GET  /m/lk/mart/:martId/shops           controllers.MarketMartLk.shopsShow(martId, sortByRaw: Option[String] = None, isReversed: Boolean ?= false)
+GET  /m/lk/mart/:martId                 controllers.MarketMartLk.martShow(martId, newAdId: Option[String] ?= None)
+GET  /m/lk/mart/:martId/shops           controllers.MarketMartLk.shopsShow(martId, sortByRaw: Option[String] ?= None, isReversed: Boolean ?= false)
 POST /m/lk/mart/:martId/search          controllers.MarketMartLk.searchShops(martId)
 GET  /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditForm(martId: String)
 POST /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditFormSubmit(martId: String)
@@ -112,7 +112,7 @@ GET  /m/lk/mart/shop/ad/:adId/hide      controllers.MarketMartLk.shopAdHideForm(
 POST /m/lk/mart/shop/ad/:adId/hide      controllers.MarketMartLk.shopAdHideFormSubmit(adId)
 
 # личный кабинет купца-арендатора ТЦ.
-GET  /m/lk/s/:shopId                    controllers.MarketShopLk.showShop(shopId)
+GET  /m/lk/s/:shopId                    controllers.MarketShopLk.showShop(shopId, newAdId: Option[String] ?= None)
 GET  /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopForm(shopId)
 POST /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopFormSubmit(shopId)
 GET  /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAccept(shopId, eaId)

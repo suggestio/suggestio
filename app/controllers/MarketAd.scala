@@ -337,7 +337,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                 mmad.picture = imgIdsSaved.head
                 // Сохранить изменения в базу
                 mmad.save.map { adId =>
-                  Redirect(routes.MarketShopLk.showShop(shopId))
+                  Redirect(routes.MarketShopLk.showShop(shopId, newAdId = Some(adId)))
                     .flashing("success" -> "Рекламная карточка создана.")
                 }
 
@@ -598,7 +598,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                 mmad.picture = imgIdsSaved.head
                 // Сохранить изменения в базу
                 mmad.save.map { adId =>
-                  Redirect(routes.MarketMartLk.martShow(martId))
+                  Redirect(routes.MarketMartLk.martShow(martId, newAdId = Some(adId)))
                     .flashing("success" -> "Рекламная карточка создана.")
                 }
 

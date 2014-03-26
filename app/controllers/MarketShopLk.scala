@@ -84,16 +84,30 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
   /**
    * Рендер страницы магазина (с точки зрения арендатора: владельца магазина).
    * @param shopId id магазина.
+   * @param newAdIdOpt Костыль для сокрытия факта асинхронного добавления рекламной карточки.
    */
-  def showShop(shopId: ShopId_t) = IsShopAdm(shopId).async { implicit request =>
+  def showShop(shopId: ShopId_t, newAdIdOpt: Option[String]) = IsShopAdm(shopId).async { implicit request =>
     import request.mshop
-    val adsFut = MMartAd.findForShop(shopId)
+    val adsFut = MMartAd.findForShopRt(shopId)
     // TODO Если магазин удалён из ТЦ, то это как должно выражаться?
+    val extAdOptFut = newAdIdOpt match {
+      case Some(newAdId) => MMartAd.getById(newAdId).map { _.filter { _.shopId.exists(_ == shopId) } }
+      case None => Future successful None
+    }
     val martId = mshop.martId.get
     MMart.getById(martId).flatMap {
       case Some(mmart) =>
-        adsFut.map { ads =>
-          Ok(shopShowTpl(mmart, mshop, ads))
+        for {
+          mads      <- adsFut
+          extAdOpt  <- extAdOptFut
+        } yield {
+          // Если есть карточка в extAdOpt, то надо добавить её в начало списка, который отсортирован по дате создания.
+          val mads2 = if (extAdOpt.isDefined  &&  mads.headOption.flatMap(_.id) != newAdIdOpt) {
+            extAdOpt.get :: mads
+          } else {
+            mads
+          }
+          Ok(shopShowTpl(mmart, mshop, mads2))
         }
 
       case None => martNotFound(martId)
