@@ -128,7 +128,7 @@ object MarketOffer extends SioController with MacroLogsImpl {
         // Картинки: нужно их перегнать в постоянное хранилище.
         ImgFormUtil.updateOrigImg(Some(imgInfo), oldImgs = None) flatMap { imgsIdsSaved =>
           // Выставить сохраненные картинки в датум и сохранить его.
-          mpo.datum.pictures = imgsIdsSaved.toSeq
+          mpo.datum.pictures = imgsIdsSaved.toSeq.map(_.id)
           mpo.save.map { mpoSavedId =>
             // Редирект на созданный промо-оффер.
             rdrToOffer(mpoSavedId)
@@ -191,7 +191,7 @@ object MarketOffer extends SioController with MacroLogsImpl {
           mpo.datum.offerType = offer.datum.offerType
           mpo.datum.shopId = offer.datum.shopId
           mpo.id = offer.id
-          mpo.datum.pictures = updatedImgIds
+          mpo.datum.pictures = updatedImgIds.map(_.id)
           mpo.save.map { _ =>
             rdrToOffer(offerId).flashing("success" -> "Saved ok.")
           }

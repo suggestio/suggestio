@@ -181,7 +181,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
         mshop.description = description
         // Для обновления shop'а надо дождаться генерации нового id логотипа.
         updateImgsFut.flatMap { newImgIds =>
-          mshop.logoImgId = newImgIds.headOption
+          mshop.logoImgId = newImgIds.headOption.map(_.id)
           mshop.save map { _shopId =>
             Redirect(routes.MarketShopLk.showShop(shopId))
               .flashing("success" -> "Изменения сохранены.")

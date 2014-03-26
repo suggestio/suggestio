@@ -173,7 +173,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
         mmart.siteUrl = mmart2.siteUrl
         mmart.phone = mmart2.phone
         savedLogoFut flatMap { savedLogos =>
-          mmart.logoImgId = savedLogos.headOption
+          mmart.logoImgId = savedLogos.headOption.map(_.id)
           mmart.save.map { _ =>
             Redirect(routes.MarketMartLk.martShow(martId))
               .flashing("success" -> "Изменения сохранены.")

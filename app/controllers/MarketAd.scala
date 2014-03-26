@@ -346,7 +346,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                 mmad.shopId = Some(shopId)
                 mmad.companyId = request.mshop.companyId
                 mmad.martId = request.mshop.martId.get
-                mmad.img = MImgInfo(imgIdsSaved.head)
+                mmad.img = imgIdsSaved.head
                 // Сохранить изменения в базу
                 mmad.save.map { adId =>
                   Redirect(routes.MarketShopLk.showShop(shopId, newAdId = Some(adId)))
@@ -457,9 +457,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             } onComplete entityLogoUpdatePf("shop", shopId)
             // TODO Проверить категорию.
             // TODO И наверное надо проверить shopId-существование в исходной рекламе.
-            ImgFormUtil.updateOrigImgId(
-              needImg = Some(ImgInfo4Save(iik)),
-              oldImgId = Some(mad.img.id)
+            ImgFormUtil.updateOrigImg(
+              needImgs = Some(ImgInfo4Save(iik)),
+              oldImgs  = Some(OrigImgIdKey(mad.img.id, mad.img.meta))
             ) flatMap { savedImgIds =>
               // В списке сохраненных id картинок либо 1 либо 0 картинок.
               if (!savedImgIds.isEmpty) {
@@ -467,7 +467,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                 mad2.martId = mad.martId
                 mad2.shopId = mad.shopId
                 mad2.companyId = mad.companyId
-                mad2.img = MImgInfo(savedImgIds.head)
+                mad2.img = savedImgIds.head
                 mad2.save.map { _ =>
                   Redirect(routes.MarketShopLk.showShop(shopId))
                     .flashing("success" -> "Изменения сохранены")
@@ -607,7 +607,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                 mmad.shopId = None
                 mmad.companyId = mmart.companyId
                 mmad.martId = martId
-                mmad.img = MImgInfo(imgIdsSaved.head)
+                mmad.img = imgIdsSaved.head
                 // Сохранить изменения в базу
                 mmad.save.map { adId =>
                   Redirect(routes.MarketMartLk.martShow(martId, newAdId = Some(adId)))
@@ -704,9 +704,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
               case None         => Future failed new NoSuchElementException(s"Mart not found: " + martId)
             } onComplete entityLogoUpdatePf("mart", martId)
             // TODO Проверить категорию.
-            ImgFormUtil.updateOrigImgId(
-              needImg = Some(ImgInfo4Save(iik)),
-              oldImgId = Some(mad.img.id)
+            ImgFormUtil.updateOrigImg(
+              needImgs = Some(ImgInfo4Save(iik)),
+              oldImgs = Some(mad.img)
             ) flatMap { savedImgIds =>
               // В списке сохраненных id картинок либо 1 либо 0 картинок.
               if (!savedImgIds.isEmpty) {
@@ -714,7 +714,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                 mad2.martId = mad.martId
                 mad2.shopId = mad.shopId
                 mad2.companyId = mad.companyId
-                mad2.img = MImgInfo(savedImgIds.head)
+                mad2.img = savedImgIds.head
                 mad2.save.map { _ =>
                   Redirect(routes.MarketMartLk.martShow(martId))
                     .flashing("success" -> "Изменения сохранены")
@@ -777,7 +777,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
         Future failed new NoSuchElementException(s"Cannot save new logo for mart=${entity.id.get} . Ignoring...")
       case savedImgIds =>
         if (entity.logoImgId != savedImgIds.headOption) {
-          entity.logoImgId = savedImgIds.headOption
+          entity.logoImgId = savedImgIds.headOption.map(_.id)
           entity.save
         } else {
           Future successful ()

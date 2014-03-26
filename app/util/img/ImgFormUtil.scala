@@ -78,7 +78,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     }
   }
 
-  def updateOrigImgId(needImg: Option[ImgInfo4Save[ImgIdKey]], oldImgId: Option[String]): Future[List[String]] = {
+  def updateOrigImgId(needImg: Option[ImgInfo4Save[ImgIdKey]], oldImgId: Option[String]): Future[List[MImgInfo]] = {
     updateOrigImg(needImg, oldImgId.map(OrigImgIdKey(_)))
   }
   
@@ -89,7 +89,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
    * @param oldImgs Уже сохранённые ранее картинки, если есть.
    * @return Список id новых и уже сохранённых картинок.
    */
-  def updateOrigImg(needImgs: Option[ImgInfo4Save[ImgIdKey]], oldImgs: Option[OrigImgIdKey]): Future[List[String]] = {
+  def updateOrigImg(needImgs: Option[ImgInfo4Save[ImgIdKey]], oldImgs: Option[MImgInfo]): Future[List[MImgInfo]] = {
     // TODO Эту фунцию можно быстро переделать с Option[] на Seq[]. Изначально она и работала через Seq. Но они не совместимы. Надо как-то это устаканить.
     val oldImgsSet = oldImgs.toSet
     val newTmpImgs = needImgs.iterator
@@ -104,7 +104,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     val delOldImgs = oldImgsSet -- needOrigImgs.map(_.iik)  // TODO Раньше были списки, теперь их нет. Надо убрать множество.
     // Запускаем в фоне удаление старых картинок. TODO Возможно, надо этот фьючерс подвязывать к фьючерсу сохранения?
     Future.traverse(delOldImgs) { oldOiik =>
-      val fut = MPict.deleteFully(oldOiik.key)
+      val fut = MPict.deleteFully(oldOiik.id)
       fut onComplete {
         case Success(_)  => trace("Old img deleted: " + oldOiik)
         case Failure(ex) => error("Failed to delete old img " + oldOiik, ex)
@@ -125,8 +125,8 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     } map { savedTmpImgsOrNull =>
       val newSavedIds = savedTmpImgsOrNull
         .filter { _ != null }
-        .map { _.idStr }
-      val preservedIds = needOrigImgs.map { _.iik.key }
+        .map { _.toMImgInfo }
+      val preservedIds = needOrigImgs.map { _.iik }
       // TODO Нужно восстанавливать исходный порядок! Сейчас пока плевать на это, но надо это как-то исправлять.
       // Как вариант: можно уйти от порядка и от работы со списками картинок. А работать только с максимум одной картинкой через Option[] вместо Seq[].
       newSavedIds ++ preservedIds
@@ -149,8 +149,16 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         } flatMap { imgBytes =>
           val idStr = MPict.idBin2Str(id)
           MUserImgOrig(idStr, imgBytes).save.map { _ =>
-            SavedTmpImg(idStr, mptmp.file)
+            mptmp.file -> idStr
           }
+        }
+        // 26.mar.2014: понадобился доступ к метаданным картинки в контексте элемента. Запускаем identify в фоне
+        val imgMetaFut = future {
+          val identifyResult = OrigImageUtil.identify(mptmp.file)
+          MImgInfoMeta(
+            height = identifyResult.getImageHeight,
+            width  = identifyResult.getImageWidth
+          )
         }
         // Если укаазно withThumb, то пора сгенерить thumbnail без учёта кропов всяких.
         val saveThumbFut = if (tii.withThumb) {
@@ -169,8 +177,14 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         } else {
           Future successful ()
         }
-        // Связываем оба фьючерса
-        saveThumbFut flatMap { _ => saveOrigFut }
+        // Связываем все асинхронные задачи воедино
+        for {
+          _ <- saveThumbFut
+          (tmpFile, idStr) <- saveOrigFut
+          imgMeta <- imgMetaFut
+        } yield {
+          SavedTmpImg(idStr, tmpFile, imgMeta)
+        }
 
       case None =>
         Future failed new FileNotFoundException(tii.iik.key)
@@ -330,7 +344,7 @@ case class TmpImgIdKey(filename: String) extends ImgIdKey with MacroLogsImplLazy
 }
 
 
-case class OrigImgIdKey(key: String, meta: Option[MImgInfoMeta] = None) extends ImgIdKey {
+class OrigImgIdKey(val key: String, meta: Option[MImgInfoMeta] = None) extends MImgInfo(key, meta) with ImgIdKey {
 
   def isTmp: Boolean = false
 
@@ -341,6 +355,9 @@ case class OrigImgIdKey(key: String, meta: Option[MImgInfoMeta] = None) extends 
   def isValid: Boolean = {
     MPict.isStrIdValid(key)
   }
+}
+object OrigImgIdKey {
+  def apply(key: String, meta: Option[MImgInfoMeta] = None) = new OrigImgIdKey(key, meta)
 }
 
 
@@ -384,4 +401,6 @@ case class ImgInfo4Save[+T <: ImgIdKey](
 )
 
 
-case class SavedTmpImg(idStr:String, tmpImgFile:File)
+case class SavedTmpImg(idStr:String, tmpImgFile:File, meta: MImgInfoMeta) {
+  def toMImgInfo = MImgInfo(idStr, Some(meta))
+}
