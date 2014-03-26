@@ -1,10 +1,92 @@
-spriteurl = url('/assets/images/sio-market-categories-sprite.png')
-spritesize = 59px 53px
+spriteurl = url('/assets/images/market/categories/icons.png')
+spritesize = 112px 937px
+
+
+.sm-categories-list
+  margin: 0 auto
+  font-family: 'futurfutc-webfont'
+  font-size: 16px
+  color: white
+  text-align: center
+  overflow: hidden
+
+.or-title
+  color: white
+  font-family: 'futurfutc-webfont'
+  height: 1px
+  background: white
+  position: relative
+  span
+    background: #CE2222
+    left: 50%
+    margin-left: -16px
+    padding: 0 10px
+    position: absolute
+    top: -9px
+
+.white-border-btn
+  display: inline-block
+  border: 2px solid white
+  font-family: 'futurfutc-webfont'
+  font-size: 30px
+  padding: 17px 30px
+  text-decoration: none
+  color: white
+.white-border-btn:active
+  background: #901818
+
 
 .sm-single-categorie
   display: block
-  width: 140px
-  height: 160px
+  text-decoration: none
+  cursor: pointer
+  overflow: hidden
   float: left
-  background: spriteurl no-repeat left top
-  background-size: spritesize
+  width: 171px
+  margin: 22px 22px 0 0
+  .icon
+    background: spriteurl no-repeat
+    background-size: spritesize
+    height: 100px
+  .name
+    height: 46px
+    padding-top: 25px
+    font-size: 24px
+.sm-single-categorie.sm-clothing
+  .icon
+    background-position: 36px -100px
+.sm-single-categorie.sm-boots
+  .icon
+    height: 90px
+    margin-top: 10px
+    background-position: 36px -644px
+.sm-single-categorie.sm-travel
+  .icon
+    background-position: 36px -850px
+  .name
+    padding-top: 15px
+    height: 56px
+.sm-single-categorie.sm-food
+  .icon
+    background-position: 36px -446px
+.sm-single-categorie.sm-electronics
+  .icon
+    background-position: 36px -342px
+.sm-single-categorie.sm-sports
+  .icon
+    background-position: 36px -741px
+.sm-single-categorie.sm-cosmetics
+  .icon
+    background-position: 40px -224px
+.sm-single-categorie.sm-restraunts
+  .icon
+    background-position: 50px 0
+  .name
+    padding-top: 15px
+    height: 56px
+.sm-single-categorie.sm-for-home
+  .icon
+    background-position: 36px -556px
+  .name
+    padding-top: 15px
+    height: 56px

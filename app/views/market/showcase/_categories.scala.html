@@ -5,11 +5,28 @@
   @* Поле ввода поиска *@
   <div class="search-bar"></div>
 
-  <div class="sm-categories-list">
-  @mmcats.map { mmcat =>
-    <div class="sm-single-categorie sm-@mmcat.cssClass">
-      <p>@mmcat.name</p>
-    </div>
-  }
+  <div class="or-title" style="margin-top: 18px;">
+    <span>ИЛИ</span>
   </div>
+
+  <div class="sm-categories-list">
+    <div style="padding-top: 24px;">ВЫБЕРИТЕ КАТЕГОРИЮ</div>
+    @mmcats.map { mmcat =>
+      <a class="sm-single-categorie sm-@mmcat.cssClass">
+        <div class="icon"></div>
+        <div class="name">@mmcat.name</div>
+      </a>
+    }
+  </div>
+
+  <div class="or-title" style="margin-top: 18px;">
+    <span>ИЛИ</span>
+  </div>
+
+  <div style="text-align: center; margin-top: 18px;">
+    <a href="#" class="white-border-btn">
+      ВЫБРАТЬ МАГАЗИН ИЗ СПИСКА
+    </a>
+  </div>
+
 </div>
