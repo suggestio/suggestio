@@ -21,6 +21,7 @@ import util.acl.IsMartAdminShop
 import util.img.ImgInfo
 import util.img.OrigImgIdKey
 import play.api.libs.json._
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -104,9 +105,15 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
   /**
    * Рендер раздачи страницы с личным кабинетом торгового центра.
    * @param martId id ТЦ
+   * @param newAdIdOpt Запрошено отображение для указанной карточки в реальном времени. Необходимо, если новая карточка
+   *                была добавлена на предыдущей странице.
    */
-  def martShow(martId: MartId_t) = IsMartAdmin(martId).async { implicit request =>
-    MMartAd.findForMart(martId, shopMustMiss = true) map { mads =>
+  def martShow(martId: MartId_t, newAdIdOpt: Option[String]) = IsMartAdmin(martId).async { implicit request =>
+    newAdIdOpt match {
+      case Some(newAdId) => MMartAd.getById(newAdId).map { _.filter { mad => mad.martId == martId } }
+      case None => Future successful None
+    }
+    MMartAd.findForMartRt(martId, shopMustMiss = true) map { mads =>
       Ok(martShowTpl(request.mmart, mads))
     }
   }

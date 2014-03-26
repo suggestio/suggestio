@@ -93,7 +93,7 @@ POST /sys/inx2/im/mart/:martId/del      controllers.SysMarket.inx2handleMartDele
 GET  /m                                 controllers.MarketLk.lkIndex
 GET  /m/lk                              controllers.MarketLk.lkList
 # Личный кабинет владельца ТЦ
-GET  /m/lk/mart/:martId                 controllers.MarketMartLk.martShow(martId)
+GET  /m/lk/mart/:martId                 controllers.MarketMartLk.martShow(martId, newAdId: Option[String] = None)
 GET  /m/lk/mart/:martId/shops           controllers.MarketMartLk.shopsShow(martId, sortByRaw: Option[String] = None, isReversed: Boolean ?= false)
 POST /m/lk/mart/:martId/search          controllers.MarketMartLk.searchShops(martId)
 GET  /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditForm(martId: String)

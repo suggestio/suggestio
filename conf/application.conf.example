@@ -132,6 +132,9 @@ es.cluster.name = "elasticsearch"
 # Макс кол-во тегов, которое пользователь может указать к одному запросу. [5]
 search.facet.invlink.request.tags.max = 5
 
+# Если true, то перезаписывать существующие маппинги при старте
+es.mapping.model.ignore_exist = false
+
 
 ###############################################################################
 ## Play framework

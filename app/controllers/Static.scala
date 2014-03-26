@@ -48,8 +48,4 @@ object Static extends Controller with ContextT {
     }
   }
 
-
-  def qsbTest(p: util.qsb.Pager) = Action {
-    Ok("Suita " + p)
-  }
 }
