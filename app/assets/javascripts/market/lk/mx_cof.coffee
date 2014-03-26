@@ -558,6 +558,7 @@ market =
   init: () ->
     $(document).ready () ->
       market.init_images_upload()
+      market.resize_preview_photos()
 
 market.init()
 window.market=market
