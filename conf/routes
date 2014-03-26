@@ -155,10 +155,10 @@ GET  /img/tmp/:filename                 controllers.Img.getTempImg(filename)
 GET  /img/orig/:imgId                   controllers.Img.getOrig(imgId)
 GET  /img/any/:imgId                    controllers.Img.getImg(imgId)
 
-#market
+# market
 GET  /market/index/:martId              controllers.Market.martIndex(martId)
 GET  /market/demo_website/:martId       controllers.Market.demoWebSite(martId)
-GET  /market/ads/:martId                controllers.Market.findAds(martId, shopId: Option[String], catId: Option[String])
+GET  /market/ads/:martId                controllers.Market.findAds(martId, a: util.qsb.AdSearch)
 
 # sys.market
 GET  /sys/market                        controllers.SysMarket.index
@@ -203,4 +203,5 @@ GET  /sys/market/cats/usr/c/:catId      controllers.MarketCategory.showUserCat(c
 GET  /sys/market/cats/usr/:ownerId      controllers.MarketCategory.showCatsFor(ownerId)
 GET  /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatForm(catId)
 POST /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatFormSubmit(catId)
+
 

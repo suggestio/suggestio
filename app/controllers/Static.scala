@@ -47,4 +47,9 @@ object Static extends Controller with ContextT {
       case _                  => http404
     }
   }
+
+
+  def qsbTest(p: util.qsb.Pager) = Action {
+    Ok("Suita " + p)
+  }
 }

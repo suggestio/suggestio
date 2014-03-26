@@ -1,5 +1,6 @@
 package controllers
 
+import _root_.util.qsb.AdSearch
 import util._
 import util.acl._
 import views.html.market.showcase._
@@ -27,7 +28,7 @@ object Market extends SioController with PlayMacroLogsImpl {
     new MarketAction(martId) {
       def execute(mmartInx: models.MMartInx): Future[SimpleResult] = {
         for {
-          ads    <- MMartAdIndexed.find(mmartInx, level = AdShowLevels.LVL_MART_SHOWCASE)
+          ads    <- MMartAdIndexed.find(mmartInx, AdSearch(levelOpt = Some(AdShowLevels.LVL_MART_SHOWCASE)))
           shops  <- shopsFut
           mmart  <- mmartFut
           mmcats <- mmcatsFut
@@ -52,7 +53,8 @@ object Market extends SioController with PlayMacroLogsImpl {
   // TODO Нужно как-то дедублицировать повторяющийся код тут
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
-  def findAds(martId: MartId_t, shopIdOpt: Option[ShopId_t], catIdOpt: Option[String]) = MaybeAuth.async { implicit request =>
+  def findAds(martId: MartId_t, adSearch: AdSearch) = MaybeAuth.async { implicit request =>
+    import adSearch._
     new MarketAction(martId) {
       def execute(mmartInx: models.MMartInx): Future[SimpleResult] = {
         val searchLevel = if (shopIdOpt.isDefined) {
@@ -61,7 +63,7 @@ object Market extends SioController with PlayMacroLogsImpl {
           AdShowLevels.LVL_MART_SHOPS
         }
         for {
-          mads   <- MMartAdIndexed.find(mmartInx, shopIdOpt = shopIdOpt, catIdOpt = catIdOpt, level = searchLevel)
+          mads   <- MMartAdIndexed.find(mmartInx, adSearch)
           mshops <- shopsFut
           mmart  <- mmartFut
           mmcats <- mmcatsFut
