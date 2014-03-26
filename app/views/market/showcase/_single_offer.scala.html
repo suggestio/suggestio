@@ -1,5 +1,7 @@
 @(ad: MMartAdT, mmart: MMart, mshopOpt: Option[MShop], isHidden: Boolean = false)(implicit ctx: util.Context)
 
+@import util.TplDataFormatUtil._
+
 <div class="sm-offer @if(isHidden){ sm-hidden-offer }">
 
   @ad.panel.map { panelSettings =>
@@ -18,9 +20,9 @@
           <div class="top-text">@adProd.vendor.value</div>
 
           @adProd.oldPrice.map { oldPrice =>
-            <div class="old-price"><s>@oldPrice.value р</s></div>
+            <div class="old-price"><s>@formatPrice(oldPrice.value)</s></div>
           }
-          <div class="new-price">@adProd.price.value р</div>
+          <div class="new-price">@formatPrice(adProd.price.value)</div>
 
           @* Если магазин не указан, то значит это рекламная карточка ТЦ. *@
           @mshopOpt.map { mshop =>
