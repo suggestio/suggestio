@@ -47,7 +47,9 @@ $(document).ready ->
     )
 
 
-
+########################################
+## Набор checkbox ов, с одним checked ##
+########################################
 $(document).on 'click', '.one-checkbox', ->
   $this = $(this)
   dataName = $this.attr('data-name')
@@ -365,9 +367,9 @@ CbcaShop =
 
   init: () ->
 
-    #########################
-    ## Работа с чекбоксами ##
-    #########################
+    ##########################################
+    ## Чекбоксы в списке рекламных плакатов ##
+    ##########################################
     $(document).on 'change', '.ads-list .controls input[type = "checkbox"]', ->
       $this = $(this)
       lvlEnabled = this.checked
