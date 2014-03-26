@@ -33,6 +33,8 @@ object SioConstants {
   def FIELD_ID            = IdFieldMapper.NAME
   def FIELD_TTL           = TTLFieldMapper.NAME
 
+  val CURRENCY_CODE_DFLT  = "RUB"
+
   // Названия анализаторов. А зачем они тут, если относятся только к SioEsUtil?
   /** Минимальный анализатор, без излишеств. */
   val MINIMAL_AN    = "aMinimal"

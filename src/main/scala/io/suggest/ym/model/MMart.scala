@@ -29,6 +29,7 @@ object MMart extends EsModelStaticT[MMart] {
 
   val ES_TYPE_NAME = "mart"
 
+  val COLOR_ESFN = "color"
 
   def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
@@ -44,7 +45,8 @@ object MMart extends EsModelStaticT[MMart] {
     FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
     FieldString(PHONE_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
     FieldString(PERSON_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
-    FieldString(LOGO_IMG_ID, include_in_all = false, index = FieldIndexingVariants.no)
+    FieldString(LOGO_IMG_ID, include_in_all = false, index = FieldIndexingVariants.no),
+    FieldString(COLOR_ESFN, include_in_all = false, index = FieldIndexingVariants.no)
   )
 
 
@@ -58,6 +60,7 @@ object MMart extends EsModelStaticT[MMart] {
     case (PHONE_ESFN, value)          => acc.phone = Option(stringParser(value))
     case (PERSON_ID_ESFN, value)      => acc.personIds = JacksonWrapper.convert[List[String]](value)
     case (LOGO_IMG_ID, value)         => acc.logoImgId = Option(stringParser(value))
+    case (COLOR_ESFN, value)          => acc.color = Option(stringParser(value))
   }
 
   protected def dummy(id: String) = MMart(
@@ -66,6 +69,7 @@ object MMart extends EsModelStaticT[MMart] {
     name = null,
     address = null,
     town = null,
+    color = None,
     siteUrl = None,
     personIds = Nil,
     phone = None
@@ -141,6 +145,7 @@ case class MMart(
   var siteUrl       : Option[String],
   var phone         : Option[String],
   var personIds     : List[String],
+  var color         : Option[String] = None,
   var logoImgId     : Option[String] = None,
   id                : Option[MMart.MartId_t] = None,
   var dateCreated   : DateTime = null
@@ -149,7 +154,6 @@ case class MMart(
   def companion = MMart
 
   def mainPersonId = personIds.lastOption
-
 
   /** Перед сохранением можно проверять состояние экземпляра. */
   override def isFieldsValid: Boolean = {
@@ -172,6 +176,8 @@ case class MMart(
       acc.field(LOGO_IMG_ID, logoImgId.get)
     if (!personIds.isEmpty)
       acc.array(PERSON_ID_ESFN, personIds : _*)
+    if (color.isDefined)
+      acc.field(COLOR_ESFN, color.get)
     acc.field(DATE_CREATED_ESFN, dateCreated)
   }
 

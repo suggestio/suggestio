@@ -27,3 +27,23 @@ case class AdSavedEvent(mmartAd: MMartAd) extends SioEventT {
     shopId = mmartAd.shopId
   )
 }
+
+
+
+/** Событие удаления рекламной карточки из БД. */
+object AdDeletedEvent {
+
+  val headSneToken: Option[String] = Some(getClass.getSimpleName)
+
+  def getClassifier(martId: Option[MartId_t] = None, shopId: Option[ShopId_t] = None): Classifier = {
+    List(headSneToken, martId, shopId)
+  }
+}
+
+/** Экземпляр события удаления рекламной карточки из БД. */
+case class AdDeletedEvent(mmartAd: MMartAd) extends SioEventT {
+  def getClassifier: Classifier = AdSavedEvent.getClassifier(
+    martId = Option(mmartAd.martId),
+    shopId = mmartAd.shopId
+  )
+}

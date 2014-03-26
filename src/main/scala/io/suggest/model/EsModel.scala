@@ -18,7 +18,6 @@ import org.elasticsearch.action.index.IndexRequestBuilder
 import scala.annotation.tailrec
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.action.delete.DeleteRequestBuilder
-import org.elasticsearch.common.unit.Fuzziness
 
 /**
  * Suggest.io
@@ -35,13 +34,19 @@ object EsModel extends MacroLogsImpl {
     Seq(MMart, MShop, MShopPriceList, MShopPromoOffer, MYmCategory, MMartAd)
   }
 
+
   implicit def listCmpOrdering[T <: Comparable[T]] = new ListCmpOrdering[T]
 
   /** Отправить маппинги всех моделей в ES. */
-  def putAllMappings(models: Seq[EsModelMinimalStaticT[_]] = ES_MODELS)(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
+  def putAllMappings(models: Seq[EsModelMinimalStaticT[_]] = ES_MODELS, ignoreExists: Boolean = false)(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
     Future.traverse(models) { esModelStatic =>
       val logPrefix = esModelStatic.getClass.getSimpleName + ".putMapping(): "
-      esModelStatic.isMappingExists flatMap {
+      val imeFut = if (ignoreExists) {
+        Future successful false
+      } else {
+        esModelStatic.isMappingExists
+      }
+      imeFut flatMap {
         case false =>
           info(logPrefix + "Trying to push mapping for model...")
           val fut = esModelStatic.putMapping
@@ -98,6 +103,7 @@ object EsModel extends MacroLogsImpl {
   val LOGO_IMG_ID       = "logoImgId"
   /** Настройки. Это под-объект, чьё содержимое никогда не анализируется никем. */
   val SETTINGS_ESFN     = "settings"
+  val META_ESFN         = "meta"
 
 
   def companyIdParser = stringParser
@@ -323,6 +329,33 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
     }
   }
 
+  /** Для ряда задач бывает необходимо задействовать multiGet вместо обычного поиска, который не успевает за refresh.
+    * Этот метод позволяет сконвертить поисковые результаты в результаты multiget.
+    * @return Результат - что-то неопределённом порядке. */
+  protected def searchResp2RtMultiget(searchResp: SearchResponse)(implicit ex: ExecutionContext, client: Client): Future[List[T]] = {
+    val searchHits = searchResp.getHits.getHits
+    if (searchHits.length == 0) {
+      Future successful Nil
+    } else {
+      val mgetReq = client.prepareMultiGet()
+        .setRealtime(true)
+      searchHits.foreach { hit =>
+        mgetReq.add(hit.getIndex, hit.getType, hit.getId)
+      }
+      mgetReq
+        .execute()
+        .map { mgetResp =>
+          mgetResp.getResponses.foldLeft[List[T]] (Nil) { (acc, mgetItem) =>
+            // Поиск может содержать элементы, которые были только что удалены. Нужно их отсеивать.
+            if (mgetItem.isFailed || !mgetItem.getResponse.isExists)
+              acc
+            else
+              deserializeOne(mgetItem.getId, mgetItem.getResponse.getSourceAsMap) :: acc
+          }
+        }
+    }
+  }
+
 
   /**
    * Выдать все магазины. Метод подходит только для административных задач.
@@ -386,6 +419,7 @@ trait EsModelStaticT[T <: EsModelT[T]] extends EsModelMinimalStaticT[T] {
   def deserializeOne(id: String, m: collection.Map[String, AnyRef]): T = {
     val acc = dummy(id)
     m foreach applyKeyValue(acc)
+    acc.postDeserialize()
     acc
   }
 
@@ -399,6 +433,9 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
 
   @JsonIgnore protected def esTypeName = companion.ES_TYPE_NAME
   @JsonIgnore protected def esIndexName = ES_INDEX_NAME
+
+  /** Можно делать какие-то действия после десериализации. Например, можно исправлять значения после эволюции схемы. */
+  @JsonIgnore def postDeserialize() {}
 
   @JsonIgnore def toJson: XContentBuilder
 

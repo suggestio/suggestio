@@ -28,12 +28,13 @@ libraryDependencies ++= {
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
     "com.typesafe" %% "scalalogging-slf4j" % "1.1.+",
     "org.gnu.inet" % "libidn" % "1.1+",
-    "com.github.nscala-time" %% "nscala-time" % "0.2.0",
+    "com.github.nscala-time" %% "nscala-time" % "0.+",
     "commons-lang" % "commons-lang" % "2.+",
     "org.im4java" % "im4java" % "1.+",
     // JSON
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVsn,
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % jacksonVsn,
+    "org.json4s" %% "json4s-native" % "3.+",
     // ES
     "org.elasticsearch" % "elasticsearch" % "1.0.1",
     // Parsers

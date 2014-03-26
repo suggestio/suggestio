@@ -66,6 +66,9 @@ trait SioImageUtilT {
   }
 
 
+  def identify(file: File) = new Info(file.getAbsolutePath, true)
+
+
   /** Блокирующе запилить картинку. */
   def checkPrepareThumb(fetchedFile: File, toFile:File) {
     // Отресайзить картинку во временный файл

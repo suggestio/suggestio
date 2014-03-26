@@ -9,11 +9,16 @@ import MShop.ShopId_t, MMart.MartId_t
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
-import io.suggest.event.{AdSavedEvent, SioNotifierStaticClientI}
+import io.suggest.event.{AdDeletedEvent, AdSavedEvent, SioNotifierStaticClientI}
 import scala.collection.JavaConversions._
 import scala.util.{Failure, Success}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.action.update.UpdateResponse
+import org.elasticsearch.search.sort.SortOrder
+import org.joda.time.DateTime
+import com.github.nscala_time.time.OrderingImplicits._
+import java.util.Currency
+import io.suggest.util.SioConstants.CURRENCY_CODE_DFLT
 
 /**
  * Suggest.io
@@ -29,13 +34,14 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
 
   val ES_TYPE_NAME      = "martAd"
 
-  val PICTURE_ESFN      = "picture"
+  val IMG_ESFN          = "img"
   val OFFERS_ESFN       = "offers"
   val OFFER_BODY_ESFN   = "offerBody"
   val VENDOR_ESFN       = "vendor"
   val MODEL_ESFN        = "model"
   val PRICE_ESFN        = "price"
   val OLD_PRICE_ESFN    = "oldPrice"
+  val CURRENCY_CODE_ESFN = "currencyCode"
   val PANEL_ESFN        = "panel"
   // Категория по дефолту задана через id. Но при индексации заполняется ещё str, который include in all и помогает в поиске.
   val USER_CAT_ID_ESFN  = "userCat.id"
@@ -68,7 +74,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
     MMartAd(
       id = Option(id),
       offers = Nil,
-      picture = null,
+      img = null,
       martId = null,
       companyId = null,
       shopId = None,
@@ -87,29 +93,51 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(shopIdQuery(shopId))
+      .addSort(DATE_CREATED_ESFN, SortOrder.DESC)
       .execute()
       .map { searchResp2list }
   }
 
+
   /**
-   * Поиск карточек в рамках ТЦ для отображения в ТЦ.
+   * Найти все рекламные карточки магазина с поправкой на реалтаймовое обновление индекса.
+   * @param shopId id магазина
+   * @return Список результатов.
+   */
+  def findForShopRt(shopId: ShopId_t)(implicit ec: ExecutionContext, client: Client): Future[List[MMartAd]] = {
+    findRt(shopIdQuery(shopId))
+  }
+
+  // TODO Почему-то сортировка работает задом наперёд, и reverse не требует.
+  private def sortResults(mads: List[MMartAd]) = mads.sortBy(_.dateCreated)
+
+  /**
+   * Реалтаймовый поиск карточек в рамках ТЦ для отображения в ЛК ТЦ.
    * @param martId id ТЦ
    * @param shopMustMiss true, если нужно найти карточки, не относящиеся к магазинам. Т.е. собственные
    *                     карточки ТЦ.
    *                     false - в выдачу также попадут карточки магазинов.
    * @return Список карточек, относящихся к ТЦ.
    */
-  def findForMart(martId: MartId_t, shopMustMiss: Boolean)(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartAd]] = {
+  def findForMartRt(martId: MartId_t, shopMustMiss: Boolean)(implicit ec: ExecutionContext, client: Client): Future[List[MMartAd]] = {
     var query: QueryBuilder = QueryBuilders.termQuery(MART_ID_ESFN, martId)
     if (shopMustMiss) {
       val shopMissingFilter = FilterBuilders.missingFilter(SHOP_ID_ESFN)
       query = QueryBuilders.filteredQuery(query, shopMissingFilter)
     }
+    findRt(query)
+  }
+
+
+  /** common-функция для запросов в реальном времени. */
+  private def findRt(query: QueryBuilder)(implicit ec: ExecutionContext, client: Client): Future[List[MMartAd]] = {
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(query)
+      .setNoFields()
       .execute()
-      .map { searchResp2list }
+      .flatMap { searchResp2RtMultiget }
+      .map { sortResults }
   }
 
 
@@ -117,7 +145,6 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
     case (MART_ID_ESFN, value)      => acc.martId = martIdParser(value)
     case (SHOP_ID_ESFN, value)      => acc.shopId = Option(shopIdParser(value))
     case (COMPANY_ID_ESFN, value)   => acc.companyId = companyIdParser(value)
-    case (PICTURE_ESFN, value)      => acc.picture = stringParser(value)
     case (PRIO_ESFN, value)         => acc.prio = Option(intParser(value))
     case (USER_CAT_ID_ESFN, value)  => acc.userCatId = Option(stringParser(value))
     case (OFFERS_ESFN, value: java.util.ArrayList[_]) =>
@@ -151,6 +178,9 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
     case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = JacksonWrapper.convert[MMartAdTextAlign](value)
     case (SHOW_LEVELS_ESFN, sls: java.lang.Iterable[_]) =>
       acc.showLevels = AdShowLevels.deserializeLevelsFrom(sls)
+    case (DATE_CREATED_ESFN, value) => acc.dateCreated = dateCreatedParser(value)
+    case ("picture", value)         => acc.img = MImgInfo(stringParser(value))  // TODO Удалить после сброса индексов после 26.mar.2014
+    case (IMG_ESFN, value)          => acc.img = JacksonWrapper.convert[MImgInfo](value)
   }
 
   def generateMappingStaticFields = List(
@@ -178,6 +208,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       // TODO нужно как-то проанализировать цифры эти, округлять например.
       FieldObject(PRICE_ESFN,  properties = Seq(floatValueField(iia = true), fontField)),
       FieldObject(OLD_PRICE_ESFN,  properties = Seq(floatValueField(iia = false), fontField)),
+      FieldString(CURRENCY_CODE_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
       // discount-поля
       FieldObject(TEXT1_ESFN, properties = Seq(stringValueField(1.1F), fontField)),
       FieldObject(DISCOUNT_ESFN, properties = Seq(floatValueField(iia = true), fontField)),
@@ -199,30 +230,17 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       FieldString(COMPANY_ID_ESFN,  index = FieldIndexingVariants.no,  include_in_all = false),
       FieldString(MART_ID_ESFN, index = FieldIndexingVariants.not_analyzed,  include_in_all = false),
       FieldString(SHOP_ID_ESFN, index = FieldIndexingVariants.not_analyzed,  include_in_all = false),
-      FieldString(PICTURE_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
+      FieldObject(IMG_ESFN, enabled = false, properties = Nil),
       FieldObject(TEXT_ALIGN_ESFN,  enabled = false,  properties = Nil),
       FieldString(USER_CAT_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
       FieldObject(PANEL_ESFN,  enabled = false,  properties = Nil),
       FieldNumber(PRIO_ESFN,  fieldType = DocFieldTypes.integer,  index = FieldIndexingVariants.not_analyzed,  include_in_all = false),
       offersField,
-      FieldString(SHOW_LEVELS_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed)
+      FieldString(SHOW_LEVELS_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
+      FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no)
     )
   }
 
-  /**
-   * Прочитать pictureId для указанного элемента.
-   * @param adId id рекламного документа.
-   * @return id картинки, если такая реклама вообще существует.
-   */
-  def getPictureIdFor(adId: String)(implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
-    client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, adId)
-      .setFields(PICTURE_ESFN)
-      .execute()
-      .map { getResp =>
-        Option(getResp.getField(PICTURE_ESFN))
-          .map(_.getValue.asInstanceOf[String])
-      }
-  }
 
   /**
    * Удалить документ по id.
@@ -231,18 +249,21 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
    */
   override def deleteById(id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
     // удалить связанную картинку из хранилища
-    val getPictFut = getPictureIdFor(id)
-    getPictFut onSuccess {
-      case Some(pictureId) =>
-        MPict.deleteFully(pictureId) onComplete {
-          case Success(_)  => trace("Successfuly erased picture: " + pictureId)
-          case Failure(ex) => error("Failed to delete associated picture: " + pictureId, ex)
+    val adOptFut = getById(id)
+    adOptFut flatMap {
+      case Some(ad) =>
+        val imgId = ad.img.id
+        MPict.deleteFully(imgId) onComplete {
+          case Success(_)  => trace("Successfuly erased picture: " + imgId)
+          case Failure(ex) => error("Failed to delete associated picture: " + imgId, ex)
         }
+        val resultFut = super.deleteById(id)
+        resultFut onSuccess { case _ =>
+          sn publish AdDeletedEvent(ad)
+        }
+        resultFut
 
-      case None => debug("PictureId unexpectedly not found for adId = " + id)
-    }
-    getPictFut flatMap { _ =>
-      super.deleteById(id)
+      case None => Future successful false
     }
   }
 
@@ -313,7 +334,7 @@ import MMartAd._
  * Экземпляр модели.
  * @param offers Список рекламных офферов (как правило из одного элемента). Используется прямое кодирование в json
  *               без промежуточных YmOfferDatum'ов. Поля оффера также хранят в себе данные о своём дизайне.
- * @param picture id картинки.
+ * @param img Данные по используемой картинке.
  * @param prio Приоритет. На первом этапе null или минимальное значение для обозначения главного и вторичных плакатов.
  * @param userCatId Индексируемые данные по категории рекламируемого товара.
  * @param companyId id компании-владельца в рамках модели MCompany.
@@ -323,7 +344,7 @@ import MMartAd._
 case class MMartAd(
   var martId      : MartId_t,
   var offers      : List[MMartAdOfferT],
-  var picture     : String,
+  var img         : MImgInfo,
   var textAlign   : MMartAdTextAlign,
   var shopId      : Option[ShopId_t] = None,
   var companyId   : MCompany.CompanyId_t,
@@ -331,7 +352,8 @@ case class MMartAd(
   var prio        : Option[Int] = None,
   var showLevels  : Set[AdShowLevel] = Set.empty,
   var userCatId   : Option[String] = None,
-  var id          : Option[String] = None
+  var id          : Option[String] = None,
+  var dateCreated : DateTime = DateTime.now
 ) extends MMartAdT[MMartAd] {
 
   def companion = MMartAd
@@ -339,7 +361,16 @@ case class MMartAd(
   /** Перед сохранением можно проверять состояние экземпляра. */
   override def isFieldsValid: Boolean = {
     super.isFieldsValid &&
-      picture != null && !offers.isEmpty && shopId != null && companyId != null && martId != null
+      img != null && !offers.isEmpty && shopId != null && companyId != null && martId != null
+  }
+
+
+  /** Можно делать какие-то действия после десериализации. Например, можно исправлять значения после эволюции схемы. */
+  override def postDeserialize(): Unit = {
+    super.postDeserialize()
+    if (img == null) {
+      img = MImgInfo("BROKEN_DATA")
+    }
   }
 
   /**
@@ -366,7 +397,6 @@ case class MMartAd(
 trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
   def martId      : MartId_t
   def offers      : List[MMartAdOfferT]
-  def picture     : String
   def textAlign   : MMartAdTextAlign
   def shopId      : Option[ShopId_t]
   def companyId   : MCompany.CompanyId_t
@@ -374,12 +404,13 @@ trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
   def prio        : Option[Int]
   def showLevels  : Set[AdShowLevel]
   def userCatId   : Option[String]
+  def dateCreated : DateTime
+  def img         : MImgInfo
 
   def isShopAd = shopId.isDefined
 
   def writeJsonFields(acc: XContentBuilder) {
     acc.field(MART_ID_ESFN, martId)
-      .field(PICTURE_ESFN, picture)
       .field(COMPANY_ID_ESFN, companyId)
     if (userCatId.isDefined)
       acc.field(USER_CAT_ID_ESFN, userCatId.get)
@@ -402,6 +433,8 @@ trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
       }
       acc.endArray()
     }
+    acc.rawField(IMG_ESFN, JacksonWrapper.serialize(img).getBytes)
+    acc.field(DATE_CREATED_ESFN, dateCreated)
     // TextAlign. Reflections из-за проблем с XCB.
     acc.rawField(TEXT_ALIGN_ESFN, JacksonWrapper.serialize(textAlign).getBytes)
   }
@@ -421,10 +454,11 @@ trait MMartAdWrapperT[T <: MMartAdT[T]] extends MMartAdT[T] {
   def companyId = mmartAd.companyId
   def shopId = mmartAd.shopId
   def textAlign = mmartAd.textAlign
-  def picture = mmartAd.picture
   def offers = mmartAd.offers
   def martId = mmartAd.martId
   def id = mmartAd.id
+  def dateCreated = mmartAd.dateCreated
+  def img = mmartAd.img
 
   def companion: EsModelMinimalStaticT[T] = mmartAd.companion
   override def isFieldsValid: Boolean = super.isFieldsValid && mmartAd.isFieldsValid
@@ -441,6 +475,13 @@ sealed trait MMartAdOfferT extends Serializable {
     acc.endObject()
   }
 }
+
+
+// MImgInfo* надо бы вынести за пределы этой модели на уровне сорцов.
+/** Объект содержит данные по картинке. Данные не индексируются, и их схему можно менять на лету. */
+case class MImgInfo(id: String, meta: Option[MImgInfoMeta] = None)
+case class MImgInfoMeta(height: Int, width: Int)
+
 
 /** Известные системе типы офферов. */
 object MMartAdOfferTypes extends Enumeration {
@@ -467,9 +508,16 @@ object MMartAdProduct {
 case class MMartAdProduct(
   vendor:   MMAdStringField,
   price:    MMAdFloatField,
-  oldPrice: Option[MMAdFloatField]
+  oldPrice: Option[MMAdFloatField],
+  var currencyCode: String = CURRENCY_CODE_DFLT
 ) extends MMartAdOfferT {
+  // TODO convert не подхватывает дефолтовые значения если валюта в json отсутствует, и получается null в currencyCode.
+  //      Из-за этого var + костыль в конструкторе
+  if (currencyCode == null)
+    currencyCode = CURRENCY_CODE_DFLT
+
   @JsonIgnore def offerType = MMartAdOfferTypes.PRODUCT
+  @JsonIgnore lazy val currency = Currency.getInstance(currencyCode)
 }
 
 object MMartAdDiscount {
