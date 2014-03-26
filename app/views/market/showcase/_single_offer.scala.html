@@ -49,8 +49,7 @@
         }
 
         case adText: MMartAdText => {
-          text: @Html(adText.text.value)
-          color: @adText.text.font.color
+          <div class="color: #@adText.text.font.color">@Html(adText.text.value)</div>
         }
       }
 
