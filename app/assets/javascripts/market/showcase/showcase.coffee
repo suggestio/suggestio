@@ -5,6 +5,7 @@ siomart =
     index_action : window.siomart_index
     sm_layout_class : 'sio-mart-layout'
     sm_trigger_class : 'sio-mart-trigger'
+    mart_id : '1zCeGm9jQbCHhU_PXITk7A'
 
   utils :
 
@@ -144,7 +145,7 @@ siomart =
     request_delay : 1000
 
     perform : ( request ) ->
-      url = '/market/ads/1zCeGm9jQbCHhU_PXITk7A'
+      url = '/market/ads/' + siomart.config.mart_id
       siomart.perform_request url
 
     queue_request : ( event ) ->
@@ -308,6 +309,17 @@ siomart =
   offers :
     is_locked : false
     auto_change_delay : 5000
+
+    ## Загрузить все офферы для магазина
+    load_for_shop_id : ( shop_id ) ->
+      url = '/market/ads/' + siomart.config.mart_id + '?a.shopId=' + shop_id
+      siomart.perform_request url
+
+    ## Загрузить все офферы для магазина
+    load_for_cat_id : ( cat_id ) ->
+      url = '/market/ads/' + siomart.config.mart_id + '?a.catId=' + cat_id
+      siomart.perform_request url
+      siomart.utils.ge('smCategoriesScreen').style.display = 'none'
 
     ## Инициализация слайдов и кнопок-контроллов
     initialize : () ->

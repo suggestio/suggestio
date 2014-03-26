@@ -2,7 +2,7 @@
 
 @import util.TplDataFormatUtil._
 
-<div class="sm-offer @if(isHidden){ sm-hidden-offer }">
+<div class="sm-offer @if(isHidden){ sm-hidden-offer }" data-is-mart-offer="@mshopOpt.nonEmpty">
 
   @ad.panel.map { panelSettings =>
   <div class="offer-header" style="background-color: #@panelSettings.color">
@@ -14,6 +14,7 @@
 
   <div class="offer-details">
     <div class="od-inner discount">
+
       @ad.offers.map {
         case adProd: MMartAdProduct => {
 
@@ -54,8 +55,9 @@
         }
       }
 
-
-      <a class="sm-button" href="">ПРЕДЛОЖЕНИЯ МАГАЗИНА</a>
+      @mshopOpt.map { mshop =>
+        <a class="sm-button" onclick="siomart.offers.load_for_shop_id('@mshop.id');">ПРЕДЛОЖЕНИЯ МАГАЗИНА</a>
+      }
 
     </div>
   </div>

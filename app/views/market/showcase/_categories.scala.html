@@ -19,7 +19,7 @@
 
       <div class="sm-categories-list">
         @mmcats.map { mmcat =>
-          <a class="sm-single-categorie sm-@mmcat.cssClass">
+          <a class="sm-single-categorie sm-@mmcat.cssClass" onclick="siomart.offers.load_for_cat_id('@mmcat.id');">
             <div class="icon"></div>
             <div class="name">@mmcat.name</div>
           </a>
