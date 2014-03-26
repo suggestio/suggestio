@@ -3,6 +3,7 @@ package models
 import io.suggest.model.{EsModel, EsModelMinimalStaticT}
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
+import play.api.Play.current
 
 /**
  * Suggest.io
@@ -22,7 +23,8 @@ object SiowebEsModel {
   }
 
   def putAllMappings(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
-    EsModel.putAllMappings(ES_MODELS)
+    val ignoreExist = current.configuration.getBoolean("es.mapping.model.ignore_exist") getOrElse false
+    EsModel.putAllMappings(ES_MODELS, ignoreExist)
   }
 
 }
