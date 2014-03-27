@@ -25,9 +25,11 @@
           }
           <div class="new-price">@formatPrice(adProd.price.value, adProd.currency)</div>
 
+          @* Локейшн магазина *@
           @* Если магазин не указан, то значит это рекламная карточка ТЦ. *@
           @mshopOpt.map { mshop =>
             <div class="offer-location">
+              <div class="ol-icon"></div>
               @mshop.martFloor.map { martFloor =>
                 Этаж @martFloor<br/>
               }
@@ -45,7 +47,7 @@
           }
 
           <div class="discount template-@adDisco.template.id-@adDisco.template.color " style="color: #@adDisco.discount.font.color">
-            @formatPercent(adDisco.discount.value/100)<span></span>
+            @formatPercentRaw(adDisco.discount.value)<span>%</span>
           </div>
 
           @adDisco.text2.map { text2 =>
