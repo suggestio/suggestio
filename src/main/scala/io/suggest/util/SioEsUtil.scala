@@ -990,19 +990,41 @@ trait FieldWithProperties extends Field {
     super.fieldsBuilder
     if (!properties.isEmpty) {
       b.startObject("properties")
-        properties map { _.builder }
+        properties foreach { _.builder }
       b.endObject()
     }
   }
 }
 
+/** Dynamic templates - механизм задания автоматики при автоматическом добавлении новых полей в маппинг.
+  * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-root-object-type.html#_dynamic_templates]]
+  */
+case class DynTemplate(id: String, nameMatch: String, matchMappingType: String = "{dynamic_type}", mapping: String)
+extends JsonObject {
+  val mapping1 = mapping.trim
+  if (!mapping1.startsWith("{") || mapping1.endsWith("}"))
+    throw new IllegalArgumentException("'mapping' field should contain json OBJECT")
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    b.field("match", nameMatch)
+     .field("match_mapping_type", matchMappingType)
+     .rawField("mapping", mapping1.getBytes)
+  }
+}
+
 /** Генератор маппинга индекса со всеми полями и блекджеком. */
-case class IndexMapping(typ:String, staticFields:Seq[Field], properties:Seq[DocField]) extends FieldWithProperties {
+case class IndexMapping(typ:String, staticFields:Seq[Field], properties:Seq[DocField], dynTemplates: Seq[DynTemplate] = Nil) extends FieldWithProperties {
   def id = typ
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     staticFields map { _.builder }
     super.fieldsBuilder(b)
+    if (!dynTemplates.isEmpty) {
+      b.startArray("dynamic_templates")
+      dynTemplates.foreach { _.builder }
+      b.endArray()
+    }
   }
 }
 

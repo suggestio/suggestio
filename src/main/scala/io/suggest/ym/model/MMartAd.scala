@@ -12,7 +12,7 @@ import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilder
 import io.suggest.event.{AdDeletedEvent, AdSavedEvent, SioNotifierStaticClientI}
 import scala.collection.JavaConversions._
 import scala.util.{Failure, Success}
-import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.{JsonIgnoreProperties, JsonIgnore}
 import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.search.sort.SortOrder
 import org.joda.time.DateTime
@@ -180,7 +180,8 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       acc.showLevels = AdShowLevels.deserializeLevelsFrom(sls)
     case (DATE_CREATED_ESFN, value) => acc.dateCreated = dateCreatedParser(value)
     case ("picture", value)         => acc.img = MImgInfo(stringParser(value))  // TODO Удалить после сброса индексов после 26.mar.2014
-    case (IMG_ESFN, value)          => acc.img = JacksonWrapper.convert[MImgInfo](value)
+    case (IMG_ESFN, value)          =>
+      acc.img = JacksonWrapper.convert[MImgInfo](value)
   }
 
   def generateMappingStaticFields = List(
@@ -359,7 +360,7 @@ case class MMartAd(
   def companion = MMartAd
 
   /** Перед сохранением можно проверять состояние экземпляра. */
-  override def isFieldsValid: Boolean = {
+  @JsonIgnore override def isFieldsValid: Boolean = {
     super.isFieldsValid &&
       img != null && !offers.isEmpty && shopId != null && companyId != null && martId != null
   }
@@ -407,7 +408,7 @@ trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
   def dateCreated : DateTime
   def img         : MImgInfo
 
-  def isShopAd = shopId.isDefined
+  @JsonIgnore def isShopAd = shopId.isDefined
 
   def writeJsonFields(acc: XContentBuilder) {
     acc.field(MART_ID_ESFN, martId)
@@ -460,8 +461,8 @@ trait MMartAdWrapperT[T <: MMartAdT[T]] extends MMartAdT[T] {
   def dateCreated = mmartAd.dateCreated
   def img = mmartAd.img
 
-  def companion: EsModelMinimalStaticT[T] = mmartAd.companion
-  override def isFieldsValid: Boolean = super.isFieldsValid && mmartAd.isFieldsValid
+  @JsonIgnore def companion: EsModelMinimalStaticT[T] = mmartAd.companion
+  @JsonIgnore override def isFieldsValid: Boolean = super.isFieldsValid && mmartAd.isFieldsValid
 }
 
 
@@ -479,7 +480,10 @@ sealed trait MMartAdOfferT extends Serializable {
 
 // MImgInfo* надо бы вынести за пределы этой модели на уровне сорцов.
 /** Объект содержит данные по картинке. Данные не индексируются, и их схему можно менять на лету. */
-case class MImgInfo(id: String, meta: Option[MImgInfoMeta] = None)
+@JsonIgnoreProperties(ignoreUnknown = true)
+case class MImgInfo(id: String, meta: Option[MImgInfoMeta] = None) {
+  override def hashCode(): Int = id.hashCode()
+}
 case class MImgInfoMeta(height: Int, width: Int)
 
 

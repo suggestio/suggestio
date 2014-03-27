@@ -259,6 +259,8 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
   def generateMappingStaticFields: List[Field]
   def generateMappingProps: List[DocField]
 
+  /** Флаг, который можно перезаписать в реализации static-модели чтобы проигнорить конфликты при апдейте маппинга. */
+  protected def mappingIgnoreConflicts: Boolean = false
 
   /** Отправить маппинг в elasticsearch. */
   def putMapping(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
@@ -266,6 +268,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
       .preparePutMapping(ES_INDEX_NAME)
       .setType(ES_TYPE_NAME)
       .setSource(generateMapping)
+      .setIgnoreConflicts(mappingIgnoreConflicts)
       .execute()
       .map { _.isAcknowledged }
   }

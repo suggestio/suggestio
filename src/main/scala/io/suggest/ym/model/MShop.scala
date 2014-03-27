@@ -34,6 +34,9 @@ object MShop extends EsModelStaticT[MShop] {
 
   type ShopId_t = MainProto.ShopId_t
 
+  /** При апдейте маппига надо игнорить конфликты из-за settings */  // TODO Снести после первого публичного запуска.
+  override protected def mappingIgnoreConflicts: Boolean = true
+
   val ES_TYPE_NAME = "shop"
 
   // Ключи настроек, никогда не индексируются и не анализируются.
@@ -57,7 +60,10 @@ object MShop extends EsModelStaticT[MShop] {
     FieldNumber(MART_FLOOR_ESFN, fieldType = DocFieldTypes.integer, include_in_all = true, index = FieldIndexingVariants.no),
     FieldNumber(MART_SECTION_ESFN, fieldType = DocFieldTypes.integer, include_in_all = true, index = FieldIndexingVariants.no),
     FieldString(LOGO_IMG_ID, include_in_all = false, index = FieldIndexingVariants.no),
-    FieldObject(SETTINGS_ESFN, enabled = false, properties = Nil)
+    // settings: нужно их заполнять по мере появления настроек в MShopSettings.
+    FieldBoolean(SETTING_SUP_IS_ENABLED, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
+    FieldString(SETTING_SUP_DISABLE_REASON, include_in_all = false, index = FieldIndexingVariants.no),
+    FieldString(SETTING_SUP_WITH_LEVELS, include_in_all = false, index = FieldIndexingVariants.not_analyzed)
   )
 
 
@@ -283,23 +289,6 @@ object MShop extends EsModelStaticT[MShop] {
     // TODO надо что-то делать, чтобы это повлияло на выдачу как можно скорее.
   }
 
-  // private - пока не тестирован, и пока не используется.
-  private def setShowLevel(shopId: ShopId_t, level: AdShowLevel, isSet: Boolean)(implicit ec: ExecutionContext, client: Client): Future[_] = {
-    // Максимально ленивый скрипт для апдейта списка уровней. Старается по возможности не изменять уже сохранённый документ.
-    // Проверка на null по мотивам http://elasticsearch-users.115913.n3.nabble.com/partial-update-and-nested-type-td3959065.html
-    val script = if (isSet) {
-      """sls = ctx._source[fn]; if (sls == null) { ctx._source[fn] = sl } else { !sls.values.contains(sl) ? (ctx._source[fn] += sl) : (ctx.op = "none") }"""
-    } else {
-      """sls = ctx._source[fn]; if (sls == null) { ctx.op = "none" } else { sls.values.contains(sl) ? (ctx._source[fn] -= sl) : (ctx.op = "none") }"""
-    }
-    client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, shopId)
-      .setScript(script)
-      .addScriptParam("fn", SETTING_SUP_WITH_LEVELS)
-      .addScriptParam("sl", level.toString)
-      .execute()
-    // TODO надо что-то делать, чтобы это повлияло на выдачу как можно скорее.
-  }
-
 }
 
 
@@ -409,6 +398,7 @@ case class MShopSettings(
   var supIsEnabled: Boolean = true,
   var supDisableReason: Option[String] = None,
   var supWithLevels: Set[AdShowLevel] = Set.empty
+  // !!! Перед добавлением новых полей, надо сначало добавить их в маппинг, а только потом внедрять поле !!!
 ) {
   /** writer json'а в аккумулятор. Сеттинги записываются прямо в текущем объекте по ключам "setting.*". */
   def writeXContent(acc: XContentBuilder) {
