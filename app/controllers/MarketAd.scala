@@ -359,7 +359,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           },
           {case (imgKey, logoImgIdOpt, mmad) =>
             // Асинхронно обрабатываем логотип.
-            updateLogo(logoImgIdOpt, mshop) onComplete entityLogoUpdatePf("shop", shopId)
+            val updateLogoFut = updateLogo(logoImgIdOpt, mshop)
+            updateLogoFut onComplete entityLogoUpdatePf("shop", shopId)
+            // Обработать MMartAd
             ImgFormUtil.updateOrigImg(Some(ImgInfo4Save(imgKey)), oldImgs = None) flatMap { imgIdsSaved =>
               if (!imgIdsSaved.isEmpty) {
                 // TODO Нужно проверить категорию.
@@ -368,7 +370,10 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                 mmad.martId = request.mshop.martId.get
                 mmad.img = imgIdsSaved.head
                 // Сохранить изменения в базу
-                mmad.save.map { adId =>
+                for {
+                  adId <- mmad.save
+                  _ <- updateLogoFut
+                } yield {
                   Redirect(routes.MarketShopLk.showShop(shopId, newAdId = Some(adId)))
                     .flashing("success" -> "Рекламная карточка создана.")
                 }
@@ -454,6 +459,14 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
   }
 
+  /** Импортировать выхлоп маппинга формы в старый экземпляр рекламы. Этот код вызывается во всех editAd-экшенах. */
+  private def importFormAdData(oldMad: MMartAd, newMad: MMartAd) {
+    oldMad.offers = newMad.offers
+    oldMad.panel = newMad.panel
+    oldMad.prio = newMad.prio
+    oldMad.textAlign = newMad.textAlign
+    oldMad.userCatId = newMad.userCatId
+  }
 
   /** Сабмит формы рендера страницы редактирования рекламной карточки.
     * @param adId id рекламной карточки.
@@ -472,10 +485,11 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             // Надо обработать логотип, который приходит в составе формы. Это можно делать независимо от самой MMartAd.
             // Если выставлен tmp-логотип, то надо запустить обновление mshop.
             val shopId = mad.shopId.get
-            request.mshopOptFut flatMap {
+            val updateLogoFut = request.mshopOptFut flatMap {
               case Some(mshop)  => updateLogo(logoImgIdOpt, mshop)
               case None         => Future failed new NoSuchElementException(s"Shop not found: " + shopId)
-            } onComplete entityLogoUpdatePf("shop", shopId)
+            }
+            updateLogoFut onComplete entityLogoUpdatePf("shop", shopId)
             // TODO Проверить категорию.
             // TODO И наверное надо проверить shopId-существование в исходной рекламе.
             ImgFormUtil.updateOrigImg(
@@ -485,12 +499,11 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
               // В списке сохраненных id картинок либо 1 либо 0 картинок.
               if (!savedImgs.isEmpty) {
                 mad.img = savedImgs.head
-                mad.offers = mad2.offers
-                mad.panel = mad2.panel
-                mad.prio = mad2.prio
-                mad.textAlign = mad.textAlign
-                mad.userCatId = mad.userCatId
-                mad.save.map { _ =>
+                importFormAdData(oldMad = mad, newMad = mad2)
+                for {
+                  _ <- mad.save
+                  _ <- updateLogoFut
+                } yield {
                   Redirect(routes.MarketShopLk.showShop(shopId))
                     .flashing("success" -> "Изменения сохранены")
                 }
@@ -646,7 +659,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           },
           {case (imgKey, logoImgIdOpt, mmad) =>
             // Асинхронно обрабатываем логотип.
-            updateLogo(logoImgIdOpt, mmart) onComplete entityLogoUpdatePf("mart", martId)
+            val updateLogoFut = updateLogo(logoImgIdOpt, mmart)
+            updateLogoFut onComplete entityLogoUpdatePf("mart", martId)
+            // Обрабатываем данные по рекламе
             ImgFormUtil.updateOrigImg(Some(ImgInfo4Save(imgKey)), oldImgs = None) flatMap {
               case imgIdsSaved if !imgIdsSaved.isEmpty =>
                 // TODO Нужно проверить категорию.
@@ -655,7 +670,10 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                 mmad.martId = martId
                 mmad.img = imgIdsSaved.head
                 // Сохранить изменения в базу
-                mmad.save.map { adId =>
+                for {
+                  adId <- mmad.save
+                  _ <- updateLogoFut
+                } yield {
                   Redirect(routes.MarketMartLk.martShow(martId, newAdId = Some(adId)))
                     .flashing("success" -> "Рекламная карточка создана.")
                 }
@@ -745,10 +763,12 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             // Надо обработать логотип, который приходит в составе формы. Это можно делать независимо от самой MMartAd.
             // Если выставлен tmp-логотип, то надо запустить обновление mshop.
             val martId = mad.martId
-            request.mmartOptFut flatMap {
+            val updateLogoFut = request.mmartOptFut flatMap {
               case Some(mmart)  => updateLogo(logoImgIdOpt, mmart)
               case None         => Future failed new NoSuchElementException(s"Mart not found: " + martId)
-            } onComplete entityLogoUpdatePf("mart", martId)
+            }
+            updateLogoFut onComplete entityLogoUpdatePf("mart", martId)
+            // Обрабатываем ad-часть формы
             // TODO Проверить категорию.
             ImgFormUtil.updateOrigImg(
               needImgs = Some(ImgInfo4Save(iik)),
@@ -756,12 +776,12 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             ) flatMap { savedImgIds =>
               // В списке сохраненных id картинок либо 1 либо 0 картинок.
               if (!savedImgIds.isEmpty) {
-                mad2.id = mad.id
-                mad2.martId = mad.martId
-                mad2.shopId = mad.shopId
-                mad2.companyId = mad.companyId
-                mad2.img = savedImgIds.head
-                mad2.save.map { _ =>
+                mad.img = savedImgIds.head
+                importFormAdData(oldMad = mad, newMad = mad2)
+                for {
+                  _ <- mad.save
+                  _ <- updateLogoFut
+                } yield {
                   Redirect(routes.MarketMartLk.martShow(martId))
                     .flashing("success" -> "Изменения сохранены")
                 }
