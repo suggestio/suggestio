@@ -1,10 +1,10 @@
-@(mmart: MMart, imf: Form[_])(implicit ctx: util.Context)
+@(mmart: MMart, imf: Form[_], eActs: Seq[EmailActivation])(implicit ctx: util.Context)
 
 @* Форма для создания инвайта на управление ТЦ. *@
 @import helper._
 
 @hPathAfter1 = {
-  / Инвайт на управление ТЦ
+  / Инвайт на управление
 }
 
 @thisMartBase(
@@ -13,10 +13,27 @@
   hPathAfter = Some(hPathAfter1)
 ) {
 
-  <p>Для отправки приглашения на управление ТЦ <a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.name</a>
-  введите email получателя прав в нижеуказанном поле.</p>
+  <h2>Текущие владельцы ТЦ</h2>
+  <p>@if(mmart.personIds.isEmpty) {
+    У этого ТЦ нет пользователей, имеющих права доступа.
+  } else {
+    Текущие подтверждённые пользователи: @mmart.personIds.mkString("  ")
+  }</p>
 
-  <p>Текущие подтверждённые пользователи: @mmart.personIds.mkString(", ")</p>
+  <h2>Текущие отправленные инвайты</h2>
+  @if(!eActs.isEmpty) {
+    <ul>@eActs.map { eAct =>
+      <li>@eAct.email</li>
+    }</ul>
+  } else {
+    Инвайтов не найдено. Они никогда не отсылались, либо были использованы получателями, либо уже истекли.
+  }
+
+  <h2>Новый инвайт</h2>
+  <p>Для отправки приглашения на управление ТЦ
+    <a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.name</a>
+    введите email получателя прав в нижеуказанном поле.
+  </p>
 
   @* Форма инвайта прямо тут, т.к. не с кем её шарить. *@
   @form(routes.SysMarket.martInviteFormSubmit(mmart.id.get)) {

@@ -461,15 +461,16 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             ImgFormUtil.updateOrigImg(
               needImgs = Some(ImgInfo4Save(iik)),
               oldImgs  = Some(mad.img)
-            ) flatMap { savedImgIds =>
+            ) flatMap { savedImgs =>
               // В списке сохраненных id картинок либо 1 либо 0 картинок.
-              if (!savedImgIds.isEmpty) {
-                mad2.id = mad.id
-                mad2.martId = mad.martId
-                mad2.shopId = mad.shopId
-                mad2.companyId = mad.companyId
-                mad2.img = savedImgIds.head
-                mad2.save.map { _ =>
+              if (!savedImgs.isEmpty) {
+                mad.img = savedImgs.head
+                mad.offers = mad2.offers
+                mad.panel = mad2.panel
+                mad.prio = mad2.prio
+                mad.textAlign = mad.textAlign
+                mad.userCatId = mad.userCatId
+                mad.save.map { _ =>
                   Redirect(routes.MarketShopLk.showShop(shopId))
                     .flashing("success" -> "Изменения сохранены")
                 }

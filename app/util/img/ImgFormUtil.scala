@@ -328,7 +328,8 @@ sealed trait ImgIdKey {
 case class TmpImgIdKey(filename: String) extends ImgIdKey with MacroLogsImplLazy {
   import LOGGER._
 
-  @JsonIgnore val mptmpOpt = try {
+  @JsonIgnore
+  val mptmpOpt = try {
     Some(MPictureTmp(filename))
   } catch {
     case ex: Throwable =>
@@ -336,25 +337,39 @@ case class TmpImgIdKey(filename: String) extends ImgIdKey with MacroLogsImplLazy
       None
   }
 
+  @JsonIgnore
   def isTmp: Boolean = true
+
+  @JsonIgnore
   def key = filename
 
+  @JsonIgnore
   def isExists: Future[Boolean] = Future successful isValid
 
+  @JsonIgnore
   def isValid = mptmpOpt.isDefined && mptmpOpt.exists(_.isExist)
 }
 
 
 class OrigImgIdKey(@JsonIgnore val key: String, meta: Option[MImgInfoMeta] = None) extends MImgInfo(key, meta) with ImgIdKey {
 
-  @JsonIgnore def isTmp: Boolean = false
+  @JsonIgnore
+  def isTmp: Boolean = false
 
-  @JsonIgnore def isExists: Future[Boolean] = {
+  @JsonIgnore
+  def isExists: Future[Boolean] = {
     MUserImgOrig.getById(key).map(_.isDefined)
   }
 
-  @JsonIgnore def isValid: Boolean = {
-    MPict.isStrIdValid(key)
+  @JsonIgnore
+  def isValid: Boolean = MPict.isStrIdValid(key)
+
+  override def equals(obj: scala.Any): Boolean = {
+    // Сравниваем с MImgInfo без учёта поля meta.
+    obj match {
+      case mii: MImgInfo => (mii eq this) || (mii.id == this.id)
+      case _ => false
+    }
   }
 }
 object OrigImgIdKey {

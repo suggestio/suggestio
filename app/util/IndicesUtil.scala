@@ -81,8 +81,16 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
       case Failure(ex) => error(logPrefix + "Failed to set mapping for mart", ex)
       // TODO при ошибке надо сносить маппинг (или заливать с ignoreConflicts и снова сносить), а затем заливать заново по-нормальному.
     }
-    // Возможно, в ТЦ уже есть данные для индексации. Нужно пробежаться по включенным магазинам и сымитировать shopEnabled
+    // Возможно, в ТЦ уже есть данные для индексации.
     smFut flatMap { _ =>
+      // Пробежаться по карточкам ТЦ и сымитировать их добавление.
+      MMartAd.findForMartRt(martId, shopMustMiss = true) flatMap { martAds =>
+        Future.traverse(martAds) { handleAdSaved }
+      } onComplete {
+        case Success(l)  => trace(logPrefix + s"martAds: ${l.size} mart ads re-processed for index " + inxName)
+        case Failure(ex) => error(logPrefix + s"martAds: Failed to process ads", ex)
+      }
+      // Нужно пробежаться по включенным магазинам и сымитировать shopEnabled
       MShop.findByMartId(martId) flatMap { mshops =>
         if (!mshops.isEmpty) {
           trace(logPrefix + "added mart already has shops. Loading enabled shops into index " + inxName)
@@ -141,7 +149,7 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
    * Нужно посмотреть в настройки публикации картинки и магазина, и добавить/удалить из выдачи эту рекламу.
    * @param mmartAd Экземпляр рекламной карточки.
    */
-  private def handleAdSaved(mmartAd: MMartAd) {
+  private def handleAdSaved(mmartAd: MMartAd): Future[_] = {
     lazy val logPrefix = s"handleAdSave(${mmartAd.id.get}): "
     val martInx2Fut = getInxFormMartCached(mmartAd.martId).map(_.get)
     val userCatStrFut = maybeCollectUserCatStr(mmartAd.userCatId)

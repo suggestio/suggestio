@@ -276,20 +276,26 @@ object SysMarket extends SioController with MacroLogsImpl {
 
   /** Рендер страницы с формой инвайта (передачи прав на управление ТЦ). */
   def martInviteForm(martId: MartId_t) = IsSuperuser.async { implicit request =>
-    MMart.getById(martId) map {
+    val eActsFut = EmailActivation.findByKey(martId)
+    MMart.getById(martId) flatMap {
       case Some(mmart) =>
-        Ok(mart.martInviteFormTpl(mmart, martInviteFormM))
+        eActsFut map { eActs =>
+          Ok(mart.martInviteFormTpl(mmart, martInviteFormM, eActs))
+        }
       case None => martNotFound(martId)
     }
   }
 
+  /** Сабмит формы создания инвайта на управление ТЦ. */
   def martInviteFormSubmit(martId: MartId_t) = IsSuperuser.async { implicit request =>
     MMart.getById(martId) flatMap {
       case Some(mmart) =>
         martInviteFormM.bindFromRequest().fold(
           {formWithErrors =>
             debug(s"martInviteFormSubmit($martId): Failed to bind form: ${formWithErrors.errors}")
-            NotAcceptable(mart.martInviteFormTpl(mmart, formWithErrors))
+            EmailActivation.findByKey(martId) map { eActs =>
+              NotAcceptable(mart.martInviteFormTpl(mmart, formWithErrors, eActs))
+            }
           },
           {email1 =>
             val eAct = EmailActivation(email=email1, key = martId)

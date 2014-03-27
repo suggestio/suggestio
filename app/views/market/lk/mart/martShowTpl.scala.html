@@ -39,6 +39,9 @@
         <div class="name-wrap">
           <span class="name">@mmart.name</span>
           <a class="edit" href="@martEditForm(mmart.id.get)">Редактировать</a>
+          @if(isSuperuser) {
+            <a href="@routes.SysMarket.martShow(mmart.id.get)">/sys</a>
+          }
         </div>
         <div class="border-line"></div>
         <div class="name-wrap">

@@ -14,7 +14,6 @@
   <p><a href="@routes.Market.demoWebSite(mmart.id.get)"><b>-&gt; demoWebSite</b></a></p>
 
   <p>@Messages("Mart"). <a href="@routes.SysMarket.martEditForm(mmart.id.get)">@Messages("Edit")</a></p>
-  @_martDeleteFormTpl(mmart.id.get)
 
   <br/>
 
@@ -34,17 +33,20 @@
     @_shopsListTpl(shops, marts=Some(Map(mmart.id.get -> mmart)))
   }
 
-  <a href="@routes.SysMarket.shopAddForm">Создать новый магазин</a>
+  <h3>Управление</h3>
+  <p><a href="@routes.SysMarket.shopAddForm">Создать новый магазин</a></p>
   <p><a href="@routes.MarketCategory.showCatsFor(mmart.id.get)">Категории ТЦ</a></p>
+  <p><a href="@routes.SysMarket.martInviteForm(mmart.id.get)">Инвайты на управление ТЦ</a></p>
 
 
   @* Кнопки для имитиации добавления/удаления уже существующего ТЦ. Потом надо будет их наверное удалить или запретить их трогать через доп.ACL. *@
   <br/><br/>
+  <h3>Команды</h3>
   @form(routes.SysMarket.inx2handleMartAdd(mmart.id.get)) {
     <input type="submit" value="IndicesUtil.handleMartAdd()" title="Имитация реакции индексов на добавление указанного ТЦ"/>
   }
   @form(routes.SysMarket.inx2handleMartDelete(mmart.id.get)) {
     <input type="submit" value="IndicesUtil.handleMartDelete()" title="Имитация реакции индексов на добавление указанного ТЦ"/>
   }
-
+  @_martDeleteFormTpl(mmart.id.get)
 }
