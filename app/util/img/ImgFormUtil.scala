@@ -62,7 +62,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         case _ => true
       }})
     val logoImgInfoM = ImgFormUtil.logoImgIdM(imgIdM)
-    "logoImgId" -> optional(logoImgInfoM)
+    LOGO_IMG_ID_K -> optional(logoImgInfoM)
   }
 
   /** Маппинг обязательного параметра кропа на реальность. */

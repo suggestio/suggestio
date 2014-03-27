@@ -11,6 +11,7 @@ import play.api.libs.concurrent.Akka
 import scala.concurrent.duration._
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.data.Form
 
 /**
  * Suggest.io
@@ -37,6 +38,10 @@ trait SioController extends Controller with ContextT {
 
   implicit def txt2jsStr(txt: TxtFormat.Appendable) = JsString(txt)
 
+  /** Построчное красивое форматирование ошибок формы для вывода в логи/консоль. */
+  def formatFormErrors(formWithErrors: Form[_]) = {
+    formWithErrors.errors.map { e => "  " + e.key + " -> " + e.message }.mkString("\n")
+  }
 }
 
 
