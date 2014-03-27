@@ -44,6 +44,10 @@ object FormUtil {
     }
   }
 
+  /** id'шники в ES-моделях генерятся силами ES. Тут маппер для полей, содержащих ES-id. */
+  val esIdM = nonEmptyText(minLength=6, maxLength=64)
+    .transform(strTrimSanitizeF, strIdentityF)
+
   /** Маппинг для номера этажа в ТЦ. */
   val martFloorM = number(min = -10, max = 200)
 
@@ -97,7 +101,9 @@ object FormUtil {
   val addressM = nonEmptyText(minLength = 10, maxLength = 128)
     .transform(strTrimSanitizeF, strIdentityF)
 
+  /** id категории. */
   def userCatIdM = esIdM
+  val userCatIdOptM = optional(userCatIdM)
 
   // TODO Нужен нормальный валидатор телефонов.
   val phoneM = nonEmptyText(minLength = 5, maxLength = 16)
@@ -142,9 +148,6 @@ object FormUtil {
     .verifying("float.invalid", floatRe.pattern.matcher(_).matches())
     .transform(_.toFloat, {f: Float => f.toString})
 
-  /** id'шники в ES-моделях генерятся силами ES. Тут маппер для полей, содержащих ES-id. */
-  val esIdM = nonEmptyText(minLength=6, maxLength=64)
-    .transform(strTrimSanitizeF, strIdentityF)
 }
 
 

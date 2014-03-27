@@ -11,7 +11,7 @@ import play.api.data._, Forms._
 import util.acl._
 import util.img._
 import scala.concurrent.Future
-import play.api.mvc.{Action, Request}
+import play.api.mvc.Request
 import play.api.Play.current
 import TextAlignValues.TextAlignValue
 import MMartCategory.CollectMMCatsAcc_t
@@ -31,21 +31,36 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   type AdFormM = Form[(ImgIdKey, LogoOpt_t, MMartAd)]
 
+  type FormDetected_t = Option[(MMartAdOfferType, AdFormM)]
+
   /** Режимы работы формы добавления рекламной карточки. Режимы перенесены в MMartAdOfferTypes. */
   object FormModes {
     import MMartAdOfferTypes._
 
-    def maybeFormWithName(n: String): Option[(MMartAdOfferType, AdFormM)] = {
+    def maybeShopFormWithName(n: String): FormDetected_t = {
       maybeWithName(n).map { m =>
-        val form = getForm(m)
+        val form = getShopForm(m)
         m -> form
       }
     }
 
-    val getForm: PartialFunction[MMartAdOfferType, AdFormM] = {
-      case PRODUCT  => adProductFormM
-      case DISCOUNT => adDiscountFormM
-      case TEXT     => adTextFormM
+    def maybeMartFormWithName(n: String): FormDetected_t = {
+      maybeWithName(n).map { m =>
+        val form = getMartForm(m)
+        m -> form
+      }
+    }
+
+    val getShopForm: PartialFunction[MMartAdOfferType, AdFormM] = {
+      case PRODUCT  => shopAdProductFormM
+      case DISCOUNT => shopAdDiscountFormM
+      case TEXT     => shopAdTextFormM
+    }
+
+    val getMartForm: PartialFunction[MMartAdOfferType, AdFormM] = {
+      case PRODUCT  => martAdProductFormM
+      case DISCOUNT => martAdDiscountFormM
+      case TEXT     => martAdTextFormM
     }
 
     val getForClass: PartialFunction[MMartAdOfferT, MMartAdOfferType] = {
@@ -54,9 +69,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       case _: MMartAdText     => MMartAdOfferTypes.TEXT
     }
 
-    def getFormForClass(c: MMartAdOfferT): AdFormM = {
-      getForm(getForClass(c))
-    }
+    def getMartFormForClass(c: MMartAdOfferT): AdFormM = getMartForm(getForClass(c))
+    def getShopFormForClass(c: MMartAdOfferT): AdFormM = getShopForm(getForClass(c))
   }
 
   // Есть шаблоны для шаблона скидки. Они различаются по id. Тут min и max для допустимых id.
@@ -226,14 +240,14 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  private def adFormApply[T <: MMartAdOfferT](userCatId: String, panelSettings: MMartAdPanelSettings, adBody: T, textAlign: MMartAdTextAlign) = {
+  private def adFormApply[T <: MMartAdOfferT](userCatId: Option[String], panelSettings: MMartAdPanelSettings, adBody: T, textAlign: MMartAdTextAlign) = {
     MMartAd(
       martId      = null,
       offers      = List(adBody),
       img         = null,
       shopId      = null,
       panel       = Some(panelSettings),
-      userCatId   = Some(userCatId),
+      userCatId   = userCatId,
       textAlign   = textAlign,
       companyId   = null
     )
@@ -244,31 +258,32 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     import mmad._
     if (panel.isDefined && userCatId.isDefined && !offers.isEmpty) {
       val adBody = offers.head.asInstanceOf[T]  // TODO Надо что-то решать с подтипами офферов. Параметризация типов MMartAd - геморрой.
-      Some((userCatId.get, panel.get, adBody, textAlign))
+      Some((userCatId, panel.get, adBody, textAlign))
     } else {
       warn("Unexpected ad object received into ad-product form: " + mmad)
       None
     }
   }
 
-  private val catIdKM = CAT_ID_K -> userCatIdM
+  private val shopCatIdKM = CAT_ID_K -> userCatIdOptM.verifying(_.isDefined)
+
   private val panelColorKM = PANEL_COLOR_K -> panelColorM
 
   /** Генератор форм добавления/редактирования рекламируемого продукта в зависимости от вкладок. */
-  private def getAdFormM[T <: MMartAdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
+  private def getShopAdFormM[T <: MMartAdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
     AD_IMG_ID_K -> imgIdJpegM,
     MarketShopLk.logoImgOptIdKM,
     "ad" -> mapping(
-      catIdKM,
+      shopCatIdKM,
       panelColorKM,
       OFFER_K -> offerM,
       textAlignKM
     )(adFormApply[T])(adFormUnapply[T])
   ))
 
-  val adProductFormM  = getAdFormM(adProductM)
-  val adDiscountFormM = getAdFormM(adDiscountM)
-  val adTextFormM     = getAdFormM(adTextM)
+  private val shopAdProductFormM  = getShopAdFormM(adProductM)
+  private val shopAdDiscountFormM = getShopAdFormM(adDiscountM)
+  private val shopAdTextFormM     = getShopAdFormM(adTextM)
 
   /** Извлекатель данных по логотипу из MShop/MMart. */
   implicit private def entityOpt2logoOpt(ent: Option[BuyPlaceT[_]]): LogoOpt_t = {
@@ -276,21 +291,26 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       .map { logoImgId => ImgInfo4Save(OrigImgIdKey(logoImgId)) }
   }
 
+  type ReqSubmit = Request[collection.Map[String, Seq[String]]]
+  type DetectForm_t = Either[AdFormM, (MMartAdOfferType, AdFormM)]
 
   /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
-  private def detectAdForm(implicit request: Request[collection.Map[String, Seq[String]]]): Either[AdFormM, (MMartAdOfferType, AdFormM)] = {
+  private def detectAdForm(dflt: AdFormM)(adMode2form: String => FormDetected_t)(implicit request: ReqSubmit): DetectForm_t = {
     val adModes = request.body.get("ad.offer.mode") getOrElse Nil
-    adModes.headOption.flatMap { adMode =>
-      FormModes.maybeFormWithName(adMode)
-    } match {
+    adModes.headOption.flatMap(adMode2form) match {
       case Some(result) =>
         Right(result)
 
       case None =>
         warn("detectAdForm(): valid AD mode not present in request body. AdModes found: " + adModes)
-        val form = adProductFormM.withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
+        val form = dflt.withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
         Left(form)
     }
+  }
+
+  /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
+  private def detectShopAdForm(implicit request: ReqSubmit): DetectForm_t = {
+    detectAdForm(shopAdProductFormM) { FormModes.maybeShopFormWithName }
   }
 
   /**
@@ -300,7 +320,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   def createShopAd(shopId: ShopId_t) = IsShopAdm(shopId).async { implicit request =>
     import request.mshop
     renderCreateShopFormWith(
-      af = adProductFormM,
+      af = shopAdProductFormM,
       catOwnerId = mshop.martId getOrElse shopId,
       mshop = mshop
     ) map {
@@ -327,7 +347,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     import request.mshop
     val catOwnerId = request.mshop.martId getOrElse shopId
     lazy val logPrefix = s"createShopAdSubmit($shopId): "
-    detectAdForm match {
+    detectShopAdForm match {
       // Как маппить форму - ясно. Теперь надо это сделать.
       case Right((formMode, formM)) =>
         val formBinded = formM.bindFromRequest()
@@ -426,7 +446,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     import request.mad
     request.mshopOptFut flatMap { mshopOpt =>
       val imgIdKey = OrigImgIdKey(mad.img.id)
-      val formFilled = FormModes.getFormForClass(mad.offers.head) fill ((imgIdKey, mshopOpt, mad))
+      val formFilled = FormModes.getShopFormForClass(mad.offers.head) fill ((imgIdKey, mshopOpt, mad))
       renderEditShopFormWith(formFilled, mshopOpt, mad) map {
         case Some(render) => Ok(render)
         case None => shopNotFound(mad.shopId.get)
@@ -440,7 +460,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     */
   def editShopAdSubmit(adId: String) = IsAdEditor(adId).async(parse.urlFormEncoded) { implicit request =>
     import request.mad
-    detectAdForm match {
+    detectShopAdForm match {
       case Right((formMode, formM)) =>
         val formBinded = formM.bindFromRequest()
         formBinded.fold(
@@ -561,13 +581,37 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   // ============================ ТЦ ================================
 
+
+  private val martCatIdKM = CAT_ID_K -> userCatIdOptM
+  /** Генератор форм добавления/редактирования рекламиры в ТЦ в зависимости от вкладок.
+    * Категория не обязательная, логотип от ТЦ. */
+  private def getMartAdFormM[T <: MMartAdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
+    AD_IMG_ID_K -> imgIdJpegM,
+    MarketMartLk.martLogoImgIdOptKM,
+    "ad" -> mapping(
+      martCatIdKM,
+      panelColorKM,
+      OFFER_K -> offerM,
+      textAlignKM
+    )(adFormApply[T])(adFormUnapply[T])
+  ))
+
+  private val martAdProductFormM  = getMartAdFormM(adProductM)
+  private val martAdDiscountFormM = getMartAdFormM(adDiscountM)
+  private val martAdTextFormM     = getMartAdFormM(adTextM)
+
+  /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
+  private def detectMartAdForm(implicit request: ReqSubmit): DetectForm_t = {
+    detectAdForm(martAdProductFormM) { FormModes.maybeMartFormWithName }
+  }
+
   /**
    * Экшен Страницы, которая занимается созданием рекламной карточки для ТЦ.
    * @param martId id ТЦ.
    */
   def createMartAd(martId: MartId_t) = IsMartAdmin(martId).async { implicit request =>
     renderCreateMartFormWith(
-      af = adProductFormM,
+      af = martAdProductFormM,
       catOwnerId = martId,
       mmart = request.mmart
     ) map {
@@ -590,7 +634,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     import request.mmart
     val catOwnerId = mmart.id.get 
     lazy val logPrefix = s"createMartAdSubmit($martId): "
-    detectAdForm match {
+    detectMartAdForm match {
       // Как маппить форму - ясно. Теперь надо это сделать.
       case Right((formMode, formM)) =>
         val formBinded = formM.bindFromRequest()
@@ -675,7 +719,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     import request.mad
     val imgIdKey = OrigImgIdKey(mad.img.id)
     request.mmartOptFut flatMap { mmartOpt =>
-      val formFilled = FormModes.getFormForClass(mad.offers.head) fill ((imgIdKey, mmartOpt, mad))
+      val formFilled = FormModes.getShopFormForClass(mad.offers.head) fill ((imgIdKey, mmartOpt, mad))
       renderEditMartFormWith(formFilled, mmartOpt) map {
         case Some(render) => Ok(render)
         case None => martNotFound(mad.martId)
@@ -689,7 +733,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     */
   def editMartAdSubmit(adId: String) = IsAdEditor(adId).async(parse.urlFormEncoded) { implicit request =>
     import request.mad
-    detectAdForm match {
+    detectMartAdForm match {
       case Right((formMode, formM)) =>
         val formBinded = formM.bindFromRequest()
         formBinded.fold(
@@ -826,14 +870,14 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   }
 
 
-  private val prevCatIdKM = CAT_ID_K -> default(userCatIdM, "")
+  private val prevCatIdKM = CAT_ID_K -> optional(userCatIdM)
   /** Генератор preview-формы. Форма совместима с основной формой, но более толерантна к исходным данным. */
   private def getPreviewAdFormM[T <: MMartAdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
     AD_IMG_ID_K -> default(
       mapping = imgIdJpegM,
       value = OrigImgIdKey(PreviewFormDefaults.IMG_ID)
     ),
-    MarketShopLk.logoImgOptIdKM,
+    LOGO_IMG_ID_K -> optional(ImgFormUtil.logoImgIdM(imgIdM)),
     "ad" -> mapping(
       prevCatIdKM,
       panelColorKM,
@@ -966,7 +1010,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
       case None =>
         warn("detectAdForm(): valid AD mode not present in request body. AdModes found: " + adModes)
-        val form = adProductFormM.withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
+        val form = shopAdProductFormM.withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
         Left(form)
     }
   }
