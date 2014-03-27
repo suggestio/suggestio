@@ -45,14 +45,12 @@
           }
 
           <div class="discount template-@adDisco.template.id-@adDisco.template.color " style="color: #@adDisco.discount.font.color">
-            @formatPercentRaw(adDisco.discount.value)<span>%</span>
+            @formatPercent(adDisco.discount.value/100)<span></span>
           </div>
 
           @adDisco.text2.map { text2 =>
             <div class="disc-text-2" style="color: #@text2.font.color">@text2.value</div>
           }
-          @*template: id=@adDisco.template.id color=@adDisco.template.color*@
-          @*disco: @adDisco.discount.value % color=@adDisco.discount.font.color*@
         }
 
         case adText: MMartAdText => {
