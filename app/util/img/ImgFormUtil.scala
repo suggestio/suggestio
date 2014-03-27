@@ -50,6 +50,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       case oiik: OrigImgIdKey => true
     }})
 
+  val LOGO_IMG_ID_K = "logoImgId"
   /** Генератор logo-маппингов. */
   def getLogoKM(errorMsg: String, marker: String) = {
     val imgIdM = ImgFormUtil.imgIdM
