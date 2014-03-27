@@ -142,6 +142,7 @@ siomart =
   touch_events :
 
     touchstart : ( event ) ->
+      siomart.offers.clear_auto_change_timer()
       this.page_x = event.pageX
 
     touchmove : ( event ) ->
@@ -369,6 +370,9 @@ siomart =
       if typeof siomart.offers.auto_change_timer != 'undefined'
         clearTimeout siomart.offers.auto_change_timer
 
+    set_auto_change_timer : ( cb ) ->
+      siomart.offers.auto_change_timer = setTimeout cb, siomart.offers.auto_change_delay
+
     next_offer : ( is_without_delay, is_backward ) ->
 
       is_backward = is_backward || false
@@ -377,7 +381,6 @@ siomart =
       this.clear_auto_change_timer()
 
       cb = () ->
-
         if is_backward == true
           next_offer_index = if siomart.offers.active_offer == 0 then siomart.offers.total_offers - 1 else siomart.offers.active_offer - 1
         else
@@ -389,7 +392,8 @@ siomart =
       if is_without_delay == true
         cb()
       else
-        siomart.offers.auto_change_timer = setTimeout cb, this.auto_change_delay
+        this.set_auto_change_timer cb
+
 
     ## Открыть слайд с оффером по указанному индексу
     show_offer : ( index ) ->
@@ -463,6 +467,7 @@ siomart =
 
     this.utils.add_single_listener sm_layout, 'touchstart', siomart.touch_events.touchstart
     this.utils.add_single_listener sm_layout, 'touchmove', siomart.touch_events.touchmove
+
 
     ## Кнопка возвращения на шаг назад
 
