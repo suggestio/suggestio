@@ -429,10 +429,8 @@ siomart =
       is_mart_offert = _offer.getAttribute 'data-is-mart-offer'
       if ( is_mart_offert == 'true' )
         siomart.index_navigation.hide()
-        console.log 'hide'
       else
         siomart.index_navigation.show()
-        console.log 'show'
 
       if index > this.active_offer
         direction = 'rtl'
@@ -475,15 +473,16 @@ siomart =
   init_navigation : () ->
 
     ## Кнопка выхода
-    this.utils.add_single_listener this.utils.ge('smCloseButton'), 'click', siomart.open_close_screen
-    this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), 'click', siomart.close_mart
 
-    this.utils.add_single_listener this.utils.ge('smCategoriesButton'), 'click', siomart.open_categories_screen
-    this.utils.add_single_listener this.utils.ge('smCloseCategoriesButton'), 'click', siomart.close_categories_screen
+    for _event in ['click', 'touchstart']
+      this.utils.add_single_listener this.utils.ge('smCloseButton'), _event, siomart.open_close_screen
+      this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), _event, siomart.close_mart
+      this.utils.add_single_listener this.utils.ge('smCategoriesButton'), _event, siomart.open_categories_screen
+      this.utils.add_single_listener this.utils.ge('smCloseCategoriesButton'), _event, siomart.close_categories_screen
 
-    this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), 'click', siomart.exit_close_screen
+      this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), _event, siomart.exit_close_screen
 
-    this.utils.add_single_listener this.utils.ge('sioMartTrigger'), 'click', siomart.open_mart
+      this.utils.add_single_listener this.utils.ge('sioMartTrigger'), _event, siomart.open_mart
 
     ## поле ввода поискового запроса
     this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', siomart.search.queue_request

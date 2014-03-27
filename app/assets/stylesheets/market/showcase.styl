@@ -361,7 +361,7 @@ transition( param )
     position: absolute
     left: 0px
     bottom: 0px
-    background: rgba(255,255,255,0.8)
+    transition( all 0.2s linear )
 
     .sm-buttons
       width: 680px
@@ -369,11 +369,15 @@ transition( param )
       margin: 0px auto
 
       .sm-button
+        background: rgba(255, 255, 255, 0.1)
         width: 282px
         margin: 20px 12px
         float: left
-        border-color: #cf3737
-        color: #cf3737
+        border-color: #fff
+        color: #fff
+
+      .sm-button:hover
+        background: rgba(255, 255, 255, 0.3)
 
   .sm-navigation.hidden
     bottom: -130px
