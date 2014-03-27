@@ -2,6 +2,7 @@
 
 @* Начальная страница для sio-market. *@
 
+@if(!ads.isEmpty) {
 @market.showcase.baseTpl() {
 
   @* Список офферов, подгружается динамически *@
@@ -13,5 +14,5 @@
   <div class="sm-offers-controller" id="smOffersController" style="width: @(ads.length*14)px">
     @_offers_list(mmart, ads, shops, isNav=true)
   </div>
-
+}
 }

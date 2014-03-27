@@ -141,6 +141,9 @@ siomart =
   ########################
   touch_events :
 
+    window_touchstart : ( event ) ->
+      event.preventDefault()
+
     touchstart : ( event ) ->
       siomart.offers.clear_auto_change_timer()
       this.page_x = event.pageX
@@ -151,7 +154,7 @@ siomart =
       if _delta > 150
         siomart.offers.next_offer(true)
 
-      if _delta < 150
+      if _delta < -150
         siomart.offers.next_offer(true, true)
 
   ########
@@ -260,6 +263,11 @@ siomart =
   ## зпросу и передать их в нужный callback
   ##################################################
   receive_response : ( data ) ->
+
+    if data.html == ''
+      alert "Карточек не найдено"
+      return false
+
     if data.action == 'martIndex'
       container = this.utils.ge 'sioMartLayout'
       container.innerHTML = data.html
@@ -468,6 +476,7 @@ siomart =
     this.utils.add_single_listener sm_layout, 'touchstart', siomart.touch_events.touchstart
     this.utils.add_single_listener sm_layout, 'touchmove', siomart.touch_events.touchmove
 
+    this.utils.add_single_listener this.utils.ge_tag('body')[0], 'touchstart', siomart.touch_events.window_touchstart
 
     ## Кнопка возвращения на шаг назад
 
