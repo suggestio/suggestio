@@ -54,7 +54,7 @@ trait Context {
   implicit lazy val now : DateTime = DateTime.now
 
   def isAuth:  Boolean = pwOpt.isDefined
-  def isSuperuser: Boolean = pwOpt.exists(_.isSuperuser)
+  def isSuperuser: Boolean = PersonWrapper.isSuperuser(pwOpt)
 
   def flashMap = request.flash.data
 

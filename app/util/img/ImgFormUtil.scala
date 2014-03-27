@@ -13,6 +13,7 @@ import scala.util.{Failure, Success}
 import java.lang
 import io.suggest.util.MacroLogsImplLazy
 import io.suggest.ym.model.{MImgInfoMeta, MImgInfo}
+import com.fasterxml.jackson.annotation.JsonIgnore
 
 /**
  * Suggest.io
@@ -317,17 +318,17 @@ object ImgIdKey {
 }
 
 sealed trait ImgIdKey {
-  def key: String
-  def isExists: Future[Boolean]
-  def isValid: Boolean
-  def isTmp: Boolean
-  override def hashCode = key.hashCode
+  @JsonIgnore def key: String
+  @JsonIgnore def isExists: Future[Boolean]
+  @JsonIgnore def isValid: Boolean
+  @JsonIgnore def isTmp: Boolean
+  @JsonIgnore override def hashCode = key.hashCode
 }
 
 case class TmpImgIdKey(filename: String) extends ImgIdKey with MacroLogsImplLazy {
   import LOGGER._
 
-  val mptmpOpt = try {
+  @JsonIgnore val mptmpOpt = try {
     Some(MPictureTmp(filename))
   } catch {
     case ex: Throwable =>
@@ -344,15 +345,15 @@ case class TmpImgIdKey(filename: String) extends ImgIdKey with MacroLogsImplLazy
 }
 
 
-class OrigImgIdKey(val key: String, meta: Option[MImgInfoMeta] = None) extends MImgInfo(key, meta) with ImgIdKey {
+class OrigImgIdKey(@JsonIgnore val key: String, meta: Option[MImgInfoMeta] = None) extends MImgInfo(key, meta) with ImgIdKey {
 
-  def isTmp: Boolean = false
+  @JsonIgnore def isTmp: Boolean = false
 
-  def isExists: Future[Boolean] = {
+  @JsonIgnore def isExists: Future[Boolean] = {
     MUserImgOrig.getById(key).map(_.isDefined)
   }
 
-  def isValid: Boolean = {
+  @JsonIgnore def isValid: Boolean = {
     MPict.isStrIdValid(key)
   }
 }

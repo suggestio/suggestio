@@ -1,6 +1,6 @@
 package controllers
 
-import util.PlayMacroLogsImpl
+import _root_.util.{Context, PlayMacroLogsImpl}
 import util.acl._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -221,9 +221,10 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
               mail.setSubject("Suggest.io | Подтверждение регистрации")
               mail.setFrom("no-reply@suggest.io")
               mail.setRecipient(_email)
+              val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
               mail.send(
-                bodyHtml = shop.emailShopInviteTpl(mmart, mshop, eAct),
-                bodyText = views.txt.market.lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct)
+                bodyHtml = shop.emailShopInviteTpl(mmart, mshop, eAct)(ctx),
+                bodyText = views.txt.market.lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct)(ctx)
               )
               // Собственно, результат работы.
               Redirect(routes.MarketMartLk.martShow(martId))
@@ -510,9 +511,10 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
               mail.setSubject("Suggest.io | Отключена ваша рекламная карточка")
               mail.setFrom("no-reply@suggest.io")
               mail.setRecipient(emails : _*)
+              val ctx = implicitly[Context]   // Нано-оптимизация: один контекст для обоих рендеров.
               mail.send(
-                bodyHtml = views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(mmart, mshop, ad, reason),
-                bodyText = views.txt.market.lk.shop.ad.emailAdDisabledByMartTpl(mmart, mshop, ad, reason)
+                bodyHtml = views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(mmart, mshop, ad, reason)(ctx),
+                bodyText = views.txt.market.lk.shop.ad.emailAdDisabledByMartTpl(mmart, mshop, ad, reason)(ctx)
               )
             }
           }
@@ -551,6 +553,19 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
         }
       }
     )
+  }
+
+
+  // Обработка инвайтов на управление ТЦ.
+
+  /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
+  def martInviteAcceptForm(martId: String, eActId: String) = MaybeAuth.async { implicit request =>
+    ???
+  }
+
+  /** Сабмит формы подтверждения инвайта на управление ТЦ. */
+  def martInviteAcceptFormSubmit(martId: String, eActId: String) = MaybeAuth.async { implicit request =>
+    ???
   }
 
 

@@ -11,8 +11,9 @@ import io.suggest.ym.model.UsernamePw
 import MCompany.CompanyId_t
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
-import io.suggest.model.inx2.MMartInx
-import util.IndicesUtil
+import util.{Context, IndicesUtil}
+import com.typesafe.plugin.{use, MailerPlugin}
+import play.api.Play.current
 
 /**
  * Suggest.io
@@ -132,9 +133,11 @@ object SysMarket extends SioController with MacroLogsImpl {
     _.map { mc => mc.id.get -> mc }.toMap
   }
 
+
   private def allMartsMap = MMart.getAll.map {
     _.map { mmart => mmart.id.get -> mmart }.toMap
   }
+
 
   /* Торговые центры и площади. */
 
@@ -202,10 +205,10 @@ object SysMarket extends SioController with MacroLogsImpl {
   }
 
   /** Отображение одного ТЦ. */
-  def martShow(mart_id: MartId_t) = IsSuperuser.async { implicit request =>
-    MMart.getById(mart_id) flatMap {
+  def martShow(martId: MartId_t) = IsSuperuser.async { implicit request =>
+    MMart.getById(martId) flatMap {
       case Some(mmart) =>
-        val martShopsFut = MShop.findByMartId(mart_id)
+        val martShopsFut = MShop.findByMartId(martId)
         for {
           ownerCompanyOpt <- mmart.company
           martShops       <- martShopsFut
@@ -213,11 +216,11 @@ object SysMarket extends SioController with MacroLogsImpl {
           Ok(mart.martShowTpl(mmart, martShops, ownerCompanyOpt))
         }
 
-      case None => martNotFound(mart_id)
+      case None => martNotFound(martId)
     }
   }
 
-  private def martNotFound(mart_id: MartId_t) = NotFound("Mart not found: " + mart_id)
+  private def martNotFound(martId: MartId_t) = NotFound("Mart not found: " + martId)
 
   /** Рендер страницы с формой редактирования торгового центра. */
   def martEditForm(mart_id: MartId_t) = IsSuperuser.async { implicit request =>
@@ -231,8 +234,8 @@ object SysMarket extends SioController with MacroLogsImpl {
   }
 
   /** Сабмит формы редактирования торгового центра. */
-  def martEditFormSubmit(mart_id: MartId_t) = IsSuperuser.async { implicit request =>
-    MMart.getById(mart_id) flatMap {
+  def martEditFormSubmit(martId: MartId_t) = IsSuperuser.async { implicit request =>
+    MMart.getById(martId) flatMap {
       case Some(mmart) =>
         martFormM.bindFromRequest().fold(
           {formWithErrors =>
@@ -251,17 +254,64 @@ object SysMarket extends SioController with MacroLogsImpl {
           }
         )
 
-      case None => martNotFound(mart_id)
+      case None => martNotFound(martId)
     }
   }
 
   /** Удалить торговый центр из системы. */
-  def martDeleteSubmit(mart_id: MartId_t) = IsSuperuser.async { implicit request =>
-    MMart.deleteById(mart_id) map {
-      case false => martNotFound(mart_id)
+  def martDeleteSubmit(martId: MartId_t) = IsSuperuser.async { implicit request =>
+    MMart.deleteById(martId) map {
+      case false => martNotFound(martId)
       case true =>
         Redirect(routes.SysMarket.martsList())
-          .flashing("success" -> s"Mart $mart_id deleted.")
+          .flashing("success" -> s"Mart $martId deleted.")
+    }
+  }
+
+  // Инвайты на управление ТЦ
+
+  val martInviteFormM = Form(
+    "email" -> email
+  )
+
+  /** Рендер страницы с формой инвайта (передачи прав на управление ТЦ). */
+  def martInviteForm(martId: MartId_t) = IsSuperuser.async { implicit request =>
+    MMart.getById(martId) map {
+      case Some(mmart) =>
+        Ok(mart.martInviteFormTpl(mmart, martInviteFormM))
+      case None => martNotFound(martId)
+    }
+  }
+
+  def martInviteFormSubmit(martId: MartId_t) = IsSuperuser.async { implicit request =>
+    MMart.getById(martId) flatMap {
+      case Some(mmart) =>
+        martInviteFormM.bindFromRequest().fold(
+          {formWithErrors =>
+            debug(s"martInviteFormSubmit($martId): Failed to bind form: ${formWithErrors.errors}")
+            NotAcceptable(mart.martInviteFormTpl(mmart, formWithErrors))
+          },
+          {email1 =>
+            val eAct = EmailActivation(email=email1, key = martId)
+            eAct.save.map { eActId =>
+              eAct.id = Some(eActId)
+              // Собираем и отправляем письмо адресату
+              val mail = use[MailerPlugin].email
+              mail.setSubject("Suggest.io | Ваш торговый центр")
+              mail.setFrom("no-reply@suggest.io")
+              mail.setRecipient(email1)
+              val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
+              mail.sendHtml(
+                bodyHtml = views.html.market.lk.mart.invite.emailMartInviteTpl(mmart, eAct)(ctx)
+              )
+              // Письмо отправлено, вернуть админа назад в магазин
+              Redirect(routes.SysMarket.martShow(martId))
+                .flashing("success" -> ("Письмо с приглашением отправлено на " + email1))
+            }
+          }
+        )
+
+      case None => martNotFound(martId)
     }
   }
 

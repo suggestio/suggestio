@@ -340,8 +340,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           {case (imgKey, logoImgIdOpt, mmad) =>
             // Асинхронно обрабатываем логотип.
             updateLogo(logoImgIdOpt, mshop) onComplete entityLogoUpdatePf("shop", shopId)
-            ImgFormUtil.updateOrigImg(Some(ImgInfo4Save(imgKey)), oldImgs = None) flatMap {
-              case imgIdsSaved if !imgIdsSaved.isEmpty =>
+            ImgFormUtil.updateOrigImg(Some(ImgInfo4Save(imgKey)), oldImgs = None) flatMap { imgIdsSaved =>
+              if (!imgIdsSaved.isEmpty) {
                 // TODO Нужно проверить категорию.
                 mmad.shopId = Some(shopId)
                 mmad.companyId = request.mshop.companyId
@@ -353,12 +353,13 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
                     .flashing("success" -> "Рекламная карточка создана.")
                 }
 
-              case _ =>
+              } else {
                 debug(logPrefix + "Failed to handle img key: " + imgKey)
                 val formWithError = formBinded.withError(AD_IMG_ID_K, "error.image.save")
                 renderCreateShopFormWith(formWithError, catOwnerId, request.mshop) map { render =>
                   NotAcceptable(render)
                 }
+              }
             }
           }
         )

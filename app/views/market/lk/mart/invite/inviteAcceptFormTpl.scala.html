@@ -1,0 +1,42 @@
+@(mmart: MMart, eAct: EmailActivation, iaf: Form[_])(implicit ctx: util.Context)
+
+@* Страница с формой подтверждения регистрации в качестве управляющего ТЦ.
+   Новый пользователь здесь может ввести пароль. Уже залогиненный - просто подтвердить себя. *@
+@import helper._
+
+@market.lk.lkBase("Подтверждение регистрации") {
+
+  <p>Торговый центр: @mmart.name</p>
+  <p>Email: @eAct.email</p>
+
+  @form(routes.MarketMartLk.martInviteAcceptFormSubmit(mmart.id.get, eAct.id.get)) {
+
+    @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
+    @if(ctx.isAuth) {
+      @* Юзер вводит пароли. *@
+      <table cellpadding="0" cellspacing="0" class="input-wrap pass">
+        <tr>
+          @inputPassword(
+            iaf("password.pw1"),
+            '_label -> "Пароль:"
+          )
+          <td class="pass-text" rowspan="2">
+            Используйте адрес электронной почты
+            и пароль для следующего входа.
+          </td>
+        </tr>
+        <tr>
+          @inputPassword(
+            iaf("password.pw2"),
+            '_label -> "Подтверждение пароля:"
+          )
+        </tr>
+      </table>
+
+      @* TODO Нужна ссылка с формой для логина в систему, если юзер уже зареган, но ещё не залогинен. *@
+    }
+
+    <input type="submit" value="Продолжить"/>
+  }
+}
+

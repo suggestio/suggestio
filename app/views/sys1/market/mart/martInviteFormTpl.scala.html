@@ -1,0 +1,26 @@
+@(mmart: MMart, imf: Form[_])(implicit ctx: util.Context)
+
+@* Форма для создания инвайта на управление ТЦ. *@
+@import helper._
+
+@hPathAfter1 = {
+  / Инвайт на управление ТЦ
+}
+
+@thisMartBase(
+  title = "Инвайт на управление ТЦ " + mmart.name,
+  mmart = mmart,
+  hPathAfter = Some(hPathAfter1)
+) {
+
+  <p>Для отправки приглашения на управление ТЦ <a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.name</a>
+  введите email получателя прав в нижеуказанном поле.</p>
+
+  <p>Текущие подтверждённые пользователи: @mmart.personIds.mkString(", ")</p>
+
+  @* Форма инвайта прямо тут, т.к. не с кем её шарить. *@
+  @form(routes.SysMarket.martInviteFormSubmit(mmart.id.get)) {
+    @inputText(imf("email"))
+    <input type="submit" value="Отправить инвайт"/>
+  }
+}

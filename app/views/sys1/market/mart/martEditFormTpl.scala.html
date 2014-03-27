@@ -5,10 +5,9 @@
 @import ctx._
 
 @hPathAfter1 = {
-  / <a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.name</a>
   / Изменить
 }
 
-@martBase("Редактировать ТЦ", hPathAfter = Some(hPathAfter1)) {
+@thisMartBase("Редактировать ТЦ", mmart) {
   @_martFormTpl("Сохранить", mf, routes.SysMarket.martEditFormSubmit(mmart.id.get))
 }

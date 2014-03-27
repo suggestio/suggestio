@@ -110,6 +110,8 @@ POST /m/lk/mart/shop/:shopId/on-off     controllers.MarketMartLk.shopOnOffSubmit
 POST /m/lk/mart/shop/:shopId/set/tla    controllers.MarketMartLk.setShopTopLevelAvailable(shopId)
 GET  /m/lk/mart/shop/ad/:adId/hide      controllers.MarketMartLk.shopAdHideForm(adId)
 POST /m/lk/mart/shop/ad/:adId/hide      controllers.MarketMartLk.shopAdHideFormSubmit(adId)
+GET  /m/lk/m/:martId/eact/:eaId         controllers.MarketMartLk.martInviteAcceptForm(martId, eaId)
+POST /m/lk/m/:martId/eact/:eaId         controllers.MarketMartLk.martInviteAcceptFormSubmit(martId, eaId)
 
 # личный кабинет купца-арендатора ТЦ.
 GET  /m/lk/s/:shopId                    controllers.MarketShopLk.showShop(shopId, newAdId: Option[String] ?= None)
@@ -178,6 +180,8 @@ GET  /sys/market/mart/:id               controllers.SysMarket.martShow(id: Strin
 GET  /sys/market/mart/:id/edit          controllers.SysMarket.martEditForm(id: String)
 POST /sys/market/mart/:id/edit          controllers.SysMarket.martEditFormSubmit(id: String)
 POST /sys/market/mart/:id/delete        controllers.SysMarket.martDeleteSubmit(id: String)
+GET  /sys/market/mart/:id/invite        controllers.SysMarket.martInviteForm(id: String)
+POST /sys/market/mart/:id/invite        controllers.SysMarket.martInviteFormSubmit(id: String)
 # sys.market.shop
 GET  /sys/market/shops                  controllers.SysMarket.shopsList
 GET  /sys/market/shop/add               controllers.SysMarket.shopAddForm
@@ -203,5 +207,4 @@ GET  /sys/market/cats/usr/c/:catId      controllers.MarketCategory.showUserCat(c
 GET  /sys/market/cats/usr/:ownerId      controllers.MarketCategory.showCatsFor(ownerId)
 GET  /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatForm(catId)
 POST /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatFormSubmit(catId)
-
 
