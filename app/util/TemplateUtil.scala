@@ -22,6 +22,7 @@ object TplDataFormatUtil {
   def formatPercent(pc: Float)(implicit ctx: Context): String = {
     // TODO Подцеплять локаль клиента
     val currFmt = NumberFormat.getPercentInstance
+    currFmt.setMaximumFractionDigits(0)
     currFmt.format(pc)
   }
 }
