@@ -2,6 +2,7 @@ package util
 
 import scala.util.parsing.combinator.JavaTokenParsers
 import io.suggest.ym.parsers.PriceParsers._
+import io.suggest.ym.parsers.Price
 
 /**
  * Suggest.io
@@ -12,8 +13,8 @@ import io.suggest.ym.parsers.PriceParsers._
 object UserInputParsers extends JavaTokenParsers {
 
   /** Парсер для цены. Если валюта не указана, то используются рубли. */
-  val priceParser: PriceP_t = {
-    val dfltPriceParser = floatP ^^ { price => (price, currRUBc) }
+  val priceParser = {
+    val dfltPriceParser = floatP ^^ { price => Price(price, currRUBc) }
     currPriceParser | dfltPriceParser
   }
 

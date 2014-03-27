@@ -1,6 +1,6 @@
 package controllers
 
-import util.{Context, PlayMacroLogsImpl}
+import util.{UserInputParsers, Context, PlayMacroLogsImpl}
 import views.html.market.lk.ad._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -17,7 +17,7 @@ import TextAlignValues.TextAlignValue
 import MMartCategory.CollectMMCatsAcc_t
 import scala.util.{Try, Failure, Success}
 import util.HtmlSanitizer.adTextFmtPolicy
-import io.suggest.ym.model.MImgInfo
+import io.suggest.ym.parsers.Price
 
 /**
  * Suggest.io
@@ -77,11 +77,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   val DISCOUNT_TPL_ID_MIN = current.configuration.getInt("ad.discount.tpl.id.min") getOrElse 1
   val DISCOUNT_TPL_ID_MAX = current.configuration.getInt("ad.discount.tpl.id.max") getOrElse 6
 
-  /** Маппинг для задания цены. */
-  val priceM = float
-    .verifying("price.mustbe.nonneg", { _ >= 0F })
-    .verifying("price.too.much", { _ < 100000000F })
-
   /** Шрифт пока что характеризуется только цветом. Поэтому маппим поле цвета на шрифт. */
   private val fontColorM = colorM
     .transform(
@@ -104,6 +99,34 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   )
   { MMAdFloatField.apply }
   { MMAdFloatField.unapply }
+
+  /** Поле с ценой. Является вариацией float-поля. */
+  private val mmaPriceM = mapping(
+    "value" -> priceStrictM,
+    "color" -> fontColorM
+  )
+  {case ((rawPrice, price), font) =>
+    MMAdPrice(price.price, price.currency.getCurrencyCode, rawPrice, font) }
+  {mmadp =>
+    import mmadp._
+    Some((orig, Price(value, currency)), font)
+  }
+
+  /** Поле с необязательной ценой. Является вариацией float-поля. Жуткий говнокод. */
+  private val mmaPriceOptM = mapping(
+    "value" -> optional(priceStrictM),
+    "color" -> fontColorM
+  )
+  {(pricePairOpt, font) =>
+    pricePairOpt.map { case (rawPrice, price) =>
+      MMAdPrice(price.price, price.currency.getCurrencyCode, rawPrice, font)
+    }
+  }
+  {_.map { mmadp =>
+    import mmadp._
+    (Some(orig -> Price(value, currency)), font)
+  }}
+
 
   /** Маппим необязательное Float-поле. */
   private def mmaFloatFieldOptM(m: Mapping[Float]) = mapping(
@@ -161,7 +184,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   private val VENDOR_MAXLEN = 32
 
   /** apply() для product-маппингов. */
-  private def adProductMApply(vendor: MMAdStringField, price: MMAdFloatField, oldPrice: Option[MMAdFloatField]) = {
+  private def adProductMApply(vendor: MMAdStringField, price: MMAdPrice, oldPrice: Option[MMAdPrice]) = {
     MMartAdProduct.apply(vendor, price, oldPrice)
   }
 
@@ -173,8 +196,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   // Общие для ad-форм мапперы закончились. Пора запилить сами формы и формоспецифичные элементы.
   val adProductM = mapping(
     "vendor"    -> mmaStringFieldM(nonEmptyText(maxLength = VENDOR_MAXLEN)),
-    "price"     -> mmaFloatFieldM(priceM),
-    "oldPrice"  -> mmaFloatFieldOptM(priceM)
+    "price"     -> mmaPriceM,
+    "oldPrice"  -> mmaPriceOptM
   )
   { adProductMApply }
   { adProductMUnapply }
@@ -874,8 +897,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     val TEXT_FONT  = MMAdFieldFont(TEXT_COLOR)
     
     object Product {
-      val PRICE_VALUE = 100F
-      val OLDPRICE_VALUE = 200F
+      val PRICE_VALUE = Price(100F)
+      val OLDPRICE_VALUE = Price(200F)
     }
 
     object Discount {
@@ -906,7 +929,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   ))
 
   private val floatInvalidIgnored = -1F
-  private val priceFieldTolerantM = text.transform(
+  private val floatFieldTolerantM = text.transform(
     { txt =>
       try {
         Math.max(txt.toFloat, 0F)
@@ -939,16 +962,19 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       ),
 
       "price" -> mapping(
-        "value" -> default(
-          mapping = priceFieldTolerantM,
-          value = PreviewFormDefaults.Product.PRICE_VALUE
-        ),
+        "value" -> priceM,
         "color" -> fontColorM
       )
-      { MMAdFloatField.apply }
-      { MMAdFloatField.unapply },
+      {case ((rawPrice, priceOpt), font) =>
+        val price = priceOpt getOrElse PreviewFormDefaults.Product.PRICE_VALUE
+        MMAdPrice(price.price, price.currency.getCurrencyCode, rawPrice, font)
+      }
+      {mmadp =>
+        import mmadp._
+        Some((orig, Some(Price(value, currency))), font)
+      },
 
-      "oldPrice"  -> mmaFloatFieldOptM(priceFieldTolerantM)
+      "oldPrice" -> mmaPriceOptM
     )
     { adProductMApply }
     { adProductMUnapply }
@@ -959,7 +985,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   private val previewAdDiscountM = {
     val discountTextM = nonEmptyText(maxLength = DISCOUNT_TEXT_MAXLEN)
       .transform(strTrimBrOnlyF, strIdentityF)
-    val discountValueM = priceFieldTolerantM
+    val discountValueM = floatFieldTolerantM
       .transform(
         { dc => if (dc < DISCOUNT_MIN || dc > DISCOUNT_MAX) floatInvalidIgnored else dc },
         { dc: Float => dc }

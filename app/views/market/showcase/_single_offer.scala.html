@@ -21,9 +21,9 @@
           <div class="vendor">@adProd.vendor.value</div>
 
           @adProd.oldPrice.map { oldPrice =>
-            <div class="old-price"><s>@formatPrice(oldPrice.value, adProd.currency)</s></div>
+            <div class="old-price"><s>@formatPrice(oldPrice.value, oldPrice.currency)</s></div>
           }
-          <div class="new-price">@formatPrice(adProd.price.value, adProd.currency)</div>
+          <div class="new-price">@formatPrice(adProd.price.value, adProd.price.currency)</div>
 
           @* Локейшн магазина *@
           @* Если магазин не указан, то значит это рекламная карточка ТЦ. *@

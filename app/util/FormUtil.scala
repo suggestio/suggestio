@@ -7,6 +7,7 @@ import gnu.inet.encoding.IDNA
 import HtmlSanitizer._
 import views.html.helper.FieldConstructor
 import views.html.market.lk._
+import play.api.data.Mapping
 
 /**
  * Suggest.io
@@ -147,6 +148,43 @@ object FormUtil {
   val float = nonEmptyText(maxLength = 15)
     .verifying("float.invalid", floatRe.pattern.matcher(_).matches())
     .transform(_.toFloat, {f: Float => f.toString})
+
+
+  import io.suggest.ym.parsers.{PriceParsers, Price}
+  import UserInputParsers.priceParser
+
+  /** Нестрогий маппинг цены. Ошибка будет только если слишком много букв. */
+  val priceM: Mapping[(String, Option[Price])] = {
+    text(maxLength = 40)
+      .transform[(String, Option[Price])](
+        {raw =>
+          val raw1 = strTrimSanitizeF(raw)
+          raw1 -> PriceParsers.parseAll(priceParser, raw1) },
+        { case (raw, None) => raw
+          case (raw, Some(_)) if !raw.isEmpty => raw
+          case (_, Some(price)) =>
+            val p = price.price
+            price.currency.getCurrencyCode match {
+              case "RUB" => p.toString
+              case "USD" => "$" + p
+              case cCode => p + " " + cCode
+          }
+        }
+      )
+  }
+
+  /** Маппинг для задания цены. Либо цена, либо ошибка. Тащим исходное значение с собой
+    * для возможности быстрого доступа к нему из маппинга без помощи локали клиента и т.д. */
+  val priceStrictM: Mapping[(String, Price)] = {
+    priceM
+      .verifying("error.required", _._2.isDefined)
+      .transform[(String, Price)](
+        {case (raw, pOpt) => raw -> pOpt.get},
+        {case (raw, p) => raw -> Some(p)}
+      )
+      .verifying("error.price.mustbe.nonneg", { _._2.price >= 0F })
+      .verifying("error.price.too.much", { _._2.price < 100000000F })
+  }
 
 }
 

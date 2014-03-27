@@ -74,6 +74,11 @@ package object models {
   val  MMartAdPanelSettings = io.suggest.ym.model.MMartAdPanelSettings
   type MMartAdPanelSettings = io.suggest.ym.model.MMartAdPanelSettings
 
+  val  MMAdPrice        = io.suggest.ym.model.MMAdPrice
+  type MMAdPrice        = io.suggest.ym.model.MMAdPrice
+
+  val  MImgInfo         = io.suggest.ym.model.MImgInfo
+  type MImgInfo         = io.suggest.ym.model.MImgInfo
 
   val  MInx             = io.suggest.model.inx2.MInx
   type MInxT            = io.suggest.model.inx2.MInxT
