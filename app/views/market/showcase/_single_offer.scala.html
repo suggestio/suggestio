@@ -43,7 +43,10 @@
           @adDisco.text1.map { text1 =>
             <div class="disc-text-1" style="color: #@text1.font.color">@text1.value</div>
           }
-          text2: @adDisco.text2.map { text2 =>
+
+          <div class="discount template-@adDisco.template.id-@adDisco.template.color " style="color: #@adDisco.discount.font.color">@adDisco.discount.value %</div>
+
+          @adDisco.text2.map { text2 =>
             <div class="disc-text-2" style="color: #@text2.font.color">@text2.value</div>
           }
           @*template: id=@adDisco.template.id color=@adDisco.template.color*@
