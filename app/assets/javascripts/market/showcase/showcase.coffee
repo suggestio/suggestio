@@ -329,6 +329,14 @@ siomart =
     event.preventDefault()
     return false
 
+  index_navigation :
+    hide : () ->
+      _dom = siomart.utils.ge 'smIndexNavigation'
+      siomart.utils.addClass _dom, 'hidden'
+    show : () ->
+      _dom = siomart.utils.ge 'smIndexNavigation'
+      siomart.utils.removeClass _dom, 'hidden'
+
   #########
   ## Офферы
   #########
@@ -415,6 +423,16 @@ siomart =
 
       if index == this.active_offer
         return false
+
+      _offer =  siomart.utils.ge 'smOffer' + index
+
+      is_mart_offert = _offer.getAttribute 'data-is-mart-offer'
+      if ( is_mart_offert == 'true' )
+        siomart.index_navigation.hide()
+        console.log 'hide'
+      else
+        siomart.index_navigation.show()
+        console.log 'show'
 
       if index > this.active_offer
         direction = 'rtl'
