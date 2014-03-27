@@ -63,14 +63,19 @@ object FormUtil {
   .verifying("passwords.do.not.match", { pws => pws match {
     case (pw1, pw2) => pw1 == pw2
   }})
-  .transform[Option[String]](
-    { case (pw1, pw2) => Some(pw1) },
+  .transform[String](
+    { case (pw1, pw2) => pw1 },
     { _: AnyRef =>
       // Назад пароли тут не возвращаем никогда. Форма простая, и ошибка может возникнуть лишь при вводе паролей.
       val pw = ""
       (pw, pw)
     }
   )
+
+  /** Возвращение проверенного пароля как Some(). */
+  val passwordWithConfirmSomeM = passwordWithConfirmM
+    .transform({ Option.apply }, {pwOpt: Option[String] => pwOpt getOrElse ""})
+
 
   val nameM = nonEmptyText(maxLength = 64)
     .transform(strTrimSanitizeF, strIdentityF)

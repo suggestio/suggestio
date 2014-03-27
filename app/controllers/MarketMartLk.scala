@@ -23,6 +23,7 @@ import util.img.OrigImgIdKey
 import play.api.libs.json._
 import scala.concurrent.Future
 import play.api.mvc.{AnyContent, SimpleResult}
+import play.api.mvc.Security.username
 
 /**
  * Suggest.io
@@ -30,7 +31,7 @@ import play.api.mvc.{AnyContent, SimpleResult}
  * Created: 02.03.14 13:54
  * Description: Личный кабинет для sio-маркета. Тут управление торговым центром и магазинами в нём.
  */
-object MarketMartLk extends SioController with PlayMacroLogsImpl {
+object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForceProtect {
 
   import LOGGER._
 
@@ -557,17 +558,59 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
   }
 
 
+  import views.html.market.lk.mart.{invite => martInvite}
+
   // Обработка инвайтов на управление ТЦ.
-  val martInviteAcceptM = Form(passwordWithConfirmM)
+  val martInviteAcceptM = Form(optional(passwordWithConfirmM))
 
   /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
-  def martInviteAcceptForm(martId: MartId_t, eActId: String) = MaybeAuth.async { implicit request =>
-    ???
+  def martInviteAcceptForm(martId: MartId_t, eActId: String) = inviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
+    Ok(martInvite.inviteAcceptFormTpl(mmart, eAct, martInviteAcceptM))
   }
 
   /** Сабмит формы подтверждения инвайта на управление ТЦ. */
-  def martInviteAcceptFormSubmit(martId: MartId_t, eActId: String) = MaybeAuth.async { implicit request =>
-    ???
+  def martInviteAcceptFormSubmit(martId: MartId_t, eActId: String) = inviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
+    // Если юзер залогинен, то форму биндить не надо
+    val formBinded = martInviteAcceptM.bindFromRequest()
+    formBinded.fold(
+      {formWithErrors =>
+        debug(s"martInviteAcceptFormSubmit($martId, act=$eActId): Form bind failed: ${formWithErrors.errors}")
+        NotAcceptable(martInvite.inviteAcceptFormTpl(mmart, eAct, formWithErrors))
+      },
+      {passwordOpt =>
+        if (passwordOpt.isEmpty && !request.isAuth) {
+          val form1 = formBinded
+            .withError("pw1", "error.required")
+            .withError("pw2", "error.required")
+          NotAcceptable(martInvite.inviteAcceptFormTpl(mmart, eAct, form1))
+        } else {
+          // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
+          eAct.delete.flatMap { isDeleted =>
+            val newPersonIdOptFut: Future[Option[String]] = if (!request.isAuth) {
+              MPerson(lang = lang.code).save flatMap { personId =>
+                EmailPwIdent.applyWithPw(email = eAct.email, personId=personId, password = passwordOpt.get, isVerified = true)
+                  .save
+                  .map { emailPwIdentId => Some(personId) }
+              }
+            } else {
+              Future successful None
+            }
+            // Для обновления полей MMart требуется доступ к personId. Дожидаемся сохранения юзера...
+            newPersonIdOptFut flatMap { personIdOpt =>
+              val personId = (personIdOpt orElse request.pwOpt.map(_.personId)).get
+              if (!(mmart.personIds contains personId)) {
+                mmart.personIds ::= personId
+              }
+              mmart.save.map { _martId =>
+                Redirect(routes.MarketMartLk.martShow(martId))
+                  .flashing("success" -> "Регистрация завершена.")
+                  .withSession(username -> personId)
+              }
+            }
+          }
+        }
+      }
+    )
   }
 
   private def inviteAcceptCommon(martId: MartId_t, eaId: String)(f: (EmailActivation, MMart) => AbstractRequestWithPwOpt[AnyContent] => Future[SimpleResult]) = {
@@ -579,8 +622,8 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
               case Some(mmart) => f(eAct, mmart)(request)
               case None =>
                 // should never occur
-                error(s"inviteAcceptCommon($martId, eaId=$eaId): Shop not found, but code for shop exist. This should never occur.")
-                NotFound //(invite.inviteInvalidTpl("shop.not.found"))
+                error(s"inviteAcceptCommon($martId, eaId=$eaId): Mart not found, but code for mart exist. This should never occur.")
+                NotFound(martInvite.inviteInvalidTpl("mart.not.found"))
             }
 
           case other =>
@@ -589,7 +632,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
             // TODO Надо проверить, есть ли у юзера права на магазин, и если есть, то значит юзер дважды засабмиттил форму, и надо его сразу отредиректить в его магазин.
             // TODO Может и быть ситуация, что юзер всё ещё не залогинен, а второй сабмит уже тут. Нужно это тоже как-то обнаруживать. Например через временную сессионную куку из формы.
             warn(s"TODO I need to handle already activated requests!!!")
-            NotFound //(invite.inviteInvalidTpl("shop.activation.expired.or.invalid.code"))
+            NotFound(martInvite.inviteInvalidTpl("mart.activation.expired.or.invalid.code"))
         }
       }
     }

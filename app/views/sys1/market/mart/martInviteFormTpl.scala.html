@@ -40,4 +40,9 @@
     @inputText(imf("email"))
     <input type="submit" value="Отправить инвайт"/>
   }
+
+  <h2>Отладка</h2>
+  Отобразить тело invite-письма:
+  <a href="@routes.SysMarket.showMartEmailInvite(mmart.id.get, isHtml = true)">HTML</a>
+  <a href="@routes.SysMarket.showMartEmailInvite(mmart.id.get, isHtml = false)">TXT</a>
 }

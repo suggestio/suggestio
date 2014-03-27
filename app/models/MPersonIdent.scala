@@ -12,6 +12,7 @@ import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
 import scala.collection.JavaConversions._
+import scala.collection.Map
 
 /**
  * Suggest.io
@@ -41,11 +42,16 @@ object MPersonIdent {
       ))
   }
   
-  def generateMappingStaticFields: List[Field] = List(
+  def generateMappingStaticFields: List[Field] = {
+    // Для надежной защиты от двойных добавлений.
+    FieldId(path = KEY_ESFN) :: generateMappingStaticFieldsMin
+  }
+
+  def generateMappingStaticFieldsMin: List[Field] = List(
     FieldSource(enabled = true),
-    FieldAll(enabled = false),
-    FieldId(path = KEY_ESFN)  // Для надежной защиты от двойных добавлений.
+    FieldAll(enabled = false)
   )
+
   def generateMappingProps: List[DocField] = List(
     FieldString(
       id = PERSON_ID_ESFN,
@@ -258,7 +264,7 @@ case class EmailPwIdent(
 
 /** Статическая часть модели [[EmailActivation]].
   * Модель нужна для хранения ключей для проверки/активации почтовых ящиков. */
-object EmailActivation extends EsModelStaticT[EmailActivation] with MPersonIdentSubmodelStatic {
+object EmailActivation extends EsModelStaticT[EmailActivation] {
 
   val ES_TYPE_NAME: String = "mpiEmailAct"
 
@@ -275,9 +281,11 @@ object EmailActivation extends EsModelStaticT[EmailActivation] with MPersonIdent
 
   protected def dummy(id: String) = EmailActivation(id = Option(id), email = null, key = null)
 
+  def generateMappingProps: List[DocField] = MPersonIdent.generateMappingProps
+
   /** Сборка static-полей маппинга. В этом маппинге должен быть ttl, чтобы старые записи автоматически выпиливались. */
   override def generateMappingStaticFields: List[Field] = {
-    FieldTtl(enabled = true, default = TTL_DFLT) :: super.generateMappingStaticFields
+    FieldTtl(enabled = true, default = TTL_DFLT) :: MPersonIdent.generateMappingStaticFieldsMin
   }
 
   def applyKeyValue(acc: EmailActivation): PartialFunction[(String, AnyRef), Unit] = {

@@ -22,7 +22,7 @@ import net.sf.jmimemagic.Magic
  * Created: 03.03.14 13:34
  * Description: Контроллер личного кабинета для арендатора, т.е. с точки зрения конкретного магазина.
  */
-object MarketShopLk extends SioController with PlayMacroLogsImpl {
+object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForceProtect {
 
   import LOGGER._
 
@@ -198,7 +198,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
   val inviteAcceptAnonFormM: InviteAcceptFormM = {
     Form(tuple(
       "shopName" -> shopNameM,
-      "password" -> passwordWithConfirmM
+      "password" -> passwordWithConfirmSomeM
     ))
   }
 
@@ -207,7 +207,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
     "shopName" -> shopNameM
       // Чтобы сохранить совместимость с anon-формой, добавляем в маппинг пустое поле пароля с None вместо нового пароля.
       .transform(
-        { shopName => (shopName, None.asInstanceOf[Option[String]]) },
+        { shopName => (shopName, Option.empty[String]) },
         { c: (String, Option[String]) => c._1 }
       )
   )

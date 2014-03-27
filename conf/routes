@@ -182,6 +182,7 @@ POST /sys/market/mart/:id/edit          controllers.SysMarket.martEditFormSubmit
 POST /sys/market/mart/:id/delete        controllers.SysMarket.martDeleteSubmit(id: String)
 GET  /sys/market/mart/:id/invite        controllers.SysMarket.martInviteForm(id: String)
 POST /sys/market/mart/:id/invite        controllers.SysMarket.martInviteFormSubmit(id: String)
+GET  /sys/market/mart/:id/invite/email  controllers.SysMarket.showMartEmailInvite(id, isHtml: Boolean)
 # sys.market.shop
 GET  /sys/market/shops                  controllers.SysMarket.shopsList
 GET  /sys/market/shop/add               controllers.SysMarket.shopAddForm

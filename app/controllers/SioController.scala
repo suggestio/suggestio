@@ -37,6 +37,10 @@ trait SioController extends Controller with ContextT {
 
   implicit def txt2jsStr(txt: TxtFormat.Appendable) = JsString(txt)
 
+}
+
+
+trait BruteForceProtect {
 
   val INVITE_CHECK_LAG_DURATION = 333 millis
 
@@ -51,5 +55,6 @@ trait SioController extends Controller with ContextT {
     }
     lagPromise.future
   }
+
 }
 

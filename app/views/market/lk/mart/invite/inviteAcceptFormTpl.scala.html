@@ -5,14 +5,14 @@
 @import helper._
 
 @market.lk.lkBase("Подтверждение регистрации") {
-
+  <br/><br/><br/><br/><br/>
   <p>Торговый центр: @mmart.name</p>
   <p>Email: @eAct.email</p>
 
   @form(routes.MarketMartLk.martInviteAcceptFormSubmit(mmart.id.get, eAct.id.get)) {
 
     @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
-    @if(ctx.isAuth) {
+    @if(!ctx.isAuth) {
       @* Юзер вводит пароли. *@
       <table cellpadding="0" cellspacing="0" class="input-wrap pass">
         <tr>

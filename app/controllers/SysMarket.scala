@@ -616,5 +616,20 @@ object SysMarket extends SioController with MacroLogsImpl {
     }
   }
 
+  /** Отрендериить тела email-сообщений инвайта передачи прав на ТЦ. */
+  def showMartEmailInvite(martId: MartId_t, isHtml: Boolean) = IsSuperuser.async { implicit request =>
+    MMart.getById(martId) map {
+      case Some(mmart) =>
+        val eAct = EmailActivation("asdasd@kde.org", key=martId, id = Some("123123asdasd_-123"))
+        val ctx = implicitly[Context]
+        if (isHtml)
+          Ok(views.html.market.lk.mart.invite.emailMartInviteTpl(mmart, eAct)(ctx))
+        else
+          Ok(views.txt.market.lk.mart.invite.emailMartInviteTpl(mmart, eAct)(ctx) : String)
+
+      case None => martNotFound(martId)
+    }
+  }
+
 }
 
