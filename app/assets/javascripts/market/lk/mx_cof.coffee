@@ -12,10 +12,9 @@ $(document).ready ->
 
   cbca.editAdPage = EditAdPage
   cbca.editAdPage.init()
-  cbca.editAdPage.updatePreview()
-
 
   cbca.common = new CbcaCommon()
+  cbca.editAdPage.updatePreview()
 
 
   if (typeof tinymce != 'undefined')
