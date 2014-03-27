@@ -14,10 +14,10 @@
 }
 
 @* Подшаблон для выбора цвета фона discount-шаблона. *@
-@tplColorItem(color: String) = {
+@tplColorItem(color: String, colorId: String) = {
   <div class="item">
-    <input type="checkbox" class="one-checkbox" name="ad.offer.template.color" value="@color" data-name="mask-color" data-value="@color"
-    @if(af("ad.offer.template.color").value.exists(_ == color)) {data-checked = "checked"}
+    <input type="checkbox" class="one-checkbox" name="ad.offer.template.color" value="@colorId" data-name="mask-color" data-value="@color"
+    @if(af("ad.offer.template.color").value.exists(_ == colorId)) {data-checked = "checked"}
     @if(!af("ad.offer.template.color").value && color == "ce2222") {data-checked = "checked"} />
     <div class="color" style="background: #@color;">&nbsp;</div>
   </div>
@@ -108,10 +108,10 @@
       </td>
 
       <td class="right">
-        @tplColorItem("ce2222")
-        @tplColorItem("fee800")
-        @tplColorItem("e3a51a")
-        @tplColorItem("4fce22")
+        @tplColorItem("ce2222", "1")
+        @tplColorItem("fee800", "2")
+        @tplColorItem("e3a51a", "3")
+        @tplColorItem("4fce22", "4")
       </td>
     </tr>
   </table>

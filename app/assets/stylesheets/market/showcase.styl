@@ -1,5 +1,6 @@
 @import 'fonts.styl'
 @import 'categories.styl'
+@import 'discount-templates.styl'
 
 spriteurl = url('/assets/images/sio-market-sprite.png')
 spritesize = 300px 100px
@@ -48,7 +49,7 @@ transition( param )
     position: absolute
     left: 15px
     top: 14px 
-    z-index: 1002
+    z-index: 1002 
     overflow: hidden
     width: 25px
     height: 27px
@@ -325,11 +326,10 @@ transition( param )
       text-align: center
       background: url('/assets/images/market/discount.png') no-repeat
       background-size: 965px 800px
-      background-position: 0 0
       padding: 30px 0
       height: 80px
       width: 140px
-
+      letter-spacing: -5px
 
   .sm-screen
     overflow: hidden
