@@ -353,8 +353,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
         val formBinded = formM.bindFromRequest()
         formBinded.fold(
           {formWithErrors =>
-            debug(logPrefix + "Bind failed: \n" +
-              formWithErrors.errors.map { e => "  " + e.key + " -> " + e.message }.mkString("\n"))
+            debug(logPrefix + "Bind failed: \n" + formatFormErrors(formWithErrors))
             createShopAdFormError(formWithErrors, catOwnerId, mshop)
           },
           {case (imgKey, logoImgIdOpt, mmad) =>
