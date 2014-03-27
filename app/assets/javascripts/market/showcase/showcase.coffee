@@ -325,7 +325,7 @@ siomart =
   #########
   offers :
     is_locked : false
-    auto_change_delay : 5000
+    auto_change_delay : 7000
 
     ## Загрузить все офферы для магазина
     load_for_shop_id : ( shop_id ) ->
