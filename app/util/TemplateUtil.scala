@@ -1,7 +1,8 @@
 package util
 
-import java.text.NumberFormat
+import java.text.{DecimalFormat, NumberFormat}
 import java.util.Currency
+import java.math.RoundingMode
 
 /**
  * Suggest.io
@@ -11,6 +12,7 @@ import java.util.Currency
  */
 object TplDataFormatUtil {
 
+  /** Напечатать цену согласно локали и валюте. */
   def formatPrice(price: Float, currency: Currency)(implicit ctx: Context): String = {
     // TODO следует залезать в локаль клиента и форматировать через неё?
     // TODO Нужна поддержка валют в ценах?
@@ -19,10 +21,23 @@ object TplDataFormatUtil {
     currFmt.format(price)
   }
 
-  def formatPercent(pc: Float)(implicit ctx: Context): String = {
-    // TODO Подцеплять локаль клиента
+
+  private val pcFmt = {
     val currFmt = NumberFormat.getPercentInstance
-    currFmt.setMaximumFractionDigits(0)
-    currFmt.format(pc)
+    currFmt.setMinimumFractionDigits(0)
+    currFmt.setMaximumFractionDigits(2)
+    currFmt
   }
+  /** Напечатать долю в процентах в рамках локали. */
+  def formatPercent(share: Float)(implicit ctx: Context): String = {
+    // TODO Подцеплять локаль клиента
+    pcFmt.format(share)
+  }
+
+
+  private val pcRawFloatFmt = new DecimalFormat("#.##")
+  def formatPercentRaw(pc: Float)(implicit ctx: Context): String = {
+    pcRawFloatFmt.format(pc)
+  }
+
 }
