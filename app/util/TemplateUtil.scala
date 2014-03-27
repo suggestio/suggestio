@@ -19,4 +19,9 @@ object TplDataFormatUtil {
     currFmt.format(price)
   }
 
+  def formatPercent(pc: Float)(implicit ctx: Context): String = {
+    // TODO Подцеплять локаль клиента
+    val currFmt = NumberFormat.getPercentInstance
+    currFmt.format(pc)
+  }
 }

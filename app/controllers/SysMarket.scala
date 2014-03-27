@@ -307,7 +307,8 @@ object SysMarket extends SioController with MacroLogsImpl {
               mail.setFrom("no-reply@suggest.io")
               mail.setRecipient(email1)
               val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
-              mail.sendHtml(
+              mail.send(
+                bodyText = views.txt.market.lk.mart.invite.emailMartInviteTpl(mmart, eAct)(ctx),
                 bodyHtml = views.html.market.lk.mart.invite.emailMartInviteTpl(mmart, eAct)(ctx)
               )
               // Письмо отправлено, вернуть админа назад в магазин

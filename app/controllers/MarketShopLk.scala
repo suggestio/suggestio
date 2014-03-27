@@ -6,13 +6,12 @@ import util.SiowebEsUtil.client
 import play.api.data._, Forms._
 import util.FormUtil._
 import util.acl._
-import models._, MShop.ShopId_t, MMart.MartId_t
+import models._
 import views.html.market.lk.shop._
 import play.api.mvc.{AnyContent, SimpleResult}
 import play.api.Play.current
 import concurrent.duration._
-import play.api.libs.concurrent.Akka
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
 import play.api.mvc.Security.username
 import util.img._
 import net.sf.jmimemagic.Magic
@@ -28,7 +27,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
   import LOGGER._
 
   /** Для защиты от брутфорса ключей активации используются задержки в работе функции проверку псевдослучайного ключа активации. */
-  val INVITE_CHECK_LAG_DURATION = {
+  override val INVITE_CHECK_LAG_DURATION = {
     val lagMs = current.configuration.getInt("market.lk.shop.invite.accept.lag_ms") getOrElse 333
     lagMs milliseconds
   }
@@ -197,24 +196,9 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
   /** Маппинг формы, которая рендерится будущему владельцу магазина (незареганному),
     * когда тот проходит по ссылки из письма-инвайта. */
   val inviteAcceptAnonFormM: InviteAcceptFormM = {
-    val passwordsM = tuple(
-      "pw1" -> passwordM,
-      "pw2" -> passwordM
-    )
-    .verifying("passwords.do.not.match", { pws => pws match {
-      case (pw1, pw2) => pw1 == pw2
-    }})
-    .transform[Option[String]](
-      { case (pw1, pw2) => Some(pw1) },
-      { _: AnyRef =>
-        // Назад пароли тут не возвращаем никогда. Форма простая, и ошибка может возникнуть лишь при вводе паролей.
-        val pw = ""
-        (pw, pw)
-      }
-    )
     Form(tuple(
       "shopName" -> shopNameM,
-      "password" -> passwordsM
+      "password" -> passwordWithConfirmM
     ))
   }
 
@@ -326,18 +310,6 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl {
         }
       }
     }
-  }
-
-  /** Система асинхронного платформонезависимого противодействия брутфорс-атакам. */
-  // TODO Надо вынести её код в util.
-  private def bruteForceProtect: Future[_] = {
-    // Для противодействию брутфорсу добавляем асинхронную задержку выполнения проверки по методике https://stackoverflow.com/a/17284760
-    // TODO Нужно лимитировать попытки по IP клиента. ip можно закидывать в cache с коротким ttl.
-    val lagPromise = Promise[Unit]()
-    Akka.system.scheduler.scheduleOnce(INVITE_CHECK_LAG_DURATION) {
-      lagPromise.success()
-    }
-    lagPromise.future
   }
 
 

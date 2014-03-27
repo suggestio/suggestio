@@ -55,6 +55,23 @@ object FormUtil {
     .verifying("password.too.short", {_.length > 5})
     .verifying("password.too.long", {_.length <= 1024})
 
+  /** Два поля: пароль и подтверждение пароля. Используется при регистрации пользователя. */
+  val passwordWithConfirmM = tuple(
+    "pw1" -> passwordM,
+    "pw2" -> passwordM
+  )
+  .verifying("passwords.do.not.match", { pws => pws match {
+    case (pw1, pw2) => pw1 == pw2
+  }})
+  .transform[Option[String]](
+    { case (pw1, pw2) => Some(pw1) },
+    { _: AnyRef =>
+      // Назад пароли тут не возвращаем никогда. Форма простая, и ошибка может возникнуть лишь при вводе паролей.
+      val pw = ""
+      (pw, pw)
+    }
+  )
+
   val nameM = nonEmptyText(maxLength = 64)
     .transform(strTrimSanitizeF, strIdentityF)
   def shopNameM = nameM

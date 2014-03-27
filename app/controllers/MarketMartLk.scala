@@ -22,6 +22,7 @@ import util.img.ImgInfo4Save
 import util.img.OrigImgIdKey
 import play.api.libs.json._
 import scala.concurrent.Future
+import play.api.mvc.{AnyContent, SimpleResult}
 
 /**
  * Suggest.io
@@ -557,15 +558,41 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl {
 
 
   // Обработка инвайтов на управление ТЦ.
+  val martInviteAcceptM = Form(passwordWithConfirmM)
 
   /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
-  def martInviteAcceptForm(martId: String, eActId: String) = MaybeAuth.async { implicit request =>
+  def martInviteAcceptForm(martId: MartId_t, eActId: String) = MaybeAuth.async { implicit request =>
     ???
   }
 
   /** Сабмит формы подтверждения инвайта на управление ТЦ. */
-  def martInviteAcceptFormSubmit(martId: String, eActId: String) = MaybeAuth.async { implicit request =>
+  def martInviteAcceptFormSubmit(martId: MartId_t, eActId: String) = MaybeAuth.async { implicit request =>
     ???
+  }
+
+  private def inviteAcceptCommon(martId: MartId_t, eaId: String)(f: (EmailActivation, MMart) => AbstractRequestWithPwOpt[AnyContent] => Future[SimpleResult]) = {
+    MaybeAuth.async { implicit request =>
+      bruteForceProtect flatMap { _ =>
+        EmailActivation.getById(eaId) flatMap {
+          case Some(eAct) if eAct.key == martId =>
+            MMart.getById(martId) flatMap {
+              case Some(mmart) => f(eAct, mmart)(request)
+              case None =>
+                // should never occur
+                error(s"inviteAcceptCommon($martId, eaId=$eaId): Shop not found, but code for shop exist. This should never occur.")
+                NotFound //(invite.inviteInvalidTpl("shop.not.found"))
+            }
+
+          case other =>
+            // Неверный код активации или id магазина. Если None, то код скорее всего истёк. Либо кто-то брутфорсит.
+            debug(s"inviteAcceptCommon($martId, eaId=$eaId): Invalid activation code (eaId): code not found. Expired?")
+            // TODO Надо проверить, есть ли у юзера права на магазин, и если есть, то значит юзер дважды засабмиттил форму, и надо его сразу отредиректить в его магазин.
+            // TODO Может и быть ситуация, что юзер всё ещё не залогинен, а второй сабмит уже тут. Нужно это тоже как-то обнаруживать. Например через временную сессионную куку из формы.
+            warn(s"TODO I need to handle already activated requests!!!")
+            NotFound //(invite.inviteInvalidTpl("shop.activation.expired.or.invalid.code"))
+        }
+      }
+    }
   }
 
 

@@ -1,4 +1,4 @@
-@(title: String, hPathAfter:Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit c:util.Context)
+@(title: String, hPathAfter:Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: util.Context)
 @import stuff._
 
 @* base-шаблон для системной панели suggest.io. *@
@@ -13,6 +13,11 @@
 </head>
 
 <body>
+    @* Рендер flash-нотификаций. *@
+    @ctx.flashMap.map { case (flashStatus, flashMsg) =>
+      <p>@flashStatus: @flashMsg</p>
+    }
+
 	<div class="sio-db-logo">
 		<a href="@routes.Sys.index"><img src="@routes.Assets.at("images/sio-dark-logo.png")"></a>
 	</div>
