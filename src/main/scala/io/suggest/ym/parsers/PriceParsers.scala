@@ -17,8 +17,7 @@ object PriceParsers extends JavaTokenParsers {
     _.replace(',', '.').toFloat
   }
 
-  type Price_t = (Float, Currency)
-  type PriceP_t = Parser[Price_t]
+  type PriceP_t = Parser[Price]
 
   // TODO Надо бы по-сильнее отделить валюты от парсеров цен.
   val currRUBc = Currency.getInstance("RUB")
@@ -28,7 +27,7 @@ object PriceParsers extends JavaTokenParsers {
     val rubl: Parser[_]   = "(?iu)[рp]([уy][б6](л[а-я]*)?)?\\.?".r
     val rouble: Parser[_] = "(?i)(r(ou|u|uo)b(le?s?)?|RUR)".r
     val currRUBp: Parser[_] = rubl | rouble
-    (floatP <~ currRUBp) ^^ { price => price -> currRUBc }
+    (floatP <~ currRUBp) ^^ { price => Price(price, currRUBc) }
   }
 
 
@@ -41,7 +40,7 @@ object PriceParsers extends JavaTokenParsers {
     val dollar: Parser[_] = "(?iu)(д[оo]лл?[аaоo][рpr]|[б6][aа][kк]+[cс])[а-я]{0,3}".r
     val prefixPrice = (dsign | usd) ~> floatP
     val postfixPrice = floatP <~ (dsign | usd | dollar)
-    (prefixPrice | postfixPrice) ^^ { floatPrice => (floatPrice, currUSDc) }
+    (prefixPrice | postfixPrice) ^^ { floatPrice => Price(floatPrice, currUSDc) }
   }
 
 
@@ -54,7 +53,7 @@ object PriceParsers extends JavaTokenParsers {
     val evro: Parser[_] = "(?iu)(й?[еэe])[вуuv][рr][оo]".r
     val prefixPrice = (eur | esign) ~> floatP
     val postixPrice = floatP <~ (eur | evro | esign)
-    (prefixPrice | postixPrice) ^^ { price => (price, currEURc) }
+    (prefixPrice | postixPrice) ^^ { price => Price(price, currEURc) }
   }
 
 
@@ -64,4 +63,16 @@ object PriceParsers extends JavaTokenParsers {
     priceRUBp | priceUSDp | priceEURp
   }
 
+
+  /** Неявный конвертер результата работы парсера в Option[T]. */
+  implicit def parseResult2Option[T](pr: ParseResult[T]): Option[T] = {
+    if (pr.successful)
+      Some(pr.get)
+    else
+      None
+  }
+
 }
+
+case class Price(price: Float, currency: Currency = PriceParsers.currRUBc)
+

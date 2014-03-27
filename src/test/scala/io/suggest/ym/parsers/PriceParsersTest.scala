@@ -65,7 +65,7 @@ class PriceParsersTest extends FlatSpec with Matchers {
     (s: String, result: Float) =>
       val pres = parse(p, s: String)
       pres.successful shouldBe true
-      val (price, curr) = pres.get
+      val Price(price, curr) = pres.get
       curr shouldBe curr
       price shouldBe result +- 0.02F
   }

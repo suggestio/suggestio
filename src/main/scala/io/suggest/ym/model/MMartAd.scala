@@ -41,7 +41,6 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
   val MODEL_ESFN        = "model"
   val PRICE_ESFN        = "price"
   val OLD_PRICE_ESFN    = "oldPrice"
-  val CURRENCY_CODE_ESFN = "currencyCode"
   val PANEL_ESFN        = "panel"
   // Категория по дефолту задана через id. Но при индексации заполняется ещё str, который include in all и помогает в поиске.
   val USER_CAT_ID_ESFN  = "userCat.id"
@@ -201,15 +200,20 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
     def floatValueField(iia: Boolean) = {
       FieldNumber(VALUE_ESFN,  fieldType = DocFieldTypes.float,  index = FieldIndexingVariants.no,  include_in_all = iia)
     }
+    def priceFields(iia: Boolean) = Seq(
+      floatValueField(iia),
+      fontField,
+      FieldString("currencyCode", include_in_all = false, index = FieldIndexingVariants.no),
+      FieldString("orig", include_in_all = false, index = FieldIndexingVariants.no)
+    )
     // Поле приоритета. На первом этапе null или число.
     val offerBodyProps = Seq(
       // product-поля
       FieldObject(VENDOR_ESFN, properties = Seq(stringValueField(1.5F), fontField)),
       FieldObject(MODEL_ESFN, properties = Seq(stringValueField(), fontField)),
       // TODO нужно как-то проанализировать цифры эти, округлять например.
-      FieldObject(PRICE_ESFN,  properties = Seq(floatValueField(iia = true), fontField)),
-      FieldObject(OLD_PRICE_ESFN,  properties = Seq(floatValueField(iia = false), fontField)),
-      FieldString(CURRENCY_CODE_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
+      FieldObject(PRICE_ESFN,  properties = priceFields(iia = true)),
+      FieldObject(OLD_PRICE_ESFN,  properties = priceFields(iia = false)),
       // discount-поля
       FieldObject(TEXT1_ESFN, properties = Seq(stringValueField(1.1F), fontField)),
       FieldObject(DISCOUNT_ESFN, properties = Seq(floatValueField(iia = true), fontField)),
@@ -509,19 +513,13 @@ object MMartAdProduct {
   def deserialize(jsObject: Any) = JacksonWrapper.convert[MMartAdProduct](jsObject)
 }
 
+@JsonIgnoreProperties(Array("currencyCode")) // 27.03.2014 Было удалено поле до 1-запуска. Потом можно это удалить.
 case class MMartAdProduct(
   vendor:   MMAdStringField,
-  price:    MMAdFloatField,
-  oldPrice: Option[MMAdFloatField],
-  var currencyCode: String = CURRENCY_CODE_DFLT
+  price:    MMAdPrice,
+  oldPrice: Option[MMAdPrice]
 ) extends MMartAdOfferT {
-  // TODO convert не подхватывает дефолтовые значения если валюта в json отсутствует, и получается null в currencyCode.
-  //      Из-за этого var + костыль в конструкторе
-  if (currencyCode == null)
-    currencyCode = CURRENCY_CODE_DFLT
-
   @JsonIgnore def offerType = MMartAdOfferTypes.PRODUCT
-  @JsonIgnore lazy val currency = Currency.getInstance(currencyCode)
 }
 
 object MMartAdDiscount {
@@ -597,6 +595,17 @@ case class MMartAdTAPhone(align: String)
 case class MMartAdTATablet(alignTop: String, alignBottom: String)
 case class MMartAdTextAlign(phone: MMartAdTAPhone, tablet: MMartAdTATablet)
 
+/** Поле, содержащее цену. */
+case class MMAdPrice(value: Float, var currencyCode: String, var orig: String, font: MMAdFieldFont) {
+  // TODO Обновление версий: добавлены два поля. Потом можно их за-val'ить и удалить null-проверки в конструкторе
+  if (currencyCode == null)
+    currencyCode = CURRENCY_CODE_DFLT
+  if (orig == null)
+    orig = value.toString
+
+  @JsonIgnore
+  lazy val currency = Currency.getInstance(currencyCode)
+}
 
 /** Допустимые значения textAlign-полей. */
 object TextAlignValues extends Enumeration {
