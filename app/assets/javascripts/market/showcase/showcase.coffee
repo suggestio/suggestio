@@ -302,6 +302,19 @@ siomart =
     event.preventDefault()
     return false
 
+  #########################################
+  ## Показать / скрыть экран со списком магазинов
+  #########################################
+  open_shopList_screen : ( event ) ->
+    siomart.utils.ge('smShopListScreen').style.display = 'block'
+    event.preventDefault()
+    return false
+
+  close_shopList_screen : ( event ) ->
+    siomart.utils.ge('smShopListScreen').style.display = 'none'
+    event.preventDefault()
+    return false
+
   ######################################################
   ## Открыть экран с предупреждением о выходе из маркета
   ######################################################
@@ -479,6 +492,8 @@ siomart =
       this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), _event, siomart.close_mart
       this.utils.add_single_listener this.utils.ge('smCategoriesButton'), _event, siomart.open_categories_screen
       this.utils.add_single_listener this.utils.ge('smCloseCategoriesButton'), _event, siomart.close_categories_screen
+      this.utils.add_single_listener this.utils.ge('smShopListButton'), _event, siomart.open_shopList_screen
+
 
       this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), _event, siomart.exit_close_screen
 

@@ -1,0 +1,35 @@
+@(mshopMap: Map[ShopId_t, MShop], mmart:MMart)(implicit ctx:util.Context)
+
+<div class="sm-shopList-screen" id="smShopListScreen">
+
+  @* Поле ввода поиска *@
+  <div class="search-bar">
+    <div class="sb-back-icon" id="smCloseCategoriesButton"></div>
+    <div class="sb-search-field">
+
+      <div class="sb-sf-container">
+        <input id="smSearchField" type="text" placeholder="ВОСПОЛЬЗУЙТЕСЬ ПОИСКОМ"/>
+      </div>
+    </div>
+    <div class="sb-search-icon"></div>
+  </div>
+
+  <div class="sm-shops-list">
+    @mshopMap.values.groupBy(_.name.head.toUpper).mapValues(_.toSeq.sortBy(_.name)).toSeq.sortBy(_._1).map { case (letter, mshops) =>
+
+      <div class="item">
+        <div class="letter">
+          @letter
+        </div>
+
+        @mshops.map { mshop =>
+          <a class="shop" href="#">
+            @mshop.name
+          </a>
+        }
+      </div>
+
+    }
+  </div>
+
+</div>
