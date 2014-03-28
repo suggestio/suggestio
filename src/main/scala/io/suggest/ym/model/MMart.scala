@@ -12,6 +12,7 @@ import io.suggest.model._
 import io.suggest.model.EsModel._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.JacksonWrapper
+import io.suggest.util.MyConfig.CONFIG
 
 /**
  * Suggest.io
@@ -46,7 +47,8 @@ object MMart extends EsModelStaticT[MMart] {
     FieldString(PHONE_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
     FieldString(PERSON_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
     FieldString(LOGO_IMG_ID, include_in_all = false, index = FieldIndexingVariants.no),
-    FieldString(COLOR_ESFN, include_in_all = false, index = FieldIndexingVariants.no)
+    FieldString(COLOR_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
+    FieldNumber(MMartSettings.MAX_L1_ADS_SHOWN_ESFN, fieldType = DocFieldTypes.integer, include_in_all = false, index = FieldIndexingVariants.no)
   )
 
 
@@ -61,6 +63,9 @@ object MMart extends EsModelStaticT[MMart] {
     case (PERSON_ID_ESFN, value)      => acc.personIds = JacksonWrapper.convert[List[String]](value)
     case (LOGO_IMG_ID, value)         => acc.logoImgId = Option(stringParser(value))
     case (COLOR_ESFN, value)          => acc.color = Option(stringParser(value))
+    // Сеттинг
+    case (MMartSettings.MAX_L1_ADS_SHOWN_ESFN, v) =>
+      acc.settings.supL1MaxAdsShown = intParser(v)
   }
 
   protected def dummy(id: String) = MMart(
@@ -147,6 +152,7 @@ case class MMart(
   var personIds     : List[String],
   var color         : Option[String] = None,
   var logoImgId     : Option[String] = None,
+  settings          : MMartSettings = new MMartSettings,
   id                : Option[MMart.MartId_t] = None,
   var dateCreated   : DateTime = null
 ) extends EsModelT[MMart] with BuyPlaceT[MMart] with MCompanySel with CompanyShopsSel with MartShopsSel {
@@ -178,6 +184,7 @@ case class MMart(
       acc.array(PERSON_ID_ESFN, personIds : _*)
     if (color.isDefined)
       acc.field(COLOR_ESFN, color.get)
+    settings writeXContent acc
     acc.field(DATE_CREATED_ESFN, dateCreated)
   }
 
@@ -210,5 +217,25 @@ trait MMartOptSel {
 trait CompanyMartsSel {
   def companyId: CompanyId_t
   def companyMarts(implicit ec:ExecutionContext, client: Client) = getByCompanyId(companyId)
+}
+
+
+object MMartSettings {
+  /** Дефолтовое максимальное кол-во отображаемых карточек в магазине. */
+  val MAX_L1_ADS_SHOWN = CONFIG.getInt("mmart.settings.level.mart.shown.max.dflt") getOrElse 2
+
+  /** Названия settings-полей. */
+  val MAX_L1_ADS_SHOWN_ESFN = "settings.l1.ads.max"
+}
+
+case class MMartSettings(
+  var supL1MaxAdsShown: Int = MMartSettings.MAX_L1_ADS_SHOWN
+) {
+  import MMartSettings._
+
+  /** writer json'а в аккумулятор. Сеттинги записываются прямо в текущем объекте по ключам "setting.*". */
+  def writeXContent(acc: XContentBuilder) {
+    acc.field(MAX_L1_ADS_SHOWN_ESFN, supL1MaxAdsShown)
+  }
 }
 

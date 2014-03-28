@@ -126,7 +126,7 @@ object MMartAdIndexed extends MacroLogsImpl {
   def deleteByShop(shopId: ShopId_t, inx2: MMartInx)(implicit ec: ExecutionContext, client: Client): Future[Int] = {
     client.prepareDeleteByQuery(inx2.targetEsInxName)
       .setTypes(inx2.esType)
-      .setQuery(MMartAd.shopIdQuery(shopId))
+      .setQuery(MMartAd.shopSearchQuery(shopId))
       .execute()
       .map { _.iterator().size }
   }

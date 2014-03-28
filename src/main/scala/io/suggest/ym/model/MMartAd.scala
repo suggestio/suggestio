@@ -19,6 +19,7 @@ import org.joda.time.DateTime
 import com.github.nscala_time.time.OrderingImplicits._
 import java.util.Currency
 import io.suggest.util.SioConstants.CURRENCY_CODE_DFLT
+import org.elasticsearch.action.search.SearchType
 
 /**
  * Suggest.io
@@ -81,8 +82,6 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
     )
   }
 
-  def shopIdQuery(shopId: ShopId_t) = QueryBuilders.termQuery(SHOP_ID_ESFN, shopId)
-
   /**
    * Найти все рекламные карточки магазина.
    * @param shopId id магазина
@@ -91,7 +90,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
   def findForShop(shopId: ShopId_t)(implicit ec: ExecutionContext, client: Client): Future[Seq[MMartAd]] = {
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
-      .setQuery(shopIdQuery(shopId))
+      .setQuery(shopSearchQuery(shopId))
       .addSort(DATE_CREATED_ESFN, SortOrder.DESC)
       .execute()
       .map { searchResp2list }
@@ -104,11 +103,38 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
    * @return Список результатов.
    */
   def findForShopRt(shopId: ShopId_t)(implicit ec: ExecutionContext, client: Client): Future[List[MMartAd]] = {
-    findRt(shopIdQuery(shopId))
+    findRt(shopSearchQuery(shopId))
   }
 
-  // TODO Почему-то сортировка работает задом наперёд, и reverse не требует.
-  private def sortResults(mads: List[MMartAd]) = mads.sortBy(_.dateCreated)
+  private def sortResults(mads: List[MMartAd]) = mads.sortBy(_.dateCreated).reverse
+  private def martQuery(martId: MartId_t) = QueryBuilders.termQuery(MART_ID_ESFN, martId)
+  private def martSearchQuery(martId: MartId_t, shopMustMiss: Boolean, withLevels: Option[Seq[AdShowLevel]]) = {
+    var query: QueryBuilder = martQuery(martId)
+    if (shopMustMiss) {
+      val shopMissingFilter = FilterBuilders.missingFilter(SHOP_ID_ESFN)
+      query = QueryBuilders.filteredQuery(query, shopMissingFilter)
+    }
+    searchQuery(query, withLevels)
+  }
+  private def searchQuery(query0: QueryBuilder, withLevels: Option[Seq[AdShowLevel]]): QueryBuilder = {
+    if (withLevels.isDefined) {
+      val lvlSet = withLevels.get
+      // Нужен фильтр по уровням.
+      val lvlFilter = if (lvlSet.isEmpty) {
+        // нужна реклама без уровней вообще
+        FilterBuilders.missingFilter(SHOW_LEVELS_ESFN)
+      } else {
+        FilterBuilders.termsFilter(SHOW_LEVELS_ESFN, lvlSet : _*)
+      }
+      QueryBuilders.filteredQuery(query0, lvlFilter)
+    } else {
+      query0
+    }
+  }
+  private[model] def shopSearchQuery(shopId: ShopId_t, withLevels: Option[Seq[AdShowLevel]] = None) = {
+    val query = QueryBuilders.termQuery(SHOP_ID_ESFN, shopId)
+    searchQuery(query, withLevels)
+  }
 
   /**
    * Реалтаймовый поиск карточек в рамках ТЦ для отображения в ЛК ТЦ.
@@ -119,14 +145,21 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
    * @return Список карточек, относящихся к ТЦ.
    */
   def findForMartRt(martId: MartId_t, shopMustMiss: Boolean)(implicit ec: ExecutionContext, client: Client): Future[List[MMartAd]] = {
-    var query: QueryBuilder = QueryBuilders.termQuery(MART_ID_ESFN, martId)
-    if (shopMustMiss) {
-      val shopMissingFilter = FilterBuilders.missingFilter(SHOP_ID_ESFN)
-      query = QueryBuilders.filteredQuery(query, shopMissingFilter)
-    }
+    val query = martSearchQuery(martId, shopMustMiss, withLevels = None)
     findRt(query)
   }
 
+  /** Посчитать кол-во объяв для указанного ТЦ. private - пока не используется за пределами модели. */
+  private def countForMart(martId: MartId_t, shopMustMiss: Boolean, withLevels: Option[Seq[AdShowLevel]])(implicit ec: ExecutionContext, client: Client): Future[Long] = {
+    val query = martSearchQuery(martId, shopMustMiss, withLevels)
+    count(query)
+  }
+
+  /** Посчитать рекламные карточки для магазина. private - пока не используется за пределами модели. */
+  private def countForShop(shopId: ShopId_t, withLevels: Option[Seq[AdShowLevel]])(implicit ec: ExecutionContext, client: Client): Future[Long] = {
+    val query = shopSearchQuery(shopId, withLevels)
+    count(query)
+  }
 
   /** common-функция для запросов в реальном времени. */
   private def findRt(query: QueryBuilder)(implicit ec: ExecutionContext, client: Client): Future[List[MMartAd]] = {
@@ -284,31 +317,67 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
     newDocFieldsXCB.endArray().endObject()
   }
 
+
   /**
    * Обновить допустимые уровни отображения рекламы на указанное значение.
+   * private - потому что пока за пределами класса-компаньона не используется.
    * @return Фьючерс для синхронизации.
    */
   private def setShowLevels(thisAd: MMartAd)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
     // Если в новый уровнях нет уровней, относящихся к singleton-уровням, то обновляем по-быстрому.
-    val singletonLevels = thisAd.showLevels intersect SHOP_LEVELS_SINGLETON
-    val adId = thisAd.id.get
-    if (!thisAd.isShopAd || singletonLevels.isEmpty) {
-      val resultFut: Future[UpdateResponse] = client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, adId)
-        .setDoc(mkLevelsUpdateDoc(thisAd.showLevels))
-        .execute()
-      // Уведомить всех о том, что в текущей рекламе были изменения.
-      resultFut onSuccess { case updateResp =>
-        sn publish AdSavedEvent(thisAd)
-      }
-      resultFut
+    if (thisAd.showLevels.isEmpty) {
+      updateShowLevels(thisAd)
     } else {
-      trace(s"setShowLevels(${thisAd.id.get}): Singleton level(s) enabled: ${singletonLevels.mkString(", ")}")
-      // Это магазинная реклама, и в текущем adId есть [новые] уровни, которые затрагивают singleton-ограничение. Нужно сделать апдейт во всех рекламах магазина, убрав их оттуда.
-      findForShop(thisAd.shopId.get) flatMap { allShopsAds =>
-        val (brb, mads) = allShopsAds.iterator
-          .map { mad =>
+      if (thisAd.isShopAd)
+        setShowLevelsShop(thisAd)
+      else
+        setShowLevelsMart(thisAd)
+    }
+  }
+
+
+  /** Обновление непустых уровней отображения для магазинной карточки. */
+  private def setShowLevelsShop(thisAd: MMartAd)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    val shopId = thisAd.shopId.get
+    val adId = thisAd.id.get
+    // Считаем кол-во реклам на нижнем уровне. Магазин может отображать только ограниченное кол-во рекламы на своём уровне.
+    import AdShowLevels.{LVL_SHOP  => l3}
+    val has3rdLvl = thisAd.showLevels contains l3
+    val thisCanAdd3rdLvlFut = if (has3rdLvl) {
+      val query1 = shopSearchQuery(shopId, withLevels = Some(Seq(l3)))
+      // Нужно НЕ считать текущую рекламу
+      val noIdFilter = FilterBuilders.notFilter(
+        FilterBuilders.termFilter("_id", adId)
+      )
+      val countNoThisQuery = QueryBuilders.filteredQuery(query1, noIdFilter)
+      val countFut = count(countNoThisQuery)
+      MShop.getById(shopId).map(_.get.settings.supLShopMaxAdsShown) flatMap { max =>
+        countFut map { currCount =>
+          currCount.toInt < max
+        }
+      }
+    } else {
+      Future successful false
+    }
+
+    // посчитать signleton-уровни и запустить обновление карточек
+    val singletonLevels = thisAd.showLevels intersect SHOP_LEVELS_SINGLETON
+    if (!singletonLevels.isEmpty) {
+      // В текущем adId есть [новые] уровни, которые затрагивают singleton-ограничение. Нужно сделать апдейт во всех рекламах магазина, убрав их оттуда.
+      lazy val logPrefix = s"setShowLevelsShop(${thisAd.id.get}): "
+      trace(logPrefix + "Singleton level(s) enabled: " + singletonLevels.mkString(", "))
+      findForShopRt(shopId) flatMap { allShopsAds =>
+        thisCanAdd3rdLvlFut flatMap { thisCanAdd3rdLvl =>
+          val (brb, mads) = allShopsAds.iterator.map { mad =>
             val lvls1 = if (mad.idOrNull == adId) {
-              thisAd.showLevels
+              val lvls2 = thisAd.showLevels
+              // Отфильтровываем 3й уровень, если предел кол-ва уровней пробит.
+              if (has3rdLvl && !thisCanAdd3rdLvl) {
+                debug(logPrefix + l3 + " level requested, but limit reached. Dropping it.")
+                lvls2.filter(_ != l3)
+              } else {
+                lvls2
+              }
             } else {
               mad.showLevels -- singletonLevels
             }
@@ -319,16 +388,65 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
           }.foldLeft (client.prepareBulk() -> List.empty[MMartAd]) {
             case ((bulk1, madsAcc), (mad, urb))  =>  bulk1.add(urb) -> (mad :: madsAcc)
           }
-        val resultFut = laFuture2sFuture(brb.execute())
-        resultFut onSuccess { case bulkResp =>
-          // Сообщить всем, что имело место обновления записей.
-          mads foreach { mad =>
-            sn publish AdSavedEvent(mad)
+          val resultFut = laFuture2sFuture(brb.execute())
+          resultFut onSuccess { case bulkResp =>
+            // Сообщить всем, что имело место обновления записей.
+            mads foreach { mad =>
+              sn publish AdSavedEvent(mad)
+            }
           }
+          resultFut
         }
-        resultFut
+      }
+
+    } else {
+      // singleton-уровней нет, но фильтровать по третьему уровню надо. Делаем это
+      if (has3rdLvl) {
+        thisCanAdd3rdLvlFut.flatMap { thisCanAdd3rdLvl =>
+          if (!thisCanAdd3rdLvl) {
+            thisAd.showLevels = thisAd.showLevels.filter(_ != l3)
+          }
+          updateShowLevels(thisAd)
+        }
+      } else {
+        updateShowLevels(thisAd)
       }
     }
+  }
+
+
+  /** Проверить кол-во рекламы для ТЦ, и если всё ок, то выполнить выставление уровней. */
+  private def setShowLevelsMart(thisAd: MMartAd)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    // Эта функция исходит из того, что ВКЛючается уровень. Т.к. уровень всего 1, то его отключение отрабаыватеся в setShowLevels().
+    import thisAd.martId
+    import AdShowLevels.{LVL_MART_SHOWCASE => l1}
+    val maxAdsFut = MMart.getById(thisAd.martId).map(_.get.settings.supL1MaxAdsShown)
+    val countQuery = martSearchQuery(martId, shopMustMiss = true, withLevels = Some(Seq(l1)))
+    // Нужно отсеять из подсчёта текущий id, если он там есть.
+    val idFilter = FilterBuilders.notFilter( FilterBuilders.termFilter(MART_ID_ESFN, thisAd.id.get) )
+    val count2query = QueryBuilders.filteredQuery(countQuery, idFilter)
+    count(count2query) flatMap { currAdsCount =>
+      maxAdsFut flatMap { maxAds =>
+        if (currAdsCount.toInt >= maxAds) {
+          debug(s"setShowLevelsMart(${thisAd.id.get}): $l1 level requested, but limit($maxAds) reached")
+          thisAd.showLevels = thisAd.showLevels.filter(_ != l1)
+        }
+        updateShowLevels(thisAd)
+      }
+    }
+  }
+
+  /** Просто отправить обновление рекламы в хранилище модели. */
+  private def updateShowLevels(thisAd: MMartAd)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    // Это немагазинная реклама, либо singleton-уровней нет.
+    val resultFut: Future[UpdateResponse] = client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, thisAd.id.get)
+      .setDoc(mkLevelsUpdateDoc(thisAd.showLevels))
+      .execute()
+    // Уведомить всех о том, что в текущей рекламе были изменения.
+    resultFut onSuccess { case updateResp =>
+      sn publish AdSavedEvent(thisAd)
+    }
+    resultFut
   }
 
 }

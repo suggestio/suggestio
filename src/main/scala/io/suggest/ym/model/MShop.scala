@@ -14,6 +14,7 @@ import org.elasticsearch.client.Client
 import io.suggest.event._
 import io.suggest.util.JacksonWrapper
 import org.elasticsearch.common.unit.Fuzziness
+import io.suggest.util.MyConfig.CONFIG
 
 /**
  * Suggest.io
@@ -43,6 +44,7 @@ object MShop extends EsModelStaticT[MShop] {
   val SETTING_SUP_IS_ENABLED      = SETTINGS_ESFN + ".sup.isEnabled"
   val SETTING_SUP_DISABLE_REASON  = SETTINGS_ESFN + ".sup.disableReason"
   val SETTING_SUP_WITH_LEVELS     = SETTINGS_ESFN + ".sup.withLevels"
+  val SETTING_SUP_LSHOP_SHOWN_ADS_MAX   = SETTINGS_ESFN + ".sup.levels.shop.ads.shown.max"
 
 
   def generateMappingStaticFields: List[Field] = List(
@@ -63,7 +65,8 @@ object MShop extends EsModelStaticT[MShop] {
     // settings: нужно их заполнять по мере появления настроек в MShopSettings.
     FieldBoolean(SETTING_SUP_IS_ENABLED, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
     FieldString(SETTING_SUP_DISABLE_REASON, include_in_all = false, index = FieldIndexingVariants.no),
-    FieldString(SETTING_SUP_WITH_LEVELS, include_in_all = false, index = FieldIndexingVariants.not_analyzed)
+    FieldString(SETTING_SUP_WITH_LEVELS, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
+    FieldNumber(SETTING_SUP_LSHOP_SHOWN_ADS_MAX, fieldType = DocFieldTypes.integer, include_in_all = false, index = FieldIndexingVariants.no)
   )
 
 
@@ -93,6 +96,8 @@ object MShop extends EsModelStaticT[MShop] {
       acc.settings.supDisableReason = Option(stringParser(v))
     case (SETTING_SUP_WITH_LEVELS, v: java.lang.Iterable[_]) =>
       acc.settings.supWithLevels = AdShowLevels.deserializeLevelsFrom(v)
+    case (SETTING_SUP_LSHOP_SHOWN_ADS_MAX, v) =>
+      acc.settings.supLShopMaxAdsShown = intParser(v)
   }
 
   /**
@@ -354,6 +359,7 @@ case class MShop(
       this.description = newMshop.description
       this.martFloor = newMshop.martFloor
       this.martSection = newMshop.martSection
+      this.settings.supLShopMaxAdsShown = newMshop.settings.supLShopMaxAdsShown
     }
   }
 
@@ -393,13 +399,22 @@ trait MShopSel {
 }
 
 
+object MShopSettings {
+
+  /** Дефолтовое максимальное кол-во отображаемых карточек в магазине. */
+  val MAX_LSHOP_ADS = CONFIG.getInt("mshop.settings.level.shop.shown.max.dflt") getOrElse 2
+
+}
+
 /** Представление распарсенных настроек MShop. */
 case class MShopSettings(
   var supIsEnabled: Boolean = true,
   var supDisableReason: Option[String] = None,
-  var supWithLevels: Set[AdShowLevel] = Set.empty
+  var supWithLevels: Set[AdShowLevel] = Set.empty,
+  var supLShopMaxAdsShown: Int = MShopSettings.MAX_LSHOP_ADS
   // !!! Перед добавлением новых полей, надо сначало добавить их в маппинг, а только потом внедрять поле !!!
 ) {
+
   /** writer json'а в аккумулятор. Сеттинги записываются прямо в текущем объекте по ключам "setting.*". */
   def writeXContent(acc: XContentBuilder) {
     acc.field(SETTING_SUP_IS_ENABLED, supIsEnabled)
@@ -412,6 +427,7 @@ case class MShopSettings(
       }
       acc.endArray()
     }
+    acc.field(SETTING_SUP_LSHOP_SHOWN_ADS_MAX, supLShopMaxAdsShown)
   }
 }
 

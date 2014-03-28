@@ -281,6 +281,20 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
       .execute()
   }
 
+  /**
+   * Примитив для рассчета кол-ва документов, удовлетворяющих указанному запросу.
+   * @param query Произвольный поисковый запрос.
+   * @return Кол-во найденных документов.
+   */
+  protected def count(query: QueryBuilder)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
+    client.prepareCount(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(query)
+      .execute()
+      .map { _.getCount }
+  }
+
+
   /** Если модели требуется выставлять routing для ключа, то можно делать это через эту функцию.
     * @param idOrNull id или null, если id отсутствует.
     * @return None если routing не требуется, иначе Some(String).
