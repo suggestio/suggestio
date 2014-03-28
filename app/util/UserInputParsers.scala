@@ -1,8 +1,6 @@
 package util
 
-import scala.util.parsing.combinator.JavaTokenParsers
-import io.suggest.ym.parsers.PriceParsers._
-import io.suggest.ym.parsers.Price
+import io.suggest.ym.parsers._
 
 /**
  * Suggest.io
@@ -10,12 +8,20 @@ import io.suggest.ym.parsers.Price
  * Created: 27.03.14 19:25
  * Description:
  */
-object UserInputParsers extends JavaTokenParsers {
+object UserInputParsers {
 
   /** Парсер для цены. Если валюта не указана, то используются рубли. */
   val priceParser = {
+    import PriceParsers._
     val dfltPriceParser = floatP ^^ { price => Price(price, currRUBc) }
     currPriceParser | dfltPriceParser
+  }
+
+
+  /** Парсер для процентных значений. */
+  val percentParser = {
+    import PercentParser._
+    floatP <~ opt(pcSignParser)
   }
 
 }
