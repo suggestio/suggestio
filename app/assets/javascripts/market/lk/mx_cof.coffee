@@ -57,6 +57,7 @@ $(document).on 'click', '.input-wrap .close', (event)->
   $wrap = $this.closest('.input-wrap')
   $wrap.find('.image-key').val('')
   $wrap.find('.image-preview').attr('src', cbca.emptyPhoto)
+  cbca.editAdPage.updatePreview()
 
 ##ПРЕВЬЮ РЕКЛАМНОЙ КАРТОЧКИ##
 $(document).on 'click', '.device', ->
@@ -277,7 +278,6 @@ CbcaCommon = () ->
       else
         $(this).removeAttr('checked')
 
-      console.log('1')
       event.stopPropagation()
 
 
