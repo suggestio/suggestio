@@ -22,7 +22,11 @@ object PersonWrapper {
    * @param session Сессия.
    * @return Option[PersonWrapper].
    */
-  def getFromSession(implicit session: Session): PwOpt_t = session.get(username).map { new PersonWrapper(_) }
+  def getFromSession(implicit session: Session): PwOpt_t = {
+    session.get(username).map {
+      PersonWrapper.apply
+    }
+  }
 
 
   /** Статическая функция проверки на принадлежность к админам вынесена сюда.
@@ -30,7 +34,10 @@ object PersonWrapper {
   def isSuperuser(pwOpt: PwOpt_t): Boolean = pwOpt.exists(_.isSuperuser)
 
 
-  /** Найти имя для пользователя. */
+  /** Асинхронно найти имя для пользователя в кеше или в хранилище модели.
+    * @param pwOpt Экземпляр PwOpt_t
+    * @return Фьючерс с юзернеймом.
+    */
   def findUserName(pwOpt: PwOpt_t): Future[Option[String]] = {
     if (pwOpt.isDefined) {
       MPerson.findUsernameCached(pwOpt.get.personId)
