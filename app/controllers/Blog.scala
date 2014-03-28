@@ -13,7 +13,7 @@ import play.api.data.Forms._
 import util.acl._
 import views.html.blog._
 import play.api.libs.concurrent.Execution.Implicits._
-import Application.http404
+import Application.http404AdHoc
 import util.SiowebEsUtil.client
 
 
@@ -57,7 +57,7 @@ object Blog extends SioController {
       case Some(record) =>
         Ok(_blogRecordTpl(record, preview=false))
 
-      case None => http404
+      case None => http404AdHoc
     }
   }
 
@@ -108,7 +108,7 @@ object Blog extends SioController {
         val formEdit = postFormM.fill(record)
         Ok(editFormTpl(record, formEdit))
 
-      case None => http404
+      case None => http404AdHoc
     }
   }
 
@@ -130,7 +130,7 @@ object Blog extends SioController {
           }
         )
 
-      case None => http404
+      case None => http404AdHoc
     }
   }
 

@@ -37,10 +37,13 @@ object IsMartAdmin extends PlayMacroLogsImpl {
   /** Код вызова проверки martID и выполнения того или иного экшена. */
   def invokeMartBlock[A](martId: MartId_t, request: Request[A], block: (AbstractRequestForMartAdm[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
+    val srmFut = SioReqMd.fromPwOpt(pwOpt)
     isMartAdmin(martId, pwOpt) flatMap {
       case Some(mmart) =>
-        val req1 = RequestForMartAdm(mmart, request, pwOpt)
-        block(req1)
+        srmFut flatMap { srm =>
+          val req1 = RequestForMartAdm(mmart, request, pwOpt, srm)
+          block(req1)
+        }
 
       case None =>
         IsAuth.onUnauth(request)
@@ -77,23 +80,27 @@ abstract class AbstractRequestForMartAdm[A](request: Request[A]) extends Abstrac
   def martId: MartId_t
   def mmart: MMart
 }
-case class RequestForMartAdm[A](mmart: MMart, request: Request[A], pwOpt: PwOpt_t)
+case class RequestForMartAdm[A](mmart: MMart, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
   extends AbstractRequestForMartAdm(request) {
   def martId: MartId_t = mmart.id.get
 }
 
 
-case class ShopMartAdRequest[A](ad: MMartAd, mmart:MMart, pwOpt: PwOpt_t, request : Request[A]) extends AbstractRequestWithPwOpt(request)
+case class ShopMartAdRequest[A](ad: MMartAd, mmart:MMart, pwOpt: PwOpt_t, request : Request[A], sioReqMd: SioReqMd)
+  extends AbstractRequestWithPwOpt(request)
 
 case class IsMartAdminShopAd(adId: String) extends ActionBuilder[ShopMartAdRequest] {
   protected def invokeBlock[A](request: Request[A], block: (ShopMartAdRequest[A]) => Future[SimpleResult]): Future[SimpleResult] = {
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    val srmFut = SioReqMd.fromPwOpt(pwOpt)
     MMartAd.getById(adId) flatMap {
       case Some(ad) =>
-        val pwOpt = PersonWrapper.getFromRequest(request)
         isMartAdmin(ad.martId, pwOpt) flatMap {
           case Some(mmart) =>
-            val req1 = ShopMartAdRequest(ad, mmart, pwOpt, request)
-            block(req1)
+            srmFut flatMap { srm =>
+              val req1 = ShopMartAdRequest(ad, mmart, pwOpt, request, srm)
+              block(req1)
+            }
 
           case None => IsAuth.onUnauth(request)
         }

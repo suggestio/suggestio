@@ -12,7 +12,7 @@ import util.ContextT
 import util.acl._
 import views.html.static._
 import views.html.help._
-import Application.http404
+import Application.http404AdHoc
 
 object Static extends Controller with ContextT {
 
@@ -44,7 +44,7 @@ object Static extends Controller with ContextT {
       case "images_settings"  => Ok(imagesSettingsTpl())
       case "design_settings"  => Ok(designSettingsTpl())
       case "setup"            => Ok(setupTpl())
-      case _                  => http404
+      case _                  => http404AdHoc
     }
   }
 

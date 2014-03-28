@@ -53,16 +53,20 @@ import IsShopAdm._
 case class IsShopAdm(shopId: ShopId_t) extends ActionBuilder[RequestForShopAdmFull] {
   protected def invokeBlock[A](request: Request[A], block: (RequestForShopAdmFull[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
+    val srmFut = SioReqMd.fromPwOpt(pwOpt)
     isShopAdminFull(shopId, pwOpt) flatMap {
       case Some(mshop) =>
-        val req1 = RequestForShopAdmFull(mshop, request, pwOpt)
-        block(req1)
+        srmFut flatMap { srm =>
+          val req1 = RequestForShopAdmFull(mshop, request, pwOpt, srm)
+          block(req1)
+        }
 
       case None => IsAuth onUnauth request
     }
   }
 }
 
-case class RequestForShopAdmFull[A](mshop: MShop, request: Request[A], pwOpt: PwOpt_t) extends AbstractRequestForShopAdm(request) {
+case class RequestForShopAdmFull[A](mshop: MShop, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
+  extends AbstractRequestForShopAdm(request) {
   def shopId: ShopId_t = mshop.id.get
 }

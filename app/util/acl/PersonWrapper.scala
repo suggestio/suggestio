@@ -4,6 +4,7 @@ import models.{MPerson, MPersonLinks}
 import play.api.mvc._, Security.username
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
+import scala.concurrent.Future
 
 object PersonWrapper {
 
@@ -12,7 +13,6 @@ object PersonWrapper {
   /**
    * Извечь из реквеста данные о залогиненности юзера. Функция враппер над getPersonWrapperFromSession().
    * @param request Реквест.
-   * @tparam A Подтип реквеста (не важен).
    * @return Option[PersonWrapper].
    */
   def getFromRequest(implicit request: RequestHeader) = getFromSession(request.session)
@@ -28,6 +28,16 @@ object PersonWrapper {
   /** Статическая функция проверки на принадлежность к админам вынесена сюда.
     * Используется обычно напрямую, т.к. у нас нет возможности добавить её напрямую в PwOpt_t. */
   def isSuperuser(pwOpt: PwOpt_t): Boolean = pwOpt.exists(_.isSuperuser)
+
+
+  /** Найти имя для пользователя. */
+  def findUserName(pwOpt: PwOpt_t): Future[Option[String]] = {
+    if (pwOpt.isDefined) {
+      MPerson.findUsernameCached(pwOpt.get.personId)
+    } else {
+      Future successful None
+    }
+  }
 }
 
 /**

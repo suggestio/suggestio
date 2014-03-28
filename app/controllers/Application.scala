@@ -1,13 +1,12 @@
 package controllers
 
 import play.api.mvc._
-import util.{PlayMacroLogsImpl, ContextImpl}
+import util.PlayMacroLogsImpl
 import util.acl._
 import views.html.crawl._
 import play.api.i18n.Lang
 import play.api.Play.current
 import scala.concurrent.Future
-import models.MPerson
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
 
@@ -55,13 +54,7 @@ object Application extends SioController with PlayMacroLogsImpl {
   }
 
 
-  /** Тело экшена, генерирующее страницу 404. Используется при минимальном окружении. */
-  def http404(implicit request: RequestHeader): SimpleResult = {
-    implicit val ctx = ContextImpl()
-    NotFound(views.html.static.http404Tpl())
-  }
-
   /** Враппер, генерящий фьючерс с телом экшена http404(RequestHeader). */
-  def http404Fut(implicit request: RequestHeader): Future[SimpleResult] = http404
+  def http404Fut(implicit request: RequestHeader): Future[SimpleResult] = http404AdHoc
 
 }

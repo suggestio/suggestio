@@ -5,8 +5,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel._
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext, future}
 import org.elasticsearch.client.Client
+import play.api.Play.current
+import play.api.cache.Cache
+import util.PlayMacroLogsImpl
 
 /**
  * Suggest.io
@@ -19,7 +22,9 @@ import org.elasticsearch.client.Client
  */
 
 // Статическая часть модели.
-object MPerson extends EsModelStaticT[MPerson] {
+object MPerson extends EsModelStaticT[MPerson] with PlayMacroLogsImpl {
+
+  import LOGGER._
 
   val ES_TYPE_NAME = "person"
 
@@ -57,6 +62,36 @@ object MPerson extends EsModelStaticT[MPerson] {
   }
 
   protected def dummy(id: String) = MPerson(id = Some(id), lang = null)
+
+
+  /** Асинхронно найти подходящее имя юзера в хранилищах и подмоделях. */
+  def findUsername(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
+    MPersonIdent.findAllEmails(personId).map(_.headOption)
+  }
+
+  /** Ключ в кеше для юзернейма. */
+  private def personCacheKey(personId: String) = personId + ".pu"
+
+  val USERNAME_CACHE_EXPIRATION_SEC: Int = current.configuration.getInt("mperson.username.cache.seconds") getOrElse 600
+
+  /** Асинхронно найти подходящее имя для юзера используя кеш. */
+  def findUsernameCached(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
+    val cacheKey = personCacheKey(personId)
+    Cache.getAs[String](cacheKey) match {
+      case Some(result) =>
+        Future.successful(Some(result))
+      case None =>
+        val resultFut = findUsername(personId)
+        resultFut onSuccess {
+          case Some(result) =>
+            Cache.set(cacheKey, result, USERNAME_CACHE_EXPIRATION_SEC)
+          case None =>
+            warn(s"findUsernameCached($personId): Username not found for user. Invalid session?")
+        }
+        resultFut
+    }
+  }
+
 }
 
 import MPerson._

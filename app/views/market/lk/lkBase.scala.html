@@ -43,13 +43,13 @@
       <div class="auth">
         <span class="gray">Welcome,</span>&nbsp;
         <span class="user hover">
-          Константинопольский&nbsp;Константин<span class="select-but">&nbsp;</span>
+	  @ctx.usernameOpt<span class="select-but">&nbsp;</span>
           <ul class="drop-menu">
             <li>
-              <a href="#">Мой профиль</a>
+              <a href="@routes.MarketLk.lkList">Мой профиль</a>
             </li>
             <li>
-              <a href="#">Выйти</a>
+              <a href="@routes.Ident.logout">Выйти</a>
             </li>
           </ul>
         </span>

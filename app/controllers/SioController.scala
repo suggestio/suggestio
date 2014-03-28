@@ -1,7 +1,7 @@
 package controllers
 
-import play.api.mvc.{SimpleResult, Controller}
-import util.{HtmlCompressUtil, ContextT}
+import play.api.mvc.{RequestHeader, SimpleResult, Controller}
+import util.{ContextImpl, HtmlCompressUtil, ContextT}
 import scala.concurrent.{Promise, Future}
 import play.api.i18n.Lang
 import util.event.SiowebNotifier
@@ -42,6 +42,13 @@ trait SioController extends Controller with ContextT {
   def formatFormErrors(formWithErrors: Form[_]) = {
     formWithErrors.errors.map { e => "  " + e.key + " -> " + e.message }.mkString("\n")
   }
+  
+  /** Тело экшена, генерирующее страницу 404. Используется при минимальном окружении. */
+  def http404AdHoc(implicit request: RequestHeader): SimpleResult = {
+    implicit val ctx = ContextImpl()
+    NotFound(views.html.static.http404Tpl())
+  }
+
 }
 
 

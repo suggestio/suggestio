@@ -3,6 +3,7 @@ package util.acl
 import play.api.mvc._
 import scala.concurrent.Future
 import controllers.routes
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
  * Suggest.io
@@ -26,10 +27,13 @@ trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
 
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
+    val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
     if (pwOpt.isDefined) {
       // Юзер залогинен. Продолжить выполнения экшена.
-      val req1 = new RequestWithPwOpt(pwOpt, request)
-      block(req1)
+      sioReqMdFut flatMap { sioReqMd =>
+        val req1 = new RequestWithPwOpt(pwOpt, request, sioReqMd)
+        block(req1)
+      }
     } else {
       onUnauth(request)
     }

@@ -2,7 +2,8 @@ package util.acl
 
 import play.api.mvc._
 import scala.concurrent.Future
-import util.Logs
+import util.PlayMacroLogsImpl
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
  * Suggest.io
@@ -10,7 +11,7 @@ import util.Logs
  * Created: 09.10.13 15:10
  * Description: ActionBuilder для определения залогиненности юзера.
  */
-object MaybeAuth extends ActionBuilder[AbstractRequestWithPwOpt] with Logs {
+object MaybeAuth extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -23,8 +24,11 @@ object MaybeAuth extends ActionBuilder[AbstractRequestWithPwOpt] with Logs {
    */
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
+    val srmFut = SioReqMd.fromPwOpt(pwOpt)
     trace("pwOpt = " + pwOpt)
-    block(RequestWithPwOpt(pwOpt, request))
+    srmFut flatMap { srm =>
+      block(RequestWithPwOpt(pwOpt, request, srm))
+    }
   }
 
 }

@@ -24,19 +24,24 @@ object IsAdEditor {
    * @tparam A Параметр типа реквеста.
    * @return None если нельзя. Some([[RequestWithAd]]) если можно исполнять реквест.
    */
-  private def maybeAllowed[A](pwOpt: PwOpt_t, mad: MMartAd, request: Request[A]): Future[Option[RequestWithAd[A]]] = {
+  private def maybeAllowed[A](pwOpt: PwOpt_t, mad: MMartAd, request: Request[A], srmFut: Future[SioReqMd]): Future[Option[RequestWithAd[A]]] = {
     if (PersonWrapper isSuperuser pwOpt) {
-      Future successful Some(RequestWithAd(mad, request, pwOpt))
+      srmFut map { srm =>
+        Some(RequestWithAd(mad, request, pwOpt, srm))
+      }
     } else {
       pwOpt match {
         case Some(pw) =>
           mad.shopId match {
             // Это реклама магазина. Редактировать может владелец магазина.
             case Some(shopId) =>
-              MShop.getById(shopId) map { mshopOpt =>
+              for {
+                mshopOpt <- MShop.getById(shopId)
+                srm <- srmFut
+              } yield {
                 mshopOpt flatMap { mshop =>
                   if (mshop.personIds contains pw.personId) {
-                    Some(RequestWithAd(mad, request, pwOpt, mshopOpt = mshopOpt))
+                    Some(RequestWithAd(mad, request, pwOpt, srm, mshopOpt = mshopOpt))
                   } else {
                     None
                   }
@@ -45,10 +50,13 @@ object IsAdEditor {
 
             // Это реклама ТЦ. Редактировать может только владелец ТЦ.
             case None =>
-              MMart.getById(mad.martId) map { mmartOpt =>
+              for {
+                mmartOpt <- MMart.getById(mad.martId)
+                srm <- srmFut
+              } yield {
                 mmartOpt flatMap { mmart =>
                   if (mmart.personIds contains pw.personId) {
-                    Some(RequestWithAd(mad, request, pwOpt, mmartOpt=mmartOpt))
+                    Some(RequestWithAd(mad, request, pwOpt, srm, mmartOpt=mmartOpt))
                   } else {
                     None
                   }
@@ -68,10 +76,11 @@ object IsAdEditor {
 case class IsAdEditor(adId: String) extends ActionBuilder[RequestWithAd] {
   protected def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
+    val srmFut = SioReqMd.fromPwOpt(pwOpt)
     MMartAd.getById(adId) flatMap {
       case Some(mad) =>
         // TODO Нужно проверять права доступа как-то: для ТЦ и для магазина
-        IsAdEditor.maybeAllowed(pwOpt, mad, request) flatMap {
+        IsAdEditor.maybeAllowed(pwOpt, mad, request, srmFut) flatMap {
           case Some(req1) => block(req1)
           case None       => IsAuth onUnauth request
         }
@@ -96,6 +105,7 @@ case class RequestWithAd[A](
   mad: MMartAd,
   request: Request[A],
   pwOpt: PwOpt_t,
+  sioReqMd: SioReqMd,
   private val mshopOpt: Option[MShop] = None,
   private val mmartOpt: Option[MMart] = None
 ) extends AbstractRequestWithPwOpt(request) {

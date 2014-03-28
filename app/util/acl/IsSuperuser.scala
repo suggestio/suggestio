@@ -2,11 +2,12 @@ package util.acl
 
 import play.api.mvc._
 import scala.concurrent.Future
-import util.{PlayMacroLogsImpl, Logs}
+import util.PlayMacroLogsImpl
 import scala.Some
 import play.api.mvc.SimpleResult
 import controllers.Application.http404Fut
 import util.acl.PersonWrapper.PwOpt_t
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
  * Suggest.io
@@ -19,10 +20,13 @@ object IsSuperuser extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacr
   
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
+    val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
     pwOpt match {
       case Some(pw) if pw.isSuperuser =>
         trace(s"for user ${pw.personId} :: ${request.method} ${request.path}")
-        block(new RequestWithPwOpt[A](pwOpt, request))
+        sioReqMdFut flatMap { srm =>
+          block(RequestWithPwOpt(pwOpt, request, srm))
+        }
 
       case _ => onUnauthFut(request, pwOpt)
     }

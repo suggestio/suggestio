@@ -5,6 +5,8 @@ import play.api.mvc.{WrappedRequest, Request}
 import models._
 import io.suggest.ym.model.MCompany
 import MShop.ShopId_t, MMart.MartId_t, MCompany.CompanyId_t
+import scala.concurrent.Future
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /*
   Используется комбинация из абстрактных классов и их реализаций case class'ов. Это необходимо из-за невозможности
@@ -14,8 +16,10 @@ import MShop.ShopId_t, MMart.MartId_t, MCompany.CompanyId_t
  */
 
 
-abstract class AbstractRequestWithPwOpt[A](request: Request[A]) extends WrappedRequest(request) {
+abstract class AbstractRequestWithPwOpt[A](request: Request[A])
+  extends WrappedRequest(request) {
   def pwOpt: PwOpt_t
+  def sioReqMd: SioReqMd
   def isSuperuser = PersonWrapper isSuperuser pwOpt
   def isAuth = pwOpt.isDefined
 }
@@ -26,7 +30,8 @@ abstract class AbstractRequestWithPwOpt[A](request: Request[A]) extends WrappedR
  * @param request Исходнный реквест.
  * @tparam A Подтип реквеста.
  */
-case class RequestWithPwOpt[A](pwOpt: PwOpt_t, request: Request[A]) extends AbstractRequestWithPwOpt(request)
+case class RequestWithPwOpt[A](pwOpt: PwOpt_t, request: Request[A], sioReqMd: SioReqMd)
+  extends AbstractRequestWithPwOpt(request)
 
 
 
@@ -43,12 +48,25 @@ abstract class AbstractRequestWithDAuthz[A](request: Request[A]) extends Abstrac
  * @param request Реквест.
  * @tparam A Подтип реквеста.
  */
-case class RequestWithDAuthz[A](pwOpt: PwOpt_t, dAuthz: MDomainAuthzT, request: Request[A]) extends AbstractRequestWithDAuthz(request)
+case class RequestWithDAuthz[A](pwOpt: PwOpt_t, dAuthz: MDomainAuthzT, request: Request[A], sioReqMd: SioReqMd)
+  extends AbstractRequestWithDAuthz(request)
 
 
 /** Админство магазина. */
 abstract class AbstractRequestForShopAdm[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
   def shopId: ShopId_t
 }
-case class RequestForShopAdm[A](shopId: ShopId_t, pwOpt:PwOpt_t, request: Request[A]) extends AbstractRequestForShopAdm(request)
 
+
+/** Метаданные, относящиеся запросу. Сюда попадают данные, которые необходимы везде и требует асинхронных действий.
+  * @param usernameOpt Отображаемое имя юзера, если есть. Формируются на основе данных сессии и данных из
+  *                    [[models.MPerson]] и [[models.MPersonIdent]].
+  */
+case class SioReqMd(usernameOpt: Option[String])
+object SioReqMd {
+  def fromPwOpt(pwOpt: PwOpt_t): Future[SioReqMd] = {
+    PersonWrapper.findUserName(pwOpt) map { usernameOpt =>
+      SioReqMd(usernameOpt = usernameOpt)
+    }
+  }
+}

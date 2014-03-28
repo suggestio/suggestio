@@ -48,6 +48,8 @@ trait Context {
   implicit def request: RequestHeader
   implicit def pwOpt: PwOpt_t
   implicit def lang: Lang
+  def usernameOpt: Option[String]
+
   def myProto = Context.SIO_PROTO_DFLT
   def myAudienceUrl = controllers.Ident.AUDIENCE_URL
 
@@ -86,11 +88,13 @@ case class Context2(
   implicit val lang: Lang
 ) extends Context {
   implicit def pwOpt: PwOpt_t = request.pwOpt
+  def usernameOpt = request.sioReqMd.usernameOpt
 }
 
 
 /** Упрощенная версия контекста, используемая в минимальных условиях и вручную. */
 case class ContextImpl(implicit val request: RequestHeader, val lang: Lang) extends Context {
   def pwOpt = PersonWrapper.getFromRequest(request)
+  def usernameOpt: Option[String] = None
 }
 

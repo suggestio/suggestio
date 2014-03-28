@@ -32,9 +32,12 @@ case class TreeUserCatAdm(ownerId: String) extends ActionBuilder[RequestUserCatA
   protected def invokeBlock[A](request: Request[A], block: (RequestUserCatAdm[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     // TODO нужно проверить права над указанным субъектов ownerId.
     val pwOpt = PersonWrapper.getFromRequest(request)
+    val srmFut = SioReqMd.fromPwOpt(pwOpt)
     if (PersonWrapper isSuperuser pwOpt) {
-      val req1 = RequestUserCatAdm(None, ownerId, pwOpt, request)
-      block(req1)
+      srmFut flatMap { srm =>
+        val req1 = RequestUserCatAdm(None, ownerId, pwOpt, request, srm)
+        block(req1)
+      }
     } else {
       IsAuth.onUnauth(request)
     }
@@ -45,11 +48,14 @@ case class TreeUserCatAdm(ownerId: String) extends ActionBuilder[RequestUserCatA
 case class UserCatAdm(catId: String) extends ActionBuilder[RequestUserCatAdm] {
   protected def invokeBlock[A](request: Request[A], block: (RequestUserCatAdm[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
+    val srmFut = SioReqMd.fromPwOpt(pwOpt)
     if (PersonWrapper isSuperuser pwOpt) {
       MMartCategory.getById(catId) flatMap {
-        case Some(cat)  =>
-          val req1 = RequestUserCatAdm(Some(cat), cat.ownerId, pwOpt, request)
-          block(req1)
+        case Some(cat) =>
+          srmFut flatMap { srm =>
+            val req1 = RequestUserCatAdm(Some(cat), cat.ownerId, pwOpt, request, srm)
+            block(req1)
+          }
 
         case _ => IsAuth.onUnauth(request)
       }
@@ -70,5 +76,5 @@ class UnauthCatAdm extends ActionBuilder[RequestUserCatAdm] {
 }
 
 /** Реквест, в тело которого забита категория, к которой адресован реквест. И корректный ownerId тоже. */
-case class RequestUserCatAdm[A](cat: Option[MMartCategory], ownerId:String, pwOpt: PwOpt_t, request: Request[A])
+case class RequestUserCatAdm[A](cat: Option[MMartCategory], ownerId:String, pwOpt: PwOpt_t, request: Request[A], sioReqMd: SioReqMd)
   extends AbstractRequestWithPwOpt(request)
