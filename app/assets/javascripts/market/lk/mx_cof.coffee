@@ -402,7 +402,18 @@ CbcaShop =
     )
 
 
+  fixActiveMartAds: (labelSelector, count)->
+    if($(labelSelector).find('input[type = "checkbox"]').filter(':checked').size() >= count)
+      $(labelSelector).find('input[type = "checkbox"]').not(':checked').each ()->
+        $(this).removeAttr('checked').attr('disabled', 'disabled').closest('label').addClass('inactive').closest('.item').addClass('disabled')
+    else
+      $(labelSelector).find('input[type = "checkbox"]').not(':checked').each ()->
+        $(this).removeAttr('disabled').closest('label').removeClass('inactive')
+
   init: () ->
+
+    self = this
+    self.martAdsLimit = 0 || parseInt($('#maxMartAds').val(),10)
 
     ##########################################
     ## Чекбоксы в списке рекламных плакатов ##
@@ -429,6 +440,11 @@ CbcaShop =
         error: (data) ->
           console.log(data)
       )
+
+    cbca.shop.fixActiveMartAds('.mart-on-off', self.martAdsLimit)
+
+    $(document).on 'change', '.mart-on-off input[type = "checkbox"]', ->
+      cbca.shop.fixActiveMartAds('.mart-on-off', self.martAdsLimit)
 
     ###################################
     ## Включение/выключение магазина ##
