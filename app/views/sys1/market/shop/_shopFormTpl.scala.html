@@ -7,6 +7,7 @@
 @form(call) {
   @inputText(sf("name"))
 
+  <br/>
   @* Компания, к которой принадлежит магазин. В продакшене это будет задаваться неявно. *@
   @defining(sf("company_id")) { ciField =>
     @defining(ciField.value.orElse(request.getQueryString("company_id")).getOrElse("")) { currCompanyId =>
@@ -31,6 +32,7 @@
     </select>
   }
 
+  <br/><br/>
   @* Опциональный номер этажа в ТЦ. *@
   @inputText(
     sf("mart_floor"),
@@ -38,6 +40,7 @@
     '_label -> "Этаж"
   )
 
+  <br/>
   @* Опциональный номер секции в ТЦ. *@
   @inputText(
     sf("mart_section"),
@@ -45,9 +48,16 @@
     '_label -> "Номер секции"
   )
 
+  <br/>
   @textarea(
     sf("description"),
     '_label -> "Описание магазина"
+  )
+
+  <br/>
+  @inputText(
+    sf("l3maxAds"),
+    '_label -> "Макс.кол-во рекл.карточек на уровне магазина"
   )
 
   <input type="submit" value="@btnText"/>

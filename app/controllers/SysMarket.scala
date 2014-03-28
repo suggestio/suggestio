@@ -7,7 +7,7 @@ import views.html.sys1.market._
 import views.html.market.lk
 import play.api.data._, Forms._
 import util.FormUtil._
-import io.suggest.ym.model.UsernamePw
+import io.suggest.ym.model.{MMartSettings, MShopSettings, UsernamePw}
 import MCompany.CompanyId_t
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
@@ -159,9 +159,10 @@ object SysMarket extends SioController with MacroLogsImpl {
     "address"   -> martAddressM,
     "siteUrl"   -> optional(urlStrMapper),
     "color"     -> optional(colorM),
-    "phone"     -> optional(phoneM)
+    "phone"     -> optional(phoneM),
+    "maxAds"    -> default(number(min = 0, max = 30), MMartSettings.MAX_L1_ADS_SHOWN)
   )
-  {(name, town, address, siteUrlOpt, colorOpt, phoneOpt) =>
+  {(name, town, address, siteUrlOpt, colorOpt, phoneOpt, maxAds) =>
     MMart(
       name = name,
       town = town,
@@ -170,12 +171,13 @@ object SysMarket extends SioController with MacroLogsImpl {
       siteUrl = siteUrlOpt,
       phone = phoneOpt,
       personIds = Nil,
-      color = colorOpt
+      color = colorOpt,
+      settings = MMartSettings(maxAds)
     )
   }
   {mmart =>
     import mmart._
-    Some((name, town, address, siteUrl, color, phone))
+    Some((name, town, address, siteUrl, color, phone, settings.supL1MaxAdsShown))
   })
 
 
@@ -248,6 +250,7 @@ object SysMarket extends SioController with MacroLogsImpl {
             mmart.siteUrl = mmart2.siteUrl
             mmart.phone = mmart2.phone
             mmart.color = mmart2.color
+            mmart.settings.supL1MaxAdsShown = mmart2.settings.supL1MaxAdsShown
             mmart.save map { _martId =>
               Redirect(routes.SysMarket.martShow(_martId))
             }
@@ -345,15 +348,26 @@ object SysMarket extends SioController with MacroLogsImpl {
     "company_id"   -> esIdM,
     "description"  -> publishedTextOptM,
     "mart_floor"   -> optional(martFloorM),
-    "mart_section" -> optional(martSectionM)
+    "mart_section" -> optional(martSectionM),
+    "l3maxAds"     -> default(number(min=0, max=30), MShopSettings.MAX_LSHOP_ADS)
   )
   // apply()
-  {(name, martId, companyId, description, martFloor, martSection) =>
-    MShop(name=name, martId=martId, companyId=companyId, description=description, martFloor=martFloor, martSection=martSection, personIds=null)
+  {(name, martId, companyId, description, martFloor, martSection, l3maxAds) =>
+    MShop(
+      name = name,
+      martId = martId,
+      companyId = companyId,
+      description = description,
+      martFloor = martFloor,
+      martSection = martSection,
+      personIds = null,
+      settings = MShopSettings(supLShopMaxAdsShown = l3maxAds)
+    )
   }
   // unapply()
   {mshop =>
-    Some((mshop.name, mshop.martId, mshop.companyId, mshop.description, mshop.martFloor, mshop.martSection))
+    import mshop._
+    Some((name, martId, companyId, description, martFloor, martSection, settings.supLShopMaxAdsShown))
   })
 
 
