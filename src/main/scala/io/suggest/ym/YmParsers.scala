@@ -6,6 +6,7 @@ import model._
 import HotelMealTypes.HotelMealType
 import HotelStarsLevels.HotelStarsLevel
 import YmParsers.PeriodUnits.PeriodUnit
+import parsers.ParserUtil.{str2FloatF, str2IntF}
 
 /**
  * Suggest.io
@@ -16,13 +17,6 @@ import YmParsers.PeriodUnits.PeriodUnit
  */
 object YmParsers extends JavaTokenParsers {
 
-  /** Функция перегона строки в целое. Используется в date/time-парсерах. */
-  private val str2IntF = {s: String => s.toInt }
-
-  /** Функция перегона строки в число с плавающей точкой. */
-  private val str2FloatF = {s: String => s.toFloat }
-  
-  
   /** Парсер измерений (размерности) товара в формате "длина/ширина/высота". */
   val DIMENSIONS_PARSER = {
     val sepParser: Parser[String] = "[/xх*]".r
@@ -192,27 +186,27 @@ object YmParsers extends JavaTokenParsers {
   val HOTEL_MEAL_PARSER: Parser[HotelMealType] = {
     import HotelMealTypes._
     // Вспомогательные словечки
-    val rest: Parser[String] = "(?i)rest".r
-    val breakfast: Parser[String] = "(?i)br[ea]+[kc]+f[ae]st".r
-    val bed:  Parser[String] = "(?i)[db][ae][db]".r
-    val only: Parser[String] = "(?i)onl[yi]".r
-    val half: Parser[String] = "(?i)h[ae]lf".r
-    val board: Parser[String] = "(?i)b[oa]{1,2}rd".r
+    val rest: Parser[_] = "(?i)rest".r
+    val breakfast: Parser[_] = "(?i)br[ea]+[kc]+f[ae]st".r
+    val bed:  Parser[_] = "(?i)[db][ae][db]".r
+    val only: Parser[_] = "(?i)onl[yi]".r
+    val half: Parser[_] = "(?i)h[ae]lf".r
+    val board: Parser[_] = "(?i)b[oa]{1,2}rd".r
     val sep: Parser[_] = "([&,\\s-]+|and)".r
     val extended = "(?i)ex(t(en[dt][ei]+[dt])?)?\\.?".r | "+"
-    val full: Parser[String] = "(?i)f+ul+".r
-    val mini: Parser[String] = "(?i)mini".r
-    val all: Parser[String] = "(?i)(a(i|l+)|everything)".r | "(?iu)вс[её]".r
+    val full: Parser[_] = "(?i)f+ul+".r
+    val mini: Parser[_] = "(?i)mini".r
+    val all: Parser[_] = "(?i)(a(i|l+)|everything)".r | "(?iu)вс[её]".r
     val inclusive = "(?i)in(c(l(u(de[dt]|sive?)?)?)?)?\\.*".r | "(?iu)вкл(ючено)?\\.*".r
-    val high: Parser[String] = "(?i)hi([hg][ghn]|-|\\s)?".r
-    val clazz: Parser[String] = "(?i)clas+".r
-    val ultra: Parser[String] = "(?i)ultr[ao]".r
+    val high: Parser[_] = "(?i)hi([hg][ghn]|-|\\s)?".r
+    val clazz: Parser[_] = "(?i)clas+".r
+    val ultra: Parser[_] = "(?i)ultr[ao]".r
     // a-la carte, menu
-    val ala = "(?i)a[-_]?la".r
-    val carte = "(?i)cart[eya]*".r
+    val ala: Parser[_] = "(?i)a[-_]?la".r
+    val carte: Parser[_] = "(?i)cart[eya]*".r
     val menu = "(?i)men[uy]e?".r | "(?iu)меню".r
-    val hb: Parser[String] = "HB"
-    val fb: Parser[String] = "FB"
+    val hb: Parser[_] = "HB"
+    val fb: Parser[_] = "FB"
     // Готовые наборы буков.
     val onlyBed = ("OB" | "NA" | "RO" | (only ~> bed) | (rest ~> only)) ^^^ OB
     val mealMenu = (ala ~ carte | menu) ^^^ Menu
@@ -231,7 +225,7 @@ object YmParsers extends JavaTokenParsers {
     // TODO Нужно распихать всякие местечковые vip/imperial обозначения между UAI и HCAL
     val hcAI = ("HCA[LI]+".r | (high ~> clazz ~> all ~> inclusive) | (all ~> inclusive ~> high ~> clazz)) ^^^ HCAL
     // Ultra All inclusive. Это для самых упоротых, либо это гостиница-город.
-    val ualRe: Parser[String] = "UA[IL]".r
+    val ualRe: Parser[_] = "UA[IL]".r
     val uAI = (ualRe | ultra <~ all <~ opt(sep) <~ opt(inclusive) | all ~> opt(sep) ~> opt(inclusive) ~> ultra | ultra <~ ai | ai ~> ultra) ^^^ UAI
     // Собираем конечный парсер на основе готовых сборок
     onlyBed | mealMenu | extHB | halfBoard | miniAI | uAI | hcAI | normAI | extFB | fullBoard | bedBreakfast
@@ -274,14 +268,14 @@ object YmParsers extends JavaTokenParsers {
   val HOTEL_STARS_PARSER: Parser[HotelStarsLevel] = {
     import HotelStarsLevels._
     // Собираем звёзды
-    val star: Parser[String] = "(?i)([*★☆]|[\\s-]*stars?)".r
+    val star: Parser[_] = "(?i)([*★☆]|[\\s-]*stars?)".r
     val starCount: Parser[Int] = "[1-5]".r ^^ str2IntF
     val hotelStarsCnt = ((star ~> starCount) | (starCount <~ star)) ^^ { forStarCount }
     val hotelStarsLen = rep1(star) ^^ { stars => forStarCount(Math.min(5, stars.size)) }
     val hotelStars = hotelStarsCnt | hotelStarsLen
     // HV-отели
-    val hv: Parser[String] = "(?i)hv".r
-    val hvSep: Parser[String] = "[-+_/]".r
+    val hv: Parser[_] = "(?i)hv".r
+    val hvSep: Parser[_] = "[-+_/]".r
     val hvLvl: Parser[Int] = "[12]".r ^^ str2IntF
     val hvHotel = (hv ~> opt(hvSep) ~> hvLvl) ^^ { forHvLevel }
     // Финальный парсер звездатости

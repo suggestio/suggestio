@@ -10,12 +10,7 @@ import java.util.Currency
  * Description: Парсер цен из строк.
  */
 
-object PriceParsers extends JavaTokenParsers {
-
-  /** Парсер float-чисел, вводимых юзерами. Не исключаем, что юзеры могут вводить float-числа, начиная их с запятой. */
-  val floatP: Parser[Float] = """-?(\d+([.,]+\d*)?|\d*[.,]+\d+)""".r ^^ {
-    _.replace(',', '.').toFloat
-  }
+object PriceParsers extends JavaTokenParsers with CommonParsers {
 
   type PriceP_t = Parser[Price]
 
@@ -63,14 +58,6 @@ object PriceParsers extends JavaTokenParsers {
     priceRUBp | priceUSDp | priceEURp
   }
 
-
-  /** Неявный конвертер результата работы парсера в Option[T]. */
-  implicit def parseResult2Option[T](pr: ParseResult[T]): Option[T] = {
-    if (pr.successful)
-      Some(pr.get)
-    else
-      None
-  }
 
 }
 
