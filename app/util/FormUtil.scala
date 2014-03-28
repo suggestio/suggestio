@@ -150,8 +150,10 @@ object FormUtil {
     .transform(_.toFloat, {f: Float => f.toString})
 
 
-  import io.suggest.ym.parsers.{PriceParsers, Price}
-  import UserInputParsers.priceParser
+  // Ценовые значения
+
+  import io.suggest.ym.parsers.Price
+  import UserInputParsers._
 
   /** Нестрогий маппинг цены. Ошибка будет только если слишком много букв. */
   val priceM: Mapping[(String, Option[Price])] = {
@@ -159,7 +161,7 @@ object FormUtil {
       .transform[(String, Option[Price])](
         {raw =>
           val raw1 = strTrimSanitizeF(raw)
-          raw1 -> PriceParsers.parseAll(priceParser, raw1) },
+          raw1 -> parsePrice(raw1) },
         { case (raw, None) => raw
           case (raw, Some(_)) if !raw.isEmpty => raw
           case (_, Some(price)) =>
@@ -184,6 +186,35 @@ object FormUtil {
       )
       .verifying("error.price.mustbe.nonneg", { _._2.price >= 0F })
       .verifying("error.price.too.much", { _._2.price < 100000000F })
+  }
+
+
+  def adhocPercentFmt(pc: Float) = TplDataFormatUtil.formatPercentRaw(pc) + "%"
+
+  // Процентные значения
+  /** Нестрогий маппер процентов. Крэшится только если слишком много букв. */
+  val percentM = {
+    text(maxLength = 20)
+      .transform[(String, Option[Float])](
+        {raw =>
+          val raw1 = strTrimSanitizeF(raw)
+          raw1 -> parsePercents(raw1)
+        },
+        { case (raw, opt) if !raw.isEmpty || opt.isEmpty => raw
+          case (raw, Some(pc)) => adhocPercentFmt(pc) }
+      )
+  }
+
+  /** Строгий маппер скидки в процентах. */
+  val discountPercentM: Mapping[Float] = {
+    percentM
+      .verifying("error.required", _._2.isDefined)
+      .verifying("error.discount.too.large", { _._2.get <= 200F })
+      .verifying("error.discount.too.small", { _._2.get >= -99.999999F })
+      .transform[Float](
+        _._2.get,
+        {pc => adhocPercentFmt(pc) -> Some(pc)}
+      )
   }
 
 }

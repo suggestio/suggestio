@@ -16,12 +16,14 @@ object UserInputParsers {
     val dfltPriceParser = floatP ^^ { price => Price(price, currRUBc) }
     currPriceParser | dfltPriceParser
   }
+  def parsePrice(s: String) = PriceParsers.parseAll(priceParser, s)
 
 
   /** Парсер для процентных значений. */
   val percentParser = {
     import PercentParser._
-    floatP <~ opt(pcSignParser)
+    floatP <~ rep(pcSignParser)
   }
+  def parsePercents(s: String) = PercentParser.parseAll(percentParser, s)
 
 }

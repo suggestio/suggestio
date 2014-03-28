@@ -91,7 +91,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   )
   { MMAdStringField.apply }
   { MMAdStringField.unapply }
-  
+
   /** Маппим числовое (Float) поле. */
   private def mmaFloatFieldM(m: Mapping[Float]) = mapping(
     "value" -> m,
@@ -204,17 +204,11 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
 
   private val DISCOUNT_TEXT_MAXLEN = 64
-  private val DISCOUNT_MIN = 0F
-  private val DISCOUNT_MAX = 200F
 
   /** Кусок формы, ориентированный на оформление скидочной рекламы. */
   val adDiscountM = {
     val discountTextM = nonEmptyText(maxLength = DISCOUNT_TEXT_MAXLEN)
       .transform(strTrimBrOnlyF, strIdentityF)
-    val discountValueM = float
-      // TODO Нужно разрешать текст в виде "10%", он не должен вызывать проблем.
-      .verifying("discount.too.low", { _ > DISCOUNT_MIN })
-      .verifying("discount.too.big", { _ < DISCOUNT_MAX })
     val tplM = mapping(
       "id"    -> number(min = DISCOUNT_TPL_ID_MIN, max = DISCOUNT_TPL_ID_MAX),
       "color" -> colorM
@@ -224,7 +218,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     // Собираем итоговый маппинг для MMartAdDiscount.
     mapping(
       "text1"     -> optional(mmaStringFieldM(discountTextM)),
-      "discount"  -> mmaFloatFieldM(discountValueM),
+      "discount"  -> mmaFloatFieldM(discountPercentM),
       "template"  -> tplM,
       "text2"     -> optional(mmaStringFieldM(discountTextM))
     )
@@ -985,11 +979,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   private val previewAdDiscountM = {
     val discountTextM = nonEmptyText(maxLength = DISCOUNT_TEXT_MAXLEN)
       .transform(strTrimBrOnlyF, strIdentityF)
-    val discountValueM = floatFieldTolerantM
-      .transform(
-        { dc => if (dc < DISCOUNT_MIN || dc > DISCOUNT_MAX) floatInvalidIgnored else dc },
-        { dc: Float => dc }
-      )
     val tplM = mapping(
       "id"    -> default(
         mapping = number(min = DISCOUNT_TPL_ID_MIN, max = DISCOUNT_TPL_ID_MAX),
@@ -1002,10 +991,16 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     // Собираем итоговый маппинг для MMartAdDiscount.
     mapping(
       "text1"     -> optional(mmaStringFieldM(discountTextM)),
-      "discount"  -> mmaFloatFieldOptM(discountValueM).transform(
-        {dcOpt => dcOpt getOrElse MMAdFloatField(PreviewFormDefaults.Discount.DISCOUNT, PreviewFormDefaults.TEXT_FONT) },
-        {dc: MMAdFloatField => Some(dc) }
-      ),
+      "discount"  -> {
+        val discountTolerantM = percentM.transform[Float](
+          {case (_, pcOpt) => pcOpt getOrElse PreviewFormDefaults.Discount.DISCOUNT },
+          {pc => adhocPercentFmt(pc) -> Some(pc) }
+        )
+        mmaFloatFieldOptM(discountTolerantM).transform(
+          {dcOpt => dcOpt getOrElse MMAdFloatField(PreviewFormDefaults.Discount.DISCOUNT, PreviewFormDefaults.TEXT_FONT) },
+          {dc: MMAdFloatField => Some(dc) }
+        )
+      },
       "template"  -> tplM,
       "text2"     -> optional(mmaStringFieldM(discountTextM))
     )

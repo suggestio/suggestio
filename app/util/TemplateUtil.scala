@@ -38,7 +38,7 @@ object TplDataFormatUtil {
   private val pcRawFloatFmt = new DecimalFormat("#.##")
   private val pcRawIntegerFmt = new DecimalFormat("#")
 
-  def formatPercentRaw(pc: Float)(implicit ctx: Context): String = {
+  def formatPercentRaw(pc: Float): String = {
     pcRawIntegerFmt.format(pc)
   }
 
