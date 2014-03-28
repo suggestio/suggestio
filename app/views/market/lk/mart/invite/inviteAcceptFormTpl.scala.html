@@ -5,38 +5,84 @@
 @import helper._
 
 @market.lk.lkBase("Подтверждение регистрации") {
-  <br/><br/><br/><br/><br/>
-  <p>Торговый центр: @mmart.name</p>
-  <p>Email: @eAct.email</p>
 
-  @form(routes.MarketMartLk.martInviteAcceptFormSubmit(mmart.id.get, eAct.id.get)) {
+  <div class="title-wrap">
+    <div class="center">
+      <div class="title-inner">
+        ПОДТВЕРЖДЕНИЕ РЕГИСТРАЦИИ
+      </div>
+    </div>
+  </div>
 
-    @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
-    @if(!ctx.isAuth) {
-      @* Юзер вводит пароли. *@
-      <table cellpadding="0" cellspacing="0" class="input-wrap pass">
-        <tr>
-          @inputPassword(
-            iaf("password.pw1"),
-            '_label -> "Пароль:"
-          )
-          <td class="pass-text" rowspan="2">
-            Используйте адрес электронной почты
-            и пароль для следующего входа.
-          </td>
-        </tr>
-        <tr>
-          @inputPassword(
-            iaf("password.pw2"),
-            '_label -> "Подтверждение пароля:"
-          )
-        </tr>
-      </table>
+  <div class="body">
 
-      @* TODO Нужна ссылка с формой для логина в систему, если юзер уже зареган, но ещё не залогинен. *@
-    }
 
-    <input type="submit" value="Продолжить"/>
+    <table cellpadding="0" cellspacing="0" class="input-wrap big disabled">
+      <td class="left">
+        <label for="mmartName">Торговый центр:</label>
+      </td>
+
+      <td class="right">
+        <div class="input clearfix">
+          <div class="input-shadow">
+            <input id="mmartName" type="text" disabled value="@mmart.name"/>
+          </div>
+        </div>
+      </td>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big disabled">
+      <td class="left">
+        <label for="mmartEmail">E-mail:</label>
+      </td>
+
+      <td class="right">
+        <div class="input clearfix">
+          <div class="input-shadow">
+            <input id="mmartEmail" type="text" disabled value="@eAct.email"/>
+          </div>
+        </div>
+      </td>
+    </table>
+
+
+      @form(routes.MarketMartLk.martInviteAcceptFormSubmit(mmart.id.get, eAct.id.get)) {
+
+        @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
+        @if(!ctx.isAuth) {
+          @* Юзер вводит пароли. *@
+          <table cellpadding="0" cellspacing="0" class="input-wrap pass">
+            <tr>
+              @inputPassword(
+                iaf("password.pw1"),
+                '_label -> "Пароль:"
+              )
+              <td class="pass-text" rowspan="2">
+                Используйте адрес электронной почты
+                и пароль для следующего входа.
+              </td>
+            </tr>
+            <tr>
+              @inputPassword(
+                iaf("password.pw2"),
+                '_label -> "Подтверждение пароля:"
+              )
+            </tr>
+          </table>
+
+          @* TODO Нужна ссылка с формой для логина в систему, если юзер уже зареган, но ещё не залогинен. *@
+        }
+
+        <div class="submit-wrap">
+          <div class="gray-but-wrap" style="margin-top: 50px; margin-left: 120px;">
+            <div class="white-border-top">
+              <input class="btn" type="submit" value="@Messages("ПРОДОЛЖИТЬ")"/>
+            </div>
+          </div>
+        </div>
+
+  </div>
+
   }
 }
 
