@@ -24,10 +24,12 @@
 
   <div class="body">
 
+    <input id="maxShopAds" type="hidden" value="@mshop.settings.supLShopMaxAdsShown" />
+
     <div class="shop-info">
 
       <div class="name-wrap">
-        <span class="name">@mshop.name</span>
+        <span class="name">@mshop.name @mshop.settings.supLShopMaxAdsShown</span>
         <a class="edit" href="@editShopForm(mshop.id.get)">Редактировать</a>
       </div>
       <div class="border-line"></div>
@@ -60,7 +62,7 @@
     ) { mad =>
       @* Галочки для управления отображением рекламной карточки магазина *@
       <div class="controls">
-        <label>
+        <label class="shopAd-fix">
           <input class="one-checkbox" type="checkbox" data-level="@LVL_MART_SHOPS" data-adid="@mad.id.get" data-name="lvl-mart-shops" @if(mad.showLevels contains LVL_MART_SHOPS) {data-checked="checked"}/>Выводить в общем каталоге
         </label>
         <label>
