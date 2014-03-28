@@ -8,12 +8,13 @@ $(document).ready ->
   cbca.statusBar.init()
 
   cbca.shop = CbcaShop
-  cbca.shop.init()
+
 
   cbca.editAdPage = EditAdPage
   cbca.editAdPage.init()
 
   cbca.common = new CbcaCommon()
+  cbca.shop.init()
   cbca.editAdPage.updatePreview()
 
 
@@ -449,7 +450,6 @@ CbcaShop =
 
     $(document).on 'change', '.shopAd-fix input[type = "checkbox"]', ->
       cbca.shop.fixActiveAds('.shopAd-fix', self.shopAdsLimit)
-
 
 
     cbca.shop.fixActiveAds('.martAd-fix', self.martAdsLimit)
