@@ -144,7 +144,7 @@
                 @* Данные по картинке загруженной. *@
                 @defining(af("image_key").value) { imgIdOpt =>
                 <input class="image-key" type="hidden" name="image_key" value="@imgIdOpt"/>
-                <img class="image-preview" width="59" height="59" src="@imgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" />
+                <img class="image-preview" width="59" src="@imgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" />
 
                 }
               </div>
