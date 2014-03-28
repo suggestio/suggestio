@@ -1,6 +1,6 @@
 package controllers
 
-import util.{UserInputParsers, Context, PlayMacroLogsImpl}
+import util.{Context, PlayMacroLogsImpl}
 import views.html.market.lk.ad._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._

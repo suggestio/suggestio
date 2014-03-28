@@ -81,7 +81,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
   def updateOrigImgId(needImg: Option[ImgInfo4Save[ImgIdKey]], oldImgId: Option[String]): Future[List[MImgInfo]] = {
-    updateOrigImg(needImg, oldImgId.map(OrigImgIdKey(_)))
+    updateOrigImg(needImg, oldImgId.map(MImgInfo(_)))
   }
   
   /**
