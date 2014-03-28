@@ -588,8 +588,7 @@ market =
       return false
 
   resize_preview_photos : () ->
-    $('.poster-photo').each () ->
-
+    $('.preview .poster-photo').each () ->
       $this = $(this)
 
       image_w = parseInt $this.attr "data-width"
