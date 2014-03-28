@@ -18,7 +18,7 @@
           <div class="select-file-wrap" id="logoImgInput">
             @defining(mf("logoImgId").value) { logoImgIdOpt =>
             <div class="preview">
-              <img class="image-preview" src="@logoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" width="59" height="59"/>
+              <img class="image-preview" src="@logoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" width="59" />
             </div>
             <div class="selectbox">
               <div class="select-file">
