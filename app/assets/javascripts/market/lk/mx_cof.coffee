@@ -38,7 +38,7 @@ $(document).ready ->
         }
       ],
       setup: (editor)->
-        editor.on 'keyup', (e)->
+        editor.on 'keyup', (event)->
           clearTimeout(upd)
           updTextarea = ()->
             $('#ad_offer_text_value').val(editor.getContent()).trigger('change')
@@ -46,38 +46,12 @@ $(document).ready ->
     )
 
 
-########################################
-## Набор checkbox ов, с одним checked ##
-########################################
-$(document).on 'click', '.one-checkbox', ->
-  $this = $(this)
-  dataName = $this.attr('data-name')
-  dataFor = $this.attr('data-for')
-  value = $this.attr('data-value')
 
-
-  if(this.checked)
-    $('.one-checkbox[data-name = "'+dataName+'"]').filter(':checked').removeAttr('checked')
-    this.checked = true
-    $('#'+dataFor).val(value)
-  else
-    $(this).removeAttr('checked')
-
-
-$(document).on 'click', '.create-ad .color-list .color', ->
-  $this = $(this)
-  $wrap = $this.closest('.item')
-  $wrap.find('.one-checkbox').trigger('click').get(0).checked = true
-
-$(document).on 'click', '.create-ad .mask-list .item', ->
-  $this = $(this)
-
-  $this.find('.one-checkbox').trigger('click' )
 
 
 ##СКРЫТЬ ВЫБРАННОЕ ФОТО##
-$(document).on 'click', '.input-wrap .close', (e)->
-  e.preventDefault()
+$(document).on 'click', '.input-wrap .close', (event)->
+  event.preventDefault()
 
   $this =$(this)
   $wrap = $this.closest('.input-wrap')
@@ -114,15 +88,15 @@ $(document).on 'click', '.popup-but', ->
 
   cbca.popup.showPopup($this.attr('href'))
 
-$(document).on 'click', '.popup .close', (e)->
-  e.preventDefault()
+$(document).on 'click', '.popup .close', (event)->
+  event.preventDefault()
   cbca.popup.hidePopup()
 
 $(document).on 'click', '#overlay', ->
     cbca.popup.hidePopup()
 
-$(document).on 'click', '.popup .cancel', (e)->
-    e.preventDefault()
+$(document).on 'click', '.popup .cancel', (event)->
+    event.preventDefault()
     cbca.popup.hidePopup()
 
 CbcaPopup = () ->
@@ -199,15 +173,15 @@ CbcaCommon = () ->
       $('#'+formId).trigger('submit')
 
 
-    $(document).on 'click', '#create-your-market-btn', (e)->
-      e.preventDefault()
+    $(document).on 'click', '#create-your-market-btn', (event)->
+      event.preventDefault()
 
       $('#hello-message').hide()
       $('#create-your-market').show()
 
 
-    $(document).on 'click', '.ads-list .tc-edit', (e)->
-      e.preventDefault()
+    $(document).on 'click', '.ads-list .tc-edit', (event)->
+      event.preventDefault()
 
       $this = $(this)
       $.ajax(
@@ -239,12 +213,72 @@ CbcaCommon = () ->
             console.log(error)
         )
 
+    ##########################
+    ## Работа с checkbox`ов ##
+    ##########################
     $('input[type = "checkbox"]').each ()->
       $this = $(this)
       if($this.attr('data-checked') == 'checked')
         this.checked = true
       else
         $this.removeAttr('checked')
+
+    $(document).on 'click', '.create-ad .color-list .color', ->
+      $this = $(this)
+      $wrap = $this.closest('.item')
+      $checkbox = $wrap.find('.one-checkbox')
+      dataName = $checkbox.attr('data-name')
+      dataFor = $checkbox.attr('data-for')
+      value = $checkbox.attr('data-value')
+      checkbox = $checkbox.get(0)
+
+      if(!checkbox.checked)
+        $('.one-checkbox[data-name = "'+dataName+'"]').filter(':checked').removeAttr('checked')
+        checkbox.checked = true
+        $('#'+dataFor).val(value)
+      else
+        $checkbox.removeAttr('checked')
+
+      cbca.editAdPage.updatePreview()
+
+    $(document).on 'click', '.create-ad .mask-list .item', (event)->
+      $this = $(this)
+
+      $checkbox = $this.find('.one-checkbox')
+      dataName = $checkbox.attr('data-name')
+      dataFor = $checkbox.attr('data-for')
+      value = $checkbox.attr('data-value')
+      checkbox = $checkbox.get(0)
+
+      if(!checkbox.checked)
+        $('.one-checkbox[data-name = "'+dataName+'"]').filter(':checked').removeAttr('checked')
+        checkbox.checked = true
+        $('#'+dataFor).val(value)
+      else
+        $checkbox.removeAttr('checked')
+
+      cbca.editAdPage.updatePreview()
+
+
+    ########################################
+    ## Набор checkbox`ов, с одним checked ##
+    ########################################
+    $(document).on 'click', '.one-checkbox', (event)->
+      $this = $(this)
+      dataName = $this.attr('data-name')
+      dataFor = $this.attr('data-for')
+      value = $this.attr('data-value')
+
+
+      if(this.checked)
+        $('.one-checkbox[data-name = "'+dataName+'"]').filter(':checked').removeAttr('checked')
+        this.checked = true
+        $('#'+dataFor).val(value)
+      else
+        $(this).removeAttr('checked')
+
+      console.log('1')
+      event.stopPropagation()
 
 
     $('.slide-content').each ()->
@@ -430,8 +464,8 @@ CbcaShop =
         cbca.shop.enableShop($shop.attr('data-shop'))
 
 
-    $(document).on 'submit', '#disable-shop form', (e) ->
-      e.preventDefault()
+    $(document).on 'submit', '#disable-shop form', (event) ->
+      event.preventDefault()
       $this = $(this)
 
       $.ajax(
