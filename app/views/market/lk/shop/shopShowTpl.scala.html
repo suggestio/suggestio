@@ -62,14 +62,14 @@
     ) { mad =>
       @* Галочки для управления отображением рекламной карточки магазина *@
       <div class="controls">
-        <label class="shopAd-fix">
+        <label class="common-catalog">
           <input class="one-checkbox" type="checkbox" data-level="@LVL_MART_SHOPS" data-adid="@mad.id.get" data-name="lvl-mart-shops" @if(mad.showLevels contains LVL_MART_SHOPS) {data-checked="checked"}/>Выводить в общем каталоге
         </label>
-        <label>
+        <label class="shop-catalog">
           <input type="checkbox" data-level="@LVL_SHOP" data-adid="@mad.id.get" @if(mad.showLevels contains LVL_SHOP) {data-checked="checked"}/>Выводить в моём магазине
         </label>
         @defining(mshop.hasTopLevelAccess) { htl =>
-          <label class="shopAd-fix2 @if(!htl){ nactive}">
+          <label class="firstPage-catalog @if(!htl){ nactive}">
             <input type="checkbox" data-level="@LVL_MART_SHOWCASE" data-adid="@mad.id.get" @if(!htl){disabled="disabled"} @if(mad.showLevels contains LVL_MART_SHOWCASE) {data-checked="checked"}/>Размещение на первом экране
           </label>
         }
