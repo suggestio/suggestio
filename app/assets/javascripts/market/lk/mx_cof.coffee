@@ -415,11 +415,12 @@ CbcaShop =
     $('.ads-list .item').each ()->
       check = true
       $this = $(this)
-      $this.find('label').not('.inactive').find('input[type = "checkbox"]').each ()->
-        if(this.checked)
-          check = false
-      if(check)
-        $this.toggleClass('disabled', true)
+      if($this.find('label').not('.inactive').find('input[type = "checkbox"]').size())
+        $this.find('label').not('.inactive').find('input[type = "checkbox"]').each ()->
+          if(this.checked)
+            check = false
+        if(check)
+          $this.toggleClass('disabled', true)
 
 
   init: () ->
