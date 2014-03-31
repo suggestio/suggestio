@@ -69,7 +69,7 @@
           <input type="checkbox" data-level="@LVL_SHOP" data-adid="@mad.id.get" @if(mad.showLevels contains LVL_SHOP) {data-checked="checked"}/>Выводить в моём магазине
         </label>
         @defining(mshop.hasTopLevelAccess) { htl =>
-          <label@if(!htl){ class="inactive"}>
+          <label class="shopAd-fix2 @if(!htl){ nactive}">
             <input type="checkbox" data-level="@LVL_MART_SHOWCASE" data-adid="@mad.id.get" @if(!htl){disabled="disabled"} @if(mad.showLevels contains LVL_MART_SHOWCASE) {data-checked="checked"}/>Размещение на первом экране
           </label>
         }
