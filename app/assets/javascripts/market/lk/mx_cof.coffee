@@ -406,7 +406,7 @@ CbcaShop =
   fixActiveAds: (labelSelector, count)->
     if($(labelSelector).find('input[type = "checkbox"]').filter(':checked').size() >= count)
       $(labelSelector).find('input[type = "checkbox"]').not(':checked').each ()->
-        $(this).removeAttr('checked').attr('disabled', 'disabled').closest('label').addClass('inactive').closest('.item').addClass('disabled')
+        $(this).removeAttr('checked').attr('disabled', 'disabled').closest('label').addClass('inactive')
     else
       $(labelSelector).find('input[type = "checkbox"]').not(':checked').each ()->
         $(this).removeAttr('disabled').closest('label').removeClass('inactive')
@@ -444,16 +444,21 @@ CbcaShop =
           console.log(data)
       )
 
-    cbca.shop.fixActiveAds('.shopAd-fix2', 1)
+    cbca.shop.fixActiveAds('.firstPage-catalog', 1)
 
-    $(document).on 'change', '.shopAd-fix2 input[type = "checkbox"]', ->
-      cbca.shop.fixActiveAds('.shopAd-fix2', 1)
+    $(document).on 'change', '.firstPage-catalog input[type = "checkbox"]', ->
+      cbca.shop.fixActiveAds('.firstPage-catalog', 1)
+
+    cbca.shop.fixActiveAds('.common-catalog', 1)
+
+    $(document).on 'change', '.common-catalog input[type = "checkbox"]', ->
+      cbca.shop.fixActiveAds('.common-catalog', 1)
 
 
-    cbca.shop.fixActiveAds('.shopAd-fix', self.shopAdsLimit)
+    cbca.shop.fixActiveAds('.shop-catalog', self.shopAdsLimit)
 
-    $(document).on 'change', '.shopAd-fix input[type = "checkbox"]', ->
-      cbca.shop.fixActiveAds('.shopAd-fix', self.shopAdsLimit)
+    $(document).on 'change', '.shop-catalog input[type = "checkbox"]', ->
+      cbca.shop.fixActiveAds('.shop-catalog', self.shopAdsLimit)
 
 
     cbca.shop.fixActiveAds('.martAd-fix', self.martAdsLimit)
