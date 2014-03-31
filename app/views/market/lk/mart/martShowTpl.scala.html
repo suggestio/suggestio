@@ -59,7 +59,8 @@
       mmart = mmart,
       addCall = routes.MarketAd.createMartAd(mmart.id.get),
       editCall = routes.MarketAd.editMartAd(_),
-      mshopOpt = None
+      mshopOpt = None,
+      isShownF = { !_.isEmpty }
     ) { mad =>
       @* Наверное нужны галочки управления отображением карточек ТЦ. *@
 

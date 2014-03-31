@@ -145,23 +145,22 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   /** Какие-то данные для text-align'a. */
   val textAlignRawM = nonEmptyText(maxLength = 16)
     .transform(strTrimSanitizeLowerF, strIdentityF)
-    .transform(
+    .transform[Option[TextAlignValue]](
       { TextAlignValues.maybeWithName },
-      { tavOpt: Option[TextAlignValue] => tavOpt.map(_.toString) getOrElse "" }
+      { tavOpt => tavOpt.map(_.toString) getOrElse "" }
     )
     .verifying("text.align.value.invalid", { _.isDefined })
     // Переводим результаты обратно в строки для более надежной работы reflections в TA-моделях.
     .transform(
       _.get.toString,
-      //{ tavStr: String => TextAlignValues.maybeWithName(tavStr) }
       { TextAlignValues.maybeWithName }
     )
 
   /** Маппинг для textAlign.phone -- параметры размещения текста на экране телефона. */
   val taPhoneM = textAlignRawM
-    .transform(
+    .transform[MMartAdTAPhone](
       { MMartAdTAPhone.apply },
-      { taPhone: MMartAdTAPhone => taPhone.align }
+      { taPhone => taPhone.align }
     )
 
   /** Маппинг для textAlign.tablet -- параметров размещения текста на планшете. */
