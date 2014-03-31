@@ -32,7 +32,7 @@
     )
     @_selectColorTpl("ad.offer.text1.color", af)
 
-    @if(!af.errors("ad.offer.text1.value").isEmpty) {
+    @if(af("ad.offer.text1.value").hasErrors) {
       <tr>
         <td class="left">&nbsp;</td>
         <td class="err-msg" colspan="2">
@@ -51,7 +51,7 @@
     )
     @_selectColorTpl("ad.offer.discount.color", af)
 
-    @if(!af.errors("ad.offer.discount.value").isEmpty) {
+    @if(af("ad.offer.discount.value").hasErrors) {
       <tr>
         <td class="left">&nbsp;</td>
         <td class="err-msg" colspan="2">
@@ -70,7 +70,7 @@
     )
     @_selectColorTpl("ad.offer.text2.color", af)
 
-    @if(!af.errors("ad.offer.text2.value").isEmpty) {
+    @if(af("ad.offer.text2.value").hasErrors) {
       <tr>
         <td class="left">&nbsp;</td>
         <td class="err-msg" colspan="2">
@@ -83,7 +83,7 @@
 
   <table cellpadding="0" cellspacing="0" class="mask-list input-wrap big">
     <tr>
-      <td class="left">
+      <td class="left @if(af("ad.offer.template.id").hasErrors) {err-msg}">
         <label>Шаблон:</label>
       </td>
 
@@ -103,7 +103,7 @@
 
   <table cellpadding="0" cellspacing="0" class="color-list input-wrap big">
     <tr>
-      <td class="left">
+      <td class="left @if(af("ad.offer.template.id").hasErrors) {err-msg}">
         <label>Цвет шаблона:</label>
       </td>
 
