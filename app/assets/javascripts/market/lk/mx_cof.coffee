@@ -444,16 +444,6 @@ CbcaShop =
           console.log(data)
       )
 
-    cbca.shop.fixActiveAds('.firstPage-catalog', 1)
-
-    $(document).on 'change', '.firstPage-catalog input[type = "checkbox"]', ->
-      cbca.shop.fixActiveAds('.firstPage-catalog', 1)
-
-    cbca.shop.fixActiveAds('.common-catalog', 1)
-
-    $(document).on 'change', '.common-catalog input[type = "checkbox"]', ->
-      cbca.shop.fixActiveAds('.common-catalog', 1)
-
 
     cbca.shop.fixActiveAds('.shop-catalog', self.shopAdsLimit)
 
