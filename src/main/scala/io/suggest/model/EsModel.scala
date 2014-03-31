@@ -18,6 +18,7 @@ import org.elasticsearch.action.index.IndexRequestBuilder
 import scala.annotation.tailrec
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.action.delete.DeleteRequestBuilder
+import io.suggest.ym.model.stat._
 
 /**
  * Suggest.io
@@ -31,7 +32,7 @@ object EsModel extends MacroLogsImpl {
 
   /** Список ES-моделей. Нужен для удобства массовых maintance-операций. Расширяется по мере роста числа ES-моделей. */
   def ES_MODELS: Seq[EsModelMinimalStaticT[_]] = {
-    Seq(MMart, MShop, MShopPriceList, MShopPromoOffer, MYmCategory, MMartAd)
+    Seq(MMart, MShop, MShopPriceList, MShopPromoOffer, MYmCategory, MMartAd, MAdStat)
   }
 
 

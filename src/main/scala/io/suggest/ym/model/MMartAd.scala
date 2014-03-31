@@ -481,6 +481,8 @@ case class MMartAd(
 
   def companion = MMartAd
 
+  def getOwnerId = shopId getOrElse martId
+
   /** Перед сохранением можно проверять состояние экземпляра. */
   @JsonIgnore override def isFieldsValid: Boolean = {
     super.isFieldsValid &&
@@ -775,6 +777,23 @@ object AdShowLevels extends Enumeration with MacroLogsImpl {
             acc
         }
       }.toSet
+  }
+
+  /**
+   * Является ли рекламная карточка ТЦ отображаемой где-либо?
+   * @param sls Список уровней отображения рекламной карточки.
+   * @return true, если карточка опубликована где-либо. Иначе false.
+   */
+  def isShownMartAd(sls: Set[AdShowLevel]) = !sls.isEmpty
+
+  /**
+   * Является ли рекламная карточка магазина отображаемой?
+   * @param htl Есть ли у магазина top level access?
+   * @param sls Уровни рекламной карточки.
+   * @return true - если карточка где-либо опубликована. Иначе false.
+   */
+  def isShownShopAd(htl: Boolean, sls: Set[AdShowLevel]): Boolean = {
+    sls.contains(LVL_SHOP) || sls.contains(LVL_MART_SHOPS) || (htl && sls.contains(LVL_MART_SHOWCASE))
   }
 
 }
