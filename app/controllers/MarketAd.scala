@@ -923,17 +923,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   ))
 
   private val floatInvalidIgnored = -1F
-  private val floatFieldTolerantM = text.transform(
-    { txt =>
-      try {
-        Math.max(txt.toFloat, 0F)
-      } catch {
-        case _: Exception => floatInvalidIgnored
-      }
-    },
-    { value: Float =>
-      if (value < 0F) "???" else value.toString }
-  )
 
   // offer-mapping'и
   /** Толерантный к значениям маппинг для рекламной карточки продукта с ценой. */
