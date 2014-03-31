@@ -444,6 +444,10 @@ CbcaShop =
           console.log(data)
       )
 
+    cbca.shop.fixActiveAds('.shopAd-fix2', 1)
+
+    $(document).on 'change', '.shopAd-fix2 input[type = "checkbox"]', ->
+      cbca.shop.fixActiveAds('.shopAd-fix2', 1)
 
 
     cbca.shop.fixActiveAds('.shopAd-fix', self.shopAdsLimit)
