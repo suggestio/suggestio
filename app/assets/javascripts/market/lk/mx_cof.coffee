@@ -411,6 +411,17 @@ CbcaShop =
       $(labelSelector).find('input[type = "checkbox"]').not(':checked').each ()->
         $(this).removeAttr('disabled').closest('label').removeClass('inactive')
 
+  checkDisabledAds: ()->
+    $('.ads-list .item').each ()->
+      check = true
+      $this = $(this)
+      if($this.find('label').not('.inactive').find('input[type = "checkbox"]').size())
+        $this.find('label').not('.inactive').find('input[type = "checkbox"]').each ()->
+          if(this.checked)
+            check = false
+        if(check)
+          $this.toggleClass('disabled', true)
+
 
   init: () ->
 
@@ -433,17 +444,13 @@ CbcaShop =
         success: (data) ->
           if(lvlEnabled)
             $this.closest('.item').removeClass('disabled')
-          else
-            check = true
-            $this.closest('.item').find('input[type = "checkbox"]').each ()->
-              if(this.checked)
-                check = false
-            if(check)
-              $this.closest('.item').toggleClass('disabled', true)
+
+          cbca.shop.checkDisabledAds()
         error: (data) ->
           console.log(data)
       )
 
+    cbca.shop.checkDisabledAds()
 
     cbca.shop.fixActiveAds('.shop-catalog', self.shopAdsLimit)
 
