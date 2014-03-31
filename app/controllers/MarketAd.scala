@@ -901,7 +901,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
 
     object Text {
-      val TEXT = "Низкие цены в этом месяце"
+      val TEXT = "Пример текста"
     }
   }
 
@@ -977,14 +977,17 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   /** Кусок формы, ориентированный на оформление скидочной рекламы. */
   private val previewAdDiscountM = {
-    val discountTextM = nonEmptyText(maxLength = DISCOUNT_TEXT_MAXLEN)
-      .transform(strTrimBrOnlyF, strIdentityF)
+    val discountTextM = text(maxLength = 2 * DISCOUNT_TEXT_MAXLEN)
+      .transform(
+        strTrimSanitizeF andThen {s: String => if (s.length > DISCOUNT_TEXT_MAXLEN) s.substring(0, DISCOUNT_TEXT_MAXLEN) else s},
+        strIdentityF
+      )
     val tplM = mapping(
       "id"    -> default(
         mapping = number(min = DISCOUNT_TPL_ID_MIN, max = DISCOUNT_TPL_ID_MAX),
         value   = PreviewFormDefaults.Discount.TPL_ID
       ),
-      "color" -> colorM
+      "color" -> default(colorM, "ce2222")
     )
     { DiscountTemplate.apply }
     { DiscountTemplate.unapply }
