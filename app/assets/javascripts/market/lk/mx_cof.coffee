@@ -435,7 +435,7 @@ CbcaShop =
             $this.closest('.item').removeClass('disabled')
           else
             check = true
-            $this.closest('.item').find('input[type = "checkbox"]').each ()->
+            $this.closest('.item').find('label').not('.inactive').find('input[type = "checkbox"]').each ()->
               if(this.checked)
                 check = false
             if(check)
