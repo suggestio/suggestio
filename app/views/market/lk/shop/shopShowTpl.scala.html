@@ -60,7 +60,7 @@
         addCall = routes.MarketAd.createShopAd(mshop.id.get),
         editCall = routes.MarketAd.editShopAd(_),
         mshopOpt = Some(mshop),
-        isShownF = { sls => sls.contains(LVL_SHOP) || sls.contains(LVL_MART_SHOPS) || (htl && sls.contains(LVL_MART_SHOWCASE)) }
+        isShownF = isShownShopAd(htl, _)
       ) { mad =>
         @* Галочки для управления отображением рекламной карточки магазина *@
         <div class="controls">

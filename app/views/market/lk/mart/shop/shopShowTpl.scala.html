@@ -70,8 +70,8 @@
 
       @* Отобразить основное описание магазина с кнопкой редактирования. *@
       @shop._shopShowTpl(
-        mshop=mshop,
-        editCall=routes.MarketMartLk.editShopForm(mshop.id.get)
+        mshop = mshop,
+        editCall = routes.MarketMartLk.editShopForm(mshop.id.get)
       )
      
       <div>
@@ -108,16 +108,16 @@
       <span class="title">Рекламные плакаты</span>
 
       @* Каталог продукции арендатора. У карточек должны быть кнопки сокрытия объявы, неактивные карточки должны выделятся как-то. *@
-      @mads.zipWithIndex.map { case (mad, i) =>
-        <div class="item @if(mad.showLevels.isEmpty) {disabled}" style="@if(i%3 != 0) {margin-left: 30px;}">
-          <div class="preview">
+      @defining(mshop.hasTopLevelAccess) { htl =>
+        @mads.zipWithIndex.map { case (mad, i) =>
+          <div class="item @if(!AdShowLevels.isShownShopAd(htl, mad.showLevels)) {disabled}" style="@if(i%3 != 0) {margin-left: 30px;}">
+            <div class="preview">
               <div class="disabled-ad"></div>
               <a class="hover tc-edit" href="@routes.MarketMartLk.shopAdHideForm(mad.id.get)">&nbsp;</a>
               @market.showcase._single_offer(mad, mmart, Some(mshop))
+            </div>
           </div>
-        </div>
-
-
+        }
       }
 
     </div>

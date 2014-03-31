@@ -54,15 +54,16 @@
       </div>
 
 
+    @* Рендер списка карточек арендатора. *@
     @market.lk.ad._adsEditableListTpl(
       mads = mads,
       mmart = mmart,
       addCall = routes.MarketAd.createMartAd(mmart.id.get),
       editCall = routes.MarketAd.editMartAd(_),
       mshopOpt = None,
-      isShownF = { !_.isEmpty }
+      isShownF = isShownMartAd
     ) { mad =>
-      @* Наверное нужны галочки управления отображением карточек ТЦ. *@
+      @* Галочка для управления отображением карточек ТЦ. *@
 
       <div class="controls">
         <label class="martAd-fix">
