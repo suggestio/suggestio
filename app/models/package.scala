@@ -90,4 +90,10 @@ package object models {
   type MMartAdIndexed   = io.suggest.ym.model.MMartAdIndexed
 
   type BuyPlaceT[T <: BuyPlaceT[T]]  = io.suggest.ym.model.BuyPlaceT[T]
+
+  val  MAdStat          = io.suggest.ym.model.stat.MAdStat
+  type MAdStat          = io.suggest.ym.model.stat.MAdStat
+
+  val  AdStatActions    = io.suggest.ym.model.stat.AdStatActions
+  type AdStatAction     = io.suggest.ym.model.stat.AdStatAction
 }

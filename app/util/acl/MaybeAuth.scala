@@ -25,7 +25,6 @@ object MaybeAuth extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroL
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[SimpleResult]): Future[SimpleResult] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
-    trace("pwOpt = " + pwOpt)
     srmFut flatMap { srm =>
       block(RequestWithPwOpt(pwOpt, request, srm))
     }

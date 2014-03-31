@@ -10,7 +10,7 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
-import play.api.mvc.{Action, AnyContent, SimpleResult}
+import play.api.mvc.{AnyContent, SimpleResult}
 import io.suggest.ym.model.stat.{MAdStat, AdStatActions}
 
 /**
@@ -76,8 +76,9 @@ object Market extends SioController with PlayMacroLogsImpl {
           personId = request.pwOpt.map(_.personId)
         )
         adStat.save.map { adStatId =>
-          adStat.id = Some(adStatId)
-          Created(adStatId)
+          //adStat.id = Some(adStatId)
+          //Created(adStatId)
+          NoContent
         }
       }
   }
