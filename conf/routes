@@ -161,6 +161,7 @@ GET  /img/any/:imgId                    controllers.Img.getImg(imgId)
 GET  /market/index/:martId              controllers.Market.martIndex(martId)
 GET  /market/demo_website/:martId       controllers.Market.demoWebSite(martId)
 GET  /market/ads/:martId                controllers.Market.findAds(martId, a: util.qsb.AdSearch)
+POST /market/ads/:martId/stat/:adId     controllers.Market.adStats(martId, adId, action: String)
 
 # sys.market
 GET  /sys/market                        controllers.SysMarket.index

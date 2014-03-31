@@ -10,7 +10,8 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
-import play.api.mvc.{AnyContent, SimpleResult}
+import play.api.mvc.{Action, AnyContent, SimpleResult}
+import io.suggest.ym.model.stat.{MAdStat, AdStatActions}
 
 /**
  * Suggest.io
@@ -37,7 +38,6 @@ object Market extends SioController with PlayMacroLogsImpl {
     }
   }
 
-
   /** Временный экшн, рендерит демо страничку предполагаемого сайта ТЦ, на которой вызывается Sio.Market */
   def demoWebSite(martId: MartId_t) = MaybeAuth.async { implicit request =>
     MMart.getById(martId) map {
@@ -59,6 +59,31 @@ object Market extends SioController with PlayMacroLogsImpl {
   }
 
 
+  // статистка
+
+  /** Кем-то просмотрена одна рекламная карточка. */
+  def adStats(martId: MartId_t, adId: String, actionRaw: String) = MaybeAuth.async { implicit request =>
+    val action = AdStatActions.withName(actionRaw)
+    MMartAd.getById(adId)
+      .filter { _.exists(_.martId == martId) }
+      .flatMap { madOpt =>
+        val adStat = MAdStat(
+          clientAddr = request.remoteAddress,
+          action = action,
+          ua = request.headers.get(USER_AGENT),
+          adId = adId,
+          adOwnerId = madOpt.get.getOwnerId,
+          personId = request.pwOpt.map(_.personId)
+        )
+        adStat.save.map { adStatId =>
+          adStat.id = Some(adStatId)
+          Created(adStatId)
+        }
+      }
+  }
+
+
+  // Внутренние хелперы
 
   private def shopsMap(martId: MartId_t): Future[Map[ShopId_t, MShop]] = {
     MShop.findByMartId(martId, onlyEnabled=true)
