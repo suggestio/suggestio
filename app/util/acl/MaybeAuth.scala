@@ -22,7 +22,7 @@ object MaybeAuth extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroL
    * @tparam A Подтип реквеста.
    * @return Фьючерс, описывающий результат.
    */
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[SimpleResult]): Future[SimpleResult] = {
+  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     srmFut flatMap { srm =>

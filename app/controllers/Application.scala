@@ -55,6 +55,6 @@ object Application extends SioController with PlayMacroLogsImpl {
 
 
   /** Враппер, генерящий фьючерс с телом экшена http404(RequestHeader). */
-  def http404Fut(implicit request: RequestHeader): Future[SimpleResult] = http404AdHoc
+  def http404Fut(implicit request: RequestHeader): Future[Result] = http404AdHoc
 
 }

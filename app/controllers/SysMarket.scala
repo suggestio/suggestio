@@ -601,11 +601,13 @@ object SysMarket extends SioController with MacroLogsImpl {
   /** Отобразить технический список реклам магазина. */
   def showShopAds(shopId: ShopId_t) = IsSuperuser.async { implicit request =>
     val madsFut = MMartAd.findForShop(shopId)
+    val adFreqsFut = MAdStat.findAdByActionFreqs(shopId)
     for {
       mshopOpt <- MShop.getById(shopId)
+      adFreqs  <- adFreqsFut
       mads     <- madsFut
     } yield {
-      Ok(shop.shopAdsTpl(mads, mshopOpt.get))
+      Ok(shop.shopAdsTpl(mads, mshopOpt.get, adFreqs))
     }
   }
 

@@ -1,10 +1,15 @@
-@(mads: Seq[MMartAd], mshop: MShop)(implicit ctx: util.Context)
+@(mads: Seq[MMartAd], mshop: MShop, adFreqs: AdFreqs_t)(implicit ctx: util.Context)
 
 @* Список реклам и сервисных функций. *@
 @import AdStatActions._
 @import util.TplDataFormatUtil._
+@import AdStatActions._
 
-@thisShopBase("Рекламные карточки", mshop) {
+@hPathAfter1 = {
+  / Реклама
+}
+
+@thisShopBase("Рекламные карточки", mshop, hPathAfter = Some(hPathAfter1)) {
   @mads.map { mad =>
     <a href="@routes.MarketAd.editShopAd(mad.id.get)">@mad.offers.headOption.map {
       case prod: MMartAdProduct => {
@@ -26,11 +31,18 @@
     </p>
 
     <p>Stat:
+      @adFreqs.get(mad.id.get).map { freqs =>
+        За последние @MAdStat.TTL_DAYS_DFLT дней:
+        @freqs.map { case (action, freq) =>
+          @action: @freq
+        }
+      }
+    </p>
     @Seq(View -> "просмотра", Click -> "клика").map { case (asa, txt) =>
       @helper.form(routes.Market.adStats(martId = mad.martId, adId = mad.id.get, action = asa.toString)) {
         <input type="submit" value="Имитация @txt"/>
       }
-    }</p>
+    }
 
     <br/><br/>
   }

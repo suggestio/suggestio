@@ -22,7 +22,7 @@ import util.img.ImgInfo4Save
 import util.img.OrigImgIdKey
 import play.api.libs.json._
 import scala.concurrent.Future
-import play.api.mvc.{AnyContent, SimpleResult}
+import play.api.mvc.{AnyContent, Result}
 import play.api.mvc.Security.username
 
 /**
@@ -613,7 +613,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     )
   }
 
-  private def inviteAcceptCommon(martId: MartId_t, eaId: String)(f: (EmailActivation, MMart) => AbstractRequestWithPwOpt[AnyContent] => Future[SimpleResult]) = {
+  private def inviteAcceptCommon(martId: MartId_t, eaId: String)(f: (EmailActivation, MMart) => AbstractRequestWithPwOpt[AnyContent] => Future[Result]) = {
     MaybeAuth.async { implicit request =>
       bruteForceProtect flatMap { _ =>
         EmailActivation.getById(eaId) flatMap {

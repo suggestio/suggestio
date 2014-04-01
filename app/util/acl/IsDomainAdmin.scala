@@ -18,7 +18,7 @@ import play.api.libs.concurrent.Execution.Implicits._
 object IsDomainAdmin {
 
   /** Фьючерс для onUnauth() */
-  def onUnauthFut(hostname: String, pwOpt: PwOpt_t, req:RequestHeader): Future[SimpleResult] = {
+  def onUnauthFut(hostname: String, pwOpt: PwOpt_t, req:RequestHeader): Future[Result] = {
     pwOpt match {
       // Юзер залогинен, но долбится на чужой домен
       case Some(_) =>
@@ -67,7 +67,7 @@ abstract class IsDomainAdminAbstract extends ActionBuilder[AbstractRequestWithDA
 
   def hostname: String
 
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithDAuthz[A]) => Future[SimpleResult]): Future[SimpleResult] = {
+  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithDAuthz[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     val dkey = UrlUtil.normalizeHostname(hostname)
@@ -82,7 +82,7 @@ abstract class IsDomainAdminAbstract extends ActionBuilder[AbstractRequestWithDA
     }
   }
 
-  def onUnauthFut(pwOpt: PwOpt_t, request: RequestHeader): Future[SimpleResult]
+  def onUnauthFut(pwOpt: PwOpt_t, request: RequestHeader): Future[Result]
 }
 
 

@@ -10,7 +10,7 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
-import play.api.mvc.{AnyContent, SimpleResult}
+import play.api.mvc.{AnyContent, Result}
 import io.suggest.ym.model.stat.{MAdStat, AdStatActions}
 
 /**
@@ -105,7 +105,7 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   /** Action-composition для нужд ряда экшенов этого контроллера. Хранит в себе данные для рендере и делает
     * проверки наличия индекса и MMart. */
-  private def marketAction(martId: MartId_t)(f: MarketRequest => Future[SimpleResult]) = MaybeAuth.async { implicit request =>
+  private def marketAction(martId: MartId_t)(f: MarketRequest => Future[Result]) = MaybeAuth.async { implicit request =>
     // Смотрим метаданные по индексу маркета. Они обычно в кеше.
     val mmartInxOptFut = IndicesUtil.getInxFormMartCached(martId)
     // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.

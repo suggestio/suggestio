@@ -1,6 +1,6 @@
 package util.acl
 
-import play.api.mvc.{SimpleResult, Request, ActionBuilder}
+import play.api.mvc.{Result, Request, ActionBuilder}
 import models._
 import util.acl.PersonWrapper.PwOpt_t
 import scala.concurrent.Future
@@ -74,7 +74,7 @@ object IsAdEditor {
 
 /** Редактировать карточку может только владелец магазина. */
 case class IsAdEditor(adId: String) extends ActionBuilder[RequestWithAd] {
-  protected def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[SimpleResult]): Future[SimpleResult] = {
+  protected def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     MMartAd.getById(adId) flatMap {

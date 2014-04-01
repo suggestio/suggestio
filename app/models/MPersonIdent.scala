@@ -89,7 +89,7 @@ object MPersonIdent {
     */
   def findAllEmails(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
     val personIdQuery = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
-    client.prepareSearch(ES_INDEX_NAME)
+    client.prepareSearch(SIO_ES_INDEX_NAME) // TODO Следует наверное собирать индексы и типы всех подчиненных моделей через что-то дополнительное.
       .setTypes(MozillaPersonaIdent.ES_TYPE_NAME, EmailPwIdent.ES_TYPE_NAME)
       .setQuery(personIdQuery)
       // TODO ограничить возвращаемые поля только необходимыми

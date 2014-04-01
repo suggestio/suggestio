@@ -1,6 +1,6 @@
 package controllers
 
-import play.api.mvc.{RequestHeader, SimpleResult, Controller}
+import play.api.mvc.{RequestHeader, Result, Controller}
 import util.{ContextImpl, HtmlCompressUtil, ContextT}
 import scala.concurrent.{Promise, Future}
 import play.api.i18n.Lang
@@ -22,7 +22,7 @@ import play.api.data.Form
 
 trait SioController extends Controller with ContextT {
 
-  implicit protected def simpleResult2async(sr: SimpleResult): Future[SimpleResult] = {
+  implicit protected def simpleResult2async(sr: Result): Future[Result] = {
     Future.successful(sr)
   }
 
@@ -44,7 +44,7 @@ trait SioController extends Controller with ContextT {
   }
   
   /** Тело экшена, генерирующее страницу 404. Используется при минимальном окружении. */
-  def http404AdHoc(implicit request: RequestHeader): SimpleResult = {
+  def http404AdHoc(implicit request: RequestHeader): Result = {
     implicit val ctx = ContextImpl()
     NotFound(views.html.static.http404Tpl())
   }

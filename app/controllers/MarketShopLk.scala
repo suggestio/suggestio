@@ -8,7 +8,7 @@ import util.FormUtil._
 import util.acl._
 import models._
 import views.html.market.lk.shop._
-import play.api.mvc.{AnyContent, SimpleResult}
+import play.api.mvc.{AnyContent, Result}
 import play.api.Play.current
 import concurrent.duration._
 import scala.concurrent.Future
@@ -287,7 +287,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
    * @param f функция генерации результата, когда всё ок.
    * @return То, что нагенерит функция или страницу с ошибкой.
    */
-  private def inviteAcceptCommon(shopId: String, eaId: String)(f: (EmailActivation, MShop) => AbstractRequestWithPwOpt[AnyContent] => Future[SimpleResult]) = {
+  private def inviteAcceptCommon(shopId: String, eaId: String)(f: (EmailActivation, MShop) => AbstractRequestWithPwOpt[AnyContent] => Future[Result]) = {
     MaybeAuth.async { implicit request =>
       bruteForceProtect flatMap { _ =>
         EmailActivation.getById(eaId) flatMap {

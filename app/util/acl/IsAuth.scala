@@ -14,7 +14,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 object IsAuth extends IsAuthAbstract {
 
   /** Что делать, когда юзер не авторизован? */
-  def onUnauth(req: RequestHeader): Future[SimpleResult] = {
+  def onUnauth(req: RequestHeader): Future[Result] = {
     Future.successful(
       Results.Redirect(routes.Ident.persona())
     )
@@ -25,7 +25,7 @@ object IsAuth extends IsAuthAbstract {
 
 trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
 
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[SimpleResult]): Future[SimpleResult] = {
+  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
     if (pwOpt.isDefined) {
@@ -40,7 +40,7 @@ trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
   }
 
   // Действия, когда персонаж не идентифицирован.
-  def onUnauth(req: RequestHeader): Future[SimpleResult]
+  def onUnauth(req: RequestHeader): Future[Result]
 
 }
 

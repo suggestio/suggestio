@@ -1,9 +1,8 @@
 import akka.actor.Cancellable
-import com.googlecode.htmlcompressor.compressor.HtmlCompressor
 import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
 import io.suggest.model.EsModel
 import org.elasticsearch.client.Client
-import play.api.mvc.{WithFilters, SimpleResult, RequestHeader}
+import play.api.mvc.{Result, WithFilters, RequestHeader}
 import scala.concurrent.{Await, Future, future}
 import scala.util.{Failure, Success}
 import util.{HtmlCompressUtil, Crontab, SiowebEsUtil, SiowebSup}
@@ -57,7 +56,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
 
   /** Проинициализировать все ES-модели и основной индекс. */
   def initializeEsModels(implicit client: Client): Future[_] = {
-    val futInx = EsModel.ensureSioIndex
+    val futInx = EsModel.ensureSioIndex()
     val logPrefix = "initializeEsModels(): "
     futInx onComplete {
       case Success(result) => debug(logPrefix + "ensure() -> " + result)
@@ -89,7 +88,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
 
 
   /** Вызов страницы 404. В продакшене надо выводить специальную страницу 404. */
-  override def onHandlerNotFound(request: RequestHeader): Future[SimpleResult] = {
+  override def onHandlerNotFound(request: RequestHeader): Future[Result] = {
     // TODO логгер тут не работает почему-то...
     trace(request.path + " - 404")
     maybeApplication match {

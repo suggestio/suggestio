@@ -2,7 +2,7 @@ package controllers
 
 import _root_.util.urls_supply.SeedUrlsSupplier
 import util.event._
-import play.api.mvc.{SimpleResult, WebSocket}
+import play.api.mvc.{Result, WebSocket}
 import play.api.data._
 import util.FormUtil._
 import util.acl._
@@ -132,7 +132,7 @@ object Js extends SioController with Logs {
 
       // Домена [пока] нет в хранилище. Нужно что-то предпринять в зав-ти от Qi и в любом случае начать проверку сайта.
       case None =>
-        val futureResult: Future[SimpleResult] = if (isQi) {
+        val futureResult: Future[Result] = if (isQi) {
           // Какбы-админ зашел на сайт. Отрендерить инсталлер.
           trace(logPrefix + s"dkey '$dkey' not found in storage, but qi install is going on...")
           qiInstallerAction(dkey=dkey, qi_id=qi_id) recover {
@@ -293,7 +293,7 @@ object Js extends SioController with Logs {
    * @param request Реквест.
    * @return Фьючерс с результатом работы.
    */
-  private def qiInstallerAction(dkey:String, qi_id:String)(implicit request: AbstractRequestWithPwOpt[_]): Future[SimpleResult] = {
+  private def qiInstallerAction(dkey:String, qi_id:String)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     import request.pwOpt
     val logPrefix = s"qiAction($dkey): "
     // Далее запрос становится асинхронным, т.к. ensureActorFor возвращает Future[ActorRef]. Можно блокироваться через EnsureSync, можно сгенерить фьючерс. Пока делаем второе.
@@ -340,7 +340,7 @@ object Js extends SioController with Logs {
    * @param request Реквест.
    * @return Фьючерс с результатом запроса.
    */
-  private def jsServingAction(dkey: String)(implicit request: AbstractRequestWithPwOpt[_]): Future[SimpleResult] = {
+  private def jsServingAction(dkey: String)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     // Параллельно читаем права юзера на домен и настройки домена. Через "for {} yield {}" подавляем многоэтажность фьючерсов.
     val isSiteAdminFut = IsDomainAdmin.isDkeyAdmin(dkey, request.pwOpt, request)
     for {

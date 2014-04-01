@@ -162,7 +162,7 @@ object Search extends SioController with Logs {
    * Запрос на поиск по сайту (сайтам) приходит сюда.
    * @return Future[Jsonp] с результатом поиска или что-то, описывающее проблему.
    */
-  private def siteSearchAsync(sso: SioSearchOptions)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[SimpleResult] = {
+  private def siteSearchAsync(sso: SioSearchOptions)(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
     import sso.{dkeys, queryStr, isDebug, langs}
 
     lazy val logPrefix = s"siteSearch(${dkeys.mkString(",")}, q:$queryStr): "

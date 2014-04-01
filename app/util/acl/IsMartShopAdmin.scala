@@ -1,6 +1,6 @@
 package util.acl
 
-import play.api.mvc.{SimpleResult, Request, ActionBuilder}
+import play.api.mvc.{Result, Request, ActionBuilder}
 import scala.concurrent.Future
 import util.acl.PersonWrapper.PwOpt_t
 import models.MShop, MShop.ShopId_t
@@ -51,7 +51,7 @@ import IsShopAdm._
 
 /** В реквесте содержится магазин, если всё ок. */
 case class IsShopAdm(shopId: ShopId_t) extends ActionBuilder[RequestForShopAdmFull] {
-  protected def invokeBlock[A](request: Request[A], block: (RequestForShopAdmFull[A]) => Future[SimpleResult]): Future[SimpleResult] = {
+  protected def invokeBlock[A](request: Request[A], block: (RequestForShopAdmFull[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     isShopAdminFull(shopId, pwOpt) flatMap {

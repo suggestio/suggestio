@@ -4,7 +4,7 @@ import io.suggest.ym.model.MMart.MartId_t
 import util.acl.PersonWrapper.PwOpt_t
 import util.PlayMacroLogsImpl
 import scala.concurrent.Future
-import play.api.mvc.{RequestHeader, SimpleResult, Request, ActionBuilder}
+import play.api.mvc.{RequestHeader, Result, Request, ActionBuilder}
 import io.suggest.ym.model.MShop, MShop.ShopId_t
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -35,7 +35,7 @@ object IsMartAdmin extends PlayMacroLogsImpl {
   }
 
   /** Код вызова проверки martID и выполнения того или иного экшена. */
-  def invokeMartBlock[A](martId: MartId_t, request: Request[A], block: (AbstractRequestForMartAdm[A]) => Future[SimpleResult]): Future[SimpleResult] = {
+  def invokeMartBlock[A](martId: MartId_t, request: Request[A], block: (AbstractRequestForMartAdm[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     isMartAdmin(martId, pwOpt) flatMap {
@@ -57,14 +57,14 @@ import IsMartAdmin._
 
 /** Административная операция над торговым центром. */
 case class IsMartAdmin(martId: MartId_t) extends ActionBuilder[AbstractRequestForMartAdm] {
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForMartAdm[A]) => Future[SimpleResult]): Future[SimpleResult] = {
+  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForMartAdm[A]) => Future[Result]): Future[Result] = {
     invokeMartBlock(martId, request, block)
   }
 }
 
 /** Какая-то административная операция над магазином, подразумевающая права на ТЦ. */
 case class IsMartAdminShop(shopId: ShopId_t) extends ActionBuilder[AbstractRequestForMartAdm] {
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForMartAdm[A]) => Future[SimpleResult]): Future[SimpleResult] = {
+  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForMartAdm[A]) => Future[Result]): Future[Result] = {
     MShop.getMartIdFor(shopId) flatMap {
       case Some(martId) =>
         invokeMartBlock(martId, request, block)
@@ -90,7 +90,7 @@ case class ShopMartAdRequest[A](ad: MMartAd, mmart:MMart, pwOpt: PwOpt_t, reques
   extends AbstractRequestWithPwOpt(request)
 
 case class IsMartAdminShopAd(adId: String) extends ActionBuilder[ShopMartAdRequest] {
-  protected def invokeBlock[A](request: Request[A], block: (ShopMartAdRequest[A]) => Future[SimpleResult]): Future[SimpleResult] = {
+  protected def invokeBlock[A](request: Request[A], block: (ShopMartAdRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     MMartAd.getById(adId) flatMap {

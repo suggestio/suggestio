@@ -1,6 +1,6 @@
 package util.acl
 
-import play.api.mvc.{SimpleResult, Request, ActionBuilder}
+import play.api.mvc.{Result, Request, ActionBuilder}
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
@@ -16,7 +16,7 @@ import util.SiowebEsUtil.client
  */
 
 case class IsPromoOfferAdmin(offerId: String) extends ActionBuilder[AbstractRequestForPromoOfferAdm] {
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForPromoOfferAdm[A]) => Future[SimpleResult]): Future[SimpleResult] = {
+  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForPromoOfferAdm[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     // Проверяем есть ли права на магазин. Если из глубин вернулся shopId, то да.
@@ -55,7 +55,7 @@ case class RequestForPromoOfferAdm[A](shopId:ShopId_t, offerId:String, pwOpt:PwO
 
 /** Почти тоже самое, что и [[IsPromoOfferAdmin]], но внутри реквеста содержится полный оффер, к которому обращаются. */
 case class IsPromoOfferAdminFull(offerId: String) extends ActionBuilder[RequestForPromoOfferAdmFull] {
-  protected def invokeBlock[A](request: Request[A], block: (RequestForPromoOfferAdmFull[A]) => Future[SimpleResult]): Future[SimpleResult] = {
+  protected def invokeBlock[A](request: Request[A], block: (RequestForPromoOfferAdmFull[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     // Проверяем есть ли права на магазин. Если из глубин вернулся shopId, то да.

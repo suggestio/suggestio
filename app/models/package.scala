@@ -93,6 +93,7 @@ package object models {
 
   val  MAdStat          = io.suggest.ym.model.stat.MAdStat
   type MAdStat          = io.suggest.ym.model.stat.MAdStat
+  type AdFreqs_t        = MAdStat.AdFreqs_t
 
   val  AdStatActions    = io.suggest.ym.model.stat.AdStatActions
   type AdStatAction     = io.suggest.ym.model.stat.AdStatAction
