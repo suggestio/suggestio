@@ -73,9 +73,9 @@ object EsModel extends MacroLogsImpl {
     case true  => SortOrder.DESC
   }
 
-  /** Имя индекса, который будет использоваться для хранения данных остальных моделей.
+  /** Имя индекса, который будет использоваться для хранения данных для большинства остальных моделей.
     * Имя должно быть коротким и лексикографически предшествовать именам остальных временных индексов. */
-  val ES_INDEX_NAME = "-sio"
+  val SIO_ES_INDEX_NAME = "-sio"
 
   // Имена полей в разных хранилищах. НЕЛЬЗЯ менять их значения.
   val COMPANY_ID_ESFN   = "companyId"
@@ -202,13 +202,13 @@ object EsModel extends MacroLogsImpl {
    * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
    *         Если индекс уже существует, то false.
    */
-  def ensureSioIndex(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
+  def ensureSioIndex(indexName: String = SIO_ES_INDEX_NAME)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     val adm = client.admin().indices()
-    adm.prepareExists(ES_INDEX_NAME).execute().flatMap { existsResp =>
+    adm.prepareExists(indexName).execute().flatMap { existsResp =>
       if (existsResp.isExists) {
         Future.successful(false)
       } else {
-        adm.prepareCreate(ES_INDEX_NAME)
+        adm.prepareCreate(indexName)
           .setSettings(generateIndexSettings)
           .execute()
           .map { _ => true }
@@ -219,19 +219,19 @@ object EsModel extends MacroLogsImpl {
   /**
    * Существует ли указанный маппинг в хранилище? Используется, когда модель хочет проверить наличие маппинга
    * внутри общего индекса.
-   * @param typename Имя типа.
+   * @param typeName Имя типа.
    * @return Да/нет.
    */
-  def isMappingExists(typename: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
+  def isMappingExists(indexName: String, typeName: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     client.admin().cluster()
       .prepareState()
-      .setIndices(ES_INDEX_NAME)
+      .setIndices(indexName)
       .execute()
       .map { cmd =>
         val imd = cmd.getState
           .getMetaData
-          .index(ES_INDEX_NAME)
-          .mapping(typename)
+          .index(indexName)
+          .mapping(typeName)
         trace("mapping exists resp: " + imd)
         imd != null
       }
@@ -245,6 +245,7 @@ import EsModel._
 /** Базовый шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelMinimalT]].
   * Здесь десериализация полностью выделена в отдельную функцию. */
 trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
+  val ES_INDEX_NAME = SIO_ES_INDEX_NAME
   val ES_TYPE_NAME: String
 
   def generateMapping: XContentBuilder = generateMappingFor(ES_TYPE_NAME)
@@ -308,7 +309,9 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
   }
 
   // TODO Нужно проверять, что текущий маппинг не устарел, и обновлять его.
-  def isMappingExists(implicit ec:ExecutionContext, client: Client) = EsModel.isMappingExists(ES_TYPE_NAME)
+  def isMappingExists(implicit ec:ExecutionContext, client: Client) = {
+    EsModel.isMappingExists(indexName=ES_INDEX_NAME, typeName=ES_TYPE_NAME)
+  }
 
   /**
    * Десериализация одного элементам модели.
@@ -450,7 +453,7 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
   @JsonIgnore def companion: EsModelMinimalStaticT[E]
 
   @JsonIgnore protected def esTypeName = companion.ES_TYPE_NAME
-  @JsonIgnore protected def esIndexName = ES_INDEX_NAME
+  @JsonIgnore protected def esIndexName = companion.ES_INDEX_NAME 
 
   /** Можно делать какие-то действия после десериализации. Например, можно исправлять значения после эволюции схемы. */
   @JsonIgnore def postDeserialize() {}

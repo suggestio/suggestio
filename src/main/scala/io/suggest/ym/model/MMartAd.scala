@@ -149,18 +149,6 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
     findRt(query)
   }
 
-  /** Посчитать кол-во объяв для указанного ТЦ. private - пока не используется за пределами модели. */
-  private def countForMart(martId: MartId_t, shopMustMiss: Boolean, withLevels: Option[Seq[AdShowLevel]])(implicit ec: ExecutionContext, client: Client): Future[Long] = {
-    val query = martSearchQuery(martId, shopMustMiss, withLevels)
-    count(query)
-  }
-
-  /** Посчитать рекламные карточки для магазина. private - пока не используется за пределами модели. */
-  private def countForShop(shopId: ShopId_t, withLevels: Option[Seq[AdShowLevel]])(implicit ec: ExecutionContext, client: Client): Future[Long] = {
-    val query = shopSearchQuery(shopId, withLevels)
-    count(query)
-  }
-
   /** common-функция для запросов в реальном времени. */
   private def findRt(query: QueryBuilder)(implicit ec: ExecutionContext, client: Client): Future[List[MMartAd]] = {
     client.prepareSearch(ES_INDEX_NAME)

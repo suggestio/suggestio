@@ -36,7 +36,7 @@ libraryDependencies ++= {
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % jacksonVsn,
     "org.json4s" %% "json4s-native" % "3.+",
     // ES
-    "org.elasticsearch" % "elasticsearch" % "1.0.1",
+    "org.elasticsearch" % "elasticsearch" % "1.1.0",
     // Parsers
     "org.apache.tika" % "tika-core" % tikaVsn,
     "org.apache.tika" % "tika-parsers" % tikaVsn exclude("xerces", "xercesImpl"),

@@ -3,15 +3,18 @@ package io.suggest.ym.model.stat
 import io.suggest.model.{EsModelT, EsModelStaticT}
 import io.suggest.model.EsModel._
 import org.joda.time.DateTime
+import org.elasticsearch.common.joda.time.{DateTime => EsDateTime}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.MyConfig.CONFIG
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.index.query.{QueryBuilder, FilterBuilders, QueryBuilders}
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import scala.collection.JavaConversions._
+import org.elasticsearch.search.aggregations.bucket.terms.Terms
+import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram
 
 /**
  * Suggest.io
@@ -31,30 +34,108 @@ object MAdStat extends EsModelStaticT[MAdStat] {
   val TIMESTAMP_ESFN = "timestamp"
 
   /** Через сколько времени удалять записи статистики. */
-  val TTL_DFLT = CONFIG.getString("ad.stat.ttl.period") getOrElse "60d"
+  val TTL_DAYS_DFLT = CONFIG.getInt("ad.stat.ttl.period.days") getOrElse 60
+
+  type AdFreqs_t = Map[String, Map[AdStatAction, Long]]
+  type DateHistAds_t = Seq[(EsDateTime, Long)]
+
+  protected[model] def adOwnerQuery(adOwnerId: String) = QueryBuilders.termQuery(AD_OWNER_ID_ESFN, adOwnerId)
 
   /**
    * Аггрегат, порождающий карту из id реклам и их статистик по action'ам.
    * @param adOwnerId id владельца рекламных карточек.
-   * @return Карту [adId -> stats], где stat - это карта [AdStatAction -> freq].
+   * @return Карту [adId -> stats], где stats - это карта [AdStatAction -> freq:Long].
    */
-  def aggForAdOwnerPerAd(adOwnerId: String)(implicit ec: ExecutionContext, client: Client): Future[Map[String, Map[AdStatAction, Int]]] = {
+  def findAdByActionFreqs(adOwnerId: String)(implicit ec: ExecutionContext, client: Client): Future[AdFreqs_t] = {
+    val aggName = "aggIdAction"
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
-      .setQuery(QueryBuilders.termQuery(AD_OWNER_ID_ESFN, adOwnerId))
+      .setQuery(adOwnerQuery(adOwnerId))
+      .setSize(0)
       .addAggregation(
-        AggregationBuilders.terms("aggId").field(AD_ID_ESFN).subAggregation(
-          AggregationBuilders.terms("aggAction").field(ACTION_ESFN)
-        )
+        AggregationBuilders.terms(aggName)
+          .script("doc['adId'].value + '.' + doc['action'].value")
       )
       .execute()
       .map { searchResp =>
-        searchResp.getAggregations.getAsMap.toMap.mapValues { aggr =>
-          ???
-        }
-        ???
+        searchResp.getAggregations
+          .get[Terms](aggName)
+          .getBuckets
+          .foldLeft[List[(String, (AdStatAction, Long))]] (Nil) { (acc, bucket) =>
+            val Array(adId, statActionRaw) = bucket.getKey.split('.')
+            val statAction = AdStatActions.withName(statActionRaw)
+            val e1 = (adId, (statAction, bucket.getDocCount))
+            e1 :: acc
+          }
+          .groupBy(_._1)
+          .mapValues { _.map(_._2).toMap }
       }
   }
+
+
+  /**
+   * Генерим данные для date-гистограммы. Данные эти можно обратить в столбчатую диаграмму или соответствующий график.
+   * @param adOwnerIdOpt Возможный id владельца рекламных карточек.
+   * @param interval Интервал значений дат.
+   * @param actionOpt Возможный id stat-экшена.
+   * @param withZeroes Возвращать ли нулевые столбцы? По умолчанию - да.
+   * @param dateBoundsOpt Необязательные границы вывода.
+   * @return Фьчерс с последовательностью (DateTime, freq:Long) в порядке возрастания даты.
+   */
+  def dateHistogramFor(adOwnerIdOpt: Option[String], interval: DateHistogram.Interval,
+                       dateBoundsOpt: Option[(EsDateTime, EsDateTime)] = None,
+                       actionOpt: Option[AdStatAction] = None, withZeroes: Boolean = false
+                      )(implicit ec: ExecutionContext, client: Client): Future[DateHistAds_t] = {
+    // Собираем поисковый запрос. Надо бы избавится от лишних типов и точек, но почему-то сразу всё становится красным.
+    var query: QueryBuilder = adOwnerIdOpt.map[QueryBuilder] { adOwnerId =>
+      adOwnerQuery(adOwnerId)
+    }.map { adOwnerQuery =>
+      actionOpt.fold(adOwnerQuery) { action =>
+        QueryBuilders.filteredQuery(
+          adOwnerQuery,
+          FilterBuilders.termFilter(ACTION_ESFN, action.toString)
+        )
+      }
+    }.orElse {
+      actionOpt.map { action =>
+        QueryBuilders.termQuery(ACTION_ESFN, action.toString)
+      }
+    }.getOrElse {
+      QueryBuilders.matchAllQuery()
+    }
+    // Добавить фильтр в query, если задан диапазон интересующих дат.
+    if (dateBoundsOpt.isDefined) {
+      val (ds, de) = dateBoundsOpt.get
+      val dateRangeFilter = FilterBuilders.rangeFilter("timestampRange").gte(ds).lte(de)
+      query = QueryBuilders.filteredQuery(query, dateRangeFilter)
+    }
+    // Собираем и запускаем es-запрос
+    val dtHistName = "adDateHist"
+    val agg = AggregationBuilders.dateHistogram(dtHistName)
+      .field(TIMESTAMP_ESFN)
+      .interval(interval)
+      .minDocCount(if (withZeroes) 0 else 1)
+    if (dateBoundsOpt.isDefined) {
+      val Some((ds, de)) = dateBoundsOpt
+      agg.extendedBounds(ds, de)
+    }
+    client.prepareSearch(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(query)
+      .setSize(0)
+      .addAggregation(agg)
+      .execute()
+      .map { searchResp =>
+        searchResp.getAggregations
+          .get[DateHistogram](dtHistName)
+          .getBuckets
+          .toSeq
+          .map { bucket =>
+            bucket.getKeyAsDate -> bucket.getDocCount
+          }
+      }
+  }
+
 
   /** Пустой экземпляр класса. */
   protected def dummy(id: String) = MAdStat(
@@ -84,7 +165,7 @@ object MAdStat extends EsModelStaticT[MAdStat] {
   def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
     FieldAll(enabled = false),
-    FieldTtl(enabled = true, default = TTL_DFLT)
+    FieldTtl(enabled = true, default = TTL_DAYS_DFLT + "d")
   )
 
   /** Маппинги для типа этой модели. */

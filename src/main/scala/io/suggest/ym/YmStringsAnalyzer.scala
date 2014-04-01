@@ -1,6 +1,6 @@
 package io.suggest.ym
 
-import org.apache.lucene.util.Version.{LUCENE_46 => luceneVsn}
+import org.apache.lucene.util.Version.{LUCENE_47 => luceneVsn}
 import org.apache.lucene.analysis.ru.RussianAnalyzer
 import org.apache.lucene.analysis.en.EnglishAnalyzer
 import org.apache.lucene.analysis.standard._
