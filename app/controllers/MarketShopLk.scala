@@ -90,7 +90,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
     val adsFut = MMartAd.findForShopRt(shopId)
     // TODO Если магазин удалён из ТЦ, то это как должно выражаться?
     val extAdOptFut = newAdIdOpt match {
-      case Some(newAdId) => MMartAd.getById(newAdId).map { _.filter { _.shopId.exists(_ == shopId) } }
+      case Some(newAdId) => MMartAd.getById(newAdId).map { _.filter { _.producerId.exists(_ == shopId) } }
       case None => Future successful None
     }
     val martId = mshop.martId.get

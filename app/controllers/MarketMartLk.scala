@@ -113,7 +113,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   def martShow(martId: MartId_t, newAdIdOpt: Option[String]) = IsMartAdmin(martId).async { implicit request =>
     // Бывает, что есть дополнительная реклама, которая появится в выдаче только по наступлению index refresh. Тут костыль для отработки этого.
     val extAdOptFut = newAdIdOpt match {
-      case Some(newAdId) => MMartAd.getById(newAdId).map { _.filter { mad => mad.martId == martId } }
+      case Some(newAdId) => MMartAd.getById(newAdId).map { _.filter { mad => mad.receiverIds == martId } }
       case None => Future successful None
     }
     for {
@@ -467,7 +467,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   /** Рендер формы сокрытия какой-то рекламы. */
   def shopAdHideForm(adId: String) = IsMartAdminShopAd(adId).async { implicit request =>
     import request.ad
-    val shopId = ad.shopId.get
+    val shopId = ad.producerId.get
     MShop.getById(shopId) map {
       case Some(mshop) =>
         Ok(shop._shopAdHideFormTpl(mshop, ad, request.mmart, shopAdHideFormM))
@@ -479,7 +479,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   /** Сабмит формы сокрытия/удаления формы. */
   def shopAdHideFormSubmit(adId: String) = IsMartAdminShopAd(adId).async { implicit request =>
     // TODO Надо поразмыслить над ответами. Вероятно, тут нужны редиректы или jsonp-команды.
-    val rdr = Redirect(routes.MarketMartLk.showShop(request.ad.shopId.get))
+    val rdr = Redirect(routes.MarketMartLk.showShop(request.ad.producerId.get))
     shopAdHideFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"shopAdHideFormSubmit($adId): Form bind failed: " + formWithErrors.errors)
@@ -502,7 +502,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    */
   private def notyfyAdDisabled(reason: String)(implicit request: ShopMartAdRequest[_]) {
     import request.{mmart, ad}
-    ad.shopId.foreach { shopId =>
+    ad.producerId.foreach { shopId =>
       MShop.getById(shopId) onSuccess { case Some(mshop) =>
         mshop.mainPersonId.foreach { personId =>
           MPersonIdent.findAllEmails(personId) onSuccess { case emails =>
@@ -543,9 +543,9 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
         MShop.getById(shopId) flatMap {
           case Some(mshop) =>
             mshop.settings.supWithLevels = if (isTopEnabled) {
-              mshop.settings.supWithLevels + AdShowLevels.LVL_MART_SHOWCASE
+              mshop.settings.supWithLevels + AdShowLevels.LVL_CONSUMER_TOP
             } else {
-              mshop.settings.supWithLevels - AdShowLevels.LVL_MART_SHOWCASE
+              mshop.settings.supWithLevels - AdShowLevels.LVL_CONSUMER_TOP
             }
             mshop.saveShopLevels map { _ =>
               Ok("updated ok")

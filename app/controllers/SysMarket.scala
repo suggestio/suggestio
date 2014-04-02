@@ -615,9 +615,9 @@ object SysMarket extends SioController with MacroLogsImpl {
   def showShopEmailAdDisableMsg(adId: String, isHtml: Boolean) = IsSuperuser.async { implicit request =>
     MMartAd.getById(adId) flatMap {
       case Some(mad) =>
-        val mmartFut = MMart.getById(mad.martId)
+        val mmartFut = MMart.getById(mad.receiverIds)
         for {
-          mshopOpt <- MShop.getById(mad.shopId.get)
+          mshopOpt <- MShop.getById(mad.producerId.get)
           mmartOpt <- mmartFut
         } yield {
           val reason = "Причина отключения ТЕСТ причина отключения 123123 ТЕСТ причина отключения."

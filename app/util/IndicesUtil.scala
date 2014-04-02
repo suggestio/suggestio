@@ -151,11 +151,11 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
    */
   private def handleAdSaved(mmartAd: MMartAd): Future[_] = {
     lazy val logPrefix = s"handleAdSave(${mmartAd.id.get}): "
-    val martInx2Fut = getInxFormMartCached(mmartAd.martId).map(_.get)
+    val martInx2Fut = getInxFormMartCached(mmartAd.receiverIds).map(_.get)
     val userCatStrFut = maybeCollectUserCatStr(mmartAd.userCatId)
     // Реклама бывает на уровне ТЦ и на уровне магазина. Если на уровне магазина, то надо определить допустимые уровни отображения.
     // Нужно пропатчить showLevels согласно допустимым уровням магазина.
-    val allowedDisplayLevelsFut: Future[Set[AdShowLevel]] = mmartAd.shopId match {
+    val allowedDisplayLevelsFut: Future[Set[AdShowLevel]] = mmartAd.producerId match {
       // Это реклама от магазина.
       case Some(_shopId) =>
         getShopByIdCached(_shopId) map {
@@ -191,7 +191,7 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
 
   /** Реакция на удаление рекламной карточки: нужно её удалить из индекса карточек. */
   private def handleAdDeleted(mmartAd: MMartAd) {
-    getInxFormMartCached(mmartAd.martId) onSuccess {
+    getInxFormMartCached(mmartAd.receiverIds) onSuccess {
       case Some(mmartInx) => MMartAdIndexed.deleteById(mmartAd.id.get, mmartInx)
     }
   }

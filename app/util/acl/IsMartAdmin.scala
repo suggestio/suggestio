@@ -95,7 +95,7 @@ case class IsMartAdminShopAd(adId: String) extends ActionBuilder[ShopMartAdReque
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     MMartAd.getById(adId) flatMap {
       case Some(ad) =>
-        isMartAdmin(ad.martId, pwOpt) flatMap {
+        isMartAdmin(ad.receiverIds, pwOpt) flatMap {
           case Some(mmart) =>
             srmFut flatMap { srm =>
               val req1 = ShopMartAdRequest(ad, mmart, pwOpt, request, srm)

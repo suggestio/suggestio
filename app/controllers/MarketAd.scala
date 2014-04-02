@@ -258,10 +258,10 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
   private def adFormApply[T <: MMartAdOfferT](userCatId: Option[String], panelSettings: MMartAdPanelSettings, adBody: T, textAlign: MMartAdTextAlign) = {
     MMartAd(
-      martId      = null,
+      consumerIds      = null,
       offers      = List(adBody),
       img         = null,
-      shopId      = null,
+      producerId      = null,
       panel       = Some(panelSettings),
       userCatId   = userCatId,
       textAlign   = textAlign,
@@ -302,7 +302,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   private val shopAdTextFormM     = getShopAdFormM(adTextM)
 
   /** Извлекатель данных по логотипу из MShop/MMart. */
-  implicit private def entityOpt2logoOpt(ent: Option[BuyPlaceT[_]]): LogoOpt_t = {
+  implicit private def entityOpt2logoOpt(ent: Option[AdNetMember]): LogoOpt_t = {
     ent.flatMap { _.logoImgId }
       .map { logoImgId => ImgInfo4Save(OrigImgIdKey(logoImgId)) }
   }
@@ -380,9 +380,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             ImgFormUtil.updateOrigImg(Some(ImgInfo4Save(imgKey)), oldImgs = None) flatMap { imgIdsSaved =>
               if (!imgIdsSaved.isEmpty) {
                 // TODO Нужно проверить категорию.
-                mmad.shopId = Some(shopId)
+                mmad.producerId = Some(shopId)
                 mmad.companyId = request.mshop.companyId
-                mmad.martId = request.mshop.martId.get
+                mmad.receiverIds = request.mshop.martId.get
                 mmad.img = imgIdsSaved.head
                 // Сохранить изменения в базу
                 for {
@@ -454,7 +454,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     request.mshopOptFut flatMap { mshopOpt =>
       renderEditShopFormWith(af, mshopOpt, mad) map {
         case Some(render) => NotAcceptable(render)
-        case None => shopNotFound(mad.shopId.get)
+        case None => shopNotFound(mad.producerId.get)
       }
     }
   }
@@ -469,7 +469,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       val formFilled = FormModes.getShopFormForClass(mad.offers.head) fill ((imgIdKey, mshopOpt, mad))
       renderEditShopFormWith(formFilled, mshopOpt, mad) map {
         case Some(render) => Ok(render)
-        case None => shopNotFound(mad.shopId.get)
+        case None => shopNotFound(mad.producerId.get)
       }
     }
   }
@@ -499,7 +499,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           {case (iik, logoImgIdOpt, mad2) =>
             // Надо обработать логотип, который приходит в составе формы. Это можно делать независимо от самой MMartAd.
             // Если выставлен tmp-логотип, то надо запустить обновление mshop.
-            val shopId = mad.shopId.get
+            val shopId = mad.producerId.get
             val updateLogoFut = request.mshopOptFut flatMap {
               case Some(mshop)  => updateLogo(logoImgIdOpt, mshop)
               case None         => Future failed new NoSuchElementException(s"Shop not found: " + shopId)
@@ -547,10 +547,10 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
    */
   def deleteSubmit(adId: String) = IsAdEditor(adId).async { implicit request =>
     MMartAd.deleteById(adId) map { _ =>
-      val route = request.mad.shopId match {
+      val route = request.mad.producerId match {
         // Невсегда ясно, куда редиректить. Поэтому угадываем истинного владельца рекламы (магазин или ТЦ).
         case Some(shopId) => routes.MarketShopLk.showShop(shopId)
-        case None         => routes.MarketMartLk.martShow(request.mad.martId)
+        case None         => routes.MarketMartLk.martShow(request.mad.receiverIds)
       }
       Redirect(route)
         .flashing("success" -> "Рекламная карточка удалена")
@@ -680,9 +680,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
             ImgFormUtil.updateOrigImg(Some(ImgInfo4Save(imgKey)), oldImgs = None) flatMap {
               case imgIdsSaved if !imgIdsSaved.isEmpty =>
                 // TODO Нужно проверить категорию.
-                mmad.shopId = None
+                mmad.producerId = None
                 mmad.companyId = mmart.companyId
-                mmad.martId = martId
+                mmad.receiverIds = martId
                 mmad.img = imgIdsSaved.head
                 // Сохранить изменения в базу
                 for {
@@ -740,7 +740,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     request.mmartOptFut flatMap { mmartOpt =>
       renderEditMartFormWith(af, mmartOpt) map {
         case Some(render) => NotAcceptable(render)
-        case None => martNotFound(request.mad.martId)
+        case None => martNotFound(request.mad.receiverIds)
       }
     }
   }
@@ -755,7 +755,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       val formFilled = FormModes.getShopFormForClass(mad.offers.head) fill ((imgIdKey, mmartOpt, mad))
       renderEditMartFormWith(formFilled, mmartOpt) map {
         case Some(render) => Ok(render)
-        case None => martNotFound(mad.martId)
+        case None => martNotFound(mad.receiverIds)
       }
     }
   }
@@ -777,7 +777,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           {case (iik, logoImgIdOpt, mad2) =>
             // Надо обработать логотип, который приходит в составе формы. Это можно делать независимо от самой MMartAd.
             // Если выставлен tmp-логотип, то надо запустить обновление mshop.
-            val martId = mad.martId
+            val martId = mad.receiverIds
             val updateLogoFut = request.mmartOptFut flatMap {
               case Some(mmart)  => updateLogo(logoImgIdOpt, mmart)
               case None         => Future failed new NoSuchElementException(s"Mart not found: " + martId)
@@ -841,7 +841,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
 
   private def getMMCatsForEdit(af: AdFormM, mad: MMartAd): Future[CollectMMCatsAcc_t] = {
-    val catOwnerId = mad.martId
+    val catOwnerId = mad.receiverIds
     maybeAfCatId(af).orElse(mad.userCatId) match {
       case Some(catId) => nearCatsList(catOwnerId=catOwnerId, catId=catId)
       case None => topCatsAsAcc(catOwnerId)
@@ -849,7 +849,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   }
 
   /** Асинхронно обновить логотип магазина или ТЦ. */
-  private def updateLogo(logoImgIdOpt: LogoOpt_t, entity: BuyPlaceT[_]): Future[_] = {
+  private def updateLogo(logoImgIdOpt: LogoOpt_t, entity: AdNetMember): Future[_] = {
     ImgFormUtil.updateOrigImgId(
       needImg = logoImgIdOpt,
       oldImgId = entity.logoImgId
@@ -1062,8 +1062,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
               {case (iik, logoOpt, mad) =>
                 mad.img = MImgInfo(iik.key)
                 mshop.logoImgId = logoOpt.map(_.iik.key)
-                mad.shopId = Some(shopId)
-                mad.martId = request.martId
+                mad.producerId = Some(shopId)
+                mad.receiverIds = request.martId
                 Ok(_single_offer(mad, request.mmart, Some(mshop)))
               }
             )
@@ -1089,8 +1089,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           {case (iik, logoOpt, mad) =>
             mad.img = MImgInfo(iik.key)
             mmart.logoImgId = logoOpt.map(_.iik.key)
-            mad.shopId = None
-            mad.martId = martId
+            mad.producerId = None
+            mad.receiverIds = martId
             Ok(_single_offer(mad, mmart, None))
           }
         )

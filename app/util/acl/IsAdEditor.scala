@@ -32,7 +32,7 @@ object IsAdEditor {
     } else {
       pwOpt match {
         case Some(pw) =>
-          mad.shopId match {
+          mad.producerId match {
             // Это реклама магазина. Редактировать может владелец магазина.
             case Some(shopId) =>
               for {
@@ -51,7 +51,7 @@ object IsAdEditor {
             // Это реклама ТЦ. Редактировать может только владелец ТЦ.
             case None =>
               for {
-                mmartOpt <- MMart.getById(mad.martId)
+                mmartOpt <- MMart.getById(mad.receiverIds)
                 srm <- srmFut
               } yield {
                 mmartOpt flatMap { mmart =>
@@ -114,7 +114,7 @@ case class RequestWithAd[A](
     if (mshopOpt.isDefined) {
       Future successful mshopOpt
     } else {
-      mad.shopId match {
+      mad.producerId match {
         case Some(shopId) => MShop.getById(shopId)
         case None         => Future successful None
       }
@@ -125,7 +125,7 @@ case class RequestWithAd[A](
     if (mmartOpt.isDefined)
       Future successful mmartOpt
     else
-      MMart.getById(mad.martId)
+      MMart.getById(mad.receiverIds)
   }
 
 }
