@@ -195,6 +195,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
 
       }
     case (PANEL_ESFN, value)        => acc.panel = Option(JacksonWrapper.convert[MMartAdPanelSettings](value))
+    case (LOGO_IMG_ID, value)       => acc.logoImgId = Option(stringParser(value))
     case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = JacksonWrapper.convert[MMartAdTextAlign](value)
     case (SHOW_LEVELS_ESFN, sls: java.lang.Iterable[_]) =>
       acc.showLevels = AdShowLevels.deserializeLevelsFrom(sls)
@@ -261,6 +262,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       FieldString(USER_CAT_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
       FieldObject(PANEL_ESFN,  enabled = false,  properties = Nil),
       FieldNumber(PRIO_ESFN,  fieldType = DocFieldTypes.integer,  index = FieldIndexingVariants.not_analyzed,  include_in_all = false),
+      FieldString(LOGO_IMG_ID, index = FieldIndexingVariants.no, include_in_all = true),
       offersField,
       FieldString(SHOW_LEVELS_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
       FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no)
@@ -459,6 +461,7 @@ case class MMartAd(
   var textAlign   : MMartAdTextAlign,
   var shopId      : Option[ShopId_t] = None,
   var companyId   : MCompany.CompanyId_t,
+  var logoImgId   : Option[String] = None,
   var panel       : Option[MMartAdPanelSettings] = None,
   var prio        : Option[Int] = None,
   var showLevels  : Set[AdShowLevel] = Set.empty,
