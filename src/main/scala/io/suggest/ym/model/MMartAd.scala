@@ -195,14 +195,13 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
 
       }
     case (PANEL_ESFN, value)        => acc.panel = Option(JacksonWrapper.convert[MMartAdPanelSettings](value))
-    case (LOGO_IMG_ID, value)       => acc.logoImgId = Option(stringParser(value))
+    case (LOGO_IMG_ID, value)       => acc.logoImg = Option(JacksonWrapper.convert[MImgInfo](value))
     case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = JacksonWrapper.convert[MMartAdTextAlign](value)
     case (SHOW_LEVELS_ESFN, sls: java.lang.Iterable[_]) =>
       acc.showLevels = AdShowLevels.deserializeLevelsFrom(sls)
     case (DATE_CREATED_ESFN, value) => acc.dateCreated = dateCreatedParser(value)
     case ("picture", value)         => acc.img = MImgInfo(stringParser(value))  // TODO Удалить после сброса индексов после 26.mar.2014
-    case (IMG_ESFN, value)          =>
-      acc.img = JacksonWrapper.convert[MImgInfo](value)
+    case (IMG_ESFN, value)          => acc.img = JacksonWrapper.convert[MImgInfo](value)
   }
 
   def generateMappingStaticFields = List(
@@ -262,7 +261,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       FieldString(USER_CAT_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
       FieldObject(PANEL_ESFN,  enabled = false,  properties = Nil),
       FieldNumber(PRIO_ESFN,  fieldType = DocFieldTypes.integer,  index = FieldIndexingVariants.not_analyzed,  include_in_all = false),
-      FieldString(LOGO_IMG_ID, index = FieldIndexingVariants.no, include_in_all = true),
+      FieldObject(LOGO_IMG_ID, enabled = false, properties = Nil),
       offersField,
       FieldString(SHOW_LEVELS_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
       FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no)
@@ -461,7 +460,7 @@ case class MMartAd(
   var textAlign   : MMartAdTextAlign,
   var shopId      : Option[ShopId_t] = None,
   var companyId   : MCompany.CompanyId_t,
-  var logoImgId   : Option[String] = None,
+  var logoImg     : Option[MImgInfo] = None,
   var panel       : Option[MMartAdPanelSettings] = None,
   var prio        : Option[Int] = None,
   var showLevels  : Set[AdShowLevel] = Set.empty,
@@ -522,6 +521,7 @@ trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
   def userCatId   : Option[String]
   def dateCreated : DateTime
   def img         : MImgInfo
+  def logoImg     : Option[MImgInfo]
 
   @JsonIgnore def isShopAd = shopId.isDefined
 
@@ -550,6 +550,8 @@ trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
       acc.endArray()
     }
     acc.rawField(IMG_ESFN, JacksonWrapper.serialize(img).getBytes)
+    if (logoImg.isDefined)
+      acc.rawField(LOGO_IMG_ID, JacksonWrapper.serialize(logoImg.get).getBytes)
     acc.field(DATE_CREATED_ESFN, dateCreated)
     // TextAlign. Reflections из-за проблем с XCB.
     acc.rawField(TEXT_ALIGN_ESFN, JacksonWrapper.serialize(textAlign).getBytes)
@@ -575,6 +577,7 @@ trait MMartAdWrapperT[T <: MMartAdT[T]] extends MMartAdT[T] {
   def id = mmartAd.id
   def dateCreated = mmartAd.dateCreated
   def img = mmartAd.img
+  def logoImg = mmartAd.logoImg
 
   @JsonIgnore def companion: EsModelMinimalStaticT[T] = mmartAd.companion
   @JsonIgnore override def isFieldsValid: Boolean = super.isFieldsValid && mmartAd.isFieldsValid
