@@ -1,6 +1,6 @@
 package io.suggest.ym.model.stat
 
-import io.suggest.model.{EsModelT, EsModelStaticT}
+import io.suggest.model.{EsModelJMXMBeanCommon, EsModelJMXBase, EsModelT, EsModelStaticT}
 import io.suggest.model.EsModel._
 import org.joda.time.DateTime
 import org.elasticsearch.common.joda.time.{DateTime => EsDateTime}
@@ -15,6 +15,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilders
 import scala.collection.JavaConversions._
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram
+import io.suggest.event.SioNotifierStaticClientI
 
 /**
  * Suggest.io
@@ -214,5 +215,17 @@ object AdStatActions extends Enumeration {
 
   val View = Value("v")
   val Click = Value("c")
+}
+
+
+
+
+/** JMX MBean интерфейс */
+trait MAdStatJmxMBean extends EsModelJMXMBeanCommon
+
+/** JMX MBean реализация. */
+case class MAdStatJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase with MAdStatJmxMBean {
+  def companion = MAdStat
 }
 

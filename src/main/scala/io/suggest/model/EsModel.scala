@@ -1,8 +1,8 @@
 package io.suggest.model
 
-import scala.concurrent.{ExecutionContext, Future}
-import io.suggest.util.MacroLogsImpl
-import io.suggest.util.SioEsUtil, SioEsUtil._
+import scala.concurrent.{Awaitable, Await, ExecutionContext, Future}
+import io.suggest.util.{JacksonWrapper, MacroLogsImpl, SioEsUtil}
+import SioEsUtil._
 import org.joda.time.{ReadableInstant, DateTime}
 import org.elasticsearch.action.search.SearchResponse
 import scala.collection.JavaConversions._
@@ -19,6 +19,7 @@ import scala.annotation.tailrec
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.action.delete.DeleteRequestBuilder
 import io.suggest.ym.model.stat._
+import com.sun.org.glassfish.gmbal.{Impact, ManagedOperation}
 
 /**
  * Suggest.io
@@ -245,7 +246,7 @@ import EsModel._
 /** Базовый шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelMinimalT]].
   * Здесь десериализация полностью выделена в отдельную функцию. */
 trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
-  val ES_INDEX_NAME = SIO_ES_INDEX_NAME
+  def ES_INDEX_NAME = SIO_ES_INDEX_NAME
   val ES_TYPE_NAME: String
 
   def generateMapping: XContentBuilder = generateMappingFor(ES_TYPE_NAME)
@@ -281,6 +282,23 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
       .prepareDeleteMapping(ES_INDEX_NAME)
       .setType(ES_TYPE_NAME)
       .execute()
+  }
+
+  /**
+   * Сервисная функция для получения списка всех id.
+   * @return Список всех id в алфавитном порядке.
+   */
+  def getAllIds(maxResults: Int = 500)(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
+    client.prepareSearch(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setNoFields()
+      .setSize(maxResults)
+      .execute()
+      .map { searchResp =>
+        searchResp.getHits.getHits.foldLeft(List.empty[String]) {
+          (acc, hit) => hit.getId :: acc
+        }.sorted
+      }
   }
 
   /**
@@ -412,6 +430,19 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
     deleteRequestBuilder(id)
       .execute()
       .map { _.isFound }
+  }
+
+
+  /**
+   * Пересохранение всех данных модели. По сути getAll + all.map(_.save). Нужно при ломании схемы.
+   * @return
+   */
+  def reindexAll(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Seq[String]] = {
+    getAll.flatMap { results =>
+      Future.traverse(results) { el =>
+        el.save
+      }
+    }
   }
 
 }
@@ -552,5 +583,129 @@ class ListCmpOrdering[T <: Comparable[T]] extends Ordering[List[T]] {
       }
     }
   }
+}
+
+
+// JMX-подсистема для ES-моделей. Включает общие для моделей MBean-интерфейсы и реализации.
+
+import Impact._
+
+trait EsModelJMXMBeanCommon {
+  /** Асинхронно вызвать переиндексацию всех данных в модели. */
+  @ManagedOperation(impact=ACTION)
+  def reindexAll()
+
+  /**
+   * Существует ли указанный маппинг сейчас?
+   * @return true, если маппинг сейчас существует.
+   */
+  @ManagedOperation(impact=INFO)
+  def isMappingExists: Boolean
+
+  /** Асинхронно сбросить маппинг. */
+  @ManagedOperation(impact=ACTION)
+  def resetMapping()
+
+  /** Асинхронно отправить маппинг в ES. */
+  @ManagedOperation(impact=ACTION)
+  def putMapping: String
+
+  /** Асинхронно удалить маппинг вместе со всеми данными. */
+  @ManagedOperation(impact=ACTION)
+  def deleteMapping()
+
+  /** Запросить routingKey у модели.
+    * @param idOrNull исходный id
+    * @return Будет распечатана строка вида "Some(..)" или "None".
+    */
+  @ManagedOperation(impact=INFO)
+  def getRoutingKey(idOrNull: String): String
+
+  /**
+   * Выполнить удаление документа.
+   * @param id id удаляемого докуметна.
+   * @return true, если элемент был удалён. Иначе false.
+   */
+  @ManagedOperation(impact=ACTION)
+  def deleteById(id: String): Boolean
+
+  /**
+   * Прочитать из хранилища и вернуть данные по документу.
+   * @param id id документа
+   * @return pretty JSON или null.
+   */
+  def getById(id: String): String
+
+  def esIndexName: String
+  def esTypeName: String
+
+  /**
+   * Выдать сколько-то id'шников в алфавитном порядке.
+   * @param maxResults Макс.кол-во выдачи.
+   * @return Текст, в каждой строчке новый id.
+   */
+  def getAllIds(maxResults: Int): String
+
+}
+
+trait EsModelJMXBase extends EsModelJMXMBeanCommon {
+  import scala.concurrent.duration._
+
+  def companion: EsModelMinimalStaticT[_]
+
+  def jmxName = "io.suggest:type=model,name=" + getClass.getSimpleName.replace("Jmx", "")
+
+  // Контексты, зависимые от конкретного проекта.
+  implicit def ec: ExecutionContext
+  implicit def client: Client
+  implicit def sn: SioNotifierStaticClientI
+
+  /** Хелпер для быстрой синхронизации фьючерсов. */
+  implicit protected def awaitFuture[T](fut: Awaitable[T]) = Await.result(fut, 10 seconds)
+
+  def reindexAll() {
+    companion.reindexAll
+  }
+
+  def isMappingExists: Boolean = {
+    companion.isMappingExists
+  }
+
+  def resetMapping() {
+    companion.resetMapping
+  }
+
+  def putMapping = {
+    companion.putMapping
+      .map(_.toString)
+      .recover { case ex: Exception => s"${ex.getClass.getName}: ${ex.getMessage}\n${ex.getStackTraceString}" }
+  }
+
+  def deleteMapping() {
+    companion.deleteMapping
+  }
+
+  def getRoutingKey(idOrNull: String): String = {
+    companion.getRoutingKey(idOrNull).toString
+  }
+
+  def deleteById(id: String): Boolean = {
+    companion.deleteById(id)
+  }
+
+  def getById(id: String): String = {
+    val docOpt: Option[_] = companion.getById(id)
+    docOpt match {
+      case None => null
+      case Some(obj) => JacksonWrapper.serializePretty(obj)
+    }
+  }
+
+  def getAllIds(maxResults: Int): String = {
+    companion.getAllIds(maxResults).mkString("\n")
+  }
+
+  def esTypeName: String = companion.ES_TYPE_NAME
+  def esIndexName: String = companion.ES_INDEX_NAME
 }
 

@@ -11,6 +11,9 @@ import io.suggest.util.SioEsUtil
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.action.deletebyquery.DeleteByQueryRequestBuilder
+import scala.concurrent.ExecutionContext
+import org.elasticsearch.client.Client
+import io.suggest.event.SioNotifierStaticClientI
 
 /**
  * Suggest.io
@@ -100,5 +103,15 @@ case class MMartInx(
       .setTypes(esType)
   }
 
+}
+
+
+/** JMX MBean интерфейс */
+trait MMartInxJmxMBean extends EsModelJMXMBeanCommon
+
+/** JMX MBean реализация. */
+case class MMartInxJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase with MMartInxJmxMBean {
+  def companion = MMartInx
 }
 

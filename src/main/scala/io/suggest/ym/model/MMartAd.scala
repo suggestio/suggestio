@@ -786,3 +786,13 @@ object AdShowLevels extends Enumeration with MacroLogsImpl {
 
 }
 
+
+/** JMX MBean интерфейс */
+trait MMartAdJmxMBean extends EsModelJMXMBeanCommon
+
+/** JMX MBean реализация. */
+case class MMartAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase with MMartAdJmxMBean {
+  def companion = MMartAd
+}
+
