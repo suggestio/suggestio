@@ -19,6 +19,10 @@ import play.api.libs.concurrent.Execution.Implicits._
  */
 object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubscriptionManager {
 
+  object Implicts {
+    implicit def sn = SiowebNotifier
+  }
+
   implicit val SN_ASK_TIMEOUT: Timeout = {
     val ms = current.configuration.getInt("sn.ask.timeout_ms") getOrElse 5000
     Timeout(ms milliseconds)

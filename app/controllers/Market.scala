@@ -1,6 +1,6 @@
 package controllers
 
-import _root_.util.qsb.AdSearch
+import util.qsb.AdSearch
 import util._
 import util.acl._
 import views.html.market.showcase._

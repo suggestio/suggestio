@@ -44,8 +44,8 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
    */
   def publish(event: SioNotifier.Event)(implicit ctx: ActorContext) {
     event match {
-      case YmMartAddedEvent(martId)   => handleMartAdd(martId)
-      case YmMartDeletedEvent(martId) => handleMartDelete(martId)
+      case mae: YmMartAddedEvent      => handleMartAdd(mae.martId)
+      case mde: YmMartDeletedEvent    => handleMartDelete(mde.martId)
       case ase: AdSavedEvent          => handleAdSaved(ase.mmartAd)
       case ade: AdDeletedEvent        => handleAdDeleted(ade.mmartAd)
       case msse: MShopSavedEvent      => handleShopSaved(msse.mshop)

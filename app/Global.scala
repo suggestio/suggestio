@@ -5,6 +5,7 @@ import org.elasticsearch.client.Client
 import play.api.mvc.{Result, WithFilters, RequestHeader}
 import scala.concurrent.{Await, Future, future}
 import scala.util.{Failure, Success}
+import util.jmx.JMXImpl
 import util.{HtmlCompressUtil, Crontab, SiowebEsUtil, SiowebSup}
 import play.api.Play._
 import play.api._
@@ -49,6 +50,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
     }
     // Блокируемся, чтобы не было ошибок в браузере и консоли из-за асинхронной работы с ещё не запущенной системой.
     Await.ready(fut, 20 seconds)
+    JMXImpl.registerAll()
     cronTimers = Crontab.startTimers
   }
 
@@ -79,6 +81,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
    */
   override def onStop(app: Application) {
     super.onStop(app)
+    JMXImpl.unregisterAll()
     // Остановить таймеры
     Crontab.stopTimers(cronTimers)
     cronTimers = null
