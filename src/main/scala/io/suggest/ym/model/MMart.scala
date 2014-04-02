@@ -4,15 +4,14 @@ import org.joda.time.DateTime
 import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.common.xcontent.XContentBuilder
-import MCompany.CompanyId_t
 import io.suggest.proto.bixo.crawler.MainProto
 import org.elasticsearch.client.Client
 import io.suggest.event._
 import io.suggest.model._
 import io.suggest.model.EsModel._
 import io.suggest.util.SioEsUtil._
-import io.suggest.util.JacksonWrapper
 import io.suggest.util.MyConfig.CONFIG
+import common._
 
 /**
  * Suggest.io
@@ -24,7 +23,7 @@ import io.suggest.util.MyConfig.CONFIG
  * - Собственное помещение единственного мазагина.
  */
 
-object MMart extends EsModelStaticT[MMart] {
+object MMart extends AdProducerStatic[MMart] with AdReceiverStatic[MMart] {
 
   type MartId_t = MainProto.MartId_t
 
@@ -37,31 +36,21 @@ object MMart extends EsModelStaticT[MMart] {
     FieldAll(enabled = false)
   )
 
-  def generateMappingProps: List[DocField] = List(
-    FieldString(COMPANY_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
-    FieldString(NAME_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
+  override def generateMappingProps: List[DocField] = super.generateMappingProps ++ List(
     FieldString(TOWN_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
     FieldString(ADDRESS_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
     FieldString(SITE_URL_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
-    FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
     FieldString(PHONE_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
-    FieldString(PERSON_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
-    FieldString(LOGO_IMG_ID, include_in_all = false, index = FieldIndexingVariants.no),
     FieldString(COLOR_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
     FieldNumber(MMartSettings.MAX_L1_ADS_SHOWN_ESFN, fieldType = DocFieldTypes.integer, include_in_all = false, index = FieldIndexingVariants.no)
   )
 
 
-  def applyKeyValue(acc: MMart): PartialFunction[(String, AnyRef), Unit] = {
-    case (COMPANY_ID_ESFN, value)     => acc.companyId = companyIdParser(value)
-    case (NAME_ESFN, value)           => acc.name = nameParser(value)
+  override def applyKeyValue(acc: MMart): PartialFunction[(String, AnyRef), Unit] = super.applyKeyValue(acc) orElse {
     case (ADDRESS_ESFN, value)        => acc.address = addressParser(value)
     case (SITE_URL_ESFN, value)       => acc.siteUrl = Option(siteUrlParser(value))
-    case (DATE_CREATED_ESFN, value)   => acc.dateCreated = dateCreatedParser(value)
     case (TOWN_ESFN, value)           => acc.town = stringParser(value)
     case (PHONE_ESFN, value)          => acc.phone = Option(stringParser(value))
-    case (PERSON_ID_ESFN, value)      => acc.personIds = JacksonWrapper.convert[List[String]](value)
-    case (LOGO_IMG_ID, value)         => acc.logoImgId = Option(stringParser(value))
     case (COLOR_ESFN, value)          => acc.color = Option(stringParser(value))
     // Сеттинг
     case (MMartSettings.MAX_L1_ADS_SHOWN_ESFN, v) =>
@@ -76,7 +65,7 @@ object MMart extends EsModelStaticT[MMart] {
     town = null,
     color = None,
     siteUrl = None,
-    personIds = Nil,
+    personIds = Set.empty,
     phone = None
   )
 
@@ -149,17 +138,19 @@ case class MMart(
   var address       : String,
   var siteUrl       : Option[String],
   var phone         : Option[String],
-  var personIds     : List[String],
+  var personIds     : Set[String],
   var color         : Option[String] = None,
   var logoImgId     : Option[String] = None,
   settings          : MMartSettings = new MMartSettings,
   id                : Option[MMart.MartId_t] = None,
   var dateCreated   : DateTime = null
-) extends EsModelT[MMart] with BuyPlaceT[MMart] with MCompanySel with CompanyShopsSel with MartShopsSel {
+) extends AdProducer[MMart] with AdReceiver[MMart] with MCompanySel with CompanyShopsSel with MartShopsSel with AdNetSupervisor[MMart] {
   def martId = id.get
   def companion = MMart
 
   def mainPersonId = personIds.lastOption
+
+  def getMaxOnShowLevel(sl: AdShowLevel): Int = 10
 
   /** Перед сохранением можно проверять состояние экземпляра. */
   override def isFieldsValid: Boolean = {
@@ -167,9 +158,9 @@ case class MMart(
       companyId != null && name != null && town != null && address != null && personIds != null
   }
 
-  def writeJsonFields(acc: XContentBuilder) {
-    acc.field(COMPANY_ID_ESFN, companyId)
-      .field(NAME_ESFN, name)
+  override def writeJsonFields(acc: XContentBuilder) {
+    super.writeJsonFields(acc)
+    acc
       .field(TOWN_ESFN, town)
       .field(ADDRESS_ESFN, address)
     if (siteUrl.isDefined)
@@ -178,14 +169,9 @@ case class MMart(
       acc.field(PHONE_ESFN, phone.get)
     if (dateCreated == null)
       dateCreated = DateTime.now()
-    if (logoImgId.isDefined)
-      acc.field(LOGO_IMG_ID, logoImgId.get)
-    if (!personIds.isEmpty)
-      acc.array(PERSON_ID_ESFN, personIds : _*)
     if (color.isDefined)
       acc.field(COLOR_ESFN, color.get)
     settings writeXContent acc
-    acc.field(DATE_CREATED_ESFN, dateCreated)
   }
 
   /**

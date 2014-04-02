@@ -23,8 +23,8 @@ object AdSavedEvent {
 
 case class AdSavedEvent(mmartAd: MMartAd) extends SioEventT {
   def getClassifier: Classifier = AdSavedEvent.getClassifier(
-    martId = Option(mmartAd.martId),
-    shopId = mmartAd.shopId
+    martId = Option(mmartAd.receiverIds),
+    shopId = mmartAd.producerId
   )
 }
 
@@ -43,7 +43,7 @@ object AdDeletedEvent {
 /** Экземпляр события удаления рекламной карточки из БД. */
 case class AdDeletedEvent(mmartAd: MMartAd) extends SioEventT {
   def getClassifier: Classifier = AdSavedEvent.getClassifier(
-    martId = Option(mmartAd.martId),
-    shopId = mmartAd.shopId
+    martId = Option(mmartAd.receiverIds),
+    shopId = mmartAd.producerId
   )
 }

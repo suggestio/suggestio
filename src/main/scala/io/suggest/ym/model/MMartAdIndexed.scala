@@ -15,6 +15,7 @@ import MMartAd.{SHOW_LEVELS_ESFN, USER_CAT_ID_ESFN}
 import io.suggest.model.EsModel.SHOP_ID_ESFN
 import io.suggest.util.SioConstants._
 import io.suggest.util.text.TextQueryV2Util
+import io.suggest.ym.model.common.AdReceiverInfo
 
 /**
  * Suggest.io

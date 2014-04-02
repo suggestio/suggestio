@@ -10,4 +10,9 @@ package object model {
 
   type AdShowLevel = AdShowLevels.AdShowLevel
   type MMartAdOfferType = MMartAdOfferTypes.MMartAdOfferType
+
+  val  AdProducerTypes = common.AdProducerTypes
+  type AdProducerType  = AdProducerTypes.AdProducerType
+
+  type CompanyId_t = MCompany.CompanyId_t
 }

@@ -4,7 +4,7 @@ import org.joda.time.DateTime
 import io.suggest.model._
 import EsModel._
 import scala.concurrent.{ExecutionContext, Future}
-import MMart.MartId_t, MCompany.CompanyId_t
+import MMart.MartId_t
 import org.elasticsearch.index.query.{QueryBuilder, FilterBuilders, QueryBuilders}
 import org.elasticsearch.common.xcontent.{XContentFactory, XContentBuilder}
 import io.suggest.util.SioEsUtil._
@@ -12,7 +12,6 @@ import io.suggest.util.SioConstants._
 import io.suggest.proto.bixo.crawler.MainProto
 import org.elasticsearch.client.Client
 import io.suggest.event._
-import io.suggest.util.JacksonWrapper
 import org.elasticsearch.common.unit.Fuzziness
 import io.suggest.util.MyConfig.CONFIG
 
@@ -31,7 +30,7 @@ import io.suggest.util.MyConfig.CONFIG
  * делать прочие административные действия.
  */
 
-object MShop extends EsModelStaticT[MShop] {
+object MShop extends common.AdProducerStatic[MShop] {
 
   type ShopId_t = MainProto.ShopId_t
 
@@ -52,16 +51,10 @@ object MShop extends EsModelStaticT[MShop] {
     FieldAll(enabled = true, index_analyzer = EDGE_NGRAM_AN_1)
   )
 
-  def generateMappingProps: List[DocField] = List(
-    FieldString(COMPANY_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
-    FieldString(MART_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
-    FieldString(NAME_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
-    FieldString(PERSON_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
-    FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
+  override def generateMappingProps: List[DocField] = super.generateMappingProps ++ List(
     FieldString(DESCRIPTION_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
     FieldNumber(MART_FLOOR_ESFN, fieldType = DocFieldTypes.integer, include_in_all = true, index = FieldIndexingVariants.no),
     FieldNumber(MART_SECTION_ESFN, fieldType = DocFieldTypes.integer, include_in_all = true, index = FieldIndexingVariants.no),
-    FieldString(LOGO_IMG_ID, include_in_all = false, index = FieldIndexingVariants.no),
     // settings: нужно их заполнять по мере появления настроек в MShopSettings.
     FieldBoolean(SETTING_SUP_IS_ENABLED, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
     FieldString(SETTING_SUP_DISABLE_REASON, include_in_all = false, index = FieldIndexingVariants.no),
@@ -75,20 +68,14 @@ object MShop extends EsModelStaticT[MShop] {
     martId = null,
     companyId = null,
     name = null,
-    personIds = Nil
+    personIds = Set.empty
   )
 
 
-  def applyKeyValue(acc: MShop): PartialFunction[(String, AnyRef), Unit] = {
-    case (COMPANY_ID_ESFN, value)     => acc.companyId   = companyIdParser(value)
-    case (MART_ID_ESFN, value)        => acc.martId      = Option(martIdParser(value))
-    case (NAME_ESFN, value)           => acc.name        = nameParser(value)
-    case (DATE_CREATED_ESFN, value)   => acc.dateCreated = dateCreatedParser(value)
+  override def applyKeyValue(acc: MShop): PartialFunction[(String, AnyRef), Unit] = super.applyKeyValue(acc) orElse {
     case (DESCRIPTION_ESFN, value)    => acc.description = Option(descriptionParser(value))
     case (MART_FLOOR_ESFN, value)     => acc.martFloor   = Option(martFloorParser(value))
     case (MART_SECTION_ESFN, value)   => acc.martSection = Option(martSectionParser(value))
-    case (PERSON_ID_ESFN, value)      => acc.personIds   = JacksonWrapper.convert[List[String]](value)
-    case (LOGO_IMG_ID, value)         => acc.logoImgId   = Option(stringParser(value))
     // Парсеры конкретных сеттингов.
     case (SETTING_SUP_IS_ENABLED, v)  =>
       acc.settings.supIsEnabled = booleanParser(v)
@@ -303,7 +290,7 @@ case class MShop(
   var companyId   : CompanyId_t,
   var martId      : Option[MartId_t] = None,
   var name        : String,
-  var personIds   : List[String],
+  var personIds   : Set[String],
   var description : Option[String] = None,
   var martFloor   : Option[Int] = None,
   var martSection : Option[Int] = None,
@@ -311,16 +298,28 @@ case class MShop(
   var logoImgId   : Option[String] = None,
   var settings    : MShopSettings = new MShopSettings,
   var dateCreated : DateTime = null
-) extends EsModelT[MShop] with BuyPlaceT[MShop] with MCompanySel with MMartOptSel with CompanyMartsSel with ShopPriceListSel with MShopOffersSel {
+) extends common.AdProducer[MShop] with MMartOptSel with CompanyMartsSel
+with ShopPriceListSel with MShopOffersSel {
 
   def companion = MShop
   def shopId = id.get
 
+  def getMaxOnShowLevel(sl: AdShowLevel): Int = {
+    if (settings.supIsEnabled) {
+      sl match {
+        case AdShowLevels.LVL_PRODUCER          => settings.supLShopMaxAdsShown
+        case AdShowLevels.LVL_PRODUCERS_CATALOG => 1
+        case AdShowLevels.LVL_CONSUMER_TOP      => if (settings.supWithLevels contains sl) 1 else 0
+      }
+    } else {
+      0
+    }
+  }
+
   override def writeJsonFields(acc: XContentBuilder) {
+    super.writeJsonFields(acc)
     acc.field(COMPANY_ID_ESFN, companyId)
       .field(NAME_ESFN, name)
-    if (!personIds.isEmpty)
-      acc.array(PERSON_ID_ESFN, personIds : _*)
     if (martId.isDefined)
       acc.field(MART_ID_ESFN, martId.get)
     if (description.isDefined)
@@ -379,7 +378,7 @@ case class MShop(
   }
 
 
-  def hasTopLevelAccess = settings.supWithLevels contains AdShowLevels.LVL_MART_SHOWCASE
+  def hasTopLevelAccess = settings.supWithLevels contains AdShowLevels.LVL_CONSUMER_TOP
 }
 
 

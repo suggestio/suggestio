@@ -20,6 +20,7 @@ import com.github.nscala_time.time.OrderingImplicits._
 import java.util.Currency
 import io.suggest.util.SioConstants.CURRENCY_CODE_DFLT
 import org.elasticsearch.action.search.SearchType
+import common._
 
 /**
  * Suggest.io
@@ -29,7 +30,7 @@ import org.elasticsearch.action.search.SearchType
  * prio используется для задания приоритета в отображении в рамках магазина. На текущий момент там всё просто:
  * если null, то приоритета нет, если 1 то он есть.
  */
-object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
+object MMartAd extends AdStatic[MMartAd] with MacroLogsImpl {
 
   import LOGGER._
 
@@ -45,7 +46,6 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
   val PANEL_ESFN        = "panel"
   // Категория по дефолту задана через id. Но при индексации заполняется ещё str, который include in all и помогает в поиске.
   val USER_CAT_ID_ESFN  = "userCat.id"
-  val SHOW_LEVELS_ESFN  = "showLevels"
   val OFFER_TYPE_ESFN   = "offerType"
 
   val FONT_ESFN         = "font"
@@ -62,23 +62,24 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
 
 
   /** Перманентные уровни отображения для рекламных карточек магазина. Если магазин включен, то эти уровни всегда доступны. */
-  val SHOP_ALWAYS_SHOW_LEVELS: Set[AdShowLevel] = Set(AdShowLevels.LVL_SHOP, AdShowLevels.LVL_MART_SHOPS)
+  val SHOP_ALWAYS_SHOW_LEVELS: Set[AdShowLevel] = Set(AdShowLevels.LVL_PRODUCER, AdShowLevels.LVL_PRODUCERS_CATALOG)
 
   /** Список уровней, которые могут быть активны только у одной карточки в рамках магазина. */
-  val SHOP_LEVELS_SINGLETON: Set[AdShowLevel] = Set(AdShowLevels.LVL_MART_SHOWCASE, AdShowLevels.LVL_MART_SHOPS)
+  val SHOP_LEVELS_SINGLETON: Set[AdShowLevel] = Set(AdShowLevels.LVL_CONSUMER_TOP, AdShowLevels.LVL_PRODUCERS_CATALOG)
 
   /** Перманентные уровни отображения для рекламных карточек ТЦ. */
-  val MART_ALWAYS_SHOW_LEVELS: Set[AdShowLevel] = Set(AdShowLevels.LVL_MART_SHOWCASE)
+  val MART_ALWAYS_SHOW_LEVELS: Set[AdShowLevel] = Set(AdShowLevels.LVL_CONSUMER_TOP)
 
   def dummy(id: String) = {
     MMartAd(
       id = Option(id),
       offers = Nil,
       img = null,
-      martId = null,
+      receiverIds = null,
       companyId = null,
-      shopId = None,
-      textAlign = null
+      producerId = null,
+      textAlign = null,
+      producerType = null
     )
   }
 
@@ -161,10 +162,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
   }
 
 
-  def applyKeyValue(acc: MMartAd): PartialFunction[(String, AnyRef), Unit] = {
-    case (MART_ID_ESFN, value)      => acc.martId = martIdParser(value)
-    case (SHOP_ID_ESFN, value)      => acc.shopId = Option(shopIdParser(value))
-    case (COMPANY_ID_ESFN, value)   => acc.companyId = companyIdParser(value)
+  override def applyKeyValue(acc: MMartAd): PartialFunction[(String, AnyRef), Unit] = super. applyKeyValue(acc) orElse {
     case (PRIO_ESFN, value)         => acc.prio = Option(intParser(value))
     case (USER_CAT_ID_ESFN, value)  => acc.userCatId = Option(stringParser(value))
     case (OFFERS_ESFN, value: java.util.ArrayList[_]) =>
@@ -184,13 +182,6 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
 
                 case None => ???
               }
-            // совместимость со старыми объектами, когда не было поля типа оффера. TODO Удалить после 2014.mart.25
-            case null =>
-              if (jsObject containsKey VENDOR_ESFN)
-                JacksonWrapper.convert[MMartAdProduct](jsObject)
-              else if (jsObject containsKey DISCOUNT_ESFN)
-                JacksonWrapper.convert[MMartAdDiscount](jsObject)
-              else ???
           }
 
       }
@@ -198,19 +189,12 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
     case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = JacksonWrapper.convert[MMartAdTextAlign](value)
     case (SHOW_LEVELS_ESFN, sls: java.lang.Iterable[_]) =>
       acc.showLevels = AdShowLevels.deserializeLevelsFrom(sls)
-    case (DATE_CREATED_ESFN, value) => acc.dateCreated = dateCreatedParser(value)
-    case ("picture", value)         => acc.img = MImgInfo(stringParser(value))  // TODO Удалить после сброса индексов после 26.mar.2014
     case (IMG_ESFN, value)          =>
       acc.img = JacksonWrapper.convert[MImgInfo](value)
   }
 
-  def generateMappingStaticFields = List(
-    FieldAll(enabled = true),
-    FieldSource(enabled = true)
-  )
-
   /** Генератор пропертисов для маппигов индексов этой модели. */
-  def generateMappingProps: List[DocField] = {
+  override def generateMappingProps: List[DocField] = {
     val fontField = FieldObject(FONT_ESFN, enabled = false, properties = Nil)
     def stringValueField(boost: Float = 1.0F) = FieldString(
       VALUE_ESFN,
@@ -252,18 +236,14 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       FieldString(OFFER_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
       FieldObject(OFFER_BODY_ESFN, enabled = true, properties = offerBodyProps)
     ))
-    List(
-      FieldString(COMPANY_ID_ESFN,  index = FieldIndexingVariants.no,  include_in_all = false),
-      FieldString(MART_ID_ESFN, index = FieldIndexingVariants.not_analyzed,  include_in_all = false),
-      FieldString(SHOP_ID_ESFN, index = FieldIndexingVariants.not_analyzed,  include_in_all = false),
+    super.generateMappingProps ++ List(
       FieldObject(IMG_ESFN, enabled = false, properties = Nil),
       FieldObject(TEXT_ALIGN_ESFN,  enabled = false,  properties = Nil),
       FieldString(USER_CAT_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
       FieldObject(PANEL_ESFN,  enabled = false,  properties = Nil),
       FieldNumber(PRIO_ESFN,  fieldType = DocFieldTypes.integer,  index = FieldIndexingVariants.not_analyzed,  include_in_all = false),
       offersField,
-      FieldString(SHOW_LEVELS_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
-      FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no)
+      FieldString(SHOW_LEVELS_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed)
     )
   }
 
@@ -326,10 +306,10 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
 
   /** Обновление непустых уровней отображения для магазинной карточки. */
   private def setShowLevelsShop(thisAd: MMartAd)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
-    val shopId = thisAd.shopId.get
+    val shopId = thisAd.producerId
     val adId = thisAd.id.get
     // Считаем кол-во реклам на нижнем уровне. Магазин может отображать только ограниченное кол-во рекламы на своём уровне.
-    import AdShowLevels.{LVL_SHOP  => l3}
+    import AdShowLevels.{LVL_PRODUCER  => l3}
     val has3rdLvl = thisAd.showLevels contains l3
     val thisCanAdd3rdLvlFut = if (has3rdLvl) {
       val query1 = shopSearchQuery(shopId, withLevels = Some(Seq(l3)))
@@ -406,10 +386,10 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
   /** Проверить кол-во рекламы для ТЦ, и если всё ок, то выполнить выставление уровней. */
   private def setShowLevelsMart(thisAd: MMartAd)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
     // Эта функция исходит из того, что ВКЛючается уровень. Т.к. уровень всего 1, то его отключение отрабаыватеся в setShowLevels().
-    import thisAd.martId
-    import AdShowLevels.{LVL_MART_SHOWCASE => l1}
-    val maxAdsFut = MMart.getById(thisAd.martId).map(_.get.settings.supL1MaxAdsShown)
-    val countQuery = martSearchQuery(martId, shopMustMiss = true, withLevels = Some(Seq(l1)))
+    import thisAd.receivers
+    import AdShowLevels.{LVL_CONSUMER_TOP => l1}
+    val maxAdsFut = MMart.getById(thisAd.receivers).map(_.get.settings.supL1MaxAdsShown)
+    val countQuery = martSearchQuery(receivers, shopMustMiss = true, withLevels = Some(Seq(l1)))
     // Нужно отсеять из подсчёта текущий id, если он там есть.
     val idFilter = FilterBuilders.notFilter( FilterBuilders.termFilter(MART_ID_ESFN, thisAd.id.get) )
     val count2query = QueryBuilders.filteredQuery(countQuery, idFilter)
@@ -453,28 +433,29 @@ import MMartAd._
  * @param id id товара.
  */
 case class MMartAd(
-  var martId      : MartId_t,
-  var offers      : List[MMartAdOfferT],
-  var img         : MImgInfo,
-  var textAlign   : MMartAdTextAlign,
-  var shopId      : Option[ShopId_t] = None,
-  var companyId   : MCompany.CompanyId_t,
-  var panel       : Option[MMartAdPanelSettings] = None,
-  var prio        : Option[Int] = None,
-  var showLevels  : Set[AdShowLevel] = Set.empty,
-  var userCatId   : Option[String] = None,
-  var id          : Option[String] = None,
-  var dateCreated : DateTime = DateTime.now
+  var producerId   : ShopId_t,
+  var producerType : AdProducerType,
+  var receivers    : Set[AdReceiverInfo],
+  var offers       : List[MMartAdOfferT],
+  var img          : MImgInfo,
+  var textAlign    : MMartAdTextAlign,
+  var companyId    : MCompany.CompanyId_t,
+  var panel        : Option[MMartAdPanelSettings] = None,
+  var prio         : Option[Int] = None,
+  var showLevels   : Set[AdShowLevel] = Set.empty,
+  var userCatId    : Option[String] = None,
+  var id           : Option[String] = None,
+  var dateCreated  : DateTime = DateTime.now
 ) extends MMartAdT[MMartAd] {
 
   def companion = MMartAd
 
-  def getOwnerId = shopId getOrElse martId
+  def getOwnerId = producerId
 
   /** Перед сохранением можно проверять состояние экземпляра. */
   @JsonIgnore override def isFieldsValid: Boolean = {
     super.isFieldsValid &&
-      img != null && !offers.isEmpty && shopId != null && companyId != null && martId != null
+      img != null && !offers.isEmpty && producerId != null && companyId != null && receivers != null
   }
 
 
@@ -505,32 +486,24 @@ case class MMartAd(
   }
 }
 
-
 /** Интерфейс экземпляра модели для возможности создания классов-врапперов. */
-trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
-  def martId      : MartId_t
-  def offers      : List[MMartAdOfferT]
-  def textAlign   : MMartAdTextAlign
-  def shopId      : Option[ShopId_t]
-  def companyId   : MCompany.CompanyId_t
-  def panel       : Option[MMartAdPanelSettings]
-  def prio        : Option[Int]
-  def showLevels  : Set[AdShowLevel]
-  def userCatId   : Option[String]
-  def dateCreated : DateTime
-  def img         : MImgInfo
+trait MMartAdT[T <: MMartAdT[T]] extends Ad[T] {
+  def offers       : List[MMartAdOfferT]
+  def textAlign    : MMartAdTextAlign
+  def panel        : Option[MMartAdPanelSettings]
+  def prio         : Option[Int]
+  def showLevels   : Set[AdShowLevel]
+  def userCatId    : Option[String]
+  def img          : MImgInfo
 
-  @JsonIgnore def isShopAd = shopId.isDefined
+  @JsonIgnore def isShopAd = producerType == AdProducerTypes.Shop
 
-  def writeJsonFields(acc: XContentBuilder) {
-    acc.field(MART_ID_ESFN, martId)
-      .field(COMPANY_ID_ESFN, companyId)
+  override def writeJsonFields(acc: XContentBuilder) {
+    super.writeJsonFields(acc)
     if (userCatId.isDefined)
       acc.field(USER_CAT_ID_ESFN, userCatId.get)
     if (prio.isDefined)
       acc.field(PRIO_ESFN, prio.get)
-    if (shopId.isDefined)
-      acc.field(SHOP_ID_ESFN, shopId.get)
     if (panel.isDefined)
       panel.get.render(acc)
     // Загружаем офферы
@@ -547,7 +520,6 @@ trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
       acc.endArray()
     }
     acc.rawField(IMG_ESFN, JacksonWrapper.serialize(img).getBytes)
-    acc.field(DATE_CREATED_ESFN, dateCreated)
     // TextAlign. Reflections из-за проблем с XCB.
     acc.rawField(TEXT_ALIGN_ESFN, JacksonWrapper.serialize(textAlign).getBytes)
   }
@@ -565,13 +537,30 @@ trait MMartAdWrapperT[T <: MMartAdT[T]] extends MMartAdT[T] {
   def prio = mmartAd.prio
   def panel = mmartAd.panel
   def companyId = mmartAd.companyId
-  def shopId = mmartAd.shopId
+  def producerId = mmartAd.producerId
   def textAlign = mmartAd.textAlign
   def offers = mmartAd.offers
-  def martId = mmartAd.martId
+  def receivers = mmartAd.receivers
   def id = mmartAd.id
   def dateCreated = mmartAd.dateCreated
   def img = mmartAd.img
+  def producerType: AdProducerType = mmartAd.producerType
+
+  def companyId_=(companyId: MCompany.CompanyId_t) {
+    mmartAd.companyId = companyId
+  }
+  def dateCreated_=(dateCreated: DateTime) {
+    mmartAd.dateCreated = dateCreated
+  }
+  def producerType_=(producerType: AdProducerType) {
+    mmartAd.producerType = producerType
+  }
+  def receivers_=(receivers: Set[AdReceiverInfo]) {
+    mmartAd.receivers = receivers
+  }
+  def producerId_=(producerId: String) {
+    mmartAd.producerId = producerId
+  }
 
   @JsonIgnore def companion: EsModelMinimalStaticT[T] = mmartAd.companion
   @JsonIgnore override def isFieldsValid: Boolean = super.isFieldsValid && mmartAd.isFieldsValid
@@ -737,14 +726,14 @@ object AdShowLevels extends Enumeration with MacroLogsImpl {
 
   type AdShowLevel = Value
 
-  /** Отображать на нулевом уровне, т.е. при входе в магазин. */
-  val LVL_MART_SHOWCASE = Value("d")
+  /** Отображать на нулевом уровне, т.е. при входе в ТЦ/ресторан и т.д. */
+  val LVL_CONSUMER_TOP = Value("d")
 
-  /** Отображать на списке витрин ТЦ. */
-  val LVL_MART_SHOPS = Value("h")
+  /** Отображать в каталоге продьюсеров. */
+  val LVL_PRODUCERS_CATALOG = Value("h")
 
-  /** Отображать эту рекламу внутри магазина. */
-  val LVL_SHOP = Value("m")
+  /** Отображать эту рекламу внутри каталога продьюсера. */
+  val LVL_PRODUCER = Value("m")
 
   def maybeWithName(n: String): Option[AdShowLevel] = {
     try {
@@ -781,7 +770,7 @@ object AdShowLevels extends Enumeration with MacroLogsImpl {
    * @return true - если карточка где-либо опубликована. Иначе false.
    */
   def isShownShopAd(htl: Boolean, sls: Set[AdShowLevel]): Boolean = {
-    sls.contains(LVL_SHOP) || sls.contains(LVL_MART_SHOPS) || (htl && sls.contains(LVL_MART_SHOWCASE))
+    sls.contains(LVL_PRODUCER) || sls.contains(LVL_PRODUCERS_CATALOG) || (htl && sls.contains(LVL_CONSUMER_TOP))
   }
 
 }
