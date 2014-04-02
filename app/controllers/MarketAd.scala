@@ -202,7 +202,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   { adProductMUnapply }
 
 
-  private val DISCOUNT_TEXT_MAXLEN = 64
+  private val DISCOUNT_TEXT_MAXLEN = 256
 
   /** Кусок формы, ориентированный на оформление скидочной рекламы. */
   val adDiscountM = {
@@ -225,7 +225,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     { MMartAdDiscount.unapply }
   }
 
-  private val AD_TEXT_MAXLEN = 160
+  private val AD_TEXT_MAXLEN = 256
   /** Форма для задания текстовой рекламы. */
   val adTextM = {
     val textM = nonEmptyText(maxLength = 200)
