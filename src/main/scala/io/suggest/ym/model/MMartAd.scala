@@ -75,7 +75,7 @@ object MMartAd extends AdStatic[MMartAd] with MacroLogsImpl {
       id = Option(id),
       offers = Nil,
       img = null,
-      receiverIds = null,
+      receivers = null,
       companyId = null,
       producerId = null,
       textAlign = null,
@@ -123,11 +123,12 @@ object MMartAd extends AdStatic[MMartAd] with MacroLogsImpl {
       // Нужен фильтр по уровням.
       val lvlFilter = if (lvlSet.isEmpty) {
         // нужна реклама без уровней вообще
-        FilterBuilders.missingFilter(SHOW_LEVELS_ESFN)
+        FilterBuilders.missingFilter(Ad.SHOW_LEVELS_ESFN)
       } else {
-        FilterBuilders.termsFilter(SHOW_LEVELS_ESFN, lvlSet : _*)
+        FilterBuilders.termsFilter(Ad.SHOW_LEVELS_ESFN, lvlSet : _*)
       }
-      QueryBuilders.filteredQuery(query0, lvlFilter)
+      val nestedLvlFilter = FilterBuilders.nestedFilter(Ad.RECEIVER_ESFN, lvlFilter)
+      QueryBuilders.filteredQuery(query0, nestedLvlFilter)
     } else {
       query0
     }
@@ -187,8 +188,6 @@ object MMartAd extends AdStatic[MMartAd] with MacroLogsImpl {
       }
     case (PANEL_ESFN, value)        => acc.panel = Option(JacksonWrapper.convert[MMartAdPanelSettings](value))
     case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = JacksonWrapper.convert[MMartAdTextAlign](value)
-    case (SHOW_LEVELS_ESFN, sls: java.lang.Iterable[_]) =>
-      acc.showLevels = AdShowLevels.deserializeLevelsFrom(sls)
     case (IMG_ESFN, value)          =>
       acc.img = JacksonWrapper.convert[MImgInfo](value)
   }
@@ -242,8 +241,7 @@ object MMartAd extends AdStatic[MMartAd] with MacroLogsImpl {
       FieldString(USER_CAT_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
       FieldObject(PANEL_ESFN,  enabled = false,  properties = Nil),
       FieldNumber(PRIO_ESFN,  fieldType = DocFieldTypes.integer,  index = FieldIndexingVariants.not_analyzed,  include_in_all = false),
-      offersField,
-      FieldString(SHOW_LEVELS_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed)
+      offersField
     )
   }
 
@@ -278,7 +276,7 @@ object MMartAd extends AdStatic[MMartAd] with MacroLogsImpl {
   private def mkLevelsUpdateDoc(newLevels: Iterable[AdShowLevel]): XContentBuilder = {
     val newDocFieldsXCB = XContentFactory.jsonBuilder()
       .startObject()
-      .startArray(SHOW_LEVELS_ESFN)
+      .startArray(Ad.RECEIVER_ESFN + "." + Ad.SHOW_LEVELS_ESFN)
     newLevels.foreach { sl =>
       newDocFieldsXCB.value(sl.toString)
     }
