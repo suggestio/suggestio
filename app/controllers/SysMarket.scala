@@ -165,11 +165,11 @@ object SysMarket extends SioController with MacroLogsImpl {
   {(name, town, address, siteUrlOpt, colorOpt, phoneOpt, maxAds) =>
     MMart(
       name = name,
-      town = town,
+      townOpt = town,
       companyId = null,
-      address = address,
+      addressOpt = address,
       siteUrl = siteUrlOpt,
-      phone = phoneOpt,
+      phoneOpt = phoneOpt,
       personIds = Nil,
       color = colorOpt,
       settings = MMartSettings(maxAds)
@@ -177,7 +177,7 @@ object SysMarket extends SioController with MacroLogsImpl {
   }
   {mmart =>
     import mmart._
-    Some((name, town, address, siteUrl, color, phone, settings.supL1MaxAdsShown))
+    Some((name, townOpt, addressOpt, siteUrl, color, phoneOpt, settings.supL1MaxAdsShown))
   })
 
 
@@ -245,10 +245,10 @@ object SysMarket extends SioController with MacroLogsImpl {
           },
           {mmart2 =>
             mmart.name = mmart2.name
-            mmart.town = mmart2.town
-            mmart.address = mmart2.address
+            mmart.townOpt = mmart2.townOpt
+            mmart.addressOpt = mmart2.addressOpt
             mmart.siteUrl = mmart2.siteUrl
-            mmart.phone = mmart2.phone
+            mmart.phoneOpt = mmart2.phoneOpt
             mmart.color = mmart2.color
             mmart.settings.supL1MaxAdsShown = mmart2.settings.supL1MaxAdsShown
             mmart.save map { _martId =>

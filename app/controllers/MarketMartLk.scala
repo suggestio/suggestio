@@ -69,12 +69,12 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   )
   // applyF()
   {(name, town, address, siteUrlOpt, phoneOpt) =>
-    MMart(name=name, town=town, address=address, siteUrl=siteUrlOpt, companyId=null, phone=phoneOpt, personIds=null)
+    MMart(name=name, townOpt=town, addressOpt=address, siteUrl=siteUrlOpt, companyId=null, phoneOpt=phoneOpt, personIds=null)
   }
   // unapplyF()
   {mmart =>
     import mmart._
-    Some((name, town, address, siteUrl, phone))
+    Some((name, townOpt, addressOpt, siteUrl, phoneOpt))
   }
 
 
@@ -250,10 +250,10 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
         // В фоне обновляем логотип ТЦ
         val savedLogoFut = ImgFormUtil.updateOrigImgId(logoImgIdOpt, oldImgId = mmart2.logoImgId)
         mmart.name = mmart2.name
-        mmart.town = mmart2.town
-        mmart.address = mmart2.address
+        mmart.townOpt = mmart2.townOpt
+        mmart.addressOpt = mmart2.addressOpt
         mmart.siteUrl = mmart2.siteUrl
-        mmart.phone = mmart2.phone
+        mmart.phoneOpt = mmart2.phoneOpt
         savedLogoFut flatMap { savedLogos =>
           mmart.logoImgId = savedLogos.headOption.map(_.id)
           mmart.save.map { _ =>
