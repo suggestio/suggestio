@@ -35,6 +35,9 @@ package object models {
   type MMartAd          = io.suggest.ym.model.MMartAd
   type MMartAdT         = io.suggest.ym.model.MMartAdT[_]
 
+  val  MWelcomeAd       = io.suggest.ym.model.MWelcomeAd
+  type MWelcomeAd       = io.suggest.ym.model.MWelcomeAd
+
   val MMartAdOfferTypes = io.suggest.ym.model.MMartAdOfferTypes
   type MMartAdOfferType = io.suggest.ym.model.MMartAdOfferType
 

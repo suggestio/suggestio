@@ -1,19 +1,17 @@
 package controllers
 
 import play.api.mvc._
-import util.{PlayMacroLogsImpl, ContextImpl, HtmlCompressUtil, ContextT}
+import util.{PlayMacroLogsImpl, HtmlCompressUtil, ContextT}
 import scala.concurrent.{Promise, Future}
 import play.api.i18n.Lang
 import util.event.SiowebNotifier
 import play.api.templates.{TxtFormat, HtmlFormat}
-import play.api.libs.json.JsString
 import play.api.libs.concurrent.Akka
 import scala.concurrent.duration._
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.data.Form
 import io.suggest.img.SioImageUtilT
-import util.acl.AbstractRequestWithPwOpt
 import play.api.libs.Files.TemporaryFile
 import models.MPictureTmp
 import util.img.OutImgFmts
@@ -30,6 +28,7 @@ import play.api.mvc.Result
  * Description: Базис для контроллеров s.io.
  */
 
+/** Базовый хелпер для контроллеров suggest.io. Используется почти всегда вместо обычного Controller. */
 trait SioController extends Controller with ContextT {
 
   implicit protected def simpleResult2async(sr: Result): Future[Result] = {
@@ -62,6 +61,7 @@ trait SioController extends Controller with ContextT {
 }
 
 
+/** Функция для защиты от брутфорса. Повзоляет сделать асинхронную задержку выполнения экшена в контроллере. */
 trait BruteForceProtect {
 
   val INVITE_CHECK_LAG_DURATION = 333 millis
@@ -82,6 +82,7 @@ trait BruteForceProtect {
 
 
 
+/** Функционал для поддержки работы с логотипами. Он является общим для ad, shop и mart-контроллеров. */
 trait LogoSupport extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._

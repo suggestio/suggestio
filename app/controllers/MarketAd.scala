@@ -253,11 +253,15 @@ object MarketAd extends SioController with LogoSupport {
   private val PANEL_COLOR_K = "panelColor"
   private val OFFER_K = "offer"
   private val textAlignKM = "textAlign" -> textAlignM
+    .transform[Option[MMartAdTextAlign]](
+      Some.apply,
+      { _ getOrElse MMartAdTextAlign(MMartAdTAPhone(""), MMartAdTATablet("", "")) }
+    )
 
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  private def adFormApply[T <: MMartAdOfferT](userCatId: Option[String], panelSettings: MMartAdPanelSettings, adBody: T, textAlign: MMartAdTextAlign) = {
+  private def adFormApply[T <: MMartAdOfferT](userCatId: Option[String], panelSettings: MMartAdPanelSettings, adBody: T, textAlignOpt: Option[MMartAdTextAlign]) = {
     MMartAd(
       martId      = null,
       offers      = List(adBody),
@@ -265,7 +269,7 @@ object MarketAd extends SioController with LogoSupport {
       shopId      = null,
       panel       = Some(panelSettings),
       userCatId   = userCatId,
-      textAlign   = textAlign,
+      textAlign   = textAlignOpt,
       companyId   = null
     )
   }
