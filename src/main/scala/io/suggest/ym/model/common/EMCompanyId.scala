@@ -29,8 +29,7 @@ trait EMCompanyIdStatic[T <: EMCompanyId[T]] extends EsModelStaticT[T] {
 
 trait EMCompanyId[T <: EMCompanyId[T]] extends EsModelT[T] {
 
-  def companyId: CompanyId_t
-  def companyId_=(companyId: CompanyId_t)
+  var companyId: CompanyId_t
 
   abstract override def writeJsonFields(acc: XContentBuilder) = {
     super.writeJsonFields(acc)

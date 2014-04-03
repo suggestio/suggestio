@@ -11,7 +11,12 @@ import io.suggest.model._
 import io.suggest.model.EsModel._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.MyConfig.CONFIG
-import common._
+import io.suggest.ym.model.common._
+import io.suggest.util.SioEsUtil.FieldAll
+import io.suggest.util.SioEsUtil.FieldString
+import io.suggest.util.SioEsUtil.FieldNumber
+import scala.Some
+import io.suggest.util.SioEsUtil.FieldSource
 
 /**
  * Suggest.io
@@ -23,7 +28,7 @@ import common._
  * - Собственное помещение единственного мазагина.
  */
 
-object MMart extends AdProducerStatic[MMart] with AdReceiverStatic[MMart] {
+object MMart extends AdProducerStatic[MMart] with AdReceiverStatic[MMart] with EMLegalEntityStatic[MMart] {
 
   type MartId_t = MainProto.MartId_t
 
@@ -38,10 +43,6 @@ object MMart extends AdProducerStatic[MMart] with AdReceiverStatic[MMart] {
   )
 
   override def generateMappingProps: List[DocField] = super.generateMappingProps ++ List(
-    FieldString(TOWN_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
-    FieldString(ADDRESS_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
-    FieldString(SITE_URL_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
-    FieldString(PHONE_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
     FieldString(COLOR_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
     FieldString(WELCOME_AD_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
     FieldNumber(MMartSettings.MAX_L1_ADS_SHOWN_ESFN, fieldType = DocFieldTypes.integer, include_in_all = false, index = FieldIndexingVariants.no)
@@ -49,10 +50,6 @@ object MMart extends AdProducerStatic[MMart] with AdReceiverStatic[MMart] {
 
 
   override def applyKeyValue(acc: MMart): PartialFunction[(String, AnyRef), Unit] = super.applyKeyValue(acc) orElse {
-    case (ADDRESS_ESFN, value)        => acc.address = addressParser(value)
-    case (SITE_URL_ESFN, value)       => acc.siteUrl = Option(siteUrlParser(value))
-    case (TOWN_ESFN, value)           => acc.town = stringParser(value)
-    case (PHONE_ESFN, value)          => acc.phone = Option(stringParser(value))
     case (COLOR_ESFN, value)          => acc.color = Option(stringParser(value))
     case (WELCOME_AD_ID_ESFN, value)  => acc.welcomeAdId = Option(stringParser(value))
     // Сеттинг
@@ -64,12 +61,12 @@ object MMart extends AdProducerStatic[MMart] with AdReceiverStatic[MMart] {
     id = Option(id),
     companyId = null,
     name = null,
-    address = null,
-    town = null,
+    addressOpt = null,
+    townOpt = null,
     color = None,
     siteUrl = None,
     personIds = Set.empty,
-    phone = None
+    phoneOpt = None
   )
 
   def companyIdQuery(companyId: CompanyId_t) = QueryBuilders.termQuery(ES_TYPE_NAME, companyId)
@@ -137,10 +134,10 @@ import MMart._
 case class MMart(
   var companyId     : CompanyId_t,
   var name          : String,
-  var town          : String,
-  var address       : String,
+  var townOpt       : Option[String],
+  var addressOpt    : Option[String],
   var siteUrl       : Option[String],
-  var phone         : Option[String],
+  var phoneOpt      : Option[String],
   var personIds     : Set[String],
   var color         : Option[String] = None,
   var logoImgId     : Option[String] = None,
@@ -148,9 +145,12 @@ case class MMart(
   settings          : MMartSettings = new MMartSettings,
   id                : Option[MMart.MartId_t] = None,
   var dateCreated   : DateTime = null
-) extends AdProducer[MMart] with AdReceiver[MMart] with MCompanySel with CompanyShopsSel with MartShopsSel with AdNetSupervisor[MMart] {
+) extends AdProducer[MMart] with AdReceiver[MMart] with MCompanySel with CompanyShopsSel with MartShopsSel
+with AdNetSupervisor[MMart] with EMLegalEntity[MMart] {
   def martId = id.get
   def companion = MMart
+
+  def aNMType: AdNetMemberType = AdNetMemberTypes.MART
 
   def mainPersonId = personIds.lastOption
 
@@ -159,20 +159,11 @@ case class MMart(
   /** Перед сохранением можно проверять состояние экземпляра. */
   override def isFieldsValid: Boolean = {
     super.isFieldsValid &&
-      companyId != null && name != null && town != null && address != null && personIds != null
+      companyId != null && name != null && townOpt != null && addressOpt != null && personIds != null
   }
 
   override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)
-    acc
-      .field(TOWN_ESFN, town)
-      .field(ADDRESS_ESFN, address)
-    if (siteUrl.isDefined)
-      acc.field(SITE_URL_ESFN, siteUrl.get)
-    if (phone.isDefined)
-      acc.field(PHONE_ESFN, phone.get)
-    if (dateCreated == null)
-      dateCreated = DateTime.now()
     if (color.isDefined)
       acc.field(COLOR_ESFN, color.get)
     if (welcomeAdId.isDefined)

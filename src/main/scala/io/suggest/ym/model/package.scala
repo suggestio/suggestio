@@ -11,8 +11,8 @@ package object model {
   type AdShowLevel = AdShowLevels.AdShowLevel
   type MMartAdOfferType = MMartAdOfferTypes.MMartAdOfferType
 
-  val  AdProducerTypes = common.AdProducerTypes
-  type AdProducerType  = AdProducerTypes.AdProducerType
+  val  AdNetMemberTypes = common.AdNetMemberTypes
+  type AdNetMemberType  = AdNetMemberTypes.AdNetMemberType
 
   type CompanyId_t = MCompany.CompanyId_t
 }

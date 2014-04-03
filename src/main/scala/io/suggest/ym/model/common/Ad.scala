@@ -4,7 +4,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.JacksonWrapper
 import io.suggest.util.SioEsUtil._
 import io.suggest.model._
-import io.suggest.ym.model.{AdShowLevel, AdProducerType}
+import io.suggest.ym.model.{AdNetMemberType, AdShowLevel}
 import EsModel._
 
 /**
@@ -28,19 +28,16 @@ import Ad._
 
 
 /** Интерфейс абстрактной карточки. */
-trait Ad[T <: EsModelMinimalT[T]] extends AdEntityBasic[T] {
+trait Ad[T <: EsModelMinimalT[T]] extends AdEntityBasic[T] with EMLogoImg[T] {
 
   /** Кто является изготовителем этой рекламной карточки? */
-  def producerId: String
-  def producerId_=(producerId: String)
+  var producerId: String
 
   /** Где (у кого) должна отображаться эта рекламная карточка? */
-  def receivers: Set[AdReceiverInfo]
-  def receivers_=(receivers: Set[AdReceiverInfo])
+  var receivers: Set[AdReceiverInfo]
 
   /** Тип создателя рекламы. */
-  def producerType: AdProducerType
-  def producerType_=(producerType: AdProducerType)
+  var producerType: AdNetMemberType
 
   abstract override def writeJsonFields(acc: XContentBuilder) = {
     acc.field(PRODUCER_ID_ESFN, producerId)
@@ -54,7 +51,7 @@ trait Ad[T <: EsModelMinimalT[T]] extends AdEntityBasic[T] {
 }
 
 
-trait AdStatic[T <: Ad] extends AdEntityBasicStatic[T] {
+trait AdStatic[T <: Ad] extends AdEntityBasicStatic[T] with EMLogoImgStatic[T] {
 
   abstract override def generateMappingProps: List[DocField] = {
     FieldString(PRODUCER_ID_ESFN, index = FieldIndexingVariants.not_analyzed,  include_in_all = false) ::
@@ -77,17 +74,9 @@ trait AdStatic[T <: Ad] extends AdEntityBasicStatic[T] {
     case (RECEIVER_ESFN, value) =>
       acc.receivers = JacksonWrapper.convert[Set[AdReceiverInfo]](value)
     case (PRODUCER_TYPE_ESFN, value) =>
-      acc.producerType = AdProducerTypes.withName(stringParser(value))
+      acc.producerType = AdNetMemberTypes.withName(stringParser(value))
   }
 
-}
-
-
-/** Типы создателей рекламных карточек перечисляются здесь. */
-object AdProducerTypes extends Enumeration {
-  type AdProducerType = Value
-  val Shop = Value("s")
-  val Mart = Value("m")
 }
 
 

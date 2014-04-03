@@ -10,3 +10,7 @@ lib/
 .ensime_lucene
 util/ym/market_categories/
 src/src/main/resources/ym/cat/
+*.orig
+*.rej
+~*
+*.swp

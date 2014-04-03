@@ -19,7 +19,6 @@ import org.joda.time.DateTime
 import com.github.nscala_time.time.OrderingImplicits._
 import java.util.Currency
 import io.suggest.util.SioConstants.CURRENCY_CODE_DFLT
-import org.elasticsearch.action.search.SearchType
 import common._
 
 /**
@@ -163,32 +162,34 @@ object MMartAd extends AdStatic[MMartAd] with MacroLogsImpl {
   }
 
 
-  override def applyKeyValue(acc: MMartAd): PartialFunction[(String, AnyRef), Unit] = super. applyKeyValue(acc) orElse {
-    case (PRIO_ESFN, value)         => acc.prio = Option(intParser(value))
-    case (USER_CAT_ID_ESFN, value)  => acc.userCatId = Option(stringParser(value))
-    case (OFFERS_ESFN, value: java.util.ArrayList[_]) =>
-      acc.offers = value.toList.map {
-        case jsObject: java.util.HashMap[_, _] =>
-          jsObject.get(OFFER_TYPE_ESFN) match {
-            case ots: String =>
-              MMartAdOfferTypes.maybeWithName(ots) match {
-                case Some(ot) =>
-                  val offerBody = jsObject.get(OFFER_BODY_ESFN)
-                  import MMartAdOfferTypes._
-                  ot match {
-                    case PRODUCT  => MMartAdProduct.deserialize(offerBody)
-                    case DISCOUNT => MMartAdDiscount.deserialize(offerBody)
-                    case TEXT     => MMartAdText.deserialize(offerBody)
-                  }
+  override def applyKeyValue(acc: MMartAd): PartialFunction[(String, AnyRef), Unit] = {
+    super.applyKeyValue(acc) orElse {
+      case (PRIO_ESFN, value)         => acc.prio = Option(intParser(value))
+      case (USER_CAT_ID_ESFN, value)  => acc.userCatId = Option(stringParser(value))
+      case (OFFERS_ESFN, value: java.util.ArrayList[_]) =>
+        acc.offers = value.toList.map {
+          case jsObject: java.util.HashMap[_, _] =>
+            jsObject.get(OFFER_TYPE_ESFN) match {
+              case ots: String =>
+                MMartAdOfferTypes.maybeWithName(ots) match {
+                  case Some(ot) =>
+                    val offerBody = jsObject.get(OFFER_BODY_ESFN)
+                    import MMartAdOfferTypes._
+                    ot match {
+                      case PRODUCT  => MMartAdProduct.deserialize(offerBody)
+                      case DISCOUNT => MMartAdDiscount.deserialize(offerBody)
+                      case TEXT     => MMartAdText.deserialize(offerBody)
+                    }
 
-                case None => ???
-              }
-          }
+                  case None => ???
+                }
+            }
 
-      }
-    case (PANEL_ESFN, value)        => acc.panel = Option(JacksonWrapper.convert[MMartAdPanelSettings](value))
-    case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = Option(JacksonWrapper.convert[MMartAdTextAlign](value))
-    case (IMG_ESFN, value)          => acc.img = JacksonWrapper.convert[MImgInfo](value)
+        }
+      case (PANEL_ESFN, value)        => acc.panel = Option(JacksonWrapper.convert[MMartAdPanelSettings](value))
+      case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = Option(JacksonWrapper.convert[MMartAdTextAlign](value))
+      case (IMG_ESFN, value)          => acc.img = JacksonWrapper.convert[MImgInfo](value)
+    }
   }
 
   /** Генератор пропертисов для маппигов индексов этой модели. */
@@ -240,8 +241,7 @@ object MMartAd extends AdStatic[MMartAd] with MacroLogsImpl {
       FieldString(USER_CAT_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
       FieldObject(PANEL_ESFN,  enabled = false,  properties = Nil),
       FieldNumber(PRIO_ESFN,  fieldType = DocFieldTypes.integer,  index = FieldIndexingVariants.not_analyzed,  include_in_all = false),
-      offersField,
-      FieldObject(LOGO_IMG_ID, enabled = false, properties = Nil)
+      offersField
     )
   }
 
@@ -432,13 +432,13 @@ import MMartAd._
  */
 case class MMartAd(
   var producerId   : ShopId_t,
-  var producerType : AdProducerType,
+  var producerType : AdNetMemberType,
   var receivers    : Set[AdReceiverInfo],
   var offers       : List[MMartAdOfferT],
   var img          : MImgInfo,
   var textAlign    : Option[MMartAdTextAlign],
   var companyId    : MCompany.CompanyId_t,
-  var logoImg     : Option[MImgInfo] = None,
+  var logoImg      : Option[MImgInfo] = None,
   var panel        : Option[MMartAdPanelSettings] = None,
   var prio         : Option[Int] = None,
   var showLevels   : Set[AdShowLevel] = Set.empty,
@@ -496,7 +496,7 @@ trait MMartAdT[T <: MMartAdT[T]] extends Ad[T] {
   def img          : MImgInfo
   def logoImg     : Option[MImgInfo]
 
-  @JsonIgnore def isShopAd = producerType == AdProducerTypes.Shop
+  @JsonIgnore def isShopAd = producerType == AdNetMemberTypes.SHOP
 
   override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)
@@ -520,8 +520,6 @@ trait MMartAdT[T <: MMartAdT[T]] extends Ad[T] {
       acc.endArray()
     }
     acc.rawField(IMG_ESFN, JacksonWrapper.serialize(img).getBytes)
-    if (logoImg.isDefined)
-      acc.rawField(LOGO_IMG_ID, JacksonWrapper.serialize(logoImg.get).getBytes)
     // TextAlign. Reflections из-за проблем с XCB.
     if (textAlign.isDefined)
       acc.rawField(TEXT_ALIGN_ESFN, JacksonWrapper.serialize(textAlign.get).getBytes)
@@ -547,7 +545,7 @@ trait MMartAdWrapperT[T <: MMartAdT[T]] extends MMartAdT[T] {
   def id = mmartAd.id
   def dateCreated = mmartAd.dateCreated
   def img = mmartAd.img
-  def producerType: AdProducerType = mmartAd.producerType
+  def producerType: AdNetMemberType = mmartAd.producerType
 
   def companyId_=(companyId: MCompany.CompanyId_t) {
     mmartAd.companyId = companyId
@@ -555,7 +553,7 @@ trait MMartAdWrapperT[T <: MMartAdT[T]] extends MMartAdT[T] {
   def dateCreated_=(dateCreated: DateTime) {
     mmartAd.dateCreated = dateCreated
   }
-  def producerType_=(producerType: AdProducerType) {
+  def producerType_=(producerType: AdNetMemberType) {
     mmartAd.producerType = producerType
   }
   def receivers_=(receivers: Set[AdReceiverInfo]) {

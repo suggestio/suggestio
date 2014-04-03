@@ -15,8 +15,9 @@ import io.suggest.util.SioEsUtil._
  */
 
 trait EMDateCreatedStatic[T <: EMDateCreated[T]] extends EsModelStaticT[T] {
-  def generateMappingProps: List[DocField] = {
-    FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no) :: super.generateMappingProps
+  abstract override def generateMappingProps: List[DocField] = {
+    FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no) ::
+    super.generateMappingProps
   }
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
@@ -29,8 +30,7 @@ trait EMDateCreatedStatic[T <: EMDateCreated[T]] extends EsModelStaticT[T] {
 
 trait EMDateCreated[T <: EMDateCreated[T]] extends EsModelT[T] {
 
-  def dateCreated: DateTime
-  def dateCreated_=(dateCreated: DateTime)
+  var dateCreated: DateTime
 
   abstract override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)

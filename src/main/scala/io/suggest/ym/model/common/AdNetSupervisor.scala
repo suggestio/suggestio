@@ -8,4 +8,5 @@ package io.suggest.ym.model.common
  */
 
 trait AdNetSupervisor[T <: AdNetMember[T]] extends AdNetMember[T] {
+  def isAdNSupervisor: Boolean = true
 }

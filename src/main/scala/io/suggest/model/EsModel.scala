@@ -102,7 +102,8 @@ object EsModel extends MacroLogsImpl {
   val CATEGORY_ID_ESFN  = "catId"
   val PRIO_ESFN         = "prio"
   val PHONE_ESFN        = "phone"
-  val LOGO_IMG_ID       = "logoImgId"
+  val LOGO_IMG_ESFN     = "logoImg"
+  val LOGO_IMG_ID_ESFN  = "logoImgId"
   /** Настройки. Это под-объект, чьё содержимое никогда не анализируется никем. */
   val SETTINGS_ESFN     = "settings"
   val META_ESFN         = "meta"

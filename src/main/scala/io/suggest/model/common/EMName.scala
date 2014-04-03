@@ -29,8 +29,7 @@ trait EMNameStatic[T <: EMName[T]] extends EsModelStaticT[T] {
 
 trait EMName[T <: EMName[T]] extends EsModelT[T] {
 
-  def name: String
-  def name_=(name: String)
+  var name: String
 
   abstract override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)

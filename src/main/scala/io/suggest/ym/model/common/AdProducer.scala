@@ -13,6 +13,8 @@ trait AdProducerStatic[T <: AdProducer[T]] extends AdNetMemberStatic[T]
 
 trait AdProducer[T <: AdProducer[T]] extends AdNetMember[T] {
 
+  def isAdProducer: Boolean = true
+
   /**
    * Сколько максимум рекламных карточек может публиковаться ДАННЫМ продьюсером на указанном уровне отображения.
    * Это не статическая фунцкия и оной она быть не может.

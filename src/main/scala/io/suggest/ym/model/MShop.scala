@@ -335,7 +335,7 @@ with ShopPriceListSel with MShopOffersSel {
     if (dateCreated == null)
       dateCreated = DateTime.now()
     if (logoImgId.isDefined)
-      acc.field(LOGO_IMG_ID, logoImgId.get)
+      acc.field(LOGO_IMG_ID_ESFN, logoImgId.get)
     settings writeXContent acc
     acc.field(DATE_CREATED_ESFN, dateCreated)
   }

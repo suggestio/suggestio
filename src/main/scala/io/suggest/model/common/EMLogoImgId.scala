@@ -14,23 +14,22 @@ import io.suggest.util.SioEsUtil._
 
 trait EMLogoImgIdStatic[T <: EMLogoImgId[T]] extends EsModelStaticT[T] {
   abstract override def generateMappingProps: List[DocField] = {
-    FieldString(LOGO_IMG_ID, include_in_all = false, index = FieldIndexingVariants.no) ::
+    FieldString(LOGO_IMG_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.no) ::
     super.generateMappingProps
   }
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = super.applyKeyValue(acc) orElse {
-    case (LOGO_IMG_ID, value)         => acc.logoImgId   = Option(stringParser(value))
+    case (LOGO_IMG_ID_ESFN, value)         => acc.logoImgId   = Option(stringParser(value))
   }
 }
 
 
 trait EMLogoImgId[T <: EMLogoImgId[T]] extends EsModelT[T] {
-  def logoImgId: Option[String]
-  def logoImgId_=(logoImgId: Option[String])
+  var logoImgId: Option[String]
 
   abstract override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)
     if (logoImgId.isDefined)
-      acc.field(LOGO_IMG_ID, logoImgId.get)
+      acc.field(LOGO_IMG_ID_ESFN, logoImgId.get)
   }
 }

@@ -27,8 +27,7 @@ trait EMPersonIdsStatic[T <: EMPersonIds[T]] extends EsModelStaticT[T] {
 
 trait EMPersonIds[T <: EMPersonIds[T]] extends EsModelT[T] {
 
-  def personIds: Set[String]
-  def personIds_=(personIds: Set[String])
+  var personIds: Set[String]
 
   abstract override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)

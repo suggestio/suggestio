@@ -9,4 +9,6 @@ package io.suggest.ym.model.common
 
 trait AdReceiverStatic[T <: AdNetMember[T]] extends AdNetMemberStatic[T]
 
-trait AdReceiver[T <: AdNetMember[T]] extends AdNetMember[T]
+trait AdReceiver[T <: AdNetMember[T]] extends AdNetMember[T] {
+  def isAdReceiver: Boolean = true
+}
