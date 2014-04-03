@@ -1,4 +1,4 @@
-@(mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], dfltOfferType: MMartAdOfferType, backCall: Call, logoUploadCall: Call, submitCall: Call, previewCall: Call, bp: BuyPlaceT[_])(implicit ctx: util.Context)
+@(mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], dfltOfferType: MMartAdOfferType, backCall: Call, submitCall: Call, previewCall: Call, bp: BuyPlaceT[_])(implicit ctx: util.Context)
 
 @* Рендер страницы с формой создания рекламы. *@
 @import ctx._
@@ -21,7 +21,6 @@
             btnText = Messages("Create"),
             mmcats  = mmcats,
             offerType = dfltOfferType,
-            logoUploadCall = logoUploadCall,
             previewCall = previewCall,
             bp = bp
           )

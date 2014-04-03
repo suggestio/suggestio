@@ -213,6 +213,12 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     }
   }
 
+
+  /** Приведение выхлопа мапперов imgId к результату сохранения, минуя это самое сохранение. */
+  implicit def logoOpt2imgInfo(logoOpt: LogoOpt_t): Option[MImgInfo] = {
+    logoOpt.map { logo => MImgInfo(logo.iik.key) }
+  }
+
 }
 
 
