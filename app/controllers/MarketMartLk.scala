@@ -165,7 +165,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
         // Нужно сохранить картинку в карточку, которая указана в текущем welcome-поле.
         welcomeAdOptFut.flatMap { welcomeAdOpt =>
           val savedImgFut = ImgFormUtil.updateOrigImg(
-            needImgs = welcomeImgOpt.map(ImgInfo4Save(_)),
+            needImgs = welcomeImgOpt.map(ImgInfo4Save(_, withThumb = false)),
             oldImgs = welcomeAdOpt.map(_.img)
           )
           savedImgFut.flatMap { savedImgs =>
