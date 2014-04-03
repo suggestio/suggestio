@@ -187,9 +187,8 @@ object MMartAd extends AdStatic[MMartAd] with MacroLogsImpl {
 
       }
     case (PANEL_ESFN, value)        => acc.panel = Option(JacksonWrapper.convert[MMartAdPanelSettings](value))
-    case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = JacksonWrapper.convert[MMartAdTextAlign](value)
-    case (IMG_ESFN, value)          =>
-      acc.img = JacksonWrapper.convert[MImgInfo](value)
+    case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = Option(JacksonWrapper.convert[MMartAdTextAlign](value))
+    case (IMG_ESFN, value)          => acc.img = JacksonWrapper.convert[MImgInfo](value)
   }
 
   /** Генератор пропертисов для маппигов индексов этой модели. */
@@ -241,7 +240,8 @@ object MMartAd extends AdStatic[MMartAd] with MacroLogsImpl {
       FieldString(USER_CAT_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
       FieldObject(PANEL_ESFN,  enabled = false,  properties = Nil),
       FieldNumber(PRIO_ESFN,  fieldType = DocFieldTypes.integer,  index = FieldIndexingVariants.not_analyzed,  include_in_all = false),
-      offersField
+      offersField,
+      FieldObject(LOGO_IMG_ID, enabled = false, properties = Nil)
     )
   }
 
@@ -436,8 +436,9 @@ case class MMartAd(
   var receivers    : Set[AdReceiverInfo],
   var offers       : List[MMartAdOfferT],
   var img          : MImgInfo,
-  var textAlign    : MMartAdTextAlign,
+  var textAlign    : Option[MMartAdTextAlign],
   var companyId    : MCompany.CompanyId_t,
+  var logoImg     : Option[MImgInfo] = None,
   var panel        : Option[MMartAdPanelSettings] = None,
   var prio         : Option[Int] = None,
   var showLevels   : Set[AdShowLevel] = Set.empty,
@@ -453,7 +454,7 @@ case class MMartAd(
   /** Перед сохранением можно проверять состояние экземпляра. */
   @JsonIgnore override def isFieldsValid: Boolean = {
     super.isFieldsValid &&
-      img != null && !offers.isEmpty && producerId != null && companyId != null && receivers != null
+      img != null && producerId != null && companyId != null && receivers != null
   }
 
 
@@ -487,12 +488,13 @@ case class MMartAd(
 /** Интерфейс экземпляра модели для возможности создания классов-врапперов. */
 trait MMartAdT[T <: MMartAdT[T]] extends Ad[T] {
   def offers       : List[MMartAdOfferT]
-  def textAlign    : MMartAdTextAlign
+  def textAlign    : Option[MMartAdTextAlign]
   def panel        : Option[MMartAdPanelSettings]
   def prio         : Option[Int]
   def showLevels   : Set[AdShowLevel]
   def userCatId    : Option[String]
   def img          : MImgInfo
+  def logoImg     : Option[MImgInfo]
 
   @JsonIgnore def isShopAd = producerType == AdProducerTypes.Shop
 
@@ -511,15 +513,18 @@ trait MMartAdT[T <: MMartAdT[T]] extends Ad[T] {
       acc.endArray()
     }
     if (!showLevels.isEmpty) {
-      acc.startArray(SHOW_LEVELS_ESFN)
+      acc.startArray(Ad.SHOW_LEVELS_ESFN)
       showLevels.foreach { sl =>
         acc.value(sl.toString)
       }
       acc.endArray()
     }
     acc.rawField(IMG_ESFN, JacksonWrapper.serialize(img).getBytes)
+    if (logoImg.isDefined)
+      acc.rawField(LOGO_IMG_ID, JacksonWrapper.serialize(logoImg.get).getBytes)
     // TextAlign. Reflections из-за проблем с XCB.
-    acc.rawField(TEXT_ALIGN_ESFN, JacksonWrapper.serialize(textAlign).getBytes)
+    if (textAlign.isDefined)
+      acc.rawField(TEXT_ALIGN_ESFN, JacksonWrapper.serialize(textAlign.get).getBytes)
   }
 }
 
@@ -559,6 +564,7 @@ trait MMartAdWrapperT[T <: MMartAdT[T]] extends MMartAdT[T] {
   def producerId_=(producerId: String) {
     mmartAd.producerId = producerId
   }
+  def logoImg = mmartAd.logoImg
 
   @JsonIgnore def companion: EsModelMinimalStaticT[T] = mmartAd.companion
   @JsonIgnore override def isFieldsValid: Boolean = super.isFieldsValid && mmartAd.isFieldsValid

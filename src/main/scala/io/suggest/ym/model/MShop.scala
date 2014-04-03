@@ -263,22 +263,26 @@ object MShop extends common.AdProducerStatic[MShop] {
 
   /**
    * Обновить в магазине поле с разрешенными дополнительными уровнями отображения.
-   * @param shopId id магазина.
-   * @param levels Новое значение premium-уровней.
+   * @param mshop экземпляр магазина.
    * @return Фьючерс для синхронизации.
    */
   // TODO Нужен апдейт массива уровней через mvel-скрипт
-  private def setShowLevels(shopId: ShopId_t, levels: Set[AdShowLevel])(implicit ec: ExecutionContext, client: Client): Future[_] = {
+  private def setShowLevels(mshop: MShop)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    val shopId = mshop.id.get
+    val levels = mshop.settings.supWithLevels
     val updateXCB = XContentFactory.jsonBuilder()
       .startObject()
         .startArray(SETTING_SUP_WITH_LEVELS)
         levels foreach { sl => updateXCB value sl.toString }
         updateXCB.endArray()
       .endObject()
-    client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, shopId)
+    val fut: Future[_] = client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, shopId)
       .setDoc(updateXCB)
       .execute()
-    // TODO надо что-то делать, чтобы это повлияло на выдачу как можно скорее.
+    fut onSuccess {
+      case _  => sn publish MShopSavedEvent(mshop)
+    }
+    fut
   }
 
 }
@@ -370,11 +374,7 @@ with ShopPriceListSel with MShopOffersSel {
   }
 
   def saveShopLevels(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
-    val fut = MShop.setShowLevels(shopId, settings.supWithLevels)
-    fut onSuccess { case _ =>
-      sn publish MShopSavedEvent(this)
-    }
-    fut
+    MShop.setShowLevels(this)
   }
 
 
