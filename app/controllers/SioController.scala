@@ -1,7 +1,7 @@
 package controllers
 
-import play.api.mvc.{RequestHeader, Result, Controller}
-import util.{ContextImpl, HtmlCompressUtil, ContextT}
+import play.api.mvc._
+import util.{PlayMacroLogsImpl, ContextImpl, HtmlCompressUtil, ContextT}
 import scala.concurrent.{Promise, Future}
 import play.api.i18n.Lang
 import util.event.SiowebNotifier
@@ -12,6 +12,16 @@ import scala.concurrent.duration._
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.data.Form
+import io.suggest.img.SioImageUtilT
+import util.acl.AbstractRequestWithPwOpt
+import play.api.libs.Files.TemporaryFile
+import models.MPictureTmp
+import util.img.OutImgFmts
+import net.sf.jmimemagic.Magic
+import util.ContextImpl
+import play.api.libs.json.JsString
+import scala.Some
+import play.api.mvc.Result
 
 /**
  * Suggest.io
@@ -68,5 +78,40 @@ trait BruteForceProtect {
     lagPromise.future
   }
 
+}
+
+
+
+trait LogoSupport extends SioController with PlayMacroLogsImpl {
+
+  import LOGGER._
+
+  /** Обработчик полученного логотипа в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана. */
+  protected def handleLogo(imageUtil: SioImageUtilT, marker: String)(implicit request: Request[MultipartFormData[TemporaryFile]]): Result = {
+    request.body.file("picture") match {
+      case Some(pictureFile) =>
+        val fileRef = pictureFile.ref
+        val srcFile = fileRef.file
+        // Если на входе png/gif, то надо эти форматы выставить в outFmt. Иначе jpeg.
+        val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
+        val outFmt = OutImgFmts.forImageMime(srcMagicMatch.getMimeType)
+        val mptmp = MPictureTmp.getForTempFile(fileRef, outFmt, Some(marker))
+        try {
+          imageUtil.convert(srcFile, mptmp.file)
+          Ok(Img.jsonTempOk(mptmp.filename))
+        } catch {
+          case ex: Throwable =>
+            debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
+            val reply = Img.jsonImgError("Unsupported picture format.")
+            BadRequest(reply)
+        } finally {
+          srcFile.delete()
+        }
+
+      case None =>
+        val reply = Img.jsonImgError("Picture not found in request.")
+        NotAcceptable(reply)
+    }
+  }
 }
 

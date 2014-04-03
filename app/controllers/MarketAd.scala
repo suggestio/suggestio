@@ -26,7 +26,7 @@ import net.sf.jmimemagic.Magic
  * Created: 06.03.14 11:26
  * Description: Контроллер для работы с рекламным фунционалом.
  */
-object MarketAd extends SioController with PlayMacroLogsImpl {
+object MarketAd extends SioController with LogoSupport {
 
   import LOGGER._
 
@@ -729,31 +729,9 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
    * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
    * @return Тот же формат ответа, что и для просто temp-картинок.
    */
+  // TODO Дедублицировать с MML.handleMartTempLogo
   def handleAdTempLogo = IsAuth(parse.multipartFormData) { implicit request =>
-    request.body.file("picture") match {
-      case Some(pictureFile) =>
-        val fileRef = pictureFile.ref
-        val srcFile = fileRef.file
-        // Если на входе png/gif, то надо эти форматы выставить в outFmt. Иначе jpeg.
-        val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
-        val outFmt = OutImgFmts.forImageMime(srcMagicMatch.getMimeType)
-        val mptmp = MPictureTmp.getForTempFile(fileRef, outFmt, Some(AD_TEMP_LOGO_MARKER))
-        try {
-          MartLogoImageUtil.convert(srcFile, mptmp.file)
-          Ok(Img.jsonTempOk(mptmp.filename))
-        } catch {
-          case ex: Throwable =>
-            debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
-            val reply = Img.jsonImgError("Unsupported picture format.")
-            BadRequest(reply)
-        } finally {
-          srcFile.delete()
-        }
-
-      case None =>
-        val reply = Img.jsonImgError("Picture not found in request.")
-        NotAcceptable(reply)
-    }
+    handleLogo(AdLogoImageUtil, AD_TEMP_LOGO_MARKER)
   }
  
 

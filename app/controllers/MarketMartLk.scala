@@ -31,7 +31,7 @@ import play.api.mvc.Security.username
  * Created: 02.03.14 13:54
  * Description: Личный кабинет для sio-маркета. Тут управление торговым центром и магазинами в нём.
  */
-object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForceProtect {
+object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport {
 
   import LOGGER._
 
@@ -330,24 +330,6 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     }
   }
 
-  /**
-   * Сабмит формы удаления магазина из торгового центра.
-   * Пока что отключено.
-   * @param martId id ТЦ.
-   * @param shopId id Магазина.
-   */
-  private def martShopDeleteSubmit(martId: MartId_t, shopId: ShopId_t) = IsMartAdmin(martId).async { implicit request =>
-    MShop.getMartIdFor(shopId) flatMap {
-      case Some(shopMartId) if shopMartId == martId =>
-        MShop.deleteById(shopId) map { _ =>
-          Redirect(routes.MarketMartLk.martShow(martId))
-            .flashing("success" -> "Магазин удалён.")
-        }
-
-      case _ => NotFound("Shop not found or unrelated.")
-    }
-  }
-
 
   /**
    * Загрузка картинки для логотипа магазина.
@@ -355,30 +337,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    * @return Тот же формат ответа, что и для просто temp-картинок.
    */
   def handleMartTempLogo(martId: MartId_t) = IsMartAdmin(martId)(parse.multipartFormData) { implicit request =>
-    request.body.file("picture") match {
-      case Some(pictureFile) =>
-        val fileRef = pictureFile.ref
-        val srcFile = fileRef.file
-        // Если на входе png/gif, то надо эти форматы выставить в outFmt. Иначе jpeg.
-        val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
-        val outFmt = OutImgFmts.forImageMime(srcMagicMatch.getMimeType)
-        val mptmp = MPictureTmp.getForTempFile(fileRef, outFmt, Some(MART_TMP_LOGO_MARKER))
-        try {
-          MartLogoImageUtil.convert(srcFile, mptmp.file)
-          Ok(Img.jsonTempOk(mptmp.filename))
-        } catch {
-          case ex: Throwable =>
-            debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
-            val reply = Img.jsonImgError("Unsupported picture format.")
-            BadRequest(reply)
-        } finally {
-          srcFile.delete()
-        }
-
-      case None =>
-        val reply = Img.jsonImgError("Picture not found in request.")
-        NotAcceptable(reply)
-    }
+    handleLogo(MartLogoImageUtil, MART_TMP_LOGO_MARKER)
   }
 
   /** Маппинг для задания причины при сокрытии сущности. */
