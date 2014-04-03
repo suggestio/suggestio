@@ -22,7 +22,7 @@ import net.sf.jmimemagic.Magic
  * Created: 03.03.14 13:34
  * Description: Контроллер личного кабинета для арендатора, т.е. с точки зрения конкретного магазина.
  */
-object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForceProtect {
+object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport {
 
   import LOGGER._
 
@@ -319,30 +319,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
    * @return Тот же формат ответа, что и для просто temp-картинок.
    */
   def handleShopTempLogo(shopId: ShopId_t) = IsShopAdm(shopId)(parse.multipartFormData) { implicit request =>
-    request.body.file("picture") match {
-      case Some(pictureFile) =>
-        val fileRef = pictureFile.ref
-        val srcFile = fileRef.file
-        // Если на входе png/gif, то надо эти форматы выставить в outFmt. Иначе jpeg.
-        val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
-        val outFmt = OutImgFmts.forImageMime(srcMagicMatch.getMimeType)
-        val mptmp = MPictureTmp.getForTempFile(fileRef, outFmt, Some(SHOP_TMP_LOGO_MARKER))
-        try {
-          ShopLogoImageUtil.convert(srcFile, mptmp.file)
-          Ok(Img.jsonTempOk(mptmp.filename))
-        } catch {
-          case ex: Throwable =>
-            debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
-            val reply = Img.jsonImgError("Unsupported picture format.")
-            BadRequest(reply)
-        } finally {
-          srcFile.delete()
-        }
-
-      case None =>
-        val reply = Img.jsonImgError("Picture not found in request.")
-        NotAcceptable(reply)
-    }
+    handleLogo(ShopLogoImageUtil, SHOP_TMP_LOGO_MARKER)
   }
 
 

@@ -30,7 +30,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   type LogoOpt_t = Option[ImgInfo4Save[ImgIdKey]]
   
   /** Маппер для поля с id картинки. Используется обертка над id чтобы прозрачно различать tmp и orig картинки. */
-  val imgIdM  = nonEmptyText(minLength = 8, maxLength = 42)
+  val imgIdM: Mapping[ImgIdKey] = nonEmptyText(minLength = 8, maxLength = 42)
     .transform(ImgIdKey.apply, {iik: ImgIdKey => iik.key})
     .verifying("img.id.invalid.", { _.isValid })
 
@@ -52,7 +52,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
   val LOGO_IMG_ID_K = "logoImgId"
   /** Генератор logo-маппингов. */
-  def getLogoKM(errorMsg: String, marker: String) = {
+  def getLogoKM(errorMsg: String, marker: String): (String, Mapping[LogoOpt_t]) = {
     val imgIdM = ImgFormUtil.imgIdM
       .verifying(errorMsg, { iik => iik match {
         case tiik: TmpImgIdKey =>
@@ -213,6 +213,12 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     }
   }
 
+
+  /** Приведение выхлопа мапперов imgId к результату сохранения, минуя это самое сохранение. */
+  implicit def logoOpt2imgInfo(logoOpt: LogoOpt_t): Option[MImgInfo] = {
+    logoOpt.map { logo => MImgInfo(logo.iik.key) }
+  }
+
 }
 
 
@@ -284,8 +290,8 @@ object ShopLogoImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
 }
 
 
-/** Конвертор картинок в логотипы ТЦ. */
-object MartLogoImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
+/** Там, где допустимы квалратные логотипы, используем этот трайт. */
+trait SqLogoImageUtil  extends SioImageUtilT with PlayMacroLogsImpl {
 
   /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
     * прямоугольник с указанныыми сторонами). */
@@ -306,6 +312,12 @@ object MartLogoImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
   def MAX_SOURCE_JPEG_NORSZ_BYTES: Option[Long] = None
 
 }
+
+/** Конвертор картинок в логотипы ТЦ. */
+object MartLogoImageUtil extends SqLogoImageUtil
+
+/** Конвертор картинок во вторичные логотипы на рекламных карточках. */
+object AdLogoImageUtil extends SqLogoImageUtil
 
 
 object ImgIdKey {

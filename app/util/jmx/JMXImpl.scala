@@ -23,7 +23,8 @@ object JMXImpl {
   private val JMX_MODELS = List(
     new MMartAdJmx,
     new MMartInxJmx,
-    new MAdStatJmx
+    new MAdStatJmx,
+    new MWelcomeAdJmx
   )
 
   private def getSrv = ManagementFactory.getPlatformMBeanServer
