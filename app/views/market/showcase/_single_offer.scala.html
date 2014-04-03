@@ -5,40 +5,27 @@
 <div class="sm-offer @if(isHidden){ sm-hidden-offer }" data-is-mart-offer="@mshopOpt.nonEmpty">
 
   @ad.panel.map { panelSettings =>
-  <div class="offer-header" style="background-color: #@panelSettings.color">
-    @mshopOpt.flatMap(_.logoImgId).orElse(mmart.logoImgId).map { logoImgId =>
-      <img class="sm-offer-logo" height="30" src="@routes.Img.getImg(logoImgId)"/>
-    }
-  </div>
+    <div class="offer-header" style="background-color: #@panelSettings.color">
+      @mshopOpt.flatMap(_.logoImgId).orElse(mmart.logoImgId).map { logoImgId =>
+        <img class="sm-offer-logo" height="30" src="@routes.Img.getImg(logoImgId)"/>
+      }
+    </div>
   }
 
   <div class="offer-details">
     <div class="od-inner">
+      @ad.logoImg.map { logoImg =>
+        <img src="@routes.Img.getImg(logoImg.id)" alt="@ad.offers.headOption.filter(_.isInstanceOf[MMartAdProduct]).map(_.asInstanceOf[MMartAdProduct].vendor.value)"/>
+      }
 
       @ad.offers.map {
         case adProd: MMartAdProduct => {
-
           <div class="vendor">@adProd.vendor.value</div>
 
           @adProd.oldPrice.map { oldPrice =>
             <div class="old-price"><s>@formatPrice(oldPrice.value, oldPrice.currency)</s></div>
           }
           <div class="new-price">@formatPrice(adProd.price.value, adProd.price.currency)</div>
-
-          @* Локейшн магазина *@
-          @* Если магазин не указан, то значит это рекламная карточка ТЦ. *@
-          @mshopOpt.map { mshop =>
-            <div class="offer-location">
-              <div class="ol-icon"></div>
-              @mshop.martFloor.map { martFloor =>
-                Этаж @martFloor<br/>
-              }
-              @mshop.martSection.map { martSection =>
-                Бутик @martSection<br/>
-              }
-              &laquo;@mshop.name&raquo;
-            </div>
-          }
         }
 
         case adDisco: MMartAdDiscount => {
@@ -58,6 +45,21 @@
         case adText: MMartAdText => {
           <div class="od-text" style="color: #@adText.text.font.color">@Html(adText.text.value)</div>
         }
+      }
+
+      @* Локейшн магазина *@
+      @* Если магазин не указан, то значит это рекламная карточка ТЦ. *@
+      @mshopOpt.map { mshop =>
+        <div class="offer-location">
+          <div class="ol-icon"></div>
+          @mshop.martFloor.map { martFloor =>
+            Этаж @martFloor<br/>
+          }
+          @mshop.martSection.map { martSection =>
+            Бутик @martSection<br/>
+          }
+          &laquo;@mshop.name&raquo;
+        </div>
       }
 
       @mshopOpt.map { mshop =>
