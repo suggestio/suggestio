@@ -1,4 +1,4 @@
-@(af: Form[_], call: Call, btnText: String, mmcats: MMartCategory.CollectMMCatsAcc_t, offerType: MMartAdOfferType, logoUploadCall: Call, previewCall: Call, bp: BuyPlaceT[_])(implicit ctx: util.Context)
+@(af: Form[_], call: Call, btnText: String, mmcats: MMartCategory.CollectMMCatsAcc_t, offerType: MMartAdOfferType, previewCall: Call, bp: BuyPlaceT[_])(implicit ctx: util.Context)
 
 @* Рендер формы редактирования произвольной рекламы.
  * offerType - предпочитаемый тип оффера, когда он неизвестен.
@@ -89,21 +89,21 @@
             <td class="right">
 
               <div class="select-file-wrap" id="logoImgInput">
-                @defining(af("logoImgId").value.orElse(bp.logoImgId)) { logoImgIdOpt =>
-                <div class="preview">
-                  <img class="image-preview" src="@logoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" width="59" />
-                </div>
-                <div class="selectbox">
-                  <div class="select-file">
-                    @stuff._fileUploadTpl(logoUploadCall, relatedFieldId="logoImgInput")
-                    <input class="image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
-                    <div class="bg">Выбрать файл для загрузки</div>
+                @defining(af("logoImgId").value) { logoImgIdOpt =>
+                  <div class="preview">
+                    <img class="image-preview" src="@logoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" width="59" />
                   </div>
-                  <div class="descr">
-                    Файл должен быть на прозрачном
-                    фоне и иметь формат .png
+                  <div class="selectbox">
+                    <div class="select-file">
+                      @stuff._fileUploadTpl(routes.MarketAd.handleAdTempLogo, relatedFieldId="logoImgInput")
+                      <input class="image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
+                      <div class="bg">Выбрать файл для загрузки</div>
+                    </div>
+                    <div class="descr">
+                      Файл должен быть на прозрачном
+                      фоне и иметь формат .png
+                    </div>
                   </div>
-                </div>
 		        }
               </div>
               <a href="#" class="close">&nbsp;</a>
@@ -143,9 +143,8 @@
               <div class="preview" id="adImagePreview">
                 @* Данные по картинке загруженной. *@
                 @defining(af("image_key").value) { imgIdOpt =>
-                <input class="image-key" type="hidden" name="image_key" value="@imgIdOpt"/>
-                <img class="image-preview" width="59" src="@imgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" />
-
+                  <input class="image-key" type="hidden" name="image_key" value="@imgIdOpt"/>
+                  <img class="image-preview" width="59" src="@imgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" />
                 }
               </div>
               <div class="selectbox">

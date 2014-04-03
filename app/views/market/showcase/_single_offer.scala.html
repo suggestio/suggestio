@@ -15,7 +15,7 @@
   <div class="offer-details">
     <div class="od-inner">
       @ad.logoImg.map { logoImg =>
-        <img src="@routes.Img.getImg(logoImg.id)" alt="@ad.offers.headOption.filter(_.isInstanceOf[MMartAdProduct]).map(_.asInstanceOf[MMartAdProduct].vendor.value)"/>
+        <img class="sm-offer-logo" height="30" src="@routes.Img.getImg(logoImg.id)" alt="@ad.offers.headOption.filter(_.isInstanceOf[MMartAdProduct]).map(_.asInstanceOf[MMartAdProduct].vendor.value)"/>
       }
 
       @ad.offers.map {

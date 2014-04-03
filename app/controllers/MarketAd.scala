@@ -18,6 +18,7 @@ import MMartCategory.CollectMMCatsAcc_t
 import scala.util.{Try, Failure, Success}
 import util.HtmlSanitizer.adTextFmtPolicy
 import io.suggest.ym.parsers.Price
+import net.sf.jmimemagic.Magic
 
 /**
  * Suggest.io
@@ -25,7 +26,7 @@ import io.suggest.ym.parsers.Price
  * Created: 06.03.14 11:26
  * Description: Контроллер для работы с рекламным фунционалом.
  */
-object MarketAd extends SioController with PlayMacroLogsImpl {
+object MarketAd extends SioController with LogoSupport {
 
   import LOGGER._
 
@@ -252,11 +253,15 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   private val PANEL_COLOR_K = "panelColor"
   private val OFFER_K = "offer"
   private val textAlignKM = "textAlign" -> textAlignM
+    .transform[Option[MMartAdTextAlign]](
+      Some.apply,
+      { _ getOrElse MMartAdTextAlign(MMartAdTAPhone(""), MMartAdTATablet("", "")) }
+    )
 
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  private def adFormApply[T <: MMartAdOfferT](userCatId: Option[String], panelSettings: MMartAdPanelSettings, adBody: T, textAlign: MMartAdTextAlign) = {
+  private def adFormApply[T <: MMartAdOfferT](userCatId: Option[String], panelSettings: MMartAdPanelSettings, adBody: T, textAlignOpt: Option[MMartAdTextAlign]) = {
     MMartAd(
       martId      = null,
       offers      = List(adBody),
@@ -264,7 +269,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
       shopId      = null,
       panel       = Some(panelSettings),
       userCatId   = userCatId,
-      textAlign   = textAlign,
+      textAlign   = textAlignOpt,
       companyId   = null
     )
   }
@@ -285,8 +290,8 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
 
   private val panelColorKM = PANEL_COLOR_K -> panelColorM
 
-  val AD_LOGO_MARKER = "adLogo"
-  private val ad2ndLogoImgIdOptKM = ImgFormUtil.getLogoKM("ad.logo.invalid", marker=AD_LOGO_MARKER)
+  val AD_TEMP_LOGO_MARKER = "adLogo"
+  private val ad2ndLogoImgIdOptKM = ImgFormUtil.getLogoKM("ad.logo.invalid", marker=AD_TEMP_LOGO_MARKER)
 
   /** Генератор форм добавления/редактирования рекламируемого продукта в зависимости от вкладок. */
   private def getShopAdFormM[T <: MMartAdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
@@ -304,10 +309,17 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
   private val shopAdDiscountFormM = getShopAdFormM(adDiscountM)
   private val shopAdTextFormM     = getShopAdFormM(adTextM)
 
+  // TODO Удалить этот метод после мержа с веткой adNet1, где BuyPlaceT был заменён.
   /** Извлекатель данных по логотипу из MShop/MMart. */
-  implicit private def entityOpt2logoOpt(ent: Option[BuyPlaceT[_]]): LogoOpt_t = {
+  private def entityOpt2logoOpt(ent: Option[BuyPlaceT[_]]): LogoOpt_t = {
     ent.flatMap { _.logoImgId }
       .map { logoImgId => ImgInfo4Save(OrigImgIdKey(logoImgId)) }
+  }
+
+  implicit private def mad2logoOpt(mad: MMartAd): LogoOpt_t = {
+    mad.logoImg.map { logoImg =>
+      ImgInfo4Save(OrigImgIdKey(logoImg.id, logoImg.meta))
+    }
   }
 
   type ReqSubmit = Request[collection.Map[String, Seq[String]]]
@@ -472,7 +484,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     import request.mad
     request.mshopOptFut flatMap { mshopOpt =>
       val imgIdKey = OrigImgIdKey(mad.img.id)
-      val formFilled = FormModes.getShopFormForClass(mad.offers.head) fill ((imgIdKey, mshopOpt, mad))
+      val formFilled = FormModes.getShopFormForClass(mad.offers.head) fill ((imgIdKey, mad, mad))
       renderEditShopFormWith(formFilled, mshopOpt, mad) map {
         case Some(render) => Ok(render)
         case None => shopNotFound(mad.shopId.get)
@@ -715,7 +727,17 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     }
   }
  
-  
+ 
+  /**
+   * Загрузка картинки для логотипа магазина.
+   * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
+   * @return Тот же формат ответа, что и для просто temp-картинок.
+   */
+  // TODO Дедублицировать с MML.handleMartTempLogo
+  def handleAdTempLogo = IsAuth(parse.multipartFormData) { implicit request =>
+    handleLogo(AdLogoImageUtil, AD_TEMP_LOGO_MARKER)
+  }
+ 
 
 
   /** Рендер ошибки в create-форме. Довольно общий, но асинхронный код.
@@ -756,7 +778,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     import request.mad
     val imgIdKey = OrigImgIdKey(mad.img.id)
     request.mmartOptFut flatMap { mmartOpt =>
-      val formFilled = FormModes.getShopFormForClass(mad.offers.head) fill ((imgIdKey, mmartOpt, mad))
+      val formFilled = FormModes.getShopFormForClass(mad.offers.head) fill ((imgIdKey, mad, mad))
       renderEditMartFormWith(formFilled, mmartOpt) map {
         case Some(render) => Ok(render)
         case None => martNotFound(mad.martId)
@@ -923,8 +945,6 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
     )(adFormApply[T])(adFormUnapply[T])
   ))
 
-  private val floatInvalidIgnored = -1F
-
   // offer-mapping'и
   /** Толерантный к значениям маппинг для рекламной карточки продукта с ценой. */
   private def previewProductM(vendorDflt: String) = {
@@ -1063,7 +1083,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
               },
               {case (iik, logoOpt, mad) =>
                 mad.img = MImgInfo(iik.key)
-                mshop.logoImgId = logoOpt.map(_.iik.key)
+                mad.logoImg = logoOpt
                 mad.shopId = Some(shopId)
                 mad.martId = request.martId
                 Ok(_single_offer(mad, request.mmart, Some(mshop)))
@@ -1090,7 +1110,7 @@ object MarketAd extends SioController with PlayMacroLogsImpl {
           },
           {case (iik, logoOpt, mad) =>
             mad.img = MImgInfo(iik.key)
-            mmart.logoImgId = logoOpt.map(_.iik.key)
+            mad.logoImg = logoOpt
             mad.shopId = None
             mad.martId = martId
             Ok(_single_offer(mad, mmart, None))

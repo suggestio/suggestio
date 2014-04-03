@@ -1,4 +1,4 @@
-@(mad: MMartAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], backCall:Call, submitCall:Call, logoUploadCall:Call, previewCall: Call, bp: BuyPlaceT[_])(implicit ctx: util.Context)
+@(mad: MMartAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], backCall:Call, submitCall:Call, previewCall: Call, bp: BuyPlaceT[_])(implicit ctx: util.Context)
 
 @* Страница с формой редактирования рекламной карточки. *@
 @import ctx._
@@ -37,7 +37,6 @@
     btnText = Messages("Save"),
     mmcats = mmcats,
     offerType = mad.offers.head.offerType,
-    logoUploadCall = logoUploadCall,
     previewCall = previewCall,
     bp = bp
   )
