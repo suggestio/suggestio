@@ -196,7 +196,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       }
     case (PANEL_ESFN, value)        => acc.panel = Option(JacksonWrapper.convert[MMartAdPanelSettings](value))
     case (LOGO_IMG_ID, value)       => acc.logoImg = Option(JacksonWrapper.convert[MImgInfo](value))
-    case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = JacksonWrapper.convert[MMartAdTextAlign](value)
+    case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = Option(JacksonWrapper.convert[MMartAdTextAlign](value))
     case (SHOW_LEVELS_ESFN, sls: java.lang.Iterable[_]) =>
       acc.showLevels = AdShowLevels.deserializeLevelsFrom(sls)
     case (DATE_CREATED_ESFN, value) => acc.dateCreated = dateCreatedParser(value)
@@ -457,7 +457,7 @@ case class MMartAd(
   var martId      : MartId_t,
   var offers      : List[MMartAdOfferT],
   var img         : MImgInfo,
-  var textAlign   : MMartAdTextAlign,
+  var textAlign   : Option[MMartAdTextAlign],
   var shopId      : Option[ShopId_t] = None,
   var companyId   : MCompany.CompanyId_t,
   var logoImg     : Option[MImgInfo] = None,
@@ -476,7 +476,7 @@ case class MMartAd(
   /** Перед сохранением можно проверять состояние экземпляра. */
   @JsonIgnore override def isFieldsValid: Boolean = {
     super.isFieldsValid &&
-      img != null && !offers.isEmpty && shopId != null && companyId != null && martId != null
+      img != null && shopId != null && companyId != null && martId != null
   }
 
 
@@ -512,7 +512,7 @@ case class MMartAd(
 trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
   def martId      : MartId_t
   def offers      : List[MMartAdOfferT]
-  def textAlign   : MMartAdTextAlign
+  def textAlign   : Option[MMartAdTextAlign]
   def shopId      : Option[ShopId_t]
   def companyId   : MCompany.CompanyId_t
   def panel       : Option[MMartAdPanelSettings]
@@ -554,7 +554,8 @@ trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
       acc.rawField(LOGO_IMG_ID, JacksonWrapper.serialize(logoImg.get).getBytes)
     acc.field(DATE_CREATED_ESFN, dateCreated)
     // TextAlign. Reflections из-за проблем с XCB.
-    acc.rawField(TEXT_ALIGN_ESFN, JacksonWrapper.serialize(textAlign).getBytes)
+    if (textAlign.isDefined)
+      acc.rawField(TEXT_ALIGN_ESFN, JacksonWrapper.serialize(textAlign.get).getBytes)
   }
 }
 

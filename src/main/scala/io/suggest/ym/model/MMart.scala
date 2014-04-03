@@ -31,6 +31,7 @@ object MMart extends EsModelStaticT[MMart] {
   val ES_TYPE_NAME = "mart"
 
   val COLOR_ESFN = "color"
+  val WELCOME_AD_ID_ESFN = "welcomeAdId"
 
   def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
@@ -48,6 +49,7 @@ object MMart extends EsModelStaticT[MMart] {
     FieldString(PERSON_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
     FieldString(LOGO_IMG_ID, include_in_all = false, index = FieldIndexingVariants.no),
     FieldString(COLOR_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
+    FieldString(WELCOME_AD_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
     FieldNumber(MMartSettings.MAX_L1_ADS_SHOWN_ESFN, fieldType = DocFieldTypes.integer, include_in_all = false, index = FieldIndexingVariants.no)
   )
 
@@ -63,6 +65,7 @@ object MMart extends EsModelStaticT[MMart] {
     case (PERSON_ID_ESFN, value)      => acc.personIds = JacksonWrapper.convert[List[String]](value)
     case (LOGO_IMG_ID, value)         => acc.logoImgId = Option(stringParser(value))
     case (COLOR_ESFN, value)          => acc.color = Option(stringParser(value))
+    case (WELCOME_AD_ID_ESFN, value)  => acc.welcomeAdId = Option(stringParser(value))
     // Сеттинг
     case (MMartSettings.MAX_L1_ADS_SHOWN_ESFN, v) =>
       acc.settings.supL1MaxAdsShown = intParser(v)
@@ -152,6 +155,7 @@ case class MMart(
   var personIds     : List[String],
   var color         : Option[String] = None,
   var logoImgId     : Option[String] = None,
+  var welcomeAdId   : Option[String] = None,
   settings          : MMartSettings = new MMartSettings,
   id                : Option[MMart.MartId_t] = None,
   var dateCreated   : DateTime = null
@@ -184,6 +188,8 @@ case class MMart(
       acc.array(PERSON_ID_ESFN, personIds : _*)
     if (color.isDefined)
       acc.field(COLOR_ESFN, color.get)
+    if (welcomeAdId.isDefined)
+      acc.field(WELCOME_AD_ID_ESFN, welcomeAdId.get)
     settings writeXContent acc
     acc.field(DATE_CREATED_ESFN, dateCreated)
   }
