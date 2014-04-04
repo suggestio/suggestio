@@ -1,4 +1,4 @@
-@(martId:MMart.MartId_t, btnText: String, mf: Form[_], call:Call)(implicit ctx: util.Context)
+@(martId:MMart.MartId_t, btnText: String, mf: Form[_], call:Call, welcomeAdOpt: Option[MMartAdT])(implicit ctx: util.Context)
 
 @* Форма для создания/редактирования торгового центра через личный кабинет. *@
 @import helper._
@@ -67,6 +67,11 @@
     </table>
   </div>
   <div class="border-line"></div>
+
+  Картинка приветствия:
+  @_welcomeAdFormTpl(martId, welcomeAdOpt, mf)
+  <br/><br/>
+
 
   <div class="submit-wrap">
     <input class="blue-but-small" type="submit" value="@btnText" style="float: right;"/>
