@@ -15,7 +15,7 @@ import EsModel._
  */
 
 
-object Ad {
+object EMAdEntity {
   val RECEIVER_ESFN      = "receiver"
   val RECEIVER_ID_ESFN   = "receiver"
   val PRODUCER_ID_ESFN   = "producerId"
@@ -24,11 +24,11 @@ object Ad {
 }
 
 
-import Ad._
+import EMAdEntity._
 
 
 /** Интерфейс абстрактной карточки. */
-trait Ad[T <: EsModelMinimalT[T]] extends AdEntityBasic[T] with EMLogoImg[T] {
+trait EMAdEntity[T <: EsModelMinimalT[T]] extends EsModelT[T] {
 
   /** Кто является изготовителем этой рекламной карточки? */
   var producerId: String
@@ -51,7 +51,7 @@ trait Ad[T <: EsModelMinimalT[T]] extends AdEntityBasic[T] with EMLogoImg[T] {
 }
 
 
-trait AdStatic[T <: Ad] extends AdEntityBasicStatic[T] with EMLogoImgStatic[T] {
+trait EmAdEntityStatic[T <: EMAdEntity[T]] extends EsModelStaticT[T] {
 
   abstract override def generateMappingProps: List[DocField] = {
     FieldString(PRODUCER_ID_ESFN, index = FieldIndexingVariants.not_analyzed,  include_in_all = false) ::
@@ -62,11 +62,6 @@ trait AdStatic[T <: Ad] extends AdEntityBasicStatic[T] with EMLogoImgStatic[T] {
     FieldString(PRODUCER_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false) ::
     super.generateMappingProps
   }
-
-  def generateMappingStaticFields: List[Field] = List(
-    FieldAll(enabled = true),
-    FieldSource(enabled = true)
-  )
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     case (PRODUCER_ID_ESFN, value) =>

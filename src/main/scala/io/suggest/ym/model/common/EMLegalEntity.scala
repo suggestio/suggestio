@@ -4,6 +4,7 @@ import io.suggest.model._
 import org.elasticsearch.common.xcontent.XContentBuilder
 import EsModel._
 import io.suggest.util.SioEsUtil._
+import io.suggest.util.JacksonWrapper
 
 /**
  * Suggest.io
@@ -12,39 +13,53 @@ import io.suggest.util.SioEsUtil._
  * Description: Поддержка полей-свойств юр.лиц.
  */
 
+object EMLegalEntity {
+  val LEGAL_INFO_ESFN = "legalInfo"
+}
+
+import EMLegalEntity._
+
 trait EMLegalEntityStatic[T <: EMLegalEntity[T]] extends EsModelStaticT[T] {
   abstract override def generateMappingProps: List[DocField] = {
-    FieldString(TOWN_ESFN, include_in_all = true, index = FieldIndexingVariants.no) ::
-    FieldString(ADDRESS_ESFN, include_in_all = true, index = FieldIndexingVariants.no) ::
-    FieldString(PHONE_ESFN, include_in_all = false, index = FieldIndexingVariants.no) ::
-    FieldString(SITE_URL_ESFN, include_in_all = false, index = FieldIndexingVariants.no) ::
-    super.generateMappingProps
+    FieldObject(LEGAL_INFO_ESFN, enabled = true, properties = Seq(
+      fs(TOWN_ESFN),
+      fs(ADDRESS_ESFN),
+      fs(PHONE_ESFN),
+      fs(SITE_URL_ESFN)
+    )) :: super.generateMappingProps
   }
+
+  private def fs(fn: String, iia: Boolean = true) = FieldString(fn, include_in_all = iia, index = FieldIndexingVariants.no)
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
-      case (ADDRESS_ESFN, value)        => acc.addressOpt = Option(addressParser(value))
-      case (TOWN_ESFN, value)           => acc.townOpt    = Option(stringParser(value))
-      case (PHONE_ESFN, value)          => acc.phoneOpt   = Option(stringParser(value))
-      case (SITE_URL_ESFN, value)       => acc.siteUrl    = Option(siteUrlParser(value))
+      case (LEGAL_INFO_ESFN, value) => JacksonWrapper.convert[AdnLegalEntityInfo](value)
     }
   }
 }
 
 trait EMLegalEntity[T <: EMLegalEntity[T]] extends EsModelT[T] {
 
-  var townOpt          : Option[String]
-  var addressOpt       : Option[String]
-  var phoneOpt         : Option[String]
-  var siteUrl          : Option[String]
+  var legalInfo: AdnLegalEntityInfo
 
   abstract override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)
-    if (townOpt.isDefined)
-      acc.field(TOWN_ESFN, townOpt.get)
-    if(addressOpt.isDefined)
-      acc.field(ADDRESS_ESFN, addressOpt.get)
-    if (phoneOpt.isDefined)
-      acc.field(PHONE_ESFN, phoneOpt.get)
+    val leInfoSer = JacksonWrapper.serialize(legalInfo)
+    acc.rawField(LEGAL_INFO_ESFN, leInfoSer.getBytes)
   }
 }
+
+
+/**
+ * Информация по юр.лицу.
+ * @param town Город.
+ * @param address Адрес в городе.
+ * @param phone Телефонный номер.
+ * @param siteUrl Ссылка на сайт.
+ */
+case class AdnLegalEntityInfo(
+  var town          : Option[String] = None,
+  var address       : Option[String] = None,
+  var phone         : Option[String] = None,
+  var siteUrl       : Option[String] = None
+)

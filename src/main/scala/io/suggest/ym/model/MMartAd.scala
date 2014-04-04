@@ -122,11 +122,11 @@ object MMartAd extends AdStatic[MMartAd] with MacroLogsImpl {
       // Нужен фильтр по уровням.
       val lvlFilter = if (lvlSet.isEmpty) {
         // нужна реклама без уровней вообще
-        FilterBuilders.missingFilter(Ad.SHOW_LEVELS_ESFN)
+        FilterBuilders.missingFilter(EMAdEntity.SHOW_LEVELS_ESFN)
       } else {
-        FilterBuilders.termsFilter(Ad.SHOW_LEVELS_ESFN, lvlSet : _*)
+        FilterBuilders.termsFilter(EMAdEntity.SHOW_LEVELS_ESFN, lvlSet : _*)
       }
-      val nestedLvlFilter = FilterBuilders.nestedFilter(Ad.RECEIVER_ESFN, lvlFilter)
+      val nestedLvlFilter = FilterBuilders.nestedFilter(EMAdEntity.RECEIVER_ESFN, lvlFilter)
       QueryBuilders.filteredQuery(query0, nestedLvlFilter)
     } else {
       query0
@@ -276,7 +276,7 @@ object MMartAd extends AdStatic[MMartAd] with MacroLogsImpl {
   private def mkLevelsUpdateDoc(newLevels: Iterable[AdShowLevel]): XContentBuilder = {
     val newDocFieldsXCB = XContentFactory.jsonBuilder()
       .startObject()
-      .startArray(Ad.RECEIVER_ESFN + "." + Ad.SHOW_LEVELS_ESFN)
+      .startArray(EMAdEntity.RECEIVER_ESFN + "." + EMAdEntity.SHOW_LEVELS_ESFN)
     newLevels.foreach { sl =>
       newDocFieldsXCB.value(sl.toString)
     }
@@ -513,7 +513,7 @@ trait MMartAdT[T <: MMartAdT[T]] extends Ad[T] {
       acc.endArray()
     }
     if (!showLevels.isEmpty) {
-      acc.startArray(Ad.SHOW_LEVELS_ESFN)
+      acc.startArray(EMAdEntity.SHOW_LEVELS_ESFN)
       showLevels.foreach { sl =>
         acc.value(sl.toString)
       }

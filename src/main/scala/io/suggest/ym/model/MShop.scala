@@ -30,7 +30,7 @@ import io.suggest.util.MyConfig.CONFIG
  * делать прочие административные действия.
  */
 
-object MShop extends common.AdProducerStatic[MShop] {
+object MShop extends EsModelStaticT[MShop] {
 
   type ShopId_t = MainProto.ShopId_t
 
@@ -302,7 +302,7 @@ case class MShop(
   var logoImgId   : Option[String] = None,
   var settings    : MShopSettings = new MShopSettings,
   var dateCreated : DateTime = null
-) extends common.AdProducer[MShop] with MMartOptSel with CompanyMartsSel
+) extends EsModelT[MShop] with MMartOptSel with CompanyMartsSel
 with ShopPriceListSel with MShopOffersSel {
 
   def companion = MShop
@@ -321,7 +321,7 @@ with ShopPriceListSel with MShopOffersSel {
   }
 
   override def writeJsonFields(acc: XContentBuilder) {
-    super.writeJsonFields(acc)
+    //super.writeJsonFields(acc)
     acc.field(COMPANY_ID_ESFN, companyId)
       .field(NAME_ESFN, name)
     if (martId.isDefined)

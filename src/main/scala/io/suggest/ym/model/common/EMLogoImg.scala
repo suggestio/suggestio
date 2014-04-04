@@ -14,10 +14,15 @@ import io.suggest.util.SioEsUtil._
  * Description: Аддон для поддержки поля LogoImg, хранящий json object по логотипу с метаданными.
  */
 
+object EMLogoImg {
+  def esMappingField = FieldObject(LOGO_IMG_ID_ESFN, enabled = false, properties = Nil)
+}
+
+import EMLogoImg._
+
 trait EMLogoImgStatic[T <: EMLogoImg[T]] extends EsModelStaticT[T] {
   abstract override def generateMappingProps: List[DocField] = {
-    FieldObject(LOGO_IMG_ID_ESFN, enabled = false, properties = Nil) ::
-    super.generateMappingProps
+    esMappingField :: super.generateMappingProps
   }
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {

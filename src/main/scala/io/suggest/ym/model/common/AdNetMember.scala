@@ -1,6 +1,5 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.common._
 import io.suggest.ym.model.common.AdNetMemberTypes.AdNetMemberType
 import io.suggest.model.{EsModelStaticT, EsModelT}
 import org.elasticsearch.common.xcontent.XContentBuilder
@@ -15,27 +14,12 @@ import io.suggest.util.SioEsUtil._
  * Таким объектом владеют люди, и совершают действия от имени объекта.
  */
 
-@deprecated("bycicle", "2014.04.04")
-trait AdNetMemberComboStatic[T <: AdNetMemberCombo[T]]
-  extends AdEntityBasicStatic[T]
-  with EMNameStatic[T]
-  with EMPersonIdsStatic[T]
-  with EMLogoImgIdStatic[T]
-  with AdNetMemberStatic[T]
-
-@deprecated("bycicle", "2014.04.04")
-trait AdNetMemberCombo[T <: AdNetMemberCombo[T]]
-  extends AdEntityBasic[T]
-  with EMName[T]
-  with EMPersonIds[T]
-  with EMLogoImgId[T]
-  with AdNetMember[T]
-
-
 object AdNetMember {
+  
+  /** Название root-object поля, в котором хранятся данные по участию в рекламной сети. */
   val ADN_MEMBER_INFO_ESFN = "adnMemberInfo"
 
-  // Подполя объекта
+  // Имена полей вышеуказнного объекта
   val IS_PRODUCER_ESFN    = "isProd"
   val IS_RECEIVER_ESFN    = "isRcvr"
   val IS_SUPERVISOR_ESFN  = "isSup"
@@ -55,7 +39,8 @@ object AdNetMember {
 
 import AdNetMember._
 
-trait AdNetMemberStatic[T <: AdNetMember[T]] extends EsModelStaticT[T] {
+/** Трейт для статической части модели участника рекламной сети. */
+trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
   abstract override def generateMappingProps: List[DocField] = {
     import FieldIndexingVariants.not_analyzed
     FieldObject(ADN_MEMBER_INFO_ESFN, enabled = true, properties = Seq(
@@ -73,7 +58,8 @@ trait AdNetMemberStatic[T <: AdNetMember[T]] extends EsModelStaticT[T] {
   }
 }
 
-trait AdNetMember[T <: AdNetMember[T]] extends EsModelT[T] {
+/** Трейт для экземпляра модели участника рекламной сети. */
+trait EMAdNetMember[T <: EMAdNetMember[T]] extends EsModelT[T] {
   var adnMemberInfo: AdNetMemberInfo
 
   abstract override def writeJsonFields(acc: XContentBuilder) {
@@ -93,15 +79,3 @@ case class AdNetMemberInfo(
   var adNMSupId: Option[String]
 )
 
-
-/** Типы узлов рекламной сети. */
-object AdNetMemberTypes extends Enumeration {
-  type AdNetMemberType = Value
-
-  val MART = Value("m")
-  val SHOP = Value("s")
-  val RESTARAUNT = Value("r")
-
-  /** Супервизор - некий диспетчер, управляющий под-сетью. */
-  val ASN_SUPERVISOR = Value("s")
-}

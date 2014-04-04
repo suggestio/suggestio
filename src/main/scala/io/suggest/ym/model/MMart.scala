@@ -28,7 +28,7 @@ import io.suggest.util.SioEsUtil.FieldSource
  * - Собственное помещение единственного мазагина.
  */
 
-object MMart extends AdProducerStatic[MMart] with AdReceiverStatic[MMart] with EMLegalEntityStatic[MMart] {
+object MMart extends EsModelStaticT[MMart] {
 
   type MartId_t = MainProto.MartId_t
 
@@ -145,8 +145,7 @@ case class MMart(
   settings          : MMartSettings = new MMartSettings,
   id                : Option[MMart.MartId_t] = None,
   var dateCreated   : DateTime = null
-) extends AdProducer[MMart] with AdReceiver[MMart] with MCompanySel with CompanyShopsSel with MartShopsSel
-with AdNetSupervisor[MMart] with EMLegalEntity[MMart] {
+) extends EsModelT[MMart] with MCompanySel with CompanyShopsSel with MartShopsSel {
   def martId = id.get
   def companion = MMart
 
