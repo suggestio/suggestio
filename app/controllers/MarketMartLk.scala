@@ -69,12 +69,12 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   )
   // applyF()
   {(name, town, address, siteUrlOpt, phoneOpt) =>
-    MMart(name=name, townOpt=town, addressOpt=address, siteUrl=siteUrlOpt, companyId=null, phoneOpt=phoneOpt, personIds=null)
+    MMart(name=name, townOpt=Option(town), addressOpt=Option(address), siteUrl=siteUrlOpt, companyId=null, phoneOpt=phoneOpt, personIds=null)
   }
   // unapplyF()
   {mmart =>
     import mmart._
-    Some((name, townOpt, addressOpt, siteUrl, phoneOpt))
+    Some((name, townOpt.get, addressOpt.get, siteUrl, phoneOpt))
   }
 
 
@@ -84,6 +84,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   /** Маппинг для формы добавления/редактирования торгового центра. */
   val martFormM = Form(tuple(
     "mart" -> martM,
+    "welcomeImgId" -> optional(ImgFormUtil.imgIdJpegM),
     martLogoImgIdOptKM
   ))
 
@@ -97,20 +98,13 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   )
   // applyF()
   {(name, email, martFloor, martSection) =>
-    email -> MShop(name=name, martFloor=Some(martFloor), martSection=Some(martSection), companyId=null, personIds=Nil)
+    email -> MShop(name=name, martFloor=Some(martFloor), martSection=Some(martSection), companyId=null, personIds=Set.empty)
   }
   // unapplyF()
   {case (_email, mshop) =>
     import mshop._
     Some((name, _email, martFloor.get, martSection.get))
   })
-
-
-  private val WELCOME_IMG_ID_K = "welcomeImgId"
-  /** Форма для запиливания приветственной картинки-карточки. */
-  private val welcomeAdFormM = Form(
-    WELCOME_IMG_ID_K -> optional(ImgFormUtil.imgIdJpegM)
-  )
 
 
   /** Асинхронно получить welcome-ad-карточку. */
@@ -128,13 +122,11 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   def martShow(martId: MartId_t, newAdIdOpt: Option[String]) = IsMartAdmin(martId).async { implicit request =>
     // Бывает, что есть дополнительная реклама, которая появится в выдаче только по наступлению index refresh. Тут костыль для отработки этого.
     val extAdOptFut = newAdIdOpt match {
-      case Some(newAdId) => MMartAd.getById(newAdId).map { _.filter { mad => mad.receiverIds == martId } }
+      case Some(newAdId) => MMartAd.getById(newAdId).map { _.filter { mad => ???; mad.receivers == martId } } // TODO Надо понять, что тут делается и исправить логику в связи с ломанием API.
       case None => Future successful None
     }
-    val welcomeAdOptFut = getWelcomeAdOpt(request.mmart)
     for {
       mads          <- MMartAd.findForMartRt(martId, shopMustMiss = true)
-      welcomeAdOpt  <- welcomeAdOptFut
       extAdOpt      <- extAdOptFut
     } yield {
       // Если есть карточка в extAdOpt, то надо добавить её в начало списка, который отсортирован по дате создания.
@@ -143,72 +135,10 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
       } else {
         mads
       }
-      Ok(martShowTpl(request.mmart, mads2, welcomeAdFormM, welcomeAdOpt))
+      Ok(martShowTpl(request.mmart, mads2))
     }
   }
 
-  /** Сабмит формы выставления welcome-картинки-карточки в ТЦ. */
-  def martWelcomeSubmit(martId: MartId_t) = IsMartAdmin(martId).async { implicit request =>
-    import request.mmart
-    val welcomeAdOptFut = getWelcomeAdOpt(request.mmart)
-    welcomeAdFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(s"martWelcomeSubmit($martId): Failed to bind form: ${formatFormErrors(formWithErrors)}")
-        for {
-          mads <- MMartAd.findForMartRt(martId, shopMustMiss = true)
-          welcomeAdOpt <- welcomeAdOptFut
-        } yield {
-          NotAcceptable(martShowTpl(mmart, mads, formWithErrors, welcomeAdOpt))
-        }
-      },
-      {welcomeImgOpt =>
-        // Нужно сохранить картинку в карточку, которая указана в текущем welcome-поле.
-        welcomeAdOptFut.flatMap { welcomeAdOpt =>
-          val savedImgFut = ImgFormUtil.updateOrigImg(
-            needImgs = welcomeImgOpt.map(ImgInfo4Save(_, withThumb = false)),
-            oldImgs = welcomeAdOpt.map(_.img)
-          )
-          savedImgFut.flatMap { savedImgs =>
-            val saveFut = savedImgs.headOption match {
-              // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
-              case None =>
-                val deleteOldAdFut = mmart.welcomeAdId.fold [Future[_]] {Future successful ()} { MMartAd.deleteById }
-                mmart.welcomeAdId = None
-                for {
-                  _ <- mmart.save
-                  _ <- deleteOldAdFut
-                } yield {
-                  ()
-                }
-
-              // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
-              case Some(newImgInfo) =>
-                val welcomeAd = welcomeAdOpt
-                  .map { welcomeAd =>
-                    welcomeAd.img = newImgInfo
-                    welcomeAd
-                  } getOrElse {
-                    MWelcomeAd(martId=martId, img = newImgInfo, companyId = mmart.companyId)
-                  }
-                welcomeAd.save andThen { case Success(welcomeAdId) =>
-                  // Если карточка в mmart ещё не указана, то надо её впилить туда.
-                  if (!mmart.welcomeAdId.exists(_ == welcomeAdId)) {
-                    mmart.welcomeAdId = Some(welcomeAdId)
-                    mmart.save
-                  } else {
-                    Future successful ()
-                  }
-                }
-            }
-            saveFut map { _ =>
-              Redirect(routes.MarketMartLk.martShow(martId))
-                .flashing("success" -> "Изменения сохранены.")
-            }
-          }
-        }
-      }
-    )
-  }
 
   /**
    * Рендер страницы со списком арендаторов.
@@ -227,11 +157,14 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    * Рендер страницы с формой редактирования ТЦ в личном кабинете.
    * @param martId id ТЦ.
    */
-  def martEditForm(martId: MartId_t) = IsMartAdmin(martId).apply { implicit request =>
+  def martEditForm(martId: MartId_t) = IsMartAdmin(martId).async { implicit request =>
     import request.mmart
-    val martLogoOpt = mmart.logoImgId.map { imgId => ImgInfo4Save(OrigImgIdKey(imgId)) }
-    val formFilled = martFormM.fill((mmart, martLogoOpt))
-    Ok(martEditFormTpl(mmart, formFilled))
+    getWelcomeAdOpt(mmart) map { welcomeAdOpt =>
+      val martLogoOpt = mmart.logoImgId.map { imgId => ImgInfo4Save(OrigImgIdKey(imgId)) }
+      val welcomeImgKey = welcomeAdOpt.map { welcomeAd => OrigImgIdKey(welcomeAd.img.id, welcomeAd.img.meta) }
+      val formFilled = martFormM.fill((mmart, welcomeImgKey, martLogoOpt))
+      Ok(martEditFormTpl(mmart, formFilled, welcomeAdOpt))
+    }
   }
 
   /**
@@ -242,23 +175,58 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     import request.mmart
     martFormM.bindFromRequest().fold(
       {formWithErrors =>
+        val welcomeAdOptFut = getWelcomeAdOpt(mmart)
         debug(s"martEditFormSubmit($martId): Failed to bind form: " + formWithErrors.errors)
-        NotAcceptable(martEditFormTpl(mmart, formWithErrors))
-          .flashing("error" -> "Ошибка заполнения формы.")
+        welcomeAdOptFut map { welcomeAdOpt =>
+          NotAcceptable(martEditFormTpl(mmart, formWithErrors, welcomeAdOpt))
+            .flashing("error" -> "Ошибка заполнения формы.")
+        }
       },
-      {case (mmart2, logoImgIdOpt) =>
+      {case (mmart2, welcomeImgOpt, logoImgIdOpt) =>
         // В фоне обновляем логотип ТЦ
         val savedLogoFut = ImgFormUtil.updateOrigImgId(logoImgIdOpt, oldImgId = mmart2.logoImgId)
+        // В фоне обновляем картинку карточки-приветствия
+        val savedWelcomeImgsFut: Future[_] = getWelcomeAdOpt(request.mmart) flatMap { welcomeAdOpt =>
+          ImgFormUtil.updateOrigImg(
+            needImgs = welcomeImgOpt.map(ImgInfo4Save(_, withThumb = false)),
+            oldImgs = welcomeAdOpt.map(_.img)
+          ) flatMap { savedImgs =>
+            savedImgs.headOption match {
+              // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
+              case None =>
+                val deleteOldAdFut = mmart.welcomeAdId
+                  .fold [Future[_]] {Future successful ()} { MMartAd.deleteById }
+                mmart.welcomeAdId = None
+                deleteOldAdFut
+
+              // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
+              case Some(newImgInfo) =>
+                val welcomeAd = welcomeAdOpt
+                  .map { welcomeAd =>
+                  welcomeAd.img = newImgInfo
+                  welcomeAd
+                } getOrElse {
+                  MWelcomeAd(martId=martId, img = newImgInfo, companyId = mmart.companyId)
+                }
+                welcomeAd.save andThen {
+                  case Success(welcomeAdId) => mmart.welcomeAdId = Some(welcomeAdId)
+                }
+            }
+          }
+        }
+        // Заполняем поля
         mmart.name = mmart2.name
         mmart.townOpt = mmart2.townOpt
         mmart.addressOpt = mmart2.addressOpt
         mmart.siteUrl = mmart2.siteUrl
         mmart.phoneOpt = mmart2.phoneOpt
-        savedLogoFut flatMap { savedLogos =>
-          mmart.logoImgId = savedLogos.headOption.map(_.id)
-          mmart.save.map { _ =>
-            Redirect(routes.MarketMartLk.martShow(martId))
-              .flashing("success" -> "Изменения сохранены.")
+        savedLogoFut.flatMap { savedLogos =>
+          savedWelcomeImgsFut flatMap { _ =>
+            mmart.logoImgId = savedLogos.headOption.map(_.id)
+            mmart.save.map { _ =>
+              Redirect(routes.MarketMartLk.martShow(martId))
+                .flashing("success" -> "Изменения сохранены.")
+            }
           }
         }
       }
@@ -506,7 +474,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   /** Рендер формы сокрытия какой-то рекламы. */
   def shopAdHideForm(adId: String) = IsMartAdminShopAd(adId).async { implicit request =>
     import request.ad
-    val shopId = ad.producerId.get
+    val shopId = ad.producerId
     MShop.getById(shopId) map {
       case Some(mshop) =>
         Ok(shop._shopAdHideFormTpl(mshop, ad, request.mmart, shopAdHideFormM))
@@ -518,7 +486,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   /** Сабмит формы сокрытия/удаления формы. */
   def shopAdHideFormSubmit(adId: String) = IsMartAdminShopAd(adId).async { implicit request =>
     // TODO Надо поразмыслить над ответами. Вероятно, тут нужны редиректы или jsonp-команды.
-    val rdr = Redirect(routes.MarketMartLk.showShop(request.ad.producerId.get))
+    val rdr = Redirect(routes.MarketMartLk.showShop(request.ad.producerId))
     shopAdHideFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"shopAdHideFormSubmit($adId): Form bind failed: " + formWithErrors.errors)
@@ -638,7 +606,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
             newPersonIdOptFut flatMap { personIdOpt =>
               val personId = (personIdOpt orElse request.pwOpt.map(_.personId)).get
               if (!(mmart.personIds contains personId)) {
-                mmart.personIds ::= personId
+                mmart.personIds += personId
               }
               mmart.save.map { _martId =>
                 Redirect(routes.MarketMartLk.martShow(martId))
