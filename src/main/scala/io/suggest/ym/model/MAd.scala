@@ -56,23 +56,27 @@ object MAd
     val adOptFut = getById(id)
     adOptFut flatMap {
       case Some(ad) =>
-        // Удаляем картинку рекламы
+        lazy val logPrefix = s"deleteById($id): "
+        // Удаляем картинку рекламы в фоне
         val imgId = ad.img.id
         MPict.deleteFully(imgId) onComplete {
-          case Success(_)  => trace("Successfuly erased main picture: " + imgId)
-          case Failure(ex) => error("Failed to delete associated picture: " + imgId, ex)
+          case Success(_)  => trace(logPrefix + "Successfuly erased main picture: " + imgId)
+          case Failure(ex) => error(logPrefix + "Failed to delete associated picture: " + imgId, ex)
         }
         // Одновременно удаляем логотип.
         ad.logoImgOpt.foreach { logoImg =>
           val logoImgId = logoImg.id
           MPict.deleteFully(logoImgId) onComplete {
-            case Success(_)  => trace("Successfuly erased 2nd-logo picture: " + logoImgId)
-            case Failure(ex) => error("Failed to delete 2nd-logo picture: " + logoImgId, ex)
+            case Success(_)  => trace(logPrefix + "Successfuly erased 2nd-logo picture: " + logoImgId)
+            case Failure(ex) => error(logPrefix + "Failed to delete 2nd-logo picture: " + logoImgId, ex)
           }
         }
+        // Одновременно удаляем саму рекламную карточку из хранилища
         val resultFut = super.deleteById(id)
-        resultFut onSuccess { case _ =>
-          sn publish AdDeletedEvent(ad)
+        // Когда всё будет удалено ок, то надо породить событие.
+        resultFut onSuccess {
+          case true  => sn publish AdDeletedEvent(ad)
+          case false => warn(logPrefix + "Failed to delete ad: id not found, but it was! Already deleted concurrently?")
         }
         resultFut
 
@@ -85,9 +89,9 @@ object MAd
 
 /** Тут поддержка полей MAd, специфичная только для рекламных карточек. Пока что пустая.
   * Реализация вынесена из MAd для соблюдения stackable trait pattern. */
-trait MAdStaticT[T <: MAdT] extends EsModelStaticEmpty[T]
+sealed trait MAdStaticT[T <: MAdT[T]] extends EsModelStaticEmpty[T]
 
-trait MAdT[T <: MAdT[T]] extends EsModelEmpty[T]
+sealed trait MAdT[T <: MAdT[T]] extends EsModelEmpty[T]
 
 
 case class MAd(
