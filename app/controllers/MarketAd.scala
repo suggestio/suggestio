@@ -19,6 +19,7 @@ import scala.util.{Try, Failure, Success}
 import util.HtmlSanitizer.adTextFmtPolicy
 import io.suggest.ym.parsers.Price
 import net.sf.jmimemagic.Magic
+import io.suggest.ym.model.common
 
 /**
  * Suggest.io
@@ -159,7 +160,7 @@ object MarketAd extends SioController with LogoSupport {
 
   /** Маппинг для textAlign.phone -- параметры размещения текста на экране телефона. */
   val taPhoneM = textAlignRawM
-    .transform[MMartAdTAPhone](
+    .transform[common.TextAlignPhone](
       { MMartAdTAPhone.apply },
       { taPhone => taPhone.align }
     )
@@ -248,12 +249,12 @@ object MarketAd extends SioController with LogoSupport {
   private val panelColorM = colorM
     .transform(
       { MMartAdPanelSettings.apply },
-      { mmaps: MMartAdPanelSettings => mmaps.color }
+      { mmaps: common.AdPanelSettings => mmaps.color }
     )
   private val PANEL_COLOR_K = "panelColor"
   private val OFFER_K = "offer"
   private val textAlignKM = "textAlign" -> textAlignM
-    .transform[Option[MMartAdTextAlign]](
+    .transform[Option[common.TextAlign]](
       Some.apply,
       { _ getOrElse MMartAdTextAlign(MMartAdTAPhone(""), MMartAdTATablet("", "")) }
     )
@@ -261,7 +262,7 @@ object MarketAd extends SioController with LogoSupport {
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  private def adFormApply[T <: MMartAdOfferT](userCatId: Option[String], panelSettings: MMartAdPanelSettings, adBody: T, textAlignOpt: Option[MMartAdTextAlign]) = {
+  private def adFormApply[T <: MMartAdOfferT](userCatId: Option[String], panelSettings: common.AdPanelSettings, adBody: T, textAlignOpt: Option[common.TextAlign]) = {
     MMartAd(
       producerId  = null,
       producerType = null,
@@ -867,7 +868,7 @@ object MarketAd extends SioController with LogoSupport {
 
 
   /** Асинхронно обновить логотип магазина или ТЦ. */
-  private def updateLogo(logoImgIdOpt: LogoOpt_t, entity: AdNetMember): Future[_] = {
+  private def updateLogo(logoImgIdOpt: LogoOpt_t, entity: MAdnNode): Future[_] = {
     ImgFormUtil.updateOrigImgId(
       needImg = logoImgIdOpt,
       oldImgId = entity.logoImgId

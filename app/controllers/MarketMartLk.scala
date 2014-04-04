@@ -550,9 +550,9 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
         MShop.getById(shopId) flatMap {
           case Some(mshop) =>
             mshop.settings.supWithLevels = if (isTopEnabled) {
-              mshop.settings.supWithLevels + AdShowLevels.LVL_CONSUMER_TOP
+              mshop.settings.supWithLevels + AdShowLevels.LVL_RECEIVER_TOP
             } else {
-              mshop.settings.supWithLevels - AdShowLevels.LVL_CONSUMER_TOP
+              mshop.settings.supWithLevels - AdShowLevels.LVL_RECEIVER_TOP
             }
             mshop.saveShopLevels map { _ =>
               Ok("updated ok")

@@ -1,3 +1,6 @@
+import io.suggest.ym.model.common
+import io.suggest.ym.model.common.{AdPanelSettings, TextAlignPhone, TextAlignTablet, TextAlign}
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -41,47 +44,47 @@ package object models {
   val MMartAdOfferTypes = io.suggest.ym.model.MMartAdOfferTypes
   type MMartAdOfferType = io.suggest.ym.model.MMartAdOfferType
 
-  type MMartAdOfferT    = io.suggest.ym.model.MMartAdOfferT
+  type MMartAdOfferT    = io.suggest.ym.model.ad.AdOfferT
 
-  val  MMartAdProduct   = io.suggest.ym.model.MMartAdProduct
-  type MMartAdProduct   = io.suggest.ym.model.MMartAdProduct
+  val  MMartAdProduct   = io.suggest.ym.model.ad.AOProduct
+  type MMartAdProduct   = io.suggest.ym.model.ad.AOProduct
 
-  val  MMartAdDiscount  = io.suggest.ym.model.MMartAdDiscount
-  type MMartAdDiscount  = io.suggest.ym.model.MMartAdDiscount
+  val  MMartAdDiscount  = io.suggest.ym.model.ad.AODiscount
+  type MMartAdDiscount  = io.suggest.ym.model.ad.AODiscount
 
-  val  MMartAdText      = io.suggest.ym.model.MMartAdText
-  type MMartAdText      = io.suggest.ym.model.MMartAdText
+  val  MMartAdText      = io.suggest.ym.model.ad.AOText
+  type MMartAdText      = io.suggest.ym.model.ad.AOText
 
-  val TextAlignValues   = io.suggest.ym.model.TextAlignValues
+  val TextAlignValues   = io.suggest.ym.model.ad.AOTextAlign
 
-  val  MMartAdTextAlign = io.suggest.ym.model.MMartAdTextAlign
-  type MMartAdTextAlign = io.suggest.ym.model.MMartAdTextAlign
+  val  MMartAdTextAlign = MMartAdTextAlign
+  type MMartAdTextAlign = common.TextAlign
 
-  val  DiscountTemplate = io.suggest.ym.model.MMartAdDiscountTemplate
-  type DiscountTemplate = io.suggest.ym.model.MMartAdDiscountTemplate
+  val  DiscountTemplate = io.suggest.ym.model.ad.AODiscountTemplate
+  type DiscountTemplate = io.suggest.ym.model.ad.AODiscountTemplate
 
-  val  MMAdFloatField   = io.suggest.ym.model.MMAdFloatField
-  type MMAdFloatField   = io.suggest.ym.model.MMAdFloatField
-  val  MMAdStringField  = io.suggest.ym.model.MMAdStringField
-  type MMAdStringField  = io.suggest.ym.model.MMAdStringField
+  val  MMAdFloatField   = io.suggest.ym.model.ad.AOFloatField
+  type MMAdFloatField   = io.suggest.ym.model.ad.AOFloatField
+  val  MMAdStringField  = io.suggest.ym.model.ad.AOStringField
+  type MMAdStringField  = io.suggest.ym.model.ad.AOStringField
 
-  val  MMartAdTAPhone   = io.suggest.ym.model.MMartAdTAPhone
-  type MMartAdTAPhone   = io.suggest.ym.model.MMartAdTAPhone
+  val  MMartAdTAPhone   = MMartAdTAPhone
+  type MMartAdTAPhone   = common.TextAlignPhone
 
-  val  MMartAdTATablet  = io.suggest.ym.model.MMartAdTATablet
-  type MMartAdTATablet  = io.suggest.ym.model.MMartAdTATablet
+  val  MMartAdTATablet  = MMartAdTATablet
+  type MMartAdTATablet  = common.TextAlignTablet
 
-  val  MMAdFieldFont    = io.suggest.ym.model.MMAdFieldFont
-  type MMAdFieldFont    = io.suggest.ym.model.MMAdFieldFont
+  val  MMAdFieldFont    = io.suggest.ym.model.ad.AOFieldFont
+  type MMAdFieldFont    = io.suggest.ym.model.ad.AOFieldFont
 
-  val  MMartAdPanelSettings = io.suggest.ym.model.MMartAdPanelSettings
-  type MMartAdPanelSettings = io.suggest.ym.model.MMartAdPanelSettings
+  val  MMartAdPanelSettings = MMartAdPanelSettings
+  type MMartAdPanelSettings = common.AdPanelSettings
 
-  val  MMAdPrice        = io.suggest.ym.model.MMAdPrice
-  type MMAdPrice        = io.suggest.ym.model.MMAdPrice
+  val  MMAdPrice        = io.suggest.ym.model.ad.AOPriceField
+  type MMAdPrice        = io.suggest.ym.model.ad.AOPriceField
 
-  val  MImgInfo         = io.suggest.ym.model.MImgInfo
-  type MImgInfo         = io.suggest.ym.model.MImgInfo
+  val  MImgInfo         = io.suggest.ym.model.common.MImgInfo
+  type MImgInfo         = io.suggest.ym.model.common.MImgInfo
 
   val  MInx             = io.suggest.model.inx2.MInx
   type MInxT            = io.suggest.model.inx2.MInxT
@@ -92,9 +95,7 @@ package object models {
   val  MMartAdIndexed   = io.suggest.ym.model.MMartAdIndexed
   type MMartAdIndexed   = io.suggest.ym.model.MMartAdIndexed
 
-  type AdNetMember      = io.suggest.ym.model.common.AdNetMemberCombo[_]
-  type AdProducer       = io.suggest.ym.model.common.AdProducer[_]
-  type AdConsumer       = io.suggest.ym.model.common.AdReceiver[_]
+  type MAdnNode         = io.suggest.ym.model.MAdnNode
 
   val  MAdStat          = io.suggest.ym.model.stat.MAdStat
   type MAdStat          = io.suggest.ym.model.stat.MAdStat

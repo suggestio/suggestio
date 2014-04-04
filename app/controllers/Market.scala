@@ -30,7 +30,7 @@ object Market extends SioController with PlayMacroLogsImpl {
   /** Входная страница для sio-market для ТЦ. */
   def martIndex(martId: MartId_t) = marketAction(martId) { implicit request =>
     for {
-      mads <- MMartAdIndexed.find(request.mmartInx, AdSearch(levelOpt = Some(AdShowLevels.LVL_CONSUMER_TOP)))
+      mads <- MMartAdIndexed.find(request.mmartInx, AdSearch(levelOpt = Some(AdShowLevels.LVL_RECEIVER_TOP)))
       rmd  <- request.marketDataFut
     } yield {
       val html = indexTpl(request.mmart, mads, rmd.mshops, rmd.mmcats)
