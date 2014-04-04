@@ -11,6 +11,7 @@ import MMartAd.IMG_ESFN
 import scala.concurrent.ExecutionContext
 import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.ym.model.common.{AdPanelSettings, TextAlign}
 
 /**
  * Suggest.io
@@ -57,8 +58,8 @@ case class MWelcomeAd(
   @JsonIgnore def companion: EsModelMinimalStaticT[MWelcomeAd] = MWelcomeAd
 
   @JsonIgnore def offers: List[MMartAdOfferT] = Nil
-  @JsonIgnore def textAlign: Option[MMartAdTextAlign] = None
-  @JsonIgnore def panel: Option[MMartAdPanelSettings] = None
+  @JsonIgnore def textAlign: Option[TextAlign] = None
+  @JsonIgnore def panel: Option[AdPanelSettings] = None
   @JsonIgnore def prio: Option[Int] = None
   @JsonIgnore def showLevels: Set[AdShowLevel] = Set.empty
   @JsonIgnore def userCatId: Option[String] = None

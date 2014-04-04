@@ -1,10 +1,7 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model._
-import io.suggest.ym.model.MImgInfo
 import org.elasticsearch.common.xcontent.XContentBuilder
-import io.suggest.util.JacksonWrapper
-import EsModel._
 import io.suggest.util.SioEsUtil._
 
 /**
@@ -15,7 +12,9 @@ import io.suggest.util.SioEsUtil._
  */
 
 object EMLogoImg {
-  def esMappingField = FieldObject(LOGO_IMG_ID_ESFN, enabled = false, properties = Nil)
+  val LOGO_IMG_ESFN = "logoImg"
+
+  def esMappingField = FieldObject(LOGO_IMG_ESFN, enabled = false, properties = Nil)
 }
 
 import EMLogoImg._
@@ -28,7 +27,7 @@ trait EMLogoImgStatic[T <: EMLogoImg[T]] extends EsModelStaticT[T] {
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
       case (LOGO_IMG_ESFN, value)  =>
-        acc.logoImgOpt = Option(JacksonWrapper.convert[MImgInfo](value))
+        acc.logoImgOpt = Option(MImgInfo.convertFrom(value))
     }
   }
 }
@@ -40,6 +39,6 @@ trait EMLogoImg[T <: EMLogoImg[T]] extends EsModelT[T] {
   abstract override def writeJsonFields(acc: XContentBuilder): Unit = {
     super.writeJsonFields(acc)
     if (logoImgOpt.isDefined)
-      acc.rawField(LOGO_IMG_ESFN, JacksonWrapper.serialize(logoImgOpt.get).getBytes)
+      acc.rawField(LOGO_IMG_ESFN, logoImgOpt.get.toJson.getBytes)
   }
 }

@@ -33,7 +33,7 @@ object EsModel extends MacroLogsImpl {
 
   /** Список ES-моделей. Нужен для удобства массовых maintance-операций. Расширяется по мере роста числа ES-моделей. */
   def ES_MODELS: Seq[EsModelMinimalStaticT[_]] = {
-    Seq(MMart, MShop, MShopPriceList, MShopPromoOffer, MYmCategory, MMartAd, MAdStat)
+    Seq(MShopPriceList, MShopPromoOffer, MYmCategory, MMartAd, MAdStat)
   }
 
 
@@ -417,6 +417,17 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
           }
         }
     }
+  }
+
+
+  /** С помощью query найти результаты, но сами результаты прочитать с помощью realtime multi-get. */
+  def findQueryRt(query: QueryBuilder, maxResults: Int = 100)(implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
+    prepareSearch
+      .setQuery(query)
+      .setNoFields()
+      .setSize(maxResults)
+      .execute()
+      .flatMap { searchResp2RtMultiget }
   }
 
 

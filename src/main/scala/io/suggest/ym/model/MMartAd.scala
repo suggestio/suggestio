@@ -17,9 +17,8 @@ import org.elasticsearch.action.update.UpdateResponse
 import org.elasticsearch.search.sort.SortOrder
 import org.joda.time.DateTime
 import com.github.nscala_time.time.OrderingImplicits._
-import java.util.Currency
-import io.suggest.util.SioConstants.CURRENCY_CODE_DFLT
 import common._
+import ad._
 
 /**
  * Suggest.io
@@ -152,12 +151,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
 
   /** common-функция для запросов в реальном времени. */
   private def findRt(query: QueryBuilder)(implicit ec: ExecutionContext, client: Client): Future[List[MMartAd]] = {
-    client.prepareSearch(ES_INDEX_NAME)
-      .setTypes(ES_TYPE_NAME)
-      .setQuery(query)
-      .setNoFields()
-      .execute()
-      .flatMap { searchResp2RtMultiget }
+    findQueryRt(query)
       .map { sortResults }
   }
 
@@ -175,14 +169,14 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
                 val offerBody = jsObject.get(OFFER_BODY_ESFN)
                 import MMartAdOfferTypes._
                 ot match {
-                  case PRODUCT  => MMartAdProduct.deserialize(offerBody)
-                  case DISCOUNT => MMartAdDiscount.deserialize(offerBody)
-                  case TEXT     => MMartAdText.deserialize(offerBody)
+                  case PRODUCT  => AOProduct.deserialize(offerBody)
+                  case DISCOUNT => AODiscount.deserialize(offerBody)
+                  case TEXT     => AOText.deserialize(offerBody)
                 }
             }
         }
-      case (PANEL_ESFN, value)        => acc.panel = Option(JacksonWrapper.convert[MMartAdPanelSettings](value))
-      case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = Option(JacksonWrapper.convert[MMartAdTextAlign](value))
+      case (PANEL_ESFN, value)        => acc.panel = Option(JacksonWrapper.convert[AdPanelSettings](value))
+      case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = Option(JacksonWrapper.convert[TextAlign](value))
       case (IMG_ESFN, value)          => acc.img = JacksonWrapper.convert[MImgInfo](value)
     }
   }
@@ -256,6 +250,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
           case Success(_)  => trace("Successfuly erased picture: " + imgId)
           case Failure(ex) => error("Failed to delete associated picture: " + imgId, ex)
         }
+        // TODO Нужно одновременно удалять вторичный логотип в logoImg!
         val resultFut = super.deleteById(id)
         resultFut onSuccess { case _ =>
           sn publish AdDeletedEvent(ad)
@@ -429,12 +424,12 @@ case class MMartAd(
   var producerId   : ShopId_t,
   var producerType : AdNetMemberType,
   var receivers    : Set[AdReceiverInfo],
-  var offers       : List[MMartAdOfferT],
+  var offers       : List[AdOfferT],
   var img          : MImgInfo,
-  var textAlign    : Option[MMartAdTextAlign],
+  var textAlign    : Option[TextAlign],
   var companyId    : MCompany.CompanyId_t,
   var logoImgOpt   : Option[MImgInfo] = None,
-  var panel        : Option[MMartAdPanelSettings] = None,
+  var panel        : Option[AdPanelSettings] = None,
   var prio         : Option[Int] = None,
   var showLevels   : Set[AdShowLevel] = Set.empty,
   var userCatId    : Option[String] = None,
@@ -482,9 +477,9 @@ case class MMartAd(
 
 /** Интерфейс экземпляра модели для возможности создания классов-врапперов. */
 trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
-  def offers       : List[MMartAdOfferT]
-  def textAlign    : Option[MMartAdTextAlign]
-  def panel        : Option[MMartAdPanelSettings]
+  def offers       : List[AdOfferT]
+  def textAlign    : Option[TextAlign]
+  def panel        : Option[AdPanelSettings]
   def prio         : Option[Int]
   def showLevels   : Set[AdShowLevel]
   def userCatId    : Option[String]
@@ -564,186 +559,6 @@ trait MMartAdWrapperT[T <: MMartAdT[T]] extends MMartAdT[T] {
 }
 
 
-sealed trait MMartAdOfferT extends Serializable {
-  @JsonIgnore def offerType: MMartAdOfferType
-  def renderJson(acc: XContentBuilder) {
-    acc.startObject()
-    acc.field(OFFER_TYPE_ESFN, offerType.toString)
-    val offerBodyJson = JacksonWrapper.serialize(this)
-    acc.rawField(OFFER_BODY_ESFN, offerBodyJson.getBytes)
-    acc.endObject()
-  }
-}
-
-
-object MMartAdProduct {
-  def deserialize(jsObject: Any) = JacksonWrapper.convert[MMartAdProduct](jsObject)
-}
-
-@JsonIgnoreProperties(Array("currencyCode")) // 27.03.2014 Было удалено поле до 1-запуска. Потом можно это удалить.
-case class MMartAdProduct(
-  vendor:   MMAdStringField,
-  price:    MMAdPrice,
-  oldPrice: Option[MMAdPrice]
-) extends MMartAdOfferT {
-  @JsonIgnore def offerType = MMartAdOfferTypes.PRODUCT
-}
-
-object MMartAdDiscount {
-  def deserialize(jsObject: Any) = JacksonWrapper.convert[MMartAdDiscount](jsObject)
-}
-case class MMartAdDiscount(
-  text1: Option[MMAdStringField],
-  discount: MMAdFloatField,
-  template: MMartAdDiscountTemplate,
-  text2: Option[MMAdStringField]
-) extends MMartAdOfferT {
-  @JsonIgnore def offerType = MMartAdOfferTypes.DISCOUNT
-}
-
-object MMartAdText {
-  def deserialize(jsObject: Any) = JacksonWrapper.convert[MMartAdText](jsObject)
-}
-case class MMartAdText(text: MMAdStringField) extends MMartAdOfferT {
-  @JsonIgnore def offerType = MMartAdOfferTypes.TEXT
-}
-
-
-case class MMartAdDiscountTemplate(id: Int, color: String) {
-  def render(acc: XContentBuilder) {
-    acc.startObject(DISCOUNT_TPL_ESFN)
-      .field("id", id)
-      .field(COLOR_ESFN, color)
-    .startObject()
-  }
-}
-
-sealed trait MMAdValueField {
-  def renderFields(acc: XContentBuilder)
-  def font: MMAdFieldFont
-  def render(acc: XContentBuilder) {
-    acc.startObject()
-      renderFields(acc)
-      font.render(acc)
-    acc.endObject()
-  }
-}
-
-case class MMAdStringField(value:String, font: MMAdFieldFont) extends MMAdValueField {
-  def renderFields(acc: XContentBuilder) {
-    acc.field(VALUE_ESFN, value)
-  }
-}
-case class MMAdFloatField(value: Float, font: MMAdFieldFont) extends MMAdValueField {
-  def renderFields(acc: XContentBuilder) {
-    acc.field(VALUE_ESFN, value)
-  }
-}
-
-case class MMAdFieldFont(color: String) {
-  def render(acc: XContentBuilder) {
-    acc.startObject(FONT_ESFN)
-      .field(COLOR_ESFN, color)
-    .endObject()
-  }
-}
-
-
-case class MMartAdPanelSettings(color: String) {
-  def render(acc: XContentBuilder) {
-    acc.startObject(PANEL_ESFN)
-      .field(COLOR_ESFN, color)
-    .endObject()
-  }
-}
-
-
-case class MMartAdTAPhone(align: String)
-case class MMartAdTATablet(alignTop: String, alignBottom: String)
-case class MMartAdTextAlign(phone: MMartAdTAPhone, tablet: MMartAdTATablet)
-
-/** Поле, содержащее цену. */
-case class MMAdPrice(value: Float, var currencyCode: String, var orig: String, font: MMAdFieldFont) {
-  // TODO Обновление версий: добавлены два поля. Потом можно их за-val'ить и удалить null-проверки в конструкторе
-  if (currencyCode == null)
-    currencyCode = CURRENCY_CODE_DFLT
-  if (orig == null)
-    orig = value.toString
-
-  @JsonIgnore
-  lazy val currency = Currency.getInstance(currencyCode)
-}
-
-/** Допустимые значения textAlign-полей. */
-object TextAlignValues extends Enumeration {
-  type TextAlignValue = Value
-  val left, right = Value
-
-  def maybeWithName(n: String): Option[TextAlignValue] = {
-    try {
-      Some(withName(n))
-    } catch {
-      case _: Exception => None
-    }
-  }
-}
-
-
-/** Уровни отображения рекламы. Используется как bitmask, но через денормализацию поля. */
-object AdShowLevels extends Enumeration with MacroLogsImpl {
-  import LOGGER._
-  import scala.collection.JavaConversions._
-
-  type AdShowLevel = Value
-
-  /** Отображать на нулевом уровне, т.е. при входе в ТЦ/ресторан и т.д. */
-  val LVL_RECEIVER_TOP = Value("d")
-
-  /** Отображать в каталоге продьюсеров. */
-  val LVL_PRODUCERS_CATALOG = Value("h")
-
-  /** Отображать эту рекламу внутри каталога продьюсера. */
-  val LVL_PRODUCER = Value("m")
-
-  def maybeWithName(n: String): Option[AdShowLevel] = {
-    try {
-      Some(withName(n))
-    } catch {
-      case _: Exception => None
-    }
-  }
-
-  /** Десериализатор значений из самых примитивных типов и коллекций. */
-  val deserializeLevelsFrom: PartialFunction[Any, Set[AdShowLevel]] = {
-    case v: java.lang.Iterable[_] =>
-      v.foldLeft[List[AdShowLevel]] (Nil) { (acc, slRaw) =>
-        AdShowLevels.maybeWithName(slRaw.toString) match {
-          case Some(sl) => sl :: acc
-          case None =>
-            warn(s"Unable to deserialize show level '$slRaw'. Possible levels are: ${AdShowLevels.values.mkString(", ")}")
-            acc
-        }
-      }.toSet
-  }
-
-  /**
-   * Является ли рекламная карточка ТЦ отображаемой где-либо?
-   * @param sls Список уровней отображения рекламной карточки.
-   * @return true, если карточка опубликована где-либо. Иначе false.
-   */
-  def isShownMartAd(sls: Set[AdShowLevel]) = !sls.isEmpty
-
-  /**
-   * Является ли рекламная карточка магазина отображаемой?
-   * @param htl Есть ли у магазина top level access?
-   * @param sls Уровни рекламной карточки.
-   * @return true - если карточка где-либо опубликована. Иначе false.
-   */
-  def isShownShopAd(htl: Boolean, sls: Set[AdShowLevel]): Boolean = {
-    sls.contains(LVL_PRODUCER) || sls.contains(LVL_PRODUCERS_CATALOG) || (htl && sls.contains(LVL_RECEIVER_TOP))
-  }
-
-}
 
 
 /** JMX MBean интерфейс */

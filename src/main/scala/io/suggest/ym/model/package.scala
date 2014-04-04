@@ -1,5 +1,6 @@
 package io.suggest.ym
 
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -8,7 +9,8 @@ package io.suggest.ym
  */
 package object model {
 
-  type AdShowLevel = AdShowLevels.AdShowLevel
+  val  AdShowLevels = common.AdShowLevels
+  type AdShowLevel  = AdShowLevels.AdShowLevel
 
   val  MMartAdOfferTypes = common.MMartAdOfferTypes
   type MMartAdOfferType  = MMartAdOfferTypes.MMartAdOfferType

@@ -1,6 +1,6 @@
 package io.suggest.ym.model.common
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import io.suggest.util.MacroLogsImpl
 
 /**
  * Suggest.io
@@ -25,13 +25,6 @@ object AdNetMemberTypes extends Enumeration {
 }
 
 
-/** Объект содержит данные по картинке. Данные не индексируются, и их схему можно менять на лету. */
-@JsonIgnoreProperties(ignoreUnknown = true)
-case class MImgInfo(id: String, meta: Option[MImgInfoMeta] = None) {
-  override def hashCode(): Int = id.hashCode()
-}
-case class MImgInfoMeta(height: Int, width: Int)
-
 
 /** Известные системе типы офферов. */
 object MMartAdOfferTypes extends Enumeration {
@@ -48,5 +41,62 @@ object MMartAdOfferTypes extends Enumeration {
       case ex: Exception => None
     }
   }
+}
+
+
+/** Уровни отображения рекламы. Используется как bitmask, но через денормализацию поля. */
+object AdShowLevels extends Enumeration with MacroLogsImpl {
+  import LOGGER._
+  import scala.collection.JavaConversions._
+
+  type AdShowLevel = Value
+
+  /** Отображать на нулевом уровне, т.е. при входе в ТЦ/ресторан и т.д. */
+  val LVL_RECEIVER_TOP = Value("d")
+
+  /** Отображать в каталоге продьюсеров. */
+  val LVL_PRODUCERS_CATALOG = Value("h")
+
+  /** Отображать эту рекламу внутри каталога продьюсера. */
+  val LVL_PRODUCER = Value("m")
+
+  def maybeWithName(n: String): Option[AdShowLevel] = {
+    try {
+      Some(withName(n))
+    } catch {
+      case _: Exception => None
+    }
+  }
+
+  /** Десериализатор значений из самых примитивных типов и коллекций. */
+  val deserializeLevelsFrom: PartialFunction[Any, Set[AdShowLevel]] = {
+    case v: java.lang.Iterable[_] =>
+      v.foldLeft[List[AdShowLevel]] (Nil) { (acc, slRaw) =>
+        AdShowLevels.maybeWithName(slRaw.toString) match {
+          case Some(sl) => sl :: acc
+          case None =>
+            warn(s"Unable to deserialize show level '$slRaw'. Possible levels are: ${AdShowLevels.values.mkString(", ")}")
+            acc
+        }
+      }.toSet
+  }
+
+  /**
+   * Является ли рекламная карточка ТЦ отображаемой где-либо?
+   * @param sls Список уровней отображения рекламной карточки.
+   * @return true, если карточка опубликована где-либо. Иначе false.
+   */
+  def isShownMartAd(sls: Set[AdShowLevel]) = !sls.isEmpty
+
+  /**
+   * Является ли рекламная карточка магазина отображаемой?
+   * @param htl Есть ли у магазина top level access?
+   * @param sls Уровни рекламной карточки.
+   * @return true - если карточка где-либо опубликована. Иначе false.
+   */
+  def isShownShopAd(htl: Boolean, sls: Set[AdShowLevel]): Boolean = {
+    sls.contains(LVL_PRODUCER) || sls.contains(LVL_PRODUCERS_CATALOG) || (htl && sls.contains(LVL_RECEIVER_TOP))
+  }
+
 }
 
