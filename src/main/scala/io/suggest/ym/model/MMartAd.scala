@@ -438,7 +438,7 @@ case class MMartAd(
   var img          : MImgInfo,
   var textAlign    : Option[MMartAdTextAlign],
   var companyId    : MCompany.CompanyId_t,
-  var logoImg      : Option[MImgInfo] = None,
+  var logoImgOpt      : Option[MImgInfo] = None,
   var panel        : Option[MMartAdPanelSettings] = None,
   var prio         : Option[Int] = None,
   var showLevels   : Set[AdShowLevel] = Set.empty,
@@ -494,7 +494,7 @@ trait MMartAdT[T <: MMartAdT[T]] extends Ad[T] {
   def showLevels   : Set[AdShowLevel]
   def userCatId    : Option[String]
   def img          : MImgInfo
-  def logoImg     : Option[MImgInfo]
+  def logoImgOpt     : Option[MImgInfo]
 
   @JsonIgnore def isShopAd = producerType == AdNetMemberTypes.SHOP
 
@@ -562,7 +562,7 @@ trait MMartAdWrapperT[T <: MMartAdT[T]] extends MMartAdT[T] {
   def producerId_=(producerId: String) {
     mmartAd.producerId = producerId
   }
-  def logoImg = mmartAd.logoImg
+  def logoImgOpt = mmartAd.logoImgOpt
 
   @JsonIgnore def companion: EsModelMinimalStaticT[T] = mmartAd.companion
   @JsonIgnore override def isFieldsValid: Boolean = super.isFieldsValid && mmartAd.isFieldsValid

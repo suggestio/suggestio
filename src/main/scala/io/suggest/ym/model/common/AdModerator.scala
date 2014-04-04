@@ -7,5 +7,5 @@ package io.suggest.ym.model.common
  * Description: Звено, имеющее возможность модерировать рекламные карточки. Например ТЦ.
  */
 
-trait AdModerator[T <: AdNetMember[T]] extends AdNetMember {
+trait AdModerator[T <: AdNetMemberCombo[T]] extends AdNetMemberCombo {
 }

@@ -62,7 +62,7 @@ case class MWelcomeAd(
   @JsonIgnore def prio: Option[Int] = None
   @JsonIgnore def showLevels: Set[AdShowLevel] = Set.empty
   @JsonIgnore def userCatId: Option[String] = None
-  @JsonIgnore def logoImg: Option[MImgInfo] = None
+  @JsonIgnore def logoImgOpt: Option[MImgInfo] = None
   @JsonIgnore def shopId: Option[MShop.ShopId_t] = None
 }
 

@@ -7,6 +7,6 @@ package io.suggest.ym.model.common
  * Description: Некто, имеющий право влиять на состав рекламной подсети. Супервайзер "сети", например ТЦ.
  */
 
-trait AdNetSupervisor[T <: AdNetMember[T]] extends AdNetMember[T] {
+trait AdNetSupervisor[T <: AdNetMemberCombo[T]] extends AdNetMemberCombo[T] {
   def isAdNSupervisor: Boolean = true
 }

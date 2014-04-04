@@ -9,9 +9,9 @@ import io.suggest.ym.model.AdShowLevel
  * Description: Очень абстрактный рекламодатель.
  */
 
-trait AdProducerStatic[T <: AdProducer[T]] extends AdNetMemberStatic[T]
+trait AdProducerStatic[T <: AdProducer[T]] extends AdNetMemberComboStatic[T]
 
-trait AdProducer[T <: AdProducer[T]] extends AdNetMember[T] {
+trait AdProducer[T <: AdProducer[T]] extends AdNetMemberCombo[T] {
 
   def isAdProducer: Boolean = true
 

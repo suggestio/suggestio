@@ -22,18 +22,18 @@ trait EMLogoImgStatic[T <: EMLogoImg[T]] extends EsModelStaticT[T] {
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
-      case (LOGO_IMG_ESFN, value)  => acc.logoImg = Option(JacksonWrapper.convert[MImgInfo](value))
+      case (LOGO_IMG_ESFN, value)  => acc.logoImgOpt = Option(JacksonWrapper.convert[MImgInfo](value))
     }
   }
 }
 
 trait EMLogoImg[T <: EMLogoImg[T]] extends EsModelT[T] {
 
-  var logoImg: Option[MImgInfo]
+  var logoImgOpt: Option[MImgInfo]
 
   abstract override def writeJsonFields(acc: XContentBuilder): Unit = {
     super.writeJsonFields(acc)
-    if (logoImg.isDefined)
-      acc.rawField(LOGO_IMG_ESFN, JacksonWrapper.serialize(logoImg.get).getBytes)
+    if (logoImgOpt.isDefined)
+      acc.rawField(LOGO_IMG_ESFN, JacksonWrapper.serialize(logoImgOpt.get).getBytes)
   }
 }

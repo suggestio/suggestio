@@ -7,8 +7,8 @@ package io.suggest.ym.model.common
  * Description: Абстрактный получатель публикуемой рекламы. Например ТЦ.
  */
 
-trait AdReceiverStatic[T <: AdNetMember[T]] extends AdNetMemberStatic[T]
+trait AdReceiverStatic[T <: AdNetMemberCombo[T]] extends AdNetMemberComboStatic[T]
 
-trait AdReceiver[T <: AdNetMember[T]] extends AdNetMember[T] {
+trait AdReceiver[T <: AdNetMemberCombo[T]] extends AdNetMemberCombo[T] {
   def isAdReceiver: Boolean = true
 }
