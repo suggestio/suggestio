@@ -1,4 +1,4 @@
-@(mmart: MMart, mads: Seq[MMartAd], wf: Form[_], welcomeAdOpt: Option[MMartAdT])(implicit ctx: util.Context)
+@(mmart: MMart, mads: Seq[MMartAd])(implicit ctx: util.Context)
 
 @* Страница с отображением торгового центра. Рисунок 1 в дизайне. *@
 
@@ -53,9 +53,6 @@
 
       </div>
 
-    Картинка приветствия:
-    @_welcomeAdFormTpl(mmart.id.get, welcomeAdOpt, wf)
-    <br/><br/>
 
     @* Рендер списка карточек арендатора. *@
     @market.lk.ad._adsEditableListTpl(
