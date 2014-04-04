@@ -14,15 +14,22 @@ import io.suggest.util.SioEsUtil._
  * Description:
  */
 
+object EMDateCreatedStatic {
+  def fieldDate = FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no)
+}
+
+import EMDateCreatedStatic._
+
+
 trait EMDateCreatedStatic[T <: EMDateCreated[T]] extends EsModelStaticT[T] {
   abstract override def generateMappingProps: List[DocField] = {
-    FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no) ::
-    super.generateMappingProps
+    fieldDate :: super.generateMappingProps
   }
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
-      case (DATE_CREATED_ESFN, value) => acc.dateCreated = dateCreatedParser(value)
+      case (DATE_CREATED_ESFN, value) =>
+        acc.dateCreated = dateCreatedParser(value)
     }
   }
 }

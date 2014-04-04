@@ -27,7 +27,8 @@ trait EMLogoImgStatic[T <: EMLogoImg[T]] extends EsModelStaticT[T] {
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
-      case (LOGO_IMG_ESFN, value)  => acc.logoImgOpt = Option(JacksonWrapper.convert[MImgInfo](value))
+      case (LOGO_IMG_ESFN, value)  =>
+        acc.logoImgOpt = Option(JacksonWrapper.convert[MImgInfo](value))
     }
   }
 }

@@ -250,6 +250,14 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
   def ES_INDEX_NAME = SIO_ES_INDEX_NAME
   val ES_TYPE_NAME: String
 
+  // Короткие враппер для типичных операций в рамках статической модели.
+  def prepareSearch(implicit client: Client) = client.prepareSearch(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
+  def prepareCount(implicit client: Client)  = client.prepareCount(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
+  def prepareGet(id: String)(implicit client: Client) = client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
+  def prepareUpdate(id: String)(implicit client: Client) = client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, id)
+  def prepareDelete(id: String)(implicit client: Client) = client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
+  def prepareDeleteByQuery(implicit client: Client) = client.prepareDeleteByQuery(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
+
   def generateMapping: XContentBuilder = generateMappingFor(ES_TYPE_NAME)
   def generateMappingFor(typeName: String): XContentBuilder = jsonGenerator { implicit b =>
     // Собираем маппинг индекса.
@@ -285,13 +293,29 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
       .execute()
   }
 
+
+  /**
+   * Существует ли указанный магазин в хранилище?
+   * @param id id магазина.
+   * @return true/false
+   */
+  def isExist(id: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
+    val req = prepareGet(id)
+    val rk = getRoutingKey(id)
+    if (rk.isDefined)
+      req.setRouting(rk.get)
+    req.setFields()
+      .execute()
+      .map { _.isExists }
+  }
+
+
   /**
    * Сервисная функция для получения списка всех id.
    * @return Список всех id в алфавитном порядке.
    */
   def getAllIds(maxResults: Int = 500)(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
-    client.prepareSearch(ES_INDEX_NAME)
-      .setTypes(ES_TYPE_NAME)
+    prepareSearch
       .setNoFields()
       .setSize(maxResults)
       .execute()
@@ -308,8 +332,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    * @return Кол-во найденных документов.
    */
   protected def count(query: QueryBuilder)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
-    client.prepareCount(ES_INDEX_NAME)
-      .setTypes(ES_TYPE_NAME)
+    prepareCount
       .setQuery(query)
       .execute()
       .map { _.getCount }
@@ -348,7 +371,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    */
   def getById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Option[T]] = {
     val maybeRk = getRoutingKey(id)
-    val req = client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
+    val req = prepareGet(id)
     if (maybeRk.isDefined)
       req.setRouting(maybeRk.get)
     req.execute()
@@ -402,8 +425,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    * @return Список магазинов в порядке их создания.
    */
   def getAll(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
-    client.prepareSearch(ES_INDEX_NAME)
-      .setTypes(ES_TYPE_NAME)
+    prepareSearch
       .setQuery(QueryBuilders.matchAllQuery())
       .execute()
       .map { searchResp2list }
@@ -415,7 +437,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    * @return Новый экземпляр DeleteRequestBuilder.
    */
   def deleteRequestBuilder(id: String)(implicit client: Client): DeleteRequestBuilder = {
-    val req = client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
+    val req = prepareDelete(id)
     val rk = getRoutingKey(id)
     if (rk.isDefined)
       req.setRouting(rk.get)
@@ -454,21 +476,6 @@ trait EsModelStaticT[T <: EsModelT[T]] extends EsModelMinimalStaticT[T] {
   protected def dummy(id: String): T
   def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit]
 
-  /**
-   * Существует ли указанный магазин в хранилище?
-   * @param id id магазина.
-   * @return true/false
-   */
-  def isExist(id: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
-    val req = client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
-    val rk = getRoutingKey(id)
-    if (rk.isDefined)
-      req.setRouting(rk.get)
-    req.setFields()
-      .execute()
-      .map { _.isExists }
-  }
-
   def deserializeOne(id: String, m: collection.Map[String, AnyRef]): T = {
     val acc = dummy(id)
     m foreach applyKeyValue(acc)
@@ -492,6 +499,7 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
 
   @JsonIgnore def toJson: XContentBuilder
 
+  @JsonIgnore
   def id: Option[String]
 
   @JsonIgnore def idOrNull = {
@@ -501,7 +509,12 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
       null
   }
 
+  /** Загрузка новых значений *пользовательских* полей из указанного экземпляра такого же класса.
+    * Полезно при edit form sumbit после накатывания маппинга формы на реквест. */
+  def loadUserFieldsFrom(other: E) {}
+
   /** Перед сохранением можно проверять состояние экземпляра. */
+  @JsonIgnore
   def isFieldsValid: Boolean = true
 
   /** Генератор indexRequestBuilder'ов. Помогает при построении bulk-реквестов. */
@@ -709,4 +722,32 @@ trait EsModelJMXBase extends EsModelJMXMBeanCommon {
   def esTypeName: String = companion.ES_TYPE_NAME
   def esIndexName: String = companion.ES_INDEX_NAME
 }
+
+
+
+
+/**
+ * Трейт для статической части модели, построенной через Stackable trait pattern.
+ * Для нормального stackable trait без подсветки красным цветом везде, надо чтобы была базовая реализация отдельно
+ * от целевой реализации и stackable-реализаций (abstract override).
+ * Тут реализованы методы-заглушки для хвоста стэка декораторов. */
+trait EsModelStaticEmpty[T <: EsModelEmpty[T]] extends EsModelStaticT[T] {
+
+  def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
+    PartialFunction.empty
+  }
+
+  def generateMappingProps: List[DocField] = {
+    Nil
+  }
+
+}
+
+/** Трейт базовой реализации экземпляра модели. Вынесен из неё из-за особенностей stackable trait pattern.
+  * Он содержит stackable-методы, реализованные пустышками. */
+trait EsModelEmpty[T <: EsModelEmpty[T]] extends EsModelT[T] {
+  def writeJsonFields(acc: XContentBuilder) {
+  }
+}
+
 

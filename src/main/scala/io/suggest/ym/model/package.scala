@@ -9,7 +9,9 @@ package io.suggest.ym
 package object model {
 
   type AdShowLevel = AdShowLevels.AdShowLevel
-  type MMartAdOfferType = MMartAdOfferTypes.MMartAdOfferType
+
+  val  MMartAdOfferTypes = common.MMartAdOfferTypes
+  type MMartAdOfferType  = MMartAdOfferTypes.MMartAdOfferType
 
   val  AdNetMemberTypes = common.AdNetMemberTypes
   type AdNetMemberType  = AdNetMemberTypes.AdNetMemberType

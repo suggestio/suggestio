@@ -64,12 +64,14 @@ trait EmAdEntityStatic[T <: EMAdEntity[T]] extends EsModelStaticT[T] {
   }
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
-    case (PRODUCER_ID_ESFN, value) =>
-      acc.producerId = stringParser(value)
-    case (RECEIVER_ESFN, value) =>
-      acc.receivers = JacksonWrapper.convert[Set[AdReceiverInfo]](value)
-    case (PRODUCER_TYPE_ESFN, value) =>
-      acc.producerType = AdNetMemberTypes.withName(stringParser(value))
+    super.applyKeyValue(acc) orElse {
+      case (PRODUCER_ID_ESFN, value) =>
+        acc.producerId = stringParser(value)
+      case (RECEIVER_ESFN, value) =>
+        acc.receivers = JacksonWrapper.convert[Set[AdReceiverInfo]](value)
+      case (PRODUCER_TYPE_ESFN, value) =>
+        acc.producerType = AdNetMemberTypes.withName(stringParser(value))
+    }
   }
 
 }

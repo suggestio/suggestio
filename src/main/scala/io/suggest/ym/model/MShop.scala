@@ -313,7 +313,7 @@ with ShopPriceListSel with MShopOffersSel {
       sl match {
         case AdShowLevels.LVL_PRODUCER          => settings.supLShopMaxAdsShown
         case AdShowLevels.LVL_PRODUCERS_CATALOG => 1
-        case AdShowLevels.LVL_CONSUMER_TOP      => if (settings.supWithLevels contains sl) 1 else 0
+        case AdShowLevels.LVL_RECEIVER_TOP      => if (settings.supWithLevels contains sl) 1 else 0
       }
     } else {
       0
@@ -378,7 +378,7 @@ with ShopPriceListSel with MShopOffersSel {
   }
 
 
-  def hasTopLevelAccess = settings.supWithLevels contains AdShowLevels.LVL_CONSUMER_TOP
+  def hasTopLevelAccess = settings.supWithLevels contains AdShowLevels.LVL_RECEIVER_TOP
 }
 
 

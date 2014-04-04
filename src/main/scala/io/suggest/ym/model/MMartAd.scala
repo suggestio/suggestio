@@ -29,7 +29,7 @@ import common._
  * prio используется для задания приоритета в отображении в рамках магазина. На текущий момент там всё просто:
  * если null, то приоритета нет, если 1 то он есть.
  */
-object MMartAd extends AdStatic[MMartAd] with MacroLogsImpl {
+object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
 
   import LOGGER._
 
@@ -64,10 +64,10 @@ object MMartAd extends AdStatic[MMartAd] with MacroLogsImpl {
   val SHOP_ALWAYS_SHOW_LEVELS: Set[AdShowLevel] = Set(AdShowLevels.LVL_PRODUCER, AdShowLevels.LVL_PRODUCERS_CATALOG)
 
   /** Список уровней, которые могут быть активны только у одной карточки в рамках магазина. */
-  val SHOP_LEVELS_SINGLETON: Set[AdShowLevel] = Set(AdShowLevels.LVL_CONSUMER_TOP, AdShowLevels.LVL_PRODUCERS_CATALOG)
+  val SHOP_LEVELS_SINGLETON: Set[AdShowLevel] = Set(AdShowLevels.LVL_RECEIVER_TOP, AdShowLevels.LVL_PRODUCERS_CATALOG)
 
   /** Перманентные уровни отображения для рекламных карточек ТЦ. */
-  val MART_ALWAYS_SHOW_LEVELS: Set[AdShowLevel] = Set(AdShowLevels.LVL_CONSUMER_TOP)
+  val MART_ALWAYS_SHOW_LEVELS: Set[AdShowLevel] = Set(AdShowLevels.LVL_RECEIVER_TOP)
 
   def dummy(id: String) = {
     MMartAd(
@@ -166,25 +166,20 @@ object MMartAd extends AdStatic[MMartAd] with MacroLogsImpl {
     super.applyKeyValue(acc) orElse {
       case (PRIO_ESFN, value)         => acc.prio = Option(intParser(value))
       case (USER_CAT_ID_ESFN, value)  => acc.userCatId = Option(stringParser(value))
-      case (OFFERS_ESFN, value: java.util.ArrayList[_]) =>
+      case (OFFERS_ESFN, value: java.lang.Iterable[_]) =>
         acc.offers = value.toList.map {
-          case jsObject: java.util.HashMap[_, _] =>
+          case jsObject: java.util.Map[_, _] =>
             jsObject.get(OFFER_TYPE_ESFN) match {
               case ots: String =>
-                MMartAdOfferTypes.maybeWithName(ots) match {
-                  case Some(ot) =>
-                    val offerBody = jsObject.get(OFFER_BODY_ESFN)
-                    import MMartAdOfferTypes._
-                    ot match {
-                      case PRODUCT  => MMartAdProduct.deserialize(offerBody)
-                      case DISCOUNT => MMartAdDiscount.deserialize(offerBody)
-                      case TEXT     => MMartAdText.deserialize(offerBody)
-                    }
-
-                  case None => ???
+                val ot = MMartAdOfferTypes.withName(ots)
+                val offerBody = jsObject.get(OFFER_BODY_ESFN)
+                import MMartAdOfferTypes._
+                ot match {
+                  case PRODUCT  => MMartAdProduct.deserialize(offerBody)
+                  case DISCOUNT => MMartAdDiscount.deserialize(offerBody)
+                  case TEXT     => MMartAdText.deserialize(offerBody)
                 }
             }
-
         }
       case (PANEL_ESFN, value)        => acc.panel = Option(JacksonWrapper.convert[MMartAdPanelSettings](value))
       case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = Option(JacksonWrapper.convert[MMartAdTextAlign](value))
@@ -385,7 +380,7 @@ object MMartAd extends AdStatic[MMartAd] with MacroLogsImpl {
   private def setShowLevelsMart(thisAd: MMartAd)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
     // Эта функция исходит из того, что ВКЛючается уровень. Т.к. уровень всего 1, то его отключение отрабаыватеся в setShowLevels().
     import thisAd.receivers
-    import AdShowLevels.{LVL_CONSUMER_TOP => l1}
+    import AdShowLevels.{LVL_RECEIVER_TOP => l1}
     val maxAdsFut = MMart.getById(thisAd.receivers).map(_.get.settings.supL1MaxAdsShown)
     val countQuery = martSearchQuery(receivers, shopMustMiss = true, withLevels = Some(Seq(l1)))
     // Нужно отсеять из подсчёта текущий id, если он там есть.
@@ -438,7 +433,7 @@ case class MMartAd(
   var img          : MImgInfo,
   var textAlign    : Option[MMartAdTextAlign],
   var companyId    : MCompany.CompanyId_t,
-  var logoImgOpt      : Option[MImgInfo] = None,
+  var logoImgOpt   : Option[MImgInfo] = None,
   var panel        : Option[MMartAdPanelSettings] = None,
   var prio         : Option[Int] = None,
   var showLevels   : Set[AdShowLevel] = Set.empty,
@@ -486,7 +481,7 @@ case class MMartAd(
 }
 
 /** Интерфейс экземпляра модели для возможности создания классов-врапперов. */
-trait MMartAdT[T <: MMartAdT[T]] extends Ad[T] {
+trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
   def offers       : List[MMartAdOfferT]
   def textAlign    : Option[MMartAdTextAlign]
   def panel        : Option[MMartAdPanelSettings]
@@ -494,7 +489,7 @@ trait MMartAdT[T <: MMartAdT[T]] extends Ad[T] {
   def showLevels   : Set[AdShowLevel]
   def userCatId    : Option[String]
   def img          : MImgInfo
-  def logoImgOpt     : Option[MImgInfo]
+  def logoImgOpt   : Option[MImgInfo]
 
   @JsonIgnore def isShopAd = producerType == AdNetMemberTypes.SHOP
 
@@ -577,33 +572,6 @@ sealed trait MMartAdOfferT extends Serializable {
     val offerBodyJson = JacksonWrapper.serialize(this)
     acc.rawField(OFFER_BODY_ESFN, offerBodyJson.getBytes)
     acc.endObject()
-  }
-}
-
-
-// MImgInfo* надо бы вынести за пределы этой модели на уровне сорцов.
-/** Объект содержит данные по картинке. Данные не индексируются, и их схему можно менять на лету. */
-@JsonIgnoreProperties(ignoreUnknown = true)
-case class MImgInfo(id: String, meta: Option[MImgInfoMeta] = None) {
-  override def hashCode(): Int = id.hashCode()
-}
-case class MImgInfoMeta(height: Int, width: Int)
-
-
-/** Известные системе типы офферов. */
-object MMartAdOfferTypes extends Enumeration {
-  type MMartAdOfferType = Value
-
-  val PRODUCT   = Value("p")
-  val DISCOUNT  = Value("d")
-  val TEXT      = Value("t")
-
-  def maybeWithName(n: String): Option[MMartAdOfferType] = {
-    try {
-      Some(withName(n))
-    } catch {
-      case ex: Exception => None
-    }
   }
 }
 
@@ -729,7 +697,7 @@ object AdShowLevels extends Enumeration with MacroLogsImpl {
   type AdShowLevel = Value
 
   /** Отображать на нулевом уровне, т.е. при входе в ТЦ/ресторан и т.д. */
-  val LVL_CONSUMER_TOP = Value("d")
+  val LVL_RECEIVER_TOP = Value("d")
 
   /** Отображать в каталоге продьюсеров. */
   val LVL_PRODUCERS_CATALOG = Value("h")
@@ -772,7 +740,7 @@ object AdShowLevels extends Enumeration with MacroLogsImpl {
    * @return true - если карточка где-либо опубликована. Иначе false.
    */
   def isShownShopAd(htl: Boolean, sls: Set[AdShowLevel]): Boolean = {
-    sls.contains(LVL_PRODUCER) || sls.contains(LVL_PRODUCERS_CATALOG) || (htl && sls.contains(LVL_CONSUMER_TOP))
+    sls.contains(LVL_PRODUCER) || sls.contains(LVL_PRODUCERS_CATALOG) || (htl && sls.contains(LVL_RECEIVER_TOP))
   }
 
 }

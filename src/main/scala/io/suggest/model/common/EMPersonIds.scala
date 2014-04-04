@@ -4,7 +4,10 @@ import io.suggest.model._
 import org.elasticsearch.common.xcontent.XContentBuilder
 import EsModel._
 import io.suggest.util.SioEsUtil._
-import io.suggest.util.JacksonWrapper
+import scala.collection.JavaConversions._
+import scala.concurrent.{Future, ExecutionContext}
+import org.elasticsearch.client.Client
+import org.elasticsearch.index.query.QueryBuilders
 
 /**
  * Suggest.io
@@ -20,14 +23,40 @@ trait EMPersonIdsStatic[T <: EMPersonIds[T]] extends EsModelStaticT[T] {
     super.generateMappingProps
   }
 
-  abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = super.applyKeyValue(acc) orElse {
-    case (PERSON_ID_ESFN, value)      => acc.personIds   = JacksonWrapper.convert[Set[String]](value)
+  abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
+    super.applyKeyValue(acc) orElse {
+      case (PERSON_ID_ESFN, value) =>
+        value match {
+          case personIdsRaw: java.lang.Iterable[_] =>
+            acc.personIds = personIdsRaw.foldLeft[List[String]] (Nil) { (acc, e) =>
+              e.toString :: acc
+            }.toSet
+        }
+    }
   }
+
+
+  /**
+   * Найти экземпляры модели, относящиеся к указанному юзеру.
+   * @param personId id юзера.
+   * @return Список найденных результатов.
+   */
+  def findByPersonId(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+    val personIdQuery = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
+    client.prepareSearch(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
+      .setQuery(personIdQuery)
+      .execute()
+      .map { searchResp2list }
+  }
+
 }
 
 trait EMPersonIds[T <: EMPersonIds[T]] extends EsModelT[T] {
 
   var personIds: Set[String]
+
+  def mainPersonId = personIds.lastOption
 
   abstract override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)
