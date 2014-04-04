@@ -311,7 +311,7 @@ object MarketAd extends SioController with LogoSupport {
   private val shopAdTextFormM     = getShopAdFormM(adTextM)
 
   implicit private def mad2logoOpt(mad: MMartAd): LogoOpt_t = {
-    mad.logoImg.map { logoImg =>
+    mad.logoImgOpt.map { logoImg =>
       ImgInfo4Save(OrigImgIdKey(logoImg.id, logoImg.meta))
     }
   }
@@ -393,7 +393,7 @@ object MarketAd extends SioController with LogoSupport {
                   mmad.producerId = shopId
                   mmad.companyId = request.mshop.companyId
                   mmad.receivers = Set(request.mshop.martId.get)
-                  mmad.logoImg = savedLogos.headOption
+                  mmad.logoImgOpt = savedLogos.headOption
                   mmad.img = imgIdsSaved.head
                   // Сохранить изменения в базу
                   for {
@@ -512,7 +512,7 @@ object MarketAd extends SioController with LogoSupport {
             // Надо обработать вторичный логотип, который приходит в составе формы. Это можно делать независимо от самой MMartAd.
             // Если выставлен tmp-логотип, то надо запустить обновление mshop.
             val shopId = mad.producerId
-            val updateLogoFut = ImgFormUtil.updateOrigImg(needImgs = logoImgIdOpt, oldImgs = mad.logoImg)
+            val updateLogoFut = ImgFormUtil.updateOrigImg(needImgs = logoImgIdOpt, oldImgs = mad.logoImgOpt)
             updateLogoFut onComplete entityLogoUpdatePf("ad", adId)
             // TODO Проверить категорию.
             // TODO И наверное надо проверить shopId-существование в исходной рекламе.
@@ -524,7 +524,7 @@ object MarketAd extends SioController with LogoSupport {
                 // В списке сохраненных id картинок либо 1 либо 0 картинок.
                 if (!savedImgs.isEmpty) {
                   mad.img = savedImgs.head
-                  mad.logoImg = savedLogos.headOption
+                  mad.logoImgOpt = savedLogos.headOption
                   importFormAdData(oldMad = mad, newMad = mad2)
                   mad.save.map { _ =>
                     Redirect(routes.MarketShopLk.showShop(shopId))
@@ -694,7 +694,7 @@ object MarketAd extends SioController with LogoSupport {
                   mmad.companyId = mmart.companyId
                   mmad.receivers = Set(martId)
                   mmad.img = imgsSaved.head
-                  mmad.logoImg = savedLogos.headOption
+                  mmad.logoImgOpt = savedLogos.headOption
                   // Сохранить изменения в базу
                   mmad.save.map { adId =>
                     Redirect(routes.MarketMartLk.martShow(martId, newAdId = Some(adId)))
@@ -798,7 +798,7 @@ object MarketAd extends SioController with LogoSupport {
             // Надо обработать логотип, который приходит в составе формы. Это можно делать независимо от самой MMartAd.
             // Если выставлен tmp-логотип, то надо запустить обновление mshop.
             val martId = mad.receivers
-            val updateLogoFut = ImgFormUtil.updateOrigImg(needImgs = logoImgIdOpt, oldImgs = mad.logoImg)
+            val updateLogoFut = ImgFormUtil.updateOrigImg(needImgs = logoImgIdOpt, oldImgs = mad.logoImgOpt)
             updateLogoFut onComplete entityLogoUpdatePf("mart", martId)
             // Обрабатываем ad-часть формы
             // TODO Проверить категорию.
@@ -810,7 +810,7 @@ object MarketAd extends SioController with LogoSupport {
                 // В списке сохраненных id картинок либо 1 либо 0 картинок.
                 if (!savedImgIds.isEmpty) {
                   mad.img = savedImgIds.head
-                  mad.logoImg = savedLogos.headOption
+                  mad.logoImgOpt = savedLogos.headOption
                   importFormAdData(oldMad = mad, newMad = mad2)
                   mad.save.map { _ =>
                     Redirect(routes.MarketMartLk.martShow(martId))
@@ -1077,7 +1077,7 @@ object MarketAd extends SioController with LogoSupport {
               },
               {case (iik, logoOpt, mad) =>
                 mad.img = MImgInfo(iik.key)
-                mad.logoImg = logoOpt
+                mad.logoImgOpt = logoOpt
                 mad.producerId = shopId
                 mad.receivers = Set(request.martId)
                 Ok(_single_offer(mad, request.mmart, Some(mshop)))
@@ -1104,7 +1104,7 @@ object MarketAd extends SioController with LogoSupport {
           },
           {case (iik, logoOpt, mad) =>
             mad.img = MImgInfo(iik.key)
-            mad.logoImg = logoOpt
+            mad.logoImgOpt = logoOpt
             mad.producerId = martId
             mad.receivers = Set(martId)
             Ok(_single_offer(mad, mmart, None))

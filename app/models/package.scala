@@ -92,7 +92,7 @@ package object models {
   val  MMartAdIndexed   = io.suggest.ym.model.MMartAdIndexed
   type MMartAdIndexed   = io.suggest.ym.model.MMartAdIndexed
 
-  type AdNetMember      = io.suggest.ym.model.common.AdNetMember[_]
+  type AdNetMember      = io.suggest.ym.model.common.AdNetMemberCombo[_]
   type AdProducer       = io.suggest.ym.model.common.AdProducer[_]
   type AdConsumer       = io.suggest.ym.model.common.AdReceiver[_]
 
