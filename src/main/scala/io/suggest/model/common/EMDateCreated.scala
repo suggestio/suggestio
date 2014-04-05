@@ -11,7 +11,7 @@ import io.suggest.util.SioEsUtil._
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 02.04.14 16:42
- * Description:
+ * Description: Поле dateCreated является часто-использьзуемым полем метаданных.
  */
 
 object EMDateCreatedStatic {
@@ -21,7 +21,7 @@ object EMDateCreatedStatic {
 import EMDateCreatedStatic._
 
 
-trait EMDateCreatedStatic[T <: EMDateCreated[T]] extends EsModelStaticT[T] {
+trait EMDateCreatedStatic[T <: EMDateCreatedMut[T]] extends EsModelStaticT[T] {
   abstract override def generateMappingProps: List[DocField] = {
     fieldDate :: super.generateMappingProps
   }
@@ -37,10 +37,20 @@ trait EMDateCreatedStatic[T <: EMDateCreated[T]] extends EsModelStaticT[T] {
 
 trait EMDateCreated[T <: EMDateCreated[T]] extends EsModelT[T] {
 
-  var dateCreated: DateTime
+  def dateCreated: DateTime
 
   abstract override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)
     acc.field(DATE_CREATED_ESFN, dateCreated)
+  }
+}
+
+trait EMDateCreatedMut[T <: EMDateCreatedMut[T]] extends EMDateCreated[T] {
+  var dateCreated: DateTime
+
+  abstract override def writeJsonFields(acc: XContentBuilder): Unit = {
+    if (dateCreated == null)
+      dateCreated = DateTime.now()
+    super.writeJsonFields(acc)
   }
 }

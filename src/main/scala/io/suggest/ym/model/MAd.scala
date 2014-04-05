@@ -1,18 +1,17 @@
 package io.suggest.ym.model
 
-import io.suggest.model.{MPict, EsModelEmpty, EsModelStaticEmpty}
+import io.suggest.model._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.util.SioEsUtil._
-import org.elasticsearch.common.xcontent.XContentBuilder
-import io.suggest.ym.model.common._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.event._
 import io.suggest.model.common._
 import org.joda.time.DateTime
-import scala.util.{Failure, Success}
 import io.suggest.util.MacroLogsImpl
-import io.suggest.ym.model.ad.{EMAdOffersStatic, EMAdOffers, AdOfferT}
+import io.suggest.ym.model.ad._
+import io.suggest.ym.model.common._
+import scala.util.{Success, Failure}
 
 /**
  * Suggest.io
@@ -22,10 +21,11 @@ import io.suggest.ym.model.ad.{EMAdOffersStatic, EMAdOffers, AdOfferT}
  * Рефакторинг в MMartAd был бы слишком глубок, поэтому лучше было начать с чистого листа.
  */
 object MAd
-  extends MAdStaticT[MAd]
-  with EMAdEntityStatic[MAd]
+  extends EsModelStaticEmpty[MAd]
+  with EMProducerIdStatic[MAd]
   with EMAdOffersStatic[MAd]
   with EMImgStatic[MAd]
+  with EMReceiversStatic[MAd]
   with EMLogoImgStatic[MAd]
   with EMTextAlignStatic[MAd]
   with EMAdPanelSettingsStatic[MAd]
@@ -40,7 +40,12 @@ object MAd
 
   val ES_TYPE_NAME: String = "ad"
 
-  protected def dummy(id: String): MAd = ???
+  protected[model] def dummy(id: String) = MAd(
+    producerId = null,
+    offers = Nil,
+    img = null,
+    id = Some(id)
+  )
 
   def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
@@ -87,19 +92,11 @@ object MAd
 }
 
 
-/** Тут поддержка полей MAd, специфичная только для рекламных карточек. Пока что пустая.
-  * Реализация вынесена из MAd для соблюдения stackable trait pattern. */
-sealed trait MAdStaticT[T <: MAdT[T]] extends EsModelStaticEmpty[T]
-
-sealed trait MAdT[T <: MAdT[T]] extends EsModelEmpty[T]
-
-
 case class MAd(
   var producerId : String,
-  var receivers  : Set[AdReceiverInfo] = Set.empty,
-  var producerType: AdNetMemberType,
   var offers     : List[AdOfferT],
   var img        : MImgInfo,
+  var receivers  : Set[AdReceiverInfo] = Set.empty,
   var logoImgOpt : Option[MImgInfo] = None,
   var textAlign  : Option[TextAlign] = None,
   var panel      : Option[AdPanelSettings] = None,
@@ -109,17 +106,19 @@ case class MAd(
   var userCatId  : Option[String] = None,
   var dateCreated : DateTime = DateTime.now
 )
-  extends MAdT[MAd]
-  with EMAdEntity[MAd]
-  with EMAdOffers[MAd]
-  with EMImg[MAd]
-  with EMLogoImg[MAd]
-  with EMTextAlign[MAd]
-  with EMAdPanelSettings[MAd]
-  with EMPrioOpt[MAd]
-  with EMShowLevels[MAd]
-  with EMUserCatId[MAd]
-  with EMDateCreated[MAd]
+  extends EsModelEmpty[MAd]
+  with MAdT
+  with EMProducerIdMut[MAd]
+  with EMAdOffersMut[MAd]
+  with EMImgMut[MAd]
+  with EMReceiversMut[MAd]
+  with EMLogoImgMut[MAd]
+  with EMTextAlignMut[MAd]
+  with EMAdPanelSettingsMut[MAd]
+  with EMPrioOptMut[MAd]
+  with EMShowLevelsMut[MAd]
+  with EMUserCatIdMut[MAd]
+  with EMDateCreatedMut[MAd]
 {
   @JsonIgnore
   def companion = MAd
@@ -140,3 +139,11 @@ case class MAd(
 }
 
 
+/** JMX MBean интерфейс */
+trait MAdJmxMBean extends EsModelJMXMBeanCommon
+
+/** JMX MBean реализация. */
+case class MAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase with MAdJmxMBean {
+  def companion = MAd
+}

@@ -19,7 +19,7 @@ object EMAdPanelSettings {
 import EMAdPanelSettings._
 
 
-trait EMAdPanelSettingsStatic[T <: EMAdPanelSettings[T]] extends EsModelStaticT[T] {
+trait EMAdPanelSettingsStatic[T <: EMAdPanelSettingsMut[T]] extends EsModelStaticT[T] {
   abstract override def generateMappingProps: List[DocField] = {
     FieldObject(PANEL_ESFN,  enabled = false,  properties = Nil) :: super.generateMappingProps
   }
@@ -34,13 +34,17 @@ trait EMAdPanelSettingsStatic[T <: EMAdPanelSettings[T]] extends EsModelStaticT[
 
 trait EMAdPanelSettings[T <: EMAdPanelSettings[T]] extends EsModelT[T] {
 
-  var panel: Option[AdPanelSettings]
+  def panel: Option[AdPanelSettings]
 
   abstract override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)
     if (panel.isDefined)
       panel.get.render(acc)
   }
+}
+
+trait EMAdPanelSettingsMut[T <: EMAdPanelSettingsMut[T]] extends EMAdPanelSettings[T] {
+  var panel: Option[AdPanelSettings]
 }
 
 

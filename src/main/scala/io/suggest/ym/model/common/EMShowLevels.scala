@@ -30,7 +30,7 @@ object EMShowLevels {
 import EMShowLevels._
 
 
-trait EMShowLevelsStatic[T <: EMShowLevels[T]] extends EsModelStaticT[T] {
+trait EMShowLevelsStatic[T <: EMShowLevelsMut[T]] extends EsModelStaticT[T] {
   def generateMappingProps: List[DocField] = {
     FieldString(SHOW_LEVELS_ESFN, FieldIndexingVariants.not_analyzed, include_in_all = false) ::
     super.generateMappingProps
@@ -46,7 +46,7 @@ trait EMShowLevelsStatic[T <: EMShowLevels[T]] extends EsModelStaticT[T] {
 
 trait EMShowLevels[T <: EMShowLevels[T]] extends EsModelT[T] {
 
-  var showLevels: Set[AdShowLevel]
+  def showLevels: Set[AdShowLevel]
 
   abstract override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)
@@ -58,4 +58,8 @@ trait EMShowLevels[T <: EMShowLevels[T]] extends EsModelT[T] {
       acc.endArray()
     }
   }
+}
+
+trait EMShowLevelsMut[T <: EMShowLevelsMut[T]] extends EMShowLevels[T] {
+  var showLevels: Set[AdShowLevel]
 }

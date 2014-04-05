@@ -16,7 +16,7 @@ object EMPrioOpt {
 
 import EMPrioOpt._
 
-trait EMPrioOptStatic[T <: EMPrioOpt[T]] extends EsModelStaticT[T] {
+trait EMPrioOptStatic[T <: EMPrioOptMut[T]] extends EsModelStaticT[T] {
   abstract override def generateMappingProps: List[DocField] = {
     FieldNumber(PRIO_ESFN,  fieldType = DocFieldTypes.integer,  index = FieldIndexingVariants.not_analyzed,  include_in_all = false) ::
     super.generateMappingProps
@@ -32,11 +32,15 @@ trait EMPrioOptStatic[T <: EMPrioOpt[T]] extends EsModelStaticT[T] {
 
 trait EMPrioOpt[T <: EMPrioOpt[T]] extends EsModelT[T] {
 
-  var prio: Option[Int]
+  def prio: Option[Int]
 
   abstract override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)
     if (prio.isDefined)
       acc.field(PRIO_ESFN, prio.get)
   }
+}
+
+trait EMPrioOptMut[T <: EMPrioOptMut[T]] extends EMPrioOpt[T] {
+  var prio: Option[Int]
 }

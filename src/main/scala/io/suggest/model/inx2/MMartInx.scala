@@ -51,9 +51,7 @@ import MMartInx._
 case class MMartInx(
   var martId: MartId_t,
   var targetEsInxName: String
-) extends EsModelT[MMartInx] with MInxT {
-
-  @JsonIgnore def esInxNames = Seq(targetEsInxName)
+) extends EsModelT[MMartInx] with MSingleInxT {
 
   @JsonIgnore def id: Option[String] = Some(martId)
 
@@ -65,9 +63,8 @@ case class MMartInx(
   }
 
   @JsonIgnore def esTypePrefix: String = martId + "_"
-  @JsonIgnore val esType = esTypePrefix + MMartAd.ES_TYPE_NAME
+  @JsonIgnore override val targetEsType = esTypePrefix + MMartAd.ES_TYPE_NAME
 
-  @JsonIgnore def esTypes = List(esType)
 
   def esInxSettings(shards: Int, replicas: Int = 1): XContentBuilder = {
     SioEsUtil.getIndexSettingsV2(shards=shards, replicas=replicas)
@@ -89,18 +86,11 @@ case class MMartInx(
   }
 
 
-  /** Выставить параметры поискового реквеста. */
-  override def prepareSearchRequest(req: SearchRequestBuilder): SearchRequestBuilder = {
-    super.prepareSearchRequest(req)
-      .setIndices(targetEsInxName)
-      .setTypes(esType)
-  }
-
   /** Выставить параметры для delete-by-query реквеста. Код тот же, но эта совместимость только на уровне исходников. */
   override def prepareDeleteByQueryRequest(req: DeleteByQueryRequestBuilder): DeleteByQueryRequestBuilder = {
     super.prepareDeleteByQueryRequest(req)
       .setIndices(targetEsInxName)
-      .setTypes(esType)
+      .setTypes(targetEsType)
   }
 
 }

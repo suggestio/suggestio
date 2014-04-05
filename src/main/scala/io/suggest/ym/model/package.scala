@@ -19,4 +19,5 @@ package object model {
   type AdNetMemberType  = AdNetMemberTypes.AdNetMemberType
 
   type CompanyId_t = MCompany.CompanyId_t
+
 }

@@ -19,7 +19,7 @@ object EMImg {
 import EMImg._
 
 
-trait EMImgStatic[T <: EMImg[T]] extends EsModelStaticT[T] {
+trait EMImgStatic[T <: EMImgMut[T]] extends EsModelStaticT[T] {
   abstract override def generateMappingProps: List[DocField] = {
     esMappingField :: super.generateMappingProps
   }
@@ -34,10 +34,14 @@ trait EMImgStatic[T <: EMImg[T]] extends EsModelStaticT[T] {
 
 trait EMImg[T <: EMImg[T]] extends EsModelT[T] {
 
-  var img: MImgInfo
+  def img: MImgInfo
 
   abstract override def writeJsonFields(acc: XContentBuilder): Unit = {
     super.writeJsonFields(acc)
     acc.rawField(IMG_ESFN, img.toJson.getBytes)
   }
+}
+
+trait EMImgMut[T <: EMImgMut[T]] extends EMImg[T] {
+  var img: MImgInfo
 }

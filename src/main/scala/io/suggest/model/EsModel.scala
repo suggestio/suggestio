@@ -239,26 +239,15 @@ object EsModel extends MacroLogsImpl {
       }
   }
 
-
 }
 
-import EsModel._
 
-/** Базовый шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelMinimalT]].
-  * Здесь десериализация полностью выделена в отдельную функцию. */
-trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
-  def ES_INDEX_NAME = SIO_ES_INDEX_NAME
-  val ES_TYPE_NAME: String
+/** Самые базовые функции генерации маппингов. */
+trait EsModelStaticMappingGenerators {
 
-  // Короткие враппер для типичных операций в рамках статической модели.
-  def prepareSearch(implicit client: Client) = client.prepareSearch(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
-  def prepareCount(implicit client: Client)  = client.prepareCount(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
-  def prepareGet(id: String)(implicit client: Client) = client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
-  def prepareUpdate(id: String)(implicit client: Client) = client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, id)
-  def prepareDelete(id: String)(implicit client: Client) = client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
-  def prepareDeleteByQuery(implicit client: Client) = client.prepareDeleteByQuery(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
+  def generateMappingStaticFields: List[Field]
+  def generateMappingProps: List[DocField]
 
-  def generateMapping: XContentBuilder = generateMappingFor(ES_TYPE_NAME)
   def generateMappingFor(typeName: String): XContentBuilder = jsonGenerator { implicit b =>
     // Собираем маппинг индекса.
     IndexMapping(
@@ -268,8 +257,19 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
     )
   }
 
-  def generateMappingStaticFields: List[Field]
-  def generateMappingProps: List[DocField]
+}
+
+
+import EsModel._
+
+/** Трейт содержит статические хелперы для работы с маппингами.
+  * Однажды был вынесен из [[EsModelStaticT]]. */
+trait EsModelStaticMapping extends EsModelStaticMappingGenerators {
+
+  def ES_INDEX_NAME = SIO_ES_INDEX_NAME
+  def ES_TYPE_NAME: String
+
+  def generateMapping: XContentBuilder = generateMappingFor(ES_TYPE_NAME)
 
   /** Флаг, который можно перезаписать в реализации static-модели чтобы проигнорить конфликты при апдейте маппинга. */
   protected def mappingIgnoreConflicts: Boolean = false
@@ -293,6 +293,20 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
       .execute()
   }
 
+}
+
+
+/** Базовый шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelMinimalT]].
+  * Здесь десериализация полностью выделена в отдельную функцию. */
+trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] extends EsModelStaticMapping {
+
+  // Короткие враппер для типичных операций в рамках статической модели.
+  def prepareSearch(implicit client: Client) = client.prepareSearch(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
+  def prepareCount(implicit client: Client)  = client.prepareCount(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
+  def prepareGet(id: String)(implicit client: Client) = client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
+  def prepareUpdate(id: String)(implicit client: Client) = client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, id)
+  def prepareDelete(id: String)(implicit client: Client) = client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
+  def prepareDeleteByQuery(implicit client: Client) = client.prepareDeleteByQuery(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
 
   /**
    * Существует ли указанный магазин в хранилище?
@@ -485,6 +499,8 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
 trait EsModelStaticT[T <: EsModelT[T]] extends EsModelMinimalStaticT[T] {
 
   protected def dummy(id: String): T
+
+  // TODO Надо бы перевести все модели на stackable-трейты и избавится от PartialFunction здесь.
   def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit]
 
   def deserializeOne(id: String, m: collection.Map[String, AnyRef]): T = {
@@ -496,6 +512,8 @@ trait EsModelStaticT[T <: EsModelT[T]] extends EsModelMinimalStaticT[T] {
 
 }
 
+
+
 /** Шаблон для динамических частей ES-моделей.
  * В минимальной редакции механизм десериализации полностью абстрактен. */
 trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
@@ -503,7 +521,7 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
   @JsonIgnore def companion: EsModelMinimalStaticT[E]
 
   @JsonIgnore protected def esTypeName = companion.ES_TYPE_NAME
-  @JsonIgnore protected def esIndexName = companion.ES_INDEX_NAME 
+  @JsonIgnore protected def esIndexName = companion.ES_INDEX_NAME
 
   /** Можно делать какие-то действия после десериализации. Например, можно исправлять значения после эволюции схемы. */
   @JsonIgnore def postDeserialize() {}
@@ -530,15 +548,17 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
 
   /** Генератор indexRequestBuilder'ов. Помогает при построении bulk-реквестов. */
   def indexRequestBuilder(implicit client: Client): IndexRequestBuilder = {
-    val _idOrNull = idOrNull
-    val irb = client.prepareIndex(esIndexName, esTypeName, _idOrNull)
+    val irb = client.prepareIndex(esIndexName, esTypeName, idOrNull)
       .setSource(toJson)
     saveBuilder(irb)
-    val rkOpt = companion.getRoutingKey(_idOrNull)
+    val rkOpt = getRoutingKey
     if (rkOpt.isDefined)
       irb.setRouting(rkOpt.get)
     irb
   }
+
+  /** Узнать routing key для текущего экземпляра. */
+  def getRoutingKey = companion.getRoutingKey(idOrNull)
 
   /** Генератор delete-реквеста. Полезно при построении bulk-реквестов. */
   def deleteRequestBuilder(implicit client: Client) = companion.deleteRequestBuilder(id.get)

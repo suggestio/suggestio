@@ -19,7 +19,7 @@ object EMLogoImg {
 
 import EMLogoImg._
 
-trait EMLogoImgStatic[T <: EMLogoImg[T]] extends EsModelStaticT[T] {
+trait EMLogoImgStatic[T <: EMLogoImgMut[T]] extends EsModelStaticT[T] {
   abstract override def generateMappingProps: List[DocField] = {
     esMappingField :: super.generateMappingProps
   }
@@ -34,11 +34,15 @@ trait EMLogoImgStatic[T <: EMLogoImg[T]] extends EsModelStaticT[T] {
 
 trait EMLogoImg[T <: EMLogoImg[T]] extends EsModelT[T] {
 
-  var logoImgOpt: Option[MImgInfo]
+  def logoImgOpt: Option[MImgInfo]
 
-  abstract override def writeJsonFields(acc: XContentBuilder): Unit = {
+  abstract override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)
     if (logoImgOpt.isDefined)
       acc.rawField(LOGO_IMG_ESFN, logoImgOpt.get.toJson.getBytes)
   }
+}
+
+trait EMLogoImgMut[T <: EMLogoImgMut[T]] extends EMLogoImg[T] {
+  var logoImgOpt: Option[MImgInfo]
 }

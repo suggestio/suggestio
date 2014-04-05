@@ -19,7 +19,7 @@ object EMTextAlign {
 import EMTextAlign._
 
 
-trait EMTextAlignStatic[T <: EMTextAlign[T]] extends EsModelStaticT[T] {
+trait EMTextAlignStatic[T <: EMTextAlignMut[T]] extends EsModelStaticT[T] {
   abstract override def generateMappingProps: List[DocField] = {
     FieldObject(TEXT_ALIGN_ESFN,  enabled = false,  properties = Nil) :: super.generateMappingProps
   }
@@ -34,13 +34,17 @@ trait EMTextAlignStatic[T <: EMTextAlign[T]] extends EsModelStaticT[T] {
 
 trait EMTextAlign[T <: EMTextAlign[T]] extends EsModelT[T] {
 
-  var textAlign    : Option[TextAlign]
+  def textAlign: Option[TextAlign]
 
   abstract override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)
     if (textAlign.isDefined)
       acc.rawField(TEXT_ALIGN_ESFN, JacksonWrapper.serialize(textAlign.get).getBytes)
   }
+}
+
+trait EMTextAlignMut[T <: EMTextAlignMut[T]] extends EMTextAlign[T] {
+  var textAlign: Option[TextAlign]
 }
 
 

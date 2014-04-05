@@ -55,7 +55,7 @@ object EMAdOffers {
 import EMAdOffers._
 
 
-trait EMAdOffersStatic[T <: EMAdOffers[T]] extends EsModelStaticT[T] {
+trait EMAdOffersStatic[T <: EMAdOffersMut[T]] extends EsModelStaticT[T] {
 
   abstract override def generateMappingProps: List[DocField] = {
     val fontField = FieldObject(FONT_ESFN, enabled = false, properties = Nil)
@@ -127,7 +127,7 @@ trait EMAdOffersStatic[T <: EMAdOffers[T]] extends EsModelStaticT[T] {
 
 trait EMAdOffers[T <: EMAdOffers[T]] extends EsModelT[T] {
 
-  var offers       : List[AdOfferT]
+  def offers: List[AdOfferT]
 
   abstract override def writeJsonFields(acc: XContentBuilder): Unit = {
     super.writeJsonFields(acc)
@@ -137,6 +137,10 @@ trait EMAdOffers[T <: EMAdOffers[T]] extends EsModelT[T] {
       acc.endArray()
     }
   }
+}
+
+trait EMAdOffersMut[T <: EMAdOffersMut[T]] extends EMAdOffers[T] {
+  var offers: List[AdOfferT]
 }
 
 
