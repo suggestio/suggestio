@@ -2,8 +2,8 @@ package util.qsb
 
 import play.api.mvc.QueryStringBindable
 import models._
-import io.suggest.ym.model.AdsSearchT
 import play.api.Play.current
+import io.suggest.ym.model.ad.AdsSearchArgsT
 
 /**
  * Suggest.io
@@ -42,7 +42,7 @@ object AdSearch {
         } yield {
           Right(
             AdSearch(
-              shopIdOpt = maybeShopIdOpt,
+              producerIdOpt = maybeShopIdOpt,
               catIdOpt  = maybeCatIdOpt,
               levelOpt  = maybeLevelOpt.flatMap(AdShowLevels.maybeWithName),
               qOpt      = maybeQOpt,
@@ -58,7 +58,7 @@ object AdSearch {
       }
 
       def unbind(key: String, value: AdSearch): String = {
-        strOptBinder.unbind(key + ".shopId", value.shopIdOpt) + "&" +
+        strOptBinder.unbind(key + ".shopId", value.producerIdOpt) + "&" +
         strOptBinder.unbind(key + ".catId", value.catIdOpt) + "&" +
         strOptBinder.unbind(key + ".level", value.levelOpt.map(_.toString)) + "&" +
         strOptBinder.unbind(key + ".q", value.qOpt) +
@@ -71,13 +71,13 @@ object AdSearch {
 }
 
 case class AdSearch(
-  shopIdOpt: Option[ShopId_t] = None,
+  producerIdOpt: Option[ShopId_t] = None,
   catIdOpt: Option[String] = None,
   levelOpt: Option[AdShowLevel] = None,
   qOpt: Option[String] = None,
   maxResultsOpt: Option[Int] = None,
   offsetOpt: Option[Int] = None
-) extends AdsSearchT {
+) extends AdsSearchArgsT {
 
   /** Абсолютный сдвиг в результатах (постраничный вывод). */
   def offset: Int = if (offsetOpt.isDefined) offsetOpt.get else 0
