@@ -350,134 +350,25 @@ siomart =
       siomart.utils.removeClass _dom, 'hidden'
 
   #########
-  ## Офферы
+  ## Скрины
   #########
-  offers :
-    is_locked : false
-    auto_change_delay : 7000
+
+  screen : () ->
+    this.screen_id = undefined
+    this.is_offers_locked = false
+    this.active_offer = 1
+    this.total_offers = undefined
 
     ## Загрузить все офферы для магазина
-    load_for_shop_id : ( shop_id ) ->
+    this.load_for_shop_id = ( shop_id ) ->
       url = '/market/ads/' + siomart.config.mart_id + '?a.shopId=' + shop_id
       siomart.perform_request url
 
     ## Загрузить все офферы для магазина
-    load_for_cat_id : ( cat_id ) ->
+    this.load_for_cat_id = ( cat_id ) ->
       url = '/market/ads/' + siomart.config.mart_id + '?a.catId=' + cat_id
       siomart.perform_request url
       siomart.utils.ge('smCategoriesScreen').style.display = 'none'
-
-    ## Инициализация слайдов и кнопок-контроллов
-    initialize : () ->
-
-      this.active_offer = 0
-
-      _i = 0
-      _offers0 = siomart.utils.ge('smOffers').getElementsByTagName 'div'
-      for _o in _offers0
-        is_offer = _o.className.match /sm-offer/g
-        if siomart.utils.is_array _o.className.match /sm-offer/g
-          _o.id = 'smOffer' + _i
-          _i++
-
-      _i = 0
-      _as = siomart.utils.ge('smOffersController').getElementsByTagName 'a'
-      for _a in _as
-        _a.setAttribute 'data-index', _i
-        _a.id = 'smOfferButton' + _i
-        siomart.utils.add_single_listener _a, 'click', ( event ) ->
-          event.preventDefault()
-          siomart.offers.next_offer()
-          siomart.offers.show_offer this.getAttribute 'data-index'
-        _i++
-
-      this.total_offers = _i
-      this.next_offer()
-
-    clear_auto_change_timer : () ->
-      if typeof siomart.offers.auto_change_timer != 'undefined'
-        clearTimeout siomart.offers.auto_change_timer
-
-    set_auto_change_timer : ( cb ) ->
-      siomart.offers.auto_change_timer = setTimeout cb, siomart.offers.auto_change_delay
-
-    next_offer : ( is_without_delay, is_backward ) ->
-
-      is_backward = is_backward || false
-      is_without_delay = is_without_delay || false
-
-      this.clear_auto_change_timer()
-
-      cb = () ->
-        if is_backward == true
-          next_offer_index = if siomart.offers.active_offer == 0 then siomart.offers.total_offers - 1 else siomart.offers.active_offer - 1
-        else
-          next_offer_index = if siomart.offers.active_offer == siomart.offers.total_offers - 1 then 0 else siomart.offers.active_offer + 1
-
-        siomart.offers.show_offer next_offer_index
-        siomart.offers.next_offer()
-
-      if is_without_delay == true
-        cb()
-      else
-        this.set_auto_change_timer cb
-
-
-    ## Открыть слайд с оффером по указанному индексу
-    show_offer : ( index ) ->
-
-      if this.is_locked == true
-        return false
-
-      this.is_locked = true
-
-      index = parseInt index
-
-      if index == this.active_offer
-        return false
-
-      _offer =  siomart.utils.ge 'smOffer' + index
-
-      is_mart_offert = _offer.getAttribute 'data-is-mart-offer'
-      if ( is_mart_offert == 'true' )
-        siomart.index_navigation.hide()
-      else
-        siomart.index_navigation.show()
-
-      if index > this.active_offer
-        direction = 'rtl'
-      else
-        direction = 'ltr'
-
-      # установить входящий слайд в нужную позицию
-      siomart.utils.removeClass 'smOffer' + index, 'sm-hidden-offer'
-      siomart.utils.addClass 'smOffer' + index, direction + '-in'
-
-      # включить анимацию для слайдов и перегнать на новые места базирования
-      cb = () ->
-        siomart.utils.addClass 'smOffer' + index, 'animated'
-        siomart.utils.removeClass 'smOffer' + index, direction + '-in'
-
-        siomart.utils.addClass 'smOffer' + siomart.offers.active_offer, direction + '-out animated'
-
-      setTimeout cb, 100
-
-      cb1 = () ->
-        #Расставить нужные классы для слайдов
-        siomart.utils.removeClass 'smOffer' + siomart.offers.active_offer, 'animated'
-        siomart.utils.removeClass 'smOffer' + siomart.offers.active_offer, direction + '-out'
-        siomart.utils.addClass 'smOffer' + siomart.offers.active_offer, 'sm-hidden-offer'
-
-        siomart.utils.removeClass 'smOffer' + index, 'animated'
-
-        # выделить активную кнопку
-        siomart.utils.removeClass 'smOfferButton' + siomart.offers.active_offer, 'active'
-        siomart.utils.addClass 'smOfferButton' + index, 'active'
-
-        siomart.offers.active_offer = index
-        siomart.offers.is_locked = false
-
-      setTimeout cb1, 700
 
   #############################################
   ## Забиндить события на навигационные кнопари
@@ -518,13 +409,14 @@ siomart =
     this.utils.add_single_listener this.utils.ge('smCategoriesButton'), 'click'
 
     ## Контроллеры слайдов с офферами
-    this.offers.initialize()
+    #this.offers.initialize()
 
   init : () ->
+
     this.load_stylesheets()
     this.draw_layout()
-    this.utils.set_window_size()
 
+    this.utils.set_window_size()
     this.load_mart_index_page()
 
     siomart.config.mart_id = window.siomart_id
@@ -534,6 +426,126 @@ siomart =
       siomart.fit_images()
 
     this.utils.add_single_listener window, 'resize', resize_cb
+
+
+##########################################
+## Прототип для работы с офферами в скрине
+##########################################
+siomart.screen.prototype =
+
+  offer_auto_change_delay : 7000
+
+  clear_auto_change_timer : () ->
+    if typeof this.auto_change_timer != 'undefined'
+      clearTimeout this.auto_change_timer
+
+  set_auto_change_timer : ( cb ) ->
+    this.auto_change_timer = setTimeout cb, siomart.screen.offer_auto_change_delay
+
+  next_offer : ( is_without_delay, is_backward ) ->
+
+    is_backward = is_backward || false
+    is_without_delay = is_without_delay || false
+
+    this.clear_auto_change_timer()
+
+    cb = () ->
+      if is_backward == true
+        next_offer_index = if siomart.offers.active_offer == 0 then siomart.offers.total_offers - 1 else siomart.offers.active_offer - 1
+      else
+        next_offer_index = if siomart.offers.active_offer == siomart.offers.total_offers - 1 then 0 else siomart.offers.active_offer + 1
+
+      siomart.offers.show_offer next_offer_index
+      siomart.offers.next_offer()
+
+    if is_without_delay == true
+      cb()
+    else
+      this.set_auto_change_timer cb
+
+  ## Открыть слайд с оффером по указанному индексу
+  show_offer : ( index ) ->
+
+    if this.is_locked == true
+      return false
+
+    this.is_locked = true
+    index = parseInt index
+
+    if index == this.active_offer
+      return false
+
+    _offer =  siomart.utils.ge 'smOffer' + index
+
+    is_mart_offert = _offer.getAttribute 'data-is-mart-offer'
+    if ( is_mart_offert == 'true' )
+      siomart.index_navigation.hide()
+    else
+      siomart.index_navigation.show()
+
+    if index > this.active_offer
+      direction = 'rtl'
+    else
+      direction = 'ltr'
+
+    # установить входящий слайд в нужную позицию
+    siomart.utils.removeClass 'smOffer' + index, 'sm-hidden-offer'
+    siomart.utils.addClass 'smOffer' + index, direction + '-in'
+
+    # включить анимацию для слайдов и перегнать на новые места базирования
+    cb = () ->
+      siomart.utils.addClass 'smOffer' + index, 'animated'
+      siomart.utils.removeClass 'smOffer' + index, direction + '-in'
+
+      siomart.utils.addClass 'smOffer' + siomart.offers.active_offer, direction + '-out animated'
+
+    setTimeout cb, 100
+
+    cb1 = () ->
+      #Расставить нужные классы для слайдов
+      siomart.utils.removeClass 'smOffer' + siomart.offers.active_offer, 'animated'
+      siomart.utils.removeClass 'smOffer' + siomart.offers.active_offer, direction + '-out'
+      siomart.utils.addClass 'smOffer' + siomart.offers.active_offer, 'sm-hidden-offer'
+
+      siomart.utils.removeClass 'smOffer' + index, 'animated'
+
+      # выделить активную кнопку
+      siomart.utils.removeClass 'smOfferButton' + siomart.offers.active_offer, 'active'
+      siomart.utils.addClass 'smOfferButton' + index, 'active'
+
+      siomart.offers.active_offer = index
+      siomart.offers.is_locked = false
+    setTimeout cb1, 700
+
+  initialize_offers : () ->
+    this.active_offer = 0
+
+    _i = 0
+    _offers0 = siomart.utils.ge('smOffers').getElementsByTagName 'div'
+
+    for _o in _offers0
+      is_offer = _o.className.match /sm-offer/g
+
+      if siomart.utils.is_array _o.className.match /sm-offer/g
+        _o.id = 'smOffer' + _i
+        _i++
+
+    _i = 0
+    _as = siomart.utils.ge('smOffersController').getElementsByTagName 'a'
+
+    for _a in _as
+      _a.setAttribute 'data-index', _i
+      _a.id = 'smOfferButton' + _i
+
+      siomart.utils.add_single_listener _a, 'click', ( event ) ->
+        event.preventDefault()
+        siomart.offers.next_offer()
+        siomart.offers.show_offer this.getAttribute 'data-index'
+      _i++
+
+    this.total_offers = _i
+
+    console.log this
 
 
 window.siomart = siomart
