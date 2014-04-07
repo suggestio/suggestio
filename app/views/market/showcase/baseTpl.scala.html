@@ -1,4 +1,4 @@
-@(title: String="", headAfter:Html = Html(""))(content: Html)(implicit ctx: util.Context)
+@(title: String = "", headAfter: Option[Html] = None)(content: Html)(implicit ctx: util.Context)
 
 @* Базовый шаблон для выдачи siomarket
   TODO: если не пригодится — удалить

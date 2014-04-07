@@ -24,7 +24,7 @@
       <a href="@routes.MarketAd.editShopAd(ad.id.get)">@Messages("Edit")</a>
 
       @ad.offers.map {
-        case prodOffer: MMartAdProduct => {
+        case prodOffer: AOProduct => {
           @* Рендерим карточку с товаром и ценой *@
           <p>Производитель: @prodOffer.vendor.value</p>
           @prodOffer.oldPrice.map { oldPrice =>
@@ -33,7 +33,7 @@
           <p>Новая цена: @prodOffer.price.value</p>
         }
 
-        case discountOffer: MMartAdDiscount => {
+        case discountOffer: AODiscount => {
           @* Рендерим карточку с указанием скидочной акции *@
           @discountOffer.text1.map { text1 =>
             <p>@text1.value</p>
@@ -44,7 +44,7 @@
           }
         }
 
-        case textOffer: MMartAdText => {
+        case textOffer: AOText => {
           TODO Надо это как-то отображать. Ещё есть поле .color
           @Html(textOffer.text.value)
         }

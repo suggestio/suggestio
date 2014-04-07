@@ -28,9 +28,9 @@ object Market extends SioController with PlayMacroLogsImpl {
 
 
   /** Входная страница для sio-market для ТЦ. */
-  def martIndex(martId: MartId_t) = marketAction(martId) { implicit request =>
+  def martIndex(martId: String) = marketAction(martId) { implicit request =>
     for {
-      mads <- MMartAdIndexed.searchAds(request.mmartInx, AdSearch(levelOpt = Some(AdShowLevels.LVL_RECEIVER_TOP)))
+      mads <- MAd.searchAds(request.mmartInx, AdSearch(levelOpt = Some(AdShowLevels.LVL_RECEIVER_TOP)))
       rmd  <- request.marketDataFut
     } yield {
       val html = indexTpl(request.mmart, mads, rmd.mshops, rmd.mmcats)
@@ -39,8 +39,8 @@ object Market extends SioController with PlayMacroLogsImpl {
   }
 
   /** Временный экшн, рендерит демо страничку предполагаемого сайта ТЦ, на которой вызывается Sio.Market */
-  def demoWebSite(martId: MartId_t) = MaybeAuth.async { implicit request =>
-    MMart.getById(martId) map {
+  def demoWebSite(martId: String) = MaybeAuth.async { implicit request =>
+    MAdnNode.getById(martId) map {
       case Some(mmart) => Ok(demoWebsiteTpl(mmart))
       case None => NotFound("martNotFound")
     }
@@ -48,9 +48,9 @@ object Market extends SioController with PlayMacroLogsImpl {
 
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
-  def findAds(martId: MartId_t, adSearch: AdSearch) = marketAction(martId) { implicit request =>
+  def findAds(martId: String, adSearch: AdSearch) = marketAction(martId) { implicit request =>
     for {
-      mads <- MMartAdIndexed.searchAds(request.mmartInx, adSearch)
+      mads <- MAd.searchAds(request.mmartInx, adSearch)
       rmd  <- request.marketDataFut
     } yield {
       val html = findAdsTpl(request.mmart, mads, rmd.mshops, rmd.mmcats)
@@ -62,36 +62,35 @@ object Market extends SioController with PlayMacroLogsImpl {
   // статистка
 
   /** Кем-то просмотрена одна рекламная карточка. */
-  def adStats(martId: MartId_t, adId: String, actionRaw: String) = MaybeAuth.async { implicit request =>
+  def adStats(martId: String, adId: String, actionRaw: String) = MaybeAuth.async { implicit request =>
     val action = AdStatActions.withName(actionRaw)
-    MMartAd.getById(adId)
-      .filter { _.exists(_.receiverIds == martId) }
-      .flatMap { madOpt =>
+    MAd.getById(adId).flatMap { madOpt =>
+      madOpt.filter { mad =>
+        mad.receivers.exists(_.receiverId == martId)
+      } foreach { mad =>
         val adStat = MAdStat(
           clientAddr = request.remoteAddress,
           action = action,
           ua = request.headers.get(USER_AGENT),
           adId = adId,
-          adOwnerId = madOpt.get.getOwnerId,
+          adOwnerId = mad.producerId,
           personId = request.pwOpt.map(_.personId)
         )
-        adStat.save.map { adStatId =>
-          //adStat.id = Some(adStatId)
-          //Created(adStatId)
-          NoContent
-        }
+        adStat.save
       }
+      NoContent
+    }
   }
 
 
   // Внутренние хелперы
 
-  private def shopsMap(martId: MartId_t): Future[Map[ShopId_t, MShop]] = {
-    MShop.findByMartId(martId, onlyEnabled=true)
+  private def shopsMap(martId: String): Future[Map[String, MAdnNode]] = {
+    MAdnNode.findBySupId(martId, onlyEnabled=true)
       .map { _.map { shop => shop.id.get -> shop }.toMap }
   }
 
-  private def martNotFound(martId: MartId_t) = NotFound("Mart not found")
+  private def martNotFound(martId: String) = NotFound("Mart not found")
 
   /** Метод для генерации json-ответа с html внутри. */
   private def jsonOk(html: JsString, action: String) = {
@@ -105,13 +104,13 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   /** Action-composition для нужд ряда экшенов этого контроллера. Хранит в себе данные для рендере и делает
     * проверки наличия индекса и MMart. */
-  private def marketAction(martId: MartId_t)(f: MarketRequest => Future[Result]) = MaybeAuth.async { implicit request =>
+  private def marketAction(martId: String)(f: MarketRequest => Future[Result]) = MaybeAuth.async { implicit request =>
     // Смотрим метаданные по индексу маркета. Они обычно в кеше.
     val mmartInxOptFut = IndicesUtil.getInxFormMartCached(martId)
     // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
     val shopsFut = shopsMap(martId)
     // Читаем из основной базы текущий ТЦ
-    val mmartFut = MMart.getById(martId)
+    val mmartFut = MAdnNode.getById(martId)
     // Текущие категории ТЦ
     val mmcatsFut = MMartCategory.findTopForOwner(martId)
     mmartInxOptFut flatMap {
@@ -144,7 +143,7 @@ object Market extends SioController with PlayMacroLogsImpl {
   abstract class MarketRequest(request: AbstractRequestWithPwOpt[AnyContent])
     extends AbstractRequestWithPwOpt[AnyContent](request) {
     def mmartInx: MMartInx
-    def mmart: MMart
+    def mmart: MAdnNode
     def marketDataFut: Future[MarketData]
 
     def sioReqMd: SioReqMd = request.sioReqMd
@@ -152,6 +151,6 @@ object Market extends SioController with PlayMacroLogsImpl {
   }
 
   /** Контейнер асинхронно-получаемых данных, необходимых для рендера, но не нужных на промежуточных шагах. */
-  case class MarketData(mmcats: Seq[MMartCategory], mshops: Map[ShopId_t, MShop])
+  case class MarketData(mmcats: Seq[MMartCategory], mshops: Map[String, MAdnNode])
 }
 

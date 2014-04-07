@@ -1,7 +1,6 @@
 package util.img
 
 import util.PlayMacroLogsImpl
-import models.MPictureTmp
 import io.suggest.img.{ConvertModes, ImgCrop, SioImageUtilT}
 import play.api.Play.current
 import io.suggest.model.{MImgThumb, MUserImgOrig, MPict}
@@ -12,8 +11,8 @@ import org.apache.commons.io.FileUtils
 import scala.util.{Failure, Success}
 import java.lang
 import io.suggest.util.MacroLogsImplLazy
-import io.suggest.ym.model.{MImgInfoMeta, MImgInfo}
 import com.fasterxml.jackson.annotation.JsonIgnore
+import models._
 
 /**
  * Suggest.io

@@ -6,7 +6,7 @@
 *@
 @import ctx._
 @import helper._
-@import MMartAdOfferTypes._
+@import AdOfferTypes._
 
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.MarketCategory.topCatsOf,
@@ -14,7 +14,7 @@
 )
 
 @* Определяем текущий тип оффера (тип формы). Используем данные формы и аргумент offerType как fallback. *@
-@defining(af("ad.offer.mode").value.flatMap(MMartAdOfferTypes.maybeWithName).getOrElse(offerType)) { offerType1 =>
+@defining(af("ad.offer.mode").value.flatMap(AdOfferTypes.maybeWithName).getOrElse(offerType)) { offerType1 =>
 @form(call, 'id -> "promoOfferForm") {
 
   @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@

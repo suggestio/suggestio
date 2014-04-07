@@ -1,6 +1,6 @@
 package controllers
 
-import util.{Context, PlayMacroLogsImpl}
+import util.Context
 import views.html.market.lk.ad._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -13,12 +13,11 @@ import util.img._
 import scala.concurrent.Future
 import play.api.mvc.Request
 import play.api.Play.current
-import TextAlignValues.TextAlignValue
+import AOTextAlignValues.TextAlignValue
 import MMartCategory.CollectMMCatsAcc_t
 import scala.util.{Try, Failure, Success}
 import util.HtmlSanitizer.adTextFmtPolicy
 import io.suggest.ym.parsers.Price
-import net.sf.jmimemagic.Magic
 import io.suggest.ym.model.common
 
 /**
@@ -31,13 +30,13 @@ object MarketAd extends SioController with LogoSupport {
 
   import LOGGER._
 
-  type AdFormM = Form[(ImgIdKey, LogoOpt_t, MMartAd)]
+  type AdFormM = Form[(ImgIdKey, LogoOpt_t, MAd)]
 
-  type FormDetected_t = Option[(MMartAdOfferType, AdFormM)]
+  type FormDetected_t = Option[(AdOfferType, AdFormM)]
 
   /** Режимы работы формы добавления рекламной карточки. Режимы перенесены в MMartAdOfferTypes. */
   object FormModes {
-    import MMartAdOfferTypes._
+    import AdOfferTypes._
 
     def maybeShopFormWithName(n: String): FormDetected_t = {
       maybeWithName(n).map { m =>
@@ -53,26 +52,26 @@ object MarketAd extends SioController with LogoSupport {
       }
     }
 
-    val getShopForm: PartialFunction[MMartAdOfferType, AdFormM] = {
+    val getShopForm: PartialFunction[AdOfferType, AdFormM] = {
       case PRODUCT  => shopAdProductFormM
       case DISCOUNT => shopAdDiscountFormM
       case TEXT     => shopAdTextFormM
     }
 
-    val getMartForm: PartialFunction[MMartAdOfferType, AdFormM] = {
+    val getMartForm: PartialFunction[AdOfferType, AdFormM] = {
       case PRODUCT  => martAdProductFormM
       case DISCOUNT => martAdDiscountFormM
       case TEXT     => martAdTextFormM
     }
 
-    val getForClass: PartialFunction[MMartAdOfferT, MMartAdOfferType] = {
-      case _: MMartAdProduct  => PRODUCT
-      case _: MMartAdDiscount => DISCOUNT
-      case _: MMartAdText     => MMartAdOfferTypes.TEXT
+    val getForClass: PartialFunction[AdOfferT, AdOfferType] = {
+      case _: AOProduct  => PRODUCT
+      case _: AODiscount => DISCOUNT
+      case _: AOText     => AdOfferTypes.TEXT
     }
 
-    def getMartFormForClass(c: MMartAdOfferT): AdFormM = getMartForm(getForClass(c))
-    def getShopFormForClass(c: MMartAdOfferT): AdFormM = getShopForm(getForClass(c))
+    def getMartFormForClass(c: AdOfferT): AdFormM = getMartForm(getForClass(c))
+    def getShopFormForClass(c: AdOfferT): AdFormM = getShopForm(getForClass(c))
   }
 
   // Есть шаблоны для шаблона скидки. Они различаются по id. Тут min и max для допустимых id.
@@ -82,8 +81,8 @@ object MarketAd extends SioController with LogoSupport {
   /** Шрифт пока что характеризуется только цветом. Поэтому маппим поле цвета на шрифт. */
   private val fontColorM = colorM
     .transform(
-      { MMAdFieldFont.apply },
-      { mmAdFont: MMAdFieldFont => mmAdFont.color }
+      { AOFieldFont.apply },
+      { mmAdFont: AOFieldFont => mmAdFont.color }
     )
 
   /** Маппим строковое поле с настройками шрифта. */
@@ -91,16 +90,16 @@ object MarketAd extends SioController with LogoSupport {
     "value" -> m,
     "color" -> fontColorM
   )
-  { MMAdStringField.apply }
-  { MMAdStringField.unapply }
+  { AOStringField.apply }
+  { AOStringField.unapply }
 
   /** Маппим числовое (Float) поле. */
   private def mmaFloatFieldM(m: Mapping[Float]) = mapping(
     "value" -> m,
     "color" -> fontColorM
   )
-  { MMAdFloatField.apply }
-  { MMAdFloatField.unapply }
+  { AOFloatField.apply }
+  { AOFloatField.unapply }
 
   /** Поле с ценой. Является вариацией float-поля. */
   private val mmaPriceM = mapping(
@@ -108,7 +107,7 @@ object MarketAd extends SioController with LogoSupport {
     "color" -> fontColorM
   )
   {case ((rawPrice, price), font) =>
-    MMAdPrice(price.price, price.currency.getCurrencyCode, rawPrice, font) }
+    AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font) }
   {mmadp =>
     import mmadp._
     Some((orig, Price(value, currency)), font)
@@ -121,7 +120,7 @@ object MarketAd extends SioController with LogoSupport {
   )
   {(pricePairOpt, font) =>
     pricePairOpt.map { case (rawPrice, price) =>
-      MMAdPrice(price.price, price.currency.getCurrencyCode, rawPrice, font)
+      AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font)
     }
   }
   {_.map { mmadp =>
@@ -136,7 +135,7 @@ object MarketAd extends SioController with LogoSupport {
     "color" -> fontColorM
   )
   {(valueOpt, color) =>
-    valueOpt map { MMAdFloatField(_, color) }
+    valueOpt map { AOFloatField(_, color) }
   }
   {_.map { mmaff =>
     (Option(mmaff.value), mmaff.font)
@@ -148,20 +147,20 @@ object MarketAd extends SioController with LogoSupport {
   val textAlignRawM = nonEmptyText(maxLength = 16)
     .transform(strTrimSanitizeLowerF, strIdentityF)
     .transform[Option[TextAlignValue]](
-      { TextAlignValues.maybeWithName },
+      { AOTextAlignValues.maybeWithName },
       { tavOpt => tavOpt.map(_.toString) getOrElse "" }
     )
     .verifying("text.align.value.invalid", { _.isDefined })
     // Переводим результаты обратно в строки для более надежной работы reflections в TA-моделях.
     .transform(
       _.get.toString,
-      { TextAlignValues.maybeWithName }
+      { AOTextAlignValues.maybeWithName }
     )
 
   /** Маппинг для textAlign.phone -- параметры размещения текста на экране телефона. */
   val taPhoneM = textAlignRawM
     .transform[common.TextAlignPhone](
-      { MMartAdTAPhone.apply },
+      { TextAlignPhone.apply },
       { taPhone => taPhone.align }
     )
 
@@ -170,27 +169,27 @@ object MarketAd extends SioController with LogoSupport {
     "top"    -> textAlignRawM,
     "bottom" -> textAlignRawM
   )
-  { MMartAdTATablet.apply }
-  { MMartAdTATablet.unapply }
+  { TextAlignTablet.apply }
+  { TextAlignTablet.unapply }
 
   /** Маппинг для всего textAlign. */
   val textAlignM = mapping(
     "phone"  -> taPhoneM,
     "tablet" -> taTabletM
   )
-  { MMartAdTextAlign.apply }
-  { MMartAdTextAlign.unapply }
+  { TextAlign.apply }
+  { TextAlign.unapply }
 
 
   private val VENDOR_MAXLEN = 32
 
   /** apply() для product-маппингов. */
-  private def adProductMApply(vendor: MMAdStringField, price: MMAdPrice, oldPrice: Option[MMAdPrice]) = {
-    MMartAdProduct.apply(vendor, price, oldPrice)
+  private def adProductMApply(vendor: AOStringField, price: AOPriceField, oldPrice: Option[AOPriceField]) = {
+    AOProduct.apply(vendor, price, oldPrice)
   }
 
   /** unapply() для product-маппингов. */
-  private def adProductMUnapply(adProduct: MMartAdProduct) = {
+  private def adProductMUnapply(adProduct: AOProduct) = {
     Some((adProduct.vendor, adProduct.price, adProduct.oldPrice))
   }
 
@@ -214,8 +213,8 @@ object MarketAd extends SioController with LogoSupport {
       "id"    -> number(min = DISCOUNT_TPL_ID_MIN, max = DISCOUNT_TPL_ID_MAX),
       "color" -> colorM
     )
-    { DiscountTemplate.apply }
-    { DiscountTemplate.unapply }
+    { AODiscountTemplate.apply }
+    { AODiscountTemplate.unapply }
     // Собираем итоговый маппинг для MMartAdDiscount.
     mapping(
       "text1"     -> optional(mmaStringFieldM(discountTextM)),
@@ -223,8 +222,8 @@ object MarketAd extends SioController with LogoSupport {
       "template"  -> tplM,
       "text2"     -> optional(mmaStringFieldM(discountTextM))
     )
-    { MMartAdDiscount.apply }
-    { MMartAdDiscount.unapply }
+    { AODiscount.apply }
+    { AODiscount.unapply }
   }
 
   private val AD_TEXT_MAXLEN = 160
@@ -237,8 +236,8 @@ object MarketAd extends SioController with LogoSupport {
     mapping(
       "text" -> mmaStringFieldM(textM)
     )
-    { MMartAdText.apply }
-    { MMartAdText.unapply }
+    { AOText.apply }
+    { AOText.unapply }
   }
 
 
@@ -248,7 +247,7 @@ object MarketAd extends SioController with LogoSupport {
 
   private val panelColorM = colorM
     .transform(
-      { MMartAdPanelSettings.apply },
+      { AdPanelSettings.apply },
       { mmaps: common.AdPanelSettings => mmaps.color }
     )
   private val PANEL_COLOR_K = "panelColor"
@@ -256,28 +255,25 @@ object MarketAd extends SioController with LogoSupport {
   private val textAlignKM = "textAlign" -> textAlignM
     .transform[Option[common.TextAlign]](
       Some.apply,
-      { _ getOrElse MMartAdTextAlign(MMartAdTAPhone(""), MMartAdTATablet("", "")) }
+      { _ getOrElse TextAlign(TextAlignPhone(""), TextAlignTablet("", "")) }
     )
 
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  private def adFormApply[T <: MMartAdOfferT](userCatId: Option[String], panelSettings: common.AdPanelSettings, adBody: T, textAlignOpt: Option[common.TextAlign]) = {
-    MMartAd(
+  private def adFormApply[T <: AdOfferT](userCatId: Option[String], panelSettings: common.AdPanelSettings, adBody: T, textAlignOpt: Option[TextAlign]): MAd = {
+    MAd(
       producerId  = null,
-      producerType = null,
       offers      = List(adBody),
       img         = null,
       panel       = Some(panelSettings),
       userCatId   = userCatId,
-      textAlign   = textAlignOpt,
-      companyId   = null,
-      receivers   = null
+      textAlign   = textAlignOpt
     )
   }
 
   /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
-  private def adFormUnapply[T <: MMartAdOfferT](mmad: MMartAd) = {
+  private def adFormUnapply[T <: AdOfferT](mmad: MAd) = {
     import mmad._
     if (panel.isDefined && userCatId.isDefined && !offers.isEmpty) {
       val adBody = offers.head.asInstanceOf[T]  // TODO Надо что-то решать с подтипами офферов. Параметризация типов MMartAd - геморрой.
@@ -296,7 +292,7 @@ object MarketAd extends SioController with LogoSupport {
   private val ad2ndLogoImgIdOptKM = ImgFormUtil.getLogoKM("ad.logo.invalid", marker=AD_TEMP_LOGO_MARKER)
 
   /** Генератор форм добавления/редактирования рекламируемого продукта в зависимости от вкладок. */
-  private def getShopAdFormM[T <: MMartAdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
+  private def getShopAdFormM[T <: AdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
     AD_IMG_ID_K -> imgIdJpegM,
     ad2ndLogoImgIdOptKM,
     "ad" -> mapping(
@@ -318,7 +314,7 @@ object MarketAd extends SioController with LogoSupport {
   }
 
   type ReqSubmit = Request[collection.Map[String, Seq[String]]]
-  type DetectForm_t = Either[AdFormM, (MMartAdOfferType, AdFormM)]
+  type DetectForm_t = Either[AdFormM, (AdOfferType, AdFormM)]
 
   /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
   private def detectAdForm(dflt: AdFormM)(adMode2form: String => FormDetected_t)(implicit request: ReqSubmit): DetectForm_t = {
@@ -392,8 +388,6 @@ object MarketAd extends SioController with LogoSupport {
                 if (!imgIdsSaved.isEmpty) {
                   // TODO Нужно проверить категорию.
                   mmad.producerId = shopId
-                  mmad.companyId = request.mshop.companyId
-                  mmad.receivers = Set(request.mshop.martId.get)
                   mmad.logoImgOpt = savedLogos.headOption
                   mmad.img = imgIdsSaved.head
                   // Сохранить изменения в базу
@@ -428,7 +422,7 @@ object MarketAd extends SioController with LogoSupport {
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
   private def renderCreateShopFormWith(af: AdFormM, catOwnerId: String, mshop: MShop)(implicit ctx: Context) = {
     getMMCatsForCreate(af, catOwnerId) map { mmcats =>
-      createShopAdTpl(mshop, mmcats, af, MMartAdOfferTypes.PRODUCT)
+      createShopAdTpl(mshop, mmcats, af, AdOfferTypes.PRODUCT)
     }
   }
 
@@ -623,7 +617,7 @@ object MarketAd extends SioController with LogoSupport {
   private val martCatIdKM = CAT_ID_K -> userCatIdOptM
   /** Генератор форм добавления/редактирования рекламиры в ТЦ в зависимости от вкладок.
     * Категория не обязательная, логотип от ТЦ. */
-  private def getMartAdFormM[T <: MMartAdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
+  private def getMartAdFormM[T <: AdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
     AD_IMG_ID_K -> imgIdJpegM,
     ad2ndLogoImgIdOptKM,
     "ad" -> mapping(
@@ -661,7 +655,7 @@ object MarketAd extends SioController with LogoSupport {
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
   private def renderCreateMartFormWith(af: AdFormM, catOwnerId: String, mmart: MMart)(implicit ctx: Context) = {
     getMMCatsForCreate(af, catOwnerId) map { mmcats =>
-      createMartAdTpl(mmart, mmcats, af, MMartAdOfferTypes.PRODUCT)
+      createMartAdTpl(mmart, mmcats, af, AdOfferTypes.PRODUCT)
     }
   }
  
@@ -906,7 +900,7 @@ object MarketAd extends SioController with LogoSupport {
     val IMG_ID = "TODO_IMG_ID"   // TODO Нужен id для дефолтовой картинки.
 
     val TEXT_COLOR = "000000"
-    val TEXT_FONT  = MMAdFieldFont(TEXT_COLOR)
+    val TEXT_FONT  = AOFieldFont(TEXT_COLOR)
     
     object Product {
       val PRICE_VALUE = Price(100F)
@@ -926,7 +920,7 @@ object MarketAd extends SioController with LogoSupport {
 
   private val prevCatIdKM = CAT_ID_K -> optional(userCatIdM)
   /** Генератор preview-формы. Форма совместима с основной формой, но более толерантна к исходным данным. */
-  private def getPreviewAdFormM[T <: MMartAdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
+  private def getPreviewAdFormM[T <: AdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
     AD_IMG_ID_K -> default(
       mapping = imgIdJpegM,
       value = OrigImgIdKey(PreviewFormDefaults.IMG_ID)
@@ -957,7 +951,7 @@ object MarketAd extends SioController with LogoSupport {
             strIdentityF
           )
         ),
-        value = MMAdStringField(vendorDflt, PreviewFormDefaults.TEXT_FONT)
+        value = AOStringField(vendorDflt, PreviewFormDefaults.TEXT_FONT)
       ),
 
       "price" -> mapping(
@@ -966,7 +960,7 @@ object MarketAd extends SioController with LogoSupport {
       )
       {case ((rawPrice, priceOpt), font) =>
         val price = priceOpt getOrElse PreviewFormDefaults.Product.PRICE_VALUE
-        MMAdPrice(price.price, price.currency.getCurrencyCode, rawPrice, font)
+        AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font)
       }
       {mmadp =>
         import mmadp._
@@ -994,8 +988,8 @@ object MarketAd extends SioController with LogoSupport {
       ),
       "color" -> default(colorM, "ce2222")
     )
-    { DiscountTemplate.apply }
-    { DiscountTemplate.unapply }
+    { AODiscountTemplate.apply }
+    { AODiscountTemplate.unapply }
     // Собираем итоговый маппинг для MMartAdDiscount.
     mapping(
       "text1"     -> optional(mmaStringFieldM(discountTextM)),
@@ -1005,15 +999,15 @@ object MarketAd extends SioController with LogoSupport {
           {pc => adhocPercentFmt(pc) -> Some(pc) }
         )
         mmaFloatFieldOptM(discountTolerantM).transform(
-          {dcOpt => dcOpt getOrElse MMAdFloatField(PreviewFormDefaults.Discount.DISCOUNT, PreviewFormDefaults.TEXT_FONT) },
-          {dc: MMAdFloatField => Some(dc) }
+          {dcOpt => dcOpt getOrElse AOFloatField(PreviewFormDefaults.Discount.DISCOUNT, PreviewFormDefaults.TEXT_FONT) },
+          {dc: AOFloatField => Some(dc) }
         )
       },
       "template"  -> tplM,
       "text2"     -> optional(mmaStringFieldM(discountTextM))
     )
-    { MMartAdDiscount.apply }
-    { MMartAdDiscount.unapply }
+    { AODiscount.apply }
+    { AODiscount.unapply }
   }
 
 
@@ -1031,8 +1025,8 @@ object MarketAd extends SioController with LogoSupport {
     mapping(
       "text" -> mmaStringFieldM(textM)
     )
-    { MMartAdText.apply }
-    { MMartAdText.unapply }
+    { AOText.apply }
+    { AOText.unapply }
   }
 
 
@@ -1041,15 +1035,15 @@ object MarketAd extends SioController with LogoSupport {
   private val previewAdTextFormM = getPreviewAdFormM(previewAdTextM)
 
   /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
-  private def detectAdPreviewForm(vendorDflt: String)(implicit request: Request[collection.Map[String, Seq[String]]]): Either[AdFormM, (MMartAdOfferType, AdFormM)] = {
+  private def detectAdPreviewForm(vendorDflt: String)(implicit request: Request[collection.Map[String, Seq[String]]]): Either[AdFormM, (AdOfferType, AdFormM)] = {
     val adModes = request.body.get("ad.offer.mode") getOrElse Nil
     adModes.headOption.flatMap { adModeStr =>
-      MMartAdOfferTypes.maybeWithName(adModeStr)
+      AdOfferTypes.maybeWithName(adModeStr)
     } map { adMode =>
       val adForm = adMode match {
-        case MMartAdOfferTypes.PRODUCT  => previewAdProductFormM(vendorDflt)
-        case MMartAdOfferTypes.DISCOUNT => previewAdDiscountFormM
-        case MMartAdOfferTypes.TEXT     => previewAdTextFormM
+        case AdOfferTypes.PRODUCT  => previewAdProductFormM(vendorDflt)
+        case AdOfferTypes.DISCOUNT => previewAdDiscountFormM
+        case AdOfferTypes.TEXT     => previewAdTextFormM
       }
       adMode -> adForm
     } match {

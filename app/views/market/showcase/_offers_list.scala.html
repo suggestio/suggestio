@@ -1,4 +1,4 @@
-@(mmart: MMart, ads: Seq[MMartAdIndexed], shops: Map[ShopId_t, MShop],isNav:Boolean=false)(implicit ctx: util.Context)
+@(mmart: MAdnNode, ads: Seq[MAd], shops: Map[String, MAdnNode],isNav:Boolean=false)(implicit ctx: util.Context)
 @if(ads.isEmpty) {
   @* рекламы в ТЦ нет *@
 } else {
@@ -6,7 +6,7 @@
     @if( isNav ){
       <a href="" @if( (ad eq ads.head) ){class="active"}><span></span></a>
     } else {
-      @_single_offer(ad, mmart, ad.shopId.flatMap(shops.get), isHidden = !(ad eq ads.head))
+      @_single_offer(ad, mmart, ad.producerId.flatMap(shops.get), isHidden = !(ad eq ads.head))
     }
   }
 }
