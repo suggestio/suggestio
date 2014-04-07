@@ -345,7 +345,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] extends EsModelStaticMappin
    * @param query Произвольный поисковый запрос.
    * @return Кол-во найденных документов.
    */
-  protected def count(query: QueryBuilder)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
+  def count(query: QueryBuilder)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
     prepareCount
       .setQuery(query)
       .execute()
@@ -400,7 +400,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] extends EsModelStaticMappin
   }
 
   /** Список результатов с source внутри перегнать в распарсенный список. */
-  protected def searchResp2list(searchResp: SearchResponse): Seq[T] = {
+  def searchResp2list(searchResp: SearchResponse): Seq[T] = {
     searchResp.getHits.getHits.toSeq.map { hit =>
       deserializeOne(hit.getId, hit.getSource)
     }
@@ -409,7 +409,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] extends EsModelStaticMappin
   /** Для ряда задач бывает необходимо задействовать multiGet вместо обычного поиска, который не успевает за refresh.
     * Этот метод позволяет сконвертить поисковые результаты в результаты multiget.
     * @return Результат - что-то неопределённом порядке. */
-  protected def searchResp2RtMultiget(searchResp: SearchResponse)(implicit ex: ExecutionContext, client: Client): Future[List[T]] = {
+  def searchResp2RtMultiget(searchResp: SearchResponse)(implicit ex: ExecutionContext, client: Client): Future[List[T]] = {
     val searchHits = searchResp.getHits.getHits
     if (searchHits.length == 0) {
       Future successful Nil
@@ -537,6 +537,8 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
     else
       null
   }
+
+  def prepareUpdate(implicit client: Client) = client.prepareUpdate(esIndexName, esTypeName, id.get)
 
   /** Загрузка новых значений *пользовательских* полей из указанного экземпляра такого же класса.
     * Полезно при edit form sumbit после накатывания маппинга формы на реквест. */

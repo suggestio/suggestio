@@ -1,13 +1,16 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.{EsModelStaticT, EsModelT}
-import org.elasticsearch.common.xcontent.XContentBuilder
+import org.elasticsearch.common.xcontent.{XContentFactory, XContentBuilder}
 import io.suggest.ym.model.AdShowLevel
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.util.SioEsUtil._
 import scala.collection.JavaConversions._
 import io.suggest.model.EsModel._
 import java.{util => ju}
+import scala.concurrent.{Future, ExecutionContext}
+import org.elasticsearch.client.Client
+import io.suggest.event.{MShopOnOffEvent, SioNotifierStaticClientI}
 
 /**
  * Suggest.io
@@ -70,6 +73,32 @@ trait EMAdnMPubSettingsStatic[T <: EMAdnMPubSettings[T]] extends EsModelStaticT[
       }
       acc.pubSettings = ps1
   }
+
+
+  /**
+   * Статическое обновление сеттингов isEnabled и disabledReason.
+   * @param adnId id изменяемого магазина
+   * @param isEnabled Новое значение поля isEnabled.
+   * @param reason Причина изменения статуса.
+   * @return Фьючерс. Внутри, скорее всего, лежит UpdateResponse.
+   */
+  def setIsEnabled(adnId: String, isEnabled: Boolean, reason: Option[String])
+                  (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    val updatedXCB = XContentFactory.jsonBuilder()
+      .startObject()
+        .field(PS_IS_ENABLED_ESFN, isEnabled)
+        .field(PS_DISABLE_REASON_ESFN, reason getOrElse null)
+      .endObject()
+    val fut = client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, adnId)
+      .setDoc(updatedXCB)
+      .execute()
+    // Уведомить о переключении состояния магазина
+    fut onSuccess { case _ =>
+      sn publish MShopOnOffEvent(adnId, isEnabled, reason)
+    }
+    fut
+  }
+
 }
 
 trait EMAdnMPubSettings[T <: EMAdnMPubSettings[T]] extends EsModelT[T] {
@@ -82,6 +111,7 @@ trait EMAdnMPubSettings[T <: EMAdnMPubSettings[T]] extends EsModelT[T] {
     pubSettings.writeFields(acc)
     acc.endObject()
   }
+
 }
 
 
@@ -107,6 +137,18 @@ case class AdnMPubSettings(
     }
     if (disableReason.isDefined)
       acc.field(DISABLE_REASON_ESFN, disableReason.get)
+  }
+
+  /**
+   * Выдать карту допустимых out-уровней.
+   * @return Если isEnabled = false, то будет пустая карта.
+   */
+  @JsonIgnore
+  def getOutShowLevels: AdnMPubSettingsLevels.LvlMap_t = {
+    if (isEnabled)
+      showLevelsInfo.out
+    else
+      Map.empty
   }
 }
 

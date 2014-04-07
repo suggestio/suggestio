@@ -12,6 +12,7 @@ import io.suggest.util.MacroLogsImpl
 import io.suggest.ym.model.ad._
 import io.suggest.ym.model.common._
 import scala.util.{Success, Failure}
+import org.elasticsearch.index.query.QueryBuilder
 
 /**
  * Suggest.io
@@ -30,9 +31,9 @@ object MAd
   with EMTextAlignStatic[MAd]
   with EMAdPanelSettingsStatic[MAd]
   with EMPrioOptStatic[MAd]
-  with EMShowLevelsStatic[MAd]
   with EMUserCatIdStatic[MAd]
   with EMDateCreatedStatic[MAd]
+  with EMText4SearchStatic[MAd]
   with MacroLogsImpl
 {
 
@@ -51,6 +52,26 @@ object MAd
     FieldSource(enabled = true),
     FieldAll(enabled = true)
   )
+
+
+  /**
+   * Реалтаймовый поиск по создателю.
+   * @param producerId id продьюсера.
+   * @return Список MAd.
+   */
+  def findForProducerRt(producerId: String, maxResults: Int = 100): Future[Seq[MAd]] = {
+    findQueryRt(producerIdQuery(producerId), maxResults)
+  }
+
+  /**
+   * Реалтаймовый поиск по получателю.
+   * @param receiverId id получателя.
+   * @param maxResults Макс. кол-во результатов.
+   * @return Последовательность MAd.
+   */
+  def findForReceiverRt(receiverId: String, maxResults: Int = 100): Future[Seq[MAd]] = {
+    findQueryRt(receiverIdQuery(receiverId), maxResults)
+  }
 
   /**
    * Удалить документ по id.
@@ -102,8 +123,8 @@ case class MAd(
   var panel      : Option[AdPanelSettings] = None,
   var prio       : Option[Int] = None,
   var id         : Option[String] = None,
-  var showLevels : Set[AdShowLevel] = Set.empty,
   var userCatId  : Option[String] = None,
+  var texts4search : Texts4Search = Texts4Search(),
   var dateCreated : DateTime = DateTime.now
 )
   extends EsModelEmpty[MAd]
@@ -116,9 +137,9 @@ case class MAd(
   with EMTextAlignMut[MAd]
   with EMAdPanelSettingsMut[MAd]
   with EMPrioOptMut[MAd]
-  with EMShowLevelsMut[MAd]
   with EMUserCatIdMut[MAd]
   with EMDateCreatedMut[MAd]
+  with EMTexts4Search[MAd]
 {
   @JsonIgnore
   def companion = MAd

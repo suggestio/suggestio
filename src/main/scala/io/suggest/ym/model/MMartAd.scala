@@ -121,11 +121,11 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       // Нужен фильтр по уровням.
       val lvlFilter = if (lvlSet.isEmpty) {
         // нужна реклама без уровней вообще
-        FilterBuilders.missingFilter(EMReceivers.SHOW_LEVELS_ESFN)
+        FilterBuilders.missingFilter(EMReceivers.SLS_WANT_ESFN)
       } else {
-        FilterBuilders.termsFilter(EMReceivers.SHOW_LEVELS_ESFN, lvlSet : _*)
+        FilterBuilders.termsFilter(EMReceivers.SLS_WANT_ESFN, lvlSet : _*)
       }
-      val nestedLvlFilter = FilterBuilders.nestedFilter(EMReceivers.RECEIVER_ESFN, lvlFilter)
+      val nestedLvlFilter = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, lvlFilter)
       QueryBuilders.filteredQuery(query0, nestedLvlFilter)
     } else {
       query0
@@ -266,7 +266,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
   private def mkLevelsUpdateDoc(newLevels: Iterable[AdShowLevel]): XContentBuilder = {
     val newDocFieldsXCB = XContentFactory.jsonBuilder()
       .startObject()
-      .startArray(EMReceivers.RECEIVER_ESFN + "." + EMReceivers.SHOW_LEVELS_ESFN)
+      .startArray(EMReceivers.RECEIVERS_ESFN + "." + EMReceivers.SLS_WANT_ESFN)
     newLevels.foreach { sl =>
       newDocFieldsXCB.value(sl.toString)
     }
@@ -486,7 +486,7 @@ trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
   def img          : MImgInfo
   def logoImgOpt   : Option[MImgInfo]
 
-  @JsonIgnore def isShopAd = producerType == AdNetMemberTypes.SHOP
+  @JsonIgnore def isShopAd: Boolean = producerType == AdNetMemberTypes.SHOP
 
   override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)
@@ -503,7 +503,7 @@ trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
       acc.endArray()
     }
     if (!showLevels.isEmpty) {
-      acc.startArray(EMReceivers.SHOW_LEVELS_ESFN)
+      acc.startArray(EMReceivers.SLS_WANT_ESFN)
       showLevels.foreach { sl =>
         acc.value(sl.toString)
       }

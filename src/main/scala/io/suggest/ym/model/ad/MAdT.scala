@@ -18,7 +18,6 @@ trait MAdT[T <: MAdT[T]] extends EsModelT[T] {
   def producerId : String
   def receivers  : Set[AdReceiverInfo]
   def prio       : Option[Int]
-  def showLevels : Set[AdShowLevel]
   def userCatId  : Option[String]
   def dateCreated : DateTime
 
@@ -42,7 +41,6 @@ trait MAdWrapperT[T <: MAdT[T], MyT <: MAdWrapperT[T,MyT]] extends MAdT[MyT] {
   def wrappedAd: MAdT[T]
 
   override def userCatId = wrappedAd.userCatId
-  override def showLevels = wrappedAd.showLevels
   override def prio = wrappedAd.prio
   override def panel = wrappedAd.panel
   override def producerId = wrappedAd.producerId
