@@ -279,8 +279,8 @@ siomart =
 
       siomart.utils.ge('smCategoriesScreen').style.display = 'none'
 
-    this.init_screens()
     this.fit_images()
+    this.screens.init()
 
   ######################################
   ## Загрузить индексную страницу для ТЦ
@@ -353,35 +353,39 @@ siomart =
   ## Скрины
   #########
 
-  screens : {}
+  screens :
+    objects : {}
+    init : () ->
 
-  init_screens : () ->
+      this.objects = {}
 
-    console.log 'init_screens'
+      console.log 'init_screens'
+      divs = siomart.utils.ge('smScreens').getElementsByTagName 'div'
+      _i = 0
 
-    divs = siomart.utils.ge('smScreens').getElementsByTagName 'div'
-
-    _i = 0
-
-    for _d in divs
-      if siomart.utils.is_array _d.className.match /sm-screen/g
-
-        ## Инициализировать скрин
-        if _d.id == ''
+      for _d in divs
+        if siomart.utils.is_array _d.className.match /sm-screen/g
+          ## Инициализировать скрин
           _d.id = 'smScreen' + _i
 
-          siomart.screens['smScreen' + _i] = new siomart.screen()
-          siomart.screens['smScreen' + _i].screen_id = 'smScreen' + _i
-          siomart.screens['smScreen' + _i].screen_container_dom = document.getElementById 'smScreen' + _i
-          siomart.screens['smScreen' + _i].initialize_offers()
+          siomart.screens.objects['smScreen' + _i] = new siomart.screen()
+          siomart.screens.objects['smScreen' + _i].screen_id = 'smScreen' + _i
+          siomart.screens.objects['smScreen' + _i].screen_container_dom = document.getElementById 'smScreen' + _i
+          siomart.screens.objects['smScreen' + _i].initialize_offers()
 
-        _i++
+          _i++
+
+      true
+
+
+    prev_screen : () ->
+      alert 'prev screen'
 
   screen : () ->
-
     this.screen_id = undefined
     this.screen_container_dom = undefined
     this.is_offers_locked = false
+    this.is_locked = false
     this.active_offer = 1
     this.total_offers = undefined
 
@@ -432,7 +436,7 @@ siomart =
     this.utils.add_single_listener this.utils.ge('smCategoriesButton'), 'click'
 
     ## Контроллеры слайдов с офферами
-    this.init_screens()
+    this.screens.init()
 
   init : () ->
 
@@ -500,6 +504,8 @@ siomart.screen.prototype =
     if index == this.active_offer
       return false
 
+    console.log this
+
     _offer =  siomart.utils.ge 'smOffer' + this.screen_id + 'o' + index
 
     is_mart_offert = _offer.getAttribute 'data-is-mart-offer'
@@ -545,8 +551,6 @@ siomart.screen.prototype =
 
   initialize_offers : () ->
 
-    console.log 'initialize offers for ' + this.screen_id
-
     this.active_offer = 0
 
     _i = 0
@@ -569,15 +573,14 @@ siomart.screen.prototype =
 
         _a.id = 'smOfferButton' + this.screen_id + 'o' + _i
 
+        console.log '1'
+
         siomart.utils.add_single_listener _a, 'click', ( event ) ->
-
-          alert 'click'
-
           event.preventDefault()
 
           screen_id = this.getAttribute 'data-screen-id'
           index = this.getAttribute 'data-index'
-          siomart.screens[screen_id].show_offer index
+          siomart.screens.objects[screen_id].show_offer index
         _i++
 
     this.total_offers = _i

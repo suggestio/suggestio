@@ -1,10 +1,13 @@
-@()
+@(is_first:Boolean=false)
 
 @* Кнопка назад / выход *@
 <div class="back-close-button">
   <div class="cb-i">
-    <a class="close" id="smCloseButton" href=""></a>
-    <a class="back" href=""></a>
+    @if( is_first ){
+      <a class="close" id="smCloseButton" href=""></a>
+    }else{
+      <a class="back" href=""></a>
+    }
   </div>
 </div>
 
