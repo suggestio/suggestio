@@ -21,38 +21,47 @@
 
   <div class="title-wrap">
     <div class="center">
-      <a class="back-but" href="@routes.MarketLk.lkList">&nbsp;</a>
+      @*<a class="back-but" href="@routes.MarketLk.lkList">&nbsp;</a>*@
       <div class="title-inner" style="float: left; padding: 0;">
         ЛИЧНЫЙ КАБИНЕТ ТЦ
       </div>
+
       <div class="gray-but-wrap" style="float: right; margin-top: -16px;">
         <div class="white-border-top">
           <a class="btn" href="@shopsShow(mmart.id.get)">АРЕНДАТОРЫ</a>
         </div>
       </div>
+
+      <div class="gray-but-wrap" style="float: right; margin-top: -16px; margin-right: 20px;">
+        <div class="white-border-top">
+          <a id="martInstallScriptButton" class="btn" href="@shopsShow(mmart.id.get)">КОД УСТАНОВКИ</a>
+        </div>
+      </div>
+
     </div>
   </div>
 
-    <div class="body">
-      <div class="shop-info">
+  <div class="body">
+    <div class="shop-info">
 
-        <input id="maxMartAds" type="hidden" value="@mmart.settings.supL1MaxAdsShown" />
+      <input id="maxMartAds" type="hidden" value="@mmart.settings.supL1MaxAdsShown" />
 
-        <div class="name-wrap">
-          <span class="name">@mmart.name</span>
-          <a class="edit" href="@martEditForm(mmart.id.get)">Редактировать</a>
-          @if(isSuperuser) {
-            <a href="@routes.SysMarket.martShow(mmart.id.get)">/sys</a>
-          }
-        </div>
-        <div class="border-line"></div>
-        <div class="name-wrap">
-          @mmart.town, @mmart.address
-        </div>
-        <div class="border-line"></div>
+      <div class="name-wrap">
+        <span class="name">@mmart.name</span>
+        <a class="edit" href="@martEditForm(mmart.id.get)">Редактировать</a>
 
+        @if(isSuperuser) {
+          <a class="superuser-link" href="@routes.SysMarket.martShow(mmart.id.get)">/sys</a>
+        }
       </div>
 
+      <div class="border-line"></div>
+      <div class="name-wrap">
+        @mmart.town, @mmart.address
+      </div>
+
+      <div class="border-line"></div>
+    </div>
 
     @* Рендер списка карточек арендатора. *@
     @market.lk.ad._adsEditableListTpl(
@@ -73,7 +82,28 @@
 
     }
 
-    </div><!-- .body end -->
+  </div><!-- .body end -->
 
 
+
+  <div class="popup" id="martInstallScriptPopup" style="display: none;">
+    <div class="hat">
+      <a href="#" class="close">&nbsp;</a>
+    </div>
+    <div class="content">
+
+      <div class="title">СКРИПТ ДЛЯ УСТАНОВКИ НА САЙТ</div>
+
+      <div class="textarea">
+      <textarea>
+        @market._mmartInstallScriptTpl( mmart )
+      </textarea>
+      </div>
+
+      <div class="note">
+        Скопируйте код из поля выше и вставьте его на все страницы вашего сайта перед загрывающим тегом <span class="blue">&lt;/body&gt;</span>
+      </div>
+
+    </div>
+  </div>
 }

@@ -1,0 +1,13 @@
+@(mmart:MMart)(implicit ctx: util.Context)
+<script type="text/javascript">
+  (function() {
+  var _siom = document.createElement("script");
+  _siom.type = "text/javascript";
+  _siom.async = true;
+  _siom.src = "@ctx.myProto://@ctx.request.host/assets/javascripts/market/showcase/showcase.min.js";
+  var _sh = document.getElementsByTagName("head")[0];
+  window.siomart_index = '@routes.Market.martIndex(mmart.id.get)'
+  window.siomart_id = '@mmart.id.get'
+  _sh.appendChild(_siom);
+  })();
+</script>

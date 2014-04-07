@@ -2,7 +2,7 @@
 
 @import util.TplDataFormatUtil._
 
-<div class="sm-offer @if(isHidden){ sm-hidden-offer }" data-is-mart-offer="@mshopOpt.nonEmpty">
+<div class="sm-offer sm-sngl-offer @if(isHidden){ sm-hidden-offer }" data-is-mart-offer="@mshopOpt.nonEmpty">
 
   @ad.panel.map { panelSettings =>
     <div class="offer-header" style="background-color: #@panelSettings.color">
@@ -63,7 +63,7 @@
       }
 
       @mshopOpt.map { mshop =>
-        <a class="sm-button" onclick="siomart.offers.load_for_shop_id('@mshop.id');">ПРЕДЛОЖЕНИЯ МАГАЗИНА</a>
+        <a class="sm-button" onclick="siomart.load_for_shop_id('@mshop.id');">ПРЕДЛОЖЕНИЯ МАГАЗИНА</a>
       }
 
     </div>

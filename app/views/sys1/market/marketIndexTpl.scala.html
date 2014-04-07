@@ -3,15 +3,25 @@
 @* Список ссылок на страницы управления магазинной частью. *@
 
 @marketBase("index") {
-  Страница маркета содержит ссылки на административные страницы, касающие магазинной части.
-  <br/><br/>
-  <p><a href="@routes.SysMarket.companiesList">Все компании</a>,
-     <a href="@routes.SysMarket.companyAddForm">+добавить</a></p>
+  <p>
+    Страница маркета содержит ссылки на административные страницы, касающие магазинной части.
+  </p>
 
-  <p><a href="@routes.SysMarket.martsList">Все ТЦ</a></p>
+  <p>
+    <a href="@routes.SysMarket.companiesList">Все компании</a>,
+    <a class="add" href="@routes.SysMarket.companyAddForm">+добавить</a>
+  </p>
 
-  <p><a href="@routes.SysMarket.shopsList">Все магазины/арендаторы</a>,
-     <a href="@routes.SysMarket.shopAddForm">+добавить</a></p>
+  <p>
+    <a href="@routes.SysMarket.martsList">Все ТЦ</a>
+  </p>
 
-  <p><a href="@routes.SysMarket.showYmCats">YM-категории</a></p>
+  <p>
+    <a href="@routes.SysMarket.shopsList">Все магазины/арендаторы</a>,
+    <a class="add" href="@routes.SysMarket.shopAddForm">+добавить</a>
+  </p>
+
+  <p>
+    <a href="@routes.SysMarket.showYmCats">YM-категории</a>
+  </p>
 }

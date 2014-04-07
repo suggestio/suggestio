@@ -4,7 +4,7 @@
 } else {
   @ads.map { ad =>
     @if( isNav ){
-      <a href="" @if( (ad eq ads.head) ){class="active"}><span></span></a>
+      <a class="sm-offer-control @if( (ad eq ads.head) ){active}" href=""><span></span></a>
     } else {
       @_single_offer(ad, mmart, ad.producerId.flatMap(shops.get), isHidden = !(ad eq ads.head))
     }

@@ -3,16 +3,10 @@
 @* Начальная страница для sio-market. *@
 
 @if(!ads.isEmpty) {
-@market.showcase.baseTpl() {
 
-  @* Список офферов, подгружается динамически *@
-  <div class="sm-offers" id="smOffers">
-    @_offers_list(mmart, ads, shops)
+  <div class="sm-screen sm-hidden-screen">
+    @_screen_nav_buttons()
+    @_sm_offers(mmart, ads, shops)
   </div>
 
-  @* Кнопочки-кружочки для перелистывания слайдов с офферами *@
-  <div class="sm-offers-controller" id="smOffersController" style="width: @(ads.length*14)px">
-    @_offers_list(mmart, ads, shops, isNav=true)
-  </div>
-}
 }

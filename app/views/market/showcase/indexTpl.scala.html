@@ -2,51 +2,29 @@
 
 @* Начальная страница для sio-market. *@
 
-@market.showcase.baseTpl() {
+  <div id="smScreens">
 
-  <div class="sm-screen">
+    <div class="sm-screen">
 
-    @* Кнопка назад / выход *@
-    <div class="back-close-button">
-      <div class="cb-i">
-        <a class="close" id="smCloseButton" href=""></a>
-        <a class="back" href=""></a>
+      @_screen_nav_buttons(true)
+      @_sm_offers(mmart, ads, shops)
+
+      <div class="sm-navigation">
+        <div class="sm-buttons">
+          <a class="sm-button" href="">Я ЗНАЮ, ЧТО ИЩУ</a>
+          <a class="sm-button" href="">ПОМОГИТЕ МНЕ С ВЫБОРОМ</a>
+        </div>
       </div>
-    </div>
 
-    @* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
-    <div class="categories-button">
-      <a href="" id="smCategoriesButton"></a>
-    </div>
-
-    <div id="smOffersList">
-    @* Список офферов, подгружается динамически *@
-    <div class="sm-offers" id="smOffers">
-      @_offers_list(mmart, ads, shops)
-    </div>
-
-    @* Кнопочки-кружочки для перелистывания слайдов с офферами *@
-    <div class="sm-offers-controller" id="smOffersController" style="width: @(ads.length*14)px; margin-left: -@(ads.length*14/2)px">
-      @_offers_list(mmart, ads, shops, isNav=true)
-    </div>
-    </div>
-
-    @* Окно с выбором категорий *@
-    @_categories(mmcats,mmart)
-
-    @* Окно с предупреждением о выходе из Sio.Market *@
-    @_exit_screen()
-
-    @* Окно с выбором магазина *@
-    @_shop_list(shops,mmart)
-
-    <div class="sm-navigation" id="smIndexNavigation">
-      <div class="sm-buttons">
-        <a class="sm-button" href="">Я ЗНАЮ, ЧТО ИЩУ</a>
-        <a class="sm-button" href="">ПОМОГИТЕ МНЕ С ВЫБОРОМ</a>
-      </div>
     </div>
 
   </div>
 
-}
+  @* Окно с выбором категорий *@
+  @_categories(mmcats,mmart)
+
+  @* Окно с предупреждением о выходе из Sio.Market *@
+  @_exit_screen()
+
+  @* Окно с выбором магазина *@
+  @_shop_list(shops,mmart)

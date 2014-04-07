@@ -40,21 +40,7 @@
   <iframe src="@siteUrl"></iframe>
 }
 
-@helper.javascriptRouter("jsRoutes")(
-  routes.javascript.Market.martIndex
-)
-
-<script type="text/javascript">
-	  (function() {
-	    var _siom = document.createElement("script");
-	    _siom.type = "text/javascript";
-	    _siom.async = true;
-	    _siom.src = "@ctx.myProto://@ctx.request.host/assets/javascripts/market/showcase/showcase.min.js";
-	    var _sh = document.getElementsByTagName("head")[0];
-      window.siomart_index = jsRoutes.controllers.Market.martIndex('@mmart.id').url
-	    _sh.appendChild(_siom);
-	  })();
-  </script>
+@market._mmartInstallScriptTpl( mmart )
 
 </body>
 
