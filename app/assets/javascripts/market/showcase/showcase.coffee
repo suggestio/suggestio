@@ -354,21 +354,21 @@ siomart =
   #########
 
   screen : () ->
+
     this.screen_id = undefined
     this.is_offers_locked = false
     this.active_offer = 1
     this.total_offers = undefined
 
-    ## Загрузить все офферы для магазина
-    this.load_for_shop_id = ( shop_id ) ->
-      url = '/market/ads/' + siomart.config.mart_id + '?a.shopId=' + shop_id
-      siomart.perform_request url
+  load_for_shop_id : ( shop_id ) ->
+    url = '/market/ads/' + siomart.config.mart_id + '?a.shopId=' + shop_id
+    siomart.perform_request url
 
-    ## Загрузить все офферы для магазина
-    this.load_for_cat_id = ( cat_id ) ->
-      url = '/market/ads/' + siomart.config.mart_id + '?a.catId=' + cat_id
-      siomart.perform_request url
-      siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+  ## Загрузить все офферы для магазина
+  load_for_cat_id : ( cat_id ) ->
+    url = '/market/ads/' + siomart.config.mart_id + '?a.catId=' + cat_id
+    siomart.perform_request url
+    siomart.utils.ge('smCategoriesScreen').style.display = 'none'
 
   #############################################
   ## Забиндить события на навигационные кнопари
