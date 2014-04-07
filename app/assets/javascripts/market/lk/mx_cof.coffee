@@ -569,6 +569,16 @@ StatusBar =
 ## TODO: отрефакторить
 ######################
 market =
+
+  ## Главная страница ЛК торгового центра
+  mart :
+    init : () ->
+      $('#martInstallScriptButton').bind 'click', () ->
+        $('#martInstallScriptPopup, #overlay').show()
+        return false
+
+
+
   init_images_upload : () ->
 
     $('.w-async-image-upload').bind "change", () ->
@@ -624,6 +634,7 @@ market =
     $(document).ready () ->
       market.init_images_upload()
       market.resize_preview_photos()
+      market.mart.init()
 
 market.init()
 window.market=market

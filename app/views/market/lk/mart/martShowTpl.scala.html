@@ -34,7 +34,7 @@
 
       <div class="gray-but-wrap" style="float: right; margin-top: -16px; margin-right: 20px;">
         <div class="white-border-top">
-          <a class="btn" href="@shopsShow(mmart.id.get)">КОД УСТАНОВКИ</a>
+          <a id="martInstallScriptButton" class="btn" href="@shopsShow(mmart.id.get)">КОД УСТАНОВКИ</a>
         </div>
       </div>
 
@@ -84,11 +84,26 @@
 
   </div><!-- .body end -->
 
-  <div>
-    <textarea>
-      @market._mmartInstallScriptTpl( mmart )
-    </textarea>
+
+
+  <div class="popup" id="martInstallScriptPopup" style="display: none;">
+    <div class="hat">
+      <a href="#" class="close">&nbsp;</a>
+    </div>
+    <div class="content">
+
+      <div class="title">СКРИПТ ДЛЯ УСТАНОВКИ НА САЙТ</div>
+
+      <div class="textarea">
+      <textarea>
+        @market._mmartInstallScriptTpl( mmart )
+      </textarea>
+      </div>
+
+      <div class="note">
+        Скопируйте код из поля выше и вставьте его на все страницы вашего сайта перед загрывающим тегом <span class="blue">&lt;/body&gt;</span>
+      </div>
+
+    </div>
   </div>
-
-
 }
