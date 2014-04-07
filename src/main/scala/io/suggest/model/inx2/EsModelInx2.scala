@@ -15,7 +15,7 @@ import io.suggest.event.SioNotifierStaticClientI
  * Description: Подобие EsModel, но с учетом того, что информация об индексе, в котором лежат данные,
  * приходит в качестве параметра вызова.
  */
-trait EsModelInx2StaticT[T, +InxT <: MInxT] {
+trait EsModelInx2StaticT[T, InxT <: MInxT] {
 
   protected def dummy(id: String, inx2: InxT): T
 
@@ -77,7 +77,7 @@ trait EsModelInx2StaticT[T, +InxT <: MInxT] {
 
 
 /** Когда индекс является single-индексом, доступны ещё кое-какие функции. */
-trait EsModelInx2StaticSingleT[T, +InxT <: MSingleInxT] extends EsModelInx2StaticT[T, InxT] {
+trait EsModelInx2StaticSingleT[T, InxT <: MSingleInxT] extends EsModelInx2StaticT[T, InxT] {
 
   /**
    * Выбрать ряд из таблицы по id.

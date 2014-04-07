@@ -59,7 +59,6 @@ case class MWelcomeAd(
   @JsonIgnore override def textAlign: Option[TextAlign] = None
   @JsonIgnore override def panel: Option[AdPanelSettings] = None
   @JsonIgnore override def prio: Option[Int] = None
-  @JsonIgnore override def showLevels: Set[AdShowLevel] = Set.empty
   @JsonIgnore override def userCatId: Option[String] = None
   @JsonIgnore override def logoImgOpt: Option[MImgInfo] = None
   @JsonIgnore override def receivers: Set[AdReceiverInfo] = Set.empty

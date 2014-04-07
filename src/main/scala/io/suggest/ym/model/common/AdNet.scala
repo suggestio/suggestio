@@ -27,14 +27,14 @@ object AdNetMemberTypes extends Enumeration {
 
 
 /** Известные системе типы офферов. */
-object MMartAdOfferTypes extends Enumeration {
-  type MMartAdOfferType = Value
+object AdOfferTypes extends Enumeration {
+  type AdOfferType = Value
 
   val PRODUCT   = Value("p")
   val DISCOUNT  = Value("d")
   val TEXT      = Value("t")
 
-  def maybeWithName(n: String): Option[MMartAdOfferType] = {
+  def maybeWithName(n: String): Option[AdOfferType] = {
     try {
       Some(withName(n))
     } catch {

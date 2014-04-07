@@ -70,6 +70,6 @@ trait EMProducerId[T <: EMProducerId[T]] extends EsModelT[T] {
   }
 }
 
-trait EMProducerIdMut[T <: EMProducerIdMut] extends EMProducerId[T] {
+trait EMProducerIdMut[T <: EMProducerIdMut[T]] extends EMProducerId[T] {
   var producerId: String
 }

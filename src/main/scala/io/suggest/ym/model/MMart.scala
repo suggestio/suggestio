@@ -11,7 +11,6 @@ import io.suggest.model._
 import io.suggest.model.EsModel._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.MyConfig.CONFIG
-import io.suggest.ym.model.common._
 import io.suggest.util.SioEsUtil.FieldAll
 import io.suggest.util.SioEsUtil.FieldString
 import io.suggest.util.SioEsUtil.FieldNumber
@@ -42,14 +41,14 @@ object MMart extends EsModelStaticT[MMart] {
     FieldAll(enabled = false)
   )
 
-  override def generateMappingProps: List[DocField] = super.generateMappingProps ++ List(
+  def generateMappingProps: List[DocField] = List(
     FieldString(COLOR_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
     FieldString(WELCOME_AD_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
     FieldNumber(MMartSettings.MAX_L1_ADS_SHOWN_ESFN, fieldType = DocFieldTypes.integer, include_in_all = false, index = FieldIndexingVariants.no)
   )
 
 
-  override def applyKeyValue(acc: MMart): PartialFunction[(String, AnyRef), Unit] = super.applyKeyValue(acc) orElse {
+  override def applyKeyValue(acc: MMart): PartialFunction[(String, AnyRef), Unit] = {
     case (COLOR_ESFN, value)          => acc.color = Option(stringParser(value))
     case (WELCOME_AD_ID_ESFN, value)  => acc.welcomeAdId = Option(stringParser(value))
     // Сеттинг
@@ -162,7 +161,6 @@ case class MMart(
   }
 
   override def writeJsonFields(acc: XContentBuilder) {
-    super.writeJsonFields(acc)
     if (color.isDefined)
       acc.field(COLOR_ESFN, color.get)
     if (welcomeAdId.isDefined)

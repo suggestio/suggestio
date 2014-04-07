@@ -12,6 +12,7 @@ import io.suggest.ym.model.common.EMProducerId.PRODUCER_ID_ESFN
 import io.suggest.ym.model.common.EMUserCatId.USER_CAT_ID_ESFN
 import io.suggest.ym.model.common.EMShowLevels.SHOW_LEVELS_ESFN
 import io.suggest.util.SioEsUtil.laFuture2sFuture
+import io.suggest.model.{EsModelMinimalT, EsModelMinimalStaticT, EsModelStaticT}
 
 /** Статичная утиль для генерации поисковых ES-запросов. */
 object AdsSearch {
@@ -92,7 +93,7 @@ trait AdsSearchArgsT {
 
 /** Если нужно добавить в рекламную inx2-модель поиск по рекламным карточкам,
   * то следует задействовать вот этот трейт. */
-trait AdsSearchT[T, +InxT <: MInxT] {
+trait AdsSearchT[T, InxT <: MInxT] {
   
   def searchResp2list(searchResp: SearchResponse, inx2: InxT): Seq[T]
   
@@ -112,4 +113,27 @@ trait AdsSearchT[T, +InxT <: MInxT] {
       .map { searchResp2list(_, inx2) }
   }
   
+}
+
+
+
+/** Если нужно добавить в рекламную inx2-модель поиск по рекламным карточкам,
+  * то следует задействовать вот этот трейт. */
+trait AdsSimpleSearchT[T <: EsModelMinimalT[T]] extends EsModelMinimalStaticT[T] {
+
+  /**
+   * Поиск карточек в ТЦ по критериям.
+   * @return Список рекламных карточек, подходящих под требования.
+   */
+  def searchAds(adSearch: AdsSearchArgsT)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
+    val query = AdsSearch.prepareEsQuery(adSearch)
+    // Запускаем собранный запрос.
+    prepareSearch
+      .setQuery(query)
+      .setSize(adSearch.maxResults)
+      .setFrom(adSearch.offset)
+      .execute()
+      .map { searchResp2list }
+  }
+
 }

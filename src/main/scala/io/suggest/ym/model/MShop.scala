@@ -51,7 +51,7 @@ object MShop extends EsModelStaticT[MShop] {
     FieldAll(enabled = true, index_analyzer = EDGE_NGRAM_AN_1)
   )
 
-  override def generateMappingProps: List[DocField] = super.generateMappingProps ++ List(
+  override def generateMappingProps: List[DocField] = List(
     FieldString(DESCRIPTION_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
     FieldNumber(MART_FLOOR_ESFN, fieldType = DocFieldTypes.integer, include_in_all = true, index = FieldIndexingVariants.no),
     FieldNumber(MART_SECTION_ESFN, fieldType = DocFieldTypes.integer, include_in_all = true, index = FieldIndexingVariants.no),
@@ -72,7 +72,7 @@ object MShop extends EsModelStaticT[MShop] {
   )
 
 
-  override def applyKeyValue(acc: MShop): PartialFunction[(String, AnyRef), Unit] = super.applyKeyValue(acc) orElse {
+  override def applyKeyValue(acc: MShop): PartialFunction[(String, AnyRef), Unit] = {
     case (DESCRIPTION_ESFN, value)    => acc.description = Option(descriptionParser(value))
     case (MART_FLOOR_ESFN, value)     => acc.martFloor   = Option(martFloorParser(value))
     case (MART_SECTION_ESFN, value)   => acc.martSection = Option(martSectionParser(value))

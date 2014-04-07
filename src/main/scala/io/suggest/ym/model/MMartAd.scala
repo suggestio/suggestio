@@ -28,6 +28,7 @@ import ad._
  * prio используется для задания приоритета в отображении в рамках магазина. На текущий момент там всё просто:
  * если null, то приоритета нет, если 1 то он есть.
  */
+@deprecated("mart+shop arch deprecated. Use MAd instead.", "2014.apr.07")
 object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
 
   import LOGGER._
@@ -96,6 +97,8 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
   }
 
 
+  def generateMappingStaticFields: List[Field] = ???
+
   /**
    * Найти все рекламные карточки магазина с поправкой на реалтаймовое обновление индекса.
    * @param shopId id магазина
@@ -157,7 +160,6 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
 
 
   override def applyKeyValue(acc: MMartAd): PartialFunction[(String, AnyRef), Unit] = {
-    super.applyKeyValue(acc) orElse {
       case (PRIO_ESFN, value)         => acc.prio = Option(intParser(value))
       case (USER_CAT_ID_ESFN, value)  => acc.userCatId = Option(stringParser(value))
       case (OFFERS_ESFN, value: java.lang.Iterable[_]) =>
@@ -165,9 +167,9 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
           case jsObject: java.util.Map[_, _] =>
             jsObject.get(OFFER_TYPE_ESFN) match {
               case ots: String =>
-                val ot = MMartAdOfferTypes.withName(ots)
+                val ot = AdOfferTypes.withName(ots)
                 val offerBody = jsObject.get(OFFER_BODY_ESFN)
-                import MMartAdOfferTypes._
+                import AdOfferTypes._
                 ot match {
                   case PRODUCT  => AOProduct.deserialize(offerBody)
                   case DISCOUNT => AODiscount.deserialize(offerBody)
@@ -178,7 +180,6 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       case (PANEL_ESFN, value)        => acc.panel = Option(JacksonWrapper.convert[AdPanelSettings](value))
       case (TEXT_ALIGN_ESFN, value)   => acc.textAlign = Option(JacksonWrapper.convert[TextAlign](value))
       case (IMG_ESFN, value)          => acc.img = JacksonWrapper.convert[MImgInfo](value)
-    }
   }
 
   /** Генератор пропертисов для маппигов индексов этой модели. */
@@ -224,7 +225,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       FieldString(OFFER_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
       FieldObject(OFFER_BODY_ESFN, enabled = true, properties = offerBodyProps)
     ))
-    super.generateMappingProps ++ List(
+    List(
       FieldObject(IMG_ESFN, enabled = false, properties = Nil),
       FieldObject(TEXT_ALIGN_ESFN,  enabled = false,  properties = Nil),
       FieldString(USER_CAT_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed),
@@ -252,9 +253,9 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
         }
         // TODO Нужно одновременно удалять вторичный логотип в logoImg!
         val resultFut = super.deleteById(id)
-        resultFut onSuccess { case _ =>
+        /*resultFut onSuccess { case _ =>
           sn publish AdDeletedEvent(ad)
-        }
+        }*/
         resultFut
 
       case None => Future successful false
@@ -345,12 +346,12 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
             case ((bulk1, madsAcc), (mad, urb))  =>  bulk1.add(urb) -> (mad :: madsAcc)
           }
           val resultFut = laFuture2sFuture(brb.execute())
-          resultFut onSuccess { case bulkResp =>
+          /*resultFut onSuccess { case bulkResp =>
             // Сообщить всем, что имело место обновления записей.
             mads foreach { mad =>
               sn publish AdSavedEvent(mad)
             }
-          }
+          }*/
           resultFut
         }
       }
@@ -376,8 +377,8 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
     // Эта функция исходит из того, что ВКЛючается уровень. Т.к. уровень всего 1, то его отключение отрабаыватеся в setShowLevels().
     import thisAd.receivers
     import AdShowLevels.{LVL_RECEIVER_TOP => l1}
-    val maxAdsFut = MMart.getById(thisAd.receivers).map(_.get.settings.supL1MaxAdsShown)
-    val countQuery = martSearchQuery(receivers, shopMustMiss = true, withLevels = Some(Seq(l1)))
+    val maxAdsFut: Future[Int] = ??? // MMart.getById(thisAd.receivers).map(_.get.settings.supL1MaxAdsShown)
+    val countQuery: QueryBuilder = ??? // martSearchQuery(receivers, shopMustMiss = true, withLevels = Some(Seq(l1)))
     // Нужно отсеять из подсчёта текущий id, если он там есть.
     val idFilter = FilterBuilders.notFilter( FilterBuilders.termFilter(MART_ID_ESFN, thisAd.id.get) )
     val count2query = QueryBuilders.filteredQuery(countQuery, idFilter)
@@ -399,9 +400,9 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
       .setDoc(mkLevelsUpdateDoc(thisAd.showLevels))
       .execute()
     // Уведомить всех о том, что в текущей рекламе были изменения.
-    resultFut onSuccess { case updateResp =>
-      sn publish AdSavedEvent(thisAd)
-    }
+    //resultFut onSuccess { case updateResp =>
+    //  sn publish AdSavedEvent(thisAd)
+    //}
     resultFut
   }
 
@@ -420,6 +421,7 @@ import MMartAd._
  * @param showLevels Список уровней, на которых должна отображаться эта реклама.
  * @param id id товара.
  */
+@deprecated("mart+shop arch deprecated. Use MAd instead.", "2014.apr.07")
 case class MMartAd(
   var producerId   : ShopId_t,
   var producerType : AdNetMemberType,
@@ -462,10 +464,10 @@ case class MMartAd(
    */
   override def save(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
     val resultFut = super.save
-    resultFut onSuccess { case adId =>
+    /*resultFut onSuccess { case adId =>
       this.id = Option(adId)
       sn publish AdSavedEvent(this)
-    }
+    }*/
     resultFut
   }
 
@@ -476,7 +478,12 @@ case class MMartAd(
 }
 
 /** Интерфейс экземпляра модели для возможности создания классов-врапперов. */
+@deprecated("mart+shop arch deprecated. Use MAd instead.", "2014.apr.07")
 trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
+  def producerId   : ShopId_t
+  def companyId    : MCompany.CompanyId_t
+  def receivers    : Set[AdReceiverInfo]
+  def producerType : AdNetMemberType
   def offers       : List[AdOfferT]
   def textAlign    : Option[TextAlign]
   def panel        : Option[AdPanelSettings]
@@ -485,11 +492,11 @@ trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
   def userCatId    : Option[String]
   def img          : MImgInfo
   def logoImgOpt   : Option[MImgInfo]
+  def dateCreated  : DateTime
 
   @JsonIgnore def isShopAd: Boolean = producerType == AdNetMemberTypes.SHOP
 
   override def writeJsonFields(acc: XContentBuilder) {
-    super.writeJsonFields(acc)
     if (userCatId.isDefined)
       acc.field(USER_CAT_ID_ESFN, userCatId.get)
     if (prio.isDefined)
@@ -520,6 +527,7 @@ trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
 /** Враппер для моделей [[MMartAdT]]. Позволяет легко и быстро написать wrap-модель над уже готовым
   * экземпляром [[MMartAdT]]. Полезно на экспорт-моделях, которые занимаются сохранением расширенных экземпляров
   * [[MMartAdT]] в другие ES-индексы. */
+@deprecated("mart+shop arch deprecated. Use MAd instead.", "2014.apr.07")
 trait MMartAdWrapperT[T <: MMartAdT[T]] extends MMartAdT[T] {
   def mmartAd: MMartAdT[T]
 
@@ -536,22 +544,6 @@ trait MMartAdWrapperT[T <: MMartAdT[T]] extends MMartAdT[T] {
   def dateCreated = mmartAd.dateCreated
   def img = mmartAd.img
   def producerType: AdNetMemberType = mmartAd.producerType
-
-  def companyId_=(companyId: MCompany.CompanyId_t) {
-    mmartAd.companyId = companyId
-  }
-  def dateCreated_=(dateCreated: DateTime) {
-    mmartAd.dateCreated = dateCreated
-  }
-  def producerType_=(producerType: AdNetMemberType) {
-    mmartAd.producerType = producerType
-  }
-  def receivers_=(receivers: Set[AdReceiverInfo]) {
-    mmartAd.receivers = receivers
-  }
-  def producerId_=(producerId: String) {
-    mmartAd.producerId = producerId
-  }
   def logoImgOpt = mmartAd.logoImgOpt
 
   @JsonIgnore def companion: EsModelMinimalStaticT[T] = mmartAd.companion
@@ -562,9 +554,11 @@ trait MMartAdWrapperT[T <: MMartAdT[T]] extends MMartAdT[T] {
 
 
 /** JMX MBean интерфейс */
+@deprecated("mart+shop arch deprecated. Use MAdJmx instead.", "2014.apr.07")
 trait MMartAdJmxMBean extends EsModelJMXMBeanCommon
 
 /** JMX MBean реализация. */
+@deprecated("mart+shop arch deprecated. Use MAdJmx instead.", "2014.apr.07")
 case class MMartAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase with MMartAdJmxMBean {
   def companion = MMartAd

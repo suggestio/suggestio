@@ -10,6 +10,7 @@ import io.suggest.ym.model.MShop
  * Created: 19.03.14 14:03
  * Description: События MShop.
  */
+@deprecated("shop+mart arch deprecated. Use AdnNodeSavedEvent", "2014.apr.07")
 object MShopSavedEvent {
 
   val headSneToken: Option[String] = Some(getClass.getSimpleName)
@@ -20,13 +21,14 @@ object MShopSavedEvent {
 
 }
 
-
+@deprecated("shop+mart arch deprecated. Use AdnNodeSavedEvent", "2014.apr.07")
 case class MShopSavedEvent(mshop: MShop) extends SioEventT {
   def getClassifier: Classifier = MShopSavedEvent.getClassifier(mshop.id)
 }
 
 
 /** Событие переключения через [[io.suggest.ym.model.MShop.setIsEnabled()]]. */
+@deprecated("shop+mart arch deprecated. Use AdnNodeOnOffEvent", "2014.apr.07")
 object MShopOnOffEvent {
 
   val headSneToken: Option[String] = Some(getClass.getSimpleName)
@@ -38,6 +40,7 @@ object MShopOnOffEvent {
 }
 
 /** Экземпляр события переключение через [[io.suggest.ym.model.MShop.setIsEnabled()]]. */
+@deprecated("shop+mart arch deprecated. Use AdnNodeOnOffEvent", "2014.apr.07")
 case class MShopOnOffEvent(shopId: ShopId_t, isEnabled: Boolean, reason: Option[String]) extends SioEventT {
   def getClassifier: Classifier = MShopOnOffEvent.getClassifier(
     shopId = Option(shopId),

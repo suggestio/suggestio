@@ -32,10 +32,10 @@ object MAdnNode
     companyId = null,
     personIds = Set.empty,
     adnMemberInfo = null,
-    legalInfo = null,
+    legal = null,
     visual = null,
     pubSettings = null,
-    metadata = null,
+    meta = null,
     id = Option(id)
   )
 
@@ -63,10 +63,10 @@ case class MAdnNode(
   var companyId     : CompanyId_t,
   var personIds     : Set[String],
   var adnMemberInfo : AdNetMemberInfo,
-  var legalInfo     : AdnLegalEntityInfo,
+  var legal         : AdnLegalEntityInfo,
   var visual        : AdnVisual,
   var pubSettings   : AdnMPubSettings,
-  var metadata      : AdnMMetadata,
+  var meta          : AdnMMetadata,
   var id            : Option[String] = None
 )
   extends EsModelEmpty[MAdnNode]
@@ -86,8 +86,8 @@ case class MAdnNode(
   @JsonIgnore
   override def isFieldsValid: Boolean = {
     super.isFieldsValid &&
-      companyId != null && personIds != null && adnMemberInfo != null && legalInfo != null &&
-      visual != null && pubSettings != null && metadata != null
+      companyId != null && personIds != null && adnMemberInfo != null && legal != null &&
+      visual != null && pubSettings != null && meta != null
   }
 
 

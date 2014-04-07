@@ -1,11 +1,9 @@
 package io.suggest.ym.model.common
 
-import io.suggest.model.{EsModel, EsModelStaticT, EsModelT}
+import io.suggest.model.{EsModelStaticT, EsModelT}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.JacksonWrapper
 import io.suggest.util.SioEsUtil._
-import EsModel._
-import io.suggest.ym.model.MImgInfo
 
 /**
  * Suggest.io

@@ -11,6 +11,8 @@ import scala.Some
  * Created: 18.02.14 15:33
  * Description: Событие удаление магазина из торгового центра.
  */
+
+@deprecated("shop+mart arch deprecated. Use AdnNodeDeletedEvent", "2014.apr.07")
 object YmShopDeletedEvent {
 
   def headSneToken: Option[String] = Some(getClass.getSimpleName)
@@ -22,6 +24,7 @@ object YmShopDeletedEvent {
 }
 
 
+@deprecated("shop+mart arch deprecated. Use AdnNodeDeletedEvent", "2014.apr.07")
 case class YmShopDeletedEvent(martId: MartId_t, shopId: ShopId_t) extends SioEventT {
   override def getClassifier: Classifier = {
     YmShopDeletedEvent.getClassifier(

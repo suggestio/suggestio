@@ -6,10 +6,9 @@ import io.suggest.ym.model.MMart.MartId_t
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
 import MInx._
-import io.suggest.ym.model.{MMartAdIndexed, MMartAd}
+import io.suggest.ym.model.MAd
 import io.suggest.util.SioEsUtil
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.action.deletebyquery.DeleteByQueryRequestBuilder
 import scala.concurrent.ExecutionContext
 import org.elasticsearch.client.Client
@@ -63,7 +62,7 @@ case class MMartInx(
   }
 
   @JsonIgnore def esTypePrefix: String = martId + "_"
-  @JsonIgnore override val targetEsType = esTypePrefix + MMartAd.ES_TYPE_NAME
+  @JsonIgnore override val targetEsType = esTypePrefix + MAd.ES_TYPE_NAME
 
 
   def esInxSettings(shards: Int, replicas: Int = 1): XContentBuilder = {
@@ -74,8 +73,8 @@ case class MMartInx(
   def esAdMapping(esTypeSuffix: String): XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
       typ = if (esTypeSuffix startsWith esTypePrefix) esTypeSuffix else esTypePrefix + esTypeSuffix,
-      staticFields = MMartAdIndexed.generateMappingStaticFields,
-      properties = MMartAdIndexed.generateMappingProps
+      staticFields = MAd.generateMappingStaticFields,
+      properties = MAd.generateMappingProps
     )
   }
 

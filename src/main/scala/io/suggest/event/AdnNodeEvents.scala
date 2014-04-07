@@ -1,7 +1,7 @@
 package io.suggest.event
 
 import io.suggest.event.SioNotifier.Classifier
-import io.suggest.ym.model.MAdnNode
+import io.suggest.ym.model.{AdNetMemberType, MAdnNode}
 
 /**
  * Suggest.io
@@ -15,14 +15,17 @@ import io.suggest.ym.model.MAdnNode
 object AdnNodeSavedEvent {
   val headSne = Some(getClass.getSimpleName)
 
-  def getClassifier(adnId: Option[String] = None, isCreated: Option[Boolean] = None): Classifier = {
-    List(headSne, adnId, isCreated)
+  def getClassifier(memberType: Option[AdNetMemberType] = None,
+                    adnId: Option[String] = None,
+                    isCreated: Option[Boolean] = None): Classifier = {
+    List(headSne, memberType, adnId, isCreated)
   }
 }
 
 case class AdnNodeSavedEvent(adnId: String, adnNode: MAdnNode, isCreated: Boolean) extends SioEventT {
   def getClassifier: Classifier = AdnNodeSavedEvent.getClassifier(
-    adnId = Some(adnId),
+    memberType = Option(adnNode.adnMemberInfo.memberType),
+    adnId = Option(adnId),
     isCreated = Some(isCreated)
   )
 }
@@ -33,13 +36,38 @@ case class AdnNodeSavedEvent(adnId: String, adnNode: MAdnNode, isCreated: Boolea
 object AdnNodeDeletedEvent {
   val headSne = Some(getClass.getSimpleName)
 
-  def getClassifier(adnId: Option[String] = None, isDeleted: Option[Boolean] = None): Classifier = {
-    List(headSne, adnId)
+  def getClassifier(adnId: Option[String] = None,
+                    isDeleted: Option[Boolean] = None): Classifier = {
+    List(headSne, adnId, isDeleted)
   }
 }
 
 case class AdnNodeDeletedEvent(adnId: String, isDeleted: Boolean) extends SioEventT {
   def getClassifier: Classifier = {
-    AdnNodeDeletedEvent.getClassifier(Some(adnId), Some(isDeleted))
+    AdnNodeDeletedEvent.getClassifier(
+      adnId = Option(adnId),
+      isDeleted = Some(isDeleted)
+    )
   }
 }
+
+
+/** Событие включения выключения узла рекламной сети. */
+object AdnNodeOnOffEvent {
+  val haadSne = Some(getClass.getSimpleName)
+
+  def getClassifier(memberType: Option[AdNetMemberType] = None,
+                    adnId: Option[String] = None,
+                    isEnabled: Option[Boolean] = None): Classifier = {
+    List(haadSne, memberType, adnId, isEnabled)
+  }
+}
+
+case class AdnNodeOnOffEvent(adn: MAdnNode) extends SioEventT {
+  def getClassifier: Classifier = AdnNodeOnOffEvent.getClassifier(
+    memberType = Option(adn.adnMemberInfo.memberType),
+    adnId = adn.id,
+    isEnabled = Some(adn.pubSettings.isEnabled)
+  )
+}
+

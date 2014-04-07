@@ -4,10 +4,10 @@ import io.suggest.model.EsModelT
 import io.suggest.model.EsModelStaticT
 import java.util.Currency
 import com.fasterxml.jackson.annotation.{JsonIgnoreProperties, JsonIgnore}
-import io.suggest.ym.model.MMartAdOfferType
+import io.suggest.ym.model.AdOfferType
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.JacksonWrapper
-import io.suggest.ym.model.common.MMartAdOfferTypes
+import io.suggest.ym.model.common.AdOfferTypes
 import io.suggest.util.SioConstants.CURRENCY_CODE_DFLT
 import io.suggest.util.SioEsUtil._
 import scala.collection.JavaConversions._
@@ -109,9 +109,9 @@ trait EMAdOffersStatic[T <: EMAdOffersMut[T]] extends EsModelStaticT[T] {
           case jsObject: java.util.Map[_, _] =>
             jsObject.get(OFFER_TYPE_ESFN) match {
               case ots: String =>
-                val ot = MMartAdOfferTypes.withName(ots)
+                val ot = AdOfferTypes.withName(ots)
                 val offerBody = jsObject.get(OFFER_BODY_ESFN)
-                import MMartAdOfferTypes._
+                import AdOfferTypes._
                 ot match {
                   case PRODUCT => AOProduct.deserialize(offerBody)
                   case DISCOUNT => AODiscount.deserialize(offerBody)
@@ -147,7 +147,7 @@ trait EMAdOffersMut[T <: EMAdOffersMut[T]] extends EMAdOffers[T] {
 // -------------- Далее идёт конструктор, из которого собираются офферы ---------------
 
 sealed trait AdOfferT extends Serializable {
-  @JsonIgnore def offerType: MMartAdOfferType
+  @JsonIgnore def offerType: AdOfferType
   def renderJson(acc: XContentBuilder) {
     acc.startObject()
     acc.field(OFFER_TYPE_ESFN, offerType.toString)
@@ -168,7 +168,7 @@ case class AOProduct(
   price:    AOPriceField,
   oldPrice: Option[AOPriceField]
 ) extends AdOfferT {
-  @JsonIgnore def offerType = MMartAdOfferTypes.PRODUCT
+  @JsonIgnore def offerType = AdOfferTypes.PRODUCT
 }
 
 object AODiscount {
@@ -180,14 +180,14 @@ case class AODiscount(
   template: AODiscountTemplate,
   text2: Option[AOStringField]
 ) extends AdOfferT {
-  @JsonIgnore def offerType = MMartAdOfferTypes.DISCOUNT
+  @JsonIgnore def offerType = AdOfferTypes.DISCOUNT
 }
 
 object AOText {
   def deserialize(jsObject: Any) = JacksonWrapper.convert[AOText](jsObject)
 }
 case class AOText(text: AOStringField) extends AdOfferT {
-  @JsonIgnore def offerType = MMartAdOfferTypes.TEXT
+  @JsonIgnore def offerType = AdOfferTypes.TEXT
 }
 
 
@@ -245,7 +245,7 @@ case class AOPriceField(value: Float, var currencyCode: String, var orig: String
 }
 
 /** Допустимые значения textAlign-полей. */
-object AOTextAlign extends Enumeration {
+object AOTextAlignValues extends Enumeration {
   type TextAlignValue = Value
   val left, right = Value
 

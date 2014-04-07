@@ -13,6 +13,7 @@ import io.suggest.ym.model.ad._
 import io.suggest.ym.model.common._
 import scala.util.{Success, Failure}
 import org.elasticsearch.index.query.QueryBuilder
+import io.suggest.model.inx2.MMartInx
 
 /**
  * Suggest.io
@@ -34,9 +35,9 @@ object MAd
   with EMUserCatIdStatic[MAd]
   with EMDateCreatedStatic[MAd]
   with EMText4SearchStatic[MAd]
+  with AdsSimpleSearchT[MAd]
   with MacroLogsImpl
 {
-
   import LOGGER._
 
   val ES_TYPE_NAME: String = "ad"
@@ -59,7 +60,7 @@ object MAd
    * @param producerId id продьюсера.
    * @return Список MAd.
    */
-  def findForProducerRt(producerId: String, maxResults: Int = 100): Future[Seq[MAd]] = {
+  def findForProducerRt(producerId: String, maxResults: Int = 100)(implicit ec: ExecutionContext, client: Client): Future[Seq[MAd]] = {
     findQueryRt(producerIdQuery(producerId), maxResults)
   }
 
@@ -69,7 +70,7 @@ object MAd
    * @param maxResults Макс. кол-во результатов.
    * @return Последовательность MAd.
    */
-  def findForReceiverRt(receiverId: String, maxResults: Int = 100): Future[Seq[MAd]] = {
+  def findForReceiverRt(receiverId: String, maxResults: Int = 100)(implicit ec: ExecutionContext, client: Client): Future[Seq[MAd]] = {
     findQueryRt(receiverIdQuery(receiverId), maxResults)
   }
 
@@ -128,7 +129,7 @@ case class MAd(
   var dateCreated : DateTime = DateTime.now
 )
   extends EsModelEmpty[MAd]
-  with MAdT
+  with MAdT[MAd]
   with EMProducerIdMut[MAd]
   with EMAdOffersMut[MAd]
   with EMImgMut[MAd]

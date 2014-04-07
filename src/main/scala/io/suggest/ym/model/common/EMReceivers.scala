@@ -91,7 +91,7 @@ trait EMReceiversStatic[T <: EMReceiversMut[T]] extends EsModelStaticT[T] {
 
 
 /** Интерфейс абстрактной карточки. */
-trait EMReceivers[T <: EsModelMinimalT[T]] extends EsModelT[T] {
+trait EMReceivers[T <: EMReceivers[T]] extends EsModelT[T] {
 
   /** Где (у кого) должна отображаться эта рекламная карточка? */
   def receivers: Set[AdReceiverInfo]
@@ -130,7 +130,7 @@ trait EMReceiversMut[T <: EMReceiversMut[T]] extends EMReceivers[T] {
 object AdReceiverInfo {
 
   /** Десериализация сериализованного AdReceiversInfo. */
-  val deserialize: PartialFunction[AnyRef, AdReceiverInfo] = {
+  val deserialize: PartialFunction[Any, AdReceiverInfo] = {
     case v: java.util.Map[_,_] =>
       AdReceiverInfo(
         receiverId = v.get(RECEIVER_ID_ESFN).toString,

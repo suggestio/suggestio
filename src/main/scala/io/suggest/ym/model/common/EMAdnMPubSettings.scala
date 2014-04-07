@@ -44,7 +44,7 @@ import EMAdnMPubSettings._
 
 trait EMAdnMPubSettingsStatic[T <: EMAdnMPubSettings[T]] extends EsModelStaticT[T] {
 
-  def generateMappingProps: List[DocField] = {
+  abstract override def generateMappingProps: List[DocField] = {
     // Для сеттингов выставляем enabled = true, но все поля не индексируем. На случай, если в будуем понадобится это изменить.
     FieldObject(PUB_SETTINGS_ESFN, enabled = true, properties = Seq(
       FieldBoolean(IS_ENABLED_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
@@ -53,25 +53,29 @@ trait EMAdnMPubSettingsStatic[T <: EMAdnMPubSettings[T]] extends EsModelStaticT[
     )) :: super.generateMappingProps
   }
 
-  def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
-    case (PUB_SETTINGS_ESFN, pubSettingsJson) =>
-      if (acc.pubSettings == null)
-        acc.pubSettings = new AdnMPubSettings
-      val ps1 = acc.pubSettings
-      pubSettingsJson match {
-        case ps: ju.Map[_,_] =>
-          ps foreach {
-            case (SHOW_LEVELS_ESFN, levelsInfoRaw) =>
-              ps1.showLevelsInfo = AdnMPubSettingsLevels.deserialize(levelsInfoRaw)
+  abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
+    super.applyKeyValue(acc) orElse {
+      case (PUB_SETTINGS_ESFN, pubSettingsJson) =>
+        if (acc.pubSettings == null)
+          acc.pubSettings = new AdnMPubSettings
+        val ps1 = acc.pubSettings
+        pubSettingsJson match {
+          case ps: ju.Map[_, _] =>
+            ps foreach {
+              case (SHOW_LEVELS_ESFN, levelsInfoRaw) =>
+                ps1.showLevelsInfo = AdnMPubSettingsLevels.deserialize(levelsInfoRaw)
 
-            case (IS_ENABLED_ESFN, isEnabledRaw) =>
-              ps1.isEnabled = booleanParser(isEnabledRaw)
+              case (IS_ENABLED_ESFN, isEnabledRaw) =>
+                ps1.isEnabled = booleanParser(isEnabledRaw)
 
-            case (DISABLE_REASON_ESFN, drRaw) =>
-              ps1.disableReason = Option(drRaw).map { stringParser(_) }  // TODO Нужно задать через method value, а не через (_). Почему-то не работает использование напрямую
-          }
-      }
-      acc.pubSettings = ps1
+              case (DISABLE_REASON_ESFN, drRaw) =>
+                ps1.disableReason = Option(drRaw).map {
+                  stringParser(_)
+                } // TODO Нужно задать через method value, а не через (_). Почему-то не работает использование напрямую
+            }
+        }
+        acc.pubSettings = ps1
+    }
   }
 
 
@@ -252,8 +256,8 @@ import AdnMPubSettingsLevels._
  * @param out Карта уровней для исходящих публикаций.
  */
 case class AdnMPubSettingsLevels(
-  var in: LvlMap_t = Map.empty,
-  var out: LvlMap_t = Map.empty
+  var in:  AdnMPubSettingsLevels.LvlMap_t = Map.empty,
+  var out: AdnMPubSettingsLevels.LvlMap_t = Map.empty
 ) {
 
   @JsonIgnore

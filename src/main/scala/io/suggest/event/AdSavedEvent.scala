@@ -1,9 +1,7 @@
 package io.suggest.event
 
-import io.suggest.ym.model.MMartAd
-import io.suggest.ym.model.MMart.MartId_t
+import io.suggest.ym.model.MAd
 import io.suggest.event.SioNotifier.Classifier
-import io.suggest.ym.model.MShop.ShopId_t
 
 /**
  * Suggest.io
@@ -15,16 +13,16 @@ object AdSavedEvent {
 
   val headSneToken: Option[String] = Some(getClass.getSimpleName)
 
-  def getClassifier(martId: Option[MartId_t] = None, shopId: Option[ShopId_t] = None): Classifier = {
-    List(headSneToken, martId, shopId)
+  def getClassifier(producerId: Option[String] = None, id: Option[String] = None): Classifier = {
+    List(headSneToken, producerId, id)
   }
 
 }
 
-case class AdSavedEvent(mmartAd: MMartAd) extends SioEventT {
+case class AdSavedEvent(mad: MAd) extends SioEventT {
   def getClassifier: Classifier = AdSavedEvent.getClassifier(
-    martId = Option(mmartAd.receiverIds),
-    shopId = mmartAd.producerId
+    producerId = Option(mad.producerId),
+    id = mad.id
   )
 }
 
@@ -35,15 +33,15 @@ object AdDeletedEvent {
 
   val headSneToken: Option[String] = Some(getClass.getSimpleName)
 
-  def getClassifier(martId: Option[MartId_t] = None, shopId: Option[ShopId_t] = None): Classifier = {
-    List(headSneToken, martId, shopId)
+  def getClassifier(producerId: Option[String] = None, id: Option[String] = None): Classifier = {
+    List(headSneToken, producerId, id)
   }
 }
 
 /** Экземпляр события удаления рекламной карточки из БД. */
-case class AdDeletedEvent(mmartAd: MMartAd) extends SioEventT {
+case class AdDeletedEvent(mad: MAd) extends SioEventT {
   def getClassifier: Classifier = AdSavedEvent.getClassifier(
-    martId = Option(mmartAd.receiverIds),
-    shopId = mmartAd.producerId
+    producerId = Option(mad.producerId),
+    id = mad.id
   )
 }

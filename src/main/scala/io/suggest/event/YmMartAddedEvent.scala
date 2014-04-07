@@ -9,6 +9,7 @@ import io.suggest.ym.model.MMart._
  * Created: 18.02.14 14:07
  * Description:
  */
+@deprecated("shop+mart arch deprecated. Use AdnNodeSavedEvent", "2014.apr.07")
 object YmMartAddedEvent {
 
   def headSneToken: Option[String] = Some(getClass.getSimpleName)
@@ -18,6 +19,7 @@ object YmMartAddedEvent {
 }
 
 
+@deprecated("shop+mart arch deprecated. Use AdnNodeSavedEvent", "2014.apr.07")
 case class YmMartAddedEvent(martId: MartId_t) extends SioEventT {
   override def getClassifier: Classifier = YmMartAddedEvent.getClassifier(martId = Option(martId))
 }

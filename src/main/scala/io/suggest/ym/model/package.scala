@@ -9,15 +9,15 @@ package io.suggest.ym
  */
 package object model {
 
-  val  AdShowLevels = common.AdShowLevels
-  type AdShowLevel  = AdShowLevels.AdShowLevel
+  val  AdShowLevels       = common.AdShowLevels
+  type AdShowLevel        = AdShowLevels.AdShowLevel
 
-  val  MMartAdOfferTypes = common.MMartAdOfferTypes
-  type MMartAdOfferType  = MMartAdOfferTypes.MMartAdOfferType
+  val  AdOfferTypes       = common.AdOfferTypes
+  type AdOfferType        = AdOfferTypes.AdOfferType
 
-  val  AdNetMemberTypes = common.AdNetMemberTypes
-  type AdNetMemberType  = AdNetMemberTypes.AdNetMemberType
+  val  AdNetMemberTypes   = common.AdNetMemberTypes
+  type AdNetMemberType    = AdNetMemberTypes.AdNetMemberType
 
-  type CompanyId_t = MCompany.CompanyId_t
+  type CompanyId_t        = MCompany.CompanyId_t
 
 }

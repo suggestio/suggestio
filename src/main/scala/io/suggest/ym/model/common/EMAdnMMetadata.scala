@@ -23,7 +23,7 @@ object EMAdnMMetadataStatic {
 import EMAdnMMetadataStatic._
 
 
-trait EMAdnMMetadataStatic[T <: EMAdnMMetadata] extends EsModelStaticT[T] {
+trait EMAdnMMetadataStatic[T <: EMAdnMMetadata[T]] extends EsModelStaticT[T] {
 
   abstract override def generateMappingProps: List[DocField] = {
     FieldObject(METADATA_ESFN, enabled = true, properties = Seq(
@@ -34,7 +34,7 @@ trait EMAdnMMetadataStatic[T <: EMAdnMMetadata] extends EsModelStaticT[T] {
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
       case (METADATA_ESFN, value) =>
-        acc.metadata = JacksonWrapper.convert[AdnMMetadata](value)
+        acc.meta = JacksonWrapper.convert[AdnMMetadata](value)
     }
   }
 
@@ -42,11 +42,11 @@ trait EMAdnMMetadataStatic[T <: EMAdnMMetadata] extends EsModelStaticT[T] {
 
 trait EMAdnMMetadata[T <: EMAdnMMetadata[T]] extends EsModelT[T] {
 
-  var metadata: AdnMMetadata
+  var meta: AdnMMetadata
 
   abstract override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)
-    val mdSer = JacksonWrapper.serialize(metadata)
+    val mdSer = JacksonWrapper.serialize(meta)
     acc.rawField(METADATA_ESFN, mdSer.getBytes)
   }
 
@@ -54,8 +54,8 @@ trait EMAdnMMetadata[T <: EMAdnMMetadata[T]] extends EsModelT[T] {
     * Полезно при edit form sumbit после накатывания маппинга формы на реквест. */
   override def loadUserFieldsFrom(other: T) {
     super.loadUserFieldsFrom(other)
-    metadata.name = other.metadata.name
-    metadata.description = other.metadata.description
+    meta.name = other.meta.name
+    meta.description = other.meta.description
   }
 }
 

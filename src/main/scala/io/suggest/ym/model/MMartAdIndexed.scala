@@ -1,21 +1,15 @@
 package io.suggest.ym.model
 
-import io.suggest.util.{JacksonWrapper, MacroLogsImpl}
-import io.suggest.model.inx2.{EsModelInx2StaticSingleT, EsModelInx2StaticT, MMartInx}
+import io.suggest.util.JacksonWrapper
+import io.suggest.model.inx2.{EsModelInx2StaticSingleT, MMartInx}
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
-import org.elasticsearch.action.search.SearchResponse
-import org.elasticsearch.index.query.{QueryBuilder, FilterBuilders, QueryBuilders}
 import io.suggest.util.SioEsUtil._
 import scala.collection.JavaConversions._
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model.MShop.ShopId_t
 import org.elasticsearch.common.xcontent.XContentBuilder
-import MMartAd.USER_CAT_ID_ESFN
-import io.suggest.model.EsModel.SHOP_ID_ESFN
 import io.suggest.util.SioConstants._
-import io.suggest.util.text.TextQueryV2Util
-import io.suggest.ym.model.ad.{AdsSearchT, AdsSearchArgsT}
+import io.suggest.ym.model.ad.AdsSearchT
 
 /**
  * Suggest.io
@@ -24,6 +18,7 @@ import io.suggest.ym.model.ad.{AdsSearchT, AdsSearchArgsT}
  * Description: MMartAdIndexed - экспорт-модель для MMartAd. Нужна для сохранения MMartAd при индексации.
  */
 
+@deprecated("mart+shop arch deprecated. Use MAd instead.", "2014.apr.07")
 object MMartAdIndexed
   extends EsModelInx2StaticSingleT[MMartAdIndexed, MMartInx]
   with AdsSearchT[MMartAdIndexed, MMartInx]
@@ -86,6 +81,7 @@ import MMartAdIndexed.USER_CAT_STR_ESFN
  * @param showLevels1 Индексируемые уровни отображения этой карточки. Формируются на основе исходных уровней.
  * @param inx2 Данные об используемом индексе. НЕ сохраняются в БД.
  */
+@deprecated("mart+shop arch deprecated. Use MAd instead.", "2014.apr.07")
 case class MMartAdIndexed(
   mmartAd          : MMartAd,
   var userCatStr   : List[String],

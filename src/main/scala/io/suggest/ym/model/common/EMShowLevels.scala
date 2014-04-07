@@ -1,7 +1,7 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.{EsModelStaticT, EsModelT}
-import io.suggest.ym.model.{AdShowLevels, AdShowLevel}
+import io.suggest.ym.model.AdShowLevel
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
 import scala.collection.JavaConversions._
@@ -16,7 +16,7 @@ object EMShowLevels {
   val SHOW_LEVELS_ESFN = "showLevels"
 
   /** Десериализатор списка уровней отображения. */
-  val deserializeShowLevels: PartialFunction[AnyRef, Set[AdShowLevel]] = {
+  val deserializeShowLevels: PartialFunction[Any, Set[AdShowLevel]] = {
     case v: java.lang.Iterable[_] =>
       v.map { rawSL => AdShowLevels.withName(rawSL.toString) }.toSet
 
@@ -27,16 +27,18 @@ object EMShowLevels {
   }
 }
 
+// TODO 2014.apr.07: Все трейты ниже - уже не используются. Их можно удалить, если не понадобятся.
+
 import EMShowLevels._
 
 
 trait EMShowLevelsStatic[T <: EMShowLevelsMut[T]] extends EsModelStaticT[T] {
-  def generateMappingProps: List[DocField] = {
+  abstract override def generateMappingProps: List[DocField] = {
     FieldString(SHOW_LEVELS_ESFN, FieldIndexingVariants.not_analyzed, include_in_all = false) ::
     super.generateMappingProps
   }
 
-  def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
+  abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
       case (SHOW_LEVELS_ESFN, value) =>
         acc.showLevels = deserializeShowLevels(value)

@@ -47,7 +47,7 @@ object ShowLevelsUtil extends MacroLogsImpl {
     val adId = thisAd.id.get
     lazy val logPrefix = s"applyOutoutConstraints($adId): "
     val producerId = producer.id.get
-    trace(s"${logPrefix}Starting, producer = $producerId / ${producer.metadata.name}")
+    trace(s"${logPrefix}Starting, producer = $producerId / ${producer.meta.name}")
     // Если владелец отключен вообще, то на этом все уровни и заканчиваются.
     val lvlMap = producer.pubSettings.getOutShowLevels
     val (levels1, levelsM) = lvlMap.foldLeft[(List[AdShowLevel], List[AdShowLevel])] (Nil -> Nil) {

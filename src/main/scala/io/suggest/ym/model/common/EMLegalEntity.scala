@@ -43,16 +43,16 @@ trait EMLegalEntityStatic[T <: EMLegalEntity[T]] extends EsModelStaticT[T] {
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
       case (LEGAL_INFO_ESFN, value: java.util.Map[_, _]) =>
-        import acc.legalInfo
-        if (legalInfo == null)
-          acc.legalInfo = new AdnLegalEntityInfo
+        import acc.legal
+        if (legal == null)
+          acc.legal = new AdnLegalEntityInfo
         value foreach {
-          case (TOWN_ESFN, town)        => legalInfo.town = Option(stringParser(town))
-          case (ADDRESS_ESFN, address)  => legalInfo.address = Option(addressParser(address))
-          case (PHONE_ESFN, phone)      => legalInfo.phone = Option(stringParser(phone))
-          case (FLOOR_ESFN, floor)      => legalInfo.floor = Option(stringParser(floor))
-          case (SECTION_ESFN, section)  => legalInfo.section = Option(stringParser(section))
-          case (SITE_URL_ESFN, siteUrl) => legalInfo.siteUrl = Option(stringParser(siteUrl))
+          case (TOWN_ESFN, town)        => legal.town = Option(stringParser(town))
+          case (ADDRESS_ESFN, address)  => legal.address = Option(addressParser(address))
+          case (PHONE_ESFN, phone)      => legal.phone = Option(stringParser(phone))
+          case (FLOOR_ESFN, floor)      => legal.floor = Option(stringParser(floor))
+          case (SECTION_ESFN, section)  => legal.section = Option(stringParser(section))
+          case (SITE_URL_ESFN, siteUrl) => legal.siteUrl = Option(stringParser(siteUrl))
         }
     }
   }
@@ -60,14 +60,14 @@ trait EMLegalEntityStatic[T <: EMLegalEntity[T]] extends EsModelStaticT[T] {
 
 trait EMLegalEntity[T <: EMLegalEntity[T]] extends EsModelT[T] {
 
-  var legalInfo: AdnLegalEntityInfo
+  var legal: AdnLegalEntityInfo
 
   abstract override def writeJsonFields(acc: XContentBuilder) {
     super.writeJsonFields(acc)
     // Быстро записать объект в JSON
-    if (!legalInfo.isEmpty) {
+    if (!legal.isEmpty) {
       acc.startObject(LEGAL_INFO_ESFN)
-      legalInfo.writeFields(acc)
+      legal.writeFields(acc)
       acc.endObject()
     }
   }
@@ -76,7 +76,7 @@ trait EMLegalEntity[T <: EMLegalEntity[T]] extends EsModelT[T] {
     * Полезно при edit form sumbit после накатывания маппинга формы на реквест. */
   override def loadUserFieldsFrom(other: T): Unit = {
     super.loadUserFieldsFrom(other)
-    legalInfo.updateFrom(other.legalInfo)
+    legal.updateFrom(other.legal)
   }
 }
 

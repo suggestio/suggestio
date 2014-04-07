@@ -61,7 +61,7 @@ libraryDependencies ++= {
     "org.apache.lucene.morphology" % "english" % morphVsn,
     // TEST
     "net.databinder.dispatch" %% "dispatch-core" % "0.11.+" % "test",
-    "org.scalatest" %% "scalatest" % "2.0" % "test"
+    "org.scalatest" %% "scalatest" % "2.+" % "test"
   )
 }
 
