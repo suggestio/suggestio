@@ -7,6 +7,7 @@
   _siom.src = "@ctx.myProto://@ctx.request.host/assets/javascripts/market/showcase/showcase.min.js";
   var _sh = document.getElementsByTagName("head")[0];
   window.siomart_index = '@routes.Market.martIndex(mmart.id.get)'
+  window.siomart_id = '@mmart.id.get'
   _sh.appendChild(_siom);
   })();
 </script>

@@ -5,7 +5,6 @@ siomart =
     index_action : window.siomart_index
     sm_layout_class : 'sio-mart-layout'
     sm_trigger_class : 'sio-mart-trigger'
-    mart_id : '1zCeGm9jQbCHhU_PXITk7A'
 
   utils :
 
@@ -275,8 +274,8 @@ siomart =
       this.utils.set_window_size()
 
     if data.action == 'findAds'
-      container = siomart.utils.ge 'smOffersList'
-      container.innerHTML = data.html
+      screensContainer = siomart.utils.ge 'smScreens'
+      screensContainer.innerHTML += data.html
 
       siomart.utils.ge('smCategoriesScreen').style.display = 'none'
 
@@ -527,6 +526,8 @@ siomart =
     this.utils.set_window_size()
 
     this.load_mart_index_page()
+
+    siomart.config.mart_id = window.siomart_id
 
     resize_cb = () ->
       siomart.utils.set_window_size()
