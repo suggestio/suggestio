@@ -72,7 +72,7 @@ trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
       FieldString(SUPERVISOR_ID_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(MEMBER_TYPE_ESFN, index = not_analyzed, include_in_all = false),
       // раньше это лежало в EMAdnMPubSettings, но потом было перемещено сюда, т.к. по сути это разделение было некорректно.
-      FieldBoolean(IS_ENABLED_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldBoolean(IS_ENABLED_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(DISABLE_REASON_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
       FieldObject(SHOW_LEVELS_ESFN, enabled = false, properties = Nil)
     )) :: super.generateMappingProps

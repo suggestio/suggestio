@@ -4,9 +4,9 @@ import org.joda.time.DateTime
 import io.suggest.model.{EsModelT, EsModelStaticT}
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.JacksonWrapper
-import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel._
 import com.fasterxml.jackson.annotation.JsonIgnore
+import io.suggest.util.SioEsUtil._, FieldIndexingVariants.FieldIndexingVariant
 
 /**
  * Suggest.io
@@ -19,6 +19,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 object EMAdnMMetadataStatic {
   /** Название поля с объектом метаданных. */
   val METADATA_ESFN = "md"
+
+  val FLOOR_ESFN = "floor"
+  val SECTION_ESFN = "section"
 }
 
 import EMAdnMMetadataStatic._
@@ -26,9 +29,20 @@ import EMAdnMMetadataStatic._
 
 trait EMAdnMMetadataStatic[T <: EMAdnMMetadata[T]] extends EsModelStaticT[T] {
 
+  private def fs(fn: String, iia: Boolean = true, index: FieldIndexingVariant = FieldIndexingVariants.no) = {
+    FieldString(fn, include_in_all = iia, index = FieldIndexingVariants.no)
+  }
+
   abstract override def generateMappingProps: List[DocField] = {
     FieldObject(METADATA_ESFN, enabled = true, properties = Seq(
-      FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
+      FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
+      // перемещено из legal
+      fs(TOWN_ESFN, iia = true),
+      fs(ADDRESS_ESFN, iia = true),
+      fs(PHONE_ESFN, iia = true),
+      fs(FLOOR_ESFN, iia = true, index = FieldIndexingVariants.not_analyzed),   // Внезапно, вдруг кто-то захочет найти все магазины на первом этаже.
+      fs(SECTION_ESFN, iia = true),
+      fs(SITE_URL_ESFN)
     )) :: super.generateMappingProps
   }
 
@@ -60,11 +74,28 @@ trait EMAdnMMetadata[T <: EMAdnMMetadata[T]] extends EsModelT[T] {
 }
 
 
-
+/**
+ *
+ * @param name Отображаемое имя/название.
+ * @param description Пользовательское описание.
+ * @param town Город.
+ * @param address Адрес в городе.
+ * @param phone Телефонный номер.
+ * @param floor Этаж.
+ * @param section Номер секции/павильона/кабинета/помещения и т.д.
+ * @param siteUrl Ссылка на сайт.@param dateCreated
+ */
 case class AdnMMetadata(
-  var name: String,
-  var description: Option[String] = None,
-  dateCreated: DateTime = DateTime.now
+  var name          : String,
+  var description   : Option[String] = None,
+  dateCreated       : DateTime = DateTime.now,
+  // перемещено из legal
+  var town          : Option[String] = None,
+  var address       : Option[String] = None,
+  var phone         : Option[String] = None,
+  var floor         : Option[String] = None,
+  var section       : Option[String] = None,
+  var siteUrl       : Option[String] = None
 ) {
 
   /** Загрузить строки из другого объекта метаданных. */
@@ -73,6 +104,13 @@ case class AdnMMetadata(
     if (other != null) {
       name = other.name
       description = other.description
+      // перемещено из legal
+      town = other.town
+      address = other.address
+      phone = other.phone
+      floor = other.floor
+      section = other.section
+      siteUrl = other.siteUrl
     }
   }
 

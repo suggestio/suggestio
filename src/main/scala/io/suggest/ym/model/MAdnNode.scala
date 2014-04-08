@@ -20,7 +20,6 @@ object MAdnNode
   extends EsModelStaticEmpty[MAdnNode]
   with EMCompanyIdStatic[MAdnNode]
   with EMPersonIdsStatic[MAdnNode]
-  with EMLegalEntityStatic[MAdnNode]
   with EMAdNetMemberStatic[MAdnNode]
   with EMAdnMVisualStatic[MAdnNode]
   with EMAdnMMetadataStatic[MAdnNode]
@@ -31,7 +30,6 @@ object MAdnNode
     companyId = null,
     personIds = Set.empty,
     adn = null,
-    legal = null,
     visual = null,
     meta = null,
     id = Option(id)
@@ -61,7 +59,6 @@ case class MAdnNode(
   var companyId     : CompanyId_t,
   var personIds     : Set[String],
   var adn : AdNetMemberInfo,
-  var legal         : AdnLegalEntityInfo,
   var visual        : AdnVisual = AdnVisual(),
   var meta          : AdnMMetadata,
   var id            : Option[String] = None
@@ -69,7 +66,6 @@ case class MAdnNode(
   extends EsModelEmpty[MAdnNode]
   with EMCompanyId[MAdnNode]
   with EMPersonIds[MAdnNode]
-  with EMLegalEntity[MAdnNode]
   with EMAdNetMember[MAdnNode]
   with EMAdnMVisual[MAdnNode]
   with EMAdnMMetadata[MAdnNode]
@@ -82,7 +78,7 @@ case class MAdnNode(
   @JsonIgnore
   override def isFieldsValid: Boolean = {
     super.isFieldsValid &&
-      companyId != null && personIds != null && adn != null && legal != null &&
+      companyId != null && personIds != null && adn != null && meta != null &&
       visual != null && meta != null
   }
 
