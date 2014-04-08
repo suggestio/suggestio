@@ -35,30 +35,25 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
   val SHOP_TMP_LOGO_MARKER = "shopLogo"
 
   /** Метаданные магазина, которые может редактировать владелец магазина. */
-  val shopMetaM = mapping(
-    "name"         -> shopNameM,
-    "description"  -> publishedTextOptM
+  val shopMetaFullM = mapping(
+    "name"          -> shopNameM,
+    "description"   -> publishedTextOptM,
+    "floor"         -> optional(floorM),
+    "section"       -> optional(sectionM)
   )
-  {(name, descr) =>
-    AdnMMetadata(name = name, description = descr)
+  {(name, descr, floor, section) =>
+    AdnMMetadata(
+      name = name,
+      description = descr,
+      floor = floor,
+      section = section
+    )
   }
   {adnMeta =>
-    Some((adnMeta.name, adnMeta.description))
+    import adnMeta._
+    Some((name, description, floor, section))
   }
-  val shopMetaKM = "meta" -> shopMetaM
-
-
-  val shopLegalM = mapping(
-    "floor"   -> optional(legalFloorM),
-    "section" -> optional(legalSectionM)
-  )
-  {(floor, section) =>
-    AdnLegalEntityInfo(floor = floor, section = section)
-  }
-  {adnLegal =>
-    Some((adnLegal.floor, adnLegal.section))
-  }
-  val shopLegalKM = "legal" -> shopLegalM
+  val shopMetaFullKM = "meta" -> shopMetaFullM
 
 
   /** Маппер для необязательного логотипа магазина. */
@@ -67,16 +62,32 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
   /** Форма для заполнения страницы, но НЕ для сабмита. */
   val shopFullFormM = Form(tuple(
     "email" -> optional(email),
-    shopMetaKM,
-    shopLegalKM,
+    shopMetaFullKM,
     logoImgOptIdKM
   ))
+
+
+  /** Ограниченный маппинг доступен владельцу магазина внутри ТЦ. */
+  val shopMetaLimitedM = mapping(
+    "name"          -> shopNameM,
+    "description"   -> publishedTextOptM
+  )
+  {(name, descr) =>
+    AdnMMetadata(
+      name = name,
+      description = descr
+    )
+  }
+  {adnMeta =>
+    import adnMeta._
+    Some((name, description))
+  }
 
   /** Ограниченный маппинг магазина. Используется при сабмите редактирования профиля магазина для имитации
     * неизменяемых полей на форме. Некоторые поля не доступны для редактирования владельцу магазина. */
   val limitedShopFormM = Form(tuple(
     // Вложенный маппинг для совместимости с исходным шаблоном.
-    shopMetaKM,
+    "meta" -> shopMetaLimitedM,
     logoImgOptIdKM
   ))
 
@@ -95,7 +106,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
       case Some(newAdId) => MAd.getById(newAdId).map { _.filter { _.producerId.exists(_ == shopId) } }
       case None => Future successful None
     }
-    val martId = mshop.adnMemberInfo.supId.get
+    val martId = mshop.adn.supId.get
     MAdnNodeCache.getByIdCached(martId).flatMap {
       case Some(mmart) =>
         for {
@@ -128,9 +139,11 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
         EmailActivation.findByKey(mshop.id.get)
           .map { _.headOption.map(_.email) }
     }
-    val imgId = mshop.visual.logoImg.map { img => ImgInfo4Save(ImgFormUtil.imgInfo2imgKey(img)) }
+    val imgId = mshop.logoImgOpt.map { img =>
+      ImgInfo4Save(ImgFormUtil.imgInfo2imgKey(img))
+    }
     shopOwnerEmailFut map { shopOwnerEmail =>
-      shopFullFormM fill (shopOwnerEmail, mshop.meta, mshop.legal, imgId)
+      shopFullFormM fill (shopOwnerEmail, mshop.meta, imgId)
     }
   }
 
@@ -142,7 +155,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
   def editShopForm(shopId: String) = IsShopAdm(shopId).async { implicit request =>
     import request.mshop
     // TODO Если магазин удалён из рекламной сети или не имеет своего ТЦ, то это как должно выражаться?
-    val martId = mshop.adnMemberInfo.supId.get
+    val martId = mshop.adn.supId.get
     val formBindedFut = fillFullForm(mshop)
     MAdnNodeCache.getByIdCached(martId) flatMap {
       case Some(mmart) =>
@@ -165,7 +178,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
         val fullFormBindedFut = fillFullForm(mshop) map { _.bindFromRequest }
         debug(s"editShopFormSubmit($shopId): Bind failed: " + formWithErrors.errors)
         // TODO Что делать, если у магазина нет своего супервизора?
-        val martId = mshop.adnMemberInfo.supId.get
+        val martId = mshop.adn.supId.get
         MAdnNodeCache.getByIdCached(martId) flatMap {
           case Some(mmart) =>
             fullFormBindedFut map { formWithErrors2 =>
@@ -177,12 +190,12 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
       {case (meta, logoImgIdOpt) =>
         val updateImgsFut = ImgFormUtil.updateOrigImg(
           needImgs = logoImgIdOpt,
-          oldImgs  = mshop.visual.logoImg
+          oldImgs  = mshop.logoImgOpt
         )
         mshop.meta.loadUserFieldsFrom(meta)
         // Для обновления shop'а надо дождаться генерации нового id логотипа.
         updateImgsFut.flatMap { newImgIds =>
-          mshop.visual.logoImg = newImgIds.headOption
+          mshop.logoImgOpt = newImgIds.headOption
           mshop.save map { _shopId =>
             Redirect(routes.MarketShopLk.showShop(shopId))
               .flashing("success" -> "Изменения сохранены.")

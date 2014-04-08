@@ -344,7 +344,7 @@ object MarketAd extends SioController with LogoSupport {
     import request.mshop
     renderCreateShopFormWith(
       af = shopAdProductFormM,
-      catOwnerId = mshop.adnMemberInfo.supId getOrElse shopId,
+      catOwnerId = mshop.adn.supId getOrElse shopId,
       mshop = mshop
     ) map {
       Ok(_)
@@ -368,7 +368,7 @@ object MarketAd extends SioController with LogoSupport {
     */
   def createShopAdSubmit(shopId: String) = IsShopAdm(shopId).async(parse.urlFormEncoded) { implicit request =>
     import request.mshop
-    val catOwnerId = request.mshop.adnMemberInfo.supId getOrElse shopId
+    val catOwnerId = request.mshop.adn.supId getOrElse shopId
     lazy val logPrefix = s"createShopAdSubmit($shopId): "
     detectShopAdForm match {
       // Как маппить форму - ясно. Теперь надо это сделать.
@@ -557,7 +557,7 @@ object MarketAd extends SioController with LogoSupport {
         case Some(adnNode) =>
           import AdNetMemberTypes._
           import request.mad.producerId
-          val routeCall = adnNode.adnMemberInfo.memberType match {
+          val routeCall = adnNode.adn.memberType match {
             case MART => routes.MarketMartLk.martShow(producerId)
             case SHOP => routes.MarketShopLk.showShop(producerId)
             case other =>

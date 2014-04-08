@@ -6,7 +6,7 @@
 
   @ad.panel.map { panelSettings =>
     <div class="offer-header" style="background-color: #@panelSettings.color">
-      @mshopOpt.flatMap(_.visual.logoImg).orElse(mmart.visual.logoImg).map { logoImg =>
+      @mshopOpt.flatMap(_.logoImgOpt).orElse(mmart.logoImgOpt).map { logoImg =>
         <img class="sm-offer-logo" height="30" src="@routes.Img.getImg(logoImg.id)"/>
       }
     </div>
@@ -14,7 +14,7 @@
 
   <div class="offer-details">
     <div class="od-inner">
-      @ad.logoImg.map { logoImg =>
+      @ad.logoImgOpt.map { logoImg =>
         <img class="sm-offer-logo" height="30" src="@routes.Img.getImg(logoImg.id)" alt="@ad.offers.headOption.filter(_.isInstanceOf[AOProduct]).map(_.asInstanceOf[AOProduct].vendor.value)"/>
       }
 
@@ -52,10 +52,10 @@
       @mshopOpt.map { mshop =>
         <div class="offer-location">
           <div class="ol-icon"></div>
-          @mshop.legal.floor.map { floor =>
+          @mshop.meta.floor.map { floor =>
             Этаж @floor<br/>
           }
-          @mshop.legal.section.map { section =>
+          @mshop.meta.section.map { section =>
             Бутик @section<br/>
           }
           &laquo;@mshop.meta.name&raquo;

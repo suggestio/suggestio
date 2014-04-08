@@ -59,10 +59,10 @@ case class IsMartAdmin(martId: String) extends ActionBuilder[AbstractRequestForM
 case class IsMartAdminShop(shopId: String) extends ActionBuilder[RequestForMartShopAdm] {
   protected def invokeBlock[A](request: Request[A], block: (RequestForMartShopAdm[A]) => Future[Result]): Future[Result] = {
     MAdnNodeCache.getByIdCached(shopId) flatMap {
-      case Some(mshop) if mshop.adnMemberInfo.supId.isDefined =>
+      case Some(mshop) if mshop.adn.supId.isDefined =>
         val pwOpt = PersonWrapper.getFromRequest(request)
         val srmFut = SioReqMd.fromPwOpt(pwOpt)
-        val martId = mshop.adnMemberInfo.supId.get
+        val martId = mshop.adn.supId.get
         isMartAdmin(martId, pwOpt) flatMap {
           case Some(mmart) =>
             srmFut flatMap { srm =>

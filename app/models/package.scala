@@ -44,9 +44,6 @@ package object models {
   val  MAd                  = ym.model.MAd
   type MAd                  = ym.model.MAd
 
-  val  AdnLegalEntityInfo   = ym.model.common.AdnLegalEntityInfo
-  type AdnLegalEntityInfo   = ym.model.common.AdnLegalEntityInfo
-
   val  AdnMMetadata         = ym.model.common.AdnMMetadata
   type AdnMMetadata         = ym.model.common.AdnMMetadata
 
@@ -56,14 +53,8 @@ package object models {
   val  AdNetMemberTypes     = ym.model.common.AdNetMemberTypes
   type AdNetMemberType      = AdNetMemberTypes.AdNetMemberType
 
-  val  AdnVisual            = ym.model.common.AdnVisual
-  type AdnVisual            = ym.model.common.AdnVisual
-
-  val  AdnMPubSettingsLevels = ym.model.common.AdnMPubSettingsLevels
-  type AdnMPubSettingsLevels = ym.model.common.AdnMPubSettingsLevels
-
-  val  AdnMPubSettings      = ym.model.common.AdnMPubSettings
-  type AdnMPubSettings      = ym.model.common.AdnMPubSettings
+  val  AdnMPubSettingsLevels = ym.model.common.AdnMemberShowLevels
+  type AdnMPubSettingsLevels = ym.model.common.AdnMemberShowLevels
 
   type MAdT                 = ym.model.ad.MAdT[_]
 

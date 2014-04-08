@@ -6,7 +6,7 @@
 
 @mshops.zipWithIndex.map { case (mshop, i) =>
 
-  <div class="item @if(i%2 == 0) {odd} else {even} @if(mshop.pubSettings.isEnabled) {enabled}" data-shop="@mshop.id">
+  <div class="item @if(i%2 == 0) {odd} else {even} @if(mshop.adn.isEnabled) {enabled}" data-shop="@mshop.id">
     <div class="left">
       <a href="@showShop(mshop.id.get)">@mshop.meta.name</a>
     </div>

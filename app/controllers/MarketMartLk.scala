@@ -56,33 +56,26 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
 
   import ShopSort._
 
-  /** Инфа по юр.лицу. */
-  val martLegalM = mapping(
+  /** Маппер для метаданных. */
+  val martMetaM = mapping(
+    "name"      -> nameM,
     "town"      -> townM,
     "address"   -> martAddressM,
     "site_url"  -> optional(urlStrMapper),
     "phone"     -> optional(phoneM)
   )
-  {(town, address, siteUrlOpt, phoneOpt) =>
-    AdnLegalEntityInfo(
+  {(name, town, address, siteUrlOpt, phoneOpt) =>
+    AdnMMetadata(
+      name = name,
       town = Some(town),
       address = Some(address),
       siteUrl = siteUrlOpt,
       phone = phoneOpt
     )
   }
-  {lei =>
-    import lei._
-    Some((town.getOrElse(""), address.getOrElse(""), siteUrl, phone))
-  }
-
-  /** Маппер для метаданных. */
-  val metaNameM = mapping(
-    "name" -> nameM
-  )
-  {name => AdnMMetadata(name) }
-  {adnM => Some(adnM.name) }
-  val metaNameKM = "meta" -> metaNameM
+  {meta =>
+    import meta._
+    Some((name, town.getOrElse(""), address.getOrElse(""), siteUrl, phone)) }
 
 
   /** Маппер для необязательного логотипа магазина. */
@@ -90,49 +83,42 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
   val martFormM = Form(tuple(
-    metaNameKM,
-    "legal" -> martLegalM,
+    "meta" -> martMetaM,
     "welcomeImgId" -> optional(ImgFormUtil.imgIdJpegM),
     martLogoImgIdOptKM
   ))
 
 
-  /** Инфа по магазину, относящаяся как-то к юридической. */
-  val shopLegalM = mapping(
-    "floor"   -> legalFloorM,
-    "section" -> legalSectionM
+  val shopMetaM = mapping(
+    "name"    -> shopNameM,
+    "floor"   -> floorM,
+    "section" -> sectionM
   )
-  {(floor, section) =>
-    AdnLegalEntityInfo(floor = Some(floor), section = Some(section))
+  {(name, floor, section) =>
+    AdnMMetadata(name, floor = Some(floor), section = Some(section))
   }
   {lei =>
     import lei._
-    if (floor.isDefined && section.isDefined)
-      Some((floor.get, section.get))
-    else
-      None
+    Some( (name, floor.getOrElse(""), section.getOrElse("")) )
   }
 
   /** Маппинг формы приглашения магазина в систему. */
   val inviteShopFormM = Form(tuple(
     "email" -> email,
-    metaNameKM,
-    "legal" -> shopLegalM
+    "meta" -> shopMetaM
   ))
 
 
   /** Форма на которой нельзя менять логотип, но можно настраивать разные поля.
     * Подходит для редактирования из ТЦ-аккаунта */
   val shopEditFormM = Form(
-    "shop" -> tuple(
-      MarketShopLk.shopMetaKM,
-      MarketShopLk.shopLegalKM
-    ))
+    MarketShopLk.shopMetaFullKM
+  )
 
   
   /** Асинхронно получить welcome-ad-карточку. */
   private def getWelcomeAdOpt(mmart: MAdnNode): Future[Option[MWelcomeAd]] = {
-    mmart.visual.welcomeAdId
+    mmart.meta.welcomeAdId
       .fold [Future[Option[MWelcomeAd]]] (Future successful None) (MWelcomeAd.getById)
   }
 
@@ -190,11 +176,11 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   def martEditForm(martId: String) = IsMartAdmin(martId).async { implicit request =>
     import request.mmart
     getWelcomeAdOpt(mmart) map { welcomeAdOpt =>
-      val martLogoOpt = mmart.visual.logoImg.map { img =>
+      val martLogoOpt = mmart.logoImgOpt.map { img =>
         ImgInfo4Save(img)
       }
       val welcomeImgKey = welcomeAdOpt.map[OrigImgIdKey] { _.img }
-      val formFilled = martFormM.fill((mmart.meta, mmart.legal, welcomeImgKey, martLogoOpt))
+      val formFilled = martFormM.fill((mmart.meta, welcomeImgKey, martLogoOpt))
       Ok(martEditFormTpl(mmart, formFilled, welcomeAdOpt))
     }
   }
@@ -214,9 +200,9 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
             .flashing("error" -> "Ошибка заполнения формы.")
         }
       },
-      {case (martMeta, martLegal, welcomeImgOpt, logoImgIdOpt) =>
+      {case (martMeta, welcomeImgOpt, logoImgIdOpt) =>
         // В фоне обновляем логотип ТЦ
-        val savedLogoFut = ImgFormUtil.updateOrigImg(logoImgIdOpt, oldImgs = mmart.visual.logoImg)
+        val savedLogoFut = ImgFormUtil.updateOrigImg(logoImgIdOpt, oldImgs = mmart.logoImgOpt)
         // В фоне обновляем картинку карточки-приветствия.
         val savedWelcomeImgsFut: Future[_] = getWelcomeAdOpt(request.mmart) flatMap { welcomeAdOpt =>
           ImgFormUtil.updateOrigImg(
@@ -226,9 +212,9 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
             savedImgs.headOption match {
               // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
               case None =>
-                val deleteOldAdFut = mmart.visual.welcomeAdId
+                val deleteOldAdFut = mmart.meta.welcomeAdId
                   .fold [Future[_]] {Future successful ()} { MAd.deleteById }
-                mmart.visual.welcomeAdId = None
+                mmart.meta.welcomeAdId = None
                 deleteOldAdFut
 
               // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
@@ -242,15 +228,14 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
                 }
                 welcomeAd.save andThen {
                   case Success(welcomeAdId) =>
-                    mmart.visual.welcomeAdId = Some(welcomeAdId)
+                    mmart.meta.welcomeAdId = Some(welcomeAdId)
                 }
             }
           }
         }
-        mmart.meta.loadUserFieldsFrom(martMeta)
-        mmart.legal.updateFrom(martLegal)
+        mmart.meta = martMeta
         savedLogoFut.flatMap { savedLogos =>
-          mmart.visual.logoImg = savedLogos.headOption
+          mmart.logoImgOpt = savedLogos.headOption
           savedWelcomeImgsFut flatMap { _ =>
             mmart.save.map { _ =>
               Redirect(routes.MarketMartLk.martShow(martId))
@@ -283,21 +268,18 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
         debug(s"inviteShopFormSubmit($martId): Bind failed: " + formWithErrors.errors)
         NotAcceptable(shop.shopInviteFormTpl(mmart, formWithErrors))
       },
-      {case (_email, meta, legal) =>
+      {case (_email, meta) =>
         MCompany(meta.name).save.flatMap { companyId =>
           // Собираем дефолтовый магазин как будущий узел рекламной сети.
           val mshop = MAdnNode(
             companyId = companyId,
             personIds = Set.empty,
-            adnMemberInfo = AdNetMemberInfo(
+            adn = AdNetMemberInfo(
               memberType = AdNetMemberTypes.SHOP,
               isProducer = true,
               isReceiver = false,
               isSupervisor = false,
-              supId = Some(martId)
-            ),
-            legal = legal,
-            pubSettings = AdnMPubSettings(
+              supId = Some(martId),
               isEnabled = false,
               disableReason = Some("First run/inactive."),
               showLevelsInfo = AdnMPubSettingsLevels(
@@ -384,11 +366,12 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
           NotAcceptable(shop.shopEditFormTpl(request.mmart, mshop, fwe3))
         }
       },
-      {case (meta, legal) =>
+      {meta =>
         // Пора накатить изменения на текущий магазин и сохранить
-        mshop.meta.loadUserFieldsFrom(meta)
-        mshop.legal.floor = legal.floor
-        mshop.legal.section = legal.section
+        mshop.meta.name = meta.name
+        mshop.meta.description = meta.description
+        mshop.meta.floor = meta.floor
+        mshop.meta.section = meta.section
         mshop.save.map { _ =>
           Redirect(routes.MarketMartLk.showShop(shopId))
             .flashing("success" -> "Изменения сохранены.")
@@ -437,7 +420,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    */
   def shopOnOffForm(shopId: String) = IsMartAdminShop(shopId).apply { implicit request =>
     import request.mshop
-    val formBinded = shopOnOffFormM.fill((false, mshop.pubSettings.disableReason))
+    val formBinded = shopOnOffFormM.fill((false, mshop.adn.disableReason))
     Ok(shop._onOffFormTpl(mshop, formBinded))
   }
 
@@ -575,9 +558,9 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
       {isTopEnabled =>
         import request.mshop
         if (isTopEnabled)
-          mshop.pubSettings.showLevelsInfo.out += AdShowLevels.LVL_RECEIVER_TOP -> 1
+          mshop.adn.showLevelsInfo.out += AdShowLevels.LVL_RECEIVER_TOP -> 1
         else
-          mshop.pubSettings.showLevelsInfo.out -= AdShowLevels.LVL_RECEIVER_TOP
+          mshop.adn.showLevelsInfo.out -= AdShowLevels.LVL_RECEIVER_TOP
         mshop.save map { _ =>
           Ok("updated ok")
         }

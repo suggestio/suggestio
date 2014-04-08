@@ -24,7 +24,7 @@
 
   <div class="body">
 
-    <input id="maxShopAds" type="hidden" value="@mshop.pubSettings.showLevelsInfo.maxOutAtLevel(LVL_PRODUCER)" />
+    <input id="maxShopAds" type="hidden" value="@mshop.adn.showLevelsInfo.maxOutAtLevel(LVL_PRODUCER)" />
 
     <div class="shop-info">
 
@@ -53,7 +53,7 @@
     </div>
 
 
-    @defining(mshop.pubSettings.showLevelsInfo.canOutAtLevel(LVL_RECEIVER_TOP)) { htl =>
+    @defining(mshop.adn.showLevelsInfo.canOutAtLevel(LVL_RECEIVER_TOP)) { htl =>
       @market.lk.ad._adsEditableListTpl(
         mads = mads,
         mmart = mmart,
