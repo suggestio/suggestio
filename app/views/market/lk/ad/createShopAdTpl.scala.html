@@ -1,4 +1,4 @@
-@(mshop: MShop, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], dfltOfferType: AdOfferType)(implicit ctx: util.Context)
+@(mshop: MAdnNode, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], dfltOfferType: AdOfferType)(implicit ctx: util.Context)
 
 @createAdTpl(
   mmcats = mmcats,
@@ -6,6 +6,5 @@
   dfltOfferType = dfltOfferType,
   backCall = routes.MarketShopLk.showShop(mshop.id.get),
   submitCall = routes.MarketAd.createShopAdSubmit(mshop.id.get),
-  previewCall = routes.MarketAd.adFormPreviewShopSubmit(mshop.id.get),
-  bp = mshop
+  previewCall = routes.MarketAd.adFormPreviewShopSubmit(mshop.id.get)
 )

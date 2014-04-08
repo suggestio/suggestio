@@ -1,8 +1,7 @@
-@(af: Form[_], call: Call, btnText: String, mmcats: MMartCategory.CollectMMCatsAcc_t, offerType: MMartAdOfferType, previewCall: Call, bp: AdNetMember)(implicit ctx: util.Context)
+@(af: Form[_], call: Call, btnText: String, mmcats: CollectMMCatsAcc_t, offerType: AdOfferType, previewCall: Call)(implicit ctx: util.Context)
 
 @* Рендер формы редактирования произвольной рекламы.
  * offerType - предпочитаемый тип оффера, когда он неизвестен.
- * bp - экземпляр MMart или MShop (или ещё чего-то) для доступа к некоторым полям (logoImgId например).
 *@
 @import ctx._
 @import helper._

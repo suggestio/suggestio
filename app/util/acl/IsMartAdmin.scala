@@ -1,11 +1,9 @@
 package util.acl
 
-import io.suggest.ym.model.MMart.MartId_t
 import util.acl.PersonWrapper.PwOpt_t
 import util.PlayMacroLogsImpl
 import scala.concurrent.Future
-import play.api.mvc.{RequestHeader, Result, Request, ActionBuilder}
-import io.suggest.ym.model.MShop, MShop.ShopId_t
+import play.api.mvc.{Result, Request, ActionBuilder}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import models._
@@ -19,8 +17,8 @@ import models._
 object IsMartAdmin extends PlayMacroLogsImpl {
   import LOGGER._
 
-  def isMartAdmin(martId: MartId_t, pwOpt: PwOpt_t): Future[Option[MMart]] = {
-    MMart.getById(martId) map { mmartOpt =>
+  def isMartAdmin(martId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
+    MAdnNodeCache.getByIdCached(martId) map { mmartOpt =>
       mmartOpt flatMap { mmart =>
         val isAllowed = PersonWrapper.isSuperuser(pwOpt) || {
           pwOpt.isDefined && (mmart.personIds contains pwOpt.get.personId)
@@ -35,7 +33,7 @@ object IsMartAdmin extends PlayMacroLogsImpl {
   }
 
   /** Код вызова проверки martID и выполнения того или иного экшена. */
-  def invokeMartBlock[A](martId: MartId_t, request: Request[A], block: (AbstractRequestForMartAdm[A]) => Future[Result]): Future[Result] = {
+  def invokeMartBlock[A](martId: String, request: Request[A], block: (AbstractRequestForMartAdm[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     isMartAdmin(martId, pwOpt) flatMap {
@@ -56,18 +54,18 @@ import IsMartAdmin._
 
 
 /** Административная операция над торговым центром. */
-case class IsMartAdmin(martId: MartId_t) extends ActionBuilder[AbstractRequestForMartAdm] {
+case class IsMartAdmin(martId: String) extends ActionBuilder[AbstractRequestForMartAdm] {
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForMartAdm[A]) => Future[Result]): Future[Result] = {
     invokeMartBlock(martId, request, block)
   }
 }
 
 /** Какая-то административная операция над магазином, подразумевающая права на ТЦ. */
-case class IsMartAdminShop(shopId: ShopId_t) extends ActionBuilder[AbstractRequestForMartAdm] {
+case class IsMartAdminShop(shopId: String) extends ActionBuilder[AbstractRequestForMartAdm] {
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForMartAdm[A]) => Future[Result]): Future[Result] = {
-    MShop.getMartIdFor(shopId) flatMap {
-      case Some(martId) =>
-        invokeMartBlock(martId, request, block)
+    MAdnNodeCache.getByIdCached(shopId) flatMap {
+      case Some(mshop) if mshop.adnMemberInfo.supId.isDefined =>
+        invokeMartBlock(mshop.adnMemberInfo.supId.get, request, block)
 
       // Не возвращаем 404 для защиты от возможных (бессмысленных) сканов.
       // None означает что или магазина нет, или ТЦ у магазина не указан (удалённый магазин, интернет-магазин).
@@ -77,32 +75,35 @@ case class IsMartAdminShop(shopId: ShopId_t) extends ActionBuilder[AbstractReque
 }
 
 abstract class AbstractRequestForMartAdm[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
-  def martId: MartId_t
-  def mmart: MMart
+  def martId: String
+  def mmart: MAdnNode
 }
-case class RequestForMartAdm[A](mmart: MMart, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
+case class RequestForMartAdm[A](mmart: MAdnNode, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
   extends AbstractRequestForMartAdm(request) {
-  def martId: MartId_t = mmart.id.get
+  def martId: String = mmart.id.get
 }
 
 
-case class ShopMartAdRequest[A](ad: MMartAd, mmart:MMart, pwOpt: PwOpt_t, request : Request[A], sioReqMd: SioReqMd)
+case class ShopMartAdRequest[A](ad: MAd, mmart: MAdnNode, pwOpt: PwOpt_t, request : Request[A], sioReqMd: SioReqMd)
   extends AbstractRequestWithPwOpt(request)
 
 case class IsMartAdminShopAd(adId: String) extends ActionBuilder[ShopMartAdRequest] {
   protected def invokeBlock[A](request: Request[A], block: (ShopMartAdRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
-    MMartAd.getById(adId) flatMap {
+    MAd.getById(adId) flatMap {
       case Some(ad) =>
-        isMartAdmin(ad.receiverIds, pwOpt) flatMap {
-          case Some(mmart) =>
+        Future.traverse(ad.receivers) { adRcvr =>
+          isMartAdmin(adRcvr.receiverId, pwOpt)
+        } flatMap { results =>
+          results.find(_.isDefined).flatten match {
+            case Some(mmart) =>
             srmFut flatMap { srm =>
               val req1 = ShopMartAdRequest(ad, mmart, pwOpt, request, srm)
               block(req1)
             }
-
-          case None => IsAuth.onUnauth(request)
+            case None => IsAuth.onUnauth(request)
+          }
         }
 
       case _ => IsAuth.onUnauth(request)

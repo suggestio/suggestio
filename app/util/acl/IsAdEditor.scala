@@ -6,6 +6,7 @@ import util.acl.PersonWrapper.PwOpt_t
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
+import com.fasterxml.jackson.annotation.JsonIgnore
 
 /**
  * Suggest.io
@@ -24,7 +25,7 @@ object IsAdEditor {
    * @tparam A Параметр типа реквеста.
    * @return None если нельзя. Some([[RequestWithAd]]) если можно исполнять реквест.
    */
-  private def maybeAllowed[A](pwOpt: PwOpt_t, mad: MMartAd, request: Request[A], srmFut: Future[SioReqMd]): Future[Option[RequestWithAd[A]]] = {
+  private def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A], srmFut: Future[SioReqMd]): Future[Option[RequestWithAd[A]]] = {
     if (PersonWrapper isSuperuser pwOpt) {
       srmFut map { srm =>
         Some(RequestWithAd(mad, request, pwOpt, srm))
@@ -32,36 +33,17 @@ object IsAdEditor {
     } else {
       pwOpt match {
         case Some(pw) =>
-          mad.producerId match {
-            // Это реклама магазина. Редактировать может владелец магазина.
-            case Some(shopId) =>
-              for {
-                mshopOpt <- MShop.getById(shopId)
-                srm <- srmFut
-              } yield {
-                mshopOpt flatMap { mshop =>
-                  if (mshop.personIds contains pw.personId) {
-                    Some(RequestWithAd(mad, request, pwOpt, srm, mshopOpt = mshopOpt))
-                  } else {
-                    None
-                  }
-                }
+          for {
+            adnNodeOpt <- MAdnNodeCache.getByIdCached(mad.producerId)
+            srm <- srmFut
+          } yield {
+            adnNodeOpt flatMap { adnNode =>
+              if (adnNode.personIds contains pw.personId) {
+                Some(RequestWithAd(mad, request, pwOpt, srm, adnNodeOpt))
+              } else {
+                None
               }
-
-            // Это реклама ТЦ. Редактировать может только владелец ТЦ.
-            case None =>
-              for {
-                mmartOpt <- MMart.getById(mad.receiverIds)
-                srm <- srmFut
-              } yield {
-                mmartOpt flatMap { mmart =>
-                  if (mmart.personIds contains pw.personId) {
-                    Some(RequestWithAd(mad, request, pwOpt, srm, mmartOpt=mmartOpt))
-                  } else {
-                    None
-                  }
-                }
-              }
+            }
           }
 
         case None => Future successful None
@@ -77,9 +59,8 @@ case class IsAdEditor(adId: String) extends ActionBuilder[RequestWithAd] {
   protected def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
-    MMartAd.getById(adId) flatMap {
+    MAd.getById(adId) flatMap {
       case Some(mad) =>
-        // TODO Нужно проверять права доступа как-то: для ТЦ и для магазина
         IsAdEditor.maybeAllowed(pwOpt, mad, request, srmFut) flatMap {
           case Some(req1) => block(req1)
           case None       => IsAuth onUnauth request
@@ -97,36 +78,30 @@ case class IsAdEditor(adId: String) extends ActionBuilder[RequestWithAd] {
  * @param mad Рекламная карточка.
  * @param request Реквест
  * @param pwOpt Данные по юзеру.
- * @param mshopOpt Закешированные данные по магазину, если было чтение.
- * @param mmartOpt Закешированные данные по ТЦ, если было чтение.
+ * @param producerOpt Закешированные данные владельцу карточки.
  * @tparam A Параметр типа реквеста.
  */
 case class RequestWithAd[A](
-  mad: MMartAd,
+  mad: MAd,
   request: Request[A],
   pwOpt: PwOpt_t,
   sioReqMd: SioReqMd,
-  private val mshopOpt: Option[MShop] = None,
-  private val mmartOpt: Option[MMart] = None
+  private[this] val producerOpt: Option[MAdnNode] = None
 ) extends AbstractRequestWithPwOpt(request) {
 
-  lazy val mshopOptFut: Future[Option[MShop]] = {
-    if (mshopOpt.isDefined) {
-      Future successful mshopOpt
+  /** Для доступа к изготовителю рекламы надо использовать этот фьючерс, а не producerOpt, который может быть
+    * неожиданно пустым. */
+  @JsonIgnore
+  lazy val producerOptFut: Future[Option[MAdnNode]] = {
+    if (producerOpt.isDefined) {
+      Future successful producerOpt
     } else {
-      mad.producerId match {
-        case Some(shopId) => MShop.getById(shopId)
-        case None         => Future successful None
-      }
+      MAdnNodeCache.getByIdCached(mad.producerId) 
     }
   }
 
-  lazy val mmartOptFut: Future[Option[MMart]] = {
-    if (mmartOpt.isDefined)
-      Future successful mmartOpt
-    else
-      MMart.getById(mad.receiverIds)
-  }
+  @JsonIgnore
+  def producerId = mad.producerId
 
 }
 

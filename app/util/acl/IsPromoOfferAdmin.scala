@@ -5,7 +5,6 @@ import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits._
 import models._
 import util.acl.PersonWrapper.PwOpt_t
-import MShop.ShopId_t
 import util.SiowebEsUtil.client
 
 /**
@@ -20,7 +19,7 @@ case class IsPromoOfferAdmin(offerId: String) extends ActionBuilder[AbstractRequ
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     // Проверяем есть ли права на магазин. Если из глубин вернулся shopId, то да.
-    val shopIdOptFut: Future[Option[ShopId_t]] = if (pwOpt.isDefined) {
+    val shopIdOptFut: Future[Option[String]] = if (pwOpt.isDefined) {
       MShopPromoOffer.getShopIdFor(offerId) flatMap {
         case r @ Some(shopId) =>
           IsShopAdm.isShopAdminFull(shopId, pwOpt) map {
@@ -48,7 +47,7 @@ case class IsPromoOfferAdmin(offerId: String) extends ActionBuilder[AbstractRequ
 abstract class AbstractRequestForPromoOfferAdm[A](request: Request[A]) extends AbstractRequestForShopAdm(request) {
   def offerId: String
 }
-case class RequestForPromoOfferAdm[A](shopId:ShopId_t, offerId:String, pwOpt:PwOpt_t, request: Request[A], sioReqMd: SioReqMd)
+case class RequestForPromoOfferAdm[A](shopId:String, offerId:String, pwOpt:PwOpt_t, request: Request[A], sioReqMd: SioReqMd)
   extends AbstractRequestForPromoOfferAdm(request)
 
 

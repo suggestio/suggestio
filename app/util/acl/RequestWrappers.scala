@@ -54,7 +54,7 @@ case class RequestWithDAuthz[A](pwOpt: PwOpt_t, dAuthz: MDomainAuthzT, request: 
 
 /** Админство магазина. */
 abstract class AbstractRequestForShopAdm[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
-  def shopId: ShopId_t
+  def shopId: String
 }
 
 

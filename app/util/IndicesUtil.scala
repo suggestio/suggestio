@@ -328,6 +328,7 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
   }
 
 
+  @deprecated("Use MAdnNodeCache instead", "2014.apr.08")
   private def cacheKeyForShop(shopId: ShopId_t) = shopId + ".shop"
 
   /**
@@ -335,6 +336,7 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
    * @param shopId id магазина.
    * @return Тоже самое, что и [[io.suggest.ym.model.MShop.getById()]].
    */
+  @deprecated("Use MAdnNodeCache instead", "2014.apr.08")
   def getShopByIdCached(shopId: ShopId_t): Future[Option[MShop]] = {
     val cacheKey = cacheKeyForShop(shopId)
     Cache.getAs[MShop](cacheKey) match {

@@ -3,10 +3,10 @@ package util.acl
 import play.api.mvc.{Result, Request, ActionBuilder}
 import scala.concurrent.Future
 import util.acl.PersonWrapper.PwOpt_t
-import models.MShop, MShop.ShopId_t
 import util.PlayMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
+import models._
 
 /**
  * Suggest.io
@@ -22,15 +22,15 @@ object IsShopAdm extends PlayMacroLogsImpl {
    * Вернуть магазин, если с правами всё ок. Иначе None.
    * @param shopId id магазина.
    * @param pwOpt Текущий юзер.
-   * @return Option[MShop].
+   * @return Option с принадлежащим пользователю магазином или None.
    */
-  def isShopAdminFull(shopId: ShopId_t, pwOpt: PwOpt_t): Future[Option[MShop]] = {
+  def isShopAdminFull(shopId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
     if (PersonWrapper isSuperuser pwOpt) {
-      MShop getById shopId
+      MAdnNodeCache.getByIdCached(shopId)
     } else {
       if (pwOpt.isDefined) {
         // Нужно узнать, существует ли магазин и TODO есть ли права у юзера на магазин
-        MShop.getById(shopId) map { mshopOpt =>
+        MAdnNodeCache.getByIdCached(shopId) map { mshopOpt =>
           mshopOpt filter { mshop =>
             val result = mshop.personIds contains pwOpt.get.personId
             if (!result) {
@@ -50,7 +50,7 @@ object IsShopAdm extends PlayMacroLogsImpl {
 import IsShopAdm._
 
 /** В реквесте содержится магазин, если всё ок. */
-case class IsShopAdm(shopId: ShopId_t) extends ActionBuilder[RequestForShopAdmFull] {
+case class IsShopAdm(shopId: String) extends ActionBuilder[RequestForShopAdmFull] {
   protected def invokeBlock[A](request: Request[A], block: (RequestForShopAdmFull[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
@@ -66,7 +66,7 @@ case class IsShopAdm(shopId: ShopId_t) extends ActionBuilder[RequestForShopAdmFu
   }
 }
 
-case class RequestForShopAdmFull[A](mshop: MShop, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
+case class RequestForShopAdmFull[A](mshop: MAdnNode, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
   extends AbstractRequestForShopAdm(request) {
-  def shopId: ShopId_t = mshop.id.get
+  def shopId: String = mshop.id.get
 }

@@ -46,6 +46,9 @@ package object models {
 
   type MAdT                 = ym.model.ad.MAdT[_]
 
+  val  AdReceiverInfo       = ym.model.common.AdReceiverInfo
+  type AdReceiverInfo       = ym.model.common.AdReceiverInfo
+
   // Начинаем MMartAd и смежные объекты.
   @deprecated("mart+shop arch is deprecated. Use MAd.", "2014.apr.07")
   val  MMartAd              = ym.model.MMartAd
@@ -123,4 +126,6 @@ package object models {
 
   val  AdStatActions        = ym.model.stat.AdStatActions
   type AdStatAction         = ym.model.stat.AdStatAction
+
+  type CollectMMCatsAcc_t   = MMartCategory.CollectMMCatsAcc_t
 }

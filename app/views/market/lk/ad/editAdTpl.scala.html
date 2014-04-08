@@ -1,4 +1,4 @@
-@(mad: MMartAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], backCall:Call, submitCall:Call, previewCall: Call, bp: AdNetMember)(implicit ctx: util.Context)
+@(mad: MAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], backCall:Call, submitCall:Call, previewCall: Call)(implicit ctx: util.Context)
 
 @* Страница с формой редактирования рекламной карточки. *@
 @import ctx._
@@ -37,8 +37,7 @@
     btnText = Messages("Save"),
     mmcats = mmcats,
     offerType = mad.offers.head.offerType,
-    previewCall = previewCall,
-    bp = bp
+    previewCall = previewCall
   )
 
   <div class="submit-wrap">
