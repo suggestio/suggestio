@@ -27,8 +27,10 @@ import io.suggest.util.SioEsUtil.FieldSource
  * - Собственное помещение единственного мазагина.
  */
 
+@deprecated("mart+shop arch is deprecated. Use MAdnNode instead.", "2014.apr.07")
 object MMart extends EsModelStaticT[MMart] {
 
+  @deprecated("mart+shop arch is deprecated. Use MAdnNode instead.", "2014.apr.07")
   type MartId_t = MainProto.MartId_t
 
   val ES_TYPE_NAME = "mart"
@@ -130,6 +132,7 @@ object MMart extends EsModelStaticT[MMart] {
 
 import MMart._
 
+@deprecated("mart+shop arch is deprecated. Use MAdnNode instead.", "2014.apr.07")
 case class MMart(
   var companyId     : CompanyId_t,
   var name          : String,

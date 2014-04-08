@@ -14,6 +14,7 @@ import org.elasticsearch.client.Client
 import io.suggest.event._
 import org.elasticsearch.common.unit.Fuzziness
 import io.suggest.util.MyConfig.CONFIG
+import io.suggest.ym.ad.ShowLevelsUtil
 
 /**
  * Suggest.io
@@ -29,9 +30,10 @@ import io.suggest.util.MyConfig.CONFIG
  * Например, можно считать его админом, и тогда он как бы может управлять оставшимся списком пользователей и
  * делать прочие административные действия.
  */
-
+@deprecated("mart+shop arch is deprecated. Use MAdnNode instead.", "2014.apr.07")
 object MShop extends EsModelStaticT[MShop] {
 
+  @deprecated("mart+shop arch is deprecated. Use MAdnNode instead.", "2014.apr.07")
   type ShopId_t = MainProto.ShopId_t
 
   /** При апдейте маппига надо игнорить конфликты из-за settings */  // TODO Снести после первого публичного запуска.
@@ -290,6 +292,7 @@ object MShop extends EsModelStaticT[MShop] {
 
 import MShop._
 
+@deprecated("mart+shop arch is deprecated. Use MAdnNode instead.", "2014.apr.07")
 case class MShop(
   var companyId   : CompanyId_t,
   var martId      : Option[MartId_t] = None,
@@ -401,7 +404,7 @@ trait MShopSel {
 object MShopSettings {
 
   /** Дефолтовое максимальное кол-во отображаемых карточек в магазине. */
-  val MAX_LSHOP_ADS = CONFIG.getInt("mshop.settings.level.shop.shown.max.dflt") getOrElse 2
+  def MAX_LSHOP_ADS = ShowLevelsUtil.PRODUCER_LEVEL_ADS_COUNT_DFLT
 
 }
 

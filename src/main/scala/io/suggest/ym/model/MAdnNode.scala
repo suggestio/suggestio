@@ -64,7 +64,7 @@ case class MAdnNode(
   var personIds     : Set[String],
   var adnMemberInfo : AdNetMemberInfo,
   var legal         : AdnLegalEntityInfo,
-  var visual        : AdnVisual,
+  var visual        : AdnVisual = AdnVisual(),
   var pubSettings   : AdnMPubSettings,
   var meta          : AdnMMetadata,
   var id            : Option[String] = None
@@ -103,6 +103,8 @@ case class MAdnNode(
     }
     saveFut
   }
+
+
 
 }
 

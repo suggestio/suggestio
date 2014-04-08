@@ -4,10 +4,15 @@ import org.elasticsearch.common.xcontent.{XContentFactory, XContentBuilder}
 import io.suggest.util.JacksonWrapper
 import io.suggest.util.SioEsUtil._
 import io.suggest.model._
-import io.suggest.ym.model.AdShowLevel
+import io.suggest.ym.model.{MAd, AdShowLevel}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
+import io.suggest.ym.ad.ShowLevelsUtil
+import scala.concurrent.{ExecutionContext, Future}
+import io.suggest.event.SioNotifierStaticClientI
+import org.elasticsearch.client.Client
+import org.elasticsearch.action.update.UpdateRequestBuilder
 
 /**
  * Suggest.io
@@ -19,6 +24,8 @@ import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilder
  */
 
 object EMReceivers {
+
+  type Receivers_t = Map[String, AdReceiverInfo]
 
   val RECEIVERS_ESFN   = "receivers"
   val RECEIVER_ID_ESFN = "receiverId"
@@ -59,6 +66,17 @@ trait EMReceiversStatic[T <: EMReceiversMut[T]] extends EsModelStaticT[T] {
     }
   }
 
+
+  /**
+   * Реалтаймовый поиск по получателю.
+   * @param receiverId id получателя.
+   * @param maxResults Макс. кол-во результатов.
+   * @return Последовательность MAd.
+   */
+  def findForReceiverRt(receiverId: String, maxResults: Int = 100)(implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
+    findQueryRt(receiverIdQuery(receiverId), maxResults)
+  }
+
   def receiverIdQuery(receiverId: String) = QueryBuilders.termQuery(RCVRS_RECEIVER_ID_ESFN, receiverId)
 
   /**
@@ -94,7 +112,7 @@ trait EMReceiversStatic[T <: EMReceiversMut[T]] extends EsModelStaticT[T] {
 trait EMReceivers[T <: EMReceivers[T]] extends EsModelT[T] {
 
   /** Где (у кого) должна отображаться эта рекламная карточка? */
-  def receivers: Set[AdReceiverInfo]
+  def receivers: Receivers_t
 
   abstract override def writeJsonFields(acc: XContentBuilder) = {
     super.writeJsonFields(acc)
@@ -106,7 +124,7 @@ trait EMReceivers[T <: EMReceivers[T]] extends EsModelT[T] {
   /** Рендер поля receivers. Вынесен из [[writeJsonFields]] для удобства выполнения апдейта только уровней. */
   def writeFieldReceivers(acc: XContentBuilder): XContentBuilder = {
     acc.startArray(RECEIVERS_ESFN)
-      receivers.foreach { rcvr =>
+      receivers.valuesIterator.foreach { rcvr =>
         rcvr.toXContent(acc)
       }
     acc.endArray()
@@ -115,14 +133,47 @@ trait EMReceivers[T <: EMReceivers[T]] extends EsModelT[T] {
   /** Поле slsPub обычно выставляется на основе want-поля и списка разрешенных уровней. Их пересечение
     * является новым slsPub значением. Тут короткий враппер, чтобы это всё сделать. */
   def resetReceiversSlsPub(slsAllowed: Set[AdShowLevel]) {
-    receivers.foreach { rcvr =>
+    receivers.valuesIterator.foreach { rcvr =>
       rcvr.slsPub = rcvr.slsWant intersect slsAllowed
     }
+  }
+
+  /** Генерация update-реквеста на обновление только поля receivers. Сам реквест не вызывается. */
+  def updateReceiversReqBuilder(implicit client: Client): UpdateRequestBuilder = {
+    val acc = XContentFactory.jsonBuilder().startObject()
+    writeFieldReceivers(acc).endObject()
+    prepareUpdate.setDoc(acc)
+  }
+
+  def updateAllWantLevels(f: Set[AdShowLevel] => Set[AdShowLevel]) {
+    receivers.valuesIterator.foreach { ari =>
+      ari.slsWant = f(ari.slsWant)
+    }
+  }
+
+  /** Сохранить новые ресиверы через update. */
+  def saveReceivers(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    updateReceiversReqBuilder.execute()
+  }
+
+  /** Собрать все уровни отображения со всех ресиверов. */
+  def allPubShowLevels = receivers.foldLeft[Set[AdShowLevel]] (Set.empty) {
+    case (acc, (_, ari))  =>  acc union ari.slsPub
+  }
+
+  /** Собрать все уровни отображения со всех ресиверов. */
+  def allWantShowLevels = receivers.foldLeft[Set[AdShowLevel]] (Set.empty) {
+    case (acc, (_, ari))  =>  acc union ari.slsWant
+  }
+
+  /** Опубликована ли рекламная карточка у указанного получателя? */
+  def isPublishedAt(receiverId: String): Boolean = {
+    receivers.get(receiverId).exists(!_.slsPub.isEmpty)
   }
 }
 
 trait EMReceiversMut[T <: EMReceiversMut[T]] extends EMReceivers[T] {
-  var receivers: Set[AdReceiverInfo]
+  var receivers: Receivers_t
 }
 
 
@@ -140,9 +191,12 @@ object AdReceiverInfo {
   }
 
   /** Десериализация сериализованного массива/списка AdReceiversInfo. */
-  val deserializeAll: PartialFunction[AnyRef, Set[AdReceiverInfo]] = {
+  val deserializeAll: PartialFunction[AnyRef, Receivers_t] = {
     case i: java.lang.Iterable[_] =>
-      i.map(deserialize(_)).toSet
+      i.map { ii =>
+        val ari = deserialize(ii)
+        ari.receiverId -> ari
+      }.toMap
   }
 
   /** Хелпер для безусловной сериализации поля с набором уровней. */
@@ -172,7 +226,7 @@ import AdReceiverInfo._
  * @param slsPub Выставленные системой уровни отображения на основе желаемых и возможных уровней.
  */
 case class AdReceiverInfo(
-  var receiverId: String,
+  receiverId: String,
   var slsWant: Set[AdShowLevel] = Set.empty,
   var slsPub: Set[AdShowLevel]  = Set.empty
 ) {

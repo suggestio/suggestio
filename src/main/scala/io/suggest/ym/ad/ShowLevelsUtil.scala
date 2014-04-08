@@ -8,6 +8,7 @@ import io.suggest.util.MacroLogsImpl
 import org.elasticsearch.common.xcontent.XContentFactory
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import io.suggest.event.{AdSavedEvent, SioNotifierStaticClientI}
+import io.suggest.util.MyConfig.CONFIG
 
 /**
  * Suggest.io
@@ -32,6 +33,9 @@ object ShowLevelsUtil extends MacroLogsImpl {
 
   import LOGGER._
 
+  /** Дефолтовое значение для макс.числа карточек на producer-уровне. */
+  val PRODUCER_LEVEL_ADS_COUNT_DFLT = CONFIG.getInt("adn.node.show.levels.lvl_producer.max.dflt") getOrElse 2
+
   /**
    * Накатить на карточку исходящие трансформации исходных (желаемых) showLevels.
    * На выходе будет список карточек, уровни которых также надо обновить.
@@ -49,7 +53,7 @@ object ShowLevelsUtil extends MacroLogsImpl {
     val producerId = producer.id.get
     trace(s"${logPrefix}Starting, producer = $producerId / ${producer.meta.name}")
     // Если владелец отключен вообще, то на этом все уровни и заканчиваются.
-    val lvlMap = producer.pubSettings.getOutShowLevels
+    val lvlMap = producer.pubSettings.maybeOutShowLevels
     val (levels1, levelsM) = lvlMap.foldLeft[(List[AdShowLevel], List[AdShowLevel])] (Nil -> Nil) {
       case (acc @ (acc1, accM), (asl, v)) =>
         if (v > 1) {
@@ -91,12 +95,12 @@ object ShowLevelsUtil extends MacroLogsImpl {
     // С singleton-уровнями всё сложнее. Надо находить текущий уровень среди реалтаймовых карточек, затем заменять
     // уровни в обоих карточках. Для простоты и надежности заменяем уровни во всех карточках сразу.
     val levels1Set = levels1.toSet
-    val has1Levels = thisAd.receivers.exists(!_.slsWant.intersect(levels1Set).isEmpty)
+    val has1Levels = thisAd.receivers.valuesIterator.exists(!_.slsWant.intersect(levels1Set).isEmpty)
     if (has1Levels) {
       // Вообще все уровни отображения, заявленные в карточке во всех ресиверах.
       val allProdAdsFut = MAd.findForProducerRt(producerId)
       val allAdRcvrsWantSls = thisAd.receivers
-        .iterator
+        .valuesIterator
         .map { _.slsWant }
         .reduce { _ union _ }
       val ad1Levels = levels1Set intersect allAdRcvrsWantSls
@@ -110,7 +114,7 @@ object ShowLevelsUtil extends MacroLogsImpl {
               // Накатить разрешенные уровни на все перечисленные в карточке ресиверы.
               thisAd.resetReceiversSlsPub(thisAdAllowedSls)
             } else {
-              mad.receivers.foreach { ari =>
+              mad.receivers.valuesIterator.foreach { ari =>
                 ari.slsPub = ari.slsWant -- ad1Levels
               }
             }
@@ -133,15 +137,13 @@ object ShowLevelsUtil extends MacroLogsImpl {
   def updateAllReceivers(mads: Seq[MAd])(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
     val bulkRequest = client.prepareBulk()
     mads.foreach { mad =>
-      val acc = XContentFactory.jsonBuilder().startObject()
-      mad.writeFieldReceivers(acc).endObject()
-      val updReq = mad.prepareUpdate.setDoc(acc)
+      val updReq = mad.updateReceiversReqBuilder
       bulkRequest.add(updReq)
     }
     val resultFut: Future[_] = bulkRequest.execute()
     resultFut onSuccess { case _ =>
-      mads.foreach { mad =>
-        sn publish AdSavedEvent(mad)
+      mads.foreach {
+        _.emitSavedEvent
       }
     }
     resultFut
@@ -153,7 +155,7 @@ object ShowLevelsUtil extends MacroLogsImpl {
     * @return Фьючерс для синхронизации.
     */
   def handleProducerOnOff(producer: MAdnNode)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
-    val allowedSls = producer.pubSettings.getOutShowLevels.keySet
+    val allowedSls = producer.pubSettings.maybeOutShowLevels.keySet
     MAd.findForProducer(producer.id.get) flatMap { prodAds =>
       // Изменяем pub-уровни согласно карте
       prodAds.foreach { mad =>

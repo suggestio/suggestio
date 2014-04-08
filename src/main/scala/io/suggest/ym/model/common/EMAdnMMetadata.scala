@@ -6,6 +6,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.JacksonWrapper
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel._
+import com.fasterxml.jackson.annotation.JsonIgnore
 
 /**
  * Suggest.io
@@ -54,8 +55,7 @@ trait EMAdnMMetadata[T <: EMAdnMMetadata[T]] extends EsModelT[T] {
     * Полезно при edit form sumbit после накатывания маппинга формы на реквест. */
   override def loadUserFieldsFrom(other: T) {
     super.loadUserFieldsFrom(other)
-    meta.name = other.meta.name
-    meta.description = other.meta.description
+    meta.loadUserFieldsFrom(other.meta)
   }
 }
 
@@ -65,5 +65,16 @@ case class AdnMMetadata(
   var name: String,
   var description: Option[String] = None,
   dateCreated: DateTime = DateTime.now
-)
+) {
+
+  /** Загрузить строки из другого объекта метаданных. */
+  @JsonIgnore
+  def loadUserFieldsFrom(other: AdnMMetadata) {
+    if (other != null) {
+      name = other.name
+      description = other.description
+    }
+  }
+
+}
 

@@ -80,12 +80,10 @@ class YmShopPriceUrlDatum extends BaseDatum(FIELDS) {
 // Далее - не-datum реализация этой же модели. Для random-access вне flow, т.е. для веб-морды например.
 // И сериализация тут не предусмотрена.
 
-import MShop.ShopId_t
 import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
-import io.suggest.util.SioConstants._
 import org.elasticsearch.client.Client
 import io.suggest.model.{EsModelStaticT, EsModelT}
 import io.suggest.model.EsModel._
@@ -187,7 +185,7 @@ case class UsernamePw(username: String, password: String) {
 }
 
 trait ShopPriceListSel {
-  def shopId: MShop.ShopId_t
+  def shopId: String
   def priceLists(implicit ec:ExecutionContext, client: Client) = getForShop(shopId)
 }
 

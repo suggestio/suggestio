@@ -10,6 +10,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model.common._
 import io.suggest.ym.model.ad.{MAdT, AdOfferT}
 import io.suggest.model.common._
+import io.suggest.ym.model.common.EMReceivers.Receivers_t
 
 /**
  * Suggest.io
@@ -61,7 +62,7 @@ case class MWelcomeAd(
   @JsonIgnore override def prio: Option[Int] = None
   @JsonIgnore override def userCatId: Option[String] = None
   @JsonIgnore override def logoImgOpt: Option[MImgInfo] = None
-  @JsonIgnore override def receivers: Set[AdReceiverInfo] = Set.empty
+  @JsonIgnore override def receivers: Receivers_t = Map.empty
 }
 
 

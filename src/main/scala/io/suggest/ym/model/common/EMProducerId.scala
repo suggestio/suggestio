@@ -39,7 +39,11 @@ trait EMProducerIdStatic[T <: EMProducerIdMut[T]] extends EsModelStaticT[T] {
     }
   }
 
-
+  /**
+   * Сгенерить es query для поиска по id продьюсера.
+   * @param producerId id продьюсера.
+   * @return QueryBuilder.
+   */
   def producerIdQuery(producerId: String) = QueryBuilders.termQuery(PRODUCER_ID_ESFN, producerId)
 
   /**
@@ -57,7 +61,17 @@ trait EMProducerIdStatic[T <: EMProducerIdMut[T]] extends EsModelStaticT[T] {
       .map { searchResp2list }
   }
 
+  /**
+   * Реалтаймовый поиск по создателю.
+   * @param producerId id продьюсера.
+   * @return Список MAd.
+   */
+  def findForProducerRt(producerId: String, maxResults: Int = 100)(implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
+    findQueryRt(producerIdQuery(producerId), maxResults)
+  }
+
 }
+
 
 trait EMProducerId[T <: EMProducerId[T]] extends EsModelT[T] {
 

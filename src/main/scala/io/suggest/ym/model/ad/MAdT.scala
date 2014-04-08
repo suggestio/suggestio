@@ -4,6 +4,7 @@ import io.suggest.ym.model._
 import io.suggest.ym.model.common._
 import org.joda.time.DateTime
 import io.suggest.model._
+import io.suggest.ym.model.common.EMReceivers.Receivers_t
 
 /**
  * Suggest.io
@@ -16,7 +17,7 @@ import io.suggest.model._
 trait MAdT[T <: MAdT[T]] extends EsModelT[T] {
 
   def producerId : String
-  def receivers  : Set[AdReceiverInfo]
+  def receivers  : Receivers_t
   def prio       : Option[Int]
   def userCatId  : Option[String]
   def dateCreated : DateTime

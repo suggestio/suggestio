@@ -12,8 +12,7 @@ import io.suggest.util.MacroLogsImpl
 import io.suggest.ym.model.ad._
 import io.suggest.ym.model.common._
 import scala.util.{Success, Failure}
-import org.elasticsearch.index.query.QueryBuilder
-import io.suggest.model.inx2.MMartInx
+import io.suggest.ym.model.common.EMReceivers.Receivers_t
 
 /**
  * Suggest.io
@@ -54,25 +53,6 @@ object MAd
     FieldAll(enabled = true)
   )
 
-
-  /**
-   * Реалтаймовый поиск по создателю.
-   * @param producerId id продьюсера.
-   * @return Список MAd.
-   */
-  def findForProducerRt(producerId: String, maxResults: Int = 100)(implicit ec: ExecutionContext, client: Client): Future[Seq[MAd]] = {
-    findQueryRt(producerIdQuery(producerId), maxResults)
-  }
-
-  /**
-   * Реалтаймовый поиск по получателю.
-   * @param receiverId id получателя.
-   * @param maxResults Макс. кол-во результатов.
-   * @return Последовательность MAd.
-   */
-  def findForReceiverRt(receiverId: String, maxResults: Int = 100)(implicit ec: ExecutionContext, client: Client): Future[Seq[MAd]] = {
-    findQueryRt(receiverIdQuery(receiverId), maxResults)
-  }
 
   /**
    * Удалить документ по id.
@@ -118,7 +98,7 @@ case class MAd(
   var producerId : String,
   var offers     : List[AdOfferT],
   var img        : MImgInfo,
-  var receivers  : Set[AdReceiverInfo] = Set.empty,
+  var receivers  : Receivers_t = Map.empty,
   var logoImgOpt : Option[MImgInfo] = None,
   var textAlign  : Option[TextAlign] = None,
   var panel      : Option[AdPanelSettings] = None,
@@ -153,11 +133,22 @@ case class MAd(
     val resultFut = super.save
     resultFut onSuccess { case adId =>
       this.id = Option(adId)
-      sn publish AdSavedEvent(this)
+      emitSavedEvent
     }
     resultFut
   }
 
+  /** Сохранить новые ресиверы через update. */
+  override def saveReceivers(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    val resultFut = super.saveReceivers
+    resultFut onSuccess {
+      case _ => emitSavedEvent
+    }
+    resultFut
+  }
+
+  /** Отправить в шину SN событие успешного сохранения этого экземпляра. */
+  def emitSavedEvent(implicit sn: SioNotifierStaticClientI) = sn publish AdSavedEvent(this)
 }
 
 

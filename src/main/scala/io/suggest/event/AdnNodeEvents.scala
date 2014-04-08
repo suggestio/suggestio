@@ -22,7 +22,7 @@ object AdnNodeSavedEvent {
   }
 }
 
-case class AdnNodeSavedEvent(adnId: String, adnNode: MAdnNode, isCreated: Boolean) extends SioEventT {
+case class AdnNodeSavedEvent(adnId: String, adnNode: MAdnNode, isCreated: Boolean) extends SioEventT with IAdnId {
   def getClassifier: Classifier = AdnNodeSavedEvent.getClassifier(
     memberType = Option(adnNode.adnMemberInfo.memberType),
     adnId = Option(adnId),
@@ -42,7 +42,7 @@ object AdnNodeDeletedEvent {
   }
 }
 
-case class AdnNodeDeletedEvent(adnId: String, isDeleted: Boolean) extends SioEventT {
+case class AdnNodeDeletedEvent(adnId: String, isDeleted: Boolean) extends SioEventT with IAdnId {
   def getClassifier: Classifier = {
     AdnNodeDeletedEvent.getClassifier(
       adnId = Option(adnId),
@@ -54,20 +54,23 @@ case class AdnNodeDeletedEvent(adnId: String, isDeleted: Boolean) extends SioEve
 
 /** Событие включения выключения узла рекламной сети. */
 object AdnNodeOnOffEvent {
-  val haadSne = Some(getClass.getSimpleName)
+  val headSne = Some(getClass.getSimpleName)
 
-  def getClassifier(memberType: Option[AdNetMemberType] = None,
-                    adnId: Option[String] = None,
+  def getClassifier(adnId: Option[String] = None,
                     isEnabled: Option[Boolean] = None): Classifier = {
-    List(haadSne, memberType, adnId, isEnabled)
+    List(headSne, adnId, isEnabled)
   }
 }
 
-case class AdnNodeOnOffEvent(adn: MAdnNode) extends SioEventT {
+case class AdnNodeOnOffEvent(adnId: String, isEnabled: Boolean) extends SioEventT with IAdnId {
   def getClassifier: Classifier = AdnNodeOnOffEvent.getClassifier(
-    memberType = Option(adn.adnMemberInfo.memberType),
-    adnId = adn.id,
-    isEnabled = Some(adn.pubSettings.isEnabled)
+    adnId = Option(adnId),
+    isEnabled = Some(isEnabled)
   )
 }
 
+
+/** Все AdnNode-события имеют adnId. Тут интерфейс, описывающий это: */
+trait IAdnId {
+  def adnId: String
+}

@@ -72,7 +72,7 @@ object AdsSearch {
 /** Интерфейс для передачи параметров поиска объявлений в индексе/типе. */
 trait AdsSearchArgsT {
   /** Необязательный id магазина. */
-  def producerIdOpt: Option[ShopId_t]
+  def producerIdOpt: Option[String]
 
   /** Необязательный id категории */
   def catIdOpt: Option[String]
@@ -93,6 +93,7 @@ trait AdsSearchArgsT {
 
 /** Если нужно добавить в рекламную inx2-модель поиск по рекламным карточкам,
   * то следует задействовать вот этот трейт. */
+@deprecated("AdsSearch trait used only by deprecated models. Should be removed after cleanup.", "2014.apr.07")
 trait AdsSearchT[T, InxT <: MInxT] {
   
   def searchResp2list(searchResp: SearchResponse, inx2: InxT): Seq[T]

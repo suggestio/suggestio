@@ -10,7 +10,7 @@ import io.suggest.model.EsModel._
 import java.{util => ju}
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
-import io.suggest.event.{MShopOnOffEvent, SioNotifierStaticClientI}
+import io.suggest.event.{AdnNodeOnOffEvent, MShopOnOffEvent, SioNotifierStaticClientI}
 
 /**
  * Suggest.io
@@ -21,6 +21,8 @@ import io.suggest.event.{MShopOnOffEvent, SioNotifierStaticClientI}
  * А на уровнях могут быть ограничители кол-ва отображаемых реклам.
  * Все эти параметры задаются и изменяются супервизорами или администрацией ресурса.
  */
+
+// TODO Вероятно, это поле следует объеденить с полем adnMember
 
 object EMAdnMPubSettings {
 
@@ -78,7 +80,6 @@ trait EMAdnMPubSettingsStatic[T <: EMAdnMPubSettings[T]] extends EsModelStaticT[
     }
   }
 
-
   /**
    * Статическое обновление сеттингов isEnabled и disabledReason.
    * @param adnId id изменяемого магазина
@@ -93,19 +94,22 @@ trait EMAdnMPubSettingsStatic[T <: EMAdnMPubSettings[T]] extends EsModelStaticT[
         .field(PS_IS_ENABLED_ESFN, isEnabled)
         .field(PS_DISABLE_REASON_ESFN, reason getOrElse null)
       .endObject()
-    val fut = client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, adnId)
+    val fut: Future[_] = prepareUpdate(adnId)
       .setDoc(updatedXCB)
       .execute()
     // Уведомить о переключении состояния магазина
     fut onSuccess { case _ =>
-      sn publish MShopOnOffEvent(adnId, isEnabled, reason)
+      sn publish AdnNodeOnOffEvent(adnId, isEnabled)
     }
     fut
   }
 
 }
 
+
 trait EMAdnMPubSettings[T <: EMAdnMPubSettings[T]] extends EsModelT[T] {
+  // Ограничиваем тип объекта-компаньона, чтобы можно было дергать статический setIsEnabled().
+  override def companion: EMAdnMPubSettingsStatic[T]
 
   var pubSettings: AdnMPubSettings
 
@@ -114,6 +118,16 @@ trait EMAdnMPubSettings[T <: EMAdnMPubSettings[T]] extends EsModelT[T] {
     acc.startObject(PUB_SETTINGS_ESFN)
     pubSettings.writeFields(acc)
     acc.endObject()
+  }
+
+  /** Быстрый доступ к статическому [[EMAdnMPubSettingsStatic.setIsEnabled( )]].
+    * @param isEnabled Новое значение isEnabled.
+    * @param reason Причина отлючения.
+    * @return Фьючерс для синхронизации.
+    */
+  def setIsEnabled(isEnabled: Boolean, reason: Option[String])
+                  (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    companion.setIsEnabled(id.get, isEnabled, reason)
   }
 
 }
@@ -144,16 +158,29 @@ case class AdnMPubSettings(
   }
 
   /**
-   * Выдать карту допустимых out-уровней.
+   * Выдать карту допустимых out-уровней. Из-за необходимости доступа к isEnabled находится вне showLevelsInfo.
    * @return Если isEnabled = false, то будет пустая карта.
    */
   @JsonIgnore
-  def getOutShowLevels: AdnMPubSettingsLevels.LvlMap_t = {
+  def maybeOutShowLevels: AdnMPubSettingsLevels.LvlMap_t = {
     if (isEnabled)
       showLevelsInfo.out
     else
       Map.empty
   }
+
+  /**
+   * Выдать карту допустимых in-уровней. Если disabled, то будет пустая карта.
+   * @return Карта типа LvlMap_t.
+   */
+  @JsonIgnore
+  def maybeInShowLevels: AdnMPubSettingsLevels.LvlMap_t = {
+    if (isEnabled)
+      showLevelsInfo.in
+    else
+      Map.empty
+  }
+
 }
 
 
@@ -259,7 +286,6 @@ case class AdnMPubSettingsLevels(
   var in:  AdnMPubSettingsLevels.LvlMap_t = Map.empty,
   var out: AdnMPubSettingsLevels.LvlMap_t = Map.empty
 ) {
-
   @JsonIgnore
   def renderFields(acc: XContentBuilder): XContentBuilder = {
     maybeRenderLevelsMap(IN_ESFN, in, acc)

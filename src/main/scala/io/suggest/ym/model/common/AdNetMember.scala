@@ -99,6 +99,24 @@ trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
       .map { searchResp2list }
   }
 
+  /**
+   * Прочитать поле с id супервизора для указанного элемента.
+   * @param id id узла рекламной сети.
+   * @return Some(String) если документ найден и у него есть супервизор. Иначе false.
+   */
+  def getSupIdOf(id: String)(implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
+    prepareGet(id)
+      .setFetchSource(false)
+      .setFields(ADN_MI_SUPERVISOR_ID_ESFN)
+      .execute()
+      .map { getResp =>
+        // Если not found, то getFields() возвращает пустую карту.
+        Option(getResp.getFields.get(ADN_MI_SUPERVISOR_ID_ESFN))
+          .flatMap { field =>
+            Option(stringParser(field.getValue))
+          }
+      }
+  }
 
   /**
    * Найти все магазины, относящиеся к указанному ТЦ.

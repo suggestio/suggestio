@@ -2,7 +2,6 @@ package io.suggest.model.inx2
 
 import io.suggest.model._
 import EsModel._
-import io.suggest.ym.model.MMart.MartId_t
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
 import MInx._
@@ -48,7 +47,7 @@ object MMartInx extends EsModelStaticT[MMartInx] {
 import MMartInx._
 
 case class MMartInx(
-  var martId: MartId_t,
+  var martId: String,
   var targetEsInxName: String
 ) extends EsModelT[MMartInx] with MSingleInxT {
 

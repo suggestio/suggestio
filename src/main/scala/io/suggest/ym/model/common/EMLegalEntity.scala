@@ -74,7 +74,7 @@ trait EMLegalEntity[T <: EMLegalEntity[T]] extends EsModelT[T] {
 
   /** Загрузка новых значений *пользовательских* полей из указанного экземпляра такого же класса.
     * Полезно при edit form sumbit после накатывания маппинга формы на реквест. */
-  override def loadUserFieldsFrom(other: T): Unit = {
+  override def loadUserFieldsFrom(other: T) {
     super.loadUserFieldsFrom(other)
     legal.updateFrom(other.legal)
   }
@@ -125,12 +125,14 @@ case class AdnLegalEntityInfo(
 
   /** Загрузить новые значения полей из другого экземпляра [[AdnLegalEntityInfo]]. */
   def updateFrom(other: AdnLegalEntityInfo) {
-    town = other.town
-    address = other.address
-    phone = other.phone
-    floor = other.floor
-    section = other.section
-    siteUrl = other.siteUrl
+    if (other != null) {
+      town = other.town
+      address = other.address
+      phone = other.phone
+      floor = other.floor
+      section = other.section
+      siteUrl = other.siteUrl
+    }
   }
 }
 
