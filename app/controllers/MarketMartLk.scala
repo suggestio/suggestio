@@ -123,7 +123,11 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
 
   /** Форма на которой нельзя менять логотип, но можно настраивать разные поля.
     * Подходит для редактирования из ТЦ-аккаунта */
-  val shopEditFormM = Form(MarketShopLk.shopKM)
+  val shopEditFormM = Form(
+    "shop" -> tuple(
+      MarketShopLk.shopMetaKM,
+      MarketShopLk.shopLegalKM
+    ))
 
   
   /** Асинхронно получить welcome-ad-карточку. */
