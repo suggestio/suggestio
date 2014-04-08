@@ -44,6 +44,27 @@ package object models {
   val  MAd                  = ym.model.MAd
   type MAd                  = ym.model.MAd
 
+  val  AdnLegalEntityInfo   = ym.model.common.AdnLegalEntityInfo
+  type AdnLegalEntityInfo   = ym.model.common.AdnLegalEntityInfo
+
+  val  AdnMMetadata         = ym.model.common.AdnMMetadata
+  type AdnMMetadata         = ym.model.common.AdnMMetadata
+
+  val  AdNetMemberInfo      = ym.model.common.AdNetMemberInfo
+  type AdNetMemberInfo      = ym.model.common.AdNetMemberInfo
+
+  val  AdNetMemberTypes     = ym.model.common.AdNetMemberTypes
+  type AdNetMemberType      = AdNetMemberTypes.AdNetMemberType
+
+  val  AdnVisual            = ym.model.common.AdnVisual
+  type AdnVisual            = ym.model.common.AdnVisual
+
+  val  AdnMPubSettingsLevels = ym.model.common.AdnMPubSettingsLevels
+  type AdnMPubSettingsLevels = ym.model.common.AdnMPubSettingsLevels
+
+  val  AdnMPubSettings      = ym.model.common.AdnMPubSettings
+  type AdnMPubSettings      = ym.model.common.AdnMPubSettings
+
   type MAdT                 = ym.model.ad.MAdT[_]
 
   val  AdReceiverInfo       = ym.model.common.AdReceiverInfo
@@ -128,4 +149,5 @@ package object models {
   type AdStatAction         = ym.model.stat.AdStatAction
 
   type CollectMMCatsAcc_t   = MMartCategory.CollectMMCatsAcc_t
+
 }

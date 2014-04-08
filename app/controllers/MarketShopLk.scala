@@ -35,28 +35,39 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
   /** Маркер картинки для logo-вещичек */
   val SHOP_TMP_LOGO_MARKER = "shopLogo"
 
-  /** Форма добавления/редактирования магазина. */
-  val shopM = mapping(
+  /** Метаданные магазина, которые может редактировать владелец магазина. */
+  val shopMetaM = mapping(
     "name"         -> shopNameM,
     "description"  -> publishedTextOptM,
-    "mart_floor"   -> optional(martFloorM),
-    "mart_section" -> optional(martSectionM)
   )
-  // apply()
-  {(name, description, martFloor, martSection) =>
-    MShop(name=name, companyId=null, description=description, martFloor=martFloor, martSection=martSection, personIds=null)
+  {(name, descr) =>
+    AdnMMetadata(name = name, description = descr)
   }
-  // unapply()
-  {mshop =>
-    import mshop._
-    Some((name, description, martFloor, martSection))
+  {adnMeta =>
+    Some((adnMeta.name, adnMeta.description))
   }
 
-  private val shopKM = "shop" -> shopM
 
-  /** Форма на которой нельзя менять логотип, но можно настраивать разные поля.
-    * Подходит для редактирования из ТЦ-аккаунта */
-  val shopFormM = Form(shopKM)
+  val shopLegalM = mapping(
+    "floor"   -> optional(legalFloorM),
+    "section" -> optional(legalSectionM)
+  )
+  {(floor, section) =>
+    AdnLegalEntityInfo(floor = floor, section = section)
+  }
+  {adnLegal =>
+    Some((adnLegal.floor, adnLegal.section))
+  }
+
+
+  /** Форма добавления/редактирования магазина. */
+  val shopM = tuple(
+    "meta"  -> shopMetaM,
+    "legal" -> shopLegalM
+  )
+
+
+  val shopKM = "shop" -> shopM
 
   /** Маппер для необязательного логотипа магазина. */
   val logoImgOptIdKM = ImgFormUtil.getLogoKM("shop.logo.invalid", marker=SHOP_TMP_LOGO_MARKER)
@@ -115,7 +126,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
 
 
   /** Асинхронно заполнить full форму с помощью указанного магазина. */
-  def fillFullForm(mshop: MShop) = {
+  def fillFullForm(mshop: MAdnNode) = {
     val shopOwnerEmailFut: Future[Option[String]] = mshop.mainPersonId match {
       case Some(personId) =>
         MPersonIdent.findAllEmails(personId)
@@ -126,7 +137,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
         EmailActivation.findByKey(mshop.id.get)
           .map { _.headOption.map(_.email) }
     }
-    val imgId = mshop.logoImgId.map { imgId => ImgInfo4Save(ImgIdKey(imgId)) }
+    val imgId = mshop.visual.logoImg.map { img => ImgInfo4Save(ImgFormUtil.imgInfo2imgKey(img)) }
     shopOwnerEmailFut map { shopOwnerEmail =>
       shopFullFormM fill (shopOwnerEmail, mshop, imgId)
     }

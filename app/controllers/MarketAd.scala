@@ -697,7 +697,7 @@ object MarketAd extends SioController with LogoSupport {
                   // TODO Нужно проверить категорию.
                   mmad.producerId = martId
                   // Добавляем самих себя в получатели
-                  mmad.receivers = Set(AdReceiverInfo(martId))
+                  mmad.receivers = Map(martId -> AdReceiverInfo(martId))
                   mmad.img = imgsSaved.head
                   mmad.logoImgOpt = savedLogos.headOption
                   // Сохранить изменения в базу
@@ -802,7 +802,6 @@ object MarketAd extends SioController with LogoSupport {
           {case (iik, logoImgIdOpt, mad2) =>
             // Надо обработать логотип, который приходит в составе формы. Это можно делать независимо от самой MMartAd.
             // Если выставлен tmp-логотип, то надо запустить обновление mshop.
-            val martId = mad.receivers
             val updateLogoFut = ImgFormUtil.updateOrigImg(needImgs = logoImgIdOpt, oldImgs = mad.logoImgOpt)
             updateLogoFut onComplete entityLogoUpdatePf("mart", mad.producerId)
             // Обрабатываем ad-часть формы
@@ -1064,7 +1063,7 @@ object MarketAd extends SioController with LogoSupport {
                 mad.img = MImgInfo(iik.key)
                 mad.logoImgOpt = logoOpt
                 mad.producerId = shopId
-                mad.receivers = Set(AdReceiverInfo(request.martId))
+                mad.receivers = Map(request.martId -> AdReceiverInfo(request.martId))
                 Ok(_single_offer(mad, request.mmart, Some(mshop)))
               }
             )
@@ -1093,7 +1092,7 @@ object MarketAd extends SioController with LogoSupport {
             mad.img = MImgInfo(iik.key)
             mad.logoImgOpt = logoOpt
             mad.producerId = martId
-            mad.receivers = Set(AdReceiverInfo(martId))
+            mad.receivers = Map(martId -> AdReceiverInfo(martId))
             Ok(_single_offer(mad, mmart, None))
           }
         )

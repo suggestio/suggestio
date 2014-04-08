@@ -1,11 +1,11 @@
-@(martId:MMart.MartId_t, btnText: String, mf: Form[_], call:Call, welcomeAdOpt: Option[MMartAdT])(implicit ctx: util.Context)
+@(martId:String, btnText: String, mf: Form[_], submitCall:Call, welcomeAdOpt: Option[MAdT])(implicit ctx: util.Context)
 
 @* Форма для создания/редактирования торгового центра через личный кабинет. *@
 @import helper._
 
 @import util.FormHelpers._
 
-@form(call) {
+@form(submitCall) {
 
   <div class="fields">
 
@@ -40,28 +40,28 @@
 
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
       @inputText(
-        mf("mart.name"),
+        mf("meta.name"),
         '_label -> "Название ТЦ:"
       )
     </table>
 
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
       @inputText(
-        mf("mart.town"),
+        mf("legal.town"),
         '_label -> "Город:"
       )
     </table>
 
     <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
       @textarea(
-        mf("mart.address"),
+        mf("legal.address"),
         '_label -> "Адрес:"
       )
     </table>
 
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
       @inputText(
-        mf("mart.siteUrl"),
+        mf("legal.siteUrl"),
         '_label -> "Сайт ТЦ:"
       )
     </table>

@@ -347,8 +347,8 @@ object SysMarket extends SioController with MacroLogsImpl {
     "mart_id"      -> optional(esIdM),
     "company_id"   -> esIdM,
     "description"  -> publishedTextOptM,
-    "mart_floor"   -> optional(martFloorM),
-    "mart_section" -> optional(martSectionM),
+    "mart_floor"   -> optional(legalFloorM),
+    "mart_section" -> optional(legalSectionM),
     "l3maxAds"     -> default(number(min=0, max=30), MShopSettings.MAX_LSHOP_ADS)
   )
   // apply()

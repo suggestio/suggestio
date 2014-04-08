@@ -218,6 +218,10 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     logoOpt.map { logo => MImgInfo(logo.iik.key) }
   }
 
+  /** Конвертер данных из готовых MImgInfo в [[OrigImgIdKey]]. */
+  implicit def imgInfo2imgKey(m: MImgInfo): OrigImgIdKey = {
+    OrigImgIdKey(m.id, m.meta)
+  }
 }
 
 

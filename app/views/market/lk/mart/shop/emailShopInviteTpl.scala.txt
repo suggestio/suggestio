@@ -1,4 +1,4 @@
-@(mmart: MMart, mshop: MShop, eAct: EmailActivation)(implicit ctx: util.Context)
+@(mmart: MAdnNode, mshop: MAdnNode, eAct: EmailActivation)(implicit ctx: util.Context)
 
 @* Шаблон рендера txt-части письма-приглашения, отправляемого владельцу магазина. *@
 

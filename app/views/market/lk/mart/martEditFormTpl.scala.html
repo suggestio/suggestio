@@ -1,4 +1,4 @@
-@(mmart: MMart, mf: Form[_], welcomeAdOpt: Option[MMartAdT])(implicit ctx: util.Context)
+@(mmart: MAdnNode, mf: Form[_], welcomeAdOpt: Option[MAdT])(implicit ctx: util.Context)
 
 @* Рендер страницы редактирования существующего ТЦ. *@
 @import ctx._
@@ -20,7 +20,7 @@
       martId = mmart.id.get,
       btnText = Messages("Save"),
       mf = mf,
-      call = routes.MarketMartLk.martEditFormSubmit(mmart.id.get),
+      submitCall = routes.MarketMartLk.martEditFormSubmit(mmart.id.get),
       welcomeAdOpt = welcomeAdOpt
     )
   </div>

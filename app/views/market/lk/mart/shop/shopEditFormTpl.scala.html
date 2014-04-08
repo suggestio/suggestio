@@ -1,4 +1,4 @@
-@(mmart: MMart, mshop:MShop, sf: Form[_])(implicit ctx: util.Context)
+@(mmart: MAdnNode, mshop:MAdnNode, sf: Form[_])(implicit ctx: util.Context)
 
 @* Страница с формой редактировния магазина для владельца ТЦ.
    Отличается от формы для владельца магазина доступом на редактирование ко всем полям, а не только
@@ -8,7 +8,7 @@
 @import routes.MarketMartLk._
 @import ctx._
 
-@lkBase(Messages("Edit") + " " + mshop.name) {
+@lkBase(Messages("Edit") + " " + mshop.meta.name) {
 
   <div class="title-wrap">
     <div class="center">

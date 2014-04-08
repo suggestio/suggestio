@@ -1,4 +1,4 @@
-@(mmart: MMart, shops: Seq[MShop])(implicit ctx: util.Context)
+@(mmart: MAdnNode, shops: Seq[MAdnNode])(implicit ctx: util.Context)
 
 @* Страница с отображением списка магазинов. *@
 
@@ -13,7 +13,7 @@
   routes.javascript.MarketMartLk.shopOnOffSubmit
 )
 
-@market.lk.lkBase(mmart.name) {
+@market.lk.lkBase(mmart.meta.name) {
 
     <div class="title-wrap">
       <div class="center">

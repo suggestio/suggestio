@@ -1,4 +1,4 @@
-@(mmart: MMart, sf: Form[_])(implicit ctx: util.Context)
+@(mmart: MAdnNode, sf: Form[_])(implicit ctx: util.Context)
 
 @* Страница с формой добавления нового магазина с отсылкой инвайта по email владельца. *@
 
@@ -19,11 +19,11 @@
 
     <div class="market-info">
       <div class="name">
-        @mmart.name
+        @mmart.meta.name
       </div>
       <div class="border-line"></div>
       <div class="descr">
-        @mmart.town, @mmart.address
+        @mmart.legal.town, @mmart.legal.address
         <br/>
         Телефон:  +7 (495) 988-18-84
         <br/>

@@ -30,7 +30,7 @@ object Market extends SioController with PlayMacroLogsImpl {
   /** Входная страница для sio-market для ТЦ. */
   def martIndex(martId: String) = marketAction(martId) { implicit request =>
     for {
-      mads <- MAd.searchAds(request.mmartInx, AdSearch(levelOpt = Some(AdShowLevels.LVL_RECEIVER_TOP)))
+      mads <- MAd.searchAds(AdSearch(levelOpt = Some(AdShowLevels.LVL_RECEIVER_TOP)))
       rmd  <- request.marketDataFut
     } yield {
       val html = indexTpl(request.mmart, mads, rmd.mshops, rmd.mmcats)
@@ -50,7 +50,7 @@ object Market extends SioController with PlayMacroLogsImpl {
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
   def findAds(martId: String, adSearch: AdSearch) = marketAction(martId) { implicit request =>
     for {
-      mads <- MAd.searchAds(request.mmartInx, adSearch)
+      mads <- MAd.searchAds(adSearch)
       rmd  <- request.marketDataFut
     } yield {
       val html = findAdsTpl(request.mmart, mads, rmd.mshops, rmd.mmcats)
@@ -66,7 +66,7 @@ object Market extends SioController with PlayMacroLogsImpl {
     val action = AdStatActions.withName(actionRaw)
     MAd.getById(adId).flatMap { madOpt =>
       madOpt.filter { mad =>
-        mad.receivers.exists(_.receiverId == martId)
+        mad.receivers.valuesIterator.exists(_.receiverId == martId)
       } foreach { mad =>
         val adStat = MAdStat(
           clientAddr = request.remoteAddress,
@@ -105,44 +105,36 @@ object Market extends SioController with PlayMacroLogsImpl {
   /** Action-composition для нужд ряда экшенов этого контроллера. Хранит в себе данные для рендере и делает
     * проверки наличия индекса и MMart. */
   private def marketAction(martId: String)(f: MarketRequest => Future[Result]) = MaybeAuth.async { implicit request =>
-    // Смотрим метаданные по индексу маркета. Они обычно в кеше.
-    val mmartInxOptFut = IndicesUtil.getInxFormMartCached(martId)
     // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
     val shopsFut = shopsMap(martId)
     // Читаем из основной базы текущий ТЦ
     val mmartFut = MAdnNode.getById(martId)
     // Текущие категории ТЦ
     val mmcatsFut = MMartCategory.findTopForOwner(martId)
-    mmartInxOptFut flatMap {
-      case Some(mmartInx1) =>
-        mmartFut flatMap {
-          case Some(mmart1) =>
-            val marketDataFut1 = for {
-              mshops <- shopsFut
-              mmcats <- mmcatsFut
-            } yield {
-              MarketData(mmcats, mshops)
-            }
-            val req1 = new MarketRequest(request) {
-              val mmartInx = mmartInx1
-              val marketDataFut = marketDataFut1
-              val mmart = mmart1
-            }
-            f(req1)
-
-          case None =>
-            warn(s"marketAction($martId): mart index exists, but mart is NOT.")
-            martNotFound(martId)
+    mmartFut flatMap {
+      case Some(mmart1) =>
+        val marketDataFut1 = for {
+          mshops <- shopsFut
+          mmcats <- mmcatsFut
+        } yield {
+          MarketData(mmcats, mshops)
         }
+        val req1 = new MarketRequest(request) {
+          val marketDataFut = marketDataFut1
+          val mmart = mmart1
+        }
+        f(req1)
 
-      case None => martNotFound(martId)
+      case None =>
+        warn(s"marketAction($martId): mart index exists, but mart is NOT.")
+        martNotFound(martId)
     }
+
   }
 
   /** Реквест, используемый в Market-экшенах. */
   abstract class MarketRequest(request: AbstractRequestWithPwOpt[AnyContent])
     extends AbstractRequestWithPwOpt[AnyContent](request) {
-    def mmartInx: MMartInx
     def mmart: MAdnNode
     def marketDataFut: Future[MarketData]
 
