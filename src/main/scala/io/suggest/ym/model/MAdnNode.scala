@@ -21,7 +21,7 @@ object MAdnNode
   with EMCompanyIdStatic[MAdnNode]
   with EMPersonIdsStatic[MAdnNode]
   with EMAdNetMemberStatic[MAdnNode]
-  with EMAdnMVisualStatic[MAdnNode]
+  with EMLogoImgStatic[MAdnNode]
   with EMAdnMMetadataStatic[MAdnNode]
 {
   val ES_TYPE_NAME: String = "adnNode"
@@ -30,7 +30,6 @@ object MAdnNode
     companyId = null,
     personIds = Set.empty,
     adn = null,
-    visual = null,
     meta = null,
     id = Option(id)
   )
@@ -58,16 +57,16 @@ object MAdnNode
 case class MAdnNode(
   var companyId     : CompanyId_t,
   var personIds     : Set[String],
-  var adn : AdNetMemberInfo,
-  var visual        : AdnVisual = AdnVisual(),
+  var adn           : AdNetMemberInfo,
   var meta          : AdnMMetadata,
+  var logoImgOpt    : Option[MImgInfo] = None,
   var id            : Option[String] = None
 )
   extends EsModelEmpty[MAdnNode]
   with EMCompanyId[MAdnNode]
   with EMPersonIds[MAdnNode]
   with EMAdNetMember[MAdnNode]
-  with EMAdnMVisual[MAdnNode]
+  with EMLogoImgMut[MAdnNode]
   with EMAdnMMetadata[MAdnNode]
 {
   @JsonIgnore
@@ -79,7 +78,7 @@ case class MAdnNode(
   override def isFieldsValid: Boolean = {
     super.isFieldsValid &&
       companyId != null && personIds != null && adn != null && meta != null &&
-      visual != null && meta != null
+      meta != null && meta != null
   }
 
 
