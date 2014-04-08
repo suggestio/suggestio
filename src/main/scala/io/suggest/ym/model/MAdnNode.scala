@@ -23,7 +23,6 @@ object MAdnNode
   with EMLegalEntityStatic[MAdnNode]
   with EMAdNetMemberStatic[MAdnNode]
   with EMAdnMVisualStatic[MAdnNode]
-  with EMAdnMPubSettingsStatic[MAdnNode]
   with EMAdnMMetadataStatic[MAdnNode]
 {
   val ES_TYPE_NAME: String = "adnNode"
@@ -31,10 +30,9 @@ object MAdnNode
   protected def dummy(id: String) = MAdnNode(
     companyId = null,
     personIds = Set.empty,
-    adnMemberInfo = null,
+    adn = null,
     legal = null,
     visual = null,
-    pubSettings = null,
     meta = null,
     id = Option(id)
   )
@@ -62,10 +60,9 @@ object MAdnNode
 case class MAdnNode(
   var companyId     : CompanyId_t,
   var personIds     : Set[String],
-  var adnMemberInfo : AdNetMemberInfo,
+  var adn : AdNetMemberInfo,
   var legal         : AdnLegalEntityInfo,
   var visual        : AdnVisual = AdnVisual(),
-  var pubSettings   : AdnMPubSettings,
   var meta          : AdnMMetadata,
   var id            : Option[String] = None
 )
@@ -75,7 +72,6 @@ case class MAdnNode(
   with EMLegalEntity[MAdnNode]
   with EMAdNetMember[MAdnNode]
   with EMAdnMVisual[MAdnNode]
-  with EMAdnMPubSettings[MAdnNode]
   with EMAdnMMetadata[MAdnNode]
 {
   @JsonIgnore
@@ -86,8 +82,8 @@ case class MAdnNode(
   @JsonIgnore
   override def isFieldsValid: Boolean = {
     super.isFieldsValid &&
-      companyId != null && personIds != null && adnMemberInfo != null && legal != null &&
-      visual != null && pubSettings != null && meta != null
+      companyId != null && personIds != null && adn != null && legal != null &&
+      visual != null && meta != null
   }
 
 

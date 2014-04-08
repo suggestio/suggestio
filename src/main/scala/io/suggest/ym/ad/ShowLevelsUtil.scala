@@ -53,7 +53,7 @@ object ShowLevelsUtil extends MacroLogsImpl {
     val producerId = producer.id.get
     trace(s"${logPrefix}Starting, producer = $producerId / ${producer.meta.name}")
     // Если владелец отключен вообще, то на этом все уровни и заканчиваются.
-    val lvlMap = producer.pubSettings.maybeOutShowLevels
+    val lvlMap = producer.adn.maybeOutShowLevels
     val (levels1, levelsM) = lvlMap.foldLeft[(List[AdShowLevel], List[AdShowLevel])] (Nil -> Nil) {
       case (acc @ (acc1, accM), (asl, v)) =>
         if (v > 1) {
@@ -155,7 +155,7 @@ object ShowLevelsUtil extends MacroLogsImpl {
     * @return Фьючерс для синхронизации.
     */
   def handleProducerOnOff(producer: MAdnNode)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
-    val allowedSls = producer.pubSettings.maybeOutShowLevels.keySet
+    val allowedSls = producer.adn.maybeOutShowLevels.keySet
     MAd.findForProducer(producer.id.get) flatMap { prodAds =>
       // Изменяем pub-уровни согласно карте
       prodAds.foreach { mad =>

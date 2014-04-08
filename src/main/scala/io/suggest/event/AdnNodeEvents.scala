@@ -24,7 +24,7 @@ object AdnNodeSavedEvent {
 
 case class AdnNodeSavedEvent(adnId: String, adnNode: MAdnNode, isCreated: Boolean) extends SioEventT with IAdnId {
   def getClassifier: Classifier = AdnNodeSavedEvent.getClassifier(
-    memberType = Option(adnNode.adnMemberInfo.memberType),
+    memberType = Option(adnNode.adn.memberType),
     adnId = Option(adnId),
     isCreated = Some(isCreated)
   )
