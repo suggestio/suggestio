@@ -1,8 +1,9 @@
-@(mmarts: Seq[MMart], mshops: Seq[MShop], martsMap: Map[MartId_t, MMart])(implicit ctx: util.Context)
+@(ng: Map[AdNetMemberType, Seq[MAdnNode]], martsMap: Map[String, MAdnNode])(implicit ctx: util.Context)
 
 @* Список личных кабинетов юзера. *@
+import AdNetMemberTypes._
 
-@lkBase("Моё") {
+@lkBase("Моя рекламная сеть") {
 
   <div class="title-wrap">
     <div class="center">
@@ -14,21 +15,21 @@
 
   <div class="body">
 
-    @if(!mmarts.isEmpty) {
+    @ng.get(MART).map { mmarts =>
       <div class="lk-list">
 
-        @mmarts.zipWithIndex.map { case(mmart,i) =>
+        @mmarts.zipWithIndex.map { case (mmart, i) =>
 
           <a href="@routes.MarketMartLk.martShow(mmart.id.get)" class="item">
             <span class="number">@(i+1)</span>
-            <span class="name">@mmart.name</span>
+            <span class="name">@mmart.meta.name</span>
           </a>
         }
 
       </div>
     }
 
-    @if(!mshops.isEmpty) {
+    @ng.get(SHOP).map { mshops =>
 
       <div class="lk-list">
         @mshops.zipWithIndex.map { case (mshop, i) =>
@@ -36,8 +37,8 @@
 
           <a href="@routes.MarketShopLk.showShop(mshop.id.get)" class="item">
             <span class="number">@(i+1)</span>
-            <span class="name">@mshop.name</span>
-            @mshop.martId.flatMap(martsMap.get).map { mmart =>
+            <span class="name">@mshop.meta.name</span>
+            @mshop.adn.supId.flatMap(martsMap.get).map { mmart =>
               <span class="mmart-name">&nbsp;/&nbsp;@mmart.name</span>
             }
 

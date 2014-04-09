@@ -18,7 +18,6 @@ import util.urls_supply.SeedUrlsSupplier
 import io.suggest.model.inx2.MMartInx
 import scala.Some
 import io.suggest.model.MVirtualIndexVin
-import io.suggest.ym.model.MMart.MartId_t
 
 /**
  * Suggest.io
@@ -232,8 +231,8 @@ object Sys extends SioController with PlayMacroLogsImpl {
 
   /** Выдать страницу со всеми индексами из inx2 моделей. */
   def inx2AllIndices = IsSuperuser.async { implicit request =>
-    val allMartsMapFut = MMart.getAll.map { all => all.map { mmart => mmart.id.get -> mmart }.toMap }
-    MMartInx.getAll.flatMap { minxs =>
+    val allMartsMapFut = MMart.getAll().map { all => all.map { mmart => mmart.id.get -> mmart }.toMap }
+    MMartInx.getAll().flatMap { minxs =>
       val minxsGrouped = minxs.groupBy(_.targetEsInxName)
       allMartsMapFut map { allMartsMap =>
         Ok(indices.inx2.listByEsInxTpl(minxsGrouped, allMartsMap))

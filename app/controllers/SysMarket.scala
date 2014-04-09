@@ -37,7 +37,7 @@ object SysMarket extends SioController with MacroLogsImpl {
 
   /** Отрендерить sio-админу список всех компаний, зарегистрированных в системе. */
   def companiesList = IsSuperuser.async { implicit request =>
-    MCompany.getAll.map { allCompanies =>
+    MCompany.getAll().map { allCompanies =>
       val render = company.companiesListTpl(allCompanies)
       Ok(render)
     }
@@ -129,12 +129,12 @@ object SysMarket extends SioController with MacroLogsImpl {
   private def companyNotFound(companyId: CompanyId_t) = NotFound("Company not found: " + companyId)
 
   /** Бывает надо передать в шаблон карту всех контор. Тут фьючерс, который этим занимается. */
-  private def allCompaniesMap = MCompany.getAll.map {
+  private def allCompaniesMap = MCompany.getAll().map {
     _.map { mc => mc.id.get -> mc }.toMap
   }
 
 
-  private def allMartsMap = MMart.getAll.map {
+  private def allMartsMap = MMart.getAll().map {
     _.map { mmart => mmart.id.get -> mmart }.toMap
   }
 
@@ -145,7 +145,7 @@ object SysMarket extends SioController with MacroLogsImpl {
   def martsList = IsSuperuser.async { implicit request =>
     val allCompaniesMapFut = allCompaniesMap
     for {
-      allMarts  <- MMart.getAll
+      allMarts  <- MMart.getAll()
       companies <- allCompaniesMapFut
     } yield {
       Ok(mart.martsListTpl(allMarts, companies=Some(companies)))
@@ -333,7 +333,7 @@ object SysMarket extends SioController with MacroLogsImpl {
     val mcsFut = allCompaniesMap
     val mmsFut = allMartsMap
     for {
-      shops <- MShop.getAll
+      shops <- MShop.getAll()
       mcs   <- mcsFut
       mms   <- mmsFut
     } yield {
@@ -372,9 +372,9 @@ object SysMarket extends SioController with MacroLogsImpl {
 
 
   private def getAllCompaniesAndMarts = {
-    val companiesFut = MCompany.getAll
+    val companiesFut = MCompany.getAll()
     for {
-      marts <- MMart.getAll
+      marts <- MMart.getAll()
       companies <- companiesFut
     } yield (companies, marts)
   }

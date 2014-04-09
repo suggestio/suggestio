@@ -41,7 +41,7 @@ object Blog extends SioController {
    */
 
   def recordList = MaybeAuth.async { implicit request =>
-    MBlog.getAll.map { blogs =>
+    MBlog.getAll().map { blogs =>
       Ok(listTpl(blogs))
     }
   }
