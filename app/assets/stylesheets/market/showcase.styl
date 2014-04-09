@@ -36,7 +36,7 @@ transition( param )
 
 .sio-mart-layout
   position: fixed
-  background: rgba(200,200,200,0.95)
+  background: rgba(0, 0, 0, 0.7)
 
 .sio-mart-layout,
 .ads-list,
@@ -441,7 +441,7 @@ transition( param )
     transition( all 0.5s ease )
 
   .sm-screen.forward-in
-    transform( translate3d(100%,0,0) )
+    transform( translate3d(150%,0,0) )
   .sm-screen.forward-out
     transform( scale3d(0.8, 0.8, 0.8) )
 
@@ -635,9 +635,15 @@ transition( param )
     .od-text
       width: 300px
 
+  .sm-navigation
+    display: none
+
 .sio-mart-layout.small,
 .ads-list.small,
 .ad-preview.small
+
+  .sm-navigation
+    display: none
 
   .offer-details
     background: rgba(0,0,0,0.1)

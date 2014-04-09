@@ -325,9 +325,8 @@ siomart =
   ######################################################
   ## Открыть экран с предупреждением о выходе из маркета
   ######################################################
-  open_close_screen : ( event ) ->
+  open_close_screen : () ->
     siomart.utils.ge('smCloseScreen').style.display = 'block'
-    event.preventDefault()
     return false
 
   exit_close_screen : ( event ) ->
@@ -390,7 +389,7 @@ siomart =
       if this.total_screens == 1
         this.active_screen = 0
         return false
-      
+
       active_screen_index = this.active_screen
       target_screen_index = parseInt( parseInt( this.total_screens ) - 1 )
 
@@ -466,7 +465,6 @@ siomart =
 
     ## Кнопка выхода
     for _event in ['click', 'touchstart']
-      this.utils.add_single_listener this.utils.ge('smCloseButton'), _event, siomart.open_close_screen
       this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), _event, siomart.close_mart
 
       this.utils.add_single_listener this.utils.ge('smCloseCategoriesButton'), _event, siomart.close_categories_screen
