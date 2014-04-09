@@ -45,6 +45,13 @@ siomart =
 
       ea
 
+    ############################
+    ## Удалить DOM элемент по id
+    ############################
+    re : ( id ) ->
+      elt = this.ge id
+      elt.parentNode.removeChild elt
+
     ##########################################
     ## Является ли переданный объект массивом?
     ##########################################
@@ -279,8 +286,10 @@ siomart =
 
       siomart.utils.ge('smCategoriesScreen').style.display = 'none'
 
-    this.fit_images()
     this.screens.init()
+    this.screens.show_last()
+
+    this.fit_images()
 
   ######################################
   ## Загрузить индексную страницу для ТЦ
@@ -291,9 +300,8 @@ siomart =
   #########################################
   ## Показать / скрыть экран с категориями и поиском
   #########################################
-  open_categories_screen : ( event ) ->
+  open_categories_screen : () ->
     siomart.utils.ge('smCategoriesScreen').style.display = 'block'
-    event.preventDefault()
     return false
 
   close_categories_screen : ( event ) ->
@@ -354,12 +362,10 @@ siomart =
   #########
 
   screens :
-    objects : {}
     init : () ->
 
       this.objects = {}
 
-      console.log 'init_screens'
       divs = siomart.utils.ge('smScreens').getElementsByTagName 'div'
       _i = 0
 
@@ -375,11 +381,65 @@ siomart =
 
           _i++
 
+      this.total_screens = _i
       true
 
+    ## Переключиться на последний экран
+    show_last : () ->
+      ## Если у нас один экран — значит, он индексный и уже активен
+      if this.total_screens == 1
+        this.active_screen = 0
+        return false
+      
+      active_screen_index = this.active_screen
+      target_screen_index = parseInt( parseInt( this.total_screens ) - 1 )
 
+      this.animate active_screen_index, target_screen_index
+
+    ## Переключиться на предыдущий экран
     prev_screen : () ->
-      alert 'prev screen'
+
+      active_screen_index = this.active_screen
+      target_screen_index = parseInt( this.active_screen - 1 )
+
+      this.animate active_screen_index, target_screen_index
+
+    animate : ( active_screen_index, target_screen_index ) ->
+
+      if active_screen_index < target_screen_index
+        direction = 'forward'
+      else
+        direction = 'backward'
+
+      # установить входящий слайд в нужную позицию
+      siomart.utils.removeClass 'smScreen' + target_screen_index, 'sm-hidden-screen'
+      siomart.utils.addClass 'smScreen' + target_screen_index, direction + '-in'
+
+      # включить анимацию для слайдов и перегнать на новые места базирования
+      cb = () ->
+        siomart.utils.addClass 'smScreen' + target_screen_index, 'animated'
+        siomart.utils.removeClass 'smScreen' + target_screen_index, direction + '-in'
+
+        siomart.utils.addClass 'smScreen' + active_screen_index, direction + '-out animated'
+
+      setTimeout cb, 100
+
+      cb1 = () ->
+
+        #Расставить нужные классы для слайдов
+        siomart.utils.removeClass 'smScreen' + active_screen_index, 'animated'
+        siomart.utils.removeClass 'smScreen' + active_screen_index, direction + '-out'
+        siomart.utils.addClass 'smScreen' + active_screen_index, 'sm-hidden-screen'
+
+        siomart.utils.removeClass 'smScreen' + target_screen_index, 'animated'
+
+        if direction == 'backward'
+          siomart.utils.re 'smScreen' + siomart.screens.active_screen
+
+        siomart.screens.active_screen = target_screen_index
+        console.log siomart.screens.active_screen
+
+      setTimeout cb1, 700
 
   screen : () ->
     this.screen_id = undefined
@@ -409,7 +469,6 @@ siomart =
       this.utils.add_single_listener this.utils.ge('smCloseButton'), _event, siomart.open_close_screen
       this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), _event, siomart.close_mart
 
-      this.utils.add_single_listener this.utils.ge('smCategoriesButton'), _event, siomart.open_categories_screen
       this.utils.add_single_listener this.utils.ge('smCloseCategoriesButton'), _event, siomart.close_categories_screen
 
       this.utils.add_single_listener this.utils.ge('smShopListButton'), _event, siomart.open_shopList_screen
@@ -504,8 +563,6 @@ siomart.screen.prototype =
     if index == this.active_offer
       return false
 
-    console.log this
-
     _offer =  siomart.utils.ge 'smOffer' + this.screen_id + 'o' + index
 
     is_mart_offert = _offer.getAttribute 'data-is-mart-offer'
@@ -573,7 +630,8 @@ siomart.screen.prototype =
 
         _a.id = 'smOfferButton' + this.screen_id + 'o' + _i
 
-        console.log '1'
+        if _a.className.match /active/g
+          this.active_offer = _i
 
         siomart.utils.add_single_listener _a, 'click', ( event ) ->
           event.preventDefault()

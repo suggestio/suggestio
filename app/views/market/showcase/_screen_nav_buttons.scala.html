@@ -6,12 +6,12 @@
     @if( is_first ){
       <a class="close" id="smCloseButton" href=""></a>
     }else{
-      <a class="back" href=""></a>
+      <a class="back" href="" onclick="siomart.screens.prev_screen(); return false;"></a>
     }
   </div>
 </div>
 
 @* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
 <div class="categories-button">
-  <a href="" id="smCategoriesButton"></a>
+  <a href="" id="smCategoriesButton" onclick="siomart.open_categories_screen(); return false;"></a>
 </div>
