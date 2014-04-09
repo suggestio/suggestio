@@ -291,9 +291,8 @@ siomart =
   #########################################
   ## Показать / скрыть экран с категориями и поиском
   #########################################
-  open_categories_screen : ( event ) ->
+  open_categories_screen : () ->
     siomart.utils.ge('smCategoriesScreen').style.display = 'block'
-    event.preventDefault()
     return false
 
   close_categories_screen : ( event ) ->
@@ -377,7 +376,6 @@ siomart =
 
       true
 
-
     prev_screen : () ->
       alert 'prev screen'
 
@@ -409,7 +407,6 @@ siomart =
       this.utils.add_single_listener this.utils.ge('smCloseButton'), _event, siomart.open_close_screen
       this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), _event, siomart.close_mart
 
-      this.utils.add_single_listener this.utils.ge('smCategoriesButton'), _event, siomart.open_categories_screen
       this.utils.add_single_listener this.utils.ge('smCloseCategoriesButton'), _event, siomart.close_categories_screen
 
       this.utils.add_single_listener this.utils.ge('smShopListButton'), _event, siomart.open_shopList_screen
@@ -503,8 +500,6 @@ siomart.screen.prototype =
 
     if index == this.active_offer
       return false
-
-    console.log this
 
     _offer =  siomart.utils.ge 'smOffer' + this.screen_id + 'o' + index
 
