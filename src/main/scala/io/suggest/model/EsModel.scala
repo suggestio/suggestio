@@ -308,6 +308,9 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] extends EsModelStaticMappin
   def prepareDelete(id: String)(implicit client: Client) = client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
   def prepareDeleteByQuery(implicit client: Client) = client.prepareDeleteByQuery(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
 
+  val MAX_RESULTS_DFLT = 100
+  val OFFSET_DFLT = 0
+
   /**
    * Существует ли указанный магазин в хранилище?
    * @param id id магазина.
@@ -449,9 +452,11 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] extends EsModelStaticMappin
    * Выдать все магазины. Метод подходит только для административных задач.
    * @return Список магазинов в порядке их создания.
    */
-  def getAll(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
+  def getAll(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
     prepareSearch
       .setQuery(QueryBuilders.matchAllQuery())
+      .setSize(maxResults)
+      .setFrom(offset)
       .execute()
       .map { searchResp2list }
   }
@@ -486,7 +491,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] extends EsModelStaticMappin
    * @return
    */
   def reindexAll(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Seq[String]] = {
-    getAll.flatMap { results =>
+    getAll().flatMap { results =>
       Future.traverse(results) { el =>
         el.save
       }

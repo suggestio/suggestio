@@ -8,6 +8,7 @@ import scala.collection.JavaConversions._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
+import org.elasticsearch.action.search.SearchRequestBuilder
 
 /**
  * Suggest.io
@@ -41,11 +42,14 @@ trait EMPersonIdsStatic[T <: EMPersonIds[T]] extends EsModelStaticT[T] {
    * @param personId id юзера.
    * @return Список найденных результатов.
    */
-  def findByPersonId(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+  def findByPersonId(personId: String, maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
+                    (implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
     val personIdQuery = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(personIdQuery)
+      .setSize(maxResults)
+      .setFrom(offset)
       .execute()
       .map { searchResp2list }
   }

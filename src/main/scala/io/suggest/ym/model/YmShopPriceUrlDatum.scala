@@ -3,7 +3,6 @@ package io.suggest.ym.model
 import io.suggest.util.CascadingFieldNamer
 import cascading.tuple.{TupleEntry, Tuple, Fields}
 import com.scaleunlimited.cascading.BaseDatum
-import io.suggest.proto.bixo.crawler.MainProto.ShopId_t
 
 /**
  * Suggest.io
@@ -51,20 +50,20 @@ class YmShopPriceUrlDatum extends BaseDatum(FIELDS) {
     setTupleEntry(te)
   }
 
-  def this(shopId:ShopId_t, priceUrl:String, authInfo:Option[AuthInfoDatum]) = {
+  def this(shopId:String, priceUrl:String, authInfo:Option[AuthInfoDatum]) = {
     this
     this.shopId = shopId
     this.priceUrl = priceUrl
     this.authInfo = authInfo
   }
 
-  def this(shopId:ShopId_t, priceUrl:String, authInfoStr: String) = {
+  def this(shopId:String, priceUrl:String, authInfoStr: String) = {
     this(shopId, priceUrl, AuthInfoDatum.parseFromString(authInfoStr))
   }
 
 
-  def shopId: ShopId_t = _tupleEntry getString SHOP_ID_FN
-  def shopId_=(shopId: ShopId_t) = _tupleEntry.setString(SHOP_ID_FN, shopId)
+  def shopId: String = _tupleEntry getString SHOP_ID_FN
+  def shopId_=(shopId: String) = _tupleEntry.setString(SHOP_ID_FN, shopId)
 
   def priceUrl = _tupleEntry getString PRICE_URL_FN
   def priceUrl_=(priceUrl: String) = _tupleEntry.setString(PRICE_URL_FN, priceUrl)
@@ -135,7 +134,7 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
    * @param shopId id магазина.
    * @return Список прайслистов, относящихся к магазину.
    */
-  def getForShop(shopId: ShopId_t)(implicit ec:ExecutionContext, client: Client): Future[Seq[MShopPriceList]] = {
+  def getForShop(shopId: String)(implicit ec:ExecutionContext, client: Client): Future[Seq[MShopPriceList]] = {
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(shopIdQuery(shopId))
@@ -143,9 +142,9 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
       .map { searchResp2list }
   }
 
-  def shopIdQuery(shopId: ShopId_t) = QueryBuilders.termQuery(SHOP_ID_ESFN, shopId)
+  def shopIdQuery(shopId: String) = QueryBuilders.termQuery(SHOP_ID_ESFN, shopId)
 
-  def deleteByShop(shopId: ShopId_t)(implicit ec:ExecutionContext, client: Client): Future[_] = {
+  def deleteByShop(shopId: String)(implicit ec:ExecutionContext, client: Client): Future[_] = {
     client.prepareDeleteByQuery(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(shopIdQuery(shopId))
@@ -157,7 +156,7 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
 import MShopPriceList._
 
 case class MShopPriceList(
-  var shopId   : ShopId_t,
+  var shopId   : String,
   var url      : String,
   var authInfo : Option[UsernamePw],
   id           : Option[String] = None

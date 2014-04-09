@@ -1,6 +1,6 @@
 package io.suggest.ym.model
 
-import io.suggest.model.{EsModelEmpty, EsModelStaticEmpty}
+import io.suggest.model.{EsModelJMXBase, EsModelJMXMBeanCommon, EsModelEmpty, EsModelStaticEmpty}
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.common._
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -95,7 +95,14 @@ case class MAdnNode(
     saveFut
   }
 
-
-
 }
 
+
+/** JMX MBean интерфейс */
+trait MAdnNodeJmxMBean extends EsModelJMXMBeanCommon
+
+/** JMX MBean реализация. */
+case class MAdnNodeJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase with MAdnNodeJmxMBean {
+  def companion = MAdnNode
+}

@@ -123,11 +123,10 @@ trait EMReceivers[T <: EMReceivers[T]] extends EsModelT[T] {
 
   /** Рендер поля receivers. Вынесен из [[writeJsonFields]] для удобства выполнения апдейта только уровней. */
   def writeFieldReceivers(acc: XContentBuilder): XContentBuilder = {
-    acc.startArray(RECEIVERS_ESFN)
-      receivers.valuesIterator.foreach { rcvr =>
-        rcvr.toXContent(acc)
-      }
-    acc.endArray()
+    val rcvrsArray = receivers.valuesIterator
+      .map { _.toXContent().string() }
+      .mkString("[",  ",",  "]")
+    acc.rawField(RECEIVERS_ESFN, rcvrsArray.getBytes)
   }
 
   /** Поле slsPub обычно выставляется на основе want-поля и списка разрешенных уровней. Их пересечение
@@ -142,6 +141,7 @@ trait EMReceivers[T <: EMReceivers[T]] extends EsModelT[T] {
   def updateReceiversReqBuilder(implicit client: Client): UpdateRequestBuilder = {
     val acc = XContentFactory.jsonBuilder().startObject()
     writeFieldReceivers(acc).endObject()
+    println(acc.string())
     prepareUpdate.setDoc(acc)
   }
 
@@ -241,7 +241,7 @@ case class AdReceiverInfo(
   override def hashCode(): Int = receiverId.hashCode
 
   @JsonIgnore
-  def toXContent(acc: XContentBuilder): XContentBuilder = {
+  def toXContent(acc: XContentBuilder = XContentFactory.jsonBuilder): XContentBuilder = {
     acc.startObject()
       .field(RECEIVER_ID_ESFN, receiverId)
     maybeSerializeLevels(SLS_WANT_ESFN, slsWant, acc)

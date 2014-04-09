@@ -16,12 +16,14 @@ resolvers ++= Seq(
 
 libraryDependencies ++= {
   val slf4jVsn      = "1.7.+"
+  val esVsn         = "1.1.0"
   val hadoopVsn     = "2.3.+"
   val hbaseVsn      = "0.98.0-hadoop2"
   val akkaVsn       = "2.3.+"
   val jacksonVsn    = "2.3.+"
   val tikaVsn       = "1.4"
   val cascadingVsn  = "2.5.+"
+  val playVsn       = "2.3-SNAPSHOT"
   val morphVsn      = "1.2-SNAPSHOT"
   Seq(
     "org.slf4j" % "slf4j-api" % slf4jVsn,
@@ -35,8 +37,9 @@ libraryDependencies ++= {
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % jacksonVsn,
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % jacksonVsn,
     "org.json4s" %% "json4s-native" % "3.+",
+    "com.typesafe.play" %% "play-json" % playVsn,
     // ES
-    "org.elasticsearch" % "elasticsearch" % "1.1.0",
+    "org.elasticsearch" % "elasticsearch" % esVsn,
     // Parsers
     "org.apache.tika" % "tika-core" % tikaVsn,
     "org.apache.tika" % "tika-parsers" % tikaVsn exclude("xerces", "xercesImpl"),

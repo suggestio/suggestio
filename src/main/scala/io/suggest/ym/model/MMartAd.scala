@@ -61,13 +61,13 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
 
 
   /** Перманентные уровни отображения для рекламных карточек магазина. Если магазин включен, то эти уровни всегда доступны. */
-  val SHOP_ALWAYS_SHOW_LEVELS: Set[AdShowLevel] = Set(AdShowLevels.LVL_PRODUCER, AdShowLevels.LVL_PRODUCERS_CATALOG)
+  val SHOP_ALWAYS_SHOW_LEVELS: Set[AdShowLevel] = Set(AdShowLevels.LVL_MEMBER, AdShowLevels.LVL_MEMBERS_CATALOG)
 
   /** Список уровней, которые могут быть активны только у одной карточки в рамках магазина. */
-  val SHOP_LEVELS_SINGLETON: Set[AdShowLevel] = Set(AdShowLevels.LVL_RECEIVER_TOP, AdShowLevels.LVL_PRODUCERS_CATALOG)
+  val SHOP_LEVELS_SINGLETON: Set[AdShowLevel] = Set(AdShowLevels.LVL_START_PAGE, AdShowLevels.LVL_MEMBERS_CATALOG)
 
   /** Перманентные уровни отображения для рекламных карточек ТЦ. */
-  val MART_ALWAYS_SHOW_LEVELS: Set[AdShowLevel] = Set(AdShowLevels.LVL_RECEIVER_TOP)
+  val MART_ALWAYS_SHOW_LEVELS: Set[AdShowLevel] = Set(AdShowLevels.LVL_START_PAGE)
 
   def dummy(id: String) = {
     MMartAd(
@@ -298,7 +298,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
     val shopId = thisAd.producerId
     val adId = thisAd.id.get
     // Считаем кол-во реклам на нижнем уровне. Магазин может отображать только ограниченное кол-во рекламы на своём уровне.
-    import AdShowLevels.{LVL_PRODUCER  => l3}
+    import AdShowLevels.{LVL_MEMBER  => l3}
     val has3rdLvl = thisAd.showLevels contains l3
     val thisCanAdd3rdLvlFut = if (has3rdLvl) {
       val query1 = shopSearchQuery(shopId, withLevels = Some(Seq(l3)))
@@ -376,7 +376,7 @@ object MMartAd extends EsModelStaticT[MMartAd] with MacroLogsImpl {
   private def setShowLevelsMart(thisAd: MMartAd)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
     // Эта функция исходит из того, что ВКЛючается уровень. Т.к. уровень всего 1, то его отключение отрабаыватеся в setShowLevels().
     import thisAd.receivers
-    import AdShowLevels.{LVL_RECEIVER_TOP => l1}
+    import AdShowLevels.{LVL_START_PAGE => l1}
     val maxAdsFut: Future[Int] = ??? // MMart.getById(thisAd.receivers).map(_.get.settings.supL1MaxAdsShown)
     val countQuery: QueryBuilder = ??? // martSearchQuery(receivers, shopMustMiss = true, withLevels = Some(Seq(l1)))
     // Нужно отсеять из подсчёта текущий id, если он там есть.

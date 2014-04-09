@@ -12,9 +12,10 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
 import org.elasticsearch.common.unit.Fuzziness
 import org.elasticsearch.index.mapper.internal.AllFieldMapper
-import io.suggest.ym.model.{AdShowLevel, CompanyId_t}
+import io.suggest.ym.model.{MAdnNode, AdShowLevel, CompanyId_t}
 import java.{util => ju, lang => jl}
 import io.suggest.event.{AdnNodeOnOffEvent, SioNotifierStaticClientI}
+import io.suggest.util.MyConfig.CONFIG
 
 /**
  * Suggest.io
@@ -81,7 +82,7 @@ trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = super.applyKeyValue(acc) orElse {
     case (ADN_ESFN, value: java.util.Map[_,_]) =>
       if (acc.adn == null)
-        acc.adn = new AdNetMemberInfo(AdNetMemberTypes.NOBODY)
+        acc.adn = new AdNetMemberInfo(null)
       val mi = acc.adn
       value.foreach {
         case (IS_PRODUCER_ESFN, v)    => mi.isProducer = booleanParser(v)
@@ -91,10 +92,8 @@ trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
         case (MEMBER_TYPE_ESFN, v)    => mi.memberType = AdNetMemberTypes.withName(stringParser(v))
         case (SHOW_LEVELS_ESFN, levelsInfoRaw) =>
           mi.showLevelsInfo = AdnMemberShowLevels.deserialize(levelsInfoRaw)
-
         case (IS_ENABLED_ESFN, isEnabledRaw) =>
           mi.isEnabled = booleanParser(isEnabledRaw)
-
         case (DISABLE_REASON_ESFN, drRaw) =>
           mi.disableReason = Option(drRaw).map {
             stringParser(_)
@@ -102,6 +101,13 @@ trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
       }
   }
 
+  /** Генератор es-query для указанного member type.
+    * @param memberType Необходимый тип участников.
+    * @return QueryBuilder.
+    */
+  def adnMemberTypeQuery(memberType: AdNetMemberType) = {
+    QueryBuilders.termQuery(ADN_MI_MEMBER_TYPE_ESFN, memberType.toString)
+  }
 
   /**
    * Поиск по указанному запросу. Обычно используется для полнотекстового поиска, и исходный запрос генерится в
@@ -212,6 +218,37 @@ trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
     fut
   }
 
+  /**
+   * Выдать по id и желаемому типу.
+   * @param id id документа.
+   * @param memberType Необходимый adn.memberType.
+   * @return Фьючерс с опшеном. Т.е. тоже самое, что и getById().
+   */
+  def getByIdType(id: String, memberType: AdNetMemberType)(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
+    // TODO Надо какой-то более эффективный метод работы, чтобы фильтрация была на стороне ES.
+    getById(id) map {
+      _.filter(_.adn.memberType == memberType)
+    }
+  }
+
+
+  /**
+   * Найти все документы, но только указанного типа.
+   * @param memberType Искомый тип участника рекламной сети.
+   * @param maxResult Макс.число результатов.
+   * @param offset Сдвиг.
+   * @return Последовательность результатов в неопределённом порядке.
+   */
+  def findAllByType(memberType: AdNetMemberType, maxResult: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
+                   (implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+    val query = adnMemberTypeQuery(memberType)
+    prepareSearch
+      .setQuery(query)
+      .setSize(maxResult)
+      .setFrom(offset)
+      .execute()
+      .map { searchResp2list }
+  }
 
 }
 
@@ -242,6 +279,18 @@ trait EMAdNetMember[T <: EMAdNetMember[T]] extends EsModelT[T] {
     companion.setIsEnabled(id.get, isEnabled, reason)
   }
 
+
+  /**
+   * Прочитать из хранилище супервизора, если он указан в соотв. поле. Считается, что супервизоры
+   * хранятся в [[io.suggest.ym.model.MAdnNode]].
+   * @return None если не указан или не найден. Иначе Some([[io.suggest.ym.model.MAdnNode]]).
+   */
+  def getSup(implicit ec: ExecutionContext, client: Client): Future[Option[MAdnNode]] = {
+    adn.supId match {
+      case Some(supId)  => MAdnNode.getById(supId)
+      case None         => Future successful None
+    }
+  }
 }
 
 
@@ -261,7 +310,7 @@ case class AdNetMemberInfo(
   def writeFields(acc: XContentBuilder) {
     acc.field(IS_PRODUCER_ESFN, isProducer)
       .field(IS_RECEIVER_ESFN, isReceiver)
-      .field(MEMBER_TYPE_ESFN, memberType.toString)
+      .field(MEMBER_TYPE_ESFN, memberType.toString())
       .field(IS_SUPERVISOR_ESFN, isSupervisor)
     if (supId.isDefined)
       acc.field(SUPERVISOR_ID_ESFN, supId.get)
@@ -303,8 +352,6 @@ case class AdNetMemberInfo(
   }
 
 }
-
-
 
 
 object AdnMemberShowLevels {
@@ -418,16 +465,19 @@ case class AdnMemberShowLevels(
   @JsonIgnore
   def isEmpty = in.isEmpty && out.isEmpty
 
-  @JsonIgnore
   def canOutAtLevel(lvl: AdShowLevel) = canAtLevel(lvl, out)
-  @JsonIgnore
   def maxOutAtLevel(lvl: AdShowLevel) = maxAtLevel(lvl, out)
+  def setMaxOutAtLevel(lvl: AdShowLevel, max: Int) = {
+    out = out + (lvl -> max)
+    this
+  }
 
-  @JsonIgnore
   def canInAtLevel(lvl: AdShowLevel) = canAtLevel(lvl, in)
-  @JsonIgnore
   def maxInAtLevel(lvl: AdShowLevel) = maxAtLevel(lvl, in)
-
+  def setMaxInAtLevel(lvl: AdShowLevel, max: Int) = {
+    in = in + (lvl -> max)
+    this
+  }
 }
 
 

@@ -33,8 +33,32 @@ object ShowLevelsUtil extends MacroLogsImpl {
 
   import LOGGER._
 
-  /** Дефолтовое значение для макс.числа карточек на producer-уровне. */
-  val PRODUCER_LEVEL_ADS_COUNT_DFLT = CONFIG.getInt("adn.node.show.levels.lvl_producer.max.dflt") getOrElse 2
+  // Дефолтовые лимиты уровней для MART и SHOP
+  /** Дефолтовая общая ширина выдачи карточек внутри магазинов-арендаторов. */
+  val MART_LVL_IN_MEMBER_DFLT          = CONFIG.getInt("sl.mart.in.lvl_member.dflt") getOrElse 5000
+
+  /** Дефолтовая ширина каталога арендаторов. */
+  val MART_LVL_IN_MEMBERS_CATALOG_DFLT = CONFIG.getInt("mart.show.levels.in.lvl_member_catalog.dflt") getOrElse 1000
+
+  /** Сколько ТЦ максимум может отображать ЧУЖОЙ рекламы на первой странице. */
+  val MART_LVL_IN_START_PAGE_DFLT      = CONFIG.getInt("sl.mart.in.lvl_start_page.dflt") getOrElse 500
+
+  /** Дефолтовое кол-во собственных (исходящих) карточек, которое может публиковать ТЦ. */
+  val MART_LVL_OUT_START_PAGE_DFLT     = CONFIG.getInt("sl.mart.out.lvl_start_page.dflt") getOrElse 2
+
+
+  /** Сколько по дефолту магазин может постить на главную ТЦ. */
+  val SHOP_LVL_OUT_START_PAGE_DFLT     = CONFIG.getInt("sl.shop.out.lvl_start_page.dflt") getOrElse 0
+
+  /** Сколько максимум магазин может постить на главную ТЦ. */
+  val SHOP_LVL_OUT_START_PAGE_MAX      = CONFIG.getInt("sl.shop.out.lvl_start_page.max") getOrElse 1
+  
+  /** Сколько карточек магазин может поистить на уровень каталога магазинов. По идее - всегда 1. */
+  val SHOP_LVL_OUT_MEMBER_CATALOG_MAX  = CONFIG.getInt("sl.shop.out.lvl_member_catalog.max") getOrElse 1
+  
+  /** Сколько по дефолту магазин может публиковать рекламных карточек на свой внутренний раздел. */
+  val SHOP_LVL_OUT_MEMBER_DLFT         = CONFIG.getInt("sl.shop.out.lvl_member.dflt") getOrElse 2
+
 
   /**
    * Накатить на карточку исходящие трансформации исходных (желаемых) showLevels.

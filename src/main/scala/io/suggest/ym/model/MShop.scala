@@ -306,7 +306,7 @@ case class MShop(
   var settings    : MShopSettings = new MShopSettings,
   var dateCreated : DateTime = null
 ) extends EsModelT[MShop] with MMartOptSel with CompanyMartsSel
-with ShopPriceListSel with MShopOffersSel {
+with ShopPriceListSel with MShopOffersSel with MCompanySel {
 
   def companion = MShop
   def shopId = id.get
@@ -314,9 +314,9 @@ with ShopPriceListSel with MShopOffersSel {
   def getMaxOnShowLevel(sl: AdShowLevel): Int = {
     if (settings.supIsEnabled) {
       sl match {
-        case AdShowLevels.LVL_PRODUCER          => settings.supLShopMaxAdsShown
-        case AdShowLevels.LVL_PRODUCERS_CATALOG => 1
-        case AdShowLevels.LVL_RECEIVER_TOP      => if (settings.supWithLevels contains sl) 1 else 0
+        case AdShowLevels.LVL_MEMBER          => settings.supLShopMaxAdsShown
+        case AdShowLevels.LVL_MEMBERS_CATALOG => 1
+        case AdShowLevels.LVL_START_PAGE      => if (settings.supWithLevels contains sl) 1 else 0
       }
     } else {
       0
@@ -381,7 +381,7 @@ with ShopPriceListSel with MShopOffersSel {
   }
 
 
-  def hasTopLevelAccess = settings.supWithLevels contains AdShowLevels.LVL_RECEIVER_TOP
+  def hasTopLevelAccess = settings.supWithLevels contains AdShowLevels.LVL_START_PAGE
 }
 
 
@@ -404,7 +404,8 @@ trait MShopSel {
 object MShopSettings {
 
   /** Дефолтовое максимальное кол-во отображаемых карточек в магазине. */
-  def MAX_LSHOP_ADS = ShowLevelsUtil.PRODUCER_LEVEL_ADS_COUNT_DFLT
+  @deprecated("mart+shop arch is deprecated. Use ShowLevelsUtil.SHOP_LVL_OUT_MEMBER_DLFT or AdNetShowLevel fields instead.", "2014.apr.09")
+  def MAX_LSHOP_ADS = ShowLevelsUtil.SHOP_LVL_OUT_MEMBER_DLFT
 
 }
 

@@ -8,6 +8,7 @@ import io.suggest.util.SioEsUtil._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
+import io.suggest.ym.model.MCompanySel
 
 /**
  * Suggest.io
@@ -38,7 +39,8 @@ trait EMCompanyIdStatic[T <: EMCompanyId[T]] extends EsModelStaticT[T] {
    * @param companyId id конторы.
    * @return Список ТЦ в неопределённом порядке.
    */
-  def getByCompanyId(companyId: CompanyId_t)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
+  def findByCompanyId(companyId: CompanyId_t, maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
+                     (implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
     prepareSearch
       .setQuery(companyIdQuery(companyId))
       .execute()
@@ -60,7 +62,7 @@ trait EMCompanyIdStatic[T <: EMCompanyId[T]] extends EsModelStaticT[T] {
 }
 
 
-trait EMCompanyId[T <: EMCompanyId[T]] extends EsModelT[T] {
+trait EMCompanyId[T <: EMCompanyId[T]] extends EsModelT[T] with MCompanySel {
 
   var companyId: CompanyId_t
 

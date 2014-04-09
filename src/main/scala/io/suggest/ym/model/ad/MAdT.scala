@@ -5,6 +5,7 @@ import io.suggest.ym.model.common._
 import org.joda.time.DateTime
 import io.suggest.model._
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
+import io.suggest.model.common.{EMDateCreated, EMPrioOpt}
 
 /**
  * Suggest.io
@@ -14,7 +15,18 @@ import io.suggest.ym.model.common.EMReceivers.Receivers_t
  * рекламные, но все отличаются по своим целям и возможностям. Для всех них нужен общий интерфейс.
  */
 
-trait MAdT[T <: MAdT[T]] extends EsModelT[T] {
+trait MAdT[T <: MAdT[T]]
+  extends EMProducerId[T]
+  with EMReceivers[T]
+  with EMPrioOpt[T]
+  with EMUserCatId[T]
+  with EMDateCreated[T]
+  with EMAdOffers[T]
+  with EMImg[T]
+  with EMAdPanelSettings[T]
+  with EMLogoImg[T]
+  with EMTextAlign[T]
+{
 
   def producerId : String
   def receivers  : Receivers_t
