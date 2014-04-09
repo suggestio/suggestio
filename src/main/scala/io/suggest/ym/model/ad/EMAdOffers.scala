@@ -11,6 +11,8 @@ import io.suggest.ym.model.common.AdOfferTypes
 import io.suggest.util.SioConstants.CURRENCY_CODE_DFLT
 import io.suggest.util.SioEsUtil._
 import scala.collection.JavaConversions._
+import io.suggest.model.EsModel.FieldsJsonAcc
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -27,6 +29,10 @@ object EMAdOffers {
 
   /** Название поля, хранящее тип оффера. */
   val OFFER_TYPE_ESFN   = "offerType"
+
+  // price field
+  val CURRENCY_CODE_ESFN = "currencyCode"
+  val ORIG_ESFN = "orig"
 
   // Названия общих полей офферов
   val FONT_ESFN         = "font"
@@ -129,15 +135,16 @@ trait EMAdOffers[T <: EMAdOffers[T]] extends EsModelT[T] {
 
   def offers: List[AdOfferT]
 
-  abstract override def writeJsonFields(acc: XContentBuilder): Unit = {
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     super.writeJsonFields(acc)
     if (!offers.isEmpty) {
-      acc.startArray(OFFERS_ESFN)
-        offers foreach { _ renderJson acc }
-      acc.endArray()
-    }
+      val offersJson = offers.map(_.renderPlayJson)
+      (OFFERS_ESFN, JsArray(offersJson)) :: acc
+    } else acc
   }
+
 }
+
 
 trait EMAdOffersMut[T <: EMAdOffersMut[T]] extends EMAdOffers[T] {
   var offers: List[AdOfferT]
@@ -155,6 +162,16 @@ sealed trait AdOfferT extends Serializable {
     acc.rawField(OFFER_BODY_ESFN, offerBodyJson.getBytes)
     acc.endObject()
   }
+  
+  @JsonIgnore
+  def renderPlayJson = {
+    JsObject(Seq(
+      OFFER_TYPE_ESFN -> JsString(offerType.toString),
+      OFFER_BODY_ESFN -> JsObject(renderPlayJsonBody)
+    ))
+  }
+  
+  def renderPlayJsonBody: FieldsJsonAcc
 }
 
 
@@ -169,7 +186,18 @@ case class AOProduct(
   oldPrice: Option[AOPriceField]
 ) extends AdOfferT {
   @JsonIgnore def offerType = AdOfferTypes.PRODUCT
+
+  def renderPlayJsonBody: FieldsJsonAcc = {
+    var acc: FieldsJsonAcc = List(
+      VENDOR_ESFN -> vendor.renderPlayJson,
+      PRICE_ESFN  -> price.renderPlayJson
+    )
+    if (oldPrice.isDefined)
+      acc ::= OLD_PRICE_ESFN -> oldPrice.get.renderPlayJson
+    acc
+  }
 }
+
 
 object AODiscount {
   def deserialize(jsObject: Any) = JacksonWrapper.convert[AODiscount](jsObject)
@@ -181,67 +209,126 @@ case class AODiscount(
   text2: Option[AOStringField]
 ) extends AdOfferT {
   @JsonIgnore def offerType = AdOfferTypes.DISCOUNT
+
+  def renderPlayJsonBody: FieldsJsonAcc = {
+    var acc: FieldsJsonAcc = List(
+      DISCOUNT_ESFN -> discount.renderPlayJson,
+      DISCOUNT_TPL_ESFN -> template.renderPlayJson
+    )
+    if (text1.isDefined)
+      acc ::= (TEXT1_ESFN, text1.get.renderPlayJson)
+    if (text2.isDefined)
+      acc ::= (TEXT2_ESFN, text2.get.renderPlayJson)
+    acc
+  }
 }
+
 
 object AOText {
   def deserialize(jsObject: Any) = JacksonWrapper.convert[AOText](jsObject)
 }
 case class AOText(text: AOStringField) extends AdOfferT {
-  @JsonIgnore def offerType = AdOfferTypes.TEXT
+  @JsonIgnore
+  def offerType = AdOfferTypes.TEXT
+
+  @JsonIgnore
+  def renderPlayJsonBody: FieldsJsonAcc = List(
+    TEXT_ESFN -> text.renderPlayJson
+  )
 }
 
 
 case class AODiscountTemplate(id: Int, color: String) {
-  def render(acc: XContentBuilder) {
+  def renderXCB(acc: XContentBuilder) {
     acc.startObject(DISCOUNT_TPL_ESFN)
       .field("id", id)
       .field(COLOR_ESFN, color)
     .startObject()
   }
+
+  def renderPlayJson = {
+    JsObject(Seq(
+      "id" -> JsNumber(id),
+      COLOR_ESFN -> JsString(color)
+    ))
+  }
 }
 
 sealed trait AOValueField {
-  def renderFields(acc: XContentBuilder)
+  def renderFieldsXCB(acc: XContentBuilder)
   def font: AOFieldFont
-  def render(acc: XContentBuilder) {
+  def renderJson(acc: XContentBuilder) {
     acc.startObject()
-      renderFields(acc)
-      font.render(acc)
+      renderFieldsXCB(acc)
+      font.renderXCB(acc)
     acc.endObject()
   }
+
+  @JsonIgnore
+  def renderPlayJson = {
+    var acc0 = font.renderPlayJson(Nil)
+    acc0 = renderPlayJsonFields(acc0)
+    JsObject(acc0)
+  }
+  
+  def renderPlayJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc
 }
 
 case class AOStringField(value:String, font: AOFieldFont) extends AOValueField {
-  def renderFields(acc: XContentBuilder) {
+  def renderFieldsXCB(acc: XContentBuilder) {
     acc.field(VALUE_ESFN, value)
   }
-}
-case class AOFloatField(value: Float, font: AOFieldFont) extends AOValueField {
-  def renderFields(acc: XContentBuilder) {
-    acc.field(VALUE_ESFN, value)
+
+  def renderPlayJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
+    (VALUE_ESFN, JsString(value)) :: acc0
   }
 }
 
+trait AOFloatFieldT extends AOValueField {
+  def value: Float
+  def renderFieldsXCB(acc: XContentBuilder) {
+    acc.field(VALUE_ESFN, value)
+  }
+
+  def renderPlayJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
+    (VALUE_ESFN, JsNumber(value)) :: acc0
+  }
+}
+case class AOFloatField(value: Float, font: AOFieldFont) extends AOFloatFieldT
+
+
 case class AOFieldFont(color: String) {
-  def render(acc: XContentBuilder) {
+  def renderXCB(acc: XContentBuilder) {
     acc.startObject(FONT_ESFN)
       .field(COLOR_ESFN, color)
     .endObject()
+  }
+  
+  def renderPlayJson(acc: FieldsJsonAcc) = {
+    val fontBody = JsObject(Seq(
+      COLOR_ESFN -> JsString(color)
+    ))
+    (FONT_ESFN, fontBody) :: acc
   }
 }
 
 
 
 /** Поле, содержащее цену. */
-case class AOPriceField(value: Float, var currencyCode: String, var orig: String, font: AOFieldFont) {
-  // TODO Обновление версий: добавлены два поля. Потом можно их за-val'ить и удалить null-проверки в конструкторе
-  if (currencyCode == null)
-    currencyCode = CURRENCY_CODE_DFLT
-  if (orig == null)
-    orig = value.toString
-
+case class AOPriceField(value: Float, currencyCode: String, orig: String, font: AOFieldFont) extends AOFloatFieldT {
   @JsonIgnore
   lazy val currency = Currency.getInstance(currencyCode)
+
+  override def renderFieldsXCB(acc: XContentBuilder) {
+    ??? // TODO XCB-поддержка для полей не написана, т.к. целиком использовался Jackson.
+    super.renderFieldsXCB(acc)
+  }
+
+  override def renderPlayJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
+    (CURRENCY_CODE_ESFN, JsString(currencyCode)) ::
+      (ORIG_ESFN, JsString(orig)) ::
+      super.renderPlayJsonFields(acc0)
+  }
 }
 
 /** Допустимые значения textAlign-полей. */
