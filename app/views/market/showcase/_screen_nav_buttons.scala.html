@@ -4,14 +4,14 @@
 <div class="back-close-button">
   <div class="cb-i">
     @if( is_first ){
-      <a class="close" href="" onclick="siomart.open_close_screen(); return false;"></a>
+      <a class="close" href="" onclick="siomart.open_close_screen(); return false;" ontouchend="siomart.open_close_screen(); return false;"></a>
     }else{
-      <a class="back" href="" onclick="siomart.screens.prev_screen(); return false;"></a>
+      <a class="back" href="" onclick="siomart.screens.prev_screen(); return false;" ontouchend="siomart.screens.prev_screen(); return false;"></a>
     }
   </div>
 </div>
 
 @* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
 <div class="categories-button">
-  <a href="" id="smCategoriesButton" onclick="siomart.open_categories_screen(); return false;"></a>
+  <a href="" id="smCategoriesButton" onclick="siomart.open_categories_screen(); return false;" ontouchend="siomart.open_categories_screen(); return false;"></a>
 </div>

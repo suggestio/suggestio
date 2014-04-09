@@ -151,17 +151,16 @@ siomart =
       event.preventDefault()
 
     touchstart : ( event ) ->
-      siomart.offers.clear_auto_change_timer()
       this.page_x = event.pageX
 
     touchmove : ( event ) ->
       _delta = this.page_x - event.pageX
 
       if _delta > 150
-        siomart.offers.next_offer(true)
+        siomart.screens.objects['smScreen' + siomart.screens.active_screen].next_offer(true)
 
       if _delta < -150
-        siomart.offers.next_offer(true, true)
+        siomart.screens.objects['smScreen' + siomart.screens.active_screen].next_offer(true, true)
 
   ########
   ## Поиск
@@ -279,6 +278,7 @@ siomart =
       container.innerHTML = data.html
 
       this.utils.set_window_size()
+      this.init_navigation()
 
     if data.action == 'findAds'
       screensContainer = siomart.utils.ge 'smScreens'
@@ -449,6 +449,7 @@ siomart =
     this.total_offers = undefined
 
   load_for_shop_id : ( shop_id ) ->
+    console.log 'load for shop id ' + shop_id
     url = '/market/ads/' + siomart.config.mart_id + '?a.shopId=' + shop_id
     siomart.perform_request url
 
@@ -464,20 +465,20 @@ siomart =
   init_navigation : () ->
 
     ## Кнопка выхода
-    for _event in ['click', 'touchstart']
-      this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), _event, siomart.close_mart
-
-      this.utils.add_single_listener this.utils.ge('smCloseCategoriesButton'), _event, siomart.close_categories_screen
-
-      this.utils.add_single_listener this.utils.ge('smShopListButton'), _event, siomart.open_shopList_screen
-      this.utils.add_single_listener this.utils.ge('smCloseShopListButton'), _event, siomart.close_shopList_screen
-
-      this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), _event, siomart.exit_close_screen
-
-      this.utils.add_single_listener this.utils.ge('sioMartTrigger'), _event, siomart.open_mart
-
+    #for _event in ['click', 'touchstart']
+    #  this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), _event, siomart.close_mart
+    #
+    #  this.utils.add_single_listener this.utils.ge('smCloseCategoriesButton'), _event, siomart.close_categories_screen
+    #
+    #  this.utils.add_single_listener this.utils.ge('smShopListButton'), _event, siomart.open_shopList_screen
+    #  this.utils.add_single_listener this.utils.ge('smCloseShopListButton'), _event, siomart.close_shopList_screen
+    #
+    #  this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), _event, siomart.exit_close_screen
+    #
+    #  this.utils.add_single_listener this.utils.ge('sioMartTrigger'), _event, siomart.open_mart
+    #
     ## поле ввода поискового запроса
-    this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', siomart.search.queue_request
+    #this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', siomart.search.queue_request
 
     ## Тач события
     sm_layout = this.utils.ge('sioMartLayout')
@@ -524,23 +525,25 @@ siomart.screen.prototype =
       clearTimeout this.auto_change_timer
 
   set_auto_change_timer : ( cb ) ->
-    this.auto_change_timer = setTimeout cb, siomart.screen.offer_auto_change_delay
+    this.auto_change_timer = setTimeout cb, this.offer_auto_change_delay
 
   next_offer : ( is_without_delay, is_backward ) ->
 
     is_backward = is_backward || false
     is_without_delay = is_without_delay || false
 
-    this.clear_auto_change_timer()
+    #this.clear_auto_change_timer()
+
+    _this = this
 
     cb = () ->
       if is_backward == true
-        next_offer_index = if siomart.offers.active_offer == 0 then siomart.offers.total_offers - 1 else siomart.offers.active_offer - 1
+        next_offer_index = if _this.active_offer == 0 then _this.total_offers - 1 else _this.active_offer - 1
       else
-        next_offer_index = if siomart.offers.active_offer == siomart.offers.total_offers - 1 then 0 else siomart.offers.active_offer + 1
+        next_offer_index = if _this.active_offer == _this.total_offers - 1 then 0 else _this.active_offer + 1
 
-      siomart.offers.show_offer next_offer_index
-      siomart.offers.next_offer()
+      _this.show_offer next_offer_index
+      #this.next_offer()
 
     if is_without_delay == true
       cb()
