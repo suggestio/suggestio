@@ -1,4 +1,4 @@
-@(spls: Seq[MShopPriceList], withShop:Option[MShop] = None, withAuth:Boolean = false, withDeleteBtn:Boolean = true)(implicit ctx: util.Context)
+@(spls: Seq[MShopPriceList], withShop:Option[MAdnNode] = None, withAuth:Boolean = false, withDeleteBtn:Boolean = true)(implicit ctx: util.Context)
 
 @* Отрендерить список прайс-листов. *@
 @import ctx._
@@ -17,7 +17,7 @@
       <td>@spl.url</td>
 
       @withShop.map { mshop =>
-        <td><a href="@routes.SysMarket.shopShow(spl.shopId)">@mshop.name</a></td>
+        <td><a href="@routes.SysMarket.shopShow(spl.shopId)">@mshop.meta.name</a></td>
       }
 
       @if(withAuth) {

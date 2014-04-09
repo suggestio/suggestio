@@ -4,12 +4,12 @@
 @import helper._
 
 @form(call) {
-  @inputText(mf("name"))
-  @inputText(mf("town"))
-  @inputText(mf("address"))
-  @inputText(mf("phone"))
-  @inputText(mf("color"))
-  @inputText(mf("siteUrl"))
+  @inputText(mf("meta.name"))
+  @inputText(mf("meta.town"))
+  @inputText(mf("meta.address"))
+  @inputText(mf("meta.phone"))
+  @inputText(mf("meta.color"))
+  @inputText(mf("meta.siteUrl"))
   @inputText(mf("maxAds"), 'title -> "макс.число отображаемых рекламных карточек.")
   <input type="submit" value="@btnText"/>
 }

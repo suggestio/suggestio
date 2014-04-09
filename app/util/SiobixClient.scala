@@ -11,16 +11,7 @@ import concurrent.duration._
 import io.suggest.proto.bixo.crawler._, MainProto.MajorRebuildReply_t
 import play.api.Logger
 import io.suggest.event._
-import util.event._
-import io.suggest.event.subscriber.SnClassSubscriber
-import akka.actor.ActorContext
-import models._, MMart.MartId_t, MShop.ShopId_t
-import io.suggest.proto.bixo.crawler.MartAdd
-import scala.Some
-import io.suggest.proto.bixo.crawler.MartDelete
-import io.suggest.proto.bixo.crawler.ShopDelete
 import io.suggest.proto.bixo.CrawlersSupProto.MaybeBootstrapDkey
-import io.suggest.proto.bixo.crawler.ShopAdd
 
 /**
  * Suggest.io
@@ -118,16 +109,11 @@ object AkkaSiobixClient {
 
 /** Клиент к реальному siobix, работающий через Akka.
   * Часть событий приходит из SioNotifier, поэтому тут заодно и слушалка действий, и static-подписчик в одном флаконе. */
-sealed class AkkaSiobixClient extends SiobixClientT with PlayMacroLogsImpl with SNStaticSubscriber with SnClassSubscriber {
+sealed class AkkaSiobixClient extends SiobixClientT with PlayMacroLogsImpl {
 
   import LOGGER._
   import SiobixClient.askTimeout
   import AkkaSiobixClient._
-
-  override def install() {
-    trace("Subscribing crawler for events...")
-    SiowebNotifier.subscribeStatic(this)
-  }
 
   /**
    * Отправить в кравлер сообщение о запросе бутстрапа домена
@@ -152,53 +138,6 @@ sealed class AkkaSiobixClient extends SiobixClientT with PlayMacroLogsImpl with 
     (sel ? MajorRebuildMsg).asInstanceOf[Future[MajorRebuildReply_t]]
   }
 
-  /**
-   * Произошло событие создания нового торгового центра.
-   * @param martId id ТЦ.
-   */
-  def handleMartAdd(martId: MartId_t) {
-    getMainCrawlerSelector ! MartAdd(martId)
-  }
-
-  def handleMartDelete(martId: MartId_t) {
-    getMainCrawlerSelector ! MartDelete(martId)
-  }
-
-  def handleYmShopAdd(martId: MartId_t, shopId: ShopId_t) {
-    getMainCrawlerSelector ! ShopAdd(mart_id=martId, shop_id=shopId)
-  }
-
-  def handleYmShopDelete(martId: MartId_t, shopId: ShopId_t) {
-    getMainCrawlerSelector ! ShopDelete(mart_id=martId, shop_id=shopId)
-  }
-
-  /** Карта статических подписок на события. */
-  override def snMap: Seq[(SioNotifier.Classifier, Seq[SioNotifier.Subscriber])] = {
-    // Сюда входит реакция на события управления списками магазинов и торговых центров.
-    // Сами события обычно возникают в соотв. моделях, а сюда форвардятся через SioNotifier.
-    // Это помогает избежать привязки конкретных моделей к кускам системы, которая к этим моделям не относится никак.
-    val subscribers = List(this)
-    Seq(
-      YmMartAddedEvent.getClassifier()    -> subscribers,
-      YmShopAddedEvent.getClassifier()    -> subscribers,
-      YmShopDeletedEvent.getClassifier()  -> subscribers,
-      YmMartDeletedEvent.getClassifier()  -> subscribers
-    )
-  }
-
-  /**
-   * Обработать событие в контексте sio_notifier'а.
-   * @param event Cобытие.
-   * @param ctx контекст sio-notifier.
-   */
-  override def publish(event: SioNotifier.Event)(implicit ctx: ActorContext) {
-    event match {
-      case sae: YmShopAddedEvent      => handleYmShopAdd(shopId=sae.shopId, martId=sae.martId)
-      case sde: YmShopDeletedEvent    => handleYmShopDelete(martId=sde.martId, shopId=sde.shopId)
-      case YmMartAddedEvent(martId)   => handleMartAdd(martId)
-      case YmMartDeletedEvent(martId) => handleMartDelete(martId)
-    }
-  }
 }
 
 

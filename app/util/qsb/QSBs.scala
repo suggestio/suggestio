@@ -71,7 +71,7 @@ object AdSearch {
 }
 
 case class AdSearch(
-  producerIdOpt: Option[ShopId_t] = None,
+  producerIdOpt: Option[String] = None,
   catIdOpt: Option[String] = None,
   levelOpt: Option[AdShowLevel] = None,
   qOpt: Option[String] = None,

@@ -1,4 +1,4 @@
-@(mads: Seq[MMartAd], mshop: MShop, adFreqs: AdFreqs_t)(implicit ctx: util.Context)
+@(mads: Seq[MAdT], mshop: MAdnNode, adFreqs: AdFreqs_t)(implicit ctx: util.Context)
 
 @* Список реклам и сервисных функций. *@
 @import AdStatActions._
@@ -39,7 +39,7 @@
       }
     </p>
     @Seq(View -> "просмотра", Click -> "клика").map { case (asa, txt) =>
-      @helper.form(routes.Market.adStats(martId = mad.martId, adId = mad.id.get, action = asa.toString)) {
+      @helper.form(routes.Market.adStats(martId = mad.adn.supId.get, adId = mad.id.get, action = asa.toString)) {
         <input type="submit" value="Имитация @txt"/>
       }
     }

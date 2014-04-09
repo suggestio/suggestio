@@ -24,7 +24,7 @@
 
   <div class="body">
 
-    <input id="maxShopAds" type="hidden" value="@mshop.adn.showLevelsInfo.maxOutAtLevel(LVL_PRODUCER)" />
+    <input id="maxShopAds" type="hidden" value="@mshop.adn.showLevelsInfo.maxOutAtLevel(LVL_MEMBER)" />
 
     <div class="shop-info">
 
@@ -53,7 +53,7 @@
     </div>
 
 
-    @defining(mshop.adn.showLevelsInfo.canOutAtLevel(LVL_RECEIVER_TOP)) { htl =>
+    @defining(mshop.adn.showLevelsInfo.canOutAtLevel(LVL_START_PAGE)) { htl =>
       @market.lk.ad._adsEditableListTpl(
         mads = mads,
         mmart = mmart,
@@ -66,10 +66,10 @@
         @defining(mad.allWantShowLevels) { sls =>
           <div class="controls">
             <label class="common-catalog">
-              <input class="one-checkbox" type="checkbox" data-level="@LVL_MART_SHOPS" data-adid="@mad.id" data-name="common-catalog" @if(sls contains LVL_MART_SHOPS) {data-checked="checked"}/>Выводить в общем каталоге
+              <input class="one-checkbox" type="checkbox" data-level="@LVL_MEMBERS_CATALOG" data-adid="@mad.id" data-name="common-catalog" @if(sls contains LVL_MEMBERS_CATALOG) {data-checked="checked"}/>Выводить в общем каталоге
             </label>
             <label class="shop-catalog">
-              <input type="checkbox" data-level="@LVL_SHOP" data-adid="@mad.id" @if(sls contains LVL_SHOP) {data-checked="checked"}/>Выводить в моём магазине
+              <input type="checkbox" data-level="@LVL_MEMBER" data-adid="@mad.id" @if(sls contains LVL_MEMBER) {data-checked="checked"}/>Выводить в моём магазине
             </label>
             <label class="firstPage-catalog @if(!htl){inactive}">
               <input class="one-checkbox" data-name="firstPage-catalog" type="checkbox" data-level="@LVL_MART_SHOWCASE" data-adid="@mad.id" @if(!htl){disabled="disabled"} @if(sls contains LVL_MART_SHOWCASE) {data-checked="checked"}/>Размещение на первом экране

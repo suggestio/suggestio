@@ -1,4 +1,4 @@
-@(marts: Seq[MMart], companies: Option[Map[MCompany.CompanyId_t, MCompany]] = None)(implicit ctx: util.Context)
+@(marts: Seq[MAdnNode], companies: Option[Map[MCompany.CompanyId_t, MCompany]] = None)(implicit ctx: util.Context)
 
 @* Рендер списка торговых центров. Вставляется из других шаблонов.
    Если передана карта компаний, то будет вставлена колонка с указанием названия конторы-владельца ТЦ
@@ -11,13 +11,13 @@
     <th>@Messages("Address")</th>
     @if(companies.isDefined) { <th>@Messages("Company")</th> }
   </tr>
-  @marts.map { mart =>
+  @marts.map { mmart =>
     <tr>
-      <td><a href="@routes.SysMarket.martShow(mart.id.get)">@mart.name</a></td>
-      <td>@mart.address</td>
+      <td><a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.meta.name</a></td>
+      <td>@mmart.meta.address</td>
       @companies.map { _companies =>
         <td>
-          @_companies.get(mart.companyId).map { mc =>
+          @_companies.get(mmart.companyId).map { mc =>
             <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a>
           }
         </td>

@@ -1,4 +1,4 @@
-@(mmart: MMart, imf: Form[_], eActs: Seq[EmailActivation])(implicit ctx: util.Context)
+@(mmart: MAdnNode, imf: Form[_], eActs: Seq[EmailActivation])(implicit ctx: util.Context)
 
 @* Форма для создания инвайта на управление ТЦ. *@
 @import helper._
@@ -8,7 +8,7 @@
 }
 
 @thisMartBase(
-  title = "Инвайт на управление ТЦ " + mmart.name,
+  title = "Инвайт на управление ТЦ " + mmart.meta.name,
   mmart = mmart,
   hPathAfter = Some(hPathAfter1)
 ) {
@@ -31,7 +31,7 @@
 
   <h2>Новый инвайт</h2>
   <p>Для отправки приглашения на управление ТЦ
-    <a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.name</a>
+    <a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.meta.name</a>
     введите email получателя прав в нижеуказанном поле.
   </p>
 

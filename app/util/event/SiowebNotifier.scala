@@ -36,8 +36,7 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
   // TODO Вынести это отсюда?
   protected def getStaticSubscribers: Seq[SNStaticSubscriber] = List(
     DomainManager,
-    SiobixClient,
-    IndicesUtil
+    SiobixClient
   )
 
   /** SiowebSup собирается запустить сие. */

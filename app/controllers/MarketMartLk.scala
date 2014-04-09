@@ -558,9 +558,9 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
       {isTopEnabled =>
         import request.mshop
         if (isTopEnabled)
-          mshop.adn.showLevelsInfo.out += AdShowLevels.LVL_RECEIVER_TOP -> 1
+          mshop.adn.showLevelsInfo.out += AdShowLevels.LVL_START_PAGE -> 1
         else
-          mshop.adn.showLevelsInfo.out -= AdShowLevels.LVL_RECEIVER_TOP
+          mshop.adn.showLevelsInfo.out -= AdShowLevels.LVL_START_PAGE
         mshop.save map { _ =>
           Ok("updated ok")
         }
@@ -652,9 +652,10 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   }
 
 
+  @deprecated("mart+shop arch is deprecated. Use constants in ")
   private def dfltShopOutLevelsMap: LvlMap_t = Map(
-    AdShowLevels.LVL_PRODUCER -> ShowLevelsUtil.PRODUCER_LEVEL_ADS_COUNT_DFLT,
-    AdShowLevels.LVL_PRODUCERS_CATALOG -> 1
+    AdShowLevels.LVL_MEMBER -> ShowLevelsUtil.SHOP_LVL_OUT_MEMBER_DFLT,
+    AdShowLevels.LVL_MEMBERS_CATALOG -> 1
   )
 
 }

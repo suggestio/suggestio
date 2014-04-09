@@ -1,12 +1,12 @@
-@(mshop: MShop, spls: Seq[MShopPriceList], ownerOpt:Option[MCompany] = None, mmartOpt: Option[MMart] = None)(implicit ctx: util.Context)
+@(mshop: MAdnNode, spls: Seq[MShopPriceList], ownerOpt:Option[MCompany] = None, mmartOpt: Option[MAdnNode] = None)(implicit ctx: util.Context)
 
 @* Страница с информацией по одному магазину. *@
 @import datetime._
 @import ctx._
 
 
-@thisShopBase(title=mshop.name, mshop=mshop, mmartOpt=mmartOpt) {
-  <h2>Магазин "@mshop.name"</h2>
+@thisShopBase(title=mshop.meta.name, mshop=mshop, mmartOpt=mmartOpt) {
+  <h2>Магазин "@mshop.meta.name"</h2>
 
   <p><a href="@routes.MarketShopLk.showShop(mshop.id.get)"><b>-&gt; Личный кабинет арендатора</b></a></p>
 
@@ -18,11 +18,11 @@
   }
 
   @mmartOpt.map { mmart =>
-    <p>ТЦ <a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.name</a> по адресу @mmart.address.</p>
+    <p>ТЦ <a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.meta.name</a> по адресу @mmart.meta.address.</p>
   }
 
   <br/>
-  Этаж @mshop.martFloor match {
+  Этаж @mshop.meta.floor match {
     case Some(floor) => {
       @floor.
     }
@@ -31,7 +31,7 @@
     }
   }
 
-  Секция @mshop.martSection match {
+  Секция @mshop.meta.section match {
     case Some(section) => {
       @section.
     }
@@ -40,10 +40,10 @@
     }
   }
 
-  <p>Магазин создан @_prettyDate(mshop.dateCreated, isCap = false, withSpan = true).</p>
+  <p>Магазин создан @_prettyDate(mshop.meta.dateCreated, isCap = false, withSpan = true).</p>
 
   <h3>Описание</h3>
-  <p>@mshop.description</p>
+  <p>@mshop.meta.description</p>
 
   <h3>Внешние прайс-листы</h3>
 

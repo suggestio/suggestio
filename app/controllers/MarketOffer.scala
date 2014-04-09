@@ -10,10 +10,7 @@ import io.suggest.ym.{OfferTypes, YmColors, YmlSax}, YmColors.YmColor
 import util.FormUtil._
 import util.img._
 import ImgFormUtil._
-import play.api.mvc._
-import MShop.ShopId_t
 import util.SiowebEsUtil.client
-import scala.concurrent.{Future, future}
 
 /**
  * Suggest.io
@@ -103,20 +100,20 @@ object MarketOffer extends SioController with MacroLogsImpl {
   /** Показать список офферов указанного магазина для владельца магазина. (или владельца ТЦ?)
     * TODO Нужно разобраться с этой фунцией и тут пофиксить ACL: смотреть офферы в ЛК могут как админы ТЦ, так и владелец магазина.
     * TODO Эту функцию надо перепилить для владельца ТЦ: они могут видеть лишь опубликованные офферы. */
-  def showShopPromoOffers(shopId: ShopId_t) = IsShopAdm(shopId).async { implicit request =>
+  def showShopPromoOffers(shopId: String) = IsShopAdm(shopId).async { implicit request =>
     MShopPromoOffer.getAllForShop(shopId) map { offers =>
       Ok(listOffersTpl(request.mshop, offers))
     }
   }
 
   /** Рендер страницы с формой добавления оффера. */
-  def addPromoOfferForm(shopId: ShopId_t) = IsShopAdm(shopId).async { implicit request =>
+  def addPromoOfferForm(shopId: String) = IsShopAdm(shopId).async { implicit request =>
     import request.mshop
     Ok(form.addPromoOfferFormTpl(shopId, vmPromoOfferFormM, mshop))
   }
 
   /** Сабмит формы добавления оффера. Надо отправить оффер в хранилище. */
-  def addPromoOfferFormSubmit(shopId: ShopId_t) = IsShopAdm(shopId).async { implicit request =>
+  def addPromoOfferFormSubmit(shopId: String) = IsShopAdm(shopId).async { implicit request =>
     vmPromoOfferFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"addPromoOfferFormSubmit($shopId): " + formWithErrors.errors)
@@ -141,7 +138,7 @@ object MarketOffer extends SioController with MacroLogsImpl {
 
   /** Отобразить страницу с указанным оффером. */
   def showPromoOffer(offerId: String) = IsPromoOfferAdminFull(offerId).async { implicit request =>
-    MShop.getById(request.shopId) map {
+    MAdnNode.getByIdType(request.shopId, AdNetMemberTypes.SHOP) map {
       case Some(mshop) =>
         Ok(showPromoOfferTpl(request.offer, mshop))
       case None => shopNotFound(request.shopId)
@@ -163,7 +160,7 @@ object MarketOffer extends SioController with MacroLogsImpl {
 
   /** Рендер страницы редактирования промо-оффера. */
   def editPromoOfferForm(offerId: String) = IsPromoOfferAdminFull(offerId).async { implicit request =>
-    MShop.getById(request.shopId) map {
+    MAdnNode.getByIdType(request.shopId, AdNetMemberTypes.SHOP) map {
       case Some(mshop) =>
         import request.offer
         val oiik = OrigImgIdKey(offer.datum.pictures.head)
@@ -180,8 +177,8 @@ object MarketOffer extends SioController with MacroLogsImpl {
     import request.offer
     vmPromoOfferFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"editPromoOfferFormSubmit($offerId): Failed to bind form: ${formWithErrors.errors}")
-        MShop.getById(request.shopId) map {
+        debug(s"editPromoOfferFormSubmit($offerId): Failed to bind form: " + formatFormErrors(formWithErrors))
+        MAdnNode.getByIdType(request.shopId, AdNetMemberTypes.SHOP) map {
           case Some(mshop) => NotAcceptable(form.editPromoOfferTpl(offer, formWithErrors, mshop))
           case None        => shopNotFound(request.shopId)
         }
@@ -200,7 +197,7 @@ object MarketOffer extends SioController with MacroLogsImpl {
     )
   }
 
-  private def shopNotFound(shopId: ShopId_t) = NotFound("Shop not found: " + shopId)
+  private def shopNotFound(shopId: String) = NotFound("Shop not found: " + shopId)
   private def rdrToOffer(offerId: String) = Redirect(routes.MarketOffer.showPromoOffer(offerId))
 
 }

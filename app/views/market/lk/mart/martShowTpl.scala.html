@@ -44,7 +44,7 @@
   <div class="body">
     <div class="shop-info">
 
-      <input id="maxMartAds" type="hidden" value="@mmart.adn.showLevelsInfo.maxOutAtLevel(LVL_RECEIVER_TOP)" />
+      <input id="maxMartAds" type="hidden" value="@mmart.adn.showLevelsInfo.maxOutAtLevel(LVL_START_PAGE)" />
 
       <div class="name-wrap">
         <span class="name">@mmart.meta.name</span>
@@ -76,7 +76,7 @@
 
       <div class="controls">
         <label class="martAd-fix">
-         <input type="checkbox" data-level="@LVL_MART_SHOWCASE" data-adid="@mad.id.get" @if(mad.allPubShowLevels contains LVL_RECEIVER_TOP) {data-checked="checked"}/>Включить объявление
+         <input type="checkbox" data-level="@LVL_MART_SHOWCASE" data-adid="@mad.id.get" @if(mad.allPubShowLevels contains LVL_START_PAGE) {data-checked="checked"}/>Включить объявление
         </label>
       </div>
 

@@ -1,4 +1,4 @@
-@(shops: Seq[MShop], companies: Option[Map[MCompany.CompanyId_t, MCompany]] = None, marts:Option[Map[MMart.MartId_t, MMart]] = None)(implicit ctx: util.Context)
+@(shops: Seq[MAdnNode], companies: Option[Map[CompanyId_t, MCompany]] = None, marts:Option[Map[String, MAdnNode]] = None)(implicit ctx: util.Context)
 
 @* Рендер списка магазинов. *@
 @import ctx._
@@ -9,23 +9,23 @@
     @if(companies.isDefined) { <th>@Messages("Company")</th> }
     @if(marts.isDefined) { <th>ТЦ</th> }
   </tr>
-  @shops.map { shop =>
+  @shops.map { mshop =>
     <tr>
-      <td><a href="@routes.SysMarket.shopShow(shop.id.get)">@shop.name</a></td>
+      <td><a href="@routes.SysMarket.shopShow(mshop.id.get)">@mshop.meta.name</a></td>
       @companies.map { _companies =>
         <td>
-          @_companies.get(shop.companyId).map { mc =>
+          @_companies.get(mshop.companyId).map { mc =>
             <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a>
           }
         </td>
       }
-      @shop.martId.map { shopMartId =>
+      @mshop.adn.supId.map { shopMartId =>
         @marts.map { _marts =>
           <td>
             @_marts.get(shopMartId).map { mmart =>
               @* a.title: Нужно экранировать/срезать ковычки, чтобы разметка не поехала. *@
-              <a href="@routes.SysMarket.martShow(shopMartId)" title="@mmart.address">@mmart.name</a>
-              @mmart.siteUrl.map { siteUrl =>
+              <a href="@routes.SysMarket.martShow(shopMartId)" title="@mmart.meta.address">@mmart.meta.name</a>
+              @mmart.meta.siteUrl.map { siteUrl =>
                 <a href="@siteUrl">&#x1f30d;</a> @* Тут символ глобуса, который почти ни у кого нормально не отображается. *@
               }
             }

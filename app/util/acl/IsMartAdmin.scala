@@ -111,10 +111,10 @@ case class IsMartAdminShopAd(adId: String) extends ActionBuilder[MartShopAdReque
         } flatMap { results =>
           results.find(_.isDefined).flatten match {
             case Some(mmart) =>
-            srmFut flatMap { srm =>
-              val req1 = MartShopAdRequest(ad, mmart, pwOpt, request, srm)
-              block(req1)
-            }
+              srmFut flatMap { srm =>
+                val req1 = MartShopAdRequest(ad, mmart, pwOpt, request, srm)
+                block(req1)
+              }
             case None => IsAuth.onUnauth(request)
           }
         }

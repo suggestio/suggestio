@@ -1,8 +1,6 @@
 package util
 
-import io.suggest.event._, SioNotifier.{Classifier, Subscriber}
-import io.suggest.event.subscriber.SnClassSubscriber
-import akka.actor.ActorContext
+import io.suggest.event._
 import models._
 import SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -20,7 +18,7 @@ import io.suggest.util.SioEsUtil.laFuture2sFuture
  * Description: Разные фунции и прочая утиль для работы с индексами.
  */
 
-object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClassSubscriber {
+object IndicesUtil extends PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -36,33 +34,6 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
     * и одного индекса на всех достаточно. */
   val MART_INX_NAME_DFLT = "--1siomart"
 
-
-  /**
-   * Передать событие подписчику.
-   * @param event событие.
-   * @param ctx контекст sio-notifier.
-   */
-  def publish(event: SioNotifier.Event)(implicit ctx: ActorContext) {
-    event match {
-      case mae: YmMartAddedEvent      => handleMartAdd(mae.martId)
-      case mde: YmMartDeletedEvent    => handleMartDelete(mde.martId)
-      case ase: AdSavedEvent          => handleAdSaved(ase.mmartAd)
-      case ade: AdDeletedEvent        => handleAdDeleted(ade.mmartAd)
-      case msse: MShopSavedEvent      => handleShopSaved(msse.mshop)
-      case soe: MShopOnOffEvent       => handleShopOnOff(soe)
-    }
-  }
-
-  def snMap: Seq[(Classifier, Seq[Subscriber])] = {
-    val subscribers = List(this)
-    Seq(
-      YmMartAddedEvent.getClassifier()    -> subscribers,
-      YmMartDeletedEvent.getClassifier()  -> subscribers,
-      AdSavedEvent.getClassifier()        -> subscribers,
-      MShopSavedEvent.getClassifier()     -> subscribers,
-      MShopOnOffEvent.getClassifier()     -> subscribers
-    )
-  }
 
   /** Асинхронные действия с индексами при создании ТЦ. */
   def handleMartAdd(martId: MartId_t): Future[MMartInx] = {
@@ -151,7 +122,7 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
    */
   private def handleAdSaved(mmartAd: MMartAd): Future[_] = {
     lazy val logPrefix = s"handleAdSave(${mmartAd.id.get}): "
-    val martInx2Fut = getInxFormMartCached(mmartAd.receiverIds).map(_.get)
+    val martInx2Fut = getInxFormMartCached(mmartAd.receivers).map(_.get)
     val userCatStrFut = maybeCollectUserCatStr(mmartAd.userCatId)
     // Реклама бывает на уровне ТЦ и на уровне магазина. Если на уровне магазина, то надо определить допустимые уровни отображения.
     // Нужно пропатчить showLevels согласно допустимым уровням магазина.
@@ -190,8 +161,8 @@ object IndicesUtil extends PlayMacroLogsImpl with SNStaticSubscriber with SnClas
   }
 
   /** Реакция на удаление рекламной карточки: нужно её удалить из индекса карточек. */
-  private def handleAdDeleted(mmartAd: MMartAd) {
-    getInxFormMartCached(mmartAd.receiverIds) onSuccess {
+  private def handleAdDeleted(mmartAd: MAd) {
+    getInxFormMartCached(mmartAd.receivers) onSuccess {
       case Some(mmartInx) => MMartAdIndexed.deleteById(mmartAd.id.get, mmartInx)
     }
   }
