@@ -21,7 +21,7 @@ import util.img._
  * Created: 03.03.14 13:34
  * Description: Контроллер личного кабинета для арендатора, т.е. с точки зрения конкретного магазина.
  */
-object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport {
+object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport with ShopMartCompat {
 
   import LOGGER._
 
@@ -107,7 +107,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
       case None => Future successful None
     }
     val martId = mshop.adn.supId.get
-    MAdnNodeCache.getByIdCached(martId).flatMap {
+    getMartByIdCache(martId).flatMap {
       case Some(mmart) =>
         for {
           mads      <- adsFut
@@ -157,7 +157,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
     // TODO Если магазин удалён из рекламной сети или не имеет своего ТЦ, то это как должно выражаться?
     val martId = mshop.adn.supId.get
     val formBindedFut = fillFullForm(mshop)
-    MAdnNodeCache.getByIdCached(martId) flatMap {
+    getMartByIdCache(martId) flatMap {
       case Some(mmart) =>
         formBindedFut map { formBinded =>
           Ok(shopEditFormTpl(mmart, mshop, formBinded))
@@ -179,7 +179,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
         debug(s"editShopFormSubmit($shopId): Bind failed: " + formWithErrors.errors)
         // TODO Что делать, если у магазина нет своего супервизора?
         val martId = mshop.adn.supId.get
-        MAdnNodeCache.getByIdCached(martId) flatMap {
+        getMartByIdCache(martId) flatMap {
           case Some(mmart) =>
             fullFormBindedFut map { formWithErrors2 =>
               NotAcceptable(shopEditFormTpl(mmart, mshop, formWithErrors2))
@@ -307,7 +307,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
       bruteForceProtect flatMap { _ =>
         EmailActivation.getById(eaId) flatMap {
           case Some(eAct) if eAct.key == shopId =>
-            MAdnNodeCache.getByIdCached(shopId) flatMap {
+            getShopByIdCache(shopId) flatMap {
               case Some(mshop) => f(eAct, mshop)(request)
               case None =>
                 // should never occur

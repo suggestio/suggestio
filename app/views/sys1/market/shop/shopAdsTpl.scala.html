@@ -39,7 +39,7 @@
       }
     </p>
     @Seq(View -> "просмотра", Click -> "клика").map { case (asa, txt) =>
-      @helper.form(routes.Market.adStats(martId = mad.adn.supId.get, adId = mad.id.get, action = asa.toString)) {
+      @helper.form(routes.Market.adStats(martId = mshop.adn.supId.get, adId = mad.id.get, action = asa.toString)) {
         <input type="submit" value="Имитация @txt"/>
       }
     }

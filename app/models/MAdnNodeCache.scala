@@ -12,11 +12,12 @@ import io.suggest.event.SioNotifier.{Event, Subscriber, Classifier}
  * для оперативного опустошения кеша.
  * getByIdCached() не следует активно использовать в личном кабинете, т.к. она не гарантирует реалтайма.
  */
-object MAdnNodeCache extends EsModelCache[MAdnNode] {
+object MAdnNodeCache extends AdnEsModelCache[MAdnNode] {
 
   val EXPIRE_SEC: Int = current.configuration.getInt("adn.node.cache.expire.seconds") getOrElse 60
   val CACHE_KEY_SUFFIX = ".nc"
 
+  type GetAs_t = MAdnNode
 
   /** Карта событий adnNode для статического подписывания в SioNotifier. */
   def snMap: Seq[(Classifier, Seq[Subscriber])] = {

@@ -1,7 +1,6 @@
 @(ng: Map[AdNetMemberType, Seq[MAdnNode]], martsMap: Map[String, MAdnNode])(implicit ctx: util.Context)
 
 @* Список личных кабинетов юзера. *@
-import AdNetMemberTypes._
 
 @lkBase("Моя рекламная сеть") {
 
@@ -18,7 +17,7 @@ import AdNetMemberTypes._
     @* Обработка карты сделана через partial-функцию, чтобы при добавлении новых типов компилятор автоматом
        выдавал warning при сборке. *@
     @ng.map {
-      case (MART, mmarts) => {
+      case (AdNetMemberTypes.MART, mmarts) => {
         <div class="lk-list">
 
           @mmarts.zipWithIndex.map { case (mmart, i) =>
@@ -32,7 +31,7 @@ import AdNetMemberTypes._
         </div>
       }
 
-      case (SHOP, mshops) => {
+      case (AdNetMemberTypes.SHOP, mshops) => {
         <div class="lk-list">
           @mshops.zipWithIndex.map { case (mshop, i) =>
 
@@ -40,7 +39,7 @@ import AdNetMemberTypes._
               <span class="number">@(i+1)</span>
               <span class="name">@mshop.meta.name</span>
               @mshop.adn.supId.flatMap(martsMap.get).map { mmart =>
-                <span class="mmart-name">&nbsp;/&nbsp;@mmart.name</span>
+                <span class="mmart-name">&nbsp;/&nbsp;@mmart.meta.name</span>
               }
 
             </a>

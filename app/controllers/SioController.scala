@@ -13,13 +13,14 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.data.Form
 import io.suggest.img.SioImageUtilT
 import play.api.libs.Files.TemporaryFile
-import models.MPictureTmp
+import models._
 import util.img.OutImgFmts
 import net.sf.jmimemagic.Magic
 import util.ContextImpl
 import play.api.libs.json.JsString
 import scala.Some
 import play.api.mvc.Result
+import util.SiowebEsUtil.client
 
 /**
  * Suggest.io
@@ -116,3 +117,13 @@ trait LogoSupport extends SioController with PlayMacroLogsImpl {
   }
 }
 
+
+/** compat-прослойка для контроллеров, которые заточены под ТЦ и магазины.
+  * После унификации в web21 этот контроллер наверное уже не будет нужен. */
+trait ShopMartCompat {
+  def getShopById(shopId: String) = MAdnNode.getByIdType(shopId, AdNetMemberTypes.SHOP)
+  def getShopByIdCache(shopId: String) = MAdnNodeCache.getByIdTypeCached(shopId, AdNetMemberTypes.SHOP)
+
+  def getMartById(martId: String) = MAdnNode.getByIdType(martId, AdNetMemberTypes.MART)
+  def getMartByIdCache(martId: String) = MAdnNodeCache.getByIdTypeCached(martId, AdNetMemberTypes.MART)
+}

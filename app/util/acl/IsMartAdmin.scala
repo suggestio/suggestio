@@ -14,10 +14,10 @@ import models._
  * Created: 02.03.14 13:58
  * Description: Проверка прав на управление ТЦ.
  */
-object IsMartAdmin {
+object IsMartAdmin extends controllers.ShopMartCompat {
 
   def isMartAdmin(martId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
-    MAdnNodeCache.getByIdCached(martId) map { mmartOpt =>
+    getMartByIdCache(martId) map { mmartOpt =>
       mmartOpt flatMap { mmart =>
         val isAllowed = PersonWrapper.isSuperuser(pwOpt) || {
           pwOpt.isDefined && (mmart.personIds contains pwOpt.get.personId)
@@ -58,7 +58,7 @@ case class IsMartAdmin(martId: String) extends ActionBuilder[AbstractRequestForM
 /** Какая-то административная операция над магазином, подразумевающая права на ТЦ. */
 case class IsMartAdminShop(shopId: String) extends ActionBuilder[RequestForMartShopAdm] {
   protected def invokeBlock[A](request: Request[A], block: (RequestForMartShopAdm[A]) => Future[Result]): Future[Result] = {
-    MAdnNodeCache.getByIdCached(shopId) flatMap {
+    IsMartAdmin.getShopByIdCache(shopId) flatMap {
       case Some(mshop) if mshop.adn.supId.isDefined =>
         val pwOpt = PersonWrapper.getFromRequest(request)
         val srmFut = SioReqMd.fromPwOpt(pwOpt)

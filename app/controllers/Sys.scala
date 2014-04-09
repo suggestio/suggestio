@@ -16,7 +16,6 @@ import io.suggest.util.VirtualIndexUtil
 import util.SiowebEsUtil.client
 import util.urls_supply.SeedUrlsSupplier
 import io.suggest.model.inx2.MMartInx
-import scala.Some
 import io.suggest.model.MVirtualIndexVin
 
 /**
@@ -231,7 +230,12 @@ object Sys extends SioController with PlayMacroLogsImpl {
 
   /** Выдать страницу со всеми индексами из inx2 моделей. */
   def inx2AllIndices = IsSuperuser.async { implicit request =>
-    val allMartsMapFut = MMart.getAll().map { all => all.map { mmart => mmart.id.get -> mmart }.toMap }
+    val allMartsMapFut = MAdnNode.findAllByType(AdNetMemberTypes.MART)
+      .map { all =>
+        all.map {
+          mmart => mmart.id.get -> mmart
+        }.toMap
+      }
     MMartInx.getAll().flatMap { minxs =>
       val minxsGrouped = minxs.groupBy(_.targetEsInxName)
       allMartsMapFut map { allMartsMap =>

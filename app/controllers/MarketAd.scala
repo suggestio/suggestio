@@ -566,6 +566,8 @@ object MarketAd extends SioController with LogoSupport {
           }
           Redirect(routeCall)
             .flashing("success" -> "Рекламная карточка удалена")
+
+        case None => http404AdHoc
       }
     }
   }

@@ -25,147 +25,15 @@ object IndicesUtil extends PlayMacroLogsImpl {
   implicit private def sn = SiowebNotifier
 
   /** Сколько времени надо кешировать в памяти частоиспользуемые метаданные по индексу ТЦ. */
-  val MART_INX_CACHE_SECONDS = current.configuration.getInt("inx2.mart.cache.seconds") getOrElse 60
+  private val MART_INX_CACHE_SECONDS = current.configuration.getInt("inx2.mart.cache.seconds") getOrElse 60
 
   /** Сколько секунд кешировать в памяти магазин. */
-  val SHOP_CACHE_SECONDS = current.configuration.getInt("mshop.cache.seconds") getOrElse 60
+  private val SHOP_CACHE_SECONDS = current.configuration.getInt("mshop.cache.seconds") getOrElse 60
 
   /** Имя дефолтового индекса для индексации MMart. Используется пока нет менеджера индексов,
     * и одного индекса на всех достаточно. */
   val MART_INX_NAME_DFLT = "--1siomart"
 
-
-  /** Асинхронные действия с индексами при создании ТЦ. */
-  def handleMartAdd(martId: MartId_t): Future[MMartInx] = {
-    val logPrefix = s"handleMartAdd($martId): "
-    // Создать индекс для указанного ТЦ
-    val inxName = MART_INX_NAME_DFLT
-    val inx = MMartInx(martId, inxName)
-    val isFut = inx.save
-    isFut onComplete {
-      case Success(_)  => trace(logPrefix + "inx2.MMartInx saved ok for index " + inxName)
-      case Failure(ex) => error(logPrefix + "Failed to save inx2.MMartInx from index " + inxName, ex)
-    }
-    val smFut = inx.setMappings
-    smFut onComplete {
-      case Success(_)  => trace(logPrefix + "Inx mapping set ok for mart")
-      case Failure(ex) => error(logPrefix + "Failed to set mapping for mart", ex)
-      // TODO при ошибке надо сносить маппинг (или заливать с ignoreConflicts и снова сносить), а затем заливать заново по-нормальному.
-    }
-    // Возможно, в ТЦ уже есть данные для индексации.
-    smFut flatMap { _ =>
-      // Пробежаться по карточкам ТЦ и сымитировать их добавление.
-      MMartAd.findForMartRt(martId, shopMustMiss = true) flatMap { martAds =>
-        Future.traverse(martAds) { handleAdSaved }
-      } onComplete {
-        case Success(l)  => trace(logPrefix + s"martAds: ${l.size} mart ads re-processed for index " + inxName)
-        case Failure(ex) => error(logPrefix + s"martAds: Failed to process ads", ex)
-      }
-      // Нужно пробежаться по включенным магазинам и сымитировать shopEnabled
-      MShop.findByMartId(martId) flatMap { mshops =>
-        if (!mshops.isEmpty) {
-          trace(logPrefix + "added mart already has shops. Loading enabled shops into index " + inxName)
-          val inxOptFut = Future successful Some(inx)
-          Future.traverse(mshops) { mshop =>
-            if (mshop.settings.supIsEnabled) {
-              handleShopEnable(mshop, inxOptFut)
-            } else {
-              Future successful 0
-            }
-          }
-        } else {
-          Future successful Nil
-        }
-      }
-    } onComplete {
-      case Success(results) if !results.isEmpty =>
-        debug(s"${logPrefix}Successfully processed ${results.size} mart's shops, loaded ${results.count(_ != 0)} shops with ${results.sum} ads total.")
-      case Failure(ex) => error(logPrefix + "Failed to load pre-existing mart's shops into index.", ex)
-      case _ => // Do nothing
-    }
-    for {
-      _ <- isFut
-      _ <- smFut
-    } yield inx
-  }
-
-  /** Асинхронные действия с индексами при удалении ТЦ. */
-  def handleMartDelete(martId: MartId_t): Future[_] = {
-    lazy val logPrefix = s"handleMartDelete($martId): "
-    // Удалить индекс, созданный для указанного ТЦ
-    MMartInx.getById(martId) flatMap {
-      case Some(mmartInx) =>
-        trace(s"${logPrefix}inx = $mmartInx :: Erasing index mappings...")
-        val dmFut = mmartInx.deleteMappings
-        dmFut onComplete {
-          case Success(_) =>
-            trace(logPrefix + "Erasing index mappings fininshed. Erasing inx2 metadata...")
-            mmartInx.delete onComplete {
-              case Success(_)   => trace(logPrefix + "inx2 metadata erased ok.")
-              case Failure(ex2) => error(logPrefix + "Failed to delete inx2 metadata", ex2)
-            }
-
-          case Failure(ex1) => error(logPrefix + "Failed to erase mappings", ex1)
-        }
-        dmFut
-
-      case None =>
-        warn(s"${logPrefix}No inx2 found for mart=$martId - Nothing to erase.")
-        Future successful ()
-    }
-  }
-
-  /**
-   * Оригинал экземпляра MMartAd сохранен в хранилище.
-   * Нужно посмотреть в настройки публикации картинки и магазина, и добавить/удалить из выдачи эту рекламу.
-   * @param mmartAd Экземпляр рекламной карточки.
-   */
-  private def handleAdSaved(mmartAd: MMartAd): Future[_] = {
-    lazy val logPrefix = s"handleAdSave(${mmartAd.id.get}): "
-    val martInx2Fut = getInxFormMartCached(mmartAd.receivers).map(_.get)
-    val userCatStrFut = maybeCollectUserCatStr(mmartAd.userCatId)
-    // Реклама бывает на уровне ТЦ и на уровне магазина. Если на уровне магазина, то надо определить допустимые уровни отображения.
-    // Нужно пропатчить showLevels согласно допустимым уровням магазина.
-    val allowedDisplayLevelsFut: Future[Set[AdShowLevel]] = mmartAd.producerId match {
-      // Это реклама от магазина.
-      case Some(_shopId) =>
-        getShopByIdCached(_shopId) map {
-          case Some(mshop)  => mshop.getAllShowLevels
-          case None         => Set.empty
-        }
-
-      // Это реклама от ТЦ. Пока её можно отображать всегда.
-      case None => Future successful MMartAd.MART_ALWAYS_SHOW_LEVELS
-    }
-    for {
-      allowedDisplayLevels <- allowedDisplayLevelsFut
-      mmartInx2 <- martInx2Fut
-    } yield {
-      val shownLevels = mmartAd.showLevels intersect allowedDisplayLevels
-      if (shownLevels.isEmpty) {
-        MMartAdIndexed.deleteById(mmartAd.id.get, mmartInx2) onComplete {
-          case Success(result)  => trace(logPrefix + "Ad deleted/hidden from indexing -> " + result)
-          case Failure(ex)      => error(logPrefix + "Failed to erase/hide AD from indexing", ex)
-        }
-      } else {
-        userCatStrFut map { userCatStrs =>
-          val mmai = MMartAdIndexed(mmartAd, userCatStrs, shownLevels, mmartInx2)
-          //trace(logPrefix + "Saving to index: " + mmai)
-          mmai.save onComplete {
-            case Success(savedAdId) => trace(logPrefix + "Ad inserted/updated into indexing: " + mmartInx2)
-            case Failure(ex)        => error(logPrefix + "Faild to save AD into index", ex)
-          }
-        }
-      }
-    }
-  }
-
-  /** Реакция на удаление рекламной карточки: нужно её удалить из индекса карточек. */
-  private def handleAdDeleted(mmartAd: MAd) {
-    getInxFormMartCached(mmartAd.receivers) onSuccess {
-      case Some(mmartInx) => MMartAdIndexed.deleteById(mmartAd.id.get, mmartInx)
-    }
-  }
 
   /** Реакция на включение/отключение магазина. */
   private def handleShopOnOff(soe: MShopOnOffEvent) {
@@ -283,7 +151,7 @@ object IndicesUtil extends PlayMacroLogsImpl {
    * @param martId id ТЦ.
    * @return Фьючерс, соответствующий результату MMartInx.getById().
    */
-  def getInxFormMartCached(martId: MartId_t): Future[Option[MMartInx]] = {
+  private def getInxFormMartCached(martId: MartId_t): Future[Option[MMartInx]] = {
     val cacheKey = cacheKeyForMartInx(martId)
     Cache.getAs[MMartInx](cacheKey) match {
       case Some(mmartInx) =>
@@ -308,7 +176,7 @@ object IndicesUtil extends PlayMacroLogsImpl {
    * @return Тоже самое, что и [[io.suggest.ym.model.MShop.getById()]].
    */
   @deprecated("Use MAdnNodeCache instead", "2014.apr.08")
-  def getShopByIdCached(shopId: ShopId_t): Future[Option[MShop]] = {
+  private def getShopByIdCached(shopId: ShopId_t): Future[Option[MShop]] = {
     val cacheKey = cacheKeyForShop(shopId)
     Cache.getAs[MShop](cacheKey) match {
       case Some(mshop) =>

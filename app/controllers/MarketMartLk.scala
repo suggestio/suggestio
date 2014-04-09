@@ -28,7 +28,7 @@ import AdnMPubSettingsLevels.LvlMap_t
  * Created: 02.03.14 13:54
  * Description: Личный кабинет для sio-маркета. Тут управление торговым центром и магазинами в нём.
  */
-object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport {
+object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport with ShopMartCompat {
 
   import LOGGER._
 
@@ -177,7 +177,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     import request.mmart
     getWelcomeAdOpt(mmart) map { welcomeAdOpt =>
       val martLogoOpt = mmart.logoImgOpt.map { img =>
-        ImgInfo4Save(img)
+        ImgInfo4Save(imgInfo2imgKey(img))
       }
       val welcomeImgKey = welcomeAdOpt.map[OrigImgIdKey] { _.img }
       val formFilled = martFormM.fill((mmart.meta, welcomeImgKey, martLogoOpt))
@@ -274,18 +274,13 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
           val mshop = MAdnNode(
             companyId = companyId,
             personIds = Set.empty,
-            adn = AdNetMemberInfo(
-              memberType = AdNetMemberTypes.SHOP,
-              isProducer = true,
-              isReceiver = false,
-              isSupervisor = false,
-              supId = Some(martId),
-              isEnabled = false,
-              disableReason = Some("First run/inactive."),
-              showLevelsInfo = AdnMPubSettingsLevels(
-                out = dfltShopOutLevelsMap
-              )
-            ),
+            adn = {
+              val mi = AdNetMemberTypes.SHOP.getAdnInfoDflt
+              mi.supId = Some(martId)
+              mi.isEnabled = false
+              mi.disableReason = Some("First run/inactive")
+              mi
+            },
             meta = meta
           )
           mshop.save.flatMap { shopId =>
@@ -485,7 +480,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   def shopAdHideForm(adId: String) = IsMartAdminShopAd(adId).async { implicit request =>
     import request.ad
     val shopId = ad.producerId
-    MAdnNodeCache.getByIdCached(shopId) map {
+    getShopByIdCache(shopId) map {
       case Some(mshop) =>
         Ok(shop._shopAdHideFormTpl(mshop, ad, request.mmart, shopAdHideFormM))
 
@@ -520,7 +515,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   private def notyfyAdDisabled(reason: String)(implicit request: MartShopAdRequest[_]) {
     import request.{mmart, ad}
     val shopId = ad.producerId
-    MAdnNodeCache.getByIdCached(shopId) onSuccess { case Some(mshop) =>
+    getShopByIdCache(shopId) onSuccess { case Some(mshop) =>
       mshop.mainPersonId.foreach { personId =>
         MPersonIdent.findAllEmails(personId) onSuccess { case emails =>
           if (emails.isEmpty) {
@@ -629,7 +624,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
       bruteForceProtect flatMap { _ =>
         EmailActivation.getById(eaId) flatMap {
           case Some(eAct) if eAct.key == martId =>
-            MAdnNodeCache.getByIdCached(martId) flatMap {
+            getMartByIdCache(martId) flatMap {
               case Some(mmart) =>
                 f(eAct, mmart)(request)
 
@@ -650,12 +645,5 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
       }
     }
   }
-
-
-  @deprecated("mart+shop arch is deprecated. Use constants in ")
-  private def dfltShopOutLevelsMap: LvlMap_t = Map(
-    AdShowLevels.LVL_MEMBER -> ShowLevelsUtil.SHOP_LVL_OUT_MEMBER_DFLT,
-    AdShowLevels.LVL_MEMBERS_CATALOG -> 1
-  )
 
 }

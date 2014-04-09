@@ -21,10 +21,11 @@ object JMXImpl {
 
   /** Список моделей, отправляемых в MBeanServer. private для защиты от возможных воздействий извне. */
   private val JMX_MODELS = List(
-    new MMartAdJmx,
     new MMartInxJmx,
     new MAdStatJmx,
-    new MWelcomeAdJmx
+    new MWelcomeAdJmx,
+    new MAdJmx,
+    new MAdnNodeJmx
   )
 
   private def getSrv = ManagementFactory.getPlatformMBeanServer

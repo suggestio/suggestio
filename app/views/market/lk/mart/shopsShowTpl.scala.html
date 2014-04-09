@@ -1,4 +1,4 @@
-@(mmart: MAdnNode, shops: Seq[MAdnNode])(implicit ctx: util.Context)
+@(mmart: MAdnNode, mshops: Seq[MAdnNode])(implicit ctx: util.Context)
 
 @* Страница с отображением списка магазинов. *@
 
@@ -49,7 +49,7 @@
           </div>
 
           <div id="shop-list">
-            @_martShopsTpl(martId=mmart.id.get, shops=shops)
+            @_martShopsTpl(mmart.id.get, mshops)
           </div>
           <div id="search-results"></div>
 

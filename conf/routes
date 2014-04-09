@@ -86,8 +86,6 @@ GET  /sys/indices/vin/:vin              controllers.Sys.showVin(vin)
 POST /sys/indices/downgrade/ALL         controllers.Sys.indicesDowngradeAll
 GET  /sys/inx2/ALL                      controllers.Sys.inx2AllIndices
 POST /sys/inx2/create/dflt/mart         controllers.Sys.inx2createDfltMart
-POST /sys/inx2/im/mart/:martId/add      controllers.SysMarket.inx2handleMartAdd(martId)
-POST /sys/inx2/im/mart/:martId/del      controllers.SysMarket.inx2handleMartDelete(martId)
 
 # Входы в личные кабинеты
 GET  /m                                 controllers.MarketLk.lkIndex

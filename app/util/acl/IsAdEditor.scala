@@ -28,7 +28,7 @@ object IsAdEditor {
   private def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A], srmFut: Future[SioReqMd]): Future[Option[RequestWithAd[A]]] = {
     if (PersonWrapper isSuperuser pwOpt) {
       srmFut map { srm =>
-        Some(RequestWithAd(mad, request, pwOpt, srm))
+        Some(RequestWithAd(mad, request, pwOpt, srm)())
       }
     } else {
       pwOpt match {
@@ -39,7 +39,7 @@ object IsAdEditor {
           } yield {
             adnNodeOpt flatMap { adnNode =>
               if (adnNode.personIds contains pw.personId) {
-                Some(RequestWithAd(mad, request, pwOpt, srm, adnNodeOpt))
+                Some(RequestWithAd(mad, request, pwOpt, srm)(adnNodeOpt))
               } else {
                 None
               }
@@ -85,9 +85,9 @@ case class RequestWithAd[A](
   mad: MAd,
   request: Request[A],
   pwOpt: PwOpt_t,
-  sioReqMd: SioReqMd,
-  private[this] val producerOpt: Option[MAdnNode] = None
-) extends AbstractRequestWithPwOpt(request) {
+  sioReqMd: SioReqMd)
+  (producerOpt: Option[MAdnNode] = None)
+  extends AbstractRequestWithPwOpt(request) {
 
   /** Для доступа к изготовителю рекламы надо использовать этот фьючерс, а не producerOpt, который может быть
     * неожиданно пустым. */

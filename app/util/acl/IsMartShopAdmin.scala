@@ -15,7 +15,7 @@ import models._
  * Description: Проверка прав на управление магазином, находящимся внутри ТЦ.
  * Следует различать случаи, когда на магазин влияет владелец ТЦ, а когда - владелец самого магазина.
  */
-object IsShopAdm extends PlayMacroLogsImpl {
+object IsShopAdm extends PlayMacroLogsImpl with controllers.ShopMartCompat {
   import LOGGER._
 
   /**
@@ -26,11 +26,11 @@ object IsShopAdm extends PlayMacroLogsImpl {
    */
   def isShopAdminFull(shopId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
     if (PersonWrapper isSuperuser pwOpt) {
-      MAdnNodeCache.getByIdCached(shopId)
+      getShopByIdCache(shopId)
     } else {
       if (pwOpt.isDefined) {
         // Нужно узнать, существует ли магазин и TODO есть ли права у юзера на магазин
-        MAdnNodeCache.getByIdCached(shopId) map { mshopOpt =>
+        getShopByIdCache(shopId) map { mshopOpt =>
           mshopOpt filter { mshop =>
             val result = mshop.personIds contains pwOpt.get.personId
             if (!result) {

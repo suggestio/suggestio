@@ -22,7 +22,7 @@ import io.suggest.ym.ad.ShowLevelsUtil
  * Created: 07.02.14 17:21
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
-object SysMarket extends SioController with MacroLogsImpl {
+object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
   import LOGGER._
 
@@ -209,7 +209,7 @@ object SysMarket extends SioController with MacroLogsImpl {
 
   /** Отображение одного ТЦ. */
   def martShow(martId: String) = IsSuperuser.async { implicit request =>
-    MAdnNode.getByIdType(martId, AdNetMemberTypes.MART) flatMap {
+    getMartById(martId) flatMap {
       case Some(mmart) =>
         val martShopsFut = MAdnNode.findBySupId(martId)
         for {
@@ -227,7 +227,7 @@ object SysMarket extends SioController with MacroLogsImpl {
 
   /** Рендер страницы с формой редактирования торгового центра. */
   def martEditForm(mart_id: String) = IsSuperuser.async { implicit request =>
-    MAdnNode.getByIdType(mart_id, AdNetMemberTypes.MART) map {
+    getMartById(mart_id) map {
       case Some(mmart) =>
         val maxOwnAdsOnStartPage = mmart.adn.showLevelsInfo.maxOutAtLevel(AdShowLevels.LVL_START_PAGE)
         val form = martFormM.fill((mmart.meta, maxOwnAdsOnStartPage))
@@ -239,7 +239,7 @@ object SysMarket extends SioController with MacroLogsImpl {
 
   /** Сабмит формы редактирования торгового центра. */
   def martEditFormSubmit(martId: String) = IsSuperuser.async { implicit request =>
-    MAdnNode.getByIdType(martId, AdNetMemberTypes.MART) flatMap {
+    getMartById(martId) flatMap {
       case Some(mmart) =>
         martFormM.bindFromRequest().fold(
           {formWithErrors =>
@@ -282,7 +282,7 @@ object SysMarket extends SioController with MacroLogsImpl {
   /** Рендер страницы с формой инвайта (передачи прав на управление ТЦ). */
   def martInviteForm(martId: String) = IsSuperuser.async { implicit request =>
     val eActsFut = EmailActivation.findByKey(martId)
-    MAdnNode.getByIdType(martId, AdNetMemberTypes.MART) flatMap {
+    getMartById(martId) flatMap {
       case Some(mmart) =>
         eActsFut map { eActs =>
           Ok(mart.martInviteFormTpl(mmart, martInviteFormM, eActs))
@@ -293,7 +293,7 @@ object SysMarket extends SioController with MacroLogsImpl {
 
   /** Сабмит формы создания инвайта на управление ТЦ. */
   def martInviteFormSubmit(martId: String) = IsSuperuser.async { implicit request =>
-    MAdnNode.getByIdType(martId, AdNetMemberTypes.MART) flatMap {
+    getMartById(martId) flatMap {
       case Some(mmart) =>
         martInviteFormM.bindFromRequest().fold(
           {formWithErrors =>
@@ -426,7 +426,7 @@ object SysMarket extends SioController with MacroLogsImpl {
 
   /** Рендер страницы, содержащей информацию по указанному магазину. */
   def shopShow(shopId: String) = IsSuperuser.async { implicit request =>
-    MAdnNode.getByIdType(shopId, AdNetMemberTypes.SHOP) flatMap {
+    getShopById(shopId) flatMap {
       case Some(mshop) =>
         val splsFut = MShopPriceList.getForShop(shopId)
         val martOptFut = mshop.getSup
@@ -456,7 +456,7 @@ object SysMarket extends SioController with MacroLogsImpl {
 
   /** Сабмит формы редактирования магазина. */
   def shopEditFormSubmit(shopId: String) = IsSuperuser.async { implicit request =>
-    MAdnNode.getByIdType(shopId, AdNetMemberTypes.SHOP) flatMap {
+    getShopById(shopId) flatMap {
       case Some(mshop) =>
         shopFormM.bindFromRequest().fold(
           {formWithErrors =>
@@ -523,7 +523,7 @@ object SysMarket extends SioController with MacroLogsImpl {
 
   /** Рендер формы добавления ссылки на прайс-лист к магазину. */
   def splAddForm(shopId: String) = IsSuperuser.async { implicit request =>
-    MAdnNode.getByIdType(shopId, AdNetMemberTypes.SHOP) map {
+    getShopById(shopId) map {
       case Some(mshop) =>
         Ok(shop.pricelist.splAddFormTpl(mshop, splFormM))
 
@@ -536,7 +536,7 @@ object SysMarket extends SioController with MacroLogsImpl {
     splFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"splAddFormSubmit($shopId): form bind failed: " + formatFormErrors(formWithErrors))
-        MAdnNode.getByIdType(shopId, AdNetMemberTypes.SHOP) map {
+        getShopById(shopId) map {
           case Some(mshop) => NotAcceptable(shop.pricelist.splAddFormTpl(mshop, formWithErrors))
           case None => shopNotFound(shopId)
         }
@@ -591,25 +591,6 @@ object SysMarket extends SioController with MacroLogsImpl {
     }
   }
 
-  // ======================================================================
-  // inx2
-
-  /** Имитация действий системы в IndicesUtil при добавлении нового ТЦ (без реального добавления. ТЦ уже добавлен). */
-  def inx2handleMartAdd(martId: String) = IsSuperuser.async { implicit request =>
-    ??? // inx2 уже отключены.
-    IndicesUtil.handleMartAdd(martId) map { inx2 =>
-      Ok("OK: " + inx2)
-    }
-  }
-
-  /** Имитация действий системы в IndicesUtil при удалении указанного ТЦ (без реального удаления). */
-  def inx2handleMartDelete(martId: String) = IsSuperuser.async { implicit request =>
-    ??? // ixn2 уже отключены
-    IndicesUtil.handleMartDelete(martId) map { _ =>
-      Ok("Deleted ok.")
-    }
-  }
-
 
   // ======================================================================
   // отладка email-сообщений
@@ -617,8 +598,8 @@ object SysMarket extends SioController with MacroLogsImpl {
   /** Отобразить html/txt email-сообщение активации без отправки куда-либо чего-либо. Нужно для отладки. */
   def showShopEmailActMsgHtml(shopId: String, isHtml: Boolean) = IsSuperuser.async { implicit request =>
     for {
-      mshop <- MAdnNode.getByIdType(shopId, AdNetMemberTypes.SHOP).map(_.get)
-      mmart <- MAdnNode.getByIdType(mshop.adn.supId.get, AdNetMemberTypes.MART).map(_.get)
+      mshop <- getShopById(shopId).map(_.get)
+      mmart <- getMartById(mshop.adn.supId.get).map(_.get)
     } yield {
       val eAct = EmailActivation("test@test.com", id = Some("asdQE123_"))
       if (isHtml)
@@ -634,7 +615,7 @@ object SysMarket extends SioController with MacroLogsImpl {
     val madsFut = MAd.findForProducer(shopId)
     val adFreqsFut = MAdStat.findAdByActionFreqs(shopId)
     for {
-      mshopOpt <- MAdnNode.getByIdType(shopId, AdNetMemberTypes.SHOP)
+      mshopOpt <- getShopById(shopId)
       adFreqs  <- adFreqsFut
       mads     <- madsFut
     } yield {
@@ -651,7 +632,7 @@ object SysMarket extends SioController with MacroLogsImpl {
           case None       => MAdnNode.getAll(maxResults = 1).map { _.headOption }
         }
         for {
-          mshopOpt <- MAdnNode.getByIdType(mad.producerId, AdNetMemberTypes.SHOP)
+          mshopOpt <- getShopById(mad.producerId)
           mmartOpt <- mmartFut
         } yield {
           val reason = "Причина отключения ТЕСТ причина отключения 123123 ТЕСТ причина отключения."
@@ -668,7 +649,7 @@ object SysMarket extends SioController with MacroLogsImpl {
 
   /** Отрендериить тела email-сообщений инвайта передачи прав на ТЦ. */
   def showMartEmailInvite(martId: String, isHtml: Boolean) = IsSuperuser.async { implicit request =>
-    MAdnNode.getByIdType(martId, AdNetMemberTypes.MART) map {
+    getMartById(martId) map {
       case Some(mmart) =>
         val eAct = EmailActivation("asdasd@kde.org", key=martId, id = Some("123123asdasd_-123"))
         val ctx = implicitly[Context]

@@ -10,6 +10,8 @@ import play.api.Play.current
 import play.api.cache.Cache
 import io.suggest.event.SioNotifier.Event
 import akka.actor.ActorContext
+import scala.reflect.ClassTag
+import io.suggest.ym.model.common.EMAdNetMember
 
 /**
  * Suggest.io
@@ -38,12 +40,14 @@ object SiowebEsModel {
 
 /** В sioweb есть быстрый кеш, поэтому тут кеш-прослойка для моделей. */
 // TODO Следует засунуть поддержку ehcache в sioutil и отправить этот трейт с кеш-поддержкой туда.
-trait EsModelCache[T <: EsModelMinimalT[T]] extends SNStaticSubscriber with SnClassSubscriber {
+// TODO Это по идее как бы трейт, но из-за ClassTag использовать trait нельзя.
+abstract class EsModelCache[T <: EsModelMinimalT[T] : ClassTag] extends SNStaticSubscriber with SnClassSubscriber {
   def companion: EsModelMinimalStaticT[T]
 
   val EXPIRE_SEC: Int
   val CACHE_KEY_SUFFIX: String
 
+  type GetAs_t
 
   /**
    * Генерация ключа кеша.
@@ -61,8 +65,8 @@ trait EsModelCache[T <: EsModelMinimalT[T]] extends SNStaticSubscriber with SnCl
     val ck = cacheKey(id)
     // Негативные результаты не кешируются.
     Cache.getAs[T](ck) match {
-      case Some(adnn) =>
-        Future successful Some(adnn)
+      case r @ Some(adnn) =>
+        Future successful r
 
       case None => getByIdAndCache(id, ck)
     }
@@ -107,3 +111,27 @@ trait EsModelCache[T <: EsModelMinimalT[T]] extends SNStaticSubscriber with SnCl
 
 }
 
+/** EsModelCache - расширение [[EsModelCache]] с фильтрацией по adn.memberType. */
+abstract class AdnEsModelCache[T <: EMAdNetMember[T] : ClassTag] extends EsModelCache[T] {
+
+  /**
+   * Для AdnNode и других последователей EMAdNetMember.
+   * @param id id элемента.
+   * @param memberType тип участника рекламной сети.
+   * @return Тоже самое, что и все остальные getById().
+   */
+  def getByIdTypeCached(id: String, memberType: AdNetMemberType)
+                       (implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
+    val ck = cacheKey(id)
+    Cache.getAs[T](ck) match {
+      case r @ Some(adnm) =>
+        val result = if (adnm.adn.memberType == memberType)  r  else  None
+        Future successful result
+
+      case None =>
+        getByIdAndCache(id, ck)
+          .map { _.filter(_.adn.memberType == memberType) }
+    }
+  }
+
+}
