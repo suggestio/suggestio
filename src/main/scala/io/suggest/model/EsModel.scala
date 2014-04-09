@@ -3,7 +3,7 @@ package io.suggest.model
 import scala.concurrent.{Awaitable, Await, ExecutionContext, Future}
 import io.suggest.util.{JacksonWrapper, MacroLogsImpl, SioEsUtil}
 import SioEsUtil._
-import org.joda.time.{ReadableInstant, DateTime}
+import org.joda.time.{DateTimeZone, ReadableInstant, DateTime}
 import org.elasticsearch.action.search.SearchResponse
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.action.delete.DeleteRequestBuilder
 import io.suggest.ym.model.stat._
 import com.sun.org.glassfish.gmbal.{Impact, ManagedOperation}
+import play.api.libs.json.{JsArray, JsString, JsValue, JsObject}
+import org.joda.time.format.ISODateTimeFormat
 
 /**
  * Suggest.io
@@ -108,6 +110,8 @@ object EsModel extends MacroLogsImpl {
   val SETTINGS_ESFN     = "settings"
   val META_ESFN         = "meta"
 
+  /** Тип аккамулятора, который используется во [[EsModelT.writeJsonFields()]]. */
+  type FieldsJsonAcc = List[(String, JsValue)]
 
   def companyIdParser = stringParser
   def martIdParser = stringParser
@@ -239,6 +243,19 @@ object EsModel extends MacroLogsImpl {
       }
   }
 
+  /** Сериализация набора строк. */
+  def asJsonStrArray(strings : Iterable[String]): JsArray = {
+    val strSeq = strings.foldLeft [List[JsString]] (Nil) {(acc, e) =>
+      JsString(e) :: acc
+    }
+    JsArray(strSeq)
+  }
+
+  // Сериализация дат
+  val dateFormatterDflt = ISODateTimeFormat.dateTime().withZone(DateTimeZone.UTC)
+
+  implicit def date2str(dateTime: ReadableInstant) = dateFormatterDflt.print(dateTime)
+  implicit def date2JsStr(dateTime: ReadableInstant) = JsString(dateTime)
 }
 
 
@@ -531,7 +548,7 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
   /** Можно делать какие-то действия после десериализации. Например, можно исправлять значения после эволюции схемы. */
   @JsonIgnore def postDeserialize() {}
 
-  @JsonIgnore def toJson: XContentBuilder
+  @JsonIgnore def toJson: String
 
   @JsonIgnore
   def id: Option[String]
@@ -598,13 +615,8 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
 
 /** Шаблон для динамических частей ES-моделей. */
 trait EsModelT[E <: EsModelT[E]] extends EsModelMinimalT[E] {
-  def toJson: XContentBuilder = {
-    val acc = XContentFactory.jsonBuilder()
-      .startObject()
-    writeJsonFields(acc)
-    acc.endObject()
-  }
-  def writeJsonFields(acc: XContentBuilder)
+  def toJson = JsObject(writeJsonFields(Nil)).toString()
+  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc
 }
 
 

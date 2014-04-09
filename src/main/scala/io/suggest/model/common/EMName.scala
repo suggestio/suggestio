@@ -2,8 +2,9 @@ package io.suggest.model.common
 
 import io.suggest.model._
 import org.elasticsearch.common.xcontent.XContentBuilder
-import EsModel.{NAME_ESFN, nameParser}
+import io.suggest.model.EsModel.{FieldsJsonAcc, NAME_ESFN, nameParser}
 import io.suggest.util.SioEsUtil._
+import play.api.libs.json.JsString
 
 /**
  * Suggest.io
@@ -31,8 +32,9 @@ trait EMName[T <: EMName[T]] extends EsModelT[T] {
 
   var name: String
 
-  abstract override def writeJsonFields(acc: XContentBuilder) {
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     super.writeJsonFields(acc)
-    acc.field(name)
+    (NAME_ESFN, JsString(name)) :: acc
   }
+
 }

@@ -134,7 +134,7 @@ case class MShopPromoOffer(
     }
   }
 
-  def toJson: XContentBuilder = datum.toJsonBuilder
+  def toJson = datum.toJsonBuilder.string()
 }
 
 

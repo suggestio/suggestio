@@ -1,8 +1,9 @@
 package io.suggest.ym.model.common
 
 import org.elasticsearch.common.xcontent.{XContentBuilder, XContentFactory}
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.{JsonIgnore, JsonIgnoreProperties}
 import io.suggest.model.EsModel
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -39,8 +40,10 @@ import MImgInfo._
 @JsonIgnoreProperties(ignoreUnknown = true)
 case class MImgInfo(id: String, meta: Option[MImgInfoMeta] = None) {
 
+  @JsonIgnore
   override def hashCode(): Int = id.hashCode()
 
+  @JsonIgnore
   def toJson: String = {
     val acc = XContentFactory.jsonBuilder().startObject()
       .field(ID_ESFN, id)
@@ -50,6 +53,15 @@ case class MImgInfo(id: String, meta: Option[MImgInfoMeta] = None) {
       acc.endObject()
     }
     acc.string()
+  }
+
+  @JsonIgnore
+  def toPlayJson = {
+    var props = List(ID_ESFN -> JsString(id))
+    if (meta.isDefined) {
+      props ::= META_ESFN -> meta.get.toPlayJson
+    }
+    JsObject(props)
   }
 }
 
@@ -72,9 +84,18 @@ object MImgInfoMeta {
 import MImgInfoMeta._
 
 case class MImgInfoMeta(height: Int, width: Int) {
+  @JsonIgnore
   def writeFields(acc: XContentBuilder) {
     acc.field(HEIGHT_ESFN, height)
       .field(WIDTH_ESFN, width)
+  }
+
+  @JsonIgnore
+  def toPlayJson = {
+    JsObject(Seq(
+      HEIGHT_ESFN -> JsNumber(height),
+      WIDTH_ESFN  -> JsNumber(width)
+    ))
   }
 }
 

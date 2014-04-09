@@ -4,6 +4,7 @@ import io.suggest.model._
 import org.elasticsearch.common.xcontent.XContentBuilder
 import EsModel._
 import io.suggest.util.SioEsUtil._
+import play.api.libs.json.JsString
 
 /**
  * Suggest.io
@@ -27,9 +28,12 @@ trait EMLogoImgIdStatic[T <: EMLogoImgId[T]] extends EsModelStaticT[T] {
 trait EMLogoImgId[T <: EMLogoImgId[T]] extends EsModelT[T] {
   var logoImgId: Option[String]
 
-  abstract override def writeJsonFields(acc: XContentBuilder) {
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     super.writeJsonFields(acc)
     if (logoImgId.isDefined)
-      acc.field(LOGO_IMG_ID_ESFN, logoImgId.get)
+      (LOGO_IMG_ID_ESFN, JsString(logoImgId.get)) :: acc
+    else
+      acc
   }
+
 }

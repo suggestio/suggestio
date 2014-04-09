@@ -8,7 +8,8 @@ import scala.collection.JavaConversions._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
-import org.elasticsearch.action.search.SearchRequestBuilder
+import play.api.libs.json.{JsString, JsValue, JsArray}
+import EsModel.asJsonStrArray
 
 /**
  * Suggest.io
@@ -62,9 +63,14 @@ trait EMPersonIds[T <: EMPersonIds[T]] extends EsModelT[T] {
 
   def mainPersonId = personIds.lastOption
 
-  abstract override def writeJsonFields(acc: XContentBuilder) {
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     super.writeJsonFields(acc)
-    if (!personIds.isEmpty)
-      acc.array(PERSON_ID_ESFN, personIds.toSeq : _*)
+    if (!personIds.isEmpty) {
+      val personIdsJson = asJsonStrArray(personIds)
+      (PERSON_ID_ESFN, personIdsJson) :: acc
+    } else {
+      acc
+    }
   }
+
 }

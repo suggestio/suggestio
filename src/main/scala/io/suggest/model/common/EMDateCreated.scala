@@ -4,8 +4,8 @@ import io.suggest.model.{EsModelStaticT, EsModelT}
 import org.joda.time.DateTime
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.model.EsModel._
-import io.suggest.util.SioEsUtil.DocField
 import io.suggest.util.SioEsUtil._
+import io.suggest.model.EsModel.date2JsStr
 
 /**
  * Suggest.io
@@ -39,10 +39,11 @@ trait EMDateCreated[T <: EMDateCreated[T]] extends EsModelT[T] {
 
   def dateCreated: DateTime
 
-  abstract override def writeJsonFields(acc: XContentBuilder) {
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     super.writeJsonFields(acc)
-    acc.field(DATE_CREATED_ESFN, dateCreated)
+    (DATE_CREATED_ESFN, date2JsStr(dateCreated)) :: acc
   }
+
 }
 
 trait EMDateCreatedMut[T <: EMDateCreatedMut[T]] extends EMDateCreated[T] {
