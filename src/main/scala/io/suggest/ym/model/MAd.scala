@@ -14,6 +14,7 @@ import io.suggest.ym.model.common._
 import scala.util.{Success, Failure}
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import io.suggest.ym.ad.ShowLevelsUtil
+import org.elasticsearch.search.sort.SortBuilder
 
 /**
  * Suggest.io
@@ -92,6 +93,15 @@ object MAd
     }
   }
 
+  /**
+   * Реалтаймовый поиск по создателю. Нужно сортировать в порядке создания карточек.
+   * @param producerId id продьюсера.
+   * @return Список MAd.
+   */
+  override def findForProducerRt(producerId: String, maxResults: Int)(implicit ec: ExecutionContext, client: Client): Future[List[MAd]] = {
+    super.findForProducerRt(producerId, maxResults)
+      .map { sortByDateCreated }
+  }
 }
 
 

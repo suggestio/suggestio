@@ -2,10 +2,10 @@ package io.suggest.model.common
 
 import io.suggest.model.{EsModelStaticT, EsModelT}
 import org.joda.time.DateTime
-import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.model.EsModel._
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel.date2JsStr
+import com.github.nscala_time.time.OrderingImplicits._
 
 /**
  * Suggest.io
@@ -32,6 +32,10 @@ trait EMDateCreatedStatic[T <: EMDateCreatedMut[T]] extends EsModelStaticT[T] {
         acc.dateCreated = dateCreatedParser(value)
     }
   }
+
+
+  /** Простой сортировщик списка по дате. */
+  def sortByDateCreated(mads: List[T]) = mads.sortBy(_.dateCreated).reverse
 }
 
 
