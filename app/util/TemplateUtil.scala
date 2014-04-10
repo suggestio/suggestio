@@ -11,6 +11,9 @@ import java.math.RoundingMode
  * Description: Разная мелкая утиль для шаблонов.
  */
 object TplDataFormatUtil {
+  // Надо укорачивать валюту до минимума
+  val CURRENCY_FIXER_RUB = " руб\\.".r
+  val CURRENCY_FIXER_USD = " USD".r
 
   /** Напечатать цену согласно локали и валюте. */
   def formatPrice(price: Float, currency: Currency)(implicit ctx: Context): String = {
@@ -18,7 +21,13 @@ object TplDataFormatUtil {
     // TODO Нужна поддержка валют в ценах?
     val currFmt = NumberFormat.getCurrencyInstance
     currFmt.setCurrency(currency)
-    currFmt.format(price)
+    val fmt0 = currFmt.format(price)
+    // Укоротить валюту
+    currency.getCurrencyCode match {
+      case "RUB" => CURRENCY_FIXER_RUB.replaceFirstIn(fmt0, "р.")
+      case "USD" => CURRENCY_FIXER_USD.replaceFirstIn(fmt0, "$")    // TODO Баксы вроде бы перед ценой отображаются, а не после.
+      case _ => fmt0
+    }
   }
 
 

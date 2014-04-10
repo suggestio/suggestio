@@ -92,7 +92,7 @@ object FormUtil {
 
   /** Маппер для поля, содержащего код цвета. */
   // TODO Нужно добавить верификацию тут какую-то. Например через YmColors.
-  val colorM = nonEmptyText(maxLength = 16)
+  val colorM = nonEmptyText(minLength = 6, maxLength = 6)
 
   val publishedTextM = text(maxLength = 2048)
     .transform(strFmtTrimF, strIdentityF)
