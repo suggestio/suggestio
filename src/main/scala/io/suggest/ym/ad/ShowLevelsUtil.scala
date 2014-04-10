@@ -121,8 +121,9 @@ object ShowLevelsUtil extends MacroLogsImpl {
     val levels1Set = levels1.toSet
     val has1Levels = thisAd.receivers.valuesIterator.exists(!_.slsWant.intersect(levels1Set).isEmpty)
     if (has1Levels) {
-      // Вообще все уровни отображения, заявленные в карточке во всех ресиверах.
+      // Для переключения singleton-уровня надо прочитать всю рекламу прямо сейчас.
       val allProdAdsFut = MAd.findForProducerRt(producerId)
+      // Вообще все уровни отображения, заявленные в карточке во всех ресиверах.
       val allAdRcvrsWantSls = thisAd.receivers
         .valuesIterator
         .map { _.slsWant }
@@ -136,10 +137,13 @@ object ShowLevelsUtil extends MacroLogsImpl {
               // Это текущая карточка. Надо в ней выставить все запрошенные уровни при наличии разрешения на установку оных.
               val thisAdAllowedSls = allowedMLevels ++ ad1Levels   // Все допустимые уровни для текущей карточки.
               // Накатить разрешенные уровни на все перечисленные в карточке ресиверы.
-              thisAd.resetReceiversSlsPub(thisAdAllowedSls)
+              mad.receivers = thisAd.receivers
+              mad.resetReceiversSlsPub(thisAdAllowedSls)
             } else {
               mad.receivers.valuesIterator.foreach { ari =>
-                ari.slsPub = ari.slsWant -- ad1Levels
+                val sls2 = ari.slsWant -- ad1Levels
+                ari.slsWant = sls2
+                ari.slsPub = sls2
               }
             }
           }

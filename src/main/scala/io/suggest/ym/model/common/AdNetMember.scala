@@ -335,6 +335,12 @@ case class AdNetMemberInfo(
       Map.empty
   }
 
+  // Врапперы над соответсвующими фунцкиями showLevelsInfo, которые учитывают флаг isEnabled.
+  def canOutAtLevel(sl: AdShowLevel) = isEnabled && showLevelsInfo.canOutAtLevel(sl)
+  def canInAtLevel(sl: AdShowLevel)  = isEnabled && showLevelsInfo.canInAtLevel(sl)
+  def maxOutAtLevel(sl: AdShowLevel) = if (isEnabled) showLevelsInfo.maxOutAtLevel(sl) else 0
+  def maxInAtLevel(sl: AdShowLevel)  = if (isEnabled) showLevelsInfo.maxInAtLevel(sl) else 0
+
   /**
    * Выдать карту допустимых in-уровней. Если disabled, то будет пустая карта.
    * @return Карта типа LvlMap_t.

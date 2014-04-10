@@ -13,6 +13,7 @@ import io.suggest.ym.model.ad._
 import io.suggest.ym.model.common._
 import scala.util.{Success, Failure}
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
+import io.suggest.ym.ad.ShowLevelsUtil
 
 /**
  * Suggest.io
@@ -149,6 +150,16 @@ case class MAd(
 
   /** Отправить в шину SN событие успешного сохранения этого экземпляра. */
   def emitSavedEvent(implicit sn: SioNotifierStaticClientI) = sn publish AdSavedEvent(this)
+
+  /** Подготовить изменения в БД для изменения в отображении.
+    * @param producer Экземпляр продьюсера, который обычно уже доступен при вызове или закеширован.
+    * @return На выходе будет список рекламных карточек, ещё не сохраненных.
+    */
+  def applyOutputConstraintsFor(producer: MAdnNode)(implicit ec: ExecutionContext, client: Client) = {
+    if (producerId != producer.id.get)
+      throw new IllegalArgumentException(s"My producer is $producerId, but producer with id=${producer.id.get} passed.")
+    ShowLevelsUtil.applyOutputConstraints(this, producer)
+  }
 }
 
 

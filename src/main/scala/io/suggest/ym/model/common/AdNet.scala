@@ -32,6 +32,7 @@ object AdNetMemberTypes extends Enumeration {
         isProducer = true,
         isReceiver = true,
         isSupervisor = false, // 2014.apr.09: Решено, что у ТЦ не должно быть прав супервайзера по объективным причинам.
+        isEnabled = true,
         showLevelsInfo = AdnMemberShowLevels(
           in = Map(
             LVL_MEMBER          -> MART_LVL_IN_MEMBER_DFLT,
@@ -52,6 +53,7 @@ object AdNetMemberTypes extends Enumeration {
         isProducer = true,
         isReceiver = false,
         isSupervisor = false,
+        isEnabled = false,
         showLevelsInfo = AdnMemberShowLevels(
           // Магазин не является
           in = Map.empty,

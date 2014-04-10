@@ -2,7 +2,7 @@ package io.suggest.ym.model.common
 
 import io.suggest.util.SioEsUtil._
 import io.suggest.model._
-import io.suggest.ym.model.AdShowLevel
+import io.suggest.ym.model.{MAdnNode, AdShowLevel}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
