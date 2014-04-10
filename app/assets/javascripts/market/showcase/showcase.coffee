@@ -260,7 +260,7 @@ siomart =
     sm_trigger = this.utils.ce "div", sm_trigger_attrs, 'Sio.Market'
 
     this.utils.ge_tag("body")[0].appendChild sm_trigger
-
+    
     meta_viewport_attrs =
       name : 'viewport'
       content : 'width=320,initial-scale=1,user-scalable=no'
@@ -542,6 +542,12 @@ siomart =
       siomart.fit_images()
 
     this.utils.add_single_listener window, 'resize', resize_cb
+
+    orientation_change_cb = ( event ) ->
+      console.log 'window width :' + window
+      console.log 'window height :' + window
+
+    this.utils.add_single_listener window, 'orientationchange', orientation_change_cb
 
 
 ##########################################

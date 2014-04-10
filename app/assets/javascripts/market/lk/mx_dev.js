@@ -41,6 +41,13 @@ var cbca = {};
         return false;
       },
       onChange: function (hsb, hex, rgb) {
+
+        params = {
+          'background-color' : '#' + hex
+        }
+
+        $this.css( params )
+
         if($checkbox.size()) {
           $checkbox.attr('data-value', hex).get(0).checked = true;
         }
@@ -50,7 +57,6 @@ var cbca = {};
         function() {
           $this.find('input').trigger('change');
         }, 500);
-
       }
     });
 
