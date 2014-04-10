@@ -23,10 +23,11 @@
           <div class="vendor">@adProd.vendor.value</div>
 
           @adProd.oldPrice.map { oldPrice =>
-            <div class="old-price"><s>@formatPrice(oldPrice.value, oldPrice.currency)</s></div>
+            @*<div class="old-price"><s>@formatPrice(oldPrice.value, oldPrice.currency)</s></div>*@
+            <div class="old-price" style="color: @oldPrice.font.color"><s>@oldPrice.value</s></div>
           }
           @*<div class="new-price">@formatPrice(adProd.price.value, adProd.price.currency)</div>*@
-          <div class="new-price">@adProd.price.value</div>
+          <div class="new-price" style="color: @adProd.price.font.color">@adProd.price.value</div>
         }
 
         case adDisco: MMartAdDiscount => {
