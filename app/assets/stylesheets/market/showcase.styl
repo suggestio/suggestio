@@ -36,7 +36,7 @@ transition( param )
 
 .sio-mart-layout
   position: fixed
-  background: rgba(200,200,200,0.95)
+  background: rgba(0, 0, 0, 0.7)
 
 .sio-mart-layout,
 .ads-list,
@@ -173,7 +173,7 @@ transition( param )
           width: 90%
           padding-left: 15px
           outline: none
-          font-family : 'futurfutc-webfont'
+          font-family : 'pfdintextcomppro-medium-webfont'
           font-size: 15px
 
       .sb-search-icon
@@ -191,7 +191,7 @@ transition( param )
     .sm-categories-list
       .sm-single-categorie
         color: #fff
-        font-family : 'futurfutc-webfont'
+        font-family : 'pfdintextcomppro-medium-webfont'
         font-size: 18px
 
   /******************************/
@@ -242,7 +242,7 @@ transition( param )
           width: 90%
           padding-left: 15px
           outline: none
-          font-family : 'futurfutc-webfont'
+          font-family : 'pfdintextcomppro-medium-webfont'
           font-size: 15px
 
       .sb-search-icon
@@ -264,7 +264,7 @@ transition( param )
         width: 310px
         margin: 0 5px
         padding-top: 25px
-        font-family: 'futurfutc-webfont'
+        font-family: 'pfdintextcomppro-medium-webfont'
         border-bottom: 1px solid #bcc2c6
         .letter
           font-size: 24px
@@ -289,7 +289,7 @@ transition( param )
     top: 0px
     background: rgba(0,0,0,0.85)
     z-index: 10004
-    font-family : 'futurfutc-webfont'
+    font-family : 'pfdintextcomppro-medium-webfont'
     font-size: 30px
     text-align: center
 
@@ -368,8 +368,8 @@ transition( param )
     background: rgba(0,0,0,0.8)
     z-index: 1001
     color: #fff
-    font-size: 30px
-    font-family: 'futurfutc-webfont'
+    font-size: 26px
+    font-family: 'pfdintextcomppro-medium-webfont'
 
     .od-inner
       padding: 85px 40px
@@ -407,15 +407,15 @@ transition( param )
 
     .disc-text-1
       font-size: 30px
-      font-family: 'futurfutc-webfont'
+      font-family: 'pfdintextcomppro-medium-webfont'
 
     .disc-text-2
       font-size: 30px
-      font-family: 'futurfutc-webfont'
+      font-family: 'pfdintextcomppro-medium-webfont'
 
     .discount
       font-size: 72px
-      font-family: 'futurfutc-webfont'
+      font-family: 'pfdintextcomppro-medium-webfont'
       text-align: center
       background: url('/assets/images/market/discount.png') no-repeat
       background-size: 965px 800px
@@ -441,7 +441,7 @@ transition( param )
     transition( all 0.5s ease )
 
   .sm-screen.forward-in
-    transform( translate3d(100%,0,0) )
+    transform( translate3d(150%,0,0) )
   .sm-screen.forward-out
     transform( scale3d(0.8, 0.8, 0.8) )
 
@@ -489,7 +489,7 @@ transition( param )
   background: rgba(0,0,0,0.5)
   color: #fff
   padding: 10px
-  font-family : 'futurfutc-webfont'
+  font-family : 'pfdintextcomppro-medium-webfont'
 
 .sio-mart-layout.small,
 .ads-list.small
@@ -498,25 +498,10 @@ transition( param )
     border-width: 3px
     font-size: 15px
 
-  .offer-details
-    background: rgba(0,0,0,0.1)
-    width: 100%
-    height: 100%
-
-    .old-price
-      font-size: 24px
-    .new-price
-      font-size: 36px
-
-    .offer-location
-      font-size: 12px
-    .sm-button
-      width: 150px
-      position: absolute
-      left: 50%
-      margin-left: -85px
-      bottom: 35px
-      font-size: 15px
+  .offer-header
+    height: 40px
+    img
+      height: 24px
 
   .sm-close-screen
 
@@ -557,10 +542,33 @@ transition( param )
       border-color: #ec7676
 
   .offer-details
+    background: rgba(0,0,0,0.1)
+    width: 100%
+    height: 100%
 
+    .od-inner
+      padding-top: 65px
+
+    .old-price
+      font-size: 24px
+    .new-price
+      font-size: 36px
+
+    .offer-location
+      font-size: 12px
+    .sm-button
+      width: 150px
+      position: absolute
+      left: 50%
+      margin-left: -85px
+      bottom: 35px
+      font-size: 15px
     .od-inner
       padding-left: 15px
       padding-right: 15px
+
+    .od-text
+      font-size: 13px
 
     .vendor
       font-size: 16px
@@ -635,9 +643,15 @@ transition( param )
     .od-text
       width: 300px
 
+  .sm-navigation
+    display: none
+
 .sio-mart-layout.small,
 .ads-list.small,
 .ad-preview.small
+
+  .sm-navigation
+    display: none
 
   .offer-details
     background: rgba(0,0,0,0.1)
@@ -647,4 +661,4 @@ transition( param )
     /* Текстовой шаблон */
     .od-text
       width: 60%
-      font-size: 20px
+      font-size: 13px
