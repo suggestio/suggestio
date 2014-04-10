@@ -28,6 +28,20 @@ siomart =
     ge_tag : ( tag ) ->
       document.getElementsByTagName tag
 
+    ge_class : ( parent, _class ) ->
+
+      childs = parent.getElementsByTagName '*'
+
+      _class_match_regexp = new RegExp( _class ,"g")
+
+      elts = []
+
+      for child in childs
+        if siomart.utils.is_array child.className.match _class_match_regexp
+          elts.push child
+
+      elts
+
     ##############################
     ## Найти DOM элемент/ы по тегу
     ##############################
@@ -326,8 +340,9 @@ siomart =
   ######################################################
   ## Открыть экран с предупреждением о выходе из маркета
   ######################################################
-  open_close_screen : () ->
+  open_close_screen : ( event ) ->
     siomart.utils.ge('smCloseScreen').style.display = 'block'
+    event.preventDefault()
     return false
 
   exit_close_screen : ( event ) ->
@@ -379,10 +394,25 @@ siomart =
           siomart.screens.objects['smScreen' + _i].screen_container_dom = document.getElementById 'smScreen' + _i
           siomart.screens.objects['smScreen' + _i].initialize_offers()
 
+          this.bind_events _d
+
           _i++
 
-      this.total_screens = _i
+      this.total_screens = _i-0
       true
+
+    bind_events : ( screen_dom ) ->
+
+      # Exit button
+      for elt in siomart.utils.ge_class screen_dom, 'siomart-close-button'
+        for _event in ['click', 'touchend']
+          siomart.utils.add_single_listener elt, _event, siomart.open_close_screen
+
+      # Back button
+      for elt in siomart.utils.ge_class screen_dom, 'siomart-back-button'
+        for _event in ['click', 'touchend']
+          siomart.utils.add_single_listener elt, _event, siomart.screens.prev_screen
+
 
     ## Переключиться на последний экран
     show_last : () ->
@@ -397,12 +427,15 @@ siomart =
       this.animate active_screen_index, target_screen_index
 
     ## Переключиться на предыдущий экран
-    prev_screen : () ->
+    prev_screen : ( event ) ->
 
-      active_screen_index = this.active_screen
-      target_screen_index = parseInt( this.active_screen - 1 )
+      _this = siomart.screens
 
-      this.animate active_screen_index, target_screen_index
+      active_screen_index = _this.active_screen
+      target_screen_index = parseInt( _this.active_screen - 1 )
+
+      _this.animate active_screen_index, target_screen_index
+      event.preventDefault()
 
     animate : ( active_screen_index, target_screen_index ) ->
 
@@ -437,7 +470,6 @@ siomart =
           siomart.utils.re 'smScreen' + siomart.screens.active_screen
 
         siomart.screens.active_screen = target_screen_index
-        console.log siomart.screens.active_screen
 
       setTimeout cb1, 700
 
@@ -466,20 +498,18 @@ siomart =
   init_navigation : () ->
 
     ## Кнопка выхода
-    #for _event in ['click', 'touchstart']
-    #  this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), _event, siomart.close_mart
-    #
-    #  this.utils.add_single_listener this.utils.ge('smCloseCategoriesButton'), _event, siomart.close_categories_screen
-    #
-    #  this.utils.add_single_listener this.utils.ge('smShopListButton'), _event, siomart.open_shopList_screen
-    #  this.utils.add_single_listener this.utils.ge('smCloseShopListButton'), _event, siomart.close_shopList_screen
-    #
-    #  this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), _event, siomart.exit_close_screen
-    #
-    #  this.utils.add_single_listener this.utils.ge('sioMartTrigger'), _event, siomart.open_mart
-    #
-    ## поле ввода поискового запроса
-    #this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', siomart.search.queue_request
+    for _event in ['click', 'touchend']
+      this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), _event, siomart.close_mart
+      this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), _event, siomart.exit_close_screen
+
+      this.utils.add_single_listener this.utils.ge('smShopListButton'), _event, siomart.open_shopList_screen
+      this.utils.add_single_listener this.utils.ge('smCloseShopListButton'), _event, siomart.close_shopList_screen
+
+      this.utils.add_single_listener this.utils.ge('smCloseCategoriesButton'), _event, siomart.close_categories_screen
+      this.utils.add_single_listener this.utils.ge('sioMartTrigger'), _event, siomart.open_mart
+
+      ## поле ввода поискового запроса
+      this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', siomart.search.queue_request
 
     ## Тач события
     sm_layout = this.utils.ge('sioMartLayout')
