@@ -1,4 +1,4 @@
-@(mmart: MMart, mshop:MShop, mads:Seq[MMartAd])(implicit ctx:util.Context)
+@(mmart: MAdnNode, mshop:MAdnNode, mads:Seq[MAdT])(implicit ctx:util.Context)
 
 @* Страница отображения магазина для арендатора ТЦ (т.е. для владельца этого магазина). *@
 @import market.lk._
@@ -11,7 +11,7 @@
   routes.javascript.MarketAd.updateShowLevelSubmit
 )
 
-@lkBase(mshop.name) {
+@lkBase(mshop.meta.name) {
 
   <div class="title-wrap">
     <div class="center">
@@ -24,12 +24,12 @@
 
   <div class="body">
 
-    <input id="maxShopAds" type="hidden" value="@mshop.settings.supLShopMaxAdsShown" />
+    <input id="maxShopAds" type="hidden" value="@mshop.adn.showLevelsInfo.maxOutAtLevel(LVL_MEMBER)" />
 
     <div class="shop-info">
 
       <div class="name-wrap">
-        <span class="name">@mshop.name</span>
+        <span class="name">@mshop.meta.name</span>
         <a class="edit" href="@editShopForm(mshop.id.get)">Редактировать</a>
       </div>
       <div class="border-line"></div>
@@ -38,7 +38,7 @@
         <tr>
           <td class="right" style="border-left: none; padding-left: 0;">
             <div class="shop-descr">
-              @mshop.description
+              @mshop.meta.description
             </div>
           </td>
         </tr>
@@ -46,35 +46,43 @@
 
       @* Отобразить основное описание магазина с кнопкой редактирования. *@
       @shop._shopShowTpl(
-        mshop=mshop,
-        editCall=routes.MarketShopLk.editShopForm(mshop.id.get)
+        mshop = mshop,
+        editCall = routes.MarketShopLk.editShopForm(mshop.id.get)
       )
 
     </div>
 
 
-    @defining(mshop.hasTopLevelAccess) { htl =>
+    @defining(mshop.adn.canOutAtLevel(LVL_MEMBERS_CATALOG)) { hc =>
+    @defining(mshop.adn.canOutAtLevel(LVL_MEMBER)) { hm =>
+    @defining(mshop.adn.canOutAtLevel(LVL_START_PAGE)) { hsp =>
+
       @market.lk.ad._adsEditableListTpl(
         mads = mads,
         mmart = mmart,
         addCall = routes.MarketAd.createShopAd(mshop.id.get),
         editCall = routes.MarketAd.editShopAd(_),
         mshopOpt = Some(mshop),
-        isShownF = isShownShopAd(htl, _)
+        isShownF = isShownShopAd(hsp, _)
       ) { mad =>
-        @* Галочки для управления отображением рекламной карточки магазина *@
-        <div class="controls">
-          <label class="common-catalog">
-            <input class="one-checkbox" type="checkbox" data-level="@LVL_MART_SHOPS" data-adid="@mad.id.get" data-name="common-catalog" @if(mad.showLevels contains LVL_MART_SHOPS) {data-checked="checked"}/>Выводить в общем каталоге
-          </label>
-          <label class="shop-catalog">
-            <input type="checkbox" data-level="@LVL_SHOP" data-adid="@mad.id.get" @if(mad.showLevels contains LVL_SHOP) {data-checked="checked"}/>Выводить в моём магазине
-          </label>
-          <label class="firstPage-catalog @if(!htl){inactive}">
-            <input class="one-checkbox" data-name="firstPage-catalog" type="checkbox" data-level="@LVL_MART_SHOWCASE" data-adid="@mad.id.get" @if(!htl){disabled="disabled"} @if(mad.showLevels contains LVL_MART_SHOWCASE) {data-checked="checked"}/>Размещение на первом экране
-          </label>
-        </div>
+        @* Галочки для управления отображением рекламной карточки магазина. *@
+        @defining(mad.allWantShowLevels) { sls =>
+          <div class="controls">
+            <label class="common-catalog @if(!hc){inactive}">
+              <input class="one-checkbox" type="checkbox" data-level="@LVL_MEMBERS_CATALOG" data-adid="@mad.id" data-name="common-catalog" @if(!hc){disabled="disabled"} @if(sls contains LVL_MEMBERS_CATALOG) {data-checked="checked"}/>Выводить в общем каталоге
+            </label>
+            <label class="shop-catalog @if(!hm){inactive}">
+              <input type="checkbox" data-level="@LVL_MEMBER" data-adid="@mad.id" @if(!hm){disabled="disabled"} @if(sls contains LVL_MEMBER) {data-checked="checked"}/>Выводить в моём магазине
+            </label>
+            <label class="firstPage-catalog @if(!hsp){inactive}">
+              <input class="one-checkbox" data-name="firstPage-catalog" type="checkbox" data-level="@LVL_START_PAGE" data-adid="@mad.id" @if(!hsp){disabled="disabled"} @if(sls contains LVL_START_PAGE) {data-checked="checked"}/>Размещение на первом экране
+            </label>
+          </div>
+        }
       }
+
+    }
+    }
     }
 
   </div>

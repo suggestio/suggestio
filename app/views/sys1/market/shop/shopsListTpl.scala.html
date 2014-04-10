@@ -1,4 +1,4 @@
-@(shops: Seq[MShop], companies: Option[Map[MCompany.CompanyId_t, MCompany]] = None, marts:Option[Map[MMart.MartId_t, MMart]] = None)(implicit ctx: util.Context)
+@(shops: Seq[MAdnNode], companies: Option[Map[CompanyId_t, MCompany]] = None, marts:Option[Map[String, MAdnNode]] = None)(implicit ctx: util.Context)
 
 @* Страница со списком магазинов/арендаторов. *@
 @import ctx._

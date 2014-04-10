@@ -1,3 +1,6 @@
+import io.suggest.ym
+import io.suggest.ym.model.common
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -7,97 +10,131 @@
 
 package object models {
 
-  type MCompany         = io.suggest.ym.model.MCompany
-  val  MCompany         = io.suggest.ym.model.MCompany
+  type MCompany             = ym.model.MCompany
+  val  MCompany             = ym.model.MCompany
+  type CompanyId_t          = MCompany.CompanyId_t
+  
+  val  MAdnNode             = ym.model.MAdnNode
+  type MAdnNode             = ym.model.MAdnNode
 
-  type MMart            = io.suggest.ym.model.MMart
-  val  MMart            = io.suggest.ym.model.MMart
-  type MartId_t         = MMart.MartId_t
+  @deprecated("mart+shop arch is deprecated. Use MAdnNode.", "2014.apr.07")
+  type MMart                = ym.model.MMart
+  @deprecated("mart+shop arch is deprecated. Use MAdnNode.", "2014.apr.07")
+  val  MMart                = ym.model.MMart
+  @deprecated("mart+shop arch is deprecated. Use String instead.", "2014.apr.07")
+  type MartId_t             = String
 
-  type MShop            = io.suggest.ym.model.MShop
-  val  MShop            = io.suggest.ym.model.MShop
-  type ShopId_t         = MShop.ShopId_t
+  @deprecated("mart+shop arch is deprecated. Use MAdnNode.", "2014.apr.07")
+  type MShop                = ym.model.MShop
+  @deprecated("mart+shop arch is deprecated. Use MAdnNode.", "2014.apr.07")
+  val  MShop                = ym.model.MShop
+  @deprecated("mart+shop arch is deprecated. Use String instead.", "2014.apr.07")
+  type ShopId_t             = String
 
-  type MShopPriceList   = io.suggest.ym.model.MShopPriceList
-  val  MShopPriceList   = io.suggest.ym.model.MShopPriceList
+  type MShopPriceList       = ym.model.MShopPriceList
+  val  MShopPriceList       = ym.model.MShopPriceList
 
-  type MShopPromoOffer  = io.suggest.ym.model.MShopPromoOffer
-  val  MShopPromoOffer  = io.suggest.ym.model.MShopPromoOffer
+  type MShopPromoOffer      = ym.model.MShopPromoOffer
+  val  MShopPromoOffer      = ym.model.MShopPromoOffer
 
-  type MYmCategory      = io.suggest.ym.model.MYmCategory
-  val  MYmCategory      = io.suggest.ym.model.MYmCategory
+  type MYmCategory          = ym.model.MYmCategory
+  val  MYmCategory          = ym.model.MYmCategory
 
-  val  AdShowLevels     = io.suggest.ym.model.AdShowLevels
-  type AdShowLevel      = AdShowLevels.AdShowLevel
+  val  AdShowLevels         = ym.model.AdShowLevels
+  type AdShowLevel          = AdShowLevels.AdShowLevel
+  
+  val  MAd                  = ym.model.MAd
+  type MAd                  = ym.model.MAd
+
+  val  AdnMMetadata         = ym.model.common.AdnMMetadata
+  type AdnMMetadata         = ym.model.common.AdnMMetadata
+
+  val  AdNetMemberInfo      = ym.model.common.AdNetMemberInfo
+  type AdNetMemberInfo      = ym.model.common.AdNetMemberInfo
+
+  val  AdNetMemberTypes     = ym.model.common.AdNetMemberTypes
+  type AdNetMemberType      = AdNetMemberTypes.AdNetMemberType
+
+  val  AdnMPubSettingsLevels = ym.model.common.AdnMemberShowLevels
+  type AdnMPubSettingsLevels = ym.model.common.AdnMemberShowLevels
+
+  type MAdT                 = ym.model.ad.MAdT[_]
+
+  val  AdReceiverInfo       = ym.model.common.AdReceiverInfo
+  type AdReceiverInfo       = ym.model.common.AdReceiverInfo
 
   // Начинаем MMartAd и смежные объекты.
-  val  MMartAd          = io.suggest.ym.model.MMartAd
-  type MMartAd          = io.suggest.ym.model.MMartAd
-  type MMartAdT         = io.suggest.ym.model.MMartAdT[_]
+  @deprecated("mart+shop arch is deprecated. Use MAd.", "2014.apr.07")
+  val  MMartAd              = ym.model.MMartAd
 
-  val  MWelcomeAd       = io.suggest.ym.model.MWelcomeAd
-  type MWelcomeAd       = io.suggest.ym.model.MWelcomeAd
+  val  MWelcomeAd           = ym.model.MWelcomeAd
+  type MWelcomeAd           = ym.model.MWelcomeAd
 
-  val MMartAdOfferTypes = io.suggest.ym.model.MMartAdOfferTypes
-  type MMartAdOfferType = io.suggest.ym.model.MMartAdOfferType
+  val  AdOfferTypes         = ym.model.AdOfferTypes
+  type AdOfferType          = ym.model.AdOfferType
 
-  type MMartAdOfferT    = io.suggest.ym.model.MMartAdOfferT
+  type AdOfferT             = ym.model.ad.AdOfferT
 
-  val  MMartAdProduct   = io.suggest.ym.model.MMartAdProduct
-  type MMartAdProduct   = io.suggest.ym.model.MMartAdProduct
+  val  AOProduct            = ym.model.ad.AOProduct
+  type AOProduct            = ym.model.ad.AOProduct
 
-  val  MMartAdDiscount  = io.suggest.ym.model.MMartAdDiscount
-  type MMartAdDiscount  = io.suggest.ym.model.MMartAdDiscount
+  val  AODiscount           = ym.model.ad.AODiscount
+  type AODiscount           = ym.model.ad.AODiscount
 
-  val  MMartAdText      = io.suggest.ym.model.MMartAdText
-  type MMartAdText      = io.suggest.ym.model.MMartAdText
+  val  AOText               = ym.model.ad.AOText
+  type AOText               = ym.model.ad.AOText
 
-  val TextAlignValues   = io.suggest.ym.model.TextAlignValues
+  val  AOTextAlignValues    = common.AOTextAlignValues
+  type AOTextAlignValue     = AOTextAlignValues.TextAlignValue
 
-  val  MMartAdTextAlign = io.suggest.ym.model.MMartAdTextAlign
-  type MMartAdTextAlign = io.suggest.ym.model.MMartAdTextAlign
+  val  AODiscountTemplate   = ym.model.ad.AODiscountTemplate
+  type AODiscountTemplate   = ym.model.ad.AODiscountTemplate
 
-  val  DiscountTemplate = io.suggest.ym.model.MMartAdDiscountTemplate
-  type DiscountTemplate = io.suggest.ym.model.MMartAdDiscountTemplate
+  val  AOFloatField         = ym.model.ad.AOFloatField
+  type AOFloatField         = ym.model.ad.AOFloatField
+  val  AOStringField        = ym.model.ad.AOStringField
+  type AOStringField        = ym.model.ad.AOStringField
 
-  val  MMAdFloatField   = io.suggest.ym.model.MMAdFloatField
-  type MMAdFloatField   = io.suggest.ym.model.MMAdFloatField
-  val  MMAdStringField  = io.suggest.ym.model.MMAdStringField
-  type MMAdStringField  = io.suggest.ym.model.MMAdStringField
+  val  TextAlign            = ym.model.common.TextAlign
+  type TextAlign            = ym.model.common.TextAlign
 
-  val  MMartAdTAPhone   = io.suggest.ym.model.MMartAdTAPhone
-  type MMartAdTAPhone   = io.suggest.ym.model.MMartAdTAPhone
+  val  TextAlignPhone       = ym.model.common.TextAlignPhone
+  type TextAlignPhone       = ym.model.common.TextAlignPhone
 
-  val  MMartAdTATablet  = io.suggest.ym.model.MMartAdTATablet
-  type MMartAdTATablet  = io.suggest.ym.model.MMartAdTATablet
+  val  TextAlignTablet      = ym.model.common.TextAlignTablet
+  type TextAlignTablet      = ym.model.common.TextAlignTablet
 
-  val  MMAdFieldFont    = io.suggest.ym.model.MMAdFieldFont
-  type MMAdFieldFont    = io.suggest.ym.model.MMAdFieldFont
+  val  AOFieldFont          = ym.model.ad.AOFieldFont
+  type AOFieldFont          = ym.model.ad.AOFieldFont
 
-  val  MMartAdPanelSettings = io.suggest.ym.model.MMartAdPanelSettings
-  type MMartAdPanelSettings = io.suggest.ym.model.MMartAdPanelSettings
+  val  AdPanelSettings      = ym.model.common.AdPanelSettings 
+  type AdPanelSettings      = ym.model.common.AdPanelSettings
 
-  val  MMAdPrice        = io.suggest.ym.model.MMAdPrice
-  type MMAdPrice        = io.suggest.ym.model.MMAdPrice
+  val  AOPriceField         = ym.model.ad.AOPriceField
+  type AOPriceField         = ym.model.ad.AOPriceField
 
-  val  MImgInfo         = io.suggest.ym.model.MImgInfo
-  type MImgInfo         = io.suggest.ym.model.MImgInfo
+  val  MImgInfo             = ym.model.common.MImgInfo
+  type MImgInfo             = ym.model.common.MImgInfo
 
-  val  MInx             = io.suggest.model.inx2.MInx
-  type MInxT            = io.suggest.model.inx2.MInxT
+  val  MImgInfoMeta         = ym.model.common.MImgInfoMeta
+  type MImgInfoMeta         = ym.model.common.MImgInfoMeta
 
-  val  MMartInx         = io.suggest.model.inx2.MMartInx
-  type MMartInx         = io.suggest.model.inx2.MMartInx
+  val  MInx                 = io.suggest.model.inx2.MInx
+  type MInxT                = io.suggest.model.inx2.MInxT
 
-  val  MMartAdIndexed   = io.suggest.ym.model.MMartAdIndexed
-  type MMartAdIndexed   = io.suggest.ym.model.MMartAdIndexed
+  val  MMartInx             = io.suggest.model.inx2.MMartInx
+  type MMartInx             = io.suggest.model.inx2.MMartInx
 
-  type BuyPlaceT[T <: BuyPlaceT[T]]  = io.suggest.ym.model.BuyPlaceT[T]
+  @deprecated("mart+shop arch is deprecated. Use MAd.", "2014.apr.07")
+  val  MMartAdIndexed       = ym.model.MMartAdIndexed
 
-  val  MAdStat          = io.suggest.ym.model.stat.MAdStat
-  type MAdStat          = io.suggest.ym.model.stat.MAdStat
-  type AdFreqs_t        = MAdStat.AdFreqs_t
+  val  MAdStat              = ym.model.stat.MAdStat
+  type MAdStat              = ym.model.stat.MAdStat
+  type AdFreqs_t            = MAdStat.AdFreqs_t
 
-  val  AdStatActions    = io.suggest.ym.model.stat.AdStatActions
-  type AdStatAction     = io.suggest.ym.model.stat.AdStatAction
+  val  AdStatActions        = ym.model.stat.AdStatActions
+  type AdStatAction         = ym.model.stat.AdStatAction
+
+  type CollectMMCatsAcc_t   = MMartCategory.CollectMMCatsAcc_t
+
 }

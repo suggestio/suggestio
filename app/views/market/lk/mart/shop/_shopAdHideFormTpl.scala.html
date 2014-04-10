@@ -1,4 +1,4 @@
-@(mshop: MShop, ad: MMartAd, mmart: MMart, sahf: Form[_])(implicit ctx: util.Context)
+@(mshop: MAdnNode, mad: MAdT, mmart: MAdnNode, sahf: Form[_])(implicit ctx: util.Context)
 
 @* Форма сокрытия рекламы магазина силами магазина (SioWeb/4.psd). *@
 @import ctx._
@@ -14,14 +14,14 @@
   <div class="content">
 
     <div class="ad-preview preview-medium" style="height: 500px;">
-      @market.showcase._single_offer(ad, mmart, Some(mshop))
+      @market.showcase._single_offer(mad, mmart, Some(mshop))
     </div>
 
-    @form(routes.MarketMartLk.shopAdHideFormSubmit(ad.id.get)) {
+    @form(routes.MarketMartLk.shopAdHideFormSubmit(mad.id.get)) {
       @* Допустимые значения: @HIDE, @DELETE. *@
       <input type="hidden" name="action" value="@HIDE"/>
 
-      @if(!ad.showLevels.isEmpty) {
+      @if(!mad.isPublishedAt(mmart.id.get)) {
         <div class="hide-content">
           @* Причина сокрытия/удаления. *@
           <table cellpadding="0" cellspacing="0" class="input-wrap big textarea hide-label" style="margin-top: 20px;">
@@ -34,7 +34,7 @@
 
           <div class="descr">
             Копия уведомления будет отправлена арендатору
-            «<a href="@routes.MarketMartLk.showShop(mshop.id.get)">@mshop.name</a>» на почту, указанную при регистрации.
+            «<a href="@routes.MarketMartLk.showShop(mshop.id.get)">@mshop.meta.name</a>» на почту, указанную при регистрации.
           </div>
         </div>
 

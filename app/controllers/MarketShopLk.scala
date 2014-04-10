@@ -8,13 +8,12 @@ import util.FormUtil._
 import util.acl._
 import models._
 import views.html.market.lk.shop._
-import play.api.mvc.{AnyContent, Result}
+import play.api.mvc.{RequestHeader, AnyContent, Result}
 import play.api.Play.current
 import concurrent.duration._
 import scala.concurrent.Future
 import play.api.mvc.Security.username
 import util.img._
-import net.sf.jmimemagic.Magic
 
 /**
  * Suggest.io
@@ -22,7 +21,7 @@ import net.sf.jmimemagic.Magic
  * Created: 03.03.14 13:34
  * Description: Контроллер личного кабинета для арендатора, т.е. с точки зрения конкретного магазина.
  */
-object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport {
+object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport with ShopMartCompat {
 
   import LOGGER._
 
@@ -35,28 +34,27 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
   /** Маркер картинки для logo-вещичек */
   val SHOP_TMP_LOGO_MARKER = "shopLogo"
 
-  /** Форма добавления/редактирования магазина. */
-  val shopM = mapping(
-    "name"         -> shopNameM,
-    "description"  -> publishedTextOptM,
-    "mart_floor"   -> optional(martFloorM),
-    "mart_section" -> optional(martSectionM)
+  /** Метаданные магазина, которые может редактировать владелец магазина. */
+  val shopMetaFullM = mapping(
+    "name"          -> shopNameM,
+    "description"   -> publishedTextOptM,
+    "floor"         -> optional(floorM),
+    "section"       -> optional(sectionM)
   )
-  // apply()
-  {(name, description, martFloor, martSection) =>
-    MShop(name=name, companyId=null, description=description, martFloor=martFloor, martSection=martSection, personIds=null)
+  {(name, descr, floor, section) =>
+    AdnMMetadata(
+      name = name,
+      description = descr,
+      floor = floor,
+      section = section
+    )
   }
-  // unapply()
-  {mshop =>
-    import mshop._
-    Some((name, description, martFloor, martSection))
+  {adnMeta =>
+    import adnMeta._
+    Some((name, description, floor, section))
   }
+  val shopMetaFullKM = "meta" -> shopMetaFullM
 
-  private val shopKM = "shop" -> shopM
-
-  /** Форма на которой нельзя менять логотип, но можно настраивать разные поля.
-    * Подходит для редактирования из ТЦ-аккаунта */
-  val shopFormM = Form(shopKM)
 
   /** Маппер для необязательного логотипа магазина. */
   val logoImgOptIdKM = ImgFormUtil.getLogoKM("shop.logo.invalid", marker=SHOP_TMP_LOGO_MARKER)
@@ -64,18 +62,32 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
   /** Форма для заполнения страницы, но НЕ для сабмита. */
   val shopFullFormM = Form(tuple(
     "email" -> optional(email),
-    shopKM,
+    shopMetaFullKM,
     logoImgOptIdKM
   ))
+
+
+  /** Ограниченный маппинг доступен владельцу магазина внутри ТЦ. */
+  val shopMetaLimitedM = mapping(
+    "name"          -> shopNameM,
+    "description"   -> publishedTextOptM
+  )
+  {(name, descr) =>
+    AdnMMetadata(
+      name = name,
+      description = descr
+    )
+  }
+  {adnMeta =>
+    import adnMeta._
+    Some((name, description))
+  }
 
   /** Ограниченный маппинг магазина. Используется при сабмите редактирования профиля магазина для имитации
     * неизменяемых полей на форме. Некоторые поля не доступны для редактирования владельцу магазина. */
   val limitedShopFormM = Form(tuple(
     // Вложенный маппинг для совместимости с исходным шаблоном.
-    "shop" -> tuple(
-      "name"         -> shopNameM,
-      "description"  -> publishedTextOptM
-    ),
+    "meta" -> shopMetaLimitedM,
     logoImgOptIdKM
   ))
 
@@ -85,16 +97,20 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
    * @param shopId id магазина.
    * @param newAdIdOpt Костыль для сокрытия факта асинхронного добавления рекламной карточки.
    */
-  def showShop(shopId: ShopId_t, newAdIdOpt: Option[String]) = IsShopAdm(shopId).async { implicit request =>
+  def showShop(shopId: String, newAdIdOpt: Option[String]) = IsShopAdm(shopId).async { implicit request =>
     import request.mshop
-    val adsFut = MMartAd.findForShopRt(shopId)
+    val adsFut = MAd.findForProducerRt(shopId)
     // TODO Если магазин удалён из ТЦ, то это как должно выражаться?
+    // Бывает, что добавлена новая карточка. Нужно её как-то отобразить.
     val extAdOptFut = newAdIdOpt match {
-      case Some(newAdId) => MMartAd.getById(newAdId).map { _.filter { _.shopId.exists(_ == shopId) } }
+      case Some(newAdId) => MAd.getById(newAdId)
+        .map { _.filter {
+          _.producerId == shopId
+        } }
       case None => Future successful None
     }
-    val martId = mshop.martId.get
-    MMart.getById(martId).flatMap {
+    val martId = mshop.adn.supId.get
+    getMartByIdCache(martId).flatMap {
       case Some(mmart) =>
         for {
           mads      <- adsFut
@@ -115,7 +131,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
 
 
   /** Асинхронно заполнить full форму с помощью указанного магазина. */
-  def fillFullForm(mshop: MShop) = {
+  def fillFullForm(mshop: MAdnNode) = {
     val shopOwnerEmailFut: Future[Option[String]] = mshop.mainPersonId match {
       case Some(personId) =>
         MPersonIdent.findAllEmails(personId)
@@ -126,9 +142,11 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
         EmailActivation.findByKey(mshop.id.get)
           .map { _.headOption.map(_.email) }
     }
-    val imgId = mshop.logoImgId.map { imgId => ImgInfo4Save(ImgIdKey(imgId)) }
+    val imgId = mshop.logoImgOpt.map { img =>
+      ImgInfo4Save(ImgFormUtil.imgInfo2imgKey(img))
+    }
     shopOwnerEmailFut map { shopOwnerEmail =>
-      shopFullFormM fill (shopOwnerEmail, mshop, imgId)
+      shopFullFormM fill (shopOwnerEmail, mshop.meta, imgId)
     }
   }
 
@@ -137,12 +155,12 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
    * Страница с формой редактирования магазина. Арендатору не доступны некоторые поля.
    * @param shopId id магазина.
    */
-  def editShopForm(shopId: ShopId_t) = IsShopAdm(shopId).async { implicit request =>
+  def editShopForm(shopId: String) = IsShopAdm(shopId).async { implicit request =>
     import request.mshop
-    // TODO Если магазин удалён из ТЦ, то это как должно выражаться?
-    val martId = mshop.martId.get
+    // TODO Если магазин удалён из рекламной сети или не имеет своего ТЦ, то это как должно выражаться?
+    val martId = mshop.adn.supId.get
     val formBindedFut = fillFullForm(mshop)
-    MMart.getById(martId) flatMap {
+    getMartByIdCache(martId) flatMap {
       case Some(mmart) =>
         formBindedFut map { formBinded =>
           Ok(shopEditFormTpl(mmart, mshop, formBinded))
@@ -156,14 +174,15 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
    * Сабмит формы редактирования магазина арендатором.
    * @param shopId id магазина.
    */
-  def editShopFormSubmit(shopId: ShopId_t) = IsShopAdm(shopId).async { implicit request =>
+  def editShopFormSubmit(shopId: String) = IsShopAdm(shopId).async { implicit request =>
     import request.mshop
     limitedShopFormM.bindFromRequest().fold(
       {formWithErrors =>
         val fullFormBindedFut = fillFullForm(mshop) map { _.bindFromRequest }
         debug(s"editShopFormSubmit($shopId): Bind failed: " + formWithErrors.errors)
-        val martId = mshop.martId.get
-        MMart.getById(martId) flatMap {
+        // TODO Что делать, если у магазина нет своего супервизора?
+        val martId = mshop.adn.supId.get
+        getMartByIdCache(martId) flatMap {
           case Some(mmart) =>
             fullFormBindedFut map { formWithErrors2 =>
               NotAcceptable(shopEditFormTpl(mmart, mshop, formWithErrors2))
@@ -171,16 +190,15 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
           case None        => martNotFound(martId)
         }
       },
-      {case ((name, description), logoImgIdOpt) =>
-        val updateImgsFut = ImgFormUtil.updateOrigImgId(
-          needImg  = logoImgIdOpt,
-          oldImgId = mshop.logoImgId
+      {case (meta, logoImgIdOpt) =>
+        val updateImgsFut = ImgFormUtil.updateOrigImg(
+          needImgs = logoImgIdOpt,
+          oldImgs  = mshop.logoImgOpt
         )
-        mshop.name = name
-        mshop.description = description
+        mshop.meta.loadUserFieldsFrom(meta)
         // Для обновления shop'а надо дождаться генерации нового id логотипа.
         updateImgsFut.flatMap { newImgIds =>
-          mshop.logoImgId = newImgIds.headOption.map(_.id)
+          mshop.logoImgOpt = newImgIds.headOption
           mshop.save map { _shopId =>
             Redirect(routes.MarketShopLk.showShop(shopId))
               .flashing("success" -> "Изменения сохранены.")
@@ -224,7 +242,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
     // Всё норм как бы. Но до сабмита нельзя менять состояние - просто рендерим форму для активации учетки.
     // Можно также продлить жизнь записи активации. Но сценарий нужности этого маловероятен.
     val formUsedM = if (request.isAuth) inviteAcceptAuthFormM else inviteAcceptAnonFormM
-    val formBindedM = formUsedM fill (mshop.name, None)
+    val formBindedM = formUsedM.fill((mshop.meta.name, None))
     Ok(invite.inviteAcceptFormTpl(mshop, eAct, formBindedM, withRegister = !request.isAuth))
   }
 
@@ -264,10 +282,10 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
           // Для обновления полей MShop требуется доступ к personId. Дожидаемся сохранения юзера...
           newPersonIdOptFut flatMap { personIdOpt =>
             // Одновременно, следует обновить название магазина
-            mshop.name = shopName
+            mshop.meta.name = shopName
             // Выставляем текущего юзера как единственного и главного владельца магазина.
             val personId: String = (personIdOpt orElse request.pwOpt.map(_.personId)).get
-            mshop.personIds = List(personId)
+            mshop.personIds = Set(personId)
             mshop.save map { _shopId =>
               trace(logPrefix + s"mshop(id=${_shopId}) saved with new owner: $personId")
               Redirect(routes.MarketShopLk.showShop(shopId))
@@ -287,12 +305,12 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
    * @param f функция генерации результата, когда всё ок.
    * @return То, что нагенерит функция или страницу с ошибкой.
    */
-  private def inviteAcceptCommon(shopId: String, eaId: String)(f: (EmailActivation, MShop) => AbstractRequestWithPwOpt[AnyContent] => Future[Result]) = {
+  private def inviteAcceptCommon(shopId: String, eaId: String)(f: (EmailActivation, MAdnNode) => AbstractRequestWithPwOpt[AnyContent] => Future[Result]) = {
     MaybeAuth.async { implicit request =>
       bruteForceProtect flatMap { _ =>
         EmailActivation.getById(eaId) flatMap {
           case Some(eAct) if eAct.key == shopId =>
-            MShop.getById(shopId) flatMap {
+            getShopByIdCache(shopId) flatMap {
               case Some(mshop) => f(eAct, mshop)(request)
               case None =>
                 // should never occur
@@ -318,12 +336,11 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
    * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
    * @return Тот же формат ответа, что и для просто temp-картинок.
    */
-  def handleShopTempLogo(shopId: ShopId_t) = IsShopAdm(shopId)(parse.multipartFormData) { implicit request =>
+  def handleShopTempLogo(shopId: String) = IsShopAdm(shopId)(parse.multipartFormData) { implicit request =>
     handleLogo(ShopLogoImageUtil, SHOP_TMP_LOGO_MARKER)
   }
 
 
-  private def martNotFound(martId: MartId_t) = NotFound("mart not found: " + martId)  // TODO Нужно дергать 404-шаблон.
-  private def shopNotFound(shopId: ShopId_t) = NotFound("Shop not found: " + shopId)
+  private def martNotFound(martId: String)(implicit request: RequestHeader) = http404AdHoc
 
 }

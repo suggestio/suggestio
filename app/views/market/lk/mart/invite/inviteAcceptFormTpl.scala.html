@@ -1,4 +1,4 @@
-@(mmart: MMart, eAct: EmailActivation, iaf: Form[_])(implicit ctx: util.Context)
+@(mmart: MAdnNode, eAct: EmailActivation, iaf: Form[_])(implicit ctx: util.Context)
 
 @* Страница с формой подтверждения регистрации в качестве управляющего ТЦ.
    Новый пользователь здесь может ввести пароль. Уже залогиненный - просто подтвердить себя. *@
@@ -25,7 +25,7 @@
       <td class="right">
         <div class="input clearfix">
           <div class="input-shadow">
-            <input id="mmartName" type="text" disabled value="@mmart.name"/>
+            <input id="mmartName" type="text" disabled value="@mmart.meta.name"/>
           </div>
         </div>
       </td>

@@ -1,15 +1,14 @@
-@(martId: MMart.MartId_t, shops: Seq[MShop])(implicit ctx: util.Context)
+@(martId: String, mshops: Seq[MAdnNode])(implicit ctx: util.Context)
 
 @* Рендер списка магазинов для торгового центра (только сам список, без обрамления и т.д.). *@
 @import routes.MarketMartLk._
 
 
-@shops.zipWithIndex.map { case (shop, i) =>
+@mshops.zipWithIndex.map { case (mshop, i) =>
 
-
-  <div class="item @if(i%2 == 0) {odd} else {even} @if(shop.settings.supIsEnabled) {enabled}" data-shop="@shop.id">
+  <div class="item @if(i%2 == 0) {odd} else {even} @if(mshop.adn.isEnabled) {enabled}" data-shop="@mshop.id">
     <div class="left">
-      <a href="@showShop(shop.id.get)">@shop.name</a>
+      <a href="@showShop(mshop.id.get)">@mshop.meta.name</a>
     </div>
     <div class="right">
       <span class="disable-but">Выкл</span>

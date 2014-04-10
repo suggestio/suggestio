@@ -1,4 +1,4 @@
-@(mshopMap: Map[ShopId_t, MShop], mmart:MMart)(implicit ctx:util.Context)
+@(mshopMap: Map[String, MAdnNode], mmart:MAdnNode)(implicit ctx:util.Context)
 
 <div class="sm-shopList-screen" id="smShopListScreen">
 
@@ -15,7 +15,7 @@
   </div>
 
   <div class="sm-shops-list">
-    @mshopMap.values.groupBy(_.name.head.toUpper).mapValues(_.toSeq.sortBy(_.name)).toSeq.sortBy(_._1).map { case (letter, mshops) =>
+    @mshopMap.values.groupBy(_.meta.name.head.toUpper).mapValues(_.toSeq.sortBy(_.meta.name)).toSeq.sortBy(_._1).map { case (letter, mshops) =>
 
       <div class="item">
         <div class="letter">
@@ -24,7 +24,7 @@
 
         @mshops.map { mshop =>
           <a class="shop" href="#">
-            @mshop.name
+            @mshop.meta.name
           </a>
         }
       </div>

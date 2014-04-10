@@ -1,13 +1,13 @@
-@(title:String, mshop:MShop, mmartOpt:Option[MMart] = None, hPathAfter:Option[Html] = None)(content: Html)(implicit ctx: util.Context)
+@(title:String, mshop:MAdnNode, mmartOpt:Option[MAdnNode] = None, hPathAfter:Option[Html] = None)(content: Html)(implicit ctx: util.Context)
 
 @* Подложка для шаблонов, которые как внутри конкретного магазина. *@
 @import ctx._
 
 @hPathAfter1 = {
   @mmartOpt.map { mmart =>
-    / ТЦ <a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.name</a>
+    / ТЦ <a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.meta.name</a>
   }
-  / <a href="@routes.SysMarket.shopShow(mshop.id.get)">@mshop.name</a>
+  / <a href="@routes.SysMarket.shopShow(mshop.id.get)">@mshop.meta.name</a>
   @hPathAfter
 }
 

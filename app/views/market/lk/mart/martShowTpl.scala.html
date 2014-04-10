@@ -1,4 +1,4 @@
-@(mmart: MMart, mads: Seq[MMartAd])(implicit ctx: util.Context)
+@(mmart: MAdnNode, mads: Seq[MAdT])(implicit ctx: util.Context)
 
 @* Страница с отображением торгового центра. Рисунок 1 в дизайне. *@
 
@@ -10,7 +10,7 @@
 
 @import AdShowLevels._
 
-@market.lk.lkBase(mmart.name) {
+@market.lk.lkBase(mmart.meta.name) {
 
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.MarketMartLk.searchShops,
@@ -44,10 +44,10 @@
   <div class="body">
     <div class="shop-info">
 
-      <input id="maxMartAds" type="hidden" value="@mmart.settings.supL1MaxAdsShown" />
+      <input id="maxMartAds" type="hidden" value="@mmart.adn.showLevelsInfo.maxOutAtLevel(LVL_START_PAGE)" />
 
       <div class="name-wrap">
-        <span class="name">@mmart.name</span>
+        <span class="name">@mmart.meta.name</span>
         <a class="edit" href="@martEditForm(mmart.id.get)">Редактировать</a>
 
         @if(isSuperuser) {
@@ -57,12 +57,13 @@
 
       <div class="border-line"></div>
       <div class="name-wrap">
-        @mmart.town, @mmart.address
+        @mmart.meta.town, @mmart.meta.address
       </div>
 
       <div class="border-line"></div>
     </div>
 
+    @defining(mmart.adn.canOutAtLevel(LVL_START_PAGE)) { htl =>
     @* Рендер списка карточек арендатора. *@
     @market.lk.ad._adsEditableListTpl(
       mads = mads,
@@ -75,13 +76,13 @@
       @* Галочка для управления отображением карточек ТЦ. *@
 
       <div class="controls">
-        <label class="martAd-fix">
-         <input type="checkbox" data-level="@LVL_MART_SHOWCASE" data-adid="@mad.id.get" @if(mad.showLevels contains LVL_MART_SHOWCASE) {data-checked="checked"}/>Включить объявление
+        <label class="martAd-fix @if(!htl){inactive}">
+          <input type="checkbox" data-level="@LVL_START_PAGE" data-adid="@mad.id.get" @if(!htl){disabled="disabled"} @if(mad.allPubShowLevels contains LVL_START_PAGE) {data-checked="checked"}/>Включить объявление
         </label>
       </div>
-
     }
 
+    }
   </div><!-- .body end -->
 
 
@@ -96,7 +97,7 @@
 
       <div class="textarea">
       <textarea>
-        @market._mmartInstallScriptTpl( mmart )
+        @_martInstallScriptTpl( mmart )
       </textarea>
       </div>
 

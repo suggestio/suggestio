@@ -1,4 +1,4 @@
-@(minxsGrouped: Map[String, Seq[MInxT]], allMartsMap: Map[String, MMart])(implicit ctx: util.Context)
+@(minxsGrouped: Map[String, Seq[MInxT]], allMartsMap: Map[String, MAdnNode])(implicit ctx: util.Context)
 
 @* Страница для вывода групп индексов по реальным индексам. *@
 @import helper._
@@ -16,7 +16,7 @@
             case minx: MMartInx => {
               <li>
                 + <a href="@routes.SysMarket.martShow(minx.martId)">
-                  @allMartsMap.get(minx.martId).map(_.name).getOrElse("ТЦ ???")
+                  @allMartsMap.get(minx.martId).map(_.meta.name).getOrElse("ТЦ ???")
                 </a>
               </li>
             }

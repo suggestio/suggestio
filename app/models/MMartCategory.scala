@@ -1,7 +1,6 @@
 package models
 
-import io.suggest.model.{TreeSortable, EsModel, EsModelStaticT, EsModelT}
-import org.elasticsearch.common.xcontent.XContentBuilder
+import io.suggest.model._
 import EsModel._
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.JacksonWrapper
@@ -12,6 +11,16 @@ import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
 import org.elasticsearch.action.search.SearchResponse
 import util.PlayMacroLogsImpl
 import scala.collection.JavaConversions._
+import io.suggest.util.SioEsUtil.FieldString
+import scala.Some
+import io.suggest.util.SioEsUtil.FieldObject
+import io.suggest.util.SioEsUtil.FieldAll
+import io.suggest.util.SioEsUtil.FieldBoolean
+import io.suggest.util.SioEsUtil.FieldNumber
+import io.suggest.util.SioEsUtil.FieldSource
+import io.suggest.model.common.{EMParentIdOpt, EMName}
+import play.api.libs.json._
+import com.fasterxml.jackson.annotation.JsonIgnore
 
 /**
  * Suggest.io
@@ -29,7 +38,7 @@ object MMartCategory extends EsModelStaticT[MMartCategory] with PlayMacroLogsImp
   val YM_CAT_ESFN           = "ymCatId"
   val YM_CAT_ID_ESFN        = "ycId"
   val OWNER_ID_ESFN         = "ownerId"
-  val YM_CAT_INHERIT_ESFT   = "inherit"
+  val YM_CAT_INHERIT_ESFN   = "inherit"
   val CSS_CLASS_ESFN        = "cssClass"
   val POSITION_ESFN         = "position"
   val INCLUDE_IN_ALL_ESFN   = "iia"
@@ -199,7 +208,7 @@ object MMartCategory extends EsModelStaticT[MMartCategory] with PlayMacroLogsImp
     FieldString(OWNER_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldObject(YM_CAT_ESFN, properties = Seq(
       FieldString(YM_CAT_ID_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldBoolean(YM_CAT_INHERIT_ESFT, index = FieldIndexingVariants.no, include_in_all = false)
+      FieldBoolean(YM_CAT_INHERIT_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
     )),
     // Индексируем, чтобы искать в рамках под-уровня без has_child велосипеда и чтобы missing filter работал.
     FieldString(PARENT_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
@@ -251,18 +260,20 @@ case class MMartCategory(
   var id        : Option[String] = None,
   var cssClass  : Option[String] = None,
   var includeInAll: Boolean = true
-) extends EsModelT[MMartCategory] with TreeSortable {
+) extends EsModelEmpty[MMartCategory] with EMName[MMartCategory] with EMParentIdOpt[MMartCategory] with TreeSortable {
 
-  def writeJsonFields(acc: XContentBuilder) {
-    acc.field(NAME_ESFN, name)
-      .field(OWNER_ID_ESFN, ownerId)
-      .field(POSITION_ESFN, position)
-      .field(INCLUDE_IN_ALL_ESFN, includeInAll)
-    ymCatPtr.render(acc)
+
+  override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    var acc1: FieldsJsonAcc = OWNER_ID_ESFN -> JsString(ownerId) ::
+      POSITION_ESFN -> JsNumber(position) ::
+      INCLUDE_IN_ALL_ESFN -> JsBoolean(includeInAll) ::
+      YM_CAT_ESFN -> ymCatPtr.renderPlayJson ::
+      super.writeJsonFields(acc)
     if (parentId.isDefined)
-      acc.field(PARENT_ID_ESFN, parentId.get)
+      acc1 ::= PARENT_ID_ESFN -> JsString(parentId.get)
     if (cssClass.isDefined)
-      acc.field(CSS_CLASS_ESFN, cssClass.get)
+      acc1 ::= CSS_CLASS_ESFN -> JsString(cssClass.get)
+    acc1
   }
 
   def companion = MMartCategory
@@ -285,11 +296,12 @@ case class MMartCategory(
  * @param inherit Наследовать прямые подкатегории ym-категории при поиске.
  */
 case class MMartYmCatPtr(ycId: String, inherit: Boolean = true) {
-  def render(acc: XContentBuilder) {
-    acc.startObject(YM_CAT_ESFN)
-      .field(YM_CAT_ID_ESFN, ycId)
-      .field(YM_CAT_INHERIT_ESFT, inherit)
-    .endObject()
+  @JsonIgnore
+  def renderPlayJson: JsObject = {
+    JsObject(Seq(
+      YM_CAT_ID_ESFN      -> JsString(ycId),
+      YM_CAT_INHERIT_ESFN -> JsBoolean(inherit)
+    ))
   }
 }
 

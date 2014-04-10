@@ -1,4 +1,4 @@
-@(mmart: MMart, mshop: MShop, ad: MMartAd, reason: String)(implicit ctx: util.Context)
+@(mmart: MAdnNode, mshop: MAdnNode, ad: MAdT, reason: String)(implicit ctx: util.Context)
 
 @* Шаблон для HTML-почтового сообщения об отключении рекламного сообщения из выдачи модератором ТЦ. *@
 
@@ -6,7 +6,7 @@
 
 Указанная причина: @reason
 
-ТЦ: @mmart.name
+ТЦ: @mmart.meta.name
 Ссылка на заблокированную карточку: @ctx.myAudienceUrl@routes.MarketAd.editShopAd(ad.id.get)
 Ссылка на Ваш магазин: @ctx.myAudienceUrl@routes.MarketShopLk.showShop(mshop.id.get)
 

@@ -1,4 +1,4 @@
-@(mshop: MShop, editCall: Call)(implicit ctx: util.Context)
+@(mshop: MAdnNode, editCall: Call)(implicit ctx: util.Context)
 
 @* Админ ТЦ смотрит карточку магазина. Или владелец магазина смотрит на свой магазин.
    У них разные шаблоны, однако отображение данных по магазину - одно.
@@ -6,28 +6,25 @@
 @import ctx._
 @import routes.MarketMartLk._
 
+<div class="border-line"></div>
 
+<table class="block">
+  <tr>
+    <td class="left">
+      <div class="shop-floor">
+        @mshop.meta.floor.map { floor =>
+          @floor&nbsp;этаж
+        }
+      </div>
+    </td>
 
+    <td class="right">
+      <div class="shop-section">
+        <span class="name">Секция:</span>
+         <span class="value">@mshop.meta.section</span>
+      </div>
+    </td>
+  </tr>
+</table>
 
-
-
-    <div class="border-line"></div>
-
-    <table class="block">
-      <tr>
-        <td class="left">
-          <div class="shop-floor">
-            @mshop.martFloor&nbsp;этаж
-          </div>
-        </td>
-        <td class="right">
-          <div class="shop-section">
-            <span class="name">Секция:</span>
-            <span class="value">@mshop.martSection</span>
-          </div>
-        </td>
-      </tr>
-    </table>
-    <div class="border-line"></div>
-
-
+<div class="border-line"></div>

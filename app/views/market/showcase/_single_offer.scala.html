@@ -1,4 +1,4 @@
-@(ad: MMartAdT, mmart: MMart, mshopOpt: Option[MShop], isHidden: Boolean = false)(implicit ctx: util.Context)
+@(ad: MAdT, mmart: MAdnNode, mshopOpt: Option[MAdnNode], isHidden: Boolean = false)(implicit ctx: util.Context)
 
 @import util.TplDataFormatUtil._
 
@@ -6,20 +6,20 @@
 
   @ad.panel.map { panelSettings =>
     <div class="offer-header" style="background-color: #@panelSettings.color">
-      @mshopOpt.flatMap(_.logoImgId).orElse(mmart.logoImgId).map { logoImgId =>
-        <img class="sm-offer-logo" height="30" src="@routes.Img.getImg(logoImgId)"/>
+      @mshopOpt.flatMap(_.logoImgOpt).orElse(mmart.logoImgOpt).map { logoImg =>
+        <img class="sm-offer-logo" height="30" src="@routes.Img.getImg(logoImg.id)"/>
       }
     </div>
   }
 
   <div class="offer-details">
     <div class="od-inner">
-      @ad.logoImg.map { logoImg =>
-        <img class="sm-offer-logo" height="30" src="@routes.Img.getImg(logoImg.id)" alt="@ad.offers.headOption.filter(_.isInstanceOf[MMartAdProduct]).map(_.asInstanceOf[MMartAdProduct].vendor.value)"/>
+      @ad.logoImgOpt.map { logoImg =>
+        <img class="sm-offer-logo" height="30" src="@routes.Img.getImg(logoImg.id)" alt="@ad.offers.headOption.filter(_.isInstanceOf[AOProduct]).map(_.asInstanceOf[AOProduct].vendor.value)"/>
       }
 
       @ad.offers.map {
-        case adProd: MMartAdProduct => {
+        case adProd: AOProduct => {
           <div class="vendor">@adProd.vendor.value</div>
 
           @adProd.oldPrice.map { oldPrice =>
@@ -29,7 +29,7 @@
           <div class="new-price">@adProd.price.value</div>
         }
 
-        case adDisco: MMartAdDiscount => {
+        case adDisco: AODiscount => {
           @adDisco.text1.map { text1 =>
             <div class="disc-text-1" style="color: #@text1.font.color">@text1.value</div>
           }
@@ -43,7 +43,7 @@
           }
         }
 
-        case adText: MMartAdText => {
+        case adText: AOText => {
           <div class="od-text" style="color: #@adText.text.font.color">@Html(adText.text.value)</div>
         }
       }
@@ -53,13 +53,13 @@
       @mshopOpt.map { mshop =>
         <div class="offer-location">
           <div class="ol-icon"></div>
-          @mshop.martFloor.map { martFloor =>
-            Этаж @martFloor<br/>
+          @mshop.meta.floor.map { floor =>
+            Этаж @floor<br/>
           }
-          @mshop.martSection.map { martSection =>
-            Бутик @martSection<br/>
+          @mshop.meta.section.map { section =>
+            Бутик @section<br/>
           }
-          &laquo;@mshop.name&raquo;
+          &laquo;@mshop.meta.name&raquo;
         </div>
       }
 

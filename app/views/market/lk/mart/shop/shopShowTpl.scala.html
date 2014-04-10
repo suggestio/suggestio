@@ -1,4 +1,4 @@
-@(mmart: MMart, mshop:MShop, mads: Seq[MMartAd])(implicit ctx:util.Context)
+@(mmart: MAdnNode, mshop:MAdnNode, mads: Seq[MAdT])(implicit ctx:util.Context)
 
 @* Шаблон отображения магазина для админа ТЦ. *@
 @import market.lk._
@@ -7,7 +7,7 @@
 @import ctx._
 @import helper._
 
-@lkBase(mshop.name) {
+@lkBase(mshop.meta.name) {
 
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.MarketMartLk.shopOnOffForm,
@@ -29,7 +29,7 @@
     <div class="shop-info">
 
       <div class="name-wrap">
-        <span class="name">@mshop.name</span>
+        <span class="name">@mshop.meta.name</span>
         <a class="edit" href="@editShopForm(mshop.id.get)">Редактировать</a>
       </div>
       <div class="border-line"></div>
@@ -45,7 +45,7 @@
                 <div class="white-border-top">
                   <div class="gray-border-bottom">
 
-                      <div class="big-triger @if(mshop.settings.supIsEnabled) {enabled}" data-shop="@mshop.id.get" id="shop-control">
+                      <div class="big-triger @if(mshop.adn.isEnabled) {enabled}" data-shop="@mshop.id.get" id="shop-control">
                         <span class="disable-but">Выкл</span>
                         <div class="triger">
                           <div class="circle"></div>
@@ -60,7 +60,7 @@
           </td>
           <td class="right">
             <div class="shop-descr">
-              @mshop.description
+              @mshop.meta.description
             </div>
           </td>
         </tr>
@@ -73,7 +73,8 @@
         mshop = mshop,
         editCall = routes.MarketMartLk.editShopForm(mshop.id.get)
       )
-     
+
+      @defining(mshop.adn.showLevelsInfo.canOutAtLevel(AdShowLevels.LVL_START_PAGE)) { hasTopLevelAccess =>
       <div>
         <div class="white-board" style="margin: 20px 0;">
           <div class="white-border-top">
@@ -85,7 +86,7 @@
                     Первая<br/>страница
                   </td>
                   <td class="right">
-                    <div class="triger-wrap @if(mshop.settings.supWithLevels.contains(AdShowLevels.LVL_MART_SHOWCASE)) {enabled}" id="first-page-triger" data-shop="@mshop.id.get">
+                    <div class="triger-wrap @if(hasTopLevelAccess) {enabled}" id="first-page-triger" data-shop="@mshop.id.get">
                       <span class="disable-but">Выкл</span>
                       <div class="triger">
                         <div class="circle"></div>
@@ -108,9 +109,9 @@
       <span class="title">Рекламные плакаты</span>
 
       @* Каталог продукции арендатора. У карточек должны быть кнопки сокрытия объявы, неактивные карточки должны выделятся как-то. *@
-      @defining(mshop.hasTopLevelAccess) { htl =>
         @mads.zipWithIndex.map { case (mad, i) =>
-          <div class="item @if(!AdShowLevels.isShownShopAd(htl, mad.showLevels)) {disabled}" style="@if(i%3 != 0) {margin-left: 30px;}">
+          @* isPublishedAt скрывает от супервизора возможность сокрыть в других карточках. Сейчас сокрыто - означает, что сокрыто в ТЦ. *@
+          <div class="item @if(!mad.isPublishedAt(mmart.id.get)) {disabled}" style="@if(i%3 != 0) {margin-left: 30px;}">
             <div class="preview">
               <div class="disabled-ad"></div>
               <a class="hover tc-edit" href="@routes.MarketMartLk.shopAdHideForm(mad.id.get)">&nbsp;</a>
@@ -118,9 +119,9 @@
             </div>
           </div>
         }
-      }
 
     </div>
+    }
 
   </div>
 

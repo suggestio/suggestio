@@ -1,10 +1,10 @@
-@(mshop: MShop, sf: Form[_], companies:Seq[MCompany], marts:Seq[MMart])(implicit ctx: util.Context)
+@(mshop: MAdnNode, sf: Form[_], companies:Seq[MCompany], marts:Seq[MAdnNode])(implicit ctx: util.Context)
 
 @* Страница с формой редактирования магазина. *@
 @import ctx._
 
 @hPathAfter1 = {
-  / <a href="@routes.SysMarket.shopShow(mshop.id.get)">@mshop.name</a>
+  / <a href="@routes.SysMarket.shopShow(mshop.id.get)">@mshop.meta.name</a>
   / @Messages("Edit")
 }
 

@@ -1,12 +1,11 @@
-@(af: Form[_], call: Call, btnText: String, mmcats: MMartCategory.CollectMMCatsAcc_t, offerType: MMartAdOfferType, previewCall: Call, bp: BuyPlaceT[_])(implicit ctx: util.Context)
+@(af: Form[_], call: Call, btnText: String, mmcats: CollectMMCatsAcc_t, offerType: AdOfferType, previewCall: Call)(implicit ctx: util.Context)
 
 @* Рендер формы редактирования произвольной рекламы.
  * offerType - предпочитаемый тип оффера, когда он неизвестен.
- * bp - экземпляр MMart или MShop (или ещё чего-то) для доступа к некоторым полям (logoImgId например).
 *@
 @import ctx._
 @import helper._
-@import MMartAdOfferTypes._
+@import AdOfferTypes._
 
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.MarketCategory.topCatsOf,
@@ -14,7 +13,7 @@
 )
 
 @* Определяем текущий тип оффера (тип формы). Используем данные формы и аргумент offerType как fallback. *@
-@defining(af("ad.offer.mode").value.flatMap(MMartAdOfferTypes.maybeWithName).getOrElse(offerType)) { offerType1 =>
+@defining(af("ad.offer.mode").value.flatMap(AdOfferTypes.maybeWithName).getOrElse(offerType)) { offerType1 =>
 @form(call, 'id -> "promoOfferForm") {
 
   @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@

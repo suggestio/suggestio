@@ -1,4 +1,4 @@
-@(call:Call, sf: Form[_], btnText:String, isLimited: Boolean, shopId: ShopId_t)(implicit ctx: util.Context)
+@(call:Call, sf: Form[_], btnText:String, isLimited: Boolean, shopId: String)(implicit ctx: util.Context)
 
 @* Форма для добавления/редактирования магазинов в MarketLk.
    - Если isLimited, то некоторые поля будут заблокированы. *@
@@ -12,12 +12,15 @@
 @form(call) {
 
   <div class="fields">
+    @*  *@
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
       @inputText(
-      sf("shop.name"),
-      '_label -> "Название магазина:")
+        sf("meta.name"),
+        '_label -> "Название магазина:"
+      )
     </table>
 
+    @* Логотип магазина. *@
     <table cellpadding="0" cellspacing="0" class="input-wrap big img-with-preview">
       <tr>
         <td class="left">
@@ -56,7 +59,7 @@
 
       <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
         @textarea(
-        sf("shop.description"),
+        sf("shop.meta.description"),
         '_label -> "Описание магазина:"
         )
       </table>
@@ -72,7 +75,7 @@
       @* Номер этажа в ТЦ. *@
       <table cellpadding="0" cellspacing="0" class="input-wrap small disabled">
         @inputText(
-          sf("shop.mart_floor"),
+          sf("shop.meta.floor"),
           'placeholder -> 1 ::
           '_label -> "Этаж:" ::
           attrsRest : _*
@@ -82,7 +85,7 @@
       @* Номер секции в ТЦ. *@
       <table cellpadding="0" cellspacing="0" class="input-wrap small disabled">
         @inputText(
-          sf("shop.mart_section"),
+          sf("shop.meta.section"),
           'placeholder -> 101 ::
           '_label -> "Номер секции:" ::
           attrsRest : _*

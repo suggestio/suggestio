@@ -50,10 +50,12 @@ object FormUtil {
     .transform(strTrimSanitizeF, strIdentityF)
 
   /** Маппинг для номера этажа в ТЦ. */
-  val martFloorM = number(min = -10, max = 200)
+  val floorM = nonEmptyText(maxLength = 4)
+    .transform(strTrimSanitizeF, strIdentityF)
 
   /** Маппинг для секции в ТЦ. */
-  val martSectionM = number(min=0, max=200000)
+  val sectionM = nonEmptyText(maxLength = 6)
+    .transform(strTrimSanitizeF, strIdentityF)
 
   /** Парсим текст, введённый в поле с паролем. */
   val passwordM = nonEmptyText

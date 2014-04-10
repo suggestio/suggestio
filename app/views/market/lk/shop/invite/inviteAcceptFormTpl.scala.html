@@ -1,4 +1,4 @@
-@(mshop: MShop, eAct: EmailActivation, iaf: Form[_], withRegister:Boolean)(implicit ctx: util.Context)
+@(mshop: MAdnNode, eAct: EmailActivation, iaf: Form[_], withRegister:Boolean)(implicit ctx: util.Context)
 
 @* Страница с формой окончания invite-регистрации магазина. Тут можно ввести пароль и подправить имя магазина. *@
 @import ctx._
@@ -93,7 +93,7 @@
           <td class="right">
             <div class="input clearfix">
               <div class="input-shadow">
-                <input id="floorTextField" type="text" disabled="disabled" value="@mshop.martFloor"/>
+                <input id="floorTextField" type="text" disabled="disabled" value="@mshop.meta.floor"/>
               </div>
             </div>
           </td>
@@ -107,7 +107,7 @@
           <td class="right">
             <div class="input clearfix">
               <div class="input-shadow">
-                <input id="floorTextField" type="text" disabled="disabled" value="@mshop.martSection"/>
+                <input id="floorTextField" type="text" disabled="disabled" value="@mshop.meta.section"/>
               </div>
             </div>
           </td>

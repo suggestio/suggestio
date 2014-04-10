@@ -19,14 +19,16 @@ object MarketLk extends SioController {
   /** Список личных кабинетов юзера. */
   def lkList = IsAuth.async { implicit request =>
     val personId = request.pwOpt.get.personId
-    val allMartsMapFut = MMart.getAll
+    val adnmsFut = MAdnNode.findByPersonId(personId)
+    val allMartsMapFut = MAdnNode.getAll()
       .map { mmarts => mmarts.map {mmart => mmart.id.get -> mmart}.toMap }
     for {
-      martsAndShops <- martsAndShopsFut(personId)
+      adnms <- adnmsFut
       allMartsMap <- allMartsMapFut
     } yield {
-      val (mmarts, mshops) = martsAndShops
-      Ok(lk.lkList(mmarts, mshops, allMartsMap))
+      val adnmsGrouped = adnms.groupBy(_.adn.memberType)
+        .mapValues(_.sortBy(_.meta.name.toLowerCase))
+      Ok(lk.lkList(adnmsGrouped, allMartsMap))
     }
   }
 
@@ -51,34 +53,24 @@ object MarketLk extends SioController {
 
   /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */
   def getMarketRdrCallFor(personId: String): Future[Option[Call]] = {
-    martsAndShopsFut(personId) map { case (mmarts, mshops) =>
-      // Не используем .tail.isEmpty вместо .size, т.к. тут не List, а обычно что-то иное, и .tail скорее всего приведет к созданию новой коллекции.
-      // Внутри функции разрешаем null, чтобы избежать повторяющихся Some().
-      val rdrOrNull: Call = if (mshops.isEmpty && mmarts.isEmpty) {
+    // Нам тут не надо выводить элементы, нужно лишь определять кол-во личных кабинетов и данные по ним.
+    MAdnNode.findByPersonId(personId, maxResults = 2).map { adnNodes =>
+      val rdrOrNull: Call = if (adnNodes.isEmpty) {
         // У юзера нет ни магазинов, ни ТЦ во владении. Некуда его редиректить, вероятно ошибся адресом.
         null
-      } else if (mmarts.isEmpty && mshops.size == 1) {
-        // У юзера есть один магазин во владении
-        routes.MarketShopLk.showShop(mshops.head.id.get)
-      } else if (mshops.isEmpty && mmarts.size == 1) {
-        // У юзера есть только один ТЦ во владении
-        routes.MarketMartLk.martShow(mmarts.head.id.get)
+      } else if (adnNodes.size == 1) {
+        // У юзера есть магазин или ТЦ
+        val adnNode = adnNodes.head
+        import AdNetMemberTypes._
+        adnNode.adn.memberType match {
+          case MART => routes.MarketMartLk.martShow(adnNode.id.get)
+          case SHOP => routes.MarketShopLk.showShop(adnNode.id.get)
+        }
       } else {
-        // У юзера есть несколько market-сущностей в персональном пользовании. Нужно отправить его на страницу со списком этого всего.
+        // У юзера есть более одно объекта во владении. Нужно предоставить ему выбор.
         routes.MarketLk.lkList()
       }
       Option(rdrOrNull)
-    }
-  }
-
-  private def martsAndShopsFut(personId: String): Future[(Seq[MMart], Seq[MShop])] = {
-    val mshopsFut = MShop.findByPersonId(personId)
-    val mmartsFut = MMart.findByPersonId(personId)
-    for {
-      mshops <- mshopsFut
-      mmarts <- mmartsFut
-    } yield {
-      (mmarts, mshops)
     }
   }
 

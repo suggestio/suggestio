@@ -1,30 +1,26 @@
 package controllers
 
-import _root_.util.{Context, PlayMacroLogsImpl}
+import util.{Context, PlayMacroLogsImpl}
 import util.acl._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
-import models._
-import MMart.MartId_t
-import MShop.ShopId_t
 import io.suggest.model.EsModel
 import views.html.market.lk.mart._
 import play.api.data._, Forms._
 import util.FormUtil._
-import MarketShopLk.{shopFormM, shopFullFormM}
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.current
-import util.img._
-import net.sf.jmimemagic.Magic
-import scala.Some
 import util.acl.IsMartAdminShop
-import util.img.ImgInfo4Save
-import util.img.OrigImgIdKey
+import util.img._
+import ImgFormUtil.imgInfo2imgKey
 import play.api.libs.json._
 import scala.concurrent.Future
 import play.api.mvc.{AnyContent, Result}
 import play.api.mvc.Security.username
 import scala.util.Success
+import models._
+import io.suggest.ym.ad.ShowLevelsUtil
+import AdnMPubSettingsLevels.LvlMap_t
 
 /**
  * Suggest.io
@@ -32,7 +28,7 @@ import scala.util.Success
  * Created: 02.03.14 13:54
  * Description: Личный кабинет для sio-маркета. Тут управление торговым центром и магазинами в нём.
  */
-object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport {
+object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport with ShopMartCompat {
 
   import LOGGER._
 
@@ -60,22 +56,26 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
 
   import ShopSort._
 
-  val martM = mapping(
-    "name"      -> martNameM,
+  /** Маппер для метаданных. */
+  val martMetaM = mapping(
+    "name"      -> nameM,
     "town"      -> townM,
     "address"   -> martAddressM,
     "site_url"  -> optional(urlStrMapper),
     "phone"     -> optional(phoneM)
   )
-  // applyF()
   {(name, town, address, siteUrlOpt, phoneOpt) =>
-    MMart(name=name, town=town, address=address, siteUrl=siteUrlOpt, companyId=null, phone=phoneOpt, personIds=null)
+    AdnMMetadata(
+      name = name,
+      town = Some(town),
+      address = Some(address),
+      siteUrl = siteUrlOpt,
+      phone = phoneOpt
+    )
   }
-  // unapplyF()
-  {mmart =>
-    import mmart._
-    Some((name, town, address, siteUrl, phone))
-  }
+  {meta =>
+    import meta._
+    Some((name, town.getOrElse(""), address.getOrElse(""), siteUrl, phone)) }
 
 
   /** Маппер для необязательного логотипа магазина. */
@@ -83,33 +83,42 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
   val martFormM = Form(tuple(
-    "mart" -> martM,
+    "meta" -> martMetaM,
     "welcomeImgId" -> optional(ImgFormUtil.imgIdJpegM),
     martLogoImgIdOptKM
   ))
 
 
-  /** Маппинг формы приглашения магазина в систему. */
-  val inviteShopFormM = Form(mapping(
-    "name"          -> shopNameM,
-    "email"         -> email,
-    "mart_floor"    -> martFloorM,
-    "mart_section"  -> martSectionM
+  val shopMetaM = mapping(
+    "name"    -> shopNameM,
+    "floor"   -> floorM,
+    "section" -> sectionM
   )
-  // applyF()
-  {(name, email, martFloor, martSection) =>
-    email -> MShop(name=name, martFloor=Some(martFloor), martSection=Some(martSection), companyId=null, personIds=Nil)
+  {(name, floor, section) =>
+    AdnMMetadata(name, floor = Some(floor), section = Some(section))
   }
-  // unapplyF()
-  {case (_email, mshop) =>
-    import mshop._
-    Some((name, _email, martFloor.get, martSection.get))
-  })
+  {lei =>
+    import lei._
+    Some( (name, floor.getOrElse(""), section.getOrElse("")) )
+  }
+
+  /** Маппинг формы приглашения магазина в систему. */
+  val inviteShopFormM = Form(tuple(
+    "email" -> email,
+    "meta" -> shopMetaM
+  ))
 
 
+  /** Форма на которой нельзя менять логотип, но можно настраивать разные поля.
+    * Подходит для редактирования из ТЦ-аккаунта */
+  val shopEditFormM = Form(
+    MarketShopLk.shopMetaFullKM
+  )
+
+  
   /** Асинхронно получить welcome-ad-карточку. */
-  private def getWelcomeAdOpt(mmart: MMart): Future[Option[MWelcomeAd]] = {
-    mmart.welcomeAdId
+  private def getWelcomeAdOpt(mmart: MAdnNode): Future[Option[MWelcomeAd]] = {
+    mmart.meta.welcomeAdId
       .fold [Future[Option[MWelcomeAd]]] (Future successful None) (MWelcomeAd.getById)
   }
 
@@ -119,15 +128,22 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    * @param newAdIdOpt Запрошено отображение для указанной карточки в реальном времени. Необходимо, если новая карточка
    *                была добавлена на предыдущей странице.
    */
-  def martShow(martId: MartId_t, newAdIdOpt: Option[String]) = IsMartAdmin(martId).async { implicit request =>
+  def martShow(martId: String, newAdIdOpt: Option[String]) = IsMartAdmin(martId).async { implicit request =>
     // Бывает, что есть дополнительная реклама, которая появится в выдаче только по наступлению index refresh. Тут костыль для отработки этого.
     val extAdOptFut = newAdIdOpt match {
-      case Some(newAdId) => MMartAd.getById(newAdId).map { _.filter { mad => mad.martId == martId } }
+      case Some(newAdId) =>
+        MAd.getById(newAdId) map {
+          // Фильтр по receivers нужен для подавления подстановки чужих ID.
+          _.filter { mad =>
+            mad.producerId == martId  ||  mad.receivers.valuesIterator.exists(_.receiverId == martId)
+          }
+        }
       case None => Future successful None
     }
+    // Начать нормальную обработку карточек
     for {
-      mads          <- MMartAd.findForMartRt(martId, shopMustMiss = true)
-      extAdOpt      <- extAdOptFut
+      mads      <- MAd.findForProducerRt(martId)
+      extAdOpt  <- extAdOptFut
     } yield {
       // Если есть карточка в extAdOpt, то надо добавить её в начало списка, который отсортирован по дате создания.
       val mads2 = if (extAdOpt.isDefined  &&  mads.headOption.flatMap(_.id) != newAdIdOpt) {
@@ -146,9 +162,9 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    * @param sortByRaw Сортировка магазинов по указанному полю. Если не задано, то порядок не определён.
    * @param isReversed Если true, то будет сортировка в обратном порядке. Иначе в прямом.
    */
-  def shopsShow(martId: MartId_t, sortByRaw: Option[String], isReversed: Boolean) = IsMartAdmin(martId).async { implicit request =>
+  def shopsShow(martId: String, sortByRaw: Option[String], isReversed: Boolean) = IsMartAdmin(martId).async { implicit request =>
     val sortBy = sortByRaw flatMap handleShopsSortBy
-    MShop.findByMartId(martId, sortBy, isReversed) map { shops =>
+    MAdnNode.findBySupId(martId, sortBy, isReversed) map { shops =>
       Ok(shopsShowTpl(request.mmart, shops))
     }
   }
@@ -157,12 +173,14 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    * Рендер страницы с формой редактирования ТЦ в личном кабинете.
    * @param martId id ТЦ.
    */
-  def martEditForm(martId: MartId_t) = IsMartAdmin(martId).async { implicit request =>
+  def martEditForm(martId: String) = IsMartAdmin(martId).async { implicit request =>
     import request.mmart
     getWelcomeAdOpt(mmart) map { welcomeAdOpt =>
-      val martLogoOpt = mmart.logoImgId.map { imgId => ImgInfo4Save(OrigImgIdKey(imgId)) }
-      val welcomeImgKey = welcomeAdOpt.map { welcomeAd => OrigImgIdKey(welcomeAd.img.id, welcomeAd.img.meta) }
-      val formFilled = martFormM.fill((mmart, welcomeImgKey, martLogoOpt))
+      val martLogoOpt = mmart.logoImgOpt.map { img =>
+        ImgInfo4Save(imgInfo2imgKey(img))
+      }
+      val welcomeImgKey = welcomeAdOpt.map[OrigImgIdKey] { _.img }
+      val formFilled = martFormM.fill((mmart.meta, welcomeImgKey, martLogoOpt))
       Ok(martEditFormTpl(mmart, formFilled, welcomeAdOpt))
     }
   }
@@ -171,7 +189,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    * Сабмит формы редактирования ТЦ.
    * @param martId id ТЦ.
    */
-  def martEditFormSubmit(martId: MartId_t) = IsMartAdmin(martId).async { implicit request =>
+  def martEditFormSubmit(martId: String) = IsMartAdmin(martId).async { implicit request =>
     import request.mmart
     martFormM.bindFromRequest().fold(
       {formWithErrors =>
@@ -182,10 +200,10 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
             .flashing("error" -> "Ошибка заполнения формы.")
         }
       },
-      {case (mmart2, welcomeImgOpt, logoImgIdOpt) =>
+      {case (martMeta, welcomeImgOpt, logoImgIdOpt) =>
         // В фоне обновляем логотип ТЦ
-        val savedLogoFut = ImgFormUtil.updateOrigImgId(logoImgIdOpt, oldImgId = mmart2.logoImgId)
-        // В фоне обновляем картинку карточки-приветствия
+        val savedLogoFut = ImgFormUtil.updateOrigImg(logoImgIdOpt, oldImgs = mmart.logoImgOpt)
+        // В фоне обновляем картинку карточки-приветствия.
         val savedWelcomeImgsFut: Future[_] = getWelcomeAdOpt(request.mmart) flatMap { welcomeAdOpt =>
           ImgFormUtil.updateOrigImg(
             needImgs = welcomeImgOpt.map(ImgInfo4Save(_, withThumb = false)),
@@ -194,9 +212,9 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
             savedImgs.headOption match {
               // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
               case None =>
-                val deleteOldAdFut = mmart.welcomeAdId
-                  .fold [Future[_]] {Future successful ()} { MMartAd.deleteById }
-                mmart.welcomeAdId = None
+                val deleteOldAdFut = mmart.meta.welcomeAdId
+                  .fold [Future[_]] {Future successful ()} { MAd.deleteById }
+                mmart.meta.welcomeAdId = None
                 deleteOldAdFut
 
               // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
@@ -206,23 +224,19 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
                   welcomeAd.img = newImgInfo
                   welcomeAd
                 } getOrElse {
-                  MWelcomeAd(martId=martId, img = newImgInfo, companyId = mmart.companyId)
+                  MWelcomeAd(producerId = martId, img = newImgInfo)
                 }
                 welcomeAd.save andThen {
-                  case Success(welcomeAdId) => mmart.welcomeAdId = Some(welcomeAdId)
+                  case Success(welcomeAdId) =>
+                    mmart.meta.welcomeAdId = Some(welcomeAdId)
                 }
             }
           }
         }
-        // Заполняем поля
-        mmart.name = mmart2.name
-        mmart.town = mmart2.town
-        mmart.address = mmart2.address
-        mmart.siteUrl = mmart2.siteUrl
-        mmart.phone = mmart2.phone
+        mmart.meta = martMeta
         savedLogoFut.flatMap { savedLogos =>
+          mmart.logoImgOpt = savedLogos.headOption
           savedWelcomeImgsFut flatMap { _ =>
-            mmart.logoImgId = savedLogos.headOption.map(_.id)
             mmart.save.map { _ =>
               Redirect(routes.MarketMartLk.martShow(martId))
                 .flashing("success" -> "Изменения сохранены.")
@@ -239,7 +253,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    * Рендер страницы с формой инвайта магазина.
    * @param martId id ТЦ.
    */
-  def inviteShopForm(martId: MartId_t) = IsMartAdmin(martId).apply { implicit request =>
+  def inviteShopForm(martId: String) = IsMartAdmin(martId).apply { implicit request =>
     Ok(shop.shopInviteFormTpl(request.mmart, inviteShopFormM))
   }
 
@@ -247,19 +261,28 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    * Сабмит формы инвайта магазина.
    * @param martId id ТЦ.
    */
-  def inviteShopFormSubmit(martId: MartId_t) = IsMartAdmin(martId).async { implicit request =>
+  def inviteShopFormSubmit(martId: String) = IsMartAdmin(martId).async { implicit request =>
     import request.mmart
     inviteShopFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"inviteShopFormSubmit($martId): Bind failed: " + formWithErrors.errors)
         NotAcceptable(shop.shopInviteFormTpl(mmart, formWithErrors))
       },
-      {case (_email, mshop) =>
-        mshop.martId = Some(martId)
-        val mcFut = MCompany(mshop.name).save
-        // Параллельно создать юзера и запись по его активации.
-        mcFut.flatMap { companyId =>
-          mshop.companyId = companyId
+      {case (_email, meta) =>
+        MCompany(meta.name).save.flatMap { companyId =>
+          // Собираем дефолтовый магазин как будущий узел рекламной сети.
+          val mshop = MAdnNode(
+            companyId = companyId,
+            personIds = Set.empty,
+            adn = {
+              val mi = AdNetMemberTypes.SHOP.getAdnInfoDflt
+              mi.supId = Some(martId)
+              mi.isEnabled = false
+              mi.disableReason = Some("First run/inactive")
+              mi
+            },
+            meta = meta
+          )
           mshop.save.flatMap { shopId =>
             mshop.id = Some(shopId)
             val eAct = EmailActivation(email = _email, key = shopId)
@@ -273,12 +296,12 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
               mail.setRecipient(_email)
               val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
               mail.send(
-                bodyHtml = shop.emailShopInviteTpl(mmart, mshop, eAct)(ctx),
-                bodyText = views.txt.market.lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct)(ctx)
+                bodyHtml = shop.emailShopInviteTpl(mmart, mshop=mshop, eAct)(ctx),
+                bodyText = views.txt.market.lk.mart.shop.emailShopInviteTpl(mmart, mshop=mshop, eAct)(ctx)
               )
               // Собственно, результат работы.
               Redirect(routes.MarketMartLk.martShow(martId))
-                .flashing("success" -> s"Добавлен магазин: '${mshop.name}'.")
+                .flashing("success" -> s"Добавлен магазин: '${mshop.meta.name}'.")
             }
           }
         }
@@ -292,15 +315,10 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    * используется именно расширенная форма.
    * @param shopId id магазина.
    */
-  def editShopForm(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
-    import request.mmart
-    MShop.getById(shopId) flatMap {
-      case Some(mshop) =>
-        MarketShopLk.fillFullForm(mshop) map { formBinded =>
-          Ok(shop.shopEditFormTpl(mmart, mshop, formBinded))
-        }
-
-      case None => shopNotFound(shopId)
+  def editShopForm(shopId: String) = IsMartAdminShop(shopId).async { implicit request =>
+    import request.{mmart, mshop}
+    MarketShopLk.fillFullForm(mshop) map { formBinded =>
+      Ok(shop.shopEditFormTpl(mmart, mshop, formBinded))
     }
   }
 
@@ -315,14 +333,14 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    * @return 200 Отрендеренный список магазинов для отображения поверх существующей страницы.
    *         406 С сообщением об ошибке.
    */
-  def searchShops(martId: MartId_t) = IsMartAdmin(martId).async { implicit request =>
+  def searchShops(martId: String) = IsMartAdmin(martId).async { implicit request =>
     searchFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"searchShops($martId): Failed to bind search form: " + formWithErrors.errors)
         NotAcceptable("Bad search request")
       },
       {q =>
-        MShop.searchAll(q, martId = Some(martId)) map { result =>
+        MAdnNode.searchAll(q, supId = Some(martId)) map { result =>
           Ok(_martShopsTpl(martId, result))
         }
       }
@@ -333,48 +351,39 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    * Сабмит формы редактирования магазина-арендатора.
    * @param shopId id редактируемого магазина.
    */
-  def editShopFormSubmit(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
-    MShop.getById(shopId) flatMap {
-      case Some(mshop) =>
-        shopFormM.bindFromRequest().fold(
-          {formWithErrors =>
-            debug(s"editShopFormSubmit($shopId): Form bind failed: " + formWithErrors.errors)
-            MarketShopLk.fillFullForm(mshop) map { formWithErrors2 =>
-              val fwe3 = formWithErrors2.bindFromRequest()
-              NotAcceptable(shop.shopEditFormTpl(request.mmart, mshop, fwe3))
-            }
-          },
-          {mshop2 =>
-            // Пора накатить изменения на текущий магазин и сохранить
-            mshop.name = mshop2.name
-            mshop.description = mshop2.description
-            mshop.martFloor = mshop2.martFloor
-            mshop.martSection = mshop2.martSection
-            mshop.save.map { _ =>
-              Redirect(routes.MarketMartLk.showShop(shopId))
-                .flashing("success" -> "Изменения сохранены.")
-            }
-          }
-        )
+  def editShopFormSubmit(shopId: String) = IsMartAdminShop(shopId).async { implicit request =>
+    import request.mshop
+    shopEditFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"editShopFormSubmit($shopId): Form bind failed: " + formWithErrors.errors)
+        MarketShopLk.fillFullForm(mshop) map { formWithErrors2 =>
+          val fwe3 = formWithErrors2.bindFromRequest()
+          NotAcceptable(shop.shopEditFormTpl(request.mmart, mshop, fwe3))
+        }
+      },
+      {meta =>
+        // Пора накатить изменения на текущий магазин и сохранить
+        mshop.meta.name = meta.name
+        mshop.meta.description = meta.description
+        mshop.meta.floor = meta.floor
+        mshop.meta.section = meta.section
+        mshop.save.map { _ =>
+          Redirect(routes.MarketMartLk.showShop(shopId))
+            .flashing("success" -> "Изменения сохранены.")
+        }
+      }
+    )
 
-      case None => shopNotFound(shopId)
-    }
   }
 
   /**
    * Отобразить страницу по магазину.
    * @param shopId id магазина.
    */
-  def showShop(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
-    import request.mmart
-    val madsFut = MMartAd.findForShop(shopId)
-    MShop.getById(shopId) flatMap {
-      case Some(mshop) =>
-        madsFut map { mads =>
-          Ok(shop.shopShowTpl(mmart, mshop, mads))
-        }
-
-      case None => shopNotFound(shopId)
+  def showShop(shopId: String) = IsMartAdminShop(shopId).async { implicit request =>
+    import request.{mmart, mshop}
+    MAd.findForProducer(shopId) map { mads =>
+      Ok(shop.shopShowTpl(mmart, mshop, mads))
     }
   }
 
@@ -384,7 +393,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
    * @return Тот же формат ответа, что и для просто temp-картинок.
    */
-  def handleMartTempLogo(martId: MartId_t) = IsMartAdmin(martId)(parse.multipartFormData) { implicit request =>
+  def handleMartTempLogo(martId: String) = IsMartAdmin(martId)(parse.multipartFormData) { implicit request =>
     handleLogo(MartLogoImageUtil, MART_TMP_LOGO_MARKER)
   }
 
@@ -404,14 +413,10 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    * @return 200 с формой указания причины отключения магазина.
    *         404 если магазин не найден.
    */
-  def shopOnOffForm(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
-    MShop.getById(shopId).map {
-      case Some(mshop) =>
-        val formBinded = shopOnOffFormM.fill((false, mshop.settings.supDisableReason))
-        Ok(shop._onOffFormTpl(mshop, formBinded))
-
-      case None => shopNotFound(shopId)
-    }
+  def shopOnOffForm(shopId: String) = IsMartAdminShop(shopId).apply { implicit request =>
+    import request.mshop
+    val formBinded = shopOnOffFormM.fill((false, mshop.adn.disableReason))
+    Ok(shop._onOffFormTpl(mshop, formBinded))
   }
 
   /**
@@ -419,14 +424,14 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    * @param shopId id магазина.
    * @return 200 Ok если всё ок.
    */
-  def shopOnOffSubmit(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
+  def shopOnOffSubmit(shopId: String) = IsMartAdminShop(shopId).async { implicit request =>
     shopOnOffFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"shopOnOffSubmit($shopId): Bind form failed: " + formWithErrors.errors)
+        debug(s"shopOnOffSubmit($shopId): Bind form failed: " + formatFormErrors(formWithErrors))
         NotAcceptable("Bad request body.")
       },
       {case (isEnabled, reason) =>
-        MShop.setIsEnabled(shopId, isEnabled = isEnabled, reason = reason) map { _ =>
+        request.mshop.setIsEnabled(isEnabled, reason) map { _ =>
           val reply = JsObject(Seq(
             "isEnabled" -> JsBoolean(isEnabled),
             "shopId" -> JsString(shopId)
@@ -474,27 +479,27 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   /** Рендер формы сокрытия какой-то рекламы. */
   def shopAdHideForm(adId: String) = IsMartAdminShopAd(adId).async { implicit request =>
     import request.ad
-    val shopId = ad.shopId.get
-    MShop.getById(shopId) map {
+    val shopId = ad.producerId
+    getShopByIdCache(shopId) map {
       case Some(mshop) =>
         Ok(shop._shopAdHideFormTpl(mshop, ad, request.mmart, shopAdHideFormM))
 
-      case None => shopNotFound(shopId)
+      case None => http404AdHoc
     }
   }
 
   /** Сабмит формы сокрытия/удаления формы. */
   def shopAdHideFormSubmit(adId: String) = IsMartAdminShopAd(adId).async { implicit request =>
     // TODO Надо поразмыслить над ответами. Вероятно, тут нужны редиректы или jsonp-команды.
-    val rdr = Redirect(routes.MarketMartLk.showShop(request.ad.shopId.get))
+    val rdr = Redirect(routes.MarketMartLk.showShop(request.ad.producerId))
     shopAdHideFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"shopAdHideFormSubmit($adId): Form bind failed: " + formWithErrors.errors)
         rdr.flashing("error" -> "Необходимо указать причину")
       },
       {case (HideShopAdActions.HIDE, reason) =>
-        request.ad.showLevels = Set.empty
-        request.ad.saveShowLevels map { _ =>
+        request.ad.receivers = Map.empty
+        request.ad.saveReceivers map { _ =>
           // Отправить письмо магазину-владельцу рекламы
           notyfyAdDisabled(reason)
           rdr.flashing("success" -> "Объявление выключено")
@@ -507,25 +512,24 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    * Сообщить владельцу магазина, что его рекламу отключили.
    * @param reason Указанная причина отключения.
    */
-  private def notyfyAdDisabled(reason: String)(implicit request: ShopMartAdRequest[_]) {
+  private def notyfyAdDisabled(reason: String)(implicit request: MartShopAdRequest[_]) {
     import request.{mmart, ad}
-    ad.shopId.foreach { shopId =>
-      MShop.getById(shopId) onSuccess { case Some(mshop) =>
-        mshop.mainPersonId.foreach { personId =>
-          MPersonIdent.findAllEmails(personId) onSuccess { case emails =>
-            if (emails.isEmpty) {
-              warn(s"notifyAdDisabled(${ad.id.get}): No notify emails found for shop ${mshop.id.get}")
-            } else {
-              val mail = use[MailerPlugin].email
-              mail.setSubject("Suggest.io | Отключена ваша рекламная карточка")
-              mail.setFrom("no-reply@suggest.io")
-              mail.setRecipient(emails : _*)
-              val ctx = implicitly[Context]   // Нано-оптимизация: один контекст для обоих рендеров.
-              mail.send(
-                bodyHtml = views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(mmart, mshop, ad, reason)(ctx),
-                bodyText = views.txt.market.lk.shop.ad.emailAdDisabledByMartTpl(mmart, mshop, ad, reason)(ctx)
-              )
-            }
+    val shopId = ad.producerId
+    getShopByIdCache(shopId) onSuccess { case Some(mshop) =>
+      mshop.mainPersonId.foreach { personId =>
+        MPersonIdent.findAllEmails(personId) onSuccess { case emails =>
+          if (emails.isEmpty) {
+            warn(s"notifyAdDisabled(${ad.id.get}): No notify emails found for shop ${mshop.id.get}")
+          } else {
+            val mail = use[MailerPlugin].email
+            mail.setSubject("Suggest.io | Отключена ваша рекламная карточка")
+            mail.setFrom("no-reply@suggest.io")
+            mail.setRecipient(emails : _*)
+            val ctx = implicitly[Context]   // Нано-оптимизация: один контекст для обоих рендеров.
+            mail.send(
+              bodyHtml = views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(mmart, mshop, ad, reason)(ctx),
+              bodyText = views.txt.market.lk.shop.ad.emailAdDisabledByMartTpl(mmart, mshop, ad, reason)(ctx)
+            )
           }
         }
       }
@@ -540,25 +544,20 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   )
 
   /** Владелец ТЦ дергает за переключатель доступности top-level выдачи для магазина. */
-  def setShopTopLevelAvailable(shopId: ShopId_t) = IsMartAdminShop(shopId).async { implicit request =>
+  def setShopTopLevelAvailable(shopId: String) = IsMartAdminShop(shopId).async { implicit request =>
     shopTopLevelFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"shopSetTopLevel($shopId): Form bind failed: " + formWithErrors.errors)
         NotAcceptable("Cannot parse req body.")
       },
       {isTopEnabled =>
-        MShop.getById(shopId) flatMap {
-          case Some(mshop) =>
-            mshop.settings.supWithLevels = if (isTopEnabled) {
-              mshop.settings.supWithLevels + AdShowLevels.LVL_MART_SHOWCASE
-            } else {
-              mshop.settings.supWithLevels - AdShowLevels.LVL_MART_SHOWCASE
-            }
-            mshop.saveShopLevels map { _ =>
-              Ok("updated ok")
-            }
-
-          case None => shopNotFound(shopId)
+        import request.mshop
+        if (isTopEnabled)
+          mshop.adn.showLevelsInfo.out += AdShowLevels.LVL_START_PAGE -> 1
+        else
+          mshop.adn.showLevelsInfo.out -= AdShowLevels.LVL_START_PAGE
+        mshop.save map { _ =>
+          Ok("updated ok")
         }
       }
     )
@@ -571,12 +570,12 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   val martInviteAcceptM = Form(optional(passwordWithConfirmM))
 
   /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
-  def martInviteAcceptForm(martId: MartId_t, eActId: String) = inviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
+  def martInviteAcceptForm(martId: String, eActId: String) = inviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
     Ok(martInvite.inviteAcceptFormTpl(mmart, eAct, martInviteAcceptM))
   }
 
   /** Сабмит формы подтверждения инвайта на управление ТЦ. */
-  def martInviteAcceptFormSubmit(martId: MartId_t, eActId: String) = inviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
+  def martInviteAcceptFormSubmit(martId: String, eActId: String) = inviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
     // Если юзер залогинен, то форму биндить не надо
     val formBinded = martInviteAcceptM.bindFromRequest()
     formBinded.fold(
@@ -606,7 +605,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
             newPersonIdOptFut flatMap { personIdOpt =>
               val personId = (personIdOpt orElse request.pwOpt.map(_.personId)).get
               if (!(mmart.personIds contains personId)) {
-                mmart.personIds ::= personId
+                mmart.personIds += personId
               }
               mmart.save.map { _martId =>
                 Redirect(routes.MarketMartLk.martShow(martId))
@@ -620,13 +619,15 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     )
   }
 
-  private def inviteAcceptCommon(martId: MartId_t, eaId: String)(f: (EmailActivation, MMart) => AbstractRequestWithPwOpt[AnyContent] => Future[Result]) = {
+  private def inviteAcceptCommon(martId: String, eaId: String)(f: (EmailActivation, MAdnNode) => AbstractRequestWithPwOpt[AnyContent] => Future[Result]) = {
     MaybeAuth.async { implicit request =>
       bruteForceProtect flatMap { _ =>
         EmailActivation.getById(eaId) flatMap {
           case Some(eAct) if eAct.key == martId =>
-            MMart.getById(martId) flatMap {
-              case Some(mmart) => f(eAct, mmart)(request)
+            getMartByIdCache(martId) flatMap {
+              case Some(mmart) =>
+                f(eAct, mmart)(request)
+
               case None =>
                 // should never occur
                 error(s"inviteAcceptCommon($martId, eaId=$eaId): Mart not found, but code for mart exist. This should never occur.")
@@ -644,9 +645,5 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
       }
     }
   }
-
-
-  private def martNotFound(martId: MartId_t) = NotFound("mart not found: " + martId)  // TODO Нужно дергать 404-шаблон.
-  private def shopNotFound(shopId: ShopId_t) = NotFound("Shop not found: " + shopId)  // TODO
 
 }

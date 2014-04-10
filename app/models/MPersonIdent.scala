@@ -13,6 +13,7 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
 import scala.collection.JavaConversions._
 import scala.collection.Map
+import play.api.libs.json.{JsBoolean, JsString}
 
 /**
  * Suggest.io
@@ -53,26 +54,10 @@ object MPersonIdent {
   )
 
   def generateMappingProps: List[DocField] = List(
-    FieldString(
-      id = PERSON_ID_ESFN,
-      index = FieldIndexingVariants.not_analyzed,
-      include_in_all = false
-    ),
-    FieldString(
-      id = KEY_ESFN,
-      index = FieldIndexingVariants.not_analyzed,
-      include_in_all = true
-    ),
-    FieldString(
-      id = VALUE_ESFN,
-      index = FieldIndexingVariants.no,
-      include_in_all = false
-    ),
-    FieldBoolean(
-      id = IS_VERIFIED_ESFN,
-      index = FieldIndexingVariants.no,
-      include_in_all = false
-    )
+    FieldString(PERSON_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldString(KEY_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
+    FieldString(VALUE_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
+    FieldBoolean(IS_VERIFIED_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
   )
 
   def generateMapping(typ: String, withStaticFields: Seq[Field] = Nil): XContentBuilder = jsonGenerator { implicit b =>
@@ -151,15 +136,17 @@ trait MPersonIdent[E <: MPersonIdent[E]] extends EsModelT[E] {
   /** Определяется реализацией: надо ли записывать в хранилище значение isVerified. */
   def writeVerifyInfo: Boolean
 
-  def writeJsonFields(acc: XContentBuilder) {
-    acc
-      .field(PERSON_ID_ESFN, personId)
-      .field(KEY_ESFN, key)
+  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    var acc1: FieldsJsonAcc = PERSON_ID_ESFN -> JsString(personId) ::
+      KEY_ESFN -> JsString(key) ::
+      acc
     if (value.isDefined)
-      acc.field(VALUE_ESFN, value.get)
+      acc1 ::= VALUE_ESFN -> JsString(value.get)
     if (writeVerifyInfo)
-      acc.field(IS_VERIFIED_ESFN, isVerified)
+      acc1 ::= IS_VERIFIED_ESFN -> JsBoolean(isVerified)
+    acc1
   }
+
 }
 
 

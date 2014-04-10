@@ -1,4 +1,4 @@
-@(mmart: MMart, mad: MMartAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_])(implicit ctx: util.Context)
+@(mmart: MAdnNode, mad: MAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_])(implicit ctx: util.Context)
 
 @editAdTpl(
   mad = mad,
@@ -6,6 +6,5 @@
   mmcats = mmcats,
   backCall = routes.MarketMartLk.martShow(mmart.id.get),
   submitCall = routes.MarketAd.editMartAdSubmit(mad.id.get),
-  previewCall = routes.MarketAd.adFormPreviewMartSubmit(mad.martId),
-  bp = mmart
+  previewCall = routes.MarketAd.adFormPreviewMartSubmit(mad.producerId)
 )

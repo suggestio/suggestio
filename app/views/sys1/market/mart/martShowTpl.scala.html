@@ -1,4 +1,4 @@
-@(mmart: MMart, shops:Seq[MShop], owner: Option[MCompany] = None)(implicit ctx: util.Context)
+@(mmart: MAdnNode, shops:Seq[MAdnNode], owner: Option[MCompany] = None)(implicit ctx: util.Context)
 
 @* Страница, отображающая информацию по торговому центру. *@
 @import sys1.market._, shop._
@@ -6,8 +6,8 @@
 @import datetime._
 @import helper._
 
-@martBase(mmart.name) {
-  <h2>@mmart.name</h2>
+@martBase(mmart.meta.name) {
+  <h2>@mmart.meta.name</h2>
 
   <p><a href="@routes.MarketMartLk.martShow(mmart.id.get)"><b>-&gt; Личный кабинет ТЦ</b></a></p>
   <p><a href="@routes.Market.martIndex(mmart.id.get)"><b>-&gt; Входная страница</b></a></p>
@@ -17,14 +17,14 @@
 
   <br/>
 
-  <p>@Messages("Address"): @mmart.address</p>
+  <p>@Messages("Address"): @mmart.meta.address</p>
   @owner.map { mc =>
     <p>@Messages("Owner"): <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a></p>
   }
-  @mmart.siteUrl.map { siteUrl =>
+  @mmart.meta.siteUrl.map { siteUrl =>
     <p>Ссылка на сайт: <a href="@siteUrl">@siteUrl</a></p>
   }
-  <p>@Messages("Created"): @_prettyDate(mmart.dateCreated, withSpan = true)</p>
+  <p>@Messages("Created"): @_prettyDate(mmart.meta.dateCreated, withSpan = true)</p>
 
   @if(shops.isEmpty) {
     <p>В этом торговом центре нет зарегистрированных магазинов.</p>
@@ -42,11 +42,5 @@
   @* Кнопки для имитиации добавления/удаления уже существующего ТЦ. Потом надо будет их наверное удалить или запретить их трогать через доп.ACL. *@
   <br/><br/>
   <h3>Команды</h3>
-  @form(routes.SysMarket.inx2handleMartAdd(mmart.id.get)) {
-    <input type="submit" value="IndicesUtil.handleMartAdd()" title="Имитация реакции индексов на добавление указанного ТЦ"/>
-  }
-  @form(routes.SysMarket.inx2handleMartDelete(mmart.id.get)) {
-    <input type="submit" value="IndicesUtil.handleMartDelete()" title="Имитация реакции индексов на добавление указанного ТЦ"/>
-  }
   @_martDeleteFormTpl(mmart.id.get)
 }

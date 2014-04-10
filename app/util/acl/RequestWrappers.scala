@@ -3,8 +3,6 @@ package util.acl
 import util.acl.PersonWrapper._
 import play.api.mvc.{WrappedRequest, Request}
 import models._
-import io.suggest.ym.model.MCompany
-import MShop.ShopId_t, MMart.MartId_t, MCompany.CompanyId_t
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
@@ -54,7 +52,7 @@ case class RequestWithDAuthz[A](pwOpt: PwOpt_t, dAuthz: MDomainAuthzT, request: 
 
 /** Админство магазина. */
 abstract class AbstractRequestForShopAdm[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
-  def shopId: ShopId_t
+  def shopId: String
 }
 
 

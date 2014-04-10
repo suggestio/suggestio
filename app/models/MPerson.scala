@@ -10,6 +10,7 @@ import org.elasticsearch.client.Client
 import play.api.Play.current
 import play.api.cache.Cache
 import util.PlayMacroLogsImpl
+import play.api.libs.json.JsString
 
 /**
  * Suggest.io
@@ -110,9 +111,10 @@ case class MPerson(
 
   override def companion = MPerson
 
-  override def writeJsonFields(acc: XContentBuilder) {
-    acc.field(LANG_ESFN, lang)
+  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    LANG_ESFN -> JsString(lang) :: acc
   }
+
 }
 
 

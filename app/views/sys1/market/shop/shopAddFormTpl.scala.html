@@ -1,4 +1,4 @@
-@(sf: Form[_], companies:Seq[MCompany], marts:Seq[MMart])(implicit ctx: util.Context)
+@(sf: Form[_], companies:Seq[MCompany], marts:Seq[MAdnNode])(implicit ctx: util.Context)
 
 @* Страница с формой добавления нового магазина. *@
 
@@ -7,7 +7,7 @@
     call = routes.SysMarket.shopAddFormSubmit,
     sf = sf,
     btnText = "Создать",
-    companies=companies,
-    marts=marts
+    companies = companies,
+    marts = marts
   )
 }

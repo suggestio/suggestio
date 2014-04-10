@@ -1,4 +1,4 @@
-@(mmart: MMart, ads: Seq[MMartAdIndexed], shops: Map[ShopId_t, MShop])(implicit ctx: util.Context)
+@(mmart: MAdnNode, ads: Seq[MAdT], shops: Map[String, MAdnNode])(implicit ctx: util.Context)
 
 @* Список офферов, подгружается динамически *@
 <div class="sm-offers">

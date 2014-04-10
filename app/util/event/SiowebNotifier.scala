@@ -9,6 +9,7 @@ import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import scala.concurrent.future
 import play.api.libs.concurrent.Execution.Implicits._
+import models.MAdnNodeCache
 
 /**
  * Suggest.io
@@ -37,7 +38,7 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
   protected def getStaticSubscribers: Seq[SNStaticSubscriber] = List(
     DomainManager,
     SiobixClient,
-    IndicesUtil
+    MAdnNodeCache
   )
 
   /** SiowebSup собирается запустить сие. */

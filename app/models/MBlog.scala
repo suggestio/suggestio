@@ -5,6 +5,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.model.{EsModelT, EsModel, EsModelStaticT}
 import EsModel._
 import io.suggest.util.SioEsUtil._
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -72,15 +73,17 @@ case class MBlog(
 
   def companion = MBlog
 
-  override def writeJsonFields(acc: XContentBuilder) {
-    acc.field(TITLE_ESFN, title)
-      .field(DESCRIPTION_ESFN, description)
-      .field(BG_IMAGE_ESFN, bgImage)
-      .field(BG_COLOR_ESFN, bgColor)
-      .field(TEXT_ESFN, text)
+  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     if (date == null)
-      date = DateTime.now()
-    acc.field(DATE_ESFN, date)
+      date = DateTime.now
+    TITLE_ESFN -> JsString(title) ::
+      DESCRIPTION_ESFN -> JsString(description) ::
+      BG_IMAGE_ESFN -> JsString(bgImage) ::
+      BG_COLOR_ESFN -> JsString(bgColor) ::
+      TEXT_ESFN -> JsString(text) ::
+      DATE_ESFN -> EsModel.date2JsStr(date) ::
+      acc
   }
+
 }
 
