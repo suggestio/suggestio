@@ -1,4 +1,5 @@
 import io.suggest.ym
+import io.suggest.ym.model.common
 
 /**
  * Suggest.io
@@ -87,7 +88,7 @@ package object models {
   val  AOText               = ym.model.ad.AOText
   type AOText               = ym.model.ad.AOText
 
-  val  AOTextAlignValues    = ym.model.ad.AOTextAlignValues
+  val  AOTextAlignValues    = common.AOTextAlignValues
   type AOTextAlignValue     = AOTextAlignValues.TextAlignValue
 
   val  AODiscountTemplate   = ym.model.ad.AODiscountTemplate
