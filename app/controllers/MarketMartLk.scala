@@ -19,8 +19,7 @@ import play.api.mvc.{AnyContent, Result}
 import play.api.mvc.Security.username
 import scala.util.Success
 import models._
-import io.suggest.ym.ad.ShowLevelsUtil
-import AdnMPubSettingsLevels.LvlMap_t
+import io.suggest.ym.model.common.EMAdnMMetadataStatic.META_FLOOR_ESFN
 
 /**
  * Suggest.io
@@ -47,7 +46,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
       } else if (SORT_BY_CAT.toString equalsIgnoreCase sortRaw) {
         ???
       } else if (SORT_BY_FLOOR.toString equalsIgnoreCase sortRaw) {
-        Some(EsModel.MART_FLOOR_ESFN)
+        Some(META_FLOOR_ESFN)
       } else {
         None
       }

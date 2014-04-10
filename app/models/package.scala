@@ -17,20 +17,6 @@ package object models {
   val  MAdnNode             = ym.model.MAdnNode
   type MAdnNode             = ym.model.MAdnNode
 
-  @deprecated("mart+shop arch is deprecated. Use MAdnNode.", "2014.apr.07")
-  type MMart                = ym.model.MMart
-  @deprecated("mart+shop arch is deprecated. Use MAdnNode.", "2014.apr.07")
-  val  MMart                = ym.model.MMart
-  @deprecated("mart+shop arch is deprecated. Use String instead.", "2014.apr.07")
-  type MartId_t             = String
-
-  @deprecated("mart+shop arch is deprecated. Use MAdnNode.", "2014.apr.07")
-  type MShop                = ym.model.MShop
-  @deprecated("mart+shop arch is deprecated. Use MAdnNode.", "2014.apr.07")
-  val  MShop                = ym.model.MShop
-  @deprecated("mart+shop arch is deprecated. Use String instead.", "2014.apr.07")
-  type ShopId_t             = String
-
   type MShopPriceList       = ym.model.MShopPriceList
   val  MShopPriceList       = ym.model.MShopPriceList
 
@@ -58,14 +44,12 @@ package object models {
   val  AdnMPubSettingsLevels = ym.model.common.AdnMemberShowLevels
   type AdnMPubSettingsLevels = ym.model.common.AdnMemberShowLevels
 
+
+  // Рекламота
   type MAdT                 = ym.model.ad.MAdT[_]
 
   val  AdReceiverInfo       = ym.model.common.AdReceiverInfo
   type AdReceiverInfo       = ym.model.common.AdReceiverInfo
-
-  // Начинаем MMartAd и смежные объекты.
-  @deprecated("mart+shop arch is deprecated. Use MAd.", "2014.apr.07")
-  val  MMartAd              = ym.model.MMartAd
 
   val  MWelcomeAd           = ym.model.MWelcomeAd
   type MWelcomeAd           = ym.model.MWelcomeAd
@@ -124,9 +108,6 @@ package object models {
 
   val  MMartInx             = io.suggest.model.inx2.MMartInx
   type MMartInx             = io.suggest.model.inx2.MMartInx
-
-  @deprecated("mart+shop arch is deprecated. Use MAd.", "2014.apr.07")
-  val  MMartAdIndexed       = ym.model.MMartAdIndexed
 
   val  MAdStat              = ym.model.stat.MAdStat
   type MAdStat              = ym.model.stat.MAdStat

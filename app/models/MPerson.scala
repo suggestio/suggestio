@@ -33,7 +33,7 @@ object MPerson extends EsModelStaticT[MPerson] with PlayMacroLogsImpl {
   val IDENTS_ESFN = "idents"
 
   /** PersonId суперпользователей sio. */
-  private var SU_IDS: Set[String] = null
+  private var SU_IDS: Set[String] = Set.empty
 
   /** Выставление personId для суперпользователей. Вызывается из Global при старте. */
   def setSuIds(suIds: Set[String]) {

@@ -451,7 +451,8 @@ object MarketAd extends SioController with LogoSupport {
   }
 
   private def renderEditShopFormWith(af: AdFormM, mshopOpt: Option[MAdnNode], mad: MAd)(implicit ctx: Context) = {
-    getMMCatsForEdit(af, mad) map { mmcats =>
+    val catOwnerId = mshopOpt.flatMap(_.adn.supId).getOrElse(mad.producerId)
+    getMMCatsForEdit(af, mad, catOwnerId) map { mmcats =>
       mshopOpt map { mshop =>
         editShopAdTpl(mshop, mad, mmcats, af)
       }
@@ -630,7 +631,7 @@ object MarketAd extends SioController with LogoSupport {
           request.producerOptFut flatMap {
             case Some(producer) =>
               mad.applyOutputConstraintsFor(producer) flatMap { appliedAds =>
-                ShowLevelsUtil.updateAllReceivers(appliedAds)
+                ShowLevelsUtil.saveAllReceivers(appliedAds)
               } map { _ =>
                 Ok("Updated ok.")
               }
@@ -801,7 +802,8 @@ object MarketAd extends SioController with LogoSupport {
   
   private def renderEditMartFormWith(af: AdFormM, mmartOpt: Option[MAdnNode])(implicit request: RequestWithAd[_]) = {
     import request.mad
-    getMMCatsForEdit(af, mad) map { mmcats =>
+    val catOwnerId = mmartOpt.map(_.id.get).getOrElse(mad.producerId)
+    getMMCatsForEdit(af, mad, catOwnerId) map { mmcats =>
       mmartOpt map { mmart =>
         editMartAdTpl(mmart, mad, mmcats, af)
       }
@@ -908,8 +910,7 @@ object MarketAd extends SioController with LogoSupport {
   }
 
 
-  private def getMMCatsForEdit(af: AdFormM, mad: MAd): Future[CollectMMCatsAcc_t] = {
-    val catOwnerId = mad.producerId //mad.receivers
+  private def getMMCatsForEdit(af: AdFormM, mad: MAd, catOwnerId: String): Future[CollectMMCatsAcc_t] = {
     maybeAfCatId(af).orElse(mad.userCatId) match {
       case Some(catId) => nearCatsList(catOwnerId=catOwnerId, catId=catId)
       case None => topCatsAsAcc(catOwnerId)

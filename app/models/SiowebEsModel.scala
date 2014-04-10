@@ -12,6 +12,7 @@ import io.suggest.event.SioNotifier.Event
 import akka.actor.ActorContext
 import scala.reflect.ClassTag
 import io.suggest.ym.model.common.EMAdNetMember
+import org.slf4j.LoggerFactory
 
 /**
  * Suggest.io
@@ -32,6 +33,7 @@ object SiowebEsModel {
 
   def putAllMappings(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
     val ignoreExist = current.configuration.getBoolean("es.mapping.model.ignore_exist") getOrElse false
+    LoggerFactory.getLogger(getClass).trace("putAllMappings(): ignoreExists = " + ignoreExist)
     EsModel.putAllMappings(ES_MODELS, ignoreExist)
   }
 
