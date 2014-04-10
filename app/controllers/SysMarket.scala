@@ -174,6 +174,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   /** Маппинг для формы добавления/редактирования торгового центра. */
   val martFormM = Form(tuple(
     "meta"   -> martMetaM,
+    "isEnabled" -> boolean,
     "maxAds" -> default(number(min = 0, max = 30), ShowLevelsUtil.MART_LVL_IN_START_PAGE_DFLT)
   ))
 
@@ -193,12 +194,16 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         debug(s"martAddFormSubmt($companyId): Form bind failed: " + formWithErrors.errors)
         NotAcceptable(mart.martAddFormTpl(companyId, formWithErrors))
       },
-      {case (mmartMeta, maxAds) =>
+      {case (mmartMeta, isEnabled, maxAds) =>
         val mmart = MAdnNode(
           companyId = companyId,
           personIds = Set.empty,
           meta = mmartMeta,
-          adn = AdNetMemberTypes.MART.getAdnInfoDflt
+          adn = {
+            val _adn = AdNetMemberTypes.MART.getAdnInfoDflt
+            _adn.isEnabled = isEnabled
+            _adn
+          }
         )
         mmart.save map { mmartSavedId =>
           Redirect(routes.SysMarket.martShow(mmartSavedId))
@@ -230,7 +235,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     getMartById(mart_id) map {
       case Some(mmart) =>
         val maxOwnAdsOnStartPage = mmart.adn.showLevelsInfo.maxOutAtLevel(AdShowLevels.LVL_START_PAGE)
-        val form = martFormM.fill((mmart.meta, maxOwnAdsOnStartPage))
+        val form = martFormM.fill((mmart.meta, mmart.adn.isEnabled, maxOwnAdsOnStartPage))
         Ok(mart.martEditFormTpl(mmart, form))
 
       case None => martNotFound(mart_id)
@@ -245,7 +250,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
           {formWithErrors =>
             NotAcceptable(mart.martEditFormTpl(mmart, formWithErrors))
           },
-          {case (martMeta, maxOwnAdsOnStartPage) =>
+          {case (martMeta, isEnabled, maxOwnAdsOnStartPage) =>
             mmart.meta.name = martMeta.name
             mmart.meta.town = martMeta.town
             mmart.meta.address = martMeta.address
@@ -253,6 +258,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
             mmart.meta.color = martMeta.color
             mmart.meta.phone = martMeta.phone
             mmart.adn.showLevelsInfo.setMaxOutAtLevel(AdShowLevels.LVL_START_PAGE, maxOwnAdsOnStartPage)
+            mmart.adn.isEnabled = isEnabled
             mmart.save map { _martId =>
               Redirect(routes.SysMarket.martShow(_martId))
             }

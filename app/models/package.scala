@@ -66,10 +66,6 @@ package object models {
   // Начинаем MMartAd и смежные объекты.
   @deprecated("mart+shop arch is deprecated. Use MAd.", "2014.apr.07")
   val  MMartAd              = ym.model.MMartAd
-  @deprecated("mart+shop arch is deprecated. Use MAd.", "2014.apr.07")
-  type MMartAd              = ym.model.MMartAd
-  @deprecated("mart+shop arch is deprecated. Use MAd.", "2014.apr.07")
-  type MMartAdT             = ym.model.MMartAdT[_]
 
   val  MWelcomeAd           = ym.model.MWelcomeAd
   type MWelcomeAd           = ym.model.MWelcomeAd
@@ -131,8 +127,6 @@ package object models {
 
   @deprecated("mart+shop arch is deprecated. Use MAd.", "2014.apr.07")
   val  MMartAdIndexed       = ym.model.MMartAdIndexed
-  @deprecated("mart+shop arch is deprecated. Use MAd.", "2014.apr.07")
-  type MMartAdIndexed       = ym.model.MMartAdIndexed
 
   val  MAdStat              = ym.model.stat.MAdStat
   type MAdStat              = ym.model.stat.MAdStat

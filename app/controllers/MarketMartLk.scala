@@ -427,7 +427,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   def shopOnOffSubmit(shopId: String) = IsMartAdminShop(shopId).async { implicit request =>
     shopOnOffFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"shopOnOffSubmit($shopId): Bind form failed: " + formWithErrors.errors)
+        debug(s"shopOnOffSubmit($shopId): Bind form failed: " + formatFormErrors(formWithErrors))
         NotAcceptable("Bad request body.")
       },
       {case (isEnabled, reason) =>

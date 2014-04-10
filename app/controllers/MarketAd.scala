@@ -20,6 +20,8 @@ import util.HtmlSanitizer.adTextFmtPolicy
 import io.suggest.ym.parsers.Price
 import io.suggest.ym.model.common
 import io.suggest.ym.model.common.AdNetMemberTypes
+import io.suggest.ym.ad.ShowLevelsUtil
+import io.suggest.ym.model.common.EMReceivers.Receivers_t
 
 /**
  * Suggest.io
@@ -597,29 +599,73 @@ object MarketAd extends SioController with LogoSupport {
     * [x] Размещение на первом экране
     */
   def updateShowLevelSubmit(adId: String) = IsAdEditor(adId).async { implicit request =>
+    lazy val logPrefix = s"updateShowLevelSubmit($adId): "
     adShowLevelFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"updateShowLevelSubmit($adId): Failed to bind form: " + formWithErrors.errors)
+        debug(logPrefix + "Failed to bind form: " + formWithErrors.errors)
         NotAcceptable("Request body invalid.")
       },
       {case (levelId, isLevelEnabled) =>
         import request.mad
-        // Нужно, чтобы настройки отображения также повлияли на выдачу:
-        val slUpdF: Set[AdShowLevel] => Set[AdShowLevel] = if (isLevelEnabled) {
-          { asl => asl + levelId }
+        // Бывает, что ресиверы ещё не выставлены. Тогда нужно найти получателя и вписать его сразу.
+        val additionalReceiversFut: Future[Receivers_t] = if (mad.receivers.isEmpty) {
+          val rcvrsFut = detectReceivers(request.producerOptFut)
+          rcvrsFut onSuccess {
+            case result =>
+              debug(logPrefix + "No receivers found in Ad. Generated new receivers map: " + result.valuesIterator.mkString("[", ", ", "]"))
+          }
+          rcvrsFut
         } else {
-          { asl => asl - levelId }
+          Future successful Map.empty
         }
-        mad.updateAllWantLevels(slUpdF)
-        val ssFut = mad.saveReceivers
-        // Вернуть результат
-        ssFut map { _ =>
-          Ok("Updated ok.")
+        additionalReceiversFut flatMap { addRcvrs =>
+          mad.receivers ++= addRcvrs
+          // Нужно, чтобы настройки отображения также повлияли на выдачу:
+          val slUpdF: Set[AdShowLevel] => Set[AdShowLevel] = if (isLevelEnabled) {
+            { asl => asl + levelId }
+          } else {
+            { asl => asl - levelId }
+          }
+          mad.updateAllWantLevels(slUpdF)
+          request.producerOptFut flatMap {
+            case Some(producer) =>
+              mad.applyOutputConstraintsFor(producer) flatMap { appliedAds =>
+                ShowLevelsUtil.updateAllReceivers(appliedAds)
+              } map { _ =>
+                Ok("Updated ok.")
+              }
+            case None => ???
+          }
         }
       }
     )
   }
 
+
+  /** Детектор получателей рекламы. Заглядывает к себе и к прямому родителю, если он указан. */
+  private def detectReceivers(producerOptFut: Future[Option[MAdnNode]]): Future[Receivers_t] = {
+    producerOptFut flatMap { producerOpt =>
+      val supRcvrIdsFut: Future[Seq[String]] = producerOpt
+        .flatMap {
+          _.adn.supId
+        } map { supId =>
+          MAdnNodeCache.getByIdCached(supId)
+            .map { _.filter(_.adn.isReceiver).map(_.idOrNull).toSeq }
+        } getOrElse {
+          Future successful Nil
+        }
+      val selfRcvrIds: Seq[String] = producerOpt
+        .filter(_.adn.isReceiver)
+        .map(_.idOrNull)
+        .toSeq
+      supRcvrIdsFut map { supRcvrIds =>
+        val rcvrIds: Seq[String] = supRcvrIds ++ selfRcvrIds
+        rcvrIds.distinct.map { rcvrId =>
+          rcvrId -> AdReceiverInfo(rcvrId)
+        }.toMap
+      }
+    }
+  }
 
 
   // ============================ ТЦ ================================
@@ -684,8 +730,7 @@ object MarketAd extends SioController with LogoSupport {
         val formBinded = formM.bindFromRequest()
         formBinded.fold(
           {formWithErrors =>
-            debug(logPrefix + "Bind failed: \n" +
-              formWithErrors.errors.map { e => "  " + e.key + " -> " + e.message }.mkString("\n"))
+            debug(logPrefix + "Bind failed: \n" + formatFormErrors(formWithErrors))
             createMartAdFormError(formWithErrors, catOwnerId, mmart)
           },
           {case (imgKey, logoImgIdOpt, mmad) =>
@@ -798,7 +843,7 @@ object MarketAd extends SioController with LogoSupport {
         val formBinded = formM.bindFromRequest()
         formBinded.fold(
           {formWithErrors =>
-            debug(s"editMartAdSubmit($adId): Failed to bind form: " + formWithErrors.errors)
+            debug(s"editMartAdSubmit($adId): Failed to bind form: " + formatFormErrors(formWithErrors))
             renderFailedEditMartFormWith(formWithErrors)
           },
           {case (iik, logoImgIdOpt, mad2) =>
@@ -1058,7 +1103,7 @@ object MarketAd extends SioController with LogoSupport {
           case Right((offerType, adFormM)) =>
             adFormM.bindFromRequest().fold(
               {formWithErrors =>
-                debug(s"adFormPreviewShopSubmit($shopId): form bind failed: " + formWithErrors.errors)
+                debug(s"adFormPreviewShopSubmit($shopId): form bind failed: " + formatFormErrors(formWithErrors))
                 NotAcceptable("Preview form bind failed.")
               },
               {case (iik, logoOpt, mad) =>
@@ -1087,7 +1132,7 @@ object MarketAd extends SioController with LogoSupport {
       case Right((offerType, adFormM)) =>
         adFormM.bindFromRequest().fold(
           {formWithErrors =>
-            debug(s"adFormPreviewMartSubmit($martId): form bind failed: " + formWithErrors.errors)
+            debug(s"adFormPreviewMartSubmit($martId): form bind failed: " + formatFormErrors(formWithErrors))
             NotAcceptable("Form bind failed")
           },
           {case (iik, logoOpt, mad) =>

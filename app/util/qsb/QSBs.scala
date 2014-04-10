@@ -38,10 +38,12 @@ object AdSearch {
           maybeQOpt      <- strOptBinder.bind(key + ".q", params)
           maybeSizeOpt   <- intOptBinder.bind(key + ".size", params)
           maybeOffsetOpt <- intOptBinder.bind(key + ".offset", params)
+          maybeRcvrIdOpt <- strOptBinder.bind(key + ".rcvr", params)
 
         } yield {
           Right(
             AdSearch(
+              receiverIdOpt = maybeRcvrIdOpt,
               producerIdOpt = maybeShopIdOpt,
               catIdOpt  = maybeCatIdOpt,
               levelOpt  = maybeLevelOpt.flatMap(AdShowLevels.maybeWithName),
@@ -58,12 +60,16 @@ object AdSearch {
       }
 
       def unbind(key: String, value: AdSearch): String = {
-        strOptBinder.unbind(key + ".shopId", value.producerIdOpt) + "&" +
-        strOptBinder.unbind(key + ".catId", value.catIdOpt) + "&" +
-        strOptBinder.unbind(key + ".level", value.levelOpt.map(_.toString)) + "&" +
-        strOptBinder.unbind(key + ".q", value.qOpt) +
-        intOptBinder.unbind(key + ".size", value.maxResultsOpt) +
-        intOptBinder.unbind(key + ".offset", value.offsetOpt)
+        List(
+          strOptBinder.unbind(key + ".rcvr", value.receiverIdOpt),
+          strOptBinder.unbind(key + ".shopId", value.producerIdOpt),
+          strOptBinder.unbind(key + ".catId", value.catIdOpt),
+          strOptBinder.unbind(key + ".level", value.levelOpt.map(_.toString)),
+          strOptBinder.unbind(key + ".q", value.qOpt),
+          intOptBinder.unbind(key + ".size", value.maxResultsOpt),
+          intOptBinder.unbind(key + ".offset", value.offsetOpt)
+        ) .filter(!_.isEmpty)
+          .mkString("&")
       }
     }
   }
@@ -71,6 +77,7 @@ object AdSearch {
 }
 
 case class AdSearch(
+  receiverIdOpt: Option[String] = None,
   producerIdOpt: Option[String] = None,
   catIdOpt: Option[String] = None,
   levelOpt: Option[AdShowLevel] = None,

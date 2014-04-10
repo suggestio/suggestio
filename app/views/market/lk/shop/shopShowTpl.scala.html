@@ -53,30 +53,36 @@
     </div>
 
 
-    @defining(mshop.adn.showLevelsInfo.canOutAtLevel(LVL_START_PAGE)) { htl =>
+    @defining(mshop.adn.canOutAtLevel(LVL_MEMBERS_CATALOG)) { hc =>
+    @defining(mshop.adn.canOutAtLevel(LVL_MEMBER)) { hm =>
+    @defining(mshop.adn.canOutAtLevel(LVL_START_PAGE)) { hsp =>
+
       @market.lk.ad._adsEditableListTpl(
         mads = mads,
         mmart = mmart,
         addCall = routes.MarketAd.createShopAd(mshop.id.get),
         editCall = routes.MarketAd.editShopAd(_),
         mshopOpt = Some(mshop),
-        isShownF = isShownShopAd(htl, _)
+        isShownF = isShownShopAd(hsp, _)
       ) { mad =>
         @* Галочки для управления отображением рекламной карточки магазина. *@
         @defining(mad.allWantShowLevels) { sls =>
           <div class="controls">
-            <label class="common-catalog">
-              <input class="one-checkbox" type="checkbox" data-level="@LVL_MEMBERS_CATALOG" data-adid="@mad.id" data-name="common-catalog" @if(sls contains LVL_MEMBERS_CATALOG) {data-checked="checked"}/>Выводить в общем каталоге
+            <label class="common-catalog @if(!hc){inactive}">
+              <input class="one-checkbox" type="checkbox" data-level="@LVL_MEMBERS_CATALOG" data-adid="@mad.id" data-name="common-catalog" @if(!hc){disabled="disabled"} @if(sls contains LVL_MEMBERS_CATALOG) {data-checked="checked"}/>Выводить в общем каталоге
             </label>
-            <label class="shop-catalog">
-              <input type="checkbox" data-level="@LVL_MEMBER" data-adid="@mad.id" @if(sls contains LVL_MEMBER) {data-checked="checked"}/>Выводить в моём магазине
+            <label class="shop-catalog @if(!hm){inactive}">
+              <input type="checkbox" data-level="@LVL_MEMBER" data-adid="@mad.id" @if(!hm){disabled="disabled"} @if(sls contains LVL_MEMBER) {data-checked="checked"}/>Выводить в моём магазине
             </label>
-            <label class="firstPage-catalog @if(!htl){inactive}">
-              <input class="one-checkbox" data-name="firstPage-catalog" type="checkbox" data-level="@LVL_START_PAGE" data-adid="@mad.id" @if(!htl){disabled="disabled"} @if(sls contains LVL_START_PAGE) {data-checked="checked"}/>Размещение на первом экране
+            <label class="firstPage-catalog @if(!hsp){inactive}">
+              <input class="one-checkbox" data-name="firstPage-catalog" type="checkbox" data-level="@LVL_START_PAGE" data-adid="@mad.id" @if(!hsp){disabled="disabled"} @if(sls contains LVL_START_PAGE) {data-checked="checked"}/>Размещение на первом экране
             </label>
           </div>
         }
       }
+
+    }
+    }
     }
 
   </div>

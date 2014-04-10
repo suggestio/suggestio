@@ -103,7 +103,10 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
     // TODO Если магазин удалён из ТЦ, то это как должно выражаться?
     // Бывает, что добавлена новая карточка. Нужно её как-то отобразить.
     val extAdOptFut = newAdIdOpt match {
-      case Some(newAdId) => MAd.getById(newAdId).map { _.filter { _.producerId.exists(_ == shopId) } }
+      case Some(newAdId) => MAd.getById(newAdId)
+        .map { _.filter {
+          _.producerId == shopId
+        } }
       case None => Future successful None
     }
     val martId = mshop.adn.supId.get
