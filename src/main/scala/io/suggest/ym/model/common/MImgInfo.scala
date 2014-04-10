@@ -1,9 +1,9 @@
 package io.suggest.ym.model.common
 
-import org.elasticsearch.common.xcontent.{XContentBuilder, XContentFactory}
 import com.fasterxml.jackson.annotation.{JsonIgnore, JsonIgnoreProperties}
 import io.suggest.model.EsModel
 import play.api.libs.json._
+import io.suggest.model.EsModel.FieldsJsonAcc
 
 /**
  * Suggest.io
@@ -23,7 +23,6 @@ object MImgInfo {
    * @param v некое значение.
    * @return
    */
-  // TODO Нужно переписать без jackson.
   def convertFrom(v: Any): MImgInfo = {
     v match {
       case m: java.util.Map[_,_] =>
@@ -44,20 +43,8 @@ case class MImgInfo(id: String, meta: Option[MImgInfoMeta] = None) {
   override def hashCode(): Int = id.hashCode()
 
   @JsonIgnore
-  def toJson: String = {
-    val acc = XContentFactory.jsonBuilder().startObject()
-      .field(ID_ESFN, id)
-    if (meta.isDefined) {
-      acc.startObject(META_ESFN)
-      meta.get.writeFields(acc)
-      acc.endObject()
-    }
-    acc.string()
-  }
-
-  @JsonIgnore
   def toPlayJson = {
-    var props = List(ID_ESFN -> JsString(id))
+    var props: FieldsJsonAcc = List(ID_ESFN -> JsString(id))
     if (meta.isDefined) {
       props ::= META_ESFN -> meta.get.toPlayJson
     }
@@ -84,11 +71,6 @@ object MImgInfoMeta {
 import MImgInfoMeta._
 
 case class MImgInfoMeta(height: Int, width: Int) {
-  @JsonIgnore
-  def writeFields(acc: XContentBuilder) {
-    acc.field(HEIGHT_ESFN, height)
-      .field(WIDTH_ESFN, width)
-  }
 
   @JsonIgnore
   def toPlayJson = {
@@ -97,5 +79,6 @@ case class MImgInfoMeta(height: Int, width: Int) {
       WIDTH_ESFN  -> JsNumber(width)
     ))
   }
+
 }
 

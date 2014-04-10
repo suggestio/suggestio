@@ -40,8 +40,7 @@ trait EMDateCreated[T <: EMDateCreated[T]] extends EsModelT[T] {
   def dateCreated: DateTime
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    super.writeJsonFields(acc)
-    (DATE_CREATED_ESFN, date2JsStr(dateCreated)) :: acc
+    (DATE_CREATED_ESFN, date2JsStr(dateCreated)) :: super.writeJsonFields(acc)
   }
 
 }
@@ -49,7 +48,7 @@ trait EMDateCreated[T <: EMDateCreated[T]] extends EsModelT[T] {
 trait EMDateCreatedMut[T <: EMDateCreatedMut[T]] extends EMDateCreated[T] {
   var dateCreated: DateTime
 
-  abstract override def writeJsonFields(acc: XContentBuilder): Unit = {
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     if (dateCreated == null)
       dateCreated = DateTime.now()
     super.writeJsonFields(acc)

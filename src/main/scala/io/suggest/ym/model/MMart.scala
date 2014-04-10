@@ -163,13 +163,8 @@ case class MMart(
       companyId != null && name != null && townOpt != null && addressOpt != null && personIds != null
   }
 
-  override def writeJsonFields(acc: XContentBuilder) {
-    if (color.isDefined)
-      acc.field(COLOR_ESFN, color.get)
-    if (welcomeAdId.isDefined)
-      acc.field(WELCOME_AD_ID_ESFN, welcomeAdId.get)
-    settings writeXContent acc
-  }
+
+  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = ???
 
   /**
    * Сохранить экземпляр в хранилище ES и сгенерить уведомление, если экземпляр обновлён.

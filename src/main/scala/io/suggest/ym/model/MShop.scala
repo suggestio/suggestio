@@ -323,25 +323,7 @@ with ShopPriceListSel with MShopOffersSel with MCompanySel {
     }
   }
 
-  override def writeJsonFields(acc: XContentBuilder) {
-    //super.writeJsonFields(acc)
-    acc.field(COMPANY_ID_ESFN, companyId)
-      .field(NAME_ESFN, name)
-    if (martId.isDefined)
-      acc.field(MART_ID_ESFN, martId.get)
-    if (description.isDefined)
-      acc.field(DESCRIPTION_ESFN, description.get)
-    if (martFloor.isDefined)
-      acc.field(MART_FLOOR_ESFN, martFloor.get)
-    if (martSection.isDefined)
-      acc.field(MART_SECTION_ESFN, martSection.get)
-    if (dateCreated == null)
-      dateCreated = DateTime.now()
-    if (logoImgId.isDefined)
-      acc.field(LOGO_IMG_ID_ESFN, logoImgId.get)
-    settings writeXContent acc
-    acc.field(DATE_CREATED_ESFN, dateCreated)
-  }
+  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = ???
 
   def mainPersonId = personIds.lastOption
 

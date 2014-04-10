@@ -64,12 +64,12 @@ trait EMPersonIds[T <: EMPersonIds[T]] extends EsModelT[T] {
   def mainPersonId = personIds.lastOption
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    super.writeJsonFields(acc)
+    val acc0 = super.writeJsonFields(acc)
     if (!personIds.isEmpty) {
       val personIdsJson = asJsonStrArray(personIds)
-      (PERSON_ID_ESFN, personIdsJson) :: acc
+      (PERSON_ID_ESFN, personIdsJson) :: acc0
     } else {
-      acc
+      acc0
     }
   }
 

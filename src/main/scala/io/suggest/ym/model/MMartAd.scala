@@ -496,30 +496,8 @@ trait MMartAdT[T <: MMartAdT[T]] extends EsModelT[T] {
 
   @JsonIgnore def isShopAd: Boolean = producerType == AdNetMemberTypes.SHOP
 
-  override def writeJsonFields(acc: XContentBuilder) {
-    if (userCatId.isDefined)
-      acc.field(USER_CAT_ID_ESFN, userCatId.get)
-    if (prio.isDefined)
-      acc.field(PRIO_ESFN, prio.get)
-    if (panel.isDefined)
-      panel.get.render(acc)
-    // Загружаем офферы
-    if (!offers.isEmpty) {
-      acc.startArray(OFFERS_ESFN)
-        offers foreach { _ renderJson acc }
-      acc.endArray()
-    }
-    if (!showLevels.isEmpty) {
-      acc.startArray(EMReceivers.SLS_WANT_ESFN)
-      showLevels.foreach { sl =>
-        acc.value(sl.toString)
-      }
-      acc.endArray()
-    }
-    acc.rawField(IMG_ESFN, JacksonWrapper.serialize(img).getBytes)
-    // TextAlign. Reflections из-за проблем с XCB.
-    if (textAlign.isDefined)
-      acc.rawField(TEXT_ALIGN_ESFN, JacksonWrapper.serialize(textAlign.get).getBytes)
+  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    ???
   }
 }
 

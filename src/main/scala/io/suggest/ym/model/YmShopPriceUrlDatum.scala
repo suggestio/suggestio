@@ -3,6 +3,7 @@ package io.suggest.ym.model
 import io.suggest.util.CascadingFieldNamer
 import cascading.tuple.{TupleEntry, Tuple, Fields}
 import com.scaleunlimited.cascading.BaseDatum
+import play.api.libs.json.JsString
 
 /**
  * Suggest.io
@@ -165,11 +166,15 @@ case class MShopPriceList(
   def companion = MShopPriceList
   def authInfoStr: Option[String] = authInfo map { _.serialize }
 
-  override def writeJsonFields(acc: XContentBuilder) = {
-    acc.field(SHOP_ID_ESFN, shopId)
-      .field(URL_ESFN, url)
+  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    var acc1: FieldsJsonAcc = {
+      SHOP_ID_ESFN -> JsString(shopId) ::
+      URL_ESFN -> JsString(url) ::
+      acc
+    }
     if (authInfo.isDefined)
-      acc.field(AUTH_INFO_ESFN, authInfo.get.serialize)
+      acc1 ::= AUTH_INFO_ESFN -> JsString(authInfo.get.serialize)
+    acc1
   }
 
 }

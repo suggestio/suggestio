@@ -9,6 +9,7 @@ import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
 import io.suggest.ym.model.MCompanySel
+import play.api.libs.json.JsString
 
 /**
  * Suggest.io
@@ -66,8 +67,8 @@ trait EMCompanyId[T <: EMCompanyId[T]] extends EsModelT[T] with MCompanySel {
 
   var companyId: CompanyId_t
 
-  abstract override def writeJsonFields(acc: XContentBuilder) = {
-    super.writeJsonFields(acc)
-    acc.field(COMPANY_ID_ESFN, companyId)
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    COMPANY_ID_ESFN -> JsString(companyId) :: super.writeJsonFields(acc)
   }
+
 }

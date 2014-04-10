@@ -2,7 +2,8 @@ package io.suggest.ym.model.common
 
 import io.suggest.model.{EsModel, EsModelStaticT, EsModelT}
 import io.suggest.util.SioEsUtil._
-import org.elasticsearch.common.xcontent.XContentBuilder
+import io.suggest.model.EsModel.FieldsJsonAcc
+import play.api.libs.json.JsString
 
 /**
  * Suggest.io
@@ -36,11 +37,14 @@ trait EMUserCatId[T <: EMUserCatId[T]] extends EsModelT[T] {
 
   def userCatId    : Option[String]
 
-  abstract override def writeJsonFields(acc: XContentBuilder) {
-    super.writeJsonFields(acc)
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    val acc0 = super.writeJsonFields(acc)
     if (userCatId.isDefined)
-      acc.field(USER_CAT_ID_ESFN, userCatId.get)
+      USER_CAT_ID_ESFN -> JsString(userCatId.get) :: acc0
+    else
+      acc0
   }
+
 }
 
 trait EMUserCatIdMut[T <: EMUserCatIdMut[T]] extends EMUserCatId[T] {

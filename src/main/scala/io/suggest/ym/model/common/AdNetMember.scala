@@ -2,7 +2,6 @@ package io.suggest.ym.model.common
 
 import io.suggest.ym.model.common.AdNetMemberTypes.AdNetMemberType
 import io.suggest.model.{EsModel, EsModelStaticT, EsModelT}
-import org.elasticsearch.common.xcontent.{XContentFactory, XContentBuilder}
 import io.suggest.util.SioEsUtil._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.collection.JavaConversions._
@@ -13,9 +12,9 @@ import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilder
 import org.elasticsearch.common.unit.Fuzziness
 import org.elasticsearch.index.mapper.internal.AllFieldMapper
 import io.suggest.ym.model.{MAdnNode, AdShowLevel, CompanyId_t}
-import java.{util => ju, lang => jl}
+import java.{util => ju}
 import io.suggest.event.{AdnNodeOnOffEvent, SioNotifierStaticClientI}
-import io.suggest.util.MyConfig.CONFIG
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -106,7 +105,7 @@ trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
     * @return QueryBuilder.
     */
   def adnMemberTypeQuery(memberType: AdNetMemberType) = {
-    QueryBuilders.termQuery(ADN_MI_MEMBER_TYPE_ESFN, memberType.toString)
+    QueryBuilders.termQuery(ADN_MI_MEMBER_TYPE_ESFN, memberType.toString())
   }
 
   /**
@@ -203,13 +202,16 @@ trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
    */
   def setIsEnabled(adnId: String, isEnabled: Boolean, reason: Option[String])
                   (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
-    val updatedXCB = XContentFactory.jsonBuilder()
-      .startObject()
-        .field(PS_IS_ENABLED_ESFN, isEnabled)
-        .field(PS_DISABLE_REASON_ESFN, reason getOrElse null)
-      .endObject()
+    var jsonFieldsAcc: FieldsJsonAcc = List(
+      IS_ENABLED_ESFN -> JsBoolean(isEnabled)
+    )
+    if (reason.isDefined)
+      jsonFieldsAcc ::= DISABLE_REASON_ESFN -> JsString(reason.get)
+    val updateJson = JsObject(Seq(
+      ADN_ESFN -> JsObject(jsonFieldsAcc)
+    ))
     val fut: Future[_] = prepareUpdate(adnId)
-      .setDoc(updatedXCB)
+      .setDoc(updateJson.toString())
       .execute()
     // Уведомить о переключении состояния магазина
     fut onSuccess { case _ =>
@@ -260,12 +262,8 @@ trait EMAdNetMember[T <: EMAdNetMember[T]] extends EsModelT[T] {
   // Ограничиваем тип объекта-компаньона, чтобы можно было дергать статический setIsEnabled().
   override def companion: EMAdNetMemberStatic[T]
 
-  abstract override def writeJsonFields(acc: XContentBuilder) {
-    super.writeJsonFields(acc)
-    // Не используем jackson для ускорения и из-за присутствия полей с enum-типами.
-    acc.startObject(ADN_ESFN)
-    adn.writeFields(acc)
-    acc.endObject()
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    ADN_ESFN -> adn.toPlayJson :: super.writeJsonFields(acc)
   }
 
 
@@ -307,24 +305,22 @@ case class AdNetMemberInfo(
   var disableReason: Option[String] = None
 ) {
   @JsonIgnore
-  def writeFields(acc: XContentBuilder) {
-    acc.field(IS_PRODUCER_ESFN, isProducer)
-      .field(IS_RECEIVER_ESFN, isReceiver)
-      .field(MEMBER_TYPE_ESFN, memberType.toString())
-      .field(IS_SUPERVISOR_ESFN, isSupervisor)
+  def toPlayJson: JsObject = {
+    var acc0: FieldsJsonAcc = List(
+      IS_PRODUCER_ESFN -> JsBoolean(isProducer),
+      IS_RECEIVER_ESFN -> JsBoolean(isReceiver),
+      MEMBER_TYPE_ESFN -> JsString(memberType.toString()),
+      IS_SUPERVISOR_ESFN -> JsBoolean(isSupervisor),
+      IS_ENABLED_ESFN -> JsBoolean(isEnabled)
+    )
     if (supId.isDefined)
-      acc.field(SUPERVISOR_ID_ESFN, supId.get)
-    // из прошлого mpub:
-    acc.field(IS_ENABLED_ESFN, isEnabled)
-    if (!showLevelsInfo.isEmpty) {
-      acc.startObject(SHOW_LEVELS_ESFN)
-      showLevelsInfo.renderFields(acc)
-      acc.endObject()
-    }
+      acc0 ::= SUPERVISOR_ID_ESFN -> JsString(supId.get)
+    if (!showLevelsInfo.isEmpty)
+      acc0 ::= SHOW_LEVELS_ESFN -> showLevelsInfo.toPlayJson
     if (disableReason.isDefined)
-      acc.field(DISABLE_REASON_ESFN, disableReason.get)
+      acc0 ::= DISABLE_REASON_ESFN -> JsString(disableReason.get)
+    JsObject(acc0)
   }
-
 
   // перемещено из mpub:
   /**
@@ -398,31 +394,19 @@ object AdnMemberShowLevels {
     acc
   }
 
-  /**
-   * Отрендерить карту уровней в JSON.
-   * @param name Название поле с картой.
-   * @param levelsMap Карта уровней.
-   * @param acc Аккамулятор, в который идёт запись.
-   * @return Аккамулятор.
-   */
-  def renderLevelsMap(name: String, levelsMap: LvlMap_t, acc: XContentBuilder): XContentBuilder = {
-    // Для внутреннего json-объекта-карты, используем Jackson из-за глюков с вложенными объектами в XContentBuilder.
-    //val lmSer = JacksonWrapper.serialize(pubSettings.levelsMap).getBytes
-    //acc.rawField(LEVELS_MAP_ESFN, lmSer)
-    acc.startObject(name)
-    levelsMap.foreach { case (sl, max) =>
-      acc.field(sl.toString, max)
-    }
-    acc.endObject()
-  }
 
-  def maybeRenderLevelsMap(name: String, levelsMap: LvlMap_t, acc: XContentBuilder): XContentBuilder = {
-    if (!levelsMap.isEmpty)
-      renderLevelsMap(name, levelsMap, acc)
-    else
+  /** Опционально отрендерить карту полей в поле в play.json в аккамулятор. */
+  private def maybeRenderLevelsMapPlayJson(name: String, levelsMap: LvlMap_t, acc: FieldsJsonAcc): FieldsJsonAcc = {
+    if (!levelsMap.isEmpty) {
+      val mapElements = levelsMap.foldLeft[FieldsJsonAcc] (Nil) {
+        case (facc, (sl, max))  =>  sl.toString -> JsNumber(max) :: facc
+      }
+      name -> JsObject(mapElements) :: acc
+    } else {
       acc
+    }
   }
-
+  
   // Хелперы для класса-компаньона.
 
   /** Определить макс.число карточек на указанном уровне с помощью указанной карты.
@@ -456,10 +440,12 @@ case class AdnMemberShowLevels(
   var in:  AdnMemberShowLevels.LvlMap_t = Map.empty,
   var out: AdnMemberShowLevels.LvlMap_t = Map.empty
 ) {
+
   @JsonIgnore
-  def renderFields(acc: XContentBuilder): XContentBuilder = {
-    maybeRenderLevelsMap(IN_ESFN, in, acc)
-    maybeRenderLevelsMap(OUT_ESFN, out, acc)
+  def toPlayJson: JsObject = {
+    var acc = maybeRenderLevelsMapPlayJson(IN_ESFN, in, Nil)
+    acc = maybeRenderLevelsMapPlayJson(OUT_ESFN, out, acc)
+    JsObject(acc)
   }
 
   @JsonIgnore

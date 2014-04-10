@@ -33,8 +33,7 @@ trait EMName[T <: EMName[T]] extends EsModelT[T] {
   var name: String
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    super.writeJsonFields(acc)
-    (NAME_ESFN, JsString(name)) :: acc
+    (NAME_ESFN, JsString(name)) :: super.writeJsonFields(acc)
   }
 
 }

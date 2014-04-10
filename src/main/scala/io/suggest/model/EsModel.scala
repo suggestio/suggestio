@@ -87,7 +87,9 @@ object EsModel extends MacroLogsImpl {
   val DATE_CREATED_ESFN = "dateCreated"
   val DESCRIPTION_ESFN  = "description"
   val SHOP_ID_ESFN      = "shopId"
+  @deprecated("mart+shop arch is deprecated. Use EMAdnMMetadata instead.", "2014.apr.10")
   val MART_FLOOR_ESFN   = "martFloor"
+  @deprecated("mart+shop arch is deprecated. Use EMAdnMMetadata instead.", "2014.apr.10")
   val MART_SECTION_ESFN = "martSection"
   val AUTH_INFO_ESFN    = "authInfo"
   val URL_ESFN          = "url"
@@ -796,7 +798,8 @@ trait EsModelStaticEmpty[T <: EsModelEmpty[T]] extends EsModelStaticT[T] {
 /** Трейт базовой реализации экземпляра модели. Вынесен из неё из-за особенностей stackable trait pattern.
   * Он содержит stackable-методы, реализованные пустышками. */
 trait EsModelEmpty[T <: EsModelEmpty[T]] extends EsModelT[T] {
-  def writeJsonFields(acc: XContentBuilder) {
+  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    acc
   }
 }
 

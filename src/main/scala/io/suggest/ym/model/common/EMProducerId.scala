@@ -6,8 +6,8 @@ import org.elasticsearch.search.sort.SortBuilder
 import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
-import org.elasticsearch.common.xcontent.XContentBuilder
-import io.suggest.model.EsModel.stringParser
+import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
+import play.api.libs.json.JsString
 
 /**
  * Suggest.io
@@ -78,10 +78,10 @@ trait EMProducerId[T <: EMProducerId[T]] extends EsModelT[T] {
   /** Кто является изготовителем этой рекламной карточки? */
   def producerId: String
 
-  abstract override def writeJsonFields(acc: XContentBuilder) = {
-    super.writeJsonFields(acc)
-    acc.field(PRODUCER_ID_ESFN, producerId)
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    PRODUCER_ID_ESFN -> JsString(producerId) :: super.writeJsonFields(acc)
   }
+
 }
 
 trait EMProducerIdMut[T <: EMProducerIdMut[T]] extends EMProducerId[T] {

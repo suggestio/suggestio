@@ -1,9 +1,10 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.{EsModelStaticT, EsModelT}
-import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.JacksonWrapper
 import io.suggest.util.SioEsUtil._
+import play.api.libs.json._
+import io.suggest.model.EsModel.FieldsJsonAcc
 
 /**
  * Suggest.io
@@ -14,6 +15,12 @@ import io.suggest.util.SioEsUtil._
 
 object EMTextAlign {
   val TEXT_ALIGN_ESFN = "textAlign"
+
+  val ALIGN_TOP_ESFN = "alignTop"
+  val ALIGN_BOTTOM_ESFN = "alignBottom"
+  val ALIGN_ESFN = "align"
+  val PHONE_ESFN = "phone"
+  val TABLET_ESFN = "tablet"
 }
 
 import EMTextAlign._
@@ -36,10 +43,12 @@ trait EMTextAlign[T <: EMTextAlign[T]] extends EsModelT[T] {
 
   def textAlign: Option[TextAlign]
 
-  abstract override def writeJsonFields(acc: XContentBuilder) {
-    super.writeJsonFields(acc)
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    val acc0 = super.writeJsonFields(acc)
     if (textAlign.isDefined)
-      acc.rawField(TEXT_ALIGN_ESFN, JacksonWrapper.serialize(textAlign.get).getBytes)
+      TEXT_ALIGN_ESFN -> textAlign.get.toPlayJson :: acc0
+    else
+      acc0
   }
 }
 
@@ -48,6 +57,42 @@ trait EMTextAlignMut[T <: EMTextAlignMut[T]] extends EMTextAlign[T] {
 }
 
 
-case class TextAlign(phone: TextAlignPhone, tablet: TextAlignTablet)
-case class TextAlignTablet(alignTop: String, alignBottom: String)
-case class TextAlignPhone(align: String)
+case class TextAlign(phone: TextAlignPhone, tablet: TextAlignTablet) {
+  def toPlayJson: JsObject = {
+    JsObject(Seq(
+      PHONE_ESFN  -> phone.toPlayJson,
+      TABLET_ESFN -> tablet.toPlayJson
+    ))
+  }
+}
+case class TextAlignTablet(alignTop: String, alignBottom: String) {
+  def toPlayJson: JsObject = {
+    JsObject(Seq(
+      ALIGN_TOP_ESFN -> JsString(alignTop),
+      ALIGN_BOTTOM_ESFN -> JsString(alignBottom)
+    ))
+  }
+}
+case class TextAlignPhone(align: String) {
+  def toPlayJson: JsObject = {
+    JsObject(Seq(
+      ALIGN_ESFN -> JsString(align)
+    ))
+  }
+}
+
+
+/** Допустимые значения textAlign-полей. */
+// TODO Пока используется только в веб-морде. Может туда её и переместить?
+object AOTextAlignValues extends Enumeration {
+  type TextAlignValue = Value
+  val left, right = Value
+
+  def maybeWithName(n: String): Option[TextAlignValue] = {
+    try {
+      Some(withName(n))
+    } catch {
+      case _: Exception => None
+    }
+  }
+}

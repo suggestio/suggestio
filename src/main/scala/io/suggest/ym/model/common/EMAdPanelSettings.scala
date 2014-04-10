@@ -1,9 +1,10 @@
 package io.suggest.ym.model.common
 
-import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.model.{EsModelStaticT, EsModelT}
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.JacksonWrapper
+import io.suggest.model.EsModel.FieldsJsonAcc
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -36,10 +37,12 @@ trait EMAdPanelSettings[T <: EMAdPanelSettings[T]] extends EsModelT[T] {
 
   def panel: Option[AdPanelSettings]
 
-  abstract override def writeJsonFields(acc: XContentBuilder) {
-    super.writeJsonFields(acc)
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    val acc0 = super.writeJsonFields(acc)
     if (panel.isDefined)
-      panel.get.render(acc)
+      PANEL_ESFN -> panel.get.renderPlayJson  ::  acc0
+    else
+      acc0
   }
 }
 
@@ -48,10 +51,13 @@ trait EMAdPanelSettingsMut[T <: EMAdPanelSettingsMut[T]] extends EMAdPanelSettin
 }
 
 
+/** Класс с настройками отображения панельки. Изначально требовался только цвет. */
 case class AdPanelSettings(color: String) {
-  def render(acc: XContentBuilder) {
-    acc.startObject(PANEL_ESFN)
-      .field(COLOR_ESFN, color)
-    .endObject()
+
+  def renderPlayJson: JsObject = {
+    JsObject(Seq(
+      COLOR_ESFN -> JsString(color)
+    ))
   }
+
 }

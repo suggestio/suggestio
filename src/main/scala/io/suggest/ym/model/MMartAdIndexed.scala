@@ -92,12 +92,6 @@ case class MMartAdIndexed(
   override def isFieldsValid: Boolean = super.isFieldsValid && inx2 != null
   override def showLevels = showLevels1
 
-  override def writeJsonFields(acc: XContentBuilder) {
-    super.writeJsonFields(acc)
-    if (!userCatStr.isEmpty)
-      acc.array(USER_CAT_STR_ESFN, userCatStr : _*)
-  }
-
   override protected def esIndexName: String = inx2.targetEsInxName
   override protected def esTypeName: String  = inx2.targetEsType
 

@@ -1,11 +1,12 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.{EsModelStaticT, EsModelT}
-import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
 import java.{util => ju, lang => jl}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.collection.JavaConversions._
+import play.api.libs.json.{JsArray, JsString, JsObject}
+import io.suggest.model.EsModel.FieldsJsonAcc
 
 /**
  * Suggest.io
@@ -40,14 +41,14 @@ trait EMText4SearchStatic[T <: EMTexts4Search[T]] extends EsModelStaticT[T] {
 trait EMTexts4Search[T <: EMTexts4Search[T]] extends EsModelT[T] {
   var texts4search: Texts4Search
 
-  abstract override def writeJsonFields(acc: XContentBuilder) {
-    super.writeJsonFields(acc)
-    if (!texts4search.isEmpty) {
-      acc.startObject(SEARCH_TEXT_ESFN)
-      texts4search.writeFields(acc)
-      acc.endObject()
-    }
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    val acc0 = super.writeJsonFields(acc)
+    if (!texts4search.isEmpty)
+      SEARCH_TEXT_ESFN -> texts4search.toPlayJson  ::  acc0
+    else
+      acc0
   }
+
 }
 
 
@@ -88,8 +89,11 @@ case class Texts4Search(
   @JsonIgnore
   def isEmpty = userCat.isEmpty
 
-  def writeFields(acc: XContentBuilder) = {
+  @JsonIgnore
+  def toPlayJson: JsObject = {
+    var acc0: FieldsJsonAcc = Nil
     if (!userCat.isEmpty)
-      acc.array(USER_CAT_ESFN, userCat: _*)
+      acc0 ::= USER_CAT_ESFN -> JsArray(userCat.map(JsString.apply))
+    JsObject(acc0)
   }
 }

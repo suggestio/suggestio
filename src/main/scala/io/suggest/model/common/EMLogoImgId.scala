@@ -29,11 +29,11 @@ trait EMLogoImgId[T <: EMLogoImgId[T]] extends EsModelT[T] {
   var logoImgId: Option[String]
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    super.writeJsonFields(acc)
+    val acc0 = super.writeJsonFields(acc)
     if (logoImgId.isDefined)
-      (LOGO_IMG_ID_ESFN, JsString(logoImgId.get)) :: acc
+      (LOGO_IMG_ID_ESFN, JsString(logoImgId.get)) :: acc0
     else
-      acc
+      acc0
   }
 
 }

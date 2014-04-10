@@ -1,8 +1,7 @@
 package io.suggest.ym.model
 
-import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
-import io.suggest.model._, EsModel._
+import io.suggest.model._
 import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.ym.cat.YmCategory
 import io.suggest.util.{SioFutureUtil, MacroLogsImpl}
@@ -11,6 +10,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import java.util.concurrent.atomic.AtomicInteger
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.index.query.QueryBuilders
+import io.suggest.model.common.{EMParentIdOptStatic, EMNameStatic, EMParentIdOpt, EMName}
 
 /**
  * Suggest.io
@@ -22,7 +22,12 @@ import org.elasticsearch.index.query.QueryBuilders
  * Формат id: l0, l1, l1l2, l1l2l3, т.е. "0", "1", "10"..."1a", "100".."10a".
  * Используется case-insensivitive-кодирование без пунктуации.
  */
-object MYmCategory extends EsModelStaticT[MYmCategory] with MacroLogsImpl {
+object MYmCategory
+  extends EsModelStaticEmpty[MYmCategory]
+  with EMNameStatic[MYmCategory]
+  with EMParentIdOptStatic[MYmCategory]
+  with MacroLogsImpl
+{
 
   import LOGGER._
 
@@ -97,21 +102,11 @@ object MYmCategory extends EsModelStaticT[MYmCategory] with MacroLogsImpl {
 
   protected def dummy(id: String) = MYmCategory(id = Option(id), name = null, parentId = None)
 
-  def applyKeyValue(acc: MYmCategory): PartialFunction[(String, AnyRef), Unit] = {
-    case (NAME_ESFN, value)         => acc.name = nameParser(value)
-    case (PARENT_ID_ESFN, value)    => acc.parentId = Option(stringParser(value))
-  }
-
 
   def generateMappingStaticFields: List[Field] = List(
     FieldAll(enabled = false),
     FieldSource(enabled = true),
     FieldParent(ES_TYPE_NAME) // _routing включается автоматом.
-  )
-
-  def generateMappingProps: List[DocField] = List(
-    FieldString(NAME_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
-    FieldString(PARENT_ID_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
   )
 
 
@@ -123,20 +118,18 @@ object MYmCategory extends EsModelStaticT[MYmCategory] with MacroLogsImpl {
   private val someRk = Some(ROUTING_KEY)
 }
 
+
 case class MYmCategory(
   var name      : String,
   var parentId  : Option[String],
   id            : Option[String] = None
-) extends EsModelT[MYmCategory] {
+)
+  extends EsModelEmpty[MYmCategory]
+  with EMName[MYmCategory]
+  with EMParentIdOpt[MYmCategory]
+{
 
   def companion = MYmCategory
-
-  def writeJsonFields(acc: XContentBuilder) {
-    acc.field(NAME_ESFN, name)
-    if (parentId.isDefined) {
-      acc.field(PARENT_ID_ESFN, parentId.get)
-    }
-  }
 
   /** Дополнительные параметры сохранения можно выставить через эту функцию. */
   override def saveBuilder(irb: IndexRequestBuilder) {

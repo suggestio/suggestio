@@ -1,10 +1,8 @@
 package io.suggest.ym.model.common
 
-import org.elasticsearch.common.xcontent.{XContentFactory, XContentBuilder}
-import io.suggest.util.JacksonWrapper
 import io.suggest.util.SioEsUtil._
 import io.suggest.model._
-import io.suggest.ym.model.{MAd, AdShowLevel}
+import io.suggest.ym.model.AdShowLevel
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
@@ -13,6 +11,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.client.Client
 import org.elasticsearch.action.update.UpdateRequestBuilder
+import io.suggest.model.EsModel.FieldsJsonAcc
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -114,19 +114,20 @@ trait EMReceivers[T <: EMReceivers[T]] extends EsModelT[T] {
   /** Где (у кого) должна отображаться эта рекламная карточка? */
   def receivers: Receivers_t
 
-  abstract override def writeJsonFields(acc: XContentBuilder) = {
-    super.writeJsonFields(acc)
-    if (!receivers.isEmpty) {
-      writeFieldReceivers(acc)
-    }
+
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    val acc0 = super.writeJsonFields(acc)
+    if (!receivers.isEmpty)
+      RECEIVERS_ESFN -> writeReceiversPlayJson :: acc0
+    else
+      acc0
   }
 
-  /** Рендер поля receivers. Вынесен из [[writeJsonFields]] для удобства выполнения апдейта только уровней. */
-  def writeFieldReceivers(acc: XContentBuilder): XContentBuilder = {
-    val rcvrsArray = receivers.valuesIterator
-      .map { _.toXContent().string() }
-      .mkString("[",  ",",  "]")
-    acc.rawField(RECEIVERS_ESFN, rcvrsArray.getBytes)
+  def writeReceiversPlayJson: JsArray = {
+    val arrayElements = receivers.valuesIterator
+      .map(_.toPlayJson)
+      .toSeq
+    JsArray(arrayElements)
   }
 
   /** Поле slsPub обычно выставляется на основе want-поля и списка разрешенных уровней. Их пересечение
@@ -139,10 +140,10 @@ trait EMReceivers[T <: EMReceivers[T]] extends EsModelT[T] {
 
   /** Генерация update-реквеста на обновление только поля receivers. Сам реквест не вызывается. */
   def updateReceiversReqBuilder(implicit client: Client): UpdateRequestBuilder = {
-    val acc = XContentFactory.jsonBuilder().startObject()
-    writeFieldReceivers(acc).endObject()
-    println(acc.string())
-    prepareUpdate.setDoc(acc)
+    val json = JsObject(Seq(
+      RECEIVERS_ESFN -> writeReceiversPlayJson
+    ))
+    prepareUpdate.setDoc(json.toString())
   }
 
   def updateAllWantLevels(f: Set[AdShowLevel] => Set[AdShowLevel]) {
@@ -199,21 +200,16 @@ object AdReceiverInfo {
       }.toMap
   }
 
-  /** Хелпер для безусловной сериализации поля с набором уровней. */
-  def serializeLevels(name: String, sls: Iterable[AdShowLevel], acc: XContentBuilder): XContentBuilder = {
-    acc.startArray(name)
-    sls foreach { sl =>
-       acc.value(sl.toString)
-    }
-    acc.endArray()
-  }
-
-  /** Хелпер для сериализации поля с набором уровней, если тот содержит данные. */
-  def maybeSerializeLevels(name: String, sls: Iterable[AdShowLevel], acc: XContentBuilder): XContentBuilder = {
-    if (sls.isEmpty)
+  def maybeSerializeLevelsPlayJson(name: String, sls: Iterable[AdShowLevel], acc: FieldsJsonAcc): FieldsJsonAcc = {
+    if (sls.isEmpty) {
       acc
-    else
-      serializeLevels(name, sls, acc)
+    } else {
+      // Используем fold вместо toSeq + map для ускорения работы.
+      val arrayElements = sls.foldLeft[List[JsString]] (Nil) {
+        (acc, e)  =>  JsString(e.toString) :: acc
+      }
+      name -> JsArray(arrayElements) :: acc
+    }
   }
 }
 
@@ -241,11 +237,11 @@ case class AdReceiverInfo(
   override def hashCode(): Int = receiverId.hashCode
 
   @JsonIgnore
-  def toXContent(acc: XContentBuilder = XContentFactory.jsonBuilder): XContentBuilder = {
-    acc.startObject()
-      .field(RECEIVER_ID_ESFN, receiverId)
-    maybeSerializeLevels(SLS_WANT_ESFN, slsWant, acc)
-    maybeSerializeLevels(SLS_PUB_ESFN, slsPub, acc)
+  def toPlayJson: JsObject = {
+    var acc: FieldsJsonAcc = List(RECEIVER_ID_ESFN -> JsString(receiverId))
+    acc = maybeSerializeLevelsPlayJson(SLS_WANT_ESFN, slsWant, acc)
+    acc = maybeSerializeLevelsPlayJson(SLS_PUB_ESFN, slsPub, acc)
+    JsObject(acc)
   }
 
 }

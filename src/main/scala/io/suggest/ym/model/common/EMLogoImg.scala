@@ -1,8 +1,8 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model._
-import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
+import io.suggest.model.EsModel.FieldsJsonAcc
 
 /**
  * Suggest.io
@@ -36,11 +36,14 @@ trait EMLogoImg[T <: EMLogoImg[T]] extends EsModelT[T] {
 
   def logoImgOpt: Option[MImgInfo]
 
-  abstract override def writeJsonFields(acc: XContentBuilder) {
-    super.writeJsonFields(acc)
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    val acc0 = super.writeJsonFields(acc)
     if (logoImgOpt.isDefined)
-      acc.rawField(LOGO_IMG_ESFN, logoImgOpt.get.toJson.getBytes)
+      LOGO_IMG_ESFN -> logoImgOpt.get.toPlayJson :: acc0
+    else
+      acc0
   }
+
 }
 
 trait EMLogoImgMut[T <: EMLogoImgMut[T]] extends EMLogoImg[T] {

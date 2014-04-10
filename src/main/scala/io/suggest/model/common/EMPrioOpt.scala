@@ -1,8 +1,9 @@
 package io.suggest.model.common
 
 import io.suggest.model.{EsModel, EsModelStaticT, EsModelT}
-import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
+import io.suggest.model.EsModel.FieldsJsonAcc
+import play.api.libs.json.JsNumber
 
 /**
  * Suggest.io
@@ -34,10 +35,12 @@ trait EMPrioOpt[T <: EMPrioOpt[T]] extends EsModelT[T] {
 
   def prio: Option[Int]
 
-  abstract override def writeJsonFields(acc: XContentBuilder) {
-    super.writeJsonFields(acc)
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    val acc0 = super.writeJsonFields(acc)
     if (prio.isDefined)
-      acc.field(PRIO_ESFN, prio.get)
+      PRIO_ESFN -> JsNumber(prio.get) :: acc0
+    else
+      acc0
   }
 }
 

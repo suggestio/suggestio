@@ -2,11 +2,11 @@ package io.suggest.ym.model.common
 
 import org.joda.time.DateTime
 import io.suggest.model.{EsModelT, EsModelStaticT}
-import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.JacksonWrapper
 import io.suggest.model.EsModel._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.util.SioEsUtil._, FieldIndexingVariants.FieldIndexingVariant
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -18,8 +18,6 @@ import io.suggest.util.SioEsUtil._, FieldIndexingVariants.FieldIndexingVariant
 
 object EMAdnMMetadataStatic {
   /** Название поля с объектом метаданных. */
-  val METADATA_ESFN = "md"
-
   val FLOOR_ESFN = "floor"
   val SECTION_ESFN = "section"
 
@@ -37,7 +35,7 @@ trait EMAdnMMetadataStatic[T <: EMAdnMMetadata[T]] extends EsModelStaticT[T] {
   }
 
   abstract override def generateMappingProps: List[DocField] = {
-    FieldObject(METADATA_ESFN, enabled = true, properties = Seq(
+    FieldObject(META_ESFN, enabled = true, properties = Seq(
       FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
       // перемещено из legal
       fs(TOWN_ESFN, iia = true),
@@ -54,7 +52,7 @@ trait EMAdnMMetadataStatic[T <: EMAdnMMetadata[T]] extends EsModelStaticT[T] {
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
-      case (METADATA_ESFN, value) =>
+      case (META_ESFN, value) =>
         acc.meta = JacksonWrapper.convert[AdnMMetadata](value)
     }
   }
@@ -65,10 +63,8 @@ trait EMAdnMMetadata[T <: EMAdnMMetadata[T]] extends EsModelT[T] {
 
   var meta: AdnMMetadata
 
-  abstract override def writeJsonFields(acc: XContentBuilder) {
-    super.writeJsonFields(acc)
-    val mdSer = JacksonWrapper.serialize(meta)
-    acc.rawField(METADATA_ESFN, mdSer.getBytes)
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    META_ESFN -> meta.toPlayJson :: super.writeJsonFields(acc)
   }
 
   /** Загрузка новых значений *пользовательских* полей из указанного экземпляра такого же класса.
@@ -123,6 +119,34 @@ case class AdnMMetadata(
       section = other.section
       siteUrl = other.siteUrl
     }
+  }
+
+  /** Статически-типизированный json-генератор. */
+  @JsonIgnore
+  def toPlayJson: JsObject = {
+    var acc0: FieldsJsonAcc = List(
+      NAME_ESFN -> JsString(name),
+      DATE_CREATED_ESFN -> date2JsStr(dateCreated)
+    )
+    if (description.isDefined)
+      acc0 ::= DESCRIPTION_ESFN -> JsString(description.get)
+    if (town.isDefined)
+      acc0 ::= TOWN_ESFN -> JsString(town.get)
+    if (address.isDefined)
+      acc0 ::= ADDRESS_ESFN -> JsString(address.get)
+    if (phone.isDefined)
+      acc0 ::= PHONE_ESFN -> JsString(phone.get)
+    if (floor.isDefined)
+      acc0 ::= FLOOR_ESFN -> JsString(floor.get)
+    if (section.isDefined)
+      acc0 ::= SECTION_ESFN -> JsString(section.get)
+    if (siteUrl.isDefined)
+      acc0 ::= SITE_URL_ESFN -> JsString(siteUrl.get)
+    if (color.isDefined)
+      acc0 ::= COLOR_ESFN -> JsString(color.get)
+    if (welcomeAdId.isDefined)
+      acc0 ::= WELCOME_AD_ID -> JsString(welcomeAdId.get)
+    JsObject(acc0)
   }
 
 }

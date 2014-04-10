@@ -2,7 +2,7 @@ package io.suggest.ym.model.common
 
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.{EsModelT, EsModelStaticT}
-import org.elasticsearch.common.xcontent.XContentBuilder
+import io.suggest.model.EsModel.FieldsJsonAcc
 
 /**
  * Suggest.io
@@ -36,10 +36,10 @@ trait EMImg[T <: EMImg[T]] extends EsModelT[T] {
 
   def img: MImgInfo
 
-  abstract override def writeJsonFields(acc: XContentBuilder): Unit = {
-    super.writeJsonFields(acc)
-    acc.rawField(IMG_ESFN, img.toJson.getBytes)
+  abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    IMG_ESFN -> img.toPlayJson :: super.writeJsonFields(acc)
   }
+
 }
 
 trait EMImgMut[T <: EMImgMut[T]] extends EMImg[T] {

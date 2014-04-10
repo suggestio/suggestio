@@ -12,6 +12,7 @@ import org.elasticsearch.action.deletebyquery.DeleteByQueryRequestBuilder
 import scala.concurrent.ExecutionContext
 import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
+import play.api.libs.json.JsString
 
 /**
  * Suggest.io
@@ -55,10 +56,12 @@ case class MMartInx(
 
   def companion = MMartInx
 
-  def writeJsonFields(acc: XContentBuilder) {
-    acc.field(MART_ID_ESFN, martId)
-       .field(ES_INX_NAME_ESFN, targetEsInxName)
+  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    MART_ID_ESFN -> JsString(martId) ::
+    ES_INX_NAME_ESFN -> JsString(targetEsInxName) ::
+    acc
   }
+
 
   @JsonIgnore def esTypePrefix: String = martId + "_"
   @JsonIgnore override val targetEsType = esTypePrefix + MAd.ES_TYPE_NAME

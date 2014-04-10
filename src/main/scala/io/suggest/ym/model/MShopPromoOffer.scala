@@ -6,7 +6,6 @@ import org.elasticsearch.index.query.QueryBuilders
 import io.suggest.ym.index.YmIndex
 import io.suggest.ym.OfferTypes
 import scala.collection.Map
-import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.client.Client
 import io.suggest.model._
 import io.suggest.event.SioNotifierStaticClientI
@@ -116,7 +115,7 @@ case class MShopPromoOffer(
   // TODO Нужно использовать облегчённую модель датума, без постоянной сериализации-десериализации. Можно просто через набор одноимённых var + парсер json в над-трейте.
   datum: YmPromoOfferDatum = new YmPromoOfferDatum(),
   var id: Option[String] = None
-) extends EsModelMinimalT[MShopPromoOffer] with MShopSel with MShopOffersSel {
+) extends EsModelMinimalT[MShopPromoOffer] with MShopOffersSel {
 
   def companion = MShopPromoOffer
   def shopId   = datum.shopId
