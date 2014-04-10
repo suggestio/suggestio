@@ -23,6 +23,8 @@ object EMAdnMMetadataStatic {
 
   val COLOR_ESFN = "color"
   val WELCOME_AD_ID = "welcomeAdId"
+
+  def META_FLOOR_ESFN = META_ESFN + "." + FLOOR_ESFN
 }
 
 import EMAdnMMetadataStatic._

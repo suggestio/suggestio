@@ -53,7 +53,7 @@ object EsModel extends MacroLogsImpl {
       imeFut flatMap {
         case false =>
           info(logPrefix + "Trying to push mapping for model...")
-          val fut = esModelStatic.putMapping
+          val fut = esModelStatic.putMapping(ignoreExists)
           fut onComplete {
             case Success(true)  => debug(logPrefix + "-> OK" )
             case Success(false) => warn(logPrefix  + "NOT ACK!!! Possibly out-of-sync.")
@@ -294,12 +294,12 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators {
   protected def mappingIgnoreConflicts: Boolean = false
 
   /** Отправить маппинг в elasticsearch. */
-  def putMapping(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
+  def putMapping(ignoreConflicts: Boolean = mappingIgnoreConflicts)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     client.admin().indices()
       .preparePutMapping(ES_INDEX_NAME)
       .setType(ES_TYPE_NAME)
       .setSource(generateMapping)
-      .setIgnoreConflicts(mappingIgnoreConflicts)
+      .setIgnoreConflicts(ignoreConflicts)
       .execute()
       .map { _.isAcknowledged }
   }
@@ -383,7 +383,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] extends EsModelStaticMappin
 
   /** Пересоздать маппинг удаляется и создаётся заново. */
   def resetMapping(implicit ec: ExecutionContext, client: Client): Future[_] = {
-    deleteMapping flatMap { _ => putMapping }
+    deleteMapping flatMap { _ => putMapping() }
   }
 
   // TODO Нужно проверять, что текущий маппинг не устарел, и обновлять его.
@@ -742,7 +742,7 @@ trait EsModelJMXBase extends EsModelJMXMBeanCommon {
   }
 
   def putMapping = {
-    companion.putMapping
+    companion.putMapping()
       .map(_.toString)
       .recover { case ex: Exception => s"${ex.getClass.getName}: ${ex.getMessage}\n${ex.getStackTraceString}" }
   }

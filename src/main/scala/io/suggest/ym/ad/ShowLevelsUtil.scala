@@ -66,7 +66,7 @@ object ShowLevelsUtil extends MacroLogsImpl {
    * Список длиной > 2 получается в случае, когда в исходной карточке есть singleton-уровни.
    * Изменений в базе никаких не происходит, чтобы можно было накатить выходные трансформации на ресиверы
    * и затем сохранить.
-   * Сохранение результатов происходит через вызов [[updateAllReceivers()]] со списком рекламных карточек.
+   * Сохранение результатов происходит через вызов [[saveAllReceivers()]] со списком рекламных карточек.
    * @param thisAd Исходная реклоамная карточка.
    * @param producer Продьюсер.
    * @return Фьчерс с новой рекламной карточкой.
@@ -162,7 +162,7 @@ object ShowLevelsUtil extends MacroLogsImpl {
 
   /** Сохранить все значения ресиверов со всех переданных карточек в хранилище модели.
     * Другие поля не будут обновляться. Для ускорения и некоторого подобия транзакционности делаем всё через bulk. */
-  def updateAllReceivers(mads: Seq[MAd])(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+  def saveAllReceivers(mads: Seq[MAd])(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
     val bulkRequest = client.prepareBulk()
     mads.foreach { mad =>
       val updReq = mad.updateReceiversReqBuilder
@@ -189,7 +189,7 @@ object ShowLevelsUtil extends MacroLogsImpl {
       prodAds.foreach { mad =>
         mad.resetReceiversSlsPub(allowedSls)
       }
-      updateAllReceivers(prodAds)
+      saveAllReceivers(prodAds)
     }
   }
 
