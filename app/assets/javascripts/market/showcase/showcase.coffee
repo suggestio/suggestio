@@ -5,6 +5,7 @@ siomart =
     index_action : window.siomart_index
     sm_layout_class : 'sio-mart-layout'
     sm_trigger_class : 'sio-mart-trigger'
+    ontouchmove_offer_change_delta : 80
 
   utils :
 
@@ -156,10 +157,10 @@ siomart =
     touchmove : ( event ) ->
       _delta = this.page_x - event.pageX
 
-      if _delta > 150
+      if _delta > siomart.config.ontouchmove_offer_change_delta
         siomart.screens.objects['smScreen' + siomart.screens.active_screen].next_offer(true)
 
-      if _delta < -150
+      if _delta < -siomart.config.ontouchmove_offer_change_delta
         siomart.screens.objects['smScreen' + siomart.screens.active_screen].next_offer(true, true)
 
   ########
