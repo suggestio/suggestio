@@ -31,7 +31,7 @@
           <div class="select-file-wrap" id="logoImgInput">
             @defining(sf("logoImgId").value) { logoImgIdOpt =>
             <div class="preview">
-              <img class="image-preview" src="@logoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" width="59"/>
+              <img class="image-preview" src="@logoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {@routes.Assets.at("images/market/lk/empty-image.gif")}" width="59"/>
             </div>
             <div class="selectbox">
               <div class="select-file">
@@ -59,8 +59,8 @@
 
       <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
         @textarea(
-        sf("shop.meta.description"),
-        '_label -> "Описание магазина:"
+          sf("shop.meta.description"),
+          '_label -> "Описание магазина:"
         )
       </table>
 
@@ -73,7 +73,7 @@
       </table>
 
       @* Номер этажа в ТЦ. *@
-      <table cellpadding="0" cellspacing="0" class="input-wrap small disabled">
+      <table cellpadding="0" cellspacing="0" class="input-wrap small @if(isLimited) {disabled}">
         @inputText(
           sf("shop.meta.floor"),
           'placeholder -> 1 ::
@@ -83,7 +83,7 @@
       </table>
 
       @* Номер секции в ТЦ. *@
-      <table cellpadding="0" cellspacing="0" class="input-wrap small disabled">
+      <table cellpadding="0" cellspacing="0" class="input-wrap small @if(isLimited) {disabled}">
         @inputText(
           sf("shop.meta.section"),
           'placeholder -> 101 ::
