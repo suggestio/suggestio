@@ -11,7 +11,6 @@ import io.suggest.model.{MVIUnitStatic, SioSearchContext, MVIUnit}
 import io.suggest.model.SioHBaseAsyncClient._
 import io.suggest.model.MVIUnitHBaseSerialized
 import scala.Some
-import io.suggest.proto.bixo.crawler.MainProto.MartId_t
 
 /**
  * Suggest.io
@@ -31,10 +30,10 @@ object MVIMart extends MVIUnitStatic[MVIMart] {
   val SER_VSN = 200.toShort
 
   /** Сериализовать id торгового центра в строку ключа ряда. */
-  def martId2rowKeyStr(martId: MartId_t): String = ROW_KEY_PREFIX + martId
+  def martId2rowKeyStr(martId: String): String = ROW_KEY_PREFIX + martId
 
   /** Сериализовать id торгового центра в ключ ряда. */
-  def martId2rowKey(martId: MartId_t): Array[Byte] = martId2rowKeyStr(martId).getBytes
+  def martId2rowKey(martId: String): Array[Byte] = martId2rowKeyStr(martId).getBytes
 
   /**
    * Сериализовать для HBase экземпляр сабжа.
@@ -58,7 +57,7 @@ object MVIMart extends MVIUnitStatic[MVIMart] {
    * @param rowkey Сырой ключ ряда.
    * @return Целочисленное mart_id.
    */
-  def deserializeRowKey2MartId(rowkey: AnyRef) : MartId_t = {
+  def deserializeRowKey2MartId(rowkey: AnyRef) : String = {
     val rkStr = SioModelUtil.deserialzeHCellCoord(rowkey)
     if (rkStr startsWith ROW_KEY_PREFIX) {
       rkStr.substring(1)
@@ -85,7 +84,7 @@ object MVIMart extends MVIUnitStatic[MVIMart] {
     * @param value Значение ячейки.
     * @return Экземпляр [[MVIMart]].
     */
-  def deserializeWithMartId(martId: MartId_t, qualifier:AnyRef, value:Array[Byte]): MVIMart = {
+  def deserializeWithMartId(martId: String, qualifier:AnyRef, value:Array[Byte]): MVIMart = {
     val vin = MVIUnit.deserializeQualifier2Vin(qualifier)
     deserializeWithMartIdVin(martId=martId, vin=vin, value=value)
   }
@@ -108,7 +107,7 @@ object MVIMart extends MVIUnitStatic[MVIMart] {
     * @param value Значение ячейки.
     * @return Экземпляр [[MVIMart]].
     */
-  def deserializeWithMartIdVin(martId:MartId_t, vin:String, value:Array[Byte]): MVIMart = {
+  def deserializeWithMartIdVin(martId:String, vin:String, value:Array[Byte]): MVIMart = {
     val tuple = SerialUtil.deserializeTuple(value)
     finalDeserializer(martId, vin, tuple)
   }
@@ -121,11 +120,11 @@ object MVIMart extends MVIUnitStatic[MVIMart] {
     finalDeserializer(martId, vin, value, serVsn)
   }
 
-  def finalDeserializer(martId: MartId_t, vin: String, value: Tuple): MVIMart = {
+  def finalDeserializer(martId: String, vin: String, value: Tuple): MVIMart = {
     val serVsn = value getShort 0
     finalDeserializer(martId, vin, value, serVsn)
   }
-  def finalDeserializer(martId: MartId_t, vin: String, value: Tuple, serVsn:Short): MVIMart = {
+  def finalDeserializer(martId: String, vin: String, value: Tuple, serVsn:Short): MVIMart = {
     serVsn match {
       case SER_VSN =>
         val generation = value getLong 1
@@ -139,7 +138,7 @@ object MVIMart extends MVIUnitStatic[MVIMart] {
    * @param martId id торгового центра.
    * @return Список индексов ТЦ в неопределённом порядке.
    */
-  def getForMartId(martId: MartId_t)(implicit ec: ExecutionContext): Future[List[MVIMart]] = {
+  def getForMartId(martId: String)(implicit ec: ExecutionContext): Future[List[MVIMart]] = {
     val rowkey = martId2rowKey(martId)
     val getReq = new GetRequest(HTABLE_NAME, rowkey).family(CF)
     ahclient.get(getReq) map { results =>
@@ -156,7 +155,7 @@ object MVIMart extends MVIUnitStatic[MVIMart] {
    * @param vin Идентификатор индекса.
    * @return Распарсенное значение ячейки, если есть.
    */
-  def getForMartIdVin(martId: MartId_t, vin: String)(implicit ec: ExecutionContext): Future[Option[MVIMart]] = {
+  def getForMartIdVin(martId: String, vin: String)(implicit ec: ExecutionContext): Future[Option[MVIMart]] = {
     val rowkey = martId2rowKey(martId)
     val qualifier = MVIUnit.serializeVin(vin)
     val getReq = new GetRequest(HTABLE_NAME, rowkey)
@@ -191,7 +190,7 @@ class MVIMart extends BaseDatum(FIELDS) with MVIUnit {
     setTuple(t)
   }
 
-  def this(martId: MartId_t, vin:String, generation:Long = MVIUnit.GENERATION_BOOTSTRAP) = {
+  def this(martId: String, vin:String, generation:Long = MVIUnit.GENERATION_BOOTSTRAP) = {
     this()
     this.martId = martId
     this.vin = vin
@@ -199,8 +198,8 @@ class MVIMart extends BaseDatum(FIELDS) with MVIUnit {
   }
 
 
-  def martId: MartId_t = _tupleEntry getString MART_ID_FN
-  def martId_=(martId: MartId_t) = _tupleEntry.setString(MART_ID_FN, martId)
+  def martId: String = _tupleEntry getString MART_ID_FN
+  def martId_=(martId: String) = _tupleEntry.setString(MART_ID_FN, martId)
 
   override def companion = MVIMart
 

@@ -161,7 +161,7 @@ case class MShopPriceList(
   var url      : String,
   var authInfo : Option[UsernamePw],
   id           : Option[String] = None
-) extends EsModelT[MShopPriceList] with MShopSel {
+) extends EsModelT[MShopPriceList] {
 
   def companion = MShopPriceList
   def authInfoStr: Option[String] = authInfo map { _.serialize }

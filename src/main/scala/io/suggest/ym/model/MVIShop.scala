@@ -12,7 +12,6 @@ import scala.collection.JavaConversions._
 import io.suggest.ym.index.YmIndex
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import scala.concurrent.ExecutionContext.Implicits.global
-import io.suggest.proto.bixo.crawler.MainProto.{MartId_t, ShopId_t}
 
 /**
  * Suggest.io
@@ -37,10 +36,10 @@ object MVIShop extends MVIUnitStatic[MVIShop] {
   override val SER_VSN = 500.toShort
 
   /** Сериализовать id магазина в строку ключа ряда. */
-  def shopId2rowKeyStr(shopId: ShopId_t): String = ROW_KEY_PREFIX + shopId
+  def shopId2rowKeyStr(shopId: String): String = ROW_KEY_PREFIX + shopId
 
   /** Сериализовать id магазина в ключ ряда. */
-  def shopId2rowKey(shopId: ShopId_t): Array[Byte] = shopId2rowKeyStr(shopId).getBytes
+  def shopId2rowKey(shopId: String): Array[Byte] = shopId2rowKeyStr(shopId).getBytes
 
   /**
    * Сериализовать экземпляр сабжа в экземпляр данных, пригодных для отправки в HBase.
@@ -77,7 +76,7 @@ object MVIShop extends MVIUnitStatic[MVIShop] {
     * @param value Значение ячейки.
     * @return Экземпляр [[MVIShop]].
     */
-  def deserializeWithShopId(shopId: ShopId_t, qualifier:AnyRef, value:Array[Byte]): MVIShop = {
+  def deserializeWithShopId(shopId: String, qualifier:AnyRef, value:Array[Byte]): MVIShop = {
     val vin = MVIUnit.deserializeQualifier2Vin(qualifier)
     deserializeWithShopIdVin(shopId=shopId, vin=vin, value=value)
   }
@@ -100,7 +99,7 @@ object MVIShop extends MVIUnitStatic[MVIShop] {
     * @param value Значение ячейки.
     * @return Экземпляр [[MVIShop]].
     */
-  def deserializeWithShopIdVin(shopId: ShopId_t, vin:String, value:Array[Byte]): MVIShop = {
+  def deserializeWithShopIdVin(shopId: String, vin:String, value:Array[Byte]): MVIShop = {
     val tuple = SerialUtil.deserializeTuple(value)
     finalDeserializer(shopId, vin, tuple)
   }
@@ -114,11 +113,11 @@ object MVIShop extends MVIUnitStatic[MVIShop] {
   }
 
 
-  def finalDeserializer(shopId: ShopId_t, vin: String, value: Tuple): MVIShop = {
+  def finalDeserializer(shopId: String, vin: String, value: Tuple): MVIShop = {
     val serVsn = value getShort 0
     finalDeserializer(shopId, vin, value, serVsn)
   }
-  def finalDeserializer(shopId: ShopId_t, vin: String, value: Tuple, serVsn:Short): MVIShop = {
+  def finalDeserializer(shopId: String, vin: String, value: Tuple, serVsn:Short): MVIShop = {
     serVsn match {
       case SER_VSN =>
         val generation = value getLong 1
@@ -132,7 +131,7 @@ object MVIShop extends MVIUnitStatic[MVIShop] {
    * @param rowkey Сырой ключ ряда.
    * @return Целочисленное shop_id.
    */
-  def deserializeRowKey2ShopId(rowkey: AnyRef) : ShopId_t = {
+  def deserializeRowKey2ShopId(rowkey: AnyRef) : String = {
     val rkStr = SioModelUtil.deserialzeHCellCoord(rowkey)
     if (rkStr startsWith ROW_KEY_PREFIX) {
       rkStr.substring(1)
@@ -147,7 +146,7 @@ object MVIShop extends MVIUnitStatic[MVIShop] {
    * @param shopId id торгового центра.
    * @return Список индексов ТЦ в неопределённом порядке.
    */
-  def getForShopId(shopId: ShopId_t)(implicit ec: ExecutionContext): Future[List[MVIShop]] = {
+  def getForShopId(shopId: String)(implicit ec: ExecutionContext): Future[List[MVIShop]] = {
     val rowkey = shopId2rowKey(shopId)
     val getReq = new GetRequest(HTABLE_NAME, rowkey).family(CF)
     ahclient.get(getReq) map { results =>
@@ -164,7 +163,7 @@ object MVIShop extends MVIUnitStatic[MVIShop] {
    * @param vin Идентификатор индекса.
    * @return Распарсенное значение ячейки, если есть.
    */
-  def getForMartIdVin(shopId: ShopId_t, vin: String)(implicit ec: ExecutionContext): Future[Option[MVIShop]] = {
+  def getForMartIdVin(shopId: String, vin: String)(implicit ec: ExecutionContext): Future[Option[MVIShop]] = {
     val rowkey = shopId2rowKey(shopId)
     val qualifier = MVIUnit.serializeVin(vin)
     val getReq = new GetRequest(HTABLE_NAME, rowkey)
@@ -199,7 +198,7 @@ class MVIShop extends BaseDatum(FIELDS) with MVIUnit {
     setTupleEntry(te)
   }
 
-  def this(shopId: ShopId_t, vin: String, generation: Long = MVIUnit.GENERATION_BOOTSTRAP) = {
+  def this(shopId: String, vin: String, generation: Long = MVIUnit.GENERATION_BOOTSTRAP) = {
     this()
     this.shopId = shopId
     this.vin = vin
@@ -211,11 +210,11 @@ class MVIShop extends BaseDatum(FIELDS) with MVIUnit {
   /** Указатель на объект-компаньон, чтобы получить доступ к статическим данным модели. */
   override def companion = MVIShop
 
-  def shopId: ShopId_t = _tupleEntry.getString(SHOP_ID_FN)
-  def shopId_=(shopId: ShopId_t) = _tupleEntry.setString(SHOP_ID_FN, shopId)
+  def shopId: String = _tupleEntry.getString(SHOP_ID_FN)
+  def shopId_=(shopId: String) = _tupleEntry.setString(SHOP_ID_FN, shopId)
 
-  def martId: MartId_t = _tupleEntry.getString(MART_ID_FN)
-  def martId_=(martId: MartId_t) = _tupleEntry.setString(MART_ID_FN, martId)
+  def martId: String = _tupleEntry.getString(MART_ID_FN)
+  def martId_=(martId: String) = _tupleEntry.setString(MART_ID_FN, martId)
 
   /** Узнать, не используется ли текущий индекс другими субъектами.
     * Нет, т.к. тут только маппинг только для одного магазина. */
