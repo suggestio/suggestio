@@ -12,7 +12,9 @@ object MainProto {
 
   type MajorRebuildReply_t = Either[String, String]
 
+  @deprecated("mart+shop arch is deprecated. Use MAdnNode instead.", "2014.apr.09")
   type MartId_t = String
+  @deprecated("mart+shop arch is deprecated. Use MAdnNode instead.", "2014.apr.09")
   type ShopId_t = String
 
   // Сигналы об изменении конфигурации магазинной части
@@ -41,7 +43,9 @@ case class ReferrersBulk(urls: List[String]) extends Serializable
  * Сообщение о добавлении нового торгового центра. Кравлер должен подготовится к добавлению магазинов.
  * @param mart_id id торгового центра.
  */
+@deprecated("mart+shop arch is deprecated. Use MAdnNode instead.", "2014.apr.09")
 case class MartAdd(mart_id: MartId_t) extends Serializable
+@deprecated("mart+shop arch is deprecated. Use MAdnNode instead.", "2014.apr.09")
 case class MartDelete(mart_id: MartId_t) extends Serializable
 
 
@@ -51,5 +55,7 @@ case class MartDelete(mart_id: MartId_t) extends Serializable
  * @param mart_id ID торг.центра, к которому относится магазин.
  * @param shop_id ID Нового магазина.
  */
+@deprecated("mart+shop arch is deprecated. Use MAdnNode instead.", "2014.apr.09")
 case class ShopAdd(mart_id:MartId_t, shop_id:ShopId_t) extends Serializable
+@deprecated("mart+shop arch is deprecated. Use MAdnNode instead.", "2014.apr.09")
 case class ShopDelete(mart_id:MartId_t, shop_id:ShopId_t) extends Serializable

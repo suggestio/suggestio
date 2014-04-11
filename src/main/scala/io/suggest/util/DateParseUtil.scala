@@ -229,7 +229,7 @@ object DateParseUtil extends Logs {
    * @return килосекунды от 0 н.э.
    */
   def date2kilosec(ld:LocalDate) : Long = {
-    ld.toDateMidnight.toInstant.getMillis / SioConstants.DATE_INSTANT_ZEROES
+    ld.toDateTimeAtStartOfDay.toInstant.getMillis / SioConstants.DATE_INSTANT_ZEROES
   }
 
   /**
@@ -279,7 +279,7 @@ object DateParseUtil extends Logs {
   }
 
 
-  private val SINSE_YEAR_DFLT_INSTANT_MS = new DateMidnight(1980, 1, 1).getMillis
+  private val SINSE_YEAR_DFLT_INSTANT_MS = new DateTime(1980, 1, 1).getMillis
   private val MS_PER_DAY: Long = 24L * 3600L * 1000L
 
   /**
@@ -289,7 +289,7 @@ object DateParseUtil extends Logs {
    * @return
    */
   def toDaysCount(d: LocalDate) : Int = {
-    val dms = d.toDateMidnight.getMillis
+    val dms = d.toDateTimeAtStartOfDay.getMillis
     if (dms <= SINSE_YEAR_DFLT_INSTANT_MS) {
       0
     } else {

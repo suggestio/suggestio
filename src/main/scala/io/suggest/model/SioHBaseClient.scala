@@ -10,6 +10,7 @@ import scala.concurrent.{ExecutionContext, Promise, Future, future}
 import scala.util.{Failure, Success}
 import java.util
 import org.apache.hadoop.conf.Configuration
+import org.slf4j.LoggerFactory
 
 /**
  * Suggest.io
@@ -68,6 +69,8 @@ object SioHBaseSyncClient extends SioHBaseSyncClientT
 
 // Будущий асинхронный клиент, на который надо будет переехать, когда его наконец запилят поддержку HBase 0.95.x
 trait SioHBaseAsyncClientT {
+
+  LoggerFactory.getLogger(getClass).debug("Starting HBase async client...")
 
   val ahclient = new HBaseClient(SioHBaseClient.QUORUM_SPEC)
 

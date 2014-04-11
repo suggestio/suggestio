@@ -3,7 +3,7 @@ package io.suggest.model
 import scala.concurrent.{Awaitable, Await, ExecutionContext, Future}
 import io.suggest.util.{JacksonWrapper, MacroLogsImpl, SioEsUtil}
 import SioEsUtil._
-import org.joda.time.{ReadableInstant, DateTime}
+import org.joda.time.{DateTimeZone, ReadableInstant, DateTime}
 import org.elasticsearch.action.search.SearchResponse
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.action.delete.DeleteRequestBuilder
 import io.suggest.ym.model.stat._
 import com.sun.org.glassfish.gmbal.{Impact, ManagedOperation}
+import play.api.libs.json.{JsArray, JsString, JsValue, JsObject}
+import org.joda.time.format.ISODateTimeFormat
 
 /**
  * Suggest.io
@@ -33,7 +35,7 @@ object EsModel extends MacroLogsImpl {
 
   /** Список ES-моделей. Нужен для удобства массовых maintance-операций. Расширяется по мере роста числа ES-моделей. */
   def ES_MODELS: Seq[EsModelMinimalStaticT[_]] = {
-    Seq(MMart, MShop, MShopPriceList, MShopPromoOffer, MYmCategory, MMartAd, MAdStat)
+    Seq(MShopPriceList, MShopPromoOffer, MYmCategory, MAdStat, MAdnNode, MAd)
   }
 
 
@@ -51,7 +53,7 @@ object EsModel extends MacroLogsImpl {
       imeFut flatMap {
         case false =>
           info(logPrefix + "Trying to push mapping for model...")
-          val fut = esModelStatic.putMapping
+          val fut = esModelStatic.putMapping(ignoreExists)
           fut onComplete {
             case Success(true)  => debug(logPrefix + "-> OK" )
             case Success(false) => warn(logPrefix  + "NOT ACK!!! Possibly out-of-sync.")
@@ -85,7 +87,9 @@ object EsModel extends MacroLogsImpl {
   val DATE_CREATED_ESFN = "dateCreated"
   val DESCRIPTION_ESFN  = "description"
   val SHOP_ID_ESFN      = "shopId"
+  @deprecated("mart+shop arch is deprecated. Use EMAdnMMetadata instead.", "2014.apr.10")
   val MART_FLOOR_ESFN   = "martFloor"
+  @deprecated("mart+shop arch is deprecated. Use EMAdnMMetadata instead.", "2014.apr.10")
   val MART_SECTION_ESFN = "martSection"
   val AUTH_INFO_ESFN    = "authInfo"
   val URL_ESFN          = "url"
@@ -102,11 +106,14 @@ object EsModel extends MacroLogsImpl {
   val CATEGORY_ID_ESFN  = "catId"
   val PRIO_ESFN         = "prio"
   val PHONE_ESFN        = "phone"
-  val LOGO_IMG_ID       = "logoImgId"
+  val LOGO_IMG_ESFN     = "logoImg"
+  val LOGO_IMG_ID_ESFN  = "logoImgId"
   /** Настройки. Это под-объект, чьё содержимое никогда не анализируется никем. */
   val SETTINGS_ESFN     = "settings"
   val META_ESFN         = "meta"
 
+  /** Тип аккамулятора, который используется во [[EsModelT.writeJsonFields()]]. */
+  type FieldsJsonAcc = List[(String, JsValue)]
 
   def companyIdParser = stringParser
   def martIdParser = stringParser
@@ -162,31 +169,31 @@ object EsModel extends MacroLogsImpl {
 
   // ES-выхлопы страдают динамической типизацией, поэтому нужна коллекция парсеров для примитивных типов.
   // Следует помнить, что любое поле может быть списком значений.
-  val intParser: PartialFunction[AnyRef, Int] = {
+  val intParser: PartialFunction[Any, Int] = {
     case null => ???
     case is: jlIterable[_] =>
       intParser(is.head.asInstanceOf[AnyRef])
     case i: Integer => i.intValue()
   }
-  val floatParser: PartialFunction[AnyRef, Float] = {
+  val floatParser: PartialFunction[Any, Float] = {
     case null               => ???
     case fs: jlIterable[_] =>
-      floatParser(fs.head.asInstanceOf[AnyRef])
+      floatParser(fs.head.asInstanceOf[Any])
     case f: java.lang.Float => f.floatValue()
   }
-  val stringParser: PartialFunction[AnyRef, String] = {
+  val stringParser: PartialFunction[Any, String] = {
     case null => null
     case strings: jlIterable[_] =>
       stringParser(strings.head.asInstanceOf[AnyRef])
     case s: String  => s
   }
-  val booleanParser: PartialFunction[AnyRef, Boolean] = {
+  val booleanParser: PartialFunction[Any, Boolean] = {
     case null => ???
     case bs: jlIterable[_] =>
       booleanParser(bs.head.asInstanceOf[AnyRef])
     case b: java.lang.Boolean => b.booleanValue()
   }
-  val dateTimeParser: PartialFunction[AnyRef, DateTime] = {
+  val dateTimeParser: PartialFunction[Any, DateTime] = {
     case null => null
     case dates: jlIterable[_] =>
       dateTimeParser(dates.head.asInstanceOf[AnyRef])
@@ -238,18 +245,28 @@ object EsModel extends MacroLogsImpl {
       }
   }
 
+  /** Сериализация набора строк. */
+  def asJsonStrArray(strings : Iterable[String]): JsArray = {
+    val strSeq = strings.foldLeft [List[JsString]] (Nil) {(acc, e) =>
+      JsString(e) :: acc
+    }
+    JsArray(strSeq)
+  }
 
+  // Сериализация дат
+  val dateFormatterDflt = ISODateTimeFormat.dateTime().withZone(DateTimeZone.UTC)
+
+  implicit def date2str(dateTime: ReadableInstant) = dateFormatterDflt.print(dateTime)
+  implicit def date2JsStr(dateTime: ReadableInstant) = JsString(dateTime)
 }
 
-import EsModel._
 
-/** Базовый шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelMinimalT]].
-  * Здесь десериализация полностью выделена в отдельную функцию. */
-trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
-  def ES_INDEX_NAME = SIO_ES_INDEX_NAME
-  val ES_TYPE_NAME: String
+/** Самые базовые функции генерации маппингов. */
+trait EsModelStaticMappingGenerators {
 
-  def generateMapping: XContentBuilder = generateMappingFor(ES_TYPE_NAME)
+  def generateMappingStaticFields: List[Field]
+  def generateMappingProps: List[DocField]
+
   def generateMappingFor(typeName: String): XContentBuilder = jsonGenerator { implicit b =>
     // Собираем маппинг индекса.
     IndexMapping(
@@ -259,19 +276,30 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
     )
   }
 
-  def generateMappingStaticFields: List[Field]
-  def generateMappingProps: List[DocField]
+}
+
+
+import EsModel._
+
+/** Трейт содержит статические хелперы для работы с маппингами.
+  * Однажды был вынесен из [[EsModelStaticT]]. */
+trait EsModelStaticMapping extends EsModelStaticMappingGenerators {
+
+  def ES_INDEX_NAME = SIO_ES_INDEX_NAME
+  def ES_TYPE_NAME: String
+
+  def generateMapping: XContentBuilder = generateMappingFor(ES_TYPE_NAME)
 
   /** Флаг, который можно перезаписать в реализации static-модели чтобы проигнорить конфликты при апдейте маппинга. */
   protected def mappingIgnoreConflicts: Boolean = false
 
   /** Отправить маппинг в elasticsearch. */
-  def putMapping(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
+  def putMapping(ignoreConflicts: Boolean = mappingIgnoreConflicts)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     client.admin().indices()
       .preparePutMapping(ES_INDEX_NAME)
       .setType(ES_TYPE_NAME)
       .setSource(generateMapping)
-      .setIgnoreConflicts(mappingIgnoreConflicts)
+      .setIgnoreConflicts(ignoreConflicts)
       .execute()
       .map { _.isAcknowledged }
   }
@@ -284,13 +312,46 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
       .execute()
   }
 
+}
+
+
+/** Базовый шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelMinimalT]].
+  * Здесь десериализация полностью выделена в отдельную функцию. */
+trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] extends EsModelStaticMapping {
+
+  // Короткие враппер для типичных операций в рамках статической модели.
+  def prepareSearch(implicit client: Client) = client.prepareSearch(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
+  def prepareCount(implicit client: Client)  = client.prepareCount(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
+  def prepareGet(id: String)(implicit client: Client) = client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
+  def prepareUpdate(id: String)(implicit client: Client) = client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, id)
+  def prepareDelete(id: String)(implicit client: Client) = client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
+  def prepareDeleteByQuery(implicit client: Client) = client.prepareDeleteByQuery(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
+
+  val MAX_RESULTS_DFLT = 100
+  val OFFSET_DFLT = 0
+
+  /**
+   * Существует ли указанный магазин в хранилище?
+   * @param id id магазина.
+   * @return true/false
+   */
+  def isExist(id: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
+    val req = prepareGet(id)
+    val rk = getRoutingKey(id)
+    if (rk.isDefined)
+      req.setRouting(rk.get)
+    req.setFields()
+      .execute()
+      .map { _.isExists }
+  }
+
+
   /**
    * Сервисная функция для получения списка всех id.
    * @return Список всех id в алфавитном порядке.
    */
   def getAllIds(maxResults: Int = 500)(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
-    client.prepareSearch(ES_INDEX_NAME)
-      .setTypes(ES_TYPE_NAME)
+    prepareSearch
       .setNoFields()
       .setSize(maxResults)
       .execute()
@@ -306,9 +367,8 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    * @param query Произвольный поисковый запрос.
    * @return Кол-во найденных документов.
    */
-  protected def count(query: QueryBuilder)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
-    client.prepareCount(ES_INDEX_NAME)
-      .setTypes(ES_TYPE_NAME)
+  def count(query: QueryBuilder)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
+    prepareCount
       .setQuery(query)
       .execute()
       .map { _.getCount }
@@ -323,7 +383,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
 
   /** Пересоздать маппинг удаляется и создаётся заново. */
   def resetMapping(implicit ec: ExecutionContext, client: Client): Future[_] = {
-    deleteMapping flatMap { _ => putMapping }
+    deleteMapping flatMap { _ => putMapping() }
   }
 
   // TODO Нужно проверять, что текущий маппинг не устарел, и обновлять его.
@@ -347,7 +407,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    */
   def getById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Option[T]] = {
     val maybeRk = getRoutingKey(id)
-    val req = client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
+    val req = prepareGet(id)
     if (maybeRk.isDefined)
       req.setRouting(maybeRk.get)
     req.execute()
@@ -362,7 +422,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
   }
 
   /** Список результатов с source внутри перегнать в распарсенный список. */
-  protected def searchResp2list(searchResp: SearchResponse): Seq[T] = {
+  def searchResp2list(searchResp: SearchResponse): Seq[T] = {
     searchResp.getHits.getHits.toSeq.map { hit =>
       deserializeOne(hit.getId, hit.getSource)
     }
@@ -371,7 +431,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
   /** Для ряда задач бывает необходимо задействовать multiGet вместо обычного поиска, который не успевает за refresh.
     * Этот метод позволяет сконвертить поисковые результаты в результаты multiget.
     * @return Результат - что-то неопределённом порядке. */
-  protected def searchResp2RtMultiget(searchResp: SearchResponse)(implicit ex: ExecutionContext, client: Client): Future[List[T]] = {
+  def searchResp2RtMultiget(searchResp: SearchResponse)(implicit ex: ExecutionContext, client: Client): Future[List[T]] = {
     val searchHits = searchResp.getHits.getHits
     if (searchHits.length == 0) {
       Future successful Nil
@@ -396,14 +456,26 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
   }
 
 
+  /** С помощью query найти результаты, но сами результаты прочитать с помощью realtime multi-get. */
+  def findQueryRt(query: QueryBuilder, maxResults: Int = 100)(implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
+    prepareSearch
+      .setQuery(query)
+      .setNoFields()
+      .setSize(maxResults)
+      .execute()
+      .flatMap { searchResp2RtMultiget }
+  }
+
+
   /**
    * Выдать все магазины. Метод подходит только для административных задач.
    * @return Список магазинов в порядке их создания.
    */
-  def getAll(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
-    client.prepareSearch(ES_INDEX_NAME)
-      .setTypes(ES_TYPE_NAME)
+  def getAll(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
+    prepareSearch
       .setQuery(QueryBuilders.matchAllQuery())
+      .setSize(maxResults)
+      .setFrom(offset)
       .execute()
       .map { searchResp2list }
   }
@@ -414,7 +486,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    * @return Новый экземпляр DeleteRequestBuilder.
    */
   def deleteRequestBuilder(id: String)(implicit client: Client): DeleteRequestBuilder = {
-    val req = client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
+    val req = prepareDelete(id)
     val rk = getRoutingKey(id)
     if (rk.isDefined)
       req.setRouting(rk.get)
@@ -438,7 +510,7 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
    * @return
    */
   def reindexAll(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Seq[String]] = {
-    getAll.flatMap { results =>
+    getAll().flatMap { results =>
       Future.traverse(results) { el =>
         el.save
       }
@@ -451,22 +523,9 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] {
 trait EsModelStaticT[T <: EsModelT[T]] extends EsModelMinimalStaticT[T] {
 
   protected def dummy(id: String): T
-  def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit]
 
-  /**
-   * Существует ли указанный магазин в хранилище?
-   * @param id id магазина.
-   * @return true/false
-   */
-  def isExist(id: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
-    val req = client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
-    val rk = getRoutingKey(id)
-    if (rk.isDefined)
-      req.setRouting(rk.get)
-    req.setFields()
-      .execute()
-      .map { _.isExists }
-  }
+  // TODO Надо бы перевести все модели на stackable-трейты и избавится от PartialFunction здесь.
+  def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit]
 
   def deserializeOne(id: String, m: collection.Map[String, AnyRef]): T = {
     val acc = dummy(id)
@@ -477,6 +536,8 @@ trait EsModelStaticT[T <: EsModelT[T]] extends EsModelMinimalStaticT[T] {
 
 }
 
+
+
 /** Шаблон для динамических частей ES-моделей.
  * В минимальной редакции механизм десериализации полностью абстрактен. */
 trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
@@ -484,13 +545,14 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
   @JsonIgnore def companion: EsModelMinimalStaticT[E]
 
   @JsonIgnore protected def esTypeName = companion.ES_TYPE_NAME
-  @JsonIgnore protected def esIndexName = companion.ES_INDEX_NAME 
+  @JsonIgnore protected def esIndexName = companion.ES_INDEX_NAME
 
   /** Можно делать какие-то действия после десериализации. Например, можно исправлять значения после эволюции схемы. */
   @JsonIgnore def postDeserialize() {}
 
-  @JsonIgnore def toJson: XContentBuilder
+  @JsonIgnore def toJson: String
 
+  @JsonIgnore
   def id: Option[String]
 
   @JsonIgnore def idOrNull = {
@@ -500,20 +562,29 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
       null
   }
 
+  def prepareUpdate(implicit client: Client) = client.prepareUpdate(esIndexName, esTypeName, id.get)
+
+  /** Загрузка новых значений *пользовательских* полей из указанного экземпляра такого же класса.
+    * Полезно при edit form sumbit после накатывания маппинга формы на реквест. */
+  def loadUserFieldsFrom(other: E) {}
+
   /** Перед сохранением можно проверять состояние экземпляра. */
+  @JsonIgnore
   def isFieldsValid: Boolean = true
 
   /** Генератор indexRequestBuilder'ов. Помогает при построении bulk-реквестов. */
   def indexRequestBuilder(implicit client: Client): IndexRequestBuilder = {
-    val _idOrNull = idOrNull
-    val irb = client.prepareIndex(esIndexName, esTypeName, _idOrNull)
+    val irb = client.prepareIndex(esIndexName, esTypeName, idOrNull)
       .setSource(toJson)
     saveBuilder(irb)
-    val rkOpt = companion.getRoutingKey(_idOrNull)
+    val rkOpt = getRoutingKey
     if (rkOpt.isDefined)
       irb.setRouting(rkOpt.get)
     irb
   }
+
+  /** Узнать routing key для текущего экземпляра. */
+  def getRoutingKey = companion.getRoutingKey(idOrNull)
 
   /** Генератор delete-реквеста. Полезно при построении bulk-реквестов. */
   def deleteRequestBuilder(implicit client: Client) = companion.deleteRequestBuilder(id.get)
@@ -546,13 +617,8 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
 
 /** Шаблон для динамических частей ES-моделей. */
 trait EsModelT[E <: EsModelT[E]] extends EsModelMinimalT[E] {
-  def toJson: XContentBuilder = {
-    val acc = XContentFactory.jsonBuilder()
-      .startObject()
-    writeJsonFields(acc)
-    acc.endObject()
-  }
-  def writeJsonFields(acc: XContentBuilder)
+  def toJson = JsObject(writeJsonFields(Nil)).toString()
+  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc
 }
 
 
@@ -676,7 +742,7 @@ trait EsModelJMXBase extends EsModelJMXMBeanCommon {
   }
 
   def putMapping = {
-    companion.putMapping
+    companion.putMapping()
       .map(_.toString)
       .recover { case ex: Exception => s"${ex.getClass.getName}: ${ex.getMessage}\n${ex.getStackTraceString}" }
   }
@@ -708,4 +774,33 @@ trait EsModelJMXBase extends EsModelJMXMBeanCommon {
   def esTypeName: String = companion.ES_TYPE_NAME
   def esIndexName: String = companion.ES_INDEX_NAME
 }
+
+
+
+
+/**
+ * Трейт для статической части модели, построенной через Stackable trait pattern.
+ * Для нормального stackable trait без подсветки красным цветом везде, надо чтобы была базовая реализация отдельно
+ * от целевой реализации и stackable-реализаций (abstract override).
+ * Тут реализованы методы-заглушки для хвоста стэка декораторов. */
+trait EsModelStaticEmpty[T <: EsModelEmpty[T]] extends EsModelStaticT[T] {
+
+  def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
+    PartialFunction.empty
+  }
+
+  def generateMappingProps: List[DocField] = {
+    Nil
+  }
+
+}
+
+/** Трейт базовой реализации экземпляра модели. Вынесен из неё из-за особенностей stackable trait pattern.
+  * Он содержит stackable-методы, реализованные пустышками. */
+trait EsModelEmpty[T <: EsModelEmpty[T]] extends EsModelT[T] {
+  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    acc
+  }
+}
+
 

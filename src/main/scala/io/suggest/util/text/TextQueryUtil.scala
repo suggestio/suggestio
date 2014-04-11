@@ -136,12 +136,12 @@ object TextQueryV2Util {
    * на её основе. Версия для новых индексов в маркете, которые содержат ngram в _all.
    * @param queryStr Строка, которую набирает в поиске юзер.
    */
-  def queryStr2QueryMarket(queryStr: String) : Option[QueryBuilder] = {
+  def queryStr2QueryMarket(queryStr: String) : Option[MarketTextQuery] = {
     // Дробим исходный запрос на куски
     val topQueriesOpt = TextQueryUtil.splitQueryStr(queryStr).map { case (ftsQS, engramQS) =>
-
       val ftsLen = ftsQS.length
       val engramLen = engramQS.length
+      val isDifficult = ftsLen == 0 && engramLen <= 2
 
       // Отрабатываем edge-ngram часть запроса.
       var queries : List[QueryBuilder] = if (engramLen == 0) {
@@ -178,25 +178,27 @@ object TextQueryV2Util {
         queries ::= queryFts
       }
 
-      queries
+      isDifficult -> queries
     }
 
     // Если получилось несколько запросов верхнего уровня, то обернуть их bool-query must
     topQueriesOpt match {
-      case None => None
-
-      case Some(topQueries) =>
+      case Some((isDifficult, topQueries)) =>
         topQueries match {
-
-          case List(query) => Some(query)
-          case Nil => None
-
+          case List(query) =>
+            Some(MarketTextQuery(query, isDifficult))
+          case Nil =>
+            None
           case _ =>
             val queryBool = QueryBuilders.boolQuery()
             topQueries.foreach { queryBool.must }
-            Some(queryBool)
+            Some(MarketTextQuery(queryBool, isDifficult))
         }
+
+      case None => None
     }
   }
 
 }
+
+case class MarketTextQuery(q: QueryBuilder, isDifficult: Boolean)

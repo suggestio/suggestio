@@ -1,13 +1,12 @@
 package io.suggest.ym.model
 
 import org.joda.time.DateTime
-import org.elasticsearch.common.xcontent.XContentBuilder
 import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
-import io.suggest.model.EsModel._
 import io.suggest.util.SioEsUtil._
+import io.suggest.model.common._
 
 /**
  * Suggest.io
@@ -17,7 +16,11 @@ import io.suggest.util.SioEsUtil._
  * Компания может владеть магазинами и торговыми центрами.
  */
 
-object MCompany extends EsModelStaticT[MCompany] {
+object MCompany
+  extends EsModelStaticEmpty[MCompany]
+  with EMNameStatic[MCompany]
+  with EMDateCreatedStatic[MCompany]
+{
 
   type CompanyId_t = String
 
@@ -29,17 +32,6 @@ object MCompany extends EsModelStaticT[MCompany] {
     FieldAll(enabled = false)
   )
 
-  def generateMappingProps: List[DocField] = List(
-    FieldString(NAME_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
-    FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no)
-  )
-
-
-  def applyKeyValue(acc: MCompany): PartialFunction[(String, AnyRef), Unit] = {
-    case (NAME_ESFN, value)           => acc.name = nameParser(value)
-    case (DATE_CREATED_ESFN, value)   => acc.dateCreated = dateCreatedParser(value)
-  }
-
   protected def dummy(id: String) = MCompany(id = Option(id), name = null)
 
   /**
@@ -48,19 +40,13 @@ object MCompany extends EsModelStaticT[MCompany] {
    * @return true, если документ найден и удалён. Если не найден, то false
    */
   override def deleteById(id: String)(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    val martsCountFut = MMart.countByCompanyId(id)
-    val fkFut = for {
-      shopsCount <- MShop.countByCompanyId(id)
-      martsCount <- martsCountFut
-    } yield {
-      martsCount -> shopsCount
-    }
-    fkFut flatMap {
-      case (0L, 0L) =>
+    val adnsCountFut = MAdnNode.countByCompanyId(id)
+    adnsCountFut flatMap {
+      case 0L =>
         super.deleteById(id)
 
-      case (martsCount, shopsCount) =>
-        Future failed new ForeignKeyException(s"Cannot delete company with $martsCount marts and $shopsCount shops.")
+      case adnsCount =>
+        Future failed new ForeignKeyException(s"Cannot delete company with $adnsCount marts/shops or other AdnMembers.")
     }
   }
 }
@@ -78,16 +64,14 @@ case class MCompany(
   var name          : String,
   id                : Option[MCompany.CompanyId_t] = None,
   var dateCreated   : DateTime = null
-) extends EsModelT[MCompany] with CompanyShopsSel with CompanyMartsSel {
+)
+  extends EsModelEmpty[MCompany]
+  with EMName[MCompany]
+  with EMDateCreatedMut[MCompany]
+{
   def companyId = id.get
   def companion = MCompany
 
-  override def writeJsonFields(acc: XContentBuilder) {
-    acc.field(NAME_ESFN, name)
-    if (dateCreated == null)
-      dateCreated = DateTime.now()
-    acc.field(DATE_CREATED_ESFN, dateCreated)
-  }
 }
 
 

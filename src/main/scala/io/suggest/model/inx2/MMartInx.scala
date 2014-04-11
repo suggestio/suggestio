@@ -2,18 +2,17 @@ package io.suggest.model.inx2
 
 import io.suggest.model._
 import EsModel._
-import io.suggest.ym.model.MMart.MartId_t
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
 import MInx._
-import io.suggest.ym.model.{MMartAdIndexed, MMartAd}
+import io.suggest.ym.model.MAd
 import io.suggest.util.SioEsUtil
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.action.deletebyquery.DeleteByQueryRequestBuilder
 import scala.concurrent.ExecutionContext
 import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
+import play.api.libs.json.JsString
 
 /**
  * Suggest.io
@@ -49,25 +48,24 @@ object MMartInx extends EsModelStaticT[MMartInx] {
 import MMartInx._
 
 case class MMartInx(
-  var martId: MartId_t,
+  var martId: String,
   var targetEsInxName: String
-) extends EsModelT[MMartInx] with MInxT {
-
-  @JsonIgnore def esInxNames = Seq(targetEsInxName)
+) extends EsModelT[MMartInx] with MSingleInxT {
 
   @JsonIgnore def id: Option[String] = Some(martId)
 
   def companion = MMartInx
 
-  def writeJsonFields(acc: XContentBuilder) {
-    acc.field(MART_ID_ESFN, martId)
-       .field(ES_INX_NAME_ESFN, targetEsInxName)
+  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    MART_ID_ESFN -> JsString(martId) ::
+    ES_INX_NAME_ESFN -> JsString(targetEsInxName) ::
+    acc
   }
 
-  @JsonIgnore def esTypePrefix: String = martId + "_"
-  @JsonIgnore val esType = esTypePrefix + MMartAd.ES_TYPE_NAME
 
-  @JsonIgnore def esTypes = List(esType)
+  @JsonIgnore def esTypePrefix: String = martId + "_"
+  @JsonIgnore override val targetEsType = esTypePrefix + MAd.ES_TYPE_NAME
+
 
   def esInxSettings(shards: Int, replicas: Int = 1): XContentBuilder = {
     SioEsUtil.getIndexSettingsV2(shards=shards, replicas=replicas)
@@ -77,8 +75,8 @@ case class MMartInx(
   def esAdMapping(esTypeSuffix: String): XContentBuilder = jsonGenerator { implicit b =>
     IndexMapping(
       typ = if (esTypeSuffix startsWith esTypePrefix) esTypeSuffix else esTypePrefix + esTypeSuffix,
-      staticFields = MMartAdIndexed.generateMappingStaticFields,
-      properties = MMartAdIndexed.generateMappingProps
+      staticFields = MAd.generateMappingStaticFields,
+      properties = MAd.generateMappingProps
     )
   }
 
@@ -89,18 +87,11 @@ case class MMartInx(
   }
 
 
-  /** Выставить параметры поискового реквеста. */
-  override def prepareSearchRequest(req: SearchRequestBuilder): SearchRequestBuilder = {
-    super.prepareSearchRequest(req)
-      .setIndices(targetEsInxName)
-      .setTypes(esType)
-  }
-
   /** Выставить параметры для delete-by-query реквеста. Код тот же, но эта совместимость только на уровне исходников. */
   override def prepareDeleteByQueryRequest(req: DeleteByQueryRequestBuilder): DeleteByQueryRequestBuilder = {
     super.prepareDeleteByQueryRequest(req)
       .setIndices(targetEsInxName)
-      .setTypes(esType)
+      .setTypes(targetEsType)
   }
 
 }

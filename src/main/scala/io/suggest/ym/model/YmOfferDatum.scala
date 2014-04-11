@@ -1,6 +1,6 @@
 package io.suggest.ym.model
 
-import com.scaleunlimited.cascading.{Payload, BaseDatum, PayloadDatum}
+import com.scaleunlimited.cascading.{Payload, PayloadDatum}
 import io.suggest.util.{MacroLogsImpl, CascadingFieldNamer}
 import cascading.tuple.{TupleEntry, Tuple, Fields}
 import scala.collection.JavaConversions._
@@ -10,12 +10,10 @@ import io.suggest.ym.YmParsers._
 import org.joda.time.DateTime
 import cascading.tuple.coerce.Coercions.{LONG, STRING, FLOAT, INTEGER}
 import io.suggest.ym.HotelStarsLevels.HotelStarsLevel
-import scala.{collection, Some}
+import scala.collection
 import io.suggest.ym.Dimensions
 import io.suggest.ym.HotelMealTypes.HotelMealType
 import org.elasticsearch.common.xcontent.{XContentFactory, XContentBuilder}
-import scala.collection
-import io.suggest.proto.bixo.crawler.MainProto.ShopId_t
 
 /**
  * Suggest.io
@@ -522,8 +520,8 @@ abstract class AbstractYmOfferDatum(fields: Fields) extends PayloadDatum(fields)
   }
 
   /** id магазина генерится силами RDBMS, а тут его целый id. */
-  def shopId: ShopId_t = _tupleEntry getString SHOP_ID_FN
-  def shopId_=(shopId: ShopId_t) =_tupleEntry.setString(SHOP_ID_FN, shopId)
+  def shopId: String = _tupleEntry getString SHOP_ID_FN
+  def shopId_=(shopId: String) =_tupleEntry.setString(SHOP_ID_FN, shopId)
 
   /**
    * Список "старых" цен в хронологическом порядке. Уценка может идти как promo/скидка, так и по какой-то причине,

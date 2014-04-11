@@ -16,6 +16,7 @@ import scala.collection.JavaConversions._
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram
 import io.suggest.event.SioNotifierStaticClientI
+import play.api.libs.json.JsString
 
 /**
  * Suggest.io
@@ -197,16 +198,20 @@ case class MAdStat(
   @JsonIgnore
   def companion = MAdStat
 
-  def writeJsonFields(acc: XContentBuilder) {
-    acc.field(CLIENT_ADDR_ESFN, clientAddr)
-      .field(ACTION_ESFN, action.toString)
-      .field(UA_ESFN, ua)
-      .field(AD_ID_ESFN, adId)
-      .field(AD_OWNER_ID_ESFN, adOwnerId)
-      .field(TIMESTAMP_ESFN, timestamp)
+  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    var acc1: FieldsJsonAcc = CLIENT_ADDR_ESFN -> JsString(clientAddr) ::
+      ACTION_ESFN -> JsString(action.toString) ::
+      AD_ID_ESFN -> JsString(adId) ::
+      AD_OWNER_ID_ESFN -> JsString(adOwnerId) ::
+      TIMESTAMP_ESFN -> date2JsStr(timestamp) ::
+      acc
+    if (ua.isDefined)
+      acc1 ::= UA_ESFN -> JsString(ua.get)
     if (personId.isDefined)
-      acc.field(PERSON_ID_ESFN, personId.get)
+      acc1 ::= PERSON_ID_ESFN -> JsString(personId.get)
+    acc1
   }
+
 }
 
 

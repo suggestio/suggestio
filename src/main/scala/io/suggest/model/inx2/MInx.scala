@@ -90,11 +90,26 @@ trait MInxT {
   /** Добавить необходимые фильтры в searchQuery чтобы правильно искать. */
   def addSearchQueryFilters(searchQuery: QueryBuilder): QueryBuilder = searchQuery
 
-  /** Выставить параметры поискового реквеста. */
-  def prepareSearchRequest(req: SearchRequestBuilder): SearchRequestBuilder = req
+  /** Выставить параметры поискового реквеста.
+    * Суффикс In в конце чтобы имя не конфликтовало с EsModelT.prepareSearch(). */
+  def prepareSearchIn(implicit client: Client): SearchRequestBuilder = {
+    client.prepareSearch(esInxNames : _*)
+      .setTypes(esTypes : _*)
+  }
 
   /** Выставить параметры поиского реквеста при удалении. */
   def prepareDeleteByQueryRequest(req: DeleteByQueryRequestBuilder): DeleteByQueryRequestBuilder = req
 
+}
+
+
+/** single-inx2 - это метаданные по индексам, всегда указывающие на один тип и один индекс.
+  * Для таких индексов допустимы некоторые дополнительные фунции в static-моделях (getById() и т.д.). */
+trait MSingleInxT extends MInxT {
+  def targetEsInxName: String
+  def targetEsType: String
+
+  @JsonIgnore def esTypes = Seq(targetEsType)
+  @JsonIgnore def esInxNames = Seq(targetEsInxName)
 }
 

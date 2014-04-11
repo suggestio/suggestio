@@ -3,7 +3,7 @@ package io.suggest.ym.model
 import io.suggest.util.CascadingFieldNamer
 import cascading.tuple.{TupleEntry, Tuple, Fields}
 import com.scaleunlimited.cascading.BaseDatum
-import io.suggest.proto.bixo.crawler.MainProto.ShopId_t
+import play.api.libs.json.JsString
 
 /**
  * Suggest.io
@@ -51,20 +51,20 @@ class YmShopPriceUrlDatum extends BaseDatum(FIELDS) {
     setTupleEntry(te)
   }
 
-  def this(shopId:ShopId_t, priceUrl:String, authInfo:Option[AuthInfoDatum]) = {
+  def this(shopId:String, priceUrl:String, authInfo:Option[AuthInfoDatum]) = {
     this
     this.shopId = shopId
     this.priceUrl = priceUrl
     this.authInfo = authInfo
   }
 
-  def this(shopId:ShopId_t, priceUrl:String, authInfoStr: String) = {
+  def this(shopId:String, priceUrl:String, authInfoStr: String) = {
     this(shopId, priceUrl, AuthInfoDatum.parseFromString(authInfoStr))
   }
 
 
-  def shopId: ShopId_t = _tupleEntry getString SHOP_ID_FN
-  def shopId_=(shopId: ShopId_t) = _tupleEntry.setString(SHOP_ID_FN, shopId)
+  def shopId: String = _tupleEntry getString SHOP_ID_FN
+  def shopId_=(shopId: String) = _tupleEntry.setString(SHOP_ID_FN, shopId)
 
   def priceUrl = _tupleEntry getString PRICE_URL_FN
   def priceUrl_=(priceUrl: String) = _tupleEntry.setString(PRICE_URL_FN, priceUrl)
@@ -80,12 +80,10 @@ class YmShopPriceUrlDatum extends BaseDatum(FIELDS) {
 // Далее - не-datum реализация этой же модели. Для random-access вне flow, т.е. для веб-морды например.
 // И сериализация тут не предусмотрена.
 
-import MShop.ShopId_t
 import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
-import io.suggest.util.SioConstants._
 import org.elasticsearch.client.Client
 import io.suggest.model.{EsModelStaticT, EsModelT}
 import io.suggest.model.EsModel._
@@ -137,7 +135,7 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
    * @param shopId id магазина.
    * @return Список прайслистов, относящихся к магазину.
    */
-  def getForShop(shopId: ShopId_t)(implicit ec:ExecutionContext, client: Client): Future[Seq[MShopPriceList]] = {
+  def getForShop(shopId: String)(implicit ec:ExecutionContext, client: Client): Future[Seq[MShopPriceList]] = {
     client.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(shopIdQuery(shopId))
@@ -145,9 +143,9 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
       .map { searchResp2list }
   }
 
-  def shopIdQuery(shopId: ShopId_t) = QueryBuilders.termQuery(SHOP_ID_ESFN, shopId)
+  def shopIdQuery(shopId: String) = QueryBuilders.termQuery(SHOP_ID_ESFN, shopId)
 
-  def deleteByShop(shopId: ShopId_t)(implicit ec:ExecutionContext, client: Client): Future[_] = {
+  def deleteByShop(shopId: String)(implicit ec:ExecutionContext, client: Client): Future[_] = {
     client.prepareDeleteByQuery(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(shopIdQuery(shopId))
@@ -159,20 +157,24 @@ object MShopPriceList extends EsModelStaticT[MShopPriceList] {
 import MShopPriceList._
 
 case class MShopPriceList(
-  var shopId   : ShopId_t,
+  var shopId   : String,
   var url      : String,
   var authInfo : Option[UsernamePw],
   id           : Option[String] = None
-) extends EsModelT[MShopPriceList] with MShopSel {
+) extends EsModelT[MShopPriceList] {
 
   def companion = MShopPriceList
   def authInfoStr: Option[String] = authInfo map { _.serialize }
 
-  override def writeJsonFields(acc: XContentBuilder) = {
-    acc.field(SHOP_ID_ESFN, shopId)
-      .field(URL_ESFN, url)
+  def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
+    var acc1: FieldsJsonAcc = {
+      SHOP_ID_ESFN -> JsString(shopId) ::
+      URL_ESFN -> JsString(url) ::
+      acc
+    }
     if (authInfo.isDefined)
-      acc.field(AUTH_INFO_ESFN, authInfo.get.serialize)
+      acc1 ::= AUTH_INFO_ESFN -> JsString(authInfo.get.serialize)
+    acc1
   }
 
 }
@@ -187,7 +189,7 @@ case class UsernamePw(username: String, password: String) {
 }
 
 trait ShopPriceListSel {
-  def shopId: MShop.ShopId_t
+  def shopId: String
   def priceLists(implicit ec:ExecutionContext, client: Client) = getForShop(shopId)
 }
 

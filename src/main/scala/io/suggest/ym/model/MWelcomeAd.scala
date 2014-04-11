@@ -1,16 +1,16 @@
 package io.suggest.ym.model
 
 import io.suggest.model._
-import io.suggest.ym.model.MMart.MartId_t
 import org.joda.time.DateTime
 import org.codehaus.jackson.annotate.JsonIgnore
 import io.suggest.util.SioEsUtil._
-import EsModel._
-import io.suggest.util.JacksonWrapper
-import MMartAd.IMG_ESFN
 import scala.concurrent.ExecutionContext
 import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
+import io.suggest.ym.model.common._
+import io.suggest.ym.model.ad.{MAdT, AdOfferT}
+import io.suggest.model.common._
+import io.suggest.ym.model.common.EMReceivers.Receivers_t
 
 /**
  * Suggest.io
@@ -18,54 +18,52 @@ import io.suggest.event.SioNotifierStaticClientI
  * Created: 03.04.14 16:46
  * Description: Модель для приветственной рекламы. Поиск тут не требуется, только изолированное хранение.
  */
-object MWelcomeAd extends EsModelStaticT[MWelcomeAd] {
+object MWelcomeAd
+  extends EsModelStaticEmpty[MWelcomeAd]
+  with EMProducerIdStatic[MWelcomeAd]
+  with EMImgStatic[MWelcomeAd]
+  with EMDateCreatedStatic[MWelcomeAd]
+{
 
-  val ES_TYPE_NAME = "welcomeAd"
+  val ES_TYPE_NAME = "wcAd"
 
-  protected def dummy(id: String) = MWelcomeAd(martId = null, img = null, companyId = null)
-
-  def generateMappingProps: List[DocField] = {
-    List(
-      FieldString(COMPANY_ID_ESFN,  index = FieldIndexingVariants.no,  include_in_all = false),
-      FieldString(MART_ID_ESFN, index = FieldIndexingVariants.not_analyzed,  include_in_all = false),
-      FieldObject(IMG_ESFN, enabled = false, properties = Nil),
-      FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no)
-    )
-  }
+  protected def dummy(id: String) = MWelcomeAd(
+    producerId = null,
+    img = null,
+    id = Some(id)
+  )
 
   def generateMappingStaticFields: List[Field] = List(
     FieldAll(enabled = false),
     FieldSource(enabled = true)
   )
 
-  def applyKeyValue(acc: MWelcomeAd): PartialFunction[(String, AnyRef), Unit] = {
-    case (MART_ID_ESFN, value)      => acc.martId = martIdParser(value)
-    case (COMPANY_ID_ESFN, value)   => acc.companyId = companyIdParser(value)
-    case (DATE_CREATED_ESFN, value) => acc.dateCreated = dateCreatedParser(value)
-    case (IMG_ESFN, value)          => acc.img = JacksonWrapper.convert[MImgInfo](value)
-  }
 }
+
 
 case class MWelcomeAd(
-  var martId      : MartId_t,
+  var producerId  : String,
   var img         : MImgInfo,
-  var companyId   : MCompany.CompanyId_t,
   var dateCreated : DateTime = null,
   var id          : Option[String] = None
-) extends EsModelT[MWelcomeAd] with MMartAdT[MWelcomeAd] {
+)
+  extends EsModelEmpty[MWelcomeAd]
+  with MAdT[MWelcomeAd]
+  with EMProducerIdMut[MWelcomeAd]
+  with EMImgMut[MWelcomeAd]
+  with EMDateCreatedMut[MWelcomeAd]
+{
 
-  @JsonIgnore def companion: EsModelMinimalStaticT[MWelcomeAd] = MWelcomeAd
+  @JsonIgnore def companion = MWelcomeAd
 
-  @JsonIgnore def offers: List[MMartAdOfferT] = Nil
-  @JsonIgnore def textAlign: Option[MMartAdTextAlign] = None
-  @JsonIgnore def panel: Option[MMartAdPanelSettings] = None
-  @JsonIgnore def prio: Option[Int] = None
-  @JsonIgnore def showLevels: Set[AdShowLevel] = Set.empty
-  @JsonIgnore def userCatId: Option[String] = None
-  @JsonIgnore def logoImg: Option[MImgInfo] = None
-  @JsonIgnore def shopId: Option[MShop.ShopId_t] = None
+  @JsonIgnore override def offers: List[AdOfferT] = Nil
+  @JsonIgnore override def textAlign: Option[TextAlign] = None
+  @JsonIgnore override def panel: Option[AdPanelSettings] = None
+  @JsonIgnore override def prio: Option[Int] = None
+  @JsonIgnore override def userCatId: Option[String] = None
+  @JsonIgnore override def logoImgOpt: Option[MImgInfo] = None
+  @JsonIgnore override def receivers: Receivers_t = Map.empty
 }
-
 
 
 /** JMX MBean интерфейс */
