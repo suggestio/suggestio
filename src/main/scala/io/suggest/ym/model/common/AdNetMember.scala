@@ -12,7 +12,7 @@ import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilder
 import org.elasticsearch.common.unit.Fuzziness
 import org.elasticsearch.index.mapper.internal.AllFieldMapper
 import io.suggest.ym.model.{MAdnNode, AdShowLevel, CompanyId_t}
-import java.{util => ju}
+import java.{util => ju, lang => jl}
 import io.suggest.event.{AdnNodeOnOffEvent, SioNotifierStaticClientI}
 import play.api.libs.json._
 
@@ -35,6 +35,7 @@ object AdNetMember {
   val IS_SUPERVISOR_ESFN  = "isSup"
   val SUPERVISOR_ID_ESFN  = "supId"
   val MEMBER_TYPE_ESFN    = "mType"
+  val RIGHTS_ESFN         = "rights"
 
 
   val IS_ENABLED_ESFN = "isEnabled"
@@ -66,9 +67,7 @@ trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
   abstract override def generateMappingProps: List[DocField] = {
     import FieldIndexingVariants.not_analyzed
     FieldObject(ADN_ESFN, enabled = true, properties = Seq(
-      FieldBoolean(IS_PRODUCER_ESFN, index = not_analyzed, include_in_all = false),
-      FieldBoolean(IS_RECEIVER_ESFN, index = not_analyzed, include_in_all = false),
-      FieldBoolean(IS_SUPERVISOR_ESFN, index = not_analyzed, include_in_all = false),
+      FieldString(RIGHTS_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(SUPERVISOR_ID_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(MEMBER_TYPE_ESFN, index = not_analyzed, include_in_all = false),
       // раньше это лежало в EMAdnMPubSettings, но потом было перемещено сюда, т.к. по сути это разделение было некорректно.
@@ -81,12 +80,11 @@ trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = super.applyKeyValue(acc) orElse {
     case (ADN_ESFN, value: java.util.Map[_,_]) =>
       if (acc.adn == null)
-        acc.adn = new AdNetMemberInfo(null)
+        acc.adn = new AdNetMemberInfo(null, rights = Set.empty)
       val mi = acc.adn
       value.foreach {
-        case (IS_PRODUCER_ESFN, v)    => mi.isProducer = booleanParser(v)
-        case (IS_RECEIVER_ESFN, v)    => mi.isReceiver = booleanParser(v)
-        case (IS_SUPERVISOR_ESFN, v)  => mi.isSupervisor = booleanParser(v)
+        case (RIGHTS_ESFN, v: jl.Iterable[_]) =>
+          mi.rights = v.map { rid => AdnRights.withName(rid.toString) }.toSet
         case (SUPERVISOR_ID_ESFN, v)  => mi.supId = Option(stringParser(v))
         case (MEMBER_TYPE_ESFN, v)    => mi.memberType = AdNetMemberTypes.withName(stringParser(v))
         case (SHOW_LEVELS_ESFN, levelsInfoRaw) =>
@@ -97,6 +95,10 @@ trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
           mi.disableReason = Option(drRaw).map {
             stringParser(_)
           } // TODO Нужно задать через method value, а не через (_). Почему-то не работает использование напрямую
+        // TODO IS-поля устарели, и были заменены на поле rights. Их можно удалить в мае 2014.
+        case (IS_PRODUCER_ESFN, v)    => mi.isProducer = booleanParser(v)
+        case (IS_RECEIVER_ESFN, v)    => mi.isReceiver = booleanParser(v)
+        case (IS_SUPERVISOR_ESFN, v)  => mi.isSupervisor = booleanParser(v)
       }
   }
 
@@ -292,27 +294,65 @@ trait EMAdNetMember[T <: EMAdNetMember[T]] extends EsModelT[T] {
 }
 
 
+/** Положение участника сети и его возможности описываются флагами прав доступа. */
+object AdnRights extends Enumeration {
+  type AdnRight = Value
+
+  /** Продьюсер может создавать свою рекламу. */
+  val PRODUCER = Value("p")
+
+  /** Ресивер может отображать в выдаче и просматривать в ЛК рекламу других участников, которые транслируют свою
+    * рекламу ему через receivers. Ресивер также может приглашать новых участников. */
+  val RECEIVER = Value("r")
+
+  /** Супервизор может управлять рекламной сетью и модерировать рекламные карточки. */
+  val SUPERVISOR = Value("s")
+}
+
+
+import AdnRights._
+
 /** Инфа об участнике рекламной сети. Все параметры его участия свернуты в один объект. */
 case class AdNetMemberInfo(
   var memberType: AdNetMemberType,
-  var isProducer: Boolean = false,
-  var isReceiver: Boolean = false,
-  var isSupervisor: Boolean = false,
+  var rights: Set[AdnRight],
   var supId: Option[String] = None,
   // перемещено из mpub:
   var showLevelsInfo: AdnMemberShowLevels = AdnMemberShowLevels(),
   var isEnabled: Boolean = false,
   var disableReason: Option[String] = None
 ) {
+
+  def updateRights(flag: AdnRight, isEnabled: Boolean) {
+    if (isEnabled)
+      rights += flag
+    else
+      rights -= flag
+  }
+
+  // Быстрый доступ к каталогу adn-прав
+  @JsonIgnore
+  def isProducer: Boolean = rights contains PRODUCER
+  def isProducer_=(isProducer: Boolean) = updateRights(PRODUCER, isProducer)
+  @JsonIgnore
+  def isReceiver: Boolean = rights contains RECEIVER
+  def isReceiver_=(isReceiver: Boolean) = updateRights(RECEIVER, isReceiver)
+  @JsonIgnore
+  def isSupervisor: Boolean = rights contains SUPERVISOR
+  def isSupervisor_=(isSupervisor: Boolean) = updateRights(SUPERVISOR, isSupervisor)
+
   @JsonIgnore
   def toPlayJson: JsObject = {
     var acc0: FieldsJsonAcc = List(
-      IS_PRODUCER_ESFN -> JsBoolean(isProducer),
-      IS_RECEIVER_ESFN -> JsBoolean(isReceiver),
-      MEMBER_TYPE_ESFN -> JsString(memberType.toString()),
-      IS_SUPERVISOR_ESFN -> JsBoolean(isSupervisor),
-      IS_ENABLED_ESFN -> JsBoolean(isEnabled)
+      MEMBER_TYPE_ESFN   -> JsString(memberType.toString()),
+      IS_ENABLED_ESFN    -> JsBoolean(isEnabled)
     )
+    if (!rights.isEmpty) {
+      val rightsJson = rights.foldLeft[List[JsString]] (Nil) {
+        (acc, e) => JsString(e.toString) :: acc
+      }
+      acc0 ::= RIGHTS_ESFN -> JsArray(rightsJson)
+    }
     if (supId.isDefined)
       acc0 ::= SUPERVISOR_ID_ESFN -> JsString(supId.get)
     if (!showLevelsInfo.isEmpty)
@@ -471,5 +511,4 @@ case class AdnMemberShowLevels(
     this
   }
 }
-
 

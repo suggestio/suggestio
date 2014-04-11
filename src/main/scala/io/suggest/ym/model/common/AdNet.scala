@@ -1,6 +1,7 @@
 package io.suggest.ym.model.common
 
 import io.suggest.util.MacroLogsImpl
+import AdnRights._
 
 /**
  * Suggest.io
@@ -29,9 +30,8 @@ object AdNetMemberTypes extends Enumeration {
     def getAdnInfoDflt: AdNetMemberInfo = {
       AdNetMemberInfo(
         memberType = this,
-        isProducer = true,
-        isReceiver = true,
-        isSupervisor = false, // 2014.apr.09: Решено, что у ТЦ не должно быть прав супервайзера по объективным причинам.
+        // 2014.apr.09: Решено, что у ТЦ не должно быть прав супервайзера по объективным причинам.
+        rights = Set(PRODUCER, RECEIVER),
         isEnabled = true,
         showLevelsInfo = AdnMemberShowLevels(
           in = Map(
@@ -50,9 +50,7 @@ object AdNetMemberTypes extends Enumeration {
     def getAdnInfoDflt: AdNetMemberInfo = {
       AdNetMemberInfo(
         memberType = this,
-        isProducer = true,
-        isReceiver = false,
-        isSupervisor = false,
+        rights = Set(PRODUCER),
         isEnabled = false,
         showLevelsInfo = AdnMemberShowLevels(
           // Магазин не является
