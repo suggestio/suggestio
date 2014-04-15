@@ -193,7 +193,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     martFormM.bindFromRequest().fold(
       {formWithErrors =>
         val welcomeAdOptFut = getWelcomeAdOpt(mmart)
-        debug(s"martEditFormSubmit($martId): Failed to bind form: " + formWithErrors.errors)
+        debug(s"martEditFormSubmit($martId): Failed to bind form: ${formatFormErrors(formWithErrors)}")
         welcomeAdOptFut map { welcomeAdOpt =>
           NotAcceptable(martEditFormTpl(mmart, formWithErrors, welcomeAdOpt))
             .flashing("error" -> "Ошибка заполнения формы.")
@@ -264,7 +264,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     import request.mmart
     inviteShopFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"inviteShopFormSubmit($martId): Bind failed: " + formWithErrors.errors)
+        debug(s"inviteShopFormSubmit($martId): Bind failed: ${formatFormErrors(formWithErrors)}")
         NotAcceptable(shop.shopInviteFormTpl(mmart, formWithErrors))
       },
       {case (_email, meta) =>
@@ -335,7 +335,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   def searchShops(martId: String) = IsMartAdmin(martId).async { implicit request =>
     searchFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"searchShops($martId): Failed to bind search form: " + formWithErrors.errors)
+        debug(s"searchShops($martId): Failed to bind search form: ${formatFormErrors(formWithErrors)}")
         NotAcceptable("Bad search request")
       },
       {q =>
@@ -354,7 +354,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     import request.mshop
     shopEditFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"editShopFormSubmit($shopId): Form bind failed: " + formWithErrors.errors)
+        debug(s"editShopFormSubmit($shopId): Form bind failed: ${formatFormErrors(formWithErrors)}")
         MarketShopLk.fillFullForm(mshop) map { formWithErrors2 =>
           val fwe3 = formWithErrors2.bindFromRequest()
           NotAcceptable(shop.shopEditFormTpl(request.mmart, mshop, fwe3))
@@ -426,7 +426,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   def shopOnOffSubmit(shopId: String) = IsMartAdminShop(shopId).async { implicit request =>
     shopOnOffFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"shopOnOffSubmit($shopId): Bind form failed: " + formatFormErrors(formWithErrors))
+        debug(s"shopOnOffSubmit($shopId): Bind form failed: ${formatFormErrors(formWithErrors)}")
         NotAcceptable("Bad request body.")
       },
       {case (isEnabled, reason) =>
@@ -493,7 +493,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     val rdr = Redirect(routes.MarketMartLk.showShop(request.ad.producerId))
     shopAdHideFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"shopAdHideFormSubmit($adId): Form bind failed: " + formWithErrors.errors)
+        debug(s"shopAdHideFormSubmit($adId): Form bind failed: ${formatFormErrors(formWithErrors)}")
         rdr.flashing("error" -> "Необходимо указать причину")
       },
       {case (HideShopAdActions.HIDE, reason) =>
@@ -546,7 +546,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   def setShopTopLevelAvailable(shopId: String) = IsMartAdminShop(shopId).async { implicit request =>
     shopTopLevelFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"shopSetTopLevel($shopId): Form bind failed: " + formWithErrors.errors)
+        debug(s"shopSetTopLevel($shopId): Form bind failed: ${formatFormErrors(formWithErrors)}")
         NotAcceptable("Cannot parse req body.")
       },
       {isTopEnabled =>
@@ -579,7 +579,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     val formBinded = martInviteAcceptM.bindFromRequest()
     formBinded.fold(
       {formWithErrors =>
-        debug(s"martInviteAcceptFormSubmit($martId, act=$eActId): Form bind failed: ${formWithErrors.errors}")
+        debug(s"martInviteAcceptFormSubmit($martId, act=$eActId): Form bind failed: ${formatFormErrors(formWithErrors)}")
         NotAcceptable(martInvite.inviteAcceptFormTpl(mmart, eAct, formWithErrors))
       },
       {passwordOpt =>
