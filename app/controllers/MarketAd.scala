@@ -1097,8 +1097,8 @@ object MarketAd extends SioController with LogoSupport {
   import views.html.market.showcase._single_offer
 
   /** Магазин сабмиттит форму для preview. */
-  def adFormPreviewShopSubmit(shopId: String) = IsMartAdminShop(shopId).async(parse.urlFormEncoded) { implicit request =>
-    MAdnNodeCache.getByIdCached(shopId) map {
+  def adFormPreviewShopSubmit(shopId: String) = IsShopAdm(shopId).async(parse.urlFormEncoded) { implicit request =>
+    MAdnNodeCache.getByIdCached(shopId) flatMap {
       case Some(mshop) =>
         detectAdPreviewForm(mshop.meta.name) match {
           case Right((offerType, adFormM)) =>
@@ -1108,11 +1108,15 @@ object MarketAd extends SioController with LogoSupport {
                 NotAcceptable("Preview form bind failed.")
               },
               {case (iik, logoOpt, mad) =>
+                val martId = mshop.adn.supId.get
+                val mmartOptFut = MAdnNodeCache.getByIdCached(martId)
                 mad.img = MImgInfo(iik.key)
                 mad.logoImgOpt = logoOpt
                 mad.producerId = shopId
-                mad.receivers = Map(request.martId -> AdReceiverInfo(request.martId))
-                Ok(_single_offer(mad, request.mmart, Some(mshop)))
+                mad.receivers = Map(martId -> AdReceiverInfo(martId))
+                mmartOptFut map { mmartOpt =>
+                  Ok(_single_offer(mad, mmartOpt.get, Some(mshop)))
+                }
               }
             )
 
