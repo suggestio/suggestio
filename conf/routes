@@ -135,6 +135,11 @@ POST /m/lk/m/:martId/ad/preview         controllers.MarketAd.adFormPreviewMartSu
 GET  /m/lk/ma/:adId/edit                controllers.MarketAd.editMartAd(adId)
 POST /m/lk/ma/:adId/edit                controllers.MarketAd.editMartAdSubmit(adId)
 
+## Личный кабинет на новой унифицированной архитектуре. Вместо всех shop и mart ЛК.
+GET  /m/lk/n/:adnId                     controllers.MarketLkAdnNode.showAdnNode(adnId)
+GET  /m/lk/n/:adnId/ps                  controllers.MarketLkAdnNode.producersShow(adnId)
+GET  /m/lk/n/:adnId/edit                controllers.MarketLkAdnNode.nodeEditForm(adnId)
+
 
 # Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
 GET  /m/c/usr/o/:ownerId/top            controllers.MarketCategory.topCatsOf(ownerId)

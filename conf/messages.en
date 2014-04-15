@@ -22,6 +22,10 @@ Manufacturer=Manufacturer
 Size=Size
 Sizes=Sizes
 
+lk.sl.enable_ad=Enable ad
+lk.sl.d=Show on start page
+lk.sl.h=Show in common catalog
+lk.sl.m=Show in my catalog
 
 error.invalid=Invalid value
 error.invalid.java.util.Date=Invalid date value
