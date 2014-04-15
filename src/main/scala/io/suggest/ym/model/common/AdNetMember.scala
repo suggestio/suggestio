@@ -410,7 +410,7 @@ object AdnMemberShowLevels {
     case rawLevelsMap: ju.Map[_,_] =>
       rawLevelsMap.foldLeft[List[(AdShowLevel, Int)]] (Nil) {
         case (mapAcc, (aslStr, count)) =>
-          val k = AdShowLevels.withName(aslStr.toString)
+          val k: AdShowLevel = AdShowLevels.withName(aslStr.toString)
           val v = count match {
             case n: java.lang.Number => n.intValue()
           }
@@ -471,7 +471,17 @@ object AdnMemberShowLevels {
    * @return true - значит карта допускает работу на этом уровне.
    */
   def canAtLevel(lvl: AdShowLevel, levelsMap: LvlMap_t): Boolean = {
-    levelsMap.get(lvl).exists(_ > 0)
+    levelsMap.get(lvl).exists(isPossibleLevel)
+  }
+
+  private def isPossibleLevel(max: Int) = max > 0
+
+  private def sls4render(sls: LvlMap_t) = {
+    sls.toSeq
+      .sortBy(_._1.visualPrio)
+      .map {
+        case (sl, slMax)  =>  sl -> (isPossibleLevel(slMax), slMax)
+      }
   }
 }
 
@@ -510,5 +520,9 @@ case class AdnMemberShowLevels(
     in = in + (lvl -> max)
     this
   }
+
+  // Для рендера галочек нужна модифицированная карта.
+  def out4render = sls4render(out)
+  def in4render  = sls4render(in)
 }
 

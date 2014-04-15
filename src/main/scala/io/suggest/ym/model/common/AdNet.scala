@@ -95,16 +95,32 @@ object AdShowLevels extends Enumeration with MacroLogsImpl {
   import LOGGER._
   import scala.collection.JavaConversions._
 
-  type AdShowLevel = Value
+  /**
+   * Надстройка над исходным классом-значением.
+   * @param name Исходный строковой id enum-элемента.
+   * @param visualPrio Визуальный приоритет отображения. Если надо отобразить несколько галочек, то
+   *                   они должны отображаться в неком стабильном порядке.
+   * @param checkboxCssClass При рендере галочки, она должна иметь этот css-класс.
+   */
+  protected case class Val(
+    name: String,
+    visualPrio: Int,
+    checkboxCssClass: String
+  ) extends super.Val(name)
+
+  implicit def value2val(v: Value) = v.asInstanceOf[Val]
+
+  type AdShowLevel = Val
 
   /** Отображать на нулевом уровне, т.е. при входе в ТЦ/ресторан и т.д. */
-  val LVL_START_PAGE = Value("d")
+  val LVL_START_PAGE = Val("d", 300, "firstPage-catalog")
 
   /** Отображать в каталоге продьюсеров. */
-  val LVL_MEMBERS_CATALOG = Value("h")
+  val LVL_MEMBERS_CATALOG = Val("h", 100, "common-catalog")
 
   /** Отображать эту рекламу внутри каталога продьюсера. */
-  val LVL_MEMBER = Value("m")
+  val LVL_MEMBER = Val("m", 200, "shop-catalog")
+
 
   def maybeWithName(n: String): Option[AdShowLevel] = {
     try {

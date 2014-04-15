@@ -15,7 +15,9 @@ object EMShowLevels {
   /** Десериализатор списка уровней отображения. */
   val deserializeShowLevels: PartialFunction[Any, Set[AdShowLevel]] = {
     case v: java.lang.Iterable[_] =>
-      v.map { rawSL => AdShowLevels.withName(rawSL.toString) }.toSet
+      v.map {
+        rawSL => AdShowLevels.withName(rawSL.toString) : AdShowLevel
+      }.toSet
 
     case s: String =>
       Set(AdShowLevels.withName(s))
