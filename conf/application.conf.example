@@ -129,6 +129,9 @@ domain.qi.parse.timeout_ms = 5000
 # Название кластера, к которму должен коннктится ES-клиент. [o.es.cluster.ClusterName.DEFAULT]
 es.cluster.name = "elasticsearch"
 
+## Можно включить юникаст для es-клиента, указав хотя бы один хост.
+#es.unicast.hosts = ["osm01", "localhost:9300"]
+
 # Макс кол-во тегов, которое пользователь может указать к одному запросу. [5]
 search.facet.invlink.request.tags.max = 5
 

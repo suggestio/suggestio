@@ -48,9 +48,10 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
     } flatMap { implicit esClient =>
       resetSuperuserIds map { _ => esClient }
     }
-    // Блокируемся, чтобы не было ошибок в браузере и консоли из-за асинхронной работы с ещё не запущенной системой.
-    Await.ready(fut, 20 seconds)
     JMXImpl.registerAll()
+    // Блокируемся, чтобы не было ошибок в браузере и консоли из-за асинхронной работы с ещё не запущенной системой.
+    val startTimeout: FiniteDuration = (app.configuration.getInt("start.timeout_sec") getOrElse 32).seconds
+    Await.ready(fut, startTimeout)
     cronTimers = Crontab.startTimers
   }
 

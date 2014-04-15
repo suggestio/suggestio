@@ -6,7 +6,7 @@ import org.elasticsearch.search.SearchHit
 import io.suggest.model._
 import scala.collection.JavaConversions._
 import collection.mutable
-import io.suggest.util.{UrlUtil, SioConstants, SioEsClient, LogsImpl}
+import io.suggest.util.{UrlUtil, SioEsClient, LogsImpl}
 import io.suggest.util.SioConstants._
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import controllers.routes
@@ -16,7 +16,6 @@ import play.api.Play.{current, configuration}
 import play.api.libs.json._
 import org.elasticsearch.search.facet.FacetBuilders
 import org.elasticsearch.search.facet.terms.TermsFacet
-import org.elasticsearch.common.unit.Fuzziness
 import io.suggest.util.text._
 
 /**
@@ -56,6 +55,15 @@ object SiowebEsUtil extends SioEsClient {
   /** Имя кластера elasticsearch, к которому будет коннектиться клиент. */
   override def getEsClusterName = configuration.getString("es.cluster.name") getOrElse super.getEsClusterName
 
+  /** Если нужен юникаст, то нужно передать непустой список из host или host:port */
+  override def unicastHosts: List[String] = {
+    configuration.getStringList("es.unicast.hosts") match {
+      case Some(uhs) if !uhs.isEmpty =>
+        uhs.toList
+      case _ =>
+        super.unicastHosts
+    }
+  }
 
   /**
    * Поиск в рамках домена.
