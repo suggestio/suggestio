@@ -7,17 +7,19 @@
 @import ctx._
 @import AdShowLevels._
 
-<div class="ads-list small">
+<div class="ads-list">
     <span class="title">Рекламные плакаты</span>
     <a class="add" href="@addCall">&nbsp;</a>
 
     @mads.zipWithIndex.map { case (ad, i) =>
       @* TODO Уровни отображения какого получателя надо брать за основу? Пока берутся все адресаты рекламы. *@
       <div class="item @if(!isShownF(ad.allPubShowLevels)) {disabled}" style="@if(i%3 != 1) {margin-right: 30px;}">
-        <div class="preview">
+        <div class="preview" style="overflow: hidden;">
             <div class="disabled-ad"></div>
             <a class="hover" href="@editCall(ad.id.get)">&nbsp;</a>
-            @market.showcase._single_offer(ad, mmart, mshopOpt)
+            <div class="preview" style="width: 768px; height: 1024px;-webkit-transform: scale3d(0.35,0.35,0.35);-webkit-transform-origin: 0px 0px;">
+              @market.showcase._single_offer(ad, mmart, mshopOpt)
+            </div>
         </div>
 
         @* Галочки рендерятся тут. *@
