@@ -1086,8 +1086,10 @@ trait SioEsClient {
     // На продакшене бывает полезно задать адреса узла/узлов кластера по юникасту.
     val uh = unicastHosts
     if (!uh.isEmpty) {
+      println("ES-client: using unicast cluster discovery: " + uh.mkString(", "))
       nb.getSettings
         .put("discovery.zen.ping.multicast.enabled", false)
+        .put("discovery.zen.ping.unicast.enabled", true)
         .putArray("discovery.zen.ping.unicast.hosts", uh: _*)
     }
     nb.node
