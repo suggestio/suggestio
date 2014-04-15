@@ -16,7 +16,7 @@
 @* Подшаблон для выбора цвета фона discount-шаблона. *@
 @tplColorItem(color: String, colorId: String) = {
   <div class="item">
-    <input type="checkbox" class="one-checkbox" name="ad.offer.template.color" value="@colorId" data-name="mask-color" data-value="@color"
+    <input type="checkbox" class="one-checkbox" name="ad.offer.template.color" value="@color" data-name="mask-color" data-value="@color"
     @if(af("ad.offer.template.color").value.exists(_ == colorId)) {data-checked = "checked"}
     @if(!af("ad.offer.template.color").value && color == "ce2222") {data-checked = "checked"} />
     <div class="color" style="background: #@color;">&nbsp;</div>
