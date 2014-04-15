@@ -196,13 +196,30 @@ case class AOProduct(
 
 
 object AODiscount {
-  def deserialize(jsObject: Any) = JacksonWrapper.convert[AODiscount](jsObject)
+  def deserialize(jsObject: Any): AODiscount = {
+    jsObject match {
+      case m: java.util.Map[_,_] =>
+        val acc = AODiscount(null, null, null, null)
+        m foreach {
+          case (TEXT1_ESFN, text1Raw) =>
+            acc.text1 = JacksonWrapper.convert[Option[AOStringField]](text1Raw)
+          case (DISCOUNT_ESFN, discoRaw) =>
+            acc.discount = JacksonWrapper.convert[AOFloatField](discoRaw)
+          case (DISCOUNT_TPL_ESFN | "template", tplRaw) =>
+            acc.template = JacksonWrapper.convert[AODiscountTemplate](tplRaw)
+          case (TEXT2_ESFN, text2Raw) =>
+            acc.text2 = JacksonWrapper.convert[Option[AOStringField]](text2Raw)
+        }
+        acc
+    }
+    //JacksonWrapper.convert[AODiscount](jsObject)
+  }
 }
 case class AODiscount(
-  text1: Option[AOStringField],
-  discount: AOFloatField,
-  template: AODiscountTemplate,
-  text2: Option[AOStringField]
+  var text1: Option[AOStringField],
+  var discount: AOFloatField,
+  var template: AODiscountTemplate,
+  var text2: Option[AOStringField]
 ) extends AdOfferT {
   @JsonIgnore def offerType = AdOfferTypes.DISCOUNT
 
