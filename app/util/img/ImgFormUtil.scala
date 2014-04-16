@@ -97,12 +97,13 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       .filter { _.iik.isInstanceOf[TmpImgIdKey] }
       .map { _.asInstanceOf[ImgInfo4Save[TmpImgIdKey]] }
       .toList
-    val needOrigImgs = needImgs.iterator
+    val needOrigImgs0 = needImgs.iterator
       .filter { _.iik.isInstanceOf[OrigImgIdKey] }
       .map { _.asInstanceOf[ImgInfo4Save[OrigImgIdKey]] }
-      .filter { oii => oldImgsSet contains oii.iik }  // Отбросить orig-картинки, которых не было среди старых оригиналов.
+    val needOrigImgs = oldImgsSet
+      .filter { oii => needOrigImgs0.exists(_.iik == oii) } // Отбросить orig-картинки, которых не было среди старых оригиналов.
       .toList
-    val delOldImgs = oldImgsSet -- needOrigImgs.map(_.iik)  // TODO Раньше были списки, теперь их нет. Надо убрать множество.
+    val delOldImgs = oldImgsSet -- needOrigImgs  // TODO Раньше были списки, теперь их нет. Надо убрать множество.
     // Запускаем в фоне удаление старых картинок. TODO Возможно, надо этот фьючерс подвязывать к фьючерсу сохранения?
     Future.traverse(delOldImgs) { oldOiik =>
       val fut = MPict.deleteFully(oldOiik.id)
@@ -127,10 +128,9 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       val newSavedIds = savedTmpImgsOrNull
         .filter { _ != null }
         .map { _.toMImgInfo }
-      val preservedIds = needOrigImgs.map { _.iik }
       // TODO Нужно восстанавливать исходный порядок! Сейчас пока плевать на это, но надо это как-то исправлять.
       // Как вариант: можно уйти от порядка и от работы со списками картинок. А работать только с максимум одной картинкой через Option[] вместо Seq[].
-      newSavedIds ++ preservedIds
+      newSavedIds ++ needOrigImgs
     }
   }
 
