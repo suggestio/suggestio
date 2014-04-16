@@ -157,6 +157,11 @@ trait EMReceivers[T <: EMReceivers[T]] extends EsModelT[T] {
     updateReceiversReqBuilder.execute()
   }
 
+  /** Есть ли хоть один уровень в каком-либо published? */
+  def isPublished: Boolean = receivers.exists {
+    case (_, ari)  =>  !ari.slsPub.isEmpty
+  }
+
   /** Собрать все уровни отображения со всех ресиверов. */
   def allPubShowLevels = receivers.foldLeft[Set[AdShowLevel]] (Set.empty) {
     case (acc, (_, ari))  =>  acc union ari.slsPub

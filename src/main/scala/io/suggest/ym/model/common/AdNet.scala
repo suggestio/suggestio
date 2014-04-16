@@ -2,6 +2,8 @@ package io.suggest.ym.model.common
 
 import io.suggest.util.MacroLogsImpl
 import AdnRights._
+import io.suggest.ym.model.MAdnNode
+import io.suggest.ym.model.ad.MAdT
 
 /**
  * Suggest.io
@@ -15,8 +17,12 @@ object AdNetMemberTypes extends Enumeration {
   import io.suggest.ym.ad.ShowLevelsUtil._
   import AdShowLevels._
 
-  /** Дополняем экземпляры Enumeration.Val дополнительными способностями, специфичными для sio-market. */
-  abstract protected case class Val(name: String) extends super.Val(name) {
+  /**
+   * Дополняем экземпляры Enumeration.Val дополнительными способностями, специфичными для sio-market.
+   * @param name Исходный строковой id.
+   * @param displayAddrOnAds Отображать адрес владельца рекламной карточке на самой рекламной карточке.
+   */
+  abstract protected case class Val(name: String, displayAddrOnAds: Boolean) extends super.Val(name) {
     def getAdnInfoDflt: AdNetMemberInfo
   }
 
@@ -26,7 +32,7 @@ object AdNetMemberTypes extends Enumeration {
   implicit def value2val(x: Value) = x.asInstanceOf[Val]
 
   /** Торговый центр. */
-  val MART = new Val("m") {
+  val MART = new Val("m", displayAddrOnAds = false) {
     def getAdnInfoDflt: AdNetMemberInfo = {
       AdNetMemberInfo(
         memberType = this,
@@ -46,7 +52,7 @@ object AdNetMemberTypes extends Enumeration {
   }
 
   /** Магазин. Обычно арендатор в ТЦ. */
-  val SHOP = new Val("s") {
+  val SHOP = new Val("s", displayAddrOnAds = true) {
     def getAdnInfoDflt: AdNetMemberInfo = {
       AdNetMemberInfo(
         memberType = this,
