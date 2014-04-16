@@ -15,6 +15,7 @@ import scala.concurrent.duration._
 import models.MPictureTmp
 import io.suggest.model.ImgWithTimestamp
 import net.sf.jmimemagic.Magic
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -57,13 +58,15 @@ object Img extends SioController with PlayMacroLogsImpl {
    * @return
    */
   def getThumb(dkey:String, imageId:String) = Action.async { implicit request =>
-    MImgThumb.getThumbById(imageId) map {
-      case Some(its) =>
-        serveImgBytes(its, CACHE_THUMB_CLIENT_SECONDS)
+    suppressQsFlood(routes.Img.getThumb(dkey, imageId)) {
+      MImgThumb.getThumbById(imageId) map {
+        case Some(its) =>
+          serveImgBytes(its, CACHE_THUMB_CLIENT_SECONDS)
 
-      case None =>
-        info(s"getThumb($dkey, $imageId): 404 Not found")
-        imgNotFound
+        case None =>
+          info(s"getThumb($dkey, $imageId): 404 Not found")
+          imgNotFound
+      }
     }
   }
 
@@ -74,23 +77,27 @@ object Img extends SioController with PlayMacroLogsImpl {
    * @return Оригинал картинки.
    */
   def getOrig(imgId: String) = Action.async { implicit request =>
-    MUserImgOrig.getById(imgId) map {
-      case Some(its) =>
-        serveImgBytes(its, CACHE_ORIG_CLIENT_SECONDS)
+    suppressQsFlood(routes.Img.getOrig(imgId)) {
+      MUserImgOrig.getById(imgId) map {
+        case Some(its) =>
+          serveImgBytes(its, CACHE_ORIG_CLIENT_SECONDS)
 
-      case None =>
-        info(s"getOrig($imgId): 404")
-        imgNotFound
+        case None =>
+          info(s"getOrig($imgId): 404")
+          imgNotFound
+      }
     }
   }
 
   /** Обслуживание картинки. */
   private def serveImgBytes(its: ImgWithTimestamp, cacheSeconds: Int)(implicit request: RequestHeader) = {
-    val ts0 = new Instant(its.timestamp) // не lazy, ибо всё равно понадобиться хотя бы в одной из веток.
+    // rfc date не содержит миллисекунд. Нужно округлять таймштамп, чтобы был 000 в конце.
+    val ims = its.timestamp % 1000L
+    val ts0 = new Instant(its.timestamp - ims) // не lazy, ибо всё равно понадобиться хотя бы в одной из веток.
     val isCached = request.headers.get(IF_MODIFIED_SINCE) flatMap {
         DateTimeUtil.parseRfcDate
       } exists { dt =>
-        ts0 isBefore dt
+        !(ts0 isAfter dt)
       }
     if (isCached) {
       trace("serveImg(): 304 Not Modified")
@@ -138,18 +145,20 @@ object Img extends SioController with PlayMacroLogsImpl {
   }
 
   /** Раздавалка картинок, созданных в [[handleTempImg]]. */
-  def getTempImg(filename: String) = IsAuth { implicit request =>
-    // Надо бы добавить сюда поддержку if-modifier-since...
-    MPictureTmp.find(filename) match {
-      case Some(mptmp) =>
-        val f = mptmp.file
-        Ok.sendFile(f, inline=true)
-          .withHeaders(
-            LAST_MODIFIED -> DateTimeUtil.df.print(f.lastModified),
-            CACHE_CONTROL -> ("public, max-age=" + TEMP_IMG_CACHE_SECONDS)
-          )
+  def getTempImg(filename: String) = IsAuth.async { implicit request =>
+    suppressQsFlood(routes.Img.getTempImg(filename)) {
+      // Надо бы добавить сюда поддержку if-modifier-since...
+      MPictureTmp.find(filename) match {
+        case Some(mptmp) =>
+          val f = mptmp.file
+          Ok.sendFile(f, inline = true)
+            .withHeaders(
+              LAST_MODIFIED -> DateTimeUtil.df.print(f.lastModified),
+              CACHE_CONTROL -> ("public, max-age=" + TEMP_IMG_CACHE_SECONDS)
+            )
 
-      case None => imgNotFound
+        case None => imgNotFound
+      }
     }
   }
 
@@ -173,6 +182,26 @@ object Img extends SioController with PlayMacroLogsImpl {
 
   private def actionImgNotFound = Action { imgNotFound }
   private def imgNotFound = NotFound("No such image")
+
+  /**
+   * Для подавления http get flood атаки через запросы с приписыванием рандомных qs
+   * и передачи ссылок публичным http-фетчерам.
+   * @param onSuccess Если реквест прошел проверку, то тут генерация результата.
+   * @param req Исходный реквест.
+   * @return
+   * @see [[https://www.linux.org.ru/forum/security/10389031]]
+   * @see [[http://habrahabr.ru/post/215233/]]
+   */
+  private def suppressQsFlood(onProblem: => Call)(onSuccess: => Future[Result])(implicit req: RequestHeader): Future[Result] = {
+    // TODO Надо отрабатывать неявно пустую qs (когда в ссылке есть ?, по после него конец ссылки).
+    val rqs = req.rawQueryString
+    if (rqs.length <= 1) {
+      onSuccess
+    } else {
+      debug("suppressQsFlood(): Query string found in request, but it should not. Sending redirects... qs=" + rqs)
+      MovedPermanently(onProblem.url)
+    }
+  }
 
   /** Выдать json ошибку по поводу картинки. */
   def jsonImgError(msg: String) = JsObject(Seq(
