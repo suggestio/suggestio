@@ -1064,6 +1064,9 @@ trait SioEsClient {
   /** Имя кластера elasticsearch, к которому будет коннектиться клиент. */
   def getEsClusterName: String = ClusterName.DEFAULT.value()
 
+  /** Если нужен юникаст, то нужно передать непустой список из host или host:port */
+  def unicastHosts: List[String] = Nil
+
   /** Убедиться, что клиент запущен. Обычно вызывается при запуске системы. */
   def ensureNode() = {
     synchronized {
@@ -1077,10 +1080,19 @@ trait SioEsClient {
 
   /** Собрать и запустить клиентскую ноду. */
   def createNode = {
-    NodeBuilder.nodeBuilder()
+    val nb = NodeBuilder.nodeBuilder()
       .client(true)
       .clusterName(getEsClusterName)
-      .node
+    // На продакшене бывает полезно задать адреса узла/узлов кластера по юникасту.
+    val uh = unicastHosts
+    if (!uh.isEmpty) {
+      println("ES-client: using unicast cluster discovery: " + uh.mkString(", "))
+      nb.getSettings
+        .put("discovery.zen.ping.multicast.enabled", false)
+        .put("discovery.zen.ping.unicast.enabled", true)
+        .putArray("discovery.zen.ping.unicast.hosts", uh: _*)
+    }
+    nb.node
   }
 
   /** Остановить клиентскую ноду, если запущена. */
