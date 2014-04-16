@@ -68,7 +68,7 @@ $(document).on 'click', '.device', ->
     $('.device.selected').removeClass('selected')
     $this.addClass('selected')
 
-    $('#preview')
+    $('#previewContainer')
     .width($this.attr('data-width'))
     .height($this.attr('data-height'))
     .closest('table').attr('class', 'ad-preview ' + $this.attr('data-class'))

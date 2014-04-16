@@ -195,7 +195,8 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
           needImgs = logoImgIdOpt,
           oldImgs  = mshop.logoImgOpt
         )
-        mshop.meta.loadUserFieldsFrom(meta)
+        mshop.meta.name = meta.name
+        mshop.meta.description = meta.description
         // Для обновления shop'а надо дождаться генерации нового id логотипа.
         updateImgsFut.flatMap { newImgIds =>
           mshop.logoImgOpt = newImgIds.headOption

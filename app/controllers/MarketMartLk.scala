@@ -60,7 +60,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     "name"      -> nameM,
     "town"      -> townM,
     "address"   -> martAddressM,
-    "site_url"  -> optional(urlStrMapper),
+    "siteUrl"   -> optional(urlStrMapper),
     "phone"     -> optional(phoneM)
   )
   {(name, town, address, siteUrlOpt, phoneOpt) =>
