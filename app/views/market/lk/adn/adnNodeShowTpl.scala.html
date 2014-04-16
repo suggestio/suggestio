@@ -1,4 +1,4 @@
-@(node: MAdnNode, myAds: Seq[MAdT] = Nil, supervisedNodes: Seq[MAdnNode] = Nil, fallbackLogo: Option[MImgInfo] = None)(implicit ctx: util.Context)
+@(node: MAdnNode, myAds: Seq[MAdT] = Nil, supervisedNodes: Seq[MAdnNode] = Nil, fallbackLogo: Option[MImgInfo] = None, sanCtx: ShowAdnNodeCtx)(implicit ctx: util.Context)
 
 @* Заглавная страница узла рекламной сети в личном кабинете. *@
 
@@ -21,7 +21,7 @@
       @if(node.adn.isReceiver) {
         <div class="gray-but-wrap" style="float: right; margin-top: -16px;">
           <div class="white-border-top">
-            <a class="btn" href="@routes.MarketLkAdnNode.producersShow(node.id.get)">АРЕНДАТОРЫ</a>
+            <a class="btn" href="@sanCtx.producersShowCall(node.id.get)">АРЕНДАТОРЫ</a>
           </div>
         </div>
 
@@ -39,7 +39,7 @@
     <div class="shop-info">
       <div class="name-wrap">
         <span class="name">@node.meta.name</span>
-        <a class="edit" href="@routes.MarketLkAdnNode.nodeEditForm(node.id.get)">Редактировать</a>
+        <a class="edit" href="@sanCtx.nodeEditCall(node.id.get)">Редактировать</a>
         @if(isSuperuser) {
           <a class="superuser-link" href="@routes.SysMarket.martShow(node.id.get)">/sys</a>
         }

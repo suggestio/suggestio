@@ -2,7 +2,7 @@ package controllers.adn
 
 import scala.concurrent.Future
 import controllers.SioController
-import play.api.mvc.{AnyContent, Result}
+import play.api.mvc.{Call, AnyContent, Result}
 import util.acl.AbstractRequestWithPwOpt
 import models._
 import views.html.market.lk.adn._
@@ -17,6 +17,8 @@ import util.SiowebEsUtil.client
  * страницу личного кабинета указанного объекта.
  */
 trait AdnShowLk extends SioController {
+
+  def showAdnNodeCtx: ShowAdnNodeCtx
 
   def renderShowAdnNode(node: MAdnNode, adnId: String, newAdIdOpt: Option[String], fallbackLogoFut: Future[Option[MImgInfo]] = Future successful None)
                        (implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
@@ -41,7 +43,7 @@ trait AdnShowLk extends SioController {
       } else {
         mads
       }
-      Ok(adnNodeShowTpl(node, mads2, fallbackLogo = fallbackLogo))
+      Ok(adnNodeShowTpl(node, mads2, fallbackLogo = fallbackLogo, sanCtx = showAdnNodeCtx))
     }
   }
 

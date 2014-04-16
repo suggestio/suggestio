@@ -8,7 +8,7 @@ import util.FormUtil._
 import util.acl._
 import models._
 import views.html.market.lk.shop._
-import play.api.mvc.{RequestHeader, AnyContent, Result}
+import play.api.mvc.{Call, RequestHeader, AnyContent, Result}
 import play.api.Play.current
 import concurrent.duration._
 import scala.concurrent.Future
@@ -93,6 +93,11 @@ with LogoSupport with ShopMartCompat with AdnShowLk {
     logoImgOptIdKM
   ))
 
+
+  val showAdnNodeCtx = new ShowAdnNodeCtx {
+    override def nodeEditCall(adnId: String): Call = routes.MarketShopLk.editShopForm(adnId)
+    override def producersShowCall(adnId: String): Call = ???
+  }
 
   /**
    * Рендер страницы магазина (с точки зрения арендатора: владельца магазина).

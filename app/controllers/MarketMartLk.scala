@@ -15,7 +15,7 @@ import util.img._
 import ImgFormUtil.imgInfo2imgKey
 import play.api.libs.json._
 import scala.concurrent.Future
-import play.api.mvc.{AnyContent, Result}
+import play.api.mvc.{Call, AnyContent, Result}
 import play.api.mvc.Security.username
 import scala.util.Success
 import models._
@@ -121,6 +121,12 @@ with ShopMartCompat with AdnShowLk {
   private def getWelcomeAdOpt(mmart: MAdnNode): Future[Option[MWelcomeAd]] = {
     mmart.meta.welcomeAdId
       .fold [Future[Option[MWelcomeAd]]] (Future successful None) (MWelcomeAd.getById)
+  }
+
+
+  val showAdnNodeCtx = new ShowAdnNodeCtx {
+    override def nodeEditCall(adnId: String): Call = routes.MarketMartLk.martEditForm(adnId)
+    override def producersShowCall(adnId: String): Call = routes.MarketMartLk.shopsShow(adnId)
   }
 
   /**
