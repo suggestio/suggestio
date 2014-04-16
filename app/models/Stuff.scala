@@ -15,4 +15,6 @@ import play.api.mvc.Call
 trait ShowAdnNodeCtx {
   def producersShowCall(adnId: String): Call
   def nodeEditCall(adnId: String): Call
+  def createAdCall(adnId: String): Call
+  def editAdCall(adId: String): Call
 }

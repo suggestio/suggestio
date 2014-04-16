@@ -106,8 +106,8 @@
         @market.lk.ad._adsEditableListTpl(
           mads = myAds,
           producer = node,
-          addCall = routes.MarketAd.createShopAd(node.id.get),
-          editCall = routes.MarketAd.editShopAd(_),
+          addCall  = sanCtx.createAdCall(node.id.get),
+          editCall = sanCtx.editAdCall,
           fallbackLogo = fallbackLogo
         ) { mad =>
           @* Галочки для управления отображением рекламной карточки магазина. *@

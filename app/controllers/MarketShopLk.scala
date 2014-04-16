@@ -97,6 +97,8 @@ with LogoSupport with ShopMartCompat with AdnShowLk {
   val showAdnNodeCtx = new ShowAdnNodeCtx {
     override def nodeEditCall(adnId: String): Call = routes.MarketShopLk.editShopForm(adnId)
     override def producersShowCall(adnId: String): Call = ???
+    override def createAdCall(adnId: String): Call = routes.MarketAd.createShopAd(adnId)
+    override def editAdCall(adId: String): Call = routes.MarketAd.editShopAd(adId)
   }
 
   /**
