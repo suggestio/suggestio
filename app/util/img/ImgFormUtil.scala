@@ -13,6 +13,7 @@ import java.lang
 import io.suggest.util.MacroLogsImplLazy
 import com.fasterxml.jackson.annotation.JsonIgnore
 import models._
+import play.api.cache.Cache
 
 /**
  * Suggest.io
@@ -117,6 +118,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       val fut = handleTmpImageForStoring(tii)
       fut onComplete { case tryResult =>
         tii.iik.mptmpOpt.foreach(_.file.delete())
+        tmpMetaCacheInvalidate(tii.iik)
       }
       fut onFailure {
         case ex =>  error(s"Failed to store picture " + tii, ex)
@@ -210,6 +212,31 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         }
       }
     }
+  }
+
+  /** Для временной картинки прочитать данные для постоения объекта метаданных. */
+  def getMetaForTmpImg(img: TmpImgIdKey): Option[MImgInfoMeta] = {
+    img.mptmpOpt.map { mptmp =>
+      val info = OrigImageUtil.identify(mptmp.file)
+      MImgInfoMeta(height = info.getImageHeight, width = info.getImageWidth)
+    }
+  }
+
+  def getTmpMetaCacheKey(id: String) = id + ".tme"
+  val TMP_META_EXPIRE_SEC: Int = current.configuration.getInt("img.tmp.meta.cache.expire.seconds") getOrElse 40
+
+  def getMetaForTmpImgCached(img: TmpImgIdKey): Option[MImgInfoMeta] = {
+    img.mptmpOpt.flatMap { mptmp =>
+      val ck = getTmpMetaCacheKey(mptmp.key)
+      Cache.getOrElse(ck, TMP_META_EXPIRE_SEC) {
+        getMetaForTmpImg(img)
+      }
+    }
+  }
+
+  def tmpMetaCacheInvalidate(tii: TmpImgIdKey) {
+    val ck = getTmpMetaCacheKey(tii.key)
+    Cache.remove(ck)
   }
 
 
