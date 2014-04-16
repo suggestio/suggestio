@@ -8,6 +8,7 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
 import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
 import play.api.libs.json.JsString
+import io.suggest.event.SioNotifierStaticClientI
 
 /**
  * Suggest.io
@@ -71,14 +72,16 @@ trait EMProducerIdStatic[T <: EMProducerIdMut[T]] extends EsModelStaticT[T] {
   }
 
   /**
-   * Удалить все документы, имеющие этот producer_id.
-   * @param producerId id создателя.
+   * Найти все документы с указанным producerId, и удалить по одному.
+   * Это важно, если delete() порождает какое-то событие или имеет иные сайд-эффекты.
+   * @param producerId id продьюсера.
    * @return Фьючерс для синхронизации.
    */
-  def deleteByProducerId(producerId: String)(implicit ec: ExecutionContext, client: Client): Future[_] = {
-    prepareDeleteByQuery
-      .setQuery(producerIdQuery(producerId))
-      .execute()
+  def deleteByProducerId1by1(producerId: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    // TODO Надо бы стандартизировать сайд-эффекты удаления и тут удалять через bulk + вызовы.
+    findForProducer(producerId).flatMap { docs =>
+      Future.traverse(docs) { _.delete }
+    }
   }
 }
 

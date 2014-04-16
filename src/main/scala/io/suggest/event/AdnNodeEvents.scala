@@ -6,7 +6,7 @@ import io.suggest.event.subscriber.SnFunSubscriber
 import io.suggest.util.MacroLogsImpl
 import io.suggest.model.EsModelMinimalStaticT
 import scala.util.{Failure, Try, Success}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 
 /**
@@ -95,8 +95,8 @@ object DeleteAdsOnAdnNodeDeleteSubscriber extends MacroLogsImpl {
           val producerId = ande.adnId
           val logPrefix = s"event(prodId=$producerId): "
           debug(logPrefix + "Starting deletion of all ads, related to producer...")
-          MAd.deleteByProducerId(producerId) onComplete handleFinishPf(logPrefix, MAd)
-          MWelcomeAd.deleteByProducerId(producerId) onComplete handleFinishPf(logPrefix, MWelcomeAd)
+          MAd.deleteByProducerId1by1(producerId) onComplete handleFinishPf(logPrefix, MAd)
+          MWelcomeAd.deleteByProducerId1by1(producerId) onComplete handleFinishPf(logPrefix, MWelcomeAd)
 
         case other =>
           warn("Unexpected event received: " + other)
