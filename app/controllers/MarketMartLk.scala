@@ -20,6 +20,7 @@ import play.api.mvc.Security.username
 import scala.util.Success
 import models._
 import io.suggest.ym.model.common.EMAdnMMetadataStatic.META_FLOOR_ESFN
+import controllers.adn.AdnShowLk
 
 /**
  * Suggest.io
@@ -27,7 +28,8 @@ import io.suggest.ym.model.common.EMAdnMMetadataStatic.META_FLOOR_ESFN
  * Created: 02.03.14 13:54
  * Description: Личный кабинет для sio-маркета. Тут управление торговым центром и магазинами в нём.
  */
-object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport with ShopMartCompat {
+object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport
+with ShopMartCompat with AdnShowLk {
 
   import LOGGER._
 
@@ -128,30 +130,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    *                была добавлена на предыдущей странице.
    */
   def martShow(martId: String, newAdIdOpt: Option[String]) = IsMartAdmin(martId).async { implicit request =>
-    // Бывает, что есть дополнительная реклама, которая появится в выдаче только по наступлению index refresh. Тут костыль для отработки этого.
-    val extAdOptFut = newAdIdOpt match {
-      case Some(newAdId) =>
-        MAd.getById(newAdId) map {
-          // Фильтр по receivers нужен для подавления подстановки чужих ID.
-          _.filter { mad =>
-            mad.producerId == martId  ||  mad.receivers.valuesIterator.exists(_.receiverId == martId)
-          }
-        }
-      case None => Future successful None
-    }
-    // Начать нормальную обработку карточек
-    for {
-      mads      <- MAd.findForProducerRt(martId)
-      extAdOpt  <- extAdOptFut
-    } yield {
-      // Если есть карточка в extAdOpt, то надо добавить её в начало списка, который отсортирован по дате создания.
-      val mads2 = if (extAdOpt.isDefined  &&  mads.headOption.flatMap(_.id) != newAdIdOpt) {
-        extAdOpt.get :: mads
-      } else {
-        mads
-      }
-      Ok(martShowTpl(request.mmart, mads2))
-    }
+    renderShowAdnNode(request.mmart, martId, newAdIdOpt)
   }
 
 

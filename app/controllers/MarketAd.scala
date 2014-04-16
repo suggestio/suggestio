@@ -1115,7 +1115,7 @@ object MarketAd extends SioController with LogoSupport {
                 mad.producerId = shopId
                 mad.receivers = Map(martId -> AdReceiverInfo(martId))
                 mmartOptFut map { mmartOpt =>
-                  Ok(_single_offer(mad, mmartOpt.get, Some(mshop)))
+                  Ok(_single_offer(mad, mshop, fallbackLogo = mmartOpt.flatMap(_.logoImgOpt) ))
                 }
               }
             )

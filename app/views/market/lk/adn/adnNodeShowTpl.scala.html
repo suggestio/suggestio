@@ -1,4 +1,4 @@
-@(node: MAdnNode, myAds: Seq[MAdT] = Nil, supervisedNodes: Seq[MAdnNode] = Nil)(implicit ctx: util.Context)
+@(node: MAdnNode, myAds: Seq[MAdT] = Nil, supervisedNodes: Seq[MAdnNode] = Nil, fallbackLogo: Option[MImgInfo] = None)(implicit ctx: util.Context)
 
 @* Заглавная страница узла рекламной сети в личном кабинете. *@
 
@@ -6,6 +6,10 @@
 @* import AdNetMemberTypes._ *@
 
 @market.lk.lkBase(node.meta.name) {
+
+  @helper.javascriptRouter("jsRoutes")(
+    routes.javascript.MarketAd.updateShowLevelSubmit
+  )
 
   @* Верхняя строка. *@
   <div class="title-wrap">
@@ -32,13 +36,14 @@
 
 
   <div class="body">
-    <div class="name-wrap">
-      <span class="name">@node.meta.name</span>
-      <a class="edit" href="@routes.MarketLkAdnNode.nodeEditForm(node.id.get)">Редактировать</a>
-
-      @if(isSuperuser) {
-        <a class="superuser-link" href="@routes.SysMarket.martShow(node.id.get)">/sys</a>
-      }
+    <div class="shop-info">
+      <div class="name-wrap">
+        <span class="name">@node.meta.name</span>
+        <a class="edit" href="@routes.MarketLkAdnNode.nodeEditForm(node.id.get)">Редактировать</a>
+        @if(isSuperuser) {
+          <a class="superuser-link" href="@routes.SysMarket.martShow(node.id.get)">/sys</a>
+        }
+      </div>
 
       <div class="border-line"></div>
 
@@ -93,13 +98,17 @@
       @* Флаг single переименовывает единственную галочку "Выводить". *@
       @defining(node.adn.showLevelsInfo.out4render) { outLvlMap =>
       @defining(outLvlMap.size == 1) { isSingleOutLvl =>
+        @* Раскрыть для скриптов текущую информацию о лимитах по кол-ву объяв на доступных уровнях отображения. *@
+        @outLvlMap.map { case (sl, (slAllowed, slMax)) =>
+          <input id="maxShownAds_@sl" type="hidden" value="@slMax"/>
+        }
+        @* Вывести рекламные карточки. *@
         @market.lk.ad._adsEditableListTpl(
           mads = myAds,
-          mmart = node,
+          producer = node,
           addCall = routes.MarketAd.createShopAd(node.id.get),
           editCall = routes.MarketAd.editShopAd(_),
-          mshopOpt = Some(node),
-          isShownF = ???
+          fallbackLogo = fallbackLogo
         ) { mad =>
           @* Галочки для управления отображением рекламной карточки магазина. *@
           <div class="controls">

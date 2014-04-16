@@ -1,4 +1,4 @@
-@(mads: Seq[MAdT], addCall: Call, editCall: String => Call, mmart: MAdnNode, mshopOpt: Option[MAdnNode], isShownF: Set[AdShowLevel] => Boolean)(content: MAdT => Html)(implicit ctx: util.Context)
+@(mads: Seq[MAdT], addCall: Call, editCall: String => Call, producer: MAdnNode, fallbackLogo: Option[MImgInfo] = None)(content: MAdT => Html)(implicit ctx: util.Context)
 
 @* Встраиваемый список изменяемых рекламных карточек.
    isShownF содержит функцию, которая определяет, является ли текущая карточка отображаемой на момент рендера.
@@ -13,12 +13,12 @@
 
     @mads.zipWithIndex.map { case (ad, i) =>
       @* TODO Уровни отображения какого получателя надо брать за основу? Пока берутся все адресаты рекламы. *@
-      <div class="item @if(!isShownF(ad.allPubShowLevels)) {disabled}" style="@if(i%3 != 1) {margin-right: 30px;}">
+      <div class="item @if(!ad.isPublished) {disabled}" style="@if(i%3 != 1) {margin-right: 30px;}">
         <div class="preview" style="overflow: hidden;">
             <div class="disabled-ad"></div>
             <a class="hover" href="@editCall(ad.id.get)">&nbsp;</a>
             <div class="preview" style="width: 768px; height: 1024px;-webkit-transform: scale3d(0.35,0.35,0.35);-webkit-transform-origin: 0px 0px; -moz-transform: scale3d(0.35,0.35,0.35);-moz-transform-origin: 0px 0px;">
-              @market.showcase._single_offer(ad, mmart, mshopOpt)
+              @market.showcase._single_offer(ad, producer, fallbackLogo)
             </div>
         </div>
 

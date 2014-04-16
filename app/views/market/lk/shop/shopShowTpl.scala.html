@@ -7,11 +7,11 @@
 @import ctx._
 @import AdShowLevels._
 
-@helper.javascriptRouter("jsRoutes")(
-  routes.javascript.MarketAd.updateShowLevelSubmit
-)
-
 @lkBase(mshop.meta.name) {
+
+  @helper.javascriptRouter("jsRoutes")(
+    routes.javascript.MarketAd.updateShowLevelSubmit
+  )
 
   <div class="title-wrap">
     <div class="center">
@@ -59,11 +59,10 @@
 
       @market.lk.ad._adsEditableListTpl(
         mads = mads,
-        mmart = mmart,
+        producer = mshop,
         addCall = routes.MarketAd.createShopAd(mshop.id.get),
         editCall = routes.MarketAd.editShopAd(_),
-        mshopOpt = Some(mshop),
-        isShownF = isShownShopAd(hsp, _)
+        fallbackLogo = mmart.logoImgOpt
       ) { mad =>
         @* Галочки для управления отображением рекламной карточки магазина. *@
         @defining(mad.allWantShowLevels) { sls =>

@@ -67,11 +67,9 @@
     @* Рендер списка карточек арендатора. *@
     @market.lk.ad._adsEditableListTpl(
       mads = mads,
-      mmart = mmart,
+      producer = mmart,
       addCall = routes.MarketAd.createMartAd(mmart.id.get),
-      editCall = routes.MarketAd.editMartAd(_),
-      mshopOpt = None,
-      isShownF = isShownMartAd
+      editCall = routes.MarketAd.editMartAd(_)
     ) { mad =>
       @* Галочка для управления отображением карточек ТЦ. *@
 
