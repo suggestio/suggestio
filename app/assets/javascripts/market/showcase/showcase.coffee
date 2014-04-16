@@ -166,10 +166,11 @@ siomart =
       event.preventDefault()
 
     touchstart : ( event ) ->
-      this.page_x = event.pageX
+      this.page_x = event.changedTouches[0].pageX
 
     touchmove : ( event ) ->
-      _delta = this.page_x - event.pageX
+
+      _delta = this.page_x - event.changedTouches[0].pageX
 
       if _delta > siomart.config.ontouchmove_offer_change_delta
         siomart.screens.objects['smScreen' + siomart.screens.active_screen].next_offer(true)
