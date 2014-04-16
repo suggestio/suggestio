@@ -1,7 +1,13 @@
 package io.suggest.event
 
-import io.suggest.event.SioNotifier.Classifier
-import io.suggest.ym.model.{AdNetMemberType, MAdnNode}
+import io.suggest.event.SioNotifier.{Subscriber, Classifier}
+import io.suggest.ym.model.{MWelcomeAd, MAd, AdNetMemberType, MAdnNode}
+import io.suggest.event.subscriber.SnFunSubscriber
+import io.suggest.util.MacroLogsImpl
+import io.suggest.model.EsModelMinimalStaticT
+import scala.util.{Failure, Try, Success}
+import scala.concurrent.ExecutionContext
+import org.elasticsearch.client.Client
 
 /**
  * Suggest.io
@@ -74,3 +80,37 @@ case class AdnNodeOnOffEvent(adnId: String, isEnabled: Boolean) extends SioEvent
 trait IAdnId {
   def adnId: String
 }
+
+
+/** Если нужно удалять рекламные карточки, созданные каким-то узлом при удалении оного, то можно
+  * можно использовать этот subscriber. */
+object DeleteAdsOnAdnNodeDeleteSubscriber extends MacroLogsImpl {
+  import LOGGER._
+
+  /** Карта подписчиков вместе с содержимым подписчика. */
+  def getSnMap(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Seq[(Classifier, Seq[Subscriber])] = {
+    Seq(
+      AdnNodeDeletedEvent.getClassifier() -> Seq(SnFunSubscriber {
+        case ande: AdnNodeDeletedEvent =>
+          val producerId = ande.adnId
+          val logPrefix = s"event(prodId=$producerId): "
+          debug(logPrefix + "Starting deletion of all ads, related to producer...")
+          MAd.deleteByProducerId(producerId) onComplete handleFinishPf(logPrefix, MAd)
+          MWelcomeAd.deleteByProducerId(producerId) onComplete handleFinishPf(logPrefix, MWelcomeAd)
+
+        case other =>
+          warn("Unexpected event received: " + other)
+      })
+    )
+  }
+
+  /** Генератор complete-функции подхвата завершения удаления рекламных карточек.
+    * Функция только сообщает в логи о своих успехах. */
+  private def handleFinishPf(logPrefix: String, model: EsModelMinimalStaticT[_]): PartialFunction[Try[_], _] = {
+    case Success(result) =>
+      debug(logPrefix + "All ads removed ok from model " + model.getClass.getSimpleName)
+    case Failure(ex) =>
+      error(logPrefix + "Failed to rm ads from model " + model.getClass.getSimpleName, ex)
+  }
+}
+

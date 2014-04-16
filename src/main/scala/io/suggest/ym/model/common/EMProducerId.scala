@@ -70,6 +70,16 @@ trait EMProducerIdStatic[T <: EMProducerIdMut[T]] extends EsModelStaticT[T] {
     findQueryRt(producerIdQuery(producerId), maxResults)
   }
 
+  /**
+   * Удалить все документы, имеющие этот producer_id.
+   * @param producerId id создателя.
+   * @return Фьючерс для синхронизации.
+   */
+  def deleteByProducerId(producerId: String)(implicit ec: ExecutionContext, client: Client): Future[_] = {
+    prepareDeleteByQuery
+      .setQuery(producerIdQuery(producerId))
+      .execute()
+  }
 }
 
 
