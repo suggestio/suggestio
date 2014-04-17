@@ -573,8 +573,18 @@ market =
   ## Главная страница ЛК торгового центра
   mart :
     init : () ->
-      $('#martInstallScriptButton').bind 'click', () ->
-        $('#martInstallScriptPopup, #overlay').show()
+      $('#installScriptButton').bind 'click', () ->
+        $('#installScriptPopup, #overlay').show()
+
+        _dom = $('#installScriptPopup')
+
+        ish = _dom.height()
+
+        params =
+          'margin-top' : - ish / 2
+
+        _dom.css params
+
         return false
 
 

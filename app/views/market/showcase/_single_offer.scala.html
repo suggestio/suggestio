@@ -1,12 +1,13 @@
-@(ad: MAdT, mmart: MAdnNode, mshopOpt: Option[MAdnNode], isHidden: Boolean = false)(implicit ctx: util.Context)
+@(ad: MAdT, producer: MAdnNode, fallbackLogo: Option[MImgInfo] = None, isHidden: Boolean = false)(implicit ctx: util.Context)
 
 @import util.TplDataFormatUtil._
+@import AdNetMemberTypes.MART
 
-<div class="sm-offer sm-sngl-offer @if(isHidden){ sm-hidden-offer }" data-is-mart-offer="@mshopOpt.nonEmpty">
+<div class="sm-offer sm-sngl-offer @if(isHidden){sm-hidden-offer}" data-is-mart-offer="@(producer.adn.memberType == MART)">
 
   @ad.panel.map { panelSettings =>
     <div class="offer-header" style="background-color: #@panelSettings.color">
-      @mshopOpt.flatMap(_.logoImgOpt).orElse(mmart.logoImgOpt).map { logoImg =>
+      @producer.logoImgOpt.orElse(fallbackLogo).map { logoImg =>
         <img class="sm-offer-logo" height="30" src="@routes.Img.getImg(logoImg.id)"/>
       }
     </div>
@@ -50,21 +51,19 @@
 
       @* Локейшн магазина *@
       @* Если магазин не указан, то значит это рекламная карточка ТЦ. *@
-      @mshopOpt.map { mshop =>
+      @if(producer.adn.memberType.displayAddrOnAds) {
         <div class="offer-location">
           <div class="ol-icon"></div>
-          @mshop.meta.floor.map { floor =>
+          @producer.meta.floor.map { floor =>
             Этаж @floor<br/>
           }
-          @mshop.meta.section.map { section =>
+          @producer.meta.section.map { section =>
             Бутик @section<br/>
           }
-          &laquo;@mshop.meta.name&raquo;
+          &laquo;@producer.meta.name&raquo;
         </div>
-      }
 
-      @mshopOpt.map { mshop =>
-        <a class="sm-button sm-shops-offers-link" onclick="siomart.load_for_shop_id('@mshop.id'); return false;" ontouchend="siomart.load_for_shop_id('@mshop.id'); return false;">ПРЕДЛОЖЕНИЯ МАГАЗИНА</a>
+        <a class="sm-button sm-shops-offers-link" onclick="siomart.load_for_shop_id('@producer.id'); return false;" ontouchend="siomart.load_for_shop_id('@producer.id'); return false;">ПРЕДЛОЖЕНИЯ МАГАЗИНА</a>
       }
 
     </div>

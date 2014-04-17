@@ -15,11 +15,12 @@ import util.img._
 import ImgFormUtil.imgInfo2imgKey
 import play.api.libs.json._
 import scala.concurrent.Future
-import play.api.mvc.{AnyContent, Result}
+import play.api.mvc.{Call, AnyContent, Result}
 import play.api.mvc.Security.username
 import scala.util.Success
 import models._
 import io.suggest.ym.model.common.EMAdnMMetadataStatic.META_FLOOR_ESFN
+import controllers.adn.AdnShowLk
 
 /**
  * Suggest.io
@@ -27,7 +28,8 @@ import io.suggest.ym.model.common.EMAdnMMetadataStatic.META_FLOOR_ESFN
  * Created: 02.03.14 13:54
  * Description: Личный кабинет для sio-маркета. Тут управление торговым центром и магазинами в нём.
  */
-object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport with ShopMartCompat {
+object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport
+with ShopMartCompat with AdnShowLk {
 
   import LOGGER._
 
@@ -121,6 +123,14 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
       .fold [Future[Option[MWelcomeAd]]] (Future successful None) (MWelcomeAd.getById)
   }
 
+
+  val showAdnNodeCtx = new ShowAdnNodeCtx {
+    override def nodeEditCall(adnId: String): Call = routes.MarketMartLk.martEditForm(adnId)
+    override def producersShowCall(adnId: String): Call = routes.MarketMartLk.shopsShow(adnId)
+    override def createAdCall(adnId: String): Call = routes.MarketAd.createMartAd(adnId)
+    override def editAdCall(adId: String): Call = routes.MarketAd.editMartAd(adId)
+  }
+
   /**
    * Рендер раздачи страницы с личным кабинетом торгового центра.
    * @param martId id ТЦ
@@ -128,30 +138,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
    *                была добавлена на предыдущей странице.
    */
   def martShow(martId: String, newAdIdOpt: Option[String]) = IsMartAdmin(martId).async { implicit request =>
-    // Бывает, что есть дополнительная реклама, которая появится в выдаче только по наступлению index refresh. Тут костыль для отработки этого.
-    val extAdOptFut = newAdIdOpt match {
-      case Some(newAdId) =>
-        MAd.getById(newAdId) map {
-          // Фильтр по receivers нужен для подавления подстановки чужих ID.
-          _.filter { mad =>
-            mad.producerId == martId  ||  mad.receivers.valuesIterator.exists(_.receiverId == martId)
-          }
-        }
-      case None => Future successful None
-    }
-    // Начать нормальную обработку карточек
-    for {
-      mads      <- MAd.findForProducerRt(martId)
-      extAdOpt  <- extAdOptFut
-    } yield {
-      // Если есть карточка в extAdOpt, то надо добавить её в начало списка, который отсортирован по дате создания.
-      val mads2 = if (extAdOpt.isDefined  &&  mads.headOption.flatMap(_.id) != newAdIdOpt) {
-        extAdOpt.get :: mads
-      } else {
-        mads
-      }
-      Ok(martShowTpl(request.mmart, mads2))
-    }
+    renderShowAdnNode(request.mmart, martId, newAdIdOpt)
   }
 
 
@@ -193,7 +180,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     martFormM.bindFromRequest().fold(
       {formWithErrors =>
         val welcomeAdOptFut = getWelcomeAdOpt(mmart)
-        debug(s"martEditFormSubmit($martId): Failed to bind form: " + formWithErrors.errors)
+        debug(s"martEditFormSubmit($martId): Failed to bind form: ${formatFormErrors(formWithErrors)}")
         welcomeAdOptFut map { welcomeAdOpt =>
           NotAcceptable(martEditFormTpl(mmart, formWithErrors, welcomeAdOpt))
             .flashing("error" -> "Ошибка заполнения формы.")
@@ -264,7 +251,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     import request.mmart
     inviteShopFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"inviteShopFormSubmit($martId): Bind failed: " + formWithErrors.errors)
+        debug(s"inviteShopFormSubmit($martId): Bind failed: ${formatFormErrors(formWithErrors)}")
         NotAcceptable(shop.shopInviteFormTpl(mmart, formWithErrors))
       },
       {case (_email, meta) =>
@@ -335,7 +322,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   def searchShops(martId: String) = IsMartAdmin(martId).async { implicit request =>
     searchFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"searchShops($martId): Failed to bind search form: " + formWithErrors.errors)
+        debug(s"searchShops($martId): Failed to bind search form: ${formatFormErrors(formWithErrors)}")
         NotAcceptable("Bad search request")
       },
       {q =>
@@ -354,7 +341,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     import request.mshop
     shopEditFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"editShopFormSubmit($shopId): Form bind failed: " + formWithErrors.errors)
+        debug(s"editShopFormSubmit($shopId): Form bind failed: ${formatFormErrors(formWithErrors)}")
         MarketShopLk.fillFullForm(mshop) map { formWithErrors2 =>
           val fwe3 = formWithErrors2.bindFromRequest()
           NotAcceptable(shop.shopEditFormTpl(request.mmart, mshop, fwe3))
@@ -426,7 +413,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   def shopOnOffSubmit(shopId: String) = IsMartAdminShop(shopId).async { implicit request =>
     shopOnOffFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"shopOnOffSubmit($shopId): Bind form failed: " + formatFormErrors(formWithErrors))
+        debug(s"shopOnOffSubmit($shopId): Bind form failed: ${formatFormErrors(formWithErrors)}")
         NotAcceptable("Bad request body.")
       },
       {case (isEnabled, reason) =>
@@ -493,7 +480,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     val rdr = Redirect(routes.MarketMartLk.showShop(request.ad.producerId))
     shopAdHideFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"shopAdHideFormSubmit($adId): Form bind failed: " + formWithErrors.errors)
+        debug(s"shopAdHideFormSubmit($adId): Form bind failed: ${formatFormErrors(formWithErrors)}")
         rdr.flashing("error" -> "Необходимо указать причину")
       },
       {case (HideShopAdActions.HIDE, reason) =>
@@ -546,7 +533,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
   def setShopTopLevelAvailable(shopId: String) = IsMartAdminShop(shopId).async { implicit request =>
     shopTopLevelFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"shopSetTopLevel($shopId): Form bind failed: " + formWithErrors.errors)
+        debug(s"shopSetTopLevel($shopId): Form bind failed: ${formatFormErrors(formWithErrors)}")
         NotAcceptable("Cannot parse req body.")
       },
       {isTopEnabled =>
@@ -579,7 +566,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     val formBinded = martInviteAcceptM.bindFromRequest()
     formBinded.fold(
       {formWithErrors =>
-        debug(s"martInviteAcceptFormSubmit($martId, act=$eActId): Form bind failed: ${formWithErrors.errors}")
+        debug(s"martInviteAcceptFormSubmit($martId, act=$eActId): Form bind failed: ${formatFormErrors(formWithErrors)}")
         NotAcceptable(martInvite.inviteAcceptFormTpl(mmart, eAct, formWithErrors))
       },
       {passwordOpt =>

@@ -1110,12 +1110,12 @@ object MarketAd extends SioController with LogoSupport {
               {case (iik, logoOpt, mad) =>
                 val martId = mshop.adn.supId.get
                 val mmartOptFut = MAdnNodeCache.getByIdCached(martId)
-                mad.img = MImgInfo(iik.key)
+                mad.img = MImgInfo(iik.key, meta = previewPrepareImgMeta(iik))
                 mad.logoImgOpt = logoOpt
                 mad.producerId = shopId
                 mad.receivers = Map(martId -> AdReceiverInfo(martId))
                 mmartOptFut map { mmartOpt =>
-                  Ok(_single_offer(mad, mmartOpt.get, Some(mshop)))
+                  Ok(_single_offer(mad, mshop, fallbackLogo = mmartOpt.flatMap(_.logoImgOpt) ))
                 }
               }
             )
@@ -1141,7 +1141,7 @@ object MarketAd extends SioController with LogoSupport {
             NotAcceptable("Form bind failed")
           },
           {case (iik, logoOpt, mad) =>
-            mad.img = MImgInfo(iik.key)
+            mad.img = MImgInfo(iik.key, meta = previewPrepareImgMeta(iik))
             mad.logoImgOpt = logoOpt
             mad.producerId = martId
             mad.receivers = Map(martId -> AdReceiverInfo(martId))
@@ -1151,6 +1151,14 @@ object MarketAd extends SioController with LogoSupport {
 
       case Left(formWithErrors) =>
         NotAcceptable("Form mode invalid.")
+    }
+  }
+
+  /** Награбить метаданные по картинке для генерации превьюшки. */
+  private def previewPrepareImgMeta(iik: ImgIdKey): Option[MImgInfoMeta] = {
+    iik match {
+      case tiik: TmpImgIdKey => ImgFormUtil.getMetaForTmpImgCached(tiik)
+      case oiik: OrigImgIdKey => oiik.meta
     }
   }
 

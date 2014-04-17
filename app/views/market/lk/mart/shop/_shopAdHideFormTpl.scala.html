@@ -14,7 +14,7 @@
   <div class="content">
 
     <div class="ad-preview preview-medium" style="height: 500px;">
-      @market.showcase._single_offer(mad, mmart, Some(mshop))
+      @market.showcase._single_offer(mad, mshop, fallbackLogo = mmart.logoImgOpt)
     </div>
 
     @form(routes.MarketMartLk.shopAdHideFormSubmit(mad.id.get)) {

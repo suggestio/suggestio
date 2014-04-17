@@ -115,7 +115,7 @@
             <div class="preview">
               <div class="disabled-ad"></div>
               <a class="hover tc-edit" href="@routes.MarketMartLk.shopAdHideForm(mad.id.get)">&nbsp;</a>
-              @market.showcase._single_offer(mad, mmart, Some(mshop))
+              @market.showcase._single_offer(mad, mshop, fallbackLogo = mmart.logoImgOpt)
             </div>
           </div>
         }

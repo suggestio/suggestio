@@ -10,6 +10,7 @@ import play.api.libs.concurrent.Akka
 import scala.concurrent.future
 import play.api.libs.concurrent.Execution.Implicits._
 import models.MAdnNodeCache
+import io.suggest.event.SioNotifier.{Subscriber, Classifier}
 
 /**
  * Suggest.io
@@ -39,7 +40,8 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
     DomainManager,
     SiobixClient,
     MAdnNodeCache,
-    IndicesUtil
+    IndicesUtil,
+    deleteAdsOnAdnNodeDeleteSNSC
   )
 
   /** SiowebSup собирается запустить сие. */
@@ -52,6 +54,13 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
    */
   private def snAfterStartAsync = future {
     staticSubscribeAllSync()
+  }
+
+  private def deleteAdsOnAdnNodeDeleteSNSC = new SNStaticSubscriber {
+    def snMap: Seq[(Classifier, Seq[Subscriber])] = {
+      import Implicts.sn, SiowebEsUtil.client
+      DeleteAdsOnAdnNodeDeleteSubscriber.getSnMap
+    }
   }
 }
 

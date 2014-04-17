@@ -23,6 +23,10 @@ Size=Размер
 Sizes=Размеры
 Price=Цена
 
+lk.sl.enable_ad=Включить объявление
+lk.sl.d=Выводить в моём каталоге
+lk.sl.h=Выводить в общем каталоге
+lk.sl.m=Размещение на первом экране
 
 error.invalid=Неверное значение
 error.invalid.java.util.Date=Неверный формат даты

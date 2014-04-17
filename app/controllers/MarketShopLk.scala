@@ -8,12 +8,13 @@ import util.FormUtil._
 import util.acl._
 import models._
 import views.html.market.lk.shop._
-import play.api.mvc.{RequestHeader, AnyContent, Result}
+import play.api.mvc.{Call, RequestHeader, AnyContent, Result}
 import play.api.Play.current
 import concurrent.duration._
 import scala.concurrent.Future
 import play.api.mvc.Security.username
 import util.img._
+import controllers.adn.AdnShowLk
 
 /**
  * Suggest.io
@@ -21,7 +22,8 @@ import util.img._
  * Created: 03.03.14 13:34
  * Description: Контроллер личного кабинета для арендатора, т.е. с точки зрения конкретного магазина.
  */
-object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport with ShopMartCompat {
+object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForceProtect
+with LogoSupport with ShopMartCompat with AdnShowLk {
 
   import LOGGER._
 
@@ -92,6 +94,13 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
   ))
 
 
+  val showAdnNodeCtx = new ShowAdnNodeCtx {
+    override def nodeEditCall(adnId: String): Call = routes.MarketShopLk.editShopForm(adnId)
+    override def producersShowCall(adnId: String): Call = ???
+    override def createAdCall(adnId: String): Call = routes.MarketAd.createShopAd(adnId)
+    override def editAdCall(adId: String): Call = routes.MarketAd.editShopAd(adId)
+  }
+
   /**
    * Рендер страницы магазина (с точки зрения арендатора: владельца магазина).
    * @param shopId id магазина.
@@ -99,34 +108,10 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
    */
   def showShop(shopId: String, newAdIdOpt: Option[String]) = IsShopAdm(shopId).async { implicit request =>
     import request.mshop
-    val adsFut = MAd.findForProducerRt(shopId)
-    // TODO Если магазин удалён из ТЦ, то это как должно выражаться?
-    // Бывает, что добавлена новая карточка. Нужно её как-то отобразить.
-    val extAdOptFut = newAdIdOpt match {
-      case Some(newAdId) => MAd.getById(newAdId)
-        .map { _.filter {
-          _.producerId == shopId
-        } }
-      case None => Future successful None
+    val fallbackLogoFut = getMartByIdCache(mshop.adn.supId.get).map {
+      _.flatMap(_.logoImgOpt)
     }
-    val martId = mshop.adn.supId.get
-    getMartByIdCache(martId).flatMap {
-      case Some(mmart) =>
-        for {
-          mads      <- adsFut
-          extAdOpt  <- extAdOptFut
-        } yield {
-          // Если есть карточка в extAdOpt, то надо добавить её в начало списка, который отсортирован по дате создания.
-          val mads2 = if (extAdOpt.isDefined  &&  mads.headOption.flatMap(_.id) != newAdIdOpt) {
-            extAdOpt.get :: mads
-          } else {
-            mads
-          }
-          Ok(shopShowTpl(mmart, mshop, mads2))
-        }
-
-      case None => martNotFound(martId)
-    }
+    renderShowAdnNode(mshop, shopId, newAdIdOpt, fallbackLogoFut)
   }
 
 

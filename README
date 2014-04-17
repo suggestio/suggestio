@@ -1,7 +1,11 @@
 sioweb3
 =====================================
 
-Вёб-морда для suggest.io на базе play 2.
+Вёб-морда для suggest.io на базе play 2+.
+
+2014.apr.16:
+При запуске stage-билда на osmX, надо использовать команду типа этой:
+bin/sioweb21 -Dconfig.file=../application.conf -Dhttp.port=9001
 
 2014.feb.06: Надо обновить настройки sbt согласно странице в wiki:
  http://wiki.cbca.ru/dokuwiki/doku.php/sbt

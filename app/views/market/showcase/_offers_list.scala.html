@@ -6,7 +6,12 @@
     @if( isNav ){
       <a class="sm-offer-control @if( (mad eq ads.head) ){active}" href=""><span></span></a>
     } else {
-      @_single_offer(mad, mmart, shops.get(mad.producerId), isHidden = !(mad eq ads.head))
+      @_single_offer(
+	mad,
+	shops.getOrElse(mad.producerId, mmart),
+	fallbackLogo = mmart.logoImgOpt,
+	isHidden = !(mad eq ads.head)
+      )
     }
   }
 }

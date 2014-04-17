@@ -8,6 +8,7 @@ import util.SiowebEsUtil.client
 import util.event.SiowebNotifier.Implicts.sn
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import java.lang.management.ManagementFactory
+import io.suggest.util.JMXBase
 
 /**
  * Suggest.io
@@ -20,12 +21,13 @@ object JMXImpl {
   import io.suggest.util.JMXHelpers._
 
   /** Список моделей, отправляемых в MBeanServer. private для защиты от возможных воздействий извне. */
-  private val JMX_MODELS = List(
+  private val JMX_MODELS = List[JMXBase](
     new MMartInxJmx,
     new MAdStatJmx,
     new MWelcomeAdJmx,
     new MAdJmx,
-    new MAdnNodeJmx
+    new MAdnNodeJmx,
+    new MPictJmx
   )
 
   private def getSrv = ManagementFactory.getPlatformMBeanServer
