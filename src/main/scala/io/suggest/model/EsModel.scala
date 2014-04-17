@@ -1,7 +1,7 @@
 package io.suggest.model
 
 import scala.concurrent.{Awaitable, Await, ExecutionContext, Future}
-import io.suggest.util.{JacksonWrapper, MacroLogsImpl, SioEsUtil}
+import io.suggest.util.{JMXBase, JacksonWrapper, MacroLogsImpl, SioEsUtil}
 import SioEsUtil._
 import org.joda.time.{DateTimeZone, ReadableInstant, DateTime}
 import org.elasticsearch.action.search.SearchResponse
@@ -714,20 +714,16 @@ trait EsModelJMXMBeanCommon {
 
 }
 
-trait EsModelJMXBase extends EsModelJMXMBeanCommon {
-  import scala.concurrent.duration._
+trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon {
 
   def companion: EsModelMinimalStaticT[_]
 
-  def jmxName = "io.suggest:type=model,name=" + getClass.getSimpleName.replace("Jmx", "")
+  override def jmxName = "io.suggest:type=model,name=" + getClass.getSimpleName.replace("Jmx", "")
 
   // Контексты, зависимые от конкретного проекта.
   implicit def ec: ExecutionContext
   implicit def client: Client
   implicit def sn: SioNotifierStaticClientI
-
-  /** Хелпер для быстрой синхронизации фьючерсов. */
-  implicit protected def awaitFuture[T](fut: Awaitable[T]) = Await.result(fut, 10 seconds)
 
   def reindexAll() {
     companion.reindexAll

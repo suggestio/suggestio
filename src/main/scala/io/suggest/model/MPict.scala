@@ -133,3 +133,11 @@ trait MPictSubmodel {
 
 case class ImgWithTimestamp(img: Array[Byte], timestamp: Long)
 
+
+/** JMX MBean интерфейс */
+trait MPictJmxMBean extends HBaseModelJMXBeanCommon
+
+/** JMX MBean реализация. */
+class MPictJmx extends HBaseModelJMXBase with MPictJmxMBean {
+  def companion = MPict
+}

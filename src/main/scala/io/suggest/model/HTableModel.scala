@@ -4,6 +4,7 @@ import HTapConversionsBasic._
 import scala.concurrent.{Future, future}
 import scala.concurrent.ExecutionContext.Implicits._
 import org.apache.hadoop.hbase.{HTableDescriptor, HColumnDescriptor}
+import io.suggest.util.JMXBase
 
 /**
  * Suggest.io
@@ -25,7 +26,7 @@ trait HTableModel {
 
   def HTABLE_NAME: String
 
-  protected def CFs: Seq[String]
+  def CFs: Seq[String]
 
   // TODO Тогда имя получается изменяемое. Это может быть небезопасно для якобы неизменяемого состояния.
   def HTABLE_NAME_BYTES: Array[Byte] = HTABLE_NAME.getBytes
@@ -74,3 +75,42 @@ trait HTableModel {
   }
 
 }
+
+
+// Поддержка JMX для remote-управления конкретными моделями.
+
+trait HBaseModelJMXBeanCommon {
+  def ensureTableExists()
+  def createTable()
+  def isTableExists: Boolean
+  def CFs: String
+  def HTABLE_NAME: String
+}
+
+trait HBaseModelJMXBase extends JMXBase with HBaseModelJMXBeanCommon {
+
+  def companion: HTableModel
+
+  override def jmxName = "io.suggest:type=model,name=" + getClass.getSimpleName.replace("Jmx", "")
+
+  override def ensureTableExists() {
+    awaitFuture(companion.ensureTableExists)
+  }
+
+  override def createTable() {
+    awaitFuture(companion.createTable)
+  }
+
+  override def isTableExists: Boolean = {
+    companion.isTableExists
+  }
+
+  override def CFs: String = {
+    companion.CFs.mkString(", ")
+  }
+
+  override def HTABLE_NAME: String = companion.HTABLE_NAME
+}
+
+
+

@@ -1,7 +1,8 @@
 package io.suggest.util
 
 import javax.management.ObjectName
-import java.lang.management.ManagementFactory
+import scala.concurrent.{Await, Awaitable}
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -13,4 +14,13 @@ object JMXHelpers {
 
   implicit def string2objectName(name:String):ObjectName = new ObjectName(name)
 
+}
+
+// Базовые костыли для всех реализаций jmx-адаптеров.
+trait JMXBase {
+
+  def jmxName: String
+
+  /** Хелпер для быстрой синхронизации фьючерсов. */
+  implicit protected def awaitFuture[T](fut: Awaitable[T]) = Await.result(fut, 10 seconds)
 }

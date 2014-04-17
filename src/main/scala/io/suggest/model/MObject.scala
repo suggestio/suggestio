@@ -45,7 +45,7 @@ object MObject extends HTableModel {
 
 
   // /!\ При добавлении новых CF-записей нужно также обновлять/запиливать функции createTable() и updateTable().
-  protected def CFs = Seq(
+  def CFs = Seq(
     CF_DPROPS, CF_MVI,
     CF_DDATA, CF_DQI,
     CF_UAUTHZ ,
