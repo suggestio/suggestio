@@ -15,22 +15,26 @@
   <div class="title-wrap">
     <div class="center">
       <a class="back-but" href="@routes.MarketLk.lkList">&nbsp;</a>
+
       <div class="title-inner">ЛИЧНЫЙ КАБИНЕТ</div>
 
       @* У узла-приемника есть список входных генераторов рекламы и доступ к коду установки. *@
       @if(node.adn.isReceiver) {
-        <div class="gray-but-wrap" style="float: right; margin-top: -16px;">
+      <div class="adn-title-buttons">
+        <div class="gray-but-wrap">
           <div class="white-border-top">
             <a class="btn" href="@sanCtx.producersShowCall(node.id.get)">АРЕНДАТОРЫ</a>
           </div>
         </div>
 
-        <div class="gray-but-wrap" style="float: right; margin-top: -16px; margin-right: 20px;">
+        <div class="gray-but-wrap">
           <div class="white-border-top">
             <a id="martInstallScriptButton" class="btn" href="">КОД УСТАНОВКИ</a>
           </div>
         </div>
+      </div>
       }
+
     </div>
   </div>
 
