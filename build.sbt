@@ -7,6 +7,8 @@ version := "1.0-SNAPSHOT"
 scalaVersion := "2.10.4"
 
 libraryDependencies ++= Seq(
+  jdbc,
+  anorm,
   cache,      // play-2.2+
   json,       // play-2.3+
   ws,
