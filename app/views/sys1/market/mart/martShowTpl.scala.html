@@ -11,7 +11,9 @@
 
   <p><a href="@routes.MarketMartLk.martShow(mmart.id.get)"><b>-&gt; Личный кабинет ТЦ</b></a></p>
   <p><a href="@routes.Market.martIndex(mmart.id.get)"><b>-&gt; Входная страница</b></a></p>
-  <p><a href="@routes.Market.demoWebSite(mmart.id.get)"><b>-&gt; demoWebSite</b></a></p>
+  <p><a href="@routes.Market.demoWebSite(mmart.id.get)"><b>-&gt; demoWebSite</b></a>
+      <a href="http://10.0.0.101:9001@routes.Market.demoWebSite(mmart.id.get)" target="_blank">osm01-vpn</a>
+  </p>
 
   <p>@Messages("Mart"). <a href="@routes.SysMarket.martEditForm(mmart.id.get)">@Messages("Edit")</a></p>
 

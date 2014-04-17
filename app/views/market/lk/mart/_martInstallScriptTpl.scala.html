@@ -4,7 +4,7 @@
   var _siom = document.createElement("script");
   _siom.type = "text/javascript";
   _siom.async = true;
-  _siom.src = "@ctx.myProto://@ctx.request.host/assets/javascripts/market/showcase/showcase.min.js";
+  _siom.src = "@ctx.myAudienceUrl@routes.Assets.at("javascripts/market/showcase/showcase.min.js")";
   var _sh = document.getElementsByTagName("head")[0];
   window.siomart_index = '@routes.Market.martIndex(mmart.id.get)'
   window.siomart_id = '@mmart.id.get'

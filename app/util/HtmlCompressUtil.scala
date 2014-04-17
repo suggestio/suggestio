@@ -1,7 +1,7 @@
 package util
 
 import com.googlecode.htmlcompressor.compressor.HtmlCompressor
-import play.api.Play, Play.current
+import play.api.Play, Play.{current, configuration}
 import play.api.templates.HtmlFormat
 
 /**
@@ -14,12 +14,33 @@ object HtmlCompressUtil {
 
   def getForGlobalUsing = {
     val compressor = new HtmlCompressor()
-    compressor.setPreserveLineBreaks(Play.isDev)
-    compressor.setRemoveComments(!Play.isDev)
-    compressor.setRemoveIntertagSpaces(true)
-    compressor.setRemoveHttpProtocol(true)
-    compressor.setRemoveHttpsProtocol(true)
+    compressor.setPreserveLineBreaks(
+      getBool("html.compress.global.preserve.line.breaks", Play.isDev))
+    compressor.setRemoveComments(
+      getBool("html.compress.global.remove.comments", Play.isProd))
+    compressor.setRemoveIntertagSpaces(
+      getBool("html.compress.global.remove.spaces.intertag", true))
+    // http false из-за проблем в iframe в demoWebSite.
+    compressor.setRemoveHttpProtocol(
+      getBool("html.compress.global.remove.proto.http", false))
+    compressor.setRemoveHttpsProtocol(
+      getBool("html.compress.global.remove.proto.https", true))
     compressor
+  }
+
+  /** Прочитать булево значение из конфига через строку, которая может быть не только true/false. */
+  private def getBool(confKey: String, dflt: Boolean): Boolean = {
+    val result = configuration.getString(confKey).map {
+      _.toLowerCase match {
+        case "true"  | "1" | "+" | "yes" | "on" => true
+        case "false" | "0" | "-" | "no" | "off" => false
+        case "isprod" | "is_prod" => Play.isProd
+        case "isdev" | "is_dev"   => Play.isDev
+      }
+    } getOrElse {
+      dflt
+    }
+    result
   }
 
 

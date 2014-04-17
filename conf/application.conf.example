@@ -2,6 +2,16 @@
 #hbase.quorum = "localhost"
 
 ###############################################################################
+## Html Compressor
+###############################################################################
+#html.compress.global.preserve.line.breaks = isDev
+#html.compress.global.remove.comments = isProd
+#html.compress.global.remove.spaces.intertag = true
+#html.compress.global.remove.proto.http = true
+#html.compress.global.remove.proto.https = true
+
+
+###############################################################################
 ## Logger
 ###############################################################################
 # You can also configure logback (http://logback.qos.ch/), by providing a logger.xml file in the conf directory .
