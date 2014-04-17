@@ -11,7 +11,7 @@ import io.suggest.ym.model.UsernamePw
 import MCompany.CompanyId_t
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
-import util.{Context, IndicesUtil}
+import util.Context
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.current
 import io.suggest.ym.ad.ShowLevelsUtil

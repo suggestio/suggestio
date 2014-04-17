@@ -1,6 +1,6 @@
 package controllers
 
-import util.PlayMacroLogsImpl
+import _root_.util.{MartCategories, PlayMacroLogsImpl}
 import play.api.data._, Forms._
 import util.FormUtil._
 import models._
@@ -146,6 +146,15 @@ object MarketCategory extends SioController with PlayMacroLogsImpl {
   def directSubcatsOf(catId: String) = Action.async { implicit request =>
     MMartCategory.findDirectSubcatsOf(catId).map { subcats =>
       Ok(renderCatsJson(subcats))
+    }
+  }
+
+
+  /** Установить набор пользовательских категорий в указанный узел рекламной сети (обычно ТЦ). */
+  def installMartCategories(adnId: String) = IsSuperuser.async { implicit request =>
+    MartCategories.saveDefaultMartCatsFor(adnId) map { catIds =>
+      Redirect(routes.MarketCategory.showCatsFor(adnId))
+        .flashing("success" -> s"Добавлено ${catIds.size} категорий. Они появятся здесь через неск.секунд. Обновите страницу.")
     }
   }
 
