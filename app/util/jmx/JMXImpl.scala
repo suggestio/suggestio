@@ -9,6 +9,7 @@ import util.event.SiowebNotifier.Implicts.sn
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import java.lang.management.ManagementFactory
 import io.suggest.util.JMXBase
+import models.MMartCategoryJmx
 
 /**
  * Suggest.io
@@ -27,7 +28,8 @@ object JMXImpl {
     new MWelcomeAdJmx,
     new MAdJmx,
     new MAdnNodeJmx,
-    new MPictJmx
+    new MPictJmx,
+    new MMartCategoryJmx
   )
 
   private def getSrv = ManagementFactory.getPlatformMBeanServer

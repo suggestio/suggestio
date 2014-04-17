@@ -305,3 +305,12 @@ case class MMartYmCatPtr(ycId: String, inherit: Boolean = true) {
   }
 }
 
+
+/** JMX MBean интерфейс */
+trait MMartCategoryJmxMBean extends EsModelJMXMBeanCommon
+
+/** JMX MBean реализация. */
+case class MMartCategoryJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase with MMartCategoryJmxMBean {
+  def companion = MMartCategory
+}

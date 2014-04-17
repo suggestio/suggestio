@@ -130,6 +130,21 @@ object MarketCategory extends SioController with PlayMacroLogsImpl {
     )
   }
 
+  /** Админ приказал стереть указанную категорию. */
+  def deleteUserCatSubmit(catId: String) = IsSuperuser.async { implicit request =>
+    // Проверить, нет ли подкатегорий. Скорее всего, эта проверка не обязательная из-за parent-id на уровне ES.
+    MMartCategory.findDirectSubcatsOf(catId) flatMap { subcats =>
+      if (subcats.isEmpty) {
+        MMartCategory.deleteById(catId) map {
+          case true  => Ok("Deleted ok.")
+          case false => NotFound("Not found: " + catId)
+        }
+      } else {
+        NotAcceptable(s"Delete refused. There are ${subcats.size} subcats, first is ${subcats.head.id.get} .")
+      }
+    }
+  }
+
   /** JSON: Выдать прямые подкатегории для указанной категории либо категории верхнего уровня для
     * указанного ТЦ/магазина/etc. Вернуть json array со списком необходимых категорий. */
   def topCatsOf(ownerId: String) = Action.async { implicit request =>
