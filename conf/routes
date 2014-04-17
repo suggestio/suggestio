@@ -17,11 +17,11 @@ GET  /thumb/get/$dkey<[-_\w\d~.]+>/$imageId<[-_\w\d]+>     controllers.Img.getTh
 GET  /search/site                       controllers.Search.siteSearchGET
 
 # ident: логины/логауты
-GET  /login/persona                     controllers.Ident.persona
-POST /login/persona                     controllers.Ident.persona_submit
-GET  /login/email_pw                    controllers.Ident.emailPwLoginForm
-POST /login/email_pw                    controllers.Ident.emailPwLoginFormSubmit
-GET  /logout                            controllers.Ident.logout
+GET  /login2/persona                    controllers.Ident.persona
+POST /login2/persona                    controllers.Ident.persona_submit
+GET  /login2/email_pw                   controllers.Ident.emailPwLoginForm
+POST /login2/email_pw                   controllers.Ident.emailPwLoginFormSubmit
+GET  /logout2                           controllers.Ident.logout
 
 ## Callback'и инсталляторов и валидаторов сайтов.
 POST /js/add_domain                             controllers.Js.addDomain
