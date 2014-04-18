@@ -5,7 +5,6 @@
 
 @billingBase(adnNode.meta.name) {
 
-
   @balanceOpt.map { balance =>
     <p>Сейчас на счёте узла: @balance.amount @balance.currencyCode</p>
   }
@@ -35,7 +34,7 @@
   }
 
 
-  <h1>Контакты</h1>
+  <h1>Контракты</h1>
   @if(contracts.isEmpty) {
     Пока нет заключенных договоров.
   } else {
@@ -44,7 +43,7 @@
       <p><a href="@routes.SysMarketBilling.editContractForm(contract.id.get)">Изменить...</a></p>
       <p>Дата подписания договора:
         @defining(contract.contractDate) { cd =>
-          @cd.getDayOfMonth @cd.getMonthOfYear @cd.getYear
+          @{cd.getDayOfMonth}.@{cd.getMonthOfYear}.@{cd.getYear}
           (@_prettyDate(cd, withSpan = true))
         }
       </p>

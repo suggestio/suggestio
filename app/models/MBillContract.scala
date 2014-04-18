@@ -20,7 +20,7 @@ object MBillContract extends SiowebSqlModelStatic[MBillContract] {
 
   private val ID_FORMATTER = new DecimalFormat("000")
 
-  val TABLE_NAME: String = "contract"
+  val TABLE_NAME: String = "bill_contract"
 
   val rowParser = get[Pk[Int]]("id") ~ get[Int]("crand") ~ get[String]("adn_id") ~ get[DateTime]("contract_date") ~
                   get[DateTime]("date_created") ~ get[Option[String]]("hidden_info") ~ get[Boolean]("is_active") ~
