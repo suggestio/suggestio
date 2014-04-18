@@ -22,6 +22,7 @@ import io.suggest.ym.model.stat._
 import com.sun.org.glassfish.gmbal.{Impact, ManagedOperation}
 import play.api.libs.json.{JsArray, JsString, JsValue, JsObject}
 import org.joda.time.format.ISODateTimeFormat
+import org.elasticsearch.action.get.MultiGetResponse
 
 /**
  * Suggest.io
@@ -428,6 +429,28 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] extends EsModelStaticMappin
     }
   }
 
+  /**
+   * Прочитать из базы все перечисленные id разом.
+   * @param ids id документов этой модели.
+   * @return Список результатов в неопределённом порядке.
+   */
+  def multiGet(ids: Seq[String])(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+    if (ids.isEmpty) {
+      Future successful Nil
+    } else {
+      val req = client.prepareMultiGet()
+        .setRealtime(true)
+      ids.foreach {
+        id =>
+          req.add(ES_INDEX_NAME, ES_TYPE_NAME, id)
+      }
+      req.execute()
+        .map {
+        mgetResp2list
+      }
+    }
+  }
+
   /** Для ряда задач бывает необходимо задействовать multiGet вместо обычного поиска, который не успевает за refresh.
     * Этот метод позволяет сконвертить поисковые результаты в результаты multiget.
     * @return Результат - что-то неопределённом порядке. */
@@ -443,15 +466,19 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] extends EsModelStaticMappin
       }
       mgetReq
         .execute()
-        .map { mgetResp =>
-          mgetResp.getResponses.foldLeft[List[T]] (Nil) { (acc, mgetItem) =>
-            // Поиск может содержать элементы, которые были только что удалены. Нужно их отсеивать.
-            if (mgetItem.isFailed || !mgetItem.getResponse.isExists)
-              acc
-            else
-              deserializeOne(mgetItem.getId, mgetItem.getResponse.getSourceAsMap) :: acc
-          }
-        }
+        .map { mgetResp2list }
+    }
+  }
+
+
+  /** Распарсить выхлоп мультигета. */
+  def mgetResp2list(mgetResp: MultiGetResponse): List[T] = {
+    mgetResp.getResponses.foldLeft[List[T]] (Nil) { (acc, mgetItem) =>
+      // Поиск может содержать элементы, которые были только что удалены. Нужно их отсеивать.
+      if (mgetItem.isFailed || !mgetItem.getResponse.isExists)
+        acc
+      else
+        deserializeOne(mgetItem.getId, mgetItem.getResponse.getSourceAsMap) :: acc
     }
   }
 
