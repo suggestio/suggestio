@@ -2,10 +2,13 @@
 
 @* Начальная страница для sio-market. *@
 
+   @defining(welcomeAdOpt.map(_.img.id)) { welcomeAdIdOpt =>
+    <img id="smWelcomeAd" class="poster-photo index-welcome-ad" data-width="1575" data-height="1181" src="@welcomeAdIdOpt.filter(!_.isEmpty).map { imgId => @routes.Img.getImg(imgId) }.getOrElse {}"/>
+   }
+
   <div id="smScreens">
 
     <div class="sm-screen">
-
       @_screen_nav_buttons(true)
       @_sm_offers(mmart, ads, shops)
 

@@ -210,7 +210,7 @@ siomart =
     images = this.utils.ge_tag 'img'
 
     for image in images
-      if image.className == 'poster-photo'
+      if image.className.match(/poster-photo/ig)
         this.fit_image image
 
   fit_image : ( image ) ->
@@ -550,6 +550,12 @@ siomart =
 
     this.utils.add_single_listener window, 'orientationchange', orientation_change_cb
 
+    hide_welcome_ad_cb = () ->
+      welcome_ad = siomart.utils.ge 'smWelcomeAd'
+
+      welcome_ad.style.display = 'none'
+
+    setTimeout hide_welcome_ad_cb, 1000
 
 ##########################################
 ## Прототип для работы с офферами в скрине
