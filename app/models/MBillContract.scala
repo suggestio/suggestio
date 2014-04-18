@@ -7,6 +7,7 @@ import io.suggest.util.SioRandom.rnd
 import java.sql.Connection
 import util.SqlModelSave
 import java.text.DecimalFormat
+import org.joda.time.format.DateTimeFormat
 
 /**
  * Suggest.io
@@ -31,6 +32,8 @@ object MBillContract extends SiowebSqlModelStatic[MBillContract] {
         dateCreated = dateCreated,  hiddenInfo = hiddenInfo,  isActive = isActive, suffix = suffix
       )
   }
+
+  val CONTRACT_DATE_FMT = DateTimeFormat.forPattern("dd.MM.yyyy")
 
   /**
    * Поиск по adnId с фильтрацией по id_active.
@@ -79,6 +82,8 @@ case class MBillContract(
       sb.append('/').append(suffix.get)
     sb.toString()
   }
+
+  def printContractDate: String = CONTRACT_DATE_FMT.print(contractDate)
 
   /**
    * Добавить в базу текущую запись.

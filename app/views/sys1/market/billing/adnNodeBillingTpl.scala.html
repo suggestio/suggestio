@@ -41,11 +41,9 @@
     @contracts.map { contract =>
       <h2>Договор № @contract.legalContractId</h2>
       <p><a href="@routes.SysMarketBilling.editContractForm(contract.id.get)">Изменить...</a></p>
-      <p>Дата подписания договора:
-        @defining(contract.contractDate) { cd =>
-          @{cd.getDayOfMonth}.@{cd.getMonthOfYear}.@{cd.getYear}
-          (@_prettyDate(cd, withSpan = true))
-        }
+      <p>Дата заключения договора:
+          contract.printContractDate
+          (@_prettyDate(contract.contractDate, withSpan = true))
       </p>
       <p>Добавлен в sio: @_prettyDate(contract.dateCreated, withSpan = true)</p>
       @if(!contract.isActive) {

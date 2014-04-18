@@ -5,6 +5,8 @@ import play.api.mvc.{WrappedRequest, Request}
 import models._
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.db.DB
+import play.api.Play.current
 
 /*
   Используется комбинация из абстрактных классов и их реализаций case class'ов. Это необходимо из-за невозможности
@@ -60,11 +62,29 @@ abstract class AbstractRequestForShopAdm[A](request: Request[A]) extends Abstrac
   * @param usernameOpt Отображаемое имя юзера, если есть. Формируются на основе данных сессии и данных из
   *                    [[models.MPerson]] и [[models.MPersonIdent]].
   */
-case class SioReqMd(usernameOpt: Option[String])
+case class SioReqMd(
+  usernameOpt: Option[String],
+  billBallanceOpt: Option[MBillBalance] = None
+)
 object SioReqMd {
+  /** Простая генерация srm на основе юзера. */
   def fromPwOpt(pwOpt: PwOpt_t): Future[SioReqMd] = {
     PersonWrapper.findUserName(pwOpt) map { usernameOpt =>
       SioReqMd(usernameOpt = usernameOpt)
     }
   }
+
+  /** Генерация srm для юзера в рамках личного кабинета. */
+  def fromPwOptAdn(pwOpt: PwOpt_t, adnId: String): Future[SioReqMd] = {
+    val bbOptFut = DB.withConnection { implicit c =>
+      MBillBalance.getByAdnIdAsync(adnId)
+    }
+    for {
+      usernameOpt <- PersonWrapper.findUserName(pwOpt)
+      bbOpt       <- bbOptFut
+    } yield {
+      SioReqMd(usernameOpt, bbOpt)
+    }
+  }
+
 }

@@ -164,6 +164,19 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
   }
 
 
+  /** Форма добавления транзакции в обработку. Ожидается, что оператор будет просто
+    * вставлять куски реквизитов платежа, а система сама разберётся по какому договору проводить
+    * платеж. */
+  def createIncomingPayment = IsSuperuser.async { implicit request =>
+    ???
+  }
+
+  /** Сабмит формы добавления платежной транзакции. */
+  def createIncomingPaymentSubmit = IsSuperuser.async { implicit request =>
+    ???
+  }
+
+
   /** Что рисовать в браузере, если не найден запрошенный узел рекламной сети. */
   private def adnNodeNotFound(adnId: String) = {
     NotFound("Adn node " + adnId + " does not exists.")

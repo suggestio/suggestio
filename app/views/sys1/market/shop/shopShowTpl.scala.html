@@ -11,7 +11,7 @@
   <p><a href="@routes.MarketShopLk.showShop(mshop.id.get)"><b>-&gt; Личный кабинет арендатора</b></a></p>
 
   <a href="@routes.SysMarket.shopEditForm(mshop.id.get)">@Messages("Edit")</a>
-  @_shopDeleteFormTpl(mshop.id.get)
+  <p><a href="@routes.SysMarketBilling.billingFor(mshop.id.get)">Billing</a></p>
 
   @ownerOpt.map { mc =>
     <p>Компания-владелец: <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a></p>
@@ -65,4 +65,7 @@
       <a href="@routes.SysMarket.showShopEmailActMsgHtml(mshop.id.get, isHtml=false)">TXT</a>
   </p>
   <p><a href="@routes.SysMarket.showShopAds(mshop.id.get)">Список рекламы магазина.</a></p>
+
+  <br/><br/>
+  @_shopDeleteFormTpl(mshop.id.get)
 }

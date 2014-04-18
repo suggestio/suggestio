@@ -15,8 +15,7 @@ import models._
  * Description: Проверка прав на управление магазином, находящимся внутри ТЦ.
  * Следует различать случаи, когда на магазин влияет владелец ТЦ, а когда - владелец самого магазина.
  */
-object IsShopAdm extends PlayMacroLogsImpl with controllers.ShopMartCompat {
-  import LOGGER._
+object IsShopAdm extends controllers.ShopMartCompat {
 
   /**
    * Вернуть магазин, если с правами всё ок. Иначе None.
@@ -25,24 +24,8 @@ object IsShopAdm extends PlayMacroLogsImpl with controllers.ShopMartCompat {
    * @return Option с принадлежащим пользователю магазином или None.
    */
   def isShopAdminFull(shopId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
-    if (PersonWrapper isSuperuser pwOpt) {
-      getShopByIdCache(shopId)
-    } else {
-      if (pwOpt.isDefined) {
-        // Нужно узнать, существует ли магазин и TODO есть ли права у юзера на магазин
-        getShopByIdCache(shopId) map { mshopOpt =>
-          mshopOpt filter { mshop =>
-            val result = mshop.personIds contains pwOpt.get.personId
-            if (!result) {
-              warn(s"isShopAdminFull($shopId, pwOpt=$pwOpt): Refused to admin unOwned shop=$shopId for user=$pwOpt")
-            }
-            result
-          }
-        }
-      } else {
-        Future successful None
-      }
-    }
+    val fut = getShopByIdCache(shopId)
+    IsAdnNodeAdmin.checkAdnNodeCreds(fut, pwOpt)
   }
 
 }
@@ -53,7 +36,7 @@ import IsShopAdm._
 case class IsShopAdm(shopId: String) extends ActionBuilder[RequestForShopAdmFull] {
   protected def invokeBlock[A](request: Request[A], block: (RequestForShopAdmFull[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
-    val srmFut = SioReqMd.fromPwOpt(pwOpt)
+    val srmFut = SioReqMd.fromPwOptAdn(pwOpt, shopId)
     isShopAdminFull(shopId, pwOpt) flatMap {
       case Some(mshop) =>
         srmFut flatMap { srm =>
@@ -61,7 +44,7 @@ case class IsShopAdm(shopId: String) extends ActionBuilder[RequestForShopAdmFull
           block(req1)
         }
 
-      case None => IsAuth onUnauth request
+      case _ => IsAuth onUnauth request
     }
   }
 }

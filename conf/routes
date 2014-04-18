@@ -134,6 +134,8 @@ POST /m/lk/m/:martId/ad/new             controllers.MarketAd.createMartAdSubmit(
 POST /m/lk/m/:martId/ad/preview         controllers.MarketAd.adFormPreviewMartSubmit(martId)
 GET  /m/lk/ma/:adId/edit                controllers.MarketAd.editMartAd(adId)
 POST /m/lk/ma/:adId/edit                controllers.MarketAd.editMartAdSubmit(adId)
+# lk.billing
+GET  /m/lk/bill/pay/bank/:adnId         controllers.MarketLkBilling.paymentRequsites(adnId)
 
 
 # Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче

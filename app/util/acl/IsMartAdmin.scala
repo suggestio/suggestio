@@ -16,19 +16,10 @@ import models._
  */
 object IsMartAdmin extends controllers.ShopMartCompat {
 
+
   def isMartAdmin(martId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
-    getMartByIdCache(martId) map { mmartOpt =>
-      mmartOpt flatMap { mmart =>
-        val isAllowed = PersonWrapper.isSuperuser(pwOpt) || {
-          pwOpt.isDefined && (mmart.personIds contains pwOpt.get.personId)
-        }
-        if (isAllowed) {
-          Some(mmart)
-        } else {
-          None
-        }
-      }
-    }
+    val fut = getMartByIdCache(martId)
+    IsAdnNodeAdmin.checkAdnNodeCreds(fut, pwOpt)
   }
 
 }
@@ -40,7 +31,7 @@ import IsMartAdmin._
 case class IsMartAdmin(martId: String) extends ActionBuilder[AbstractRequestForMartAdm] {
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForMartAdm[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
-    val srmFut = SioReqMd.fromPwOpt(pwOpt)
+    val srmFut = SioReqMd.fromPwOptAdn(pwOpt, martId)
     isMartAdmin(martId, pwOpt) flatMap {
       case Some(mmart) =>
         srmFut flatMap { srm =>
@@ -48,7 +39,7 @@ case class IsMartAdmin(martId: String) extends ActionBuilder[AbstractRequestForM
           block(req1)
         }
 
-      case None =>
+      case _ =>
         IsAuth.onUnauth(request)
     }
   }
@@ -61,8 +52,8 @@ case class IsMartAdminShop(shopId: String) extends ActionBuilder[RequestForMartS
     IsMartAdmin.getShopByIdCache(shopId) flatMap {
       case Some(mshop) if mshop.adn.supId.isDefined =>
         val pwOpt = PersonWrapper.getFromRequest(request)
-        val srmFut = SioReqMd.fromPwOpt(pwOpt)
         val martId = mshop.adn.supId.get
+        val srmFut = SioReqMd.fromPwOptAdn(pwOpt, martId)
         isMartAdmin(martId, pwOpt) flatMap {
           case Some(mmart) =>
             srmFut flatMap { srm =>
@@ -103,6 +94,7 @@ case class MartShopAdRequest[A](ad: MAd, mmart: MAdnNode, pwOpt: PwOpt_t, reques
 case class IsMartAdminShopAd(adId: String) extends ActionBuilder[MartShopAdRequest] {
   protected def invokeBlock[A](request: Request[A], block: (MartShopAdRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
+    // Для экшенов модерации обычно (пока что) не требуется bill-контекста, поэтому делаем srm по-простому.
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     MAd.getById(adId) flatMap {
       case Some(ad) =>
