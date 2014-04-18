@@ -2,9 +2,7 @@
 
 @* Начальная страница для sio-market. *@
 
-   @defining(welcomeAdOpt.map(_.img.id)) { welcomeAdIdOpt =>
-    <img id="smWelcomeAd" class="poster-photo index-welcome-ad" data-width="1575" data-height="1181" src="@welcomeAdIdOpt.filter(!_.isEmpty).map { imgId => @routes.Img.getImg(imgId) }.getOrElse {}"/>
-   }
+   <img id="smWelcomeAd" class="poster-photo index-welcome-ad" data-width="@welcomeAdOpt.map(_.img.meta.map(_.width))" data-height="@welcomeAdOpt.map(_.img.meta.map(_.height))" src="@welcomeAdOpt.map(_.img.id).filter(!_.isEmpty).map { imgId => @routes.Img.getImg(imgId) }.getOrElse {}"/>
 
   <div id="smScreens">
 
