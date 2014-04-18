@@ -1,0 +1,62 @@
+@(adnNode: MAdnNode, balanceOpt: Option[MBillBalance], contracts: List[MBillContract], txns: Seq[MBillTxn])(implicit ctx: util.Context)
+
+@* Страница с информацией по биллингу указанного узла рекламной сети. *@
+@import datetime._
+
+@billingBase(adnNode.meta.name) {
+
+
+  @balanceOpt.map { balance =>
+    <p>Сейчас на счёте узла: @balance.amount @balance.currencyCode</p>
+  }
+
+  <h2>Транзакции</h2>
+  @if(!txns.isEmpty) {
+    <table>
+      <tr>
+        <th>id</th>
+        <th>Оплачен</th>
+        <th>Обработан</th>
+        <th>Сумма</th>
+        <th>Комментарий</th>
+      </tr>
+      @txns.map { txn =>
+        <tr>
+          <td>@txn.txnUid</td>
+          <td>@_prettyDate(txn.datePaid, withSpan = true)</td>
+          <td>@_prettyDate(txn.dateProcessed, withSpan = true)</td>
+          <td>@txn.amount @txn.currencyCode</td>
+          <td>@txn.paymentComment</td>
+        </tr>
+      }
+    </table>
+  } else {
+    Нет транзакций.
+  }
+
+
+  <h1>Контакты</h1>
+  @if(contracts.isEmpty) {
+    Пока нет заключенных договоров.
+  } else {
+    @contracts.map { contract =>
+      <h2>Договор № @contract.legalContractId</h2>
+      <p>Дата подписания договора:
+        @defining(contract.contractDate) { cd =>
+          @cd.getDayOfMonth @cd.getMonthOfYear @cd.getYear
+          (@_prettyDate(cd, withSpan = true))
+        }
+      </p>
+      <p>Добавлен в sio: @_prettyDate(contract.dateCreated, withSpan = true)</p>
+      @if(!contract.isActive) {
+        <p><b>Не активен</b>.</p>
+      }
+      @contract.hiddenInfo.map { hiddenInfo =>
+        <p>Служебная информация:</p>
+        <pre>@hiddenInfo</pre>
+      }
+    }
+  }
+  <a href="@routes.SysMarketBilling.createContractForm(adnNode.id.get)">Добавить договор...</a>
+
+}

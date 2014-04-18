@@ -210,4 +210,8 @@ GET  /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatFo
 POST /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatFormSubmit(catId)
 POST /sys/market/cats/usr/:ownerId/inst/m  controllers.MarketCategory.installMartCategories(ownerId)
 POST /sys/market/cats/usr/d/:catId      controllers.MarketCategory.deleteUserCatSubmit(catId)
+# sys.market.billing
+GET  /sys/market/bill/:adnId               controllers.SysMarketBilling.billingFor(adnId)
+GET  /sys/market/bill/:adnId/contract/new  controllers.SysMarketBilling.createContractForm(adnId)
+POST /sys/market/bill/:adnId/contract/new  controllers.SysMarketBilling.createContractFormSubmit(adnId)
 

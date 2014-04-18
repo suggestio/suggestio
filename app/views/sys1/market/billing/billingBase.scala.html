@@ -1,0 +1,15 @@
+@(title: String, hPathAfter: Option[Html] = None)(content: Html)(implicit ctx: util.Context)
+
+@* Подложка страниц с управлением биллингом. *@
+
+@hPathAfter1 = {
+  @hPathAfter.getOrElse {
+    / @title
+  }
+}
+
+@sys1.market.marketBase(
+  title = title + " | billing",
+  hPathAfter = Some(hPathAfter1)
+)(content)
+
