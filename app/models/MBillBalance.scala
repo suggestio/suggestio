@@ -3,7 +3,6 @@ package models
 import anorm._
 import util.SqlModelSave
 import java.sql.Connection
-import scala.concurrent.{Future, ExecutionContext, future}
 
 /**
  * Suggest.io
@@ -33,12 +32,6 @@ object MBillBalance {
       .on('adnId -> adnId)
       .as(rowParser *)
       .headOption
-  }
-
-  def getByAdnIdAsync(adnId: String)(implicit c: Connection, ec: ExecutionContext): Future[Option[MBillBalance]] = {
-    future {
-      getByAdnId(adnId)
-    }
   }
 
 

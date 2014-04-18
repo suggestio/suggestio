@@ -3,7 +3,7 @@ package util.acl
 import util.acl.PersonWrapper._
 import play.api.mvc.{WrappedRequest, Request}
 import models._
-import scala.concurrent.Future
+import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.db.DB
 import play.api.Play.current
@@ -76,8 +76,10 @@ object SioReqMd {
 
   /** Генерация srm для юзера в рамках личного кабинета. */
   def fromPwOptAdn(pwOpt: PwOpt_t, adnId: String): Future[SioReqMd] = {
-    val bbOptFut = DB.withConnection { implicit c =>
-      MBillBalance.getByAdnIdAsync(adnId)
+    val bbOptFut = future {
+      DB.withConnection { implicit c =>
+        MBillBalance.getByAdnId(adnId)
+      }
     }
     for {
       usernameOpt <- PersonWrapper.findUserName(pwOpt)
