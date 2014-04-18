@@ -6,6 +6,7 @@ siomart =
     sm_layout_class : 'sio-mart-layout'
     sm_trigger_class : 'sio-mart-trigger'
     ontouchmove_offer_change_delta : 80
+    welcome_ad_hide_timeout : 2500
 
   utils :
 
@@ -555,7 +556,7 @@ siomart =
 
       welcome_ad.style.display = 'none'
 
-    setTimeout hide_welcome_ad_cb, 1000
+    setTimeout hide_welcome_ad_cb, siomart.config.welcome_ad_hide_timeout
 
 ##########################################
 ## Прототип для работы с офферами в скрине
