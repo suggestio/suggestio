@@ -50,6 +50,17 @@ object MBillTxn extends SiowebSqlModelStatic[MBillTxn] {
       .as(rowParser *)
   }
 
+  /**
+   * Прочитать n последних платежей, т.е. с положительным amount.
+   * @param count Размер выдачи.
+   * @return
+   */
+  def lastNPayments(count: Int = 10)(implicit c: Connection): List[MBillTxn] = {
+    SQL("SELECT * FROM " + TABLE_NAME + " WHERE amount > 0 ORDER BY id DESC LIMIT {count}")
+      .on('count -> count)
+      .as(rowParser *)
+  }
+
 }
 
 

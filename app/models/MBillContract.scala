@@ -8,6 +8,7 @@ import java.sql.Connection
 import util.SqlModelSave
 import java.text.DecimalFormat
 import org.joda.time.format.DateTimeFormat
+import io.suggest.util.TextUtil
 
 /**
  * Suggest.io
@@ -57,6 +58,65 @@ object MBillContract extends SiowebSqlModelStatic[MBillContract] {
       .as(rowParser *)
   }
 
+  /**
+   * Поиск по crand. Используется при опечатках в id контракта.
+   * @param crand Рандомная константа контракта.
+   * @return Список найденных с указанной константой.
+   */
+  def findByCrand(crand: Int)(implicit c: Connection): List[MBillContract] = {
+    // TODO Добавить сортировку по similarity id и suffix
+    SQL("SELECT * FROM " + TABLE_NAME + " WHERE crand = {crand}")
+      .on('crand -> crand)
+      .as(rowParser *)
+  }
+
+  val LEGAL_CONTRACT_ID_RE = "(?iu)(\\d{3,10})-(\\d{3})(/[a-zа-я\\d]{1,5})?".r
+
+  /** Распарсить номера договоров из строки. */
+  def parseLegalContractId(text: String): List[LegalContractId] = {
+    LEGAL_CONTRACT_ID_RE.findAllIn(text).foldLeft[List[LegalContractId]](Nil) { (acc, e) =>
+      val LEGAL_CONTRACT_ID_RE(idStr, crandStr, suffixRaw) = e
+      val suffix = if (suffixRaw == null || suffixRaw.isEmpty) {
+        None
+      } else {
+        Some(suffixRaw.tail)
+      }
+      LegalContractId(idStr.toInt, crand = crandStr.toInt, suffix = suffix, raw = e) :: acc
+    }.reverse
+  }
+
+  /** Визуально сравнить два суффикса, чтобы они совпадали. */
+  def matchSuffixes(suffix0: Option[String], suffix1: Option[String]): Boolean = {
+    (suffix0, suffix1) match {
+      case (Some(_suffix0), Some(_suffix1)) =>
+        val s1 = _suffix0.map(TextUtil.mischarFixRu)
+        val s2 = _suffix1.map(TextUtil.mischarFixRu)
+        s1 equalsIgnoreCase s2
+
+      case _ => false
+    }
+  }
+
+  /** Напечатать строкой номер договора на основе переданных идентификаторов. */
+  def formatLegalContractId(id: Int, crand: Int, suffix: Option[String]): String = {
+    val idFmt = ID_FORMATTER.format(id)
+    val sb = new StringBuilder(idFmt)
+    sb.append('-').append(crand)
+    if (suffix.isDefined)
+      sb.append('/').append(suffix.get)
+    sb.toString()
+  }
+
+  case class LegalContractId(id: Int, crand: Int, suffix: Option[String], raw: String) {
+    override def toString: String = {
+      if (raw == null || raw.isEmpty)
+        formatLegalContractId(id, crand=crand, suffix=suffix)
+      else
+        raw
+    }
+
+    def contractId = id
+  }
 }
 
 import MBillContract._
@@ -74,16 +134,11 @@ case class MBillContract(
 
   def hasId: Boolean = id.isDefined
 
-  lazy val legalContractId: String = {
-    val idFmt = ID_FORMATTER.format(id.get)
-    val sb = new StringBuilder(idFmt)
-    sb.append('-').append(crand)
-    if (suffix.isDefined)
-      sb.append('/').append(suffix.get)
-    sb.toString()
-  }
+  def legalContractId = formatLegalContractId(id.get, crand=crand, suffix=suffix)
 
   def printContractDate: String = CONTRACT_DATE_FMT.print(contractDate)
+
+  def suffixMatches(suffix1: Option[String]) = MBillContract.matchSuffixes(suffix, suffix1)
 
   /**
    * Добавить в базу текущую запись.

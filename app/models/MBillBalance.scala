@@ -49,7 +49,7 @@ object MBillBalance {
    * @return Кол-во обновлённых рядов.
    */
   def updateAmount(adnId: String, addAmount: Float)(implicit c: Connection): Int = {
-    SQL("UPDATE " + TABLE_NAME + " SET amoutn = amount + {addAmount} WHERE adn_id = {adnId}")
+    SQL("UPDATE " + TABLE_NAME + " SET amount = amount + {addAmount} WHERE adn_id = {adnId}")
       .on('adnId -> adnId, 'addAmount -> addAmount)
       .executeUpdate()
   }

@@ -3,10 +3,11 @@
 @* Страница с информацией по биллингу указанного узла рекламной сети. *@
 @import datetime._
 
-@billingBase(adnNode.meta.name) {
+@billingBase(adnNode.meta.name, Some(adnNode)) {
+  <h1>Биллинг -- <a href="@routes.SysMarket.adnRdr(adnNode.id.get)">@adnNode.meta.name</a></h1>
 
   @balanceOpt.map { balance =>
-    <p>Сейчас на счёте узла: @balance.amount @balance.currencyCode</p>
+    <p>Сейчас на балансе: @balance.amount @balance.currencyCode</p>
   }
 
   <h2>Транзакции</h2>
@@ -32,6 +33,7 @@
   } else {
     Нет транзакций.
   }
+  <p><a href="@routes.SysMarketBilling.incomingPaymentForm">Провести платёж...</a></p>
 
 
   <h1>Контракты</h1>
@@ -42,7 +44,7 @@
       <h2>Договор № @contract.legalContractId</h2>
       <p><a href="@routes.SysMarketBilling.editContractForm(contract.id.get)">Изменить...</a></p>
       <p>Дата заключения договора:
-          contract.printContractDate
+          @contract.printContractDate
           (@_prettyDate(contract.contractDate, withSpan = true))
       </p>
       <p>Добавлен в sio: @_prettyDate(contract.dateCreated, withSpan = true)</p>

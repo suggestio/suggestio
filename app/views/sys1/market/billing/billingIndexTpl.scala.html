@@ -1,0 +1,40 @@
+@(lastPays: Seq[MBillTxn], contracts: Map[Int, MBillContract], adns: Map[String, MAdnNode])(implicit ctx: util.Context)
+
+@* Страница биллинга вне сущностей рекламной сети.
+   Здесь есть ссылка на транзакцию и список последний транзакций. *@
+@import datetime._
+
+@billingBase("Весь биллинг") {
+
+  <h1>Общий биллинг</h1>
+
+  <p><a href="@routes.SysMarketBilling.incomingPaymentForm">Провести платёж...</a></p>
+
+  <h2>Последние платежи</h2>
+  @if(lastPays.isEmpty) {
+    Пока не было ни одного платежа.
+  } else {
+    <table>
+      <tr>
+        <th>Когда</th>
+        <th>Сумма</th>
+        <th>Договор</th>
+        <th>Плательщик</th>
+      </tr>
+      @lastPays.map { txn =>
+        <tr>
+          <td>@_prettyDate(txn.dateProcessed, withSpan = true)</td>
+          <td>@txn.amount @txn.currencyCodeOpt</td>
+          @defining(contracts.get(txn.contractId)) { mbcOpt =>
+            <td>@mbcOpt.map { mbc =>
+              <span title="Договор от @mbc.printContractDate">@mbc.legalContractId</span>
+            }</td>
+            <td>@mbcOpt.map(_.adnId).flatMap(adns.get).map { adnNode =>
+              <a href="@routes.SysMarket.adnRdr(adnNode.id.get)">@adnNode.meta.name / @adnNode.meta.town</a>
+            }</td>
+          }
+        </tr>
+      }
+    </table>
+  }
+}

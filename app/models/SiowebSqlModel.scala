@@ -2,6 +2,7 @@ package models
 
 import anorm._
 import java.sql.Connection
+import util.AnormPgArray._
 
 /**
  * Suggest.io
@@ -40,4 +41,15 @@ trait SiowebSqlModelStatic[T] {
         .executeUpdate()
   }
 
+
+  /**
+   * Получение пачкой всех перечисленных рядов.
+   * @param ids Список id рядов.
+   * @return Список результатов в неопределённом порядке.
+   */
+  def multigetByIds(ids: Seq[Int])(implicit c: Connection): List[T] = {
+    SQL("SELECT * FROM " + TABLE_NAME + " WHERE id = ANY({ids})")
+      .on('ids -> seqInt2pgArray(ids))
+      .as(rowParser *)
+  }
 }

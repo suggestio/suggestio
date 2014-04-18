@@ -1,8 +1,11 @@
-@(title: String, hPathAfter: Option[Html] = None)(content: Html)(implicit ctx: util.Context)
+@(title: String, nodeOpt: Option[MAdnNode] = None, hPathAfter: Option[Html] = None)(content: Html)(implicit ctx: util.Context)
 
 @* Подложка страниц с управлением биллингом. *@
 
 @hPathAfter1 = {
+  @nodeOpt.map { node =>
+    / <a href="@routes.SysMarket.adnRdr(node.id.get)" title="@node.adn.memberType / @node.meta.town">@node.meta.name</a>
+  }
   @hPathAfter.getOrElse {
     / @title
   }

@@ -1,6 +1,6 @@
 package controllers
 
-import util.PlayMacroLogsImpl
+import util.{Billing, PlayMacroLogsImpl}
 import util.acl.IsSuperuser
 import models._
 import util.SiowebEsUtil.client
@@ -13,6 +13,7 @@ import play.api.data._, Forms._
 import util.FormUtil._
 import org.joda.time.DateTime
 import scala.concurrent.Future
+import io.suggest.ym.parsers.Price
 
 /**
  * Suggest.io
@@ -24,11 +25,13 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
+  val bDate = localDate
+    .transform[DateTime](_.toDateTimeAtStartOfDay, _.toLocalDate)
+
   /** Маппинг для формы добавления/редактирования контракта. */
   val contractFormM = Form(mapping(
     "adnId"         -> esIdM,
-    "dateContract"  -> localDate
-      .transform[DateTime](_.toDateTimeAtStartOfDay, _.toLocalDate)
+    "dateContract"  -> bDate
     ,
     "suffix"        -> optional(
       text(maxLength = 16)
@@ -164,16 +167,135 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
   }
 
 
+  /** Маппинг для формы ввода входящего платежа. */
+  val paymentFormM = Form(mapping(
+    "txnUid" -> nonEmptyText(minLength = 4, maxLength = 64)
+      .transform(strTrimSanitizeLowerF, strIdentityF),
+    "amount" -> priceStrictM
+      .transform[Price]({_._2}, {"" -> _}),
+    "datePaid" -> bDate,
+    "paymentComment" -> nonEmptyText(minLength = 10, maxLength = 512)
+      .transform(strTrimSanitizeF, strIdentityF)
+  )
+  // apply().
+  {(txnUid, price, datePaid, paymentComment) =>
+    val lci = MBillContract.parseLegalContractId(paymentComment).head
+    val txn = MBillTxn(
+      contractId = lci.contractId,
+      amount     = price.price,
+      datePaid   = datePaid,
+      txnUid     = txnUid,
+      currencyCodeOpt = Some(price.currency.getCurrencyCode),
+      paymentComment  = paymentComment
+    )
+    lci -> txn
+  }
+  // unapply()
+  {case (lci, txn) =>
+    Some((txn.txnUid, Price(txn.amount, txn.currency), txn.datePaid, txn.paymentComment))
+  })
+
   /** Форма добавления транзакции в обработку. Ожидается, что оператор будет просто
     * вставлять куски реквизитов платежа, а система сама разберётся по какому договору проводить
     * платеж. */
-  def createIncomingPayment = IsSuperuser.async { implicit request =>
-    ???
+  def incomingPaymentForm = IsSuperuser { implicit request =>
+    Ok(createIncomingPaymentFormTpl(paymentFormM))
   }
 
   /** Сабмит формы добавления платежной транзакции. */
-  def createIncomingPaymentSubmit = IsSuperuser.async { implicit request =>
-    ???
+  def incomingPaymentFormSubmit = IsSuperuser.async { implicit request =>
+    val formBinded = paymentFormM.bindFromRequest()
+    formBinded.fold(
+      {formWithErrors =>
+        debug("incomingPaymentFormSubmit(): Failed to bind form: " + formatFormErrors(formWithErrors))
+        NotAcceptable(createIncomingPaymentFormTpl(formWithErrors))
+      },
+      {case (lci, txn) =>
+        // Форма распарсилась, но может быть там неверные данные по платежу.
+        // Следует помнить, что этот сабмит для проверки, сохранение данных будет на следующем шаге.
+        val maybeMbc0 = DB.withConnection { implicit c =>
+          MBillContract.getById(lci.contractId)
+        }
+        val maybeMbc = maybeMbc0.filter { mbc =>
+          val crandMatches = mbc.crand == lci.crand
+          val suffixMatches = mbc suffixMatches lci.suffix
+          val result = crandMatches && suffixMatches
+          if (!result) {
+            debug("incomingPaymentFormSubmit(): Failed to fully match contract id: " +
+              s"crand->$crandMatches (${lci.crand} mbc=${mbc.crand}) suffix->$suffixMatches (${lci.suffix} mbc=${mbc.suffix})")
+          }
+          result
+        }
+        if (maybeMbc.isEmpty) {
+          // Нет точного совпадения с искомым контрактом. Надо переспросить оператора, выдав ему подсказки.
+          var mbcs = DB.withConnection { implicit c =>
+            MBillContract.findByCrand(lci.crand)
+          }
+          if (maybeMbc0.isDefined)
+            mbcs ::= maybeMbc0.get
+          Future.traverse(mbcs) { mbc =>
+            MAdnNodeCache.getByIdCached(mbc.adnId) map { adnNodeOpt =>
+              mbc -> adnNodeOpt.get
+            }
+          } map { mbcsNoded =>
+            NotAcceptable(createIncomingPaymentFormTpl(formBinded, Some(mbcsNoded)))
+          }
+        } else {
+          // Есть точное совпадение. Нужно отрендерить страницу-подтверждение.
+          val mbc = maybeMbc.get
+          MAdnNodeCache.getByIdCached(mbc.adnId) map { adnNodeOpt =>
+            val adnNode = adnNodeOpt.get
+            Ok(confirmIncomingPaymentTpl(adnNode, mbc, formBinded))
+          }
+        }
+      } // END mapped ok
+    )
+  }
+
+  /** Сабмит подтверждения платежа. */
+  def confirmIncomingPaymentSubmit = IsSuperuser.async { implicit request =>
+    // Тут не должно быть никаких проблем, поэтому не тратим время на отработку ошибок.
+    paymentFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        warn("confirmIncomingPaymentSubmit(): Failed to bind locked form: " + formatFormErrors(formWithErrors))
+        NotAcceptable("Invalid data. This should not occur. Use 'back' browser button to continue.")
+      },
+      {case (lci, txn) =>
+        val mbc = DB.withConnection { implicit c =>
+          MBillContract.getById(lci.contractId).get
+        }
+        if (mbc.crand != lci.crand || !mbc.suffixMatches(lci.suffix))
+          throw new IllegalArgumentException("invalid id")
+        val result = Billing.addPayment(txn)
+        val okMsg = "Платеж успешно проведён. Баланс: " + result.newBalance.amount
+        Redirect(routes.SysMarketBilling.billingFor(mbc.adnId))
+          .flashing("success" -> okMsg)
+      }
+    )
+  }
+
+
+  /** Индексная страница для быстрого доступа операторов к основным функциям. */
+  def index = IsSuperuser.async { implicit request =>
+    val (lastPays, contracts) = DB.withConnection { implicit c =>
+      val _lastPays = MBillTxn.lastNPayments()
+      val contractIds = _lastPays.map(_.contractId).distinct
+      val _contracts = MBillContract.multigetByIds(contractIds)
+      _lastPays -> _contracts
+    }
+    val adnIds = contracts.map(_.adnId).distinct
+    val adnsFut = MAdnNode.multiGet(adnIds)
+      .map { adnNodes =>
+        adnNodes.map {
+          adnNode => adnNode.id.get -> adnNode
+        }.toMap
+      }
+    val contractsMap = contracts.map { mbc =>
+      mbc.id.get -> mbc
+    }.toMap
+    adnsFut map { adnsMap =>
+      Ok(billingIndexTpl(lastPays, contractsMap, adnsMap))
+    }
   }
 
 

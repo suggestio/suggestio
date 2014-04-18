@@ -1,0 +1,24 @@
+@(node: MAdnNode, mbc: MBillContract, tf: Form[_])(implicit ctx: util.Context)
+
+@* Страница с подтверждением ввода платежа. Тут оператор видит данные и подтверждает. *@
+@import ctx._
+
+@billingBase("Новый платёж", Some(node)) {
+
+  <h1>Подтверждение ввода платежа</h1>
+  Ещё ничего не сохранено и не проведено. Вы можете безопасно вернутся назад.
+  Для подтверждения платежа проверьте данные и нажмите кнопку "@Messages("Save")".
+
+  <p>От: <b>@node.meta.name</b> @node.meta.town.map { town =>
+      / @town
+  }</p>
+  <p>Договор: @mbc.legalContractId от @mbc.printContractDate</p>
+
+  @if(!mbc.isActive) {
+    <h2>Внимание: Этот договор НЕ АКТИВЕН.</h2>
+  }
+
+  @* Отображается исходная форма, но с заблокированными полями. *@
+  @_paymentFormTpl(tf, isActive = false)
+
+}
