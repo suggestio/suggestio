@@ -75,6 +75,18 @@ abstract class EsModelCache[T <: EsModelMinimalT[T] : ClassTag] extends SNStatic
   }
 
   /**
+   * Если id задан, то прочитать из кеша или из хранилища. Иначе вернуть None.
+   * @param idOpt Опциональный id.
+   * @return Тоже самое, что и [[getByIdCached]].
+   */
+  def maybeGetByIdCached(idOpt: Option[String])(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
+    idOpt match {
+      case Some(id) => getByIdCached(id)
+      case None     => Future successful None
+    }
+  }
+
+  /**
    * Прочитать из хранилища документ, и если всё нормально, то отправить его в кеш.
    * @param id id документа.
    * @param ck0 Ключ в кеше.

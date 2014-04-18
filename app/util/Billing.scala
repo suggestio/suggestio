@@ -20,14 +20,14 @@ object Billing {
   def addPayment(txn: MBillTxn): AddPaymentResult = {
     DB.withTransaction { implicit c =>
       val contract = MBillContract.getById(txn.contractId).get
-      val balance0 = MBillBalance.getByAdnId(contract.adnId).get
+      val balance0 = MBillBalance.getByAdnId(contract.adnId) getOrElse {
+        MBillBalance(contract.adnId, 0F).save
+      }
       if (txn.currencyCode != balance0.currencyCode)
         throw new UnsupportedOperationException(s"Currency convertion (${txn.currencyCode} -> ${balance0.currencyCode}) not yet implemented.")
-      AddPaymentResult(
-        txnSaved   = txn.save,
-        newBalance = balance0.updateAmount(txn.amount),
-        contract   = contract
-      )
+      val txnSaved = txn.save
+      val newBalance = balance0.updateAmount(txn.amount)
+      AddPaymentResult(txnSaved, newBalance, contract)
     }
   }
 

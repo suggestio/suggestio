@@ -61,7 +61,7 @@ import MBillContract._
 case class MBillContract(
   adnId         : String,
   var contractDate: DateTime,
-  suffix        : Option[String] = None,
+  var suffix    : Option[String] = None,
   dateCreated   : DateTime = DateTime.now,
   var hiddenInfo: Option[String] = None,
   var isActive  : Boolean = true,
@@ -99,8 +99,9 @@ case class MBillContract(
    */
   def saveUpdate(implicit c: Connection): Int = {
     SQL("UPDATE " + TABLE_NAME + " SET contract_date = {contractDate}, hidden_info = {hiddenInfo}," +
-        " is_active = {isActive} WHERE id = {id}")
-      .on('id -> id.get, 'contractDate -> contractDate, 'hiddenInfo -> hiddenInfo, 'isActive -> isActive)
+        " is_active = {isActive}, suffix = {suffix} WHERE id = {id}")
+      .on('id -> id.get, 'contractDate -> contractDate, 'hiddenInfo -> hiddenInfo,
+          'isActive -> isActive, 'suffix -> suffix)
       .executeUpdate()
   }
 

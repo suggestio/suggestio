@@ -41,6 +41,7 @@
   } else {
     @contracts.map { contract =>
       <h2>Договор № @contract.legalContractId</h2>
+      <p><a href="@routes.SysMarketBilling.editContractForm(contract.id.get)">Изменить...</a></p>
       <p>Дата подписания договора:
         @defining(contract.contractDate) { cd =>
           @cd.getDayOfMonth @cd.getMonthOfYear @cd.getYear
