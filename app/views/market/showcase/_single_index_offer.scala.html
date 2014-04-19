@@ -1,0 +1,18 @@
+@(ad: MAdT, producer: MAdnNode, fallbackLogo: Option[MImgInfo] = None, isHidden: Boolean = false)(implicit ctx: util.Context)
+
+@import util.TplDataFormatUtil._
+@import AdNetMemberTypes.MART
+
+<div class="sm-index-offer">
+
+  <img width="230" data-width="@ad.img.meta.map(_.width).getOrElse(1575)" data-height="@ad.img.meta.map(_.height).getOrElse(1181)" src="@routes.Img.getImg(ad.img.id)"/>
+
+  @ad.panel.map { panelSettings =>
+  <div class="sm-io-pannel" style="background-color: #@panelSettings.color">
+    @producer.logoImgOpt.orElse(fallbackLogo).map { logoImg =>
+    <img class="sm-offer-logo" height="30" src="@routes.Img.getImg(logoImg.id)"/>
+    }
+  </div>
+  }
+
+</div>
