@@ -164,7 +164,8 @@ siomart =
   touch_events :
 
     window_touchstart : ( event ) ->
-      event.preventDefault()
+      console.log 'window touchstart'
+      #event.preventDefault()
 
     touchstart : ( event ) ->
       this.page_x = event.changedTouches[0].pageX
