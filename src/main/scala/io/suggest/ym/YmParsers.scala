@@ -34,8 +34,9 @@ object YmParsers extends JavaTokenParsers {
   val ISO_PERIOD_DATE_PARSER: Parser[List[Int ~ PeriodUnit]] = {
     // Календарный период
     val yearsParser   = ("\\d{1,2}".r ^^ str2IntF) ~ ("[Yy]".r ^^^ PeriodUnits.Year)
-    val monthsParser  = ("\\d{1,3}".r ^^ str2IntF) ~ (mmRe     ^^^ PeriodUnits.Month)
-    val weekParser    = ("\\d{1,3}".r ^^ str2IntF) ~ ("[Ww]".r ^^^ PeriodUnits.Week)
+    val d13p = "\\d{1,3}".r ^^ str2IntF
+    val monthsParser  = d13p ~ (mmRe     ^^^ PeriodUnits.Month)
+    val weekParser    = d13p ~ ("[Ww]".r ^^^ PeriodUnits.Week)
     val daysParser    = ("\\d{1,4}".r ^^ str2IntF) ~ ("[Dd]".r ^^^ PeriodUnits.Day)
     rep(yearsParser | monthsParser | weekParser | daysParser)
   }

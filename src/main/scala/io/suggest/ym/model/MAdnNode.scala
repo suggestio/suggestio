@@ -23,6 +23,7 @@ object MAdnNode
   with EMAdNetMemberStatic[MAdnNode]
   with EMLogoImgStatic[MAdnNode]
   with EMAdnMMetadataStatic[MAdnNode]
+  with EMTariffStatic[MAdnNode]
 {
   val ES_TYPE_NAME: String = "adnNode"
 
@@ -60,6 +61,7 @@ case class MAdnNode(
   var adn           : AdNetMemberInfo,
   var meta          : AdnMMetadata,
   var logoImgOpt    : Option[MImgInfo] = None,
+  var tariffs       : List[Tariff] = Nil,
   var id            : Option[String] = None
 )
   extends EsModelEmpty[MAdnNode]
@@ -68,6 +70,7 @@ case class MAdnNode(
   with EMAdNetMember[MAdnNode]
   with EMLogoImgMut[MAdnNode]
   with EMAdnMMetadata[MAdnNode]
+  with EMTariff[MAdnNode]
 {
   @JsonIgnore
   def companion = MAdnNode
