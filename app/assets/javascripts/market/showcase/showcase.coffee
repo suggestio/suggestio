@@ -165,7 +165,7 @@ siomart =
 
     window_touchstart : ( event ) ->
       console.log 'window touchstart'
-      #event.preventDefault()
+      event.preventDefault()
 
     touchstart : ( event ) ->
       this.page_x = event.changedTouches[0].pageX
@@ -191,7 +191,7 @@ siomart =
       hide_cb = () ->
         siomart.notifications.hide()
 
-      setTimeout hide_cb, 1500
+      setTimeout hide_cb, 1800
 
     hide : ( message ) ->
       n_dom = siomart.utils.ge 'smNotification'
