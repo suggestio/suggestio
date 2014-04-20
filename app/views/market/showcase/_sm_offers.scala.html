@@ -1,11 +1,19 @@
-@(mmart: MAdnNode, ads: Seq[MAdT], shops: Map[String, MAdnNode])(implicit ctx: util.Context)
+@(mmart: MAdnNode, ads: Seq[MAdT], shops: Map[String, MAdnNode], isIndex:Boolean = false)(implicit ctx: util.Context)
 
-@* Список офферов, подгружается динамически *@
-<div class="sm-offers">
-  @_offers_list(mmart, ads, shops)
+@if( isIndex ){
+
+<div class="sm-index-offers">
+  @_offers_list(mmart, ads, shops, isNav=false, isIndex = true)
 </div>
 
-@* Кнопочки-кружочки для перелистывания слайдов с офферами *@
-<div class="sm-offers-controller" style="width: @(ads.length*14)px; margin-left: -@(ads.length*14/2)px">
-  @_offers_list(mmart, ads, shops, isNav=true)
-</div>
+}else{
+  @* Список офферов, подгружается динамически *@
+  <div class="sm-offers">
+    @_offers_list(mmart, ads, shops)
+  </div>
+
+  @* Кнопочки-кружочки для перелистывания слайдов с офферами *@
+  <div class="sm-offers-controller" style="width: @(ads.length*14)px; margin-left: -@(ads.length*14/2)px">
+    @_offers_list(mmart, ads, shops, isNav=true)
+  </div>
+}
