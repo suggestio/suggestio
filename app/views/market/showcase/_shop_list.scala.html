@@ -23,7 +23,7 @@
         </div>
 
         @mshops.map { mshop =>
-          <a class="shop" href="#">
+          <a class="shop" onclick="siomart.load_for_shop_id('@mshop.id');" ontouchend="siomart.load_for_cat_id('@mshop.id');">
             @mshop.meta.name
           </a>
         }

@@ -220,7 +220,7 @@ siomart =
 
       siomart.search.search_request_timeout_timer = setTimeout timeout_cb, siomart.search.request_timeout
 
-      url = '/market/ads/' + siomart.config.mart_id + '?a.q=' + request
+      url = '/market/ads/' + siomart.config.mart_id + '?a.q=' + request + '&a.rcvr=' + siomart.config.mart_id
       siomart.perform_request url
 
     queue_request : ( event ) ->
@@ -519,6 +519,8 @@ siomart =
     console.log 'load for shop id ' + shop_id
     url = '/market/ads/' + siomart.config.mart_id + '?a.shopId=' + shop_id
     siomart.perform_request url
+    siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+    siomart.utils.ge('smShopListScreen').style.display = 'none'
 
   ## Загрузить все офферы для магазина
   load_for_cat_id : ( cat_id ) ->
