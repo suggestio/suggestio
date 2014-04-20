@@ -180,6 +180,26 @@ siomart =
       if _delta < -siomart.config.ontouchmove_offer_change_delta
         siomart.screens.objects['smScreen' + siomart.screens.active_screen].next_offer(true, true)
 
+  notifications :
+    show : ( message ) ->
+      n_dom = siomart.utils.ge 'smNotification'
+      n_data_dom = siomart.utils.ge 'smNotificationData'
+
+      n_dom.style.display = 'block'
+      n_data_dom.innerHTML = message
+
+      hide_cb = () ->
+        siomart.notifications.hide()
+
+      setTimeout hide_cb, 1500
+
+    hide : ( message ) ->
+      n_dom = siomart.utils.ge 'smNotification'
+      n_data_dom = siomart.utils.ge 'smNotificationData'
+
+      n_dom.style.display = 'none'
+      n_data_dom.innerHTML = ''
+
   ########
   ## Поиск
   ########
@@ -288,7 +308,7 @@ siomart =
   receive_response : ( data ) ->
 
     if data.html == ''
-      alert "Карточек не найдено"
+      siomart.notifications.show "КАРТОЧЕК НЕ НАЙДЕНО, ПОПРОБУЙТЕ ДРУГОЙ ЗАПРОС"
       return false
 
     if data.action == 'martIndex'
