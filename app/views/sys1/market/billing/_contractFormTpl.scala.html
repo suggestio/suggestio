@@ -1,0 +1,34 @@
+@(adnId: String, cf: Form[_], btnText: String, submitCall: Call)(implicit ctx: util.Context)
+
+@* Шаблон формы добавления/редактирования контракта. *@
+@import helper._
+
+@form(submitCall) {
+  <input type="hidden" name="adnId" value="@adnId"/>
+
+  @inputText(
+    cf("dateContract"),
+    '_label -> "Дата подписания",
+    'title  -> "Дата в удобном формате, например '12 апреля 2014' или '12.04.2014'."
+  )
+
+  @inputText(
+    cf("suffix"),
+    '_label -> "Суффикс нумерации контракта.",
+    'title  -> "Например суффикс 'СЕО' превратит '001' в '001/СЕО'."
+  )
+
+  @checkbox(
+    cf("isActive"),
+    '_label -> "Договор активен?",
+    'title  -> "Не забывайте убирать галочку при расторжении договора, и поставить при заключении."
+  )
+
+  @textarea(
+    cf("hiddenInfo"),
+    '_label -> "Служебные заметки",
+    'title  -> "Отображаются только вам и другим администраторам suggest.io."
+  )
+
+  <input type="submit" value="@btnText"/>
+}

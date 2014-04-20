@@ -7,6 +7,8 @@ version := "1.0-SNAPSHOT"
 scalaVersion := "2.10.4"
 
 libraryDependencies ++= Seq(
+  jdbc,
+  anorm,
   cache,      // play-2.2+
   json,       // play-2.3+
   ws,
@@ -36,9 +38,11 @@ libraryDependencies ++= Seq(
   "com.google.guava" % "guava" % "14.+",
   "com.lambdaworks" % "scrypt" % "1.4.0",     // Чтобы хешировать пароли (models.EmailPwIdent например)
   // Для импорт данных из sio v1 кластера. Выпилить вместе с util.compat.v1 после запуска
-  "org.erlang.otp" % "jinterface" % "1.5.+"
+  "org.erlang.otp" % "jinterface" % "1.5.+",
   // Для поддержки финансовых моделей нужен асинхронный postgres-драйвер.
   //"com.github.mauricio" %% "postgresql-async" % "0.2.+"
+  // Бомжуем с синхронным драйвером из-за конфликта версии netty между postgresql-async и asynchbase
+  "org.postgresql" % "postgresql" % "9.3-1100-jdbc41"
 )
 
 play.Project.playScalaSettings

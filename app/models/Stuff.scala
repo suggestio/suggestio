@@ -1,6 +1,7 @@
 package models
 
 import play.api.mvc.Call
+import java.util.Currency
 
 /**
  * Suggest.io
@@ -18,3 +19,17 @@ trait ShowAdnNodeCtx {
   def createAdCall(adnId: String): Call
   def editAdCall(adId: String): Call
 }
+
+
+object CurrencyCodeOpt {
+  val CURRENCY_CODE_DFLT = "RUB"
+}
+
+/** Опциональное поле currencyCode, подразумевающее дефолтовую валюту. */
+trait CurrencyCodeOpt {
+  def currencyCodeOpt : Option[String]
+
+  def currencyCode = currencyCodeOpt getOrElse CurrencyCodeOpt.CURRENCY_CODE_DFLT
+  def currency = Currency.getInstance(currencyCode)
+}
+

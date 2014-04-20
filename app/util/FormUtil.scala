@@ -2,12 +2,13 @@ package util
 
 import play.api.data.Forms._
 import java.net.URL
-import io.suggest.util.UrlUtil
+import io.suggest.util.{DateParseUtil, UrlUtil}
 import gnu.inet.encoding.IDNA
 import HtmlSanitizer._
 import views.html.helper.FieldConstructor
 import views.html.market.lk._
 import play.api.data.Mapping
+import org.joda.time.LocalDate
 
 /**
  * Suggest.io
@@ -150,6 +151,16 @@ object FormUtil {
   val float = nonEmptyText(maxLength = 15)
     .verifying("float.invalid", floatRe.pattern.matcher(_).matches())
     .transform(_.toFloat, {f: Float => f.toString})
+
+
+  // Даты
+  val localDate = text(maxLength = 32)
+    .transform[Option[LocalDate]](
+      DateParseUtil.extractDates(_).headOption,
+      { ldOpt => ldOpt.map(_.toString) getOrElse "" }
+    )
+    .verifying("error.required", _.isDefined)
+    .transform[LocalDate](_.get, Some.apply)
 
 
   // Ценовые значения

@@ -1,0 +1,28 @@
+@(tf: Form[_], isActive: Boolean)(implicit ctx: util.Context)
+
+@* Форма для ввода данных по транзакции оператором (бухгалетром) suggest.io. *@
+@import helper._
+@import ctx._
+
+@* При !isActive приходит статическая форма. *@
+@mkField(name: String, label: String, title: String) = {
+  @if(isActive) {
+    @inputText(tf(name),  '_label -> label,  'title  -> title)
+  } else {
+    <input type="hidden" name="@name" value="@tf(name).value"/>
+    <p><span title="@title">@label</span>: <b>@tf(name).value</b></p>
+  }
+}
+
+@form(if(isActive) routes.SysMarketBilling.incomingPaymentFormSubmit else routes.SysMarketBilling.confirmIncomingPaymentSubmit) {
+
+  @mkField("txnUid", "ID транзакции", "Генерируется банком, приходит в отдельном поле платежа.")
+  @mkField("amount", "Сумма", "В рублях. Если валюта не указана, то считается что рубли.")
+  @mkField("datePaid", "Дата платежа", "Когда оплата была отправлена? Например 18.12.2012 или в другой (произвольной) форме.")
+  @mkField("paymentComment", "Комментарий к платежу", "Просто весь комментарий скопировать и вставить.")
+
+  @if(isActive) {
+    <p>Будет произведена проверка реквизитов, и затем отобразится страница с подтверждением нового платежа.</p>
+  }
+  <input type="submit" value="@if(isActive) {Проверить} else {@Messages("Save")}"/>
+}

@@ -176,3 +176,12 @@ session.cookieName = "s"
 # Переименовать длинный палевный "PLAY_LANG" в "l". Это скроет play.
 application.lang.cookie = "l"
 
+
+###############################################################################
+## SQL DBMS
+###############################################################################
+db.default.driver = org.postgresql.Driver
+db.default.url = "jdbc:postgresql://localhost/postgres?searchpath=sio2"
+db.default.user = "sio2"
+db.default.password = "Rjvfhjdj&"
+

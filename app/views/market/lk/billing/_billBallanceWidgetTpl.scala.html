@@ -1,0 +1,14 @@
+@(adnId: String)(implicit ctx: util.Context)
+
+@* Рисуем баланс на счете, если есть счёт. *@
+@import util.TplDataFormatUtil._
+
+@ctx.billBalanceOpt.map { mbb =>
+  <span>
+    @* Отобразить баланс + TODO ссылка на выписку по счету. *@
+    @formatPrice(mbb.amount, mbb.currency)
+
+    @* Ссылка для оплаты/внесения новых денег в sio. *@
+    <a href="@routes.MarketLkBilling.paymentRequsites(adnId)">+</a>
+  </span>
+}

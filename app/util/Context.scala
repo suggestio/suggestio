@@ -7,6 +7,7 @@ import play.api.Play.current
 import util.acl._, PersonWrapper.PwOpt_t
 import io.suggest.util.UrlUtil
 import java.sql.Connection
+import models.MBillBalance
 
 /**
  * Suggest.io
@@ -22,6 +23,8 @@ object Context {
   /** Протокол, используемый при генерации ссылок на suggest.io. Обычно на локалхостах нет https вообще, в
     * то же время, на мастере только https. */
   val SIO_PROTO_DFLT = current.configuration.getString("sio.proto.dflt") getOrElse "https"
+
+  val mobileUaPattern = "(iPhone|webOS|iPod|Android|BlackBerry|mobile|SAMSUNG|IEMobile|OperaMobi)".r.unanchored
 }
 
 
@@ -48,7 +51,11 @@ trait Context {
   implicit def request: RequestHeader
   implicit def pwOpt: PwOpt_t
   implicit def lang: Lang
-  def usernameOpt: Option[String]
+
+  // srm в protected т.к. пока нет смысла её отображать. Раскрываем её api прямо тут:
+  protected def sioReqMdOpt: Option[SioReqMd]
+  def usernameOpt = sioReqMdOpt.flatMap(_.usernameOpt)
+  def billBalanceOpt = sioReqMdOpt.flatMap(_.billBallanceOpt)
 
   def myProto = Context.SIO_PROTO_DFLT
   def myAudienceUrl = controllers.Ident.AUDIENCE_URL
@@ -62,10 +69,9 @@ trait Context {
 
   def userAgent:  Option[String] = request.headers.get("User-Agent")
 
-  val mobileUaPattern = "(iPhone|webOS|iPod|Android|BlackBerry|mobile|SAMSUNG|IEMobile|OperaMobi)".r.unanchored
   def isMobile : Boolean = {
     userAgent.exists {
-      case mobileUaPattern(a) => true
+      case Context.mobileUaPattern(a) => true
       case _ => false
     }
   }
@@ -88,13 +94,13 @@ case class Context2(
   implicit val lang: Lang
 ) extends Context {
   implicit def pwOpt: PwOpt_t = request.pwOpt
-  def usernameOpt = request.sioReqMd.usernameOpt
+  val sioReqMdOpt: Option[SioReqMd] = Some(request.sioReqMd)
 }
 
 
 /** Упрощенная версия контекста, используемая в минимальных условиях и вручную. */
 case class ContextImpl(implicit val request: RequestHeader, val lang: Lang) extends Context {
   def pwOpt = PersonWrapper.getFromRequest(request)
-  def usernameOpt: Option[String] = None
+  def sioReqMdOpt: Option[SioReqMd] = None
 }
 

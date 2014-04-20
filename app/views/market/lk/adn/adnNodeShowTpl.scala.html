@@ -3,9 +3,8 @@
 @* Заглавная страница узла рекламной сети в личном кабинете. *@
 
 @import ctx._
-@* import AdNetMemberTypes._ *@
 
-@market.lk.lkBase(node.meta.name) {
+@market.lk.lkBase(node.meta.name, adnIdOpt = node.id) {
 
   @helper.javascriptRouter("jsRoutes")(
     routes.javascript.MarketAd.updateShowLevelSubmit

@@ -134,6 +134,8 @@ POST /m/lk/m/:martId/ad/new             controllers.MarketAd.createMartAdSubmit(
 POST /m/lk/m/:martId/ad/preview         controllers.MarketAd.adFormPreviewMartSubmit(martId)
 GET  /m/lk/ma/:adId/edit                controllers.MarketAd.editMartAd(adId)
 POST /m/lk/ma/:adId/edit                controllers.MarketAd.editMartAdSubmit(adId)
+# lk.billing
+GET  /m/lk/bill/pay/bank/:adnId         controllers.MarketLkBilling.paymentRequsites(adnId)
 
 
 # Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
@@ -193,6 +195,7 @@ POST /sys/market/shop/:id/edit          controllers.SysMarket.shopEditFormSubmit
 POST /sys/market/shop/:id/delete        controllers.SysMarket.shopDeleteSubmit(id)
 GET  /sys/market/shop/:id/eact          controllers.SysMarket.showShopEmailActMsgHtml(id, isHtml: Boolean)
 GET  /sys/market/shop/:id/ads           controllers.SysMarket.showShopAds(id)
+GET  /sys/market/adn/:adnId/rdr         controllers.SysMarket.adnRdr(adnId)
 GET  /sys/market/s/ad/:adId/email       controllers.SysMarket.showShopEmailAdDisableMsg(adId, isHtml: Boolean ?= true)
 # sys.market.shop.pricelist
 GET  /sys/market/spl/add/:shopId        controllers.SysMarket.splAddForm(shopId)
@@ -210,4 +213,15 @@ GET  /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatFo
 POST /sys/market/cats/usr/e/:catId      controllers.MarketCategory.editUserCatFormSubmit(catId)
 POST /sys/market/cats/usr/:ownerId/inst/m  controllers.MarketCategory.installMartCategories(ownerId)
 POST /sys/market/cats/usr/d/:catId      controllers.MarketCategory.deleteUserCatSubmit(catId)
+# sys.market.billing
+GET  /sys/market/billing                controllers.SysMarketBilling.index
+GET  /sys/market/b/show/:adnId          controllers.SysMarketBilling.billingFor(adnId)
+GET  /sys/market/b/contract/new/:adnId  controllers.SysMarketBilling.createContractForm(adnId)
+POST /sys/market/b/contract/new         controllers.SysMarketBilling.createContractFormSubmit
+GET  /sys/market/b/contract/edit/:cId   controllers.SysMarketBilling.editContractForm(cId: Int)
+POST /sys/market/b/contract/edit/:cId   controllers.SysMarketBilling.editContractFormSubmit(cId: Int)
+## Платежи обрабатываются вне контекста узлов, ибо при входящем платеже никто не знает, к кому он относится.
+GET  /sys/market/b/payment/new          controllers.SysMarketBilling.incomingPaymentForm
+POST /sys/market/b/payment/new          controllers.SysMarketBilling.incomingPaymentFormSubmit
+POST /sys/market/b/payment/new/confirm  controllers.SysMarketBilling.confirmIncomingPaymentSubmit
 

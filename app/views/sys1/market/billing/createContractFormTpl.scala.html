@@ -1,0 +1,17 @@
+@(adnNode: MAdnNode, supOpt: Option[MAdnNode], cf: Form[_])(implicit ctx: util.Context)
+
+@* Страница с формой создания нового договора. *@
+@import ctx._
+
+@billingBase("Новый контракт") {
+  <h1>Создание нового контракта</h1>
+  <p>Сторона контракта: @_contractSideTpl(adnNode, supOpt)</p>
+
+  @_contractFormTpl(
+    adnId = adnNode.id.get,
+    cf = cf,
+    btnText = Messages("Create"),
+    submitCall = routes.SysMarketBilling.createContractFormSubmit
+  )
+
+}
