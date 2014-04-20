@@ -22,6 +22,14 @@ transition( param )
   -o-transition: param
   transition: param
 
+.sm-preload
+  width: 1px
+  height: 1px
+  overflow: hidden
+  position: absolute
+  left : -1px
+  top: -1px
+
 .sm-notification
   display: none
   background: rgba(0, 0, 0, 0.8)
@@ -30,7 +38,7 @@ transition( param )
   position: absolute
   left: 0px
   top: 0px
-  z-index: 1001
+  z-index: 100001
   color: #fff
   font-family: 'pfdintextcomppro-medium-webfont'
 

@@ -164,7 +164,6 @@ siomart =
   touch_events :
 
     window_touchstart : ( event ) ->
-      console.log 'window touchstart'
       event.preventDefault()
 
     touchstart : ( event ) ->
@@ -191,7 +190,7 @@ siomart =
       hide_cb = () ->
         siomart.notifications.hide()
 
-      setTimeout hide_cb, 1800
+      setTimeout hide_cb, 1700
 
     hide : ( message ) ->
       n_dom = siomart.utils.ge 'smNotification'
@@ -206,9 +205,21 @@ siomart =
 
   search :
 
-    request_delay : 1000
+    request_delay : 600
+    request_timeout : 800
+
+    on_request_error : () ->
+      console.log 'request error'
+      siomart.notifications.show "НЕ УДАЛОСЬ ВЫПОЛНИТЬ ЗАПРОС, ПОПРОБУЙТЕ ЧЕРЕЗ НЕКОТОРОЕ ВРЕМЯ"
+      return false
 
     perform : ( request ) ->
+
+      timeout_cb = () ->
+        siomart.search.on_request_error()
+
+      siomart.search.search_request_timeout_timer = setTimeout timeout_cb, siomart.search.request_timeout
+
       url = '/market/ads/' + siomart.config.mart_id + '?a.q=' + request
       siomart.perform_request url
 
