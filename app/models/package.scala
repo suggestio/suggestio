@@ -118,4 +118,9 @@ package object models {
 
   type CollectMMCatsAcc_t   = MMartCategory.CollectMMCatsAcc_t
 
+  val  Tariff               = ym.model.common.Tariff
+  type Tariff               = ym.model.common.Tariff
+
+  val  TariffTypes          = ym.model.common.TariffTypes
+  type TariffType           = TariffTypes.TariffType
 }

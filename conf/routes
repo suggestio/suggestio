@@ -224,4 +224,7 @@ POST /sys/market/b/contract/edit/:cId   controllers.SysMarketBilling.editContrac
 GET  /sys/market/b/payment/new          controllers.SysMarketBilling.incomingPaymentForm
 POST /sys/market/b/payment/new          controllers.SysMarketBilling.incomingPaymentFormSubmit
 POST /sys/market/b/payment/new/confirm  controllers.SysMarketBilling.confirmIncomingPaymentSubmit
+## Тарифы
+GET  /sys/market/bt/new/:adnId          controllers.SysMarketBillingTariff.addTariffForm(adnId)
+POST /sys/market/bt/new/:adnId          controllers.SysMarketBillingTariff.addTariffFormSubmit(adnId)
 

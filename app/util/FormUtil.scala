@@ -8,7 +8,10 @@ import HtmlSanitizer._
 import views.html.helper.FieldConstructor
 import views.html.market.lk._
 import play.api.data.Mapping
-import org.joda.time.LocalDate
+import org.joda.time.{Period, LocalDate}
+import io.suggest.ym.YmParsers
+import org.joda.time.format.ISOPeriodFormat
+import models._
 
 /**
  * Suggest.io
@@ -162,6 +165,19 @@ object FormUtil {
     .verifying("error.required", _.isDefined)
     .transform[LocalDate](_.get, Some.apply)
 
+  /** ISO-период в виде стандартной строки P1Y3M... */
+  val isoPeriodM: Mapping[Period] = {
+    import YmParsers.{parse, ISO_PERIOD_PARSER}
+    val formatter = ISOPeriodFormat.standard()
+    text(minLength = 3, maxLength = 64)
+      .transform[Option[Period]](
+        { str => Option(parse(ISO_PERIOD_PARSER, str).getOrElse(null)) },
+        { case Some(period) => period.toString(formatter)
+          case None => "" }
+      )
+      .verifying("error.invalid", _.isDefined)
+      .transform[Period](_.get, Some.apply)
+  }
 
   // Ценовые значения
 
@@ -188,6 +204,18 @@ object FormUtil {
       )
   }
 
+  /** Маппер типа тарифа. */
+  val tariffTypeM: Mapping[TariffType] = {
+    nonEmptyText(maxLength = 1)
+      .transform[Option[TariffType]](
+        { TariffTypes.maybeWithName },
+        { case Some(tt) => tt.toString
+          case None => "" }
+      )
+      .verifying("error.invalid", _.isDefined)
+      .transform({ _.get }, Some.apply)
+  }
+
   /** Маппинг для задания цены. Либо цена, либо ошибка. Тащим исходное значение с собой
     * для возможности быстрого доступа к нему из маппинга без помощи локали клиента и т.д. */
   val priceStrictM: Mapping[(String, Price)] = {
@@ -199,6 +227,14 @@ object FormUtil {
       )
       .verifying("error.price.mustbe.nonneg", { _._2.price >= 0F })
       .verifying("error.price.too.much", { _._2.price < 100000000F })
+  }
+
+  /** price, но без исходного raw-значения. */
+  val priceStrictNoraw: Mapping[Price] = {
+    priceStrictM.transform[Price](
+      { case (raw, price) => price },
+      { price => "" -> price }
+    )
   }
 
 

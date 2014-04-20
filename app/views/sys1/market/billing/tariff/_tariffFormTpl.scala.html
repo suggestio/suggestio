@@ -1,0 +1,28 @@
+@(id: Int, tf: Form[_], submitCall: Call, btnText: String)(implicit ctx: util.Context)
+
+@* Форма создания/редактирования тарифа. *@
+@import helper._
+
+@form(submitCall) {
+  <input type="hidden" name="id" value="@tf("id").value.getOrElse(id)"/>
+
+  @inputText(tf("name"), '_label -> "Название")
+
+  @* Тип тарифа. Содержит значение из models.TariffTypes. *@
+  @* TODO: Когда будет >1 типа тарифов, надо запилить переключение между типами. *@
+  <input type="hidden" name="ttype" value="@tf("ttype").value"/>
+
+  @checkbox(tf("enabled"), '_label -> "Активен?")
+
+
+  @* Начинаются поля для periodical-тарифов. *@
+  inputText(tf("tbody.period"), '_label -> "Интервал списания")
+  Интервал задаётся латиницей согласно ISO8601:
+  <br/><b>P1M</b> - 1 месяц, <b>P30D</b> - 30 дней, <b>P1M1D</b> - 1 месяц 1 день.
+
+  @* Дебет списания (цена периода). *@
+  @inputText(tf("tbody.price"), '_label -> "Цена периода (дебет)")
+  <br/>Например: "100" или "100 руб".
+
+  <input type="submit" value="@btnText">
+}

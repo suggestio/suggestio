@@ -4,10 +4,9 @@
 @import datetime._
 
 @billingBase(adnNode.meta.name, Some(adnNode)) {
-  <h1>Биллинг -- <a href="@routes.SysMarket.adnRdr(adnNode.id.get)">@adnNode.meta.name</a></h1>
 
   @balanceOpt.map { balance =>
-    <p>Сейчас на балансе: @balance.amount @balance.currencyCode</p>
+    <p>Текущий баланс: @balance.amount @balance.currencyCode</p>
   }
 
   <h2>Транзакции</h2>
@@ -36,7 +35,7 @@
   <p><a href="@routes.SysMarketBilling.incomingPaymentForm">Провести платёж...</a></p>
 
 
-  <h1>Контракты</h1>
+  <h2>Контракты</h2>
   @if(contracts.isEmpty) {
     Пока нет заключенных договоров.
   } else {
@@ -59,4 +58,31 @@
   }
   <a href="@routes.SysMarketBilling.createContractForm(adnNode.id.get)">Добавить договор...</a>
 
+
+  <h2 title="Тарифы используются для списания денег со счета. Любой узел сети может иметь любое число действующих тарифов.">Тарификация</h2>
+  @if(adnNode.tariffs.isEmpty) {
+    Нет тарифов.
+  } else {
+    <table>
+      <tr>
+        <th>#</th>
+        <th>Активен?</th>
+        <th>Имя</th>
+        <th>Тип</th>
+        <th>Суть</th>
+        <th>Создан</th>
+      </tr>
+      @adnNode.tariffs.map { tariff =>
+        <tr>
+          <td>@tariff.id</td>
+          <td>@tariff.isEnabled</td>
+          <td>@tariff.name</td>
+          <td>@tariff.tType</td>
+          <td title="@tariff.tBody">@tariff.tBody.describe</td>
+          <td>@datetime._prettyDate(tariff.dateCreated, withSpan = true)</td>
+        </tr>
+      }
+    </table>
+  }
+  <a href="@routes.SysMarketBillingTariff.addTariffForm(adnNode.id.get)">Добавить тариф...</a>
 }
