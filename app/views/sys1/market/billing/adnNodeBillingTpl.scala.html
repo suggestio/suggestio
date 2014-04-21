@@ -78,7 +78,7 @@
                 <td>@tariff.id</td>
                 <td>@tariff.isEnabled</td>
                 <td>@tariff.name</td>
-                <td>@_maybeTagged("strike", !tariff.isEnabled) {@tariff.tinterval}</td>
+                <td>@_maybeTagged("strike", !tariff.isEnabled) {@tariff.tintervalPretty}</td>
                 <td>@tariff.fee @tariff.feeCC</td>
                 <td>@_maybeTagged("strike", !tariff.isEnabled) {@datetime._prettyDate(tariff.dateFirst, withSpan = true)}</td>
                 <td>

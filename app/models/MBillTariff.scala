@@ -4,7 +4,7 @@ import anorm._
 import org.joda.time.DateTime
 import util.AnormJodaTime._
 import util.AnormPgInterval._
-import util.SqlModelSave
+import util.{FormUtil, SqlModelSave}
 import java.sql.Connection
 import java.util.Currency
 import org.postgresql.util.PGInterval
@@ -108,6 +108,8 @@ case class MBillTariffFee(
 
   override def companion = MBillTariffFee
 
+  def tintervalPretty: String = FormUtil.pgIntervalPretty(tinterval)
+
   /** Доступен ли ключ ряда в текущем инстансе? */
   override def hasId: Boolean = id.isDefined
 
@@ -124,7 +126,7 @@ case class MBillTariffFee(
     SQL("UPDATE " + TABLE_NAME + " SET name = {name}, is_enabled = {isEnabled}, date_first = {dateFirst}, " +
         "tinterval = {tinterval}, date_status = {dateStatus}, fee = {fee}, fee_cc = {feeCC} WHERE id = {id}")
       .on('id -> id.get, 'name -> name, 'isEnabled -> isEnabled, 'dateFirst -> dateFirst, 'tinterval -> tinterval,
-          'date_status -> dateStatus, 'fee -> fee, 'feeCC -> feeCC)
+          'dateStatus -> dateStatus, 'fee -> fee, 'feeCC -> feeCC)
       .executeUpdate()
   }
 

@@ -218,6 +218,7 @@ object FormUtil {
       .transform({ _.get }, Some.apply)
   }
 
+  def pgIntervalPretty(pgi: PGInterval) = pgi.toString.replaceAll("0([.,]0+)?\\s+[a-z]+", "").trim
 
   val pgIntervalM: Mapping[PGInterval] = {
     nonEmptyText(minLength = 3, maxLength = 256)
@@ -229,7 +230,7 @@ object FormUtil {
             case ex: SQLException => None
           }
         },
-        { case Some(pgi) => pgi.toString.replaceAll("0([.,]0+)?\\s+[a-z]+", "")
+        { case Some(pgi) => pgIntervalPretty(pgi)
           case None      => "" }
       )
       .verifying("error.invalid", _.isDefined)
