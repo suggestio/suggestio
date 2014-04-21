@@ -227,4 +227,7 @@ POST /sys/market/b/payment/new/confirm  controllers.SysMarketBilling.confirmInco
 ## Тарифы
 GET  /sys/market/bt/new/:adnId          controllers.SysMarketBillingTariff.addTariffForm(adnId)
 POST /sys/market/bt/new/:adnId          controllers.SysMarketBillingTariff.addTariffFormSubmit(adnId)
+GET  /sys/market/bt/edit/:adnId/:tid    controllers.SysMarketBillingTariff.editTariffForm(adnId, tid: Int)
+POST /sys/market/bt/edit/:adnId         controllers.SysMarketBillingTariff.editTariffFormSubmit(adnId, tid: Int)
+POST /sys/market/bt/delete/:adnId/:tid  controllers.SysMarketBillingTariff.deleteTariffSubmit(adnId, tid: Int)
 

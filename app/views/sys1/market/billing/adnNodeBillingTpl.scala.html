@@ -2,6 +2,7 @@
 
 @* Страница с информацией по биллингу указанного узла рекламной сети. *@
 @import datetime._
+@import ctx._
 
 @billingBase(adnNode.meta.name, Some(adnNode)) {
 
@@ -70,16 +71,20 @@
         <th>Имя</th>
         <th>Тип</th>
         <th>Суть</th>
-        <th>Создан</th>
+        <th>Старт</th>
+        <th>Действия</th>
       </tr>
       @adnNode.tariffs.map { tariff =>
         <tr>
           <td>@tariff.id</td>
           <td>@tariff.isEnabled</td>
           <td>@tariff.name</td>
-          <td>@tariff.tType</td>
+          <td>@Messages("tariff.type." + tariff.tType)</td>
           <td title="@tariff.tBody">@tariff.tBody.describe</td>
-          <td>@datetime._prettyDate(tariff.dateCreated, withSpan = true)</td>
+          <td>@datetime._prettyDate(tariff.dateFirst, withSpan = true)</td>
+          <td>
+              <a href="@routes.SysMarketBillingTariff.editTariffForm(adnNode.id.get, tariff.id)">@Messages("Edit")</a>
+          </td>
         </tr>
       }
     </table>
