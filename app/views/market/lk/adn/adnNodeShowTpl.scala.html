@@ -39,11 +39,16 @@
   <div class="body">
     <div class="shop-info">
       <div class="name-wrap">
+
         <span class="name">@node.meta.name</span>
         <a class="edit" href="@sanCtx.nodeEditCall(node.id.get)">Редактировать</a>
         @if(isSuperuser) {
           <a class="superuser-link" href="@routes.SysMarket.martShow(node.id.get)">/sys</a>
         }
+      </div>
+
+      <div class="sm-note">
+        Подсказка : в редактировани вы можете указать информацию о вашем магазине и загрузить основной логотип, который будет отображаться на всех рекламных карточках.
       </div>
 
       <div class="border-line"></div>
