@@ -2,7 +2,7 @@ name := "util"
 
 organization := "io.suggest"
 
-version := "1.0.0-SNAPSHOT"
+version := "1.1.0-SNAPSHOT"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
@@ -90,7 +90,8 @@ resourceGenerators in Compile <+= Def.task {
       csvFileDir.mkdirs()
       println(csvFileDir.toString + " dirs created")
     }
-    val cmd0 = List("xls2csv", "-q", "-x", xlsFile.toString, "-b", "WINDOWS-1251", "-c", csvFile.toString, "-a", "UTF-8")
+    // TODO Надо разобраться с зоопарком xls2csv.
+    val cmd0 = List("/usr/bin/vendor_perl/xls2csv", "-q", "-x", xlsFile.toString, "-b", "WINDOWS-1251", "-c", csvFile.toString, "-a", "UTF-8")
     println("Creating CSV categories tree from. Executing shell command:\n " + cmd0.mkString(" "))
     cmd0 !
     // 2014.02.28: Яндекс поменял формат своей доки. Теперь всё добро свалено в одном столбце, и появилась корневая категория "Все товары".

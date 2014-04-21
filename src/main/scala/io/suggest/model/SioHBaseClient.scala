@@ -11,6 +11,7 @@ import scala.util.{Failure, Success}
 import java.util
 import org.apache.hadoop.conf.Configuration
 import org.slf4j.LoggerFactory
+import io.suggest.util.MyConfig.CONFIG
 
 /**
  * Suggest.io
@@ -20,7 +21,7 @@ import org.slf4j.LoggerFactory
  */
 
 object SioHBaseClient {
-  val QUORUM_SPEC = "upload.lan"
+  val QUORUM_SPEC: String = CONFIG.getString("hbase.quorum") getOrElse "upload.lan"
 }
 
 

@@ -88,7 +88,15 @@ object YmCategory {
   }
 
   /** Совместимое дерево категорий без "Всех товаров". */
-  val CAT_TREE_CORE = YmCategoryRoot(CAT_TREE.cats.head._2.subcatsOpt.get)
+  val CAT_TREE_CORE = {
+    val headCat = CAT_TREE.cats.head
+    headCat._2.subcatsOpt match {
+      case Some(x) => YmCategoryRoot(x)
+      case None =>
+        println("Unexpected headCat in CAT_TREE:\n " + headCat)
+        ???
+    }
+  }
 
 
   /** Поиск общего пути между несколькими списками списками.

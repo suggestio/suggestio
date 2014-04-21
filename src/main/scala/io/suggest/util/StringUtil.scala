@@ -1,9 +1,9 @@
 package io.suggest.util
 
 import annotation.tailrec
-import scala.util.Random
 import java.nio.ByteBuffer
 import org.apache.commons.codec.binary.Base32
+import SioRandom.rnd
 
 /**
  * Suggest.io
@@ -21,8 +21,6 @@ object StringUtil {
   val BASEN_PADDING_BYTE  = '='.toByte
   /** Если нулевые байты, то в начале будут дефисы в случае Base64+ordered. */
   val B32HEX_ZERO_BYTE = '0'.toByte
-
-  private val rnd = new Random(System.currentTimeMillis())
 
 
   /**

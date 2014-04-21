@@ -6,6 +6,7 @@ import java.util.Locale
 import collection.mutable
 import scala.util.Random
 import org.joda.time.DateMidnight
+import SioRandom.rnd
 
 /**
  * Suggest.io
@@ -242,10 +243,8 @@ object DateParseUtil extends Logs {
   }
 
 
-  // Используем внутренний ГСЧ для надежности
-  protected val rnd = new Random(System.currentTimeMillis())
   // Нижняя планка случайного года
-  protected val min_random_year = -10
+  protected def min_random_year = -10
 
   /**
    * Генерация рандомной даты. Нужно, когда дата страницы неизвестна.
@@ -279,7 +278,7 @@ object DateParseUtil extends Logs {
   }
 
 
-  private val SINSE_YEAR_DFLT_INSTANT_MS = new DateTime(1980, 1, 1).getMillis
+  private val SINSE_YEAR_DFLT_INSTANT_MS = new DateTime(1980, 1, 1, 0, 0).getMillis
   private val MS_PER_DAY: Long = 24L * 3600L * 1000L
 
   /**
