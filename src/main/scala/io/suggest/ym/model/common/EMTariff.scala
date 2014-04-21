@@ -38,7 +38,10 @@ object EMTariff {
   val TTYPE_ESFN    = "tType"
   val ENABLED_ESFN  = "enabled"
   val TBODY_ESFN    = "tBody"
-  /** Названия поля в котором записаны дата-время создания тарифа. */
+
+  /** Дата первого списания. Все остальные даты списания генерятся на основе этой даты и периода. */
+  val DATE_FIRST_ESFN    = "dateStart"
+  /** Название поля в котором записаны дата-время создания тарифа. */
   val DATE_CREATED_ESFN  = "dateCreated"
   /** Дата последнего изменения статуса enabled. */
   val DATE_STATUS_ESFN   = "dateStatus"
@@ -58,6 +61,7 @@ trait EMTariffStatic[T <: EMTariff[T]] extends EsModelStaticT[T] {
       FieldString(TTYPE_ESFN, FieldIndexingVariants.not_analyzed, include_in_all = false),
       FieldBoolean(ENABLED_ESFN, FieldIndexingVariants.not_analyzed, include_in_all = false),
       FieldObject(TBODY_ESFN, enabled = false, properties = Nil),
+      FieldDate(DATE_FIRST_ESFN, FieldIndexingVariants.no, include_in_all = false),
       FieldDate(DATE_CREATED_ESFN, FieldIndexingVariants.no, include_in_all = false),
       FieldDate(DATE_STATUS_ESFN, FieldIndexingVariants.no, include_in_all = false),
       FieldDate(DATE_MODIFIED_ESFN, FieldIndexingVariants.no, include_in_all = false)
@@ -88,6 +92,19 @@ trait EMTariff[T <: EMTariff[T]] extends EsModelT[T] {
       val tariffsJson = JsArray(arrayElems)
       TARIFF_ESFN -> tariffsJson :: acc1
     }
+  }
+
+  /** Выдать первый свободный id тарифа. */
+  def nextTariffId: Int = {
+    if (tariffs.isEmpty) {
+      0
+    } else {
+      tariffs.maxBy(_.id).id + 1
+    }
+  }
+
+  def getTariffById(id: Int): Option[Tariff] = {
+    tariffs.find(_.id == id)
   }
 }
 
@@ -128,29 +145,41 @@ object Tariff {
   def deserialize(tm: ju.Map[_,_]): Tariff = {
     val tid = EsModel.intParser(tm.get(ID_ESFN))
     val tName = tm.get(NAME_ESFN).toString
-    val tType = TariffTypes.withName(tm.get(TTYPE_ESFN).toString)
+    val tType: TariffType = TariffTypes.withName(tm.get(TTYPE_ESFN).toString)
     val isEnabled: Boolean = EsModel.booleanParser(tm.get(ENABLED_ESFN))
     val tBody = tm.get(TBODY_ESFN) match {
       case tbodyRaw: ju.Map[_,_]  =>  TariffBody.deserialize(tType, tbodyRaw)
     }
+    val dateStart    = EsModel.dateTimeParser(tm.get(DATE_FIRST_ESFN))
     val dateCreated  = EsModel.dateTimeParser(tm.get(DATE_CREATED_ESFN))
     val dateStatus   = EsModel.dateTimeParser(tm.get(DATE_STATUS_ESFN))
     val dateModified = Option(tm.get(DATE_MODIFIED_ESFN)).map(EsModel.dateTimeParser)
-    Tariff(tid, tName, tType, isEnabled, tBody, dateCreated, dateStatus, dateModified)
+    Tariff(
+      id    = tid,
+      name  = tName,
+      tType = tType,
+      isEnabled     = isEnabled,
+      tBody         = tBody,
+      dateFirst     = dateStart,
+      dateCreated   = dateCreated,
+      dateStatus    = dateStatus,
+      dateModified  = dateModified
+    )
   }
 }
 
 import Tariff.PERIOD_FORMATTER
 
 case class Tariff(
-  id            : Int,
-  name          : String,
-  tType         : TariffType,
-  isEnabled     : Boolean,
-  tBody         : TariffBody,
-  dateCreated   : DateTime = DateTime.now,
-  dateStatus    : DateTime = DateTime.now,
-  dateModified  : Option[DateTime] = None
+  var id            : Int,
+  var name          : String,
+  var tType         : TariffType,
+  var isEnabled     : Boolean,
+  var tBody         : TariffBody,
+  var dateFirst     : DateTime,
+  dateCreated       : DateTime = DateTime.now,
+  var dateStatus    : DateTime = DateTime.now,
+  var dateModified  : Option[DateTime] = None
 ) {
   def toPlayJson: JsObject = {
     var jsonFields: List[(String, JsValue)] = List(
@@ -159,6 +188,7 @@ case class Tariff(
       TTYPE_ESFN   -> JsString(tType.toString),
       ENABLED_ESFN -> JsBoolean(isEnabled),
       TBODY_ESFN   -> tBody.toPlayJson,
+      DATE_FIRST_ESFN   -> EsModel.date2JsStr(dateFirst),
       DATE_CREATED_ESFN -> EsModel.date2JsStr(dateCreated),
       DATE_STATUS_ESFN  -> EsModel.date2JsStr(dateStatus)
     )

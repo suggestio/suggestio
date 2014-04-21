@@ -180,7 +180,7 @@ object EsModel extends MacroLogsImpl {
     case null               => ???
     case fs: jlIterable[_] =>
       floatParser(fs.head.asInstanceOf[Any])
-    case f: java.lang.Float => f.floatValue()
+    case f: java.lang.Number => f.floatValue()
   }
   val stringParser: PartialFunction[Any, String] = {
     case null => null

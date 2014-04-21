@@ -74,6 +74,19 @@ trait HTableModel {
     }
   }
 
+  def dropTableSync() {
+    val adm = SioHBaseSyncClient.admin
+    adm.deleteTable(HTABLE_NAME)
+  }
+
+  def disableTableSync() {
+    SioHBaseSyncClient.admin.disableTable(HTABLE_NAME)
+  }
+
+  def enableTableSync() {
+    SioHBaseSyncClient.admin.enableTable(HTABLE_NAME)
+  }
+
 }
 
 
@@ -85,6 +98,9 @@ trait HBaseModelJMXBeanCommon {
   def isTableExists: Boolean
   def CFs: String
   def HTABLE_NAME: String
+  def dropTable()
+  def disableTable()
+  def enableTable()
 }
 
 trait HBaseModelJMXBase extends JMXBase with HBaseModelJMXBeanCommon {
@@ -110,6 +126,18 @@ trait HBaseModelJMXBase extends JMXBase with HBaseModelJMXBeanCommon {
   }
 
   override def HTABLE_NAME: String = companion.HTABLE_NAME
+
+  override def dropTable() {
+    companion.dropTableSync()
+  }
+
+  override def disableTable() {
+    companion.disableTableSync()
+  }
+
+  override def enableTable() {
+    companion.enableTableSync()
+  }
 }
 
 
