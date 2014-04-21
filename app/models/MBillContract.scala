@@ -166,3 +166,9 @@ case class MBillContract(
   }
 
 }
+
+
+trait MBillContractSel {
+  def contractId: Int
+  def contract(implicit c: Connection) = MBillContract.getById(contractId)
+}

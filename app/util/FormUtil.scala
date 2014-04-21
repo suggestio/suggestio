@@ -12,6 +12,8 @@ import org.joda.time.{Period, LocalDate}
 import io.suggest.ym.YmParsers
 import org.joda.time.format.ISOPeriodFormat
 import models._
+import org.postgresql.util.PGInterval
+import java.sql.SQLException
 
 /**
  * Suggest.io
@@ -205,16 +207,42 @@ object FormUtil {
   }
 
   /** Маппер типа тарифа. */
-  val tariffTypeM: Mapping[TariffType] = {
+  val bTariffTypeM: Mapping[BTariffType] = {
     nonEmptyText(maxLength = 1)
-      .transform[Option[TariffType]](
-        { TariffTypes.maybeWithName },
+      .transform[Option[BTariffType]](
+        { BTariffTypes.maybeWithName },
         { case Some(tt) => tt.toString
           case None => "" }
       )
       .verifying("error.invalid", _.isDefined)
       .transform({ _.get }, Some.apply)
   }
+
+
+  val pgIntervalM: Mapping[PGInterval] = {
+    nonEmptyText(minLength = 3, maxLength = 256)
+      .transform[Option[PGInterval]](
+        {str =>
+          try {
+            Some(new PGInterval(str))
+          } catch {
+            case ex: SQLException => None
+          }
+        },
+        { case Some(pgi) => pgi.toString.replaceAll("0([.,]0+)?\\s+[a-z]+", "")
+          case None      => "" }
+      )
+      .verifying("error.invalid", _.isDefined)
+      .transform(_.get, Some.apply)
+  }
+
+  val pgIntervalStrM: Mapping[String] = {
+    pgIntervalM.transform[String](
+      _.toString,
+      {str => new PGInterval(str) }
+    )
+  }
+  
 
   /** Маппинг для задания цены. Либо цена, либо ошибка. Тащим исходное значение с собой
     * для возможности быстрого доступа к нему из маппинга без помощи локали клиента и т.д. */

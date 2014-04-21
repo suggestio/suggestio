@@ -1,16 +1,17 @@
-@(adnNode: MAdnNode, balanceOpt: Option[MBillBalance], contracts: List[MBillContract], txns: Seq[MBillTxn])(implicit ctx: util.Context)
+@(adnNode: MAdnNode, balanceOpt: Option[MBillBalance], contracts: List[MBillContract], txns: Seq[MBillTxn], feeTariffsMap: Map[Int, Seq[MBillTariffFee]])(implicit ctx: util.Context)
 
 @* Страница с информацией по биллингу указанного узла рекламной сети. *@
 @import datetime._
 @import ctx._
+@import stuff._
 
-@billingBase(adnNode.meta.name, Some(adnNode)) {
+@billingBase("Биллинг", Some(adnNode)) {
 
   @balanceOpt.map { balance =>
     <p>Текущий баланс: @balance.amount @balance.currencyCode</p>
   }
 
-  <h2>Транзакции</h2>
+  <h2>Транзакции (@txns.size)</h2>
   @if(!txns.isEmpty) {
     <table>
       <tr>
@@ -36,58 +37,62 @@
   <p><a href="@routes.SysMarketBilling.incomingPaymentForm">Провести платёж...</a></p>
 
 
-  <h2>Контракты</h2>
+  <h2>Контракты (@contracts.size)</h2>
+  <a href="@routes.SysMarketBilling.createContractForm(adnNode.id.get)">Создать контракт...</a>
   @if(contracts.isEmpty) {
-    Пока нет заключенных договоров.
+    <p>Пока нет заключенных договоров.</p>
   } else {
     @contracts.map { contract =>
-      <h2>Договор № @contract.legalContractId</h2>
-      <p><a href="@routes.SysMarketBilling.editContractForm(contract.id.get)">Изменить...</a></p>
-      <p>Дата заключения договора:
+      <h3>Договор № @contract.legalContractId</h3>
+      <a href="@routes.SysMarketBilling.editContractForm(contract.id.get)">Изменить...</a>
+      <br/>Дата заключения договора:
           @contract.printContractDate
           (@_prettyDate(contract.contractDate, withSpan = true))
-      </p>
       <p>Добавлен в sio: @_prettyDate(contract.dateCreated, withSpan = true)</p>
       @if(!contract.isActive) {
-        <p><b>Не активен</b>.</p>
+        <br/><b>Не активен</b>.
       }
       @contract.hiddenInfo.map { hiddenInfo =>
-        <p>Служебная информация:</p>
+        <br/>Служебная информация:
         <pre>@hiddenInfo</pre>
       }
-    }
-  }
-  <a href="@routes.SysMarketBilling.createContractForm(adnNode.id.get)">Добавить договор...</a>
 
 
-  <h2 title="Тарифы используются для списания денег со счета. Любой узел сети может иметь любое число действующих тарифов.">Тарификация</h2>
-  @if(adnNode.tariffs.isEmpty) {
-    Нет тарифов.
-  } else {
-    <table>
-      <tr>
-        <th>#</th>
-        <th>Активен?</th>
-        <th>Имя</th>
-        <th>Тип</th>
-        <th>Суть</th>
-        <th>Старт</th>
-        <th>Действия</th>
-      </tr>
-      @adnNode.tariffs.map { tariff =>
-        <tr>
-          <td>@tariff.id</td>
-          <td>@tariff.isEnabled</td>
-          <td>@tariff.name</td>
-          <td>@Messages("tariff.type." + tariff.tType)</td>
-          <td title="@tariff.tBody">@tariff.tBody.describe</td>
-          <td>@datetime._prettyDate(tariff.dateFirst, withSpan = true)</td>
-          <td>
-              <a href="@routes.SysMarketBillingTariff.editTariffForm(adnNode.id.get, tariff.id)">@Messages("Edit")</a>
-          </td>
-        </tr>
-      }
-    </table>
+      @defining(feeTariffsMap.get(contract.id.get).getOrElse(Nil)) { tariffs =>
+        <h4 title="Тарифы абон.платы используются для периодического списания денег со счета по договору.">Абон.плата по договору (@tariffs.size)</h4>
+        @if(tariffs.isEmpty) {
+          Нет абонплаты по этому договору.
+        } else {
+          <table>
+            <tr>
+              <th>#</th>
+              <th>Активен?</th>
+              <th>Имя</th>
+              <th>Интервал</th>
+              <th>Абон.плата</th>
+              <th>Старт</th>
+              <th>Действия</th>
+            </tr>
+            @tariffs.map { tariff =>
+              <tr>
+                <td>@tariff.id</td>
+                <td>@tariff.isEnabled</td>
+                <td>@tariff.name</td>
+                <td>@_maybeTagged("strike", !tariff.isEnabled) {@tariff.tinterval}</td>
+                <td>@tariff.fee @tariff.feeCC</td>
+                <td>@_maybeTagged("strike", !tariff.isEnabled) {@datetime._prettyDate(tariff.dateFirst, withSpan = true)}</td>
+                <td>
+                  <a href="@routes.SysMarketBillingTariff.editFeeTariffForm(tariff.id.get)">@Messages("Edit")</a>
+                </td>
+              </tr>
+            }
+          </table>
+        }
+        <a href="@routes.SysMarketBillingTariff.addFeeTariffForm(contract.id.get)">Добавить абонплату...</a>
+      } @* defining tariffs *@
+
+    } @* contract *@
+
   }
-  <a href="@routes.SysMarketBillingTariff.addTariffForm(adnNode.id.get)">Добавить тариф...</a>
+
 }

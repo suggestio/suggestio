@@ -52,4 +52,21 @@ trait SiowebSqlModelStatic[T] {
       .on('ids -> seqInt2pgArray(ids))
       .as(rowParser *)
   }
+
+  /** Прочитать всю таблицу. */
+  def getAll(implicit c: Connection): List[T] = {
+    SQL("SELECT * FROM " + TABLE_NAME)
+      .as(rowParser *)
+  }
+}
+
+
+trait SiowebSqlModel[T] {
+  def id: Pk[Int]
+  def companion: SiowebSqlModelStatic[T]
+
+  def delete(implicit c: Connection) = id match {
+    case Id(_id)  => companion.deleteById(_id)
+    case _        => 0
+  }
 }
