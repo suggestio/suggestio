@@ -22,7 +22,7 @@ import io.suggest.ym.model.common
 import io.suggest.ym.model.common.AdNetMemberTypes
 import io.suggest.ym.ad.ShowLevelsUtil
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
-import io.suggest.model.{MUserImgMetadata, MPict}
+import io.suggest.model.MUserImgMetadata
 
 /**
  * Suggest.io
@@ -395,10 +395,7 @@ object MarketAd extends SioController with LogoSupport {
                   mmad.logoImgOpt = savedLogos.headOption
                   mmad.img = imgIdsSaved.head
                   // Сохранить изменения в базу
-                  for {
-                    adId <- mmad.save
-                    _ <- updateLogoFut
-                  } yield {
+                  mmad.save.map { adId =>
                     Redirect(routes.MarketShopLk.showShop(shopId, newAdId = Some(adId)))
                       .flashing("success" -> "Рекламная карточка создана.")
                   }

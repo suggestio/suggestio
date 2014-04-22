@@ -30,7 +30,8 @@ object Billing extends PlayMacroLogsImpl {
   def addPayment(txn: MBillTxn): AddPaymentResult = {
     DB.withTransaction { implicit c =>
       val contract = MBillContract.getById(txn.contractId).get
-      val balance0 = MBillBalance.getByAdnId(contract.adnId, SelectPolicies.UPDATE) getOrElse {
+      // SelectPolicies.UPDATE не требуется, т.к. фактический инкремент идёт на стороне базы, а не тут.
+      val balance0 = MBillBalance.getByAdnId(contract.adnId) getOrElse {
         MBillBalance(contract.adnId, 0F).save
       }
       if (txn.currencyCode != balance0.currencyCode)
