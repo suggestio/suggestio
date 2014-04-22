@@ -74,13 +74,12 @@
       }
     </div>
 
-
     @* Если указаны этаж/секция, то их напечатать таблицей. *@
     @if(node.meta.floor.isDefined || node.meta.section.isDefined) {
       <table class="block">
         <tr>
           <td class="left">
-            <div class="shop-floor">
+            <div class="shop-floor" style="padding-left: 30px;">
               @node.meta.floor.map { floor =>
                 @floor&nbsp;этаж
               }
@@ -99,7 +98,6 @@
       <div class="border-line"></div>
     }
 
-
     @* Для тех, кто может создавать свою рекламу, рисуем список своих рекламных карточек с галочками. *@
     @if(node.adn.isProducer) {
       @* Флаг single переименовывает единственную галочку "Выводить". *@
@@ -109,6 +107,7 @@
         @outLvlMap.map { case (sl, (slAllowed, slMax)) =>
           <input id="maxShownAds_@sl" type="hidden" value="@slMax"/>
         }
+
         @* Вывести рекламные карточки. *@
         @market.lk.ad._adsEditableListTpl(
           mads = myAds,
@@ -140,7 +139,6 @@
     }
   </div>
 
-
   @* Обладают выдачей только ресиверы, поэтому окно с кодом рендерится только для них. *@
   @if(node.adn.isReceiver) {
     <div class="popup" id="installScriptPopup" style="display: none;">
@@ -164,7 +162,6 @@
       </div>
     </div>
   }
-
 
   @* Супервизору надо отрендерить табличку подчиненых узлов: для реализации надзорных полномочий. *@
   @if(node.adn.isSupervisor) {

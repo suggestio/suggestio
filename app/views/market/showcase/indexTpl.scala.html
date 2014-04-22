@@ -1,7 +1,7 @@
 @(mmart: MAdnNode, ads: Seq[MAd], shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory], welcomeAdOpt: Option[MWelcomeAd])(implicit ctx: util.Context)
 
 @* Начальная страница для sio-market. *@
-  <img id="smWelcomeAd" class="poster-photo index-welcome-ad" data-width="@welcomeAdOpt.map(_.img.meta.map(_.width))" data-height="@welcomeAdOpt.map(_.img.meta.map(_.height))" src="@ctx.myAudienceUrl@welcomeAdOpt.map(_.img.id).filter(!_.isEmpty).map { imgId => @routes.Img.getImg(imgId) }.getOrElse {}"/>
+  <img id="smWelcomeAd" class="poster-photo index-welcome-ad" data-width="@welcomeAdOpt.map(_.img.meta.map(_.width))" data-height="@welcomeAdOpt.map(_.img.meta.map(_.height))" src="@ctx.myAudienceUrl@welcomeAdOpt.map(_.img.id).filter(!_.isEmpty).map {imgId =>@routes.Img.getImg(imgId)}.getOrElse {}"/>
 
   <div class="sm-notification" id="smNotification">
     <div class="data" id="smNotificationData"></div>
