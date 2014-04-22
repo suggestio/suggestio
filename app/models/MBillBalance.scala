@@ -17,9 +17,14 @@ object MBillBalance {
 
   val CURRENCY_CODE_DFLT = "RUB"
 
-  val rowParser = get[String]("adn_id") ~ get[Float]("amount") ~ get[Option[String]]("currency") map {
-    case adnId ~ amount ~ currencyCodeOpt =>
-      MBillBalance(adnId = adnId,  amount = amount,  currencyCodeOpt = currencyCodeOpt)
+  val rowParser = get[String]("adn_id") ~ get[Float]("amount") ~ get[Option[String]]("currency") ~ get[Float]("overdraft") map {
+    case adnId ~ amount ~ currencyCodeOpt ~ overdraft =>
+      MBillBalance(
+        adnId = adnId,
+        amount = amount,
+        currencyCodeOpt = currencyCodeOpt,
+        overdraft = overdraft
+      )
   }
 
   /**
@@ -27,8 +32,13 @@ object MBillBalance {
    * @param adnId id узла сети.
    * @return
    */
-  def getByAdnId(adnId: String)(implicit c: Connection): Option[MBillBalance] = {
-    SQL("SELECT * FROM " + TABLE_NAME + " WHERE adn_id = {adnId}")
+  def getByAdnId(adnId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): Option[MBillBalance] = {
+    // Собрать реквест с учётом возможного наличия заданной политики селекта ряда.
+    val req = new StringBuilder(64, "SELECT * FROM ")
+      .append(TABLE_NAME)
+      .append(" WHERE adn_id = {adnId}")
+    policy.append2sb(req)
+    SQL(req.toString())
       .on('adnId -> adnId)
       .as(rowParser *)
       .headOption
@@ -55,7 +65,8 @@ import MBillBalance._
 case class MBillBalance(
   adnId: String,
   amount: Float,
-  currencyCodeOpt: Option[String] = None
+  currencyCodeOpt: Option[String] = None,
+  var overdraft: Float = 0F
 ) extends SqlModelSave[MBillBalance] with CurrencyCodeOpt {
 
   def hasId: Boolean = true
@@ -74,8 +85,8 @@ case class MBillBalance(
     * @return Кол-во обновлённых рядов. Обычно 0 либо 1.
     */
   def saveUpdate(implicit c: Connection): Int = {
-    SQL("UPDATE " + TABLE_NAME + " SET amount = {amount} WHERE adn_id = {adnId}")
-      .on('adnId -> adnId, 'amount -> amount)
+    SQL("UPDATE " + TABLE_NAME + " SET amount = {amount}, overdraft = {overdraft} WHERE adn_id = {adnId}")
+      .on('adnId -> adnId, 'amount -> amount, 'overdraft -> overdraft)
       .executeUpdate()
   }
 

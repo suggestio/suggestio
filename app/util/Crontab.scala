@@ -45,6 +45,14 @@ object Crontab extends PlayMacroLogsImpl {
         } catch {
           case ex: Throwable => error(s"Cron: MPictureTmp.cleanupOld() failed", ex)
         }
+      },
+      // Производить начисление абон.платы.
+      schedule(10 seconds, Billing.SCHED_TARIFFICATION_DURATION) {
+        try {
+          Billing.processFeeTarificationAll()
+        } catch {
+          case ex: Throwable => error("Cron: Billing:processFeeTarificationAll() failed", ex)
+        }
       }
     )
   }

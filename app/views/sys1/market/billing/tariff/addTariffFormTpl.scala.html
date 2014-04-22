@@ -1,0 +1,16 @@
+@(adnNode: MAdnNode, contract: MBillContract, tf: Form[_])(implicit ctx: util.Context)
+
+@* Страница с формой добавления нового тарифа для узла рекламной сети. *@
+@import ctx._
+
+@sys1.market.billing.billingBase("Новый тариф", Some(adnNode)) {
+
+  <p>Добавление нового тарифа к договору @contract.legalContractId от @contract.printContractDate.</p>
+
+  @_tariffFormTpl(
+    submitCall = routes.SysMarketBillingTariff.addFeeTariffFormSubmit(contract.id.get),
+    tf = tf,
+    btnText = Messages("Create")
+  )
+
+}

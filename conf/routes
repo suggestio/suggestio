@@ -224,4 +224,10 @@ POST /sys/market/b/contract/edit/:cId   controllers.SysMarketBilling.editContrac
 GET  /sys/market/b/payment/new          controllers.SysMarketBilling.incomingPaymentForm
 POST /sys/market/b/payment/new          controllers.SysMarketBilling.incomingPaymentFormSubmit
 POST /sys/market/b/payment/new/confirm  controllers.SysMarketBilling.confirmIncomingPaymentSubmit
+## Тарифы
+GET  /sys/market/bt/new/:contractId     controllers.SysMarketBillingTariff.addFeeTariffForm(contractId: Int)
+POST /sys/market/bt/new/:contractId     controllers.SysMarketBillingTariff.addFeeTariffFormSubmit(contractId: Int)
+GET  /sys/market/bt/edit/:tariffId      controllers.SysMarketBillingTariff.editFeeTariffForm(tariffId: Int)
+POST /sys/market/bt/edit/:tariffId      controllers.SysMarketBillingTariff.editFeeTariffFormSubmit(tariffId: Int)
+POST /sys/market/bt/delete/:tariffId    controllers.SysMarketBillingTariff.deleteFeeTariffSubmit(tariffId: Int)
 
