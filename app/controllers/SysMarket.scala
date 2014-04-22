@@ -15,6 +15,7 @@ import util.Context
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.current
 import io.suggest.ym.ad.ShowLevelsUtil
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -423,8 +424,19 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       },
       {mshop =>
         mshop.personIds = Set(request.pwOpt.get.personId)
-        mshop.save map { mshopSavedId =>
-          Redirect(routes.SysMarket.shopShow(mshopSavedId))
+        mshop.save flatMap { mshopSavedId =>
+          // Нужно добавить новый магазин в список продьюсеров ТЦ.
+          val martUpdateFut: Future[_] = mshop.adn.supId match {
+            case Some(martId) => MAdnNodeCache.getByIdCached(martId) flatMap { mmartOpt =>
+              val mmart = mmartOpt.get
+              mmart.adn.producerIds += mshopSavedId
+              mmart.save
+            }
+            case None => Future successful ()
+          }
+          martUpdateFut map { _=>
+            Redirect(routes.SysMarket.shopShow(mshopSavedId))
+          }
         }
       }
     )
@@ -495,8 +507,9 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   def shopDeleteSubmit(shop_id: String) = IsSuperuser.async { implicit request =>
     // TODO Эта логика повторяет martDeleteSubmit().
     MAdnNode.deleteById(shop_id) map {
-      case true => Redirect(routes.SysMarket.shopsList())
-        .flashing("success" -> "Shop deleted")
+      case true =>
+        Redirect(routes.SysMarket.shopsList())
+          .flashing("success" -> "Shop deleted")
       case false => shopNotFound(shop_id)
     }
   }
