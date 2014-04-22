@@ -1,4 +1,4 @@
-@(mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], dfltOfferType: AdOfferType, backCall: Call, submitCall: Call, previewCall: Call)(implicit ctx: util.Context)
+@(mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], dfltOfferType: AdOfferType, backCall: Call, submitCall: Call, adnNode: MAdnNode)(implicit ctx: util.Context)
 
 @* Рендер страницы с формой создания рекламы. *@
 @import ctx._
@@ -21,7 +21,7 @@
             btnText = Messages("Create"),
             mmcats  = mmcats,
             offerType = dfltOfferType,
-            previewCall = previewCall
+            adnNode = adnNode
           )
 
           <div class="submit-wrap">

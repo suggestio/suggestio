@@ -22,6 +22,7 @@ import io.suggest.ym.model.common
 import io.suggest.ym.model.common.AdNetMemberTypes
 import io.suggest.ym.ad.ShowLevelsUtil
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
+import io.suggest.model.{MUserImgMetadata, MPict}
 
 /**
  * Suggest.io
@@ -1096,69 +1097,63 @@ object MarketAd extends SioController with LogoSupport {
 
   import views.html.market.showcase._single_offer
 
-  /** Магазин сабмиттит форму для preview. */
-  def adFormPreviewShopSubmit(shopId: String) = IsShopAdm(shopId).async(parse.urlFormEncoded) { implicit request =>
-    MAdnNodeCache.getByIdCached(shopId) flatMap {
-      case Some(mshop) =>
-        detectAdPreviewForm(mshop.meta.name) match {
-          case Right((offerType, adFormM)) =>
-            adFormM.bindFromRequest().fold(
-              {formWithErrors =>
-                debug(s"adFormPreviewShopSubmit($shopId): form bind failed: " + formatFormErrors(formWithErrors))
-                NotAcceptable("Preview form bind failed.")
-              },
-              {case (iik, logoOpt, mad) =>
-                val martId = mshop.adn.supId.get
-                val mmartOptFut = MAdnNodeCache.getByIdCached(martId)
-                mad.img = MImgInfo(iik.key, meta = previewPrepareImgMeta(iik))
-                mad.logoImgOpt = logoOpt
-                mad.producerId = shopId
-                mad.receivers = Map(martId -> AdReceiverInfo(martId))
-                mmartOptFut map { mmartOpt =>
-                  Ok(_single_offer(mad, mshop, fallbackLogo = mmartOpt.flatMap(_.logoImgOpt) ))
-                }
-              }
-            )
-
-          case Left(formWithGlobalError) =>
-            NotAcceptable("Form mode invalid")
-      }
-
-      case None => shopNotFound(shopId)
-    }
-  }
-
-  // TODO Дедублицировать эти два метода надо бы...
-
-  /** ТЦ сабмиттит форму для preview. */
-  def adFormPreviewMartSubmit(martId: String) = IsMartAdmin(martId)(parse.urlFormEncoded) { implicit request =>
-    import request.mmart
-    detectAdPreviewForm(mmart.meta.name) match {
+  def adFormPreviewSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
+    import request.adnNode
+    detectAdPreviewForm(adnNode.meta.name) match {
       case Right((offerType, adFormM)) =>
         adFormM.bindFromRequest().fold(
           {formWithErrors =>
-            debug(s"adFormPreviewMartSubmit($martId): form bind failed: " + formatFormErrors(formWithErrors))
-            NotAcceptable("Form bind failed")
+            debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))
+            NotAcceptable("Preview form bind failed.")
           },
           {case (iik, logoOpt, mad) =>
-            mad.img = MImgInfo(iik.key, meta = previewPrepareImgMeta(iik))
+            val fallbackLogoOptFut: Future[Option[MImgInfo]] = adnNode.adn.supId match {
+              case Some(supId) =>
+                MAdnNodeCache.getByIdCached(supId) map {
+                  _.flatMap(_.logoImgOpt)
+                }
+              case None => Future successful None
+            }
+            val imgMetaFut = previewPrepareImgMeta(iik)
             mad.logoImgOpt = logoOpt
-            mad.producerId = martId
-            mad.receivers = Map(martId -> AdReceiverInfo(martId))
-            Ok(_single_offer(mad, mmart, None))
+            mad.producerId = adnId
+            for {
+              imgMeta <- imgMetaFut
+              fallbackLogoOpt <- fallbackLogoOptFut
+            } yield {
+              mad.img = MImgInfo(iik.key, meta = imgMeta)
+              Ok(_single_offer(mad, adnNode, fallbackLogo = fallbackLogoOpt ))
+            }
           }
         )
 
-      case Left(formWithErrors) =>
-        NotAcceptable("Form mode invalid.")
+      case Left(formWithGlobalError) =>
+        NotAcceptable("Form mode invalid")
     }
   }
 
   /** Награбить метаданные по картинке для генерации превьюшки. */
-  private def previewPrepareImgMeta(iik: ImgIdKey): Option[MImgInfoMeta] = {
+  private def previewPrepareImgMeta(iik: ImgIdKey): Future[Option[MImgInfoMeta]] = {
     iik match {
-      case tiik: TmpImgIdKey => ImgFormUtil.getMetaForTmpImgCached(tiik)
-      case oiik: OrigImgIdKey => oiik.meta
+      case tiik: TmpImgIdKey =>
+        Future successful ImgFormUtil.getMetaForTmpImgCached(tiik)
+      case oiik: OrigImgIdKey if oiik.meta.isDefined =>
+        Future successful oiik.meta
+      case oiik: OrigImgIdKey =>
+        // Метаданных нет, но данные уже в базе. Надо бы прочитать метаданные из таблицы
+        MUserImgMetadata.getById(oiik.key) map { muimOpt =>
+          muimOpt.flatMap { muim =>
+            muim.md.get("w").flatMap { widthStr =>
+              muim.md.get("h").map { heightStr =>
+                MImgInfoMeta(height = heightStr.toInt, width = widthStr.toInt)
+              }
+            }
+          }
+        } recover {
+          case ex: Exception =>
+            error(s"previewPrepareImgMeta($iik): Failed to fetch img metadata from hbase", ex)
+            None
+        }
     }
   }
 
