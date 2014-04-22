@@ -7,6 +7,7 @@ import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import com.fasterxml.jackson.annotation.JsonIgnore
+import IsAdnNodeAdmin.onUnauth
 
 /**
  * Suggest.io
@@ -63,10 +64,10 @@ case class IsAdEditor(adId: String) extends ActionBuilder[RequestWithAd] {
       case Some(mad) =>
         IsAdEditor.maybeAllowed(pwOpt, mad, request, srmFut) flatMap {
           case Some(req1) => block(req1)
-          case None       => IsAuth onUnauth request
+          case None       => onUnauth(request)
         }
 
-      case None => IsAuth onUnauth request
+      case None => onUnauth(request)
     }
   }
 }

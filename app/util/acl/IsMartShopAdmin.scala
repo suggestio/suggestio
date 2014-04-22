@@ -7,6 +7,7 @@ import util.PlayMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
 import models._
+import IsAdnNodeAdmin.onUnauth
 
 /**
  * Suggest.io
@@ -44,7 +45,7 @@ case class IsShopAdm(shopId: String) extends ActionBuilder[RequestForShopAdmFull
           block(req1)
         }
 
-      case _ => IsAuth onUnauth request
+      case _ => onUnauth(request)
     }
   }
 }
