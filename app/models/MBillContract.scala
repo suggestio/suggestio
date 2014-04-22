@@ -117,6 +117,15 @@ object MBillContract extends SiowebSqlModelStatic[MBillContract] {
 
     def contractId = id
   }
+
+  /**
+   * Выдать все активные контракты.
+   * @return Список контрактов в неопределённом порядке.
+   */
+  def findAllActive(implicit c: Connection): List[MBillContract] = {
+    SQL("SELECT * FROM " + TABLE_NAME + " WHERE is_active")
+      .as(rowParser *)
+  }
 }
 
 import MBillContract._

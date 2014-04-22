@@ -11,6 +11,67 @@
     <p>Текущий баланс: @balance.amount @balance.currencyCode</p>
   }
 
+  <h2>Контракты (@contracts.size)</h2>
+  <a href="@routes.SysMarketBilling.createContractForm(adnNode.id.get)">Создать контракт...</a>
+  @if(contracts.isEmpty) {
+    <p>Пока нет заключенных договоров.</p>
+  } else {
+    @contracts.map { contract =>
+      <h3>Договор № @contract.legalContractId</h3>
+      <a href="@routes.SysMarketBilling.editContractForm(contract.id.get)">Изменить...</a>
+      <br/>Дата заключения договора:
+          @contract.printContractDate
+          (@_prettyDate(contract.contractDate, withSpan = true))
+      <p>Добавлен в sio: @_prettyDate(contract.dateCreated, withSpan = true)</p>
+      @if(!contract.isActive) {
+        <br/><b>Не активен</b>.
+      }
+      @contract.hiddenInfo.map { hiddenInfo =>
+        <br/>Служебная информация:
+        <pre>@hiddenInfo</pre>
+      }
+
+
+      @defining(feeTariffsMap.get(contract.id.get).getOrElse(Nil)) { tariffs =>
+        <h4 title="Тарифы абон.платы используются для периодического списания денег со счета по договору.">Абон.плата по договору @contract.legalContractId (@tariffs.size)</h4>
+        @if(tariffs.isEmpty) {
+          Нет абонплаты по этому договору.
+        } else {
+          <table>
+            <tr>
+              <th>#</th>
+              <th>Активен?</th>
+              <th>Имя</th>
+              <th>Интервал</th>
+              <th>Абон.плата</th>
+              <th>Старт</th>
+              <th>Действия</th>
+            </tr>
+            @tariffs.map { tariff =>
+              @defining(contract.isActive && tariff.isEnabled) { te =>
+              <tr>
+                <td>@tariff.id</td>
+                <td>@tariff.isEnabled</td>
+                <td>@tariff.name</td>
+                <td>@_maybeTagged("strike", !te) {@tariff.tintervalPretty}</td>
+                <td>@tariff.fee @tariff.feeCC</td>
+                <td>@_maybeTagged("strike", !te) {@datetime._prettyDate(tariff.dateFirst, withSpan = true)}</td>
+                <td>
+                  <a href="@routes.SysMarketBillingTariff.editFeeTariffForm(tariff.id.get)">@Messages("Edit")</a>
+                </td>
+              </tr>
+              }
+            }
+          </table>
+        }
+        <a href="@routes.SysMarketBillingTariff.addFeeTariffForm(contract.id.get)">Добавить абонплату...</a>
+      } @* defining tariffs *@
+
+    } @* contract *@
+
+  }
+
+  <br/><br/>
   <h2>Транзакции (@txns.size)</h2>
   @if(!txns.isEmpty) {
     <table>
@@ -35,64 +96,5 @@
     Нет транзакций.
   }
   <p><a href="@routes.SysMarketBilling.incomingPaymentForm">Провести платёж...</a></p>
-
-
-  <h2>Контракты (@contracts.size)</h2>
-  <a href="@routes.SysMarketBilling.createContractForm(adnNode.id.get)">Создать контракт...</a>
-  @if(contracts.isEmpty) {
-    <p>Пока нет заключенных договоров.</p>
-  } else {
-    @contracts.map { contract =>
-      <h3>Договор № @contract.legalContractId</h3>
-      <a href="@routes.SysMarketBilling.editContractForm(contract.id.get)">Изменить...</a>
-      <br/>Дата заключения договора:
-          @contract.printContractDate
-          (@_prettyDate(contract.contractDate, withSpan = true))
-      <p>Добавлен в sio: @_prettyDate(contract.dateCreated, withSpan = true)</p>
-      @if(!contract.isActive) {
-        <br/><b>Не активен</b>.
-      }
-      @contract.hiddenInfo.map { hiddenInfo =>
-        <br/>Служебная информация:
-        <pre>@hiddenInfo</pre>
-      }
-
-
-      @defining(feeTariffsMap.get(contract.id.get).getOrElse(Nil)) { tariffs =>
-        <h4 title="Тарифы абон.платы используются для периодического списания денег со счета по договору.">Абон.плата по договору (@tariffs.size)</h4>
-        @if(tariffs.isEmpty) {
-          Нет абонплаты по этому договору.
-        } else {
-          <table>
-            <tr>
-              <th>#</th>
-              <th>Активен?</th>
-              <th>Имя</th>
-              <th>Интервал</th>
-              <th>Абон.плата</th>
-              <th>Старт</th>
-              <th>Действия</th>
-            </tr>
-            @tariffs.map { tariff =>
-              <tr>
-                <td>@tariff.id</td>
-                <td>@tariff.isEnabled</td>
-                <td>@tariff.name</td>
-                <td>@_maybeTagged("strike", !tariff.isEnabled) {@tariff.tintervalPretty}</td>
-                <td>@tariff.fee @tariff.feeCC</td>
-                <td>@_maybeTagged("strike", !tariff.isEnabled) {@datetime._prettyDate(tariff.dateFirst, withSpan = true)}</td>
-                <td>
-                  <a href="@routes.SysMarketBillingTariff.editFeeTariffForm(tariff.id.get)">@Messages("Edit")</a>
-                </td>
-              </tr>
-            }
-          </table>
-        }
-        <a href="@routes.SysMarketBillingTariff.addFeeTariffForm(contract.id.get)">Добавить абонплату...</a>
-      } @* defining tariffs *@
-
-    } @* contract *@
-
-  }
 
 }

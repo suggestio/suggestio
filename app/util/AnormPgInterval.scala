@@ -3,6 +3,7 @@ package util
 import org.postgresql.util.PGInterval
 import anorm.{ToStatement, TypeDoesNotMatch, Column}
 import java.sql.PreparedStatement
+import org.joda.time.Period
 
 /**
  * Suggest.io
@@ -27,6 +28,15 @@ object AnormPgInterval {
     override def set(s: PreparedStatement, index: Int, v: PGInterval) {
       s.setObject(index, v)
     }
+  }
+
+  /** Конвертор PGInterval в joda.Period. */
+  implicit def pgInterval2period(pgi: PGInterval): Period = {
+    // Костыли с секундами и миллисекундами.
+    val seconds = pgi.getSeconds.toInt
+    val ms = ((pgi.getSeconds - seconds) * 1000).toInt
+    new Period(pgi.getYears, pgi.getMonths, 0, pgi.getDays,
+               pgi.getHours, pgi.getMinutes, seconds, ms)
   }
 
 }

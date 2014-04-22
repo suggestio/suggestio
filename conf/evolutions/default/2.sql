@@ -1,8 +1,17 @@
+--DROP TABLE sio2.bill_tariff_fee;
+--DROP TABLE sio2.bill_tariff;
+
 
 BEGIN;
 
-CREATE TABLE sio2.bill_tariff
-(
+
+ALTER TABLE sio2.bill_balance
+   ADD COLUMN overdraft real NOT NULL DEFAULT 0;
+COMMENT ON COLUMN sio2.bill_balance.overdraft
+  IS 'Допустимый овердрафт на балансе. По сути - нижнее значение amount.';
+
+
+CREATE TABLE sio2.bill_tariff(
   id serial NOT NULL,
   contract_id integer NOT NULL, -- id договора
   name character varying(64) NOT NULL, -- некое отображаемое имя
@@ -13,10 +22,9 @@ CREATE TABLE sio2.bill_tariff
   date_modified timestamp with time zone,
   date_last timestamp with time zone, -- Последние выполнение тарифа.
   tinterval interval NOT NULL, -- интервал снятия тарифа
-  date_status timestamp with time zone NOT NULL DEFAULT now()
-)
-WITH (
-  OIDS=FALSE
+  date_status timestamp with time zone NOT NULL DEFAULT now(),
+  generation integer NOT NULL DEFAULT 0,
+  debit_count integer NOT NULL DEFAULT 0 -- счетчик списаний по этому тарифу
 );
 ALTER TABLE sio2.bill_tariff
   OWNER TO sio2;
@@ -25,24 +33,11 @@ COMMENT ON COLUMN sio2.bill_tariff.name IS 'некое отображаемое 
 COMMENT ON COLUMN sio2.bill_tariff.ttype IS 'тип тарифа';
 COMMENT ON COLUMN sio2.bill_tariff.date_last IS 'Последние выполнение тарифа.';
 COMMENT ON COLUMN sio2.bill_tariff.tinterval IS 'интервал снятия тарифа';
+COMMENT ON COLUMN sio2.bill_tariff.debit_count IS 'счетчик списаний по этому тарифу';
 
 
 
-
-
-CREATE TABLE sio2.bill_tariff_fee
-(
--- Унаследована from table sio2.bill_tariff:  id integer NOT NULL DEFAULT nextval('sio2.bill_tariff_id_seq'::regclass),
--- Унаследована from table sio2.bill_tariff:  contract_id integer NOT NULL,
--- Унаследована from table sio2.bill_tariff:  name character varying(64) NOT NULL,
--- Унаследована from table sio2.bill_tariff:  ttype "char" NOT NULL,
--- Унаследована from table sio2.bill_tariff:  is_enabled boolean NOT NULL,
--- Унаследована from table sio2.bill_tariff:  date_first timestamp(0) with time zone NOT NULL DEFAULT now(),
--- Унаследована from table sio2.bill_tariff:  date_created timestamp with time zone NOT NULL DEFAULT now(),
--- Унаследована from table sio2.bill_tariff:  date_modified timestamp with time zone,
--- Унаследована from table sio2.bill_tariff:  date_last timestamp with time zone,
--- Унаследована from table sio2.bill_tariff:  tinterval interval NOT NULL,
--- Унаследована from table sio2.bill_tariff:  date_status timestamp with time zone NOT NULL DEFAULT now(),
+CREATE TABLE sio2.bill_tariff_fee (
   fee real NOT NULL, -- Сколько платить (тариф).
   fee_cc character(3) NOT NULL, -- код валюты цены, указанной fee. "cc" сокр. "currency code".
   CONSTRAINT bill_tariff_fee_pkey PRIMARY KEY (id),
@@ -51,10 +46,7 @@ CREATE TABLE sio2.bill_tariff_fee
       ON UPDATE CASCADE ON DELETE CASCADE,
   CONSTRAINT bill_tariff_fee_ttype_check CHECK (ttype = 'f'::"char")
 )
-INHERITS (sio2.bill_tariff)
-WITH (
-  OIDS=FALSE
-);
+INHERITS (sio2.bill_tariff);
 ALTER TABLE sio2.bill_tariff_fee
   OWNER TO sio2;
 COMMENT ON COLUMN sio2.bill_tariff_fee.fee IS 'Сколько платить (тариф).';
@@ -70,4 +62,6 @@ CREATE INDEX fki_bill_tariff_fee_contract_id_fkey
   USING btree
   (contract_id);
 
+
 COMMIT;
+

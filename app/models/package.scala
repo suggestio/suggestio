@@ -125,4 +125,6 @@ package object models {
 
   val  TariffTypes          = ym.model.common.TariffTypes
   type TariffType           = TariffTypes.TariffType
+
+  type SelectPolicy         = SelectPolicies.SelectPolicy
 }
