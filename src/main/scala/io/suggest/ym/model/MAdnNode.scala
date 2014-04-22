@@ -8,6 +8,8 @@ import common._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.event._
+import io.suggest.event.SioNotifier.{Subscriber, Classifier}
+import io.suggest.event.subscriber.SnFunSubscriber
 
 /**
  * Suggest.io
@@ -58,6 +60,7 @@ object MAdnNode
       case (EMTariff.TARIFF_ESFN, _) => // Do nothing
     }
   }
+
 }
 
 

@@ -13,8 +13,9 @@ import org.elasticsearch.common.unit.Fuzziness
 import org.elasticsearch.index.mapper.internal.AllFieldMapper
 import io.suggest.ym.model.{MAdnNode, AdShowLevel, CompanyId_t}
 import java.{util => ju, lang => jl}
-import io.suggest.event.{AdnNodeOnOffEvent, SioNotifierStaticClientI}
+import io.suggest.event.{AdnNodeDeletedEvent, AdnNodeOnOffEvent, SioNotifierStaticClientI}
 import play.api.libs.json._
+import io.suggest.event.subscriber.SnFunSubscriber
 
 /**
  * Suggest.io
@@ -36,6 +37,9 @@ object AdNetMember {
   val SUPERVISOR_ID_ESFN  = "supId"
   val MEMBER_TYPE_ESFN    = "mType"
   val RIGHTS_ESFN         = "rights"
+  /** Название поля с подчинёнными продьюсерами, от которых происходит приём рекламного контента.
+    * Например: список id магазинов по отношению к ТЦ. Или id супервизора в каждом из подчинённых ресторанов. */
+  val PRODUCER_IDS_ESFN   = "producerIds"
 
 
   val IS_ENABLED_ESFN = "isEnabled"
@@ -50,6 +54,7 @@ object AdNetMember {
   val ADN_MI_IS_SUPERVISOR_ESFN = fullFN(IS_SUPERVISOR_ESFN)
   val ADN_MI_SUPERVISOR_ID_ESFN = fullFN(SUPERVISOR_ID_ESFN)
   val ADN_MI_MEMBER_TYPE_ESFN   = fullFN(MEMBER_TYPE_ESFN)
+  val ADN_MI_PRODUCER_IDS_ESFN  = fullFN(PRODUCER_IDS_ESFN)
 
   // Полные (flat) имена используемых полей. Используются при составлении поисковых запросов.
   val PS_IS_ENABLED_ESFN = fullFN(IS_ENABLED_ESFN)
@@ -70,6 +75,7 @@ trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
       FieldString(RIGHTS_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(SUPERVISOR_ID_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(MEMBER_TYPE_ESFN, index = not_analyzed, include_in_all = false),
+      FieldString(PRODUCER_IDS_ESFN, index= not_analyzed, include_in_all = false),
       // раньше это лежало в EMAdnMPubSettings, но потом было перемещено сюда, т.к. по сути это разделение было некорректно.
       FieldBoolean(IS_ENABLED_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(DISABLE_REASON_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
@@ -89,12 +95,14 @@ trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
         case (MEMBER_TYPE_ESFN, v)    => mi.memberType = AdNetMemberTypes.withName(stringParser(v))
         case (SHOW_LEVELS_ESFN, levelsInfoRaw) =>
           mi.showLevelsInfo = AdnMemberShowLevels.deserialize(levelsInfoRaw)
+        case (PRODUCER_IDS_ESFN, producerIds: jl.Iterable[_]) =>
+          mi.producerIds = producerIds.foldLeft[List[String]] (Nil) { (acc, e) =>
+            e.toString :: acc
+          }.toSet
         case (IS_ENABLED_ESFN, isEnabledRaw) =>
           mi.isEnabled = booleanParser(isEnabledRaw)
         case (DISABLE_REASON_ESFN, drRaw) =>
-          mi.disableReason = Option(drRaw).map {
-            stringParser(_)
-          } // TODO Нужно задать через method value, а не через (_). Почему-то не работает использование напрямую
+          mi.disableReason = Option(drRaw).map(stringParser)
         // TODO IS-поля устарели, и были заменены на поле rights. Их можно удалить в мае 2014.
         case (IS_PRODUCER_ESFN, v)    => mi.isProducer = booleanParser(v)
         case (IS_RECEIVER_ESFN, v)    => mi.isReceiver = booleanParser(v)
@@ -254,6 +262,21 @@ trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
       .map { searchResp2list }
   }
 
+
+  /** Сгенерить запрос для поиска по внешним продьюсерам. */
+  def incomingProducerIdQuery(producerId: String) = QueryBuilders.termQuery(ADN_MI_PRODUCER_IDS_ESFN, producerId)
+
+  /** Поиск по элементу из поля списка внешних продьюсеров. Позволяет найти ТЦ по id магазина например.
+    * @param producerId id исходного продьюсера.
+    * @return
+    */
+  def findByIncomingProducerId(producerId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+    prepareSearch
+      .setQuery(incomingProducerIdQuery(producerId))
+      .execute()
+      .map { searchResp2list }
+  }
+
 }
 
 
@@ -317,6 +340,7 @@ case class AdNetMemberInfo(
   var memberType: AdNetMemberType,
   var rights: Set[AdnRight],
   var supId: Option[String] = None,
+  var producerIds: Set[String] = Set.empty,
   // перемещено из mpub:
   var showLevelsInfo: AdnMemberShowLevels = AdnMemberShowLevels(),
   var isEnabled: Boolean = false,
@@ -352,6 +376,12 @@ case class AdNetMemberInfo(
         (acc, e) => JsString(e.toString) :: acc
       }
       acc0 ::= RIGHTS_ESFN -> JsArray(rightsJson)
+    }
+    if (!producerIds.isEmpty) {
+      val arrElems = producerIds.foldLeft[List[JsString]] (Nil) {
+        (acc, e)  =>  JsString(e) :: acc
+      }
+      acc0 ::= PRODUCER_IDS_ESFN -> JsArray(arrElems)
     }
     if (supId.isDefined)
       acc0 ::= SUPERVISOR_ID_ESFN -> JsString(supId.get)
@@ -524,5 +554,28 @@ case class AdnMemberShowLevels(
   // Для рендера галочек нужна модифицированная карта.
   def out4render = sls4render(out)
   def in4render  = sls4render(in)
+}
+
+
+/** Чистить adn.producerIds узлов при стирании узла рекламной сети. */
+object CleanupAdnProducerIdsOnAdnNodeDelete {
+
+  def getSnMap(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI) = {
+    val sub = SnFunSubscriber {
+      case ande: AdnNodeDeletedEvent =>
+        MAdnNode.findByIncomingProducerId(ande.adnId)
+          .filter(!_.isEmpty)
+          .foreach { ands =>
+          ands.foreach { adnNode =>
+            if (adnNode.adn.producerIds contains ande.adnId) {
+              adnNode.adn.producerIds -= ande.adnId
+              adnNode.save
+            }
+          }
+        }
+    }
+    val subs = Seq(sub)
+    Seq( AdnNodeDeletedEvent.getClassifier(isDeleted = Some(true)) -> subs )
+  }
 }
 

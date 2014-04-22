@@ -1,13 +1,13 @@
 package io.suggest.model
 
-import scala.concurrent.{Awaitable, Await, ExecutionContext, Future}
-import io.suggest.util.{JMXBase, JacksonWrapper, MacroLogsImpl, SioEsUtil}
+import scala.concurrent.{ExecutionContext, Future}
+import io.suggest.util._
 import SioEsUtil._
 import org.joda.time.{DateTimeZone, ReadableInstant, DateTime}
 import org.elasticsearch.action.search.SearchResponse
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
-import org.elasticsearch.common.xcontent.{XContentBuilder, XContentFactory}
+import org.elasticsearch.common.xcontent.XContentBuilder
 import org.elasticsearch.client.Client
 import scala.util.{Failure, Success}
 import io.suggest.event.SioNotifierStaticClientI
@@ -20,9 +20,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.action.delete.DeleteRequestBuilder
 import io.suggest.ym.model.stat._
 import com.sun.org.glassfish.gmbal.{Impact, ManagedOperation}
-import play.api.libs.json.{JsArray, JsString, JsValue, JsObject}
+import play.api.libs.json._
 import org.joda.time.format.ISODateTimeFormat
 import org.elasticsearch.action.get.MultiGetResponse
+import io.suggest.util.SioEsUtil.IndexMapping
+import io.suggest.ym.model.UsernamePw
 
 /**
  * Suggest.io
@@ -204,24 +206,38 @@ object EsModel extends MacroLogsImpl {
     case ri: ReadableInstant => new DateTime(ri)
   }
 
-  def generateIndexSettings = SioEsUtil.getIndexSettingsV2(shards=1, replicas=1)
+  val SHARDS_COUNT_DFLT   = MyConfig.CONFIG.getInt("es.model.shards.count.dflt") getOrElse 2
+  val REPLICAS_COUNT_DFLT = MyConfig.CONFIG.getInt("es.model.replicas.count.dflt") getOrElse 1
+
 
   /**
    * Убедиться, что индекс существует.
    * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
    *         Если индекс уже существует, то false.
    */
-  def ensureSioIndex(indexName: String = SIO_ES_INDEX_NAME)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
+  def ensureIndex(indexName: String, shards: Int = 5, replicas: Int = 1)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     val adm = client.admin().indices()
     adm.prepareExists(indexName).execute().flatMap { existsResp =>
       if (existsResp.isExists) {
         Future.successful(false)
       } else {
+        val indexSettings = SioEsUtil.getIndexSettingsV2(shards=shards, replicas=replicas)
         adm.prepareCreate(indexName)
-          .setSettings(generateIndexSettings)
+          .setSettings(indexSettings)
           .execute()
           .map { _ => true }
       }
+    }
+  }
+
+  /** Пройтись по всем ES_MODELS и проверить, что всех ихние индексы существуют. */
+  def ensureEsModelsIndices(implicit ec:ExecutionContext, client: Client): Future[_] = {
+    val indices = ES_MODELS.map { esModel =>
+      esModel.ES_INDEX_NAME -> (esModel.SHARDS_COUNT, esModel.REPLICAS_COUNT)
+    }.toMap
+    Future.traverse(indices) {
+      case (inxName, (shards, replicas)) =>
+        ensureIndex(inxName, shards=shards, replicas=replicas)
     }
   }
 
@@ -288,6 +304,8 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators {
 
   def ES_INDEX_NAME = SIO_ES_INDEX_NAME
   def ES_TYPE_NAME: String
+  def SHARDS_COUNT = SHARDS_COUNT_DFLT
+  def REPLICAS_COUNT = REPLICAS_COUNT_DFLT
 
   def generateMapping: XContentBuilder = generateMappingFor(ES_TYPE_NAME)
 
@@ -313,6 +331,9 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators {
       .execute()
   }
 
+  def ensureIndex(implicit ec:ExecutionContext, client: Client) = {
+    EsModel.ensureIndex(ES_INDEX_NAME, shards = SHARDS_COUNT, replicas = REPLICAS_COUNT)
+  }
 }
 
 

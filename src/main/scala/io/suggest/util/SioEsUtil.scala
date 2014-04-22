@@ -234,7 +234,7 @@ object SioEsUtil extends MacroLogsImpl {
   /**
    * Билдер настроек для индекса. Тут генерится в представление в виде дерева scala-классов и сразу конвертится в XContent.
    */
-  def getNewIndexSettings(shards:Int, replicas:Int=1) = {
+  def getNewIndexSettings(shards: Int, replicas : Int = 1) = {
     val filters0 = List(STD_FN, WORD_DELIM_FN, LOWERCASE_FN)
     // Начать генерацию в псевдокоде, затем сразу перегнать в XContentBuilder
     jsonGenerator { implicit b =>

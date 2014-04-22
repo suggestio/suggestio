@@ -5,7 +5,6 @@ import io.suggest.model.EsModel._
 import org.joda.time.DateTime
 import org.elasticsearch.common.joda.time.{DateTime => EsDateTime}
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
 import io.suggest.util.MyConfig.CONFIG
 import scala.concurrent.{Future, ExecutionContext}
@@ -25,7 +24,9 @@ import play.api.libs.json.JsString
  * Description: Для накопления статистики по рекламным карточкам используется эта модель.
  */
 object MAdStat extends EsModelStaticT[MAdStat] {
-  val ES_TYPE_NAME: String = "adStat"
+  /** Используем изолированный индекс для статистики из-за крайней суровости статистической информации. */
+  override val ES_INDEX_NAME = "-siostat"
+  val ES_TYPE_NAME = "adStat"
 
   // Поля модели.
   val CLIENT_ADDR_ESFN = "clientAddr"
@@ -50,8 +51,7 @@ object MAdStat extends EsModelStaticT[MAdStat] {
    */
   def findAdByActionFreqs(adOwnerId: String)(implicit ec: ExecutionContext, client: Client): Future[AdFreqs_t] = {
     val aggName = "aggIdAction"
-    client.prepareSearch(ES_INDEX_NAME)
-      .setTypes(ES_TYPE_NAME)
+    prepareSearch
       .setQuery(adOwnerQuery(adOwnerId))
       .setSize(0)
       .addAggregation(
@@ -121,8 +121,7 @@ object MAdStat extends EsModelStaticT[MAdStat] {
       val Some((ds, de)) = dateBoundsOpt
       agg.extendedBounds(ds, de)
     }
-    client.prepareSearch(ES_INDEX_NAME)
-      .setTypes(ES_TYPE_NAME)
+    prepareSearch
       .setQuery(query)
       .setSize(0)
       .addAggregation(agg)
