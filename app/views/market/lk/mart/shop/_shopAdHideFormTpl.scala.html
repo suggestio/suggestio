@@ -13,8 +13,10 @@
 
   <div class="content">
 
-    <div class="ad-preview preview-medium" style="height: 500px;">
+    <div style="height: 600px; overflow: hidden;">
+    <div class="ad-preview preview" style="height: 1024px; width: 768px; position: relative; -webkit-transform: scale3d(0.57,0.57,0.57); -webkit-transform-origin: 0px 0px;">
       @market.showcase._single_offer(mad, mshop, fallbackLogo = mmart.logoImgOpt)
+    </div>
     </div>
 
     @form(routes.MarketMartLk.shopAdHideFormSubmit(mad.id.get)) {
@@ -50,3 +52,7 @@
   </div>
 
 </div>
+
+<script type="text/javascript">
+  market.resize_preview_photos();
+</script>

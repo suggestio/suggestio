@@ -28,20 +28,19 @@
         </td>
         <td class="right">
 
-          <div class="select-file-wrap" id="logoImgInput">
+          <div class="select-file-wrap" id="logoImgInput" style="width: 500px;">
             @defining(sf("logoImgId").value) { logoImgIdOpt =>
             <div class="preview">
               <img class="image-preview" src="@logoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {@routes.Assets.at("images/market/lk/empty-image.gif")}" width="59"/>
             </div>
-            <div class="selectbox">
+            <div class="selectbox" style="width: 400px;">
               <div class="select-file">
                 @stuff._fileUploadTpl(routes.MarketShopLk.handleShopTempLogo(shopId), relatedFieldId="logoImgInput")
                 <input class="image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
                 <div class="bg">Выбрать файл для загрузки</div>
               </div>
               <div class="descr">
-                Файл должен быть на прозрачном
-                фоне и иметь формат .png
+                Логотип будет отображаться на всех ваших рекламных карточках. Для наилучшего отображения, изображение логотипа должно быть на прозрачном фоне, без отступов сверху и снизу.
               </div>
             </div>
             }

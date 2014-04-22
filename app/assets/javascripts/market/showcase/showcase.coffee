@@ -6,6 +6,7 @@ siomart =
     sm_layout_class : 'sio-mart-layout'
     sm_trigger_class : 'sio-mart-trigger'
     ontouchmove_offer_change_delta : 80
+    welcome_ad_hide_timeout : 2500
 
   utils :
 
@@ -178,16 +179,48 @@ siomart =
       if _delta < -siomart.config.ontouchmove_offer_change_delta
         siomart.screens.objects['smScreen' + siomart.screens.active_screen].next_offer(true, true)
 
+  notifications :
+    show : ( message ) ->
+      n_dom = siomart.utils.ge 'smNotification'
+      n_data_dom = siomart.utils.ge 'smNotificationData'
+
+      n_dom.style.display = 'block'
+      n_data_dom.innerHTML = message
+
+      hide_cb = () ->
+        siomart.notifications.hide()
+
+      setTimeout hide_cb, 1700
+
+    hide : ( message ) ->
+      n_dom = siomart.utils.ge 'smNotification'
+      n_data_dom = siomart.utils.ge 'smNotificationData'
+
+      n_dom.style.display = 'none'
+      n_data_dom.innerHTML = ''
+
   ########
   ## Поиск
   ########
 
   search :
 
-    request_delay : 1000
+    request_delay : 600
+    request_timeout : 800
+
+    on_request_error : () ->
+      console.log 'request error'
+      siomart.notifications.show "НЕ УДАЛОСЬ ВЫПОЛНИТЬ ЗАПРОС, ПОПРОБУЙТЕ ЧЕРЕЗ НЕКОТОРОЕ ВРЕМЯ"
+      return false
 
     perform : ( request ) ->
-      url = '/market/ads/' + siomart.config.mart_id + '?a.q=' + request
+
+      timeout_cb = () ->
+        siomart.search.on_request_error()
+
+      siomart.search.search_request_timeout_timer = setTimeout timeout_cb, siomart.search.request_timeout
+
+      url = '/market/ads/' + siomart.config.mart_id + '?a.q=' + request + '&a.rcvr=' + siomart.config.mart_id
       siomart.perform_request url
 
     queue_request : ( event ) ->
@@ -210,7 +243,7 @@ siomart =
     images = this.utils.ge_tag 'img'
 
     for image in images
-      if image.className == 'poster-photo'
+      if image.className.match(/poster-photo/ig)
         this.fit_image image
 
   fit_image : ( image ) ->
@@ -286,7 +319,7 @@ siomart =
   receive_response : ( data ) ->
 
     if data.html == ''
-      alert "Карточек не найдено"
+      siomart.notifications.show "КАРТОЧЕК НЕ НАЙДЕНО, ПОПРОБУЙТЕ ДРУГОЙ ЗАПРОС"
       return false
 
     if data.action == 'martIndex'
@@ -486,6 +519,8 @@ siomart =
     console.log 'load for shop id ' + shop_id
     url = '/market/ads/' + siomart.config.mart_id + '?a.shopId=' + shop_id
     siomart.perform_request url
+    siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+    siomart.utils.ge('smShopListScreen').style.display = 'none'
 
   ## Загрузить все офферы для магазина
   load_for_cat_id : ( cat_id ) ->
@@ -550,6 +585,12 @@ siomart =
 
     this.utils.add_single_listener window, 'orientationchange', orientation_change_cb
 
+    hide_welcome_ad_cb = () ->
+      welcome_ad = siomart.utils.ge 'smWelcomeAd'
+
+      welcome_ad.style.display = 'none'
+
+    setTimeout hide_welcome_ad_cb, siomart.config.welcome_ad_hide_timeout
 
 ##########################################
 ## Прототип для работы с офферами в скрине

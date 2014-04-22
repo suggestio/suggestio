@@ -13,7 +13,8 @@
   @* Верхняя строка. *@
   <div class="title-wrap">
     <div class="center">
-      <a class="back-but" href="@routes.MarketLk.lkList">&nbsp;</a>
+
+      <a class="back-but" href="@routes.MarketLk.lkList" style="visibility: hidden;">&nbsp;</a>
 
       <div class="title-inner">ЛИЧНЫЙ КАБИНЕТ</div>
 
@@ -33,19 +34,22 @@
         </div>
       </div>
       }
-
     </div>
   </div>
 
-
   <div class="body">
     <div class="shop-info">
-      <div class="name-wrap">
+
+      <div class="name-wrap" style="padding-bottom: 0px;">
         <span class="name">@node.meta.name</span>
         <a class="edit" href="@sanCtx.nodeEditCall(node.id.get)">Редактировать</a>
         @if(isSuperuser) {
           <a class="superuser-link" href="@routes.SysMarket.martShow(node.id.get)">/sys</a>
         }
+      </div>
+
+      <div class="sm-note">
+        Подсказка : в редактировани вы можете указать информацию о вашем магазине и загрузить основной логотип, который будет отображаться на всех рекламных карточках.
       </div>
 
       <div class="border-line"></div>

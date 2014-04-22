@@ -270,9 +270,19 @@ with ShopMartCompat with AdnShowLk {
             meta = meta
           )
           mshop.save.flatMap { shopId =>
+            // Добавить магазин как источник рекламного контента для ТЦ
+            // TODO Надежнее это обновлять скриптом через UPDATE API.
+            mmart.adn.producerIds += shopId
+            val mmartSaveFut = mmart.save
+            // Это зачем-то надо:
             mshop.id = Some(shopId)
+            // Магазин создан. Отправить инвайт будущему владельцу по почте.
             val eAct = EmailActivation(email = _email, key = shopId)
-            eAct.save.map { eaId =>
+            // Дождаться, пока всё сохранится...
+            for {
+              eaId <- eAct.save
+              _    <- mmartSaveFut
+            } yield {
               eAct.id = Some(eaId)
               // Пора отправлять письмо юзеру с ссылкой для активации.
               trace(s"inviteShopFormSubmit($martId): shopId=$shopId companyId=$companyId eAct=$eAct :: Sending message to ${_email} ...")
