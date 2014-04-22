@@ -59,7 +59,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
 
   /** Проинициализировать все ES-модели и основной индекс. */
   def initializeEsModels(implicit client: Client): Future[_] = {
-    val futInx = EsModel.ensureSioIndex()
+    val futInx = EsModel.ensureEsModelsIndices
     val logPrefix = "initializeEsModels(): "
     futInx onComplete {
       case Success(result) => debug(logPrefix + "ensure() -> " + result)

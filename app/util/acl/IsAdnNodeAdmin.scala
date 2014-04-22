@@ -4,8 +4,11 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import util.acl.PersonWrapper.PwOpt_t
-import play.api.mvc.{Result, Request, ActionBuilder}
+import play.api.mvc._
 import util.SiowebEsUtil.client
+import controllers.routes
+import play.api.mvc.Result
+import scala.Some
 
 /**
  * Suggest.io
@@ -14,6 +17,14 @@ import util.SiowebEsUtil.client
  * Description: Проверка прав на управление абстрактным узлом рекламной сети.
  */
 object IsAdnNodeAdmin {
+
+  /** Что делать, когда юзер не авторизован, но долбится в ЛК? */
+  def onUnauth(req: RequestHeader): Future[Result] = {
+    Future.successful(
+      Results.Redirect(routes.MarketLk.lkIndex())
+    )
+  }
+
 
   def checkAdnNodeCreds(adnNodeOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
     adnNodeOptFut map { adnNodeOpt =>
@@ -38,6 +49,8 @@ object IsAdnNodeAdmin {
 }
 
 
+import IsAdnNodeAdmin.onUnauth
+
 /** В реквесте содержится магазин, если всё ок. */
 case class IsAdnNodeAdmin(adnId: String) extends ActionBuilder[RequestForShopAdmFull] {
   protected def invokeBlock[A](request: Request[A], block: (RequestForShopAdmFull[A]) => Future[Result]): Future[Result] = {
@@ -50,7 +63,7 @@ case class IsAdnNodeAdmin(adnId: String) extends ActionBuilder[RequestForShopAdm
           block(req1)
         }
 
-      case _ => IsAuth onUnauth request
+      case _ => onUnauth(request)
     }
   }
 }

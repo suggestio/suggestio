@@ -7,6 +7,7 @@ import play.api.mvc.{Result, Request, ActionBuilder}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import models._
+import IsAdnNodeAdmin.onUnauth
 
 /**
  * Suggest.io
@@ -40,7 +41,7 @@ case class IsMartAdmin(martId: String) extends ActionBuilder[AbstractRequestForM
         }
 
       case _ =>
-        IsAuth.onUnauth(request)
+        onUnauth(request)
     }
   }
 }
@@ -62,12 +63,12 @@ case class IsMartAdminShop(shopId: String) extends ActionBuilder[RequestForMartS
             }
 
           case None =>
-          IsAuth.onUnauth(request)
+          onUnauth(request)
         }
 
       // Не возвращаем 404 для защиты от возможных (бессмысленных) сканов.
       // None означает что или магазина нет, или ТЦ у магазина не указан (удалённый магазин, интернет-магазин).
-      case None => IsAuth.onUnauth(request)
+      case None => onUnauth(request)
     }
   }
 }
@@ -107,11 +108,11 @@ case class IsMartAdminShopAd(adId: String) extends ActionBuilder[MartShopAdReque
                 val req1 = MartShopAdRequest(ad, mmart, pwOpt, request, srm)
                 block(req1)
               }
-            case None => IsAuth.onUnauth(request)
+            case None => onUnauth(request)
           }
         }
 
-      case _ => IsAuth.onUnauth(request)
+      case _ => onUnauth(request)
     }
   }
 }
