@@ -302,3 +302,4 @@ send=Отправить
 
 c.s.search_query.empty=Пустая строка поиска. Что-то ищем?
 
+tariff.type.p=Абонплата

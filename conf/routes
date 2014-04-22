@@ -121,17 +121,16 @@ POST /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAcceptSub
 POST /m/lk/a/:adId/delete               controllers.MarketAd.deleteSubmit(adId)
 POST /m/lk/ai/temp                      controllers.MarketAd.handleAdTempLogo
 ## ЛК: Рекламные карточки: shop
+POST /m/lk/aa/:adnId/ad/preview         controllers.MarketAd.adFormPreviewSubmit(adnId)
 GET  /m/lk/s/:shopId/ad/new             controllers.MarketAd.createShopAd(shopId)
 POST /m/lk/s/:shopId/ad/new             controllers.MarketAd.createShopAdSubmit(shopId)
 POST /m/lk/s/:shopId/logo               controllers.MarketShopLk.handleShopTempLogo(shopId)
-POST /m/lk/s/:shopId/ad/preview         controllers.MarketAd.adFormPreviewShopSubmit(shopId)
 GET  /m/lk/sa/:adId/edit                controllers.MarketAd.editShopAd(adId)
 POST /m/lk/sa/:adId/edit                controllers.MarketAd.editShopAdSubmit(adId)
 POST /m/lk/sa/:adId/update/show         controllers.MarketAd.updateShowLevelSubmit(adId)
 ## ЛК: Рекламные карточки: ТЦ
 GET  /m/lk/m/:martId/ad/new             controllers.MarketAd.createMartAd(martId)
 POST /m/lk/m/:martId/ad/new             controllers.MarketAd.createMartAdSubmit(martId)
-POST /m/lk/m/:martId/ad/preview         controllers.MarketAd.adFormPreviewMartSubmit(martId)
 GET  /m/lk/ma/:adId/edit                controllers.MarketAd.editMartAd(adId)
 POST /m/lk/ma/:adId/edit                controllers.MarketAd.editMartAdSubmit(adId)
 # lk.billing
@@ -224,4 +223,10 @@ POST /sys/market/b/contract/edit/:cId   controllers.SysMarketBilling.editContrac
 GET  /sys/market/b/payment/new          controllers.SysMarketBilling.incomingPaymentForm
 POST /sys/market/b/payment/new          controllers.SysMarketBilling.incomingPaymentFormSubmit
 POST /sys/market/b/payment/new/confirm  controllers.SysMarketBilling.confirmIncomingPaymentSubmit
+## Тарифы
+GET  /sys/market/bt/new/:contractId     controllers.SysMarketBillingTariff.addFeeTariffForm(contractId: Int)
+POST /sys/market/bt/new/:contractId     controllers.SysMarketBillingTariff.addFeeTariffFormSubmit(contractId: Int)
+GET  /sys/market/bt/edit/:tariffId      controllers.SysMarketBillingTariff.editFeeTariffForm(tariffId: Int)
+POST /sys/market/bt/edit/:tariffId      controllers.SysMarketBillingTariff.editFeeTariffFormSubmit(tariffId: Int)
+POST /sys/market/bt/delete/:tariffId    controllers.SysMarketBillingTariff.deleteFeeTariffSubmit(tariffId: Int)
 

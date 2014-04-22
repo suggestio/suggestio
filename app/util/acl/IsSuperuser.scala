@@ -8,6 +8,10 @@ import play.api.mvc.Result
 import controllers.Application.http404Fut
 import util.acl.PersonWrapper.PwOpt_t
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import models._
+import util.SiowebEsUtil.client
+import play.api.db.DB
+import play.api.Play.current
 
 /**
  * Suggest.io
@@ -20,9 +24,9 @@ object IsSuperuser extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacr
   
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
-    val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
     pwOpt match {
       case Some(pw) if pw.isSuperuser =>
+        val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
         trace(s"for user ${pw.personId} :: ${request.method} ${request.path}")
         sioReqMdFut flatMap { srm =>
           block(RequestWithPwOpt(pwOpt, request, srm))
@@ -38,4 +42,83 @@ object IsSuperuser extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacr
     http404Fut(request)
   }
 
+}
+
+/**
+ * Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin.
+ * @param adnId
+ */
+case class IsSuperuserAdnNode(adnId: String) extends ActionBuilder[AbstractRequestForAdnNodeAdm] {
+  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNodeAdm[A]) => Future[Result]): Future[Result] = {
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    if (PersonWrapper.isSuperuser(pwOpt)) {
+      val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
+      MAdnNodeCache.getByIdCached(adnId) flatMap {
+        case Some(adnNode) =>
+          sioReqMdFut flatMap { srm =>
+            block(RequestForAdnNodeAdm(adnNode, request, pwOpt, srm))
+          }
+        case None =>
+          Future successful Results.NotFound("Adn node not found: " + adnId)
+      }
+    } else {
+      IsSuperuser.onUnauthFut(request, pwOpt)
+    }
+  }
+}
+
+
+
+case class FeeTariffRequest[A](
+  tariff: MBillTariffFee,
+  contract: MBillContract,
+  pwOpt: PwOpt_t,
+  request: Request[A],
+  sioReqMd: SioReqMd
+) extends AbstractRequestWithPwOpt[A](request)
+
+case class IsSuperuserFeeTariffContract(tariffId: Int) extends ActionBuilder[FeeTariffRequest] {
+  override protected def invokeBlock[A](request: Request[A], block: (FeeTariffRequest[A]) => Future[Result]): Future[Result] = {
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    if (PersonWrapper.isSuperuser(pwOpt)) {
+      val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
+      val (tariff, contract) = DB.withConnection { implicit c =>
+        val _tariff = MBillTariffFee.getById(tariffId).get
+        val _contract = MBillContract.getById(_tariff.contractId).get
+        _tariff -> _contract
+      }
+      sioReqMdFut flatMap { srm =>
+        val req1 = FeeTariffRequest(tariff, contract, pwOpt, request, srm)
+        block(req1)
+      }
+    } else {
+      IsSuperuser.onUnauthFut(request, pwOpt)
+    }
+  }
+}
+
+
+case class ContractRequest[A](
+  contract: MBillContract,
+  pwOpt: PwOpt_t,
+  request: Request[A],
+  sioReqMd: SioReqMd
+) extends AbstractRequestWithPwOpt[A](request)
+
+case class IsSuperuserContract(contractId: Int) extends ActionBuilder[ContractRequest] {
+  override protected def invokeBlock[A](request: Request[A], block: (ContractRequest[A]) => Future[Result]): Future[Result] = {
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    if (PersonWrapper.isSuperuser(pwOpt)) {
+      val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
+      val contract = DB.withConnection { implicit c =>
+        MBillContract.getById(contractId).get
+      }
+      sioReqMdFut flatMap { srm =>
+        val req1 = ContractRequest(contract, pwOpt, request, srm)
+        block(req1)
+      }
+    } else {
+      IsSuperuser.onUnauthFut(request, pwOpt)
+    }
+  }
 }

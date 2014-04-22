@@ -52,14 +52,14 @@ object IsAdnNodeAdmin {
 import IsAdnNodeAdmin.onUnauth
 
 /** В реквесте содержится магазин, если всё ок. */
-case class IsAdnNodeAdmin(adnId: String) extends ActionBuilder[RequestForShopAdmFull] {
-  protected def invokeBlock[A](request: Request[A], block: (RequestForShopAdmFull[A]) => Future[Result]): Future[Result] = {
+case class IsAdnNodeAdmin(adnId: String) extends ActionBuilder[RequestForAdnNodeAdm] {
+  protected def invokeBlock[A](request: Request[A], block: (RequestForAdnNodeAdm[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOptAdn(pwOpt, adnId)
     IsAdnNodeAdmin.isAdnNodeAdmin(adnId, pwOpt) flatMap {
       case Some(adnNode) =>
         srmFut flatMap { srm =>
-          val req1 = RequestForShopAdmFull(adnNode, request, pwOpt, srm)
+          val req1 = RequestForAdnNodeAdm(adnNode, request, pwOpt, srm)
           block(req1)
         }
 

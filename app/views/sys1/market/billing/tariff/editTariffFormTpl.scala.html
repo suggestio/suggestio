@@ -1,0 +1,23 @@
+@(adnNode: MAdnNode, contract: MBillContract, tariff: MBillTariffFee, tf: Form[_])(implicit ctx: util.Context)
+
+@* Страница с формой добавления нового тарифа для узла рекламной сети. *@
+@import ctx._
+
+@sys1.market.billing.billingBase("Тариф #" + tariff.id, Some(adnNode)) {
+
+  <p>Изменение тарифа #@tariff.id.get.
+     Договор @contract.legalContractId от @contract.printContractDate.</p>
+
+  @* Кнопку удаления тут отображаем *@
+  @stuff._deleteSmthFormBtnTpl(
+    routes.SysMarketBillingTariff.deleteFeeTariffSubmit(tariff.id.get)
+  )
+  <br/><br/>
+
+  @_tariffFormTpl(
+    submitCall = routes.SysMarketBillingTariff.editFeeTariffFormSubmit(tariff.id.get),
+    tf = tf,
+    btnText = Messages("Save")
+  )
+
+}

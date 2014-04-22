@@ -71,12 +71,14 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
       val contracts = MBillContract.findForAdn(adnId)
       val contractIds = contracts.map(_.id.get)
       val txns = MBillTxn.findForContracts(contractIds)
-      (balanceOpt, contracts, txns)
+      val feeTariffs = MBillTariffFee.getAll
+      (balanceOpt, contracts, txns, feeTariffs)
     }
     adnNodeOptFut map {
       case Some(adnNode) =>
-        val (balanceOpt, contracts, txns) = syncResult
-        Ok(adnNodeBillingTpl(adnNode, balanceOpt, contracts, txns))
+        val (balanceOpt, contracts, txns, feeTariffs) = syncResult
+        val ftm = feeTariffs.groupBy(_.contractId)
+        Ok(adnNodeBillingTpl(adnNode, balanceOpt, contracts, txns, ftm))
       case None =>
         adnNodeNotFound(adnId)
     }

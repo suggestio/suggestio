@@ -3,7 +3,7 @@ package util.img
 import util.PlayMacroLogsImpl
 import io.suggest.img.{ConvertModes, ImgCrop, SioImageUtilT}
 import play.api.Play.current
-import io.suggest.model.{MImgThumb, MUserImgOrig, MPict}
+import io.suggest.model.{MUserImgMetadata, MImgThumb, MUserImgOrig, MPict}
 import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import java.io.{File, FileNotFoundException}
@@ -146,22 +146,30 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     tii.iik.mptmpOpt match {
       case Some(mptmp) =>
         val id = MPict.randomId
+        val idStr = MPict.idBin2Str(id)
         // Запустить чтение из уже отрезайзенного tmp-файла и сохранение как-бы-исходного материала в HBase
         val saveOrigFut = future {
           OrigImageUtil.maybeReadFromFile(mptmp.file)
         } flatMap { imgBytes =>
-          val idStr = MPict.idBin2Str(id)
           MUserImgOrig(idStr, imgBytes).save.map { _ =>
             mptmp.file -> idStr
           }
         }
         // 26.mar.2014: понадобился доступ к метаданным картинки в контексте элемента. Запускаем identify в фоне
-        val imgMetaFut = future {
-          val identifyResult = OrigImageUtil.identify(mptmp.file)
-          MImgInfoMeta(
-            height = identifyResult.getImageHeight,
-            width  = identifyResult.getImageWidth
+        val imgMetaFut: Future[MImgInfoMeta] = future {
+          OrigImageUtil.identify(mptmp.file)
+        } flatMap { identifyResult =>
+          // 2014.04.22: Сохранение метаданных в HBase для доступа в ad-preview.
+          val savedMeta = Map(
+            "w" -> identifyResult.getImageWidth.toString,
+            "h" -> identifyResult.getImageHeight.toString
           )
+          MUserImgMetadata(idStr, savedMeta).save map { _ =>
+            MImgInfoMeta(
+              height = identifyResult.getImageHeight,
+              width  = identifyResult.getImageWidth
+            )
+          }
         }
         // Если укаазно withThumb, то пора сгенерить thumbnail без учёта кропов всяких.
         val saveThumbFut = if (tii.withThumb) {
@@ -372,7 +380,7 @@ case class TmpImgIdKey(filename: String) extends ImgIdKey with MacroLogsImplLazy
   import LOGGER._
 
   @JsonIgnore
-  val mptmpOpt = try {
+  val mptmpOpt: Option[MPictureTmp] = try {
     Some(MPictureTmp(filename))
   } catch {
     case ex: Throwable =>
