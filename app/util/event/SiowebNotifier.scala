@@ -11,6 +11,8 @@ import scala.concurrent.future
 import play.api.libs.concurrent.Execution.Implicits._
 import models.MAdnNodeCache
 import io.suggest.event.SioNotifier.{Subscriber, Classifier}
+import io.suggest.ym.model.MAdnNode
+import io.suggest.ym.model.common.CleanupAdnProducerIdsOnAdnNodeDelete
 
 /**
  * Suggest.io
@@ -41,7 +43,8 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
     SiobixClient,
     MAdnNodeCache,
     IndicesUtil,
-    deleteAdsOnAdnNodeDeleteSNSC
+    deleteAdsOnAdnNodeDeleteSNSC,
+    cleanupAdnProducerIdsOnDeleteAdnNode
   )
 
   /** SiowebSup собирается запустить сие. */
@@ -56,10 +59,18 @@ object SiowebNotifier extends SioNotifierStaticActorSelection with SNStaticSubsc
     staticSubscribeAllSync()
   }
 
+
+  import Implicts.sn, SiowebEsUtil.client
+
   private def deleteAdsOnAdnNodeDeleteSNSC = new SNStaticSubscriber {
     def snMap: Seq[(Classifier, Seq[Subscriber])] = {
-      import Implicts.sn, SiowebEsUtil.client
       DeleteAdsOnAdnNodeDeleteSubscriber.getSnMap
+    }
+  }
+
+  private def cleanupAdnProducerIdsOnDeleteAdnNode = new SNStaticSubscriber {
+    override def snMap: Seq[(Classifier, Seq[Subscriber])] = {
+      CleanupAdnProducerIdsOnAdnNodeDelete.getSnMap
     }
   }
 }

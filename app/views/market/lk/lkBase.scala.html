@@ -30,24 +30,26 @@
       <a class="logo" href="/m/lk">
         <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" />
       </a>
-      <div class="auth">
-        <span class="gray">Добро пожаловать,</span>&nbsp;
-        <span class="user hover">
-	        @ctx.usernameOpt<span class="select-but">&nbsp;</span>
-          <ul class="drop-menu">
-            <li>
-              <a href="@routes.MarketLk.lkList">Мой профиль</a>
-            </li>
-            <li>
-              <a href="@routes.Ident.logout">Выйти</a>
-            </li>
-          </ul>
-        </span>
-        @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
-        @adnIdOpt.map { adnId =>
-          @billing._billBallanceWidgetTpl(adnId)
-        }
-      </div>
+      @ctx.usernameOpt.map { username =>
+        <div class="auth">
+          <span class="gray">Добро пожаловать,</span>&nbsp;
+          <span class="user hover">
+	        @username<span class="select-but">&nbsp;</span>
+            <ul class="drop-menu">
+              <li>
+                <a href="@routes.MarketLk.lkList">Мой профиль</a>
+              </li>
+              <li>
+                <a href="@routes.Ident.logout">Выйти</a>
+              </li>
+            </ul>
+          </span>
+          @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
+          @adnIdOpt.map { adnId =>
+            @billing._billBallanceWidgetTpl(adnId)
+          }
+        </div>
+      }
     </div>
 
   </div><!-- header-wrap end -->
