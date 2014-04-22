@@ -1,0 +1,11 @@
+(function() {
+  var _siom=document.createElement("script");
+  _siom.type="text/javascript";
+  _siom.async=true;
+  _siom.src="http://192.168.199.148:9000/assets/javascripts/market/showcase/showcase.min.js";
+  window.siomart_host='http://192.168.199.148:9000';
+  var _sh=document.getElementsByTagName("head")[0];
+  window.siomart_index='/market/index/cwU_fJ4WRDS47vvLyEF3jA';
+  window.siomart_id='cwU_fJ4WRDS47vvLyEF3jA';
+  _sh.appendChild(_siom);
+})();

@@ -270,7 +270,7 @@ siomart =
     stylesheet_attrs =
       type : 'text/css'
       rel : 'stylesheet'
-      href : this.config.css
+      href : siomart.config.host + this.config.css
 
     stylesheet = this.utils.ce "link", stylesheet_attrs
     this.utils.ge_tag("head")[0].appendChild stylesheet
@@ -307,7 +307,7 @@ siomart =
   perform_request : ( url ) ->
     js_request_attrs =
       type : 'text/javascript'
-      src : url
+      src : siomart.config.host + url
 
     js_request = this.utils.ce "script", js_request_attrs
     this.utils.ge_tag("head")[0].appendChild js_request
@@ -565,13 +565,14 @@ siomart =
 
   init : () ->
 
+    siomart.config.mart_id = window.siomart_id
+    siomart.config.host = window.siomart_host
+
     this.load_stylesheets()
     this.draw_layout()
 
     this.utils.set_window_size()
     this.load_mart_index_page()
-
-    siomart.config.mart_id = window.siomart_id
 
     resize_cb = () ->
       siomart.utils.set_window_size()

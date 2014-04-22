@@ -8,7 +8,7 @@
   @ad.panel.map { panelSettings =>
     <div class="offer-header" style="background-color: #@panelSettings.color">
       @producer.logoImgOpt.orElse(fallbackLogo).map { logoImg =>
-        <img class="sm-offer-logo" height="30" src="@routes.Img.getImg(logoImg.id)"/>
+        <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)"/>
       }
     </div>
   }
@@ -16,7 +16,7 @@
   <div class="offer-details">
     <div class="od-inner">
       @ad.logoImgOpt.map { logoImg =>
-        <img class="sm-offer-logo" height="30" src="@routes.Img.getImg(logoImg.id)" alt="@ad.offers.headOption.filter(_.isInstanceOf[AOProduct]).map(_.asInstanceOf[AOProduct].vendor.value)"/>
+        <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)" alt="@ad.offers.headOption.filter(_.isInstanceOf[AOProduct]).map(_.asInstanceOf[AOProduct].vendor.value)"/>
       }
 
       @ad.offers.map {
@@ -70,6 +70,6 @@
     </div>
   </div>
 
-  <img class="poster-photo" data-width="@ad.img.meta.map(_.width).getOrElse(1575)" data-height="@ad.img.meta.map(_.height).getOrElse(1181)" src="@routes.Img.getImg(ad.img.id)"/>
+  <img class="poster-photo" data-width="@ad.img.meta.map(_.width).getOrElse(1575)" data-height="@ad.img.meta.map(_.height).getOrElse(1181)" src="@ctx.myAudienceUrl@routes.Img.getImg(ad.img.id)"/>
 
 </div>
