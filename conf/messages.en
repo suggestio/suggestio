@@ -22,6 +22,9 @@ Manufacturer=Manufacturer
 Size=Size
 Sizes=Sizes
 
+slaves.of.m=RENTERS
+slaves.of.R=RESTAURANTS
+
 lk.sl.enable_ad=Enable ad
 lk.sl.d=Show on start page
 lk.sl.h=Show in common catalog

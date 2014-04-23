@@ -15,12 +15,10 @@ import util.img._
 import ImgFormUtil.imgInfo2imgKey
 import play.api.libs.json._
 import scala.concurrent.Future
-import play.api.mvc.{Call, AnyContent, Result}
+import play.api.mvc.{AnyContent, Result}
 import play.api.mvc.Security.username
 import scala.util.Success
 import models._
-import io.suggest.ym.model.common.EMAdnMMetadataStatic.META_FLOOR_ESFN
-import controllers.adn.AdnShowLk
 
 /**
  * Suggest.io
@@ -36,26 +34,6 @@ with ShopMartCompat {
   /** Маркер картинки для использования в качестве логотипа. */
   val MART_TMP_LOGO_MARKER = "martLogo"
 
-  // Допустимые значения сортировки при выдаче магазинов.
-  object ShopSort extends Enumeration {
-    val SORT_BY_A_Z   = Value("a-z")
-    val SORT_BY_CAT   = Value("cat")
-    val SORT_BY_FLOOR = Value("floor")
-
-    def handleShopsSortBy(sortRaw: String): Option[String] = {
-      if (SORT_BY_A_Z.toString equalsIgnoreCase sortRaw) {
-        Some(EsModel.NAME_ESFN)
-      } else if (SORT_BY_CAT.toString equalsIgnoreCase sortRaw) {
-        ???
-      } else if (SORT_BY_FLOOR.toString equalsIgnoreCase sortRaw) {
-        Some(META_FLOOR_ESFN)
-      } else {
-        None
-      }
-    }
-  }
-
-  import ShopSort._
 
   /** Маппер для метаданных. */
   val martMetaM = mapping(
@@ -123,19 +101,6 @@ with ShopMartCompat {
       .fold [Future[Option[MWelcomeAd]]] (Future successful None) (MWelcomeAd.getById)
   }
 
-
-  /**
-   * Рендер страницы со списком арендаторов.
-   * @param martId id ТЦ
-   * @param sortByRaw Сортировка магазинов по указанному полю. Если не задано, то порядок не определён.
-   * @param isReversed Если true, то будет сортировка в обратном порядке. Иначе в прямом.
-   */
-  def shopsShow(martId: String, sortByRaw: Option[String], isReversed: Boolean) = IsMartAdmin(martId).async { implicit request =>
-    val sortBy = sortByRaw flatMap handleShopsSortBy
-    MAdnNode.findBySupId(martId, sortBy, isReversed) map { shops =>
-      Ok(shopsShowTpl(request.mmart, shops))
-    }
-  }
 
   /**
    * Рендер страницы с формой редактирования ТЦ в личном кабинете.
@@ -300,30 +265,6 @@ with ShopMartCompat {
     }
   }
 
-  /** Поисковая форма. Сейчас в шаблонах она не используется, только в контроллере. */
-  val searchFormM = Form(
-    "q" -> nonEmptyText(maxLength = 64)
-  )
-
-  /**
-   * Поиск по магазинам в рамках ТЦ.
-   * @param martId id ТЦ.
-   * @return 200 Отрендеренный список магазинов для отображения поверх существующей страницы.
-   *         406 С сообщением об ошибке.
-   */
-  def searchShops(martId: String) = IsMartAdmin(martId).async { implicit request =>
-    searchFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(s"searchShops($martId): Failed to bind search form: ${formatFormErrors(formWithErrors)}")
-        NotAcceptable("Bad search request")
-      },
-      {q =>
-        MAdnNode.searchAll(q, supId = Some(martId)) map { result =>
-          Ok(_martShopsTpl(martId, result))
-        }
-      }
-    )
-  }
 
   /**
    * Сабмит формы редактирования магазина-арендатора.
@@ -375,9 +316,6 @@ with ShopMartCompat {
     handleLogo(MartLogoImageUtil, MART_TMP_LOGO_MARKER)
   }
 
-  /** Маппинг для задания причины при сокрытии сущности. */
-  val hideEntityReasonM = nonEmptyText(maxLength = 512)
-    .transform(strTrimSanitizeF, strIdentityF)
 
   /** Маппинг формы включения/выключения магазина. */
   val shopOnOffFormM = Form(tuple(

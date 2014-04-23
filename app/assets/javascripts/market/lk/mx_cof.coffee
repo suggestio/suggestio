@@ -129,7 +129,7 @@ CbcaSearch = () ->
   self = this
 
   self.search = (martId, searchString) ->
-    jsRoutes.controllers.MarketMartLk.searchShops(martId).ajax(
+    jsRoutes.controllers.MarketLkAdn.searchSlaves(martId).ajax(
       type: "POST",
       data:
         'q': searchString

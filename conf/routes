@@ -91,9 +91,9 @@ POST /sys/inx2/create/dflt/mart         controllers.Sys.inx2createDfltMart
 GET  /m                                 controllers.MarketLk.lkIndex
 GET  /m/lk                              controllers.MarketLk.lkList
 GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, newAdId: Option[String] ?= None)
+GET  /m/lk/adn/:adnId/slaves            controllers.MarketLkAdn.showSlaves(adnId, sortByRaw: Option[String] ?= None, isReversed: Boolean ?= false)
+POST /m/lk/adn/:adnId/search            controllers.MarketLkAdn.searchSlaves(adnId)
 # Личный кабинет владельца ТЦ
-GET  /m/lk/mart/:martId/shops           controllers.MarketMartLk.shopsShow(martId, sortByRaw: Option[String] ?= None, isReversed: Boolean ?= false)
-POST /m/lk/mart/:martId/search          controllers.MarketMartLk.searchShops(martId)
 GET  /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditForm(martId: String)
 POST /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditFormSubmit(martId: String)
 #POST /m/lk/mart/:martId/shop/:shopId/delete controllers.MarketMartLk.martShopDeleteSubmit(martId, shopId)

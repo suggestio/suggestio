@@ -295,6 +295,11 @@ object FormUtil {
       )
   }
 
+
+  /** Маппинг для задания причины при сокрытии сущности. */
+  val hideEntityReasonM = nonEmptyText(maxLength = 512)
+    .transform(strTrimSanitizeF, strIdentityF)
+
 }
 
 

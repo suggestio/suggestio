@@ -54,8 +54,8 @@ trait AdnShowLk extends SioController {
 object AdnShowTypes extends Enumeration {
   protected abstract case class Val(amt: AdNetMemberType) extends super.Val(amt.name) {
     def lkNodeEditCall(adnId: String): Call
-    def lkProducersShowCall(adnId: String): Call
     def sysShow(adnId: String): Call
+    def inviteSubNodeCall(adnId: String): Call
   }
 
   type AdnShowType = Val
@@ -65,14 +65,14 @@ object AdnShowTypes extends Enumeration {
 
   val SHOP = new Val(AdNetMemberTypes.SHOP) {
     override def lkNodeEditCall(adnId: String) = routes.MarketShopLk.editShopForm(adnId)
-    override def lkProducersShowCall(adnId: String) = throw new UnsupportedOperationException("mart shop cannot have producers")
     override def sysShow(adnId: String): Call = routes.SysMarket.shopShow(adnId)
+    override def inviteSubNodeCall(adnId: String): Call = throw new UnsupportedOperationException("Shops cannot invite sub-shops.")
   }
 
   val MART = new Val(AdNetMemberTypes.MART) {
     override def lkNodeEditCall(adnId: String) = routes.MarketMartLk.martEditForm(adnId)
-    override def lkProducersShowCall(adnId: String) = routes.MarketMartLk.shopsShow(adnId)
     override def sysShow(adnId: String): Call = routes.SysMarket.martShow(adnId)
+    override def inviteSubNodeCall(adnId: String): Call = routes.MarketMartLk.inviteShopForm(adnId)
   }
 
 }
