@@ -30,8 +30,8 @@ object CanSuperviseNode {
   }
 }
 
-case class CanSuperviseNode(adnId: String) extends ActionBuilder[RequestForNodeSupervision] {
-  protected def invokeBlock[A](request: Request[A], block: (RequestForNodeSupervision[A]) => Future[Result]): Future[Result] = {
+case class CanSuperviseNode(adnId: String) extends ActionBuilder[RequestForSlave] {
+  protected def invokeBlock[A](request: Request[A], block: (RequestForSlave[A]) => Future[Result]): Future[Result] = {
     MAdnNodeCache.getByIdCached(adnId) flatMap {
       case Some(mslave) if mslave.adn.supId.isDefined =>
         val pwOpt = PersonWrapper.getFromRequest(request)
@@ -40,7 +40,7 @@ case class CanSuperviseNode(adnId: String) extends ActionBuilder[RequestForNodeS
         IsAdnNodeAdmin.isAdnNodeAdmin(supId, pwOpt) flatMap {
           case Some(msup) if msup.adn.isSupervisor || PersonWrapper.isSuperuser(pwOpt) =>
             srmFut flatMap { srm =>
-              val req1 = RequestForNodeSupervision(slaveNode = mslave, supNode = msup, request, pwOpt, srm)
+              val req1 = RequestForSlave(slaveNode = mslave, supNode = msup, request, pwOpt, srm)
               block(req1)
             }
 
@@ -56,18 +56,18 @@ case class CanSuperviseNode(adnId: String) extends ActionBuilder[RequestForNodeS
 
 
 // Реквесты
-abstract class AbstractRequestForNodeSupervision[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
+abstract class AbstractRequestForSlave[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
   def supNode: MAdnNode
   def slaveNode: MAdnNode
 }
 
-case class RequestForNodeSupervision[A](slaveNode: MAdnNode, supNode: MAdnNode, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
-  extends AbstractRequestForNodeSupervision(request)
+case class RequestForSlave[A](slaveNode: MAdnNode, supNode: MAdnNode, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
+  extends AbstractRequestForSlave(request)
 
 
 /** Просматривать прямые под-узлы может просматривать тот, кто записан в supId. */
-case class CanViewAsSlaveNode(adnId: String) extends ActionBuilder[RequestForNodeSupervision] {
-  override protected def invokeBlock[A](request: Request[A], block: (RequestForNodeSupervision[A]) => Future[Result]): Future[Result] = {
+case class CanViewSlave(adnId: String) extends ActionBuilder[RequestForSlave] {
+  override protected def invokeBlock[A](request: Request[A], block: (RequestForSlave[A]) => Future[Result]): Future[Result] = {
     MAdnNodeCache.getByIdCached(adnId) flatMap {
       case Some(mslave) if mslave.adn.supId.isDefined =>
         val pwOpt = PersonWrapper.getFromRequest(request)
@@ -76,7 +76,7 @@ case class CanViewAsSlaveNode(adnId: String) extends ActionBuilder[RequestForNod
         IsAdnNodeAdmin.isAdnNodeAdmin(supId, pwOpt) flatMap {
           case Some(msup) =>
             srmFut flatMap { srm =>
-              val req1 = RequestForNodeSupervision(slaveNode = mslave, supNode = msup, request, pwOpt, srm)
+              val req1 = RequestForSlave(slaveNode = mslave, supNode = msup, request, pwOpt, srm)
               block(req1)
             }
 
@@ -89,3 +89,78 @@ case class CanViewAsSlaveNode(adnId: String) extends ActionBuilder[RequestForNod
     }
   }
 }
+
+
+
+/** Просматривать рекламу с прямых под-узлов может просматривать тот, кто записан в supId. */
+case class CanViewSlaveAd(adId: String) extends ActionBuilder[RequestForSlaveAd] {
+  override protected def invokeBlock[A](request: Request[A], block: (RequestForSlaveAd[A]) => Future[Result]): Future[Result] = {
+    MAd.getById(adId) flatMap {
+      case Some(mad) =>
+        val adnId = mad.producerId
+        MAdnNodeCache.getByIdCached(adnId) flatMap {
+          case Some(mslave) if mslave.adn.supId.isDefined =>
+            val pwOpt = PersonWrapper.getFromRequest(request)
+            val supId = mslave.adn.supId.get
+            val srmFut = SioReqMd.fromPwOptAdn(pwOpt, supId)
+            IsAdnNodeAdmin.isAdnNodeAdmin(supId, pwOpt) flatMap {
+              case Some(msup) =>
+                srmFut flatMap { srm =>
+                  val req1 = RequestForSlaveAd(mad = mad, slaveNode = mslave, supNode = msup, request, pwOpt, srm)
+                  block(req1)
+                }
+
+              case _ => onUnauth(request)
+            }
+
+          // Не возвращаем 404 для защиты от возможных (бессмысленных) сканов.
+          // None означает что или магазина нет, или ТЦ у магазина не указан (удалённый магазин, интернет-магазин).
+          case None => onUnauth(request)
+        }
+
+      case None => onUnauth(request)
+    }
+  }
+}
+
+
+case class RequestForSlaveAd[A](mad: MAd, slaveNode: MAdnNode, supNode: MAdnNode, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
+  extends AbstractRequestForSlave(request)
+
+
+/** Можно ли влиять на рекламную карточку подчинённого узла? Да, если узел подчинён и если юзер -- админу узла-супервизора. */
+case class CanSuperviseSlaveAd(adId: String) extends ActionBuilder[RequestForSlaveAd] {
+  protected def invokeBlock[A](request: Request[A], block: (RequestForSlaveAd[A]) => Future[Result]): Future[Result] = {
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    // Для экшенов модерации обычно (пока что) не требуется bill-контекста, поэтому делаем srm по-простому.
+    val srmFut = SioReqMd.fromPwOpt(pwOpt)
+    MAd.getById(adId) flatMap {
+      case Some(mad) =>
+        val slaveNodeOptFut = MAdnNodeCache.getByIdCached(mad.producerId)
+        Future.traverse(mad.receivers.valuesIterator) { adRcvr =>
+          IsAdnNodeAdmin.isAdnNodeAdmin(adRcvr.receiverId, pwOpt)
+        } flatMap { results =>
+          results.find(_.isDefined).flatten match {
+            case Some(supNode) if supNode.adn.isSupervisor =>
+              slaveNodeOptFut.flatMap { slaveNodeOpt =>
+                srmFut.flatMap { srm =>
+                  val req1 = RequestForSlaveAd(
+                    mad = mad,
+                    slaveNode = slaveNodeOpt.get,
+                    supNode = supNode,
+                    request = request,
+                    pwOpt = pwOpt,
+                    sioReqMd = srm
+                  )
+                  block(req1)
+                }
+              }
+            case _ => onUnauth(request)
+          }
+        }
+
+      case _ => onUnauth(request)
+    }
+  }
+}
+

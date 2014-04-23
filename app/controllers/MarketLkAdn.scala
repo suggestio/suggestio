@@ -182,13 +182,14 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with AdnShowLk {
 
 
   /**
-   * Отобразить страницу по магазину.
+   * Отобразить страницу по подчинённому узлу.
    * @param adnId id под-узла.
    */
-  def showSlave(adnId: String) = CanViewAsSlaveNode(adnId).async { implicit request =>
+  def showSlave(adnId: String) = CanViewSlave(adnId).async { implicit request =>
     import request.{slaveNode, supNode}
     MAd.findForProducer(adnId) map { mads =>
       Ok(showSlaveNodeTpl(msup = supNode, mslave = slaveNode, mads))
     }
   }
+
 }

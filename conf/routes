@@ -97,6 +97,8 @@ GET  /m/lk/adn/slave/:adnId             controllers.MarketLkAdn.showSlave(adnId)
 GET  /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffForm(adnId)
 POST /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffSubmit(adnId)
 POST /m/lk/adn/slave/:adnId/set/tla     controllers.MarketLkAdn.setSlaveTopLevelAvailable(adnId)
+GET  /m/lk/adn/ad/slave/:adId           controllers.MarketLkAdnSlaveAd.showSlaveAd(adId)
+POST /m/lk/adn/ad/slave/:adId/hide      controllers.MarketLkAdnSlaveAd.slaveAdHideFormSubmit(adId)
 # Личный кабинет владельца ТЦ
 GET  /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditForm(martId: String)
 POST /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditFormSubmit(martId: String)
@@ -106,8 +108,6 @@ POST /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopFormS
 POST /m/lk/mart/:martId/logo            controllers.MarketMartLk.handleMartTempLogo(martId)
 GET  /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopForm(shopId)
 POST /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopFormSubmit(shopId)
-GET  /m/lk/mart/shop/ad/:adId/hide      controllers.MarketMartLk.shopAdHideForm(adId)
-POST /m/lk/mart/shop/ad/:adId/hide      controllers.MarketMartLk.shopAdHideFormSubmit(adId)
 GET  /m/lk/m/:martId/eact/:eaId         controllers.MarketMartLk.martInviteAcceptForm(martId, eaId)
 POST /m/lk/m/:martId/eact/:eaId         controllers.MarketMartLk.martInviteAcceptFormSubmit(martId, eaId)
 

@@ -5,7 +5,7 @@
   <div class="item @if(!mad.isPublishedAt(msup.id.get)) {disabled}" style="@if(i%3 != 0) {margin-left: 30px;}">
     <div class="preview">
       <div class="disabled-ad"></div>
-      <a class="hover tc-edit" href="@routes.MarketMartLk.shopAdHideForm(mad.id.get)">&nbsp;</a>
+      <a class="hover tc-edit" href="@routes.MarketLkAdnSlaveAd.showSlaveAd(mad.id.get)">&nbsp;</a>
       @market.showcase._single_offer(mad, mnode, fallbackLogo = msup.logoImgOpt)
     </div>
   </div>

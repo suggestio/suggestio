@@ -1,0 +1,64 @@
+@(mslave: MAdnNode, mad: MAdT, msup: MAdnNode, sahf: Form[_])(implicit ctx: util.Context)
+
+@* Форма сокрытия рекламы магазина силами магазина (SioWeb/4.psd). *@
+@import ctx._
+@import helper._
+@import controllers.MarketLkAdnSlaveAd.HideShopAdActions._
+@import util.FormHelpers._
+@import util.acl.CanSuperviseNode._
+
+<div class="popup disable-ad" id="disable-ad">
+  <div class="hat">
+    <a href="#" class="close">&nbsp;</a>
+  </div>
+
+  <div class="content">
+
+    <div style="height: 600px; overflow: hidden;">
+      <div class="ad-preview preview" style="height: 1024px; width: 768px; position: relative; -webkit-transform: scale3d(0.57,0.57,0.57); -webkit-transform-origin: 0px 0px; -moz-transform: scale3d(0.57,0.57,0.57); -moz-transform-origin: 0px 0px;">
+        @market.showcase._single_offer(mad, mslave, fallbackLogo = msup.logoImgOpt)
+      </div>
+    </div>
+
+    @* Для супервизора доступны кнопки управления рекламной карточкой. *@
+    @if( canSuperviseNode(supNode = msup, slaveNode = mslave) ) {
+      @* Кнопка сокрытия рекламной карточки. *@
+      @form(routes.MarketLkAdnSlaveAd.slaveAdHideFormSubmit(mad.id.get)) {
+        @* Допустимые значения: @HIDE *@
+        <input type="hidden" name="action" value="@HIDE"/>
+
+        @if(!mad.isPublishedAt(msup.id.get)) {
+          <div class="hide-content">
+            @* Причина сокрытия/удаления. *@
+            <table cellpadding="0" cellspacing="0" class="input-wrap big textarea hide-label" style="margin-top: 20px;">
+              @textarea(
+                sahf("reason"),
+                '_label -> "Причина",
+                'placeholder -> "Напишите причину удаления"
+              )
+            </table>
+
+            <div class="descr">
+              Копия уведомления будет отправлена арендатору
+              «<a href="@routes.MarketLkAdn.showSlave(mslave.id.get)">@mslave.meta.name</a>» на почту, указанную при регистрации.
+            </div>
+          </div>
+
+          <div class="ovh" style="text-align: center; margin-top: 20px;">
+            <input class="blue-but-small" type="submit" value="Выключить" />
+          </div>
+        }
+      } @* ad hide form *@
+
+
+      @* Кнопка публикации карточки на другом узле (в другом ресторане). *@
+
+    } @* if supervisor *@
+
+  </div>
+
+</div>
+
+<script type="text/javascript">
+  market.resize_preview_photos();
+</script>
