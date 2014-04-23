@@ -1,4 +1,4 @@
-@(node: MAdnNode, myAds: Seq[MAdT] = Nil, supervisedNodes: Seq[MAdnNode] = Nil, fallbackLogo: Option[MImgInfo] = None)(implicit ctx: util.Context)
+@(node: MAdnNode, myAds: Seq[MAdT] = Nil, slaves: Seq[MAdnNode] = Nil, fallbackLogo: Option[MImgInfo] = None)(implicit ctx: util.Context)
 
 @* Заглавная страница узла рекламной сети в личном кабинете. *@
 
@@ -83,16 +83,17 @@
     @if(node.adn.isProducer) {
       @_myAdsTpl(node, myAds, fallbackLogo)
     }
+
+    @* Супервизору надо отрендерить табличку подчиненых узлов: для реализации надзорных полномочий. *@
+    @if(!slaves.isEmpty) {
+      @_supShowNodesTpl(node, slaves)
+    }
+
   </div>
 
   @* Обладают выдачей только ресиверы, поэтому окно с кодом рендерится только для них. *@
   @if(node.adn.isReceiver) {
     @_installScriptPopupTpl(node)
-  }
-
-  @* Супервизору надо отрендерить табличку подчиненых узлов: для реализации надзорных полномочий. *@
-  @if(node.adn.isSupervisor) {
-    @_supShowNodesTpl(node, supervisedNodes)
   }
 
 } @* defining AdnShowType *@

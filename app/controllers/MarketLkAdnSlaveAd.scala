@@ -99,6 +99,7 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
           mail.setRecipient(emails : _*)
           val ctx = implicitly[Context]   // Нано-оптимизация: один контекст для обоих рендеров.
           mail.send(
+            // TODO Вынести письма за пределы shop.
             bodyHtml = views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(supNode, slaveNode, mad, reason)(ctx),
             bodyText = views.txt.market.lk.shop.ad.emailAdDisabledByMartTpl(supNode, slaveNode, mad, reason)(ctx)
           )
@@ -108,5 +109,18 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
   }
 
 
+  /**
+   * Отобразить обрубок с подчинёнными рекламными карточками.
+   * @param adnId id подчинённого узла.
+   */
+  def _showSlaveAds(adnId: String) = CanViewSlave(adnId).async { implicit request =>
+    MAd.findForProducer(adnId) map { mads =>
+      Ok(_node._slaveNodeAdsTpl(
+        msup = request.supNode,
+        mslave = request.slaveNode,
+        mads = mads
+      ))
+    }
+  }
 
 }

@@ -43,7 +43,12 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with AdnShowLk {
 
       case None => Future successful None
     }
-    renderShowAdnNode(adnNode, newAdIdOpt, fallbackLogoFut)
+    val slavesFut: Future[Seq[MAdnNode]] = //if(request.adnNode.adn.isSupervisor) {
+      MAdnNode.findBySupId(adnId)
+    //} else {
+    //  Future successful Nil
+    //}
+    renderShowAdnNode(adnNode, newAdIdOpt, slavesFut, fallbackLogoFut)
   }
 
   
@@ -110,7 +115,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with AdnShowLk {
 
 
   /** Маппинг формы включения/выключения магазина. */
-  val shopOnOffFormM = Form(tuple(
+  private val nodeOnOffFormM = Form(tuple(
     "isEnabled" -> boolean,
     "reason"    -> optional(hideEntityReasonM)
   ))
@@ -124,7 +129,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with AdnShowLk {
    */
   def nodeOnOffForm(adnId: String) = CanSuperviseNode(adnId).apply { implicit request =>
     import request.slaveNode
-    val formBinded = shopOnOffFormM.fill((false, slaveNode.adn.disableReason))
+    val formBinded = nodeOnOffFormM.fill((false, slaveNode.adn.disableReason))
     Ok(_nodeOnOffFormTpl(slaveNode, formBinded))
   }
 
@@ -134,7 +139,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with AdnShowLk {
    * @return 200 Ok если всё ок.
    */
   def nodeOnOffSubmit(shopId: String) = CanSuperviseNode(shopId).async { implicit request =>
-    shopOnOffFormM.bindFromRequest().fold(
+    nodeOnOffFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"nodeOnOffSubmit($shopId): Bind form failed: ${formatFormErrors(formWithErrors)}")
         NotAcceptable("Bad request body.")

@@ -1,4 +1,4 @@
-@(node: MAdnNode, supervisedNodes: Seq[MAdnNode])(implicit ctx: util.Context)
+@(node: MAdnNode, slaves: Seq[MAdnNode])(implicit ctx: util.Context)
 
 @* Рендер списка подчинённых узлов. *@
 
@@ -7,10 +7,10 @@
        При первом раскрытии элемента должен асинхронно на сервер отправляться запрос рекламных карточек узла. *@
 Моя рекламная сеть
 <ul>
-  @supervisedNodes.map { snode =>
+  @slaves.map { slave =>
     <li>
-      @snode.meta.name / @snode.meta.town
-      <a href="TODO">развернуть</a>
+      @slave.meta.name / @slave.meta.town
+      <a href="@routes.MarketLkAdnSlaveAd._showSlaveAds(slave.id.get)">развернуть</a>
     </li>
   }
 </ul>

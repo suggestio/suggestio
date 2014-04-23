@@ -1,4 +1,4 @@
-@(msup: MAdnNode, mnode: MAdnNode, mads: Seq[MAdT])(implicit ctx: util.Context)
+@(msup: MAdnNode, mslave: MAdnNode, mads: Seq[MAdT])(implicit ctx: util.Context)
 
 @mads.zipWithIndex.map { case (mad, i) =>
   @* isPublishedAt скрывает от супервизора возможность сокрыть в других карточках. Сейчас сокрыто - означает, что сокрыто в ТЦ. *@
@@ -6,7 +6,7 @@
     <div class="preview">
       <div class="disabled-ad"></div>
       <a class="hover tc-edit" href="@routes.MarketLkAdnSlaveAd.showSlaveAd(mad.id.get)">&nbsp;</a>
-      @market.showcase._single_offer(mad, mnode, fallbackLogo = msup.logoImgOpt)
+      @market.showcase._single_offer(mad, mslave, fallbackLogo = msup.logoImgOpt)
     </div>
   </div>
 }

@@ -49,7 +49,7 @@ case class CanSuperviseNode(adnId: String) extends ActionBuilder[RequestForSlave
 
       // Не возвращаем 404 для защиты от возможных (бессмысленных) сканов.
       // None означает что или магазина нет, или ТЦ у магазина не указан (удалённый магазин, интернет-магазин).
-      case None => onUnauth(request)
+      case _ => onUnauth(request)
     }
   }
 }
@@ -68,9 +68,9 @@ case class RequestForSlave[A](slaveNode: MAdnNode, supNode: MAdnNode, request: R
 /** Просматривать прямые под-узлы может просматривать тот, кто записан в supId. */
 case class CanViewSlave(adnId: String) extends ActionBuilder[RequestForSlave] {
   override protected def invokeBlock[A](request: Request[A], block: (RequestForSlave[A]) => Future[Result]): Future[Result] = {
+    val pwOpt = PersonWrapper.getFromRequest(request)
     MAdnNodeCache.getByIdCached(adnId) flatMap {
-      case Some(mslave) if mslave.adn.supId.isDefined =>
-        val pwOpt = PersonWrapper.getFromRequest(request)
+      case Some(mslave) if mslave.adn.supId.isDefined || PersonWrapper.isSuperuser(pwOpt) =>
         val supId = mslave.adn.supId.get
         val srmFut = SioReqMd.fromPwOptAdn(pwOpt, supId)
         IsAdnNodeAdmin.isAdnNodeAdmin(supId, pwOpt) flatMap {
@@ -85,7 +85,7 @@ case class CanViewSlave(adnId: String) extends ActionBuilder[RequestForSlave] {
 
       // Не возвращаем 404 для защиты от возможных (бессмысленных) сканов.
       // None означает что или магазина нет, или ТЦ у магазина не указан (удалённый магазин, интернет-магазин).
-      case None => onUnauth(request)
+      case _ => onUnauth(request)
     }
   }
 }
@@ -98,9 +98,9 @@ case class CanViewSlaveAd(adId: String) extends ActionBuilder[RequestForSlaveAd]
     MAd.getById(adId) flatMap {
       case Some(mad) =>
         val adnId = mad.producerId
+        val pwOpt = PersonWrapper.getFromRequest(request)
         MAdnNodeCache.getByIdCached(adnId) flatMap {
-          case Some(mslave) if mslave.adn.supId.isDefined =>
-            val pwOpt = PersonWrapper.getFromRequest(request)
+          case Some(mslave) if mslave.adn.supId.isDefined || PersonWrapper.isSuperuser(pwOpt) =>
             val supId = mslave.adn.supId.get
             val srmFut = SioReqMd.fromPwOptAdn(pwOpt, supId)
             IsAdnNodeAdmin.isAdnNodeAdmin(supId, pwOpt) flatMap {
@@ -115,7 +115,7 @@ case class CanViewSlaveAd(adId: String) extends ActionBuilder[RequestForSlaveAd]
 
           // Не возвращаем 404 для защиты от возможных (бессмысленных) сканов.
           // None означает что или магазина нет, или ТЦ у магазина не указан (удалённый магазин, интернет-магазин).
-          case None => onUnauth(request)
+          case _ => onUnauth(request)
         }
 
       case None => onUnauth(request)
@@ -141,7 +141,7 @@ case class CanSuperviseSlaveAd(adId: String) extends ActionBuilder[RequestForSla
           IsAdnNodeAdmin.isAdnNodeAdmin(adRcvr.receiverId, pwOpt)
         } flatMap { results =>
           results.find(_.isDefined).flatten match {
-            case Some(supNode) if supNode.adn.isSupervisor =>
+            case Some(supNode) if supNode.adn.isSupervisor || PersonWrapper.isSuperuser(pwOpt) =>
               slaveNodeOptFut.flatMap { slaveNodeOpt =>
                 srmFut.flatMap { srm =>
                   val req1 = RequestForSlaveAd(

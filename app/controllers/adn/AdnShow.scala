@@ -18,7 +18,7 @@ import util.SiowebEsUtil.client
  */
 trait AdnShowLk extends SioController {
 
-  def renderShowAdnNode(node: MAdnNode, newAdIdOpt: Option[String], fallbackLogoFut: Future[Option[MImgInfo]] = Future successful None)
+  def renderShowAdnNode(node: MAdnNode, newAdIdOpt: Option[String], slavesFut: Future[Seq[MAdnNode]], fallbackLogoFut: Future[Option[MImgInfo]])
                        (implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
     val adnId = node.id.get
     val adsFut = MAd.findForProducerRt(adnId)
@@ -35,6 +35,7 @@ trait AdnShowLk extends SioController {
       mads      <- adsFut
       extAdOpt  <- extAdOptFut
       fallbackLogo <- fallbackLogoFut
+      slaves    <- slavesFut
     } yield {
       // Если есть карточка в extAdOpt, то надо добавить её в начало списка, который отсортирован по дате создания.
       val mads2 = if (extAdOpt.isDefined  &&  mads.headOption.flatMap(_.id) != newAdIdOpt) {
@@ -42,7 +43,7 @@ trait AdnShowLk extends SioController {
       } else {
         mads
       }
-      Ok(adnNodeShowTpl(node, mads2, fallbackLogo = fallbackLogo))
+      Ok(adnNodeShowTpl(node, mads2, slaves, fallbackLogo))
     }
   }
 
