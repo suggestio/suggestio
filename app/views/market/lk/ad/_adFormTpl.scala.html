@@ -17,7 +17,7 @@
 @form(call, 'id -> "promoOfferForm") {
 
   @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@
-  @af.globalError
+  @*af.globalError*@
 
   <input type="hidden" id="preview-action" value="@routes.MarketAd.adFormPreviewSubmit(adnNode.id.get)" />
 
