@@ -317,47 +317,6 @@ with ShopMartCompat {
   }
 
 
-  /** Маппинг формы включения/выключения магазина. */
-  val shopOnOffFormM = Form(tuple(
-    "isEnabled" -> boolean,
-    "reason"    -> optional(hideEntityReasonM)
-  ))
-
-  /**
-   * Рендер блока с формой отключения магазина.
-   * @param shopId id отключаемого магазина.
-   * @return 200 с формой указания причины отключения магазина.
-   *         404 если магазин не найден.
-   */
-  def shopOnOffForm(shopId: String) = IsMartAdminShop(shopId).apply { implicit request =>
-    import request.mshop
-    val formBinded = shopOnOffFormM.fill((false, mshop.adn.disableReason))
-    Ok(shop._onOffFormTpl(mshop, formBinded))
-  }
-
-  /**
-   * Владелец ТЦ включает/выключает состояние магазина.
-   * @param shopId id магазина.
-   * @return 200 Ok если всё ок.
-   */
-  def shopOnOffSubmit(shopId: String) = IsMartAdminShop(shopId).async { implicit request =>
-    shopOnOffFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(s"shopOnOffSubmit($shopId): Bind form failed: ${formatFormErrors(formWithErrors)}")
-        NotAcceptable("Bad request body.")
-      },
-      {case (isEnabled, reason) =>
-        request.mshop.setIsEnabled(isEnabled, reason) map { _ =>
-          val reply = JsObject(Seq(
-            "isEnabled" -> JsBoolean(isEnabled),
-            "shopId" -> JsString(shopId)
-          ))
-          Ok(reply)
-        }
-      }
-    )
-  }
-
 
   object HideShopAdActions extends Enumeration {
     type HideShopAdAction = Value

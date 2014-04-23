@@ -382,7 +382,7 @@ EditAdPage =
 #########################
 CbcaShop =
   disableShop: (shopId) ->
-    jsRoutes.controllers.MarketMartLk.shopOnOffForm(shopId).ajax(
+    jsRoutes.controllers.MarketLkAdn.nodeOnOffForm(shopId).ajax(
       type: "GET",
       success:  (data) ->
         if(data.toString().trim())
@@ -393,7 +393,7 @@ CbcaShop =
     )
 
   enableShop: (shopId) ->
-    jsRoutes.controllers.MarketMartLk.shopOnOffSubmit(shopId).ajax(
+    jsRoutes.controllers.MarketLkAdn.nodeOnOffSubmit(shopId).ajax(
       type: 'POST'
       dataType: 'JSON'
       data:

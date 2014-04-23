@@ -6,14 +6,19 @@
 @import ctx._
 @import helper._
 @import market.lk.adn._node._
+@import util.acl.CanSuperviseNode._
 
 @lkBase(mshop.meta.name) {
+@defining( canSuperviseNode(supNode = mmart, slaveNode = mshop) ) { isNodeSup =>
 
-  @helper.javascriptRouter("jsRoutes")(
-    routes.javascript.MarketMartLk.shopOnOffForm,
-    routes.javascript.MarketMartLk.shopOnOffSubmit,
-    routes.javascript.MarketMartLk.setShopTopLevelAvailable
-  )
+  @* Если не супервизор, то нечего тут командовать. *@
+  @if(isNodeSup) {
+    @helper.javascriptRouter("jsRoutes")(
+      routes.javascript.MarketMartLk.setShopTopLevelAvailable,
+      routes.javascript.MarketLkAdn.nodeOnOffForm,
+      routes.javascript.MarketLkAdn.nodeOnOffSubmit
+    )
+  }
 
   <div class="title-wrap">
     <div class="center">
@@ -34,9 +39,11 @@
 
       <table class="block">
         <tr>
-          <td class="left">
-            @_nodeOnOffSwitcherTpl(mshop)
-          </td>
+          @if(isNodeSup) {
+            <td class="left">
+              @_nodeOnOffSwitcherTpl(mshop)
+            </td>
+          }
           @_nodeDescrTdTpl(mshop)
         </tr>
       </table>
@@ -47,8 +54,10 @@
       @_floorSectionTableTpl(mshop)
 
       @* Переключалка доступа к первому уровню. *@
-      <div class="border-line"></div>
-      <div>@_nodeFirstPageSwitcherTpl(mshop)</div>
+      @if(isNodeSup) {
+        <div class="border-line"></div>
+        <div>@_nodeFirstPageSwitcherTpl(mshop)</div>
+      }
 
     </div>
 
@@ -67,4 +76,5 @@
 
   </div>
 
+}
 }

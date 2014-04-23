@@ -2,7 +2,7 @@ package controllers
 
 import util.PlayMacroLogsImpl
 import controllers.adn.AdnShowLk
-import util.acl.IsAdnNodeAdmin
+import _root_.util.acl.{CanSuperviseNode, IsAdnNodeAdmin}
 import models.MAdnNodeCache
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -13,6 +13,8 @@ import views.html.market.lk.adn._, _node._
 import io.suggest.ym.model.MAdnNode
 import play.api.data.Form
 import play.api.data.Forms._
+import util.FormUtil._
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -103,4 +105,49 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with AdnShowLk {
       }
     }
   }
+
+
+
+  /** Маппинг формы включения/выключения магазина. */
+  val shopOnOffFormM = Form(tuple(
+    "isEnabled" -> boolean,
+    "reason"    -> optional(hideEntityReasonM)
+  ))
+
+
+  /**
+   * Рендер блока с формой отключения подчинённого узла.
+   * @param adnId id отключаемого узла.
+   * @return 200 с формой указания причины отключения узла.
+   *         404 если узел не найден.
+   */
+  def nodeOnOffForm(adnId: String) = CanSuperviseNode(adnId).apply { implicit request =>
+    import request.slaveNode
+    val formBinded = shopOnOffFormM.fill((false, slaveNode.adn.disableReason))
+    Ok(_nodeOnOffFormTpl(slaveNode, formBinded))
+  }
+
+  /**
+   * Супервизор подсети включает/выключает состояние узла.
+   * @param shopId id узла.
+   * @return 200 Ok если всё ок.
+   */
+  def nodeOnOffSubmit(shopId: String) = CanSuperviseNode(shopId).async { implicit request =>
+    shopOnOffFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"nodeOnOffSubmit($shopId): Bind form failed: ${formatFormErrors(formWithErrors)}")
+        NotAcceptable("Bad request body.")
+      },
+      {case (isEnabled, reason) =>
+        request.slaveNode.setIsEnabled(isEnabled, reason) map { _ =>
+          val reply = JsObject(Seq(
+            "isEnabled" -> JsBoolean(isEnabled),
+            "shopId" -> JsString(shopId)
+          ))
+          Ok(reply)
+        }
+      }
+    )
+  }
+
 }
