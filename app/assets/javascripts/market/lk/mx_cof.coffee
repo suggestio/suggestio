@@ -520,7 +520,7 @@ CbcaShop =
       $shop = $(this).closest('.triger-wrap')
       if(!$shop.hasClass('enabled'))
         $shop.addClass('enabled')
-        jsRoutes.controllers.MarketMartLk.setShopTopLevelAvailable($shop.attr('data-shop')).ajax(
+        jsRoutes.controllers.MarketLkAdn.setSlaveTopLevelAvailable($shop.attr('data-shop')).ajax(
           type: 'POST'
           data:
             'isEnabled': true
@@ -530,7 +530,7 @@ CbcaShop =
       $shop = $(this).closest('.triger-wrap')
       if($shop.hasClass('enabled'))
         $shop.removeClass('enabled')
-        jsRoutes.controllers.MarketMartLk.setShopTopLevelAvailable($shop.attr('data-shop')).ajax(
+        jsRoutes.controllers.MarketLkAdn.setSlaveTopLevelAvailable($shop.attr('data-shop')).ajax(
           type: 'POST'
           data:
             'isEnabled': false

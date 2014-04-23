@@ -4,7 +4,6 @@ import util.{Context, PlayMacroLogsImpl}
 import util.acl._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
-import io.suggest.model.EsModel
 import views.html.market.lk.mart._
 import play.api.data._, Forms._
 import util.FormUtil._
@@ -13,7 +12,6 @@ import play.api.Play.current
 import util.acl.IsMartAdminShop
 import util.img._
 import ImgFormUtil.imgInfo2imgKey
-import play.api.libs.json._
 import scala.concurrent.Future
 import play.api.mvc.{AnyContent, Result}
 import play.api.mvc.Security.username
@@ -409,33 +407,6 @@ with ShopMartCompat {
         }
       }
     }
-  }
-
-
-  /** Форма, которая используется при обработке сабмита о переключении доступности магазину функции отображения рекламы
-    * на верхнем уровне ТЦ. */
-  val shopTopLevelFormM = Form(
-    "isEnabled" -> boolean
-  )
-
-  /** Владелец ТЦ дергает за переключатель доступности top-level выдачи для магазина. */
-  def setShopTopLevelAvailable(shopId: String) = IsMartAdminShop(shopId).async { implicit request =>
-    shopTopLevelFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(s"shopSetTopLevel($shopId): Form bind failed: ${formatFormErrors(formWithErrors)}")
-        NotAcceptable("Cannot parse req body.")
-      },
-      {isTopEnabled =>
-        import request.mshop
-        if (isTopEnabled)
-          mshop.adn.showLevelsInfo.out += AdShowLevels.LVL_START_PAGE -> 1
-        else
-          mshop.adn.showLevelsInfo.out -= AdShowLevels.LVL_START_PAGE
-        mshop.save map { _ =>
-          Ok("updated ok")
-        }
-      }
-    )
   }
 
 

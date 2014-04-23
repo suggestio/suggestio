@@ -15,6 +15,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import util.FormUtil._
 import play.api.libs.json._
+import io.suggest.ym.model.common.AdShowLevels
 
 /**
  * Suggest.io
@@ -149,5 +150,34 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with AdnShowLk {
       }
     )
   }
+  
+  
+  
+  /** Форма, которая используется при обработке сабмита о переключении доступности магазину функции отображения рекламы
+    * на верхнем уровне ТЦ. */
+  val shopTopLevelFormM = Form(
+    "isEnabled" -> boolean
+  )
+
+  /** Владелец ТЦ дергает за переключатель доступности top-level выдачи для магазина. */
+  def setSlaveTopLevelAvailable(adnId: String) = CanSuperviseNode(adnId).async { implicit request =>
+    shopTopLevelFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"shopSetTopLevel($adnId): Form bind failed: ${formatFormErrors(formWithErrors)}")
+        NotAcceptable("Cannot parse req body.")
+      },
+      {isTopEnabled =>
+        import request.slaveNode
+        if (isTopEnabled)
+          slaveNode.adn.showLevelsInfo.out += AdShowLevels.LVL_START_PAGE -> 1
+        else
+          slaveNode.adn.showLevelsInfo.out -= AdShowLevels.LVL_START_PAGE
+        slaveNode.save map { _ =>
+          Ok("updated ok")
+        }
+      }
+    )
+  }
+
 
 }
