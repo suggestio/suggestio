@@ -37,24 +37,18 @@
           <td class="left">
             @_nodeOnOffSwitcherTpl(mshop)
           </td>
-          <td class="right">
-            <div class="shop-descr">
-              @mshop.meta.description
-            </div>
-          </td>
+          @_nodeDescrTdTpl(mshop)
         </tr>
       </table>
-
 
 
       @* Отобразить основное описание магазина с кнопкой редактирования. *@
       <div class="border-line"></div>
       @market.lk.adn._node._floorSectionTableTpl(mshop)
-      <div class="border-line"></div>
 
-      <div>
-        @_nodeFirstPageSwitcherTpl(mshop)
-      </div>
+      @* Переключалка доступа к первому уровню. *@
+      <div class="border-line"></div>
+      <div>@_nodeFirstPageSwitcherTpl(mshop)</div>
 
     </div>
 

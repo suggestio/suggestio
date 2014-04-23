@@ -67,11 +67,7 @@
       @if(node.meta.description.isDefined) {
         <table class="block">
           <tr>
-            <td class="right" style="border-left: none; padding-left: 0;">
-              <div class="shop-descr">
-                @node.meta.description
-              </div>
-            </td>
+            @_nodeDescrTdTpl(node, style = "border-left: none; padding-left: 0;")
           </tr>
         </table>
       }
