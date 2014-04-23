@@ -61,11 +61,7 @@ object MarketLk extends SioController {
       } else if (adnNodes.size == 1) {
         // У юзера есть магазин или ТЦ
         val adnNode = adnNodes.head
-        import AdNetMemberTypes._
-        adnNode.adn.memberType match {
-          case MART => routes.MarketMartLk.martShow(adnNode.id.get)
-          case SHOP => routes.MarketShopLk.showShop(adnNode.id.get)
-        }
+        routes.MarketLkAdn.showAdnNode(adnNode.id.get)
       } else {
         // У юзера есть более одно объекта во владении. Нужно предоставить ему выбор.
         routes.MarketLk.lkList()

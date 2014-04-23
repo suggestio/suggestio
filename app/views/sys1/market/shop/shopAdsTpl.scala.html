@@ -11,7 +11,7 @@
 
 @thisShopBase("Рекламные карточки", mshop, hPathAfter = Some(hPathAfter1)) {
   @mads.map { mad =>
-    <a href="@routes.MarketAd.editShopAd(mad.id.get)">@mad.offers.headOption.map {
+    <a href="@routes.MarketAd.editAd(mad.id.get)">@mad.offers.headOption.map {
       case prod: AOProduct => {
         @prod.vendor.value / @formatPrice(prod.price.value, prod.price.currency)
       }

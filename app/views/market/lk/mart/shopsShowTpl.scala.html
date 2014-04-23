@@ -2,8 +2,6 @@
 
 @* Страница с отображением списка магазинов. *@
 
-@import routes.MarketMartLk._
-
 @import ctx._
 @import helper._
 
@@ -17,7 +15,7 @@
 
     <div class="title-wrap">
       <div class="center">
-        <a class="back-but" href="@martShow(mmart.id.get)">&nbsp;</a>
+        <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(mmart.id.get)">&nbsp;</a>
         <div class="title-inner">
           АРЕНДАТОРЫ
         </div>
@@ -40,7 +38,7 @@
               <span class="title">
                 АРЕНДАТОРЫ
               </span>
-          <a class="green-but-big" href="@inviteShopForm(mmart.id.get)">Выдать личный кабинет</a>
+          <a class="green-but-big" href="@routes.MarketMartLk.inviteShopForm(mmart.id.get)">Выдать личный кабинет</a>
         </div>
 
         <div class="renters-list">

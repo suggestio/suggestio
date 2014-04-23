@@ -1,11 +1,12 @@
-@(node: MAdnNode, myAds: Seq[MAdT] = Nil, supervisedNodes: Seq[MAdnNode] = Nil, fallbackLogo: Option[MImgInfo] = None, sanCtx: ShowAdnNodeCtx)(implicit ctx: util.Context)
+@(node: MAdnNode, myAds: Seq[MAdT] = Nil, supervisedNodes: Seq[MAdnNode] = Nil, fallbackLogo: Option[MImgInfo] = None)(implicit ctx: util.Context)
 
 @* Заглавная страница узла рекламной сети в личном кабинете. *@
 
 @import ctx._
+@import controllers.adn.AdnShowTypes._
 
 @market.lk.lkBase(node.meta.name, adnIdOpt = node.id) {
-
+@defining(node.adn.memberType : AdnShowType) { adnShowType =>
   @helper.javascriptRouter("jsRoutes")(
     routes.javascript.MarketAd.updateShowLevelSubmit
   )
@@ -20,19 +21,19 @@
 
       @* У узла-приемника есть список входных генераторов рекламы и доступ к коду установки. *@
       @if(node.adn.isReceiver) {
-      <div class="adn-title-buttons">
-        <div class="gray-but-wrap">
-          <div class="white-border-top">
-            <a class="btn" href="@sanCtx.producersShowCall(node.id.get)">АРЕНДАТОРЫ</a>
+        <div class="adn-title-buttons">
+          <div class="gray-but-wrap">
+            <div class="white-border-top">
+              <a class="btn" href="@adnShowType.lkProducersShowCall(node.id.get)">АРЕНДАТОРЫ</a>
+            </div>
           </div>
-        </div>
 
-        <div class="gray-but-wrap">
-          <div class="white-border-top">
-            <a id="installScriptButton" class="btn" href="">КОД УСТАНОВКИ</a>
+          <div class="gray-but-wrap">
+            <div class="white-border-top">
+              <a id="installScriptButton" class="btn" href="">КОД УСТАНОВКИ</a>
+            </div>
           </div>
         </div>
-      </div>
       }
     </div>
   </div>
@@ -42,9 +43,9 @@
 
       <div class="name-wrap" style="padding-bottom: 0px;">
         <span class="name">@node.meta.name</span>
-        <a class="edit" href="@sanCtx.nodeEditCall(node.id.get)">Редактировать</a>
+        <a class="edit" href="@adnShowType.lkNodeEditCall(node.id.get)">Редактировать</a>
         @if(isSuperuser) {
-          <a class="superuser-link" href="@routes.SysMarket.martShow(node.id.get)">/sys</a>
+          <a class="superuser-link" href="@adnShowType.sysShow(node.id.get)">/sys</a>
         }
       </div>
 
@@ -112,8 +113,8 @@
         @market.lk.ad._adsEditableListTpl(
           mads = myAds,
           producer = node,
-          addCall  = sanCtx.createAdCall(node.id.get),
-          editCall = sanCtx.editAdCall,
+          addCall  = routes.MarketAd.createAd(node.id.get),
+          editCall = routes.MarketAd.editAd,
           fallbackLogo = fallbackLogo
         ) { mad =>
           @* Галочки для управления отображением рекламной карточки магазина. *@
@@ -178,4 +179,5 @@
     </ul>
   }
 
+} @* defining AdnShowType *@
 }

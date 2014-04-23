@@ -198,4 +198,18 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
       Some.apply,
       { _ getOrElse TextAlign(TextAlignPhone(""), TextAlignTablet("", "")) }
     )
+
+  /**
+   * Определить владельца категорий узла.
+   * @param adnNode Узел рекламной сети.
+   * @return id узла-владельца категорий.
+   */
+  def getCatOwnerId(adnNode: MAdnNode): String = {
+    import AdNetMemberTypes._
+    adnNode.adn.memberType match {
+      case SHOP => adnNode.adn.supId getOrElse adnNode.id.get
+      case MART => adnNode.id.get
+    }
+  }
+
 }

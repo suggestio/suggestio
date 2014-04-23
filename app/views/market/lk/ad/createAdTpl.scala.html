@@ -1,13 +1,10 @@
-@(mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], dfltOfferType: AdOfferType, backCall: Call, submitCall: Call, adnNode: MAdnNode)(implicit ctx: util.Context)
+@(mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], dfltOfferType: AdOfferType, adnNode: MAdnNode)(implicit ctx: util.Context)
 
 @* Рендер страницы с формой создания рекламы. *@
 @import ctx._
 
 
-@adFormBase(
-  title = "Создание рекламной карточки",
-  backCall = backCall
-) {
+@adFormBase("Создание рекламной карточки", adnId = adnNode.id.get) {
 
     <!--<div class="status-bar bad"></div>-->
 
@@ -17,7 +14,7 @@
 
           @_adFormTpl(
             af      = af,
-            call    = submitCall,
+            call    = routes.MarketAd.createAdSubmit(adnNode.id.get),
             btnText = Messages("Create"),
             mmcats  = mmcats,
             offerType = dfltOfferType,

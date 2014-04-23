@@ -2,7 +2,6 @@
 
 @* Шаблон отображения магазина для админа ТЦ. *@
 @import market.lk._
-@import routes.MarketMartLk._
 
 @import ctx._
 @import helper._
@@ -17,7 +16,7 @@
 
   <div class="title-wrap">
     <div class="center">
-      <a class="back-but" href="@martShow(mmart.id.get)">&nbsp;</a>
+      <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(mmart.id.get)">&nbsp;</a>
       <div class="title-inner">
         КАРТОЧКА АРЕНДАТОРА
       </div>
@@ -30,7 +29,7 @@
 
       <div class="name-wrap">
         <span class="name">@mshop.meta.name</span>
-        <a class="edit" href="@editShopForm(mshop.id.get)">Редактировать</a>
+        <a class="edit" href="@routes.MarketShopLk.editShopForm(mshop.id.get)">Редактировать</a>
       </div>
       <div class="border-line"></div>
 

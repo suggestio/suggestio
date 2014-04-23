@@ -22,7 +22,7 @@
 
           @mmarts.zipWithIndex.map { case (mmart, i) =>
 
-            <a href="@routes.MarketMartLk.martShow(mmart.id.get)" class="item">
+            <a href="@routes.MarketLkAdn.showAdnNode(mmart.id.get)" class="item">
               <span class="number">@(i+1)</span>
               <span class="name">@mmart.meta.name</span>
             </a>
@@ -35,7 +35,7 @@
         <div class="lk-list">
           @mshops.zipWithIndex.map { case (mshop, i) =>
 
-            <a href="@routes.MarketShopLk.showShop(mshop.id.get)" class="item">
+            <a href="@routes.MarketLkAdn.showAdnNode(mshop.id.get)" class="item">
               <span class="number">@(i+1)</span>
               <span class="name">@mshop.meta.name</span>
               @mshop.adn.supId.flatMap(martsMap.get).map { mmart =>

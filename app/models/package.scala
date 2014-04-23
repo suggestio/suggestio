@@ -55,7 +55,7 @@ package object models {
   type MWelcomeAd           = ym.model.MWelcomeAd
 
   val  AdOfferTypes         = ym.model.AdOfferTypes
-  type AdOfferType          = ym.model.AdOfferType
+  type AdOfferType          = AdOfferTypes.AdOfferType
 
   type AdOfferT             = ym.model.ad.AdOfferT
 

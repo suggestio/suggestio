@@ -8,7 +8,7 @@
 @thisShopBase(title=mshop.meta.name, mshop=mshop, mmartOpt=mmartOpt) {
   <h2>Магазин "@mshop.meta.name"</h2>
 
-  <p><a href="@routes.MarketShopLk.showShop(mshop.id.get)"><b>-&gt; Личный кабинет арендатора</b></a></p>
+  <p><a href="@routes.MarketLkAdn.showAdnNode(mshop.id.get)"><b>-&gt; Личный кабинет арендатора</b></a></p>
 
   <a href="@routes.SysMarket.shopEditForm(mshop.id.get)">@Messages("Edit")</a>
   <p><a href="@routes.SysMarketBilling.billingFor(mshop.id.get)">Billing</a></p>

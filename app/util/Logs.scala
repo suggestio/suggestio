@@ -13,7 +13,7 @@ import com.typesafe.scalalogging.slf4j.{Logger => MacroLogger}
 
 object PlayMacroLogsImpl {
   def getLogger(clazz: Class[_]) = {
-    val playLogger = Logger(getClass)
+    val playLogger = Logger(clazz)
     val slf4jLogger = playLogger.logger
     MacroLogger(slf4jLogger)
   }

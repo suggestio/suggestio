@@ -1,7 +1,7 @@
 package controllers.adn
 
 import scala.concurrent.Future
-import controllers.SioController
+import controllers.{routes, SioController}
 import play.api.mvc.{Call, AnyContent, Result}
 import util.acl.AbstractRequestWithPwOpt
 import models._
@@ -18,10 +18,9 @@ import util.SiowebEsUtil.client
  */
 trait AdnShowLk extends SioController {
 
-  def showAdnNodeCtx: ShowAdnNodeCtx
-
-  def renderShowAdnNode(node: MAdnNode, adnId: String, newAdIdOpt: Option[String], fallbackLogoFut: Future[Option[MImgInfo]] = Future successful None)
+  def renderShowAdnNode(node: MAdnNode, newAdIdOpt: Option[String], fallbackLogoFut: Future[Option[MImgInfo]] = Future successful None)
                        (implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[Result] = {
+    val adnId = node.id.get
     val adsFut = MAd.findForProducerRt(adnId)
     // TODO Если магазин удалён из ТЦ, то это как должно выражаться?
     // Бывает, что добавлена новая карточка. Нужно её как-то отобразить.
@@ -43,8 +42,37 @@ trait AdnShowLk extends SioController {
       } else {
         mads
       }
-      Ok(adnNodeShowTpl(node, mads2, fallbackLogo = fallbackLogo, sanCtx = showAdnNodeCtx))
+      Ok(adnNodeShowTpl(node, mads2, fallbackLogo = fallbackLogo))
     }
+  }
+
+}
+
+
+/** Расширение функционала AdNetMemberTypes для функций доступа к дополнительным данным в рамках.
+  * Пришло на смену ShowAdnNodeCtx, жившему на уровне реализаций контроллеров. */
+object AdnShowTypes extends Enumeration {
+  protected abstract case class Val(amt: AdNetMemberType) extends super.Val(amt.name) {
+    def lkNodeEditCall(adnId: String): Call
+    def lkProducersShowCall(adnId: String): Call
+    def sysShow(adnId: String): Call
+  }
+
+  type AdnShowType = Val
+
+  implicit def value2val(x: Value) = x.asInstanceOf[AdnShowType]
+  implicit def anmt2showType(x: AdNetMemberType): AdnShowType = withName(x.name)
+
+  val SHOP = new Val(AdNetMemberTypes.SHOP) {
+    override def lkNodeEditCall(adnId: String) = routes.MarketShopLk.editShopForm(adnId)
+    override def lkProducersShowCall(adnId: String) = throw new UnsupportedOperationException("mart shop cannot have producers")
+    override def sysShow(adnId: String): Call = routes.SysMarket.shopShow(adnId)
+  }
+
+  val MART = new Val(AdNetMemberTypes.MART) {
+    override def lkNodeEditCall(adnId: String) = routes.MarketMartLk.martEditForm(adnId)
+    override def lkProducersShowCall(adnId: String) = routes.MarketMartLk.shopsShow(adnId)
+    override def sysShow(adnId: String): Call = routes.SysMarket.martShow(adnId)
   }
 
 }

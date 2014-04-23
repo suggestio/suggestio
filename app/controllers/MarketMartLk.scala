@@ -29,7 +29,7 @@ import controllers.adn.AdnShowLk
  * Description: Личный кабинет для sio-маркета. Тут управление торговым центром и магазинами в нём.
  */
 object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport
-with ShopMartCompat with AdnShowLk {
+with ShopMartCompat {
 
   import LOGGER._
 
@@ -124,24 +124,6 @@ with ShopMartCompat with AdnShowLk {
   }
 
 
-  val showAdnNodeCtx = new ShowAdnNodeCtx {
-    override def nodeEditCall(adnId: String): Call = routes.MarketMartLk.martEditForm(adnId)
-    override def producersShowCall(adnId: String): Call = routes.MarketMartLk.shopsShow(adnId)
-    override def createAdCall(adnId: String): Call = routes.MarketAd.createMartAd(adnId)
-    override def editAdCall(adId: String): Call = routes.MarketAd.editMartAd(adId)
-  }
-
-  /**
-   * Рендер раздачи страницы с личным кабинетом торгового центра.
-   * @param martId id ТЦ
-   * @param newAdIdOpt Запрошено отображение для указанной карточки в реальном времени. Необходимо, если новая карточка
-   *                была добавлена на предыдущей странице.
-   */
-  def martShow(martId: String, newAdIdOpt: Option[String]) = IsMartAdmin(martId).async { implicit request =>
-    renderShowAdnNode(request.mmart, martId, newAdIdOpt)
-  }
-
-
   /**
    * Рендер страницы со списком арендаторов.
    * @param martId id ТЦ
@@ -224,7 +206,7 @@ with ShopMartCompat with AdnShowLk {
           mmart.logoImgOpt = savedLogos.headOption
           savedWelcomeImgsFut flatMap { _ =>
             mmart.save.map { _ =>
-              Redirect(routes.MarketMartLk.martShow(martId))
+              Redirect(routes.MarketLkAdn.showAdnNode(martId))
                 .flashing("success" -> "Изменения сохранены.")
             }
           }
@@ -296,7 +278,7 @@ with ShopMartCompat with AdnShowLk {
                 bodyText = views.txt.market.lk.mart.shop.emailShopInviteTpl(mmart, mshop=mshop, eAct)(ctx)
               )
               // Собственно, результат работы.
-              Redirect(routes.MarketMartLk.martShow(martId))
+              Redirect(routes.MarketLkAdn.showAdnNode(martId))
                 .flashing("success" -> s"Добавлен магазин: '${mshop.meta.name}'.")
             }
           }
@@ -604,7 +586,7 @@ with ShopMartCompat with AdnShowLk {
                 mmart.personIds += personId
               }
               mmart.save.map { _martId =>
-                Redirect(routes.MarketMartLk.martShow(martId))
+                Redirect(routes.MarketLkAdn.showAdnNode(martId))
                   .flashing("success" -> "Регистрация завершена.")
                   .withSession(username -> personId)
               }

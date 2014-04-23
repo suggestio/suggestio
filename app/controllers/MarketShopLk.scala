@@ -23,7 +23,7 @@ import controllers.adn.AdnShowLk
  * Description: Контроллер личного кабинета для арендатора, т.е. с точки зрения конкретного магазина.
  */
 object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForceProtect
-with LogoSupport with ShopMartCompat with AdnShowLk {
+with LogoSupport with ShopMartCompat {
 
   import LOGGER._
 
@@ -92,27 +92,6 @@ with LogoSupport with ShopMartCompat with AdnShowLk {
     "meta" -> shopMetaLimitedM,
     logoImgOptIdKM
   ))
-
-
-  val showAdnNodeCtx = new ShowAdnNodeCtx {
-    override def nodeEditCall(adnId: String): Call = routes.MarketShopLk.editShopForm(adnId)
-    override def producersShowCall(adnId: String): Call = ???
-    override def createAdCall(adnId: String): Call = routes.MarketAd.createShopAd(adnId)
-    override def editAdCall(adId: String): Call = routes.MarketAd.editShopAd(adId)
-  }
-
-  /**
-   * Рендер страницы магазина (с точки зрения арендатора: владельца магазина).
-   * @param shopId id магазина.
-   * @param newAdIdOpt Костыль для сокрытия факта асинхронного добавления рекламной карточки.
-   */
-  def showShop(shopId: String, newAdIdOpt: Option[String]) = IsShopAdm(shopId).async { implicit request =>
-    import request.mshop
-    val fallbackLogoFut = getMartByIdCache(mshop.adn.supId.get).map {
-      _.flatMap(_.logoImgOpt)
-    }
-    renderShowAdnNode(mshop, shopId, newAdIdOpt, fallbackLogoFut)
-  }
 
 
   /** Асинхронно заполнить full форму с помощью указанного магазина. */
@@ -186,7 +165,7 @@ with LogoSupport with ShopMartCompat with AdnShowLk {
         updateImgsFut.flatMap { newImgIds =>
           mshop.logoImgOpt = newImgIds.headOption
           mshop.save map { _shopId =>
-            Redirect(routes.MarketShopLk.showShop(shopId))
+            Redirect(routes.MarketLkAdn.showAdnNode(shopId))
               .flashing("success" -> "Изменения сохранены.")
           }
         }
@@ -274,7 +253,7 @@ with LogoSupport with ShopMartCompat with AdnShowLk {
             mshop.personIds = Set(personId)
             mshop.save map { _shopId =>
               trace(logPrefix + s"mshop(id=${_shopId}) saved with new owner: $personId")
-              Redirect(routes.MarketShopLk.showShop(shopId))
+              Redirect(routes.MarketLkAdn.showAdnNode(shopId))
                 .flashing("success" -> "Регистрация завершена успешно.")
                 .withSession(username -> personId)
             }

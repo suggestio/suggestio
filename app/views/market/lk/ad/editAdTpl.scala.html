@@ -1,12 +1,9 @@
-@(mad: MAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], backCall:Call, submitCall:Call, adnNode: MAdnNode)(implicit ctx: util.Context)
+@(mad: MAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], adnNode: MAdnNode)(implicit ctx: util.Context)
 
 @* Страница с формой редактирования рекламной карточки. *@
 @import ctx._
 
-@adFormBase(
-  title = "Редактирование рекламной карточки",
-  backCall = backCall
-) {
+@adFormBase("Редактирование рекламной карточки", adnId = adnNode.id.get) {
 
   @* Кнопка стирания рекламной карточки пока лежит тут. До лучших времён. *@
   <div class="popup remove-ad" id="remove-ad">
@@ -33,7 +30,7 @@
 
   @_adFormTpl(
     af = af,
-    call = submitCall,
+    call = routes.MarketAd.editAdSubmit(mad.id.get),
     btnText = Messages("Save"),
     mmcats = mmcats,
     offerType = mad.offers.head.offerType,
