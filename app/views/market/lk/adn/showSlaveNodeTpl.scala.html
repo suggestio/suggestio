@@ -1,4 +1,4 @@
-@(mmart: MAdnNode, mshop:MAdnNode, mads: Seq[MAdT])(implicit ctx:util.Context)
+@(msup: MAdnNode, mslave:MAdnNode, mads: Seq[MAdT])(implicit ctx:util.Context)
 
 @* Шаблон отображения магазина для админа ТЦ. *@
 @import market.lk._
@@ -7,9 +7,10 @@
 @import helper._
 @import market.lk.adn._node._
 @import util.acl.CanSuperviseNode._
+@import controllers.adn.AdnShowTypes._
 
-@lkBase(mshop.meta.name) {
-@defining( canSuperviseNode(supNode = mmart, slaveNode = mshop) ) { isNodeSup =>
+@lkBase(mslave.meta.name) {
+@defining( canSuperviseNode(supNode = msup, slaveNode = mslave) ) { isNodeSup =>
 
   @* Если не супервизор, то нечего тут командовать. *@
   @if(isNodeSup) {
@@ -22,7 +23,7 @@
 
   <div class="title-wrap">
     <div class="center">
-      <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(mmart.id.get)">&nbsp;</a>
+      <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(msup.id.get)">&nbsp;</a>
       <div class="title-inner">КАРТОЧКА АРЕНДАТОРА</div>
     </div>
   </div>
@@ -32,8 +33,10 @@
     <div class="shop-info">
 
       <div class="name-wrap">
-        <span class="name">@mshop.meta.name</span>
-        <a class="edit" href="@routes.MarketShopLk.editShopForm(mshop.id.get)">Редактировать</a>
+        <span class="name">@mslave.meta.name</span>
+        @mslave.adn.memberType.slaveNodeEditCall(mslave.id.get).map { call =>
+          <a class="edit" href="@call">Редактировать</a>
+        }
       </div>
       <div class="border-line"></div>
 
@@ -41,22 +44,22 @@
         <tr>
           @if(isNodeSup) {
             <td class="left">
-              @_nodeOnOffSwitcherTpl(mshop)
+              @_nodeOnOffSwitcherTpl(mslave)
             </td>
           }
-          @_nodeDescrTdTpl(mshop)
+          @_nodeDescrTdTpl(mslave)
         </tr>
       </table>
 
 
       @* Отобразить основное описание магазина с кнопкой редактирования. *@
       <div class="border-line"></div>
-      @_floorSectionTableTpl(mshop)
+      @_floorSectionTableTpl(mslave)
 
       @* Переключалка доступа к первому уровню. *@
       @if(isNodeSup) {
         <div class="border-line"></div>
-        <div>@_nodeFirstPageSwitcherTpl(mshop)</div>
+        <div>@_nodeFirstPageSwitcherTpl(mslave)</div>
       }
 
     </div>
@@ -67,8 +70,8 @@
 
       @* Каталог продукции арендатора. У карточек должны быть кнопки сокрытия объявы, неактивные карточки должны выделятся как-то. *@
       @_slaveNodeAdsTpl(
-        msup = mmart,
-        mnode = mshop,
+        msup = msup,
+        mnode = mslave,
         mads = mads
       )
 

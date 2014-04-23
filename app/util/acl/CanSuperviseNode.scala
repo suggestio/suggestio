@@ -64,3 +64,28 @@ abstract class AbstractRequestForNodeSupervision[A](request: Request[A]) extends
 case class RequestForNodeSupervision[A](slaveNode: MAdnNode, supNode: MAdnNode, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
   extends AbstractRequestForNodeSupervision(request)
 
+
+/** Просматривать прямые под-узлы может просматривать тот, кто записан в supId. */
+case class CanViewAsSlaveNode(adnId: String) extends ActionBuilder[RequestForNodeSupervision] {
+  override protected def invokeBlock[A](request: Request[A], block: (RequestForNodeSupervision[A]) => Future[Result]): Future[Result] = {
+    MAdnNodeCache.getByIdCached(adnId) flatMap {
+      case Some(mslave) if mslave.adn.supId.isDefined =>
+        val pwOpt = PersonWrapper.getFromRequest(request)
+        val supId = mslave.adn.supId.get
+        val srmFut = SioReqMd.fromPwOptAdn(pwOpt, supId)
+        IsAdnNodeAdmin.isAdnNodeAdmin(supId, pwOpt) flatMap {
+          case Some(msup) =>
+            srmFut flatMap { srm =>
+              val req1 = RequestForNodeSupervision(slaveNode = mslave, supNode = msup, request, pwOpt, srm)
+              block(req1)
+            }
+
+          case _ => onUnauth(request)
+        }
+
+      // Не возвращаем 404 для защиты от возможных (бессмысленных) сканов.
+      // None означает что или магазина нет, или ТЦ у магазина не указан (удалённый магазин, интернет-магазин).
+      case None => onUnauth(request)
+    }
+  }
+}

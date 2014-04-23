@@ -6,7 +6,7 @@
 
   <div class="item @if(i%2 == 0) {odd} else {even} @if(mnode.adn.isEnabled) {enabled}" data-shop="@mnode.id">
     <div class="left">
-      <a href="@routes.MarketMartLk.showShop(mnode.id.get)">@mnode.meta.name</a>
+      <a href="@routes.MarketLkAdn.showSlave(mnode.id.get)">@mnode.meta.name</a>
     </div>
     <div class="right">
       <span class="disable-but">Выкл</span>

@@ -2,8 +2,8 @@ package controllers
 
 import util.PlayMacroLogsImpl
 import controllers.adn.AdnShowLk
-import _root_.util.acl.{CanSuperviseNode, IsAdnNodeAdmin}
-import models.MAdnNodeCache
+import util.acl._
+import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import scala.concurrent.Future
@@ -180,4 +180,15 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with AdnShowLk {
   }
 
 
+
+  /**
+   * Отобразить страницу по магазину.
+   * @param adnId id под-узла.
+   */
+  def showSlave(adnId: String) = CanViewAsSlaveNode(adnId).async { implicit request =>
+    import request.{slaveNode, supNode}
+    MAd.findForProducer(adnId) map { mads =>
+      Ok(showSlaveNodeTpl(msup = supNode, mslave = slaveNode, mads))
+    }
+  }
 }

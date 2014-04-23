@@ -285,23 +285,12 @@ with ShopMartCompat {
         mshop.meta.floor = meta.floor
         mshop.meta.section = meta.section
         mshop.save.map { _ =>
-          Redirect(routes.MarketMartLk.showShop(shopId))
+          Redirect(routes.MarketLkAdn.showSlave(shopId))
             .flashing("success" -> "Изменения сохранены.")
         }
       }
     )
 
-  }
-
-  /**
-   * Отобразить страницу по магазину.
-   * @param shopId id магазина.
-   */
-  def showShop(shopId: String) = IsMartAdminShop(shopId).async { implicit request =>
-    import request.{mmart, mshop}
-    MAd.findForProducer(shopId) map { mads =>
-      Ok(shop.shopShowTpl(mmart, mshop, mads))
-    }
   }
 
 
@@ -364,7 +353,7 @@ with ShopMartCompat {
   /** Сабмит формы сокрытия/удаления формы. */
   def shopAdHideFormSubmit(adId: String) = IsMartAdminShopAd(adId).async { implicit request =>
     // TODO Надо поразмыслить над ответами. Вероятно, тут нужны редиректы или jsonp-команды.
-    val rdr = Redirect(routes.MarketMartLk.showShop(request.ad.producerId))
+    val rdr = Redirect(routes.MarketLkAdn.showSlave(request.ad.producerId))
     shopAdHideFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"shopAdHideFormSubmit($adId): Form bind failed: ${formatFormErrors(formWithErrors)}")
