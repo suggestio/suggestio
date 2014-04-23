@@ -11,6 +11,14 @@ import com.typesafe.scalalogging.slf4j.{Logger => MacroLogger}
  * Description: Добавить инстанс play-only логгера для текущего модуля.
  */
 
+object PlayMacroLogsImpl {
+  def getLogger(clazz: Class[_]) = {
+    val playLogger = Logger(getClass)
+    val slf4jLogger = playLogger.logger
+    MacroLogger(slf4jLogger)
+  }
+}
+
 trait Logs {
 
   protected val LOGGER = Logger(getClass)
@@ -24,12 +32,13 @@ trait LazyLogger {
 /** Аналог MacroLogsImpl, но использует плеевский генератор slf4j-логгеров. Скорее всего эквивалентен исходному логгеру.
   * Создан для проверки некоторых вещей, касающихся логгирования, потом можно будет безопасно удалить. */
 trait PlayMacroLogsImpl {
-  val LOGGER = {
-    val playLogger = Logger(getClass)
-    val slf4jLogger = playLogger.logger
-    MacroLogger(slf4jLogger)
-  }
+  val LOGGER = PlayMacroLogsImpl.getLogger(getClass)
 }
+trait PlayLazyMacroLogsImpl {
+  lazy val LOGGER = PlayMacroLogsImpl.getLogger(getClass)
+}
+
+
 
 /** trait-костыль. Подмешивается к abstract-классам из библиотек, ибо они не совместимы с play-логгером. */
 trait SioutilLogs extends LogsAbstract with Logs {

@@ -121,7 +121,7 @@ POST /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAcceptSub
 POST /m/lk/a/:adId/delete               controllers.MarketAd.deleteSubmit(adId)
 POST /m/lk/ai/temp                      controllers.MarketAd.handleAdTempLogo
 ## ЛК: Рекламные карточки: shop
-POST /m/lk/aa/:adnId/ad/preview         controllers.MarketAd.adFormPreviewSubmit(adnId)
+POST /m/lk/aa/:adnId/ad/preview         controllers.MarketAdPreview.adFormPreviewSubmit(adnId)
 GET  /m/lk/s/:shopId/ad/new             controllers.MarketAd.createShopAd(shopId)
 POST /m/lk/s/:shopId/ad/new             controllers.MarketAd.createShopAdSubmit(shopId)
 POST /m/lk/s/:shopId/logo               controllers.MarketShopLk.handleShopTempLogo(shopId)

@@ -13,16 +13,14 @@ import util.img._
 import scala.concurrent.Future
 import play.api.mvc.Request
 import play.api.Play.current
-import AOTextAlignValues.TextAlignValue
 import MMartCategory.CollectMMCatsAcc_t
 import scala.util.{Try, Failure, Success}
 import util.HtmlSanitizer.adTextFmtPolicy
-import io.suggest.ym.parsers.Price
-import io.suggest.ym.model.common
 import io.suggest.ym.model.common.AdNetMemberTypes
 import io.suggest.ym.ad.ShowLevelsUtil
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
-import io.suggest.model.MUserImgMetadata
+import controllers.ad.MarketAdFormUtil
+import MarketAdFormUtil._
 
 /**
  * Suggest.io
@@ -33,10 +31,6 @@ import io.suggest.model.MUserImgMetadata
 object MarketAd extends SioController with LogoSupport {
 
   import LOGGER._
-
-  type AdFormM = Form[(ImgIdKey, LogoOpt_t, MAd)]
-
-  type FormDetected_t = Option[(AdOfferType, AdFormM)]
 
   /** Режимы работы формы добавления рекламной карточки. Режимы перенесены в MMartAdOfferTypes. */
   object FormModes {
@@ -78,124 +72,6 @@ object MarketAd extends SioController with LogoSupport {
     def getShopFormForClass(c: AdOfferT): AdFormM = getShopForm(getForClass(c))
   }
 
-  // Есть шаблоны для шаблона скидки. Они различаются по id. Тут min и max для допустимых id.
-  val DISCOUNT_TPL_ID_MIN = current.configuration.getInt("ad.discount.tpl.id.min") getOrElse 1
-  val DISCOUNT_TPL_ID_MAX = current.configuration.getInt("ad.discount.tpl.id.max") getOrElse 6
-
-  /** Шрифт пока что характеризуется только цветом. Поэтому маппим поле цвета на шрифт. */
-  private val fontColorM = colorM
-    .transform(
-      { AOFieldFont.apply },
-      { mmAdFont: AOFieldFont => mmAdFont.color }
-    )
-
-  /** Маппим строковое поле с настройками шрифта. */
-  private def mmaStringFieldM(m : Mapping[String]) = mapping(
-    "value" -> m,
-    "color" -> fontColorM
-  )
-  { AOStringField.apply }
-  { AOStringField.unapply }
-
-  /** Маппим числовое (Float) поле. */
-  private def mmaFloatFieldM(m: Mapping[Float]) = mapping(
-    "value" -> m,
-    "color" -> fontColorM
-  )
-  { AOFloatField.apply }
-  { AOFloatField.unapply }
-
-  /** Поле с ценой. Является вариацией float-поля. */
-  private val mmaPriceM = mapping(
-    "value" -> priceStrictM,
-    "color" -> fontColorM
-  )
-  {case ((rawPrice, price), font) =>
-    AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font) }
-  {mmadp =>
-    import mmadp._
-    Some((orig, Price(value, currency)), font)
-  }
-
-  /** Поле с необязательной ценой. Является вариацией float-поля. Жуткий говнокод. */
-  private val mmaPriceOptM = mapping(
-    "value" -> optional(priceStrictM),
-    "color" -> fontColorM
-  )
-  {(pricePairOpt, font) =>
-    pricePairOpt.map { case (rawPrice, price) =>
-      AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font)
-    }
-  }
-  {_.map { mmadp =>
-    import mmadp._
-    (Some(orig -> Price(value, currency)), font)
-  }}
-
-
-  /** Маппим необязательное Float-поле. */
-  private def mmaFloatFieldOptM(m: Mapping[Float]) = mapping(
-    "value" -> optional(m),
-    "color" -> fontColorM
-  )
-  {(valueOpt, color) =>
-    valueOpt map { AOFloatField(_, color) }
-  }
-  {_.map { mmaff =>
-    (Option(mmaff.value), mmaff.font)
-  }}
-
-
-  // Мапперы для textAlign'ов
-  /** Какие-то данные для text-align'a. */
-  val textAlignRawM = nonEmptyText(maxLength = 16)
-    .transform(strTrimSanitizeLowerF, strIdentityF)
-    .transform[Option[TextAlignValue]](
-      { AOTextAlignValues.maybeWithName },
-      { tavOpt => tavOpt.map(_.toString) getOrElse "" }
-    )
-    .verifying("text.align.value.invalid", { _.isDefined })
-    // Переводим результаты обратно в строки для более надежной работы reflections в TA-моделях.
-    .transform(
-      _.get.toString,
-      { AOTextAlignValues.maybeWithName }
-    )
-
-  /** Маппинг для textAlign.phone -- параметры размещения текста на экране телефона. */
-  val taPhoneM = textAlignRawM
-    .transform[common.TextAlignPhone](
-      { TextAlignPhone.apply },
-      { taPhone => taPhone.align }
-    )
-
-  /** Маппинг для textAlign.tablet -- параметров размещения текста на планшете. */
-  val taTabletM = mapping(
-    "top"    -> textAlignRawM,
-    "bottom" -> textAlignRawM
-  )
-  { TextAlignTablet.apply }
-  { TextAlignTablet.unapply }
-
-  /** Маппинг для всего textAlign. */
-  val textAlignM = mapping(
-    "phone"  -> taPhoneM,
-    "tablet" -> taTabletM
-  )
-  { TextAlign.apply }
-  { TextAlign.unapply }
-
-
-  private val VENDOR_MAXLEN = 32
-
-  /** apply() для product-маппингов. */
-  private def adProductMApply(vendor: AOStringField, price: AOPriceField, oldPrice: Option[AOPriceField]) = {
-    AOProduct.apply(vendor, price, oldPrice)
-  }
-
-  /** unapply() для product-маппингов. */
-  private def adProductMUnapply(adProduct: AOProduct) = {
-    Some((adProduct.vendor, adProduct.price, adProduct.oldPrice))
-  }
 
   // Общие для ad-форм мапперы закончились. Пора запилить сами формы и формоспецифичные элементы.
   val adProductM = mapping(
@@ -206,8 +82,6 @@ object MarketAd extends SioController with LogoSupport {
   { adProductMApply }
   { adProductMUnapply }
 
-
-  private val DISCOUNT_TEXT_MAXLEN = 256
 
   /** Кусок формы, ориентированный на оформление скидочной рекламы. */
   val adDiscountM = {
@@ -230,7 +104,6 @@ object MarketAd extends SioController with LogoSupport {
     { AODiscount.unapply }
   }
 
-  private val AD_TEXT_MAXLEN = 256
   /** Форма для задания текстовой рекламы. */
   val adTextM = {
     val textM = nonEmptyText(maxLength = 200)
@@ -246,51 +119,12 @@ object MarketAd extends SioController with LogoSupport {
 
 
   // Дублирующиеся куски маппина выносим за пределы метода.
-  private val CAT_ID_K = "catId"
-  private val AD_IMG_ID_K = "image_key"
+  val CAT_ID_K = "catId"
+  val AD_IMG_ID_K = "image_key"
 
-  private val panelColorM = colorM
-    .transform(
-      { AdPanelSettings.apply },
-      { mmaps: common.AdPanelSettings => mmaps.color }
-    )
-  private val PANEL_COLOR_K = "panelColor"
-  private val OFFER_K = "offer"
-  private val textAlignKM = "textAlign" -> textAlignM
-    .transform[Option[common.TextAlign]](
-      Some.apply,
-      { _ getOrElse TextAlign(TextAlignPhone(""), TextAlignTablet("", "")) }
-    )
-
-
-  /** apply-функция для формы добавления/редактировать рекламной карточки.
-    * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  private def adFormApply[T <: AdOfferT](userCatId: Option[String], panelSettings: common.AdPanelSettings, adBody: T, textAlignOpt: Option[TextAlign]): MAd = {
-    MAd(
-      producerId  = null,
-      offers      = List(adBody),
-      img         = null,
-      panel       = Some(panelSettings),
-      userCatId   = userCatId,
-      textAlign   = textAlignOpt
-    )
-  }
-
-  /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
-  private def adFormUnapply[T <: AdOfferT](mmad: MAd) = {
-    import mmad._
-    if (panel.isDefined && userCatId.isDefined && !offers.isEmpty) {
-      val adBody = offers.head.asInstanceOf[T]
-      Some((userCatId, panel.get, adBody, textAlign))
-    } else {
-      warn("Unexpected ad object received into ad-product form: " + mmad)
-      None
-    }
-  }
 
   private val shopCatIdKM = CAT_ID_K -> userCatIdOptM.verifying(_.isDefined)
 
-  private val panelColorKM = PANEL_COLOR_K -> panelColorM
 
   val AD_TEMP_LOGO_MARKER = "adLogo"
   private val ad2ndLogoImgIdOptKM = ImgFormUtil.getLogoKM("ad.logo.invalid", marker=AD_TEMP_LOGO_MARKER)
@@ -307,7 +141,7 @@ object MarketAd extends SioController with LogoSupport {
     )(adFormApply[T])(adFormUnapply[T])
   ))
 
-  private val shopAdProductFormM  = getShopAdFormM(adProductM)
+  val shopAdProductFormM  = getShopAdFormM(adProductM)
   private val shopAdDiscountFormM = getShopAdFormM(adDiscountM)
   private val shopAdTextFormM     = getShopAdFormM(adTextM)
 
@@ -925,234 +759,6 @@ object MarketAd extends SioController with LogoSupport {
   private def shopNotFound(shopId: String) = NotFound("Shop not found: " + shopId)
   private def martNotFound(martId: String) = NotFound("Mart not found: " + martId)
 
-
-  // ================================== preview-фунционал ========================================
-
-  /** Объект, содержащий дефолтовые значения для preview-формы. Нужен для возможности простого импорта значений
-    * в шаблон формы и для изоляции области видимости от другого кода. */
-  object PreviewFormDefaults {
-    /** Дефолтовый id картинки, когда она не задана. */
-    val IMG_ID = "TODO_IMG_ID"   // TODO Нужен id для дефолтовой картинки.
-
-    val TEXT_COLOR = "000000"
-    val TEXT_FONT  = AOFieldFont(TEXT_COLOR)
-    
-    object Product {
-      val PRICE_VALUE = Price(100F)
-      val OLDPRICE_VALUE = Price(200F)
-    }
-
-    object Discount {
-      val TPL_ID    = DISCOUNT_TPL_ID_MIN
-      val DISCOUNT  = 50F
-    }
-
-    object Text {
-      val TEXT = "Пример текста"
-    }
-  }
-
-
-  private val prevCatIdKM = CAT_ID_K -> optional(userCatIdM)
-  /** Генератор preview-формы. Форма совместима с основной формой, но более толерантна к исходным данным. */
-  private def getPreviewAdFormM[T <: AdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
-    AD_IMG_ID_K -> default(
-      mapping = imgIdJpegM,
-      value = OrigImgIdKey(PreviewFormDefaults.IMG_ID)
-    ),
-    LOGO_IMG_ID_K -> optional(ImgFormUtil.logoImgIdM(imgIdM)),
-    "ad" -> mapping(
-      prevCatIdKM,
-      panelColorKM,
-      OFFER_K -> offerM,
-      textAlignKM
-    )(adFormApply[T])(adFormUnapply[T])
-  ))
-
-  // offer-mapping'и
-  /** Толерантный к значениям маппинг для рекламной карточки продукта с ценой. */
-  private def previewProductM(vendorDflt: String) = {
-    mapping(
-      "vendor"    -> default(
-        mapping = mmaStringFieldM(
-          text.transform(
-            strTrimSanitizeF andThen { vendor =>
-              if(vendor.isEmpty)
-                vendorDflt
-              else if (vendor.length > VENDOR_MAXLEN)
-                vendor.substring(0, VENDOR_MAXLEN)
-              else vendor
-            },
-            strIdentityF
-          )
-        ),
-        value = AOStringField(vendorDflt, PreviewFormDefaults.TEXT_FONT)
-      ),
-
-      "price" -> mapping(
-        "value" -> priceM,
-        "color" -> fontColorM
-      )
-      {case ((rawPrice, priceOpt), font) =>
-        val price = priceOpt getOrElse PreviewFormDefaults.Product.PRICE_VALUE
-        AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font)
-      }
-      {mmadp =>
-        import mmadp._
-        Some((orig, Some(Price(value, currency))), font)
-      },
-
-      "oldPrice" -> mmaPriceOptM
-    )
-    { adProductMApply }
-    { adProductMUnapply }
-  }
-
-
-  /** Кусок формы, ориентированный на оформление скидочной рекламы. */
-  private val previewAdDiscountM = {
-    val discountTextM = text(maxLength = 2 * DISCOUNT_TEXT_MAXLEN)
-      .transform(
-        strTrimSanitizeF andThen {s: String => if (s.length > DISCOUNT_TEXT_MAXLEN) s.substring(0, DISCOUNT_TEXT_MAXLEN) else s},
-        strIdentityF
-      )
-    val tplM = mapping(
-      "id"    -> default(
-        mapping = number(min = DISCOUNT_TPL_ID_MIN, max = DISCOUNT_TPL_ID_MAX),
-        value   = PreviewFormDefaults.Discount.TPL_ID
-      ),
-      "color" -> default(colorM, "ce2222")
-    )
-    { AODiscountTemplate.apply }
-    { AODiscountTemplate.unapply }
-    // Собираем итоговый маппинг для MMartAdDiscount.
-    mapping(
-      "text1"     -> optional(mmaStringFieldM(discountTextM)),
-      "discount"  -> {
-        val discountTolerantM = percentM.transform[Float](
-          {case (_, pcOpt) => pcOpt getOrElse PreviewFormDefaults.Discount.DISCOUNT },
-          {pc => adhocPercentFmt(pc) -> Some(pc) }
-        )
-        mmaFloatFieldOptM(discountTolerantM).transform(
-          {dcOpt => dcOpt getOrElse AOFloatField(PreviewFormDefaults.Discount.DISCOUNT, PreviewFormDefaults.TEXT_FONT) },
-          {dc: AOFloatField => Some(dc) }
-        )
-      },
-      "template"  -> tplM,
-      "text2"     -> optional(mmaStringFieldM(discountTextM))
-    )
-    { AODiscount.apply }
-    { AODiscount.unapply }
-  }
-
-
-  /** Форма для задания текстовой рекламы. */
-  private val previewAdTextM = {
-    val textM = default(
-      mapping = text
-        .transform({ adTextFmtPolicy.sanitize }, strIdentityF)
-        .transform(
-          { s => if (s.length > AD_TEXT_MAXLEN) s.substring(0, AD_TEXT_MAXLEN) else s},
-          strIdentityF
-        ),
-      value = PreviewFormDefaults.Text.TEXT
-    )
-    mapping(
-      "text" -> mmaStringFieldM(textM)
-    )
-    { AOText.apply }
-    { AOText.unapply }
-  }
-
-
-  private def previewAdProductFormM(vendorDflt: String) = getPreviewAdFormM(previewProductM(vendorDflt))
-  private val previewAdDiscountFormM = getPreviewAdFormM(previewAdDiscountM)
-  private val previewAdTextFormM = getPreviewAdFormM(previewAdTextM)
-
-  /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
-  private def detectAdPreviewForm(vendorDflt: String)(implicit request: Request[collection.Map[String, Seq[String]]]): Either[AdFormM, (AdOfferType, AdFormM)] = {
-    val adModes = request.body.get("ad.offer.mode") getOrElse Nil
-    adModes.headOption.flatMap { adModeStr =>
-      AdOfferTypes.maybeWithName(adModeStr)
-    } map { adMode =>
-      val adForm = adMode match {
-        case AdOfferTypes.PRODUCT  => previewAdProductFormM(vendorDflt)
-        case AdOfferTypes.DISCOUNT => previewAdDiscountFormM
-        case AdOfferTypes.TEXT     => previewAdTextFormM
-      }
-      adMode -> adForm
-    } match {
-      case Some(result) =>
-        Right(result)
-
-      case None =>
-        warn("detectAdForm(): valid AD mode not present in request body. AdModes found: " + adModes)
-        val form = shopAdProductFormM.withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
-        Left(form)
-    }
-  }
-
-  import views.html.market.showcase._single_offer
-
-  def adFormPreviewSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
-    import request.adnNode
-    detectAdPreviewForm(adnNode.meta.name) match {
-      case Right((offerType, adFormM)) =>
-        adFormM.bindFromRequest().fold(
-          {formWithErrors =>
-            debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))
-            NotAcceptable("Preview form bind failed.")
-          },
-          {case (iik, logoOpt, mad) =>
-            val fallbackLogoOptFut: Future[Option[MImgInfo]] = adnNode.adn.supId match {
-              case Some(supId) =>
-                MAdnNodeCache.getByIdCached(supId) map {
-                  _.flatMap(_.logoImgOpt)
-                }
-              case None => Future successful None
-            }
-            val imgMetaFut = previewPrepareImgMeta(iik)
-            mad.logoImgOpt = logoOpt
-            mad.producerId = adnId
-            for {
-              imgMeta <- imgMetaFut
-              fallbackLogoOpt <- fallbackLogoOptFut
-            } yield {
-              mad.img = MImgInfo(iik.key, meta = imgMeta)
-              Ok(_single_offer(mad, adnNode, fallbackLogo = fallbackLogoOpt ))
-            }
-          }
-        )
-
-      case Left(formWithGlobalError) =>
-        NotAcceptable("Form mode invalid")
-    }
-  }
-
-  /** Награбить метаданные по картинке для генерации превьюшки. */
-  private def previewPrepareImgMeta(iik: ImgIdKey): Future[Option[MImgInfoMeta]] = {
-    iik match {
-      case tiik: TmpImgIdKey =>
-        Future successful ImgFormUtil.getMetaForTmpImgCached(tiik)
-      case oiik: OrigImgIdKey if oiik.meta.isDefined =>
-        Future successful oiik.meta
-      case oiik: OrigImgIdKey =>
-        // Метаданных нет, но данные уже в базе. Надо бы прочитать метаданные из таблицы
-        MUserImgMetadata.getById(oiik.key) map { muimOpt =>
-          muimOpt.flatMap { muim =>
-            muim.md.get("w").flatMap { widthStr =>
-              muim.md.get("h").map { heightStr =>
-                MImgInfoMeta(height = heightStr.toInt, width = widthStr.toInt)
-              }
-            }
-          }
-        } recover {
-          case ex: Exception =>
-            error(s"previewPrepareImgMeta($iik): Failed to fetch img metadata from hbase", ex)
-            None
-        }
-    }
-  }
 
 }
 
