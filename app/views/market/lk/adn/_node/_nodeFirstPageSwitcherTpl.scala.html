@@ -1,0 +1,28 @@
+@(mnode: MAdnNode)(implicit ctx: util.Context)
+
+<div class="white-board" style="margin: 20px 0;">
+  <div class="white-border-top">
+    <div class="gray-border-bottom">
+
+      @defining(mnode.adn.showLevelsInfo.canOutAtLevel(AdShowLevels.LVL_START_PAGE)) { hasTopLevelAccess =>
+        <div class="first-page-triger">
+          <table>
+            <tr>
+              <td class="left">Первая<br/>страница</td>
+              <td class="right">
+                <div class="triger-wrap @if(hasTopLevelAccess) {enabled}" id="first-page-triger" data-shop="@mnode.id.get">
+                  <span class="disable-but">Выкл</span>
+                  <div class="triger">
+                    <div class="circle"></div>
+                  </div>
+                  <span class="enable-but">Вкл</span>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </div>
+      }
+
+    </div>
+  </div>
+</div><!-- .white-board end-->

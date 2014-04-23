@@ -1,0 +1,22 @@
+@(node: MAdnNode)(implicit ctx: util.Context)
+
+@* Рендер плашки с номером этажа и секции. *@
+
+<table class="block">
+  <tr>
+    <td class="left">
+      <div class="shop-floor" style="padding-left: 30px;">
+        @node.meta.floor.map { floor =>
+          @floor&nbsp;этаж
+        }
+      </div>
+    </td>
+
+    <td class="right">
+      <div class="shop-section">
+        <span class="name">Секция:</span>
+        <span class="value">@node.meta.section</span>
+      </div>
+    </td>
+  </tr>
+</table>

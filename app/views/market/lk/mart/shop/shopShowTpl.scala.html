@@ -5,21 +5,20 @@
 
 @import ctx._
 @import helper._
+@import market.lk.adn._node._
 
 @lkBase(mshop.meta.name) {
 
-@helper.javascriptRouter("jsRoutes")(
-  routes.javascript.MarketMartLk.shopOnOffForm,
-  routes.javascript.MarketMartLk.shopOnOffSubmit,
-  routes.javascript.MarketMartLk.setShopTopLevelAvailable
-)
+  @helper.javascriptRouter("jsRoutes")(
+    routes.javascript.MarketMartLk.shopOnOffForm,
+    routes.javascript.MarketMartLk.shopOnOffSubmit,
+    routes.javascript.MarketMartLk.setShopTopLevelAvailable
+  )
 
   <div class="title-wrap">
     <div class="center">
       <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(mmart.id.get)">&nbsp;</a>
-      <div class="title-inner">
-        КАРТОЧКА АРЕНДАТОРА
-      </div>
+      <div class="title-inner">КАРТОЧКА АРЕНДАТОРА</div>
     </div>
   </div>
 
@@ -36,23 +35,7 @@
       <table class="block">
         <tr>
           <td class="left">
-
-            <div class="big-triger-wrap">
-              <div class="title">Личный кабинет:</div>
-              <div class="white-board" style="margin-bottom: 5px;">
-                <div class="white-border-top">
-                  <div class="gray-border-bottom">
-                    <div class="big-triger @if(mshop.adn.isEnabled) {enabled}" data-shop="@mshop.id.get" id="shop-control">
-                      <span class="disable-but">Выкл</span>
-                      <div class="triger">
-                        <div class="circle"></div>
-                      </div>
-                      <span class="enable-but">Вкл</span>
-                    </div>
-                  </div>
-              </div><!-- .white-board end-->
-            </div>
-
+            @_nodeOnOffSwitcherTpl(mshop)
           </td>
           <td class="right">
             <div class="shop-descr">
@@ -65,37 +48,12 @@
 
 
       @* Отобразить основное описание магазина с кнопкой редактирования. *@
-      @shop._shopShowTpl(
-        mshop = mshop,
-        editCall = routes.MarketMartLk.editShopForm(mshop.id.get)
-      )
+      <div class="border-line"></div>
+      @market.lk.adn._node._floorSectionTableTpl(mshop)
+      <div class="border-line"></div>
 
-      @defining(mshop.adn.showLevelsInfo.canOutAtLevel(AdShowLevels.LVL_START_PAGE)) { hasTopLevelAccess =>
       <div>
-        <div class="white-board" style="margin: 20px 0;">
-          <div class="white-border-top">
-            <div class="gray-border-bottom">
-
-              <div class="first-page-triger">
-                <table>
-                  <td class="left">
-                    Первая<br/>страница
-                  </td>
-                  <td class="right">
-                    <div class="triger-wrap @if(hasTopLevelAccess) {enabled}" id="first-page-triger" data-shop="@mshop.id.get">
-                      <span class="disable-but">Выкл</span>
-                      <div class="triger">
-                        <div class="circle"></div>
-                      </div>
-                      <span class="enable-but">Вкл</span>
-                    </div>
-                  </td>
-                </table>
-              </div>
-
-            </div>
-          </div>
-        </div><!-- .white-board end-->
+        @_nodeFirstPageSwitcherTpl(mshop)
       </div>
 
     </div>
@@ -105,19 +63,13 @@
       <span class="title">Рекламные плакаты</span>
 
       @* Каталог продукции арендатора. У карточек должны быть кнопки сокрытия объявы, неактивные карточки должны выделятся как-то. *@
-        @mads.zipWithIndex.map { case (mad, i) =>
-          @* isPublishedAt скрывает от супервизора возможность сокрыть в других карточках. Сейчас сокрыто - означает, что сокрыто в ТЦ. *@
-          <div class="item @if(!mad.isPublishedAt(mmart.id.get)) {disabled}" style="@if(i%3 != 0) {margin-left: 30px;}">
-            <div class="preview">
-              <div class="disabled-ad"></div>
-              <a class="hover tc-edit" href="@routes.MarketMartLk.shopAdHideForm(mad.id.get)">&nbsp;</a>
-              @market.showcase._single_offer(mad, mshop, fallbackLogo = mmart.logoImgOpt)
-            </div>
-          </div>
-        }
+      @_slaveNodeAdsTpl(
+        msup = mmart,
+        mnode = mshop,
+        mads = mads
+      )
 
     </div>
-    }
 
   </div>
 
