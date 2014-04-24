@@ -289,6 +289,34 @@ CbcaCommon = () ->
         $this.slideDown()
 
 
+    $('.nodes .node').each () ->
+      $(this).data('dataLoaded', false)
+
+    $(document).on 'click', '.nodes .node .toggle', (e) ->
+      e.preventDefault()
+      $this = $(this)
+      $node = $this.parent()
+
+      if($node.hasClass('open'))
+        $node.removeClass('open').next().next().slideUp()
+        $this.html('Развернуть')
+      else if($node.data('dataLoaded'))
+        $node.addClass('open').next().next().slideDown()
+        $this.html('Свернуть')
+      else
+        $.ajax(
+          type: 'GET'
+          url: $this.attr('href')
+          success: (data)->
+            $node.addClass('open').data('dataLoaded', true).next().after('<div class="ads-list small">'+data+'</div>')
+            $node.next().next().slideDown('normal', () ->  market.resize_preview_photos())
+            $this.html('Свернуть')
+          error: (error)->
+            console.log(error)
+        )
+
+
+
   self.init()
 
 #########################################################

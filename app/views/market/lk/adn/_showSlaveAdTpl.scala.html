@@ -54,7 +54,14 @@
 
 
       @* Кнопка публикации карточки на другом узле (в другом ресторане). *@
-      <a href="@routes.MarketLkAdnSlaveAd.adPublishDialog(mad.id.get)">@Messages("add.to.other." + mslave.adn.memberType)</a>
+
+      <div class="gray-but">
+        <div class="white-border-top">
+          <a href="@routes.MarketLkAdnSlaveAd.adPublishDialog(mad.id.get)">@Messages("add.to.other." + mslave.adn.memberType)</a>
+        </div>
+      </div>
+
+      <a class="blue-but-small" style="float: right;">Выключить</a>
 
     } @* if supervisor *@
 

@@ -192,9 +192,12 @@ transform(v)
     border-radius(6px)
     display: inline-block
     padding: 1px 0
+
     .white-border-top
       border-radius(6px)
       box-shadow(0 -1px 0 0 white)
+      overflow: hidden
+
       .btn
         background: none
         border: none
@@ -215,8 +218,10 @@ transform(v)
   .gray-but-wrap:active
     border: 1px solid #9a9b9b
     box-shadow(inset 0 0 40px 0 #9a9b9b)
+
     .white-border-top
       box-shadow: none
+
       .btn
         color: #676666
 
@@ -245,10 +250,13 @@ transform(v)
     outline: 0
     display: inline-block
     width: 122px
-    height: 40px
-    color: white
+    color: white !important
     cursor: pointer
     font-size: 14px
+    line-height: 14px
+    text-align: center
+    text-decoration: none
+    padding: 13px 0
     font-family: 'Arial'
     background: url('/assets/images/market/lk/blue-but.small.png') no-repeat
     background-position: 0 -180px
@@ -303,6 +311,43 @@ transform(v)
     .gray-but-small:active
       color: #dcea8
       background-position: 0 -90px
+
+  .gray-but
+    display: inline-block
+    border: 1px solid #646464
+    border-radius(6px)
+
+    .white-border-top
+      border-radius(6px)
+      border-top: 1px solid #e5e6e6
+      overflow: hidden
+      padding: 10px 25px
+      background: #9a9d9e
+
+      a
+        display: inline-block
+        text-decoration: none
+        color: white
+        text-shadow(1px 1px 1px #435f6e)
+        height: 0
+        font-family: 'Arial'
+        font-size: 14px
+  .gray-but:hover
+
+    .white-border-top
+
+      a
+        box-shadow(0 7px 20px 3px #FFFFFF)
+  .gray-but:active
+
+    .white-border-top
+      border-top: 1px solid #7f8283
+      background: #7f8283
+
+      a
+        box-shadow(none)
+        opacity: 0.6
+
 
 
   .select-file-wrap
@@ -510,10 +555,12 @@ transform(v)
     border-radius(6px)
     background: #efefef
     box-shadow(1px 1px 2px 0 #959595)
+
     .white-border-top
       border-radius(6px)
       box-shadow(0 -2px 0 0 white)
       overflow: hidden
+
       .gray-border-bottom
         overflow: hidden
         border-radius(6px)
@@ -595,6 +642,64 @@ transform(v)
         color: #676666
     .item:hover
       background: #efefef
+
+
+  /*
+   *  Список дочерних элементов в кабинете супервайзера
+   */
+  .nodes
+    margin-bottom: 50px
+
+    .title
+      font-size: 14px
+      font-weight: bold
+      font-family: 'Arial'
+      margin: 25px 0
+
+    .node
+      padding: 15px 10px
+      background: #dad9d9
+
+      .n-name,
+      .n-city
+        font-size: 14px
+        color: #676666
+
+      .n-expand
+        float: right
+        color: #959595
+        font-size: 12px
+        text-decoration: none
+
+      .toggle
+        float: right
+        text-decoration: none
+        display: inline-block
+        font-size: 12px
+        line-height: 14px
+        font-family: 'Arial'
+        color: #959595
+        padding-right: 20px
+        background: url('/assets/images/market/lk/angle.png') no-repeat
+        background-position: right -115px
+      .toggle:hover
+        color: #5088aa
+        background-position: right 3px
+      .toggle:active
+        margin-top: 1px
+
+    .node.open
+      background: #efefef
+
+      .toggle
+        background-position: right -176px
+      .toggle:hover
+        color: #5088aa
+        background-position: right -58px
+
+    .ads-list
+      display: none
+      padding-top: 30px
 
 
 
