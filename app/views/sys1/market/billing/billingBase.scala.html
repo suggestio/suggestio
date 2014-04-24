@@ -4,7 +4,7 @@
 
 @hPathAfter1 = {
   @nodeOpt.map { node =>
-    / <a href="@routes.SysMarket.adnRdr(node.id.get)" title="@node.adn.memberType / @node.meta.town">@node.meta.name</a>
+    / <a href="@routes.SysMarket.showAdnNode(node.id.get)" title="@node.adn.memberType / @node.meta.town">@node.meta.name</a>
   }
   @hPathAfter.getOrElse {
     / @title

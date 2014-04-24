@@ -3,7 +3,7 @@
 @* Страница с формой редактирования пользовательской категории. *@
 @import ctx._
 
-@userCatBase(mmcat.name + " " + Messages("Edit")) {
+@userCatBase(mmcat.name + " " + Messages("Edit"), adnId = mmcat.ownerId) {
   <p>@Messages("Edit") категории <a href="@routes.MarketCategory.showUserCat(mmcat.id.get)">@mmcat.name</a>.</p>
   @parentOpt.map { parent =>
     <p>Родительская категория: <a href="@routes.MarketCategory.showUserCat(parent.id.get)">@parent.name</a>.</p>

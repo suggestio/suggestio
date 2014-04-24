@@ -864,21 +864,5 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     }
   }
 
-
-  /** Из-за зоопарка разделов в /sys/ нужно куда-то редиректить админов при наличии adnId.
-    * Тут редиректилка, которая отправит админа куда надо на основе adnId. */
-  def adnRdr(adnId: String) = IsSuperuser.async { implicit request =>
-    MAdnNodeCache.getByIdCached(adnId) map {
-      case Some(node) =>
-        import AdNetMemberTypes._
-        val rdrCall = node.adn.memberType match {
-          case MART => routes.SysMarket.martShow(node.id.get)
-          case SHOP => routes.SysMarket.shopShow(node.id.get)
-        }
-        Redirect(rdrCall)
-
-      case None => NotFound("Adn node not found: " + adnId)
-    }
-  }
 }
 

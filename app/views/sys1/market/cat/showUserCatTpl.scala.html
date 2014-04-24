@@ -2,7 +2,7 @@
 
 @* Отображение пользовательской категории *@
 
-@userCatBase(mmcat.name) {
+@userCatBase(mmcat.name, adnId = mmcat.ownerId) {
 
   <p>Название: <b>@mmcat.name</b></p>
   <p>YM-категория: <span title="ymCatId = @ymCat.id">@ymCat.name</span> :: @if(mmcat.ymCatPtr.inherit) {+наследовать подкатегории}</p>

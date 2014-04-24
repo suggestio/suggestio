@@ -30,7 +30,7 @@
               <span title="Договор от @mbc.printContractDate">@mbc.legalContractId</span>
             }</td>
             <td>@mbcOpt.map(_.adnId).flatMap(adns.get).map { adnNode =>
-              <a href="@routes.SysMarket.adnRdr(adnNode.id.get)">@adnNode.meta.name / @adnNode.meta.town</a>
+              <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name / @adnNode.meta.town</a>
             }</td>
           }
         </tr>

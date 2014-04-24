@@ -4,7 +4,7 @@
 @import org.apache.commons.lang3.StringUtils.leftPad
 @import helper._
 
-@userCatBase("Категории") {
+@userCatBase("Категории", adnId = ownerId) {
   <h2>Управление деревом</h2>
   <a href="@routes.MarketCategory.addUserCatForm(Some(ownerId), parentId = None)">Создать новую категорию верхнего уровня</a>
 
