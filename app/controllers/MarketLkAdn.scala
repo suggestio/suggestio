@@ -1,7 +1,6 @@
 package controllers
 
 import util.PlayMacroLogsImpl
-import controllers.adn.AdnShowLk
 import util.acl._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -23,7 +22,7 @@ import io.suggest.ym.model.common.AdShowLevels
  * Created: 23.04.14 11:18
  * Description: Унифицированные части личного кабинета.
  */
-object MarketLkAdn extends SioController with PlayMacroLogsImpl with AdnShowLk {
+object MarketLkAdn extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -43,12 +42,36 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with AdnShowLk {
 
       case None => Future successful None
     }
+    // TODO Вернуть проверку на супервайзинг узла, когда всё необходимое будет запилено.
     val slavesFut: Future[Seq[MAdnNode]] = //if(request.adnNode.adn.isSupervisor) {
       MAdnNode.findBySupId(adnId)
     //} else {
     //  Future successful Nil
     //}
-    renderShowAdnNode(adnNode, newAdIdOpt, slavesFut, fallbackLogoFut)
+    val adsFut = MAd.findForProducerRt(adnId)
+    // Бывает, что добавлена новая карточка (но индекс ещё не сделал refresh). Нужно её найти и отобразить:
+    val extAdOptFut = newAdIdOpt match {
+      case Some(newAdId) => MAd.getById(newAdId)
+        .map { _.filter { mad =>
+        mad.producerId == adnId  ||  mad.receivers.valuesIterator.exists(_.receiverId == adnId)
+      } }
+      case None => Future successful None
+    }
+    // Дождаться всех фьючерсов и отрендерить результат.
+    for {
+      mads      <- adsFut
+      extAdOpt  <- extAdOptFut
+      fallbackLogo <- fallbackLogoFut
+      slaves    <- slavesFut
+    } yield {
+      // Если есть карточка в extAdOpt, то надо добавить её в начало списка, который отсортирован по дате создания.
+      val mads2 = if (extAdOpt.isDefined  &&  mads.headOption.flatMap(_.id) != newAdIdOpt) {
+        extAdOpt.get :: mads
+      } else {
+        mads
+      }
+      Ok(adnNodeShowTpl(adnNode, mads2, slaves, fallbackLogo))
+    }
   }
 
   
@@ -160,13 +183,13 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with AdnShowLk {
   
   /** Форма, которая используется при обработке сабмита о переключении доступности магазину функции отображения рекламы
     * на верхнем уровне ТЦ. */
-  val shopTopLevelFormM = Form(
+  private val nodeTopLevelFormM = Form(
     "isEnabled" -> boolean
   )
 
   /** Владелец ТЦ дергает за переключатель доступности top-level выдачи для магазина. */
   def setSlaveTopLevelAvailable(adnId: String) = CanSuperviseNode(adnId).async { implicit request =>
-    shopTopLevelFormM.bindFromRequest().fold(
+    nodeTopLevelFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"shopSetTopLevel($adnId): Form bind failed: ${formatFormErrors(formWithErrors)}")
         NotAcceptable("Cannot parse req body.")
