@@ -181,6 +181,7 @@ GET  /sys/market/company/:id            controllers.SysMarket.companyShow(id: St
 GET  /sys/market/adn/:adnId             controllers.SysMarket.showAdnNode(adnId)
 GET  /sys/market/adns                   controllers.SysMarket.adnNodesList
 POST /sys/market/adn/:adnId/delete      controllers.SysMarket.deleteAdnNodeSubmit(adnId)
+GET  /sys/market/adn/:adnId/ads         controllers.SysMarket.showAdnNodeAds(adnId)
 # sys.market.mart
 GET  /sys/market/marts                  controllers.SysMarket.martsList
 GET  /sys/market/mart/add/:company_id   controllers.SysMarket.martAddForm(company_id: String)
@@ -188,7 +189,6 @@ POST /sys/market/mart/add/:company_id   controllers.SysMarket.martAddFormSubmit(
 GET  /sys/market/mart/:id               controllers.SysMarket.martShow(id: String)
 GET  /sys/market/mart/:id/edit          controllers.SysMarket.martEditForm(id: String)
 POST /sys/market/mart/:id/edit          controllers.SysMarket.martEditFormSubmit(id: String)
-POST /sys/market/mart/:id/delete        controllers.SysMarket.martDeleteSubmit(id: String)
 GET  /sys/market/mart/:id/invite        controllers.SysMarket.martInviteForm(id: String)
 POST /sys/market/mart/:id/invite        controllers.SysMarket.martInviteFormSubmit(id: String)
 GET  /sys/market/mart/:id/invite/email  controllers.SysMarket.showMartEmailInvite(id, isHtml: Boolean)
@@ -199,9 +199,7 @@ POST /sys/market/shop/add               controllers.SysMarket.shopAddFormSubmit
 GET  /sys/market/shop/:id               controllers.SysMarket.shopShow(id)
 GET  /sys/market/shop/:id/edit          controllers.SysMarket.shopEditForm(id)
 POST /sys/market/shop/:id/edit          controllers.SysMarket.shopEditFormSubmit(id)
-POST /sys/market/shop/:id/delete        controllers.SysMarket.shopDeleteSubmit(id)
 GET  /sys/market/shop/:id/eact          controllers.SysMarket.showShopEmailActMsgHtml(id, isHtml: Boolean)
-GET  /sys/market/shop/:id/ads           controllers.SysMarket.showShopAds(id)
 GET  /sys/market/adn/:adnId/rdr         controllers.SysMarket.adnRdr(adnId)
 GET  /sys/market/s/ad/:adId/email       controllers.SysMarket.showShopEmailAdDisableMsg(adId, isHtml: Boolean ?= true)
 # sys.market.shop.pricelist

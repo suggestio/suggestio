@@ -189,9 +189,9 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     "name"      -> nameM,
     "town"      -> townM,
     "address"   -> martAddressM,
-    "siteUrl"   -> optional(urlStrMapper),
-    "color"     -> optional(colorM),
-    "phone"     -> optional(phoneM)
+    "siteUrl"   -> urlStrOptM,
+    "color"     -> colorOptM,
+    "phone"     -> phoneOptM
   )
   {(name, town, address, siteUrlOpt, colorOpt, phoneOpt) =>
     AdnMMetadata(
@@ -303,16 +303,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         )
 
       case None => martNotFound(martId)
-    }
-  }
-
-  /** Удалить торговый центр из системы. */
-  def martDeleteSubmit(martId: String) = IsSuperuser.async { implicit request =>
-    MAdnNode.deleteById(martId) map {
-      case false => martNotFound(martId)
-      case true =>
-        Redirect(routes.SysMarket.martsList())
-          .flashing("success" -> s"Mart $martId deleted.")
     }
   }
 
@@ -539,23 +529,12 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     }
   }
 
-  /** Админ нажал кнопку удаления магазина. Сделать это. */
-  def shopDeleteSubmit(shop_id: String) = IsSuperuser.async { implicit request =>
-    // TODO Эта логика повторяет martDeleteSubmit().
-    MAdnNode.deleteById(shop_id) map {
-      case true =>
-        Redirect(routes.SysMarket.shopsList())
-          .flashing("success" -> "Shop deleted")
-      case false => shopNotFound(shop_id)
-    }
-  }
-
 
   /* Ссылки на прайс-листы магазинов, а именно их изменение. */
 
   /** Маппинг для формы добавления/редактирования ссылок на прайс-листы. */
   val splFormM = Form(mapping(
-    "url"       -> urlStrMapper,
+    "url"       -> urlStrM,
     "username"  -> optional(text(maxLength = 64)),
     "password"  -> optional(text(maxLength = 64))
   )
@@ -665,16 +644,15 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
 
-  /** Отобразить технический список реклам магазина. */
-  def showShopAds(shopId: String) = IsSuperuser.async { implicit request =>
-    val madsFut = MAd.findForProducer(shopId)
-    val adFreqsFut = MAdStat.findAdByActionFreqs(shopId)
+  /** Отобразить технический список рекламных карточек узла. */
+  def showAdnNodeAds(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+    val madsFut = MAd.findForProducer(adnId)
+    val adFreqsFut = MAdStat.findAdByActionFreqs(adnId)
     for {
-      mshopOpt <- getShopById(shopId)
       adFreqs  <- adFreqsFut
       mads     <- madsFut
     } yield {
-      Ok(shop.shopAdsTpl(mads, mshopOpt.get, adFreqs))
+      Ok(showAdnNodeAdsTpl(mads, request.adnNode, adFreqs))
     }
   }
 

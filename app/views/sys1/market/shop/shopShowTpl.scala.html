@@ -64,8 +64,8 @@
       <a href="@routes.SysMarket.showShopEmailActMsgHtml(mshop.id.get, isHtml=true)">HTML</a>
       <a href="@routes.SysMarket.showShopEmailActMsgHtml(mshop.id.get, isHtml=false)">TXT</a>
   </p>
-  <p><a href="@routes.SysMarket.showShopAds(mshop.id.get)">Список рекламы магазина.</a></p>
+  <p><a href="@routes.SysMarket.showAdnNodeAds(mshop.id.get)">Список рекламы магазина.</a></p>
 
   <br/><br/>
-  @_shopDeleteFormTpl(mshop.id.get)
+  @stuff._deleteSmthFormBtnTpl(routes.SysMarket.deleteAdnNodeSubmit(mshop.id.get))
 }

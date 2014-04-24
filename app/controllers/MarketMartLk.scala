@@ -38,8 +38,8 @@ with ShopMartCompat {
     "name"      -> nameM,
     "town"      -> townM,
     "address"   -> martAddressM,
-    "siteUrl"   -> optional(urlStrMapper),
-    "phone"     -> optional(phoneM)
+    "siteUrl"   -> urlStrOptM,
+    "phone"     -> phoneOptM
   )
   {(name, town, address, siteUrlOpt, phoneOpt) =>
     AdnMMetadata(

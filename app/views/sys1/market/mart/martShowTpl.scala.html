@@ -45,5 +45,5 @@
   @* Кнопки для имитиации добавления/удаления уже существующего ТЦ. Потом надо будет их наверное удалить или запретить их трогать через доп.ACL. *@
   <br/><br/>
   <h3>Команды</h3>
-  @_martDeleteFormTpl(mmart.id.get)
+  @stuff._deleteSmthFormBtnTpl(routes.SysMarket.deleteAdnNodeSubmit(mmart.id.get))
 }

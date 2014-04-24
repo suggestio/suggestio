@@ -99,6 +99,7 @@ object FormUtil {
   /** Маппер для поля, содержащего код цвета. */
   // TODO Нужно добавить верификацию тут какую-то. Например через YmColors.
   val colorM = nonEmptyText(minLength = 6, maxLength = 6)
+  val colorOptM = optional(colorM)
 
   val publishedTextM = text(maxLength = 2048)
     .transform(strFmtTrimF, strIdentityF)
@@ -116,6 +117,7 @@ object FormUtil {
 
   // TODO Нужен нормальный валидатор телефонов.
   val phoneM = nonEmptyText(minLength = 5, maxLength = 16)
+  val phoneOptM = optional(phoneM)
 
   def martAddressM = addressM
 
@@ -124,12 +126,13 @@ object FormUtil {
   def list2OptListF[T] = { l:List[T] =>  if (l.isEmpty) None else Some(l) }
 
   /** Маппер form-поля URL в строку URL */
-  val urlStrMapper = nonEmptyText(minLength = 8)
+  val urlStrM = nonEmptyText(minLength = 8)
     .transform(strTrimF, strIdentityF)
     .verifying("mappers.url.invalid_url", isValidUrl(_))
+  val urlStrOptM = optional(urlStrM)
 
   /** Маппер form-поля с ссылкой в java.net.URL. */
-  val urlMapper = urlStrMapper
+  val urlMapper = urlStrM
     .transform(new URL(_), {url:URL => url.toExternalForm})
 
   /** Проверить ссылку на возможность добавления сайта в индексацию. */

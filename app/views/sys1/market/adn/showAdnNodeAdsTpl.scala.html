@@ -1,4 +1,4 @@
-@(mads: Seq[MAdT], mshop: MAdnNode, adFreqs: AdFreqs_t)(implicit ctx: util.Context)
+@(mads: Seq[MAdT], adnNode: MAdnNode, adFreqs: AdFreqs_t)(implicit ctx: util.Context)
 
 @* Список реклам и сервисных функций. *@
 @import AdStatActions._
@@ -6,10 +6,11 @@
 @import AdStatActions._
 
 @hPathAfter1 = {
+  / <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
   / Реклама
 }
 
-@thisShopBase("Рекламные карточки", mshop, hPathAfter = Some(hPathAfter1)) {
+@adnBase("Рекламные карточки", hPathAfter = Some(hPathAfter1)) {
   @mads.map { mad =>
     <a href="@routes.MarketAd.editAd(mad.id.get)">@mad.offers.headOption.map {
       case prod: AOProduct => {
@@ -39,7 +40,7 @@
       }
     </p>
     @Seq(View -> "просмотра", Click -> "клика").map { case (asa, txt) =>
-      @helper.form(routes.Market.adStats(martId = mshop.adn.supId.get, adId = mad.id.get, action = asa.toString)) {
+      @helper.form(routes.Market.adStats(martId = adnNode.adn.supId.get, adId = mad.id.get, action = asa.toString)) {
         <input type="submit" value="Имитация @txt"/>
       }
     }

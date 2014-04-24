@@ -74,7 +74,24 @@
   }
 
   <br/>
+  <h3>Участие в рекламной сети</h3>
+  Права: @adnNode.adn.rights.map(_.longName)<br/>
+  @if(!adnNode.adn.producerIds.isEmpty) {
+    producerIds = @adnNode.adn.producerIds.toSeq.zipWithIndex.map { case (producerId, i) =>
+      <a href="@routes.SysMarket.showAdnNode(producerId)">@i</a>
+    }
+    <br/>
+  }
+  @* TODO Надо бы отображать как-то showLevelsInfo. *@
+  isEnabled = @adnNode.adn.isEnabled<br/>
+  @adnNode.adn.disableReason.map { dr =>
+    disableReason = @dr<br/>
+  }
+
+
+  <br/>
   <h3>Управление</h3>
+  <a href="@routes.SysMarket.showAdnNodeAds(adnNode.id.get)">Список рекламных карточек узла</a><br/>
   <a href="@routes.SysMarket.shopAddForm">Создать новый магазин</a><br/>
   <a href="@routes.MarketCategory.showCatsFor(adnNode.id.get)">Категории</a><br/>
   <a href="@routes.SysMarket.martInviteForm(adnNode.id.get)">Инвайты на управление ТЦ</a><br/>
