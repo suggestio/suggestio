@@ -1,0 +1,21 @@
+@(mad: MAdT, slaves: Seq[MAdnNode])(implicit ctx: util.Context)
+
+@* Диалоговое окошко, которое отображается супервизору для добавления рекламной карточки в чужую выдачу.
+   Окно содержит форму со списком узлов и форму поиска по списку. *@
+@import ctx._
+@import helper._
+
+<div>
+  @* Форма-список магазинов/ресторанов или иных узлов рекламной сети. *@
+  @form(routes.MarketLkAdnSlaveAd.adPublishDialogSubmit(mad.id.get), 'enctype -> "application/x-www-form-urlencoded") {
+    @* Список узлов. *@
+    @slaves.map { slave =>
+      <label>@slave.meta.name
+             @if(slave.meta.town.isDefined) {/} @slave.meta.town
+        <input type="checkbox" name="node" value="@slave.id.get" @if(mad.isPublishedAt(slave.id.get)) {checked}/>
+      </label>
+    }
+
+    <input type="submit" value="@Messages("Save")"/>
+  }
+</div>

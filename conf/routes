@@ -64,42 +64,26 @@ POST /admin/apply_ds/:domain            controllers.Admin.applyDomainSettings(do
 GET  /feedback                          controllers.Feedback.feedbackForm(isAsync:Boolean ?= false)
 POST /feedback                          controllers.Feedback.feedbackFormSubmit
 
-GET  /sys                               controllers.Sys.index
-GET  /sys/dkeys/all                     controllers.Sys.dkeysListAll
-GET  /sys/dkey/:dkey                    controllers.Sys.dkeyShow(dkey)
-GET  /sys/dkey/:dkey/search             controllers.Sys.dkeySearch(dkey)
-GET  /sys/addSite                       controllers.Sys.addSiteForm
-POST /sys/addSite                       controllers.Sys.addSiteFormSubmit
-POST /sys/dkey/:dkey/delete             controllers.Sys.dkeyDelete(dkey)
-POST /sys/majorRebuild                  controllers.Sys.majorRebuild
-GET  /sys/siobix/actorTree/*path        controllers.Sys.siobixActor(path: String)
-GET  /sys/siobix                        controllers.Sys.siobixIndex
-GET  /sys/siobix/rebuild                controllers.Sys.siobixRebuild
-
-GET  /sys/siobix/main/rfr/push          controllers.Sys.pushReferrerForm
-POST /sys/siobix/main/rfr/push          controllers.Sys.pushReferrerFormSubmit
-
-GET  /sys/indices                       controllers.Sys.indicesIndex
-GET  /sys/indices/active                controllers.Sys.indicesListAllActive
-GET  /sys/indices/active/:dkey/:vin     controllers.Sys.indicesShowActiveFor(dkey:String, vin:String)
-GET  /sys/indices/vin/:vin              controllers.Sys.showVin(vin)
-POST /sys/indices/downgrade/ALL         controllers.Sys.indicesDowngradeAll
-GET  /sys/inx2/ALL                      controllers.Sys.inx2AllIndices
-POST /sys/inx2/create/dflt/mart         controllers.Sys.inx2createDfltMart
 
 # Входы в личные кабинеты
 GET  /m                                 controllers.MarketLk.lkIndex
 GET  /m/lk                              controllers.MarketLk.lkList
 GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, newAdId: Option[String] ?= None)
+# Базовый супервайзинг узлов
 GET  /m/lk/adn/:adnId/slaves            controllers.MarketLkAdn.showSlaves(adnId, sortByRaw: Option[String] ?= None, isReversed: Boolean ?= false)
 POST /m/lk/adn/:adnId/search            controllers.MarketLkAdn.searchSlaves(adnId)
 GET  /m/lk/adn/slave/:adnId             controllers.MarketLkAdn.showSlave(adnId)
 GET  /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffForm(adnId)
 POST /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffSubmit(adnId)
+# Супервайзинг рекламных карточек на подчинённых узлах
 POST /m/lk/adn/slave/:adnId/set/tla     controllers.MarketLkAdn.setSlaveTopLevelAvailable(adnId)
 GET  /m/lk/adn/ad/slave/:adId           controllers.MarketLkAdnSlaveAd.showSlaveAd(adId)
 POST /m/lk/adn/ad/slave/:adId/hide      controllers.MarketLkAdnSlaveAd.slaveAdHideFormSubmit(adId)
 GET  /m/lk/adn/:adnId/_ads              controllers.MarketLkAdnSlaveAd._showSlaveAds(adnId)
+# Супервайзинг узлов: публикация рекламы на подчинённых узлах.
+GET  /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialog(adId)
+POST /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialogSubmit(adId)
+
 # Личный кабинет владельца ТЦ
 GET  /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditForm(martId: String)
 POST /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditFormSubmit(martId: String)
@@ -159,6 +143,29 @@ GET  /market/demo_website/:martId       controllers.Market.demoWebSite(martId)
 GET  /market/ads/:martId                controllers.Market.findAds(martId, a: util.qsb.AdSearch)
 POST /market/ads/:martId/stat/:adId     controllers.Market.adStats(martId, adId, action: String)
 
+
+GET  /sys                               controllers.Sys.index
+GET  /sys/dkeys/all                     controllers.Sys.dkeysListAll
+GET  /sys/dkey/:dkey                    controllers.Sys.dkeyShow(dkey)
+GET  /sys/dkey/:dkey/search             controllers.Sys.dkeySearch(dkey)
+GET  /sys/addSite                       controllers.Sys.addSiteForm
+POST /sys/addSite                       controllers.Sys.addSiteFormSubmit
+POST /sys/dkey/:dkey/delete             controllers.Sys.dkeyDelete(dkey)
+POST /sys/majorRebuild                  controllers.Sys.majorRebuild
+GET  /sys/siobix/actorTree/*path        controllers.Sys.siobixActor(path: String)
+GET  /sys/siobix                        controllers.Sys.siobixIndex
+GET  /sys/siobix/rebuild                controllers.Sys.siobixRebuild
+
+GET  /sys/siobix/main/rfr/push          controllers.Sys.pushReferrerForm
+POST /sys/siobix/main/rfr/push          controllers.Sys.pushReferrerFormSubmit
+
+GET  /sys/indices                       controllers.Sys.indicesIndex
+GET  /sys/indices/active                controllers.Sys.indicesListAllActive
+GET  /sys/indices/active/:dkey/:vin     controllers.Sys.indicesShowActiveFor(dkey:String, vin:String)
+GET  /sys/indices/vin/:vin              controllers.Sys.showVin(vin)
+POST /sys/indices/downgrade/ALL         controllers.Sys.indicesDowngradeAll
+GET  /sys/inx2/ALL                      controllers.Sys.inx2AllIndices
+POST /sys/inx2/create/dflt/mart         controllers.Sys.inx2createDfltMart
 # sys.market
 GET  /sys/market                        controllers.SysMarket.index
 # sys.market.company

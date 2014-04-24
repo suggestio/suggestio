@@ -25,6 +25,11 @@ Sizes=Sizes
 slaves.of.m=RENTERS
 slaves.of.R=RESTAURANTS
 
+add.to.other.s=Add to other shop
+add.to.other.r=Add to other restaurant
+add.to.other.m=Add to other mart
+add.to.other.R=Add to other restaurant net
+
 lk.sl.enable_ad=Enable ad
 lk.sl.d=Show on start page
 lk.sl.h=Show in common catalog

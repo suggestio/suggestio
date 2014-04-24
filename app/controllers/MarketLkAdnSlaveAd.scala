@@ -10,6 +10,7 @@ import views.html.market.lk.adn._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import play.api.Play.current
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -120,6 +121,50 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
         mslave = request.slaveNode,
         mads = mads
       ))
+    }
+  }
+
+
+
+  // Фунционал для публикации рекламной карточки на иных узлах: окошко, сабмит, поиск.
+  import publish._
+
+  /** Рендер диалога со списком узлов, пригодных для публикации рекламной карточки. */
+  def adPublishDialog(adId: String) = CanSuperviseSlaveAd(adId).async { implicit request =>
+    import request.{supNode, mad}
+    val supId = supNode.id.get
+    MAdnNode.findBySupId(supId) map { slaves =>
+      val slaves1 = if (supNode.adn.isReceiver) {
+        supNode :: slaves.toList
+      } else {
+        slaves
+      }
+      Ok(_adPublishDialogTpl(mad, slaves1))
+    }
+  }
+
+  /** Самбмит обновлённого списка узлов, на которых надо опубликовать рекламную карточку. */
+  def adPublishDialogSubmit(adId: String) = CanSuperviseSlaveAd(adId).async(parse.urlFormEncoded) { implicit request =>
+    import request.mad
+    // Процессим POST без маппингов - так проще в данном случае.
+    val sls = Set(AdShowLevels.LVL_START_PAGE)
+    mad.receivers = request.body("node")
+      .foldLeft [List[(String, AdReceiverInfo)]] (Nil) { (acc, rcvrId) =>
+        val ari0 = mad.receivers.get(rcvrId)
+          .map { rcvr =>
+            AdReceiverInfo(rcvrId,  slsWant = rcvr.slsWant ++ sls,  slsPub = rcvr.slsPub ++ sls)
+          }
+          .getOrElse {
+            AdReceiverInfo(rcvrId, sls, sls)
+          }
+        rcvrId -> ari0 :: acc
+      }
+      .toMap
+    mad.saveReceivers.map { _ =>
+      val reply = JsObject(Seq(
+        "status" -> JsString("ok")
+      ))
+      Ok(reply)
     }
   }
 

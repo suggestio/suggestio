@@ -14,7 +14,6 @@ import concurrent.duration._
 import scala.concurrent.Future
 import play.api.mvc.Security.username
 import util.img._
-import controllers.adn.AdnShowLk
 
 /**
  * Suggest.io

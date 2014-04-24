@@ -21,21 +21,25 @@
 
       <div class="title-inner">ЛИЧНЫЙ КАБИНЕТ</div>
 
-      @* У узла-приемника есть список входных генераторов рекламы и доступ к коду установки. *@
-      @if(node.adn.isReceiver) {
-        <div class="adn-title-buttons">
-          <div class="gray-but-wrap">
-            <div class="white-border-top">
-              <a class="btn" href="@routes.MarketLkAdn.showSlaves(node.id.get)">АРЕНДАТОРЫ</a>
+      @* У узла-приемника/супервизора есть доступ к списку входных продьюсеров рекламы и доступ к коду установки. *@
+      @defining(node.adn.isReceiver) { isRcvr =>
+        @if(isRcvr || node.adn.isSupervisor) {
+          <div class="adn-title-buttons">
+            <div class="gray-but-wrap">
+              <div class="white-border-top">
+                <a class="btn" href="@routes.MarketLkAdn.showSlaves(node.id.get)">@Messages("slaves.of." + node.adn.memberType)</a>
+              </div>
             </div>
-          </div>
 
-          <div class="gray-but-wrap">
-            <div class="white-border-top">
-              <a id="installScriptButton" class="btn" href="">КОД УСТАНОВКИ</a>
-            </div>
+            @if(isRcvr) {
+              <div class="gray-but-wrap">
+                <div class="white-border-top">
+                  <a id="installScriptButton" class="btn" href="">КОД УСТАНОВКИ</a>
+                </div>
+              </div>
+            }
           </div>
-        </div>
+        }
       }
     </div>
   </div>

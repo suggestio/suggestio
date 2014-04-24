@@ -13,7 +13,7 @@
   routes.javascript.MarketLkAdn.nodeOnOffSubmit
 )
 
-@market.lk.lkBase(mnode.meta.name) {
+@market.lk.lkBase(mnode.meta.name, adnIdOpt = mnode.id) {
 @defining(Messages("slaves.of." + mnode.adn.memberType)) { title =>
   <div class="title-wrap">
     <div class="center">

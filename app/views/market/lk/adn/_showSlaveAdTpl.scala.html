@@ -1,6 +1,7 @@
 @(mslave: MAdnNode, mad: MAdT, msup: MAdnNode, sahf: Form[_])(implicit ctx: util.Context)
 
-@* Форма сокрытия рекламы магазина силами магазина (SioWeb/4.psd). *@
+@* Форма отображения и супервайзинга рекламной карточки подчинённого узла (SioWeb/4.psd). *@
+
 @import ctx._
 @import helper._
 @import controllers.MarketLkAdnSlaveAd.HideShopAdActions._
@@ -22,6 +23,7 @@
 
     @* Для супервизора доступны кнопки управления рекламной карточкой. *@
     @if( canSuperviseNode(supNode = msup, slaveNode = mslave) ) {
+
       @* Кнопка сокрытия рекламной карточки. *@
       @form(routes.MarketLkAdnSlaveAd.slaveAdHideFormSubmit(mad.id.get)) {
         @* Допустимые значения: @HIDE *@
@@ -52,6 +54,7 @@
 
 
       @* Кнопка публикации карточки на другом узле (в другом ресторане). *@
+      <a href="@routes.MarketLkAdnSlaveAd.adPublishDialog(mad.id.get)">@Messages("add.to.other." + mslave.adn.memberType)</a>
 
     } @* if supervisor *@
 
