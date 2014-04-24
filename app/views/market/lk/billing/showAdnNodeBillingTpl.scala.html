@@ -1,0 +1,47 @@
+@(adnNode: MAdnNode, tariffs: Seq[MBillTariff], txns: Seq[MBillTxn], mbc: MBillContract)(implicit ctx: util.Context)
+
+@* Страница с информацией по биллингу для узла рекламной сети. *@
+@import ctx._
+@import util.TplDataFormatUtil._
+@import datetime._
+
+@market.lk.lkBase("Биллинг | " + adnNode.meta.name, adnIdOpt = adnNode.id) {
+
+  @* Верхняя информация: баланс, тарификация *@
+  @ctx.billBalanceOpt.map { mbb =>
+    <p>Текущий баланс: @formatPrice(mbb.amount, mbb.currency)</p>
+  }
+
+  @tariffs.headOption.map { tariff =>
+    @tariff.nextPayDt.map { npd =>
+      <p>Списание средств:
+        <span title="@_prettyDate(npd).toString.trim">@numericDate(npd)</span>
+      </p>
+    }
+
+    <p>Сумма списания: @tariff match {
+        case mbtf: MBillTariffFee => {
+          @formatPrice(mbtf.fee, mbtf.feeCurrency)
+        }
+      }
+      Тариф: @tariff.name
+    </p>
+  }
+
+
+  @* Реквизиты платежа *@
+  @_billPaymentBankTpl(mbc)
+  <a href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">Версия для печати</a>
+
+  @* История транзакций *@
+  @if(!txns.isEmpty) {
+    <h3>История операций:</h3>
+    <ul>
+      @txns.map { txn =>
+        <li>@txn.paymentComment / <span title="@_prettyDate(txn.datePaid).toString.trim">@numericDate(txn.datePaid)</span>
+        Сумма: @formatPrice(txn.amount, txn.currency)</li>
+      }
+    </ul>
+  }
+
+}

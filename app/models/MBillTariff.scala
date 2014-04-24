@@ -142,7 +142,7 @@ object MBillTariffFee extends TariffsFindByContract[MBillTariffFee] with Tariffs
 }
 
 /** Интерфейс экземпляров тарифных моделей. */
-trait MBillTariff {
+sealed trait MBillTariff {
   def contractId  : Int
   def name        : String
   def ttype       : BTariffType
@@ -156,6 +156,8 @@ trait MBillTariff {
   def id          : Pk[Int]
   def generation  : Int
   def debitCount  : Int
+
+  def nextPayDt = dateLast.map(_ plus tinterval)
 }
 
 

@@ -6,7 +6,7 @@
 @import market.lk._
 @import ctx._
 
-@lkBase(Messages("Edit") + " " + mshop.meta.name) {
+@lkBase(Messages("Edit") + " " + mshop.meta.name, adnIdOpt = mmart.id) {
   <div class="title-wrap">
     <div class="center">
       <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(mshop.id.get)">&nbsp;</a>

@@ -3,6 +3,8 @@ package util
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Currency
 import java.math.RoundingMode
+import org.joda.time.DateTime
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 /**
  * Suggest.io
@@ -44,11 +46,17 @@ object TplDataFormatUtil {
   }
 
 
-  private val pcRawFloatFmt = new DecimalFormat("#.##")
+  //private val pcRawFloatFmt = new DecimalFormat("#.##")
   private val pcRawIntegerFmt = new DecimalFormat("#")
 
   def formatPercentRaw(pc: Float): String = {
     pcRawIntegerFmt.format(pc)
   }
+
+
+
+  private val numericDateFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+
+  def numericDate(dt: DateTime) = numericDateFormat.print(dt)
 
 }
