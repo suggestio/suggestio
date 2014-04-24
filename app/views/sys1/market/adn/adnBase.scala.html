@@ -1,0 +1,17 @@
+@(title: String, hPathAfter:Option[Html] = None)(content: Html)(implicit ctx: util.Context)
+
+@* Подложка для страниц, работающих с унифицированными adn-узлами. *@
+@import sys1.market._
+@import ctx._
+
+@hPathAfter1 = {
+  / <a href="@routes.SysMarket.adnNodesList">ADN</a>
+  @hPathAfter.getOrElse {
+    / @title
+  }
+}
+
+@marketBase(
+  title = title + " | ADN",
+  hPathAfter = Some(hPathAfter1)
+)(content)

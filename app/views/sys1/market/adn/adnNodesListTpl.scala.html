@@ -1,0 +1,18 @@
+@(adnNodes: Seq[MAdnNode], companies: Option[Map[CompanyId_t, MCompany]] = None)(implicit ctx: util.Context)
+
+@* Страница со списком торговых центров. *@
+
+@import sys1.market._
+@import ctx._
+
+@hPathAfter = {
+  / Узлы (@adnNodes.size)
+}
+
+@adnBase("Узлы", hPathAfter = Some(hPathAfter)) {
+  @if(adnNodes.isEmpty) {
+    Торговых центров пока нет.
+  } else {
+    @_adnNodesListTpl(adnNodes, companies)
+  }
+}

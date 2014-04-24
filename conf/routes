@@ -177,6 +177,10 @@ GET  /sys/market/company/:id/edit       controllers.SysMarket.companyEditForm(id
 POST /sys/market/company/:id/edit       controllers.SysMarket.companyEditFormSubmit(id: String)
 POST /sys/market/company/:id/delete     controllers.SysMarket.companyDeleteSubmit(id: String)
 GET  /sys/market/company/:id            controllers.SysMarket.companyShow(id: String)
+# sys.market.adn
+GET  /sys/market/adn/:adnId             controllers.SysMarket.showAdnNode(adnId)
+GET  /sys/market/adns                   controllers.SysMarket.adnNodesList
+POST /sys/market/adn/:adnId/delete      controllers.SysMarket.deleteAdnNodeSubmit(adnId)
 # sys.market.mart
 GET  /sys/market/marts                  controllers.SysMarket.martsList
 GET  /sys/market/mart/add/:company_id   controllers.SysMarket.martAddForm(company_id: String)

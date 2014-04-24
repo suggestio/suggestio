@@ -21,6 +21,7 @@ object AdnShowTypes extends Enumeration {
     def sysShow(adnId: String): Call
     def inviteSubNodeCall(adnId: String): Call
     def slaveNodeEditCall(adnId: String): Option[Call]
+    def sysEditCall(adnId: String): Option[Call]
   }
 
   type AdnShowType = Val
@@ -33,6 +34,7 @@ object AdnShowTypes extends Enumeration {
     override def sysShow(adnId: String): Call = routes.SysMarket.shopShow(adnId)
     override def inviteSubNodeCall(adnId: String): Call = throw new UnsupportedOperationException("Shops cannot invite sub-shops.")
     override def slaveNodeEditCall(adnId: String): Option[Call] = Some(routes.MarketMartLk.editShopForm(adnId))
+    override def sysEditCall(adnId: String): Option[Call] = Some(routes.SysMarket.shopEditForm(adnId))
   }
 
   val MART = new Val(AdNetMemberTypes.MART) {
@@ -40,6 +42,7 @@ object AdnShowTypes extends Enumeration {
     override def sysShow(adnId: String): Call = routes.SysMarket.martShow(adnId)
     override def inviteSubNodeCall(adnId: String): Call = routes.MarketMartLk.inviteShopForm(adnId)
     override def slaveNodeEditCall(adnId: String): Option[Call] = None
+    override def sysEditCall(adnId: String): Option[Call] = Some(routes.SysMarket.martEditForm(adnId))
   }
 
 }

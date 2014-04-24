@@ -1,0 +1,89 @@
+@(adnNode: MAdnNode, slaves:Seq[MAdnNode], company: Option[MCompany] = None)(implicit ctx: util.Context)
+
+@* Страница, отображающая информацию по торговому центру. *@
+@import ctx._
+@import datetime._
+@import helper._
+@import controllers.adn.AdnShowTypes._
+
+@hPathAfter = {
+  @adnNode.adn.supId.map { supId =>
+    / <a href="@routes.SysMarket.showAdnNode(supId)">..</a>
+  }
+  / <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
+}
+
+@adnBase(adnNode.meta.name, hPathAfter = Some(hPathAfter)) {
+
+  <h2>@Messages("amt.of.type." + adnNode.adn.memberType)</h2>
+  <a href="@adnNode.adn.memberType.sysEditCall(adnNode.id.get)">@Messages("Edit")</a>
+
+  <p><a href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)"><b>-&gt; Личный кабинет узла</b></a></p>
+  @if(adnNode.adn.isReceiver) {
+    <p><a href="@routes.Market.demoWebSite(adnNode.id.get)"><b>-&gt; demoWebSite</b></a>
+       (<a href="http://10.0.0.101:9001@routes.Market.demoWebSite(adnNode.id.get)" target="_blank">osm01-vpn</a>)
+       <a href="@routes.Market.martIndex(adnNode.id.get)"><b>js</b></a>
+    </p>
+  }
+  <a href="@routes.SysMarketBilling.billingFor(adnNode.id.get)">Billing</a>
+
+  @company.map { mc =>
+    <p>@Messages("Company")-@Messages("Owner"): <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a></p>
+  }
+
+
+  <h3>Метаданные</h3>
+  <div>
+    @Messages("Name"): @adnNode.meta.name<br/>
+    @adnNode.meta.description.map { descr =>
+      Описание: @descr<br/>
+    }
+    @Messages("Created"): @_prettyDate(adnNode.meta.dateCreated)<br/>
+    @adnNode.meta.town.map { town =>
+      Город: @town<br/>
+    }
+    @adnNode.meta.address.map { address =>
+      @Messages("Address"): @address<br/>
+    }
+    @adnNode.meta.phone.map { phone =>
+      Телефон: @phone<br/>
+    }
+    @adnNode.meta.floor.map { floor =>
+      Этаж: @floor<br/>
+    }
+    @adnNode.meta.section.map { section =>
+      Секция: @section<br/>
+    }
+    @adnNode.meta.siteUrl.map { siteUrl =>
+      URL сайта: <a href="@siteUrl">@siteUrl</a><br/>
+    }
+    @adnNode.meta.color.map { color =>
+      Цвет: <b>#@color</b> <span style="background-color: #@color;">&nbsp;&nbsp;&nbsp;&nbsp;</span><br/>
+    }
+    @adnNode.meta.welcomeAdId.map { wad =>
+      Приветствие: @wad
+    }
+  </div>
+
+  @if(slaves.isEmpty) {
+    <p>Нет подчинённых узлов.</p>
+  } else {
+    <br/>
+    <h3>Подчинённые узлы (@slaves.size)</h3>
+    @_adnNodesListTpl(slaves, withDelims = false)
+  }
+
+  <br/>
+  <h3>Управление</h3>
+  <a href="@routes.SysMarket.shopAddForm">Создать новый магазин</a><br/>
+  <a href="@routes.MarketCategory.showCatsFor(adnNode.id.get)">Категории</a><br/>
+  <a href="@routes.SysMarket.martInviteForm(adnNode.id.get)">Инвайты на управление ТЦ</a><br/>
+
+
+
+  <br/><br/>
+  <h3>Команды</h3>
+  @stuff._deleteSmthFormBtnTpl(routes.SysMarket.deleteAdnNodeSubmit(adnNode.id.get))
+
+}
+

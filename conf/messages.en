@@ -30,6 +30,12 @@ add.to.other.r=Add to other restaurant
 add.to.other.m=Add to other mart
 add.to.other.R=Add to other restaurant net
 
+amt.of.type.s=Shop
+amt.of.type.m=Mart
+amt.of.type.r=Restaurant
+amt.of.type.R=Restaurant net
+
+
 lk.sl.enable_ad=Enable ad
 lk.sl.d=Show on start page
 lk.sl.h=Show in common catalog

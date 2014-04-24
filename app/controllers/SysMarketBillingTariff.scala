@@ -27,7 +27,7 @@ object SysMarketBillingTariff extends SioController with PlayMacroLogsImpl {
   val feeTariffFormM = Form(mapping(
     "name"      -> nonEmptyText(maxLength = 128),
     "enabled"   -> boolean,
-    "dateFirst" -> jodaDate,
+    "dateFirst" -> jodaDate("dd.MM.yyyy HH:mm"),
     "tinterval" -> pgIntervalM,
     "price"     -> priceStrictNoraw
   )

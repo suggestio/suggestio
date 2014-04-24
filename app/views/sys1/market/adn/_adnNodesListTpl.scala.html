@@ -1,0 +1,39 @@
+@(adnNodes: Seq[MAdnNode], companies: Option[Map[CompanyId_t, MCompany]] = None, withDelims: Boolean = true)(implicit ctx: util.Context)
+
+@* Инлайновый список узлов. *@
+
+<table>
+  <tr>
+    <th>@Messages("Name")</th>
+    <th>Тип</th>
+    <th>Город</th>
+    @if(companies.isDefined) {<th>@Messages("Company")</th>}
+  </tr>
+  @adnNodes.groupBy(_.adn.memberType).map { case (memberType, adnNodes1) =>
+    @if(withDelims) {
+      <tr>
+        <td>-------------</td>
+        <td>@Messages("amt.of.type." + memberType)</td>
+        <td>-------------</td>
+        @if(companies.isDefined) { <td>-------------</td> }
+      </tr>
+    }
+    @adnNodes1.sortBy(_.meta.name).map { adnNode =>
+      <tr>
+        <td>
+          <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
+        </td>
+        <td>@Messages("amt.of.type." + memberType)</td>
+        <td>@adnNode.meta.town</td>
+        @companies.map { _companies =>
+          <td>
+            @_companies.get(adnNode.companyId).map { mc =>
+              <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a>
+            }
+          </td>
+        }
+      }
+    </tr>
+  }
+</table>
+

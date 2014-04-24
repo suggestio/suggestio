@@ -1,7 +1,7 @@
 package controllers
 
 import io.suggest.util.MacroLogsImpl
-import util.acl.{IsShopAdm, IsSuperuser}
+import util.acl.{IsSuperuserAdnNode, IsShopAdm, IsSuperuser}
 import models._
 import views.html.sys1.market._
 import views.html.market.lk
@@ -132,6 +132,42 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   /** Бывает надо передать в шаблон карту всех контор. Тут фьючерс, который этим занимается. */
   private def allCompaniesMap = MCompany.getAll().map {
     _.map { mc => mc.id.get -> mc }.toMap
+  }
+
+  /* Унифицированные узлы ADN */
+  import views.html.sys1.market.adn._
+
+  def adnNodesList = IsSuperuser.async { implicit request =>
+    val adnNodesFut = MAdnNode.getAll(maxResults = 1000)
+    val companiesFut = MCompany.getAll(maxResults = 1000)
+      .map { _.map {c => c.id.get -> c }.toMap }
+    for {
+      adnNodes <- adnNodesFut
+      companies <- companiesFut
+    } yield {
+      Ok(adnNodesListTpl(adnNodes, Some(companies)))
+    }
+  }
+
+  def showAdnNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+    import request.adnNode
+    val slavesFut = MAdnNode.findBySupId(adnId)
+    val companyOptFut = MCompany.getById(adnNode.companyId)
+    for {
+      slaves <- slavesFut
+      companyOpt <- companyOptFut
+    } yield {
+      Ok(adnNodeShowTpl(adnNode, slaves, companyOpt))
+    }
+  }
+
+  def deleteAdnNodeSubmit(adnId: String) = IsSuperuser.async { implicit request =>
+    MAdnNode.deleteById(adnId) map {
+      case true =>
+        Redirect(routes.SysMarket.shopsList())
+          .flashing("success" -> "Shop deleted")
+      case false => NotFound("ADN node not found: " + adnId)
+    }
   }
 
 

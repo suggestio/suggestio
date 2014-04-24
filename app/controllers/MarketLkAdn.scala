@@ -34,7 +34,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl {
    */
   def showAdnNode(adnId: String, newAdIdOpt: Option[String]) = IsAdnNodeAdmin(adnId).async { implicit request =>
     import request.adnNode
-    val fallbackLogoFut = adnNode.adn.supId match{
+    val fallbackLogoFut = adnNode.adn.supId match {
       case Some(supId) =>
         MAdnNodeCache.getByIdCached(supId) map {
           _.flatMap(_.logoImgOpt)
