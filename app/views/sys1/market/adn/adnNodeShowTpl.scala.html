@@ -96,7 +96,6 @@
   <br/>
   <h3>Управление</h3>
   <a href="@routes.SysMarket.showAdnNodeAds(adnNode.id.get)">Список рекламных карточек узла</a><br/>
-  <a href="@routes.SysMarket.shopAddForm">Создать новый магазин</a><br/>
   <a href="@routes.MarketCategory.showCatsFor(adnNode.id.get)">Категории</a><br/>
   @if(adnNode.adn.memberType == AdNetMemberTypes.MART) {
     <a href="@routes.SysMarket.martInviteForm(adnNode.id.get)">Инвайты на управление ТЦ</a><br/>
