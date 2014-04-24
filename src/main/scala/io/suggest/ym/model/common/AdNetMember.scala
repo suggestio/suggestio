@@ -90,7 +90,7 @@ trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
       val mi = acc.adn
       value.foreach {
         case (RIGHTS_ESFN, v: jl.Iterable[_]) =>
-          mi.rights = v.map { rid => AdnRights.withName(rid.toString) }.toSet
+          mi.rights = v.map { rid => AdnRights.withName(rid.toString) : AdnRights.AdnRight }.toSet
         case (SUPERVISOR_ID_ESFN, v)  => mi.supId = Option(stringParser(v))
         case (MEMBER_TYPE_ESFN, v)    => mi.memberType = AdNetMemberTypes.withName(stringParser(v))
         case (SHOW_LEVELS_ESFN, levelsInfoRaw) =>
@@ -319,17 +319,19 @@ trait EMAdNetMember[T <: EMAdNetMember[T]] extends EsModelT[T] {
 
 /** Положение участника сети и его возможности описываются флагами прав доступа. */
 object AdnRights extends Enumeration {
-  type AdnRight = Value
+  protected case class Val(name: String, longName: String) extends super.Val(name)
+  type AdnRight = Val
+  implicit def value2val(x: Value): AdnRight = x.asInstanceOf[AdnRight]
 
   /** Продьюсер может создавать свою рекламу. */
-  val PRODUCER = Value("p")
+  val PRODUCER: AdnRight = Val("p", "producer")
 
   /** Ресивер может отображать в выдаче и просматривать в ЛК рекламу других участников, которые транслируют свою
     * рекламу ему через receivers. Ресивер также может приглашать новых участников. */
-  val RECEIVER = Value("r")
+  val RECEIVER: AdnRight = Val("r", "receiver")
 
   /** Супервизор может управлять рекламной сетью и модерировать рекламные карточки. */
-  val SUPERVISOR = Value("s")
+  val SUPERVISOR: AdnRight = Val("s", "supervisor")
 }
 
 

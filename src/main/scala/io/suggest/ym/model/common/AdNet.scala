@@ -22,17 +22,17 @@ object AdNetMemberTypes extends Enumeration {
    * @param name Исходный строковой id.
    * @param displayAddrOnAds Отображать адрес владельца рекламной карточке на самой рекламной карточке.
    */
-  abstract protected case class Val(name: String, displayAddrOnAds: Boolean) extends super.Val(name) {
+  abstract protected case class Val(name: String, displayAddrOnAds: Boolean, slDflt: AdShowLevel) extends super.Val(name) {
     def getAdnInfoDflt: AdNetMemberInfo
   }
 
   // TODO Надо бы "= Value", но почему-то он везде этот тип красным подсвечивается.
   type AdNetMemberType = Val
 
-  implicit def value2val(x: Value) = x.asInstanceOf[Val]
+  implicit def value2val(x: Value): AdNetMemberType = x.asInstanceOf[AdNetMemberType]
 
   /** Торговый центр. */
-  val MART = new Val("m", displayAddrOnAds = false) {
+  val MART = new Val("m", displayAddrOnAds = false, slDflt = AdShowLevels.LVL_START_PAGE) {
     def getAdnInfoDflt: AdNetMemberInfo = {
       AdNetMemberInfo(
         memberType = this,
@@ -52,7 +52,7 @@ object AdNetMemberTypes extends Enumeration {
   }
 
   /** Магазин. Обычно арендатор в ТЦ. */
-  val SHOP = new Val("s", displayAddrOnAds = true) {
+  val SHOP = new Val("s", displayAddrOnAds = true, slDflt = AdShowLevels.LVL_MEMBER) {
     def getAdnInfoDflt: AdNetMemberInfo = {
       AdNetMemberInfo(
         memberType = this,
@@ -74,6 +74,14 @@ object AdNetMemberTypes extends Enumeration {
   /** Генератор лефолтовых экземпляров [[AdNetMemberInfo]]. */
   def getAdnInfoDfltFor(memberType: AdNetMemberType) = memberType.getAdnInfoDflt
 
+  /** Безопасная версия withName(). */
+  def maybeWithName(s: String): Option[AdNetMemberType] = {
+    try {
+      Some(withName(s))
+    } catch {
+      case ex: NoSuchElementException => None
+    }
+  }
 }
 
 
