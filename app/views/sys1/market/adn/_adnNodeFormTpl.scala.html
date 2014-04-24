@@ -1,0 +1,49 @@
+@(af: Form[_], call: Call, companies: Seq[MCompany], btnText: String)(implicit ctx: util.Context)
+
+@* Форма для создания/редактирования торгового центра. *@
+@import helper._
+@import ctx._
+
+@form(call) {
+  @* ADN *@
+  <label>Тип узла ADN
+    @defining(af("adn.memberType")) { mtField =>
+      <select name="@mtField.name">
+        <option disabled>Тип узла</option>
+        @AdNetMemberTypes.values.map { anmt =>
+          <option value="@anmt.name" @if(mtField.value.exists(_ == anmt.name)) {selected}>@Messages("amt.of.type." + anmt.name)</option>
+        }
+      </select>
+    }
+  </label>
+  @checkbox(af("adn.isEnabled"), '_label -> "Включён?")
+
+
+  @* Компания, к которой принадлежит узел. В продакшене это задаётся неявно. *@
+  @defining(af("companyId")) { ciField =>
+    @defining(ciField.value.orElse(request.getQueryString("company_id")).getOrElse("")) { currCompanyId =>
+      <select name="@ciField.name">
+        <option disabled>@Messages("Company")-@Messages("Owner")</option>
+        @companies.map { mcompany =>
+          <option value="@mcompany.id.get"@if(currCompanyId == mcompany.id.get) {selected}>@mcompany.name</option>
+        }
+      </select>
+    }
+  }
+
+
+  @* meta *@
+  @inputText(af("meta.name"),    '_label -> "Название")
+  @textarea(af("meta.descr"),    '_label -> "Описание объекта")
+  @inputText(af("meta.town"),    '_label -> "Город")
+  @inputText(af("meta.address"), 'placeholder -> "пр.Ленина, д.1", '_label -> "Адрес в городе")
+  @inputText(af("meta.phone"),   'placeholder -> "+78121234567", '_label -> "Номер телефона")
+  @inputText(af("meta.floor"),   'placeholder -> 1,         '_label -> "Этаж")
+  @inputText(af("meta.section"), 'placeholder -> 101,       '_label -> "Номер секции")
+  @inputText(af("meta.siteUrl"), 'placeholder -> "http://", '_label -> "Адрес сайта в интернете")
+  @inputText(af("meta.color"),   'placeholder -> "cceeff",  '_label -> "Цвет")
+
+  @inputText(af("maxAds"), 'title -> "макс.число отображаемых рекламных карточек.")
+
+  <input type="submit" value="@btnText"/>
+}

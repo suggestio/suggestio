@@ -39,6 +39,11 @@ object FormUtil {
     textFmtPolicy.sanitize(s).trim
   }
 
+  /** Функция, которая превращает Some("") в None. */
+  def emptyStrOptToNone(s: Option[String]) = {
+    s.filter(!_.isEmpty)
+  }
+
   private val allowedProtocolRE = "(?i)https?".r
 
   def isValidUrl(urlStr: String): Boolean = {
@@ -58,10 +63,14 @@ object FormUtil {
   /** Маппинг для номера этажа в ТЦ. */
   val floorM = nonEmptyText(maxLength = 4)
     .transform(strTrimSanitizeF, strIdentityF)
+  val floorOptM = optional(floorM)
+    .transform [Option[String]] (emptyStrOptToNone, identity)
 
   /** Маппинг для секции в ТЦ. */
   val sectionM = nonEmptyText(maxLength = 6)
     .transform(strTrimSanitizeF, strIdentityF)
+  val sectionOptM = optional(sectionM)
+    .transform [Option[String]] (emptyStrOptToNone, identity)
 
   /** Парсим текст, введённый в поле с паролем. */
   val passwordM = nonEmptyText
@@ -96,28 +105,37 @@ object FormUtil {
   def martNameM = nameM
   def companyNameM = nameM
 
+
   /** Маппер для поля, содержащего код цвета. */
   // TODO Нужно добавить верификацию тут какую-то. Например через YmColors.
   val colorM = nonEmptyText(minLength = 6, maxLength = 6)
   val colorOptM = optional(colorM)
+    .transform [Option[String]] (emptyStrOptToNone, identity)
 
   val publishedTextM = text(maxLength = 2048)
     .transform(strFmtTrimF, strIdentityF)
   val publishedTextOptM = optional(publishedTextM)
+    .transform [Option[String]] (emptyStrOptToNone, identity)
 
   val townM = nonEmptyText(maxLength = 32)
     .transform(strTrimSanitizeF, strIdentityF)
+  val townOptM = optional(townM)
+    .transform [Option[String]] (emptyStrOptToNone, identity)
 
   val addressM = nonEmptyText(minLength = 10, maxLength = 128)
     .transform(strTrimSanitizeF, strIdentityF)
+  val addressOptM = optional(addressM)
+    .transform [Option[String]] (emptyStrOptToNone, identity)
 
   /** id категории. */
   def userCatIdM = esIdM
   val userCatIdOptM = optional(userCatIdM)
+    .transform [Option[String]] (emptyStrOptToNone, identity)
 
   // TODO Нужен нормальный валидатор телефонов.
   val phoneM = nonEmptyText(minLength = 5, maxLength = 16)
   val phoneOptM = optional(phoneM)
+    .transform [Option[String]] (emptyStrOptToNone, identity)
 
   def martAddressM = addressM
 
@@ -302,6 +320,16 @@ object FormUtil {
   /** Маппинг для задания причины при сокрытии сущности. */
   val hideEntityReasonM = nonEmptyText(maxLength = 512)
     .transform(strTrimSanitizeF, strIdentityF)
+
+
+  /** Маппер типа adn-узла. */
+  val adnMemberTypeM: Mapping[AdNetMemberType] = nonEmptyText(maxLength = 1)
+    .transform [Option[AdNetMemberType]] (
+      { AdNetMemberTypes.maybeWithName },
+      { _.map(_.name).getOrElse("") }
+    )
+    .verifying("error.required", _.isDefined)
+    .transform [AdNetMemberType] (_.get, Some.apply)
 
 }
 

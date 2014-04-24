@@ -22,23 +22,8 @@
   }
 
   <br/>
-  Этаж @mshop.meta.floor match {
-    case Some(floor) => {
-      @floor.
-    }
-    case None => {
-      не указан.
-    }
-  }
-
-  Секция @mshop.meta.section match {
-    case Some(section) => {
-      @section.
-    }
-    case None => {
-      не указана.
-    }
-  }
+  Этаж @mshop.meta.floor.getOrElse {не указан}.
+  Секция @mshop.meta.section.getOrElse {не указан}.
 
   <p>Магазин создан @_prettyDate(mshop.meta.dateCreated, isCap = false, withSpan = true).</p>
 

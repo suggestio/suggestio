@@ -16,7 +16,7 @@
 @adnBase(adnNode.meta.name, hPathAfter = Some(hPathAfter)) {
 
   <h2>@Messages("amt.of.type." + adnNode.adn.memberType)</h2>
-  <a href="@adnNode.adn.memberType.sysEditCall(adnNode.id.get)">@Messages("Edit")</a>
+  <a href="@routes.SysMarket.editAdnNode(adnNode.id.get)">@Messages("Edit")</a>
 
   <p><a href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)"><b>-&gt; Личный кабинет узла</b></a></p>
   @if(adnNode.adn.isReceiver) {
@@ -65,11 +65,13 @@
     }
   </div>
 
+
+  <h3>Подчинённые узлы (@slaves.size)</h3>
+  <a class="add" href="@routes.SysMarket.createAdnNode(adnNode.id)">Добавить подузел...</a><br/>
   @if(slaves.isEmpty) {
     <p>Нет подчинённых узлов.</p>
   } else {
     <br/>
-    <h3>Подчинённые узлы (@slaves.size)</h3>
     @_adnNodesListTpl(slaves, withDelims = false)
   }
 
@@ -94,13 +96,22 @@
   <a href="@routes.SysMarket.showAdnNodeAds(adnNode.id.get)">Список рекламных карточек узла</a><br/>
   <a href="@routes.SysMarket.shopAddForm">Создать новый магазин</a><br/>
   <a href="@routes.MarketCategory.showCatsFor(adnNode.id.get)">Категории</a><br/>
-  <a href="@routes.SysMarket.martInviteForm(adnNode.id.get)">Инвайты на управление ТЦ</a><br/>
+  @if(adnNode.adn.memberType == AdNetMemberTypes.MART) {
+    <a href="@routes.SysMarket.martInviteForm(adnNode.id.get)">Инвайты на управление ТЦ</a><br/>
+  }
+  @* Функционал товаров и прайс-листов пока скрыт: кравлер не готов, товары не нужны. *@
+  @*<a href="@routes.SysMarket.splAddForm(mshop.id.get)">Добавить источник прайс-листа.</a>
+    <a href="@routes.MarketOffer.showShopPromoOffers(mshop.id.get)">ЛК: Товары магазина</a> *@
 
 
-
-  <br/><br/>
-  <h3>Команды</h3>
-  @stuff._deleteSmthFormBtnTpl(routes.SysMarket.deleteAdnNodeSubmit(adnNode.id.get))
+  <br/>
+  <h3>Отладка</h3>
+  @if(adnNode.adn.memberType == AdNetMemberTypes.SHOP) {
+    Отобразить email-письмо активации:
+      <a href="@routes.SysMarket.showShopEmailActMsgHtml(adnNode.id.get, isHtml=true)">HTML</a>
+      <a href="@routes.SysMarket.showShopEmailActMsgHtml(adnNode.id.get, isHtml=false)">TXT</a>
+    <br/>
+  }
 
 }
 

@@ -13,7 +13,7 @@
     @if(withDelims) {
       <tr>
         <td>-------------</td>
-        <td>@Messages("amt.of.type." + memberType)</td>
+        <td><a href="@routes.SysMarket.adnNodesList(Some(memberType.name))">@Messages("amt.of.type." + memberType)</a></td>
         <td>-------------</td>
         @if(companies.isDefined) { <td>-------------</td> }
       </tr>

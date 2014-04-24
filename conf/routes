@@ -179,9 +179,13 @@ POST /sys/market/company/:id/delete     controllers.SysMarket.companyDeleteSubmi
 GET  /sys/market/company/:id            controllers.SysMarket.companyShow(id: String)
 # sys.market.adn
 GET  /sys/market/adn/:adnId             controllers.SysMarket.showAdnNode(adnId)
-GET  /sys/market/adns                   controllers.SysMarket.adnNodesList
+GET  /sys/market/adns                   controllers.SysMarket.adnNodesList(anmt: Option[String] ?= None)
+GET  /sys/market/create/adn             controllers.SysMarket.createAdnNode(supId: Option[String] ?= None)
+POST /sys/market/create/adn             controllers.SysMarket.createAdnNodeSubmit(supId: Option[String] ?= None)
 POST /sys/market/adn/:adnId/delete      controllers.SysMarket.deleteAdnNodeSubmit(adnId)
 GET  /sys/market/adn/:adnId/ads         controllers.SysMarket.showAdnNodeAds(adnId)
+GET  /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNode(adnId)
+POST /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNodeSubmit(adnId)
 # sys.market.mart
 GET  /sys/market/marts                  controllers.SysMarket.martsList
 GET  /sys/market/mart/add/:company_id   controllers.SysMarket.martAddForm(company_id: String)

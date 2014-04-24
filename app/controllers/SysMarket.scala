@@ -1,7 +1,7 @@
 package controllers
 
 import io.suggest.util.MacroLogsImpl
-import util.acl.{IsSuperuserAdnNode, IsShopAdm, IsSuperuser}
+import util.acl.{AbstractRequestWithPwOpt, IsSuperuserAdnNode, IsShopAdm, IsSuperuser}
 import models._
 import views.html.sys1.market._
 import views.html.market.lk
@@ -134,13 +134,22 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     _.map { mc => mc.id.get -> mc }.toMap
   }
 
+
   /* Унифицированные узлы ADN */
   import views.html.sys1.market.adn._
 
-  def adnNodesList = IsSuperuser.async { implicit request =>
-    val adnNodesFut = MAdnNode.getAll(maxResults = 1000)
-    val companiesFut = MCompany.getAll(maxResults = 1000)
-      .map { _.map {c => c.id.get -> c }.toMap }
+  /** Страница с унифицированным списком узлов рекламной сети в алфавитном порядке с делёжкой по memberType.  */
+  def adnNodesList(anmtRaw: Option[String]) = IsSuperuser.async { implicit request =>
+    val companiesFut = MCompany.getAll(maxResults = 1000).map {
+      _.map {c => c.id.get -> c }.toMap
+    }
+    val adnNodesFut = anmtRaw match {
+      case Some(_anmtRaw) =>
+        val anmt = AdNetMemberTypes.withName(_anmtRaw)
+        MAdnNode.findAllByType(anmt, maxResult = 1000)
+      case None =>
+        MAdnNode.getAll(maxResults = 1000)
+    }
     for {
       adnNodes <- adnNodesFut
       companies <- companiesFut
@@ -149,6 +158,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     }
   }
 
+  /** Унифицированая страница отображения узла рекламной сети. */
   def showAdnNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
     import request.adnNode
     val slavesFut = MAdnNode.findBySupId(adnId)
@@ -161,13 +171,172 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     }
   }
 
+  /** Безвозвратное удаление узла рекламной сети. */
   def deleteAdnNodeSubmit(adnId: String) = IsSuperuser.async { implicit request =>
     MAdnNode.deleteById(adnId) map {
       case true =>
-        Redirect(routes.SysMarket.shopsList())
-          .flashing("success" -> "Shop deleted")
+        Redirect(routes.SysMarket.adnNodesList())
+          .flashing("success" -> "Узел ADN удалён.")
       case false => NotFound("ADN node not found: " + adnId)
     }
+  }
+
+
+  /** Форма для маппинг метаданных произвольного узла ADN. */
+  private val adnNodeMetaM = mapping(
+    "name"      -> nameM,
+    "descr"     -> publishedTextOptM,
+    "town"      -> townOptM,
+    "address"   -> addressOptM,
+    "phone"     -> phoneOptM,
+    "floor"     -> floorOptM,
+    "section"   -> sectionOptM,
+    "siteUrl"   -> urlStrOptM,
+    "color"     -> colorOptM
+  )
+  {(name, descr, town, address, phone, floor, section, siteUrl, color) =>
+    AdnMMetadata(
+      name    = name,
+      description = descr,
+      town    = town,
+      address = address,
+      phone   = phone,
+      floor   = floor,
+      section = section,
+      siteUrl = siteUrl,
+      color   = color
+    )
+  }
+  {meta =>
+    import meta._
+    Some((name, description, town, address, phone, floor, section, siteUrl, color))
+  }
+
+  /** Маппинг для adn-полей формы adn-узла. */
+  private val adnMemberM: Mapping[AdNetMemberInfo] = mapping(
+    "memberType" -> adnMemberTypeM,
+    "isEnabled"  -> boolean
+  )
+  {(mt, isEnabled) =>
+    val result = mt.getAdnInfoDflt
+    result.isEnabled = isEnabled
+    result
+  }
+  {anmi =>
+    Some((anmi.memberType, anmi.isEnabled))
+  }
+
+
+  /** Маппинг для формы добавления/редактирования торгового центра. */
+  private val adnNodeFormM = Form(mapping(
+    "companyId" -> esIdM,
+    "adn"       -> adnMemberM,
+    "meta"      -> adnNodeMetaM,
+    "maxAds"    -> default(
+      number(min = 0, max = 30),
+      ShowLevelsUtil.MART_LVL_IN_START_PAGE_DFLT
+    )
+  )
+  // apply()
+  {(companyId, anmi, meta, maxAds) =>
+    anmi.showLevelsInfo.setMaxOutAtLevel(anmi.memberType.slDflt, maxAds)
+    MAdnNode(
+      meta = meta,
+      companyId = companyId,
+      adn = anmi,
+      personIds = Set.empty
+    )
+  }
+  // unapply()
+  {adnNode =>
+    import adnNode._
+    val maxAds = adn.showLevelsInfo.maxOutAtLevel(adnNode.adn.memberType.slDflt)
+    Some((companyId, adn, meta, maxAds))
+  })
+
+  private def maybeSupOpt(supIdOpt: Option[String]): Future[Option[MAdnNode]] = {
+    supIdOpt match {
+      case Some(supId) => MAdnNodeCache.getByIdCached(supId)
+      case None => Future successful None
+    }
+  }
+  private def createAdnNodeRender(supOptFut: Future[Option[MAdnNode]], supIdOpt: Option[String])(implicit request: AbstractRequestWithPwOpt[_]) = {
+    val companiesFut = MCompany.getAll(maxResults = 100)
+    for {
+      supOpt    <- supOptFut
+      companies <- companiesFut
+    } yield {
+      createAdnNodeFormTpl(supOpt, adnNodeFormM, companies)
+    }
+  }
+
+  /** Страница с формой создания нового узла. */
+  def createAdnNode(supIdOpt: Option[String]) = IsSuperuser.async { implicit request =>
+    createAdnNodeRender(maybeSupOpt(supIdOpt), supIdOpt) map { Ok(_) }
+  }
+
+  /** Сабмит формы создания нового узла. */
+  def createAdnNodeSubmit(supIdOpt: Option[String]) = IsSuperuser.async { implicit request =>
+    val supOptFut = maybeSupOpt(supIdOpt)
+    adnNodeFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        val renderFut = createAdnNodeRender(supOptFut, supIdOpt)
+        debug(s"createAdnNodeSubmit(supId=$supIdOpt): Failed to bind form: ${formatFormErrors(formWithErrors)}")
+        renderFut map {
+          NotAcceptable(_)
+        }
+      },
+      {adnNode =>
+        adnNode.adn.supId = supIdOpt
+        for {
+          adnId <- adnNode.save
+          supOpt <- supOptFut
+        } yield {
+          if (supIdOpt.isDefined && adnNode.adn.isProducer) {
+            val sup = supOpt.get
+            sup.adn.producerIds += adnId
+            sup.save
+          }
+          Redirect(routes.SysMarket.showAdnNode(adnId))
+            .flashing("succes" -> s"Создан узел сети: $adnId")
+        }
+      }
+    )
+  }
+
+  /** Страница с формой редактирования узла ADN. */
+  def editAdnNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+    import request.adnNode
+    val companiesFut = MCompany.getAll(maxResults = 1000)
+    val formFilled = adnNodeFormM.fill(adnNode)
+    companiesFut map { companies =>
+      Ok(editAdnNodeFormTpl(adnNode, formFilled, companies))
+    }
+  }
+  /** Самбит формы редактирования узла. */
+  def editAdnNodeSubmit(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+    import request.adnNode
+    adnNodeFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        val companiesFut = MCompany.getAll(maxResults = 1000)
+        debug(s"editAdnNodeSubmit($adnId): Failed to bind form: ${formatFormErrors(formWithErrors)}")
+        companiesFut map { companies =>
+          NotAcceptable(editAdnNodeFormTpl(adnNode, formWithErrors, companies))
+        }
+      },
+      {adnNode2 =>
+        adnNode.meta = adnNode2.meta
+        adnNode.adn.memberType = adnNode2.adn.memberType
+        adnNode.companyId = adnNode2.companyId
+        val sl = adnNode2.adn.memberType.slDflt
+        val maxAds = adnNode2.adn.showLevelsInfo.maxOutAtLevel(sl)
+        adnNode.adn.showLevelsInfo.setMaxOutAtLevel(sl, maxAds)
+        adnNode.save.map { _ =>
+          Redirect(routes.SysMarket.showAdnNode(adnId))
+            .flashing("success" -> "Изменения сохранены")
+        }
+      }
+    )
   }
 
 
@@ -185,7 +354,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
 
-  val martMetaM = mapping(
+  private val martMetaM = mapping(
     "name"      -> nameM,
     "town"      -> townM,
     "address"   -> martAddressM,
@@ -209,7 +378,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
-  val martFormM = Form(tuple(
+  private val martFormM = Form(tuple(
     "meta"   -> martMetaM,
     "isEnabled" -> boolean,
     "maxAds" -> default(number(min = 0, max = 30), ShowLevelsUtil.MART_LVL_IN_START_PAGE_DFLT)
@@ -381,8 +550,8 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   val shopMetaM = mapping(
     "name"    -> shopNameM,
     "descr"   -> publishedTextOptM,
-    "floor"   -> optional(floorM),
-    "section" -> optional(sectionM)
+    "floor"   -> floorOptM,
+    "section" -> sectionOptM
   )
   {(name, descriptionOpt, floorOpt, sectionOpt) =>
     AdnMMetadata(
