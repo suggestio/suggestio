@@ -10,12 +10,9 @@ import util.FormUtil._
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.current
 import util.acl.IsMartAdminShop
-import util.img._
-import ImgFormUtil.imgInfo2imgKey
 import scala.concurrent.Future
 import play.api.mvc.{AnyContent, Result}
 import play.api.mvc.Security.username
-import scala.util.Success
 import models._
 
 /**
@@ -24,49 +21,11 @@ import models._
  * Created: 02.03.14 13:54
  * Description: Личный кабинет для sio-маркета. Тут управление торговым центром и магазинами в нём.
  */
-object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with LogoSupport
-with ShopMartCompat {
+object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with ShopMartCompat {
 
   import LOGGER._
 
-  /** Маркер картинки для использования в качестве логотипа. */
-  val MART_TMP_LOGO_MARKER = "martLogo"
-
-
-  /** Маппер для метаданных. */
-  val martMetaM = mapping(
-    "name"      -> nameM,
-    "town"      -> townM,
-    "address"   -> martAddressM,
-    "siteUrl"   -> urlStrOptM,
-    "phone"     -> phoneOptM
-  )
-  {(name, town, address, siteUrlOpt, phoneOpt) =>
-    AdnMMetadata(
-      name = name,
-      town = Some(town),
-      address = Some(address),
-      siteUrl = siteUrlOpt,
-      phone = phoneOpt
-    )
-  }
-  {meta =>
-    import meta._
-    Some((name, town.getOrElse(""), address.getOrElse(""), siteUrl, phone)) }
-
-
-  /** Маппер для необязательного логотипа магазина. */
-  val martLogoImgIdOptKM = ImgFormUtil.getLogoKM("mart.logo.invalid", marker=MART_TMP_LOGO_MARKER)
-
-  /** Маппинг для формы добавления/редактирования торгового центра. */
-  val martFormM = Form(tuple(
-    "meta" -> martMetaM,
-    "welcomeImgId" -> optional(ImgFormUtil.imgIdJpegM),
-    martLogoImgIdOptKM
-  ))
-
-
-  val shopMetaM = mapping(
+  private val shopMetaM = mapping(
     "name"    -> shopNameM,
     "floor"   -> floorM,
     "section" -> sectionM
@@ -80,7 +39,7 @@ with ShopMartCompat {
   }
 
   /** Маппинг формы приглашения магазина в систему. */
-  val inviteShopFormM = Form(tuple(
+  private val inviteShopFormM = Form(tuple(
     "email" -> email,
     "meta" -> shopMetaM
   ))
@@ -88,96 +47,9 @@ with ShopMartCompat {
 
   /** Форма на которой нельзя менять логотип, но можно настраивать разные поля.
     * Подходит для редактирования из ТЦ-аккаунта */
-  val shopEditFormM = Form(
+  private val shopEditFormM = Form(
     MarketShopLk.shopMetaFullKM
   )
-
-  
-  /** Асинхронно получить welcome-ad-карточку. */
-  private def getWelcomeAdOpt(mmart: MAdnNode): Future[Option[MWelcomeAd]] = {
-    mmart.meta.welcomeAdId
-      .fold [Future[Option[MWelcomeAd]]] (Future successful None) (MWelcomeAd.getById)
-  }
-
-
-  /**
-   * Рендер страницы с формой редактирования ТЦ в личном кабинете.
-   * @param martId id ТЦ.
-   */
-  def martEditForm(martId: String) = IsMartAdmin(martId).async { implicit request =>
-    import request.mmart
-    getWelcomeAdOpt(mmart) map { welcomeAdOpt =>
-      val martLogoOpt = mmart.logoImgOpt.map { img =>
-        ImgInfo4Save(imgInfo2imgKey(img))
-      }
-      val welcomeImgKey = welcomeAdOpt.map[OrigImgIdKey] { _.img }
-      val formFilled = martFormM.fill((mmart.meta, welcomeImgKey, martLogoOpt))
-      Ok(martEditFormTpl(mmart, formFilled, welcomeAdOpt))
-    }
-  }
-
-  /**
-   * Сабмит формы редактирования ТЦ.
-   * @param martId id ТЦ.
-   */
-  def martEditFormSubmit(martId: String) = IsMartAdmin(martId).async { implicit request =>
-    import request.mmart
-    martFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        val welcomeAdOptFut = getWelcomeAdOpt(mmart)
-        debug(s"martEditFormSubmit($martId): Failed to bind form: ${formatFormErrors(formWithErrors)}")
-        welcomeAdOptFut map { welcomeAdOpt =>
-          NotAcceptable(martEditFormTpl(mmart, formWithErrors, welcomeAdOpt))
-            .flashing("error" -> "Ошибка заполнения формы.")
-        }
-      },
-      {case (martMeta, welcomeImgOpt, logoImgIdOpt) =>
-        // В фоне обновляем логотип ТЦ
-        val savedLogoFut = ImgFormUtil.updateOrigImg(logoImgIdOpt, oldImgs = mmart.logoImgOpt)
-        // В фоне обновляем картинку карточки-приветствия.
-        val savedWelcomeImgsFut: Future[_] = getWelcomeAdOpt(request.mmart) flatMap { welcomeAdOpt =>
-          ImgFormUtil.updateOrigImg(
-            needImgs = welcomeImgOpt.map(ImgInfo4Save(_, withThumb = false)),
-            oldImgs = welcomeAdOpt.map(_.img)
-          ) flatMap { savedImgs =>
-            savedImgs.headOption match {
-              // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
-              case None =>
-                val deleteOldAdFut = mmart.meta.welcomeAdId
-                  .fold [Future[_]] {Future successful ()} { MAd.deleteById }
-                mmart.meta.welcomeAdId = None
-                deleteOldAdFut
-
-              // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
-              case Some(newImgInfo) =>
-                val welcomeAd = welcomeAdOpt
-                  .map { welcomeAd =>
-                  welcomeAd.img = newImgInfo
-                  welcomeAd
-                } getOrElse {
-                  MWelcomeAd(producerId = martId, img = newImgInfo)
-                }
-                welcomeAd.save andThen {
-                  case Success(welcomeAdId) =>
-                    mmart.meta.welcomeAdId = Some(welcomeAdId)
-                }
-            }
-          }
-        }
-        mmart.meta = martMeta
-        savedLogoFut.flatMap { savedLogos =>
-          mmart.logoImgOpt = savedLogos.headOption
-          savedWelcomeImgsFut flatMap { _ =>
-            mmart.save.map { _ =>
-              Redirect(routes.MarketLkAdn.showAdnNode(martId))
-                .flashing("success" -> "Изменения сохранены.")
-            }
-          }
-        }
-      }
-    )
-
-  }
 
 
   /**
@@ -294,21 +166,11 @@ with ShopMartCompat {
   }
 
 
-  /**
-   * Загрузка картинки для логотипа магазина.
-   * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
-   * @return Тот же формат ответа, что и для просто temp-картинок.
-   */
-  def handleMartTempLogo(martId: String) = IsMartAdmin(martId)(parse.multipartFormData) { implicit request =>
-    handleLogo(MartLogoImageUtil, MART_TMP_LOGO_MARKER)
-  }
-
-
 
   import views.html.market.lk.mart.{invite => martInvite}
 
   // Обработка инвайтов на управление ТЦ.
-  val martInviteAcceptM = Form(optional(passwordWithConfirmM))
+  private val martInviteAcceptM = Form(optional(passwordWithConfirmM))
 
   /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
   def martInviteAcceptForm(martId: String, eActId: String) = inviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>

@@ -8,7 +8,7 @@ import util.FormUtil._
 import util.acl._
 import models._
 import views.html.market.lk.shop._
-import play.api.mvc.{Call, RequestHeader, AnyContent, Result}
+import play.api.mvc.{RequestHeader, AnyContent, Result}
 import play.api.Play.current
 import concurrent.duration._
 import scala.concurrent.Future
@@ -21,8 +21,7 @@ import util.img._
  * Created: 03.03.14 13:34
  * Description: Контроллер личного кабинета для арендатора, т.е. с точки зрения конкретного магазина.
  */
-object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForceProtect
-with LogoSupport with ShopMartCompat {
+object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with ShopMartCompat {
 
   import LOGGER._
 
@@ -114,41 +113,35 @@ with LogoSupport with ShopMartCompat {
   }
 
 
-  /**
-   * Страница с формой редактирования магазина. Арендатору не доступны некоторые поля.
-   * @param shopId id магазина.
-   */
-  def editShopForm(shopId: String) = IsShopAdm(shopId).async { implicit request =>
-    import request.mshop
+  /** Страница с формой редактирования магазина. Арендатору не доступны некоторые поля. */
+  def editShopForm(implicit request: AbstractRequestForAdnNodeAdm[_]): Future[Result] = {
+    import request.adnNode
     // TODO Если магазин удалён из рекламной сети или не имеет своего ТЦ, то это как должно выражаться?
-    val martId = mshop.adn.supId.get
-    val formBindedFut = fillFullForm(mshop)
+    val martId = adnNode.adn.supId.get
+    val formBindedFut = fillFullForm(adnNode)
     getMartByIdCache(martId) flatMap {
       case Some(mmart) =>
         formBindedFut map { formBinded =>
-          Ok(shopEditFormTpl(mmart, mshop, formBinded))
+          Ok(shopEditFormTpl(mmart, adnNode, formBinded))
         }
 
       case None => martNotFound(martId)
     }
   }
 
-  /**
-   * Сабмит формы редактирования магазина арендатором.
-   * @param shopId id магазина.
-   */
-  def editShopFormSubmit(shopId: String) = IsShopAdm(shopId).async { implicit request =>
-    import request.mshop
+  /** Сабмит формы редактирования магазина арендатором. */
+  def editShopFormSubmit(implicit request: AbstractRequestForAdnNodeAdm[_]): Future[Result] = {
+    import request.adnNode
     limitedShopFormM.bindFromRequest().fold(
       {formWithErrors =>
-        val fullFormBindedFut = fillFullForm(mshop) map { _.bindFromRequest }
-        debug(s"editShopFormSubmit($shopId): Bind failed: " + formWithErrors.errors)
+        val fullFormBindedFut = fillFullForm(adnNode) map { _.bindFromRequest }
+        debug(s"editShopFormSubmit(${adnNode.id.get}}): Bind failed: " + formWithErrors.errors)
         // TODO Что делать, если у магазина нет своего супервизора?
-        val martId = mshop.adn.supId.get
+        val martId = adnNode.adn.supId.get
         getMartByIdCache(martId) flatMap {
           case Some(mmart) =>
             fullFormBindedFut map { formWithErrors2 =>
-              NotAcceptable(shopEditFormTpl(mmart, mshop, formWithErrors2))
+              NotAcceptable(shopEditFormTpl(mmart, adnNode, formWithErrors2))
             }
           case None        => martNotFound(martId)
         }
@@ -156,15 +149,15 @@ with LogoSupport with ShopMartCompat {
       {case (meta, logoImgIdOpt) =>
         val updateImgsFut = ImgFormUtil.updateOrigImg(
           needImgs = logoImgIdOpt,
-          oldImgs  = mshop.logoImgOpt
+          oldImgs  = adnNode.logoImgOpt
         )
-        mshop.meta.name = meta.name
-        mshop.meta.description = meta.description
+        adnNode.meta.name = meta.name
+        adnNode.meta.description = meta.description
         // Для обновления shop'а надо дождаться генерации нового id логотипа.
         updateImgsFut.flatMap { newImgIds =>
-          mshop.logoImgOpt = newImgIds.headOption
-          mshop.save map { _shopId =>
-            Redirect(routes.MarketLkAdn.showAdnNode(shopId))
+          adnNode.logoImgOpt = newImgIds.headOption
+          adnNode.save map { _shopId =>
+            Redirect(routes.MarketLkAdn.showAdnNode(adnNode.id.get))
               .flashing("success" -> "Изменения сохранены.")
           }
         }
@@ -292,16 +285,6 @@ with LogoSupport with ShopMartCompat {
         }
       }
     }
-  }
-
-
-  /**
-   * Загрузка картинки для логотипа магазина.
-   * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
-   * @return Тот же формат ответа, что и для просто temp-картинок.
-   */
-  def handleShopTempLogo(shopId: String) = IsShopAdm(shopId)(parse.multipartFormData) { implicit request =>
-    handleLogo(ShopLogoImageUtil, SHOP_TMP_LOGO_MARKER)
   }
 
 

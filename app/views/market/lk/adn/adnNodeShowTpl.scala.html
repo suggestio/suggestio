@@ -49,7 +49,7 @@
 
       <div class="name-wrap" style="padding-bottom: 0px;">
         <span class="name">@node.meta.name</span>
-        <a class="edit" href="@adnShowType.lkNodeEditCall(node.id.get)">Редактировать</a>
+        <a class="edit" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">@Messages("Edit")</a>
         @if(isSuperuser) {
           <a class="superuser-link" href="@routes.SysMarket.showAdnNode(node.id.get)">/sys</a>
         }

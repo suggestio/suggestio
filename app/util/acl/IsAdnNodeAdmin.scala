@@ -52,8 +52,8 @@ object IsAdnNodeAdmin {
 import IsAdnNodeAdmin.onUnauth
 
 /** В реквесте содержится магазин, если всё ок. */
-case class IsAdnNodeAdmin(adnId: String) extends ActionBuilder[RequestForAdnNodeAdm] {
-  protected def invokeBlock[A](request: Request[A], block: (RequestForAdnNodeAdm[A]) => Future[Result]): Future[Result] = {
+case class IsAdnNodeAdmin(adnId: String) extends ActionBuilder[AbstractRequestForAdnNodeAdm] {
+  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNodeAdm[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOptAdn(pwOpt, adnId)
     IsAdnNodeAdmin.isAdnNodeAdmin(adnId, pwOpt) flatMap {

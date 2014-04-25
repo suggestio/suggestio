@@ -1,4 +1,4 @@
-@(mmart: MAdnNode)(implicit ctx: util.Context)
+@(adnNode: MAdnNode)(implicit ctx: util.Context)
 
 @* Временный шаблон. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
 @import ctx._
@@ -36,11 +36,11 @@
 
 <body>
 
-@mmart.meta.siteUrl.map { siteUrl =>
+@adnNode.meta.siteUrl.map { siteUrl =>
   <iframe src="@siteUrl"></iframe>
 }
 
-@market.lk.mart._martInstallScriptTpl( mmart )
+@market.lk.adn._node._installScriptTpl( adnNode )
 
 </body>
 

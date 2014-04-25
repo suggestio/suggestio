@@ -36,6 +36,11 @@ amt.of.type.m=Торговый центр
 amt.of.type.r=Ресторан
 amt.of.type.R=Ресторанная сеть
 
+editing.of.amt.profile.s=Редактирование профайла магазина
+editing.of.amt.profile.m=Редактирование профайла ТЦ
+editing.of.amt.profile.r=Редактирование профайла ресторана
+editing.of.amt.profile.R=Редактирование профайла супервайзера
+
 
 lk.sl.enable_ad=Включить объявление
 lk.sl.d=Выводить в моём каталоге

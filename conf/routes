@@ -69,6 +69,9 @@ POST /feedback                          controllers.Feedback.feedbackFormSubmit
 GET  /m                                 controllers.MarketLk.lkIndex
 GET  /m/lk                              controllers.MarketLk.lkList
 GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, newAdId: Option[String] ?= None)
+GET  /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNode(adnId)
+POST /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
+POST /m/lk/adn/:adnId/logo              controllers.MarketLkAdnEdit.handleTempLogo(adnId)
 # Базовый супервайзинг узлов
 GET  /m/lk/adn/:adnId/slaves            controllers.MarketLkAdn.showSlaves(adnId, sortByRaw: Option[String] ?= None, isReversed: Boolean ?= false)
 POST /m/lk/adn/:adnId/search            controllers.MarketLkAdn.searchSlaves(adnId)
@@ -85,20 +88,15 @@ GET  /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublish
 POST /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialogSubmit(adId)
 
 # Личный кабинет владельца ТЦ
-GET  /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditForm(martId: String)
-POST /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditFormSubmit(martId: String)
 #POST /m/lk/mart/:martId/shop/:shopId/delete controllers.MarketMartLk.martShopDeleteSubmit(martId, shopId)
 GET  /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopForm(martId)
 POST /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopFormSubmit(martId)
-POST /m/lk/mart/:martId/logo            controllers.MarketMartLk.handleMartTempLogo(martId)
 GET  /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopForm(shopId)
 POST /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopFormSubmit(shopId)
 GET  /m/lk/m/:martId/eact/:eaId         controllers.MarketMartLk.martInviteAcceptForm(martId, eaId)
 POST /m/lk/m/:martId/eact/:eaId         controllers.MarketMartLk.martInviteAcceptFormSubmit(martId, eaId)
 
 # личный кабинет купца-арендатора ТЦ.
-GET  /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopForm(shopId)
-POST /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopFormSubmit(shopId)
 GET  /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAccept(shopId, eaId)
 POST /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAcceptSubmit(shopId, eaId)
 # ЛК: Рекламные карточки
@@ -108,7 +106,6 @@ GET  /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAd(adnId)
 POST /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAdSubmit(adnId)
 ## ЛК: Рекламные карточки: shop
 POST /m/lk/ap/:adnId/preview            controllers.MarketAdPreview.adFormPreviewSubmit(adnId)
-POST /m/lk/s/:shopId/logo               controllers.MarketShopLk.handleShopTempLogo(shopId)
 POST /m/lk/sa/:adId/update/show         controllers.MarketAd.updateShowLevelSubmit(adId)
 ## ЛК: Рекламные карточки: ТЦ
 GET  /m/lk/ad/:adId/edit                controllers.MarketAd.editAd(adId)

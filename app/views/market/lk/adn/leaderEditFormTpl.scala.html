@@ -1,0 +1,28 @@
+@(adnNode: MAdnNode, mf: Form[_], welcomeAdOpt: Option[MAdT])(implicit ctx: util.Context)
+
+@* Рендер страницы редактирования узла, имеющего высокий статус, т.е. супервизора или ресивера. *@
+@import ctx._
+@import edit._
+
+@market.lk.lkBase(Messages("editing.of.amt.profile." + adnNode.adn.memberType), adnIdOpt = adnNode.id) {
+
+  <div class="title-wrap">
+    <div class="center">
+      <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)">&nbsp;</a>
+      <div class="title-inner">
+        @Messages("editing.of.amt.profile." + adnNode.adn.memberType).toUpperCase
+      </div>
+    </div>
+  </div>
+
+  <div class="body">
+    @_leaderNodeFormTpl(
+      adnId = adnNode.id.get,
+      btnText = Messages("Save"),
+      mf = mf,
+      submitCall = routes.MarketLkAdnEdit.editAdnNodeSubmit(adnNode.id.get),
+      welcomeAdOpt = welcomeAdOpt
+    )
+  </div>
+
+}

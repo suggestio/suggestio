@@ -35,6 +35,11 @@ amt.of.type.m=Mart
 amt.of.type.r=Restaurant
 amt.of.type.R=Restaurant net
 
+editing.of.amt.profile.s=Shop profile edit
+editing.of.amt.profile.m=Mhop profile edit
+editing.of.amt.profile.r=Restaurant profile edit
+editing.of.amt.profile.R=Supervisor profile edit
+
 
 lk.sl.enable_ad=Enable ad
 lk.sl.d=Show on start page

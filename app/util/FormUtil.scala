@@ -94,9 +94,15 @@ object FormUtil {
     }
   )
 
+
+  def strOptGetOrElseEmpty(x: Option[String]) = x getOrElse ""
+  def toStrOptM(x: Mapping[String]): Mapping[Option[String]] = {
+    x.transform[Option[String]](Option.apply, strOptGetOrElseEmpty)
+  }
+
+
   /** Возвращение проверенного пароля как Some(). */
-  val passwordWithConfirmSomeM = passwordWithConfirmM
-    .transform({ Option.apply }, {pwOpt: Option[String] => pwOpt getOrElse ""})
+  val passwordWithConfirmSomeM = toStrOptM(passwordWithConfirmM)
 
 
   val nameM = nonEmptyText(maxLength = 64)

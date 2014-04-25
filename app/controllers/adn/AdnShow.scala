@@ -17,7 +17,6 @@ import models._
   * Пришло на смену ShowAdnNodeCtx, жившему на уровне реализаций контроллеров. */
 object AdnShowTypes extends Enumeration {
   protected abstract case class Val(amt: AdNetMemberType) extends super.Val(amt.name) {
-    def lkNodeEditCall(adnId: String): Call
     def inviteSubNodeCall(adnId: String): Option[Call]
     def slaveNodeEditCall(adnId: String): Option[Call]
   }
@@ -28,13 +27,11 @@ object AdnShowTypes extends Enumeration {
   implicit def anmt2showType(x: AdNetMemberType): AdnShowType = withName(x.name)
 
   val SHOP = new Val(AdNetMemberTypes.SHOP) {
-    override def lkNodeEditCall(adnId: String) = routes.MarketShopLk.editShopForm(adnId)
     override def inviteSubNodeCall(adnId: String) = None
     override def slaveNodeEditCall(adnId: String) = Some(routes.MarketMartLk.editShopForm(adnId))
   }
 
   val MART = new Val(AdNetMemberTypes.MART) {
-    override def lkNodeEditCall(adnId: String) = routes.MarketMartLk.martEditForm(adnId)
     override def inviteSubNodeCall(adnId: String) = Some(routes.MarketMartLk.inviteShopForm(adnId))
     override def slaveNodeEditCall(adnId: String) = None
   }
