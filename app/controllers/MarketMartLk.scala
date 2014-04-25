@@ -86,10 +86,11 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
             },
             meta = meta
           )
+          mshop.handleMeAddedAsChildFor(mmart)
           mshop.save.flatMap { shopId =>
-            // Добавить магазин как источник рекламного контента для ТЦ
-            // TODO Надежнее это обновлять скриптом через UPDATE API.
-            mmart.adn.producerIds += shopId
+            mshop.id = Some(shopId)
+            // Добавить магазин как источник рекламного контента для ТЦ.
+            mmart.handleChildNodeAddedToMe(mshop)
             val mmartSaveFut = mmart.save
             // Это зачем-то надо:
             mshop.id = Some(shopId)

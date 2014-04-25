@@ -287,17 +287,23 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       },
       {adnNode =>
         adnNode.adn.supId = supIdOpt
-        for {
-          adnId <- adnNode.save
-          supOpt <- supOptFut
-        } yield {
-          if (supIdOpt.isDefined && adnNode.adn.isProducer) {
-            val sup = supOpt.get
-            sup.adn.producerIds += adnId
-            sup.save
+        supOptFut flatMap { supOpt =>
+          if (supIdOpt.isDefined) {
+            adnNode.handleMeAddedAsChildFor(supOpt.get)
           }
-          Redirect(routes.SysMarket.showAdnNode(adnId))
-            .flashing("success" -> s"Создан узел сети: $adnId")
+          for {
+            adnId <- adnNode.save
+          } yield {
+            adnNode.id = Some(adnId)
+            if (supIdOpt.isDefined) {
+              val sup = supOpt.get
+              if (sup.handleChildNodeAddedToMe(adnNode)) {
+                sup.save
+              }
+            }
+            Redirect(routes.SysMarket.showAdnNode(adnId))
+              .flashing("succes" -> s"Создан узел сети: $adnId")
+          }
         }
       }
     )
@@ -789,7 +795,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     warn("Inserting categories into MYmCategories...")
     MYmCategory.insertYmCats.map { _ =>
       Redirect(routes.SysMarket.showYmCats())
-        .flashing("success" -> "Импорт сделан.")
+        .flashing("succes" -> "Импорт сделан.")
     }
   }
 
