@@ -3,7 +3,7 @@
 @* Селектор цветов для различных полей формы. *@
 @import ctx._
 
-@defining( if(af(colorFN).value) {af(colorFN).value} else {"FFFFFF"} ) { colorValue =>
+@defining( af(colorFN).value.getOrElse("FFFFFF") ) { colorValue =>
 <td class="select-color">
   @Messages("Color"):
   <div class="color custom" style="background-color: #@colorValue;">&nbsp;
