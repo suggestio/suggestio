@@ -184,9 +184,10 @@ object MarketAd extends SioController with LogoSupport {
   private def getAdnProductForm(nodeType: AdNetMemberType): AdFormM = {
     import AdNetMemberTypes._
     nodeType match {
-      case MART | RESTAURANT | RESTAURANT_SUP =>
+      case MART | RESTAURANT_SUP =>
         martAdProductFormM
-      case SHOP => shopAdProductFormM
+      case SHOP | RESTAURANT =>
+        shopAdProductFormM
     }
   }
 

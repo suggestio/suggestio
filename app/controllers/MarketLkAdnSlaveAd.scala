@@ -160,6 +160,7 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
         rcvrId -> ari0 :: acc
       }
       .toMap
+    // TODO Вероятно, надо дёргать SLU.applyOutputConstraint(), но он может нарушить исходную задумку супервизора.
     mad.saveReceivers.map { _ =>
       val reply = JsObject(Seq(
         "status" -> JsString("ok")

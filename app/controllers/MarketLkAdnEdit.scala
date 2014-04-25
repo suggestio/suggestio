@@ -62,8 +62,11 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSup
   def handleTempLogo(adnId: String) = IsAdnNodeAdmin(adnId)(parse.multipartFormData) { implicit request =>
     import AdNetMemberTypes._
     request.adnNode.adn.memberType match {
-      case MART => handleLogo(MartLogoImageUtil, LEADER_TMP_LOGO_MARKER)
-      case SHOP => handleLogo(ShopLogoImageUtil, MarketShopLk.SHOP_TMP_LOGO_MARKER)
+      // TODO Может пора выпилить это разделение на сущности?
+      case MART | RESTAURANT_SUP | RESTAURANT =>
+        handleLogo(MartLogoImageUtil, LEADER_TMP_LOGO_MARKER)
+      case SHOP =>
+        handleLogo(ShopLogoImageUtil, MarketShopLk.SHOP_TMP_LOGO_MARKER)
     }
   }
 
