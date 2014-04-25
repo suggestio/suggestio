@@ -22,7 +22,7 @@
   @if(adnNode.adn.isReceiver) {
     <p><a href="@routes.Market.demoWebSite(adnNode.id.get)"><b>-&gt; demoWebSite</b></a>
        (<a href="http://10.0.0.101:9001@routes.Market.demoWebSite(adnNode.id.get)" target="_blank">osm01-vpn</a>)
-       <a href="@routes.Market.martIndex(adnNode.id.get)"><b>js</b></a>
+       <a href="@routes.Market.martIndex(adnNode.id.get)"><b>JSON</b></a>
     </p>
   }
   <a href="@routes.SysMarketBilling.billingFor(adnNode.id.get)">Billing</a>
@@ -79,7 +79,7 @@
 
   <br/>
   <h3>Участие в рекламной сети</h3>
-  Права: @adnNode.adn.rights.map(_.longName)<br/>
+  Права: @adnNode.adn.rights.map(_.longName).mkString(", ")<br/>
   @if(!adnNode.adn.producerIds.isEmpty) {
     producerIds = @adnNode.adn.producerIds.toSeq.zipWithIndex.map { case (producerId, i) =>
       <a href="@routes.SysMarket.showAdnNode(producerId)">@i</a>

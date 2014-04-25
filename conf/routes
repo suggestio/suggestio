@@ -88,7 +88,6 @@ GET  /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublish
 POST /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialogSubmit(adId)
 
 # Личный кабинет владельца ТЦ
-#POST /m/lk/mart/:martId/shop/:shopId/delete controllers.MarketMartLk.martShopDeleteSubmit(martId, shopId)
 GET  /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopForm(martId)
 POST /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopFormSubmit(martId)
 GET  /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopForm(shopId)

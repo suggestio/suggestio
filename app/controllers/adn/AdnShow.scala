@@ -23,7 +23,7 @@ object AdnShowTypes extends Enumeration {
 
   type AdnShowType = Val
 
-  implicit def value2val(x: Value) = x.asInstanceOf[AdnShowType]
+  implicit def value2val(x: Value): AdnShowType = x.asInstanceOf[AdnShowType]
   implicit def anmt2showType(x: AdNetMemberType): AdnShowType = withName(x.name)
 
   val SHOP = new Val(AdNetMemberTypes.SHOP) {
