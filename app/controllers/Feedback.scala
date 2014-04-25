@@ -73,7 +73,7 @@ object Feedback extends Controller with Logs with ContextT {
         mail.send(feedbackMailTxtTpl(email1, message)(ctx).toString())
         // Отредиректить юзера куда-нибудь
         Redirect(routes.Application.index())
-          .flashing("success" -> Messages("f.feedback_sent_succes")(ctx.lang))
+          .flashing("success" -> Messages("f.feedback_sent_success")(ctx.lang))
       }
     )
   }

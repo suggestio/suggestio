@@ -1,7 +1,7 @@
-@(mc: MCompany, ng: Map[AdNetMemberType, Seq[MAdnNode]])(implicit ctx: util.Context)
+@(mc: MCompany, nodes: Seq[MAdnNode])(implicit ctx: util.Context)
 
 @* Отобразить данные по одной компании. *@
-@import sys1.market._
+@import sys1.market._, adn._
 @import ctx._
 @import AdNetMemberTypes._
 
@@ -13,25 +13,7 @@
   @stuff._deleteSmthFormBtnTpl(routes.SysMarket.companyDeleteSubmit(mc.id.get))
 
   @defining(Some(Map(mc.id.get -> mc))) { mcMapOpt =>
-    @* Обход карты сделан через partial-фунцию чтобы при создании новых типов компилятор выдавал warning. *@
-    @ng.map {
-      case (MART, mmarts) => {
-	@* Отображаем список ТЦ, которыми владеет компания. *@
-	@ng.get(MART).map { mmarts =>
-	  <h3 title="В порядке добавления, новые снизу.">Торговые центры компании (@mmarts.size)</h3>
-	  @mart._martsListTpl(mmarts, companies = mcMapOpt)
-	}
-      }
-
-      case (SHOP, mshops) => {
-	@* Отображаем список магазинов, которыми владеет/управляет компания. *@
-	@ng.get(SHOP).map { mshops =>
-	  <h3 title="В порядке добавления, новые снизу.">Магазины и торговые павильоны компании (@mshops.size)</h3>
-	  @shop._shopsListTpl(mshops, companies = mcMapOpt)
-	}
-      }
-    } @* ng.map *@
-
+    @_adnNodesListTpl(nodes)
   }
 
   <hr/>

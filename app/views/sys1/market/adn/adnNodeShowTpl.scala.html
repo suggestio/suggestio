@@ -36,9 +36,9 @@
   <div>
     @Messages("Name"): @adnNode.meta.name<br/>
     @adnNode.meta.description.map { descr =>
-      Описание: @descr<br/>
+      Описание: @Html(descr)<br/>
     }
-    @Messages("Created"): @_prettyDate(adnNode.meta.dateCreated)<br/>
+    @Messages("Created"): @_prettyDate(adnNode.meta.dateCreated, withSpan = true)<br/>
     @adnNode.meta.town.map { town =>
       Город: @town<br/>
     }

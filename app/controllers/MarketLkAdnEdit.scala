@@ -36,7 +36,8 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSup
   def editAdnNode(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     import AdNetMemberTypes._
     request.adnNode.adn.memberType match {
-      case MART => editAdnLeader
+      case MART | RESTAURANT | RESTAURANT_SUP =>
+        editAdnLeader
       case SHOP => MarketShopLk.editShopForm
     }
   }
@@ -47,7 +48,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSup
   def editAdnNodeSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     import AdNetMemberTypes._
     request.adnNode.adn.memberType match {
-      case MART => editAdnLeaderSubmit
+      case MART | RESTAURANT | RESTAURANT_SUP => editAdnLeaderSubmit
       case SHOP => MarketShopLk.editShopFormSubmit
     }
   }

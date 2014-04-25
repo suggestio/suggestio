@@ -26,6 +26,7 @@ object AdnShowTypes extends Enumeration {
   implicit def value2val(x: Value): AdnShowType = x.asInstanceOf[AdnShowType]
   implicit def anmt2showType(x: AdNetMemberType): AdnShowType = withName(x.name)
 
+
   val SHOP = new Val(AdNetMemberTypes.SHOP) {
     override def inviteSubNodeCall(adnId: String) = None
     override def slaveNodeEditCall(adnId: String) = Some(routes.MarketMartLk.editShopForm(adnId))
@@ -33,6 +34,17 @@ object AdnShowTypes extends Enumeration {
 
   val MART = new Val(AdNetMemberTypes.MART) {
     override def inviteSubNodeCall(adnId: String) = Some(routes.MarketMartLk.inviteShopForm(adnId))
+    override def slaveNodeEditCall(adnId: String) = None
+  }
+
+
+  val RESTAURANT = new Val(AdNetMemberTypes.RESTAURANT) {
+    override def inviteSubNodeCall(adnId: String) = None
+    override def slaveNodeEditCall(adnId: String) = Some(routes.MarketMartLk.editShopForm(adnId))
+  }
+
+  val RESTAURANT_SUP = new Val(AdNetMemberTypes.RESTAURANT_SUP) {
+    override def inviteSubNodeCall(adnId: String) = None // TODO Надо?
     override def slaveNodeEditCall(adnId: String) = None
   }
 

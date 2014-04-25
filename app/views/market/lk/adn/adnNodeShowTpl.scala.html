@@ -25,11 +25,13 @@
       @defining(node.adn.isReceiver) { isRcvr =>
         @if(isRcvr || node.adn.isSupervisor) {
           <div class="adn-title-buttons">
-            <div class="gray-but-wrap">
-              <div class="white-border-top">
-                <a class="btn" href="@routes.MarketLkAdn.showSlaves(node.id.get)">@Messages("slaves.of." + node.adn.memberType)</a>
+            @if(node.adn.memberType.canViewSlaves) {
+              <div class="gray-but-wrap">
+                <div class="white-border-top">
+                  <a class="btn" href="@routes.MarketLkAdn.showSlaves(node.id.get)">@Messages("slaves.of." + node.adn.memberType)</a>
+                </div>
               </div>
-            </div>
+            }
 
             @if(isRcvr) {
               <div class="gray-but-wrap">

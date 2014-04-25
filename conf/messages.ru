@@ -34,7 +34,7 @@ add.to.other.R=Добавить в другую сеть ресторанов
 amt.of.type.s=Магазин
 amt.of.type.m=Торговый центр
 amt.of.type.r=Ресторан
-amt.of.type.R=Ресторанная сеть
+amt.of.type.R=Супервайзер сети ресторанов
 
 editing.of.amt.profile.s=Редактирование профайла магазина
 editing.of.amt.profile.m=Редактирование профайла ТЦ

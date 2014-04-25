@@ -69,7 +69,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     */
   def companyShow(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
     val companyAdnmsFut = MAdnNode.findByCompanyId(companyId)
-      .map { _.groupBy(_.adn.memberType) }
     MCompany.getById(companyId) flatMap {
       case Some(mc) =>
         for {
@@ -298,7 +297,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
             sup.save
           }
           Redirect(routes.SysMarket.showAdnNode(adnId))
-            .flashing("succes" -> s"Создан узел сети: $adnId")
+            .flashing("success" -> s"Создан узел сети: $adnId")
         }
       }
     )
@@ -790,7 +789,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     warn("Inserting categories into MYmCategories...")
     MYmCategory.insertYmCats.map { _ =>
       Redirect(routes.SysMarket.showYmCats())
-        .flashing("succes" -> "Импорт сделан.")
+        .flashing("success" -> "Импорт сделан.")
     }
   }
 

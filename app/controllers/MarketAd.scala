@@ -175,7 +175,7 @@ object MarketAd extends SioController with LogoSupport {
     anmt match {
       case SHOP =>
         detectAdForm(shopAdProductFormM) { FormModes.maybeShopFormWithName }
-      case MART =>
+      case MART | RESTAURANT | RESTAURANT_SUP =>
         detectAdForm(martAdProductFormM) { FormModes.maybeMartFormWithName }
     }
   }
@@ -184,8 +184,9 @@ object MarketAd extends SioController with LogoSupport {
   private def getAdnProductForm(nodeType: AdNetMemberType): AdFormM = {
     import AdNetMemberTypes._
     nodeType match {
+      case MART | RESTAURANT | RESTAURANT_SUP =>
+        martAdProductFormM
       case SHOP => shopAdProductFormM
-      case MART => martAdProductFormM
     }
   }
 

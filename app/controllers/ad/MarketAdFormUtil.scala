@@ -207,8 +207,8 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
   def getCatOwnerId(adnNode: MAdnNode): String = {
     import AdNetMemberTypes._
     adnNode.adn.memberType match {
-      case SHOP => adnNode.adn.supId getOrElse adnNode.id.get
-      case MART => adnNode.id.get
+      case SHOP | RESTAURANT => adnNode.adn.supId getOrElse adnNode.id.get
+      case MART | RESTAURANT_SUP => adnNode.id.get
     }
   }
 

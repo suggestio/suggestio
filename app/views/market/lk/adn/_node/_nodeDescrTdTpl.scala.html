@@ -2,6 +2,8 @@
 
 <td class="right"@if(!style.isEmpty) { style="@style"}>
   <div class="shop-descr">
-    @mnode.meta.description
+    @if(mnode.meta.description.isDefined) {
+      @Html(mnode.meta.description.get)
+    }
   </div>
 </td>
