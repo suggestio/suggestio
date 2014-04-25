@@ -36,7 +36,9 @@
     <div class="renters">
       <div class="ovh">
         <span class="title">@title</span>
-        <a class="green-but-big" href="@mnode.adn.memberType.inviteSubNodeCall(mnode.id.get)">Выдать личный кабинет</a>
+        @mnode.adn.memberType.inviteSubNodeCall(mnode.id.get).map { inviteCall =>
+          <a class="green-but-big" href="inviteCall">Выдать личный кабинет</a>
+        }
       </div>
 
       <div class="renters-list">

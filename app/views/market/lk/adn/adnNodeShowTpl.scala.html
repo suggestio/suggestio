@@ -51,7 +51,7 @@
         <span class="name">@node.meta.name</span>
         <a class="edit" href="@adnShowType.lkNodeEditCall(node.id.get)">Редактировать</a>
         @if(isSuperuser) {
-          <a class="superuser-link" href="@adnShowType.sysShow(node.id.get)">/sys</a>
+          <a class="superuser-link" href="@routes.SysMarket.showAdnNode(node.id.get)">/sys</a>
         }
       </div>
 

@@ -18,8 +18,7 @@ import models._
 object AdnShowTypes extends Enumeration {
   protected abstract case class Val(amt: AdNetMemberType) extends super.Val(amt.name) {
     def lkNodeEditCall(adnId: String): Call
-    def sysShow(adnId: String): Call
-    def inviteSubNodeCall(adnId: String): Call
+    def inviteSubNodeCall(adnId: String): Option[Call]
     def slaveNodeEditCall(adnId: String): Option[Call]
   }
 
@@ -30,16 +29,14 @@ object AdnShowTypes extends Enumeration {
 
   val SHOP = new Val(AdNetMemberTypes.SHOP) {
     override def lkNodeEditCall(adnId: String) = routes.MarketShopLk.editShopForm(adnId)
-    override def sysShow(adnId: String): Call = routes.SysMarket.shopShow(adnId)
-    override def inviteSubNodeCall(adnId: String): Call = throw new UnsupportedOperationException("Shops cannot invite sub-shops.")
-    override def slaveNodeEditCall(adnId: String): Option[Call] = Some(routes.MarketMartLk.editShopForm(adnId))
+    override def inviteSubNodeCall(adnId: String) = None
+    override def slaveNodeEditCall(adnId: String) = Some(routes.MarketMartLk.editShopForm(adnId))
   }
 
   val MART = new Val(AdNetMemberTypes.MART) {
     override def lkNodeEditCall(adnId: String) = routes.MarketMartLk.martEditForm(adnId)
-    override def sysShow(adnId: String): Call = routes.SysMarket.martShow(adnId)
-    override def inviteSubNodeCall(adnId: String): Call = routes.MarketMartLk.inviteShopForm(adnId)
-    override def slaveNodeEditCall(adnId: String): Option[Call] = None
+    override def inviteSubNodeCall(adnId: String) = Some(routes.MarketMartLk.inviteShopForm(adnId))
+    override def slaveNodeEditCall(adnId: String) = None
   }
 
 }
