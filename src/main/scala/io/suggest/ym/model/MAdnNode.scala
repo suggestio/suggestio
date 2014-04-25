@@ -105,6 +105,23 @@ case class MAdnNode(
     saveFut
   }
 
+  /**
+   * У текущего узла появился под-узел.
+   * @param childNode Дочерний узел.
+   * @return true, если в полях текущего узла произошли какие-то изменения, требующие сохранения.
+   */
+  def handleChildNodeAddedToMe(childNode: MAdnNode): Boolean = {
+    adn.memberType.updateParentForChild(this, child = childNode)
+  }
+
+  /**
+   * Текущий узел в процессе создания в дочернего узла по отношению к указанному узлу.
+   * @param parentNode Существующий родительский узел
+   * @return true, если текущая сущность изменялась.
+   */
+  def handleMeAddedAsChildFor(parentNode: MAdnNode): Boolean = {
+    adn.memberType.prepareChildForParent(parentNode, child = this)
+  }
 }
 
 

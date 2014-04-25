@@ -67,9 +67,9 @@ object ShowLevelsUtil extends MacroLogsImpl {
    * Изменений в базе никаких не происходит, чтобы можно было накатить выходные трансформации на ресиверы
    * и затем сохранить.
    * Сохранение результатов происходит через вызов [[saveAllReceivers()]] со списком рекламных карточек.
-   * @param thisAd Исходная реклоамная карточка.
+   * @param thisAd Исходная рекламная карточка.
    * @param producer Продьюсер.
-   * @return Фьчерс с новой рекламной карточкой.
+   * @return Фьчерс со списком рекламных карточек, которые как-либо изменились в ходе трансформаций исходной карточки.
    */
   def applyOutputConstraints(thisAd: MAd, producer: MAdnNode)(implicit ec: ExecutionContext, client: Client): Future[Seq[MAd]] = {
     val adId = thisAd.id.get
