@@ -330,6 +330,26 @@ CbcaCommon = () ->
       )
 
 
+    $('.border-line-vertical').each () ->
+      $this = $(this)
+      $parent = $this.parent()
+
+      $this.height($parent.height())
+
+
+    $(document).on 'click', '.transactions-history .toggle', (e) ->
+      e.preventDefault()
+      $this = $(this)
+      $parent = $this.parent()
+
+      if($parent.hasClass('open'))
+        $parent.removeClass('open').parent().find('.transactions-list').slideUp()
+        $this.html('Развернуть')
+      else
+        $parent.addClass('open').parent().find('.transactions-list').slideDown()
+        $this.html('Свернуть')
+
+
 
   self.init()
 

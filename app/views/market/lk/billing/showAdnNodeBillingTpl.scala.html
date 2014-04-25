@@ -7,41 +7,112 @@
 
 @market.lk.lkBase("Биллинг | " + adnNode.meta.name, adnIdOpt = adnNode.id) {
 
-  @* Верхняя информация: баланс, тарификация *@
-  @ctx.billBalanceOpt.map { mbb =>
-    <p>Текущий баланс: @formatPrice(mbb.amount, mbb.currency)</p>
-  }
+  <div class="title-wrap">
+    <div class="center">
+      <a class="back-but" href="#">&nbsp;</a>
+      <div class="title-inner">БАЛАНС</div>
+    </div>
+  </div>
 
-  @tariffs.headOption.map { tariff =>
-    @tariff.nextPayDt.map { npd =>
-      <p>Списание средств:
-        <span title="@_prettyDate(npd).toString.trim">@numericDate(npd)</span>
-      </p>
-    }
+  <div class="body billing-page">
 
-    <p>Сумма списания: @tariff match {
-        case mbtf: MBillTariffFee => {
-          @formatPrice(mbtf.fee, mbtf.feeCurrency)
+    @* Верхняя информация: баланс, тарификация *@
+    <table class="top-info">
+
+
+      @ctx.billBalanceOpt.map { mbb =>
+
+        <td>
+          <div class="ovh" style="padding-left: 0;">
+            <span class="gray font-12">Текущий баланс:</span>
+          </div>
+        </td>
+        <td>
+          <div class="ovh">
+            <span class="value big">@formatPrice(mbb.amount, mbb.currency)</span>
+          </div>
+        </td>
+
+      }
+
+
+      @tariffs.headOption.map { tariff =>
+
+        @tariff.nextPayDt.map { npd =>
+          <td>
+            <div class="border-line-vertical f-left"></div>
+            <div class="ovh">
+              <span class="gray font-12">Списание средств:</span>
+            </div>
+          </td>
+          <td>
+            <div class="ovh">
+              <span data-js-class="value" title="@_prettyDate(npd).toString.trim">@numericDate(npd)</span>
+            </div>
+            <div class="border-line-vertical f-right"></div>
+          </td>
         }
+
+        <td>
+          <div class="ovh">
+            <span class="gray font-12">Сумма списания:</span>
+          </div>
+        </td>
+        <td>
+          <div class="ovh">
+            @tariff match {
+              case mbtf: MBillTariffFee => {
+                <span class="value">@formatPrice(mbtf.fee, mbtf.feeCurrency)</span>
+              }
+            }
+            <span class="value font-12">(Тариф: @tariff.name)</span>
+          </div>
+        </td>
+
+    }
+    </table>
+    <div class="border-line"></div>
+
+
+    <div class="mid-info">
+      @* Реквизиты платежа *@
+
+      <div class="f-left gray font-12">
+        Реквизиты:
+      </div>
+      <div class="ovh">
+        @_billPaymentBankTpl(mbc)
+        <a class="print-btn" href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">Версия для печати</a>
+      </div>
+    </div>
+
+
+    @* История транзакций *@
+    <div class="transactions-history">
+
+      @if(!txns.isEmpty) {
+        <div class="title">
+          <strong>История операций:</strong>
+          <a class="toggle" href="#">Развернуть</a>
+        </div>
+        <div class="border-line"></div>
+        <div class="transactions-list">
+          @txns.map { txn =>
+            <div class="item">
+              <div class="f-left">
+                <strong>@txn.paymentComment</strong> / <span title="@_prettyDate(txn.datePaid).toString.trim">@numericDate(txn.datePaid)</span>
+              </div>
+              <div class="ovh">
+                Сумма: <strong>@formatPrice(txn.amount, txn.currency)</strong>
+              </div>
+            </div>
+            <div class="border-line"></div>
+          }
+        </div>
       }
-      Тариф: @tariff.name
-    </p>
-  }
 
+    </div>
 
-  @* Реквизиты платежа *@
-  @_billPaymentBankTpl(mbc)
-  <a href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">Версия для печати</a>
-
-  @* История транзакций *@
-  @if(!txns.isEmpty) {
-    <h3>История операций:</h3>
-    <ul>
-      @txns.map { txn =>
-        <li>@txn.paymentComment / <span title="@_prettyDate(txn.datePaid).toString.trim">@numericDate(txn.datePaid)</span>
-        Сумма: @formatPrice(txn.amount, txn.currency)</li>
-      }
-    </ul>
-  }
+  </div>
 
 }
