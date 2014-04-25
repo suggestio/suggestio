@@ -15,19 +15,21 @@
 
   <div class="offer-details">
     <div class="od-inner">
+
       @ad.logoImgOpt.map { logoImg =>
         <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)" alt="@ad.offers.headOption.filter(_.isInstanceOf[AOProduct]).map(_.asInstanceOf[AOProduct].vendor.value)"/>
       }
 
       @ad.offers.map {
+
         case adProd: AOProduct => {
-          <div class="vendor">@adProd.vendor.value</div>
+
+          <div class="vendor" style="color: #@adProd.vendor.font.color;">@adProd.vendor.value</div>
 
           @adProd.oldPrice.map { oldPrice =>
-            @*<div class="old-price"><s>@formatPrice(oldPrice.value, oldPrice.currency)</s></div>*@
-            <div class="old-price" style="color: @oldPrice.font.color"><s>@oldPrice.value</s></div>
-          }
-          <div class="new-price">@formatPrice(adProd.price.value, adProd.price.currency)</div>
+            <div class="old-price" style="color: #@oldPrice.font.color"><s>@oldPrice.value</s></div>
+      }
+          <div class="new-price" style="color: #@adProd.price.font.color">@formatPrice(adProd.price.value, adProd.price.currency)</div>
         }
 
         case adDisco: AODiscount => {
