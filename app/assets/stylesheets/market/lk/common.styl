@@ -61,16 +61,34 @@ transform(v)
     font-family: 'Arial'
     margin: 25px 0
 
-  .gray-16
+  strong
+    font-weight: bold
+
+  .font-12
+    font-size: 12px
+    font-family: 'Arial'
+
+  .font-16
     font-size: 16px
     font-family: 'Arial'
+
+  .gray
     color: #959595
+
+  .f-left
+    float: left
+
+  .f-right
+    float: right
 
   .border-line
     overflow: hidden
     width: 100%
     border-top: 1px solid #cbcbcb
     border-bottom: 1px solid #f8f8f8
+  .border-line-vertical
+    border-left: 1px solid #cbcbcb
+    border-right: 1px solid #f8f8f8
 
   .input-wrap
     margin-top: 10px
@@ -799,6 +817,92 @@ transform(v)
 
         .circle
           transform( translate3d(27px, 0, 0))
+
+  /*
+   *  Биллинг
+   */
+  .billing-page
+
+    .top-info
+      margin-bottom: 15px
+
+      td
+        vertical-align: middle
+
+        .ovh
+          display: inline-block
+          padding: 10px 25px
+
+        .gray
+          display: inline-block
+          width: 60px
+
+        .vlaue
+          font-size: 14px
+          font-family: 'Arial'
+          color: #676666
+
+        .value.big
+          font-size: 24px
+          color: #23313d
+          font-family: 'ParagNorCIta'
+
+    .mid-info
+      margin: 30px 0
+
+      .f-left
+        width: 100px
+
+      .ovh
+        color: #616161
+
+    .transactions-history
+      margin-top: 100px
+      margin-bottom: 50px
+
+      .title
+        padding: 15px 10px
+        background: #dad9d9
+
+        .toggle
+          float: right
+          text-decoration: none
+          display: inline-block
+          font-size: 12px
+          line-height: 14px
+          font-family: 'Arial'
+          color: #959595
+          padding-right: 20px
+          background: url('/assets/images/market/lk/angle.png') no-repeat
+          background-position: right -115px
+        .toggle:hover
+          color: #5088aa
+          background-position: right 3px
+        .toggle:active
+          margin-top: 1px
+
+      .title.open
+        background: #efefef
+
+        .toggle
+          background-position: right -176px
+        .toggle:hover
+          color: #5088aa
+          background-position: right -58px
+
+
+
+      .transactions-list
+        display: none
+
+        .item
+          padding: 15px 0px 15px 20px
+          overflow: hidden
+
+          .f-left
+            width: 630px
+
+
 
 
 

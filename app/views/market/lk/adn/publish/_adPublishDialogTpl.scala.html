@@ -32,7 +32,7 @@
           <div class="item @if(i%2 == 0) {odd} else {even} @if(slave.adn.isEnabled) {enabled}">
             <div class="left">
               <a href="@routes.MarketLkAdn.showSlave(slave.id.get)">@slave.meta.name</a>
-              <span class="gray-16">@if(slave.meta.town.isDefined) {/} @slave.meta.town</span>
+              <span class="gray font-16">@if(slave.meta.town.isDefined) {/} @slave.meta.town</span>
             </div>
 
             <div class="right">
