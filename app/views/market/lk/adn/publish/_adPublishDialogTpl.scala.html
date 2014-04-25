@@ -5,17 +5,52 @@
 @import ctx._
 @import helper._
 
-<div>
-  @* Форма-список магазинов/ресторанов или иных узлов рекламной сети. *@
-  @form(routes.MarketLkAdnSlaveAd.adPublishDialogSubmit(mad.id.get), 'enctype -> "application/x-www-form-urlencoded") {
-    @* Список узлов. *@
-    @slaves.map { slave =>
-      <label>@slave.meta.name
-             @if(slave.meta.town.isDefined) {/} @slave.meta.town
-        <input type="checkbox" name="node" value="@slave.id.get" @if(mad.isPublishedAt(slave.id.get)) {checked}/>
-      </label>
+<div class="popup another-nodes" id="anotherNodes">
+
+  <div class="hat">
+    <a href="#" class="close">&nbsp;</a>
+  </div>
+
+  <div class="content">
+
+    <div class="title">
+      ДОБАВИТЬ В ВЫДАЧУ
+    </div>
+
+    @* Форма-список магазинов/ресторанов или иных узлов рекламной сети. *@
+
+    @form(routes.MarketLkAdnSlaveAd.adPublishDialogSubmit(mad.id.get), 'enctype -> "application/x-www-form-urlencoded") {
+      @* Список узлов. *@
+
+      <h5>
+        Список ресторанов
+      </h5>
+      <div class="nodes-list">
+
+        @slaves.zipWithIndex.map { case(slave,i) =>
+
+          <div class="item @if(i%2 == 0) {odd} else {even} @if(slave.adn.isEnabled) {enabled}">
+            <div class="left">
+              <a href="@routes.MarketLkAdn.showSlave(slave.id.get)">@slave.meta.name</a>
+              <span class="gray-16">@if(slave.meta.town.isDefined) {/} @slave.meta.town</span>
+            </div>
+
+            <div class="right">
+              <input type="checkbox" name="node" value="@slave.id.get" @if(mad.isPublishedAt(slave.id.get)) {checked}/>
+            </div>
+
+          </div>
+
+        }
+
+      </div>
+
+      <div class="input-wrap ovh" style="margin-top: 25px;">
+        <input class="green-but-small" type="submit" value="@Messages("Save")"/>
+      </div>
+
     }
 
-    <input type="submit" value="@Messages("Save")"/>
-  }
+  </div>
+
 </div>

@@ -54,6 +54,18 @@ transform(v)
   .ovh
     overflow: hidden
 
+  h5
+    color: #676666
+    font-size: 14px
+    font-weight: bold
+    font-family: 'Arial'
+    margin: 25px 0
+
+  .gray-16
+    font-size: 16px
+    font-family: 'Arial'
+    color: #959595
+
   .border-line
     overflow: hidden
     width: 100%
@@ -522,6 +534,8 @@ transform(v)
           border-top: 1px #d3d3d3 solid
           box-shadow( inset 1px 1px 3px d3d3d3 )
           border-radius( 2px )
+  .popup.another-nodes
+    width: 768px
 
   .disable-shop
     .input-wrap
@@ -650,12 +664,6 @@ transform(v)
   .nodes
     margin-bottom: 50px
 
-    .title
-      font-size: 14px
-      font-weight: bold
-      font-family: 'Arial'
-      margin: 25px 0
-
     .node
       padding: 15px 10px
       background: #dad9d9
@@ -701,6 +709,96 @@ transform(v)
       display: none
       padding-top: 30px
 
+  /*
+   *  Список узлов с чередованием цветов
+   */
+  .nodes-list
+    margin-top: 10px
+    border: 1px solid #b2b2b2
+
+    .hat
+      padding: 12px
+      background: #cbcbcb
+      font-size: 12px
+      line-height: 12px
+      font-family: 'Arial'
+      color: #efefef
+      text-align: right
+
+    .even,
+    .odd
+      overflow: hidden
+      padding: 11px 12px
+
+    .even
+      background: #f5f5f5
+
+    .odd
+      background: white
+
+    .left
+      float: left
+
+      a
+        font-family: 'Arial'
+        color: #959595
+        font-weight: bold
+        text-decoration: none
+        font-size: 16px
+      a:hover
+        text-decoration: underline
+
+      .type
+        font-family: 'Arial'
+        font-size: 16px
+        color: #959595
+
+    .right
+      float: right
+
+      span
+        font-family: 'Arial'
+        font-size: 10px
+
+      span:hover
+        cursor: pointer
+        color: #5088aa
+
+      .disable-but
+        color: #cbcbcb
+
+      .triger
+        position: relative
+        display: inline-block
+        width: 44px
+        height: 6px
+        background: url('/assets/images/market/lk/triger-bg.png') no-repeat center center
+
+        .circle
+          transition( -webkit-transform linear 0.1s )
+          transition( transform linear 0.1s )
+          position: absolute
+          width: 20px
+          height: 18px
+          top: -6px
+          transform( translate3d(-3px, 0, 0))
+          background: url('/assets/images/market/lk/circle.png') no-repeat
+          background-position: 0 -68px
+        .circle:hover
+          cursor: pointer
+          background-position: 0 0
+
+    .enabled
+
+      .left
+
+        a
+          color: #4f88a9
+
+      .right
+
+        .circle
+          transform( translate3d(27px, 0, 0))
 
 
 

@@ -8,6 +8,10 @@
 @import util.FormHelpers._
 @import util.acl.CanSuperviseNode._
 
+@helper.javascriptRouter("jsRoutes")(
+  routes.javascript.MarketLkAdnSlaveAd.adPublishDialog
+)
+
 <div class="popup disable-ad" id="disable-ad">
   <div class="hat">
     <a href="#" class="close">&nbsp;</a>
@@ -55,7 +59,7 @@
 
       @* Кнопка публикации карточки на другом узле (в другом ресторане). *@
 
-      <div class="gray-but">
+      <div class="gray-but add-to-another-node" >
         <div class="white-border-top">
           <a href="@routes.MarketLkAdnSlaveAd.adPublishDialog(mad.id.get)">@Messages("add.to.other." + mslave.adn.memberType)</a>
         </div>

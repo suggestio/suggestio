@@ -305,15 +305,29 @@ CbcaCommon = () ->
         $this.html('Свернуть')
       else
         $.ajax(
-          type: 'GET'
           url: $this.attr('href')
-          success: (data)->
+          success: (data) ->
             $node.addClass('open').data('dataLoaded', true).next().after('<div class="ads-list small">'+data+'</div>')
             $node.next().next().slideDown('normal', () ->  market.resize_preview_photos())
             $this.html('Свернуть')
-          error: (error)->
+          error: (error) ->
             console.log(error)
         )
+
+
+    $(document).on 'click', '.add-to-another-node', (e) ->
+      e.preventDefault()
+      $this = $(this)
+
+      $.ajax(
+        url:  $this.find('a').attr('href'),
+        success: (data) ->
+          $('#disable-ad, #anotherNodes').remove()
+          $('.body-wrap').append(data)
+          cbca.popup.showPopup('#anotherNodes')
+        error: (data) ->
+          console.log(data)
+      )
 
 
 
