@@ -8,6 +8,7 @@ import util.acl._, PersonWrapper.PwOpt_t
 import io.suggest.util.UrlUtil
 import java.sql.Connection
 import models.MBillBalance
+import play.api.http.HeaderNames
 
 /**
  * Suggest.io
@@ -25,6 +26,8 @@ object Context {
   val SIO_PROTO_DFLT = current.configuration.getString("sio.proto.dflt") getOrElse "https"
 
   val mobileUaPattern = "(iPhone|webOS|iPod|Android|BlackBerry|mobile|SAMSUNG|IEMobile|OperaMobi)".r.unanchored
+
+  val isIpadRe = "iPad".r.unanchored
 }
 
 
@@ -67,7 +70,7 @@ trait Context {
 
   def flashMap = request.flash.data
 
-  def userAgent:  Option[String] = request.headers.get("User-Agent")
+  def userAgent: Option[String] = request.headers.get(HeaderNames.USER_AGENT)
 
   def isMobile : Boolean = {
     userAgent.exists {
@@ -76,6 +79,11 @@ trait Context {
     }
   }
 
+  lazy val isIpad: Boolean = {
+    userAgent.exists { ua =>
+      Context.isIpadRe.pattern.matcher(ua).find()
+    }
+  }
 
   def langStr = lang.language
 

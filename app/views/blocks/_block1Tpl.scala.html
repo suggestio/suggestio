@@ -1,0 +1,21 @@
+@(blockMap: BlockMap, isStandalone: Boolean)(implicit ctx: util.Context)
+
+@* Блок верстки на базе milano/block-1.html *@
+@import ctx._
+@import util.blocks.BlocksUtil._
+
+@blockBase(isStandalone) {
+@defining(blockMap(BK_HEIGHT)) { blockHeight =>
+
+<div class="block-1 height-@blockHeight index-block" data-border-height="2" data-block-name="block-1" data-width="140" data-height="@blockHeight">
+  <div class="inner">
+    <a href="{{ resource.url }}" class="title">
+      @blockMap.getOrElse(BK_TITLE, "TITLE")
+    </a>
+    <p>
+      @blockMap.getOrElse(BK_DESCRIPTION, "season FW 2014/15 Wed. 15th, January > Sun. 19th")
+    </p>
+  </div>
+</div>
+}
+}

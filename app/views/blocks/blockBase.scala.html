@@ -1,0 +1,32 @@
+@(isStandalone: Boolean, pageTitle: Option[String] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* База для шаблонов блоков. *@
+
+@if(isStandalone) {
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
+<head>
+
+  <title>@pageTitle.getOrElse("Suggest.io")</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+  <noscript><meta http-equiv="refresh" content="0; URL=/badbrowser"></noscript>
+
+  <meta name="viewport" content="@if(ctx.isIpad) {width=640, initial-scale = 1} else {width=320,initial-scale = 1},user-scalable=no"/>
+
+  @* Тут надо логотип узла рекламной сети? *@
+  <link rel="shortcut icon" type="image/png" href="/static/images/favicon.ico">
+
+  @headAfter
+  <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
+
+</head>
+<body>
+}
+
+@content
+
+@if(isStandalone) {
+</body>
+</html>
+}

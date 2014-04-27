@@ -127,4 +127,8 @@ package object models {
   type TariffType           = TariffTypes.TariffType
 
   type SelectPolicy         = SelectPolicies.SelectPolicy
+
+  type Context              = util.Context
+  type BlockMap             = util.blocks.BlocksUtil.BlockMap
+
 }
