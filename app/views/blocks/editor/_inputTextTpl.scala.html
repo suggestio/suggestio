@@ -1,0 +1,5 @@
+@(key: String, value: Option[Any], bc: BlockConf)(implicit ctx: Context)
+
+@_textInputBaseTpl(key, bc) {
+  <input name="@key" class="white-input" type="text" value="@value" />
+}

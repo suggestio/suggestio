@@ -1,42 +1,23 @@
 package util.blocks
 
-import play.api.templates.{Template3, HtmlFormat, Template2}
+import play.api.templates._
 import util.Context
 import play.api.data._, Forms._
 import util.FormUtil._
 import views.html.blocks._
+import BlocksUtil._
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 27.04.14 16:50
- * Description: Конфиги для блоков верстки и вспомогательная утиль.
+ * Description: Конфиги для блоков верстки.
  */
 
-object BlocksUtil {
-  type BlockMap = Map[String, Any]
-
-  // BK-константы именуют все используемые ключи конфигов. Полезно для избежания ошибок в разных местах.
-  val BK_HEIGHT       = "height"
-  val BK_TITLE        = "title"
-  val BK_DESCRIPTION  = "description"
-  val BK_PHOTO_ID     = "photoId"
-  val BK_BG_COLOR     = "bgColor"
-
-  val bTitleM = nonEmptyText(minLength = 2, maxLength = 250)
-    .transform[String](strTrimSanitizeF, strIdentityF)
-
-  val bDescriptionM = publishedTextM
-}
-
-
-import BlocksUtil._
-
-/** Enum, описывающий все допустимые конфигурации. */
 object BlocksConf extends Enumeration {
   
   /** Всё описание блока идёт через наследование Val. */
-  protected abstract case class Val(n: Int, name: String) extends super.Val(n, name) {
+  protected abstract class Val(id: Int, name: String) extends super.Val(id, name) {
     /** Шаблон для рендера. */
     def template: Template3[BlockMap, Boolean, Context, HtmlFormat.Appendable]
 
@@ -50,17 +31,42 @@ object BlocksConf extends Enumeration {
 
     /** Высота блока есть везде, поэтому её дефолтовое значение вынесено сюда. */
     def bkHeightDflt = 140
+    def bkHeightMin = bkHeightDflt
+    def bkHeightMax = 460
 
     /** Добавить в карту фунцию для получения дефолтовых значений.
       * Для перезаписи BK_HEIGHT следует использовать [[bkHeightDflt]]. */
     def withDefaultMap(confMap: BlockMap) = confMap.withDefault(defaultValueFor)
 
+    def maybeDefaultValueFor(bk: String): Option[Any] = {
+      if (bk == BK_HEIGHT)
+        Some(bkHeightDflt)
+      else
+        None
+    }
+
+    def minValueFor(bk: String): Option[Any] = {
+      if (bk == BK_HEIGHT)
+        Some(bkHeightMin)
+      else
+        None
+    }
+
+    def maxValueFor(bk: String): Option[Any] = {
+      if (bk == BK_HEIGHT)
+        Some(bkHeightMax)
+      else
+        None
+    }
+
+    def heightM = number(
+      min = bkHeightMin,
+      max = bkHeightMax
+    )
+
     /** Дефолтовые значения для ключей конфигурации блока. */
     def defaultValueFor(bk: String): Any = {
-      if (bk == BK_HEIGHT)
-        bkHeightDflt
-      else
-        throw new NoSuchElementException(s"Key '$bk' not found.")
+      maybeDefaultValueFor(bk).get
     }
 
     /**
@@ -69,6 +75,9 @@ object BlocksConf extends Enumeration {
      * @return идентификатор, пригодный для резолва через Messages().
       */
     def i18nLabelOf(bk: String) = "blocks.bk." + bk
+
+    /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
+    def blockFields: List[BlockField]
   }
 
   type BlockConf = Val
@@ -77,22 +86,35 @@ object BlocksConf extends Enumeration {
 
   // Начало значений
 
-  val Block1 = new Val(1, "1") {
+  val Block1 = new Val(1, "verySimple") {
     /** Набор маппингов для обработки данных от формы. */
-    def bMapping = mapping[BlockMap, String, String](
-      BK_TITLE -> bTitleM,
-      BK_DESCRIPTION -> bDescriptionM
+    override val bMapping = mapping(
+      BK_HEIGHT       -> heightM,
+      BK_TITLE        -> bTitleM,
+      BK_DESCRIPTION  -> bDescriptionM
     )
-    {(title, descr) =>
-      Map(BK_TITLE -> title, BK_DESCRIPTION -> descr)
+    {(height, title, descr) =>
+      Map(BK_HEIGHT -> height, BK_TITLE -> title, BK_DESCRIPTION -> descr): BlockMap
     }
     {bmap =>
-      val bmapSafe = bmap.withDefault { _ => "" }
-      Some( (bmapSafe(BK_TITLE).toString, bmapSafe(BK_DESCRIPTION).toString) )
+      val bmapSafe = bmap.withDefault {
+        case BK_HEIGHT => bkHeightDflt
+        case _         => ""
+      }
+      val height = bmapSafe(BK_HEIGHT).asInstanceOf[Int]
+      val title = bmapSafe(BK_TITLE).toString
+      val descr = bmapSafe(BK_DESCRIPTION).toString
+      Some((height, title, descr))
     }
 
     /** Шаблон для рендера. */
-    def template = _block1Tpl
+    override def template = _block1Tpl
+
+    override val blockFields = List(
+      BlockField(BK_HEIGHT, BlocksEditorFields.Height),
+      BlockField(BK_TITLE, BlocksEditorFields.InputText),
+      BlockField(BK_DESCRIPTION, BlocksEditorFields.TextArea)
+    )
   }
 
 

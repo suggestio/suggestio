@@ -1,0 +1,16 @@
+@(bk: String, value: Option[Any], bc: BlockConf)(implicit ctx: Context)
+
+@import ctx._
+
+<div class="vertical-change-block">
+
+  <div class="field-name">@Messages(bc.i18nLabelOf(bk))</div>
+  <div class="vertical-change">
+    <div id="blockHeightCells" class="value"></div>
+    <div class="plus block-height-change-button" data-change-direction="increase"></div>
+    <div class="minus bot block-height-change-button" data-change-direction="decrease"></div>
+  </div>
+
+  <input type="hidden" name="@bk" value="@value.orElse(bc.maybeDefaultValueFor(bk))" data-min-value="@bc.minValueFor(bk)" data-max-value="@bc.maxValueFor(bk)"/>
+
+</div>

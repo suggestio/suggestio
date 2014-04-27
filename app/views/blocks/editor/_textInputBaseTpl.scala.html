@@ -1,0 +1,11 @@
+@(key: String, bc: BlockConf)(content: Html)(implicit ctx: Context)
+
+@* Поле для ввода текста: input или textarea в зависимости от обстоятельств. *@
+@import ctx._
+
+<div class="cbt-sw-fieldset">
+  <fieldset>
+    <label>@Messages(bc.i18nLabelOf(key))</label>
+    @content
+  </fieldset>
+</div>

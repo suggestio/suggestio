@@ -130,5 +130,5 @@ package object models {
 
   type Context              = util.Context
   type BlockMap             = util.blocks.BlocksUtil.BlockMap
-
+  type BlockConf            = util.blocks.BlocksConf.BlockConf
 }

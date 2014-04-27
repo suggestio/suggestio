@@ -1,0 +1,24 @@
+@(bc: BlockConf, bm: BlockMap)(implicit ctx: Context)
+
+<div class="preview-wrap">
+
+  <div class="block-editor">
+    <div class="block-preview" id="blockPreviewContainer">
+      {% include "blocks_editor/block_preview.html" with block_id=resource_block.type params=resource_block.params %}
+    </div>
+  </div>
+</div>
+<div class="controls">
+  <div class="block-editor-form">
+
+    <div id="blockEditorForm">
+      @for(bf <- bc.blockFields) {
+        @bf.field.render(key = bf.name, value = bm.get(bf.name), bc = bc)
+        <div class="clear"></div>
+      }
+
+      <input type="hidden" name="blockId" value="@bc.id">
+
+    </div>
+  </div>
+</div>
