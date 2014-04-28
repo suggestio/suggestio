@@ -321,9 +321,25 @@ object MarketAd extends SioController with LogoSupport {
   def editAd(adId: String) = IsAdEditor(adId).async { implicit request =>
     import request.mad
     val imgIdKey = OrigImgIdKey(mad.img.id)
-    val formFilled = FormModes.getShopFormForClass(mad.offers.head) fill ((imgIdKey, mad, mad))
-    renderEditFormWith(formFilled)
-      .map { Ok(_) }
+    val anmt = request.producer.adn.memberType
+    val formFilledOpt = mad.offers.headOption map { offer =>
+      import AdNetMemberTypes._
+      anmt match {
+        case MART | RESTAURANT_SUP | RESTAURANT =>
+          FormModes.getMartFormForClass(offer)
+        case SHOP =>
+          FormModes.getShopFormForClass(offer)
+      }
+    } map { form0 =>
+      form0 fill ((imgIdKey, mad, mad))
+    }
+    formFilledOpt match {
+      case Some(formFilled) =>
+        renderEditFormWith(formFilled)
+          .map { Ok(_) }
+
+      case None => NotFound("Something gonna wrong")
+    }
   }
 
   /** Импортировать выхлоп маппинга формы в старый экземпляр рекламы. Этот код вызывается во всех editAd-экшенах. */
