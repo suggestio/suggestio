@@ -24,6 +24,9 @@
       case adText: AOText => {
         @adText.text
       }
+      case adRaw: AORaw => {
+        @adRaw.bodyMap.values.mkString(" / ")
+      }
     }</a>
     <p>Отобразить email-сообщение о деактивации:
       @Seq(true -> "HTML", false -> "TXT").map { case (isHtml, linkText) =>

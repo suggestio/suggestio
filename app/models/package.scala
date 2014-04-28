@@ -68,6 +68,9 @@ package object models {
   val  AOText               = ym.model.ad.AOText
   type AOText               = ym.model.ad.AOText
 
+  val  AORaw                = ym.model.ad.AORaw
+  type AORaw                = ym.model.ad.AORaw
+
   val  AOTextAlignValues    = common.AOTextAlignValues
   type AOTextAlignValue     = AOTextAlignValues.TextAlignValue
 
@@ -130,7 +133,10 @@ package object models {
 
   type Context              = util.Context
   type BlockMap             = util.blocks.BlocksUtil.BlockMap
-  type BlockConf            = util.blocks.BlocksConf.BlockConf
+
+  val  BlocksConf           = util.blocks.BlocksConf
+  type BlockConf            = BlocksConf.BlockConf
+
   type NumberBlockField     = util.blocks.NumberBlockField
   type StringBlockField     = util.blocks.StringBlockField
 }

@@ -7,6 +7,7 @@ import util.FormUtil._
 import views.html.blocks._
 import BlocksUtil._
 import io.suggest.model.EsModel
+import models._
 
 /**
  * Suggest.io
@@ -26,9 +27,15 @@ object BlocksConf extends Enumeration {
     def bMapping: Mapping[BlockMap]
 
     /** Более удобный интерфейс для метода template.render(). */
-    def render(confMap: BlockMap, isStandalone: Boolean)(implicit ctx: Context) = {
-      template.render(confMap, isStandalone, ctx)
+    def render(bm: BlockMap, isStandalone: Boolean)(implicit ctx: Context) = {
+      template.render(bm, isStandalone, ctx)
     }
+
+    def aoRawMapping = bMapping
+      .transform[AORaw](
+       {bm => AORaw(bm + (BK_BLOCK_ID -> id)) },
+        _.bodyMap
+      )
 
     /**
      * label'ы опций конфига блока, прописанные в conf/messages*.
@@ -91,4 +98,12 @@ object BlocksConf extends Enumeration {
       case ex: NoSuchElementException => None
     }
   }
+
+
+  def renderBlockMap(bm: BlockMap, isStandalone: Boolean)(implicit ctx: Context) = {
+    val blockId = BlocksUtil.extractBlockId(bm)
+    val blockConf = apply(blockId)
+    blockConf.render(bm, isStandalone)
+  }
+  
 }
