@@ -1,6 +1,23 @@
-@(mmart: MAdnNode, ads: Seq[MAd], shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory])(implicit ctx: util.Context)
+@(mmart: MAdnNode, ads: Seq[MAd], shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory], adSearch:util.qsb.AdSearch)(implicit ctx: util.Context)
 
-@* Список карточек *@
+@if( adSearch.producerIdOpt ){
 
-@if(!ads.isEmpty) {
+  @* Список карточек указанного продюссера *@
+  @if(!ads.isEmpty) {
+
+  <div class="sio-mart__node-offers">
+
+    <div>
+      2 этаж
+    </div>
+
+    <div>
+      @_block_offers_list(mmart, ads, shops, isDoubleSize=true)
+    </div>
+
+  </div>
+  }
+
+}else{
+  @* Вывести *@
 }
