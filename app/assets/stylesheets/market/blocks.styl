@@ -1,8 +1,20 @@
 @import 'fonts.styl'
 
+.sm-block
+  font-family: 'Arial'
+  font-size: 12px
+
+  h5
+    font-family: 'Arial'
+    font-size: 14px
+    font-weight: bold
+    margin: 6px 0
+
+  p
+    margin: 10px 0
+
 .sm-block-tpl1
-  width: 298px
-  height: 298px
+  width: 282px
   padding: 8px
   border: 1px solid #515151
   background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAMAAAADCAYAAABWKLW/AAAAFUlEQVQImWNggIJNmzb9x8FgYGAAALMZCUBv7a2oAAAAAElFTkSuQmCC') repeat
@@ -31,3 +43,37 @@
       color: #bd2d4e
       font-size: 85px
       line-height: 70px
+
+
+.sm-block-tpl2
+  width: 300px
+
+  .sale-icon
+    background: white
+    padding-bottom: 4px
+    border-bottom: 1px dotted black
+
+    .mask
+      background: url('/assets/images/market/blocks/tpl2-mask.png') no-repeat
+      background-size: 300px 195px
+      position: absolute
+      top: 0
+      left: 0
+      width: 300px
+      height: 195px
+
+    img
+      display: block
+      width: 300px
+      height: 195px
+
+  .info
+    overflow: hidden
+    background: white
+    text-align: center
+    border-bottom: 5px solid black
+
+.sm-block-tpl2.height-300
+
+  .info
+    height: 95px
