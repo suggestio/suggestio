@@ -12,6 +12,7 @@ import io.suggest.util.SioEsUtil._
 import scala.collection.JavaConversions._
 import io.suggest.model.EsModel.FieldsJsonAcc
 import play.api.libs.json._
+import java.util
 
 /**
  * Suggest.io
@@ -118,9 +119,10 @@ trait EMAdOffersStatic[T <: EMAdOffersMut[T]] extends EsModelStaticT[T] {
                 val offerBody = jsObject.get(OFFER_BODY_ESFN)
                 import AdOfferTypes._
                 ot match {
-                  case PRODUCT => AOProduct.deserialize(offerBody)
+                  case RAW      => AORaw.deserialize(offerBody)
+                  case PRODUCT  => AOProduct.deserialize(offerBody)
                   case DISCOUNT => AODiscount.deserialize(offerBody)
-                  case TEXT => AOText.deserialize(offerBody)
+                  case TEXT     => AOText.deserialize(offerBody)
                 }
             }
         }
@@ -155,7 +157,8 @@ trait EMAdOffersMut[T <: EMAdOffersMut[T]] extends EMAdOffers[T] {
 // -------------- Далее идёт конструктор, из которого собираются офферы ---------------
 
 sealed trait AdOfferT extends Serializable {
-  @JsonIgnore def offerType: AdOfferType
+  @JsonIgnore
+  def offerType: AdOfferType
 
   @JsonIgnore
   def renderPlayJson = {
@@ -168,6 +171,56 @@ sealed trait AdOfferT extends Serializable {
   @JsonIgnore
   def renderPlayJsonBody: FieldsJsonAcc
 }
+
+
+object AORaw {
+  def deserialize(jsObject: Any) = AORaw(
+    bodyMap = JacksonWrapper.convert[Map[String,Any]](jsObject)
+  )
+
+  def convertJsValue2play(v: Any): JsValue = {
+    v match {
+      case null       => JsNull
+      case i: Int     => JsNumber(i)
+      case s: String  => JsString(s)
+      case d: Double  => JsNumber(d)
+      case f: Float   => JsNumber(f)
+      case l: Long    => JsNumber(l)
+      case b: Boolean => JsBoolean(b)
+      case s: Short   => JsNumber(s)
+      case m: java.util.Map[_,_] =>
+        JsObject(convertJacksonJson2play(m))
+      case m: collection.Map[_,_] =>
+        JsObject(convertJacksonJson2play(m))
+      case l: java.lang.Iterable[_] =>
+        JsArray(l.map(convertJsValue2play).toSeq)
+      case l: Iterable[_] =>
+        JsArray(l.map(convertJsValue2play).toSeq)
+    }
+  }
+
+  def convertJacksonJson2play(o: collection.Map[_, _]): FieldsJsonAcc = {
+    o.foldLeft[FieldsJsonAcc] (Nil) { case (acc, (k, v)) =>
+      val jsV = convertJsValue2play(v)
+      k.toString -> jsV :: acc
+    }
+  }
+
+}
+
+
+case class AORaw(
+  bodyMap: Map[String, Any]
+) extends AdOfferT {
+  @JsonIgnore
+  override def offerType = AdOfferTypes.RAW
+
+  @JsonIgnore
+  override def renderPlayJsonBody: FieldsJsonAcc = {
+    AORaw.convertJacksonJson2play(bodyMap)
+  }
+}
+
 
 
 object AOProduct {
