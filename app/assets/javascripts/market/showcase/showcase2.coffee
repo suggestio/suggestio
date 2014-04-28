@@ -129,45 +129,6 @@ siomart =
           elt.attachEvent 'on' + eventType, () ->
             listener.apply elt
 
-    ##############################################
-    ## Определить и сохранить размер окна браузера
-    ##############################################
-    set_window_size : () ->
-      ww = wh = 0
-      if typeof window.innerWidth == 'number'
-        ww = window.innerWidth
-        wh = window.innerHeight
-      else if document.documentElement && ( document.documentElement.clientWidth || document.documentElement.clientHeight )
-        ww = document.documentElement.clientWidth
-        wh = document.documentElement.clientHeight
-      else if document.body && ( document.body.clientWidth || document.body.clientHeight )
-        ww = document.body.clientWidth
-        wh = document.body.clientHeight
-
-      siomart.ww = ww
-      siomart.wh = wh
-
-  ########################
-  ## Обработка тач событий
-  ########################
-  touch_events :
-
-    window_touchstart : ( event ) ->
-      event.preventDefault()
-
-    touchstart : ( event ) ->
-      this.page_x = event.changedTouches[0].pageX
-
-    touchmove : ( event ) ->
-
-      _delta = this.page_x - event.changedTouches[0].pageX
-
-      if _delta > siomart.config.ontouchmove_offer_change_delta
-        siomart.screens.objects['smScreen' + siomart.screens.active_screen].next_offer(true)
-
-      if _delta < -siomart.config.ontouchmove_offer_change_delta
-        siomart.screens.objects['smScreen' + siomart.screens.active_screen].next_offer(true, true)
-
   notifications :
     show : ( message ) ->
       n_dom = siomart.utils.ge 'smNotification'
@@ -287,8 +248,7 @@ siomart =
       container = this.utils.ge 'sioMartLayout'
       container.innerHTML = data.html
 
-      this.utils.set_window_size()
-      this.init_navigation()
+      cbca_grid.init()
 
     if data.action == 'findAds'
       screensContainer = siomart.utils.ge 'smScreens'
@@ -296,10 +256,6 @@ siomart =
 
       siomart.utils.ge('smCategoriesScreen').style.display = 'none'
 
-    this.screens.init()
-    this.screens.show_last()
-
-    this.fit_images()
 
   ######################################
   ## Загрузить индексную страницу для ТЦ
@@ -367,115 +323,6 @@ siomart =
       _dom = siomart.utils.ge 'smIndexNavigation'
       siomart.utils.removeClass _dom, 'hidden'
 
-  #########
-  ## Скрины
-  #########
-
-  screens :
-    init : () ->
-
-      this.objects = {}
-
-      divs = siomart.utils.ge('smScreens').getElementsByTagName 'div'
-      _i = 0
-
-      for _d in divs
-        if siomart.utils.is_array _d.className.match /sm-screen/g
-          ## Инициализировать скрин
-          _d.id = 'smScreen' + _i
-
-          siomart.screens.objects['smScreen' + _i] = new siomart.screen()
-          siomart.screens.objects['smScreen' + _i].screen_id = 'smScreen' + _i
-          siomart.screens.objects['smScreen' + _i].screen_container_dom = document.getElementById 'smScreen' + _i
-          siomart.screens.objects['smScreen' + _i].initialize_offers()
-
-          this.bind_events _d
-
-          _i++
-
-      this.total_screens = _i-0
-      true
-
-    bind_events : ( screen_dom ) ->
-
-      # Exit button
-      for elt in siomart.utils.ge_class screen_dom, 'siomart-close-button'
-        for _event in ['click', 'touchend']
-          siomart.utils.add_single_listener elt, _event, siomart.open_close_screen
-
-      # Back button
-      for elt in siomart.utils.ge_class screen_dom, 'siomart-back-button'
-        for _event in ['click', 'touchend']
-          siomart.utils.add_single_listener elt, _event, siomart.screens.prev_screen
-
-
-    ## Переключиться на последний экран
-    show_last : () ->
-      ## Если у нас один экран — значит, он индексный и уже активен
-      if this.total_screens == 1
-        this.active_screen = 0
-        return false
-
-      active_screen_index = this.active_screen
-      target_screen_index = parseInt( parseInt( this.total_screens ) - 1 )
-
-      this.animate active_screen_index, target_screen_index
-
-    ## Переключиться на предыдущий экран
-    prev_screen : ( event ) ->
-
-      _this = siomart.screens
-
-      active_screen_index = _this.active_screen
-      target_screen_index = parseInt( _this.active_screen - 1 )
-
-      _this.animate active_screen_index, target_screen_index
-      event.preventDefault()
-
-    animate : ( active_screen_index, target_screen_index ) ->
-
-      if active_screen_index < target_screen_index
-        direction = 'forward'
-      else
-        direction = 'backward'
-
-      # установить входящий слайд в нужную позицию
-      siomart.utils.removeClass 'smScreen' + target_screen_index, 'sm-hidden-screen'
-      siomart.utils.addClass 'smScreen' + target_screen_index, direction + '-in'
-
-      # включить анимацию для слайдов и перегнать на новые места базирования
-      cb = () ->
-        siomart.utils.addClass 'smScreen' + target_screen_index, 'animated'
-        siomart.utils.removeClass 'smScreen' + target_screen_index, direction + '-in'
-
-        siomart.utils.addClass 'smScreen' + active_screen_index, direction + '-out animated'
-
-      setTimeout cb, 100
-
-      cb1 = () ->
-
-        #Расставить нужные классы для слайдов
-        siomart.utils.removeClass 'smScreen' + active_screen_index, 'animated'
-        siomart.utils.removeClass 'smScreen' + active_screen_index, direction + '-out'
-        siomart.utils.addClass 'smScreen' + active_screen_index, 'sm-hidden-screen'
-
-        siomart.utils.removeClass 'smScreen' + target_screen_index, 'animated'
-
-        if direction == 'backward'
-          siomart.utils.re 'smScreen' + siomart.screens.active_screen
-
-        siomart.screens.active_screen = target_screen_index
-
-      setTimeout cb1, 700
-
-  screen : () ->
-    this.screen_id = undefined
-    this.screen_container_dom = undefined
-    this.is_offers_locked = false
-    this.is_locked = false
-    this.active_offer = 1
-    this.total_offers = undefined
-
   load_for_shop_id : ( shop_id ) ->
     console.log 'load for shop id ' + shop_id
     url = '/market/ads/' + siomart.config.mart_id + '?a.shopId=' + shop_id
@@ -533,7 +380,6 @@ siomart =
     this.load_stylesheets()
     this.draw_layout()
 
-    this.utils.set_window_size()
     this.load_mart_index_page()
 
 
