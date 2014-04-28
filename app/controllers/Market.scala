@@ -26,7 +26,6 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   val JSONP_CB_FUN = "siomart.receive_response"
 
-
   /** Входная страница для sio-market для ТЦ. */
   def martIndex(martId: String) = marketAction(martId) { implicit request =>
     val welcomeAdOptFut: Future[Option[MWelcomeAd]] = request.mmart.meta.welcomeAdId match {

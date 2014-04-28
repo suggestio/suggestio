@@ -265,7 +265,8 @@ siomart =
       cbca_grid.init()
 
     if data.action == 'findAds'
-      screensContainer = siomart.utils.ge 'smScreens'
+
+      screensContainer = siomart.utils.ge 'sioMartLayout'
       screensContainer.innerHTML += data.html
 
       siomart.utils.ge('smCategoriesScreen').style.display = 'none'
@@ -338,12 +339,10 @@ siomart =
       siomart.utils.removeClass _dom, 'hidden'
 
   load_for_shop_id : ( shop_id ) ->
-    alert 'load for shop_id ' + shop_id
     console.log 'load for shop id ' + shop_id
     url = '/market/ads/' + siomart.config.mart_id + '?a.shopId=' + shop_id
+
     siomart.perform_request url
-    siomart.utils.ge('smCategoriesScreen').style.display = 'none'
-    siomart.utils.ge('smShopListScreen').style.display = 'none'
 
   ## Загрузить все офферы для магазина
   load_for_cat_id : ( cat_id ) ->
