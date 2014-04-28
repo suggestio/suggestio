@@ -1,24 +1,31 @@
-@(bc: BlockConf, bm: BlockMap)(implicit ctx: Context)
+@(af: Form[_])(implicit ctx: Context)
 
-<div class="preview-wrap">
+@import util.blocks._
 
-  <div class="block-editor">
-    <div class="block-preview" id="blockPreviewContainer">
-      {% include "blocks_editor/block_preview.html" with block_id=resource_block.type params=resource_block.params %}
+@defining( BlocksConf(af("ad.offer.blockId").value.map(_.toInt).getOrElse(1)) ) { bc =>
+  <div class="preview-wrap">
+
+    <div class="block-editor">
+      <div class="block-preview" id="blockPreviewContainer">
+        {% include "blocks_editor/block_preview.html" with block_id=resource_block.type params=resource_block.params %}
+      </div>
     </div>
   </div>
-</div>
-<div class="controls">
-  <div class="block-editor-form">
+  <div class="controls">
+    <div class="block-editor-form">
 
-    <div id="blockEditorForm">
-      @for(bf <- bc.blockFields) {
-        @bf.render(value = bf.extractValue(bm), bc = bc)
-        <div class="clear"></div>
-      }
+      <div id="blockEditorForm">
+        @for(bcf <- bc.blockFields) {
+          @bcf.render(
+            value = af("ad.offer." + bcf.name).value.flatMap(bcf.anyValueToT),
+            bc = bc
+          )
+          <div class="clear"></div>
+        }
 
-      <input type="hidden" name="ad.offer.blockId" value="@bc.id">
+        <input type="hidden" name="ad.offer.blockId" value="@bc.id">
 
+      </div>
     </div>
   </div>
-</div>
+}

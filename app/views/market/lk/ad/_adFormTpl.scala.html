@@ -183,6 +183,9 @@
     <div class="border-line"></div>
 
     <div class="tabs">
+      <div class="tab @if(offerType1 == RAW) {act}" data-mode="@RAW">
+        BLOCKS
+      </div>
       <div class="tab @if(offerType1 == PRODUCT) {act}" data-mode="@PRODUCT">
         ЦЕНОВОЙ
       </div>
@@ -199,6 +202,7 @@
 
     <div class="slide-content" id="templates">
       @* Вкладки формы. *@
+      @blocks.editor._blockEditorTpl(af)
       @_adFormProductTpl(af,  isShown = offerType1 == PRODUCT)
       @_adFormDiscountTpl(af, isShown = offerType1 == DISCOUNT)
       @_adFormTextTpl(af,     isShown = offerType1 == TEXT)
