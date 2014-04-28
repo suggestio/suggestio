@@ -2,12 +2,13 @@
 
 @import util.blocks._
 
+@defining( "ad.offer." ) { nameBase =>
 @defining( BlocksConf(af("ad.offer.blockId").value.map(_.toInt).getOrElse(1)) ) { bc =>
   <div class="preview-wrap">
 
     <div class="block-editor">
       <div class="block-preview" id="blockPreviewContainer">
-        {% include "blocks_editor/block_preview.html" with block_id=resource_block.type params=resource_block.params %}
+        @bc.renderEditorPreview(af, nameBase)
       </div>
     </div>
   </div>
@@ -17,7 +18,7 @@
       <div id="blockEditorForm">
         @for(bf <- bc.blockFields) {
           @bf.renderEditorField(
-            formField = af("ad.offer." + bf.name),
+            formField = af(nameBase + bf.name),
             bc = bc
           )
           <div class="clear"></div>
@@ -28,4 +29,5 @@
       </div>
     </div>
   </div>
+}
 }

@@ -31,9 +31,30 @@ object BlocksConf extends Enumeration {
       template.render(bm, isStandalone, ctx)
     }
 
+    /** При генерации рендера-превьюшки нет доступа к AORaw и т.д. Извлекаем карту из формы. */
+    def renderEditorPreview(bform: Form[_], nameBase: String)(implicit ctx: Context) = {
+      val bm = bform.data.foldLeft[List[(String,Any)]] (Nil) { case (acc, (k, v)) =>
+        if (k.startsWith(nameBase)) {
+          val newk = k.substring(nameBase.length)
+          val v1 = Option(v)
+            .filter(!_.isEmpty)
+            .orElse {
+              blockFields.find(_.name == newk).flatMap(_.defaultValue)
+            }
+            .getOrElse(v)
+          newk -> v1 :: acc
+        } else {
+          acc
+        }
+      }
+      renderBlock(bmEnsureId(bm.toMap), isStandalone = false)
+    }
+
+    def bmEnsureId(bm: BlockMap): BlockMap = bm + (BK_BLOCK_ID -> id)
+
     def aoRawMapping = bMapping
       .transform[AORaw](
-       {bm => AORaw(bm + (BK_BLOCK_ID -> id)) },
+       {bm => AORaw( bmEnsureId(bm) ) },
         _.bodyMap
       )
 
