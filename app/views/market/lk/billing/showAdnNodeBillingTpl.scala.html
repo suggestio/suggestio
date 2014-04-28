@@ -9,7 +9,7 @@
 
   <div class="title-wrap">
     <div class="center">
-      <a class="back-but" href="#">&nbsp;</a>
+      <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)">&nbsp;</a>
       <div class="title-inner">БАЛАНС</div>
     </div>
   </div>
@@ -47,13 +47,13 @@
           </td>
           <td>
             <div class="ovh">
-              <span data-js-class="value" title="@_prettyDate(npd).toString.trim">@numericDate(npd)</span>
+              <span class="value" data-js-class="value" title="@_prettyDate(npd).toString.trim">@numericDate(npd)</span>
             </div>
-            <div class="border-line-vertical f-right"></div>
           </td>
         }
 
         <td>
+          <div class="border-line-vertical f-left"></div>
           <div class="ovh">
             <span class="gray font-12">Сумма списания:</span>
           </div>
@@ -82,7 +82,10 @@
       </div>
       <div class="ovh">
         @_billPaymentBankTpl(mbc)
-        <a class="print-btn" href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">Версия для печати</a>
+        <span class="gray-but-smallest">
+          <a class="white-border-top" href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">Распечатать</a>
+        </span>
+
       </div>
     </div>
 
