@@ -168,7 +168,12 @@ case class ColorBlockField(
   field: StringBlockEditorField,
   defaultValue: Option[String] = None
 ) extends StringBlockFieldT {
-  override def getMapping: Mapping[T] = colorM
+  override def getMapping: Mapping[T] = {
+    if (defaultValue.isDefined)
+      default(colorM, defaultValue.get)
+    else
+      colorM
+  }
   override def maxLen: Int = 6
   override def minLen: Int = maxLen
 }
