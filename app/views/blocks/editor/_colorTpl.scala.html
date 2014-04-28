@@ -1,0 +1,57 @@
+@(bf: StringBlockFieldT, formField: Field, bc: BlockConf)(implicit ctx: Context)
+
+@* Поле редактора для настройки цвета чего-либо. *@
+@import ctx._
+
+<table class="color-select" cellspacing="0" cellpadding="0">
+  <tr>
+    <td style="width: 350px;">
+      <strong class="gray">@Messages(bc.i18nLabelOf(bf.name))</strong>
+    </td>
+    <td style="padding: 0 10px;">
+      <input class="color-lock" type="checkbox" />
+    </td>
+    <td class="custom-color">
+      <a>&nbsp;</a>
+      <input class="color-value" type="hidden" name="@formField.name" value="@formField.value.orElse(bf.defaultValue)"/>
+    </td>
+  <tr/>
+</table>
+
+
+@* TODO Статический JS надо вынести в файл. *@
+<script type="text/javascript">
+
+  var colorTimeOut;
+
+  $(document).on('click', '.color-lock',
+  function(e) {
+    $this = $(this);
+    $colorInput = $this.closest('.color-select').find('.color-value');
+    if(this.checked) {
+      $colorInput.val($colorInput.data('data-color')).trigger('change');
+    }
+    else {
+      $colorInput.val('').trigger('change');
+    }
+  });
+
+  $('.custom-color a').colpick({
+    layout:'hex',
+    submit:0,
+    onChange: function(HSB, HEX, RGB, el) {
+      var $input = $(el).parent().find('input');
+      clearTimeout(colorTimeOut);
+      colorTimeOut = setTimeout(
+      function() {
+        $input.val(HEX).data('data-color', HEX);
+        if($(el).closest('.color-select').find('.color-lock')[0].checked) {
+          $input.trigger('change');
+        }
+      }, 500);
+    }
+  });
+
+
+
+</script>

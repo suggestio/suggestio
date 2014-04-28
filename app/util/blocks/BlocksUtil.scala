@@ -51,7 +51,7 @@ object BlocksEditorFields extends Enumeration {
   
   protected trait StringVal {
     type T = String
-    type BFT = StringBlockField
+    type BFT = StringBlockFieldT
     def parseAnyVal(anyV: Any): Option[T] = Some(anyV.toString)
   }
   
@@ -82,6 +82,9 @@ object BlocksEditorFields extends Enumeration {
     override def fieldTemplate = _textareaTpl
   }
 
+  val Color: StringBlockEditorField = new Val("color") with StringVal {
+    override def fieldTemplate = _colorTpl
+  }
 }
 
 import BlocksEditorFields._
@@ -128,6 +131,19 @@ case class NumberBlockField(
 }
 
 
+
+trait StringBlockFieldT extends BlockFieldT {
+  override type T = String
+  override def field: StringBlockEditorField
+  override def anyValueToT(v: Any): Option[T] = field.parseAnyVal(v)
+  override def renderEditorField(formField: Field, bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+    field.renderEditorField(this, formField, bc)
+  }
+  def minLen: Int
+  def maxLen: Int
+}
+
+
 case class StringBlockField(
   name: String,
   field: StringBlockEditorField,
@@ -135,9 +151,7 @@ case class StringBlockField(
   defaultValue: Option[String] = None,
   minLen: Int = 0,
   maxLen: Int = 16000
-) extends BlockFieldT {
-  override type T = String
-
+) extends StringBlockFieldT {
   override def getMapping: Mapping[T] = {
     val mapping0 = nonEmptyText(minLength = minLen, maxLength = maxLen)
       .transform(strTransformF, strIdentityF)
@@ -146,9 +160,16 @@ case class StringBlockField(
     else
       mapping0
   }
-  override def renderEditorField(formField: Field, bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
-    field.renderEditorField(this, formField, bc)
-  }
-  override def anyValueToT(v: Any): Option[T] = field.parseAnyVal(v)
+}
+
+
+case class ColorBlockField(
+  name: String,
+  field: StringBlockEditorField,
+  defaultValue: Option[String] = None
+) extends StringBlockFieldT {
+  override def getMapping: Mapping[T] = colorM
+  override def maxLen: Int = 6
+  override def minLen: Int = maxLen
 }
 

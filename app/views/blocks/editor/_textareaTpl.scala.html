@@ -1,4 +1,4 @@
-@(bf: StringBlockField, formField: Field, bc: BlockConf)(implicit ctx: Context)
+@(bf: StringBlockFieldT, formField: Field, bc: BlockConf)(implicit ctx: Context)
 
 @_textInputBaseTpl(bf, bc) {
   <textarea name="@formField.name" class="white-input">@formField.value.flatMap(bf.anyValueToT)</textarea>

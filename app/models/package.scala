@@ -139,4 +139,5 @@ package object models {
 
   type NumberBlockField     = util.blocks.NumberBlockField
   type StringBlockField     = util.blocks.StringBlockField
+  type StringBlockFieldT    = util.blocks.StringBlockFieldT
 }
