@@ -13,7 +13,7 @@
 
     <div id="blockEditorForm">
       @for(bf <- bc.blockFields) {
-        @bf.field.render(key = bf.name, value = bm.get(bf.name), bc = bc)
+        @bf.render(value = bf.extractValue(bm), bc = bc)
         <div class="clear"></div>
       }
 

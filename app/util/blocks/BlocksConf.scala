@@ -6,6 +6,7 @@ import play.api.data._, Forms._
 import util.FormUtil._
 import views.html.blocks._
 import BlocksUtil._
+import io.suggest.model.EsModel
 
 /**
  * Suggest.io
@@ -29,46 +30,6 @@ object BlocksConf extends Enumeration {
       template.render(confMap, isStandalone, ctx)
     }
 
-    /** Высота блока есть везде, поэтому её дефолтовое значение вынесено сюда. */
-    def bkHeightDflt = 140
-    def bkHeightMin = bkHeightDflt
-    def bkHeightMax = 460
-
-    /** Добавить в карту фунцию для получения дефолтовых значений.
-      * Для перезаписи BK_HEIGHT следует использовать [[bkHeightDflt]]. */
-    def withDefaultMap(confMap: BlockMap) = confMap.withDefault(defaultValueFor)
-
-    def maybeDefaultValueFor(bk: String): Option[Any] = {
-      if (bk == BK_HEIGHT)
-        Some(bkHeightDflt)
-      else
-        None
-    }
-
-    def minValueFor(bk: String): Option[Any] = {
-      if (bk == BK_HEIGHT)
-        Some(bkHeightMin)
-      else
-        None
-    }
-
-    def maxValueFor(bk: String): Option[Any] = {
-      if (bk == BK_HEIGHT)
-        Some(bkHeightMax)
-      else
-        None
-    }
-
-    def heightM = number(
-      min = bkHeightMin,
-      max = bkHeightMax
-    )
-
-    /** Дефолтовые значения для ключей конфигурации блока. */
-    def defaultValueFor(bk: String): Any = {
-      maybeDefaultValueFor(bk).get
-    }
-
     /**
      * label'ы опций конфига блока, прописанные в conf/messages*.
      * @param bk исходный BK_-идентификатор
@@ -77,7 +38,7 @@ object BlocksConf extends Enumeration {
     def i18nLabelOf(bk: String) = "blocks.bk." + bk
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
-    def blockFields: List[BlockField]
+    def blockFields: List[BlockFieldT]
   }
 
   type BlockConf = Val
@@ -87,21 +48,29 @@ object BlocksConf extends Enumeration {
   // Начало значений
 
   val Block1 = new Val(1, "verySimple") {
+    val heightField = NumberBlockField(BK_HEIGHT, BlocksEditorFields.Height, minValue = 140, maxValue=460, defaultValue = Some(140))
+    val titleField = StringBlockField(BK_TITLE, BlocksEditorFields.InputText, maxLen = 512)
+    val descrField = StringBlockField(BK_DESCRIPTION, BlocksEditorFields.TextArea, maxLen = 8192)
+
+    override val blockFields = List(
+      heightField, titleField, descrField
+    )
+
     /** Набор маппингов для обработки данных от формы. */
     override val bMapping = mapping(
-      BK_HEIGHT       -> heightM,
-      BK_TITLE        -> bTitleM,
-      BK_DESCRIPTION  -> bDescriptionM
+      BK_HEIGHT       -> heightField.getMapping,
+      BK_TITLE        -> titleField.getMapping,
+      BK_DESCRIPTION  -> descrField.getMapping
     )
     {(height, title, descr) =>
       Map(BK_HEIGHT -> height, BK_TITLE -> title, BK_DESCRIPTION -> descr): BlockMap
     }
     {bmap =>
       val bmapSafe = bmap.withDefault {
-        case BK_HEIGHT => bkHeightDflt
+        case BK_HEIGHT => heightField.defaultValue.getOrElse(140)
         case _         => ""
       }
-      val height = bmapSafe(BK_HEIGHT).asInstanceOf[Int]
+      val height = EsModel.intParser(bmapSafe(BK_HEIGHT))
       val title = bmapSafe(BK_TITLE).toString
       val descr = bmapSafe(BK_DESCRIPTION).toString
       Some((height, title, descr))
@@ -110,11 +79,6 @@ object BlocksConf extends Enumeration {
     /** Шаблон для рендера. */
     override def template = _block1Tpl
 
-    override val blockFields = List(
-      BlockField(BK_HEIGHT, BlocksEditorFields.Height),
-      BlockField(BK_TITLE, BlocksEditorFields.InputText),
-      BlockField(BK_DESCRIPTION, BlocksEditorFields.TextArea)
-    )
   }
 
 
