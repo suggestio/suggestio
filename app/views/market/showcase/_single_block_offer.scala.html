@@ -3,5 +3,11 @@
 @import util.TplDataFormatUtil._
 @import AdNetMemberTypes.MART
 
+
+@*ad.offers.map {
+  case adRaw: AORaw => {
+    @BlocksConf.renderBlockMap(adRaw.bodyMap, isStandalone = false)
+  }
+}*@
 @blocks.sm_block_tpl1()
 @blocks.sm_block_tpl2()
