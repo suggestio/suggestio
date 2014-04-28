@@ -8,18 +8,19 @@
 
 @* Основной контейнер, шапка + карточки *@
 
+
+@_screen_nav_buttons(true)
 <div class="sio-mart__producer-header" style="background-color: #@mmart.meta.color;">
   @mmart.logoImgOpt.map { logoImg =>
   <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)"/>
   }
 </div>
 
+
 <div class="sio-mart__index-offers">
   <div class="sio-mart__index-offers__container" id="sioMartIndexGridLayout">
     <div id="sioMartIndexGrid">
-      <div class="sm-block sio-mart__single-offer" data-width="300" data-height="300" style="width: 300px; height: 300px;"></div>
-      <div class="sm-block sio-mart__single-offer" data-width="140" data-height="300" style="width: 140px; height: 300px;"></div>
-      <div class="sm-block sio-mart__single-offer" data-width="140" data-height="300" style="width: 140px; height: 300px;"></div>
+      @_block_offers_list(mmart, ads, shops)
     </div>
   </div>
 <div>
@@ -28,13 +29,9 @@
   <div class="data" id="smNotificationData"></div>
 </div>
 
-@*<div class="sm-preload">
+<div class="sm-preload">
   <img src="@ctx.myAudienceUrl/assets/images/market/categories/icons.png">
-</div>*@
-
-@_screen_nav_buttons(true)
-
-@*_offers_list(mmart, ads, shops)*@
+</div>
 
 @* Окно с выбором категорий *@
 @_categories(mmcats,mmart)
