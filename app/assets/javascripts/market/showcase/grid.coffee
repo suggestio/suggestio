@@ -51,7 +51,9 @@ cbca_grid =
 
     this.max_allowed_cell_width = no_of_cells
 
-    this.layout_dom.style.width = cw + 'px'
+    #this.layout_dom.style.width = cw + 'px'
+    this.layout_dom.css
+      'width' : cw + 'px'
 
   ##############
   ## Fetch block
@@ -197,9 +199,9 @@ cbca_grid =
     _slow_class = "slow-motion-block"
 
     if is_on == 1
-      $('.index-block').addClass _slow_class
+      $('.sm-block').addClass _slow_class
     else
-      $('.index-block').removeClass _slow_class
+      $('.sm-block').removeClass _slow_class
 
   ##############################
   ## Find all blocks on the page
@@ -208,8 +210,7 @@ cbca_grid =
 
     i = 0
     ## TODO : make selector configurable
-    $('.index-block').each () ->
-
+    $('.sm-block').each () ->
       $(this).attr "id", "elt" + i
 
       height = parseInt $(this).attr "data-height"
@@ -266,12 +267,15 @@ cbca_grid =
 
   init : () ->
 
-    this.blocks_container = document.getElementById 'sioMartIndexGrid'
-    this.layout_dom = document.getElementById 'sioMartIndexGridLayout'
+    #this.blocks_container = document.getElementById 'sioMartIndexGrid'
+    #this.layout_dom = document.getElementById 'sioMartIndexGridLayout'
+
+    this.blocks_container = $('#sioMartIndexGrid')
+    this.layout_dom = $('#sioMartIndexGridLayout')
 
     this.set_container_size()
-    #this.load_blocks()
-    #this.build()
+    this.load_blocks()
+    this.build()
 
   resize : () ->
     this.set_container_size()
@@ -301,7 +305,7 @@ cbca_grid =
           elt.css({'width' : original_width + 'px','height' : original_height + 'px','opacity':'1'})
 
       if active_block == "resize"
-        $('.index-block').css({'opacity' : '1'})
+        $('.sm-block').css({'opacity' : '1'})
         cbca.deactivate_block cbca.active_block, 1
         delete cbca.active_block
         #cbca.push_history_state "/"
@@ -347,7 +351,7 @@ cbca_grid =
     if ( browser.iphone || browser.ipad )
       ## Если у нас девайс на базе iOS — использует touch события
 
-      $('.index-block').each () ->
+      $('.sm-block').each () ->
 
         b = $(this)
 
@@ -413,13 +417,13 @@ cbca_grid =
 
     else
       ## В противном случае — обычные
-      $('.index-block').bind "mouseover", () ->
+      $('.sm-block').bind "mouseover", () ->
         cbca.block_hover_action $(this)
 
-      $('.index-block').bind "mouseout", () ->
+      $('.sm-block').bind "mouseout", () ->
         cbca.block_unhover_action $(this)
 
-      $('.index-block').bind "click", () ->
+      $('.sm-block').bind "click", () ->
         if !$(this).hasClass "active-block"
           cbca.block_click_action $(this)
 

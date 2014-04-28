@@ -129,6 +129,20 @@ siomart =
           elt.attachEvent 'on' + eventType, () ->
             listener.apply elt
 
+    ###########################
+    ## Установить vendor_prefix
+    ###########################
+    set_vendor_prefix : () ->
+      styles = window.getComputedStyle(document.documentElement, '')
+      pre = (Array.prototype.slice.call(styles).join('').match(/-(moz|webkit|ms)-/) || (styles.OLink == '' && ['', 'o']))[1]
+
+      obj =
+        lowercase: pre
+        css: '-' + pre + '-'
+        js: pre[0].toUpperCase() + pre.substr(1)
+
+      window.vendor_prefix = obj
+
   notifications :
     show : ( message ) ->
       n_dom = siomart.utils.ge 'smNotification'
@@ -377,11 +391,11 @@ siomart =
     siomart.config.mart_id = window.siomart_id
     siomart.config.host = window.siomart_host
 
+    this.utils.set_vendor_prefix()
     this.load_stylesheets()
     this.draw_layout()
 
     this.load_mart_index_page()
-
 
 window.siomart = siomart
 siomart.init()
