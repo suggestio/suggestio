@@ -1,14 +1,17 @@
 @(af: Form[_])(implicit ctx: Context)
 
-@import util.blocks._
+@import util.blocks._, BlocksUtil._
 
 @defining( "ad.offer." ) { nameBase =>
-@defining( BlocksConf(af("ad.offer.blockId").value.map(_.toInt).getOrElse(1)) ) { bc =>
+@defining( af(nameBase + BK_BLOCK_ID).value ) { biFieldValue =>
+@defining( BlocksConf(biFieldValue.map(_.toInt).getOrElse(1)) ) { bc =>
   <div class="preview-wrap">
 
     <div class="block-editor">
       <div class="block-preview" id="blockPreviewContainer">
-        @bc.renderEditorPreview(af, nameBase)
+        @if(biFieldValue.isDefined) {
+          @bc.renderEditorPreview(af, nameBase)
+        }
       </div>
     </div>
   </div>
@@ -24,10 +27,11 @@
           <div class="clear"></div>
         }
 
-        <input type="hidden" name="ad.offer.blockId" value="@bc.id">
+        <input type="hidden" name="@nameBase@BK_BLOCK_ID" value="@bc.id">
 
       </div>
     </div>
   </div>
+}
 }
 }

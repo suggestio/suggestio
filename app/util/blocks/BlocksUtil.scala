@@ -90,6 +90,7 @@ object BlocksEditorFields extends Enumeration {
 import BlocksEditorFields._
 
 
+/** Трейт для конкретного поля в рамках динамического маппинга поля. */
 trait BlockFieldT {
   type T
   def name: String
@@ -107,6 +108,7 @@ trait BlockFieldT {
 }
 
 
+/** Поле для какой-то цифры. */
 case class NumberBlockField(
   name: String,
   field: NumberBlockEditorField,
