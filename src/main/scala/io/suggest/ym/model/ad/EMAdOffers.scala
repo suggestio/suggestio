@@ -1,7 +1,6 @@
 package io.suggest.ym.model.ad
 
-import io.suggest.model.EsModelT
-import io.suggest.model.EsModelStaticT
+import io.suggest.model.{EsModel, EsModelT, EsModelStaticT}
 import java.util.Currency
 import com.fasterxml.jackson.annotation.{JsonIgnoreProperties, JsonIgnore}
 import io.suggest.ym.model.AdOfferType
@@ -54,8 +53,12 @@ object EMAdOffers {
   val DISCOUNT_ESFN     = "discount"
   val DISCOUNT_TPL_ESFN = "discoTpl"
 
+  // BLOCK offer
+  val BLOCK_ID_ESFN     = "blockId"
+
   // TEXT offer
   val TEXT_ESFN         = "text"
+
 }
 
 import EMAdOffers._
@@ -84,7 +87,6 @@ trait EMAdOffersStatic[T <: EMAdOffersMut[T]] extends EsModelStaticT[T] {
     val offerBodyProps = Seq(
       // product-поля
       FieldObject(VENDOR_ESFN, properties = Seq(stringValueField(1.5F), fontField)),
-      FieldObject(MODEL_ESFN, properties = Seq(stringValueField(), fontField)),
       // TODO нужно как-то проанализировать цифры эти, округлять например.
       FieldObject(PRICE_ESFN,  properties = priceFields(iia = true)),
       FieldObject(OLD_PRICE_ESFN,  properties = priceFields(iia = false)),
@@ -119,7 +121,7 @@ trait EMAdOffersStatic[T <: EMAdOffersMut[T]] extends EsModelStaticT[T] {
                 val offerBody = jsObject.get(OFFER_BODY_ESFN)
                 import AdOfferTypes._
                 ot match {
-                  case RAW      => AORaw.deserialize(offerBody)
+                  case BLOCK      => AOBlock.deserialize(offerBody)
                   case PRODUCT  => AOProduct.deserialize(offerBody)
                   case DISCOUNT => AODiscount.deserialize(offerBody)
                   case TEXT     => AOText.deserialize(offerBody)
@@ -173,51 +175,58 @@ sealed trait AdOfferT extends Serializable {
 }
 
 
-object AORaw {
-  def deserialize(jsObject: Any) = AORaw(
-    bodyMap = JacksonWrapper.convert[Map[String,Any]](jsObject)
-  )
-
-  def convertJsValue2play(v: Any): JsValue = {
-    v match {
-      case null       => JsNull
-      case i: Int     => JsNumber(i)
-      case s: String  => JsString(s)
-      case d: Double  => JsNumber(d)
-      case f: Float   => JsNumber(f)
-      case l: Long    => JsNumber(l)
-      case b: Boolean => JsBoolean(b)
-      case s: Short   => JsNumber(s)
+object AOBlock {
+  def deserialize(jsObject: Any) = {
+    jsObject match {
       case m: java.util.Map[_,_] =>
-        JsObject(convertJacksonJson2play(m))
-      case m: collection.Map[_,_] =>
-        JsObject(convertJacksonJson2play(m))
-      case l: java.lang.Iterable[_] =>
-        JsArray(l.map(convertJsValue2play).toSeq)
-      case l: Iterable[_] =>
-        JsArray(l.map(convertJsValue2play).toSeq)
-    }
-  }
-
-  def convertJacksonJson2play(o: collection.Map[_, _]): FieldsJsonAcc = {
-    o.foldLeft[FieldsJsonAcc] (Nil) { case (acc, (k, v)) =>
-      val jsV = convertJsValue2play(v)
-      k.toString -> jsV :: acc
+        val acc = AOBlock(-1)
+        m foreach {
+          case (BLOCK_ID_ESFN, blockId) =>
+            acc.blockId = EsModel.intParser(blockId)
+          case (TEXT1_ESFN, text1Raw) =>
+            acc.text1 = JacksonWrapper.convert[Option[AOStringField]](text1Raw)
+          case (DISCOUNT_ESFN, discoRaw) =>
+            acc.discount = Option(JacksonWrapper.convert[AOFloatField](discoRaw))
+          case (TEXT2_ESFN, text2Raw) =>
+            acc.text2 = JacksonWrapper.convert[Option[AOStringField]](text2Raw)
+          case (PRICE_ESFN, priceRaw) =>
+            acc.price = Option(JacksonWrapper.convert[AOPriceField](priceRaw))
+          case (OLD_PRICE_ESFN, priceOldRaw) =>
+            acc.priceOld = Option(JacksonWrapper.convert[AOPriceField](priceOldRaw))
+        }
+        acc
     }
   }
 
 }
 
 
-case class AORaw(
-  bodyMap: Map[String, Any]
+case class AOBlock(
+  var blockId: Int,
+  var text1: Option[AOStringField] = None,
+  var text2: Option[AOStringField] = None,
+  var discount: Option[AOFloatField] = None,
+  //discountTemplate: Option[AODiscountTemplate] = None,
+  var price: Option[AOPriceField]  = None,
+  var priceOld: Option[AOPriceField] = None
 ) extends AdOfferT {
   @JsonIgnore
-  override def offerType = AdOfferTypes.RAW
+  override def offerType = AdOfferTypes.BLOCK
 
   @JsonIgnore
   override def renderPlayJsonBody: FieldsJsonAcc = {
-    AORaw.convertJacksonJson2play(bodyMap)
+    var acc: FieldsJsonAcc = List(BLOCK_ID_ESFN -> JsNumber(blockId))
+    if (text1.isDefined)
+      acc ::= TEXT1_ESFN -> text1.get.renderPlayJson
+    if (text2.isDefined)
+      acc ::= TEXT2_ESFN -> text2.get.renderPlayJson
+    if (discount.isDefined)
+      acc ::= DISCOUNT_ESFN -> discount.get.renderPlayJson
+    if (price.isDefined)
+      acc ::= PRICE_ESFN -> price.get.renderPlayJson
+    if (priceOld.isDefined)
+      acc ::= OLD_PRICE_ESFN -> priceOld.get.renderPlayJson
+    acc
   }
 }
 

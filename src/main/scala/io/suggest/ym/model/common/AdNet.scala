@@ -173,7 +173,7 @@ object AdOfferTypes extends Enumeration {
   val PRODUCT   = Value("p")
   val DISCOUNT  = Value("d")
   val TEXT      = Value("t")
-  val RAW       = Value("r")
+  val BLOCK     = Value("b")
 
   def maybeWithName(n: String): Option[AdOfferType] = {
     try {
