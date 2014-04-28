@@ -1,0 +1,8 @@
+@(bf: BlockFloatFieldT, formField: Field, bc: BlockConf)(implicit ctx: Context)
+
+@*import util.TplDataFormatUtil._ *@
+
+@_textInputBaseTpl(bf, bc) {
+  @* TODO Использовать formatPrice. *@
+  <input name="@formField.name" class="white-input" type="text" value="@formField.value" />
+}

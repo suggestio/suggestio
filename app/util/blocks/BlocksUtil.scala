@@ -25,6 +25,8 @@ object BlocksUtil {
   val BK_DESCRIPTION  = "description"
   val BK_PHOTO_ID     = "photoId"
   val BK_BG_COLOR     = "bgColor"
+  val BK_PRICE        = "price"
+  val BK_OLD_PRICE    = "oldPrice"
 
   val bTitleM = nonEmptyText(minLength = 2, maxLength = 250)
     .transform[String](strTrimSanitizeF, strIdentityF)
@@ -60,30 +62,41 @@ object BlocksEditorFields extends Enumeration {
     type BFT = NumberBlockField
     def parseAnyVal(anyV: Any): Option[T] = Some(EsModel.intParser(anyV))
   }
+  
+  protected trait FloatVal {
+    type T = Float
+    type BFT = BlockFloatFieldT
+    def parseAnyVal(anyV: Any): Option[T] = Some(EsModel.floatParser(anyV))
+  }
 
   type BlockEditorField = Val
-  type StringBlockEditorField = BlockEditorField with StringVal
-  type NumberBlockEditorField = BlockEditorField with IntVal
+  type BlockEditorStringField = BlockEditorField with StringVal
+  type BlockEditorIntField = BlockEditorField with IntVal
+  type BlockEditorFloatField = BlockEditorField with FloatVal
 
   implicit def value2val(x: Value): BlockEditorField = {
     x.asInstanceOf[BlockEditorField]
   }
 
 
-  val Height: NumberBlockEditorField = new Val("height") with IntVal {
+  val Height: BlockEditorIntField = new Val("height") with IntVal {
     override def fieldTemplate = _heightTpl
   }
 
-  val InputText: StringBlockEditorField = new Val("inputText") with StringVal {
+  val InputText: BlockEditorStringField = new Val("inputText") with StringVal {
     override def fieldTemplate = _inputTextTpl
   }
 
-  val TextArea: StringBlockEditorField = new Val("textarea") with StringVal {
+  val TextArea: BlockEditorStringField = new Val("textarea") with StringVal {
     override def fieldTemplate = _textareaTpl
   }
 
-  val Color: StringBlockEditorField = new Val("color") with StringVal {
+  val Color: BlockEditorStringField = new Val("color") with StringVal {
     override def fieldTemplate = _colorTpl
+  }
+
+  val Price: BlockEditorFloatField = new Val("price") with FloatVal {
+    override def fieldTemplate = _priceTpl
   }
 }
 
@@ -111,7 +124,7 @@ trait BlockFieldT {
 /** Поле для какой-то цифры. */
 case class NumberBlockField(
   name: String,
-  field: NumberBlockEditorField,
+  field: BlockEditorIntField,
   defaultValue: Option[Int] = None,
   minValue: Int = Int.MinValue,
   maxValue: Int = Int.MaxValue
@@ -133,10 +146,32 @@ case class NumberBlockField(
 }
 
 
+trait BlockFloatFieldT extends BlockFieldT {
+  override type T = Float
+  override def field: BlockEditorFloatField 
+  override def anyValueToT(v: Any): Option[T] = Some(EsModel.floatParser(v))
+  override def renderEditorField(formField: Field, bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+    field.renderEditorField(this, formField, bc)
+  }
+}
+
+case class PriceBlockField(
+  name: String,
+  field: BlockEditorFloatField,
+  defaultValue: Option[Float] = None,
+  minValue: Float = 0F,
+  maxValue: Float = 99999999F
+) extends BlockFloatFieldT {
+  override def getMapping: Mapping[T] = {
+    ???
+  }
+}
+
+
 
 trait StringBlockFieldT extends BlockFieldT {
   override type T = String
-  override def field: StringBlockEditorField
+  override def field: BlockEditorStringField
   override def anyValueToT(v: Any): Option[T] = field.parseAnyVal(v)
   override def renderEditorField(formField: Field, bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
     field.renderEditorField(this, formField, bc)
@@ -148,7 +183,7 @@ trait StringBlockFieldT extends BlockFieldT {
 
 case class StringBlockField(
   name: String,
-  field: StringBlockEditorField,
+  field: BlockEditorStringField,
   strTransformF: String => String = strTrimSanitizeLowerF,
   defaultValue: Option[String] = None,
   minLen: Int = 0,
@@ -167,7 +202,7 @@ case class StringBlockField(
 
 case class ColorBlockField(
   name: String,
-  field: StringBlockEditorField,
+  field: BlockEditorStringField,
   defaultValue: Option[String] = None
 ) extends StringBlockFieldT {
   override def getMapping: Mapping[T] = {

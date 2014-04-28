@@ -41,21 +41,21 @@ object MarketAd extends SioController with LogoSupport {
       case PRODUCT  => shopAdProductFormM
       case DISCOUNT => shopAdDiscountFormM
       case TEXT     => shopAdTextFormM
-      case RAW      => throw new UnsupportedOperationException("Cannot statically assign dynamic block form.")
+      case BLOCK      => throw new UnsupportedOperationException("Cannot statically assign dynamic block form.")
     }
 
     val getMartForm: PartialFunction[AdOfferType, AdFormM] = {
       case PRODUCT  => martAdProductFormM
       case DISCOUNT => martAdDiscountFormM
       case TEXT     => martAdTextFormM
-      case RAW      => throw new UnsupportedOperationException("Cannot statically assign dynamic block form.")
+      case BLOCK      => throw new UnsupportedOperationException("Cannot statically assign dynamic block form.")
     }
 
     val getForClass: PartialFunction[AdOfferT, AdOfferType] = {
       case _: AOProduct  => PRODUCT
       case _: AODiscount => DISCOUNT
       case _: AOText     => AdOfferTypes.TEXT
-      case _: AORaw      => AdOfferTypes.RAW
+      case _: AORaw      => AdOfferTypes.BLOCK
     }
 
     def getForm(aot: AdOfferType, anmt: AdNetMemberType): AdFormM = {
@@ -169,7 +169,7 @@ object MarketAd extends SioController with LogoSupport {
   private def detectAdnAdForm(anmt: AdNetMemberType)(implicit request: ReqSubmit): DetectForm_t = {
     val adModeOpt = (request.body.get("ad.offer.mode") getOrElse Nil).headOption
     adModeOpt.flatMap(AdOfferTypes.maybeWithName).map {
-      case aot @ AdOfferTypes.RAW =>
+      case aot @ AdOfferTypes.BLOCK =>
         // Нужно раздобыть id из реквеста
         val blockId = (request.body.get("ad.offer.blockId") getOrElse Nil)
           .headOption
