@@ -5,17 +5,19 @@
 @import util.blocks.BlocksUtil._
 
 @blockBase(isStandalone) {
-@defining(blockMap(BK_HEIGHT)) { blockHeight =>
+  @defining(blockMap(BK_HEIGHT)) { blockHeight =>
 
-<div class="block-1 height-@blockHeight index-block" data-border-height="2" data-block-name="block-1" data-width="140" data-height="@blockHeight">
-  <div class="inner">
-    <a href="{{ resource.url }}" class="title">
-      @blockMap.getOrElse(BK_TITLE, "TITLE")
-    </a>
-    <p>
-      @blockMap.getOrElse(BK_DESCRIPTION, "season FW 2014/15 Wed. 15th, January > Sun. 19th")
-    </p>
-  </div>
-</div>
-}
+    <div class="sm-block height-300 sio-mart__single-offer sm-block-tpl1" data-width="300" data-height="300">
+
+      <img class="bg" src="/assets/images/block-ad-sample-image.jpg" />
+
+      <div class="info">
+        <div class="title">Opaque Naturel2<br/>Корректирующее Платье</div>
+        <div class="old-price">9999р.</div>
+        <div class="price">30550р.</div>
+      </div>
+
+    </div>
+
+  }
 }
