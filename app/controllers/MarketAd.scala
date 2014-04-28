@@ -21,6 +21,7 @@ import io.suggest.ym.ad.ShowLevelsUtil
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
+import util.blocks.BlocksUtil
 
 /**
  * Suggest.io
@@ -36,40 +37,49 @@ object MarketAd extends SioController with LogoSupport {
   object FormModes {
     import AdOfferTypes._
 
-    def maybeShopFormWithName(n: String): FormDetected_t = {
-      maybeWithName(n).map { m =>
-        val form = getShopForm(m)
-        m -> form
-      }
-    }
-
-    def maybeMartFormWithName(n: String): FormDetected_t = {
-      maybeWithName(n).map { m =>
-        val form = getMartForm(m)
-        m -> form
-      }
-    }
-
     val getShopForm: PartialFunction[AdOfferType, AdFormM] = {
       case PRODUCT  => shopAdProductFormM
       case DISCOUNT => shopAdDiscountFormM
       case TEXT     => shopAdTextFormM
+      case RAW      => throw new UnsupportedOperationException("Cannot statically assign dynamic block form.")
     }
 
     val getMartForm: PartialFunction[AdOfferType, AdFormM] = {
       case PRODUCT  => martAdProductFormM
       case DISCOUNT => martAdDiscountFormM
       case TEXT     => martAdTextFormM
+      case RAW      => throw new UnsupportedOperationException("Cannot statically assign dynamic block form.")
     }
 
     val getForClass: PartialFunction[AdOfferT, AdOfferType] = {
       case _: AOProduct  => PRODUCT
       case _: AODiscount => DISCOUNT
       case _: AOText     => AdOfferTypes.TEXT
+      case _: AORaw      => AdOfferTypes.RAW
     }
 
-    def getMartFormForClass(c: AdOfferT): AdFormM = getMartForm(getForClass(c))
-    def getShopFormForClass(c: AdOfferT): AdFormM = getShopForm(getForClass(c))
+    def getForm(aot: AdOfferType, anmt: AdNetMemberType): AdFormM = {
+      import AdNetMemberTypes._
+      anmt match {
+        case MART | RESTAURANT_SUP | RESTAURANT =>
+          getMartForm(aot)
+        case SHOP =>
+          getShopForm(aot)
+      }
+    }
+
+    def getForClassAndAnmt(c: AdOfferT, anmt: AdNetMemberType): AdFormM = {
+      c match {
+        case aoraw: AORaw =>
+          val blockId = BlocksUtil.extractBlockId(aoraw.bodyMap)
+          val blockMapping = BlocksConf(blockId).aoRawMapping
+          getAdFormM(anmt, blockMapping)
+
+        case other =>
+          val aot = getForClass(other)
+          getForm(aot, anmt)
+      }
+    }
   }
 
 
@@ -141,7 +151,7 @@ object MarketAd extends SioController with LogoSupport {
     )(adFormApply[T])(adFormUnapply[T])
   ))
 
-  val shopAdProductFormM  = getShopAdFormM(adProductM)
+  val shopAdProductFormM          = getShopAdFormM(adProductM)
   private val shopAdDiscountFormM = getShopAdFormM(adDiscountM)
   private val shopAdTextFormM     = getShopAdFormM(adTextM)
 
@@ -155,28 +165,24 @@ object MarketAd extends SioController with LogoSupport {
   type DetectForm_t = Either[AdFormM, (AdOfferType, AdFormM)]
 
 
-  /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
-  private def detectAdForm(dflt: AdFormM)(adMode2form: String => FormDetected_t)(implicit request: ReqSubmit): DetectForm_t = {
-    val adModes = request.body.get("ad.offer.mode") getOrElse Nil
-    adModes.headOption.flatMap(adMode2form) match {
-      case Some(result) =>
-        Right(result)
-
-      case None =>
-        warn("detectAdForm(): valid AD mode not present in request body. AdModes found: " + adModes)
-        val form = dflt.withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
-        Left(form)
-    }
-  }
-
   /** Выдать маппинг ad-формы в зависимости от типа adn-узла. */
   private def detectAdnAdForm(anmt: AdNetMemberType)(implicit request: ReqSubmit): DetectForm_t = {
-    import AdNetMemberTypes._
-    anmt match {
-      case SHOP =>
-        detectAdForm(shopAdProductFormM) { FormModes.maybeShopFormWithName }
-      case MART | RESTAURANT | RESTAURANT_SUP =>
-        detectAdForm(martAdProductFormM) { FormModes.maybeMartFormWithName }
+    val adModeOpt = (request.body.get("ad.offer.mode") getOrElse Nil).headOption
+    adModeOpt.flatMap(AdOfferTypes.maybeWithName).map {
+      case aot @ AdOfferTypes.RAW =>
+        // Нужно раздобыть id из реквеста
+        val blockId = (request.body.get("ad.offer.blockId") getOrElse Nil)
+          .headOption
+          .map(_.toInt)
+          .getOrElse(1)
+        val block = BlocksConf(blockId).aoRawMapping
+        Right(aot -> getAdFormM(anmt, block))
+
+      case otherType =>
+        Right(otherType -> FormModes.getForm(otherType, anmt))
+    } getOrElse {
+      val form = FormModes.getForm(AdOfferTypes.PRODUCT, anmt)
+      Left(form)
     }
   }
 
@@ -323,13 +329,7 @@ object MarketAd extends SioController with LogoSupport {
     val imgIdKey = OrigImgIdKey(mad.img.id)
     val anmt = request.producer.adn.memberType
     val formFilledOpt = mad.offers.headOption map { offer =>
-      import AdNetMemberTypes._
-      anmt match {
-        case MART | RESTAURANT_SUP | RESTAURANT =>
-          FormModes.getMartFormForClass(offer)
-        case SHOP =>
-          FormModes.getShopFormForClass(offer)
-      }
+      FormModes.getForClassAndAnmt(offer, anmt)
     } map { form0 =>
       form0 fill ((imgIdKey, mad, mad))
     }
@@ -526,6 +526,14 @@ object MarketAd extends SioController with LogoSupport {
 
 
   // ============================== common-методы =================================
+
+  private def getAdFormM[T <: AdOfferT](anmt: AdNetMemberType, offerM: Mapping[T]): AdFormM = {
+    import AdNetMemberTypes._
+    anmt match {
+      case SHOP | RESTAURANT      => getShopAdFormM(offerM)
+      case MART | RESTAURANT_SUP  => getMartAdFormM(offerM)
+    }
+  }
 
 
   /**

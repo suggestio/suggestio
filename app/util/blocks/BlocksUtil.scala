@@ -19,6 +19,7 @@ object BlocksUtil {
   type BlockMap = Map[String, Any]
 
   // BK-константы именуют все используемые ключи конфигов. Полезно для избежания ошибок в разных местах.
+  val BK_BLOCK_ID     = "blockId"
   val BK_HEIGHT       = "height"
   val BK_TITLE        = "title"
   val BK_DESCRIPTION  = "description"
@@ -30,6 +31,7 @@ object BlocksUtil {
 
   def bDescriptionM = publishedTextM
 
+  def extractBlockId(bm: BlockMap) = EsModel.intParser(bm(BK_BLOCK_ID))
 }
 
 import BlocksUtil._

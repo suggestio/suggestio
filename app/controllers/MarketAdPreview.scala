@@ -177,6 +177,14 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
       AdOfferTypes.maybeWithName(adModeStr)
     } map { adMode =>
       val adForm = adMode match {
+        case AdOfferTypes.RAW      =>
+          val blockId: Int = request.body.get("ad.offer.blockId")
+            .getOrElse(Nil)
+            .headOption
+            .map(_.toInt)
+            .getOrElse(1)
+          val offerM = BlocksConf(blockId).aoRawMapping
+          getPreviewAdFormM(offerM)
         case AdOfferTypes.PRODUCT  => previewAdProductFormM(vendorDflt)
         case AdOfferTypes.DISCOUNT => previewAdDiscountFormM
         case AdOfferTypes.TEXT     => previewAdTextFormM
