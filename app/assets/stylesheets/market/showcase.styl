@@ -59,8 +59,11 @@ transition( param )
 
   /* Офферы на главной странице выдачи */
   .sio-mart__index-offers
+    position: relative
     width: 100%
-    min-height: 100%
+    height: 100%
+    overflow-y: scroll
+    -webkit-overflow-scrolling: touch
     padding-top: 10px
 
   .sio-mart__index-offers__container
@@ -68,6 +71,7 @@ transition( param )
 
   .sio-mart__single-offer
     position: absolute
+    cursor: pointer
 
 
 .sio-mart-showcase,

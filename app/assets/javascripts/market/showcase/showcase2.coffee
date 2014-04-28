@@ -338,6 +338,7 @@ siomart =
       siomart.utils.removeClass _dom, 'hidden'
 
   load_for_shop_id : ( shop_id ) ->
+    alert 'load for shop_id ' + shop_id
     console.log 'load for shop id ' + shop_id
     url = '/market/ads/' + siomart.config.mart_id + '?a.shopId=' + shop_id
     siomart.perform_request url
@@ -396,6 +397,11 @@ siomart =
     this.draw_layout()
 
     this.load_mart_index_page()
+
+    resize_cb = () ->
+      cbca_grid.resize()
+
+    this.utils.add_single_listener window, 'resize', resize_cb
 
 window.siomart = siomart
 siomart.init()
