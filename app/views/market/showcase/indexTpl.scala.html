@@ -1,39 +1,43 @@
 @(mmart: MAdnNode, ads: Seq[MAd], shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory], welcomeAdOpt: Option[MWelcomeAd])(implicit ctx: util.Context)
 
 @* Начальная страница для sio-market. *@
-  <img id="smWelcomeAd" class="poster-photo index-welcome-ad" data-width="@welcomeAdOpt.map(_.img.meta.map(_.width))" data-height="@welcomeAdOpt.map(_.img.meta.map(_.height))" src="@ctx.myAudienceUrl@welcomeAdOpt.map(_.img.id).filter(!_.isEmpty).map {imgId =>@routes.Img.getImg(imgId)}.getOrElse {}"/>
 
-  <div class="sm-notification" id="smNotification">
-    <div class="data" id="smNotificationData"></div>
-  </div>
+@* Картинка-приветствие для первого экрана *@
 
-  <div class="sm-preload">
-    <img src="@ctx.myAudienceUrl/assets/images/market/categories/icons.png">
-  </div>
+@*<img id="smWelcomeAd" class="poster-photo index-welcome-ad" data-width="@welcomeAdOpt.map(_.img.meta.map(_.width))" data-height="@welcomeAdOpt.map(_.img.meta.map(_.height))" src="@ctx.myAudienceUrl@welcomeAdOpt.map(_.img.id).filter(!_.isEmpty).map {imgId =>@routes.Img.getImg(imgId)}.getOrElse {}"/>*@
 
-  <div id="smScreens">
-    <div class="sm-screen">
+@* Основной контейнер, шапка + карточки *@
 
-      @_screen_nav_buttons(true)
+<div class="sio-mart__producer-header" style="background-color: #@mmart.meta.color;">
+  @mmart.logoImgOpt.map { logoImg =>
+  <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)"/>
+  }
+</div>
 
-      @_sm_offers(mmart, ads, shops, false)
-
-      <div class="sm-navigation">
-        <div class="sm-buttons">
-          <a class="sm-button" href="">Я ЗНАЮ, ЧТО ИЩУ</a>
-          <a class="sm-button" href="">ПОМОГИТЕ МНЕ С ВЫБОРОМ</a>
-        </div>
-      </div>
-
+<div class="sio-mart__index-offers">
+  <div class="sio-mart__index-offers__container">
+    <div class="sio-mart__single-offer" style="width: 300px; height: 300px;">
     </div>
-
   </div>
+<div>
 
-  @* Окно с выбором категорий *@
-  @_categories(mmcats,mmart)
+<div class="sm-notification" id="smNotification">
+  <div class="data" id="smNotificationData"></div>
+</div>
 
-  @* Окно с предупреждением о выходе из Sio.Market *@
-  @_exit_screen()
+@*<div class="sm-preload">
+  <img src="@ctx.myAudienceUrl/assets/images/market/categories/icons.png">
+</div>*@
 
-  @* Окно с выбором магазина *@
-  @_shop_list(shops,mmart)
+@_screen_nav_buttons(true)
+
+@*_offers_list(mmart, ads, shops)*@
+
+@* Окно с выбором категорий *@
+@_categories(mmcats,mmart)
+
+@* Окно с предупреждением о выходе из Sio.Market *@
+@_exit_screen()
+
+@* Окно с выбором магазина *@
+@_shop_list(shops,mmart)
