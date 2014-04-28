@@ -1,4 +1,5 @@
-<div class="sm-block sio-mart__single-offer sm-block-tpl1" data-width="298" data-height="298" style="width: 298px; height: 298px;">
+@(producer: MAdnNode)(implicit ctx: util.Context)
+<div class="sm-block sio-mart__single-offer sm-block-tpl1" data-width="300" data-height="300" style="width: 298px; height: 298px;" onclick="siomart.load_for_shop_id('@producer.id'); return false;">
 
     <img class="bg" src="/assets/images/block-ad-sample-image.jpg" />
 
