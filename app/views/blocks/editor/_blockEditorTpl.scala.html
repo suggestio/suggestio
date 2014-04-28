@@ -15,9 +15,9 @@
     <div class="block-editor-form">
 
       <div id="blockEditorForm">
-        @for(bcf <- bc.blockFields) {
-          @bcf.render(
-            value = af("ad.offer." + bcf.name).value.flatMap(bcf.anyValueToT),
+        @for(bf <- bc.blockFields) {
+          @bf.renderEditorField(
+            formField = af("ad.offer." + bf.name),
             bc = bc
           )
           <div class="clear"></div>

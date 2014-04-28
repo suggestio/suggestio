@@ -1,5 +1,5 @@
-@(bf: StringBlockField, value: Option[String], bc: BlockConf)(implicit ctx: Context)
+@(bf: StringBlockField, formField: Field, bc: BlockConf)(implicit ctx: Context)
 
 @_textInputBaseTpl(bf, bc) {
-  <textarea name="ad.offer.@bf.name" class="white-input">@value</textarea>
+  <textarea name="@formField.name" class="white-input">@formField.value.flatMap(bf.anyValueToT)</textarea>
 }

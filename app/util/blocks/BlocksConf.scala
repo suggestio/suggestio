@@ -27,7 +27,7 @@ object BlocksConf extends Enumeration {
     def bMapping: Mapping[BlockMap]
 
     /** Более удобный интерфейс для метода template.render(). */
-    def render(bm: BlockMap, isStandalone: Boolean)(implicit ctx: Context) = {
+    def renderBlock(bm: BlockMap, isStandalone: Boolean)(implicit ctx: Context) = {
       template.render(bm, isStandalone, ctx)
     }
 
@@ -103,7 +103,7 @@ object BlocksConf extends Enumeration {
   def renderBlockMap(bm: BlockMap, isStandalone: Boolean)(implicit ctx: Context) = {
     val blockId = BlocksUtil.extractBlockId(bm)
     val blockConf = apply(blockId)
-    blockConf.render(bm, isStandalone)
+    blockConf.renderBlock(bm, isStandalone)
   }
   
 }

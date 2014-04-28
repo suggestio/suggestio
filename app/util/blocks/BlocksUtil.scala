@@ -42,9 +42,9 @@ object BlocksEditorFields extends Enumeration {
   protected abstract case class Val(name: String) extends super.Val(name) {
     type T
     type BFT <: BlockFieldT
-    def fieldTemplate: Template4[BFT, Option[T], BlockConf, Context, HtmlFormat.Appendable]
-    def render(bf: BFT, value: Option[T], bc: BlockConf)(implicit ctx: Context) = {
-      fieldTemplate.render(bf, value, bc, ctx)
+    def fieldTemplate: Template4[BFT, Field, BlockConf, Context, HtmlFormat.Appendable]
+    def renderEditorField(bf: BFT, formField: Field, bc: BlockConf)(implicit ctx: Context) = {
+      fieldTemplate.render(bf, formField, bc, ctx)
     }
     def parseAnyVal(anyV: Any): Option[T]
   }
@@ -94,7 +94,7 @@ trait BlockFieldT {
   def defaultValue: Option[T]
 
   def getMapping: Mapping[T]
-  def render(value: Option[T], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable
+  def renderEditorField(formField: Field, bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable
   def anyValueToT(v: Any): Option[T]
   def extractValue(bm: BlockMap): Option[T] = {
     bm.get(name)
@@ -121,8 +121,8 @@ case class NumberBlockField(
       mapping0
   }
 
-  override def render(value: Option[T], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
-    field.render(this, value, bc)
+  override def renderEditorField(formField: Field, bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+    field.renderEditorField(this, formField, bc)
   }
   override def anyValueToT(v: Any): Option[T] = field.parseAnyVal(v)
 }
@@ -146,8 +146,8 @@ case class StringBlockField(
     else
       mapping0
   }
-  override def render(value: Option[T], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
-    field.render(this, value, bc)
+  override def renderEditorField(formField: Field, bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+    field.renderEditorField(this, formField, bc)
   }
   override def anyValueToT(v: Any): Option[T] = field.parseAnyVal(v)
 }
