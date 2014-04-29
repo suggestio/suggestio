@@ -1,5 +1,5 @@
-@(bf: StringBlockFieldT, formField: Field, bc: BlockConf)(implicit ctx: Context)
+@(bf: BfString, formField: Field, bc: BlockConf)(implicit ctx: Context)
 
 @_textInputBaseTpl(bf, bc) {
-  <input name="@formField.name" class="white-input" type="text" value="@formField.value.flatMap(bf.anyValueToT)" />
+  <input name="@formField.name" class="white-input" type="text" value="@formField.value" />
 }

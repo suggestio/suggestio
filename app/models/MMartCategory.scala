@@ -29,9 +29,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore
  * Description: Дерево пользовательских категорий конкретного ТЦ либо магазина (модель не различает владельцев).
  * Хранится в ES.
  */
-object MMartCategory extends EsModelStaticT[MMartCategory] with PlayMacroLogsImpl {
+object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
 
   import LOGGER._
+
+  override type T = MMartCategory
 
   val ES_TYPE_NAME = "usrCat"
 
@@ -260,8 +262,9 @@ case class MMartCategory(
   var id        : Option[String] = None,
   var cssClass  : Option[String] = None,
   var includeInAll: Boolean = true
-) extends EsModelEmpty[MMartCategory] with EMName[MMartCategory] with EMParentIdOpt[MMartCategory] with TreeSortable {
+) extends EsModelEmpty with EMName with EMParentIdOpt with TreeSortable {
 
+  override type T = MMartCategory
 
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     var acc1: FieldsJsonAcc = OWNER_ID_ESFN -> JsString(ownerId) ::

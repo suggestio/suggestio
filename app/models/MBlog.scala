@@ -15,8 +15,10 @@ import play.api.libs.json._
  * Порт модели blog_record из старого sioweb.
  */
 
-object MBlog extends EsModelStaticT[MBlog] {
+object MBlog extends EsModelStaticT {
   override val ES_TYPE_NAME: String = "blog"
+
+  override type T = MBlog
 
   val TITLE_ESFN    = "title"
   val BG_IMAGE_ESFN = "bgImage"
@@ -69,7 +71,9 @@ case class MBlog(
   var text      : String,
   id            : Option[String] = None,
   var date      : DateTime = null
-) extends EsModelT[MBlog] {
+) extends EsModelT {
+
+  override type T = MBlog
 
   def companion = MBlog
 

@@ -13,19 +13,8 @@
 @adnBase("Рекламные карточки", hPathAfter = Some(hPathAfter1)) {
   @mads.map { mad =>
     <a href="@routes.MarketAd.editAd(mad.id.get)">@mad.offers.headOption.map {
-      case prod: AOProduct => {
-        @prod.vendor.value / @formatPrice(prod.price.value, prod.price.currency)
-      }
-      case disco: AODiscount => {
-        @disco.text1.map(_.value) /
-        @formatPercentRaw(disco.discount.value)% /
-        @disco.text2.map(_.value)
-      }
-      case adText: AOText => {
-        @adText.text
-      }
-      case adRaw: AORaw => {
-        @adRaw.bodyMap.values.mkString(" / ")
+      case adBlock: AOBlock => {
+        @adBlock.text1.map(_.value) / @adBlock.text2.map(_.value)
       }
     }</a>
     <p>Отобразить email-сообщение о деактивации:

@@ -7,6 +7,8 @@
 @import util.FormHelpers.myFields
 @import controllers.ad.MarketAdFormUtil.{DISCOUNT_TPL_ID_MIN, DISCOUNT_TPL_ID_MAX}
 
+@* TODO: Удалить, когда переезд на blocks будет завершен. *@
+
 @mkField(isBig: Boolean)(content: Html) = {
   <table cellpadding="0" cellspacing="0" class="input-wrap@if(isBig){ big}">
     <tr>@content</tr>

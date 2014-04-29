@@ -1,10 +1,10 @@
-@(blockMap: BlockMap, isStandalone: Boolean)(implicit ctx: util.Context)
+@(bd: BlockData, isStandalone: Boolean)(implicit ctx: util.Context)
 
 @import ctx._
 @import util.blocks.BlocksUtil._
 
 @blockBase(isStandalone) {
-  @defining(blockMap(BK_HEIGHT)) { blockHeight =>
+  @defining(bd.blockMeta.height) { blockHeight =>
 
     <div class="sm-block height-300 sio-mart__single-offer sm-block-tpl2" data-width="300" data-height="300" >
 

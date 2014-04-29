@@ -12,7 +12,6 @@ import util.img._
 import scala.concurrent.Future
 import play.api.mvc.Request
 import play.api.Play.current
-import util.HtmlSanitizer.adTextFmtPolicy
 import io.suggest.ym.parsers.Price
 import io.suggest.model.MUserImgMetadata
 import controllers.ad.MarketAdFormUtil
@@ -56,7 +55,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
 
   private val prevCatIdKM = CAT_ID_K -> optional(userCatIdM)
   /** Генератор preview-формы. Форма совместима с основной формой, но более толерантна к исходным данным. */
-  private def getPreviewAdFormM[T <: AdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
+  private def getPreviewAdFormM(blockM: Mapping[BlockData]): AdFormM = Form(tuple(
     AD_IMG_ID_K -> default(
       mapping = imgIdJpegM,
       value = OrigImgIdKey(PreviewFormDefaults.IMG_ID)
@@ -65,110 +64,11 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
     "ad" -> mapping(
       prevCatIdKM,
       panelColorKM,
-      OFFER_K -> offerM,
+      OFFER_K -> blockM,
       textAlignKM
-    )(adFormApply[T])(adFormUnapply[T])
+    )(adFormApply)(adFormUnapply)
   ))
 
-  // offer-mapping'и
-  /** Толерантный к значениям маппинг для рекламной карточки продукта с ценой. */
-  private def previewProductM(vendorDflt: String) = {
-    mapping(
-      "vendor"    -> default(
-        mapping = mmaStringFieldM(
-          text.transform(
-            strTrimSanitizeF andThen { vendor =>
-              if(vendor.isEmpty)
-                vendorDflt
-              else if (vendor.length > VENDOR_MAXLEN)
-                vendor.substring(0, VENDOR_MAXLEN)
-              else vendor
-            },
-            strIdentityF
-          )
-        ),
-        value = AOStringField(vendorDflt, PreviewFormDefaults.TEXT_FONT)
-      ),
-
-      "price" -> mapping(
-        "value" -> priceM,
-        "color" -> fontColorM
-      )
-      {case ((rawPrice, priceOpt), font) =>
-        val price = priceOpt getOrElse PreviewFormDefaults.Product.PRICE_VALUE
-        AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font)
-      }
-      {mmadp =>
-        import mmadp._
-        Some((orig, Some(Price(value, currency))), font)
-      },
-
-      "oldPrice" -> mmaPriceOptM
-    )
-    { adProductMApply }
-    { adProductMUnapply }
-  }
-
-
-  /** Кусок формы, ориентированный на оформление скидочной рекламы. */
-  private val previewAdDiscountM = {
-    val discountTextM = text(maxLength = 2 * DISCOUNT_TEXT_MAXLEN)
-      .transform(
-        strTrimSanitizeF andThen {s: String => if (s.length > DISCOUNT_TEXT_MAXLEN) s.substring(0, DISCOUNT_TEXT_MAXLEN) else s},
-        strIdentityF
-      )
-    val tplM = mapping(
-      "id"    -> default(
-        mapping = number(min = DISCOUNT_TPL_ID_MIN, max = DISCOUNT_TPL_ID_MAX),
-        value   = PreviewFormDefaults.Discount.TPL_ID
-      ),
-      "color" -> default(colorM, "ce2222")
-    )
-    { AODiscountTemplate.apply }
-    { AODiscountTemplate.unapply }
-    // Собираем итоговый маппинг для MMartAdDiscount.
-    mapping(
-      "text1"     -> optional(mmaStringFieldM(discountTextM)),
-      "discount"  -> {
-        val discountTolerantM = percentM.transform[Float](
-          {case (_, pcOpt) => pcOpt getOrElse PreviewFormDefaults.Discount.DISCOUNT },
-          {pc => adhocPercentFmt(pc) -> Some(pc) }
-        )
-        mmaFloatFieldOptM(discountTolerantM).transform(
-          {dcOpt => dcOpt getOrElse AOFloatField(PreviewFormDefaults.Discount.DISCOUNT, PreviewFormDefaults.TEXT_FONT) },
-          {dc: AOFloatField => Some(dc) }
-        )
-      },
-      "template"  -> tplM,
-      "text2"     -> optional(mmaStringFieldM(discountTextM))
-    )
-    { AODiscount.apply }
-    { AODiscount.unapply }
-  }
-
-
-  /** Форма для задания текстовой рекламы. */
-  private val previewAdTextM = {
-    val textM = default(
-      mapping = text
-        .transform({ adTextFmtPolicy.sanitize }, strIdentityF)
-        .transform(
-          { s => if (s.length > AD_TEXT_MAXLEN) s.substring(0, AD_TEXT_MAXLEN) else s},
-          strIdentityF
-        ),
-      value = PreviewFormDefaults.Text.TEXT
-    )
-    mapping(
-      "text" -> mmaStringFieldM(textM)
-    )
-    { AOText.apply }
-    { AOText.unapply }
-  }
-
-
-  private def previewAdProductFormM(vendorDflt: String) = getPreviewAdFormM(previewProductM(vendorDflt))
-  private val previewAdDiscountFormM = getPreviewAdFormM(previewAdDiscountM)
-  private val previewAdTextFormM = getPreviewAdFormM(previewAdTextM)
 
   /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
   private def detectAdPreviewForm(vendorDflt: String)(implicit request: Request[collection.Map[String, Seq[String]]]): Either[AdFormM, (AdOfferType, AdFormM)] = {
@@ -183,11 +83,8 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
             .headOption
             .map(_.toInt)
             .getOrElse(1)
-          val offerM = BlocksConf(blockId).aoRawMapping
-          getPreviewAdFormM(offerM)
-        case AdOfferTypes.PRODUCT  => previewAdProductFormM(vendorDflt)
-        case AdOfferTypes.DISCOUNT => previewAdDiscountFormM
-        case AdOfferTypes.TEXT     => previewAdTextFormM
+          val blockConf: BlockConf = BlocksConf(blockId)
+          getPreviewAdFormM(blockConf.bMapping)
       }
       adMode -> adForm
     } match {
@@ -196,7 +93,8 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
 
       case None =>
         warn("detectAdForm(): valid AD mode not present in request body. AdModes found: " + adModes)
-        val form = MarketAd.shopAdProductFormM.withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
+        val form = getPreviewAdFormM(MarketAd.dfltBlock.bMapping)
+          .withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
         Left(form)
     }
   }
@@ -215,8 +113,8 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
           {case (iik, logoOpt, mad) =>
             val fallbackLogoOptFut: Future[Option[MImgInfo]] = adnNode.adn.supId match {
               case Some(supId) =>
-                MAdnNodeCache.getByIdCached(supId) map {
-                  _.flatMap(_.logoImgOpt)
+                MAdnNodeCache.getByIdCached(supId) map { supOpt =>
+                  supOpt.flatMap(_.logoImgOpt)
                 }
               case None => Future successful None
             }
