@@ -275,6 +275,7 @@ siomart =
 
 
   adjust_node_offers_popup : () ->
+
     _container = siomart.utils.ge('sioMartNodeOffers')
     _block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
 
@@ -284,12 +285,15 @@ siomart =
     cw = sm_block.offsetWidth
     ch = sm_block.offsetHeight
 
-    sm_block.style.width = cw*2 + 'px'
-    sm_block.style.height = ch*2 + 'px'
+    if cbca_grid.ww > 600
+      sm_block.style.width = cw*2 + 'px'
+      sm_block.style.height = ch*2 + 'px'
+      siomart.utils.addClass sm_block, 'double-size'
 
-    siomart.utils.addClass sm_block, 'double-size'
-
-    _block_container.style.width = cw*2 + 'px'
+    if cbca_grid.ww > 600
+      _block_container.style.width = cw*2 + 'px'
+    else
+      _block_container.style.width = cw + 'px'
 
 
   ######################################
@@ -418,7 +422,15 @@ siomart =
     this.load_mart_index_page()
 
     resize_cb = () ->
-      cbca_grid.resize()
+
+      if typeof siomart.window_resize_timer != 'undefined'
+        clearTimeout siomart.window_resize_timer
+
+      grid_resize = () ->
+        cbca_grid.resize()
+
+      siomart.window_resize_timer = setTimeout grid_resize, 300
+
 
     this.utils.add_single_listener window, 'resize', resize_cb
 
