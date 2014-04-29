@@ -266,8 +266,9 @@ siomart =
 
     if data.action == 'findAds'
 
-      screensContainer = siomart.utils.ge 'sioMartLayout'
+      screensContainer = siomart.utils.ge 'sioMartNodeOffersRoot'
       screensContainer.innerHTML += data.html
+      screensContainer.style.display = 'block'
 
       siomart.utils.ge('smCategoriesScreen').style.display = 'none'
 
@@ -277,6 +278,7 @@ siomart =
   close_node_offers_popup : ( event ) ->
 
     siomart.utils.re 'sioMartNodeOffers'
+    siomart.utils.ge('sioMartNodeOffersRoot').style.display = 'none'
     event.preventDefault()
 
   init_node_offers_popup : () ->

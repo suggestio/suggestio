@@ -58,9 +58,14 @@ transition( param )
 
   /* Хидер ТЦ / Ресторана / ... */
   .sio-mart__producer-header
+    position: absolute
+    left: 0px
+    top: 0px
+    width: 100%
     height: 30px
     padding: 10px 0px
     text-align: center
+    z-index: 10
     -webkit-box-shadow: 1px 1px 2px #999
 
   /* Офферы на главной странице выдачи */
@@ -70,7 +75,7 @@ transition( param )
     height: 100%
     overflow-y: scroll
     -webkit-overflow-scrolling: touch
-    padding-top: 10px
+    padding-top: 60px
 
   .sio-mart__index-offers__container
     margin: 0px auto
@@ -79,6 +84,15 @@ transition( param )
     background: #fff
     position: absolute
     cursor: pointer
+
+  .sio-mart__node-offers-root
+    position: absolute
+    left: 0px
+    top: 0px
+    width: 100%
+    height: 100%
+    z-index: 1003
+    display: none
 
   .sio-mart__node-offers
     z-index: 1003
@@ -106,7 +120,7 @@ transition( param )
   .sio-mart__producer-popup-location
     position: relative
     width: 100px
-    padding: 15px 0px
+    padding: 65px 0px 15px 0px
     margin: 0px auto
     .icon
       position: absolute
@@ -120,7 +134,7 @@ transition( param )
       font-size: 15px
 
   .sio-mart__node-offers__spacer
-    height: 100px
+    height: 60px
 
 .sio-mart-showcase,
 .sio-mart-showcase .sm-screen,

@@ -8,6 +8,8 @@
 
 @* Основной контейнер, шапка + карточки *@
 
+<div class="sio-mart__node-offers-root" id="sioMartNodeOffersRoot">
+</div>
 
 @_screen_nav_buttons(true)
 <div class="sio-mart__producer-header" style="background-color: #@mmart.meta.color;">
@@ -16,10 +18,9 @@
   }
 </div>
 
-
 <div class="sio-mart__index-offers">
   <div class="sio-mart__index-offers__container" id="sioMartIndexGridLayout">
-    <div id="sioMartIndexGrid">
+    <div id="sioMartIndexGrid" style="padding-bottom: 30px">
       @_block_offers_list(mmart, ads, shops)
     </div>
   </div>
