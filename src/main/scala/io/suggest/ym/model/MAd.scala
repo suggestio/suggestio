@@ -28,7 +28,7 @@ object MAd
   with EMProducerIdStatic
   with EMAdOffersStatic
   with EMImgStatic
-  with EMBlockIdStatic
+  with EMBlockMetaStatic
   with EMReceiversStatic
   with EMLogoImgStatic
   with EMTextAlignStatic
@@ -46,8 +46,11 @@ object MAd
 
   val ES_TYPE_NAME: String = "ad"
 
+  protected[model] val blockMetaDflt = BlockMeta(height = 140, blockId = 1)  // TODO Убрать после окончания миграции всех карточек на blocks.
+
   protected[model] def dummy(id: String) = MAd(
     producerId = null,
+    blockMeta = blockMetaDflt,
     offers = Nil,
     img = null,
     id = Some(id)
@@ -110,9 +113,9 @@ object MAd
 
 case class MAd(
   var producerId : String,
-  var offers     : List[AdOfferT],
+  var offers     : List[AOBlock],
   var img        : MImgInfo,
-  var blockId    : Int = 1,
+  var blockMeta  : BlockMeta,
   var receivers  : Receivers_t = Map.empty,
   var logoImgOpt : Option[MImgInfo] = None,
   var textAlign  : Option[TextAlign] = None,
@@ -128,7 +131,7 @@ case class MAd(
   with EMProducerIdMut
   with EMAdOffersMut
   with EMImgMut
-  with EMBlockIdMut
+  with EMBlockMetaMut
   with EMReceiversMut
   with EMLogoImgMut
   with EMTextAlignMut

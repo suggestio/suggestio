@@ -170,10 +170,7 @@ object AdNetMemberTypes extends Enumeration {
 object AdOfferTypes extends Enumeration {
   type AdOfferType = Value
 
-  val PRODUCT   = Value("p")
-  val DISCOUNT  = Value("d")
-  val TEXT      = Value("t")
-  val BLOCK     = Value("b")
+  val BLOCK = Value("b")
 
   def maybeWithName(n: String): Option[AdOfferType] = {
     try {

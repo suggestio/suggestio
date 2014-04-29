@@ -42,7 +42,6 @@ object EMAdOffers {
   val VALUE_ESFN        = "value"
 
   // PRODUCT offer
-  val VENDOR_ESFN       = "vendor"
   val MODEL_ESFN        = "model"
   val PRICE_ESFN        = "price"
   val OLD_PRICE_ESFN    = "oldPrice"
@@ -51,13 +50,9 @@ object EMAdOffers {
   val TEXT1_ESFN        = "text1"
   val TEXT2_ESFN        = "text2"
   val DISCOUNT_ESFN     = "discount"
-  val DISCOUNT_TPL_ESFN = "discoTpl"
 
   /** В списке офферов порядок поддерживается с помощью поля n, которое поддерживает порядок по возрастанию. */
   val N_ESFN            = "n"
-
-  // TEXT offer
-  val TEXT_ESFN         = "text"
 
 }
 
@@ -87,22 +82,13 @@ trait EMAdOffersStatic extends EsModelStaticT {
     // Поле приоритета. На первом этапе null или число.
     val offerBodyProps = Seq(
       // product-поля
-      FieldObject(VENDOR_ESFN, properties = Seq(stringValueField(1.5F), fontField)),
       // TODO нужно как-то проанализировать цифры эти, округлять например.
       FieldObject(PRICE_ESFN,  properties = priceFields(iia = true)),
       FieldObject(OLD_PRICE_ESFN,  properties = priceFields(iia = false)),
       // discount-поля
       FieldObject(TEXT1_ESFN, properties = Seq(stringValueField(1.1F), fontField)),
       FieldObject(DISCOUNT_ESFN, properties = Seq(floatValueField(iia = true), fontField)),
-      FieldObject(DISCOUNT_TPL_ESFN, enabled = false, properties = Nil),
-      FieldObject(TEXT2_ESFN, properties = Seq(stringValueField(0.9F), fontField)),
-      // text-поля
-      FieldObject(TEXT_ESFN, properties = Seq(
-        // HTML будет пострипан тут автоматом.
-        FieldString(VALUE_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
-        stringValueField(),
-        fontField
-      ))
+      FieldObject(TEXT2_ESFN, properties = Seq(stringValueField(0.9F), fontField))
     )
     val offersField = FieldNestedObject(OFFERS_ESFN, enabled = true, properties = Seq(
       FieldString(OFFER_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
@@ -124,10 +110,14 @@ trait EMAdOffersStatic extends EsModelStaticT {
 }
 
 
-trait EMAdOffers extends EsModelT {
-  override type T <: EMAdOffers
+/** Интерфейс поля offers. Вынесен их [[EMAdOffers]] из-за потребностей blocks-инфраструктуры. */
+trait IOffers {
+  def offers: List[AOBlock]
+}
 
-  def offers: List[AdOfferT]
+/** read-only аддон для экземпляра [[io.suggest.model.EsModelT]] для добавления поддержки работы с полем offers. */
+trait EMAdOffers extends EsModelT with IOffers {
+  override type T <: EMAdOffers
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
@@ -144,7 +134,7 @@ trait EMAdOffers extends EsModelT {
 
 trait EMAdOffersMut extends EMAdOffers {
   override type T <: EMAdOffersMut
-  var offers: List[AdOfferT]
+  var offers: List[AOBlock]
 }
 
 
@@ -152,7 +142,7 @@ trait EMAdOffersMut extends EMAdOffers {
 object AdOffer {
 
   /** Десериализовать один оффер. */
-  def deserializeOne(x: Any): AdOfferT = {
+  def deserializeOne(x: Any): AOBlock = {
     x match {
       case jsObject: java.util.Map[_, _] =>
         jsObject.get(OFFER_TYPE_ESFN) match {
@@ -162,9 +152,6 @@ object AdOffer {
             import AdOfferTypes._
             ot match {
               case BLOCK => AOBlock.deserializeBody(offerBody)
-              case PRODUCT => AOProduct.deserializeBody(offerBody)
-              case DISCOUNT => AODiscount.deserializeBody(offerBody)
-              case TEXT => AOText.deserializeBody(offerBody)
             }
         }
     }
@@ -200,7 +187,7 @@ object AOBlock {
   def deserializeBody(jsObject: Any) = {
     jsObject match {
       case m: java.util.Map[_,_] =>
-        val acc = AOBlock(-1)
+        val acc = AOBlock(n = -1)
         m foreach {
           case (TEXT1_ESFN, text1Raw) =>
             acc.text1 = JacksonWrapper.convert[Option[AOStringField]](text1Raw)
@@ -249,101 +236,6 @@ case class AOBlock(
 }
 
 
-
-object AOProduct {
-  def deserializeBody(jsObject: Any) = JacksonWrapper.convert[AOProduct](jsObject)
-}
-
-@JsonIgnoreProperties(Array("currencyCode")) // 27.03.2014 Было удалено поле до 1-запуска. Потом можно это удалить.
-case class AOProduct(
-  vendor:   AOStringField,
-  price:    AOPriceField,
-  oldPrice: Option[AOPriceField]
-) extends AdOfferT {
-  @JsonIgnore def offerType = AdOfferTypes.PRODUCT
-  @JsonIgnore def n = 0
-
-  @JsonIgnore
-  def renderPlayJsonBody: FieldsJsonAcc = {
-    var acc: FieldsJsonAcc = List(
-      VENDOR_ESFN -> vendor.renderPlayJson,
-      PRICE_ESFN  -> price.renderPlayJson
-    )
-    if (oldPrice.isDefined)
-      acc ::= OLD_PRICE_ESFN -> oldPrice.get.renderPlayJson
-    acc
-  }
-}
-
-
-object AODiscount {
-  def deserializeBody(jsObject: Any): AODiscount = {
-    jsObject match {
-      case m: java.util.Map[_,_] =>
-        val acc = AODiscount(null, null, null, null)
-        m foreach {
-          case (TEXT1_ESFN, text1Raw) =>
-            acc.text1 = JacksonWrapper.convert[Option[AOStringField]](text1Raw)
-          case (DISCOUNT_ESFN, discoRaw) =>
-            acc.discount = JacksonWrapper.convert[AOFloatField](discoRaw)
-          case (DISCOUNT_TPL_ESFN | "template", tplRaw) =>
-            acc.template = JacksonWrapper.convert[AODiscountTemplate](tplRaw)
-          case (TEXT2_ESFN, text2Raw) =>
-            acc.text2 = JacksonWrapper.convert[Option[AOStringField]](text2Raw)
-        }
-        acc
-    }
-    //JacksonWrapper.convert[AODiscount](jsObject)
-  }
-}
-case class AODiscount(
-  var text1: Option[AOStringField],
-  var discount: AOFloatField,
-  var template: AODiscountTemplate,
-  var text2: Option[AOStringField]
-) extends AdOfferT {
-  @JsonIgnore def offerType = AdOfferTypes.DISCOUNT
-  @JsonIgnore def n = 0
-
-  @JsonIgnore
-  def renderPlayJsonBody: FieldsJsonAcc = {
-    var acc: FieldsJsonAcc = List(
-      DISCOUNT_ESFN -> discount.renderPlayJson,
-      DISCOUNT_TPL_ESFN -> template.renderPlayJson
-    )
-    if (text1.isDefined)
-      acc ::= (TEXT1_ESFN, text1.get.renderPlayJson)
-    if (text2.isDefined)
-      acc ::= (TEXT2_ESFN, text2.get.renderPlayJson)
-    acc
-  }
-}
-
-
-object AOText {
-  def deserializeBody(jsObject: Any) = JacksonWrapper.convert[AOText](jsObject)
-}
-case class AOText(text: AOStringField) extends AdOfferT {
-  @JsonIgnore def n = 0
-  @JsonIgnore
-  def offerType = AdOfferTypes.TEXT
-
-  @JsonIgnore
-  def renderPlayJsonBody: FieldsJsonAcc = List(
-    TEXT_ESFN -> text.renderPlayJson
-  )
-}
-
-
-case class AODiscountTemplate(id: Int, color: String) {
-  @JsonIgnore
-  def renderPlayJson = {
-    JsObject(Seq(
-      "id" -> JsNumber(id),
-      COLOR_ESFN -> JsString(color)
-    ))
-  }
-}
 
 sealed trait AOValueField {
   def font: AOFieldFont

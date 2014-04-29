@@ -23,7 +23,7 @@ trait MAdT
   with EMDateCreated
   with EMAdOffers
   with EMImg
-  with EMBlockId
+  with EMBlockMeta
   with EMAdPanelSettings
   with EMLogoImg
   with EMTextAlign
@@ -51,7 +51,7 @@ trait MAdWrapperT extends MAdT {
   override def dateCreated = wrappedAd.dateCreated
   override def img = wrappedAd.img
   override def logoImgOpt = wrappedAd.logoImgOpt
-  override def blockId = wrappedAd.blockId
+  override def blockMeta = wrappedAd.blockMeta
 
   /** Перед сохранением надо также проверять состояние исходного экземпляра. */
   override def isFieldsValid: Boolean = {
