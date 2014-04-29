@@ -1,4 +1,4 @@
-@(mmart: MAdnNode, ads: Seq[MAd], shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory], adSearch:util.qsb.AdSearch)(implicit ctx: util.Context)
+@(mmart: MAdnNode, ads: Seq[MAd], shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory], adSearch:util.qsb.AdSearch, adProducerOpt: Option[MAdnNode])(implicit ctx: util.Context)
 
 @if( adSearch.producerIdOpt ){
 
