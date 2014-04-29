@@ -36,7 +36,7 @@ object BlocksConf extends Enumeration {
      * @param bk исходный BK_-идентификатор
      * @return идентификатор, пригодный для резолва через Messages().
       */
-    def i18nLabelOf(bk: String) = "blocks.bk." + bk
+    def i18nLabelOf(bk: String) = I18N_PREFIX + bk
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     def blockFields: List[BlockFieldT]
