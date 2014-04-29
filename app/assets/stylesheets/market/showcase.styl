@@ -88,10 +88,17 @@ transition( param )
     height: 100%
     background: rgba(255,255,255,0.8)
 
+  .sio-mart__node-offers__scrollable_container
+    height: 100%
+    width: 100%
+    overflow-y: scroll
+    -webkit-overflow-scrolling: touch
+
   .sio-mart__node-offers__block_container
     margin: 0px auto
 
     .sm-block
+      -webkit-box-shadow: 0px 0px 3px #999
       position: relative
 
   .sio-mart__producer-popup-location
@@ -109,6 +116,9 @@ transition( param )
       padding-left: 30px
       font-family: 'pfdintextcomppro-medium-webfont'
       font-size: 15px
+
+  .sio-mart__node-offers__spacer
+    height: 100px
 
 .sio-mart-showcase,
 .sio-mart-showcase .sm-screen,

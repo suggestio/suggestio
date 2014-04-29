@@ -6,12 +6,14 @@
 
     @* Список карточек указанного продюссера *@
     <div class="sio-mart__node-offers" id="sioMartNodeOffers">
+
       @producer.logoImgOpt.map { logoImg =>
       <div class="sio-mart__producer-header" style="background-color: #@producer.meta.color;">
         <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)"/>
         }
       </div>
 
+      <div class="sio-mart__node-offers__scrollable_container">
       <div class="sio-mart__producer-popup-location">
         <div class="icon"></div>
         <div class="data">
@@ -24,6 +26,10 @@
       @if(!ads.isEmpty) {
         @_block_offers_list(mmart, ads, shops, isDoubleSize=true)
       }
+      </div>
+
+      <div class="sio-mart__node-offers__spacer"></div>
+
       </div>
     </div>
 
