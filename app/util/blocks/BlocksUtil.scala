@@ -2,7 +2,7 @@ package util.blocks
 
 import play.api.data._, Forms._
 import util.FormUtil._
-import play.api.templates.{HtmlFormat, Template4}
+import play.api.templates.{Template5, HtmlFormat, Template4}
 import models._
 import views.html.blocks.editor._
 import BlocksConf.BlockConf
@@ -48,9 +48,9 @@ object BlocksEditorFields extends Enumeration {
   protected abstract case class Val(name: String) extends super.Val(name) {
     type T
     type BFT <: BlockFieldT
-    def fieldTemplate: Template4[BFT, Field, BlockConf, Context, HtmlFormat.Appendable]
-    def renderEditorField(bf: BFT, formField: Field, bc: BlockConf)(implicit ctx: Context) = {
-      fieldTemplate.render(bf, formField, bc, ctx)
+    def fieldTemplate: Template5[BFT, String, Form[_], BlockConf, Context, HtmlFormat.Appendable]
+    def renderEditorField(bf: BFT, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+      fieldTemplate.render(bf, bfNameBase, af, bc, ctx)
     }
   }
  
@@ -109,9 +109,15 @@ trait BlockFieldT {
   def fallbackValue: T
   def anyDefaultValue: T = defaultValue getOrElse fallbackValue
 
-  def getMapping: Mapping[T]
-  def getMappingKV = name -> getMapping
-  def renderEditorField(formField: Field, bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable
+  def mappingBase: Mapping[T]
+
+  def getStrictMapping: Mapping[T] = defaultOpt(mappingBase, defaultValue)
+  def getStrictMappingKV = name -> getStrictMapping
+
+  def getOptionalStrictMapping: Mapping[Option[T]] = optional(mappingBase)
+  def getOptionalStrictMappingKV = name -> getOptionalStrictMapping
+
+  def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable
 }
 
 
@@ -127,13 +133,10 @@ case class BfInt(
 
   override def fallbackValue: T = 140
 
-  override def getMapping: Mapping[T] = {
-    val mapping0 = number(min = minValue, max = maxValue)
-    defaultOpt(mapping0, defaultValue)
-  }
+  override val mappingBase = number(min = minValue, max = maxValue)
 
-  override def renderEditorField(formField: Field, bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
-    field.renderEditorField(this, formField, bc)
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+    field.renderEditorField(this, bfNameBase, af, bc)
   }
 }
 
@@ -144,14 +147,8 @@ case class BfPrice(
   defaultValue: Option[AOPriceField] = None
 ) extends BlockFieldT {
   override type T = AOPriceField
-  override def renderEditorField(formField: Field, bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
-    field.renderEditorField(this, formField, bc)
-  }
 
-  override def getMapping: Mapping[T] = {
-    val m0 = MarketAdFormUtil.mmaPriceM
-    defaultOpt(m0, defaultValue)
-  }
+  override def mappingBase: Mapping[T] = MarketAdFormUtil.mmaPriceM
 
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
   override def fallbackValue: T = AOPriceField(
@@ -160,6 +157,10 @@ case class BfPrice(
     orig = "100 рублей",
     font = defaultFont
   )
+
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+    field.renderEditorField(this, bfNameBase, af, bc)
+  }
 }
 
 
@@ -173,15 +174,10 @@ case class BfString(
 ) extends BlockFieldT {
   override type T = AOStringField
 
-  override def getMapping: Mapping[T] = {
+  override val mappingBase: Mapping[T] = {
     val m0 = nonEmptyText(minLength = minLen, maxLength = maxLen)
       .transform(strTrimSanitizeLowerF, strIdentityF)
-    val m1 = MarketAdFormUtil.mmaStringFieldM(m0)
-    defaultOpt(m1, defaultValue)
-  }
-
-  override def renderEditorField(formField: Field, bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
-    field.renderEditorField(this, formField, bc)
+    MarketAdFormUtil.mmaStringFieldM(m0)
   }
 
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
@@ -190,6 +186,9 @@ case class BfString(
     font = defaultFont
   )
 
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+    field.renderEditorField(this, bfNameBase, af, bc)
+  }
 }
 
 

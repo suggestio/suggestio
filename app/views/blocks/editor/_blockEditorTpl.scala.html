@@ -19,7 +19,8 @@
       <div id="blockEditorForm">
         @for(bf <- bc.blockFields) {
           @bf.renderEditorField(
-            formField = af(nameBase + bf.name),
+            af = af,
+            bfNameBase = nameBase + "." + bf.name,
             bc = bc
           )
           <div class="clear"></div>

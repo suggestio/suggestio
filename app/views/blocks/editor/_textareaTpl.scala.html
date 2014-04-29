@@ -1,5 +1,7 @@
-@(bf: BfString, formField: Field, bc: BlockConf)(implicit ctx: Context)
+@(bf: BfString, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
 
 @_textInputBaseTpl(bf, bc) {
-  <textarea name="@formField.name" class="white-input">@formField.value</textarea>
+  @defining( af(bfNameBase + ".value") ) { ff =>
+    <textarea name="@ff.name" class="white-input">@ff.value</textarea>
+  }
 }

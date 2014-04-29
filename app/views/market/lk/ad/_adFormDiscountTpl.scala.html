@@ -33,7 +33,7 @@
       '_label -> "Текст сверху:",
       'id     -> "text1ValueInput"
     )
-    @_selectColorTpl("ad.offer.text1.color", af)
+    @_selectColorTpl(af("ad.offer.text1.color"))
 
     @if(af("ad.offer.text1.value").hasErrors) {
       <tr>
@@ -52,7 +52,7 @@
       '_label -> "Скидка в процентах:",
       'id     -> "discountValueInput"
     )
-    @_selectColorTpl("ad.offer.discount.color", af)
+    @_selectColorTpl(af("ad.offer.discount.color"))
 
     @if(af("ad.offer.discount.value").hasErrors) {
       <tr>
@@ -71,7 +71,7 @@
       '_label -> "Текст снизу:",
       'id -> "text2ValueInput"
     )
-    @_selectColorTpl("ad.offer.text2.color", af)
+    @_selectColorTpl(af("ad.offer.text2.color"))
 
     @if(af("ad.offer.text2.value").hasErrors) {
       <tr>

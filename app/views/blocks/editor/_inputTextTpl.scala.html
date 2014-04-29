@@ -1,5 +1,10 @@
-@(bf: BfString, formField: Field, bc: BlockConf)(implicit ctx: Context)
+@(bf: BfString, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
+
+@import market.lk.ad._selectColorTpl
 
 @_textInputBaseTpl(bf, bc) {
-  <input name="@formField.name" class="white-input" type="text" value="@formField.value" />
+  @defining( af(bfNameBase + ".value") ) { pvf =>
+    <input name="@pvf.name" class="white-input" type="text" value="@pvf.value" />
+  }
+  @_selectColorTpl(af(bfNameBase + ".color"))
 }

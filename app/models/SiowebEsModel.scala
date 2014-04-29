@@ -45,7 +45,7 @@ object SiowebEsModel {
 // TODO Это по идее как бы трейт, но из-за ClassTag использовать trait нельзя.
 abstract class EsModelCache[T <: EsModelMinimalT : ClassTag] extends SNStaticSubscriber with SnClassSubscriber {
 
-  protected def getById(id: String): Future[Option[T]]
+  def getByIdNoCache(id: String): Future[Option[T]]
 
   val EXPIRE_SEC: Int
   val CACHE_KEY_SUFFIX: String
@@ -95,7 +95,7 @@ abstract class EsModelCache[T <: EsModelMinimalT : ClassTag] extends SNStaticSub
    */
   def getByIdAndCache(id: String, ck0: String = null)(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
     val ck: String = if (ck0 == null) cacheKey(id) else ck0
-    val resultFut = getById(id)
+    val resultFut = getByIdNoCache(id)
     resultFut onSuccess {
       case Some(adnn) =>
         Cache.set(ck, adnn, EXPIRE_SEC)

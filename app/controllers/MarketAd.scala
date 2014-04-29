@@ -81,7 +81,7 @@ object MarketAd extends SioController with LogoSupport {
           .map(_.toInt)
           .getOrElse(1)
         val block: BlockConf = BlocksConf(blockId)
-        Right(aot -> getAdFormM(anmt, block.bMapping))
+        Right(aot -> getAdFormM(anmt, block.strictMapping))
     }
   }
 
@@ -93,7 +93,7 @@ object MarketAd extends SioController with LogoSupport {
   def createAd(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     import request.adnNode
     renderCreateFormWith(
-      af = getAdFormM(adnNode.adn.memberType, dfltBlock.bMapping),
+      af = getAdFormM(adnNode.adn.memberType, dfltBlock.strictMapping),
       catOwnerId = getCatOwnerId(adnNode),
       adnNode = adnNode
     ).map(Ok(_))
@@ -219,7 +219,7 @@ object MarketAd extends SioController with LogoSupport {
     val anmt = request.producer.adn.memberType
     val formFilledOpt = mad.offers.headOption map { offer =>
       val blockConf: BlockConf = BlocksConf.apply(mad.blockMeta.blockId)
-      val form0 = getAdFormM(request.producer.adn.memberType, blockConf.bMapping)
+      val form0 = getAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
       form0 fill ((imgIdKey, mad, mad))
     }
     formFilledOpt match {

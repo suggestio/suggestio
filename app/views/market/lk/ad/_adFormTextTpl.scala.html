@@ -15,7 +15,7 @@
         'class -> "tiny-mce",
         '_label -> "Текст: "
         )
-      @_selectColorTpl("ad.offer.text.color", af)
+      @_selectColorTpl(af("ad.offer.text.color"))
 
       @if(!af.errors("ad.offer.text.value").isEmpty) {
         <tr>

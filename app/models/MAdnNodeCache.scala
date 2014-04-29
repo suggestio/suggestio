@@ -32,7 +32,7 @@ object MAdnNodeCache extends AdnEsModelCache[MAdnNode] {
   }
 
 
-  override protected def getById(id: String) = MAdnNode.getById(id)
+  override def getByIdNoCache(id: String) = MAdnNode.getById(id)
 
   /** Извлекаем adnId из события. */
   override def event2id(event: Event): String = {

@@ -24,7 +24,7 @@ object BlocksConf extends Enumeration {
     def template: Template3[BlockData, Boolean, Context, HtmlFormat.Appendable]
 
     /** Набор маппингов для обработки данных от формы. */
-    def bMapping: Mapping[BlockData]
+    def strictMapping: Mapping[BlockData]
 
     /** Более удобный интерфейс для метода template.render(). */
     def renderBlock(bm: BlockData, isStandalone: Boolean)(implicit ctx: Context) = {
@@ -48,7 +48,48 @@ object BlocksConf extends Enumeration {
 
   // Начало значений
 
-  val Block1 = new Val(1, "verySimple") {
+  val Block1 = new Val(1, "photoAdnPrice") {
+    val heightField = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 140, maxValue=460, defaultValue = Some(140))
+    val priceField = BfPrice(EMAdOffers.PRICE_ESFN, BlocksEditorFields.Price)
+    val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN, BlocksEditorFields.Price)
+
+    override val blockFields = List(
+      heightField, priceField, oldPriceField
+    )
+
+    /** Набор маппингов для обработки данных от формы. */
+    override val strictMapping = mapping(
+      heightField.getStrictMappingKV,
+      priceField.getStrictMappingKV,
+      oldPriceField.getOptionalStrictMappingKV
+    )
+    {(height, price, oldPrice) =>
+      BlockDataImpl(
+        blockMeta = BlockMeta(
+          height = height,
+          blockId = id
+        ),
+        offers = List( AOBlock(
+          n = 0,
+          price = Some(price),
+          oldPrice = oldPrice
+        ) )
+      ): BlockData
+    }
+    {bd =>
+      bd.offers.headOption.map { offer =>
+        val price = offer.price.getOrElse(priceField.anyDefaultValue)
+        (bd.blockMeta.height, price, offer.oldPrice)
+      }
+    }
+
+    /** Шаблон для рендера. */
+    override def template = _block1Tpl
+
+  }
+
+
+  val Block2 = new Val(2, "saleWithText") {
     val heightField = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 140, maxValue=460, defaultValue = Some(140))
     val text1Field = BfString(EMAdOffers.TEXT1_ESFN, BlocksEditorFields.InputText, maxLen = 512)
     val text2Field = BfString(EMAdOffers.TEXT2_ESFN, BlocksEditorFields.TextArea, maxLen = 8192)
@@ -58,10 +99,10 @@ object BlocksConf extends Enumeration {
     )
 
     /** Набор маппингов для обработки данных от формы. */
-    override val bMapping = mapping(
-      heightField.getMappingKV,
-      text1Field.getMappingKV,
-      text2Field.getMappingKV
+    override val strictMapping = mapping(
+      heightField.getStrictMappingKV,
+      text1Field.getStrictMappingKV,
+      text2Field.getStrictMappingKV
     )
     {(height, text1, text2) =>
       BlockDataImpl(
@@ -85,7 +126,7 @@ object BlocksConf extends Enumeration {
     }
 
     /** Шаблон для рендера. */
-    override def template = _block1Tpl
+    override def template = _block2Tpl
 
   }
 

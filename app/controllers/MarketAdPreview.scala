@@ -84,7 +84,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
             .map(_.toInt)
             .getOrElse(1)
           val blockConf: BlockConf = BlocksConf(blockId)
-          getPreviewAdFormM(blockConf.bMapping)
+          getPreviewAdFormM(blockConf.strictMapping)
       }
       adMode -> adForm
     } match {
@@ -93,7 +93,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
 
       case None =>
         warn("detectAdForm(): valid AD mode not present in request body. AdModes found: " + adModes)
-        val form = getPreviewAdFormM(MarketAd.dfltBlock.bMapping)
+        val form = getPreviewAdFormM(MarketAd.dfltBlock.strictMapping)
           .withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
         Left(form)
     }
