@@ -1,7 +1,10 @@
 @(bf: BfString, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
 
+@import market.lk.ad._selectColorTpl
+
 @_textInputBaseTpl(bf, bc) {
   @defining( af(bfNameBase + ".value") ) { ff =>
     <textarea name="@ff.name" class="white-input">@ff.value</textarea>
+    @_selectColorTpl(af(bfNameBase + ".color"))
   }
 }

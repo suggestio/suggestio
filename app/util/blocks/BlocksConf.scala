@@ -50,20 +50,22 @@ object BlocksConf extends Enumeration {
 
   val Block1 = new Val(1, "photoAdnPrice") {
     val heightField = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 140, maxValue=460, defaultValue = Some(140))
+    val text1Field = BfString(EMAdOffers.TEXT1_ESFN, BlocksEditorFields.TextArea, minLen = 1, maxLen = 64)
     val priceField = BfPrice(EMAdOffers.PRICE_ESFN, BlocksEditorFields.Price)
     val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN, BlocksEditorFields.Price)
 
     override val blockFields = List(
-      heightField, priceField, oldPriceField
+      heightField, text1Field, priceField, oldPriceField
     )
 
     /** Набор маппингов для обработки данных от формы. */
     override val strictMapping = mapping(
       heightField.getStrictMappingKV,
+      text1Field.getStrictMappingKV,
       priceField.getStrictMappingKV,
       oldPriceField.getOptionalStrictMappingKV
     )
-    {(height, price, oldPrice) =>
+    {(height, text1, price, oldPrice) =>
       BlockDataImpl(
         blockMeta = BlockMeta(
           height = height,
@@ -71,6 +73,7 @@ object BlocksConf extends Enumeration {
         ),
         offers = List( AOBlock(
           n = 0,
+          text1 = Some(text1),
           price = Some(price),
           oldPrice = oldPrice
         ) )
@@ -79,7 +82,8 @@ object BlocksConf extends Enumeration {
     {bd =>
       bd.offers.headOption.map { offer =>
         val price = offer.price.getOrElse(priceField.anyDefaultValue)
-        (bd.blockMeta.height, price, offer.oldPrice)
+        val text1 = offer.text1.getOrElse(text1Field.anyDefaultValue)
+        (bd.blockMeta.height, text1, price, offer.oldPrice)
       }
     }
 
