@@ -1,4 +1,4 @@
-@import 'fonts.styl'
+@import 'fonts'
 
 .sm-block
   font-family: 'Arial'
@@ -13,88 +13,16 @@
   p
     margin: 10px 0
 
-.sm-block-tpl1
-  width: 282px
-  padding: 8px
-  border: 1px solid #515151
-  background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAMAAAADCAYAAABWKLW/AAAAFUlEQVQImWNggIJNmzb9x8FgYGAAALMZCUBv7a2oAAAAAElFTkSuQmCC') repeat
-  color: black
-  font-family: 'pfdintextcomppro-medium-webfont'
+.sm-block.double-size
+  font-size: 24px
 
-  .bg
-    border-left: 1px solid #959595
-    width: 100%
-    height: 100%
+  h5
+    margin: 12px 0
+    font-size: 28px
 
-  .info
-    position: absolute
-    left: 8px
-    bottom: 8px
-    padding: 15px
+  p
+    margin: 20px 0
 
-    .title
-      font-size: 24px
 
-    .old-price
-      font-size: 38px
-      text-decoration: line-through
-
-    .price
-      color: #bd2d4e
-      font-size: 85px
-      line-height: 70px
-
-.sm-block-tpl1.height-300
-  height: 282px
-
-.sm-block-tpl2
-  width: 300px
-
-  .sale-icon
-    background: white
-    padding-bottom: 4px
-    border-bottom: 1px dotted black
-
-    .mask
-      background: url('/assets/images/market/blocks/tpl2-mask.png') no-repeat
-      background-size: 300px 195px
-      position: absolute
-      top: 0
-      left: 0
-      width: 300px
-      height: 195px
-
-    img
-      display: block
-      width: 300px
-      height: 195px
-
-  .info
-    overflow: hidden
-    background: white
-    text-align: center
-    border-bottom: 5px solid black
-
-.sm-block-tpl2.height-300
-  height: 300px
-
-  .info
-    height: 95px
-
-.sm-block-tpl2.height-460
-  height: 460px
-
-  .info
-    height: 255px
-
-.sm-block-tpl3
-  width: 300px
-  background: white
-
-  .triangle-border-top
-    height: 3px
-    background: url('/assets/images/market/blocks/triangle.png') repeat
-    background-size: 5px auto
-
-.sm-block-tpl3.height-300
-  height: 300px
+@import 'blocks/sm_block_tpl1'
+@import 'blocks/sm_block_tpl2'
