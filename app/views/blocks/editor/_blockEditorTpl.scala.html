@@ -1,11 +1,11 @@
-@(af: Form[_])(implicit ctx: Context)
+@(af: Form[_], withBC: Option[BlockConf] = None)(implicit ctx: Context)
 
 @import util.blocks._, BlocksUtil._
 
 
 @defining( "ad.offer." ) { nameBase =>
 @defining( af(nameBase + BLOCK_ID_FN).value ) { biFieldValue =>
-@defining( BlocksConf(biFieldValue.map(_.toInt).getOrElse(1)) ) { bc =>
+@defining(  withBC.getOrElse( BlocksConf(biFieldValue.map(_.toInt).getOrElse(1)) )  ) { bc =>
   <div class="preview-wrap">
 
     <div class="block-editor">

@@ -103,10 +103,9 @@ POST /m/lk/ad/:adId/delete              controllers.MarketAd.deleteSubmit(adId)
 POST /m/lk/ai/temp                      controllers.MarketAd.handleAdTempLogo
 GET  /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAd(adnId)
 POST /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAdSubmit(adnId)
-## ЛК: Рекламные карточки: shop
 POST /m/lk/ap/:adnId/preview            controllers.MarketAdPreview.adFormPreviewSubmit(adnId)
+POST /m/lk/ap/:adnId/edit/block         controllers.MarketAdPreview.adBlockSwitchEditor(adnId)
 POST /m/lk/sa/:adId/update/show         controllers.MarketAd.updateShowLevelSubmit(adId)
-## ЛК: Рекламные карточки: ТЦ
 GET  /m/lk/ad/:adId/edit                controllers.MarketAd.editAd(adId)
 POST /m/lk/ad/:adId/edit                controllers.MarketAd.editAdSubmit(adId)
 # lk.billing

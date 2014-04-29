@@ -67,24 +67,25 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
     )(adFormApply)(adFormUnapply)
   ))
 
+  private def detectAdPreviewForm(implicit request: Request[collection.Map[String, Seq[String]]]) = {
+    getAdPreviewForm(request.body)
+  }
 
   /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
-  private def detectAdPreviewForm(vendorDflt: String)(implicit request: Request[collection.Map[String, Seq[String]]]): Either[AdFormM, (AdOfferType, AdFormM)] = {
-    val adModes = request.body.get("ad.offer.mode") getOrElse Nil
+  private def getAdPreviewForm(reqBody: collection.Map[String, Seq[String]]): Either[AdFormM, (BlockConf, AdFormM)] = {
+    // TODO adModes пора выпиливать. И этот Either заодно.
+    val adModes = reqBody.get("ad.offer.mode") getOrElse Nil
     adModes.headOption.flatMap { adModeStr =>
       AdOfferTypes.maybeWithName(adModeStr)
-    } map { adMode =>
-      val adForm = adMode match {
-        case AdOfferTypes.BLOCK      =>
-          val blockId: Int = request.body.get("ad.offer.blockId")
-            .getOrElse(Nil)
-            .headOption
-            .map(_.toInt)
-            .getOrElse(1)
-          val blockConf: BlockConf = BlocksConf(blockId)
-          getPreviewAdFormM(blockConf.strictMapping)
-      }
-      adMode -> adForm
+    } map {
+      case AdOfferTypes.BLOCK =>
+        val blockId: Int = reqBody.get("ad.offer.blockId")
+          .getOrElse(Nil)
+          .headOption
+          .map(_.toInt)
+          .getOrElse(1)
+        val blockConf: BlockConf = BlocksConf(blockId)
+        blockConf -> getPreviewAdFormM(blockConf.strictMapping)
     } match {
       case Some(result) =>
         Right(result)
@@ -101,7 +102,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
 
   def adFormPreviewSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
     import request.adnNode
-    detectAdPreviewForm(adnNode.meta.name) match {
+    detectAdPreviewForm match {
       case Right((offerType, adFormM)) =>
         adFormM.bindFromRequest().fold(
           {formWithErrors =>
@@ -156,6 +157,19 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
             error(s"previewPrepareImgMeta($iik): Failed to fetch img metadata from hbase", ex)
             None
         }
+    }
+  }
+
+
+  /** Экшен смены блока редактора. */
+  def adBlockSwitchEditor(adnId: String) = IsAdnNodeAdmin(adnId).apply(parse.urlFormEncoded) { implicit request =>
+    detectAdPreviewForm match {
+      case Right((bc, adForm)) =>
+        val formBinded = adForm.bindFromRequest().discardingErrors
+        Ok(bc.renderEditor(formBinded))
+
+      case Left(formWithErrors) =>
+        Ok(views.html.blocks.editor._blockEditorTpl(formWithErrors))
     }
   }
 

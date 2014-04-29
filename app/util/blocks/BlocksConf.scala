@@ -40,6 +40,11 @@ object BlocksConf extends Enumeration {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     def blockFields: List[BlockFieldT]
+
+    /** Отрендерить редактор. */
+    def renderEditor(af: Form[_])(implicit ctx: util.Context): HtmlFormat.Appendable = {
+      editor._blockEditorTpl(af, withBC = Some(this))
+    }
   }
 
   type BlockConf = Val
