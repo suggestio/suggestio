@@ -295,8 +295,8 @@ siomart =
     ch = sm_block.offsetHeight
 
     if cbca_grid.ww > 600
-      sm_block.style.width = cw*2 + 'px'
-      sm_block.style.height = ch*2 + 'px'
+      #sm_block.style.width = cw*2 + 'px'
+      #sm_block.style.height = ch*2 + 'px'
       siomart.utils.addClass sm_block, 'double-size'
 
     if cbca_grid.ww > 600
