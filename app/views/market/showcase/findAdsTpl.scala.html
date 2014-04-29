@@ -23,11 +23,11 @@
 
       <div class="sio-mart__node-offers__scrollable_container">
       <div class="sio-mart__producer-popup-location">
-        <div class="icon"></div>
-        <div class="data">
-          <div>@producer.meta.name</div>
-          <div>@producer.meta.floor-й этаж</div>
-        </div>
+        <span class="data">
+          <span class="icon"></span>
+          @producer.meta.name
+          @if( producer.meta.floor ){<br/>@producer.meta.floor-й этаж}
+        </span>
       </div>
 
       <div class="sio-mart__node-offers__block_container" id="sioMartNodeOffersBlockContainer">
