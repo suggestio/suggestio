@@ -262,6 +262,8 @@ siomart =
       container = this.utils.ge 'sioMartLayout'
       container.innerHTML = data.html
 
+      siomart.utils.add_single_listener siomart.utils.ge('smCloseButton'), 'click', siomart.open_close_screen
+
       cbca_grid.init()
 
     if data.action == 'findAds'
