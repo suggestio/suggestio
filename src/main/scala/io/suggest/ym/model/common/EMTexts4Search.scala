@@ -24,7 +24,9 @@ object EMTexts4Search {
 
 import EMTexts4Search._
 
-trait EMText4SearchStatic[T <: EMTexts4Search[T]] extends EsModelStaticT[T] {
+trait EMText4SearchStatic extends EsModelStaticT {
+  override type T <: EMTexts4Search
+
   abstract override def generateMappingProps: List[DocField] = {
     FieldObject(SEARCH_TEXT_ESFN, enabled = true, properties = Texts4Search.generateMappingProps) ::
       super.generateMappingProps
@@ -38,7 +40,9 @@ trait EMText4SearchStatic[T <: EMTexts4Search[T]] extends EsModelStaticT[T] {
   }
 }
 
-trait EMTexts4Search[T <: EMTexts4Search[T]] extends EsModelT[T] {
+trait EMTexts4Search extends EsModelT {
+  override type T <: EMTexts4Search
+
   var texts4search: Texts4Search
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {

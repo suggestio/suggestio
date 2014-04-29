@@ -12,7 +12,9 @@ import io.suggest.util.SioEsUtil._
  * Description: Поле с необязательным parentId: Option[String].
  */
 
-trait EMParentIdOptStatic[T <: EMParentIdOpt[T]] extends EsModelStaticT[T] {
+trait EMParentIdOptStatic extends EsModelStaticT {
+  override type T <: EMParentIdOpt
+
   abstract override def generateMappingProps: List[DocField] = {
     FieldString(PARENT_ID_ESFN, index = FieldIndexingVariants.no, include_in_all = false) ::
     super.generateMappingProps
@@ -26,7 +28,9 @@ trait EMParentIdOptStatic[T <: EMParentIdOpt[T]] extends EsModelStaticT[T] {
 }
 
 
-trait EMParentIdOpt[T <: EMParentIdOpt[T]] extends EsModelT[T] {
+trait EMParentIdOpt extends EsModelT {
+  override type T <: EMParentIdOpt
+
   var parentId: Option[String]
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {

@@ -13,7 +13,8 @@ import play.api.libs.json.JsString
  * Description: Аддон для es-моделей с полем name.
  */
 
-trait EMNameStatic[T <: EMName[T]] extends EsModelStaticT[T] {
+trait EMNameStatic extends EsModelStaticT {
+  override type T <: EMName
 
   abstract override def generateMappingProps: List[DocField] = {
     FieldString(NAME_ESFN, FieldIndexingVariants.not_analyzed, include_in_all = false) ::
@@ -28,7 +29,8 @@ trait EMNameStatic[T <: EMName[T]] extends EsModelStaticT[T] {
 }
 
 
-trait EMName[T <: EMName[T]] extends EsModelT[T] {
+trait EMName extends EsModelT {
+  override type T <: EMName
 
   var name: String
 

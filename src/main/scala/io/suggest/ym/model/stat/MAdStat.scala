@@ -23,7 +23,10 @@ import play.api.libs.json.JsString
  * Created: 31.03.14 15:57
  * Description: Для накопления статистики по рекламным карточкам используется эта модель.
  */
-object MAdStat extends EsModelStaticT[MAdStat] {
+object MAdStat extends EsModelStaticT {
+
+  override type T = MAdStat
+
   /** Используем изолированный индекс для статистики из-за крайней суровости статистической информации. */
   override val ES_INDEX_NAME = "-siostat"
   val ES_TYPE_NAME = "adStat"
@@ -192,7 +195,9 @@ case class MAdStat(
   var personId: Option[String] = None,
   var timestamp: DateTime = new DateTime,
   var id: Option[String] = None
-) extends EsModelT[MAdStat] {
+) extends EsModelT {
+
+  override type T = MAdStat
 
   @JsonIgnore
   def companion = MAdStat

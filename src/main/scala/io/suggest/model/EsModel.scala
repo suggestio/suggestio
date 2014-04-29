@@ -37,7 +37,7 @@ object EsModel extends MacroLogsImpl {
   import LOGGER._
 
   /** Список ES-моделей. Нужен для удобства массовых maintance-операций. Расширяется по мере роста числа ES-моделей. */
-  def ES_MODELS: Seq[EsModelMinimalStaticT[_]] = {
+  def ES_MODELS: Seq[EsModelMinimalStaticT] = {
     Seq(MShopPriceList, MShopPromoOffer, MYmCategory, MAdStat, MAdnNode, MAd)
   }
 
@@ -45,7 +45,7 @@ object EsModel extends MacroLogsImpl {
   implicit def listCmpOrdering[T <: Comparable[T]] = new ListCmpOrdering[T]
 
   /** Отправить маппинги всех моделей в ES. */
-  def putAllMappings(models: Seq[EsModelMinimalStaticT[_]] = ES_MODELS, ignoreExists: Boolean = false)(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
+  def putAllMappings(models: Seq[EsModelMinimalStaticT] = ES_MODELS, ignoreExists: Boolean = false)(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
     Future.traverse(models) { esModelStatic =>
       val logPrefix = esModelStatic.getClass.getSimpleName + ".putMapping(): "
       val imeFut = if (ignoreExists) {
@@ -339,7 +339,9 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators {
 
 /** Базовый шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelMinimalT]].
   * Здесь десериализация полностью выделена в отдельную функцию. */
-trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] extends EsModelStaticMapping {
+trait EsModelMinimalStaticT extends EsModelStaticMapping {
+
+  type T <: EsModelMinimalT
 
   // Короткие враппер для типичных операций в рамках статической модели.
   def prepareSearch(implicit client: Client) = client.prepareSearch(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
@@ -568,7 +570,9 @@ trait EsModelMinimalStaticT[T <: EsModelMinimalT[T]] extends EsModelStaticMappin
 }
 
 /** Шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelT]]. */
-trait EsModelStaticT[T <: EsModelT[T]] extends EsModelMinimalStaticT[T] {
+trait EsModelStaticT extends EsModelMinimalStaticT {
+
+  override type T <: EsModelT
 
   protected def dummy(id: String): T
 
@@ -588,9 +592,11 @@ trait EsModelStaticT[T <: EsModelT[T]] extends EsModelMinimalStaticT[T] {
 
 /** Шаблон для динамических частей ES-моделей.
  * В минимальной редакции механизм десериализации полностью абстрактен. */
-trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
+trait EsModelMinimalT {
 
-  @JsonIgnore def companion: EsModelMinimalStaticT[E]
+  type T <: EsModelMinimalT
+
+  @JsonIgnore def companion: EsModelMinimalStaticT
 
   @JsonIgnore protected def esTypeName = companion.ES_TYPE_NAME
   @JsonIgnore protected def esIndexName = companion.ES_INDEX_NAME
@@ -614,7 +620,7 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
 
   /** Загрузка новых значений *пользовательских* полей из указанного экземпляра такого же класса.
     * Полезно при edit form sumbit после накатывания маппинга формы на реквест. */
-  def loadUserFieldsFrom(other: E) {}
+  def loadUserFieldsFrom(other: T) {}
 
   /** Перед сохранением можно проверять состояние экземпляра. */
   @JsonIgnore
@@ -664,7 +670,8 @@ trait EsModelMinimalT[E <: EsModelMinimalT[E]] {
 }
 
 /** Шаблон для динамических частей ES-моделей. */
-trait EsModelT[E <: EsModelT[E]] extends EsModelMinimalT[E] {
+trait EsModelT extends EsModelMinimalT {
+  override type T <: EsModelT
   def toJson = JsObject(writeJsonFields(Nil)).toString()
   def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc
 }
@@ -764,7 +771,7 @@ trait EsModelJMXMBeanCommon {
 
 trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon {
 
-  def companion: EsModelMinimalStaticT[_]
+  def companion: EsModelMinimalStaticT
 
   override def jmxName = "io.suggest:type=model,name=" + getClass.getSimpleName.replace("Jmx", "")
 
@@ -827,7 +834,7 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon {
  * Для нормального stackable trait без подсветки красным цветом везде, надо чтобы была базовая реализация отдельно
  * от целевой реализации и stackable-реализаций (abstract override).
  * Тут реализованы методы-заглушки для хвоста стэка декораторов. */
-trait EsModelStaticEmpty[T <: EsModelEmpty[T]] extends EsModelStaticT[T] {
+trait EsModelStaticEmpty extends EsModelStaticT {
 
   def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     PartialFunction.empty
@@ -836,12 +843,11 @@ trait EsModelStaticEmpty[T <: EsModelEmpty[T]] extends EsModelStaticT[T] {
   def generateMappingProps: List[DocField] = {
     Nil
   }
-
 }
 
 /** Трейт базовой реализации экземпляра модели. Вынесен из неё из-за особенностей stackable trait pattern.
   * Он содержит stackable-методы, реализованные пустышками. */
-trait EsModelEmpty[T <: EsModelEmpty[T]] extends EsModelT[T] {
+trait EsModelEmpty extends EsModelT {
   def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     acc
   }

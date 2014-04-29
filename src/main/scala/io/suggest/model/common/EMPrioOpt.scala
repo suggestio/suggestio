@@ -17,7 +17,9 @@ object EMPrioOpt {
 
 import EMPrioOpt._
 
-trait EMPrioOptStatic[T <: EMPrioOptMut[T]] extends EsModelStaticT[T] {
+trait EMPrioOptStatic extends EsModelStaticT {
+  override type T <: EMPrioOptMut
+
   abstract override def generateMappingProps: List[DocField] = {
     FieldNumber(PRIO_ESFN,  fieldType = DocFieldTypes.integer,  index = FieldIndexingVariants.not_analyzed,  include_in_all = false) ::
     super.generateMappingProps
@@ -31,7 +33,8 @@ trait EMPrioOptStatic[T <: EMPrioOptMut[T]] extends EsModelStaticT[T] {
   }
 }
 
-trait EMPrioOpt[T <: EMPrioOpt[T]] extends EsModelT[T] {
+trait EMPrioOpt extends EsModelT {
+  override type T <: EMPrioOpt
 
   def prio: Option[Int]
 
@@ -44,6 +47,7 @@ trait EMPrioOpt[T <: EMPrioOpt[T]] extends EsModelT[T] {
   }
 }
 
-trait EMPrioOptMut[T <: EMPrioOptMut[T]] extends EMPrioOpt[T] {
+trait EMPrioOptMut extends EMPrioOpt {
+  override type T <: EMPrioOptMut
   var prio: Option[Int]
 }

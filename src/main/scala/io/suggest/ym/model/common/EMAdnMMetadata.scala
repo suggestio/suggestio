@@ -30,7 +30,9 @@ object EMAdnMMetadataStatic {
 import EMAdnMMetadataStatic._
 
 
-trait EMAdnMMetadataStatic[T <: EMAdnMMetadata[T]] extends EsModelStaticT[T] {
+trait EMAdnMMetadataStatic extends EsModelStaticT {
+
+  override type T <: EMAdnMMetadata
 
   private def fs(fn: String, iia: Boolean = true, index: FieldIndexingVariant = FieldIndexingVariants.no) = {
     FieldString(fn, include_in_all = iia, index = FieldIndexingVariants.no)
@@ -61,7 +63,8 @@ trait EMAdnMMetadataStatic[T <: EMAdnMMetadata[T]] extends EsModelStaticT[T] {
 
 }
 
-trait EMAdnMMetadata[T <: EMAdnMMetadata[T]] extends EsModelT[T] {
+trait EMAdnMMetadata extends EsModelT {
+  override type T <: EMAdnMMetadata
 
   var meta: AdnMMetadata
 
@@ -79,7 +82,7 @@ trait EMAdnMMetadata[T <: EMAdnMMetadata[T]] extends EsModelT[T] {
 
 
 /**
- *
+ * Экземпляр контейнера метаданных узла.
  * @param name Отображаемое имя/название.
  * @param description Пользовательское описание.
  * @param town Город.

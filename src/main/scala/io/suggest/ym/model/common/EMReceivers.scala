@@ -48,7 +48,9 @@ object EMReceivers {
 import EMReceivers._
 
 
-trait EMReceiversStatic[T <: EMReceiversMut[T]] extends EsModelStaticT[T] {
+trait EMReceiversStatic extends EsModelStaticT {
+
+  override type T <: EMReceiversMut
 
   abstract override def generateMappingProps: List[DocField] = {
     FieldNestedObject(RECEIVERS_ESFN, enabled = true, properties = Seq(
@@ -109,7 +111,8 @@ trait EMReceiversStatic[T <: EMReceiversMut[T]] extends EsModelStaticT[T] {
 
 
 /** Интерфейс абстрактной карточки. */
-trait EMReceivers[T <: EMReceivers[T]] extends EsModelT[T] {
+trait EMReceivers extends EsModelT {
+  override type T <: EMReceivers
 
   /** Где (у кого) должна отображаться эта рекламная карточка? */
   def receivers: Receivers_t
@@ -178,7 +181,8 @@ trait EMReceivers[T <: EMReceivers[T]] extends EsModelT[T] {
   }
 }
 
-trait EMReceiversMut[T <: EMReceiversMut[T]] extends EMReceivers[T] {
+trait EMReceiversMut extends EMReceivers {
+  override type T <: EMReceiversMut
   var receivers: Receivers_t
 }
 

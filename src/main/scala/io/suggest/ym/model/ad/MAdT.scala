@@ -15,43 +15,30 @@ import io.suggest.model.common.{EMDateCreated, EMPrioOpt}
  * рекламные, но все отличаются по своим целям и возможностям. Для всех них нужен общий интерфейс.
  */
 
-trait MAdT[T <: MAdT[T]]
-  extends EMProducerId[T]
-  with EMReceivers[T]
-  with EMPrioOpt[T]
-  with EMUserCatId[T]
-  with EMDateCreated[T]
-  with EMAdOffers[T]
-  with EMImg[T]
-  with EMAdPanelSettings[T]
-  with EMLogoImg[T]
-  with EMTextAlign[T]
+trait MAdT
+  extends EMProducerId
+  with EMReceivers
+  with EMPrioOpt
+  with EMUserCatId
+  with EMDateCreated
+  with EMAdOffers
+  with EMImg
+  with EMBlockId
+  with EMAdPanelSettings
+  with EMLogoImg
+  with EMTextAlign
 {
-
-  def producerId : String
-  def receivers  : Receivers_t
-  def prio       : Option[Int]
-  def userCatId  : Option[String]
-  def dateCreated : DateTime
-
-  // Визуально-отображаемые юзеру поля.
-  def offers     : List[AdOfferT]
-  def img        : MImgInfo
-  def panel      : Option[AdPanelSettings]
-  def logoImgOpt : Option[MImgInfo]
-  def textAlign  : Option[TextAlign]
-
+  override type T <: MAdT
 }
 
 
-/** trait для рантаймового враппинга экземпляра абстрактной рекламной карточки.
-  * Следует помнить, что это только враппинг интерфейса, который на json никак не отражается.
-  * Для всего остального функционала надо подмешивать соотв. не-Mut трейты в добавок к этому.
-  * @tparam T Тип оборачивамой карточки
-  * @tparam MyT Тип этой (оборачивающей) карточки.
-  */
-trait MAdWrapperT[T <: MAdT[T], MyT <: MAdWrapperT[T,MyT]] extends MAdT[MyT] {
-  def wrappedAd: MAdT[T]
+/**
+ * trait для рантаймового враппинга экземпляра абстрактной рекламной карточки.
+ * Следует помнить, что это только враппинг интерфейса, который на json никак не отражается.
+ * Для всего остального функционала надо подмешивать соотв. не-Mut трейты в добавок к этому.
+ */
+trait MAdWrapperT extends MAdT {
+  def wrappedAd: MAdT
 
   override def userCatId = wrappedAd.userCatId
   override def prio = wrappedAd.prio
@@ -64,6 +51,7 @@ trait MAdWrapperT[T <: MAdT[T], MyT <: MAdWrapperT[T,MyT]] extends MAdT[MyT] {
   override def dateCreated = wrappedAd.dateCreated
   override def img = wrappedAd.img
   override def logoImgOpt = wrappedAd.logoImgOpt
+  override def blockId = wrappedAd.blockId
 
   /** Перед сохранением надо также проверять состояние исходного экземпляра. */
   override def isFieldsValid: Boolean = {

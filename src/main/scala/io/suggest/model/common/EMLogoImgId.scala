@@ -13,7 +13,9 @@ import play.api.libs.json.JsString
  * Description: Аддон для Es-моделей, имеющих необязательное поле для id логотипа: магазины, тц и т.д.
  */
 
-trait EMLogoImgIdStatic[T <: EMLogoImgId[T]] extends EsModelStaticT[T] {
+trait EMLogoImgIdStatic extends EsModelStaticT {
+  override type T <: EMLogoImgId
+
   abstract override def generateMappingProps: List[DocField] = {
     FieldString(LOGO_IMG_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.no) ::
     super.generateMappingProps
@@ -25,7 +27,9 @@ trait EMLogoImgIdStatic[T <: EMLogoImgId[T]] extends EsModelStaticT[T] {
 }
 
 
-trait EMLogoImgId[T <: EMLogoImgId[T]] extends EsModelT[T] {
+trait EMLogoImgId extends EsModelT {
+  override type T <: EMLogoImgId
+
   var logoImgId: Option[String]
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {

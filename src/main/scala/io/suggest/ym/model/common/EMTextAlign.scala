@@ -26,7 +26,9 @@ object EMTextAlign {
 import EMTextAlign._
 
 
-trait EMTextAlignStatic[T <: EMTextAlignMut[T]] extends EsModelStaticT[T] {
+trait EMTextAlignStatic extends EsModelStaticT {
+  override type T <: EMTextAlignMut
+
   abstract override def generateMappingProps: List[DocField] = {
     FieldObject(TEXT_ALIGN_ESFN,  enabled = false,  properties = Nil) :: super.generateMappingProps
   }
@@ -39,7 +41,8 @@ trait EMTextAlignStatic[T <: EMTextAlignMut[T]] extends EsModelStaticT[T] {
   }
 }
 
-trait EMTextAlign[T <: EMTextAlign[T]] extends EsModelT[T] {
+trait EMTextAlign extends EsModelT {
+  override type T <: EMTextAlign
 
   def textAlign: Option[TextAlign]
 
@@ -52,7 +55,8 @@ trait EMTextAlign[T <: EMTextAlign[T]] extends EsModelT[T] {
   }
 }
 
-trait EMTextAlignMut[T <: EMTextAlignMut[T]] extends EMTextAlign[T] {
+trait EMTextAlignMut extends EMTextAlign {
+  override type T <: EMTextAlignMut
   var textAlign: Option[TextAlign]
 }
 

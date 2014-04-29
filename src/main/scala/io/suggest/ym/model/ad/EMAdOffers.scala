@@ -53,8 +53,8 @@ object EMAdOffers {
   val DISCOUNT_ESFN     = "discount"
   val DISCOUNT_TPL_ESFN = "discoTpl"
 
-  // BLOCK offer
-  val BLOCK_ID_ESFN     = "blockId"
+  /** В списке офферов порядок поддерживается с помощью поля n, которое поддерживает порядок по возрастанию. */
+  val N_ESFN            = "n"
 
   // TEXT offer
   val TEXT_ESFN         = "text"
@@ -64,7 +64,8 @@ object EMAdOffers {
 import EMAdOffers._
 
 
-trait EMAdOffersStatic[T <: EMAdOffersMut[T]] extends EsModelStaticT[T] {
+trait EMAdOffersStatic extends EsModelStaticT {
+  override type T <: EMAdOffersMut
 
   abstract override def generateMappingProps: List[DocField] = {
     val fontField = FieldObject(FONT_ESFN, enabled = false, properties = Nil)
@@ -105,6 +106,7 @@ trait EMAdOffersStatic[T <: EMAdOffersMut[T]] extends EsModelStaticT[T] {
     )
     val offersField = FieldNestedObject(OFFERS_ESFN, enabled = true, properties = Seq(
       FieldString(OFFER_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldNumber(N_ESFN, index = FieldIndexingVariants.no, include_in_all = false, fieldType = DocFieldTypes.integer),
       FieldObject(OFFER_BODY_ESFN, enabled = true, properties = offerBodyProps)
     ))
     offersField :: super.generateMappingProps
@@ -113,28 +115,17 @@ trait EMAdOffersStatic[T <: EMAdOffersMut[T]] extends EsModelStaticT[T] {
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
       case (OFFERS_ESFN, value: java.lang.Iterable[_]) =>
-        acc.offers = value.toList.map {
-          case jsObject: java.util.Map[_, _] =>
-            jsObject.get(OFFER_TYPE_ESFN) match {
-              case ots: String =>
-                val ot = AdOfferTypes.withName(ots)
-                val offerBody = jsObject.get(OFFER_BODY_ESFN)
-                import AdOfferTypes._
-                ot match {
-                  case BLOCK      => AOBlock.deserialize(offerBody)
-                  case PRODUCT  => AOProduct.deserialize(offerBody)
-                  case DISCOUNT => AODiscount.deserialize(offerBody)
-                  case TEXT     => AOText.deserialize(offerBody)
-                }
-            }
-        }
+        acc.offers = value.toList
+          .map(AdOffer.deserializeOne)
+          .sortBy(_.n)
     }
   }
 
 }
 
 
-trait EMAdOffers[T <: EMAdOffers[T]] extends EsModelT[T] {
+trait EMAdOffers extends EsModelT {
+  override type T <: EMAdOffers
 
   def offers: List[AdOfferT]
 
@@ -151,20 +142,49 @@ trait EMAdOffers[T <: EMAdOffers[T]] extends EsModelT[T] {
 }
 
 
-trait EMAdOffersMut[T <: EMAdOffersMut[T]] extends EMAdOffers[T] {
+trait EMAdOffersMut extends EMAdOffers {
+  override type T <: EMAdOffersMut
   var offers: List[AdOfferT]
 }
 
 
 // -------------- Далее идёт конструктор, из которого собираются офферы ---------------
+object AdOffer {
 
+  /** Десериализовать один оффер. */
+  def deserializeOne(x: Any): AdOfferT = {
+    x match {
+      case jsObject: java.util.Map[_, _] =>
+        jsObject.get(OFFER_TYPE_ESFN) match {
+          case ots: String =>
+            val ot = AdOfferTypes.withName(ots)
+            val offerBody = jsObject.get(OFFER_BODY_ESFN)
+            import AdOfferTypes._
+            ot match {
+              case BLOCK => AOBlock.deserializeBody(offerBody)
+              case PRODUCT => AOProduct.deserializeBody(offerBody)
+              case DISCOUNT => AODiscount.deserializeBody(offerBody)
+              case TEXT => AOText.deserializeBody(offerBody)
+            }
+        }
+    }
+  }
+
+}
+
+/** Абстрактный оффер. */
 sealed trait AdOfferT extends Serializable {
   @JsonIgnore
   def offerType: AdOfferType
 
+  /** Порядковый номер оффера в списке офферов. Нужен для поддержания исходного порядка. */
+  def n: Int
+
   @JsonIgnore
   def renderPlayJson = {
+    // Метаданные оффера содержат его порядковый номер и тип. Body содержит сами данные по офферу.
     JsObject(Seq(
+      N_ESFN          -> JsNumber(n),
       OFFER_TYPE_ESFN -> JsString(offerType.toString),
       OFFER_BODY_ESFN -> JsObject(renderPlayJsonBody)
     ))
@@ -176,13 +196,12 @@ sealed trait AdOfferT extends Serializable {
 
 
 object AOBlock {
-  def deserialize(jsObject: Any) = {
+  /** Десериализация тела блочного оффера. */
+  def deserializeBody(jsObject: Any) = {
     jsObject match {
       case m: java.util.Map[_,_] =>
         val acc = AOBlock(-1)
         m foreach {
-          case (BLOCK_ID_ESFN, blockId) =>
-            acc.blockId = EsModel.intParser(blockId)
           case (TEXT1_ESFN, text1Raw) =>
             acc.text1 = JacksonWrapper.convert[Option[AOStringField]](text1Raw)
           case (DISCOUNT_ESFN, discoRaw) =>
@@ -202,11 +221,10 @@ object AOBlock {
 
 
 case class AOBlock(
-  var blockId: Int,
+  var n: Int,
   var text1: Option[AOStringField] = None,
   var text2: Option[AOStringField] = None,
   var discount: Option[AOFloatField] = None,
-  //discountTemplate: Option[AODiscountTemplate] = None,
   var price: Option[AOPriceField]  = None,
   var priceOld: Option[AOPriceField] = None
 ) extends AdOfferT {
@@ -215,7 +233,7 @@ case class AOBlock(
 
   @JsonIgnore
   override def renderPlayJsonBody: FieldsJsonAcc = {
-    var acc: FieldsJsonAcc = List(BLOCK_ID_ESFN -> JsNumber(blockId))
+    var acc: FieldsJsonAcc = List(N_ESFN -> JsNumber(n))
     if (text1.isDefined)
       acc ::= TEXT1_ESFN -> text1.get.renderPlayJson
     if (text2.isDefined)
@@ -233,7 +251,7 @@ case class AOBlock(
 
 
 object AOProduct {
-  def deserialize(jsObject: Any) = JacksonWrapper.convert[AOProduct](jsObject)
+  def deserializeBody(jsObject: Any) = JacksonWrapper.convert[AOProduct](jsObject)
 }
 
 @JsonIgnoreProperties(Array("currencyCode")) // 27.03.2014 Было удалено поле до 1-запуска. Потом можно это удалить.
@@ -243,6 +261,7 @@ case class AOProduct(
   oldPrice: Option[AOPriceField]
 ) extends AdOfferT {
   @JsonIgnore def offerType = AdOfferTypes.PRODUCT
+  @JsonIgnore def n = 0
 
   @JsonIgnore
   def renderPlayJsonBody: FieldsJsonAcc = {
@@ -258,7 +277,7 @@ case class AOProduct(
 
 
 object AODiscount {
-  def deserialize(jsObject: Any): AODiscount = {
+  def deserializeBody(jsObject: Any): AODiscount = {
     jsObject match {
       case m: java.util.Map[_,_] =>
         val acc = AODiscount(null, null, null, null)
@@ -284,6 +303,7 @@ case class AODiscount(
   var text2: Option[AOStringField]
 ) extends AdOfferT {
   @JsonIgnore def offerType = AdOfferTypes.DISCOUNT
+  @JsonIgnore def n = 0
 
   @JsonIgnore
   def renderPlayJsonBody: FieldsJsonAcc = {
@@ -301,9 +321,10 @@ case class AODiscount(
 
 
 object AOText {
-  def deserialize(jsObject: Any) = JacksonWrapper.convert[AOText](jsObject)
+  def deserializeBody(jsObject: Any) = JacksonWrapper.convert[AOText](jsObject)
 }
 case class AOText(text: AOStringField) extends AdOfferT {
+  @JsonIgnore def n = 0
   @JsonIgnore
   def offerType = AdOfferTypes.TEXT
 

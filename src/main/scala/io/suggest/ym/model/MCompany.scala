@@ -17,10 +17,12 @@ import io.suggest.model.common._
  */
 
 object MCompany
-  extends EsModelStaticEmpty[MCompany]
-  with EMNameStatic[MCompany]
-  with EMDateCreatedStatic[MCompany]
+  extends EsModelStaticEmpty
+  with EMNameStatic
+  with EMDateCreatedStatic
 {
+
+  override type T = MCompany
 
   type CompanyId_t = String
 
@@ -65,13 +67,14 @@ case class MCompany(
   id                : Option[MCompany.CompanyId_t] = None,
   var dateCreated   : DateTime = null
 )
-  extends EsModelEmpty[MCompany]
-  with EMName[MCompany]
-  with EMDateCreatedMut[MCompany]
+  extends EsModelEmpty
+  with EMName
+  with EMDateCreatedMut
 {
+  override type T = MCompany
+
   def companyId = id.get
   def companion = MCompany
-
 }
 
 

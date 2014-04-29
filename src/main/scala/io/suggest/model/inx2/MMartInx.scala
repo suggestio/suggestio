@@ -20,9 +20,11 @@ import play.api.libs.json.JsString
  * Created: 18.03.14 11:35
  * Description: Метаданные об индексах ТЦ представляются и хранятся в этой модели.
  */
-object MMartInx extends EsModelStaticT[MMartInx] {
+object MMartInx extends EsModelStaticT {
 
   val ES_TYPE_NAME: String = "inxMart"
+
+  override type T = MMartInx
 
   protected def dummy(martId: String) = MMartInx(martId = martId, targetEsInxName = null)
 
@@ -50,7 +52,8 @@ import MMartInx._
 case class MMartInx(
   var martId: String,
   var targetEsInxName: String
-) extends EsModelT[MMartInx] with MSingleInxT {
+) extends EsModelT with MSingleInxT {
+  override type T = MMartInx
 
   @JsonIgnore def id: Option[String] = Some(martId)
 

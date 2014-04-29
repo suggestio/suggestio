@@ -21,7 +21,9 @@ object EMDateCreatedStatic {
 import EMDateCreatedStatic._
 
 
-trait EMDateCreatedStatic[T <: EMDateCreatedMut[T]] extends EsModelStaticT[T] {
+trait EMDateCreatedStatic extends EsModelStaticT {
+  override type T <: EMDateCreatedMut
+
   abstract override def generateMappingProps: List[DocField] = {
     fieldDate :: super.generateMappingProps
   }
@@ -39,7 +41,8 @@ trait EMDateCreatedStatic[T <: EMDateCreatedMut[T]] extends EsModelStaticT[T] {
 }
 
 
-trait EMDateCreated[T <: EMDateCreated[T]] extends EsModelT[T] {
+trait EMDateCreated extends EsModelT {
+  override type T <: EMDateCreated
 
   def dateCreated: DateTime
 
@@ -49,7 +52,8 @@ trait EMDateCreated[T <: EMDateCreated[T]] extends EsModelT[T] {
 
 }
 
-trait EMDateCreatedMut[T <: EMDateCreatedMut[T]] extends EMDateCreated[T] {
+trait EMDateCreatedMut extends EMDateCreated {
+  override type T <: EMDateCreatedMut
   var dateCreated: DateTime
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {

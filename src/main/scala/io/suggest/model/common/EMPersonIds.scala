@@ -18,7 +18,9 @@ import EsModel.asJsonStrArray
  * Description: Аддон для ES-моделей, имеющих поле person_id во множественном числе.
  */
 
-trait EMPersonIdsStatic[T <: EMPersonIds[T]] extends EsModelStaticT[T] {
+trait EMPersonIdsStatic extends EsModelStaticT {
+
+  override type T <: EMPersonIds
 
   abstract override def generateMappingProps: List[DocField] = {
     FieldString(PERSON_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed) ::
@@ -57,7 +59,9 @@ trait EMPersonIdsStatic[T <: EMPersonIds[T]] extends EsModelStaticT[T] {
 
 }
 
-trait EMPersonIds[T <: EMPersonIds[T]] extends EsModelT[T] {
+trait EMPersonIds extends EsModelT {
+
+  override type T <: EMPersonIds
 
   var personIds: Set[String]
 

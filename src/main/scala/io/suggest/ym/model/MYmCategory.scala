@@ -23,13 +23,14 @@ import io.suggest.model.common.{EMParentIdOptStatic, EMNameStatic, EMParentIdOpt
  * Используется case-insensivitive-кодирование без пунктуации.
  */
 object MYmCategory
-  extends EsModelStaticEmpty[MYmCategory]
-  with EMNameStatic[MYmCategory]
-  with EMParentIdOptStatic[MYmCategory]
+  extends EsModelStaticEmpty
+  with EMNameStatic
+  with EMParentIdOptStatic
   with MacroLogsImpl
 {
-
   import LOGGER._
+
+  override type T = MYmCategory
 
   val ES_TYPE_NAME = "ymCat"
 
@@ -124,10 +125,11 @@ case class MYmCategory(
   var parentId  : Option[String],
   id            : Option[String] = None
 )
-  extends EsModelEmpty[MYmCategory]
-  with EMName[MYmCategory]
-  with EMParentIdOpt[MYmCategory]
+  extends EsModelEmpty
+  with EMName
+  with EMParentIdOpt
 {
+  override type T = MYmCategory
 
   def companion = MYmCategory
 

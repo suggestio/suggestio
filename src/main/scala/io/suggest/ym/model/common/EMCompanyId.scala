@@ -18,7 +18,9 @@ import play.api.libs.json.JsString
  * Description: Аддон для ES-моделей, содержащий поле companyId.
  */
 
-trait EMCompanyIdStatic[T <: EMCompanyId[T]] extends EsModelStaticT[T] {
+trait EMCompanyIdStatic extends EsModelStaticT {
+  override type T <: EMCompanyId
+
   abstract override def generateMappingProps: List[DocField] = {
     FieldString(COMPANY_ID_ESFN,  index = FieldIndexingVariants.not_analyzed,  include_in_all = false) ::
     super.generateMappingProps
@@ -63,7 +65,8 @@ trait EMCompanyIdStatic[T <: EMCompanyId[T]] extends EsModelStaticT[T] {
 }
 
 
-trait EMCompanyId[T <: EMCompanyId[T]] extends EsModelT[T] with MCompanySel {
+trait EMCompanyId extends EsModelT with MCompanySel {
+  override type T <: EMCompanyId
 
   var companyId: CompanyId_t
 

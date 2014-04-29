@@ -18,7 +18,9 @@ object EMUserCatId {
 import EMUserCatId._
 
 
-trait EMUserCatIdStatic[T <: EMUserCatIdMut[T]] extends EsModelStaticT[T] {
+trait EMUserCatIdStatic extends EsModelStaticT {
+  override type T <: EMUserCatIdMut
+
   abstract override def generateMappingProps: List[DocField] = {
     FieldString(USER_CAT_ID_ESFN, include_in_all = false, index = FieldIndexingVariants.not_analyzed) ::
     super.generateMappingProps
@@ -33,9 +35,10 @@ trait EMUserCatIdStatic[T <: EMUserCatIdMut[T]] extends EsModelStaticT[T] {
 }
 
 
-trait EMUserCatId[T <: EMUserCatId[T]] extends EsModelT[T] {
+trait EMUserCatId extends EsModelT {
+  override type T <: EMUserCatId
 
-  def userCatId    : Option[String]
+  def userCatId: Option[String]
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
@@ -47,6 +50,7 @@ trait EMUserCatId[T <: EMUserCatId[T]] extends EsModelT[T] {
 
 }
 
-trait EMUserCatIdMut[T <: EMUserCatIdMut[T]] extends EMUserCatId[T] {
+trait EMUserCatIdMut extends EMUserCatId {
+  override type T <: EMUserCatIdMut
   var userCatId: Option[String]
 }

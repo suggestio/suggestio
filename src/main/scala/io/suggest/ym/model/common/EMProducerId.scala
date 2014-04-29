@@ -27,7 +27,9 @@ object EMProducerId {
 import EMProducerId._
 
 
-trait EMProducerIdStatic[T <: EMProducerIdMut[T]] extends EsModelStaticT[T] {
+trait EMProducerIdStatic extends EsModelStaticT {
+  override type T <: EMProducerIdMut
+
   abstract override def generateMappingProps: List[DocField] = {
     FieldString(PRODUCER_ID_ESFN, index = FieldIndexingVariants.not_analyzed,  include_in_all = false) ::
     super.generateMappingProps
@@ -86,7 +88,8 @@ trait EMProducerIdStatic[T <: EMProducerIdMut[T]] extends EsModelStaticT[T] {
 }
 
 
-trait EMProducerId[T <: EMProducerId[T]] extends EsModelT[T] {
+trait EMProducerId extends EsModelT {
+  override type T <: EMProducerId
 
   /** Кто является изготовителем этой рекламной карточки? */
   def producerId: String
@@ -97,6 +100,7 @@ trait EMProducerId[T <: EMProducerId[T]] extends EsModelT[T] {
 
 }
 
-trait EMProducerIdMut[T <: EMProducerIdMut[T]] extends EMProducerId[T] {
+trait EMProducerIdMut extends EMProducerId {
+  override type T <: EMProducerIdMut
   var producerId: String
 }

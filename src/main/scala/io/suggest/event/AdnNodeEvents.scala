@@ -106,7 +106,7 @@ object DeleteAdsOnAdnNodeDeleteSubscriber extends MacroLogsImpl {
 
   /** Генератор complete-функции подхвата завершения удаления рекламных карточек.
     * Функция только сообщает в логи о своих успехах. */
-  private def handleFinishPf(logPrefix: String, model: EsModelMinimalStaticT[_]): PartialFunction[Try[_], _] = {
+  private def handleFinishPf(logPrefix: String, model: EsModelMinimalStaticT): PartialFunction[Try[_], _] = {
     case Success(result) =>
       debug(logPrefix + "All ads removed ok from model " + model.getClass.getSimpleName)
     case Failure(ex) =>

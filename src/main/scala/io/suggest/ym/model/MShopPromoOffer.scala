@@ -23,11 +23,13 @@ import scala.util.{Failure, Success}
  * Этот оффер привязан к магазину -- это избавляет от кучи головной боли, хоть и бывает не оптимально.
  */
 
-object MShopPromoOffer extends EsModelMinimalStaticT[MShopPromoOffer] with MacroLogsImpl {
+object MShopPromoOffer extends EsModelMinimalStaticT with MacroLogsImpl {
 
   import LOGGER._
 
   val ES_TYPE_NAME  = "shopPromoOffers"
+
+  override type T = MShopPromoOffer
 
   // TODO Надо бы это запилить по-нормальному, отрефакторив YmIndex.
   override def generateMapping = YmIndex.getIndexMapping(ES_TYPE_NAME)
@@ -115,7 +117,9 @@ case class MShopPromoOffer(
   // TODO Нужно использовать облегчённую модель датума, без постоянной сериализации-десериализации. Можно просто через набор одноимённых var + парсер json в над-трейте.
   datum: YmPromoOfferDatum = new YmPromoOfferDatum(),
   var id: Option[String] = None
-) extends EsModelMinimalT[MShopPromoOffer] with MShopOffersSel {
+) extends EsModelMinimalT with MShopOffersSel {
+
+  override type T = MShopPromoOffer
 
   def companion = MShopPromoOffer
   def shopId   = datum.shopId

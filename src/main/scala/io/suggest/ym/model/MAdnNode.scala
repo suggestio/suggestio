@@ -19,14 +19,16 @@ import io.suggest.event.subscriber.SnFunSubscriber
  * Модель узла конструируется компилятором из кучи кусков, вроде бы не связанных между собой.
  */
 object MAdnNode
-  extends EsModelStaticEmpty[MAdnNode]
-  with EMCompanyIdStatic[MAdnNode]
-  with EMPersonIdsStatic[MAdnNode]
-  with EMAdNetMemberStatic[MAdnNode]
-  with EMLogoImgStatic[MAdnNode]
-  with EMAdnMMetadataStatic[MAdnNode]
+  extends EsModelStaticEmpty
+  with EMCompanyIdStatic
+  with EMPersonIdsStatic
+  with EMAdNetMemberStatic
+  with EMLogoImgStatic
+  with EMAdnMMetadataStatic
 {
   val ES_TYPE_NAME: String = "adnNode"
+
+  override type T = MAdnNode
 
   protected def dummy(id: String) = MAdnNode(
     companyId = null,
@@ -72,13 +74,15 @@ case class MAdnNode(
   var logoImgOpt    : Option[MImgInfo] = None,
   var id            : Option[String] = None
 )
-  extends EsModelEmpty[MAdnNode]
-  with EMCompanyId[MAdnNode]
-  with EMPersonIds[MAdnNode]
-  with EMAdNetMember[MAdnNode]
-  with EMLogoImgMut[MAdnNode]
-  with EMAdnMMetadata[MAdnNode]
+  extends EsModelEmpty
+  with EMCompanyId
+  with EMPersonIds
+  with EMAdNetMember
+  with EMLogoImgMut
+  with EMAdnMMetadata
 {
+  override type T = MAdnNode
+
   @JsonIgnore
   def companion = MAdnNode
 

@@ -19,7 +19,9 @@ object EMImg {
 import EMImg._
 
 
-trait EMImgStatic[T <: EMImgMut[T]] extends EsModelStaticT[T] {
+trait EMImgStatic extends EsModelStaticT {
+  override type T <: EMImgMut
+
   abstract override def generateMappingProps: List[DocField] = {
     esMappingField :: super.generateMappingProps
   }
@@ -32,7 +34,8 @@ trait EMImgStatic[T <: EMImgMut[T]] extends EsModelStaticT[T] {
   }
 }
 
-trait EMImg[T <: EMImg[T]] extends EsModelT[T] {
+trait EMImg extends EsModelT {
+  override type T <: EMImg
 
   def img: MImgInfo
 
@@ -42,6 +45,7 @@ trait EMImg[T <: EMImg[T]] extends EsModelT[T] {
 
 }
 
-trait EMImgMut[T <: EMImgMut[T]] extends EMImg[T] {
+trait EMImgMut extends EMImg {
+  override type T <: EMImgMut
   var img: MImgInfo
 }

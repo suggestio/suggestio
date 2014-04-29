@@ -52,7 +52,9 @@ object EMTariff {
 
 import EMTariff._
 
-trait EMTariffStatic[T <: EMTariff[T]] extends EsModelStaticT[T] {
+trait EMTariffStatic extends EsModelStaticT {
+
+  override type T <: EMTariff
 
   override abstract def generateMappingProps: List[DocField] = {
     FieldNestedObject(TARIFF_ESFN, enabled = true, properties = Seq(
@@ -80,7 +82,9 @@ trait EMTariffStatic[T <: EMTariff[T]] extends EsModelStaticT[T] {
 }
 
 
-trait EMTariff[T <: EMTariff[T]] extends EsModelT[T] {
+trait EMTariff extends EsModelT {
+  override type T <: EMTariff
+
   var tariffs: List[Tariff]
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {

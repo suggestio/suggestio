@@ -67,7 +67,9 @@ import AdNetMember._
 
 
 /** Трейт для статической части модели участника рекламной сети. */
-trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
+trait EMAdNetMemberStatic extends EsModelStaticT {
+
+  override type T <: EMAdNetMember
 
   abstract override def generateMappingProps: List[DocField] = {
     import FieldIndexingVariants.not_analyzed
@@ -281,11 +283,13 @@ trait EMAdNetMemberStatic[T <: EMAdNetMember[T]] extends EsModelStaticT[T] {
 
 
 /** Трейт для экземпляра модели участника рекламной сети. */
-trait EMAdNetMember[T <: EMAdNetMember[T]] extends EsModelT[T] {
+trait EMAdNetMember extends EsModelT {
+  override type T <: EMAdNetMember
+
   var adn: AdNetMemberInfo
 
   // Ограничиваем тип объекта-компаньона, чтобы можно было дергать статический setIsEnabled().
-  override def companion: EMAdNetMemberStatic[T]
+  override def companion: EMAdNetMemberStatic
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     ADN_ESFN -> adn.toPlayJson :: super.writeJsonFields(acc)
@@ -308,7 +312,7 @@ trait EMAdNetMember[T <: EMAdNetMember[T]] extends EsModelT[T] {
    * хранятся в [[io.suggest.ym.model.MAdnNode]].
    * @return None если не указан или не найден. Иначе Some([[io.suggest.ym.model.MAdnNode]]).
    */
-  def getSup(implicit ec: ExecutionContext, client: Client): Future[Option[MAdnNode]] = {
+  def getSup(implicit ec: ExecutionContext, client: Client): Future[Option[MAdnNode.T]] = {
     adn.supId match {
       case Some(supId)  => MAdnNode.getById(supId)
       case None         => Future successful None
@@ -569,13 +573,13 @@ object CleanupAdnProducerIdsOnAdnNodeDelete {
         MAdnNode.findByIncomingProducerId(ande.adnId)
           .filter(!_.isEmpty)
           .foreach { ands =>
-          ands.foreach { adnNode =>
-            if (adnNode.adn.producerIds contains ande.adnId) {
-              adnNode.adn.producerIds -= ande.adnId
-              adnNode.save
+            ands.foreach { adnNode =>
+              if (adnNode.adn.producerIds contains ande.adnId) {
+                adnNode.adn.producerIds -= ande.adnId
+                adnNode.save
+              }
             }
           }
-        }
     }
     val subs = Seq(sub)
     Seq( AdnNodeDeletedEvent.getClassifier(isDeleted = Some(true)) -> subs )

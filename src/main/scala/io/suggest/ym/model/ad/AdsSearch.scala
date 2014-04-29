@@ -148,7 +148,7 @@ trait AdsSearchT[T, InxT <: MInxT] {
 
 /** Если нужно добавить в рекламную inx2-модель поиск по рекламным карточкам,
   * то следует задействовать вот этот трейт. */
-trait AdsSimpleSearchT[T <: EsModelMinimalT[T]] extends EsModelMinimalStaticT[T] {
+trait AdsSimpleSearchT extends EsModelMinimalStaticT {
 
   /**
    * Поиск карточек в ТЦ по критериям.

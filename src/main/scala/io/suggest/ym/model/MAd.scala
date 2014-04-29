@@ -24,22 +24,25 @@ import org.elasticsearch.search.sort.SortBuilder
  * Рефакторинг в MMartAd был бы слишком глубок, поэтому лучше было начать с чистого листа.
  */
 object MAd
-  extends EsModelStaticEmpty[MAd]
-  with EMProducerIdStatic[MAd]
-  with EMAdOffersStatic[MAd]
-  with EMImgStatic[MAd]
-  with EMReceiversStatic[MAd]
-  with EMLogoImgStatic[MAd]
-  with EMTextAlignStatic[MAd]
-  with EMAdPanelSettingsStatic[MAd]
-  with EMPrioOptStatic[MAd]
-  with EMUserCatIdStatic[MAd]
-  with EMDateCreatedStatic[MAd]
-  with EMText4SearchStatic[MAd]
-  with AdsSimpleSearchT[MAd]
+  extends EsModelStaticEmpty
+  with EMProducerIdStatic
+  with EMAdOffersStatic
+  with EMImgStatic
+  with EMBlockIdStatic
+  with EMReceiversStatic
+  with EMLogoImgStatic
+  with EMTextAlignStatic
+  with EMAdPanelSettingsStatic
+  with EMPrioOptStatic
+  with EMUserCatIdStatic
+  with EMDateCreatedStatic
+  with EMText4SearchStatic
+  with AdsSimpleSearchT
   with MacroLogsImpl
 {
   import LOGGER._
+
+  override type T = MAd
 
   val ES_TYPE_NAME: String = "ad"
 
@@ -109,6 +112,7 @@ case class MAd(
   var producerId : String,
   var offers     : List[AdOfferT],
   var img        : MImgInfo,
+  var blockId    : Int = 1,
   var receivers  : Receivers_t = Map.empty,
   var logoImgOpt : Option[MImgInfo] = None,
   var textAlign  : Option[TextAlign] = None,
@@ -119,20 +123,24 @@ case class MAd(
   var texts4search : Texts4Search = Texts4Search(),
   var dateCreated : DateTime = DateTime.now
 )
-  extends EsModelEmpty[MAd]
-  with MAdT[MAd]
-  with EMProducerIdMut[MAd]
-  with EMAdOffersMut[MAd]
-  with EMImgMut[MAd]
-  with EMReceiversMut[MAd]
-  with EMLogoImgMut[MAd]
-  with EMTextAlignMut[MAd]
-  with EMAdPanelSettingsMut[MAd]
-  with EMPrioOptMut[MAd]
-  with EMUserCatIdMut[MAd]
-  with EMDateCreatedMut[MAd]
-  with EMTexts4Search[MAd]
+  extends EsModelEmpty
+  with MAdT
+  with EMProducerIdMut
+  with EMAdOffersMut
+  with EMImgMut
+  with EMBlockIdMut
+  with EMReceiversMut
+  with EMLogoImgMut
+  with EMTextAlignMut
+  with EMAdPanelSettingsMut
+  with EMPrioOptMut
+  with EMUserCatIdMut
+  with EMDateCreatedMut
+  with EMTexts4Search
 {
+  @JsonIgnore
+  override type T = MAd
+
   @JsonIgnore
   def companion = MAd
 

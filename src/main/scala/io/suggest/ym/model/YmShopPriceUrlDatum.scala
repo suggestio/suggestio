@@ -96,7 +96,9 @@ import io.suggest.model.EsModel._
  * [[io.suggest.ym.model.YmShopPriceUrlDatum]].
  */
 
-object MShopPriceList extends EsModelStaticT[MShopPriceList] {
+object MShopPriceList extends EsModelStaticT {
+
+  override type T = MShopPriceList
 
   /** Разделитель имени и пароля в строке auth_info. */
   val AUTH_INFO_SEP = ":"
@@ -161,7 +163,9 @@ case class MShopPriceList(
   var url      : String,
   var authInfo : Option[UsernamePw],
   id           : Option[String] = None
-) extends EsModelT[MShopPriceList] {
+) extends EsModelT {
+
+  override type T = MShopPriceList
 
   def companion = MShopPriceList
   def authInfoStr: Option[String] = authInfo map { _.serialize }
