@@ -287,6 +287,8 @@ siomart =
     sm_block.style.width = cw*2 + 'px'
     sm_block.style.height = ch*2 + 'px'
 
+    siomart.utils.addClass sm_block, 'double-size'
+
     _block_container.style.width = cw*2 + 'px'
 
 
