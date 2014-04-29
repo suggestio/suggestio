@@ -2,11 +2,10 @@ package util.blocks
 
 import play.api.data._, Forms._
 import util.FormUtil._
-import play.api.templates.{Template5, HtmlFormat, Template4}
+import play.api.templates.{Template5, HtmlFormat}
 import models._
 import views.html.blocks.editor._
 import BlocksConf.BlockConf
-import io.suggest.model.EsModel
 import controllers.ad.MarketAdFormUtil
 import io.suggest.ym.model.common.{IBlockMeta, BlockMeta}
 import io.suggest.ym.model.ad.IOffers
@@ -22,6 +21,7 @@ object BlocksUtil {
 
   val BLOCK_ID_FN = "blockId"
 
+  val I18N_PREFIX = "blocks.field."
 
   val bTitleM = nonEmptyText(minLength = 2, maxLength = 250)
     .transform[String](strTrimSanitizeF, strIdentityF)
@@ -118,6 +118,9 @@ trait BlockFieldT {
   def getOptionalStrictMappingKV = name -> getOptionalStrictMapping
 
   def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable
+
+  def offerNopt: Option[Int]
+  def offerN = offerNopt getOrElse 0
 }
 
 
@@ -125,6 +128,7 @@ trait BlockFieldT {
 case class BfInt(
   name: String,
   field: BEFInt = BlocksEditorFields.Height,
+  offerNopt: Option[Int] = None,
   defaultValue: Option[Int] = None,
   minValue: Int = Int.MinValue,
   maxValue: Int = Int.MaxValue
@@ -144,6 +148,7 @@ case class BfInt(
 case class BfPrice(
   name: String,
   field: BEFFloat = BlocksEditorFields.Price,
+  offerNopt: Option[Int] = None,
   defaultValue: Option[AOPriceField] = None
 ) extends BlockFieldT {
   override type T = AOPriceField
@@ -167,6 +172,7 @@ case class BfPrice(
 case class BfString(
   name: String,
   field: BEFString,
+  offerNopt: Option[Int] = None,
   strTransformF: String => String = strTrimSanitizeLowerF,
   defaultValue: Option[AOStringField] = None,
   minLen: Int = 0,

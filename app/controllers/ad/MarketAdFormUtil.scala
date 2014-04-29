@@ -108,27 +108,19 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  def adFormApply(userCatId: Option[String], bd: BlockData, textAlignOpt: Option[TextAlign]): MAd = {
+  def adFormApply(userCatId: Option[String], bd: BlockData): MAd = {
     MAd(
       producerId  = null,
       offers      = bd.offers,
       blockMeta   = bd.blockMeta,
       img         = null,
-      userCatId   = userCatId,
-      textAlign   = textAlignOpt
+      userCatId   = userCatId
     )
   }
 
   /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
-  def adFormUnapply(mmad: MAd): Option[(Option[String], BlockData, Option[TextAlign])] = {
-    import mmad.{panel, userCatId, offers, textAlign}
-    if (panel.isDefined && userCatId.isDefined && !offers.isEmpty) {
-      val bd = BlockDataImpl(mmad.blockMeta, offers)
-      Some((userCatId, bd, textAlign))
-    } else {
-      warn("Unexpected ad object received into ad-product form: " + mmad)
-      None
-    }
+  def adFormUnapply(mmad: MAd): Option[(Option[String], BlockData)] = {
+    Some((mmad.userCatId, mmad))
   }
 
 
