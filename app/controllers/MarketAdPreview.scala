@@ -63,7 +63,6 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
     LOGO_IMG_ID_K -> optional(ImgFormUtil.logoImgIdM(imgIdM)),
     "ad" -> mapping(
       prevCatIdKM,
-      panelColorKM,
       OFFER_K -> blockM,
       textAlignKM
     )(adFormApply)(adFormUnapply)

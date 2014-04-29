@@ -50,7 +50,6 @@ object MarketAd extends SioController with LogoSupport {
     ad2ndLogoImgIdOptKM,
     "ad" -> mapping(
       shopCatIdKM,
-      panelColorKM,
       OFFER_K -> blockM,
       textAlignKM
     )(adFormApply)(adFormUnapply)
@@ -403,7 +402,6 @@ object MarketAd extends SioController with LogoSupport {
     ad2ndLogoImgIdOptKM,
     "ad" -> mapping(
       martCatIdKM,
-      panelColorKM,
       OFFER_K -> blockM,
       textAlignKM
     )(adFormApply)(adFormUnapply)
