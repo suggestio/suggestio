@@ -5,7 +5,6 @@
 @* Input для id выбранной категории. *@
 <input id="catId" data-curr-cat="cat" type="hidden" name="ad.catId" value="@af("ad.catId").value" />
 
-<div style="margin: 30px 0;">
   <div class="categories" id="cat-select">
     @mmcats.map { case (selectedIdOpt, mmcats1) =>
       <span class="cbca-select">
@@ -36,5 +35,3 @@
   @if(!af.errors("ad.catId").isEmpty) {
     <div style="color: #E23131; font-size: 12px; font-family: 'Arial'; padding: 5px;">Выберите категорию</div>
   }
-
-</div>
