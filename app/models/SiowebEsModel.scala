@@ -43,13 +43,9 @@ object SiowebEsModel {
 /** В sioweb есть быстрый кеш, поэтому тут кеш-прослойка для моделей. */
 // TODO Следует засунуть поддержку ehcache в sioutil и отправить этот трейт с кеш-поддержкой туда.
 // TODO Это по идее как бы трейт, но из-за ClassTag использовать trait нельзя.
-trait EsModelCache extends SNStaticSubscriber with SnClassSubscriber {
-
-  type T <: EsModelMinimalT
+abstract class EsModelCache[T <: EsModelMinimalT : ClassTag] extends SNStaticSubscriber with SnClassSubscriber {
 
   protected def getById(id: String): Future[Option[T]]
-
-  implicit val TTag: ClassTag[T]
 
   val EXPIRE_SEC: Int
   val CACHE_KEY_SUFFIX: String
@@ -131,9 +127,7 @@ trait EsModelCache extends SNStaticSubscriber with SnClassSubscriber {
 }
 
 /** EsModelCache - расширение [[EsModelCache]] с фильтрацией по adn.memberType. */
-trait AdnEsModelCache extends EsModelCache {
-
-  override type T <: EMAdNetMember
+abstract class AdnEsModelCache[T <: EMAdNetMember : ClassTag] extends EsModelCache[T] {
 
   /**
    * Для AdnNode и других последователей EMAdNetMember.

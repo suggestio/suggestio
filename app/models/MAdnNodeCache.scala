@@ -3,7 +3,6 @@ package models
 import play.api.Play.current
 import io.suggest.event._
 import io.suggest.event.SioNotifier.{Event, Subscriber, Classifier}
-import scala.reflect._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 
@@ -15,10 +14,7 @@ import util.SiowebEsUtil.client
  * для оперативного опустошения кеша.
  * getByIdCached() не следует активно использовать в личном кабинете, т.к. она не гарантирует реалтайма.
  */
-object MAdnNodeCache extends AdnEsModelCache {
-
-  override type T = MAdnNode
-  override implicit val TTag: ClassTag[T] = classTag[MAdnNode]
+object MAdnNodeCache extends AdnEsModelCache[MAdnNode] {
 
   override val EXPIRE_SEC: Int = current.configuration.getInt("adn.node.cache.expire.seconds") getOrElse 60
   override val CACHE_KEY_SUFFIX = ".nc"
