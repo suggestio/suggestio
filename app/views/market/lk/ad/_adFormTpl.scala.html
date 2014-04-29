@@ -6,6 +6,7 @@
 @import ctx._
 @import helper._
 @import AdOfferTypes._
+@import util.blocks._
 
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.MarketCategory.topCatsOf,
@@ -142,69 +143,51 @@
     </div>
   </div>
 
-  <div class="block">
-    <div class="border-line"></div>
-    <div class="hat">
-      <span class="title">Шаблоны</span>
-      <a class="toggle open" href="#" data-content="templates">Свернуть</a>
+  @* Тут выводится список блоков в виде иконок. При нажатии — производится запрос для рендера нужного редактора блока *@
+  <div class="lk-edit-form__block">
+    <div class="lk-edit-form__block-title">
+      Выбор шаблона
     </div>
-    <div class="border-line"></div>
+    <div class="lk-edit-form__block-body">
 
-    <div class="tabs">
-      <div class="tab @if(offerType1 == BLOCK) {act}" data-mode="@BLOCK">
-        BLOCKS
+      <div class="lk-edit-form__blocks-list-icons">
+      @BlocksConf.values.map { bc =>
+        <div class="blocks-list-icons__single-icon">
+          @bc.id
+        </div>
+      }
+      <div class="clear"></div>
       </div>
-    </div>
-    <div class="blue-line"></div>
-
-    <div class="sm-note">Обратите внимание, что для большинства текстовых полей можно выбрать цвет ( по умолчанию — черный ).</div>
-
-    <div class="slide-content" id="templates">
-      @* Вкладки формы. *@
-      @blocks.editor._blockEditorTpl(af)
-
-      <div class="border-line"></div>
 
     </div>
-
-    @*
-    <table cellpadding="0" cellspacing="0" class="input-wrap">
-      <tr>
-        <td class="left">
-          <label>Положение текста:</label>
-        </td>
-        <td class="select-iphone">
-          <span>iPhone</span>
-          <div class="iphone-block act" data-value="left">&nbsp;</div>
-          <div class="iphone-block" data-value="right">&nbsp;</div>
-        </td>
-        <td class="select-ipad">
-          <span>iPad</span>
-          <div class="ipad-wrap">
-            <div class="ipad-block act" data-group="textAlign-tablet-top" data-value="left">&nbsp;</div>
-            <div class="ipad-block" data-group="textAlign-tablet-top" data-value="right">&nbsp;</div>
-            <span>— информация</span>
-            <div class="ipad-block" data-group="textAlign-tablet-bottom" data-value="left">&nbsp;</div>
-            <div class="ipad-block act" data-group="textAlign-tablet-bottom" data-value="right">&nbsp;</div>
-            <span>— контакты</span>
-          </div>
-        </td>
-      </tr>
-    </table>
-    *@
-    <div class="border-line"></div>
-
   </div>
 
+  @* Для блока : превьюшка + редактор *@
+  <div class="lk-edit-form__block">
+    <div class="lk-edit-form__block-title">
+      Отображение рекламной карточки
+    </div>
+    <div class="lk-edit-form__block-body">
+
+      <div class="lk-edit-form__block-editor-preview">
+
+        @* Отображение превьюшки *@
+        <div class="block-editor-preview__preview"></div>
+
+        @* Отображение нужного редактора *@
+        <div class="block-editor-preview__editor">
+        @blocks.editor._blockEditorTpl(af)
+        </div>
+
+        <div class="clear"></div>
+
+      </div>
+
+    </div>
+  </div>
 
   @* Режим формы (тип рекламного оффера). Должен переключаться при переключении вкладки. *@
   <input id="ad-mode" type="hidden" name="ad.offer.mode" value="@offerType1.toString"/>
-
-
-  @* Положение текста на разных устройствах. Как оно задаётся - хз, пока в виде произвольной строки. *@
-  <input id="textAlign-phone" type="hidden" name="ad.textAlign.phone" value="left">
-  <input id="textAlign-tablet-top" type="hidden" name="ad.textAlign.tablet.top" value="left">
-  <input id="textAlign-tablet-bottom" type="hidden" name="ad.textAlign.tablet.bottom" value="right">
 
 }
 }

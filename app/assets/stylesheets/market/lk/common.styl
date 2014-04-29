@@ -21,6 +21,9 @@ transform(v)
   -webkit-transform: v
   transform: v
 
+.clear
+  clear: both
+
 @css {
   @import url(http://fonts.googleapis.com/css?family=PT+Sans+Narrow:700,400&subset=cyrillic-ext,latin-ext);
 
@@ -912,3 +915,41 @@ transform(v)
 
 @import "ads-list"
 @import "cbca-select"
+
+/* Общие стили */
+.lk-edit-form__block
+  margin: 10px 0px
+
+.lk-edit-form__block-title
+  background: #dad9d9
+  padding: 17px 11px
+  color: #676666
+  font-weight: bold
+
+.lk-edit-form__block-body
+  background: #efefef
+  padding: 20px 22px
+
+/* Список блоков в виде иконок */
+.lk-edit-form__blocks-list-icons
+  padding: 0px
+
+.blocks-list-icons__single-icon
+  float: left
+  background: #dad9d9
+  width: 60px
+  height: 60px
+  margin-right: 10px
+
+/* Блок с превьюшкой и редактором блока */
+.lk-edit-form__block-editor-preview
+  padding: 0px
+
+.block-editor-preview__preview
+  width: 340px
+  height: 100px
+  float: left
+
+.block-editor-preview__editor
+  width: 480px
+  float: left
