@@ -271,10 +271,15 @@ siomart =
 
       siomart.utils.ge('smCategoriesScreen').style.display = 'none'
 
-      siomart.adjust_node_offers_popup()
+      siomart.init_node_offers_popup()
 
 
-  adjust_node_offers_popup : () ->
+  close_node_offers_popup : ( event ) ->
+
+    siomart.utils.re 'sioMartNodeOffers'
+    event.preventDefault()
+
+  init_node_offers_popup : () ->
 
     _container = siomart.utils.ge('sioMartNodeOffers')
     _block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
@@ -294,6 +299,9 @@ siomart =
       _block_container.style.width = cw*2 + 'px'
     else
       _block_container.style.width = cw + 'px'
+
+
+    siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), 'click', siomart.close_node_offers_popup
 
 
   ######################################

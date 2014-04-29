@@ -8,6 +8,14 @@
     <div class="sio-mart__node-offers" id="sioMartNodeOffers">
 
       @producer.logoImgOpt.map { logoImg =>
+
+      @* Кнопка назад / выход *@
+      <div class="back-close-button">
+        <div class="cb-i">
+          <a class="back siomart-back-button" id="closeNodeOffersPopupButton" href=""></a>
+        </div>
+      </div>
+
       <div class="sio-mart__producer-header" style="background-color: #@producer.meta.color;">
         <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)"/>
         }
