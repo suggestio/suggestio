@@ -271,6 +271,24 @@ siomart =
 
       siomart.utils.ge('smCategoriesScreen').style.display = 'none'
 
+      siomart.adjust_node_offers_popup()
+
+
+  adjust_node_offers_popup : () ->
+    _container = siomart.utils.ge('sioMartNodeOffers')
+    _block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
+
+    sm_block = siomart.utils.ge_class _container, 'sm-block'
+    sm_block = sm_block.pop()
+
+    cw = sm_block.offsetWidth
+    ch = sm_block.offsetHeight
+
+    sm_block.style.width = cw*2 + 'px'
+    sm_block.style.height = ch*2 + 'px'
+
+    _block_container.style.width = cw*2 + 'px'
+
 
   ######################################
   ## Загрузить индексную страницу для ТЦ

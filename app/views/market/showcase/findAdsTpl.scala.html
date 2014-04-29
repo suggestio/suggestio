@@ -5,9 +5,9 @@
   @adProducerOpt.map { producer =>
 
     @* Список карточек указанного продюссера *@
-    <div class="sio-mart__node-offers">
+    <div class="sio-mart__node-offers" id="sioMartNodeOffers">
       @producer.logoImgOpt.map { logoImg =>
-      <div class="sio-mart__producer-header" style="background-color: #@mmart.meta.color;">
+      <div class="sio-mart__producer-header" style="background-color: #@producer.meta.color;">
         <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)"/>
         }
       </div>
@@ -17,12 +17,13 @@
         <div>@producer.meta.floor</div>
       </div>
 
-      <div>
+      <div class="sio-mart__node-offers__block_container" id="sioMartNodeOffersBlockContainer">
       @if(!ads.isEmpty) {
         @_block_offers_list(mmart, ads, shops, isDoubleSize=true)
       }
       </div>
     </div>
+
   }
 
 }else{
