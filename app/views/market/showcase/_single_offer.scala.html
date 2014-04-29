@@ -15,10 +15,12 @@
     <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)" alt=""/>
   }*@
 
+  <div onclick="siomart.load_for_shop_id('@producer.id'); return false;">
   @ad.offers.map {
     case adBlock: AOBlock => {
       @BlocksConf(ad.blockMeta.blockId).renderBlock(ad, isStandalone = false)
     }
   }
+  </div>
 
   @*<img class="poster-photo" data-width="@ad.img.meta.map(_.width).getOrElse(1575)" data-height="@ad.img.meta.map(_.height).getOrElse(1181)" src="@ctx.myAudienceUrl@routes.Img.getImg(ad.img.id)"/>*@

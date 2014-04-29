@@ -54,7 +54,7 @@ object BlocksConf extends Enumeration {
   // Начало значений
 
   val Block1 = new Val(1, "photoAdnPrice") {
-    val heightField = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 140, maxValue=460, defaultValue = Some(140))
+    val heightField = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
     val text1Field = BfString(EMAdOffers.TEXT1_ESFN, BlocksEditorFields.TextArea, minLen = 1, maxLen = 64)
     val priceField = BfPrice(EMAdOffers.PRICE_ESFN, BlocksEditorFields.Price)
     val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN, BlocksEditorFields.Price)
