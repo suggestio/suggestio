@@ -22,8 +22,7 @@
 
       @ad.offers.map {
         case adBlock: AOBlock => {
-          @* Надо отрендерить как block *@
-          BlocksConf.renderBlockMap(adBlock.bodyMap, isStandalone = false)
+          @BlocksConf(ad.blockMeta.blockId).renderBlock(ad, isStandalone = false)
         }
       }
 

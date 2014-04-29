@@ -14,7 +14,7 @@
 
       <div class="info">
         @bd.offers.headOption.map { offer =>
-          <div class="title">@offer.text1.map { text1 => Html(text1.value) }.getOrElse {
+          <div class="title">@offer.text1.map { text1 => @Html(text1.value) }.getOrElse {
             Opaque nature<br/>Корректирующее платье
           }</div>
 
