@@ -262,7 +262,7 @@ siomart =
       container = this.utils.ge 'sioMartLayout'
       container.innerHTML = data.html
 
-      siomart.utils.add_single_listener siomart.utils.ge('smCloseButton'), 'click', siomart.open_close_screen
+      siomart.init_navigation()
 
       cbca_grid.init()
 
@@ -393,6 +393,9 @@ siomart =
 
     ## Кнопка выхода
     for _event in ['click', 'touchend']
+
+      siomart.utils.add_single_listener this.utils.ge('smCloseButton'), _event, siomart.open_close_screen
+
       this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), _event, siomart.close_mart
       this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), _event, siomart.exit_close_screen
 
@@ -405,21 +408,8 @@ siomart =
       ## поле ввода поискового запроса
       this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', siomart.search.queue_request
 
-    ## Тач события
-    sm_layout = this.utils.ge('sioMartLayout')
-
-    this.utils.add_single_listener sm_layout, 'touchstart', siomart.touch_events.touchstart
-    this.utils.add_single_listener sm_layout, 'touchmove', siomart.touch_events.touchmove
-
-    this.utils.add_single_listener this.utils.ge_tag('body')[0], 'touchstart', siomart.touch_events.window_touchstart
-
-    ## Кнопка возвращения на шаг назад
-
     ## Кнопка вызова окна с категориями
     this.utils.add_single_listener this.utils.ge('smCategoriesButton'), 'click'
-
-    ## Контроллеры слайдов с офферами
-    this.screens.init()
 
   ## Инициализация Sio.Market
   init : () ->
