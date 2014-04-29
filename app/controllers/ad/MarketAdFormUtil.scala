@@ -10,6 +10,8 @@ import play.api.Play.current
 import AOTextAlignValues.TextAlignValue
 import io.suggest.ym.parsers.Price
 import io.suggest.ym.model.common
+import io.suggest.ym.model.common.BlockMeta
+import util.blocks.BlockDataImpl
 
 /**
  * Suggest.io
@@ -94,18 +96,6 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
   }}
 
 
-  val VENDOR_MAXLEN = 32
-
-  /** apply() для product-маппингов. */
-  def adProductMApply(vendor: AOStringField, price: AOPriceField, oldPrice: Option[AOPriceField]) = {
-    AOProduct.apply(vendor, price, oldPrice)
-  }
-
-  /** unapply() для product-маппингов. */
-  def adProductMUnapply(adProduct: AOProduct) = {
-    Some((adProduct.vendor, adProduct.price, adProduct.oldPrice))
-  }
-
   val DISCOUNT_TEXT_MAXLEN = 256
 
   val AD_TEXT_MAXLEN = 256
@@ -118,10 +108,11 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  def adFormApply[T <: AdOfferT](userCatId: Option[String], panelSettings: common.AdPanelSettings, adBody: T, textAlignOpt: Option[TextAlign]): MAd = {
+  def adFormApply(userCatId: Option[String], panelSettings: common.AdPanelSettings, bd: BlockData, textAlignOpt: Option[TextAlign]): MAd = {
     MAd(
       producerId  = null,
-      offers      = List(adBody),
+      offers      = bd.offers,
+      blockMeta   = bd.blockMeta,
       img         = null,
       panel       = Some(panelSettings),
       userCatId   = userCatId,
@@ -130,11 +121,11 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
   }
 
   /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
-  def adFormUnapply[T <: AdOfferT](mmad: MAd) = {
-    import mmad._
+  def adFormUnapply(mmad: MAd): Option[(Option[String], AdPanelSettings, BlockData, Option[TextAlign])] = {
+    import mmad.{panel, userCatId, offers, textAlign}
     if (panel.isDefined && userCatId.isDefined && !offers.isEmpty) {
-      val adBody = offers.head.asInstanceOf[T]
-      Some((userCatId, panel.get, adBody, textAlign))
+      val bd = BlockDataImpl(mmad.blockMeta, offers)
+      Some((userCatId, panel.get, bd, textAlign))
     } else {
       warn("Unexpected ad object received into ad-product form: " + mmad)
       None

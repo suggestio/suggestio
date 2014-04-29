@@ -2,6 +2,8 @@ package models
 
 import play.api.mvc.Call
 import java.util.Currency
+import io.suggest.ym.model.common.IBlockMeta
+import io.suggest.ym.model.ad.IOffers
 
 /**
  * Suggest.io

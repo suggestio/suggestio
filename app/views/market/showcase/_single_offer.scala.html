@@ -17,38 +17,13 @@
     <div class="od-inner">
 
       @ad.logoImgOpt.map { logoImg =>
-        <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)" alt="@ad.offers.headOption.filter(_.isInstanceOf[AOProduct]).map(_.asInstanceOf[AOProduct].vendor.value)"/>
+        <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)" alt=""/>
       }
 
       @ad.offers.map {
-        case adRaw: AORaw => {
+        case adBlock: AOBlock => {
           @* Надо отрендерить как block *@
-          BlocksConf.renderBlockMap(adRaw.bodyMap, isStandalone = false)
-        }
-        case adProd: AOProduct => {
-          <div class="vendor" style="color: #@adProd.vendor.font.color;">@adProd.vendor.value</div>
-          @adProd.oldPrice.map { oldPrice =>
-            <div class="old-price" style="color: #@oldPrice.font.color"><s>@oldPrice.value</s></div>
-          }
-          <div class="new-price" style="color: #@adProd.price.font.color">@formatPrice(adProd.price.value, adProd.price.currency)</div>
-        }
-
-        case adDisco: AODiscount => {
-          @adDisco.text1.map { text1 =>
-            <div class="disc-text-1" style="color: #@text1.font.color">@text1.value</div>
-          }
-
-          <div class="discount template-@adDisco.template.id-@adDisco.template.color " style="color: #@adDisco.discount.font.color">
-            @formatPercentRaw(adDisco.discount.value)<span>%</span>
-          </div>
-
-          @adDisco.text2.map { text2 =>
-            <div class="disc-text-2" style="color: #@text2.font.color">@text2.value</div>
-          }
-        }
-
-        case adText: AOText => {
-          <div class="od-text" style="color: #@adText.text.font.color">@Html(adText.text.value)</div>
+          BlocksConf.renderBlockMap(adBlock.bodyMap, isStandalone = false)
         }
       }
 

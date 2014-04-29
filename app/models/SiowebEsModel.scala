@@ -26,7 +26,7 @@ object SiowebEsModel {
    * Список моделей, которые должны быть проинициалированы при старте.
    * @return Список EsModelMinimalStaticT.
    */
-  def ES_MODELS: Seq[EsModelMinimalStaticT[_]] = {
+  def ES_MODELS: Seq[EsModelMinimalStaticT] = {
     Seq(MBlog, MPerson, MozillaPersonaIdent, EmailPwIdent, EmailActivation, MMartCategory) ++
       EsModel.ES_MODELS
   }
@@ -43,8 +43,13 @@ object SiowebEsModel {
 /** В sioweb есть быстрый кеш, поэтому тут кеш-прослойка для моделей. */
 // TODO Следует засунуть поддержку ehcache в sioutil и отправить этот трейт с кеш-поддержкой туда.
 // TODO Это по идее как бы трейт, но из-за ClassTag использовать trait нельзя.
-abstract class EsModelCache[T <: EsModelMinimalT[T] : ClassTag] extends SNStaticSubscriber with SnClassSubscriber {
-  def companion: EsModelMinimalStaticT[T]
+trait EsModelCache extends SNStaticSubscriber with SnClassSubscriber {
+
+  type T <: EsModelMinimalT
+
+  protected def getById(id: String): Future[Option[T]]
+
+  implicit val TTag: ClassTag[T]
 
   val EXPIRE_SEC: Int
   val CACHE_KEY_SUFFIX: String
@@ -94,7 +99,7 @@ abstract class EsModelCache[T <: EsModelMinimalT[T] : ClassTag] extends SNStatic
    */
   def getByIdAndCache(id: String, ck0: String = null)(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
     val ck: String = if (ck0 == null) cacheKey(id) else ck0
-    val resultFut = companion.getById(id)
+    val resultFut = getById(id)
     resultFut onSuccess {
       case Some(adnn) =>
         Cache.set(ck, adnn, EXPIRE_SEC)
@@ -126,7 +131,9 @@ abstract class EsModelCache[T <: EsModelMinimalT[T] : ClassTag] extends SNStatic
 }
 
 /** EsModelCache - расширение [[EsModelCache]] с фильтрацией по adn.memberType. */
-abstract class AdnEsModelCache[T <: EMAdNetMember[T] : ClassTag] extends EsModelCache[T] {
+trait AdnEsModelCache extends EsModelCache {
+
+  override type T <: EMAdNetMember
 
   /**
    * Для AdnNode и других последователей EMAdNetMember.

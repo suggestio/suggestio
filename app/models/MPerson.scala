@@ -23,9 +23,11 @@ import play.api.libs.json.JsString
  */
 
 // Статическая часть модели.
-object MPerson extends EsModelStaticT[MPerson] with PlayMacroLogsImpl {
+object MPerson extends EsModelStaticT with PlayMacroLogsImpl {
 
   import LOGGER._
+
+  override type T = MPerson
 
   val ES_TYPE_NAME = "person"
 
@@ -105,7 +107,9 @@ import MPerson._
 case class MPerson(
   var lang  : String,
   var id    : Option[String] = None
-) extends EsModelT[MPerson] with MPersonLinks {
+) extends EsModelT with MPersonLinks {
+
+  override type T = MPerson
 
   def personId = id.get
 

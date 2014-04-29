@@ -2,16 +2,14 @@
 
 @import util.blocks._, BlocksUtil._
 
+
 @defining( "ad.offer." ) { nameBase =>
-@defining( af(nameBase + BK_BLOCK_ID).value ) { biFieldValue =>
+@defining( af(nameBase + BLOCK_ID_FN).value ) { biFieldValue =>
 @defining( BlocksConf(biFieldValue.map(_.toInt).getOrElse(1)) ) { bc =>
   <div class="preview-wrap">
 
     <div class="block-editor">
       <div class="block-preview" id="blockPreviewContainer">
-        @if(biFieldValue.isDefined) {
-          @bc.renderEditorPreview(af, nameBase)
-        }
       </div>
     </div>
   </div>
@@ -27,7 +25,7 @@
           <div class="clear"></div>
         }
 
-        <input type="hidden" name="@nameBase@BK_BLOCK_ID" value="@bc.id">
+        <input type="hidden" name="@nameBase@BLOCK_ID_FN" value="@bc.id">
 
       </div>
     </div>

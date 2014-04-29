@@ -46,7 +46,7 @@ package object models {
 
 
   // Рекламота
-  type MAdT                 = ym.model.ad.MAdT[_]
+  type MAdT                 = ym.model.ad.MAdT
 
   val  AdReceiverInfo       = ym.model.common.AdReceiverInfo
   type AdReceiverInfo       = ym.model.common.AdReceiverInfo
@@ -59,23 +59,11 @@ package object models {
 
   type AdOfferT             = ym.model.ad.AdOfferT
 
-  val  AOProduct            = ym.model.ad.AOProduct
-  type AOProduct            = ym.model.ad.AOProduct
-
-  val  AODiscount           = ym.model.ad.AODiscount
-  type AODiscount           = ym.model.ad.AODiscount
-
-  val  AOText               = ym.model.ad.AOText
-  type AOText               = ym.model.ad.AOText
-
-  val  AORaw                = ym.model.ad.AORaw
-  type AORaw                = ym.model.ad.AORaw
+  val  AOBlock              = ym.model.ad.AOBlock
+  type AOBlock              = ym.model.ad.AOBlock
 
   val  AOTextAlignValues    = common.AOTextAlignValues
   type AOTextAlignValue     = AOTextAlignValues.TextAlignValue
-
-  val  AODiscountTemplate   = ym.model.ad.AODiscountTemplate
-  type AODiscountTemplate   = ym.model.ad.AODiscountTemplate
 
   val  AOFloatField         = ym.model.ad.AOFloatField
   type AOFloatField         = ym.model.ad.AOFloatField
@@ -132,12 +120,13 @@ package object models {
   type SelectPolicy         = SelectPolicies.SelectPolicy
 
   type Context              = util.Context
-  type BlockMap             = util.blocks.BlocksUtil.BlockMap
+  type BlockData            = common.IBlockMeta with ym.model.ad.IOffers
 
   val  BlocksConf           = util.blocks.BlocksConf
   type BlockConf            = BlocksConf.BlockConf
 
-  type NumberBlockField     = util.blocks.NumberBlockField
-  type StringBlockField     = util.blocks.StringBlockField
-  type StringBlockFieldT    = util.blocks.StringBlockFieldT
+  type BlockFieldT          = util.blocks.BlockFieldT
+  type BfInt                = util.blocks.BfInt
+  type BfString             = util.blocks.BfString
+  type BfPrice              = util.blocks.BfPrice
 }

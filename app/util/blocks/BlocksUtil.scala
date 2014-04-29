@@ -3,10 +3,13 @@ package util.blocks
 import play.api.data._, Forms._
 import util.FormUtil._
 import play.api.templates.{HtmlFormat, Template4}
-import models.Context
+import models._
 import views.html.blocks.editor._
 import BlocksConf.BlockConf
 import io.suggest.model.EsModel
+import controllers.ad.MarketAdFormUtil
+import io.suggest.ym.model.common.{IBlockMeta, BlockMeta}
+import io.suggest.ym.model.ad.IOffers
 
 /**
  * Suggest.io
@@ -16,22 +19,25 @@ import io.suggest.model.EsModel
  */
 
 object BlocksUtil {
-  type BlockMap = Map[String, Any]
 
-  // BK-константы именуют все используемые ключи конфигов. Полезно для избежания ошибок в разных местах.
-  val BK_BLOCK_ID     = "blockId"
-  val BK_HEIGHT       = "height"
-  val BK_TITLE        = "title"
-  val BK_DESCRIPTION  = "description"
-  val BK_PHOTO_ID     = "photoId"
-  val BK_BG_COLOR     = "bgColor"
+  val BLOCK_ID_FN = "blockId"
+
 
   val bTitleM = nonEmptyText(minLength = 2, maxLength = 250)
     .transform[String](strTrimSanitizeF, strIdentityF)
 
   def bDescriptionM = publishedTextM
 
-  def extractBlockId(bm: BlockMap) = EsModel.intParser(bm(BK_BLOCK_ID))
+  def extractBlockId(bd: BlockData) = bd.blockMeta.blockId
+
+  def defaultOpt[T](m0: Mapping[T], defaultOpt: Option[T]): Mapping[T] = {
+    if (defaultOpt.isDefined)
+      default(m0, defaultOpt.get)
+    else
+      m0
+  }
+
+  def defaultFont: AOFieldFont = AOFieldFont(color = "000000")
 }
 
 import BlocksUtil._
@@ -46,44 +52,47 @@ object BlocksEditorFields extends Enumeration {
     def renderEditorField(bf: BFT, formField: Field, bc: BlockConf)(implicit ctx: Context) = {
       fieldTemplate.render(bf, formField, bc, ctx)
     }
-    def parseAnyVal(anyV: Any): Option[T]
   }
-  
+ 
   protected trait StringVal {
-    type T = String
-    type BFT = StringBlockFieldT
-    def parseAnyVal(anyV: Any): Option[T] = Some(anyV.toString)
+    type T = AOStringField
+    type BFT = BfString
   }
   
   protected trait IntVal {
     type T = Int
-    type BFT = NumberBlockField
-    def parseAnyVal(anyV: Any): Option[T] = Some(EsModel.intParser(anyV))
+    type BFT = BfInt
+  }
+  
+  protected trait PriceVal {
+    type T = AOPriceField
+    type BFT = BfPrice
   }
 
-  type BlockEditorField = Val
-  type StringBlockEditorField = BlockEditorField with StringVal
-  type NumberBlockEditorField = BlockEditorField with IntVal
+  type BlockEditorField   = Val
+  type BEFInt             = BlockEditorField with IntVal
+  type BEFFloat           = BlockEditorField with PriceVal
+  type BEFString          = BlockEditorField with StringVal
 
   implicit def value2val(x: Value): BlockEditorField = {
     x.asInstanceOf[BlockEditorField]
   }
 
 
-  val Height: NumberBlockEditorField = new Val("height") with IntVal {
+  val Height: BEFInt = new Val("height") with IntVal {
     override def fieldTemplate = _heightTpl
   }
 
-  val InputText: StringBlockEditorField = new Val("inputText") with StringVal {
+  val InputText: BEFString = new Val("inputText") with StringVal {
     override def fieldTemplate = _inputTextTpl
   }
 
-  val TextArea: StringBlockEditorField = new Val("textarea") with StringVal {
+  val TextArea: BEFString = new Val("textarea") with StringVal {
     override def fieldTemplate = _textareaTpl
   }
 
-  val Color: StringBlockEditorField = new Val("color") with StringVal {
-    override def fieldTemplate = _colorTpl
+  val Price: BEFFloat = new Val("price") with PriceVal {
+    override def fieldTemplate = _priceTpl
   }
 }
 
@@ -96,87 +105,94 @@ trait BlockFieldT {
   def name: String
   def field: BlockEditorField
   def defaultValue: Option[T]
+  /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
+  def fallbackValue: T
+  def anyDefaultValue: T = defaultValue getOrElse fallbackValue
 
   def getMapping: Mapping[T]
+  def getMappingKV = name -> getMapping
   def renderEditorField(formField: Field, bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable
-  def anyValueToT(v: Any): Option[T]
-  def extractValue(bm: BlockMap): Option[T] = {
-    bm.get(name)
-      .flatMap(anyValueToT)
-      .orElse(defaultValue)
-  }
 }
 
 
 /** Поле для какой-то цифры. */
-case class NumberBlockField(
+case class BfInt(
   name: String,
-  field: NumberBlockEditorField,
+  field: BEFInt = BlocksEditorFields.Height,
   defaultValue: Option[Int] = None,
   minValue: Int = Int.MinValue,
   maxValue: Int = Int.MaxValue
 ) extends BlockFieldT {
   override type T = Int
 
+  override def fallbackValue: T = 140
+
   override def getMapping: Mapping[T] = {
     val mapping0 = number(min = minValue, max = maxValue)
-    if (defaultValue.isDefined)
-      default(mapping0, defaultValue.get)
-    else
-      mapping0
+    defaultOpt(mapping0, defaultValue)
   }
 
   override def renderEditorField(formField: Field, bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
     field.renderEditorField(this, formField, bc)
   }
-  override def anyValueToT(v: Any): Option[T] = field.parseAnyVal(v)
 }
 
 
-
-trait StringBlockFieldT extends BlockFieldT {
-  override type T = String
-  override def field: StringBlockEditorField
-  override def anyValueToT(v: Any): Option[T] = field.parseAnyVal(v)
-  override def renderEditorField(formField: Field, bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
-    field.renderEditorField(this, formField, bc)
-  }
-  def minLen: Int
-  def maxLen: Int
-}
-
-
-case class StringBlockField(
+case class BfPrice(
   name: String,
-  field: StringBlockEditorField,
+  field: BEFFloat = BlocksEditorFields.Price,
+  defaultValue: Option[AOPriceField] = None
+) extends BlockFieldT {
+  override type T = AOPriceField
+  override def renderEditorField(formField: Field, bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+    field.renderEditorField(this, formField, bc)
+  }
+
+  override def getMapping: Mapping[T] = {
+    val m0 = MarketAdFormUtil.mmaPriceM
+    defaultOpt(m0, defaultValue)
+  }
+
+  /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
+  override def fallbackValue: T = AOPriceField(
+    value = 100F,
+    currencyCode = "RUB",
+    orig = "100 рублей",
+    font = defaultFont
+  )
+}
+
+
+case class BfString(
+  name: String,
+  field: BEFString,
   strTransformF: String => String = strTrimSanitizeLowerF,
-  defaultValue: Option[String] = None,
+  defaultValue: Option[AOStringField] = None,
   minLen: Int = 0,
   maxLen: Int = 16000
-) extends StringBlockFieldT {
+) extends BlockFieldT {
+  override type T = AOStringField
+
   override def getMapping: Mapping[T] = {
-    val mapping0 = nonEmptyText(minLength = minLen, maxLength = maxLen)
-      .transform(strTransformF, strIdentityF)
-    if (defaultValue.isDefined)
-      default(mapping0, defaultValue.get)
-    else
-      mapping0
+    val m0 = nonEmptyText(minLength = minLen, maxLength = maxLen)
+      .transform(strTrimSanitizeLowerF, strIdentityF)
+    val m1 = MarketAdFormUtil.mmaStringFieldM(m0)
+    defaultOpt(m1, defaultValue)
   }
+
+  override def renderEditorField(formField: Field, bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+    field.renderEditorField(this, formField, bc)
+  }
+
+  /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
+  override def fallbackValue: T = AOStringField(
+    value = "Домик на рублёвке",    // TODO Нужен каталог примеров fallback-строк, новая на каждый раз.
+    font = defaultFont
+  )
+
 }
 
 
-case class ColorBlockField(
-  name: String,
-  field: StringBlockEditorField,
-  defaultValue: Option[String] = None
-) extends StringBlockFieldT {
-  override def getMapping: Mapping[T] = {
-    if (defaultValue.isDefined)
-      default(colorM, defaultValue.get)
-    else
-      colorM
-  }
-  override def maxLen: Int = 6
-  override def minLen: Int = maxLen
-}
+/** Класс-реализация для быстрого создания BlockData. Используется вместо new BlockData{}. */
+case class BlockDataImpl(blockMeta: BlockMeta, offers: List[AOBlock]) extends IBlockMeta with IOffers
 

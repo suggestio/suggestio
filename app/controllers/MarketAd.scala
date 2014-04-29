@@ -1,6 +1,5 @@
 package controllers
 
-import util.Context
 import views.html.market.lk.ad._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -15,8 +14,6 @@ import play.api.mvc.Request
 import play.api.Play.current
 import MMartCategory.CollectMMCatsAcc_t
 import scala.util.{Try, Failure, Success}
-import util.HtmlSanitizer.adTextFmtPolicy
-import io.suggest.ym.model.common.AdNetMemberTypes
 import io.suggest.ym.ad.ShowLevelsUtil
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
@@ -33,101 +30,6 @@ object MarketAd extends SioController with LogoSupport {
 
   import LOGGER._
 
-  /** Режимы работы формы добавления рекламной карточки. Режимы перенесены в MMartAdOfferTypes. */
-  object FormModes {
-    import AdOfferTypes._
-
-    val getShopForm: PartialFunction[AdOfferType, AdFormM] = {
-      case PRODUCT  => shopAdProductFormM
-      case DISCOUNT => shopAdDiscountFormM
-      case TEXT     => shopAdTextFormM
-      case RAW      => throw new UnsupportedOperationException("Cannot statically assign dynamic block form.")
-    }
-
-    val getMartForm: PartialFunction[AdOfferType, AdFormM] = {
-      case PRODUCT  => martAdProductFormM
-      case DISCOUNT => martAdDiscountFormM
-      case TEXT     => martAdTextFormM
-      case RAW      => throw new UnsupportedOperationException("Cannot statically assign dynamic block form.")
-    }
-
-    val getForClass: PartialFunction[AdOfferT, AdOfferType] = {
-      case _: AOProduct  => PRODUCT
-      case _: AODiscount => DISCOUNT
-      case _: AOText     => AdOfferTypes.TEXT
-      case _: AORaw      => AdOfferTypes.RAW
-    }
-
-    def getForm(aot: AdOfferType, anmt: AdNetMemberType): AdFormM = {
-      import AdNetMemberTypes._
-      anmt match {
-        case MART | RESTAURANT_SUP | RESTAURANT =>
-          getMartForm(aot)
-        case SHOP =>
-          getShopForm(aot)
-      }
-    }
-
-    def getForClassAndAnmt(c: AdOfferT, anmt: AdNetMemberType): AdFormM = {
-      c match {
-        case aoraw: AORaw =>
-          val blockId = BlocksUtil.extractBlockId(aoraw.bodyMap)
-          val blockMapping = BlocksConf(blockId).aoRawMapping
-          getAdFormM(anmt, blockMapping)
-
-        case other =>
-          val aot = getForClass(other)
-          getForm(aot, anmt)
-      }
-    }
-  }
-
-
-  // Общие для ad-форм мапперы закончились. Пора запилить сами формы и формоспецифичные элементы.
-  val adProductM = mapping(
-    "vendor"    -> mmaStringFieldM(nonEmptyText(maxLength = VENDOR_MAXLEN)),
-    "price"     -> mmaPriceM,
-    "oldPrice"  -> mmaPriceOptM
-  )
-  { adProductMApply }
-  { adProductMUnapply }
-
-
-  /** Кусок формы, ориентированный на оформление скидочной рекламы. */
-  val adDiscountM = {
-    val discountTextM = nonEmptyText(maxLength = DISCOUNT_TEXT_MAXLEN)
-      .transform(strTrimBrOnlyF, strIdentityF)
-    val tplM = mapping(
-      "id"    -> number(min = DISCOUNT_TPL_ID_MIN, max = DISCOUNT_TPL_ID_MAX),
-      "color" -> colorM
-    )
-    { AODiscountTemplate.apply }
-    { AODiscountTemplate.unapply }
-    // Собираем итоговый маппинг для MMartAdDiscount.
-    mapping(
-      "text1"     -> optional(mmaStringFieldM(discountTextM)),
-      "discount"  -> mmaFloatFieldM(discountPercentM),
-      "template"  -> tplM,
-      "text2"     -> optional(mmaStringFieldM(discountTextM))
-    )
-    { AODiscount.apply }
-    { AODiscount.unapply }
-  }
-
-  /** Форма для задания текстовой рекламы. */
-  val adTextM = {
-    val textM = nonEmptyText(maxLength = 200)
-      .transform({ adTextFmtPolicy.sanitize }, strIdentityF)
-      .verifying("text.too.len", { _.length <= AD_TEXT_MAXLEN })
-
-    mapping(
-      "text" -> mmaStringFieldM(textM)
-    )
-    { AOText.apply }
-    { AOText.unapply }
-  }
-
-
   // Дублирующиеся куски маппина выносим за пределы метода.
   val CAT_ID_K = "catId"
   val AD_IMG_ID_K = "image_key"
@@ -135,25 +37,25 @@ object MarketAd extends SioController with LogoSupport {
 
   private val shopCatIdKM = CAT_ID_K -> userCatIdOptM.verifying(_.isDefined)
 
+  /** Дефолтовый блок, используемый редакторами форм. */
+  protected[controllers] def dfltBlock = BlocksConf.Block1
+
 
   val AD_TEMP_LOGO_MARKER = "adLogo"
   private val ad2ndLogoImgIdOptKM = ImgFormUtil.getLogoKM("ad.logo.invalid", marker=AD_TEMP_LOGO_MARKER)
 
   /** Генератор форм добавления/редактирования рекламируемого продукта в зависимости от вкладок. */
-  private def getShopAdFormM[T <: AdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
+  private def getShopAdFormM(blockM: Mapping[BlockData]): AdFormM = Form(tuple(
     AD_IMG_ID_K -> imgIdJpegM,
     ad2ndLogoImgIdOptKM,
     "ad" -> mapping(
       shopCatIdKM,
       panelColorKM,
-      OFFER_K -> offerM,
+      OFFER_K -> blockM,
       textAlignKM
-    )(adFormApply[T])(adFormUnapply[T])
+    )(adFormApply)(adFormUnapply)
   ))
 
-  val shopAdProductFormM          = getShopAdFormM(adProductM)
-  private val shopAdDiscountFormM = getShopAdFormM(adDiscountM)
-  private val shopAdTextFormM     = getShopAdFormM(adTextM)
 
   implicit private def mad2logoOpt(mad: MAd): LogoOpt_t = {
     mad.logoImgOpt.map { logoImg =>
@@ -167,35 +69,22 @@ object MarketAd extends SioController with LogoSupport {
 
   /** Выдать маппинг ad-формы в зависимости от типа adn-узла. */
   private def detectAdnAdForm(anmt: AdNetMemberType)(implicit request: ReqSubmit): DetectForm_t = {
-    val adModeOpt = (request.body.get("ad.offer.mode") getOrElse Nil).headOption
-    adModeOpt.flatMap(AdOfferTypes.maybeWithName).map {
-      case aot @ AdOfferTypes.RAW =>
+    val adMode = (request.body.get("ad.offer.mode") getOrElse Nil)
+      .headOption
+      .flatMap(AdOfferTypes.maybeWithName)
+      .getOrElse(AdOfferTypes.BLOCK)
+    adMode match {
+      case aot @ AdOfferTypes.BLOCK =>
         // Нужно раздобыть id из реквеста
         val blockId = (request.body.get("ad.offer.blockId") getOrElse Nil)
           .headOption
           .map(_.toInt)
           .getOrElse(1)
-        val block = BlocksConf(blockId).aoRawMapping
-        Right(aot -> getAdFormM(anmt, block))
-
-      case otherType =>
-        Right(otherType -> FormModes.getForm(otherType, anmt))
-    } getOrElse {
-      val form = FormModes.getForm(AdOfferTypes.PRODUCT, anmt)
-      Left(form)
+        val block: BlockConf = BlocksConf(blockId)
+        Right(aot -> getAdFormM(anmt, block.bMapping))
     }
   }
 
-
-  private def getAdnProductForm(nodeType: AdNetMemberType): AdFormM = {
-    import AdNetMemberTypes._
-    nodeType match {
-      case MART | RESTAURANT_SUP =>
-        martAdProductFormM
-      case SHOP | RESTAURANT =>
-        shopAdProductFormM
-    }
-  }
 
   /**
    * Рендер унифицированной страницы добаления рекламной карточки.
@@ -204,7 +93,7 @@ object MarketAd extends SioController with LogoSupport {
   def createAd(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     import request.adnNode
     renderCreateFormWith(
-      af = getAdnProductForm(adnNode.adn.memberType),
+      af = getAdFormM(adnNode.adn.memberType, dfltBlock.bMapping),
       catOwnerId = getCatOwnerId(adnNode),
       adnNode = adnNode
     ).map(Ok(_))
@@ -279,7 +168,7 @@ object MarketAd extends SioController with LogoSupport {
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
   private def renderCreateFormWith(af: AdFormM, catOwnerId: String, adnNode: MAdnNode)(implicit ctx: Context) = {
     getMMCatsForCreate(af, catOwnerId) map { mmcats =>
-      createAdTpl(mmcats, af, AdOfferTypes.PRODUCT, adnNode)
+      createAdTpl(mmcats, af, AdOfferTypes.BLOCK, adnNode)
     }
   }
 
@@ -329,8 +218,8 @@ object MarketAd extends SioController with LogoSupport {
     val imgIdKey = OrigImgIdKey(mad.img.id)
     val anmt = request.producer.adn.memberType
     val formFilledOpt = mad.offers.headOption map { offer =>
-      FormModes.getForClassAndAnmt(offer, anmt)
-    } map { form0 =>
+      val blockConf: BlockConf = BlocksConf.apply(mad.blockMeta.blockId)
+      val form0 = getAdFormM(request.producer.adn.memberType, blockConf.bMapping)
       form0 fill ((imgIdKey, mad, mad))
     }
     formFilledOpt match {
@@ -509,29 +398,25 @@ object MarketAd extends SioController with LogoSupport {
   private val martCatIdKM = CAT_ID_K -> userCatIdOptM
   /** Генератор форм добавления/редактирования рекламиры в ТЦ в зависимости от вкладок.
     * Категория не обязательная, логотип от ТЦ. */
-  private def getMartAdFormM[T <: AdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
+  private def getMartAdFormM(blockM: Mapping[BlockData]): AdFormM = Form(tuple(
     AD_IMG_ID_K -> imgIdJpegM,
     ad2ndLogoImgIdOptKM,
     "ad" -> mapping(
       martCatIdKM,
       panelColorKM,
-      OFFER_K -> offerM,
+      OFFER_K -> blockM,
       textAlignKM
-    )(adFormApply[T])(adFormUnapply[T])
+    )(adFormApply)(adFormUnapply)
   ))
-
-  private val martAdProductFormM  = getMartAdFormM(adProductM)
-  private val martAdDiscountFormM = getMartAdFormM(adDiscountM)
-  private val martAdTextFormM     = getMartAdFormM(adTextM)
 
 
   // ============================== common-методы =================================
 
-  private def getAdFormM[T <: AdOfferT](anmt: AdNetMemberType, offerM: Mapping[T]): AdFormM = {
+  private def getAdFormM(anmt: AdNetMemberType, blockM: Mapping[BlockData]): AdFormM = {
     import AdNetMemberTypes._
     anmt match {
-      case SHOP | RESTAURANT      => getShopAdFormM(offerM)
-      case MART | RESTAURANT_SUP  => getMartAdFormM(offerM)
+      case SHOP | RESTAURANT      => getShopAdFormM(blockM)
+      case MART | RESTAURANT_SUP  => getMartAdFormM(blockM)
     }
   }
 
