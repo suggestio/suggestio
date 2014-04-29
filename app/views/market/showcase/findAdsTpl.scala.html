@@ -2,20 +2,27 @@
 
 @if( adSearch.producerIdOpt ){
 
-  @* Список карточек указанного продюссера *@
-  @if(!ads.isEmpty) {
+  @adProducerOpt.map { producer =>
 
-  <div class="sio-mart__node-offers">
+    @* Список карточек указанного продюссера *@
+    <div class="sio-mart__node-offers">
+      @producer.logoImgOpt.map { logoImg =>
+      <div class="sio-mart__producer-header" style="background-color: #@mmart.meta.color;">
+        <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)"/>
+        }
+      </div>
 
-    <div>
-      2 этаж
+      <div>
+        <div>@producer.meta.name</div>
+        <div>@producer.meta.floor</div>
+      </div>
+
+      <div>
+      @if(!ads.isEmpty) {
+        @_block_offers_list(mmart, ads, shops, isDoubleSize=true)
+      }
+      </div>
     </div>
-
-    <div>
-      @_block_offers_list(mmart, ads, shops, isDoubleSize=true)
-    </div>
-
-  </div>
   }
 
 }else{
