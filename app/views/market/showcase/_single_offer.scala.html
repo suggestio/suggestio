@@ -3,50 +3,22 @@
 @import util.TplDataFormatUtil._
 @import AdNetMemberTypes.MART
 
-<div class="sm-offer sm-sngl-offer @if(isHidden){sm-hidden-offer}" data-is-mart-offer="@(producer.adn.memberType == MART)">
-
-  @ad.panel.map { panelSettings =>
+  @*ad.panel.map { panelSettings =>
     <div class="offer-header" style="background-color: #@panelSettings.color">
       @producer.logoImgOpt.orElse(fallbackLogo).map { logoImg =>
         <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)"/>
       }
     </div>
+  }*@
+
+  @*ad.logoImgOpt.map { logoImg =>
+    <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)" alt=""/>
+  }*@
+
+  @ad.offers.map {
+    case adBlock: AOBlock => {
+      @BlocksConf(ad.blockMeta.blockId).renderBlock(ad, isStandalone = false)
+    }
   }
 
-  <div class="offer-details">
-    <div class="od-inner">
-
-      @ad.logoImgOpt.map { logoImg =>
-        <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)" alt=""/>
-      }
-
-      @ad.offers.map {
-        case adBlock: AOBlock => {
-          @BlocksConf(ad.blockMeta.blockId).renderBlock(ad, isStandalone = false)
-        }
-      }
-
-      @* Локейшн магазина *@
-      @* Если магазин не указан, то значит это рекламная карточка ТЦ. *@
-
-      @if(producer.adn.memberType.displayAddrOnAds) {
-        <div class="offer-location">
-          <div class="ol-icon"></div>
-          @producer.meta.floor.map { floor =>
-            Этаж @floor<br/>
-          }
-          @producer.meta.section.map { section =>
-            Бутик @section<br/>
-          }
-          &laquo;@producer.meta.name&raquo;
-        </div>
-
-        <a class="sm-button sm-shops-offers-link" onclick="siomart.load_for_shop_id('@producer.id'); return false;" ontouchend="siomart.load_for_shop_id('@producer.id'); return false;">ПРЕДЛОЖЕНИЯ МАГАЗИНА</a>
-      }
-
-    </div>
-  </div>
-
-  <img class="poster-photo" data-width="@ad.img.meta.map(_.width).getOrElse(1575)" data-height="@ad.img.meta.map(_.height).getOrElse(1181)" src="@ctx.myAudienceUrl@routes.Img.getImg(ad.img.id)"/>
-
-</div>
+  @*<img class="poster-photo" data-width="@ad.img.meta.map(_.width).getOrElse(1575)" data-height="@ad.img.meta.map(_.height).getOrElse(1181)" src="@ctx.myAudienceUrl@routes.Img.getImg(ad.img.id)"/>*@

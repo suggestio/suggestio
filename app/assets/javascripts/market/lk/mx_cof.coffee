@@ -649,6 +649,24 @@ market =
 
         return false
 
+  ##############################
+  ## Редактор рекламной карточки
+  ##############################
+  ad_form :
+
+    init : () ->
+      $('#adFormBlocksList div').bind 'click', () ->
+        block_id = $(this).attr 'data-block-id'
+        block_editor_action = $('#adFormBlocksList .block-editor-action').val()
+
+        $('#adFormBlocksList .block-id').val block_id
+
+        $.ajax
+          url : block_editor_action
+          method : 'post'
+          data : $('#promoOfferForm').serialize()
+          success : ( data ) ->
+            $('#adFormBlockEditor').html data
 
 
   init_images_upload : () ->
@@ -703,6 +721,7 @@ market =
 
 
   init: () ->
+    this.ad_form.init()
     $(document).ready () ->
       market.init_images_upload()
       market.resize_preview_photos()
