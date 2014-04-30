@@ -2,9 +2,11 @@
 
 @import market.lk.ad._selectColorTpl
 
+<div>
 @_textInputBaseTpl(bf, bc) {
   @defining( af(bfNameBase + ".value") ) { pvf =>
     <input name="@pvf.name" class="white-input" type="text" value="@pvf.value" />
   }
   @_selectColorTpl(af(bfNameBase + ".color"))
 }
+</div>

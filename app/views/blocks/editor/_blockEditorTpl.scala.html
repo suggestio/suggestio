@@ -6,31 +6,24 @@
 @defining( "ad.offer." ) { nameBase =>
 @defining( af(nameBase + BLOCK_ID_FN).value ) { biFieldValue =>
 @defining(  withBC.getOrElse( BlocksConf(biFieldValue.map(_.toInt).getOrElse(1)) )  ) { bc =>
-  <div class="preview-wrap">
 
-    <div class="block-editor">
-      <div class="block-preview" id="blockPreviewContainer">
-      </div>
+  <div class="block-editor-form">
+    <div id="blockEditorForm">
+
+      @for(bf <- bc.blockFields) {
+        @bf.renderEditorField(
+          af = af,
+          bfNameBase = nameBase + bf.name,
+          bc = bc
+        )
+        <div class="clear"></div>
+      }
+
+      <input type="hidden" name="@nameBase@BLOCK_ID_FN" value="@bc.id">
+
     </div>
   </div>
-  <div class="controls">
-    <div class="block-editor-form">
 
-      <div id="blockEditorForm">
-        @for(bf <- bc.blockFields) {
-          @bf.renderEditorField(
-            af = af,
-            bfNameBase = nameBase + bf.name,
-            bc = bc
-          )
-          <div class="clear"></div>
-        }
-
-        <input type="hidden" name="@nameBase@BLOCK_ID_FN" value="@bc.id">
-
-      </div>
-    </div>
-  </div>
 }
 }
 }
