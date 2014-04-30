@@ -10,12 +10,25 @@
   float: left
 
 .ads-list-block
-  width: 163px
+  position: relative
+  width: 164px
   overflow: hidden
 
-.ads-list-block__preview
+.ads-list-block__preview,
+.ads-list-block__link
+  display: block
   width: 163px
   height: 163px
+
+.ads-list-block__preview
+  width: 150px
+  height: 150px
+  padding: 6px
   background: #fff
   border: 1px #a5a5a5 solid
   box-shadow( inset 0px 1px 3px #bec2c5 )
+
+.ads-list-block__link
+  position: absolute
+  left: 0px
+  top: 0px
