@@ -1,6 +1,5 @@
 package controllers.ad
 
-import util.PlayLazyMacroLogsImpl
 import models._
 import util.img.ImgFormUtil._
 import util.FormUtil._
@@ -10,8 +9,6 @@ import play.api.Play.current
 import AOTextAlignValues.TextAlignValue
 import io.suggest.ym.parsers.Price
 import io.suggest.ym.model.common
-import io.suggest.ym.model.common.BlockMeta
-import util.blocks.BlockDataImpl
 
 /**
  * Suggest.io
@@ -19,9 +16,7 @@ import util.blocks.BlockDataImpl
  * Created: 23.04.14 10:15
  * Description: Общая утиль для работы с разными ad-формами: preview и обычными.
  */
-object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
-
-  import LOGGER._
+object MarketAdFormUtil {
 
   type AdFormM = Form[(ImgIdKey, LogoOpt_t, MAd)]
 
@@ -113,7 +108,7 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
       producerId  = null,
       offers      = bd.offers,
       blockMeta   = bd.blockMeta,
-      img         = null,
+      imgOpt         = null,
       userCatId   = userCatId
     )
   }
@@ -124,6 +119,7 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
   }
 
 
+  /*
   val panelColorM = colorM
     .transform(
       { AdPanelSettings.apply },
@@ -131,12 +127,30 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
     )
   val PANEL_COLOR_K = "panelColor"
   val panelColorKM = PANEL_COLOR_K -> panelColorM
+  */
+
 
   val OFFER_K = "offer"
 
+  /**
+   * Определить владельца категорий узла.
+   * @param adnNode Узел рекламной сети.
+   * @return id узла-владельца категорий.
+   */
+  def getCatOwnerId(adnNode: MAdnNode): String = {
+    import AdNetMemberTypes._
+    adnNode.adn.memberType match {
+      case SHOP | RESTAURANT => adnNode.adn.supId getOrElse adnNode.id.get
+      case MART | RESTAURANT_SUP => adnNode.id.get
+    }
+  }
+
+}
 
 
-  // Мапперы для textAlign'ов
+/** Мапперы для textAlign'ов. Пока не используются и живут тут. Потом может быть будут удалены. */
+object MarketAdTextAlignUtil {
+
   /** Какие-то данные для text-align'a. */
   val textAlignRawM = nonEmptyText(maxLength = 16)
     .transform(strTrimSanitizeLowerF, strIdentityF)
@@ -181,17 +195,5 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
       { _ getOrElse TextAlign(TextAlignPhone(""), TextAlignTablet("", "")) }
     )
 
-  /**
-   * Определить владельца категорий узла.
-   * @param adnNode Узел рекламной сети.
-   * @return id узла-владельца категорий.
-   */
-  def getCatOwnerId(adnNode: MAdnNode): String = {
-    import AdNetMemberTypes._
-    adnNode.adn.memberType match {
-      case SHOP | RESTAURANT => adnNode.adn.supId getOrElse adnNode.id.get
-      case MART | RESTAURANT_SUP => adnNode.id.get
-    }
-  }
-
 }
+

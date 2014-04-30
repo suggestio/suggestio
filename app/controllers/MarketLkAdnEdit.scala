@@ -118,7 +118,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSup
       val martLogoOpt = adnNode.logoImgOpt.map { img =>
         ImgInfo4Save(imgInfo2imgKey(img))
       }
-      val welcomeImgKey = welcomeAdOpt.map[OrigImgIdKey] { _.img }
+      val welcomeImgKey = welcomeAdOpt.flatMap { _.imgOpt }.map[OrigImgIdKey] { img => img }
       val formFilled = martFormM.fill((adnNode.meta, welcomeImgKey, martLogoOpt))
       Ok(leaderEditFormTpl(adnNode, formFilled, welcomeAdOpt))
     }
@@ -144,7 +144,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSup
         val savedWelcomeImgsFut: Future[_] = getWelcomeAdOpt(adnNode) flatMap { welcomeAdOpt =>
           ImgFormUtil.updateOrigImg(
             needImgs = welcomeImgOpt.map(ImgInfo4Save(_, withThumb = false)),
-            oldImgs = welcomeAdOpt.map(_.img)
+            oldImgs = welcomeAdOpt.flatMap(_.imgOpt)
           ) flatMap { savedImgs =>
             savedImgs.headOption match {
               // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
@@ -155,13 +155,13 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSup
                 deleteOldAdFut
 
               // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
-              case Some(newImgInfo) =>
+              case newImgInfoOpt @ Some(newImgInfo) =>
                 val welcomeAd = welcomeAdOpt
                   .map { welcomeAd =>
-                  welcomeAd.img = newImgInfo
+                  welcomeAd.imgOpt = newImgInfoOpt
                   welcomeAd
                 } getOrElse {
-                  MWelcomeAd(producerId = adnNode.id.get, img = newImgInfo)
+                  MWelcomeAd(producerId = adnNode.id.get, imgOpt = newImgInfoOpt)
                 }
                 welcomeAd.save andThen {
                   case Success(welcomeAdId) =>

@@ -136,7 +136,7 @@ object MarketAd extends SioController with LogoSupport {
                   // TODO Нужно проверить категорию.
                   mmad.producerId = adnId
                   mmad.logoImgOpt = savedLogos.headOption
-                  mmad.img = imgsSaved.head
+                  mmad.imgOpt = imgsSaved.headOption
                   // Сохранить изменения в базу
                   mmad.save.map { adId =>
                     Redirect(routes.MarketLkAdn.showAdnNode(adnId, newAdId = Some(adId)))
@@ -213,8 +213,9 @@ object MarketAd extends SioController with LogoSupport {
     */
   def editAd(adId: String) = IsAdEditor(adId).async { implicit request =>
     import request.mad
-    val imgIdKey = OrigImgIdKey(mad.img.id)
-    val anmt = request.producer.adn.memberType
+    // TODO Бывают карточки без картинки. Нужно вынести маппинги на block-уровень.
+    val imgIdKey = OrigImgIdKey(mad.imgOpt.get.id)
+    //val anmt = request.producer.adn.memberType
     val formFilledOpt = mad.offers.headOption map { offer =>
       val blockConf: BlockConf = BlocksConf.apply(mad.blockMeta.blockId)
       val form0 = getAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
@@ -232,9 +233,7 @@ object MarketAd extends SioController with LogoSupport {
   /** Импортировать выхлоп маппинга формы в старый экземпляр рекламы. Этот код вызывается во всех editAd-экшенах. */
   private def importFormAdData(oldMad: MAd, newMad: MAd) {
     oldMad.offers = newMad.offers
-    oldMad.panel = newMad.panel
     oldMad.prio = newMad.prio
-    oldMad.textAlign = newMad.textAlign
     oldMad.userCatId = newMad.userCatId
   }
 
@@ -261,12 +260,12 @@ object MarketAd extends SioController with LogoSupport {
             // TODO И наверное надо проверить shopId-существование в исходной рекламе.
             ImgFormUtil.updateOrigImg(
               needImgs = Some(ImgInfo4Save(iik)),
-              oldImgs  = Some(mad.img)
+              oldImgs  = mad.imgOpt
             ) flatMap { savedImgs =>
               updateLogoFut flatMap { savedLogos =>
                 // В списке сохраненных id картинок либо 1 либо 0 картинок.
                 if (!savedImgs.isEmpty) {
-                  mad.img = savedImgs.head
+                  mad.imgOpt = savedImgs.headOption
                   mad.logoImgOpt = savedLogos.headOption
                   importFormAdData(oldMad = mad, newMad = mad2)
                   mad.save.map { _ =>

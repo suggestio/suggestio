@@ -3,15 +3,7 @@
 @import util.TplDataFormatUtil._
 
 <div class="sm-index-offer">
-
-  <img width="230" data-width="@ad.img.meta.map(_.width).getOrElse(1575)" data-height="@ad.img.meta.map(_.height).getOrElse(1181)" src="@ctx.myAudienceUrl@routes.Img.getImg(ad.img.id)"/>
-
-  @ad.panel.map { panelSettings =>
-  <div class="sm-io-pannel" style="background-color: #@panelSettings.color">
-    @producer.logoImgOpt.orElse(fallbackLogo).map { logoImg =>
-    <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)"/>
-    }
-  </div>
+  @ad.imgOpt.map { img =>
+    <img width="230" data-width="@img.meta.map(_.width).getOrElse(1575)" data-height="@img.meta.map(_.height).getOrElse(1181)" src="@ctx.myAudienceUrl@routes.Img.getImg(img.id)"/>
   }
-
 </div>
