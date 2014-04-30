@@ -1,0 +1,16 @@
+@(bf: BfInt, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
+
+@import ctx._
+
+<label class="ad-block-editor__fieldset_label">@Messages(bc.i18nLabelOf(bf.name))</label>
+
+@* Форма для загрузки картинки *@
+<div class="lk-file-field">
+
+  <input type="file" class="w-async-image-upload" data-related-field-id="fieldName" data-action="" name="picture"/>
+
+  <div id="fieldName">
+    <input type="hidden" class="js-image-key" name="image_key"/>
+  </div>
+
+</div>
