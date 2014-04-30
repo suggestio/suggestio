@@ -196,6 +196,8 @@ case class BfPrice(
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
+
+  override def getOptionalStrictMapping: Mapping[Option[T]] = MarketAdFormUtil.mmaPriceOptM
 }
 
 
@@ -212,7 +214,7 @@ case class BfText(
   def strTransformF = strTrimSanitizeLowerF
 
   override val mappingBase: Mapping[T] = {
-    val m0 = nonEmptyText(minLength = minLen, maxLength = maxLen)
+    val m0 = text(minLength = minLen, maxLength = maxLen)
       .transform(strTrimSanitizeLowerF, strIdentityF)
     MarketAdFormUtil.mmaStringFieldM(m0)
   }
@@ -225,6 +227,11 @@ case class BfText(
 
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
     field.renderEditorField(this, bfNameBase, af, bc)
+  }
+
+  override def getOptionalStrictMapping: Mapping[Option[T]] = {
+    super.getOptionalStrictMapping
+      .transform[Option[T]]({_.filter(!_.value.isEmpty)}, identity)
   }
 }
 
@@ -250,6 +257,11 @@ case class BfString(
   override def mappingBase: Mapping[T] = {
     nonEmptyText(minLength = minLen, maxLength = maxLen)
       .transform(strTransformF, strIdentityF)
+  }
+
+  override def getOptionalStrictMapping: Mapping[Option[T]] = {
+    super.getOptionalStrictMapping
+      .transform[Option[T]]({_.filter(!_.isEmpty)}, identity)
   }
 }
 

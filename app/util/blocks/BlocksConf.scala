@@ -71,7 +71,7 @@ object BlocksConf extends Enumeration {
     val bgImg = BfImage(BG_IMG_FN, marker = BG_IMG_MARKER, imgUtil = OrigImageUtil)
 
     val heightField = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
-    val text1Field = BfText("title", BlocksEditorFields.InputText, minLen = 1, maxLen = 64)
+    val text1Field = BfText("title", BlocksEditorFields.InputText, minLen = 0, maxLen = 64)
     val priceField = BfPrice(EMAdOffers.PRICE_ESFN, BlocksEditorFields.Price)
     val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN, BlocksEditorFields.Price)
 
@@ -83,8 +83,8 @@ object BlocksConf extends Enumeration {
     override val strictMapping = mapping(
       bgImg.getStrictMappingKV,
       heightField.getStrictMappingKV,
-      text1Field.getStrictMappingKV,
-      priceField.getStrictMappingKV,
+      text1Field.getOptionalStrictMappingKV,
+      priceField.getOptionalStrictMappingKV,
       oldPriceField.getOptionalStrictMappingKV
     )
     {(bgIik, height, text1, price, oldPrice) =>
@@ -95,8 +95,8 @@ object BlocksConf extends Enumeration {
         ),
         offers = List( AOBlock(
           n = 0,
-          text1 = Some(text1),
-          price = Some(price),
+          text1 = text1,
+          price = price,
           oldPrice = oldPrice
         ) )
       )
@@ -105,8 +105,8 @@ object BlocksConf extends Enumeration {
     }
     {case BlockMapperResult(bd, bim) =>
       bd.offers.headOption.map { offer =>
-        val price = offer.price.getOrElse(priceField.anyDefaultValue)
-        val text1 = offer.text1.getOrElse(text1Field.anyDefaultValue)
+        val text1 = offer.text1
+        val price = offer.price
         val bgIik = bim.get(bgImg.name).getOrElse(bgImg.fallbackValue)
         (bgIik, bd.blockMeta.height, text1, price, offer.oldPrice)
       }
