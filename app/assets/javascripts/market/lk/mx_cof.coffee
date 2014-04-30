@@ -665,6 +665,7 @@ market =
           $('#adFormBlockPreview').html data
 
     init : () ->
+      this.request_block_preview()
       $('#adFormBlocksList div').bind 'click', () ->
         block_id = $(this).attr 'data-block-id'
         block_editor_action = $('#adFormBlocksList .block-editor-action').val()
@@ -677,6 +678,7 @@ market =
           data : $('#promoOfferForm').serialize()
           success : ( data ) ->
             $('#adFormBlockEditor').html data
+            market.ad_form.request_block_preview()
 
 
   init_images_upload : () ->
