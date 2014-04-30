@@ -963,12 +963,20 @@ transform(v)
   width: 60px
   height: 60px
   margin-right: 10px
+  border: 1px transparent solid
+  background-image: url('/assets/images/block-icons-sprite.png')
 
 .blocks-list-icons__single-icon_active
-  border: 1px red solid
+  border-color: #a2a2a2
+  background-color: #e1e1e1
+  box-shadow( inset 0px 2px 3px #a8acaf )
 
 .block-list-icon-1
-  background: url('/assets/images/block-icons-sprite.png') no-repeat left top
+  background-position: left -959px
+
+.block-list-icon-2
+  background-position: left -1039px
+
 /* Блок с превьюшкой и редактором блока */
 .lk-ad-block-edit-form__preview
   width: 340px
