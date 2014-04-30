@@ -3,9 +3,6 @@
 @* Поле для ввода текста: input или textarea в зависимости от обстоятельств. *@
 @import ctx._
 
-<div class="cbt-sw-fieldset">
-  <fieldset>
-    <label>@Messages(bc.i18nLabelOf(bf.name))</label>
-    @content
-  </fieldset>
-</div>
+<label class="ad-block-editor__fieldset_label">@Messages(bc.i18nLabelOf(bf.name))</label>
+
+@content

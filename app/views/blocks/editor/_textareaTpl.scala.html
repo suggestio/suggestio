@@ -3,8 +3,13 @@
 @import market.lk.ad._selectColorTpl
 
 @_textInputBaseTpl(bf, bc) {
+
   @defining( af(bfNameBase + ".value") ) { ff =>
-    <textarea name="@ff.name" class="white-input">@ff.value</textarea>
+    <div class="lk-text-field">
+      <div><textarea name="@ff.name" class="white-input">@ff.value</textarea></div>
+    </div>
+
     @_selectColorTpl(af(bfNameBase + ".color"))
+
   }
 }

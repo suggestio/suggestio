@@ -145,17 +145,18 @@
 
   @* Тут выводится список блоков в виде иконок. При нажатии — производится запрос для рендера нужного редактора блока *@
   <div class="lk-edit-form__block">
-    <div class="lk-edit-form__block-title">
+    <div class="lk-edit-form__block_title">
       Выбор шаблона
     </div>
-    <div class="lk-edit-form__block-body">
+    <div class="lk-edit-form__block_body">
+
       <div class="lk-edit-form__blocks-list-icons" id="adFormBlocksList">
       @BlocksConf.values.map { bc =>
         <div class="blocks-list-icons__single-icon" data-block-id="@bc.id">
           @bc.id
         </div>
       }
-      @* TODO: FIXME *@
+
       <input class="block-editor-action" type="hidden" value="@routes.MarketAdPreview.adBlockSwitchEditor(adnNode.id.get)"/>
       <div class="clear"></div>
       </div>
@@ -165,19 +166,28 @@
 
   @* Для блока : превьюшка + редактор *@
   <div class="lk-edit-form__block">
-    <div class="lk-edit-form__block-title">
+    <div class="lk-edit-form__block_title">
       Отображение рекламной карточки
     </div>
-    <div class="lk-edit-form__block-body">
+    <div class="lk-edit-form__block_body">
 
-      <div class="lk-edit-form__block-editor-preview">
+      @* Форма редактирования блока *@
+      <div class="lk-ad-block-edit-form">
 
         @* Отображение превьюшки *@
-        <div class="block-editor-preview__preview"></div>
+        <div class="lk-ad-block-edit-form__preview">
+
+          @* TODO: в этот div надо рендерить превьюшку *@
+          <div class="lk-ad-block-edit-form__preview_container">
+
+          </div>
+          <div class="clear"></div>
+
+        </div>
 
         @* Отображение нужного редактора *@
-        <div class="block-editor-preview__editor" id="adFormBlockEditor">
-        @blocks.editor._blockEditorTpl(af)
+        <div class="lk-ad-block-edit-form__editor" id="adFormBlockEditor">
+          @blocks.editor._blockEditorTpl(af)
         </div>
 
         <div class="clear"></div>

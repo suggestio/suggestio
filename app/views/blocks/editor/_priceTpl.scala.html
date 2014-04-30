@@ -5,7 +5,9 @@
 
 @_textInputBaseTpl(bf, bc) {
   @defining( af(bfNameBase + ".value") ) { pvf =>
-    <input name="@pvf.name" class="white-input" type="text" value="@pvf.value" />
+    <div class="lk-text-field">
+      <div><input name="@pvf.name" class="white-input" type="text" value="@pvf.value" /></div>
+    </div>
     @_selectColorTpl(af(bfNameBase + ".color"))
   }
 
