@@ -121,7 +121,7 @@ object BlocksConf extends Enumeration {
     val BG_IMG_FN = "bgImg"
     val bgImg = BfImage(BG_IMG_FN, marker = BG_IMG_FN + id, imgUtil = OrigImageUtil)
 
-    val heightField = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 140, maxValue=460, defaultValue = Some(140))
+    val heightField = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
     val text1Field = BfText(EMAdOffers.TEXT1_ESFN, BlocksEditorFields.InputText, maxLen = 512)
     val text2Field = BfText(EMAdOffers.TEXT2_ESFN, BlocksEditorFields.TextArea, maxLen = 8192)
 

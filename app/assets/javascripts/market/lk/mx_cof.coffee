@@ -359,19 +359,7 @@ CbcaCommon = () ->
 EditAdPage =
 
   updatePreview: () ->
-    $form = $('#promoOfferForm')
-    if($form.size())
-      action = $form.find('#preview-action').val()
-      $.ajax(
-        type: 'POST'
-        url: action
-        data: $form.serialize()
-        success: (data)->
-          $('#preview').html(data)
-          market.resize_preview_photos()
-        error: (error)->
-          console.log(error)
-      )
+    return false
 
   init: () ->
     #################
