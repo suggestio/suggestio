@@ -654,6 +654,16 @@ market =
   ##############################
   ad_form :
 
+    request_block_preview : () ->
+      action = $('.js-ad-block-preview-action').val()
+
+      $.ajax
+        url : action
+        method : 'post'
+        data : $('#promoOfferForm').serialize()
+        success : ( data ) ->
+          $('#adFormBlockPreview').html data
+
     init : () ->
       $('#adFormBlocksList div').bind 'click', () ->
         block_id = $(this).attr 'data-block-id'

@@ -178,7 +178,9 @@
         <div class="lk-ad-block-edit-form__preview">
 
           @* TODO: в этот div надо рендерить превьюшку *@
-          <div class="lk-ad-block-edit-form__preview_container">
+          <input class="js-ad-block-preview-action" type="hidden" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get)"/>
+
+          <div class="lk-ad-block-edit-form__preview_container" id="adFormBlockPreview">
 
           </div>
           <div class="clear"></div>
