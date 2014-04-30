@@ -6,31 +6,37 @@ import io.suggest.model.EsModel.FieldsJsonAcc
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import com.typesafe.scalalogging.slf4j.Logger
+import play.api.libs.json._
+import java.{util => ju}
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
  * User: Konstantin обязательной Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 04.04.14 17:20
  * Description: Поле основной и обязательной картинки.
+ * 2014.apr.04: Примитивное поле img: MImgInfo
+ * 2014.apr.30: img -> imgOpt: Option[MImgInfo]
+ * 2014.apr.30: img -> Map[String, MImgInfo] для потребностей blocks.
+ *              В качестве ключа используется произвольная строка. Внутри это всё хранится как JsObject.
  */
+
 
 object EMImg {
   val IMG_ESFN = "img"
   def esMappingField = FieldObject(IMG_ESFN, enabled = false, properties = Nil)
 
+  type Imgs_t = Map[String, MImgInfo]
 
   /** Стереть картинку, указанную в поле imgOpt, если она там есть. */
-  def eraseImgOpt(imgOpt: Option[MImgInfo])(implicit ec: ExecutionContext): Future[_] = {
-    imgOpt match {
-      case Some(img) =>
-        val imgId = img.id
-        val logPrefix = s"eraseLinkedImage($img): "
-        MPict.deleteFully(imgId) andThen {
-          case Success(_)  => LOGGER.trace(logPrefix + "Successfuly erased main picture: " + imgId)
-          case Failure(ex) => LOGGER.error(logPrefix + "Failed to delete associated picture: " + imgId, ex)
-        }
-
-      case None => Future successful ()
+  def eraseImgs(imgs: Imgs_t)(implicit ec: ExecutionContext): Future[_] = {
+    Future.traverse(imgs) { case (_, img) =>
+      val imgId = img.id
+      val logPrefix = s"eraseLinkedImage($img): "
+      MPict.deleteFully(imgId) andThen {
+        case Success(_)  => LOGGER.trace(logPrefix + "Successfuly erased main picture: " + imgId)
+        case Failure(ex) => LOGGER.error(logPrefix + "Failed to delete associated picture: " + imgId, ex)
+      }
     }
   }
 }
@@ -49,34 +55,54 @@ trait EMImgStatic extends EsModelStaticT {
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
-      case (IMG_ESFN, value)  =>
-        acc.imgOpt = Option(MImgInfo.convertFrom(value))
+      case (IMG_ESFN, value: ju.Map[_,_]) =>
+        // TODO 2014.apr.30: Карта может быть в старом формате. Удалить этот код миграции с проверками после публичного запуска.
+        acc.imgs = if (MImgInfo.testSerialized(value)) {
+          import scala.concurrent.ExecutionContext.Implicits.global
+          // Это старый формат. Нужно удалить картинку в фоне и вернуть, что картинок нет.
+          val img = MImgInfo.convertFrom(value)
+          EMImg.eraseImgs(Map("" -> img))
+          Map.empty
+        } else {
+          // Новый формат. Этот код должен остаться после удаления чистки старого формата.
+          value.foldLeft [List[(String, MImgInfo)]] (Nil) {
+            case (mapAcc, (k, v)) =>
+              k.toString -> MImgInfo.convertFrom(v) :: mapAcc
+          }.toMap
+        }
     }
   }
 
-  def eraseImgOpt(impl: T)(implicit ec: ExecutionContext): Future[_] = {
-    EMImg.eraseImgOpt(impl.imgOpt)
+  def eraseImgs(impl: T)(implicit ec: ExecutionContext): Future[_] = {
+    EMImg.eraseImgs(impl.imgs)
   }
 }
 
-trait ImgOpt {
-  def imgOpt: Option[MImgInfo]
+
+trait Imgs {
+  def imgs: Imgs_t
 }
 
-trait EMImg extends EsModelT with ImgOpt {
+trait EMImg extends EsModelT with Imgs {
   override type T <: EMImg
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
-    if (imgOpt.isDefined)
-      IMG_ESFN -> imgOpt.get.toPlayJson :: acc0
-    else
+    if (!imgs.isEmpty) {
+      // Переводим карту в JsObject стандартным образом.
+      val jsonAcc1 = imgs.foldLeft [List[(String, JsValue)]] (Nil) {
+        case (jsonAcc, (k, imgInfo)) =>
+          k -> imgInfo.toPlayJson :: jsonAcc
+      }
+      IMG_ESFN -> JsObject(jsonAcc1) :: acc0
+    } else {
       acc0
+    }
   }
 
 }
 
 trait EMImgMut extends EMImg {
   override type T <: EMImgMut
-  var imgOpt: Option[MImgInfo]
+  var imgs: Imgs_t
 }

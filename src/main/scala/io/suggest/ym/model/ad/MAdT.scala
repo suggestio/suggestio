@@ -45,7 +45,7 @@ trait MAdWrapperT extends MAdT {
   override def receivers = wrappedAd.receivers
   override def id = wrappedAd.id
   override def dateCreated = wrappedAd.dateCreated
-  override def imgOpt = wrappedAd.imgOpt
+  override def imgs = wrappedAd.imgs
   override def logoImgOpt = wrappedAd.logoImgOpt
   override def blockMeta = wrappedAd.blockMeta
 

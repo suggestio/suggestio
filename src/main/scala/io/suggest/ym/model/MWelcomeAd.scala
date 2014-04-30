@@ -11,6 +11,7 @@ import io.suggest.ym.model.common._
 import io.suggest.ym.model.ad.MAdT
 import io.suggest.model.common._
 import io.suggest.util.MacroLogsImplLazy
+import io.suggest.ym.model.common.EMImg.Imgs_t
 
 /**
  * Suggest.io
@@ -32,7 +33,7 @@ object MWelcomeAd
 
   protected def dummy(id: String) = MWelcomeAd(
     producerId = null,
-    imgOpt = null,
+    imgs = null,
     id = Some(id)
   )
 
@@ -49,7 +50,7 @@ object MWelcomeAd
   override def deleteById(id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
     val adOptFut = getById(id)
     val imgDelFut = adOptFut flatMap {
-      case Some(ad) => eraseImgOpt(ad)
+      case Some(ad) => eraseImgs(ad)
       case None     => Future successful ()
     }
     imgDelFut flatMap { _ =>
@@ -61,7 +62,7 @@ object MWelcomeAd
 
 case class MWelcomeAd(
   var producerId  : String,
-  var imgOpt      : Option[MImgInfo],
+  var imgs        : Imgs_t,
   var dateCreated : DateTime = null,
   var id          : Option[String] = None
 )

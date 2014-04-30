@@ -14,6 +14,7 @@ import io.suggest.ym.model.common._
 import scala.util.{Success, Failure}
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import io.suggest.ym.ad.ShowLevelsUtil
+import io.suggest.ym.model.common.EMImg.Imgs_t
 
 /**
  * Suggest.io
@@ -49,7 +50,7 @@ object MAd
     producerId = null,
     blockMeta = blockMetaDflt,
     offers = Nil,
-    imgOpt = null,
+    imgs = Map.empty,
     id = Some(id)
   )
 
@@ -70,7 +71,7 @@ object MAd
       case Some(ad) =>
         lazy val logPrefix = s"deleteById($id): "
         // Удаляем картинку рекламы в фоне
-        eraseImgOpt(ad)
+        eraseImgs(ad)
         // Одновременно удаляем логотип.
         ad.logoImgOpt.foreach { logoImg =>
           val logoImgId = logoImg.id
@@ -107,7 +108,7 @@ object MAd
 case class MAd(
   var producerId : String,
   var offers     : List[AOBlock],
-  var imgOpt        : Option[MImgInfo],
+  var imgs       : Imgs_t,
   var blockMeta  : BlockMeta,
   var receivers  : Receivers_t = Map.empty,
   var logoImgOpt : Option[MImgInfo] = None,

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.{JsonIgnore, JsonIgnoreProperties}
 import io.suggest.model.EsModel
 import play.api.libs.json._
 import io.suggest.model.EsModel.FieldsJsonAcc
+import java.{util => ju}
 
 /**
  * Suggest.io
@@ -25,10 +26,24 @@ object MImgInfo {
    */
   def convertFrom(v: Any): MImgInfo = {
     v match {
-      case m: java.util.Map[_,_] =>
+      case m: ju.Map[_,_] =>
         val id = m.get(ID_ESFN).toString
         val metaOpt = Option(m.get(META_ESFN)).map(MImgInfoMeta.convertFrom)
         MImgInfo(id, metaOpt)
+    }
+  }
+
+  /**
+   * Проверить, являются ли указанные сериализованные данные результатом сериализации MImgInfo.
+   * @param v выхлоп jackson'а.
+   * @return true, если можно это отправлять в [[convertFrom()]]. Иначе false.
+   */
+  def testSerialized(v: Any): Boolean = {
+    v match {
+      case m: ju.Map[_,_] =>
+        m.containsKey(ID_ESFN) && m.containsKey(META_ESFN) && m.size() == 2
+
+      case _ => false
     }
   }
 }
