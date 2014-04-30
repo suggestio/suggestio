@@ -43,8 +43,7 @@
 
       <div class="lk-edit-form__blocks-list-icons" id="adFormBlocksList">
       @BlocksConf.values.map { bc =>
-        <div class="blocks-list-icons__single-icon" data-block-id="@bc.id">
-          @bc.id
+        <div class="blocks-list-icons__single-icon blocks-list-icons__single-icon_active block-list-icon-@bc.id" data-block-id="@bc.id">
         </div>
       }
 
