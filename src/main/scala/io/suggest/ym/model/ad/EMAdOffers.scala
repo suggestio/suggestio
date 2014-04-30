@@ -147,12 +147,21 @@ object AdOffer {
       case jsObject: java.util.Map[_, _] =>
         jsObject.get(OFFER_TYPE_ESFN) match {
           case ots: String =>
-            val ot = AdOfferTypes.withName(ots)
-            val offerBody = jsObject.get(OFFER_BODY_ESFN)
-            import AdOfferTypes._
-            ot match {
-              case BLOCK => AOBlock.deserializeBody(offerBody)
+            AdOfferTypes.maybeWithName(ots) match {
+              case Some(ot) =>
+                val offerBody = jsObject.get(OFFER_BODY_ESFN)
+                import AdOfferTypes._
+                ot match {
+                  case BLOCK => AOBlock.deserializeBody(offerBody)
+                }
+              // Старые AOProduct, AODiscount, AOText удалены -- тут обработка.
+              case None =>
+                AOBlock(
+                  n = 0,
+                  text1 = Some(AOStringField("Оффер в старом формате не поддерживается.", font = AOFieldFont("888888")))
+                )
             }
+
         }
     }
   }
@@ -198,7 +207,9 @@ object AOBlock {
           case (PRICE_ESFN, priceRaw) =>
             acc.price = Option(JacksonWrapper.convert[AOPriceField](priceRaw))
           case (OLD_PRICE_ESFN, priceOldRaw) =>
-            acc.priceOld = Option(JacksonWrapper.convert[AOPriceField](priceOldRaw))
+            acc.oldPrice = Option(JacksonWrapper.convert[AOPriceField](priceOldRaw))
+          case (other, v) =>
+            println("AOBlock.deserializeBody: Skipping unknown field: " + other + " = " + v)
         }
         acc
     }
@@ -213,14 +224,14 @@ case class AOBlock(
   var text2: Option[AOStringField] = None,
   var discount: Option[AOFloatField] = None,
   var price: Option[AOPriceField]  = None,
-  var priceOld: Option[AOPriceField] = None
+  var oldPrice: Option[AOPriceField] = None
 ) extends AdOfferT {
   @JsonIgnore
   override def offerType = AdOfferTypes.BLOCK
 
   @JsonIgnore
   override def renderPlayJsonBody: FieldsJsonAcc = {
-    var acc: FieldsJsonAcc = List(N_ESFN -> JsNumber(n))
+    var acc: FieldsJsonAcc = Nil
     if (text1.isDefined)
       acc ::= TEXT1_ESFN -> text1.get.renderPlayJson
     if (text2.isDefined)
@@ -229,8 +240,8 @@ case class AOBlock(
       acc ::= DISCOUNT_ESFN -> discount.get.renderPlayJson
     if (price.isDefined)
       acc ::= PRICE_ESFN -> price.get.renderPlayJson
-    if (priceOld.isDefined)
-      acc ::= OLD_PRICE_ESFN -> priceOld.get.renderPlayJson
+    if (oldPrice.isDefined)
+      acc ::= OLD_PRICE_ESFN -> oldPrice.get.renderPlayJson
     acc
   }
 }
