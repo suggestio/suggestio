@@ -17,5 +17,7 @@
 
 @* Для рендере WelcodeAd: если офферов нет, то можно сразу отрендерить картинку. *@
 @if(ad.offers.isEmpty) {
-  <img class="poster-photo" data-width="@ad.img.meta.map(_.width).getOrElse(1575)" data-height="@ad.img.meta.map(_.height).getOrElse(1181)" src="@ctx.myAudienceUrl@routes.Img.getImg(ad.img.id)"/>
+  @ad.imgOpt.map { img =>
+    <img class="poster-photo" data-width="@img.meta.map(_.width).getOrElse(1575)" data-height="@img.meta.map(_.height).getOrElse(1181)" src="@ctx.myAudienceUrl@routes.Img.getImg(img.id)"/>
+  }
 }

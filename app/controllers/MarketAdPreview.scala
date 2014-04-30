@@ -103,19 +103,17 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
   def adFormPreviewSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
     import request.adnNode
     detectAdPreviewForm match {
-      case Right((offerType, adFormM)) =>
+      case Right((bc, adFormM)) =>
         adFormM.bindFromRequest().fold(
           {formWithErrors =>
             debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))
             NotAcceptable("Preview form bind failed.")
           },
           {case (iik, logoOpt, mad) =>
-            val fallbackLogoOptFut: Future[Option[MImgInfo]] = adnNode.adn.supId match {
-              case Some(supId) =>
-                MAdnNodeCache.getByIdCached(supId) map { supOpt =>
-                  supOpt.flatMap(_.logoImgOpt)
-                }
-              case None => Future successful None
+            val fallbackLogoOptFut: Future[Option[MImgInfo]] = {
+              MAdnNodeCache.maybeGetByIdCached(adnNode.adn.supId) map { parentAdnOpt =>
+                parentAdnOpt.flatMap(_.logoImgOpt)
+              }
             }
             val imgMetaFut = previewPrepareImgMeta(iik)
             mad.logoImgOpt = logoOpt
@@ -124,7 +122,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
               imgMeta <- imgMetaFut
               fallbackLogoOpt <- fallbackLogoOptFut
             } yield {
-              mad.img = MImgInfo(iik.key, meta = imgMeta)
+              mad.imgOpt = Some(MImgInfo(iik.key, meta = imgMeta))
               Ok(_single_offer(mad, adnNode, fallbackLogo = fallbackLogoOpt ))
             }
           }
