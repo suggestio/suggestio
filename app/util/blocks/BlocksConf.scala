@@ -71,7 +71,7 @@ object BlocksConf extends Enumeration {
     val bgImg = BfImage(BG_IMG_FN, marker = BG_IMG_MARKER, imgUtil = OrigImageUtil)
 
     val heightField = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
-    val text1Field = BfText(EMAdOffers.TEXT1_ESFN, BlocksEditorFields.TextArea, minLen = 1, maxLen = 64)
+    val text1Field = BfText("title", BlocksEditorFields.InputText, minLen = 1, maxLen = 64)
     val priceField = BfPrice(EMAdOffers.PRICE_ESFN, BlocksEditorFields.Price)
     val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN, BlocksEditorFields.Price)
 
@@ -114,14 +114,6 @@ object BlocksConf extends Enumeration {
 
     /** Шаблон для рендера. */
     override def template = _block1Tpl
-
-    override def i18nLabelOf(bk: String): String = {
-      if (bk == text1Field.name) {
-        I18N_PREFIX + "title"
-      } else {
-        super.i18nLabelOf(bk)
-      }
-    }
   }
 
 

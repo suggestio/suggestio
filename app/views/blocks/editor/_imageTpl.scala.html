@@ -10,7 +10,7 @@
   <input type="file" class="w-async-image-upload" data-related-field-id="fieldName" data-action="@routes.MarketAdPreview.prepareBlockImg(bc.id, bf.name)" name="picture"/>
 
   <div id="fieldName">
-    <input type="hidden" class="js-image-key" name="@bfNameBase" value="@af(bfNameBase).value.filter(!_.isEmpty).map(routes.Img.getImg).getOrElse {@routes.Assets.at("images/market/lk/empty-image.gif")}"/>
+    <input type="hidden" class="js-image-key" name="@bfNameBase" value="@af(bfNameBase).value"/>
   </div>
 
 </div>
