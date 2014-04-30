@@ -114,6 +114,14 @@ object BlocksConf extends Enumeration {
 
     /** Шаблон для рендера. */
     override def template = _block1Tpl
+
+    override def i18nLabelOf(bk: String): String = {
+      if (bk == text1Field.name) {
+        I18N_PREFIX + "title"
+      } else {
+        super.i18nLabelOf(bk)
+      }
+    }
   }
 
 

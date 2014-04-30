@@ -41,6 +41,12 @@ editing.of.amt.profile.r=Restaurant profile edit
 editing.of.amt.profile.R=Supervisor profile edit
 
 
+blocks.field.price=Price
+blocks.field.oldPrice=Old price
+blocks.field.height=Block height
+blocks.field.title=Заголовок
+
+
 lk.sl.enable_ad=Enable ad
 lk.sl.d=Show on start page
 lk.sl.h=Show in common catalog
