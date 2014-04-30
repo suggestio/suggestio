@@ -3,24 +3,19 @@
 @import util.TplDataFormatUtil._
 @import AdNetMemberTypes.MART
 
-  @*ad.panel.map { panelSettings =>
-    <div class="offer-header" style="background-color: #@panelSettings.color">
-      @producer.logoImgOpt.orElse(fallbackLogo).map { logoImg =>
-        <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)"/>
-      }
-    </div>
-  }*@
+@*ad.logoImgOpt.map { logoImg =>
+  <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)" alt=""/>
+}*@
 
-  @*ad.logoImgOpt.map { logoImg =>
-    <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)" alt=""/>
-  }*@
-
-  <div onclick="siomart.load_for_shop_id('@producer.id'); return false;">
+<div onclick="siomart.load_for_shop_id('@producer.id'); return false;">
   @ad.offers.map {
     case adBlock: AOBlock => {
       @BlocksConf(ad.blockMeta.blockId).renderBlock(ad, isStandalone = false)
     }
   }
-  </div>
+</div>
 
-  @*<img class="poster-photo" data-width="@ad.img.meta.map(_.width).getOrElse(1575)" data-height="@ad.img.meta.map(_.height).getOrElse(1181)" src="@ctx.myAudienceUrl@routes.Img.getImg(ad.img.id)"/>*@
+@* Для рендере WelcodeAd: если офферов нет, то можно сразу отрендерить картинку. *@
+@if(ad.offers.isEmpty) {
+  <img class="poster-photo" data-width="@ad.img.meta.map(_.width).getOrElse(1575)" data-height="@ad.img.meta.map(_.height).getOrElse(1181)" src="@ctx.myAudienceUrl@routes.Img.getImg(ad.img.id)"/>
+}
