@@ -1,4 +1,4 @@
-@(ad: MAdT, producer: MAdnNode, fallbackLogo: Option[MImgInfo] = None, isHidden: Boolean = false)(implicit ctx: util.Context)
+@(ad: MAdT, producer: MAdnNode, fallbackLogo: Option[MImgInfo] = None, isHidden: Boolean = false, isWithAction : Boolean = false)(implicit ctx: util.Context)
 
 @import util.TplDataFormatUtil._
 @import AdNetMemberTypes.MART
@@ -7,7 +7,7 @@
   <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)" alt=""/>
 }*@
 
-<div onclick="siomart.load_for_shop_id('@producer.id'); return false;">
+<div @if( isWithAction ){ onclick="siomart.load_for_shop_id('@producer.id'); return false;" }>
   @ad.offers.map {
     case adBlock: AOBlock => {
       @BlocksConf(ad.blockMeta.blockId).renderBlock(ad, isStandalone = false)
