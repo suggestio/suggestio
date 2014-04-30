@@ -286,15 +286,17 @@ siomart =
 
   node_offers_popup :
 
-    nav_pointer_class : 'sm-nav-block__pointer'
-    nav_pointer_size : 8
-    nav_pointer_margin : 6
+    nav_pointer_size : 14
 
     show_block_by_index : ( block_index ) ->
       this.active_block_dom.style.display = 'none'
       siomart.utils.removeClass this.active_block_dom, 'double-size'
 
       this.show_block this.sm_blocks[block_index]
+
+      siomart.utils.removeClass siomart.utils.ge('smNodeOffersNavPointer' + this.active_block_index), 'sm-nav-block__pointer_active'
+      this.active_block_index = block_index
+      siomart.utils.addClass siomart.utils.ge('smNodeOffersNavPointer' + this.active_block_index), 'sm-nav-block__pointer_active'
 
     show_block : ( sm_block ) ->
 
@@ -331,6 +333,7 @@ siomart =
         if i == 0
           this.show_block sm_block
           this.active_block_dom = sm_block
+          this.active_block_index = 0
 
         if i == 0
           _nav_pointer_class = 'sm-nav-block__pointer sm-nav-block__pointer_active'
@@ -339,10 +342,10 @@ siomart =
         else
           _nav_pointer_class = 'sm-nav-block__pointer'
 
-        nav_pointers_html += '<div onclick="siomart.node_offers_popup.show_block_by_index(\'' + i + '\');" class="' + _nav_pointer_class + '"></div>'
+        nav_pointers_html += '<div id="smNodeOffersNavPointer' + i + '" onclick="siomart.node_offers_popup.show_block_by_index(\'' + i + '\');" class="' + _nav_pointer_class + '"><i></i></div>'
 
       this._container_nav.innerHTML = nav_pointers_html
-      this._container_nav.style.width = this.nav_pointer_size * sm_blocks.length + this.nav_pointer_margin * sm_blocks.length - this.nav_pointer_margin + 'px'
+      this._container_nav.style.width = this.nav_pointer_size * sm_blocks.length + 'px'
 
       siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), 'click', siomart.close_node_offers_popup
 

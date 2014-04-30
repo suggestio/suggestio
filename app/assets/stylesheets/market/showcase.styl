@@ -153,18 +153,20 @@ transition( param )
   .sm-nav-block__pointer
     cursor: pointer
     float: left
-    width: 8px
-    height: 8px
-    margin-right: 6px
-    background: #3b3b3b
-    border-radius( 50px )
+    margin: 3px
 
-  .sm-nav-block__pointer_no-margin
-    margin-right: 0px
+    i
+      display: block
+      width: 8px
+      height: 8px
+      background: #3b3b3b
+      border-radius( 50px )
 
   .sm-nav-block__pointer_active
-    background-color: #ce2222
     cursor: default
+    i
+      background-color: #ce2222
+
 
 .sio-mart-showcase,
 .sio-mart-showcase .sm-screen,
@@ -178,7 +180,7 @@ transition( param )
 
 .sio-mart-showcase
   position: fixed
-  background: rgba(255, 255, 255, 0.9)
+  background: rgba(255, 255, 255, 0.97)
 
 .index-welcome-ad
   position: absolute
