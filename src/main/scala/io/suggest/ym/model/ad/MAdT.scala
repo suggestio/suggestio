@@ -24,9 +24,7 @@ trait MAdT
   with EMAdOffers
   with EMImg
   with EMBlockMeta
-  with EMAdPanelSettings
   with EMLogoImg
-  with EMTextAlign
 {
   override type T <: MAdT
 }
@@ -42,14 +40,12 @@ trait MAdWrapperT extends MAdT {
 
   override def userCatId = wrappedAd.userCatId
   override def prio = wrappedAd.prio
-  override def panel = wrappedAd.panel
   override def producerId = wrappedAd.producerId
-  override def textAlign = wrappedAd.textAlign
   override def offers = wrappedAd.offers
   override def receivers = wrappedAd.receivers
   override def id = wrappedAd.id
   override def dateCreated = wrappedAd.dateCreated
-  override def img = wrappedAd.img
+  override def imgOpt = wrappedAd.imgOpt
   override def logoImgOpt = wrappedAd.logoImgOpt
   override def blockMeta = wrappedAd.blockMeta
 

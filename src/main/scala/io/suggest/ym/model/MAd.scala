@@ -14,7 +14,6 @@ import io.suggest.ym.model.common._
 import scala.util.{Success, Failure}
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import io.suggest.ym.ad.ShowLevelsUtil
-import org.elasticsearch.search.sort.SortBuilder
 
 /**
  * Suggest.io
@@ -31,8 +30,6 @@ object MAd
   with EMBlockMetaStatic
   with EMReceiversStatic
   with EMLogoImgStatic
-  with EMTextAlignStatic
-  with EMAdPanelSettingsStatic
   with EMPrioOptStatic
   with EMUserCatIdStatic
   with EMDateCreatedStatic
@@ -52,7 +49,7 @@ object MAd
     producerId = null,
     blockMeta = blockMetaDflt,
     offers = Nil,
-    img = null,
+    imgOpt = null,
     id = Some(id)
   )
 
@@ -73,11 +70,7 @@ object MAd
       case Some(ad) =>
         lazy val logPrefix = s"deleteById($id): "
         // Удаляем картинку рекламы в фоне
-        val imgId = ad.img.id
-        MPict.deleteFully(imgId) onComplete {
-          case Success(_)  => trace(logPrefix + "Successfuly erased main picture: " + imgId)
-          case Failure(ex) => error(logPrefix + "Failed to delete associated picture: " + imgId, ex)
-        }
+        eraseImgOpt(ad)
         // Одновременно удаляем логотип.
         ad.logoImgOpt.foreach { logoImg =>
           val logoImgId = logoImg.id
@@ -114,12 +107,10 @@ object MAd
 case class MAd(
   var producerId : String,
   var offers     : List[AOBlock],
-  var img        : MImgInfo,
+  var imgOpt        : Option[MImgInfo],
   var blockMeta  : BlockMeta,
   var receivers  : Receivers_t = Map.empty,
   var logoImgOpt : Option[MImgInfo] = None,
-  var textAlign  : Option[TextAlign] = None,
-  var panel      : Option[AdPanelSettings] = None,
   var prio       : Option[Int] = None,
   var id         : Option[String] = None,
   var userCatId  : Option[String] = None,
@@ -134,8 +125,6 @@ case class MAd(
   with EMBlockMetaMut
   with EMReceiversMut
   with EMLogoImgMut
-  with EMTextAlignMut
-  with EMAdPanelSettingsMut
   with EMPrioOptMut
   with EMUserCatIdMut
   with EMDateCreatedMut

@@ -4,13 +4,13 @@ import io.suggest.model._
 import org.joda.time.DateTime
 import org.codehaus.jackson.annotate.JsonIgnore
 import io.suggest.util.SioEsUtil._
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model.common._
-import io.suggest.ym.model.ad.{MAdT, AdOfferT}
+import io.suggest.ym.model.ad.MAdT
 import io.suggest.model.common._
-import io.suggest.ym.model.common.EMReceivers.Receivers_t
+import io.suggest.util.MacroLogsImplLazy
 
 /**
  * Suggest.io
@@ -23,6 +23,7 @@ object MWelcomeAd
   with EMProducerIdStatic
   with EMImgStatic
   with EMDateCreatedStatic
+  with MacroLogsImplLazy
 {
 
   val ES_TYPE_NAME = "wcAd"
@@ -31,7 +32,7 @@ object MWelcomeAd
 
   protected def dummy(id: String) = MWelcomeAd(
     producerId = null,
-    img = null,
+    imgOpt = null,
     id = Some(id)
   )
 
@@ -40,12 +41,27 @@ object MWelcomeAd
     FieldSource(enabled = true)
   )
 
+  /**
+   * Удалить документ по id.
+   * @param id id документа.
+   * @return true, если документ найден и удалён. Если не найден, то false
+   */
+  override def deleteById(id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
+    val adOptFut = getById(id)
+    val imgDelFut = adOptFut flatMap {
+      case Some(ad) => eraseImgOpt(ad)
+      case None     => Future successful ()
+    }
+    imgDelFut flatMap { _ =>
+      super.deleteById(id)
+    }
+  }
 }
 
 
 case class MWelcomeAd(
   var producerId  : String,
-  var img         : MImgInfo,
+  var imgOpt      : Option[MImgInfo],
   var dateCreated : DateTime = null,
   var id          : Option[String] = None
 )
@@ -57,10 +73,8 @@ case class MWelcomeAd(
 {
   override type T = MWelcomeAd
 
-  @JsonIgnore def companion = MWelcomeAd
+  @JsonIgnore override def companion = MWelcomeAd
   @JsonIgnore override def offers = Nil
-  @JsonIgnore override def textAlign = None
-  @JsonIgnore override def panel = None
   @JsonIgnore override def prio = None
   @JsonIgnore override def userCatId = None
   @JsonIgnore override def logoImgOpt = None
