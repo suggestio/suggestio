@@ -61,8 +61,6 @@ object BlocksConf extends Enumeration {
   type BlockConf = Val
   implicit def value2val(x: Value): BlockConf = x.asInstanceOf[BlockConf]
 
-
-
   // Начало значений
 
   val Block1 = new Val(1, "photoAdnPrice") with SaveBgImg {
@@ -115,7 +113,6 @@ object BlocksConf extends Enumeration {
     /** Шаблон для рендера. */
     override def template = _block1Tpl
   }
-
 
   val Block2 = new Val(2, "saleWithText") with SaveBgImg {
     val BG_IMG_FN = "bgImg"
