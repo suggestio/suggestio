@@ -3,7 +3,8 @@
 @import util.TplDataFormatUtil._
 
 <div class="sm-index-offer">
-  @ad.imgOpt.map { img =>
+  @* Какую картинку тут надо рисовать, если их несколько? *@
+  @ad.imgs.headOption.map { case (_, img) =>
     <img width="230" data-width="@img.meta.map(_.width).getOrElse(1575)" data-height="@img.meta.map(_.height).getOrElse(1181)" src="@ctx.myAudienceUrl@routes.Img.getImg(img.id)"/>
   }
 </div>

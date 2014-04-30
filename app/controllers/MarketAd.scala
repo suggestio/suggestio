@@ -18,7 +18,8 @@ import io.suggest.ym.ad.ShowLevelsUtil
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
-import util.blocks.BlocksUtil
+import util.blocks.BlockMapperResult
+import util.blocks.BlocksUtil.imgs2bim
 
 /**
  * Suggest.io
@@ -26,7 +27,7 @@ import util.blocks.BlocksUtil
  * Created: 06.03.14 11:26
  * Description: Контроллер для работы с рекламным фунционалом.
  */
-object MarketAd extends SioController with LogoSupport {
+object MarketAd extends SioController with TempImgSupport {
 
   import LOGGER._
 
@@ -45,14 +46,12 @@ object MarketAd extends SioController with LogoSupport {
   private val ad2ndLogoImgIdOptKM = ImgFormUtil.getLogoKM("ad.logo.invalid", marker=AD_TEMP_LOGO_MARKER)
 
   /** Генератор форм добавления/редактирования рекламируемого продукта в зависимости от вкладок. */
-  private def getShopAdFormM(blockM: Mapping[BlockData]): AdFormM = Form(tuple(
-    AD_IMG_ID_K -> imgIdJpegM,
-    ad2ndLogoImgIdOptKM,
+  private def getShopAdFormM(blockM: Mapping[BlockMapperResult]): AdFormM = Form(
     "ad" -> mapping(
       shopCatIdKM,
       OFFER_K -> blockM
     )(adFormApply)(adFormUnapply)
-  ))
+  )
 
 
   implicit private def mad2logoOpt(mad: MAd): LogoOpt_t = {
@@ -62,7 +61,7 @@ object MarketAd extends SioController with LogoSupport {
   }
 
   type ReqSubmit = Request[collection.Map[String, Seq[String]]]
-  type DetectForm_t = Either[AdFormM, (AdOfferType, AdFormM)]
+  type DetectForm_t = Either[AdFormM, (BlockConf, AdFormM)]
 
 
   /** Выдать маппинг ad-формы в зависимости от типа adn-узла. */
@@ -76,10 +75,9 @@ object MarketAd extends SioController with LogoSupport {
         // Нужно раздобыть id из реквеста
         val blockId = (request.body.get("ad.offer.blockId") getOrElse Nil)
           .headOption
-          .map(_.toInt)
-          .getOrElse(1)
-        val block: BlockConf = BlocksConf(blockId)
-        Right(aot -> getAdFormM(anmt, block.strictMapping))
+          .fold(1)(_.toInt)
+        val blockConf: BlockConf = BlocksConf(blockId)
+        Right(blockConf -> getAdFormM(anmt, blockConf.strictMapping))
     }
   }
 
@@ -118,38 +116,22 @@ object MarketAd extends SioController with LogoSupport {
     lazy val logPrefix = s"createAdSubmit($adnId): "
     detectAdnAdForm(adnNode.adn.memberType) match {
       // Как маппить форму - ясно. Теперь надо это сделать.
-      case Right((formMode, formM)) =>
+      case Right((bc, formM)) =>
         val formBinded = formM.bindFromRequest()
         formBinded.fold(
           {formWithErrors =>
             debug(logPrefix + "Bind failed: \n" + formatFormErrors(formWithErrors))
             createAdFormError(formWithErrors, catOwnerId, adnNode)
           },
-          {case (imgKey, logoImgIdOpt, mmad) =>
+          {case (mmad, bim) =>
             // Асинхронно обрабатываем логотип.
-            val updateLogoFut = ImgFormUtil.updateOrigImgId(needImg = logoImgIdOpt, oldImgId = None)
-            updateLogoFut onComplete entityLogoUpdatePf("shop", adnId)
-            // Обработать MMartAd
-            ImgFormUtil.updateOrigImg(Some(ImgInfo4Save(imgKey)), oldImgs = None) flatMap { imgsSaved =>
-              updateLogoFut flatMap { savedLogos =>
-                if (!imgsSaved.isEmpty) {
-                  // TODO Нужно проверить категорию.
-                  mmad.producerId = adnId
-                  mmad.logoImgOpt = savedLogos.headOption
-                  mmad.imgOpt = imgsSaved.headOption
-                  // Сохранить изменения в базу
-                  mmad.save.map { adId =>
-                    Redirect(routes.MarketLkAdn.showAdnNode(adnId, newAdId = Some(adId)))
-                      .flashing("success" -> "Рекламная карточка создана.")
-                  }
-
-                } else {
-                  debug(logPrefix + "Failed to handle img key: " + imgKey)
-                  val formWithError = formBinded.withError(AD_IMG_ID_K, "error.image.save")
-                  renderCreateFormWith(formWithError, catOwnerId, adnNode) map { render =>
-                    NotAcceptable(render)
-                  }
-                }
+            bc.saveImgs(newImgs = bim, oldImgs = Map.empty) flatMap { savedImgs =>
+              mmad.producerId = adnId
+              mmad.imgs = savedImgs
+              // Сохранить изменения в базу
+              mmad.save.map { adId =>
+                Redirect(routes.MarketLkAdn.showAdnNode(adnId, newAdId = Some(adId)))
+                  .flashing("success" -> "Рекламная карточка создана.")
               }
             }
           }
@@ -214,12 +196,10 @@ object MarketAd extends SioController with LogoSupport {
   def editAd(adId: String) = IsAdEditor(adId).async { implicit request =>
     import request.mad
     // TODO Бывают карточки без картинки. Нужно вынести маппинги на block-уровень.
-    val imgIdKey = OrigImgIdKey(mad.imgOpt.get.id)
-    //val anmt = request.producer.adn.memberType
     val formFilledOpt = mad.offers.headOption map { offer =>
       val blockConf: BlockConf = BlocksConf.apply(mad.blockMeta.blockId)
       val form0 = getAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
-      form0 fill ((imgIdKey, mad, mad))
+      form0 fill ((mad, mad.imgs))
     }
     formFilledOpt match {
       case Some(formFilled) =>
@@ -243,42 +223,20 @@ object MarketAd extends SioController with LogoSupport {
   def editAdSubmit(adId: String) = IsAdEditor(adId).async(parse.urlFormEncoded) { implicit request =>
     import request.mad
     detectAdnAdForm(request.producer.adn.memberType) match {
-      case Right((formMode, formM)) =>
+      case Right((bc, formM)) =>
         val formBinded = formM.bindFromRequest()
         formBinded.fold(
           {formWithErrors =>
             debug(s"editShopAdSubmit($adId): Failed to bind form: " + formWithErrors.errors)
             renderFailedEditFormWith(formWithErrors)
           },
-          {case (iik, logoImgIdOpt, mad2) =>
-            // Надо обработать вторичный логотип, который приходит в составе формы. Это можно делать независимо от самой MMartAd.
-            // Если выставлен tmp-логотип, то надо запустить обновление mshop.
-            import mad.producerId
-            val updateLogoFut = ImgFormUtil.updateOrigImg(needImgs = logoImgIdOpt, oldImgs = mad.logoImgOpt)
-            updateLogoFut onComplete entityLogoUpdatePf("ad", adId)
-            // TODO Проверить категорию.
-            // TODO И наверное надо проверить shopId-существование в исходной рекламе.
-            ImgFormUtil.updateOrigImg(
-              needImgs = Some(ImgInfo4Save(iik)),
-              oldImgs  = mad.imgOpt
-            ) flatMap { savedImgs =>
-              updateLogoFut flatMap { savedLogos =>
-                // В списке сохраненных id картинок либо 1 либо 0 картинок.
-                if (!savedImgs.isEmpty) {
-                  mad.imgOpt = savedImgs.headOption
-                  mad.logoImgOpt = savedLogos.headOption
-                  importFormAdData(oldMad = mad, newMad = mad2)
-                  mad.save.map { _ =>
-                    Redirect(routes.MarketLkAdn.showAdnNode(producerId))
-                      .flashing("success" -> "Изменения сохранены")
-                  }
-
-                } else {
-                  // Не удалось обработать картинку. Вернуть форму назад
-                  debug(s"editShopAdSubmit($adId): Failed to update iik = " + iik)
-                  val formWithError = formBinded.withError(AD_IMG_ID_K, "error.image.save")
-                  renderFailedEditFormWith(formWithError)
-                }
+          {case (mad2, bim) =>
+            bc.saveImgs(newImgs = bim, oldImgs = mad.imgs) flatMap { imgsSaved =>
+              mad.imgs = imgsSaved
+              importFormAdData(oldMad = mad, newMad = mad2)
+              mad.save.map { _ =>
+                Redirect(routes.MarketLkAdn.showAdnNode(mad.producerId))
+                  .flashing("success" -> "Изменения сохранены")
               }
             }
           }
@@ -371,12 +329,12 @@ object MarketAd extends SioController with LogoSupport {
   /** Детектор получателей рекламы. Заглядывает к себе и к прямому родителю, если он указан. */
   private def detectReceivers(producer: MAdnNode): Future[Receivers_t] = {
     val supRcvrIdsFut: Future[Seq[String]] = producer.adn.supId
-      . map { supId =>
-      MAdnNodeCache.getByIdCached(supId)
-        .map { _.filter(_.adn.isReceiver).map(_.idOrNull).toSeq }
-    } getOrElse {
-      Future successful Nil
-    }
+      .map { supId =>
+        MAdnNodeCache.getByIdCached(supId)
+          .map { _.filter(_.adn.isReceiver).map(_.idOrNull).toSeq }
+      } getOrElse {
+        Future successful Nil
+      }
     val selfRcvrIds: Seq[String] = Some(producer)
       .filter(_.adn.isReceiver)
       .map(_.idOrNull)
@@ -395,19 +353,17 @@ object MarketAd extends SioController with LogoSupport {
   private val martCatIdKM = CAT_ID_K -> userCatIdOptM
   /** Генератор форм добавления/редактирования рекламиры в ТЦ в зависимости от вкладок.
     * Категория не обязательная, логотип от ТЦ. */
-  private def getMartAdFormM(blockM: Mapping[BlockData]): AdFormM = Form(tuple(
-    AD_IMG_ID_K -> imgIdJpegM,
-    ad2ndLogoImgIdOptKM,
+  private def getMartAdFormM(blockM: Mapping[BlockMapperResult]): AdFormM = Form(
     "ad" -> mapping(
       martCatIdKM,
       OFFER_K -> blockM
     )(adFormApply)(adFormUnapply)
-  ))
+  )
 
 
   // ============================== common-методы =================================
 
-  private def getAdFormM(anmt: AdNetMemberType, blockM: Mapping[BlockData]): AdFormM = {
+  private def getAdFormM(anmt: AdNetMemberType, blockM: Mapping[BlockMapperResult]): AdFormM = {
     import AdNetMemberTypes._
     anmt match {
       case SHOP | RESTAURANT      => getShopAdFormM(blockM)
@@ -423,7 +379,7 @@ object MarketAd extends SioController with LogoSupport {
    */
   // TODO Дедублицировать с MML.handleMartTempLogo
   def handleAdTempLogo = IsAuth(parse.multipartFormData) { implicit request =>
-    handleLogo(AdLogoImageUtil, AD_TEMP_LOGO_MARKER)
+    _handleTempImg(AdLogoImageUtil, Some(AD_TEMP_LOGO_MARKER))
   }
 
 
@@ -452,13 +408,6 @@ object MarketAd extends SioController with LogoSupport {
       case Some(catId) => nearCatsList(catOwnerId=catOwnerId, catId=catId)
       case None => topCatsAsAcc(catOwnerId)
     }
-  }
-
-
-  /** Логгинг для результатов асинхронного обновления логотипов. */
-  private def entityLogoUpdatePf(ent: String, entId: String): PartialFunction[Try[_], Unit] = {
-    case Success(_)  => trace(s"Logo for $ent=$entId updated ok")
-    case Failure(ex) => error(s"Cannot update logo for $ent=$entId", ex)
   }
 
 

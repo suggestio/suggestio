@@ -8,7 +8,7 @@
   <div class="preview" id="welcomeAdPreview">
     @* Данные по картинке загруженной. *@
     @defining(mf("welcomeImgId").value) { imgIdOpt =>
-      @defining(welcomeAdOpt.flatMap(_.imgOpt).map(_.id)) { welcomeAdIdOpt =>
+      @defining(welcomeAdOpt.flatMap(_.imgs.headOption).map(_._2.id)) { welcomeAdIdOpt =>
         <input class="image-key" type="hidden" name="welcomeImgId" value="@welcomeAdIdOpt"/>
         <img class="image-preview" width="59" src="@welcomeAdIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {@routes.Assets.at("images/market/lk/empty-image.gif")}" />
       }

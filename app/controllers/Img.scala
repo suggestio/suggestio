@@ -25,7 +25,7 @@ import scala.concurrent.Future
  * Изначально контроллер служил только для превьюшек картинок, и назывался "Thumb".
  */
 
-object Img extends SioController with PlayMacroLogsImpl {
+object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
 
   import LOGGER._
 
@@ -119,29 +119,7 @@ object Img extends SioController with PlayMacroLogsImpl {
   /** Загрузка сырой картинки для дальнейшей базовой обработки (кадрирования).
     * Картинка загружается в tmp-хранилище, чтобы её можно было оттуда оперативно удалить и иметь реалтаймовый доступ к ней. */
   def handleTempImg = IsAuth(parse.multipartFormData) { implicit request =>
-    request.body.file("picture") match {
-      case Some(pictureFile) =>
-        val fileRef = pictureFile.ref
-        val srcFile = fileRef.file
-        val mptmp = MPictureTmp.getForTempFile(fileRef)
-        try {
-          OrigImageUtil.convert(srcFile, mptmp.file)
-          Ok(jsonTempOk(mptmp.filename))
-
-        } catch {
-          case ex: Throwable =>
-            debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
-            val reply = jsonImgError("Unsupported picture format.")
-            BadRequest(reply)
-
-        } finally {
-          srcFile.delete()
-        }
-
-      case None =>
-        val reply = jsonImgError("Picture not found in request.")
-        NotAcceptable(reply)
-    }
+    _handleTempImg(OrigImageUtil, marker = None)
   }
 
   /** Раздавалка картинок, созданных в [[handleTempImg]]. */

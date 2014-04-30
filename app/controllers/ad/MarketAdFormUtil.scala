@@ -9,6 +9,8 @@ import play.api.Play.current
 import AOTextAlignValues.TextAlignValue
 import io.suggest.ym.parsers.Price
 import io.suggest.ym.model.common
+import util.blocks.BlocksUtil.BlockImgMap
+import util.blocks.BlockMapperResult
 
 /**
  * Suggest.io
@@ -18,7 +20,8 @@ import io.suggest.ym.model.common
  */
 object MarketAdFormUtil {
 
-  type AdFormM = Form[(ImgIdKey, LogoOpt_t, MAd)]
+  type AdFormMResult = (MAd, BlockImgMap)
+  type AdFormM = Form[AdFormMResult]
 
   type FormDetected_t = Option[(AdOfferType, AdFormM)]
 
@@ -103,19 +106,22 @@ object MarketAdFormUtil {
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  def adFormApply(userCatId: Option[String], bd: BlockData): MAd = {
-    MAd(
+  def adFormApply(userCatId: Option[String], bmr: BlockMapperResult): AdFormMResult = {
+    val mad = MAd(
       producerId  = null,
-      offers      = bd.offers,
-      blockMeta   = bd.blockMeta,
-      imgOpt         = null,
+      offers      = bmr.bd.offers,
+      blockMeta   = bmr.bd.blockMeta,
+      imgs        = null,
       userCatId   = userCatId
     )
+    mad -> bmr.bim
   }
 
   /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
-  def adFormUnapply(mmad: MAd): Option[(Option[String], BlockData)] = {
-    Some((mmad.userCatId, mmad))
+  def adFormUnapply(applied: AdFormMResult): Option[(Option[String], BlockMapperResult)] = {
+    val mad = applied._1
+    val bmr = BlockMapperResult(mad, applied._2)
+    Some( (mad.userCatId, bmr) )
   }
 
 

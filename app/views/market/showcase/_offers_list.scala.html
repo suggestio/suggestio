@@ -1,4 +1,4 @@
-@(mmart: MAdnNode, ads: Seq[MAdT], shops: Map[String, MAdnNode],isNav:Boolean=false,isIndex:Boolean=false)(implicit ctx: util.Context)
+@(mmart: MAdnNode, ads: Seq[MAdT], shops: Map[String, MAdnNode], isNav:Boolean=false, isIndex:Boolean=false)(implicit ctx: util.Context)
 @if(ads.isEmpty) {
   @* рекламы в ТЦ нет *@
 } else {

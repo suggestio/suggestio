@@ -51,9 +51,10 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     }})
 
   val LOGO_IMG_ID_K = "logoImgId"
-  /** Генератор logo-маппингов. */
-  def getLogoKM(errorMsg: String, marker: String): (String, Mapping[LogoOpt_t]) = {
-    val imgIdM = ImgFormUtil.imgIdM
+
+  /** Изображение, промаркированное известным маркером, либо уже сохранённый orig. */
+  def imgIdMarkedM(errorMsg: String, marker: String): Mapping[ImgIdKey] = {
+    imgIdM
       .verifying(errorMsg, { iik => iik match {
         case tiik: TmpImgIdKey =>
           val m = tiik.mptmpOpt.get.markerOpt
@@ -61,6 +62,11 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
         case _ => true
       }})
+  }
+
+  /** Генератор logo-маппингов. */
+  def getLogoKM(errorMsg: String, marker: String): (String, Mapping[LogoOpt_t]) = {
+    val imgIdM = imgIdMarkedM(errorMsg, marker = marker)
     val logoImgInfoM = ImgFormUtil.logoImgIdM(imgIdM)
     LOGO_IMG_ID_K -> optional(logoImgInfoM)
   }

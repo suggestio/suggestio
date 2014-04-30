@@ -127,6 +127,8 @@ package object models {
 
   type BlockFieldT          = util.blocks.BlockFieldT
   type BfInt                = util.blocks.BfInt
-  type BfString             = util.blocks.BfString
+  type BfText               = util.blocks.BfText
   type BfPrice              = util.blocks.BfPrice
+  type BfString             = util.blocks.BfString
+  type BfImage              = util.blocks.BfImage
 }

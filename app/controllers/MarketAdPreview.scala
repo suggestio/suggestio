@@ -16,6 +16,8 @@ import io.suggest.ym.parsers.Price
 import io.suggest.model.MUserImgMetadata
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
+import util.blocks.BlockMapperResult
+import io.suggest.ym.model.common.EMImg.Imgs_t
 
 /**
  * Suggest.io
@@ -25,7 +27,7 @@ import MarketAdFormUtil._
  * для обновления рекламной карточки в реальном времени.
  */
 
-object MarketAdPreview extends SioController with PlayMacroLogsImpl {
+object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImgSupport {
   import LOGGER._
 
   /** Объект, содержащий дефолтовые значения для preview-формы. Нужен для возможности простого импорта значений
@@ -55,17 +57,12 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
 
   private val prevCatIdKM = CAT_ID_K -> optional(userCatIdM)
   /** Генератор preview-формы. Форма совместима с основной формой, но более толерантна к исходным данным. */
-  private def getPreviewAdFormM(blockM: Mapping[BlockData]): AdFormM = Form(tuple(
-    AD_IMG_ID_K -> default(
-      mapping = imgIdJpegM,
-      value = OrigImgIdKey(PreviewFormDefaults.IMG_ID)
-    ),
-    LOGO_IMG_ID_K -> optional(ImgFormUtil.logoImgIdM(imgIdM)),
+  private def getPreviewAdFormM(blockM: Mapping[BlockMapperResult]): AdFormM = Form(
     "ad" -> mapping(
       prevCatIdKM,
       OFFER_K -> blockM
     )(adFormApply)(adFormUnapply)
-  ))
+  )
 
   private def detectAdPreviewForm(implicit request: Request[collection.Map[String, Seq[String]]]) = {
     getAdPreviewForm(request.body)
@@ -82,8 +79,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
         val blockId: Int = reqBody.get("ad.offer.blockId")
           .getOrElse(Nil)
           .headOption
-          .map(_.toInt)
-          .getOrElse(1)
+          .fold(1)(_.toInt)
         val blockConf: BlockConf = BlocksConf(blockId)
         blockConf -> getPreviewAdFormM(blockConf.strictMapping)
     } match {
@@ -109,20 +105,26 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
             debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))
             NotAcceptable("Preview form bind failed.")
           },
-          {case (iik, logoOpt, mad) =>
+          {case (mad, bim) =>
             val fallbackLogoOptFut: Future[Option[MImgInfo]] = {
               MAdnNodeCache.maybeGetByIdCached(adnNode.adn.supId) map { parentAdnOpt =>
                 parentAdnOpt.flatMap(_.logoImgOpt)
               }
             }
-            val imgMetaFut = previewPrepareImgMeta(iik)
-            mad.logoImgOpt = logoOpt
+            val imgsFut: Future[Imgs_t] = Future.traverse(bim) {
+              case (k, iik) =>
+                previewPrepareImgMeta(iik) map { imgMetaOpt =>
+                  k -> MImgInfo(iik.key, meta = imgMetaOpt)
+                }
+            } map {
+              _.toMap
+            }
             mad.producerId = adnId
             for {
-              imgMeta <- imgMetaFut
+              imgs <- imgsFut
               fallbackLogoOpt <- fallbackLogoOptFut
             } yield {
-              mad.imgOpt = Some(MImgInfo(iik.key, meta = imgMeta))
+              mad.imgs = imgs
               Ok(_single_offer(mad, adnNode, fallbackLogo = fallbackLogoOpt ))
             }
           }
@@ -168,6 +170,18 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
 
       case Left(formWithErrors) =>
         Ok(views.html.blocks.editor._blockEditorTpl(formWithErrors))
+    }
+  }
+
+
+  /** Подготовка картинки, которая загружается в динамическое поле блока. */
+  def prepareBlockImg(blockId: Int, fn: String) = IsAuth.apply(parse.multipartFormData) { implicit request =>
+    val bc = BlocksConf(blockId)
+    bc.blockFieldForName(fn) match {
+      case Some(bfi: BfImage) =>
+        _handleTempImg(bfi.imgUtil, Some(bfi.marker))
+
+      case _ => NotFound
     }
   }
 

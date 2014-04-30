@@ -24,13 +24,14 @@ import play.api.mvc.Result
  * узлов делают те или иные действия.
  * Супервайзер ресторанной сети и ТЦ имеют одну форму и здесь обозначаются как "узлы-лидеры".
  */
-object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSupport {
+object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImgSupport {
 
   import LOGGER._
 
   /** Маркер картинки для использования в качестве логотипа. */
   val LEADER_TMP_LOGO_MARKER = "leadLogo"
 
+  val WELCOME_IMG_KEY = "wlcm"
 
   /** Страница с формой редактирования узла рекламной сети. Функция смотрит тип узла и рендерит ту или иную страницу. */
   def editAdnNode(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
@@ -64,9 +65,9 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSup
     request.adnNode.adn.memberType match {
       // TODO Может пора выпилить это разделение на сущности?
       case MART | RESTAURANT_SUP | RESTAURANT =>
-        handleLogo(MartLogoImageUtil, LEADER_TMP_LOGO_MARKER)
+        _handleTempImg(MartLogoImageUtil, Some(LEADER_TMP_LOGO_MARKER))
       case SHOP =>
-        handleLogo(ShopLogoImageUtil, MarketShopLk.SHOP_TMP_LOGO_MARKER)
+        _handleTempImg(ShopLogoImageUtil, Some(MarketShopLk.SHOP_TMP_LOGO_MARKER))
     }
   }
 
@@ -118,7 +119,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSup
       val martLogoOpt = adnNode.logoImgOpt.map { img =>
         ImgInfo4Save(imgInfo2imgKey(img))
       }
-      val welcomeImgKey = welcomeAdOpt.flatMap { _.imgOpt }.map[OrigImgIdKey] { img => img }
+      val welcomeImgKey = welcomeAdOpt.flatMap { _.imgs.headOption }.map[OrigImgIdKey] { img => img._2 }
       val formFilled = martFormM.fill((adnNode.meta, welcomeImgKey, martLogoOpt))
       Ok(leaderEditFormTpl(adnNode, formFilled, welcomeAdOpt))
     }
@@ -144,7 +145,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSup
         val savedWelcomeImgsFut: Future[_] = getWelcomeAdOpt(adnNode) flatMap { welcomeAdOpt =>
           ImgFormUtil.updateOrigImg(
             needImgs = welcomeImgOpt.map(ImgInfo4Save(_, withThumb = false)),
-            oldImgs = welcomeAdOpt.flatMap(_.imgOpt)
+            oldImgs = welcomeAdOpt.flatMap(_.imgs.headOption).map(_._2)
           ) flatMap { savedImgs =>
             savedImgs.headOption match {
               // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
@@ -156,12 +157,13 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSup
 
               // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
               case newImgInfoOpt @ Some(newImgInfo) =>
+                val imgs = Map(WELCOME_IMG_KEY -> newImgInfo)
                 val welcomeAd = welcomeAdOpt
                   .map { welcomeAd =>
-                  welcomeAd.imgOpt = newImgInfoOpt
+                  welcomeAd.imgs = imgs
                   welcomeAd
                 } getOrElse {
-                  MWelcomeAd(producerId = adnNode.id.get, imgOpt = newImgInfoOpt)
+                  MWelcomeAd(producerId = adnNode.id.get, imgs = imgs)
                 }
                 welcomeAd.save andThen {
                   case Success(welcomeAdId) =>
