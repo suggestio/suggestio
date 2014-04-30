@@ -290,7 +290,16 @@ siomart =
     nav_pointer_size : 8
     nav_pointer_margin : 6
 
+    show_block_by_index : ( block_index ) ->
+      this.active_block_dom.style.display = 'none'
+      siomart.utils.removeClass this.active_block_dom, 'double-size'
+
+      this.show_block this.sm_blocks[block_index]
+
     show_block : ( sm_block ) ->
+
+      sm_block.style.display = 'block'
+      this.active_block_dom = sm_block
 
       cw = sm_block.offsetWidth
       ch = sm_block.offsetHeight
@@ -302,22 +311,26 @@ siomart =
 
       if cbca_grid.ww > 600
         this._block_container.style.width = cw*2 + 'px'
+        console.log cw*2 + 'px'
       else
         this._block_container.style.width = cw + 'px'
 
     init : () ->
+
       this._block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
       this._container = siomart.utils.ge('sioMartNodeOffers')
 
       this._container_nav = siomart.utils.ge_class this._container, 'js-popup-nav'
       this._container_nav = this._container_nav[0]
 
-      sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
+      this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
+
       nav_pointers_html = ''
 
       for sm_block,i in sm_blocks
         if i == 0
           this.show_block sm_block
+          this.active_block_dom = sm_block
 
         if i == 0
           _nav_pointer_class = 'sm-nav-block__pointer sm-nav-block__pointer_active'
@@ -326,7 +339,7 @@ siomart =
         else
           _nav_pointer_class = 'sm-nav-block__pointer'
 
-        nav_pointers_html += '<div class="' + _nav_pointer_class + '"></div>'
+        nav_pointers_html += '<div onclick="siomart.node_offers_popup.show_block_by_index(\'' + i + '\');" class="' + _nav_pointer_class + '"></div>'
 
       this._container_nav.innerHTML = nav_pointers_html
       this._container_nav.style.width = this.nav_pointer_size * sm_blocks.length + this.nav_pointer_margin * sm_blocks.length - this.nav_pointer_margin + 'px'
