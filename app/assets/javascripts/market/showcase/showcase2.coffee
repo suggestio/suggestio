@@ -286,6 +286,10 @@ siomart =
 
   node_offers_popup :
 
+    nav_pointer_class : 'sm-nav-block__pointer'
+    nav_pointer_size : 8
+    nav_pointer_margin : 6
+
     show_block : ( sm_block ) ->
 
       cw = sm_block.offsetWidth
@@ -305,11 +309,27 @@ siomart =
       this._block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
       this._container = siomart.utils.ge('sioMartNodeOffers')
 
+      this._container_nav = siomart.utils.ge_class this._container, 'js-popup-nav'
+      this._container_nav = this._container_nav[0]
+
       sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
+      nav_pointers_html = ''
 
       for sm_block,i in sm_blocks
         if i == 0
           this.show_block sm_block
+
+        if i == 0
+          _nav_pointer_class = 'sm-nav-block__pointer sm-nav-block__pointer_active'
+        else if i == sm_blocks.length-1
+          _nav_pointer_class = 'sm-nav-block__pointer sm-nav-block__pointer_no-margin'
+        else
+          _nav_pointer_class = 'sm-nav-block__pointer'
+
+        nav_pointers_html += '<div class="' + _nav_pointer_class + '"></div>'
+
+      this._container_nav.innerHTML = nav_pointers_html
+      this._container_nav.style.width = this.nav_pointer_size * sm_blocks.length + this.nav_pointer_margin * sm_blocks.length - this.nav_pointer_margin + 'px'
 
       siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), 'click', siomart.close_node_offers_popup
 
