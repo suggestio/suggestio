@@ -1,4 +1,4 @@
-@(bd: BlockData, isStandalone: Boolean)(implicit ctx: util.Context)
+@(mad: MAdT, isStandalone: Boolean)(implicit ctx: util.Context)
 
 @* Блок верстки на базе milano/block-1.html *@
 @import ctx._
@@ -6,14 +6,13 @@
 @import util.TplDataFormatUtil._
 
 @blockBase(isStandalone) {
-  @defining(bd.blockMeta.height) { blockHeight =>
 
-    <div class="sm-block height-@blockHeight sio-mart__single-offer sm-block-tpl1" data-width="300" data-height="@blockHeight">
+    <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl1" data-width="300" data-height="@mad.blockMeta.height">
 
       <img class="bg" src="@routes.Assets.at("images/block-ad-sample-image.jpg")" alt="SALE"/>
 
       <div class="info">
-        @bd.offers.headOption.map { offer =>
+        @mad.offers.headOption.map { offer =>
           <div class="title">@offer.text1.map { text1 => @Html(text1.value) }.getOrElse {
             Opaque nature<br/>Корректирующее платье
           }</div>
@@ -30,5 +29,4 @@
 
     </div>
 
-  }
 }

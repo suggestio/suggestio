@@ -21,14 +21,14 @@ object BlocksConf extends Enumeration {
   /** Всё описание блока идёт через наследование Val. */
   protected abstract class Val(id: Int, name: String) extends super.Val(id, name) {
     /** Шаблон для рендера. */
-    def template: Template3[BlockData, Boolean, Context, HtmlFormat.Appendable]
+    def template: Template3[MAdT, Boolean, Context, HtmlFormat.Appendable]
 
     /** Набор маппингов для обработки данных от формы. */
     def strictMapping: Mapping[BlockData]
 
     /** Более удобный интерфейс для метода template.render(). */
-    def renderBlock(bm: BlockData, isStandalone: Boolean)(implicit ctx: Context) = {
-      template.render(bm, isStandalone, ctx)
+    def renderBlock(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context) = {
+      template.render(mad, isStandalone, ctx)
     }
 
     /**
@@ -150,11 +150,4 @@ object BlocksConf extends Enumeration {
     }
   }
 
-
-  def renderBlockMap(bm: BlockData, isStandalone: Boolean)(implicit ctx: Context) = {
-    val blockId = BlocksUtil.extractBlockId(bm)
-    val blockConf = apply(blockId)
-    blockConf.renderBlock(bm, isStandalone)
-  }
-  
 }

@@ -3,14 +3,6 @@
 @import util.TplDataFormatUtil._
 @import AdNetMemberTypes.MART
 
-  @*ad.panel.map { panelSettings =>
-    <div class="offer-header" style="background-color: #@panelSettings.color">
-      @producer.logoImgOpt.orElse(fallbackLogo).map { logoImg =>
-        <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)"/>
-      }
-    </div>
-  }*@
-
   @*ad.logoImgOpt.map { logoImg =>
     <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)" alt=""/>
   }*@
