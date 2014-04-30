@@ -274,7 +274,7 @@ siomart =
 
       siomart.utils.ge('smCategoriesScreen').style.display = 'none'
 
-      siomart.init_node_offers_popup()
+      siomart.node_offers_popup.init()
 
 
   close_node_offers_popup : ( event ) ->
@@ -283,29 +283,35 @@ siomart =
     siomart.utils.ge('sioMartNodeOffersRoot').style.display = 'none'
     event.preventDefault()
 
-  init_node_offers_popup : () ->
 
-    _container = siomart.utils.ge('sioMartNodeOffers')
-    _block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
+  node_offers_popup :
 
-    sm_block = siomart.utils.ge_class _container, 'sm-block'
-    sm_block = sm_block.pop()
+    show_block : ( sm_block ) ->
 
-    cw = sm_block.offsetWidth
-    ch = sm_block.offsetHeight
+      cw = sm_block.offsetWidth
+      ch = sm_block.offsetHeight
 
-    if cbca_grid.ww > 600
-      #sm_block.style.width = cw*2 + 'px'
-      #sm_block.style.height = ch*2 + 'px'
-      siomart.utils.addClass sm_block, 'double-size'
+      if cbca_grid.ww > 600
+        #sm_block.style.width = cw*2 + 'px'
+        #sm_block.style.height = ch*2 + 'px'
+        siomart.utils.addClass sm_block, 'double-size'
 
-    if cbca_grid.ww > 600
-      _block_container.style.width = cw*2 + 'px'
-    else
-      _block_container.style.width = cw + 'px'
+      if cbca_grid.ww > 600
+        this._block_container.style.width = cw*2 + 'px'
+      else
+        this._block_container.style.width = cw + 'px'
 
+    init : () ->
+      this._block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
+      this._container = siomart.utils.ge('sioMartNodeOffers')
 
-    siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), 'click', siomart.close_node_offers_popup
+      sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
+
+      for sm_block,i in sm_blocks
+        if i == 0
+          this.show_block sm_block
+
+      siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), 'click', siomart.close_node_offers_popup
 
 
   ######################################
