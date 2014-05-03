@@ -14,16 +14,18 @@
 
       <div class="info">
         @mad.offers.headOption.map { offer =>
-          <div class="title">@offer.text1.map { text1 => @Html(text1.value) }.getOrElse {
-            Opaque nature<br/>Корректирующее платье
-          }</div>
+          @offer.text1.map { title =>
+            <div class="title" style="color: #@title.font.color;">@title.value</div>
+          }.getOrElse {
+            <div class="title">Opaque nature<br/>Корректирующее платье</div>
+          }
 
           @offer.oldPrice.map { oldPrice =>
-            <div class="old-price">@formatPrice(oldPrice.value, oldPrice.currency)</div>
+            <div class="old-price" style="color: #@oldPrice.font.color;">@formatPrice(oldPrice.value, oldPrice.currency)</div>
           }
 
           @offer.price.map { price =>
-            <div class="price">@formatPrice(price.value, price.currency)</div>
+            <div class="price" style="color: #@price.font.color">@formatPrice(price.value, price.currency)</div>
           }
         }
       </div>

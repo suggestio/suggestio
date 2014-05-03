@@ -46,6 +46,7 @@ blocks.field.price=Цена
 blocks.field.oldPrice=Старая цена
 blocks.field.height=Высота блока
 blocks.field.title=Заголовок
+blocks.field.bgImg=Фоновое изображение
 
 lk.sl.enable_ad=Включить объявление
 lk.sl.d=Выводить в моём каталоге

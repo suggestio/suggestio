@@ -2,14 +2,16 @@
 
 @import ctx._
 
-<label>@Messages(bc.i18nLabelOf(bf.name))</label>
+<label class="ad-block-editor__fieldset_label">@Messages(bc.i18nLabelOf(bf.name))</label>
 
-<div class="vertical-change">
-  <div id="blockHeightCells" class="value"></div>
-  <div class="plus block-height-change-button" data-change-direction="increase"></div>
-  <div class="minus bot block-height-change-button" data-change-direction="decrease"></div>
-</div>
+<div class="block-height-controller">
 
-@defining( af("bfNameBase") ) { formField =>
+  <div class="block-height-controller__button" data-change-direction="decrease"><div></div></div>
+  <div class="block-height-controller__button" data-change-direction="increase"><div></div></div>
+
+
+  @defining( af("bfNameBase") ) { formField =>
   <input type="hidden" name="@formField.name" value="@formField.value.orElse(bf.defaultValue)" data-min-value="@bf.minValue" data-max-value="@bf.maxValue"/>
-}
+  }
+
+</div>
