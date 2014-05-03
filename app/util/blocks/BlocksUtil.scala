@@ -211,11 +211,11 @@ case class BfText(
 ) extends BlockFieldT {
   override type T = AOStringField
 
-  def strTransformF = strTrimSanitizeLowerF
+  def strTransformF = strTrimSanitizeF
 
   override val mappingBase: Mapping[T] = {
     val m0 = text(minLength = minLen, maxLength = maxLen)
-      .transform(strTrimSanitizeLowerF, strIdentityF)
+      .transform(strTrimSanitizeF, strIdentityF)
     MarketAdFormUtil.mmaStringFieldM(m0)
   }
 
@@ -248,7 +248,7 @@ case class BfString(
   def fallbackValue = "example"
 
   override type T = String
-  def strTransformF = strTrimSanitizeLowerF
+  def strTransformF = strTrimSanitizeF
 
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
     field.renderEditorField(this, bfNameBase, af, bc)

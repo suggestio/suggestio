@@ -1,0 +1,13 @@
+@(colorField: Field)(implicit ctx: util.Context)
+
+@* Селектор цветов для различных полей формы. *@
+@import ctx._
+
+@defining( colorField.value.getOrElse("FFFFFF") ) { colorValue =>
+<div class="lk-color-select">
+  <label>@Messages("Color"):</label>
+  <div class="color custom" style="background-color: #@colorValue;">&nbsp;
+    <input type="hidden" name="@colorField.name" value="@colorValue"/>
+  </div>
+</div>
+}

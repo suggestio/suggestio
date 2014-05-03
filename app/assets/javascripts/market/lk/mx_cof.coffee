@@ -642,6 +642,8 @@ market =
   ##############################
   ad_form :
 
+    preview_request_delay : 300
+
     request_block_preview : () ->
       action = $('.js-ad-block-preview-action').val()
 
@@ -652,8 +654,21 @@ market =
         success : ( data ) ->
           $('#adFormBlockPreview').html data
 
+    queue_block_preview_request : () ->
+      
+      if typeof this.block_preview_request_timer != 'undefined'
+        clearTimeout this.block_preview_request_timer
+      
+      this.block_preview_request_timer = setTimeout market.ad_form.request_block_preview, this.preview_request_delay
+
+    init_block_editor : () ->
+      $('.js-input-w-block-preview').bind 'keyup', () ->
+        market.ad_form.queue_block_preview_request()
+
     init : () ->
+
       this.request_block_preview()
+      this.init_block_editor()
       $('#adFormBlocksList div').bind 'click', () ->
         block_id = $(this).attr 'data-block-id'
         block_editor_action = $('#adFormBlocksList .block-editor-action').val()
@@ -666,6 +681,7 @@ market =
           data : $('#promoOfferForm').serialize()
           success : ( data ) ->
             $('#adFormBlockEditor').html data
+            market.ad_form.init_block_editor()
             market.ad_form.request_block_preview()
 
 
