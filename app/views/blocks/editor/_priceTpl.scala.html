@@ -1,14 +1,17 @@
 @(bf: BfPrice, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
 
-@*import util.TplDataFormatUtil._ *@
-@import market.lk.ad._selectColorTpl
+@content = {
 
-@_textInputBaseTpl(bf, bc) {
   @defining( af(bfNameBase + ".value") ) { pvf =>
-    <div class="lk-text-field">
-      <div><input name="@pvf.name" class="js-input-w-block-preview" type="text" value="@pvf.value" /></div>
-    </div>
-    @_selectColorTpl(af(bfNameBase + ".color"))
+  <div class="lk-text-field">
+    <div><input name="@pvf.name" class="js-input-w-block-preview" type="text" value="@pvf.value" /></div>
+  </div>
   }
 
 }
+
+@colorSelectorHtml = {
+  @_colorTpl(af(bfNameBase + ".color"))
+}
+
+@_textInputBaseTpl(bf, bc, content, colorSelectorHtml)

@@ -1,15 +1,15 @@
 @(bf: BfText, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
 
-@import market.lk.ad._selectColorTpl
-
-@_textInputBaseTpl(bf, bc) {
-
+@content = {
   @defining( af(bfNameBase + ".value") ) { ff =>
-    <div class="lk-text-field">
-      <div><textarea name="@ff.name" class="js-input-w-block-preview">@ff.value</textarea></div>
-    </div>
-
-    @_selectColorTpl(af(bfNameBase + ".color"))
-
+  <div class="lk-text-field">
+    <div><textarea name="@ff.name" class="js-input-w-block-preview">@ff.value</textarea></div>
+  </div>
   }
 }
+
+@colorSelectorHtml = {
+  @_colorTpl(af(bfNameBase + ".color"))
+}
+
+@_textInputBaseTpl(bf, bc, content, colorSelectorHtml)

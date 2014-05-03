@@ -5,9 +5,11 @@
 
 @defining( colorField.value.getOrElse("FFFFFF") ) { colorValue =>
 <div class="lk-color-select">
-  <label>@Messages("Color"):</label>
-  <div class="color custom" style="background-color: #@colorValue;">&nbsp;
+  <label class="lk-color-select__label">@Messages("Color"):</label>
+
+  <div class="lk-color-select__color" style="background-color: #@colorValue;">&nbsp;
     <input type="hidden" name="@colorField.name" value="@colorValue"/>
   </div>
+
 </div>
 }

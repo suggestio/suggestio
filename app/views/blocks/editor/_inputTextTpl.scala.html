@@ -1,8 +1,6 @@
 @(bf: BfText, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
 
-@import market.lk.ad._selectColorTpl
-
-@_textInputBaseTpl(bf, bc) {
+@content = {
 
   @defining( af(bfNameBase + ".value") ) { pvf =>
     <div class="lk-text-field">
@@ -10,6 +8,10 @@
     </div>
   }
 
-  @_selectColorTpl(af(bfNameBase + ".color"))
-
 }
+
+@colorSelectorHtml = {
+  @_colorTpl(af(bfNameBase + ".color"))
+}
+
+@_textInputBaseTpl(bf, bc, content, colorSelectorHtml)
