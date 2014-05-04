@@ -622,7 +622,6 @@ market =
 
   init_colorpickers : () ->
     $('.js-custom-color').each () ->
-
       cb = ( _this ) ->
         i = Math.random()
         _this.ColorPicker
@@ -676,18 +675,52 @@ market =
           $('#adFormBlockPreview').html data
 
     queue_block_preview_request : () ->
-      
+
       if typeof this.block_preview_request_timer != 'undefined'
         clearTimeout this.block_preview_request_timer
-      
+
       this.block_preview_request_timer = setTimeout market.ad_form.request_block_preview, this.preview_request_delay
 
     init_block_editor : () ->
+
       $('.js-input-w-block-preview').bind 'keyup', () ->
         market.ad_form.queue_block_preview_request()
 
-    init : () ->
+      $('.js-block-height-editor-button').bind 'click', () ->
 
+        _cell_size = 140
+        _cell_padding = 20
+
+        _direction = $(this).attr 'data-change-direction'
+
+        _p = $(this).parent()
+        _value_dom = _p.find('input')
+
+        _cur_value = parseInt _value_dom.val()
+        _min_value = parseInt _value_dom.attr 'data-min-value'
+        _max_value = parseInt _value_dom.attr 'data-max-value'
+
+        _cur_cells_value = Math.floor _cur_value / _cell_size
+
+        if _direction == 'decrease'
+          _cur_cells_value--
+        else
+          _cur_cells_value++
+
+        _new_value = _cur_cells_value * _cell_size + ( _cur_cells_value - 1 ) * _cell_padding
+
+        if _new_value > _max_value
+          _new_value = _max_value
+
+        if _new_value < _min_value
+          _new_value = _min_value
+
+        _value_dom.val _new_value
+
+        console.log _value_dom.val()
+        market.ad_form.queue_block_preview_request()
+
+    init : () ->
       this.request_block_preview()
       this.init_block_editor()
       $('#adFormBlocksList div').bind 'click', () ->
@@ -703,8 +736,8 @@ market =
           success : ( data ) ->
             $('#adFormBlockEditor').html data
             market.ad_form.init_block_editor()
+            market.init_colorpickers()
             market.ad_form.request_block_preview()
-
 
   init_images_upload : () ->
 
