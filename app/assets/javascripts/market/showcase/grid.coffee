@@ -27,7 +27,6 @@ cbca_grid =
     this.wh = wh
 
   set_container_size : () ->
-
     this.set_window_size()
 
     no_of_cells = Math.floor( ( this.ww - this.cell_padding ) / ( this.cell_size + this.cell_padding) )
@@ -50,15 +49,13 @@ cbca_grid =
     cw = no_of_cells * ( this.cell_size + this.cell_padding) - this.cell_padding
 
     this.max_allowed_cell_width = no_of_cells
+    this.layout_dom.style.width = cw + 'px'
 
-    #this.layout_dom.style.width = cw + 'px'
-    this.layout_dom.css
-      'width' : cw + 'px'
+    console.log cw
 
   ##############
   ## Fetch block
   ##############
-
   fetch_block : (block_max_w, tmp_block, i) ->
 
     # если элементов в grid.blocks нет – возвращаем null
@@ -79,10 +76,13 @@ cbca_grid =
 
     if w_cell_width <= block_max_w
       if w_cell_width > this.max_allowed_cell_width || w_cell_width_opened > this.max_allowed_cell_width
-        tmp_block.splice(i,1)
-        params = {'opacity':'0'}
-        params[vendor_prefix.css + 'transform'] = 'translate3d(-1000px, 0px,0)'
-        $('#elt' + b.id ).css params
+        tmp_block.splice i,1
+
+        _elt = siomart.utils.ge 'elt' + b.id
+
+        _elt.style.opacity = 0
+        _elt.style[vendor_prefix.css + 'transform'] = 'translate3d(-1000px, 0px,0)'
+
         return this.fetch_block(block_max_w, tmp_block, i+1 )
       else
         tmp_block.splice(i,1)
@@ -91,9 +91,11 @@ cbca_grid =
         return b
     else
       if w_cell_width > this.max_allowed_cell_width || w_cell_width_opened > this.max_allowed_cell_width
-        params = {'opacity':'0'}
-        params[vendor_prefix.css + 'transform'] = 'translate3d(-1000px, 0px,0)'
-        $('#elt' + b.id ).css params
+
+        _elt = siomart.utils.ge 'elt' + b.id
+
+        _elt.style.opacity = 0
+        _elt.style[vendor_prefix.css + 'transform'] = 'translate3d(-1000px, 0px,0)'
         tmp_block.splice(i,1)
 
       return this.fetch_block(block_max_w, tmp_block, i+1 )
@@ -108,7 +110,7 @@ cbca_grid =
       i = 0
 
     b = tmp_spacer[i]
-    b.block.show()
+    b.block.style.display = 'block'
     return b
 
   ######################
@@ -147,29 +149,28 @@ cbca_grid =
 
   init_single_block : ( block_id ) ->
 
-    params =
-      'opacity' : '1'
+    _elt = siomart.utils.ge 'elt' + block_id
 
-    $('#elt' + block_id).addClass "animated-block"
-    $('#elt' + block_id).css params
+    siomart.utils.addClass _elt, 'animated-block'
+    _elt.style.opacity = 1
 
   deactivate_block : ( block_id, target_opacity ) ->
 
-    block = $('#' + block_id)
+    block = siomart.utils.ge block_id
 
-    block.css({'opacity':target_opacity})
+    block.style.opacity = target_opacity
 
-    if block.hasClass "active-block"
-      block.removeClass "active-block"
-      block_js_class = block.attr "data-js-class"
+    if siomart.utils.is_array block.className.match /active-block/g
+      siomart.utils.removeClass block, 'active-block'
+      block_js_class = block.getAttribute 'data-js-class'
 
-      bs = jQuery('.block-source', block)
+      bs = siomart.utils.ge_class block, '.block-source'
       cb2 = () ->
-        bs.css({'visibility':'hidden'})
-        block.removeClass "no-bg"
-        block.removeClass "hover"
+        bs.style['visibility'] = 'hidden'
+        siomart.utils.removeClass block, 'no-bg'
+        siomart.utils.removeClass block, 'hover'
 
-      cbca['block_desource' + block_id]= setTimeout cb2, 300
+      cbca['block_desource' + block_id] = setTimeout cb2, 300
 
       if typeof block_js_class != 'undefined'
         close_action = window[block_js_class].close_action
@@ -180,7 +181,7 @@ cbca_grid =
   is_only_spacers : () ->
 
     for b in this.blocks
-      if b.class != 'block under-construction'
+      if b.className != 'block under-construction'
         return false
 
     return true
@@ -194,15 +195,6 @@ cbca_grid =
 
     return max_h
 
-  slow_down_blocks : ( is_on ) ->
-
-    _slow_class = "slow-motion-block"
-
-    if is_on == 1
-      $('.sm-block').addClass _slow_class
-    else
-      $('.sm-block').removeClass _slow_class
-
   ##############################
   ## Find all blocks on the page
   ##############################
@@ -210,18 +202,21 @@ cbca_grid =
 
     i = 0
     ## TODO : make selector configurable
-    $('.sm-block').each () ->
-      $(this).attr "id", "elt" + i
+    for elt in siomart.utils.ge_class document, 'sm-block'
 
-      height = parseInt $(this).attr "data-height"
-      width = parseInt $(this).attr "data-width"
+      _this = elt
 
-      opened_height = parseInt $(this).attr "data-opened-height"
-      opened_width = parseInt $(this).attr "data-opened-width"
+      _this.setAttribute 'id', 'elt' + i
 
-      _class = $(this).attr "class"
-      _search_string = $(this).attr "data-search-string"
-      _is_moveable = $(this).attr "data-is-moveable" || "false"
+      height = parseInt _this.getAttribute 'data-height'
+      width = parseInt _this.getAttribute 'data-width'
+
+      opened_height = parseInt _this.getAttribute 'data-opened-height'
+      opened_width = parseInt _this.getAttribute 'data-opened-width'
+
+      _class = _this.className
+      _search_string = _this.getAttribute 'data-search-string'
+      _is_moveable = _this.getAttribute 'data-is-moveable' || 'false'
 
       block =
         'id' : i
@@ -230,7 +225,7 @@ cbca_grid =
         'opened_width' : opened_width
         'opened_height' : opened_height
         'class' : _class
-        'block' : $(this)
+        'block' : _this
         '_is_moveable' : _is_moveable
 
       i++
@@ -238,18 +233,19 @@ cbca_grid =
       cbca_grid.m_blocks = cbca_grid.blocks.slice(0)
 
     ## Загрузить спейсеры
-    $('.index-spacer').each () ->
-      $(this).attr "id", "elt" + i
+    for elt in siomart.utils.ge_class document, 'index-spacer'
+      _this = elt
+      _this.setAttribute 'id', 'elt' + i
 
-      height = parseInt $(this).attr "data-height"
-      width = parseInt $(this).attr "data-width"
+      height = parseInt _this.getAttribute 'data-height'
+      width = parseInt _this.getAttribute 'data-width'
 
-      opened_height = parseInt $(this).attr "data-opened-height"
-      opened_width = parseInt $(this).attr "data-opened-width"
+      opened_height = parseInt _this.getAttribute 'data-opened-height'
+      opened_width = parseInt _this.getAttribute 'data-opened-width'
 
-      _class = $(this).attr "class"
-      _search_string = $(this).attr "data-search-string"
-      _is_moveable = $(this).attr "data-is-moveable" || "false"
+      _class = _this.className
+      _search_string = _this.getAttribute 'data-search-string'
+      _is_moveable = _this.getAttribute 'data-is-moveable' || 'false'
 
       block =
         'id' : i
@@ -258,7 +254,7 @@ cbca_grid =
         'opened_width' : opened_width
         'opened_height' : opened_height
         'class' : _class
-        'block' : $(this)
+        'block' : _this
         '_is_moveable' : _is_moveable
 
       i++
@@ -266,12 +262,8 @@ cbca_grid =
       cbca_grid.m_spacers = cbca_grid.spacers.slice(0)
 
   init : () ->
-
-    #this.blocks_container = document.getElementById 'sioMartIndexGrid'
-    #this.layout_dom = document.getElementById 'sioMartIndexGridLayout'
-
-    this.blocks_container = $('#sioMartIndexGrid')
-    this.layout_dom = $('#sioMartIndexGridLayout')
+    this.blocks_container = document.getElementById 'sioMartIndexGrid'
+    this.layout_dom = document.getElementById 'sioMartIndexGridLayout'
 
     this.set_container_size()
     this.load_blocks()
@@ -283,155 +275,10 @@ cbca_grid =
     cbca_grid.m_blocks = cbca_grid.blocks.slice(0)
     this.build()
 
-    $('body').width "100%"
-
-  set_active_block : ( active_block ) ->
-
-    if active_block
-
-      if typeof cbca.active_block != 'undefined'
-
-        elt = $('#' + cbca.active_block)
-
-        elt_id = parseInt cbca.active_block.replace('elt','')
-
-        original_width = elt.data "original-width"
-        original_height = elt.data "original-height"
-
-        cbca.blocks[elt_id].width = original_width
-        cbca.blocks[elt_id].height =  original_height
-
-        if active_block != cbca.active_block
-          elt.css({'width' : original_width + 'px','height' : original_height + 'px','opacity':'1'})
-
-      if active_block == "resize"
-        $('.sm-block').css({'opacity' : '1'})
-        cbca.deactivate_block cbca.active_block, 1
-        delete cbca.active_block
-        #cbca.push_history_state "/"
-
-      else
-
-        if cbca.active_block == active_block
-          return false
-
-        else
-          for i in cbca.blocks
-            if 'elt' + i.id == active_block
-
-              setTimeout "cbca.scroll_to('" + active_block + "')", 600
-
-              cbca.active_block = active_block
-
-              bn = $('#elt' + i.id).data "block-name"
-              if typeof bn != 'undefined'
-                cbca.push_history_state "/b/" + bn
-              else
-                cbca.push_history_state "/"
-
-
-              $('#elt' + i.id).attr "data-original-width", cbca.blocks[_i].width
-              $('#elt' + i.id).attr "data-original-height", cbca.blocks[_i].height
-
-              opened_width = parseInt $('#elt' + i.id).attr "data-opened-width"
-              opened_height = parseInt $('#elt' + i.id).attr "data-opened-height"
-
-              cbca.blocks[_i].width = opened_width
-              cbca.blocks[_i].height = opened_height
-
-              bl = $('#elt' + i.id)
-
-              bl.addClass "active-block"
-              bl.css({'width' : opened_width + 'px','height' : opened_height + 'px','opacity':'1'})
-
-            else
-              cbca.deactivate_block 'elt' + i.id, 0.9
-
-  attach_actions : () ->
-    if ( browser.iphone || browser.ipad )
-      ## Если у нас девайс на базе iOS — использует touch события
-
-      $('.sm-block').each () ->
-
-        b = $(this)
-
-        b.bind "touchstart", ( e ) ->
-          x = e.originalEvent.touches[0].pageX
-          y = e.originalEvent.touches[0].pageY
-          cbca.touch_pos.start = {'x' : x, 'y' : y}
-
-        b.bind "touchmove", ( e ) ->
-          cbca.touch_moves++
-          x = e.originalEvent.touches[0].pageX
-          y = e.originalEvent.touches[0].pageY
-          cbca.touch_pos.end = {'x' : x, 'y' : y}
-
-        b.bind "touchend", ( e ) ->
-
-          b = $(this)
-          id = b.attr "id"
-
-          if cbca.is_locked == true
-            return false
-
-          unlock_cb = () ->
-            cbca.is_locked = false
-
-          cbca.invoke_block_class_action b, "hover_reset"
-
-          is_moveable = b.attr "data-is-moveable"
-
-          if cbca.touch_moves > 1
-
-            cbca.touch_moves = 0
-
-            if Math.abs( cbca.touch_pos.end.y - cbca.touch_pos.start.y ) > 5
-              if typeof is_moveable != 'undefined' && is_moveable == "true"
-                cbca.notification.mark_message_as_shown "moveable"
-                cbca.notification.show "second-tap"
-
-              return false
-
-          if typeof is_moveable != 'undefined' && is_moveable == "true"
-            cbca.notification.show "moveable"
-          else
-            cbca.notification.show "second-tap"
-
-          id = b.attr "id"
-
-          if !b.hasClass "hover"
-            setTimeout unlock_cb, 100
-
-            if typeof cbca.hovered != 'undefined'
-              cbca.block_unhover_action cbca.hovered
-
-            cbca.hovered = b
-            cbca.block_hover_action b
-          else
-            setTimeout unlock_cb, 300
-            if !b.hasClass "active-block"
-              cbca.block_click_action b
-            #else
-            #  b.removeClass "hover"
-            #  cbca.init "resize"
-
-    else
-      ## В противном случае — обычные
-      $('.sm-block').bind "mouseover", () ->
-        cbca.block_hover_action $(this)
-
-      $('.sm-block').bind "mouseout", () ->
-        cbca.block_unhover_action $(this)
-
-      $('.sm-block').bind "click", () ->
-        if !$(this).hasClass "active-block"
-          cbca.block_click_action $(this)
-
   build : ( active_block ) ->
 
-    $('.blocks-container').show()
-
-    this.set_active_block active_block
+    for elt in siomart.utils.ge_class document, 'blocks-container'
+      elt.style.display = 'block'
 
     blocks_length = cbca_grid.blocks.length
 
@@ -440,7 +287,7 @@ cbca_grid =
     top_pointer = 100
 
     # Определяем ширину окна
-    window_width = $(window).width()
+    window_width = this.ww
 
     # Определеяем сколько колонок влезет в экран колонок
     columns = Math.floor( ( window_width - this.cell_padding ) / ( this.cell_size + this.cell_padding) )
@@ -512,17 +359,7 @@ cbca_grid =
 
         id = b.id
 
-        params = {}
-        params[vendor_prefix.css + 'transform'] = 'translate3d(' + left + 'px, ' + top + 'px,0)'
-
-        #if !cbca.if_3d_transform_supported()
-        #  params['left'] = left + 'px'
-        #  params['top'] = top + 'px'
-
-        $('#elt' + id).css params
-
-        if !active_block
-          setTimeout "cbca_grid.init_single_block('" + id + "')", 5*i-i*3
+        siomart.utils.ge('elt' + id).style[vendor_prefix.css + 'transform'] = 'translate3d(' + left + 'px, ' + top + 'px,0)'
 
         left_pointer += b.width + this.cell_padding
         pline = cline
@@ -531,30 +368,15 @@ cbca_grid =
         cur_column++
         left_pointer += this.cell_size + this.cell_padding
 
-    ## TODO:
-    ## тут у нас есть проблема — в некоторых случаях остаются неиспользованные блоки,
-    ## надо их как-то скрывать, или что-то другое придумать
-    ## console.log cbca.blocks
-
     for b in this.blocks
       bid = b.id
-      params = {'opacity':'0'}
-      $('#elt' + bid ).css params
+      siomart.utils.ge('elt' + bid ).style.opacity = 0
 
     ## Вычислим максимальную высоту внутри колонки
     max_h = this.max_used_height columns_used_space
 
     real_h = ( this.cell_size + this.cell_padding) * max_h + this.bottom_offset
 
-    css_params =
-      'height' : parseInt( real_h + this.top_offset ) + 'px'
-
-    this.blocks_container.css css_params
-
-    ## Навешиваем события для блоков
-    if active_block
-      return false
-
-    #this.attach_actions()
+    this.blocks_container.style.height = parseInt( real_h + this.top_offset ) + 'px'
 
 window.cbca_grid = cbca_grid
