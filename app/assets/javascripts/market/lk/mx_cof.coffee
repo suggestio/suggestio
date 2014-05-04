@@ -623,18 +623,25 @@ market =
   init_colorpickers : () ->
     $('.js-custom-color').each () ->
 
-      $(this).ColorPicker
-        onSubmit: (hsb, hex, rgb, el) ->
-          console.log hex
-          $(el).val(hex)
-        	$(el).ColorPickerHide()
-        onBeforeShow: () ->
-          $(this).ColorPickerSetColor(this.value)
+      cb = ( _this ) ->
+        i = Math.random()
+        _this.ColorPicker
+      	  color: '#0000ff'
+      	  onShow: (colpkr) ->
+      	    $(colpkr).fadeIn(500)
+      	  onHide: (colpkr) ->
+      	    $(colpkr).fadeOut(500)
+      	  onChange: (hsb, hex, rgb) ->
+      	    market.ad_form.queue_block_preview_request()
+      	    _this.find('input').val hex
+      	    _this.css
+      	      'background-color' : '#' + hex
+
+      cb( $(this) )
 
   ## Главная страница ЛК торгового центра
   mart :
     init : () ->
-
       market.init_colorpickers()
 
       $('#installScriptButton').bind 'click', () ->
