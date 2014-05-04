@@ -620,9 +620,27 @@ StatusBar =
 ######################
 market =
 
+  init_colorpickers : () ->
+    console.log 'init colorpicker'
+    $('.js-custom-color').each () ->
+
+      $(this).ColorPicker
+      	color: '#' + jQuery('input', this).val()
+      	onShow: (colpkr) ->
+      		$(colpkr).fadeIn(500)
+      	onHide: (colpkr) ->
+      		$(colpkr).fadeOut(500)
+      	onChange: (hsb, hex, rgb) ->
+      	  console.log hex
+      	  jQuery('input', this).val hex
+      	  market.ad_form.queue_block_preview_request()
+
   ## Главная страница ЛК торгового центра
   mart :
     init : () ->
+
+      market.init_colorpickers()
+
       $('#installScriptButton').bind 'click', () ->
         $('#installScriptPopup, #overlay').show()
 
