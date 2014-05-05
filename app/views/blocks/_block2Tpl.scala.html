@@ -13,10 +13,14 @@
 
     <div class="info">
       @mad.offers.headOption.map { offer =>
-        <h5>@offer.text1.map(_.value)</h5>
+        @offer.text1.map { title =>
+          <h5 style="@title.font.color">@title.value</h5>
+        }.getOrElse{
+          <h5>Заголовок</h5>
+        }
 
         <div class="text">
-          <p>@offer.text2.map(_.value)</p>
+          <p>@offer.text2.map(_.value).getOrElse{ Короткое описание }</p>
         </div>
       }
     </div>

@@ -684,6 +684,10 @@ market =
 
     init_block_editor : () ->
       market.init_images_upload()
+
+      $('.js-int-only-input').bind 'keyup', () ->
+
+
       $('.js-input-w-block-preview').bind 'keyup', () ->
         market.ad_form.queue_block_preview_request()
 
