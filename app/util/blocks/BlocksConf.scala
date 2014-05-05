@@ -208,10 +208,16 @@ object BlocksConf extends Enumeration {
     override def template = _block2Tpl
   }
 
+
   /** Картинка, три заголовка с тремя ценами. Такой блок встречается несколько раз с разным дизайном. */
   protected abstract class Price3Block(id: Int, name: String) extends Val(id, name) with SaveBgImg {
+    // Названия используемых полей.
     val TITLE_FN = "title"
     val PRICE_FN = "price"
+
+    /** Начало отсчета счетчика офферов. */
+    val N0 = 0
+    /** Макс кол-во офферов (макс.длина списка офферов). */
     val OFFERS_COUNT = 3
 
     val heightField = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
@@ -221,7 +227,7 @@ object BlocksConf extends Enumeration {
 
     /** Генерация описания полей. У нас тут повторяющийся маппинг, поэтому blockFields для редактора генерится без полей-констант. */
     override def blockFields: List[BlockFieldT] = {
-      val fns = (0 until OFFERS_COUNT)
+      val fns = (N0 until OFFERS_COUNT)
         .flatMap { offerN =>
           val offerNopt = Some(offerN)
           val titleBf = bfText(offerNopt)
@@ -258,10 +264,25 @@ object BlocksConf extends Enumeration {
             }
             .toList
           },
-          {_.map { aoBlock =>
-            // TODO При нарушении нумерации aoBlock.n надо бы заполнять пустоты автоматом.
-            aoBlock.text1 -> aoBlock.price
-          }}
+          {aoBlocks =>
+            // При нарушении нумерации aoBlock.n надо бы заполнять пустоты автоматом. Тут - велосипед на основе карты имеющихся и необходимых офферов с индексацией по id.
+            if (aoBlocks.isEmpty) {
+              Nil
+            } else {
+              val maxN = aoBlocks.maxBy(_.n).n
+              val aoBlocksNS = aoBlocks
+                .map { aoBlock => aoBlock.n -> aoBlock }
+                .toMap
+              (N0 to maxN)
+                .map { n =>
+                  aoBlocksNS
+                    .get(n)
+                    .map { aoBlock => aoBlock.text1 -> aoBlock.price }
+                    .getOrElse(None -> None)
+                }
+                .toList
+            }
+          }
         )
       // Маппинг для всего блока.
       mapping(
