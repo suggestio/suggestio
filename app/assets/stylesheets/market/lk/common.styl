@@ -943,14 +943,28 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   float: left
 
 .lk-color-select__label
+  padding-top: 6px
+  width: 45px
   color: #959595
   font-size: 12px
   font-family: Arial
 
 .lk-color-select__color
+  cursor: pointer
+  position: relative
   width: 27px
   height: 27px
   border: 1px #b2b2b2 solid
+
+.lk-color-select__color_custom
+  div
+    position: absolute
+    left: 0px
+    top: 0px
+    width: 27px
+    height: 27px
+    background: lk_sprite
+    background-position: left -190px
 
 .lk-field-w-colorpicker__left,
 .lk-field-w-colorpicker__right
