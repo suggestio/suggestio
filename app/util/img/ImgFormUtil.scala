@@ -312,8 +312,8 @@ object ThumbImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
 }
 
 
-/** Обработка логотипов для магазинов. */
-object ShopLogoImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
+/** Обработка логотипов. */
+object AdnLogoImageUtil extends SioImageUtilT with PlayMacroLogsImpl {
 
   /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
     * прямоугольник с указанныыми сторонами). */

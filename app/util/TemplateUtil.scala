@@ -13,8 +13,8 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
  */
 object TplDataFormatUtil {
   // Надо укорачивать валюту до минимума
-  private val CURRENCY_FIXER_RUB = " руб\\.".r
-  private val CURRENCY_FIXER_USD = " USD".r
+  private val CURRENCY_FIXER_RUB = "руб\\.".r
+  private val CURRENCY_FIXER_USD = "USD".r
 
   /** Напечатать цену согласно локали и валюте. */
   def formatPrice(price: Float, currency: Currency)(implicit ctx: Context): String = {
@@ -23,7 +23,8 @@ object TplDataFormatUtil {
     val currFmt = NumberFormat.getCurrencyInstance.asInstanceOf[DecimalFormat]
     currFmt.setCurrency(currency)
     val dcs = currFmt.getDecimalFormatSymbols
-    dcs.setCurrencySymbol(formatCurrency(currency))
+    val currencySymbol = formatCurrency(currency)
+    dcs.setCurrencySymbol(currencySymbol)
     currFmt.setDecimalFormatSymbols(dcs)
     currFmt.format(price)
   }

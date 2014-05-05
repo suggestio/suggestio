@@ -8,11 +8,13 @@ import views.html.blocks._
 import models._
 import io.suggest.ym.model.ad.EMAdOffers
 import io.suggest.ym.model.common.BlockMeta
-import util.img.{OrigImageUtil, ImgInfo4Save, ImgFormUtil, ImgIdKey}
+import util.img._
 import io.suggest.ym.model.common.EMImg.Imgs_t
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import util.blocks.BlocksUtil.BlockImgMap
+import scala.Some
+import util.img.ImgInfo4Save
 
 /**
  * Suggest.io
@@ -23,15 +25,57 @@ import util.blocks.BlocksUtil.BlockImgMap
 
 object BlocksConf extends Enumeration {
 
+  /** Интерфейс для сохранения картинок. */
+  protected trait ISaveImgs {
+    def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t): Future[Imgs_t] = {
+      Future successful Map.empty
+    }
+  }
+
+
+  /** Функционал для сохранения фоновой (основной) картинки блока. */
+  protected trait SaveBgImg extends ISaveImgs {
+    // Константы можно легко переопределить т.к. trait и early initializers.
+    val BG_IMG_FN = "bgImg"
+    val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, imgUtil = OrigImageUtil)
+
+    override def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t): Future[Imgs_t] = {
+      val supImgsFut = super.saveImgs(newImgs, oldImgs)
+      SaveImgUtil.saveImgsStatic(
+        newImgs = newImgs,
+        oldImgs = oldImgs,
+        supImgsFut = supImgsFut,
+        fn = BG_IMG_FN
+      )
+    }
+
+  }
+
+
+  /** Функционал для сохранения вторичного логотипа рекламной карточки. */
+  protected trait SaveLogoImg extends ISaveImgs {
+    val LOGO_IMG_FN = "logo"
+    val logoImgBf = BfImage(LOGO_IMG_FN, marker = LOGO_IMG_FN, imgUtil = AdnLogoImageUtil)  // Запилить отдельный конвертор для логотипов на карточках?
+
+    override def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t): Future[Imgs_t] = {
+      val supImgsFut = super.saveImgs(newImgs, oldImgs)
+      SaveImgUtil.saveImgsStatic(
+        newImgs = newImgs,
+        oldImgs = oldImgs,
+        supImgsFut = supImgsFut,
+        fn = LOGO_IMG_FN
+      )
+    }
+  }
+
+
   /** Всё описание блока идёт через наследование Val. */
-  protected abstract class Val(id: Int, name: String) extends super.Val(id, name) {
+  protected abstract class Val(id: Int, name: String) extends super.Val(id, name) with ISaveImgs {
     /** Шаблон для рендера. */
     def template: Template3[MAdT, Boolean, Context, HtmlFormat.Appendable]
 
     /** Набор маппингов для обработки данных от формы. */
     def strictMapping: Mapping[BlockMapperResult]
-
-    def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t): Future[Imgs_t]
 
     /** Более удобный интерфейс для метода template.render(). */
     def renderBlock(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context) = {
@@ -61,6 +105,15 @@ object BlocksConf extends Enumeration {
   type BlockConf = Val
   implicit def value2val(x: Value): BlockConf = x.asInstanceOf[BlockConf]
 
+  // Хелперы
+  def maybeWithName(n: String): Option[BlockConf] = {
+    try {
+      Some(withName(n))
+    } catch {
+      case ex: NoSuchElementException => None
+    }
+  }
+
 
   // Начало значений
 
@@ -73,12 +126,12 @@ object BlocksConf extends Enumeration {
     val priceField = BfPrice(EMAdOffers.PRICE_ESFN, BlocksEditorFields.Price)
 
     override val blockFields = List(
-      bgImg, heightField, text1Field, oldPriceField, priceField
+      bgImgBf, heightField, text1Field, oldPriceField, priceField
     )
 
     /** Набор маппингов для обработки данных от формы. */
     override val strictMapping = mapping(
-      bgImg.getStrictMappingKV,
+      bgImgBf.getStrictMappingKV,
       heightField.getStrictMappingKV,
       text1Field.getOptionalStrictMappingKV,
       oldPriceField.getOptionalStrictMappingKV,
@@ -119,12 +172,12 @@ object BlocksConf extends Enumeration {
     val text2Field = BfText(EMAdOffers.TEXT2_ESFN, BlocksEditorFields.TextArea, maxLen = 8192)
 
     override val blockFields = List(
-      bgImg, heightField, text1Field, text2Field
+      bgImgBf, heightField, text1Field, text2Field
     )
 
     /** Набор маппингов для обработки данных от формы. */
     override val strictMapping = mapping(
-      bgImg.getStrictMappingKV,
+      bgImgBf.getStrictMappingKV,
       heightField.getStrictMappingKV,
       text1Field.getStrictMappingKV,
       text2Field.getStrictMappingKV
@@ -177,7 +230,7 @@ object BlocksConf extends Enumeration {
           List(titleBf, priceBf)
         }
         .toList
-      bgImg :: heightField :: fns
+      bgImgBf :: heightField :: fns
     }
 
     /** Маппинг для обработки сабмита формы блока. */
@@ -213,7 +266,7 @@ object BlocksConf extends Enumeration {
         )
       // Маппинг для всего блока.
       mapping(
-        bgImg.getStrictMappingKV,
+        bgImgBf.getStrictMappingKV,
         heightField.getStrictMappingKV,
         "offer" -> offersMapping
       )
@@ -237,6 +290,7 @@ object BlocksConf extends Enumeration {
   }
 
 
+  /** Рекламный блок с предложением товара/услуги и рекламным посылом. */
   val Block4 = new Val(4, "2texts+price") with SaveBgImg {
     val heightBf = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
     val text1bf = BfText("text1", BlocksEditorFields.InputText, maxLen = 256)
@@ -245,13 +299,13 @@ object BlocksConf extends Enumeration {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override val blockFields: List[BlockFieldT] = List(
-      heightBf, bgImg, priceBf, text2bf
+      heightBf, bgImgBf, text1bf, priceBf, text2bf
     )
 
     /** Маппинг для обработки данных от сабмита формы блока. */
     override val strictMapping: Mapping[BlockMapperResult] = {
       mapping(
-        bgImg.getStrictMappingKV,
+        bgImgBf.getStrictMappingKV,
         heightBf.getStrictMappingKV,
         text1bf.getOptionalStrictMappingKV,
         priceBf.getOptionalStrictMappingKV,
@@ -287,37 +341,83 @@ object BlocksConf extends Enumeration {
     override def template = _block4Tpl
   }
 
-  // Хелперы
 
-  def maybeWithName(n: String): Option[BlockConf] = {
-    try {
-      Some(withName(n))
-    } catch {
-      case ex: NoSuchElementException => None
+  /** Реклама брендированного товара. От предыдущих одно-офферных блоков отличается дизайном и тем, что есть вторичный логотип. */
+  val Block5 = new Val(5, "brandedProduct") with SaveBgImg with SaveLogoImg {
+    val heightBf = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
+    val text1Bf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+    val oldPriceBf = BfPrice("oldPrice")
+    val priceBf = BfPrice("price")
+
+    override val blockFields: List[BlockFieldT] = List(
+      bgImgBf, heightBf, logoImgBf, text1Bf, oldPriceBf, priceBf
+    )
+
+    /** Набор маппингов для обработки данных от формы. */
+    override def strictMapping: Mapping[BlockMapperResult] = mapping(
+      bgImgBf.getStrictMappingKV,
+      logoImgBf.getOptionalStrictMappingKV,
+      heightBf.getStrictMappingKV,
+      text1Bf.getOptionalStrictMappingKV,
+      oldPriceBf.getOptionalStrictMappingKV,
+      priceBf.getOptionalStrictMappingKV
+    )
+    {(bgBim, logoBim, height, text1Opt, oldPriceOpt, priceOpt) =>
+      val block = AOBlock(
+        n = 0,
+        text1 = text1Opt,
+        oldPrice = oldPriceOpt,
+        price = priceOpt
+      )
+      val bd: BlockData = BlockDataImpl(
+        blockMeta = BlockMeta(
+          height = height,
+          blockId = id
+        ),
+        offers = List(block)
+      )
+      val bim: BlockImgMap = logoBim.fold(bgBim) { bgBim ++ _ }
+      BlockMapperResult(bd, bim)
     }
+    {bmr =>
+      val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+      val logoBim: BlockImgMap = bmr.bim.filter(_._1 == logoImgBf.name)
+      val logoBimOpt = if (logoBim.isEmpty) None else Some(logoBim)
+      val height = bmr.bd.blockMeta.height
+      val offerOpt = bmr.bd.offers.headOption
+      val text1 = offerOpt.flatMap(_.text1)
+      val oldPrice = offerOpt.flatMap(_.oldPrice)
+      val price = offerOpt.flatMap(_.price)
+      Some( (bgBim, logoBimOpt, height, text1, oldPrice, price) )
+    }
+
+    /** Шаблон для рендера. */
+    override def template = _block5Tpl
   }
 
+  val valuesSorted = values.toSeq.sortBy(_.id)
 }
 
 
 case class BlockMapperResult(bd: BlockData, bim: BlockImgMap)
 
 
+object SaveImgUtil {
 
-/** Функционал для сохранения единственной картинки блока. */
-protected trait SaveBgImg {
-  // Константы можно легко переопределить т.к. trait и early initializers.
-  val BG_IMG_FN = "bgImg"
-  val bgImg = BfImage(BG_IMG_FN, marker = BG_IMG_FN, imgUtil = OrigImageUtil)
-
-  def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t): Future[Imgs_t] = {
-    ImgFormUtil.updateOrigImg(
-      needImgs = newImgs.get(BG_IMG_FN).map(ImgInfo4Save(_)),
-      oldImgs = oldImgs.get(BG_IMG_FN)
-    ) map { savedImgs =>
-      savedImgs.headOption
-        .map { BG_IMG_FN -> }
-        .toMap
+  def saveImgsStatic(newImgs: BlockImgMap, oldImgs: Imgs_t, supImgsFut: Future[Imgs_t], fn: String): Future[Imgs_t] = {
+    val saveBgImgsFut = ImgFormUtil.updateOrigImg(
+      needImgs = newImgs.get(fn).map(ImgInfo4Save(_)),
+      oldImgs = oldImgs.get(fn)
+    )
+    for {
+      savedBgImgs <- saveBgImgsFut
+      supSavedMap <- supImgsFut
+    } yield {
+      savedBgImgs
+        .headOption
+        .fold(supSavedMap) {
+        savedBgImg =>  supSavedMap + (fn -> savedBgImg)
+      }
     }
   }
 

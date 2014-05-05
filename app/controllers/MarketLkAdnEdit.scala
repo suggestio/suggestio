@@ -67,7 +67,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
       case MART | RESTAURANT_SUP | RESTAURANT =>
         _handleTempImg(MartLogoImageUtil, Some(LEADER_TMP_LOGO_MARKER))
       case SHOP =>
-        _handleTempImg(ShopLogoImageUtil, Some(MarketShopLk.SHOP_TMP_LOGO_MARKER))
+        _handleTempImg(AdnLogoImageUtil, Some(MarketShopLk.SHOP_TMP_LOGO_MARKER))
     }
   }
 
