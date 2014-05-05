@@ -169,7 +169,7 @@ object BlocksConf extends Enumeration {
 
     /** Генерация описания полей. У нас тут повторяющийся маппинг, поэтому blockFields для редактора генерится без полей-констант. */
     override val blockFields: List[BlockFieldT] = {
-      val fns = (1 to OFFERS_COUNT)
+      val fns = (0 until OFFERS_COUNT)
         .flatMap { offerN =>
           val offerNopt = Some(offerN)
           val titleBf = bfText(offerNopt)
@@ -192,7 +192,7 @@ object BlocksConf extends Enumeration {
       )
       // Маппинг для списка офферов.
       val offersMapping = list(offerMapping)
-        .verifying("error.too.much", { _.size <= 3 })
+        .verifying("error.too.much", { _.size <= OFFERS_COUNT })
         .transform[List[AOBlock]](
           {_.iterator
             .zipWithIndex // Делаем zipWithIndex перед фильтром чтобы сохранять выравнивание на странице (css-классы), если 1 или 2 элемент пропущен.
