@@ -744,8 +744,10 @@ market =
 
     $('.w-async-image-upload').bind "change", () ->
 
-      relatedFieldId = $(this).attr "data-related-field-id"
+      relatedFieldId = $(this).attr 'data-related-field-id'
       form_data = new FormData()
+
+      is_w_block_preview = $(this).attr 'data-w-block-preview'
 
       if $(this)[0].type == 'file'
         form_data.append $(this)[0].name, $(this)[0].files[0]
@@ -757,6 +759,10 @@ market =
         contentType: false
         processData: false
         success : ( resp_data ) ->
+
+          if typeof is_w_block_preview != 'undefined'
+            market.ad_form.queue_block_preview_request()
+
           $('#' + relatedFieldId + ' .image-key, #' + relatedFieldId + ' .js-image-key').val(resp_data.image_key).trigger('change')
           $('#' + relatedFieldId + ' .image-preview').show().attr "src", resp_data.image_link
 
