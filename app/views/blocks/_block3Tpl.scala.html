@@ -21,14 +21,16 @@
 
       @mad.offers.map { offer =>
         <div class="item el-@offer.n">
-          <div class="title">
-            @offer.text1.map(_.value).map(Html.apply)
+          @offer.text1.map { title =>
+          <div class="title" style="color: #@title.font.color;">
+            @Html(title.value)
           </div>
-          <div class="price">
-            @offer.price.map { price =>
-              @formatPrice(price.value, price.currency)
-            }
+          }
+          @offer.price.map { price =>
+          <div class="price" style="color: #@price.font.color;">
+            @formatPrice(price.value, price.currency)
           </div>
+          }
         </div>
       }
 
