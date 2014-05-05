@@ -73,7 +73,9 @@ object TplDataFormatUtil {
   //private val pcRawFloatFmt = new DecimalFormat("#.##")
   private val pcRawIntegerFmt = new DecimalFormat("#")
 
+  /** Форматирование процентов без самого знака %%. */
   def formatPercentRaw(pc: Float): String = {
+    // TODO Надо бы реоргонизовать через DecimalFormat и decimalSymbols
     pcRawIntegerFmt.format(pc)
   }
 

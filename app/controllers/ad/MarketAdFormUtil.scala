@@ -38,7 +38,7 @@ object MarketAdFormUtil {
     )
 
   /** Маппим строковое поле с настройками шрифта. */
-  def mmaStringFieldM(m : Mapping[String]) = mapping(
+  def aoStringFieldM(m : Mapping[String]) = mapping(
     "value" -> m,
     "color" -> fontColorM
   )
@@ -46,7 +46,7 @@ object MarketAdFormUtil {
   { AOStringField.unapply }
 
   /** Маппим числовое (Float) поле. */
-  def mmaFloatFieldM(m: Mapping[Float]) = mapping(
+  def aoFloatFieldM(m: Mapping[Float]) = mapping(
     "value" -> m,
     "color" -> fontColorM
   )
@@ -82,7 +82,7 @@ object MarketAdFormUtil {
 
 
   /** Маппим необязательное Float-поле. */
-  def mmaFloatFieldOptM(m: Mapping[Float]) = mapping(
+  def aoFloatFieldOptM(m: Mapping[Float]) = mapping(
     "value" -> optional(m),
     "color" -> fontColorM
   )

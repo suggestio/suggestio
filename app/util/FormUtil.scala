@@ -180,7 +180,7 @@ object FormUtil {
 
   // Маппер для float-значений.
   val floatRe = "[0-9]{0,8}([,.][0-9]{0,4})?".r
-  val float = nonEmptyText(maxLength = 15)
+  val floatM = nonEmptyText(maxLength = 15)
     .verifying("float.invalid", floatRe.pattern.matcher(_).matches())
     .transform(_.toFloat, {f: Float => f.toString})
 
@@ -310,16 +310,31 @@ object FormUtil {
       )
   }
 
-  /** Строгий маппер скидки в процентах. */
-  val discountPercentM: Mapping[Float] = {
+  /** Маппинг со строгой проверкой на проценты. */
+  def getStrictDiscountPercentM(min: Float, max: Float): Mapping[Float] = {
     percentM
       .verifying("error.required", _._2.isDefined)
-      .verifying("error.discount.too.large", { _._2.get <= 200F })
-      .verifying("error.discount.too.small", { _._2.get >= -99.999999F })
+      .verifying("error.discount.too.large", { _._2.get >= min })
+      .verifying("error.discount.too.small", { _._2.get <= max })
       .transform[Float](
         _._2.get,
         {pc => adhocPercentFmt(pc) -> Some(pc)}
       )
+  }
+
+  /** Маппинг, толерантный к значениям, выходящим за пределы диапазона. */
+  def getTolerantDiscountPercentM(min: Float, max: Float, dflt: Float): Mapping[Float] = {
+    percentM.transform[Float](
+      {case (raw, pcOpt) =>
+        pcOpt
+          .map { pcf => Math.min(max, Math.max(min, pcf)) }
+          .getOrElse(dflt)
+      },
+      {pcf =>
+        val raw = TplDataFormatUtil.formatPercentRaw(pcf) + "%"
+        raw -> Some(pcf)
+      }
+    )
   }
 
 

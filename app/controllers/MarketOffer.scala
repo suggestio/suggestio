@@ -60,10 +60,10 @@ object MarketOffer extends SioController with MacroLogsImpl {
     .transform(strTrimSanitizeF, strIdentityF)   // TODO Юниты надо проверять по множеству допустимых.
 
   /** Маппер для цены товара. */
-  val priceM = "price" -> float
+  val priceM = "price" -> floatM
 
   /** Маппер "старых" цен. Старых цен может быть 0, 1 или более. Для упрощения пока только одна цена максимум. */
-  val oldPriceM = "oldPrice" -> optional(float)
+  val oldPriceM = "oldPrice" -> optional(floatM)
     .transform(_.toList, {l: List[Float] => l.headOption})
 
   /** Маппер формы создания/редактирования промо-оффера в режиме vendor.model. */

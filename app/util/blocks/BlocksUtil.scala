@@ -55,6 +55,7 @@ import BlocksUtil._
 
 object BlocksEditorFields extends Enumeration {
 
+  // TODO Наверное надо параметризовать BFT или T, иначе тут какая-то задница с типами получается.
   protected abstract case class Val(name: String) extends super.Val(name) {
     type T
     type BFT <: BlockFieldT
@@ -89,9 +90,15 @@ object BlocksEditorFields extends Enumeration {
     type BFT = BfImage
   }
 
+  protected trait DiscountVal {
+    type T = AOFloatField
+    type BFT = BfDiscount
+  }
+
   type BlockEditorField   = Val
   type BefInt             = BlockEditorField with IntVal
-  type BefFloat           = BlockEditorField with PriceVal
+  type BefDiscount        = BlockEditorField with DiscountVal
+  type BefPrice           = BlockEditorField with PriceVal
   type BefText            = BlockEditorField with TextVal
   type BefString          = BlockEditorField with StringVal
   type BefImage           = BlockEditorField with ImageVal
@@ -116,13 +123,17 @@ object BlocksEditorFields extends Enumeration {
   }
 
   /** input text для задания цены. */
-  val Price: BefFloat = new Val("price") with PriceVal {
+  val Price: BefPrice = new Val("price") with PriceVal {
     override def fieldTemplate = _priceTpl
   }
 
   /** Поле с кнопкой для загрузки картинки. */
   val Image: BefImage = new Val("img") with ImageVal {
     override def fieldTemplate = _imageTpl
+  }
+  
+  val Discount: BefDiscount = new Val("discount") with DiscountVal {
+    override def fieldTemplate = _discountTpl
   }
 }
 
@@ -177,13 +188,14 @@ case class BfInt(
 
 case class BfPrice(
   name: String,
-  field: BefFloat = BlocksEditorFields.Price,
   offerNopt: Option[Int] = None,
   defaultValue: Option[AOPriceField] = None
 ) extends BlockFieldT {
   override type T = AOPriceField
 
   override def mappingBase: Mapping[T] = MarketAdFormUtil.mmaPriceM
+
+  override def field: BefPrice = BlocksEditorFields.Price
 
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
   override def fallbackValue: T = AOPriceField(
@@ -216,7 +228,7 @@ case class BfText(
   override val mappingBase: Mapping[T] = {
     val m0 = text(minLength = minLen, maxLength = maxLen)
       .transform(strTrimSanitizeF, strIdentityF)
-    MarketAdFormUtil.mmaStringFieldM(m0)
+    MarketAdFormUtil.aoStringFieldM(m0)
   }
 
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
@@ -287,6 +299,43 @@ case class BfImage(
         { iik => Map(name -> iik) },
         { bim => bim.get(name).getOrElse(fallbackIik) }
       )
+  }
+
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+    field.renderEditorField(this, bfNameBase, af, bc)
+  }
+}
+
+
+/** Поле для ввода скидки в процентах. Кто-то хочет положительную скидку задавать, кто-то отрицательную. */
+case class BfDiscount(
+  name: String,
+  defaultValue: Option[AOFloatField] = None,
+  offerNopt: Option[Int] = None,
+  min: Float = -100F,
+  max: Float = 200F
+) extends BlockFieldT {
+  override type T = AOFloatField
+  val discoFloatM = getTolerantDiscountPercentM(
+    min = min,
+    max = max,
+    dflt = defaultValue
+      .map(_.value)
+      .getOrElse(fallbackValue.value)
+  )
+
+  override def field: BefDiscount = Discount
+
+  /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
+  override def fallbackValue: T = AOFloatField(0F, defaultFont)
+
+  override def mappingBase: Mapping[T] = {
+    val mapping0 = MarketAdFormUtil.aoFloatFieldM(discoFloatM)
+    defaultOpt(mapping0, defaultValue)
+  }
+
+  override def getOptionalStrictMapping: Mapping[Option[T]] = {
+    MarketAdFormUtil.aoFloatFieldOptM(discoFloatM)
   }
 
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {

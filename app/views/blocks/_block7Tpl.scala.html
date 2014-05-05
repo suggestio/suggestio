@@ -1,0 +1,30 @@
+@(mad: MAdT, isStandalone: Boolean)(implicit ctx: util.Context)
+
+@import util.TplDataFormatUtil._
+
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl7" data-width="300" data-height="@mad.blockMeta.height" >
+
+  <div class="color-bg"></div>
+  <div class="sale-mask abs"></div>
+
+  @mad.offers.headOption.map { offer =>
+
+    <div class="sale-icon">
+      @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
+    </div>
+
+    <div class="info">
+      @offer.text1.map { text1 =>
+        <div class="title" style="color: #@text1.font.color;">
+          @text1.value
+        </div>
+      }
+      @offer.price.map { price =>
+        <div class="price" style="color: #@price.font.color;">
+          @formatPrice(price.value, price.currency)
+        </div>
+      }
+    </div>
+  }
+
+</div>

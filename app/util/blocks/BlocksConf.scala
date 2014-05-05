@@ -122,8 +122,8 @@ object BlocksConf extends Enumeration {
 
     val heightField = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
     val text1Field = BfText("title", BlocksEditorFields.InputText, minLen = 0, maxLen = 64)
-    val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN, BlocksEditorFields.Price)
-    val priceField = BfPrice(EMAdOffers.PRICE_ESFN, BlocksEditorFields.Price)
+    val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN)
+    val priceField = BfPrice(EMAdOffers.PRICE_ESFN)
 
     override def blockFields = List(
       bgImgBf, heightField, text1Field, oldPriceField, priceField
@@ -209,8 +209,8 @@ object BlocksConf extends Enumeration {
   }
 
 
-  /** Картинка, три заголовка с тремя ценами. Такой блок встречается несколько раз с разным дизайном. */
-  protected abstract class Price3Block(id: Int, name: String) extends Val(id, name) with SaveBgImg {
+  /** Карточка с картинкой и списком title+price. Такой блок встречается несколько раз с разным дизайном. */
+  protected abstract class TitlePriceListBlock(id: Int, name: String) extends Val(id, name) with SaveBgImg {
     // Названия используемых полей.
     val TITLE_FN = "title"
     val PRICE_FN = "price"
@@ -223,7 +223,7 @@ object BlocksConf extends Enumeration {
     val heightField = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
 
     protected def bfText(offerNopt: Option[Int]) = BfText(TITLE_FN, BlocksEditorFields.TextArea, maxLen = 128, offerNopt = offerNopt)
-    protected def bfPrice(offerNopt: Option[Int]) = BfPrice(PRICE_FN, BlocksEditorFields.Price, offerNopt = offerNopt)
+    protected def bfPrice(offerNopt: Option[Int]) = BfPrice(PRICE_FN, offerNopt = offerNopt)
 
     /** Генерация описания полей. У нас тут повторяющийся маппинг, поэтому blockFields для редактора генерится без полей-констант. */
     override def blockFields: List[BlockFieldT] = {
@@ -306,8 +306,9 @@ object BlocksConf extends Enumeration {
     }
   }
 
+
   /** Блок с тремя ценами в первом дизайне. */
-  val Block3 = new Price3Block(3, "3prices") {
+  val Block3 = new TitlePriceListBlock(3, "3prices") {
     /** Шаблон для рендера. */
     override def template = _block3Tpl
   }
@@ -420,9 +421,61 @@ object BlocksConf extends Enumeration {
 
 
   /** Блок, который содержит до трёх офферов с ценами. Аналог [[Block3]], но с иным дизайном. */
-  val Block6 = new Price3Block(6, "3prices2") {
+  val Block6 = new TitlePriceListBlock(6, "3prices2") {
     /** Шаблон для рендера. */
     override def template = _block6Tpl
+  }
+
+
+  /** Блок, отображающий скидочную цену на товар или услугу. */
+  val Block7 = new Val(7, "discountedPrice1") {
+    val heightBf = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
+    val discoBf = BfDiscount("discount", min = -9.9F, max = 99F)
+    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+    val priceBf = BfPrice("price")
+
+    /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
+    override def blockFields: List[BlockFieldT] = List(
+      heightBf, discoBf, titleBf, priceBf
+    )
+
+    /** Набор маппингов для обработки данных от формы. */
+    override def strictMapping: Mapping[BlockMapperResult] = {
+      mapping(
+        heightBf.getStrictMappingKV,
+        discoBf.getOptionalStrictMappingKV,
+        titleBf.getOptionalStrictMappingKV,
+        priceBf.getOptionalStrictMappingKV
+      )
+      {(height, discoOpt, titleOpt, priceOpt) =>
+        val blk = AOBlock(
+          n = 0,
+          text1 = titleOpt,
+          discount = discoOpt,
+          price = priceOpt
+        )
+        val bd: BlockData = BlockDataImpl(
+          blockMeta = BlockMeta(
+            height = height,
+            blockId = id
+          ),
+          offers = List(blk)
+        )
+        val bim: BlockImgMap = Map.empty
+        BlockMapperResult(bd, bim)
+      }
+      {bmr =>
+        val height = bmr.bd.blockMeta.height
+        val offerOpt = bmr.bd.offers.headOption
+        val discount = offerOpt.flatMap(_.discount)
+        val title = offerOpt.flatMap(_.text1)
+        val price = offerOpt.flatMap(_.price)
+        Some( (height, discount, title, price) )
+      }
+    }
+
+    /** Шаблон для рендера. */
+    override def template = _block7Tpl
   }
 
 
