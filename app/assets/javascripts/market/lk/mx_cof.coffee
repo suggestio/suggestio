@@ -622,6 +622,7 @@ market =
 
   init_colorpickers : () ->
     $('.js-custom-color').each () ->
+
       cb = ( _this ) ->
         i = Math.random()
         _this.ColorPicker
@@ -635,7 +636,6 @@ market =
       	    _this.find('input').val hex
       	    _this.css
       	      'background-color' : '#' + hex
-
       cb( $(this) )
 
   ## Главная страница ЛК торгового центра
@@ -647,7 +647,6 @@ market =
         $('#installScriptPopup, #overlay').show()
 
         _dom = $('#installScriptPopup')
-
         ish = _dom.height()
 
         params =
@@ -674,12 +673,14 @@ market =
         success : ( data ) ->
           $('#adFormBlockPreview').html data
 
-    queue_block_preview_request : () ->
+    queue_block_preview_request : ( request_delay ) ->
+
+      request_delay = request_delay || this.preview_request_delay
 
       if typeof this.block_preview_request_timer != 'undefined'
         clearTimeout this.block_preview_request_timer
 
-      this.block_preview_request_timer = setTimeout market.ad_form.request_block_preview, this.preview_request_delay
+      this.block_preview_request_timer = setTimeout market.ad_form.request_block_preview, request_delay
 
     init_block_editor : () ->
 
@@ -718,7 +719,7 @@ market =
         _value_dom.val _new_value
 
         console.log _value_dom.val()
-        market.ad_form.queue_block_preview_request()
+        market.ad_form.queue_block_preview_request request_delay=10
 
     init : () ->
       this.request_block_preview()
