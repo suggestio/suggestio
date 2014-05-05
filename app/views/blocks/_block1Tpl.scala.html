@@ -16,8 +16,6 @@
         @mad.offers.headOption.map { offer =>
           @offer.text1.map { title =>
             <div class="title" style="color: #@title.font.color;">@title.value</div>
-          }.getOrElse {
-            <div class="title">Короткий заголовок</div>
           }
 
           @offer.oldPrice.map { oldPrice =>
