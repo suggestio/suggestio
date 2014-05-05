@@ -23,12 +23,24 @@
   height: 163px
 
 .ads-list-block__preview
+  position: relative
+  overflow: hidden
   width: 153px
   height: 154px
   padding: 6px
   background: #fff
   border: 1px #a5a5a5 solid
   box-shadow( inset 0px 1px 3px #bec2c5 )
+
+.ads-list-block__zigzag-mask
+  position: absolute
+  width: 154px
+  background: lk_sprite
+  background-position: -170px -172px
+  height: 10px
+  z-index: 1000
+  left: 4px
+  top: 157px
 
 .ads-list-block__preview_add-new
   background: lk_sprite
