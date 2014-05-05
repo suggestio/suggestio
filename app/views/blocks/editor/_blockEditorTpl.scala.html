@@ -2,25 +2,25 @@
 
 @import util.blocks._, BlocksUtil._
 
-@defining( "ad.offer." ) { nameBase =>
-@defining( af(nameBase + BLOCK_ID_FN).value ) { biFieldValue =>
+@defining( "ad.offer" ) { nameBase =>
+@defining( af(nameBase + "." + BLOCK_ID_FN).value ) { biFieldValue =>
 @defining(  withBC.getOrElse( BlocksConf(biFieldValue.map(_.toInt).getOrElse(1)) )  ) { bc =>
 
 <div class="ad-block-editor">
   @for(bf <- bc.blockFields) {
 
     <div class="ad-block-editor__fieldset">
-    @bf.renderEditorField(
-      af = af,
-      bfNameBase = nameBase + bf.name,
-      bc = bc
-    )
+      @bf.renderEditorField(
+        af = af,
+        bfNameBase = nameBase + bf.offerNopt.map(".offer[" + _ + "]").getOrElse("") + "." + bf.name,
+        bc = bc
+      )
     </div>
     <div class="clear"></div>
 
   }
 
-  <input type="hidden" name="@nameBase@BLOCK_ID_FN" value="@bc.id">
+  <input type="hidden" name="@nameBase.@BLOCK_ID_FN" value="@bc.id">
 </div>
 }
 }

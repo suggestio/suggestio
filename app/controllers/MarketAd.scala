@@ -215,6 +215,7 @@ object MarketAd extends SioController with TempImgSupport {
     oldMad.offers = newMad.offers
     oldMad.prio = newMad.prio
     oldMad.userCatId = newMad.userCatId
+    oldMad.blockMeta = newMad.blockMeta
   }
 
   /** Сабмит формы рендера страницы редактирования рекламной карточки.

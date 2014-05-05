@@ -85,7 +85,7 @@ object BlocksEditorFields extends Enumeration {
   }
 
   protected trait ImageVal {
-    type T = ImgIdKey
+    type T = BlockImgMap
     type BFT = BfImage
   }
 
@@ -271,16 +271,22 @@ case class BfImage(
   marker: String,
   imgUtil: SioImageUtilT,
   field: BefImage = Image,
-  defaultValue: Option[ImgIdKey] = None,
+  defaultValue: Option[BlockImgMap] = None,
   offerNopt: Option[Int] = None
 ) extends BlockFieldT {
-  override type T = ImgIdKey
+  override type T = BlockImgMap
+
+  private def fallbackIik = OrigImgIdKey(PreviewFormDefaults.IMG_ID)
 
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
-  override def fallbackValue: T = OrigImgIdKey(PreviewFormDefaults.IMG_ID)
+  override def fallbackValue: T = Map(name -> fallbackIik)
 
   override def mappingBase: Mapping[T] = {
     ImgFormUtil.imgIdMarkedM("error.image.invalid", marker = marker)
+      .transform[BlockImgMap](
+        { iik => Map(name -> iik) },
+        { bim => bim.get(name).getOrElse(fallbackIik) }
+      )
   }
 
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
