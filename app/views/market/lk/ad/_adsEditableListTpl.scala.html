@@ -12,12 +12,17 @@
   <div class="lk-h2">Рекламные плакаты</div>
 
   <div class="ads-list__block ads-list-block">
-    <a class="" href="@addCall"></a>
+    <a class="ads-list-block__link" href="@addCall"></a>
+
+    <div class="ads-list-block__preview">
+    </div>
+
   </div>
 
   @mads.zipWithIndex.map { case (ad, i) =>
+
     @* TODO Уровни отображения какого получателя надо брать за основу? Пока берутся все адресаты рекламы. *@
-    <div class="ads-list__block ads-list-block @if(!ad.isPublished) {disabled}" style="@if(i%3 != 1) {margin-right: 30px;}">
+    <div class="ads-list__block ads-list-block @if(!ad.isPublished) {disabled}">
 
       <div class="ads-list-block__preview">
         @market.showcase._single_offer(ad, producer, fallbackLogo)
@@ -29,6 +34,7 @@
       @content(ad)
 
     </div>
+
   }
 
   <div class="clear"></div>
