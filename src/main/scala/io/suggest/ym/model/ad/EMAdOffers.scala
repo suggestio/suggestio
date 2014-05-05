@@ -147,17 +147,18 @@ object AdOffer {
       case jsObject: java.util.Map[_, _] =>
         jsObject.get(OFFER_TYPE_ESFN) match {
           case ots: String =>
+            val n: Int = Option(jsObject.get(N_ESFN)).map(EsModel.intParser).getOrElse(0)
             AdOfferTypes.maybeWithName(ots) match {
               case Some(ot) =>
                 val offerBody = jsObject.get(OFFER_BODY_ESFN)
                 import AdOfferTypes._
                 ot match {
-                  case BLOCK => AOBlock.deserializeBody(offerBody)
+                  case BLOCK => AOBlock.deserializeBody(offerBody, n)
                 }
-              // Старые AOProduct, AODiscount, AOText удалены -- тут обработка.
+              // Старые AOProduct, AODiscount, AOText удалены -- тут обработка. // TODO Удалить это после первого полугодия 2014.
               case None =>
                 AOBlock(
-                  n = 0,
+                  n = n,
                   text1 = Some(AOStringField("Оффер в старом формате не поддерживается.", font = AOFieldFont("888888")))
                 )
             }
@@ -193,10 +194,10 @@ sealed trait AdOfferT extends Serializable {
 
 object AOBlock {
   /** Десериализация тела блочного оффера. */
-  def deserializeBody(jsObject: Any) = {
+  def deserializeBody(jsObject: Any, n: Int) = {
     jsObject match {
       case m: java.util.Map[_,_] =>
-        val acc = AOBlock(n = -1)
+        val acc = AOBlock(n)
         m foreach {
           case (TEXT1_ESFN, text1Raw) =>
             acc.text1 = JacksonWrapper.convert[Option[AOStringField]](text1Raw)
