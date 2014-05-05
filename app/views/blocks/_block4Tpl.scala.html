@@ -6,18 +6,22 @@
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl4" data-width="300" data-height="@mad.blockMeta.height" >
 
   @mad.imgs.get(Block4.BG_IMG_FN).map { img =>
-    <img src="@routes.Img.getImg(img.id)" alt=""/>
+    <img class="bg" src="@routes.Img.getImg(img.id)" alt=""/>
   }
 
   <div class="inner"></div>
 
   <div class="info">
     @mad.offers.headOption.map { offer =>
-      <div class="title">@offer.text1.map(_.value)</div>
-      @offer.price.map { price =>
-        <div class="price">@formatPriceDigits(price.value)<span>@formatCurrency(price.currency)</span></div>
+      @offer.text1.map { title =>
+        <div class="title" style="color: #@title.font.color;">@title.value</div>
       }
-      <div class="descr">@offer.text2.map(_.value)</div>
+      @offer.price.map { price =>
+        <div class="price" style="color: #@price.font.color;">@formatPriceDigits(price.value)<span>@formatCurrency(price.currency)</span></div>
+      }
+      @offer.text2.map { description =>
+        <div class="descr" style="color: #@description.font.color;">@description.value</div>
+      }
     }
   </div>
 
