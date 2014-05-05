@@ -192,14 +192,22 @@ object BlocksConf extends Enumeration {
       )
       // Маппинг для списка офферов.
       val offersMapping = list(offerMapping)
+        .verifying("error.too.much", { _.size <= 3 })
         .transform[List[AOBlock]](
           {_.iterator
             .zipWithIndex // Делаем zipWithIndex перед фильтром чтобы сохранять выравнивание на странице (css-классы), если 1 или 2 элемент пропущен.
-            .filter { case ((titleOpt, priceOpt), _) => titleOpt.isDefined || priceOpt.isDefined }
-            .map { case ((titleOpt, priceOpt), i) => AOBlock(n = i,  text1 = titleOpt,  price = priceOpt) }
+            .filter {
+              case ((titleOpt, priceOpt), _) =>
+                titleOpt.isDefined || priceOpt.isDefined
+            }
+            .map {
+              case ((titleOpt, priceOpt), i) =>
+                AOBlock(n = i,  text1 = titleOpt,  price = priceOpt)
+            }
             .toList
           },
           {_.map { aoBlock =>
+            // TODO При нарушении нумерации aoBlock.n надо бы заполнять пустоты автоматом.
             aoBlock.text1 -> aoBlock.price
           }}
         )
@@ -248,12 +256,9 @@ case class BlockMapperResult(bd: BlockData, bim: BlockImgMap)
 
 /** Функционал для сохранения единственной картинки блока. */
 protected trait SaveBgImg {
-  def id: Int
-
   // Константы можно легко переопределить т.к. trait и early initializers.
   val BG_IMG_FN = "bgImg"
-  val BG_IMG_MARKER = BG_IMG_FN + id
-  val bgImg = BfImage(BG_IMG_FN, marker = BG_IMG_MARKER, imgUtil = OrigImageUtil)
+  val bgImg = BfImage(BG_IMG_FN, marker = BG_IMG_FN, imgUtil = OrigImageUtil)
 
   def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t): Future[Imgs_t] = {
     ImgFormUtil.updateOrigImg(

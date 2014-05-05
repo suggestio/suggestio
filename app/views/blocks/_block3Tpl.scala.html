@@ -14,7 +14,7 @@
 
   <div class="inner">
     @mad.imgs.get(Block3.BG_IMG_FN).map { img =>
-      <img src="@routes.Img.getImg(img.id)" alt="@mad.offers.headOption.flatMap(_.text1).map(_.value)"/>
+      <img src="@routes.Img.getImg(img.id)" alt=""/>
     }
 
     <div class="items">

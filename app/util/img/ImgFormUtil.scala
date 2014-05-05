@@ -57,8 +57,9 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     imgIdM
       .verifying(errorMsg, { iik => iik match {
         case tiik: TmpImgIdKey =>
-          val m = tiik.mptmpOpt.get.markerOpt
-          m.isDefined && m.get == marker
+          tiik.mptmpOpt
+            .flatMap(_.markerOpt)
+            .exists(_ == marker)
 
         case _ => true
       }})
