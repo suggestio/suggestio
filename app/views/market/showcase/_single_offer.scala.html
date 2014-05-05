@@ -8,9 +8,5 @@
 }*@
 
 <div @if( isWithAction ){ onclick="siomart.load_for_shop_id('@producer.id'); return false;" } @if( isHidden == true){}>
-  @ad.offers.map {
-    case adBlock: AOBlock => {
-      @BlocksConf(ad.blockMeta.blockId).renderBlock(ad, isStandalone = false)
-    }
-  }
+  @BlocksConf(ad.blockMeta.blockId).renderBlock(ad, isStandalone = false)
 </div>

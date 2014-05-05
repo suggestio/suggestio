@@ -14,12 +14,12 @@
 
   <div class="inner">
     @mad.imgs.get(Block3.BG_IMG_FN).map { img =>
-      <img src="@routes.Img.getImg(img.id)" alt="@mad.offers.headOption.flatMap(_.text1)"/>
+      <img src="@routes.Img.getImg(img.id)" alt="@mad.offers.headOption.flatMap(_.text1).map(_.value)"/>
     }
 
     <div class="items">
 
-      @mad.offers.headOption.map { case offer =>
+      @mad.offers.map { offer =>
         <div class="item el-@offer.n">
           <div class="title">
             @offer.text1.map(_.value).map(Html.apply)

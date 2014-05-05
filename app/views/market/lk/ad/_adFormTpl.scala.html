@@ -1,4 +1,4 @@
-@(af: Form[_], call: Call, btnText: String, mmcats: CollectMMCatsAcc_t, offerType: AdOfferType, adnNode: MAdnNode)(implicit ctx: util.Context)
+@(af: Form[_], call: Call, btnText: String, mmcats: CollectMMCatsAcc_t, withBC: Option[BlockConf], adnNode: MAdnNode)(implicit ctx: util.Context)
 
 @* Рендер формы редактирования произвольной рекламы.
  * offerType - предпочитаемый тип оффера, когда он неизвестен.
@@ -14,7 +14,6 @@
 )
 
 @* Определяем текущий тип оффера (тип формы). Используем данные формы и аргумент offerType как fallback. *@
-@defining(af("ad.offer.mode").value.flatMap(AdOfferTypes.maybeWithName).getOrElse(offerType)) { offerType1 =>
 @form(call, 'id -> "promoOfferForm") {
 
   @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@
@@ -78,7 +77,7 @@
 
         @* Отображение нужного редактора *@
         <div class="lk-ad-block-edit-form__editor" id="adFormBlockEditor">
-          @blocks.editor._blockEditorTpl(af)
+          @blocks.editor._blockEditorTpl(af, withBC = withBC)
         </div>
 
         <div class="clear"></div>
@@ -89,8 +88,7 @@
   </div>
 
   @* Режим формы (тип рекламного оффера). Должен переключаться при переключении вкладки. *@
-  <input id="ad-mode" type="hidden" name="ad.offer.mode" value="@offerType1.toString"/>
+  <input id="ad-mode" type="hidden" name="ad.offer.mode" value="@AdOfferTypes.BLOCK"/>
 
-}
 }
 

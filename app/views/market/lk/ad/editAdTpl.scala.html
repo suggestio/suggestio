@@ -33,7 +33,7 @@
     call = routes.MarketAd.editAdSubmit(mad.id.get),
     btnText = Messages("Save"),
     mmcats = mmcats,
-    offerType = mad.offers.head.offerType,
+    withBC  = Some(BlocksConf(mad.blockMeta.blockId)),
     adnNode = adnNode
   )
 

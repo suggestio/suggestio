@@ -148,7 +148,7 @@ object MarketAd extends SioController with TempImgSupport {
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
   private def renderCreateFormWith(af: AdFormM, catOwnerId: String, adnNode: MAdnNode)(implicit ctx: Context) = {
     getMMCatsForCreate(af, catOwnerId) map { mmcats =>
-      createAdTpl(mmcats, af, AdOfferTypes.BLOCK, adnNode)
+      createAdTpl(mmcats, af, adnNode)
     }
   }
 

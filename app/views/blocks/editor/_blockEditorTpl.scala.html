@@ -3,8 +3,7 @@
 @import util.blocks._, BlocksUtil._
 
 @defining( "ad.offer" ) { nameBase =>
-@defining( af(nameBase + "." + BLOCK_ID_FN).value ) { biFieldValue =>
-@defining(  withBC.getOrElse( BlocksConf(biFieldValue.map(_.toInt).getOrElse(1)) )  ) { bc =>
+@defining(  withBC.getOrElse( BlocksConf(1) )  ) { bc =>
 
 <div class="ad-block-editor">
   @for(bf <- bc.blockFields) {
@@ -22,6 +21,5 @@
 
   <input type="hidden" name="@nameBase.@BLOCK_ID_FN" value="@bc.id">
 </div>
-}
 }
 }
