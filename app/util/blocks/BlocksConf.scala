@@ -125,12 +125,12 @@ object BlocksConf extends Enumeration {
     val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN, BlocksEditorFields.Price)
     val priceField = BfPrice(EMAdOffers.PRICE_ESFN, BlocksEditorFields.Price)
 
-    override val blockFields = List(
+    override def blockFields = List(
       bgImgBf, heightField, text1Field, oldPriceField, priceField
     )
 
     /** Набор маппингов для обработки данных от формы. */
-    override val strictMapping = mapping(
+    override def strictMapping = mapping(
       bgImgBf.getStrictMappingKV,
       heightField.getStrictMappingKV,
       text1Field.getOptionalStrictMappingKV,
@@ -171,12 +171,12 @@ object BlocksConf extends Enumeration {
     val text1Field = BfText(EMAdOffers.TEXT1_ESFN, BlocksEditorFields.InputText, maxLen = 512)
     val text2Field = BfText(EMAdOffers.TEXT2_ESFN, BlocksEditorFields.TextArea, maxLen = 8192)
 
-    override val blockFields = List(
+    override def blockFields = List(
       bgImgBf, heightField, text1Field, text2Field
     )
 
     /** Набор маппингов для обработки данных от формы. */
-    override val strictMapping = mapping(
+    override def strictMapping = mapping(
       bgImgBf.getStrictMappingKV,
       heightField.getStrictMappingKV,
       text1Field.getStrictMappingKV,
@@ -208,9 +208,8 @@ object BlocksConf extends Enumeration {
     override def template = _block2Tpl
   }
 
-
-  /** Картинка, три заголовка с тремя ценами. */
-  val Block3 = new Val(3, "3prices") with SaveBgImg {
+  /** Картинка, три заголовка с тремя ценами. Такой блок встречается несколько раз с разным дизайном. */
+  protected abstract class Price3Block(id: Int, name: String) extends Val(id, name) with SaveBgImg {
     val TITLE_FN = "title"
     val PRICE_FN = "price"
     val OFFERS_COUNT = 3
@@ -221,7 +220,7 @@ object BlocksConf extends Enumeration {
     protected def bfPrice(offerNopt: Option[Int]) = BfPrice(PRICE_FN, BlocksEditorFields.Price, offerNopt = offerNopt)
 
     /** Генерация описания полей. У нас тут повторяющийся маппинг, поэтому blockFields для редактора генерится без полей-констант. */
-    override val blockFields: List[BlockFieldT] = {
+    override def blockFields: List[BlockFieldT] = {
       val fns = (0 until OFFERS_COUNT)
         .flatMap { offerN =>
           val offerNopt = Some(offerN)
@@ -234,7 +233,7 @@ object BlocksConf extends Enumeration {
     }
 
     /** Маппинг для обработки сабмита формы блока. */
-    override val strictMapping: Mapping[BlockMapperResult] = {
+    override def strictMapping: Mapping[BlockMapperResult] = {
       // Поля оффера
       val titleMapping = bfText(None)
       val priceMapping = bfPrice(None)
@@ -284,7 +283,10 @@ object BlocksConf extends Enumeration {
         Some((bmr.bim, bmr.bd.blockMeta.height, bmr.bd.offers))
       }
     }
+  }
 
+  /** Блок с тремя ценами в первом дизайне. */
+  val Block3 = new Price3Block(3, "3prices") {
     /** Шаблон для рендера. */
     override def template = _block3Tpl
   }
@@ -298,12 +300,12 @@ object BlocksConf extends Enumeration {
     val text2bf = BfText("text2", BlocksEditorFields.TextArea, maxLen = 512)
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
-    override val blockFields: List[BlockFieldT] = List(
+    override def blockFields: List[BlockFieldT] = List(
       heightBf, bgImgBf, text1bf, priceBf, text2bf
     )
 
     /** Маппинг для обработки данных от сабмита формы блока. */
-    override val strictMapping: Mapping[BlockMapperResult] = {
+    override def strictMapping: Mapping[BlockMapperResult] = {
       mapping(
         bgImgBf.getStrictMappingKV,
         heightBf.getStrictMappingKV,
@@ -349,7 +351,7 @@ object BlocksConf extends Enumeration {
     val oldPriceBf = BfPrice("oldPrice")
     val priceBf = BfPrice("price")
 
-    override val blockFields: List[BlockFieldT] = List(
+    override def blockFields: List[BlockFieldT] = List(
       bgImgBf, heightBf, logoImgBf, text1Bf, oldPriceBf, priceBf
     )
 
@@ -395,6 +397,16 @@ object BlocksConf extends Enumeration {
     override def template = _block5Tpl
   }
 
+
+  /** Блок, который содержит до трёх офферов с ценами. Аналог [[Block3]], но с иным дизайном. */
+  val Block6 = new Price3Block(6, "3prices2") {
+    /** Шаблон для рендера. */
+    override def template = _block6Tpl
+  }
+
+
+  /** Сортированные значения. Обращение напрямую к values порождает множество с неопределённым порядком,
+    * а тут - сразу отсортировано по id. */
   val valuesSorted = values.toSeq.sortBy(_.id)
 }
 
