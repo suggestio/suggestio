@@ -237,6 +237,56 @@ object BlocksConf extends Enumeration {
   }
 
 
+  val Block4 = new Val(4, "2texts+price") with SaveBgImg {
+    val heightBf = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
+    val text1bf = BfText("text1", BlocksEditorFields.InputText, maxLen = 256)
+    val priceBf = BfPrice("price")
+    val text2bf = BfText("text2", BlocksEditorFields.TextArea, maxLen = 512)
+
+    /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
+    override val blockFields: List[BlockFieldT] = List(
+      heightBf, bgImg, priceBf, text2bf
+    )
+
+    /** Маппинг для обработки данных от сабмита формы блока. */
+    override val strictMapping: Mapping[BlockMapperResult] = {
+      mapping(
+        bgImg.getStrictMappingKV,
+        heightBf.getStrictMappingKV,
+        text1bf.getOptionalStrictMappingKV,
+        priceBf.getOptionalStrictMappingKV,
+        text2bf.getOptionalStrictMappingKV
+      )
+      {(bim, height, text1Opt, priceOpt, text2Opt) =>
+        val blk = AOBlock(
+          n = 0,
+          text1 = text1Opt,
+          price = priceOpt,
+          text2 = text2Opt
+        )
+        val bd: BlockData = BlockDataImpl(
+          blockMeta = BlockMeta(
+            height = height,
+            blockId = id
+          ),
+          offers = List(blk)
+        )
+        BlockMapperResult(bd, bim)
+      }
+      {bmr =>
+        val height = bmr.bd.blockMeta.height
+        val offerOpt = bmr.bd.offers.headOption
+        val text1 = offerOpt.flatMap(_.text1)
+        val price = offerOpt.flatMap(_.price)
+        val text2 = offerOpt.flatMap(_.text2)
+        Some( (bmr.bim, height, text1, price, text2) )
+      }
+    }
+
+    /** Шаблон для рендера. */
+    override def template = _block4Tpl
+  }
+
   // Хелперы
 
   def maybeWithName(n: String): Option[BlockConf] = {
