@@ -1,0 +1,24 @@
+@(mad: MAdT, isStandalone: Boolean)(implicit ctx: util.Context)
+
+@import util.blocks.BlocksConf.Block4
+@import util.TplDataFormatUtil._
+
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl4" data-width="300" data-height="@mad.blockMeta.height" >
+
+  @mad.imgs.get(Block4.BG_IMG_FN).map { img =>
+    <img src="@routes.Img.getImg(img.id)" alt=""/>
+  }
+
+  <div class="inner"></div>
+
+  <div class="info">
+    @mad.offers.headOption.map { offer =>
+      <div class="title">@offer.text1.map(_.value)</div>
+      @offer.price.map { price =>
+        <div class="price">@formatPriceDigits(price.value)<span>@formatCurrency(price.currency)</span></div>
+      }
+      <div class="descr">@offer.text2.map(_.value)</div>
+    }
+  </div>
+
+</div>
