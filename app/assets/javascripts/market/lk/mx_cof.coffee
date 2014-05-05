@@ -683,7 +683,7 @@ market =
       this.block_preview_request_timer = setTimeout market.ad_form.request_block_preview, request_delay
 
     init_block_editor : () ->
-
+      market.init_images_upload()
       $('.js-input-w-block-preview').bind 'keyup', () ->
         market.ad_form.queue_block_preview_request()
 
@@ -753,6 +753,8 @@ market =
 
       relatedFieldId = $(this).attr 'data-related-field-id'
       form_data = new FormData()
+
+      console.log relatedFieldId
 
       is_w_block_preview = $(this).attr 'data-w-block-preview'
 

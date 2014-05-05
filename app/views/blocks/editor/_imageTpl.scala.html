@@ -7,9 +7,9 @@
 @* Форма для загрузки картинки *@
 <div class="lk-file-field">
 
-  <input type="file" class="w-async-image-upload" data-w-block-preview="true" data-related-field-id="fieldName" data-action="@routes.MarketAdPreview.prepareBlockImg(bc.id, bf.name)" name="picture"/>
+  <input type="file" class="w-async-image-upload" data-w-block-preview="true" data-related-field-id="blockImage@bf.name" data-action="@routes.MarketAdPreview.prepareBlockImg(bc.id, bf.name)" name="picture"/>
 
-  <div id="fieldName">
+  <div id="blockImage@bf.name">
     <input type="hidden" class="js-image-key" name="@bfNameBase" value="@af(bfNameBase).value"/>
   </div>
 

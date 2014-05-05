@@ -3,7 +3,13 @@
 @import util.TplDataFormatUtil._
 @import util.blocks.BlocksConf.Block5
 
-<div class="sm-block height-@mad.blockMeta.height  sio-mart__single-offer sm-block-tpl5" data-width="300" data-height="@mad.blockMeta.height" >
+@renderColor(colorHex:String) = {
+  @if( colorHex != "ffffff" ){
+    #@colorHex
+  }
+}
+
+<div class="sm-block height-@mad.blockMeta.height  sio-mart__single-offer sm-block-tpl5" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   @mad.imgs.get(Block5.BG_IMG_FN).map { bgImg =>
     <img class="bg abs" src="@routes.Img.getImg(bgImg.id)" />
@@ -20,19 +26,19 @@
 
     @mad.offers.headOption.map { offer =>
       @offer.text1.map { text1 =>
-        <div class="title">
+        <div class="title" style="color: @renderColor( text1.font.color );">
           @Html(text1.value)
         </div>
       }
 
       @offer.oldPrice.map { oldPrice =>
-        <div class="old-price">
+        <div class="old-price" style="color: @renderColor(oldPrice.font.color);">
           @formatPrice(oldPrice.value, oldPrice.currency)
         </div>
       }
 
       @offer.price.map { price =>
-        <div class="price">
+        <div class="price" style="color: @renderColor(price.font.color);">
           @formatPrice(price.value, price.currency)
         </div>
       }
