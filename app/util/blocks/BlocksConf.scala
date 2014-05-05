@@ -431,7 +431,10 @@ object BlocksConf extends Enumeration {
   val Block7 = new Val(7, "discountedPrice1") {
     val heightBf = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
     val discoBf = BfDiscount("discount", min = -9.9F, max = 99F)
-    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+    val titleBf = BfText("title", BlocksEditorFields.TextArea,
+      maxLen = 256,
+      defaultValue = Some(AOStringField("", AOFieldFont("444444")))
+    )
     val priceBf = BfPrice("price")
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
