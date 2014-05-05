@@ -724,7 +724,14 @@ market =
     init : () ->
       this.request_block_preview()
       this.init_block_editor()
-      $('#adFormBlocksList div').bind 'click', () ->
+
+      icons_dom = $('#adFormBlocksList div')
+
+      icons_dom.bind 'click', () ->
+
+        icons_dom.removeClass 'blocks-list-icons__single-icon_active'
+        $(this).addClass 'blocks-list-icons__single-icon_active'
+
         block_id = $(this).attr 'data-block-id'
         block_editor_action = $('#adFormBlocksList .block-editor-action').val()
 
