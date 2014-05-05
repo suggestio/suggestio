@@ -3,7 +3,7 @@
 @import util.blocks.BlocksConf.Block4
 @import util.TplDataFormatUtil._
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl4" data-width="300" data-height="@mad.blockMeta.height" >
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl4" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   @mad.imgs.get(Block4.BG_IMG_FN).map { img =>
     <img class="bg" src="@routes.Img.getImg(img.id)" alt=""/>

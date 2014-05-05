@@ -329,12 +329,15 @@ siomart =
       nav_pointers_html = ''
 
       for sm_block,i in sm_blocks
-        if i == 0
+
+        mad_id = sm_block.getAttribute 'data-mad-id'
+
+        if mad_id == this.requested_ad_id
           this.show_block sm_block
           this.active_block_dom = sm_block
-          this.active_block_index = 0
+          this.active_block_index = i
 
-        if i == 0
+        if mad_id == this.requested_ad_id
           _nav_pointer_class = 'sm-nav-block__pointer sm-nav-block__pointer_active'
         else if i == sm_blocks.length-1
           _nav_pointer_class = 'sm-nav-block__pointer sm-nav-block__pointer_no-margin'
@@ -415,9 +418,11 @@ siomart =
       _dom = siomart.utils.ge 'smIndexNavigation'
       siomart.utils.removeClass _dom, 'hidden'
 
-  load_for_shop_id : ( shop_id ) ->
+  load_for_shop_id : ( shop_id, ad_id ) ->
     console.log 'load for shop id ' + shop_id
     url = '/market/ads/' + siomart.config.mart_id + '?a.shopId=' + shop_id
+
+    siomart.node_offers_popup.requested_ad_id = ad_id
 
     siomart.perform_request url
 
