@@ -3,7 +3,7 @@
 @import util.TplDataFormatUtil._
 @import util.blocks.BlocksConf.Block6
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl6" data-width="300" data-height="@mad.blockMeta.height" >
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl6" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   <div class="left-border abs"></div>
   <div class="right-border abs"></div>
@@ -16,12 +16,12 @@
     @mad.offers.map { offer =>
       <div class="item">
         @offer.text1.map { text1 =>
-          <div class="title">
+          <div class="title" style="color: #@text1.font.color;">
             @Html(text1.value)
           </div>
         }
         @offer.price.map { price =>
-          <div class="price">
+          <div class="price" style="color: #@price.font.color;">
             @formatPrice(price.value, price.currency)
           </div>
         }
