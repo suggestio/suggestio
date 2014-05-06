@@ -493,6 +493,54 @@ object BlocksConf extends Enumeration {
   }
 
 
+  val Block8 = new Val(8, "titleWithPrice8") with SaveBgImg {
+    val heightBf = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
+    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+    val priceBf = BfPrice("price")
+
+    /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
+    override def blockFields: List[BlockFieldT] = List(
+      heightBf, bgImgBf, titleBf, priceBf
+    )
+
+    /** Набор маппингов для обработки данных от формы. */
+    override def strictMapping: Mapping[BlockMapperResult] = mapping(
+      bgImgBf.getStrictMappingKV,
+      heightBf.getStrictMappingKV,
+      titleBf.getOptionalStrictMappingKV,
+      priceBf.getOptionalStrictMappingKV
+    )
+    // apply()
+    {(bim, height, titleOpt, priceOpt) =>
+      val blk = AOBlock(
+        n = 0,
+        text1 = titleOpt,
+        price = priceOpt
+      )
+      val bd: BlockData = BlockDataImpl(
+        blockMeta = BlockMeta(
+          height = height,
+          blockId = id
+        ),
+        offers = List(blk)
+      )
+      BlockMapperResult(bd, bim)
+    }
+    // unapply()
+    {bmr =>
+      val height = bmr.bd.blockMeta.height
+      val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+      val offerOpt = bmr.bd.offers.headOption
+      val title = offerOpt.flatMap(_.text1)
+      val price = offerOpt.flatMap(_.price)
+      Some( (bgBim, height, title, price) )
+    }
+
+    /** Шаблон для рендера. */
+    override def template = _block8Tpl
+  }
+
+
   /** Сортированные значения. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id. */
   val valuesSorted = values.toSeq.sortBy(_.id)
