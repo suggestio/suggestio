@@ -703,6 +703,58 @@ object BlocksConf extends Enumeration {
   }
 
 
+  val Block12 = new Val(12, "discountNarrow12") {
+    val heightBf = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
+    val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("00ff1a"))
+    val discountBf = BfDiscount("discount", min = -9.9F, max = 99F)
+    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+
+    /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
+    override def blockFields: List[BlockFieldT] = List(
+      heightBf, saleMaskColorBf, discountBf, titleBf, descrBf
+    )
+
+    /** Набор маппингов для обработки данных от формы. */
+    override def strictMapping: Mapping[BlockMapperResult] = mapping(
+      heightBf.getStrictMappingKV,
+      saleMaskColorBf.getStrictMappingKV,
+      discountBf.getOptionalStrictMappingKV,
+      titleBf.getOptionalStrictMappingKV,
+      descrBf.getOptionalStrictMappingKV
+    )
+    {(height, saleMaskColor, discountOpt, titleOpt, descrOpt) =>
+      val blk = AOBlock(
+        n = 0,
+        discount = discountOpt,
+        text1 = titleOpt,
+        text2 = descrOpt
+      )
+      val bd = BlockDataImpl(
+        blockMeta = BlockMeta(
+          height = height,
+          blockId = id
+        ),
+        offers = List(blk),
+        colors = Map(saleMaskColorBf.name -> saleMaskColor)
+      )
+      BlockMapperResult(bd, bim = Map.empty)
+    }
+    {bmr =>
+      val height = bmr.bd.blockMeta.height
+      val offerOpt = bmr.bd.offers.headOption
+      val title = offerOpt.flatMap(_.text1)
+      val descr = offerOpt.flatMap(_.text2)
+      val discount = offerOpt.flatMap(_.discount)
+      val saleMaskColor = bmr.bd.colors.get(saleMaskColorBf.name).getOrElse(saleMaskColorBf.anyDefaultValue)
+      Some( (height, saleMaskColor, discount, title, descr) )
+    }
+
+    /** Шаблон для рендера. */
+    override def template = _block12Tpl
+  }
+
+
   /** Сортированные значения. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id. */
   val valuesSorted = values.toSeq.sortBy(_.id)
