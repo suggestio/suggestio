@@ -164,8 +164,27 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
   /** Экшен смены блока редактора. */
   def adBlockSwitchEditor(adnId: String) = IsAdnNodeAdmin(adnId).apply(parse.urlFormEncoded) { implicit request =>
     detectAdPreviewForm match {
-      case Right((bc, adForm)) =>
-        val formBinded = adForm.bindFromRequest().discardingErrors
+      case Right((bc, newAdForm)) =>
+        // Отсутсвие или невалидность blockId считаем нештатной ситуацией, спровоцированной юзером.
+        val formBinded: AdFormM = request.body.get("ad.offer.oldBlockId")
+          // Отрабатываем, если нет старого blockId. Такое маловероятно, скорее всего юзер выпилил соотв. input из формы.
+          .flatMap { _.headOption }
+          // Пытаемся забиндить форму старого блока и получить её значения.
+          .flatMap { oldBlockIdStr =>
+            val oldBlockId = oldBlockIdStr.toInt
+            val oldBc: BlockConf = BlocksConf(oldBlockId)
+            val oldForm = getPreviewAdFormM(oldBc.strictMapping)
+            oldForm.bindFromRequest().fold(
+              {oldFormWithErrors =>
+                debug(s"adBlockSwitchEditor(): Failed to bind OLD blockId=$oldBlockId form: ${formatFormErrors(oldFormWithErrors)}")
+                None
+              },
+              { Some.apply }
+            )
+          }
+          // Если старая форма забиндилась, то результаты залить в новую форму. Иначе попытаться забиндить новую форму.
+          .fold { newAdForm.bindFromRequest() } { newAdForm.fill }
+          .discardingErrors
         Ok(bc.renderEditor(formBinded))
 
       case Left(formWithErrors) =>

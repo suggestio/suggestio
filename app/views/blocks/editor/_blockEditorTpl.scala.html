@@ -19,7 +19,11 @@
 
   }
 
-  <input type="hidden" name="@nameBase.@BLOCK_ID_FN" value="@bc.id">
+  @* Исходный id блока. Необходим при переключении блоков. *@
+  <input type="hidden" name="@{nameBase}.oldBlockId" value="@bc.id"/>
+
+  @* Новый/текущий id блока. При переключении сюда втыкается новый id блока и происходит submit для получения новой формы. *@
+  <input type="hidden" name="@nameBase.@BLOCK_ID_FN" value="@bc.id"/>
 </div>
 }
 }

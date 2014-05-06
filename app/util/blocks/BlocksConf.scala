@@ -251,39 +251,7 @@ object BlocksConf extends Enumeration {
       // Маппинг для списка офферов.
       val offersMapping = list(offerMapping)
         .verifying("error.too.much", { _.size <= OFFERS_COUNT })
-        .transform[List[AOBlock]](
-          {_.iterator
-            .zipWithIndex // Делаем zipWithIndex перед фильтром чтобы сохранять выравнивание на странице (css-классы), если 1 или 2 элемент пропущен.
-            .filter {
-              case ((titleOpt, priceOpt), _) =>
-                titleOpt.isDefined || priceOpt.isDefined
-            }
-            .map {
-              case ((titleOpt, priceOpt), i) =>
-                AOBlock(n = i,  text1 = titleOpt,  price = priceOpt)
-            }
-            .toList
-          },
-          {aoBlocks =>
-            // При нарушении нумерации aoBlock.n надо бы заполнять пустоты автоматом. Тут - велосипед на основе карты имеющихся и необходимых офферов с индексацией по id.
-            if (aoBlocks.isEmpty) {
-              Nil
-            } else {
-              val maxN = aoBlocks.maxBy(_.n).n
-              val aoBlocksNS = aoBlocks
-                .map { aoBlock => aoBlock.n -> aoBlock }
-                .toMap
-              (N0 to maxN)
-                .map { n =>
-                  aoBlocksNS
-                    .get(n)
-                    .map { aoBlock => aoBlock.text1 -> aoBlock.price }
-                    .getOrElse(None -> None)
-                }
-                .toList
-            }
-          }
-        )
+        .transform[List[AOBlock]] (applyAOBlocks, unapplyAOBlocks)
       // Маппинг для всего блока.
       mapping(
         bgImgBf.getStrictMappingKV,
@@ -302,6 +270,49 @@ object BlocksConf extends Enumeration {
       }
       {bmr =>
         Some((bmr.bim, bmr.bd.blockMeta.height, bmr.bd.offers))
+      }
+    }
+
+    /** Собрать AOBlock на основе куска выхлопа формы. */
+    protected def applyAOBlocks(l: List[(Option[AOStringField], Option[AOPriceField])]): List[AOBlock] = {
+      l.iterator
+        // Делаем zipWithIndex перед фильтром чтобы сохранять выравнивание на странице (css-классы), если 1 или 2 элемент пропущен.
+        .zipWithIndex
+        // Выкинуть пустые офферы
+        .filter {
+          case ((titleOpt, priceOpt), _) =>
+            titleOpt.isDefined || priceOpt.isDefined
+        }
+        // Оставшиеся офферы завернуть в AOBlock
+        .map {
+          case ((titleOpt, priceOpt), i) =>
+            AOBlock(n = i,  text1 = titleOpt,  price = priceOpt)
+        }
+        .toList
+    }
+
+    /** unapply для offersMapping. Вынесен для упрощения кода. Метод восстанавливает исходный выхлоп формы,
+      * даже если были пропущены какие-то группы полей. */
+    protected def unapplyAOBlocks(aoBlocks: Seq[AOBlock]) = {
+      // без if isEmpty будет экзепшен в maxBy().
+      if (aoBlocks.isEmpty) {
+        Nil
+      } else {
+        // Вычисляем оптимальную длину списка результатов
+        val maxN = aoBlocks.maxBy(_.n).n
+        // Рисуем карту маппингов необходимой длины, ключ - это n.
+        val aoBlocksNS = aoBlocks
+          .map { aoBlock => aoBlock.n -> aoBlock }
+          .toMap
+        // Восстанавливаем новый список выхлопов мапперов на основе длины и имеющихся экземпляров AOBlock.
+        (N0 to maxN)
+          .map { n =>
+          aoBlocksNS
+            .get(n)
+            .map { aoBlock => aoBlock.text1 -> aoBlock.price }
+            .getOrElse(None -> None)
+          }
+          .toList
       }
     }
   }
