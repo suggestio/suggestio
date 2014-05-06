@@ -81,6 +81,7 @@ case class MWelcomeAd(
   @JsonIgnore override def userCatId = None
   @JsonIgnore override def receivers = Map.empty
   @JsonIgnore override def blockMeta = MAd.blockMetaDflt
+  @JsonIgnore override def colors = Map.empty
 }
 
 

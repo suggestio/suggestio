@@ -35,6 +35,7 @@ object MAd
   with EMDateCreatedStatic
   with EMText4SearchStatic
   with AdsSimpleSearchT
+  with EMColorsStatic
   with MacroLogsImpl
   with EsModelStaticIgnore
 {
@@ -107,6 +108,7 @@ case class MAd(
   var id         : Option[String] = None,
   var userCatId  : Option[String] = None,
   var texts4search : Texts4Search = Texts4Search(),
+  var colors     : Map[String, String] = Map.empty,
   var dateCreated : DateTime = DateTime.now
 )
   extends EsModelEmpty
@@ -120,6 +122,7 @@ case class MAd(
   with EMUserCatIdMut
   with EMDateCreatedMut
   with EMTexts4Search
+  with EMColorsMut
 {
   @JsonIgnore
   override type T = MAd
