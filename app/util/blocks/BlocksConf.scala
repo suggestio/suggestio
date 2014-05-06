@@ -448,12 +448,12 @@ object BlocksConf extends Enumeration {
     )
     val priceBf = BfPrice("price")
     // 2014.may.06: Цвета для слова SALE и фона рамки с %показателем скидки.
-    val bannerFontColorBf = BfColor("bannerFontColor")
-    val iconBgColorBf = BfColor("iconBgColor")
+    val bannerFontColorBf = BfColor("bannerFontColor", defaultValue = Some("00ff1a"))
+    val iconBgColorBf = BfColor("iconBgColor", defaultValue = Some("ff2424"))
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, discoBf, titleBf, priceBf, bannerFontColorBf, iconBgColorBf
+      heightBf, bannerFontColorBf, discoBf, iconBgColorBf, titleBf, priceBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -478,7 +478,11 @@ object BlocksConf extends Enumeration {
             height = height,
             blockId = id
           ),
-          offers = List(blk)
+          offers = List(blk),
+          colors = Map(
+            bannerFontColorBf.name -> bannerFontColor,
+            iconBgColorBf.name     -> iconBgColor
+          )
         )
         val bim: BlockImgMap = Map.empty
         BlockMapperResult(bd, bim)
@@ -489,8 +493,8 @@ object BlocksConf extends Enumeration {
         val discount = offerOpt.flatMap(_.discount)
         val title = offerOpt.flatMap(_.text1)
         val price = offerOpt.flatMap(_.price)
-        val bannerFontColor = "FFFFFF"
-        val iconBgColor = "FFFFFF"
+        val bannerFontColor = bmr.bd.colors.get(bannerFontColorBf.name).getOrElse(bannerFontColorBf.anyDefaultValue)
+        val iconBgColor = bmr.bd.colors.get(iconBgColorBf.name).getOrElse(iconBgColorBf.anyDefaultValue)
         Some( (height, bannerFontColor, iconBgColor, discount, title, price) )
       }
     }

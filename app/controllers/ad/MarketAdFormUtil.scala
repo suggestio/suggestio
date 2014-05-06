@@ -111,6 +111,7 @@ object MarketAdFormUtil {
       producerId  = null,
       offers      = bmr.bd.offers,
       blockMeta   = bmr.bd.blockMeta,
+      colors      = bmr.bd.colors,
       imgs        = null,
       userCatId   = userCatId
     )
