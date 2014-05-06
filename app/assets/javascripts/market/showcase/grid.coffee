@@ -81,7 +81,9 @@ cbca_grid =
         _elt = siomart.utils.ge 'elt' + b.id
 
         _elt.style.opacity = 0
-        _elt.style[vendor_prefix.css + 'transform'] = 'translate3d(-1000px, 0px,0)'
+
+        for p in [vendor_prefix.css + 'transform', 'transform']
+          _elt.style[p] = 'translate3d(-1000px, 0px,0)'
 
         return this.fetch_block(block_max_w, tmp_block, i+1 )
       else
@@ -95,7 +97,8 @@ cbca_grid =
         _elt = siomart.utils.ge 'elt' + b.id
 
         _elt.style.opacity = 0
-        _elt.style[vendor_prefix.css + 'transform'] = 'translate3d(-1000px, 0px,0)'
+        for p in [vendor_prefix.css + 'transform', 'transform']
+          _elt.style[p] = 'translate3d(-1000px, 0px,0)'
         tmp_block.splice(i,1)
 
       return this.fetch_block(block_max_w, tmp_block, i+1 )
@@ -359,7 +362,8 @@ cbca_grid =
 
         id = b.id
 
-        siomart.utils.ge('elt' + id).style[vendor_prefix.css + 'transform'] = 'translate3d(' + left + 'px, ' + top + 'px,0)'
+        for p in [vendor_prefix.css + 'transform', 'transform']
+          siomart.utils.ge('elt' + id).style[p] = 'translate3d(' + left + 'px, ' + top + 'px,0)'
 
         left_pointer += b.width + this.cell_padding
         pline = cline
