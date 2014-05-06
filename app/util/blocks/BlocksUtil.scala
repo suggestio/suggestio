@@ -95,6 +95,11 @@ object BlocksEditorFields extends Enumeration {
     type BFT = BfDiscount
   }
 
+  protected trait ColorVal {
+    type T = String
+    type BFT = BfColor
+  }
+
   type BlockEditorField   = Val
   type BefInt             = BlockEditorField with IntVal
   type BefDiscount        = BlockEditorField with DiscountVal
@@ -102,6 +107,7 @@ object BlocksEditorFields extends Enumeration {
   type BefText            = BlockEditorField with TextVal
   type BefString          = BlockEditorField with StringVal
   type BefImage           = BlockEditorField with ImageVal
+  type BefColor           = BlockEditorField with ColorVal
 
   implicit def value2val(x: Value): BlockEditorField = {
     x.asInstanceOf[BlockEditorField]
@@ -134,6 +140,10 @@ object BlocksEditorFields extends Enumeration {
   
   val Discount: BefDiscount = new Val("discount") with DiscountVal {
     override def fieldTemplate = _discountTpl
+  }
+
+  val Color: BefColor = new Val("color") with ColorVal {
+    override def fieldTemplate = _colorTpl
   }
 }
 
@@ -336,6 +346,27 @@ case class BfDiscount(
   override def getOptionalStrictMapping: Mapping[Option[T]] = {
     MarketAdFormUtil.aoFloatFieldOptM(discoFloatM)
   }
+
+  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
+    field.renderEditorField(this, bfNameBase, af, bc)
+  }
+}
+
+
+case class BfColor(
+  name: String,
+  defaultValue: Option[String] = None,
+  offerNopt: Option[Int] = None
+) extends BlockFieldT {
+  override type T = String
+
+  override def mappingBase: Mapping[T] = colorM
+  override def getOptionalStrictMapping: Mapping[Option[T]] = colorOptM
+
+  override def field = BlocksEditorFields.Color
+
+  /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
+  override def fallbackValue: T = "FFFFFF"
 
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
     field.renderEditorField(this, bfNameBase, af, bc)
