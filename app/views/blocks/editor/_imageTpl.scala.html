@@ -1,4 +1,4 @@
-@(bf: BfImage, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
+@(bf: BfImage, bfNameBase: String, af: Form[_], bc: BlockConf, isWithCropping: Boolean = false)(implicit ctx: Context)
 
 @import ctx._
 
@@ -12,5 +12,10 @@
   <div id="blockImage@bf.name">
     <input type="hidden" class="js-image-key" name="@bfNameBase" value="@af(bfNameBase).value"/>
   </div>
+
+  @* При необходимости показать ссылку для вызова инструмента кадрирования *@
+  @if( isWithCropping ){
+    <div class="js-image-cropping-button">Кадрирование</div>
+  }
 
 </div>
