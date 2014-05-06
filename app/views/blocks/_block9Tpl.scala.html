@@ -14,13 +14,13 @@
   @mad.offers.headOption.map { offer =>
     <div class="info">
       @offer.text1.map { text1 =>
-        <div class="title" style="@text1.font.color">@Html(text1.value)</div>
+        <div class="title" style="color: #@text1.font.color">@Html(text1.value)</div>
       }
       @offer.price.map { price =>
-        <div class="price" style="@price.font.color">@formatPriceDigits(price.value)<span>@formatCurrency(price.currency)</span></div>
+        <div class="price" style="color: #@price.font.color">@formatPriceDigits(price.value)<span>@formatCurrency(price.currency)</span></div>
       }
       @offer.text2.map { text2 =>
-        <div class="descr" style="@text2.font.color">@Html(text2.value)</div>
+        <div class="descr" style="color: #@text2.font.color">@Html(text2.value)</div>
       }
     </div>
   }
