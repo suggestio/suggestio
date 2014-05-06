@@ -67,6 +67,9 @@ siomart =
     ############################
     re : ( id ) ->
       elt = this.ge id
+      if !elt || elt == null
+        return false
+
       elt.parentNode.removeChild elt
 
     ##########################################
@@ -141,6 +144,23 @@ siomart =
         js: pre[0].toUpperCase() + pre.substr(1)
 
       window.vendor_prefix = obj
+
+  events :
+    document_keyup_event : ( event ) ->
+
+      if !event
+        return false
+
+      ## Exc button
+      if event.keyCode == 27
+        siomart.close_node_offers_popup()
+
+      if event.keyCode == 39
+        siomart.node_offers_popup.next_block()
+
+      if event.keyCode == 37
+        siomart.node_offers_popup.prev_block()
+
 
   notifications :
     show : ( message ) ->
@@ -280,8 +300,11 @@ siomart =
 
     siomart.utils.re 'sioMartNodeOffers'
     siomart.utils.ge('sioMartNodeOffersRoot').style.display = 'none'
-    event.preventDefault()
 
+    delete siomart.node_offers_popup.active_block_index
+
+    if event
+      event.preventDefault()
 
   node_offers_popup :
 
@@ -315,6 +338,27 @@ siomart =
         console.log cw*2 + 'px'
       else
         this._block_container.style.width = cw + 'px'
+
+    next_block : () ->
+      if typeof this.active_block_index == 'undefined'
+        return false
+
+      next_index = this.active_block_index + 1
+
+      if next_index == this.sm_blocks.length
+        next_index = 0
+      this.show_block_by_index next_index
+
+    prev_block : () ->
+      if typeof this.active_block_index == 'undefined'
+        return false
+
+      prev_index = this.active_block_index - 1
+
+      if prev_index < 0
+        prev_index = this.sm_blocks.length - 1
+
+      this.show_block_by_index prev_index
 
     init : () ->
 
@@ -438,6 +482,9 @@ siomart =
   init_navigation : () ->
 
     ## Кнопка выхода
+
+    siomart.utils.add_single_listener document, 'keyup', siomart.events.document_keyup_event
+
     for _event in ['click', 'touchend']
 
       siomart.utils.add_single_listener this.utils.ge('smCloseButton'), _event, siomart.open_close_screen
