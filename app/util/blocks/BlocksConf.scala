@@ -448,12 +448,12 @@ object BlocksConf extends Enumeration {
     )
     val priceBf = BfPrice("price")
     // 2014.may.06: Цвета для слова SALE и фона рамки с %показателем скидки.
-    val bannerFontColorBf = BfColor("bannerFontColor")
-    val iconBgColorBf = BfColor("iconBgColor")
+    val bannerFontColorBf = BfColor("bannerFontColor", defaultValue = Some("00ff1a"))
+    val iconBgColorBf = BfColor("iconBgColor", defaultValue = Some("ff2424"))
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, discoBf, titleBf, priceBf, bannerFontColorBf, iconBgColorBf
+      heightBf, bannerFontColorBf, discoBf, iconBgColorBf, titleBf, priceBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -478,7 +478,11 @@ object BlocksConf extends Enumeration {
             height = height,
             blockId = id
           ),
-          offers = List(blk)
+          offers = List(blk),
+          colors = Map(
+            bannerFontColorBf.name -> bannerFontColor,
+            iconBgColorBf.name     -> iconBgColor
+          )
         )
         val bim: BlockImgMap = Map.empty
         BlockMapperResult(bd, bim)
@@ -489,8 +493,8 @@ object BlocksConf extends Enumeration {
         val discount = offerOpt.flatMap(_.discount)
         val title = offerOpt.flatMap(_.text1)
         val price = offerOpt.flatMap(_.price)
-        val bannerFontColor = "FFFFFF"
-        val iconBgColor = "FFFFFF"
+        val bannerFontColor = bmr.bd.colors.get(bannerFontColorBf.name).getOrElse(bannerFontColorBf.anyDefaultValue)
+        val iconBgColor = bmr.bd.colors.get(iconBgColorBf.name).getOrElse(iconBgColorBf.anyDefaultValue)
         Some( (height, bannerFontColor, iconBgColor, discount, title, price) )
       }
     }
@@ -646,6 +650,52 @@ object BlocksConf extends Enumeration {
 
     /** Шаблон для рендера. */
     override def template = _block10Tpl
+  }
+
+
+  val Block11 = new Val(11, "promoNarrow11") with SaveBgImg {
+    val heightBf = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
+    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+
+    /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
+    override def blockFields: List[BlockFieldT] = List(
+      heightBf, bgImgBf, titleBf, descrBf
+    )
+
+    /** Набор маппингов для обработки данных от формы. */
+    override def strictMapping: Mapping[BlockMapperResult] = mapping(
+      heightBf.getStrictMappingKV,
+      bgImgBf.getStrictMappingKV,
+      titleBf.getOptionalStrictMappingKV,
+      descrBf.getOptionalStrictMappingKV
+    )
+    {(height, bgBim, titleOpt, descrOpt) =>
+      val blk = AOBlock(
+        n = 0,
+        text1 = titleOpt,
+        text2 = descrOpt
+      )
+      val bd = BlockDataImpl(
+        blockMeta = BlockMeta(
+          height = height,
+          blockId = id
+        ),
+        offers = List(blk)
+      )
+      BlockMapperResult(bd, bgBim)
+    }
+    {bmr =>
+      val height = bmr.bd.blockMeta.height
+      val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+      val offerOpt = bmr.bd.offers.headOption
+      val title = offerOpt.flatMap(_.text1)
+      val descr = offerOpt.flatMap(_.text2)
+      Some( (height, bgBim, title, descr) )
+    }
+
+    /** Шаблон для рендера. */
+    override def template = _block11Tpl
   }
 
 

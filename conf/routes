@@ -100,7 +100,6 @@ GET  /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAccept(sh
 POST /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAcceptSubmit(shopId, eaId)
 # ЛК: Рекламные карточки
 POST /m/lk/ad/:adId/delete              controllers.MarketAd.deleteSubmit(adId)
-POST /m/lk/ai/temp                      controllers.MarketAd.handleAdTempLogo
 GET  /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAd(adnId)
 POST /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAdSubmit(adnId)
 POST /m/lk/ap/:adnId/preview            controllers.MarketAdPreview.adFormPreviewSubmit(adnId)

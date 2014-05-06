@@ -7,7 +7,7 @@ import models._
 import views.html.blocks.editor._
 import BlocksConf.BlockConf
 import controllers.ad.MarketAdFormUtil
-import io.suggest.ym.model.common.{IBlockMeta, BlockMeta}
+import io.suggest.ym.model.common.{IColors, IBlockMeta, BlockMeta}
 import io.suggest.ym.model.ad.IOffers
 import util.img.{OrigImgIdKey, ImgIdKey, ImgFormUtil}
 import controllers.MarketAdPreview.PreviewFormDefaults
@@ -356,17 +356,15 @@ case class BfDiscount(
 case class BfColor(
   name: String,
   defaultValue: Option[String] = None,
+  fallbackValue: String = "FFFFFF",
   offerNopt: Option[Int] = None
 ) extends BlockFieldT {
   override type T = String
 
-  override def mappingBase: Mapping[T] = colorM
+  override def mappingBase: Mapping[T] = defaultOpt(colorM, defaultValue)
   override def getOptionalStrictMapping: Mapping[Option[T]] = colorOptM
 
   override def field = BlocksEditorFields.Color
-
-  /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
-  override def fallbackValue: T = "FFFFFF"
 
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
     field.renderEditorField(this, bfNameBase, af, bc)
@@ -375,7 +373,12 @@ case class BfColor(
 
 
 /** Класс-реализация для быстрого создания BlockData. Используется вместо new BlockData{}. */
-case class BlockDataImpl(blockMeta: BlockMeta, offers: List[AOBlock])
+case class BlockDataImpl(
+  blockMeta: BlockMeta,
+  offers: List[AOBlock],
+  colors: Map[String, String] = Map.empty
+)
   extends IBlockMeta
   with IOffers
+  with IColors
 

@@ -41,10 +41,6 @@ object MarketAd extends SioController with TempImgSupport {
   /** Дефолтовый блок, используемый редакторами форм. */
   protected[controllers] def dfltBlock = BlocksConf.Block1
 
-
-  val AD_TEMP_LOGO_MARKER = "adLogo"
-  private val ad2ndLogoImgIdOptKM = ImgFormUtil.getLogoKM("ad.logo.invalid", marker=AD_TEMP_LOGO_MARKER)
-
   /** Генератор форм добавления/редактирования рекламируемого продукта в зависимости от вкладок. */
   private def getShopAdFormM(blockM: Mapping[BlockMapperResult]): AdFormM = Form(
     "ad" -> mapping(
@@ -53,12 +49,6 @@ object MarketAd extends SioController with TempImgSupport {
     )(adFormApply)(adFormUnapply)
   )
 
-
-  implicit private def mad2logoOpt(mad: MAd): LogoOpt_t = {
-    mad.logoImgOpt.map { logoImg =>
-      ImgInfo4Save(OrigImgIdKey(logoImg.id, logoImg.meta))
-    }
-  }
 
   type ReqSubmit = Request[collection.Map[String, Seq[String]]]
   type DetectForm_t = Either[AdFormM, (BlockConf, AdFormM)]
@@ -371,18 +361,6 @@ object MarketAd extends SioController with TempImgSupport {
       case MART | RESTAURANT_SUP  => getMartAdFormM(blockM)
     }
   }
-
-
-  /**
-   * Загрузка картинки для логотипа магазина.
-   * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
-   * @return Тот же формат ответа, что и для просто temp-картинок.
-   */
-  // TODO Дедублицировать с MML.handleMartTempLogo
-  def handleAdTempLogo = IsAuth(parse.multipartFormData) { implicit request =>
-    _handleTempImg(AdLogoImageUtil, Some(AD_TEMP_LOGO_MARKER))
-  }
-
 
 
   private def maybeAfCatId(af: AdFormM) = {
