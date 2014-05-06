@@ -6,6 +6,7 @@
 
   @ads.map { mad =>
     @_single_offer(mad, shops.getOrElse(mad.producerId, mmart), fallbackLogo = mmart.logoImgOpt, isHidden=(!isIndex&&(mad != ads.head)), isIndex)
+    @*@_single_block_offer(mad, shops.getOrElse(mad.producerId, mmart), fallbackLogo = mmart.logoImgOpt)*@
   }
 
 }
