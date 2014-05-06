@@ -447,21 +447,26 @@ object BlocksConf extends Enumeration {
       defaultValue = Some(AOStringField("", AOFieldFont("444444")))
     )
     val priceBf = BfPrice("price")
+    // 2014.may.06: Цвета для слова SALE и фона рамки с %показателем скидки.
+    val bannerFontColorBf = BfColor("bannerFontColor")
+    val iconBgColorBf = BfColor("iconBgColor")
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, discoBf, titleBf, priceBf
+      heightBf, discoBf, titleBf, priceBf, bannerFontColorBf, iconBgColorBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
     override def strictMapping: Mapping[BlockMapperResult] = {
       mapping(
         heightBf.getStrictMappingKV,
+        bannerFontColorBf.getStrictMappingKV,
+        iconBgColorBf.getStrictMappingKV,
         discoBf.getOptionalStrictMappingKV,
         titleBf.getOptionalStrictMappingKV,
         priceBf.getOptionalStrictMappingKV
       )
-      {(height, discoOpt, titleOpt, priceOpt) =>
+      {(height, bannerFontColor, iconBgColor, discoOpt, titleOpt, priceOpt) =>
         val blk = AOBlock(
           n = 0,
           text1 = titleOpt,
@@ -484,7 +489,9 @@ object BlocksConf extends Enumeration {
         val discount = offerOpt.flatMap(_.discount)
         val title = offerOpt.flatMap(_.text1)
         val price = offerOpt.flatMap(_.price)
-        Some( (height, discount, title, price) )
+        val bannerFontColor = "FFFFFF"
+        val iconBgColor = "FFFFFF"
+        Some( (height, bannerFontColor, iconBgColor, discount, title, price) )
       }
     }
 
