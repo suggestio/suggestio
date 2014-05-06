@@ -133,7 +133,7 @@ POST /img/tmp/prepare                   controllers.Img.handleTempImg
 GET  /img/tmp/:filename                 controllers.Img.getTempImg(filename)
 GET  /img/orig/:imgId                   controllers.Img.getOrig(imgId)
 GET  /img/any/:imgId                    controllers.Img.getImg(imgId)
-GET  /img/crop/:imgId                   controllers.Img.imgCrop(imgId)
+GET  /img/crop/:imgId                   controllers.Img.imgCrop(imgId, width:Int, height: Int)
 
 # market
 GET  /market/index/:martId              controllers.Market.martIndex(martId)

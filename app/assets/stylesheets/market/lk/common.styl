@@ -918,6 +918,31 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 @import "ads-list"
 @import "cbca-select"
 
+/* Разные окошки, которые нужно отображать поверх всего */
+.lk-overlay-data
+  display: none
+  position: fixed
+  left: 0px
+  top: 0px
+  width: 100%
+  height: 100%
+  z-index: 10000
+
+.lk-overlay-data__window
+  width: 700px
+  margin: 50px auto
+  padding: 20px
+  background: #e1e1e1
+
+/* Окошко для кадрирования картинок */
+.market-crop-tool
+  padding: 10px
+  border: 1px red solid
+
+.market-crop-tool__container
+  border: 1px #ccc solid
+  overflow: hidden
+
 /* Поля ввода */
 .lk-text-field
   border: 1px #b2b2b2 solid

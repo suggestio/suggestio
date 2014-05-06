@@ -656,6 +656,98 @@ market =
 
         return false
 
+
+  ################################
+  ## Класс для работы с картинками
+  ################################
+  img :
+
+    init_upload : () ->
+
+      $('.w-async-image-upload').bind "change", () ->
+
+        relatedFieldId = $(this).attr 'data-related-field-id'
+        form_data = new FormData()
+
+        console.log relatedFieldId
+
+        is_w_block_preview = $(this).attr 'data-w-block-preview'
+
+        if $(this)[0].type == 'file'
+          form_data.append $(this)[0].name, $(this)[0].files[0]
+
+        request_params =
+          url : $(this).attr "data-action"
+          method : 'post'
+          data : form_data
+          contentType: false
+          processData: false
+          success : ( resp_data ) ->
+
+            if typeof is_w_block_preview != 'undefined'
+              market.ad_form.queue_block_preview_request()
+
+            $('#' + relatedFieldId + ' .image-key, #' + relatedFieldId + ' .js-image-key').val(resp_data.image_key).trigger('change')
+            $('#' + relatedFieldId + ' .image-preview').show().attr "src", resp_data.image_link
+
+        $.ajax request_params
+
+        return false
+
+    crop :
+      init_triggers : () ->
+        $('.js-img-w-crop').unbind 'click'
+        $('.js-img-w-crop').bind 'click', () ->
+          img_key = $(this).attr 'data-image-key'
+          width = $(this).attr 'data-width'
+          height = $(this).attr 'data-height'
+
+          $.ajax
+            url : '/img/crop/' + img_key + '?width=' + width + '&height=' + height
+            success : ( data ) ->
+              $('#overlay, #overlayData').show()
+              $('#overlayData').html data
+
+              market.img.crop.init()
+
+          return false
+
+      init : () ->
+        crop_tool_dom = $('#imgCropTool')
+        crop_tool_container_dom = jQuery('.js-crop-container', crop_tool_dom)
+        crop_tool_img_dom = jQuery('img', crop_tool_dom)
+
+        width = parseInt crop_tool_dom.attr 'data-width'
+        height = parseInt crop_tool_dom.attr 'data-height'
+
+        img_width = parseInt crop_tool_img_dom.attr 'data-width'
+        img_height = parseInt crop_tool_img_dom.attr 'data-height'
+
+        crop_tool_container_dom.css
+          'width' : width + 'px'
+          'height' : height + 'px'
+
+        crop_tool_dom.css
+          'width' : width + 'px'
+
+        ## отресайзить картинку по нужной стороне
+
+        wbh = width/height
+        img_wbh = img_width/img_height
+
+        if wbh < img_wbh
+          img_new_width = width
+          img_new_height = img_height * img_new_width / img_width
+        else
+          img_new_height = height
+          img_new_width = img_new_height * img_width / img_height
+
+        crop_tool_img_dom.css
+          'width' : img_new_width + 'px'
+          'height' : img_new_height + 'px'
+
+        crop_tool_img_dom.draggable()
+        
   ##############################
   ## Редактор рекламной карточки
   ##############################
@@ -683,8 +775,9 @@ market =
       this.block_preview_request_timer = setTimeout market.ad_form.request_block_preview, request_delay
 
     init_block_editor : () ->
-      market.init_images_upload()
-
+      market.img.init_upload()
+      market.img.crop.init_triggers()
+      
       $('.js-int-only-input').bind 'keyup', () ->
 
 
@@ -726,6 +819,7 @@ market =
         market.ad_form.queue_block_preview_request request_delay=10
 
     init : () ->
+      market.img.crop.init_triggers()
       this.request_block_preview()
       this.init_block_editor()
 
@@ -750,38 +844,6 @@ market =
             market.ad_form.init_block_editor()
             market.init_colorpickers()
             market.ad_form.request_block_preview()
-
-  init_images_upload : () ->
-
-    $('.w-async-image-upload').bind "change", () ->
-
-      relatedFieldId = $(this).attr 'data-related-field-id'
-      form_data = new FormData()
-
-      console.log relatedFieldId
-
-      is_w_block_preview = $(this).attr 'data-w-block-preview'
-
-      if $(this)[0].type == 'file'
-        form_data.append $(this)[0].name, $(this)[0].files[0]
-
-      request_params =
-        url : $(this).attr "data-action"
-        method : 'post'
-        data : form_data
-        contentType: false
-        processData: false
-        success : ( resp_data ) ->
-
-          if typeof is_w_block_preview != 'undefined'
-            market.ad_form.queue_block_preview_request()
-
-          $('#' + relatedFieldId + ' .image-key, #' + relatedFieldId + ' .js-image-key').val(resp_data.image_key).trigger('change')
-          $('#' + relatedFieldId + ' .image-preview').show().attr "src", resp_data.image_link
-
-      $.ajax request_params
-
-      return false
 
   resize_preview_photos : () ->
     $('.preview .poster-photo').each () ->
@@ -813,7 +875,7 @@ market =
   init: () ->
     this.ad_form.init()
     $(document).ready () ->
-      market.init_images_upload()
+      market.img.init_upload()
       market.resize_preview_photos()
       market.mart.init()
 

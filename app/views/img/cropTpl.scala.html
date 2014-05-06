@@ -1,3 +1,10 @@
-@(imgId:String)(implicit ctx: util.Context)
+@(imgId:String, width: Int, height: Int)(implicit ctx: util.Context)
 
-<img class="bg abs" src="@routes.Img.getImg(imgId)" />
+<div id="imgCropTool" data-width="@width" data-height="@height" class="lk-overlay-data__window market-crop-tool">
+  <div class="market-crop-tool__container js-crop-container" style="width: @width; height: @height;">
+
+    @* TODO: аттрибуты data-width и data-height надо заменить на реальные значения *@
+    <img class="bg abs" data-width="604" data-height="604" src="@routes.Img.getImg(imgId)" />
+
+  </div>
+</div>
