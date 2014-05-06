@@ -20,7 +20,7 @@
     <div class="items">
 
       @mad.offers.map { offer =>
-        <div class="item el-@offer.n">
+        <div class="item el-@{offer.n + 1}">
           @offer.text1.map { title =>
           <div class="title" style="color: #@title.font.color;">
             @Html(title.value)
