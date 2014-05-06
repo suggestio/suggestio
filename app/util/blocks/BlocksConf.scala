@@ -448,19 +448,19 @@ object BlocksConf extends Enumeration {
     )
     val priceBf = BfPrice("price")
     // 2014.may.06: Цвета для слова SALE и фона рамки с %показателем скидки.
-    val bannerFontColorBf = BfColor("bannerFontColor", defaultValue = Some("00ff1a"))
+    val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("00ff1a"))
     val iconBgColorBf = BfColor("iconBgColor", defaultValue = Some("ff2424"))
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, bannerFontColorBf, discoBf, iconBgColorBf, titleBf, priceBf
+      heightBf, saleMaskColorBf, discoBf, iconBgColorBf, titleBf, priceBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
     override def strictMapping: Mapping[BlockMapperResult] = {
       mapping(
         heightBf.getStrictMappingKV,
-        bannerFontColorBf.getStrictMappingKV,
+        saleMaskColorBf.getStrictMappingKV,
         iconBgColorBf.getStrictMappingKV,
         discoBf.getOptionalStrictMappingKV,
         titleBf.getOptionalStrictMappingKV,
@@ -480,7 +480,7 @@ object BlocksConf extends Enumeration {
           ),
           offers = List(blk),
           colors = Map(
-            bannerFontColorBf.name -> bannerFontColor,
+            saleMaskColorBf.name -> bannerFontColor,
             iconBgColorBf.name     -> iconBgColor
           )
         )
@@ -493,9 +493,9 @@ object BlocksConf extends Enumeration {
         val discount = offerOpt.flatMap(_.discount)
         val title = offerOpt.flatMap(_.text1)
         val price = offerOpt.flatMap(_.price)
-        val bannerFontColor = bmr.bd.colors.get(bannerFontColorBf.name).getOrElse(bannerFontColorBf.anyDefaultValue)
+        val saleMaskColor = bmr.bd.colors.get(saleMaskColorBf.name).getOrElse(saleMaskColorBf.anyDefaultValue)
         val iconBgColor = bmr.bd.colors.get(iconBgColorBf.name).getOrElse(iconBgColorBf.anyDefaultValue)
-        Some( (height, bannerFontColor, iconBgColor, discount, title, price) )
+        Some( (height, saleMaskColor, iconBgColor, discount, title, price) )
       }
     }
 
@@ -657,20 +657,22 @@ object BlocksConf extends Enumeration {
     val heightBf = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+    val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("aaaaaa"))
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, bgImgBf, titleBf, descrBf
+      heightBf, saleMaskColorBf, bgImgBf, titleBf, descrBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
     override def strictMapping: Mapping[BlockMapperResult] = mapping(
       heightBf.getStrictMappingKV,
+      saleMaskColorBf.getStrictMappingKV,
       bgImgBf.getStrictMappingKV,
       titleBf.getOptionalStrictMappingKV,
       descrBf.getOptionalStrictMappingKV
     )
-    {(height, bgBim, titleOpt, descrOpt) =>
+    {(height, saleMaskColor, bgBim, titleOpt, descrOpt) =>
       val blk = AOBlock(
         n = 0,
         text1 = titleOpt,
@@ -681,7 +683,8 @@ object BlocksConf extends Enumeration {
           height = height,
           blockId = id
         ),
-        offers = List(blk)
+        offers = List(blk),
+        colors = Map(saleMaskColorBf.name -> saleMaskColor)
       )
       BlockMapperResult(bd, bgBim)
     }
@@ -691,7 +694,8 @@ object BlocksConf extends Enumeration {
       val offerOpt = bmr.bd.offers.headOption
       val title = offerOpt.flatMap(_.text1)
       val descr = offerOpt.flatMap(_.text2)
-      Some( (height, bgBim, title, descr) )
+      val saleMaskColor = bmr.bd.colors.get(saleMaskColorBf.name).getOrElse(saleMaskColorBf.anyDefaultValue)
+      Some( (height, saleMaskColor, bgBim, title, descr) )
     }
 
     /** Шаблон для рендера. */

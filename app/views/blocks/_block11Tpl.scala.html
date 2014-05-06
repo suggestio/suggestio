@@ -6,7 +6,7 @@
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl11" data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   <div class="color-bg"></div>
-  <div class="sale-mask abs"></div>
+  <div class="sale-mask abs"@mad.colors.get(Block11.saleMaskColorBf.name).map { saleColor => style="color: #@saleColor"}></div>
 
   @mad.imgs.get(Block11.BG_IMG_FN).map { img =>
     <img class="photo" src="@routes.Img.getImg(img.id)" />
