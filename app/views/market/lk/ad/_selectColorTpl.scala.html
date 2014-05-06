@@ -3,7 +3,8 @@
 @* Селектор цветов для различных полей формы. *@
 @import ctx._
 
-@defining( colorField.value.getOrElse("FFFFFF") ) { colorValue =>
+@* Дополнительная фильтрация значения формы из-за возможных пустых значений Some("") невыясненной природы. *@
+@defining( colorField.value.map(_.trim).filter(!_.isEmpty).getOrElse("FFFFFF") ) { colorValue =>
   <td class="select-color">
     @Messages("Color"):
     <div class="color custom" style="background-color: #@colorValue;">&nbsp;

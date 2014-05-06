@@ -2,7 +2,7 @@ package util
 
 import play.api.data.Forms._
 import java.net.URL
-import io.suggest.util.{DateParseUtil, UrlUtil}
+import io.suggest.util.{JacksonWrapper, DateParseUtil, UrlUtil}
 import gnu.inet.encoding.IDNA
 import HtmlSanitizer._
 import views.html.helper.FieldConstructor
@@ -14,6 +14,12 @@ import org.joda.time.format.ISOPeriodFormat
 import models._
 import org.postgresql.util.PGInterval
 import java.sql.SQLException
+import java.io._
+import java.util.zip.{GZIPInputStream, GZIPOutputStream}
+import org.apache.commons.codec.binary.{Base64InputStream, Base64OutputStream}
+import scala.collection.GenTraversableOnce
+import scala.Some
+import play.api.Logger
 
 /**
  * Suggest.io
@@ -361,3 +367,90 @@ object FormHelpers {
 
 }
 
+
+/** Сериализатор данных в поле формы, пригодное для передачи на клиент и возврату обратно.
+  * Структура отражает Map[String, String] на Json + gzip + base64.
+  * {"ad.offer.text1.value" : "рекламо", "ad.offer.text1.color" : "FFFFFF", ...}.
+  */
+object FormDataSerializer extends PlayLazyMacroLogsImpl {
+  import play.api.libs.json._
+  import LOGGER._
+
+  val ENCODING = "ISO-8859-1"
+
+  /** Сериализация Form.data или любой другой совместимой коллекции. */
+  def serializeData(data: GenTraversableOnce[(String, String)]): String = {
+    // Нано-оптимизация: вместо mapValues() + toSeq() намного эффективнее юзать foldLeft[List]
+    val dataJs = data.foldLeft[List[(String, JsValue)]] (Nil) {
+      case (acc, (k, v))  =>  k -> JsString(v) :: acc
+    }
+    val jsonStr = JsObject(dataJs).toString()
+    // Сжимаем
+    compress(jsonStr)
+  }
+
+  /** Десериализация выхлопа [[serializeData()]]. Для упрощения используется jackson. */
+  def deserializeData(s: String): Map[String, String] = {
+    val jsonStream = decompressStream(s)
+    try {
+      JacksonWrapper.deserialize[Map[String, String]](jsonStream)
+    } finally {
+      jsonStream.close()
+    }
+  }
+
+  def deserializeDataSafe(s: String): Option[Map[String, String]] = {
+    try {
+      Some(deserializeData(s))
+    } catch {
+      case ex: Exception =>
+        if (LOGGER.underlying.isDebugEnabled) {
+          val sb = new StringBuilder("deserializeDataSafe(): Failed to deser. string[")
+            .append(s.length)
+            .append(" chars]")
+          if (LOGGER.underlying.isTraceEnabled) {
+            sb.append(": ").append(s)
+          }
+          debug(sb.toString(), ex)
+        }
+        None
+    }
+  }
+
+  /** Сжатие строки в gzip+base64. */
+  def compress(str: String): String = {
+    if (str == null || str.length() == 0) {
+      ""
+    } else {
+      val out = new ByteArrayOutputStream()
+      val b64 = new Base64OutputStream(out, true, 0, Array())
+      val gzipped = new GZIPOutputStream(b64)
+      // TODO Opt: Надо бы использовать url-safe кодирование и отбрасывать padding в хвосте.
+      gzipped.write(str.getBytes)
+      gzipped.close()
+      out.toString(ENCODING)
+    }
+  }
+
+  /** Декомпрессия потока. */
+  def decompressStream(str: String): InputStream = {
+    val bais = new ByteArrayInputStream(str.getBytes(ENCODING))
+    val gis64 = new Base64InputStream(bais)
+    new GZIPInputStream(gis64)
+  }
+
+  /** Разжатие строки из gzip+base64 строки. */
+  def decompress(str: String): String = {
+    if (str == null || str.length() == 0) {
+      ""
+    } else {
+      val gis = decompressStream(str)
+      try {
+        val br = new BufferedReader(new InputStreamReader(gis, ENCODING))
+        Stream.continually(br.readLine()).takeWhile(_ != null).mkString("")
+      } finally {
+        gis.close()
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 package controllers
 
-import util.PlayMacroLogsImpl
+import util.{FormDataSerializer, PlayMacroLogsImpl}
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
@@ -165,32 +165,53 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
   def adBlockSwitchEditor(adnId: String) = IsAdnNodeAdmin(adnId).apply(parse.urlFormEncoded) { implicit request =>
     detectAdPreviewForm match {
       case Right((bc, newAdForm)) =>
-        // Отсутсвие или невалидность blockId считаем нештатной ситуацией, спровоцированной юзером.
-        val formBinded: AdFormM = request.body.get("ad.offer.oldBlockId")
+        // Для улучшения восстановления значений при переключении между формами разных блоков, используем сериализацию состояния формы в hidden-поле редактора.
+        val prevFormData: Map[String, String] = request.body.get("formData")
+          .flatMap(_.headOption)
+          .flatMap(FormDataSerializer.deserializeDataSafe)
+          .getOrElse {
+            request.body
+              .mapValues(_.headOption)
+              .filter(!_._2.isEmpty)
+              .mapValues(_.get)
+            }
+        val oldBindResultOpt = request.body.get("ad.offer.oldBlockId")
           // Отрабатываем, если нет старого blockId. Такое маловероятно, скорее всего юзер выпилил соотв. input из формы.
           .flatMap { _.headOption }
           // Пытаемся забиндить форму старого блока и получить её значения.
-          .flatMap { oldBlockIdStr =>
+          .map { oldBlockIdStr =>
+            // Невалидность blockId считаем нештатной ситуацией, спровоцированной юзером.
             val oldBlockId = oldBlockIdStr.toInt
             val oldBc: BlockConf = BlocksConf(oldBlockId)
             val oldForm = getPreviewAdFormM(oldBc.strictMapping)
-            oldForm.bindFromRequest().fold(
+            val oldFormBinded = oldForm.bindFromRequest()
+            val vOpt = oldFormBinded.fold(
               {oldFormWithErrors =>
                 debug(s"adBlockSwitchEditor(): Failed to bind OLD blockId=$oldBlockId form: ${formatFormErrors(oldFormWithErrors)}")
                 None
               },
               { Some.apply }
             )
+            oldFormBinded -> vOpt
           }
-          // Если старая форма забиндилась, то результаты залить в новую форму. Иначе попытаться забиндить новую форму.
-          .fold { newAdForm.bindFromRequest() } { newAdForm.fill }
+        val formBinded0: AdFormM = oldBindResultOpt
+          .flatMap(_._2)
+          .fold
+            { newAdForm.bindFromRequest() }    // Если старая форма не прокатила, то накатить все данные на новую форму.
+            { newAdForm.fill }                 // Если старая форма схватилась, то залить её результаты в новую форму.
+        val formBinded = newAdForm
+          .bind(prevFormData ++ formBinded0.data)
           .discardingErrors
-        Ok(bc.renderEditor(formBinded))
+        val newFormData = (prevFormData ++ formBinded.data)
+          .filter { case (k, v)  =>  !v.isEmpty && k != "ad.catId" && k != "ad.offer.blockId" }
+        val formDataSer = FormDataSerializer.serializeData(newFormData)
+        Ok(bc.renderEditor(formBinded, formDataSer = Some(formDataSer)))
 
       case Left(formWithErrors) =>
         Ok(views.html.blocks.editor._blockEditorTpl(formWithErrors))
     }
   }
+
 
 
   /** Подготовка картинки, которая загружается в динамическое поле блока. */

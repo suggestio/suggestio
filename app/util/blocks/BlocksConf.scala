@@ -97,8 +97,8 @@ object BlocksConf extends Enumeration {
     }
 
     /** Отрендерить редактор. */
-    def renderEditor(af: Form[_])(implicit ctx: util.Context): HtmlFormat.Appendable = {
-      editor._blockEditorTpl(af, withBC = Some(this))
+    def renderEditor(af: Form[_], formDataSer: Option[String])(implicit ctx: util.Context): HtmlFormat.Appendable = {
+      editor._blockEditorTpl(af, withBC = Some(this), formDataSer = formDataSer)
     }
   }
 

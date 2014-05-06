@@ -28,11 +28,31 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   import LOGGER._
 
   type LogoOpt_t = Option[ImgInfo4Save[ImgIdKey]]
+
+  val IIK_MAXLEN = 42
   
   /** Маппер для поля с id картинки. Используется обертка над id чтобы прозрачно различать tmp и orig картинки. */
-  val imgIdM: Mapping[ImgIdKey] = nonEmptyText(minLength = 8, maxLength = 42)
-    .transform(ImgIdKey.apply, {iik: ImgIdKey => iik.key})
+  val imgIdM: Mapping[ImgIdKey] = nonEmptyText(minLength = 8, maxLength = IIK_MAXLEN)
+    .transform[ImgIdKey](ImgIdKey.apply, _.key)
     .verifying("img.id.invalid.", { _.isValid })
+
+  /** маппер для поля с id картинки, который может отсутствовать. */
+  val imgIdOptM: Mapping[Option[ImgIdKey]] = optional(text(maxLength = IIK_MAXLEN))
+    .transform[Option[ImgIdKey]](
+       {txtOpt =>
+         try {
+           txtOpt
+             .filter(_.length >= 8)
+             .map(ImgIdKey.apply)
+         } catch {
+           case ex: Exception =>
+             debug("imgIdOptM.apply: Cannot parse img id key: " + txtOpt, ex)
+             None
+         }
+       },
+       { _.map(_.key) }
+    )
+
 
   /** Маппер для поля с id картинки-логотипа, но результат конвертируется в ImgInfo. */
   def logoImgIdM(_imgIdM: Mapping[ImgIdKey]) = _imgIdM
@@ -52,17 +72,30 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
   val LOGO_IMG_ID_K = "logoImgId"
 
-  /** Изображение, промаркированное известным маркером, либо уже сохранённый orig. */
-  def imgIdMarkedM(errorMsg: String, marker: String): Mapping[ImgIdKey] = {
-    imgIdM
-      .verifying(errorMsg, { iik => iik match {
-        case tiik: TmpImgIdKey =>
-          tiik.mptmpOpt
-            .flatMap(_.markerOpt)
-            .exists(_ == marker)
 
-        case _ => true
-      }})
+  /** Синхронно проверить переданный img id key насколько это возможно. */
+  def checkIIK(iik: ImgIdKey, marker: String): Boolean = {
+    iik match {
+      case tiik: TmpImgIdKey =>
+        tiik.mptmpOpt
+          .flatMap(_.markerOpt)
+          .exists(_ == marker)
+
+      case _ => true
+    }
+  }
+
+  /** Собрать маппинг для id изображения, промаркированного известным маркером, либо уже сохранённый orig. */
+  def imgIdMarkedM(errorMsg: String, marker: String): Mapping[ImgIdKey] = {
+    imgIdM.verifying(errorMsg, checkIIK(_, marker))
+  }
+
+  /** Аналог [[imgIdMarkedM]], но функция толерантна к ошибкам, и без ошибок отсеивает некорректные img id. */
+  def imgIdMarkedOptM(marker: String): Mapping[Option[ImgIdKey]] = {
+    imgIdOptM.transform[Option[ImgIdKey]](
+      { _.filter(checkIIK(_, marker)) },
+      { identity }
+    )
   }
 
   /** Генератор logo-маппингов. */

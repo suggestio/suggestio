@@ -288,16 +288,15 @@ case class BfImage(
 ) extends BlockFieldT {
   override type T = BlockImgMap
 
-  private def fallbackIik = OrigImgIdKey(PreviewFormDefaults.IMG_ID)
-
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
-  override def fallbackValue: T = Map(name -> fallbackIik)
+  override def fallbackValue: T = Map(name -> OrigImgIdKey(PreviewFormDefaults.IMG_ID))
 
   override def mappingBase: Mapping[T] = {
-    ImgFormUtil.imgIdMarkedM("error.image.invalid", marker = marker)
+    ImgFormUtil.imgIdMarkedOptM(marker = marker)
       .transform[BlockImgMap](
-        { iik => Map(name -> iik) },
-        { bim => bim.get(name).getOrElse(fallbackIik) }
+        { case Some(iik)  => Map(name -> iik)
+          case None       => Map.empty },
+        { _.get(name) }
       )
   }
 
