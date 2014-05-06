@@ -33,10 +33,14 @@ trait EMPrioOptStatic extends EsModelStaticT {
   }
 }
 
-trait EMPrioOpt extends EsModelT {
-  override type T <: EMPrioOpt
 
+trait EMPrioOptI extends EsModelT {
+  override type T <: EMPrioOptI
   def prio: Option[Int]
+}
+
+
+trait EMPrioOpt extends EMPrioOptI {
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)

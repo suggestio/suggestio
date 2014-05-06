@@ -115,10 +115,12 @@ trait IOffers {
   def offers: List[AOBlock]
 }
 
-/** read-only аддон для экземпляра [[io.suggest.model.EsModelT]] для добавления поддержки работы с полем offers. */
-trait EMAdOffers extends EsModelT with IOffers {
-  override type T <: EMAdOffers
+trait EMAdOffersI extends EsModelT with IOffers {
+  override type T <: EMAdOffersI
+}
 
+/** read-only аддон для экземпляра [[io.suggest.model.EsModelT]] для добавления поддержки работы с полем offers. */
+trait EMAdOffers extends EMAdOffersI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
     if (!offers.isEmpty) {

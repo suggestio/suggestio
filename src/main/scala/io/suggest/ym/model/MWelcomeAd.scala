@@ -20,7 +20,7 @@ import io.suggest.ym.model.common.EMImg.Imgs_t
  * Description: Модель для приветственной рекламы. Поиск тут не требуется, только изолированное хранение.
  */
 object MWelcomeAd
-  extends EsModelStaticEmpty
+  extends EsModelStaticIgnore
   with EMProducerIdStatic
   with EMImgStatic
   with EMDateCreatedStatic

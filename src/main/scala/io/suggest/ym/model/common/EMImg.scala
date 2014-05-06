@@ -83,9 +83,11 @@ trait Imgs {
   def imgs: Imgs_t
 }
 
-trait EMImg extends EsModelT with Imgs {
-  override type T <: EMImg
+trait EMImgI extends EsModelT with Imgs {
+  override type T <: EMImgI
+}
 
+trait EMImg extends EMImgI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
     if (!imgs.isEmpty) {
@@ -99,7 +101,6 @@ trait EMImg extends EsModelT with Imgs {
       acc0
     }
   }
-
 }
 
 trait EMImgMut extends EMImg {

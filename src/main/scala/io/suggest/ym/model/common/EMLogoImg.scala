@@ -33,11 +33,12 @@ trait EMLogoImgStatic extends EsModelStaticT {
   }
 }
 
-trait EMLogoImg extends EsModelT {
-  override type T <: EMLogoImg
-
+trait EMLogoImgI extends EsModelT {
+  override type T <: EMLogoImgI
   def logoImgOpt: Option[MImgInfo]
+}
 
+trait EMLogoImg extends EMLogoImgI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
     if (logoImgOpt.isDefined)
@@ -45,7 +46,6 @@ trait EMLogoImg extends EsModelT {
     else
       acc0
   }
-
 }
 
 trait EMLogoImgMut extends EMLogoImg {

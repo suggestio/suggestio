@@ -35,11 +35,13 @@ trait EMUserCatIdStatic extends EsModelStaticT {
 }
 
 
-trait EMUserCatId extends EsModelT {
-  override type T <: EMUserCatId
-
+trait EMUserCatIdI extends EsModelT {
+  override type T <: EMUserCatIdI
   def userCatId: Option[String]
+}
 
+
+trait EMUserCatId extends EMUserCatIdI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
     if (userCatId.isDefined)
@@ -47,8 +49,8 @@ trait EMUserCatId extends EsModelT {
     else
       acc0
   }
-
 }
+
 
 trait EMUserCatIdMut extends EMUserCatId {
   override type T <: EMUserCatIdMut

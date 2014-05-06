@@ -41,16 +41,18 @@ trait EMDateCreatedStatic extends EsModelStaticT {
 }
 
 
-trait EMDateCreated extends EsModelT {
-  override type T <: EMDateCreated
-
+trait EMDateCreatedI extends EsModelT {
+  override type T <: EMDateCreatedI
   def dateCreated: DateTime
+}
 
+
+trait EMDateCreated extends EMDateCreatedI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     (DATE_CREATED_ESFN, date2JsStr(dateCreated)) :: super.writeJsonFields(acc)
   }
-
 }
+
 
 trait EMDateCreatedMut extends EMDateCreated {
   override type T <: EMDateCreatedMut

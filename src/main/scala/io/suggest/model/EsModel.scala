@@ -845,6 +845,18 @@ trait EsModelStaticEmpty extends EsModelStaticT {
   }
 }
 
+
+/** Аналог [[EsModelStaticEmpty]], но в applyKeyValue() не происходит MatchError. */
+trait EsModelStaticIgnore extends EsModelStaticT {
+  // TODO Надо бы перевести все модели на stackable-трейты и избавится от PartialFunction здесь.
+  override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
+    case other => // Do nothing
+  }
+
+  override def generateMappingProps: List[DocField] = Nil
+}
+
+
 /** Трейт базовой реализации экземпляра модели. Вынесен из неё из-за особенностей stackable trait pattern.
   * Он содержит stackable-методы, реализованные пустышками. */
 trait EsModelEmpty extends EsModelT {

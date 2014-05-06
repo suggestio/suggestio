@@ -1,11 +1,7 @@
 package io.suggest.ym.model.ad
 
-import io.suggest.ym.model._
 import io.suggest.ym.model.common._
-import org.joda.time.DateTime
-import io.suggest.model._
-import io.suggest.ym.model.common.EMReceivers.Receivers_t
-import io.suggest.model.common.{EMDateCreated, EMPrioOpt}
+import io.suggest.model.common._
 
 /**
  * Suggest.io
@@ -16,15 +12,15 @@ import io.suggest.model.common.{EMDateCreated, EMPrioOpt}
  */
 
 trait MAdT
-  extends EMProducerId
-  with EMReceivers
-  with EMPrioOpt
-  with EMUserCatId
-  with EMDateCreated
-  with EMAdOffers
-  with EMImg
-  with EMBlockMeta
-  with EMLogoImg
+  extends EMProducerIdI
+  with EMReceiversI
+  with EMPrioOptI
+  with EMUserCatIdI
+  with EMDateCreatedI
+  with EMAdOffersI
+  with EMImgI
+  with EMBlockMetaI
+  with EMLogoImgI
 {
   override type T <: MAdT
 }

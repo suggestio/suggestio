@@ -88,12 +88,15 @@ trait EMProducerIdStatic extends EsModelStaticT {
 }
 
 
-trait EMProducerId extends EsModelT {
-  override type T <: EMProducerId
+trait EMProducerIdI extends EsModelT {
+  override type T <: EMProducerIdI
 
   /** Кто является изготовителем этой рекламной карточки? */
   def producerId: String
+}
 
+
+trait EMProducerId extends EMProducerIdI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     PRODUCER_ID_ESFN -> JsString(producerId) :: super.writeJsonFields(acc)
   }

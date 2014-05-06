@@ -40,10 +40,13 @@ trait IBlockMeta {
   def blockMeta: BlockMeta
 }
 
-/** Аддон для экземпляра [[io.suggest.model.EsModelT]] для интеграции поля blockId в модель. */
-trait EMBlockMeta extends EsModelT with IBlockMeta {
-  override type T <: EMBlockMeta
+/** Интерфейсная часть EMBlockMeta. Вынесена, чтобы избежать сериализации поля blockMeta когда это не нужно. */
+trait EMBlockMetaI extends EsModelT with IBlockMeta {
+  override type T <: EMBlockMetaI
+}
 
+/** Аддон для экземпляра [[io.suggest.model.EsModelT]] для интеграции поля blockId в модель. */
+trait EMBlockMeta extends EMBlockMetaI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     BLOCK_META_ESFN -> blockMeta.toPlayJson :: super.writeJsonFields(acc)
   }

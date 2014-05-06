@@ -24,7 +24,7 @@ import io.suggest.ym.model.common.EMImg.Imgs_t
  * Рефакторинг в MMartAd был бы слишком глубок, поэтому лучше было начать с чистого листа.
  */
 object MAd
-  extends EsModelStaticEmpty
+  extends EsModelStaticIgnore
   with EMProducerIdStatic
   with EMAdOffersStatic
   with EMImgStatic

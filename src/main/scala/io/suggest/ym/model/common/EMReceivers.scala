@@ -110,13 +110,36 @@ trait EMReceiversStatic extends EsModelStaticT {
 }
 
 
-/** Интерфейс абстрактной карточки. */
-trait EMReceivers extends EsModelT {
-  override type T <: EMReceivers
+trait EMReceiversI extends EsModelT {
+  override type T <: EMReceiversI
 
   /** Где (у кого) должна отображаться эта рекламная карточка? */
   def receivers: Receivers_t
 
+  /** Есть ли хоть один уровень в каком-либо published? */
+  def isPublished: Boolean = receivers.exists {
+    case (_, ari)  =>  !ari.slsPub.isEmpty
+  }
+
+  /** Собрать все уровни отображения со всех ресиверов. */
+  def allPubShowLevels = receivers.foldLeft[Set[AdShowLevel]] (Set.empty) {
+    case (acc, (_, ari))  =>  acc union ari.slsPub
+  }
+
+  /** Собрать все уровни отображения со всех ресиверов. */
+  def allWantShowLevels = receivers.foldLeft[Set[AdShowLevel]] (Set.empty) {
+    case (acc, (_, ari))  =>  acc union ari.slsWant
+  }
+
+  /** Опубликована ли рекламная карточка у указанного получателя? */
+  def isPublishedAt(receiverId: String): Boolean = {
+    receivers.get(receiverId).exists(!_.slsPub.isEmpty)
+  }
+}
+
+
+/** Интерфейс абстрактной карточки. */
+trait EMReceivers extends EMReceiversI {
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
@@ -160,25 +183,6 @@ trait EMReceivers extends EsModelT {
     updateReceiversReqBuilder.execute()
   }
 
-  /** Есть ли хоть один уровень в каком-либо published? */
-  def isPublished: Boolean = receivers.exists {
-    case (_, ari)  =>  !ari.slsPub.isEmpty
-  }
-
-  /** Собрать все уровни отображения со всех ресиверов. */
-  def allPubShowLevels = receivers.foldLeft[Set[AdShowLevel]] (Set.empty) {
-    case (acc, (_, ari))  =>  acc union ari.slsPub
-  }
-
-  /** Собрать все уровни отображения со всех ресиверов. */
-  def allWantShowLevels = receivers.foldLeft[Set[AdShowLevel]] (Set.empty) {
-    case (acc, (_, ari))  =>  acc union ari.slsWant
-  }
-
-  /** Опубликована ли рекламная карточка у указанного получателя? */
-  def isPublishedAt(receiverId: String): Boolean = {
-    receivers.get(receiverId).exists(!_.slsPub.isEmpty)
-  }
 }
 
 trait EMReceiversMut extends EMReceivers {
