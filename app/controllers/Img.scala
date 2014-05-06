@@ -16,6 +16,7 @@ import models.MPictureTmp
 import io.suggest.model.ImgWithTimestamp
 import net.sf.jmimemagic.Magic
 import scala.concurrent.Future
+import views.html.img._
 
 /**
  * Suggest.io
@@ -195,6 +196,11 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
       "image_key"  -> JsString(filename),
       "image_link" -> JsString(routes.Img.getTempImg(filename).url)
     ))
+  }
+
+  /** Отрендерить оконный интерфейс для кадрирования картинки. */
+  def imgCrop(filename: String) = IsAuth.async { implicit request =>
+    Ok(cropTpl())
   }
 
 }
