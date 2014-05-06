@@ -79,7 +79,6 @@ case class MWelcomeAd(
   @JsonIgnore override def offers = Nil
   @JsonIgnore override def prio = None
   @JsonIgnore override def userCatId = None
-  @JsonIgnore override def logoImgOpt = None
   @JsonIgnore override def receivers = Map.empty
   @JsonIgnore override def blockMeta = MAd.blockMetaDflt
 }

@@ -30,7 +30,6 @@ object MAd
   with EMImgStatic
   with EMBlockMetaStatic
   with EMReceiversStatic
-  with EMLogoImgStatic
   with EMPrioOptStatic
   with EMUserCatIdStatic
   with EMDateCreatedStatic
@@ -73,14 +72,6 @@ object MAd
         lazy val logPrefix = s"deleteById($id): "
         // Удаляем картинку рекламы в фоне
         eraseImgs(ad)
-        // Одновременно удаляем логотип.
-        ad.logoImgOpt.foreach { logoImg =>
-          val logoImgId = logoImg.id
-          MPict.deleteFully(logoImgId) onComplete {
-            case Success(_)  => trace(logPrefix + "Successfuly erased 2nd-logo picture: " + logoImgId)
-            case Failure(ex) => error(logPrefix + "Failed to delete 2nd-logo picture: " + logoImgId, ex)
-          }
-        }
         // Одновременно удаляем саму рекламную карточку из хранилища
         val resultFut = super.deleteById(id)
         // Когда всё будет удалено ок, то надо породить событие.
@@ -112,7 +103,6 @@ case class MAd(
   var imgs       : Imgs_t,
   var blockMeta  : BlockMeta,
   var receivers  : Receivers_t = Map.empty,
-  var logoImgOpt : Option[MImgInfo] = None,
   var prio       : Option[Int] = None,
   var id         : Option[String] = None,
   var userCatId  : Option[String] = None,
@@ -126,7 +116,6 @@ case class MAd(
   with EMImgMut
   with EMBlockMetaMut
   with EMReceiversMut
-  with EMLogoImgMut
   with EMPrioOptMut
   with EMUserCatIdMut
   with EMDateCreatedMut

@@ -20,7 +20,6 @@ trait MAdT
   with EMAdOffersI
   with EMImgI
   with EMBlockMetaI
-  with EMLogoImgI
 {
   override type T <: MAdT
 }
@@ -42,7 +41,6 @@ trait MAdWrapperT extends MAdT {
   override def id = wrappedAd.id
   override def dateCreated = wrappedAd.dateCreated
   override def imgs = wrappedAd.imgs
-  override def logoImgOpt = wrappedAd.logoImgOpt
   override def blockMeta = wrappedAd.blockMeta
 
   /** Перед сохранением надо также проверять состояние исходного экземпляра. */
