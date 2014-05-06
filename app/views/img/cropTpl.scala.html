@@ -1,4 +1,3 @@
-@()(implicit ctx: util.Context)
+@(imgId:String)(implicit ctx: util.Context)
 
-<div class="crop">
-</div>
+<img class="bg abs" src="@routes.Img.getImg(imgId)" />

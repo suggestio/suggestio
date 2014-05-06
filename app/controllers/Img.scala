@@ -199,8 +199,8 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
   }
 
   /** Отрендерить оконный интерфейс для кадрирования картинки. */
-  def imgCrop(filename: String) = IsAuth.async { implicit request =>
-    Ok(cropTpl())
+  def imgCrop(imgId: String) = IsAuth.async { implicit request =>
+    Ok(cropTpl(imgId))
   }
 
 }
