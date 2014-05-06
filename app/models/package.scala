@@ -132,5 +132,6 @@ package object models {
   type BfPrice              = util.blocks.BfPrice
   type BfString             = util.blocks.BfString
   type BfImage              = util.blocks.BfImage
+  type BfColor              = util.blocks.BfColor
 
 }
