@@ -1,15 +1,17 @@
 package io.suggest.ym.model
 
-import io.suggest.model.{EsModelJMXBase, EsModelJMXMBeanCommon, EsModelEmpty, EsModelStaticEmpty}
+import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.common._
 import com.fasterxml.jackson.annotation.JsonIgnore
-import common._
+import io.suggest.ym.model.common._
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.event._
-import io.suggest.event.SioNotifier.{Subscriber, Classifier}
-import io.suggest.event.subscriber.SnFunSubscriber
+import io.suggest.util.SioEsUtil.FieldAll
+import io.suggest.ym.model.common.AdNetMemberInfo
+import io.suggest.util.SioEsUtil.FieldSource
+import io.suggest.ym.model.common.AdnMMetadata
 
 /**
  * Suggest.io
@@ -25,6 +27,7 @@ object MAdnNode
   with EMAdNetMemberStatic
   with EMLogoImgStatic
   with EMAdnMMetadataStatic
+  with EsModelStaticIgnore
 {
   val ES_TYPE_NAME: String = "adnNode"
 
@@ -54,13 +57,6 @@ object MAdnNode
       sn publish AdnNodeDeletedEvent(id, isDeleted)
     }
     delFut
-  }
-
-  // TODO Удалить это после публичного запуска. Тарифы были перенесены в SQL-модель MBillTariff.
-  override def applyKeyValue(acc: MAdnNode): PartialFunction[(String, AnyRef), Unit] = {
-    super.applyKeyValue(acc) orElse {
-      case (EMTariff.TARIFF_ESFN, _) => // Do nothing
-    }
   }
 
 }

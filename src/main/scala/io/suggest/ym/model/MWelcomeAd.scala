@@ -20,11 +20,12 @@ import io.suggest.ym.model.common.EMImg.Imgs_t
  * Description: Модель для приветственной рекламы. Поиск тут не требуется, только изолированное хранение.
  */
 object MWelcomeAd
-  extends EsModelStaticIgnore
+  extends EsModelStaticEmpty
   with EMProducerIdStatic
   with EMImgStatic
   with EMDateCreatedStatic
   with MacroLogsImplLazy
+  with EsModelStaticIgnore
 {
 
   val ES_TYPE_NAME = "wcAd"

@@ -828,32 +828,28 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon {
 
 
 
-
 /**
  * Трейт для статической части модели, построенной через Stackable trait pattern.
  * Для нормального stackable trait без подсветки красным цветом везде, надо чтобы была базовая реализация отдельно
  * от целевой реализации и stackable-реализаций (abstract override).
  * Тут реализованы методы-заглушки для хвоста стэка декораторов. */
 trait EsModelStaticEmpty extends EsModelStaticT {
-
   def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     PartialFunction.empty
   }
 
-  def generateMappingProps: List[DocField] = {
-    Nil
-  }
+  def generateMappingProps: List[DocField] = Nil
 }
 
 
-/** Аналог [[EsModelStaticEmpty]], но в applyKeyValue() не происходит MatchError. */
+/** Дополнение к [[EsModelStaticEmpty]], но в applyKeyValue() не происходит MatchError. Втыкается в последнем with. */
 trait EsModelStaticIgnore extends EsModelStaticT {
   // TODO Надо бы перевести все модели на stackable-трейты и избавится от PartialFunction здесь.
-  override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
-    case other => // Do nothing
+  abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
+    super.applyKeyValue(acc) orElse {
+      case other => // Do nothing
+    }
   }
-
-  override def generateMappingProps: List[DocField] = Nil
 }
 
 
