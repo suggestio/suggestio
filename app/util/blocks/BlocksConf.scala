@@ -541,7 +541,7 @@ object BlocksConf extends Enumeration {
   }
   
   
-  val Block9 = new Val(9, "titlePriceDescr9") with SaveBgImg {
+  val Block9 = new Val(9, "titlePriceDescrNarrow9") with SaveBgImg {
     val heightBf = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val priceBf = BfPrice("price")
@@ -589,6 +589,56 @@ object BlocksConf extends Enumeration {
 
     /** Шаблон для рендера. */
     override def template = _block9Tpl
+  }
+
+
+  val Block10 = new Val(10, "oldNewPriceNarrow10") with SaveBgImg {
+    val heightBf    = BfInt(BlockMeta.HEIGHT_ESFN, BlocksEditorFields.Height, minValue = 300, maxValue=460, defaultValue = Some(300))
+    val titleBf     = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+    val oldPriceBf  = BfPrice("oldPrice")
+    val priceBf     = BfPrice("price")
+
+    /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
+    override def blockFields: List[BlockFieldT] = List(
+      heightBf, bgImgBf, titleBf, oldPriceBf, priceBf
+    )
+
+    /** Набор маппингов для обработки данных от формы. */
+    override def strictMapping: Mapping[BlockMapperResult] = mapping(
+      heightBf.getStrictMappingKV,
+      bgImgBf.getStrictMappingKV,
+      titleBf.getOptionalStrictMappingKV,
+      oldPriceBf.getOptionalStrictMappingKV,
+      priceBf.getOptionalStrictMappingKV
+    )
+    {(height, bgBim, titleOpt, oldPriceOpt, priceOpt) =>
+      val blk = AOBlock(
+        n = 0,
+        text1 = titleOpt,
+        oldPrice = oldPriceOpt,
+        price = priceOpt
+      )
+      val bd = BlockDataImpl(
+        blockMeta = BlockMeta(
+          height = height,
+          blockId = id
+        ),
+        offers = List(blk)
+      )
+      BlockMapperResult(bd, bgBim)
+    }
+    {bmr =>
+      val height = bmr.bd.blockMeta.height
+      val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+      val offerOpt = bmr.bd.offers.headOption
+      val title = offerOpt.flatMap(_.text1)
+      val oldPrice = offerOpt.flatMap(_.oldPrice)
+      val price = offerOpt.flatMap(_.price)
+      Some( (height, bgBim, title, oldPrice, price) )
+    }
+
+    /** Шаблон для рендера. */
+    override def template = _block10Tpl
   }
 
 
