@@ -744,23 +744,19 @@ market =
         target_offset = "+" + Math.round( Math.abs(offset_x) ) + "+" + Math.round(Math.abs(offset_y))
         target_size = rw + 'x' + rh
 
+        tw = parseInt this.crop_tool_dom.attr 'data-width'
+        th = parseInt this.crop_tool_dom.attr 'data-height'
 
-        if sw / sh > rw / rh
-          Rh = TargetHeight
-          Rw = Rh * SourceWidth / SourceHeight,
-
-          Ch = SourceHeight,
-          Cw = Ch * TargetWidth / TargetHeight,
-          {round( Rw ), round( Rh ), round( Cw ), round( Ch )};
+        if sw / sh > tw / th
+          ch = sh
+          cw = ch * tw / th
 
         else
-          Rw = TargetWidth,
-          Rh = Rw * SourceHeight / SourceWidth,
+          cw = sw
+          ch = cw * th / tw
 
-          Cw = SourceWidth,
-          Ch = Cw * TargetHeight / TargetWidth,
-          {round( Rw ),  round( Rh ), round( Cw ), round( Ch )}
-        
+        crop_size = Math.round( cw ) + 'x' + Math.round( ch )
+
         jQuery('input[name=crop]', form_dom).val( crop_size + target_offset )
 
         form_dom1 = $('#imgCropTool form')
