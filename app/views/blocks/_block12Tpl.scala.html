@@ -2,9 +2,9 @@
 
 @import util.blocks.BlocksConf.Block12
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl12" data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl12"@mad.colors.get(Block12.saleMaskColorBf.name).map { saleColor => style="border-color: #@saleColor"} data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
-  <div class="color-bg"></div>
+  <div class="color-bg"@mad.colors.get(Block12.saleMaskColorBf.name).map { saleColor => style="background: #@saleColor"}></div>
   <div class="sale-mask abs"@mad.colors.get(Block12.saleMaskColorBf.name).map { saleColor => style="color: #@saleColor"}></div>
 
   <div class="icon">50<span>%</span></div>
