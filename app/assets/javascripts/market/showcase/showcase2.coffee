@@ -152,6 +152,10 @@ siomart =
       window.vendor_prefix = obj
 
   events :
+
+    document_touchstart : ( event ) ->
+      alert event
+
     document_keyup_event : ( event ) ->
 
       if !event
@@ -489,8 +493,10 @@ siomart =
   #############################################
   init_navigation : () ->
 
-    ## Кнопка выхода
+    siomart.utils.add_single_listener document, 'touchstart', siomart.events.document_touchstart
+    siomart.utils.add_single_listener document, 'touchmove', siomart.events.document_touchmove
 
+    ## Кнопка выхода
     siomart.utils.add_single_listener document, 'keyup', siomart.events.document_keyup_event
 
     _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
@@ -515,11 +521,14 @@ siomart =
     blocks_w_actions = siomart.utils.ge_class document, 'js-shop-link'
 
     for _b in blocks_w_actions
-      producer_id = _b.getAttribute 'data-producer-id'
-      ad_id = _b.getAttribute 'data-ad-id'
 
-      siomart.utils.add_single_listener _b, _event, () ->
-        siomart.load_for_shop_id producer_id, ad_id
+      cb = ( b ) ->
+        producer_id = b.getAttribute 'data-producer-id'
+        ad_id = b.getAttribute 'data-ad-id'
+        siomart.utils.add_single_listener b, _event, () ->
+          siomart.load_for_shop_id producer_id, ad_id
+
+      cb _b
 
   ## Инициализация Sio.Market
   init : () ->
