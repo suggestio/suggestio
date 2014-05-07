@@ -9,7 +9,7 @@
 
     <div class="sale-icon">
       <div class="mask"></div>
-      <img class="bg" src="@mad.imgs.get(Block2.BG_IMG_FN).map { img => @routes.Img.getImg(img.id) }.getOrElse(routes.Assets.at("images/market/blocks/tpl2-bg.jpg"))"/>
+      <img class="bg" src="@mad.imgs.get(Block2.BG_IMG_FN).map { img => @routes.Img.getImg(img.filename) }.getOrElse(routes.Assets.at("images/market/blocks/tpl2-bg.jpg"))"/>
     </div>
 
     <div class="info">

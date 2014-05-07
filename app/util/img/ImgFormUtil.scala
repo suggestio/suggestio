@@ -1,6 +1,6 @@
 package util.img
 
-import util.PlayMacroLogsImpl
+import util.{FormUtil, PlayMacroLogsImpl}
 import io.suggest.img.{ConvertModes, ImgCrop, SioImageUtilT}
 import play.api.Play.current
 import io.suggest.model.{MUserImgMetadata, MImgThumb, MUserImgOrig, MPict}
@@ -10,10 +10,11 @@ import java.io.{File, FileNotFoundException}
 import org.apache.commons.io.FileUtils
 import scala.util.{Failure, Success}
 import java.lang
-import io.suggest.util.MacroLogsImplLazy
 import com.fasterxml.jackson.annotation.JsonIgnore
 import models._
 import play.api.cache.Cache
+import io.suggest.ym.model.common.MImgInfoT
+import net.sf.jmimemagic.MagicMatch
 
 /**
  * Suggest.io
@@ -33,7 +34,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   
   /** Маппер для поля с id картинки. Используется обертка над id чтобы прозрачно различать tmp и orig картинки. */
   val imgIdM: Mapping[ImgIdKey] = nonEmptyText(minLength = 8, maxLength = IIK_MAXLEN)
-    .transform[ImgIdKey](ImgIdKey.apply, _.key)
+    .transform[ImgIdKey](ImgIdKey.apply, _.filename)
     .verifying("img.id.invalid.", { _.isValid })
 
   /** маппер для поля с id картинки, который может отсутствовать. */
@@ -50,7 +51,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
              None
          }
        },
-       { _.map(_.key) }
+       { _.map(_.filename) }
     )
 
 
@@ -65,9 +66,9 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   val imgIdJpegM = imgIdM
     .verifying("img.fmt.invalid", { iik => iik match {
       case tiik: TmpImgIdKey =>
-        import tiik.mptmpOpt
-        mptmpOpt.isDefined  &&  mptmpOpt.get.fmt == OutImgFmts.JPEG
-      case oiik: OrigImgIdKey => true
+        tiik.mptmp.data.fmt == OutImgFmts.JPEG
+      case oiik: OrigImgIdKey =>
+        true
     }})
 
   val LOGO_IMG_ID_K = "logoImgId"
@@ -77,8 +78,8 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   def checkIIK(iik: ImgIdKey, marker: String): Boolean = {
     iik match {
       case tiik: TmpImgIdKey =>
-        tiik.mptmpOpt
-          .flatMap(_.markerOpt)
+        tiik.mptmp
+          .data.markerOpt
           .exists(_ == marker)
 
       case _ => true
@@ -106,11 +107,17 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
   /** Маппинг обязательного параметра кропа на реальность. */
-  val imgCropM = nonEmptyText(minLength = 4, maxLength = 16)
-    .verifying("crop.invalid", ImgCrop.isValidCropStr(_))
-    .transform(ImgCrop.apply, {ic: ImgCrop => ic.toCropStr})
+  val imgCropM: Mapping[ImgCrop] = nonEmptyText(minLength = 4, maxLength = 16)
+    .transform[Option[ImgCrop]] (ImgCrop.maybeApply, _.map(_.toCropStr).getOrElse(""))
+    .verifying("crop.invalid", _.isDefined)
+    .transform[ImgCrop](_.get, Some.apply)
 
-  val imgCropOptM = optional(imgCropM)
+  val imgCropOptM: Mapping[Option[ImgCrop]] = {
+    val txtM = text(maxLength = 16).transform(FormUtil.strTrimSanitizeLowerF, FormUtil.strIdentityF)
+    optional(txtM)
+      .transform[Option[String]] (_.filter(!_.isEmpty), identity)
+      .transform[Option[ImgCrop]] (_.flatMap(ImgCrop.maybeApply), _.map(_.toCropStr))
+  }
 
 
   /** Нередко бывает несколько картинок при сабмите. */
@@ -147,7 +154,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     val delOldImgs = oldImgsSet -- needOrigImgs  // TODO Раньше были списки, теперь их нет. Надо убрать множество.
     // Запускаем в фоне удаление старых картинок. TODO Возможно, надо этот фьючерс подвязывать к фьючерсу сохранения?
     Future.traverse(delOldImgs) { oldOiik =>
-      val fut = MPict.deleteFully(oldOiik.id)
+      val fut = MPict.deleteFully(oldOiik.data.rowKey)
       fut onComplete {
         case Success(_)  => trace("Old img deleted: " + oldOiik)
         case Failure(ex) => error("Failed to delete old img " + oldOiik, ex)
@@ -157,7 +164,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     Future.traverse(newTmpImgs) { tii =>
       val fut = handleTmpImageForStoring(tii)
       fut onComplete { case tryResult =>
-        tii.iik.mptmpOpt.foreach(_.file.delete())
+        tii.iik.mptmp.file.delete()
         tmpMetaCacheInvalidate(tii.iik)
       }
       fut onFailure {
@@ -183,62 +190,57 @@ object ImgFormUtil extends PlayMacroLogsImpl {
    * @return Фьючерс, содержащий imgId в виде строки.
    */
   def handleTmpImageForStoring(tii: ImgInfo4Save[TmpImgIdKey]): Future[SavedTmpImg] = {
-    tii.iik.mptmpOpt match {
-      case Some(mptmp) =>
-        val id = MPict.randomId
-        val idStr = MPict.idBin2Str(id)
-        // Запустить чтение из уже отрезайзенного tmp-файла и сохранение как-бы-исходного материала в HBase
-        val saveOrigFut = future {
-          OrigImageUtil.maybeReadFromFile(mptmp.file)
-        } flatMap { imgBytes =>
-          MUserImgOrig(idStr, imgBytes, q = MPict.Q_USER_IMG_ORIG)
-            .save
-            .map { _ => mptmp.file -> idStr }
+    import tii.iik.mptmp
+    val id = MPict.randomId
+    val idStr = MPict.idBin2Str(id)
+    // Запустить чтение из уже отрезайзенного tmp-файла и сохранение как-бы-исходного материала в HBase
+    val saveOrigFut = future {
+      OrigImageUtil.maybeReadFromFile(mptmp.file)
+    } flatMap { imgBytes =>
+      MUserImgOrig(idStr, imgBytes, q = tii.iik.origQualifier)
+        .save
+        .map { _ => mptmp.file -> idStr }
+    }
+    // 26.mar.2014: понадобился доступ к метаданным картинки в контексте элемента. Запускаем identify в фоне
+    val imgMetaFut: Future[MImgInfoMeta] = future {
+      OrigImageUtil.identify(mptmp.file)
+    } flatMap { identifyResult =>
+      // 2014.04.22: Сохранение метаданных в HBase для доступа в ad-preview.
+      val savedMeta = Map(
+        "w" -> identifyResult.getImageWidth.toString,
+        "h" -> identifyResult.getImageHeight.toString
+      )
+      MUserImgMetadata(idStr, savedMeta).save map { _ =>
+        MImgInfoMeta(
+          height = identifyResult.getImageHeight,
+          width  = identifyResult.getImageWidth
+        )
+      }
+    }
+    // Если укаазно withThumb, то пора сгенерить thumbnail без учёта кропов всяких.
+    val saveThumbFut = if (tii.withThumb) {
+      future {
+        val tmpThumbFile = File.createTempFile("origThumb", ".jpeg")
+        val thumbBytes = try {
+          ThumbImageUtil.convert(mptmp.file, tmpThumbFile, mode = ConvertModes.THUMB, crop = tii.cropOpt)
+          // Прочитать файл в памяти и сохранить в MImgThumb
+          FileUtils.readFileToByteArray(tmpThumbFile)
+        } finally {
+          tmpThumbFile.delete()
         }
-        // 26.mar.2014: понадобился доступ к метаданным картинки в контексте элемента. Запускаем identify в фоне
-        val imgMetaFut: Future[MImgInfoMeta] = future {
-          OrigImageUtil.identify(mptmp.file)
-        } flatMap { identifyResult =>
-          // 2014.04.22: Сохранение метаданных в HBase для доступа в ad-preview.
-          val savedMeta = Map(
-            "w" -> identifyResult.getImageWidth.toString,
-            "h" -> identifyResult.getImageHeight.toString
-          )
-          MUserImgMetadata(idStr, savedMeta).save map { _ =>
-            MImgInfoMeta(
-              height = identifyResult.getImageHeight,
-              width  = identifyResult.getImageWidth
-            )
-          }
-        }
-        // Если укаазно withThumb, то пора сгенерить thumbnail без учёта кропов всяких.
-        val saveThumbFut = if (tii.withThumb) {
-          future {
-            val tmpThumbFile = File.createTempFile("origThumb", ".jpeg")
-            val thumbBytes = try {
-              ThumbImageUtil.convert(mptmp.file, tmpThumbFile, mode = ConvertModes.THUMB, crop = tii.cropOpt)
-              // Прочитать файл в памяти и сохранить в MImgThumb
-              FileUtils.readFileToByteArray(tmpThumbFile)
-            } finally {
-              tmpThumbFile.delete()
-            }
-            val thumbDatum = new MImgThumb(id=id, thumb=thumbBytes, imageUrl=null)
-            thumbDatum.save
-          }
-        } else {
-          Future successful ()
-        }
-        // Связываем все асинхронные задачи воедино
-        for {
-          _ <- saveThumbFut
-          (tmpFile, idStr) <- saveOrigFut
-          imgMeta <- imgMetaFut
-        } yield {
-          SavedTmpImg(idStr, tmpFile, imgMeta)
-        }
-
-      case None =>
-        Future failed new FileNotFoundException(tii.iik.key)
+        val thumbDatum = new MImgThumb(id=id, thumb=thumbBytes, imageUrl=null)
+        thumbDatum.save
+      }
+    } else {
+      Future successful ()
+    }
+    // Связываем все асинхронные задачи воедино
+    for {
+      _ <- saveThumbFut
+      (tmpFile, idStr) <- saveOrigFut
+      imgMeta <- imgMetaFut
+    } yield {
+      SavedTmpImg(idStr, tmpFile, imgMeta)
     }
   }
 
@@ -264,38 +266,35 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
   /** Для временной картинки прочитать данные для постоения объекта метаданных. */
   def getMetaForTmpImg(img: TmpImgIdKey): Option[MImgInfoMeta] = {
-    img.mptmpOpt.map { mptmp =>
-      val info = OrigImageUtil.identify(mptmp.file)
-      MImgInfoMeta(height = info.getImageHeight, width = info.getImageWidth)
-    }
+    val info = OrigImageUtil.identify(img.mptmp.file)
+    val result = MImgInfoMeta(height = info.getImageHeight, width = info.getImageWidth)
+    Some(result)    // TODO Option -- тут аттавизм, пока остался, потом надо будет удалить.
   }
 
   def getTmpMetaCacheKey(id: String) = id + ".tme"
   val TMP_META_EXPIRE_SEC: Int = current.configuration.getInt("img.tmp.meta.cache.expire.seconds") getOrElse 40
 
   def getMetaForTmpImgCached(img: TmpImgIdKey): Option[MImgInfoMeta] = {
-    img.mptmpOpt.flatMap { mptmp =>
-      val ck = getTmpMetaCacheKey(mptmp.key)
-      Cache.getOrElse(ck, TMP_META_EXPIRE_SEC) {
-        getMetaForTmpImg(img)
-      }
+    val ck = getTmpMetaCacheKey(img.mptmp.data.key)
+    Cache.getOrElse(ck, TMP_META_EXPIRE_SEC) {
+      getMetaForTmpImg(img)
     }
   }
 
   def tmpMetaCacheInvalidate(tii: TmpImgIdKey) {
-    val ck = getTmpMetaCacheKey(tii.key)
+    val ck = getTmpMetaCacheKey(tii.filename)
     Cache.remove(ck)
   }
 
 
   /** Приведение выхлопа мапперов imgId к результату сохранения, минуя это самое сохранение. */
   implicit def logoOpt2imgInfo(logoOpt: LogoOpt_t): Option[MImgInfo] = {
-    logoOpt.map { logo => MImgInfo(logo.iik.key) }
+    logoOpt.map { logo => MImgInfo(logo.iik.filename) }
   }
 
   /** Конвертер данных из готовых MImgInfo в [[OrigImgIdKey]]. */
   implicit def imgInfo2imgKey(m: MImgInfo): OrigImgIdKey = {
-    OrigImgIdKey(m.id, m.meta)
+    OrigImgIdKey(m.filename, m.meta)()
   }
 }
 
@@ -403,68 +402,91 @@ object ImgIdKey {
     if (key startsWith MPictureTmp.KEY_PREFIX) {
       TmpImgIdKey(key)
     } else {
-      OrigImgIdKey(key)
+      OrigImgIdKey(key)()
     }
   }
 }
 
 sealed trait ImgIdKey {
-  @JsonIgnore def key: String
-  @JsonIgnore def isExists: Future[Boolean]
-  @JsonIgnore def isValid: Boolean
-  @JsonIgnore def isTmp: Boolean
-  @JsonIgnore override def hashCode = key.hashCode
+  def filename: String
+  def isExists: Future[Boolean]
+  def isValid: Boolean
+  def isTmp: Boolean
+  override def hashCode = filename.hashCode
+  def cropOpt: Option[ImgCrop]
+
+  // Определение hbase qualifier для сохранения/чтения картинки по этому ключу.
+  def origQualifierOpt = cropOpt.map { _.toCropStr }
+  def origQualifier = cropOpt.fold(MPict.Q_USER_IMG_ORIG) { _.toCropStr }
 }
 
-case class TmpImgIdKey(filename: String) extends ImgIdKey with MacroLogsImplLazy {
-  import LOGGER._
+case class TmpImgIdKey(filename: String) extends ImgIdKey {
+  @JsonIgnore
+  val mptmp: MPictureTmp = MPictureTmp(filename)
 
   @JsonIgnore
-  val mptmpOpt: Option[MPictureTmp] = try {
-    Some(MPictureTmp(filename))
-  } catch {
-    case ex: Throwable =>
-      debug("Failed to bind filename: " + filename, ex)
-      None
-  }
+  override def cropOpt = mptmp.data.cropOpt
 
   @JsonIgnore
-  def isTmp: Boolean = true
+  override def isTmp: Boolean = true
 
   @JsonIgnore
-  def key = filename
+  override def isExists: Future[Boolean] = Future successful isValid
 
   @JsonIgnore
-  def isExists: Future[Boolean] = Future successful isValid
-
-  @JsonIgnore
-  def isValid = mptmpOpt.isDefined && mptmpOpt.exists(_.isExist)
+  override def isValid: Boolean = mptmp.isExist
 }
 
 
-class OrigImgIdKey(@JsonIgnore val key: String, meta: Option[MImgInfoMeta] = None) extends MImgInfo(key, meta) with ImgIdKey {
+object OrigImgIdKey {
+  import io.suggest.img.ImgUtilParsers._
+
+  val FILENAME_PARSER: Parser[OrigImgData] = {
+    "(?i)[0-9a-z_-]+".r ~ opt("~" ~> ImgCrop.CROP_STR_PARSER) ^^ {
+      case rowKey ~ cropOpt =>
+        OrigImgData(rowKey, cropOpt)
+    }
+  }
+
+  def parseFilename(filename: String) = parse(FILENAME_PARSER, filename)
+}
+
+case class OrigImgData(rowKey: String, cropOpt: Option[ImgCrop]) {
+  def toFilename: String = {
+    var sbSz: Int = rowKey.length
+    if (cropOpt.isDefined)
+      sbSz += 22
+    val sb = new StringBuilder(sbSz, rowKey)
+    if (cropOpt.isDefined)
+      sb.append('~').append(cropOpt.get.toUrlSafeStr)
+    sb.toString()
+  }
+}
+
+case class OrigImgIdKey(filename: String, meta: Option[MImgInfoMeta] = None)
+                       (val data: OrigImgData = OrigImgIdKey.parseFilename(filename).get)
+  extends MImgInfoT with ImgIdKey
+{
+  @JsonIgnore
+  override def isTmp: Boolean = false
 
   @JsonIgnore
-  def isTmp: Boolean = false
-
-  @JsonIgnore
-  def isExists: Future[Boolean] = {
-    MUserImgOrig.getById(key, q = None).map(_.isDefined)
+  override def isExists: Future[Boolean] = {
+    MUserImgOrig.getById(filename, q = None).map(_.isDefined)
   }
 
   @JsonIgnore
-  def isValid: Boolean = MPict.isStrIdValid(key)
+  override def isValid: Boolean = MPict.isStrIdValid(filename)
 
   override def equals(obj: scala.Any): Boolean = {
     // Сравниваем с MImgInfo без учёта поля meta.
     obj match {
-      case mii: MImgInfo => (mii eq this) || (mii.id == this.id)
+      case mii: MImgInfoT => (mii eq this) || (mii.filename == this.filename)
       case _ => false
     }
   }
-}
-object OrigImgIdKey {
-  def apply(key: String, meta: Option[MImgInfoMeta] = None) = new OrigImgIdKey(key, meta)
+
+  override def cropOpt = data.cropOpt
 }
 
 

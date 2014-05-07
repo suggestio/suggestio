@@ -4,7 +4,6 @@ import util.{FormDataSerializer, PlayMacroLogsImpl}
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
-import util.img.ImgFormUtil._
 import util.FormUtil._
 import play.api.data._, Forms._
 import util.acl._
@@ -18,6 +17,7 @@ import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import util.blocks.BlockMapperResult
 import io.suggest.ym.model.common.EMImg.Imgs_t
+import views.html.img.cropTpl
 
 /**
  * Suggest.io
@@ -112,9 +112,9 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
               }
             }
             val imgsFut: Future[Imgs_t] = Future.traverse(bim) {
-              case (k, iik) =>
-                previewPrepareImgMeta(iik) map { imgMetaOpt =>
-                  k -> MImgInfo(iik.key, meta = imgMetaOpt)
+              case (k, i4s) =>
+                previewPrepareImgMeta(i4s.iik) map {
+                  imgMetaOpt  =>  k -> MImgInfo(i4s.iik.filename, meta = imgMetaOpt)
                 }
             } map {
               _.toMap
@@ -144,7 +144,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
         Future successful oiik.meta
       case oiik: OrigImgIdKey =>
         // Метаданных нет, но данные уже в базе. Надо бы прочитать метаданные из таблицы
-        MUserImgMetadata.getById(oiik.key) map { muimOpt =>
+        MUserImgMetadata.getById(oiik.filename) map { muimOpt =>
           muimOpt.flatMap { muim =>
             muim.md.get("w").flatMap { widthStr =>
               muim.md.get("h").map { heightStr =>
@@ -203,7 +203,9 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
           .bind(prevFormData ++ formBinded0.data)
           .discardingErrors
         val newFormData = (prevFormData ++ formBinded.data)
-          .filter { case (k, v)  =>  !v.isEmpty && k != "ad.catId" && k != "ad.offer.blockId" }
+          .filter {
+            case (k, v)  =>  !v.isEmpty && k != "ad.catId" && k != "ad.offer.blockId"
+          }
         val formDataSer = FormDataSerializer.serializeData(newFormData)
         Ok(bc.renderEditor(formBinded, formDataSer = Some(formDataSer)))
 

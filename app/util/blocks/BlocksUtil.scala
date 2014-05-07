@@ -9,10 +9,10 @@ import BlocksConf.BlockConf
 import controllers.ad.MarketAdFormUtil
 import io.suggest.ym.model.common.{IColors, IBlockMeta, BlockMeta}
 import io.suggest.ym.model.ad.IOffers
-import util.img.{OrigImgIdKey, ImgIdKey, ImgFormUtil}
+import util.img._
 import controllers.MarketAdPreview.PreviewFormDefaults
-import io.suggest.ym.model.common.EMImg.Imgs_t
 import io.suggest.img.SioImageUtilT
+import util.img.ImgInfo4Save
 
 /**
  * Suggest.io
@@ -23,7 +23,7 @@ import io.suggest.img.SioImageUtilT
 
 object BlocksUtil {
 
-  type BlockImgMap = Map[String, ImgIdKey]
+  type BlockImgMap = Map[String, ImgInfo4Save[ImgIdKey]]
 
   val BLOCK_ID_FN = "blockId"
 
@@ -44,10 +44,6 @@ object BlocksUtil {
   }
 
   def defaultFont: AOFieldFont = AOFieldFont(color = "000000")
-
-  implicit def imgs2bim(imgs: Imgs_t): BlockImgMap = {
-    imgs.mapValues { mii => OrigImgIdKey(mii.id, mii.meta) }
-  }
 }
 
 import BlocksUtil._
@@ -298,21 +294,29 @@ case class BfImage(
   imgUtil: SioImageUtilT,
   field: BefImage = Image,
   defaultValue: Option[BlockImgMap] = None,
-  offerNopt: Option[Int] = None
+  offerNopt: Option[Int] = None,
+  saveWithThumb: Boolean = false
 ) extends BlockFieldT {
   override type T = BlockImgMap
 
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
-  override def fallbackValue: T = Map(name -> OrigImgIdKey(PreviewFormDefaults.IMG_ID))
+  override def fallbackValue: T = {
+    val oiik = OrigImgIdKey(PreviewFormDefaults.IMG_ID)(OrigImgData("", None))
+    val i4s = ImgInfo4Save(oiik, withThumb = saveWithThumb)
+    Map(name -> i4s)
+  }
 
+  /** Маппинг для картинок, которые можно кадрировать. Есть ключ картинки и есть настройки кадрирования. */
   override def mappingBase: Mapping[T] = {
     ImgFormUtil.imgIdMarkedOptM(marker = marker)
-      .transform[BlockImgMap](
-        { case Some(iik)  => Map(name -> iik)
-          case None       => Map.empty },
-        { _.get(name) }
+      .transform[BlockImgMap] (
+        { _.map { iik => ImgInfo4Save(iik, withThumb = saveWithThumb) }
+           .fold[BlockImgMap] (Map.empty) { i4s => Map(name -> i4s) }
+        },
+        { _.get(name).map(_.iik) }
       )
   }
+
 
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
     field.renderEditorField(this, bfNameBase, af, bc)

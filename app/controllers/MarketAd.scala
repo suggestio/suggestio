@@ -4,22 +4,19 @@ import views.html.market.lk.ad._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
-import util.img.ImgFormUtil._
 import util.FormUtil._
 import play.api.data._, Forms._
 import util.acl._
-import util.img._
 import scala.concurrent.Future
 import play.api.mvc.Request
 import play.api.Play.current
 import MMartCategory.CollectMMCatsAcc_t
-import scala.util.{Try, Failure, Success}
 import io.suggest.ym.ad.ShowLevelsUtil
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import util.blocks.BlockMapperResult
-import util.blocks.BlocksUtil.imgs2bim
+import util.img.{ImgInfo4Save, OrigImgIdKey}
 
 /**
  * Suggest.io
@@ -189,7 +186,11 @@ object MarketAd extends SioController with TempImgSupport {
     val formFilledOpt = mad.offers.headOption map { offer =>
       val blockConf: BlockConf = BlocksConf.apply(mad.blockMeta.blockId)
       val form0 = getAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
-      form0 fill ((mad, mad.imgs))
+      val bim = mad.imgs.mapValues { mii =>
+        val oiik = OrigImgIdKey(filename = mii.filename, meta = mii.meta)()
+        ImgInfo4Save(oiik)
+      }
+      form0 fill ((mad, bim))
     }
     formFilledOpt match {
       case Some(formFilled) =>

@@ -767,19 +767,25 @@ case class BlockMapperResult(bd: BlockData, bim: BlockImgMap)
 object SaveImgUtil {
 
   def saveImgsStatic(newImgs: BlockImgMap, oldImgs: Imgs_t, supImgsFut: Future[Imgs_t], fn: String): Future[Imgs_t] = {
-    val saveBgImgsFut = ImgFormUtil.updateOrigImg(
-      needImgs = newImgs.get(fn).map(ImgInfo4Save(_)),
-      oldImgs = oldImgs.get(fn)
-    )
-    for {
-      savedBgImgs <- saveBgImgsFut
-      supSavedMap <- supImgsFut
-    } yield {
-      savedBgImgs
-        .headOption
-        .fold(supSavedMap) {
-        savedBgImg =>  supSavedMap + (fn -> savedBgImg)
+    val needImgsThis = newImgs.get(fn)
+    val oldImgsThis = oldImgs.get(fn)
+    // Нанооптимизация: не ворочить картинками, если нет по ним никакой инфы.
+    if (needImgsThis.isDefined || oldImgsThis.isDefined) {
+      // Есть картинки для обработки (старые или новые), запустить обработку.
+      val saveBgImgsFut = ImgFormUtil.updateOrigImg(needImgs = needImgsThis,  oldImgs = oldImgsThis)
+      for {
+        savedBgImgs <- saveBgImgsFut
+        supSavedMap <- supImgsFut
+      } yield {
+        savedBgImgs
+          .headOption
+          .fold(supSavedMap) {
+          savedBgImg => supSavedMap + (fn -> savedBgImg)
+        }
       }
+    } else {
+      // Нет данных по картинкам. Можно спокойно возвращать исходный фьючерс.
+      supImgsFut
     }
   }
 

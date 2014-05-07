@@ -1,4 +1,7 @@
-@(imgId:String, width: Int, height: Int)(implicit ctx: util.Context)
+@(imgId:String, width: Int, height: Int, markerOpt: Option[String])(implicit ctx: util.Context)
+
+@import ctx._
+@import helper._
 
 <div id="imgCropTool" data-width="@width" data-height="@height" class="lk-overlay-data__window market-crop-tool">
   <div class="market-crop-tool__container js-crop-container" style="width: @width; height: @height;">
@@ -10,6 +13,15 @@
     </div>
 
   </div>
+
+  @form(routes.Img.imgCropSubmit) {
+    <input type="hidden" name="imgId" value="@imgId"/>
+    <input type="hidden" name="crop" value="0x0+10+10"/>
+    @markerOpt.map { marker =>
+      <input type="hidden" name="marker" value="@marker"/>
+    }
+    <input type="submit" value="@Messages("Save")"/>
+  }
 
   <a href="" onclick="market.img.crop.save_crop(); return false;">Сохранить</a>
 

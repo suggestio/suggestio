@@ -1,4 +1,4 @@
-@(mads: Seq[MAdT], addCall: Call, editCall: String => Call, producer: MAdnNode, fallbackLogo: Option[MImgInfo] = None)(content: MAdT => Html)(implicit ctx: util.Context)
+@(mads: Seq[MAdT], addCall: Call, editCall: String => Call, producer: MAdnNode, fallbackLogo: Option[MImgInfoT] = None)(content: MAdT => Html)(implicit ctx: util.Context)
 
 @* Встраиваемый список изменяемых рекламных карточек.
    isShownF содержит функцию, которая определяет, является ли текущая карточка отображаемой на момент рендера.

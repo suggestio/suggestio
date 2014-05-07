@@ -97,7 +97,7 @@ trait TempImgSupport extends SioController with PlayMacroLogsImpl {
         // Если на входе png/gif, то надо эти форматы выставить в outFmt. Иначе jpeg.
         val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
         val outFmt = OutImgFmts.forImageMime(srcMagicMatch.getMimeType)
-        val mptmp = MPictureTmp.getForTempFile(fileRef, outFmt, marker)
+        val mptmp = MPictureTmp.getForTempFile(fileRef.file, outFmt, marker)
         try {
           imageUtil.convert(srcFile, mptmp.file)
           Ok(Img.jsonTempOk(mptmp.filename))

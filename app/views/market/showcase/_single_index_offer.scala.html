@@ -1,10 +1,10 @@
-@(ad: MAdT, producer: MAdnNode, fallbackLogo: Option[MImgInfo] = None, isHidden: Boolean = false)(implicit ctx: util.Context)
+@(ad: MAdT, producer: MAdnNode, fallbackLogo: Option[MImgInfoT] = None, isHidden: Boolean = false)(implicit ctx: util.Context)
 
 @import util.TplDataFormatUtil._
 
 <div class="sm-index-offer">
   @* Какую картинку тут надо рисовать, если их несколько? *@
   @ad.imgs.headOption.map { case (_, img) =>
-    <img width="230" data-width="@img.meta.map(_.width).getOrElse(1575)" data-height="@img.meta.map(_.height).getOrElse(1181)" src="@ctx.myAudienceUrl@routes.Img.getImg(img.id)"/>
+    <img width="230" data-width="@img.meta.map(_.width).getOrElse(1575)" data-height="@img.meta.map(_.height).getOrElse(1181)" src="@ctx.myAudienceUrl@routes.Img.getImg(img.filename)"/>
   }
 </div>
