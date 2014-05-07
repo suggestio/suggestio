@@ -3,6 +3,6 @@
 @import util.TplDataFormatUtil._
 @import AdNetMemberTypes.MART
 
-<div @if( isWithAction ){ onclick="siomart.load_for_shop_id('@producer.id', '@ad.id'); return false;" } @if( isHidden == true){}>
+<div @if( isWithAction ){ class="js-shop-link" data-producer-id="@producer.id" data-ad-id="@ad.id" } @if( isHidden == true){}>
   @BlocksConf(ad.blockMeta.blockId).renderBlock(ad, isStandalone = false)
 </div>

@@ -198,7 +198,6 @@ siomart =
     request_timeout : 800
 
     on_request_error : () ->
-      console.log 'request error'
       siomart.notifications.show "НЕ УДАЛОСЬ ВЫПОЛНИТЬ ЗАПРОС, ПОПРОБУЙТЕ ЧЕРЕЗ НЕКОТОРОЕ ВРЕМЯ"
       return false
 
@@ -341,7 +340,6 @@ siomart =
 
       if cbca_grid.ww > 600
         this._block_container.style.width = cw*2 + 'px'
-        console.log cw*2 + 'px'
       else
         this._block_container.style.width = cw + 'px'
 
@@ -398,10 +396,13 @@ siomart =
       this._container_nav.innerHTML = nav_pointers_html
       this._container_nav.style.width = this.nav_pointer_size * sm_blocks.length + 'px'
 
-      siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), 'click', siomart.close_node_offers_popup
-
+      ## События
       _e = if siomart.utils.is_touch_device() then 'touchend' else 'click'
 
+      ## Кнопка возврата на главный экран
+      siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), _e, siomart.close_node_offers_popup
+
+      ## Переход к следующему блоку при клике на текущий
       siomart.utils.add_single_listener siomart.utils.ge('sioMartNodeOffersBlockContainer'), _e, () ->
         siomart.node_offers_popup.next_block()
 
@@ -471,7 +472,6 @@ siomart =
       siomart.utils.removeClass _dom, 'hidden'
 
   load_for_shop_id : ( shop_id, ad_id ) ->
-    console.log 'load for shop id ' + shop_id
     url = '/market/ads/' + siomart.config.mart_id + '?a.shopId=' + shop_id
 
     siomart.node_offers_popup.requested_ad_id = ad_id
@@ -511,6 +511,15 @@ siomart =
 
     ## Кнопка вызова окна с категориями
     this.utils.add_single_listener this.utils.ge('smCategoriesButton'), _event, siomart.open_categories_screen
+
+    blocks_w_actions = siomart.utils.ge_class document, 'js-shop-link'
+
+    for _b in blocks_w_actions
+      producer_id = _b.getAttribute 'data-producer-id'
+      ad_id = _b.getAttribute 'data-ad-id'
+
+      siomart.utils.add_single_listener _b, _event, () ->
+        siomart.load_for_shop_id producer_id, ad_id
 
   ## Инициализация Sio.Market
   init : () ->
