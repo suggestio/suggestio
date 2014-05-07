@@ -155,7 +155,7 @@ siomart =
 
     touchmove_lock_delta : 2
     is_touch_locked : false
-
+    
     document_touchmove : ( event ) ->
 
       cx = event.touches[0].pageX
@@ -355,6 +355,7 @@ siomart =
 
     show_block : ( sm_block ) ->
 
+      sm_block.style.opacity = 0
       sm_block.style.display = 'block'
       this.active_block_dom = sm_block
 
@@ -370,6 +371,8 @@ siomart =
         this._block_container.style.width = cw*2 + 'px'
       else
         this._block_container.style.width = cw + 'px'
+
+      sm_block.style.opacity = 1
 
     next_block : () ->
       if typeof this.active_block_index == 'undefined'
@@ -506,6 +509,7 @@ siomart =
       siomart.utils.removeClass _dom, 'hidden'
 
   load_for_shop_id : ( shop_id, ad_id ) ->
+
     if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
       return false
 

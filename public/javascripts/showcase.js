@@ -6,6 +6,6 @@
   window.siomart_host = 'http://192.168.199.148:9000';
   var _sh = document.getElementsByTagName("head")[0];
   window.siomart_index = '/market/index/FjUbonPSTNSO2-0-SAp0cg';
-  window.siomart_id = 'cwU_fJ4WRDS47vvLyEF3jA';
+  window.siomart_id = 'FjUbonPSTNSO2-0-SAp0cg';
   _sh.appendChild(_siom);
 })();
