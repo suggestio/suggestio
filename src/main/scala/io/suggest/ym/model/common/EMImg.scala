@@ -31,7 +31,7 @@ object EMImg {
   /** Стереть картинку, указанную в поле imgOpt, если она там есть. */
   def eraseImgs(imgs: Imgs_t)(implicit ec: ExecutionContext): Future[_] = {
     Future.traverse(imgs) { case (_, img) =>
-      val imgId = img.id
+      val imgId = img.filename
       val logPrefix = s"eraseLinkedImage($img): "
       MPict.deleteFully(imgId) andThen {
         case Success(_)  => LOGGER.trace(logPrefix + "Successfuly erased main picture: " + imgId)

@@ -110,7 +110,11 @@ object MImgThumb extends MImgThumbStaticT with MPictSubmodel {
         None
       } else {
         val cell = kvs.head
-        val result = ImgWithTimestamp(cell.value, cell.timestamp)
+        // Наверное надо какой-то нормальный экземпляр модели сделать?
+        val result = new ImgWithTimestamp {
+          val img = cell.value
+          val timestamp = cell.timestamp
+        }
         Some(result)
       }
     }

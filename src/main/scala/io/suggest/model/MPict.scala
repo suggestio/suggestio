@@ -131,7 +131,10 @@ trait MPictSubmodel {
 }
 
 
-case class ImgWithTimestamp(img: Array[Byte], timestamp: Long)
+trait ImgWithTimestamp {
+  def img: Array[Byte]
+  def timestamp: Long
+}
 
 
 /** JMX MBean интерфейс */

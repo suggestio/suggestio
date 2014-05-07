@@ -16,8 +16,8 @@ import java.{util => ju}
 /** Статическая часть MImgInfo. */
 object MImgInfo {
 
-  val ID_ESFN     = "id"
-  val META_ESFN   = "meta"
+  val FILENAME_ESFN = "id"
+  val META_ESFN     = "meta"
 
   /**
    * Десериализатор.
@@ -27,7 +27,7 @@ object MImgInfo {
   def convertFrom(v: Any): MImgInfo = {
     v match {
       case m: ju.Map[_,_] =>
-        val id = m.get(ID_ESFN).toString
+        val id = m.get(FILENAME_ESFN).toString
         val metaOpt = Option(m.get(META_ESFN)).map(MImgInfoMeta.convertFrom)
         MImgInfo(id, metaOpt)
     }
@@ -41,7 +41,7 @@ object MImgInfo {
   def testSerialized(v: Any): Boolean = {
     v match {
       case m: ju.Map[_,_] =>
-        m.containsKey(ID_ESFN) && m.containsKey(META_ESFN) && m.size() == 2
+        m.containsKey(FILENAME_ESFN) && m.containsKey(META_ESFN) && m.size() == 2
 
       case _ => false
     }
@@ -50,21 +50,26 @@ object MImgInfo {
 
 import MImgInfo._
 
-/** Объект содержит данные по картинке. Данные не индексируются (по идее), и их схему можно менять на лету. */
-@JsonIgnoreProperties(ignoreUnknown = true)
-case class MImgInfo(id: String, meta: Option[MImgInfoMeta] = None) {
-
-  @JsonIgnore
-  override def hashCode(): Int = id.hashCode()
+trait MImgInfoT {
+  def filename: String
+  def meta: Option[MImgInfoMeta]
 
   @JsonIgnore
   def toPlayJson = {
-    var props: FieldsJsonAcc = List(ID_ESFN -> JsString(id))
+    var props: FieldsJsonAcc = List(FILENAME_ESFN -> JsString(filename))
     if (meta.isDefined) {
       props ::= META_ESFN -> meta.get.toPlayJson
     }
     JsObject(props)
   }
+}
+
+/** Объект содержит данные по картинке. Данные не индексируются (по идее), и их схему можно менять на лету. */
+@JsonIgnoreProperties(ignoreUnknown = true)
+case class MImgInfo(filename: String, meta: Option[MImgInfoMeta] = None) extends MImgInfoT {
+
+  @JsonIgnore
+  override def hashCode(): Int = filename.hashCode()
 }
 
 

@@ -5,6 +5,7 @@ import java.io.{FileInputStream, File}
 import java.nio.file.Files
 import com.typesafe.scalalogging.slf4j.Logger
 import io.suggest.img.ConvertModes.ConvertMode
+import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
  * Suggest.io
@@ -197,47 +198,77 @@ object ConvertModes extends Enumeration {
   val STRIP, THUMB, RESIZE = Value
 }
 
+/** Комбо-парсеры для img-части. */
+object ImgUtilParsers extends JavaTokenParsers
 
+
+/** Статическая часть ImgCrop, описывающего кадрирование картинки. */
 object ImgCrop {
+  import ImgUtilParsers._
 
-  val CROP_MATCHER = "^(\\d+)x(\\d+)([+-]\\d+)([+-]\\d+)$".r
-
-  def apply(cropStr: String) : ImgCrop = {
-    val CROP_MATCHER(w, h, offX, offY) = cropStr
-    ImgCrop(w = w.toInt,  h = h.toInt,  offX = offX.toInt,  offY = offY.toInt)
-  }
-
-  def maybeParse(cropStr: String): Option[ImgCrop] = {
-    cropStr match {
-      case CROP_MATCHER(w, h, offX, offY) =>
-        val result = ImgCrop(w = w.toInt,  h = h.toInt,  offX = offX.toInt,  offY = offY.toInt)
-        Some(result)
-
-      case _ => None
+  val CROP_STR_PARSER: Parser[ImgCrop] = {
+    val whP: Parser[Int] = "\\d+".r ^^ { Integer.parseInt }
+    val offIntP: Parser[Int] = "[+-_]\\d+".r ^^ { parseOffInt }
+    (whP ~ ("[xX]".r ~> whP) ~ offIntP ~ offIntP) ^^ {
+      case w ~ h ~ offX ~ offY =>
+        ImgCrop(w=w, h=h, offX=offX, offY=offY)
     }
   }
 
-  def isValidCropStr(cropStr: String): Boolean = CROP_MATCHER.pattern.matcher(cropStr).matches()
+  /** Метод для парсинга offset-чисел, которые всегда знаковые. */
+  private def parseOffInt(offStr: String): Int = {
+    // При URL_SAFE-кодировании используется _ вместо +. Этот символ нужно отбросить.
+    val offStr1 = if (offStr.charAt(0) == '_') {
+      offStr.substring(1)
+    } else {
+      offStr
+    }
+    Integer.parseInt(offStr1)
+  }
 
-  private def optSign(v: Int) : String = {
-    if (v < 0)
-      v.toString
+  private def parseCropStr(cropStr: String) = parse(CROP_STR_PARSER, cropStr)
+
+  def apply(cropStr: String): ImgCrop = parseCropStr(cropStr).get
+
+  def maybeApply(cropStr: String): Option[ImgCrop] = {
+    val pr = parseCropStr(cropStr)
+    if (pr.successful)
+      Some(pr.get)
     else
-      "+" + v
+      None
+  }
+
+  private def optSign(v: Int, posSign: Char, acc: StringBuilder) {
+    if (v < 0) {
+      acc.append(v)
+    } else {
+      acc.append(posSign).append(v)
+    }
   }
 }
 
-import ImgCrop._
-
 case class ImgCrop(w:Int, h:Int, offX:Int, offY:Int) {
+  import ImgCrop.optSign
 
   /**
    * Сконвертить в строку cropStr.
    * @return строку, пригодную для возврата в шаблоны/формы
    */
-  def toCropStr: String = {
-    w.toString + "x" + h + optSign(offX) + optSign(offY)
-  }
+  def toCropStr: String = toStr('+')
 
+  /**
+   * Сериализовать данные в строку вида "WxH_offX-offY".
+   *@return Строка, пригодная для использования в URL или ещё где-либо и обратимая назад в экземпляр ImgCrop.
+   */
+  def toUrlSafeStr: String = toStr('_')
+
+  /** Хелпер для сериализации экземпляра класса. */
+  def toStr(posSign: Char): String = {
+    val sb = new StringBuilder
+    sb.append(w).append('x').append(h)
+    optSign(offX, posSign, sb)
+    optSign(offY, posSign, sb)
+    sb.toString()
+  }
 }
 
