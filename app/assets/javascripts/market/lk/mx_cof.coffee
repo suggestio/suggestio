@@ -712,24 +712,59 @@ market =
 
           return false
 
+      save_crop : () ->
+
+        offset_x = parseInt this.crop_tool_img_dom.css('left').replace('px', '')
+        c_offset_x = this.container_offset_x
+        offset_x = offset_x - parseInt c_offset_x
+
+        offset_y = parseInt this.crop_tool_img_dom.css('top').replace('px', '')
+        c_offset_y = this.container_offset_y
+        offset_y = offset_y - parseInt c_offset_y
+
+        ci = this.crop_tool_img_dom
+
+        sw = parseInt ci.attr 'data-width'
+        sh = parseInt ci.attr 'data-height'
+
+        rw = parseInt ci.width()
+        rh = parseInt ci.height()
+
+        offset_x = sw * offset_x / rw
+        offset_y = sh * offset_y / rh
+
+        target_offset = "+" + Math.round( Math.abs(offset_x) ) + "+" + Math.round(Math.abs(offset_y))
+        target_size = rw + 'x' + rh
+
+        alert target_size + target_offset
+
+        #$.ajax
+        #  url : ''
+        #  method : 'post'
+        #  data :
+        #    target_size : ''
+        #    offset : target_offset
+        #  success : () ->
+        #    console.log 'done'
+
       init : () ->
-        crop_tool_dom = $('#imgCropTool')
-        crop_tool_container_dom = jQuery('.js-crop-container', crop_tool_dom)
-        crop_tool_container_div_dom = jQuery('div', crop_tool_container_dom)
-        crop_tool_img_dom = jQuery('img', crop_tool_dom)
 
+        this.crop_tool_dom = $('#imgCropTool')
+        this.crop_tool_container_dom = jQuery('.js-crop-container', this.crop_tool_dom)
+        this.crop_tool_container_div_dom = jQuery('div', this.crop_tool_container_dom)
+        this.crop_tool_img_dom = jQuery('img', this.crop_tool_dom)
 
-        width = parseInt crop_tool_dom.attr 'data-width'
-        height = parseInt crop_tool_dom.attr 'data-height'
+        width = parseInt this.crop_tool_dom.attr 'data-width'
+        height = parseInt this.crop_tool_dom.attr 'data-height'
 
-        img_width = parseInt crop_tool_img_dom.attr 'data-width'
-        img_height = parseInt crop_tool_img_dom.attr 'data-height'
+        img_width = parseInt this.crop_tool_img_dom.attr 'data-width'
+        img_height = parseInt this.crop_tool_img_dom.attr 'data-height'
 
-        crop_tool_container_dom.css
+        this.crop_tool_container_dom.css
           'width' : width + 'px'
           'height' : height + 'px'
 
-        crop_tool_dom.css
+        this.crop_tool_dom.css
           'width' : width + 'px'
 
         ## отресайзить картинку по нужной стороне
@@ -747,23 +782,26 @@ market =
         container_offset_x = parseInt img_new_width - width
         container_offset_y = parseInt img_new_height - height
 
-        crop_tool_img_dom.css
+        this.crop_tool_img_dom.css
           'width' : img_new_width + 'px'
           'height' : img_new_height + 'px'
 
-        crop_tool_container_div_dom.css
+        this.crop_tool_container_div_dom.css
           'margin-left' : -container_offset_x + 'px'
           'margin-top' : -container_offset_y + 'px'
 
-        x1 = crop_tool_container_div_dom.offset()['left']
-        y1 = crop_tool_container_div_dom.offset()['top']
+        this.container_offset_x = container_offset_x
+        this.container_offset_y = container_offset_y
+
+        x1 = this.crop_tool_container_div_dom.offset()['left']
+        y1 = this.crop_tool_container_div_dom.offset()['top']
 
         x2 = x1 + container_offset_x
         y2 = y1 + container_offset_y
 
         console.log [x1,y1,x2,y2]
 
-        crop_tool_img_dom.draggable
+        this.crop_tool_img_dom.draggable
           'containment' : [x1,y1,x2,y2]
 
 
