@@ -330,8 +330,6 @@ cbca_grid =
       top = cline * ( this.cell_size + this.cell_padding ) + this.top_offset
       left = left_pointer
 
-      console.log this.is_only_spacers()
-
       if this.is_only_spacers()
         break
 

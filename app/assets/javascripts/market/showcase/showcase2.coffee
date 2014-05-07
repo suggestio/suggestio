@@ -153,8 +153,28 @@ siomart =
 
   events :
 
-    document_touchstart : ( event ) ->
-      alert event
+    touchmove_lock_delta : 5
+    is_touch_locked : false
+
+    document_touchmove : ( event ) ->
+
+      cx = event.touches[0].pageX
+      cy = event.touches[0].pageY
+
+      if typeof siomart.events.document_touch_x == 'undefined'
+        siomart.events.document_touch_x = cx
+        siomart.events.document_touch_y = cy
+
+      siomart.events.document_touch_x_delta = siomart.events.document_touch_x - cx
+      siomart.events.document_touch_y_delta = siomart.events.document_touch_y - cy
+
+      if Math.abs siomart.events.document_touch_x_delta > siomart.events.touchmove_lock_delta || Math.abs siomart.events.document_touch_y_delta > siomart.events.touchmove_lock_delta
+        siomart.events.is_touch_locked = true
+
+    document_touchend : ( event ) ->
+      siomart.events.is_touch_locked = false
+      delete siomart.events.document_touch_x
+      delete siomart.events.document_touch_y
 
     document_keyup_event : ( event ) ->
 
@@ -493,8 +513,8 @@ siomart =
   #############################################
   init_navigation : () ->
 
-    siomart.utils.add_single_listener document, 'touchstart', siomart.events.document_touchstart
-    siomart.utils.add_single_listener document, 'touchmove', siomart.events.document_touchmove
+    siomart.utils.add_single_listener window, 'touchmove', siomart.events.document_touchmove
+    siomart.utils.add_single_listener window, 'touchend', siomart.events.document_touchend
 
     ## Кнопка выхода
     siomart.utils.add_single_listener document, 'keyup', siomart.events.document_keyup_event
