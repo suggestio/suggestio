@@ -715,7 +715,9 @@ market =
       init : () ->
         crop_tool_dom = $('#imgCropTool')
         crop_tool_container_dom = jQuery('.js-crop-container', crop_tool_dom)
+        crop_tool_container_div_dom = jQuery('div', crop_tool_container_dom)
         crop_tool_img_dom = jQuery('img', crop_tool_dom)
+
 
         width = parseInt crop_tool_dom.attr 'data-width'
         height = parseInt crop_tool_dom.attr 'data-height'
@@ -735,18 +737,36 @@ market =
         wbh = width/height
         img_wbh = img_width/img_height
 
-        if wbh < img_wbh
+        if wbh > img_wbh
           img_new_width = width
           img_new_height = img_height * img_new_width / img_width
         else
           img_new_height = height
           img_new_width = img_new_height * img_width / img_height
 
+        container_offset_x = parseInt img_new_width - width
+        container_offset_y = parseInt img_new_height - height
+
         crop_tool_img_dom.css
           'width' : img_new_width + 'px'
           'height' : img_new_height + 'px'
 
-        crop_tool_img_dom.draggable()
+        crop_tool_container_div_dom.css
+          'margin-left' : -container_offset_x + 'px'
+          'margin-top' : -container_offset_y + 'px'
+
+        x1 = crop_tool_container_div_dom.offset()['left']
+        y1 = crop_tool_container_div_dom.offset()['top']
+
+        x2 = x1 + container_offset_x
+        y2 = y1 + container_offset_y
+
+        console.log [x1,y1,x2,y2]
+
+        crop_tool_img_dom.draggable
+          'containment' : [x1,y1,x2,y2]
+
+
 
   ##############################
   ## Редактор рекламной карточки
