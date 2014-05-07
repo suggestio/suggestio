@@ -11,6 +11,10 @@ siomart =
     welcome_ad_hide_timeout : 2500
 
   utils :
+
+    is_touch_device : () ->
+      if document.ontouchstart != null then false else true
+
     ######################
     ## Создать DOM элемент
     ######################
@@ -396,9 +400,10 @@ siomart =
 
       siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), 'click', siomart.close_node_offers_popup
 
-      for _e in ['click']
-        siomart.utils.add_single_listener siomart.utils.ge('sioMartNodeOffersBlockContainer'), _e, () ->
-          siomart.node_offers_popup.next_block()
+      _e = if siomart.utils.is_touch_device() then 'touchend' else 'click'
+
+      siomart.utils.add_single_listener siomart.utils.ge('sioMartNodeOffersBlockContainer'), _e, () ->
+        siomart.node_offers_popup.next_block()
 
 
 
@@ -491,27 +496,29 @@ siomart =
 
     siomart.utils.add_single_listener document, 'keyup', siomart.events.document_keyup_event
 
-    for _event in ['click', 'touchend']
+    _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
 
-      siomart.utils.add_single_listener this.utils.ge('smCloseButton'), _event, siomart.open_close_screen
+    siomart.utils.add_single_listener this.utils.ge('smCloseButton'), _event, siomart.open_close_screen
 
-      this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), _event, siomart.close_mart
-      this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), _event, siomart.exit_close_screen
+    this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), _event, siomart.close_mart
+    this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), _event, siomart.exit_close_screen
 
-      this.utils.add_single_listener this.utils.ge('smShopListButton'), _event, siomart.open_shopList_screen
-      this.utils.add_single_listener this.utils.ge('smCloseShopListButton'), _event, siomart.close_shopList_screen
+    this.utils.add_single_listener this.utils.ge('smShopListButton'), _event, siomart.open_shopList_screen
+    this.utils.add_single_listener this.utils.ge('smCloseShopListButton'), _event, siomart.close_shopList_screen
 
-      this.utils.add_single_listener this.utils.ge('smCloseCategoriesButton'), _event, siomart.close_categories_screen
-      this.utils.add_single_listener this.utils.ge('sioMartTrigger'), _event, siomart.open_mart
+    this.utils.add_single_listener this.utils.ge('smCloseCategoriesButton'), _event, siomart.close_categories_screen
+    this.utils.add_single_listener this.utils.ge('sioMartTrigger'), _event, siomart.open_mart
 
-      ## поле ввода поискового запроса
-      this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', siomart.search.queue_request
+    ## поле ввода поискового запроса
+    this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', siomart.search.queue_request
 
     ## Кнопка вызова окна с категориями
     this.utils.add_single_listener this.utils.ge('smCategoriesButton'), 'click'
 
   ## Инициализация Sio.Market
   init : () ->
+
+    this.utils.is_touch_device()
 
     siomart.config.mart_id = window.siomart_id
     siomart.config.host = window.siomart_host
