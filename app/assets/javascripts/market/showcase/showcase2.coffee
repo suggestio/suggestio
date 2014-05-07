@@ -418,12 +418,9 @@ siomart =
   #########################################
   open_categories_screen : () ->
     siomart.utils.ge('smCategoriesScreen').style.display = 'block'
-    return false
 
-  close_categories_screen : ( event ) ->
+  close_categories_screen : () ->
     siomart.utils.ge('smCategoriesScreen').style.display = 'none'
-    event.preventDefault()
-    return false
 
   #########################################
   ## Показать / скрыть экран со списком магазинов
@@ -513,7 +510,7 @@ siomart =
     this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', siomart.search.queue_request
 
     ## Кнопка вызова окна с категориями
-    this.utils.add_single_listener this.utils.ge('smCategoriesButton'), 'click'
+    this.utils.add_single_listener this.utils.ge('smCategoriesButton'), _event, siomart.open_categories_screen
 
   ## Инициализация Sio.Market
   init : () ->
