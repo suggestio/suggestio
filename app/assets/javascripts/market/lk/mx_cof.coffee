@@ -699,6 +699,11 @@ market =
         $('.js-img-w-crop').unbind 'click'
         $('.js-img-w-crop').bind 'click', () ->
           img_key = $(this).attr 'data-image-key'
+
+          if img_key == ''
+            alert 'сначала нужно загрузить картинку'
+            return false
+
           width = $(this).attr 'data-width'
           height = $(this).attr 'data-height'
 
