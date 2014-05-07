@@ -30,7 +30,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
   type LogoOpt_t = Option[ImgInfo4Save[ImgIdKey]]
 
-  val IIK_MAXLEN = 42
+  val IIK_MAXLEN = 80
   
   /** Маппер для поля с id картинки. Используется обертка над id чтобы прозрачно различать tmp и orig картинки. */
   val imgIdM: Mapping[ImgIdKey] = nonEmptyText(minLength = 8, maxLength = IIK_MAXLEN)

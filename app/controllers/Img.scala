@@ -18,6 +18,7 @@ import net.sf.jmimemagic.Magic
 import scala.concurrent.Future
 import views.html.img._
 import play.api.data._, Forms._
+import io.suggest.img.ConvertModes
 
 /**
  * Suggest.io
@@ -252,7 +253,8 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
           OrigImageUtil.convert(
             fileOld = origMptmp.file,
             fileNew = croppedMptmp.file,
-            crop = cropOpt
+            crop = cropOpt,
+            mode = ConvertModes.STRIP
           )
           Ok(jsonTempOk(croppedMptmp.filename))
         }
