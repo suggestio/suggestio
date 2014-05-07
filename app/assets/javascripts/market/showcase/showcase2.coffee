@@ -153,7 +153,7 @@ siomart =
 
   events :
 
-    touchmove_lock_delta : 5
+    touchmove_lock_delta : 2
     is_touch_locked : false
 
     document_touchmove : ( event ) ->
@@ -168,13 +168,17 @@ siomart =
       siomart.events.document_touch_x_delta = siomart.events.document_touch_x - cx
       siomart.events.document_touch_y_delta = siomart.events.document_touch_y - cy
 
-      if Math.abs siomart.events.document_touch_x_delta > siomart.events.touchmove_lock_delta || Math.abs siomart.events.document_touch_y_delta > siomart.events.touchmove_lock_delta
+      if Math.abs( siomart.events.document_touch_x_delta ) > siomart.events.touchmove_lock_delta || Math.abs( siomart.events.document_touch_y_delta ) > siomart.events.touchmove_lock_delta
         siomart.events.is_touch_locked = true
 
     document_touchend : ( event ) ->
-      siomart.events.is_touch_locked = false
-      delete siomart.events.document_touch_x
-      delete siomart.events.document_touch_y
+
+      cb = () ->
+        siomart.events.is_touch_locked = false
+        delete siomart.events.document_touch_x
+        delete siomart.events.document_touch_y
+
+      setTimeout cb, 100
 
     document_keyup_event : ( event ) ->
 
@@ -371,6 +375,9 @@ siomart =
       if typeof this.active_block_index == 'undefined'
         return false
 
+      if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
+        return false
+
       next_index = this.active_block_index + 1
 
       if next_index == this.sm_blocks.length
@@ -379,6 +386,9 @@ siomart =
 
     prev_block : () ->
       if typeof this.active_block_index == 'undefined'
+        return false
+
+      if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
         return false
 
       prev_index = this.active_block_index - 1
@@ -496,6 +506,9 @@ siomart =
       siomart.utils.removeClass _dom, 'hidden'
 
   load_for_shop_id : ( shop_id, ad_id ) ->
+    if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
+      return false
+
     url = '/market/ads/' + siomart.config.mart_id + '?a.shopId=' + shop_id
 
     siomart.node_offers_popup.requested_ad_id = ad_id
