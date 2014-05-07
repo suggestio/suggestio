@@ -369,7 +369,6 @@ siomart =
       this._container_nav = this._container_nav[0]
 
       this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
-
       nav_pointers_html = ''
 
       for sm_block,i in sm_blocks
@@ -394,6 +393,11 @@ siomart =
       this._container_nav.style.width = this.nav_pointer_size * sm_blocks.length + 'px'
 
       siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), 'click', siomart.close_node_offers_popup
+
+      for _e in ['click']
+        siomart.utils.add_single_listener siomart.utils.ge('sioMartNodeOffersBlockContainer'), _e, () ->
+          siomart.node_offers_popup.next_block()
+
 
 
   ######################################
