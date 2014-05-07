@@ -14,7 +14,6 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import util.blocks.BlocksUtil.BlockImgMap
 import scala.Some
-import util.img.ImgInfo4Save
 
 /**
  * Suggest.io
@@ -752,6 +751,62 @@ object BlocksConf extends Enumeration {
 
     /** Шаблон для рендера. */
     override def template = _block12Tpl
+  }
+
+
+  val Block13 = new Val(13, "svgBgSlogan13") with SaveBgImg {
+    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300))
+    val saleColorBf = BfColor("saleColor", defaultValue = Some("828fa0"))
+    val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("FFFFFF"))
+    val discountBf = BfDiscount("discount", min = -9.9F, max = 99F)
+    val textBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+
+    /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
+    override def blockFields: List[BlockFieldT] = List(
+      heightBf, saleColorBf, saleMaskColorBf, bgImgBf, discountBf, textBf
+    )
+
+    /** Набор маппингов для обработки данных от формы. */
+    override def strictMapping: Mapping[BlockMapperResult] = mapping(
+      heightBf.getStrictMappingKV,
+      saleColorBf.getStrictMappingKV,
+      saleMaskColorBf.getStrictMappingKV,
+      bgImgBf.getStrictMappingKV,
+      discountBf.getOptionalStrictMappingKV,
+      textBf.getOptionalStrictMappingKV
+    )
+    {(height, saleColor, saleMaskColor, bgBim, discountOpt, textOpt) =>
+      val blk = AOBlock(
+        n = 0,
+        discount = discountOpt,
+        text2 = textOpt
+      )
+      val bd = BlockDataImpl(
+        blockMeta = BlockMeta(
+          height = height,
+          blockId = id
+        ),
+        offers = List(blk),
+        colors = Map(
+          saleColorBf.name -> saleColor,
+          saleMaskColorBf.name -> saleMaskColor
+        )
+      )
+      BlockMapperResult(bd, bgBim)
+    }
+    {bmr =>
+      val height = bmr.bd.blockMeta.height
+      val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+      val offerOpt = bmr.bd.offers.headOption
+      val discount = offerOpt.flatMap(_.discount)
+      val text = offerOpt.flatMap(_.text2)
+      val saleColor = bmr.bd.colors.get(saleColorBf.name).getOrElse(saleColorBf.anyDefaultValue)
+      val saleMaskColor = bmr.bd.colors.get(saleMaskColorBf.name).getOrElse(saleMaskColorBf.anyDefaultValue)
+      Some( (height, saleColor, saleMaskColor, bgBim, discount, text) )
+    }
+
+    /** Шаблон для рендера. */
+    override def template = _block13Tpl
   }
 
 
