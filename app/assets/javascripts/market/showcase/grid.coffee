@@ -180,9 +180,8 @@ cbca_grid =
           close_action()
 
   is_only_spacers : () ->
-
     for b in this.blocks
-      if b.className != 'block under-construction'
+      if b.className != 'sm-block-spacer'
         return false
 
     return true
@@ -330,6 +329,11 @@ cbca_grid =
 
       top = cline * ( this.cell_size + this.cell_padding ) + this.top_offset
       left = left_pointer
+
+      console.log this.is_only_spacers()
+
+      if this.is_only_spacers()
+        break
 
       if cline > pline && this.is_only_spacers() == true && cline == this.max_used_height columns_used_space
         break
