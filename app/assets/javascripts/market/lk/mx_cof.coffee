@@ -698,14 +698,17 @@ market =
       init_triggers : () ->
         $('.js-img-w-crop').unbind 'click'
         $('.js-img-w-crop').bind 'click', () ->
-          img_key = $(this).attr 'data-image-key'
+
+          img_key = jQuery('input', $(this).parent()).val()
+          img_name = jQuery('input', $(this).parent()).attr 'name'
 
           if img_key == ''
             alert 'сначала нужно загрузить картинку'
             return false
 
-          width = $(this).attr 'data-width'
-          height = $(this).attr 'data-height'
+          width = $('.sm-block').attr 'data-width'
+          height = $('.sm-block').attr 'data-height'
+
           marker = $(this).attr 'data-marker'
 
           $.ajax
@@ -714,17 +717,16 @@ market =
               $('#overlay, #overlayData').show()
               $('#overlayData').html data
 
-              market.img.crop.init()
+              market.img.crop.init( img_name )
 
           return false
 
-      save_crop : () ->
-
-        offset_x = parseInt this.crop_tool_img_dom.css('left').replace('px', '')
+      save_crop : ( form_dom ) ->
+        offset_x = parseInt( this.crop_tool_img_dom.css('left').replace('px', '') ) || 0
         c_offset_x = this.container_offset_x
         offset_x = offset_x - parseInt c_offset_x
 
-        offset_y = parseInt this.crop_tool_img_dom.css('top').replace('px', '')
+        offset_y = parseInt( this.crop_tool_img_dom.css('top').replace('px', '') ) || 0
         c_offset_y = this.container_offset_y
         offset_y = offset_y - parseInt c_offset_y
 
@@ -742,19 +744,26 @@ market =
         target_offset = "+" + Math.round( Math.abs(offset_x) ) + "+" + Math.round(Math.abs(offset_y))
         target_size = rw + 'x' + rh
 
-        alert target_size + target_offset
+        jQuery('input[name=crop]', form_dom).val( target_size + target_offset )
 
-        #$.ajax
-        #  url : ''
-        #  method : 'post'
-        #  data :
-        #    target_size : ''
-        #    offset : target_offset
-        #  success : () ->
-        #    console.log 'done'
+        form_dom1 = $('#imgCropTool form')
+        image_name = this.image_name
 
-      init : () ->
+        $.ajax
+          url : form_dom1.attr 'action'
+          method : 'post'
+          data : form_dom1.serialize()
+          success : ( img_data ) ->
+            console.log market.img.crop.img_name
+            $('input[name=\'' + market.img.crop.img_name + '\']').val img_data.image_key
+            market.ad_form.queue_block_preview_request request_delay=10
 
+            $('#overlay, #overlayData').hide()
+            $('#overlayData').html ''
+
+
+      init : (img_name) ->
+        this.img_name = img_name
         this.crop_tool_dom = $('#imgCropTool')
         this.crop_tool_container_dom = jQuery('.js-crop-container', this.crop_tool_dom)
         this.crop_tool_container_div_dom = jQuery('div', this.crop_tool_container_dom)
@@ -805,11 +814,14 @@ market =
         x2 = x1 + container_offset_x
         y2 = y1 + container_offset_y
 
-        console.log [x1,y1,x2,y2]
-
         this.crop_tool_img_dom.draggable
           'containment' : [x1,y1,x2,y2]
 
+        ## Забиндить событие на сохранение формы
+        $('#imgCropTool form').bind 'submit', () ->
+          market.img.crop.save_crop $(this)
+
+          return false
 
 
   ##############################

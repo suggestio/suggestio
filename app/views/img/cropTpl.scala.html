@@ -9,7 +9,7 @@
     <div>
     @* Здесь у нас загружается исходное изображение, которое js-ом ресайзится до размеров родительского контейнера *@
     @* TODO: аттрибуты data-width и data-height надо заменить на реальные значения *@
-    <img class="bg abs" data-width="604" data-height="604" src="@routes.Img.getImg(imgId)" />
+    <img class="bg abs" data-width="600" data-height="399" src="@routes.Img.getImg(imgId)" />
     </div>
 
   </div>
@@ -22,7 +22,5 @@
     }
     <input type="submit" value="@Messages("Save")"/>
   }
-
-  <a href="" onclick="market.img.crop.save_crop(); return false;">Сохранить</a>
 
 </div>
