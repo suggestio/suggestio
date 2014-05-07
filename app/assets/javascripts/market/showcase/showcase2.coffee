@@ -39,8 +39,10 @@ siomart =
       elts = []
 
       for child in childs
-        if siomart.utils.is_array child.className.match _class_match_regexp
-          elts.push child
+        _className = if typeof child.className.baseVal != 'undefined' then child.className.baseVal else child.className
+        if typeof _className != 'undefined'
+          if siomart.utils.is_array _className.match _class_match_regexp
+            elts.push child
 
       elts
 
