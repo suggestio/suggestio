@@ -70,9 +70,9 @@ object BlocksEditorFields extends Enumeration {
     type BFT = BfText
   }
   
-  protected trait IntVal {
+  protected trait HeightVal {
     type T = Int
-    type BFT = BfInt
+    type BFT = BfHeight
   }
   
   protected trait PriceVal {
@@ -101,7 +101,7 @@ object BlocksEditorFields extends Enumeration {
   }
 
   type BlockEditorField   = Val
-  type BefInt             = BlockEditorField with IntVal
+  type BefHeight             = BlockEditorField with HeightVal
   type BefDiscount        = BlockEditorField with DiscountVal
   type BefPrice           = BlockEditorField with PriceVal
   type BefText            = BlockEditorField with TextVal
@@ -114,7 +114,7 @@ object BlocksEditorFields extends Enumeration {
   }
 
   /** Скрытое поле для указания высоты блока. */
-  val Height: BefInt = new Val("height") with IntVal {
+  val Height: BefHeight = new Val("height") with HeightVal {
     override def fieldTemplate = _heightTpl
   }
 
@@ -175,20 +175,24 @@ trait BlockFieldT {
 }
 
 
+object BfHeight {
+  val HEIGHTS_AVAILABLE = Set(140, 300, 460)
+}
+
 /** Поле для какой-то цифры. */
-case class BfInt(
+case class BfHeight(
   name: String,
-  field: BefInt = BlocksEditorFields.Height,
   offerNopt: Option[Int] = None,
   defaultValue: Option[Int] = None,
-  minValue: Int = Int.MinValue,
-  maxValue: Int = Int.MaxValue
+  availableVals: Set[Int] = BfHeight.HEIGHTS_AVAILABLE
 ) extends BlockFieldT {
   override type T = Int
+  override def field = BlocksEditorFields.Height
 
   override def fallbackValue: T = 140
 
-  override val mappingBase = number(min = minValue, max = maxValue)
+  override def mappingBase = number
+    .verifying("error.invalid", { availableVals.contains(_) })
 
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {
     field.renderEditorField(this, bfNameBase, af, bc)

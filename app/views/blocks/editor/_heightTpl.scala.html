@@ -1,4 +1,4 @@
-@(bf: BfInt, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
+@(bf: BfHeight, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
 
 @import ctx._
 
@@ -10,7 +10,7 @@
   <div class="block-height-editor__button block-height-editor__button_increase js-block-height-editor-button" data-change-direction="increase"><div></div></div>
 
   @defining( af(bfNameBase) ) { formField =>
-  <input type="hidden" name="@formField.name" value="@formField.value.orElse(bf.defaultValue)" data-min-value="@bf.minValue" data-max-value="@bf.maxValue"/>
+    <input type="hidden" name="@formField.name" value="@formField.value.orElse(bf.defaultValue)" data-min-value="@bf.availableVals.min" data-max-value="@bf.availableVals.max"/>
   }
 
 </div>

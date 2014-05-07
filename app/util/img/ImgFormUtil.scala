@@ -191,9 +191,9 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         val saveOrigFut = future {
           OrigImageUtil.maybeReadFromFile(mptmp.file)
         } flatMap { imgBytes =>
-          MUserImgOrig(idStr, imgBytes).save.map { _ =>
-            mptmp.file -> idStr
-          }
+          MUserImgOrig(idStr, imgBytes, q = MPict.Q_USER_IMG_ORIG)
+            .save
+            .map { _ => mptmp.file -> idStr }
         }
         // 26.mar.2014: понадобился доступ к метаданным картинки в контексте элемента. Запускаем identify в фоне
         val imgMetaFut: Future[MImgInfoMeta] = future {
@@ -449,7 +449,7 @@ class OrigImgIdKey(@JsonIgnore val key: String, meta: Option[MImgInfoMeta] = Non
 
   @JsonIgnore
   def isExists: Future[Boolean] = {
-    MUserImgOrig.getById(key).map(_.isDefined)
+    MUserImgOrig.getById(key, q = None).map(_.isDefined)
   }
 
   @JsonIgnore
