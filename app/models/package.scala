@@ -90,6 +90,7 @@ package object models {
 
   val  MImgInfo             = ym.model.common.MImgInfo
   type MImgInfo             = ym.model.common.MImgInfo
+  type MImgInfoT            = ym.model.common.MImgInfoT
 
   val  MImgInfoMeta         = ym.model.common.MImgInfoMeta
   type MImgInfoMeta         = ym.model.common.MImgInfoMeta

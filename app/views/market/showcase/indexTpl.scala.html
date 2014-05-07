@@ -4,7 +4,7 @@
 
 @* Картинка-приветствие для первого экрана *@
 
-@*<img id="smWelcomeAd" class="poster-photo index-welcome-ad" data-width="@welcomeAdOpt.map(_.img.meta.map(_.width))" data-height="@welcomeAdOpt.map(_.img.meta.map(_.height))" src="@ctx.myAudienceUrl@welcomeAdOpt.map(_.img.id).filter(!_.isEmpty).map {imgId =>@routes.Img.getImg(imgId)}.getOrElse {}"/>*@
+@*<img id="smWelcomeAd" class="poster-photo index-welcome-ad" data-width="@welcomeAdOpt.map(_.img.meta.map(_.width))" data-height="@welcomeAdOpt.map(_.img.meta.map(_.height))" src="@ctx.myAudienceUrl@welcomeAdOpt.map(_.img.filename).filter(!_.isEmpty).map {imgId =>@routes.Img.getImg(imgId)}.getOrElse {}"/>*@
 
 @* Основной контейнер, шапка + карточки *@
 
@@ -14,7 +14,7 @@
 @_screen_nav_buttons(true)
 <div class="sio-mart__producer-header" style="background-color: #@mmart.meta.color;">
   @mmart.logoImgOpt.map { logoImg =>
-  <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)"/>
+  <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
   }
 </div>
 

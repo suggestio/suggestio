@@ -706,9 +706,10 @@ market =
 
           width = $(this).attr 'data-width'
           height = $(this).attr 'data-height'
+          marker = $(this).attr 'data-marker'
 
           $.ajax
-            url : '/img/crop/' + img_key + '?width=' + width + '&height=' + height
+            url : '/img/crop/' + img_key + '?width=' + width + '&height=' + height + '&marker=' + marker
             success : ( data ) ->
               $('#overlay, #overlayData').show()
               $('#overlayData').html data

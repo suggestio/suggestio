@@ -6,7 +6,7 @@
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl9" data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   @mad.imgs.get(Block9.BG_IMG_FN).map { img =>
-    <img class="bg" src="@routes.Img.getImg(img.id)" />
+    <img class="bg" src="@routes.Img.getImg(img.filename)" />
   }
 
   <div class="inner"></div>
