@@ -119,7 +119,7 @@ object BlocksConf extends Enumeration {
   /** Картинка, название, старая и новая цена. Аналог былого DiscountOffer. */
   val Block1 = new Val(1, "photoAdnPrice") with SaveBgImg {
 
-    val heightField = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300))
+    val heightField = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460, 620))
     val text1Field = BfText("title", BlocksEditorFields.InputText, minLen = 0, maxLen = 64)
     val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN)
     val priceField = BfPrice(EMAdOffers.PRICE_ESFN)
@@ -166,7 +166,7 @@ object BlocksConf extends Enumeration {
 
   /** Блок картинки с двумя текстами. */
   val Block2 = new Val(2, "saleWithText") with SaveBgImg {
-    val heightField = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300))
+    val heightField = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460))
     val text1Field = BfText(EMAdOffers.TEXT1_ESFN, BlocksEditorFields.InputText, maxLen = 512)
     val text2Field = BfText(EMAdOffers.TEXT2_ESFN, BlocksEditorFields.TextArea, maxLen = 8192)
 
@@ -319,6 +319,7 @@ object BlocksConf extends Enumeration {
 
   /** Блок с тремя ценами в первом дизайне. */
   val Block3 = new TitlePriceListBlock(3, "3prices") {
+
     /** Шаблон для рендера. */
     override def template = _block3Tpl
   }
@@ -326,14 +327,14 @@ object BlocksConf extends Enumeration {
 
   /** Рекламный блок с предложением товара/услуги и рекламным посылом. */
   val Block4 = new Val(4, "2texts+price") with SaveBgImg {
-    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300))
+    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300))
     val text1bf = BfText("text1", BlocksEditorFields.InputText, maxLen = 256)
     val priceBf = BfPrice("price")
     val text2bf = BfText("text2", BlocksEditorFields.TextArea, maxLen = 512)
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, bgImgBf, text1bf, priceBf, text2bf
+      bgImgBf, text1bf, priceBf, text2bf
     )
 
     /** Маппинг для обработки данных от сабмита формы блока. */
@@ -378,7 +379,7 @@ object BlocksConf extends Enumeration {
 
   /** Реклама брендированного товара. От предыдущих одно-офферных блоков отличается дизайном и тем, что есть вторичный логотип. */
   val Block5 = new Val(5, "brandedProduct") with SaveBgImg with SaveLogoImg {
-    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300))
+    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460))
     val text1Bf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val oldPriceBf = BfPrice("oldPrice")
     val priceBf = BfPrice("price")
@@ -439,7 +440,7 @@ object BlocksConf extends Enumeration {
 
   /** Блок, отображающий скидочную цену на товар или услугу. */
   val Block7 = new Val(7, "discountedPrice1") {
-    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300))
+    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300))
     val discoBf = BfDiscount("discount", min = -9.9F, max = 99F)
     val titleBf = BfText("title", BlocksEditorFields.TextArea,
       maxLen = 256,
@@ -452,7 +453,7 @@ object BlocksConf extends Enumeration {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, saleMaskColorBf, discoBf, iconBgColorBf, titleBf, priceBf
+      saleMaskColorBf, discoBf, iconBgColorBf, titleBf, priceBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -504,13 +505,13 @@ object BlocksConf extends Enumeration {
 
 
   val Block8 = new Val(8, "titleWithPrice8") with SaveBgImg {
-    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300))
+    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300))
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val priceBf = BfPrice("price")
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, bgImgBf, titleBf, priceBf
+      bgImgBf, titleBf, priceBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -552,14 +553,14 @@ object BlocksConf extends Enumeration {
   
   
   val Block9 = new Val(9, "titlePriceDescrNarrow9") with SaveBgImg {
-    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300))
+    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300))
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val priceBf = BfPrice("price")
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, bgImgBf, titleBf, priceBf, descrBf
+      bgImgBf, titleBf, priceBf, descrBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -603,14 +604,14 @@ object BlocksConf extends Enumeration {
 
 
   val Block10 = new Val(10, "oldNewPriceNarrow10") with SaveBgImg {
-    val heightBf    = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300))
+    val heightBf    = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300))
     val titleBf     = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val oldPriceBf  = BfPrice("oldPrice")
     val priceBf     = BfPrice("price")
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, bgImgBf, titleBf, oldPriceBf, priceBf
+      bgImgBf, titleBf, oldPriceBf, priceBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -653,14 +654,14 @@ object BlocksConf extends Enumeration {
 
 
   val Block11 = new Val(11, "promoNarrow11") with SaveBgImg {
-    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300))
+    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300))
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
     val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("aaaaaa"))
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, saleMaskColorBf, bgImgBf, titleBf, descrBf
+      saleMaskColorBf, bgImgBf, titleBf, descrBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -703,7 +704,7 @@ object BlocksConf extends Enumeration {
 
 
   val Block12 = new Val(12, "discountNarrow12") {
-    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300))
+    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300))
     val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("00ff1a"))
     val discountBf = BfDiscount("discount", min = -9.9F, max = 99F)
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
@@ -711,7 +712,7 @@ object BlocksConf extends Enumeration {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, saleMaskColorBf, discountBf, titleBf, descrBf
+      saleMaskColorBf, discountBf, titleBf, descrBf
     )
 
     /** Набор маппингов для обработки данных от формы. */

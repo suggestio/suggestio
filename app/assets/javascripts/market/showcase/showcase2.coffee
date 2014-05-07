@@ -155,7 +155,7 @@ siomart =
 
     touchmove_lock_delta : 2
     is_touch_locked : false
-    
+
     document_touchmove : ( event ) ->
 
       cx = event.touches[0].pageX
@@ -318,8 +318,7 @@ siomart =
 
       cbca_grid.init()
 
-    if data.action == 'findAds'
-
+    if data.action == 'producerAds'
       screensContainer = siomart.utils.ge 'sioMartNodeOffersRoot'
       screensContainer.innerHTML += data.html
       screensContainer.style.display = 'block'
@@ -327,6 +326,9 @@ siomart =
       siomart.utils.ge('smCategoriesScreen').style.display = 'none'
 
       siomart.node_offers_popup.init()
+
+    if data.action == 'findAds'
+      alert 'do САМСИТНЬ!'
 
 
   close_node_offers_popup : ( event ) ->
