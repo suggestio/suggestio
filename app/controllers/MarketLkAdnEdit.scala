@@ -77,21 +77,23 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
     "name"      -> nameM,
     "town"      -> toStrOptM(townM),
     "address"   -> toStrOptM(martAddressM),
+    "color"     -> toStrOptM(colorM),
     "siteUrl"   -> urlStrOptM,
     "phone"     -> phoneOptM
   )
-  {(name, town, address, siteUrlOpt, phoneOpt) =>
+  {(name, town, address, color, siteUrlOpt, phoneOpt) =>
     AdnMMetadata(
       name    = name,
       town    = town,
       address = address,
+      color = color,
       siteUrl = siteUrlOpt,
       phone   = phoneOpt
     )
   }
   {meta =>
     import meta._
-    Some((name, town, address, siteUrl, phone)) }
+    Some((name, town, address, color, siteUrl, phone)) }
 
 
   /** Маппер для необязательного логотипа магазина. */

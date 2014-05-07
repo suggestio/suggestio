@@ -3,10 +3,6 @@
 @import util.TplDataFormatUtil._
 @import AdNetMemberTypes.MART
 
-@*ad.logoImgOpt.map { logoImg =>
-  <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)" alt=""/>
-}*@
-
 <div @if( isWithAction ){ onclick="siomart.load_for_shop_id('@producer.id', '@ad.id'); return false;" } @if( isHidden == true){}>
   @BlocksConf(ad.blockMeta.blockId).renderBlock(ad, isStandalone = false)
 </div>
