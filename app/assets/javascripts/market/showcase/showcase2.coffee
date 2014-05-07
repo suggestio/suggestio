@@ -152,6 +152,34 @@ siomart =
       window.vendor_prefix = obj
 
   events :
+
+    touchmove_lock_delta : 2
+    is_touch_locked : false
+    
+    document_touchmove : ( event ) ->
+
+      cx = event.touches[0].pageX
+      cy = event.touches[0].pageY
+
+      if typeof siomart.events.document_touch_x == 'undefined'
+        siomart.events.document_touch_x = cx
+        siomart.events.document_touch_y = cy
+
+      siomart.events.document_touch_x_delta = siomart.events.document_touch_x - cx
+      siomart.events.document_touch_y_delta = siomart.events.document_touch_y - cy
+
+      if Math.abs( siomart.events.document_touch_x_delta ) > siomart.events.touchmove_lock_delta || Math.abs( siomart.events.document_touch_y_delta ) > siomart.events.touchmove_lock_delta
+        siomart.events.is_touch_locked = true
+
+    document_touchend : ( event ) ->
+
+      cb = () ->
+        siomart.events.is_touch_locked = false
+        delete siomart.events.document_touch_x
+        delete siomart.events.document_touch_y
+
+      setTimeout cb, 100
+
     document_keyup_event : ( event ) ->
 
       if !event
@@ -198,7 +226,6 @@ siomart =
     request_timeout : 800
 
     on_request_error : () ->
-      console.log 'request error'
       siomart.notifications.show "НЕ УДАЛОСЬ ВЫПОЛНИТЬ ЗАПРОС, ПОПРОБУЙТЕ ЧЕРЕЗ НЕКОТОРОЕ ВРЕМЯ"
       return false
 
@@ -328,6 +355,7 @@ siomart =
 
     show_block : ( sm_block ) ->
 
+      sm_block.style.opacity = 0
       sm_block.style.display = 'block'
       this.active_block_dom = sm_block
 
@@ -341,12 +369,16 @@ siomart =
 
       if cbca_grid.ww > 600
         this._block_container.style.width = cw*2 + 'px'
-        console.log cw*2 + 'px'
       else
         this._block_container.style.width = cw + 'px'
 
+      sm_block.style.opacity = 1
+
     next_block : () ->
       if typeof this.active_block_index == 'undefined'
+        return false
+
+      if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
         return false
 
       next_index = this.active_block_index + 1
@@ -357,6 +389,9 @@ siomart =
 
     prev_block : () ->
       if typeof this.active_block_index == 'undefined'
+        return false
+
+      if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
         return false
 
       prev_index = this.active_block_index - 1
@@ -398,10 +433,13 @@ siomart =
       this._container_nav.innerHTML = nav_pointers_html
       this._container_nav.style.width = this.nav_pointer_size * sm_blocks.length + 'px'
 
-      siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), 'click', siomart.close_node_offers_popup
-
+      ## События
       _e = if siomart.utils.is_touch_device() then 'touchend' else 'click'
 
+      ## Кнопка возврата на главный экран
+      siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), _e, siomart.close_node_offers_popup
+
+      ## Переход к следующему блоку при клике на текущий
       siomart.utils.add_single_listener siomart.utils.ge('sioMartNodeOffersBlockContainer'), _e, () ->
         siomart.node_offers_popup.next_block()
 
@@ -418,12 +456,9 @@ siomart =
   #########################################
   open_categories_screen : () ->
     siomart.utils.ge('smCategoriesScreen').style.display = 'block'
-    return false
 
-  close_categories_screen : ( event ) ->
+  close_categories_screen : () ->
     siomart.utils.ge('smCategoriesScreen').style.display = 'none'
-    event.preventDefault()
-    return false
 
   #########################################
   ## Показать / скрыть экран со списком магазинов
@@ -474,7 +509,10 @@ siomart =
       siomart.utils.removeClass _dom, 'hidden'
 
   load_for_shop_id : ( shop_id, ad_id ) ->
-    console.log 'load for shop id ' + shop_id
+
+    if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
+      return false
+
     url = '/market/ads/' + siomart.config.mart_id + '?a.shopId=' + shop_id
 
     siomart.node_offers_popup.requested_ad_id = ad_id
@@ -492,8 +530,10 @@ siomart =
   #############################################
   init_navigation : () ->
 
-    ## Кнопка выхода
+    siomart.utils.add_single_listener window, 'touchmove', siomart.events.document_touchmove
+    siomart.utils.add_single_listener window, 'touchend', siomart.events.document_touchend
 
+    ## Кнопка выхода
     siomart.utils.add_single_listener document, 'keyup', siomart.events.document_keyup_event
 
     _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
@@ -513,7 +553,19 @@ siomart =
     this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', siomart.search.queue_request
 
     ## Кнопка вызова окна с категориями
-    this.utils.add_single_listener this.utils.ge('smCategoriesButton'), 'click'
+    this.utils.add_single_listener this.utils.ge('smCategoriesButton'), _event, siomart.open_categories_screen
+
+    blocks_w_actions = siomart.utils.ge_class document, 'js-shop-link'
+
+    for _b in blocks_w_actions
+
+      cb = ( b ) ->
+        producer_id = b.getAttribute 'data-producer-id'
+        ad_id = b.getAttribute 'data-ad-id'
+        siomart.utils.add_single_listener b, _event, () ->
+          siomart.load_for_shop_id producer_id, ad_id
+
+      cb _b
 
   ## Инициализация Sio.Market
   init : () ->

@@ -51,8 +51,6 @@ cbca_grid =
     this.max_allowed_cell_width = no_of_cells
     this.layout_dom.style.width = cw + 'px'
 
-    console.log cw
-
   ##############
   ## Fetch block
   ##############
@@ -182,9 +180,8 @@ cbca_grid =
           close_action()
 
   is_only_spacers : () ->
-
     for b in this.blocks
-      if b.className != 'block under-construction'
+      if b.className != 'sm-block-spacer'
         return false
 
     return true
@@ -236,7 +233,7 @@ cbca_grid =
       cbca_grid.m_blocks = cbca_grid.blocks.slice(0)
 
     ## Загрузить спейсеры
-    for elt in siomart.utils.ge_class document, 'index-spacer'
+    for elt in siomart.utils.ge_class document, 'sm-block-spacer'
       _this = elt
       _this.setAttribute 'id', 'elt' + i
 
@@ -333,6 +330,9 @@ cbca_grid =
       top = cline * ( this.cell_size + this.cell_padding ) + this.top_offset
       left = left_pointer
 
+      if this.is_only_spacers()
+        break
+
       if cline > pline && this.is_only_spacers() == true && cline == this.max_used_height columns_used_space
         break
 
@@ -346,10 +346,8 @@ cbca_grid =
 
         if b == null
           if this.blocks.length > 0
-            console.log 'null, got blocks ' + i
             b = this.fetch_spacer block_max_w
           else
-            console.log 'null, no more blocks ' + i
             break
 
         w_cell_width = Math.floor ( b.width + this.cell_padding ) / ( this.cell_size + this.cell_padding )
@@ -362,8 +360,11 @@ cbca_grid =
 
         id = b.id
 
+        _pelt = siomart.utils.ge('elt' + id)
         for p in [vendor_prefix.css + 'transform', 'transform']
-          siomart.utils.ge('elt' + id).style[p] = 'translate3d(' + left + 'px, ' + top + 'px,0)'
+
+          if _pelt != null
+            _pelt.style[p] = 'translate3d(' + left + 'px, ' + top + 'px,0)'
 
         left_pointer += b.width + this.cell_padding
         pline = cline
