@@ -6,6 +6,7 @@ import java.nio.file.Files
 import com.typesafe.scalalogging.slf4j.Logger
 import io.suggest.img.ConvertModes.ConvertMode
 import scala.util.parsing.combinator.JavaTokenParsers
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -185,6 +186,7 @@ trait SioImageUtilT {
     op.quality(JPEG_QUALITY_PC)
     op.samplingFactor(2.0, 1.0)
     op.addImage(fileNew.getAbsolutePath)
+    LOGGER.trace("convert(): " + cmd.getCommand.mkString(" ") + " " + op.toString)
     cmd.run(op)
   }
 
