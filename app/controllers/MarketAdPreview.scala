@@ -106,7 +106,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
             NotAcceptable("Preview form bind failed.")
           },
           {case (mad, bim) =>
-            val fallbackLogoOptFut: Future[Option[MImgInfo]] = {
+            val fallbackLogoOptFut: Future[Option[MImgInfoT]] = {
               MAdnNodeCache.maybeGetByIdCached(adnNode.adn.supId) map { parentAdnOpt =>
                 parentAdnOpt.flatMap(_.logoImgOpt)
               }

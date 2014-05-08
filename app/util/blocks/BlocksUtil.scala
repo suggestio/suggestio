@@ -301,7 +301,7 @@ case class BfImage(
 
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
   override def fallbackValue: T = {
-    val oiik = OrigImgIdKey(PreviewFormDefaults.IMG_ID)(OrigImgData("", None))
+    val oiik = OrigImgIdKey(PreviewFormDefaults.IMG_ID, OrigImgData("", None))
     val i4s = ImgInfo4Save(oiik, withThumb = saveWithThumb)
     Map(name -> i4s)
   }

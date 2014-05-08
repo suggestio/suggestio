@@ -187,7 +187,7 @@ object MarketAd extends SioController with TempImgSupport {
       val blockConf: BlockConf = BlocksConf.apply(mad.blockMeta.blockId)
       val form0 = getAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
       val bim = mad.imgs.mapValues { mii =>
-        val oiik = OrigImgIdKey(filename = mii.filename, meta = mii.meta)()
+        val oiik = OrigImgIdKey(filename = mii.filename, meta = mii.meta)
         ImgInfo4Save(oiik)
       }
       form0 fill ((mad, bim))

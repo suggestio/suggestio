@@ -70,11 +70,10 @@ object MarketOffer extends SioController with MacroLogsImpl {
   val vmPromoOfferFormM = Form(mapping(
     vendorM, modelM, colorsM, sizesM, sizeUnitsM, priceM, oldPriceM,
     // TODO Изначально была поддержка list(tmpImgIdM), но эта форма стала тестовым полигоном для картинок сразу после 6b6694f83444, поэтому пока работа идёт с одной картинкой.
-    "image_key"  -> imgIdM,
-    "crop"  -> optional(imgCropM)
+    "image_key"  -> imgIdM
   )
   // apply()
-  {(vendor, model, colors, sizes, sizeUnits, price, oldPriceOpt, iik, cropOpt) =>
+  {(vendor, model, colors, sizes, sizeUnits, price, oldPriceOpt, iik) =>
     val offer = new MShopPromoOffer
     import offer.datum
     datum.vendor = vendor
@@ -85,14 +84,16 @@ object MarketOffer extends SioController with MacroLogsImpl {
     datum.price = price
     datum.oldPrices = oldPriceOpt
     // Подхватываем тут tempImg*. Сначала мержим id картинок и их кропы
-    val imgInfo = ImgInfo4Save(iik, cropOpt)
+    val imgInfo = ImgInfo4Save(iik)
     (offer, imgInfo)
   }
   // unapply()
   {case (mOffer, imgInfo)=>
     import mOffer.datum._
-    import imgInfo._
-    Some((vendor getOrElse "",  model getOrElse "",  colors.toList,  sizesOrig,  sizeUnitsOrig getOrElse "",  price,  oldPrices, iik, cropOpt))
+    val vendor1 = vendor getOrElse ""
+    val model1 = model getOrElse ""
+    val szUnits = sizeUnitsOrig getOrElse ""
+    Some((vendor1, model1,  colors.toList,  sizesOrig,  szUnits,  price,  oldPrices, imgInfo.iik))
   })
 
 
@@ -123,9 +124,9 @@ object MarketOffer extends SioController with MacroLogsImpl {
         mpo.datum.shopId = shopId
         mpo.datum.offerType = OfferTypes.VendorModel
         // Картинки: нужно их перегнать в постоянное хранилище.
-        ImgFormUtil.updateOrigImg(Some(imgInfo), oldImgs = None) flatMap { imgsIdsSaved =>
+        ImgFormUtil.updateOrigImgFull(Some(imgInfo), oldImgs = None) flatMap { imgsIdsSaved =>
           // Выставить сохраненные картинки в датум и сохранить его.
-          mpo.datum.pictures = imgsIdsSaved.toSeq.map(_.filename)
+          mpo.datum.pictures = imgsIdsSaved.map(_.filename)
           mpo.save.map { mpoSavedId =>
             // Редирект на созданный промо-оффер.
             rdrToOffer(mpoSavedId)
@@ -163,7 +164,7 @@ object MarketOffer extends SioController with MacroLogsImpl {
     MAdnNode.getByIdType(request.shopId, AdNetMemberTypes.SHOP) map {
       case Some(mshop) =>
         import request.offer
-        val oiik = OrigImgIdKey(offer.datum.pictures.head)()
+        val oiik = OrigImgIdKey(offer.datum.pictures.head)
         val imgInfo = ImgInfo4Save(oiik)
         val f = vmPromoOfferFormM fill (offer -> imgInfo)
         Ok(form.editPromoOfferTpl(offer, f, mshop))

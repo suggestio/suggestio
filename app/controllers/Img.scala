@@ -81,14 +81,14 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
    * @return Оригинал картинки.
    */
   def getOrig(filename: String) = {
-    val oiik = OrigImgIdKey(filename)()
+    val oiik = OrigImgIdKey(filename)
     getOrigIik(oiik)
   }
 
   def getOrigIik(oiik: OrigImgIdKey) = Action.async { implicit request =>
     import oiik.filename
     suppressQsFlood(routes.Img.getOrig(filename)) {
-      MUserImgOrig.getById(filename, q = oiik.origQualifierOpt) map {
+      MUserImgOrig.getById(oiik.data.rowKey, q = oiik.origQualifierOpt) map {
         case Some(its) =>
           serveImgBytes(its, CACHE_ORIG_CLIENT_SECONDS)
 

@@ -154,8 +154,8 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
         adnNode.meta.name = meta.name
         adnNode.meta.description = meta.description
         // Для обновления shop'а надо дождаться генерации нового id логотипа.
-        updateImgsFut.flatMap { newImgIds =>
-          adnNode.logoImgOpt = newImgIds.headOption
+        updateImgsFut.flatMap { newImgInfo =>
+          adnNode.logoImgOpt = newImgInfo
           adnNode.save map { _shopId =>
             Redirect(routes.MarketLkAdn.showAdnNode(adnNode.id.get))
               .flashing("success" -> "Изменения сохранены.")

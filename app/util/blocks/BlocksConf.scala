@@ -828,13 +828,12 @@ object SaveImgUtil {
     // Нанооптимизация: не ворочить картинками, если нет по ним никакой инфы.
     if (needImgsThis.isDefined || oldImgsThis.isDefined) {
       // Есть картинки для обработки (старые или новые), запустить обработку.
-      val saveBgImgsFut = ImgFormUtil.updateOrigImg(needImgs = needImgsThis,  oldImgs = oldImgsThis)
+      val saveBgImgFut = ImgFormUtil.updateOrigImg(needImgs = needImgsThis,  oldImgs = oldImgsThis)
       for {
-        savedBgImgs <- saveBgImgsFut
+        savedBgImg <- saveBgImgFut
         supSavedMap <- supImgsFut
       } yield {
-        savedBgImgs
-          .headOption
+        savedBgImg
           .fold(supSavedMap) {
           savedBgImg => supSavedMap + (fn -> savedBgImg)
         }
