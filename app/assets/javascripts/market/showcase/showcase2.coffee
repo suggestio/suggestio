@@ -251,6 +251,11 @@ siomart =
 
       siomart.search.search_timer = setTimeout search_cb, siomart.search.request_delay
 
+  ## Карточки ноды верхнего уровня
+  load_index_ads : () ->
+    url = '/market/ads/' + siomart.config.mart_id + '?a.rcvr=' + siomart.config.mart_id
+    siomart.perform_request url
+
   ####################################
   ## Загрузить все нужные стили цсс'ки
   ####################################
@@ -329,10 +334,10 @@ siomart =
 
     if data.action == 'findAds'
       grid_container_dom = siomart.utils.ge 'sioMartIndexGrid'
-      
+
       grid_container_dom.innerHTML = data.html
       cbca_grid.init()
-
+      siomart.init_shop_links()
 
   close_node_offers_popup : ( event ) ->
 
@@ -530,9 +535,10 @@ siomart =
     siomart.perform_request url
     siomart.utils.ge('smCategoriesScreen').style.display = 'none'
 
-  #############################################
+  ##################################################
   ## Забиндить события на навигационные кнопари
-  #############################################
+  ## Вызывается только при инициализации marketIndex
+  ##################################################
   init_navigation : () ->
 
     siomart.utils.add_single_listener window, 'touchmove', siomart.events.document_touchmove
@@ -560,16 +566,22 @@ siomart =
     ## Кнопка вызова окна с категориями
     this.utils.add_single_listener this.utils.ge('smCategoriesButton'), _event, siomart.open_categories_screen
 
+    ## Возврат на индекс выдачи
+    this.utils.add_single_listener this.utils.ge('rootNodeLogo'), _event, siomart.load_index_ads
+
+    this.init_shop_links()
+
+  init_shop_links : () ->
+    _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
     blocks_w_actions = siomart.utils.ge_class document, 'js-shop-link'
 
     for _b in blocks_w_actions
-
       cb = ( b ) ->
         producer_id = b.getAttribute 'data-producer-id'
         ad_id = b.getAttribute 'data-ad-id'
         siomart.utils.add_single_listener b, _event, () ->
+          console.log producer_id
           siomart.load_for_shop_id producer_id, ad_id
-
       cb _b
 
   ## Инициализация Sio.Market
