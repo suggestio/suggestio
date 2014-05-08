@@ -13,6 +13,7 @@ import util.img._
 import controllers.MarketAdPreview.PreviewFormDefaults
 import io.suggest.img.SioImageUtilT
 import util.img.ImgInfo4Save
+import util.FormUtil
 
 /**
  * Suggest.io
@@ -340,6 +341,8 @@ case class BfDiscount(
       .map(_.value)
       .getOrElse(fallbackValue.value)
   )
+
+  def maxStrlen: Int = FormUtil.PERCENT_M_CHARLEN_MAX
 
   override def field: BefDiscount = Discount
 

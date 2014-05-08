@@ -302,10 +302,12 @@ object FormUtil {
 
   def adhocPercentFmt(pc: Float) = TplDataFormatUtil.formatPercentRaw(pc) + "%"
 
+  val PERCENT_M_CHARLEN_MAX = 32
+
   // Процентные значения
   /** Нестрогий маппер процентов. Крэшится только если слишком много букв. */
   val percentM = {
-    text(maxLength = 20)
+    text(maxLength = PERCENT_M_CHARLEN_MAX)
       .transform[(String, Option[Float])](
         {raw =>
           val raw1 = strTrimSanitizeF(raw)
