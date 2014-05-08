@@ -35,7 +35,7 @@ trait EMLogoImgStatic extends EsModelStaticT {
 
 trait EMLogoImgI extends EsModelT {
   override type T <: EMLogoImgI
-  def logoImgOpt: Option[MImgInfo]
+  def logoImgOpt: Option[MImgInfoT]
 }
 
 trait EMLogoImg extends EMLogoImgI {
@@ -50,5 +50,5 @@ trait EMLogoImg extends EMLogoImgI {
 
 trait EMLogoImgMut extends EMLogoImg {
   override type T <: EMLogoImgMut
-  var logoImgOpt: Option[MImgInfo]
+  var logoImgOpt: Option[MImgInfoT]
 }

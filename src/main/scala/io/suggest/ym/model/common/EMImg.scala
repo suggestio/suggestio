@@ -19,6 +19,7 @@ import scala.collection.JavaConversions._
  * 2014.apr.30: img -> imgOpt: Option[MImgInfo]
  * 2014.apr.30: img -> Map[String, MImgInfo] для потребностей blocks.
  *              В качестве ключа используется произвольная строка. Внутри это всё хранится как JsObject.
+ * 2014.may.08: MImgInfo -> MImgInfoT.
  */
 
 
@@ -26,7 +27,7 @@ object EMImg {
   val IMG_ESFN = "img"
   def esMappingField = FieldObject(IMG_ESFN, enabled = false, properties = Nil)
 
-  type Imgs_t = Map[String, MImgInfo]
+  type Imgs_t = Map[String, MImgInfoT]
 
   /** Стереть картинку, указанную в поле imgOpt, если она там есть. */
   def eraseImgs(imgs: Imgs_t)(implicit ec: ExecutionContext): Future[_] = {

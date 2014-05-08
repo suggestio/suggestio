@@ -67,7 +67,7 @@ case class MAdnNode(
   var personIds     : Set[String],
   var adn           : AdNetMemberInfo,
   var meta          : AdnMMetadata,
-  var logoImgOpt    : Option[MImgInfo] = None,
+  var logoImgOpt    : Option[MImgInfoT] = None,
   var id            : Option[String] = None
 )
   extends EsModelEmpty

@@ -144,7 +144,7 @@ case class MUserImgOrig(idStr: String, img: Array[Byte], q: String, timestamp: L
 
   def save: Future[_] = {
     val cfOrigsB = CF_ORIGINALS.getBytes
-    val qUserImgOrigB = Q_USER_IMG_ORIG.getBytes
+    val qUserImgOrigB = q.getBytes
     val putReq = if (timestamp > 0) {
       new PutRequest(HTABLE_NAME_BYTES, id, cfOrigsB, qUserImgOrigB, img, timestamp)
     } else {
