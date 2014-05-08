@@ -229,7 +229,9 @@ object BlocksConf extends Enumeration {
     /** Макс кол-во офферов (макс.длина списка офферов). */
     val OFFERS_COUNT = 3
 
-    val heightField = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300))
+    def heightAvailableVals: Set[Int]
+
+    val heightField = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = heightAvailableVals)
 
     protected def bfText(offerNopt: Option[Int]) = BfText(TITLE_FN, BlocksEditorFields.TextArea, maxLen = 128, offerNopt = offerNopt)
     protected def bfPrice(offerNopt: Option[Int]) = BfPrice(PRICE_FN, offerNopt = offerNopt)
@@ -329,6 +331,8 @@ object BlocksConf extends Enumeration {
 
   /** Блок с тремя ценами в первом дизайне. */
   val Block3 = new TitlePriceListBlock(3, "3prices") {
+
+    def heightAvailableVals = Set(300, 460, 620)
 
     /** Шаблон для рендера. */
     override def template = _block3Tpl
@@ -444,6 +448,8 @@ object BlocksConf extends Enumeration {
   /** Блок, который содержит до трёх офферов с ценами. Аналог [[Block3]], но с иным дизайном. */
   val Block6 = new TitlePriceListBlock(6, "3prices2") {
 
+    def heightAvailableVals = Set(300)
+
     override def blockFields: List[BlockFieldT] = {
       val fns = (N0 until OFFERS_COUNT)
         .flatMap { offerN =>
@@ -455,6 +461,7 @@ object BlocksConf extends Enumeration {
         .toList
       bgImgBf :: fns
     }
+
     /** Шаблон для рендера. */
     override def template = _block6Tpl
   }
@@ -778,7 +785,7 @@ object BlocksConf extends Enumeration {
 
 
   val Block13 = new Val(13, "svgBgSlogan13") with SaveBgImg {
-    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460, 620))
+    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460))
     val saleColorBf = BfColor("saleColor", defaultValue = Some("828fa0"))
     val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("FFFFFF"))
     val discountBf = BfDiscount("discount", min = -9.9F, max = 99F)
@@ -845,7 +852,7 @@ object BlocksConf extends Enumeration {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, topColorBf, bgImgBf, bottomColorBf, lineColorBf, titleBf, descrBf
+      topColorBf, bgImgBf, bottomColorBf, lineColorBf, titleBf, descrBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
