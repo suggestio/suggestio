@@ -302,20 +302,20 @@ object FormUtil {
 
   def adhocPercentFmt(pc: Float) = TplDataFormatUtil.formatPercentRaw(pc) + "%"
 
+  /** Макс.длина текста в полях price/percent. Используется в маппинге и в input-шаблонах редактора блоков. */
   val PERCENT_M_CHARLEN_MAX = 32
 
   // Процентные значения
   /** Нестрогий маппер процентов. Крэшится только если слишком много букв. */
   val percentM = {
-    text(maxLength = PERCENT_M_CHARLEN_MAX)
-      .transform[(String, Option[Float])](
-        {raw =>
-          val raw1 = strTrimSanitizeF(raw)
-          raw1 -> parsePercents(raw1)
-        },
-        { case (raw, opt) if !raw.isEmpty || opt.isEmpty => raw
-          case (raw, Some(pc)) => adhocPercentFmt(pc) }
-      )
+    text.transform[(String, Option[Float])](
+      {raw =>
+        val raw1 = strTrimSanitizeF(raw.substring(0, PERCENT_M_CHARLEN_MAX))
+        raw1 -> parsePercents(raw1)
+      },
+      { case (raw, opt) if !raw.isEmpty || opt.isEmpty => raw
+        case (raw, Some(pc)) => adhocPercentFmt(pc) }
+    )
   }
 
   /** Маппинг со строгой проверкой на проценты. */
