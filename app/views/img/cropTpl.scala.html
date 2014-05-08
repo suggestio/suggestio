@@ -1,4 +1,4 @@
-@(imgId:String, width: Int, height: Int, markerOpt: Option[String])(implicit ctx: util.Context)
+@(imgId:String, width: Int, height: Int, markerOpt: Option[String], imeta: MImgInfoMeta)(implicit ctx: util.Context)
 
 @import ctx._
 @import helper._
@@ -9,7 +9,7 @@
     <div>
     @* Здесь у нас загружается исходное изображение, которое js-ом ресайзится до размеров родительского контейнера *@
     @* TODO: аттрибуты data-width и data-height надо заменить на реальные значения *@
-    <img class="bg abs" data-width="600" data-height="399" src="@routes.Img.getImg(imgId)" />
+    <img class="bg abs" data-width="@imeta.width" data-height="@imeta.height" src="@routes.Img.getImg(imgId)" />
     </div>
 
   </div>
