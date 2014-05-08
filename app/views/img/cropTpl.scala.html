@@ -1,4 +1,4 @@
-@(imgId:String, width: Int, height: Int, markerOpt: Option[String], imeta: MImgInfoMeta)(implicit ctx: util.Context)
+@(imgId:String, width: Int, height: Int, markerOpt: Option[String], imeta: MImgInfoMeta, cropOpt: Option[ImgCrop])(implicit ctx: util.Context)
 
 @import ctx._
 @import helper._
@@ -16,7 +16,7 @@
 
   @form(routes.Img.imgCropSubmit) {
     <input type="hidden" name="imgId" value="@imgId"/>
-    <input type="hidden" name="crop" value="0x0+10+10"/>
+    <input type="hidden" name="crop" value="@cropOpt.map(_.toCropStr)"/>
     @markerOpt.map { marker =>
       <input type="hidden" name="marker" value="@marker"/>
     }

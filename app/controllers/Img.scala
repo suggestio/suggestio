@@ -212,14 +212,15 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
   /** Отрендерить оконный интерфейс для кадрирования картинки. */
   def imgCropForm(imgId: String, width: Int, height: Int, markerOpt: Option[String]) = {
     IsAuth.async { implicit request =>
-      val iik = ImgIdKey(imgId)
+      val iik0 = ImgIdKey(imgId)
+      val iik = iik0.uncropped
       iik.getImageWH map { imetaOpt =>
         val imeta: MImgInfoMeta = imetaOpt getOrElse {
           val stub = MImgInfoMeta(640, 480)
           warn("Failed to fetch image w/h metadata for iik " + iik + " . Returning stub metadata: " + stub)
           stub
         }
-        Ok(cropTpl(imgId, width, height, markerOpt, imeta))
+        Ok(cropTpl(iik.filename, width, height, markerOpt, imeta, iik0.cropOpt))
       }
     }
   }
