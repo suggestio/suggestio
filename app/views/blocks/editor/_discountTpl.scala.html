@@ -1,10 +1,12 @@
 @(bf: BfDiscount, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
 
+@import util.TplDataFormatUtil._
+
 @content = {
 
   @defining( af(bfNameBase + ".value") ) { pvf =>
     <div class="lk-text-field">
-      <div><input name="@pvf.name" class="js-input-w-block-preview" type="text" value="@pvf.value" /></div>
+      <div><input name="@pvf.name" class="js-input-w-block-preview" type="text" value="@pvf.value.orElse(bf.defaultValue.map(p => formatPercent(p.value / 100)))" maxlength="@bf.maxStrlen"/></div>
     </div>
   }
 

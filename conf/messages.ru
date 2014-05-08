@@ -50,6 +50,13 @@ blocks.field.bgImg=Фоновое изображение
 blocks.field.text1=Текст 1
 blocks.field.text2=Текст 2
 blocks.field.discount=Скидка
+blocks.field.logo=Логотип
+blocks.field.lineColor=Цвет линии
+blocks.field.bottomColor=Цвет верхней заливки
+blocks.field.topColor=Цвет нижней заливки
+blocks.field.descr=Описание
+blocks.field.saleMaskColor=Цвет маски SALE
+
 
 lk.sl.enable_ad=Включить объявление
 lk.sl.d=Выводить в моём каталоге

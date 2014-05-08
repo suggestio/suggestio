@@ -89,8 +89,8 @@ object MarketAd extends SioController with TempImgSupport {
     * @param adnNode Магазин, с которым происходит сейчас работа.
     * @return NotAcceptable со страницей с create-формой.
     */
-  private def createAdFormError(formWithErrors: AdFormM, catOwnerId: String, adnNode: MAdnNode)(implicit ctx: util.Context) = {
-    renderCreateFormWith(formWithErrors, catOwnerId, adnNode)
+  private def createAdFormError(formWithErrors: AdFormM, catOwnerId: String, adnNode: MAdnNode, withBC: Option[BlockConf])(implicit ctx: util.Context) = {
+    renderCreateFormWith(formWithErrors, catOwnerId, adnNode, withBC)
       .map(NotAcceptable(_))
   }
 
@@ -108,7 +108,7 @@ object MarketAd extends SioController with TempImgSupport {
         formBinded.fold(
           {formWithErrors =>
             debug(logPrefix + "Bind failed: \n" + formatFormErrors(formWithErrors))
-            createAdFormError(formWithErrors, catOwnerId, adnNode)
+            createAdFormError(formWithErrors, catOwnerId, adnNode, Some(bc))
           },
           {case (mmad, bim) =>
             // Асинхронно обрабатываем логотип.
@@ -128,14 +128,14 @@ object MarketAd extends SioController with TempImgSupport {
       case Left(formWithGlobalError) =>
         warn(logPrefix + "AD mode is undefined or invalid. Returning form back.")
         val formWithErrors = formWithGlobalError.bindFromRequest()
-        createAdFormError(formWithErrors, catOwnerId, adnNode)
+        createAdFormError(formWithErrors, catOwnerId, adnNode, withBC = None)
     }
   }
 
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
-  private def renderCreateFormWith(af: AdFormM, catOwnerId: String, adnNode: MAdnNode)(implicit ctx: Context) = {
+  private def renderCreateFormWith(af: AdFormM, catOwnerId: String, adnNode: MAdnNode, withBC: Option[BlockConf] = None)(implicit ctx: Context) = {
     getMMCatsForCreate(af, catOwnerId) map { mmcats =>
-      createAdTpl(mmcats, af, adnNode)
+      createAdTpl(mmcats, af, adnNode, withBC)
     }
   }
 
@@ -187,7 +187,7 @@ object MarketAd extends SioController with TempImgSupport {
       val blockConf: BlockConf = BlocksConf.apply(mad.blockMeta.blockId)
       val form0 = getAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
       val bim = mad.imgs.mapValues { mii =>
-        val oiik = OrigImgIdKey(filename = mii.filename, meta = mii.meta)()
+        val oiik = OrigImgIdKey(filename = mii.filename, meta = mii.meta)
         ImgInfo4Save(oiik)
       }
       form0 fill ((mad, bim))

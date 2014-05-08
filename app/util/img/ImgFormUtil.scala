@@ -63,7 +63,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   /** Маппер для поля с id картинки-логотипа, но результат конвертируется в ImgInfo. */
   def logoImgIdM(_imgIdM: Mapping[ImgIdKey]) = _imgIdM
     .transform(
-      { ImgInfo4Save(_, cropOpt = None, withThumb = false) },
+      { ImgInfo4Save(_, withThumb = false) },
       { ii: ImgInfo4Save[ImgIdKey] => ii.iik }
     )
 
@@ -125,30 +125,47 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
 
-  /** Нередко бывает несколько картинок при сабмите. */
-  def mergeListMappings(iiks: List[ImgIdKey], iCrops: List[ImgCrop]): List[ImgInfo4Save[ImgIdKey]] = {
-    iiks.zip(iCrops) map {
-      case (iik, crop) => ImgInfo4Save(iik, Some(crop))
-    }
+  def updateOrigImgId(needImg: Option[ImgInfo4Save[ImgIdKey]], oldImgId: Option[String]): Future[List[MImgInfoT]] = {
+    updateOrigImgFull(needImg, oldImgId.map(MImgInfo(_)))
   }
 
-  def updateOrigImgId(needImg: Option[ImgInfo4Save[ImgIdKey]], oldImgId: Option[String]): Future[List[MImgInfo]] = {
-    updateOrigImg(needImg, oldImgId.map(MImgInfo(_)))
+  /** Комбо из [[updateOrigImgFull()]] и [[miiPreferFirstCropped()]]. */
+  def updateOrigImg(needImgs: Option[ImgInfo4Save[ImgIdKey]], oldImgs: Option[MImgInfoT]): Future[Option[MImgInfoT]] = {
+    updateOrigImgFull(needImgs, oldImgs)
+      .map { miiPreferFirstCropped }
   }
-  
+
   /**
    * Замена иллюстрации к некоей сущности.
    * @param needImgs Необходимые в результате набор картинок. Тут могут быть как уже сохранённыя картинка,
    *                 так и новая из tmp. Если Nil, то старые картинки будут удалены.
-   * @param oldImgs Уже сохранённые ранее картинки, если есть.
-   * @return Список id новых и уже сохранённых картинок.
+   * @param oldImgs Уже сохранённые ранее картинки, если есть.  // TODO Надо перейти на MImgInfoT или OrigImgIdKey.
+   * @return Список id новых и уже сохранённых картинок.        // TODO Надо перейти на MImgInfoT или OrigImgIdKey.
    */
-  def updateOrigImg(needImgs: Option[ImgInfo4Save[ImgIdKey]], oldImgs: Option[MImgInfo]): Future[List[MImgInfo]] = {
+  def updateOrigImgFull(needImgs: Option[ImgInfo4Save[ImgIdKey]], oldImgs: Option[MImgInfoT]): Future[List[MImgInfoT]] = {
     // TODO Эту фунцию можно быстро переделать с Option[] на Seq[]. Изначально она и работала через Seq. Но они не совместимы. Надо как-то это устаканить.
     val oldImgsSet = oldImgs.toSet
     val newTmpImgs = needImgs.iterator
+      // В новых (произведённых) картинках есть только добавленные картинки.
       .filter { _.iik.isInstanceOf[TmpImgIdKey] }
       .map { _.asInstanceOf[ImgInfo4Save[TmpImgIdKey]] }
+      // 2014.05.08: Нужно сохранять ещё и исходную tmp-картинку, если передана откадрированная tmp-картинка.
+      .flatMap { ti4s =>
+        if (ti4s.iik.isCropped) {
+          // Это откадрированная картинка, значит рядом лежит оригинал. Надо срезать crop и тоже схоронить.
+          val id = MPict.randomId
+          val idStr = MPict.idBin2Str(id)
+          val idOpt = Some(idStr)
+          List(
+            ti4s.copy(withId = idOpt),
+            // Восстанавливать связи между исходными orig-картинками и need tmp пока нет удобной возможности, поэтому тут по сути идёт пересохранение orig-картинки под новым id с параллельным удаление старой.
+            // TODO Надо сделать так, чтобы откадрированные оригиналы сохранялись под исходными id, при этом исходники не пересохранялись.
+            ti4s.copy(iik = ti4s.iik.uncropped, withId = idOpt)
+          )
+        } else {
+          List(ti4s)
+        }
+      }
       .toList
     val needOrigImgs0 = needImgs.iterator
       .filter { _.iik.isInstanceOf[OrigImgIdKey] }
@@ -196,46 +213,72 @@ object ImgFormUtil extends PlayMacroLogsImpl {
    */
   def handleTmpImageForStoring(tii: ImgInfo4Save[TmpImgIdKey]): Future[SavedTmpImg] = {
     import tii.iik.mptmp
-    val id = MPict.randomId
-    val idStr = MPict.idBin2Str(id)
+    lazy val logPrefix = s"handleTmpImageForStoring(${tii.iik.filename}): "
+    trace(s"${logPrefix}Starting: crop=${tii.iik.cropOpt}, withThumb=${tii.withThumb} withId=${tii.withId}")
+    val (rowkeyStr, rowkey) = tii.withId match {
+      case Some(_rowkeyStr) =>
+        _rowkeyStr -> MPict.idStr2Bin(_rowkeyStr)
+      case None =>
+        val _rowkey = MPict.randomId
+        val _rowkeyStr = MPict.idBin2Str(_rowkey)
+        _rowkeyStr -> _rowkey
+    }
+    // qualifier для сохранения картинки и её метаданных
+    val q = tii.iik.origQualifier
     // Запустить чтение из уже отрезайзенного tmp-файла и сохранение как-бы-исходного материала в HBase
     val saveOrigFut = future {
       OrigImageUtil.maybeReadFromFile(mptmp.file)
     } flatMap { imgBytes =>
-      MUserImgOrig(idStr, imgBytes, q = tii.iik.origQualifier)
+      MUserImgOrig(rowkeyStr, imgBytes, q = q)
         .save
-        .map { _ => mptmp.file -> idStr }
+        .map { _ =>
+          val savedFilename = OrigImgData(rowkeyStr, cropOpt = tii.iik.cropOpt).toFilename
+          mptmp.file -> savedFilename
+        }
+    }
+    saveOrigFut onComplete {
+      case Success(result) => trace(logPrefix + "Orig img saved ok. Result = " + result)
+      case Failure(ex)     => error(logPrefix + "Failed to save img.", ex)
     }
     // 26.mar.2014: понадобился доступ к метаданным картинки в контексте элемента. Запускаем identify в фоне
     val imgMetaFut: Future[MImgInfoMeta] = future {
       OrigImageUtil.identify(mptmp.file)
     } flatMap { identifyResult =>
       // 2014.04.22: Сохранение метаданных в HBase для доступа в ad-preview.
+      val w = identifyResult.getImageWidth
+      val h = identifyResult.getImageHeight
       val savedMeta = Map(
-        IMETA_WIDTH  -> identifyResult.getImageWidth.toString,
-        IMETA_HEIGHT -> identifyResult.getImageHeight.toString
+        IMETA_WIDTH  -> w.toString,
+        IMETA_HEIGHT -> h.toString
       )
-      MUserImgMetadata(idStr, savedMeta).save map { _ =>
-        MImgInfoMeta(
-          height = identifyResult.getImageHeight,
-          width  = identifyResult.getImageWidth
-        )
+      MUserImgMetadata(rowkeyStr, savedMeta, q = q).save map { _ =>
+        MImgInfoMeta(height = h,  width = w)
       }
+    }
+    imgMetaFut onComplete {
+      case Success(result) => trace(logPrefix + "Img metadata saved ok: " + result)
+      case Failure(ex)     => error(logPrefix + "Failed to save img metadata.", ex)
     }
     // Если укаазно withThumb, то пора сгенерить thumbnail без учёта кропов всяких.
     val saveThumbFut = if (tii.withThumb) {
-      future {
+      val stFut = future {
         val tmpThumbFile = File.createTempFile("origThumb", ".jpeg")
         val thumbBytes = try {
-          ThumbImageUtil.convert(mptmp.file, tmpThumbFile, mode = ConvertModes.THUMB, crop = tii.cropOpt)
+          ThumbImageUtil.convert(mptmp.file, tmpThumbFile, mode = ConvertModes.THUMB)
           // Прочитать файл в памяти и сохранить в MImgThumb
           FileUtils.readFileToByteArray(tmpThumbFile)
         } finally {
           tmpThumbFile.delete()
         }
-        val thumbDatum = new MImgThumb(id=id, thumb=thumbBytes, imageUrl=null)
+        new MImgThumb(id=rowkey, thumb=thumbBytes, imageUrl=null)
+      } flatMap { thumbDatum =>
         thumbDatum.save
       }
+      stFut onComplete {
+        case Success(_)  => trace(logPrefix + "Img thumb saved ok")
+        case Failure(ex) => error(logPrefix + "Failed to save img thumbnail", ex)
+      }
+      stFut
     } else {
       Future successful ()
     }
@@ -245,7 +288,25 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       (tmpFile, idStr) <- saveOrigFut
       imgMeta <- imgMetaFut
     } yield {
-      SavedTmpImg(idStr, tmpFile, imgMeta)
+      SavedTmpImg(idStr, tmpFile, imgMeta, tii.iik.cropOpt)
+    }
+  }
+
+
+  /**
+   * Т.к. [[updateOrigImg()]] возвращает список результатов, хотя подразумевается только один, то надо
+   * выделять нужную картинку из выхлопа сохраненных картинок.
+   * Так, при кадрировании возвращается две сохранённые картинки (исходная и кадрированная) вместо одной или нуля.
+   * @param l Выхлоп [[updateOrigImg()]]
+   * @return Опционально выбранная картинка.
+   */
+  def miiPreferFirstCropped(l: List[MImgInfoT]): Option[MImgInfoT] = {
+    l.reduceOption { (mii1, mii2) =>
+      val oiik1: OrigImgIdKey = mii1
+      if (oiik1.isCropped)
+        mii1
+      else
+        mii2
     }
   }
 
@@ -298,8 +359,13 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
   /** Конвертер данных из готовых MImgInfo в [[OrigImgIdKey]]. */
-  implicit def imgInfo2imgKey(m: MImgInfo): OrigImgIdKey = {
-    OrigImgIdKey(m.filename, m.meta)()
+  implicit def imgInfo2imgKey(m: MImgInfoT): OrigImgIdKey = {
+    m match {
+      case oiik: OrigImgIdKey =>
+        oiik
+      case _ =>
+        OrigImgIdKey(m.filename, m.meta)
+    }
   }
 }
 
@@ -407,7 +473,7 @@ object ImgIdKey {
     if (key startsWith MPictureTmp.KEY_PREFIX) {
       TmpImgIdKey(key)
     } else {
-      OrigImgIdKey(key)()
+      OrigImgIdKey(key)
     }
   }
 }
@@ -424,11 +490,28 @@ sealed trait ImgIdKey {
   // Определение hbase qualifier для сохранения/чтения картинки по этому ключу.
   def origQualifierOpt = cropOpt.map { _.toCropStr }
   def origQualifier = cropOpt.fold(MPict.Q_USER_IMG_ORIG) { _.toCropStr }
+
+  /** Является ли эта картинка кадрированной производной?
+    * @return false, если картинка оригинальная. true если откадрированная картинка.
+    */
+  def isCropped = cropOpt.isDefined
+
+  def uncropped: ImgIdKey
 }
 
-case class TmpImgIdKey(filename: String) extends ImgIdKey {
-  @JsonIgnore
-  val mptmp: MPictureTmp = MPictureTmp(filename)
+
+object TmpImgIdKey {
+  def apply(filename: String): TmpImgIdKey = {
+    val mptmp = MPictureTmp(filename)
+    TmpImgIdKey(filename, mptmp)
+  }
+  def apply(mptmp: MPictureTmp): TmpImgIdKey = {
+    val filename = mptmp.filename
+    TmpImgIdKey(filename, mptmp)
+  }
+}
+
+case class TmpImgIdKey(filename: String, @JsonIgnore mptmp: MPictureTmp) extends ImgIdKey {
 
   @JsonIgnore
   override def cropOpt = mptmp.data.cropOpt
@@ -458,6 +541,17 @@ case class TmpImgIdKey(filename: String) extends ImgIdKey {
     }
     Future successful result
   }
+
+  @JsonIgnore
+  override def uncropped: TmpImgIdKey = {
+    if (isCropped) {
+      val mptmpData1 = mptmp.data.copy(cropOpt = None)
+      val mptmp1 = MPictureTmp(mptmpData1)
+      TmpImgIdKey(mptmp1)
+    } else {
+      this
+    }
+  }
 }
 
 
@@ -473,6 +567,24 @@ object OrigImgIdKey {
   }
 
   def parseFilename(filename: String) = parse(FILENAME_PARSER, filename)
+
+  def apply(filename: String): OrigImgIdKey = {
+    apply(filename, meta = None)
+  }
+  def apply(filename: String, meta: Option[MImgInfoMeta]): OrigImgIdKey = {
+    val data = OrigImgIdKey.parseFilename(filename).get
+    apply(filename, meta, data)
+  }
+  def apply(data: OrigImgData): OrigImgIdKey = {
+    apply(data, meta = None)
+  }
+  def apply(data: OrigImgData, meta: Option[MImgInfoMeta]): OrigImgIdKey = {
+    val filename = data.toFilename
+    apply(filename, meta, data)
+  }
+  def apply(filename: String, data: OrigImgData): OrigImgIdKey = {
+    apply(filename, meta = None, data = data)
+  }
 
 
   /** Прочитать ширину-длину хранимой orig-картинки по модели MUserImgMetadata.
@@ -509,8 +621,7 @@ case class OrigImgData(rowKey: String, cropOpt: Option[ImgCrop]) {
   }
 }
 
-case class OrigImgIdKey(filename: String, meta: Option[MImgInfoMeta] = None)
-                       (val data: OrigImgData = OrigImgIdKey.parseFilename(filename).get)
+case class OrigImgIdKey(filename: String, meta: Option[MImgInfoMeta], data: OrigImgData)
   extends MImgInfoT with ImgIdKey
 {
   @JsonIgnore
@@ -538,6 +649,16 @@ case class OrigImgIdKey(filename: String, meta: Option[MImgInfoMeta] = None)
 
   @JsonIgnore
   override def getImageWH = OrigImgIdKey.getOrigImageWH(data.rowKey)
+
+  override def uncropped: OrigImgIdKey = {
+    if (isCropped) {
+      val data1 = data.copy(cropOpt = None)
+      val fn1 = data1.toFilename
+      OrigImgIdKey(fn1, meta, data1)
+    } else {
+      this
+    }
+  }
 }
 
 
@@ -571,16 +692,15 @@ import OutImgFmts._
 /**
  * Класс для объединения кропа и id картинки (чтобы не использовать Tuple2 с числовыми названиями полей)
  * @param iik Указатель на картинку.
- * @param cropOpt Данные по желаемому кадрированию.
  * @tparam T Реальный тип iik.
  */
 case class ImgInfo4Save[+T <: ImgIdKey](
-  iik     : T,
-  cropOpt : Option[ImgCrop] = None,
-  withThumb: Boolean = true
+  iik       : T,
+  withThumb : Boolean = true,
+  withId    : Option[String] = None
 )
 
 
-case class SavedTmpImg(idStr:String, tmpImgFile:File, meta: MImgInfoMeta) {
+case class SavedTmpImg(idStr:String, tmpImgFile:File, meta: MImgInfoMeta, cropOpt: Option[ImgCrop] = None) {
   def toMImgInfo = MImgInfo(idStr, Some(meta))
 }

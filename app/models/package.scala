@@ -92,6 +92,9 @@ package object models {
   type MImgInfo             = ym.model.common.MImgInfo
   type MImgInfoT            = ym.model.common.MImgInfoT
 
+  type ImgCrop              = io.suggest.img.ImgCrop
+  val  ImgCrop              = io.suggest.img.ImgCrop
+
   val  MImgInfoMeta         = ym.model.common.MImgInfoMeta
   type MImgInfoMeta         = ym.model.common.MImgInfoMeta
 

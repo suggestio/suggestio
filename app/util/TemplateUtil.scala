@@ -4,6 +4,7 @@ import java.text.{DecimalFormat, NumberFormat}
 import java.util.Currency
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+import scala.util.matching.Regex
 
 /**
  * Suggest.io
@@ -49,8 +50,8 @@ object TplDataFormatUtil {
     // TODO Надо прогонять код через currency formatter, чтобы учитывать локаль?
     val fmt0 = currency.getSymbol()   // TODO Надо передавать сюда локаль клиента через аргумент.
     currency.getCurrencyCode match {
-      case "RUB" => CURRENCY_FIXER_RUB.replaceFirstIn(fmt0, "р.")
-      case "USD" => CURRENCY_FIXER_USD.replaceFirstIn(fmt0, "$")
+      case "RUB" => CURRENCY_FIXER_RUB.replaceFirstIn(fmt0, Regex.quoteReplacement("р."))
+      case "USD" => CURRENCY_FIXER_USD.replaceFirstIn(fmt0, Regex.quoteReplacement("$"))
       case other => fmt0
     }
   }

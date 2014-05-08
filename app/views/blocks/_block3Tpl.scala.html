@@ -13,9 +13,10 @@
   <div class="triangle-border-bottom"></div>
 
   <div class="inner">
-    @mad.imgs.get(Block3.BG_IMG_FN).map { img =>
-      <img src="@routes.Img.getImg(img.filename)" alt=""/>
-    }
+
+    <img src="@mad.imgs.get(Block3.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl3-bg.jpg"))" />
+
+
 
     <div class="items">
 

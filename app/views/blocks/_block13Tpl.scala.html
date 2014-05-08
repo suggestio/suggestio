@@ -9,9 +9,9 @@
   <div class="left-border abs"></div>
   <div class="right-border abs"></div>
 
-  @mad.imgs.get(Block13.BG_IMG_FN).map { img =>
-    <img class="photo" src="@routes.Img.getImg(img.filename)" />
-  }
+
+  <img class="photo" src="@mad.imgs.get(Block13.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl13-bg.jpg"))" />
+
 
   @defining(mad.colors.getOrElse(Block13.saleColorBf.name, Block13.saleColorBf.anyDefaultValue)) { saleColor =>
 

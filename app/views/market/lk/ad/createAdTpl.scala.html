@@ -1,4 +1,4 @@
-@(mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], adnNode: MAdnNode)(implicit ctx: util.Context)
+@(mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], adnNode: MAdnNode, withBC: Option[BlockConf] = None)(implicit ctx: util.Context)
 
 @* Рендер страницы с формой создания рекламы. *@
 @import ctx._
@@ -17,7 +17,7 @@
             call    = routes.MarketAd.createAdSubmit(adnNode.id.get),
             btnText = Messages("Create"),
             mmcats  = mmcats,
-            withBC  = None,
+            withBC  = withBC,
             adnNode = adnNode
           )
 

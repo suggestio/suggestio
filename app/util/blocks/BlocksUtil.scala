@@ -13,6 +13,7 @@ import util.img._
 import controllers.MarketAdPreview.PreviewFormDefaults
 import io.suggest.img.SioImageUtilT
 import util.img.ImgInfo4Save
+import util.FormUtil
 
 /**
  * Suggest.io
@@ -203,6 +204,8 @@ case class BfPrice(
 ) extends BlockFieldT {
   override type T = AOPriceField
 
+  def maxStrlen = FormUtil.PRICE_M_MAX_STRLEN
+
   override def mappingBase: Mapping[T] = MarketAdFormUtil.mmaPriceM
 
   override def field: BefPrice = BlocksEditorFields.Price
@@ -301,7 +304,7 @@ case class BfImage(
 
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
   override def fallbackValue: T = {
-    val oiik = OrigImgIdKey(PreviewFormDefaults.IMG_ID)(OrigImgData("", None))
+    val oiik = OrigImgIdKey(PreviewFormDefaults.IMG_ID, OrigImgData("", None))
     val i4s = ImgInfo4Save(oiik, withThumb = saveWithThumb)
     Map(name -> i4s)
   }
@@ -341,6 +344,8 @@ case class BfDiscount(
       .getOrElse(fallbackValue.value)
   )
 
+  def maxStrlen: Int = FormUtil.PERCENT_M_CHARLEN_MAX
+
   override def field: BefDiscount = Discount
 
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
@@ -364,7 +369,7 @@ case class BfDiscount(
 case class BfColor(
   name: String,
   defaultValue: Option[String] = None,
-  fallbackValue: String = "FFFFFF",
+  fallbackValue: String = "444444",
   offerNopt: Option[Int] = None
 ) extends BlockFieldT {
   override type T = String

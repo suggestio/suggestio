@@ -1,0 +1,42 @@
+@(mad: MAdT, isStandalone: Boolean, bc: util.blocks.BlocksConf.CommonBlock145)(implicit ctx: util.Context)
+
+@import blocks.svg._
+
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl@bc.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+
+  @defining(mad.colors.getOrElse(bc.lineColorBf.name, bc.lineColorBf.anyDefaultValue)) { lineColor =>
+    @_top145(
+      cssClass  = "svg-top",
+      fillColor = mad.colors.getOrElse(bc.topColorBf.name, bc.topColorBf.anyDefaultValue),
+      lineColor = lineColor
+    )
+
+    @_bottom145(
+      cssClass  = "svg-bottom",
+      fillColor = mad.colors.getOrElse(bc.bottomColorBf.name, bc.bottomColorBf.anyDefaultValue),
+      lineColor = lineColor
+    )
+
+    <div class="bottom-bg abs" style="background: #@lineColor"></div>
+  }
+
+
+
+  <img class="logo abs" src="@mad.imgs.get(bc.LOGO_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-logo.jpg"))" />
+
+  @mad.offers.headOption.map { offer =>
+    <div class="info abs">
+      @offer.text1.map { text1 =>
+        <div class="title" style="color: #@text1.font.color">
+          @Html(text1.value)
+        </div>
+      }
+      @offer.text2.map { text2 =>
+        <div class="descr" style="color: #@text2.font.color">
+          @Html(text2.value)
+        </div>
+      }
+    </div>
+  }
+
+</div>

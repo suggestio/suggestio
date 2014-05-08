@@ -219,12 +219,20 @@ object FormUtil {
   import io.suggest.ym.parsers.Price
   import UserInputParsers._
 
+
+  /** Макс.длина текста в поле цены. */
+  val PRICE_M_MAX_STRLEN = 40
+
   /** Нестрогий маппинг цены. Ошибка будет только если слишком много букв. */
   val priceM: Mapping[(String, Option[Price])] = {
-    text(maxLength = 40)
+    text
       .transform[(String, Option[Price])](
         {raw =>
-          val raw1 = strTrimSanitizeF(raw)
+          val raw0 = if (raw.length > PRICE_M_MAX_STRLEN)
+            raw.substring(0, PRICE_M_MAX_STRLEN)
+          else
+            raw
+          val raw1 = strTrimSanitizeF(raw0)
           raw1 -> parsePrice(raw1) },
         { case (raw, None) => raw
           case (raw, Some(_)) if !raw.isEmpty => raw
@@ -302,18 +310,24 @@ object FormUtil {
 
   def adhocPercentFmt(pc: Float) = TplDataFormatUtil.formatPercentRaw(pc) + "%"
 
+  /** Макс.длина текста в полях price/percent. Используется в маппинге и в input-шаблонах редактора блоков. */
+  val PERCENT_M_CHARLEN_MAX = 32
+
   // Процентные значения
   /** Нестрогий маппер процентов. Крэшится только если слишком много букв. */
   val percentM = {
-    text(maxLength = 20)
-      .transform[(String, Option[Float])](
-        {raw =>
-          val raw1 = strTrimSanitizeF(raw)
-          raw1 -> parsePercents(raw1)
-        },
-        { case (raw, opt) if !raw.isEmpty || opt.isEmpty => raw
-          case (raw, Some(pc)) => adhocPercentFmt(pc) }
-      )
+    text.transform[(String, Option[Float])](
+      {raw =>
+        val raw0 = if (raw.length > PERCENT_M_CHARLEN_MAX)
+          raw.substring(0, PERCENT_M_CHARLEN_MAX)
+        else
+          raw
+        val raw1 = strTrimSanitizeF(raw0)
+        raw1 -> parsePercents(raw1)
+      },
+      { case (raw, opt) if !raw.isEmpty || opt.isEmpty => raw
+        case (raw, Some(pc)) => adhocPercentFmt(pc) }
+    )
   }
 
   /** Маппинг со строгой проверкой на проценты. */

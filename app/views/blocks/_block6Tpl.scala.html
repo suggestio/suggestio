@@ -8,9 +8,7 @@
   <div class="left-border abs"></div>
   <div class="right-border abs"></div>
 
-  @mad.imgs.get(Block6.BG_IMG_FN).map { img =>
-    <img class="bg abs" src="@routes.Img.getImg(img.filename)" />
-  }
+  <img class="bg abs" src="@mad.imgs.get(Block6.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl6-bg.jpg"))" />
 
   <div class="info abs">
     @mad.offers.map { offer =>

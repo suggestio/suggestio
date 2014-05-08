@@ -148,8 +148,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
           ImgFormUtil.updateOrigImg(
             needImgs = welcomeImgOpt.map(ImgInfo4Save(_, withThumb = false)),
             oldImgs = welcomeAdOpt.flatMap(_.imgs.headOption).map(_._2)
-          ) flatMap { savedImgs =>
-            savedImgs.headOption match {
+          ) flatMap {
               // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
               case None =>
                 val deleteOldAdFut = adnNode.meta.welcomeAdId
@@ -171,12 +170,11 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
                   case Success(welcomeAdId) =>
                     adnNode.meta.welcomeAdId = Some(welcomeAdId)
                 }
-            }
           }
         }
         adnNode.meta = adnMeta
-        savedLogoFut.flatMap { savedLogos =>
-          adnNode.logoImgOpt = savedLogos.headOption
+        savedLogoFut.flatMap { savedLogo =>
+          adnNode.logoImgOpt = savedLogo
           savedWelcomeImgsFut flatMap { _ =>
             adnNode.save.map { _ =>
               Redirect(routes.MarketLkAdn.showAdnNode(adnNode.id.get))

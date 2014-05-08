@@ -81,14 +81,14 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
    * @return Оригинал картинки.
    */
   def getOrig(filename: String) = {
-    val oiik = OrigImgIdKey(filename)()
+    val oiik = OrigImgIdKey(filename)
     getOrigIik(oiik)
   }
 
   def getOrigIik(oiik: OrigImgIdKey) = Action.async { implicit request =>
     import oiik.filename
     suppressQsFlood(routes.Img.getOrig(filename)) {
-      MUserImgOrig.getById(filename, q = oiik.origQualifierOpt) map {
+      MUserImgOrig.getById(oiik.data.rowKey, q = oiik.origQualifierOpt) map {
         case Some(its) =>
           serveImgBytes(its, CACHE_ORIG_CLIENT_SECONDS)
 
@@ -212,14 +212,15 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
   /** Отрендерить оконный интерфейс для кадрирования картинки. */
   def imgCropForm(imgId: String, width: Int, height: Int, markerOpt: Option[String]) = {
     IsAuth.async { implicit request =>
-      val iik = ImgIdKey(imgId)
+      val iik0 = ImgIdKey(imgId)
+      val iik = iik0.uncropped
       iik.getImageWH map { imetaOpt =>
         val imeta: MImgInfoMeta = imetaOpt getOrElse {
           val stub = MImgInfoMeta(640, 480)
           warn("Failed to fetch image w/h metadata for iik " + iik + " . Returning stub metadata: " + stub)
           stub
         }
-        Ok(cropTpl(imgId, width, height, markerOpt, imeta))
+        Ok(cropTpl(iik.filename, width, height, markerOpt, imeta, iik0.cropOpt))
       }
     }
   }

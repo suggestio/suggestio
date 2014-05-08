@@ -120,9 +120,17 @@ object BlocksConf extends Enumeration {
   val Block1 = new Val(1, "photoAdnPrice") with SaveBgImg {
 
     val heightField = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460, 620))
-    val text1Field = BfText("title", BlocksEditorFields.InputText, minLen = 0, maxLen = 64)
-    val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN)
-    val priceField = BfPrice(EMAdOffers.PRICE_ESFN)
+    val text1Field = BfText("title", BlocksEditorFields.InputText,
+      minLen = 0,
+      maxLen = 64,
+      defaultValue = Some(AOStringField("Платье", AOFieldFont("444444")))
+    )
+    val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN,
+      defaultValue = Some(AOPriceField(200F, "RUB", "200 р.", defaultFont))
+    )
+    val priceField = BfPrice(EMAdOffers.PRICE_ESFN,
+      defaultValue = Some(AOPriceField(100F, "RUB", "100 р.", defaultFont))
+    )
 
     override def blockFields = List(
       bgImgBf, heightField, text1Field, oldPriceField, priceField
@@ -168,7 +176,9 @@ object BlocksConf extends Enumeration {
   val Block2 = new Val(2, "saleWithText") with SaveBgImg {
     val heightField = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460))
     val text1Field = BfText(EMAdOffers.TEXT1_ESFN, BlocksEditorFields.InputText, maxLen = 512)
-    val text2Field = BfText(EMAdOffers.TEXT2_ESFN, BlocksEditorFields.TextArea, maxLen = 8192)
+    val text2Field = BfText(EMAdOffers.TEXT2_ESFN, BlocksEditorFields.TextArea, maxLen = 8192,
+      defaultValue = Some(AOStringField("Распродажа. Сегодня. Сейчас.", AOFieldFont("000000")))
+    )
 
     override def blockFields = List(
       bgImgBf, heightField, text1Field, text2Field
@@ -209,7 +219,7 @@ object BlocksConf extends Enumeration {
 
 
   /** Карточка с картинкой и списком title+price. Такой блок встречается несколько раз с разным дизайном. */
-  protected abstract class TitlePriceListBlock(id: Int, name: String) extends Val(id, name) with SaveBgImg {
+  sealed abstract class TitlePriceListBlock(id: Int, name: String) extends Val(id, name) with SaveBgImg {
     // Названия используемых полей.
     val TITLE_FN = "title"
     val PRICE_FN = "price"
@@ -219,7 +229,9 @@ object BlocksConf extends Enumeration {
     /** Макс кол-во офферов (макс.длина списка офферов). */
     val OFFERS_COUNT = 3
 
-    val heightField = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300))
+    def heightAvailableVals: Set[Int]
+
+    val heightField = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = heightAvailableVals)
 
     protected def bfText(offerNopt: Option[Int]) = BfText(TITLE_FN, BlocksEditorFields.TextArea, maxLen = 128, offerNopt = offerNopt)
     protected def bfPrice(offerNopt: Option[Int]) = BfPrice(PRICE_FN, offerNopt = offerNopt)
@@ -319,6 +331,8 @@ object BlocksConf extends Enumeration {
 
   /** Блок с тремя ценами в первом дизайне. */
   val Block3 = new TitlePriceListBlock(3, "3prices") {
+
+    def heightAvailableVals = Set(300, 460, 620)
 
     /** Шаблон для рендера. */
     override def template = _block3Tpl
@@ -433,6 +447,21 @@ object BlocksConf extends Enumeration {
 
   /** Блок, который содержит до трёх офферов с ценами. Аналог [[Block3]], но с иным дизайном. */
   val Block6 = new TitlePriceListBlock(6, "3prices2") {
+
+    def heightAvailableVals = Set(300)
+
+    override def blockFields: List[BlockFieldT] = {
+      val fns = (N0 until OFFERS_COUNT)
+        .flatMap { offerN =>
+        val offerNopt = Some(offerN)
+        val titleBf = bfText(offerNopt)
+        val priceBf = bfPrice(offerNopt)
+        List(titleBf, priceBf)
+      }
+        .toList
+      bgImgBf :: fns
+    }
+
     /** Шаблон для рендера. */
     override def template = _block6Tpl
   }
@@ -453,7 +482,7 @@ object BlocksConf extends Enumeration {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      saleMaskColorBf, discoBf, iconBgColorBf, titleBf, priceBf
+      saleMaskColorBf, discoBf, titleBf, priceBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -756,7 +785,7 @@ object BlocksConf extends Enumeration {
 
 
   val Block13 = new Val(13, "svgBgSlogan13") with SaveBgImg {
-    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300))
+    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460))
     val saleColorBf = BfColor("saleColor", defaultValue = Some("828fa0"))
     val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("FFFFFF"))
     val discountBf = BfDiscount("discount", min = -9.9F, max = 99F)
@@ -811,6 +840,75 @@ object BlocksConf extends Enumeration {
   }
 
 
+  sealed abstract class CommonBlock145(id: Int, name: String) extends Val(id, name) with SaveLogoImg {
+    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460))
+    val topColorBf = BfColor("topColor", defaultValue = Some("000000"))
+    val bottomColorBf = BfColor("bottomColor", defaultValue = Some("bf6a6a"))
+    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+    val lineColorBf = BfColor("lineColor", defaultValue = Some("B35151"))
+
+    val blockWidth: Int
+
+    /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
+    override def blockFields: List[BlockFieldT] = List(
+      topColorBf, logoImgBf, bottomColorBf, lineColorBf, titleBf, descrBf
+    )
+
+    /** Набор маппингов для обработки данных от формы. */
+    override def strictMapping: Mapping[BlockMapperResult] = mapping(
+      heightBf.getStrictMappingKV,
+      topColorBf.getStrictMappingKV,
+      logoImgBf.getStrictMappingKV,
+      bottomColorBf.getStrictMappingKV,
+      lineColorBf.getStrictMappingKV,
+      titleBf.getOptionalStrictMappingKV,
+      descrBf.getOptionalStrictMappingKV
+    )
+    {(height, topColor, logoBim, bottomColor, lineColor, titleOpt, descrOpt) =>
+      val blk = AOBlock(
+        n = 0,
+        text1 = titleOpt,
+        text2 = descrOpt
+      )
+      val bd = BlockDataImpl(
+        blockMeta = BlockMeta(
+          height = height,
+          blockId = id
+        ),
+        offers = List(blk),
+        colors = Map(
+          topColorBf.name -> topColor,
+          bottomColorBf.name -> bottomColor,
+          lineColorBf.name -> lineColor
+        )
+      )
+      BlockMapperResult(bd, logoBim)
+    }
+    {bmr =>
+      val height = bmr.bd.blockMeta.height
+      val logoBim = bmr.bim.filter(_._1 == logoImgBf.name)
+      val offerOpt = bmr.bd.offers.headOption
+      val titleOpt = offerOpt.flatMap(_.text1)
+      val descrOpt = offerOpt.flatMap(_.text2)
+      val topColor = bmr.bd.colors.get(topColorBf.name).getOrElse(topColorBf.anyDefaultValue)
+      val bottomColor = bmr.bd.colors.get(bottomColorBf.name).getOrElse(bottomColorBf.anyDefaultValue)
+      val lineColor = bmr.bd.colors.get(lineColorBf.name).getOrElse(lineColorBf.anyDefaultValue)
+      Some( (height, topColor, logoBim, bottomColor, lineColor, titleOpt, descrOpt) )
+    }
+  }
+
+  val Block14 = new CommonBlock145(14, "svgPictTitleDescr14") {
+    override def template = _block14Tpl
+    override val blockWidth: Int = 300
+  }
+
+  val Block15 = new CommonBlock145(15, "svgPictTitleDescrNarrow15") {
+    override def template = _block15Tpl
+    override val blockWidth: Int = 140
+  }
+
+
   /** Сортированные значения. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id. */
   val valuesSorted = values.toSeq.sortBy(_.id)
@@ -828,13 +926,12 @@ object SaveImgUtil {
     // Нанооптимизация: не ворочить картинками, если нет по ним никакой инфы.
     if (needImgsThis.isDefined || oldImgsThis.isDefined) {
       // Есть картинки для обработки (старые или новые), запустить обработку.
-      val saveBgImgsFut = ImgFormUtil.updateOrigImg(needImgs = needImgsThis,  oldImgs = oldImgsThis)
+      val saveBgImgFut = ImgFormUtil.updateOrigImg(needImgs = needImgsThis,  oldImgs = oldImgsThis)
       for {
-        savedBgImgs <- saveBgImgsFut
+        savedBgImg <- saveBgImgFut
         supSavedMap <- supImgsFut
       } yield {
-        savedBgImgs
-          .headOption
+        savedBgImg
           .fold(supSavedMap) {
           savedBgImg => supSavedMap + (fn -> savedBgImg)
         }

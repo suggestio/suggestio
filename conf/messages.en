@@ -48,6 +48,12 @@ blocks.field.title=Title
 blocks.field.text1=Text 1
 blocks.field.text2=Text 2
 blocks.field.discount=Discount
+blocks.field.logo=Logo
+blocks.field.lineColor=Line color
+blocks.field.bottomColor=Bottom color
+blocks.field.topColor=Top color
+blocks.field.descr=Description
+blocks.field.saleMaskColor=SALE mask color
 
 
 lk.sl.enable_ad=Enable ad
