@@ -30,7 +30,6 @@ object MPict extends HTableModel {
   val Q_THUMB         = "t"   // Картинка-превьюшка. CF_THUMBS
   val Q_IMAGE_URL     = "u"   // Ссылка на исходную картинку, если есть. CF_METADATA
   // MUserImg
-  val Q_IMG_META = "m"   // Сериализованный кусок датума MImgThumb. CF_METADATA
   val Q_USER_IMG_ORIG = "o"   // Бинарник, содержащий оригинал изображения. CF_ORIGINALS
 
   private val rnd = {
