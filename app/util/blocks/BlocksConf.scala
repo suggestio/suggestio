@@ -433,6 +433,18 @@ object BlocksConf extends Enumeration {
 
   /** Блок, который содержит до трёх офферов с ценами. Аналог [[Block3]], но с иным дизайном. */
   val Block6 = new TitlePriceListBlock(6, "3prices2") {
+
+    override def blockFields: List[BlockFieldT] = {
+      val fns = (N0 until OFFERS_COUNT)
+        .flatMap { offerN =>
+        val offerNopt = Some(offerN)
+        val titleBf = bfText(offerNopt)
+        val priceBf = bfPrice(offerNopt)
+        List(titleBf, priceBf)
+      }
+        .toList
+      bgImgBf :: fns
+    }
     /** Шаблон для рендера. */
     override def template = _block6Tpl
   }
