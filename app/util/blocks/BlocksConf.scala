@@ -833,7 +833,7 @@ object BlocksConf extends Enumeration {
   }
 
 
-  sealed abstract class CommonBlock145(id: Int, name: String) extends Val(id, name) with SaveBgImg {
+  sealed abstract class CommonBlock145(id: Int, name: String) extends Val(id, name) with SaveLogoImg {
     val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460))
     val topColorBf = BfColor("topColor", defaultValue = Some("000000"))
     val bottomColorBf = BfColor("bottomColor", defaultValue = Some("bf6a6a"))
@@ -845,20 +845,20 @@ object BlocksConf extends Enumeration {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, topColorBf, bgImgBf, bottomColorBf, lineColorBf, titleBf, descrBf
+      heightBf, topColorBf, logoImgBf, bottomColorBf, lineColorBf, titleBf, descrBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
     override def strictMapping: Mapping[BlockMapperResult] = mapping(
       heightBf.getStrictMappingKV,
       topColorBf.getStrictMappingKV,
-      bgImgBf.getStrictMappingKV,
+      logoImgBf.getStrictMappingKV,
       bottomColorBf.getStrictMappingKV,
       lineColorBf.getStrictMappingKV,
       titleBf.getOptionalStrictMappingKV,
       descrBf.getOptionalStrictMappingKV
     )
-    {(height, topColor, bgBim, bottomColor, lineColor, titleOpt, descrOpt) =>
+    {(height, topColor, logoBim, bottomColor, lineColor, titleOpt, descrOpt) =>
       val blk = AOBlock(
         n = 0,
         text1 = titleOpt,
@@ -876,18 +876,18 @@ object BlocksConf extends Enumeration {
           lineColorBf.name -> lineColor
         )
       )
-      BlockMapperResult(bd, bgBim)
+      BlockMapperResult(bd, logoBim)
     }
     {bmr =>
       val height = bmr.bd.blockMeta.height
-      val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+      val logoBim = bmr.bim.filter(_._1 == logoImgBf.name)
       val offerOpt = bmr.bd.offers.headOption
       val titleOpt = offerOpt.flatMap(_.text1)
       val descrOpt = offerOpt.flatMap(_.text2)
       val topColor = bmr.bd.colors.get(topColorBf.name).getOrElse(topColorBf.anyDefaultValue)
       val bottomColor = bmr.bd.colors.get(bottomColorBf.name).getOrElse(bottomColorBf.anyDefaultValue)
       val lineColor = bmr.bd.colors.get(lineColorBf.name).getOrElse(lineColorBf.anyDefaultValue)
-      Some( (height, topColor, bgBim, bottomColor, lineColor, titleOpt, descrOpt) )
+      Some( (height, topColor, logoBim, bottomColor, lineColor, titleOpt, descrOpt) )
     }
   }
 
