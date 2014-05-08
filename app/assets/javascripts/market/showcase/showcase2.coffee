@@ -328,7 +328,10 @@ siomart =
       siomart.node_offers_popup.init()
 
     if data.action == 'findAds'
-      alert 'do САМСИТНЬ!'
+      grid_container_dom = siomart.utils.ge 'sioMartIndexGrid'
+      
+      grid_container_dom.innerHTML = data.html
+      cbca_grid.init()
 
 
   close_node_offers_popup : ( event ) ->
