@@ -204,6 +204,8 @@ case class BfPrice(
 ) extends BlockFieldT {
   override type T = AOPriceField
 
+  def maxStrlen = FormUtil.PRICE_M_MAX_STRLEN
+
   override def mappingBase: Mapping[T] = MarketAdFormUtil.mmaPriceM
 
   override def field: BefPrice = BlocksEditorFields.Price

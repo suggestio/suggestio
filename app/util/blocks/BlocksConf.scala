@@ -123,10 +123,14 @@ object BlocksConf extends Enumeration {
     val text1Field = BfText("title", BlocksEditorFields.InputText,
       minLen = 0,
       maxLen = 64,
-      defaultValue = Some(AOStringField("", AOFieldFont("444444")))
+      defaultValue = Some(AOStringField("Платье", AOFieldFont("444444")))
     )
-    val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN)
-    val priceField = BfPrice(EMAdOffers.PRICE_ESFN)
+    val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN,
+      defaultValue = Some(AOPriceField(200F, "RUB", "200 р.", defaultFont))
+    )
+    val priceField = BfPrice(EMAdOffers.PRICE_ESFN,
+      defaultValue = Some(AOPriceField(100F, "RUB", "100 р.", defaultFont))
+    )
 
     override def blockFields = List(
       bgImgBf, heightField, text1Field, oldPriceField, priceField
@@ -172,7 +176,9 @@ object BlocksConf extends Enumeration {
   val Block2 = new Val(2, "saleWithText") with SaveBgImg {
     val heightField = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460))
     val text1Field = BfText(EMAdOffers.TEXT1_ESFN, BlocksEditorFields.InputText, maxLen = 512)
-    val text2Field = BfText(EMAdOffers.TEXT2_ESFN, BlocksEditorFields.TextArea, maxLen = 8192)
+    val text2Field = BfText(EMAdOffers.TEXT2_ESFN, BlocksEditorFields.TextArea, maxLen = 8192,
+      defaultValue = Some(AOStringField("Распродажа. Сегодня. Сейчас.", AOFieldFont("000000")))
+    )
 
     override def blockFields = List(
       bgImgBf, heightField, text1Field, text2Field

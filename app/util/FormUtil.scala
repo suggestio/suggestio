@@ -219,12 +219,20 @@ object FormUtil {
   import io.suggest.ym.parsers.Price
   import UserInputParsers._
 
+
+  /** Макс.длина текста в поле цены. */
+  val PRICE_M_MAX_STRLEN = 40
+
   /** Нестрогий маппинг цены. Ошибка будет только если слишком много букв. */
   val priceM: Mapping[(String, Option[Price])] = {
-    text(maxLength = 40)
+    text
       .transform[(String, Option[Price])](
         {raw =>
-          val raw1 = strTrimSanitizeF(raw)
+          val raw0 = if (raw.length > PRICE_M_MAX_STRLEN)
+            raw.substring(0, PRICE_M_MAX_STRLEN)
+          else
+            raw
+          val raw1 = strTrimSanitizeF(raw0)
           raw1 -> parsePrice(raw1) },
         { case (raw, None) => raw
           case (raw, Some(_)) if !raw.isEmpty => raw
