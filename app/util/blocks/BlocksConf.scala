@@ -882,6 +882,11 @@ object BlocksConf extends Enumeration {
     override val blockWidth: Int = 300
   }
 
+  val Block15 = new CommonBlock145(15, "svgPictTitleDescrNarrow15") {
+    override def template = _block15Tpl
+    override val blockWidth: Int = 140
+  }
+
 
   /** Сортированные значения. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id. */
