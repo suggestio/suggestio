@@ -13,8 +13,8 @@
     <img class="photo" src="@routes.Img.getImg(img.filename)" />
   }
 
-  <div class="left-line"></div>
-  <div class="right-line"></div>
+  <div class="left-line" style="border-color: @mad.colors.getOrElse(Block13.saleColorBf.name, Block13.saleColorBf.anyDefaultValue)"></div>
+  <div class="right-line" style="border-color: @mad.colors.getOrElse(Block13.saleColorBf.name, Block13.saleColorBf.anyDefaultValue)"></div>
 
   @mad.offers.headOption.map { offer =>
     <div class="sale"@offer.discount.map { discount => style="color: #@discount.font.color"}>
