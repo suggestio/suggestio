@@ -778,7 +778,7 @@ object BlocksConf extends Enumeration {
 
 
   val Block13 = new Val(13, "svgBgSlogan13") with SaveBgImg {
-    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460))
+    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460, 620))
     val saleColorBf = BfColor("saleColor", defaultValue = Some("828fa0"))
     val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("FFFFFF"))
     val discountBf = BfDiscount("discount", min = -9.9F, max = 99F)
