@@ -465,7 +465,7 @@ object BlocksConf extends Enumeration {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      saleMaskColorBf, discoBf, iconBgColorBf, titleBf, priceBf
+      saleMaskColorBf, discoBf, titleBf, priceBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -768,7 +768,7 @@ object BlocksConf extends Enumeration {
 
 
   val Block13 = new Val(13, "svgBgSlogan13") with SaveBgImg {
-    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300))
+    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460))
     val saleColorBf = BfColor("saleColor", defaultValue = Some("828fa0"))
     val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("FFFFFF"))
     val discountBf = BfDiscount("discount", min = -9.9F, max = 99F)
