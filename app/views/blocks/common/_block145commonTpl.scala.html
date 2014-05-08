@@ -16,9 +16,11 @@
       fillColor = mad.colors.getOrElse(bc.bottomColorBf.name, bc.bottomColorBf.anyDefaultValue),
       lineColor = lineColor
     )
+
+    <div class="bottom-bg abs" style="background: #@lineColor"></div>
   }
 
-  <div class="bottom-bg abs"></div>
+
 
   <img class="logo abs" src="@mad.imgs.get(bc.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-logo.jpg"))" />
 
