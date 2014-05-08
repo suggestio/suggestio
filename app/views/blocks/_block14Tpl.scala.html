@@ -1,37 +1,3 @@
 @(mad: MAdT, isStandalone: Boolean)(implicit ctx: util.Context)
 
-@import util.blocks.BlocksConf.Block14
-@import svg._
-
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl14" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
-
-  @_top145(
-    cssClass  = "svg-top",
-    fillColor = mad.colors.getOrElse(Block14.topColorBf.name, Block14.topColorBf.anyDefaultValue)
-  )
-
-  @_bottom145(
-    cssClass  = "svg-bottom",
-    fillColor = mad.colors.getOrElse(Block14.bottomColorBf.name, Block14.bottomColorBf.anyDefaultValue)
-  )
-
-  <div class="bottom-bg abs"></div>
-
-  <img class="logo abs" src="@mad.imgs.get(Block14.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-logo.jpg"))" />
-
-  @mad.offers.headOption.map { offer =>
-    <div class="info abs">
-      @offer.text1.map { text1 =>
-        <div class="title" style="color: #@text1.font.color">
-          @Html(text1.value)
-        </div>
-      }
-      @offer.text2.map { text2 =>
-        <div class="descr" style="color: #@text2.font.color">
-          @Html(text2.value)
-        </div>
-      }
-    </div>
-  }
-
-</div>
+@common._block145commonTpl(mad, isStandalone, util.blocks.BlocksConf.Block14)

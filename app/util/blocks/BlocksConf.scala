@@ -209,7 +209,7 @@ object BlocksConf extends Enumeration {
 
 
   /** Карточка с картинкой и списком title+price. Такой блок встречается несколько раз с разным дизайном. */
-  protected abstract class TitlePriceListBlock(id: Int, name: String) extends Val(id, name) with SaveBgImg {
+  sealed abstract class TitlePriceListBlock(id: Int, name: String) extends Val(id, name) with SaveBgImg {
     // Названия используемых полей.
     val TITLE_FN = "title"
     val PRICE_FN = "price"
@@ -823,12 +823,14 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block14 = new Val(14, "svgPictTitleDescr14") with SaveBgImg {
+  sealed abstract class CommonBlock145(id: Int, name: String) extends Val(id, name) with SaveBgImg {
     val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460))
     val topColorBf = BfColor("topColor", defaultValue = Some("000000"))
     val bottomColorBf = BfColor("bottomColor", defaultValue = Some("bf6a6a"))
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+
+    val blockWidth: Int
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
@@ -873,8 +875,11 @@ object BlocksConf extends Enumeration {
       val bottomColor = bmr.bd.colors.get(bottomColorBf.name).getOrElse(bottomColorBf.anyDefaultValue)
       Some( (height, topColor, bgBim, bottomColor, titleOpt, descrOpt) )
     }
+  }
 
+  val Block14 = new CommonBlock145(14, "svgPictTitleDescr14") {
     override def template = _block14Tpl
+    override val blockWidth: Int = 300
   }
 
 
