@@ -53,6 +53,7 @@ blocks.field.lineColor=Line color
 blocks.field.bottomColor=Bottom color
 blocks.field.topColor=Top color
 blocks.field.descr=Description
+blocks.field.saleMaskColor=SALE mask color
 
 
 lk.sl.enable_ad=Enable ad

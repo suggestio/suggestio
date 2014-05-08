@@ -369,7 +369,7 @@ case class BfDiscount(
 case class BfColor(
   name: String,
   defaultValue: Option[String] = None,
-  fallbackValue: String = "FFFFFF",
+  fallbackValue: String = "444444",
   offerNopt: Option[Int] = None
 ) extends BlockFieldT {
   override type T = String
