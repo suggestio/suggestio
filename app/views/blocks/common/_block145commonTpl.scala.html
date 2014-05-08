@@ -4,15 +4,19 @@
 
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl@bc.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
-  @_top145(
-    cssClass  = "svg-top",
-    fillColor = mad.colors.getOrElse(bc.topColorBf.name, bc.topColorBf.anyDefaultValue)
-  )
+  @defining(mad.colors.getOrElse(bc.lineColorBf.name, bc.lineColorBf.anyDefaultValue)) { lineColor =>
+    @_top145(
+      cssClass  = "svg-top",
+      fillColor = mad.colors.getOrElse(bc.topColorBf.name, bc.topColorBf.anyDefaultValue),
+      lineColor = lineColor
+    )
 
-  @_bottom145(
-    cssClass  = "svg-bottom",
-    fillColor = mad.colors.getOrElse(bc.bottomColorBf.name, bc.bottomColorBf.anyDefaultValue)
-  )
+    @_bottom145(
+      cssClass  = "svg-bottom",
+      fillColor = mad.colors.getOrElse(bc.bottomColorBf.name, bc.bottomColorBf.anyDefaultValue),
+      lineColor = lineColor
+    )
+  }
 
   <div class="bottom-bg abs"></div>
 

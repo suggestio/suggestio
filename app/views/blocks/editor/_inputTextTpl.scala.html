@@ -4,7 +4,7 @@
 
   @defining( af(bfNameBase + ".value") ) { pvf =>
     <div class="lk-text-field">
-      <div><input name="@pvf.name" type="text" value="@pvf.value" class="js-input-w-block-preview"/></div>
+      <div><input name="@pvf.name" type="text" value="@pvf.value" class="js-input-w-block-preview" maxlength="@bf.maxLen"/></div>
     </div>
   }
 

@@ -223,6 +223,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         val _rowkeyStr = MPict.idBin2Str(_rowkey)
         _rowkeyStr -> _rowkey
     }
+    // qualifier для сохранения картинки и её метаданных
     val q = tii.iik.origQualifier
     // Запустить чтение из уже отрезайзенного tmp-файла и сохранение как-бы-исходного материала в HBase
     val saveOrigFut = future {
@@ -244,15 +245,14 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       OrigImageUtil.identify(mptmp.file)
     } flatMap { identifyResult =>
       // 2014.04.22: Сохранение метаданных в HBase для доступа в ad-preview.
+      val w = identifyResult.getImageWidth
+      val h = identifyResult.getImageHeight
       val savedMeta = Map(
-        IMETA_WIDTH  -> identifyResult.getImageWidth.toString,
-        IMETA_HEIGHT -> identifyResult.getImageHeight.toString
+        IMETA_WIDTH  -> w.toString,
+        IMETA_HEIGHT -> h.toString
       )
-      MUserImgMetadata(rowkeyStr, savedMeta, q).save map { _ =>
-        MImgInfoMeta(
-          height = identifyResult.getImageHeight,
-          width  = identifyResult.getImageWidth
-        )
+      MUserImgMetadata(rowkeyStr, savedMeta, q = q).save map { _ =>
+        MImgInfoMeta(height = h,  width = w)
       }
     }
     imgMetaFut onComplete {

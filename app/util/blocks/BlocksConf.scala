@@ -120,7 +120,11 @@ object BlocksConf extends Enumeration {
   val Block1 = new Val(1, "photoAdnPrice") with SaveBgImg {
 
     val heightField = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460, 620))
-    val text1Field = BfText("title", BlocksEditorFields.InputText, minLen = 0, maxLen = 64)
+    val text1Field = BfText("title", BlocksEditorFields.InputText,
+      minLen = 0,
+      maxLen = 64,
+      defaultValue = Some(AOStringField("", AOFieldFont("444444")))
+    )
     val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN)
     val priceField = BfPrice(EMAdOffers.PRICE_ESFN)
 
@@ -829,12 +833,13 @@ object BlocksConf extends Enumeration {
     val bottomColorBf = BfColor("bottomColor", defaultValue = Some("bf6a6a"))
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+    val lineColorBf = BfColor("lineColor", defaultValue = Some("B35151"))
 
     val blockWidth: Int
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, topColorBf, bgImgBf, bottomColorBf, titleBf, descrBf
+      heightBf, topColorBf, bgImgBf, bottomColorBf, lineColorBf, titleBf, descrBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -843,10 +848,11 @@ object BlocksConf extends Enumeration {
       topColorBf.getStrictMappingKV,
       bgImgBf.getStrictMappingKV,
       bottomColorBf.getStrictMappingKV,
+      lineColorBf.getStrictMappingKV,
       titleBf.getOptionalStrictMappingKV,
       descrBf.getOptionalStrictMappingKV
     )
-    {(height, topColor, bgBim, bottomColor, titleOpt, descrOpt) =>
+    {(height, topColor, bgBim, bottomColor, lineColor, titleOpt, descrOpt) =>
       val blk = AOBlock(
         n = 0,
         text1 = titleOpt,
@@ -860,7 +866,8 @@ object BlocksConf extends Enumeration {
         offers = List(blk),
         colors = Map(
           topColorBf.name -> topColor,
-          bottomColorBf.name -> bottomColor
+          bottomColorBf.name -> bottomColor,
+          lineColorBf.name -> lineColor
         )
       )
       BlockMapperResult(bd, bgBim)
@@ -873,7 +880,8 @@ object BlocksConf extends Enumeration {
       val descrOpt = offerOpt.flatMap(_.text2)
       val topColor = bmr.bd.colors.get(topColorBf.name).getOrElse(topColorBf.anyDefaultValue)
       val bottomColor = bmr.bd.colors.get(bottomColorBf.name).getOrElse(bottomColorBf.anyDefaultValue)
-      Some( (height, topColor, bgBim, bottomColor, titleOpt, descrOpt) )
+      val lineColor = bmr.bd.colors.get(lineColorBf.name).getOrElse(lineColorBf.anyDefaultValue)
+      Some( (height, topColor, bgBim, bottomColor, lineColor, titleOpt, descrOpt) )
     }
   }
 
