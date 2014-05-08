@@ -823,6 +823,61 @@ object BlocksConf extends Enumeration {
   }
 
 
+  val Block14 = new Val(14, "svgPictTitleDescr14") with SaveBgImg {
+    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460))
+    val topColorBf = BfColor("topColor", defaultValue = Some("000000"))
+    val bottomColorBf = BfColor("bottomColor", defaultValue = Some("bf6a6a"))
+    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+
+    /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
+    override def blockFields: List[BlockFieldT] = List(
+      heightBf, topColorBf, bgImgBf, bottomColorBf, titleBf, descrBf
+    )
+
+    /** Набор маппингов для обработки данных от формы. */
+    override def strictMapping: Mapping[BlockMapperResult] = mapping(
+      heightBf.getStrictMappingKV,
+      topColorBf.getStrictMappingKV,
+      bgImgBf.getStrictMappingKV,
+      bottomColorBf.getStrictMappingKV,
+      titleBf.getOptionalStrictMappingKV,
+      descrBf.getOptionalStrictMappingKV
+    )
+    {(height, topColor, bgBim, bottomColor, titleOpt, descrOpt) =>
+      val blk = AOBlock(
+        n = 0,
+        text1 = titleOpt,
+        text2 = descrOpt
+      )
+      val bd = BlockDataImpl(
+        blockMeta = BlockMeta(
+          height = height,
+          blockId = id
+        ),
+        offers = List(blk),
+        colors = Map(
+          topColorBf.name -> topColor,
+          bottomColorBf.name -> bottomColor
+        )
+      )
+      BlockMapperResult(bd, bgBim)
+    }
+    {bmr =>
+      val height = bmr.bd.blockMeta.height
+      val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+      val offerOpt = bmr.bd.offers.headOption
+      val titleOpt = offerOpt.flatMap(_.text1)
+      val descrOpt = offerOpt.flatMap(_.text2)
+      val topColor = bmr.bd.colors.get(topColorBf.name).getOrElse(topColorBf.anyDefaultValue)
+      val bottomColor = bmr.bd.colors.get(bottomColorBf.name).getOrElse(bottomColorBf.anyDefaultValue)
+      Some( (height, topColor, bgBim, bottomColor, titleOpt, descrOpt) )
+    }
+
+    override def template = _block14Tpl
+  }
+
+
   /** Сортированные значения. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id. */
   val valuesSorted = values.toSeq.sortBy(_.id)
