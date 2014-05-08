@@ -223,11 +223,12 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         val _rowkeyStr = MPict.idBin2Str(_rowkey)
         _rowkeyStr -> _rowkey
     }
+    val q = tii.iik.origQualifier
     // Запустить чтение из уже отрезайзенного tmp-файла и сохранение как-бы-исходного материала в HBase
     val saveOrigFut = future {
       OrigImageUtil.maybeReadFromFile(mptmp.file)
     } flatMap { imgBytes =>
-      MUserImgOrig(rowkeyStr, imgBytes, q = tii.iik.origQualifier)
+      MUserImgOrig(rowkeyStr, imgBytes, q = q)
         .save
         .map { _ =>
           val savedFilename = OrigImgData(rowkeyStr, cropOpt = tii.iik.cropOpt).toFilename
@@ -247,7 +248,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
         IMETA_WIDTH  -> identifyResult.getImageWidth.toString,
         IMETA_HEIGHT -> identifyResult.getImageHeight.toString
       )
-      MUserImgMetadata(rowkeyStr, savedMeta).save map { _ =>
+      MUserImgMetadata(rowkeyStr, savedMeta, q).save map { _ =>
         MImgInfoMeta(
           height = identifyResult.getImageHeight,
           width  = identifyResult.getImageWidth
