@@ -310,7 +310,11 @@ object FormUtil {
   val percentM = {
     text.transform[(String, Option[Float])](
       {raw =>
-        val raw1 = strTrimSanitizeF(raw.substring(0, PERCENT_M_CHARLEN_MAX))
+        val raw0 = if (raw.length > PERCENT_M_CHARLEN_MAX)
+          raw.substring(0, PERCENT_M_CHARLEN_MAX)
+        else
+          raw
+        val raw1 = strTrimSanitizeF(raw0)
         raw1 -> parsePercents(raw1)
       },
       { case (raw, opt) if !raw.isEmpty || opt.isEmpty => raw
