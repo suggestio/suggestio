@@ -10,6 +10,8 @@ import MPict._
 import io.suggest.util.CascadingTupleUtil._
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 
+
+/** Дублирующийся код метода удаления deleteById() в обоих подмоделях вынесен сюда. */
 sealed trait MUserImgDeleteByIdStatic {
 
   /**

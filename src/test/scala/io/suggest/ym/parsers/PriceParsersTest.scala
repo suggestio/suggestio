@@ -25,6 +25,8 @@ class PriceParsersTest extends FlatSpec with Matchers {
     rp("100.50 RUB", 100.50F)
     rp("1234 roubles", 1234F)
     rp("1234.5 p.", 1234.5F)
+    rp("RUB100", 100F)
+    rp("RUB 100", 100F)
   }
 
   it should "parse USD prices" in {

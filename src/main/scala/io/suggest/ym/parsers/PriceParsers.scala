@@ -19,10 +19,13 @@ object PriceParsers extends JavaTokenParsers with CommonParsers {
 
   /** Парсер цен в российских рублях. */
   val priceRUBp: PriceP_t = {
-    val rubl: Parser[_]   = "(?iu)[рp]([уy][б6](л[а-я]*)?)?\\.?".r
-    val rouble: Parser[_] = "(?i)(r(ou|u|uo)b(le?s?)?|RUR)".r
-    val currRUBp: Parser[_] = rubl | rouble
-    (floatP <~ currRUBp) ^^ { price => Price(price, currRUBc) }
+    val rubl: Parser[_] = "(?iu)[рp]([уy][б6](л[а-я]*)?)?\\.?".r
+    val rub: Parser[_] = "(?i)RU[BR]".r
+    val rouble = "(?i)r(ou|u|uo)b(le?s?)?|".r | rub
+    val currRUBp = rubl | rouble
+    val postfixPrice = floatP <~ currRUBp
+    val prefixPrice = rub ~> floatP
+    (postfixPrice | prefixPrice) ^^ { price => Price(price, currRUBc) }
   }
 
 
