@@ -10,7 +10,7 @@
 
   @mad.offers.headOption.map { offer =>
 
-    <div class="sale-icon"@mad.colors.get(Block7.iconBgColorBf.name).map { ibColor => style="color: #@ibColor"}>
+    <div class="sale-icon" @offer.discount.map { discount => style="color: #@discount.font.color"}>
       @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
     </div>
 
