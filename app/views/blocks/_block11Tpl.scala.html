@@ -7,9 +7,9 @@
   <div class="color-bg"></div>
   <div class="sale-mask abs"@mad.colors.get(Block11.saleMaskColorBf.name).map { saleColor => style="color: #@saleColor"}></div>
 
-  @mad.imgs.get(Block11.BG_IMG_FN).map { img =>
-    <img class="photo" src="@routes.Img.getImg(img.filename)" />
-  }
+
+  <img class="photo" src="@mad.imgs.get(Block11.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl11-bg.jpg"))" />
+
 
   @mad.offers.headOption.map { offer =>
     <div class="info">

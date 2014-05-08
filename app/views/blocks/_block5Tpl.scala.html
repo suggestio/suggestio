@@ -11,9 +11,7 @@
 
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl5" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
-  @mad.imgs.get(Block5.BG_IMG_FN).map { bgImg =>
-    <img class="bg abs" src="@routes.Img.getImg(bgImg.filename)" />
-  }
+  <img class="bg abs" src="@mad.imgs.get(Block5.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-bg.jpg"))" />
 
   <div class="color-bg abs"></div>
 
