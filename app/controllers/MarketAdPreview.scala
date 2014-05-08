@@ -17,7 +17,7 @@ import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import util.blocks.BlockMapperResult
 import io.suggest.ym.model.common.EMImg.Imgs_t
-import views.html.img.cropTpl
+import ImgFormUtil.{IMETA_HEIGHT, IMETA_WIDTH}
 
 /**
  * Suggest.io
@@ -144,19 +144,12 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
         Future successful oiik.meta
       case oiik: OrigImgIdKey =>
         // Метаданных нет, но данные уже в базе. Надо бы прочитать метаданные из таблицы
-        MUserImgMetadata.getById(oiik.filename) map { muimOpt =>
-          muimOpt.flatMap { muim =>
-            muim.md.get("w").flatMap { widthStr =>
-              muim.md.get("h").map { heightStr =>
-                MImgInfoMeta(height = heightStr.toInt, width = widthStr.toInt)
-              }
-            }
+        oiik.getImageWH
+          .recover {
+            case ex: Exception =>
+              error(s"previewPrepareImgMeta($iik): Failed to fetch img metadata from hbase", ex)
+              None
           }
-        } recover {
-          case ex: Exception =>
-            error(s"previewPrepareImgMeta($iik): Failed to fetch img metadata from hbase", ex)
-            None
-        }
     }
   }
 

@@ -15,6 +15,7 @@ import models._
 import play.api.cache.Cache
 import io.suggest.ym.model.common.MImgInfoT
 import net.sf.jmimemagic.MagicMatch
+import play.api.Logger
 
 /**
  * Suggest.io
@@ -31,6 +32,10 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   type LogoOpt_t = Option[ImgInfo4Save[ImgIdKey]]
 
   val IIK_MAXLEN = 80
+
+  // Ключи в карте MUserImgMeta, которые хранят данные о картинке.
+  val IMETA_WIDTH  = "w"
+  val IMETA_HEIGHT = "h"
   
   /** Маппер для поля с id картинки. Используется обертка над id чтобы прозрачно различать tmp и orig картинки. */
   val imgIdM: Mapping[ImgIdKey] = nonEmptyText(minLength = 8, maxLength = IIK_MAXLEN)
@@ -207,8 +212,8 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     } flatMap { identifyResult =>
       // 2014.04.22: Сохранение метаданных в HBase для доступа в ad-preview.
       val savedMeta = Map(
-        "w" -> identifyResult.getImageWidth.toString,
-        "h" -> identifyResult.getImageHeight.toString
+        IMETA_WIDTH  -> identifyResult.getImageWidth.toString,
+        IMETA_HEIGHT -> identifyResult.getImageHeight.toString
       )
       MUserImgMetadata(idStr, savedMeta).save map { _ =>
         MImgInfoMeta(
@@ -414,6 +419,7 @@ sealed trait ImgIdKey {
   def isTmp: Boolean
   override def hashCode = filename.hashCode
   def cropOpt: Option[ImgCrop]
+  def getImageWH: Future[Option[MImgInfoMeta]]
 
   // Определение hbase qualifier для сохранения/чтения картинки по этому ключу.
   def origQualifierOpt = cropOpt.map { _.toCropStr }
@@ -435,11 +441,29 @@ case class TmpImgIdKey(filename: String) extends ImgIdKey {
 
   @JsonIgnore
   override def isValid: Boolean = mptmp.isExist
+
+  @JsonIgnore
+  override def getImageWH: Future[Option[MImgInfoMeta]] = {
+    val result = try {
+      val info = OrigImageUtil.identify(mptmp.file)
+      val imeta = MImgInfoMeta(
+        height = info.getImageHeight,
+        width = info.getImageWidth
+      )
+      Some(imeta)
+    } catch {
+      case ex: org.im4java.core.InfoException =>
+        Logger(getClass).info("getImageWH(): Unable to identity image " + filename, ex)
+        None
+    }
+    Future successful result
+  }
 }
 
 
 object OrigImgIdKey {
   import io.suggest.img.ImgUtilParsers._
+  import ImgFormUtil.{IMETA_HEIGHT, IMETA_WIDTH}
 
   val FILENAME_PARSER: Parser[OrigImgData] = {
     "(?i)[0-9a-z_-]+".r ~ opt("~" ~> ImgCrop.CROP_STR_PARSER) ^^ {
@@ -449,6 +473,28 @@ object OrigImgIdKey {
   }
 
   def parseFilename(filename: String) = parse(FILENAME_PARSER, filename)
+
+
+  /** Прочитать ширину-длину хранимой orig-картинки по модели MUserImgMetadata.
+    * Метод довольно статичен, но private чтобы не допускать логических ошибок при передаче параметров
+    * (ведь можно ошибочно передать [[OrigImgIdKey.filename]] например -- функция будет вести себя ошибочно при crop).
+    * @param rowKey Чистый ключ картинки. Доступен через [[OrigImgIdKey.data.rowKey]].
+    * @return Асинхронные метаданные по ширине-высоте картинки.
+    */
+  private def getOrigImageWH(rowKey: String): Future[Option[MImgInfoMeta]] = {
+    MUserImgMetadata.getById(rowKey)
+      .map { imetaOpt =>
+        imetaOpt.flatMap { imeta =>
+          imeta.md.get(IMETA_WIDTH).flatMap { widthStr =>
+            imeta.md.get(IMETA_HEIGHT).map { heightStr =>
+              MImgInfoMeta(height = heightStr.toInt, width = widthStr.toInt)
+            }
+          }
+        }
+      }
+      // TODO Можно попытаться прочитать картинку из хранилища, если метаданные по картинке не найдены.
+  }
+
 }
 
 case class OrigImgData(rowKey: String, cropOpt: Option[ImgCrop]) {
@@ -478,6 +524,7 @@ case class OrigImgIdKey(filename: String, meta: Option[MImgInfoMeta] = None)
   @JsonIgnore
   override def isValid: Boolean = MPict.isStrIdValid(filename)
 
+  @JsonIgnore
   override def equals(obj: scala.Any): Boolean = {
     // Сравниваем с MImgInfo без учёта поля meta.
     obj match {
@@ -486,7 +533,11 @@ case class OrigImgIdKey(filename: String, meta: Option[MImgInfoMeta] = None)
     }
   }
 
+  @JsonIgnore
   override def cropOpt = data.cropOpt
+
+  @JsonIgnore
+  override def getImageWH = OrigImgIdKey.getOrigImageWH(data.rowKey)
 }
 
 

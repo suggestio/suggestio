@@ -5,7 +5,7 @@ import _root_.util.{FormUtil, PlayMacroLogsImpl, SiobixFs, DateTimeUtil}
 import org.apache.hadoop.fs.Path
 import io.suggest.util.SioConstants._
 import play.api.libs.concurrent.Execution.Implicits._
-import io.suggest.model.{MUserImgOrig, MImgThumb}
+import io.suggest.model.{MUserImgMetadata, MUserImgOrig, MImgThumb, ImgWithTimestamp}
 import org.joda.time.Instant
 import play.api.Play.current
 import util.acl.IsAuth
@@ -13,12 +13,13 @@ import _root_.util.img._
 import play.api.libs.json._
 import scala.concurrent.duration._
 import models.MPictureTmp
-import io.suggest.model.ImgWithTimestamp
 import net.sf.jmimemagic.Magic
 import scala.concurrent.Future
 import views.html.img._
 import play.api.data._, Forms._
 import io.suggest.img.ConvertModes
+import io.suggest.model
+import io.suggest.ym.model.common.MImgInfoMeta
 
 /**
  * Suggest.io
@@ -209,8 +210,18 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
 
 
   /** Отрендерить оконный интерфейс для кадрирования картинки. */
-  def imgCropForm(imgId: String, width: Int, height: Int, markerOpt: Option[String]) = IsAuth.apply { implicit request =>
-    Ok(cropTpl(imgId, width, height, markerOpt))
+  def imgCropForm(imgId: String, width: Int, height: Int, markerOpt: Option[String]) = {
+    IsAuth.async { implicit request =>
+      val iik = ImgIdKey(imgId)
+      iik.getImageWH map { imetaOpt =>
+        val imeta: MImgInfoMeta = imetaOpt getOrElse {
+          val stub = MImgInfoMeta(640, 480)
+          warn("Failed to fetch image w/h metadata for iik " + iik + " . Returning stub metadata: " + stub)
+          stub
+        }
+        Ok(cropTpl(imgId, width, height, markerOpt, imeta))
+      }
+    }
   }
 
 
