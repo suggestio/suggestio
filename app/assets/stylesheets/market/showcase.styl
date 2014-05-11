@@ -77,9 +77,11 @@ transition( param )
   .sm-back-close-button__span:active
     margin-top: 1px
 
-  sm-back-close-button__span_close
+  .sm-back-close-button__span_close
     background-position: -54px top
 
+  .sm-back-close-button__span_back-mask
+    background-position: -95px -12px
   img
     margin: 0px
     border: 0px
@@ -196,6 +198,53 @@ transition( param )
       background-color: #ce2222
 
 
+  /* Searchfield */
+
+  .sm-search-bar
+    position: absolute
+    left: 0px
+    top: 0px
+    width: 100%
+    height: 50px
+    border-bottom: rgba(0,0,0,0.5)
+    background: #fff
+    z-index: 1005
+
+  .sm-search-bar__field
+    height: 43px
+    margin-left: 44px
+    margin-right: 44px
+    padding-top: 7px
+
+  .sm-search-bar__container
+    height: 32px
+    background: #e3e8ea
+    border: 1px #bcc2c6 solid
+
+  .sm-search-bar__input
+    height: 32px
+    background: none
+    border: 0px
+    color: #bcc2c6
+    width: 90%
+    padding-left: 15px
+    outline: none
+    font-family : 'pfdintextcomppro-medium-webfont'
+    font-size: 15px
+
+  .sm-search-bar__icon
+    position: absolute
+    right: 10px
+    top: 11px
+    display: block
+    width: 26px
+    height: 25px
+    background: spriteurl -139px -12px
+    background-size: spritesize
+
+  .sm-search-bar__icon:active
+    background-position: -139px -13px
+
 .index-welcome-ad
   position: absolute
   left: 50%
@@ -263,54 +312,6 @@ transition( param )
     background: #e3e8ea
     z-index: 1004
     overflow: scroll
-
-    .search-bar
-      height: 44px
-      border-bottom: rgba(0,0,0,0.5)
-      background: #ce2222
-
-      .sb-back-icon,
-      .sb-search-icon
-        background: spriteurl -85px -2px
-        background-size: spritesize
-        width: 44px
-        height: 44px
-        float: left
-        cursor: pointer
-
-      .sb-search-field
-        height: 39px
-        background: #fff
-        margin-left: 44px
-        margin-right: 44px
-        padding-top: 5px
-
-        .sb-sf-container
-          height: 32px
-          background: #e3e8ea
-          border: 1px #bcc2c6 solid
-
-        input
-          height: 32px
-          background: none
-          border: 0px
-          color: #bcc2c6
-          width: 90%
-          padding-left: 15px
-          outline: none
-          font-family : 'pfdintextcomppro-medium-webfont'
-          font-size: 15px
-
-      .sb-search-icon
-        float: right
-        margin-top: -44px
-        background: spriteurl -130px -2px
-        background-size: spritesize
-
-      .sb-back-icon:active
-        background-position: -85px -1px
-      .sb-search-icon:active
-        background-position: -130px -1px
 
     .sm-shops-list
       width: 960px

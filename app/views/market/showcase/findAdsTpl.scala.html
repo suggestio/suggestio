@@ -9,12 +9,7 @@
 
       @producer.logoImgOpt.map { logoImg =>
 
-      @* Кнопка назад / выход *@
-      <div class="back-close-button">
-        <div class="cb-i">
-          <span class="back siomart-back-button" id="closeNodeOffersPopupButton"></span>
-        </div>
-      </div>
+      @_screen_nav_button("close")
 
       <div class="sio-mart__producer-header" style="background-color: #@producer.meta.color;">
         <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>

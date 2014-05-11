@@ -1,12 +1,14 @@
-@()(implicit ctx:util.Context)
+@(mmart:MAdnNode)(implicit ctx:util.Context)
 
 @* Поле ввода поиска *@
 <div class="sm-search-bar">
-  <div class="sb-back-icon" id="smCloseCategoriesButton"></div>
-  <div class="sb-search-field">
-    <div class="sb-sf-container">
-      <input id="smSearchField" type="text" placeholder="ВОСПОЛЬЗУЙТЕСЬ ПОИСКОМ"/>
+
+  @_screen_nav_button("back-mask", "", "#" + mmart.meta.color.head)
+
+  <div class="sm-search-bar__field">
+    <div class="sm-search-bar__container">
+      <input class="sm-search-bar__input" id="smSearchField" type="text" placeholder="ВОСПОЛЬЗУЙТЕСЬ ПОИСКОМ"/>
     </div>
   </div>
-  <div class="sb-search-icon"></div>
+  <div class="sm-search-bar__icon" style="background-color: #@mmart.meta.color;"></div>
 </div>

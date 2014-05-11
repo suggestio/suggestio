@@ -1,6 +1,6 @@
 @(mmcats: Seq[MMartCategory], mmart:MAdnNode)(implicit ctx:util.Context)
 
-@_search_bar()
+@_search_bar(mmart)
 
 <div class="sm-categories-screen" style="background-color: #@mmart.meta.color" id="smCategoriesScreen">
 
