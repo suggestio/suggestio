@@ -469,6 +469,7 @@ siomart =
   #########################################
   open_categories_screen : () ->
     siomart.utils.ge('smCategoriesScreen').style.display = 'block'
+    siomart.utils.ge('smSearchBar').style.display = 'block'
 
   close_categories_screen : () ->
     siomart.utils.ge('smCategoriesScreen').style.display = 'none'

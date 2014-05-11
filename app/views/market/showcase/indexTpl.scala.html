@@ -7,9 +7,7 @@
 @*<img id="smWelcomeAd" class="poster-photo index-welcome-ad" data-width="@welcomeAdOpt.map(_.img.meta.map(_.width))" data-height="@welcomeAdOpt.map(_.img.meta.map(_.height))" src="@ctx.myAudienceUrl@welcomeAdOpt.map(_.img.filename).filter(!_.isEmpty).map {imgId =>@routes.Img.getImg(imgId)}.getOrElse {}"/>*@
 
 @* Основной контейнер, шапка + карточки *@
-
-<div class="sio-mart__node-offers-root" id="sioMartNodeOffersRoot">
-</div>
+<div class="sio-mart__node-offers-root" id="sioMartNodeOffersRoot"></div>
 
 @_screen_nav_button("close", "smCloseButton")
 
