@@ -9,7 +9,7 @@
 
       @producer.logoImgOpt.map { logoImg =>
 
-      @_screen_nav_button("back")
+      @_screen_nav_button("back","closeNodeOffersPopupButton")
 
       <div class="sio-mart__producer-header" style="background-color: #@producer.meta.color;">
         <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>

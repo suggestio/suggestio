@@ -456,23 +456,23 @@ siomart =
       siomart.utils.add_single_listener siomart.utils.ge('sioMartNodeOffersBlockContainer'), _e, () ->
         siomart.node_offers_popup.next_block()
 
-
-
   ######################################
   ## Загрузить индексную страницу для ТЦ
   ######################################
   load_mart_index_page : () ->
     this.perform_request siomart.config.index_action
 
-  #########################################
+  ##################################################
   ## Показать / скрыть экран с категориями и поиском
-  #########################################
-  open_categories_screen : () ->
-    siomart.utils.ge('smCategoriesScreen').style.display = 'block'
-    siomart.utils.ge('smSearchBar').style.display = 'block'
+  ##################################################
+  navigation_layer :
+    open : () ->
+      siomart.utils.ge('smCategoriesScreen').style.display = 'block'
+      siomart.utils.ge('smSearchBar').style.display = 'block'
 
-  close_categories_screen : () ->
-    siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+    close : () ->
+      siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+      siomart.utils.ge('smSearchBar').style.display = 'none'
 
   #########################################
   ## Показать / скрыть экран со списком магазинов
@@ -537,7 +537,7 @@ siomart =
   load_for_cat_id : ( cat_id ) ->
     url = '/market/ads/' + siomart.config.mart_id + '?a.catId=' + cat_id
     siomart.perform_request url
-    siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+    siomart.navigation_layer.close()
 
   ##################################################
   ## Забиндить события на навигационные кнопари
@@ -560,14 +560,13 @@ siomart =
 
     this.utils.add_single_listener this.utils.ge('smShopListButton'), _event, siomart.open_shopList_screen
 
-    this.utils.add_single_listener this.utils.ge('smCloseCategoriesButton'), _event, siomart.close_categories_screen
     this.utils.add_single_listener this.utils.ge('sioMartTrigger'), _event, siomart.open_mart
 
     ## поле ввода поискового запроса
     this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', siomart.search.queue_request
 
     ## Кнопка вызова окна с категориями
-    this.utils.add_single_listener this.utils.ge('smCategoriesButton'), _event, siomart.open_categories_screen
+    this.utils.add_single_listener this.utils.ge('smCategoriesButton'), _event, siomart.navigation_layer.open
 
     ## Возврат на индекс выдачи
     this.utils.add_single_listener this.utils.ge('rootNodeLogo'), _event, siomart.load_index_ads
