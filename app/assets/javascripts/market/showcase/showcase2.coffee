@@ -315,7 +315,7 @@ siomart =
 
     if typeof siomart.request.request_timeout_timer != 'undefined'
       clearTimeout siomart.request.request_timeout_timer
-
+    
     if data.html == ''
       siomart.notifications.show "КАРТОЧЕК НЕ НАЙДЕНО, ПОПРОБУЙТЕ ДРУГОЙ ЗАПРОС"
       return false
@@ -334,17 +334,20 @@ siomart =
       screensContainer.style.display = 'block'
 
       siomart.utils.ge('smCategoriesScreen').style.display = 'none'
-
       siomart.node_offers_popup.init()
+      siomart.navigation_layer.close()
 
-    if data.action == 'findAds'
+    if data.action == 'findAds' || data.action == 'searchAds'
       grid_container_dom = siomart.utils.ge 'sioMartIndexGrid'
 
       grid_container_dom.innerHTML = data.html
       cbca_grid.init()
       siomart.init_shop_links()
 
-    siomart.navigation_layer.close()
+      if data.action == 'searchAds'
+        siomart.navigation_layer.close true
+      else
+        siomart.navigation_layer.close()
 
   close_node_offers_popup : ( event ) ->
 
@@ -474,10 +477,13 @@ siomart =
       siomart.utils.ge('smCategoriesScreen').style.display = 'block'
       siomart.utils.ge('smSearchBar').style.display = 'block'
 
-    close : () ->
+    close : ( all_except_search ) ->
       siomart.utils.ge('smCategoriesScreen').style.display = 'none'
-      siomart.utils.ge('smSearchBar').style.display = 'none'
       siomart.utils.ge('smShopListScreen').style.display = 'none'
+
+      if all_except_search != true
+        siomart.utils.ge('smSearchBar').style.display = 'none'
+
 
     back : () ->
       shop_list_screen_dom = siomart.utils.ge('smShopListScreen')
