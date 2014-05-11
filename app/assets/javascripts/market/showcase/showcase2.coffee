@@ -226,21 +226,10 @@ siomart =
   search :
 
     request_delay : 600
-    request_timeout : 800
-
-    on_request_error : () ->
-      siomart.notifications.show "НЕ УДАЛОСЬ ВЫПОЛНИТЬ ЗАПРОС, ПОПРОБУЙТЕ ЧЕРЕЗ НЕКОТОРОЕ ВРЕМЯ"
-      return false
-
+    
     perform : ( request ) ->
-
-      timeout_cb = () ->
-        siomart.search.on_request_error()
-
-      siomart.search.search_request_timeout_timer = setTimeout timeout_cb, siomart.search.request_timeout
-
       url = '/market/ads/' + siomart.config.mart_id + '?a.q=' + request + '&a.rcvr=' + siomart.config.mart_id
-      siomart.perform_request url
+      siomart.request.perform url
 
     queue_request : ( event ) ->
 
@@ -257,7 +246,7 @@ siomart =
   ## Карточки ноды верхнего уровня
   load_index_ads : () ->
     url = '/market/ads/' + siomart.config.mart_id + '?a.rcvr=' + siomart.config.mart_id
-    siomart.perform_request url
+    siomart.request.perform url
 
   ####################################
   ## Загрузить все нужные стили цсс'ки
@@ -300,19 +289,32 @@ siomart =
   ###################################
   ## Осуществить запрос к серверу sio
   ###################################
-  perform_request : ( url ) ->
-    js_request_attrs =
-      type : 'text/javascript'
-      src : siomart.config.host + url
+  request :
+    request_timeout : 2000
 
-    js_request = this.utils.ce "script", js_request_attrs
-    this.utils.ge_tag("head")[0].appendChild js_request
+    on_request_error : () ->
+      siomart.notifications.show "НЕ УДАЛОСЬ ВЫПОЛНИТЬ ЗАПРОС"
 
+    perform : ( url ) ->
+
+      timeout_cb = () ->
+        siomart.request.on_request_error()
+
+      siomart.request.request_timeout_timer = setTimeout timeout_cb, siomart.request.request_timeout
+
+      js_request_attrs =
+        type : 'text/javascript'
+        src : siomart.config.host + url
+      js_request = siomart.utils.ce "script", js_request_attrs
+      siomart.utils.ge_tag("head")[0].appendChild js_request
   ##################################################
   ## Получить результаты по последнему отправленному
   ## зпросу и передать их в нужный callback
   ##################################################
   receive_response : ( data ) ->
+
+    if typeof siomart.request.request_timeout_timer != 'undefined'
+      clearTimeout siomart.request.request_timeout_timer
 
     if data.html == ''
       siomart.notifications.show "КАРТОЧЕК НЕ НАЙДЕНО, ПОПРОБУЙТЕ ДРУГОЙ ЗАПРОС"
@@ -342,11 +344,13 @@ siomart =
       cbca_grid.init()
       siomart.init_shop_links()
 
+    siomart.navigation_layer.close()
+
   close_node_offers_popup : ( event ) ->
 
     siomart.utils.re 'sioMartNodeOffers'
     siomart.utils.ge('sioMartNodeOffersRoot').style.display = 'none'
-
+    delete siomart.node_offers_popup.requested_ad_id
     delete siomart.node_offers_popup.active_block_index
 
     if event
@@ -429,12 +433,12 @@ siomart =
 
         mad_id = sm_block.getAttribute 'data-mad-id'
 
-        if mad_id == this.requested_ad_id
+        if ( typeof this.requested_ad_id == 'undefined' && i == 0 ) || mad_id == this.requested_ad_id
           this.show_block sm_block
           this.active_block_dom = sm_block
           this.active_block_index = i
 
-        if mad_id == this.requested_ad_id
+        if ( typeof this.requested_ad_id == 'undefined' && i == 0 ) || mad_id == this.requested_ad_id
           _nav_pointer_class = 'sm-nav-block__pointer sm-nav-block__pointer_active'
         else if i == sm_blocks.length-1
           _nav_pointer_class = 'sm-nav-block__pointer sm-nav-block__pointer_no-margin'
@@ -460,7 +464,7 @@ siomart =
   ## Загрузить индексную страницу для ТЦ
   ######################################
   load_mart_index_page : () ->
-    this.perform_request siomart.config.index_action
+    this.request.perform siomart.config.index_action
 
   ##################################################
   ## Показать / скрыть экран с категориями и поиском
@@ -473,6 +477,7 @@ siomart =
     close : () ->
       siomart.utils.ge('smCategoriesScreen').style.display = 'none'
       siomart.utils.ge('smSearchBar').style.display = 'none'
+      siomart.utils.ge('smShopListScreen').style.display = 'none'
 
   #########################################
   ## Показать / скрыть экран со списком магазинов
@@ -530,14 +535,12 @@ siomart =
     url = '/market/ads/' + siomart.config.mart_id + '?a.shopId=' + shop_id
 
     siomart.node_offers_popup.requested_ad_id = ad_id
-
-    siomart.perform_request url
+    siomart.request.perform url
 
   ## Загрузить все офферы для магазина
   load_for_cat_id : ( cat_id ) ->
     url = '/market/ads/' + siomart.config.mart_id + '?a.catId=' + cat_id
-    siomart.perform_request url
-    siomart.navigation_layer.close()
+    siomart.request.perform url
 
   ##################################################
   ## Забиндить события на навигационные кнопари
@@ -563,13 +566,18 @@ siomart =
     this.utils.add_single_listener this.utils.ge('sioMartTrigger'), _event, siomart.open_mart
 
     ## поле ввода поискового запроса
-    this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', siomart.search.queue_request
+    this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', () ->
+      this.value = this.value.toUpperCase()
+      siomart.search.queue_request()
 
     ## Кнопка вызова окна с категориями
     this.utils.add_single_listener this.utils.ge('smCategoriesButton'), _event, siomart.navigation_layer.open
 
     ## Возврат на индекс выдачи
     this.utils.add_single_listener this.utils.ge('rootNodeLogo'), _event, siomart.load_index_ads
+
+    this.utils.add_single_listener this.utils.ge('smSearchIcon'), _event, () ->
+      siomart.utils.ge('smSearchField').focus()
 
     this.init_shop_links()
 
