@@ -191,6 +191,7 @@ siomart =
       ## Exc button
       if event.keyCode == 27
         siomart.close_node_offers_popup()
+        siomart.navigation_layer.back()
 
       if event.keyCode == 39
         siomart.node_offers_popup.next_block()
@@ -312,10 +313,9 @@ siomart =
   ## зпросу и передать их в нужный callback
   ##################################################
   receive_response : ( data ) ->
-
     if typeof siomart.request.request_timeout_timer != 'undefined'
       clearTimeout siomart.request.request_timeout_timer
-    
+
     if data.html == ''
       siomart.notifications.show "КАРТОЧЕК НЕ НАЙДЕНО, ПОПРОБУЙТЕ ДРУГОЙ ЗАПРОС"
       return false
@@ -327,6 +327,7 @@ siomart =
       siomart.init_navigation()
 
       cbca_grid.init()
+      siomart.set_window_class()
 
     if data.action == 'producerAds'
       screensContainer = siomart.utils.ge 'sioMartNodeOffersRoot'
@@ -612,6 +613,21 @@ siomart =
           siomart.load_for_shop_id producer_id, ad_id
       cb _b
 
+  set_window_class : () ->
+
+    _window_class = ''
+
+    if cbca_grid.ww <= 980
+      _window_class = 'sm-w-980'
+
+    if cbca_grid.ww <= 800
+      _window_class = 'sm-w-800'
+
+    if cbca_grid.ww <= 620
+      _window_class = 'sm-w-400'
+
+    siomart.utils.ge('sioMartLayout').className = _window_class
+
   ## Инициализация Sio.Market
   init : () ->
 
@@ -633,9 +649,9 @@ siomart =
 
       grid_resize = () ->
         cbca_grid.resize()
+        siomart.set_window_class()
 
       siomart.window_resize_timer = setTimeout grid_resize, 300
-
 
     this.utils.add_single_listener window, 'resize', resize_cb
 
