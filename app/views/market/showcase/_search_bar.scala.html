@@ -3,12 +3,14 @@
 @* Поле ввода поиска *@
 <div class="sm-search-bar" id="smSearchBar">
 
-  @_screen_nav_button("back-mask", "", "#" + mmart.meta.color.head)
+  @_screen_nav_button("back-mask", "smNavigationLayerBackButton", "#" + mmart.meta.color.head)
 
   <div class="sm-search-bar__field">
     <div class="sm-search-bar__container">
       <input class="sm-search-bar__input" id="smSearchField" type="text" placeholder="БЫСТРЫЙ ПОИСК ПО ПРЕДЛОЖЕНИЯМ"/>
     </div>
   </div>
+
   <div id="smSearchIcon" class="sm-search-bar__icon" style="background-color: #@mmart.meta.color;"></div>
+
 </div>

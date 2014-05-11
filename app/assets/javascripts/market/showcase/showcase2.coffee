@@ -479,6 +479,15 @@ siomart =
       siomart.utils.ge('smSearchBar').style.display = 'none'
       siomart.utils.ge('smShopListScreen').style.display = 'none'
 
+    back : () ->
+      shop_list_screen_dom = siomart.utils.ge('smShopListScreen')
+
+      if shop_list_screen_dom.style.display == 'block'
+        shop_list_screen_dom.style.display = 'none'
+      else
+        siomart.navigation_layer.close()
+
+
   #########################################
   ## Показать / скрыть экран со списком магазинов
   #########################################
@@ -572,6 +581,9 @@ siomart =
 
     ## Кнопка вызова окна с категориями
     this.utils.add_single_listener this.utils.ge('smCategoriesButton'), _event, siomart.navigation_layer.open
+
+    this.utils.add_single_listener this.utils.ge('smNavigationLayerBackButton'), _event, siomart.navigation_layer.back
+
 
     ## Возврат на индекс выдачи
     this.utils.add_single_listener this.utils.ge('rootNodeLogo'), _event, siomart.load_index_ads
