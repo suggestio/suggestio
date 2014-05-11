@@ -52,6 +52,34 @@ transition( param )
 
 .sio-mart-showcase
 
+  /*************************/
+  /* Общие кнопки в хидере */
+  /*************************/
+  .sm-back-close-button
+    position: absolute
+    left: 15px
+    top: 10px
+    z-index: 1002
+    overflow: hidden
+    width: 25px
+    height: 27px
+  .sm-back-close-button__inner
+    width: 50px
+    height: 27px
+  .sm-back-close-button__span
+    display: block
+    cursor: pointer
+    float: left
+    width: 25px
+    height: 27px
+    background: spriteurl no-repeat left 3px
+    background-size: spritesize
+  .sm-back-close-button__span:active
+    margin-top: 1px
+
+  sm-back-close-button__span_close
+    background-position: -54px top
+
   img
     margin: 0px
     border: 0px
@@ -168,18 +196,6 @@ transition( param )
       background-color: #ce2222
 
 
-.sio-mart-showcase
-  position: absolute
-  left: 0px
-  top: 0px
-  width: 100%
-  height: 100%
-  z-index: 1000
-
-.sio-mart-showcase
-  position: fixed
-  background: rgba(255, 255, 255, 0.97)
-
 .index-welcome-ad
   position: absolute
   left: 50%
@@ -187,33 +203,6 @@ transition( param )
   z-index: 1000000
 
 .sio-mart-showcase
-  /*************************/
-  /* Общие кнопки в хидере */
-  /*************************/
-  .back-close-button
-    position: absolute
-    left: 15px
-    top: 10px
-    z-index: 1002
-    overflow: hidden
-    width: 25px
-    height: 27px
-    .cb-i
-      width: 50px
-      height: 27px
-    span
-      display: block
-      cursor: pointer
-      float: left
-      width: 25px
-      height: 27px
-      background: spriteurl no-repeat left 3px
-      background-size: spritesize
-    span:active
-      margin-top: 1px
-
-    span.close
-      background-position: -54px top
 
   .categories-button
     position: absolute
@@ -387,38 +376,6 @@ transition( param )
       margin-right: 23px
       color: #ec7676
       border-color: #ec7676
-
-  /*******************************************/
-  /* Навигация для главного экрана выдачи ТЦ */
-  /*******************************************/
-  .sm-navigation
-    display: none
-    z-index: 1001
-    width: 100%
-    height: 129px
-    position: absolute
-    left: 0px
-    bottom: 0px
-    transition( all 0.2s linear )
-
-    .sm-buttons
-      width: 680px
-      height: 100px
-      margin: 0px auto
-
-      .sm-button
-        background: rgba(255, 255, 255, 0.1)
-        width: 282px
-        margin: 20px 12px
-        float: left
-        border-color: #fff
-        color: #fff
-
-      .sm-button:hover
-        background: rgba(255, 255, 255, 0.3)
-
-  .sm-navigation.hidden
-    bottom: -130px
 
 .sio-mart-trigger
   cursor: pointer

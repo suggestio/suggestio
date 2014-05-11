@@ -130,6 +130,9 @@ siomart =
     ############################################
     add_single_listener : (elt, eventType, listener) ->
 
+      if elt == null
+        return false
+
       if elt.addEventListener
         elt.addEventListener eventType, listener, false
       else
@@ -555,7 +558,6 @@ siomart =
     this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), _event, siomart.exit_close_screen
 
     this.utils.add_single_listener this.utils.ge('smShopListButton'), _event, siomart.open_shopList_screen
-    this.utils.add_single_listener this.utils.ge('smCloseShopListButton'), _event, siomart.close_shopList_screen
 
     this.utils.add_single_listener this.utils.ge('smCloseCategoriesButton'), _event, siomart.close_categories_screen
     this.utils.add_single_listener this.utils.ge('sioMartTrigger'), _event, siomart.open_mart

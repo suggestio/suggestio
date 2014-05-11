@@ -1,12 +1,12 @@
 @(is_first:Boolean=false)
 
 @* Кнопка назад / выход *@
-<div class="back-close-button">
-  <div class="cb-i">
+<div class="sm-back-close-button">
+  <div class="sm-back-close-button__inner">
     @if( is_first ){
-      <span class="close siomart-close-button" href="" id="smCloseButton"></span>
+      <span class="sm-back-close-button__span sm-back-close-button__span_close" href="" id="smCloseButton"></span>
     }else{
-      <span class="back siomart-back-button" href=""></span>
+      <span class="sm-back-close-button__span sm-back-close-button__span_back" href=""></span>
     }
   </div>
 </div>
