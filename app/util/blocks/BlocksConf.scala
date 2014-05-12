@@ -909,6 +909,58 @@ object BlocksConf extends Enumeration {
   }
 
 
+  val Block16 = new Val(16, "titleDescPriceNopict") {
+    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460, 620))
+    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+    val priceBf = BfPrice("price")
+    val bgColorBf = BfColor("bgColor", defaultValue = Some("e1cea1"))
+
+    /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
+    override def blockFields: List[BlockFieldT] = List(
+      heightBf, bgColorBf, titleBf, descrBf, priceBf
+    )
+
+    /** Набор маппингов для обработки данных от формы. */
+    override def strictMapping: Mapping[BlockMapperResult] = mapping(
+      heightBf.getStrictMappingKV,
+      bgColorBf.getStrictMappingKV,
+      titleBf.getOptionalStrictMappingKV,
+      descrBf.getOptionalStrictMappingKV,
+      priceBf.getOptionalStrictMappingKV
+    )
+    {(height, bgColor, titleOpt, descrOpt, priceOpt) =>
+      val blk = AOBlock(
+        n = 0,
+        text1 = titleOpt,
+        text2 = descrOpt,
+        price = priceOpt
+      )
+      val bd = BlockDataImpl(
+        blockMeta = BlockMeta(
+          height = height,
+          blockId = id
+        ),
+        offers = List(blk),
+        colors = Map(bgColorBf.name -> bgColor)
+      )
+      val bim: BlockImgMap = Map.empty
+      BlockMapperResult(bd, bim)
+    }
+    {bmr =>
+      val height = bmr.bd.blockMeta.height
+      val offerOpt = bmr.bd.offers.headOption
+      val titleOpt = offerOpt.flatMap(_.text1)
+      val descrOpt = offerOpt.flatMap(_.text2)
+      val bgColor = bmr.bd.colors.get(bgColorBf.name).getOrElse(bgColorBf.anyDefaultValue)
+      val priceOpt = offerOpt.flatMap(_.price)
+      Some( (height, bgColor, titleOpt, descrOpt, priceOpt) )
+    }
+
+    override def template = _block16Tpl
+  }
+
+
   /** Сортированные значения. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id. */
   val valuesSorted = values.toSeq.sortBy(_.id)

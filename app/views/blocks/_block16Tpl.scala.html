@@ -1,0 +1,36 @@
+@(mad: MAdT, isStandalone: Boolean)(implicit ctx: util.Context)
+
+@import svg._
+@import util.blocks.BlocksConf.Block16
+@import util.TplDataFormatUtil._
+
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl16"
+     style="background: #@mad.colors.getOrElse(Block16.bgColorBf.name, Block16.bgColorBf.anyDefaultValue);"
+     data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+
+    <div class="inner">
+
+      <div class="info">
+        @mad.offers.headOption.map { offer =>
+          @offer.text1.map { text1 =>
+            <div class="title" style="color: #@text1.font.color">
+              @Html(text1.value)
+            </div>
+          }
+          @offer.text2.map { text2 =>
+            <div class="descr" style="color: #@text2.font.color">
+              @Html(text2.value)
+            </div>
+          }
+          @offer.price.map { price =>
+            <div class="price" style="color: #@price.font.color">
+              @formatPrice(price.value, price.currency)
+            </div>
+          }
+        }
+
+      </div>
+
+    </div>
+
+</div>
