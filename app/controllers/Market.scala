@@ -66,16 +66,15 @@ object Market extends SioController with PlayMacroLogsImpl {
       rmd  <- request.marketDataFut
       producerOpt <- producerOptFut
     } yield {
-
-      val js_action = producerOpt match {
-        case Some(producer) =>
-          "producerAds"
-        case None =>
-          "findAds"
+      val jsAction: String = if (adSearch.qOpt.isDefined) {
+        "searchAds"
+      } else if (producerOpt.isDefined) {
+        "producerAds"
+      } else {
+        "findAds"
       }
-
       val html = findAdsTpl(request.mmart, mads, rmd.mshops, rmd.mmcats, adSearch, producerOpt)
-      jsonOk(html, js_action)
+      jsonOk(html, jsAction)
     }
   }
 
