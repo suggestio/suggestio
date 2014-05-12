@@ -2,7 +2,7 @@ package util.qsb
 
 import play.api.mvc.QueryStringBindable
 import models._
-import play.api.Play.current
+import play.api.Play.{current, configuration}
 import io.suggest.ym.model.ad.AdsSearchArgsT
 
 /**
@@ -15,10 +15,13 @@ import io.suggest.ym.model.ad.AdsSearchArgsT
 object AdSearch {
 
   /** Максимальное число результатов в ответе на запрос (макс. результатов на странице). */
-  val MAX_RESULTS_PER_RESPONSE = current.configuration.getInt("market.search.ad.results.max") getOrElse 50
+  val MAX_RESULTS_PER_RESPONSE = configuration.getInt("market.search.ad.results.max") getOrElse 50
+
+  /** Кол-во результатов на страницу по дефолту. */
+  val MAX_RESULTS_DFLT = configuration.getInt("market.search.ad.results.count.dflt") getOrElse 20
 
   /** Макс.кол-во сдвигов в страницах. */
-  val MAX_PAGE_OFFSET = current.configuration.getInt("market.search.ad.results.offset.max") getOrElse 20
+  val MAX_PAGE_OFFSET = configuration.getInt("market.search.ad.results.offset.max") getOrElse 20
 
 
   private implicit def eitherOpt2option[T](e: Either[_, Option[T]]): Option[T] = {
@@ -90,6 +93,6 @@ case class AdSearch(
   def offset: Int = if (offsetOpt.isDefined) offsetOpt.get else 0
 
   /** Макс.кол-во результатов. */
-  def maxResults: Int = if (maxResultsOpt.isDefined) maxResultsOpt.get else 10
+  def maxResults: Int = maxResultsOpt getOrElse AdSearch.MAX_RESULTS_DFLT
 }
 
