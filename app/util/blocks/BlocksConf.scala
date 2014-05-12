@@ -919,21 +919,23 @@ object BlocksConf extends Enumeration {
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
     val priceBf = BfPrice("price")
     val bgColorBf = BfColor("bgColor", defaultValue = Some("e1cea1"))
+    val borderColorBf = BfColor("borderColor", defaultValue = Some("FFFFFF"))
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, bgColorBf, titleBf, descrBf, priceBf
+      heightBf, bgColorBf, borderColorBf, titleBf, descrBf, priceBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
     override def strictMapping: Mapping[BlockMapperResult] = mapping(
       heightBf.getStrictMappingKV,
       bgColorBf.getStrictMappingKV,
+      borderColorBf.getStrictMappingKV,
       titleBf.getOptionalStrictMappingKV,
       descrBf.getOptionalStrictMappingKV,
       priceBf.getOptionalStrictMappingKV
     )
-    {(height, bgColor, titleOpt, descrOpt, priceOpt) =>
+    {(height, bgColor, borderColor, titleOpt, descrOpt, priceOpt) =>
       val blk = AOBlock(
         n = 0,
         text1 = titleOpt,
@@ -946,7 +948,10 @@ object BlocksConf extends Enumeration {
           blockId = id
         ),
         offers = List(blk),
-        colors = Map(bgColorBf.name -> bgColor)
+        colors = Map(
+          bgColorBf.name      -> bgColor,
+          borderColorBf.name  -> borderColor
+        )
       )
       val bim: BlockImgMap = Map.empty
       BlockMapperResult(bd, bim)
@@ -957,8 +962,9 @@ object BlocksConf extends Enumeration {
       val titleOpt = offerOpt.flatMap(_.text1)
       val descrOpt = offerOpt.flatMap(_.text2)
       val bgColor = bmr.bd.colors.get(bgColorBf.name).getOrElse(bgColorBf.anyDefaultValue)
+      val borderColor = bmr.bd.colors.get(borderColorBf.name).getOrElse(borderColorBf.anyDefaultValue)
       val priceOpt = offerOpt.flatMap(_.price)
-      Some( (height, bgColor, titleOpt, descrOpt, priceOpt) )
+      Some( (height, bgColor, borderColor, titleOpt, descrOpt, priceOpt) )
     }
 
     override def template = _block16Tpl
