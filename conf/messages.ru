@@ -56,6 +56,9 @@ blocks.field.bottomColor=Цвет верхней заливки
 blocks.field.topColor=Цвет нижней заливки
 blocks.field.descr=Описание
 blocks.field.saleMaskColor=Цвет маски SALE
+blocks.field.bgColor=Цвет фона
+blocks.field.circleFillColor=Цвет заливки кружков
+blocks.field.borderColor=Цвет бордюра
 
 
 lk.sl.enable_ad=Включить объявление

@@ -516,7 +516,7 @@ CbcaShop =
     ###################################
     ## Включение/выключение магазина ##
     ###################################
-    $(document).on 'click', '.renters-list .enable-but', ->
+    $(document).on 'click', '.nodes-list .enable-but', ->
       shopId = $(this).closest('.item').attr('data-shop')
       $shop = $('#shop-list').find('.item[data-shop = "'+shopId+'"]')
 
@@ -526,7 +526,7 @@ CbcaShop =
         cbca.shop.enableShop($shop.attr('data-shop'))
 
 
-    $(document).on 'click', '.renters-list .disable-but', ->
+    $(document).on 'click', '.nodes-list .disable-but', ->
       shopId = $(this).closest('.item').attr('data-shop')
       $shop = $('#shop-list').find('.item[data-shop = "'+shopId+'"]')
 

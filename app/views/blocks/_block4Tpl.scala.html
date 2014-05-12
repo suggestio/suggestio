@@ -10,7 +10,7 @@
 
   <div class="inner"></div>
 
-  <div class="info">
+  <div class="info" style="background: #@mad.colors.getOrElse(Block4.bgColorBf.name, Block4.bgColorBf.anyDefaultValue);">
     @mad.offers.headOption.map { offer =>
       @offer.text1.map { title =>
         <div class="title" style="color: #@title.font.color;">@title.value</div>

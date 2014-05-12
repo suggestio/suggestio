@@ -54,6 +54,9 @@ blocks.field.bottomColor=Bottom color
 blocks.field.topColor=Top color
 blocks.field.descr=Description
 blocks.field.saleMaskColor=SALE mask color
+blocks.field.bgColor=Background color
+blocks.field.circleFillColor=Circles fill color
+blocks.field.borderColor=Border color
 
 
 lk.sl.enable_ad=Enable ad
