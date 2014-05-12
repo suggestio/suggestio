@@ -57,10 +57,8 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
   def findAds(martId: String, adSearch: AdSearch) = marketAction(martId) { implicit request =>
-    val producerOptFut = adSearch.producerIdOpt match {
-      case Some(rcvrId) => MAdnNodeCache.getByIdCached(rcvrId)
-      case None         => Future successful None
-    }
+    val producerOptFut = adSearch.producerIdOpt
+      .fold [Future[Option[MAdnNode]]] { Future successful None } { MAdnNodeCache.getByIdCached }
     for {
       mads <- MAd.searchAds(adSearch)
       rmd  <- request.marketDataFut

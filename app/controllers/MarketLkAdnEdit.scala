@@ -159,13 +159,12 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
               // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
               case newImgInfoOpt @ Some(newImgInfo) =>
                 val imgs = Map(WELCOME_IMG_KEY -> newImgInfo)
-                val welcomeAd = welcomeAdOpt
-                  .map { welcomeAd =>
-                  welcomeAd.imgs = imgs
-                  welcomeAd
-                } getOrElse {
-                  MWelcomeAd(producerId = adnNode.id.get, imgs = imgs)
-                }
+                val welcomeAd = welcomeAdOpt.fold
+                  { MWelcomeAd(producerId = adnNode.id.get, imgs = imgs) }
+                  {welcomeAd =>
+                    welcomeAd.imgs = imgs
+                    welcomeAd
+                  }
                 welcomeAd.save andThen {
                   case Success(welcomeAdId) =>
                     adnNode.meta.welcomeAdId = Some(welcomeAdId)

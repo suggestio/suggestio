@@ -2,9 +2,15 @@
 
 @* Начальная страница для sio-market. *@
 
-@* Картинка-приветствие для первого экрана *@
+@import controllers.MarketLkAdnEdit.WELCOME_IMG_KEY
 
-@*<img id="smWelcomeAd" class="poster-photo index-welcome-ad" data-width="@welcomeAdOpt.map(_.img.meta.map(_.width))" data-height="@welcomeAdOpt.map(_.img.meta.map(_.height))" src="@ctx.myAudienceUrl@welcomeAdOpt.map(_.img.filename).filter(!_.isEmpty).map {imgId =>@routes.Img.getImg(imgId)}.getOrElse {}"/>*@
+@* Картинка-приветствие для первого экрана *@
+@welcomeAdOpt.flatMap(_.imgs.get(WELCOME_IMG_KEY)).map { welcomeAdImg =>
+  <img id="smWelcomeAd" class="poster-photo index-welcome-ad"
+       data-width="@welcomeAdImg.meta.map(_.width)"
+       data-height="@welcomeAdImg.meta.map(_.height)"
+       src="@ctx.myAudienceUrl@routes.Img.getImg(welcomeAdImg.filename)"/>
+}
 
 @* Основной контейнер, шапка + карточки *@
 <div class="sio-mart__node-offers-root" id="sioMartNodeOffersRoot"></div>

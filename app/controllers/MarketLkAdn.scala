@@ -1,6 +1,5 @@
 package controllers
 
-import util.img.ImgFormUtil
 import util.PlayMacroLogsImpl
 import util.acl._
 import models._
