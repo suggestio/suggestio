@@ -961,6 +961,68 @@ object BlocksConf extends Enumeration {
   }
 
 
+  val Block17 = new Val(17, "circlesAndDisco17") with SaveBgImg {
+    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460, 620))
+    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+    val discoBf = BfDiscount("discount", min = -9.9F, max = 99F)
+
+    val bgColorBf = BfColor("bgColor", defaultValue = Some("FFFFFF"))
+    val circleFillColorBf = BfColor("circleFillColor", defaultValue = Some("f9daac"))
+    val saleIconColorBf = BfColor("saleIconColor", defaultValue = Some("ce2222"))
+    val saleIconMaskColorBf = BfColor("saleIconMaskColor", defaultValue = Some("FFFFFF"))
+
+    override def blockFields: List[BlockFieldT] = List(
+      heightBf, bgColorBf, bgImgBf, circleFillColorBf, titleBf, discoBf, saleIconColorBf, saleIconMaskColorBf
+    )
+
+    override def strictMapping: Mapping[BlockMapperResult] = mapping(
+      heightBf.getStrictMappingKV,
+      bgColorBf.getStrictMappingKV,
+      bgImgBf.getStrictMappingKV,
+      circleFillColorBf.getStrictMappingKV,
+      titleBf.getOptionalStrictMappingKV,
+      discoBf.getOptionalStrictMappingKV,
+      saleIconColorBf.getStrictMappingKV,
+      saleIconMaskColorBf.getStrictMappingKV
+    )
+    {(height, bgColor, bgBim, circleFillColor, titleOpt, discoOpt, saleIconColor, saleIconMaskColor) =>
+      val blk = AOBlock(
+        n = 0,
+        text1 = titleOpt,
+        discount = discoOpt
+      )
+      val bd = BlockDataImpl(
+        blockMeta = BlockMeta(
+          height = height,
+          blockId = id
+        ),
+        offers = List(blk),
+        colors = Map(
+          bgColorBf.name           -> bgColor,
+          circleFillColorBf.name   -> circleFillColor,
+          saleIconColorBf.name     -> saleIconColor,
+          saleIconMaskColorBf.name -> saleIconMaskColor
+        )
+      )
+      BlockMapperResult(bd, bgBim)
+    }
+    {bmr =>
+      val height = bmr.bd.blockMeta.height
+      val offerOpt = bmr.bd.offers.headOption
+      val titleOpt = offerOpt.flatMap(_.text1)
+      val discoOpt = offerOpt.flatMap(_.discount)
+      val bgColor = bmr.bd.colors.get(bgColorBf.name).getOrElse(bgColorBf.anyDefaultValue)
+      val circleFillColor = bmr.bd.colors.getOrElse(circleFillColorBf.name, circleFillColorBf.anyDefaultValue)
+      val saleIconColor = bmr.bd.colors.getOrElse(saleIconColorBf.name, saleIconColorBf.anyDefaultValue)
+      val saleIconMaskColor = bmr.bd.colors.getOrElse(saleIconMaskColorBf.name, saleIconMaskColorBf.anyDefaultValue)
+      val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+      Some( (height, bgColor, bgBim, circleFillColor, titleOpt, discoOpt, saleIconColor, saleIconMaskColor) )
+    }
+
+    override def template = _block17Tpl
+  }
+
+
   /** Сортированные значения. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id. */
   val valuesSorted = values.toSeq.sortBy(_.id)
