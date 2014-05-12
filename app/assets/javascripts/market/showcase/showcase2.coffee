@@ -322,9 +322,11 @@ siomart =
       container = this.utils.ge 'sioMartLayout'
       container.innerHTML = data.html
 
+      cbca_grid.init()
+
+      siomart.welcome_ad.init()
       siomart.init_navigation()
 
-      cbca_grid.init()
       siomart.set_window_class()
 
     if data.action == 'producerAds'
@@ -555,6 +557,39 @@ siomart =
   load_for_cat_id : ( cat_id ) ->
     url = '/market/ads/' + siomart.config.mart_id + '?a.catId=' + cat_id
     siomart.request.perform url
+
+  ########################################
+  ## картинка приветствия торгового центра
+  ########################################
+  welcome_ad :
+
+    hide_timeout : 2000
+
+    fit : ( image_dom ) ->
+      image_w = parseInt image_dom.getAttribute "data-width"
+      image_h = parseInt image_dom.getAttribute "data-height"
+
+      if image_w / image_h < cbca_grid.ww / cbca_grid.wh
+        nw = cbca_grid.ww
+        nh = nw * image_h / image_w
+      else
+        nh = cbca_grid.wh
+        nw = nh * image_w / image_h
+
+      image_dom.style.width = nw + 'px'
+      image_dom.style.height = nh + 'px'
+      image_dom.style.marginLeft = - nw / 2 + 'px'
+      image_dom.style.marginTop = - nh / 2 + 'px'
+
+    hide : () ->
+      siomart.welcome_ad.img_dom.style.display = 'none'
+
+    init : () ->
+      this.img_dom = siomart.utils.ge 'smWelcomeAd'
+      this.fit this.img_dom
+
+      setTimeout siomart.welcome_ad.hide, this.hide_timeout
+
 
   ##################################################
   ## Забиндить события на навигационные кнопари
