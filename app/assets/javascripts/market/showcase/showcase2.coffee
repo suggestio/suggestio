@@ -232,15 +232,13 @@ siomart =
       url = '/market/ads/' + siomart.config.mart_id + '?a.q=' + request + '&a.rcvr=' + siomart.config.mart_id
       siomart.request.perform url
 
-    queue_request : ( event ) ->
+    queue_request : ( request ) ->
 
       if typeof siomart.search.search_timer != 'undefined'
         clearTimeout siomart.search.search_timer
 
-      search_request = this.value
-
       search_cb = () ->
-        siomart.search.perform search_request
+        siomart.search.perform request.toLowerCase()
 
       siomart.search.search_timer = setTimeout search_cb, siomart.search.request_delay
 
@@ -340,7 +338,7 @@ siomart =
 
     if data.action == 'findAds' || data.action == 'searchAds'
       grid_container_dom = siomart.utils.ge 'sioMartIndexGrid'
-      
+
       grid_container_dom.innerHTML = data.html
       cbca_grid.init()
       siomart.init_shop_links()
@@ -584,7 +582,7 @@ siomart =
     ## поле ввода поискового запроса
     this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', () ->
       this.value = this.value.toUpperCase()
-      siomart.search.queue_request()
+      siomart.search.queue_request this.value
 
     ## Кнопка вызова окна с категориями
     this.utils.add_single_listener this.utils.ge('smCategoriesButton'), _event, siomart.navigation_layer.open
