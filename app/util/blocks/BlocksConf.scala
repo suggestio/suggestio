@@ -971,7 +971,7 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block17 = new Val(17, "circlesAndDisco17") with SaveBgImg {
+  sealed abstract class CommonBlock17_18(id: Int, blkName: String) extends Val(id, blkName) with SaveBgImg {
     val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460, 620))
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val discoBf = BfDiscount("discount", min = -9.9F, max = 99F)
@@ -980,6 +980,8 @@ object BlocksConf extends Enumeration {
     val circleFillColorBf = BfColor("circleFillColor", defaultValue = Some("f9daac"))
     val saleIconColorBf = BfColor("saleIconColor", defaultValue = Some("ce2222"))
     val saleIconMaskColorBf = BfColor("saleIconMaskColor", defaultValue = Some("FFFFFF"))
+
+    val blockWidth: Int
 
     override def blockFields: List[BlockFieldT] = List(
       heightBf, bgColorBf, bgImgBf, circleFillColorBf, titleBf, discoBf, saleIconColorBf, saleIconMaskColorBf
@@ -1028,8 +1030,16 @@ object BlocksConf extends Enumeration {
       val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
       Some( (height, bgColor, bgBim, circleFillColor, titleOpt, discoOpt, saleIconColor, saleIconMaskColor) )
     }
+  }
 
+  val Block17 = new CommonBlock17_18(17, "circlesAndDisco17") {
+    override val blockWidth: Int = 300
     override def template = _block17Tpl
+  }
+
+  val Block18 = new CommonBlock17_18(18, "circlesAndDiscoNarrow18") {
+    override val blockWidth: Int = 140
+    override def template = _block18Tpl
   }
 
 
