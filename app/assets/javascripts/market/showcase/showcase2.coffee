@@ -13,8 +13,8 @@ siomart =
   utils :
 
     is_touch_device : () ->
-      #if document.ontouchstart != null then false else true
-      false
+      if document.ontouchstart != null then false else true
+
 
     ######################
     ## Создать DOM элемент
