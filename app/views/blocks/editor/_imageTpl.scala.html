@@ -7,12 +7,20 @@
 @* Форма для загрузки картинки *@
 <div class="lk-file-field">
 
-  <input type="file" class="w-async-image-upload" data-w-block-preview="true" data-related-field-id="blockImage@bf.name" data-action="@routes.MarketAdPreview.prepareBlockImg(bc.id, bf.name)" name="picture"/>
+  <div class="lk-file-input">
+    <div class="lk-file-input__div">
+      <div class="lk-file-input__div-inner">
+        Загрузить изображение
+      </div>
+    </div>
+    <input type="file" class="lk-file-input__input w-async-image-upload" data-w-block-preview="true" data-related-field-id="blockImage@bf.name" data-action="@routes.MarketAdPreview.prepareBlockImg(bc.id, bf.name)" name="picture"/>
+  </div>
 
   <div id="blockImage@bf.name">
     <input type="hidden" class="js-image-key" name="@bfNameBase" value="@af(bfNameBase).value"/>
+
     @* В аттрибутах data-width и data-height указываются размеры, до которых нужно отресайзить и обкропить исходное изображение *@
-    <a href="" class="js-img-w-crop" data-width="140" data-height="300" data-marker="@bf.marker">Кадрирование</a>
+    <a href="" class="lk-small-link lk-small-link_gray js-img-w-crop" data-width="140" data-height="300" data-marker="@bf.marker">Кадрирование</a>
   </div>
 
 </div>

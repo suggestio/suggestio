@@ -11,7 +11,7 @@
 }
 
 @colorSelectorHtml = {
-  @_colorBtnTpl(af(bfNameBase + ".color"), default = bf.defaultValue.map(_.font.color))
+  @_colorBtnTpl(af(bfNameBase + ".color"), default = bf.defaultValue.map(_.font.color), true)
 }
 
 @_textInputBaseTpl(bf, bc, content, colorSelectorHtml)

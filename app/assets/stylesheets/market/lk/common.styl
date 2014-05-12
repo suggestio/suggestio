@@ -943,6 +943,49 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   border: 1px #ccc solid
   overflow: hidden
 
+/* Мелкая ссылка */
+.lk-small-link
+  font-size: 12px
+
+.lk-small-link_gray
+  color: #333
+
+/* Инпут для загрузки картинки */
+.lk-file-input
+  position: relative
+  height: 30px
+
+.lk-file-input__div
+  cursor: pointer
+  position: absolute
+  left: 0px
+  top: 0px
+  color: #959595
+  font-size: 12px
+  border: 1px #b2b2b2 solid
+  border-radius( 20px )
+
+.lk-file-input__div-inner
+  cursor: pointer
+  border-top: 1px #fff solid
+  border-radius( 20px )
+  padding: 4px 10px
+  width: 160px
+  text-align: center
+  background: #e2e2e2
+
+  background: -moz-linear-gradient(top,  #efefef 0%, #e2e2e2 100%)
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#efefef), color-stop(100%,#e2e2e2));
+  background: -webkit-linear-gradient(top,  #efefef 0%,#e2e2e2 100%)
+  background: -o-linear-gradient(top,  #efefef 0%,#e2e2e2 100%)
+  background: -ms-linear-gradient(top,  #efefef 0%,#e2e2e2 100%)
+  background: linear-gradient(to bottom,  #efefef 0%,#e2e2e2 100%)
+
+
+.lk-file-input__input
+  opacity: 0
+  cursor: pointer
+
 /* Поля ввода */
 .lk-text-field
   border: 1px #b2b2b2 solid
@@ -974,6 +1017,9 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   color: #959595
   font-size: 12px
   font-family: Arial
+
+.lk-color-select__label_hidden
+  display: none
 
 .lk-color-select__color
   cursor: pointer
