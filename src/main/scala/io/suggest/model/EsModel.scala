@@ -586,9 +586,17 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
       _ <- deleteMapping
       _ <- putMapping(ignoreConflicts = false)
       _ <- Future.traverse(results) { _.save }
+      _ <- refreshIndex
     } yield {
       LOGGER.info(s"${logPrefix}Model's data remapping finished after ${System.currentTimeMillis - startedAt} ms.")
     }
+  }
+
+  /** Рефреш всего индекса, в котором живёт эта модель. */
+  def refreshIndex(implicit client: Client): Future[_] = {
+    client.admin().indices()
+      .prepareRefresh(ES_INDEX_NAME)
+      .execute()
   }
 
 }
