@@ -14,6 +14,7 @@ import org.elasticsearch.index.query.QueryBuilders
 import scala.collection.JavaConversions._
 import scala.collection.Map
 import play.api.libs.json.{JsBoolean, JsString}
+import util.PlayMacroLogsImpl
 
 /**
  * Suggest.io
@@ -158,7 +159,7 @@ trait MPersonIdentSubmodelStatic {
 }
 
 /** Идентификации от mozilla-persona. */
-object MozillaPersonaIdent extends EsModelStaticT with MPersonIdentSubmodelStatic {
+object MozillaPersonaIdent extends EsModelStaticT with MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
 
   override type T = MozillaPersonaIdent
 
@@ -196,7 +197,7 @@ case class MozillaPersonaIdent(
 
 
 /** Статическая под-модель для хранения юзеров, живущих вне mozilla persona. */
-object EmailPwIdent extends EsModelStaticT with MPersonIdentSubmodelStatic {
+object EmailPwIdent extends EsModelStaticT with MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
 
   override type T = EmailPwIdent
 
@@ -263,7 +264,7 @@ case class EmailPwIdent(
 
 /** Статическая часть модели [[EmailActivation]].
   * Модель нужна для хранения ключей для проверки/активации почтовых ящиков. */
-object EmailActivation extends EsModelStaticT {
+object EmailActivation extends EsModelStaticT with PlayMacroLogsImpl {
 
   override type T = EmailActivation
 

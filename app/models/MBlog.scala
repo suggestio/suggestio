@@ -1,7 +1,7 @@
 package models
 
+import _root_.util.PlayMacroLogsImpl
 import org.joda.time.DateTime
-import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.model.{EsModelT, EsModel, EsModelStaticT}
 import EsModel._
 import io.suggest.util.SioEsUtil._
@@ -15,7 +15,7 @@ import play.api.libs.json._
  * Порт модели blog_record из старого sioweb.
  */
 
-object MBlog extends EsModelStaticT {
+object MBlog extends EsModelStaticT with PlayMacroLogsImpl {
   override val ES_TYPE_NAME: String = "blog"
 
   override type T = MBlog

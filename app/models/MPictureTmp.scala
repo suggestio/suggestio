@@ -1,12 +1,10 @@
 package models
 
 import java.io.File
-import play.api.libs.Files.TemporaryFile
 import play.api.Play.{current, configuration}
 import concurrent.duration._
 import util.img.OutImgFmts, OutImgFmts.OutImgFmt
 import util.FormUtil
-import io.suggest.img.ImgCrop
 import org.apache.commons.io.FileUtils
 
 /**
