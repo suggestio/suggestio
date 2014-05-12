@@ -1,6 +1,6 @@
 package io.suggest.ym.model
 
-import io.suggest.util.CascadingFieldNamer
+import io.suggest.util.{MacroLogsImpl, CascadingFieldNamer}
 import cascading.tuple.{TupleEntry, Tuple, Fields}
 import com.scaleunlimited.cascading.BaseDatum
 import play.api.libs.json.JsString
@@ -88,6 +88,7 @@ import org.elasticsearch.client.Client
 import io.suggest.model.{EsModelStaticT, EsModelT}
 import io.suggest.model.EsModel._
 
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -95,8 +96,7 @@ import io.suggest.model.EsModel._
  * Description: Таблица хранит адреса прайс-листов магазинов. Модель является хранилищем для
  * [[io.suggest.ym.model.YmShopPriceUrlDatum]].
  */
-
-object MShopPriceList extends EsModelStaticT {
+object MShopPriceList extends EsModelStaticT with MacroLogsImpl {
 
   override type T = MShopPriceList
 

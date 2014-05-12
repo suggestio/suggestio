@@ -25,6 +25,7 @@ import org.joda.time.format.ISODateTimeFormat
 import org.elasticsearch.action.get.MultiGetResponse
 import io.suggest.util.SioEsUtil.IndexMapping
 import io.suggest.ym.model.UsernamePw
+import com.typesafe.scalalogging.slf4j.Logger
 
 /**
  * Suggest.io
@@ -341,6 +342,8 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators {
   * Здесь десериализация полностью выделена в отдельную функцию. */
 trait EsModelMinimalStaticT extends EsModelStaticMapping {
 
+  def LOGGER: Logger
+
   type T <: EsModelMinimalT
 
   // Короткие враппер для типичных операций в рамках статической модели.
@@ -559,15 +562,37 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
    * Пересохранение всех данных модели. По сути getAll + all.map(_.save). Нужно при ломании схемы.
    * @return
    */
-  def reindexAll(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Seq[String]] = {
-    getAll().flatMap { results =>
+  def resaveMany(maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Seq[String]] = {
+    getAll(maxResults).flatMap { results =>
       Future.traverse(results) { el =>
         el.save
       }
     }
   }
 
+  /**
+   * Прочитать в RAM n документов, пересоздать маппинг, отправить документы назад в индекс.
+   * Крайне опасно дергать эту функцию в продакшене, т.к. она скорее всего приведёт к потере данных.
+   * Функция не экономит память и сильно грузит кластер при сохранении, т.к. не использует bulk request.
+   * @param maxResults Макс. число результатов для прочтения из хранилища модели.
+   * @return
+   */
+  def remapMany(maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    val logPrefix = s"remapMany($maxResults): "
+    LOGGER.warn(logPrefix + "Starting model data remapping...")
+    val startedAt = System.currentTimeMillis()
+    for {
+      results <- getAll(maxResults)
+      _ <- deleteMapping
+      _ <- putMapping(ignoreConflicts = false)
+      _ <- Future.traverse(results) { _.save }
+    } yield {
+      LOGGER.info(s"${logPrefix}Model's data remapping finished after ${System.currentTimeMillis - startedAt} ms.")
+    }
+  }
+
 }
+
 
 /** Шаблон для статических частей ES-моделей. Применяется в связке с [[EsModelT]]. */
 trait EsModelStaticT extends EsModelMinimalStaticT {
@@ -714,7 +739,9 @@ import Impact._
 trait EsModelJMXMBeanCommon {
   /** Асинхронно вызвать переиндексацию всех данных в модели. */
   @ManagedOperation(impact=ACTION)
-  def reindexAll()
+  def resaveMany(maxResults: Int)
+  
+  def remapMany(maxResults: Int)
 
   /**
    * Существует ли указанный маппинг сейчас?
@@ -780,37 +807,41 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon {
   implicit def client: Client
   implicit def sn: SioNotifierStaticClientI
 
-  def reindexAll() {
-    companion.reindexAll
+  override def resaveMany(maxResults: Int) {
+    companion.resaveMany(maxResults)
+  }
+  
+  override def remapMany(maxResults: Int) {
+    companion.remapMany(maxResults)
   }
 
-  def isMappingExists: Boolean = {
+  override def isMappingExists: Boolean = {
     companion.isMappingExists
   }
 
-  def resetMapping() {
+  override def resetMapping() {
     companion.resetMapping
   }
 
-  def putMapping = {
+  override def putMapping = {
     companion.putMapping()
       .map(_.toString)
       .recover { case ex: Exception => s"${ex.getClass.getName}: ${ex.getMessage}\n${ex.getStackTraceString}" }
   }
 
-  def deleteMapping() {
+  override def deleteMapping() {
     companion.deleteMapping
   }
 
-  def getRoutingKey(idOrNull: String): String = {
+  override def getRoutingKey(idOrNull: String): String = {
     companion.getRoutingKey(idOrNull).toString
   }
 
-  def deleteById(id: String): Boolean = {
+  override def deleteById(id: String): Boolean = {
     companion.deleteById(id)
   }
 
-  def getById(id: String): String = {
+  override def getById(id: String): String = {
     val docOpt: Option[_] = companion.getById(id)
     docOpt match {
       case None => null
@@ -818,12 +849,12 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon {
     }
   }
 
-  def getAllIds(maxResults: Int): String = {
+  override def getAllIds(maxResults: Int): String = {
     companion.getAllIds(maxResults).mkString("\n")
   }
 
-  def esTypeName: String = companion.ES_TYPE_NAME
-  def esIndexName: String = companion.ES_INDEX_NAME
+  override def esTypeName: String = companion.ES_TYPE_NAME
+  override def esIndexName: String = companion.ES_INDEX_NAME
 }
 
 

@@ -10,8 +10,9 @@ import io.suggest.util.text.TextQueryV2Util
 import io.suggest.ym.model.common.EMProducerId.PRODUCER_ID_ESFN
 import io.suggest.ym.model.common.EMUserCatId.USER_CAT_ID_ESFN
 import io.suggest.util.SioEsUtil.laFuture2sFuture
-import io.suggest.model.{EsModelMinimalT, EsModelMinimalStaticT}
+import io.suggest.model.EsModelMinimalStaticT
 import io.suggest.ym.model.common.EMReceivers
+import io.suggest.util.SioConstants
 
 /** Статичная утиль для генерации поисковых ES-запросов. */
 object AdsSearch {
@@ -24,11 +25,11 @@ object AdsSearch {
   def prepareEsQuery(adSearch: AdsSearchArgsT): QueryBuilder = {
     import adSearch._
     // Собираем запрос в функциональном стиле, иначе получается многовато вложенных if-else.
-    adSearch.qOpt.flatMap { q =>
+    adSearch.qOpt.flatMap[QueryBuilder] { q =>
       // Собираем запрос текстового поиска.
       // TODO Для коротких запросов следует искать по receiverId и фильтровать по qStr (query-filter + match-query).
-      TextQueryV2Util.queryStr2QueryMarket(q)
-        .map(_.q)   // Пока отбрасываем флаг isDifficult, т.е. всегда начинаем искать полнотекстово.
+      TextQueryV2Util.queryStr2QueryMarket(q, s"${SioConstants.FIELD_ALL}")
+        .map { _.q }
     } map { qstrQB =>
       // Если producerId задан, то навешиваем ещё фильтр.
       producerIdOpt.fold(qstrQB) { producerId =>

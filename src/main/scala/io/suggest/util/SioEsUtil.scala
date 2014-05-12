@@ -304,24 +304,25 @@ object SioEsUtil extends MacroLogsImpl {
         ),
         tokenizers = Seq(new TokenizerStandard(STD_TN)),
         analyzers = {
+          val chFilters = Seq("html_strip")
           val filters0 = List(STD_FN, WORD_DELIM_FN, LOWERCASE_FN)
           val filters1 = filters0 ++ List(STOP_EN_FN, STOP_RU_FN, STEM_RU_FN, STEM_EN_FN)
           Seq(
             AnalyzerCustom(
               id = DFLT_AN,
-              charFilters = Seq("html_strip"),
+              charFilters = chFilters,
               tokenizer = STD_TN,
               filters = filters1
             ),
             AnalyzerCustom(
               id = EDGE_NGRAM_AN_1,
-              charFilters = Seq("html_strip"),
+              charFilters = chFilters,
               tokenizer = STD_TN,
               filters = filters1 ++ List(EDGE_NGRAM_FN_1)
             ),
             AnalyzerCustom(
               id = EDGE_NGRAM_AN_2,
-              charFilters = Seq("html_strip"),
+              charFilters = chFilters,
               tokenizer = STD_TN,
               filters = filters1 ++ List(EDGE_NGRAM_FN_2)
             ),
@@ -1043,9 +1044,17 @@ case class FieldObject(
 case class FieldNestedObject(
   id          : String,
   properties  : Seq[DocField],
-  enabled     : Boolean = true
+  enabled     : Boolean = true,
+  includeInParent: Boolean = false,
+  includeInRoot: Boolean = false
 ) extends DocField with FieldWithProperties with FieldEnableable {
   def fieldType = DocFieldTypes.nested
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+    b.field("include_in_parent", includeInParent)
+     .field("include_in_root", includeInRoot)
+  }
 }
 
 // END: DSL полей документа --------------------------------------------------------------------------------------------

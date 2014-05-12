@@ -12,6 +12,7 @@ import io.suggest.util.SioEsUtil.FieldAll
 import io.suggest.ym.model.common.AdNetMemberInfo
 import io.suggest.util.SioEsUtil.FieldSource
 import io.suggest.ym.model.common.AdnMMetadata
+import io.suggest.util.MacroLogsImpl
 
 /**
  * Suggest.io
@@ -28,6 +29,7 @@ object MAdnNode
   with EMLogoImgStatic
   with EMAdnMMetadataStatic
   with EsModelStaticIgnore
+  with MacroLogsImpl
 {
   val ES_TYPE_NAME: String = "adnNode"
 

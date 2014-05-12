@@ -2,16 +2,14 @@ package io.suggest.ym.model.ad
 
 import io.suggest.model.{EsModel, EsModelT, EsModelStaticT}
 import java.util.Currency
-import com.fasterxml.jackson.annotation.{JsonIgnoreProperties, JsonIgnore}
+import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.ym.model.AdOfferType
 import io.suggest.util.JacksonWrapper
 import io.suggest.ym.model.common.AdOfferTypes
-import io.suggest.util.SioConstants.CURRENCY_CODE_DFLT
 import io.suggest.util.SioEsUtil._
 import scala.collection.JavaConversions._
 import io.suggest.model.EsModel.FieldsJsonAcc
 import play.api.libs.json._
-import java.util
 
 /**
  * Suggest.io
@@ -90,11 +88,15 @@ trait EMAdOffersStatic extends EsModelStaticT {
       FieldObject(DISCOUNT_ESFN, properties = Seq(floatValueField(iia = true), fontField)),
       FieldObject(TEXT2_ESFN, properties = Seq(stringValueField(0.9F), fontField))
     )
-    val offersField = FieldNestedObject(OFFERS_ESFN, enabled = true, properties = Seq(
-      FieldString(OFFER_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldNumber(N_ESFN, index = FieldIndexingVariants.no, include_in_all = false, fieldType = DocFieldTypes.integer),
-      FieldObject(OFFER_BODY_ESFN, enabled = true, properties = offerBodyProps)
-    ))
+    val offersField = FieldNestedObject(OFFERS_ESFN,
+      enabled = true,
+      //includeInRoot = true,
+      properties = Seq(
+        FieldString(OFFER_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+        FieldNumber(N_ESFN, index = FieldIndexingVariants.no, include_in_all = false, fieldType = DocFieldTypes.integer),
+        FieldObject(OFFER_BODY_ESFN, enabled = true, properties = offerBodyProps)
+      )
+    )
     offersField :: super.generateMappingProps
   }
 

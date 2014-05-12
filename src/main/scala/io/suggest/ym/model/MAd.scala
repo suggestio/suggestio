@@ -8,7 +8,7 @@ import org.elasticsearch.client.Client
 import io.suggest.event._
 import io.suggest.model.common._
 import org.joda.time.DateTime
-import io.suggest.util.MacroLogsImpl
+import io.suggest.util.{SioConstants, MacroLogsImpl}
 import io.suggest.ym.model.ad._
 import io.suggest.ym.model.common._
 import scala.util.{Success, Failure}
@@ -57,7 +57,7 @@ object MAd
 
   def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
-    FieldAll(enabled = true)
+    FieldAll(enabled = true, index_analyzer = SioConstants.EDGE_NGRAM_AN_1, search_analyzer = DFLT_AN)
   )
 
 

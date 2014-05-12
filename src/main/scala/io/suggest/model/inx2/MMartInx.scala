@@ -6,7 +6,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
 import MInx._
 import io.suggest.ym.model.MAd
-import io.suggest.util.SioEsUtil
+import io.suggest.util.{MacroLogsImpl, SioEsUtil}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.action.deletebyquery.DeleteByQueryRequestBuilder
 import scala.concurrent.ExecutionContext
@@ -20,7 +20,7 @@ import play.api.libs.json.JsString
  * Created: 18.03.14 11:35
  * Description: Метаданные об индексах ТЦ представляются и хранятся в этой модели.
  */
-object MMartInx extends EsModelStaticT {
+object MMartInx extends EsModelStaticT with MacroLogsImpl {
 
   val ES_TYPE_NAME: String = "inxMart"
 

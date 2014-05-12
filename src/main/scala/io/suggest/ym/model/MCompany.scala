@@ -7,6 +7,7 @@ import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.common._
+import io.suggest.util.MacroLogsImpl
 
 /**
  * Suggest.io
@@ -20,6 +21,7 @@ object MCompany
   extends EsModelStaticEmpty
   with EMNameStatic
   with EMDateCreatedStatic
+  with MacroLogsImpl
 {
 
   override type T = MCompany

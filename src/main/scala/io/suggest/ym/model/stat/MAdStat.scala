@@ -16,6 +16,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogram
 import io.suggest.event.SioNotifierStaticClientI
 import play.api.libs.json.JsString
+import io.suggest.util.MacroLogsImpl
 
 /**
  * Suggest.io
@@ -23,7 +24,7 @@ import play.api.libs.json.JsString
  * Created: 31.03.14 15:57
  * Description: Для накопления статистики по рекламным карточкам используется эта модель.
  */
-object MAdStat extends EsModelStaticT {
+object MAdStat extends EsModelStaticT with MacroLogsImpl {
 
   override type T = MAdStat
 

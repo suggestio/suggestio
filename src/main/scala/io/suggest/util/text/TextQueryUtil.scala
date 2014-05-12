@@ -136,7 +136,7 @@ object TextQueryV2Util {
    * на её основе. Версия для новых индексов в маркете, которые содержат ngram в _all.
    * @param queryStr Строка, которую набирает в поиске юзер.
    */
-  def queryStr2QueryMarket(queryStr: String) : Option[MarketTextQuery] = {
+  def queryStr2QueryMarket(queryStr: String, fn: String) : Option[MarketTextQuery] = {
     // Дробим исходный запрос на куски
     val topQueriesOpt = TextQueryUtil.splitQueryStr(queryStr).map { case (ftsQS, engramQS) =>
       val ftsLen = ftsQS.length
@@ -149,13 +149,13 @@ object TextQueryV2Util {
       } else {
         // Генерим базовый engram-запрос
         var queries1 = List(
-          QueryBuilders.matchQuery(FIELD_ALL, engramQS)
+          QueryBuilders.matchQuery(fn, engramQS)
             .analyzer(MINIMAL_AN)
             .fuzziness(Fuzziness.AUTO)
         )
         // Если чел уже набрал достаточное кол-во символов, то искать парралельно в fts
         if (engramLen >= 4) {
-          val ftsQuery = QueryBuilders.matchQuery(FIELD_ALL, engramQS)
+          val ftsQuery = QueryBuilders.matchQuery(fn, engramQS)
             .fuzziness(Fuzziness.AUTO)
           queries1 = ftsQuery :: queries1
         }
@@ -173,7 +173,7 @@ object TextQueryV2Util {
 
       // Обработать fts-часть исходного запроса.
       if (ftsLen > 1) {
-        val queryFts = QueryBuilders.matchQuery(FIELD_ALL, ftsQS)
+        val queryFts = QueryBuilders.matchQuery(fn, ftsQS)
           .fuzziness(Fuzziness.AUTO)
         queries ::= queryFts
       }
