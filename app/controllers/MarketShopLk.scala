@@ -34,24 +34,28 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
   /** Маркер картинки для logo-вещичек */
   val SHOP_TMP_LOGO_MARKER = "shopLogo"
 
+  private val colorOptM = toStrOptM(colorM)
+
   /** Метаданные магазина, которые может редактировать владелец магазина. */
   val shopMetaFullM = mapping(
     "name"          -> shopNameM,
     "description"   -> publishedTextOptM,
     "floor"         -> optional(floorM),
+    "color"         -> colorOptM,
     "section"       -> optional(sectionM)
   )
-  {(name, descr, floor, section) =>
+  {(name, descr, floor, colorOpt, section) =>
     AdnMMetadata(
       name = name,
       description = descr,
       floor = floor,
-      section = section
+      section = section,
+      color = colorOpt
     )
   }
   {adnMeta =>
     import adnMeta._
-    Some((name, description, floor, section))
+    Some((name, description, floor, color, section))
   }
   val shopMetaFullKM = "meta" -> shopMetaFullM
 
@@ -70,17 +74,19 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
   /** Ограниченный маппинг доступен владельцу магазина внутри ТЦ. */
   val shopMetaLimitedM = mapping(
     "name"          -> shopNameM,
+    "color"         -> colorOptM,
     "description"   -> publishedTextOptM
   )
-  {(name, descr) =>
+  {(name, colorOpt, descr) =>
     AdnMMetadata(
       name = name,
+      color = colorOpt,
       description = descr
     )
   }
   {adnMeta =>
     import adnMeta._
-    Some((name, description))
+    Some((name, color, description))
   }
 
   /** Ограниченный маппинг магазина. Используется при сабмите редактирования профиля магазина для имитации
@@ -153,6 +159,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
         )
         adnNode.meta.name = meta.name
         adnNode.meta.description = meta.description
+        adnNode.meta.color = meta.color
         // Для обновления shop'а надо дождаться генерации нового id логотипа.
         updateImgsFut.flatMap { newImgInfo =>
           adnNode.logoImgOpt = newImgInfo
