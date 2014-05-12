@@ -3,7 +3,7 @@
 ###############################
 siomart =
   config :
-    css : '/assets/stylesheets/market/showcase.min.css'
+    css : '/assets/stylesheets/market/showcase.min.css?v=33'
     index_action : window.siomart_index
     sm_layout_class : 'sio-mart-showcase'
     sm_trigger_class : 'sio-mart-trigger'
@@ -13,7 +13,8 @@ siomart =
   utils :
 
     is_touch_device : () ->
-      if document.ontouchstart != null then false else true
+      #if document.ontouchstart != null then false else true
+      false
 
     ######################
     ## Создать DOM элемент
@@ -129,7 +130,6 @@ siomart =
     ## Забиндить на ОДИН DOM объект ОДНО событие
     ############################################
     add_single_listener : (elt, eventType, listener) ->
-
       if elt == null
         return false
 
@@ -340,7 +340,7 @@ siomart =
 
     if data.action == 'findAds' || data.action == 'searchAds'
       grid_container_dom = siomart.utils.ge 'sioMartIndexGrid'
-
+      
       grid_container_dom.innerHTML = data.html
       cbca_grid.init()
       siomart.init_shop_links()
@@ -601,9 +601,9 @@ siomart =
     this.init_shop_links()
 
   init_shop_links : () ->
+
     _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
     blocks_w_actions = siomart.utils.ge_class document, 'js-shop-link'
-
     for _b in blocks_w_actions
       cb = ( b ) ->
         producer_id = b.getAttribute 'data-producer-id'

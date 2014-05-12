@@ -22,6 +22,11 @@ transition( param )
   -o-transition: param
   transition: param
 
+box-shadow( param )
+  -webkit-box-shadow: param
+  -moz-box-shadow: param
+  box-shadow: param
+
 .sm-preload
   width: 1px
   height: 1px
@@ -101,7 +106,7 @@ transition( param )
     padding: 10px 0px
     text-align: center
     z-index: 10
-    -webkit-box-shadow: 1px 1px 2px #222
+    box-shadow( 1px 1px 2px #222 )
 
   /* Офферы на главной странице выдачи */
   .sio-mart__index-offers
@@ -149,7 +154,7 @@ transition( param )
 
     .sm-block
       cursor: default
-      -webkit-box-shadow: 0px 0px 3px #999
+      box-shadow( 0px 0px 3px #999 )
       position: relative
       display: none
 
