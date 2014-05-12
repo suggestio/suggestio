@@ -6,10 +6,12 @@
 
 @* Картинка-приветствие для первого экрана *@
 @welcomeAdOpt.flatMap(_.imgs.get(WELCOME_IMG_KEY)).map { welcomeAdImg =>
-  <img id="smWelcomeAd" class="poster-photo index-welcome-ad"
+<div class="sm-welcome-ad">
+  <img id="smWelcomeAd" class="js-index-welcome-ad"
        data-width="@welcomeAdImg.meta.map(_.width)"
        data-height="@welcomeAdImg.meta.map(_.height)"
        src="@ctx.myAudienceUrl@routes.Img.getImg(welcomeAdImg.filename)"/>
+</div>
 }
 
 @* Основной контейнер, шапка + карточки *@
