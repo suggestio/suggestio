@@ -359,22 +359,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
 
-  /** Отображение одного ТЦ. */
-  def martShow(martId: String) = IsSuperuser.async { implicit request =>
-    getMartById(martId) flatMap {
-      case Some(mmart) =>
-        val martShopsFut = MAdnNode.findBySupId(martId)
-        for {
-          ownerCompanyOpt <- mmart.company
-          martShops       <- martShopsFut
-        } yield {
-          Ok(mart.martShowTpl(mmart, martShops, ownerCompanyOpt))
-        }
-
-      case None => martNotFound(martId)
-    }
-  }
-
   private def martNotFound(martId: String) = NotFound("Mart not found: " + martId)
 
 
@@ -422,7 +406,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
                 bodyHtml = views.html.market.lk.mart.invite.emailMartInviteTpl(mmart, eAct)(ctx)
               )
               // Письмо отправлено, вернуть админа назад в магазин
-              Redirect(routes.SysMarket.martShow(martId))
+              Redirect(routes.SysMarket.showAdnNode(martId))
                 .flashing("success" -> ("Письмо с приглашением отправлено на " + email1))
             }
           }

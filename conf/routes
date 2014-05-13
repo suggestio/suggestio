@@ -185,7 +185,6 @@ GET  /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNode(adnId)
 POST /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNodeSubmit(adnId)
 # sys.market.mart
 GET  /sys/market/marts                  controllers.SysMarket.martsList
-GET  /sys/market/mart/:id               controllers.SysMarket.martShow(id: String)
 GET  /sys/market/mart/:id/invite        controllers.SysMarket.martInviteForm(id: String)
 POST /sys/market/mart/:id/invite        controllers.SysMarket.martInviteFormSubmit(id: String)
 GET  /sys/market/mart/:id/invite/email  controllers.SysMarket.showMartEmailInvite(id, isHtml: Boolean)

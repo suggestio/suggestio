@@ -13,7 +13,7 @@
   </tr>
   @marts.map { mmart =>
     <tr>
-      <td><a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.meta.name</a></td>
+      <td><a href="@routes.SysMarket.showAdnNode(mmart.id.get)">@mmart.meta.name</a></td>
       <td>@mmart.meta.address</td>
       @companies.map { _companies =>
         <td>

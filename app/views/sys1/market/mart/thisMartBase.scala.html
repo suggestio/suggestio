@@ -3,7 +3,7 @@
 @* Подложка для шаблонов, относящихся к работе с конкретным ТЦ. *@
 
 @hPathAfter1 = {
-  / <a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.meta.name</a>
+  / <a href="@routes.SysMarket.showAdnNode(mmart.id.get)">@mmart.meta.name</a>
   @hPathAfter.getOrElse {
     / @title
   }

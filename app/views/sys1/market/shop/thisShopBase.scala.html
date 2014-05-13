@@ -5,7 +5,7 @@
 
 @hPathAfter1 = {
   @mmartOpt.map { mmart =>
-    / ТЦ <a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.meta.name</a>
+    / ТЦ <a href="@routes.SysMarket.showAdnNode(mmart.id.get)">@mmart.meta.name</a>
   }
   / <a href="@routes.SysMarket.showAdnNode(mshop.id.get)">@mshop.meta.name</a>
   @hPathAfter
