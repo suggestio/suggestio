@@ -5,38 +5,31 @@
   @adProducerOpt.map { producer =>
 
     @* Список карточек указанного продюссера *@
-    <div class="sio-mart__node-offers" id="sioMartNodeOffers">
+    <div class="sio-mart__node-offers sio-mart-node-offers-window" id="sioMartNodeOffers">
 
       @producer.logoImgOpt.map { logoImg =>
-
-      @_screen_nav_button("back","closeNodeOffersPopupButton")
-
-      <div class="sio-mart__producer-header" style="background-color: #@producer.meta.color;">
-        <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
-        }
-      </div>
-
-      <div class="sio-mart__node-offers__scrollable_container">
-      @*<div class="sio-mart__producer-popup-location">
-        <span class="data">
-          <span class="icon"></span>
-          @producer.meta.name
-          @if( producer.meta.floor ){<br/>@producer.meta.floor-й этаж}
-        </span>
-      </div>*@
-
-      <div class="sio-mart__node-offers__block_container" id="sioMartNodeOffersBlockContainer">
-      @if(!ads.isEmpty) {
-        @_block_offers_list(mmart, ads, shops)
+        @_screen_nav_button("back","closeNodeOffersPopupButton")
+        <div class="sio-mart__producer-header" style="background-color: #@producer.meta.color;">
+          <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
+        </div>
       }
+
+      @* Контейнер с прокручивающимися офферами *@
+      <div class="sio-mart-node-offers-window__root-container" id="sioMartNodeOffersBlockContainer">
+
+      @if(!ads.isEmpty) {
+
+        @ads.map { mad =>
+          @_single_offer(mad, shops.getOrElse(mad.producerId, mmart), fallbackLogo = mmart.logoImgOpt, false, false)
+        }
+
+        @producer.meta.name
+        @if( producer.meta.floor ){ @producer.meta.floor-й этаж }
+
+      }
+
       </div>
 
-      <div class="sio-mart__node-offers_nav sm-nav-block js-popup-nav">
-      </div>
-
-      <div class="sio-mart__node-offers_spacer"></div>
-
-      </div>
     </div>
 
   }

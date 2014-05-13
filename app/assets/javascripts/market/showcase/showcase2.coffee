@@ -610,7 +610,7 @@ siomart =
       this.img_dom = siomart.utils.ge 'smWelcomeAd'
       if this.img_dom == null
         return false
-        
+
       this.fit this.img_dom
 
       setTimeout siomart.welcome_ad.hide, this.hide_timeout
