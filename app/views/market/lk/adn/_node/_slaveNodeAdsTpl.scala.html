@@ -2,11 +2,16 @@
 
 @mads.zipWithIndex.map { case (mad, i) =>
   @* isPublishedAt скрывает от супервизора возможность сокрыть в других карточках. Сейчас сокрыто - означает, что сокрыто в ТЦ. *@
-  <div class="item @if(!mad.isPublishedAt(msup.id.get)) {disabled}" style="@if(i%3 != 0) {margin-left: 30px;}">
-    <div class="preview">
+  <div class="ads-list__block ads-list-block @if(!mad.isPublishedAt(msup.id.get)) {disabled}">
+    <div class="ads-list-block__preview">
+
       <div class="disabled-ad"></div>
-      <a class="hover tc-edit" href="@routes.MarketLkAdnSlaveAd.showSlaveAd(mad.id.get)">&nbsp;</a>
+
+      <a class="ads-list-block__link js-tc-edit" href="@routes.MarketLkAdnSlaveAd.showSlaveAd(mad.id.get)"></a>
+
       @market.showcase._single_offer(mad, mslave, fallbackLogo = msup.logoImgOpt)
+
     </div>
   </div>
 }
+<div class="clear"></div>
