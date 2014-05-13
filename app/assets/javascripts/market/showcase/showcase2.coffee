@@ -399,9 +399,6 @@ siomart =
       if typeof this.active_block_index == 'undefined'
         return false
 
-      if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
-        return false
-
       next_index = this.active_block_index + 1
 
       if next_index == this.sm_blocks.length
@@ -462,7 +459,21 @@ siomart =
 
       ## Переход к следующему блоку при клике на текущий
       siomart.utils.add_single_listener siomart.utils.ge('sioMartNodeOffersBlockContainer'), _e, () ->
-        siomart.node_offers_popup.next_block()
+        delete siomart.node_offers_popup.start_cx
+
+      ## Переход к следующему блоку при клике на текущий
+      siomart.utils.add_single_listener siomart.utils.ge('sioMartNodeOffersBlockContainer'), 'touchmove', ( event ) ->
+
+        cx = event.touches[0].pageX
+
+        if typeof siomart.node_offers_popup.start_cx == 'undefined'
+          siomart.node_offers_popup.start_cx = cx
+
+        delta = siomart.node_offers_popup.start_cx - cx
+
+        if Math.abs( delta ) > 130
+          siomart.node_offers_popup.next_block()
+          delete siomart.node_offers_popup.start_cx
 
   ######################################
   ## Загрузить индексную страницу для ТЦ
