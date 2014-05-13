@@ -33,13 +33,12 @@
       @ctx.usernameOpt.map { username =>
         <div class="auth">
 
-          @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
+          <a class="logout-but" href="@routes.Ident.logout"></a>
 
+          @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
           @adnIdOpt.map { adnId =>
               @billing._billBallanceWidgetTpl(adnId)
           }
-
-          <a class="logout-but" href="@routes.Ident.logout"></a>
 
         </div>
       }
