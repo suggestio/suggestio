@@ -347,18 +347,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
   /* Торговые центры и площади. */
 
-  /** Рендер страницы со списком торговых центров. */
-  def martsList = IsSuperuser.async { implicit request =>
-    val allCompaniesMapFut = allCompaniesMap
-    for {
-      allMarts  <- MAdnNode.findAllByType(AdNetMemberTypes.MART)
-      companies <- allCompaniesMapFut
-    } yield {
-      Ok(mart.martsListTpl(allMarts, companies=Some(companies)))
-    }
-  }
-
-
   private def martNotFound(martId: String) = NotFound("Mart not found: " + martId)
 
 
