@@ -1,7 +1,7 @@
 package controllers
 
 import io.suggest.util.MacroLogsImpl
-import util.acl.{AbstractRequestWithPwOpt, IsSuperuserAdnNode, IsShopAdm, IsSuperuser}
+import util.acl.{AbstractRequestWithPwOpt, IsSuperuserAdnNode, IsSuperuser}
 import models._
 import views.html.sys1.market._
 import views.html.market.lk
@@ -127,11 +127,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
   /** Реакция на ошибку обращения к несуществующей компании. Эта логика расшарена между несколькими экшенами. */
   private def companyNotFound(companyId: CompanyId_t) = NotFound("Company not found: " + companyId)
-
-  /** Бывает надо передать в шаблон карту всех контор. Тут фьючерс, который этим занимается. */
-  private def allCompaniesMap = MCompany.getAll().map {
-    _.map { mc => mc.id.get -> mc }.toMap
-  }
 
 
   /* Унифицированные узлы ADN */

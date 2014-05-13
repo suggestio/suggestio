@@ -2,14 +2,15 @@
 
 @* Форма для создания инвайта на управление ТЦ. *@
 @import helper._
+@import sys1.market.adn._
 
 @hPathAfter1 = {
+  / <a href="@routes.SysMarket.showAdnNode(mmart.id.get)">@mmart.meta.name</a>
   / Инвайт на управление
 }
 
-@thisMartBase(
+@adnBase(
   title = "Инвайт на управление ТЦ " + mmart.meta.name,
-  mmart = mmart,
   hPathAfter = Some(hPathAfter1)
 ) {
 
