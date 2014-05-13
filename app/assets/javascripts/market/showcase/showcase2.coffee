@@ -432,7 +432,7 @@ siomart =
 
         _b.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
         _b.parentNode.parentNode.parentNode.style.width = _block_width*2 + 11*2 + 'px'
-
+        
       this._block_container.style.width = this.sm_blocks.length * cbca_grid.ww + 'px'
       return false
 

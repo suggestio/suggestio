@@ -28,9 +28,13 @@
               @_single_offer(mad, shops.getOrElse(mad.producerId, mmart), fallbackLogo = mmart.logoImgOpt, false, false)
             </div>
 
-            <div class="sio-mart-node-offers-window__single-ad-location">
-              @producer.meta.name
-              @if( producer.meta.floor ){ @producer.meta.floor-й этаж }
+            <div class="sio-mart-node-offers-window__single-ad-location sm-now-location">
+              <div class="sm-now-location__icon"></div>
+              <div class="sm-now-location__info">
+                <span>@if( producer.meta.floor ){ @producer.meta.floor-й этаж }</span>
+                <strong>@producer.meta.name</strong>
+              </div>
+              <div class="sm-clear"></div>
             </div>
 
             </div>

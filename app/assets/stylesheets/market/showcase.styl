@@ -28,6 +28,9 @@ box-shadow( param )
   -moz-box-shadow: param
   box-shadow: param
 
+.sm-clear
+  clear: both
+
 .sm-preload
   width: 1px
   height: 1px
@@ -148,20 +151,18 @@ box-shadow( param )
 
   .sio-mart-node-offers-window
     position: relative
-    background: red
     height: 100%
     width: 100%
 
   .sio-mart-node-offers-window__root-container
     position: relative
     height: 100%
-    background: yellow
     overflow: hidden
+    -webkit-transition: all 0.5s ease-in
 
   .sio-mart-node-offers-window__single-ad-container
     width: 600px
     height: 100%
-    background: green
     float: left
     overflow-y: scroll
 
@@ -174,6 +175,25 @@ box-shadow( param )
   .sio-mart-node-offers-window__single-ad-location
     background: #fff
     margin: 2px 0px
+    padding: 11px
+
+  .sm-now-location
+    font-family: 'pfdintextcomppro-medium-webfont'
+    font-size: 14px
+
+  .sm-now-location__icon
+    width: 19px
+    height: 37px
+    background: spriteurl -204px -6px
+    background-size: spritesize
+    float: left
+    padding-right: 11px
+  .sm-now-location__info
+    strong
+      font-size: 17px
+      font-weight: normal
+
+
 
   /* Searchfield */
 
