@@ -211,7 +211,7 @@ siomart =
       hide_cb = () ->
         siomart.notifications.hide()
 
-      setTimeout hide_cb, 1700
+      setTimeout hide_cb, 1200
 
     hide : ( message ) ->
       n_dom = siomart.utils.ge 'smNotification'
@@ -555,6 +555,10 @@ siomart =
 
   ## Загрузить все офферы для магазина
   load_for_cat_id : ( cat_id ) ->
+
+    if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
+      return false
+
     url = '/market/ads/' + siomart.config.mart_id + '?a.catId=' + cat_id
     siomart.request.perform url
 
