@@ -32,7 +32,16 @@
       </a>
       @ctx.usernameOpt.map { username =>
         <div class="auth">
-          <span class="gray">Добро пожаловать,</span>&nbsp;
+
+          @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
+          <div class="billing-but">
+            <div class="white-border-top">
+              @adnIdOpt.map { adnId =>
+                @billing._billBallanceWidgetTpl(adnId)
+              }
+            </div>
+          </div>
+
           <span class="user hover">
 	        @username<span class="select-but">&nbsp;</span>
             <ul class="drop-menu">
@@ -44,10 +53,7 @@
               </li>
             </ul>
           </span>
-          @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
-          @adnIdOpt.map { adnId =>
-            @billing._billBallanceWidgetTpl(adnId)
-          }
+
         </div>
       }
     </div>
