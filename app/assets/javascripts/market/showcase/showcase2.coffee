@@ -3,7 +3,7 @@
 ###############################
 siomart =
   config :
-    css : '/assets/stylesheets/market/showcase.min.css?v=33'
+    css : '/assets/stylesheets/market/showcase.min.css?v=34'
     index_action : window.siomart_index
     sm_layout_class : 'sio-mart-showcase'
     sm_trigger_class : 'sio-mart-trigger'
