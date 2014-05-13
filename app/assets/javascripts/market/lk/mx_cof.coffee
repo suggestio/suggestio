@@ -1,3 +1,4 @@
+
 $(document).ready ->
   cbca.emptyPhoto = '/assets/images/market/lk/empty-image.gif'
 
@@ -182,7 +183,7 @@ CbcaCommon = () ->
       $('#create-your-market').show()
 
 
-    $(document).on 'click', '.ads-list .tc-edit', (event)->
+    $(document).on 'click', '.ads-list .js-tc-edit', (event)->
       event.preventDefault()
 
       $this = $(this)

@@ -20,7 +20,7 @@
     fallbackLogo = fallbackLogo
   ) { mad =>
     @* Галочки для управления отображением рекламной карточки магазина. *@
-    <div class="controls">
+    <div class="ads-list-block__controls">
       @defining(mad.allWantShowLevels) { adSls =>
         @* Обходим карту уровней, переводя её в список галочек. *@
         @outLvlMap.map { case (sl, (slAllowed, slMax)) =>
