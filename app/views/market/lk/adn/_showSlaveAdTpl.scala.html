@@ -8,7 +8,7 @@
 @import util.FormHelpers._
 @import util.acl.CanSuperviseNode._
 
-@helper.javascriptRouter("jsRoutes")(
+@helper.javascriptRouter("jsRoutes2")(
   routes.javascript.MarketLkAdnSlaveAd.adPublishDialog
 )
 
@@ -33,7 +33,6 @@
         @* Допустимые значения: @HIDE *@
         <input type="hidden" name="action" value="@HIDE"/>
 
-        @if(!mad.isPublishedAt(msup.id.get)) {
           <div class="hide-content">
             @* Причина сокрытия/удаления. *@
             <table cellpadding="0" cellspacing="0" class="input-wrap big textarea hide-label" style="margin-top: 20px;">
@@ -50,22 +49,23 @@
             </div>
           </div>
 
-          <div class="ovh" style="text-align: center; margin-top: 20px;">
-            <input class="blue-but-small" type="submit" value="Выключить" />
+          <div class="ovh" style="margin-top: 20px;">
+                
+            @* Кнопка публикации карточки на другом узле (в другом ресторане). *@
+
+            <div class="gray-but add-to-another-node" >
+              <div class="white-border-top">
+                <a href="@routes.MarketLkAdnSlaveAd.adPublishDialog(mad.id.get)">@Messages("add.to.other." + mslave.adn.memberType)</a>
+              </div>
+            </div>
+
+            <input class="blue-but-small f-right" type="submit" value="Выключить" />
           </div>
-        }
+
       } @* ad hide form *@
 
 
-      @* Кнопка публикации карточки на другом узле (в другом ресторане). *@
 
-      <div class="gray-but add-to-another-node" >
-        <div class="white-border-top">
-          <a href="@routes.MarketLkAdnSlaveAd.adPublishDialog(mad.id.get)">@Messages("add.to.other." + mslave.adn.memberType)</a>
-        </div>
-      </div>
-
-      <a class="blue-but-small" style="float: right;">Выключить</a>
 
     } @* if supervisor *@
 

@@ -17,7 +17,7 @@
       <td>@spl.url</td>
 
       @withShop.map { mshop =>
-        <td><a href="@routes.SysMarket.shopShow(spl.shopId)">@mshop.meta.name</a></td>
+        <td><a href="@routes.SysMarket.showAdnNode(spl.shopId)">@mshop.meta.name</a></td>
       }
 
       @if(withAuth) {

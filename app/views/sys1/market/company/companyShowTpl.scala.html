@@ -12,10 +12,5 @@
   <p><a href="@routes.SysMarket.companyEditForm(mc.id.get)">@Messages("Edit")</a></p>
   @stuff._deleteSmthFormBtnTpl(routes.SysMarket.companyDeleteSubmit(mc.id.get))
 
-  @defining(Some(Map(mc.id.get -> mc))) { mcMapOpt =>
-    @_adnNodesListTpl(nodes)
-  }
-
-  <hr/>
-  <p><a href="@routes.SysMarket.martAddForm(mc.id.get)">+Добавить ТЦ</a></p>
+  @_adnNodesListTpl(nodes)
 }
