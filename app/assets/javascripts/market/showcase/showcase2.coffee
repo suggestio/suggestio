@@ -365,35 +365,7 @@ siomart =
     nav_pointer_size : 14
 
     show_block_by_index : ( block_index ) ->
-      this.active_block_dom.style.display = 'none'
-      siomart.utils.removeClass this.active_block_dom, 'double-size'
-
-      this.show_block this.sm_blocks[block_index]
-
-      siomart.utils.removeClass siomart.utils.ge('smNodeOffersNavPointer' + this.active_block_index), 'sm-nav-block__pointer_active'
-      this.active_block_index = block_index
-      siomart.utils.addClass siomart.utils.ge('smNodeOffersNavPointer' + this.active_block_index), 'sm-nav-block__pointer_active'
-
-    show_block : ( sm_block ) ->
-
-      sm_block.style.opacity = 0
-      sm_block.style.display = 'block'
-      this.active_block_dom = sm_block
-
-      cw = sm_block.offsetWidth
-      ch = sm_block.offsetHeight
-
-      if cbca_grid.ww > 600
-        #sm_block.style.width = cw*2 + 'px'
-        #sm_block.style.height = ch*2 + 'px'
-        siomart.utils.addClass sm_block, 'double-size'
-
-      if cbca_grid.ww > 600
-        this._block_container.style.width = cw*2 + 'px'
-      else
-        this._block_container.style.width = cw + 'px'
-
-      sm_block.style.opacity = 1
+      siomart.node_offers_popup._block_container.style['-webkit-transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
 
     next_block : () ->
       if typeof this.active_block_index == 'undefined'
@@ -419,6 +391,24 @@ siomart =
 
       this.show_block_by_index prev_index
 
+    fit : () ->
+      for _b in this.sm_blocks
+        _block_width = _b.getAttribute 'data-width'
+
+        if cbca_grid.ww > 600
+          siomart.utils.addClass _b, 'double-size'
+        else
+          siomart.utils.removeClass _b, 'double-size'
+
+        _b.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
+
+        if cbca_grid.ww > 600
+          _b.parentNode.parentNode.parentNode.style.width = _block_width*2 + 11*2 + 'px'
+        else
+          _b.parentNode.parentNode.parentNode.style.width = _block_width + 'px'
+
+      this._block_container.style.width = this.sm_blocks.length * cbca_grid.ww + 'px'
+
     init : () ->
 
       this._block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
@@ -426,16 +416,16 @@ siomart =
 
       this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
 
+      this.fit()
+
+      i = 0
       for _b in this.sm_blocks
-        _block_width = _b.getAttribute 'data-width'
-        siomart.utils.addClass _b, 'double-size'
+        if _b.getAttribute('data-mad-id') == this.requested_ad_id
+          this.show_block_by_index i
 
-        _b.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
-        _b.parentNode.parentNode.parentNode.style.width = _block_width*2 + 11*2 + 'px'
-        
-      this._block_container.style.width = this.sm_blocks.length * cbca_grid.ww + 'px'
-      return false
+        i++
 
+      siomart.utils.addClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
 
       ## События
       _e = if siomart.utils.is_touch_device() then 'touchend' else 'click'
@@ -443,23 +433,6 @@ siomart =
       ## Кнопка возврата на главный экран
       siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), _e, siomart.close_node_offers_popup
 
-      ## Переход к следующему блоку при клике на текущий
-      siomart.utils.add_single_listener siomart.utils.ge('sioMartNodeOffersBlockContainer'), _e, () ->
-        delete siomart.node_offers_popup.start_cx
-
-      ## Переход к следующему блоку при клике на текущий
-      siomart.utils.add_single_listener siomart.utils.ge('sioMartNodeOffersBlockContainer'), 'touchmove', ( event ) ->
-
-        cx = event.touches[0].pageX
-
-        if typeof siomart.node_offers_popup.start_cx == 'undefined'
-          siomart.node_offers_popup.start_cx = cx
-
-        delta = siomart.node_offers_popup.start_cx - cx
-
-        if Math.abs( delta ) > 130
-          siomart.node_offers_popup.next_block()
-          delete siomart.node_offers_popup.start_cx
 
   ######################################
   ## Загрузить индексную страницу для ТЦ
