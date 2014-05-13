@@ -20,11 +20,19 @@
       @if(!ads.isEmpty) {
 
         @ads.map { mad =>
-          @_single_offer(mad, shops.getOrElse(mad.producerId, mmart), fallbackLogo = mmart.logoImgOpt, false, false)
-        }
+          <div class="sio-mart-node-offers-window__single-ad-container js-nop-single-ad-container">
 
-        @producer.meta.name
-        @if( producer.meta.floor ){ @producer.meta.floor-й этаж }
+            <div class="sio-mart-node-offers-window__single-ad-w-border">
+              @_single_offer(mad, shops.getOrElse(mad.producerId, mmart), fallbackLogo = mmart.logoImgOpt, false, false)
+            </div>
+
+            <div class="sio-mart-node-offers-window__single-ad-location">
+              @producer.meta.name
+              @if( producer.meta.floor ){ @producer.meta.floor-й этаж }
+            </div>
+
+          </div>
+        }
 
       }
 

@@ -424,32 +424,16 @@ siomart =
       this._block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
       this._container = siomart.utils.ge('sioMartNodeOffers')
 
-      this._container_nav = siomart.utils.ge_class this._container, 'js-popup-nav'
-      this._container_nav = this._container_nav[0]
-
       this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
-      nav_pointers_html = ''
 
-      for sm_block,i in sm_blocks
+      for _b in this.sm_blocks
+        siomart.utils.addClass _b, 'double-size'
+        _parent_container = _b.parentNode.parentNode.parentNode
 
-        mad_id = sm_block.getAttribute 'data-mad-id'
+        _parent_container.style.width = cbca_grid.ww + 'px'
 
-        if ( typeof this.requested_ad_id == 'undefined' && i == 0 ) || mad_id == this.requested_ad_id
-          this.show_block sm_block
-          this.active_block_dom = sm_block
-          this.active_block_index = i
+      return false
 
-        if ( typeof this.requested_ad_id == 'undefined' && i == 0 ) || mad_id == this.requested_ad_id
-          _nav_pointer_class = 'sm-nav-block__pointer sm-nav-block__pointer_active'
-        else if i == sm_blocks.length-1
-          _nav_pointer_class = 'sm-nav-block__pointer sm-nav-block__pointer_no-margin'
-        else
-          _nav_pointer_class = 'sm-nav-block__pointer'
-
-        nav_pointers_html += '<div id="smNodeOffersNavPointer' + i + '" onclick="siomart.node_offers_popup.show_block_by_index(\'' + i + '\');" class="' + _nav_pointer_class + '"><i></i></div>'
-
-      this._container_nav.innerHTML = nav_pointers_html
-      this._container_nav.style.width = this.nav_pointer_size * sm_blocks.length + 'px'
 
       ## События
       _e = if siomart.utils.is_touch_device() then 'touchend' else 'click'
