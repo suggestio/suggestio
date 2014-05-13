@@ -552,51 +552,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     }
   }
 
-  val shopMetaM = mapping(
-    "name"    -> shopNameM,
-    "descr"   -> publishedTextOptM,
-    "floor"   -> floorOptM,
-    "section" -> sectionOptM
-  )
-  {(name, descriptionOpt, floorOpt, sectionOpt) =>
-    AdnMMetadata(
-      name = name,
-      description = descriptionOpt,
-      floor = floorOpt,
-      section = sectionOpt
-    )
-  }
-  {meta =>
-    import meta._
-    Some((name, description, floor, section))
-  }
-
-  /** Форма добавления/редактирования магазина. */
-  val shopFormM = Form(mapping(
-    "meta"       -> shopMetaM,
-    "martId"     -> optional(esIdM),
-    "companyId"  -> esIdM,
-    "l3maxAds"   -> default(number(min=0, max=30), ShowLevelsUtil.SHOP_LVL_OUT_MEMBER_DLFT)
-  )
-  // apply()
-  {(meta, martIdOpt, companyId, l3maxAds) =>
-    val adnShop = AdNetMemberTypes.SHOP.getAdnInfoDflt
-    adnShop.supId = martIdOpt
-    adnShop.showLevelsInfo.setMaxOutAtLevel(AdShowLevels.LVL_MEMBER, l3maxAds)
-    MAdnNode(
-      meta = meta,
-      companyId = companyId,
-      adn = adnShop,
-      personIds = Set.empty
-    )
-  }
-  // unapply()
-  {mshop =>
-    import mshop._
-    val l3maxAds = adn.showLevelsInfo.maxOutAtLevel(AdShowLevels.LVL_MEMBER)
-    Some((meta, adn.supId, companyId, l3maxAds))
-  })
-
 
   /** Рендер ошибки, если магазин не найден в базе. */
   private def shopNotFound(shopId: String) = NotFound("Shop not found: " + shopId)
@@ -605,7 +560,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   /* Ссылки на прайс-листы магазинов, а именно их изменение. */
 
   /** Маппинг для формы добавления/редактирования ссылок на прайс-листы. */
-  val splFormM = Form(mapping(
+  private val splFormM = Form(mapping(
     "url"       -> urlStrM,
     "username"  -> optional(text(maxLength = 64)),
     "password"  -> optional(text(maxLength = 64))
