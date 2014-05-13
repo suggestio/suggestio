@@ -1,27 +1,5 @@
 @(mad: MAdT, isStandalone: Boolean)(implicit ctx: util.Context)
 
 @import util.blocks.BlocksConf.Block4
-@import util.TplDataFormatUtil._
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl4" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
-
-
-  <img class="bg" src="@mad.imgs.get(Block4.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl4-bg.jpg"))" alt=""/>
-
-  <div class="inner"></div>
-
-  <div class="info" style="background: #@mad.colors.getOrElse(Block4.bgColorBf.name, Block4.bgColorBf.anyDefaultValue);">
-    @mad.offers.headOption.map { offer =>
-      @offer.text1.map { title =>
-        <div class="title" style="color: #@title.font.color;">@title.value</div>
-      }
-      @offer.price.map { price =>
-        <div class="price" style="color: #@price.font.color;">@formatPriceDigits(price.value)<span>@formatCurrency(price.currency)</span></div>
-      }
-      @offer.text2.map { description =>
-        <div class="descr" style="color: #@description.font.color;">@description.value</div>
-      }
-    }
-  </div>
-
-</div>
+@common._block4_9commonTpl(mad, isStandalone, Block4)

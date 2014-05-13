@@ -339,13 +339,14 @@ object BlocksConf extends Enumeration {
   }
 
 
-  /** Рекламный блок с предложением товара/услуги и рекламным посылом. */
-  val Block4 = new Val(4, "2texts+price") with SaveBgImg {
+  sealed abstract class CommonBlock4_9(id: Int, name: String) extends Val(id, name) with SaveBgImg {
     val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300))
     val text1bf = BfText("text1", BlocksEditorFields.InputText, maxLen = 256)
     val priceBf = BfPrice("price")
     val text2bf = BfText("text2", BlocksEditorFields.TextArea, maxLen = 512)
     val bgColorBf = BfColor("bgColor", defaultValue = Some("0F2841"))
+
+    val blockWidth: Int
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
@@ -389,8 +390,12 @@ object BlocksConf extends Enumeration {
         Some( (bmr.bim, height, text1, price, text2, bgColor) )
       }
     }
+  }
 
-    /** Шаблон для рендера. */
+
+  /** Рекламный блок с предложением товара/услуги и рекламным посылом. */
+  val Block4 = new CommonBlock4_9(4, "2texts+price") {
+    override val blockWidth = 300
     override def template = _block4Tpl
   }
 
@@ -585,53 +590,8 @@ object BlocksConf extends Enumeration {
   }
   
   
-  val Block9 = new Val(9, "titlePriceDescrNarrow9") with SaveBgImg {
-    val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300))
-    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
-    val priceBf = BfPrice("price")
-    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
-
-    /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
-    override def blockFields: List[BlockFieldT] = List(
-      bgImgBf, titleBf, priceBf, descrBf
-    )
-
-    /** Набор маппингов для обработки данных от формы. */
-    override def strictMapping: Mapping[BlockMapperResult] = mapping(
-      heightBf.getStrictMappingKV,
-      bgImgBf.getStrictMappingKV,
-      titleBf.getOptionalStrictMappingKV,
-      priceBf.getOptionalStrictMappingKV,
-      descrBf.getOptionalStrictMappingKV
-    )
-    // apply()
-    {(height, bgBim, titleOpt, priceOpt, descrOpt) =>
-      val blk = AOBlock(
-        n = 0,
-        text1 = titleOpt,
-        price = priceOpt,
-        text2 = descrOpt
-      )
-      val bd = BlockDataImpl(
-        blockMeta = BlockMeta(
-          height = height,
-          blockId = id
-        ),
-        offers = List(blk)
-      )
-      BlockMapperResult(bd, bgBim)
-    }
-    {bmr =>
-      val height = bmr.bd.blockMeta.height
-      val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
-      val offerOpt = bmr.bd.offers.headOption
-      val title = offerOpt.flatMap(_.text1)
-      val price = offerOpt.flatMap(_.price)
-      val descr = offerOpt.flatMap(_.text2)
-      Some( (height, bgBim, title, price, descr) )
-    }
-
-    /** Шаблон для рендера. */
+  val Block9 = new CommonBlock4_9(9, "titlePriceDescrNarrow9") {
+    override val blockWidth = 140
     override def template = _block9Tpl
   }
 
