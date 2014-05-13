@@ -10,7 +10,6 @@
 
   <p><a href="@routes.MarketLkAdn.showAdnNode(mshop.id.get)"><b>-&gt; Личный кабинет арендатора</b></a></p>
 
-  <a href="@routes.SysMarket.shopEditForm(mshop.id.get)">@Messages("Edit")</a>
   <p><a href="@routes.SysMarketBilling.billingFor(mshop.id.get)">Billing</a></p>
 
   @ownerOpt.map { mc =>

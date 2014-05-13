@@ -598,15 +598,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   })
 
 
-  private def getAllCompaniesAndMarts = {
-    val companiesFut = MCompany.getAll()
-    for {
-      marts     <- MAdnNode.findAllByType(AdNetMemberTypes.MART)
-      companies <- companiesFut
-    } yield (companies, marts)
-  }
-
-
   /** Рендер страницы, содержащей информацию по указанному магазину. */
   def shopShow(shopId: String) = IsSuperuser.async { implicit request =>
     getShopById(shopId) flatMap {
@@ -627,46 +618,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
   /** Рендер ошибки, если магазин не найден в базе. */
   private def shopNotFound(shopId: String) = NotFound("Shop not found: " + shopId)
-
-  /** Отрендерить страницу с формой редактирования магазина. */
-  def shopEditForm(shop_id: String) = IsShopAdm(shop_id).async { implicit request =>
-    getAllCompaniesAndMarts map { case (companies, marts) =>
-      import request.mshop
-      val form = shopFormM.fill(mshop)
-      Ok(shop.shopEditFormTpl(mshop, form, companies, marts))
-    }
-  }
-
-  /** Сабмит формы редактирования магазина. */
-  def shopEditFormSubmit(shopId: String) = IsSuperuser.async { implicit request =>
-    getShopById(shopId) flatMap {
-      case Some(mshop) =>
-        shopFormM.bindFromRequest().fold(
-          {formWithErrors =>
-            debug(s"shopEditFormSubmit($shopId): form bind failed: " + formatFormErrors(formWithErrors))
-            getAllCompaniesAndMarts map { case (companies, marts) =>
-              NotAcceptable(shop.shopEditFormTpl(mshop, formWithErrors, companies, marts))
-            }
-          },
-          {newShop =>
-            mshop.meta.name = newShop.meta.name
-            mshop.meta.description = newShop.meta.description
-            mshop.meta.floor = newShop.meta.floor
-            mshop.meta.section = newShop.meta.section
-            mshop.adn.supId = newShop.adn.supId
-            mshop.companyId = newShop.companyId
-            val l3max = newShop.adn.showLevelsInfo.maxOutAtLevel(AdShowLevels.LVL_MEMBER)
-            mshop.adn.showLevelsInfo.setMaxOutAtLevel(AdShowLevels.LVL_MEMBER, l3max)
-            mshop.save map { _ =>
-              Redirect(routes.SysMarket.shopShow(shopId))
-                .flashing("success" -> "Changes saved.")
-            }
-          }
-        )
-
-      case None => shopNotFound(shopId)
-    }
-  }
 
 
   /* Ссылки на прайс-листы магазинов, а именно их изменение. */

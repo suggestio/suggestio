@@ -196,8 +196,6 @@ GET  /sys/market/mart/:id/invite/email  controllers.SysMarket.showMartEmailInvit
 # sys.market.shop
 GET  /sys/market/shops                  controllers.SysMarket.shopsList
 GET  /sys/market/shop/:id               controllers.SysMarket.shopShow(id)
-GET  /sys/market/shop/:id/edit          controllers.SysMarket.shopEditForm(id)
-POST /sys/market/shop/:id/edit          controllers.SysMarket.shopEditFormSubmit(id)
 GET  /sys/market/shop/:id/eact          controllers.SysMarket.showShopEmailActMsgHtml(id, isHtml: Boolean)
 GET  /sys/market/s/ad/:adId/email       controllers.SysMarket.showShopEmailAdDisableMsg(adId, isHtml: Boolean ?= true)
 # sys.market.shop.pricelist
