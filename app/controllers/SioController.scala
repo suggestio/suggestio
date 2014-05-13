@@ -38,7 +38,9 @@ trait SioController extends Controller with ContextT {
 
   implicit def sn = SiowebNotifier
 
-  implicit def html4email(html: HtmlFormat.Appendable) = HtmlCompressUtil.compressForEmail(html)
+  implicit def html4email(html: HtmlFormat.Appendable): String = {
+    HtmlCompressUtil.compressForEmail(html)
+  }
 
   implicit def html2jsStr(html: HtmlFormat.Appendable) = JsString(
     HtmlCompressUtil.compressForJson(html)

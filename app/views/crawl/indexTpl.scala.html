@@ -103,7 +103,7 @@
   
   $(document).ready(function(){
     sio.index.init();
-    sio.config.host = '@myProto://@ctx.request.host';
+    sio.config.host = '@ctx.myAudienceUrl';
   });
 </script>
 
