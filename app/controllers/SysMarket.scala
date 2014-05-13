@@ -331,6 +331,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         val sl = adnNode2.adn.memberType.slDflt
         val maxAds = adnNode2.adn.showLevelsInfo.maxOutAtLevel(sl)
         adnNode.adn.showLevelsInfo.setMaxOutAtLevel(sl, maxAds)
+        adnNode.adn.isEnabled = adnNode2.adn.isEnabled
         adnNode.save.map { _ =>
           Redirect(routes.SysMarket.showAdnNode(adnId))
             .flashing("success" -> "Изменения сохранены")
