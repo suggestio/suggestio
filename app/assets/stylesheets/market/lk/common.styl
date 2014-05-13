@@ -372,8 +372,10 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     height: 49px
     cursor: pointer
     background: url('/assets/images/market/lk/logout-but.png') no-repeat
-    background-position: 0 -99px
+    background-position: 0 -198px
   .logout-but:hover
+    background-position: 0 -99px
+  .logout-but:active
     background-position: 0 0
 
 
@@ -434,6 +436,53 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
       a
         box-shadow(none)
         opacity: 0.6
+
+
+  .gray-but-smallest
+    display: inline-block
+    overflow: hidden
+    border: 1px solid #b2b2b2
+    border-radius(10px)
+    box-shadow(1px 1px 1px 1px #676767)
+
+    .white-border-top
+      display: inline-block
+      border-top: 1px solid #fbfbfb
+      border-radius(10px)
+      padding: 4px 15px
+      color: #959595
+      text-decoration: none
+      font-size: 12px
+      font-family: 'Arial'
+
+  @css {
+    .gray-but-smallest .white-border-top {
+        background: #eeeeee;
+        background: -moz-linear-gradient(top, #eeeeee 0%, #d7d7d7 100%);
+        background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#eeeeee), color-stop(100%,#d7d7d7));
+        background: -webkit-linear-gradient(top, #eeeeee 0%,#d7d7d7 100%);
+        background: -o-linear-gradient(top, #eeeeee 0%,#d7d7d7 100%);
+        background: -ms-linear-gradient(top, #eeeeee 0%,#d7d7d7 100%);
+        background: linear-gradient(to bottom, #eeeeee 0%,#d7d7d7 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#eeeeee', endColorstr='#d7d7d7',GradientType=0 );
+    }
+
+    .gray-but-smallest:hover .white-border-top {
+      background: #f0f0f0
+    }
+
+    .gray-but-smallest:active .white-border-top  {
+      background: #d7d7d7;
+      background: -moz-linear-gradient(top, #d7d7d7 0%, #ebebeb 100%);
+      background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#d7d7d7), color-stop(100%,#ebebeb));
+      background: -webkit-linear-gradient(top, #d7d7d7 0%,#ebebeb 100%);
+      background: -o-linear-gradient(top, #d7d7d7 0%,#ebebeb 100%);
+      background: -ms-linear-gradient(top, #d7d7d7 0%,#ebebeb 100%);
+      background: linear-gradient(to bottom, #d7d7d7 0%,#ebebeb 100%);
+      filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d7d7d7', endColorstr='#ebebeb',GradientType=0 );
+    }
+
+  }
 
 
 
@@ -958,6 +1007,10 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
           .f-left
             width: 630px
+
+    .gray-but-smallest
+      margin-top: 25px
+      margin-left: 1px
 
 
 @import "../reset"

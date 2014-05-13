@@ -182,7 +182,6 @@ object MarketAd extends SioController with TempImgSupport {
     */
   def editAd(adId: String) = IsAdEditor(adId).async { implicit request =>
     import request.mad
-    // TODO Бывают карточки без картинки. Нужно вынести маппинги на block-уровень.
     val formFilledOpt = mad.offers.headOption map { offer =>
       val blockConf: BlockConf = BlocksConf.apply(mad.blockMeta.blockId)
       val form0 = getAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
@@ -258,7 +257,7 @@ object MarketAd extends SioController with TempImgSupport {
   // ===================================== ad show levels =============================================
 
   /** Форма для маппинга результатов  */
-  val adShowLevelFormM: Form[(AdShowLevel, Boolean)] = Form(tuple(
+  private val adShowLevelFormM: Form[(AdShowLevel, Boolean)] = Form(tuple(
     // id уровня, прописано в чекбоксе
     "levelId" -> nonEmptyText(maxLength = 1)
       .transform [Option[AdShowLevel]] (
@@ -272,12 +271,10 @@ object MarketAd extends SioController with TempImgSupport {
     "levelEnabled" -> boolean   // Новое состояние чекбокса.
   ))
 
-  /** Включение/выключение какого-то уровня отображения указанной рекламы.
-    * Сабмит сюда должен отсылаться при нажатии на чекбоксы отображения на тех или иных экранах в _showAdsTpl:
-    * [x] Выводить в общем каталоге
-    * [x] Выводить в моём магазине
-    * [x] Размещение на первом экране
-    */
+  /**
+   * Включение/выключение какого-то уровня отображения указанной рекламы.
+   * Сабмит сюда должен отсылаться при нажатии на чекбоксы отображения на тех или иных экранах в _showAdsTpl.
+   */
   def updateShowLevelSubmit(adId: String) = IsAdEditor(adId).async { implicit request =>
     lazy val logPrefix = s"updateShowLevelSubmit($adId): "
     adShowLevelFormM.bindFromRequest().fold(

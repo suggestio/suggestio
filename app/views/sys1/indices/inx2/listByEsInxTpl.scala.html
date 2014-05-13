@@ -15,7 +15,7 @@
           @minxs.map {
             case minx: MMartInx => {
               <li>
-                + <a href="@routes.SysMarket.martShow(minx.martId)">
+                + <a href="@routes.SysMarket.showAdnNode(minx.martId)">
                   @allMartsMap.get(minx.martId).map(_.meta.name).getOrElse("ТЦ ???")
                 </a>
               </li>
