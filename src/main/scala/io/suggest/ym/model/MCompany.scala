@@ -84,3 +84,12 @@ trait MCompanySel {
   def companyId: CompanyId_t
   def company(implicit ec:ExecutionContext, client: Client) = getById(companyId)
 }
+
+
+trait MCompanyJmxMBean extends EsModelJMXMBeanCommon
+class MCompanyJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase
+  with MCompanyJmxMBean
+{
+  override def companion = MCompany
+}
