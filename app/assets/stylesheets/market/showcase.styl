@@ -28,6 +28,9 @@ box-shadow( param )
   -moz-box-shadow: param
   box-shadow: param
 
+.sm-clear
+  clear: both
+
 .sm-preload
   width: 1px
   height: 1px
@@ -146,69 +149,53 @@ box-shadow( param )
     height: 100%
     background: rgba(227, 224, 226, 0.93)
 
-  .sio-mart__node-offers__scrollable_container
+  .sio-mart-node-offers-window
+    position: relative
     height: 100%
     width: 100%
-    overflow-y: scroll
-    -webkit-overflow-scrolling: touch
 
-  .sio-mart__node-offers__block_container
-    margin: 0px auto
-
-    .sm-block
-      cursor: default
-      box-shadow( 0px 0px 3px #999 )
-      position: relative
-      display: none
-
-  .sio-mart__producer-popup-location
+  .sio-mart-node-offers-window__root-container
     position: relative
-    text-align: center
-    padding: 75px 0px 25px 0px
-    margin: 0px auto
+    height: 100%
+    overflow: hidden
 
-    .icon
-      position: absolute
-      left: -30px
-      top: -4px
-      background: url('/assets/images/geo-marker-black.png') no-repeat left top
-      width: 16px
-      height: 35px
-      background-size: 16px 35px
-    .data
-      position: relative
-      font-family: 'pfdintextcomppro-medium-webfont'
-      font-size: 26px
-      line-height: 26px
+  .sio-mart-node-offers-window__root-container_animated
+    -webkit-transition: all 0.3s ease-in-out
 
-  .sio-mart__node-offers_spacer
-    height: 60px
-
-  /* Кружочки навигации по слайдам */
-  .sio-mart__node-offers_nav
-    height: 8px
-    margin: 0px auto
-    padding: 15px 0px
-
-  .sm-nav-block
-    height: 8px
-
-  .sm-nav-block__pointer
-    cursor: pointer
+  .sio-mart-node-offers-window__single-ad-container
+    width: 600px
+    height: 100%
     float: left
-    margin: 3px
+    overflow-y: scroll
 
-    i
-      display: block
-      width: 8px
-      height: 8px
-      background: #3b3b3b
-      border-radius( 50px )
+  .sio-mart-node-offers-window__single-ad-w-border
+    background: #fff
+    padding: 11px
+    .sm-block
+      position: relative
 
-  .sm-nav-block__pointer_active
-    cursor: default
-    i
-      background-color: #ce2222
+  .sio-mart-node-offers-window__single-ad-location
+    background: #fff
+    margin: 2px 0px
+    padding: 11px
+
+  .sm-now-location
+    font-family: 'pfdintextcomppro-medium-webfont'
+    font-size: 14px
+
+  .sm-now-location__icon
+    width: 19px
+    height: 37px
+    background: spriteurl -204px -6px
+    background-size: spritesize
+    float: left
+    padding-right: 11px
+  .sm-now-location__info
+    strong
+      font-size: 17px
+      font-weight: normal
+
+
 
   /* Searchfield */
 

@@ -2,7 +2,7 @@ cbca_grid =
 
   cell_size : 140
   cell_padding : 20
-  top_offset : 0
+  top_offset : 20
   bottom_offset : 20
   max_allowed_cell_width : 4
 
