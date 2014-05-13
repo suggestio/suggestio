@@ -62,12 +62,20 @@
       )
     </table>
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
-      @inputText(
-      mf("meta.color"),
-      '_label -> "Основной цвет:"
-      )
+
+
+    <table class="input-wrap big" cellspacing="0" cellpadding="0">
+      <td class="left">
+        <label for="meta_color">Основной цвет:</label>
+      </td>
+      <td class="right">
+        <div class="lk-color-select__color lk-color-select__color_custom js-custom-color" style="background: #4F4F4F;">
+          <div></div>
+          <input id="meta_color" type="hidden" name="meta.color" value="4F4F4F"/>
+        </div>
+      </td>
     </table>
+
 
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
       @inputText(

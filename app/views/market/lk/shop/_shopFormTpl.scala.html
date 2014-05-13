@@ -52,7 +52,19 @@
     </table>
 
     @* Цвет, который может задавать магазин для самого себя. *@
-    @inputText(sf("meta.color"), '_placeholder -> "4F4F4F", '_label -> "Мой цвет")
+    @*inputText(sf("meta.color"), '_placeholder -> "4F4F4F", '_label -> "Мой цвет")*@
+
+    <table class="input-wrap big" cellspacing="0" cellpadding="0">
+      <td class="left">
+        <label for="meta_color">Мой цвет:</label>
+      </td>
+      <td class="right">
+        <div class="lk-color-select__color lk-color-select__color_custom js-custom-color" style="background: #4F4F4F;">
+          <div></div>
+          <input id="meta_color" type="hidden" name="meta.color" value="4F4F4F"/>
+        </div>
+      </td>
+    </table>
 
     @* Поля этажа/секции доступны только владельцу ТЦ, т.е. если !isLimited. Задаём атрибут через хвост-список. *@
     @defining(if(isLimited) List('disabled -> "disabled") else Nil) { attrsRest =>
