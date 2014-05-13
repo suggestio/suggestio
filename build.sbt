@@ -16,7 +16,7 @@ resolvers ++= Seq(
 
 libraryDependencies ++= {
   val slf4jVsn      = "1.7.+"
-  val esVsn         = "1.1.0"
+  val esVsn         = "1.1.1"
   val hadoopVsn     = "2.4.+"
   val hbaseVsn      = "0.98.1-hadoop2"
   val akkaVsn       = "2.3.+"

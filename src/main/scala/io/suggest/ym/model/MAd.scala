@@ -168,10 +168,28 @@ case class MAd(
 
 
 /** JMX MBean интерфейс */
-trait MAdJmxMBean extends EsModelJMXMBeanCommon
+trait MAdJmxMBean extends EsModelJMXMBeanCommon {
+  def searchForReceiverAtPubLevel(receiverId: String, level: String): String
+}
 
 /** JMX MBean реализация. */
 case class MAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase with MAdJmxMBean {
   def companion = MAd
+
+  override def searchForReceiverAtPubLevel(receiverId: String, level: String): String = {
+    val searchArgs = new AdsSearchArgsT {
+      override def levelOpt = Some(level.trim).filter(!_.isEmpty).flatMap(AdShowLevels.maybeWithName)
+      override def receiverIdOpt = Some(receiverId.trim).filter(!_.isEmpty)
+      override def maxResults: Int = 100
+      override def offset: Int = 0
+      override def catIdOpt: Option[String] = None
+      override def producerIdOpt: Option[String] = None
+      override def qOpt: Option[String] = None
+    }
+    MAd.searchAds(searchArgs).map {
+      _.map(_.toJsonPretty)
+        .mkString("\n,\n")
+    }
+  }
 }

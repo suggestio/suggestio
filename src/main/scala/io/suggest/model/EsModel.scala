@@ -638,6 +638,7 @@ trait EsModelMinimalT {
   @JsonIgnore def postDeserialize() {}
 
   @JsonIgnore def toJson: String
+  @JsonIgnore def toJsonPretty: String = toJson
 
   @JsonIgnore
   def id: Option[String]
@@ -705,7 +706,11 @@ trait EsModelMinimalT {
 /** Шаблон для динамических частей ES-моделей. */
 trait EsModelT extends EsModelMinimalT {
   override type T <: EsModelT
-  def toJson = JsObject(writeJsonFields(Nil)).toString()
+
+  def toPlayJson = JsObject(writeJsonFields(Nil))
+  def toJson = toPlayJson.toString()
+  override def toJsonPretty: String = Json.prettyPrint(toPlayJson)
+
   def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc
 }
 
@@ -850,11 +855,8 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon {
   }
 
   override def getById(id: String): String = {
-    val docOpt: Option[_] = companion.getById(id)
-    docOpt match {
-      case None => null
-      case Some(obj) => JacksonWrapper.serializePretty(obj)
-    }
+    companion.getById(id)
+      .fold("not found")(_.toJsonPretty)
   }
 
   override def getAllIds(maxResults: Int): String = {
