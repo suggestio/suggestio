@@ -328,6 +328,8 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
 
   .billing-but
+    margin-top: 7px
+    margin-right: 20px
     display: inline-block
     border: 1px solid #646464
     border-radius(10px)
@@ -346,6 +348,10 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
         color: white
         text-decoration: none
 
+        span
+          font-size: 12px
+          font-family: 'Arial'
+
   .billing-but:hover
     .white-border-top
 
@@ -356,6 +362,19 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     .white-border-top
       border-color: #3e718f
       background: #3e718f
+
+
+
+  .logout-but
+    float: right
+    display: inline-block
+    width: 49px
+    height: 49px
+    cursor: pointer
+    background: url('/assets/images/market/lk/logout-but.png') no-repeat
+    background-position: 0 -99px
+  .logout-but:hover
+    background-position: 0 0
 
 
 

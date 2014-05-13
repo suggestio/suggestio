@@ -34,25 +34,12 @@
         <div class="auth">
 
           @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
-          <div class="billing-but">
-            <div class="white-border-top">
-              @adnIdOpt.map { adnId =>
-                @billing._billBallanceWidgetTpl(adnId)
-              }
-            </div>
-          </div>
 
-          <span class="user hover">
-	        @username<span class="select-but">&nbsp;</span>
-            <ul class="drop-menu">
-              <li>
-                <a href="@routes.MarketLk.lkList">Мой профиль</a>
-              </li>
-              <li>
-                <a href="@routes.Ident.logout">Выйти</a>
-              </li>
-            </ul>
-          </span>
+          @adnIdOpt.map { adnId =>
+              @billing._billBallanceWidgetTpl(adnId)
+          }
+
+          <a class="logout-but" href="@routes.Ident.logout"></a>
 
         </div>
       }
