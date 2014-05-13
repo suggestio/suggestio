@@ -435,22 +435,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
   /* Магазины (арендаторы ТЦ). */
 
-  /** Выдать страницу со списком всех магазинов в порядке их создания. */
-  def shopsList = IsSuperuser.async { implicit request =>
-    val mcsFut = allCompaniesMap
-    val mmsFut = MAdnNode.findAllByType(AdNetMemberTypes.MART).map {
-      _.map { mmart  =>  mmart.id.get -> mmart }.toMap
-    }
-    for {
-      shops <- MAdnNode.findAllByType(AdNetMemberTypes.SHOP)
-      mcs   <- mcsFut
-      mms   <- mmsFut
-    } yield {
-      Ok(shop.shopsListTpl(shops, marts=Some(mms), companies=Some(mcs)))
-    }
-  }
-
-
   /** Рендер ошибки, если магазин не найден в базе. */
   private def shopNotFound(shopId: String) = NotFound("Shop not found: " + shopId)
 
