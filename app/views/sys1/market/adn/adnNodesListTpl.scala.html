@@ -11,8 +11,10 @@
 
 @adnBase("Узлы", hPathAfter = Some(hPathAfter)) {
   @if(adnNodes.isEmpty) {
-    Торговых центров пока нет.
+    Узлов рекламной сети пока нет.
   } else {
     @_adnNodesListTpl(adnNodes, companies)
   }
+  <br/>
+  <p><a class="add" href="@routes.SysMarket.createAdnNode()">Добавить ADN-узел верхнего уровня</a></p>
 }

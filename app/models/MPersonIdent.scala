@@ -15,6 +15,7 @@ import scala.collection.JavaConversions._
 import scala.collection.Map
 import play.api.libs.json.{JsBoolean, JsString}
 import util.PlayMacroLogsImpl
+import io.suggest.event.SioNotifierStaticClientI
 
 /**
  * Suggest.io
@@ -237,6 +238,16 @@ object EmailPwIdent extends EsModelStaticT with MPersonIdentSubmodelStatic with 
   }
 }
 
+trait MozillaPersonaIdentJmxMBean extends EsModelJMXMBeanCommon
+class MozillaPersonaIdentJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase
+  with MozillaPersonaIdentJmxMBean
+{
+  override def companion = MozillaPersonaIdent
+}
+
+
+
 /**
  * Идентификация по email и паролю.
  * @param email Электропочта.
@@ -259,6 +270,14 @@ case class EmailPwIdent(
   def writeVerifyInfo: Boolean = true
   def value: Option[String] = Some(pwHash)
   def checkPassword(password: String) = checkHash(password, pwHash)
+}
+
+trait EmailPwIdentJmxMBean extends EsModelJMXMBeanCommon
+class EmailPwIdentJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase
+  with EmailPwIdentJmxMBean
+{
+  override def companion = EmailPwIdent
 }
 
 
@@ -326,3 +345,10 @@ case class EmailActivation(
   def value: Option[String] = None
 }
 
+trait EmailActivationJmxMBean extends EsModelJMXMBeanCommon
+class EmailActivationJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase
+  with EmailActivationJmxMBean
+{
+  override def companion = EmailActivation
+}
