@@ -57,6 +57,8 @@ blocks.field.saleMaskColor=SALE mask color
 blocks.field.bgColor=Background color
 blocks.field.circleFillColor=Circles fill color
 blocks.field.borderColor=Border color
+blocks.field.discoIconColor=Discount icon color
+blocks.field.discoBorderColor=Discount border color
 
 
 lk.sl.enable_ad=Enable ad

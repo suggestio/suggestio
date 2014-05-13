@@ -14,12 +14,12 @@
 
     @_saleIcon13Tpl(
       cssClass = "svg",
-      fillColor = mad.colors.getOrElse(bc.saleIconColorBf.name, bc.saleIconColorBf.anyDefaultValue)
+      fillColor = mad.colors.getOrElse(bc.discoIconColorBf.name, bc.discoIconColorBf.anyDefaultValue)
     )
 
     @_saleIconMask13Tpl(
       cssClass = "svg-mask",
-      fillColor = mad.colors.getOrElse(bc.saleIconMaskColorBf.name, bc.saleIconMaskColorBf.anyDefaultValue)
+      fillColor = mad.colors.getOrElse(bc.discoBorderColorBf.name, bc.discoBorderColorBf.anyDefaultValue)
     )
 
     @mad.offers.headOption.map { offer =>

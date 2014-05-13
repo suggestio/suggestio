@@ -790,21 +790,21 @@ object BlocksConf extends Enumeration {
 
   val Block13 = new Val(13, "svgBgSlogan13") with SaveBgImg {
     val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460))
-    val saleColorBf = BfColor("saleColor", defaultValue = Some("828fa0"))
-    val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("FFFFFF"))
+    val discoIconColorBf = BfColor("discoIconColor", defaultValue = Some("828fa0"))
+    val discoBorderColorBf = BfColor("discoBorderColor", defaultValue = Some("FFFFFF"))
     val discountBf = BfDiscount("discount", min = -9.9F, max = 99F)
     val textBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, saleColorBf, saleMaskColorBf, bgImgBf, discountBf, textBf
+      heightBf, discoIconColorBf, discoBorderColorBf, bgImgBf, discountBf, textBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
     override def strictMapping: Mapping[BlockMapperResult] = mapping(
       heightBf.getStrictMappingKV,
-      saleColorBf.getStrictMappingKV,
-      saleMaskColorBf.getStrictMappingKV,
+      discoIconColorBf.getStrictMappingKV,
+      discoBorderColorBf.getStrictMappingKV,
       bgImgBf.getStrictMappingKV,
       discountBf.getOptionalStrictMappingKV,
       textBf.getOptionalStrictMappingKV
@@ -822,8 +822,8 @@ object BlocksConf extends Enumeration {
         ),
         offers = List(blk),
         colors = Map(
-          saleColorBf.name -> saleColor,
-          saleMaskColorBf.name -> saleMaskColor
+          discoIconColorBf.name -> saleColor,
+          discoBorderColorBf.name -> saleMaskColor
         )
       )
       BlockMapperResult(bd, bgBim)
@@ -834,8 +834,8 @@ object BlocksConf extends Enumeration {
       val offerOpt = bmr.bd.offers.headOption
       val discount = offerOpt.flatMap(_.discount)
       val text = offerOpt.flatMap(_.text2)
-      val saleColor = bmr.bd.colors.get(saleColorBf.name).getOrElse(saleColorBf.anyDefaultValue)
-      val saleMaskColor = bmr.bd.colors.get(saleMaskColorBf.name).getOrElse(saleMaskColorBf.anyDefaultValue)
+      val saleColor = bmr.bd.colors.get(discoIconColorBf.name).getOrElse(discoIconColorBf.anyDefaultValue)
+      val saleMaskColor = bmr.bd.colors.get(discoBorderColorBf.name).getOrElse(discoBorderColorBf.anyDefaultValue)
       Some( (height, saleColor, saleMaskColor, bgBim, discount, text) )
     }
 
@@ -978,13 +978,13 @@ object BlocksConf extends Enumeration {
 
     val bgColorBf = BfColor("bgColor", defaultValue = Some("FFFFFF"))
     val circleFillColorBf = BfColor("circleFillColor", defaultValue = Some("f9daac"))
-    val saleIconColorBf = BfColor("saleIconColor", defaultValue = Some("ce2222"))
-    val saleIconMaskColorBf = BfColor("saleIconMaskColor", defaultValue = Some("FFFFFF"))
+    val discoIconColorBf = BfColor("discoIconColor", defaultValue = Some("ce2222"))
+    val discoBorderColorBf = BfColor("discoBorderColor", defaultValue = Some("FFFFFF"))
 
     val blockWidth: Int
 
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, bgColorBf, bgImgBf, circleFillColorBf, titleBf, discoBf, saleIconColorBf, saleIconMaskColorBf
+      heightBf, bgColorBf, bgImgBf, circleFillColorBf, titleBf, discoBf, discoIconColorBf, discoBorderColorBf
     )
 
     override def strictMapping: Mapping[BlockMapperResult] = mapping(
@@ -994,8 +994,8 @@ object BlocksConf extends Enumeration {
       circleFillColorBf.getStrictMappingKV,
       titleBf.getOptionalStrictMappingKV,
       discoBf.getOptionalStrictMappingKV,
-      saleIconColorBf.getStrictMappingKV,
-      saleIconMaskColorBf.getStrictMappingKV
+      discoIconColorBf.getStrictMappingKV,
+      discoBorderColorBf.getStrictMappingKV
     )
     {(height, bgColor, bgBim, circleFillColor, titleOpt, discoOpt, saleIconColor, saleIconMaskColor) =>
       val blk = AOBlock(
@@ -1012,8 +1012,8 @@ object BlocksConf extends Enumeration {
         colors = Map(
           bgColorBf.name           -> bgColor,
           circleFillColorBf.name   -> circleFillColor,
-          saleIconColorBf.name     -> saleIconColor,
-          saleIconMaskColorBf.name -> saleIconMaskColor
+          discoIconColorBf.name     -> saleIconColor,
+          discoBorderColorBf.name -> saleIconMaskColor
         )
       )
       BlockMapperResult(bd, bgBim)
@@ -1025,8 +1025,8 @@ object BlocksConf extends Enumeration {
       val discoOpt = offerOpt.flatMap(_.discount)
       val bgColor = bmr.bd.colors.get(bgColorBf.name).getOrElse(bgColorBf.anyDefaultValue)
       val circleFillColor = bmr.bd.colors.getOrElse(circleFillColorBf.name, circleFillColorBf.anyDefaultValue)
-      val saleIconColor = bmr.bd.colors.getOrElse(saleIconColorBf.name, saleIconColorBf.anyDefaultValue)
-      val saleIconMaskColor = bmr.bd.colors.getOrElse(saleIconMaskColorBf.name, saleIconMaskColorBf.anyDefaultValue)
+      val saleIconColor = bmr.bd.colors.getOrElse(discoIconColorBf.name, discoIconColorBf.anyDefaultValue)
+      val saleIconMaskColor = bmr.bd.colors.getOrElse(discoBorderColorBf.name, discoBorderColorBf.anyDefaultValue)
       val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
       Some( (height, bgColor, bgBim, circleFillColor, titleOpt, discoOpt, saleIconColor, saleIconMaskColor) )
     }
