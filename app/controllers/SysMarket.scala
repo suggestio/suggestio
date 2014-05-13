@@ -359,37 +359,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
 
-  private val martMetaM = mapping(
-    "name"      -> nameM,
-    "town"      -> townM,
-    "address"   -> martAddressM,
-    "siteUrl"   -> urlStrOptM,
-    "color"     -> colorOptM,
-    "phone"     -> phoneOptM
-  )
-  {(name, town, address, siteUrlOpt, colorOpt, phoneOpt) =>
-    AdnMMetadata(
-      name    = name,
-      town    = Some(town),
-      address = Some(address),
-      siteUrl = siteUrlOpt,
-      phone   = phoneOpt,
-      color   = colorOpt
-    )
-  }
-  {meta =>
-    import meta._
-    Some((name, town.getOrElse(""), address.getOrElse(""), siteUrl, color, phone))
-  }
-
-  /** Маппинг для формы добавления/редактирования торгового центра. */
-  private val martFormM = Form(tuple(
-    "meta"   -> martMetaM,
-    "isEnabled" -> boolean,
-    "maxAds" -> default(number(min = 0, max = 30), ShowLevelsUtil.MART_LVL_IN_START_PAGE_DFLT)
-  ))
-
-
   /** Отображение одного ТЦ. */
   def martShow(martId: String) = IsSuperuser.async { implicit request =>
     getMartById(martId) flatMap {
@@ -408,44 +377,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
   private def martNotFound(martId: String) = NotFound("Mart not found: " + martId)
 
-  /** Рендер страницы с формой редактирования торгового центра. */
-  def martEditForm(mart_id: String) = IsSuperuser.async { implicit request =>
-    getMartById(mart_id) map {
-      case Some(mmart) =>
-        val maxOwnAdsOnStartPage = mmart.adn.showLevelsInfo.maxOutAtLevel(AdShowLevels.LVL_START_PAGE)
-        val form = martFormM.fill((mmart.meta, mmart.adn.isEnabled, maxOwnAdsOnStartPage))
-        Ok(mart.martEditFormTpl(mmart, form))
-
-      case None => martNotFound(mart_id)
-    }
-  }
-
-  /** Сабмит формы редактирования торгового центра. */
-  def martEditFormSubmit(martId: String) = IsSuperuser.async { implicit request =>
-    getMartById(martId) flatMap {
-      case Some(mmart) =>
-        martFormM.bindFromRequest().fold(
-          {formWithErrors =>
-            NotAcceptable(mart.martEditFormTpl(mmart, formWithErrors))
-          },
-          {case (martMeta, isEnabled, maxOwnAdsOnStartPage) =>
-            mmart.meta.name = martMeta.name
-            mmart.meta.town = martMeta.town
-            mmart.meta.address = martMeta.address
-            mmart.meta.siteUrl = martMeta.siteUrl
-            mmart.meta.color = martMeta.color
-            mmart.meta.phone = martMeta.phone
-            mmart.adn.showLevelsInfo.setMaxOutAtLevel(AdShowLevels.LVL_START_PAGE, maxOwnAdsOnStartPage)
-            mmart.adn.isEnabled = isEnabled
-            mmart.save map { _martId =>
-              Redirect(routes.SysMarket.martShow(_martId))
-            }
-          }
-        )
-
-      case None => martNotFound(martId)
-    }
-  }
 
   // Инвайты на управление ТЦ
 
