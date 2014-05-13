@@ -41,6 +41,26 @@ editing.of.amt.profile.r=Restaurant profile edit
 editing.of.amt.profile.R=Supervisor profile edit
 
 
+blocks.field.price=Price
+blocks.field.oldPrice=Old price
+blocks.field.height=Block height
+blocks.field.title=Title
+blocks.field.text1=Text 1
+blocks.field.text2=Text 2
+blocks.field.discount=Discount
+blocks.field.logo=Logo
+blocks.field.lineColor=Line color
+blocks.field.bottomColor=Bottom color
+blocks.field.topColor=Top color
+blocks.field.descr=Description
+blocks.field.saleMaskColor=SALE mask color
+blocks.field.bgColor=Background color
+blocks.field.circleFillColor=Circles fill color
+blocks.field.borderColor=Border color
+blocks.field.discoIconColor=Discount icon color
+blocks.field.discoBorderColor=Discount border color
+
+
 lk.sl.enable_ad=Enable ad
 lk.sl.d=Show on start page
 lk.sl.h=Show in common catalog

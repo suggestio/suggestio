@@ -1,11 +1,11 @@
 package controllers
 
 import play.api.mvc._
-import util.{PlayMacroLogsImpl, SiobixFs, DateTimeUtil}
+import _root_.util.{FormUtil, PlayMacroLogsImpl, SiobixFs, DateTimeUtil}
 import org.apache.hadoop.fs.Path
 import io.suggest.util.SioConstants._
 import play.api.libs.concurrent.Execution.Implicits._
-import io.suggest.model.{MUserImgOrig, MImgThumb}
+import io.suggest.model.{MUserImgMetadata, MUserImgOrig, MImgThumb, ImgWithTimestamp}
 import org.joda.time.Instant
 import play.api.Play.current
 import util.acl.IsAuth
@@ -13,9 +13,13 @@ import _root_.util.img._
 import play.api.libs.json._
 import scala.concurrent.duration._
 import models.MPictureTmp
-import io.suggest.model.ImgWithTimestamp
 import net.sf.jmimemagic.Magic
 import scala.concurrent.Future
+import views.html.img._
+import play.api.data._, Forms._
+import io.suggest.img.ConvertModes
+import io.suggest.model
+import io.suggest.ym.model.common.MImgInfoMeta
 
 /**
  * Suggest.io
@@ -25,7 +29,7 @@ import scala.concurrent.Future
  * Изначально контроллер служил только для превьюшек картинок, и назывался "Thumb".
  */
 
-object Img extends SioController with PlayMacroLogsImpl {
+object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
 
   import LOGGER._
 
@@ -73,21 +77,28 @@ object Img extends SioController with PlayMacroLogsImpl {
 
   /**
    * Раздача оригиналов сохраненных в HBase картинок.
-   * @param imgId id картинки.
+   * @param filename id картинки.
    * @return Оригинал картинки.
    */
-  def getOrig(imgId: String) = Action.async { implicit request =>
-    suppressQsFlood(routes.Img.getOrig(imgId)) {
-      MUserImgOrig.getById(imgId) map {
+  def getOrig(filename: String) = {
+    val oiik = OrigImgIdKey(filename)
+    getOrigIik(oiik)
+  }
+
+  def getOrigIik(oiik: OrigImgIdKey) = Action.async { implicit request =>
+    import oiik.filename
+    suppressQsFlood(routes.Img.getOrig(filename)) {
+      MUserImgOrig.getById(oiik.data.rowKey, q = oiik.origQualifierOpt) map {
         case Some(its) =>
           serveImgBytes(its, CACHE_ORIG_CLIENT_SECONDS)
 
         case None =>
-          info(s"getOrig($imgId): 404")
+          info(s"getOrig($filename): 404")
           imgNotFound
       }
     }
   }
+
 
   /** Обслуживание картинки. */
   private def serveImgBytes(its: ImgWithTimestamp, cacheSeconds: Int)(implicit request: RequestHeader) = {
@@ -119,29 +130,7 @@ object Img extends SioController with PlayMacroLogsImpl {
   /** Загрузка сырой картинки для дальнейшей базовой обработки (кадрирования).
     * Картинка загружается в tmp-хранилище, чтобы её можно было оттуда оперативно удалить и иметь реалтаймовый доступ к ней. */
   def handleTempImg = IsAuth(parse.multipartFormData) { implicit request =>
-    request.body.file("picture") match {
-      case Some(pictureFile) =>
-        val fileRef = pictureFile.ref
-        val srcFile = fileRef.file
-        val mptmp = MPictureTmp.getForTempFile(fileRef)
-        try {
-          OrigImageUtil.convert(srcFile, mptmp.file)
-          Ok(jsonTempOk(mptmp.filename))
-
-        } catch {
-          case ex: Throwable =>
-            debug(s"ImageMagick crashed on file $srcFile ; orig: ${pictureFile.filename} :: ${pictureFile.contentType} [${srcFile.length} bytes]", ex)
-            val reply = jsonImgError("Unsupported picture format.")
-            BadRequest(reply)
-
-        } finally {
-          srcFile.delete()
-        }
-
-      case None =>
-        val reply = jsonImgError("Picture not found in request.")
-        NotAcceptable(reply)
-    }
+    _handleTempImg(OrigImageUtil, marker = None)
   }
 
   /** Раздавалка картинок, созданных в [[handleTempImg]]. */
@@ -172,7 +161,7 @@ object Img extends SioController with PlayMacroLogsImpl {
     if (iik.isValid) {
       iik match {
         case tiik: TmpImgIdKey  => getTempImg(imgId)
-        case oiik: OrigImgIdKey => getOrig(imgId)
+        case oiik: OrigImgIdKey => getOrigIik(oiik)
       }
     } else {
       trace(s"invalid img id: " + iik)
@@ -217,6 +206,72 @@ object Img extends SioController with PlayMacroLogsImpl {
       "image_key"  -> JsString(filename),
       "image_link" -> JsString(routes.Img.getTempImg(filename).url)
     ))
+  }
+
+
+  /** Отрендерить оконный интерфейс для кадрирования картинки. */
+  def imgCropForm(imgId: String, width: Int, height: Int, markerOpt: Option[String]) = {
+    IsAuth.async { implicit request =>
+      val iik0 = ImgIdKey(imgId)
+      val iik = iik0.uncropped
+      iik.getImageWH map { imetaOpt =>
+        val imeta: MImgInfoMeta = imetaOpt getOrElse {
+          val stub = MImgInfoMeta(640, 480)
+          warn("Failed to fetch image w/h metadata for iik " + iik + " . Returning stub metadata: " + stub)
+          stub
+        }
+        Ok(cropTpl(iik.filename, width, height, markerOpt, imeta, iik0.cropOpt))
+      }
+    }
+  }
+
+
+  private val imgCropFormM = Form(tuple(
+    "imgId"  -> ImgFormUtil.imgIdM,
+    "crop"   -> ImgFormUtil.imgCropM,
+    "marker" -> optional(text(maxLength = 32))
+  ))
+
+  /** Сабмит запроса на кадрирование картинки. В сабмите данные по исходной картинке и данные по кропу. */
+  def imgCropSubmit = IsAuth.async { implicit request =>
+    imgCropFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug("imgCropSubmit(): Failed to bind form: " + formatFormErrors(formWithErrors))
+        NotAcceptable("crop request parse failed")
+      },
+      {case (iik0, icrop, markerOpt) =>
+        // Нужно получить исходную картинку из хранилища в файл.
+        val origMptmpFut: Future[MPictureTmp] = iik0 match {
+          case tiik: TmpImgIdKey =>
+            // Для временной картинки файл уже доступен.
+            Future successful tiik.mptmp
+          case oiik: OrigImgIdKey =>
+            // Нужно выкачать из hbase исходную картинку во временный файл.
+            MUserImgOrig.getById(oiik.data.rowKey, q = None) map { oimgOpt =>
+              val oimg = oimgOpt.get
+              val magicMatch = Magic.getMagicMatch(oimg.img)
+              val oif = OutImgFmts.forImageMime(magicMatch.getMimeType)
+              val mptmp = MPictureTmp.mkNew(markerOpt, cropOpt = None, oif)
+              mptmp.writeIntoFile(oimg.img)
+              mptmp
+            }
+        }
+        // В будущем уже есть на руках исходная картинка. Надо запустить кроп.
+        origMptmpFut map { origMptmp =>
+          // TODO Нужно дополнительно провалидировать значение icrop, чтобы не было попыток DoS-атаки через 100000000x100000000+10000000...
+          val cropOpt = Some(icrop)
+          val croppedMptmpData = origMptmp.data.copy(cropOpt = cropOpt)
+          val croppedMptmp = MPictureTmp(data = croppedMptmpData)
+          OrigImageUtil.convert(
+            fileOld = origMptmp.file,
+            fileNew = croppedMptmp.file,
+            crop = cropOpt,
+            mode = ConvertModes.STRIP
+          )
+          Ok(jsonTempOk(croppedMptmp.filename))
+        }
+      }
+    )
   }
 
 }

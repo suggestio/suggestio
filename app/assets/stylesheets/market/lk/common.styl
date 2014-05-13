@@ -21,10 +21,15 @@ transform(v)
   -webkit-transform: v
   transform: v
 
+.clear
+  clear: both
+
 @css {
   @import url(http://fonts.googleapis.com/css?family=PT+Sans+Narrow:700,400&subset=cyrillic-ext,latin-ext);
 
 }
+
+lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
 @font-face
     font-family: 'ParagNorCIta'
@@ -954,9 +959,6 @@ transform(v)
       margin-left: 1px
 
 
-
-
-
 @import "../reset"
 @import "base"
 @import "main-page"
@@ -966,3 +968,274 @@ transform(v)
 
 @import "ads-list"
 @import "cbca-select"
+
+/* Разные окошки, которые нужно отображать поверх всего */
+.lk-overlay-data
+  display: none
+  position: fixed
+  left: 0px
+  top: 0px
+  width: 100%
+  height: 100%
+  z-index: 10000
+
+.lk-overlay-data__window
+  width: 700px
+  margin: 50px auto
+  padding: 20px
+  background: #e1e1e1
+
+/* Окошко для кадрирования картинок */
+.market-crop-tool
+  padding: 10px
+  border: 1px red solid
+
+.market-crop-tool__container
+  border: 1px #ccc solid
+  overflow: hidden
+
+/* Мелкая ссылка */
+.lk-small-link
+  font-size: 12px
+
+.lk-small-link_gray
+  color: #333
+
+/* Инпут для загрузки картинки */
+.lk-file-input
+  position: relative
+  height: 30px
+
+.lk-file-input__div
+  cursor: pointer
+  position: absolute
+  left: 0px
+  top: 0px
+  color: #959595
+  font-size: 12px
+  border: 1px #b2b2b2 solid
+  border-radius( 20px )
+
+.lk-file-input__div-inner
+  cursor: pointer
+  border-top: 1px #fff solid
+  border-radius( 20px )
+  padding: 4px 10px
+  width: 160px
+  text-align: center
+  background: #e2e2e2
+
+  background: -moz-linear-gradient(top,  #efefef 0%, #e2e2e2 100%)
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#efefef), color-stop(100%,#e2e2e2));
+  background: -webkit-linear-gradient(top,  #efefef 0%,#e2e2e2 100%)
+  background: -o-linear-gradient(top,  #efefef 0%,#e2e2e2 100%)
+  background: -ms-linear-gradient(top,  #efefef 0%,#e2e2e2 100%)
+  background: linear-gradient(to bottom,  #efefef 0%,#e2e2e2 100%)
+
+
+.lk-file-input__input
+  opacity: 0
+  cursor: pointer
+
+/* Поля ввода */
+.lk-text-field
+  border: 1px #b2b2b2 solid
+  padding: 1px
+
+  div
+    border-top: 1px #d3d3d3 solid
+    border-left: 1px #fbfbfb solid
+    border-right: 1px #fbfbfb solid
+    padding: 10px 15px
+    background: #fff
+
+    input,
+    textarea
+      width: 100%
+      outline: none
+
+.lk-color-select
+  width: 100px
+  padding-top: 5px
+
+.lk-color-select__label,
+.lk-color-select__color
+  float: left
+
+.lk-color-select__label
+  padding-top: 6px
+  width: 45px
+  color: #959595
+  font-size: 12px
+  font-family: Arial
+
+.lk-color-select__label_hidden
+  display: none
+
+.lk-color-select__color
+  cursor: pointer
+  position: relative
+  width: 27px
+  height: 27px
+  border: 1px #b2b2b2 solid
+
+.lk-color-select__color_custom
+  div
+    position: absolute
+    left: 0px
+    top: 0px
+    width: 27px
+    height: 27px
+    background: lk_sprite
+    background-position: left -190px
+
+.lk-field-w-colorpicker__left,
+.lk-field-w-colorpicker__right
+  float: left
+
+.lk-field-w-colorpicker__right
+  padding-left: 20px
+
+.lk-fieldeset_wide
+  width: 360px
+
+/* Общие стили */
+.lk-edit-form__block
+  margin: 10px 0px
+
+.lk-edit-form__block_title
+  background: #dad9d9
+  padding: 17px 11px
+  color: #676666
+  font-weight: bold
+
+.lk-edit-form__block_body
+  background: #efefef
+  padding: 20px 22px
+
+.lk-h2
+  color: #676666
+  font-size: 14px
+  font-weight: bold
+  padding: 10px 0px
+
+/* Список блоков в виде иконок */
+.lk-edit-form__blocks-list-icons
+  padding: 0px
+
+.blocks-list-icons__single-icon
+  float: left
+  cursor: pointer
+  background: #efefef
+  width: 60px
+  height: 60px
+  margin-right: 10px
+  margin-bottom: 15px
+  border: 1px transparent solid
+  background-image: url('/assets/images/block-icons-sprite.png')
+
+.blocks-list-icons__single-icon_active
+  cursor: default
+  border-color: #a2a2a2
+  background-color: #e1e1e1
+  box-shadow( inset 0px 2px 3px #a8acaf )
+
+.block-list-icon-1
+  background-position: left -959px
+
+.block-list-icon-2,
+.block-list-icon-7
+  background-position: left -1039px
+
+.block-list-icon-3
+  background-position: left -879px
+
+.block-list-icon-4
+  background-position: left -3259px
+
+.block-list-icon-5
+  background-position: left -1359px
+
+.block-list-icon-6
+  background-position: left -1439px
+
+.block-list-icon-8
+  background-position: left -639px
+
+.block-list-icon-9
+  background-position: left -799px
+
+.block-list-icon-10
+  background-position: left -79px
+
+.block-list-icon-11
+  background-position: left -160px
+
+.block-list-icon-12
+  background-position: left -239px
+
+.block-list-icon-13
+  background-position: left -3179px
+
+.block-list-icon-14
+  background-position: 0px -1199px
+
+.block-list-icon-15
+  background-position: 0px -400px
+
+/* Блок с превьюшкой и редактором блока */
+.lk-ad-block-edit-form__preview
+  width: 340px
+  min-height: 100px
+  float: left
+
+.lk-ad-block-edit-form__preview_container
+  background: url('/assets/images/ld-ad-block-size-grid.png') no-repeat left top
+  float: left
+  min-height: 140px
+  min-width: 140px
+  padding-left: 23px
+  padding-top: 24px
+
+  .sio-mart__single-offer
+    position: relative
+
+
+.lk-ad-block-edit-form__editor
+  width: 480px
+  float: left
+
+/* Блока редактора блока с полями ввода */
+.ad-block-editor__fieldset
+  margin: 20px 0px
+
+.ad-block-editor__fieldset_label
+  display: block
+  padding: 5px 0px
+  color: #838383
+  font-family: Arial
+  font-size: 12px
+  font-weight: bold
+
+/* Редактор высоты блока */
+.block-height-editor
+  height: 21px
+
+.block-height-editor__button
+  float: left
+  border-top: 1px #c4c4c4 solid
+  border-bottom: 1px #f7f7f7 solid
+  margin-right: 8px
+
+  div
+    width: 22px
+    height: 21px
+    background: #efefef lk_sprite
+    background-position: 4px -165px
+    border: 1px #c4c4c4 solid
+    border-top: 1px #f7f7f7 solid
+    cursor: pointer
+
+.block-height-editor__button_increase
+  div
+    background-position: -18px -165px

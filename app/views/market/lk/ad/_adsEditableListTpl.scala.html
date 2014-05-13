@@ -1,4 +1,4 @@
-@(mads: Seq[MAdT], addCall: Call, editCall: String => Call, producer: MAdnNode, fallbackLogo: Option[MImgInfo] = None)(content: MAdT => Html)(implicit ctx: util.Context)
+@(mads: Seq[MAdT], addCall: Call, editCall: String => Call, producer: MAdnNode, fallbackLogo: Option[MImgInfoT] = None)(content: MAdT => Html)(implicit ctx: util.Context)
 
 @* Встраиваемый список изменяемых рекламных карточек.
    isShownF содержит функцию, которая определяет, является ли текущая карточка отображаемой на момент рендера.
@@ -8,25 +8,35 @@
 @import AdShowLevels._
 
 <div class="ads-list">
-    <span class="title">Рекламные плакаты</span>
-    <a class="add" href="@addCall">&nbsp;</a>
 
-    @mads.zipWithIndex.map { case (ad, i) =>
-      @* TODO Уровни отображения какого получателя надо брать за основу? Пока берутся все адресаты рекламы. *@
-      <div class="item @if(!ad.isPublished) {disabled}" style="@if(i%3 != 1) {margin-right: 30px;}">
-        <div class="preview" style="overflow: hidden;">
-            <div class="disabled-ad"></div>
-            <a class="hover" href="@editCall(ad.id.get)">&nbsp;</a>
-            <div class="preview" style="width: 768px; height: 1024px;-webkit-transform: scale3d(0.35,0.35,0.35);-webkit-transform-origin: 0px 0px; -moz-transform: scale3d(0.35,0.35,0.35);-moz-transform-origin: 0px 0px;">
-              @market.showcase._single_offer(ad, producer, fallbackLogo)
-            </div>
-        </div>
+  <div class="lk-h2">Рекламные плакаты</div>
 
+  <div class="ads-list__block ads-list-block">
+    <a class="ads-list-block__link" href="@addCall"></a>
+    <div class="ads-list-block__preview ads-list-block__preview_add-new">
+    </div>
+
+  </div>
+
+  @mads.zipWithIndex.map { case (ad, i) =>
+
+    @* TODO Уровни отображения какого получателя надо брать за основу? Пока берутся все адресаты рекламы. *@
+    <div class="ads-list__block ads-list-block @if(!ad.isPublished) {disabled}">
+
+      <div class="ads-list-block__preview">
+        @market.showcase._single_offer(ad, producer, fallbackLogo)
         @* Галочки рендерятся тут. *@
-        @content(ad)
-
+        <div class="ads-list-block__zigzag-mask"></div>
       </div>
-    }
+
+      <a class="ads-list-block__link" href="@editCall(ad.id.get)"></a>
+
+      @content(ad)
+
+    </div>
+
+  }
+
+  <div class="clear"></div>
+
 </div>
-
-

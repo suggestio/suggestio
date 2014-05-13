@@ -26,7 +26,6 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   val JSONP_CB_FUN = "siomart.receive_response"
 
-
   /** Входная страница для sio-market для ТЦ. */
   def martIndex(martId: String) = marketAction(martId) { implicit request =>
     val welcomeAdOptFut: Future[Option[MWelcomeAd]] = request.mmart.meta.welcomeAdId match {
@@ -58,12 +57,22 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
   def findAds(martId: String, adSearch: AdSearch) = marketAction(martId) { implicit request =>
+    val producerOptFut = adSearch.producerIdOpt
+      .fold [Future[Option[MAdnNode]]] { Future successful None } { MAdnNodeCache.getByIdCached }
     for {
       mads <- MAd.searchAds(adSearch)
       rmd  <- request.marketDataFut
+      producerOpt <- producerOptFut
     } yield {
-      val html = findAdsTpl(request.mmart, mads, rmd.mshops, rmd.mmcats)
-      jsonOk(html, "findAds")
+      val jsAction: String = if (adSearch.qOpt.isDefined) {
+        "searchAds"
+      } else if (producerOpt.isDefined) {
+        "producerAds"
+      } else {
+        "findAds"
+      }
+      val html = findAdsTpl(request.mmart, mads, rmd.mshops, rmd.mmcats, adSearch, producerOpt)
+      jsonOk(html, jsAction)
     }
   }
 

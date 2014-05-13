@@ -16,56 +16,6 @@ var cbca = {};
     $('#'+slideContentId).slideToggle();
   });
 
-
- $('.color.custom').each(
-  function() {
-
-    var $this = $(this),
-    updatePreview = false,
-    $wrap = $this.parent(),
-    $checkbox = $wrap.find('.one-checkbox');
-
-    $this.ColorPicker({
-      color: '#'+$this.find('input').val(),
-      onBeforeShow: function() {
-        if($checkbox.size()) {
-          $checkbox.trigger('click').get(0).checked = true;
-        }
-      },
-      onShow: function (colpkr) {
-        $(colpkr).fadeIn(500);
-        return false;
-      },
-      onHide: function (colpkr) {
-        $(colpkr).fadeOut(500);
-        return false;
-      },
-      onChange: function (hsb, hex, rgb) {
-
-        params = {
-          'background-color' : '#' + hex
-        }
-
-        $this.css( params )
-
-        if($checkbox.size()) {
-          $checkbox.attr('data-value', hex).get(0).checked = true;
-        }
-        $this.find('input').val(hex);
-        clearTimeout(updatePreview);
-        updatePreview = setTimeout(
-        function() {
-          $this.find('input').trigger('change');
-        }, 500);
-      }
-    });
-
-  });
-
-
-
-
-
 });
 
 function CbcaSelect(containerId) {

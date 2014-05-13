@@ -1,10 +1,9 @@
 package controllers
 
-import util.PlayMacroLogsImpl
+import util.{FormDataSerializer, PlayMacroLogsImpl}
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
-import util.img.ImgFormUtil._
 import util.FormUtil._
 import play.api.data._, Forms._
 import util.acl._
@@ -12,11 +11,13 @@ import util.img._
 import scala.concurrent.Future
 import play.api.mvc.Request
 import play.api.Play.current
-import util.HtmlSanitizer.adTextFmtPolicy
 import io.suggest.ym.parsers.Price
 import io.suggest.model.MUserImgMetadata
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
+import util.blocks.BlockMapperResult
+import io.suggest.ym.model.common.EMImg.Imgs_t
+import ImgFormUtil.{IMETA_HEIGHT, IMETA_WIDTH}
 
 /**
  * Suggest.io
@@ -26,7 +27,7 @@ import MarketAdFormUtil._
  * для обновления рекламной карточки в реальном времени.
  */
 
-object MarketAdPreview extends SioController with PlayMacroLogsImpl {
+object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImgSupport {
   import LOGGER._
 
   /** Объект, содержащий дефолтовые значения для preview-формы. Нужен для возможности простого импорта значений
@@ -56,139 +57,39 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
 
   private val prevCatIdKM = CAT_ID_K -> optional(userCatIdM)
   /** Генератор preview-формы. Форма совместима с основной формой, но более толерантна к исходным данным. */
-  private def getPreviewAdFormM[T <: AdOfferT](offerM: Mapping[T]): AdFormM = Form(tuple(
-    AD_IMG_ID_K -> default(
-      mapping = imgIdJpegM,
-      value = OrigImgIdKey(PreviewFormDefaults.IMG_ID)
-    ),
-    LOGO_IMG_ID_K -> optional(ImgFormUtil.logoImgIdM(imgIdM)),
+  private def getPreviewAdFormM(blockM: Mapping[BlockMapperResult]): AdFormM = Form(
     "ad" -> mapping(
       prevCatIdKM,
-      panelColorKM,
-      OFFER_K -> offerM,
-      textAlignKM
-    )(adFormApply[T])(adFormUnapply[T])
-  ))
+      OFFER_K -> blockM
+    )(adFormApply)(adFormUnapply)
+  )
 
-  // offer-mapping'и
-  /** Толерантный к значениям маппинг для рекламной карточки продукта с ценой. */
-  private def previewProductM(vendorDflt: String) = {
-    mapping(
-      "vendor"    -> default(
-        mapping = mmaStringFieldM(
-          text.transform(
-            strTrimSanitizeF andThen { vendor =>
-              if(vendor.isEmpty)
-                vendorDflt
-              else if (vendor.length > VENDOR_MAXLEN)
-                vendor.substring(0, VENDOR_MAXLEN)
-              else vendor
-            },
-            strIdentityF
-          )
-        ),
-        value = AOStringField(vendorDflt, PreviewFormDefaults.TEXT_FONT)
-      ),
-
-      "price" -> mapping(
-        "value" -> priceM,
-        "color" -> fontColorM
-      )
-      {case ((rawPrice, priceOpt), font) =>
-        val price = priceOpt getOrElse PreviewFormDefaults.Product.PRICE_VALUE
-        AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font)
-      }
-      {mmadp =>
-        import mmadp._
-        Some((orig, Some(Price(value, currency))), font)
-      },
-
-      "oldPrice" -> mmaPriceOptM
-    )
-    { adProductMApply }
-    { adProductMUnapply }
+  private def detectAdPreviewForm(implicit request: Request[collection.Map[String, Seq[String]]]) = {
+    getAdPreviewForm(request.body)
   }
-
-
-  /** Кусок формы, ориентированный на оформление скидочной рекламы. */
-  private val previewAdDiscountM = {
-    val discountTextM = text(maxLength = 2 * DISCOUNT_TEXT_MAXLEN)
-      .transform(
-        strTrimSanitizeF andThen {s: String => if (s.length > DISCOUNT_TEXT_MAXLEN) s.substring(0, DISCOUNT_TEXT_MAXLEN) else s},
-        strIdentityF
-      )
-    val tplM = mapping(
-      "id"    -> default(
-        mapping = number(min = DISCOUNT_TPL_ID_MIN, max = DISCOUNT_TPL_ID_MAX),
-        value   = PreviewFormDefaults.Discount.TPL_ID
-      ),
-      "color" -> default(colorM, "ce2222")
-    )
-    { AODiscountTemplate.apply }
-    { AODiscountTemplate.unapply }
-    // Собираем итоговый маппинг для MMartAdDiscount.
-    mapping(
-      "text1"     -> optional(mmaStringFieldM(discountTextM)),
-      "discount"  -> {
-        val discountTolerantM = percentM.transform[Float](
-          {case (_, pcOpt) => pcOpt getOrElse PreviewFormDefaults.Discount.DISCOUNT },
-          {pc => adhocPercentFmt(pc) -> Some(pc) }
-        )
-        mmaFloatFieldOptM(discountTolerantM).transform(
-          {dcOpt => dcOpt getOrElse AOFloatField(PreviewFormDefaults.Discount.DISCOUNT, PreviewFormDefaults.TEXT_FONT) },
-          {dc: AOFloatField => Some(dc) }
-        )
-      },
-      "template"  -> tplM,
-      "text2"     -> optional(mmaStringFieldM(discountTextM))
-    )
-    { AODiscount.apply }
-    { AODiscount.unapply }
-  }
-
-
-  /** Форма для задания текстовой рекламы. */
-  private val previewAdTextM = {
-    val textM = default(
-      mapping = text
-        .transform({ adTextFmtPolicy.sanitize }, strIdentityF)
-        .transform(
-          { s => if (s.length > AD_TEXT_MAXLEN) s.substring(0, AD_TEXT_MAXLEN) else s},
-          strIdentityF
-        ),
-      value = PreviewFormDefaults.Text.TEXT
-    )
-    mapping(
-      "text" -> mmaStringFieldM(textM)
-    )
-    { AOText.apply }
-    { AOText.unapply }
-  }
-
-
-  private def previewAdProductFormM(vendorDflt: String) = getPreviewAdFormM(previewProductM(vendorDflt))
-  private val previewAdDiscountFormM = getPreviewAdFormM(previewAdDiscountM)
-  private val previewAdTextFormM = getPreviewAdFormM(previewAdTextM)
 
   /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
-  private def detectAdPreviewForm(vendorDflt: String)(implicit request: Request[collection.Map[String, Seq[String]]]): Either[AdFormM, (AdOfferType, AdFormM)] = {
-    val adModes = request.body.get("ad.offer.mode") getOrElse Nil
+  private def getAdPreviewForm(reqBody: collection.Map[String, Seq[String]]): Either[AdFormM, (BlockConf, AdFormM)] = {
+    // TODO adModes пора выпиливать. И этот Either заодно.
+    val adModes = reqBody.get("ad.offer.mode") getOrElse Nil
     adModes.headOption.flatMap { adModeStr =>
       AdOfferTypes.maybeWithName(adModeStr)
-    } map { adMode =>
-      val adForm = adMode match {
-        case AdOfferTypes.PRODUCT  => previewAdProductFormM(vendorDflt)
-        case AdOfferTypes.DISCOUNT => previewAdDiscountFormM
-        case AdOfferTypes.TEXT     => previewAdTextFormM
-      }
-      adMode -> adForm
+    } map {
+      case AdOfferTypes.BLOCK =>
+        val blockId: Int = reqBody.get("ad.offer.blockId")
+          .getOrElse(Nil)
+          .headOption
+          .fold(1)(_.toInt)
+        val blockConf: BlockConf = BlocksConf(blockId)
+        blockConf -> getPreviewAdFormM(blockConf.strictMapping)
     } match {
       case Some(result) =>
         Right(result)
 
       case None =>
         warn("detectAdForm(): valid AD mode not present in request body. AdModes found: " + adModes)
-        val form = MarketAd.shopAdProductFormM.withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
+        val form = getPreviewAdFormM(MarketAd.dfltBlock.strictMapping)
+          .withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
         Left(form)
     }
   }
@@ -197,29 +98,33 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
 
   def adFormPreviewSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
     import request.adnNode
-    detectAdPreviewForm(adnNode.meta.name) match {
-      case Right((offerType, adFormM)) =>
+    detectAdPreviewForm match {
+      case Right((bc, adFormM)) =>
         adFormM.bindFromRequest().fold(
           {formWithErrors =>
             debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))
             NotAcceptable("Preview form bind failed.")
           },
-          {case (iik, logoOpt, mad) =>
-            val fallbackLogoOptFut: Future[Option[MImgInfo]] = adnNode.adn.supId match {
-              case Some(supId) =>
-                MAdnNodeCache.getByIdCached(supId) map {
-                  _.flatMap(_.logoImgOpt)
-                }
-              case None => Future successful None
+          {case (mad, bim) =>
+            val fallbackLogoOptFut: Future[Option[MImgInfoT]] = {
+              MAdnNodeCache.maybeGetByIdCached(adnNode.adn.supId) map { parentAdnOpt =>
+                parentAdnOpt.flatMap(_.logoImgOpt)
+              }
             }
-            val imgMetaFut = previewPrepareImgMeta(iik)
-            mad.logoImgOpt = logoOpt
+            val imgsFut: Future[Imgs_t] = Future.traverse(bim) {
+              case (k, i4s) =>
+                previewPrepareImgMeta(i4s.iik) map {
+                  imgMetaOpt  =>  k -> MImgInfo(i4s.iik.filename, meta = imgMetaOpt)
+                }
+            } map {
+              _.toMap
+            }
             mad.producerId = adnId
             for {
-              imgMeta <- imgMetaFut
+              imgs <- imgsFut
               fallbackLogoOpt <- fallbackLogoOptFut
             } yield {
-              mad.img = MImgInfo(iik.key, meta = imgMeta)
+              mad.imgs = imgs
               Ok(_single_offer(mad, adnNode, fallbackLogo = fallbackLogoOpt ))
             }
           }
@@ -239,19 +144,79 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl {
         Future successful oiik.meta
       case oiik: OrigImgIdKey =>
         // Метаданных нет, но данные уже в базе. Надо бы прочитать метаданные из таблицы
-        MUserImgMetadata.getById(oiik.key) map { muimOpt =>
-          muimOpt.flatMap { muim =>
-            muim.md.get("w").flatMap { widthStr =>
-              muim.md.get("h").map { heightStr =>
-                MImgInfoMeta(height = heightStr.toInt, width = widthStr.toInt)
-              }
-            }
+        oiik.getImageWH
+          .recover {
+            case ex: Exception =>
+              error(s"previewPrepareImgMeta($iik): Failed to fetch img metadata from hbase", ex)
+              None
           }
-        } recover {
-          case ex: Exception =>
-            error(s"previewPrepareImgMeta($iik): Failed to fetch img metadata from hbase", ex)
-            None
-        }
+    }
+  }
+
+
+  /** Экшен смены блока редактора. */
+  def adBlockSwitchEditor(adnId: String) = IsAdnNodeAdmin(adnId).apply(parse.urlFormEncoded) { implicit request =>
+    detectAdPreviewForm match {
+      case Right((bc, newAdForm)) =>
+        // Для улучшения восстановления значений при переключении между формами разных блоков, используем сериализацию состояния формы в hidden-поле редактора.
+        val prevFormData: Map[String, String] = request.body.get("formData")
+          .flatMap(_.headOption)
+          .flatMap(FormDataSerializer.deserializeDataSafe)
+          .getOrElse {
+            request.body
+              .mapValues(_.headOption)
+              .filter(!_._2.isEmpty)
+              .mapValues(_.get)
+            }
+        val oldBindResultOpt = request.body.get("ad.offer.oldBlockId")
+          // Отрабатываем, если нет старого blockId. Такое маловероятно, скорее всего юзер выпилил соотв. input из формы.
+          .flatMap { _.headOption }
+          // Пытаемся забиндить форму старого блока и получить её значения.
+          .map { oldBlockIdStr =>
+            // Невалидность blockId считаем нештатной ситуацией, спровоцированной юзером.
+            val oldBlockId = oldBlockIdStr.toInt
+            val oldBc: BlockConf = BlocksConf(oldBlockId)
+            val oldForm = getPreviewAdFormM(oldBc.strictMapping)
+            val oldFormBinded = oldForm.bindFromRequest()
+            val vOpt = oldFormBinded.fold(
+              {oldFormWithErrors =>
+                debug(s"adBlockSwitchEditor(): Failed to bind OLD blockId=$oldBlockId form: ${formatFormErrors(oldFormWithErrors)}")
+                None
+              },
+              { Some.apply }
+            )
+            oldFormBinded -> vOpt
+          }
+        val formBinded0: AdFormM = oldBindResultOpt
+          .flatMap(_._2)
+          .fold
+            { newAdForm.bindFromRequest() }    // Если старая форма не прокатила, то накатить все данные на новую форму.
+            { newAdForm.fill }                 // Если старая форма схватилась, то залить её результаты в новую форму.
+        val formBinded = newAdForm
+          .bind(prevFormData ++ formBinded0.data)
+          .discardingErrors
+        val newFormData = (prevFormData ++ formBinded.data)
+          .filter {
+            case (k, v)  =>  !v.isEmpty && k != "ad.catId" && k != "ad.offer.blockId"
+          }
+        val formDataSer = FormDataSerializer.serializeData(newFormData)
+        Ok(bc.renderEditor(formBinded, formDataSer = Some(formDataSer)))
+
+      case Left(formWithErrors) =>
+        Ok(views.html.blocks.editor._blockEditorTpl(formWithErrors))
+    }
+  }
+
+
+
+  /** Подготовка картинки, которая загружается в динамическое поле блока. */
+  def prepareBlockImg(blockId: Int, fn: String) = IsAuth.apply(parse.multipartFormData) { implicit request =>
+    val bc = BlocksConf(blockId)
+    bc.blockFieldForName(fn) match {
+      case Some(bfi: BfImage) =>
+        _handleTempImg(bfi.imgUtil, Some(bfi.marker))
+
+      case _ => NotFound
     }
   }
 

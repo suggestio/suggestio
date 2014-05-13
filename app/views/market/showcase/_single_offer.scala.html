@@ -1,77 +1,8 @@
-@(ad: MAdT, producer: MAdnNode, fallbackLogo: Option[MImgInfo] = None, isHidden: Boolean = false)(implicit ctx: util.Context)
+@(ad: MAdT, producer: MAdnNode, fallbackLogo: Option[MImgInfoT] = None, isHidden: Boolean = false, isWithAction : Boolean = false)(implicit ctx: util.Context)
 
 @import util.TplDataFormatUtil._
 @import AdNetMemberTypes.MART
 
-<div class="sm-offer sm-sngl-offer @if(isHidden){sm-hidden-offer}" data-is-mart-offer="@(producer.adn.memberType == MART)">
-
-  @ad.panel.map { panelSettings =>
-    <div class="offer-header" style="background-color: #@panelSettings.color">
-      @producer.logoImgOpt.orElse(fallbackLogo).map { logoImg =>
-        <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)"/>
-      }
-    </div>
-  }
-
-  <div class="offer-details">
-    <div class="od-inner">
-
-      @ad.logoImgOpt.map { logoImg =>
-        <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.id)" alt="@ad.offers.headOption.filter(_.isInstanceOf[AOProduct]).map(_.asInstanceOf[AOProduct].vendor.value)"/>
-      }
-
-      @ad.offers.map {
-
-        case adProd: AOProduct => {
-
-          <div class="vendor" style="color: #@adProd.vendor.font.color;">@adProd.vendor.value</div>
-
-          @adProd.oldPrice.map { oldPrice =>
-            <div class="old-price" style="color: #@oldPrice.font.color"><s>@oldPrice.value</s></div>
-      }
-          <div class="new-price" style="color: #@adProd.price.font.color">@formatPrice(adProd.price.value, adProd.price.currency)</div>
-        }
-
-        case adDisco: AODiscount => {
-          @adDisco.text1.map { text1 =>
-            <div class="disc-text-1" style="color: #@text1.font.color">@text1.value</div>
-          }
-
-          <div class="discount template-@adDisco.template.id-@adDisco.template.color " style="color: #@adDisco.discount.font.color">
-            @formatPercentRaw(adDisco.discount.value)<span>%</span>
-          </div>
-
-          @adDisco.text2.map { text2 =>
-            <div class="disc-text-2" style="color: #@text2.font.color">@text2.value</div>
-          }
-        }
-
-        case adText: AOText => {
-          <div class="od-text" style="color: #@adText.text.font.color">@Html(adText.text.value)</div>
-        }
-      }
-
-      @* Локейшн магазина *@
-      @* Если магазин не указан, то значит это рекламная карточка ТЦ. *@
-
-      @if(producer.adn.memberType.displayAddrOnAds) {
-        <div class="offer-location">
-          <div class="ol-icon"></div>
-          @producer.meta.floor.map { floor =>
-            Этаж @floor<br/>
-          }
-          @producer.meta.section.map { section =>
-            Бутик @section<br/>
-          }
-          &laquo;@producer.meta.name&raquo;
-        </div>
-
-        <a class="sm-button sm-shops-offers-link" onclick="siomart.load_for_shop_id('@producer.id'); return false;" ontouchend="siomart.load_for_shop_id('@producer.id'); return false;">ПРЕДЛОЖЕНИЯ МАГАЗИНА</a>
-      }
-
-    </div>
-  </div>
-
-  <img class="poster-photo" data-width="@ad.img.meta.map(_.width).getOrElse(1575)" data-height="@ad.img.meta.map(_.height).getOrElse(1181)" src="@ctx.myAudienceUrl@routes.Img.getImg(ad.img.id)"/>
-
+<div @if( isWithAction ){ class="js-shop-link" data-producer-id="@producer.id" data-ad-id="@ad.id" } @if( isHidden == true){}>
+  @BlocksConf(ad.blockMeta.blockId).renderBlock(ad, isStandalone = false)
 </div>

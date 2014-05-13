@@ -1,0 +1,33 @@
+@(mad: MAdT, isStandalone: Boolean)(implicit ctx: util.Context)
+
+@* Первый блок верстки. *@
+@import ctx._
+@import util.blocks.BlocksUtil._
+@import util.blocks.BlocksConf.Block1
+@import util.TplDataFormatUtil._
+
+@blockBase(isStandalone) {
+
+    <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl1" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+
+      <img class="bg" src="@mad.imgs.get(Block1.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/block-ad-sample-image.jpg"))" alt="SALE"/>
+
+      <div class="info">
+        @mad.offers.headOption.map { offer =>
+          @offer.text1.map { title =>
+            <div class="title" style="color: #@title.font.color;">@title.value</div>
+          }
+
+          @offer.oldPrice.map { oldPrice =>
+            <div class="old-price" style="color: #@oldPrice.font.color;">@formatPrice(oldPrice.value, oldPrice.currency)</div>
+          }
+
+          @offer.price.map { price =>
+            <div class="price" style="color: #@price.font.color">@formatPrice(price.value, price.currency)</div>
+          }
+        }
+      </div>
+
+    </div>
+
+}

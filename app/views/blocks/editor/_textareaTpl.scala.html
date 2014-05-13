@@ -1,0 +1,15 @@
+@(bf: BfText, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
+
+@content = {
+  @defining( af(bfNameBase + ".value") ) { ff =>
+  <div class="lk-text-field">
+    <div><textarea name="@ff.name" class="js-input-w-block-preview" maxlength="@bf.maxLen">@ff.value</textarea></div>
+  </div>
+  }
+}
+
+@colorSelectorHtml = {
+  @_colorBtnTpl(af(bfNameBase + ".color"), default = bf.defaultValue.map(_.font.color), true)
+}
+
+@_textInputBaseTpl(bf, bc, content, colorSelectorHtml)

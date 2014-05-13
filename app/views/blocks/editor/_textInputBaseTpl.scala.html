@@ -1,0 +1,17 @@
+@(bf: BlockFieldT, bc: BlockConf, content: Html = Html(""), colorSelector: Html = Html(""))(implicit ctx: Context)
+
+@* Поле для ввода текста: input или textarea в зависимости от обстоятельств. *@
+@import ctx._
+
+<label class="ad-block-editor__fieldset_label">@Messages(bc.i18nLabelOf(bf.name)) @bf.offerNopt.map(_ + 1)</label>
+
+<div class="lk-field-w-colorpicker">
+  <div class="lk-field-w-colorpicker__left lk-fieldeset_wide">
+    @content
+  </div>
+
+  <div class="lk-field-w-colorpicker__right">
+    @colorSelector
+  </div>
+
+</div>

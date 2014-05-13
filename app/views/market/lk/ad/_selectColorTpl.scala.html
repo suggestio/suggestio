@@ -1,13 +1,14 @@
-@(colorFN: String, af: Form[_])(implicit ctx: util.Context)
+@(colorField: Field)(implicit ctx: util.Context)
 
 @* Селектор цветов для различных полей формы. *@
 @import ctx._
 
-@defining( af(colorFN).value.getOrElse("FFFFFF") ) { colorValue =>
-<td class="select-color">
-  @Messages("Color"):
-  <div class="color custom" style="background-color: #@colorValue;">&nbsp;
-    <input type="hidden" name="@colorFN" value="@colorValue"/>
-  </div>
-</td>
+@* Дополнительная фильтрация значения формы из-за возможных пустых значений Some("") невыясненной природы. *@
+@defining( colorField.value.map(_.trim).filter(!_.isEmpty).getOrElse("FFFFFF") ) { colorValue =>
+  <td class="select-color">
+    @Messages("Color"):
+    <div class="color custom" style="background-color: #@colorValue;">&nbsp;
+      <input type="hidden" name="@colorField.name" value="@colorValue"/>
+    </div>
+  </td>
 }

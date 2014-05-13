@@ -1,6 +1,5 @@
 package controllers.ad
 
-import util.PlayLazyMacroLogsImpl
 import models._
 import util.img.ImgFormUtil._
 import util.FormUtil._
@@ -10,6 +9,8 @@ import play.api.Play.current
 import AOTextAlignValues.TextAlignValue
 import io.suggest.ym.parsers.Price
 import io.suggest.ym.model.common
+import util.blocks.BlocksUtil.BlockImgMap
+import util.blocks.BlockMapperResult
 
 /**
  * Suggest.io
@@ -17,11 +18,10 @@ import io.suggest.ym.model.common
  * Created: 23.04.14 10:15
  * Description: Общая утиль для работы с разными ad-формами: preview и обычными.
  */
-object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
+object MarketAdFormUtil {
 
-  import LOGGER._
-
-  type AdFormM = Form[(ImgIdKey, LogoOpt_t, MAd)]
+  type AdFormMResult = (MAd, BlockImgMap)
+  type AdFormM = Form[AdFormMResult]
 
   type FormDetected_t = Option[(AdOfferType, AdFormM)]
 
@@ -38,7 +38,7 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
     )
 
   /** Маппим строковое поле с настройками шрифта. */
-  def mmaStringFieldM(m : Mapping[String]) = mapping(
+  def aoStringFieldM(m : Mapping[String]) = mapping(
     "value" -> m,
     "color" -> fontColorM
   )
@@ -46,7 +46,7 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
   { AOStringField.unapply }
 
   /** Маппим числовое (Float) поле. */
-  def mmaFloatFieldM(m: Mapping[Float]) = mapping(
+  def aoFloatFieldM(m: Mapping[Float]) = mapping(
     "value" -> m,
     "color" -> fontColorM
   )
@@ -82,7 +82,7 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
 
 
   /** Маппим необязательное Float-поле. */
-  def mmaFloatFieldOptM(m: Mapping[Float]) = mapping(
+  def aoFloatFieldOptM(m: Mapping[Float]) = mapping(
     "value" -> optional(m),
     "color" -> fontColorM
   )
@@ -93,18 +93,6 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
     (Option(mmaff.value), mmaff.font)
   }}
 
-
-  val VENDOR_MAXLEN = 32
-
-  /** apply() для product-маппингов. */
-  def adProductMApply(vendor: AOStringField, price: AOPriceField, oldPrice: Option[AOPriceField]) = {
-    AOProduct.apply(vendor, price, oldPrice)
-  }
-
-  /** unapply() для product-маппингов. */
-  def adProductMUnapply(adProduct: AOProduct) = {
-    Some((adProduct.vendor, adProduct.price, adProduct.oldPrice))
-  }
 
   val DISCOUNT_TEXT_MAXLEN = 256
 
@@ -118,30 +106,27 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  def adFormApply[T <: AdOfferT](userCatId: Option[String], panelSettings: common.AdPanelSettings, adBody: T, textAlignOpt: Option[TextAlign]): MAd = {
-    MAd(
+  def adFormApply(userCatId: Option[String], bmr: BlockMapperResult): AdFormMResult = {
+    val mad = MAd(
       producerId  = null,
-      offers      = List(adBody),
-      img         = null,
-      panel       = Some(panelSettings),
-      userCatId   = userCatId,
-      textAlign   = textAlignOpt
+      offers      = bmr.bd.offers,
+      blockMeta   = bmr.bd.blockMeta,
+      colors      = bmr.bd.colors,
+      imgs        = null,
+      userCatId   = userCatId
     )
+    mad -> bmr.bim
   }
 
   /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
-  def adFormUnapply[T <: AdOfferT](mmad: MAd) = {
-    import mmad._
-    if (panel.isDefined && userCatId.isDefined && !offers.isEmpty) {
-      val adBody = offers.head.asInstanceOf[T]
-      Some((userCatId, panel.get, adBody, textAlign))
-    } else {
-      warn("Unexpected ad object received into ad-product form: " + mmad)
-      None
-    }
+  def adFormUnapply(applied: AdFormMResult): Option[(Option[String], BlockMapperResult)] = {
+    val mad = applied._1
+    val bmr = BlockMapperResult(mad, applied._2)
+    Some( (mad.userCatId, bmr) )
   }
 
 
+  /*
   val panelColorM = colorM
     .transform(
       { AdPanelSettings.apply },
@@ -149,12 +134,30 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
     )
   val PANEL_COLOR_K = "panelColor"
   val panelColorKM = PANEL_COLOR_K -> panelColorM
+  */
+
 
   val OFFER_K = "offer"
 
+  /**
+   * Определить владельца категорий узла.
+   * @param adnNode Узел рекламной сети.
+   * @return id узла-владельца категорий.
+   */
+  def getCatOwnerId(adnNode: MAdnNode): String = {
+    import AdNetMemberTypes._
+    adnNode.adn.memberType match {
+      case SHOP | RESTAURANT => adnNode.adn.supId getOrElse adnNode.id.get
+      case MART | RESTAURANT_SUP => adnNode.id.get
+    }
+  }
+
+}
 
 
-  // Мапперы для textAlign'ов
+/** Мапперы для textAlign'ов. Пока не используются и живут тут. Потом может быть будут удалены. */
+object MarketAdTextAlignUtil {
+
   /** Какие-то данные для text-align'a. */
   val textAlignRawM = nonEmptyText(maxLength = 16)
     .transform(strTrimSanitizeLowerF, strIdentityF)
@@ -199,17 +202,5 @@ object MarketAdFormUtil extends PlayLazyMacroLogsImpl {
       { _ getOrElse TextAlign(TextAlignPhone(""), TextAlignTablet("", "")) }
     )
 
-  /**
-   * Определить владельца категорий узла.
-   * @param adnNode Узел рекламной сети.
-   * @return id узла-владельца категорий.
-   */
-  def getCatOwnerId(adnNode: MAdnNode): String = {
-    import AdNetMemberTypes._
-    adnNode.adn.memberType match {
-      case SHOP | RESTAURANT => adnNode.adn.supId getOrElse adnNode.id.get
-      case MART | RESTAURANT_SUP => adnNode.id.get
-    }
-  }
-
 }
+

@@ -24,13 +24,14 @@ import play.api.mvc.Result
  * узлов делают те или иные действия.
  * Супервайзер ресторанной сети и ТЦ имеют одну форму и здесь обозначаются как "узлы-лидеры".
  */
-object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSupport {
+object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImgSupport {
 
   import LOGGER._
 
   /** Маркер картинки для использования в качестве логотипа. */
   val LEADER_TMP_LOGO_MARKER = "leadLogo"
 
+  val WELCOME_IMG_KEY = "wlcm"
 
   /** Страница с формой редактирования узла рекламной сети. Функция смотрит тип узла и рендерит ту или иную страницу. */
   def editAdnNode(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
@@ -64,9 +65,9 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSup
     request.adnNode.adn.memberType match {
       // TODO Может пора выпилить это разделение на сущности?
       case MART | RESTAURANT_SUP | RESTAURANT =>
-        handleLogo(MartLogoImageUtil, LEADER_TMP_LOGO_MARKER)
+        _handleTempImg(MartLogoImageUtil, Some(LEADER_TMP_LOGO_MARKER))
       case SHOP =>
-        handleLogo(ShopLogoImageUtil, MarketShopLk.SHOP_TMP_LOGO_MARKER)
+        _handleTempImg(AdnLogoImageUtil, Some(MarketShopLk.SHOP_TMP_LOGO_MARKER))
     }
   }
 
@@ -76,21 +77,23 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSup
     "name"      -> nameM,
     "town"      -> toStrOptM(townM),
     "address"   -> toStrOptM(martAddressM),
+    "color"     -> toStrOptM(colorM),
     "siteUrl"   -> urlStrOptM,
     "phone"     -> phoneOptM
   )
-  {(name, town, address, siteUrlOpt, phoneOpt) =>
+  {(name, town, address, color, siteUrlOpt, phoneOpt) =>
     AdnMMetadata(
       name    = name,
       town    = town,
       address = address,
+      color = color,
       siteUrl = siteUrlOpt,
       phone   = phoneOpt
     )
   }
   {meta =>
     import meta._
-    Some((name, town, address, siteUrl, phone)) }
+    Some((name, town, address, color, siteUrl, phone)) }
 
 
   /** Маппер для необязательного логотипа магазина. */
@@ -118,7 +121,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSup
       val martLogoOpt = adnNode.logoImgOpt.map { img =>
         ImgInfo4Save(imgInfo2imgKey(img))
       }
-      val welcomeImgKey = welcomeAdOpt.map[OrigImgIdKey] { _.img }
+      val welcomeImgKey = welcomeAdOpt.flatMap { _.imgs.headOption }.map[OrigImgIdKey] { img => img._2 }
       val formFilled = martFormM.fill((adnNode.meta, welcomeImgKey, martLogoOpt))
       Ok(leaderEditFormTpl(adnNode, formFilled, welcomeAdOpt))
     }
@@ -144,9 +147,8 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSup
         val savedWelcomeImgsFut: Future[_] = getWelcomeAdOpt(adnNode) flatMap { welcomeAdOpt =>
           ImgFormUtil.updateOrigImg(
             needImgs = welcomeImgOpt.map(ImgInfo4Save(_, withThumb = false)),
-            oldImgs = welcomeAdOpt.map(_.img)
-          ) flatMap { savedImgs =>
-            savedImgs.headOption match {
+            oldImgs = welcomeAdOpt.flatMap(_.imgs.headOption).map(_._2)
+          ) flatMap {
               // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
               case None =>
                 val deleteOldAdFut = adnNode.meta.welcomeAdId
@@ -155,24 +157,23 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with LogoSup
                 deleteOldAdFut
 
               // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
-              case Some(newImgInfo) =>
-                val welcomeAd = welcomeAdOpt
-                  .map { welcomeAd =>
-                  welcomeAd.img = newImgInfo
-                  welcomeAd
-                } getOrElse {
-                  MWelcomeAd(producerId = adnNode.id.get, img = newImgInfo)
-                }
+              case newImgInfoOpt @ Some(newImgInfo) =>
+                val imgs = Map(WELCOME_IMG_KEY -> newImgInfo)
+                val welcomeAd = welcomeAdOpt.fold
+                  { MWelcomeAd(producerId = adnNode.id.get, imgs = imgs) }
+                  {welcomeAd =>
+                    welcomeAd.imgs = imgs
+                    welcomeAd
+                  }
                 welcomeAd.save andThen {
                   case Success(welcomeAdId) =>
                     adnNode.meta.welcomeAdId = Some(welcomeAdId)
                 }
-            }
           }
         }
         adnNode.meta = adnMeta
-        savedLogoFut.flatMap { savedLogos =>
-          adnNode.logoImgOpt = savedLogos.headOption
+        savedLogoFut.flatMap { savedLogo =>
+          adnNode.logoImgOpt = savedLogo
           savedWelcomeImgsFut flatMap { _ =>
             adnNode.save.map { _ =>
               Redirect(routes.MarketLkAdn.showAdnNode(adnNode.id.get))

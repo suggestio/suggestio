@@ -1,21 +1,11 @@
 @(mmcats: Seq[MMartCategory], mmart:MAdnNode)(implicit ctx:util.Context)
 
+@_search_bar(mmart)
+
 <div class="sm-categories-screen" style="background-color: #@mmart.meta.color" id="smCategoriesScreen">
 
   <div class="sm-categories-body-wrap">
     <div class="sm-categories-body">
-
-      @* Поле ввода поиска *@
-      <div class="search-bar">
-        <div class="sb-back-icon" id="smCloseCategoriesButton"></div>
-        <div class="sb-search-field">
-
-          <div class="sb-sf-container">
-            <input id="smSearchField" type="text" placeholder="ВОСПОЛЬЗУЙТЕСЬ ПОИСКОМ"/>
-          </div>
-        </div>
-        <div class="sb-search-icon"></div>
-      </div>
 
       <div class="sm-categories-list">
         @mmcats.map { mmcat =>

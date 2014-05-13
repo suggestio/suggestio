@@ -5,6 +5,8 @@
 @import ctx._
 @import util.FormHelpers.myFields
 
+@* TODO: Удалить, когда переезд на blocks будет завершен. *@
+
 <div class="tab-content" @if(!isShown) {style="display: none;"}>
     <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
 
@@ -13,7 +15,7 @@
         'class -> "tiny-mce",
         '_label -> "Текст: "
         )
-      @_selectColorTpl("ad.offer.text.color", af)
+      @_selectColorTpl(af("ad.offer.text.color"))
 
       @if(!af.errors("ad.offer.text.value").isEmpty) {
         <tr>

@@ -42,6 +42,27 @@ editing.of.amt.profile.r=Редактирование профайла рест�
 editing.of.amt.profile.R=Редактирование профайла супервайзера
 
 
+blocks.field.price=Цена
+blocks.field.oldPrice=Старая цена
+blocks.field.height=Высота блока
+blocks.field.title=Заголовок
+blocks.field.bgImg=Фоновое изображение
+blocks.field.text1=Текст 1
+blocks.field.text2=Текст 2
+blocks.field.discount=Скидка
+blocks.field.logo=Логотип
+blocks.field.lineColor=Цвет линии
+blocks.field.bottomColor=Цвет верхней заливки
+blocks.field.topColor=Цвет нижней заливки
+blocks.field.descr=Описание
+blocks.field.saleMaskColor=Цвет маски SALE
+blocks.field.bgColor=Цвет фона
+blocks.field.circleFillColor=Цвет заливки кружков
+blocks.field.borderColor=Цвет бордюра
+blocks.field.discoIconColor=Цвет значка скидки
+blocks.field.discoBorderColor=Цвет бордюра скидки
+
+
 lk.sl.enable_ad=Включить объявление
 lk.sl.d=Выводить в моём каталоге
 lk.sl.h=Выводить в общем каталоге

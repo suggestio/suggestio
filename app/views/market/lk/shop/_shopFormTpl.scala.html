@@ -51,6 +51,8 @@
       </tr>
     </table>
 
+    @* Цвет, который может задавать магазин для самого себя. *@
+    @inputText(sf("meta.color"), '_placeholder -> "4F4F4F", '_label -> "Мой цвет")
 
     @* Поля этажа/секции доступны только владельцу ТЦ, т.е. если !isLimited. Задаём атрибут через хвост-список. *@
     @defining(if(isLimited) List('disabled -> "disabled") else Nil) { attrsRest =>

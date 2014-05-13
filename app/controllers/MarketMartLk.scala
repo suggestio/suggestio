@@ -157,6 +157,7 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
         mshop.meta.description = meta.description
         mshop.meta.floor = meta.floor
         mshop.meta.section = meta.section
+        mshop.meta.color = meta.color
         mshop.save.map { _ =>
           Redirect(routes.MarketLkAdn.showSlave(shopId))
             .flashing("success" -> "Изменения сохранены.")
