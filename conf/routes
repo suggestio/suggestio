@@ -195,8 +195,6 @@ POST /sys/market/mart/:id/invite        controllers.SysMarket.martInviteFormSubm
 GET  /sys/market/mart/:id/invite/email  controllers.SysMarket.showMartEmailInvite(id, isHtml: Boolean)
 # sys.market.shop
 GET  /sys/market/shops                  controllers.SysMarket.shopsList
-GET  /sys/market/shop/add               controllers.SysMarket.shopAddForm
-POST /sys/market/shop/add               controllers.SysMarket.shopAddFormSubmit
 GET  /sys/market/shop/:id               controllers.SysMarket.shopShow(id)
 GET  /sys/market/shop/:id/edit          controllers.SysMarket.shopEditForm(id)
 POST /sys/market/shop/:id/edit          controllers.SysMarket.shopEditFormSubmit(id)

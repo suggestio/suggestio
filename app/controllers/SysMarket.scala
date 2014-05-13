@@ -606,41 +606,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     } yield (companies, marts)
   }
 
-  /** Рендер страницы добавления нового магазина. */
-  def shopAddForm = IsSuperuser.async { implicit request =>
-    getAllCompaniesAndMarts map { case (companies, marts) =>
-      Ok(shop.shopAddFormTpl(shopFormM, companies, marts))
-    }
-  }
-
-  /** Сабмит формы добавления нового магазина. */
-  def shopAddFormSubmit = IsSuperuser.async { implicit request =>
-    shopFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(s"shopAddFormSubmit(): " + formatFormErrors(formWithErrors))
-        getAllCompaniesAndMarts map { case (companies, marts) =>
-          NotAcceptable(shop.shopAddFormTpl(formWithErrors, companies, marts))
-        }
-      },
-      {mshop =>
-        mshop.personIds = Set(request.pwOpt.get.personId)
-        mshop.save flatMap { mshopSavedId =>
-          // Нужно добавить новый магазин в список продьюсеров ТЦ.
-          val martUpdateFut: Future[_] = mshop.adn.supId match {
-            case Some(martId) => MAdnNodeCache.getByIdCached(martId) flatMap { mmartOpt =>
-              val mmart = mmartOpt.get
-              mmart.adn.producerIds += mshopSavedId
-              mmart.save
-            }
-            case None => Future successful ()
-          }
-          martUpdateFut map { _=>
-            Redirect(routes.SysMarket.shopShow(mshopSavedId))
-          }
-        }
-      }
-    )
-  }
 
   /** Рендер страницы, содержащей информацию по указанному магазину. */
   def shopShow(shopId: String) = IsSuperuser.async { implicit request =>

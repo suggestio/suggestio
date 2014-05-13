@@ -4,6 +4,7 @@
 @import ctx._
 
 @shopBase("Все") {
+
   @if(shops.isEmpty) {
     В системе нет магазинов.
   } else {
@@ -11,5 +12,4 @@
     <br/><hr/>
   }
 
-  <a href="@routes.SysMarket.shopAddForm">Создать магазин.</a>
 }
