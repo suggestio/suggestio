@@ -278,10 +278,10 @@ siomart =
     sm_trigger = this.utils.ce "div", sm_trigger_attrs, 'Sio.Market'
 
     this.utils.ge_tag("body")[0].appendChild sm_trigger
-    
+
     meta_viewport_attrs =
       name : 'viewport'
-      content : 'width=320,initial-scale=1,user-scalable=no'
+      content : 'width=320,initial-scale=1,user-scalable=no,minimal-ui'
     meta_viewport = this.utils.ce "meta", meta_viewport_attrs
     this.utils.ge_tag('head')[0].appendChild meta_viewport
 
@@ -608,6 +608,9 @@ siomart =
 
     init : () ->
       this.img_dom = siomart.utils.ge 'smWelcomeAd'
+      if this.img_dom == null
+        return false
+        
       this.fit this.img_dom
 
       setTimeout siomart.welcome_ad.hide, this.hide_timeout
