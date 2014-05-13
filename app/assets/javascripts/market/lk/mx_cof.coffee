@@ -849,12 +849,13 @@ market =
     request_block_preview : () ->
       action = $('.js-ad-block-preview-action').val()
 
-      $.ajax
-        url : action
-        method : 'post'
-        data : $('#promoOfferForm').serialize()
-        success : ( data ) ->
-          $('#adFormBlockPreview').html data
+      if(action)
+        $.ajax
+          url : action
+          method : 'post'
+          data : $('#promoOfferForm').serialize()
+          success : ( data ) ->
+            $('#adFormBlockPreview').html data
 
     queue_block_preview_request : ( request_delay ) ->
 
