@@ -79,3 +79,5 @@ gzipAssets := {
 }
 
 
+templatesImport += "util.blocks.BlocksConf._"
+
