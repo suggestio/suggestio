@@ -195,7 +195,6 @@ POST /sys/market/mart/:id/invite        controllers.SysMarket.martInviteFormSubm
 GET  /sys/market/mart/:id/invite/email  controllers.SysMarket.showMartEmailInvite(id, isHtml: Boolean)
 # sys.market.shop
 GET  /sys/market/shops                  controllers.SysMarket.shopsList
-GET  /sys/market/shop/:id               controllers.SysMarket.shopShow(id)
 GET  /sys/market/shop/:id/eact          controllers.SysMarket.showShopEmailActMsgHtml(id, isHtml: Boolean)
 GET  /sys/market/s/ad/:adId/email       controllers.SysMarket.showShopEmailAdDisableMsg(adId, isHtml: Boolean ?= true)
 # sys.market.shop.pricelist

@@ -7,7 +7,7 @@
   @mmartOpt.map { mmart =>
     / ТЦ <a href="@routes.SysMarket.martShow(mmart.id.get)">@mmart.meta.name</a>
   }
-  / <a href="@routes.SysMarket.shopShow(mshop.id.get)">@mshop.meta.name</a>
+  / <a href="@routes.SysMarket.showAdnNode(mshop.id.get)">@mshop.meta.name</a>
   @hPathAfter
 }
 

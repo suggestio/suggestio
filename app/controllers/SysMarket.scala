@@ -598,24 +598,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   })
 
 
-  /** Рендер страницы, содержащей информацию по указанному магазину. */
-  def shopShow(shopId: String) = IsSuperuser.async { implicit request =>
-    getShopById(shopId) flatMap {
-      case Some(mshop) =>
-        val splsFut = MShopPriceList.getForShop(shopId)
-        val martOptFut = mshop.getSup
-        for {
-          ownerOpt <- mshop.company
-          spls     <- splsFut
-          mmartOpt <- martOptFut
-        } yield {
-          Ok(shop.shopShowTpl(mshop, spls, ownerOpt, mmartOpt))
-        }
-
-      case None => shopNotFound(shopId)
-    }
-  }
-
   /** Рендер ошибки, если магазин не найден в базе. */
   private def shopNotFound(shopId: String) = NotFound("Shop not found: " + shopId)
 
@@ -667,7 +649,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       },
       {case (url, authInfo) =>
         MShopPriceList(shopId=shopId, url=url, authInfo=authInfo).save map { mspl =>
-          Redirect(routes.SysMarket.shopShow(shopId))
+          Redirect(routes.SysMarket.showAdnNode(shopId))
            .flashing("success" -> "Pricelist added.")
         }
       }
@@ -681,7 +663,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         mspl.delete onFailure {
           case ex => error("Unable to delete MSPL id=" + splId, ex)
         }
-        Redirect(routes.SysMarket.shopShow(mspl.shopId))
+        Redirect(routes.SysMarket.showAdnNode(mspl.shopId))
 
       case None => NotFound("No such shop pricelist with id = " + splId)
     }

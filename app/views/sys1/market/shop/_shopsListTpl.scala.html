@@ -11,7 +11,7 @@
   </tr>
   @shops.map { mshop =>
     <tr>
-      <td><a href="@routes.SysMarket.shopShow(mshop.id.get)">@mshop.meta.name</a></td>
+      <td><a href="@routes.SysMarket.showAdnNode(mshop.id.get)">@mshop.meta.name</a></td>
       @companies.map { _companies =>
         <td>
           @_companies.get(mshop.companyId).map { mc =>
