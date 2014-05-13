@@ -363,9 +363,13 @@ siomart =
   node_offers_popup :
 
     nav_pointer_size : 14
+    mouse_drag : false
 
     show_block_by_index : ( block_index ) ->
+      this.active_block_index = block_index
       siomart.node_offers_popup._block_container.style['-webkit-transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
+
+      siomart.node_offers_popup._block_container.setAttribute 'data-x-offset', -cbca_grid.ww*block_index
 
     next_block : () ->
       if typeof this.active_block_index == 'undefined'
@@ -409,6 +413,40 @@ siomart =
 
       this._block_container.style.width = this.sm_blocks.length * cbca_grid.ww + 'px'
 
+    ## События
+    manipulator_move_event : ( x, y ) ->
+
+      if typeof this.x_start == 'undefined'
+        this.x_start = x
+        this.y_start = y
+        siomart.utils.removeClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
+
+      delta_x = this.x_start - x
+      delta_y = this.y_start - y
+
+      c_x_offset = siomart.node_offers_popup._block_container.getAttribute 'data-x-offset'
+      c_x_offset = parseInt c_x_offset
+
+      siomart.node_offers_popup._block_container.style['-webkit-transform'] = 'translate3d(' + parseInt( c_x_offset - delta_x ) + 'px, 0px, 0px)'
+
+      this.x_delta_direction = this.x_last - x
+      this.y_delta_direction = this.y_last - y
+
+      this.x_last = x
+      this.y_last = y
+
+    manipulator_move_end_event : () ->
+
+      siomart.utils.addClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
+
+      if this.x_delta_direction > 0
+        siomart.node_offers_popup.next_block()
+      else
+        siomart.node_offers_popup.prev_block()
+
+      delete siomart.node_offers_popup.x_start
+      delete siomart.node_offers_popup.y_start
+
     init : () ->
 
       this._block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
@@ -432,6 +470,18 @@ siomart =
 
       ## Кнопка возврата на главный экран
       siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), _e, siomart.close_node_offers_popup
+
+      ## Таскание мышкой
+      siomart.utils.add_single_listener this._block_container, 'mousedown', ( event ) ->
+        siomart.node_offers_popup.mouse_drag = true
+
+      siomart.utils.add_single_listener this._block_container, 'mouseup', ( event ) ->
+        siomart.node_offers_popup.mouse_drag = false
+        siomart.node_offers_popup.manipulator_move_end_event()
+
+      siomart.utils.add_single_listener this._block_container, 'mousemove', ( event ) ->
+        if siomart.node_offers_popup.mouse_drag == true
+          siomart.node_offers_popup.manipulator_move_event event.x, event.y
 
 
   ######################################
