@@ -87,6 +87,10 @@ trait HTableModel {
     SioHBaseSyncClient.admin.enableTable(HTABLE_NAME)
   }
 
+  def getTableDescriptorSync = {
+    SioHBaseSyncClient.admin
+      .getTableDescriptor(HTABLE_NAME)
+  }
 }
 
 
@@ -101,6 +105,7 @@ trait HBaseModelJMXBeanCommon {
   def dropTable()
   def disableTable()
   def enableTable()
+  def getTableDescriptor: String
 }
 
 trait HBaseModelJMXBase extends JMXBase with HBaseModelJMXBeanCommon {
@@ -137,6 +142,10 @@ trait HBaseModelJMXBase extends JMXBase with HBaseModelJMXBeanCommon {
 
   override def enableTable() {
     companion.enableTableSync()
+  }
+
+  override def getTableDescriptor: String = {
+    companion.getTableDescriptorSync.toString
   }
 }
 
