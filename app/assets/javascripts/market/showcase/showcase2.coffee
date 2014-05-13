@@ -564,6 +564,7 @@ siomart =
   welcome_ad :
 
     hide_timeout : 2000
+    fadeout_transition_time : 1000
 
     fit : ( image_dom ) ->
       image_w = parseInt image_dom.getAttribute "data-width"
@@ -582,7 +583,13 @@ siomart =
       image_dom.style.marginTop = - nh / 2 + 'px'
 
     hide : () ->
-      siomart.welcome_ad.img_dom.style.display = 'none'
+
+      siomart.utils.addClass siomart.welcome_ad.img_dom, 'sm-welcome-ad__img_fade-out'
+
+      dn_cb = () ->
+        siomart.welcome_ad.img_dom.style.display = 'none'
+
+      setTimeout dn_cb, siomart.welcome_ad.fadeout_transition_time
 
     init : () ->
       this.img_dom = siomart.utils.ge 'smWelcomeAd'
