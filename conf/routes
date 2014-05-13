@@ -185,8 +185,6 @@ GET  /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNode(adnId)
 POST /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNodeSubmit(adnId)
 # sys.market.mart
 GET  /sys/market/marts                  controllers.SysMarket.martsList
-GET  /sys/market/mart/add/:company_id   controllers.SysMarket.martAddForm(company_id: String)
-POST /sys/market/mart/add/:company_id   controllers.SysMarket.martAddFormSubmit(company_id: String)
 GET  /sys/market/mart/:id               controllers.SysMarket.martShow(id: String)
 GET  /sys/market/mart/:id/edit          controllers.SysMarket.martEditForm(id: String)
 POST /sys/market/mart/:id/edit          controllers.SysMarket.martEditFormSubmit(id: String)

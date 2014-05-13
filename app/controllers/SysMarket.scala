@@ -390,39 +390,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   ))
 
 
-  /** Рендер страницы с формой добавления торгового центра. */
-  def martAddForm(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
-    MCompany.isExist(companyId) map {
-      case true  => Ok(mart.martAddFormTpl(companyId, martFormM))
-      case false => companyNotFound(companyId)
-    }
-  }
-
-  /** Сабмит формы добавления торгового центра. */
-  def martAddFormSubmit(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
-    martFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(s"martAddFormSubmt($companyId): Form bind failed: " + formWithErrors.errors)
-        NotAcceptable(mart.martAddFormTpl(companyId, formWithErrors))
-      },
-      {case (mmartMeta, isEnabled, maxAds) =>
-        val mmart = MAdnNode(
-          companyId = companyId,
-          personIds = Set.empty,
-          meta = mmartMeta,
-          adn = {
-            val _adn = AdNetMemberTypes.MART.getAdnInfoDflt
-            _adn.isEnabled = isEnabled
-            _adn
-          }
-        )
-        mmart.save map { mmartSavedId =>
-          Redirect(routes.SysMarket.martShow(mmartSavedId))
-        }
-      }
-    )
-  }
-
   /** Отображение одного ТЦ. */
   def martShow(martId: String) = IsSuperuser.async { implicit request =>
     getMartById(martId) flatMap {
