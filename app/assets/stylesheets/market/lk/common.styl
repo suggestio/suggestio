@@ -326,6 +326,39 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     padding: 0
 
 
+
+  .billing-but
+    display: inline-block
+    border: 1px solid #646464
+    border-radius(10px)
+    font-size: 24px
+    font-family: 'PT Sans Narrow','sans-serif'
+
+    .white-border-top
+      border-top: 1px solid #97b9cc
+      border-radius(10px)
+      background: #4f88a9
+      padding: 10px 15px
+
+      a
+        display: inline-block
+        height: 0
+        color: white
+        text-decoration: none
+
+  .billing-but:hover
+    .white-border-top
+
+      a
+        box-shadow(0 7px 20px 3px #FFFFFF)
+
+  .billing-but:active
+    .white-border-top
+      border-color: #3e718f
+      background: #3e718f
+
+
+
   .gray-but-small
       outline: 0
       display: inline-block
