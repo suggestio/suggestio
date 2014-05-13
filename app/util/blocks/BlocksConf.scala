@@ -479,7 +479,7 @@ object BlocksConf extends Enumeration {
   /** Блок, отображающий скидочную цену на товар или услугу. */
   val Block7 = new Val(7, "discountedPrice1") {
     val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300))
-    val discoBf = BfDiscount("discount", min = -9.9F, max = 99F)
+    val discoBf = BfDiscount("discount", min = -99F, max = 999F)
     val titleBf = BfText("title", BlocksEditorFields.TextArea,
       maxLen = 256,
       defaultValue = Some(AOStringField("", AOFieldFont("444444")))
@@ -699,7 +699,7 @@ object BlocksConf extends Enumeration {
   val Block12 = new Val(12, "discountNarrow12") {
     val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300))
     val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("00ff1a"))
-    val discountBf = BfDiscount("discount", min = -9.9F, max = 99F)
+    val discountBf = BfDiscount("discount", min = -99F, max = 999F)
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
 
@@ -752,7 +752,7 @@ object BlocksConf extends Enumeration {
     val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460))
     val discoIconColorBf = BfColor("discoIconColor", defaultValue = Some("828fa0"))
     val discoBorderColorBf = BfColor("discoBorderColor", defaultValue = Some("FFFFFF"))
-    val discountBf = BfDiscount("discount", min = -9.9F, max = 99F)
+    val discountBf = BfDiscount("discount", min = -99F, max = 999F)
     val textBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
@@ -934,7 +934,11 @@ object BlocksConf extends Enumeration {
   sealed abstract class CommonBlock17_18(id: Int, blkName: String) extends Val(id, blkName) with SaveBgImg {
     val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460, 620))
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
-    val discoBf = BfDiscount("discount", min = -9.9F, max = 99F)
+    val discoBf = BfDiscount("discount",
+      min = -99F,
+      max = 99F,
+      defaultValue = Some(AOFloatField(50F, defaultFont))
+    )
 
     val bgColorBf = BfColor("bgColor", defaultValue = Some("FFFFFF"))
     val circleFillColorBf = BfColor("circleFillColor", defaultValue = Some("f9daac"))

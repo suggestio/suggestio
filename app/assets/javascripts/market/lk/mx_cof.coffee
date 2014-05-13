@@ -484,7 +484,7 @@ CbcaShop =
     ##########################################
     ## Чекбоксы в списке рекламных плакатов ##
     ##########################################
-    $(document).on 'change', '.ads-list .controls input[type = "checkbox"]', ->
+    $(document).on 'change', '.ads-list .ads-list-block__controls input[type = "checkbox"]', ->
       $this = $(this)
       lvlEnabled = this.checked
 
