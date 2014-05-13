@@ -427,11 +427,13 @@ siomart =
       this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
 
       for _b in this.sm_blocks
+        _block_width = _b.getAttribute 'data-width'
         siomart.utils.addClass _b, 'double-size'
-        _parent_container = _b.parentNode.parentNode.parentNode
 
-        _parent_container.style.width = cbca_grid.ww + 'px'
+        _b.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
+        _b.parentNode.parentNode.parentNode.style.width = _block_width*2 + 11*2 + 'px'
 
+      this._block_container.style.width = this.sm_blocks.length * cbca_grid.ww + 'px'
       return false
 
 
