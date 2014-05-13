@@ -121,34 +121,7 @@ trait AdsSearchArgsT {
 }
 
 
-/** Если нужно добавить в рекламную inx2-модель поиск по рекламным карточкам,
-  * то следует задействовать вот этот трейт. */
-@deprecated("AdsSearch trait used only by deprecated models. Should be removed after cleanup.", "2014.apr.07")
-trait AdsSearchT[T, InxT <: MInxT] {
-
-  def searchResp2list(searchResp: SearchResponse, inx2: InxT): Seq[T]
-
-  /**
-   * Поиск карточек в ТЦ по критериям.
-   * @param inx2 Метаданные об индексе ТЦ.
-   * @return Список рекламных карточек, подходящих под требования.
-   */
-  def searchAds(inx2: InxT, adSearch: AdsSearchArgsT)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
-    val query = AdsSearch.prepareEsQuery(adSearch)
-    // Запускаем собранный запрос.
-    inx2.prepareSearchIn
-      .setQuery(query)
-      .setSize(adSearch.maxResults)
-      .setFrom(adSearch.offset)
-      .execute()
-      .map { searchResp2list(_, inx2) }
-  }
-
-}
-
-
-/** Если нужно добавить в рекламную inx2-модель поиск по рекламным карточкам,
-  * то следует задействовать вот этот трейт. */
+/** Если нужно добавить в рекламную модель поиск по рекламным карточкам, то следует задействовать вот этот трейт. */
 trait AdsSimpleSearchT extends EsModelMinimalStaticT {
 
   /**
