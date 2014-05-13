@@ -17,6 +17,7 @@ import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import util.blocks.BlockMapperResult
 import util.img.{ImgInfo4Save, OrigImgIdKey}
+import io.suggest.ym.model.common.Texts4Search
 
 /**
  * Suggest.io
@@ -110,15 +111,19 @@ object MarketAd extends SioController with TempImgSupport {
             debug(logPrefix + "Bind failed: \n" + formatFormErrors(formWithErrors))
             createAdFormError(formWithErrors, catOwnerId, adnNode, Some(bc))
           },
-          {case (mmad, bim) =>
+          {case (mad, bim) =>
+            val t4s2Fut = newTexts4search(mad)
             // Асинхронно обрабатываем логотип.
             bc.saveImgs(newImgs = bim, oldImgs = Map.empty) flatMap { savedImgs =>
-              mmad.producerId = adnId
-              mmad.imgs = savedImgs
-              // Сохранить изменения в базу
-              mmad.save.map { adId =>
-                Redirect(routes.MarketLkAdn.showAdnNode(adnId, newAdId = Some(adId)))
-                  .flashing("success" -> "Рекламная карточка создана.")
+              mad.producerId = adnId
+              mad.imgs = savedImgs
+              t4s2Fut flatMap { t4s2 =>
+                mad.texts4search = t4s2
+                // Сохранить изменения в базу
+                mad.save.map { adId =>
+                  Redirect(routes.MarketLkAdn.showAdnNode(adnId, newAdId = Some(adId)))
+                    .flashing("success" -> "Рекламная карточка создана.")
+                }
               }
             }
           }
@@ -222,12 +227,16 @@ object MarketAd extends SioController with TempImgSupport {
             renderFailedEditFormWith(formWithErrors)
           },
           {case (mad2, bim) =>
+            val t4s2Fut = newTexts4search(mad2)
             bc.saveImgs(newImgs = bim, oldImgs = mad.imgs) flatMap { imgsSaved =>
               mad.imgs = imgsSaved
               importFormAdData(oldMad = mad, newMad = mad2)
-              mad.save.map { _ =>
-                Redirect(routes.MarketLkAdn.showAdnNode(mad.producerId))
-                  .flashing("success" -> "Изменения сохранены")
+              t4s2Fut flatMap { t4s2 =>
+                mad.texts4search = t4s2
+                mad.save.map { _ =>
+                  Redirect(routes.MarketLkAdn.showAdnNode(mad.producerId))
+                    .flashing("success" -> "Изменения сохранены")
+                }
               }
             }
           }
@@ -237,7 +246,6 @@ object MarketAd extends SioController with TempImgSupport {
         val formWithErrors = formWithGlobalError.bindFromRequest()
         renderFailedEditFormWith(formWithErrors)
     }
-
   }
 
   /**
@@ -250,6 +258,25 @@ object MarketAd extends SioController with TempImgSupport {
       val routeCall = routes.MarketLkAdn.showAdnNode(request.mad.producerId)
       Redirect(routeCall)
         .flashing("success" -> "Рекламная карточка удалена")
+    }
+  }
+
+
+  /**
+   * Залить в mad.text4search новые данные, в частности по категориям.
+   * @param mad Изменяемый инстанс рекламной карточки.
+   */
+  private def newTexts4search(mad: MAd): Future[Texts4Search] = {
+    mad.userCatId.fold(Future successful mad.texts4search) { userCatId =>
+      MMartCategory.foldUpChain [List[String]] (userCatId, Nil) {
+        (acc, e) =>
+          if (e.includeInAll)
+            e.name :: acc
+          else
+            acc
+      } map { ucats =>
+        mad.texts4search.copy(userCat = ucats)
+      }
     }
   }
 
