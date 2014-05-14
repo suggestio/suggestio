@@ -5,6 +5,7 @@
 @import util.blocks.BlocksUtil._
 @import util.blocks.BlocksConf.Block1
 @import util.TplDataFormatUtil._
+@import common._
 
 @blockBase(isStandalone) {
 
@@ -15,15 +16,15 @@
       <div class="info">
         @mad.offers.headOption.map { offer =>
           @offer.text1.map { title =>
-            <div class="title" style="color: #@title.font.color;@title.font.size.map {fsize =>font-size: @{fsize}pt;}">@title.value</div>
+            <div class="title" style="@_aoffStyleTpl(title.font)">@title.value</div>
           }
 
           @offer.oldPrice.map { oldPrice =>
-            <div class="old-price" style="color: #@oldPrice.font.color;">@formatPrice(oldPrice.value, oldPrice.currency)</div>
+            <div class="old-price" style="@_aoffStyleTpl(oldPrice.font)">@formatPrice(oldPrice.value, oldPrice.currency)</div>
           }
 
           @offer.price.map { price =>
-            <div class="price" style="color: #@price.font.color">@formatPrice(price.value, price.currency)</div>
+            <div class="price" style="@_aoffStyleTpl(price.font)">@formatPrice(price.value, price.currency)</div>
           }
         }
       </div>

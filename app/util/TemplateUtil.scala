@@ -5,6 +5,7 @@ import java.util.Currency
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import scala.util.matching.Regex
+import io.suggest.ym.model.ad.AOFieldFont
 
 /**
  * Suggest.io
