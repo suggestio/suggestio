@@ -309,12 +309,14 @@ object BlocksConf extends Enumeration {
     val priceBf = BfPrice("price")
     val text2bf = BfText("text2", BlocksEditorFields.TextArea, maxLen = 512)
     val bgColorBf = BfColor("bgColor", defaultValue = Some("0F2841"))
+    val borderColorBf = BfColor("borderColor", defaultValue = Some("FFFFFF"))
+
 
     val blockWidth: Int
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      bgImgBf, text1bf, priceBf, text2bf, bgColorBf
+      bgImgBf, text1bf, priceBf, text2bf, bgColorBf, borderColorBf
     )
 
     /** Маппинг для обработки данных от сабмита формы блока. */
@@ -325,9 +327,10 @@ object BlocksConf extends Enumeration {
         text1bf.getOptionalStrictMappingKV,
         priceBf.getOptionalStrictMappingKV,
         text2bf.getOptionalStrictMappingKV,
-        bgColorBf.getStrictMappingKV
+        bgColorBf.getStrictMappingKV,
+        borderColorBf.getStrictMappingKV
       )
-      {(bim, height, text1Opt, priceOpt, text2Opt, bgColor) =>
+      {(bim, height, text1Opt, priceOpt, text2Opt, bgColor, borderColor) =>
         val blk = AOBlock(
           n = 0,
           text1 = text1Opt,
@@ -340,7 +343,10 @@ object BlocksConf extends Enumeration {
             blockId = id
           ),
           offers = List(blk),
-          colors = Map(bgColorBf.name -> bgColor)
+          colors = Map(
+            bgColorBf.name -> bgColor,
+            borderColorBf.name -> borderColor
+          )
         )
         BlockMapperResult(bd, bim)
       }
@@ -351,7 +357,8 @@ object BlocksConf extends Enumeration {
         val price = offerOpt.flatMap(_.price)
         val text2 = offerOpt.flatMap(_.text2)
         val bgColor = bmr.bd.colors.get(bgColorBf.name).getOrElse(bgColorBf.anyDefaultValue)
-        Some( (bmr.bim, height, text1, price, text2, bgColor) )
+        val borderColor = bmr.bd.colors.get(borderColorBf.name).getOrElse(borderColorBf.anyDefaultValue)
+        Some( (bmr.bim, height, text1, price, text2, bgColor, borderColor) )
       }
     }
   }
