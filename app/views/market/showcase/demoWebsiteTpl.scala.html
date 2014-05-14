@@ -1,6 +1,6 @@
 @(adnNode: MAdnNode)(implicit ctx: util.Context)
 
-@* Временный шаблон. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
+@* Шаблон для рендеринга демо выдачи. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
 @import ctx._
 
 <html>
@@ -36,13 +36,8 @@
 
 <body>
 
-@adnNode.meta.siteUrl.map { siteUrl =>
-  @*<iframe src="@siteUrl"></iframe>*@
-}
-
 @market.lk.adn._node._installScriptTpl( adnNode )
 
 </body>
 
-@*<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>*@
 </html>
