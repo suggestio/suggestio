@@ -397,14 +397,14 @@ siomart =
       for _b in this.sm_blocks
         _block_width = _b.getAttribute 'data-width'
 
-        if cbca_grid.ww > 600
+        if cbca_grid.ww >= 660
           siomart.utils.addClass _b, 'double-size'
         else
           siomart.utils.removeClass _b, 'double-size'
 
         _b.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
 
-        if cbca_grid.ww > 600
+        if cbca_grid.ww >= 660
           _b.parentNode.parentNode.parentNode.style.width = _block_width*2 + 11*2 + 'px'
         else
           _b.parentNode.parentNode.parentNode.style.width = _block_width + 'px'
@@ -703,7 +703,7 @@ siomart =
     if cbca_grid.ww <= 800
       _window_class = 'sm-w-800'
 
-    if cbca_grid.ww <= 620
+    if cbca_grid.ww <= 660
       _window_class = 'sm-w-400'
 
     siomart.utils.ge('sioMartLayout').className = _window_class
