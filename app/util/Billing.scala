@@ -132,7 +132,7 @@ object Billing extends PlayMacroLogsImpl {
 
 
   /** Определение даты-времени списания. Если была задержка, то now. Иначе считаем относительно dateLast. */
-  def detectNewDatePaid(tariff: MBillTariff, now: DateTime = DateTime.now): DateTime = {
+  def detectNewDatePaid(tariff: MBillTariffFee, now: DateTime = DateTime.now): DateTime = {
     tariff.dateLast
       .filter { dateLast =>
         // Если была просрочка, то выкидываем эту дату

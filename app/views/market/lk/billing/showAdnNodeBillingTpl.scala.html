@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, tariffs: Seq[MBillTariff], txns: Seq[MBillTxn], mbc: MBillContract)(implicit ctx: util.Context)
+@(adnNode: MAdnNode, feeTariffs: Seq[MBillTariffFee], txns: Seq[MBillTxn], mbc: MBillContract)(implicit ctx: util.Context)
 
 @* Страница с информацией по биллингу для узла рекламной сети. *@
 @import ctx._
@@ -36,7 +36,7 @@
       }
 
 
-      @tariffs.headOption.map { tariff =>
+      @feeTariffs.headOption.map { tariff =>
 
         @tariff.nextPayDt.map { npd =>
           <td>
