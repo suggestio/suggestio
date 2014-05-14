@@ -2,6 +2,7 @@
 
 @import util.blocks.BlocksConf.Block8
 @import util.TplDataFormatUtil._
+@import common._
 
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl8" data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
@@ -14,12 +15,12 @@
   <div class="info abs">
     @mad.offers.headOption.map { offer =>
       @offer.text1.map { text1 =>
-        <div class="title" style="color: #@text1.font.color">
+        <div class="title" style="@_aovfStyleTpl(text1)">
           @Html(text1.value)
         </div>
       }
       @offer.price.map { price =>
-        <div class="price" style="color: #@price.font.color">
+        <div class="price" style="@_aovfStyleTpl(price)">
           @formatPrice(price.value, price.currency)
         </div>
       }

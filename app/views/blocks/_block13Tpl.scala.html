@@ -3,6 +3,7 @@
 @import blocks.svg._
 @import util.blocks.BlocksConf.Block13
 @import util.TplDataFormatUtil._
+@import common._
 
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl13" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
@@ -20,7 +21,7 @@
     <div class="right-line" style="background: #@discoIconColor"></div>
 
     @mad.offers.headOption.map { offer =>
-      <div class="sale"@offer.discount.map { discount => style="color: #@discount.font.color"}>
+      <div class="sale"@offer.discount.map { discount => style="@_aovfStyleTpl(discount)"}>
         @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
       </div>
 
@@ -39,7 +40,7 @@
       }
 
       @offer.text2.map { text2 =>
-        <div class="info abs" style="color: #@text2.font.color">
+        <div class="info abs" style="@_aovfStyleTpl(text2)">
           @Html(text2.value)
         </div>
       }

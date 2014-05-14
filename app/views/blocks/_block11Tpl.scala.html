@@ -1,6 +1,7 @@
 @(mad: MAdT, isStandalone: Boolean)(implicit ctx: util.Context)
 
 @import util.blocks.BlocksConf.Block11
+@import common._
 
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl11"@mad.colors.get(Block11.saleMaskColorBf.name).map { saleColor => style="border-color: #@saleColor"} data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
@@ -14,12 +15,12 @@
   @mad.offers.headOption.map { offer =>
     <div class="info">
       @offer.text1.map { text1 =>
-        <div class="title" style="color: #@text1.font.color">
+        <div class="title" style="@_aovfStyleTpl(text1)">
           @Html(text1.value)
         </div>
       }
       @offer.text2.map { text2 =>
-        <div class="slogan" style="color: #@text2.font.color">
+        <div class="slogan" style="@_aovfStyleTpl(text2)">
           @Html(text2.value)
         </div>
       }
