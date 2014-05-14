@@ -19,13 +19,16 @@
   <a href="@routes.SysMarket.editAdnNode(adnNode.id.get)">@Messages("Edit")</a>
 
   <p><a href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)"><b>-&gt; Личный кабинет узла</b></a></p>
-  @if(adnNode.adn.isReceiver) {
-    <p><a href="@routes.Market.demoWebSite(adnNode.id.get)"><b>-&gt; demoWebSite</b></a>
-       (<a href="http://10.0.0.101:9001@routes.Market.demoWebSite(adnNode.id.get)" target="_blank">osm01-vpn</a>)
-       <a href="@routes.Market.martIndex(adnNode.id.get)"><b>JSON</b></a>
+
+  @adnNode.adn.memberType.demoWebsiteAdnId(adnNode).map { dwId =>
+    <p><a href="@routes.Market.demoWebSite(dwId)"><b>-&gt; demoWebSite</b></a>
+      (<a href="http://10.0.0.101:9001@routes.Market.demoWebSite(dwId)" target="_blank">osm01-vpn</a>)
+      <a href="@routes.Market.martIndex(dwId)"><b>JSON</b></a>
     </p>
   }
+
   <a href="@routes.SysMarketBilling.billingFor(adnNode.id.get)">Billing</a>
+
 
   @company.map { mc =>
     <p>@Messages("Company")-@Messages("Owner"): <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a></p>

@@ -21,6 +21,11 @@
 
       <div class="title-inner">ЛИЧНЫЙ КАБИНЕТ</div>
 
+      @* Ссылка на demo web site. *@
+      @adnShowType.demoWebsiteAdnId(node).map { dwId =>
+        <a href="@routes.Market.demoWebSite(dwId)">demoWebSite</a>
+      }
+
       @* У узла-приемника/супервизора есть доступ к списку входных продьюсеров рекламы и доступ к коду установки. *@
       @defining(node.adn.isReceiver) { isRcvr =>
         @if(isRcvr || node.adn.isSupervisor) {
