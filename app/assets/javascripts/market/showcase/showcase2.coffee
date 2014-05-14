@@ -744,6 +744,9 @@ siomart =
         cbca_grid.resize()
         siomart.set_window_class()
 
+        siomart.node_offers_popup.fit()
+        siomart.node_offers_popup.show_block_by_index siomart.node_offers_popup.active_block_index
+
       siomart.window_resize_timer = setTimeout grid_resize, 300
 
     this.utils.add_single_listener window, 'resize', resize_cb

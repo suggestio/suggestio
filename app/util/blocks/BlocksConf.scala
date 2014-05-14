@@ -875,8 +875,8 @@ object BlocksConf extends Enumeration {
 
   val Block16 = new Val(16, "titleDescPriceNopict") {
     val heightBf = BfHeight(BlockMeta.HEIGHT_ESFN, defaultValue = Some(300), availableVals = Set(300, 460, 620))
-    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256, withFontSizes = Set(65, 56, 40))
-    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256, withFontSizes = Set(36, 28, 22))
+    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
     val priceBf = BfPrice("price")
     val bgColorBf = BfColor("bgColor", defaultValue = Some("e1cea1"))
     val borderColorBf = BfColor("borderColor", defaultValue = Some("FFFFFF"))

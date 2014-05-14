@@ -19,14 +19,18 @@
 
       @if(!ads.isEmpty) {
 
-        @ads.map { mad =>
+        @ads.zipWithIndex.map { case (mad, index) =>
           <div class="sio-mart-node-offers-window__single-ad-container js-nop-single-ad-container">
 
             <div style="margin: 0px auto;">
 
             <div class="sio-mart-node-offers-window__top-offset"></div>
             <div class="sio-mart-node-offers-window__single-ad-w-border">
+
+              <div class="sio-mart-node-offers-window__page-marker">@(index+1)/@ads.length</div>
+
               @_single_offer(mad, shops.getOrElse(mad.producerId, mmart), fallbackLogo = mmart.logoImgOpt, false, false)
+
             </div>
 
             <div class="sio-mart-node-offers-window__single-ad-location sm-now-location">
