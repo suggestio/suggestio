@@ -16,15 +16,15 @@
       <div class="info">
         @mad.offers.headOption.map { offer =>
           @offer.text1.map { title =>
-            <div class="title" style="@_aoffStyleTpl(title.font)">@title.value</div>
+            <div class="title" style="@_aovfStyleTpl(title)">@title.value</div>
           }
 
           @offer.oldPrice.map { oldPrice =>
-            <div class="old-price" style="@_aoffStyleTpl(oldPrice.font)">@formatPrice(oldPrice.value, oldPrice.currency)</div>
+            <div class="old-price" style="@_aovfStyleTpl(oldPrice)">@formatPrice(oldPrice.value, oldPrice.currency)</div>
           }
 
           @offer.price.map { price =>
-            <div class="price" style="@_aoffStyleTpl(price.font)">@formatPrice(price.value, price.currency)</div>
+            <div class="price" style="@_aovfStyleTpl(price)">@formatPrice(price.value, price.currency)</div>
           }
         }
       </div>

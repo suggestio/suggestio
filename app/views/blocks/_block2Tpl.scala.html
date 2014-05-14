@@ -3,30 +3,25 @@
 @import ctx._
 @import util.blocks.BlocksUtil._
 @import util.blocks.BlocksConf.Block2
+@import common._
 
 @blockBase(isStandalone) {
   <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl2" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
     <div class="sale-icon">
       <div class="mask"></div>
-      <img class="bg" src="@mad.imgs.get(Block2.BG_IMG_FN).map { img => @routes.Img.getImg(img.filename) }.getOrElse(routes.Assets.at("images/market/blocks/tpl2-bg.jpg"))"/>
+      <img class="bg" src="@mad.imgs.get(Block2.BG_IMG_FN).map { img =>@routes.Img.getImg(img.filename) }.getOrElse(routes.Assets.at("images/market/blocks/tpl2-bg.jpg"))"/>
     </div>
 
     <div class="info">
       @mad.offers.headOption.map { offer =>
         @offer.text1.map { title =>
-          <h5 style="color: #@title.font.color">@title.value</h5>
-        }.getOrElse{
-          <h5>Заголовок</h5>
+          <h5 style="@_aovfStyleTpl(title)">@title.value</h5>
         }
 
         @offer.text2.map { descr =>
-          <div class="text" style="color: #@descr.font.color">
+          <div class="text" style="@_aovfStyleTpl(descr)">
             <p>@descr.value</p>
-          </div>
-        }.getOrElse{
-          <div class="text">
-            <p>Короткое описание</p>
           </div>
         }
 

@@ -82,6 +82,8 @@ package object models {
   val  AOFieldFont          = ym.model.ad.AOFieldFont
   type AOFieldFont          = ym.model.ad.AOFieldFont
 
+  type AOValueField         = ym.model.ad.AOValueField
+
   val  AdPanelSettings      = ym.model.common.AdPanelSettings 
   type AdPanelSettings      = ym.model.common.AdPanelSettings
 
