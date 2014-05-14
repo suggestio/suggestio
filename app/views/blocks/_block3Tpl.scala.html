@@ -3,7 +3,7 @@
 @import util.TplDataFormatUtil._
 @import util.blocks.BlocksConf.Block3
 @import ctx._
-
+@import common._
 
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl3" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
@@ -23,12 +23,12 @@
       @mad.offers.map { offer =>
         <div class="item el-@{offer.n + 1}">
           @offer.text1.map { title =>
-          <div class="title" style="color: #@title.font.color;">
+          <div class="title" style="@_aovfStyleTpl(title)">
             @Html(title.value)
           </div>
           }
           @offer.price.map { price =>
-          <div class="price" style="color: #@price.font.color;">
+          <div class="price" style="@_aovfStyleTpl(price)">
             @formatPrice(price.value, price.currency)
           </div>
           }
