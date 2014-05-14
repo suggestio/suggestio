@@ -30,33 +30,75 @@ object MarketAdFormUtil {
   val DISCOUNT_TPL_ID_MIN = current.configuration.getInt("ad.discount.tpl.id.min") getOrElse 1
   val DISCOUNT_TPL_ID_MAX = current.configuration.getInt("ad.discount.tpl.id.max") getOrElse 6
 
-  /** Шрифт пока что характеризуется только цветом. Поэтому маппим поле цвета на шрифт. */
-  val fontColorM = colorM
-    .transform(
-      { AOFieldFont.apply },
-      { mmAdFont: AOFieldFont => mmAdFont.color }
-    )
+
+  /** Генератор маппингов для шрифтов.
+    * @param fontSizes Допустимые размеры шрифтов.
+    * @return Маппинг, возвращающий int-размер шрифта.
+    */
+  def fontSizeM(fontSizes: Set[Int]): Mapping[Int] = {
+    number(min = fontSizes.min, max = fontSizes.max)
+     .verifying("error.unawailable.font.size", fontSizes.contains(_))
+  }
+
+  /**
+   * Сборка маппинга для шрифта.
+   * @param withFontColor Включить font color?
+   * @param withFontSizes Множество допустимых размеров шрифтов, если пусто то поле отключено.
+   * @param default Дефолтовое значение.
+   * @return Маппинг для AOFieldFont.
+   */
+  def getFontM(withFontColor: Boolean = true, withFontSizes: Set[Int] = Set.empty, default: AOFieldFont): Mapping[AOFieldFont] = {
+    val withFontSize = !withFontSizes.isEmpty
+    (withFontColor, withFontSize) match {
+      case (true, true) =>
+        mapping(
+          "color" -> colorM,
+          "size"  -> fontSizeM(withFontSizes)
+        )
+        {(color, sz) =>
+          AOFieldFont(color, Some(sz)) }
+        {aoff =>
+          val fontSz = aoff.size.orElse(default.size).getOrElse(10)
+          Some((aoff.color, fontSz))}
+
+      case (true, false) =>
+        mapping("color" -> colorM)
+        {color => AOFieldFont(color) }
+        {aoff  => Some(aoff.color) }
+
+      case (false, true) =>
+        mapping("sz" -> fontSizeM(withFontSizes))
+        {sz => AOFieldFont(default.color, Some(sz)) }
+        {aoff => aoff.size }
+
+      case (false, false) =>
+        // Это заглушка, чтобы не было экзепшенов. Маловероятно, что до сюда будет доходить выполнение кода.
+        mapping("_stub_" -> optional(text(maxLength = 1)))
+        {_ => default }
+        {_ => None }
+    }
+  }
 
   /** Маппим строковое поле с настройками шрифта. */
-  def aoStringFieldM(m : Mapping[String]) = mapping(
+  def aoStringFieldM(m : Mapping[String], fontM: Mapping[AOFieldFont]) = mapping(
     "value" -> m,
-    "color" -> fontColorM
+    "font"  -> fontM
   )
   { AOStringField.apply }
   { AOStringField.unapply }
 
   /** Маппим числовое (Float) поле. */
-  def aoFloatFieldM(m: Mapping[Float]) = mapping(
+  def aoFloatFieldM(m: Mapping[Float], fontM: Mapping[AOFieldFont]) = mapping(
     "value" -> m,
-    "color" -> fontColorM
+    "font"  -> fontM
   )
   { AOFloatField.apply }
   { AOFloatField.unapply }
 
   /** Поле с ценой. Является вариацией float-поля. */
-  val mmaPriceM = mapping(
+  def mmaPriceM(fontM: Mapping[AOFieldFont]) = mapping(
     "value" -> priceStrictM,
-    "color" -> fontColorM
+    "font" -> fontM
   )
   {case ((rawPrice, price), font) =>
     AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font) }
@@ -66,9 +108,9 @@ object MarketAdFormUtil {
   }
 
   /** Поле с необязательной ценой. Является вариацией float-поля. Жуткий говнокод. */
-  val mmaPriceOptM = mapping(
+  def aoPriceOptM(fontM: Mapping[AOFieldFont]) = mapping(
     "value" -> optional(priceStrictM),
-    "color" -> fontColorM
+    "font" -> fontM
   )
   {(pricePairOpt, font) =>
     pricePairOpt.map { case (rawPrice, price) =>
@@ -82,9 +124,9 @@ object MarketAdFormUtil {
 
 
   /** Маппим необязательное Float-поле. */
-  def aoFloatFieldOptM(m: Mapping[Float]) = mapping(
+  def aoFloatFieldOptM(m: Mapping[Float], fontM: Mapping[AOFieldFont]) = mapping(
     "value" -> optional(m),
-    "color" -> fontColorM
+    "font" -> fontM
   )
   {(valueOpt, color) =>
     valueOpt map { AOFloatField(_, color) }

@@ -2,19 +2,10 @@
 
 @import util.TplDataFormatUtil._
 
-@content = {
-
+@_textInputBaseTpl(bf, bc, bfNameBase, af) {
   @defining( af(bfNameBase + ".value") ) { pvf =>
-
     <div class="lk-text-field">
       <div><input name="@pvf.name" class="js-input-w-block-preview" type="text" value="@pvf.value.orElse(bf.defaultValue.map(p => formatPrice(p.value, p.currency)))" maxlength="@bf.maxStrlen"/></div>
     </div>
   }
-
 }
-
-@colorSelectorHtml = {
-  @_colorBtnTpl(af(bfNameBase + ".color"), default = bf.defaultValue.map(_.font.color), isWithLabel=true )
-}
-
-@_textInputBaseTpl(bf, bc, content, colorSelectorHtml)

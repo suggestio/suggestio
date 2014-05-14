@@ -8,7 +8,7 @@ import views.html.blocks.editor._
 import BlocksConf.BlockConf
 import controllers.ad.MarketAdFormUtil
 import io.suggest.ym.model.common.{IColors, IBlockMeta, BlockMeta}
-import io.suggest.ym.model.ad.IOffers
+import io.suggest.ym.model.ad.{AOValueField, IOffers}
 import util.img._
 import controllers.MarketAdPreview.PreviewFormDefaults
 import io.suggest.img.SioImageUtilT
@@ -172,6 +172,18 @@ trait BlockFieldT {
 }
 
 
+trait BlockAOValueFieldT extends BlockFieldT {
+  override type T <: AOValueField
+
+  def withFontColor: Boolean
+  def withFontSizes: Set[Int]
+  def withFontSize = !withFontSizes.isEmpty
+  def defaultFont: AOFieldFont = BlocksUtil.defaultFont
+
+  def getFontMapping = MarketAdFormUtil.getFontM(withFontColor,  withFontSizes,  default = defaultValue.fold(defaultFont)(_.font))
+}
+
+
 object BfHeight {
   val HEIGHTS_AVAILABLE = Set(140, 300, 460)
 }
@@ -200,13 +212,15 @@ case class BfHeight(
 case class BfPrice(
   name: String,
   offerNopt: Option[Int] = None,
-  defaultValue: Option[AOPriceField] = None
-) extends BlockFieldT {
+  defaultValue: Option[AOPriceField] = None,
+  withFontColor: Boolean = true,
+  withFontSizes: Set[Int] = Set.empty
+) extends BlockAOValueFieldT {
   override type T = AOPriceField
 
   def maxStrlen = FormUtil.PRICE_M_MAX_STRLEN
 
-  override def mappingBase: Mapping[T] = MarketAdFormUtil.mmaPriceM
+  override def mappingBase: Mapping[T] = MarketAdFormUtil.mmaPriceM(getFontMapping)
 
   override def field: BefPrice = BlocksEditorFields.Price
 
@@ -222,7 +236,7 @@ case class BfPrice(
     field.renderEditorField(this, bfNameBase, af, bc)
   }
 
-  override def getOptionalStrictMapping: Mapping[Option[T]] = MarketAdFormUtil.mmaPriceOptM
+  override def getOptionalStrictMapping: Mapping[Option[T]] = MarketAdFormUtil.aoPriceOptM(getFontMapping)
 }
 
 
@@ -232,8 +246,10 @@ case class BfText(
   offerNopt: Option[Int] = None,
   defaultValue: Option[AOStringField] = None,
   minLen: Int = 0,
-  maxLen: Int = 16000
-) extends BlockFieldT {
+  maxLen: Int = 16000,
+  withFontColor: Boolean = true,
+  withFontSizes: Set[Int] = Set.empty
+) extends BlockAOValueFieldT {
   override type T = AOStringField
 
   def strTransformF = strTrimSanitizeF
@@ -241,7 +257,7 @@ case class BfText(
   override val mappingBase: Mapping[T] = {
     val m0 = text(minLength = minLen, maxLength = maxLen)
       .transform(strTrimSanitizeF, strIdentityF)
-    MarketAdFormUtil.aoStringFieldM(m0)
+    MarketAdFormUtil.aoStringFieldM(m0, getFontMapping)
   }
 
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
@@ -333,8 +349,10 @@ case class BfDiscount(
   defaultValue: Option[AOFloatField] = None,
   offerNopt: Option[Int] = None,
   min: Float = -100F,
-  max: Float = 200F
-) extends BlockFieldT {
+  max: Float = 200F,
+  withFontColor: Boolean = true,
+  withFontSizes: Set[Int] = Set.empty
+) extends BlockAOValueFieldT {
   override type T = AOFloatField
   val discoFloatM = getTolerantDiscountPercentM(
     min = min,
@@ -352,12 +370,12 @@ case class BfDiscount(
   override def fallbackValue: T = AOFloatField(0F, defaultFont)
 
   override def mappingBase: Mapping[T] = {
-    val mapping0 = MarketAdFormUtil.aoFloatFieldM(discoFloatM)
+    val mapping0 = MarketAdFormUtil.aoFloatFieldM(discoFloatM, getFontMapping)
     defaultOpt(mapping0, defaultValue)
   }
 
   override def getOptionalStrictMapping: Mapping[Option[T]] = {
-    MarketAdFormUtil.aoFloatFieldOptM(discoFloatM)
+    MarketAdFormUtil.aoFloatFieldOptM(discoFloatM, getFontMapping)
   }
 
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): HtmlFormat.Appendable = {

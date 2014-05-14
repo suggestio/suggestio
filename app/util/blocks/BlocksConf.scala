@@ -123,7 +123,8 @@ object BlocksConf extends Enumeration {
     val text1Field = BfText("title", BlocksEditorFields.InputText,
       minLen = 0,
       maxLen = 64,
-      defaultValue = Some(AOStringField("Платье", AOFieldFont("444444")))
+      defaultValue = Some(AOStringField("Платье", AOFieldFont("444444"))),
+      withFontSizes = Set(12, 14, 18)
     )
     val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN,
       defaultValue = Some(AOPriceField(200F, "RUB", "200 р.", defaultFont))

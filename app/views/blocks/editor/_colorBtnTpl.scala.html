@@ -1,11 +1,11 @@
-@(colorField: Field, default: Option[String] = None, isWithLabel:Boolean=false)(implicit ctx: util.Context)
+@(colorField: Field, default: Option[String] = None, withLabel: Boolean = false)(implicit ctx: util.Context)
 
 @* Селектор цветов для различных полей формы. *@
 @import ctx._
 
 @defining( colorField.value.orElse(default).getOrElse("FFFFFF") ) { colorValue =>
   <div class="lk-color-select">
-    <label class="lk-color-select__label @if( !isWithLabel ){ lk-color-select__label_hidden }">@Messages("Color"):</label>
+    <label class="lk-color-select__label @if( !withLabel ){ lk-color-select__label_hidden }">@Messages("Color"):</label>
 
     <div class="lk-color-select__color lk-color-select__color_custom js-custom-color" style="background-color: #@colorValue;">&nbsp;
       <div></div>

@@ -130,6 +130,7 @@ package object models {
   type BlockConf            = BlocksConf.BlockConf
 
   type BlockFieldT          = util.blocks.BlockFieldT
+  type BlockAOValueFieldT   = util.blocks.BlockAOValueFieldT
   type BfHeight             = util.blocks.BfHeight
   type BfDiscount           = util.blocks.BfDiscount
   type BfText               = util.blocks.BfText

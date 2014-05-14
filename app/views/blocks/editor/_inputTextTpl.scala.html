@@ -1,17 +1,9 @@
 @(bf: BfText, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
 
-@content = {
-
+@_textInputBaseTpl(bf, bc, bfNameBase, af, colorWithLabel = true) {
   @defining( af(bfNameBase + ".value") ) { pvf =>
     <div class="lk-text-field">
       <div><input name="@pvf.name" type="text" value="@pvf.value.orElse(bf.defaultValue.map(_.value))" class="js-input-w-block-preview" maxlength="@bf.maxLen"/></div>
     </div>
   }
-
 }
-
-@colorSelectorHtml = {
-  @_colorBtnTpl(af(bfNameBase + ".color"), default = bf.defaultValue.map(_.font.color), true)
-}
-
-@_textInputBaseTpl(bf, bc, content, colorSelectorHtml)

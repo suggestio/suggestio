@@ -1,0 +1,13 @@
+@(bf: BlockAOValueFieldT, bfNameBase: String, af: Form[_])(implicit ctx: Context)
+
+@* Шаблон, где надо выбрать размер шрифта. *@
+
+@defining( bfNameBase + ".font.size" ) { fsName =>
+  <select name="@fsName">
+    @defining( af(fsName).value.orElse(bf.defaultValue.flatMap(_.font.size)) ) { fsValueOpt =>
+      @for(sz <- bf.withFontSizes) {
+        <option value="@sz"@if(fsValueOpt.exists(_ == sz.toString)) { selected}>@sz</option>
+      }
+    }
+  </select>
+}
