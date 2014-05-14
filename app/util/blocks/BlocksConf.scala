@@ -1103,10 +1103,11 @@ object BlocksConf extends Enumeration {
     )
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+    val borderColorBf = BfColor("borderColor", defaultValue = Some("95FF00"))
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields = List(
-      heightField, bgImgBf, titleBf, descrBf
+      heightField, bgImgBf, borderColorBf, titleBf, descrBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -1114,10 +1115,11 @@ object BlocksConf extends Enumeration {
       mapping(
         heightField.getStrictMappingKV,
         bgImgBf.getStrictMappingKV,
+        borderColorBf.getStrictMappingKV,
         titleBf.getOptionalStrictMappingKV,
         descrBf.getOptionalStrictMappingKV
       )
-      {(height, bgBim, titleOpt, descrOpt) =>
+      {(height, bgBim, borderColor, titleOpt, descrOpt) =>
         val blk = AOBlock(
           n = 0,
           text1 = titleOpt,
@@ -1128,7 +1130,8 @@ object BlocksConf extends Enumeration {
             height = height,
             blockId = id
           ),
-          offers = List(blk)
+          offers = List(blk),
+          colors = Map(borderColorBf.name -> borderColor)
         )
         BlockMapperResult(bd, bgBim)
       }
@@ -1138,7 +1141,8 @@ object BlocksConf extends Enumeration {
         val offerOpt = bmr.bd.offers.headOption
         val titleOpt = offerOpt.flatMap(_.text1)
         val descrOpt = offerOpt.flatMap(_.text2)
-        Some( (height, bgBim, titleOpt, descrOpt) )
+        val borderColor = bmr.bd.colors.get(borderColorBf.name).getOrElse(borderColorBf.anyDefaultValue)
+        Some( (height, bgBim, borderColor, titleOpt, descrOpt) )
       }
     }
 
