@@ -458,8 +458,6 @@ siomart =
 
     touchend_event : ( event ) ->
 
-      console.log 'touchend_event'
-
       siomart.utils.addClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
 
       delete siomart.node_offers_popup.tstart_x
@@ -468,11 +466,9 @@ siomart =
       if this.x_delta_direction > 0
         cb = () ->
           siomart.node_offers_popup.next_block()
-          console.log 'next block'
       else
         cb = () ->
           siomart.node_offers_popup.prev_block()
-          console.log 'prev block'
 
       if this.scroll_or_move == 'move'
         setTimeout cb, 1
