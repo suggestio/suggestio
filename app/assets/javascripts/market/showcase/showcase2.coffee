@@ -382,10 +382,8 @@ siomart =
       this.show_block_by_index next_index
 
     prev_block : () ->
-      if typeof this.active_block_index == 'undefined'
-        return false
 
-      if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
+      if typeof this.active_block_index == 'undefined'
         return false
 
       prev_index = this.active_block_index - 1
@@ -437,12 +435,20 @@ siomart =
 
     manipulator_move_end_event : () ->
 
+      console.log 'manipulator_move_end_event'
+
       siomart.utils.addClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
 
-      if this.x_delta_direction > 0
-        siomart.node_offers_popup.next_block()
+      if siomart.node_offers_popup.x_delta_direction > 0
+        cb = () ->
+          siomart.node_offers_popup.next_block()
+          console.log 'next block'
       else
-        siomart.node_offers_popup.prev_block()
+        cb = () ->
+          siomart.node_offers_popup.prev_block()
+          console.log 'prev block'
+
+      setTimeout cb, 1
 
       delete siomart.node_offers_popup.x_start
       delete siomart.node_offers_popup.y_start
@@ -471,17 +477,24 @@ siomart =
       ## Кнопка возврата на главный экран
       siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), _e, siomart.close_node_offers_popup
 
-      ## Таскание мышкой
-      siomart.utils.add_single_listener this._block_container, 'mousedown', ( event ) ->
-        siomart.node_offers_popup.mouse_drag = true
+      if siomart.utils.is_touch_device()
+        siomart.utils.add_single_listener this._block_container, 'touchend', ( event ) ->
+          siomart.node_offers_popup.manipulator_move_end_event()
 
-      siomart.utils.add_single_listener this._block_container, 'mouseup', ( event ) ->
-        siomart.node_offers_popup.mouse_drag = false
-        siomart.node_offers_popup.manipulator_move_end_event()
+        siomart.utils.add_single_listener this._block_container, 'touchmove', ( event ) ->
+          siomart.node_offers_popup.manipulator_move_event event.touches[0].pageX, event.touches[0].pageY
+      else
+        ## Таскание мышкой
+        siomart.utils.add_single_listener this._block_container, 'mousedown', ( event ) ->
+          siomart.node_offers_popup.mouse_drag = true
 
-      siomart.utils.add_single_listener this._block_container, 'mousemove', ( event ) ->
-        if siomart.node_offers_popup.mouse_drag == true
-          siomart.node_offers_popup.manipulator_move_event event.x, event.y
+        siomart.utils.add_single_listener this._block_container, 'mouseup', ( event ) ->
+          siomart.node_offers_popup.mouse_drag = false
+          siomart.node_offers_popup.manipulator_move_end_event()
+
+        siomart.utils.add_single_listener this._block_container, 'mousemove', ( event ) ->
+          if siomart.node_offers_popup.mouse_drag == true
+            siomart.node_offers_popup.manipulator_move_event event.x, event.y
 
 
   ######################################
