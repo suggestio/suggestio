@@ -364,6 +364,7 @@ siomart =
 
     nav_pointer_size : 14
     mouse_drag : false
+    scroll_move_locked : true
 
     show_block_by_index : ( block_index ) ->
       this.active_block_index = block_index
@@ -422,6 +423,10 @@ siomart =
       delta_x = this.x_start - x
       delta_y = this.y_start - y
 
+      if Math.abs( delta_y ) > Math.abs( delta_x )
+        siomart.node_offers_popup.scroll_move_locked = true
+        return false
+
       c_x_offset = siomart.node_offers_popup._block_container.getAttribute 'data-x-offset'
       c_x_offset = parseInt c_x_offset
 
@@ -448,10 +453,12 @@ siomart =
           siomart.node_offers_popup.prev_block()
           console.log 'prev block'
 
-      setTimeout cb, 1
+      if siomart.node_offers_popup.scroll_move_locked != true
+        setTimeout cb, 1
 
       delete siomart.node_offers_popup.x_start
       delete siomart.node_offers_popup.y_start
+      siomart.node_offers_popup.scroll_move_locked = false
 
     init : () ->
 
