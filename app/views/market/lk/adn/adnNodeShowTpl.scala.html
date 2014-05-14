@@ -21,11 +21,6 @@
 
       <div class="title-inner">ЛИЧНЫЙ КАБИНЕТ</div>
 
-      @* Ссылка на demo web site. *@
-      @adnShowType.demoWebsiteAdnId(node).map { dwId =>
-        <a href="@routes.Market.demoWebSite(dwId)">demoWebSite</a>
-      }
-
       @* У узла-приемника/супервизора есть доступ к списку входных продьюсеров рекламы и доступ к коду установки. *@
       @defining(node.adn.isReceiver) { isRcvr =>
         @if(isRcvr || node.adn.isSupervisor) {
@@ -93,6 +88,16 @@
     @* Для тех, кто может создавать свою рекламу, рисуем список своих рекламных карточек с галочками. *@
     @if(node.adn.isProducer) {
       @_myAdsTpl(node, myAds, fallbackLogo)
+
+      @* Ссылка на demo web site. *@
+
+      <div class="sm-note">
+
+        @adnShowType.demoWebsiteAdnId(node).map { dwId =>
+          Вы можете посмотреть, как выглядят ваши к карточки в <a class="sm-note__link" target="_blank" href="@routes.Market.demoWebSite(dwId)">рекламной выдаче</a>
+        }
+      </div>
+
     }
 
     @* Супервизору надо отрендерить табличку подчиненых узлов: для реализации надзорных полномочий. *@

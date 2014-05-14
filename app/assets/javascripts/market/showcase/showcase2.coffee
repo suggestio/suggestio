@@ -363,8 +363,7 @@ siomart =
   node_offers_popup :
 
     nav_pointer_size : 14
-    mouse_drag : false
-    scroll_move_locked : true
+    scroll_or_move : undefined
 
     show_block_by_index : ( block_index ) ->
       this.active_block_index = block_index
@@ -412,39 +411,61 @@ siomart =
 
       this._block_container.style.width = this.sm_blocks.length * cbca_grid.ww + 'px'
 
-    ## События
-    manipulator_move_event : ( x, y ) ->
+    ###############################
+    ## События для обработки свайпа
+    ###############################
 
-      if typeof this.x_start == 'undefined'
-        this.x_start = x
-        this.y_start = y
-        siomart.utils.removeClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
+    touchstart_event : ( event ) ->
 
-      delta_x = this.x_start - x
-      delta_y = this.y_start - y
+      ex = event.touches[0].pageX
+      ey = event.touches[0].pageY
 
-      if Math.abs( delta_y ) > Math.abs( delta_x )
-        siomart.node_offers_popup.scroll_move_locked = true
+      this.tstart_x = ex
+      this.tstart_y = ey
+
+      this.last_x = ex
+
+      siomart.utils.removeClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
+
+    touchmove_event : ( event ) ->
+
+      ex = event.touches[0].pageX
+      ey = event.touches[0].pageY
+
+      delta_x = this.tstart_x - ex
+      delta_y = this.tstart_y - ey
+
+      if typeof siomart.node_offers_popup.scroll_or_move == 'undefined' && !( delta_x == 0 && delta_y == 0 )
+
+        if Math.abs( delta_y ) > Math.abs( delta_x )
+          siomart.node_offers_popup.scroll_or_move = 'scroll'
+        else
+          siomart.node_offers_popup.scroll_or_move = 'move'
+
+      if siomart.node_offers_popup.scroll_or_move == 'scroll'
         return false
+      else
+        event.preventDefault()
 
       c_x_offset = siomart.node_offers_popup._block_container.getAttribute 'data-x-offset'
       c_x_offset = parseInt c_x_offset
 
       siomart.node_offers_popup._block_container.style['-webkit-transform'] = 'translate3d(' + parseInt( c_x_offset - delta_x ) + 'px, 0px, 0px)'
 
-      this.x_delta_direction = this.x_last - x
-      this.y_delta_direction = this.y_last - y
+      this.x_delta_direction = this.last_x - ex
 
-      this.x_last = x
-      this.y_last = y
+      this.last_x = ex
 
-    manipulator_move_end_event : () ->
+    touchend_event : ( event ) ->
 
-      console.log 'manipulator_move_end_event'
+      console.log 'touchend_event'
 
       siomart.utils.addClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
 
-      if siomart.node_offers_popup.x_delta_direction > 0
+      delete siomart.node_offers_popup.tstart_x
+      delete siomart.node_offers_popup.tstart_y
+
+      if this.x_delta_direction > 0
         cb = () ->
           siomart.node_offers_popup.next_block()
           console.log 'next block'
@@ -453,12 +474,11 @@ siomart =
           siomart.node_offers_popup.prev_block()
           console.log 'prev block'
 
-      if siomart.node_offers_popup.scroll_move_locked != true
+      if this.scroll_or_move == 'move'
         setTimeout cb, 1
 
-      delete siomart.node_offers_popup.x_start
-      delete siomart.node_offers_popup.y_start
-      siomart.node_offers_popup.scroll_move_locked = false
+      delete siomart.node_offers_popup.scroll_or_move
+
 
     init : () ->
 
@@ -484,25 +504,15 @@ siomart =
       ## Кнопка возврата на главный экран
       siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), _e, siomart.close_node_offers_popup
 
-      if siomart.utils.is_touch_device()
-        siomart.utils.add_single_listener this._block_container, 'touchend', ( event ) ->
-          siomart.node_offers_popup.manipulator_move_end_event()
+      ## События для свайпа
+      siomart.utils.add_single_listener this._block_container, 'touchstart', ( event ) ->
+        siomart.node_offers_popup.touchstart_event event
 
-        siomart.utils.add_single_listener this._block_container, 'touchmove', ( event ) ->
-          siomart.node_offers_popup.manipulator_move_event event.touches[0].pageX, event.touches[0].pageY
-      else
-        ## Таскание мышкой
-        siomart.utils.add_single_listener this._block_container, 'mousedown', ( event ) ->
-          siomart.node_offers_popup.mouse_drag = true
+      siomart.utils.add_single_listener this._block_container, 'touchmove', ( event ) ->
+        siomart.node_offers_popup.touchmove_event event
 
-        siomart.utils.add_single_listener this._block_container, 'mouseup', ( event ) ->
-          siomart.node_offers_popup.mouse_drag = false
-          siomart.node_offers_popup.manipulator_move_end_event()
-
-        siomart.utils.add_single_listener this._block_container, 'mousemove', ( event ) ->
-          if siomart.node_offers_popup.mouse_drag == true
-            siomart.node_offers_popup.manipulator_move_event event.x, event.y
-
+      siomart.utils.add_single_listener this._block_container, 'touchend', ( event ) ->
+        siomart.node_offers_popup.touchend_event event
 
   ######################################
   ## Загрузить индексную страницу для ТЦ
