@@ -190,7 +190,7 @@ CbcaCommon = () ->
       $.ajax(
         url: $this.attr('href')
         success: (data) ->
-          $('#disable-ad').remove()
+          $('#disable-ad, #anotherNodes').remove()
           $('.body-wrap').append(data)
           cbca.popup.showPopup('#disable-ad')
         error: (error) ->
