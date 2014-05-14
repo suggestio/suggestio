@@ -2,7 +2,7 @@
 
 @import util.TplDataFormatUtil._
 
-@_textInputBaseTpl(bf, bc, bfNameBase, af) {
+@_textInputBaseTpl(bf, bc, bfNameBase, af, true) {
   @defining( af(bfNameBase + ".value") ) { pvf =>
     <div class="lk-text-field">
       <div><input name="@pvf.name" class="js-input-w-block-preview" type="text" value="@pvf.value.orElse(bf.defaultValue.map(p => formatPrice(p.value, p.currency)))" maxlength="@bf.maxStrlen"/></div>
