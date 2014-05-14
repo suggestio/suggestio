@@ -282,11 +282,19 @@ trait AOFloatFieldT extends AOValueField {
 case class AOFloatField(value: Float, font: AOFieldFont) extends AOFloatFieldT
 
 
-case class AOFieldFont(color: String) {
+/**
+ * Описание шрифтоты.
+ * @param color Цвет шрифта.
+ * @param size Необязательный размер шрифта.
+ */
+case class AOFieldFont(color: String, size: Option[Int] = None) {
   def renderPlayJsonFields(acc: FieldsJsonAcc) = {
-    val fontBody = JsObject(Seq(
+    var fieldsAcc: FieldsJsonAcc = List(
       COLOR_ESFN -> JsString(color)
-    ))
+    )
+    if (size.isDefined)
+      fieldsAcc ::= SIZE_ESFN -> JsNumber(size.get)
+    val fontBody = JsObject(fieldsAcc)
     (FONT_ESFN, fontBody) :: acc
   }
 }
