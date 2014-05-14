@@ -132,24 +132,42 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     .left
       vertical-align: top
       padding-top: 18px
+
   .input-wrap.big
     width: 100%
+
+    .input-shadow
+
+      input
+        width: 98%
+
+
   .input-wrap.small
     width: 260px
     float: left
     margin-right: 60px
+
+    .input-shadow
+
+      input
+        width: 88%
+
   .input-wrap.hide-label
     .left
       display: none
+
   .input
     background: none repeat scroll 0 0 #FFFFFF
     border: 1px solid #B4B3B3
     padding: 1px
+
     .input-shadow
+      overflow: hidden
       border-left: 1px solid #FBFBFB
       border-right: 1px solid #FBFBFB
       border-top: 1px solid #D2D3D3
       border-radius(4px)
+
       input
         outline: 0
         padding: 0 10px
@@ -158,6 +176,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
         font-size: 16px
         color: #959595
         font-family: 'Arial'
+
       textarea
         width: 100%
         height: 170px
