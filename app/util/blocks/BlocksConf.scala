@@ -1042,6 +1042,58 @@ object BlocksConf extends Enumeration {
   }
 
 
+  val Block20 = new Val(20, "block20") with SaveBgImg {
+
+    val heightField = BfHeight(
+      name = BlockMeta.HEIGHT_ESFN,
+      defaultValue = Some(300),
+      availableVals = Set(300, 460, 620)
+    )
+    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+
+    /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
+    override def blockFields = List(
+      heightField, bgImgBf, titleBf, descrBf
+    )
+
+    /** Набор маппингов для обработки данных от формы. */
+    override def strictMapping: Mapping[BlockMapperResult] = {
+      mapping(
+        heightField.getStrictMappingKV,
+        bgImgBf.getStrictMappingKV,
+        titleBf.getOptionalStrictMappingKV,
+        descrBf.getOptionalStrictMappingKV
+      )
+      {(height, bgBim, titleOpt, descrOpt) =>
+        val blk = AOBlock(
+          n = 0,
+          text1 = titleOpt,
+          text2 = descrOpt
+        )
+        val bd = BlockDataImpl(
+          blockMeta = BlockMeta(
+            height = height,
+            blockId = id
+          ),
+          offers = List(blk)
+        )
+        BlockMapperResult(bd, bgBim)
+      }
+      {bmr =>
+        val height = bmr.bd.blockMeta.height
+        val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+        val offerOpt = bmr.bd.offers.headOption
+        val titleOpt = offerOpt.flatMap(_.text1)
+        val descrOpt = offerOpt.flatMap(_.text2)
+        Some( (height, bgBim, titleOpt, descrOpt) )
+      }
+    }
+
+    override def template = _block20Tpl
+  }
+
+
   /** Сортированные значения. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id. */
   val valuesSorted = values.toSeq.sortBy(_.id)
