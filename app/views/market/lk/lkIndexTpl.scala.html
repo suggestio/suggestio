@@ -3,31 +3,62 @@
 @* Страница, которая отображается незалогиненному юзеру, который зашел в маркет.
    Тут небольшое описание и поля для логина. *@
 
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Добро пожаловать! | market | Suggest.io</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-@lkBase("Маркет") {
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/colorpicker/css/colorpicker.css")'/>
+
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/common.min.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/create-ad.min.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase.min.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/edit-shop.min.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase_previews.min.css")'/>
+
+  <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
+
+</head>
 
 
-  <div class="body">
+<body class="lk">
 
-    <div class="login-page">
-      <div class="block-480">
-        <p>
-          Уважаемые дамы и господа! Мы рады приветствовать Вас на сайте SIOMarket. Это не простой маркет в прямом
-          понимании обывателя XXI века. Это Маркет огого, да, да именно с большой буквы.
-        </p>
-        <p>
-          Если вам посчастливилось получить заветное письмо от вашего ТЦ и у вас есть личный кабинет,
-          входите и не стесняйтесь. Остальные же пошли прочь!
-        </p>
+  <div class="body-wrap">
 
-        <div class="lp-title">ВХОД</div>
-        <div class="border-line"></div>
+    <div class="body">
+
+      <div class="login-page">
+        <div class="block-480">
+          <a href="#" class="logo-2">
+
+          </a>
+
+          <p>
+            Уважаемые дамы и господа! Мы рады приветствовать Вас на сайте SIOMarket. Это не простой маркет в прямом
+            понимании обывателя XXI века. Это Маркет огого, да, да именно с большой буквы.
+          </p>
+          <p>
+            Если вам посчастливилось получить заветное письмо от вашего ТЦ и у вас есть личный кабинет,
+            входите и не стесняйтесь. Остальные же пошли прочь!
+          </p>
+
+          <div class="lp-title">ВХОД</div>
+          <div class="border-line"></div>
+        </div>
+        @* Рендерим форму логина прямо здесь. *@
+        @ident._emailPwLoginFormTpl(lf)
       </div>
-      @* Рендерим форму логина прямо здесь. *@
-      @ident._emailPwLoginFormTpl(lf)
+
     </div>
 
   </div>
 
-}
+  <script src="@routes.Assets.at("javascripts/market/lk/mx_cof.js")"></script>
+  <script src="@routes.Assets.at("javascripts/market/lk/mx_dev.js")"></script>
+  <script src="@routes.Assets.at("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
+  <script src="@routes.Assets.at("javascripts/jquery-ui.custom.min.js")"></script>
+
+</body>
+</html>
 
