@@ -1276,6 +1276,66 @@ object BlocksConf extends Enumeration {
   }
 
 
+  val Block24 = new Val(24, "smth24") with SaveBgImg with SaveLogoImg {
+    val heightBf = BfHeight(
+      name = BlockMeta.HEIGHT_ESFN,
+      defaultValue = Some(300),
+      availableVals = Set(300, 460, 620)
+    )
+    val fillColorBf = BfColor("fillColor", defaultValue = Some("d5c864"))
+    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+    val priceBf = BfPrice("price")
+    val oldPriceBf = BfPrice("oldPrice")
+
+    def blockFields: List[BlockFieldT] = List(
+      heightBf, logoImgBf, bgImgBf, fillColorBf, titleBf, priceBf, oldPriceBf
+    )
+
+    def strictMapping: Mapping[BlockMapperResult] = {
+      mapping(
+        heightBf.getStrictMappingKV,
+        logoImgBf.getStrictMappingKV,
+        bgImgBf.getStrictMappingKV,
+        fillColorBf.getStrictMappingKV,
+        titleBf.getOptionalStrictMappingKV,
+        priceBf.getOptionalStrictMappingKV,
+        oldPriceBf.getOptionalStrictMappingKV
+      )
+      {(height, logoBim, bgBim, fillColor, titleOpt, priceOpt, oldPriceOpt) =>
+        val blk = AOBlock(
+          n = 0,
+          text1 = titleOpt,
+          price = priceOpt,
+          oldPrice = oldPriceOpt
+        )
+        val bd = BlockDataImpl(
+          blockMeta = BlockMeta(
+            height = height,
+            blockId = id
+          ),
+          offers = List(blk),
+          colors = Map(fillColorBf.name -> fillColor)
+        )
+        val bim = bgBim ++ logoBim
+        BlockMapperResult(bd, bim)
+      }
+      {bmr =>
+        val height = bmr.bd.blockMeta.height
+        val logoBim: BlockImgMap = bmr.bim.filter(_._1 == logoImgBf.name)
+        val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+        val fillColor = bmr.bd.colors.get(fillColorBf.name).getOrElse(fillColorBf.anyDefaultValue)
+        val offerOpt = bmr.bd.offers.headOption
+        val titleOpt = offerOpt.flatMap(_.text1)
+        val priceOpt = offerOpt.flatMap(_.price)
+        val oldPriceOpt = offerOpt.flatMap(_.oldPrice)
+        Some( (height, logoBim, bgBim, fillColor, titleOpt, priceOpt, oldPriceOpt) )
+      }
+    }
+
+    def template = _block24Tpl
+  }
+
+
   /** Сортированные значения. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id. */
   val valuesSorted = values.toSeq.sortBy(_.id)
