@@ -1217,6 +1217,65 @@ object BlocksConf extends Enumeration {
   }
 
 
+  val Block23 = new Val(23, "somethng23") with SaveBgImg {
+    val heightBf = BfHeight(
+      name = BlockMeta.HEIGHT_ESFN,
+      defaultValue = Some(300),
+      availableVals = Set(300, 460, 620)
+    )
+    val fillColorBf = BfColor("fillColor", defaultValue = Some("f3f3f3"))
+    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+    val priceBf = BfPrice("price")
+
+    /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
+    def blockFields: List[BlockFieldT] = List(
+      heightBf, bgImgBf, fillColorBf, titleBf, descrBf, priceBf
+    )
+
+    /** Набор маппингов для обработки данных от формы. */
+    def strictMapping: Mapping[BlockMapperResult] = {
+      mapping(
+        heightBf.getStrictMappingKV,
+        bgImgBf.getStrictMappingKV,
+        fillColorBf.getStrictMappingKV,
+        titleBf.getOptionalStrictMappingKV,
+        descrBf.getOptionalStrictMappingKV,
+        priceBf.getOptionalStrictMappingKV
+      )
+      {(height, bgBim, fillColor, titleOpt, descrOpt, priceOpt) =>
+        val blk = AOBlock(
+          n = 0,
+          text1 = titleOpt,
+          text2 = descrOpt,
+          price = priceOpt
+        )
+        val bd = BlockDataImpl(
+          blockMeta = BlockMeta(
+            height = height,
+            blockId = id
+          ),
+          offers = List(blk),
+          colors = Map(fillColorBf.name -> fillColor)
+        )
+        BlockMapperResult(bd, bgBim)
+      }
+      {bmr =>
+        val height = bmr.bd.blockMeta.height
+        val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+        val fillColor = bmr.bd.colors.get(fillColorBf.name).getOrElse(fillColorBf.anyDefaultValue)
+        val offerOpt = bmr.bd.offers.headOption
+        val titleOpt = offerOpt.flatMap(_.text1)
+        val descrOpt = offerOpt.flatMap(_.text2)
+        val priceOpt = offerOpt.flatMap(_.price)
+        Some( (height, bgBim, fillColor, titleOpt, descrOpt, priceOpt) )
+      }
+    }
+
+    def template = _block23Tpl
+  }
+
+
   /** Сортированные значения. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id. */
   val valuesSorted = values.toSeq.sortBy(_.id)
