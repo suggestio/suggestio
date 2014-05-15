@@ -1,0 +1,28 @@
+@(stf: Form[_], submitCall: Call, btnText: String)(implicit ctx: Context)
+
+@* Форма создания/редактирования тарифа, который снимает деньги с баланса по просмотрам/переходам. *@
+
+@import helper._
+@import ctx._
+@import util.BillingTpl._
+
+@form(submitCall) {
+
+  @stf.globalError.map { ge =>
+    <p><b>Серьёзная проблема</b>: @Messages(ge.message, ge.args : _*)</p>
+  }
+
+  @inputText(stf("name"), '_label -> "Название")
+  <br/>
+
+  @checkbox(stf("enabled"), '_label -> "Активен?")
+  <br/>
+
+  @inputText(stf("dateFirst"), '_label -> "Активен с (dd.MM.yyyy HH:mm)")
+
+  @select(stf("debitFor"), options = adStatActionsSeq, '_label -> "За что списываем деньги?")
+
+  @inputText(stf("price"), '_label -> "Размер одного списания", 'placeholder -> "1,15 руб")
+
+  <input type="submit" value="@btnText"/>
+}

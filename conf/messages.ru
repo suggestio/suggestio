@@ -62,6 +62,9 @@ blocks.field.borderColor=Цвет бордюра
 blocks.field.discoIconColor=Цвет значка скидки
 blocks.field.discoBorderColor=Цвет бордюра скидки
 
+ad.stat.action.v=Просмотр
+ad.stat.action.c=Клик
+
 
 lk.sl.enable_ad=Включить объявление
 lk.sl.d=Выводить в моём каталоге

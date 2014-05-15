@@ -31,6 +31,7 @@ object MBillTariff {
 object BTariffTypes extends Enumeration {
   type BTariffType = Value
   val Fee = Value("f")
+  val Stat = Value("s")
 
   def maybeWithName(n: String): Option[BTariffType] = {
     try {

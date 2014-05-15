@@ -1,0 +1,17 @@
+@(adnNode: MAdnNode, stf: Form[_], contract: MBillContract)(implicit ctx: Context)
+
+@* Страница с формой создания тарификации по просмотрам/кликам. *@
+@import sys1.market.billing.billingBase
+@import ctx._
+
+@billingBase("Новый тариф", Some(adnNode)) {
+
+  <h3>Создание тарификации по просмотрам/переходам для договора @contract.legalContractId</h3>
+
+  @_statTariffFormTpl(
+    stf         = stf,
+    submitCall  = routes.SysMarketBillingTariff.addStatTariffSubmit(contract.id.get),
+    btnText     = Messages("Create")
+  )
+
+}

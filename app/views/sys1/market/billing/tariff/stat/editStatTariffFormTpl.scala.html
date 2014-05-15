@@ -1,0 +1,17 @@
+@(adnNode: MAdnNode, tariff: MBillTariffStat, contract: MBillContract, stf: Form[_])(implicit ctx: Context)
+
+@* Страница с формой редактирования stat-тарифа. *@
+@import ctx._
+@import sys1.market.billing.billingBase
+
+@billingBase("Изменить stat-тариф", Some(adnNode)) {
+
+  <h5>Редактирование тарифа #@tariff.id.get (договор @contract.legalContractId)</h5>
+
+  @_statTariffFormTpl(
+    stf = stf,
+    submitCall = routes.SysMarketBillingTariff.editStatTariffSubmit(tariff.id.get),
+    btnText = Messages("Save")
+  )
+
+}

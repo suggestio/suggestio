@@ -50,7 +50,7 @@ object MBillTariffFee extends TariffsFindByContract[MBillTariffFee] with Tariffs
 
 case class MBillTariffFee(
   id              : Pk[Int] = NotAssigned,
-  var contractId  : Int,
+  contractId      : Int,
   var name        : String,
   ttype           : BTariffType = BTariffTypes.Fee,
   var isEnabled   : Boolean,

@@ -79,5 +79,7 @@ gzipAssets := {
 }
 
 
-templatesImport += "util.blocks.BlocksConf._"
+templatesImport ++= Seq(
+  "util.blocks.BlocksConf._"
+)
 

@@ -3,11 +3,9 @@ package models
 import anorm._
 import org.joda.time.DateTime
 import util.AnormJodaTime._
-import util.AnormPgInterval._
-import util.{FormUtil, SqlModelSave}
+import util.SqlModelSave
 import java.sql.Connection
 import java.util.Currency
-import org.postgresql.util.PGInterval
 
 /**
  * Suggest.io
@@ -30,20 +28,20 @@ object MBillTariffStat extends TariffsFindByContract[MBillTariffStat] with Tarif
       case id ~ contractId ~ name ~ ttype ~ isEnabled ~ dateFirst ~ dateCreated ~ dateModified ~ dateLast ~
            dateStatus ~ generation ~ debitCount ~ debitedTotal ~ debitFor ~ debitAmount ~ currencyCode =>
         MBillTariffStat(
-          id          = id,
-          contractId  = contractId,
-          name        = name,
-          ttype       = ttype,
-          isEnabled   = isEnabled,
-          dateFirst   = dateFirst,
-          dateCreated = dateCreated,
+          id           = id,
+          contractId   = contractId,
+          name         = name,
+          ttype        = ttype,
+          isEnabled    = isEnabled,
+          dateFirst    = dateFirst,
+          dateCreated  = dateCreated,
           dateModified = dateModified,
-          dateLast    = dateLast,
-          dateStatus  = dateStatus,
-          generation  = generation,
-          debitCount  = debitCount,
-          debitedFor  = debitFor,
-          debitAmount = debitAmount,
+          dateLast     = dateLast,
+          dateStatus   = dateStatus,
+          generation   = generation,
+          debitCount   = debitCount,
+          debitFor     = debitFor,
+          debitAmount  = debitAmount,
           debitedTotal = debitedTotal,
           currencyCode = currencyCode
         )
@@ -55,11 +53,11 @@ object MBillTariffStat extends TariffsFindByContract[MBillTariffStat] with Tarif
 
 case class MBillTariffStat(
   id              : Pk[Int] = NotAssigned,
-  var contractId  : Int,
+  contractId      : Int,
   var name        : String,
-  debitedFor      : AdStatAction,
-  debitAmount     : Float,
-  ttype           : BTariffType = BTariffTypes.Fee,
+  var debitFor    : AdStatAction,
+  var debitAmount : Float,
+  ttype           : BTariffType = BTariffTypes.Stat,
   var isEnabled   : Boolean,
   var dateFirst   : DateTime,
   dateCreated     : DateTime = DateTime.now,
@@ -83,18 +81,19 @@ case class MBillTariffStat(
         "VALUES ({contractId}, {name}, {ttype}, {isEnabled}, {dateFirst}, {dateCreated}, {dateStatus}, {generation}, {debitCount}, {debitedTotal}, {debitFor}, {debitAmount}, {currencyCode})")
       .on('contractId -> contractId, 'name -> name, 'ttype -> ttype.toString, 'isEnabled -> isEnabled,
           'dateFirst -> dateFirst, 'dateCreated -> dateCreated, 'dateStatus -> dateStatus,
-          'generation -> generation, 'debitCount -> debitCount, 'debitFor -> debitedFor.toString,
+          'generation -> generation, 'debitCount -> debitCount, 'debitedTotal -> debitedTotal, 'debitFor -> debitFor.toString,
           'debitAmount -> debitAmount, 'currencyCode -> currencyCode)
       .executeInsert(rowParser single)
   }
 
   override def saveUpdate(implicit c: Connection): Int = {
     SQL("UPDATE " + TABLE_NAME + " SET name = {name}, is_enabled = {isEnabled}, date_first = {dateFirst}," +
-        " date_status = {dateStatus}, debit_amount = {debitAmount}, currency_code = {currencyCode}," +
+        " date_status = {dateStatus}, debit_for = {debitFor}, debit_amount = {debitAmount}, currency_code = {currencyCode}," +
         " generation = generation + 1 WHERE id = {id}")
       .on('id -> id.get, 'name -> name, 'isEnabled -> isEnabled, 'dateFirst -> dateFirst,
-          'dateStatus -> dateStatus, 'debitAmount -> debitAmount, 'currencyCode -> currencyCode)
+          'dateStatus -> dateStatus, 'debitFor -> debitFor.toString, 'debitAmount -> debitAmount, 'currencyCode -> currencyCode)
       .executeUpdate()
   }
 
+  def currency = Currency.getInstance(currencyCode)
 }

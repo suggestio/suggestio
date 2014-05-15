@@ -25,11 +25,11 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
-  val bDate = localDate
+  private val bDate = localDate
     .transform[DateTime](_.toDateTimeAtStartOfDay, _.toLocalDate)
 
   /** Маппинг для формы добавления/редактирования контракта. */
-  val contractFormM = Form(mapping(
+  private val contractFormM = Form(mapping(
     "adnId"         -> esIdM,
     "dateContract"  -> bDate
     ,
@@ -64,21 +64,23 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
 
   /** Страница с информацией по биллингу. */
   def billingFor(adnId: String) = IsSuperuser.async { implicit request =>
-    val adnNodeOptFut = MAdnNode.getById(adnId)
+    val adnNodeOptFut = MAdnNodeCache.getByIdCached(adnId)
     // Синхронные модели
     val syncResult = DB.withConnection { implicit c =>
-      val balanceOpt = MBillBalance.getByAdnId(adnId)
       val contracts = MBillContract.findForAdn(adnId)
       val contractIds = contracts.map(_.id.get)
-      val txns = MBillTxn.findForContracts(contractIds)
-      val feeTariffs = MBillTariffFee.getAll
-      (balanceOpt, contracts, txns, feeTariffs)
+      val mbtsGrouper = { mbt: MBillTariff => mbt.contractId }
+      SysAdnNodeBillingArgs(
+        balanceOpt = MBillBalance.getByAdnId(adnId),
+        contracts = contracts,
+        txns = MBillTxn.findForContracts(contractIds),
+        feeTariffsMap = MBillTariffFee.getAll.groupBy(mbtsGrouper),
+        statTariffsMap = MBillTariffStat.getAll.groupBy(mbtsGrouper)
+      )
     }
     adnNodeOptFut map {
       case Some(adnNode) =>
-        val (balanceOpt, contracts, txns, feeTariffs) = syncResult
-        val ftm = feeTariffs.groupBy(_.contractId)
-        Ok(adnNodeBillingTpl(adnNode, balanceOpt, contracts, txns, ftm))
+        Ok(adnNodeBillingTpl(adnNode, syncResult))
       case None =>
         adnNodeNotFound(adnId)
     }
@@ -170,7 +172,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
 
 
   /** Маппинг для формы ввода входящего платежа. */
-  val paymentFormM = Form(mapping(
+  private val paymentFormM = Form(mapping(
     "txnUid" -> nonEmptyText(minLength = 4, maxLength = 64)
       .transform(strTrimSanitizeLowerF, strIdentityF),
     "amount" -> priceStrictM
