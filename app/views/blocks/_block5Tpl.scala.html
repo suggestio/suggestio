@@ -16,7 +16,7 @@
   <img class="bg abs" src="@mad.imgs.get(Block5.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-bg.jpg"))" />
 
   @_mask5(
-    cssClass = "mask",
+    cssClass = "mask abs",
     fillColor = mad.colors.getOrElse(Block5.maskColorBf.name, Block5.maskColorBf.anyDefaultValue)
   )
 
