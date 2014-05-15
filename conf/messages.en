@@ -59,6 +59,7 @@ blocks.field.circleFillColor=Circles fill color
 blocks.field.borderColor=Border color
 blocks.field.discoIconColor=Discount icon color
 blocks.field.discoBorderColor=Discount border color
+blocks.field.maskColor=Mask color
 
 
 lk.sl.enable_ad=Enable ad

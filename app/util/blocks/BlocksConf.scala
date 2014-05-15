@@ -377,13 +377,15 @@ object BlocksConf extends Enumeration {
     val text1Bf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val oldPriceBf = BfPrice("oldPrice")
     val priceBf = BfPrice("price")
+    val maskColorBf = BfColor("maskColor", defaultValue = Some("d5c864"))
 
     override def blockFields: List[BlockFieldT] = List(
-      bgImgBf, heightBf, logoImgBf, text1Bf, oldPriceBf, priceBf
+      bgImgBf, heightBf, maskColorBf, logoImgBf, text1Bf, oldPriceBf, priceBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
     override def strictMapping: Mapping[BlockMapperResult] = mapping(
+      maskColorBf.getStrictMappingKV,
       bgImgBf.getStrictMappingKV,
       logoImgBf.getOptionalStrictMappingKV,
       heightBf.getStrictMappingKV,
@@ -391,7 +393,7 @@ object BlocksConf extends Enumeration {
       oldPriceBf.getOptionalStrictMappingKV,
       priceBf.getOptionalStrictMappingKV
     )
-    {(bgBim, logoBim, height, text1Opt, oldPriceOpt, priceOpt) =>
+    {(maskColor, bgBim, logoBim, height, text1Opt, oldPriceOpt, priceOpt) =>
       val block = AOBlock(
         n = 0,
         text1 = text1Opt,
@@ -403,7 +405,8 @@ object BlocksConf extends Enumeration {
           height = height,
           blockId = id
         ),
-        offers = List(block)
+        offers = List(block),
+        colors = Map(maskColorBf.name -> maskColor)
       )
       val bim: BlockImgMap = logoBim.fold(bgBim) { bgBim ++ _ }
       BlockMapperResult(bd, bim)
@@ -417,7 +420,8 @@ object BlocksConf extends Enumeration {
       val text1 = offerOpt.flatMap(_.text1)
       val oldPrice = offerOpt.flatMap(_.oldPrice)
       val price = offerOpt.flatMap(_.price)
-      Some( (bgBim, logoBimOpt, height, text1, oldPrice, price) )
+      val maskColor = bmr.bd.colors.get(maskColorBf.name).getOrElse(maskColorBf.anyDefaultValue)
+      Some( (maskColor, bgBim, logoBimOpt, height, text1, oldPrice, price) )
     }
 
     /** Шаблон для рендера. */
