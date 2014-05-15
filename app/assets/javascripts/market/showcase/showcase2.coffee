@@ -376,8 +376,7 @@ siomart =
     show_block_by_index : ( block_index ) ->
       this.active_block_index = block_index
 
-      for p in [vendor_prefix.css + 'transform', 'transform']
-        siomart.node_offers_popup._block_container.style[p] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
+      siomart.node_offers_popup._block_container.style['-webkit-transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
 
       siomart.node_offers_popup._block_container.setAttribute 'data-x-offset', -cbca_grid.ww*block_index
 
