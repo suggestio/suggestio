@@ -3,6 +3,6 @@
 @import util.TplDataFormatUtil._
 @import AdNetMemberTypes.MART
 
-<div @if( isWithAction ){ class="js-shop-link" data-producer-id="@producer.id" data-ad-id="@ad.id" } @if( isHidden == true){}>
+<div @if( isWithAction ){ class="js-shop-link" data-producer-id="@producer.id" data-ad-id="@ad.id" }else{ class="sm-block-parent" } @if( isHidden == true){}>
   @BlocksConf(ad.blockMeta.blockId).renderBlock(ad, isStandalone = false)
 </div>
