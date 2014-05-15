@@ -228,4 +228,5 @@ GET  /sys/market/bts/new/:contractId     controllers.SysMarketBillingTariff.addS
 POST /sys/market/bts/new/:contractId     controllers.SysMarketBillingTariff.addStatTariffSubmit(contractId: Int)
 GET  /sys/market/bts/edit/:tariffId      controllers.SysMarketBillingTariff.editStatTariff(tariffId: Int)
 POST /sys/market/bts/edit/:tariffId      controllers.SysMarketBillingTariff.editStatTariffSubmit(tariffId: Int)
+POST /sys/market/bts/delete/:tariffId    controllers.SysMarketBillingTariff.deleteStatTariffSubmit(tariffId: Int)
 

@@ -1,5 +1,6 @@
 package controllers
 
+import _root_.util.billing.StatBillingQueueActor
 import util.qsb.AdSearch
 import util._
 import util.acl._
@@ -80,12 +81,13 @@ object Market extends SioController with PlayMacroLogsImpl {
   // статистка
 
   /** Кем-то просмотрена одна рекламная карточка. */
-  def adStats(martId: String, adId: String, actionRaw: String) = MaybeAuth.async { implicit request =>
+  def adStats(martId: String, adId: String, actionRaw: String) = MaybeAuth.apply { implicit request =>
     val action = AdStatActions.withName(actionRaw)
-    MAd.getById(adId).flatMap { madOpt =>
+    MAd.getById(adId).map { madOpt =>
       madOpt.filter { mad =>
         mad.receivers.valuesIterator.exists(_.receiverId == martId)
       } foreach { mad =>
+        StatBillingQueueActor.sendNewStats(rcvrId = martId, mad = mad, action = action)
         val adStat = MAdStat(
           clientAddr = request.remoteAddress,
           action = action,
@@ -96,8 +98,8 @@ object Market extends SioController with PlayMacroLogsImpl {
         )
         adStat.save
       }
-      NoContent
     }
+    NoContent
   }
 
 

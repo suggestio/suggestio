@@ -2,6 +2,7 @@ package models
 
 import anorm._
 import util.AnormJodaTime._
+import util.AnormPgArray._
 import org.joda.time.DateTime
 import io.suggest.util.SioRandom.rnd
 import java.sql.Connection
@@ -53,6 +54,27 @@ object MBillContract extends SiowebSqlModelStatic[MBillContract] {
     }
     // Добавляем сортировку и запускаем на исполнение.
     reqSql.append(" ORDER BY id ASC")
+    SQL(reqSql.toString())
+      .on(args : _*)
+      .as(rowParser *)
+  }
+
+  /**
+   * Найди все вхождения для списка ands.
+   * @param adnIds Коллекция id узлов рекламной сети.
+   * @param isActive Необязательный фильтр по значенияем в колонке is_active.
+   * @return Список экземпляров [[MBillContract]] в неопределённом порядке.
+   */
+  def findForAdns(adnIds: Traversable[String], isActive: Option[Boolean] = None)(implicit c: Connection): List[MBillContract] = {
+    val reqSql = new StringBuilder("SELECT * FROM ")
+      .append(TABLE_NAME)
+      .append(" WHERE adn_id = ANY({adnIds})")
+    var args: List[NamedParameter] = List('adnIds -> strings2pgArray(adnIds))
+    // Если задан isActive, то нужно добавить ещё проверку в исходный запрос
+    if (isActive.isDefined) {
+      reqSql.append(" AND is_active = {is_active}")
+      args ::= (('is_active, isActive.get) : NamedParameter)
+    }
     SQL(reqSql.toString())
       .on(args : _*)
       .as(rowParser *)

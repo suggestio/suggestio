@@ -1,12 +1,13 @@
-package util
+package util.billing
 
 import models._
 import play.api.Play.{current, configuration}
 import play.api.db.DB
 import org.joda.time.{Period, DateTime}
 import scala.concurrent.duration._
-import AnormPgInterval.pgInterval2period
 import play.api.i18n.Messages
+import util.PlayMacroLogsImpl
+import util.AnormPgInterval._
 
 /**
  * Suggest.io

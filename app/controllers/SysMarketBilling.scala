@@ -1,6 +1,6 @@
 package controllers
 
-import util.{Billing, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
 import util.acl.IsSuperuser
 import models._
 import util.SiowebEsUtil.client
@@ -14,6 +14,7 @@ import util.FormUtil._
 import org.joda.time.DateTime
 import scala.concurrent.Future
 import io.suggest.ym.parsers.Price
+import util.billing.Billing
 
 /**
  * Suggest.io

@@ -4,6 +4,7 @@ import anorm._
 import org.joda.time.DateTime
 import util.AnormJodaTime._
 import java.sql.Connection
+import util.AnormPgArray._
 
 /**
  * Suggest.io
@@ -49,12 +50,23 @@ trait TariffsFindByContract[T] extends SiowebSqlModelStatic[T] {
    * @param contractId id договора.
    * @return Список тарифов в неопределённом порядке.
    */
-  def findByContractId(contractId: Int)(implicit c: Connection): List[T] = {
-    SQL("SELECT * FROM " + TABLE_NAME + " WHERE contract_id = {contractId}")
+  def findByContractId(contractId: Int, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    val sb = new StringBuilder("SELECT * FROM ").append(TABLE_NAME).append(" WHERE contract_id = {contractId}")
+    policy.append2sb(sb)
+    SQL(sb.toString())
      .on('contractId -> contractId)
      .as(rowParser *)
   }
+
+  def findByContractIds(contractIds: Traversable[Int], policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    val sb = new StringBuilder("SELECT * FROM ").append(TABLE_NAME).append(" WHERE contract_id = ANY({contractIds})")
+    policy.append2sb(sb)
+    SQL(sb.toString())
+      .on('contractIds -> seqInt2pgArray(contractIds))
+      .as(rowParser *)
+  }
 }
+
 
 /** Добавить функции нахождения всех активных тарифов. */
 trait TariffsAllEnabled[T] extends SiowebSqlModelStatic[T] {
@@ -66,23 +78,6 @@ trait TariffsAllEnabled[T] extends SiowebSqlModelStatic[T] {
   /** Расширенная версия findAllEnabled: залезает в contracts-таблицу и проверяет там isEnabled. */
   def findAllContractEnabled(implicit c: Connection): List[T] = {
     SQL(s"SELECT t.* FROM $TABLE_NAME t, ${MBillContract.TABLE_NAME} c WHERE t.is_enabled AND c.is_active AND t.contract_id = c.id")
-      .as(rowParser *)
-  }
-
-  /** Найти тарифы, которые нуждаются в скорейшем списании. Это enabled-тарифы, которые имеют период меньше,
-    * чем now - последнее списание. */
-  def findAllNonDebited(implicit c: Connection): List[T] = {
-    SQL("SELECT t.* FROM " + TABLE_NAME + " t WHERE is_enabled AND date_last + tinterval < now()")
-      .as(rowParser *)
-  }
-
-  /**
-   * Найти все включенные тарифы, у который активные контракты и по которым пора бы списывать деньги.
-   * Гибрид [[findAllContractEnabled]] и [[findAllNonDebited]].
-   * @return Список тарифов в неопределённом порядке.
-   */
-  def findAllNonDebitedContractActive(implicit c: Connection): List[T] = {
-    SQL(s"SELECT t.* FROM $TABLE_NAME t, ${MBillContract.TABLE_NAME} c WHERE t.is_enabled AND c.is_active AND t.contract_id = c.id AND (date_last IS NULL OR date_last + tinterval < now())")
       .as(rowParser *)
   }
 }

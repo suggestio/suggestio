@@ -45,6 +45,23 @@ object MBillTariffFee extends TariffsFindByContract[MBillTariffFee] with Tariffs
     }
   }
 
+
+  /** Найти тарифы, которые нуждаются в скорейшем списании. Это enabled-тарифы, которые имеют период меньше,
+    * чем now - последнее списание. */
+  def findAllNonDebited(implicit c: Connection): List[MBillTariffFee] = {
+    SQL("SELECT t.* FROM " + TABLE_NAME + " t WHERE is_enabled AND date_last + tinterval < now()")
+      .as(rowParser *)
+  }
+
+  /**
+   * Найти все включенные тарифы, у который активные контракты и по которым пора бы списывать деньги.
+   * Гибрид [[findAllContractEnabled]] и [[findAllNonDebited]].
+   * @return Список тарифов в неопределённом порядке.
+   */
+  def findAllNonDebitedContractActive(implicit c: Connection): List[MBillTariffFee] = {
+    SQL(s"SELECT t.* FROM $TABLE_NAME t, ${MBillContract.TABLE_NAME} c WHERE t.is_enabled AND c.is_active AND t.contract_id = c.id AND (date_last IS NULL OR date_last + tinterval < now())")
+      .as(rowParser *)
+  }
 }
 
 

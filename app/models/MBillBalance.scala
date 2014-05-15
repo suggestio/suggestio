@@ -3,6 +3,7 @@ package models
 import anorm._
 import util.SqlModelSave
 import java.sql.Connection
+import util.AnormPgArray._
 
 /**
  * Suggest.io
@@ -42,6 +43,23 @@ object MBillBalance {
       .on('adnId -> adnId)
       .as(rowParser *)
       .headOption
+  }
+
+
+  /**
+   * Получение балансов для указанных id узлов рекламной сети.
+   * @param adnIds Коллекция из id узлов рекламной сети.
+   * @param policy Политика локов в SELECT.
+   * @return Список [[MBillBalance]] в неопределённом порядке.
+   */
+  def getByAdnIds(adnIds: Traversable[String], policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[MBillBalance] = {
+    val req = new StringBuilder(64, "SELECT * FROM ")
+      .append(TABLE_NAME)
+      .append(" WHERE adn_id = ANY({adnIds})")
+    policy.append2sb(req)
+    SQL(req.toString())
+      .on('adnIds -> strings2pgArray(adnIds))
+      .as(rowParser *)
   }
 
 

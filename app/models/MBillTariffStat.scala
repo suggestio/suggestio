@@ -47,6 +47,14 @@ object MBillTariffStat extends TariffsFindByContract[MBillTariffStat] with Tarif
         )
     }
   }
+
+
+  def updateDebited(id: Int, debitedCount: Int, willDebit: Float)(implicit c: Connection): Int = {
+    SQL("UPDATE " + TABLE_NAME + " SET debitCount = debitCount + {debitedCount}, debitedTotal = debitedTotal + {willDebit} WHERE id = {id}")
+      .on('id -> id, 'debitedCount -> debitedCount, 'willDebit -> willDebit)
+      .executeUpdate()
+  }
+
 }
 
 
@@ -93,6 +101,14 @@ case class MBillTariffStat(
       .on('id -> id.get, 'name -> name, 'isEnabled -> isEnabled, 'dateFirst -> dateFirst,
           'dateStatus -> dateStatus, 'debitFor -> debitFor.toString, 'debitAmount -> debitAmount, 'currencyCode -> currencyCode)
       .executeUpdate()
+  }
+
+  def updateDebited(debitedCount: Int, willDebit: Float)(implicit c: Connection) = {
+    MBillTariffStat.updateDebited(
+      id = id.get,
+      debitedCount = debitedCount,
+      willDebit = willDebit
+    )
   }
 
   def currency = Currency.getInstance(currencyCode)

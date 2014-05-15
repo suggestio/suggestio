@@ -7,6 +7,7 @@
 @billingBase("Изменить stat-тариф", Some(adnNode)) {
 
   <h5>Редактирование тарифа #@tariff.id.get (договор @contract.legalContractId)</h5>
+  @stuff._deleteSmthFormBtnTpl(routes.SysMarketBillingTariff.deleteStatTariffSubmit(tariff.id.get))
 
   @_statTariffFormTpl(
     stf = stf,

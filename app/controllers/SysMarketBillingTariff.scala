@@ -131,7 +131,7 @@ object SysMarketBillingTariff extends SioController with PlayMacroLogsImpl {
     val rowsDeleted = DB.withConnection { implicit c =>
       tariff.delete
     }
-    val flashMsg = s"Тариф #$tariffId удалён: ${rowsDeleted > 0}. Договор ${contract.legalContractId}."
+    val flashMsg = deleteFlashMsg(tariffId, rowsDeleted, contract)
     rdrFlashing(contract.adnId, flashMsg)
   }
 
@@ -144,6 +144,10 @@ object SysMarketBillingTariff extends SioController with PlayMacroLogsImpl {
 
   private def editSaveFlashMsg(tariff: MBillTariff, contract: MBillContract): String = {
     s"Изменения в тарифе #${tariff.id.get} сохранены (договор ${contract.legalContractId})."
+  }
+
+  private def deleteFlashMsg(tariffId: Int, rowsDeleted: Int, contract: MBillContract): String = {
+    s"Тариф #$tariffId удалён: ${rowsDeleted > 0}. Договор ${contract.legalContractId}."
   }
 
 
@@ -240,6 +244,17 @@ object SysMarketBillingTariff extends SioController with PlayMacroLogsImpl {
         rdrFlashing(request.contract.adnId, flashMsg)
       }
     )
+  }
+
+
+  /** Запрос на удаление stat-тарифа. */
+  def deleteStatTariffSubmit(tariffId: Int) = IsSuperuserStatTariffContract(tariffId).apply { implicit request =>
+    import request.{contract, tariff}
+    val rowsDeleted = DB.withConnection { implicit c =>
+      tariff.delete
+    }
+    val flashMsg = deleteFlashMsg(tariffId, rowsDeleted, contract)
+    rdrFlashing(contract.adnId, flashMsg)
   }
 
 }
