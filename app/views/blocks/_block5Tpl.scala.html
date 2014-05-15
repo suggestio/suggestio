@@ -15,9 +15,10 @@
 
   <img class="bg abs" src="@mad.imgs.get(Block5.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-bg.jpg"))" />
 
-  <div class="color-bg abs"></div>
-
-  <div class="mask abs"></div>
+  @_mask5(
+    cssClass = "mask",
+    fillColor = "d5c864"
+  )
 
   <div class="info">
     @mad.imgs.get(Block5.LOGO_IMG_FN).map { logoImg =>
