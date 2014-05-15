@@ -1,19 +1,24 @@
 @(msup: MAdnNode, mslave: MAdnNode, mads: Seq[MAdT])(implicit ctx: util.Context)
 
-@mads.zipWithIndex.map { case (mad, i) =>
-  @* isPublishedAt скрывает от супервизора возможность сокрыть в других карточках. Сейчас сокрыто - означает, что сокрыто в ТЦ. *@
-  <div class="ads-list__block ads-list-block @if(!mad.isPublishedAt(msup.id.get)) {disabled}">
-    <div class="ads-list-block__preview">
+@if(mads)  {
+  @mads.zipWithIndex.map { case (mad, i) =>
+    @* isPublishedAt скрывает от супервизора возможность сокрыть в других карточках. Сейчас сокрыто - означает, что сокрыто в ТЦ. *@
+    <div class="ads-list__block ads-list-block @if(!mad.isPublishedAt(msup.id.get)) {disabled}">
+      <div class="ads-list-block__preview">
 
-      <div class="disabled-ad"></div>
+        <div class="disabled-ad"></div>
 
-      <a class="ads-list-block__link js-tc-edit" href="@routes.MarketLkAdnSlaveAd.showSlaveAd(mad.id.get)"></a>
+        <a class="ads-list-block__link js-tc-edit" href="@routes.MarketLkAdnSlaveAd.showSlaveAd(mad.id.get)"></a>
 
-      <div class="ads-list-block__preview-container">
-      @market.showcase._single_offer(mad, mslave, fallbackLogo = msup.logoImgOpt)
+        <div class="ads-list-block__preview-container">
+        @market.showcase._single_offer(mad, mslave, fallbackLogo = msup.logoImgOpt)
+        </div>
+
       </div>
-
     </div>
-  </div>
+  }
+
+} else {
+  Рекламных плакатов нет.
 }
 <div class="clear"></div>
