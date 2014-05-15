@@ -62,6 +62,7 @@ blocks.field.borderColor=Цвет бордюра
 blocks.field.discoIconColor=Цвет значка скидки
 blocks.field.discoBorderColor=Цвет бордюра скидки
 blocks.field.maskColor=Цвет маски
+blocks.field.fillColor=Цвет заливки
 
 
 lk.sl.enable_ad=Включить объявление

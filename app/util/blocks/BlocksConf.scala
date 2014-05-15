@@ -1008,10 +1008,12 @@ object BlocksConf extends Enumeration {
     )
 
     val bgColorBf = BfColor("bgColor", defaultValue = Some("000000"))
+    val borderColorBf = BfColor("borderColor", defaultValue = Some("444444"))
+    val fillColorBf = BfColor("fillColor", defaultValue = Some("666666"))
 
     /** Генерация описания полей. У нас тут повторяющийся маппинг, поэтому blockFields для редактора генерится без полей-констант. */
     override def blockFields: List[BlockFieldT] = {
-      heightField :: bgImgBf :: bgColorBf :: super.blockFields
+      heightField :: borderColorBf :: bgImgBf  :: bgColorBf :: fillColorBf :: super.blockFields
     }
 
     /** Набор маппингов для обработки данных от формы. */
@@ -1021,23 +1023,31 @@ object BlocksConf extends Enumeration {
         bgImgBf.getStrictMappingKV,
         heightField.getStrictMappingKV,
         bgColorBf.getStrictMappingKV,
+        borderColorBf.getStrictMappingKV,
+        fillColorBf.getStrictMappingKV,
         "offer" -> offersMapping
       )
-      {(bim, height, bgColor, offers) =>
+      {(bim, height, bgColor, borderColor, fillColor, offers) =>
         val bd: BlockData = BlockDataImpl(
           blockMeta = BlockMeta(
             height = height,
             blockId = id
           ),
           offers = offers,
-          colors = Map(bgColorBf.name -> bgColor)
+          colors = Map(
+            bgColorBf.name      -> bgColor,
+            borderColorBf.name  -> borderColor,
+            fillColorBf.name    -> fillColor
+          )
         )
         BlockMapperResult(bd, bim)
       }
       {bmr =>
         val height = bmr.bd.blockMeta.height
-        val bgColor = bmr.bd.colors.get(bgColorBf.name).getOrElse(bgColorBf.anyDefaultValue)
-        Some((bmr.bim, height, bgColor, bmr.bd.offers))
+        val bgColor     = bmr.bd.colors.get(bgColorBf.name).getOrElse(bgColorBf.anyDefaultValue)
+        val borderColor = bmr.bd.colors.get(borderColorBf.name).getOrElse(borderColorBf.anyDefaultValue)
+        val fillColor   = bmr.bd.colors.get(fillColorBf.name).getOrElse(fillColorBf.anyDefaultValue)
+        Some((bmr.bim, height, bgColor, borderColor, fillColor, bmr.bd.offers))
       }
     }
 
