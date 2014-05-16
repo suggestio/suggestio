@@ -13,6 +13,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import util.blocks.BlocksUtil.BlockImgMap
 import scala.Some
+import util.blocks.BlocksEditorFields.BefText
 
 /**
  * Suggest.io
@@ -57,12 +58,7 @@ object BlocksConf extends Enumeration {
   // Начало значений
 
   /** Картинка, название, старая и новая цена. Аналог былого DiscountOffer. */
-  val Block1 = new Val(1, "photoAdnPrice") with SaveBgImg with HeightStatic {
-    val titleBf = BfText("title", BlocksEditorFields.InputText,
-      minLen = 0,
-      maxLen = 64,
-      defaultValue = Some(AOStringField("Платье", AOFieldFont("444444")))
-    )
+  val Block1 = new Val(1, "photoAdnPrice") with SaveBgImg with HeightStatic with TitleStatic {
     val oldPriceBf = BfPrice(EMAdOffers.OLD_PRICE_ESFN,
       defaultValue = Some(AOPriceField(200F, "RUB", "200 р.", defaultFont))
     )
@@ -109,9 +105,8 @@ object BlocksConf extends Enumeration {
 
 
   /** Блок картинки с двумя текстами. */
-  val Block2 = new Val(2, "saleWithText") with SaveBgImg with Height {
+  val Block2 = new Val(2, "saleWithText") with SaveBgImg with Height with TitleStatic {
     override def heightAvailableVals: Set[Int] = Set(300, 460)
-    val titleBf = BfText("title", BlocksEditorFields.InputText, maxLen = 512)
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 8192,
       defaultValue = Some(AOStringField("Распродажа. Сегодня. Сейчас.", AOFieldFont("000000")))
     )
@@ -186,8 +181,7 @@ object BlocksConf extends Enumeration {
   }
 
 
-  sealed abstract class CommonBlock4_9(id: Int, name: String) extends Val(id, name) with SaveBgImg with Height300 {
-    val textBf = BfText("title", BlocksEditorFields.InputText, maxLen = 256)
+  sealed abstract class CommonBlock4_9(id: Int, name: String) extends Val(id, name) with SaveBgImg with Height300 with TitleStatic {
     val priceBf = BfPrice("price")
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 512)
     val bgColorBf = BfColor("bgColor", defaultValue = Some("0F2841"))
@@ -197,14 +191,14 @@ object BlocksConf extends Enumeration {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      bgImgBf, textBf, priceBf, descrBf, bgColorBf, borderColorBf
+      bgImgBf, titleBf, priceBf, descrBf, bgColorBf, borderColorBf
     )
 
     /** Маппинг для обработки данных от сабмита формы блока. */
     override def strictMapping: Mapping[BlockMapperResult] = {
       mapping(
         bgImgBf.getStrictMappingKV,
-        textBf.getOptionalStrictMappingKV,
+        titleBf.getOptionalStrictMappingKV,
         priceBf.getOptionalStrictMappingKV,
         descrBf.getOptionalStrictMappingKV,
         bgColorBf.getStrictMappingKV,
@@ -248,8 +242,7 @@ object BlocksConf extends Enumeration {
 
 
   /** Реклама брендированного товара. От предыдущих одно-офферных блоков отличается дизайном и тем, что есть вторичный логотип. */
-  val Block5 = new Val(5, "brandedProduct") with SaveBgImg with SaveLogoImg with HeightStatic {
-    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+  val Block5 = new Val(5, "brandedProduct") with SaveBgImg with SaveLogoImg with HeightStatic with TitleStatic {
     val oldPriceBf = BfPrice("oldPrice")
     val priceBf = BfPrice("price")
     val maskColorBf = BfColor("maskColor", defaultValue = Some("d5c864"))
@@ -332,12 +325,8 @@ object BlocksConf extends Enumeration {
 
 
   /** Блок, отображающий скидочную цену на товар или услугу. */
-  val Block7 = new Val(7, "discountedPrice1") with Height300 {
+  val Block7 = new Val(7, "discountedPrice1") with Height300 with TitleStatic {
     val discoBf = BfDiscount("discount", min = -99F, max = 999F)
-    val titleBf = BfText("title", BlocksEditorFields.TextArea,
-      maxLen = 256,
-      defaultValue = Some(AOStringField("", AOFieldFont("444444")))
-    )
     val priceBf = BfPrice("price")
     // 2014.may.06: Цвета для слова SALE и фона рамки с %показателем скидки.
     val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("00ff1a"))
@@ -391,8 +380,7 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block8 = new Val(8, "titleWithPrice8") with SaveBgImg with Height300 {
-    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+  val Block8 = new Val(8, "titleWithPrice8") with SaveBgImg with Height300 with TitleStatic {
     val priceBf = BfPrice("price")
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
@@ -439,8 +427,7 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block10 = new Val(10, "oldNewPriceNarrow10") with SaveBgImg with Height300 {
-    val titleBf     = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+  val Block10 = new Val(10, "oldNewPriceNarrow10") with SaveBgImg with Height300 with TitleStatic {
     val oldPriceBf  = BfPrice("oldPrice")
     val priceBf     = BfPrice("price")
 
@@ -483,8 +470,7 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block11 = new Val(11, "promoNarrow11") with SaveBgImg with Height300 {
-    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+  val Block11 = new Val(11, "promoNarrow11") with SaveBgImg with Height300 with TitleStatic {
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
     val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("aaaaaa"))
 
@@ -527,10 +513,9 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block12 = new Val(12, "discountNarrow12") with Height300 {
+  val Block12 = new Val(12, "discountNarrow12") with Height300 with TitleStatic {
     val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("00ff1a"))
     val discountBf = BfDiscount("discount", min = -99F, max = 999F)
-    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
@@ -578,11 +563,11 @@ object BlocksConf extends Enumeration {
     val discoIconColorBf = BfColor("discoIconColor", defaultValue = Some("828fa0"))
     val discoBorderColorBf = BfColor("discoBorderColor", defaultValue = Some("FFFFFF"))
     val discountBf = BfDiscount("discount", min = -99F, max = 999F)
-    val textBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, discoIconColorBf, discoBorderColorBf, bgImgBf, discountBf, textBf
+      heightBf, discoIconColorBf, discoBorderColorBf, bgImgBf, discountBf, descrBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -592,7 +577,7 @@ object BlocksConf extends Enumeration {
       discoBorderColorBf.getStrictMappingKV,
       bgImgBf.getStrictMappingKV,
       discountBf.getOptionalStrictMappingKV,
-      textBf.getOptionalStrictMappingKV
+      descrBf.getOptionalStrictMappingKV
     )
     {(height, saleColor, saleMaskColor, bgBim, discountOpt, textOpt) =>
       val blk = AOBlock(
@@ -630,7 +615,6 @@ object BlocksConf extends Enumeration {
 
 
   sealed abstract class CommonBlock145(id: Int, name: String) extends Val(id, name) with SaveLogoImg with Height {
-    override def heightAvailableVals: Set[Int] = Set(300, 460)
     val topColorBf = BfColor("topColor", defaultValue = Some("000000"))
     val bottomColorBf = BfColor("bottomColor", defaultValue = Some("bf6a6a"))
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
@@ -690,16 +674,19 @@ object BlocksConf extends Enumeration {
   val Block14 = new CommonBlock145(14, "svgPictTitleDescr14") {
     override def template = _block14Tpl
     override val blockWidth: Int = 300
+    override def heightAvailableVals: Set[Int] = Set(300, 460)
+    override def blockFields: List[BlockFieldT] = heightBf :: super.blockFields
   }
 
   val Block15 = new CommonBlock145(15, "svgPictTitleDescrNarrow15") {
     override def template = _block15Tpl
     override val blockWidth: Int = 140
+    override def heightAvailableVals: Set[Int] = Set(300)
   }
 
 
-  val Block16 = new Val(16, "titleDescPriceNopict") with HeightStatic {
-    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256, withFontSizes = Set(65, 55, 45, 35, 28))
+  val Block16 = new Val(16, "titleDescPriceNopict") with HeightStatic with Title {
+    override def titleFontSizes: Set[Int] = Set(65, 55, 45, 35, 28)
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256, withFontSizes = Set(36, 28, 22))
     val priceBf = BfPrice("price", withFontSizes = Set(65, 55, 45))
     val bgColorBf = BfColor("bgColor", defaultValue = Some("e1cea1"))
@@ -756,14 +743,12 @@ object BlocksConf extends Enumeration {
 
 
 
-  sealed abstract class CommonBlock17_18(id: Int, blkName: String) extends Val(id, blkName) with SaveBgImg with HeightT {
-    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+  sealed abstract class CommonBlock17_18(id: Int, blkName: String) extends Val(id, blkName) with SaveBgImg with HeightT with TitleStatic {
     val discoBf = BfDiscount("discount",
       min = -99F,
       max = 99F,
       defaultValue = Some(AOFloatField(50F, defaultFont))
     )
-
     val bgColorBf = BfColor("bgColor", defaultValue = Some("FFFFFF"))
     val circleFillColorBf = BfColor("circleFillColor", defaultValue = Some("f9daac"))
     val discoIconColorBf = BfColor("discoIconColor", defaultValue = Some("ce2222"))
@@ -885,8 +870,7 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block20 = new Val(20, "block20") with SaveBgImg with HeightStatic {
-    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+  val Block20 = new Val(20, "block20") with SaveBgImg with HeightStatic with TitleStatic {
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
@@ -931,8 +915,7 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block21 = new Val(21, "block20") with SaveBgImg with HeightStatic {
-    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+  val Block21 = new Val(21, "block20") with SaveBgImg with HeightStatic with TitleStatic {
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
     val borderColorBf = BfColor("borderColor", defaultValue = Some("95FF00"))
 
@@ -981,8 +964,7 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block22 = new Val(22, "block22") with SaveBgImg with SaveLogoImg with HeightStatic {
-    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+  val Block22 = new Val(22, "block22") with SaveBgImg with SaveLogoImg with HeightStatic with TitleStatic {
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
     val borderColorBf = BfColor("borderColor", defaultValue = Some("FFFFFF"))
 
@@ -1034,9 +1016,8 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block23 = new Val(23, "somethng23") with SaveBgImg with HeightStatic {
+  val Block23 = new Val(23, "somethng23") with SaveBgImg with HeightStatic with TitleStatic {
     val fillColorBf = BfColor("fillColor", defaultValue = Some("f3f3f3"))
-    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
     val priceBf = BfPrice("price")
 
@@ -1088,9 +1069,8 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block24 = new Val(24, "smth24") with SaveBgImg with SaveLogoImg with HeightStatic {
+  val Block24 = new Val(24, "smth24") with SaveBgImg with SaveLogoImg with HeightStatic with TitleStatic {
     val fillColorBf = BfColor("fillColor", defaultValue = Some("d5c864"))
-    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val priceBf = BfPrice("price")
     val oldPriceBf = BfPrice("oldPrice")
 
@@ -1280,7 +1260,7 @@ trait TitlePriceListBlockT {
   /** Макс кол-во офферов (макс.длина списка офферов). */
   def offersCount: Int
 
-  protected def bfText(offerNopt: Option[Int]) = BfText(TITLE_FN, BlocksEditorFields.TextArea, maxLen = 128, offerNopt = offerNopt)
+  protected def bfTitle(offerNopt: Option[Int]) = BfText(TITLE_FN, BlocksEditorFields.TextArea, maxLen = 128, offerNopt = offerNopt)
   protected def bfPrice(offerNopt: Option[Int]) = BfPrice(PRICE_FN, offerNopt = offerNopt)
 
   /** Генерация описания полей. У нас тут повторяющийся маппинг, поэтому blockFields для редактора генерится без полей-констант. */
@@ -1288,7 +1268,7 @@ trait TitlePriceListBlockT {
     (N0 until offersCount)
       .flatMap { offerN =>
       val offerNopt = Some(offerN)
-      val titleBf = bfText(offerNopt)
+      val titleBf = bfTitle(offerNopt)
       val priceBf = bfPrice(offerNopt)
       List(titleBf, priceBf)
     }
@@ -1296,7 +1276,7 @@ trait TitlePriceListBlockT {
   }
 
   // Поля оффера
-  protected def titleMapping = bfText(None)
+  protected def titleMapping = bfTitle(None)
   protected def priceMapping = bfPrice(None)
 
   // Маппинг для одного элемента (оффера)
@@ -1370,9 +1350,7 @@ trait HeightT extends ValT {
   def heightBf: BfHeight
   def heightDefaultValue: Option[Int]
   def heightAvailableVals: Set[Int]
-
-  /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
-  abstract override def blockFieldsRev: List[BlockFieldT] = heightBf :: super.blockFields
+  abstract override def blockFieldsRev: List[BlockFieldT] = heightBf :: super.blockFieldsRev
 }
 
 trait HeightStatic extends HeightT {
@@ -1397,5 +1375,51 @@ trait Height extends HeightT {
 trait Height300 extends ValT {
   val HEIGHT = 300
   def getBlockMeta: BlockMeta = getBlockMeta(HEIGHT)
+}
+
+
+
+object BlocksConfUtilTitle {
+  val BF_NAME_DFLT = "title"
+  val LEN_MAX_DFLT = 128
+  val DEFAULT_VALUE_DFLT = Some(AOStringField("Платье", AOFieldFont("444444")))
+  val BF_TEXT_DFLT = BfText(
+    name = BF_NAME_DFLT,
+    field = BlocksEditorFields.TextArea,
+    maxLen = LEN_MAX_DFLT,
+    defaultValue = DEFAULT_VALUE_DFLT
+  )
+}
+
+trait TitleT extends ValT {
+  import BlocksConfUtilTitle._
+
+  def titleBf: BfText
+
+  def titleMaxLen: Int = LEN_MAX_DFLT
+  def titleDefaultValue: Option[AOStringField] = DEFAULT_VALUE_DFLT
+  def titleEditorField: BefText = BlocksEditorFields.TextArea
+  def titleFontSizes: Set[Int] = Set.empty
+  abstract override def blockFieldsRev: List[BlockFieldT] = titleBf :: super.blockFieldsRev
+}
+
+trait Title extends TitleT {
+  import BlocksConfUtilTitle._
+  override def titleBf: BfText = BfText(
+    name = BF_NAME_DFLT,
+    field = titleEditorField,
+    maxLen = titleMaxLen,
+    defaultValue = titleDefaultValue,
+    withFontSizes = titleFontSizes
+  )
+}
+
+trait TitleStatic extends TitleT {
+  import BlocksConfUtilTitle._
+  override def titleBf = BF_TEXT_DFLT
+  override final def titleMaxLen = super.titleMaxLen
+  override final def titleDefaultValue = super.titleDefaultValue
+  override final def titleEditorField = super.titleEditorField
+  override final def titleFontSizes = super.titleFontSizes
 }
 

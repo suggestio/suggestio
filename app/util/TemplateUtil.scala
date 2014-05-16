@@ -18,6 +18,18 @@ object TplDataFormatUtil {
   private val CURRENCY_FIXER_RUB = "руб\\.".r
   private val CURRENCY_FIXER_USD = "USD".r
 
+  /** Сконвертить "ffffff" в List(255,255,255). */
+  final def colorHex2rgb(hex: String, start: Int = 0, acc: List[Int] = Nil): List[Int] = {
+    if (start > hex.length - 1) {
+      acc.reverse
+    } else {
+      val untilPos = start + 2
+      val subhex = hex.substring(start, untilPos)
+      val xint = Integer.parseInt(subhex, 16)
+      colorHex2rgb(hex, untilPos, xint :: acc)
+    }
+  }
+
   /** Напечатать цену согласно локали и валюте. */
   def formatPrice(price: Float, currency: Currency)(implicit ctx: Context): String = {
     // TODO следует залезать в локаль клиента и форматировать через неё?

@@ -1,6 +1,7 @@
 @(mad: MAdT, isStandalone: Boolean)(implicit ctx: util.Context)
 
 @import common._
+@import util.TplDataFormatUtil._
 
 @defining( mad.colors.getOrElse(Block22.borderColorBf.name, Block22.borderColorBf.anyDefaultValue) )  { borderColor =>
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl22" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
@@ -24,6 +25,7 @@
           }
           @offer.text2.map { text2 =>
             <div @_aovfStyleTpl(text2, "descr")>
+              ( @colorHex2rgb(borderColor).mkString(",") )
               @Html(text2.value)
             </div>
           }
