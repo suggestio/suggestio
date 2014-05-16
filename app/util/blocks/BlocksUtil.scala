@@ -364,7 +364,7 @@ case class BfDiscount(
 
   def maxStrlen: Int = FormUtil.PERCENT_M_CHARLEN_MAX
 
-  override def field: BefDiscount = Discount
+  override def field: BefDiscount = BlocksEditorFields.Discount
 
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
   override def fallbackValue: T = AOFloatField(0F, defaultFont)
