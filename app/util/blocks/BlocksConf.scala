@@ -165,16 +165,11 @@ object BlocksConf extends Enumeration {
 
 
   sealed abstract class CommonBlock4_9(id: Int, name: String) extends Val(id, name) with SaveBgImg with Height300
-  with TitleStatic with DescrStatic with PriceStatic with BorderColor {
-    val bgColorBf = BfColor("bgColor", defaultValue = Some("0F2841"))
+  with TitleStatic with PriceStatic with DescrStatic with BgColor with BorderColor {
+    override def bgColorDefaultValue: Option[String] = Some("0F2841")
     override def borderColorDefaultValue: Option[String] = Some("FFFFFF")
 
     val blockWidth: Int
-
-    /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
-    override def blockFields: List[BlockFieldT] = List(
-      bgImgBf, titleBf, priceBf, descrBf, bgColorBf, borderColorBf
-    )
 
     /** Маппинг для обработки данных от сабмита формы блока. */
     override def strictMapping: Mapping[BlockMapperResult] = {
@@ -643,18 +638,12 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block16 = new Val(16, "titleDescPriceNopict") with HeightStatic with BorderColor with Title with Descr with Price {
+  val Block16 = new Val(16, "titleDescPriceNopict") with HeightStatic with BgColor with BorderColor with Title with Descr with Price {
     override def titleFontSizes: Set[Int] = Set(65, 55, 45, 35, 28)
     override def descrFontSizes: Set[Int] = Set(36, 28, 22)
     override def priceFontSizes: Set[Int] = Set(65, 55, 45)
     override def borderColorDefaultValue: Option[String] = Some("FFFFFF")
-
-    val bgColorBf = BfColor("bgColor", defaultValue = Some("e1cea1"))
-
-    /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
-    override def blockFields: List[BlockFieldT] = List(
-      heightBf, bgColorBf, borderColorBf, titleBf, descrBf, priceBf
-    )
+    override def bgColorDefaultValue: Option[String] = Some("e1cea1")
 
     /** Набор маппингов для обработки данных от формы. */
     override def strictMapping: Mapping[BlockMapperResult] = mapping(
@@ -702,14 +691,14 @@ object BlocksConf extends Enumeration {
 
 
 
-  sealed abstract class CommonBlock17_18(id: Int, blkName: String) extends Val(id, blkName) with SaveBgImgI with HeightI
-  with TitleStatic {
+  sealed abstract class CommonBlock17_18(id: Int, blkName: String) extends Val(id, blkName)
+  with BgColor with SaveBgImgI with HeightI with TitleStatic {
     val discoBf = BfDiscount("discount",
       min = -99F,
       max = 99F,
       defaultValue = Some(AOFloatField(50F, defaultFont))
     )
-    val bgColorBf = BfColor("bgColor", defaultValue = Some("FFFFFF"))
+    override def bgColorDefaultValue: Option[String] = Some("FFFFFF")
     val circleFillColorBf = BfColor("circleFillColor", defaultValue = Some("f9daac"))
     val discoIconColorBf = BfColor("discoIconColor", defaultValue = Some("ce2222"))
     val discoBorderColorBf = BfColor("discoBorderColor", defaultValue = Some("FFFFFF"))
@@ -778,15 +767,15 @@ object BlocksConf extends Enumeration {
   }
 
   
-  val Block19 = new Val(19, "2prices19") with SaveBgImg with BorderColor with HeightStatic with TitlePriceListBlockT {
+  val Block19 = new Val(19, "2prices19") with HeightStatic with SaveBgImg with BorderColor with TitlePriceListBlockT with BgColor {
     override val offersCount = 2
     override def borderColorDefaultValue: Option[String] = Some("444444")
-    val bgColorBf = BfColor("bgColor", defaultValue = Some("000000"))
+    override def bgColorDefaultValue: Option[String] = Some("000000")
     val fillColorBf = BfColor("fillColor", defaultValue = Some("666666"))
 
     /** Генерация описания полей. У нас тут повторяющийся маппинг, поэтому blockFields для редактора генерится без полей-констант. */
-    override def blockFields: List[BlockFieldT] = {
-      heightBf :: borderColorBf :: bgImgBf  :: bgColorBf :: fillColorBf :: super.blockFields
+    override def blockFieldsRev: List[BlockFieldT] = {
+      fillColorBf :: super.blockFieldsRev
     }
 
     /** Набор маппингов для обработки данных от формы. */
@@ -1404,24 +1393,24 @@ trait Descr extends DescrT {
 
 
 
-object BlocksConfUtilPrice {
+object Price {
   val BF_NAME_DFLT = "price"
   val BF_PRICE_DFLT = BfPrice(BF_NAME_DFLT)
 }
-trait PriceT extends ValT {
+sealed trait PriceT extends ValT {
   def priceBf: BfPrice
   def priceDefaultValue: Option[AOPriceField] = None
   def priceFontSizes: Set[Int] = Set.empty
   abstract override def blockFieldsRev: List[BlockFieldT] = priceBf :: super.blockFieldsRev
 }
-trait PriceStatic extends PriceT {
-  override final def priceBf = BlocksConfUtilPrice.BF_PRICE_DFLT
+sealed trait PriceStatic extends PriceT {
+  override final def priceBf = Price.BF_PRICE_DFLT
   override final def priceDefaultValue = super.priceDefaultValue
   override final def priceFontSizes = super.priceFontSizes
 }
-trait Price extends PriceT {
+sealed trait Price extends PriceT {
   override def priceBf = BfPrice(
-    name = BlocksConfUtilPrice.BF_NAME_DFLT,
+    name = Price.BF_NAME_DFLT,
     defaultValue = priceDefaultValue,
     withFontSizes = priceFontSizes
   )
@@ -1429,7 +1418,7 @@ trait Price extends PriceT {
 
 
 
-object BlocksConfUtilOldPrice {
+object OldPrice {
   val BF_NAME_DFLT = "oldPrice"
   val BF_OLD_PRICE_DFLT = BfPrice(BF_NAME_DFLT)
 }
@@ -1440,13 +1429,13 @@ trait OldPriceT extends ValT {
   abstract override def blockFieldsRev: List[BlockFieldT] = oldPriceBf :: super.blockFieldsRev
 }
 trait OldPriceStatic extends OldPriceT {
-  override def oldPriceBf = BlocksConfUtilOldPrice.BF_OLD_PRICE_DFLT
+  override def oldPriceBf = OldPrice.BF_OLD_PRICE_DFLT
   override final def oldPriceDefaultValue = super.oldPriceDefaultValue
   override final def oldPriceFontSizes = super.oldPriceFontSizes
 }
 trait OldPrice extends OldPriceT {
   override def oldPriceBf = BfPrice(
-    name = BlocksConfUtilOldPrice.BF_NAME_DFLT,
+    name = OldPrice.BF_NAME_DFLT,
     defaultValue = oldPriceDefaultValue,
     withFontSizes = oldPriceFontSizes
   )
@@ -1454,14 +1443,23 @@ trait OldPrice extends OldPriceT {
 
 
 
-object BlocksConfUtilBorderColor {
+object BorderColor {
   val BF_NAME_DFLT = "borderColor"
 }
 trait BorderColor extends ValT {
-  def BF_NAME_DFLT = BlocksConfUtilBorderColor.BF_NAME_DFLT
+  import BorderColor._
   def borderColorDefaultValue: Option[String] = None
   def borderColorBf = BfColor(BF_NAME_DFLT, defaultValue = borderColorDefaultValue)
   abstract override def blockFieldsRev: List[BlockFieldT] = borderColorBf :: super.blockFieldsRev
 }
 
+object BgColor {
+  val BF_NAME_DFLT = "bgColor"
+}
+trait BgColor extends ValT {
+  import BgColor._
+  def bgColorDefaultValue: Option[String] = None
+  def bgColorBf = BfColor(BF_NAME_DFLT, defaultValue = bgColorDefaultValue)
+  abstract override def blockFieldsRev: List[BlockFieldT] = bgColorBf :: super.blockFieldsRev
+}
 
