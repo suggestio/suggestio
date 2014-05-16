@@ -1042,7 +1042,7 @@ object BlocksConf extends Enumeration {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, bgImgBf, titleBf, descrBf, priceBf
+      bgImgBf, titleBf, descrBf, priceBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -1095,7 +1095,7 @@ object BlocksConf extends Enumeration {
     val oldPriceBf = BfPrice("oldPrice")
 
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, logoImgBf, bgImgBf, fillColorBf, titleBf, priceBf, oldPriceBf
+      logoImgBf, bgImgBf, fillColorBf, titleBf, priceBf, oldPriceBf
     )
 
     def strictMapping: Mapping[BlockMapperResult] = {
