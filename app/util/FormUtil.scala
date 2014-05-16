@@ -372,6 +372,11 @@ object FormUtil {
     .verifying("error.required", _.isDefined)
     .transform [AdNetMemberType] (_.get, Some.apply)
 
+
+  val adStatActionM: Mapping[AdStatAction] = {
+    nonEmptyText(maxLength = 1)
+      .transform[AdStatAction]({AdStatActions.withName}, {_.toString})
+  }
 }
 
 

@@ -1,9 +1,7 @@
 package models
 
-import play.api.mvc.Call
 import java.util.Currency
-import io.suggest.ym.model.common.IBlockMeta
-import io.suggest.ym.model.ad.IOffers
+import play.api.i18n.Messages
 
 /**
  * Suggest.io
@@ -24,3 +22,40 @@ trait CurrencyCodeOpt {
   def currency = Currency.getInstance(currencyCode)
 }
 
+
+/** У шаблона [[views.html.sys1.market.billing.adnNodeBillingTpl]] очень много параметров со сложными типам.
+  * Тут удобный контейнер для всей кучи параметров шаблона. */
+case class SysAdnNodeBillingArgs(
+  balanceOpt: Option[MBillBalance],
+  contracts: Seq[MBillContract],
+  txns: Seq[MBillTxn],
+  feeTariffsMap: collection.Map[Int, Seq[MBillTariffFee]],
+  statTariffsMap: collection.Map[Int, Seq[MBillTariffStat]]
+)
+
+
+/** Статическая утиль для шаблонов, работающих со экшенами статистики. */
+object AdStatActionsTpl {
+
+  def adStatActionI18N(asa: AdStatAction): String = {
+    "ad.stat.action." + asa.toString
+  }
+
+  /** Фунция для генерации списка пар (String, String), которые описывают  */
+  def adStatActionsSeq(implicit ctx: Context): Seq[(AdStatAction, String)] = {
+    import ctx._
+    AdStatActions.values.toSeq.map { v =>
+      val i18n = adStatActionI18N(v)
+      v -> Messages(i18n)
+    }
+  }
+
+  def adStatActionsSeqStr(implicit ctx: Context): Seq[(String, String)] = {
+    import ctx._
+    AdStatActions.values.toSeq.map { v =>
+      val i18n = adStatActionI18N(v)
+      v.toString -> Messages(i18n)
+    }
+  }
+
+}
