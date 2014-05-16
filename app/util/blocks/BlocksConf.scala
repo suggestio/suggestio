@@ -756,6 +756,7 @@ object BlocksConf extends Enumeration {
   }
 
 
+
   sealed abstract class CommonBlock17_18(id: Int, blkName: String) extends Val(id, blkName) with SaveBgImg with HeightStatic {
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val discoBf = BfDiscount("discount",
