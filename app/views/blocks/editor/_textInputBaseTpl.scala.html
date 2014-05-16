@@ -16,11 +16,12 @@
         default    = bf.defaultValue.map(_.font.color),
         withLabel  = colorWithLabel
       )
-    </div>
-  }
 
-  @if( bf.withFontSize ) {
-    @_fontSizeSelectTpl(bf, bfNameBase, af)
+      @if( bf.withFontSize ) {
+        @_fontSizeSelectTpl(bf, bfNameBase, af)
+      }
+
+    </div>
   }
 
 </div>

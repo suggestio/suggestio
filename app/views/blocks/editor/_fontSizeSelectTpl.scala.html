@@ -3,11 +3,18 @@
 @* Шаблон, где надо выбрать размер шрифта. *@
 
 @defining( bfNameBase + ".font.size" ) { fsName =>
-  <select name="@fsName">
-    @defining( af(fsName).value.orElse(bf.defaultValue.flatMap(_.font.size)) ) { fsValueOpt =>
+
+  <div class="lk-fontsize-select">
+    <label class="lk-fontsize-select__label">@Messages("Size"):</label>
+
+    <select class="lk-fontsize-select__select" name="@fsName">
+      @defining( af(fsName).value.orElse(bf.defaultValue.flatMap(_.font.size)) ) { fsValueOpt =>
       @for(sz <- bf.withFontSizes) {
-        <option value="@sz"@if(fsValueOpt.exists(_ == sz.toString)) { selected}>@sz</option>
+      <option value="@sz"@if(fsValueOpt.exists(_ == sz.toString)) { selected}>@sz</option>
       }
-    }
-  </select>
+      }
+    </select>
+
+  </div>
+
 }
