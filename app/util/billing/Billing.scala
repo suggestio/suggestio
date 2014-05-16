@@ -5,7 +5,6 @@ import play.api.Play.{current, configuration}
 import play.api.db.DB
 import org.joda.time.{Period, DateTime}
 import scala.concurrent.duration._
-import play.api.i18n.Messages
 import util.PlayMacroLogsImpl
 import util.AnormPgInterval._
 
@@ -169,20 +168,3 @@ object Billing extends PlayMacroLogsImpl {
 }
 
 
-/** Статическая утиль для шаблонов, работающих с биллингом. */
-object BillingTpl {
-
-  def adStatActionI18N(asa: AdStatAction): String = {
-    "ad.stat.action." + asa.toString
-  }
-
-  /** Фунция для генерации списка пар (String, String), которые описывают  */
-  def adStatActionsSeq(implicit ctx: Context): Seq[(String, String)] = {
-    import ctx._
-    AdStatActions.values.toSeq.map { v =>
-      val i18n = adStatActionI18N(v)
-      v.toString -> Messages(i18n)
-    }
-  }
-
-}

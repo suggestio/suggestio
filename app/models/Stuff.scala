@@ -1,6 +1,7 @@
 package models
 
 import java.util.Currency
+import play.api.i18n.Messages
 
 /**
  * Suggest.io
@@ -31,3 +32,30 @@ case class SysAdnNodeBillingArgs(
   feeTariffsMap: collection.Map[Int, Seq[MBillTariffFee]],
   statTariffsMap: collection.Map[Int, Seq[MBillTariffStat]]
 )
+
+
+/** Статическая утиль для шаблонов, работающих со экшенами статистики. */
+object AdStatActionsTpl {
+
+  def adStatActionI18N(asa: AdStatAction): String = {
+    "ad.stat.action." + asa.toString
+  }
+
+  /** Фунция для генерации списка пар (String, String), которые описывают  */
+  def adStatActionsSeq(implicit ctx: Context): Seq[(AdStatAction, String)] = {
+    import ctx._
+    AdStatActions.values.toSeq.map { v =>
+      val i18n = adStatActionI18N(v)
+      v -> Messages(i18n)
+    }
+  }
+
+  def adStatActionsSeqStr(implicit ctx: Context): Seq[(String, String)] = {
+    import ctx._
+    AdStatActions.values.toSeq.map { v =>
+      val i18n = adStatActionI18N(v)
+      v.toString -> Messages(i18n)
+    }
+  }
+
+}

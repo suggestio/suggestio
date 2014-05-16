@@ -88,7 +88,7 @@ object StatBillingQueueActor extends PlayMacroLogsImpl {
                 None
               }
               .filter { mbts =>
-                val result = mbts.dateFirst.isAfter(now)
+                val result = mbts.dateFirst.isBefore(now)
                 if (!result)
                   info(s"Skipping stat tariff ${mbts.id.get}, because dateFirst in future (${mbts.dateFirst})")
                 result
@@ -166,7 +166,7 @@ class StatBillingQueueActor extends Actor {
         future {
           flushAcc(readyAcc)
         } onComplete {
-          case Success(totalDebited) => trace("Successfully flushed accumulator. Debited: " + totalDebited.mkString(", "))
+          case Success(totalDebited) => trace("Successfully flushed accumulator. Debited: " + totalDebited.mkString("[", ", ", "]"))
           case Failure(ex)           => error(s"Failed to debit ${acc.size} items: $readyAcc", ex)
         }
         acc = Nil

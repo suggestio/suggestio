@@ -50,7 +50,7 @@ object MBillTariffStat extends TariffsFindByContract[MBillTariffStat] with Tarif
 
 
   def updateDebited(id: Int, debitedCount: Int, willDebit: Float)(implicit c: Connection): Int = {
-    SQL("UPDATE " + TABLE_NAME + " SET debitCount = debitCount + {debitedCount}, debitedTotal = debitedTotal + {willDebit} WHERE id = {id}")
+    SQL("UPDATE " + TABLE_NAME + " SET debit_count = debit_count + {debitedCount}, debited_total = debited_total + {willDebit} WHERE id = {id}")
       .on('id -> id, 'debitedCount -> debitedCount, 'willDebit -> willDebit)
       .executeUpdate()
   }

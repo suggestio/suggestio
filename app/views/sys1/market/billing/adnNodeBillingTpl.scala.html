@@ -6,7 +6,7 @@
 @import stuff._
 @import args._
 @import util.TplDataFormatUtil._
-@import util.billing.BillingTpl._
+@import AdStatActionsTpl._
 
 @billingBase("Биллинг", Some(adnNode)) {
 
@@ -82,6 +82,7 @@
               <th>Имя</th>
               <th>Старт</th>
               <th>Стоимость</th>
+              <th>Списано</th>
               <th>Действия</th>
             </tr>
             @tariffs.map { tariff =>
@@ -92,6 +93,7 @@
                   <td>@tariff.name</td>
                   <td>@_maybeTagged("strike", !te) {@datetime._prettyDate(tariff.dateFirst, withSpan = true)}</td>
                   <td>@_maybeTagged("strike", !te) {@formatPrice(tariff.debitAmount, tariff.currency) за @Messages(adStatActionI18N(tariff.debitFor))}</td>
+                  <td>@tariff.debitCount.toInt / @tariff.debitedTotal @tariff.currencyCode</td>
                   <td>
                     <a href="@routes.SysMarketBillingTariff.editStatTariff(tariff.id.get)">@Messages("Edit")</a>
                   </td>

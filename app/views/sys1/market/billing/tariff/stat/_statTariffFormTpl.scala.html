@@ -4,7 +4,7 @@
 
 @import helper._
 @import ctx._
-@import util.billing.BillingTpl._
+@import AdStatActionsTpl._
 
 @form(submitCall) {
 
@@ -20,7 +20,7 @@
 
   @inputText(stf("dateFirst"), '_label -> "Активен с (dd.MM.yyyy HH:mm)")
 
-  @select(stf("debitFor"), options = adStatActionsSeq, '_label -> "За что списываем деньги?")
+  @select(stf("debitFor"), options = adStatActionsSeqStr, '_label -> "За что списываем деньги?")
 
   @inputText(stf("price"), '_label -> "Размер одного списания", 'placeholder -> "1,15 руб")
 
