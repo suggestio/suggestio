@@ -35,6 +35,7 @@ libraryDependencies ++= Seq(
     exclude("xerces",   "xerces")
     exclude("log4j",    "log4j")
   ,
+  "org.slf4j" % "log4j-over-slf4j" % "1.+",
   // coffeescript-компилятор используем свой заместо компилятора play по ряду причин (последний прибит гвоздями к sbt-plugin, например).
   "org.jcoffeescript" % "jcoffeescript" % "1.6-SNAPSHOT",
   // for domain validation:
