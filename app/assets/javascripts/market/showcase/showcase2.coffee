@@ -12,9 +12,17 @@ siomart =
 
   utils :
 
-    is_touch_device : () ->
-      if document.ontouchstart != null then false else true
+    is_firefox : () ->
+      navigator.userAgent.toLowerCase().indexOf('firefox') > -1
 
+    is_touch_device : () ->
+      if document.ontouchstart != null
+        false
+      else
+        if navigator.userAgent.toLowerCase().indexOf('firefox') > -1
+          false
+        else
+          true
 
     ######################
     ## Создать DOM элемент
@@ -367,6 +375,7 @@ siomart =
 
     show_block_by_index : ( block_index ) ->
       this.active_block_index = block_index
+
       siomart.node_offers_popup._block_container.style['-webkit-transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
 
       siomart.node_offers_popup._block_container.setAttribute 'data-x-offset', -cbca_grid.ww*block_index

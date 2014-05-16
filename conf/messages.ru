@@ -61,6 +61,8 @@ blocks.field.circleFillColor=Цвет заливки кружков
 blocks.field.borderColor=Цвет бордюра
 blocks.field.discoIconColor=Цвет значка скидки
 blocks.field.discoBorderColor=Цвет бордюра скидки
+blocks.field.maskColor=Цвет маски
+blocks.field.fillColor=Цвет заливки
 
 ad.stat.action.v=Просмотр
 ad.stat.action.c=Клик

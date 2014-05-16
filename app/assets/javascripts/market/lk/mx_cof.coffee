@@ -794,8 +794,6 @@ market =
           'width' : width + 'px'
           'height' : height + 'px'
 
-        this.crop_tool_dom.css
-          'width' : width + 'px'
 
         ## отресайзить картинку по нужной стороне
 

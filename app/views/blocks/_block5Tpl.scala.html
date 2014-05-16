@@ -2,6 +2,8 @@
 
 @import util.TplDataFormatUtil._
 @import util.blocks.BlocksConf.Block5
+@import svg._
+
 
 @renderColor(colorHex:String) = {
   @if( colorHex != "ffffff" ){
@@ -13,9 +15,21 @@
 
   <img class="bg abs" src="@mad.imgs.get(Block5.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-bg.jpg"))" />
 
-  <div class="color-bg abs"></div>
+  @_mask5(
+    cssClass = "mask abs",
+    fillColor = "d5c864"
+  )
 
-  <div class="mask abs"></div>
+  @_mask5_460(
+    cssClass = "mask-460 abs",
+    fillColor = "d5c864"
+  )
+
+  @_mask5_620(
+    cssClass = "mask-620 abs",
+    fillColor = "d5c864"
+  )
+
 
   <div class="info">
     @mad.imgs.get(Block5.LOGO_IMG_FN).map { logoImg =>

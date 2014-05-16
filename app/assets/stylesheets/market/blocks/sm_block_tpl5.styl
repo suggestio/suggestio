@@ -5,19 +5,11 @@
     z-index: 1
     width: 300px
 
-  .color-bg
-    z-index: 2
-    top: 3px
-    left: 3px
-    width: 290px
-    border-left: 4px solid #bd2d4e
-    border-bottom: 4px solid #bd2d4e
-
   .mask
-    width: 100%
-    z-index: 2
-    background: url('/assets/images/market/blocks/tpl5-mask.png') no-repeat
-    background-size: 300px 300px
+    width: 300px
+    height: 300px
+    z-index: 3
+
 
   .info
     position: absolute
@@ -50,15 +42,9 @@
   .bg
     width: 600px
 
-  .color-bg
-    top: 7px
-    left: 6px
-    border-left: 7px solid #bd2d4e
-    border-bottom: 8px solid #bd2d4e
-    width: 580px
-
   .mask
-    background-size: 600px 600px
+    width: 600px
+    height: 600px
 
   .info
     left: 20px
@@ -85,41 +71,63 @@
   .bg
     height: 100%
 
-  .color-bg
-    height: 290px
+  .mask-460
+    display: none
 
-  .mask
-    height: 100%
+  .mask-620
+    display: none
 
 .sm-block-tpl5.height-300.double-size
   height: 600px
-
-  .color-bg
-    height: 580px
 
 
 .sm-block-tpl5.height-460
   height: 460px
 
+  .mask
+    display: none
+
+  .mask-620
+    display: none
+
+  .mask-460
+    display: block
+    width: 300px
+    height: 460px
+    z-index: 3
+
   .bg
     height: 100%
-
-  .color-bg
-    left: 2px
-    top: 163px
-    width: 291px
-    height: 291px
-
-  .mask
-    height: 100%
-    background: url('/assets/images/market/blocks/tpl5-mask-460.png') no-repeat
-    background-size: 100% 100%
 
 .sm-block-tpl5.height-460.double-size
   height: 920px
 
-  .color-bg
-    top: 325px
-    left: 3px
-    width: 585px
-    height: 584px
+  .mask-460
+    width: 600px
+    height: 920px
+
+
+.sm-block-tpl5.height-620
+  height: 620px
+
+  .mask
+    display: none
+
+  .mask-460
+    display: none
+
+  .mask-620
+    display: block
+    width: 300px
+    height: 620px
+    z-index: 3
+
+  .bg
+    height: 100%
+
+.sm-block-tpl5.height-620.double-size
+  height: 1240px
+
+  .mask-620
+    width: 600px
+    height: 1240px

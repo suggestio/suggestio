@@ -367,6 +367,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
       border-radius(10px)
       background: #4f88a9
       padding: 10px 15px
+      min-height: 14px
 
       a
         display: inline-block
@@ -636,16 +637,18 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     margin-left: -249px
     background: #e1e1e1
     border-radius(10px)
+
     .hat
       background: #efefef
       border-bottom: 1px solid #9a9b9b
       border-radius(10px 10px 0 0)
       overflow: hidden
       padding: 10px
+
     .content
       padding: 25px
 
-      .title
+      .popup_title
         padding-bottom: 25px
         color: #676666
         font-size: 30px
@@ -893,7 +896,6 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
     .ads-list
       display: none
-      padding-top: 30px
 
   /*
    *  Список узлов с чередованием цветов
@@ -1097,15 +1099,10 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
 .lk-overlay-data__window
   width: 700px
-  margin: 50px auto
-  padding: 20px
+  margin-top: 50px
   background: #e1e1e1
 
 /* Окошко для кадрирования картинок */
-.market-crop-tool
-  padding: 10px
-  border: 1px red solid
-
 .market-crop-tool__container
   border: 1px #ccc solid
   overflow: hidden

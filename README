@@ -3,6 +3,23 @@ sioweb3
 
 Вёб-морда для suggest.io на базе play 2+.
 
+
+Deploy
+=====================================
+sbt stage
+cd target/universal/stage
+rsync -avz -e ssh . www@osm01.suggest.io:sio2/sioweb21/
+
+ssh www@osm01.suggest.io
+screen -r sio2
+CTRL+C
+UP
+ENTER
+
+
+Changelog
+======================================
+
 2014.may.05:
   В сборочном окружении нужен stylus >= 0.40 (0.42+ например).
 

@@ -1,14 +1,10 @@
 .ads-list
-
-  padding: 20px 0px
+  overflow: hidden
+  margin: 20px 0px
 
   .sm-block
     position: relative
-    -webkit-transform: scale3d(0.5,0.5,0.5)
-    -moz-transform: scale3d(0.5,0.5,0.5)
-    -webkit-transform-origin: 0px 0px
-    -moz-transform-origin: 0px 0px
-
+    margin: 0px auto
 
 .ads-list__block
   float: left
@@ -30,10 +26,17 @@
   overflow: hidden
   width: 153px
   height: 154px
-  padding: 6px
+  padding: 8px 5px 6px 7px
   background: #fff
   border: 1px #a5a5a5 solid
   box-shadow( inset 0px 1px 3px #bec2c5 )
+
+.ads-list-block__preview-container
+  width: 300px
+  -webkit-transform: scale3d(0.5,0.5,0.5)
+  -moz-transform: scale3d(0.5,0.5,0.5)
+  -webkit-transform-origin: 0px 0px
+  -moz-transform-origin: 0px 0px
 
 .ads-list-block__zigzag-mask
   position: absolute
@@ -41,9 +44,9 @@
   background: lk_sprite
   background-position: -170px -172px
   height: 10px
-  z-index: 1000
+  z-index: 4
   left: 4px
-  top: 157px
+  top: 158px
 
 .ads-list-block__preview_add-new
   background: lk_sprite
