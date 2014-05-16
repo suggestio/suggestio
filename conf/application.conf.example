@@ -185,3 +185,10 @@ db.default.url = "jdbc:postgresql://localhost/postgres?searchpath=sio2"
 db.default.user = "sio2"
 db.default.password = "Rjvfhjdj&"
 
+
+###############################################################################
+## Billing
+###############################################################################
+## Тарификацию по накопленным данных по stat-биллингу производить не чаще этого интервала времени.
+billing.stat.queue.flush.interval.seconds = 10
+

@@ -191,12 +191,12 @@ object BfHeight {
 /** Поле для какой-то цифры. */
 case class BfHeight(
   name: String,
-  offerNopt: Option[Int] = None,
   defaultValue: Option[Int] = None,
   availableVals: Set[Int] = BfHeight.HEIGHTS_AVAILABLE
 ) extends BlockFieldT {
   override type T = Int
   override def field = BlocksEditorFields.Height
+  override def offerNopt: Option[Int] = None
 
   override def fallbackValue: T = 140
 
