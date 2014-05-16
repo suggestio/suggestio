@@ -2,6 +2,7 @@
 
 @import common._
 
+@defining( mad.colors.getOrElse(Block22.borderColorBf.name, Block22.borderColorBf.anyDefaultValue) )  { borderColor =>
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl22" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   <img class="bg abs" src="@mad.imgs.get(Block22.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl22-bg.jpg"))" />
@@ -12,7 +13,7 @@
 
   <div class="outer-border">
 
-    <div class="inner">
+    <div class="inner" style="border-color: #borderColor;">
 
       <div class="info abs">
         @mad.offers.headOption.map { offer =>
@@ -34,3 +35,4 @@
   </div>
 
 </div>
+}
