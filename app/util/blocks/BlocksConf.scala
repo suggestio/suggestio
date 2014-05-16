@@ -888,7 +888,7 @@ object BlocksConf extends Enumeration {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields = List(
-      heightBf, bgImgBf, titleBf, descrBf
+      bgImgBf, titleBf, descrBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -935,7 +935,7 @@ object BlocksConf extends Enumeration {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields = List(
-      heightBf, bgImgBf, borderColorBf, titleBf, descrBf
+      bgImgBf, borderColorBf, titleBf, descrBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -985,7 +985,7 @@ object BlocksConf extends Enumeration {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields = List(
-      heightBf, logoImgBf, borderColorBf, bgImgBf, titleBf, descrBf
+      logoImgBf, borderColorBf, bgImgBf, titleBf, descrBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
