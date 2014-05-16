@@ -1,1 +1,1 @@
-@(aoff: AOFieldFont, className: String = "")style="color: #@aoff.color;" class="@className @aoff.size.map {fsize =>sm-font-@{fsize}}"
+@(aoff: AOFieldFont, className: String = "", styleStr: String = "")style="color: #@aoff.color; @styleStr" class="@className @aoff.size.map {fsize =>sm-font-@{fsize}}"

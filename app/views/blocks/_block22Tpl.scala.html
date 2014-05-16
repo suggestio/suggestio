@@ -24,8 +24,7 @@
             </div>
           }
           @offer.text2.map { text2 =>
-            <div @_aovfStyleTpl(text2, "descr")>
-              ( @colorHex2rgb(borderColor).mkString(",") )
+            <div @_aovfStyleTpl(text2, "descr", "background-color: rgba(" + colorHex2rgb(borderColor).mkString(",") + ", 0.7);")>
               @Html(text2.value)
             </div>
           }
