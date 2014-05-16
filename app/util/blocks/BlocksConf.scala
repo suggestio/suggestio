@@ -1171,10 +1171,11 @@ object BlocksConf extends Enumeration {
     )
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+    val borderColorBf = BfColor("borderColor", defaultValue = Some("FFFFFF"))
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields = List(
-      heightField, logoImgBf, bgImgBf, titleBf, descrBf
+      heightField, logoImgBf, borderColorBf, bgImgBf, titleBf, descrBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -1182,11 +1183,12 @@ object BlocksConf extends Enumeration {
       mapping(
         heightField.getStrictMappingKV,
         bgImgBf.getStrictMappingKV,
+        borderColorBf.getStrictMappingKV,
         logoImgBf.getStrictMappingKV,
         titleBf.getOptionalStrictMappingKV,
         descrBf.getOptionalStrictMappingKV
       )
-      {(height, bgBim, logoBim, titleOpt, descrOpt) =>
+      {(height, bgBim, borderColor, logoBim, titleOpt, descrOpt) =>
         val blk = AOBlock(
           n = 0,
           text1 = titleOpt,
@@ -1197,7 +1199,8 @@ object BlocksConf extends Enumeration {
             height = height,
             blockId = id
           ),
-          offers = List(blk)
+          offers = List(blk),
+          colors = Map(borderColorBf.name -> borderColor)
         )
         val bim = bgBim ++ logoBim
         BlockMapperResult(bd, bim)
@@ -1205,11 +1208,12 @@ object BlocksConf extends Enumeration {
       {bmr =>
         val height = bmr.bd.blockMeta.height
         val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+        val borderColor = bmr.bd.colors.get(borderColorBf.name).getOrElse(borderColorBf.anyDefaultValue)
         val logoBim: BlockImgMap = bmr.bim.filter(_._1 == logoImgBf.name)
         val offerOpt = bmr.bd.offers.headOption
         val titleOpt = offerOpt.flatMap(_.text1)
         val descrOpt = offerOpt.flatMap(_.text2)
-        Some( (height, bgBim, logoBim, titleOpt, descrOpt) )
+        Some( (height, bgBim, borderColor, logoBim, titleOpt, descrOpt) )
       }
     }
 
