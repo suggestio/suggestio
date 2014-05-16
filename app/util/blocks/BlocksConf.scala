@@ -58,12 +58,9 @@ object BlocksConf extends Enumeration {
   // Начало значений
 
   /** Картинка, название, старая и новая цена. Аналог былого DiscountOffer. */
-  val Block1 = new Val(1, "photoAdnPrice") with SaveBgImg with HeightStatic with TitleStatic with Price {
+  val Block1 = new Val(1, "photoAdnPrice") with SaveBgImg with HeightStatic with TitleStatic with Price with OldPrice {
     override def priceDefaultValue = Some(AOPriceField(100F, "RUB", "100 р.", defaultFont))
-
-    val oldPriceBf = BfPrice(EMAdOffers.OLD_PRICE_ESFN,
-      defaultValue = Some(AOPriceField(200F, "RUB", "200 р.", defaultFont))
-    )
+    override def oldPriceDefaultValue = Some(AOPriceField(200F, "RUB", "200 р.", defaultFont))
 
     override def blockFields = List(
       bgImgBf, heightBf, titleBf, oldPriceBf, priceBf
@@ -241,8 +238,7 @@ object BlocksConf extends Enumeration {
 
   /** Реклама брендированного товара. От предыдущих одно-офферных блоков отличается дизайном и тем, что есть вторичный логотип. */
   val Block5 = new Val(5, "brandedProduct") with SaveBgImg with SaveLogoImg with HeightStatic with TitleStatic
-    with PriceStatic {
-    val oldPriceBf = BfPrice("oldPrice")
+    with PriceStatic with OldPriceStatic {
     val maskColorBf = BfColor("maskColor", defaultValue = Some("d5c864"))
 
     override def blockFields: List[BlockFieldT] = List(
@@ -422,8 +418,8 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block10 = new Val(10, "oldNewPriceNarrow10") with SaveBgImg with Height300 with TitleStatic with PriceStatic {
-    val oldPriceBf  = BfPrice("oldPrice")
+  val Block10 = new Val(10, "oldNewPriceNarrow10") with SaveBgImg with Height300 with TitleStatic with PriceStatic
+  with OldPriceStatic {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
@@ -1055,9 +1051,9 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block24 = new Val(24, "smth24") with SaveBgImg with SaveLogoImg with HeightStatic with TitleStatic with PriceStatic {
+  val Block24 = new Val(24, "smth24") with SaveBgImg with SaveLogoImg with HeightStatic with TitleStatic with PriceStatic
+  with OldPriceStatic {
     val fillColorBf = BfColor("fillColor", defaultValue = Some("d5c864"))
-    val oldPriceBf = BfPrice("oldPrice")
 
     override def blockFields: List[BlockFieldT] = List(
       logoImgBf, bgImgBf, fillColorBf, titleBf, priceBf, oldPriceBf
@@ -1475,6 +1471,31 @@ trait Price extends PriceT {
     name = BlocksConfUtilPrice.BF_NAME_DFLT,
     defaultValue = priceDefaultValue,
     withFontSizes = priceFontSizes
+  )
+}
+
+
+
+object BlocksConfUtilOldPrice {
+  val BF_NAME_DFLT = "oldPrice"
+  val BF_OLD_PRICE_DFLT = BfPrice(BF_NAME_DFLT)
+}
+trait OldPriceT extends ValT {
+  def oldPriceBf: BfPrice
+  def oldPriceDefaultValue: Option[AOPriceField] = None
+  def oldPriceFontSizes: Set[Int] = Set.empty
+  abstract override def blockFieldsRev: List[BlockFieldT] = oldPriceBf :: super.blockFieldsRev
+}
+trait OldPriceStatic extends OldPriceT {
+  override def oldPriceBf = BlocksConfUtilOldPrice.BF_OLD_PRICE_DFLT
+  override final def oldPriceDefaultValue = super.oldPriceDefaultValue
+  override final def oldPriceFontSizes = super.oldPriceFontSizes
+}
+trait OldPrice extends OldPriceT {
+  override def oldPriceBf = BfPrice(
+    name = BlocksConfUtilOldPrice.BF_NAME_DFLT,
+    defaultValue = oldPriceDefaultValue,
+    withFontSizes = oldPriceFontSizes
   )
 }
 
