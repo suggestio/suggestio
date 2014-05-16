@@ -1,1 +1,1 @@
-@(aoff: AOFieldFont)color: #@aoff.color;@aoff.size.map {fsize =>font-size: @{fsize}px; line-height: @{fsize}px;}
+@(aoff: AOFieldFont, className: String = "")style="color: #@aoff.color;" class="@className sm-font-@aoff.size.map {fsize =>@{fsize}}"
