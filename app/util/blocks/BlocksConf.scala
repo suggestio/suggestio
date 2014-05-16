@@ -187,9 +187,9 @@ object BlocksConf extends Enumeration {
 
 
   sealed abstract class CommonBlock4_9(id: Int, name: String) extends Val(id, name) with SaveBgImg with Height300 {
-    val text1Bf = BfText("text1", BlocksEditorFields.InputText, maxLen = 256)
+    val textBf = BfText("title", BlocksEditorFields.InputText, maxLen = 256)
     val priceBf = BfPrice("price")
-    val text2Bf = BfText("text2", BlocksEditorFields.TextArea, maxLen = 512)
+    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 512)
     val bgColorBf = BfColor("bgColor", defaultValue = Some("0F2841"))
     val borderColorBf = BfColor("borderColor", defaultValue = Some("FFFFFF"))
 
@@ -197,16 +197,16 @@ object BlocksConf extends Enumeration {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      bgImgBf, text1Bf, priceBf, text2Bf, bgColorBf, borderColorBf
+      bgImgBf, textBf, priceBf, descrBf, bgColorBf, borderColorBf
     )
 
     /** Маппинг для обработки данных от сабмита формы блока. */
     override def strictMapping: Mapping[BlockMapperResult] = {
       mapping(
         bgImgBf.getStrictMappingKV,
-        text1Bf.getOptionalStrictMappingKV,
+        textBf.getOptionalStrictMappingKV,
         priceBf.getOptionalStrictMappingKV,
-        text2Bf.getOptionalStrictMappingKV,
+        descrBf.getOptionalStrictMappingKV,
         bgColorBf.getStrictMappingKV,
         borderColorBf.getStrictMappingKV
       )
@@ -756,7 +756,7 @@ object BlocksConf extends Enumeration {
 
 
 
-  sealed abstract class CommonBlock17_18(id: Int, blkName: String) extends Val(id, blkName) with SaveBgImg with HeightStatic {
+  sealed abstract class CommonBlock17_18(id: Int, blkName: String) extends Val(id, blkName) with SaveBgImg with HeightT {
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val discoBf = BfDiscount("discount",
       min = -99F,
@@ -772,7 +772,7 @@ object BlocksConf extends Enumeration {
     val blockWidth: Int
 
     override def blockFields: List[BlockFieldT] = List(
-      heightBf, bgColorBf, bgImgBf, circleFillColorBf, titleBf, discoBf, discoIconColorBf, discoBorderColorBf
+      bgColorBf, bgImgBf, circleFillColorBf, titleBf, discoBf, discoIconColorBf, discoBorderColorBf
     )
 
     override def strictMapping: Mapping[BlockMapperResult] = mapping(
@@ -820,13 +820,16 @@ object BlocksConf extends Enumeration {
     }
   }
 
-  val Block17 = new CommonBlock17_18(17, "circlesAndDisco17") {
+  val Block17 = new CommonBlock17_18(17, "circlesAndDisco17") with Height {
     override val blockWidth: Int = 300
+    override def heightAvailableVals: Set[Int] = Set(300, 460)
+    override def blockFields = heightBf :: super.blockFields
     override def template = _block17Tpl
   }
 
-  val Block18 = new CommonBlock17_18(18, "circlesAndDiscoNarrow18") {
+  val Block18 = new CommonBlock17_18(18, "circlesAndDiscoNarrow18") with Height {
     override val blockWidth: Int = 140
+    override def heightAvailableVals: Set[Int] = Set(300)
     override def template = _block18Tpl
   }
 
