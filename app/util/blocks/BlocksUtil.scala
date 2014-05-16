@@ -256,7 +256,7 @@ case class BfText(
 
   override val mappingBase: Mapping[T] = {
     val m0 = text(minLength = minLen, maxLength = maxLen)
-      .transform(strTrimSanitizeF, strIdentityF)
+      .transform(replaceEOLwithBR andThen strTrimBrOnlyF,  replaceBRwithEOL)
     MarketAdFormUtil.aoStringFieldM(m0, getFontMapping)
   }
 

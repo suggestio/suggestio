@@ -45,6 +45,15 @@ object FormUtil {
     textFmtPolicy.sanitize(s).trim
   }
 
+  val replaceEOLwithBRre = "\n\r?".r
+  val replaceEOLwithBR = {s: String =>
+    replaceEOLwithBRre.replaceAllIn(s, "<br/>")
+  }
+  val replaceBRwithEOL_re = "(?i)<br\\s*/?>".r
+  val replaceBRwithEOL = {s: String =>
+    replaceBRwithEOL_re.replaceAllIn(s, "\n")
+  }
+
   /** Функция, которая превращает Some("") в None. */
   def emptyStrOptToNone(s: Option[String]) = {
     s.filter(!_.isEmpty)

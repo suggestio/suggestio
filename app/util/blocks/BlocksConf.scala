@@ -58,12 +58,12 @@ object BlocksConf extends Enumeration {
 
   /** Картинка, название, старая и новая цена. Аналог былого DiscountOffer. */
   val Block1 = new Val(1, "photoAdnPrice") with SaveBgImg with HeightStatic {
-    val text1Field = BfText("title", BlocksEditorFields.InputText,
+    val titleBf = BfText("title", BlocksEditorFields.InputText,
       minLen = 0,
       maxLen = 64,
       defaultValue = Some(AOStringField("Платье", AOFieldFont("444444")))
     )
-    val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN,
+    val oldPriceBf = BfPrice(EMAdOffers.OLD_PRICE_ESFN,
       defaultValue = Some(AOPriceField(200F, "RUB", "200 р.", defaultFont))
     )
     val priceBf = BfPrice(EMAdOffers.PRICE_ESFN,
@@ -71,15 +71,15 @@ object BlocksConf extends Enumeration {
     )
 
     override def blockFields = List(
-      bgImgBf, heightBf, text1Field, oldPriceField, priceBf
+      bgImgBf, heightBf, titleBf, oldPriceBf, priceBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
     override def strictMapping = mapping(
       bgImgBf.getStrictMappingKV,
       heightBf.getStrictMappingKV,
-      text1Field.getOptionalStrictMappingKV,
-      oldPriceField.getOptionalStrictMappingKV,
+      titleBf.getOptionalStrictMappingKV,
+      oldPriceBf.getOptionalStrictMappingKV,
       priceBf.getOptionalStrictMappingKV
     )
     {(bim, height, text1, oldPrice, price) =>
@@ -187,9 +187,9 @@ object BlocksConf extends Enumeration {
 
 
   sealed abstract class CommonBlock4_9(id: Int, name: String) extends Val(id, name) with SaveBgImg with Height300 {
-    val text1bf = BfText("text1", BlocksEditorFields.InputText, maxLen = 256)
+    val text1Bf = BfText("text1", BlocksEditorFields.InputText, maxLen = 256)
     val priceBf = BfPrice("price")
-    val text2bf = BfText("text2", BlocksEditorFields.TextArea, maxLen = 512)
+    val text2Bf = BfText("text2", BlocksEditorFields.TextArea, maxLen = 512)
     val bgColorBf = BfColor("bgColor", defaultValue = Some("0F2841"))
     val borderColorBf = BfColor("borderColor", defaultValue = Some("FFFFFF"))
 
@@ -197,16 +197,16 @@ object BlocksConf extends Enumeration {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
-      bgImgBf, text1bf, priceBf, text2bf, bgColorBf, borderColorBf
+      bgImgBf, text1Bf, priceBf, text2Bf, bgColorBf, borderColorBf
     )
 
     /** Маппинг для обработки данных от сабмита формы блока. */
     override def strictMapping: Mapping[BlockMapperResult] = {
       mapping(
         bgImgBf.getStrictMappingKV,
-        text1bf.getOptionalStrictMappingKV,
+        text1Bf.getOptionalStrictMappingKV,
         priceBf.getOptionalStrictMappingKV,
-        text2bf.getOptionalStrictMappingKV,
+        text2Bf.getOptionalStrictMappingKV,
         bgColorBf.getStrictMappingKV,
         borderColorBf.getStrictMappingKV
       )
@@ -249,13 +249,13 @@ object BlocksConf extends Enumeration {
 
   /** Реклама брендированного товара. От предыдущих одно-офферных блоков отличается дизайном и тем, что есть вторичный логотип. */
   val Block5 = new Val(5, "brandedProduct") with SaveBgImg with SaveLogoImg with HeightStatic {
-    val text1Bf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
+    val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
     val oldPriceBf = BfPrice("oldPrice")
     val priceBf = BfPrice("price")
     val maskColorBf = BfColor("maskColor", defaultValue = Some("d5c864"))
 
     override def blockFields: List[BlockFieldT] = List(
-      bgImgBf, heightBf, maskColorBf, logoImgBf, text1Bf, oldPriceBf, priceBf
+      bgImgBf, heightBf, maskColorBf, logoImgBf, titleBf, oldPriceBf, priceBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -264,7 +264,7 @@ object BlocksConf extends Enumeration {
       bgImgBf.getStrictMappingKV,
       logoImgBf.getOptionalStrictMappingKV,
       heightBf.getStrictMappingKV,
-      text1Bf.getOptionalStrictMappingKV,
+      titleBf.getOptionalStrictMappingKV,
       oldPriceBf.getOptionalStrictMappingKV,
       priceBf.getOptionalStrictMappingKV
     )
