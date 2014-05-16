@@ -62,6 +62,9 @@ blocks.field.discoBorderColor=Discount border color
 blocks.field.maskColor=Mask color
 blocks.field.fillColor=Fill color
 
+ad.stat.action.v=View
+ad.stat.action.c=Click
+
 
 lk.sl.enable_ad=Enable ad
 lk.sl.d=Show on start page

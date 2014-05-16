@@ -1,11 +1,12 @@
-package util
+package util.billing
 
 import models._
 import play.api.Play.{current, configuration}
 import play.api.db.DB
 import org.joda.time.{Period, DateTime}
 import scala.concurrent.duration._
-import AnormPgInterval.pgInterval2period
+import util.PlayMacroLogsImpl
+import util.AnormPgInterval._
 
 /**
  * Suggest.io
@@ -132,7 +133,7 @@ object Billing extends PlayMacroLogsImpl {
 
 
   /** Определение даты-времени списания. Если была задержка, то now. Иначе считаем относительно dateLast. */
-  def detectNewDatePaid(tariff: MBillTariff, now: DateTime = DateTime.now): DateTime = {
+  def detectNewDatePaid(tariff: MBillTariffFee, now: DateTime = DateTime.now): DateTime = {
     tariff.dateLast
       .filter { dateLast =>
         // Если была просрочка, то выкидываем эту дату
@@ -165,4 +166,5 @@ object Billing extends PlayMacroLogsImpl {
   }
 
 }
+
 

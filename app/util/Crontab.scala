@@ -7,6 +7,7 @@ import play.api.libs.concurrent.Akka
 import scala.concurrent.duration._
 import models.MPictureTmp
 import play.api.Logger
+import util.billing.Billing
 
 /**
  * Suggest.io

@@ -1,9 +1,9 @@
 @(mads: Seq[MAdT], adnNode: MAdnNode, adFreqs: AdFreqs_t)(implicit ctx: util.Context)
 
 @* Список реклам и сервисных функций. *@
-@import AdStatActions._
 @import util.TplDataFormatUtil._
-@import AdStatActions._
+@import AdStatActionsTpl._
+@import ctx._
 
 @hPathAfter1 = {
   / <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
@@ -31,9 +31,11 @@
         }
       }
     </p>
-    @Seq(View -> "просмотра", Click -> "клика").map { case (asa, txt) =>
-      @helper.form(routes.Market.adStats(martId = adnNode.adn.supId.get, adId = mad.id.get, action = asa.toString)) {
-        <input type="submit" value="Имитация @txt"/>
+    @adStatActionsSeq.map { case (asa, txt) =>
+      @adnNode.adn.supId.orElse(adnNode.id).map { adnNodeId =>
+        @helper.form( routes.Market.adStats(martId = adnNodeId, adId = mad.id.get, action = asa.toString) ) {
+          <input type="submit" value="Имитировать @Messages(txt)"/>
+        }
       }
     }
 

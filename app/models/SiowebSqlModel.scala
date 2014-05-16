@@ -105,3 +105,17 @@ object SelectPolicies extends Enumeration {
 
   implicit def value2val(x: Value) = x.asInstanceOf[SelectPolicy]
 }
+
+
+/** Утиль, относящаяся к управлению транзакциями. */
+object PgTransaction {
+
+  def savepoint(name: String)(implicit c: Connection) {
+    SQL("SAVEPOINT " + name).execute()
+  }
+
+  def rollbackTo(name: String)(implicit c: Connection) {
+    SQL("ROLLBACK TO " + name).execute()
+  }
+
+}
