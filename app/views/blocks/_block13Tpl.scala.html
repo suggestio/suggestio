@@ -21,9 +21,12 @@
     <div class="right-line" style="background: #@discoIconColor"></div>
 
     @mad.offers.headOption.map { offer =>
-      <div class="sale"@offer.discount.map { discount => style="@_aovfStyleTpl(discount)"}>
+
+      @offer.discount.map { discount =>
+      <div @_aovfStyleTpl(discount, "sale")>
         @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
       </div>
+      }
 
 
       @_saleIcon13Tpl(
@@ -40,7 +43,7 @@
       }
 
       @offer.text2.map { text2 =>
-        <div class="info abs" style="@_aovfStyleTpl(text2)">
+        <div @_aovfStyleTpl(text2, "info abs")>
           @Html(text2.value)
         </div>
       }

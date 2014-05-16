@@ -376,7 +376,11 @@ siomart =
     show_block_by_index : ( block_index ) ->
       this.active_block_index = block_index
 
-      siomart.node_offers_popup._block_container.style['-webkit-transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
+      if vendor_prefix.js == 'Webkit'
+        siomart.node_offers_popup._block_container.style['-webkit-transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
+      else
+        siomart.node_offers_popup._block_container.style['transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
+
 
       siomart.node_offers_popup._block_container.setAttribute 'data-x-offset', -cbca_grid.ww*block_index
 
@@ -459,7 +463,10 @@ siomart =
       c_x_offset = siomart.node_offers_popup._block_container.getAttribute 'data-x-offset'
       c_x_offset = parseInt c_x_offset
 
-      siomart.node_offers_popup._block_container.style['-webkit-transform'] = 'translate3d(' + parseInt( c_x_offset - delta_x ) + 'px, 0px, 0px)'
+      if vendor_prefix.js == 'Webkit'
+        siomart.node_offers_popup._block_container.style['-webkit-transform'] = 'translate3d(' + parseInt( c_x_offset - delta_x ) + 'px, 0px, 0px)'
+      else
+        siomart.node_offers_popup._block_container.style['transform'] = 'translate3d(' + parseInt( c_x_offset - delta_x ) + 'px, 0px, 0px)'
 
       this.x_delta_direction = this.last_x - ex
 

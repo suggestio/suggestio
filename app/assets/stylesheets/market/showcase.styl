@@ -17,12 +17,6 @@ transform( param )
   -o-transform : param
   transform : param
 
-transition( param )
-  -webkit-transition: param
-  -moz-transition: param
-  -o-transition: param
-  transition: param
-
 box-shadow( param )
   -webkit-box-shadow: param
   -moz-box-shadow: param
@@ -164,7 +158,9 @@ box-shadow( param )
     overflow: hidden
 
   .sio-mart-node-offers-window__root-container_animated
-    -webkit-transition: all 0.3s ease-in-out
+    transition: all 0.3s ease 0s
+    -webkit-transition: all 0.3s ease 0s
+
 
   .sio-mart-node-offers-window__single-ad-container
     width: 600px

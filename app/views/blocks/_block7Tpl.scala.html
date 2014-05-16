@@ -11,18 +11,18 @@
 
   @mad.offers.headOption.map { offer =>
 
-    <div class="sale-icon" @offer.discount.map { discount => style="@_aovfStyleTpl(discount)"}>
+    <div @offer.discount.map { discount => @_aovfStyleTpl(discount, "sale-icon")}>
       @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
     </div>
 
     <div class="info">
       @offer.text1.map { text1 =>
-        <div class="title" style="@_aovfStyleTpl(text1)">
+        <div @_aovfStyleTpl(text1, "title")>
           @text1.value
         </div>
       }
       @offer.price.map { price =>
-        <div class="price" style="@_aovfStyleTpl(price)">
+        <div @_aovfStyleTpl(price, "price")>
           @formatPrice(price.value, price.currency)
         </div>
       }

@@ -11,13 +11,13 @@
   <div class="info" style="background: #@mad.colors.getOrElse(bc.bgColorBf.name, bc.bgColorBf.anyDefaultValue);">
     @mad.offers.headOption.map { offer =>
       @offer.text1.map { title =>
-        <div class="title" style="@_aovfStyleTpl(title)">@title.value</div>
+        <div @_aovfStyleTpl(title, "title")>@title.value</div>
       }
       @offer.price.map { price =>
-        <div class="price" style="@_aovfStyleTpl(price)">@formatPriceDigits(price.value)<span>@formatCurrency(price.currency)</span></div>
+        <div @_aovfStyleTpl(price, "price")>@formatPriceDigits(price.value)<span>@formatCurrency(price.currency)</span></div>
       }
       @offer.text2.map { descr =>
-        <div class="descr" style="@_aovfStyleTpl(descr)">@descr.value</div>
+        <div @_aovfStyleTpl(descr, "descr")>@descr.value</div>
       }
     }
   </div>

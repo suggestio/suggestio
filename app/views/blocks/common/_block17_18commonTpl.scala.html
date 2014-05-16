@@ -28,14 +28,14 @@
         <img class="photo" src="@mad.imgs.get(bc.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl17-bg.jpg"))" />
 
         @offer.text1.map { text1 =>
-          <div class="title" style="@_aovfStyleTpl(text1)">
+          <div @_aovfStyleTpl(text1, "title")>
             @Html(text1.value)
           </div>
         }
       </div>
 
       @offer.discount.map { discount =>
-        <div class="sale" style="@_aovfStyleTpl(discount)">
+        <div @_aovfStyleTpl(discount, "sale")>
           @formatPercentRaw(discount.value)<span>%</span>
         </div>
       }
