@@ -4,7 +4,7 @@
 @import common._
 @import util.TplDataFormatUtil._
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl24" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl24" data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   <img class="bg abs" src="@mad.imgs.get(Block24.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-bg.jpg"))" />
 

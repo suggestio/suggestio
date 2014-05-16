@@ -515,7 +515,7 @@ siomart =
 
       ## Кнопка возврата на главный экран
       siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), _e, siomart.close_node_offers_popup
-      
+
       ## События для свайпа
       siomart.utils.add_single_listener this._block_container, 'touchstart', ( event ) ->
         siomart.node_offers_popup.touchstart_event event
