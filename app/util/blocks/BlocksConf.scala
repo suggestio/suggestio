@@ -105,11 +105,11 @@ object BlocksConf extends Enumeration {
 
 
   /** Блок картинки с двумя текстами. */
-  val Block2 = new Val(2, "saleWithText") with SaveBgImg with Height with TitleStatic {
+  val Block2 = new Val(2, "saleWithText") with SaveBgImg with Height with TitleStatic with Descr {
     override def heightAvailableVals: Set[Int] = Set(300, 460)
-    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 8192,
-      defaultValue = Some(AOStringField("Распродажа. Сегодня. Сейчас.", AOFieldFont("000000")))
-    )
+    override def descrDefaultValue: Option[AOStringField] = {
+      Some(AOStringField("Распродажа. Сегодня. Сейчас.", AOFieldFont("000000")))
+    }
 
     override def blockFields = List(
       bgImgBf, heightBf, titleBf, descrBf
@@ -181,9 +181,9 @@ object BlocksConf extends Enumeration {
   }
 
 
-  sealed abstract class CommonBlock4_9(id: Int, name: String) extends Val(id, name) with SaveBgImg with Height300 with TitleStatic {
+  sealed abstract class CommonBlock4_9(id: Int, name: String) extends Val(id, name) with SaveBgImg with Height300 with TitleStatic
+  with DescrStatic {
     val priceBf = BfPrice("price")
-    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 512)
     val bgColorBf = BfColor("bgColor", defaultValue = Some("0F2841"))
     val borderColorBf = BfColor("borderColor", defaultValue = Some("FFFFFF"))
 
@@ -470,8 +470,7 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block11 = new Val(11, "promoNarrow11") with SaveBgImg with Height300 with TitleStatic {
-    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+  val Block11 = new Val(11, "promoNarrow11") with SaveBgImg with Height300 with TitleStatic with DescrStatic {
     val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("aaaaaa"))
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
@@ -513,10 +512,9 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block12 = new Val(12, "discountNarrow12") with Height300 with TitleStatic {
+  val Block12 = new Val(12, "discountNarrow12") with Height300 with TitleStatic with DescrStatic {
     val saleMaskColorBf = BfColor("saleMaskColor", defaultValue = Some("00ff1a"))
     val discountBf = BfDiscount("discount", min = -99F, max = 999F)
-    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
@@ -558,12 +556,11 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block13 = new Val(13, "svgBgSlogan13") with SaveBgImg with Height {
+  val Block13 = new Val(13, "svgBgSlogan13") with SaveBgImg with Height with DescrStatic {
     override def heightAvailableVals: Set[Int] = Set(300, 460)
     val discoIconColorBf = BfColor("discoIconColor", defaultValue = Some("828fa0"))
     val discoBorderColorBf = BfColor("discoBorderColor", defaultValue = Some("FFFFFF"))
     val discountBf = BfDiscount("discount", min = -99F, max = 999F)
-    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields: List[BlockFieldT] = List(
@@ -614,11 +611,10 @@ object BlocksConf extends Enumeration {
   }
 
 
-  sealed abstract class CommonBlock145(id: Int, name: String) extends Val(id, name) with SaveLogoImg with Height {
+  sealed abstract class CommonBlock145(id: Int, name: String) extends Val(id, name) with SaveLogoImg with Height with DescrStatic {
     val topColorBf = BfColor("topColor", defaultValue = Some("000000"))
     val bottomColorBf = BfColor("bottomColor", defaultValue = Some("bf6a6a"))
     val titleBf = BfText("title", BlocksEditorFields.TextArea, maxLen = 256)
-    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
     val lineColorBf = BfColor("lineColor", defaultValue = Some("B35151"))
 
     val blockWidth: Int
@@ -685,9 +681,9 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block16 = new Val(16, "titleDescPriceNopict") with HeightStatic with Title {
+  val Block16 = new Val(16, "titleDescPriceNopict") with HeightStatic with Title with Descr {
     override def titleFontSizes: Set[Int] = Set(65, 55, 45, 35, 28)
-    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256, withFontSizes = Set(36, 28, 22))
+    override def descrFontSizes: Set[Int] = Set(36, 28, 22)
     val priceBf = BfPrice("price", withFontSizes = Set(65, 55, 45))
     val bgColorBf = BfColor("bgColor", defaultValue = Some("e1cea1"))
     val borderColorBf = BfColor("borderColor", defaultValue = Some("FFFFFF"))
@@ -743,7 +739,8 @@ object BlocksConf extends Enumeration {
 
 
 
-  sealed abstract class CommonBlock17_18(id: Int, blkName: String) extends Val(id, blkName) with SaveBgImg with HeightT with TitleStatic {
+  sealed abstract class CommonBlock17_18(id: Int, blkName: String) extends Val(id, blkName) with SaveBgImg with HeightT
+  with TitleStatic {
     val discoBf = BfDiscount("discount",
       min = -99F,
       max = 99F,
@@ -870,9 +867,7 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block20 = new Val(20, "block20") with SaveBgImg with HeightStatic with TitleStatic {
-    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
-
+  val Block20 = new Val(20, "block20") with SaveBgImg with HeightStatic with TitleStatic with DescrStatic {
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     override def blockFields = List(
       bgImgBf, titleBf, descrBf
@@ -915,8 +910,7 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block21 = new Val(21, "block20") with SaveBgImg with HeightStatic with TitleStatic {
-    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+  val Block21 = new Val(21, "block20") with SaveBgImg with HeightStatic with TitleStatic with DescrStatic {
     val borderColorBf = BfColor("borderColor", defaultValue = Some("95FF00"))
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
@@ -964,8 +958,7 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block22 = new Val(22, "block22") with SaveBgImg with SaveLogoImg with HeightStatic with TitleStatic {
-    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
+  val Block22 = new Val(22, "block22") with SaveBgImg with SaveLogoImg with HeightStatic with TitleStatic with DescrStatic {
     val borderColorBf = BfColor("borderColor", defaultValue = Some("FFFFFF"))
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
@@ -1016,9 +1009,8 @@ object BlocksConf extends Enumeration {
   }
 
 
-  val Block23 = new Val(23, "somethng23") with SaveBgImg with HeightStatic with TitleStatic {
+  val Block23 = new Val(23, "somethng23") with SaveBgImg with HeightStatic with TitleStatic with DescrStatic {
     val fillColorBf = BfColor("fillColor", defaultValue = Some("f3f3f3"))
-    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 256)
     val priceBf = BfPrice("price")
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
@@ -1169,12 +1161,16 @@ sealed trait ISaveImgs {
   }
 }
 
+object SaveBgImg {
+  val BG_IMG_FN = "bgImg"
+  val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, imgUtil = OrigImageUtil)
+}
 
 /** Функционал для сохранения фоновой (основной) картинки блока. */
 sealed trait SaveBgImg extends ISaveImgs {
   // Константы можно легко переопределить т.к. trait и early initializers.
-  val BG_IMG_FN = "bgImg"
-  val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, imgUtil = OrigImageUtil)
+  def BG_IMG_FN = SaveBgImg.BG_IMG_FN
+  def bgImgBf = SaveBgImg.bgImgBf
 
   override def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t): Future[Imgs_t] = {
     val supImgsFut = super.saveImgs(newImgs, oldImgs)
@@ -1189,10 +1185,14 @@ sealed trait SaveBgImg extends ISaveImgs {
 }
 
 
-/** Функционал для сохранения вторичного логотипа рекламной карточки. */
-sealed trait SaveLogoImg extends ISaveImgs {
+object SaveLogoImg {
   val LOGO_IMG_FN = "logo"
   val logoImgBf = BfImage(LOGO_IMG_FN, marker = LOGO_IMG_FN, imgUtil = AdnLogoImageUtil)  // Запилить отдельный конвертор для логотипов на карточках?
+}
+/** Функционал для сохранения вторичного логотипа рекламной карточки. */
+sealed trait SaveLogoImg extends ISaveImgs {
+  def LOGO_IMG_FN = SaveLogoImg.LOGO_IMG_FN
+  def logoImgBf = SaveLogoImg.logoImgBf
 
   override def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t): Future[Imgs_t] = {
     val supImgsFut = super.saveImgs(newImgs, oldImgs)
@@ -1337,33 +1337,30 @@ trait TitlePriceListBlockT {
 
 
 object BlocksConfUtilHeight {
-  val BLOCK_HEIGHT_DFLT_VALUE = Some(300)
+  val BF_HEIGHT_DFLT_VALUE = Some(300)
   val AVAILABLE_VALS_DFLT = Set(300, 460, 620)
   val BF_HEIGHT_DFLT = BfHeight(
     name = BlockMeta.HEIGHT_ESFN,
-    defaultValue = BLOCK_HEIGHT_DFLT_VALUE,
+    defaultValue = BF_HEIGHT_DFLT_VALUE,
     availableVals = AVAILABLE_VALS_DFLT
   )
 }
-
 trait HeightT extends ValT {
   def heightBf: BfHeight
   def heightDefaultValue: Option[Int]
   def heightAvailableVals: Set[Int]
   abstract override def blockFieldsRev: List[BlockFieldT] = heightBf :: super.blockFieldsRev
 }
-
 trait HeightStatic extends HeightT {
   import BlocksConfUtilHeight._
   // final - для защиты от ошибочной перезаписи полей. При наступлении необходимости надо заюзать Height вместо HeightStatic
   override final def heightBf = BF_HEIGHT_DFLT
-  override final def heightDefaultValue = BLOCK_HEIGHT_DFLT_VALUE
+  override final def heightDefaultValue = BF_HEIGHT_DFLT_VALUE
   override final def heightAvailableVals = AVAILABLE_VALS_DFLT
 }
-
 trait Height extends HeightT {
   import BlocksConfUtilHeight._
-  override def heightDefaultValue = BLOCK_HEIGHT_DFLT_VALUE
+  override def heightDefaultValue = BF_HEIGHT_DFLT_VALUE
   override def heightAvailableVals = AVAILABLE_VALS_DFLT
   override def heightBf = BfHeight(
     name = BlockMeta.HEIGHT_ESFN,
@@ -1383,14 +1380,13 @@ object BlocksConfUtilTitle {
   val BF_NAME_DFLT = "title"
   val LEN_MAX_DFLT = 128
   val DEFAULT_VALUE_DFLT = Some(AOStringField("Платье", AOFieldFont("444444")))
-  val BF_TEXT_DFLT = BfText(
+  val BF_TITLE_DFLT = BfText(
     name = BF_NAME_DFLT,
     field = BlocksEditorFields.TextArea,
     maxLen = LEN_MAX_DFLT,
     defaultValue = DEFAULT_VALUE_DFLT
   )
 }
-
 trait TitleT extends ValT {
   import BlocksConfUtilTitle._
 
@@ -1402,7 +1398,6 @@ trait TitleT extends ValT {
   def titleFontSizes: Set[Int] = Set.empty
   abstract override def blockFieldsRev: List[BlockFieldT] = titleBf :: super.blockFieldsRev
 }
-
 trait Title extends TitleT {
   import BlocksConfUtilTitle._
   override def titleBf: BfText = BfText(
@@ -1413,13 +1408,53 @@ trait Title extends TitleT {
     withFontSizes = titleFontSizes
   )
 }
-
 trait TitleStatic extends TitleT {
   import BlocksConfUtilTitle._
-  override def titleBf = BF_TEXT_DFLT
+  override final def titleBf = BF_TITLE_DFLT
   override final def titleMaxLen = super.titleMaxLen
   override final def titleDefaultValue = super.titleDefaultValue
   override final def titleEditorField = super.titleEditorField
   override final def titleFontSizes = super.titleFontSizes
+}
+
+
+
+object BlocksConfUtillDescr {
+  val BF_NAME_DFLT = "descr"
+  val LEN_MAX_DFLT = 160
+  val DEFAULT_VALUE_DFLT = Some(AOStringField("Только сегодня", AOFieldFont("444444")))
+  val BF_DESCR_DFLT = BfText(
+    name = BF_NAME_DFLT,
+    field = BlocksEditorFields.TextArea,
+    maxLen = LEN_MAX_DFLT,
+    defaultValue = DEFAULT_VALUE_DFLT
+  ) 
+} 
+trait DescrT extends ValT {
+  import BlocksConfUtillDescr._
+
+  def descrBf: BfText
+
+  def descrMaxLen: Int = LEN_MAX_DFLT
+  def descrDefaultValue: Option[AOStringField] = DEFAULT_VALUE_DFLT
+  def descrEditorField: BefText = BlocksEditorFields.TextArea
+  def descrFontSizes: Set[Int] = Set.empty
+  abstract override def blockFieldsRev: List[BlockFieldT] = descrBf :: super.blockFieldsRev
+}
+trait DescrStatic extends DescrT {
+  override final def descrBf = BlocksConfUtillDescr.BF_DESCR_DFLT
+  override final def descrMaxLen = super.descrMaxLen
+  override final def descrDefaultValue = super.descrDefaultValue
+  override final def descrEditorField = super.descrEditorField
+  override final def descrFontSizes = super.descrFontSizes
+}
+trait Descr extends DescrT {
+  import BlocksConfUtillDescr._
+  override def descrBf = BfText(
+    name = BF_NAME_DFLT,
+    field = descrEditorField,
+    maxLen = descrMaxLen,
+    defaultValue = descrDefaultValue
+  )
 }
 
