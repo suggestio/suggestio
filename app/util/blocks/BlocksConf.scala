@@ -1230,7 +1230,7 @@ object BlocksConf extends Enumeration {
 
     /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
     def blockFields: List[BlockFieldT] = List(
-      heightBf, bgImgBf, fillColorBf, titleBf, descrBf, priceBf
+      heightBf, bgImgBf, titleBf, descrBf, priceBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
