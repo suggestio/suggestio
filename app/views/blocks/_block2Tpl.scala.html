@@ -21,7 +21,7 @@
 
         @offer.text2.map { descr =>
           <div @_aovfStyleTpl(descr, "text")>
-            <p>@descr.value</p>
+            <p>@Html(descr.value)</p>
           </div>
         }
 

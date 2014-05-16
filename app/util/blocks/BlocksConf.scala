@@ -111,21 +111,21 @@ object BlocksConf extends Enumeration {
   /** Блок картинки с двумя текстами. */
   val Block2 = new Val(2, "saleWithText") with SaveBgImg with Height {
     override def heightAvailableVals: Set[Int] = Set(300, 460)
-    val text1Field = BfText(EMAdOffers.TEXT1_ESFN, BlocksEditorFields.InputText, maxLen = 512)
-    val text2Field = BfText(EMAdOffers.TEXT2_ESFN, BlocksEditorFields.TextArea, maxLen = 8192,
+    val titleBf = BfText("title", BlocksEditorFields.InputText, maxLen = 512)
+    val descrBf = BfText("descr", BlocksEditorFields.TextArea, maxLen = 8192,
       defaultValue = Some(AOStringField("Распродажа. Сегодня. Сейчас.", AOFieldFont("000000")))
     )
 
     override def blockFields = List(
-      bgImgBf, heightBf, text1Field, text2Field
+      bgImgBf, heightBf, titleBf, descrBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
     override def strictMapping = mapping(
       bgImgBf.getStrictMappingKV,
       heightBf.getStrictMappingKV,
-      text1Field.getStrictMappingKV,
-      text2Field.getStrictMappingKV
+      titleBf.getStrictMappingKV,
+      descrBf.getStrictMappingKV
     )
     {(bim, height, text1, text2) =>
       val blk = AOBlock(
@@ -141,8 +141,8 @@ object BlocksConf extends Enumeration {
     }
     {bmr =>
       bmr.bd.offers.headOption.map { offer =>
-        val text1 = offer.text1.getOrElse(text1Field.anyDefaultValue)
-        val text2 = offer.text2.getOrElse(text2Field.anyDefaultValue)
+        val text1 = offer.text1.getOrElse(titleBf.anyDefaultValue)
+        val text2 = offer.text2.getOrElse(descrBf.anyDefaultValue)
         (bmr.bim, bmr.bd.blockMeta.height, text1, text2)
       }
     }
