@@ -897,6 +897,29 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     .ads-list
       display: none
 
+  .js-g-slide-toggle
+    text-decoration: none
+    display: inline-block
+    font-size: 12px
+    line-height: 14px
+    font-family: 'Arial'
+    color: #959595
+    padding-right: 20px
+    background: url('/assets/images/market/lk/angle.png') no-repeat
+    background-position: right -115px
+  .js-g-slide-toggle:hover
+    color: #5088aa
+    background-position: right 3px
+
+  .js-g-slide-toggle.open
+    background-position: right -176px
+  .js-g-slide-toggle.open:hover
+    color: #5088aa
+    background-position: right -58px
+
+  .js-g-slide-toggle.l-right
+    float: right
+
   /*
    *  Список узлов с чередованием цветов
    */
@@ -1223,16 +1246,26 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
 /* Общие стили */
 .lk-edit-form__block
-  margin: 10px 0px
+  margin-bottom: 20px
 
 .lk-edit-form__block_title
   background: #dad9d9
-  padding: 17px 11px
   color: #676666
   font-weight: bold
 
+  .js-g-slide-toggle
+    margin: 17px 11px
+
+.lk-edit-form__block_title_span
+  display: inline-block
+  padding: 17px 11px
+
 .lk-edit-form__block_body
   background: #efefef
+  border-radius(0 0 6px 6px)
+  box-shadow(0px 1px 0px 0px #acadad)
+
+.lk-edit-form__block_body_inner
   padding: 20px 22px
 
 .lk-h2

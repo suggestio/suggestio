@@ -21,67 +21,92 @@
 
   <input type="hidden" id="preview-action" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get)" />
 
-  <div class="lk-edit-form__block">
-    <div class="lk-edit-form__block-title">
-      Выбор категории
+  <div class="lk-edit-form__block js-slide-wrap">
+    <div class="lk-edit-form__block_title">
+      <div class="border-line"></div>
+      <span class="lk-edit-form__block_title_span">
+        Выбор категории
+      </span>
+      <a href="#" class="js-g-slide-toggle l-right">Развернуть</a>
+      <div class="border-line"></div>
     </div>
 
-    <div class="lk-edit-form__block-body">
-      @_adFormCatSelectorsTpl(mmcats, af)
+    <div class="lk-edit-form__block_body js-slide-content">
+      <div class="lk-edit-form__block_body_inner">
+        @_adFormCatSelectorsTpl(mmcats, af)
+      </div>
     </div>
 
   </div>
 
   @* Тут выводится список блоков в виде иконок. При нажатии — производится запрос для рендера нужного редактора блока *@
-  <div class="lk-edit-form__block">
+  <div class="lk-edit-form__block js-slide-wrap">
     <div class="lk-edit-form__block_title">
-      Выбор шаблона
+      <div class="border-line"></div>
+      <span class="lk-edit-form__block_title_span">
+        Выбор шаблона
+      </span>
+      <a href="#" class="js-g-slide-toggle l-right">Развернуть</a>
+      <div class="border-line"></div>
     </div>
-    <div class="lk-edit-form__block_body">
+    <div class="lk-edit-form__block_body js-slide-content">
 
-      <div class="lk-edit-form__blocks-list-icons" id="adFormBlocksList">
-      @defining( withBC getOrElse BlocksConf(1) ) { bc =>
-        @BlocksConf.valuesSorted.map { bca =>
-          <div class="blocks-list-icons__single-icon @if( bc.id == bca.id ){blocks-list-icons__single-icon_active} block-list-icon-@bca.id" data-block-id="@bca.id"></div>
+      <div class="lk-edit-form__block_body_inner">
+
+        <div class="lk-edit-form__blocks-list-icons" id="adFormBlocksList">
+        @defining( withBC getOrElse BlocksConf(1) ) { bc =>
+          @BlocksConf.valuesSorted.map { bca =>
+            <div class="blocks-list-icons__single-icon @if( bc.id == bca.id ){blocks-list-icons__single-icon_active} block-list-icon-@bca.id" data-block-id="@bca.id"></div>
+          }
         }
-      }
 
-      <input class="block-editor-action" type="hidden" value="@routes.MarketAdPreview.adBlockSwitchEditor(adnNode.id.get)"/>
-      <div class="clear"></div>
+        <input class="block-editor-action" type="hidden" value="@routes.MarketAdPreview.adBlockSwitchEditor(adnNode.id.get)"/>
+        <div class="clear"></div>
+        </div>
+
       </div>
 
     </div>
   </div>
 
   @* Для блока : превьюшка + редактор *@
-  <div class="lk-edit-form__block">
+  <div class="lk-edit-form__block js-slide-wrap">
     <div class="lk-edit-form__block_title">
-      Отображение рекламной карточки
+      <div class="border-line"></div>
+      <span class="lk-edit-form__block_title_span">
+        Отображение рекламной карточки
+      </span>
+      <a href="#" class="js-g-slide-toggle l-right">Развернуть</a>
+      <div class="border-line"></div>
     </div>
-    <div class="lk-edit-form__block_body">
+    <div class="lk-edit-form__block_body js-slide-content">
 
-      @* Форма редактирования блока *@
-      <div class="lk-ad-block-edit-form">
+      <div class="lk-edit-form__block_body_inner">
 
-        @* Отображение превьюшки *@
-        <div class="lk-ad-block-edit-form__preview">
+        @* Форма редактирования блока *@
+        <div class="lk-ad-block-edit-form">
 
-          @* TODO: в этот div надо рендерить превьюшку *@
-          <input class="js-ad-block-preview-action" type="hidden" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get)"/>
+          @* Отображение превьюшки *@
+          <div class="lk-ad-block-edit-form__preview">
 
-          <div class="lk-ad-block-edit-form__preview_container" id="adFormBlockPreview">
+            @* TODO: в этот div надо рендерить превьюшку *@
+            <input class="js-ad-block-preview-action" type="hidden" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get)"/>
+
+            <div class="lk-ad-block-edit-form__preview_container" id="adFormBlockPreview">
+
+            </div>
+            <div class="clear"></div>
 
           </div>
+
+          @* Отображение нужного редактора *@
+          <div class="lk-ad-block-edit-form__editor" id="adFormBlockEditor">
+            @blocks.editor._blockEditorTpl(af, withBC = withBC)
+          </div>
+
           <div class="clear"></div>
 
         </div>
-
-        @* Отображение нужного редактора *@
-        <div class="lk-ad-block-edit-form__editor" id="adFormBlockEditor">
-          @blocks.editor._blockEditorTpl(af, withBC = withBC)
-        </div>
-
-        <div class="clear"></div>
 
       </div>
 

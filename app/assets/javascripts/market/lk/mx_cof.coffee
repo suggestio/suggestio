@@ -162,6 +162,15 @@ CbcaCommon = () ->
   self = this
 
   self.init = () ->
+
+    $(document).on 'click', '.js-g-slide-toggle', (e)->
+      e.preventDefault()
+      $this = $(this)
+
+      $this.closest('.js-slide-wrap').find('.js-slide-content').slideToggle()
+      $this.toggleClass('open')
+
+
     $(document).on 'focus', '.input-wrap input, .input-wrap textarea', ->
       $(this).closest('.input-wrap').toggleClass('focus', true)
 
