@@ -170,6 +170,12 @@ CbcaCommon = () ->
       $this.closest('.js-slide-wrap').find('.js-slide-content').slideToggle()
       $this.toggleClass('open')
 
+      if($this.hasClass('open'))
+        $this.html('Свернуть')
+      else
+        $this.html('Развернуть')
+
+
 
     $(document).on 'focus', '.input-wrap input, .input-wrap textarea', ->
       $(this).closest('.input-wrap').toggleClass('focus', true)
