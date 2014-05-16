@@ -23,7 +23,7 @@
   @slaves.map { slave =>
     <div class="node">
 
-      <strong class="n-name">@slave.meta.name</strong>&nbsp;/&nbsp;<span class="n-city">@slave.meta.town</span>
+      <strong class="n-name">@slave.meta.name</strong>@if( slave.meta.town ){&nbsp;/&nbsp;<span class="n-city">@slave.meta.town</span>}
 
       <a class="toggle" href="@routes.MarketLkAdnSlaveAd._showSlaveAds(slave.id.get)">Развернуть</a>
 
