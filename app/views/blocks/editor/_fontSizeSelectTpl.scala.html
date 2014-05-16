@@ -7,7 +7,7 @@
   <div class="lk-fontsize-select">
     <label class="lk-fontsize-select__label">@Messages("Size"):</label>
 
-    <select class="lk-fontsize-select__select" name="@fsName">
+    <select class="lk-fontsize-select__select js-custom-font-select" name="@fsName">
       @defining( af(fsName).value.orElse(bf.defaultValue.flatMap(_.font.size)) ) { fsValueOpt =>
       @for(sz <- bf.withFontSizes) {
       <option value="@sz"@if(fsValueOpt.exists(_ == sz.toString)) { selected}>@sz</option>

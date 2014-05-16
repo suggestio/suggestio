@@ -868,8 +868,8 @@ market =
       market.img.init_upload()
       market.img.crop.init_triggers()
       
-      $('.js-int-only-input').bind 'keyup', () ->
-
+      $('.js-custom-font-select').bind 'change', () ->
+        market.ad_form.queue_block_preview_request()
 
       $('.js-input-w-block-preview').bind 'keyup', () ->
         market.ad_form.queue_block_preview_request()
