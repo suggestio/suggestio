@@ -3,7 +3,6 @@ package util.blocks
 import play.api.templates._
 import play.api.data._, Forms._
 import BlocksUtil._
-import util.FormUtil._
 import views.html.blocks._
 import models._
 import io.suggest.ym.model.ad.EMAdOffers
@@ -67,12 +66,12 @@ object BlocksConf extends Enumeration {
     val oldPriceField = BfPrice(EMAdOffers.OLD_PRICE_ESFN,
       defaultValue = Some(AOPriceField(200F, "RUB", "200 р.", defaultFont))
     )
-    val priceField = BfPrice(EMAdOffers.PRICE_ESFN,
+    val priceBf = BfPrice(EMAdOffers.PRICE_ESFN,
       defaultValue = Some(AOPriceField(100F, "RUB", "100 р.", defaultFont))
     )
 
     override def blockFields = List(
-      bgImgBf, heightBf, text1Field, oldPriceField, priceField
+      bgImgBf, heightBf, text1Field, oldPriceField, priceBf
     )
 
     /** Набор маппингов для обработки данных от формы. */
@@ -81,7 +80,7 @@ object BlocksConf extends Enumeration {
       heightBf.getStrictMappingKV,
       text1Field.getOptionalStrictMappingKV,
       oldPriceField.getOptionalStrictMappingKV,
-      priceField.getOptionalStrictMappingKV
+      priceBf.getOptionalStrictMappingKV
     )
     {(bim, height, text1, oldPrice, price) =>
       val blk = AOBlock(
@@ -233,8 +232,8 @@ object BlocksConf extends Enumeration {
         val text1 = offerOpt.flatMap(_.text1)
         val price = offerOpt.flatMap(_.price)
         val text2 = offerOpt.flatMap(_.text2)
-        val bgColor = bmr.bd.colors.get(bgColorBf.name).getOrElse(bgColorBf.anyDefaultValue)
-        val borderColor = bmr.bd.colors.get(borderColorBf.name).getOrElse(borderColorBf.anyDefaultValue)
+        val bgColor = bmr.unapplyColor(bgColorBf)
+        val borderColor = bmr.unapplyColor(borderColorBf)
         Some( (bmr.bim, text1, price, text2, bgColor, borderColor) )
       }
     }
@@ -285,15 +284,15 @@ object BlocksConf extends Enumeration {
       BlockMapperResult(bd, bim)
     }
     {bmr =>
-      val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
-      val logoBim: BlockImgMap = bmr.bim.filter(_._1 == logoImgBf.name)
+      val bgBim = bmr.unapplyBIM(bgImgBf)
+      val logoBim = bmr.unapplyBIM(logoImgBf)
       val logoBimOpt = if (logoBim.isEmpty) None else Some(logoBim)
       val height = bmr.bd.blockMeta.height
       val offerOpt = bmr.bd.offers.headOption
       val text1 = offerOpt.flatMap(_.text1)
       val oldPrice = offerOpt.flatMap(_.oldPrice)
       val price = offerOpt.flatMap(_.price)
-      val maskColor = bmr.bd.colors.get(maskColorBf.name).getOrElse(maskColorBf.anyDefaultValue)
+      val maskColor = bmr.unapplyColor(maskColorBf)
       Some( (maskColor, bgBim, logoBimOpt, height, text1, oldPrice, price) )
     }
 
@@ -381,8 +380,8 @@ object BlocksConf extends Enumeration {
         val discount = offerOpt.flatMap(_.discount)
         val title = offerOpt.flatMap(_.text1)
         val price = offerOpt.flatMap(_.price)
-        val saleMaskColor = bmr.bd.colors.get(saleMaskColorBf.name).getOrElse(saleMaskColorBf.anyDefaultValue)
-        val iconBgColor = bmr.bd.colors.get(iconBgColorBf.name).getOrElse(iconBgColorBf.anyDefaultValue)
+        val saleMaskColor = bmr.unapplyColor(saleMaskColorBf)
+        val iconBgColor = bmr.unapplyColor(iconBgColorBf)
         Some( (saleMaskColor, iconBgColor, discount, title, price) )
       }
     }
@@ -422,7 +421,7 @@ object BlocksConf extends Enumeration {
     }
     // unapply()
     {bmr =>
-      val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+      val bgBim = bmr.unapplyBIM(bgImgBf)
       val offerOpt = bmr.bd.offers.headOption
       val title = offerOpt.flatMap(_.text1)
       val price = offerOpt.flatMap(_.price)
@@ -471,7 +470,7 @@ object BlocksConf extends Enumeration {
       BlockMapperResult(bd, bgBim)
     }
     {bmr =>
-      val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+      val bgBim = bmr.unapplyBIM(bgImgBf)
       val offerOpt = bmr.bd.offers.headOption
       val title = offerOpt.flatMap(_.text1)
       val oldPrice = offerOpt.flatMap(_.oldPrice)
@@ -515,11 +514,11 @@ object BlocksConf extends Enumeration {
       BlockMapperResult(bd, bgBim)
     }
     {bmr =>
-      val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+      val bgBim = bmr.unapplyBIM(bgImgBf)
       val offerOpt = bmr.bd.offers.headOption
       val title = offerOpt.flatMap(_.text1)
       val descr = offerOpt.flatMap(_.text2)
-      val saleMaskColor = bmr.bd.colors.get(saleMaskColorBf.name).getOrElse(saleMaskColorBf.anyDefaultValue)
+      val saleMaskColor = bmr.unapplyColor(saleMaskColorBf)
       Some( (saleMaskColor, bgBim, title, descr) )
     }
 
@@ -565,7 +564,7 @@ object BlocksConf extends Enumeration {
       val title = offerOpt.flatMap(_.text1)
       val descr = offerOpt.flatMap(_.text2)
       val discount = offerOpt.flatMap(_.discount)
-      val saleMaskColor = bmr.bd.colors.get(saleMaskColorBf.name).getOrElse(saleMaskColorBf.anyDefaultValue)
+      val saleMaskColor = bmr.unapplyColor(saleMaskColorBf)
       Some( (saleMaskColor, discount, title, descr) )
     }
 
@@ -616,12 +615,12 @@ object BlocksConf extends Enumeration {
     }
     {bmr =>
       val height = bmr.bd.blockMeta.height
-      val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+      val bgBim = bmr.unapplyBIM(bgImgBf)
       val offerOpt = bmr.bd.offers.headOption
       val discount = offerOpt.flatMap(_.discount)
       val text = offerOpt.flatMap(_.text2)
-      val saleColor = bmr.bd.colors.get(discoIconColorBf.name).getOrElse(discoIconColorBf.anyDefaultValue)
-      val saleMaskColor = bmr.bd.colors.get(discoBorderColorBf.name).getOrElse(discoBorderColorBf.anyDefaultValue)
+      val saleColor = bmr.unapplyColor(discoIconColorBf)
+      val saleMaskColor = bmr.unapplyColor(discoBorderColorBf)
       Some( (height, saleColor, saleMaskColor, bgBim, discount, text) )
     }
 
@@ -677,13 +676,13 @@ object BlocksConf extends Enumeration {
     }
     {bmr =>
       val height = bmr.bd.blockMeta.height
-      val logoBim = bmr.bim.filter(_._1 == logoImgBf.name)
+      val logoBim = bmr.unapplyBIM(logoImgBf)
       val offerOpt = bmr.bd.offers.headOption
       val titleOpt = offerOpt.flatMap(_.text1)
       val descrOpt = offerOpt.flatMap(_.text2)
-      val topColor = bmr.bd.colors.get(topColorBf.name).getOrElse(topColorBf.anyDefaultValue)
-      val bottomColor = bmr.bd.colors.get(bottomColorBf.name).getOrElse(bottomColorBf.anyDefaultValue)
-      val lineColor = bmr.bd.colors.get(lineColorBf.name).getOrElse(lineColorBf.anyDefaultValue)
+      val topColor = bmr.unapplyColor(topColorBf)
+      val bottomColor = bmr.unapplyColor(bottomColorBf)
+      val lineColor = bmr.unapplyColor(lineColorBf)
       Some( (height, topColor, logoBim, bottomColor, lineColor, titleOpt, descrOpt) )
     }
   }
@@ -746,8 +745,8 @@ object BlocksConf extends Enumeration {
       val offerOpt = bmr.bd.offers.headOption
       val titleOpt = offerOpt.flatMap(_.text1)
       val descrOpt = offerOpt.flatMap(_.text2)
-      val bgColor = bmr.bd.colors.get(bgColorBf.name).getOrElse(bgColorBf.anyDefaultValue)
-      val borderColor = bmr.bd.colors.get(borderColorBf.name).getOrElse(borderColorBf.anyDefaultValue)
+      val bgColor = bmr.unapplyColor(bgColorBf)
+      val borderColor = bmr.unapplyColor(borderColorBf)
       val priceOpt = offerOpt.flatMap(_.price)
       Some( (height, bgColor, borderColor, titleOpt, descrOpt, priceOpt) )
     }
@@ -812,11 +811,11 @@ object BlocksConf extends Enumeration {
       val offerOpt = bmr.bd.offers.headOption
       val titleOpt = offerOpt.flatMap(_.text1)
       val discoOpt = offerOpt.flatMap(_.discount)
-      val bgColor = bmr.bd.colors.get(bgColorBf.name).getOrElse(bgColorBf.anyDefaultValue)
-      val circleFillColor = bmr.bd.colors.getOrElse(circleFillColorBf.name, circleFillColorBf.anyDefaultValue)
-      val saleIconColor = bmr.bd.colors.getOrElse(discoIconColorBf.name, discoIconColorBf.anyDefaultValue)
-      val saleIconMaskColor = bmr.bd.colors.getOrElse(discoBorderColorBf.name, discoBorderColorBf.anyDefaultValue)
-      val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+      val bgColor = bmr.unapplyColor(bgColorBf)
+      val circleFillColor = bmr.unapplyColor(circleFillColorBf)
+      val saleIconColor = bmr.unapplyColor(discoIconColorBf)
+      val saleIconMaskColor = bmr.unapplyColor(discoBorderColorBf)
+      val bgBim = bmr.unapplyBIM(bgImgBf)
       Some( (height, bgColor, bgBim, circleFillColor, titleOpt, discoOpt, saleIconColor, saleIconMaskColor) )
     }
   }
@@ -871,9 +870,9 @@ object BlocksConf extends Enumeration {
       }
       {bmr =>
         val height = bmr.bd.blockMeta.height
-        val bgColor     = bmr.bd.colors.get(bgColorBf.name).getOrElse(bgColorBf.anyDefaultValue)
-        val borderColor = bmr.bd.colors.get(borderColorBf.name).getOrElse(borderColorBf.anyDefaultValue)
-        val fillColor   = bmr.bd.colors.get(fillColorBf.name).getOrElse(fillColorBf.anyDefaultValue)
+        val bgColor     = bmr.unapplyColor(bgColorBf)
+        val borderColor = bmr.unapplyColor(borderColorBf)
+        val fillColor   = bmr.unapplyColor(fillColorBf)
         Some((bmr.bim, height, bgColor, borderColor, fillColor, bmr.bd.offers))
       }
     }
@@ -917,7 +916,7 @@ object BlocksConf extends Enumeration {
       }
       {bmr =>
         val height = bmr.bd.blockMeta.height
-        val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+        val bgBim = bmr.unapplyBIM(bgImgBf)
         val offerOpt = bmr.bd.offers.headOption
         val titleOpt = offerOpt.flatMap(_.text1)
         val descrOpt = offerOpt.flatMap(_.text2)
@@ -966,11 +965,11 @@ object BlocksConf extends Enumeration {
       }
       {bmr =>
         val height = bmr.bd.blockMeta.height
-        val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
+        val bgBim = bmr.unapplyBIM(bgImgBf)
         val offerOpt = bmr.bd.offers.headOption
         val titleOpt = offerOpt.flatMap(_.text1)
         val descrOpt = offerOpt.flatMap(_.text2)
-        val borderColor = bmr.bd.colors.get(borderColorBf.name).getOrElse(borderColorBf.anyDefaultValue)
+        val borderColor = bmr.unapplyColor(borderColorBf)
         Some( (height, bgBim, borderColor, titleOpt, descrOpt) )
       }
     }
@@ -1018,9 +1017,9 @@ object BlocksConf extends Enumeration {
       }
       {bmr =>
         val height = bmr.bd.blockMeta.height
-        val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
-        val borderColor = bmr.bd.colors.get(borderColorBf.name).getOrElse(borderColorBf.anyDefaultValue)
-        val logoBim: BlockImgMap = bmr.bim.filter(_._1 == logoImgBf.name)
+        val bgBim = bmr.unapplyBIM(bgImgBf)
+        val borderColor = bmr.unapplyColor(borderColorBf)
+        val logoBim = bmr.unapplyBIM(logoImgBf)
         val offerOpt = bmr.bd.offers.headOption
         val titleOpt = offerOpt.flatMap(_.text1)
         val descrOpt = offerOpt.flatMap(_.text2)
@@ -1072,8 +1071,8 @@ object BlocksConf extends Enumeration {
       }
       {bmr =>
         val height = bmr.bd.blockMeta.height
-        val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
-        val fillColor = bmr.bd.colors.get(fillColorBf.name).getOrElse(fillColorBf.anyDefaultValue)
+        val bgBim = bmr.unapplyBIM(bgImgBf)
+        val fillColor = bmr.unapplyColor(fillColorBf)
         val offerOpt = bmr.bd.offers.headOption
         val titleOpt = offerOpt.flatMap(_.text1)
         val descrOpt = offerOpt.flatMap(_.text2)
@@ -1126,9 +1125,9 @@ object BlocksConf extends Enumeration {
       }
       {bmr =>
         val height = bmr.bd.blockMeta.height
-        val logoBim: BlockImgMap = bmr.bim.filter(_._1 == logoImgBf.name)
-        val bgBim: BlockImgMap = bmr.bim.filter(_._1 == bgImgBf.name)
-        val fillColor = bmr.bd.colors.get(fillColorBf.name).getOrElse(fillColorBf.anyDefaultValue)
+        val logoBim = bmr.unapplyBIM(logoImgBf)
+        val bgBim = bmr.unapplyBIM(bgImgBf)
+        val fillColor = bmr.unapplyColor(fillColorBf)
         val offerOpt = bmr.bd.offers.headOption
         val titleOpt = offerOpt.flatMap(_.text1)
         val priceOpt = offerOpt.flatMap(_.price)
@@ -1147,7 +1146,10 @@ object BlocksConf extends Enumeration {
 }
 
 
-case class BlockMapperResult(bd: BlockData, bim: BlockImgMap)
+case class BlockMapperResult(bd: BlockData, bim: BlockImgMap) {
+  def unapplyColor(bfc: BfColor): String = bd.colors.getOrElse(bfc.name, bfc.anyDefaultValue)
+  def unapplyBIM(bfi: BfImage): BlockImgMap = bim.filter(_._1 == bfi.name)
+}
 
 
 object SaveImgUtil {
