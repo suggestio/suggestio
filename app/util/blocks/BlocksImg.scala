@@ -5,6 +5,7 @@ import io.suggest.ym.model.common.EMImg.Imgs_t
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import util.blocks.BlocksUtil.BlockImgMap
+import play.api.data.{FormError, Mapping}
 
 /**
  * Suggest.io
@@ -45,7 +46,27 @@ object SaveImgUtil {
     }
   }
 
+  /** Закинуть данные по картинке в bindAcc аккамулятор. */
+  def mergeBindAccWithBim(maybeAcc: Either[Seq[FormError], BindAcc],
+                          maybeImg: Either[Seq[FormError], BlockImgMap]): Either[Seq[FormError], BindAcc] = {
+    (maybeAcc, maybeImg) match {
+      case (a @ Right(acc0), Right(bim)) =>
+        acc0.bim ++= bim
+        maybeAcc
+
+      case (Left(accFE), Right(bim)) =>
+        maybeAcc
+
+      case (Right(_), Left(colorFE)) =>
+        Left(colorFE)   // Избыточна пересборка left either из-за right-типа. Можно также вернуть через .asInstanceOf, но это плохо.
+
+      case (Left(accFE), Left(colorFE)) =>
+        Left(accFE ++ colorFE)
+    }
+  }
+
 }
+
 
 object BgImg {
   val BG_IMG_FN = "bgImg"
@@ -73,6 +94,31 @@ trait BgImg extends ValT with SaveBgImgI {
   }
 
   abstract override def blockFieldsRev: List[BlockFieldT] = bgImgBf :: super.blockFieldsRev
+
+  // Mapping
+  private def m = bgImgBf.getStrictMapping.withPrefix(key)
+
+  abstract override def mappingsAcc: List[Mapping[_]] = {
+    m :: super.mappingsAcc
+  }
+
+  abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
+    val maybeAcc0 = super.bindAcc(data)
+    val maybeBim = m.bind(data)
+    SaveImgUtil.mergeBindAccWithBim(maybeAcc0, maybeBim)
+  }
+
+  abstract override def unbind(value: BlockMapperResult): Map[String, String] = {
+    val v = m.unbind( value.unapplyBIM(bgImgBf) )
+    super.unbind(value) ++ v
+  }
+
+  abstract override def unbindAndValidate(value: BlockMapperResult): (Map[String, String], Seq[FormError]) = {
+    val (ms, fes) = super.unbindAndValidate(value)
+    val c = value.unapplyBIM(bgImgBf)
+    val (cms, cfes) = m.unbindAndValidate(c)
+    (ms ++ cms) -> (fes ++ cfes)
+  }
 }
 
 
@@ -96,5 +142,30 @@ trait LogoImg extends ValT with ISaveImgs {
   }
 
   abstract override def blockFieldsRev: List[BlockFieldT] = logoImgBf :: super.blockFieldsRev
+
+  // Mapping
+  private def m = logoImgBf.getStrictMapping.withPrefix(key)
+
+  abstract override def mappingsAcc: List[Mapping[_]] = {
+    m :: super.mappingsAcc
+  }
+
+  abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
+    val maybeAcc0 = super.bindAcc(data)
+    val maybeBim = m.bind(data)
+    SaveImgUtil.mergeBindAccWithBim(maybeAcc0, maybeBim)
+  }
+
+  abstract override def unbind(value: BlockMapperResult): Map[String, String] = {
+    val v = m.unbind( value.unapplyBIM(logoImgBf) )
+    super.unbind(value) ++ v
+  }
+
+  abstract override def unbindAndValidate(value: BlockMapperResult): (Map[String, String], Seq[FormError]) = {
+    val (ms, fes) = super.unbindAndValidate(value)
+    val c = value.unapplyBIM(logoImgBf)
+    val (cms, cfes) = m.unbindAndValidate(c)
+    (ms ++ cms) -> (fes ++ cfes)
+  }
 }
 
