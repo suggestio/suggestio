@@ -94,12 +94,14 @@ trait Title extends TitleT {
   def titleDefaultValue: Option[AOStringField] = DEFAULT_VALUE_DFLT
   def titleEditorField: BefText = BlocksEditorFields.TextArea
   def titleFontSizes: Set[Int] = Set.empty
+  def titleWithCoords: Boolean = false
   override def titleBf: BfText = BfText(
     name = BF_NAME_DFLT,
     field = titleEditorField,
     maxLen = titleMaxLen,
     defaultValue = titleDefaultValue,
-    withFontSizes = titleFontSizes
+    withFontSizes = titleFontSizes,
+    withCoords = titleWithCoords
   )
 }
 

@@ -91,10 +91,12 @@ trait PriceStatic extends PriceT {
 trait Price extends PriceT {
   def priceDefaultValue: Option[AOPriceField] = None
   def priceFontSizes: Set[Int] = Set.empty
+  def priceWithCoords: Boolean = false
   override def priceBf = BfPrice(
     name = Price.BF_NAME_DFLT,
     defaultValue = priceDefaultValue,
-    withFontSizes = priceFontSizes
+    withFontSizes = priceFontSizes,
+    withCoords = priceWithCoords
   )
 }
 

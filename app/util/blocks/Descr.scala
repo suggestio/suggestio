@@ -104,12 +104,14 @@ trait Descr extends DescrT {
   def descrDefaultValue: Option[AOStringField] = DEFAULT_VALUE_DFLT
   def descrEditorField: BefText = BlocksEditorFields.TextArea
   def descrFontSizes: Set[Int] = Set.empty
+  def descrWithCoords: Boolean = false
 
   override def descrBf = BfText(
     name = Descr.BF_NAME_DFLT,
     field = descrEditorField,
     maxLen = descrMaxLen,
-    defaultValue = descrDefaultValue
+    defaultValue = descrDefaultValue,
+    withCoords = descrWithCoords
   )
 }
 

@@ -1,10 +1,8 @@
 package controllers.ad
 
 import models._
-import util.img.ImgFormUtil._
 import util.FormUtil._
 import play.api.data._, Forms._
-import util.img._
 import play.api.Play.current
 import AOTextAlignValues.TextAlignValue
 import io.suggest.ym.parsers.Price
@@ -79,61 +77,149 @@ object MarketAdFormUtil {
     }
   }
 
-  /** Маппим строковое поле с настройками шрифта. */
-  def aoStringFieldM(m : Mapping[String], fontM: Mapping[AOFieldFont]) = mapping(
-    "value" -> m,
-    "font"  -> fontM
-  )
-  { AOStringField.apply }
-  { AOStringField.unapply }
 
-  /** Маппим числовое (Float) поле. */
-  def aoFloatFieldM(m: Mapping[Float], fontM: Mapping[AOFieldFont]) = mapping(
-    "value" -> m,
-    "font"  -> fontM
-  )
-  { AOFloatField.apply }
-  { AOFloatField.unapply }
-
-  /** Поле с ценой. Является вариацией float-поля. */
-  def mmaPriceM(fontM: Mapping[AOFieldFont]) = mapping(
-    "value" -> priceStrictM,
-    "font" -> fontM
-  )
-  {case ((rawPrice, price), font) =>
-    AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font) }
-  {mmadp =>
-    import mmadp._
-    Some((orig, Price(value, currency)), font)
+  val coordM = number(min = 0, max = 2048)
+  val coordsM: Mapping[Coords_t] = {
+    tuple(
+      "x" -> coordM,
+      "y" -> coordM
+    )
   }
+  val coordsOptM: Mapping[CoordsOpt_t] = optional(coordsM)
 
-  /** Поле с необязательной ценой. Является вариацией float-поля. Жуткий говнокод. */
-  def aoPriceOptM(fontM: Mapping[AOFieldFont]) = mapping(
-    "value" -> optional(priceStrictM),
-    "font" -> fontM
-  )
-  {(pricePairOpt, font) =>
-    pricePairOpt.map { case (rawPrice, price) =>
-      AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font)
+
+  /** Маппим строковое поле с настройками шрифта. */
+  def aoStringFieldM(m: Mapping[String], fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[AOStringField] = {
+    if (withCoords) {
+      mapping(
+        "value" -> m,
+        "font"  -> fontM,
+        "coord" -> coordsOptM
+      )
+      { AOStringField.apply }
+      { AOStringField.unapply }
+    } else {
+      mapping(
+        "value" -> m,
+        "font"  -> fontM
+      )
+      { AOStringField.apply(_, _) }
+      { aosf => AOStringField.unapply(aosf).map { u => u._1 -> u._2 } }
     }
   }
-  {_.map { mmadp =>
-    import mmadp._
-    (Some(orig -> Price(value, currency)), font)
-  }}
+
+  /** Маппим числовое (Float) поле. */
+  def aoFloatFieldM(m: Mapping[Float], fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[AOFloatField] = {
+    if (withCoords) {
+      mapping(
+        "value"  -> m,
+        "font"   -> fontM,
+        "coords" -> coordsOptM
+      )
+      { AOFloatField.apply }
+      { AOFloatField.unapply }
+    } else {
+      mapping(
+        "value" -> m,
+        "font"  -> fontM
+      )
+      { AOFloatField.apply(_, _) }
+      { AOFloatField.unapply(_).map { u => u._1 -> u._2} }
+    }
+  }
+
+  /** Поле с ценой. Является вариацией float-поля. */
+  def aoPriceFieldM(fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[AOPriceField] = {
+    if (withCoords) {
+      mapping(
+        "value"  -> priceStrictM,
+        "font"   -> fontM,
+        "coords" -> coordsOptM
+      )
+      {case ((rawPrice, price), font, coordsOpt) =>
+        AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font, coordsOpt)
+      }
+      {mmadp =>
+        import mmadp._
+        Some( (orig -> Price(value, currency), font, coords) )
+      }
+    } else {
+      mapping(
+        "value" -> priceStrictM,
+        "font"  -> fontM
+      )
+      {case ((rawPrice, price), font) =>
+        AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font) }
+      {mmadp =>
+        import mmadp._
+        Some( (orig -> Price(value, currency), font) )
+      }
+    }
+  }
+
+
+  /** Поле с необязательной ценой. Является вариацией float-поля. Жуткий говнокод. */
+  def aoPriceOptM(fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[Option[AOPriceField]] = {
+    if (withCoords) {
+      mapping(
+        "value"  -> optional(priceStrictM),
+        "font"   -> fontM,
+        "coords" -> coordsOptM
+      )
+      {(pricePairOpt, font, coordsOpt) =>
+        pricePairOpt.map { case (rawPrice, price) =>
+          AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font, coordsOpt)
+        }
+      }
+      {_.map { mmadp =>
+        import mmadp._
+        (Some(orig -> Price(value, currency)), font, coords)
+      }}
+    } else {
+      mapping(
+        "value" -> optional(priceStrictM),
+        "font"  -> fontM
+      )
+      {(pricePairOpt, font) =>
+        pricePairOpt.map { case (rawPrice, price) =>
+          AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font)
+        }
+      }
+      {_.map { mmadp =>
+        import mmadp._
+        (Some(orig -> Price(value, currency)), font)
+      }}
+    }
+  }
 
 
   /** Маппим необязательное Float-поле. */
-  def aoFloatFieldOptM(m: Mapping[Float], fontM: Mapping[AOFieldFont]) = mapping(
-    "value" -> optional(m),
-    "font" -> fontM
-  )
-  {(valueOpt, color) =>
-    valueOpt map { AOFloatField(_, color) }
+  def aoFloatFieldOptM(m: Mapping[Float], fontM: Mapping[AOFieldFont], withCoords: Boolean): Mapping[Option[AOFloatField]] = {
+    if (withCoords) {
+      mapping(
+        "value"  -> optional(m),
+        "font"   -> fontM,
+        "coords" -> coordsOptM
+      )
+      {(valueOpt, color, coordsOpt) =>
+        valueOpt map { AOFloatField(_, color, coordsOpt) }
+      }
+      {_.map { mmaff =>
+        (Option(mmaff.value), mmaff.font, mmaff.coords)
+      }}
+    } else {
+      mapping(
+        "value" -> optional(m),
+        "font"  -> fontM
+      )
+      {(valueOpt, color) =>
+        valueOpt map { AOFloatField(_, color) }
+      }
+      {_.map { mmaff =>
+        (Option(mmaff.value), mmaff.font)
+      }}
+    }
   }
-  {_.map { mmaff =>
-    (Option(mmaff.value), mmaff.font)
-  }}
 
 
   val DISCOUNT_TEXT_MAXLEN = 256
