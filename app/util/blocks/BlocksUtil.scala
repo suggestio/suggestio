@@ -220,7 +220,7 @@ case class BfPrice(
 
   def maxStrlen = FormUtil.PRICE_M_MAX_STRLEN
 
-  override def mappingBase: Mapping[T] = MarketAdFormUtil.mmaPriceM(getFontMapping)
+  override def mappingBase: Mapping[T] = MarketAdFormUtil.aoPriceFieldM(getFontMapping)
 
   override def field: BefPrice = BlocksEditorFields.Price
 
