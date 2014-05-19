@@ -21,25 +21,32 @@ object Title {
   )
 }
 
+
 /** Базовый трейт для статических и динамических bfTitle. Добавляет поле в форму. */
 trait TitleT extends ValT {
   def titleBf: BfText
   abstract override def blockFieldsRev: List[BlockFieldT] = titleBf :: super.blockFieldsRev
 }
+
+
 trait Title extends TitleT {
   import Title._
   def titleMaxLen: Int = LEN_MAX_DFLT
   def titleDefaultValue: Option[AOStringField] = DEFAULT_VALUE_DFLT
   def titleEditorField: BefText = BlocksEditorFields.TextArea
   def titleFontSizes: Set[Int] = Set.empty
+  def titleWithCoords: Boolean = false
   override def titleBf: BfText = BfText(
     name = BF_NAME_DFLT,
     field = titleEditorField,
     maxLen = titleMaxLen,
     defaultValue = titleDefaultValue,
-    withFontSizes = titleFontSizes
+    withFontSizes = titleFontSizes,
+    withCoords = titleWithCoords
   )
 }
+
+
 trait TitleStatic extends TitleT {
   import Title._
   override final def titleBf = BF_TITLE_DFLT
