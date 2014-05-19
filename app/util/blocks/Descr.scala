@@ -13,14 +13,7 @@ import play.api.data.{FormError, Mapping}
 
 object Descr {
   val BF_NAME_DFLT = "descr"
-  val LEN_MAX_DFLT = 160
-  val DEFAULT_VALUE_DFLT = Some(AOStringField("Только сегодня", AOFieldFont("444444")))
-  val BF_DESCR_DFLT = BfText(
-    name = BF_NAME_DFLT,
-    field = BlocksEditorFields.TextArea,
-    maxLen = LEN_MAX_DFLT,
-    defaultValue = DEFAULT_VALUE_DFLT
-  )
+  val BF_DESCR_DFLT = BfText(BF_NAME_DFLT)
 
   def mergeBindAccWithDescr(maybeAcc: Either[Seq[FormError], BindAcc],
                             offerN: Int,
@@ -57,12 +50,12 @@ import Descr._
 
 
 /** Базовый трейт для descrBf-трейтов, как статических так и динамических. */
-trait DescrT extends ValT {
-  def descrBf: BfText
+trait Descr extends ValT {
+  def descrBf: BfText = BF_DESCR_DFLT
   abstract override def blockFieldsRev: List[BlockFieldT] = descrBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = descrBf.getOptionalStrictMapping.withPrefix(key)
+  private def m = descrBf.getOptionalStrictMapping.withPrefix(descrBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -87,31 +80,4 @@ trait DescrT extends ValT {
   }
 }
 
-
-/** Статическая реализация descrBf. Экономит оперативку, когда дефолтовые значения полностью
-  * устраивают. */
-trait DescrStatic extends DescrT {
-  override final def descrBf = Descr.BF_DESCR_DFLT
-}
-
-
-/** Динамическая реализация descrBf. Генерит персональный инстанс descrBf для блока.
-  * Параметры сборки поля можно переопределить через соответствующие методы. */
-trait Descr extends DescrT {
-  import Descr._
-
-  def descrMaxLen: Int = LEN_MAX_DFLT
-  def descrDefaultValue: Option[AOStringField] = DEFAULT_VALUE_DFLT
-  def descrEditorField: BefText = BlocksEditorFields.TextArea
-  def descrFontSizes: Set[Int] = Set.empty
-  def descrWithCoords: Boolean = false
-
-  override def descrBf = BfText(
-    name = Descr.BF_NAME_DFLT,
-    field = descrEditorField,
-    maxLen = descrMaxLen,
-    defaultValue = descrDefaultValue,
-    withCoords = descrWithCoords
-  )
-}
 

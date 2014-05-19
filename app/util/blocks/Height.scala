@@ -15,13 +15,7 @@ import play.api.data.{Mapping, FormError}
 
 object Height {
   val BF_HEIGHT_NAME_DFLT = "height"
-  val BF_HEIGHT_DFLT_VALUE = Some(300)
-  val AVAILABLE_VALS_DFLT = Set(300, 460, 620)
-  val BF_HEIGHT_DFLT = BfHeight(
-    name = BF_HEIGHT_NAME_DFLT,
-    defaultValue = BF_HEIGHT_DFLT_VALUE,
-    availableVals = AVAILABLE_VALS_DFLT
-  )
+  val BF_HEIGHT_DFLT = BfHeight(BF_HEIGHT_NAME_DFLT)
 
 
   def mergeBindAccWithHeight(maybeAcc: Either[Seq[FormError], BindAcc],
@@ -56,11 +50,13 @@ trait HeightI {
 
 
 /** Если нужно добавление поля в blockFields (т.е. в форму редактора), то нужен этот трейт. */
-trait HeightII extends HeightI with ValT {
+trait Height extends ValT with HeightI {
   abstract override def blockFieldsRev: List[BlockFieldT] = heightBf :: super.blockFieldsRev
 
+  override def heightBf = Height.BF_HEIGHT_DFLT
+
   // Mapping
-  private def m = heightBf.getStrictMapping.withPrefix(key)
+  private def m = heightBf.getStrictMapping.withPrefix(heightBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -86,37 +82,10 @@ trait HeightII extends HeightI with ValT {
 }
 
 
-/** Трейт, добавляющий статический расшаренный неизменяемый инстанс [[BfHeight]].
-  * Полезно когда дефолтовые размеры полностью устраивают. */
-trait HeightStatic extends HeightII {
-  import Height._
-  // final - для защиты от ошибочной перезаписи полей. При наступлении необходимости надо заюзать Height вместо HeightStatic
-  override final def heightBf = BF_HEIGHT_DFLT
-}
-
-
-/** Трейт, создающий собственный экземпляр BfHeight. Параметры сборки можно переопределить
-  * с дефолтовых через соотв. методы. */
-trait HeightPlain extends HeightI {
-  import Height._
-  def heightDefaultValue: Option[Int] = BF_HEIGHT_DFLT_VALUE
-  def heightAvailableVals: Set[Int] = AVAILABLE_VALS_DFLT
-  override def heightBf = BfHeight(
-    name = BF_HEIGHT_NAME_DFLT,
-    defaultValue = heightDefaultValue,
-    availableVals = heightAvailableVals
-  )
-}
-
-
-/** Тоже самое, что и [[HeightPlain]], но + добавляющее поле в blocksFields. */
-trait Height extends HeightPlain with HeightII
-
-
-
 /** Бывает, что блок имеет фиксированную высоту. Тут хелпер, немного экономящий время.
   * Высоту можно переопределить. */
 trait HeightFixed extends ValT {
   val HEIGHT = 300
   def getBlockMeta: BlockMeta = getBlockMeta(HEIGHT)
 }
+

@@ -10,14 +10,21 @@ import models._
  * Почти всегда это блоки title+price.
  */
 
-/** Для сборки блоков, обрабатывающие блоки с офферами вида "title+price много раз", используется этот трейт. */
-trait TitlePriceListBlockT extends ValT {
+object ListBlock {
   // Названия используемых полей.
   val TITLE_FN = "title"
   val PRICE_FN = "price"
 
+}
+
+/** Для сборки блоков, обрабатывающие блоки с офферами вида "title+price много раз", используется этот трейт. */
+trait TitlePriceListBlockT extends ValT {
+
+  def TITLE_FN = ListBlock.TITLE_FN
+  def PRICE_FN = ListBlock.PRICE_FN
+
   /** Начало отсчета счетчика офферов. */
-  val N0 = 0
+  def N0 = 0
 
   /** Макс кол-во офферов (макс.длина списка офферов). */
   def offersCount: Int
@@ -96,10 +103,11 @@ trait TitlePriceListBlockT extends ValT {
   }
 
   // Mapping
-  private val m = offersMapping.withPrefix(key)
+  private def m = offersMapping.withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
-    m :: super.mappingsAcc
+    val m1 = m
+    m1 :: super.mappingsAcc
   }
 
   abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {

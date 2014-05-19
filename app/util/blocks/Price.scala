@@ -49,12 +49,12 @@ import Price._
 
 
 /** Базовый трейт для трейтов-реализаций bfPrice. Добавляет поле в форму редактора. */
-trait PriceT extends ValT {
-  def priceBf: BfPrice
+trait Price extends ValT {
+  def priceBf: BfPrice = BF_PRICE_DFLT
   abstract override def blockFieldsRev: List[BlockFieldT] = priceBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = priceBf.getOptionalStrictMapping.withPrefix(key)
+  private def m = priceBf.getOptionalStrictMapping.withPrefix(priceBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -77,26 +77,5 @@ trait PriceT extends ValT {
     val (cms, cfes) = m.unbindAndValidate(c)
     (ms ++ cms) -> (fes ++ cfes)
   }
-}
-
-
-/** Статическая реализация priceBf. Инстанс расшарен между разными блоками. */
-trait PriceStatic extends PriceT {
-  override final def priceBf = Price.BF_PRICE_DFLT
-}
-
-
-/** Динамическая реализация priceBf. Инстанс собирается на основе параметров,
-  * задаваемых через соответсвующие методы. */
-trait Price extends PriceT {
-  def priceDefaultValue: Option[AOPriceField] = None
-  def priceFontSizes: Set[Int] = Set.empty
-  def priceWithCoords: Boolean = false
-  override def priceBf = BfPrice(
-    name = Price.BF_NAME_DFLT,
-    defaultValue = priceDefaultValue,
-    withFontSizes = priceFontSizes,
-    withCoords = priceWithCoords
-  )
 }
 

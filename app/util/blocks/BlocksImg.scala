@@ -96,7 +96,7 @@ trait BgImg extends ValT with SaveBgImgI {
   abstract override def blockFieldsRev: List[BlockFieldT] = bgImgBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = bgImgBf.getStrictMapping.withPrefix(key)
+  private def m = bgImgBf.getStrictMapping.withPrefix(bgImgBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -144,7 +144,7 @@ trait LogoImg extends ValT with ISaveImgs {
   abstract override def blockFieldsRev: List[BlockFieldT] = logoImgBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = logoImgBf.getStrictMapping.withPrefix(key)
+  private def m = logoImgBf.getStrictMapping.withPrefix(logoImgBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc

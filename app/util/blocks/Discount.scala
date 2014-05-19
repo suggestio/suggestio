@@ -13,15 +13,7 @@ import play.api.data.{Mapping, FormError}
 
 object Discount {
   val BF_NAME_DFLT = "discount"
-  val DISCOUNT_BF_VALUE_DFLT: Option[AOFloatField] = Some(AOFloatField(50F, defaultFont))
-  val DISCOUNT_MIN_DFLT = -99F
-  val DISCOUNT_MAX_DFLT = 100F
-  val DISCOUNT_BF_DFLT = BfDiscount(
-    name = BF_NAME_DFLT,
-    min = DISCOUNT_MIN_DFLT,
-    max = DISCOUNT_MAX_DFLT,
-    defaultValue = DISCOUNT_BF_VALUE_DFLT
-  )
+  val DISCOUNT_BF_DFLT = BfDiscount(BF_NAME_DFLT)
 
   def mergeBindAccWithDiscount(maybeAcc: Either[Seq[FormError], BindAcc],
                             offerN: Int,
@@ -58,8 +50,8 @@ import Discount._
 
 
 /** Базовый интерфейсный трейт для реализаций поля discountBf. */
-trait DiscountT extends ValT {
-  def discountBf: BfDiscount
+trait Discount extends ValT {
+  def discountBf: BfDiscount = DISCOUNT_BF_DFLT
   abstract override def blockFieldsRev: List[BlockFieldT] = discountBf :: super.blockFieldsRev
 
   // Mapping
@@ -88,8 +80,3 @@ trait DiscountT extends ValT {
   }
 }
 
-
-/** Статическая реализация discount-поля. Достаточна для большинства случаев. */
-trait DiscountStatic extends DiscountT {
-  def discountBf = DISCOUNT_BF_DFLT
-}

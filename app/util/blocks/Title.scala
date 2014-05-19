@@ -13,14 +13,7 @@ import play.api.data.{Mapping, FormError}
 
 object Title {
   val BF_NAME_DFLT = "title"
-  val LEN_MAX_DFLT = 128
-  val DEFAULT_VALUE_DFLT = Some(AOStringField("Платье", AOFieldFont("444444")))
-  val BF_TITLE_DFLT = BfText(
-    name = BF_NAME_DFLT,
-    field = BlocksEditorFields.TextArea,
-    maxLen = LEN_MAX_DFLT,
-    defaultValue = DEFAULT_VALUE_DFLT
-  )
+  val BF_TITLE_DFLT = BfText(BF_NAME_DFLT)
 
   def mergeBindAccWithTitle(maybeAcc: Either[Seq[FormError], BindAcc],
                             offerN: Int,
@@ -57,12 +50,12 @@ import Title._
 
 
 /** Базовый трейт для статических и динамических bfTitle. Добавляет поле в форму. */
-trait TitleT extends ValT {
-  def titleBf: BfText
+trait Title extends ValT {
+  def titleBf: BfText = BF_TITLE_DFLT
   abstract override def blockFieldsRev: List[BlockFieldT] = titleBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = titleBf.getOptionalStrictMapping.withPrefix(key)
+  private def m = titleBf.getOptionalStrictMapping.withPrefix(titleBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -87,26 +80,3 @@ trait TitleT extends ValT {
   }
 }
 
-
-trait Title extends TitleT {
-  import Title._
-  def titleMaxLen: Int = LEN_MAX_DFLT
-  def titleDefaultValue: Option[AOStringField] = DEFAULT_VALUE_DFLT
-  def titleEditorField: BefText = BlocksEditorFields.TextArea
-  def titleFontSizes: Set[Int] = Set.empty
-  def titleWithCoords: Boolean = false
-  override def titleBf: BfText = BfText(
-    name = BF_NAME_DFLT,
-    field = titleEditorField,
-    maxLen = titleMaxLen,
-    defaultValue = titleDefaultValue,
-    withFontSizes = titleFontSizes,
-    withCoords = titleWithCoords
-  )
-}
-
-
-trait TitleStatic extends TitleT {
-  import Title._
-  override final def titleBf = BF_TITLE_DFLT
-}

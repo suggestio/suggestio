@@ -50,12 +50,12 @@ import OldPrice._
 
 /** Базовый интерфейсный трейт для реализаций oldPriceBf.
   * Добавляет поле в список полей формы редактора. */
-trait OldPriceT extends ValT {
-  def oldPriceBf: BfPrice
+trait OldPrice extends ValT {
+  def oldPriceBf: BfPrice = BF_OLD_PRICE_DFLT
   abstract override def blockFieldsRev: List[BlockFieldT] = oldPriceBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = oldPriceBf.getOptionalStrictMapping.withPrefix(key)
+  private def m = oldPriceBf.getOptionalStrictMapping.withPrefix(oldPriceBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -78,25 +78,5 @@ trait OldPriceT extends ValT {
     val (cms, cfes) = m.unbindAndValidate(c)
     (ms ++ cms) -> (fes ++ cfes)
   }
-}
-
-
-/** Статическая реализация поля. Используется общий статический инстанс поля oldPriceBf. */
-trait OldPriceStatic extends OldPriceT {
-  override def oldPriceBf = OldPrice.BF_OLD_PRICE_DFLT
-}
-
-
-/** Динамическая реализация oldPriceBf. */
-trait OldPrice extends OldPriceT {
-  def oldPriceDefaultValue: Option[AOPriceField] = None
-  def oldPriceFontSizes: Set[Int] = Set.empty
-  def oldPriceWithCoords: Boolean = false
-  override def oldPriceBf = BfPrice(
-    name = OldPrice.BF_NAME_DFLT,
-    defaultValue = oldPriceDefaultValue,
-    withFontSizes = oldPriceFontSizes,
-    withCoords = oldPriceWithCoords
-  )
 }
 

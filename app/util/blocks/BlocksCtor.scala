@@ -36,11 +36,11 @@ object BlocksCtorUtil {
 
 object BorderColor {
   val BF_NAME_DFLT = "borderColor"
+  val DFLT = BfColor(BF_NAME_DFLT, defaultValue = Some("FFFFFF"))
 }
 trait BorderColor extends ValT {
   import BorderColor._
-  def borderColorDefaultValue: Option[String] = None
-  def borderColorBf = BfColor(BF_NAME_DFLT, defaultValue = borderColorDefaultValue)
+  def borderColorBf: BfColor = DFLT
 
   abstract override def blockFieldsRev: List[BlockFieldT] = borderColorBf :: super.blockFieldsRev
 
@@ -78,8 +78,7 @@ object BgColor {
 }
 trait BgColor extends ValT {
   import BgColor._
-  def bgColorDefaultValue: Option[String] = None
-  def bgColorBf = BfColor(BF_NAME_DFLT, defaultValue = bgColorDefaultValue)
+  def bgColorBf = BfColor(BF_NAME_DFLT)
   abstract override def blockFieldsRev: List[BlockFieldT] = bgColorBf :: super.blockFieldsRev
 
   // Mapping
