@@ -52,6 +52,8 @@ object EMAdOffers {
   /** В списке офферов порядок поддерживается с помощью поля n, которое поддерживает порядок по возрастанию. */
   val N_ESFN            = "n"
 
+  type Coords_t = (Int, Int)
+  type CoordsOpt_t = Option[Coords_t]
 }
 
 import EMAdOffers._
@@ -255,6 +257,7 @@ case class AOBlock(
 
 sealed trait AOValueField {
   def font: AOFieldFont
+  def coords: CoordsOpt_t
 
   @JsonIgnore
   def renderPlayJson = {
@@ -266,7 +269,7 @@ sealed trait AOValueField {
   def renderPlayJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc
 }
 
-case class AOStringField(value:String, font: AOFieldFont) extends AOValueField {
+case class AOStringField(value:String, font: AOFieldFont, coords: CoordsOpt_t = None) extends AOValueField {
   def renderPlayJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
     (VALUE_ESFN, JsString(value)) :: acc0
   }
@@ -279,7 +282,7 @@ trait AOFloatFieldT extends AOValueField {
     (VALUE_ESFN, JsNumber(value)) :: acc0
   }
 }
-case class AOFloatField(value: Float, font: AOFieldFont) extends AOFloatFieldT
+case class AOFloatField(value: Float, font: AOFieldFont, coords: CoordsOpt_t = None) extends AOFloatFieldT
 
 
 /**
@@ -301,7 +304,8 @@ case class AOFieldFont(color: String, size: Option[Int] = None) {
 
 
 /** Поле, содержащее цену. */
-case class AOPriceField(value: Float, currencyCode: String, orig: String, font: AOFieldFont) extends AOFloatFieldT {
+case class AOPriceField(value: Float, currencyCode: String, orig: String, font: AOFieldFont, coords: CoordsOpt_t = None)
+  extends AOFloatFieldT {
   @JsonIgnore
   lazy val currency = Currency.getInstance(currencyCode)
 
