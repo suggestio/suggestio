@@ -187,22 +187,15 @@ object MarketAd extends SioController with TempImgSupport {
     */
   def editAd(adId: String) = IsAdEditor(adId).async { implicit request =>
     import request.mad
-    val formFilledOpt = mad.offers.headOption map { offer =>
-      val blockConf: BlockConf = BlocksConf.apply(mad.blockMeta.blockId)
-      val form0 = getAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
-      val bim = mad.imgs.mapValues { mii =>
-        val oiik = OrigImgIdKey(filename = mii.filename, meta = mii.meta)
-        ImgInfo4Save(oiik)
-      }
-      form0 fill ((mad, bim))
+    val blockConf: BlockConf = BlocksConf.apply(mad.blockMeta.blockId)
+    val form0 = getAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
+    val bim = mad.imgs.mapValues { mii =>
+      val oiik = OrigImgIdKey(filename = mii.filename, meta = mii.meta)
+      ImgInfo4Save(oiik)
     }
-    formFilledOpt match {
-      case Some(formFilled) =>
-        renderEditFormWith(formFilled)
-          .map { Ok(_) }
-
-      case None => NotFound("Something gonna wrong")
-    }
+    val formFilled = form0 fill ((mad, bim))
+    renderEditFormWith(formFilled)
+      .map { Ok(_) }
   }
 
   /** Импортировать выхлоп маппинга формы в старый экземпляр рекламы. Этот код вызывается во всех editAd-экшенах. */
