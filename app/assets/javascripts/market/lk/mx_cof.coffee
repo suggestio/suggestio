@@ -122,6 +122,7 @@ CbcaPopup = () ->
     popup = '.popup' || popup
     this.hideOverlay()
     $(popup).hide()
+    $('#overlay, #overlayData').hide()
 
 
 ##поисковая строка##
