@@ -163,7 +163,6 @@ CbcaCommon = () ->
   self = this
 
   self.init = () ->
-
     $(document).on 'click', '.js-g-slide-toggle', (e)->
       e.preventDefault()
       $this = $(this)
@@ -687,8 +686,6 @@ market =
         relatedFieldId = $(this).attr 'data-related-field-id'
         form_data = new FormData()
 
-        console.log relatedFieldId
-
         is_w_block_preview = $(this).attr 'data-w-block-preview'
 
         if $(this)[0].type == 'file'
@@ -860,7 +857,7 @@ market =
 
     preview_request_delay : 300
 
-    request_block_preview : () ->
+    request_block_preview : ( is_with_auto_crop ) ->
       action = $('.js-ad-block-preview-action').val()
 
       if(action)
@@ -869,16 +866,25 @@ market =
           method : 'post'
           data : $('#promoOfferForm').serialize()
           success : ( data ) ->
+
+            if is_with_auto_crop == true
+              console.log 'новости'
+
             $('#adFormBlockPreview').html data
 
-    queue_block_preview_request : ( request_delay ) ->
 
+    queue_block_preview_request : ( request_delay, is_with_auto_crop ) ->
       request_delay = request_delay || this.preview_request_delay
 
       if typeof this.block_preview_request_timer != 'undefined'
         clearTimeout this.block_preview_request_timer
 
-      this.block_preview_request_timer = setTimeout market.ad_form.request_block_preview, request_delay
+      is_with_auto_crop = is_with_auto_crop || false
+
+      cb = () ->
+        market.ad_form.request_block_preview is_with_auto_crop
+
+      this.block_preview_request_timer = setTimeout cb, request_delay
 
     init_block_editor : () ->
       market.img.init_upload()
