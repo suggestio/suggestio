@@ -186,13 +186,14 @@ trait BlockAOValueFieldT extends BlockFieldT {
 
 
 object BfHeight {
-  val HEIGHTS_AVAILABLE = Set(140, 300, 460)
+  val HEIGHT_DFLT = Some(300)
+  val HEIGHTS_AVAILABLE = Set(300, 460, 620)
 }
 
 /** Поле для какой-то цифры. */
 case class BfHeight(
   name: String,
-  defaultValue: Option[Int] = None,
+  defaultValue: Option[Int] = BfHeight.HEIGHT_DFLT,
   availableVals: Set[Int] = BfHeight.HEIGHTS_AVAILABLE
 ) extends BlockFieldT {
   override type T = Int
@@ -244,7 +245,7 @@ case class BfPrice(
 
 case class BfText(
   name: String,
-  field: BefText,
+  field: BefText = BlocksEditorFields.TextArea,
   offerNopt: Option[Int] = None,
   defaultValue: Option[AOStringField] = None,
   minLen: Int = 0,
@@ -346,13 +347,17 @@ case class BfImage(
 }
 
 
+object BfDiscount {
+  val DFLT: Option[AOFloatField] = Some(AOFloatField(50F, defaultFont))
+}
+
 /** Поле для ввода скидки в процентах. Кто-то хочет положительную скидку задавать, кто-то отрицательную. */
 case class BfDiscount(
   name: String,
-  defaultValue: Option[AOFloatField] = None,
+  defaultValue: Option[AOFloatField] = BfDiscount.DFLT,
   offerNopt: Option[Int] = None,
-  min: Float = -100F,
-  max: Float = 200F,
+  min: Float = -99F,
+  max: Float = 100F,
   withFontColor: Boolean = true,
   withFontSizes: Set[Int] = Set.empty,
   withCoords: Boolean = false

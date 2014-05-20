@@ -10,14 +10,21 @@ import models._
  * Почти всегда это блоки title+price.
  */
 
-/** Для сборки блоков, обрабатывающие блоки с офферами вида "title+price много раз", используется этот трейт. */
-trait TitlePriceListBlockT extends ValT {
+object ListBlock {
   // Названия используемых полей.
   val TITLE_FN = "title"
   val PRICE_FN = "price"
 
+}
+
+/** Для сборки блоков, обрабатывающие блоки с офферами вида "title+price много раз", используется этот трейт. */
+trait TitlePriceListBlockT extends ValT {
+
+  def TITLE_FN = ListBlock.TITLE_FN
+  def PRICE_FN = ListBlock.PRICE_FN
+
   /** Начало отсчета счетчика офферов. */
-  val N0 = 0
+  def N0 = 0
 
   /** Макс кол-во офферов (макс.длина списка офферов). */
   def offersCount: Int
@@ -93,6 +100,45 @@ trait TitlePriceListBlockT extends ValT {
       }
         .toList
     }
+  }
+
+  // Mapping
+  private def m = offersMapping.withPrefix("offer").withPrefix(key)
+
+  abstract override def mappingsAcc: List[Mapping[_]] = {
+    val m1 = m
+    m1 :: super.mappingsAcc
+  }
+
+  abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
+    val maybeAcc0 = super.bindAcc(data)
+    val maybeOffers = m.bind(data)
+    (maybeAcc0, maybeOffers) match {
+      case (Right(acc0), Right(offers)) =>
+        acc0.offers = offers
+        maybeAcc0
+
+      case (Left(accFE), Right(descr)) =>
+        maybeAcc0
+
+      case (Right(_), Left(colorFE)) =>
+        Left(colorFE)   // Избыточная пересборка left either из-за right-типа. Можно также вернуть через .asInstanceOf, но это плохо.
+
+      case (Left(accFE), Left(colorFE)) =>
+        Left(accFE ++ colorFE)
+    }
+  }
+
+  abstract override def unbind(value: BlockMapperResult): Map[String, String] = {
+    val v = m.unbind( value.bd.offers )
+    super.unbind(value) ++ v
+  }
+
+  abstract override def unbindAndValidate(value: BlockMapperResult): (Map[String, String], Seq[FormError]) = {
+    val (ms, fes) = super.unbindAndValidate(value)
+    val c = value.bd.offers
+    val (cms, cfes) = m.unbindAndValidate(c)
+    (ms ++ cms) -> (fes ++ cfes)
   }
 }
 
