@@ -163,6 +163,13 @@ CbcaCommon = () ->
   self = this
 
   self.init = () ->
+
+    $(document).on 'click', '.ads-list-block__preview_add-new', ()->
+      $this = $(this)
+
+      $this.parent().find('.ads-list-block__link')[0].click()
+
+
     $(document).on 'click', '.js-g-slide-toggle', (e)->
       e.preventDefault()
       $this = $(this)
