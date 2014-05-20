@@ -868,7 +868,7 @@ market =
           success : ( data ) ->
 
             if is_with_auto_crop == true
-              console.log 'новости'
+              console.log 'необходим авто кроп'
 
             $('#adFormBlockPreview').html data
 
