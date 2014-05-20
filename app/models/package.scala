@@ -141,6 +141,6 @@ package object models {
   type BfImage              = util.blocks.BfImage
   type BfColor              = util.blocks.BfColor
 
-  type Coords_t             = ym.model.ad.EMAdOffers.Coords_t
-  type CoordsOpt_t          = ym.model.ad.EMAdOffers.CoordsOpt_t
+  type Coords2D             = ym.model.ad.Coords2D
+  val  Coords2D             = ym.model.ad.Coords2D
 }

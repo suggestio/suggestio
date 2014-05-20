@@ -16,6 +16,21 @@ import util.img.{ImgIdKey, ImgInfo4Save}
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 27.04.14 16:50
  * Description: Конфиги для блоков верстки.
+ *
+ * 2014.may.20: По ряду различных причин, конфиги блоков были отрефакторены так, чтобы работать в режиме конструктора,
+ * собираемого компилятором. Все поля -- это трейты (аддоны), которые можно добавить в блок через with/extends,
+ * и компилятор разрулит автоматом все генераторы форм, маппинги и т.д.
+ *
+ * В связи со вспывшими подводными камнями, не удалось полностью избавится от ненужного кода, хотя оставшийся ненужный
+ * код можно выправлять путём копипаста из другого блока. Конфиг блока состоит из нескольких частей:
+ * - Базовый трейт. Обычно называется BlockNt (например Block19t, Block1t). Он содержит всё описание блока (все with).
+ * - val BlockN - неизменяемый инстанс элемента scala.Enumeration.Value и реализация базового трейта.
+ *   Содержит в себе реализацию метода mappingWithNewKey(String), который генерит враппер над этим блоком для нужд\
+ *   play mapping'ов.
+ * - BlockNWrapper (имеет имя Block1Wrapper, Block2Wrapper, итд). Вынужденный костыль, который отвязан от
+ *   scala.Enumeration, но в остальном повторяет val BlockN. Является case-подклассом [[ValTWrapper]] и трейта BlockNt.
+ *   Содержит в себе реализацию метода mappingWithNewKey(String), который вызывает copy() чтобы выставить врапперу новый
+ *   mapping-ключ.
  */
 
 object BlocksConf extends Enumeration {
@@ -55,10 +70,12 @@ object BlocksConf extends Enumeration {
   /** Картинка, название, старая и новая цена. Аналог былого DiscountOffer. */
   sealed trait Block1t extends Height with BgImg with Title with OldPrice with Price {
     override def titleBf = super.titleBf.copy(
-      defaultValue = Some(AOStringField("Платье", AOFieldFont("444444")))
+      defaultValue = Some(AOStringField("Платье", AOFieldFont("444444"))),
+      withCoords = true
     )
     override def priceBf = super.priceBf.copy(
-      defaultValue = Some(AOPriceField(100F, "RUB", "100 р.", defaultFont))
+      defaultValue = Some(AOPriceField(100F, "RUB", "100 р.", defaultFont)),
+      withCoords = true
     )
     override def oldPriceBf = super.oldPriceBf.copy(
       defaultValue = Some(AOPriceField(200F, "RUB", "200 р.", defaultFont))
