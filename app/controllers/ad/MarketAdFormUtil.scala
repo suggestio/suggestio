@@ -79,13 +79,15 @@ object MarketAdFormUtil {
 
 
   val coordM = number(min = 0, max = 2048)
-  val coordsM: Mapping[Coords_t] = {
-    tuple(
+  val coords2DM: Mapping[Coords2D] = {
+    mapping(
       "x" -> coordM,
       "y" -> coordM
     )
+    { Coords2D.apply }
+    { Coords2D.unapply }
   }
-  val coordsOptM: Mapping[CoordsOpt_t] = optional(coordsM)
+  val coords2DOptM: Mapping[Option[Coords2D]] = optional(coords2DM)
 
 
   /** Маппим строковое поле с настройками шрифта. */
@@ -94,7 +96,7 @@ object MarketAdFormUtil {
       mapping(
         "value" -> m,
         "font"  -> fontM,
-        "coord" -> coordsOptM
+        "coords" -> coords2DOptM
       )
       { AOStringField.apply }
       { AOStringField.unapply }
@@ -114,7 +116,7 @@ object MarketAdFormUtil {
       mapping(
         "value"  -> m,
         "font"   -> fontM,
-        "coords" -> coordsOptM
+        "coords" -> coords2DOptM
       )
       { AOFloatField.apply }
       { AOFloatField.unapply }
@@ -134,7 +136,7 @@ object MarketAdFormUtil {
       mapping(
         "value"  -> priceStrictM,
         "font"   -> fontM,
-        "coords" -> coordsOptM
+        "coords" -> coords2DOptM
       )
       {case ((rawPrice, price), font, coordsOpt) =>
         AOPriceField(price.price, price.currency.getCurrencyCode, rawPrice, font, coordsOpt)
@@ -164,7 +166,7 @@ object MarketAdFormUtil {
       mapping(
         "value"  -> optional(priceStrictM),
         "font"   -> fontM,
-        "coords" -> coordsOptM
+        "coords" -> coords2DOptM
       )
       {(pricePairOpt, font, coordsOpt) =>
         pricePairOpt.map { case (rawPrice, price) =>
@@ -199,7 +201,7 @@ object MarketAdFormUtil {
       mapping(
         "value"  -> optional(m),
         "font"   -> fontM,
-        "coords" -> coordsOptM
+        "coords" -> coords2DOptM
       )
       {(valueOpt, color, coordsOpt) =>
         valueOpt map { AOFloatField(_, color, coordsOpt) }

@@ -16,7 +16,10 @@
       <div class="info">
         @mad.offers.headOption.map { offer =>
           @offer.text1.map { title =>
-            <div @_aovfStyleTpl(title, "title")>@title.value</div>
+            @title.coords.map { coords =>
+              [x:@coords.x y:@coords.y]
+            }
+            <div @_aovfStyleTpl(title, "title")>@Html(title.value)</div>
           }
 
           @offer.oldPrice.map { oldPrice =>

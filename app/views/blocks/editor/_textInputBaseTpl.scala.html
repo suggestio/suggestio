@@ -21,6 +21,15 @@
         @_fontSizeSelectTpl(bf, bfNameBase, af)
       }
 
+      @* Пример задания полей для координат. *@
+      @if( bf.withCoords ) {
+        @defining( bfNameBase + ".coords.x" ) { xname =>
+          <input type="hidden" name="@xname" value="@af(xname).value"/>
+        }
+        @defining( bfNameBase + ".coords.y" ) { yname =>
+          <input type="hidden" name="@yname" value="@af(yname).value"/>
+        }
+      }
     </div>
   }
 
