@@ -4,7 +4,7 @@ import io.suggest.model.{EsModel, EsModelT, EsModelStaticT}
 import java.util.Currency
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.ym.model.AdOfferType
-import io.suggest.util.JacksonWrapper
+import io.suggest.util.{SioEsUtil, JacksonWrapper}
 import io.suggest.ym.model.common.AdOfferTypes
 import io.suggest.util.SioEsUtil._
 import scala.collection.JavaConversions._
@@ -52,8 +52,7 @@ object EMAdOffers {
   /** В списке офферов порядок поддерживается с помощью поля n, которое поддерживает порядок по возрастанию. */
   val N_ESFN            = "n"
 
-  type Coords_t = (Int, Int)
-  type CoordsOpt_t = Option[Coords_t]
+  val COORDS_ESFN       = "coords"
 }
 
 import EMAdOffers._
@@ -63,42 +62,53 @@ trait EMAdOffersStatic extends EsModelStaticT {
   override type T <: EMAdOffersMut
 
   abstract override def generateMappingProps: List[DocField] = {
-    val fontField = FieldObject(FONT_ESFN, enabled = false, properties = Nil)
+    // vfields0 содержит поля, присущие для всех сериализованных AOValueField.
+    val vfields0 = List(
+      FieldObject(FONT_ESFN, enabled = false, properties = Nil),
+      FieldObject(COORDS_ESFN, enabled = false, properties = Nil)
+    )
+    // Сгенерить поле строкового значения (.value)
     def stringValueField(boost: Float = 1.0F) = FieldString(
       VALUE_ESFN,
       index = FieldIndexingVariants.no,
       include_in_all = true,
       boost = Some(boost)
     )
+    // Сгенерить поле числового значения (.value)
     def floatValueField(iia: Boolean) = {
       FieldNumber(VALUE_ESFN,  fieldType = DocFieldTypes.float,  index = FieldIndexingVariants.no,  include_in_all = iia)
     }
-    def priceFields(iia: Boolean) = Seq(
-      floatValueField(iia),
-      fontField,
-      FieldString("currencyCode", include_in_all = false, index = FieldIndexingVariants.no),
-      FieldString("orig", include_in_all = false, index = FieldIndexingVariants.no)
-    )
-    // Поле приоритета. На первом этапе null или число.
+    // Основной список полей для AOPriceField дополняется валютой и исходной ценой.
+    val priceFields0 = {
+      FieldString(CURRENCY_CODE_ESFN, include_in_all = false, index = FieldIndexingVariants.no) ::
+      FieldString(ORIG_ESFN, include_in_all = false, index = FieldIndexingVariants.no) ::
+      vfields0
+    }
+    // Сгенерить набор полей для AOPriceField.
+    def priceFields(iia: Boolean) = floatValueField(iia) :: priceFields0
+    // Маппинг для объекта, представляющего сериализованный AOBlock.
     val offerBodyProps = Seq(
       // product-поля
       // TODO нужно как-то проанализировать цифры эти, округлять например.
       FieldObject(PRICE_ESFN,  properties = priceFields(iia = true)),
       FieldObject(OLD_PRICE_ESFN,  properties = priceFields(iia = false)),
       // discount-поля
-      FieldObject(TEXT1_ESFN, properties = Seq(stringValueField(1.1F), fontField)),
-      FieldObject(DISCOUNT_ESFN, properties = Seq(floatValueField(iia = true), fontField)),
-      FieldObject(TEXT2_ESFN, properties = Seq(stringValueField(0.9F), fontField))
+      FieldObject(TEXT1_ESFN, properties = stringValueField(1.1F) :: vfields0),
+      FieldObject(DISCOUNT_ESFN, properties = floatValueField(iia = true) :: vfields0),
+      FieldObject(TEXT2_ESFN, properties = stringValueField(0.9F) :: vfields0)
     )
+    // Полный маппинг для поля offer.
     val offersField = FieldNestedObject(OFFERS_ESFN,
       enabled = true,
       //includeInRoot = true,
       properties = Seq(
+        // TODO Отсутствие необходимости в индексировании OFFER_TYPE была обнаружена лишь перед самым стартом. Надо бы тут index = no выставить...
         FieldString(OFFER_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
         FieldNumber(N_ESFN, index = FieldIndexingVariants.no, include_in_all = false, fieldType = DocFieldTypes.integer),
         FieldObject(OFFER_BODY_ESFN, enabled = true, properties = offerBodyProps)
       )
     )
+    // Закинуть результат в аккамулятор.
     offersField :: super.generateMappingProps
   }
 
@@ -257,23 +267,30 @@ case class AOBlock(
 
 sealed trait AOValueField {
   def font: AOFieldFont
-  def coords: CoordsOpt_t
+  def coords: Option[Coords2D]
 
   @JsonIgnore
   def renderPlayJson = {
-    var acc0 = font.renderPlayJsonFields(Nil)
-    acc0 = renderPlayJsonFields(acc0)
-    JsObject(acc0)
+    var acc = font.renderPlayJsonFields(Nil)
+    acc = renderPlayJsonFields(acc)
+    if (coords.isDefined)
+      acc = coords.get.renderPlayJsonFields(acc)
+    JsObject(acc)
   }
   
   def renderPlayJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc
 }
 
-case class AOStringField(value:String, font: AOFieldFont, coords: CoordsOpt_t = None) extends AOValueField {
+
+case class AOStringField(value:String, font: AOFieldFont, var coords: Option[Coords2D] = None) extends AOValueField {
+  if (coords == null)
+    coords = None
+
   def renderPlayJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
     (VALUE_ESFN, JsString(value)) :: acc0
   }
 }
+
 
 trait AOFloatFieldT extends AOValueField {
   def value: Float
@@ -282,7 +299,41 @@ trait AOFloatFieldT extends AOValueField {
     (VALUE_ESFN, JsNumber(value)) :: acc0
   }
 }
-case class AOFloatField(value: Float, font: AOFieldFont, coords: CoordsOpt_t = None) extends AOFloatFieldT
+
+case class AOFloatField(value: Float, font: AOFieldFont, var coords: Option[Coords2D] = None) extends AOFloatFieldT {
+  if (coords == null)
+    coords = None
+}
+
+
+/** Список допустимых значений для выравнивания текста. */
+object TextAligns extends Enumeration {
+  protected case class Val(strId: String, cssName: String) extends super.Val(strId)
+  type TextAlign = Val
+
+  val Left    : TextAlign = Val("l", "left")
+  val Right   : TextAlign = Val("r", "right")
+  val Center  : TextAlign = Val("c", "center")
+  val Justify : TextAlign = Val("j", "justify")
+
+  def maybeWithName(s: String): Option[TextAlign] = {
+    try {
+      Some(withName(s))
+    } catch {
+      case ex: NoSuchElementException => None
+    }
+  }
+
+  def maybeWithCssName(cssName: String): Option[TextAlign] = {
+    values.find(_.cssName equalsIgnoreCase cssName)
+      .asInstanceOf[Option[TextAlign]]
+  }
+
+  implicit def value2val(x: Value): TextAlign = x.asInstanceOf[TextAlign]
+}
+
+
+import TextAligns.TextAlign
 
 
 /**
@@ -290,11 +341,16 @@ case class AOFloatField(value: Float, font: AOFieldFont, coords: CoordsOpt_t = N
  * @param color Цвет шрифта.
  * @param size Необязательный размер шрифта.
  */
-case class AOFieldFont(color: String, size: Option[Int] = None) {
+case class AOFieldFont(color: String, size: Option[Int] = None, var align: Option[TextAlign] = None) {
+  if (align == null)
+    align = None
+
   def renderPlayJsonFields(acc: FieldsJsonAcc) = {
     var fieldsAcc: FieldsJsonAcc = List(
       COLOR_ESFN -> JsString(color)
     )
+    if (align.isDefined)
+      fieldsAcc ::= ALIGN_ESFN -> JsString(align.get.toString)
     if (size.isDefined)
       fieldsAcc ::= SIZE_ESFN -> JsNumber(size.get)
     val fontBody = JsObject(fieldsAcc)
@@ -304,10 +360,13 @@ case class AOFieldFont(color: String, size: Option[Int] = None) {
 
 
 /** Поле, содержащее цену. */
-case class AOPriceField(value: Float, currencyCode: String, orig: String, font: AOFieldFont, coords: CoordsOpt_t = None)
+case class AOPriceField(value: Float, currencyCode: String, orig: String, font: AOFieldFont, var coords: Option[Coords2D] = None)
   extends AOFloatFieldT {
   @JsonIgnore
   lazy val currency = Currency.getInstance(currencyCode)
+
+  if (coords == null)
+    coords = None
 
   override def renderPlayJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
     (CURRENCY_CODE_ESFN, JsString(currencyCode)) ::
@@ -317,4 +376,12 @@ case class AOPriceField(value: Float, currencyCode: String, orig: String, font: 
 }
 
 
-
+case class Coords2D(x: Int, y: Int) {
+  def renderPlayJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
+    val obj = JsObject(Seq(
+      "x" -> JsNumber(x),
+      "y" -> JsNumber(y)
+    ))
+    COORDS_ESFN -> obj :: acc0
+  }
+}
