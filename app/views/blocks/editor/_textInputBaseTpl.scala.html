@@ -30,6 +30,13 @@
           <input type="hidden" name="@yname" value="@af(yname).value"/>
         }
       }
+
+      @* Выравнивание текста. Допустимые значения: l/left/r/right/j/justify/c/center. *@
+      @if( bf.withTextAlign ) {
+        @defining(bfNameBase + ".font.align") { aname =>
+          <input type="hidden" name="@aname" value="@af(aname).value"/>
+        }
+      }
     </div>
   }
 

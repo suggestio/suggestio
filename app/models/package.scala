@@ -62,22 +62,10 @@ package object models {
   val  AOBlock              = ym.model.ad.AOBlock
   type AOBlock              = ym.model.ad.AOBlock
 
-  val  AOTextAlignValues    = common.AOTextAlignValues
-  type AOTextAlignValue     = AOTextAlignValues.TextAlignValue
-
   val  AOFloatField         = ym.model.ad.AOFloatField
   type AOFloatField         = ym.model.ad.AOFloatField
   val  AOStringField        = ym.model.ad.AOStringField
   type AOStringField        = ym.model.ad.AOStringField
-
-  val  TextAlign            = ym.model.common.TextAlign
-  type TextAlign            = ym.model.common.TextAlign
-
-  val  TextAlignPhone       = ym.model.common.TextAlignPhone
-  type TextAlignPhone       = ym.model.common.TextAlignPhone
-
-  val  TextAlignTablet      = ym.model.common.TextAlignTablet
-  type TextAlignTablet      = ym.model.common.TextAlignTablet
 
   val  AOFieldFont          = ym.model.ad.AOFieldFont
   type AOFieldFont          = ym.model.ad.AOFieldFont
@@ -143,4 +131,8 @@ package object models {
 
   type Coords2D             = ym.model.ad.Coords2D
   val  Coords2D             = ym.model.ad.Coords2D
+
+  val  TextAligns           = ym.model.ad.TextAligns
+  type TextAlign            = TextAligns.TextAlign
+
 }

@@ -178,8 +178,14 @@ trait BlockAOValueFieldT extends BlockFieldT {
   def withFontColor: Boolean
   def withFontSizes: Set[Int]
   def withFontSize = !withFontSizes.isEmpty
+  def withTextAlign: Boolean
   def defaultFont: AOFieldFont = BlocksUtil.defaultFont
-  def getFontMapping = MarketAdFormUtil.getFontM(withFontColor,  withFontSizes,  default = defaultValue.fold(defaultFont)(_.font))
+  def getFontMapping = MarketAdFormUtil.getFontM(
+    withFontColor = withFontColor,
+    withFontSizes = withFontSizes,
+    withTextAlign = withTextAlign,
+    default = defaultValue.fold(defaultFont)(_.font)
+  )
 
   def withCoords: Boolean
 }
@@ -217,7 +223,8 @@ case class BfPrice(
   defaultValue: Option[AOPriceField] = None,
   withFontColor: Boolean = true,
   withFontSizes: Set[Int] = Set.empty,
-  withCoords: Boolean = false
+  withCoords: Boolean = false,
+  withTextAlign: Boolean = false
 ) extends BlockAOValueFieldT {
   override type T = AOPriceField
 
@@ -252,7 +259,8 @@ case class BfText(
   maxLen: Int = 16000,
   withFontColor: Boolean = true,
   withFontSizes: Set[Int] = Set.empty,
-  withCoords: Boolean = false
+  withCoords: Boolean = false,
+  withTextAlign: Boolean = false
 ) extends BlockAOValueFieldT {
   override type T = AOStringField
 
@@ -360,7 +368,8 @@ case class BfDiscount(
   max: Float = 100F,
   withFontColor: Boolean = true,
   withFontSizes: Set[Int] = Set.empty,
-  withCoords: Boolean = false
+  withCoords: Boolean = false,
+  withTextAlign: Boolean = false
 ) extends BlockAOValueFieldT {
   override type T = AOFloatField
   val discoFloatM = getTolerantDiscountPercentM(

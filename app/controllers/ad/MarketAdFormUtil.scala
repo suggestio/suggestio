@@ -4,9 +4,7 @@ import models._
 import util.FormUtil._
 import play.api.data._, Forms._
 import play.api.Play.current
-import AOTextAlignValues.TextAlignValue
 import io.suggest.ym.parsers.Price
-import io.suggest.ym.model.common
 import util.blocks.BlocksUtil.BlockImgMap
 import util.blocks.BlockMapperResult
 
@@ -35,7 +33,32 @@ object MarketAdFormUtil {
     */
   def fontSizeM(fontSizes: Set[Int]): Mapping[Int] = {
     number(min = fontSizes.min, max = fontSizes.max)
-     .verifying("error.unawailable.font.size", fontSizes.contains(_))
+     .verifying("error.unavailable.font.size", fontSizes.contains(_))
+  }
+
+  /** Маппинг для выравнивания текста в рамках поля. */
+  val textAlignOptM: Mapping[Option[TextAlign]] = {
+    text.transform[Option[TextAlign]](
+      {Some(_)
+        .filter(_.length <= 10)
+        .flatMap { s =>
+          if (s.length == 1) {
+            TextAligns.maybeWithName(s)
+          } else if (s.length == 0) {
+            None
+          } else {
+            TextAligns.maybeWithCssName(s)
+          }
+        }
+      },
+      { _.fold("")(_.toString) }
+    )
+  }
+
+
+  private def fontSizeAsOptM(fontSizes: Set[Int], default: Option[Int]): Mapping[Option[Int]] = {
+    fontSizeM(fontSizes)
+      .transform[Option[Int]](Some.apply, { _.orElse(default).getOrElse(10) })
   }
 
   /**
@@ -45,35 +68,67 @@ object MarketAdFormUtil {
    * @param default Дефолтовое значение.
    * @return Маппинг для AOFieldFont.
    */
-  def getFontM(withFontColor: Boolean = true, withFontSizes: Set[Int] = Set.empty, default: AOFieldFont): Mapping[AOFieldFont] = {
+  def getFontM(withFontColor: Boolean = true, withFontSizes: Set[Int] = Set.empty, withTextAlign: Boolean = false, default: AOFieldFont): Mapping[AOFieldFont] = {
     val withFontSize = !withFontSizes.isEmpty
-    (withFontColor, withFontSize) match {
-      case (true, true) =>
+    (withFontColor, withFontSize, withTextAlign) match {
+      case (true, true, true) =>
         mapping(
           "color" -> colorM,
-          "size"  -> fontSizeM(withFontSizes)
+          "size"  -> fontSizeAsOptM(withFontSizes, default.size),
+          "align" -> textAlignOptM
         )
-        {(color, sz) =>
-          AOFieldFont(color, Some(sz)) }
-        {aoff =>
-          val fontSz = aoff.size.orElse(default.size).getOrElse(10)
-          Some((aoff.color, fontSz))}
+        { AOFieldFont.apply }
+        { AOFieldFont.unapply }
 
-      case (true, false) =>
-        mapping("color" -> colorM)
+      case (true, true, false) =>
+        mapping(
+          "color" -> colorM,
+          "size"  -> fontSizeAsOptM(withFontSizes, default.size)
+        )
+        { AOFieldFont.apply(_, _) }
+        { AOFieldFont.unapply(_).map { c => c._1 -> c._2 } }
+
+      case (true, false, true) =>
+        mapping(
+          "color" -> colorM,
+          "align" -> textAlignOptM
+        )
+        {(color, taOpt) => AOFieldFont(color, align = taOpt) }
+        {aoff  => Some(aoff.color -> aoff.align) }
+
+      case (true, false, false) =>
+        mapping(
+          "color" -> colorM
+        )
         {color => AOFieldFont(color) }
         {aoff  => Some(aoff.color) }
 
-      case (false, true) =>
-        mapping("sz" -> fontSizeM(withFontSizes))
-        {sz => AOFieldFont(default.color, Some(sz)) }
-        {aoff => aoff.size }
 
-      case (false, false) =>
+      case (false, true, true) =>
+        mapping(
+          "size"  -> fontSizeAsOptM(withFontSizes, default.size),
+          "align" -> textAlignOptM
+        )
+        { (size, taOpt) => AOFieldFont(default.color, size, taOpt) }
+        { aoff => Some(aoff.size -> aoff.align) }
+
+      case (false, true, false) =>
+        mapping(
+          "size" -> fontSizeAsOptM(withFontSizes, default.size)
+        )
+        { sz => AOFieldFont(default.color, sz) }
+        { aoff => Option(aoff.size) }
+
+      case (false, false, true) =>
+        mapping("align" -> textAlignOptM)
+        { taOpt => AOFieldFont(default.color, align = taOpt) }
+        { aoff  => Some(aoff.align) }
+
+      case (false, false, false) =>
         // Это заглушка, чтобы не было экзепшенов. Маловероятно, что до сюда будет доходить выполнение кода.
         mapping("_stub_" -> optional(text(maxLength = 1)))
-        {_ => default }
-        {_ => None }
+        { _ => default }
+        { _ => None }
     }
   }
 
@@ -281,56 +336,6 @@ object MarketAdFormUtil {
       case MART | RESTAURANT_SUP => adnNode.id.get
     }
   }
-
-}
-
-
-/** Мапперы для textAlign'ов. Пока не используются и живут тут. Потом может быть будут удалены. */
-object MarketAdTextAlignUtil {
-
-  /** Какие-то данные для text-align'a. */
-  val textAlignRawM = nonEmptyText(maxLength = 16)
-    .transform(strTrimSanitizeLowerF, strIdentityF)
-    .transform[Option[TextAlignValue]](
-      { AOTextAlignValues.maybeWithName },
-      { tavOpt => tavOpt.map(_.toString) getOrElse "" }
-    )
-    .verifying("text.align.value.invalid", { _.isDefined })
-    // Переводим результаты обратно в строки для более надежной работы reflections в TA-моделях.
-    .transform(
-      _.get.toString,
-      { AOTextAlignValues.maybeWithName }
-    )
-
-  /** Маппинг для textAlign.phone -- параметры размещения текста на экране телефона. */
-  val taPhoneM = textAlignRawM
-    .transform[common.TextAlignPhone](
-      { TextAlignPhone.apply },
-      { taPhone => taPhone.align }
-    )
-
-  /** Маппинг для textAlign.tablet -- параметров размещения текста на планшете. */
-  val taTabletM = mapping(
-    "top"    -> textAlignRawM,
-    "bottom" -> textAlignRawM
-  )
-  { TextAlignTablet.apply }
-  { TextAlignTablet.unapply }
-
-  /** Маппинг для всего textAlign. */
-  val textAlignM = mapping(
-    "phone"  -> taPhoneM,
-    "tablet" -> taTabletM
-  )
-  { TextAlign.apply }
-  { TextAlign.unapply }
-
-
-  val textAlignKM = "textAlign" -> textAlignM
-    .transform[Option[common.TextAlign]](
-      Some.apply,
-      { _ getOrElse TextAlign(TextAlignPhone(""), TextAlignTablet("", "")) }
-    )
 
 }
 
