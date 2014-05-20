@@ -45,7 +45,7 @@ trait BorderColor extends ValT {
   abstract override def blockFieldsRev: List[BlockFieldT] = borderColorBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = borderColorBf.getStrictMapping.withPrefix(key)
+  private def m = borderColorBf.getStrictMapping.withPrefix(borderColorBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -82,7 +82,7 @@ trait BgColor extends ValT {
   abstract override def blockFieldsRev: List[BlockFieldT] = bgColorBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = bgColorBf.getStrictMapping.withPrefix(key)
+  private def m = bgColorBf.getStrictMapping.withPrefix(bgColorBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -114,12 +114,11 @@ object FillColor {
 }
 trait FillColor extends ValT {
   import FillColor._
-  def fillColorDefaultValue: Option[String] = None
-  def fillColorBf = BfColor(BF_NAME_DFLT, defaultValue = fillColorDefaultValue)
+  def fillColorBf = BfColor(BF_NAME_DFLT)
   abstract override def blockFieldsRev: List[BlockFieldT] = fillColorBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = fillColorBf.getStrictMapping.withPrefix(key)
+  private def m = fillColorBf.getStrictMapping.withPrefix(fillColorBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -152,12 +151,12 @@ object DiscoBorderColor {
   val DBC_BF_VALUE_DFLT = Some("FFFFFF")
   val DBC_BF_DFLT = BfColor(BF_NAME_DFLT, defaultValue = DBC_BF_VALUE_DFLT)
 }
-trait DiscoBorderColorT extends ValT {
-  def discoBorderColorBf: BfColor
+trait DiscoBorderColor extends ValT {
+  def discoBorderColorBf: BfColor = DiscoBorderColor.DBC_BF_DFLT
   abstract override def blockFieldsRev: List[BlockFieldT] = discoBorderColorBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = discoBorderColorBf.getStrictMapping.withPrefix(key)
+  private def m = discoBorderColorBf.getStrictMapping.withPrefix(discoBorderColorBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -181,14 +180,6 @@ trait DiscoBorderColorT extends ValT {
     (ms ++ cms) -> (fes ++ cfes)
   }
 }
-trait DiscoBorderColorStatic extends DiscoBorderColorT {
-  override def discoBorderColorBf = DiscoBorderColor.DBC_BF_DFLT
-}
-trait DiscoBorderColor extends DiscoBorderColorT {
-  import DiscoBorderColor._
-  def discoBorderColorDefaultValue: Option[String] = DBC_BF_VALUE_DFLT
-  override def discoBorderColorBf = BfColor(BF_NAME_DFLT, defaultValue = discoBorderColorDefaultValue)
-}
 
 
 object DiscoIconColor {
@@ -196,12 +187,11 @@ object DiscoIconColor {
 }
 trait DiscoIconColor extends ValT {
   import DiscoIconColor._
-  def discoIconColorDefaultValue: Option[String] = None
-  def discoIconColorBf = BfColor(BF_NAME_DFLT, defaultValue = discoIconColorDefaultValue)
+  def discoIconColorBf = BfColor(BF_NAME_DFLT)
   abstract override def blockFieldsRev: List[BlockFieldT] = discoIconColorBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = discoIconColorBf.getStrictMapping.withPrefix(key)
+  private def m = discoIconColorBf.getStrictMapping.withPrefix(discoIconColorBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -232,12 +222,11 @@ object CircleFillColor {
 }
 trait CircleFillColor extends ValT {
   import CircleFillColor._
-  def circleFillColorDefaultValue: Option[String] = None
-  def circleFillColorBf = BfColor(BF_NAME_DFLT, defaultValue = circleFillColorDefaultValue)
+  def circleFillColorBf = BfColor(BF_NAME_DFLT)
   abstract override def blockFieldsRev: List[BlockFieldT] = circleFillColorBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = circleFillColorBf.getStrictMapping.withPrefix(key)
+  private def m = circleFillColorBf.getStrictMapping.withPrefix(circleFillColorBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -268,12 +257,11 @@ object MaskColor {
 }
 trait MaskColor extends ValT {
   import MaskColor._
-  def maskColorDefaultValue: Option[String] = None
-  def maskColorBf = BfColor(BF_NAME_DFLT, defaultValue = maskColorDefaultValue)
+  def maskColorBf = BfColor(BF_NAME_DFLT)
   abstract override def blockFieldsRev: List[BlockFieldT] = maskColorBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = maskColorBf.getStrictMapping.withPrefix(key)
+  private def m = maskColorBf.getStrictMapping.withPrefix(maskColorBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -304,12 +292,11 @@ object SaleMaskColor {
 }
 trait SaleMaskColor extends ValT {
   import SaleMaskColor._
-  def saleMaskColorDefaultValue: Option[String] = None
-  def saleMaskColorBf = BfColor(BF_NAME_DFLT, defaultValue = saleMaskColorDefaultValue)
+  def saleMaskColorBf = BfColor(BF_NAME_DFLT)
   abstract override def blockFieldsRev: List[BlockFieldT] = saleMaskColorBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = saleMaskColorBf.getStrictMapping.withPrefix(key)
+  private def m = saleMaskColorBf.getStrictMapping.withPrefix(saleMaskColorBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -340,12 +327,11 @@ object TopColor {
 }
 trait TopColor extends ValT {
   import TopColor._
-  def topColorDefaultValue: Option[String] = None
-  def topColorBf = BfColor(BF_NAME_DFLT, defaultValue = topColorDefaultValue)
+  def topColorBf = BfColor(BF_NAME_DFLT)
   abstract override def blockFieldsRev: List[BlockFieldT] = topColorBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = topColorBf.getStrictMapping.withPrefix(key)
+  private def m = topColorBf.getStrictMapping.withPrefix(topColorBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -376,12 +362,11 @@ object BottomColor {
 }
 trait BottomColor extends ValT {
   import BottomColor._
-  def bottomColorDefaultValue: Option[String] = None
-  def bottomColorBf = BfColor(BF_NAME_DFLT, defaultValue = bottomColorDefaultValue)
+  def bottomColorBf = BfColor(BF_NAME_DFLT)
   abstract override def blockFieldsRev: List[BlockFieldT] = bottomColorBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = bottomColorBf.getStrictMapping.withPrefix(key)
+  private def m = bottomColorBf.getStrictMapping.withPrefix(bottomColorBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
@@ -412,12 +397,11 @@ object LineColor {
 }
 trait LineColor extends ValT {
   import LineColor._
-  def lineColorDefaultValue: Option[String] = None
-  def lineColorBf = BfColor(BF_NAME_DFLT, defaultValue = lineColorDefaultValue)
+  def lineColorBf = BfColor(BF_NAME_DFLT)
   abstract override def blockFieldsRev: List[BlockFieldT] = lineColorBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = lineColorBf.getStrictMapping.withPrefix(key)
+  private def m = lineColorBf.getStrictMapping.withPrefix(lineColorBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc

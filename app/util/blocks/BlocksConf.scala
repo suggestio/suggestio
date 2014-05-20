@@ -86,7 +86,7 @@ object BlocksConf extends Enumeration {
   val Block2 = new Val(2) with Block2t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block2Wrapper(key = newKey)
   }
-  sealed case class Block2Wrapper(key: String) extends ValTWrapper(Block2) with ValTEmpty with Block1t {
+  sealed case class Block2Wrapper(key: String) extends ValTWrapper(Block2) with ValTEmpty with Block2t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
   }
 
@@ -127,9 +127,10 @@ object BlocksConf extends Enumeration {
 
 
   /** Реклама брендированного товара. От предыдущих одно-офферных блоков отличается дизайном и тем, что есть вторичный логотип. */
-  sealed trait Block5t extends BgImg with Height with MaskColor with LogoImg with Title
-    with Price with OldPrice {
-    override def maskColorDefaultValue: Option[String] = Some("d5c864")
+  sealed trait Block5t extends BgImg with Height with MaskColor with LogoImg with Title with Price with OldPrice {
+    override def maskColorBf: BfColor = super.maskColorBf.copy(
+      defaultValue = Some("d5c864")
+    )
     override def template = _block5Tpl
   }
   val Block5 = new Val(5) with Block5t with EmptyKey {
@@ -154,98 +155,139 @@ object BlocksConf extends Enumeration {
 
 
   /** Блок, отображающий скидочную цену на товар или услугу. */
-  sealed case class Block7c(key: String = "") extends Val(7) with HeightFixed with SaleMaskColor with Discount
-  with Title with Price {
-    // 2014.may.06: Цвета для слова SALE и фона рамки с %показателем скидки.
-    override def saleMaskColorDefaultValue: Option[String] = Some("00ff1a")
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  sealed trait Block7t extends HeightFixed with SaleMaskColor with Discount with Title with Price {
     override def template = _block7Tpl
+    override def saleMaskColorBf: BfColor = super.saleMaskColorBf.copy(
+      defaultValue = Some("00ff1a")
+    )
   }
-  val Block7 = Block7c()
-
-
-  sealed case class Block8c(key: String = "") extends Val(8) with BgImg with Title with Price with HeightFixed {
+  val Block7 = new Val(7) with Block7t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block7Wrapper(key = newKey)
+  }
+  sealed case class Block7Wrapper(key: String) extends ValTWrapper(Block7) with ValTEmpty with Block7t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
+
+
+  sealed trait Block8t extends BgImg with Title with Price with HeightFixed {
     override def template = _block8Tpl
   }
-  val Block8 = Block8c()
-  
-
-  sealed case class Block9c(key: String = "") extends Val(9) with CommonBlock4_9 {
-    override val blockWidth = 140
+  val Block8 = new Val(8) with Block8t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block8Wrapper(key = newKey)
+  }
+  sealed case class Block8Wrapper(key: String) extends ValTWrapper(Block8) with ValTEmpty with Block8t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
+
+
+  sealed trait Block9t extends CommonBlock4_9 {
+    override val blockWidth = 140
     override def template = _block9Tpl
   }
-  val Block9 = Block9c()
-
-
-  sealed case class Block10c(key: String = "") extends Val(10) with BgImg with Title with OldPrice
-  with Price with HeightFixed {
+  val Block9 = new Val(9) with Block9t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block9Wrapper(key = newKey)
+  }
+  sealed case class Block9Wrapper(key: String) extends ValTWrapper(Block9) with ValTEmpty with Block9t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
+
+
+  sealed trait Block10t extends BgImg with Title with OldPrice with Price with HeightFixed {
     override def template = _block10Tpl
   }
-  val Block10 = Block10c()
-
-
-  sealed case class Block11c(key: String = "") extends Val(11) with SaleMaskColor with BgImg with HeightFixed
-  with Title with Descr {
-    override def saleMaskColorDefaultValue: Option[String] = Some("aaaaaa")
+  val Block10 = new Val(10) with Block10t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block10Wrapper(key = newKey)
+  }
+  sealed case class Block10Wrapper(key: String) extends ValTWrapper(Block9) with ValTEmpty with Block10t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
+
+
+  sealed trait Block11t extends SaleMaskColor with BgImg with HeightFixed with Title with Descr {
+    override def saleMaskColorBf: BfColor = super.saleMaskColorBf.copy(
+      defaultValue = Some("AAAAAA")
+    )
     override def template = _block11Tpl
   }
-  val Block11 = Block11c()
-
-
-  sealed case class Block12c(key: String = "") extends Val(12) with HeightFixed with SaleMaskColor with Discount
-  with Title with Descr {
+  val Block11 = new Val(11) with Block11t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block11Wrapper(key = newKey)
+  }
+  sealed case class Block11Wrapper(key: String) extends ValTWrapper(Block10) with ValTEmpty with Block11t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-    override def saleMaskColorDefaultValue: Option[String] = Some("00ff1a")
+  }
+
+
+  sealed trait Block12t extends HeightFixed with SaleMaskColor with Discount with Title with Descr {
+    override def saleMaskColorBf: BfColor = super.saleMaskColorBf.copy(
+      defaultValue = Some("00ff1a")
+    )
     override def template = _block12Tpl
   }
-  val Block12 = Block12c()
+  val Block12 = new Val(12) with Block12t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block12Wrapper(key = newKey)
+  }
+  sealed case class Block12Wrapper(key: String) extends ValTWrapper(Block12) with ValTEmpty with Block12t {
+    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
 
 
-  sealed case class Block13c(key: String = "") extends Val(13) with Height with DiscoIconColor
-  with DiscoBorderColorStatic with BgImg with Discount with Descr {
+  sealed trait Block13t extends Height with DiscoIconColor with DiscoBorderColor with BgImg with Discount with Descr {
     override def heightBf: BfHeight = super.heightBf.copy(
       availableVals = Set(300, 460)
     )
-    override def discoIconColorDefaultValue: Option[String] = Some("828fa0")
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+    override def discoIconColorBf: BfColor = super.discoIconColorBf.copy(
+      defaultValue = Some("828fa0")
+    )
     override def template = _block13Tpl
   }
-  val Block13 = Block13c()
+  val Block13 = new Val(13) with Block13t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block13Wrapper(key = newKey)
+  }
+  sealed case class Block13Wrapper(key: String) extends ValTWrapper(Block13) with ValTEmpty with Block13t {
+    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
 
 
-  sealed trait CommonBlock145 extends TopColor with LogoImg with BottomColor with LineColor
-  with Title with Descr {
-    override def topColorDefaultValue: Option[String] = Some("000000")
-    override def bottomColorDefaultValue: Option[String] = Some("bf6a6a")
-    override def lineColorDefaultValue: Option[String] = Some("B35151")
+  sealed trait CommonBlock145 extends TopColor with LogoImg with BottomColor with LineColor with Title with Descr {
+    override def topColorBf: BfColor = super.topColorBf.copy(
+      defaultValue = Some("000000")
+    )
+    override def bottomColorBf: BfColor = super.bottomColorBf.copy(
+      defaultValue = Some("bf6a6a")
+    )
+    override def lineColorBf: BfColor = super.lineColorBf.copy(
+      defaultValue = Some("B35151")
+    )
     val blockWidth: Int
   }
 
-  sealed case class Block14c(key: String = "") extends Val(14) with Height with CommonBlock145 {
+  sealed trait Block14t extends Height with CommonBlock145 {
     override def template = _block14Tpl
     override val blockWidth: Int = 300
     override def heightBf = super.heightBf.copy(
       availableVals = Set(300, 460)
     )
-    override def blockFields: List[BlockFieldT] = heightBf :: super.blockFields
+  }
+  val Block14 = new Val(14) with Block14t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block14Wrapper(key = newKey)
+  }
+  sealed case class Block14Wrapper(key: String) extends ValTWrapper(Block14) with ValTEmpty with Block14t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
   }
-  val Block14 = Block14c()
 
-  sealed case class Block15c(key: String = "") extends Val(15) with CommonBlock145 {
+  sealed trait Block15t extends CommonBlock145 {
     override def template = _block15Tpl
     override val blockWidth: Int = 140
+  }
+  val Block15 = new Val(15) with Block15t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block15Wrapper(key = newKey)
+  }
+  sealed case class Block15Wrapper(key: String) extends ValTWrapper(Block15) with ValTEmpty with Block15t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
   }
-  val Block15 = Block15c()
 
 
-  sealed case class Block16c(key: String = "") extends Val(16) with Height with BgColor with BorderColor
-  with Title with Descr with Price {
+  sealed trait Block16t extends Height with BgColor with BorderColor with Title with Descr with Price {
     override def titleBf = super.titleBf.copy(
       withFontSizes = Set(65, 55, 45, 35, 28)
     )
@@ -255,107 +297,148 @@ object BlocksConf extends Enumeration {
     override def priceBf = super.priceBf.copy(
       withFontSizes = Set(65, 55, 45)
     )
-    override def bgColorBf: BfColor = super.bgColorBf.copy(
+    override def bgColorBf = super.bgColorBf.copy(
       defaultValue = Some("e1cea1")
     )
 
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
     override def template = _block16Tpl
   }
-  val Block16 = Block16c()
+  val Block16 = new Val(16) with Block16t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block16Wrapper(key = newKey)
+  }
+  sealed case class Block16Wrapper(key: String) extends ValTWrapper(Block16) with ValTEmpty with Block16t {
+    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
 
 
-  sealed trait CommonBlock17_18 extends BgColor with SaveBgImgI with CircleFillColor with Title
-  with Discount with DiscoIconColor with DiscoBorderColorStatic {
-    override def bgColorBf: BfColor = super.bgColorBf.copy(
+  sealed trait CommonBlock17_18 extends BgImg with BgColor with SaveBgImgI with CircleFillColor with Title
+  with Discount with DiscoIconColor with DiscoBorderColor {
+    override def bgColorBf = super.bgColorBf.copy(
       defaultValue = Some("FFFFFF")
     )
-    override def discoIconColorDefaultValue: Option[String] = Some("ce2222")
-    override def circleFillColorDefaultValue: Option[String] = Some("f9daac")
-
+    override def discoIconColorBf = super.discoIconColorBf.copy(
+      defaultValue = Some("ce2222")
+    )
+    override def circleFillColorBf = super.circleFillColorBf.copy(
+      defaultValue = Some("f9daac")
+    )
     val blockWidth: Int
   }
 
-  sealed case class Block17c(key: String = "") extends Val(17) with Height with CommonBlock17_18 with BgImg {
+
+  sealed trait Block17t extends Height with CommonBlock17_18 {
     override val blockWidth: Int = 300
     override def heightBf: BfHeight = super.heightBf.copy(
       availableVals = Set(300, 460)
     )
     // Добавляем в начало формы поле высоты.
     override def blockFields: List[BlockFieldT] = heightBf :: super.blockFields
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
     override def template = _block17Tpl
   }
-  val Block17 = Block17c()
-
-  sealed case class Block18c(key: String = "") extends Val(18) with CommonBlock17_18 with BgImg {
-    override val blockWidth: Int = 140
+  val Block17 = new Val(17) with Block17t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block17Wrapper(key = newKey)
+  }
+  sealed case class Block17Wrapper(key: String) extends ValTWrapper(Block17) with ValTEmpty with Block17t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
+
+
+  sealed trait Block18t extends CommonBlock17_18 {
+    override val blockWidth: Int = 140
     override def template = _block18Tpl
   }
-  val Block18 = Block18c()
+  val Block18 = new Val(18) with Block18t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block18Wrapper(key = newKey)
+  }
+  sealed case class Block18Wrapper(key: String) extends ValTWrapper(Block18) with ValTEmpty with Block18t {
+    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
 
 
-  sealed case class Block19c(key: String = "") extends Val(19) with Height with BgImg with BorderColor
-  with TitlePriceListBlockT with BgColor with FillColor {
+
+  sealed trait Block19t extends Height with BgImg with BorderColor with TitlePriceListBlockT with BgColor with FillColor {
     override val offersCount = 2
-    override def borderColorBf: BfColor = super.borderColorBf.copy(
+    override def borderColorBf = super.borderColorBf.copy(
       defaultValue = Some("444444")
     )
-    override def bgColorBf: BfColor = super.bgColorBf.copy(
+    override def bgColorBf = super.bgColorBf.copy(
       defaultValue = Some("000000")
     )
-    override def fillColorDefaultValue: Option[String] = Some("666666")
-
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+    override def fillColorBf = super.fillColorBf.copy(
+      defaultValue = Some("666666")
+    )
     override def template = _block19Tpl
   }
-  val Block19 = Block19c()
-
-
-  sealed case class Block20c(key: String = "") extends Val(20) with Height with BgImg with Title
-  with Descr {
+  val Block19 = new Val(19) with Block19t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block19Wrapper(key = newKey)
+  }
+  sealed case class Block19Wrapper(key: String) extends ValTWrapper(Block19) with ValTEmpty with Block19t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
+
+
+  sealed trait Block20t extends Height with BgImg with Title with Descr {
     override def template = _block20Tpl
   }
-  val Block20 = Block20c()
-
-
-  sealed case class Block21c(key: String = "") extends Val(21) with Height with BgImg with BorderColor
-  with Title with Descr {
+  val Block20 = new Val(20) with Block20t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block20Wrapper(key = newKey)
+  }
+  sealed case class Block20Wrapper(key: String) extends ValTWrapper(Block20) with ValTEmpty with Block20t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-    override def borderColorBf: BfColor = super.borderColorBf.copy(
+  }
+
+
+  sealed trait Block21t extends Height with BgImg with BorderColor with Title with Descr {
+    override def borderColorBf = super.borderColorBf.copy(
       defaultValue = Some("95FF00")
     )
     override def template = _block21Tpl
   }
-  val Block21 = Block21c()
-
-
-  sealed case class Block22c(key: String = "") extends Val(22) with Height with LogoImg with BorderColor
-  with BgImg with Title with Descr {
+  val Block21 = new Val(21) with Block21t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block21Wrapper(key = newKey)
+  }
+  sealed case class Block21Wrapper(key: String) extends ValTWrapper(Block21) with ValTEmpty with Block21t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
+
+
+  sealed trait Block22t extends Height with LogoImg with BorderColor with BgImg with Title with Descr {
     override def template = _block22Tpl
   }
-  val Block22 = Block22c()
-
-
-  sealed case class Block23c(key: String = "") extends Val(23) with BgImg with Title with Descr
-  with Price with FillColor with HeightFixed {
+  val Block22 = new Val(22) with Block22t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block22Wrapper(key = newKey)
+  }
+  sealed case class Block22Wrapper(key: String) extends ValTWrapper(Block22) with ValTEmpty with Block22t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-    override def fillColorDefaultValue: Option[String] = Some("f3f3f3")
+  }
+
+
+  sealed trait Block23t extends BgImg with Title with Descr with Price with FillColor with HeightFixed {
+    override def fillColorBf = super.fillColorBf.copy(
+      defaultValue = Some("f3f3f3")
+    )
     override def template = _block23Tpl
   }
-  val Block23 = Block23c()
-
-
-  sealed case class Block24c(key: String = "") extends Val(24) with LogoImg with BgImg with FillColor with Height
-  with Title with Price with OldPrice {
+  val Block23 = new Val(23) with Block23t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block23Wrapper(key = newKey)
+  }
+  sealed case class Block23Wrapper(key: String) extends ValTWrapper(Block23) with ValTEmpty with Block23t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-    override def fillColorDefaultValue: Option[String] = Some("d5c864")
+  }
+
+
+  sealed trait Block24t extends LogoImg with BgImg with FillColor with Height with Title with Price with OldPrice {
+    override def fillColorBf = super.fillColorBf.copy(
+      defaultValue = Some("d5c864")
+    )
     override def template = _block24Tpl
   }
-  val Block24 = Block24c()
+  val Block24 = new Val(24) with Block24t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block24Wrapper(key = newKey)
+  }
+  sealed case class Block24Wrapper(key: String) extends ValTWrapper(Block24) with ValTEmpty with Block24t {
+    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
 
 
   /** Сортированные значения. Обращение напрямую к values порождает множество с неопределённым порядком,

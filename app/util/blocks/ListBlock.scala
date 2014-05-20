@@ -103,7 +103,7 @@ trait TitlePriceListBlockT extends ValT {
   }
 
   // Mapping
-  private def m = offersMapping.withPrefix(key)
+  private def m = offersMapping.withPrefix("offer").withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     val m1 = m

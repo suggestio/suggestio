@@ -55,7 +55,7 @@ trait Discount extends ValT {
   abstract override def blockFieldsRev: List[BlockFieldT] = discountBf :: super.blockFieldsRev
 
   // Mapping
-  private def m = discountBf.getOptionalStrictMapping.withPrefix(key)
+  private def m = discountBf.getOptionalStrictMapping.withPrefix(discountBf.name).withPrefix(key)
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     m :: super.mappingsAcc
