@@ -1,8 +1,6 @@
 package io.suggest.ym.model.ad
 
 import io.suggest.ym.model._
-import org.elasticsearch.action.search.SearchResponse
-import io.suggest.model.inx2.MInxT
 import org.elasticsearch.index.query.{FilterBuilder, QueryBuilder, FilterBuilders, QueryBuilders}
 import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
@@ -13,6 +11,7 @@ import io.suggest.util.SioEsUtil.laFuture2sFuture
 import io.suggest.model.EsModelMinimalStaticT
 import io.suggest.ym.model.common.EMReceivers
 import io.suggest.util.SioConstants
+import io.suggest.util.SioRandom.rnd
 
 /** Статичная утиль для генерации поисковых ES-запросов. */
 object AdsSearch {
@@ -131,12 +130,18 @@ trait AdsSimpleSearchT extends EsModelMinimalStaticT {
   def searchAds(adSearch: AdsSearchArgsT)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
     val query = AdsSearch.prepareEsQuery(adSearch)
     // Запускаем собранный запрос.
-    prepareSearch
+    var resultFut: Future[Seq[T]] = prepareSearch
       .setQuery(query)
       .setSize(adSearch.maxResults)
       .setFrom(adSearch.offset)
       .execute()
       .map { searchResp2list }
+    // Если нет поиска по буквам (т.е. нет релевантности), то используем случайное перемешивание.
+    if (adSearch.qOpt.isEmpty) {
+      resultFut = resultFut.map { rnd.shuffle(_) }
+    }
+    // TODO Узкие карточки надо бы группировать, чтобы они вместе были.
+    resultFut
   }
 
 }

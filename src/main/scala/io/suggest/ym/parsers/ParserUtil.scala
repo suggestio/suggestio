@@ -18,8 +18,16 @@ object ParserUtil {
     s.replace(',', '.').toFloat
   }
 
+  val floatRE = """-?(\d+([.,]+\d*)?|\d*[.,]+\d+)""".r
+
+  /** Генератор регэкспов для форматированных float-чисел. */
+  def floatGroupedRE(groupingSepRE: String, fracSepRE: String): String = {
+    s"""(?U)-?(\d(\d|$groupingSepRE)*($fracSepRE+\d*)?|\d*$fracSepRE+\d+)"""
+  }
+
 }
 
+// TODO Нужно собрать парсеры для различных float-форматов согласно http://docs.oracle.com/cd/E19455-01/806-0169/overview-9/index.html
 
 import ParserUtil._
 
@@ -34,8 +42,10 @@ trait CommonParsers extends JavaTokenParsers {
       None
   }
 
+  val floatStrP: Parser[String] = ParserUtil.floatRE
+
   /** Парсер float-чисел, вводимых юзерами. Не исключаем, что юзеры могут вводить float-числа, начиная их с запятой. */
-  val floatP: Parser[Float] = """-?(\d+([.,]+\d*)?|\d*[.,]+\d+)""".r ^^ str2FloatF
+  val floatP: Parser[Float] = floatStrP ^^ str2FloatF
 
 }
 

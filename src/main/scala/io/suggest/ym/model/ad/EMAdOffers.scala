@@ -407,7 +407,7 @@ object AOFieldFont {
         color  = Option(jm.get(COLOR_ESFN)).fold(FONT_COLOR_DFLT)(EsModel.stringParser),
         size   = Option(jm.get(SIZE_ESFN)).map(EsModel.intParser),
         align  = Option(jm.get(ALIGN_ESFN)).map(EsModel.stringParser).flatMap(TextAligns.maybeWithName),
-        family = Option(jm.get(ALIGN_ESFN)).map(EsModel.stringParser)
+        family = Option(jm.get(FAMILY_ESFN)).map(EsModel.stringParser)
       )
   }
 }
