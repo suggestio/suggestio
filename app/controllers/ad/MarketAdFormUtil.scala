@@ -42,7 +42,7 @@ object MarketAdFormUtil {
             }
           }
         },
-        { _.map(_.toString) }
+        { _.map(_.cssName) }
       )
   }
 
