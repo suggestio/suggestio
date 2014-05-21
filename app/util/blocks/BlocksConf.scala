@@ -148,13 +148,11 @@ object BlocksConf extends Enumeration {
     override def bgColorBf: BfColor = super.bgColorBf.copy(
       defaultValue = Some("0F2841")
     )
-    def blockWidth: Int
   }
 
 
   /** Рекламный блок с предложением товара/услуги и рекламным посылом. */
   sealed trait Block4t extends CommonBlock4_9 {
-    override val blockWidth = 300
     override def template = _block4Tpl
   }
   val Block4 = new Val(4) with Block4t with EmptyKey {
@@ -220,7 +218,7 @@ object BlocksConf extends Enumeration {
 
 
   sealed trait Block9t extends CommonBlock4_9 {
-    override val blockWidth = 140
+    override def blockWidth = BLOCK_WIDTH_NARROW_PX
     override def template = _block9Tpl
   }
   val Block9 = new Val(9) with Block9t with EmptyKey {
@@ -297,12 +295,10 @@ object BlocksConf extends Enumeration {
     override def lineColorBf: BfColor = super.lineColorBf.copy(
       defaultValue = Some("B35151")
     )
-    val blockWidth: Int
   }
 
   sealed trait Block14t extends Height with CommonBlock145 {
     override def template = _block14Tpl
-    override val blockWidth: Int = 300
     override def heightBf = super.heightBf.copy(
       availableVals = Set(300, 460)
     )
@@ -316,7 +312,7 @@ object BlocksConf extends Enumeration {
 
   sealed trait Block15t extends CommonBlock145 {
     override def template = _block15Tpl
-    override val blockWidth: Int = 140
+    override def blockWidth: Int = BLOCK_WIDTH_NARROW_PX
   }
   val Block15 = new Val(15) with Block15t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block15Wrapper(key = newKey)
@@ -361,12 +357,10 @@ object BlocksConf extends Enumeration {
     override def circleFillColorBf = super.circleFillColorBf.copy(
       defaultValue = Some("f9daac")
     )
-    val blockWidth: Int
   }
 
 
   sealed trait Block17t extends Height with CommonBlock17_18 {
-    override val blockWidth: Int = 300
     override def heightBf: BfHeight = super.heightBf.copy(
       availableVals = Set(300, 460)
     )
@@ -383,7 +377,7 @@ object BlocksConf extends Enumeration {
 
 
   sealed trait Block18t extends CommonBlock17_18 {
-    override val blockWidth: Int = 140
+    override def blockWidth: Int = BLOCK_WIDTH_NARROW_PX
     override def template = _block18Tpl
   }
   val Block18 = new Val(18) with Block18t with EmptyKey {
@@ -493,6 +487,10 @@ case class BlockMapperResult(bd: BlockData, bim: BlockImgMap) {
 /** Базовый интерфейс для реализаций класса Enumeration.Val. */
 trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
   def id: Int
+
+  /** Ширина блока. Используется при дублировании блоков. */
+  def blockWidth: Int = BLOCK_WIDTH_NORMAL_PX
+  def isNarrow = blockWidth <= BLOCK_WIDTH_NARROW_PX
 
   /** Шаблон для рендера. */
   def template: Template3[MAdT, Boolean, Context, HtmlFormat.Appendable]

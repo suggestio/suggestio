@@ -45,6 +45,10 @@ object BlocksUtil {
   }
 
   def defaultFont: AOFieldFont = AOFieldFont(color = "000000")
+
+  // Допустимые ширины блоков.
+  val BLOCK_WIDTH_NORMAL_PX = 300
+  val BLOCK_WIDTH_NARROW_PX = 140
 }
 
 import BlocksUtil._

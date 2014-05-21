@@ -13,6 +13,7 @@ import SiowebEsUtil.client
 import scala.concurrent.Future
 import play.api.mvc.{AnyContent, Result}
 import io.suggest.ym.model.stat.{MAdStat, AdStatActions}
+import io.suggest.ym.model.common.IBlockMeta
 
 /**
  * Suggest.io
@@ -38,7 +39,7 @@ object Market extends SioController with PlayMacroLogsImpl {
       receiverIdOpt = Some(martId)
     )
     for {
-      mads  <- MAd.searchAds(searchReq)
+      mads  <- MAd.searchAds(searchReq).map(groupNarrowAds)
       rmd   <- request.marketDataFut
       waOpt <- welcomeAdOptFut
     } yield {
@@ -61,7 +62,7 @@ object Market extends SioController with PlayMacroLogsImpl {
     val producerOptFut = adSearch.producerIdOpt
       .fold [Future[Option[MAdnNode]]] { Future successful None } { MAdnNodeCache.getByIdCached }
     for {
-      mads <- MAd.searchAds(adSearch)
+      mads <- MAd.searchAds(adSearch).map(groupNarrowAds)
       rmd  <- request.marketDataFut
       producerOpt <- producerOptFut
     } yield {
@@ -149,8 +150,38 @@ object Market extends SioController with PlayMacroLogsImpl {
         warn(s"marketAction($martId): mart index exists, but mart is NOT.")
         martNotFound(martId)
     }
-
   }
+
+
+  /**
+   * Сгруппировать "узкие" карточки, чтобы они были вместе.
+   * @param ads Исходный список элементов.
+   * @tparam T Тип элемента.
+   * @return
+   */
+  private def groupNarrowAds[T <: IBlockMeta](ads: Seq[T]): Seq[T] = {
+    val (enOpt1, acc0) = ads.foldLeft [(Option[T], List[T])] (None -> Nil) {
+      case ((enOpt, acc), e) =>
+        val blockId = e.blockMeta.blockId
+        val bc: BlockConf = BlocksConf(blockId)
+        if (bc.isNarrow) {
+          enOpt match {
+            case Some(en) =>
+              (None, en :: e :: acc)
+            case None =>
+              (Some(e), acc)
+          }
+        } else {
+          (enOpt, e :: acc)
+        }
+    }
+    val acc1 = enOpt1 match {
+      case Some(en) => en :: acc0
+      case None     => acc0
+    }
+    acc1.reverse
+  }
+
 
   /** Реквест, используемый в Market-экшенах. */
   abstract class MarketRequest(request: AbstractRequestWithPwOpt[AnyContent])
