@@ -74,7 +74,8 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
       },
       {case (HideShopAdActions.HIDE, reason) =>
         mad.receivers = Map.empty
-        mad.saveReceivers map { _ =>
+        mad.disableReason = Some(reason)
+        mad.save map { _ =>
           // Отправить письмо магазину-владельцу рекламы
           notyfyAdDisabled(reason)
           rdr.flashing("success" -> "Объявление выключено")
