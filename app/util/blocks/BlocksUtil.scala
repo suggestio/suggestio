@@ -178,13 +178,11 @@ trait BlockAOValueFieldT extends BlockFieldT {
   def withFontColor: Boolean
   def withFontSizes: Set[Int]
   def withFontSize = !withFontSizes.isEmpty
+  def withFontFamily: Boolean
   def withTextAlign: Boolean
   def defaultFont: AOFieldFont = BlocksUtil.defaultFont
   def getFontMapping = MarketAdFormUtil.getFontM(
-    withFontColor = withFontColor,
-    withFontSizes = withFontSizes,
-    withTextAlign = withTextAlign,
-    default = defaultValue.fold(defaultFont)(_.font)
+    withFontSizes = withFontSizes
   )
 
   def withCoords: Boolean
@@ -223,6 +221,7 @@ case class BfPrice(
   defaultValue: Option[AOPriceField] = None,
   withFontColor: Boolean = true,
   withFontSizes: Set[Int] = Set.empty,
+  withFontFamily: Boolean = false,
   withCoords: Boolean = false,
   withTextAlign: Boolean = false
 ) extends BlockAOValueFieldT {
@@ -259,6 +258,7 @@ case class BfText(
   maxLen: Int = 16000,
   withFontColor: Boolean = true,
   withFontSizes: Set[Int] = Set.empty,
+  withFontFamily: Boolean = false,
   withCoords: Boolean = false,
   withTextAlign: Boolean = false
 ) extends BlockAOValueFieldT {
@@ -368,6 +368,7 @@ case class BfDiscount(
   max: Float = 100F,
   withFontColor: Boolean = true,
   withFontSizes: Set[Int] = Set.empty,
+  withFontFamily: Boolean = false,
   withCoords: Boolean = false,
   withTextAlign: Boolean = false
 ) extends BlockAOValueFieldT {

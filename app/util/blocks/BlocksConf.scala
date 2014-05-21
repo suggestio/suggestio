@@ -117,7 +117,8 @@ object BlocksConf extends Enumeration {
     )
     override def descrBf = super.descrBf.copy(
       defaultValue = Some(AOStringField("Распродажа. Сегодня. Сейчас.", AOFieldFont("000000"))),
-      withTextAlign = true
+      withTextAlign = true,
+      withFontFamily = true
     )
     override def template = _block2Tpl
   }

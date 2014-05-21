@@ -14,7 +14,7 @@ import util.blocks.BlockMapperResult
  * Created: 23.04.14 10:15
  * Description: Общая утиль для работы с разными ad-формами: preview и обычными.
  */
-object MarketAdFormUtil {
+object fontSizeOptM {
 
   type AdFormMResult = (MAd, BlockImgMap)
   type AdFormM = Form[AdFormMResult]
@@ -29,37 +29,34 @@ object MarketAdFormUtil {
 
   /** Маппинг для выравнивания текста в рамках поля. */
   val textAlignOptM: Mapping[Option[TextAlign]] = {
-    optional(text(maxLength = 10))
-      .transform[Option[TextAlign]](
-        {_.filter(_.length <= 10)
-          .flatMap { s =>
-            if (s.length == 1) {
-              TextAligns.maybeWithName(s)
-            } else if (s.length == 0) {
-              None
-            } else {
-              TextAligns.maybeWithCssName(s)
-            }
+    text.transform[Option[TextAlign]](
+      {Some(_)
+        .filter(_.length <= 10)
+        .flatMap { s =>
+          if (s.length == 1) {
+            TextAligns.maybeWithName(s)
+          } else if (s.length == 0) {
+            None
+          } else {
+            TextAligns.maybeWithCssName(s)
           }
-        },
-        { _.map(_.toString) }
-      )
+        }
+      },
+      { _.fold("")(_.toString) }
+    )
   }
 
 
-  private def fontSizeOptM(fontSizes: Set[Int]): Mapping[Option[Int]] = {
-    val hasFontSizes = fontSizes.isEmpty
-    val (min, max) = if (hasFontSizes) {
+  private def fontSizeAsOptM(fontSizes: Set[Int], default: Option[Int]): Mapping[Option[Int]] = {
+        val (min, max) = if (fontSizes.isEmpty) {
       0 -> 0
     } else {
       fontSizes.min -> fontSizes.max
     }
-    optional(number(min = min, max = max))
-     .transform[Option[Int]](
-        { szOpt => if (hasFontSizes) szOpt.filter(fontSizes.contains) else szOpt },
-        { identity }
-      )
-     .verifying("error.unavailable.font.size", { szOpt => hasFontSizes || szOpt.exists(fontSizes.contains) })
+    val fontSizeM = number(min = min, max = max)
+     .verifying("error.unavailable.font.size", fontSizes.contains(_))
+    fontSizeM
+      .transform[Option[Int]](Some.apply, { _.orElse(default).getOrElse(10) })
   }
 
   val fontFamilyOptM: Mapping[Option[String]] = optional(text(maxLength = 15))
@@ -67,12 +64,13 @@ object MarketAdFormUtil {
   /**
    * Сборка маппинга для шрифта.
    * @param withFontSizes Множество допустимых размеров шрифтов, если пусто то поле отключено.
+   * @param default Дефолтовое значение.
    * @return Маппинг для AOFieldFont.
    */
-  def getFontM(withFontSizes: Set[Int]): Mapping[AOFieldFont] = {
+  def getFontM(withFontSizes: Set[Int] = Set.empty, default: AOFieldFont): Mapping[AOFieldFont] = {
     mapping(
       "color"  -> colorM,
-      "size"   -> fontSizeOptM(withFontSizes),
+      "size"   -> fontSizeAsOptM(withFontSizes, default.size),
       "align"  -> textAlignOptM,
       "family" -> fontFamilyOptM
     )

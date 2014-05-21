@@ -34,7 +34,13 @@
       @* Выравнивание текста. Допустимые значения: l/left/r/right/j/justify/c/center. *@
       @if( bf.withTextAlign ) {
         @defining(bfNameBase + ".font.align") { aname =>
-          <input type="hidden" name="@aname" value="@af(aname).value"/>
+          @aname: <input type="text" name="@aname" value="@af(aname).value"/>
+        }
+      }
+
+      @if( bf.withFontFamily ) {
+        @defining( bfNameBase + ".font.family") { ffname =>
+          @ffname: <input type="text" name="@ffname" value="@af(ffname).value"/>
         }
       }
     </div>

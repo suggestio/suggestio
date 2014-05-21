@@ -128,8 +128,9 @@ object FormUtil {
 
 
   /** Маппер для поля, содержащего код цвета. */
-  // TODO Нужно добавить верификацию тут какую-то. Например через YmColors.
+  private val colorCheckRE = "(?i)[a-f0-9]{6}".r
   val colorM = nonEmptyText(minLength = 6, maxLength = 6)
+    .verifying("error.color.invalid", colorCheckRE.pattern.matcher(_).matches)
   val colorOptM = optional(colorM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
 
