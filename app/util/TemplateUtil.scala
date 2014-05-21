@@ -30,6 +30,11 @@ object TplDataFormatUtil {
     }
   }
 
+  /** Постпроцессинг цен. Использовать неразрывные пробелы вместо обычных. */
+  def pricePostprocess(priceStr: String): String = {
+    priceStr.replace('\u0020', '\u00A0')
+  }
+
   /** Напечатать цену согласно локали и валюте. */
   def formatPrice(price: Float, currency: Currency)(implicit ctx: Context): String = {
     // TODO следует залезать в локаль клиента и форматировать через неё?
@@ -40,20 +45,26 @@ object TplDataFormatUtil {
     val currencySymbol = formatCurrency(currency)
     dcs.setCurrencySymbol(currencySymbol)
     currFmt.setDecimalFormatSymbols(dcs)
-    currFmt.format(price)
+    if (price <= 9999)
+      currFmt.setGroupingUsed(false)
+    val formatted = currFmt.format(price)
+    pricePostprocess(formatted)
   }
 
 
   // Пока локали не поддерживаются, используется один форматтер на всех.
-  private val formatPriceDigitsDF = {
-    val currFmt = NumberFormat.getCurrencyInstance.asInstanceOf[DecimalFormat]
-    val dcf = currFmt.getDecimalFormatSymbols
-    dcf.setCurrencySymbol("")
-    currFmt.setDecimalFormatSymbols(dcf)
-    currFmt
-  }
   def formatPriceDigits(price: Float)(implicit ctx: Context): String = {
-    formatPriceDigitsDF.format(price)
+    val formatPriceDigitsDF = {
+      val currFmt = NumberFormat.getCurrencyInstance.asInstanceOf[DecimalFormat]
+      val dcf = currFmt.getDecimalFormatSymbols
+      dcf.setCurrencySymbol("")
+      currFmt.setDecimalFormatSymbols(dcf)
+      if (price <= 9999)
+        currFmt.setGroupingUsed(false)
+      currFmt
+    }
+    val formatted = formatPriceDigitsDF.format(price)
+    pricePostprocess(formatted)
   }
 
 
