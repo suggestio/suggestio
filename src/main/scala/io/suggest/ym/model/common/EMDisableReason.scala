@@ -9,7 +9,7 @@ import play.api.libs.json._
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 21.05.14 18:05
- * Description:
+ * Description: Поле "причина отключения", используется для хранения причины бана в рекламной карточке.
  */
 
 object EMDisableReason {
