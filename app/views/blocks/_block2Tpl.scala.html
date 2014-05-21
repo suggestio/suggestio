@@ -16,7 +16,7 @@
     <div class="info">
       @mad.offers.headOption.map { offer =>
         @offer.text1.map { title =>
-          <h5 @_aovfStyleTpl(title)>@title.value</h5>
+          <h5 @_aovfStyleTpl(title)>@Html(title.value)</h5>
         }
 
         @offer.text2.map { descr =>

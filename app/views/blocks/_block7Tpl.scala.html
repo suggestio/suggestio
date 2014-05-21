@@ -1,4 +1,4 @@
-@(mad: MAdT, isStandalone: Boolean)(implicit ctx: util.Context)
+@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
 @import util.blocks.BlocksConf.Block7
@@ -18,7 +18,7 @@
     <div class="info">
       @offer.text1.map { text1 =>
         <div @_aovfStyleTpl(text1, "title")>
-          @text1.value
+          @Html(text1.value)
         </div>
       }
       @offer.price.map { price =>
