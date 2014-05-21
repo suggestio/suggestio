@@ -37,6 +37,7 @@ object MAd
   with AdsSimpleSearchT
   with EMColorsStatic
   with MacroLogsImpl
+  with EMDisableReasonStatic
   with EsModelStaticIgnore
 {
   import LOGGER._
@@ -109,7 +110,8 @@ case class MAd(
   var userCatId  : Option[String] = None,
   var texts4search : Texts4Search = Texts4Search(),
   var colors     : Map[String, String] = Map.empty,
-  var dateCreated : DateTime = DateTime.now
+  var disableReason : Option[String] = None,
+  var dateCreated   : DateTime = DateTime.now
 )
   extends EsModelEmpty
   with MAdT
@@ -123,6 +125,7 @@ case class MAd(
   with EMDateCreatedMut
   with EMTexts4Search
   with EMColorsMut
+  with EMDisableReasonMut
 {
   @JsonIgnore
   override type T = MAd
@@ -137,7 +140,8 @@ case class MAd(
   override def save(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
     val resultFut = super.save
     resultFut onSuccess { case adId =>
-      this.id = Option(adId)
+      if (this.id.isEmpty)
+        this.id = Option(adId)
       emitSavedEvent
     }
     resultFut

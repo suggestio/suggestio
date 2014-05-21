@@ -140,7 +140,6 @@ trait AdsSimpleSearchT extends EsModelMinimalStaticT {
     if (adSearch.qOpt.isEmpty) {
       resultFut = resultFut.map { rnd.shuffle(_) }
     }
-    // TODO Узкие карточки надо бы группировать, чтобы они вместе были.
     resultFut
   }
 
