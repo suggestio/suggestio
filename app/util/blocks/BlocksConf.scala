@@ -452,10 +452,7 @@ object BlocksConf extends Enumeration {
   }
 
 
-  sealed trait Block23t extends BgImg with Title with Descr with Price with FillColor with HeightFixed {
-    override def fillColorBf = super.fillColorBf.copy(
-      defaultValue = Some("f3f3f3")
-    )
+  sealed trait Block23t extends BgImg with Title with Descr with Price with HeightFixed {
     override def template = _block23Tpl
   }
   val Block23 = new Val(23) with Block23t with EmptyKey {
