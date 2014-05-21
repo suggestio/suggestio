@@ -28,7 +28,7 @@
       }
 
       @offer.price.map { price =>
-        <div class="price">
+        <div class="price" @_aovfStyleTpl(price, "price")>
           <p>@formatPrice(price.value, price.currency)</p>
         </div>
       }
