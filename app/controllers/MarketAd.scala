@@ -227,6 +227,7 @@ object MarketAd extends SioController with TempImgSupport {
               importFormAdData(oldMad = mad, newMad = mad2)
               t4s2Fut flatMap { t4s2 =>
                 mad.texts4search = t4s2
+                mad.disableReason = None
                 mad.save.map { _ =>
                   Redirect(routes.MarketLkAdn.showAdnNode(mad.producerId))
                     .flashing("success" -> "Изменения сохранены")
