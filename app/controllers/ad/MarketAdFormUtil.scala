@@ -62,7 +62,7 @@ object MarketAdFormUtil {
      .verifying("error.unavailable.font.size", { szOpt => hasFontSizes || szOpt.exists(fontSizes.contains) })
   }
 
-  val fontFamilyOptM: Mapping[Option[String]] = optional(text(maxLength = 15))
+  val fontFamilyOptM: Mapping[Option[String]] = optional(text(maxLength = 32))
 
   /**
    * Сборка маппинга для шрифта.

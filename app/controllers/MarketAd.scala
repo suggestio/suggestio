@@ -34,22 +34,43 @@ object MarketAd extends SioController with TempImgSupport {
   val AD_IMG_ID_K = "image_key"
 
 
-  private val shopCatIdKM = CAT_ID_K -> userCatIdOptM.verifying(_.isDefined)
-
   /** Дефолтовый блок, используемый редакторами форм. */
   protected[controllers] def dfltBlock = BlocksConf.Block1
-
-  /** Генератор форм добавления/редактирования рекламируемого продукта в зависимости от вкладок. */
-  private def getShopAdFormM(blockM: Mapping[BlockMapperResult]): AdFormM = Form(
-    "ad" -> mapping(
-      shopCatIdKM,
-      OFFER_K -> blockM
-    )(adFormApply)(adFormUnapply)
-  )
 
 
   type ReqSubmit = Request[collection.Map[String, Seq[String]]]
   type DetectForm_t = Either[AdFormM, (BlockConf, AdFormM)]
+
+
+  /**
+   * Внутренний сборщик форм создания/редактирования рекламных карточек.
+   * @param anmt Тип узла.
+   * @param blockM Маппинг блока.
+   * @return Форма, готовая к эксплуатации
+   */
+  private def getSaveAdFormM(anmt: AdNetMemberType, blockM: Mapping[BlockMapperResult]): AdFormM = {
+    import AdNetMemberTypes._
+    val catIdM = anmt match {
+      case SHOP | RESTAURANT      => userCatIdSomeM
+      case MART | RESTAURANT_SUP  => userCatIdOptM
+    }
+    getAdFormM(catIdM, blockM)
+  }
+
+  /**
+   * Сборщик форм произвольного назначения для парсинга рекламных карточек.
+   * @param catIdM маппер для id категории.
+   * @param blockM маппер для блоков.
+   * @return Маппинг формы, готовый к эксплуатации.
+   */
+  def getAdFormM(catIdM: Mapping[Option[String]], blockM: Mapping[BlockMapperResult]): AdFormM = {
+    Form(
+      "ad" -> mapping(
+        CAT_ID_K -> catIdM,
+        OFFER_K  -> blockM
+      )(adFormApply)(adFormUnapply)
+    )
+  }
 
 
   /** Выдать маппинг ad-формы в зависимости от типа adn-узла. */
@@ -65,7 +86,7 @@ object MarketAd extends SioController with TempImgSupport {
           .headOption
           .fold(1)(_.toInt)
         val blockConf: BlockConf = BlocksConf(blockId)
-        Right(blockConf -> getAdFormM(anmt, blockConf.strictMapping))
+        Right(blockConf -> getSaveAdFormM(anmt, blockConf.strictMapping))
     }
   }
 
@@ -77,7 +98,7 @@ object MarketAd extends SioController with TempImgSupport {
   def createAd(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     import request.adnNode
     renderCreateFormWith(
-      af = getAdFormM(adnNode.adn.memberType, dfltBlock.strictMapping),
+      af = getSaveAdFormM(adnNode.adn.memberType, dfltBlock.strictMapping),
       catOwnerId = getCatOwnerId(adnNode),
       adnNode = adnNode
     ).map(Ok(_))
@@ -188,7 +209,7 @@ object MarketAd extends SioController with TempImgSupport {
   def editAd(adId: String) = IsAdEditor(adId).async { implicit request =>
     import request.mad
     val blockConf: BlockConf = BlocksConf.apply(mad.blockMeta.blockId)
-    val form0 = getAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
+    val form0 = getSaveAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
     val bim = mad.imgs.mapValues { mii =>
       val oiik = OrigImgIdKey(filename = mii.filename, meta = mii.meta)
       ImgInfo4Save(oiik)
@@ -205,6 +226,7 @@ object MarketAd extends SioController with TempImgSupport {
     oldMad.userCatId = newMad.userCatId
     oldMad.blockMeta = newMad.blockMeta
     oldMad.colors = newMad.colors
+    oldMad.richDescrOpt = newMad.richDescrOpt
   }
 
   /** Сабмит формы рендера страницы редактирования рекламной карточки.
@@ -359,28 +381,7 @@ object MarketAd extends SioController with TempImgSupport {
   }
 
 
-  // ============================ ТЦ ================================
-
-  private val martCatIdKM = CAT_ID_K -> userCatIdOptM
-  /** Генератор форм добавления/редактирования рекламиры в ТЦ в зависимости от вкладок.
-    * Категория не обязательная, логотип от ТЦ. */
-  private def getMartAdFormM(blockM: Mapping[BlockMapperResult]): AdFormM = Form(
-    "ad" -> mapping(
-      martCatIdKM,
-      OFFER_K -> blockM
-    )(adFormApply)(adFormUnapply)
-  )
-
-
   // ============================== common-методы =================================
-
-  private def getAdFormM(anmt: AdNetMemberType, blockM: Mapping[BlockMapperResult]): AdFormM = {
-    import AdNetMemberTypes._
-    anmt match {
-      case SHOP | RESTAURANT      => getShopAdFormM(blockM)
-      case MART | RESTAURANT_SUP  => getMartAdFormM(blockM)
-    }
-  }
 
 
   private def maybeAfCatId(af: AdFormM) = {
