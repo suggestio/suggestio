@@ -10,6 +10,7 @@ import util.blocks.BlocksUtil.BlockImgMap
 import scala.Some
 import play.api.data.validation.Constraint
 import util.img.{ImgIdKey, ImgInfo4Save}
+import scala.collection.immutable.{ListSet, SortedSet}
 
 /**
  * Suggest.io
@@ -92,20 +93,20 @@ object BlocksConf extends Enumeration {
     override def titleBf = super.titleBf.copy(
       defaultValue = Some(AOStringField("Платье", AOFieldFont("444444"))),
       withCoords = true,
-      withFontSizes = Set(65, 55, 45, 35, 28),
+      withFontSizes = List(65, 55, 45, 35, 28),
       withTextAlign = true,
       withFontFamily = true
     )
     override def priceBf = super.priceBf.copy(
       defaultValue = Some(AOPriceField(100F, "RUB", "100 р.", defaultFont)),
       withCoords = true,
-      withFontSizes = Set(65, 55, 45, 35, 28),
+      withFontSizes = List(65, 55, 45, 35, 28),
       withFontFamily = true
     )
     override def oldPriceBf = super.oldPriceBf.copy(
       defaultValue = Some(AOPriceField(200F, "RUB", "200 р.", defaultFont)),
       withCoords = true,
-      withFontSizes = Set(65, 55, 45, 35, 28),
+      withFontSizes = List(65, 55, 45, 35, 28),
       withFontFamily = true
     )
     override def template = _block1Tpl
@@ -332,13 +333,13 @@ object BlocksConf extends Enumeration {
 
   sealed trait Block16t extends Height with BgColor with BorderColor with Title with Descr with Price {
     override def titleBf = super.titleBf.copy(
-      withFontSizes = Set(65, 55, 45, 35, 28)
+      withFontSizes = List(65, 55, 45, 35, 28)
     )
     override def descrBf = super.descrBf.copy(
-      withFontSizes = Set(36, 28, 22)
+      withFontSizes = List(36, 28, 22)
     )
     override def priceBf = super.priceBf.copy(
-      withFontSizes = Set(65, 55, 45)
+      withFontSizes = List(65, 55, 45)
     )
     override def bgColorBf = super.bgColorBf.copy(
       defaultValue = Some("e1cea1")

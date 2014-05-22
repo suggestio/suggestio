@@ -180,7 +180,7 @@ trait BlockAOValueFieldT extends BlockFieldT {
   override type T <: AOValueField
 
   def withFontColor: Boolean
-  def withFontSizes: Set[Int]
+  def withFontSizes: List[Int]
   def withFontSize = !withFontSizes.isEmpty
   def withFontFamily: Boolean
   def withTextAlign: Boolean
@@ -224,7 +224,7 @@ case class BfPrice(
   offerNopt: Option[Int] = None,
   defaultValue: Option[AOPriceField] = None,
   withFontColor: Boolean = true,
-  withFontSizes: Set[Int] = Set.empty,
+  withFontSizes: List[Int] = Nil,
   withFontFamily: Boolean = false,
   withCoords: Boolean = false,
   withTextAlign: Boolean = false
@@ -261,7 +261,7 @@ case class BfText(
   minLen: Int = 0,
   maxLen: Int = 16000,
   withFontColor: Boolean = true,
-  withFontSizes: Set[Int] = Set.empty,
+  withFontSizes: List[Int] = Nil,
   withFontFamily: Boolean = false,
   withCoords: Boolean = false,
   withTextAlign: Boolean = false
@@ -371,7 +371,7 @@ case class BfDiscount(
   min: Float = -99F,
   max: Float = 100F,
   withFontColor: Boolean = true,
-  withFontSizes: Set[Int] = Set.empty,
+  withFontSizes: List[Int] = Nil,
   withFontFamily: Boolean = false,
   withCoords: Boolean = false,
   withTextAlign: Boolean = false
