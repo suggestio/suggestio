@@ -4,7 +4,7 @@
 
 @defining( bfNameBase + ".font.size" ) { fsName =>
 
-  <div class="lk-fontsize-select lk-field-tools__editor">
+  <div class="lk-field-tools__editor">
     <select class="js-custom-font-select" name="@fsName">
       @defining( af(fsName).value.orElse(bf.defaultValue.flatMap(_.font.size)) ) { fsValueOpt =>
       @for(sz <- bf.withFontSizes) {
