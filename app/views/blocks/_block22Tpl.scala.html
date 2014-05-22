@@ -19,12 +19,12 @@
       <div class="info abs">
         @mad.offers.headOption.map { offer =>
           @offer.text1.map { text1 =>
-            <div @_aovfStyleTpl(text1, "title")>
+            <div @_aovfStyleTpl(text1, Block22.titleBf, "title")>
               @Html(text1.value)
             </div>
           }
           @offer.text2.map { text2 =>
-            <div @_aovfStyleTpl(text2, "descr", "background-color: rgba(" + colorHex2rgb(borderColor).mkString(",") + ", 0.7);")>
+            <div @_aovfStyleTpl(text2, Block22.descrBf, "descr", "background-color: rgba(" + colorHex2rgb(borderColor).mkString(",") + ", 0.7);")>
               @Html(text2.value)
             </div>
           }

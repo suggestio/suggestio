@@ -16,19 +16,19 @@
   <div class="info abs">
     @mad.offers.headOption.map { offer =>
       @offer.text1.map { text1 =>
-        <div @_aovfStyleTpl(text1, "title")>
+        <div @_aovfStyleTpl(text1, Block23.titleBf, "title")>
           <p>@Html(text1.value)</p>
         </div>
       }
 
       @offer.text2.map { text2 =>
-        <div @_aovfStyleTpl(text2, "descr")>
+        <div @_aovfStyleTpl(text2, Block23.descrBf, "descr")>
           <p>@Html(text2.value)</p>
         </div>
       }
 
       @offer.price.map { price =>
-        <div class="price" @_aovfStyleTpl(price, "price")>
+        <div class="price" @_aovfStyleTpl(price, Block23.priceBf, "price")>
           <p>@formatPrice(price.value, price.currency)</p>
         </div>
       }

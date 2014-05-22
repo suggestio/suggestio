@@ -12,13 +12,13 @@
   <div class="info" style="background: rgba(@{colorHex2rgb(color).mkString(",")}, 0.7);">
     @mad.offers.headOption.map { offer =>
       @offer.text1.map { title =>
-        <div @_aovfStyleTpl(title, "title")>@Html(title.value)</div>
+        <div @_aovfStyleTpl(title, bc.titleBf, "title")>@Html(title.value)</div>
       }
       @offer.price.map { price =>
-        <div @_aovfStyleTpl(price, "price")>@formatPriceDigits(price.value)@formatCurrency(price.currency)</div>
+        <div @_aovfStyleTpl(price, bc.priceBf, "price")>@formatPriceDigits(price.value)@formatCurrency(price.currency)</div>
       }
       @offer.text2.map { descr =>
-        <div @_aovfStyleTpl(descr, "descr")>@Html(descr.value)</div>
+        <div @_aovfStyleTpl(descr, bc.descrBf, "descr")>@Html(descr.value)</div>
       }
     }
   </div>

@@ -1,7 +1,6 @@
 @(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
-@import util.blocks.BlocksConf.Block7
 @import common._
 
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl7"@mad.colors.get(Block7.saleMaskColorBf.name).map { saleColor => style="border-color: #@saleColor"} data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
@@ -11,18 +10,18 @@
 
   @mad.offers.headOption.map { offer =>
 
-    <div @offer.discount.map { discount => @_aovfStyleTpl(discount, "sale-icon")}>
+    <div @offer.discount.map { discount =>@_aovfStyleTpl(discount, Block7.discountBf, "sale-icon")}>
       @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
     </div>
 
     <div class="info">
       @offer.text1.map { text1 =>
-        <div @_aovfStyleTpl(text1, "title")>
+        <div @_aovfStyleTpl(text1, Block7.titleBf, "title")>
           @Html(text1.value)
         </div>
       }
       @offer.price.map { price =>
-        <div @_aovfStyleTpl(price, "price")>
+        <div @_aovfStyleTpl(price, Block7.priceBf, "price")>
           @formatPrice(price.value, price.currency)
         </div>
       }

@@ -32,15 +32,18 @@ trait TitlePriceListBlockT extends ValT {
   protected def bfTitle(offerNopt: Option[Int]) = BfText(TITLE_FN, BlocksEditorFields.TextArea, maxLen = 128, offerNopt = offerNopt)
   protected def bfPrice(offerNopt: Option[Int]) = BfPrice(PRICE_FN, offerNopt = offerNopt)
 
+  def titleBf = bfTitle(None)
+  def priceBf = bfPrice(None)
+
   /** Генерация описания полей. У нас тут повторяющийся маппинг, поэтому blockFields для редактора генерится без полей-констант. */
   abstract override def blockFieldsRev: List[BlockFieldT] = {
     val acc0 = super.blockFieldsRev
     (N0 until offersCount).foldLeft(acc0) {
       (acc, offerN) =>
         val offerNopt = Some(offerN)
-        val titleBf = bfTitle(offerNopt)
-        val priceBf = bfPrice(offerNopt)
-        priceBf :: titleBf :: acc
+        val _titleBf = bfTitle(offerNopt)
+        val _priceBf = bfPrice(offerNopt)
+        _priceBf :: _titleBf :: acc
     }
   }
 

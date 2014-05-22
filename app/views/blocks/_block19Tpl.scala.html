@@ -24,13 +24,13 @@
             <span class="item_line" style="background: #@offer.text1.map {title =>@title.font.color}"></span>
 
             @offer.text1.map { text1 =>
-              <div @_aovfStyleTpl(text1, "item_title")>
+              <div @_aovfStyleTpl(text1, Block19.titleBf, "item_title")>
                 @Html(text1.value)
               </div>
             }
 
             @offer.price.map { price =>
-              <div @_aovfStyleTpl(price, "item_price")>
+              <div @_aovfStyleTpl(price, Block19.priceBf, "item_price")>
                 @formatPrice(price.value, price.currency)
               </div>
             }

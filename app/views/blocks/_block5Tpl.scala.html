@@ -1,7 +1,6 @@
 @(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
-@import util.blocks.BlocksConf.Block5
 @import svg._
 @import common._
 
@@ -37,30 +36,24 @@
 
     @mad.offers.headOption.map { offer =>
       @offer.text1.map { text1 =>
-        <div class="js-mvbl" data-connected-input="ad.offer.title" style="position: absolute; @text1.coords.map { coords =>
-              left: @(coords.x)px; top:@(coords.y)px;
-            }.getOrElse{ left: 11px; top: 173px; }">
-        <div @_aovfStyleTpl(text1, "title")>
+        <div class="js-mvbl" data-connected-input="ad.offer.title" style="@_coordsStyleTpl(text1, left = 11, top = 173)">
+        <div @_aovfStyleTpl(text1, Block5.titleBf, "title")>
           @Html(text1.value)
         </div>
         </div>
       }
 
       @offer.oldPrice.map { oldPrice =>
-        <div class="js-mvbl" data-connected-input="ad.offer.oldPrice" style="position: absolute; @oldPrice.coords.map { coords =>
-              left: @(coords.x)px; top:@(coords.y)px;
-            }.getOrElse{ left: 11px; top: 231px; }">
-        <div @_aovfStyleTpl(oldPrice, "old-price")>
+        <div class="js-mvbl" data-connected-input="ad.offer.oldPrice" style="@_coordsStyleTpl(oldPrice, left = 11, top = 231)">
+        <div @_aovfStyleTpl(oldPrice, Block5.oldPriceBf, "old-price")>
           @formatPrice(oldPrice.value, oldPrice.currency)
         </div>
         </div>
       }
 
       @offer.price.map { price =>
-        <div class="js-mvbl" data-connected-input="ad.offer.price" style="position: absolute; @price.coords.map { coords =>
-              left: @(coords.x)px; top:@(coords.y)px;
-            }.getOrElse{ left: 11px; top: 260px; }">
-        <div @_aovfStyleTpl(price, "price")>
+        <div class="js-mvbl" data-connected-input="ad.offer.price" style="@_coordsStyleTpl(price, left = 11, top = 260)">
+        <div @_aovfStyleTpl(price, Block5.priceBf, "price")>
           @formatPrice(price.value, price.currency)
         </div>
         </div>

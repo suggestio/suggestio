@@ -1,7 +1,6 @@
 @(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
-@import util.blocks.BlocksConf.Block3
 @import ctx._
 @import common._
 
@@ -17,18 +16,17 @@
     <img src="@mad.imgs.get(Block3.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl3-bg.jpg"))" />
 
 
-
     <div class="items">
 
       @mad.offers.map { offer =>
         <div class="item el-@{offer.n + 1}">
           @offer.text1.map { title =>
-          <div @_aovfStyleTpl(title, "title")>
+          <div @_aovfStyleTpl(title, Block3.titleBf, "title")>
             @Html(title.value)
           </div>
           }
           @offer.price.map { price =>
-          <div @_aovfStyleTpl(price, "price")>
+          <div @_aovfStyleTpl(price, Block3.priceBf, "price")>
             @formatPrice(price.value, price.currency)
           </div>
           }

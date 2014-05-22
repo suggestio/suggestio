@@ -1,7 +1,7 @@
-@(aovf: AOValueField, className: String = "", styleStr: String = "")
+@(aovf: AOValueField, bf: BlockAOValueFieldT, className: String = "", styleStr: String = "")
 style="color: #@aovf.font.color;
- @aovf.font.size.map {sz =>font-size: @{sz}px;}
- @aovf.font.lineHeight.orElse(aovf.font.size.map(_ - 10)).map {lh =>line-height: @{lh}px;}
+ @aovf.font.size.orElse(bf.fontSizeDflt).map {sz =>font-size: @{sz}px;}
+ @aovf.font.lineHeight.orElse(bf.lineHeightDflt).orElse(aovf.font.size.map(_ - 10)).map {lh =>line-height: @{lh}px;}
  @aovf.font.family.map {ff =>font-family: @ff;}
  @aovf.font.align.map {ta =>text-align: @ta.cssName;}
  @styleStr"
