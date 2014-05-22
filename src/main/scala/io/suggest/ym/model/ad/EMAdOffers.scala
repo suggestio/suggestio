@@ -39,6 +39,8 @@ object EMAdOffers {
   val ALIGN_ESFN        = "align"
   val VALUE_ESFN        = "value"
   val FAMILY_ESFN       = "family"
+  val LINE_HEIGHT_ESFN  = "lineHeight"
+
   val FONT_COLOR_DFLT   = "FFFFFF"
 
   // PRODUCT offer
@@ -407,7 +409,8 @@ object AOFieldFont {
         color  = Option(jm.get(COLOR_ESFN)).fold(FONT_COLOR_DFLT)(EsModel.stringParser),
         size   = Option(jm.get(SIZE_ESFN)).map(EsModel.intParser),
         align  = Option(jm.get(ALIGN_ESFN)).map(EsModel.stringParser).flatMap(TextAligns.maybeWithName),
-        family = Option(jm.get(FAMILY_ESFN)).map(EsModel.stringParser)
+        family = Option(jm.get(FAMILY_ESFN)).map(EsModel.stringParser),
+        lineHeight = Option(jm.get(LINE_HEIGHT_ESFN)).map(EsModel.intParser)
       )
   }
 }
@@ -421,10 +424,13 @@ case class AOFieldFont(
   color: String,
   size: Option[Int] = None,
   var align: Option[TextAlign] = None,
-  var family: Option[String] = None
+  var family: Option[String] = None,
+  var lineHeight: Option[Int] = None
 ) {
   if (align == null)
     align = None
+  if (lineHeight == null)
+    lineHeight = None
 
   def renderPlayJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     var fieldsAcc: FieldsJsonAcc = List(
@@ -436,6 +442,8 @@ case class AOFieldFont(
       fieldsAcc ::= ALIGN_ESFN -> JsString(align.get.toString)
     if (size.isDefined)
       fieldsAcc ::= SIZE_ESFN -> JsNumber(size.get)
+    if (lineHeight.isDefined)
+      fieldsAcc ::= LINE_HEIGHT_ESFN -> JsNumber(lineHeight.get)
     val fontBody = JsObject(fieldsAcc)
     (FONT_ESFN, fontBody) :: acc
   }
