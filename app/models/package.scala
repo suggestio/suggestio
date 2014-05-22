@@ -135,4 +135,7 @@ package object models {
   val  TextAligns           = ym.model.ad.TextAligns
   type TextAlign            = TextAligns.TextAlign
 
+  val  DisableReason        = ym.model.common.DisableReason
+  type DisableReason        = ym.model.common.DisableReason
+
 }
