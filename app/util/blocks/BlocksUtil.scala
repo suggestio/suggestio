@@ -109,7 +109,7 @@ object BlocksEditorFields extends Enumeration {
   }
 
   type BlockEditorField   = Val
-  type BefHeight             = BlockEditorField with HeightVal
+  type BefHeight          = BlockEditorField with HeightVal
   type BefDiscount        = BlockEditorField with DiscountVal
   type BefPrice           = BlockEditorField with PriceVal
   type BefText            = BlockEditorField with TextVal
@@ -188,6 +188,7 @@ trait BlockAOValueFieldT extends BlockFieldT {
 
   def withFontColor: Boolean
   def withFontSizes: List[FontSize]
+  def fontSizeDflt: Option[Int]
   def withFontSize = !withFontSizes.isEmpty
   def withFontFamily: Boolean
   def withTextAlign: Boolean
@@ -232,6 +233,8 @@ case class BfPrice(
   defaultValue: Option[AOPriceField] = None,
   withFontColor: Boolean = true,
   withFontSizes: List[FontSize] = FONT_SIZES_DFLT,
+  dfltFontSize: Option[Int] = None,
+  fontSizeDflt: Option[Int] = None,
   withFontFamily: Boolean = true,
   withCoords: Boolean = true,
   withTextAlign: Boolean = false
@@ -269,6 +272,7 @@ case class BfText(
   maxLen: Int = 16000,
   withFontColor: Boolean = true,
   withFontSizes: List[FontSize] = FONT_SIZES_DFLT,
+  fontSizeDflt: Option[Int] = None,
   withFontFamily: Boolean = true,
   withCoords: Boolean = true,
   withTextAlign: Boolean = true
@@ -383,6 +387,7 @@ case class BfDiscount(
   max: Float = 100F,
   withFontColor: Boolean = true,
   withFontSizes: List[FontSize] = Nil,
+  fontSizeDflt: Option[Int] = None,
   withFontFamily: Boolean = false,
   withCoords: Boolean = false,
   withTextAlign: Boolean = false
