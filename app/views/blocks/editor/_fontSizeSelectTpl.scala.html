@@ -5,8 +5,6 @@
 @defining( bfNameBase + ".font.size" ) { fsName =>
 
   <div class="lk-fontsize-select">
-    <label class="lk-fontsize-select__label">@Messages("Size"):</label>
-
     <select class="lk-fontsize-select__select js-custom-font-select" name="@fsName">
       @defining( af(fsName).value.orElse(bf.defaultValue.flatMap(_.font.size)) ) { fsValueOpt =>
       @for(sz <- bf.withFontSizes) {
@@ -14,7 +12,6 @@
       }
       }
     </select>
-
   </div>
 
 }

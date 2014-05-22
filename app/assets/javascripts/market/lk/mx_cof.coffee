@@ -878,6 +878,13 @@ market =
               console.log 'необходим авто кроп'
 
             $('#adFormBlockPreview').html data
+            $('.js-mvbl').draggable
+              stop : () ->
+                connected_input = $(this).attr 'data-connected-input'
+                pos = $(this).position()
+
+                $('input[name=\'' + connected_input + '.coords.x\']').val pos['left']
+                $('input[name=\'' + connected_input + '.coords.y\']').val pos['top']
 
 
     queue_block_preview_request : ( request_delay, is_with_auto_crop ) ->
@@ -896,7 +903,7 @@ market =
     init_block_editor : () ->
       market.img.init_upload()
       market.img.crop.init_triggers()
-      
+
       $('.js-custom-font-select').bind 'change', () ->
         market.ad_form.queue_block_preview_request()
 

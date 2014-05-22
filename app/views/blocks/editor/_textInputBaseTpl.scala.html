@@ -6,29 +6,26 @@
 
 <label class="ad-block-editor__fieldset_label">@Messages(bc.i18nLabelOf(bf.name)) @bf.offerNopt.map(_ + 1)</label>
 
-<div class="lk-field-w-colorpicker">
-  <div class="lk-field-w-colorpicker__left lk-fieldeset_wide">@content</div>
+<div class="lk-field-w-tools">
+  <div class="lk-field-w-tools__field">@content</div>
 
   @if( bf.withFontColor ) {
-    <div class="lk-field-w-colorpicker__right">
-      @_colorBtnTpl(
-        colorField = af(bfNameBase + ".font.color"),
-        default    = bf.defaultValue.map(_.font.color),
-        withLabel  = colorWithLabel
-      )
+    <div class="lk-field-w-tools__tools">
 
-      @if( bf.withFontSize ) {
-        @_fontSizeSelectTpl(bf, bfNameBase, af)
+      @if( bf.withFontFamily ) {
+
+        @defining( bfNameBase + ".font.family") { ffname =>
+          <select name="@ffname">
+          @List("pfdintextcomppro-medium-webfont","favoritlightcondcregular").map { vl =>
+            <option value="@vl" @if( vl == af(ffname).value ){selected="selected"}>Шрифт 1</option>
+          }
+          </select>
+        }
       }
 
-      @* Пример задания полей для координат. *@
-      @if( bf.withCoords ) {
-        @defining( bfNameBase + ".coords.x" ) { xname =>
-          <input type="text" name="@xname" value="@af(xname).value"/>
-        }
-        @defining( bfNameBase + ".coords.y" ) { yname =>
-          <input type="text" name="@yname" value="@af(yname).value"/>
-        }
+      <div style="display: none;">
+      @if( bf.withFontSize ) {
+        @_fontSizeSelectTpl(bf, bfNameBase, af)
       }
 
       @* Выравнивание текста. Допустимые значения: l/left/r/right/j/justify/c/center. *@
@@ -38,11 +35,23 @@
         }
       }
 
-      @if( bf.withFontFamily ) {
-        @defining( bfNameBase + ".font.family") { ffname =>
-          @ffname: <input type="text" name="@ffname" value="@af(ffname).value"/>
+      @_colorBtnTpl(
+        colorField = af(bfNameBase + ".font.color"),
+        default    = bf.defaultValue.map(_.font.color),
+        withLabel  = colorWithLabel
+      )
+
+      @* Скрытое поле *@
+      @if( bf.withCoords ) {
+        @defining( bfNameBase + ".coords.x" ) { xname =>
+          <input type="hidden" name="@xname" value="@af(xname).value"/>
+        }
+        @defining( bfNameBase + ".coords.y" ) { yname =>
+          <input type="hidden" name="@yname" value="@af(yname).value"/>
         }
       }
+      </div>
+
     </div>
   }
 

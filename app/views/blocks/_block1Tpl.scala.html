@@ -13,24 +13,29 @@
 
       <img class="bg" src="@mad.imgs.get(Block1.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/block-ad-sample-image.jpg"))" alt="SALE"/>
 
-      <div class="info">
-        @mad.offers.headOption.map { offer =>
-          @offer.text1.map { title =>
-            @title.coords.map { coords =>
-              [x:@coords.x y:@coords.y]
-            }
-            <div @_aovfStyleTpl(title, "title")>@Html(title.value)</div>
+      @mad.offers.headOption.map { offer =>
+        @offer.text1.map { title =>
+            <div class="js-mvbl" data-connected-input="ad.offer.title" style="position: absolute; @title.coords.map { coords =>
+              left: @(coords.x)px; top:@(coords.y)px;
+            }.getOrElse{ left: 10px; top: 10px; }">
+              <div @_aovfStyleTpl(title, "title")>@Html(title.value)</div>
+            </div>
           }
-
           @offer.oldPrice.map { oldPrice =>
-            <div @_aovfStyleTpl(oldPrice, "old-price")>@formatPrice(oldPrice.value, oldPrice.currency)</div>
+            <div class="js-mvbl" data-connected-input="ad.offer.oldPrice" style="position: absolute; @oldPrice.coords.map { coords =>
+              left: @(coords.x)px; top:@(coords.y)px;
+            }.getOrElse{ left: 10px; top: 40px; }">
+              <div @_aovfStyleTpl(oldPrice, "old-price")>@formatPrice(oldPrice.value, oldPrice.currency)</div>
+            </div>
           }
-
           @offer.price.map { price =>
+            <div class="js-mvbl" data-connected-input="ad.offer.price" style="position: absolute; @price.coords.map { coords =>
+              left: @(coords.x)px; top:@(coords.y)px;
+            }.getOrElse{ left: 10px; top: 100px; }">
             <div @_aovfStyleTpl(price, "price")>@formatPrice(price.value, price.currency)</div>
+            </div>
           }
         }
-      </div>
 
     </div>
 

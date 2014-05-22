@@ -91,14 +91,22 @@ object BlocksConf extends Enumeration {
   sealed trait Block1t extends Height with BgImg with Title with OldPrice with Price {
     override def titleBf = super.titleBf.copy(
       defaultValue = Some(AOStringField("Платье", AOFieldFont("444444"))),
-      withCoords = true
+      withCoords = true,
+      withFontSizes = Set(65, 55, 45, 35, 28),
+      withTextAlign = true,
+      withFontFamily = true
     )
     override def priceBf = super.priceBf.copy(
       defaultValue = Some(AOPriceField(100F, "RUB", "100 р.", defaultFont)),
-      withCoords = true
+      withCoords = true,
+      withFontSizes = Set(65, 55, 45, 35, 28),
+      withFontFamily = true
     )
     override def oldPriceBf = super.oldPriceBf.copy(
-      defaultValue = Some(AOPriceField(200F, "RUB", "200 р.", defaultFont))
+      defaultValue = Some(AOPriceField(200F, "RUB", "200 р.", defaultFont)),
+      withCoords = true,
+      withFontSizes = Set(65, 55, 45, 35, 28),
+      withFontFamily = true
     )
     override def template = _block1Tpl
   }
