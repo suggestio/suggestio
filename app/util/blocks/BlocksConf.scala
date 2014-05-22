@@ -175,7 +175,7 @@ object BlocksConf extends Enumeration {
 
 
   /** Блок, который содержит до трёх офферов с ценами. Аналог [[Block3]], но с иным дизайном. */
-  sealed trait Block6t extends BgImg with TitlePriceListBlockT with HeightFixed {
+  sealed trait Block6t extends BgImg with TitlePriceListBlockT with HeightFixed with FillColor with BorderColor {
     override val offersCount = 3
     override def template = _block6Tpl
   }
