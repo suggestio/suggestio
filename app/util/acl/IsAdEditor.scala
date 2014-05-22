@@ -28,8 +28,11 @@ object IsAdEditor {
    */
   private def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A], srmFut: Future[SioReqMd]): Future[Option[RequestWithAd[A]]] = {
     if (PersonWrapper isSuperuser pwOpt) {
-      srmFut map { srm =>
-        Some(RequestWithAd(mad, request, pwOpt, srm)())
+      for {
+        adnNodeOpt <- MAdnNodeCache.getByIdCached(mad.producerId)
+        srm <- srmFut
+      } yield {
+        Some(RequestWithAd(mad, request, pwOpt, srm, adnNodeOpt.get))
       }
     } else {
       pwOpt match {
@@ -40,7 +43,7 @@ object IsAdEditor {
           } yield {
             adnNodeOpt flatMap { adnNode =>
               if (adnNode.personIds contains pw.personId) {
-                Some(RequestWithAd(mad, request, pwOpt, srm)(adnNodeOpt))
+                Some(RequestWithAd(mad, request, pwOpt, srm, adnNode))
               } else {
                 None
               }
@@ -79,27 +82,15 @@ case class IsAdEditor(adId: String) extends ActionBuilder[RequestWithAd] {
  * @param mad Рекламная карточка.
  * @param request Реквест
  * @param pwOpt Данные по юзеру.
- * @param producerOpt Закешированные данные владельцу карточки.
  * @tparam A Параметр типа реквеста.
  */
 case class RequestWithAd[A](
   mad: MAd,
   request: Request[A],
   pwOpt: PwOpt_t,
-  sioReqMd: SioReqMd)
-  (producerOpt: Option[MAdnNode] = None)
-  extends AbstractRequestWithPwOpt(request) {
-
-  /** Для доступа к изготовителю рекламы надо использовать этот фьючерс, а не producerOpt, который может быть
-    * неожиданно пустым. */
-  @JsonIgnore
-  lazy val producerOptFut: Future[Option[MAdnNode]] = {
-    if (producerOpt.isDefined) {
-      Future successful producerOpt
-    } else {
-      MAdnNodeCache.getByIdCached(mad.producerId) 
-    }
-  }
+  sioReqMd: SioReqMd,
+  producer: MAdnNode
+) extends AbstractRequestWithPwOpt(request) {
 
   @JsonIgnore
   def producerId = mad.producerId

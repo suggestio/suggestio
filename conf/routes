@@ -64,6 +64,85 @@ POST /admin/apply_ds/:domain            controllers.Admin.applyDomainSettings(do
 GET  /feedback                          controllers.Feedback.feedbackForm(isAsync:Boolean ?= false)
 POST /feedback                          controllers.Feedback.feedbackFormSubmit
 
+
+# Входы в личные кабинеты
+GET  /m                                 controllers.MarketLk.lkIndex
+POST /m                                 controllers.MarketLk.emailPwLoginFormSubmit
+GET  /m/lk                              controllers.MarketLk.lkList
+GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, newAdId: Option[String] ?= None)
+GET  /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNode(adnId)
+POST /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
+POST /m/lk/adn/:adnId/logo              controllers.MarketLkAdnEdit.handleTempLogo(adnId)
+# Базовый супервайзинг узлов
+GET  /m/lk/adn/:adnId/slaves            controllers.MarketLkAdn.showSlaves(adnId, sortByRaw: Option[String] ?= None, isReversed: Boolean ?= false)
+POST /m/lk/adn/:adnId/search            controllers.MarketLkAdn.searchSlaves(adnId)
+GET  /m/lk/adn/slave/:adnId             controllers.MarketLkAdn.showSlave(adnId)
+GET  /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffForm(adnId)
+POST /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffSubmit(adnId)
+# Супервайзинг рекламных карточек на подчинённых узлах
+POST /m/lk/adn/slave/:adnId/set/tla     controllers.MarketLkAdn.setSlaveTopLevelAvailable(adnId)
+GET  /m/lk/adn/ad/slave/:adId           controllers.MarketLkAdnSlaveAd.showSlaveAd(adId)
+POST /m/lk/adn/ad/slave/:adId/hide      controllers.MarketLkAdnSlaveAd.slaveAdHideFormSubmit(adId)
+GET  /m/lk/adn/:adnId/_ads              controllers.MarketLkAdnSlaveAd._showSlaveAds(adnId)
+# Супервайзинг узлов: публикация рекламы на подчинённых узлах.
+GET  /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialog(adId)
+POST /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialogSubmit(adId)
+
+# Личный кабинет владельца ТЦ
+GET  /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopForm(martId)
+POST /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopFormSubmit(martId)
+GET  /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopForm(shopId)
+POST /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopFormSubmit(shopId)
+GET  /m/lk/m/:martId/eact/:eaId         controllers.MarketMartLk.martInviteAcceptForm(martId, eaId)
+POST /m/lk/m/:martId/eact/:eaId         controllers.MarketMartLk.martInviteAcceptFormSubmit(martId, eaId)
+
+# личный кабинет купца-арендатора ТЦ.
+GET  /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAccept(shopId, eaId)
+POST /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAcceptSubmit(shopId, eaId)
+# ЛК: Рекламные карточки
+POST /m/lk/ad/:adId/delete              controllers.MarketAd.deleteSubmit(adId)
+GET  /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAd(adnId)
+POST /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAdSubmit(adnId)
+POST /m/lk/ap/:adnId/preview            controllers.MarketAdPreview.adFormPreviewSubmit(adnId)
+POST /m/lk/ap/:adnId/edit/block         controllers.MarketAdPreview.adBlockSwitchEditor(adnId)
+POST /m/lk/ai/:blockId/:fn              controllers.MarketAdPreview.prepareBlockImg(blockId: Int, fn: String)
+POST /m/lk/sa/:adId/update/show         controllers.MarketAd.updateShowLevelSubmit(adId)
+GET  /m/lk/ad/:adId/edit                controllers.MarketAd.editAd(adId)
+POST /m/lk/ad/:adId/edit                controllers.MarketAd.editAdSubmit(adId)
+# lk.billing
+GET  /m/lk/bill/adn/:adnId              controllers.MarketLkBilling.showAdnNodeBilling(adnId)
+GET  /m/lk/bill/adn/:adnId/pay/bank     controllers.MarketLkBilling.paymentRequsites(adnId)
+
+
+# Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
+GET  /m/c/usr/o/:ownerId/top            controllers.MarketCategory.topCatsOf(ownerId)
+GET  /m/c/usr/c/:catId/dc               controllers.MarketCategory.directSubcatsOf(catId)
+
+# Управление промо-офферами (для арендатора и для владельца ТЦ).
+GET  /m/lk/s/:shopId/offers             controllers.MarketOffer.showShopPromoOffers(shopId: String)
+GET  /m/lk/offer/promo/add/:shopId      controllers.MarketOffer.addPromoOfferForm(shopId: String)
+# promo-offer'ы (poffer)
+POST /m/lk/poffer/add/:shopId           controllers.MarketOffer.addPromoOfferFormSubmit(shopId: String)
+POST /m/lk/poffer/:offerId/delete       controllers.MarketOffer.deletePromoOfferSubmit(offerId)
+GET  /m/lk/poffer/:offerId              controllers.MarketOffer.showPromoOffer(offerId)
+GET  /m/lk/poffer/:offerId/edit         controllers.MarketOffer.editPromoOfferForm(offerId)
+POST /m/lk/poffer/:offerId/edit         controllers.MarketOffer.editPromoOfferFormSubmit(offerId)
+
+
+POST /img/tmp/prepare                   controllers.Img.handleTempImg
+GET  /img/tmp/:filename                 controllers.Img.getTempImg(filename)
+GET  /img/orig/:imgId                   controllers.Img.getOrig(imgId)
+GET  /img/any/:imgId                    controllers.Img.getImg(imgId)
+GET  /img/crop/:imgId                   controllers.Img.imgCropForm(imgId, width:Int, height: Int, marker: Option[String] ?= None)
+POST /img/crop                          controllers.Img.imgCropSubmit
+
+# market
+GET  /market/index/:martId              controllers.Market.martIndex(martId)
+GET  /market/demo_website/:martId       controllers.Market.demoWebSite(martId)
+GET  /market/ads/:martId                controllers.Market.findAds(martId, a: util.qsb.AdSearch)
+POST /market/ads/:martId/stat/:adId     controllers.Market.adStats(martId, adId, action: String)
+
+
 GET  /sys                               controllers.Sys.index
 GET  /sys/dkeys/all                     controllers.Sys.dkeysListAll
 GET  /sys/dkey/:dkey                    controllers.Sys.dkeyShow(dkey)
@@ -86,83 +165,6 @@ GET  /sys/indices/vin/:vin              controllers.Sys.showVin(vin)
 POST /sys/indices/downgrade/ALL         controllers.Sys.indicesDowngradeAll
 GET  /sys/inx2/ALL                      controllers.Sys.inx2AllIndices
 POST /sys/inx2/create/dflt/mart         controllers.Sys.inx2createDfltMart
-
-# Входы в личные кабинеты
-GET  /m                                 controllers.MarketLk.lkIndex
-GET  /m/lk                              controllers.MarketLk.lkList
-# Личный кабинет владельца ТЦ
-GET  /m/lk/mart/:martId                 controllers.MarketMartLk.martShow(martId, newAdId: Option[String] ?= None)
-GET  /m/lk/mart/:martId/shops           controllers.MarketMartLk.shopsShow(martId, sortByRaw: Option[String] ?= None, isReversed: Boolean ?= false)
-POST /m/lk/mart/:martId/search          controllers.MarketMartLk.searchShops(martId)
-GET  /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditForm(martId: String)
-POST /m/lk/mart/:martId/edit            controllers.MarketMartLk.martEditFormSubmit(martId: String)
-#POST /m/lk/mart/:martId/shop/:shopId/delete controllers.MarketMartLk.martShopDeleteSubmit(martId, shopId)
-GET  /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopForm(martId)
-POST /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopFormSubmit(martId)
-POST /m/lk/mart/:martId/logo            controllers.MarketMartLk.handleMartTempLogo(martId)
-GET  /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopForm(shopId)
-POST /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopFormSubmit(shopId)
-GET  /m/lk/mart/shop/:shopId            controllers.MarketMartLk.showShop(shopId)
-GET  /m/lk/mart/shop/:shopId/on-off     controllers.MarketMartLk.shopOnOffForm(shopId)
-POST /m/lk/mart/shop/:shopId/on-off     controllers.MarketMartLk.shopOnOffSubmit(shopId)
-POST /m/lk/mart/shop/:shopId/set/tla    controllers.MarketMartLk.setShopTopLevelAvailable(shopId)
-GET  /m/lk/mart/shop/ad/:adId/hide      controllers.MarketMartLk.shopAdHideForm(adId)
-POST /m/lk/mart/shop/ad/:adId/hide      controllers.MarketMartLk.shopAdHideFormSubmit(adId)
-GET  /m/lk/m/:martId/eact/:eaId         controllers.MarketMartLk.martInviteAcceptForm(martId, eaId)
-POST /m/lk/m/:martId/eact/:eaId         controllers.MarketMartLk.martInviteAcceptFormSubmit(martId, eaId)
-
-# личный кабинет купца-арендатора ТЦ.
-GET  /m/lk/s/:shopId                    controllers.MarketShopLk.showShop(shopId, newAdId: Option[String] ?= None)
-GET  /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopForm(shopId)
-POST /m/lk/s/:shopId/edit               controllers.MarketShopLk.editShopFormSubmit(shopId)
-GET  /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAccept(shopId, eaId)
-POST /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAcceptSubmit(shopId, eaId)
-# ЛК: Рекламные карточки
-POST /m/lk/a/:adId/delete               controllers.MarketAd.deleteSubmit(adId)
-POST /m/lk/ai/temp                      controllers.MarketAd.handleAdTempLogo
-## ЛК: Рекламные карточки: shop
-POST /m/lk/aa/:adnId/ad/preview         controllers.MarketAd.adFormPreviewSubmit(adnId)
-GET  /m/lk/s/:shopId/ad/new             controllers.MarketAd.createShopAd(shopId)
-POST /m/lk/s/:shopId/ad/new             controllers.MarketAd.createShopAdSubmit(shopId)
-POST /m/lk/s/:shopId/logo               controllers.MarketShopLk.handleShopTempLogo(shopId)
-GET  /m/lk/sa/:adId/edit                controllers.MarketAd.editShopAd(adId)
-POST /m/lk/sa/:adId/edit                controllers.MarketAd.editShopAdSubmit(adId)
-POST /m/lk/sa/:adId/update/show         controllers.MarketAd.updateShowLevelSubmit(adId)
-## ЛК: Рекламные карточки: ТЦ
-GET  /m/lk/m/:martId/ad/new             controllers.MarketAd.createMartAd(martId)
-POST /m/lk/m/:martId/ad/new             controllers.MarketAd.createMartAdSubmit(martId)
-GET  /m/lk/ma/:adId/edit                controllers.MarketAd.editMartAd(adId)
-POST /m/lk/ma/:adId/edit                controllers.MarketAd.editMartAdSubmit(adId)
-# lk.billing
-GET  /m/lk/bill/pay/bank/:adnId         controllers.MarketLkBilling.paymentRequsites(adnId)
-
-
-# Категории: client JSON API. Используется для динамических форм заполнения карточек и в выдаче
-GET  /m/c/usr/o/:ownerId/top            controllers.MarketCategory.topCatsOf(ownerId)
-GET  /m/c/usr/c/:catId/dc               controllers.MarketCategory.directSubcatsOf(catId)
-
-# Управление промо-офферами (для арендатора и для владельца ТЦ).
-GET  /m/lk/s/:shopId/offers             controllers.MarketOffer.showShopPromoOffers(shopId: String)
-GET  /m/lk/offer/promo/add/:shopId      controllers.MarketOffer.addPromoOfferForm(shopId: String)
-# promo-offer'ы (poffer)
-POST /m/lk/poffer/add/:shopId           controllers.MarketOffer.addPromoOfferFormSubmit(shopId: String)
-POST /m/lk/poffer/:offerId/delete       controllers.MarketOffer.deletePromoOfferSubmit(offerId)
-GET  /m/lk/poffer/:offerId              controllers.MarketOffer.showPromoOffer(offerId)
-GET  /m/lk/poffer/:offerId/edit         controllers.MarketOffer.editPromoOfferForm(offerId)
-POST /m/lk/poffer/:offerId/edit         controllers.MarketOffer.editPromoOfferFormSubmit(offerId)
-
-
-POST /img/tmp/prepare                   controllers.Img.handleTempImg
-GET  /img/tmp/:filename                 controllers.Img.getTempImg(filename)
-GET  /img/orig/:imgId                   controllers.Img.getOrig(imgId)
-GET  /img/any/:imgId                    controllers.Img.getImg(imgId)
-
-# market
-GET  /market/index/:martId              controllers.Market.martIndex(martId)
-GET  /market/demo_website/:martId       controllers.Market.demoWebSite(martId)
-GET  /market/ads/:martId                controllers.Market.findAds(martId, a: util.qsb.AdSearch)
-POST /market/ads/:martId/stat/:adId     controllers.Market.adStats(martId, adId, action: String)
-
 # sys.market
 GET  /sys/market                        controllers.SysMarket.index
 # sys.market.company
@@ -173,28 +175,21 @@ GET  /sys/market/company/:id/edit       controllers.SysMarket.companyEditForm(id
 POST /sys/market/company/:id/edit       controllers.SysMarket.companyEditFormSubmit(id: String)
 POST /sys/market/company/:id/delete     controllers.SysMarket.companyDeleteSubmit(id: String)
 GET  /sys/market/company/:id            controllers.SysMarket.companyShow(id: String)
+# sys.market.adn
+GET  /sys/market/adn/:adnId             controllers.SysMarket.showAdnNode(adnId)
+GET  /sys/market/adns                   controllers.SysMarket.adnNodesList(anmt: Option[String] ?= None)
+GET  /sys/market/create/adn             controllers.SysMarket.createAdnNode(supId: Option[String] ?= None)
+POST /sys/market/create/adn             controllers.SysMarket.createAdnNodeSubmit(supId: Option[String] ?= None)
+POST /sys/market/adn/:adnId/delete      controllers.SysMarket.deleteAdnNodeSubmit(adnId)
+GET  /sys/market/adn/:adnId/ads         controllers.SysMarket.showAdnNodeAds(adnId)
+GET  /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNode(adnId)
+POST /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNodeSubmit(adnId)
 # sys.market.mart
-GET  /sys/market/marts                  controllers.SysMarket.martsList
-GET  /sys/market/mart/add/:company_id   controllers.SysMarket.martAddForm(company_id: String)
-POST /sys/market/mart/add/:company_id   controllers.SysMarket.martAddFormSubmit(company_id: String)
-GET  /sys/market/mart/:id               controllers.SysMarket.martShow(id: String)
-GET  /sys/market/mart/:id/edit          controllers.SysMarket.martEditForm(id: String)
-POST /sys/market/mart/:id/edit          controllers.SysMarket.martEditFormSubmit(id: String)
-POST /sys/market/mart/:id/delete        controllers.SysMarket.martDeleteSubmit(id: String)
 GET  /sys/market/mart/:id/invite        controllers.SysMarket.martInviteForm(id: String)
 POST /sys/market/mart/:id/invite        controllers.SysMarket.martInviteFormSubmit(id: String)
 GET  /sys/market/mart/:id/invite/email  controllers.SysMarket.showMartEmailInvite(id, isHtml: Boolean)
 # sys.market.shop
-GET  /sys/market/shops                  controllers.SysMarket.shopsList
-GET  /sys/market/shop/add               controllers.SysMarket.shopAddForm
-POST /sys/market/shop/add               controllers.SysMarket.shopAddFormSubmit
-GET  /sys/market/shop/:id               controllers.SysMarket.shopShow(id)
-GET  /sys/market/shop/:id/edit          controllers.SysMarket.shopEditForm(id)
-POST /sys/market/shop/:id/edit          controllers.SysMarket.shopEditFormSubmit(id)
-POST /sys/market/shop/:id/delete        controllers.SysMarket.shopDeleteSubmit(id)
 GET  /sys/market/shop/:id/eact          controllers.SysMarket.showShopEmailActMsgHtml(id, isHtml: Boolean)
-GET  /sys/market/shop/:id/ads           controllers.SysMarket.showShopAds(id)
-GET  /sys/market/adn/:adnId/rdr         controllers.SysMarket.adnRdr(adnId)
 GET  /sys/market/s/ad/:adId/email       controllers.SysMarket.showShopEmailAdDisableMsg(adId, isHtml: Boolean ?= true)
 # sys.market.shop.pricelist
 GET  /sys/market/spl/add/:shopId        controllers.SysMarket.splAddForm(shopId)
@@ -223,10 +218,16 @@ POST /sys/market/b/contract/edit/:cId   controllers.SysMarketBilling.editContrac
 GET  /sys/market/b/payment/new          controllers.SysMarketBilling.incomingPaymentForm
 POST /sys/market/b/payment/new          controllers.SysMarketBilling.incomingPaymentFormSubmit
 POST /sys/market/b/payment/new/confirm  controllers.SysMarketBilling.confirmIncomingPaymentSubmit
-## Тарифы
-GET  /sys/market/bt/new/:contractId     controllers.SysMarketBillingTariff.addFeeTariffForm(contractId: Int)
-POST /sys/market/bt/new/:contractId     controllers.SysMarketBillingTariff.addFeeTariffFormSubmit(contractId: Int)
-GET  /sys/market/bt/edit/:tariffId      controllers.SysMarketBillingTariff.editFeeTariffForm(tariffId: Int)
-POST /sys/market/bt/edit/:tariffId      controllers.SysMarketBillingTariff.editFeeTariffFormSubmit(tariffId: Int)
-POST /sys/market/bt/delete/:tariffId    controllers.SysMarketBillingTariff.deleteFeeTariffSubmit(tariffId: Int)
+## Тарифы: абонплата
+GET  /sys/market/btf/new/:contractId     controllers.SysMarketBillingTariff.addFeeTariffForm(contractId: Int)
+POST /sys/market/btf/new/:contractId     controllers.SysMarketBillingTariff.addFeeTariffFormSubmit(contractId: Int)
+GET  /sys/market/btf/edit/:tariffId      controllers.SysMarketBillingTariff.editFeeTariffForm(tariffId: Int)
+POST /sys/market/btf/edit/:tariffId      controllers.SysMarketBillingTariff.editFeeTariffFormSubmit(tariffId: Int)
+POST /sys/market/btf/delete/:tariffId    controllers.SysMarketBillingTariff.deleteFeeTariffSubmit(tariffId: Int)
+## Тарифы: просмотры/переходы (stat-тарифы)
+GET  /sys/market/bts/new/:contractId     controllers.SysMarketBillingTariff.addStatTariff(contractId: Int)
+POST /sys/market/bts/new/:contractId     controllers.SysMarketBillingTariff.addStatTariffSubmit(contractId: Int)
+GET  /sys/market/bts/edit/:tariffId      controllers.SysMarketBillingTariff.editStatTariff(tariffId: Int)
+POST /sys/market/bts/edit/:tariffId      controllers.SysMarketBillingTariff.editStatTariffSubmit(tariffId: Int)
+POST /sys/market/bts/delete/:tariffId    controllers.SysMarketBillingTariff.deleteStatTariffSubmit(tariffId: Int)
 

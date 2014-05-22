@@ -1,0 +1,121 @@
+@(adnNode: MAdnNode, feeTariffs: Seq[MBillTariffFee], txns: Seq[MBillTxn], mbc: MBillContract)(implicit ctx: util.Context)
+
+@* Страница с информацией по биллингу для узла рекламной сети. *@
+@import ctx._
+@import util.TplDataFormatUtil._
+@import datetime._
+
+@market.lk.lkBase("Биллинг | " + adnNode.meta.name, adnIdOpt = adnNode.id) {
+
+  <div class="title-wrap">
+    <div class="center">
+      <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)">&nbsp;</a>
+      <div class="title-inner">БАЛАНС</div>
+    </div>
+  </div>
+
+  <div class="body billing-page">
+
+    @* Верхняя информация: баланс, тарификация *@
+    <table class="top-info">
+
+
+      @ctx.billBalanceOpt.map { mbb =>
+
+        <td>
+          <div class="ovh" style="padding-left: 0;">
+            <span class="gray font-12">Текущий баланс:</span>
+          </div>
+        </td>
+        <td>
+          <div class="ovh">
+            <span class="value big">@formatPrice(mbb.amount, mbb.currency)</span>
+          </div>
+        </td>
+
+      }
+
+
+      @feeTariffs.headOption.map { tariff =>
+
+        @tariff.nextPayDt.map { npd =>
+          <td>
+            <div class="border-line-vertical f-left"></div>
+            <div class="ovh">
+              <span class="gray font-12">Списание средств:</span>
+            </div>
+          </td>
+          <td>
+            <div class="ovh">
+              <span class="value" data-js-class="value" title="@_prettyDate(npd).toString.trim">@numericDate(npd)</span>
+            </div>
+          </td>
+        }
+
+        <td>
+          <div class="border-line-vertical f-left"></div>
+          <div class="ovh">
+            <span class="gray font-12">Сумма списания:</span>
+          </div>
+        </td>
+        <td>
+          <div class="ovh">
+            @tariff match {
+              case mbtf: MBillTariffFee => {
+                <span class="value">@formatPrice(mbtf.fee, mbtf.feeCurrency)</span>
+              }
+            }
+            <span class="value font-12">(Тариф: @tariff.name)</span>
+          </div>
+        </td>
+
+    }
+    </table>
+    <div class="border-line"></div>
+
+
+    <div class="mid-info">
+      @* Реквизиты платежа *@
+
+      <div class="f-left gray font-12">
+        Реквизиты:
+      </div>
+      <div class="ovh">
+        @_billPaymentBankTpl(mbc)
+        <span class="gray-but-smallest">
+          <a class="white-border-top" href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">Распечатать</a>
+        </span>
+
+      </div>
+    </div>
+
+
+    @* История транзакций *@
+    <div class="transactions-history">
+
+      @if(!txns.isEmpty) {
+        <div class="title">
+          <strong>История операций:</strong>
+          <a class="toggle" href="#">Развернуть</a>
+        </div>
+        <div class="border-line"></div>
+        <div class="transactions-list">
+          @txns.map { txn =>
+            <div class="item">
+              <div class="f-left">
+                <strong>@txn.paymentComment</strong> / <span title="@_prettyDate(txn.datePaid).toString.trim">@numericDate(txn.datePaid)</span>
+              </div>
+              <div class="ovh">
+                Сумма: <strong>@formatPrice(txn.amount, txn.currency)</strong>
+              </div>
+            </div>
+            <div class="border-line"></div>
+          }
+        </div>
+      }
+
+    </div>
+
+  </div>
+
+}

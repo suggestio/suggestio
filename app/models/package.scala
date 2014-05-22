@@ -46,7 +46,7 @@ package object models {
 
 
   // Рекламота
-  type MAdT                 = ym.model.ad.MAdT[_]
+  type MAdT                 = ym.model.ad.MAdT
 
   val  AdReceiverInfo       = ym.model.common.AdReceiverInfo
   type AdReceiverInfo       = ym.model.common.AdReceiverInfo
@@ -55,41 +55,22 @@ package object models {
   type MWelcomeAd           = ym.model.MWelcomeAd
 
   val  AdOfferTypes         = ym.model.AdOfferTypes
-  type AdOfferType          = ym.model.AdOfferType
+  type AdOfferType          = AdOfferTypes.AdOfferType
 
   type AdOfferT             = ym.model.ad.AdOfferT
 
-  val  AOProduct            = ym.model.ad.AOProduct
-  type AOProduct            = ym.model.ad.AOProduct
-
-  val  AODiscount           = ym.model.ad.AODiscount
-  type AODiscount           = ym.model.ad.AODiscount
-
-  val  AOText               = ym.model.ad.AOText
-  type AOText               = ym.model.ad.AOText
-
-  val  AOTextAlignValues    = common.AOTextAlignValues
-  type AOTextAlignValue     = AOTextAlignValues.TextAlignValue
-
-  val  AODiscountTemplate   = ym.model.ad.AODiscountTemplate
-  type AODiscountTemplate   = ym.model.ad.AODiscountTemplate
+  val  AOBlock              = ym.model.ad.AOBlock
+  type AOBlock              = ym.model.ad.AOBlock
 
   val  AOFloatField         = ym.model.ad.AOFloatField
   type AOFloatField         = ym.model.ad.AOFloatField
   val  AOStringField        = ym.model.ad.AOStringField
   type AOStringField        = ym.model.ad.AOStringField
 
-  val  TextAlign            = ym.model.common.TextAlign
-  type TextAlign            = ym.model.common.TextAlign
-
-  val  TextAlignPhone       = ym.model.common.TextAlignPhone
-  type TextAlignPhone       = ym.model.common.TextAlignPhone
-
-  val  TextAlignTablet      = ym.model.common.TextAlignTablet
-  type TextAlignTablet      = ym.model.common.TextAlignTablet
-
   val  AOFieldFont          = ym.model.ad.AOFieldFont
   type AOFieldFont          = ym.model.ad.AOFieldFont
+
+  type AOValueField         = ym.model.ad.AOValueField
 
   val  AdPanelSettings      = ym.model.common.AdPanelSettings 
   type AdPanelSettings      = ym.model.common.AdPanelSettings
@@ -99,6 +80,10 @@ package object models {
 
   val  MImgInfo             = ym.model.common.MImgInfo
   type MImgInfo             = ym.model.common.MImgInfo
+  type MImgInfoT            = ym.model.common.MImgInfoT
+
+  type ImgCrop              = io.suggest.img.ImgCrop
+  val  ImgCrop              = io.suggest.img.ImgCrop
 
   val  MImgInfoMeta         = ym.model.common.MImgInfoMeta
   type MImgInfoMeta         = ym.model.common.MImgInfoMeta
@@ -127,4 +112,30 @@ package object models {
   type TariffType           = TariffTypes.TariffType
 
   type SelectPolicy         = SelectPolicies.SelectPolicy
+
+  type Context              = util.Context
+  type BlockData            = common.IBlockMeta with ym.model.ad.IOffers with common.IColors
+
+  val  BlocksConf           = util.blocks.BlocksConf
+  type BlockConf            = BlocksConf.BlockConf
+
+  type BlockFieldT          = util.blocks.BlockFieldT
+  type BlockAOValueFieldT   = util.blocks.BlockAOValueFieldT
+  type BfHeight             = util.blocks.BfHeight
+  type BfDiscount           = util.blocks.BfDiscount
+  type BfText               = util.blocks.BfText
+  type BfPrice              = util.blocks.BfPrice
+  type BfString             = util.blocks.BfString
+  type BfImage              = util.blocks.BfImage
+  type BfColor              = util.blocks.BfColor
+
+  type Coords2D             = ym.model.ad.Coords2D
+  val  Coords2D             = ym.model.ad.Coords2D
+
+  val  TextAligns           = ym.model.ad.TextAligns
+  type TextAlign            = TextAligns.TextAlign
+
+  val  DisableReason        = ym.model.common.DisableReason
+  type DisableReason        = ym.model.common.DisableReason
+
 }

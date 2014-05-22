@@ -1,11 +1,19 @@
 package models
 
+import _root_.util.PlayMacroLogsImpl
 import org.joda.time.DateTime
-import org.elasticsearch.common.xcontent.XContentBuilder
-import io.suggest.model.{EsModelT, EsModel, EsModelStaticT}
+import io.suggest.model._
 import EsModel._
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
+import io.suggest.util.SioEsUtil.FieldAll
+import io.suggest.util.SioEsUtil.FieldDate
+import io.suggest.util.SioEsUtil.FieldString
+import io.suggest.util.SioEsUtil.FieldSource
+import play.api.libs.json.JsString
+import io.suggest.event.SioNotifierStaticClientI
+import scala.concurrent.ExecutionContext
+import org.elasticsearch.client.Client
 
 /**
  * Suggest.io
@@ -15,8 +23,10 @@ import play.api.libs.json._
  * Порт модели blog_record из старого sioweb.
  */
 
-object MBlog extends EsModelStaticT[MBlog] {
+object MBlog extends EsModelStaticT with PlayMacroLogsImpl {
   override val ES_TYPE_NAME: String = "blog"
+
+  override type T = MBlog
 
   val TITLE_ESFN    = "title"
   val BG_IMAGE_ESFN = "bgImage"
@@ -69,7 +79,9 @@ case class MBlog(
   var text      : String,
   id            : Option[String] = None,
   var date      : DateTime = null
-) extends EsModelT[MBlog] {
+) extends EsModelT {
+
+  override type T = MBlog
 
   def companion = MBlog
 
@@ -86,4 +98,14 @@ case class MBlog(
   }
 
 }
+
+
+trait MBlogJmxMBean extends EsModelJMXMBeanCommon
+class MBlogJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase
+  with MBlogJmxMBean
+{
+  override def companion = MBlog
+}
+
 

@@ -1,0 +1,18 @@
+@(ad: MAdT, producer: MAdnNode, fallbackLogo: Option[MImgInfoT] = None, isDoubleSize:Boolean = false)(implicit ctx: util.Context)
+
+@import util.TplDataFormatUtil._
+@import AdNetMemberTypes.MART
+
+@*ad.offers.map {
+  case adRaw: AORaw => {
+    @BlocksConf.renderBlockMap(adRaw.bodyMap, isStandalone = false)
+  }
+}*@
+
+<div onclick="siomart.load_for_shop_id('@producer.id'); return false;">
+  @blocks.sm_block_tpl24()
+</div>
+
+@*blocks.sm_block_tpl1()
+@blocks.sm_block_tpl2()
+@blocks.sm_block_tpl3()*@

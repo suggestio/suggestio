@@ -1,0 +1,39 @@
+@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+
+@import common._
+@import util.TplDataFormatUtil._
+
+@defining( mad.colors.getOrElse(Block22.borderColorBf.name, Block22.borderColorBf.anyDefaultValue) )  { borderColor =>
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl22" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+
+  <img class="bg abs" src="@mad.imgs.get(Block22.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl22-bg.jpg"))" />
+
+  <div class="logo-wrap abs">
+    <img class="logo" src="@mad.imgs.get(Block22.LOGO_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl22-logo.jpg"))" />
+  </div>
+
+  <div class="outer-border" style="border-color: #@borderColor;">
+
+    <div class="inner" style="border-color: #@borderColor;">
+
+      <div class="info abs">
+        @mad.offers.headOption.map { offer =>
+          @offer.text1.map { text1 =>
+            <div @_aovfStyleTpl(text1, "title")>
+              @Html(text1.value)
+            </div>
+          }
+          @offer.text2.map { text2 =>
+            <div @_aovfStyleTpl(text2, "descr", "background-color: rgba(" + colorHex2rgb(borderColor).mkString(",") + ", 0.7);")>
+              @Html(text2.value)
+            </div>
+          }
+        }
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+}

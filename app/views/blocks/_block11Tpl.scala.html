@@ -1,0 +1,30 @@
+@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+
+@import util.blocks.BlocksConf.Block11
+@import common._
+
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl11"@mad.colors.get(Block11.saleMaskColorBf.name).map { saleColor => style="border-color: #@saleColor"} data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+
+  <div class="color-bg"@mad.colors.get(Block11.saleMaskColorBf.name).map { saleColor => style="background: #@saleColor"}></div>
+  <div class="sale-mask abs"></div>
+
+
+  <img class="photo" src="@mad.imgs.get(Block11.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl11-bg.jpg"))" />
+
+
+  @mad.offers.headOption.map { offer =>
+    <div class="info">
+      @offer.text1.map { text1 =>
+        <div @_aovfStyleTpl(text1, "title")>
+          @Html(text1.value)
+        </div>
+      }
+      @offer.text2.map { text2 =>
+        <div @_aovfStyleTpl(text2, "slogan")>
+          @Html(text2.value)
+        </div>
+      }
+    </div>
+  }
+
+</div>

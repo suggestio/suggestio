@@ -98,6 +98,37 @@ case class IsSuperuserFeeTariffContract(tariffId: Int) extends ActionBuilder[Fee
 }
 
 
+
+case class StatTariffRequest[A](
+  tariff: MBillTariffStat,
+  contract: MBillContract,
+  pwOpt: PwOpt_t,
+  request: Request[A],
+  sioReqMd: SioReqMd
+) extends AbstractRequestWithPwOpt[A](request)
+
+case class IsSuperuserStatTariffContract(tariffId: Int) extends ActionBuilder[StatTariffRequest] {
+  override protected def invokeBlock[A](request: Request[A], block: (StatTariffRequest[A]) => Future[Result]): Future[Result] = {
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    if (PersonWrapper.isSuperuser(pwOpt)) {
+      val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
+      val (tariff, contract) = DB.withConnection { implicit c =>
+        val _tariff = MBillTariffStat.getById(tariffId).get
+        val _contract = MBillContract.getById(_tariff.contractId).get
+        _tariff -> _contract
+      }
+      sioReqMdFut flatMap { srm =>
+        val req1 = StatTariffRequest(tariff, contract, pwOpt, request, srm)
+        block(req1)
+      }
+    } else {
+      IsSuperuser.onUnauthFut(request, pwOpt)
+    }
+  }
+}
+
+
+
 case class ContractRequest[A](
   contract: MBillContract,
   pwOpt: PwOpt_t,

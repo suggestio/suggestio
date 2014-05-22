@@ -1,7 +1,7 @@
 package controllers
 
 import io.suggest.util.MacroLogsImpl
-import util.acl.{IsShopAdm, IsSuperuser}
+import util.acl.{AbstractRequestWithPwOpt, IsSuperuserAdnNode, IsSuperuser}
 import models._
 import views.html.sys1.market._
 import views.html.market.lk
@@ -69,7 +69,6 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     */
   def companyShow(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
     val companyAdnmsFut = MAdnNode.findByCompanyId(companyId)
-      .map { _.groupBy(_.adn.memberType) }
     MCompany.getById(companyId) flatMap {
       case Some(mc) =>
         for {
@@ -129,156 +128,223 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   /** Реакция на ошибку обращения к несуществующей компании. Эта логика расшарена между несколькими экшенами. */
   private def companyNotFound(companyId: CompanyId_t) = NotFound("Company not found: " + companyId)
 
-  /** Бывает надо передать в шаблон карту всех контор. Тут фьючерс, который этим занимается. */
-  private def allCompaniesMap = MCompany.getAll().map {
-    _.map { mc => mc.id.get -> mc }.toMap
+
+  /* Унифицированные узлы ADN */
+  import views.html.sys1.market.adn._
+
+  /** Страница с унифицированным списком узлов рекламной сети в алфавитном порядке с делёжкой по memberType.  */
+  def adnNodesList(anmtRaw: Option[String]) = IsSuperuser.async { implicit request =>
+    val companiesFut = MCompany.getAll(maxResults = 1000).map {
+      _.map {c => c.id.get -> c }.toMap
+    }
+    val adnNodesFut = anmtRaw match {
+      case Some(_anmtRaw) =>
+        val anmt = AdNetMemberTypes.withName(_anmtRaw)
+        MAdnNode.findAllByType(anmt, maxResult = 1000)
+      case None =>
+        MAdnNode.getAll(maxResults = 1000)
+    }
+    for {
+      adnNodes <- adnNodesFut
+      companies <- companiesFut
+    } yield {
+      Ok(adnNodesListTpl(adnNodes, Some(companies)))
+    }
   }
 
-
-  /* Торговые центры и площади. */
-
-  /** Рендер страницы со списком торговых центров. */
-  def martsList = IsSuperuser.async { implicit request =>
-    val allCompaniesMapFut = allCompaniesMap
+  /** Унифицированая страница отображения узла рекламной сети. */
+  def showAdnNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+    import request.adnNode
+    val slavesFut = MAdnNode.findBySupId(adnId)
+    val companyOptFut = MCompany.getById(adnNode.companyId)
     for {
-      allMarts  <- MAdnNode.findAllByType(AdNetMemberTypes.MART)
-      companies <- allCompaniesMapFut
+      slaves <- slavesFut
+      companyOpt <- companyOptFut
     } yield {
-      Ok(mart.martsListTpl(allMarts, companies=Some(companies)))
+      Ok(adnNodeShowTpl(adnNode, slaves, companyOpt))
+    }
+  }
+
+  /** Безвозвратное удаление узла рекламной сети. */
+  def deleteAdnNodeSubmit(adnId: String) = IsSuperuser.async { implicit request =>
+    MAdnNode.deleteById(adnId) map {
+      case true =>
+        Redirect(routes.SysMarket.adnNodesList())
+          .flashing("success" -> "Узел ADN удалён.")
+      case false => NotFound("ADN node not found: " + adnId)
     }
   }
 
 
-  val martMetaM = mapping(
+  /** Форма для маппинг метаданных произвольного узла ADN. */
+  private val adnNodeMetaM = mapping(
     "name"      -> nameM,
-    "town"      -> townM,
-    "address"   -> martAddressM,
-    "siteUrl"   -> optional(urlStrMapper),
-    "color"     -> optional(colorM),
-    "phone"     -> optional(phoneM)
+    "descr"     -> publishedTextOptM,
+    "town"      -> townOptM,
+    "address"   -> addressOptM,
+    "phone"     -> phoneOptM,
+    "floor"     -> floorOptM,
+    "section"   -> sectionOptM,
+    "siteUrl"   -> urlStrOptM,
+    "color"     -> colorOptM
   )
-  {(name, town, address, siteUrlOpt, colorOpt, phoneOpt) =>
+  {(name, descr, town, address, phone, floor, section, siteUrl, color) =>
     AdnMMetadata(
       name    = name,
-      town    = Some(town),
-      address = Some(address),
-      siteUrl = siteUrlOpt,
-      phone   = phoneOpt,
-      color   = colorOpt
+      description = descr,
+      town    = town,
+      address = address,
+      phone   = phone,
+      floor   = floor,
+      section = section,
+      siteUrl = siteUrl,
+      color   = color
     )
   }
   {meta =>
     import meta._
-    Some((name, town.getOrElse(""), address.getOrElse(""), siteUrl, color, phone))
+    Some((name, description, town, address, phone, floor, section, siteUrl, color))
   }
 
+  /** Маппинг для adn-полей формы adn-узла. */
+  private val adnMemberM: Mapping[AdNetMemberInfo] = mapping(
+    "memberType" -> adnMemberTypeM,
+    "isEnabled"  -> boolean
+  )
+  {(mt, isEnabled) =>
+    val result = mt.getAdnInfoDflt
+    result.isEnabled = isEnabled
+    result
+  }
+  {anmi =>
+    Some((anmi.memberType, anmi.isEnabled))
+  }
+
+
   /** Маппинг для формы добавления/редактирования торгового центра. */
-  val martFormM = Form(tuple(
-    "meta"   -> martMetaM,
-    "isEnabled" -> boolean,
-    "maxAds" -> default(number(min = 0, max = 30), ShowLevelsUtil.MART_LVL_IN_START_PAGE_DFLT)
-  ))
+  private val adnNodeFormM = Form(mapping(
+    "companyId" -> esIdM,
+    "adn"       -> adnMemberM,
+    "meta"      -> adnNodeMetaM,
+    "maxAds"    -> default(
+      number(min = 0, max = 30),
+      ShowLevelsUtil.MART_LVL_IN_START_PAGE_DFLT
+    )
+  )
+  // apply()
+  {(companyId, anmi, meta, maxAds) =>
+    anmi.showLevelsInfo.setMaxOutAtLevel(anmi.memberType.slDflt, maxAds)
+    MAdnNode(
+      meta = meta,
+      companyId = companyId,
+      adn = anmi,
+      personIds = Set.empty
+    )
+  }
+  // unapply()
+  {adnNode =>
+    import adnNode._
+    val maxAds = adn.showLevelsInfo.maxOutAtLevel(adnNode.adn.memberType.slDflt)
+    Some((companyId, adn, meta, maxAds))
+  })
 
-
-  /** Рендер страницы с формой добавления торгового центра. */
-  def martAddForm(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
-    MCompany.isExist(companyId) map {
-      case true  => Ok(mart.martAddFormTpl(companyId, martFormM))
-      case false => companyNotFound(companyId)
+  private def maybeSupOpt(supIdOpt: Option[String]): Future[Option[MAdnNode]] = {
+    supIdOpt match {
+      case Some(supId) => MAdnNodeCache.getByIdCached(supId)
+      case None => Future successful None
+    }
+  }
+  private def createAdnNodeRender(supOptFut: Future[Option[MAdnNode]], supIdOpt: Option[String])(implicit request: AbstractRequestWithPwOpt[_]) = {
+    val companiesFut = MCompany.getAll(maxResults = 100)
+    for {
+      supOpt    <- supOptFut
+      companies <- companiesFut
+    } yield {
+      createAdnNodeFormTpl(supOpt, adnNodeFormM, companies)
     }
   }
 
-  /** Сабмит формы добавления торгового центра. */
-  def martAddFormSubmit(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
-    martFormM.bindFromRequest().fold(
+  /** Страница с формой создания нового узла. */
+  def createAdnNode(supIdOpt: Option[String]) = IsSuperuser.async { implicit request =>
+    createAdnNodeRender(maybeSupOpt(supIdOpt), supIdOpt) map { Ok(_) }
+  }
+
+  /** Сабмит формы создания нового узла. */
+  def createAdnNodeSubmit(supIdOpt: Option[String]) = IsSuperuser.async { implicit request =>
+    val supOptFut = maybeSupOpt(supIdOpt)
+    adnNodeFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug(s"martAddFormSubmt($companyId): Form bind failed: " + formWithErrors.errors)
-        NotAcceptable(mart.martAddFormTpl(companyId, formWithErrors))
+        val renderFut = createAdnNodeRender(supOptFut, supIdOpt)
+        debug(s"createAdnNodeSubmit(supId=$supIdOpt): Failed to bind form: ${formatFormErrors(formWithErrors)}")
+        renderFut map {
+          NotAcceptable(_)
+        }
       },
-      {case (mmartMeta, isEnabled, maxAds) =>
-        val mmart = MAdnNode(
-          companyId = companyId,
-          personIds = Set.empty,
-          meta = mmartMeta,
-          adn = {
-            val _adn = AdNetMemberTypes.MART.getAdnInfoDflt
-            _adn.isEnabled = isEnabled
-            _adn
+      {adnNode =>
+        adnNode.adn.supId = supIdOpt
+        supOptFut flatMap { supOpt =>
+          if (supIdOpt.isDefined) {
+            adnNode.handleMeAddedAsChildFor(supOpt.get)
           }
-        )
-        mmart.save map { mmartSavedId =>
-          Redirect(routes.SysMarket.martShow(mmartSavedId))
+          for {
+            adnId <- adnNode.save
+          } yield {
+            adnNode.id = Some(adnId)
+            if (supIdOpt.isDefined) {
+              val sup = supOpt.get
+              if (sup.handleChildNodeAddedToMe(adnNode)) {
+                sup.save
+              }
+            }
+            Redirect(routes.SysMarket.showAdnNode(adnId))
+              .flashing("succes" -> s"Создан узел сети: $adnId")
+          }
         }
       }
     )
   }
 
-  /** Отображение одного ТЦ. */
-  def martShow(martId: String) = IsSuperuser.async { implicit request =>
-    getMartById(martId) flatMap {
-      case Some(mmart) =>
-        val martShopsFut = MAdnNode.findBySupId(martId)
-        for {
-          ownerCompanyOpt <- mmart.company
-          martShops       <- martShopsFut
-        } yield {
-          Ok(mart.martShowTpl(mmart, martShops, ownerCompanyOpt))
-        }
-
-      case None => martNotFound(martId)
+  /** Страница с формой редактирования узла ADN. */
+  def editAdnNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+    import request.adnNode
+    val companiesFut = MCompany.getAll(maxResults = 1000)
+    val formFilled = adnNodeFormM.fill(adnNode)
+    companiesFut map { companies =>
+      Ok(editAdnNodeFormTpl(adnNode, formFilled, companies))
     }
   }
+  /** Самбит формы редактирования узла. */
+  def editAdnNodeSubmit(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+    import request.adnNode
+    adnNodeFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        val companiesFut = MCompany.getAll(maxResults = 1000)
+        debug(s"editAdnNodeSubmit($adnId): Failed to bind form: ${formatFormErrors(formWithErrors)}")
+        companiesFut map { companies =>
+          NotAcceptable(editAdnNodeFormTpl(adnNode, formWithErrors, companies))
+        }
+      },
+      {adnNode2 =>
+        adnNode.meta = adnNode2.meta
+        adnNode.adn.memberType = adnNode2.adn.memberType
+        adnNode.companyId = adnNode2.companyId
+        val sl = adnNode2.adn.memberType.slDflt
+        val maxAds = adnNode2.adn.showLevelsInfo.maxOutAtLevel(sl)
+        adnNode.adn.showLevelsInfo.setMaxOutAtLevel(sl, maxAds)
+        adnNode.adn.isEnabled = adnNode2.adn.isEnabled
+        adnNode.save.map { _ =>
+          Redirect(routes.SysMarket.showAdnNode(adnId))
+            .flashing("success" -> "Изменения сохранены")
+        }
+      }
+    )
+  }
+
+
+  /* Торговые центры и площади. */
 
   private def martNotFound(martId: String) = NotFound("Mart not found: " + martId)
 
-  /** Рендер страницы с формой редактирования торгового центра. */
-  def martEditForm(mart_id: String) = IsSuperuser.async { implicit request =>
-    getMartById(mart_id) map {
-      case Some(mmart) =>
-        val maxOwnAdsOnStartPage = mmart.adn.showLevelsInfo.maxOutAtLevel(AdShowLevels.LVL_START_PAGE)
-        val form = martFormM.fill((mmart.meta, mmart.adn.isEnabled, maxOwnAdsOnStartPage))
-        Ok(mart.martEditFormTpl(mmart, form))
-
-      case None => martNotFound(mart_id)
-    }
-  }
-
-  /** Сабмит формы редактирования торгового центра. */
-  def martEditFormSubmit(martId: String) = IsSuperuser.async { implicit request =>
-    getMartById(martId) flatMap {
-      case Some(mmart) =>
-        martFormM.bindFromRequest().fold(
-          {formWithErrors =>
-            NotAcceptable(mart.martEditFormTpl(mmart, formWithErrors))
-          },
-          {case (martMeta, isEnabled, maxOwnAdsOnStartPage) =>
-            mmart.meta.name = martMeta.name
-            mmart.meta.town = martMeta.town
-            mmart.meta.address = martMeta.address
-            mmart.meta.siteUrl = martMeta.siteUrl
-            mmart.meta.color = martMeta.color
-            mmart.meta.phone = martMeta.phone
-            mmart.adn.showLevelsInfo.setMaxOutAtLevel(AdShowLevels.LVL_START_PAGE, maxOwnAdsOnStartPage)
-            mmart.adn.isEnabled = isEnabled
-            mmart.save map { _martId =>
-              Redirect(routes.SysMarket.martShow(_martId))
-            }
-          }
-        )
-
-      case None => martNotFound(martId)
-    }
-  }
-
-  /** Удалить торговый центр из системы. */
-  def martDeleteSubmit(martId: String) = IsSuperuser.async { implicit request =>
-    MAdnNode.deleteById(martId) map {
-      case false => martNotFound(martId)
-      case true =>
-        Redirect(routes.SysMarket.martsList())
-          .flashing("success" -> s"Mart $martId deleted.")
-    }
-  }
 
   // Инвайты на управление ТЦ
 
@@ -324,7 +390,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
                 bodyHtml = views.html.market.lk.mart.invite.emailMartInviteTpl(mmart, eAct)(ctx)
               )
               // Письмо отправлено, вернуть админа назад в магазин
-              Redirect(routes.SysMarket.martShow(martId))
+              Redirect(routes.SysMarket.showAdnNode(martId))
                 .flashing("success" -> ("Письмо с приглашением отправлено на " + email1))
             }
           }
@@ -337,189 +403,15 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
   /* Магазины (арендаторы ТЦ). */
 
-  /** Выдать страницу со списком всех магазинов в порядке их создания. */
-  def shopsList = IsSuperuser.async { implicit request =>
-    val mcsFut = allCompaniesMap
-    val mmsFut = MAdnNode.findAllByType(AdNetMemberTypes.MART).map {
-      _.map { mmart  =>  mmart.id.get -> mmart }.toMap
-    }
-    for {
-      shops <- MAdnNode.findAllByType(AdNetMemberTypes.SHOP)
-      mcs   <- mcsFut
-      mms   <- mmsFut
-    } yield {
-      Ok(shop.shopsListTpl(shops, marts=Some(mms), companies=Some(mcs)))
-    }
-  }
-
-  val shopMetaM = mapping(
-    "name"    -> shopNameM,
-    "descr"   -> publishedTextOptM,
-    "floor"   -> optional(floorM),
-    "section" -> optional(sectionM)
-  )
-  {(name, descriptionOpt, floorOpt, sectionOpt) =>
-    AdnMMetadata(
-      name = name,
-      description = descriptionOpt,
-      floor = floorOpt,
-      section = sectionOpt
-    )
-  }
-  {meta =>
-    import meta._
-    Some((name, description, floor, section))
-  }
-
-  /** Форма добавления/редактирования магазина. */
-  val shopFormM = Form(mapping(
-    "meta"       -> shopMetaM,
-    "martId"     -> optional(esIdM),
-    "companyId"  -> esIdM,
-    "l3maxAds"   -> default(number(min=0, max=30), ShowLevelsUtil.SHOP_LVL_OUT_MEMBER_DLFT)
-  )
-  // apply()
-  {(meta, martIdOpt, companyId, l3maxAds) =>
-    val adnShop = AdNetMemberTypes.SHOP.getAdnInfoDflt
-    adnShop.supId = martIdOpt
-    adnShop.showLevelsInfo.setMaxOutAtLevel(AdShowLevels.LVL_MEMBER, l3maxAds)
-    MAdnNode(
-      meta = meta,
-      companyId = companyId,
-      adn = adnShop,
-      personIds = Set.empty
-    )
-  }
-  // unapply()
-  {mshop =>
-    import mshop._
-    val l3maxAds = adn.showLevelsInfo.maxOutAtLevel(AdShowLevels.LVL_MEMBER)
-    Some((meta, adn.supId, companyId, l3maxAds))
-  })
-
-
-  private def getAllCompaniesAndMarts = {
-    val companiesFut = MCompany.getAll()
-    for {
-      marts     <- MAdnNode.findAllByType(AdNetMemberTypes.MART)
-      companies <- companiesFut
-    } yield (companies, marts)
-  }
-
-  /** Рендер страницы добавления нового магазина. */
-  def shopAddForm = IsSuperuser.async { implicit request =>
-    getAllCompaniesAndMarts map { case (companies, marts) =>
-      Ok(shop.shopAddFormTpl(shopFormM, companies, marts))
-    }
-  }
-
-  /** Сабмит формы добавления нового магазина. */
-  def shopAddFormSubmit = IsSuperuser.async { implicit request =>
-    shopFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(s"shopAddFormSubmit(): " + formatFormErrors(formWithErrors))
-        getAllCompaniesAndMarts map { case (companies, marts) =>
-          NotAcceptable(shop.shopAddFormTpl(formWithErrors, companies, marts))
-        }
-      },
-      {mshop =>
-        mshop.personIds = Set(request.pwOpt.get.personId)
-        mshop.save flatMap { mshopSavedId =>
-          // Нужно добавить новый магазин в список продьюсеров ТЦ.
-          val martUpdateFut: Future[_] = mshop.adn.supId match {
-            case Some(martId) => MAdnNodeCache.getByIdCached(martId) flatMap { mmartOpt =>
-              val mmart = mmartOpt.get
-              mmart.adn.producerIds += mshopSavedId
-              mmart.save
-            }
-            case None => Future successful ()
-          }
-          martUpdateFut map { _=>
-            Redirect(routes.SysMarket.shopShow(mshopSavedId))
-          }
-        }
-      }
-    )
-  }
-
-  /** Рендер страницы, содержащей информацию по указанному магазину. */
-  def shopShow(shopId: String) = IsSuperuser.async { implicit request =>
-    getShopById(shopId) flatMap {
-      case Some(mshop) =>
-        val splsFut = MShopPriceList.getForShop(shopId)
-        val martOptFut = mshop.getSup
-        for {
-          ownerOpt <- mshop.company
-          spls     <- splsFut
-          mmartOpt <- martOptFut
-        } yield {
-          Ok(shop.shopShowTpl(mshop, spls, ownerOpt, mmartOpt))
-        }
-
-      case None => shopNotFound(shopId)
-    }
-  }
-
   /** Рендер ошибки, если магазин не найден в базе. */
   private def shopNotFound(shopId: String) = NotFound("Shop not found: " + shopId)
-
-  /** Отрендерить страницу с формой редактирования магазина. */
-  def shopEditForm(shop_id: String) = IsShopAdm(shop_id).async { implicit request =>
-    getAllCompaniesAndMarts map { case (companies, marts) =>
-      import request.mshop
-      val form = shopFormM.fill(mshop)
-      Ok(shop.shopEditFormTpl(mshop, form, companies, marts))
-    }
-  }
-
-  /** Сабмит формы редактирования магазина. */
-  def shopEditFormSubmit(shopId: String) = IsSuperuser.async { implicit request =>
-    getShopById(shopId) flatMap {
-      case Some(mshop) =>
-        shopFormM.bindFromRequest().fold(
-          {formWithErrors =>
-            debug(s"shopEditFormSubmit($shopId): form bind failed: " + formatFormErrors(formWithErrors))
-            getAllCompaniesAndMarts map { case (companies, marts) =>
-              NotAcceptable(shop.shopEditFormTpl(mshop, formWithErrors, companies, marts))
-            }
-          },
-          {newShop =>
-            mshop.meta.name = newShop.meta.name
-            mshop.meta.description = newShop.meta.description
-            mshop.meta.floor = newShop.meta.floor
-            mshop.meta.section = newShop.meta.section
-            mshop.adn.supId = newShop.adn.supId
-            mshop.companyId = newShop.companyId
-            val l3max = newShop.adn.showLevelsInfo.maxOutAtLevel(AdShowLevels.LVL_MEMBER)
-            mshop.adn.showLevelsInfo.setMaxOutAtLevel(AdShowLevels.LVL_MEMBER, l3max)
-            mshop.save map { _ =>
-              Redirect(routes.SysMarket.shopShow(shopId))
-                .flashing("success" -> "Changes saved.")
-            }
-          }
-        )
-
-      case None => shopNotFound(shopId)
-    }
-  }
-
-  /** Админ нажал кнопку удаления магазина. Сделать это. */
-  def shopDeleteSubmit(shop_id: String) = IsSuperuser.async { implicit request =>
-    // TODO Эта логика повторяет martDeleteSubmit().
-    MAdnNode.deleteById(shop_id) map {
-      case true =>
-        Redirect(routes.SysMarket.shopsList())
-          .flashing("success" -> "Shop deleted")
-      case false => shopNotFound(shop_id)
-    }
-  }
 
 
   /* Ссылки на прайс-листы магазинов, а именно их изменение. */
 
   /** Маппинг для формы добавления/редактирования ссылок на прайс-листы. */
-  val splFormM = Form(mapping(
-    "url"       -> urlStrMapper,
+  private val splFormM = Form(mapping(
+    "url"       -> urlStrM,
     "username"  -> optional(text(maxLength = 64)),
     "password"  -> optional(text(maxLength = 64))
   )
@@ -562,7 +454,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       },
       {case (url, authInfo) =>
         MShopPriceList(shopId=shopId, url=url, authInfo=authInfo).save map { mspl =>
-          Redirect(routes.SysMarket.shopShow(shopId))
+          Redirect(routes.SysMarket.showAdnNode(shopId))
            .flashing("success" -> "Pricelist added.")
         }
       }
@@ -576,7 +468,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         mspl.delete onFailure {
           case ex => error("Unable to delete MSPL id=" + splId, ex)
         }
-        Redirect(routes.SysMarket.shopShow(mspl.shopId))
+        Redirect(routes.SysMarket.showAdnNode(mspl.shopId))
 
       case None => NotFound("No such shop pricelist with id = " + splId)
     }
@@ -629,16 +521,15 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
 
-  /** Отобразить технический список реклам магазина. */
-  def showShopAds(shopId: String) = IsSuperuser.async { implicit request =>
-    val madsFut = MAd.findForProducer(shopId)
-    val adFreqsFut = MAdStat.findAdByActionFreqs(shopId)
+  /** Отобразить технический список рекламных карточек узла. */
+  def showAdnNodeAds(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+    val madsFut = MAd.findForProducer(adnId)
+    val adFreqsFut = MAdStat.findAdByActionFreqs(adnId)
     for {
-      mshopOpt <- getShopById(shopId)
       adFreqs  <- adFreqsFut
       mads     <- madsFut
     } yield {
-      Ok(shop.shopAdsTpl(mads, mshopOpt.get, adFreqs))
+      Ok(showAdnNodeAdsTpl(mads, request.adnNode, adFreqs))
     }
   }
 
@@ -655,10 +546,11 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
           mmartOpt <- mmartFut
         } yield {
           val reason = "Причина отключения ТЕСТ причина отключения 123123 ТЕСТ причина отключения."
+          val adOwner = mshopOpt.orElse(mmartOpt).get
           if (isHtml) {
-            Ok(views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, mshopOpt.get, mad, reason))
+            Ok(views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, adOwner, mad, reason))
           } else {
-            Ok(views.txt.market.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, mshopOpt.get, mad, reason): String)
+            Ok(views.txt.market.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, adOwner, mad, reason): String)
           }
         }
 
@@ -681,21 +573,5 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     }
   }
 
-
-  /** Из-за зоопарка разделов в /sys/ нужно куда-то редиректить админов при наличии adnId.
-    * Тут редиректилка, которая отправит админа куда надо на основе adnId. */
-  def adnRdr(adnId: String) = IsSuperuser.async { implicit request =>
-    MAdnNodeCache.getByIdCached(adnId) map {
-      case Some(node) =>
-        import AdNetMemberTypes._
-        val rdrCall = node.adn.memberType match {
-          case MART => routes.SysMarket.martShow(node.id.get)
-          case SHOP => routes.SysMarket.shopShow(node.id.get)
-        }
-        Redirect(rdrCall)
-
-      case None => NotFound("Adn node not found: " + adnId)
-    }
-  }
 }
 

@@ -1,9 +1,10 @@
-@(title: String)(content: Html)(implicit ctx: util.Context)
+@(title: String, adnId: String)(content: Html)(implicit ctx: util.Context)
 
 @* Подложка для шаблонов категорий. *@
 
 @hPathAfter = {
-  / usrCats / @title  @* TODO Нужно owner'а отображать как-то. *@
+  / <a href="@routes.SysMarket.showAdnNode(adnId)">Owner</a>
+  / @title
 }
 
 @sys1.market.marketBase(title)(content)

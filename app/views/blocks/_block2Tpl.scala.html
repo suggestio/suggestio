@@ -1,0 +1,40 @@
+@(mad: MAdT, isStandalone: Boolean)(implicit ctx: util.Context)
+
+@import ctx._
+@import util.blocks.BlocksUtil._
+@import util.blocks.BlocksConf.Block2
+@import common._
+
+@blockBase(isStandalone) {
+  <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl2" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+
+    <div class="sale-icon">
+      <div class="mask"></div>
+      <img class="bg" src="@mad.imgs.get(Block2.BG_IMG_FN).map { img =>@routes.Img.getImg(img.filename) }.getOrElse(routes.Assets.at("images/market/blocks/tpl2-bg.jpg"))"/>
+    </div>
+
+    <div class="info">
+      @mad.offers.headOption.map { offer =>
+        @offer.text1.map { title =>
+          <div class="js-mvbl" data-connected-input="ad.offer.title" style="position: absolute; @title.coords.map { coords =>
+              left: @(coords.x)px; top:@(coords.y)px;
+            }.getOrElse{ left: 22px; top: 219px; }">
+            <h5 @_aovfStyleTpl(title)>@Html(title.value)</h5>
+          </div>
+        }
+
+        @offer.text2.map { descr =>
+          <div class="js-mvbl" data-connected-input="ad.offer.descr" style="position: absolute; @descr.coords.map { coords =>
+              left: @(coords.x)px; top:@(coords.y)px;
+            }.getOrElse{ left: 22px; top: 249px; }">
+          <div @_aovfStyleTpl(descr, "text")>
+            <p>@Html(descr.value)</p>
+          </div>
+          </div>
+        }
+
+      }
+    </div>
+
+  </div>
+}

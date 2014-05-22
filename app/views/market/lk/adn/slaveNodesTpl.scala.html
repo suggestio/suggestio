@@ -1,0 +1,60 @@
+@(mnode: MAdnNode, mslaves: Seq[MAdnNode])(implicit ctx: util.Context)
+
+@* Страница с отображением списка магазинов. *@
+
+@import ctx._
+@import helper._
+@import _node._
+@import controllers.adn.AdnShowTypes._
+
+@helper.javascriptRouter("jsRoutes")(
+  routes.javascript.MarketLkAdn.searchSlaves,
+  routes.javascript.MarketLkAdn.nodeOnOffForm,
+  routes.javascript.MarketLkAdn.nodeOnOffSubmit
+)
+
+@market.lk.lkBase(mnode.meta.name, adnIdOpt = mnode.id) {
+@defining(Messages("slaves.of." + mnode.adn.memberType)) { title =>
+  <div class="title-wrap">
+    <div class="center">
+      <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(mnode.id.get)">&nbsp;</a>
+      <div class="title-inner">@title</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <form class="search">
+      <div class="input" style="width: 830px; float: left;">
+        <div class="input-shadow">
+          <input id="searchShop" type="text" value="" data-mart-id="@mnode.id.get" />
+        </div>
+      </div>
+      <input class="submit" type="submit" value="" />
+      <div class="descr">Ищите по имени компании, номеру секции</div>
+    </form>
+
+    <div class="nodes-page">
+      <div class="ovh">
+        <span class="title">@title</span>
+        @mnode.adn.memberType.inviteSubNodeCall(mnode.id.get).map { inviteCall =>
+          <a class="green-but-big" href="@inviteCall">Выдать личный кабинет</a>
+        }
+      </div>
+
+      <div class="nodes-list">
+        <div class="hat">
+          Управление личным кабинетом
+        </div>
+
+        <div id="shop-list">
+          @_slaveNodesListTpl(mslaves)
+        </div>
+        <div id="search-results"></div>
+
+      </div><!-- renters-list end -->
+    </div>
+
+  </div><!-- .body end -->
+
+}
+}

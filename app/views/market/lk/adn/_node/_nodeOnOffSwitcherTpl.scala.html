@@ -1,0 +1,20 @@
+@(mnode: MAdnNode)(implicit ctx: util.Context)
+
+@* Переключатель on-off. По идее на него вешается js с использованием jsRoutes. *@
+
+<div class="big-triger-wrap">
+  <div class="title">Личный кабинет:</div>
+  <div class="white-board" style="margin-bottom: 5px;">
+    <div class="white-border-top">
+      <div class="gray-border-bottom">
+        <div class="big-triger @if(mnode.adn.isEnabled) {enabled}" data-shop="@mnode.id.get" id="shop-control">
+          <span class="disable-but">Выкл</span>
+          <div class="triger">
+            <div class="circle"></div>
+          </div>
+          <span class="enable-but">Вкл</span>
+        </div>
+      </div>
+    </div><!-- .white-board end-->
+  </div>
+</div>

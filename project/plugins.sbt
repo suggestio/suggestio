@@ -25,3 +25,5 @@ addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.3-SNAPSHOT")
 // stylus assets
 addSbtPlugin("patience" % "play-stylus" % "1.0.0-SNAPSHOT")
 
+addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "+")
+

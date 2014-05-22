@@ -4,6 +4,7 @@
 spriteurl = url('/assets/images/sio-market-sprite.png')
 spritesize = 300px 100px
 
+
 border-radius( param )
   -webkit-border-radius : param
   -moz-border-radius : param
@@ -16,11 +17,13 @@ transform( param )
   -o-transform : param
   transform : param
 
-transition( param )
-  -webkit-transition: param
-  -moz-transition: param
-  -o-transition: param
-  transition: param
+box-shadow( param )
+  -webkit-box-shadow: param
+  -moz-box-shadow: param
+  box-shadow: param
+
+.sm-clear
+  clear: both
 
 .sm-preload
   width: 1px
@@ -50,127 +53,260 @@ transition( param )
     margin-top: -50px
     font-size: 20px
 
-.sio-mart-layout,
-.sio-mart-layout .sm-screen,
-.sio-mart-layout .sm-offers
-  position: absolute
-  left: 0px
-  top: 0px
+.sio-mart-showcase
+  position: fixed
   width: 100%
   height: 100%
-  z-index: 1000
+  left: 0px
+  top: 0px
+  z-index: 999
 
-.sio-mart-layout
-  position: fixed
-  background: rgba(0, 0, 0, 0.7)
+  .sm-block
+    -webkit-tap-highlight-color:rgba(0,0,0,0)
 
-.index-welcome-ad
+  /*************************/
+  /* Общие кнопки в хидере */
+  /*************************/
+  .sm-back-close-button
+    position: absolute
+    left: 5px
+    top: 0px
+    z-index: 1002
+    overflow: hidden
+    width: 50px
+    height: 50px
+  .sm-back-close-button__inner
+    width: 50px
+    height: 27px
+    margin-left: 10px
+    margin-top: 10px
+  .sm-back-close-button__span
+    display: block
+    cursor: pointer
+    float: left
+    width: 25px
+    height: 27px
+    background: spriteurl no-repeat left 3px
+    background-size: spritesize
+  .sm-back-close-button__span:active
+    margin-top: 1px
+
+  .sm-back-close-button__span_close
+    background-position: -54px top
+
+  .sm-back-close-button__span_back-mask
+    background-position: -95px -12px
+  img
+    margin: 0px
+    border: 0px
+
+  /* Хидер ТЦ / Ресторана / ... */
+  .sio-mart__producer-header
+    position: absolute
+    left: 0px
+    top: 0px
+    width: 100%
+    height: 30px
+    padding: 10px 0px
+    text-align: center
+    z-index: 10
+    box-shadow( 1px 1px 2px #222 )
+
+  /* Офферы на главной странице выдачи */
+  .sio-mart__index-offers
+    position: relative
+    width: 100%
+    height: 100%
+    overflow-y: scroll
+    -webkit-overflow-scrolling: touch
+    padding-top: 60px
+
+  .sio-mart__index-offers__container
+    margin: 0px auto
+
+  .sio-mart__single-offer
+    background-color: #fff
+    position: absolute
+    cursor: pointer
+
+  .sio-mart__node-offers-root
+    position: absolute
+    left: 0px
+    top: 0px
+    width: 100%
+    height: 100%
+    z-index: 1003
+    display: none
+
+  .sio-mart__node-offers
+    z-index: 1003
+    position: absolute
+    left: 0px
+    top: 0px
+    width: 100%
+    height: 100%
+    background: rgba(227, 224, 226, 0.93)
+
+  .sio-mart-node-offers-window
+    position: relative
+    height: 100%
+    width: 100%
+
+  .sio-mart-node-offers-window__root-container
+    position: relative
+    height: 100%
+    overflow: hidden
+
+  .sio-mart-node-offers-window__root-container.sio-mart-node-offers-window__root-container_animated
+    transition: all 0.3s ease
+    -webkit-transition: all 0.3s ease
+
+  .sio-mart-node-offers-window__single-ad-container
+    width: 600px
+    height: 100%
+    float: left
+    overflow-y: scroll
+    -webkit-overflow-scrolling: touch
+
+  .sio-mart-node-offers-window__top-offset
+    height: 80px
+
+  .sio-mart-node-offers-window__page-marker
+    position: absolute
+    right: 17px
+    top: 17px
+    background: rgba(0,0,0,0.5)
+    z-index: 4
+    border-radius( 50px )
+    font-family: 'pfdintextcomppro-medium-webfont'
+    font-size: 15px
+    color: #fff
+    padding: 7px
+
+  .sio-mart-node-offers-window__single-ad-w-border
+    position: relative
+    background: #fff
+    padding: 11px
+    .sm-block
+      position: relative
+
+  .sio-mart-node-offers-window__single-ad-location
+    background: #fff
+    margin: 2px 0px
+    padding: 11px
+
+  .sio-mart-node-offers-window__bottom_margin
+    height: 30px
+
+  .sm-now-location
+    font-family: 'pfdintextcomppro-medium-webfont'
+    font-size: 14px
+
+  .sm-now-location__icon
+    width: 19px
+    height: 37px
+    background: spriteurl -204px -6px
+    background-size: spritesize
+    float: left
+    padding-right: 11px
+  .sm-now-location__info
+    strong
+      display: block
+      font-size: 17px
+      font-weight: normal
+
+
+
+  /* Searchfield */
+
+  .sm-search-bar
+    display: none
+    position: absolute
+    left: 0px
+    top: 0px
+    width: 100%
+    height: 50px
+    border-bottom: rgba(0,0,0,0.5)
+    background: #fff
+    z-index: 1005
+
+  .sm-search-bar__field
+    height: 43px
+    margin-left: 44px
+    margin-right: 44px
+    padding-top: 7px
+
+  .sm-search-bar__container
+    height: 32px
+    background: #e3e8ea
+    border: 1px #bcc2c6 solid
+
+  .sm-search-bar__input
+    height: 32px
+    background: none
+    border: 0px
+    color: #bcc2c6
+    width: 90%
+    padding-left: 15px
+    outline: none
+    font-family : 'pfdintextcomppro-medium-webfont'
+    font-size: 15px
+
+  .sm-search-bar__icon
+    position: absolute
+    right: 10px
+    top: 11px
+    display: block
+    width: 26px
+    height: 26px
+    background: spriteurl -139px -12px
+    background-size: spritesize
+    cursor: pointer
+
+  .sm-search-bar__icon:active
+    background-position: -139px -11px
+
+.sm-welcome-ad
   position: absolute
   left: 50%
   top: 50%
   z-index: 1000000
 
-.sio-mart-layout,
-.ads-list,
-.ad-preview
+.sm-welcome-ad__img
+  -webkit-transition: opacity 0.7s linear
+  -moz-transition: opacity 0.7s linear
 
-  .sm-index-offers
-    background: #fff
-    width: 100%
-    height: 100%
-    overflow-y: scroll
+.sm-welcome-ad__img_fade-out
+  opacity: 0
 
-    .sm-index-offer
-      width: 230px
-      margin-bottom: 20px
-    .sm-io-pannel
-      height: 51px
-      text-align: center
-
-
-  /*************************/
-  /* Общие кнопки в хидере */
-  /*************************/
-  .back-close-button
-    position: absolute
-    left: 15px
-    top: 10px
-    z-index: 1002
-    overflow: hidden
-    width: 25px
-    height: 27px
-    .cb-i
-      width: 50px
-      height: 27px
-    a
-      display: block
-      float: left
-      width: 25px
-      height: 27px
-      background: spriteurl no-repeat left 3px
-      background-size: spritesize
-    a:active
-      margin-top: 1px
-
-    a.close
-      background-position: -54px top
+.sio-mart-showcase
 
   .categories-button
     position: absolute
-    right: 15px
-    top: 10px
+    right: 0px
+    top: 0px
     z-index: 1002
-    a
+    padding: 10px 15px 14px 15px
+    span
+      cursor: pointer
       width: 25px
       height: 25px
       display: block
       background: spriteurl no-repeat left top
       background-size: spritesize
       background-position: -27px 0px
-    a:active
+    span:active
       margin-top: 1px
   .sm-button
     display: block
     color: #fff
     border: 5px #fff solid
-    font-size: 30px
+    font-size: 30px 
     padding: 15px 10px
     font-family: 'pfdintextcomppro-medium-webfont'
     text-decoration: none
     text-align: center
     cursor: pointer
-
-  /*******************************************/
-  /* Кнопочки-контроллеры слайдов с офферами */
-  /*******************************************/
-  .sm-offers-controller
-    position: absolute
-    width: 28px
-    height: 14px
-    left: 50%
-    bottom: 10px
-    margin-left: -14px
-    z-index: 1002
-
-    a
-      display: block
-      width: 14px
-      height: 14px
-      float: left
-      span
-        display: block
-        width: 8px
-        height: 8px
-        margin-left: 3px
-        margin-top: 3px
-        background: #000
-        border-radius( 50px )
-        border: 1px #fff solid
-
-    a.active
-      cursor: default
-      span
-        background: red
 
   /*****************************/
   /* Экран с выбором категории */
@@ -185,54 +321,6 @@ transition( param )
     background: #ce2222
     background-color: rgb(206, 34, 34)
     z-index: 1003
-
-    .search-bar
-      height: 44px
-      border-bottom: rgba(0,0,0,0.5)
-
-      .sb-back-icon,
-      .sb-search-icon
-        background: spriteurl -85px -2px
-        background-size: spritesize
-        width: 44px
-        height: 44px
-        float: left
-        cursor: pointer
-
-      .sb-search-field
-        height: 39px
-        background: #fff
-        margin-left: 44px
-        margin-right: 44px
-        padding-top: 5px
-
-        .sb-sf-container
-          height: 32px
-          background: #e3e8ea
-          border: 1px #bcc2c6 solid
-
-        input
-          height: 32px
-          background: none
-          border: 0px
-          color: #bcc2c6
-          width: 90%
-          padding-left: 15px
-          outline: none
-          font-family : 'pfdintextcomppro-medium-webfont'
-          font-size: 15px
-
-      .sb-search-icon
-        float: right
-        margin-top: -44px
-        background: spriteurl -130px -2px
-        background-size: spritesize
-
-      .sb-back-icon:active
-        background-position: -85px -1px
-      .sb-search-icon:active
-        background-position: -130px -1px
-
 
     .sm-categories-list
       .sm-single-categorie
@@ -254,64 +342,16 @@ transition( param )
     z-index: 1004
     overflow: scroll
 
-    .search-bar
-      height: 44px
-      border-bottom: rgba(0,0,0,0.5)
-      background: #ce2222
-
-      .sb-back-icon,
-      .sb-search-icon
-        background: spriteurl -85px -2px
-        background-size: spritesize
-        width: 44px
-        height: 44px
-        float: left
-        cursor: pointer
-
-      .sb-search-field
-        height: 39px
-        background: #fff
-        margin-left: 44px
-        margin-right: 44px
-        padding-top: 5px
-
-        .sb-sf-container
-          height: 32px
-          background: #e3e8ea
-          border: 1px #bcc2c6 solid
-
-        input
-          height: 32px
-          background: none
-          border: 0px
-          color: #bcc2c6
-          width: 90%
-          padding-left: 15px
-          outline: none
-          font-family : 'pfdintextcomppro-medium-webfont'
-          font-size: 15px
-
-      .sb-search-icon
-        float: right
-        margin-top: -44px
-        background: spriteurl -130px -2px
-        background-size: spritesize
-
-      .sb-back-icon:active
-        background-position: -85px -1px
-      .sb-search-icon:active
-        background-position: -130px -1px
-
     .sm-shops-list
       width: 960px
       margin: 0 auto
+      padding-top: 50px
       .item
         float: left
         width: 310px
         margin: 0 5px
         padding-top: 25px
         font-family: 'pfdintextcomppro-medium-webfont'
-        border-bottom: 1px solid #bcc2c6
         .letter
           font-size: 24px
           padding-bottom: 5px
@@ -324,12 +364,18 @@ transition( param )
           text-decoration: none
           cursor: pointer
 
+  .sm-shops-list__delimiter
+    height: 1px
+    width: 100%
+    background: #bcc2c6
+    clear: both
+
   /**************************************************/
   /* Экран с предупредлением о выходе из Sio.Market */
   /**************************************************/
   .sm-close-screen
     display: none
-    position: absolute
+    position: absolute 
     width: 100%
     height: 100%
     left: 0px
@@ -359,176 +405,13 @@ transition( param )
       font-size: 72px
 
     .sm-button
-      float: left
+      float: left 
       width: 260px
 
     .sm-button.sm-close-button
       margin-right: 23px
       color: #ec7676
       border-color: #ec7676
-
-  /********************************/
-  /* Оффер ( рекламная карточка ) */
-  /********************************/
-  .sm-offer
-    position: absolute
-    overflow: hidden
-    width: 100%
-    height: 100%
-
-  .sm-offer.animated
-    transition( all 0.5s ease )
-
-  .sm-offer.rtl-in
-    transform( translate3d(100%,0,0) )
-  .sm-offer.rtl-out
-    transform( translate3d(-100%,0,0) )
-
-  .sm-offer.ltr-in
-    transform( translate3d(-100%,0,0) )
-  .sm-offer.ltr-out
-    transform( translate3d(100%,0,0) )
-
-  .sm-hidden-offer
-    left: -100%
-
-  .offer-header
-    position: absolute
-    z-index: 1002
-    width: 100%
-    height: 44px
-    border-top: 1px rgba(255,255,255,0.5) solid
-    border-bottom: 1px rgba(0,0,0,0.5) solid
-    background: #cf3737
-    opacity: 0.95
-
-    .sm-offer-logo
-      display: block
-      margin: 8px auto 0px auto
-    
-  .offer-details
-    position: absolute
-    left: 0px
-    top: 0px
-    width: 350px
-    height: 100%
-    background: rgba(0,0,0,0.8)
-    z-index: 1001
-    color: #fff
-    font-size: 26px
-    font-family: 'pfdintextcomppro-medium-webfont'
-
-    .od-inner
-      padding: 85px 40px
-
-    .vendor
-      font-size: 30px
-      line-height: 30px
-
-    .old-price
-      font-size: 38px
-
-    .new-price
-      font-size: 52px
-
-    .offer-location
-      position: relative
-      font-size: 15px
-      padding-left: 39px
-      margin: 15px 0px 35px 0px
-      min-height: 60px
-
-      .ol-icon
-        position: absolute
-        left: 0px
-        top: 0px
-        width: 29px
-        height: 57px
-        background: spriteurl no-repeat left -27px
-        background-size: spritesize
-
-
-
-    .sm-button
-      font-size: 24px
-
-    .disc-text-1
-      font-size: 30px
-      font-family: 'pfdintextcomppro-medium-webfont'
-
-    .disc-text-2
-      font-size: 30px
-      font-family: 'pfdintextcomppro-medium-webfont'
-
-    .discount
-      font-size: 72px
-      font-family: 'pfdintextcomppro-medium-webfont'
-      text-align: center
-      background: url('/assets/images/market/discount.png') no-repeat
-      background-size: 965px 800px
-      padding: 30px 0
-      height: 80px
-      width: 140px
-      letter-spacing: -5px
-      span
-        padding-left: 5px
-        font-size: 30px
-
-  .sm-screen
-    overflow: hidden
-    .poster-photo
-      background: #ccc
-      position: absolute
-      left: 50%
-      top: 50%
-
-  .sm-hidden-screen
-    left: -100%
-
-  .sm-screen.animated
-    transition( all 0.5s ease )
-
-  .sm-screen.forward-in
-    transform( translate3d(150%,0,0) )
-  .sm-screen.forward-out
-    transform( scale3d(0.8, 0.8, 0.8) )
-
-  .sm-screen.backward-in
-    transform( scale3d(0.8, 0.8, 0.8) )
-  .sm-screen.backward-out
-    transform( translate3d(100%,0,0) )
-
-  /*******************************************/
-  /* Навигация для главного экрана выдачи ТЦ */
-  /*******************************************/
-  .sm-navigation
-    display: none
-    z-index: 1001
-    width: 100%
-    height: 129px
-    position: absolute
-    left: 0px
-    bottom: 0px
-    transition( all 0.2s linear )
-
-    .sm-buttons
-      width: 680px
-      height: 100px
-      margin: 0px auto
-
-      .sm-button
-        background: rgba(255, 255, 255, 0.1)
-        width: 282px
-        margin: 20px 12px
-        float: left
-        border-color: #fff
-        color: #fff
-
-      .sm-button:hover
-        background: rgba(255, 255, 255, 0.3)
-
-  .sm-navigation.hidden
-    bottom: -130px
 
 .sio-mart-trigger
   cursor: pointer
@@ -540,177 +423,54 @@ transition( param )
   padding: 10px
   font-family : 'pfdintextcomppro-medium-webfont'
 
-.sio-mart-layout.small,
-.ads-list.small
+@import 'blocks.styl'
 
-  .sm-button
-    border-width: 3px
-    font-size: 15px
 
-  .offer-header
-    height: 40px
-    img
-      height: 24px
+.sm-w-980
+  .sm-shops-list
+    width: 724px!important
+    .item
+      width: 230px!important
 
-  .sm-close-screen
+.sm-w-800
+  .sm-shops-list
+    width: 544px!important
+    .item
+      width: 170px!important
 
+.sm-w-400
+  .sm-shops-list
+    width: 318px!important
+    .item
+      width: 96px!important
+
+  .sm-close-screen 
+    font-size: 16px
     .es-container
-      width: auto !important
-      padding: 0 10px !important
-      left: 0 !important
-      margin-left: 0 !important
-      margin-top: -174px !important
-
-    p
-      padding: 0px
-      margin: 20px 0px
-      font-size: 16px
-
-    .es-container
-      position: absolute
-      width: 603px
-      left: 50%
-      top: 50%
-      margin-left: -301px
-      margin-top: -250px
-      color : #fff
+      width: 320px!important
+      margin-left: -160px!important
+      margin-top: -150px!important
 
     strong
-      display: block
-      font-size: 36px
+      font-size: 46px!important
+
+    p
+      font-size: 16px!important
+
+    a
+      font-size: 16px!important
 
     .sm-button
-      display: block
-      width: auto
-      float: none
-      margin: 10px 0 0 0 !important
+      margin-left: 2px!important
+      border-width: 3px!important
+      width: 116px!important
+      padding: 8px 11px!important
 
-    .sm-button.sm-close-button
-      margin-right: 23px
-      color: #ec7676
-      border-color: #ec7676
+  .sio-mart-node-offers-window__single-ad-w-border
+    padding: 0px
 
-  .offer-details
-    background: rgba(0,0,0,0.1)
-    width: 100%
-    height: 100%
+  .sio-mart-node-offers-window__top-offset
+    height: 60px
 
-    .od-inner
-      padding-top: 65px
-
-    .old-price
-      font-size: 24px
-    .new-price
-      font-size: 36px
-
-    .offer-location
-      font-size: 12px
-    .sm-button
-      width: 150px
-      position: absolute
-      left: 50%
-      margin-left: -85px
-      bottom: 35px
-      font-size: 15px
-    .od-inner
-      padding-left: 15px
-      padding-right: 15px
-
-    .od-text
-      font-size: 13px
-
-    .vendor
-      font-size: 16px
-
-    .disc-text-1
-      width: 50%
-      font-size: 16px
-
-    .disc-text-2
-      width: 50%
-      font-size: 16px
-
-    .discount
-      background: url('/assets/images/market/discount.iphone.png') no-repeat
-      background-size: 545px 450px
-      font-size: 36px
-      width: 70px
-      padding: 15px 0
-      height: 40px
-      span
-        font-size: 16px
-
-  .sm-shops-list
-    width: auto
-    .item
-      width: 100%
-      padding-top: 0
-      margin: 0
-      .letter
-        font-size: 12px
-        background: #bcc2c6
-        padding-top: 5px
-        color: #e3e8ea
-
-
-.sio-mart-layout.medium,
-.ads-list.medium,
-.ad-preview.medium
-
-  .sm-button
-    border-width: 4px
-    font-size: 30px
-
-  .offer-details
-    background: rgba(0,0,0,0.1)
-    width: 100%
-    height: 100%
-
-    .old-price
-      font-size: 24px
-    .new-price
-      font-size: 36px
-
-    .offer-location
-      font-size: 12px
-    .sm-button
-      width: 370px
-      position: absolute
-      left: 50%
-      margin-left: -195px
-      bottom: 35px
-      border-width: 4px
-      font-size: 30px
-
-    .disc-text-1
-      width: 50%
-
-    .disc-text-2
-      width: 50%
-
-    /* Текстовой шаблон */
-    .od-text
-      width: 300px
-
-  .sm-navigation
-    display: none
-
-.sio-mart-layout.small,
-.ads-list.small,
-.ad-preview.small
-
-  .sm-navigation
-    display: none
-
-  .offer-details
-    background: rgba(0,0,0,0.1)
-    width: 100%
-    height: 100%
-
-    /* Текстовой шаблон */
-    .od-text
-      width: 60%
-      font-size: 13px
-
-
-@import 'discount-templates.styl'
+  .sio-mart-node-offers-window__bottom_margin
+    height: 10px

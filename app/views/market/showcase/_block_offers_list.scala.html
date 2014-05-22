@@ -1,0 +1,12 @@
+@(mmart: MAdnNode, ads: Seq[MAdT], shops: Map[String, MAdnNode], isIndex:Boolean=false)(implicit ctx: util.Context)
+
+@if(ads.isEmpty) {
+  @* рекламы в ТЦ нет *@
+} else {
+
+  @ads.map { mad =>
+    @_single_offer(mad, shops.getOrElse(mad.producerId, mmart), fallbackLogo = mmart.logoImgOpt, isHidden=(!isIndex&&(mad != ads.head)), isIndex)
+    @*_single_block_offer(mad, shops.getOrElse(mad.producerId, mmart), fallbackLogo = mmart.logoImgOpt)*@
+  }
+
+}

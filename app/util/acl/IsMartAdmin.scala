@@ -17,7 +17,6 @@ import IsAdnNodeAdmin.onUnauth
  */
 object IsMartAdmin extends controllers.ShopMartCompat {
 
-
   def isMartAdmin(martId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
     val fut = getMartByIdCache(martId)
     IsAdnNodeAdmin.checkAdnNodeCreds(fut, pwOpt)

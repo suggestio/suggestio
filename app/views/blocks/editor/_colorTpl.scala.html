@@ -1,0 +1,9 @@
+@(bf: BfColor, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
+
+@import ctx._
+
+<label class="ad-block-editor__fieldset_label">@Messages(bc.i18nLabelOf(bf.name)) @bf.offerNopt.map(_ + 1)</label>
+
+<div class="lk-field-w-colorpicker">
+  @_colorBtnTpl(af(bfNameBase), default = bf.defaultValue)
+</div>

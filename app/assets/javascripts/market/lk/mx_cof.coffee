@@ -1,3 +1,4 @@
+
 $(document).ready ->
   cbca.emptyPhoto = '/assets/images/market/lk/empty-image.gif'
 
@@ -121,6 +122,7 @@ CbcaPopup = () ->
     popup = '.popup' || popup
     this.hideOverlay()
     $(popup).hide()
+    $('#overlay, #overlayData').hide()
 
 
 ##поисковая строка##
@@ -129,7 +131,7 @@ CbcaSearch = () ->
   self = this
 
   self.search = (martId, searchString) ->
-    jsRoutes.controllers.MarketMartLk.searchShops(martId).ajax(
+    jsRoutes.controllers.MarketLkAdn.searchSlaves(martId).ajax(
       type: "POST",
       data:
         'q': searchString
@@ -161,6 +163,27 @@ CbcaCommon = () ->
   self = this
 
   self.init = () ->
+
+    $(document).on 'click', '.ads-list-block__preview_add-new', ()->
+      $this = $(this)
+
+      $this.parent().find('.ads-list-block__link')[0].click()
+
+
+    $(document).on 'click', '.js-g-slide-toggle', (e)->
+      e.preventDefault()
+      $this = $(this)
+
+      $this.closest('.js-slide-wrap').find('.js-slide-content').slideToggle()
+      $this.toggleClass('open')
+
+      if($this.hasClass('open'))
+        $this.html('Свернуть')
+      else
+        $this.html('Развернуть')
+
+
+
     $(document).on 'focus', '.input-wrap input, .input-wrap textarea', ->
       $(this).closest('.input-wrap').toggleClass('focus', true)
 
@@ -182,14 +205,14 @@ CbcaCommon = () ->
       $('#create-your-market').show()
 
 
-    $(document).on 'click', '.ads-list .tc-edit', (event)->
+    $(document).on 'click', '.ads-list .js-tc-edit', (event)->
       event.preventDefault()
 
       $this = $(this)
       $.ajax(
         url: $this.attr('href')
         success: (data) ->
-          $('#disable-ad').remove()
+          $('#disable-ad, #anotherNodes').remove()
           $('.body-wrap').append(data)
           cbca.popup.showPopup('#disable-ad')
         error: (error) ->
@@ -289,6 +312,69 @@ CbcaCommon = () ->
         $this.slideDown()
 
 
+    $('.nodes .node').each () ->
+      $(this).data('dataLoaded', false)
+
+    $(document).on 'click', '.nodes .node .toggle', (e) ->
+      e.preventDefault()
+      $this = $(this)
+      $node = $this.parent()
+
+      if($node.hasClass('open'))
+        $node.removeClass('open').next().next().slideUp()
+        $this.html('Развернуть')
+      else if($node.data('dataLoaded'))
+        $node.addClass('open').next().next().slideDown()
+        $this.html('Свернуть')
+      else
+        $.ajax(
+          url: $this.attr('href')
+          success: (data) ->
+            $node.addClass('open').data('dataLoaded', true).next().after('<div class="ads-list small">'+data+'</div>')
+            $node.next().next().slideDown('normal', () ->  market.resize_preview_photos())
+            $this.html('Свернуть')
+          error: (error) ->
+            console.log(error)
+        )
+
+
+    $(document).on 'click', '.add-to-another-node', (e) ->
+      e.preventDefault()
+      $this = $(this)
+
+      $.ajax(
+        url:  $this.find('a').attr('href'),
+        success: (data) ->
+          $('#disable-ad, #anotherNodes').remove()
+          $('.body-wrap').append(data)
+          cbca.popup.showPopup('#anotherNodes')
+        error: (data) ->
+          console.log(data)
+      )
+
+
+    $('.border-line-vertical').each () ->
+      $this = $(this)
+      $parent = $this.parent()
+
+      $this.height($parent.height())
+
+
+    $(document).on 'click', '.transactions-history .toggle', (e) ->
+      e.preventDefault()
+      $this = $(this)
+      $parent = $this.parent()
+
+      if($parent.hasClass('open'))
+        $parent.removeClass('open').parent().find('.transactions-list').slideUp()
+        $this.html('Развернуть')
+      else
+        $parent.addClass('open').parent().find('.transactions-list').slideDown()
+        $this.html('Свернуть')
+
+
+
+
   self.init()
 
 #########################################################
@@ -297,19 +383,7 @@ CbcaCommon = () ->
 EditAdPage =
 
   updatePreview: () ->
-    $form = $('#promoOfferForm')
-    if($form.size())
-      action = $form.find('#preview-action').val()
-      $.ajax(
-        type: 'POST'
-        url: action
-        data: $form.serialize()
-        success: (data)->
-          $('#preview').html(data)
-          market.resize_preview_photos()
-        error: (error)->
-          console.log(error)
-      )
+    return false
 
   init: () ->
     #################
@@ -382,7 +456,7 @@ EditAdPage =
 #########################
 CbcaShop =
   disableShop: (shopId) ->
-    jsRoutes.controllers.MarketMartLk.shopOnOffForm(shopId).ajax(
+    jsRoutes.controllers.MarketLkAdn.nodeOnOffForm(shopId).ajax(
       type: "GET",
       success:  (data) ->
         if(data.toString().trim())
@@ -393,7 +467,7 @@ CbcaShop =
     )
 
   enableShop: (shopId) ->
-    jsRoutes.controllers.MarketMartLk.shopOnOffSubmit(shopId).ajax(
+    jsRoutes.controllers.MarketLkAdn.nodeOnOffSubmit(shopId).ajax(
       type: 'POST'
       dataType: 'JSON'
       data:
@@ -432,7 +506,7 @@ CbcaShop =
     ##########################################
     ## Чекбоксы в списке рекламных плакатов ##
     ##########################################
-    $(document).on 'change', '.ads-list .controls input[type = "checkbox"]', ->
+    $(document).on 'change', '.ads-list .ads-list-block__controls input[type = "checkbox"]', ->
       $this = $(this)
       lvlEnabled = this.checked
 
@@ -466,7 +540,7 @@ CbcaShop =
     ###################################
     ## Включение/выключение магазина ##
     ###################################
-    $(document).on 'click', '.renters-list .enable-but', ->
+    $(document).on 'click', '.nodes-list .enable-but', ->
       shopId = $(this).closest('.item').attr('data-shop')
       $shop = $('#shop-list').find('.item[data-shop = "'+shopId+'"]')
 
@@ -476,7 +550,7 @@ CbcaShop =
         cbca.shop.enableShop($shop.attr('data-shop'))
 
 
-    $(document).on 'click', '.renters-list .disable-but', ->
+    $(document).on 'click', '.nodes-list .disable-but', ->
       shopId = $(this).closest('.item').attr('data-shop')
       $shop = $('#shop-list').find('.item[data-shop = "'+shopId+'"]')
 
@@ -520,7 +594,7 @@ CbcaShop =
       $shop = $(this).closest('.triger-wrap')
       if(!$shop.hasClass('enabled'))
         $shop.addClass('enabled')
-        jsRoutes.controllers.MarketMartLk.setShopTopLevelAvailable($shop.attr('data-shop')).ajax(
+        jsRoutes.controllers.MarketLkAdn.setSlaveTopLevelAvailable($shop.attr('data-shop')).ajax(
           type: 'POST'
           data:
             'isEnabled': true
@@ -530,7 +604,7 @@ CbcaShop =
       $shop = $(this).closest('.triger-wrap')
       if($shop.hasClass('enabled'))
         $shop.removeClass('enabled')
-        jsRoutes.controllers.MarketMartLk.setShopTopLevelAvailable($shop.attr('data-shop')).ajax(
+        jsRoutes.controllers.MarketLkAdn.setSlaveTopLevelAvailable($shop.attr('data-shop')).ajax(
           type: 'POST'
           data:
             'isEnabled': false
@@ -570,14 +644,33 @@ StatusBar =
 ######################
 market =
 
+  init_colorpickers : () ->
+    $('.js-custom-color').each () ->
+
+      cb = ( _this ) ->
+        i = Math.random()
+        _this.ColorPicker
+      	  color: '#0000ff'
+      	  onShow: (colpkr) ->
+      	    $(colpkr).fadeIn(500)
+      	  onHide: (colpkr) ->
+      	    $(colpkr).fadeOut(500)
+      	  onChange: (hsb, hex, rgb) ->
+      	    market.ad_form.queue_block_preview_request()
+      	    _this.find('input').val hex
+      	    _this.css
+      	      'background-color' : '#' + hex
+      cb( $(this) )
+
   ## Главная страница ЛК торгового центра
   mart :
     init : () ->
+      market.init_colorpickers()
+
       $('#installScriptButton').bind 'click', () ->
         $('#installScriptPopup, #overlay').show()
 
         _dom = $('#installScriptPopup')
-
         ish = _dom.height()
 
         params =
@@ -588,30 +681,309 @@ market =
         return false
 
 
+  ################################
+  ## Класс для работы с картинками
+  ################################
+  img :
 
-  init_images_upload : () ->
+    init_upload : () ->
 
-    $('.w-async-image-upload').bind "change", () ->
+      $('.w-async-image-upload').bind "change", () ->
 
-      relatedFieldId = $(this).attr "data-related-field-id"
-      form_data = new FormData()
+        relatedFieldId = $(this).attr 'data-related-field-id'
+        form_data = new FormData()
 
-      if $(this)[0].type == 'file'
-        form_data.append $(this)[0].name, $(this)[0].files[0]
+        is_w_block_preview = $(this).attr 'data-w-block-preview'
 
-      request_params =
-        url : $(this).attr "data-action"
-        method : 'post'
-        data : form_data
-        contentType: false
-        processData: false
-        success : ( resp_data ) ->
-          $('#' + relatedFieldId + ' .image-key').val(resp_data.image_key).trigger('change')
-          $('#' + relatedFieldId + ' .image-preview').show().attr "src", resp_data.image_link
+        if $(this)[0].type == 'file'
+          form_data.append $(this)[0].name, $(this)[0].files[0]
 
-      $.ajax request_params
+        request_params =
+          url : $(this).attr "data-action"
+          method : 'post'
+          data : form_data
+          contentType: false
+          processData: false
+          success : ( resp_data ) ->
 
-      return false
+            if typeof is_w_block_preview != 'undefined'
+              market.ad_form.queue_block_preview_request()
+
+            $('#' + relatedFieldId + ' .image-key, #' + relatedFieldId + ' .js-image-key').val(resp_data.image_key).trigger('change')
+            $('#' + relatedFieldId + ' .image-preview').show().attr "src", resp_data.image_link
+
+        $.ajax request_params
+
+        return false
+
+    crop :
+      init_triggers : () ->
+        $('.js-img-w-crop').unbind 'click'
+        $('.js-img-w-crop').bind 'click', () ->
+
+          img_key = jQuery('input', $(this).parent()).val()
+          img_name = jQuery('input', $(this).parent()).attr 'name'
+
+          if img_key == ''
+            alert 'сначала нужно загрузить картинку'
+            return false
+
+          width = $('.sm-block').attr 'data-width'
+          height = $('.sm-block').attr 'data-height'
+
+          marker = $(this).attr 'data-marker'
+
+          $.ajax
+            url : '/img/crop/' + img_key + '?width=' + width + '&height=' + height + '&marker=' + marker
+            success : ( data ) ->
+              $('#overlay, #overlayData').show()
+              $('#overlayData').html data
+
+              market.img.crop.init( img_name )
+
+          return false
+
+      save_crop : ( form_dom ) ->
+        offset_x = parseInt( this.crop_tool_img_dom.css('left').replace('px', '') ) || 0
+        c_offset_x = this.container_offset_x
+        offset_x = offset_x - parseInt c_offset_x
+
+        offset_y = parseInt( this.crop_tool_img_dom.css('top').replace('px', '') ) || 0
+        c_offset_y = this.container_offset_y
+        offset_y = offset_y - parseInt c_offset_y
+
+        ci = this.crop_tool_img_dom
+
+        sw = parseInt ci.attr 'data-width'
+        sh = parseInt ci.attr 'data-height'
+
+        rw = parseInt ci.width()
+        rh = parseInt ci.height()
+
+        offset_x = sw * offset_x / rw
+        offset_y = sh * offset_y / rh
+
+        target_offset = "+" + Math.round( Math.abs(offset_x) ) + "+" + Math.round(Math.abs(offset_y))
+        target_size = rw + 'x' + rh
+
+        tw = parseInt this.crop_tool_dom.attr 'data-width'
+        th = parseInt this.crop_tool_dom.attr 'data-height'
+
+        if sw / sh > tw / th
+          ch = sh
+          cw = ch * tw / th
+
+        else
+          cw = sw
+          ch = cw * th / tw
+
+        crop_size = Math.round( cw ) + 'x' + Math.round( ch )
+
+        jQuery('input[name=crop]', form_dom).val( crop_size + target_offset )
+
+        form_dom1 = $('#imgCropTool form')
+        image_name = this.image_name
+
+        $.ajax
+          url : form_dom1.attr 'action'
+          method : 'post'
+          data : form_dom1.serialize()
+          success : ( img_data ) ->
+            console.log market.img.crop.img_name
+            $('input[name=\'' + market.img.crop.img_name + '\']').val img_data.image_key
+            market.ad_form.queue_block_preview_request request_delay=10
+
+            $('#overlay, #overlayData').hide()
+            $('#overlayData').html ''
+
+
+      init : (img_name) ->
+        this.img_name = img_name
+        this.crop_tool_dom = $('#imgCropTool')
+        this.crop_tool_container_dom = jQuery('.js-crop-container', this.crop_tool_dom)
+        this.crop_tool_container_div_dom = jQuery('div', this.crop_tool_container_dom)
+        this.crop_tool_img_dom = jQuery('img', this.crop_tool_dom)
+
+        width = parseInt this.crop_tool_dom.attr 'data-width'
+        height = parseInt this.crop_tool_dom.attr 'data-height'
+
+        img_width = parseInt this.crop_tool_img_dom.attr 'data-width'
+        img_height = parseInt this.crop_tool_img_dom.attr 'data-height'
+
+        this.crop_tool_container_dom.css
+          'width' : width + 'px'
+          'height' : height + 'px'
+
+
+        ## отресайзить картинку по нужной стороне
+
+        wbh = width/height
+        img_wbh = img_width/img_height
+
+        if wbh > img_wbh
+          img_new_width = width
+          img_new_height = img_height * img_new_width / img_width
+        else
+          img_new_height = height
+          img_new_width = img_new_height * img_width / img_height
+
+        container_offset_x = parseInt img_new_width - width
+        container_offset_y = parseInt img_new_height - height
+
+        this.crop_tool_img_dom.css
+          'width' : img_new_width + 'px'
+          'height' : img_new_height + 'px'
+
+        this.crop_tool_container_div_dom.css
+          'margin-left' : -container_offset_x + 'px'
+          'margin-top' : -container_offset_y + 'px'
+
+        this.container_offset_x = container_offset_x
+        this.container_offset_y = container_offset_y
+
+        x1 = this.crop_tool_container_div_dom.offset()['left']
+        y1 = this.crop_tool_container_div_dom.offset()['top']
+
+        x2 = x1 + container_offset_x
+        y2 = y1 + container_offset_y
+
+        this.crop_tool_img_dom.draggable
+          'containment' : [x1,y1,x2,y2]
+
+        ## Забиндить событие на сохранение формы
+        $('#imgCropTool form').bind 'submit', () ->
+          market.img.crop.save_crop $(this)
+
+          return false
+
+
+  ##############################
+  ## Редактор рекламной карточки
+  ##############################
+  ad_form :
+
+    preview_request_delay : 300
+
+    request_block_preview : ( is_with_auto_crop ) ->
+      action = $('.js-ad-block-preview-action').val()
+
+      if(action)
+        $.ajax
+          url : action
+          method : 'post'
+          data : $('#promoOfferForm').serialize()
+          success : ( data ) ->
+
+            if is_with_auto_crop == true
+              console.log 'необходим авто кроп'
+
+            $('#adFormBlockPreview').html data
+            $('.js-mvbl').draggable
+              stop : () ->
+                connected_input = $(this).attr 'data-connected-input'
+                pos = $(this).position()
+
+                $('input[name=\'' + connected_input + '.coords.x\']').val pos['left']
+                $('input[name=\'' + connected_input + '.coords.y\']').val pos['top']
+
+
+    queue_block_preview_request : ( request_delay, is_with_auto_crop ) ->
+      request_delay = request_delay || this.preview_request_delay
+
+      if typeof this.block_preview_request_timer != 'undefined'
+        clearTimeout this.block_preview_request_timer
+
+      is_with_auto_crop = is_with_auto_crop || false
+
+      cb = () ->
+        market.ad_form.request_block_preview is_with_auto_crop
+
+      this.block_preview_request_timer = setTimeout cb, request_delay
+
+    init_block_editor : () ->
+      market.img.init_upload()
+      market.img.crop.init_triggers()
+
+      $('.js-align-editor').each () ->
+        input = $(this).find 'input'
+        buttons = $(this).find '.js-ae-button'
+
+        buttons.bind 'click', () ->
+          align_value = $(this).attr 'data-align'
+          input.val align_value
+
+          buttons.removeClass 'align-editor__button_active'
+          $(this).addClass 'align-editor__button_active'
+
+          market.ad_form.queue_block_preview_request()
+
+
+      $('.js-custom-font-select, .js-custom-font-family-select').bind 'change', () ->
+        market.ad_form.queue_block_preview_request()
+
+      $('.js-input-w-block-preview').bind 'keyup', () ->
+        market.ad_form.queue_block_preview_request()
+
+      $('.js-block-height-editor-button').bind 'click', () ->
+
+        _cell_size = 140
+        _cell_padding = 20
+
+        _direction = $(this).attr 'data-change-direction'
+
+        _p = $(this).parent()
+        _value_dom = _p.find('input')
+
+        _cur_value = parseInt _value_dom.val()
+        _min_value = parseInt _value_dom.attr 'data-min-value'
+        _max_value = parseInt _value_dom.attr 'data-max-value'
+
+        _cur_cells_value = Math.floor _cur_value / _cell_size
+
+        if _direction == 'decrease'
+          _cur_cells_value--
+        else
+          _cur_cells_value++
+
+        _new_value = _cur_cells_value * _cell_size + ( _cur_cells_value - 1 ) * _cell_padding
+
+        if _new_value > _max_value
+          _new_value = _max_value
+
+        if _new_value < _min_value
+          _new_value = _min_value
+
+        _value_dom.val _new_value
+
+        console.log _value_dom.val()
+        market.ad_form.queue_block_preview_request request_delay=10
+
+    init : () ->
+      market.img.crop.init_triggers()
+      this.request_block_preview()
+      this.init_block_editor()
+
+      icons_dom = $('#adFormBlocksList div')
+
+      icons_dom.bind 'click', () ->
+
+        icons_dom.removeClass 'blocks-list-icons__single-icon_active'
+        $(this).addClass 'blocks-list-icons__single-icon_active'
+
+        block_id = $(this).attr 'data-block-id'
+        block_editor_action = $('#adFormBlocksList .block-editor-action').val()
+
+        $('input[name=\'ad.offer.blockId\']').val block_id
+
+        $.ajax
+          url : block_editor_action
+          method : 'post'
+          data : $('#promoOfferForm').serialize()
+          success : ( data ) ->
+            $('#adFormBlockEditor').html data
+            market.ad_form.init_block_editor()
+            market.init_colorpickers()
+            market.ad_form.request_block_preview()
 
   resize_preview_photos : () ->
     $('.preview .poster-photo').each () ->
@@ -641,8 +1013,9 @@ market =
 
 
   init: () ->
+    this.ad_form.init()
     $(document).ready () ->
-      market.init_images_upload()
+      market.img.init_upload()
       market.resize_preview_photos()
       market.mart.init()
 

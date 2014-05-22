@@ -3,9 +3,29 @@ sioweb3
 
 Вёб-морда для suggest.io на базе play 2+.
 
+
+Deploy
+=====================================
+sbt stage
+cd target/universal/stage
+rsync -avz -e ssh . www@osm01.suggest.io:sio2/sioweb21/
+
+ssh www@osm01.suggest.io
+screen -r sio2
+CTRL+C
+UP
+ENTER
+
+
+Changelog
+======================================
+
+2014.may.05:
+  В сборочном окружении нужен stylus >= 0.40 (0.42+ например).
+
 2014.apr.16:
-При запуске stage-билда на osmX, надо использовать команду типа этой:
-bin/sioweb21 -Dconfig.file=../application.conf -Dhttp.port=9001 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=15666 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.local.only=false -Djava.rmi.server.hostname=10.0.0.101
+  При запуске stage-билда на osmX, надо использовать команду типа этой:
+  bin/sioweb21 -Dconfig.file=../application.conf -Dhttp.port=9001 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=15666 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.local.only=false -Djava.rmi.server.hostname=10.0.0.101
 
 2014.feb.06: Надо обновить настройки sbt согласно странице в wiki:
  http://wiki.cbca.ru/dokuwiki/doku.php/sbt

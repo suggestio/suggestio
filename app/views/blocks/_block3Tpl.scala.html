@@ -1,0 +1,41 @@
+@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+
+@import util.TplDataFormatUtil._
+@import util.blocks.BlocksConf.Block3
+@import ctx._
+@import common._
+
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl3" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+
+  <div class="triangle-border-top"></div>
+  <div class="triangle-border-left"></div>
+  <div class="triangle-border-right"></div>
+  <div class="triangle-border-bottom"></div>
+
+  <div class="inner">
+
+    <img src="@mad.imgs.get(Block3.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl3-bg.jpg"))" />
+
+
+
+    <div class="items">
+
+      @mad.offers.map { offer =>
+        <div class="item el-@{offer.n + 1}">
+          @offer.text1.map { title =>
+          <div @_aovfStyleTpl(title, "title")>
+            @Html(title.value)
+          </div>
+          }
+          @offer.price.map { price =>
+          <div @_aovfStyleTpl(price, "price")>
+            @formatPrice(price.value, price.currency)
+          </div>
+          }
+        </div>
+      }
+
+    </div><!-- .items end -->
+  </div>
+
+</div>

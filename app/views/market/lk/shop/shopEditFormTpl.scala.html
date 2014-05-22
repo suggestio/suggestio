@@ -4,13 +4,12 @@
    Отличается от формы для владельца ТЦ отсутствием доступа на редактирование ко некоторым полям. *@
 
 @import market.lk._
-@import routes.MarketShopLk._
 @import ctx._
 
-@lkBase(Messages("Edit") + " " + mshop.meta.name) {
+@lkBase(Messages("Edit") + " " + mshop.meta.name, adnIdOpt = mmart.id) {
   <div class="title-wrap">
     <div class="center">
-      <a class="back-but" href="@showShop(mshop.id.get)">&nbsp;</a>
+      <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(mshop.id.get)">&nbsp;</a>
       <div class="title-inner">
         РЕДАКТИРОВАНИЕ ПРОФАЙЛА МАГАЗИНА
       </div>
@@ -20,7 +19,7 @@
   <div class="body">
 
     @shop._shopFormTpl(
-      call = editShopFormSubmit(mshop.id.get),
+      call = routes.MarketLkAdnEdit.editAdnNodeSubmit(mshop.id.get),
       sf = sf,
       btnText = Messages("Сохранить"),
       isLimited = true,

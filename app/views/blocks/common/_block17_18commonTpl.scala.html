@@ -1,0 +1,46 @@
+@(mad: MAdT, isStandalone: Boolean, bc: CommonBlock17_18)(implicit ctx: Context)
+
+@import blocks.svg._
+@import util.TplDataFormatUtil._
+
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl@bc.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+
+  @defining( mad.colors.getOrElse(bc.bgColorBf.name, bc.bgColorBf.anyDefaultValue) ) { bgColor =>
+    @_circles17(
+      cssClass = "bg",
+      fillColor = mad.colors.getOrElse(bc.circleFillColorBf.name, bc.circleFillColorBf.anyDefaultValue),
+      bgColor = bgColor
+    )
+
+    @_saleIcon13Tpl(
+      cssClass = "svg",
+      fillColor = mad.colors.getOrElse(bc.discoIconColorBf.name, bc.discoIconColorBf.anyDefaultValue)
+    )
+
+    @_saleIconMask13Tpl(
+      cssClass = "svg-mask",
+      fillColor = mad.colors.getOrElse(bc.discoBorderColorBf.name, bc.discoBorderColorBf.anyDefaultValue)
+    )
+
+    @mad.offers.headOption.map { offer =>
+      <div class="inner" style="background: #@bgColor;">
+
+        <img class="photo" src="@mad.imgs.get(bc.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl17-bg.jpg"))" />
+
+        @offer.text1.map { text1 =>
+          <div @_aovfStyleTpl(text1, "title")>
+            @Html(text1.value)
+          </div>
+        }
+      </div>
+
+      @offer.discount.map { discount =>
+        <div @_aovfStyleTpl(discount, "sale")>
+          @formatPercentRaw(discount.value)<span>%</span>
+        </div>
+      }
+    } @* offer *@
+
+  }
+
+</div>

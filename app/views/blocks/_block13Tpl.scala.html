@@ -1,0 +1,54 @@
+@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+
+@import blocks.svg._
+@import util.blocks.BlocksConf.Block13
+@import util.TplDataFormatUtil._
+@import common._
+
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl13" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+
+  <div class="left-border abs"></div>
+  <div class="right-border abs"></div>
+
+
+  <img class="photo" src="@mad.imgs.get(Block13.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl13-bg.jpg"))" />
+
+
+  @defining(mad.colors.getOrElse(Block13.discoIconColorBf.name, Block13.discoIconColorBf.anyDefaultValue)) { discoIconColor =>
+
+
+    <div class="left-line" style="background: #@discoIconColor"></div>
+    <div class="right-line" style="background: #@discoIconColor"></div>
+
+    @mad.offers.headOption.map { offer =>
+
+      @offer.discount.map { discount =>
+      <div @_aovfStyleTpl(discount, "sale")>
+        @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
+      </div>
+      }
+
+
+      @_saleIcon13Tpl(
+        cssClass = "svg",
+        fillColor = discoIconColor
+      )
+
+
+      @defining(Block13.discoBorderColorBf) { smcbf =>
+        @_saleIconMask13Tpl(
+          cssClass = "svg-mask",
+          fillColor = mad.colors.getOrElse(smcbf.name, smcbf.anyDefaultValue)
+        )
+      }
+
+      @offer.text2.map { text2 =>
+        <div @_aovfStyleTpl(text2, "info abs")>
+          @Html(text2.value)
+        </div>
+      }
+    }
+
+  }
+
+</div>

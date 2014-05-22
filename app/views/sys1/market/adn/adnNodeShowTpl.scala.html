@@ -1,0 +1,121 @@
+@(adnNode: MAdnNode, slaves:Seq[MAdnNode], company: Option[MCompany] = None)(implicit ctx: util.Context)
+
+@* Страница, отображающая информацию по торговому центру. *@
+@import ctx._
+@import datetime._
+@import helper._
+@import controllers.adn.AdnShowTypes._
+
+@hPathAfter = {
+  @adnNode.adn.supId.map { supId =>
+    / <a href="@routes.SysMarket.showAdnNode(supId)">..</a>
+  }
+  / <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
+}
+
+@adnBase(adnNode.meta.name, hPathAfter = Some(hPathAfter)) {
+
+  <h2>@Messages("amt.of.type." + adnNode.adn.memberType)</h2>
+  <a href="@routes.SysMarket.editAdnNode(adnNode.id.get)">@Messages("Edit")</a>
+
+  <p><a href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)"><b>-&gt; Личный кабинет узла</b></a></p>
+
+  @adnNode.adn.memberType.demoWebsiteAdnId(adnNode).map { dwId =>
+    <p><a href="@routes.Market.demoWebSite(dwId)"><b>-&gt; demoWebSite</b></a>
+      (<a href="http://10.0.0.101:9001@routes.Market.demoWebSite(dwId)" target="_blank">osm01-vpn</a>)
+      <a href="@routes.Market.martIndex(dwId)"><b>JSON</b></a>
+    </p>
+  }
+
+  <a href="@routes.SysMarketBilling.billingFor(adnNode.id.get)">Billing</a>
+
+
+  @company.map { mc =>
+    <p>@Messages("Company")-@Messages("Owner"): <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a></p>
+  }
+
+
+  <h3>Метаданные</h3>
+  <div>
+    @Messages("Name"): @adnNode.meta.name<br/>
+    @adnNode.meta.description.map { descr =>
+      Описание: @Html(descr)<br/>
+    }
+    @Messages("Created"): @_prettyDate(adnNode.meta.dateCreated, withSpan = true)<br/>
+    @adnNode.meta.town.map { town =>
+      Город: @town<br/>
+    }
+    @adnNode.meta.address.map { address =>
+      @Messages("Address"): @address<br/>
+    }
+    @adnNode.meta.phone.map { phone =>
+      Телефон: @phone<br/>
+    }
+    @adnNode.meta.floor.map { floor =>
+      Этаж: @floor<br/>
+    }
+    @adnNode.meta.section.map { section =>
+      Секция: @section<br/>
+    }
+    @adnNode.meta.siteUrl.map { siteUrl =>
+      URL сайта: <a href="@siteUrl">@siteUrl</a><br/>
+    }
+    @adnNode.meta.color.map { color =>
+      Цвет: <b>#@color</b> <span style="background-color: #@color;">&nbsp;&nbsp;&nbsp;&nbsp;</span><br/>
+    }
+    @adnNode.meta.welcomeAdId.map { wad =>
+      Приветствие: @wad
+    }
+  </div>
+
+
+  <br/>
+  <h3>Подчинённые узлы (@slaves.size)</h3>
+  <a class="add" href="@routes.SysMarket.createAdnNode(adnNode.id)">Добавить подузел...</a><br/>
+  @if(slaves.isEmpty) {
+    <p>Нет подчинённых узлов.</p>
+  } else {
+    <br/>
+    @_adnNodesListTpl(slaves, withDelims = false)
+  }
+
+
+  <br/>
+  <h3>Участие в рекламной сети</h3>
+  Права: @adnNode.adn.rights.map(_.longName).mkString(", ")<br/>
+  @if(!adnNode.adn.producerIds.isEmpty) {
+    producerIds = @adnNode.adn.producerIds.toSeq.zipWithIndex.map { case (producerId, i) =>
+      <a href="@routes.SysMarket.showAdnNode(producerId)">@i</a>
+    }
+    <br/>
+  }
+  @* TODO Надо бы отображать как-то showLevelsInfo. *@
+  isEnabled = @adnNode.adn.isEnabled<br/>
+  @adnNode.adn.disableReason.map { dr =>
+    disableReason = @dr<br/>
+  }
+
+
+  <br/>
+  <h3>Управление</h3>
+  <a href="@routes.SysMarket.showAdnNodeAds(adnNode.id.get)">Список рекламных карточек узла</a><br/>
+  <a href="@routes.MarketCategory.showCatsFor(adnNode.id.get)">Категории</a><br/>
+  @if(adnNode.adn.memberType == AdNetMemberTypes.MART) {
+    <a href="@routes.SysMarket.martInviteForm(adnNode.id.get)">Инвайты на управление ТЦ</a><br/>
+  }
+  @* Функционал товаров и прайс-листов пока скрыт: кравлер не готов, товары не нужны. *@
+  @*<a href="@routes.SysMarket.splAddForm(mshop.id.get)">Добавить источник прайс-листа.</a>
+    <a href="@routes.MarketOffer.showShopPromoOffers(mshop.id.get)">ЛК: Товары магазина</a> *@
+
+
+  <br/>
+  <h3>Отладка</h3>
+  @if(adnNode.adn.memberType == AdNetMemberTypes.SHOP) {
+    Отобразить email-письмо активации:
+      <a href="@routes.SysMarket.showShopEmailActMsgHtml(adnNode.id.get, isHtml=true)">HTML</a>
+      <a href="@routes.SysMarket.showShopEmailActMsgHtml(adnNode.id.get, isHtml=false)">TXT</a>
+    <br/>
+  }
+
+}
+

@@ -1,12 +1,62 @@
-@(mmart: MAdnNode, ads: Seq[MAd], shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory])(implicit ctx: util.Context)
+@(mmart: MAdnNode, ads: Seq[MAd], shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory], adSearch:util.qsb.AdSearch, adProducerOpt: Option[MAdnNode])(implicit ctx: util.Context)
 
-@* Начальная страница для sio-market. *@
+@if( adSearch.producerIdOpt ){
 
-@if(!ads.isEmpty) {
+  @adProducerOpt.map { producer =>
 
-  <div class="sm-screen sm-hidden-screen">
-    @_screen_nav_buttons()
-    @_sm_offers(mmart, ads, shops)
-  </div>
+    @* Список карточек указанного продюссера *@
+    <div class="sio-mart__node-offers sio-mart-node-offers-window" id="sioMartNodeOffers">
 
+      @_screen_nav_button("back","closeNodeOffersPopupButton")
+      <div class="sio-mart__producer-header" style="background-color: #@producer.meta.color;">
+      @producer.logoImgOpt.map { logoImg =>
+        <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
+      }
+      </div>
+
+      @* Контейнер с прокручивающимися офферами *@
+      <div class="sio-mart-node-offers-window__root-container" id="sioMartNodeOffersBlockContainer">
+
+      @if(!ads.isEmpty) {
+
+        @ads.zipWithIndex.map { case (mad, index) =>
+          <div class="sio-mart-node-offers-window__single-ad-container js-nop-single-ad-container">
+
+            <div class="js-no-container" style="margin: 0px auto;">
+
+            <div class="sio-mart-node-offers-window__top-offset"></div>
+            <div class="sio-mart-node-offers-window__single-ad-w-border">
+
+              <div class="sio-mart-node-offers-window__page-marker">@(index+1)/@ads.length</div>
+
+              @_single_offer(mad, shops.getOrElse(mad.producerId, mmart), fallbackLogo = mmart.logoImgOpt, false, false)
+
+            </div>
+
+            <div class="sio-mart-node-offers-window__single-ad-location sm-now-location">
+              <div class="sm-now-location__icon"></div>
+              <div class="sm-now-location__info">
+                <span>@if( producer.meta.floor ){ @producer.meta.floor-й этаж }</span>
+                <strong>@producer.meta.name</strong>
+              </div>
+              <div class="sm-clear"></div>
+            </div>
+
+            <div class="sio-mart-node-offers-window__bottom_margin"></div>
+
+            </div>
+
+          </div>
+        }
+
+      }
+
+      </div>
+
+    </div>
+
+  }
+
+}else{
+  @_block_offers_list(mmart, ads, shops, true)
 }

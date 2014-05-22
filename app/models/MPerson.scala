@@ -1,6 +1,6 @@
 package models
 
-import io.suggest.model.{EsModelStaticT, EsModelT}
+import io.suggest.model.{EsModelJMXBase, EsModelJMXMBeanCommon, EsModelStaticT, EsModelT}
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.elasticsearch.common.xcontent.XContentBuilder
 import io.suggest.util.SioEsUtil._
@@ -11,6 +11,7 @@ import play.api.Play.current
 import play.api.cache.Cache
 import util.PlayMacroLogsImpl
 import play.api.libs.json.JsString
+import io.suggest.event.SioNotifierStaticClientI
 
 /**
  * Suggest.io
@@ -23,9 +24,11 @@ import play.api.libs.json.JsString
  */
 
 // Статическая часть модели.
-object MPerson extends EsModelStaticT[MPerson] with PlayMacroLogsImpl {
+object MPerson extends EsModelStaticT with PlayMacroLogsImpl {
 
   import LOGGER._
+
+  override type T = MPerson
 
   val ES_TYPE_NAME = "person"
 
@@ -105,7 +108,9 @@ import MPerson._
 case class MPerson(
   var lang  : String,
   var id    : Option[String] = None
-) extends EsModelT[MPerson] with MPersonLinks {
+) extends EsModelT with MPersonLinks {
+
+  override type T = MPerson
 
   def personId = id.get
 
@@ -130,4 +135,12 @@ trait MPersonLinks {
   @JsonIgnore def allDomainsAuthz = MPersonDomainAuthz.getForPerson(personId)
 }
 
+
+trait MPersonJmxMBean extends EsModelJMXMBeanCommon
+class MPersonJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase
+  with MPersonJmxMBean
+{
+  override def companion = MPerson
+}
 

@@ -5,14 +5,13 @@
    к описаниям/названиям. *@
 
 @import market.lk._
-@import routes.MarketMartLk._
 @import ctx._
 
 @lkBase(Messages("Edit") + " " + mshop.meta.name) {
 
   <div class="title-wrap">
     <div class="center">
-      <a class="back-but" href="@showShop(mshop.id.get)">&nbsp;</a>
+      <a class="back-but" href="@routes.MarketLkAdn.showSlave(mshop.id.get)">&nbsp;</a>
       <div class="title-inner">
         ПРОФАЙЛ МАГАЗИНА
       </div>
@@ -22,7 +21,7 @@
   <div class="body">
 
     @shop._shopFormTpl(
-      call = editShopFormSubmit(mshop.id.get),
+      call = routes.MarketMartLk.editShopFormSubmit(mshop.id.get),
       sf = sf,
       btnText = Messages("Сохранить"),
       isLimited = false,

@@ -24,7 +24,7 @@ object HtmlCompressUtil {
     compressor.setRemoveHttpProtocol(
       getBool("html.compress.global.remove.proto.http", false))
     compressor.setRemoveHttpsProtocol(
-      getBool("html.compress.global.remove.proto.https", true))
+      getBool("html.compress.global.remove.proto.https", false))
     compressor
   }
 
@@ -57,7 +57,7 @@ object HtmlCompressUtil {
 
   private val html4emailCompressor = {
     val compressor = getForGlobalUsing
-    compressor.setRemoveIntertagSpaces(false)
+    compressor.setRemoveIntertagSpaces(true)
     compressor.setRemoveMultiSpaces(true)
     compressor.setRemoveHttpProtocol(false)
     compressor.setRemoveHttpsProtocol(false)

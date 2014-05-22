@@ -23,6 +23,51 @@ Size=Размер
 Sizes=Размеры
 Price=Цена
 
+slaves.of.m=АРЕНДАТОРЫ
+slaves.of.R=РЕСТОРАНЫ
+
+add.to.other.s=Добавить в другой магазин
+add.to.other.r=Добавить в другой ресторан
+add.to.other.m=Добавить в другой торговый центр
+add.to.other.R=Добавить в другую сеть ресторанов
+
+amt.of.type.s=Магазин
+amt.of.type.m=Торговый центр
+amt.of.type.r=Ресторан
+amt.of.type.R=Супервайзер сети ресторанов
+
+editing.of.amt.profile.s=Редактирование профайла магазина
+editing.of.amt.profile.m=Редактирование профайла ТЦ
+editing.of.amt.profile.r=Редактирование профайла ресторана
+editing.of.amt.profile.R=Редактирование профайла супервайзера
+
+
+blocks.field.price=Цена
+blocks.field.oldPrice=Старая цена
+blocks.field.height=Высота блока
+blocks.field.title=Заголовок
+blocks.field.bgImg=Фоновое изображение
+blocks.field.text1=Текст 1
+blocks.field.text2=Текст 2
+blocks.field.discount=Скидка
+blocks.field.logo=Логотип
+blocks.field.lineColor=Цвет линии
+blocks.field.bottomColor=Цвет нижней заливки
+blocks.field.topColor=Цвет верхней заливки
+blocks.field.descr=Описание
+blocks.field.saleMaskColor=Цвет маски SALE
+blocks.field.bgColor=Цвет фона
+blocks.field.circleFillColor=Цвет заливки кружков
+blocks.field.borderColor=Цвет бордюра
+blocks.field.discoIconColor=Цвет значка скидки
+blocks.field.discoBorderColor=Цвет бордюра скидки
+blocks.field.maskColor=Цвет маски
+blocks.field.fillColor=Цвет заливки
+
+ad.stat.action.v=Просмотр
+ad.stat.action.c=Клик
+
+
 lk.sl.enable_ad=Включить объявление
 lk.sl.d=Выводить в моём каталоге
 lk.sl.h=Выводить в общем каталоге
@@ -40,6 +85,7 @@ error.max=Значение должно быть меньше, либо равн
 error.max.strict=Значение должно быть меньше {0}
 error.minLength=Минимум {0} символов
 error.maxLength=Максимальная длина — {0} символов
+error.unknown.email_pw=Неверные email/пароль.
 
 constraint.required=Обязательно
 constraint.min=Минимальное значение: {0}

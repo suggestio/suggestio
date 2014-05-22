@@ -2,7 +2,10 @@ package util
 
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Currency
-import java.math.RoundingMode
+import org.joda.time.DateTime
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+import scala.util.matching.Regex
+import io.suggest.ym.model.ad.AOFieldFont
 
 /**
  * Suggest.io
@@ -12,25 +15,73 @@ import java.math.RoundingMode
  */
 object TplDataFormatUtil {
   // Надо укорачивать валюту до минимума
-  val CURRENCY_FIXER_RUB = " руб\\.".r
-  val CURRENCY_FIXER_USD = " USD".r
+  private val CURRENCY_FIXER_RUB = "руб\\.".r
+  private val CURRENCY_FIXER_USD = "USD".r
+
+  /** Сконвертить "ffffff" в List(255,255,255). */
+  final def colorHex2rgb(hex: String, start: Int = 0, acc: List[Int] = Nil): List[Int] = {
+    if (start > hex.length - 1) {
+      acc.reverse
+    } else {
+      val untilPos = start + 2
+      val subhex = hex.substring(start, untilPos)
+      val xint = Integer.parseInt(subhex, 16)
+      colorHex2rgb(hex, untilPos, xint :: acc)
+    }
+  }
+
+  /** Постпроцессинг цен. Использовать неразрывные пробелы вместо обычных. */
+  def pricePostprocess(priceStr: String): String = {
+    priceStr.replace('\u0020', '\u00A0')
+  }
 
   /** Напечатать цену согласно локали и валюте. */
   def formatPrice(price: Float, currency: Currency)(implicit ctx: Context): String = {
     // TODO следует залезать в локаль клиента и форматировать через неё?
     // TODO Нужна поддержка валют в ценах?
-    val currFmt = NumberFormat.getCurrencyInstance
+    val currFmt = NumberFormat.getCurrencyInstance.asInstanceOf[DecimalFormat]
     currFmt.setCurrency(currency)
-    val fmt0 = currFmt.format(price)
-    // Укоротить валюту
+    val dcs = currFmt.getDecimalFormatSymbols
+    val currencySymbol = formatCurrency(currency)
+    dcs.setCurrencySymbol(currencySymbol)
+    currFmt.setDecimalFormatSymbols(dcs)
+    if (price <= 9999)
+      currFmt.setGroupingUsed(false)
+    val formatted = currFmt.format(price)
+    pricePostprocess(formatted)
+  }
+
+
+  // Пока локали не поддерживаются, используется один форматтер на всех.
+  def formatPriceDigits(price: Float)(implicit ctx: Context): String = {
+    val formatPriceDigitsDF = {
+      val currFmt = NumberFormat.getCurrencyInstance.asInstanceOf[DecimalFormat]
+      val dcf = currFmt.getDecimalFormatSymbols
+      dcf.setCurrencySymbol("")
+      currFmt.setDecimalFormatSymbols(dcf)
+      if (price <= 9999)
+        currFmt.setGroupingUsed(false)
+      currFmt
+    }
+    val formatted = formatPriceDigitsDF.format(price)
+    pricePostprocess(formatted)
+  }
+
+
+  /** Отформатировать валюту. */
+  def formatCurrency(currency: Currency)(implicit ctx: Context): String = {
+    // TODO Надо бы дедублицировать это с частями formatPrice()
+    // TODO Надо прогонять код через currency formatter, чтобы учитывать локаль?
+    val fmt0 = currency.getSymbol()   // TODO Надо передавать сюда локаль клиента через аргумент.
     currency.getCurrencyCode match {
-      case "RUB" => CURRENCY_FIXER_RUB.replaceFirstIn(fmt0, "р.")
-      case "USD" => CURRENCY_FIXER_USD.replaceFirstIn(fmt0, "$")    // TODO Баксы вроде бы перед ценой отображаются, а не после.
-      case _ => fmt0
+      case "RUB" => CURRENCY_FIXER_RUB.replaceFirstIn(fmt0, Regex.quoteReplacement("р."))
+      case "USD" => CURRENCY_FIXER_USD.replaceFirstIn(fmt0, Regex.quoteReplacement("$"))
+      case other => fmt0
     }
   }
 
 
+  // Пока локали не работают, используем общий для всех форматтер данных.
   private val pcFmt = {
     val currFmt = NumberFormat.getPercentInstance
     currFmt.setMinimumFractionDigits(0)
@@ -44,11 +95,19 @@ object TplDataFormatUtil {
   }
 
 
-  private val pcRawFloatFmt = new DecimalFormat("#.##")
+  //private val pcRawFloatFmt = new DecimalFormat("#.##")
   private val pcRawIntegerFmt = new DecimalFormat("#")
 
+  /** Форматирование процентов без самого знака %%. */
   def formatPercentRaw(pc: Float): String = {
+    // TODO Надо бы реоргонизовать через DecimalFormat и decimalSymbols
     pcRawIntegerFmt.format(pc)
   }
+
+
+
+  private val numericDateFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+
+  def numericDate(dt: DateTime) = numericDateFormat.print(dt)
 
 }

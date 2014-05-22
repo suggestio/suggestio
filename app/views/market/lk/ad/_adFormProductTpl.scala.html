@@ -5,6 +5,8 @@
 @import helper._
 @import util.FormHelpers.myFields
 
+@* TODO: Удалить, когда переезд на blocks будет завершен. *@
+
 @mkField(clazz: String = "", style:String = "")(content: Html) = {
   <table cellpadding="0" cellspacing="0" class="input-wrap @clazz" @if(!style.isEmpty) { style="@style" }>
     @content
@@ -20,7 +22,7 @@
       '_label -> "Производитель:",
       'id -> "vendorValueInput"
     )
-    @_selectColorTpl("ad.offer.vendor.color", af)
+    @_selectColorTpl(af("ad.offer.vendor.color"))
 
     @if(!af.errors("ad.offer.vendor.value").isEmpty) {
       <tr>
@@ -40,7 +42,8 @@
       '_label -> "Цена:",
       'id -> "priceValueInput"
     )
-    @_selectColorTpl("ad.offer.price.color", af)
+
+    @_selectColorTpl(af("ad.offer.price.color"))
 
     @if(!af.errors("ad.offer.price.value").isEmpty) {
       <tr>
@@ -66,7 +69,7 @@
       af("ad.offer.oldPrice.value"),
       '_label -> "Старая цена"
     )
-    @_selectColorTpl("ad.offer.oldPrice.color", af)
+    @_selectColorTpl(af("ad.offer.oldPrice.color"))
 
     @if(!af.errors("ad.offer.oldPrice.value").isEmpty) {
       <tr>

@@ -2,7 +2,7 @@ package util
 
 import play.api.data.Forms._
 import java.net.URL
-import io.suggest.util.{DateParseUtil, UrlUtil}
+import io.suggest.util.{JacksonWrapper, DateParseUtil, UrlUtil}
 import gnu.inet.encoding.IDNA
 import HtmlSanitizer._
 import views.html.helper.FieldConstructor
@@ -14,6 +14,13 @@ import org.joda.time.format.ISOPeriodFormat
 import models._
 import org.postgresql.util.PGInterval
 import java.sql.SQLException
+import java.io._
+import java.util.zip.{GZIPInputStream, GZIPOutputStream}
+import org.apache.commons.codec.binary.{Base64InputStream, Base64OutputStream}
+import scala.collection.GenTraversableOnce
+import scala.Some
+import play.api.Logger
+import java.util.regex.Pattern
 
 /**
  * Suggest.io
@@ -39,6 +46,25 @@ object FormUtil {
     textFmtPolicy.sanitize(s).trim
   }
 
+  private val crLfRe = "\r\n".r
+  private val lfCrRe = "\n\r".r
+  private val lfRe = "\n".r
+  private val brReplacement = "<br/>"
+  val replaceEOLwithBR = {s: String =>
+    var r1 = crLfRe.replaceAllIn(s, brReplacement)
+    r1 = lfCrRe.replaceAllIn(r1, brReplacement)
+    lfRe.replaceAllIn(r1, brReplacement)
+  }
+  private val brTagRe = "(?i)<br\\s*/?\\s*>".r
+  val replaceBRwithEOL = {s: String =>
+    brTagRe.replaceAllIn(s, "\r\n")
+  }
+
+  /** Функция, которая превращает Some("") в None. */
+  def emptyStrOptToNone(s: Option[String]) = {
+    s.filter(!_.isEmpty)
+  }
+
   private val allowedProtocolRE = "(?i)https?".r
 
   def isValidUrl(urlStr: String): Boolean = {
@@ -47,7 +73,7 @@ object FormUtil {
       true
 
     } catch {
-      case ex:Throwable => false
+      case ex: Exception => false
     }
   }
 
@@ -58,10 +84,14 @@ object FormUtil {
   /** Маппинг для номера этажа в ТЦ. */
   val floorM = nonEmptyText(maxLength = 4)
     .transform(strTrimSanitizeF, strIdentityF)
+  val floorOptM = optional(floorM)
+    .transform [Option[String]] (emptyStrOptToNone, identity)
 
   /** Маппинг для секции в ТЦ. */
   val sectionM = nonEmptyText(maxLength = 6)
     .transform(strTrimSanitizeF, strIdentityF)
+  val sectionOptM = optional(sectionM)
+    .transform [Option[String]] (emptyStrOptToNone, identity)
 
   /** Парсим текст, введённый в поле с паролем. */
   val passwordM = nonEmptyText
@@ -85,9 +115,15 @@ object FormUtil {
     }
   )
 
+
+  def strOptGetOrElseEmpty(x: Option[String]) = x getOrElse ""
+  def toStrOptM(x: Mapping[String]): Mapping[Option[String]] = {
+    x.transform[Option[String]](Option.apply, strOptGetOrElseEmpty)
+  }
+
+
   /** Возвращение проверенного пароля как Some(). */
-  val passwordWithConfirmSomeM = passwordWithConfirmM
-    .transform({ Option.apply }, {pwOpt: Option[String] => pwOpt getOrElse ""})
+  val passwordWithConfirmSomeM = toStrOptM(passwordWithConfirmM)
 
 
   val nameM = nonEmptyText(maxLength = 64)
@@ -96,26 +132,39 @@ object FormUtil {
   def martNameM = nameM
   def companyNameM = nameM
 
+
   /** Маппер для поля, содержащего код цвета. */
-  // TODO Нужно добавить верификацию тут какую-то. Например через YmColors.
+  private val colorCheckRE = "(?i)[a-f0-9]{6}".r
   val colorM = nonEmptyText(minLength = 6, maxLength = 6)
+    .verifying("error.color.invalid", colorCheckRE.pattern.matcher(_).matches)
+  val colorOptM = optional(colorM)
+    .transform [Option[String]] (emptyStrOptToNone, identity)
 
   val publishedTextM = text(maxLength = 2048)
     .transform(strFmtTrimF, strIdentityF)
   val publishedTextOptM = optional(publishedTextM)
+    .transform [Option[String]] (emptyStrOptToNone, identity)
 
   val townM = nonEmptyText(maxLength = 32)
     .transform(strTrimSanitizeF, strIdentityF)
+  val townOptM = optional(townM)
+    .transform [Option[String]] (emptyStrOptToNone, identity)
 
   val addressM = nonEmptyText(minLength = 10, maxLength = 128)
     .transform(strTrimSanitizeF, strIdentityF)
+  val addressOptM = optional(addressM)
+    .transform [Option[String]] (emptyStrOptToNone, identity)
 
   /** id категории. */
   def userCatIdM = esIdM
   val userCatIdOptM = optional(userCatIdM)
+    .transform [Option[String]] (emptyStrOptToNone, identity)
+  val userCatIdSomeM = userCatIdOptM.verifying("error.required", _.isDefined)
 
   // TODO Нужен нормальный валидатор телефонов.
   val phoneM = nonEmptyText(minLength = 5, maxLength = 16)
+  val phoneOptM = optional(phoneM)
+    .transform [Option[String]] (emptyStrOptToNone, identity)
 
   def martAddressM = addressM
 
@@ -124,12 +173,13 @@ object FormUtil {
   def list2OptListF[T] = { l:List[T] =>  if (l.isEmpty) None else Some(l) }
 
   /** Маппер form-поля URL в строку URL */
-  val urlStrMapper = nonEmptyText(minLength = 8)
+  val urlStrM = nonEmptyText(minLength = 8)
     .transform(strTrimF, strIdentityF)
     .verifying("mappers.url.invalid_url", isValidUrl(_))
+  val urlStrOptM = optional(urlStrM)
 
   /** Маппер form-поля с ссылкой в java.net.URL. */
-  val urlMapper = urlStrMapper
+  val urlMapper = urlStrM
     .transform(new URL(_), {url:URL => url.toExternalForm})
 
   /** Проверить ссылку на возможность добавления сайта в индексацию. */
@@ -153,7 +203,7 @@ object FormUtil {
 
   // Маппер для float-значений.
   val floatRe = "[0-9]{0,8}([,.][0-9]{0,4})?".r
-  val float = nonEmptyText(maxLength = 15)
+  val floatM = nonEmptyText(maxLength = 15)
     .verifying("float.invalid", floatRe.pattern.matcher(_).matches())
     .transform(_.toFloat, {f: Float => f.toString})
 
@@ -186,12 +236,20 @@ object FormUtil {
   import io.suggest.ym.parsers.Price
   import UserInputParsers._
 
+
+  /** Макс.длина текста в поле цены. */
+  val PRICE_M_MAX_STRLEN = 40
+
   /** Нестрогий маппинг цены. Ошибка будет только если слишком много букв. */
   val priceM: Mapping[(String, Option[Price])] = {
-    text(maxLength = 40)
+    text
       .transform[(String, Option[Price])](
         {raw =>
-          val raw1 = strTrimSanitizeF(raw)
+          val raw0 = if (raw.length > PRICE_M_MAX_STRLEN)
+            raw.substring(0, PRICE_M_MAX_STRLEN)
+          else
+            raw
+          val raw1 = strTrimSanitizeF(raw0)
           raw1 -> parsePrice(raw1) },
         { case (raw, None) => raw
           case (raw, Some(_)) if !raw.isEmpty => raw
@@ -269,32 +327,73 @@ object FormUtil {
 
   def adhocPercentFmt(pc: Float) = TplDataFormatUtil.formatPercentRaw(pc) + "%"
 
+  /** Макс.длина текста в полях price/percent. Используется в маппинге и в input-шаблонах редактора блоков. */
+  val PERCENT_M_CHARLEN_MAX = 32
+
   // Процентные значения
   /** Нестрогий маппер процентов. Крэшится только если слишком много букв. */
   val percentM = {
-    text(maxLength = 20)
-      .transform[(String, Option[Float])](
-        {raw =>
-          val raw1 = strTrimSanitizeF(raw)
-          raw1 -> parsePercents(raw1)
-        },
-        { case (raw, opt) if !raw.isEmpty || opt.isEmpty => raw
-          case (raw, Some(pc)) => adhocPercentFmt(pc) }
-      )
+    text.transform[(String, Option[Float])](
+      {raw =>
+        val raw0 = if (raw.length > PERCENT_M_CHARLEN_MAX)
+          raw.substring(0, PERCENT_M_CHARLEN_MAX)
+        else
+          raw
+        val raw1 = strTrimSanitizeF(raw0)
+        raw1 -> parsePercents(raw1)
+      },
+      { case (raw, opt) if !raw.isEmpty || opt.isEmpty => raw
+        case (raw, Some(pc)) => adhocPercentFmt(pc) }
+    )
   }
 
-  /** Строгий маппер скидки в процентах. */
-  val discountPercentM: Mapping[Float] = {
+  /** Маппинг со строгой проверкой на проценты. */
+  def getStrictDiscountPercentM(min: Float, max: Float): Mapping[Float] = {
     percentM
       .verifying("error.required", _._2.isDefined)
-      .verifying("error.discount.too.large", { _._2.get <= 200F })
-      .verifying("error.discount.too.small", { _._2.get >= -99.999999F })
+      .verifying("error.discount.too.large", { _._2.get >= min })
+      .verifying("error.discount.too.small", { _._2.get <= max })
       .transform[Float](
         _._2.get,
         {pc => adhocPercentFmt(pc) -> Some(pc)}
       )
   }
 
+  /** Маппинг, толерантный к значениям, выходящим за пределы диапазона. */
+  def getTolerantDiscountPercentM(min: Float, max: Float, dflt: Float): Mapping[Float] = {
+    percentM.transform[Float](
+      {case (raw, pcOpt) =>
+        pcOpt
+          .map { pcf => Math.min(max, Math.max(min, pcf)) }
+          .getOrElse(dflt)
+      },
+      {pcf =>
+        val raw = TplDataFormatUtil.formatPercentRaw(pcf) + "%"
+        raw -> Some(pcf)
+      }
+    )
+  }
+
+
+  /** Маппинг для задания причины при сокрытии сущности. */
+  val hideEntityReasonM = nonEmptyText(maxLength = 512)
+    .transform(strTrimSanitizeF, strIdentityF)
+
+
+  /** Маппер типа adn-узла. */
+  val adnMemberTypeM: Mapping[AdNetMemberType] = nonEmptyText(maxLength = 1)
+    .transform [Option[AdNetMemberType]] (
+      { AdNetMemberTypes.maybeWithName },
+      { _.map(_.name).getOrElse("") }
+    )
+    .verifying("error.required", _.isDefined)
+    .transform [AdNetMemberType] (_.get, Some.apply)
+
+
+  val adStatActionM: Mapping[AdStatAction] = {
+    nonEmptyText(maxLength = 1)
+      .transform[AdStatAction]({AdStatActions.withName}, {_.toString})
+  }
 }
 
 
@@ -304,3 +403,90 @@ object FormHelpers {
 
 }
 
+
+/** Сериализатор данных в поле формы, пригодное для передачи на клиент и возврату обратно.
+  * Структура отражает Map[String, String] на Json + gzip + base64.
+  * {"ad.offer.text1.value" : "рекламо", "ad.offer.text1.color" : "FFFFFF", ...}.
+  */
+object FormDataSerializer extends PlayLazyMacroLogsImpl {
+  import play.api.libs.json._
+  import LOGGER._
+
+  val ENCODING = "ISO-8859-1"
+
+  /** Сериализация Form.data или любой другой совместимой коллекции. */
+  def serializeData(data: GenTraversableOnce[(String, String)]): String = {
+    // Нано-оптимизация: вместо mapValues() + toSeq() намного эффективнее юзать foldLeft[List]
+    val dataJs = data.foldLeft[List[(String, JsValue)]] (Nil) {
+      case (acc, (k, v))  =>  k -> JsString(v) :: acc
+    }
+    val jsonStr = JsObject(dataJs).toString()
+    // Сжимаем
+    compress(jsonStr)
+  }
+
+  /** Десериализация выхлопа [[serializeData()]]. Для упрощения используется jackson. */
+  def deserializeData(s: String): Map[String, String] = {
+    val jsonStream = decompressStream(s)
+    try {
+      JacksonWrapper.deserialize[Map[String, String]](jsonStream)
+    } finally {
+      jsonStream.close()
+    }
+  }
+
+  def deserializeDataSafe(s: String): Option[Map[String, String]] = {
+    try {
+      Some(deserializeData(s))
+    } catch {
+      case ex: Exception =>
+        if (LOGGER.underlying.isDebugEnabled) {
+          val sb = new StringBuilder("deserializeDataSafe(): Failed to deser. string[")
+            .append(s.length)
+            .append(" chars]")
+          if (LOGGER.underlying.isTraceEnabled) {
+            sb.append(": ").append(s)
+          }
+          debug(sb.toString(), ex)
+        }
+        None
+    }
+  }
+
+  /** Сжатие строки в gzip+base64. */
+  def compress(str: String): String = {
+    if (str == null || str.length() == 0) {
+      ""
+    } else {
+      val out = new ByteArrayOutputStream()
+      val b64 = new Base64OutputStream(out, true, 0, Array())
+      val gzipped = new GZIPOutputStream(b64)
+      // TODO Opt: Надо бы использовать url-safe кодирование и отбрасывать padding в хвосте.
+      gzipped.write(str.getBytes)
+      gzipped.close()
+      out.toString(ENCODING)
+    }
+  }
+
+  /** Декомпрессия потока. */
+  def decompressStream(str: String): InputStream = {
+    val bais = new ByteArrayInputStream(str.getBytes(ENCODING))
+    val gis64 = new Base64InputStream(bais)
+    new GZIPInputStream(gis64)
+  }
+
+  /** Разжатие строки из gzip+base64 строки. */
+  def decompress(str: String): String = {
+    if (str == null || str.length() == 0) {
+      ""
+    } else {
+      val gis = decompressStream(str)
+      try {
+        val br = new BufferedReader(new InputStreamReader(gis, ENCODING))
+        Stream.continually(br.readLine()).takeWhile(_ != null).mkString("")
+      } finally {
+        gis.close()
+      }
+    }
+  }
+}

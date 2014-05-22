@@ -1,0 +1,44 @@
+@(mads: Seq[MAdT], adnNode: MAdnNode, adFreqs: AdFreqs_t)(implicit ctx: util.Context)
+
+@* Список реклам и сервисных функций. *@
+@import util.TplDataFormatUtil._
+@import AdStatActionsTpl._
+@import ctx._
+
+@hPathAfter1 = {
+  / <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
+  / Реклама
+}
+
+@adnBase("Рекламные карточки", hPathAfter = Some(hPathAfter1)) {
+  @mads.map { mad =>
+    <a href="@routes.MarketAd.editAd(mad.id.get)">@mad.offers.headOption.map {
+      case adBlock: AOBlock => {
+        @adBlock.text1.map {t => @Html(t.value)} / @adBlock.text2.map {t2 =>@Html(t2.value)}
+      }
+    }</a>
+    <p>Отобразить email-сообщение о деактивации:
+      @Seq(true -> "HTML", false -> "TXT").map { case (isHtml, linkText) =>
+        <a href="@routes.SysMarket.showShopEmailAdDisableMsg(mad.id.get, isHtml = isHtml)">@linkText</a>
+      }
+    </p>
+
+    <p>Stat:
+      @adFreqs.get(mad.id.get).map { freqs =>
+        За последние @MAdStat.TTL_DAYS_DFLT дней:
+        @freqs.map { case (action, freq) =>
+          @action: @freq
+        }
+      }
+    </p>
+    @adStatActionsSeq.map { case (asa, txt) =>
+      @adnNode.adn.supId.orElse(adnNode.id).map { adnNodeId =>
+        @helper.form( routes.Market.adStats(martId = adnNodeId, adId = mad.id.get, action = asa.toString) ) {
+          <input type="submit" value="Имитировать @Messages(txt)"/>
+        }
+      }
+    }
+
+    <br/><br/>
+  }
+}

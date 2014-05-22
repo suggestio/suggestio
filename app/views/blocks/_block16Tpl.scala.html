@@ -1,0 +1,37 @@
+@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+
+@import svg._
+@import util.blocks.BlocksConf.Block16
+@import util.TplDataFormatUtil._
+@import common._
+
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl16"
+     style="background: #@mad.colors.getOrElse(Block16.bgColorBf.name, Block16.bgColorBf.anyDefaultValue);"
+     data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+
+  <div class="inner" style="border-color: #@mad.colors.getOrElse(Block16.borderColorBf.name, Block16.borderColorBf.anyDefaultValue);">
+
+      <div class="info">
+        @mad.offers.headOption.map { offer =>
+          @offer.text1.map { text1 =>
+            <div @_aovfStyleTpl(text1, "title")>
+              @Html(text1.value)
+            </div>
+          }
+          @offer.text2.map { text2 =>
+            <div @_aovfStyleTpl(text2, "descr")>
+              @Html(text2.value)
+            </div>
+          }
+          @offer.price.map { price =>
+            <div @_aovfStyleTpl(price, "price")>
+              @formatPrice(price.value, price.currency)
+            </div>
+          }
+        }
+
+    </div>
+
+  </div>
+
+</div>

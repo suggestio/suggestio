@@ -3,6 +3,8 @@ package models
 import play.api.Play.current
 import io.suggest.event._
 import io.suggest.event.SioNotifier.{Event, Subscriber, Classifier}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import util.SiowebEsUtil.client
 
 /**
  * Suggest.io
@@ -14,13 +16,13 @@ import io.suggest.event.SioNotifier.{Event, Subscriber, Classifier}
  */
 object MAdnNodeCache extends AdnEsModelCache[MAdnNode] {
 
-  val EXPIRE_SEC: Int = current.configuration.getInt("adn.node.cache.expire.seconds") getOrElse 60
-  val CACHE_KEY_SUFFIX = ".nc"
+  override val EXPIRE_SEC: Int = current.configuration.getInt("adn.node.cache.expire.seconds") getOrElse 60
+  override val CACHE_KEY_SUFFIX = ".nc"
 
-  type GetAs_t = MAdnNode
+  override type GetAs_t = MAdnNode
 
   /** Карта событий adnNode для статического подписывания в SioNotifier. */
-  def snMap: Seq[(Classifier, Seq[Subscriber])] = {
+  override def snMap: Seq[(Classifier, Seq[Subscriber])] = {
     val subs = Seq(this)
     Seq(
       AdnNodeSavedEvent.getClassifier()   -> subs,
@@ -29,10 +31,11 @@ object MAdnNodeCache extends AdnEsModelCache[MAdnNode] {
     )
   }
 
-  def companion = MAdnNode
+
+  override def getByIdNoCache(id: String) = MAdnNode.getById(id)
 
   /** Извлекаем adnId из события. */
-  def event2id(event: Event): String = {
+  override def event2id(event: Event): String = {
     // Все подписанные события реализуют интерфейс IAdnId. Но всё же надо перестраховаться.
     event match {
       case e: IAdnId =>

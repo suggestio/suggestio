@@ -60,21 +60,20 @@ object MarketOffer extends SioController with MacroLogsImpl {
     .transform(strTrimSanitizeF, strIdentityF)   // TODO Юниты надо проверять по множеству допустимых.
 
   /** Маппер для цены товара. */
-  val priceM = "price" -> float
+  val priceM = "price" -> floatM
 
   /** Маппер "старых" цен. Старых цен может быть 0, 1 или более. Для упрощения пока только одна цена максимум. */
-  val oldPriceM = "oldPrice" -> optional(float)
+  val oldPriceM = "oldPrice" -> optional(floatM)
     .transform(_.toList, {l: List[Float] => l.headOption})
 
   /** Маппер формы создания/редактирования промо-оффера в режиме vendor.model. */
   val vmPromoOfferFormM = Form(mapping(
     vendorM, modelM, colorsM, sizesM, sizeUnitsM, priceM, oldPriceM,
     // TODO Изначально была поддержка list(tmpImgIdM), но эта форма стала тестовым полигоном для картинок сразу после 6b6694f83444, поэтому пока работа идёт с одной картинкой.
-    "image_key"  -> imgIdM,
-    "crop"  -> optional(imgCropM)
+    "image_key"  -> imgIdM
   )
   // apply()
-  {(vendor, model, colors, sizes, sizeUnits, price, oldPriceOpt, iik, cropOpt) =>
+  {(vendor, model, colors, sizes, sizeUnits, price, oldPriceOpt, iik) =>
     val offer = new MShopPromoOffer
     import offer.datum
     datum.vendor = vendor
@@ -85,14 +84,16 @@ object MarketOffer extends SioController with MacroLogsImpl {
     datum.price = price
     datum.oldPrices = oldPriceOpt
     // Подхватываем тут tempImg*. Сначала мержим id картинок и их кропы
-    val imgInfo = ImgInfo4Save(iik, cropOpt)
+    val imgInfo = ImgInfo4Save(iik)
     (offer, imgInfo)
   }
   // unapply()
   {case (mOffer, imgInfo)=>
     import mOffer.datum._
-    import imgInfo._
-    Some((vendor getOrElse "",  model getOrElse "",  colors.toList,  sizesOrig,  sizeUnitsOrig getOrElse "",  price,  oldPrices, iik, cropOpt))
+    val vendor1 = vendor getOrElse ""
+    val model1 = model getOrElse ""
+    val szUnits = sizeUnitsOrig getOrElse ""
+    Some((vendor1, model1,  colors.toList,  sizesOrig,  szUnits,  price,  oldPrices, imgInfo.iik))
   })
 
 
@@ -123,9 +124,9 @@ object MarketOffer extends SioController with MacroLogsImpl {
         mpo.datum.shopId = shopId
         mpo.datum.offerType = OfferTypes.VendorModel
         // Картинки: нужно их перегнать в постоянное хранилище.
-        ImgFormUtil.updateOrigImg(Some(imgInfo), oldImgs = None) flatMap { imgsIdsSaved =>
+        ImgFormUtil.updateOrigImgFull(Some(imgInfo), oldImgs = None) flatMap { imgsIdsSaved =>
           // Выставить сохраненные картинки в датум и сохранить его.
-          mpo.datum.pictures = imgsIdsSaved.toSeq.map(_.id)
+          mpo.datum.pictures = imgsIdsSaved.map(_.filename)
           mpo.save.map { mpoSavedId =>
             // Редирект на созданный промо-оффер.
             rdrToOffer(mpoSavedId)
@@ -188,7 +189,7 @@ object MarketOffer extends SioController with MacroLogsImpl {
           mpo.datum.offerType = offer.datum.offerType
           mpo.datum.shopId = offer.datum.shopId
           mpo.id = offer.id
-          mpo.datum.pictures = updatedImgIds.map(_.id)
+          mpo.datum.pictures = updatedImgIds.map(_.filename)
           mpo.save.map { _ =>
             rdrToOffer(offerId).flashing("success" -> "Saved ok.")
           }

@@ -1,0 +1,108 @@
+@(adnId:String, btnText: String, mf: Form[_], submitCall:Call, welcomeAdOpt: Option[MAdT])(implicit ctx: util.Context)
+
+@* Форма для создания/редактирования торгового центра через личный кабинет. *@
+@import helper._
+
+@import util.FormHelpers._
+
+@form(submitCall) {
+
+  <div class="fields">
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      <tr>
+
+        <td class="left">
+          <label>Логотип</label>
+        </td>
+
+        <td class="right">
+          <div class="select-file-wrap" id="logoImgInput">
+            @defining(mf("logoImgId").value) { logoImgIdOpt =>
+            <div class="preview">
+              <img class="image-preview" src="@logoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {@routes.Assets.at("images/market/lk/empty-image.gif")}" width="59" />
+            </div>
+            <div class="selectbox">
+              <div class="select-file">
+                @stuff._fileUploadTpl(routes.MarketLkAdnEdit.handleTempLogo(adnId), relatedFieldId="logoImgInput")
+                <input class="image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
+                <div class="bg">Выбрать файл для загрузки</div>
+              </div>
+              <div class="descr">
+                Файл должен быть на прозрачном
+                фоне и иметь формат .png
+              </div>
+            </div>
+            }
+          </div>
+          <a href="#" class="close">&nbsp;</a>
+        </td>
+
+      </tr>
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      @inputText(
+        mf("meta.name"),
+        '_label -> "Название ТЦ:"
+      )
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      @inputText(
+        mf("meta.town"),
+        '_label -> "Город:"
+      )
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
+      @textarea(
+        mf("meta.address"),
+        '_label -> "Адрес:"
+      )
+    </table>
+
+
+    <table class="input-wrap big" cellspacing="0" cellpadding="0">
+      <td class="left">
+        <label for="meta_color">Основной цвет:</label>
+      </td>
+      <td class="right">
+        <div class="lk-color-select__color lk-color-select__color_custom js-custom-color" style="background: #4F4F4F;">
+          <div></div>
+          <input id="meta_color" type="hidden" name="meta.color" value="4F4F4F"/>
+        </div>
+      </td>
+    </table>
+
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      @inputText(
+        mf("meta.siteUrl"),
+        '_label -> "Сайт ТЦ:"
+      )
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+
+      <tbody>
+        <tr>
+          <td class="left">
+            <label>Картинка приветствия:</label>
+          </td>
+          <td class="right">
+            @_welcomeAdFormTpl(adnId, welcomeAdOpt, mf)
+          </td>
+        </tr>
+      </tbody>
+
+    </table>
+
+  </div>
+  <div class="border-line"></div>
+
+  <div class="submit-wrap">
+    <input class="blue-but-small" type="submit" value="@btnText" style="float: right;"/>
+  </div>
+
+}

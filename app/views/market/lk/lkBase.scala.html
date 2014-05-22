@@ -32,22 +32,14 @@
       </a>
       @ctx.usernameOpt.map { username =>
         <div class="auth">
-          <span class="gray">Добро пожаловать,</span>&nbsp;
-          <span class="user hover">
-	        @username<span class="select-but">&nbsp;</span>
-            <ul class="drop-menu">
-              <li>
-                <a href="@routes.MarketLk.lkList">Мой профиль</a>
-              </li>
-              <li>
-                <a href="@routes.Ident.logout">Выйти</a>
-              </li>
-            </ul>
-          </span>
+
+          <a class="logout-but" href="@routes.Ident.logout"></a>
+
           @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
           @adnIdOpt.map { adnId =>
-            @billing._billBallanceWidgetTpl(adnId)
+              @billing._billBallanceWidgetTpl(adnId)
           }
+
         </div>
       }
     </div>
@@ -84,11 +76,12 @@
   </div>
 
   <div class="overlay" id="overlay"></div>
+  <div class="lk-overlay-data" id="overlayData"></div>
 
   <script src="@routes.Assets.at("javascripts/market/lk/mx_cof.js")"></script>
   <script src="@routes.Assets.at("javascripts/market/lk/mx_dev.js")"></script>
-
   <script src="@routes.Assets.at("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
+  <script src="@routes.Assets.at("javascripts/jquery-ui.custom.min.js")"></script>
 
 </body>
 </html>

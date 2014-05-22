@@ -1,12 +1,9 @@
-@(mad: MAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], backCall:Call, submitCall:Call, adnNode: MAdnNode)(implicit ctx: util.Context)
+@(mad: MAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], adnNode: MAdnNode)(implicit ctx: util.Context)
 
 @* Страница с формой редактирования рекламной карточки. *@
 @import ctx._
 
-@adFormBase(
-  title = "Редактирование рекламной карточки",
-  backCall = backCall
-) {
+@adFormBase("Редактирование рекламной карточки", adnId = adnNode.id.get) {
 
   @* Кнопка стирания рекламной карточки пока лежит тут. До лучших времён. *@
   <div class="popup remove-ad" id="remove-ad">
@@ -15,13 +12,13 @@
     </div>
 
     <div class="content">
-      <div class="title">
+      <div class="popup_title">
         РЕКЛАМНАЯ КАРТОЧКА БУДЕТ УДАЛЕНА ИЗ ПОИСКОВОЙ ВЫДАЧИ
       </div>
       <!-- вызвать шаблон с id рекламной карточки -->
       <div class="ad-preview"></div>
       <div class="controls">
-        <a class="gray-but-small cancel" href="#">Отменить</a>
+        <a class="gray-but-small cancel" style="margin-right: 80px;" href="#">Отменить</a>
         @stuff._deleteSmthFormBtnTpl(routes.MarketAd.deleteSubmit(mad.id.get))
       </div>
     </div>
@@ -33,10 +30,10 @@
 
   @_adFormTpl(
     af = af,
-    call = submitCall,
+    call = routes.MarketAd.editAdSubmit(mad.id.get),
     btnText = Messages("Save"),
     mmcats = mmcats,
-    offerType = mad.offers.head.offerType,
+    withBC  = Some(BlocksConf(mad.blockMeta.blockId)),
     adnNode = adnNode
   )
 

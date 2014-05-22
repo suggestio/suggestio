@@ -1,0 +1,35 @@
+@(node: MAdnNode, slaves: Seq[MAdnNode])(implicit ctx: util.Context)
+
+@* Рендер списка подчинённых узлов. *@
+
+@import ctx._
+@import helper._
+
+@helper.javascriptRouter("jsRoutes2")(
+  routes.javascript.MarketLkAdnSlaveAd._showSlaveAds
+)
+
+@* При верстке этой таблички надо избегать конкретных терминов типа "ТЦ", "магазин", "ресторан" и т.д.
+       При первом раскрытии элемента должен асинхронно на сервер отправляться запрос рекламных карточек узла. *@
+
+<div class="nodes">
+  <div class="border-line"></div>
+
+  <h5>
+    Рекламные плакаты ресторанов
+  </h5>
+
+
+  @slaves.map { slave =>
+    <div class="node">
+
+      <strong class="n-name">@slave.meta.name</strong>@if( slave.meta.town ){&nbsp;/&nbsp;<span class="n-city">@slave.meta.town</span>}
+
+      <a class="toggle" href="@routes.MarketLkAdnSlaveAd._showSlaveAds(slave.id.get)">Развернуть</a>
+
+    </div>
+    <div class="border-line"></div>
+  }
+
+
+</div>

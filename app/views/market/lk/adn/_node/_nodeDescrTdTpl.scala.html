@@ -1,0 +1,9 @@
+@(mnode: MAdnNode, style: String = "")(implicit ctx: util.Context)
+
+<td class="right"@if(!style.isEmpty) { style="@style"}>
+  <div class="shop-descr">
+    @if(mnode.meta.description.isDefined) {
+      @Html(mnode.meta.description.get)
+    }
+  </div>
+</td>

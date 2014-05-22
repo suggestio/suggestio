@@ -1,13 +1,20 @@
 @(mbc: MBillContract)(implicit ctx: util.Context)
 
-@* Страница показывает юзеру реквизиты платежа для пополнения счета. *@
+@* Страница показывает юзеру только реквизиты платежа для пополнения счета.
+   !Это версия для печати, поэтому лишней верстки здесь быть не должно. *@
 
 @market.lk.lkBase("Безналичный банковский платеж") {
 
-  <p>БИК: 12313123132312</p>
-  <p>ОКАТО: 242134389538934584358934589</p>
-  <p>Комментарий к платежу:
-      Для оплаты по договору @mbc.legalContractId от @mbc.printContractDate.
-  </p>
+  <div class="title-wrap">
+    <div class="center">
+      <div class="title-inner">РЕКВИЗИТЫ ПЛАТЕЖА</div>
+    </div>
+  </div>
+
+  <div class="body billing-page">
+
+    @_billPaymentBankTpl(mbc)
+
+  </div>
 
 }

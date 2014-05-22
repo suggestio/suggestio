@@ -1,15 +1,19 @@
 spriteUrl = url('/assets/images/market/categories/icons.png')
 smallSpriteUrl = url('/assets/images/market/categories/icons.small.png')
+
 spriteSize = 112px 937px
 smallSpriteSize = 54px 570px
 
 .sm-categories-screen
   overflow: scroll
+  -webkit-overflow-scrolling: touch
 
 .sm-categories-body-wrap
   min-height: 100%
   .sm-categories-body
     padding-bottom: 130px
+    padding-top: 50px
+
 .sm-categories-footer
   overflow: hidden
   position: relative
@@ -174,3 +178,60 @@ smallSpriteSize = 54px 570px
     span
       font-size: 12px
       top: -7px
+
+
+.sm-w-980
+  .sm-categories-list
+    width: 764px
+
+.sm-w-800
+  .sm-categories-list
+    width: 580px
+
+.sm-w-400
+  .sm-categories-list
+    width: 320px!important
+  .sm-single-categorie
+    padding: 0px
+    width: 70px
+    margin: 5px 18px
+    .icon
+      background: smallSpriteUrl
+      background-size: smallSpriteSize
+      background-repeat: no-repeat
+      height: 50px
+    .name
+      font-size: 14px
+      padding-top: 5px
+
+  .sm-clothing
+    .icon
+      background-position: 13px -66px
+  .sm-single-categorie.sm-boots
+    .icon
+      background-position: 12px -406px
+  .sm-single-categorie.sm-travel
+    .icon
+      background-position: 12px -525px
+  .sm-single-categorie.sm-electronics
+    .icon
+      background-position: 9px -204px
+  .sm-single-categorie.sm-sports
+    .icon
+      background-position: 9px -455px
+  .sm-single-categorie.sm-cosmetics
+    .icon
+      background-position: 20px -134px
+  .sm-single-categorie.sm-for-home
+    .icon
+      background-position: 15px -271px
+  .sm-single-categorie.sm-restraunts
+    .icon
+      background-position: 19px 5px
+  .sm-single-categorie.sm-food
+    .icon
+      background-position: 15px -336px
+
+  .sm-categories-screen
+    .white-border-btn
+      font-size: 18px

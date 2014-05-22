@@ -1,9 +1,12 @@
-@(adnNode: MAdnNode, balanceOpt: Option[MBillBalance], contracts: List[MBillContract], txns: Seq[MBillTxn], feeTariffsMap: Map[Int, Seq[MBillTariffFee]])(implicit ctx: util.Context)
+@(adnNode: MAdnNode, args: SysAdnNodeBillingArgs)(implicit ctx: util.Context)
 
 @* Страница с информацией по биллингу указанного узла рекламной сети. *@
 @import datetime._
 @import ctx._
 @import stuff._
+@import args._
+@import util.TplDataFormatUtil._
+@import AdStatActionsTpl._
 
 @billingBase("Биллинг", Some(adnNode)) {
 
@@ -33,10 +36,10 @@
 
 
       @defining(feeTariffsMap.get(contract.id.get).getOrElse(Nil)) { tariffs =>
-        <h4 title="Тарифы абон.платы используются для периодического списания денег со счета по договору.">Абон.плата по договору @contract.legalContractId (@tariffs.size)</h4>
-        @if(tariffs.isEmpty) {
-          Нет абонплаты по этому договору.
-        } else {
+        @if( !tariffs.isEmpty ) {
+          <h4 title="Тарифы абон.платы используются для периодического списания денег со счета по договору.">
+            Абон.плата по договору @contract.legalContractId (@tariffs.size)
+          </h4>
           <table>
             <tr>
               <th>#</th>
@@ -64,8 +67,43 @@
             }
           </table>
         }
-        <a href="@routes.SysMarketBillingTariff.addFeeTariffForm(contract.id.get)">Добавить абонплату...</a>
       } @* defining tariffs *@
+      <a href="@routes.SysMarketBillingTariff.addFeeTariffForm(contract.id.get)">Добавить абонплату...</a>
+
+      @defining( statTariffsMap.getOrElse(contract.id.get, Nil) ) { tariffs =>
+        @if( !tariffs.isEmpty ) {
+          <h4 title="Схемы тарификации по просмотрам/переходам используются для освоения денег на балансе в ~реальном времени.">
+            Тарификация просмотров/переходов по договору @contract.legalContractId (@tariffs.size)
+          </h4>
+          <table>
+            <tr>
+              <th>#</th>
+              <th>Активен?</th>
+              <th>Имя</th>
+              <th>Старт</th>
+              <th>Стоимость</th>
+              <th>Списано</th>
+              <th>Действия</th>
+            </tr>
+            @tariffs.map { tariff =>
+              @defining(contract.isActive && tariff.isEnabled) { te =>
+                <tr>
+                  <td>@tariff.id</td>
+                  <td>@tariff.isEnabled</td>
+                  <td>@tariff.name</td>
+                  <td>@_maybeTagged("strike", !te) {@datetime._prettyDate(tariff.dateFirst, withSpan = true)}</td>
+                  <td>@_maybeTagged("strike", !te) {@formatPrice(tariff.debitAmount, tariff.currency) за @Messages(adStatActionI18N(tariff.debitFor))}</td>
+                  <td>@tariff.debitCount.toInt / @tariff.debitedTotal @tariff.currencyCode</td>
+                  <td>
+                    <a href="@routes.SysMarketBillingTariff.editStatTariff(tariff.id.get)">@Messages("Edit")</a>
+                  </td>
+                </tr>
+              }
+            }
+          </table>
+        }
+      }
+      <a href="@routes.SysMarketBillingTariff.addStatTariff(contract.id.get)">Добавить тарификацию за просмотры/переходы...</a>
 
     } @* contract *@
 

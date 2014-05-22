@@ -1,0 +1,43 @@
+@(node: MAdnNode, myAds: Seq[MAdT] = Nil, fallbackLogo: Option[MImgInfoT] = None)(implicit ctx: util.Context)
+
+@* Список рекламных карточек для создателя рекламы. В нём галочки есть. *@
+
+@* Флаг single переименовывает единственную галочку "Выводить". *@
+@defining(node.adn.showLevelsInfo.out4render) { outLvlMap =>
+@defining(outLvlMap.size == 1) { isSingleOutLvl =>
+
+  @* Раскрыть для скриптов текущую информацию о лимитах по кол-ву объяв на доступных уровнях отображения. *@
+  @outLvlMap.map { case (sl, (slAllowed, slMax)) =>
+    <input id="maxShownAds_@sl" type="hidden" value="@slMax"/>
+  }
+
+  @* Вывести рекламные карточки. *@
+  @market.lk.ad._adsEditableListTpl(
+    mads = myAds,
+    producer = node,
+    addCall  = routes.MarketAd.createAd(node.id.get),
+    editCall = routes.MarketAd.editAd,
+    fallbackLogo = fallbackLogo
+  ) { mad =>
+    @if( mad.disableReason.isEmpty ) {
+      @* Галочки для управления отображением рекламной карточки магазина. *@
+      <div class="ads-list-block__controls">
+        @defining(mad.allWantShowLevels) { adSls =>
+          @* Обходим карту уровней, переводя её в список галочек. *@
+          @outLvlMap.map { case (sl, (slAllowed, slMax)) =>
+            @defining(node.adn.canOutAtLevel(sl)) { hl =>
+              <label class="@sl.checkboxCssClass@if(!slAllowed){ inactive}">
+                <input class="@if(slMax == 1){one-}checkbox" type="checkbox"
+                       data-level="@sl" data-adid="@mad.id" data-name="@sl.checkboxCssClass"
+                       @if(!slAllowed) {disabled="disabled"} @if(adSls contains sl) {data-checked="checked"}
+                       />@Messages(if(isSingleOutLvl) "lk.sl.enable_ad" else "lk.sl." + sl.name)
+              </label>
+            }
+          }
+        }
+      </div>
+    } @* disableReason.isEmpty *@
+  }
+
+}
+}

@@ -1,8 +1,10 @@
-@(node: MAdnNode, myAds: Seq[MAdT] = Nil, supervisedNodes: Seq[MAdnNode] = Nil, fallbackLogo: Option[MImgInfo] = None, sanCtx: ShowAdnNodeCtx)(implicit ctx: util.Context)
+@(node: MAdnNode, myAds: Seq[MAdT] = Nil, slaves: Seq[MAdnNode] = Nil, fallbackLogo: Option[MImgInfoT] = None)(implicit ctx: util.Context)
 
 @* Заглавная страница узла рекламной сети в личном кабинете. *@
 
 @import ctx._
+@import controllers.adn.AdnShowTypes._
+@import _node._
 
 @market.lk.lkBase(node.meta.name, adnIdOpt = node.id) {
 
@@ -10,6 +12,7 @@
     routes.javascript.MarketAd.updateShowLevelSubmit
   )
 
+@defining(node.adn.memberType : AdnShowType) { adnShowType =>
   @* Верхняя строка. *@
   <div class="title-wrap">
     <div class="center">
@@ -18,21 +21,27 @@
 
       <div class="title-inner">ЛИЧНЫЙ КАБИНЕТ</div>
 
-      @* У узла-приемника есть список входных генераторов рекламы и доступ к коду установки. *@
-      @if(node.adn.isReceiver) {
-      <div class="adn-title-buttons">
-        <div class="gray-but-wrap">
-          <div class="white-border-top">
-            <a class="btn" href="@sanCtx.producersShowCall(node.id.get)">АРЕНДАТОРЫ</a>
-          </div>
-        </div>
+      @* У узла-приемника/супервизора есть доступ к списку входных продьюсеров рекламы и доступ к коду установки. *@
+      @defining(node.adn.isReceiver) { isRcvr =>
+        @if(isRcvr || node.adn.isSupervisor) {
+          <div class="adn-title-buttons">
+            @if(node.adn.memberType.canViewSlaves) {
+              <div class="gray-but-wrap">
+                <div class="white-border-top">
+                  <a class="btn" href="@routes.MarketLkAdn.showSlaves(node.id.get)">@Messages("slaves.of." + node.adn.memberType)</a>
+                </div>
+              </div>
+            }
 
-        <div class="gray-but-wrap">
-          <div class="white-border-top">
-            <a id="installScriptButton" class="btn" href="">КОД УСТАНОВКИ</a>
+            @if(isRcvr) {
+              <div class="gray-but-wrap">
+                <div class="white-border-top">
+                  <a id="installScriptButton" class="btn" href="">КОД УСТАНОВКИ</a>
+                </div>
+              </div>
+            }
           </div>
-        </div>
-      </div>
+        }
       }
     </div>
   </div>
@@ -42,14 +51,14 @@
 
       <div class="name-wrap" style="padding-bottom: 0px;">
         <span class="name">@node.meta.name</span>
-        <a class="edit" href="@sanCtx.nodeEditCall(node.id.get)">Редактировать</a>
+        <a class="edit" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">@Messages("Edit")</a>
         @if(isSuperuser) {
-          <a class="superuser-link" href="@routes.SysMarket.martShow(node.id.get)">/sys</a>
+          <a class="superuser-link" href="@routes.SysMarket.showAdnNode(node.id.get)">/sys</a>
         }
       </div>
 
       <div class="sm-note">
-        Подсказка : в редактировани вы можете указать информацию о вашем магазине и загрузить основной логотип, который будет отображаться на всех рекламных карточках.
+        Подсказка: в редактировании вы можете указать информацию о вашем магазине и загрузить основной логотип, который будет отображаться на всех рекламных карточках.
       </div>
 
       <div class="border-line"></div>
@@ -64,11 +73,7 @@
       @if(node.meta.description.isDefined) {
         <table class="block">
           <tr>
-            <td class="right" style="border-left: none; padding-left: 0;">
-              <div class="shop-descr">
-                @node.meta.description
-              </div>
-            </td>
+            @_nodeDescrTdTpl(node, style = "border-left: none; padding-left: 0;")
           </tr>
         </table>
       }
@@ -76,106 +81,37 @@
 
     @* Если указаны этаж/секция, то их напечатать таблицей. *@
     @if(node.meta.floor.isDefined || node.meta.section.isDefined) {
-      <table class="block">
-        <tr>
-          <td class="left">
-            <div class="shop-floor" style="padding-left: 30px;">
-              @node.meta.floor.map { floor =>
-                @floor&nbsp;этаж
-              }
-            </div>
-          </td>
-
-          <td class="right">
-            <div class="shop-section">
-              <span class="name">Секция:</span>
-              <span class="value">@node.meta.section</span>
-            </div>
-          </td>
-        </tr>
-      </table>
-
+      @_floorSectionTableTpl(node)
       <div class="border-line"></div>
     }
 
     @* Для тех, кто может создавать свою рекламу, рисуем список своих рекламных карточек с галочками. *@
     @if(node.adn.isProducer) {
-      @* Флаг single переименовывает единственную галочку "Выводить". *@
-      @defining(node.adn.showLevelsInfo.out4render) { outLvlMap =>
-      @defining(outLvlMap.size == 1) { isSingleOutLvl =>
-        @* Раскрыть для скриптов текущую информацию о лимитах по кол-ву объяв на доступных уровнях отображения. *@
-        @outLvlMap.map { case (sl, (slAllowed, slMax)) =>
-          <input id="maxShownAds_@sl" type="hidden" value="@slMax"/>
-        }
+      @_myAdsTpl(node, myAds, fallbackLogo)
 
-        @* Вывести рекламные карточки. *@
-        @market.lk.ad._adsEditableListTpl(
-          mads = myAds,
-          producer = node,
-          addCall  = sanCtx.createAdCall(node.id.get),
-          editCall = sanCtx.editAdCall,
-          fallbackLogo = fallbackLogo
-        ) { mad =>
-          @* Галочки для управления отображением рекламной карточки магазина. *@
-          <div class="controls">
-            @defining(mad.allWantShowLevels) { adSls =>
-              @* Обходим карту уровней, переводя её в список галочек. *@
-              @outLvlMap.map { case (sl, (slAllowed, slMax)) =>
-                @defining(node.adn.canOutAtLevel(sl)) { hl =>
-                  <label class="@sl.checkboxCssClass@if(!slAllowed){ inactive}">
-                    <input class="@if(slMax == 1){one-}checkbox" type="checkbox"
-                           data-level="@sl" data-adid="@mad.id" data-name="@sl.checkboxCssClass"
-                           @if(!slAllowed) {disabled="disabled"} @if(adSls contains sl) {data-checked="checked"}
-                           />@Messages(if(isSingleOutLvl) "lk.sl.enable_ad" else "lk.sl." + sl.name)
-                  </label>
-                }
-              }
-            }
-          </div>
-        }
+      @* Ссылка на demo web site. *@
 
-      }
-      }
+      <div class="sm-note">
+
+        @adnShowType.demoWebsiteAdnId(node).map { dwId =>
+          Вы можете посмотреть, как выглядят ваши к карточки в <a class="sm-note__link" target="_blank" href="@routes.Market.demoWebSite(dwId)">рекламной выдаче</a>
+        }
+      </div>
+
     }
+
+    @* Супервизору надо отрендерить табличку подчиненых узлов: для реализации надзорных полномочий.
+       Если этот узел не может супервайзить, то slaves должен быть пустым. *@
+    @if(!slaves.isEmpty) {
+      @_supShowNodesTpl(node, slaves)
+    }
+
   </div>
 
   @* Обладают выдачей только ресиверы, поэтому окно с кодом рендерится только для них. *@
   @if(node.adn.isReceiver) {
-    <div class="popup" id="installScriptPopup" style="display: none;">
-      <div class="hat">
-        <a href="#" class="close">&nbsp;</a>
-      </div>
-      <div class="content">
-
-        <div class="title">СКРИПТ ДЛЯ УСТАНОВКИ НА САЙТ</div>
-
-        <div class="textarea">
-          <textarea>
-            @market.lk.mart._martInstallScriptTpl(node)
-          </textarea>
-        </div>
-
-        <div class="note">
-          Скопируйте код из поля выше и вставьте его на все страницы вашего сайта перед закрывающим тегом <span class="blue">&lt;/body&gt;</span>
-        </div>
-
-      </div>
-    </div>
+    @_installScriptPopupTpl(node)
   }
 
-  @* Супервизору надо отрендерить табличку подчиненых узлов: для реализации надзорных полномочий. *@
-  @if(node.adn.isSupervisor) {
-    @* При верстке этой таблички надо избегать конкретных терминов типа "ТЦ", "магазин", "ресторан" и т.д.
-       При первом раскрытии элемента должен асинхронно на сервер отправляться запрос рекламных карточек узла. *@
-    Моя рекламная сеть
-    <ul>
-      @supervisedNodes.map { snode =>
-        <li>
-          @snode.meta.name / @snode.meta.town
-          <a href="TODO">развернуть</a>
-        </li>
-      }
-    </ul>
-  }
-
+} @* defining AdnShowType *@
 }

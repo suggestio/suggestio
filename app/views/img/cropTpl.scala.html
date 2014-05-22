@@ -1,0 +1,39 @@
+@(imgId:String, width: Int, height: Int, markerOpt: Option[String], imeta: MImgInfoMeta, cropOpt: Option[ImgCrop])(implicit ctx: util.Context)
+
+@import ctx._
+@import helper._
+
+<div id="imgCropTool" data-width="@width" data-height="@height" class="popup lk-overlay-data__window market-crop-tool" style="display: block; top: 0; margin-left: -150px; width: auto;">
+
+  <div class="hat">
+    <a class="close" href="#">&nbsp;</a>
+  </div>
+
+  <div class="content">
+
+    <div class="market-crop-tool__container js-crop-container" style="width: @width; height: @height;">
+
+      <div>
+      @* Здесь у нас загружается исходное изображение, которое js-ом ресайзится до размеров родительского контейнера *@
+      @* TODO: аттрибуты data-width и data-height надо заменить на реальные значения *@
+      <img class="bg abs" data-width="@imeta.width" data-height="@imeta.height" src="@routes.Img.getImg(imgId)" />
+      </div>
+
+    </div>
+
+    @form(routes.Img.imgCropSubmit) {
+      <input type="hidden" name="imgId" value="@imgId"/>
+      <input type="hidden" name="crop" value="@cropOpt.map(_.toCropStr)"/>
+      @markerOpt.map { marker =>
+        <input type="hidden" name="marker" value="@marker"/>
+      }
+
+      <div class="submit-wrap" style="margin-top: 20px; text-align: center;">
+        <input class="blue-but-small" type="submit" value="@Messages("Save")"/>
+      </div>
+
+  </div>
+
+  }
+
+</div>

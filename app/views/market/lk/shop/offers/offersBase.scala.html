@@ -8,7 +8,7 @@
   <div class="body">
 
   @mshopOpt.map { mshop =>
-    <a href="@routes.MarketShopLk.showShop(mshop.id.get)">Вернутся назад в магазин @mshop.meta.name</a>
+    <a href="@routes.MarketLkAdn.showAdnNode(mshop.id.get)">Вернутся назад в магазин @mshop.meta.name</a>
   }
   @content
 

@@ -14,6 +14,8 @@ import org.elasticsearch.index.query.QueryBuilders
 import scala.collection.JavaConversions._
 import scala.collection.Map
 import play.api.libs.json.{JsBoolean, JsString}
+import util.PlayMacroLogsImpl
+import io.suggest.event.SioNotifierStaticClientI
 
 /**
  * Suggest.io
@@ -126,7 +128,9 @@ object MPersonIdent {
 
 import MPersonIdent._
 
-trait MPersonIdent[E <: MPersonIdent[E]] extends EsModelT[E] {
+trait MPersonIdent extends EsModelT {
+  override type T <: MPersonIdent
+
   def personId: String
   def idType: MPersonIdentType
   def key: String
@@ -156,7 +160,9 @@ trait MPersonIdentSubmodelStatic {
 }
 
 /** Идентификации от mozilla-persona. */
-object MozillaPersonaIdent extends EsModelStaticT[MozillaPersonaIdent] with MPersonIdentSubmodelStatic {
+object MozillaPersonaIdent extends EsModelStaticT with MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
+
+  override type T = MozillaPersonaIdent
 
   val ES_TYPE_NAME = "mpiMozPersona"
 
@@ -176,7 +182,10 @@ trait MPIWithEmail {
 case class MozillaPersonaIdent(
   var email     : String,
   var personId  : String
-) extends MPersonIdent[MozillaPersonaIdent] with MPersonLinks with MPIWithEmail {
+) extends MPersonIdent with MPersonLinks with MPIWithEmail {
+
+  override type T = MozillaPersonaIdent
+
   /** Сгенерить id. Если допустить, что тут None, то _id будет из взят из поля key согласно маппингу. */
   def id: Option[String] = Some(email)
   def key = email
@@ -189,7 +198,10 @@ case class MozillaPersonaIdent(
 
 
 /** Статическая под-модель для хранения юзеров, живущих вне mozilla persona. */
-object EmailPwIdent extends EsModelStaticT[EmailPwIdent] with MPersonIdentSubmodelStatic {
+object EmailPwIdent extends EsModelStaticT with MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
+
+  override type T = EmailPwIdent
+
   val ES_TYPE_NAME: String = "mpiEmailPw"
 
   def applyKeyValue(acc: EmailPwIdent): PartialFunction[(String, AnyRef), Unit] = {
@@ -226,6 +238,16 @@ object EmailPwIdent extends EsModelStaticT[EmailPwIdent] with MPersonIdentSubmod
   }
 }
 
+trait MozillaPersonaIdentJmxMBean extends EsModelJMXMBeanCommon
+class MozillaPersonaIdentJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase
+  with MozillaPersonaIdentJmxMBean
+{
+  override def companion = MozillaPersonaIdent
+}
+
+
+
 /**
  * Идентификация по email и паролю.
  * @param email Электропочта.
@@ -238,7 +260,9 @@ case class EmailPwIdent(
   var personId  : String,
   var pwHash    : String,
   var isVerified: Boolean = EmailPwIdent.IS_VERIFIED_DFLT
-) extends MPersonIdent[EmailPwIdent] with MPersonLinks with MPIWithEmail {
+) extends MPersonIdent with MPersonLinks with MPIWithEmail {
+  override type T = EmailPwIdent
+
   def id: Option[String] = Some(email)
   def idType: MPersonIdentType = IdTypes.EMAIL_PW
   def key: String = email
@@ -248,10 +272,20 @@ case class EmailPwIdent(
   def checkPassword(password: String) = checkHash(password, pwHash)
 }
 
+trait EmailPwIdentJmxMBean extends EsModelJMXMBeanCommon
+class EmailPwIdentJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase
+  with EmailPwIdentJmxMBean
+{
+  override def companion = EmailPwIdent
+}
+
 
 /** Статическая часть модели [[EmailActivation]].
   * Модель нужна для хранения ключей для проверки/активации почтовых ящиков. */
-object EmailActivation extends EsModelStaticT[EmailActivation] {
+object EmailActivation extends EsModelStaticT with PlayMacroLogsImpl {
+
+  override type T = EmailActivation
 
   val ES_TYPE_NAME: String = "mpiEmailAct"
 
@@ -300,7 +334,9 @@ case class EmailActivation(
   var email     : String,
   var key       : String = EmailActivation.randomActivationKey,
   var id        : Option[String] = None
-) extends MPersonIdent[EmailActivation] with MPersonLinks {
+) extends MPersonIdent with MPersonLinks {
+  override type T = EmailActivation
+
   def personId = email
   def companion = EmailActivation
   def writeVerifyInfo: Boolean = false
@@ -309,3 +345,10 @@ case class EmailActivation(
   def value: Option[String] = None
 }
 
+trait EmailActivationJmxMBean extends EsModelJMXMBeanCommon
+class EmailActivationJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase
+  with EmailActivationJmxMBean
+{
+  override def companion = EmailActivation
+}

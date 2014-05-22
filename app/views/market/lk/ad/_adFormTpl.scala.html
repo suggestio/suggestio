@@ -1,4 +1,4 @@
-@(af: Form[_], call: Call, btnText: String, mmcats: CollectMMCatsAcc_t, offerType: AdOfferType, adnNode: MAdnNode)(implicit ctx: util.Context)
+@(af: Form[_], call: Call, btnText: String, mmcats: CollectMMCatsAcc_t, withBC: Option[BlockConf], adnNode: MAdnNode)(implicit ctx: util.Context)
 
 @* Рендер формы редактирования произвольной рекламы.
  * offerType - предпочитаемый тип оффера, когда он неизвестен.
@@ -6,6 +6,7 @@
 @import ctx._
 @import helper._
 @import AdOfferTypes._
+@import util.blocks._
 
 @helper.javascriptRouter("jsRoutes")(
   routes.javascript.MarketCategory.topCatsOf,
@@ -13,238 +14,129 @@
 )
 
 @* Определяем текущий тип оффера (тип формы). Используем данные формы и аргумент offerType как fallback. *@
-@defining(af("ad.offer.mode").value.flatMap(AdOfferTypes.maybeWithName).getOrElse(offerType)) { offerType1 =>
 @form(call, 'id -> "promoOfferForm") {
 
   @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@
   @*af.globalError*@
 
-  <input type="hidden" id="preview-action" value="@routes.MarketAd.adFormPreviewSubmit(adnNode.id.get)" />
+  <input type="hidden" id="preview-action" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get)" />
 
-  <div class="block" style="margin-top: 30px;">
-    <div class="border-line"></div>
-      <div class="hat">
-        <span class="title">Выбор категории</span>
-        <a class="toggle open" href="#" data-content="cat-select-wrap">Свернуть</a>
-      </div>
-    <div class="border-line"></div>
-    <div class="slide-content" id="cat-select-wrap">
-      @_adFormCatSelectorsTpl(mmcats, af)
-    </div>
-  </div>
-
-  <div class="block">
-    <div class="border-line"></div>
-    <div class="hat">
-      <span class="title">Отображение на устройстве</span>
-      <a class="toggle open" href="#" data-content="ad-preview">Свернуть</a>
-    </div>
-    <div class="border-line"></div>
-    <div class="slide-content" id="ad-preview">
-      <table  class="ad-preview preview-medium" cellpadding="0" cellsapcing="0">
-        <tr>
-          <td class="left" style="width: 50%; float: none;">
-            <div>
-              <span class="gray">iPhone</span>
-              <span class="device iphone" data-width="100" data-height="140" data-class="preview-small">&nbsp;</span>
-            </div>
-            <div>
-              <span class="gray">iPad</span>
-              <span class="device ipad selected" data-width="210" data-height="290" data-class="preview-medium">&nbsp;</span>
-            </div>
-            <div>
-              <span class="gray">Desktop</span>
-              <span class="device desktop" href="#"  data-width="335" data-height="235" data-class="preview-large">&nbsp;</span>
-            </div>
-          </td>
-          <td class="right" style="width: 50%;">
-            <div id="previewContainer" style="width: 210px; height: 290px; overflow: hidden;">
-              <div class="preview" id="preview" style="-webkit-transform: scale3d(0.3,0.3,0.3); -webkit-transform-origin: 0px 0px; -moz-transform: scale3d(0.3,0.3,0.3); -moz-transform-origin: 0px 0px; width: 768px; height: 1024px; position: relative;">
-            </div>
-          </td>
-        </tr>
-      </table>
-    </div>
-  </div>
-
-  <div class="block">
-    <div class="border-line"></div>
-    <div class="hat">
-      <span class="title">Брендированая шапка</span>
-      <a class="toggle open" href="#" data-content="brand-hat">Свернуть</a>
-    </div>
-    <div class="border-line"></div>
-    <div class="slide-content" id="brand-hat">
-      <div class="subhat">
-        <span class="title">Редактирование логотипа</span>
-        <a class="toggle" href="#" data-content="brand-hat-logo">Развернуть</a>
-      </div>
+  <div class="lk-edit-form__block js-slide-wrap">
+    <div class="lk-edit-form__block_title">
       <div class="border-line"></div>
+      <span class="lk-edit-form__block_title_span">
+        Выбор категории
+      </span>
+      <a href="#" class="js-g-slide-toggle open l-right">Свернуть</a>
+      <div class="border-line"></div>
+    </div>
 
-      <div class="slide-content" id="brand-hat-logo" style="display: none;">
-        <table cellpadding="0" cellspacing="0" class="input-wrap big img-with-preview">
-          <tr>
-            <td class="left">
-              <label @if(af("logoImgId").hasErrors) {style="color: #E23131;"}>Логотип:</label>
-            </td>
-            <td class="right">
+    <div class="lk-edit-form__block_body js-slide-content">
+      <div class="lk-edit-form__block_body_inner">
+        @_adFormCatSelectorsTpl(mmcats, af)
+      </div>
+    </div>
 
-              <div class="select-file-wrap" id="logoImgInput">
-                @defining(af("logoImgId").value) { logoImgIdOpt =>
-                  <div class="preview">
-                    <img class="image-preview" src="@logoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" width="59" />
-                  </div>
-                  <div class="selectbox">
-                    <div class="select-file">
-                      @stuff._fileUploadTpl(routes.MarketAd.handleAdTempLogo, relatedFieldId="logoImgInput")
-                      <input class="image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
-                      <div class="bg">Выбрать файл для загрузки</div>
-                    </div>
-                    <div class="descr">
-                      Файл должен быть на прозрачном
-                      фоне и иметь формат .png
-                    </div>
-                  </div>
-		        }
-              </div>
-              <a href="#" class="close">&nbsp;</a>
-            </td>
-          </tr>
-          @if(af("logoImgId").hasErrors) {
-            <tr>
-              <td class="left">&nbsp;</td>
-              <td class="err-msg">
-                Поле заполнено некорректно!
-              </td>
-            </tr>
+  </div>
+
+  @* Тут выводится список блоков в виде иконок. При нажатии — производится запрос для рендера нужного редактора блока *@
+  <div class="lk-edit-form__block js-slide-wrap">
+    <div class="lk-edit-form__block_title">
+      <div class="border-line"></div>
+      <span class="lk-edit-form__block_title_span">
+        Выбор шаблона
+      </span>
+      <a href="#" class="js-g-slide-toggle open l-right">Свернуть</a>
+      <div class="border-line"></div>
+    </div>
+    <div class="lk-edit-form__block_body js-slide-content">
+
+      <div class="lk-edit-form__block_body_inner">
+
+        <div class="lk-edit-form__blocks-list-icons" id="adFormBlocksList">
+        @defining( withBC getOrElse BlocksConf(1) ) { bc =>
+          @BlocksConf.valuesSorted.map { bca =>
+            <div class="blocks-list-icons__single-icon @if( bc.id == bca.id ){blocks-list-icons__single-icon_active} block-list-icon-@bca.id" data-block-id="@bca.id"></div>
           }
-        </table>
-        <div class="border-line"></div>
-      </div>
-
-      @_adFormPanelColorTpl(af)
-    </div>
-  </div>
-
-  <div class="block">
-    <div class="border-line"></div>
-    <div class="hat">
-      <span class="title">Рекламная фотография</span>
-      <a class="toggle open" href="#" data-content="ad-photo">Свернуть</a>
-    </div>
-    <div class="border-line"></div>
-    <div class="slide-content" id="ad-photo">
-      <table cellpadding="0" cellspacing="0" class="input-wrap big img-with-preview ">
-        <tr>
-          <td class="left">
-            <label>Фотография товара:</label>
-          </td>
-          <td class="right">
-            <div class="select-file-wrap">
-              <div class="preview" id="adImagePreview">
-                @* Данные по картинке загруженной. *@
-                @defining(af("image_key").value) { imgIdOpt =>
-                  <input class="image-key" type="hidden" name="image_key" value="@imgIdOpt"/>
-                  <img class="image-preview" width="59" src="@imgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {/assets/images/market/lk/empty-image.gif}" />
-                }
-              </div>
-              <div class="selectbox">
-                <div class="select-file">
-                  @stuff._fileUploadTpl(routes.Img.handleTempImg, relatedFieldId="adImagePreview")
-                  <div class="bg">Выбрать файл для загрузки</div>
-                </div>
-                <div class="descr">
-                  Файл должен быть на прозрачном
-                  фоне и иметь формат .png
-                </div>
-              </div>
-            </div>
-            <a href="#" class="close">&nbsp;</a>
-          </td>
-        </tr>
-        @if(!af.errors("image_key").isEmpty) {
-        <tr>
-          <td class="left">&nbsp;</td>
-          <td class="err-msg">
-            Поле заполнено некорректно!
-          </td>
-        </tr>
         }
-      </table>
+
+        <input class="block-editor-action" type="hidden" value="@routes.MarketAdPreview.adBlockSwitchEditor(adnNode.id.get)"/>
+        <div class="clear"></div>
+        </div>
+
+      </div>
+
     </div>
   </div>
 
-  <div class="block">
-    <div class="border-line"></div>
-    <div class="hat">
-      <span class="title">Шаблоны</span>
-      <a class="toggle open" href="#" data-content="templates">Свернуть</a>
-    </div>
-    <div class="border-line"></div>
-
-    <div class="tabs">
-      <div class="tab @if(offerType1 == PRODUCT) {act}" data-mode="@PRODUCT">
-        ЦЕНОВОЙ
-      </div>
-      <div class="tab @if(offerType1 == DISCOUNT) {act}" data-mode="@DISCOUNT">
-        СКИДОЧНЫЙ
-      </div>
-      <div class="tab @if(offerType1 == TEXT) {act}" data-mode="@TEXT">
-        ТЕКСТОВОЙ
-      </div>
-    </div>
-    <div class="blue-line"></div>
-
-    <div class="sm-note">Обратите внимание, что для большинства текстовых полей можно выбрать цвет ( по умолчанию — черный ).</div>
-
-    <div class="slide-content" id="templates">
-      @* Вкладки формы. *@
-      @_adFormProductTpl(af,  isShown = offerType1 == PRODUCT)
-      @_adFormDiscountTpl(af, isShown = offerType1 == DISCOUNT)
-      @_adFormTextTpl(af,     isShown = offerType1 == TEXT)
-
+  @* Для блока : превьюшка + редактор *@
+  <div class="lk-edit-form__block js-slide-wrap">
+    <div class="lk-edit-form__block_title">
       <div class="border-line"></div>
+      <span class="lk-edit-form__block_title_span">
+        Отображение рекламной карточки
+      </span>
+      <a href="#" class="js-g-slide-toggle open l-right">Свернуть</a>
+      <div class="border-line"></div>
+    </div>
+    <div class="lk-edit-form__block_body js-slide-content">
+
+      <div class="lk-edit-form__block_body_inner">
+
+        @* Форма редактирования блока *@
+        <div class="lk-ad-block-edit-form">
+
+          @* Отображение превьюшки *@
+          <div class="lk-ad-block-edit-form__preview">
+
+            @* TODO: в этот div надо рендерить превьюшку *@
+            <input class="js-ad-block-preview-action" type="hidden" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get)"/>
+
+            <div class="lk-ad-block-edit-form__preview_container" id="adFormBlockPreview">
+
+            </div>
+            <div class="clear"></div>
+
+          </div>
+
+          @* Отображение нужного редактора *@
+          <div class="lk-ad-block-edit-form__editor" id="adFormBlockEditor">
+            @blocks.editor._blockEditorTpl(af, withBC = withBC)
+          </div>
+
+          <div class="clear"></div>
+
+        </div>
+
+      </div>
 
     </div>
+  </div>
 
-    @*
-    <table cellpadding="0" cellspacing="0" class="input-wrap">
-      <tr>
-        <td class="left">
-          <label>Положение текста:</label>
-        </td>
-        <td class="select-iphone">
-          <span>iPhone</span>
-          <div class="iphone-block act" data-value="left">&nbsp;</div>
-          <div class="iphone-block" data-value="right">&nbsp;</div>
-        </td>
-        <td class="select-ipad">
-          <span>iPad</span>
-          <div class="ipad-wrap">
-            <div class="ipad-block act" data-group="textAlign-tablet-top" data-value="left">&nbsp;</div>
-            <div class="ipad-block" data-group="textAlign-tablet-top" data-value="right">&nbsp;</div>
-            <span>— информация</span>
-            <div class="ipad-block" data-group="textAlign-tablet-bottom" data-value="left">&nbsp;</div>
-            <div class="ipad-block act" data-group="textAlign-tablet-bottom" data-value="right">&nbsp;</div>
-            <span>— контакты</span>
-          </div>
-        </td>
-      </tr>
-    </table>
-    *@
-    <div class="border-line"></div>
+
+  @* HTML-редактор для ввода текстового описания. *@
+  <div class="lk-edit-form__block js-slide-wrap">
+    <div class="lk-edit-form__block_title">
+      <div class="border-line"></div>
+      <span class="lk-edit-form__block_title_span">
+        Описание
+      </span>
+      <a href="#" class="js-g-slide-toggle open l-right">Свернуть</a>
+      <div class="border-line"></div>
+    </div>
+
+    <div class="lk-edit-form__block_body js-slide-content">
+      <div class="lk-edit-form__block_body_inner">
+        @textarea(af("ad.descr.text"))
+        @_selectColorTpl(af("ad.descr.bgColor"))
+      </div>
+    </div>
 
   </div>
 
 
   @* Режим формы (тип рекламного оффера). Должен переключаться при переключении вкладки. *@
-  <input id="ad-mode" type="hidden" name="ad.offer.mode" value="@offerType1.toString"/>
-
-
-  @* Положение текста на разных устройствах. Как оно задаётся - хз, пока в виде произвольной строки. *@
-  <input id="textAlign-phone" type="hidden" name="ad.textAlign.phone" value="left">
-  <input id="textAlign-tablet-top" type="hidden" name="ad.textAlign.tablet.top" value="left">
-  <input id="textAlign-tablet-bottom" type="hidden" name="ad.textAlign.tablet.bottom" value="right">
+  <input id="ad-mode" type="hidden" name="ad.offer.mode" value="@AdOfferTypes.BLOCK"/>
 
 }
-}
+

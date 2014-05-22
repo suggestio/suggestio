@@ -1,0 +1,16 @@
+@(adnNode: MAdnNode, af: Form[_], companies: Seq[MCompany])(implicit ctx: util.Context)
+
+@* Редактирования узла ADN. *@
+@import ctx._
+
+@adnBase("Редактирование") {
+
+  @stuff._deleteSmthFormBtnTpl(routes.SysMarket.deleteAdnNodeSubmit(adnNode.id.get))
+
+  @_adnNodeFormTpl(
+    af = af,
+    companies = companies,
+    call = routes.SysMarket.editAdnNodeSubmit(adnNode.id.get),
+    btnText = Messages("Save")
+  )
+}

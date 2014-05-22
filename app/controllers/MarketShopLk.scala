@@ -8,13 +8,12 @@ import util.FormUtil._
 import util.acl._
 import models._
 import views.html.market.lk.shop._
-import play.api.mvc.{Call, RequestHeader, AnyContent, Result}
+import play.api.mvc.{RequestHeader, AnyContent, Result}
 import play.api.Play.current
 import concurrent.duration._
 import scala.concurrent.Future
 import play.api.mvc.Security.username
 import util.img._
-import controllers.adn.AdnShowLk
 
 /**
  * Suggest.io
@@ -22,8 +21,7 @@ import controllers.adn.AdnShowLk
  * Created: 03.03.14 13:34
  * Description: Контроллер личного кабинета для арендатора, т.е. с точки зрения конкретного магазина.
  */
-object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForceProtect
-with LogoSupport with ShopMartCompat with AdnShowLk {
+object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForceProtect with ShopMartCompat {
 
   import LOGGER._
 
@@ -36,24 +34,28 @@ with LogoSupport with ShopMartCompat with AdnShowLk {
   /** Маркер картинки для logo-вещичек */
   val SHOP_TMP_LOGO_MARKER = "shopLogo"
 
+  private val colorOptM = toStrOptM(colorM)
+
   /** Метаданные магазина, которые может редактировать владелец магазина. */
   val shopMetaFullM = mapping(
     "name"          -> shopNameM,
     "description"   -> publishedTextOptM,
     "floor"         -> optional(floorM),
+    "color"         -> colorOptM,
     "section"       -> optional(sectionM)
   )
-  {(name, descr, floor, section) =>
+  {(name, descr, floor, colorOpt, section) =>
     AdnMMetadata(
       name = name,
       description = descr,
       floor = floor,
-      section = section
+      section = section,
+      color = colorOpt
     )
   }
   {adnMeta =>
     import adnMeta._
-    Some((name, description, floor, section))
+    Some((name, description, floor, color, section))
   }
   val shopMetaFullKM = "meta" -> shopMetaFullM
 
@@ -72,17 +74,19 @@ with LogoSupport with ShopMartCompat with AdnShowLk {
   /** Ограниченный маппинг доступен владельцу магазина внутри ТЦ. */
   val shopMetaLimitedM = mapping(
     "name"          -> shopNameM,
+    "color"         -> colorOptM,
     "description"   -> publishedTextOptM
   )
-  {(name, descr) =>
+  {(name, colorOpt, descr) =>
     AdnMMetadata(
       name = name,
+      color = colorOpt,
       description = descr
     )
   }
   {adnMeta =>
     import adnMeta._
-    Some((name, description))
+    Some((name, color, description))
   }
 
   /** Ограниченный маппинг магазина. Используется при сабмите редактирования профиля магазина для имитации
@@ -92,27 +96,6 @@ with LogoSupport with ShopMartCompat with AdnShowLk {
     "meta" -> shopMetaLimitedM,
     logoImgOptIdKM
   ))
-
-
-  val showAdnNodeCtx = new ShowAdnNodeCtx {
-    override def nodeEditCall(adnId: String): Call = routes.MarketShopLk.editShopForm(adnId)
-    override def producersShowCall(adnId: String): Call = ???
-    override def createAdCall(adnId: String): Call = routes.MarketAd.createShopAd(adnId)
-    override def editAdCall(adId: String): Call = routes.MarketAd.editShopAd(adId)
-  }
-
-  /**
-   * Рендер страницы магазина (с точки зрения арендатора: владельца магазина).
-   * @param shopId id магазина.
-   * @param newAdIdOpt Костыль для сокрытия факта асинхронного добавления рекламной карточки.
-   */
-  def showShop(shopId: String, newAdIdOpt: Option[String]) = IsShopAdm(shopId).async { implicit request =>
-    import request.mshop
-    val fallbackLogoFut = getMartByIdCache(mshop.adn.supId.get).map {
-      _.flatMap(_.logoImgOpt)
-    }
-    renderShowAdnNode(mshop, shopId, newAdIdOpt, fallbackLogoFut)
-  }
 
 
   /** Асинхронно заполнить full форму с помощью указанного магазина. */
@@ -136,41 +119,35 @@ with LogoSupport with ShopMartCompat with AdnShowLk {
   }
 
 
-  /**
-   * Страница с формой редактирования магазина. Арендатору не доступны некоторые поля.
-   * @param shopId id магазина.
-   */
-  def editShopForm(shopId: String) = IsShopAdm(shopId).async { implicit request =>
-    import request.mshop
+  /** Страница с формой редактирования магазина. Арендатору не доступны некоторые поля. */
+  def editShopForm(implicit request: AbstractRequestForAdnNodeAdm[_]): Future[Result] = {
+    import request.adnNode
     // TODO Если магазин удалён из рекламной сети или не имеет своего ТЦ, то это как должно выражаться?
-    val martId = mshop.adn.supId.get
-    val formBindedFut = fillFullForm(mshop)
+    val martId = adnNode.adn.supId.get
+    val formBindedFut = fillFullForm(adnNode)
     getMartByIdCache(martId) flatMap {
       case Some(mmart) =>
         formBindedFut map { formBinded =>
-          Ok(shopEditFormTpl(mmart, mshop, formBinded))
+          Ok(shopEditFormTpl(mmart, adnNode, formBinded))
         }
 
       case None => martNotFound(martId)
     }
   }
 
-  /**
-   * Сабмит формы редактирования магазина арендатором.
-   * @param shopId id магазина.
-   */
-  def editShopFormSubmit(shopId: String) = IsShopAdm(shopId).async { implicit request =>
-    import request.mshop
+  /** Сабмит формы редактирования магазина арендатором. */
+  def editShopFormSubmit(implicit request: AbstractRequestForAdnNodeAdm[_]): Future[Result] = {
+    import request.adnNode
     limitedShopFormM.bindFromRequest().fold(
       {formWithErrors =>
-        val fullFormBindedFut = fillFullForm(mshop) map { _.bindFromRequest }
-        debug(s"editShopFormSubmit($shopId): Bind failed: " + formWithErrors.errors)
+        val fullFormBindedFut = fillFullForm(adnNode) map { _.bindFromRequest }
+        debug(s"editShopFormSubmit(${adnNode.id.get}}): Bind failed: " + formWithErrors.errors)
         // TODO Что делать, если у магазина нет своего супервизора?
-        val martId = mshop.adn.supId.get
+        val martId = adnNode.adn.supId.get
         getMartByIdCache(martId) flatMap {
           case Some(mmart) =>
             fullFormBindedFut map { formWithErrors2 =>
-              NotAcceptable(shopEditFormTpl(mmart, mshop, formWithErrors2))
+              NotAcceptable(shopEditFormTpl(mmart, adnNode, formWithErrors2))
             }
           case None        => martNotFound(martId)
         }
@@ -178,15 +155,16 @@ with LogoSupport with ShopMartCompat with AdnShowLk {
       {case (meta, logoImgIdOpt) =>
         val updateImgsFut = ImgFormUtil.updateOrigImg(
           needImgs = logoImgIdOpt,
-          oldImgs  = mshop.logoImgOpt
+          oldImgs  = adnNode.logoImgOpt
         )
-        mshop.meta.name = meta.name
-        mshop.meta.description = meta.description
+        adnNode.meta.name = meta.name
+        adnNode.meta.description = meta.description
+        adnNode.meta.color = meta.color
         // Для обновления shop'а надо дождаться генерации нового id логотипа.
-        updateImgsFut.flatMap { newImgIds =>
-          mshop.logoImgOpt = newImgIds.headOption
-          mshop.save map { _shopId =>
-            Redirect(routes.MarketShopLk.showShop(shopId))
+        updateImgsFut.flatMap { newImgInfo =>
+          adnNode.logoImgOpt = newImgInfo
+          adnNode.save map { _shopId =>
+            Redirect(routes.MarketLkAdn.showAdnNode(adnNode.id.get))
               .flashing("success" -> "Изменения сохранены.")
           }
         }
@@ -274,7 +252,7 @@ with LogoSupport with ShopMartCompat with AdnShowLk {
             mshop.personIds = Set(personId)
             mshop.save map { _shopId =>
               trace(logPrefix + s"mshop(id=${_shopId}) saved with new owner: $personId")
-              Redirect(routes.MarketShopLk.showShop(shopId))
+              Redirect(routes.MarketLkAdn.showAdnNode(shopId))
                 .flashing("success" -> "Регистрация завершена успешно.")
                 .withSession(username -> personId)
             }
@@ -314,16 +292,6 @@ with LogoSupport with ShopMartCompat with AdnShowLk {
         }
       }
     }
-  }
-
-
-  /**
-   * Загрузка картинки для логотипа магазина.
-   * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
-   * @return Тот же формат ответа, что и для просто temp-картинок.
-   */
-  def handleShopTempLogo(shopId: String) = IsShopAdm(shopId)(parse.multipartFormData) { implicit request =>
-    handleLogo(ShopLogoImageUtil, SHOP_TMP_LOGO_MARKER)
   }
 
 

@@ -38,7 +38,9 @@ trait SioController extends Controller with ContextT {
 
   implicit def sn = SiowebNotifier
 
-  implicit def html4email(html: HtmlFormat.Appendable) = HtmlCompressUtil.compressForEmail(html)
+  implicit def html4email(html: HtmlFormat.Appendable): String = {
+    HtmlCompressUtil.compressForEmail(html)
+  }
 
   implicit def html2jsStr(html: HtmlFormat.Appendable) = JsString(
     HtmlCompressUtil.compressForJson(html)
@@ -84,12 +86,12 @@ trait BruteForceProtect {
 
 
 /** Функционал для поддержки работы с логотипами. Он является общим для ad, shop и mart-контроллеров. */
-trait LogoSupport extends SioController with PlayMacroLogsImpl {
+trait TempImgSupport extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
   /** Обработчик полученного логотипа в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана. */
-  protected def handleLogo(imageUtil: SioImageUtilT, marker: String)(implicit request: Request[MultipartFormData[TemporaryFile]]): Result = {
+  protected def _handleTempImg(imageUtil: SioImageUtilT, marker: Option[String])(implicit request: Request[MultipartFormData[TemporaryFile]]): Result = {
     request.body.file("picture") match {
       case Some(pictureFile) =>
         val fileRef = pictureFile.ref
@@ -97,7 +99,7 @@ trait LogoSupport extends SioController with PlayMacroLogsImpl {
         // Если на входе png/gif, то надо эти форматы выставить в outFmt. Иначе jpeg.
         val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
         val outFmt = OutImgFmts.forImageMime(srcMagicMatch.getMimeType)
-        val mptmp = MPictureTmp.getForTempFile(fileRef, outFmt, Some(marker))
+        val mptmp = MPictureTmp.getForTempFile(fileRef.file, outFmt, marker)
         try {
           imageUtil.convert(srcFile, mptmp.file)
           Ok(Img.jsonTempOk(mptmp.filename))

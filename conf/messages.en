@@ -22,6 +22,50 @@ Manufacturer=Manufacturer
 Size=Size
 Sizes=Sizes
 
+slaves.of.m=RENTERS
+slaves.of.R=RESTAURANTS
+
+add.to.other.s=Add to other shop
+add.to.other.r=Add to other restaurant
+add.to.other.m=Add to other mart
+add.to.other.R=Add to other restaurant net
+
+amt.of.type.s=Shop
+amt.of.type.m=Mart
+amt.of.type.r=Restaurant
+amt.of.type.R=Restaurant net
+
+editing.of.amt.profile.s=Shop profile edit
+editing.of.amt.profile.m=Mhop profile edit
+editing.of.amt.profile.r=Restaurant profile edit
+editing.of.amt.profile.R=Supervisor profile edit
+
+
+blocks.field.price=Price
+blocks.field.oldPrice=Old price
+blocks.field.height=Block height
+blocks.field.title=Title
+blocks.field.text1=Text 1
+blocks.field.text2=Text 2
+blocks.field.discount=Discount
+blocks.field.logo=Logo
+blocks.field.lineColor=Line color
+blocks.field.bottomColor=Bottom color
+blocks.field.topColor=Top color
+blocks.field.descr=Description
+blocks.field.saleMaskColor=SALE mask color
+blocks.field.bgColor=Background color
+blocks.field.circleFillColor=Circles fill color
+blocks.field.borderColor=Border color
+blocks.field.discoIconColor=Discount icon color
+blocks.field.discoBorderColor=Discount border color
+blocks.field.maskColor=Mask color
+blocks.field.fillColor=Fill color
+
+ad.stat.action.v=View
+ad.stat.action.c=Click
+
+
 lk.sl.enable_ad=Enable ad
 lk.sl.d=Show on start page
 lk.sl.h=Show in common catalog
@@ -39,6 +83,7 @@ error.max=Must be less or equal to {0}
 error.max.strict=Must be strictly less than {0}
 error.minLength=Minimum length is {0}
 error.maxLength=Maximum length is {0}
+error.unknown.email_pw=Invalid email/password.
 
 constraint.required=Required
 constraint.min=Minimum value: {0}

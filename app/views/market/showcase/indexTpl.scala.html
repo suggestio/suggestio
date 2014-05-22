@@ -1,39 +1,62 @@
 @(mmart: MAdnNode, ads: Seq[MAd], shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory], welcomeAdOpt: Option[MWelcomeAd])(implicit ctx: util.Context)
 
 @* Начальная страница для sio-market. *@
-  <img id="smWelcomeAd" class="poster-photo index-welcome-ad" data-width="@welcomeAdOpt.map(_.img.meta.map(_.width))" data-height="@welcomeAdOpt.map(_.img.meta.map(_.height))" src="@ctx.myAudienceUrl@welcomeAdOpt.map(_.img.id).filter(!_.isEmpty).map {imgId =>@routes.Img.getImg(imgId)}.getOrElse {}"/>
 
-  <div class="sm-notification" id="smNotification">
-    <div class="data" id="smNotificationData"></div>
-  </div>
+@import controllers.MarketLkAdnEdit.WELCOME_IMG_KEY
 
-  <div class="sm-preload">
-    <img src="@ctx.myAudienceUrl/assets/images/market/categories/icons.png">
-  </div>
+@* Картинка-приветствие для первого экрана *@
+@welcomeAdOpt.flatMap(_.imgs.get(WELCOME_IMG_KEY)).map { welcomeAdImg =>
+<div class="sm-welcome-ad">
+  <img id="smWelcomeAd" class="sm-welcome-ad__img js-index-welcome-ad"
+       data-width="@welcomeAdImg.meta.map(_.width)"
+       data-height="@welcomeAdImg.meta.map(_.height)"
+       src="@ctx.myAudienceUrl@routes.Img.getImg(welcomeAdImg.filename)"/>
+</div>
+}
 
-  <div id="smScreens">
-    <div class="sm-screen">
+@* Основной контейнер, шапка + карточки *@
+<div class="sio-mart__node-offers-root" id="sioMartNodeOffersRoot"></div>
 
-      @_screen_nav_buttons(true)
+@_screen_nav_button("close", "smCloseButton")
 
-      @_sm_offers(mmart, ads, shops, false)
+@* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
+<div class="categories-button" id="smCategoriesButton">
+  <span></span>
+</div>
 
-      <div class="sm-navigation">
-        <div class="sm-buttons">
-          <a class="sm-button" href="">Я ЗНАЮ, ЧТО ИЩУ</a>
-          <a class="sm-button" href="">ПОМОГИТЕ МНЕ С ВЫБОРОМ</a>
-        </div>
-      </div>
+<div class="sio-mart__producer-header" style="background-color: #@mmart.meta.color;">
+  @mmart.logoImgOpt.map { logoImg =>
+    <img id="rootNodeLogo" class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
+  }
+</div>
+
+<div class="sio-mart__index-offers">
+  <div class="sio-mart__index-offers__container" id="sioMartIndexGridLayout">
+    <div id="sioMartIndexGrid" style="padding-bottom: 30px">
+
+      @_block_offers_list(mmart, ads, shops, true)
+
+      @*for(i <- 0 to 0) {
+        <div class="sm-block-spacer" data-width="140" data-height="140" style="background: #fff; display: none; width: 140px; height: 140px; position: absolute;"></div>
+      }*@
 
     </div>
-
   </div>
+</div>
 
-  @* Окно с выбором категорий *@
-  @_categories(mmcats,mmart)
+<div class="sm-notification" id="smNotification">
+  <div class="data" id="smNotificationData"></div>
+</div>
 
-  @* Окно с предупреждением о выходе из Sio.Market *@
-  @_exit_screen()
+<div class="sm-preload">
+  <img src="@ctx.myAudienceUrl/assets/images/market/categories/icons.png">
+</div>
 
-  @* Окно с выбором магазина *@
-  @_shop_list(shops,mmart)
+@* Окно с выбором категорий *@
+@_categories_w_search(mmcats,mmart)
+
+@* Окно с предупреждением о выходе из Sio.Market *@
+@_exit_screen()
+
+@* Окно с выбором магазина *@
+@_shop_list(shops,mmart)

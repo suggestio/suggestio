@@ -9,7 +9,7 @@ import util.event.SiowebNotifier.Implicts.sn
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import java.lang.management.ManagementFactory
 import io.suggest.util.JMXBase
-import models.MMartCategoryJmx
+import models._
 
 /**
  * Suggest.io
@@ -29,7 +29,14 @@ object JMXImpl {
     new MAdJmx,
     new MAdnNodeJmx,
     new MPictJmx,
-    new MMartCategoryJmx
+    new MObjectJmx,
+    new MMartCategoryJmx,
+    new EmailActivationJmx,
+    new EmailPwIdentJmx,
+    new MozillaPersonaIdentJmx,
+    new MPersonJmx,
+    new MBlogJmx,
+    new MCompanyJmx
   )
 
   private def getSrv = ManagementFactory.getPlatformMBeanServer

@@ -78,6 +78,7 @@ class SiowebSup extends Actor with Logs {
     NewsQueue4Play.startLinkSup(context)
     SiowebNotifier.startLink(context)
     SeedUrlsSupplier.startLink(context)
+    billing.StatBillingQueueActor.startLink(context)
   }
 
 

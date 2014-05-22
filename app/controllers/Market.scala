@@ -1,5 +1,6 @@
 package controllers
 
+import _root_.util.billing.StatBillingQueueActor
 import util.qsb.AdSearch
 import util._
 import util.acl._
@@ -12,6 +13,7 @@ import SiowebEsUtil.client
 import scala.concurrent.Future
 import play.api.mvc.{AnyContent, Result}
 import io.suggest.ym.model.stat.{MAdStat, AdStatActions}
+import io.suggest.ym.model.common.IBlockMeta
 
 /**
  * Suggest.io
@@ -26,7 +28,6 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   val JSONP_CB_FUN = "siomart.receive_response"
 
-
   /** Входная страница для sio-market для ТЦ. */
   def martIndex(martId: String) = marketAction(martId) { implicit request =>
     val welcomeAdOptFut: Future[Option[MWelcomeAd]] = request.mmart.meta.welcomeAdId match {
@@ -38,7 +39,7 @@ object Market extends SioController with PlayMacroLogsImpl {
       receiverIdOpt = Some(martId)
     )
     for {
-      mads  <- MAd.searchAds(searchReq)
+      mads  <- MAd.searchAds(searchReq).map(groupNarrowAds)
       rmd   <- request.marketDataFut
       waOpt <- welcomeAdOptFut
     } yield {
@@ -58,12 +59,22 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
   def findAds(martId: String, adSearch: AdSearch) = marketAction(martId) { implicit request =>
+    val producerOptFut = adSearch.producerIdOpt
+      .fold [Future[Option[MAdnNode]]] { Future successful None } { MAdnNodeCache.getByIdCached }
     for {
-      mads <- MAd.searchAds(adSearch)
+      mads <- MAd.searchAds(adSearch).map(groupNarrowAds)
       rmd  <- request.marketDataFut
+      producerOpt <- producerOptFut
     } yield {
-      val html = findAdsTpl(request.mmart, mads, rmd.mshops, rmd.mmcats)
-      jsonOk(html, "findAds")
+      val jsAction: String = if (adSearch.qOpt.isDefined) {
+        "searchAds"
+      } else if (producerOpt.isDefined) {
+        "producerAds"
+      } else {
+        "findAds"
+      }
+      val html = findAdsTpl(request.mmart, mads, rmd.mshops, rmd.mmcats, adSearch, producerOpt)
+      jsonOk(html, jsAction)
     }
   }
 
@@ -71,12 +82,13 @@ object Market extends SioController with PlayMacroLogsImpl {
   // статистка
 
   /** Кем-то просмотрена одна рекламная карточка. */
-  def adStats(martId: String, adId: String, actionRaw: String) = MaybeAuth.async { implicit request =>
+  def adStats(martId: String, adId: String, actionRaw: String) = MaybeAuth.apply { implicit request =>
     val action = AdStatActions.withName(actionRaw)
-    MAd.getById(adId).flatMap { madOpt =>
+    MAd.getById(adId).map { madOpt =>
       madOpt.filter { mad =>
         mad.receivers.valuesIterator.exists(_.receiverId == martId)
       } foreach { mad =>
+        StatBillingQueueActor.sendNewStats(rcvrId = martId, mad = mad, action = action)
         val adStat = MAdStat(
           clientAddr = request.remoteAddress,
           action = action,
@@ -87,8 +99,8 @@ object Market extends SioController with PlayMacroLogsImpl {
         )
         adStat.save
       }
-      NoContent
     }
+    NoContent
   }
 
 
@@ -138,8 +150,38 @@ object Market extends SioController with PlayMacroLogsImpl {
         warn(s"marketAction($martId): mart index exists, but mart is NOT.")
         martNotFound(martId)
     }
-
   }
+
+
+  /**
+   * Сгруппировать "узкие" карточки, чтобы они были вместе.
+   * @param ads Исходный список элементов.
+   * @tparam T Тип элемента.
+   * @return
+   */
+  private def groupNarrowAds[T <: IBlockMeta](ads: Seq[T]): Seq[T] = {
+    val (enOpt1, acc0) = ads.foldLeft [(Option[T], List[T])] (None -> Nil) {
+      case ((enOpt, acc), e) =>
+        val blockId = e.blockMeta.blockId
+        val bc: BlockConf = BlocksConf(blockId)
+        if (bc.isNarrow) {
+          enOpt match {
+            case Some(en) =>
+              (None, en :: e :: acc)
+            case None =>
+              (Some(e), acc)
+          }
+        } else {
+          (enOpt, e :: acc)
+        }
+    }
+    val acc1 = enOpt1 match {
+      case Some(en) => en :: acc0
+      case None     => acc0
+    }
+    acc1.reverse
+  }
+
 
   /** Реквест, используемый в Market-экшенах. */
   abstract class MarketRequest(request: AbstractRequestWithPwOpt[AnyContent])
