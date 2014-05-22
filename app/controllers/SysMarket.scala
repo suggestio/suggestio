@@ -546,10 +546,11 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
           mmartOpt <- mmartFut
         } yield {
           val reason = "Причина отключения ТЕСТ причина отключения 123123 ТЕСТ причина отключения."
+          val adOwner = mshopOpt.orElse(mmartOpt).get
           if (isHtml) {
-            Ok(views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, mshopOpt.get, mad, reason))
+            Ok(views.html.market.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, adOwner, mad, reason))
           } else {
-            Ok(views.txt.market.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, mshopOpt.get, mad, reason): String)
+            Ok(views.txt.market.lk.shop.ad.emailAdDisabledByMartTpl(mmartOpt.get, adOwner, mad, reason): String)
           }
         }
 

@@ -20,6 +20,7 @@ import org.apache.commons.codec.binary.{Base64InputStream, Base64OutputStream}
 import scala.collection.GenTraversableOnce
 import scala.Some
 import play.api.Logger
+import java.util.regex.Pattern
 
 /**
  * Suggest.io
@@ -45,13 +46,18 @@ object FormUtil {
     textFmtPolicy.sanitize(s).trim
   }
 
-  val replaceEOLwithBRre = "\n\r?".r
+  private val crLfRe = "\r\n".r
+  private val lfCrRe = "\n\r".r
+  private val lfRe = "\n".r
+  private val brReplacement = "<br/>"
   val replaceEOLwithBR = {s: String =>
-    replaceEOLwithBRre.replaceAllIn(s, "<br/>")
+    var r1 = crLfRe.replaceAllIn(s, brReplacement)
+    r1 = lfCrRe.replaceAllIn(r1, brReplacement)
+    lfRe.replaceAllIn(r1, brReplacement)
   }
   val replaceBRwithEOL_re = "(?i)<br\\s*/?>".r
   val replaceBRwithEOL = {s: String =>
-    replaceBRwithEOL_re.replaceAllIn(s, "\n")
+    replaceBRwithEOL_re.replaceAllIn(s, "\r\n")
   }
 
   /** Функция, которая превращает Some("") в None. */

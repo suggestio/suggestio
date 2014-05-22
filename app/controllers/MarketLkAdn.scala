@@ -44,11 +44,11 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl {
       case None => Future successful None
     }
     // TODO Вернуть проверку на супервайзинг узла, когда всё необходимое будет запилено.
-    val slavesFut: Future[Seq[MAdnNode]] = //if(request.adnNode.adn.isSupervisor) {
+    val slavesFut: Future[Seq[MAdnNode]] = if(request.adnNode.adn.isSupervisor) {
       MAdnNode.findBySupId(adnId)
-    //} else {
-    //  Future successful Nil
-    //}
+    } else {
+      Future successful Nil
+    }
     val adsFut = MAd.findForProducerRt(adnId)
     // Бывает, что добавлена новая карточка (но индекс ещё не сделал refresh). Нужно её найти и отобразить:
     val extAdOptFut = newAdIdOpt match {

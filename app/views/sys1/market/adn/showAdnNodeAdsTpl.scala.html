@@ -14,7 +14,7 @@
   @mads.map { mad =>
     <a href="@routes.MarketAd.editAd(mad.id.get)">@mad.offers.headOption.map {
       case adBlock: AOBlock => {
-        @adBlock.text1.map(_.value) / @adBlock.text2.map(_.value)
+        @adBlock.text1.map {t => @Html(t.value)} / @adBlock.text2.map {t2 =>@Html(t2.value)}
       }
     }</a>
     <p>Отобразить email-сообщение о деактивации:
