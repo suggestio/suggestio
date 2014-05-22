@@ -49,6 +49,13 @@ object BlocksUtil {
   // Допустимые ширины блоков.
   val BLOCK_WIDTH_NORMAL_PX = 300
   val BLOCK_WIDTH_NARROW_PX = 140
+
+  /** Линейка размеров шрифтов. */
+  val FONT_SIZES_DFLT: List[FontSize] = List(
+    FontSize(18, 10), FontSize(24, 10), FontSize(28, 10), FontSize(32, 10), FontSize(36, 10), FontSize(40, 10),
+    FontSize(44, 10), FontSize(48, 10), FontSize(52, 10), FontSize(56, 10), FontSize(60, 10), FontSize(64, 10),
+    FontSize(68, 10), FontSize(72, 10), FontSize(76, 10), FontSize(80, 10), FontSize(84, 10)
+  )
 }
 
 import BlocksUtil._
@@ -180,7 +187,7 @@ trait BlockAOValueFieldT extends BlockFieldT {
   override type T <: AOValueField
 
   def withFontColor: Boolean
-  def withFontSizes: List[Int]
+  def withFontSizes: List[FontSize]
   def withFontSize = !withFontSizes.isEmpty
   def withFontFamily: Boolean
   def withTextAlign: Boolean
@@ -224,7 +231,7 @@ case class BfPrice(
   offerNopt: Option[Int] = None,
   defaultValue: Option[AOPriceField] = None,
   withFontColor: Boolean = true,
-  withFontSizes: List[Int] = List(18,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80,84),
+  withFontSizes: List[FontSize] = FONT_SIZES_DFLT,
   withFontFamily: Boolean = true,
   withCoords: Boolean = true,
   withTextAlign: Boolean = false
@@ -261,7 +268,7 @@ case class BfText(
   minLen: Int = 0,
   maxLen: Int = 16000,
   withFontColor: Boolean = true,
-  withFontSizes: List[Int] = List(18,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80,84),
+  withFontSizes: List[FontSize] = FONT_SIZES_DFLT,
   withFontFamily: Boolean = true,
   withCoords: Boolean = true,
   withTextAlign: Boolean = true
@@ -375,7 +382,7 @@ case class BfDiscount(
   min: Float = -99F,
   max: Float = 100F,
   withFontColor: Boolean = true,
-  withFontSizes: List[Int] = Nil,
+  withFontSizes: List[FontSize] = Nil,
   withFontFamily: Boolean = false,
   withCoords: Boolean = false,
   withTextAlign: Boolean = false
