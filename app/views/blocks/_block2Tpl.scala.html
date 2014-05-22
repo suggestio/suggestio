@@ -3,12 +3,19 @@
 @import ctx._
 @import util.blocks.BlocksUtil._
 @import common._
+@import svg._
 
 @blockBase(isStandalone) {
   <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl2" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
     <div class="sale-icon">
-      <div class="mask"></div>
+
+      @_mask2(
+        cssClass = "mask",
+        fillColor = "ffffff"
+      )
+
+      <!--<div class="mask"></div>-->
       <img class="bg" src="@mad.imgs.get(Block2.BG_IMG_FN).map { img =>@routes.Img.getImg(img.filename) }.getOrElse(routes.Assets.at("images/market/blocks/tpl2-bg.jpg"))"/>
     </div>
 
