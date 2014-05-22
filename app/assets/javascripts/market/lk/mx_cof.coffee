@@ -904,6 +904,20 @@ market =
       market.img.init_upload()
       market.img.crop.init_triggers()
 
+      $('.js-align-editor').each () ->
+        input = $(this).find 'input'
+        buttons = $(this).find '.js-ae-button'
+
+        buttons.bind 'click', () ->
+          align_value = $(this).attr 'data-align'
+          input.val align_value
+
+          buttons.removeClass 'align-editor__button_active'
+          $(this).addClass 'align-editor__button_active'
+
+          market.ad_form.queue_block_preview_request()
+
+
       $('.js-custom-font-select, .js-custom-font-family-select').bind 'change', () ->
         market.ad_form.queue_block_preview_request()
 

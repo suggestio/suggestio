@@ -89,9 +89,16 @@ object BlocksConf extends Enumeration {
   // Начало значений
 
   /** Картинка, название, старая и новая цена. Аналог былого DiscountOffer. */
-  sealed trait Block1t extends Height with BgImg with Title with OldPrice with Price {
+  sealed trait Block1t extends Height with BgImg with Title with Descr with OldPrice with Price {
     override def titleBf = super.titleBf.copy(
       defaultValue = Some(AOStringField("Платье", AOFieldFont("444444"))),
+      withCoords = true,
+      withFontSizes = List(65, 55, 45, 35, 28),
+      withTextAlign = true,
+      withFontFamily = true
+    )
+    override def descrBf = super.descrBf.copy(
+      defaultValue = Some(AOStringField("Описание", AOFieldFont("000000"))),
       withCoords = true,
       withFontSizes = List(65, 55, 45, 35, 28),
       withTextAlign = true,
