@@ -8,7 +8,7 @@ import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model.common._
-import io.suggest.ym.model.ad.MAdT
+import io.suggest.ym.model.ad.{RichDescr, MAdT}
 import io.suggest.model.common._
 import io.suggest.util.MacroLogsImplLazy
 import io.suggest.ym.model.common.EMImg.Imgs_t
@@ -83,6 +83,7 @@ case class MWelcomeAd(
   @JsonIgnore override def blockMeta = MAd.blockMetaDflt
   @JsonIgnore override def colors = Map.empty
   @JsonIgnore override def disableReason = None
+  @JsonIgnore override def richDescrOpt = None
 }
 
 

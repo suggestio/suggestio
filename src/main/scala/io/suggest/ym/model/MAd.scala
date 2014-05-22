@@ -38,6 +38,7 @@ object MAd
   with EMColorsStatic
   with MacroLogsImpl
   with EMDisableReasonStatic
+  with EMRichDescrStatic
   with EsModelStaticIgnore
 {
   import LOGGER._
@@ -111,6 +112,7 @@ case class MAd(
   var texts4search : Texts4Search = Texts4Search(),
   var colors     : Map[String, String] = Map.empty,
   var disableReason : Option[String] = None,
+  var richDescrOpt  : Option[RichDescr] = None,
   var dateCreated   : DateTime = DateTime.now
 )
   extends EsModelEmpty
@@ -126,6 +128,7 @@ case class MAd(
   with EMTexts4Search
   with EMColorsMut
   with EMDisableReasonMut
+  with EMRichDescrMut
 {
   @JsonIgnore
   override type T = MAd

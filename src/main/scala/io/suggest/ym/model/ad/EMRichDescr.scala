@@ -14,6 +14,7 @@ import java.{util => ju}
  * descr: {
  *   bgColor: String = "FFFFFF"
  *   text: String = "...html..."
+ * }
  */
 object EMRichDescr {
 
