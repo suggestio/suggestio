@@ -1,0 +1,9 @@
+@(disableReason: Option[String])(implicit ctx: Context)
+
+@* Опциональный рендер покрывающего div'а с причиной отключения. *@
+
+@disableReason.map { dr =>
+  <div class="disabled-ad">
+    Причина отключения: @dr
+  </div>
+}

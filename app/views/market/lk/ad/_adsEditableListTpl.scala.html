@@ -24,10 +24,10 @@
     <div class="ads-list__block ads-list-block @if(!ad.isPublished) {disabled}">
 
       <div class="ads-list-block__preview">
+        @_adDisableReasonCoverTpl(ad.disableReason)
         <div class="ads-list-block__preview-container">
-        @market.showcase._single_offer(ad, producer, fallbackLogo)
+          @market.showcase._single_offer(ad, producer, fallbackLogo)
         </div>
-        @* Галочки рендерятся тут. *@
         <div class="ads-list-block__zigzag-mask"></div>
       </div>
 
