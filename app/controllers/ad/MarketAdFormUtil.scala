@@ -7,6 +7,7 @@ import play.api.Play.current
 import io.suggest.ym.parsers.Price
 import util.blocks.BlocksUtil.BlockImgMap
 import util.blocks.BlockMapperResult
+import io.suggest.ym.model.ad.RichDescr
 
 /**
  * Suggest.io
@@ -47,7 +48,7 @@ object MarketAdFormUtil {
   }
 
 
-  private def fontSizeOptM(fontSizes: Set[Int]): Mapping[Option[Int]] = {
+  private def fontSizeOptM(fontSizes: Seq[Int]): Mapping[Option[Int]] = {
     val hasFontSizes = fontSizes.isEmpty
     val (min, max) = if (hasFontSizes) {
       0 -> 0
@@ -62,14 +63,46 @@ object MarketAdFormUtil {
      .verifying("error.unavailable.font.size", { szOpt => hasFontSizes || szOpt.exists(fontSizes.contains) })
   }
 
-  val fontFamilyOptM: Mapping[Option[String]] = optional(text(maxLength = 32))
+  /** Маппер для значения font.family. */
+  val fontFamilyOptM: Mapping[Option[String]] = {
+    optional(
+      // TODO RELEASE: Добавить валидацию перед запуском
+      text(maxLength = 32)
+    )
+  }
+
+
+  /** Маппер для описания, прилагаемого к рекламной карточке. */
+  val richDescrOptM: Mapping[Option[RichDescr]] = {
+    val rdTextM = text(maxLength = 8192)
+      .transform(strFmtTrimF, strIdentityF)
+    val m = mapping(
+      "bgColor" -> colorM,
+      "text"    -> rdTextM
+    )
+    {(bgColor, rdText) =>
+      if (rdText.isEmpty) {
+        None
+      } else {
+        Some(RichDescr(bgColor = bgColor, text = rdText))
+      }
+    }
+    {rdOpt =>
+      val bgColor = rdOpt.fold("FFFFFF")(_.bgColor)
+      val rdText  = rdOpt.fold("")(_.text)
+      Some( (bgColor, rdText) )
+    }
+    optional(m)
+      .transform(_.flatten, Option.apply)
+  }
+
 
   /**
    * Сборка маппинга для шрифта.
    * @param withFontSizes Множество допустимых размеров шрифтов, если пусто то поле отключено.
    * @return Маппинг для AOFieldFont.
    */
-  def getFontM(withFontSizes: Set[Int]): Mapping[AOFieldFont] = {
+  def getFontM(withFontSizes: Seq[Int]): Mapping[AOFieldFont] = {
     mapping(
       "color"  -> colorM,
       "size"   -> fontSizeOptM(withFontSizes),
@@ -239,23 +272,24 @@ object MarketAdFormUtil {
 
   /** apply-функция для формы добавления/редактировать рекламной карточки.
     * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  def adFormApply(userCatId: Option[String], bmr: BlockMapperResult): AdFormMResult = {
+  def adFormApply(userCatId: Option[String], bmr: BlockMapperResult, richDescrOpt: Option[RichDescr]): AdFormMResult = {
     val mad = MAd(
       producerId  = null,
       offers      = bmr.bd.offers,
       blockMeta   = bmr.bd.blockMeta,
       colors      = bmr.bd.colors,
       imgs        = null,
-      userCatId   = userCatId
+      userCatId   = userCatId,
+      richDescrOpt = richDescrOpt
     )
     mad -> bmr.bim
   }
 
   /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
-  def adFormUnapply(applied: AdFormMResult): Option[(Option[String], BlockMapperResult)] = {
+  def adFormUnapply(applied: AdFormMResult): Option[(Option[String], BlockMapperResult, Option[RichDescr])] = {
     val mad = applied._1
     val bmr = BlockMapperResult(mad, applied._2)
-    Some( (mad.userCatId, bmr) )
+    Some( (mad.userCatId, bmr, mad.richDescrOpt) )
   }
 
 

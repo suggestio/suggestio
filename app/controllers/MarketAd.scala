@@ -58,7 +58,7 @@ object MarketAd extends SioController with TempImgSupport {
   }
 
   /**
-   * Сборщик форм произвольного назначения для парсинга рекламных карточек.
+   * Сборщик форм произвольного назначения для парсинга реквестов с данными рекламной карточки.
    * @param catIdM маппер для id категории.
    * @param blockM маппер для блоков.
    * @return Маппинг формы, готовый к эксплуатации.
@@ -67,7 +67,8 @@ object MarketAd extends SioController with TempImgSupport {
     Form(
       "ad" -> mapping(
         CAT_ID_K -> catIdM,
-        OFFER_K  -> blockM
+        OFFER_K  -> blockM,
+        "descr"  -> richDescrOptM
       )(adFormApply)(adFormUnapply)
     )
   }
