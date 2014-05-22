@@ -1229,11 +1229,6 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 .lk-color-select__label_hidden
   display: none
 
-.lk-fontsize-select__select
-  border: 1px #ccc solid
-  font-size: 12px
-  margin-top: 5px
-
 .lk-color-select__color
   cursor: pointer
   position: relative
@@ -1260,7 +1255,25 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   height: 34px
   position: absolute
   left: 0px
-  top: -34px
+  top: -33px
+
+/* Field tools */
+
+.lk-field-tools__top-white-line
+  background: #eaeaea
+  height: 1px
+  width: 100%
+
+.lk-field-tools__inner
+  border: 1px #b2b2b2 solid
+  height: 32px
+
+.lk-field-tools__editor
+  float: left
+
+  select
+    font-size: 12px
+    border: 1px #ccc solid
 
 .lk-field-w-tools__field
   position: relative

@@ -904,7 +904,7 @@ market =
       market.img.init_upload()
       market.img.crop.init_triggers()
 
-      $('.js-custom-font-select').bind 'change', () ->
+      $('.js-custom-font-select, .js-custom-font-family-select').bind 'change', () ->
         market.ad_form.queue_block_preview_request()
 
       $('.js-input-w-block-preview').bind 'keyup', () ->

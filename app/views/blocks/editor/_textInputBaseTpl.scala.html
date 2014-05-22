@@ -10,48 +10,51 @@
   <div class="lk-field-w-tools__field">@content</div>
 
   @if( bf.withFontColor ) {
-    <div class="lk-field-w-tools__tools">
+    <div class="lk-field-w-tools__tools lk-field-tools">
+      <div class="lk-field-tools__inner">
+        <div class="lk-field-tools__top-white-line"></div>
 
-      @if( bf.withFontFamily ) {
-
-        @defining( bfNameBase + ".font.family") { ffname =>
-          <select name="@ffname">
-          @List("pfdintextcomppro-medium-webfont","favoritlightcondcregular").map { vl =>
-            <option value="@vl" @if( vl == af(ffname).value ){selected="selected"}>Шрифт 1</option>
+        @if( bf.withFontFamily ) {
+          @defining( bfNameBase + ".font.family") { ffname =>
+            <div class="lk-field-tools__editor">
+            <select name="@ffname" class="js-custom-font-family-select">
+            @List("pfdintextcomppro-medium-webfont","favoritlightcondcregular").zipWithIndex.map { case (vl, i) =>
+              <option value="@vl" @if( vl == af(ffname).value ){selected="selected"}>Шрифт @i</option>
+            }
+            </select>
+            </div>
           }
-          </select>
         }
-      }
 
-      <div style="display: none;">
-      @if( bf.withFontSize ) {
-        @_fontSizeSelectTpl(bf, bfNameBase, af)
-      }
-
-      @* Выравнивание текста. Допустимые значения: l/left/r/right/j/justify/c/center. *@
-      @if( bf.withTextAlign ) {
-        @defining(bfNameBase + ".font.align") { aname =>
-          @aname: <input type="text" name="@aname" value="@af(aname).value"/>
+        @if( bf.withFontSize ) {
+          @_fontSizeSelectTpl(bf, bfNameBase, af)
         }
-      }
+        <div style="display: none;">
+          @* Выравнивание текста. Допустимые значения: l/left/r/right/j/justify/c/center. *@
+          @if( bf.withTextAlign ) {
+          @defining(bfNameBase + ".font.align") { aname =>
+            @aname: <input type="text" name="@aname" value="@af(aname).value"/>
+          }
+          }
+        </div>
 
-      @_colorBtnTpl(
-        colorField = af(bfNameBase + ".font.color"),
-        default    = bf.defaultValue.map(_.font.color),
-        withLabel  = colorWithLabel
-      )
+        @_colorBtnTpl(
+          colorField = af(bfNameBase + ".font.color"),
+          default    = bf.defaultValue.map(_.font.color),
+          withLabel  = false,
+          className = "lk-field-tools__editor"
+        )
 
-      @* Скрытое поле *@
-      @if( bf.withCoords ) {
-        @defining( bfNameBase + ".coords.x" ) { xname =>
-          <input type="hidden" name="@xname" value="@af(xname).value"/>
+        @* Скрытое поле *@
+        @if( bf.withCoords ) {
+          @defining( bfNameBase + ".coords.x" ) { xname =>
+            <input type="hidden" name="@xname" value="@af(xname).value"/>
+          }
+          @defining( bfNameBase + ".coords.y" ) { yname =>
+            <input type="hidden" name="@yname" value="@af(yname).value"/>
+          }
         }
-        @defining( bfNameBase + ".coords.y" ) { yname =>
-          <input type="hidden" name="@yname" value="@af(yname).value"/>
-        }
-      }
       </div>
-
     </div>
   }
 
