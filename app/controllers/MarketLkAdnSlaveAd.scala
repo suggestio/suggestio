@@ -116,7 +116,7 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
    * @param adnId id подчинённого узла.
    */
   def _showSlaveAds(adnId: String) = CanViewSlave(adnId).async { implicit request =>
-    MAd.findForProducer(adnId) map { mads =>
+    MAd.findForProducerRt(adnId) map { mads =>
       Ok(_node._slaveNodeAdsTpl(
         msup = request.supNode,
         mslave = request.slaveNode,

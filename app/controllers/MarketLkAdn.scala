@@ -1,5 +1,6 @@
 package controllers
 
+import _root_.util.qsb.AdSearch
 import util.PlayMacroLogsImpl
 import util.acl._
 import models._
@@ -215,7 +216,11 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl {
    */
   def showSlave(adnId: String) = CanViewSlave(adnId).async { implicit request =>
     import request.{slaveNode, supNode}
-    MAd.findForProducer(adnId) map { mads =>
+    val req = AdSearch(
+      receiverIdOpt = Some(request.supNode.id.get),
+      producerIdOpt = Some(adnId)
+    )
+    MAd.searchAdsRt(req) map { mads =>
       Ok(showSlaveNodeTpl(msup = supNode, mslave = slaveNode, mads))
     }
   }
