@@ -224,9 +224,9 @@ case class BfPrice(
   offerNopt: Option[Int] = None,
   defaultValue: Option[AOPriceField] = None,
   withFontColor: Boolean = true,
-  withFontSizes: List[Int] = Nil,
-  withFontFamily: Boolean = false,
-  withCoords: Boolean = false,
+  withFontSizes: List[Int] = List(18,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80,84),
+  withFontFamily: Boolean = true,
+  withCoords: Boolean = true,
   withTextAlign: Boolean = false
 ) extends BlockAOValueFieldT {
   override type T = AOPriceField
@@ -261,10 +261,10 @@ case class BfText(
   minLen: Int = 0,
   maxLen: Int = 16000,
   withFontColor: Boolean = true,
-  withFontSizes: List[Int] = Nil,
-  withFontFamily: Boolean = false,
-  withCoords: Boolean = false,
-  withTextAlign: Boolean = false
+  withFontSizes: List[Int] = List(18,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80,84),
+  withFontFamily: Boolean = true,
+  withCoords: Boolean = true,
+  withTextAlign: Boolean = true
 ) extends BlockAOValueFieldT {
   override type T = AOStringField
 
@@ -299,6 +299,10 @@ case class BfString(
   field: BefString,
   offerNopt: Option[Int] = None,
   defaultValue: Option[String] = None,
+  withFontColor: Boolean = true,
+  withFontFamily: Boolean = false,
+  withCoords: Boolean = false,
+  withTextAlign: Boolean = false,
   minLen: Int = 0,
   maxLen: Int = 16000
 ) extends BlockFieldT {

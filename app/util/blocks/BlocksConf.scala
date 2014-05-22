@@ -91,30 +91,16 @@ object BlocksConf extends Enumeration {
   /** Картинка, название, старая и новая цена. Аналог былого DiscountOffer. */
   sealed trait Block1t extends Height with BgImg with Title with Descr with OldPrice with Price {
     override def titleBf = super.titleBf.copy(
-      defaultValue = Some(AOStringField("Платье", AOFieldFont("444444"))),
-      withCoords = true,
-      withFontSizes = List(65, 55, 45, 35, 28),
-      withTextAlign = true,
-      withFontFamily = true
+      defaultValue = Some(AOStringField("Платье", AOFieldFont("444444")))
     )
     override def descrBf = super.descrBf.copy(
-      defaultValue = Some(AOStringField("Описание", AOFieldFont("000000"))),
-      withCoords = true,
-      withFontSizes = List(65, 55, 45, 35, 28),
-      withTextAlign = true,
-      withFontFamily = true
+      defaultValue = Some(AOStringField("Описание", AOFieldFont("000000")))
     )
     override def priceBf = super.priceBf.copy(
-      defaultValue = Some(AOPriceField(100F, "RUB", "100 р.", defaultFont)),
-      withCoords = true,
-      withFontSizes = List(65, 55, 45, 35, 28),
-      withFontFamily = true
+      defaultValue = Some(AOPriceField(100F, "RUB", "100 р.", defaultFont))
     )
     override def oldPriceBf = super.oldPriceBf.copy(
-      defaultValue = Some(AOPriceField(200F, "RUB", "200 р.", defaultFont)),
-      withCoords = true,
-      withFontSizes = List(65, 55, 45, 35, 28),
-      withFontFamily = true
+      defaultValue = Some(AOPriceField(200F, "RUB", "200 р.", defaultFont))
     )
     override def template = _block1Tpl
   }
