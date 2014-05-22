@@ -30,9 +30,7 @@
 
       <div class="login-page">
         <div class="block-480">
-          <a href="#" class="logo-2">
-
-          </a>
+          <a href="#" class="logo-2"></a>
 
           <p>
             Уважаемые дамы и господа! Мы рады приветствовать Вас на сайте SIOMarket. Это не простой маркет в прямом
@@ -47,7 +45,10 @@
           <div class="border-line"></div>
         </div>
         @* Рендерим форму логина прямо здесь. *@
-        @ident._emailPwLoginFormTpl(lf)
+        @ident._emailPwLoginFormTpl(
+          lf = lf,
+          submitCall = routes.MarketLk.emailPwLoginFormSubmit
+        )
       </div>
 
     </div>

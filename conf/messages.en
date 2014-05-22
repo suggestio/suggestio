@@ -83,6 +83,7 @@ error.max=Must be less or equal to {0}
 error.max.strict=Must be strictly less than {0}
 error.minLength=Minimum length is {0}
 error.maxLength=Maximum length is {0}
+error.unknown.email_pw=Invalid email/password.
 
 constraint.required=Required
 constraint.min=Minimum value: {0}

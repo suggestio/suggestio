@@ -67,6 +67,7 @@ POST /feedback                          controllers.Feedback.feedbackFormSubmit
 
 # Входы в личные кабинеты
 GET  /m                                 controllers.MarketLk.lkIndex
+POST /m                                 controllers.MarketLk.emailPwLoginFormSubmit
 GET  /m/lk                              controllers.MarketLk.lkList
 GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, newAdId: Option[String] ?= None)
 GET  /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNode(adnId)

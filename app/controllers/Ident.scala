@@ -18,6 +18,8 @@ import play.api.mvc.Security.username
 import play.api.i18n.Lang
 import SiowebEsUtil.client
 import scala.util.{Failure, Success}
+import play.api.templates.HtmlFormat
+import com.typesafe.scalalogging.slf4j.Logger
 
 /**
  * Suggest.io
@@ -27,7 +29,7 @@ import scala.util.{Failure, Success}
  * в будущем будет также и вход по имени/паролю для некоторых учетных записей.
  */
 
-object Ident extends SioController with Logs {
+object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit {
 
   import LOGGER._
 
@@ -182,33 +184,9 @@ object Ident extends SioController with Logs {
     Ok(emailPwLoginFormTpl(emailPwLoginFormM))
   }
 
-  /** Самбит формы логина по email и паролю. */
-  // TODO Нужно отрабатывать уже залогиненных юзеров?
-  def emailPwLoginFormSubmit = MaybeAuth.async { implicit request =>
-    emailPwLoginFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug("emailPwLoginFormSubmit(): Form bind failed " + formWithErrors.errors)
-        NotAcceptable(emailPwLoginFormTpl(formWithErrors))
-      },
-      {case (email1, pw1) =>
-        EmailPwIdent.getByEmail(email1) flatMap { epwOpt =>
-          if (epwOpt.exists(_.checkPassword(pw1))) {
-            // Логин удался.
-            // TODO Нужно дать возможность режима сессии "чужой компьютер".
-            val personId = epwOpt.get.personId
-            MarketLk.getMarketRdrCallFor(personId) map { callOpt =>
-              val call = callOpt getOrElse routes.Admin.index()
-              Redirect(call)
-                .withSession(username -> personId)
-            }
-          } else {
-            val lf = emailPwLoginFormM.fill(email1 -> "")
-            val lfe = lf.withGlobalError("invalid.login.credentials")
-            Forbidden(emailPwLoginFormTpl(lfe))
-          }
-        }
-      }
-    )
+
+  override def emailSubmitError(lf: EmailPwLoginForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+    Forbidden(emailPwLoginFormTpl(lf))
   }
 
 
@@ -235,6 +213,51 @@ object Ident extends SioController with Logs {
 
   // TODO выставить нормальный routing тут
   protected def rdrToAdmin = Redirect(routes.Application.index())
+
+}
+
+
+/** Добавить обработчик сабмита формы логина по email и паролю в контроллер. */
+trait EmailPwSubmit extends SioController {
+  import Ident.{EmailPwLoginForm_t, emailPwLoginFormM}
+
+  def LOGGER: Logger
+
+  def emailSubmitOkCall(personId: String)(implicit request: AbstractRequestWithPwOpt[_]): Future[Call] = {
+    MarketLk.getMarketRdrCallFor(personId) map { callOpt =>
+      callOpt getOrElse routes.Admin.index()
+    }
+  }
+
+  def emailSubmitError(lf: EmailPwLoginForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result]
+
+  /** Самбит формы логина по email и паролю. */
+  // TODO Нужно отрабатывать уже залогиненных юзеров?
+  def emailPwLoginFormSubmit = MaybeAuth.async { implicit request =>
+    emailPwLoginFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        LOGGER.debug("emailPwLoginFormSubmit(): Form bind failed: " + formatFormErrors(formWithErrors))
+        emailSubmitError(formWithErrors)
+      },
+      {case (email1, pw1) =>
+        EmailPwIdent.getByEmail(email1) flatMap { epwOpt =>
+          if (epwOpt.exists(_.checkPassword(pw1))) {
+            // Логин удался.
+            // TODO Нужно дать возможность режима сессии "чужой компьютер".
+            val personId = epwOpt.get.personId
+            emailSubmitOkCall(personId) map { call =>
+              Redirect(call)
+                .withSession(username -> personId)
+            }
+          } else {
+            val lf = emailPwLoginFormM.fill(email1 -> "")
+            val lfe = lf.withGlobalError("error.unknown.email_pw")
+            emailSubmitError(lfe)
+          }
+        }
+      }
+    )
+  }
 
 }
 

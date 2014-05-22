@@ -1,12 +1,14 @@
 package controllers
 
-import play.api.mvc.Call
+import play.api.mvc.{Result, Call}
 import models._
 import util.acl._
 import scala.concurrent.Future
 import views.html.market.lk
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
+import util.PlayMacroLogsImpl
+import controllers.Ident.EmailPwLoginForm_t
 
 /**
  * Suggest.io
@@ -14,7 +16,7 @@ import util.SiowebEsUtil.client
  * Created: 21.03.14 10:33
  * Description: Система личных кабинетов sio-market. Тут экшены и прочее API, которое не поместилось в конкретные ЛК.
  */
-object MarketLk extends SioController {
+object MarketLk extends SioController with EmailPwSubmit with PlayMacroLogsImpl {
 
   /** Список личных кабинетов юзера. */
   def lkList = IsAuth.async { implicit request =>
@@ -70,4 +72,7 @@ object MarketLk extends SioController {
     }
   }
 
+  override def emailSubmitError(lf: EmailPwLoginForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+    Forbidden(lk.lkIndexTpl(lf))
+  }
 }

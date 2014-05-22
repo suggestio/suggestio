@@ -85,6 +85,7 @@ error.max=Значение должно быть меньше, либо равн
 error.max.strict=Значение должно быть меньше {0}
 error.minLength=Минимум {0} символов
 error.maxLength=Максимальная длина — {0} символов
+error.unknown.email_pw=Неверные email/пароль.
 
 constraint.required=Обязательно
 constraint.min=Минимальное значение: {0}

@@ -1,4 +1,4 @@
-@(lf: Form[_])(implicit ctx: util.Context)
+@(lf: Form[_], submitCall: Call)(implicit ctx: util.Context)
 
 @* Форма для логина по email и паролю. *@
 @import ctx._
@@ -6,27 +6,29 @@
 
 @import util.FormHelpers._
 
-@form(routes.Ident.emailPwLoginFormSubmit) {
+@form(submitCall) {
 
   @lf.globalError.map { ge =>
-    Ошибка: @Messages(ge.message)
+    <p>Ошибка: @Messages(ge.message)</p>
   }
 
   <table cellpadding="0" cellspacing="0" class="input-wrap big">
     @inputText(
-    lf("email"),
-    '_label -> "E-mail:")
+      lf("email"),
+      '_label -> "E-mail:"
+    )
   </table>
 
   <table cellpadding="0" cellspacing="0" class="input-wrap big">
     @inputPassword(
-    lf("password"),
-    '_label -> "Пароль:")
+      lf("password"),
+      '_label -> "Пароль:"
+    )
   </table>
 
-  <div class="ovh recover-password">
+  @*<div class="ovh recover-password">
     У вас проблемы?&nbsp;<a href="#">Восстановить пароль?</a>
-  </div>
+  </div>*@
 
   <div class="block-480 login-but-wrap">
     <div class="border-line"></div>

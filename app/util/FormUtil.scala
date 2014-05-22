@@ -55,9 +55,9 @@ object FormUtil {
     r1 = lfCrRe.replaceAllIn(r1, brReplacement)
     lfRe.replaceAllIn(r1, brReplacement)
   }
-  val replaceBRwithEOL_re = "(?i)<br\\s*/?>".r
+  private val brTagRe = "(?i)<br\\s*/?\\s*>".r
   val replaceBRwithEOL = {s: String =>
-    replaceBRwithEOL_re.replaceAllIn(s, "\r\n")
+    brTagRe.replaceAllIn(s, "\r\n")
   }
 
   /** Функция, которая превращает Some("") в None. */
@@ -73,7 +73,7 @@ object FormUtil {
       true
 
     } catch {
-      case ex:Throwable => false
+      case ex: Exception => false
     }
   }
 
