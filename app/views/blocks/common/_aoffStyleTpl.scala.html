@@ -1,1 +1,1 @@
-@(aoff: AOFieldFont, className: String = "", styleStr: String = "")style="color: #@aoff.color;@aoff.size.map {fsize =>font-size: @{fsize}px;line-height: @{fsize}px;}@aoff.family.map {ff =>font-family:@ff;}@aoff.align.map {ta =>text-align:@ta.cssName;}@styleStr" class="@className"
+@(aoff: AOFieldFont, className: String = "", styleStr: String = "")style="color: #@aoff.color;@aoff.size.map {fsize =>font-size: @{fsize}px;line-height: @(fsize-10)px;}@aoff.family.map {ff =>font-family:@ff;}@aoff.align.map {ta =>text-align:@ta.cssName;}@styleStr" class="@className"
