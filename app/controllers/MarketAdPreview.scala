@@ -55,21 +55,17 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
   }
 
 
-  private val prevCatIdKM = CAT_ID_K -> optional(userCatIdM)
   /** Генератор preview-формы. Форма совместима с основной формой, но более толерантна к исходным данным. */
-  private def getPreviewAdFormM(blockM: Mapping[BlockMapperResult]): AdFormM = Form(
-    "ad" -> mapping(
-      prevCatIdKM,
-      OFFER_K -> blockM
-    )(adFormApply)(adFormUnapply)
-  )
+  private def getPreviewAdFormM(blockM: Mapping[BlockMapperResult]): AdFormM = {
+    MarketAd.getAdFormM(userCatIdOptM, blockM)
+  }
 
   private def detectAdPreviewForm(implicit request: Request[collection.Map[String, Seq[String]]]) = {
-    getAdPreviewForm(request.body)
+    maybeGetAdPreviewFormM(request.body)
   }
 
   /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
-  private def getAdPreviewForm(reqBody: collection.Map[String, Seq[String]]): Either[AdFormM, (BlockConf, AdFormM)] = {
+  private def maybeGetAdPreviewFormM(reqBody: collection.Map[String, Seq[String]]): Either[AdFormM, (BlockConf, AdFormM)] = {
     // TODO adModes пора выпиливать. И этот Either заодно.
     val adModes = reqBody.get("ad.offer.mode") getOrElse Nil
     adModes.headOption.flatMap { adModeStr =>
