@@ -48,19 +48,27 @@ object MarketAdFormUtil {
   }
 
 
-  private def fontSizeOptM(fontSizes: Seq[Int]): Mapping[Option[Int]] = {
-    val hasFontSizes = fontSizes.isEmpty
+  private def fontSizeOptM(fontSizes: Seq[FontSize]): Mapping[Option[FontSize]] = {
+    val hasFontSizes = !fontSizes.isEmpty
     val (min, max) = if (hasFontSizes) {
-      0 -> 0
+      val minSz = fontSizes.iterator.map(_.size).min
+      val maxSz = fontSizes.iterator.map(_.size).max
+      minSz -> maxSz
     } else {
-      fontSizes.min -> fontSizes.max
+      0 -> 0
     }
     optional(number(min = min, max = max))
-     .transform[Option[Int]](
-        { szOpt => if (hasFontSizes) szOpt.filter(fontSizes.contains) else szOpt },
-        { identity }
+      .transform[Option[FontSize]](
+        {szOpt =>
+          if (hasFontSizes) {
+            szOpt flatMap { sz => fontSizes.find(_.size == sz) }
+          } else {
+            None
+          }
+        },
+        { _.map(_.size) }
       )
-     .verifying("error.unavailable.font.size", { szOpt => hasFontSizes || szOpt.exists(fontSizes.contains) })
+     .verifying("error.unavailable.font.size", { szOpt => !hasFontSizes || szOpt.isDefined })
   }
 
   /** Маппер для значения font.family. */
@@ -102,15 +110,29 @@ object MarketAdFormUtil {
    * @param withFontSizes Множество допустимых размеров шрифтов, если пусто то поле отключено.
    * @return Маппинг для AOFieldFont.
    */
-  def getFontM(withFontSizes: Seq[Int]): Mapping[AOFieldFont] = {
+  def getFontM(withFontSizes: Seq[FontSize]): Mapping[AOFieldFont] = {
     mapping(
       "color"  -> colorM,
       "size"   -> fontSizeOptM(withFontSizes),
       "align"  -> textAlignOptM,
       "family" -> fontFamilyOptM
     )
-    { AOFieldFont.apply }
-    { AOFieldFont.unapply }
+    {(color, fsz, align, family) =>
+      AOFieldFont(
+        color  = color,
+        size   = fsz.map(_.size),
+        align  = align,
+        family = family,
+        lineHeight = fsz.map(_.lineHeight)
+      )
+    }
+    {aoff =>
+      import aoff._
+      val fsz: Option[FontSize] = aoff.size.flatMap { sz =>
+        withFontSizes.find(_.size == sz)
+      }
+      Some((color, fsz, align, family))
+    }
   }
 
 
