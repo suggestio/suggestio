@@ -94,7 +94,7 @@ object BlocksConf extends Enumeration {
       defaultValue = Some(AOStringField("Платье", AOFieldFont("444444")))
     )
     override def descrBf = super.descrBf.copy(
-      defaultValue = Some(AOStringField("Описание", AOFieldFont("000000")))
+      defaultValue = Some(AOStringField("", AOFieldFont("000000")))
     )
     override def priceBf = super.priceBf.copy(
       defaultValue = Some(AOPriceField(100F, "RUB", "100 р.", defaultFont))
@@ -116,11 +116,6 @@ object BlocksConf extends Enumeration {
   sealed trait Block2t extends BgImg with Height with Title with Descr {
     override def heightBf: BfHeight = super.heightBf.copy(
       availableVals = Set(300, 460)
-    )
-    override def descrBf = super.descrBf.copy(
-      defaultValue = Some(AOStringField("Распродажа. Сегодня. Сейчас.", AOFieldFont("000000"))),
-      withTextAlign = true,
-      withFontFamily = true
     )
     override def template = _block2Tpl
   }

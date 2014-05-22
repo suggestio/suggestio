@@ -16,12 +16,20 @@
     <div class="info">
       @mad.offers.headOption.map { offer =>
         @offer.text1.map { title =>
-          <h5 @_aovfStyleTpl(title)>@Html(title.value)</h5>
+          <div class="js-mvbl" data-connected-input="ad.offer.title" style="position: absolute; @title.coords.map { coords =>
+              left: @(coords.x)px; top:@(coords.y)px;
+            }.getOrElse{ left: 22px; top: 219px; }">
+            <h5 @_aovfStyleTpl(title)>@Html(title.value)</h5>
+          </div>
         }
 
         @offer.text2.map { descr =>
+          <div class="js-mvbl" data-connected-input="ad.offer.descr" style="position: absolute; @descr.coords.map { coords =>
+              left: @(coords.x)px; top:@(coords.y)px;
+            }.getOrElse{ left: 22px; top: 249px; }">
           <div @_aovfStyleTpl(descr, "text")>
             <p>@Html(descr.value)</p>
+          </div>
           </div>
         }
 
