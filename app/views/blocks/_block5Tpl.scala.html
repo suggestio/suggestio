@@ -3,13 +3,8 @@
 @import util.TplDataFormatUtil._
 @import util.blocks.BlocksConf.Block5
 @import svg._
+@import common._
 
-
-@renderColor(colorHex:String) = {
-  @if( colorHex != "ffffff" ){
-    #@colorHex
-  }
-}
 
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl5" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
@@ -42,20 +37,32 @@
 
     @mad.offers.headOption.map { offer =>
       @offer.text1.map { text1 =>
-        <div class="title" style="color: @renderColor( text1.font.color );">
+        <div class="js-mvbl" data-connected-input="ad.offer.title" style="position: absolute; @text1.coords.map { coords =>
+              left: @(coords.x)px; top:@(coords.y)px;
+            }.getOrElse{ left: 11px; top: 173px; }">
+        <div @_aovfStyleTpl(text1, "title")>
           @Html(text1.value)
+        </div>
         </div>
       }
 
       @offer.oldPrice.map { oldPrice =>
-        <div class="old-price" style="color: @renderColor(oldPrice.font.color);">
+        <div class="js-mvbl" data-connected-input="ad.offer.oldPrice" style="position: absolute; @oldPrice.coords.map { coords =>
+              left: @(coords.x)px; top:@(coords.y)px;
+            }.getOrElse{ left: 11px; top: 231px; }">
+        <div @_aovfStyleTpl(oldPrice, "old-price")>
           @formatPrice(oldPrice.value, oldPrice.currency)
+        </div>
         </div>
       }
 
       @offer.price.map { price =>
-        <div class="price" style="color: @renderColor(price.font.color);">
+        <div class="js-mvbl" data-connected-input="ad.offer.price" style="position: absolute; @price.coords.map { coords =>
+              left: @(coords.x)px; top:@(coords.y)px;
+            }.getOrElse{ left: 11px; top: 260px; }">
+        <div @_aovfStyleTpl(price, "price")>
           @formatPrice(price.value, price.currency)
+        </div>
         </div>
       }
     }
