@@ -370,7 +370,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
       min-height: 14px
 
       a
-        display: inline-block
+        display: block
         height: 0
         color: white
         text-decoration: none
@@ -559,7 +559,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
           background-position: 0 -77px
       .select-file:active
          .bg
-          background-position: 0 0
+          background-position: 0 0 
       .descr
         padding-top: 5px
         font-size: 12px
@@ -567,21 +567,31 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
         color: #b4b4b4
 
   .body-wrap
+
     .title-wrap
+
       .center
         position: relative
+
         .adn-title-buttons
           position: absolute
           top: 3px
-          right: 0px
+          right: 50px
+
+          .gray-but-wrap
+
+            a
+              padding: 7px 15px 3px
 
         .title-inner
           font-size: 30px
           color: #676666
           font-family: 'ParagNorCIta'
           padding-left: 50px
+
         .back-but
           display: block
+          margin-left: 11px
           margin-right: 15px
           width: 35px
           height: 35px
@@ -855,7 +865,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     margin-bottom: 50px
 
     .node
-      padding: 15px 10px
+      padding: 10px
       background: #dad9d9
 
       .n-name,
@@ -1055,7 +1065,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
       margin-bottom: 50px
 
       .title
-        padding: 15px 10px
+        padding: 10px
         background: #dad9d9
 
         .toggle
@@ -1327,11 +1337,11 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   font-weight: bold
 
   .js-g-slide-toggle
-    margin: 17px 11px
+    margin: 10px 11px
 
 .lk-edit-form__block_title_span
   display: inline-block
-  padding: 17px 11px
+  padding: 10px 11px
 
 .lk-edit-form__block_body
   background: #efefef
@@ -1451,7 +1461,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   min-height: 140px
   min-width: 140px
   padding-left: 23px
-  padding-top: 24px 
+  padding-top: 24px
 
   .sio-mart__single-offer
     position: relative

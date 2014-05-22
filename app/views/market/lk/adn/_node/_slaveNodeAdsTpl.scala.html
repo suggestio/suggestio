@@ -1,12 +1,14 @@
 @(msup: MAdnNode, mslave: MAdnNode, mads: Seq[MAdT])(implicit ctx: util.Context)
 
+@import market.lk.ad._
+
 @if(mads)  {
   @mads.zipWithIndex.map { case (mad, i) =>
     @* isPublishedAt скрывает от супервизора возможность сокрыть в других карточках. Сейчас сокрыто - означает, что сокрыто в ТЦ. *@
     <div class="ads-list__block ads-list-block @if(!mad.isPublishedAt(msup.id.get)) {disabled}">
       <div class="ads-list-block__preview">
 
-        <div class="disabled-ad"></div>
+        @_adDisableReasonCoverTpl(mad.disableReason)
 
         <a class="ads-list-block__link js-tc-edit" href="@routes.MarketLkAdnSlaveAd.showSlaveAd(mad.id.get)"></a>
 
@@ -19,6 +21,6 @@
   }
 
 } else {
-  <div class="sm-note">Рекламных плакатов нет</div>
+  <div class="sm-note">Опубликованных рекламных плакатов нет.</div>
 }
 <div class="clear"></div>

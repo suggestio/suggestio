@@ -19,22 +19,24 @@
     editCall = routes.MarketAd.editAd,
     fallbackLogo = fallbackLogo
   ) { mad =>
-    @* Галочки для управления отображением рекламной карточки магазина. *@
-    <div class="ads-list-block__controls">
-      @defining(mad.allWantShowLevels) { adSls =>
-        @* Обходим карту уровней, переводя её в список галочек. *@
-        @outLvlMap.map { case (sl, (slAllowed, slMax)) =>
-          @defining(node.adn.canOutAtLevel(sl)) { hl =>
-            <label class="@sl.checkboxCssClass@if(!slAllowed){ inactive}">
-              <input class="@if(slMax == 1){one-}checkbox" type="checkbox"
-                     data-level="@sl" data-adid="@mad.id" data-name="@sl.checkboxCssClass"
-                     @if(!slAllowed) {disabled="disabled"} @if(adSls contains sl) {data-checked="checked"}
-                     />@Messages(if(isSingleOutLvl) "lk.sl.enable_ad" else "lk.sl." + sl.name)
-            </label>
+    @if( mad.disableReason.isEmpty ) {
+      @* Галочки для управления отображением рекламной карточки магазина. *@
+      <div class="ads-list-block__controls">
+        @defining(mad.allWantShowLevels) { adSls =>
+          @* Обходим карту уровней, переводя её в список галочек. *@
+          @outLvlMap.map { case (sl, (slAllowed, slMax)) =>
+            @defining(node.adn.canOutAtLevel(sl)) { hl =>
+              <label class="@sl.checkboxCssClass@if(!slAllowed){ inactive}">
+                <input class="@if(slMax == 1){one-}checkbox" type="checkbox"
+                       data-level="@sl" data-adid="@mad.id" data-name="@sl.checkboxCssClass"
+                       @if(!slAllowed) {disabled="disabled"} @if(adSls contains sl) {data-checked="checked"}
+                       />@Messages(if(isSingleOutLvl) "lk.sl.enable_ad" else "lk.sl." + sl.name)
+              </label>
+            }
           }
         }
-      }
-    </div>
+      </div>
+    } @* disableReason.isEmpty *@
   }
 
 }
