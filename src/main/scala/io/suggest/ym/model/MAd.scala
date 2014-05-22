@@ -111,7 +111,7 @@ case class MAd(
   var userCatId  : Option[String] = None,
   var texts4search : Texts4Search = Texts4Search(),
   var colors     : Map[String, String] = Map.empty,
-  var disableReason : Option[String] = None,
+  var disableReason : List[DisableReason] = Nil,
   var richDescrOpt  : Option[RichDescr] = None,
   var dateCreated   : DateTime = DateTime.now
 )

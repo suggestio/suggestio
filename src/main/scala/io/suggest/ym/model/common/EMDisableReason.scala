@@ -4,6 +4,10 @@ import io.suggest.model.{EsModelT, EsModelStaticT}
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
 import play.api.libs.json._
+import com.fasterxml.jackson.annotation.JsonIgnore
+import java.{util => ju, lang => jl}
+import scala.collection.JavaConversions._
+import io.suggest.util.JacksonWrapper
 
 /**
  * Suggest.io
@@ -13,7 +17,10 @@ import play.api.libs.json._
  */
 
 object EMDisableReason {
-  val DISABLE_REASON_ESFN = "disableReason"
+  val DISABLE_REASON_ESFN = "dsblReason"
+
+  val ADN_ID_ESFN = "adnId"
+  val REASON_ESFN = "reason"
 }
 
 import EMDisableReason._
@@ -22,14 +29,24 @@ trait EMDisableReasonStatic extends EsModelStaticT {
   override type T <: EMDisableReasonMut
 
   abstract override def generateMappingProps: List[DocField] = {
-    val drField = FieldString(DISABLE_REASON_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
+    val drField = FieldObject(DISABLE_REASON_ESFN, enabled = false, properties = Nil)
     drField :: super.generateMappingProps
   }
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
       case (DISABLE_REASON_ESFN, value) =>
-        acc.disableReason = Option(stringParser(value))
+        acc.disableReason = value match {
+          case null =>
+            Nil
+          // Начальная реализация умела только одну анонимную причину хранить из всех жалоб.
+          case s: String =>
+            Nil
+          case l: jl.Iterable[_] if l.isEmpty =>
+            Nil
+          case _ =>
+            JacksonWrapper.convert[List[DisableReason]](value)
+        }
     }
   }
 }
@@ -39,22 +56,50 @@ trait EMDisableReasonI extends EsModelT {
   override type T <: EMDisableReasonI
 
   /** Кто является изготовителем этой рекламной карточки? */
-  def disableReason: Option[String]
+  def disableReason: List[DisableReason]
 }
 
 
 trait EMDisableReason extends EMDisableReasonI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
-    if (disableReason.isDefined)
-      DISABLE_REASON_ESFN -> JsString(disableReason.get) :: acc0
-    else
+    if (!disableReason.isEmpty) {
+      val v = JsArray(disableReason.map(_.toPlayJson))
+      DISABLE_REASON_ESFN -> v  ::  acc0
+    } else {
       acc0
+    }
   }
 
 }
 
-trait EMDisableReasonMut extends EMProducerId {
-  override type T <: EMProducerIdMut
-  var disableReason: Option[String]
+trait EMDisableReasonMut extends EMDisableReason {
+  override type T <: EMDisableReasonMut
+  var disableReason: List[DisableReason]
+}
+
+
+object DisableReason {
+
+  def deserializeMap(jm: ju.Map[_,_]): DisableReason = {
+    DisableReason(
+      adnId  = Option(jm.get(ADN_ID_ESFN)).map(stringParser).getOrElse(""),
+      reason = Option(jm.get(REASON_ESFN)).map(stringParser).getOrElse("")
+    )
+  }
+
+}
+
+/** Класс для представления причины выпиливания карточки. */
+case class DisableReason(adnId: String, reason: String) {
+
+  /** Сериализация этого класса в JSON. */
+  @JsonIgnore
+  def toPlayJson: JsObject = {
+    JsObject(Seq(
+      ADN_ID_ESFN -> JsString(adnId),
+      REASON_ESFN -> JsString(reason)
+    ))
+  }
+
 }

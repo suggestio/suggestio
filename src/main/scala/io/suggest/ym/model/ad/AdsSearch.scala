@@ -12,6 +12,7 @@ import io.suggest.model.EsModelMinimalStaticT
 import io.suggest.ym.model.common.EMReceivers
 import io.suggest.util.SioConstants
 import io.suggest.util.SioRandom.rnd
+import org.elasticsearch.action.search.SearchResponse
 
 /** Статичная утиль для генерации поисковых ES-запросов. */
 object AdsSearch {
@@ -123,24 +124,42 @@ trait AdsSearchArgsT {
 /** Если нужно добавить в рекламную модель поиск по рекламным карточкам, то следует задействовать вот этот трейт. */
 trait AdsSimpleSearchT extends EsModelMinimalStaticT {
 
+  def searchAdsReqBuilder(adSearch: AdsSearchArgsT)(implicit ec:ExecutionContext, client: Client) = {
+    val query = AdsSearch.prepareEsQuery(adSearch)
+    // Запускаем собранный запрос.
+    prepareSearch
+      .setQuery(query)
+      .setSize(adSearch.maxResults)
+      .setFrom(adSearch.offset)
+  }
+
+  /** Постпроцессинг результатов поиска рекламных карточек. */
+  private def postprocessSearchResults(adSearch: AdsSearchArgsT, resultFut: Future[Seq[T]])(implicit ec: ExecutionContext): Future[Seq[T]] = {
+    // TODO Надо бы сделать так, что Seq могла быть и List
+    if (adSearch.qOpt.isEmpty) {
+      resultFut.map { rnd.shuffle(_) }
+    } else {
+      resultFut
+    }
+  }
+
   /**
    * Поиск карточек в ТЦ по критериям.
    * @return Список рекламных карточек, подходящих под требования.
    */
   def searchAds(adSearch: AdsSearchArgsT)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
-    val query = AdsSearch.prepareEsQuery(adSearch)
-    // Запускаем собранный запрос.
-    var resultFut: Future[Seq[T]] = prepareSearch
-      .setQuery(query)
-      .setSize(adSearch.maxResults)
-      .setFrom(adSearch.offset)
+    val resultFut = searchAdsReqBuilder(adSearch)
       .execute()
       .map { searchResp2list }
-    // Если нет поиска по буквам (т.е. нет релевантности), то используем случайное перемешивание.
-    if (adSearch.qOpt.isEmpty) {
-      resultFut = resultFut.map { rnd.shuffle(_) }
-    }
-    resultFut
+    postprocessSearchResults(adSearch, resultFut)
+  }
+
+  def searchAdsRt(adSearch: AdsSearchArgsT)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+    val resultFut = searchAdsReqBuilder(adSearch)
+      .setNoFields()
+      .execute()
+      .flatMap { searchResp2RtMultiget }
+    postprocessSearchResults(adSearch, resultFut)
   }
 
 }

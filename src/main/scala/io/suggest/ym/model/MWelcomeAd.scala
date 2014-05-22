@@ -82,7 +82,7 @@ case class MWelcomeAd(
   @JsonIgnore override def receivers = Map.empty
   @JsonIgnore override def blockMeta = MAd.blockMetaDflt
   @JsonIgnore override def colors = Map.empty
-  @JsonIgnore override def disableReason = None
+  @JsonIgnore override def disableReason = Nil
   @JsonIgnore override def richDescrOpt = None
 }
 
