@@ -1,7 +1,7 @@
 package util.blocks
 
 import play.api.templates._
-import play.api.data._, Forms._
+import play.api.data._
 import BlocksUtil._
 import views.html.blocks._
 import models._
@@ -10,7 +10,6 @@ import util.blocks.BlocksUtil.BlockImgMap
 import scala.Some
 import play.api.data.validation.Constraint
 import util.img.{ImgIdKey, ImgInfo4Save}
-import scala.collection.immutable.{ListSet, SortedSet}
 
 /**
  * Suggest.io
@@ -320,15 +319,6 @@ object BlocksConf extends Enumeration {
 
 
   sealed trait Block16t extends Height with BgColor with BorderColor with Title with Descr with Price {
-    override def titleBf = super.titleBf.copy(
-      withFontSizes = List(65, 55, 45, 35, 28)
-    )
-    override def descrBf = super.descrBf.copy(
-      withFontSizes = List(36, 28, 22)
-    )
-    override def priceBf = super.priceBf.copy(
-      withFontSizes = List(65, 55, 45)
-    )
     override def bgColorBf = super.bgColorBf.copy(
       defaultValue = Some("e1cea1")
     )
