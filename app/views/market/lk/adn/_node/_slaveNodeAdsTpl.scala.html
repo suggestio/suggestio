@@ -6,7 +6,11 @@
     <div class="ads-list__block ads-list-block @if(!mad.isPublishedAt(msup.id.get)) {disabled}">
       <div class="ads-list-block__preview">
 
-        <div class="disabled-ad"></div>
+        <div class="disabled-ad">
+          @mad.disableReason.map { dr =>
+            Причина отключения: @dr
+          }
+        </div>
 
         <a class="ads-list-block__link js-tc-edit" href="@routes.MarketLkAdnSlaveAd.showSlaveAd(mad.id.get)"></a>
 
