@@ -164,6 +164,20 @@ CbcaCommon = () ->
 
   self.init = () ->
 
+    tinymce.init(
+      selector:'textarea.js-tinymce',
+      menubar: false,
+      plugins: 'link, textcolor',
+      toolbar: "undo redo | fontselect | fontsizeselect | | alignleft aligncenter alignright | bold italic | forecolor backcolor | link"
+    )
+
+    $(document).on 'change', '#ad_descr_bgColor', (e)->
+      $this = $(this)
+      hex = '#' + $this.val()
+
+      $('#ad_descr_text_ifr').contents().find('body').css 'background-color': hex
+
+
     $(document).on 'click', '.ads-list-block__preview_add-new', ()->
       $this = $(this)
 
@@ -657,7 +671,7 @@ market =
       	    $(colpkr).fadeOut(500)
       	  onChange: (hsb, hex, rgb) ->
       	    market.ad_form.queue_block_preview_request()
-      	    _this.find('input').val hex
+      	    _this.find('input').val(hex).trigger('change')
       	    _this.css
       	      'background-color' : '#' + hex
       cb( $(this) )
