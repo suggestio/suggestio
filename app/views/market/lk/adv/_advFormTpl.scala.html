@@ -1,0 +1,46 @@
+@(adId: String, adnNodes: Seq[MAdnNode], af: Form[_])(implicit ctx: Context)
+
+@* Форма для размещения рекламы (ADVertising) на узлах-получателях рекламной сети. *@
+@import ctx._
+@import helper._
+@import util.FormHelpers._
+
+@form(routes.MarketAdv.advertiseFormSubmit(adId)) {
+
+  @defining( adnNodes.groupBy(_.adn.memberType).mapValues(_.sortBy(_.meta.name)) )  {  adnNodesMap =>
+
+    @* Рендерим табы по типам узлов. *@
+    @adnNodesMap.map { case (memberType, _) =>
+      <div>@Messages("amts.of.type." + memberType)</div>
+    }
+
+    @* Рендерим содержимое табов, т.е. таблички в рамках одной категории узла *@
+    @adnNodesMap.map { case (memberType, adnNodes) =>
+      <table>
+        @adnNodes.iterator.zipWithIndex.map { case (node, i) =>
+          <tr>
+            @defining(memberType.id * i) { mid =>
+              @* Галочка включения узла в публикацию. *@
+              <td>@checkbox(af(s"node[$mid].advertise"), '_label -> "")</td>
+              <td>@node.meta.name / @node.meta.town</td>
+              @* Далее, селект длительности и галочка появляются при выставлении первой галочки. *@
+              <td>
+                <select name="node[@mid].period">
+                  <option value="P1D">На 1 день</option>
+                  <option value="P3D">На 3 дня</option>
+                  <option value="P1W">На неделю</option>
+                  <option value="P1M">На месяц</option>
+                </select>
+              </td>
+              <td>@checkbox(af(s"node[$mid].onStartPage"), '_label -> "На главном экране")</td>
+            }
+          </tr>
+        }
+      </table>
+    }
+
+  }
+
+
+  <input type="submit" value="Отправить запрос"/>
+}

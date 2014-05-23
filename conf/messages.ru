@@ -36,6 +36,11 @@ amt.of.type.m=Торговый центр
 amt.of.type.r=Ресторан
 amt.of.type.R=Супервайзер сети ресторанов
 
+amts.of.type.s=Магазины
+amts.of.type.m=Торговые центры
+amts.of.type.r=Рестораны
+amts.of.type.R=Сети ресторанов
+
 editing.of.amt.profile.s=Редактирование профайла магазина
 editing.of.amt.profile.m=Редактирование профайла ТЦ
 editing.of.amt.profile.r=Редактирование профайла ресторана
