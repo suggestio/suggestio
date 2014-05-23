@@ -11,7 +11,7 @@
 
     <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl2" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
-      <div class="sale-icon" style="background: #@fillColor;">
+      <div class="sale-icon" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(Block2.borderColorBf.name, Block2.borderColorBf.anyDefaultValue)">
 
         @_mask2(
           cssClass = "mask",
