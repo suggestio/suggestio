@@ -21,13 +21,17 @@
       @mad.offers.map { offer =>
         <div class="item el-@{offer.n + 1}">
           @offer.text1.map { title =>
+          <div class="js-mvbl" data-connected-input="ad.offer.offer[@{offer.n}].title" style="@_coordsStyleTpl(title, left = 22, top = (offer.n)*20+30)">
           <div @_aovfStyleTpl(title, Block3.titleBf, "title")>
             @Html(title.value)
           </div>
+          </div>
           }
           @offer.price.map { price =>
+          <div class="js-mvbl" data-connected-input="ad.offer.offer[@{offer.n}].price" style="@_coordsStyleTpl(price, left = 22, top = (offer.n)*20+50)">
           <div @_aovfStyleTpl(price, Block3.priceBf, "price")>
             @formatPrice(price.value, price.currency)
+          </div>
           </div>
           }
         </div>

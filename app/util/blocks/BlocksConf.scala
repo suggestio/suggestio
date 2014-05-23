@@ -119,6 +119,12 @@ object BlocksConf extends Enumeration {
     override def heightBf: BfHeight = super.heightBf.copy(
       availableVals = Set(300, 460)
     )
+    override def fillColorBf: BfColor = super.fillColorBf.copy(
+      defaultValue = Some("ffffff")
+    )
+    override def borderColorBf: BfColor = super.borderColorBf.copy(
+      defaultValue = Some("000000")
+    )
     override def template = _block2Tpl
   }
   val Block2 = new Val(2) with Block2t with EmptyKey {
