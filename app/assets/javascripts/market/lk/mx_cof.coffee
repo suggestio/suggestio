@@ -168,6 +168,7 @@ CbcaCommon = () ->
       selector:'textarea.js-tinymce',
       width: 615,
       menubar: false,
+      statusbar : false,
       plugins: 'link, textcolor',
       toolbar: ["fontselect | fontsizeselect | alignleft aligncenter alignright | bold italic | forecolor backcolor | link" ]
     )
