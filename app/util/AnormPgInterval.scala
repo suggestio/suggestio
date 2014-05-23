@@ -31,12 +31,28 @@ object AnormPgInterval {
   }
 
   /** Конвертор PGInterval в joda.Period. */
-  implicit def pgInterval2period(pgi: PGInterval): Period = {
+  implicit def pgInterval2jodaPeriod(pgi: PGInterval): Period = {
     // Костыли с секундами и миллисекундами.
     val seconds = pgi.getSeconds.toInt
     val ms = ((pgi.getSeconds - seconds) * 1000).toInt
     new Period(pgi.getYears, pgi.getMonths, 0, pgi.getDays,
                pgi.getHours, pgi.getMinutes, seconds, ms)
+  }
+
+  /** Конвертор joda.time.Period -> PGInterval, т.е. обратный к [[pgInterval2jodaPeriod()]]. */
+  implicit def jodaPeriod2pgInterval(period: Period): PGInterval = {
+    new PGInterval(
+      period.getYears, period.getMonths, period.getDays,
+      period.getHours, period.getMinutes, period.getSeconds
+    )
+  }
+
+  /** Поддержка joda period в SQL.on(). */
+  implicit val periodToStatement = new ToStatement[Period] {
+    override def set(s: PreparedStatement, index: Int, v: Period) = {
+      val pgi = jodaPeriod2pgInterval(v)
+      s.setObject(index, pgi)
+    }
   }
 
 }

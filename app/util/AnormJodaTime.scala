@@ -19,7 +19,6 @@ object AnormJodaTime {
   val dateFormatGeneration: DateTimeFormatter = DateTimeFormat.forPattern("yyyyMMddHHmmssSS");
 
   implicit def rowToDateTime: Column[DateTime] = Column.nonNull { (value, meta) =>
-    val MetaDataItem(qualified, nullable, clazz) = meta
     value match {
       case ts: java.sql.Timestamp => Right(new DateTime(ts.getTime))
       case d: java.sql.Date => Right(new DateTime(d.getTime))
