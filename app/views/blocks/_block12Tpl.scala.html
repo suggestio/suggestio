@@ -2,31 +2,40 @@
 
 @import util.TplDataFormatUtil._
 @import common._
+@import svg._
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl12"@mad.colors.get(Block12.saleMaskColorBf.name).map { saleColor => style="border-color: #@saleColor"} data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+@defining( mad.colors.getOrElse(Block12.fillColorBf.name, Block12.fillColorBf.anyDefaultValue) ) { fillColor =>
 
-  <div class="color-bg"@mad.colors.get(Block12.saleMaskColorBf.name).map { saleColor => style="background: #@saleColor"}></div>
-  <div class="sale-mask abs"@mad.colors.get(Block12.saleMaskColorBf.name).map { saleColor => style="color: #@saleColor"}></div>
+  <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl12" style="background: #@fillColor; @mad.colors.get(Block12.saleMaskColorBf.name).map { saleColor => border-color: #@saleColor;}" data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
+    <div class="color-bg"@mad.colors.get(Block12.saleMaskColorBf.name).map { saleColor => style="background: #@saleColor"}></div>
+    <!--<div class="sale-mask abs"></div>-->
 
-  @mad.offers.headOption.map { offer =>
+    @_mask2(
+      cssClass = "sale-mask abs",
+      fillColor = fillColor
+    )
 
-    <div @offer.discount.map { discount =>@_aovfStyleTpl(discount, Block12.discountBf, "icon")} >
-      @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
-    </div>
+    @mad.offers.headOption.map { offer =>
 
-    <div class="info">
-    @offer.text1.map { text1 =>
-      <div @_aovfStyleTpl(text1, Block12.titleBf, "title")>
-        @Html(text1.value)
+      <div @offer.discount.map { discount =>@_aovfStyleTpl(discount, Block12.discountBf, "icon")} >
+        @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
+      </div>
+
+      <div class="info">
+      @offer.text1.map { text1 =>
+        <div @_aovfStyleTpl(text1, Block12.titleBf, "title")>
+          @Html(text1.value)
+        </div>
+      }
+      @offer.text2.map { text2 =>
+        <div @_aovfStyleTpl(text2, Block12.descrBf, "slogan")>
+          @Html(text2.value)
+        </div>
+      }
       </div>
     }
-    @offer.text2.map { text2 =>
-      <div @_aovfStyleTpl(text2, Block12.descrBf, "slogan")>
-        @Html(text2.value)
-      </div>
-    }
-    </div>
-  }
 
-</div>
+  </div>
+
+}

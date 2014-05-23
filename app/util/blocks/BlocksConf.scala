@@ -259,7 +259,7 @@ object BlocksConf extends Enumeration {
   }
 
 
-  sealed trait Block12t extends HeightFixed with SaleMaskColor with Discount with Title with Descr {
+  sealed trait Block12t extends HeightFixed with SaleMaskColor with Discount with Title with Descr with FillColor {
     override def saleMaskColorBf: BfColor = super.saleMaskColorBf.copy(
       defaultValue = Some("00ff1a")
     )
