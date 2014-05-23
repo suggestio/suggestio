@@ -1,14 +1,26 @@
 @(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
 
-@import blocks.svg._
+@import svg._
 @import util.blocks.BlocksConf.Block13
 @import util.TplDataFormatUtil._
 @import common._
 
+
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl13" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
-  <div class="left-border abs"></div>
-  <div class="right-border abs"></div>
+  @defining(Block13.discoBorderColorBf) { smcbf =>
+  @_block6_left_border(
+    cssClass = "left-border abs",
+    fillColor = "ffffff",
+    borderColor = mad.colors.getOrElse(smcbf.name, smcbf.anyDefaultValue)
+  )
+
+  @_block6_right_border(
+    cssClass = "right-border abs",
+    fillColor = "ffffff",
+    borderColor = mad.colors.getOrElse(smcbf.name, smcbf.anyDefaultValue)
+  )
+  }
 
 
   <img class="photo" src="@mad.imgs.get(Block13.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl13-bg.jpg"))" />
