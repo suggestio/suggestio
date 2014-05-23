@@ -1,8 +1,12 @@
-@(aovf: AOValueField, bf: BlockAOValueFieldT, className: String = "", styleStr: String = "")
-style="color: #@aovf.font.color;
- @aovf.font.size.orElse(bf.fontSizeDflt).map {sz =>font-size: @{sz}px;}
- @aovf.font.lineHeight.orElse(bf.lineHeightDflt).orElse(aovf.font.size.map(_ - 10)).map {lh =>line-height: @{lh}px;}
- @aovf.font.family.map {ff =>font-family: @ff;}
- @aovf.font.align.map {ta =>text-align: @ta.cssName;}
- @styleStr"
-class="@className"
+@(aovf: AOValueField, bf: BlockAOValueFieldT, className: String = "", styleStr: String = "", isDouble: Boolean = false)
+color: #@aovf.font.color;
+@if( isDouble == true ){
+  @aovf.font.size.orElse(bf.fontSizeDflt).map {sz =>font-size: @{sz*2}px;}
+  @aovf.font.lineHeight.orElse(bf.lineHeightDflt).orElse(aovf.font.size.map(_ - 10)).map {lh =>line-height: @{lh*2}px;}
+}else{
+  @aovf.font.size.orElse(bf.fontSizeDflt).map {sz =>font-size: @{sz}px;}
+  @aovf.font.lineHeight.orElse(bf.lineHeightDflt).orElse(aovf.font.size.map(_ - 10)).map {lh =>line-height: @{lh}px;}
+}
+@aovf.font.family.map {ff =>font-family: @ff;}
+@aovf.font.align.map {ta =>text-align: @ta.cssName;}
+@styleStr

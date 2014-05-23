@@ -1,4 +1,9 @@
-@(v: AOValueField, left: Int, top: Int)
+@(v: AOValueField, left: Int, top: Int, isDouble: Boolean = false)
 position: absolute;
-left: @v.coords.fold(left)(_.x)px;
-top:  @v.coords.fold(top)(_.y)px;
+@if(isDouble){
+  left: @{v.coords.fold(left)(_.x)*2}px;
+  top:  @{v.coords.fold(top)(_.y)*2}px;
+}else{
+  left: @v.coords.fold(left)(_.x)px;
+  top:  @v.coords.fold(top)(_.y)px;
+}
