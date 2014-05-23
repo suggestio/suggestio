@@ -54,9 +54,20 @@
         )
       }
 
+
+      @offer.text1.map { text1 =>
+        <div class="js-mvbl" data-connected-input="ad.offer.title" style="@_coordsStyleTpl(text1, left = 12, top = 24)">
+        <div @_aovfStyleTpl(text1, Block13.descrBf, "")>
+          @Html(text1.value)
+        </div>
+        </div>
+      }
+
       @offer.text2.map { text2 =>
+        <div class="js-mvbl" data-connected-input="ad.offer.descr" style="@_coordsStyleTpl(text2, left = 12, top = 24)">
         <div @_aovfStyleTpl(text2, Block13.descrBf, "info abs")>
           @Html(text2.value)
+        </div>
         </div>
       }
     }

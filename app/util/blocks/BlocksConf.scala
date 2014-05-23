@@ -265,7 +265,7 @@ object BlocksConf extends Enumeration {
   }
 
 
-  sealed trait Block13t extends Height with DiscoIconColor with DiscoBorderColor with BgImg with Discount with Descr {
+  sealed trait Block13t extends Height with DiscoIconColor with DiscoBorderColor with BgImg with Discount with Title with Descr {
     override def heightBf: BfHeight = super.heightBf.copy(
       availableVals = Set(300, 460)
     )
