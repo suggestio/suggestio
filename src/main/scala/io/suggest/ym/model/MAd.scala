@@ -186,13 +186,13 @@ case class MAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn:
 
   override def searchForReceiverAtPubLevel(receiverId: String, level: String): String = {
     val searchArgs = new AdsSearchArgsT {
-      override def levelOpt = Some(level.trim).filter(!_.isEmpty).flatMap(AdShowLevels.maybeWithName)
-      override def receiverIdOpt = Some(receiverId.trim).filter(!_.isEmpty)
-      override def maxResults: Int = 100
-      override def offset: Int = 0
-      override def catIdOpt: Option[String] = None
-      override def producerIdOpt: Option[String] = None
-      override def qOpt: Option[String] = None
+      override def levels = List(level.trim).filter(!_.isEmpty).flatMap(AdShowLevels.maybeWithName)
+      override def receiverIds = List(receiverId.trim).filter(!_.isEmpty)
+      override def maxResults = 100
+      override def offset = 0
+      override def catIds = Nil
+      override def producerIds = Nil
+      override def qOpt = None
     }
     MAd.searchAds(searchArgs).map {
       _.map(_.toJsonPretty)

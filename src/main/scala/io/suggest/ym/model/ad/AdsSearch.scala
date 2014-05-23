@@ -30,64 +30,83 @@ object AdsSearch {
       // TODO Для коротких запросов следует искать по receiverId и фильтровать по qStr (query-filter + match-query).
       TextQueryV2Util.queryStr2QueryMarket(q, s"${SioConstants.FIELD_ALL}")
         .map { _.q }
-    } map { qstrQB =>
-      // Если producerId задан, то навешиваем ещё фильтр.
-      producerIdOpt.fold(qstrQB) { producerId =>
-        val shopIdFilter = FilterBuilders.termFilter(PRODUCER_ID_ESFN, producerId)
+    }.map { qstrQB =>
+      // Если producerId задан, то навешиваем ещё фильтр сверху.
+      if (producerIds.isEmpty) {
+        qstrQB
+      } else {
+        val shopIdFilter = FilterBuilders.termsFilter(PRODUCER_ID_ESFN, producerIds : _*)
         QueryBuilders.filteredQuery(qstrQB, shopIdFilter)
       }
-    } orElse {
+    }.orElse[QueryBuilder] {
       // Всё ещё не удалось собрать поисковый запрос. Если задан shopId, то собираем query по магазину.
-      producerIdOpt.map { producerId =>
-        QueryBuilders.termQuery(PRODUCER_ID_ESFN, producerId)
+      if (producerIds.isEmpty) {
+        None
+      } else {
+        val qb = QueryBuilders.termsQuery(PRODUCER_ID_ESFN, producerIds : _*)
+        Some(qb)
       }
-    } map { qb =>
+    }.map { qb =>
       // Если есть q или shopId и указана catId, то добавляем catId-фильтр.
-      catIdOpt.fold(qb) { catId =>
-        val catIdFilter = FilterBuilders.termFilter(USER_CAT_ID_ESFN, catId)
+      if (catIds.isEmpty) {
+        qb
+      } else {
+        val catIdFilter = FilterBuilders.termsFilter(USER_CAT_ID_ESFN, catIds : _*)
         QueryBuilders.filteredQuery(qb, catIdFilter)
       }
-    } orElse {
+    }.orElse[QueryBuilder] {
       // Запроса всё ещё нет, т.е. собрать запрос по shopId тоже не удалось. Пробуем собрать запрос с catIdOpt...
-      catIdOpt.map { catId =>
-        QueryBuilders.termQuery(USER_CAT_ID_ESFN, catId)
+      if (catIds.isEmpty) {
+        None
+      } else {
+        val qb = QueryBuilders.termsQuery(USER_CAT_ID_ESFN, catIds : _*)
+        Some(qb)
       }
-    } map { qb =>
+    }.map { qb =>
       // Если receiverId задан, то надо фильтровать в рамках ресивера. Сразу надо уровни отработать, т.к. они nested в одном поддокументе.
-      if (receiverIdOpt.isDefined || levelOpt.isDefined) {
+      if (!receiverIds.isEmpty || !levels.isEmpty) {
         var nestedSubfilters: List[FilterBuilder] = Nil
-        if (receiverIdOpt.isDefined)
-          nestedSubfilters ::= FilterBuilders.termFilter(EMReceivers.RCVRS_RECEIVER_ID_ESFN, receiverIdOpt.get)
-        if (levelOpt.isDefined)
-          nestedSubfilters ::= FilterBuilders.termFilter(EMReceivers.RCVRS_SLS_PUB_ESFN, levelOpt.get)
+        if (!receiverIds.isEmpty) {
+          nestedSubfilters ::= FilterBuilders.termsFilter(EMReceivers.RCVRS_RECEIVER_ID_ESFN, receiverIds: _*)
+        }
+        if (!levels.isEmpty) {
+          nestedSubfilters ::= FilterBuilders.termsFilter(EMReceivers.RCVRS_SLS_PUB_ESFN, levels.map(_.toString) : _*)
+        }
         // Если получилось несколько фильтров, то надо их объеденить.
-        val finalNestedSubfilter: FilterBuilder = if (!nestedSubfilters.tail.isEmpty)
-          FilterBuilders.andFilter(nestedSubfilters : _*)
-        else
+        val finalNestedSubfilter: FilterBuilder = if (!nestedSubfilters.tail.isEmpty) {
+          FilterBuilders.andFilter(nestedSubfilters: _*)
+        } else {
           nestedSubfilters.head
+        }
         // Оборачиваем результирующий фильтр в nested, и затем вешаем на исходную query.
         val nestedFilter = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, finalNestedSubfilter)
         QueryBuilders.filteredQuery(qb, nestedFilter)
       } else {
         qb
       }
-    } orElse {
+    }.orElse[QueryBuilder] {
       // Нет поискового запроса. Попытаться собрать запрос по ресиверу с опциональным фильтром по level.
-      receiverIdOpt.map { receiverId =>
-        var nestedSubquery: QueryBuilder = QueryBuilders.termQuery(EMReceivers.RCVRS_RECEIVER_ID_ESFN, receiverId)
-        if (levelOpt.isDefined) {
-          val levelFilter = FilterBuilders.termFilter(EMReceivers.RCVRS_SLS_PUB_ESFN, levelOpt.get)
+      if (receiverIds.isEmpty) {
+        None
+      } else {
+        var nestedSubquery: QueryBuilder = QueryBuilders.termsQuery(EMReceivers.RCVRS_RECEIVER_ID_ESFN, receiverIds : _*)
+        if (!levels.isEmpty) {
+          val levelFilter = FilterBuilders.termsFilter(EMReceivers.RCVRS_SLS_PUB_ESFN, levels.map(_.toString) : _*)
           nestedSubquery = QueryBuilders.filteredQuery(nestedSubquery, levelFilter)
         }
-        QueryBuilders.nestedQuery(EMReceivers.RECEIVERS_ESFN, nestedSubquery)
+        val qb = QueryBuilders.nestedQuery(EMReceivers.RECEIVERS_ESFN, nestedSubquery)
+        Some(qb)
       }
-    } orElse {
+    }.orElse[QueryBuilder] {
       // Сборка запроса по receiverId тоже не удалась. Просто ищем по уровням.
-      levelOpt map { level =>
-        val levelQuery = QueryBuilders.termQuery(EMReceivers.SLS_PUB_ESFN, level.toString)
-        QueryBuilders.nestedQuery(EMReceivers.RECEIVERS_ESFN, levelQuery)
+      if (levels.isEmpty) {
+        None
+      } else {
+        val levelQuery = QueryBuilders.termsQuery(EMReceivers.SLS_PUB_ESFN, levels.map(_.toString) : _*)
+        val qb = QueryBuilders.nestedQuery(EMReceivers.RECEIVERS_ESFN, levelQuery)
+        Some(qb)
       }
-    } getOrElse {
+    }.getOrElse[QueryBuilder] {
       // Сборка реквеста не удалась вообще: все параметры не заданы. Просто возвращаем все объявы в рамках индекса.
       QueryBuilders.matchAllQuery()
     }
@@ -98,17 +117,19 @@ object AdsSearch {
 
 /** Интерфейс для передачи параметров поиска объявлений в индексе/типе. */
 trait AdsSearchArgsT {
+  // Ниже Seq брать нельзя, т.к. используется vararhs конструкция вида (x : _*), которая требует Seq[T].
+
   /** id "получателя" рекламы, т.е. id ТЦ, ресторана и просто поискового контекста. */
-  def receiverIdOpt: Option[String]
+  def receiverIds: Seq[String]
 
   /** Необязательный id владельца рекламы. Полезно при поиске в рамках магазина. */
-  def producerIdOpt: Option[String]
+  def producerIds: Seq[String]
 
   /** Необязательный id категории */
-  def catIdOpt: Option[String]
+  def catIds: Seq[String]
 
   /** Какого уровня требуются карточки. */
-  def levelOpt: Option[AdShowLevel]
+  def levels: Seq[AdShowLevel]
 
   /** Произвольный текстовый запрос, если есть. */
   def qOpt: Option[String]
