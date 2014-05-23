@@ -127,8 +127,14 @@
 
     <div class="lk-edit-form__block_body js-slide-content">
       <div class="lk-edit-form__block_body_inner">
-        @textarea(af("ad.descr.text"))
+
+        @*textarea(af("ad.descr.text"))*@
+        <textarea class="js-tinymce" id="ad_descr_text" name="ad.descr.text">
+          @af("ad.descr.text").value
+        </textarea>
+
         @_selectColorTpl(af("ad.descr.bgColor"))
+
       </div>
     </div>
 
