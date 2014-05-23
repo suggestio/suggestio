@@ -166,9 +166,10 @@ CbcaCommon = () ->
 
     tinymce.init(
       selector:'textarea.js-tinymce',
+      width: 615,
       menubar: false,
       plugins: 'link, textcolor',
-      toolbar: "undo redo | fontselect | fontsizeselect | | alignleft aligncenter alignright | bold italic | forecolor backcolor | link"
+      toolbar: ["fontselect | fontsizeselect | alignleft aligncenter alignright | bold italic | forecolor backcolor | link" ]
     )
 
     $(document).on 'change', '#ad_descr_bgColor', (e)->
