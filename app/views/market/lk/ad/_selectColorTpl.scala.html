@@ -1,4 +1,4 @@
-@(colorField: Field)(implicit ctx: util.Context)
+@(colorField: Field, label: String)(implicit ctx: util.Context)
 
 @* Селектор цветов для различных полей формы. *@
 @import ctx._
@@ -6,7 +6,7 @@
 @* Дополнительная фильтрация значения формы из-за возможных пустых значений Some("") невыясненной природы. *@
 @defining( colorField.value.map(_.trim).filter(!_.isEmpty).getOrElse("FFFFFF") ) { colorValue =>
   <td class="select-color">
-    @Messages("Color"):
+    @label:
     <div class="lk-color-select__color lk-color-select__color_custom js-custom-color" style="background-color: #@colorValue;">
       <div></div>
       <input type="hidden" id="@colorField.id" name="@colorField.name" value="@colorValue"/>

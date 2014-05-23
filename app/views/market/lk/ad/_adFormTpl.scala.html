@@ -2,7 +2,7 @@
 
 @* Рендер формы редактирования произвольной рекламы.
  * offerType - предпочитаемый тип оффера, когда он неизвестен.
-*@
+ *@
 @import ctx._
 @import helper._
 @import AdOfferTypes._
@@ -136,7 +136,7 @@
             </textarea>
           </td>
 
-          @_selectColorTpl(af("ad.descr.bgColor"))
+          @_selectColorTpl(af("ad.descr.bgColor"), label = Messages("Color"))
         </table>
 
       </div>
