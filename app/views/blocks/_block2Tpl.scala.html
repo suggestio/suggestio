@@ -6,37 +6,42 @@
 @import svg._
 
 @blockBase(isStandalone) {
-  <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl2" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
-    <div class="sale-icon">
+  @defining( mad.colors.getOrElse(Block2.fillColorBf.name, Block2.fillColorBf.anyDefaultValue) ) { fillColor =>
 
-      @_mask2(
-        cssClass = "mask",
-        fillColor = "ffffff"
-      )
+    <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl2" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
-      <!--<div class="mask"></div>-->
-      <img class="bg" src="@mad.imgs.get(Block2.BG_IMG_FN).map { img =>@routes.Img.getImg(img.filename) }.getOrElse(routes.Assets.at("images/market/blocks/tpl2-bg.jpg"))"/>
+      <div class="sale-icon" style="background: #@fillColor;">
+
+        @_mask2(
+          cssClass = "mask",
+          fillColor = fillColor
+        )
+
+        <!--<div class="mask"></div>-->
+        <img class="bg" src="@mad.imgs.get(Block2.BG_IMG_FN).map { img =>@routes.Img.getImg(img.filename) }.getOrElse(routes.Assets.at("images/market/blocks/tpl2-bg.jpg"))"/>
+      </div>
+
+      <div class="info" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(Block2.borderColorBf.name, Block2.borderColorBf.anyDefaultValue)">
+        @mad.offers.headOption.map { offer =>
+          @offer.text1.map { title =>
+            <div class="js-mvbl" data-connected-input="ad.offer.title" style="@_coordsStyleTpl(title, left = 22, top = 219)">
+              <h5 @_aovfStyleTpl(title, Block2.titleBf)>@Html(title.value)</h5>
+            </div>
+          }
+
+          @offer.text2.map { descr =>
+            <div class="js-mvbl" data-connected-input="ad.offer.descr" style="@_coordsStyleTpl(descr, left = 22, top = 249)">
+            <div @_aovfStyleTpl(descr, Block2.descrBf, "text")>
+              <p>@Html(descr.value)</p>
+            </div>
+            </div>
+          }
+
+        }
+      </div>
+
     </div>
 
-    <div class="info">
-      @mad.offers.headOption.map { offer =>
-        @offer.text1.map { title =>
-          <div class="js-mvbl" data-connected-input="ad.offer.title" style="@_coordsStyleTpl(title, left = 22, top = 219)">
-            <h5 @_aovfStyleTpl(title, Block2.titleBf)>@Html(title.value)</h5>
-          </div>
-        }
-
-        @offer.text2.map { descr =>
-          <div class="js-mvbl" data-connected-input="ad.offer.descr" style="@_coordsStyleTpl(descr, left = 22, top = 249)">
-          <div @_aovfStyleTpl(descr, Block2.descrBf, "text")>
-            <p>@Html(descr.value)</p>
-          </div>
-          </div>
-        }
-
-      }
-    </div>
-
-  </div>
+  }
 }
