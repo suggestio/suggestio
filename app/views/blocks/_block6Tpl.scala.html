@@ -27,7 +27,7 @@
 
     <img class="bg abs" src="@mad.imgs.get(Block6.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl6-bg.jpg"))" />
 
-    <div class="info abs">
+    <div class="info abs" style="background-color: #@mad.colors.getOrElse(Block6.borderColorBf.name, Block6.borderColorBf.anyDefaultValue);">
       @mad.offers.map { offer =>
         <div class="item">
           @offer.text1.map { text1 =>
