@@ -1,6 +1,6 @@
 @(mmart: MAdnNode, ads: Seq[MAd], shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory], adSearch:util.qsb.AdSearch, adProducerOpt: Option[MAdnNode])(implicit ctx: util.Context)
 
-@if( adSearch.producerIdOpt ){
+@if( !adSearch.producerIds.isEmpty ){
 
   @adProducerOpt.map { producer =>
 
