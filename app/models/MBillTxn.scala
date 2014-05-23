@@ -19,12 +19,13 @@ object MBillTxn extends SiowebSqlModelStatic[MBillTxn] {
 
   val rowParser = get[Pk[Int]]("id") ~ get[Int]("contract_id") ~ get[Float]("amount") ~
                   get[Option[String]]("currency") ~ get[DateTime]("date_paid") ~ get[DateTime]("date_processed") ~
-                  get[String]("payment_comment") ~ get[String]("txn_uid") map {
-    case id ~ contractId ~ amount ~ currencyCodeOpt ~ datePaid ~ dateProcessed ~ paymentComment ~ txnUid =>
+                  get[String]("payment_comment") ~ get[String]("txn_uid") ~ get[Option[String]]("ad_id") ~
+                  get[Option[Float]]("comission_pc") map {
+    case id ~ contractId ~ amount ~ currencyCodeOpt ~ datePaid ~ dateProcessed ~ paymentComment ~ txnUid ~ adId ~ comissionPc =>
       MBillTxn(
         id = id,  contractId = contractId,  amount = amount,  currencyCodeOpt = currencyCodeOpt,
         datePaid = datePaid,  dateProcessed = dateProcessed,  paymentComment = paymentComment,
-        txnUid = txnUid
+        txnUid = txnUid, adId = adId, comissionPc = comissionPc
       )
   }
 
@@ -74,6 +75,8 @@ case class MBillTxn(
   currencyCodeOpt : Option[String] = None,
   dateProcessed   : DateTime = DateTime.now(),
   paymentComment  : String,
+  adId            : Option[String] = None,
+  comissionPc     : Option[Float] = None,
   id              : Pk[Int] = NotAssigned
 ) extends CurrencyCodeOpt {
 
@@ -82,11 +85,11 @@ case class MBillTxn(
    * @return Новый экземпляр сабжа.
    */
   def save(implicit c: Connection): MBillTxn = {
-    SQL("INSERT INTO " + TABLE_NAME + "(contract_id, amount, currency, date_paid, date_processed, payment_comment, txn_uid)" +
-        " VALUES({contractId}, {amount}, {currencyCode}, {datePaid}, {dateProcessed}, {paymentComment}, {txnUid})")
+    SQL("INSERT INTO " + TABLE_NAME + "(contract_id, amount, currency, date_paid, date_processed, payment_comment, txn_uid, ad_id, comission_pc)" +
+        " VALUES({contractId}, {amount}, {currencyCode}, {datePaid}, {dateProcessed}, {paymentComment}, {txnUid}, {adId}), {comissionPc}")
       .on('contractId -> contractId, 'amount -> amount, 'currencyCode -> currencyCodeOpt,
           'datePaid -> datePaid, 'dateProcessed -> dateProcessed, 'paymentComment -> paymentComment,
-          'txnUid -> txnUid)
+          'txnUid -> txnUid, 'adId -> adId, 'comissionPc -> comissionPc)
       .executeInsert(rowParser single)
   }
 

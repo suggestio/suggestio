@@ -137,6 +137,7 @@ case class CanSuperviseSlaveAd(adId: String) extends ActionBuilder[RequestForSla
     MAd.getById(adId) flatMap {
       case Some(mad) =>
         val slaveNodeOptFut = MAdnNodeCache.getByIdCached(mad.producerId)
+        // TODO Наверное надо проверять права супервайзера этого узла над подчинённым узлов.
         Future.traverse(mad.receivers.valuesIterator) { adRcvr =>
           IsAdnNodeAdmin.isAdnNodeAdmin(adRcvr.receiverId, pwOpt)
         } flatMap { results =>

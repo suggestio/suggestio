@@ -18,13 +18,15 @@ object MBillBalance {
 
   val CURRENCY_CODE_DFLT = "RUB"
 
-  val rowParser = get[String]("adn_id") ~ get[Float]("amount") ~ get[Option[String]]("currency") ~ get[Float]("overdraft") map {
-    case adnId ~ amount ~ currencyCodeOpt ~ overdraft =>
+  val rowParser = get[String]("adn_id") ~ get[Float]("amount") ~ get[Option[String]]("currency") ~
+    get[Float]("overdraft") ~ get[Float]("blocked") map {
+    case adnId ~ amount ~ currencyCodeOpt ~ overdraft ~ blocked =>
       MBillBalance(
         adnId = adnId,
         amount = amount,
         currencyCodeOpt = currencyCodeOpt,
-        overdraft = overdraft
+        overdraft = overdraft,
+        blocked = blocked
       )
   }
 
@@ -67,7 +69,7 @@ object MBillBalance {
    * Заапдейтить поле amount.
    * @param adnId id кошелька (узла рекламной сети).
    * @param addAmount Изменение баланса.
-   * @return Кол-во обновлённых рядов.
+   * @return Кол-во обновлённых рядов, т.е. 0 или 1.
    */
   def updateAmount(adnId: String, addAmount: Float)(implicit c: Connection): Int = {
     SQL("UPDATE " + TABLE_NAME + " SET amount = amount + {addAmount} WHERE adn_id = {adnId}")
@@ -75,6 +77,29 @@ object MBillBalance {
       .executeUpdate()
   }
 
+  /**
+   * Заблокировать часть денег на счете. По сути, ускоренная версия комбинации [[updateAmount()]] и [[updateBlocked()]].
+   * @param adnId id узла (id владельца кошелька).
+   * @param amount Блокируемый объём средств.
+   * @return Кол-во обновлённых рядов, т.е. 0 или 1.
+   */
+  def blockAmount(adnId: String, amount: Float)(implicit c: Connection): Int = {
+    SQL("UPDATE " + TABLE_NAME + " SET amount = amount - {amount}, blocked = blocked + {amount} WHERE adn_id = {adnId}")
+      .on('adnId -> adnId, 'amount -> amount)
+      .executeUpdate()
+  }
+
+  /**
+   * Списать ранеее заблокированные средства.
+   * @param adnId id узла (id владельца кошелька).
+   * @param addAmount Объём движения средств.
+   * @return Кол-во обновлённых рядов, т.е. 0 или 1.
+   */
+  def updateBlocked(adnId: String, addAmount: Float)(implicit c: Connection): Int = {
+    SQL("UPDATE " + TABLE_NAME + " SET blocked = blocked + {amount} WHERE adn_id = {adnId}")
+      .on('adnId -> adnId, 'amount -> addAmount)
+      .executeUpdate()
+  }
 }
 
 
@@ -84,7 +109,8 @@ case class MBillBalance(
   adnId: String,
   amount: Float,
   currencyCodeOpt: Option[String] = None,
-  var overdraft: Float = 0F
+  overdraft: Float = 0F,
+  blocked: Float = 0F
 ) extends SqlModelSave[MBillBalance] with CurrencyCodeOpt {
 
   def hasId: Boolean = true
@@ -93,9 +119,9 @@ case class MBillBalance(
     * @return Новый экземпляр сабжа.
     */
   def saveInsert(implicit c: Connection): MBillBalance = {
-    SQL("INSERT INTO " + TABLE_NAME + "(adn_id, amount, currency)" +
-        " VALUES({adnId}, {amount}, {currencyCode})")
-      .on('adnId -> adnId, 'amount -> amount, 'currencyCode -> currencyCodeOpt)
+    SQL("INSERT INTO " + TABLE_NAME + "(adn_id, amount, currency, blocked)" +
+        " VALUES({adnId}, {amount}, {currencyCode}, {blocked})")
+      .on('adnId -> adnId, 'amount -> amount, 'currencyCode -> currencyCodeOpt, 'blocked -> blocked)
       .executeInsert(rowParser single)
   }
 
@@ -103,8 +129,8 @@ case class MBillBalance(
     * @return Кол-во обновлённых рядов. Обычно 0 либо 1.
     */
   def saveUpdate(implicit c: Connection): Int = {
-    SQL("UPDATE " + TABLE_NAME + " SET amount = {amount}, overdraft = {overdraft} WHERE adn_id = {adnId}")
-      .on('adnId -> adnId, 'amount -> amount, 'overdraft -> overdraft)
+    SQL("UPDATE " + TABLE_NAME + " SET amount = {amount}, overdraft = {overdraft}, blocked = {blocked} WHERE adn_id = {adnId}")
+      .on('adnId -> adnId, 'amount -> amount, 'overdraft -> overdraft, 'blocked -> blocked)
       .executeUpdate()
   }
 
@@ -120,4 +146,5 @@ case class MBillBalance(
       case 1 => mbb1
     }
   }
+
 }
