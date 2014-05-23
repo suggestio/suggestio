@@ -97,10 +97,12 @@ object BlocksConf extends Enumeration {
       defaultValue = Some(AOStringField("", AOFieldFont("000000")))
     )
     override def priceBf = super.priceBf.copy(
-      defaultValue = Some(AOPriceField(100F, "RUB", "100 р.", defaultFont))
+      defaultValue = Some(AOPriceField(100F, "RUB", "100 р.", defaultFont)),
+      fontSizeDflt = Some(70)
     )
     override def oldPriceBf = super.oldPriceBf.copy(
-      defaultValue = Some(AOPriceField(200F, "RUB", "200 р.", defaultFont))
+      defaultValue = Some(AOPriceField(200F, "RUB", "200 р.", defaultFont)),
+      fontSizeDflt = Some(46)
     )
     override def template = _block1Tpl
   }
