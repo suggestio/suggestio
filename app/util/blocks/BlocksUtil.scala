@@ -52,9 +52,9 @@ object BlocksUtil {
 
   /** Линейка размеров шрифтов. */
   val FONT_SIZES_DFLT: List[FontSize] = List(
-    FontSize(18, 12), FontSize(22, 16), FontSize(26, 18), FontSize(30, 20), FontSize(34, 22), FontSize(38, 24),
-    FontSize(42, 28), FontSize(46, 30), FontSize(50, 34), FontSize(54, 36), FontSize(58, 38), FontSize(62, 40),
-    FontSize(66, 42), FontSize(70, 44), FontSize(74, 46), FontSize(80, 48), FontSize(84, 50)
+    FontSize(18, 16), FontSize(22, 20), FontSize(26, 24), FontSize(30, 28), FontSize(34, 30), FontSize(38, 34),
+    FontSize(42, 38), FontSize(46, 42), FontSize(50, 46), FontSize(54, 50), FontSize(58, 54), FontSize(62, 58),
+    FontSize(66, 62), FontSize(70, 66), FontSize(74, 70), FontSize(80, 76), FontSize(84, 80)
   )
 }
 

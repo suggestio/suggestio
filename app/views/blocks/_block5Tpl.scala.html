@@ -36,7 +36,7 @@
 
     @mad.offers.headOption.map { offer =>
       @offer.text1.map { text1 =>
-        <div class="js-mvbl" data-connected-input="ad.offer.title" style="@_coordsStyleTpl(text1, left = 11, top = 173)">
+        <div class="js-mvbl" data-connected-input="ad.offer.title" style="@_coordsStyleTpl(text1, left = 11, top = 150)">
         <div @_aovfStyleTpl(text1, Block5.titleBf, "title")>
           @Html(text1.value)
         </div>
@@ -44,7 +44,7 @@
       }
 
       @offer.oldPrice.map { oldPrice =>
-        <div class="js-mvbl" data-connected-input="ad.offer.oldPrice" style="@_coordsStyleTpl(oldPrice, left = 11, top = 231)">
+        <div class="js-mvbl" data-connected-input="ad.offer.oldPrice" style="@_coordsStyleTpl(oldPrice, left = 11, top = 180)">
         <div @_aovfStyleTpl(oldPrice, Block5.oldPriceBf, "old-price")>
           @formatPrice(oldPrice.value, oldPrice.currency)
         </div>
@@ -52,7 +52,7 @@
       }
 
       @offer.price.map { price =>
-        <div class="js-mvbl" data-connected-input="ad.offer.price" style="@_coordsStyleTpl(price, left = 11, top = 260)">
+        <div class="js-mvbl" data-connected-input="ad.offer.price" style="@_coordsStyleTpl(price, left = 11, top = 220)">
         <div @_aovfStyleTpl(price, Block5.priceBf, "price")>
           @formatPrice(price.value, price.currency)
         </div>
