@@ -444,19 +444,22 @@ object BlocksConf extends Enumeration {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
   }
 
-
+  /*
   sealed trait Block24t extends LogoImg with BgImg with FillColor with Height with Title with Price with OldPrice {
     override def fillColorBf = super.fillColorBf.copy(
       defaultValue = Some("d5c864")
     )
     override def template = _block24Tpl
   }
+
   val Block24 = new Val(24) with Block24t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block24Wrapper(key = newKey)
   }
+
   sealed case class Block24Wrapper(key: String) extends ValTWrapper(Block24) with ValTEmpty with Block24t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
   }
+  */
 
 
   /** Сортированные значения. Обращение напрямую к values порождает множество с неопределённым порядком,
