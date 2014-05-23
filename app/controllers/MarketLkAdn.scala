@@ -217,8 +217,8 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl {
   def showSlave(adnId: String) = CanViewSlave(adnId).async { implicit request =>
     import request.{slaveNode, supNode}
     val req = AdSearch(
-      receiverIdOpt = Some(request.supNode.id.get),
-      producerIdOpt = Some(adnId)
+      receiverIds = List(request.supNode.id.get),
+      producerIds = List(adnId)
     )
     MAd.searchAdsRt(req) map { mads =>
       Ok(showSlaveNodeTpl(msup = supNode, mslave = slaveNode, mads))

@@ -35,8 +35,8 @@ object Market extends SioController with PlayMacroLogsImpl {
       case None => Future successful None
     }
     val searchReq = AdSearch(
-      levelOpt = Some(AdShowLevels.LVL_START_PAGE),
-      receiverIdOpt = Some(martId)
+      levels = List(AdShowLevels.LVL_START_PAGE),
+      receiverIds = List(martId)
     )
     for {
       mads  <- MAd.searchAds(searchReq).map(groupNarrowAds)
@@ -59,21 +59,22 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
   def findAds(martId: String, adSearch: AdSearch) = marketAction(martId) { implicit request =>
-    val producerOptFut = adSearch.producerIdOpt
-      .fold [Future[Option[MAdnNode]]] { Future successful None } { MAdnNodeCache.getByIdCached }
+    val producersFut = Future.traverse(adSearch.producerIds) { MAdnNodeCache.getByIdCached }
+      .map { _.flatMap(_.toList) }
     for {
       mads <- MAd.searchAds(adSearch).map(groupNarrowAds)
       rmd  <- request.marketDataFut
-      producerOpt <- producerOptFut
+      producers <- producersFut
     } yield {
       val jsAction: String = if (adSearch.qOpt.isDefined) {
         "searchAds"
-      } else if (producerOpt.isDefined) {
+      } else if (!producers.isEmpty) {
         "producerAds"
       } else {
         "findAds"
       }
-      val html = findAdsTpl(request.mmart, mads, rmd.mshops, rmd.mmcats, adSearch, producerOpt)
+      // TODO Хвост списка продьюсеров дропается, для рендера используется только один. Надо бы в шаблоне отработать эту ситуацию.
+      val html = findAdsTpl(request.mmart, mads, rmd.mshops, rmd.mmcats, adSearch, producers.headOption)
       jsonOk(html, jsAction)
     }
   }

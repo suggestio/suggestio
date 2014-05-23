@@ -31,6 +31,13 @@ object AdSearch {
     }
   }
 
+  private implicit def eitherOpt2list[T](e: Either[_, Option[T]]): List[T] = {
+    e match {
+      case Left(_)  => Nil
+      case Right(b) => b.toList
+    }
+  }
+
   implicit def queryStringBinder(implicit strOptBinder: QueryStringBindable[Option[String]], intOptBinder: QueryStringBindable[Option[Int]]) = {
     new QueryStringBindable[AdSearch] {
       def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, AdSearch]] = {
@@ -46,15 +53,15 @@ object AdSearch {
         } yield {
           Right(
             AdSearch(
-              receiverIdOpt = maybeRcvrIdOpt,
-              producerIdOpt = maybeShopIdOpt,
-              catIdOpt  = maybeCatIdOpt,
-              levelOpt  = maybeLevelOpt.flatMap(AdShowLevels.maybeWithName),
+              receiverIds = maybeRcvrIdOpt,
+              producerIds = maybeShopIdOpt,
+              catIds  = maybeCatIdOpt,
+              levels  = eitherOpt2list(maybeLevelOpt).flatMap(AdShowLevels.maybeWithName),
               qOpt      = maybeQOpt,
-              maxResultsOpt = maybeSizeOpt map { size =>
+              maxResultsOpt = eitherOpt2option(maybeSizeOpt) map { size =>
                 Math.max(4,  Math.min(size, MAX_RESULTS_PER_RESPONSE))
               },
-              offsetOpt = maybeOffsetOpt map { offset =>
+              offsetOpt = eitherOpt2option(maybeOffsetOpt) map { offset =>
                 Math.max(0,  Math.min(offset,  MAX_PAGE_OFFSET * maybeSizeOpt.getOrElse(10)))
               }
             )
@@ -64,10 +71,10 @@ object AdSearch {
 
       def unbind(key: String, value: AdSearch): String = {
         List(
-          strOptBinder.unbind(key + ".rcvr", value.receiverIdOpt),
-          strOptBinder.unbind(key + ".shopId", value.producerIdOpt),
-          strOptBinder.unbind(key + ".catId", value.catIdOpt),
-          strOptBinder.unbind(key + ".level", value.levelOpt.map(_.toString)),
+          strOptBinder.unbind(key + ".rcvr", value.receiverIds.headOption),   // TODO Разбиндивать на весь список receivers сразу надо
+          strOptBinder.unbind(key + ".shopId", value.producerIds.headOption), // TODO Разбиндивать на весь список producers сразу надо.
+          strOptBinder.unbind(key + ".catId", value.catIds.headOption),       // TODO Разбиндивать на весь список catIds надо бы
+          strOptBinder.unbind(key + ".level", value.levels.headOption.map(_.toString)),
           strOptBinder.unbind(key + ".q", value.qOpt),
           intOptBinder.unbind(key + ".size", value.maxResultsOpt),
           intOptBinder.unbind(key + ".offset", value.offsetOpt)
@@ -80,10 +87,10 @@ object AdSearch {
 }
 
 case class AdSearch(
-  receiverIdOpt: Option[String] = None,
-  producerIdOpt: Option[String] = None,
-  catIdOpt: Option[String] = None,
-  levelOpt: Option[AdShowLevel] = None,
+  receiverIds : List[String] = Nil,
+  producerIds : List[String] = Nil,
+  catIds      : List[String] = Nil,
+  levels      : List[AdShowLevel] = Nil,
   qOpt: Option[String] = None,
   maxResultsOpt: Option[Int] = None,
   offsetOpt: Option[Int] = None

@@ -1,5 +1,6 @@
 package controllers
 
+import _root_.util.qsb.AdSearch
 import util.{Context, PlayMacroLogsImpl}
 import util.FormUtil._
 import play.api.data._, Forms._
@@ -112,11 +113,17 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
 
 
   /**
-   * Отобразить обрубок с подчинёнными рекламными карточками.
+   * Отобразить обрубок с подчинёнными рекламными карточками, с которыми можно что-то творить.
    * @param adnId id подчинённого узла.
    */
   def _showSlaveAds(adnId: String) = CanViewSlave(adnId).async { implicit request =>
-    MAd.findForProducerRt(adnId) map { mads =>
+    // Тут подборка рекламы, которая собственная для указанного узла-продьюсера.
+    val listAdnId = List(adnId)
+    val req = AdSearch(
+      receiverIds = request.supNode.id.get :: listAdnId,
+      producerIds = listAdnId
+    )
+    MAd.searchAdsRt(req) map { mads =>
       Ok(_node._slaveNodeAdsTpl(
         msup = request.supNode,
         mslave = request.slaveNode,

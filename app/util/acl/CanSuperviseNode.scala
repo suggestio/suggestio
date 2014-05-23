@@ -141,6 +141,7 @@ case class CanSuperviseSlaveAd(adId: String) extends ActionBuilder[RequestForSla
           IsAdnNodeAdmin.isAdnNodeAdmin(adRcvr.receiverId, pwOpt)
         } flatMap { results =>
           results.find(_.isDefined).flatten match {
+            // isSuperuser проверяется тут, чтобы легче выявлять ошибки, даже будучи админом.
             case Some(supNode) if supNode.adn.isSupervisor || PersonWrapper.isSuperuser(pwOpt) =>
               slaveNodeOptFut.flatMap { slaveNodeOpt =>
                 srmFut.flatMap { srm =>
