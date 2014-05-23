@@ -2,11 +2,10 @@ package io.suggest.ym.model.common
 
 import io.suggest.util.SioEsUtil._
 import io.suggest.model._
-import io.suggest.ym.model.{MAdnNode, AdShowLevel}
+import io.suggest.ym.model.AdShowLevel
 import com.fasterxml.jackson.annotation.JsonIgnore
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
-import io.suggest.ym.ad.ShowLevelsUtil
 import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.event.SioNotifierStaticClientI
 import org.elasticsearch.client.Client
