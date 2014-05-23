@@ -347,7 +347,7 @@ object BlocksConf extends Enumeration {
     )
   }
 
-
+  /*
   sealed trait Block17t extends Height with CommonBlock17_18 {
     override def heightBf: BfHeight = super.heightBf.copy(
       availableVals = Set(300, 460)
@@ -374,6 +374,7 @@ object BlocksConf extends Enumeration {
   sealed case class Block18Wrapper(key: String) extends ValTWrapper(Block18) with ValTEmpty with Block18t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
   }
+  */
 
 
 
