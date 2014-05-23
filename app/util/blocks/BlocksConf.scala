@@ -115,7 +115,7 @@ object BlocksConf extends Enumeration {
 
 
   /** Блок картинки с двумя текстами. */
-  sealed trait Block2t extends BgImg with Height with Title with Descr with FillColor with BorderColor {
+  sealed trait Block2t extends BgImg with Height with Title with Descr with FillColor with BorderColor with Discount {
     override def heightBf: BfHeight = super.heightBf.copy(
       availableVals = Set(300, 460)
     )

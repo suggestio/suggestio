@@ -2,6 +2,7 @@
 
 @import ctx._
 @import util.blocks.BlocksUtil._
+@import util.TplDataFormatUtil._
 @import common._
 @import svg._
 
@@ -11,7 +12,15 @@
 
     <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl2" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
-      <div class="sale-icon" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(Block2.borderColorBf.name, Block2.borderColorBf.anyDefaultValue)">
+      @mad.offers.headOption.map { offer =>
+
+        <div @offer.discount.map { discount =>@_aovfStyleTpl(discount, Block7.discountBf, "sale-icon")}>
+          @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
+        </div>
+
+      }
+
+      <div class="sale-mask-wrap" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(Block2.borderColorBf.name, Block2.borderColorBf.anyDefaultValue)">
 
         @_mask2(
           cssClass = "mask",
