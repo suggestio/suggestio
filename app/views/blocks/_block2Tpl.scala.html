@@ -10,14 +10,14 @@
 
   @defining( mad.colors.getOrElse(Block2.fillColorBf.name, Block2.fillColorBf.anyDefaultValue) ) { fillColor =>
 
-    <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl2" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+    <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl2 sm-block@mad.id" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
       @mad.offers.headOption.map { offer =>
-
-        <div @offer.discount.map { discount =>@_aovfStyleTpl(discount, Block7.discountBf, "sale-icon")}>
+        @offer.discount.map { discount =>
+        <div class="sale-icon">
           @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
         </div>
-
+        }
       }
 
       <div class="sale-mask-wrap" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(Block2.borderColorBf.name, Block2.borderColorBf.anyDefaultValue)">
@@ -35,16 +35,18 @@
         @mad.offers.headOption.map { offer =>
           @offer.text1.map { title =>
             <div class="js-mvbl" data-connected-input="ad.offer.title" style="@_coordsStyleTpl(title, left = 22, top = 219)">
-              <h5 @_aovfStyleTpl(title, Block2.titleBf)>@Html(title.value)</h5>
+              <h5 class="title">@Html(title.value)</h5>
             </div>
+            @_blockStyleTpl( mad.id, title, Block2.titleBf, "title", left = 22, top = 219 )
           }
 
           @offer.text2.map { descr =>
             <div class="js-mvbl" data-connected-input="ad.offer.descr" style="@_coordsStyleTpl(descr, left = 22, top = 249)">
-            <div @_aovfStyleTpl(descr, Block2.descrBf, "text")>
+            <div class="descr">
               <p>@Html(descr.value)</p>
             </div>
             </div>
+            @_blockStyleTpl( mad.id, descr, Block2.descrBf, "descr", left = 22, top = 249 )
           }
 
         }

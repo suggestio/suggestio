@@ -1,0 +1,17 @@
+@( bid:Option[String], aovf: AOValueField, bf: BlockAOValueFieldT, className: String = "", left : Int = 0, top : Int = 0 )
+<style type="text/css">
+  .sm-block@bid .mvbl-@className
+  {
+  @_coordsStyleTpl(aovf, left, top)
+  }
+  .sm-block@{bid}.double-size .mvbl-@className
+  {
+  @_coordsStyleTpl(aovf, left, top, isDouble=true)
+  }
+  .sm-block@bid .@{className} {
+  @_aovfStyleTpl(aovf, bf, className)
+  }
+  .sm-block@{bid}.double-size .@{className} {
+  @_aovfStyleTpl(aovf, bf, className, isDouble = true)
+  }
+</style>
