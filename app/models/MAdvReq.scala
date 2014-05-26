@@ -2,8 +2,7 @@ package models
 
 import anorm._
 import MAdv._
-import org.joda.time.{Period, DateTime}
-import util.AnormPgInterval._
+import org.joda.time.DateTime
 import util.AnormJodaTime._
 import util.SqlModelSave
 import java.sql.Connection
@@ -20,19 +19,21 @@ object MAdvReq extends MAdvStatic[MAdvReq] {
 
   val TABLE_NAME = "adv_req"
 
-  val rowParser = ROW_PARSER_BASE ~ get[Int]("prod_contract_id") ~ get[String]("rcvr_adn_id") map {
-    case id ~ adId ~ amount ~ currencyCodeOpt ~ dateCreated ~ comissionPc ~ period ~ mode ~ onStartPage ~ prodContractId ~ rcvrAdnId =>
+  val rowParser = ROW_PARSER_BASE ~ get[Int]("prod_contract_id") map {
+    case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ onStartPage ~ dateStart ~ dateEnd ~ prodAdnId ~ rcvrAdnId ~ prodContractId =>
       MAdvReq(
         id          = id,
         adId        = adId,
         amount      = amount,
-        currencyCodeOpt = currencyCodeOpt,
+        currencyCode = currencyCode,
         dateCreated = dateCreated,
-        comissionPc = comissionPc,
-        period      = period,
+        comission   = comission,
         onStartPage = onStartPage,
         prodContractId = prodContractId,
-        rcvrAdnId   = rcvrAdnId
+        prodAdnId   = prodAdnId,
+        rcvrAdnId   = rcvrAdnId,
+        dateStart   = dateStart,
+        dateEnd     = dateEnd
       )
   }
 
@@ -61,27 +62,30 @@ import MAdvReq._
 case class MAdvReq(
   adId          : String,
   amount        : Float,
-  currencyCodeOpt: Option[String] = None,
-  comissionPc   : Option[Float],
-  period        : Period,
+  currencyCode  : String = CurrencyCodeOpt.CURRENCY_CODE_DFLT,
+  comission     : Option[Float],
   prodContractId: Int,
+  prodAdnId     : String,
   rcvrAdnId     : String,
+  dateStart     : DateTime,
+  dateEnd       : DateTime,
   onStartPage   : Boolean,
   dateCreated   : DateTime = DateTime.now(),
   id            : Pk[Int] = NotAssigned
-) extends SqlModelSave[MAdvReq] with CurrencyCodeOpt with SiowebSqlModel[MAdvReq] with MAdvI {
+) extends SqlModelSave[MAdvReq] with CurrencyCode with SiowebSqlModel[MAdvReq] with MAdvI {
 
   override def mode = MAdvModes.REQ
   override def hasId = id.isDefined
   override def companion = MAdvReq
+  override def dateStatus = dateCreated
 
   override def saveInsert(implicit c: Connection): MAdvReq = {
     SQL("INSERT INTO " + TABLE_NAME +
-      "(ad_id, amount, currency_code, date_created, comission_pc, period, mode, on_start_page, prod_contract_id, rcvr_adn_id) " +
-      "VALUES ({adId}, {amount}, {currencyCodeOpt}, {dateCreated}, {comissionPc}, {period}, {mode}, {onStartPage}, {prodContractId}, {rcvrAdnId})")
-      .on('adId -> adId, 'amount -> amount, 'currencyCodeOpt -> currencyCodeOpt, 'dateCreated -> dateCreated,
-          'comissionPc -> comissionPc, 'period -> period, 'mode -> mode.toString, 'onStartPage -> onStartPage,
-          'prodContractId -> prodContractId, 'rcvrAdnId -> rcvrAdnId)
+      "(ad_id, amount, currency_code, date_created, comission, mode, on_start_page, date_start, date_end, prod_contract_id, prod_adn_id, rcvr_adn_id) " +
+      "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {comission}, {mode}, {onStartPage}, {dateStart}, {dateEnd}, {prodContractId}, {prodAdnId}, {rcvrAdnId})")
+      .on('adId -> adId, 'amount -> amount, 'currencyCode -> currencyCode, 'dateCreated -> dateCreated,
+          'comission -> comission, 'mode -> mode.toString, 'onStartPage -> onStartPage, 'dateStart -> dateStart,
+          'dateEnd -> dateEnd, 'prodContractId -> prodContractId, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId)
       .executeInsert(rowParser single)
   }
 

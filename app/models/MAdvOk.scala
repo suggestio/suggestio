@@ -2,8 +2,7 @@ package models
 
 import anorm._
 import MAdv._
-import org.joda.time.{Period, DateTime}
-import util.AnormPgInterval._
+import org.joda.time.DateTime
 import util.AnormJodaTime._
 import util.SqlModelSave
 import java.sql.Connection
@@ -20,42 +19,25 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
   val TABLE_NAME = "adv_ok"
 
   override val rowParser = {
-    ROW_PARSER_BASE ~ get[DateTime]("date_ok") ~ get[Option[DateTime]]("date_start") ~
-      get[Int]("prod_txn_id") ~ get[Option[Int]]("rcvr_txn_id") map {
-      case id ~ adId ~ amount ~ currencyCodeOpt ~ dateCreated ~ comissionPc ~ period ~ mode ~ onStartPage ~ dateOk ~ dateStart ~ prodTxnId ~ rcvrTxnId =>
+    ROW_PARSER_BASE ~ get[DateTime]("date_status") ~ get[Int]("prod_txn_id") ~ get[Option[Int]]("rcvr_txn_id") map {
+      case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ onStartPage ~ dateStart ~ dateEnd ~ prodAdnId ~ rcvrAdnId ~ dateStatus ~ prodTxnId ~ rcvrTxnId =>
         MAdvOk(
           id          = id,
           adId        = adId,
           amount      = amount,
-          currencyCodeOpt = currencyCodeOpt,
+          currencyCode = currencyCode,
           dateCreated = dateCreated,
-          comissionPc = comissionPc,
-          period      = period,
-          dateOk      = dateOk,
+          comission   = comission,
+          dateStatus  = dateStatus,
           dateStart   = dateStart,
+          dateEnd     = dateEnd,
           onStartPage = onStartPage,
           prodTxnId   = prodTxnId,
-          rcvrTxnId   = rcvrTxnId
+          rcvrTxnId   = rcvrTxnId,
+          prodAdnId   = prodAdnId,
+          rcvrAdnId   = rcvrAdnId
         )
     }
-  }
-
-  /** Парсер для выхлопов [[findByAdIdWithRcvrAdnId()]]. */
-  val rowWithAdnIdParser = get[String]("adnId") ~ rowParser map {
-    case adnId ~ advOk  =>  adnId -> advOk
-  }
-
-  /**
-   * Тоже самое, что и [[findByAdId()]], но добавляет колонку rcvr adnId для быстрого получения инфы о целевом узле.
-   * Операция довольно жирная, активно использует INNER JOIN.
-   * @param adId id рекламной карточки.
-   * @return Список пар (adnId, [[MAdvOk]]) в неопределённом порядке.
-   */
-  def findByAdIdWithRcvrAdnId(adId: String)(implicit c: Connection): List[(String, MAdvOk)] = {
-    SQL(s"SELECT mbc.adn_id, ao.* FROM $TABLE_NAME ao, ${MBillTxn.TABLE_NAME} mbt, ${MBillContract.TABLE_NAME} mbc " +
-      "WHERE ao.ad_id = {adId} AND ao.rcvr_txn_id = mbt.id AND mbt.contract_id = mbc.id")
-      .on('adId -> adId)
-      .as(rowWithAdnIdParser *)
   }
 
 }
@@ -67,17 +49,19 @@ import MAdvOk._
 case class MAdvOk(
   adId          : String,
   amount        : Float,
-  currencyCodeOpt: Option[String] = None,
-  comissionPc   : Option[Float],
-  period        : Period,
-  dateStart     : Option[DateTime],
+  currencyCode  : String = CurrencyCodeOpt.CURRENCY_CODE_DFLT,
+  comission     : Option[Float],
+  dateStart     : DateTime,
+  dateEnd       : DateTime,
   prodTxnId     : Int,
   rcvrTxnId     : Option[Int],
   onStartPage   : Boolean,
+  prodAdnId     : String,
+  rcvrAdnId     : String,
   dateCreated   : DateTime = DateTime.now(),
-  dateOk        : DateTime = DateTime.now(),
+  dateStatus    : DateTime = DateTime.now(),
   id            : Pk[Int] = NotAssigned
-) extends SqlModelSave[MAdvOk] with CurrencyCodeOpt with SiowebSqlModel[MAdvOk] with MAdvI {
+) extends SqlModelSave[MAdvOk] with CurrencyCode with SiowebSqlModel[MAdvOk] with MAdvI {
 
   override def mode = MAdvModes.OK
   override def hasId: Boolean = id.isDefined
@@ -85,11 +69,12 @@ case class MAdvOk(
 
   override def saveInsert(implicit c: Connection): MAdvOk = {
     SQL("INSERT INTO " + TABLE_NAME +
-      "(ad_id, amount, currency_code, date_created, comission_pc, period, mode, on_start_page, date_ok, date_start, prod_txn_id, rcvr_txn_id) " +
-      "VALUES ({adId}, {amount}, {currencyCodeOpt}, {dateCreated}, {comissionPc}, {period}, {mode}, {onStartPage}, {dateOk}, {dateStart}, {prodTxnId}, {rcvrTxnId})")
-    .on('adId -> adId, 'amount -> amount, 'currencyCodeOpt -> currencyCodeOpt, 'dateCreated -> dateCreated,
-        'comissionPc -> comissionPc, 'period -> period, 'mode -> mode.toString, 'onStartPage -> onStartPage,
-        'dateOk -> dateOk, 'dateStart -> dateStart, 'prodTxnId -> prodTxnId, 'rcvrTxnId -> rcvrTxnId)
+      "(ad_id, amount, currency_code, date_created, comission, mode, on_start_page, date_start, date_end, prod_adn_id, rcvr_adn_id, date_status, prod_txn_id, rcvr_txn_id) " +
+      "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {comissionPc}, {mode}, {onStartPage}, {dateStart}, {dateEnd}, {prodAdnId}, {rcvrAdnId}, {dateStatus}, {prodTxnId}, {rcvrTxnId})")
+    .on('adId -> adId, 'amount -> amount, 'currencyCode -> currencyCode, 'dateCreated -> dateCreated,
+        'comission -> comission, 'dateStart -> dateStart, 'mode -> mode.toString, 'onStartPage -> onStartPage,
+        'dateStatus -> dateStatus, 'dateStart -> dateStart, 'dateEnd -> dateEnd, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId,
+        'dateStatus -> dateStatus, 'prodTxnId -> prodTxnId, 'rcvrTxnId -> rcvrTxnId)
     .executeInsert(rowParser single)
   }
 
