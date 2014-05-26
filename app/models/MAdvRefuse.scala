@@ -66,11 +66,11 @@ case class MAdvRefuse(
 
   override def saveInsert(implicit c: Connection): MAdvRefuse = {
     SQL("INSERT INTO " + TABLE_NAME +
-      "(ad_id, amount, currency_code, date_created, comission_pc, period, mode, date_refused, reason, refuser_adn_id, prod_adn_id) " +
-      "VALUES ({adId}, {amount}, {currencyCodeOpt}, {dateCreated}, {comissionPc}, {period}, {mode}, {dateRefused}, {reason}, {refuserAdnId}, {prodAdnId})")
+      "(ad_id, amount, currency_code, date_created, comission_pc, period, mode, on_start_page, date_refused, reason, refuser_adn_id, prod_adn_id) " +
+      "VALUES ({adId}, {amount}, {currencyCodeOpt}, {dateCreated}, {comissionPc}, {period}, {mode}, {onStartPage}, {dateRefused}, {reason}, {refuserAdnId}, {prodAdnId})")
     .on('adId -> adId, 'amount -> amount, 'currencyCodeOpt -> currencyCodeOpt, 'dateCreated -> dateCreated,
-        'comissionPc -> comissionPc, 'period -> period, 'mode -> mode.toString, 'dateRefused -> dateRefused,
-        'reason -> reason, 'refuserAdnId -> refuserAdnId, 'prodAdnId -> prodAdnId)
+        'comissionPc -> comissionPc, 'period -> period, 'mode -> mode.toString, 'onStartPage -> onStartPage,
+        'dateRefused -> dateRefused, 'reason -> reason, 'refuserAdnId -> refuserAdnId, 'prodAdnId -> prodAdnId)
     .executeInsert(rowParser single)
   }
 

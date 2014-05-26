@@ -77,11 +77,11 @@ case class MAdvReq(
 
   override def saveInsert(implicit c: Connection): MAdvReq = {
     SQL("INSERT INTO " + TABLE_NAME +
-      "(ad_id, amount, currency_code, date_created, comission_pc, period, mode, prod_contract_id, rcvr_adn_id) " +
-      "VALUES ({adId}, {amount}, {currencyCodeOpt}, {dateCreated}, {comissionPc}, {period}, {mode}, {prodContractId}, {rcvrAdnId})")
+      "(ad_id, amount, currency_code, date_created, comission_pc, period, mode, on_start_page, prod_contract_id, rcvr_adn_id) " +
+      "VALUES ({adId}, {amount}, {currencyCodeOpt}, {dateCreated}, {comissionPc}, {period}, {mode}, {onStartPage}, {prodContractId}, {rcvrAdnId})")
       .on('adId -> adId, 'amount -> amount, 'currencyCodeOpt -> currencyCodeOpt, 'dateCreated -> dateCreated,
-          'comissionPc -> comissionPc, 'period -> period, 'mode -> mode.toString, 'prodContractId -> prodContractId,
-          'rcvrAdnId -> rcvrAdnId)
+          'comissionPc -> comissionPc, 'period -> period, 'mode -> mode.toString, 'onStartPage -> onStartPage,
+          'prodContractId -> prodContractId, 'rcvrAdnId -> rcvrAdnId)
       .executeInsert(rowParser single)
   }
 

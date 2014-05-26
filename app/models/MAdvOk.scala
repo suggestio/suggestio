@@ -85,11 +85,11 @@ case class MAdvOk(
 
   override def saveInsert(implicit c: Connection): MAdvOk = {
     SQL("INSERT INTO " + TABLE_NAME +
-      "(ad_id, amount, currency_code, date_created, comission_pc, period, mode, date_ok, date_start, prod_txn_id, rcvr_txn_id) " +
-      "VALUES ({adId}, {amount}, {currencyCodeOpt}, {dateCreated}, {comissionPc}, {period}, {mode}, {dateOk}, {dateStart}, {prodTxnId}, {rcvrTxnId})")
+      "(ad_id, amount, currency_code, date_created, comission_pc, period, mode, on_start_page, date_ok, date_start, prod_txn_id, rcvr_txn_id) " +
+      "VALUES ({adId}, {amount}, {currencyCodeOpt}, {dateCreated}, {comissionPc}, {period}, {mode}, {onStartPage}, {dateOk}, {dateStart}, {prodTxnId}, {rcvrTxnId})")
     .on('adId -> adId, 'amount -> amount, 'currencyCodeOpt -> currencyCodeOpt, 'dateCreated -> dateCreated,
-        'comissionPc -> comissionPc, 'period -> period, 'mode -> mode.toString, 'dateOk -> dateOk,
-        'dateStart -> dateStart, 'prodTxnId -> prodTxnId, 'rcvrTxnId -> rcvrTxnId)
+        'comissionPc -> comissionPc, 'period -> period, 'mode -> mode.toString, 'onStartPage -> onStartPage,
+        'dateOk -> dateOk, 'dateStart -> dateStart, 'prodTxnId -> prodTxnId, 'rcvrTxnId -> rcvrTxnId)
     .executeInsert(rowParser single)
   }
 
