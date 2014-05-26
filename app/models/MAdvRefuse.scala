@@ -15,14 +15,14 @@ import java.sql.Connection
  * Description: Модель для хранения записей об отказах в размещении рекламы. Т.е. некий антипод [[MAdvOk]].
  */
 
-object MAdvRefuse extends SiowebSqlModelStatic[MAdvRefuse] {
+object MAdvRefuse extends MAdvStatic[MAdvRefuse] {
   import SqlParser._
 
   override val TABLE_NAME = "adv_refuse"
 
   override val rowParser = {
     ROW_PARSER_BASE ~ get[DateTime]("date_refused") ~ get[String]("reason") ~ get[String]("refuser_adn_id") ~ get[String]("prod_adn_id") map {
-      case id ~ adId ~ amount ~ currencyCodeOpt ~ dateCreated ~ comissionPc ~ period ~ dateRefused ~ reason ~ refuserAdnId ~ prodAdnId =>
+      case id ~ adId ~ amount ~ currencyCodeOpt ~ dateCreated ~ comissionPc ~ period ~ mode ~ onStartPage ~ dateRefused ~ reason ~ refuserAdnId ~ prodAdnId =>
         MAdvRefuse(
           id          = id,
           adId        = adId,
@@ -31,6 +31,7 @@ object MAdvRefuse extends SiowebSqlModelStatic[MAdvRefuse] {
           dateCreated = dateCreated,
           comissionPc = comissionPc,
           period      = period,
+          onStartPage = onStartPage,
           dateRefused = dateRefused,
           reason      = reason,
           refuserAdnId = refuserAdnId,
@@ -53,21 +54,23 @@ case class MAdvRefuse(
   reason        : String,
   refuserAdnId  : String,
   prodAdnId     : String,
+  onStartPage   : Boolean,
   dateRefused   : DateTime = DateTime.now,
   dateCreated   : DateTime = DateTime.now,
   id            : Pk[Int] = NotAssigned
 ) extends SqlModelSave[MAdvRefuse] with CurrencyCodeOpt with SiowebSqlModel[MAdvRefuse] with MAdvI {
 
+  override def mode = MAdvModes.REFUSED
   override def hasId: Boolean = id.isDefined
   override def companion = MAdvRefuse
 
   override def saveInsert(implicit c: Connection): MAdvRefuse = {
     SQL("INSERT INTO " + TABLE_NAME +
-      "(ad_id, amount, currency_code, date_created, comission_pc, period, date_refused, reason, refuser_adn_id, prod_adn_id) " +
-      "VALUES ({adId}, {amount}, {currencyCodeOpt}, {dateCreated}, {comissionPc}, {period}, {dateRefused}, {reason}, {refuserAdnId}, {prodAdnId})")
+      "(ad_id, amount, currency_code, date_created, comission_pc, period, mode, on_start_page, date_refused, reason, refuser_adn_id, prod_adn_id) " +
+      "VALUES ({adId}, {amount}, {currencyCodeOpt}, {dateCreated}, {comissionPc}, {period}, {mode}, {onStartPage}, {dateRefused}, {reason}, {refuserAdnId}, {prodAdnId})")
     .on('adId -> adId, 'amount -> amount, 'currencyCodeOpt -> currencyCodeOpt, 'dateCreated -> dateCreated,
-        'comissionPc -> comissionPc, 'period -> period, 'dateRefused -> dateRefused, 'reason -> reason,
-        'refuserAdnId -> refuserAdnId, 'prodAdnId -> prodAdnId)
+        'comissionPc -> comissionPc, 'period -> period, 'mode -> mode.toString, 'onStartPage -> onStartPage,
+        'dateRefused -> dateRefused, 'reason -> reason, 'refuserAdnId -> refuserAdnId, 'prodAdnId -> prodAdnId)
     .executeInsert(rowParser single)
   }
 

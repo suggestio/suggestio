@@ -88,8 +88,8 @@ GET  /m/lk/adn/:adnId/_ads              controllers.MarketLkAdnSlaveAd._showSlav
 GET  /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialog(adId)
 POST /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialogSubmit(adId)
 # Адвертайзинг: размещение рекламы на узлах-получателях
-GET  /m/lk/adv/:adId/ctl                controllers.MarketAdv.infoForAd(adId)
-POST /m/lk/adv/:adId/add                controllers.MarketAdv.advertiseFormSubmit(adId)
+GET  /m/lk/adv/:adId/ctl                controllers.MarketAdv.advForAd(adId)
+POST /m/lk/adv/:adId/add                controllers.MarketAdv.advFormSubmit(adId)
 
 # Личный кабинет владельца ТЦ
 GET  /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopForm(martId)

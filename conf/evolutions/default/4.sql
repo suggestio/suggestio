@@ -38,6 +38,8 @@ CREATE TABLE sio2.adv (
   date_created timestamp with time zone NOT NULL DEFAULT now(),
   comission_pc real, -- комиссия suggest.io за операцию.
   period interval NOT NULL, -- Длительность размещения рекламной карточки.
+  mode "char" NOT NULL, -- Режим текущего ряда. По сути, позволяет абстрактно разделять между собой ряды из _req, _ok и _refuse.
+  on_start_page boolean NOT NULL,
   CHECK (amount > 0)
 );
 ALTER TABLE sio2.adv
@@ -46,6 +48,7 @@ COMMENT ON TABLE sio2.adv
   IS 'Абстрактная таблица для коммерческих отношений между рекламными узлами.';
 COMMENT ON COLUMN sio2.adv.comission_pc IS 'комиссия suggest.io за операцию.';
 COMMENT ON COLUMN sio2.adv.period IS 'Длительность размещения рекламной карточки.';
+COMMENT ON COLUMN sio2.adv.mode IS 'Режим текущего ряда. По сути, позволяет абстрактно разделять между собой ряды из _req, _ok и _refuse.';
 
 
 
@@ -61,7 +64,8 @@ CREATE TABLE sio2.adv_ok (
       ON UPDATE RESTRICT ON DELETE RESTRICT,
   FOREIGN KEY (rcvr_txn_id)
       REFERENCES sio2.bill_txn (id) MATCH SIMPLE
-      ON UPDATE RESTRICT ON DELETE RESTRICT
+      ON UPDATE RESTRICT ON DELETE RESTRICT,
+  CHECK (mode = 'o')
 )
 INHERITS (sio2.adv);
 ALTER TABLE sio2.adv_ok
@@ -81,7 +85,8 @@ CREATE TABLE sio2.adv_refuse (
   refuser_adn_id character varying(32) NOT NULL, -- id узла, который написал отказ
   prod_adn_id character varying(32) NOT NULL, -- id узла-продьюсера, т.е. узла который создал предложение адвертайза и получил отказ.
   PRIMARY KEY (id),
-  CHECK (amount > 0)
+  CHECK (amount > 0),
+  CHECK (mode = 'e')
 )
 INHERITS (sio2.adv);
 ALTER TABLE sio2.adv_refuse
@@ -103,7 +108,8 @@ CREATE TABLE sio2.adv_req (
   FOREIGN KEY (rcvr_adn_id)
       REFERENCES sio2.bill_balance (adn_id) MATCH SIMPLE
       ON UPDATE RESTRICT ON DELETE RESTRICT,
-  CHECK (amount > 0::double precision)
+  CHECK (amount > 0::double precision),
+  CHECK (mode = 'r')
 )
 INHERITS (sio2.adv);
 ALTER TABLE sio2.adv_req
@@ -112,3 +118,4 @@ COMMENT ON COLUMN sio2.adv_req.prod_contract_id IS 'Номер договора 
 
 
 COMMIT;
+

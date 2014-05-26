@@ -1,0 +1,20 @@
+@(mad: MAd, currAdvsArgs: CurrentAdvsTplArgs, formArgs: AdvFormTplArgs)(implicit ctx: Context)
+
+@* Страница управления размещением рекламной карточки. *@
+@import ctx._
+@import market.lk._
+
+@lkBase("Управление рекламой", adnIdOpt = Some(mad.producerId)) {
+  <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">Назад</a>
+  <h1>Управление рекламой</h1>
+
+  <div>
+    <h2>Информация</h2>
+    @_currentAdvsTpl(currAdvsArgs)
+  </div>
+
+  <div>
+    <h2>Разместить рекламную карточку</h2>
+    @_advFormTpl(formArgs)
+  </div>
+}
