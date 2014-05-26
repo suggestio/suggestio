@@ -1,6 +1,6 @@
 @( bid:Option[String], aovf: AOValueField, bf: BlockAOValueFieldT, className: String = "", left : Int = 0, top : Int = 0, isMvbl:Boolean=true )
 <style type="text/css">
-  @if( isMvbl == false ){
+  @if( isMvbl == true ){
   .sm-block@bid .mvbl-@className
   {
     @_coordsStyleTpl(aovf, left, top)
