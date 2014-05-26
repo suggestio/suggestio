@@ -34,14 +34,14 @@
       <div class="info" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(Block2.borderColorBf.name, Block2.borderColorBf.anyDefaultValue)">
         @mad.offers.headOption.map { offer =>
           @offer.text1.map { title =>
-            <div class="js-mvbl" data-connected-input="ad.offer.title" style="@_coordsStyleTpl(title, left = 22, top = 219)">
+            <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title" style="@_coordsStyleTpl(title, left = 22, top = 219)">
               <h5 class="title">@Html(title.value)</h5>
             </div>
             @_blockStyleTpl( mad.id, title, Block2.titleBf, "title", left = 22, top = 219 )
           }
 
           @offer.text2.map { descr =>
-            <div class="js-mvbl" data-connected-input="ad.offer.descr" style="@_coordsStyleTpl(descr, left = 22, top = 249)">
+            <div class="js-mvbl mvbl-descr" data-connected-input="ad.offer.descr" style="@_coordsStyleTpl(descr, left = 22, top = 249)">
             <div class="descr">
               <p>@Html(descr.value)</p>
             </div>
