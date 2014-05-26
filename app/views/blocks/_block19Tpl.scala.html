@@ -5,7 +5,7 @@
 @import svg._
 
 @defining( mad.colors.getOrElse(Block19.fillColorBf.name, Block19.fillColorBf.anyDefaultValue) ) { fillColor =>
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl19" style="background: #@fillColor" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl19 sm-block@mad.id" style="background: #@fillColor" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   @_bg19Tpl(
     cssClass = "bg",
@@ -17,22 +17,28 @@
     <div class="inner" style="border-color: #@mad.colors.getOrElse(Block19.borderColorBf.name, Block19.borderColorBf.anyDefaultValue)">
       <img class="photo" src="@mad.imgs.get(Block19.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl19-bg.jpg"))" />
 
-      <div class="info abs">
+      <div class="info">
 
         @mad.offers.map { offer =>
           <div class="item">
             <span class="item_line" style="background: #@offer.text1.map {title =>@title.font.color}"></span>
 
             @offer.text1.map { text1 =>
-              <div @_aovfStyleTpl(text1, Block19.titleBf, "item_title")>
+              <div class="js-mvbl mvbl-item_title-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].title">
+              <div class="item_title item_title-@offer.n">
                 @Html(text1.value)
               </div>
+              </div>
+              @_blockStyleTpl( mad.id, text1, Block19.titleBf, "item_title-" + offer.n, left = 22, top = (offer.n)*80+30 )
             }
 
             @offer.price.map { price =>
-              <div @_aovfStyleTpl(price, Block19.priceBf, "item_price")>
+              <div class="js-mvbl mvbl-item_price-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].price">
+              <div class="item_price item_price-@offer.n">
                 @formatPrice(price.value, price.currency)
               </div>
+              </div>
+              @_blockStyleTpl( mad.id, price, Block19.priceBf, "item_price-" + offer.n, left = 22, top = (offer.n)*80+60 )
             }
           </div>
         }

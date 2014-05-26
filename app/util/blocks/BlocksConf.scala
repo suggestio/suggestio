@@ -389,7 +389,7 @@ sealed case class Block18Wrapper(key: String) extends ValTWrapper(Block18) with 
 
 
 sealed trait Block19t extends Height with BgImg with BorderColor with TitlePriceListBlockT with BgColor with FillColor {
-  override val offersCount = 2
+  override val offersCount = 3
   override def borderColorBf = super.borderColorBf.copy(
     defaultValue = Some("444444")
   )

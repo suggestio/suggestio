@@ -2,21 +2,27 @@
 
 @import common._
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl20" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl20 sm-block@mad.id" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   <img class="bg" src="@mad.imgs.get(Block20.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl20-bg.jpg"))" />
 
   @mad.offers.headOption.map { offer =>
     <div class="info abs">
     @offer.text1.map { text1 =>
-      <div @_aovfStyleTpl(text1, Block20.titleBf, "title")>
+      <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title">
+      <div class="title">
         @Html(text1.value)
       </div>
+      </div>
+      @_blockStyleTpl( mad.id, text1, Block20.titleBf, "title", left = 18, top = 24  )
     }
     @offer.text2.map { text2 =>
-      <div @_aovfStyleTpl(text2, Block20.descrBf, "descr")>
+      <div class="js-mvbl mvbl-descr" data-connected-input="ad.offer.descr">
+      <div class="descr">
         @Html(text2.value)
       </div>
+      </div>
+      @_blockStyleTpl( mad.id, text2, Block20.descrBf, "descr", left = 18, top = 24  )
     }
     </div>
   }
