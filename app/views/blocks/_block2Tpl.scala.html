@@ -14,7 +14,7 @@
 
       @mad.offers.headOption.map { offer =>
         @offer.discount.map { discount =>
-        <div class="sale-icon">
+        <div class="sale-icon" style="color: #@discount.font.color;">
           @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
         </div>
         }

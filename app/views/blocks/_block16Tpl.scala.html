@@ -4,7 +4,7 @@
 @import util.TplDataFormatUtil._
 @import common._
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl16"
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl16 sm-block@mad.id"
      style="background: #@mad.colors.getOrElse(Block16.bgColorBf.name, Block16.bgColorBf.anyDefaultValue);"
      data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
@@ -13,25 +13,28 @@
       <div class="info">
         @mad.offers.headOption.map { offer =>
           @offer.text1.map { text1 =>
-            <div class="js-mvbl" data-connected-input="ad.offer.title" style="@_coordsStyleTpl(text1, left = 12, top = 24)">
-            <div @_aovfStyleTpl(text1, Block16.titleBf, "title")>
+            <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title">
+            <div class="title">
               @Html(text1.value)
             </div>
             </div>
+            @_blockStyleTpl( mad.id, text1, Block16.titleBf, "title", left = 12, top = 24 )
           }
           @offer.text2.map { text2 =>
-            <div class="js-mvbl" data-connected-input="ad.offer.descr" style="@_coordsStyleTpl(text2, left = 12, top = 78)">
-            <div @_aovfStyleTpl(text2, Block16.descrBf, "descr")>
+            <div class="js-mvbl mvbl-descr" data-connected-input="ad.offer.descr">
+            <div class="descr">
               @Html(text2.value)
             </div>
             </div>
+            @_blockStyleTpl( mad.id, text2, Block16.descrBf, "descr", left = 12, top = 78 )
           }
           @offer.price.map { price =>
-            <div class="js-mvbl" data-connected-input="ad.offer.price" style="@_coordsStyleTpl(price, left = 12, top = 120)">
-            <div @_aovfStyleTpl(price, Block16.priceBf, "price")>
+            <div class="js-mvbl mvbl-price" data-connected-input="ad.offer.price">
+            <div class="price">
               @formatPrice(price.value, price.currency)
             </div>
             </div>
+            @_blockStyleTpl( mad.id, price, Block16.priceBf, "price", left = 12, top = 120 )
           }
         }
 

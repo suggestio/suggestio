@@ -1,4 +1,4 @@
-@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+@*(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
 
 @import util.TplDataFormatUtil._
 @import common._
@@ -10,7 +10,7 @@
 
   @mad.offers.headOption.map { offer =>
 
-    <div @offer.discount.map { discount =>@_aovfStyleTpl(discount, Block7.discountBf, "sale-icon")}>
+    <div @offer.discount.map { discount => @_aovfStyleTpl(discount, Block7.discountBf, "sale-icon")}>
       @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
     </div>
 
@@ -30,3 +30,4 @@
   }
 
 </div>
+*@

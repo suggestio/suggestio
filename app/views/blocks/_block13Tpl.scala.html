@@ -6,7 +6,7 @@
 @import common._
 
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl13" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl13 sm-block@mad.id" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   @defining(Block13.discoBorderColorBf) { smcbf =>
   @_block6_left_border(
@@ -35,7 +35,7 @@
     @mad.offers.headOption.map { offer =>
 
       @offer.discount.map { discount =>
-      <div @_aovfStyleTpl(discount, Block13.discountBf, "sale")>
+      <div class="sale" style="color: #@discount.font.color;">
         @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
       </div>
       }
@@ -46,7 +46,6 @@
         fillColor = discoIconColor
       )
 
-
       @defining(Block13.discoBorderColorBf) { smcbf =>
         @_saleIconMask13Tpl(
           cssClass = "svg-mask",
@@ -54,21 +53,23 @@
         )
       }
 
-
       @offer.text1.map { text1 =>
-        <div class="js-mvbl" data-connected-input="ad.offer.title" style="@_coordsStyleTpl(text1, left = 12, top = 24)">
-        <div @_aovfStyleTpl(text1, Block13.descrBf, "")>
+        <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title">
+        <div class="title">
           @Html(text1.value)
         </div>
         </div>
+        @_blockStyleTpl( mad.id, text1, Block13.descrBf, "title", left = 12, top = 210 )
+
       }
 
       @offer.text2.map { text2 =>
-        <div class="js-mvbl" data-connected-input="ad.offer.descr" style="@_coordsStyleTpl(text2, left = 12, top = 24)">
-        <div @_aovfStyleTpl(text2, Block13.descrBf, "info abs")>
+        <div class="js-mvbl mvbl-info" data-connected-input="ad.offer.descr">
+        <div class="info">
           @Html(text2.value)
         </div>
         </div>
+        @_blockStyleTpl( mad.id, text2, Block13.descrBf, "info", left = 12, top = 250 )
       }
     }
 

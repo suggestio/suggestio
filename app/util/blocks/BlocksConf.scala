@@ -197,6 +197,7 @@ object BlocksConf extends Enumeration {
 
 
   /** Блок, отображающий скидочную цену на товар или услугу. */
+  /*
   sealed trait Block7t extends HeightFixed with SaleMaskColor with Discount with Title with Price {
     override def template = _block7Tpl
     override def saleMaskColorBf: BfColor = super.saleMaskColorBf.copy(
@@ -209,6 +210,7 @@ object BlocksConf extends Enumeration {
   sealed case class Block7Wrapper(key: String) extends ValTWrapper(Block7) with ValTEmpty with Block7t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
   }
+  */
 
 
   sealed trait Block8t extends BgImg with Title with Price with HeightFixed {
@@ -233,7 +235,7 @@ object BlocksConf extends Enumeration {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
   }
 
-
+  /*
   sealed trait Block10t extends BgImg with Title with OldPrice with Price with HeightFixed {
     override def template = _block10Tpl
   }
@@ -271,7 +273,7 @@ object BlocksConf extends Enumeration {
   sealed case class Block12Wrapper(key: String) extends ValTWrapper(Block12) with ValTEmpty with Block12t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
   }
-
+  */
 
   sealed trait Block13t extends Height with DiscoIconColor with DiscoBorderColor with BgImg with Discount with Title with Descr {
     override def heightBf: BfHeight = super.heightBf.copy(
