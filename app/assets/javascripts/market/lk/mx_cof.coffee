@@ -164,22 +164,6 @@ CbcaCommon = () ->
 
   self.init = () ->
 
-    tinymce.init(
-      selector:'textarea.js-tinymce',
-      width: 615,
-      menubar: false,
-      statusbar : false,
-      plugins: 'link, textcolor',
-      toolbar: ["fontselect | fontsizeselect | alignleft aligncenter alignright | bold italic | forecolor backcolor | link" ]
-    )
-
-    $(document).on 'change', '#ad_descr_bgColor', (e)->
-      $this = $(this)
-      hex = '#' + $this.val()
-
-      $('#ad_descr_text_ifr').contents().find('body').css 'background-color': hex
-
-
     $(document).on 'click', '.ads-list-block__preview_add-new', ()->
       $this = $(this)
 
@@ -974,7 +958,28 @@ market =
         console.log _value_dom.val()
         market.ad_form.queue_block_preview_request request_delay=10
 
+    set_descr_editor_bg : () ->
+      hex = '#' + $('#ad_descr_bgColor').val()
+      $('#ad_descr_text_ifr').contents().find('body').css 'background-color': hex
+
     init : () ->
+
+      tinymce.init(
+        selector:'textarea.js-tinymce',
+        width: 615,
+        menubar: false,
+        statusbar : false,
+        plugins: 'link, textcolor',
+        toolbar: ["fontselect | fontsizeselect | alignleft aligncenter alignright | bold italic | forecolor backcolor | link" ],
+
+        setup: (editor) ->
+          editor.on 'init', (e) ->
+            market.ad_form.set_descr_editor_bg()
+      )
+
+      $(document).on 'change', '#ad_descr_bgColor', (e)->
+        market.ad_form.set_descr_editor_bg()
+
       market.img.crop.init_triggers()
       this.request_block_preview()
       this.init_block_editor()

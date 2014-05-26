@@ -33,6 +33,7 @@
 
             </div>
 
+            @* Информация о магазине *@
             <div class="sio-mart-node-offers-window__single-ad-location sm-now-location">
               <div class="sm-now-location__icon"></div>
               <div class="sm-now-location__info">
@@ -42,6 +43,12 @@
               <div class="sm-clear"></div>
             </div>
 
+            @* Контейнер с описанием рекламной карточки *@
+            @mad.richDescrOpt.map { rd =>
+            <div class="sio-mart-node-offers-window__single-ad-descr" style="background-color: #@rd.bgColor;">
+              @Html(rd.text)
+            </div>
+            }
             <div class="sio-mart-node-offers-window__bottom_margin"></div>
 
             </div>
