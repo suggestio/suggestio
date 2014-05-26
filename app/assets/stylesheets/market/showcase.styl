@@ -145,7 +145,7 @@ box-shadow( param )
     top: 0px
     width: 100%
     height: 100%
-    background: rgba(227, 224, 226, 0.93)
+    background-image: url('/assets/images/market-showcase-popup-bg.png')
 
   .sio-mart-node-offers-window
     position: relative
@@ -175,13 +175,23 @@ box-shadow( param )
     position: absolute
     right: 17px
     top: 17px
-    background: rgba(0,0,0,0.5)
     z-index: 4
-    border-radius( 50px )
     font-family: 'pfdintextcomppro-medium-webfont'
     font-size: 15px
+
+  .sio-mart-showcase-page-marker__label
+    color: #787878
+    line-height: 14px
+    float: left
+    margin-right: 10px
+
+  .sio-mart-showcase-page-marker__no
+    border-radius( 50px )
     color: #fff
-    padding: 7px
+    float: left
+    padding: 16px 10px
+    margin-top: -12px
+    background: rgba(0,0,0,0.8)
 
   .sio-mart-node-offers-window__single-ad-w-border
     position: relative
@@ -214,6 +224,7 @@ box-shadow( param )
     height: 30px
 
   .sm-now-location
+    position: relative
     font-family: 'pfdintextcomppro-medium-webfont'
     font-size: 14px
 

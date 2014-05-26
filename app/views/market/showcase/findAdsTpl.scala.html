@@ -26,15 +26,20 @@
 
             <div class="sio-mart-node-offers-window__top-offset"></div>
             <div class="sio-mart-node-offers-window__single-ad-w-border">
-
-              <div class="sio-mart-node-offers-window__page-marker">@(index+1)/@ads.length</div>
-
               @_single_offer(mad, shops.getOrElse(mad.producerId, mmart), fallbackLogo = mmart.logoImgOpt, false, false)
 
             </div>
 
             @* Информация о магазине *@
             <div class="sio-mart-node-offers-window__single-ad-location sm-now-location">
+
+              <div class="sio-mart-node-offers-window__page-marker sio-mart-showcase-page-marker">
+
+                <div class="sio-mart-showcase-page-marker__label">Карточек<br/>товара:</div>
+                <div class="sio-mart-showcase-page-marker__no">@(index+1)/@ads.length</div>
+
+              </div>
+
               <div class="sm-now-location__icon"></div>
               <div class="sm-now-location__info">
                 <span>@if( producer.meta.floor ){ @producer.meta.floor-й этаж }</span>
