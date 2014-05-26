@@ -52,7 +52,15 @@
                   }
                 </select>
               </td>
-              <td>@checkbox(af(s"node[$mid].onStartPage"), '_label -> "На главном экране")</td>
+              <td>@if(maybeBusyAdv.isDefined) {
+                  <label>
+                    На главном экране
+                    <input type="checkbox" disabled @if(maybeBusyAdv.get.onStartPage) {checked}/>
+                  </label>
+                } else {
+                  @checkbox(af(s"node[$mid].onStartPage"), '_label -> "На главном экране")
+                }
+              </td>
             </tr>
           }
           }

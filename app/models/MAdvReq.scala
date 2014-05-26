@@ -21,7 +21,7 @@ object MAdvReq extends MAdvStatic[MAdvReq] {
   val TABLE_NAME = "adv_req"
 
   val rowParser = ROW_PARSER_BASE ~ get[Int]("prod_contract_id") ~ get[String]("rcvr_adn_id") map {
-    case id ~ adId ~ amount ~ currencyCodeOpt ~ dateCreated ~ comissionPc ~ period ~ mode ~ prodContractId ~ rcvrAdnId =>
+    case id ~ adId ~ amount ~ currencyCodeOpt ~ dateCreated ~ comissionPc ~ period ~ mode ~ onStartPage ~ prodContractId ~ rcvrAdnId =>
       MAdvReq(
         id          = id,
         adId        = adId,
@@ -30,6 +30,7 @@ object MAdvReq extends MAdvStatic[MAdvReq] {
         dateCreated = dateCreated,
         comissionPc = comissionPc,
         period      = period,
+        onStartPage = onStartPage,
         prodContractId = prodContractId,
         rcvrAdnId   = rcvrAdnId
       )
@@ -65,6 +66,7 @@ case class MAdvReq(
   period        : Period,
   prodContractId: Int,
   rcvrAdnId     : String,
+  onStartPage   : Boolean,
   dateCreated   : DateTime = DateTime.now(),
   id            : Pk[Int] = NotAssigned
 ) extends SqlModelSave[MAdvReq] with CurrencyCodeOpt with SiowebSqlModel[MAdvReq] with MAdvI {

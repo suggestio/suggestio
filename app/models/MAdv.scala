@@ -30,7 +30,8 @@ object MAdv {
 
   /** Базовый парсер для колонок таблиц ad7ing_*. */
   val ROW_PARSER_BASE = get[Pk[Int]]("id") ~ get[String]("ad_id") ~ AMOUNT_PARSER ~ CURRENCY_CODE_OPT_PARSER ~
-    get[DateTime]("date_created") ~ get[Option[Float]]("comission_pc") ~ get[PGInterval]("period") ~ ADV_MODE_PARSER
+    get[DateTime]("date_created") ~ get[Option[Float]]("comission_pc") ~ get[PGInterval]("period") ~ ADV_MODE_PARSER ~
+    get[Boolean]("on_start_page")
 
 }
 
@@ -45,6 +46,7 @@ trait MAdvI {
   def dateCreated   : DateTime
   def id            : Pk[Int]
   def mode          : MAdvMode
+  def onStartPage   : Boolean
 
   def isoPeriod = ISOPeriodFormat.standard().print(period)
 }

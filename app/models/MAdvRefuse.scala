@@ -22,7 +22,7 @@ object MAdvRefuse extends MAdvStatic[MAdvRefuse] {
 
   override val rowParser = {
     ROW_PARSER_BASE ~ get[DateTime]("date_refused") ~ get[String]("reason") ~ get[String]("refuser_adn_id") ~ get[String]("prod_adn_id") map {
-      case id ~ adId ~ amount ~ currencyCodeOpt ~ dateCreated ~ comissionPc ~ period ~ mode ~ dateRefused ~ reason ~ refuserAdnId ~ prodAdnId =>
+      case id ~ adId ~ amount ~ currencyCodeOpt ~ dateCreated ~ comissionPc ~ period ~ mode ~ onStartPage ~ dateRefused ~ reason ~ refuserAdnId ~ prodAdnId =>
         MAdvRefuse(
           id          = id,
           adId        = adId,
@@ -31,6 +31,7 @@ object MAdvRefuse extends MAdvStatic[MAdvRefuse] {
           dateCreated = dateCreated,
           comissionPc = comissionPc,
           period      = period,
+          onStartPage = onStartPage,
           dateRefused = dateRefused,
           reason      = reason,
           refuserAdnId = refuserAdnId,
@@ -53,6 +54,7 @@ case class MAdvRefuse(
   reason        : String,
   refuserAdnId  : String,
   prodAdnId     : String,
+  onStartPage   : Boolean,
   dateRefused   : DateTime = DateTime.now,
   dateCreated   : DateTime = DateTime.now,
   id            : Pk[Int] = NotAssigned

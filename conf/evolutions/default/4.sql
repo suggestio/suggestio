@@ -39,6 +39,7 @@ CREATE TABLE sio2.adv (
   comission_pc real, -- комиссия suggest.io за операцию.
   period interval NOT NULL, -- Длительность размещения рекламной карточки.
   mode "char" NOT NULL, -- Режим текущего ряда. По сути, позволяет абстрактно разделять между собой ряды из _req, _ok и _refuse.
+  on_start_page boolean NOT NULL,
   CHECK (amount > 0)
 );
 ALTER TABLE sio2.adv

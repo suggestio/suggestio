@@ -22,7 +22,7 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
   override val rowParser = {
     ROW_PARSER_BASE ~ get[DateTime]("date_ok") ~ get[Option[DateTime]]("date_start") ~
       get[Int]("prod_txn_id") ~ get[Option[Int]]("rcvr_txn_id") map {
-      case id ~ adId ~ amount ~ currencyCodeOpt ~ dateCreated ~ comissionPc ~ period ~ mode ~ dateOk ~ dateStart ~ prodTxnId ~ rcvrTxnId =>
+      case id ~ adId ~ amount ~ currencyCodeOpt ~ dateCreated ~ comissionPc ~ period ~ mode ~ onStartPage ~ dateOk ~ dateStart ~ prodTxnId ~ rcvrTxnId =>
         MAdvOk(
           id          = id,
           adId        = adId,
@@ -33,6 +33,7 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
           period      = period,
           dateOk      = dateOk,
           dateStart   = dateStart,
+          onStartPage = onStartPage,
           prodTxnId   = prodTxnId,
           rcvrTxnId   = rcvrTxnId
         )
@@ -72,6 +73,7 @@ case class MAdvOk(
   dateStart     : Option[DateTime],
   prodTxnId     : Int,
   rcvrTxnId     : Option[Int],
+  onStartPage   : Boolean,
   dateCreated   : DateTime = DateTime.now(),
   dateOk        : DateTime = DateTime.now(),
   id            : Pk[Int] = NotAssigned
