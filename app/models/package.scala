@@ -38,6 +38,9 @@ package object models {
   val  AdNetMemberInfo      = ym.model.common.AdNetMemberInfo
   type AdNetMemberInfo      = ym.model.common.AdNetMemberInfo
 
+  val  AdnRights            = ym.model.common.AdnRights
+  type AdnRight             = AdnRights.AdnRight
+
   val  AdNetMemberTypes     = ym.model.common.AdNetMemberTypes
   type AdNetMemberType      = AdNetMemberTypes.AdNetMemberType
 
@@ -138,4 +141,5 @@ package object models {
   val  DisableReason        = ym.model.common.DisableReason
   type DisableReason        = ym.model.common.DisableReason
 
+  type MAdvMode             = MAdvModes.MAdvMode
 }

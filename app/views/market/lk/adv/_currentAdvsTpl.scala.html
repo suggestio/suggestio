@@ -1,0 +1,40 @@
+@(args: CurrentAdvsTplArgs)(implicit ctx: Context)
+
+@* Список текущих размещений рекламы на странице "управления" рекламной карточкой. *@
+
+@import MAdvModes._
+@import ctx._
+@import datetime._
+@import util.TplDataFormatUtil._
+@import args._
+
+@advs.map { adv =>
+  @adv2adn.get(adv.id.get).map { node =>
+    @Messages("amt.of.type." + node.adn.memberType)
+    <strong>@node.meta.name / @node.meta.town</strong>
+    @adv match {
+      case advOk: MAdvOk => {
+        одобрил размещение. @_prettyDate(advOk.dateOk)
+      }
+      case advReq: MAdvReq => {
+        рассматривает размещение.
+      }
+      case advRefused: MAdvRefuse => {
+        отменил размещение. @advRefused.reason
+      }
+    }
+  }
+
+  <h3>Заблокировано денег</h3>
+  @if(blockedSums.isEmpty) {
+    @formatPrice(0F, java.util.Currency.getInstance(CurrencyCodeOpt.CURRENCY_CODE_DFLT))
+  } else {
+    @blockedSums.map { case (amount, currency) =>
+      @formatPrice(amount, currency)
+    }
+  }
+}
+
+
+
+

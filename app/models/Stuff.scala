@@ -2,6 +2,7 @@ package models
 
 import java.util.Currency
 import play.api.i18n.Messages
+import play.api.data.Form
 
 /**
  * Suggest.io
@@ -65,3 +66,17 @@ object AdStatActionsTpl {
 /** Выбор высоты шрифта влияет на высоту линии (интерлиньяж) и возможно иные параметры.
   * В любом случае, ключом является кегль шрифта. */
 case class FontSize(size: Int, lineHeight: Int)
+
+
+
+case class CurrentAdvsTplArgs(
+  advs: Seq[MAdvI],
+  adv2adn: Map[Int, MAdnNode],
+  blockedSums: Seq[(Float, Currency)]
+)
+case class AdvFormTplArgs(
+  adId: String,
+  adnNodes: Seq[MAdnNode], af: Form[_],
+  busyAdns: Map[String, MAdvI]
+)
+
