@@ -4,7 +4,7 @@
 @import common._
 @import util.TplDataFormatUtil._
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl23" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl23 sm-block@mad.id" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   @_mask23(
     cssClass  = "mask abs",
@@ -16,19 +16,21 @@
   <div class="info abs">
     @mad.offers.headOption.map { offer =>
       @offer.text1.map { text1 =>
-        <div class="js-mvbl" data-connected-input="ad.offer.title" style="@_coordsStyleTpl(text1, left = 12, top = 24)">
-        <div @_aovfStyleTpl(text1, Block23.titleBf, "title")>
+        <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title">
+        <div class="title">
           <p>@Html(text1.value)</p>
         </div>
         </div>
+        @_blockStyleTpl( mad.id, text1, Block23.titleBf, "title", left = 18, top = 24  )
       }
 
       @offer.text2.map { text2 =>
-        <div class="js-mvbl" data-connected-input="ad.offer.descr" style="@_coordsStyleTpl(text2, left = 12, top = 65)">
-        <div @_aovfStyleTpl(text2, Block23.descrBf, "descr")>
+        <div class="js-mvbl mvbl-descr" data-connected-input="ad.offer.descr">
+        <div class="descr">
           <p>@Html(text2.value)</p>
         </div>
         </div>
+        @_blockStyleTpl( mad.id, text2, Block23.descrBf, "descr", left = 18, top = 65  )
       }
 
       @offer.price.map { price =>
