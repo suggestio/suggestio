@@ -2,7 +2,7 @@
 
 @import util.TplDataFormatUtil._
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl@bc.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl@bc.id sm-block@mad.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   <img class="bg" src="@mad.imgs.get(bc.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl4-bg.jpg"))" alt=""/>
 
@@ -12,13 +12,16 @@
   <div class="info" style="background: rgba(@{colorHex2rgb(color).mkString(",")}, 0.7);">
     @mad.offers.headOption.map { offer =>
       @offer.text1.map { title =>
-        <div @_aovfStyleTpl(title, bc.titleBf, "title")>@Html(title.value)</div>
+        <div class="title">@Html(title.value)</div>
+        @_blockStyleTpl( mad.id, title, bc.titleBf, "title", left = 0, top = 0, isMvbl=false )
       }
       @offer.price.map { price =>
-        <div @_aovfStyleTpl(price, bc.priceBf, "price")>@formatPriceDigits(price.value)@formatCurrency(price.currency)</div>
+        <div class="price">@formatPriceDigits(price.value)@formatCurrency(price.currency)</div>
+        @_blockStyleTpl( mad.id, price, bc.priceBf, "price", left = 0, top = 0, isMvbl=false )
       }
       @offer.text2.map { descr =>
-        <div @_aovfStyleTpl(descr, bc.descrBf, "descr")>@Html(descr.value)</div>
+        <div class="descr">@Html(descr.value)</div>
+        @_blockStyleTpl( mad.id, descr, bc.descrBf, "descr", left = 0, top = 0, isMvbl=false )
       }
     }
   </div>
