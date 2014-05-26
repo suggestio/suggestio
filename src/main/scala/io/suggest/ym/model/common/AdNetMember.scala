@@ -68,6 +68,7 @@ import AdNetMember._
 
 /** Трейт для статической части модели участника рекламной сети. */
 trait EMAdNetMemberStatic extends EsModelStaticT {
+  import AdnRights.AdnRight
 
   override type T <: EMAdNetMember
 
@@ -92,7 +93,7 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
       val mi = acc.adn
       value.foreach {
         case (RIGHTS_ESFN, v: jl.Iterable[_]) =>
-          mi.rights = v.map { rid => AdnRights.withName(rid.toString) : AdnRights.AdnRight }.toSet
+          mi.rights = v.map { rid => AdnRights.withName(rid.toString) : AdnRight }.toSet
         case (SUPERVISOR_ID_ESFN, v)  => mi.supId = Option(stringParser(v))
         case (MEMBER_TYPE_ESFN, v)    => mi.memberType = AdNetMemberTypes.withName(stringParser(v))
         case (SHOW_LEVELS_ESFN, levelsInfoRaw) =>
@@ -264,6 +265,27 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
       .map { searchResp2list }
   }
 
+
+  /**
+   * Собрать es query для поиска по полю adn-прав. Искомый объект обязан обладать всеми перечисленными правами.
+   * @param rights Список прав, по которым ищем.
+   * @return ES Query.
+   */
+  def adnRightsAllQuery(rights: Seq[AdnRight]) = QueryBuilders
+    .termsQuery(RIGHTS_ESFN, rights.map(_.toString()) : _*)
+    .minimumMatch(rights.size)
+
+  /**
+   * Найти по правам (ролям) узла в сети.
+   * @param rights Список прав, по которым происходит поиск.
+   * @return Фьючерс со списком результатов в неопределённом порядке.
+   */
+  def findByAllAdnRights(rights: Seq[AdnRight])(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+    prepareSearch
+      .setQuery(adnRightsAllQuery(rights))
+      .execute()
+      .map { searchResp2list }
+  }
 
   /** Сгенерить запрос для поиска по внешним продьюсерам. */
   def incomingProducerIdQuery(producerId: String) = QueryBuilders.termQuery(ADN_MI_PRODUCER_IDS_ESFN, producerId)
