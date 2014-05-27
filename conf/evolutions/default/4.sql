@@ -110,27 +110,42 @@ COMMIT;
 
 
 
--- Заносим в договор колонки с ценами рекламных модулей.
+-- Был кратковременный занос цен в bill_contract, но всё-таки чтобы улучшить работу это дело было вынесено в отдельную модель.
+ALTER TABLE sio2.bill_contract
+  DROP COLUMN mmp_weekday;
+ALTER TABLE sio2.bill_contract
+  DROP COLUMN mmp_weekend;
+ALTER TABLE sio2.bill_contract
+  DROP COLUMN mmp_primetime;
+ALTER TABLE sio2.bill_contract
+  DROP COLUMN currency_code;
+
+
+
+-- Создать таблицу для тарифов минимальных рекламных модулей при посуточной оплате.
 BEGIN;
 
-ALTER TABLE sio2.bill_contract
-  ADD COLUMN mmp_weekday real NOT NULL DEFAULT 100;
-ALTER TABLE sio2.bill_contract
-  ADD COLUMN mmp_weekend real NOT NULL DEFAULT 150;
-ALTER TABLE sio2.bill_contract
-  ADD COLUMN mmp_primetime real NOT NULL DEFAULT 200;
-ALTER TABLE sio2.bill_contract
-  ADD COLUMN currency_code character(3) NOT NULL DEFAULT 'RUB';
-COMMENT ON COLUMN sio2.bill_contract.mmp_weekday IS 'Цена минимального рекламного модуля в трудовыебудни.';
-COMMENT ON COLUMN sio2.bill_contract.mmp_weekend IS 'Цена минимального рекламного модуля в выходные дни.';
-COMMENT ON COLUMN sio2.bill_contract.mmp_primetime IS 'Цена минимального рекламного модуля в prime-time.';
+CREATE TABLE sio2.bill_mmp_daily (
+  id serial NOT NULL,
+  contract_id integer NOT NULL,
+  mmp_weekday real NOT NULL,
+  mmp_weekend real NOT NULL,
+  mmp_primetime real NOT NULL,
+  currency_code character(3) NOT NULL DEFAULT 'RUB',
+  PRIMARY KEY (id),
+  FOREIGN KEY (contract_id)
+      REFERENCES sio2.bill_contract (id) MATCH SIMPLE
+      ON UPDATE RESTRICT ON DELETE RESTRICT
+);
+ALTER TABLE sio2.bill_mmp_daily
+  OWNER TO sio2;
+COMMENT ON TABLE sio2.bill_mmp_daily
+  IS 'Тарифы по рекламным площадям при посуточной оплате.';
 
-ALTER TABLE sio2.bill_contract
-   ALTER COLUMN mmp_weekday DROP DEFAULT;
-ALTER TABLE sio2.bill_contract
-   ALTER COLUMN mmp_weekend DROP DEFAULT;
-ALTER TABLE sio2.bill_contract
-   ALTER COLUMN mmp_primetime DROP DEFAULT;
+CREATE INDEX fki_bill_mmp_daily_contract_id_fkey
+  ON sio2.bill_mmp_daily
+  USING btree
+  (contract_id);
 
 COMMIT;
 

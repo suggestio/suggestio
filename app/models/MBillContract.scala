@@ -26,13 +26,11 @@ object MBillContract extends SiowebSqlModelStatic[MBillContract] {
   val TABLE_NAME: String = "bill_contract"
 
   val rowParser = get[Pk[Int]]("id") ~ get[Int]("crand") ~ get[String]("adn_id") ~ get[DateTime]("contract_date") ~
-    get[DateTime]("date_created") ~ get[Option[String]]("hidden_info") ~ get[Boolean]("is_active") ~ get[Option[String]]("suffix") ~
-    get[Float]("mmp_weekday") ~ get[Float]("mmp_weekend") ~ get[Float]("mmp_primetime") ~ get[String]("currency_code") map {
-    case id ~ crand ~ adnId ~ contractDate ~ dateCreated ~ hiddenInfo ~ isActive ~ suffix ~ mmpWeekday ~ mmpWeekend ~ mmpPrimetime ~ currencyCode =>
+    get[DateTime]("date_created") ~ get[Option[String]]("hidden_info") ~ get[Boolean]("is_active") ~ get[Option[String]]("suffix") map {
+    case id ~ crand ~ adnId ~ contractDate ~ dateCreated ~ hiddenInfo ~ isActive ~ suffix =>
       MBillContract(
         id = id,  crand = crand,  adnId = adnId, contractDate = contractDate,
-        dateCreated = dateCreated,  hiddenInfo = hiddenInfo,  isActive = isActive, suffix = suffix,
-        mmpWeekday = mmpWeekday, mmpWeekend = mmpWeekend, mmpPrimetime = mmpPrimetime, currencyCode = currencyCode
+        dateCreated = dateCreated,  hiddenInfo = hiddenInfo,  isActive = isActive, suffix = suffix
       )
   }
 
@@ -156,17 +154,13 @@ import MBillContract._
 case class MBillContract(
   adnId         : String,
   var contractDate: DateTime,
-  mmpWeekday    : Float,
-  mmpWeekend    : Float,
-  mmpPrimetime  : Float,
-  currencyCode  : String = CurrencyCodeOpt.CURRENCY_CODE_DFLT,
   var suffix    : Option[String] = None,
   dateCreated   : DateTime = DateTime.now,
   var hiddenInfo: Option[String] = None,
   var isActive  : Boolean = true,
   crand         : Int = rnd.nextInt(999) + 1, // от 1 до 999. Чтоб не было 0, а то перепутают с 'O'.
   id            : Pk[Int] = NotAssigned
-) extends SqlModelSave[MBillContract] with CurrencyCode {
+) extends SqlModelSave[MBillContract] {
 
   def hasId: Boolean = id.isDefined
 
@@ -208,3 +202,29 @@ trait MBillContractSel {
   def contractId: Int
   def contract(implicit c: Connection) = MBillContract.getById(contractId)
 }
+
+
+trait FindByContract[T] extends SiowebSqlModelStatic[T] {
+  /**
+   * Найти все тарифы для указанного номера договора.
+   * @param contractId id договора.
+   * @return Список тарифов в неопределённом порядке.
+   */
+  def findByContractId(contractId: Int, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    val sb = new StringBuilder("SELECT * FROM ").append(TABLE_NAME).append(" WHERE contract_id = {contractId}")
+    policy.append2sb(sb)
+    SQL(sb.toString())
+     .on('contractId -> contractId)
+     .as(rowParser *)
+  }
+
+  def findByContractIds(contractIds: Traversable[Int], policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    val sb = new StringBuilder("SELECT * FROM ").append(TABLE_NAME).append(" WHERE contract_id = ANY({contractIds})")
+    policy.append2sb(sb)
+    SQL(sb.toString())
+      .on('contractIds -> seqInt2pgArray(contractIds))
+      .as(rowParser *)
+  }
+}
+
+

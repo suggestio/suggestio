@@ -1,0 +1,16 @@
+@(mbmd: MBillMmpDaily, mbc: MBillContract, mdf: Form[_], nodeOpt: Option[MAdnNode])(implicit ctx: Context)
+
+@* Страница с формой редактирования посуточного mmp-тарификатора. *@
+@import ctx._
+
+@mmpBase("Создание посуточного mmp-тарификатора", mbc = mbc, nodeOpt = nodeOpt) {
+
+  <p>Редактирование тарифного плана #@mbmd.id.get</p>
+
+  @_mmpDailyFormTpl(
+    mdf = mdf,
+    btnText = Messages("Save"),
+    submitCall = routes.SysMarketBillingMmp.editMmpDailySubmit(mbmd.id.get)
+  )
+
+}

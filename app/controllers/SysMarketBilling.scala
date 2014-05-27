@@ -44,30 +44,22 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
       .transform[Option[String]](
         {Some(_).filter(!_.isEmpty)},
         {_ getOrElse ""}
-      ),
-    "currencyCode"  -> default(text(minLength = 3, maxLength = 3), "RUB"),
-    "mmpWeekday"    -> floatM,
-    "mmpWeekend"    -> floatM,
-    "mmpPrimetime"  -> floatM
+      )
   )
   // apply()
-  {(adnId, dateContract, suffix, isActive, hiddenInfo, currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime) =>
+  {(adnId, dateContract, suffix, isActive, hiddenInfo) =>
     MBillContract(
       adnId = adnId,
       contractDate = dateContract,
       suffix = suffix,
       hiddenInfo = hiddenInfo,
-      isActive = isActive,
-      currencyCode = currencyCode,
-      mmpWeekday = mmpWeekday,
-      mmpWeekend = mmpWeekend,
-      mmpPrimetime = mmpPrimetime
+      isActive = isActive
     )
   }
   // unapply()
   {mbc =>
     import mbc._
-    Some((adnId, contractDate, suffix, isActive, hiddenInfo, currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime))
+    Some((adnId, contractDate, suffix, isActive, hiddenInfo))
   })
 
 
@@ -78,13 +70,14 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
     val syncResult = DB.withConnection { implicit c =>
       val contracts = MBillContract.findForAdn(adnId)
       val contractIds = contracts.map(_.id.get)
-      val mbtsGrouper = { mbt: MBillTariff => mbt.contractId }
+      val mbtsGrouper = { mbt: MBillContractSel => mbt.contractId }
       SysAdnNodeBillingArgs(
-        balanceOpt = MBillBalance.getByAdnId(adnId),
-        contracts = contracts,
-        txns = MBillTxn.findForContracts(contractIds),
-        feeTariffsMap = MBillTariffFee.getAll.groupBy(mbtsGrouper),
-        statTariffsMap = MBillTariffStat.getAll.groupBy(mbtsGrouper)
+        balanceOpt      = MBillBalance.getByAdnId(adnId),
+        contracts       = contracts,
+        txns            = MBillTxn.findForContracts(contractIds),
+        feeTariffsMap   = MBillTariffFee.getAll.groupBy(mbtsGrouper),
+        statTariffsMap  = MBillTariffStat.getAll.groupBy(mbtsGrouper),
+        dailyMmpsMap    = MBillMmpDaily.findByContractIds(contractIds).groupBy(mbtsGrouper)
       )
     }
     adnNodeOptFut map {

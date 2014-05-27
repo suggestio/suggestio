@@ -233,4 +233,9 @@ POST /sys/market/bts/new/:contractId     controllers.SysMarketBillingTariff.addS
 GET  /sys/market/bts/edit/:tariffId      controllers.SysMarketBillingTariff.editStatTariff(tariffId: Int)
 POST /sys/market/bts/edit/:tariffId      controllers.SysMarketBillingTariff.editStatTariffSubmit(tariffId: Int)
 POST /sys/market/bts/delete/:tariffId    controllers.SysMarketBillingTariff.deleteStatTariffSubmit(tariffId: Int)
+## Тарифы: посуточные mmp
+GET  /sys/market/tmmp/daily/new/:mbcId   controllers.SysMarketBillingMmp.createMmpDaily(mbcId: Int)
+POST /sys/market/tmmp/daily/new/:mbcId   controllers.SysMarketBillingMmp.createMmpDailySubmit(mbcId: Int)
+GET  /sys/market/tmmp/daily/edit/:mbmdId controllers.SysMarketBillingMmp.editMmpDaily(mbmdId: Int)
+POST /sys/market/tmmp/daily/edit/:mbmdId controllers.SysMarketBillingMmp.editMmpDailySubmit(mbmdId: Int)
 

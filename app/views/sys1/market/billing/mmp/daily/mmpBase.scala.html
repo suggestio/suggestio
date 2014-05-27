@@ -1,0 +1,12 @@
+@(title: String, mbc: MBillContract, nodeOpt: Option[MAdnNode] = None, hPathAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@hPathAfter1 = {
+  / @mbc.legalContractId / mmp
+  @hPathAfter
+}
+
+@sys1.market.billing.billingBase(
+  title = title,
+  nodeOpt = nodeOpt,
+  hPathAfter = Some(hPathAfter1)
+)(content)

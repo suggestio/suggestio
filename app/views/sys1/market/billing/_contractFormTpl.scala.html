@@ -1,4 +1,4 @@
-@(adnId: String, cf: Form[_], btnText: String, submitCall: Call)(implicit ctx: util.Context)
+@(adnId: String, cf: Form[_], btnText: String, submitCall: Call)(implicit ctx: Context)
 
 @* Шаблон формы добавления/редактирования контракта. *@
 @import helper._
@@ -28,26 +28,6 @@
     cf("hiddenInfo"),
     '_label -> "Служебные заметки",
     'title  -> "Отображаются только вам и другим администраторам suggest.io."
-  )
-
-  @inputText(
-    cf("currencyCode"),
-    '_label -> "Валюта контракта (RUB, USD, EUR, ...)"
-  )
-
-  @inputText(
-    cf("mmpWeekday"),
-    '_label -> "Стоимость мин.рекламного блока в день по будням"
-  )
-
-  @inputText(
-    cf("mmpWeekend"),
-    '_label -> "Стоимость мин.рекламного блока в день по выходным"
-  )
-
-  @inputText(
-    cf("mmpPrimetime"),
-    '_label -> "Стоимость мин.рекламного блока в день в прайм-тайм."
   )
 
   <input type="submit" value="@btnText"/>

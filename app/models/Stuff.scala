@@ -35,7 +35,8 @@ case class SysAdnNodeBillingArgs(
   contracts: Seq[MBillContract],
   txns: Seq[MBillTxn],
   feeTariffsMap: collection.Map[Int, Seq[MBillTariffFee]],
-  statTariffsMap: collection.Map[Int, Seq[MBillTariffStat]]
+  statTariffsMap: collection.Map[Int, Seq[MBillTariffStat]],
+  dailyMmpsMap: collection.Map[Int, Seq[MBillMmpDaily]]
 )
 
 

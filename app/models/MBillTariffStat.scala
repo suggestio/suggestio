@@ -14,7 +14,7 @@ import java.util.Currency
  * Description: Модель тарифов, где списания происходят по просмотрам/кликам (статистика).
  * Сама статистика по факту в списаниях не участвует, но списания жестко кореллируют с ней.
  */
-object MBillTariffStat extends TariffsFindByContract[MBillTariffStat] with TariffsAllEnabled[MBillTariffStat] {
+object MBillTariffStat extends FindByContract[MBillTariffStat] with TariffsAllEnabled[MBillTariffStat] {
   import SqlParser._
 
   override val TABLE_NAME = "bill_tariff_stat"
