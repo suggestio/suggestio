@@ -154,8 +154,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
             result
           }
           // Пора сохранять новые реквесты на размещение в базу.
-          val rdr0 = Redirect(routes.MarketAdv.advForAd(adId))
-          if (!advs2.isEmpty) {
+          val successMsg = if (!advs2.isEmpty) {
             DB.withTransaction { implicit c =>
               val mbc = MBillContract.findForAdn(request.producerId, isActive = Some(true)).head
               advs2.foreach { advEntry =>
@@ -172,10 +171,12 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
                 ).save
               }
             }
-            rdr0.flashing("success" -> "Запросы на размещение отправлены.")
+            "Запросы на размещение отправлены."
           } else {
-            rdr0.flashing("success" -> "Без изменений.")
+            "Без изменений."
           }
+          Redirect(routes.MarketAdv.advForAd(adId))
+            .flashing("success" -> successMsg)
         }
       }
     )

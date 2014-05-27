@@ -108,3 +108,29 @@ COMMENT ON COLUMN sio2.adv_req.prod_contract_id IS 'Номер договора 
 
 COMMIT;
 
+
+
+-- Заносим в договор колонки с ценами рекламных модулей.
+BEGIN;
+
+ALTER TABLE sio2.bill_contract
+  ADD COLUMN mmp_weekday real NOT NULL DEFAULT 100;
+ALTER TABLE sio2.bill_contract
+  ADD COLUMN mmp_weekend real NOT NULL DEFAULT 150;
+ALTER TABLE sio2.bill_contract
+  ADD COLUMN mmp_primetime real NOT NULL DEFAULT 200;
+ALTER TABLE sio2.bill_contract
+  ADD COLUMN currency_code character(3) NOT NULL DEFAULT 'RUB';
+COMMENT ON COLUMN sio2.bill_contract.mmp_weekday IS 'Цена минимального рекламного модуля в трудовыебудни.';
+COMMENT ON COLUMN sio2.bill_contract.mmp_weekend IS 'Цена минимального рекламного модуля в выходные дни.';
+COMMENT ON COLUMN sio2.bill_contract.mmp_primetime IS 'Цена минимального рекламного модуля в prime-time.';
+
+ALTER TABLE sio2.bill_contract
+   ALTER COLUMN mmp_weekday DROP DEFAULT;
+ALTER TABLE sio2.bill_contract
+   ALTER COLUMN mmp_weekend DROP DEFAULT;
+ALTER TABLE sio2.bill_contract
+   ALTER COLUMN mmp_primetime DROP DEFAULT;
+
+COMMIT;
+

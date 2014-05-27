@@ -26,12 +26,13 @@ object MBillContract extends SiowebSqlModelStatic[MBillContract] {
   val TABLE_NAME: String = "bill_contract"
 
   val rowParser = get[Pk[Int]]("id") ~ get[Int]("crand") ~ get[String]("adn_id") ~ get[DateTime]("contract_date") ~
-                  get[DateTime]("date_created") ~ get[Option[String]]("hidden_info") ~ get[Boolean]("is_active") ~
-                  get[Option[String]]("suffix") map {
-    case id ~ crand ~ adnId ~ contractDate ~ dateCreated ~ hiddenInfo ~ isActive ~ suffix =>
+    get[DateTime]("date_created") ~ get[Option[String]]("hidden_info") ~ get[Boolean]("is_active") ~ get[Option[String]]("suffix") ~
+    get[Float]("mmp_weekday") ~ get[Float]("mmp_weekend") ~ get[Float]("mmp_primetime") ~ get[String]("currency_code") map {
+    case id ~ crand ~ adnId ~ contractDate ~ dateCreated ~ hiddenInfo ~ isActive ~ suffix ~ mmpWeekday ~ mmpWeekend ~ mmpPrimetime ~ currencyCode =>
       MBillContract(
         id = id,  crand = crand,  adnId = adnId, contractDate = contractDate,
-        dateCreated = dateCreated,  hiddenInfo = hiddenInfo,  isActive = isActive, suffix = suffix
+        dateCreated = dateCreated,  hiddenInfo = hiddenInfo,  isActive = isActive, suffix = suffix,
+        mmpWeekday = mmpWeekday, mmpWeekend = mmpWeekend, mmpPrimetime = mmpPrimetime, currencyCode = currencyCode
       )
   }
 
@@ -155,13 +156,17 @@ import MBillContract._
 case class MBillContract(
   adnId         : String,
   var contractDate: DateTime,
+  mmpWeekday    : Float,
+  mmpWeekend    : Float,
+  mmpPrimetime  : Float,
+  currencyCode  : String = CurrencyCodeOpt.CURRENCY_CODE_DFLT,
   var suffix    : Option[String] = None,
   dateCreated   : DateTime = DateTime.now,
   var hiddenInfo: Option[String] = None,
   var isActive  : Boolean = true,
   crand         : Int = rnd.nextInt(999) + 1, // от 1 до 999. Чтоб не было 0, а то перепутают с 'O'.
   id            : Pk[Int] = NotAssigned
-) extends SqlModelSave[MBillContract] {
+) extends SqlModelSave[MBillContract] with CurrencyCode {
 
   def hasId: Boolean = id.isDefined
 

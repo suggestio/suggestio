@@ -44,22 +44,30 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
       .transform[Option[String]](
         {Some(_).filter(!_.isEmpty)},
         {_ getOrElse ""}
-      )
+      ),
+    "currencyCode"  -> default(text(minLength = 3, maxLength = 3), "RUB"),
+    "mmpWeekday"    -> floatM,
+    "mmpWeekend"    -> floatM,
+    "mmpPrimetime"  -> floatM
   )
   // apply()
-  {(adnId, dateContract, suffix, isActive, hiddenInfo) =>
+  {(adnId, dateContract, suffix, isActive, hiddenInfo, currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime) =>
     MBillContract(
       adnId = adnId,
       contractDate = dateContract,
       suffix = suffix,
       hiddenInfo = hiddenInfo,
-      isActive = isActive
+      isActive = isActive,
+      currencyCode = currencyCode,
+      mmpWeekday = mmpWeekday,
+      mmpWeekend = mmpWeekend,
+      mmpPrimetime = mmpPrimetime
     )
   }
   // unapply()
   {mbc =>
     import mbc._
-    Some((adnId, contractDate, suffix, isActive, hiddenInfo))
+    Some((adnId, contractDate, suffix, isActive, hiddenInfo, currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime))
   })
 
 
