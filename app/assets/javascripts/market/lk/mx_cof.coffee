@@ -971,6 +971,7 @@ market =
         statusbar : false,
         plugins: 'link, textcolor',
         toolbar: ["fontselect | fontsizeselect | alignleft aligncenter alignright | bold italic | forecolor backcolor | link" ],
+        content_css: "/assets/stylesheets/market/descr.css",
 
         setup: (editor) ->
           editor.on 'init', (e) ->

@@ -34,11 +34,12 @@
       }
 
       @offer.price.map { price =>
-        <div class="js-mvbl" data-connected-input="ad.offer.price" style="@_coordsStyleTpl(price, left = 12, top = 105)">
-        <div class="price" @_aovfStyleTpl(price, Block23.priceBf, "price")>
+        <div class="js-mvbl mvbl-price" data-connected-input="ad.offer.price">
+        <div class="price">
           <p>@formatPrice(price.value, price.currency)</p>
         </div>
         </div>
+        @_blockStyleTpl( mad.id, price, Block23.priceBf, "price", left = 12, top = 105  )
       }
     }
   </div>
