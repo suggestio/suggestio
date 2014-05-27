@@ -1,0 +1,22 @@
+@(mad: MAd, producer: MAdnNode, advs: Seq[MAdvI], adv2adn: Map[Int, MAdnNode])(implicit ctx: Context)
+
+@* Всплывающее окошко с информацией по размещению рекламной карточки. *@
+
+@import market.showcase._
+
+<div>
+  <h1>Информация</h1>
+
+  @_single_offer(mad, producer, isHidden = false)
+
+  <hr/>
+  <p>Размещение: TODO</p>
+  <p>Стоимость: TODO</p>
+
+  <hr/>
+  @_currentAdvsListTpl(advs, adv2adn)
+</div>
+
+
+
+
