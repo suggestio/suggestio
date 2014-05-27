@@ -969,7 +969,7 @@ market =
         width: 615,
         menubar: false,
         statusbar : false,
-        plugins: 'link, textcolor',
+        plugins: 'link, textcolor, paste',
         toolbar: ["fontselect | fontsizeselect | alignleft aligncenter alignright | bold italic | forecolor backcolor | link" ],
         content_css: "/assets/stylesheets/market/descr.css",
 
