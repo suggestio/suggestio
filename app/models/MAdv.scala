@@ -61,7 +61,7 @@ object MAdvModes extends Enumeration {
 }
 
 
-trait MAdvStatic[T] extends SiowebSqlModelStatic[T] {
+trait MAdvStatic[T] extends SqlModelStatic[T] {
 
   /**
    * Поиск по колонке adId, т.е. по id рекламной карточки.

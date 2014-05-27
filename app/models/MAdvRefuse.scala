@@ -59,7 +59,7 @@ case class MAdvRefuse(
   dateStatus    : DateTime = DateTime.now,
   dateCreated   : DateTime = DateTime.now,
   id            : Pk[Int] = NotAssigned
-) extends SqlModelSave[MAdvRefuse] with CurrencyCode with SiowebSqlModel[MAdvRefuse] with MAdvI {
+) extends SqlModelSave[MAdvRefuse] with CurrencyCode with SqlModelDelete with MAdvI {
 
   override def mode = MAdvModes.REFUSED
   override def hasId: Boolean = id.isDefined

@@ -10,7 +10,7 @@ import util.AnormPgArray._
  * Created: 18.04.14 10:13
  * Description: Общий код для sql-моделей sioweb.
  */
-trait SiowebSqlModelStatic[T] {
+trait SqlModelStatic[T] {
 
   /** Парсер ряда. */
   val rowParser: RowParser[T]
@@ -64,9 +64,15 @@ trait SiowebSqlModelStatic[T] {
       .as(rowParser *)
   }
 
-  /** Произвольный поиск. Генерится запрос на базе "select * from ..." и отправляется на исполнение. */
-  def findBy(where: String, policy: SelectPolicy, args: NamedParameter*)(implicit c: Connection) = {
-    val sb = new StringBuilder("SELECT * FROM ").append(TABLE_NAME).append(where)
+  /** Произвольный поиск с доступом к блокировкам.
+    * Генерится запрос на базе "select * from ..." и отправляется на исполнение.
+    * @param afterFrom SQL-часть запроса, идущая после "FROM $TABLE_NAME". В частности пустая строка.
+    * @param policy Политика блокировки.
+    * @param args Аргументы SQL-запроса. Тоже самое, что и в SQL.on().
+    * @return Список экземпляров модели в произвольном либо заданном порядке.
+    */
+  def findBy(afterFrom: String, policy: SelectPolicy, args: NamedParameter*)(implicit c: Connection) = {
+    val sb = new StringBuilder("SELECT * FROM ").append(TABLE_NAME).append(afterFrom)
     policy.append2sb(sb)
     SQL(sb.toString())
      .on(args : _*)
@@ -76,13 +82,16 @@ trait SiowebSqlModelStatic[T] {
 }
 
 
-trait SiowebSqlModel[T] {
+trait SqlModelDelete {
   def id: Pk[Int]
-  def companion: SiowebSqlModelStatic[T]
+  def companion: SqlModelStatic[_]
 
-  def delete(implicit c: Connection) = id match {
-    case Id(_id)  => companion.deleteById(_id)
-    case _        => 0
+  def delete(implicit c: Connection) = {
+    if (id.isDefined) {
+      companion.deleteById(id.get)
+    } else {
+      0
+    }
   }
 }
 

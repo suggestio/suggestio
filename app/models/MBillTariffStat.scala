@@ -76,7 +76,7 @@ case class MBillTariffStat(
   debitCount      : Int = 0,
   debitedTotal    : Float = 0F,
   var currencyCode: String = "RUB"
-) extends SqlModelSave[MBillTariffStat] with MBillContractSel with SiowebSqlModel[MBillTariffStat] with MBillTariff {
+) extends SqlModelSave[MBillTariffStat] with MBillContractSel with SqlModelDelete with MBillTariff {
   import MBillTariffStat._
 
   override def companion = MBillTariffStat

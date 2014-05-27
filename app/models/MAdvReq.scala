@@ -72,7 +72,7 @@ case class MAdvReq(
   onStartPage   : Boolean,
   dateCreated   : DateTime = DateTime.now(),
   id            : Pk[Int] = NotAssigned
-) extends SqlModelSave[MAdvReq] with CurrencyCode with SiowebSqlModel[MAdvReq] with MAdvI {
+) extends SqlModelSave[MAdvReq] with CurrencyCode with SqlModelDelete with MAdvI {
 
   override def mode = MAdvModes.REQ
   override def hasId = id.isDefined

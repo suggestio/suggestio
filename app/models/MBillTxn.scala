@@ -12,7 +12,7 @@ import java.sql.Connection
  * Created: 18.04.14 11:43
  * Description: Журнал транзакций по биллингу.
  */
-object MBillTxn extends SiowebSqlModelStatic[MBillTxn] {
+object MBillTxn extends SqlModelStatic[MBillTxn] {
   import SqlParser._
 
   val TABLE_NAME: String = "bill_txn"

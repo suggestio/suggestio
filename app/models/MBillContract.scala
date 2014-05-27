@@ -18,7 +18,7 @@ import io.suggest.util.TextUtil
  * Description: Биллинг: SQL-модель для работы со списком договоров.
  */
 // TODO Модель синхронная. Надо бы её рассинхронизировать, когда в asynchbase переедут на netty 4.x.
-object MBillContract extends SiowebSqlModelStatic[MBillContract] {
+object MBillContract extends SqlModelStatic[MBillContract] {
   import SqlParser._
 
   private val ID_FORMATTER = new DecimalFormat("000")
@@ -204,7 +204,7 @@ trait MBillContractSel {
 }
 
 
-trait FindByContract[T] extends SiowebSqlModelStatic[T] {
+trait FindByContract[T] extends SqlModelStatic[T] {
 
   /**
    * Найти все ряды для указанного номера договора.

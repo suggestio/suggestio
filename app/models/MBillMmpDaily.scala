@@ -38,9 +38,10 @@ case class MBillMmpDaily(
   mmpPrimetime  : Float,
   currencyCode  : String = CurrencyCodeOpt.CURRENCY_CODE_DFLT,
   id            : Pk[Int] = NotAssigned
-) extends SqlModelSave[MBillMmpDaily] with CurrencyCode with MBillContractSel {
+) extends SqlModelSave[MBillMmpDaily] with CurrencyCode with MBillContractSel with SqlModelDelete {
 
   override def hasId = id.isDefined
+  override def companion = MBillMmpDaily
 
   override def saveInsert(implicit c: Connection): MBillMmpDaily = {
     SQL("INSERT INTO " + TABLE_NAME + "(contract_id, currency_code, mmp_weekday, mmp_weekend, mmp_primetime) " +

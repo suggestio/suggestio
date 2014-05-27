@@ -81,7 +81,7 @@ case class MBillTariffFee(
   debitCount      : Int = 0,
   var fee         : Float,
   var feeCC       : String = "RUB"
-) extends SqlModelSave[MBillTariffFee] with MBillContractSel with SiowebSqlModel[MBillTariffFee] with MBillTariff {
+) extends SqlModelSave[MBillTariffFee] with MBillContractSel with SqlModelDelete with MBillTariff {
   import MBillTariffFee._
 
   override def companion = MBillTariffFee
