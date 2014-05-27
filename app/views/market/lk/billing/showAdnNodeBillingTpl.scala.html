@@ -87,13 +87,7 @@
       <div>
         <h4>Ставка тарифных планов</h4>
         @mmpDailyTariffs.map { mbmd =>
-          Соглашением между компанией CBCA и @Messages("amt.of.type." + adnNode.adn.memberType) @adnNode.meta.name
-          определены тарифные планы на @ctx.now.getYear год.
-          @defining( mbmd.currency ) { currency =>
-            <p>Будние дни: @formatPrice(mbmd.mmpWeekday, currency)</p>
-            <p>Выходные: @formatPrice(mbmd.mmpWeekend, currency)</p>
-            <p>Праймтайм: @formatPrice(mbmd.mmpPrimetime, currency)</p>
-          }
+          @_dailyMmpTariffPlanTpl(mbmd, adnNode)
         }
       </div>
     }
