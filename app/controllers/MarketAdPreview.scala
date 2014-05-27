@@ -93,7 +93,6 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
   import views.html.market.showcase._single_offer
 
   def adFormPreviewSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
-    import request.adnNode
     detectAdPreviewForm match {
       case Right((bc, adFormM)) =>
         adFormM.bindFromRequest().fold(
@@ -115,7 +114,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
               imgs <- imgsFut
             } yield {
               mad.imgs = imgs
-              Ok(_single_offer(mad, adnNode))
+              Ok(_single_offer(mad))
             }
           }
         )

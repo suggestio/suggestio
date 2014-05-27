@@ -1,4 +1,4 @@
-@(mmart: MAdnNode, ads: Seq[MAdT], shops: Map[String, MAdnNode], isNav:Boolean=false, isIndex:Boolean=false)(implicit ctx: util.Context)
+@(ads: Seq[MAdT], isNav: Boolean = false, isIndex : Boolean = false)(implicit ctx: util.Context)
 @if(ads.isEmpty) {
   @* рекламы в ТЦ нет *@
 } else {
@@ -7,10 +7,12 @@
     @if( isNav ){
       <a class="sm-offer-control @if( (mad eq ads.head) ){active}" href=""><span></span></a>
     } else {
-      @if( isIndex ){
-        @_single_index_offer(mad, shops.getOrElse(mad.producerId, mmart), isHidden = !(mad eq ads.head))
-      } else {
-        @_single_offer(mad, shops.getOrElse(mad.producerId, mmart), isHidden = !(mad eq ads.head))
+      @defining( !(mad eq ads.head) ) { isHidden =>
+        @if( isIndex ){
+          @_single_index_offer(mad, isHidden = isHidden)
+        } else {
+          @_single_offer(mad, isHidden = isHidden)
+        }
       }
     }
   }

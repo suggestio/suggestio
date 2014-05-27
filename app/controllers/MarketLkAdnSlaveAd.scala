@@ -126,7 +126,6 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
     MAd.searchAdsRt(req) map { mads =>
       Ok(_node._slaveNodeAdsTpl(
         msup = request.supNode,
-        mslave = request.slaveNode,
         mads = mads
       ))
     }

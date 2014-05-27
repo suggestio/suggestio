@@ -56,11 +56,11 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
   /** Страница управления размещением рекламной карточки. */
   def advForAd(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
-    _advFormFor(adId, advFormM).map { Ok(_) }
+    renderAdvFormFor(adId, advFormM).map { Ok(_) }
   }
 
   /** Общий для экшенов код подготовки данных и рендера страницы advFormTpl, которая содержит форму размещения. */
-  private def _advFormFor(adId: String, form: Form[List[AdvFormEntry]])(implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
+  private def renderAdvFormFor(adId: String, form: Form[List[AdvFormEntry]])(implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
     // Запуск асинхронных операций: подготовка списка узлов, на которые можно вообще возмонжо опубликовать карточку.
     val rcvrsFut = collectReceivers(request.producerId)
     // Работа с синхронными моделями.
@@ -116,7 +116,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     advFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"${logPrefix}form bind failed:\n${formatFormErrors(formWithErrors)}")
-        _advFormFor(adId, formWithErrors).map(NotAcceptable(_))
+        renderAdvFormFor(adId, formWithErrors).map(NotAcceptable(_))
       },
       {advs =>
         trace(logPrefix + "advs entries submitted: " + advs)
@@ -188,6 +188,28 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     MAdnNode.findByAllAdnRights(Seq(AdnRights.RECEIVER))
       // Самому себе через "управление размещением" публиковать нельзя.
       .map { _.filter(_.id.get != dropRcvrId) }
+  }
+
+
+  /**
+   * Рендер окна информации для карточки с точки зрения ресивера.
+   * @param adId id рекламной карточки
+   * @return
+   */
+  def advInfoWnd(adId: String, fromAdnId: String) = ThirdPartyAdAccess(adId, fromAdnId).apply { implicit request =>
+    val syncResult = if(request.isRcvrAccess) {
+      DB.withConnection { implicit c =>
+        val advsOk = MAdvOk.findByAdIdAndRcvr(adId, fromAdnId)
+        val advsReq = MAdvReq.findByAdIdAndRcvr(adId, fromAdnId)
+        val advsRefused = MAdvRefuse.findByAdIdAndRcvr(adId, fromAdnId)
+        (advsOk, advsReq, advsRefused)
+      }
+    } else {
+      (Nil, Nil, Nil)
+    }
+    val (advsOk, advsReq, advsRefused) = syncResult
+    val advs = advsOk ++ advsReq ++ advsRefused
+    Ok(_advInfoWndTpl(request.mad, advs))
   }
 
 }

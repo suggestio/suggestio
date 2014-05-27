@@ -1,4 +1,4 @@
-@(node: MAdnNode, myAds: Seq[MAdT] = Nil, fallbackLogo: Option[MImgInfoT] = None)(implicit ctx: util.Context)
+@(node: MAdnNode, myAds: Seq[MAdT] = Nil)(implicit ctx: util.Context)
 
 @* Список рекламных карточек для создателя рекламы. В нём галочки есть. *@
 
@@ -14,10 +14,8 @@
   @* Вывести рекламные карточки. *@
   @market.lk.ad._adsEditableListTpl(
     mads = myAds,
-    producer = node,
     addCall  = routes.MarketAd.createAd(node.id.get),
-    editCall = routes.MarketAd.editAd,
-    fallbackLogo = fallbackLogo
+    editCall = routes.MarketAd.editAd
   ) { mad =>
     @if( mad.disableReason.isEmpty ) {
       @* Галочки для управления отображением рекламной карточки магазина. *@

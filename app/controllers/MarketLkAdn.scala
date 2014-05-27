@@ -35,15 +35,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl {
    */
   def showAdnNode(adnId: String, newAdIdOpt: Option[String]) = IsAdnNodeAdmin(adnId).async { implicit request =>
     import request.adnNode
-    val fallbackLogoFut = adnNode.adn.supId match {
-      case Some(supId) =>
-        MAdnNodeCache.getByIdCached(supId) map {
-          _.flatMap(_.logoImgOpt)
-        }
-
-      case None => Future successful None
-    }
-    // TODO Вернуть проверку на супервайзинг узла, когда всё необходимое будет запилено.
+    // Супервайзинг узла приводит к рендеру ещё одного виджета
     val slavesFut: Future[Seq[MAdnNode]] = if(request.adnNode.adn.isSupervisor) {
       MAdnNode.findBySupId(adnId)
     } else {
@@ -62,7 +54,6 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl {
     for {
       mads      <- adsFut
       extAdOpt  <- extAdOptFut
-      fallbackLogo <- fallbackLogoFut
       slaves    <- slavesFut
     } yield {
       // Если есть карточка в extAdOpt, то надо добавить её в начало списка, который отсортирован по дате создания.
@@ -71,7 +62,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl {
       } else {
         mads
       }
-      Ok(adnNodeShowTpl(adnNode, mads2, slaves, fallbackLogo))
+      Ok(adnNodeShowTpl(adnNode, mads2, slaves))
     }
   }
 

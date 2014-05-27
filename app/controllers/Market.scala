@@ -1,6 +1,6 @@
 package controllers
 
-import _root_.util.billing.StatBillingQueueActor
+import util.billing.StatBillingQueueActor
 import util.qsb.AdSearch
 import util._
 import util.acl._
@@ -58,12 +58,13 @@ object Market extends SioController with PlayMacroLogsImpl {
 
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
-  def findAds(martId: String, adSearch: AdSearch) = marketAction(martId) { implicit request =>
+  def findAds(martId: String, adSearch: AdSearch) = MaybeAuth.async { implicit request =>
+    val mmcatsFut = MMartCategory.findTopForOwner(martId)
     val producersFut = Future.traverse(adSearch.producerIds) { MAdnNodeCache.getByIdCached }
       .map { _.flatMap(_.toList) }
     for {
-      mads <- MAd.searchAds(adSearch).map(groupNarrowAds)
-      rmd  <- request.marketDataFut
+      mads      <- MAd.searchAds(adSearch).map(groupNarrowAds)
+      mmcats    <- mmcatsFut
       producers <- producersFut
     } yield {
       val jsAction: String = if (adSearch.qOpt.isDefined) {
@@ -74,7 +75,7 @@ object Market extends SioController with PlayMacroLogsImpl {
         "findAds"
       }
       // TODO Хвост списка продьюсеров дропается, для рендера используется только один. Надо бы в шаблоне отработать эту ситуацию.
-      val html = findAdsTpl(request.mmart, mads, rmd.mshops, rmd.mmcats, adSearch, producers.headOption)
+      val html = findAdsTpl(mads, mmcats, adSearch, producers.headOption)
       jsonOk(html, jsAction)
     }
   }
@@ -126,6 +127,7 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   /** Action-composition для нужд ряда экшенов этого контроллера. Хранит в себе данные для рендере и делает
     * проверки наличия индекса и MMart. */
+  // TODO Надо бы заинлайнить и убрать все контейнеры и прочее добро. Это ускорит работу.
   private def marketAction(martId: String)(f: MarketRequest => Future[Result]) = MaybeAuth.async { implicit request =>
     // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
     val shopsFut = shopsMap(martId)

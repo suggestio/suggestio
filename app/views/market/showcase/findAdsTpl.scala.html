@@ -1,4 +1,4 @@
-@(mmart: MAdnNode, ads: Seq[MAd], shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory], adSearch:util.qsb.AdSearch, adProducerOpt: Option[MAdnNode])(implicit ctx: util.Context)
+@(ads: Seq[MAd], mmcats: Seq[MMartCategory], adSearch:util.qsb.AdSearch, adProducerOpt: Option[MAdnNode])(implicit ctx: util.Context)
 
 @if( !adSearch.producerIds.isEmpty ){
 
@@ -29,7 +29,7 @@
 
             <div class="sio-mart-node-offers-window__top-offset"></div>
             <div class="sio-mart-node-offers-window__single-ad-w-border">
-              @_single_offer(mad, shops.getOrElse(mad.producerId, mmart), false, false)
+              @_single_offer(mad, false, false)
 
             </div>
 
@@ -73,5 +73,5 @@
   }
 
 }else{
-  @_block_offers_list(mmart, ads, shops, true)
+  @_block_offers_list(ads, true)
 }

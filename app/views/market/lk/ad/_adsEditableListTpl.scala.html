@@ -1,4 +1,4 @@
-@(mads: Seq[MAdT], addCall: Call, editCall: String => Call, producer: MAdnNode, fallbackLogo: Option[MImgInfoT] = None)(content: MAdT => Html)(implicit ctx: util.Context)
+@(mads: Seq[MAdT], addCall: Call, editCall: String => Call)(content: MAdT => Html)(implicit ctx: util.Context)
 
 @* Встраиваемый список изменяемых рекламных карточек.
    isShownF содержит функцию, которая определяет, является ли текущая карточка отображаемой на момент рендера.
@@ -26,7 +26,7 @@
       <div class="ads-list-block__preview">
         @_adDisableReasonCoverTpl(ad.disableReason)
         <div class="ads-list-block__preview-container">
-          @market.showcase._single_offer(ad, producer, fallbackLogo)
+          @market.showcase._single_offer(ad)
         </div>
         <div class="ads-list-block__zigzag-mask"></div>
       </div>
