@@ -205,26 +205,29 @@ trait MBillContractSel {
 
 
 trait FindByContract[T] extends SiowebSqlModelStatic[T] {
+
   /**
-   * Найти все тарифы для указанного номера договора.
+   * Найти все ряды для указанного номера договора.
    * @param contractId id договора.
-   * @return Список тарифов в неопределённом порядке.
+   * @return Список рядов в неопределённом порядке.
    */
   def findByContractId(contractId: Int, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
-    val sb = new StringBuilder("SELECT * FROM ").append(TABLE_NAME).append(" WHERE contract_id = {contractId}")
-    policy.append2sb(sb)
-    SQL(sb.toString())
-     .on('contractId -> contractId)
-     .as(rowParser *)
+    findBy(" WHERE contract_id = {contractId}", policy, 'contractId -> contractId)
   }
 
   def findByContractIds(contractIds: Traversable[Int], policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
-    val sb = new StringBuilder("SELECT * FROM ").append(TABLE_NAME).append(" WHERE contract_id = ANY({contractIds})")
-    policy.append2sb(sb)
-    SQL(sb.toString())
-      .on('contractIds -> seqInt2pgArray(contractIds))
-      .as(rowParser *)
+    findBy(" WHERE contract_id = ANY({contractIds})", policy, 'contractIds -> seqInt2pgArray(contractIds))
   }
+
+  /**
+   * Найти все ряды, которые НЕ содержат указанный номер договора.
+   * @param contractId номер договора.
+   * @return Список рядов в неопределённом порядке.
+   */
+  def findByNotContractId(contractId: Int, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(" WHERE contract_id != {contractId}", policy, 'contractId -> contractId)
+  }
+
 }
 
 

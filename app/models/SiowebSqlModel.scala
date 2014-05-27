@@ -63,6 +63,16 @@ trait SiowebSqlModelStatic[T] {
     SQL("SELECT * FROM " + TABLE_NAME)
       .as(rowParser *)
   }
+
+  /** Произвольный поиск. Генерится запрос на базе "select * from ..." и отправляется на исполнение. */
+  def findBy(where: String, policy: SelectPolicy, args: NamedParameter*)(implicit c: Connection) = {
+    val sb = new StringBuilder("SELECT * FROM ").append(TABLE_NAME).append(where)
+    policy.append2sb(sb)
+    SQL(sb.toString())
+     .on(args : _*)
+     .as(rowParser *)
+  }
+
 }
 
 

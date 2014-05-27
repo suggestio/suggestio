@@ -1,0 +1,7 @@
+@(mbmds: Seq[MBillMmpDaily], adnNode: MAdnNode)(implicit ctx: Context)
+
+@* Рендер списка тарифных сеток (посуточная mmp-тарификация). *@
+
+@mbmds.map { mbmd =>
+  @_dailyMmpTariffPlanTpl(mbmd, adnNode)
+}

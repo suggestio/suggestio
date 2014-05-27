@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, mmpDailyTariffs: Seq[MBillMmpDaily], txns: Seq[MBillTxn], mbc: MBillContract)(implicit ctx: util.Context)
+@(adnNode: MAdnNode, mmpDailyTariffs: Seq[MBillMmpDaily], txns: Seq[MBillTxn], mbc: MBillContract, otherRcvrs: Seq[MAdnNode])(implicit ctx: util.Context)
 
 @* Страница с информацией по биллингу для узла рекламной сети. *@
 @import ctx._
@@ -82,15 +82,25 @@
     </div>
 
 
-    @* Посуточная mmp-тарифная сетка. *@
+    @* Посуточная mmp-тарифная сетка этого узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
     @if(!mmpDailyTariffs.isEmpty) {
       <div>
         <h4>Ставка тарифных планов</h4>
-        @mmpDailyTariffs.map { mbmd =>
-          @_dailyMmpTariffPlanTpl(mbmd, adnNode)
-        }
+        @_dailyMmpTariffPlansTpl(mmpDailyTariffs, adnNode)
       </div>
     }
+
+    @* Если продьюсер, то надо отобразить список узлов-ресиверов, на которые можно разместить рекламную карточку.
+       Содержимое узла (тарифная сетка) рендерится асинхронно при нажатии кнопки "развернуть" в списке. *@
+    @if(!otherRcvrs.isEmpty) {
+      @* Пока без вкладок, просто сплошным списком. *@
+      @otherRcvrs.map { rcvr =>
+        @rcvr.meta.name / @rcvr.meta.town
+        @* При развертывании элемента нужно слать запрос по указанной ссылке. При повторном развертывании нужно отображать уже полученную табличку тарифов. *@
+        <a href="@routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get)">Развернуть</a>
+      }
+    }
+
   </div>
 
 }

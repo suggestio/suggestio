@@ -39,7 +39,7 @@
       <div>
       @defining(dailyMmpsMap.get(contract.id.get) getOrElse Nil) { dmmps =>
         @if(!dmmps.isEmpty) {
-          <h4>Тарифные планы размещения рекламы посуточные</h4>
+          <h4>Тарифные планы размещения рекламы посуточные (@dmmps.size)</h4>
           <table>
             <tr>
               <th>#</th>
