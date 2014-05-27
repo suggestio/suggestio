@@ -10,6 +10,13 @@ import util.AnormPgArray._
  * Created: 18.04.14 10:13
  * Description: Общий код для sql-моделей sioweb.
  */
+
+object SqlModelStatic {
+  import SqlParser._
+
+  val boolColumnParser = get[Boolean]("bool")
+}
+
 trait SqlModelStatic[T] {
 
   /** Парсер ряда. */
