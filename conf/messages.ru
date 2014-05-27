@@ -73,7 +73,7 @@ ad.stat.action.v=Просмотр
 ad.stat.action.c=Клик
 
 
-lk.sl.enable_ad=Включить объявление
+lk.sl.enable_ad=Выводить
 lk.sl.d=Выводить в моём каталоге
 lk.sl.h=Выводить в общем каталоге
 lk.sl.m=Размещение на первом экране

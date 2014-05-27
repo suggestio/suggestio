@@ -15,13 +15,13 @@
     <a class="ads-list-block__link" href="@addCall" style="background: none;"></a>
     <div class="ads-list-block__preview ads-list-block__preview_add-new">
     </div>
-
   </div>
 
   @mads.zipWithIndex.map { case (ad, i) =>
-
+    @defining(i+2) { index =>
     @* TODO Уровни отображения какого получателя надо брать за основу? Пока берутся все адресаты рекламы. *@
-    <div class="ads-list__block ads-list-block @if(!ad.isPublished) {disabled}">
+
+    <div class="ads-list__block ads-list-block s-@index @if( index%4 == 0 ){ ads-list__block_no-margin } @if(!ad.isPublished) {disabled}">
 
       <div class="ads-list-block__preview">
         @_adDisableReasonCoverTpl(ad.disableReason)
@@ -36,7 +36,7 @@
       @content(ad)
 
     </div>
-
+    }
   }
 
   <div class="clear"></div>
