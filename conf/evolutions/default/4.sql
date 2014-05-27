@@ -42,7 +42,7 @@ CREATE TABLE sio2.adv (
   mode "char" NOT NULL, -- Режим текущего ряда. По сути, позволяет абстрактно разделять между собой ряды из _req, _ok и _refuse.
   on_start_page boolean NOT NULL,
   date_start timestamp with time zone NOT NULL,
-  date_end time with time zone NOT NULL,
+  date_end timestamp with time zone NOT NULL,
   prod_adn_id character varying(32) NOT NULL,
   rcvr_adn_id character varying(32) NOT NULL,
   CHECK (amount > 0)

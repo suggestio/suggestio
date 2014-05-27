@@ -27,7 +27,7 @@
         @adnNodes.iterator.zipWithIndex.map { case (node, i) =>
           @* числовой id нужен для использования list mapping, хотя в нашем случае вообще не обязателен. *@
           @defining(args.busyAdns.get(node.id.get)) { maybeBusyAdv =>
-          @defining(memberType.id * i) { mid =>
+          @defining((memberType.id + 1) * (i + 1)) { mid =>
             @if(maybeBusyAdv.isEmpty) {
               <input type="hidden" name="node[@mid].adnId" value="@node.id"/>
             }
@@ -41,17 +41,17 @@
                   @checkbox(af(s"node[$mid].advertise"), '_label -> "")
                 }</td>
               <td>@node.meta.name / @node.meta.town</td>
-              @* Далее, селект длительности и галочка появляются при выставлении первой галочки. *@
+
               <td>
-                <select @if(maybeBusyAdv.isEmpty) {name="node[@mid].period"}>
-                  @defining(maybeBusyAdv.map(_.isoPeriod)) { maybeCurrIsoPeriod =>
-                    @periodOption("P1D", "На 1 день", maybeCurrIsoPeriod)
-                    @periodOption("P3D", "На 3 дня", maybeCurrIsoPeriod)
-                    @periodOption("P1W", "На неделю", maybeCurrIsoPeriod)
-                    @periodOption("P1M", "На месяц", maybeCurrIsoPeriod)
-                  }
-                </select>
+                @if(maybeBusyAdv.isDefined) {
+                  @maybeBusyAdv.get.dateStart.toLocalDate - @maybeBusyAdv.get.dateEnd.toLocalDate
+                } else {
+                  @* Тут должен быть, селект-календарь длительности и галочка появляются при выставлении первой галочки. *@
+                  <input type="hidden" name="node[@mid].dateStart" value="2014-05-28"/>
+                  <input type="hidden" name="node[@mid].dateEnd" value="2014-05-29"/>
+                }
               </td>
+
               <td>@if(maybeBusyAdv.isDefined) {
                   <label>
                     На главном экране

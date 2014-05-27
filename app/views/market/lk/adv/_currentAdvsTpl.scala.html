@@ -14,7 +14,7 @@
     <strong>@node.meta.name / @node.meta.town</strong>
     @adv match {
       case advOk: MAdvOk => {
-        одобрил размещение. @_prettyDate(advOk.dateOk)
+        одобрил размещение. @_prettyDate(advOk.dateStatus)  @* dateStatus - одобрение, dateStart - начало размещения. *@
       }
       case advReq: MAdvReq => {
         рассматривает размещение.
