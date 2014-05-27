@@ -1,0 +1,8 @@
+@(mbmds: Seq[MBillMmpDaily], adnNode: MAdnNode)(implicit ctx: Context)
+
+@* Рендер окошка, которое должно бы отображаться при щелчке на имени узла в форме размещения рекламной карточки. *@
+
+<div>
+  Ставка тарифных планов @adnNode.meta.name / @adnNode.meta.town
+  @_dailyMmpTariffPlansTpl(mbmds, adnNode)
+</div>

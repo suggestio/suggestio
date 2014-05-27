@@ -38,7 +38,9 @@
                   <input type="hidden" name="node[@mid].adnId" value="@node.id"/>
                   @checkbox(af(s"node[$mid].advertise"), '_label -> "")
                 }</td>
-              <td>@node.meta.name / @node.meta.town</td>
+              <td>
+                 <a href="@routes.MarketLkBilling._renderNodeMbmdsWindow(node.id.get)">@node.meta.name</a> / @node.meta.town
+              </td>
 
               <td>
                 @if(maybeBusyAdv.isDefined) {

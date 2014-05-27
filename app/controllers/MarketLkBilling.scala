@@ -9,6 +9,7 @@ import play.api.Play.current
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
+import play.api.mvc.{RequestHeader, Result}
 
 /**
  * Suggest.io
@@ -77,11 +78,14 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
 
 
   /**
-   * Инлайновый рендер сеток тарифных планов.
-   * @param adnId id узла, к которому нужно найти и отрендерить посуточные тарифные сетки.
-   * @return inline выхлоп для отображения внутри какой-то страницы с тарифами.
+   * Одинаковые куски [[_renderNodeMbmds()]] и [[_renderNodeMbmdsWindow()]] вынесены в эту функцию.
+   * Она собирает данные для рендера шаблонов, относящихся к этим экшенам и дергает фунцию рендера, когда всё готово.
+   * @param adnId id узла.
+   * @param f функция вызова рендера результата.
+   * @return Фьючерс с результатом. Если нет узла, то 404.
    */
-  def _renderNodeMbmds(adnId: String) = IsAuth.async { implicit request =>
+  private def _prepareNodeMbmds(adnId: String)(f: (List[MBillMmpDaily], MAdnNode) => Result)(implicit request: RequestHeader): Future[Result] = {
+    // TODO По идее надо бы проверять узел на то, является ли он ресивером наверное?
     val adnNodeFut = MAdnNodeCache.getByIdCached(adnId)
     val mbdms = DB.withConnection { implicit c =>
       // TODO Opt Нам тут нужны только номера договоров (id), а не сами договоры.
@@ -91,9 +95,32 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
     }
     adnNodeFut.map {
       case Some(adnNode) =>
-        Ok(_dailyMmpTariffPlansTpl(mbdms, adnNode))
+        f(mbdms, adnNode)
 
       case None => http404AdHoc
+    }
+  }
+
+  /**
+   * Инлайновый рендер сеток тарифных планов.
+   * @param adnId id узла, к которому нужно найти и отрендерить посуточные тарифные сетки.
+   * @return inline выхлоп для отображения внутри какой-то страницы с тарифами.
+   */
+  def _renderNodeMbmds(adnId: String) = IsAuth.async { implicit request =>
+    _prepareNodeMbmds(adnId) { (mbdms, adnNode) =>
+      Ok(_dailyMmpTariffPlansTpl(mbdms, adnNode))
+    }
+  }
+
+
+  /**
+   * Тоже самое, что и [[_renderNodeMbmds()]], но ещё обрамляет всё дело в окно, пригодное для отображения юзеру
+   * в плавающей форме.
+   * @param adnId id просматриваемого узла.
+   */
+  def _renderNodeMbmdsWindow(adnId: String) = IsAuth.async { implicit request =>
+    _prepareNodeMbmds(adnId) { (mbdms, adnNode) =>
+      Ok(_dailyMmpsWindowTpl(mbdms, adnNode))
     }
   }
 
