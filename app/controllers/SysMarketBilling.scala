@@ -167,7 +167,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
           mbc0.save
         }
         Redirect(routes.SysMarketBilling.billingFor(mbc1.adnId))
-          .flashing("success" -> s"Изменения сохранены: #${mbc1.legalContractId}.")
+          .flashing("success" -> s"Изменения сохранены: #${mbc0.legalContractId}.")
       }
     )
   }
