@@ -22,15 +22,12 @@
     }
 
     @* Рендерим содержимое табов, т.е. таблички в рамках одной категории узла *@
-    @adnNodesMap.map { case (memberType, adnNodes) =>
-      <table>
+    <table>
+      @adnNodesMap.map { case (memberType, adnNodes) =>
         @adnNodes.iterator.zipWithIndex.map { case (node, i) =>
           @* числовой id нужен для использования list mapping, хотя в нашем случае вообще не обязателен. *@
           @defining(args.busyAdns.get(node.id.get)) { maybeBusyAdv =>
           @defining((memberType.id + 1) * (i + 1)) { mid =>
-            @if(maybeBusyAdv.isEmpty) {
-              <input type="hidden" name="node[@mid].adnId" value="@node.id"/>
-            }
             <tr>
               @* Галочка включения узла в публикацию. Если busy, то уже занято. *@
               <td>@if(maybeBusyAdv.isDefined) {
@@ -38,6 +35,7 @@
                   <input type="checkbox" checked disabled/>
                 } else {
                   @* Узел может принять рекламную карточку. *@
+                  <input type="hidden" name="node[@mid].adnId" value="@node.id"/>
                   @checkbox(af(s"node[$mid].advertise"), '_label -> "")
                 }</td>
               <td>@node.meta.name / @node.meta.town</td>
@@ -65,8 +63,8 @@
           }
           }
         }
-      </table>
-    }
+      }
+    </table>
 
   }
 
