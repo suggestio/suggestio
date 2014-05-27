@@ -26,8 +26,7 @@ object MBillContract extends SiowebSqlModelStatic[MBillContract] {
   val TABLE_NAME: String = "bill_contract"
 
   val rowParser = get[Pk[Int]]("id") ~ get[Int]("crand") ~ get[String]("adn_id") ~ get[DateTime]("contract_date") ~
-                  get[DateTime]("date_created") ~ get[Option[String]]("hidden_info") ~ get[Boolean]("is_active") ~
-                  get[Option[String]]("suffix") map {
+    get[DateTime]("date_created") ~ get[Option[String]]("hidden_info") ~ get[Boolean]("is_active") ~ get[Option[String]]("suffix") map {
     case id ~ crand ~ adnId ~ contractDate ~ dateCreated ~ hiddenInfo ~ isActive ~ suffix =>
       MBillContract(
         id = id,  crand = crand,  adnId = adnId, contractDate = contractDate,
@@ -203,3 +202,29 @@ trait MBillContractSel {
   def contractId: Int
   def contract(implicit c: Connection) = MBillContract.getById(contractId)
 }
+
+
+trait FindByContract[T] extends SiowebSqlModelStatic[T] {
+  /**
+   * Найти все тарифы для указанного номера договора.
+   * @param contractId id договора.
+   * @return Список тарифов в неопределённом порядке.
+   */
+  def findByContractId(contractId: Int, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    val sb = new StringBuilder("SELECT * FROM ").append(TABLE_NAME).append(" WHERE contract_id = {contractId}")
+    policy.append2sb(sb)
+    SQL(sb.toString())
+     .on('contractId -> contractId)
+     .as(rowParser *)
+  }
+
+  def findByContractIds(contractIds: Traversable[Int], policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    val sb = new StringBuilder("SELECT * FROM ").append(TABLE_NAME).append(" WHERE contract_id = ANY({contractIds})")
+    policy.append2sb(sb)
+    SQL(sb.toString())
+      .on('contractIds -> seqInt2pgArray(contractIds))
+      .as(rowParser *)
+  }
+}
+
+

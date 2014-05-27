@@ -44,30 +44,6 @@ object BTariffTypes extends Enumeration {
 }
 
 
-trait TariffsFindByContract[T] extends SiowebSqlModelStatic[T] {
-  /**
-   * Найти все тарифы для указанного номера договора.
-   * @param contractId id договора.
-   * @return Список тарифов в неопределённом порядке.
-   */
-  def findByContractId(contractId: Int, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
-    val sb = new StringBuilder("SELECT * FROM ").append(TABLE_NAME).append(" WHERE contract_id = {contractId}")
-    policy.append2sb(sb)
-    SQL(sb.toString())
-     .on('contractId -> contractId)
-     .as(rowParser *)
-  }
-
-  def findByContractIds(contractIds: Traversable[Int], policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
-    val sb = new StringBuilder("SELECT * FROM ").append(TABLE_NAME).append(" WHERE contract_id = ANY({contractIds})")
-    policy.append2sb(sb)
-    SQL(sb.toString())
-      .on('contractIds -> seqInt2pgArray(contractIds))
-      .as(rowParser *)
-  }
-}
-
-
 /** Добавить функции нахождения всех активных тарифов. */
 trait TariffsAllEnabled[T] extends SiowebSqlModelStatic[T] {
   def findAllEnabled(implicit c: Connection): List[T] = {
@@ -102,8 +78,7 @@ trait UpdateDebitCount {
 
 
 /** Интерфейс экземпляров тарифных моделей. */
-trait MBillTariff {
-  def contractId  : Int
+trait MBillTariff extends MBillContractSel {
   def name        : String
   def ttype       : BTariffType
   def isEnabled   : Boolean

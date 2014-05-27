@@ -1,0 +1,33 @@
+@(mdf: Form[_], btnText: String, submitCall: Call)(implicit ctx: Context)
+
+@* Костяк формы создания/редактирования посуточного mmp-тарификатора. *@
+
+@import ctx._
+@import helper._
+
+@form(submitCall) {
+
+  @inputText(
+    mdf("currencyCode"),
+    '_label -> "Валюта контракта (RUB, USD, EUR, ...)"
+  )
+
+  <h4>Минимальная стоимость модуля</h4>
+
+  @inputText(
+    mdf("mmpWeekday"),
+    '_label -> "Будни"
+  )
+
+  @inputText(
+    mdf("mmpWeekend"),
+    '_label -> "Выходные"
+  )
+
+  @inputText(
+    mdf("mmpPrimetime"),
+    '_label -> "Прайм"
+  )
+
+  <input type="submit" value="@btnText"/>
+}

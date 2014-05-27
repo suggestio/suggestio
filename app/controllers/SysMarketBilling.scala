@@ -70,13 +70,14 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
     val syncResult = DB.withConnection { implicit c =>
       val contracts = MBillContract.findForAdn(adnId)
       val contractIds = contracts.map(_.id.get)
-      val mbtsGrouper = { mbt: MBillTariff => mbt.contractId }
+      val mbtsGrouper = { mbt: MBillContractSel => mbt.contractId }
       SysAdnNodeBillingArgs(
-        balanceOpt = MBillBalance.getByAdnId(adnId),
-        contracts = contracts,
-        txns = MBillTxn.findForContracts(contractIds),
-        feeTariffsMap = MBillTariffFee.getAll.groupBy(mbtsGrouper),
-        statTariffsMap = MBillTariffStat.getAll.groupBy(mbtsGrouper)
+        balanceOpt      = MBillBalance.getByAdnId(adnId),
+        contracts       = contracts,
+        txns            = MBillTxn.findForContracts(contractIds),
+        feeTariffsMap   = MBillTariffFee.getAll.groupBy(mbtsGrouper),
+        statTariffsMap  = MBillTariffStat.getAll.groupBy(mbtsGrouper),
+        dailyMmpsMap    = MBillMmpDaily.findByContractIds(contractIds).groupBy(mbtsGrouper)
       )
     }
     adnNodeOptFut map {

@@ -89,7 +89,7 @@ GET  /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublish
 POST /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialogSubmit(adId)
 # Адвертайзинг: размещение рекламы на узлах-получателях
 GET  /m/lk/adv/:adId/ctl                controllers.MarketAdv.advForAd(adId)
-POST /m/lk/adv/:adId/add                controllers.MarketAdv.advFormSubmit(adId)
+POST /m/lk/adv/:adId/ctl                controllers.MarketAdv.advFormSubmit(adId)
 
 # Личный кабинет владельца ТЦ
 GET  /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopForm(martId)
@@ -233,4 +233,9 @@ POST /sys/market/bts/new/:contractId     controllers.SysMarketBillingTariff.addS
 GET  /sys/market/bts/edit/:tariffId      controllers.SysMarketBillingTariff.editStatTariff(tariffId: Int)
 POST /sys/market/bts/edit/:tariffId      controllers.SysMarketBillingTariff.editStatTariffSubmit(tariffId: Int)
 POST /sys/market/bts/delete/:tariffId    controllers.SysMarketBillingTariff.deleteStatTariffSubmit(tariffId: Int)
+## Тарифы: посуточные mmp
+GET  /sys/market/tmmp/daily/new/:mbcId   controllers.SysMarketBillingMmp.createMmpDaily(mbcId: Int)
+POST /sys/market/tmmp/daily/new/:mbcId   controllers.SysMarketBillingMmp.createMmpDailySubmit(mbcId: Int)
+GET  /sys/market/tmmp/daily/edit/:mbmdId controllers.SysMarketBillingMmp.editMmpDaily(mbmdId: Int)
+POST /sys/market/tmmp/daily/edit/:mbmdId controllers.SysMarketBillingMmp.editMmpDailySubmit(mbmdId: Int)
 

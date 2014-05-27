@@ -35,6 +35,37 @@
       }
 
 
+      @* Рендер посуточных mmp-тарификаторов *@
+      <div>
+      @defining(dailyMmpsMap.get(contract.id.get) getOrElse Nil) { dmmps =>
+        @if(!dmmps.isEmpty) {
+          <h4>Тарифные планы размещения рекламы посуточные</h4>
+          <table>
+            <tr>
+              <th>#</th>
+              <th>Валюта</th>
+              <th>Будни</th>
+              <th>Выходные</th>
+              <th>Прайм</th>
+              <th>Действия</th>
+            </tr>
+            @dmmps.map { dmmp =>
+              <tr>
+                <td>@dmmp.id.get</td>
+                <td>@dmmp.currencyCode</td>
+                <td>@dmmp.mmpWeekday</td>
+                <td>@dmmp.mmpWeekend</td>
+                <td>@dmmp.mmpPrimetime</td>
+                <td><a href="@routes.SysMarketBillingMmp.editMmpDaily(dmmp.id.get)">Редактировать</a></td>
+              </tr>
+            }
+          </table>
+        }
+        <a href="@routes.SysMarketBillingMmp.createMmpDaily(contract.id.get)">Создать посуточный mmp-тарифный план...</a>
+      }
+      </div>
+
+
       @defining(feeTariffsMap.get(contract.id.get).getOrElse(Nil)) { tariffs =>
         @if( !tariffs.isEmpty ) {
           <h4 title="Тарифы абон.платы используются для периодического списания денег со счета по договору.">

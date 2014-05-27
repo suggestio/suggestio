@@ -15,12 +15,16 @@ object CurrencyCodeOpt {
   val CURRENCY_CODE_DFLT = "RUB"
 }
 
-/** Опциональное поле currencyCode, подразумевающее дефолтовую валюту. */
-trait CurrencyCodeOpt {
-  def currencyCodeOpt : Option[String]
 
-  def currencyCode = currencyCodeOpt getOrElse CurrencyCodeOpt.CURRENCY_CODE_DFLT
+trait CurrencyCode {
+  def currencyCode: String
   def currency = Currency.getInstance(currencyCode)
+}
+
+/** Опциональное поле currencyCode, подразумевающее дефолтовую валюту. */
+trait CurrencyCodeOpt extends CurrencyCode {
+  def currencyCodeOpt : Option[String]
+  def currencyCode = currencyCodeOpt getOrElse CurrencyCodeOpt.CURRENCY_CODE_DFLT
 }
 
 
@@ -31,7 +35,8 @@ case class SysAdnNodeBillingArgs(
   contracts: Seq[MBillContract],
   txns: Seq[MBillTxn],
   feeTariffsMap: collection.Map[Int, Seq[MBillTariffFee]],
-  statTariffsMap: collection.Map[Int, Seq[MBillTariffStat]]
+  statTariffsMap: collection.Map[Int, Seq[MBillTariffStat]],
+  dailyMmpsMap: collection.Map[Int, Seq[MBillMmpDaily]]
 )
 
 
