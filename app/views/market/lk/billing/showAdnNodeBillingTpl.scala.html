@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, feeTariffs: Seq[MBillTariffFee], txns: Seq[MBillTxn], mbc: MBillContract)(implicit ctx: util.Context)
+@(adnNode: MAdnNode, mmpDailyTariffs: Seq[MBillMmpDaily], txns: Seq[MBillTxn], mbc: MBillContract)(implicit ctx: util.Context)
 
 @* Страница с информацией по биллингу для узла рекламной сети. *@
 @import ctx._
@@ -35,41 +35,6 @@
 
       }
 
-
-      @feeTariffs.headOption.map { tariff =>
-
-        @tariff.nextPayDt.map { npd =>
-          <td>
-            <div class="border-line-vertical f-left"></div>
-            <div class="ovh">
-              <span class="gray font-12">Списание средств:</span>
-            </div>
-          </td>
-          <td>
-            <div class="ovh">
-              <span class="value" data-js-class="value" title="@_prettyDate(npd).toString.trim">@numericDate(npd)</span>
-            </div>
-          </td>
-        }
-
-        <td>
-          <div class="border-line-vertical f-left"></div>
-          <div class="ovh">
-            <span class="gray font-12">Сумма списания:</span>
-          </div>
-        </td>
-        <td>
-          <div class="ovh">
-            @tariff match {
-              case mbtf: MBillTariffFee => {
-                <span class="value">@formatPrice(mbtf.fee, mbtf.feeCurrency)</span>
-              }
-            }
-            <span class="value font-12">(Тариф: @tariff.name)</span>
-          </div>
-        </td>
-
-    }
     </table>
     <div class="border-line"></div>
 
@@ -116,6 +81,22 @@
 
     </div>
 
+
+    @* Посуточная mmp-тарифная сетка. *@
+    @if(!mmpDailyTariffs.isEmpty) {
+      <div>
+        <h4>Ставка тарифных планов</h4>
+        @mmpDailyTariffs.map { mbmd =>
+          Соглашением между компанией CBCA и @Messages("amt.of.type." + adnNode.adn.memberType) @adnNode.meta.name
+          определены тарифные планы на @ctx.now.getYear год.
+          @defining( mbmd.currency ) { currency =>
+            <p>Будние дни: @formatPrice(mbmd.mmpWeekday, currency)</p>
+            <p>Выходные: @formatPrice(mbmd.mmpWeekend, currency)</p>
+            <p>Праймтайм: @formatPrice(mbmd.mmpPrimetime, currency)</p>
+          }
+        }
+      </div>
+    }
   </div>
 
 }

@@ -40,14 +40,15 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
   def showAdnNodeBilling(adnId: String) = IsAdnNodeAdmin(adnId).apply { implicit request =>
     val billInfoOpt = DB.withConnection { implicit c =>
       MBillContract.findForAdn(adnId, isActive = Some(true)).headOption.map { mbc =>
-        val txns = MBillTxn.findForContract(mbc.id.get)
-        val tariffs = MBillTariffFee.findByContractId(mbc.id.get)
-        (mbc, txns, tariffs)
+        val contractId = mbc.id.get
+        val txns = MBillTxn.findForContract(contractId)
+        val mbmds = MBillMmpDaily.findByContractId(contractId)
+        (mbc, txns, mbmds)
       }
     }
     billInfoOpt match {
-      case Some((mbc, txns, tariffs)) =>
-        Ok(showAdnNodeBillingTpl(request.adnNode, tariffs, txns, mbc))
+      case Some((mbc, txns, mbmds)) =>
+        Ok(showAdnNodeBillingTpl(request.adnNode, mbmds, txns, mbc))
 
       case None =>
         warn(s"showAdnNodeBilling($adnId): No active contracts found for node, but billing page requested by user ${request.pwOpt} ref=${request.headers.get("Referer")}")
