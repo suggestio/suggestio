@@ -25,7 +25,7 @@ object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
-  /** Биндинг формы для daly-тарификатора. */
+  /** Маппинг формы для daly-тарификатора. */
   val mmpDailyFormM = Form(mapping(
     "currencyCode"  -> default(text(minLength = 3, maxLength = 3), "RUB"),
     "mmpWeekday"    -> floatM,
@@ -47,6 +47,9 @@ object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
   })
 
 
+  /** Рендер страницы создания нового посуточного mmp-тарификтора.
+    * @param contractId номер договора.
+    */
   def createMmpDaily(contractId: Int) = IsSuperuserContract(contractId).async { implicit request =>
     _createMmpDaily(mmpDailyFormM)
       .map(Ok(_))
@@ -58,6 +61,10 @@ object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
     }
   }
 
+  /**
+   * Сабмит формы создания нового посуточного mmp-тарифного плана.
+   * @param contractId номер договора.
+   */
   def createMmpDailySubmit(contractId: Int) = IsSuperuserContract(contractId).async { implicit request =>
     mmpDailyFormM.bindFromRequest().fold(
       {formWithErrors =>
@@ -77,6 +84,10 @@ object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
   }
 
 
+  /**
+   * Рендер страницы с формой редактирования посуточного mmp-тарифного плана.
+   * @param mmpdId id mmp-тарифного плана.
+   */
   def editMmpDaily(mmpdId: Int) = IsSuperuser.async { implicit request =>
     _editMmpDaily(mmpdId, mmpDailyFormM)
       .map(Ok(_))
@@ -96,6 +107,10 @@ object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
     }
   }
 
+  /**
+   * Сабмит формы редактирования mmp-тарифного плана.
+   * @param mmpdId id mmp-тарифного плана.
+   */
   def editMmpDailySubmit(mmpdId: Int) = IsSuperuser.async { implicit request =>
     mmpDailyFormM.bindFromRequest().fold(
       {formWithErrors =>
