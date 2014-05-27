@@ -3,7 +3,7 @@
 @import util.TplDataFormatUtil._
 @import common._
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl7"@mad.colors.get(Block7.saleMaskColorBf.name).map { saleColor => style="border-color: #@saleColor"} data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl7 sm-block@mad.id" @mad.colors.get(Block7.saleMaskColorBf.name).map { saleColor => style="border-color: #@saleColor"} data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   <div class="color-bg"@mad.colors.get(Block7.saleMaskColorBf.name).map { saleColor => style="background: #@saleColor"}></div>
   <div class="sale-mask abs"@mad.colors.get(Block7.saleMaskColorBf.name).map { saleColor => style="color: #@saleColor"}></div>
@@ -16,14 +16,20 @@
 
     <div class="info">
       @offer.text1.map { text1 =>
-        <div @_aovfStyleTpl(text1, Block7.titleBf, "title")>
+        <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title">
+        <div class="title">
           @Html(text1.value)
         </div>
+        </div>
+        @_blockStyleTpl( mad.id, text1, Block7.titleBf, "title", left = 18, top = 24  )
       }
       @offer.price.map { price =>
-        <div @_aovfStyleTpl(price, Block7.priceBf, "price")>
+        <div class="js-mvbl mvbl-price" data-connected-input="ad.offer.price">
+        <div class="price">
           @formatPrice(price.value, price.currency)
         </div>
+        </div>
+        @_blockStyleTpl( mad.id, price, Block7.priceBf, "price", left = 18, top = 54  )
       }
     </div>
 

@@ -28,7 +28,9 @@
         )
 
         <!--<div class="mask"></div>-->
-        <img class="bg" src="@mad.imgs.get(Block2.BG_IMG_FN).map { img =>@routes.Img.getImg(img.filename) }.getOrElse(routes.Assets.at("images/market/blocks/tpl2-bg.jpg"))"/>
+        <div class="bg" style="overflow: hidden; height: 200px;">
+          <img style="height: auto;" src="@mad.imgs.get(Block2.BG_IMG_FN).map { img =>@routes.Img.getImg(img.filename) }.getOrElse(routes.Assets.at("images/market/blocks/tpl2-bg.jpg"))"/>
+        </div>
       </div>
 
       <div class="info" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(Block2.borderColorBf.name, Block2.borderColorBf.anyDefaultValue)">

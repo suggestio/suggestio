@@ -11,19 +11,23 @@
   <img class="bg abs" src="@mad.imgs.get(Block8.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl6-bg.jpg"))" />
 
 
-  <div class="info abs">
+  <div class="info">
     @mad.offers.headOption.map { offer =>
       @offer.text1.map { text1 =>
+        <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title">
         <div class="title">
           @Html(text1.value)
         </div>
-        @_blockStyleTpl( mad.id, text1, Block8.titleBf, "title", left = 18, top = 24  )
+        </div>
+        @_blockStyleTpl( mad.id, text1, Block8.titleBf, "title", left = 18, top = 160  )
       }
       @offer.price.map { price =>
+        <div class="js-mvbl mvbl-price" data-connected-input="ad.offer.price">
         <div class="price">
           @formatPrice(price.value, price.currency)
         </div>
-        @_blockStyleTpl( mad.id, price, Block8.priceBf, "price", left = 18, top = 24  )
+        </div>
+        @_blockStyleTpl( mad.id, price, Block8.priceBf, "price", left = 18, top = 210  )
       }
     }
 
