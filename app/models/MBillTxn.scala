@@ -86,7 +86,7 @@ case class MBillTxn(
    */
   def save(implicit c: Connection): MBillTxn = {
     SQL("INSERT INTO " + TABLE_NAME + "(contract_id, amount, currency, date_paid, date_processed, payment_comment, txn_uid, ad_id, comission_pc)" +
-        " VALUES({contractId}, {amount}, {currencyCode}, {datePaid}, {dateProcessed}, {paymentComment}, {txnUid}, {adId}), {comissionPc}")
+        " VALUES({contractId}, {amount}, {currencyCode}, {datePaid}, {dateProcessed}, {paymentComment}, {txnUid}, {adId}, {comissionPc})")
       .on('contractId -> contractId, 'amount -> amount, 'currencyCode -> currencyCodeOpt,
           'datePaid -> datePaid, 'dateProcessed -> dateProcessed, 'paymentComment -> paymentComment,
           'txnUid -> txnUid, 'adId -> adId, 'comissionPc -> comissionPc)
