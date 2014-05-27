@@ -7,6 +7,7 @@
 @import controllers.MarketLkAdnSlaveAd.HideShopAdActions._
 @import util.FormHelpers._
 @import util.acl.CanSuperviseNode._
+@import market.showcase._
 
 @helper.javascriptRouter("jsRoutes2")(
   routes.javascript.MarketLkAdnSlaveAd.adPublishDialog
@@ -20,9 +21,7 @@
   <div class="content">
 
     <div class="ad-preview">
-
-        @market.showcase._single_offer(mad, mslave, fallbackLogo = msup.logoImgOpt)
-
+      @_single_offer(mad)
     </div>
 
     @* Для супервизора доступны кнопки управления рекламной карточкой. *@

@@ -1,4 +1,4 @@
-@(node: MAdnNode, myAds: Seq[MAdT] = Nil, slaves: Seq[MAdnNode] = Nil, fallbackLogo: Option[MImgInfoT] = None)(implicit ctx: util.Context)
+@(node: MAdnNode, myAds: Seq[MAdT] = Nil, slaves: Seq[MAdnNode] = Nil)(implicit ctx: util.Context)
 
 @* Заглавная страница узла рекламной сети в личном кабинете. *@
 
@@ -87,7 +87,7 @@
 
     @* Для тех, кто может создавать свою рекламу, рисуем список своих рекламных карточек с галочками. *@
     @if(node.adn.isProducer) {
-      @_myAdsTpl(node, myAds, fallbackLogo)
+      @_myAdsTpl(node, myAds)
 
       @* Ссылка на demo web site. *@
 

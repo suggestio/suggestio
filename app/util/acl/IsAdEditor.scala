@@ -8,6 +8,9 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import com.fasterxml.jackson.annotation.JsonIgnore
 import IsAdnNodeAdmin.onUnauth
+import play.api.Play.current
+import play.api.db.DB
+import util.PlayMacroLogsImpl
 
 /**
  * Suggest.io
@@ -16,7 +19,9 @@ import IsAdnNodeAdmin.onUnauth
  * Description: Проверка прав на управление рекламной карточкой.
  */
 
-object IsAdEditor {
+object IsAdEditor extends PlayMacroLogsImpl {
+
+  import LOGGER._
 
   /**
    * Определить, можно ли пропускать реквест на исполнение экшена.
@@ -27,30 +32,39 @@ object IsAdEditor {
    * @return None если нельзя. Some([[RequestWithAd]]) если можно исполнять реквест.
    */
   private def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A], srmFut: Future[SioReqMd]): Future[Option[RequestWithAd[A]]] = {
-    if (PersonWrapper isSuperuser pwOpt) {
-      for {
-        adnNodeOpt <- MAdnNodeCache.getByIdCached(mad.producerId)
-        srm <- srmFut
-      } yield {
-        Some(RequestWithAd(mad, request, pwOpt, srm, adnNodeOpt.get))
-      }
+    val hasAdv = DB.withConnection { implicit c =>
+      MAdvOk.hasAdvUntilNow(mad.id.get)  ||  MAdvReq.hasAdvUntilNow(mad.id.get)
+    }
+    trace(s"maybeAllowed(${mad.id.get}): ad has advs = $hasAdv")
+    if (hasAdv) {
+      // Если объява уже где-то опубликована, то значит редактировать её нельзя.
+      Future successful None
     } else {
-      pwOpt match {
-        case Some(pw) =>
-          for {
-            adnNodeOpt <- MAdnNodeCache.getByIdCached(mad.producerId)
-            srm <- srmFut
-          } yield {
-            adnNodeOpt flatMap { adnNode =>
-              if (adnNode.personIds contains pw.personId) {
-                Some(RequestWithAd(mad, request, pwOpt, srm, adnNode))
-              } else {
-                None
+      if (PersonWrapper isSuperuser pwOpt) {
+        for {
+          adnNodeOpt <- MAdnNodeCache.getByIdCached(mad.producerId)
+          srm <- srmFut
+        } yield {
+          Some(RequestWithAd(mad, request, pwOpt, srm, adnNodeOpt.get))
+        }
+      } else {
+        pwOpt match {
+          case Some(pw) =>
+            for {
+              adnNodeOpt <- MAdnNodeCache.getByIdCached(mad.producerId)
+              srm <- srmFut
+            } yield {
+              adnNodeOpt flatMap { adnNode =>
+                if (adnNode.personIds contains pw.personId) {
+                  Some(RequestWithAd(mad, request, pwOpt, srm, adnNode))
+                } else {
+                  None
+                }
               }
             }
-          }
 
-        case None => Future successful None
+          case None => Future successful None
+        }
       }
     }
   }

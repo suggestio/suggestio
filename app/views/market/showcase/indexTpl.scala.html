@@ -34,7 +34,7 @@
   <div class="sio-mart__index-offers__container" id="sioMartIndexGridLayout">
     <div id="sioMartIndexGrid" style="padding-bottom: 30px">
 
-      @_block_offers_list(mmart, ads, shops, true)
+      @_block_offers_list(ads, true)
 
       @*for(i <- 0 to 0) {
         <div class="sm-block-spacer" data-width="140" data-height="140" style="background: #fff; display: none; width: 140px; height: 140px; position: absolute;"></div>
@@ -53,10 +53,10 @@
 </div>
 
 @* Окно с выбором категорий *@
-@_categories_w_search(mmcats,mmart)
+@_categories_w_search(mmcats, mmart)
 
 @* Окно с предупреждением о выходе из Sio.Market *@
 @_exit_screen()
 
 @* Окно с выбором магазина *@
-@_shop_list(shops,mmart)
+@_shop_list(shops, mmart)

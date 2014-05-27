@@ -1,0 +1,28 @@
+@(advs: Seq[MAdvI], adv2adn: Map[Int, MAdnNode])(implicit ctx: Context)
+
+@* Список размещений какой-то рекламной карточки. *@
+
+@import MAdvModes._
+@import ctx._
+@import datetime._
+@import util.TplDataFormatUtil._
+
+@advs.map { adv =>
+  @adv2adn.get(adv.id.get).map { node =>
+    @Messages("amt.of.type." + node.adn.memberType)
+    <strong>@node.meta.name / @node.meta.town</strong>
+    @adv match {
+      case advOk: MAdvOk => {
+        одобрил размещение. @_prettyDate(advOk.dateStatus)  @* dateStatus - одобрение, dateStart - начало размещения. *@
+      }
+      case advReq: MAdvReq => {
+        рассматривает размещение.
+      }
+      case advRefused: MAdvRefuse => {
+        отменил размещение. @advRefused.reason
+      }
+    }
+  }
+
+}
+

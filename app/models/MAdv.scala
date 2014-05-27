@@ -1,13 +1,11 @@
 package models
 
 import anorm._
-import org.joda.time.{Period, DateTime}
+import org.joda.time.DateTime
 import util.AnormJodaTime._
-import util.AnormPgInterval._
-import org.postgresql.util.PGInterval
+import util.AnormPgArray._
 import java.sql.Connection
 import java.util.Currency
-import org.joda.time.format.ISOPeriodFormat
 
 /**
  * Suggest.io
@@ -72,5 +70,31 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
     SQL("SELECT * FROM " + TABLE_NAME + " WHERE ad_id = {adId}")
       .on('adId -> adId)
       .as(rowParser *)
+  }
+
+  /**
+   * Найти ряды по карточке и адресату запроса размещения.
+   * @param adId id карточки.
+   * @param rcvrId id получателя.
+   * @param policy Политика блокировок.
+   * @return Список подходящих рядов в неопределённом порядке.
+   */
+  def findByAdIdAndRcvr(adId: String, rcvrId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(" WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId}", policy, 'adId -> adId, 'rcvrId -> rcvrId)
+  }
+
+  def findByAdIdAndRcvrs(adId: String, rcvrIds: Traversable[String], policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(" WHERE ad_id = {adId} AND rcvr_adn_id = ANY({rcvrIds})", policy, 'rcvrIds -> strings2pgArray(rcvrIds), 'ad_id -> adId)
+  }
+
+  /**
+   * Есть ли в текущей adv-модели ряд, который относится к указанной рекламной карточке
+   * @param adId id рекламной карточки.
+   * @return true, если в таблице есть хотя бы один подходящий ряд.
+   */
+  def hasAdvUntilNow(adId: String)(implicit c: Connection): Boolean = {
+    SQL("SELECT count(*) > 0 AS bool FROM " + TABLE_NAME + " WHERE ad_id = {adId} AND date_end >= now() LIMIT 1")
+      .on('adId -> adId)
+      .as(SqlModelStatic.boolColumnParser single)
   }
 }

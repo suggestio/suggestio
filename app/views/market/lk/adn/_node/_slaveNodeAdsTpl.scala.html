@@ -1,6 +1,7 @@
-@(msup: MAdnNode, mslave: MAdnNode, mads: Seq[MAdT])(implicit ctx: util.Context)
+@(msup: MAdnNode, mads: Seq[MAdT])(implicit ctx: util.Context)
 
 @import market.lk.ad._
+@import market.showcase._
 
 @if(mads)  {
   @mads.zipWithIndex.map { case (mad, i) =>
@@ -11,9 +12,13 @@
         @_adDisableReasonCoverTpl(mad.disableReason)
 
         <a class="ads-list-block__link js-tc-edit" href="@routes.MarketLkAdnSlaveAd.showSlaveAd(mad.id.get)"></a>
+        @* Для отображения окошка информации по размещению надо дергать эту ссылку:
+           routes.MarketAdv.advInfoWnd(adId, powAdnId)
+           где powAdnId - adnId узла, с точки зрения которого смотрим на этот узел.
+        *@
 
         <div class="ads-list-block__preview-container">
-          @market.showcase._single_offer(mad, mslave, fallbackLogo = msup.logoImgOpt)
+          @_single_offer(mad)
         </div>
 
       </div>
