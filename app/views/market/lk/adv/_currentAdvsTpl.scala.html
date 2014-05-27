@@ -25,16 +25,14 @@
     }
   }
 
-  <h3>Заблокировано денег</h3>
-  @if(blockedSums.isEmpty) {
-    @formatPrice(0F, java.util.Currency.getInstance(CurrencyCodeOpt.CURRENCY_CODE_DFLT))
-  } else {
-    @blockedSums.map { case (amount, currency) =>
-      @formatPrice(amount, currency)
-    }
-  }
 }
 
 
-
-
+<h3>Заблокировано денег</h3>
+@if(blockedSums.isEmpty) {
+  @formatPrice(0F, java.util.Currency.getInstance(CurrencyCodeOpt.CURRENCY_CODE_DFLT))
+} else {
+  @blockedSums.map { case (amount, currency) =>
+    @formatPrice(amount, currency)
+  }
+}

@@ -75,6 +75,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       (advsOk, advsReq, advsRefused, blockedSums)
     }
     val (advsOk, advsReq, advsRefused, blockedSums) = syncResult
+    trace(s"_advFormFor($adId): advsOk[${advsOk.size}] advsReq[${advsReq.size}] advsRefused[${advsRefused.size}] blockedSums=${blockedSums.mkString(",")}")
     val advs = (advsReq ++ advsRefused ++ advsOk).sortBy(_.dateCreated)
     // Собираем карту adv.id -> rcvrId. Она нужна для сборки карты adv.id -> rcvr.
     val reqAdnIds = advsReq.map {
