@@ -52,7 +52,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   }
 
   /** Комиссия s.io за размещение рекламной карточки. */
-  val SIO_COMISSION_SHARE = configuration.getDouble("adv.req.share.sio").map(_.toFloat).getOrElse(0.30F)
+  val SIO_COMISSION_SHARE = configuration.getDouble("adv.req.share.sio").map(_.toFloat) getOrElse 0.300000F
 
   /** Страница управления размещением рекламной карточки. */
   def advForAd(adId: String) = CanAdvertiseAd(adId).async { implicit request =>

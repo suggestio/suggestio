@@ -1,0 +1,30 @@
+@(mads: Seq[MAdT], coverDisableReason: Boolean)(postContent: MAdT => Html)(implicit ctx: util.Context)
+
+@* Заготовка списка рекламных карточек на странице узла рекламной сети.
+   postContent содержит функцию, которая генерит верстку для каждого элемента списка.
+   coverDisableReason = false позволяет игнорировать наличие disableReason при рендере. *@
+
+@import ctx._
+@import AdShowLevels._
+@import market.showcase._
+
+@mads.map { mad =>
+
+  <div class="ads-list__block ads-list-block">
+
+    <div class="ads-list-block__preview">
+      @if(coverDisableReason) {
+        @_adDisableReasonCoverTpl(mad.disableReason)
+      }
+      <div class="ads-list-block__preview-container">
+        @_single_offer(mad)
+      </div>
+      <div class="ads-list-block__zigzag-mask"></div>
+    </div>
+
+    @postContent(mad)
+
+  </div>
+
+}
+

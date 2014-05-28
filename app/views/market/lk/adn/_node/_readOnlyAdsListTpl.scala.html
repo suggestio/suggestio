@@ -1,0 +1,15 @@
+@(mads: Seq[MAdT] = Nil, povAdnIdOpt: Option[String])(implicit ctx: util.Context)
+
+@* Список рекламных карточек при просмотре чужого узла. При щелчке по карточке должна появится инфа по размещению
+   с точки зрения узла povAdnIdOpt. *@
+
+@import market.lk.ad._
+
+@_adsListOuterTpl {
+  @_adsListTpl(mads, coverDisableReason = false) { mad =>
+    @* Если задан POV-узел, то отрендерить ссылку, которая отображает инфу по размещению карточки. *@
+    @povAdnIdOpt.map { povAdnId =>
+      <a href="@routes.MarketAdv.advInfoWnd(mad.id.get, povAdnId)">Нажмите для просмотра информации</a>
+    }
+  }
+}
