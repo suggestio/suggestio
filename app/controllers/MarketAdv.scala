@@ -15,6 +15,7 @@ import play.api.data.Form
 import play.api.templates.HtmlFormat
 import play.api.mvc.{Result, AnyContent}
 import java.sql.SQLException
+import io.suggest.ym.parsers.Price
 
 /**
  * Suggest.io
@@ -367,8 +368,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       val prodMbbUpdated = MBillBalance.updateBlocked(prodAdnId, -amount0)
       assert(prodMbbUpdated == 1, "Failed to debit blocked amount for producer " + prodAdnId)
 
-      // Запилить транзакцию списания для продьюсера
       val now = DateTime.now
+      // Запилить транзакцию списания для продьюсера
       val prodTxn = MBillTxn(
         contractId      = prodContract.id.get,
         amount          = -amount0,
@@ -382,7 +383,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         .headOption
         .getOrElse {
           warn(s"advReqAcceptSubmit($advReqId): Creating new contract for adv. award receiver...")
-          MBillContract(rcvrAdnId, contractDate = DateTime.now, isActive = true, suffix = Some("CEO")).save
+          MBillContract(rcvrAdnId, contractDate = now, isActive = true, suffix = Some("CEO")).save
         }
       val amount1 = rcvrContract.sioComission * amount0
       assert(amount1 <= amount0, "Comissioned amount must be less or equal than source amount.")
@@ -405,7 +406,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       MAdvOk(
         request.advReq,
         comission1 = Some(rcvrContract.sioComission),
-        dateStatus1 = DateTime.now,
+        dateStatus1 = now,
         prodTxnId = prodTxn.id.get,
         rcvrTxnId = Some(rcvrTxn.id.get),
         isOnline = false
