@@ -10,11 +10,22 @@
 
 @_currentAdvsListTpl(advs, adv2adn)
 
-<h3>Заблокировано денег</h3>
-@if(blockedSums.isEmpty) {
-  @formatPrice(0F, java.util.Currency.getInstance(CurrencyCodeOpt.CURRENCY_CODE_DFLT))
-} else {
-  @blockedSums.map { case (amount, currency) =>
-    @formatPrice(amount, currency)
-  }
-}
+<div class="advs-info-block">
+
+  <div class="advs-info-block__section advs-info-block__section_left">&nbsp;</div>
+  <div class="advs-info-block__section advs-info-block__section_center">&nbsp;</div>
+  <div class="advs-info-block__section advs-info-block__section_right">
+
+    <h3>Заблокировано денег</h3>
+    @if(blockedSums.isEmpty) {
+      @formatPrice(0F, java.util.Currency.getInstance(CurrencyCodeOpt.CURRENCY_CODE_DFLT))
+    } else {
+      @blockedSums.map { case (amount, currency) =>
+        @formatPrice(amount, currency)
+      }
+    }
+  </div>
+
+  <div class="clear"></div>
+
+</div>
