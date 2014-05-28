@@ -32,6 +32,7 @@ object MAdv {
     get[DateTime]("date_created") ~ get[Option[Float]]("comission") ~ ADV_MODE_PARSER ~ get[Boolean]("on_start_page") ~
     get[DateTime]("date_start") ~ get[DateTime]("date_end") ~ PROD_ADN_ID_PARSER ~ get[String]("rcvr_adn_id")
 
+  val COUNT_PARSER = get[Long]("c")
 }
 
 
@@ -109,5 +110,17 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
     SQL("SELECT DISTINCT prod_adn_id FROM " + TABLE_NAME + " WHERE rcvr_adn_id = {rcvrAdnId} AND date_end >= now()")
      .on('rcvrAdnId -> rcvrAdnId)
      .as(MAdv.PROD_ADN_ID_PARSER *)
+  }
+
+
+  /**
+   * Посчитать кол-во рядов, относящихся к указанному ресиверу.
+   * @param rcvrAdnId adn id узла-ресивера.
+   * @return Неотрицательно кол-во.
+   */
+  def countForRcvr(rcvrAdnId: String)(implicit c: Connection): Long = {
+    SQL("SELECT count(*) AS c FROM " + TABLE_NAME + " WHERE rcvr_adn_id = {rcvrAdnId}")
+      .on('rcvrAdnId -> rcvrAdnId)
+      .as(MAdv.COUNT_PARSER single)
   }
 }

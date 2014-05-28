@@ -56,17 +56,18 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl {
         case _ => Future successful None
       }
       // Нужно узнать, есть ли рекламодатели у указанного узла.
-      val advertisersFut: Future[Seq[MAdnNode]] = if(request.isMyNode && adnNode.adn.isReceiver) {
+      val (advReqsCount, advertisersFut): (Long, Future[Seq[MAdnNode]]) = if(request.isMyNode && adnNode.adn.isReceiver) {
         val syncResult = DB.withConnection { implicit c =>
           val okAdnIds = MAdvOk.findAllProducersForRcvr(adnId)
           val reqAdnIds = MAdvReq.findAllProducersForRcvr(adnId)
-          (okAdnIds, reqAdnIds)
+          val reqsCount = MAdvReq.countForRcvr(adnId)
+          (okAdnIds, reqAdnIds, reqsCount)
         }
-        val (okAdnIds, reqAdnIds) = syncResult
+        val (okAdnIds, reqAdnIds, reqsCount) = syncResult
         val advAdnIds = (okAdnIds ++ reqAdnIds).distinct
-        MAdnNode.multiGet(advAdnIds)
+        reqsCount -> MAdnNode.multiGet(advAdnIds) // TODO Opt надо задействовать кеш в multiget'e.
       } else {
-        Future successful Nil
+        0L -> Future.successful(Nil)
       }
       // Дождаться всех фьючерсов и отрендерить результат.
       for {
@@ -87,7 +88,8 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl {
           slaves      = slaves,
           isMyNode    = request.isMyNode,
           advertisers = advertisers,
-          povAdnIdOpt = povAdnIdOpt
+          povAdnIdOpt = povAdnIdOpt,
+          advReqsCount = advReqsCount
         ))
       }
     }
