@@ -42,8 +42,9 @@ object MmpDailyBilling {
         walkDaysAndPrice(day1, acc1)
       }
     }
-    val amount = walkDaysAndPrice(dateStart, 0F)
-    Price(amount, rcvrPricing.currency)
+    val amount1 = walkDaysAndPrice(dateStart, 0F)
+    val amountAllBlocks = blockModulesCount * amount1
+    Price(amountAllBlocks, rcvrPricing.currency)
   }
 
 
