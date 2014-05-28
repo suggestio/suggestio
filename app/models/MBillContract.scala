@@ -21,7 +21,7 @@ import io.suggest.util.TextUtil
 object MBillContract extends SqlModelStatic[MBillContract] {
   import SqlParser._
 
-  private val ID_FORMATTER = new DecimalFormat("000")
+  private def idFormatter = new DecimalFormat("000")
 
   val TABLE_NAME: String = "bill_contract"
 
@@ -95,15 +95,17 @@ object MBillContract extends SqlModelStatic[MBillContract] {
 
   /** Распарсить номера договоров из строки. */
   def parseLegalContractId(text: String): List[LegalContractId] = {
-    LEGAL_CONTRACT_ID_RE.findAllIn(text).foldLeft[List[LegalContractId]](Nil) { (acc, e) =>
-      val LEGAL_CONTRACT_ID_RE(idStr, crandStr, suffixRaw) = e
-      val suffix = if (suffixRaw == null || suffixRaw.isEmpty) {
-        None
-      } else {
-        Some(suffixRaw.tail)
+    LEGAL_CONTRACT_ID_RE.findAllIn(text)
+      .foldLeft[List[LegalContractId]](Nil) { (acc, e) =>
+        val LEGAL_CONTRACT_ID_RE(idStr, crandStr, suffixRaw) = e
+        val suffix = if (suffixRaw == null || suffixRaw.isEmpty) {
+          None
+        } else {
+          Some(suffixRaw.tail)
+        }
+        LegalContractId(idStr.toInt, crand = crandStr.toInt, suffix = suffix, raw = e) :: acc
       }
-      LegalContractId(idStr.toInt, crand = crandStr.toInt, suffix = suffix, raw = e) :: acc
-    }.reverse
+      .reverse
   }
 
   /** Визуально сравнить два суффикса, чтобы они совпадали. */
@@ -120,9 +122,12 @@ object MBillContract extends SqlModelStatic[MBillContract] {
 
   /** Напечатать строкой номер договора на основе переданных идентификаторов. */
   def formatLegalContractId(id: Int, crand: Int, suffix: Option[String]): String = {
-    val idFmt = ID_FORMATTER.format(id)
-    val sb = new StringBuilder(idFmt)
-    sb.append('-').append(crand)
+    val fmt = idFormatter
+    val idStr = fmt format id
+    val sb = new StringBuilder(idStr)
+    // Нужно добавить нули в начале crand
+    val crandStr = fmt format crand
+    sb.append('-').append(crandStr)
     if (suffix.isDefined)
       sb.append('/').append(suffix.get)
     sb.toString()

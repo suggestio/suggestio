@@ -1,9 +1,11 @@
-@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None, backHref:String="")(content: Html)(implicit ctx: util.Context)
+@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None, backHref: Option[Call] = None)(content: Html)(implicit ctx: util.Context)
 
-@market.lk.lkBase(title = title) {
+@market.lk.lkBase(title = title, adnIdOpt = adnIdOpt, headAfter = headAfter) {
 <div class="title-wrap">
   <div class="center">
-    <a class="back-but" href="@backHref" title="Вернуться назад в магазин">&nbsp;</a>
+    @backHref.map { bh =>
+      <a class="back-but" href="@bh" title="Вернуться назад">&nbsp;</a>
+    }
     <div class="title-inner">
       Управление рекламной
     </div>
