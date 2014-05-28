@@ -25,25 +25,32 @@ object IsAdnNodeAdmin {
     )
   }
 
-
-  def checkAdnNodeCreds(adnNodeOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
+  def checkAdnNodeCreds(adnNodeOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Either[Option[MAdnNode], MAdnNode]] = {
     adnNodeOptFut map { adnNodeOpt =>
-      adnNodeOpt flatMap { adnNode =>
+      adnNodeOpt.fold [Either[Option[MAdnNode], MAdnNode]] (Left(None)) { adnNode =>
         val isAllowed = PersonWrapper.isSuperuser(pwOpt) || {
           pwOpt.isDefined && (adnNode.personIds contains pwOpt.get.personId)
         }
         if (isAllowed) {
-          Some(adnNode)
+          Right(adnNode)
         } else {
-          None
+          Left(adnNodeOpt)
         }
       }
     }
   }
 
+  def checkAdnNodeCredsOpt(adnNodeOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
+    checkAdnNodeCreds(adnNodeOptFut, pwOpt) map {
+      case Right(adnNode) => Some(adnNode)
+      case _ => None
+    }
+  }
+
+
   def isAdnNodeAdmin(adnId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
     val fut = MAdnNodeCache.getByIdCached(adnId)
-    checkAdnNodeCreds(fut, pwOpt)
+    checkAdnNodeCredsOpt(fut, pwOpt)
   }
 
 }
@@ -52,14 +59,14 @@ object IsAdnNodeAdmin {
 import IsAdnNodeAdmin.onUnauth
 
 /** В реквесте содержится магазин, если всё ок. */
-case class IsAdnNodeAdmin(adnId: String) extends ActionBuilder[AbstractRequestForAdnNodeAdm] {
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNodeAdm[A]) => Future[Result]): Future[Result] = {
+case class IsAdnNodeAdmin(adnId: String) extends ActionBuilder[AbstractRequestForAdnNode] {
+  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOptAdn(pwOpt, adnId)
     IsAdnNodeAdmin.isAdnNodeAdmin(adnId, pwOpt) flatMap {
       case Some(adnNode) =>
         srmFut flatMap { srm =>
-          val req1 = RequestForAdnNodeAdm(adnNode, request, pwOpt, srm)
+          val req1 = RequestForAdnNode(adnNode, isMyNode = true, request, pwOpt, srm)
           block(req1)
         }
 
@@ -70,10 +77,48 @@ case class IsAdnNodeAdmin(adnId: String) extends ActionBuilder[AbstractRequestFo
 
 
 
-abstract class AbstractRequestForAdnNodeAdm[A](request: Request[A])
+abstract class AbstractRequestForAdnNode[A](request: Request[A])
   extends AbstractRequestWithPwOpt(request) {
   def adnNode: MAdnNode
+  def isMyNode: Boolean
 }
 
-case class RequestForAdnNodeAdm[A](adnNode: MAdnNode, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
-  extends AbstractRequestForAdnNodeAdm(request)
+case class RequestForAdnNode[A](adnNode: MAdnNode, isMyNode: Boolean, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
+  extends AbstractRequestForAdnNode(request)
+
+
+/**
+ * Доступ к узлу, к которому НЕ обязательно есть права на админство.
+ * @param adnId узел.
+ */
+case class AdnNodeAccess(adnId: String) extends ActionBuilder[AbstractRequestForAdnNode] {
+  override protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
+    PersonWrapper.getFromRequest(request) match {
+      case pwOpt @ Some(pw) =>
+        val adnNodeOptFut = MAdnNodeCache.getByIdCached(adnId)
+        IsAdnNodeAdmin.checkAdnNodeCreds(adnNodeOptFut, pwOpt) flatMap {
+          // Это админ узла
+          case Right(adnNode) =>
+            SioReqMd.fromPwOptAdn(pwOpt, adnId) flatMap { srm =>
+              val req1 = RequestForAdnNode(adnNode, isMyNode = true, request, pwOpt, srm)
+              block(req1)
+            }
+
+          // Узел существует, но он не относится к текущему залогиненному юзеру.
+          case Left(Some(adnNode)) =>
+            SioReqMd.fromPwOpt(pwOpt) flatMap { srm =>
+              val req1 = RequestForAdnNode(adnNode, isMyNode = false, request, pwOpt, srm)
+              block(req1)
+            }
+
+          // Узел не существует.
+          case Left(None) =>
+            Future successful Results.NotFound
+        }
+
+      // Отправить анонима на страницу логина.
+      case None => IsAuth.onUnauth(request)
+    }
+
+  }
+}

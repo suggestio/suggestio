@@ -120,7 +120,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
 
 
   /** Страница с формой редактирования магазина. Арендатору не доступны некоторые поля. */
-  def editShopForm(implicit request: AbstractRequestForAdnNodeAdm[_]): Future[Result] = {
+  def editShopForm(implicit request: AbstractRequestForAdnNode[_]): Future[Result] = {
     import request.adnNode
     // TODO Если магазин удалён из рекламной сети или не имеет своего ТЦ, то это как должно выражаться?
     val martId = adnNode.adn.supId.get
@@ -136,7 +136,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
   }
 
   /** Сабмит формы редактирования магазина арендатором. */
-  def editShopFormSubmit(implicit request: AbstractRequestForAdnNodeAdm[_]): Future[Result] = {
+  def editShopFormSubmit(implicit request: AbstractRequestForAdnNode[_]): Future[Result] = {
     import request.adnNode
     limitedShopFormM.bindFromRequest().fold(
       {formWithErrors =>

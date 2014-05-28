@@ -115,7 +115,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
 
 
   /** Страница с формой редактирования узла-лидера. */
-  private def editAdnLeader(implicit request: AbstractRequestForAdnNodeAdm[_]): Future[Result] = {
+  private def editAdnLeader(implicit request: AbstractRequestForAdnNode[_]): Future[Result] = {
     import request.adnNode
     getWelcomeAdOpt(adnNode) map { welcomeAdOpt =>
       val martLogoOpt = adnNode.logoImgOpt.map { img =>
@@ -129,7 +129,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
 
 
   /** Сабмит формы редактирования узла-лидера. */
-  private def editAdnLeaderSubmit(implicit request: AbstractRequestForAdnNodeAdm[_]): Future[Result] = {
+  private def editAdnLeaderSubmit(implicit request: AbstractRequestForAdnNode[_]): Future[Result] = {
     import request.adnNode
     martFormM.bindFromRequest().fold(
       {formWithErrors =>

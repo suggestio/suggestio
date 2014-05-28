@@ -1,4 +1,4 @@
-@(node: MAdnNode, mads: Seq[MAdT] = Nil, slaves: Seq[MAdnNode] = Nil, advertisers: Seq[MAdnNode] = Nil, isMyNode: Boolean = true, povAdnIdOpt: Option[String] = None)(implicit ctx: Context)
+@(node: MAdnNode, mads: Seq[MAdT], slaves: Seq[MAdnNode], advertisers: Seq[MAdnNode] = Nil, isMyNode: Boolean, povAdnIdOpt: Option[String])(implicit ctx: Context)
 
 @* Заглавная страница узла рекламной сети в личных кабинетах.
    Если isMyNode, то идёт рендер управляемого узла, и povAdnIdOpt игнорируется.
@@ -119,7 +119,7 @@
 
 
     @* Ресиверу надо отрендерить список его рекламодателей, если они есть. *@
-    @if(isMyNode && node.adn.isReceiver && !advertisers.isEmpty) {
+    @if(isMyNode && !advertisers.isEmpty) {
       <h5>Рекламодатели</h5>
       @_advertisersListTpl(advertisers, povAdnIdOpt = node.id)
     }

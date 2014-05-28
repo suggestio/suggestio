@@ -25,10 +25,12 @@ object MAdv {
     Currency.getInstance(cc)
   }
 
+  val PROD_ADN_ID_PARSER = get[String]("prod_adn_id")
+
   /** Базовый парсер для колонок таблиц ad7ing_*. */
   val ROW_PARSER_BASE = get[Pk[Int]]("id") ~ get[String]("ad_id") ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
     get[DateTime]("date_created") ~ get[Option[Float]]("comission") ~ ADV_MODE_PARSER ~ get[Boolean]("on_start_page") ~
-    get[DateTime]("date_start") ~ get[DateTime]("date_end") ~ get[String]("prod_adn_id") ~ get[String]("rcvr_adn_id")
+    get[DateTime]("date_start") ~ get[DateTime]("date_end") ~ PROD_ADN_ID_PARSER ~ get[String]("rcvr_adn_id")
 
 }
 
@@ -96,5 +98,16 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
     SQL("SELECT count(*) > 0 AS bool FROM " + TABLE_NAME + " WHERE ad_id = {adId} AND date_end >= now() LIMIT 1")
       .on('adId -> adId)
       .as(SqlModelStatic.boolColumnParser single)
+  }
+
+  /**
+   * Найти всех продьюсеров (рекламодателей) для указанного ресивера.
+   * @param rcvrAdnId adn id узла-ресивера.
+   * @return Список adn id продьюсеров (узлов-рекламодателей) в неопределённом порядке
+   */
+  def findAllProducersForRcvr(rcvrAdnId: String)(implicit c: Connection): List[String] = {
+    SQL("SELECT DISTINCT prod_adn_id FROM " + TABLE_NAME + " WHERE rcvr_adn_id = {rcvrAdnId} AND date_end >= now()")
+     .on('rcvrAdnId -> rcvrAdnId)
+     .as(MAdv.PROD_ADN_ID_PARSER *)
   }
 }

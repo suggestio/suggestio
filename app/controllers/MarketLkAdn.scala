@@ -1,9 +1,10 @@
 package controllers
 
-import _root_.util.qsb.AdSearch
+import util.qsb.AdSearch
 import util.PlayMacroLogsImpl
 import util.acl._
 import models._
+import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import scala.concurrent.Future
@@ -16,6 +17,7 @@ import play.api.data.Forms._
 import util.FormUtil._
 import play.api.libs.json._
 import io.suggest.ym.model.common.AdShowLevels
+import play.api.db.DB
 
 /**
  * Suggest.io
@@ -35,10 +37,10 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl {
    * @param povAdnIdOpt С точки зрения какого узла идёт просмотр указанного узла.
    */
   def showAdnNode(adnId: String, newAdIdOpt: Option[String], povAdnIdOpt: Option[String]) = {
-    IsAdnNodeAdmin(adnId).async { implicit request =>
+    AdnNodeAccess(adnId).async { implicit request =>
       import request.adnNode
       // Супервайзинг узла приводит к рендеру ещё одного виджета
-      val slavesFut: Future[Seq[MAdnNode]] = if(request.adnNode.adn.isSupervisor) {
+      val slavesFut: Future[Seq[MAdnNode]] = if(request.isMyNode && request.adnNode.adn.isSupervisor) {
         MAdnNode.findBySupId(adnId)
       } else {
         Future successful Nil
@@ -46,17 +48,32 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl {
       val adsFut = MAd.findForProducerRt(adnId)
       // Бывает, что добавлена новая карточка (но индекс ещё не сделал refresh). Нужно её найти и отобразить:
       val extAdOptFut = newAdIdOpt match {
-        case Some(newAdId) => MAd.getById(newAdId)
-          .map { _.filter { mad =>
-          mad.producerId == adnId  ||  mad.receivers.valuesIterator.exists(_.receiverId == adnId)
-        } }
-        case None => Future successful None
+        case Some(newAdId) if request.isMyNode =>
+          MAd.getById(newAdId)
+           .map { _.filter { mad =>
+              mad.producerId == adnId  ||  mad.receivers.valuesIterator.exists(_.receiverId == adnId)
+           } }
+        case _ => Future successful None
+      }
+      // Нужно узнать, есть ли рекламодатели у указанного узла.
+      val advertisersFut: Future[Seq[MAdnNode]] = if(request.isMyNode && adnNode.adn.isReceiver) {
+        val syncResult = DB.withConnection { implicit c =>
+          val okAdnIds = MAdvOk.findAllProducersForRcvr(adnId)
+          val reqAdnIds = MAdvReq.findAllProducersForRcvr(adnId)
+          (okAdnIds, reqAdnIds)
+        }
+        val (okAdnIds, reqAdnIds) = syncResult
+        val advAdnIds = (okAdnIds ++ reqAdnIds).distinct
+        MAdnNode.multiGet(advAdnIds)
+      } else {
+        Future successful Nil
       }
       // Дождаться всех фьючерсов и отрендерить результат.
       for {
-        mads      <- adsFut
-        extAdOpt  <- extAdOptFut
-        slaves    <- slavesFut
+        mads        <- adsFut
+        extAdOpt    <- extAdOptFut
+        slaves      <- slavesFut
+        advertisers <- advertisersFut
       } yield {
         // Если есть карточка в extAdOpt, то надо добавить её в начало списка, который отсортирован по дате создания.
         val mads2 = if (extAdOpt.isDefined  &&  mads.headOption.flatMap(_.id) != newAdIdOpt) {
@@ -64,7 +81,14 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl {
         } else {
           mads
         }
-        Ok(adnNodeShowTpl(adnNode, mads2, slaves))
+        Ok(adnNodeShowTpl(
+          node        = adnNode,
+          mads        = mads2,
+          slaves      = slaves,
+          isMyNode    = request.isMyNode,
+          advertisers = advertisers,
+          povAdnIdOpt = povAdnIdOpt
+        ))
       }
     }
   }

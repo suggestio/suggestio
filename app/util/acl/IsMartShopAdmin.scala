@@ -26,7 +26,7 @@ object IsShopAdm extends controllers.ShopMartCompat {
    */
   def isShopAdminFull(shopId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
     val fut = getShopByIdCache(shopId)
-    IsAdnNodeAdmin.checkAdnNodeCreds(fut, pwOpt)
+    IsAdnNodeAdmin.checkAdnNodeCredsOpt(fut, pwOpt)
   }
 
 }

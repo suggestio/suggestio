@@ -48,15 +48,15 @@ object IsSuperuser extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacr
  * Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin.
  * @param adnId
  */
-case class IsSuperuserAdnNode(adnId: String) extends ActionBuilder[AbstractRequestForAdnNodeAdm] {
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNodeAdm[A]) => Future[Result]): Future[Result] = {
+case class IsSuperuserAdnNode(adnId: String) extends ActionBuilder[AbstractRequestForAdnNode] {
+  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper.isSuperuser(pwOpt)) {
       val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
       MAdnNodeCache.getByIdCached(adnId) flatMap {
         case Some(adnNode) =>
           sioReqMdFut flatMap { srm =>
-            block(RequestForAdnNodeAdm(adnNode, request, pwOpt, srm))
+            block(RequestForAdnNode(adnNode, isMyNode = true, request, pwOpt, srm))
           }
         case None =>
           Future successful Results.NotFound("Adn node not found: " + adnId)
