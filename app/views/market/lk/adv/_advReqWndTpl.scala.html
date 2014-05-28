@@ -1,9 +1,11 @@
-@(adProducer: MAdnNode, adRcvr: MAdnNode, mad: MAd, advReq: MAdvReq)(implicit ctx: Context)
+@(adProducer: MAdnNode, adRcvr: MAdnNode, mad: MAd, advReq: MAdvReq, refuseFormM: Form[_])(implicit ctx: Context)
 
 @* Рендер окошка, отображающего предложение размещения рекламной карточки у узла. *@
 @import ctx._
 @import market.showcase._
 @import util.TplDataFormatUtil._
+@import helper._
+@import util.FormHelpers._
 @import util.DateTimePrettyPrinter._
 
 <div>
@@ -18,8 +20,16 @@
 
   <p>Стоимость согласно <a href="@routes.MarketLkBilling._renderNodeMbmdsWindow(adRcvr.id.get)">ставке тарифных планов</a>.</p>
 
-  <p>@formatPrice(advReq.amount, advReq.currency)</p>
+  <p>@formatPrice(advReq.amountWithComission, advReq.currency)</p>
 
-  Отменить размещение
-  Разместить
+  @* Отменить размещение рекламы с указанием причины. *@
+  @form(routes.MarketAdv.advReqRefuseSubmit(advReq.id.get)) {
+    @textarea(refuseFormM("reason"))
+    <input type="submit" value="Отменить размещение"/>
+  }
+
+  @* Подтвердить размещение рекламы. *@
+  @form(routes.MarketAdv.advReqAcceptSubmit(advReq.id.get)) {
+    <input type="submit" value="Разместить"/>
+  }
 </div>

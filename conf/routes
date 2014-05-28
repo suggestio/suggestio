@@ -92,7 +92,10 @@ POST /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublish
 GET  /m/lk/adv/:adId/ctl                controllers.MarketAdv.advForAd(adId)
 POST /m/lk/adv/:adId/ctl                controllers.MarketAdv.advFormSubmit(adId)
 GET  /m/lk/advs/:adnId                  controllers.MarketAdv.showNodeAdvs(adnId)
+# Размещение рекламы: обработка запросов размещения.
 GET  /m/lk/advs/req/:advReqId           controllers.MarketAdv._showAdvReq(advReqId: Int)
+POST /m/lk/advs/req/:advReqId/refuse    controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int)
+POST /m/lk/advs/req/:advReqId/accept    controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int)
 
 # Личный кабинет владельца ТЦ
 GET  /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopForm(martId)

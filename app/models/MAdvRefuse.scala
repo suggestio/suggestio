@@ -39,6 +39,26 @@ object MAdvRefuse extends MAdvStatic[MAdvRefuse] {
         )
     }
   }
+
+
+  def apply(adv: MAdvI, reason: String, dateStatus1: DateTime): MAdvRefuse = {
+    import adv._
+    MAdvRefuse(
+      id          = id,
+      adId        = adId,
+      amount      = amount,
+      currencyCode = currencyCode,
+      dateCreated = dateCreated,
+      comission   = comission,
+      onStartPage = onStartPage,
+      dateStatus  = dateStatus1,
+      dateStart   = dateStart,
+      dateEnd     = dateEnd,
+      reason      = reason,
+      rcvrAdnId   = rcvrAdnId,
+      prodAdnId   = prodAdnId
+    )
+  }
 }
 
 

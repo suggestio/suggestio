@@ -13,7 +13,7 @@ import util.PlayMacroLogsImpl
 import scala.concurrent.Future
 import play.api.data.Form
 import play.api.templates.HtmlFormat
-import play.api.mvc.AnyContent
+import play.api.mvc.{Result, AnyContent}
 import java.sql.SQLException
 
 /**
@@ -277,6 +277,11 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    * @return 404 если что-то не найдено, иначе 200.
    */
   def _showAdvReq(advReqId: Int) = CanReceiveAdvReq(advReqId).async { implicit request =>
+    _showAdvReq1(reqRefuseFormM)
+      .map { _.fold(identity, Ok(_))}
+  }
+
+  private def _showAdvReq1(refuseFormM: Form[String])(implicit request: RequestWithAdvReq[AnyContent]): Future[Either[Result, HtmlFormat.Appendable]] = {
     val madOptFut = MAd.getById(request.advReq.adId)
     val adProducerOptFut = madOptFut flatMap { madOpt =>
       val prodIdOpt = madOpt.map(_.producerId)
@@ -287,17 +292,133 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       madOpt        <- madOptFut
     } yield {
       if (madOpt.isDefined && adProducerOpt.isDefined) {
-        Ok(_advReqWndTpl(
+        Right(_advReqWndTpl(
           adProducer = adProducerOpt.get,
           adRcvr = request.rcvrNode,
           mad = madOpt.get,
-          advReq = request.advReq
+          advReq = request.advReq,
+          refuseFormM = refuseFormM
         ))
       } else {
+        val advReqId = request.advReq.id.get
         warn(s"_showAdvReq($advReqId): Something not found, but it should: mad=$madOpt producer=$adProducerOpt")
-        http404AdHoc
+        Left(http404AdHoc)
       }
     }
+  }
+
+
+  /** Маппинг формы отказа от размещения рекламной карточки. Указывать причину надо. */
+  private val reqRefuseFormM = {
+    import play.api.data.Forms._
+    Form(
+      "reason" -> nonEmptyText(minLength = 2, maxLength = 256)
+    )
+  }
+
+  /**
+   * Сабмит формы отказа от размещения рекламной карточки.
+   * @param advReqId id реквеста.
+   * @return 406 если причина слишком короткая или слишком длинная. 302 если всё ок.
+   */
+  def advReqRefuseSubmit(advReqId: Int) = CanReceiveAdvReq(advReqId).async { implicit request =>
+    reqRefuseFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"advReqRefuseSubmit($advReqId): Failed to bind refuse form:\n${formatFormErrors(formWithErrors)}")
+        _showAdvReq1(formWithErrors)
+          .map { _.fold(identity, NotAcceptable(_)) }
+      },
+      {reason =>
+        val advRefused = MAdvRefuse(request.advReq, reason, DateTime.now)
+        val advRefused1 = DB.withTransaction { implicit c =>
+          val rowsDeleted = request.advReq.delete
+          assertAdvsReqRowsDeleted(rowsDeleted, 1, advReqId)
+          advRefused.save
+        }
+        Redirect(routes.MarketAdv.showNodeAdvs(request.rcvrNode.id.get))
+          .flashing("success" -> "Размещение рекламы отменено.")
+      }
+    )
+  }
+
+
+  /**
+   * Юзер одобряет размещение рекламной карточки.
+   * @param advReqId id одобряемого реквеста.
+   * @return 302
+   */
+  def advReqAcceptSubmit(advReqId: Int) = CanReceiveAdvReq(advReqId).apply { implicit request =>
+    // Надо провести платёж, запилить транзакции для prod и rcvr и т.д.
+    val rcvrAdnId = request.advReq.rcvrAdnId
+    val advOk = DB.withTransaction { implicit c =>
+      // Удалить исходный реквест размещения
+      val reqsDeleted = request.advReq.delete
+      assertAdvsReqRowsDeleted(reqsDeleted, 1, advReqId)
+      // Провести все денежные операции.
+      val prodAdnId = request.advReq.prodAdnId
+      val prodContractOpt = MBillContract.findForAdn(prodAdnId, isActive = Some(true)).headOption
+      assert(prodContractOpt.exists(_.id.get == request.advReq.prodContractId), "Producer contract not found or changed since request creation.")
+      val prodContract = prodContractOpt.get
+      val amount0 = request.advReq.amount
+
+      // Списать заблокированную сумму:
+      val oldProdMbbOpt = MBillBalance.getByAdnId(prodAdnId)
+      assert(oldProdMbbOpt.exists(_.currencyCode == request.advReq.currencyCode), "producer balance currency does not match to adv request")
+      val prodMbbUpdated = MBillBalance.updateBlocked(prodAdnId, -amount0)
+      assert(prodMbbUpdated == 1, "Failed to debit blocked amount for producer " + prodAdnId)
+
+      // Запилить транзакцию списания для продьюсера
+      val now = DateTime.now
+      val prodTxn = MBillTxn(
+        contractId      = prodContract.id.get,
+        amount          = -amount0,
+        datePaid        = now,
+        txnUid          = s"${prodContract.id.get}-$advReqId",
+        paymentComment  = "Debit for advertise"
+      ).save
+
+      // Разобраться с кошельком получателя
+      val rcvrContract = MBillContract.findForAdn(rcvrAdnId, isActive = Some(true))
+        .headOption
+        .getOrElse {
+          warn(s"advReqAcceptSubmit($advReqId): Creating new contract for adv. award receiver...")
+          MBillContract(rcvrAdnId, contractDate = DateTime.now, isActive = true, suffix = Some("CEO")).save
+        }
+      val amount1 = rcvrContract.sioComission * amount0
+      assert(amount1 <= amount0, "Comissioned amount must be less or equal than source amount.")
+      val rcvrMbbOpt = MBillBalance.getByAdnId(rcvrAdnId)
+      assert(rcvrMbbOpt.exists(_.currencyCode == request.advReq.currencyCode), "Rcvr balance currency does not match to adv request")
+      val rcvrMbb = rcvrMbbOpt getOrElse MBillBalance(rcvrAdnId, 0F, Some(request.advReq.currencyCode))
+
+      // Зачислить деньги на счет получателя
+      rcvrMbb.updateAmount(amount1)
+      val rcvrTxn = MBillTxn(
+        contractId  = rcvrContract.id.get,
+        amount      = amount1,
+        comissionPc = Some(rcvrContract.sioComission),
+        datePaid    = now,
+        txnUid      = s"${rcvrContract.id.get}-$advReqId",
+        paymentComment = "Credit for adverise"
+      ).save
+
+      // Сохранить подтверждённое размещение с инфой о платежах.
+      MAdvOk(
+        request.advReq,
+        comission1 = Some(rcvrContract.sioComission),
+        dateStatus1 = DateTime.now,
+        prodTxnId = prodTxn.id.get,
+        rcvrTxnId = Some(rcvrTxn.id.get),
+        isOnline = false
+      ).save
+    }
+    // Всё сохранено. Можно отредиректить юзера, чтобы он дальше продолжил одобрять рекламные карточки.
+    Redirect(routes.MarketAdv.showNodeAdvs(rcvrAdnId))
+      .flashing("success" -> "Реклама будет размещена.")
+  }
+
+  private def assertAdvsReqRowsDeleted(rowsDeleted: Int, mustBe: Int, advReqId: Int) {
+    if (rowsDeleted != mustBe)
+      throw new IllegalStateException(s"Adv request $advReqId not deleted. Rows deleted = $rowsDeleted, but 1 expected.")
   }
 
 }

@@ -51,6 +51,8 @@ trait MAdvI {
   def dateEnd       : DateTime
   def prodAdnId     : String
   def rcvrAdnId     : String
+
+  def amountWithComission: Float = comission.fold(amount)(amount * _)
 }
 
 

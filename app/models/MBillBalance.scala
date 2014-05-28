@@ -140,7 +140,7 @@ case class MBillBalance(
    * @return Новый/этот инстанс [[MBillBalance]].
    */
   def updateAmount(addAmount: Float)(implicit c: Connection): MBillBalance = {
-    val mbb1 = MBillBalance(adnId, amount  + addAmount, currencyCodeOpt)
+    val mbb1 = copy(amount = amount + addAmount)
     MBillBalance.updateAmount(adnId, addAmount) match {
       case 0 => mbb1.save
       case 1 => mbb1
