@@ -8,6 +8,7 @@
 @import util.FormHelpers._
 @import args._
 
+<div class="advs-form-block">
 @form(routes.MarketAdv.advFormSubmit(adId)) {
 
   @defining( adnNodes.groupBy(_.adn.memberType).mapValues(_.sortBy(_.meta.name)) )  {  adnNodesMap =>
@@ -18,14 +19,18 @@
     }
 
     @* Рендерим табы по типам узлов. *@
-    @adnNodesMap.map { case (memberType, _) =>
-      <div>@Messages("amts.of.type." + memberType)</div>
+    <div class="advs-form-block__tabs">
+    @adnNodesMap.zipWithIndex.map { case ((memberType, _), i) =>
+      <div class="advs-form-block__tabs-single-tab @if( i == 0 ){ advs-form-block__tabs-single-tab_active }">@Messages("amts.of.type." + memberType)</div>
     }
+      <div class="clear"></div>
+    </div>
 
     @* Рендерим содержимое табов, т.е. таблички в рамках одной категории узла *@
-    <div>
+    <div class="advs-form-block__nodes">
       @adnNodesMap.map { case (memberType, adnNodes) =>
         @adnNodes.iterator.zipWithIndex.map { case (node, i) =>
+          <div class="advs-form-block__nodes-node">
           @* числовой id нужен для использования list mapping, хотя в нашем случае вообще не обязателен. *@
           @defining(args.busyAdns.get(node.id.get)) { maybeBusyAdv =>
           @defining((memberType.id + 1) * (i + 1)) { mid =>
@@ -38,8 +43,7 @@
                   <input type="hidden" name="node[@mid].adnId" value="@node.id"/>
                   @checkbox(af(s"node[$mid].advertise"), '_label -> "")
                 }
-
-                 <a href="@routes.MarketLkBilling._renderNodeMbmdsWindow(node.id.get)">@node.meta.name</a> / @node.meta.town
+                <a href="@routes.MarketLkBilling._renderNodeMbmdsWindow(node.id.get)">@node.meta.name</a> / @node.meta.town
 
                 @if(maybeBusyAdv.isDefined) {
                   @maybeBusyAdv.get.dateStart.toLocalDate - @maybeBusyAdv.get.dateEnd.toLocalDate
@@ -61,6 +65,7 @@
 
           }
           }
+          </div>
         }
       }
     </div>
@@ -70,3 +75,5 @@
 
   <input type="submit" value="Отправить запрос"/>
 }
+
+</div>
