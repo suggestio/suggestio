@@ -34,34 +34,35 @@
           @* числовой id нужен для использования list mapping, хотя в нашем случае вообще не обязателен. *@
           @defining(args.busyAdns.get(node.id.get)) { maybeBusyAdv =>
           @defining((memberType.id + 1) * (i + 1)) { mid =>
-              @* Галочка включения узла в публикацию. Если busy, то уже занято. *@
-              @if(maybeBusyAdv.isDefined) {
-                  @* Узел уже одобрил или рассматривает предложение. Нельзя влиять на галочку. *@
-                  <input type="checkbox" checked disabled/>
-                } else {
-                  @* Узел может принять рекламную карточку. *@
-                  <input type="hidden" name="node[@mid].adnId" value="@node.id"/>
-                  @checkbox(af(s"node[$mid].advertise"), '_label -> "")
-                }
-                <a href="@routes.MarketLkBilling._renderNodeMbmdsWindow(node.id.get)">@node.meta.name</a> / @node.meta.town
 
-                @if(maybeBusyAdv.isDefined) {
-                  @maybeBusyAdv.get.dateStart.toLocalDate - @maybeBusyAdv.get.dateEnd.toLocalDate
-                } else {
-                  @* Тут должен быть, селект-календарь длительности и галочка появляются при выставлении первой галочки. *@
-                  <input type="hidden" name="node[@mid].dateStart" value="2014-05-28"/>
-                  <input type="hidden" name="node[@mid].dateEnd" value="2014-05-29"/>
-                }
+            @* Галочка включения узла в публикацию. Если busy, то уже занято. *@
+            @if(maybeBusyAdv.isDefined) {
+              @* Узел уже одобрил или рассматривает предложение. Нельзя влиять на галочку. *@
+              <input type="checkbox" checked disabled/>
+            } else {
+              @* Узел может принять рекламную карточку. *@
+              <input type="hidden" name="node[@mid].adnId" value="@node.id"/>
+              <input type="checkbox" id="node_@{mid}_onStartPage" name="node[@mid].advertise" value="true">
+            }
 
+            <a href="@routes.MarketLkBilling._renderNodeMbmdsWindow(node.id.get)">@node.meta.name</a> / @node.meta.town
 
-              @if(maybeBusyAdv.isDefined) {
-                  <label>
-                    На главном экране
-                    <input type="checkbox" disabled @if(maybeBusyAdv.get.onStartPage) {checked}/>
-                  </label>
-                } else {
-                  @checkbox(af(s"node[$mid].onStartPage"), '_label -> "На главном экране")
-                }
+            @if(maybeBusyAdv.isDefined) {
+              @maybeBusyAdv.get.dateStart.toLocalDate - @maybeBusyAdv.get.dateEnd.toLocalDate
+            } else {
+              @* Тут должен быть, селект-календарь длительности и галочка появляются при выставлении первой галочки. *@
+              <input type="hidden" name="node[@mid].dateStart" value="2014-05-28"/>
+              <input type="hidden" name="node[@mid].dateEnd" value="2014-05-29"/>
+            }
+
+            @if(maybeBusyAdv.isDefined) {
+            <label>
+              На главном экране
+              <input type="checkbox" disabled @if(maybeBusyAdv.get.onStartPage) {checked}/>
+            </label>
+            } else {
+              <input type="checkbox" id="node_@{mid}_onStartPage" name="node[@mid].onStartPage" value="true">
+            }
 
           }
           }
