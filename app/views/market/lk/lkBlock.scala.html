@@ -1,0 +1,15 @@
+@(blockTitle: String)(blockContent: Html)(implicit ctx: util.Context)
+
+<div class="lk-edit-form__block js-slide-wrap">
+  <div class="lk-edit-form__block_title">
+    <div class="border-line"></div>
+      <span class="lk-edit-form__block_title_span">
+        @blockTitle
+      </span>
+    <a href="#" class="js-g-slide-toggle open l-right">Свернуть</a>
+    <div class="border-line"></div>
+  </div>
+  <div class="lk-edit-form__block_body js-slide-content">
+    @blockContent
+  </div>
+</div>

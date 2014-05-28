@@ -5,16 +5,14 @@
 @import market.lk._
 
 @market.lk.lkBaseLayout("Управление рекламой", adnIdOpt = Some(mad.producerId), None, backHref = routes.MarketLkAdn.showAdnNode(mad.producerId).toString()) {
-  <h1>Управление рекламой</h1>
 
-  <div>
-    <h2>Информация</h2>
+
+  @market.lk.lkBlock("Информация") {
     @_currentAdvsTpl(currAdvsArgs)
-  </div>
+  }
 
-  <div>
-    <h2>Разместить рекламную карточку</h2>
+  @market.lk.lkBlock("Разместить рекламную карточку") {
     @_advFormTpl(formArgs)
-  </div>
+  }
 
 }

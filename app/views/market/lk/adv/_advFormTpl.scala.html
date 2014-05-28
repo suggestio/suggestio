@@ -20,7 +20,7 @@
     @adnNodesMap.map { case (memberType, _) =>
       <div>@Messages("amts.of.type." + memberType)</div>
     }
-
+    
     @* Рендерим содержимое табов, т.е. таблички в рамках одной категории узла *@
     <table>
       @adnNodesMap.map { case (memberType, adnNodes) =>

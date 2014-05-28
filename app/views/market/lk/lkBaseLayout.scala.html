@@ -1,0 +1,18 @@
+@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None, backHref:String="")(content: Html)(implicit ctx: util.Context)
+
+@market.lk.lkBase(title = title) {
+<div class="title-wrap">
+  <div class="center">
+    <a class="back-but" href="@backHref" title="Вернуться назад в магазин">&nbsp;</a>
+    <div class="title-inner">
+      Управление рекламной
+    </div>
+  </div>
+</div>
+
+<div class="body">
+  <div class="create-ad">
+    @content
+  </div>
+</div>
+}
