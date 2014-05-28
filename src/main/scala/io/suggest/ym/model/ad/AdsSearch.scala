@@ -12,7 +12,6 @@ import io.suggest.model.EsModelMinimalStaticT
 import io.suggest.ym.model.common.EMReceivers
 import io.suggest.util.SioConstants
 import io.suggest.util.SioRandom.rnd
-import org.elasticsearch.action.search.SearchResponse
 
 /** Статичная утиль для генерации поисковых ES-запросов. */
 object AdsSearch {
