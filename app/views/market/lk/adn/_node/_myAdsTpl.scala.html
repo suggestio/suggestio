@@ -11,14 +11,12 @@
     <input id="maxShownAds_@sl" type="hidden" value="@slMax"/>
   }
 
-
   @_adsListOuterTpl {
 
     <div class="ads-list__block ads-list-block">
       <a class="ads-list-block__link" href="@routes.MarketAd.createAd(node.id.get)" style="background: none;"></a>
       <div class="ads-list-block__preview ads-list-block__preview_add-new">
       </div>
-
     </div>
 
     @defining(outLvlMap.size == 1) { isSingleOutLvl =>

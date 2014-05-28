@@ -4,8 +4,7 @@
 @import ctx._
 @import market.lk._
 
-@lkBase("Управление рекламой", adnIdOpt = Some(mad.producerId)) {
-  <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">Назад</a>
+@market.lk.lkBaseLayout("Управление рекламой", adnIdOpt = Some(mad.producerId), None, backHref = routes.MarketLkAdn.showAdnNode(mad.producerId).toString()) {
   <h1>Управление рекламой</h1>
 
   <div>
@@ -17,4 +16,5 @@
     <h2>Разместить рекламную карточку</h2>
     @_advFormTpl(formArgs)
   </div>
+
 }
