@@ -32,37 +32,40 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl {
    * @param adnId id узла.
    * @param newAdIdOpt Костыль: если была добавлена рекламная карточка, то она должна отобразится сразу,
    *                   независимо от refresh в индексе. Тут её id.
+   * @param povAdnIdOpt С точки зрения какого узла идёт просмотр указанного узла.
    */
-  def showAdnNode(adnId: String, newAdIdOpt: Option[String]) = IsAdnNodeAdmin(adnId).async { implicit request =>
-    import request.adnNode
-    // Супервайзинг узла приводит к рендеру ещё одного виджета
-    val slavesFut: Future[Seq[MAdnNode]] = if(request.adnNode.adn.isSupervisor) {
-      MAdnNode.findBySupId(adnId)
-    } else {
-      Future successful Nil
-    }
-    val adsFut = MAd.findForProducerRt(adnId)
-    // Бывает, что добавлена новая карточка (но индекс ещё не сделал refresh). Нужно её найти и отобразить:
-    val extAdOptFut = newAdIdOpt match {
-      case Some(newAdId) => MAd.getById(newAdId)
-        .map { _.filter { mad =>
-        mad.producerId == adnId  ||  mad.receivers.valuesIterator.exists(_.receiverId == adnId)
-      } }
-      case None => Future successful None
-    }
-    // Дождаться всех фьючерсов и отрендерить результат.
-    for {
-      mads      <- adsFut
-      extAdOpt  <- extAdOptFut
-      slaves    <- slavesFut
-    } yield {
-      // Если есть карточка в extAdOpt, то надо добавить её в начало списка, который отсортирован по дате создания.
-      val mads2 = if (extAdOpt.isDefined  &&  mads.headOption.flatMap(_.id) != newAdIdOpt) {
-        extAdOpt.get :: mads
+  def showAdnNode(adnId: String, newAdIdOpt: Option[String], povAdnIdOpt: Option[String]) = {
+    IsAdnNodeAdmin(adnId).async { implicit request =>
+      import request.adnNode
+      // Супервайзинг узла приводит к рендеру ещё одного виджета
+      val slavesFut: Future[Seq[MAdnNode]] = if(request.adnNode.adn.isSupervisor) {
+        MAdnNode.findBySupId(adnId)
       } else {
-        mads
+        Future successful Nil
       }
-      Ok(adnNodeShowTpl(adnNode, mads2, slaves))
+      val adsFut = MAd.findForProducerRt(adnId)
+      // Бывает, что добавлена новая карточка (но индекс ещё не сделал refresh). Нужно её найти и отобразить:
+      val extAdOptFut = newAdIdOpt match {
+        case Some(newAdId) => MAd.getById(newAdId)
+          .map { _.filter { mad =>
+          mad.producerId == adnId  ||  mad.receivers.valuesIterator.exists(_.receiverId == adnId)
+        } }
+        case None => Future successful None
+      }
+      // Дождаться всех фьючерсов и отрендерить результат.
+      for {
+        mads      <- adsFut
+        extAdOpt  <- extAdOptFut
+        slaves    <- slavesFut
+      } yield {
+        // Если есть карточка в extAdOpt, то надо добавить её в начало списка, который отсортирован по дате создания.
+        val mads2 = if (extAdOpt.isDefined  &&  mads.headOption.flatMap(_.id) != newAdIdOpt) {
+          extAdOpt.get :: mads
+        } else {
+          mads
+        }
+        Ok(adnNodeShowTpl(adnNode, mads2, slaves))
+      }
     }
   }
 

@@ -9,7 +9,7 @@
   @_adsListTpl(mads, coverDisableReason = false) { mad =>
     @* Если задан POV-узел, то отрендерить ссылку, которая отображает инфу по размещению карточки. *@
     @povAdnIdOpt.map { povAdnId =>
-      <a href="@routes.MarketAdv.advInfoWnd(mad.id.get, povAdnId)">Нажмите для просмотра информации</a>
+      <a class="ads-list-block__link" href="@routes.MarketAdv.advInfoWnd(mad.id.get, povAdnId)">Нажмите для просмотра информации</a>
     }
   }
 }

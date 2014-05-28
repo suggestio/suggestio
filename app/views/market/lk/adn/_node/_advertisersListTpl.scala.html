@@ -1,0 +1,11 @@
+@(advertisers: Seq[MAdnNode], povAdnIdOpt: Option[String])(implicit ctx: Context)
+
+@* Виджет-список узлов, которые например поставляют рекламу текущему узлу. *@
+
+@advertisers.zipWithIndex.map { case (mnode, i) =>
+  <div class="item @if(i%2 == 0) {odd} else {even} @if(mnode.adn.isEnabled) {enabled}" data-shop="@mnode.id">
+    <div class="left">
+      <a href="@routes.MarketLkAdn.showAdnNode(mnode.id.get, povAdnId = povAdnIdOpt)">@mnode.meta.name</a>
+    </div>
+  </div>
+}

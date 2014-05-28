@@ -1,46 +1,56 @@
-@(node: MAdnNode, myAds: Seq[MAdT] = Nil, slaves: Seq[MAdnNode] = Nil)(implicit ctx: util.Context)
+@(node: MAdnNode, mads: Seq[MAdT] = Nil, slaves: Seq[MAdnNode] = Nil, advertisers: Seq[MAdnNode] = Nil, isMyNode: Boolean = true, povAdnIdOpt: Option[String] = None)(implicit ctx: Context)
 
-@* Заглавная страница узла рекламной сети в личном кабинете. *@
+@* Заглавная страница узла рекламной сети в личных кабинетах.
+   Если isMyNode, то идёт рендер управляемого узла, и povAdnIdOpt игнорируется.
+   Если !isMyNode, то юзер смотрит чужой нередактируемый узел. *@
 
 @import ctx._
 @import controllers.adn.AdnShowTypes._
 @import _node._
 
 @market.lk.lkBase(node.meta.name, adnIdOpt = node.id) {
-
+@if(isMyNode) {
   @helper.javascriptRouter("jsRoutes")(
     routes.javascript.MarketAd.updateShowLevelSubmit
   )
+}
 
 @defining(node.adn.memberType : AdnShowType) { adnShowType =>
   @* Верхняя строка. *@
   <div class="title-wrap">
     <div class="center">
 
-      <a class="back-but" href="@routes.MarketLk.lkList" style="visibility: hidden;">&nbsp;</a>
+      @* TODO Надо бы объеденить map и defining, но почему-то не работает оно. *@
+      @defining( if(isMyNode) Some(routes.MarketLk.lkList) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
+        @backCallOpt.map { backCall =>
+          <a class="back-but" href="@backCall">&nbsp;</a>
+        }
+      }
 
-      <div class="title-inner">ЛИЧНЫЙ КАБИНЕТ</div>
+      <div class="title-inner">@if(isMyNode) {ЛИЧНЫЙ КАБИНЕТ} else {РЕКЛАМОДАТЕЛЬ}</div>
 
       @* У узла-приемника/супервизора есть доступ к списку входных продьюсеров рекламы и доступ к коду установки. *@
-      @defining(node.adn.isReceiver) { isRcvr =>
-        @if(isRcvr || node.adn.isSupervisor) {
-          <div class="adn-title-buttons">
-            @if(node.adn.memberType.canViewSlaves) {
-              <div class="gray-but-wrap">
-                <div class="white-border-top">
-                  <a class="btn" href="@routes.MarketLkAdn.showSlaves(node.id.get)">@Messages("slaves.of." + node.adn.memberType)</a>
+      @if(isMyNode) {
+        @defining(node.adn.isReceiver) { isRcvr =>
+          @if(isRcvr || node.adn.isSupervisor) {
+            <div class="adn-title-buttons">
+              @if(node.adn.memberType.canViewSlaves) {
+                <div class="gray-but-wrap">
+                  <div class="white-border-top">
+                    <a class="btn" href="@routes.MarketLkAdn.showSlaves(node.id.get)">@Messages("slaves.of." + node.adn.memberType)</a>
+                  </div>
                 </div>
-              </div>
-            }
+              }
 
-            @if(isRcvr) {
-              <div class="gray-but-wrap">
-                <div class="white-border-top">
-                  <a id="installScriptButton" class="btn" href="">КОД УСТАНОВКИ</a>
+              @if(isRcvr) {
+                <div class="gray-but-wrap">
+                  <div class="white-border-top">
+                    <a id="installScriptButton" class="btn" href="">КОД УСТАНОВКИ</a>
+                  </div>
                 </div>
-              </div>
-            }
-          </div>
+              }
+            </div>
+          }
         }
       }
     </div>
@@ -51,15 +61,19 @@
 
       <div class="name-wrap" style="padding-bottom: 0px;">
         <span class="name">@node.meta.name</span>
-        <a class="edit" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">@Messages("Edit")</a>
-        @if(isSuperuser) {
-          <a class="superuser-link" href="@routes.SysMarket.showAdnNode(node.id.get)">/sys</a>
+        @if(isMyNode) {
+          <a class="edit" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">@Messages("Edit")</a>
+          @if(isSuperuser) {
+            <a class="superuser-link" href="@routes.SysMarket.showAdnNode(node.id.get)">/sys</a>
+          }
         }
       </div>
 
-      <div class="sm-note">
-        Подсказка: в редактировании вы можете указать информацию о вашем магазине и загрузить основной логотип, который будет отображаться на всех рекламных карточках.
-      </div>
+      @if(isMyNode) {
+        <div class="sm-note">
+          Подсказка: в редактировании вы можете указать информацию о вашем магазине и загрузить основной логотип, который будет отображаться на всех рекламных карточках.
+        </div>
+      }
 
       <div class="border-line"></div>
 
@@ -87,29 +101,40 @@
 
     @* Для тех, кто может создавать свою рекламу, рисуем список своих рекламных карточек с галочками. *@
     @if(node.adn.isProducer) {
-      @_myAdsTpl(node, myAds)
+      @if(isMyNode) {
+        @_myAdsTpl(node, mads)
+      } else {
+        @_readOnlyAdsListTpl(mads, povAdnIdOpt)
+      }
 
       @* Ссылка на demo web site. *@
-
-      <div class="sm-note">
-
-        @adnShowType.demoWebsiteAdnId(node).map { dwId =>
-          Вы можете посмотреть, как выглядят ваши к карточки в <a class="sm-note__link" target="_blank" href="@routes.Market.demoWebSite(dwId)">рекламной выдаче</a>
-        }
-      </div>
-
+      @if(isMyNode) {
+        <div class="sm-note">
+          @adnShowType.demoWebsiteAdnId(node).map { dwId =>
+            Вы можете посмотреть, как выглядят ваши к карточки в <a class="sm-note__link" target="_blank" href="@routes.Market.demoWebSite(dwId)">рекламной выдаче</a>
+          }
+        </div>
+      }
     }
+
+
+    @* Ресиверу надо отрендерить список его рекламодателей, если они есть. *@
+    @if(isMyNode && node.adn.isReceiver && !advertisers.isEmpty) {
+      <h5>Рекламодатели</h5>
+      @_advertisersListTpl(advertisers, povAdnIdOpt = node.id)
+    }
+
 
     @* Супервизору надо отрендерить табличку подчиненых узлов: для реализации надзорных полномочий.
        Если этот узел не может супервайзить, то slaves должен быть пустым. *@
-    @if(!slaves.isEmpty) {
+    @if(isMyNode && !slaves.isEmpty) {
       @_supShowNodesTpl(node, slaves)
     }
 
   </div>
 
   @* Обладают выдачей только ресиверы, поэтому окно с кодом рендерится только для них. *@
-  @if(node.adn.isReceiver) {
+  @if(isMyNode && node.adn.isReceiver) {
     @_installScriptPopupTpl(node)
   }
 
