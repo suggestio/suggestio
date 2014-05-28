@@ -56,7 +56,7 @@ case class IsSuperuserAdnNode(adnId: String) extends ActionBuilder[AbstractReque
       MAdnNodeCache.getByIdCached(adnId) flatMap {
         case Some(adnNode) =>
           sioReqMdFut flatMap { srm =>
-            block(RequestForAdnNode(adnNode, isMyNode = true, request, pwOpt, srm))
+            block(RequestForAdnNodeAdm(adnNode, isMyNode = true, request, pwOpt, srm))
           }
         case None =>
           Future successful Results.NotFound("Adn node not found: " + adnId)

@@ -66,7 +66,7 @@ case class IsAdnNodeAdmin(adnId: String) extends ActionBuilder[AbstractRequestFo
     IsAdnNodeAdmin.isAdnNodeAdmin(adnId, pwOpt) flatMap {
       case Some(adnNode) =>
         srmFut flatMap { srm =>
-          val req1 = RequestForAdnNode(adnNode, isMyNode = true, request, pwOpt, srm)
+          val req1 = RequestForAdnNodeAdm(adnNode, isMyNode = true, request, pwOpt, srm)
           block(req1)
         }
 
@@ -83,7 +83,7 @@ abstract class AbstractRequestForAdnNode[A](request: Request[A])
   def isMyNode: Boolean
 }
 
-case class RequestForAdnNode[A](adnNode: MAdnNode, isMyNode: Boolean, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
+case class RequestForAdnNodeAdm[A](adnNode: MAdnNode, isMyNode: Boolean, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
   extends AbstractRequestForAdnNode(request)
 
 
@@ -91,24 +91,39 @@ case class RequestForAdnNode[A](adnNode: MAdnNode, isMyNode: Boolean, request: R
  * Доступ к узлу, к которому НЕ обязательно есть права на админство.
  * @param adnId узел.
  */
-case class AdnNodeAccess(adnId: String) extends ActionBuilder[AbstractRequestForAdnNode] {
-  override protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
+case class AdnNodeAccess(adnId: String, povAdnIdOpt: Option[String]) extends ActionBuilder[RequestForAdnNode] {
+  override protected def invokeBlock[A](request: Request[A], block: (RequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     PersonWrapper.getFromRequest(request) match {
       case pwOpt @ Some(pw) =>
+        val povAdnNodeOptFut = povAdnIdOpt.fold
+          { Future successful Option.empty[MAdnNode] }
+          { povAdnId => IsAdnNodeAdmin.isAdnNodeAdmin(povAdnId, pwOpt) }
         val adnNodeOptFut = MAdnNodeCache.getByIdCached(adnId)
         IsAdnNodeAdmin.checkAdnNodeCreds(adnNodeOptFut, pwOpt) flatMap {
-          // Это админ узла
+          // Это админ текущего узла
           case Right(adnNode) =>
             SioReqMd.fromPwOptAdn(pwOpt, adnId) flatMap { srm =>
-              val req1 = RequestForAdnNode(adnNode, isMyNode = true, request, pwOpt, srm)
-              block(req1)
+              povAdnNodeOptFut flatMap { povAdnNodeOpt =>
+                val req1 = RequestForAdnNode(adnNode, povAdnNodeOpt, isMyNode = true, request, pwOpt, srm)
+                block(req1)
+              }
             }
 
-          // Узел существует, но он не относится к текущему залогиненному юзеру.
+          // Узел существует, но он не относится к текущему залогиненному юзеру. Это узел третьего лица, рекламодателя в частности.
           case Left(Some(adnNode)) =>
-            SioReqMd.fromPwOpt(pwOpt) flatMap { srm =>
-              val req1 = RequestForAdnNode(adnNode, isMyNode = false, request, pwOpt, srm)
-              block(req1)
+            povAdnNodeOptFut flatMap { povAdnNodeOpt =>
+              val srmFut = povAdnNodeOpt match {
+                // Это админ pov-узла подглядывает к рекламодателю или какому-то иному узлу.
+                case Some(povAdnNode) =>
+                  SioReqMd.fromPwOptAdn(pwOpt, povAdnNode.id.get)
+                // Это кто-то иной косит под админа внешнего узела, скорее всего получил ссылку на ноду от другого человека.
+                case None =>
+                  SioReqMd.fromPwOpt(pwOpt)
+              }
+              srmFut flatMap { srm =>
+                val req1 = RequestForAdnNode(adnNode, povAdnNodeOpt, isMyNode = false, request, pwOpt, srm)
+                block(req1)
+              }
             }
 
           // Узел не существует.
@@ -122,3 +137,7 @@ case class AdnNodeAccess(adnId: String) extends ActionBuilder[AbstractRequestFor
 
   }
 }
+
+case class RequestForAdnNode[A](adnNode: MAdnNode, povAdnNodeOpt: Option[MAdnNode], isMyNode: Boolean,
+                                request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
+  extends AbstractRequestForAdnNode(request)
