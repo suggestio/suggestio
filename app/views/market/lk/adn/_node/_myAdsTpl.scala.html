@@ -35,12 +35,12 @@
                   <input class="@if(slMax == 1){one-}checkbox" type="checkbox"
                          data-level="@sl" data-adid="@mad.id" data-name="@sl.checkboxCssClass"
                          @if(!slAllowed) {disabled="disabled"} @if(adSls contains sl) {data-checked="checked"}
-                         />@Messages(if(isSingleOutLvl) "lk.sl.enable_ad" else "lk.sl." + sl.name)
+                         />&nbsp;@Messages(if(isSingleOutLvl) "lk.sl.enable_ad" else "lk.sl." + sl.name)
                 </label>
               }
             }
           }
-          <a class="sm-large-button" href="@routes.MarketAdv.advForAd(mad.id.get)">УПРАВЛЕНИЕ</a>
+          <a class="sm-large-button" href="@routes.MarketAdv.advForAd(mad.id.get)"><span>УПРАВЛЕНИЕ</span></a>
         </div>
       } @* ads list*@
     }
