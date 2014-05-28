@@ -10,6 +10,7 @@ import util.SqlModelSave
 import java.text.DecimalFormat
 import org.joda.time.format.DateTimeFormat
 import io.suggest.util.TextUtil
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -21,13 +22,17 @@ import io.suggest.util.TextUtil
 object MBillContract extends SqlModelStatic[MBillContract] {
   import SqlParser._
 
+  /** Комиссия s.io за размещение рекламной карточки. Пока что одна для всех. Вероятно, надо вынести это в другое место. */
+  val SIO_COMISSION_SHARE_DFLT = configuration.getDouble("adv.comission.sio").map(_.toFloat) getOrElse 0.300000F
+
   private def idFormatter = new DecimalFormat("000")
 
   val TABLE_NAME: String = "bill_contract"
 
   val rowParser = get[Pk[Int]]("id") ~ get[Int]("crand") ~ get[String]("adn_id") ~ get[DateTime]("contract_date") ~
-    get[DateTime]("date_created") ~ get[Option[String]]("hidden_info") ~ get[Boolean]("is_active") ~ get[Option[String]]("suffix") map {
-    case id ~ crand ~ adnId ~ contractDate ~ dateCreated ~ hiddenInfo ~ isActive ~ suffix =>
+    get[DateTime]("date_created") ~ get[Option[String]]("hidden_info") ~ get[Boolean]("is_active") ~
+    get[Option[String]]("suffix") ~ get[Float]("sio_comission") map {
+    case id ~ crand ~ adnId ~ contractDate ~ dateCreated ~ hiddenInfo ~ isActive ~ suffix ~ sioComission =>
       MBillContract(
         id = id,  crand = crand,  adnId = adnId, contractDate = contractDate,
         dateCreated = dateCreated,  hiddenInfo = hiddenInfo,  isActive = isActive, suffix = suffix
@@ -164,6 +169,7 @@ case class MBillContract(
   var hiddenInfo: Option[String] = None,
   var isActive  : Boolean = true,
   crand         : Int = rnd.nextInt(999) + 1, // от 1 до 999. Чтоб не было 0, а то перепутают с 'O'.
+  var sioComission: Float = MBillContract.SIO_COMISSION_SHARE_DFLT,
   id            : Pk[Int] = NotAssigned
 ) extends SqlModelSave[MBillContract] {
 
@@ -180,10 +186,10 @@ case class MBillContract(
    * @return Новый экземпляр сабжа.
    */
   def saveInsert(implicit c: Connection): MBillContract = {
-    SQL("INSERT INTO " + TABLE_NAME + "(adn_id, contract_date, date_created, hidden_info, is_active, crand, suffix)" +
-        " VALUES ({adnId}, {contractDate}, {dateCreated}, {hiddenInfo}, {isActive}, {crand}, {suffix})")
-      .on('adnId -> adnId, 'contractDate -> contractDate, 'dateCreated -> dateCreated,
-          'hiddenInfo -> hiddenInfo, 'isActive -> isActive, 'crand -> crand, 'suffix -> suffix)
+    SQL("INSERT INTO " + TABLE_NAME + "(adn_id, contract_date, date_created, hidden_info, is_active, crand, suffix, sio_comission)" +
+        " VALUES ({adnId}, {contractDate}, {dateCreated}, {hiddenInfo}, {isActive}, {crand}, {suffix}, {sioComission})")
+      .on('adnId -> adnId, 'contractDate -> contractDate, 'dateCreated -> dateCreated, 'hiddenInfo -> hiddenInfo,
+          'isActive -> isActive, 'crand -> crand, 'suffix -> suffix, 'sioComission -> sioComission)
       .executeInsert(rowParser single)
   }
 
@@ -194,9 +200,9 @@ case class MBillContract(
    */
   def saveUpdate(implicit c: Connection): Int = {
     SQL("UPDATE " + TABLE_NAME + " SET contract_date = {contractDate}, hidden_info = {hiddenInfo}," +
-        " is_active = {isActive}, suffix = {suffix} WHERE id = {id}")
+        " is_active = {isActive}, suffix = {suffix}, sio_comission = {sioComission} WHERE id = {id}")
       .on('id -> id.get, 'contractDate -> contractDate, 'hiddenInfo -> hiddenInfo,
-          'isActive -> isActive, 'suffix -> suffix)
+          'isActive -> isActive, 'suffix -> suffix, 'sioComission -> sioComission)
       .executeUpdate()
   }
 

@@ -8,10 +8,6 @@
 @import util.FormHelpers._
 @import args._
 
-@periodOption(isoPeriod: String, text: String, maybeCurrIsoPeriod: Option[String]) = {
-  <option value="@isoPeriod" @if(maybeCurrIsoPeriod.exists(_ == isoPeriod)) {selected}>@text</option>
-}
-
 @form(routes.MarketAdv.advFormSubmit(adId)) {
 
   @defining( adnNodes.groupBy(_.adn.memberType).mapValues(_.sortBy(_.meta.name)) )  {  adnNodesMap =>

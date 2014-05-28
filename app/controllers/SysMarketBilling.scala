@@ -44,22 +44,24 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
       .transform[Option[String]](
         {Some(_).filter(!_.isEmpty)},
         {_ getOrElse ""}
-      )
+      ),
+    "sioComission"  -> floatM
   )
   // apply()
-  {(adnId, dateContract, suffix, isActive, hiddenInfo) =>
+  {(adnId, dateContract, suffix, isActive, hiddenInfo, sioComission) =>
     MBillContract(
       adnId = adnId,
       contractDate = dateContract,
       suffix = suffix,
       hiddenInfo = hiddenInfo,
-      isActive = isActive
+      isActive = isActive,
+      sioComission = sioComission
     )
   }
   // unapply()
   {mbc =>
     import mbc._
-    Some((adnId, contractDate, suffix, isActive, hiddenInfo))
+    Some((adnId, contractDate, suffix, isActive, hiddenInfo, sioComission))
   })
 
 
@@ -163,6 +165,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
         mbc0.hiddenInfo   = mbc1.hiddenInfo
         mbc0.isActive     = mbc1.isActive
         mbc0.suffix       = mbc1.suffix
+        mbc0.sioComission = mbc1.sioComission
         DB.withConnection { implicit c =>
           mbc0.save
         }

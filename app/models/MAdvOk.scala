@@ -19,8 +19,8 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
   val TABLE_NAME = "adv_ok"
 
   override val rowParser = {
-    ROW_PARSER_BASE ~ get[DateTime]("date_status") ~ get[Int]("prod_txn_id") ~ get[Option[Int]]("rcvr_txn_id") map {
-      case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ onStartPage ~ dateStart ~ dateEnd ~ prodAdnId ~ rcvrAdnId ~ dateStatus ~ prodTxnId ~ rcvrTxnId =>
+    ROW_PARSER_BASE ~ get[DateTime]("date_status") ~ get[Int]("prod_txn_id") ~ get[Option[Int]]("rcvr_txn_id") ~ get[Boolean]("online") map {
+      case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ onStartPage ~ dateStart ~ dateEnd ~ prodAdnId ~ rcvrAdnId ~ dateStatus ~ prodTxnId ~ rcvrTxnId ~ isOnline =>
         MAdvOk(
           id          = id,
           adId        = adId,
@@ -35,7 +35,8 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
           prodTxnId   = prodTxnId,
           rcvrTxnId   = rcvrTxnId,
           prodAdnId   = prodAdnId,
-          rcvrAdnId   = rcvrAdnId
+          rcvrAdnId   = rcvrAdnId,
+          isOnline    = isOnline
         )
     }
   }
@@ -60,6 +61,7 @@ case class MAdvOk(
   rcvrAdnId     : String,
   dateCreated   : DateTime = DateTime.now(),
   dateStatus    : DateTime = DateTime.now(),
+  isOnline      : Boolean = false,
   id            : Pk[Int] = NotAssigned
 ) extends SqlModelSave[MAdvOk] with CurrencyCode with SqlModelDelete with MAdvI {
 
@@ -69,12 +71,12 @@ case class MAdvOk(
 
   override def saveInsert(implicit c: Connection): MAdvOk = {
     SQL("INSERT INTO " + TABLE_NAME +
-      "(ad_id, amount, currency_code, date_created, comission, mode, on_start_page, date_start, date_end, prod_adn_id, rcvr_adn_id, date_status, prod_txn_id, rcvr_txn_id) " +
-      "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {comissionPc}, {mode}, {onStartPage}, {dateStart}, {dateEnd}, {prodAdnId}, {rcvrAdnId}, {dateStatus}, {prodTxnId}, {rcvrTxnId})")
+      "(ad_id, amount, currency_code, date_created, comission, mode, on_start_page, date_start, date_end, prod_adn_id, rcvr_adn_id, date_status, prod_txn_id, rcvr_txn_id, is_online) " +
+      "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {comissionPc}, {mode}, {onStartPage}, {dateStart}, {dateEnd}, {prodAdnId}, {rcvrAdnId}, {dateStatus}, {prodTxnId}, {rcvrTxnId}, {isOnline})")
     .on('adId -> adId, 'amount -> amount, 'currencyCode -> currencyCode, 'dateCreated -> dateCreated,
         'comission -> comission, 'dateStart -> dateStart, 'mode -> mode.toString, 'onStartPage -> onStartPage,
         'dateStatus -> dateStatus, 'dateStart -> dateStart, 'dateEnd -> dateEnd, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId,
-        'dateStatus -> dateStatus, 'prodTxnId -> prodTxnId, 'rcvrTxnId -> rcvrTxnId)
+        'dateStatus -> dateStatus, 'prodTxnId -> prodTxnId, 'rcvrTxnId -> rcvrTxnId, 'isOnline -> isOnline)
     .executeInsert(rowParser single)
   }
 

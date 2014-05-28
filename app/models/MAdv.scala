@@ -90,6 +90,15 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
     findBy(" WHERE ad_id = {adId} AND rcvr_adn_id = ANY({rcvrIds})", policy, 'rcvrIds -> strings2pgArray(rcvrIds), 'ad_id -> adId)
   }
 
+  /** Найти все ряда, содержащие указанного получателя в соотв. колонке.
+    * @param rcvrAdnId id узла-получателя.
+    * @param policy Политика блокировки рядов.
+    * @return Список рядов, адресованных указанному получателю, в неопр.порядке.
+    */
+  def findByRcvr(rcvrAdnId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(" WHERE rcvr_adn_id = {rcvrAdnId}", policy, 'rcvrAdnId -> rcvrAdnId)
+  }
+
   /**
    * Есть ли в текущей adv-модели ряд, который относится к указанной рекламной карточке
    * @param adId id рекламной карточки.

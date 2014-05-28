@@ -36,7 +36,7 @@
               @if(node.adn.memberType.canViewSlaves) {
                 <div class="gray-but-wrap">
                   <div class="white-border-top">
-                    <a class="btn" href="@routes.MarketLkAdn.showSlaves(node.id.get)">РЕКЛАМОДАТЕЛИ @if(advReqsCount > 0L) {(@advReqsCount)} </a>
+                    <a class="btn" href="@routes.MarketAdv.showNodeAdvs(node.id.get)">РЕКЛАМОДАТЕЛИ @if(advReqsCount > 0L) {(@advReqsCount)} </a>
                   </div>
                 </div>
               }

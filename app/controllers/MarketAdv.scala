@@ -75,8 +75,6 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     )
   }
 
-  /** Комиссия s.io за размещение рекламной карточки. */
-  val SIO_COMISSION_SHARE = configuration.getDouble("adv.req.share.sio").map(_.toFloat) getOrElse 0.300000F
 
   /** Страница управления размещением рекламной карточки. */
   def advForAd(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
@@ -191,7 +189,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
                   MAdvReq(
                     adId = adId,
                     amount = amount,
-                    comission = Some(SIO_COMISSION_SHARE),
+                    comission = Some(mbc.sioComission),
                     prodContractId = mbc.id.get,
                     prodAdnId = request.producerId,
                     rcvrAdnId = advEntry.adnId,
@@ -249,6 +247,27 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     val (advsOk, advsReq, advsRefused) = syncResult
     val advs = advsOk ++ advsReq ++ advsRefused
     Ok(_advInfoWndTpl(request.mad, advs))
+  }
+
+
+  /** Рендер страницы, которая появляется по ссылке-кнопке "рекламодатели". */
+  // TODO Вместо IsAdnAdmin надо какой-то IsAdnRcvrAdmin
+  def showNodeAdvs(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
+    val advsReq = DB.withConnection { implicit c =>
+      MAdvReq.findByRcvr(adnId)
+    }
+    val adIds = advsReq.map(_.adId).distinct
+    val madsFut = MAd.multiGet(adIds)
+    val advReqMap = advsReq.map { advReq => advReq.adId -> advReq }.toMap
+    madsFut map { mads =>
+      val reqsAndMads = mads
+        .map { mad =>
+          val madId = mad.id.get
+          advReqMap(madId) -> mad
+        }
+        .sortBy(_._1.id.get)
+      Ok(nodeAdvsTpl(request.adnNode, reqsAndMads))
+    }
   }
 
 }

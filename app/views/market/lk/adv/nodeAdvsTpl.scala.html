@@ -1,0 +1,33 @@
+@(adnNode: MAdnNode, advsWithAds: Seq[(MAdvReq, MAd)])(implicit ctx: Context)
+
+@* Страница, которая появляется при нажатии на кнопку "рекламодатели". *@
+@import ctx._
+@import market.lk._
+@import market.showcase._
+@import controllers.adn.AdnShowTypes._
+
+@lkBaseLayout(
+  title = "Рекламодатели",
+  adnIdOpt = adnNode.id,
+  backHref = adnNode.id.map(routes.MarketLkAdn.showAdnNode(_))
+) {
+
+  @adnNode.adn.memberType.inviteSubNodeCall(adnNode.id.get).map { inviteCall =>
+    <div>
+      <h1>Управление</h1>
+      <p>Выдавайте личные кабинеты, это бесплатно для вас и для рекламодателей.</p>
+      <a class="green-but-big" href="@inviteCall">Выдать личный кабинет</a>
+    </div>
+  }
+
+  <div>
+    <h1>На рассмотрении</h1>
+    <p>В этом разделе появляются запросы на размещение рекламных карточек.</p>
+
+    @advsWithAds.map { case (advReq, mad) =>
+      @_single_offer(mad)
+      <a href="TODO">Нажмите для просмотра информации</a>
+    }
+  </div>
+
+}
