@@ -13,22 +13,20 @@
 ) {
 
   @adnNode.adn.memberType.inviteSubNodeCall(adnNode.id.get).map { inviteCall =>
-    <div>
-      <h1>Управление</h1>
+    @market.lk.lkBlock("Управление") {
       <p>Выдавайте личные кабинеты, это бесплатно для вас и для рекламодателей.</p>
       <a class="green-but-big" href="@inviteCall">Выдать личный кабинет</a>
-    </div>
+    }
   }
 
-  <div>
-    <h1>На рассмотрении</h1>
-    <p>В этом разделе появляются запросы на размещение рекламных карточек.</p>
 
+  @market.lk.lkBlock("На рассмотрении") {
+    <p>В этом разделе появляются запросы на размещение рекламных карточек.</p>
     @advsWithAds.map { case (advReq, mad) =>
       @_single_offer(mad)
       @* Надо сделать, чтобы окно рендерилось поверх текущего добра. *@
       <a href="@routes.MarketAdv._showAdvReq(advReq.id.get)">Нажмите для просмотра информации</a>
     }
-  </div>
+  }
 
 }
