@@ -172,4 +172,8 @@ object DateTimePrettyPrinter {
     }
   }
 
+
+  def formatDate(dt: DateTime)(implicit ctx: Context): String = {
+    dtFormatterOld.print(dt)
+  }
 }

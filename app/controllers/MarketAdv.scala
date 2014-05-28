@@ -270,6 +270,36 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     }
   }
 
+
+  /**
+   * Рендер окошка рассмотрения рекламной карточки.
+   * @param advReqId id запроса на размещение.
+   * @return 404 если что-то не найдено, иначе 200.
+   */
+  def _showAdvReq(advReqId: Int) = CanReceiveAdvReq(advReqId).async { implicit request =>
+    val madOptFut = MAd.getById(request.advReq.adId)
+    val adProducerOptFut = madOptFut flatMap { madOpt =>
+      val prodIdOpt = madOpt.map(_.producerId)
+      MAdnNodeCache.maybeGetByIdCached(prodIdOpt)
+    }
+    for {
+      adProducerOpt <- adProducerOptFut
+      madOpt        <- madOptFut
+    } yield {
+      if (madOpt.isDefined && adProducerOpt.isDefined) {
+        Ok(_advReqWndTpl(
+          adProducer = adProducerOpt.get,
+          adRcvr = request.rcvrNode,
+          mad = madOpt.get,
+          advReq = request.advReq
+        ))
+      } else {
+        warn(s"_showAdvReq($advReqId): Something not found, but it should: mad=$madOpt producer=$adProducerOpt")
+        http404AdHoc
+      }
+    }
+  }
+
 }
 
 sealed case class AdvFormEntry(adnId: String, advertise: Boolean, onStartPage: Boolean, dateStart: LocalDate, dateEnd: LocalDate)

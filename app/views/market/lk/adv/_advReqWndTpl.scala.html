@@ -1,0 +1,25 @@
+@(adProducer: MAdnNode, adRcvr: MAdnNode, mad: MAd, advReq: MAdvReq)(implicit ctx: Context)
+
+@* Рендер окошка, отображающего предложение размещения рекламной карточки у узла. *@
+@import ctx._
+@import market.showcase._
+@import util.TplDataFormatUtil._
+@import util.DateTimePrettyPrinter._
+
+<div>
+  @_single_offer(mad)
+
+  <p>Запрос размещения рекламы от <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">@adProducer.meta.name</a></p>
+
+  <p>С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)</p>
+  @if(advReq.onStartPage) {
+    <p>+ Размещение на главном экране</p>
+  }
+
+  <p>Стоимость согласно <a href="@routes.MarketLkBilling._renderNodeMbmdsWindow(adRcvr.id.get)">ставке тарифных планов</a>.</p>
+
+  <p>@formatPrice(advReq.amount, advReq.currency)</p>
+
+  Отменить размещение
+  Разместить
+</div>
