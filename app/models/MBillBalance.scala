@@ -92,12 +92,12 @@ object MBillBalance {
   /**
    * Списать ранеее заблокированные средства.
    * @param adnId id узла (id владельца кошелька).
-   * @param addAmount Объём движения средств.
+   * @param blockAmount Объём движения средств.
    * @return Кол-во обновлённых рядов, т.е. 0 или 1.
    */
-  def updateBlocked(adnId: String, addAmount: Float)(implicit c: Connection): Int = {
+  def updateBlocked(adnId: String, blockAmount: Float)(implicit c: Connection): Int = {
     SQL("UPDATE " + TABLE_NAME + " SET blocked = blocked + {amount} WHERE adn_id = {adnId}")
-      .on('adnId -> adnId, 'amount -> addAmount)
+      .on('adnId -> adnId, 'amount -> blockAmount)
       .executeUpdate()
   }
 }
@@ -145,6 +145,11 @@ case class MBillBalance(
       case 0 => mbb1.save
       case 1 => mbb1
     }
+  }
+  
+  
+  def updateBlocked(blockAmount: Float)(implicit c: Connection): Int = {
+    MBillBalance.blockAmount(adnId, blockAmount)
   }
 
 }

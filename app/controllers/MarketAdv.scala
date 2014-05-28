@@ -179,11 +179,13 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
           // Пора сохранять новые реквесты на размещение в базу.
           val successMsg = if (!advs2.isEmpty) {
             DB.withTransaction { implicit c =>
+              val mbb0 = MBillBalance.getByAdnId(request.producerId).get
               val mbc = MBillContract.findForAdn(request.producerId, isActive = Some(true)).head
+              val amount = 10F  // TODO Нужно рассчитывать цену
               advs2.foreach { advEntry =>
                 MAdvReq(
                   adId = adId,
-                  amount = 10F, // TODO Нужно рассчитывать цену
+                  amount = amount,
                   comission = Some(SIO_COMISSION_SHARE),
                   prodContractId = mbc.id.get,
                   prodAdnId = request.producerId,
@@ -192,6 +194,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
                   dateEnd = advEntry.dateEnd.toDateTimeAtStartOfDay,
                   onStartPage = advEntry.onStartPage
                 ).save
+                // Нужно заблокировать на счете узла необходимую сумму денег.
+                mbb0.updateBlocked(amount)
               }
             }
             "Запросы на размещение отправлены."
