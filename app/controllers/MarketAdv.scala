@@ -14,6 +14,7 @@ import scala.concurrent.Future
 import play.api.data.Form
 import play.api.templates.HtmlFormat
 import play.api.mvc.AnyContent
+import java.sql.SQLException
 
 /**
  * Suggest.io
@@ -86,6 +87,10 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   private def renderAdvFormFor(adId: String, form: Form[List[AdvFormEntry]])(implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
     // Запуск асинхронных операций: подготовка списка узлов, на которые можно вообще возмонжо опубликовать карточку.
     val rcvrsFut = collectReceivers(request.producerId)
+    renderAdvFormForRcvrs(adId, form, rcvrsFut)
+  }
+
+  private def renderAdvFormForRcvrs(adId: String, form: Form[List[AdvFormEntry]], rcvrsFut: Future[Seq[MAdnNode]])(implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
     // Работа с синхронными моделями.
     val syncResult = DB.withConnection { implicit c =>
       // Собираем всю инфу о размещении этой рекламной карточки
@@ -136,7 +141,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   /** Сабмит формы размещения рекламной карточки. */
   def advFormSubmit(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
     lazy val logPrefix = s"advFormSubmit($adId): "
-    advFormM.bindFromRequest().fold(
+    val formBinded = advFormM.bindFromRequest()
+    formBinded.fold(
       {formWithErrors =>
         debug(s"${logPrefix}form bind failed:\n${formatFormErrors(formWithErrors)}")
         renderAdvFormFor(adId, formWithErrors).map(NotAcceptable(_))
@@ -166,9 +172,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
             warn(s"${logPrefix}Dropping submit entry rcvrId=${advEntry.adnId} : Node already is busy by other adv by this adId.")
           result
         }
-        for {
-          allRcvrs <- allRcvrsFut
-        } yield {
+        allRcvrsFut flatMap { allRcvrs =>
           val allRcvrsAdnIds = allRcvrs.map(_.id.get).toSet
           val advs2 = advs1.filter { advEntry =>
             val result = allRcvrsAdnIds contains advEntry.adnId
@@ -177,33 +181,41 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
             result
           }
           // Пора сохранять новые реквесты на размещение в базу.
-          val successMsg = if (!advs2.isEmpty) {
-            DB.withTransaction { implicit c =>
-              val mbb0 = MBillBalance.getByAdnId(request.producerId).get
-              val mbc = MBillContract.findForAdn(request.producerId, isActive = Some(true)).head
-              val amount = 10F  // TODO Нужно рассчитывать цену
-              advs2.foreach { advEntry =>
-                MAdvReq(
-                  adId = adId,
-                  amount = amount,
-                  comission = Some(SIO_COMISSION_SHARE),
-                  prodContractId = mbc.id.get,
-                  prodAdnId = request.producerId,
-                  rcvrAdnId = advEntry.adnId,
-                  dateStart = advEntry.dateStart.toDateTimeAtStartOfDay,
-                  dateEnd = advEntry.dateEnd.toDateTimeAtStartOfDay,
-                  onStartPage = advEntry.onStartPage
-                ).save
-                // Нужно заблокировать на счете узла необходимую сумму денег.
-                mbb0.updateBlocked(amount)
+          if (!advs2.isEmpty) {
+            try {
+              DB.withTransaction { implicit c =>
+                val mbb0 = MBillBalance.getByAdnId(request.producerId).get
+                val mbc = MBillContract.findForAdn(request.producerId, isActive = Some(true)).head
+                val amount = 10F // TODO Нужно рассчитывать цену
+                advs2.foreach { advEntry =>
+                  MAdvReq(
+                    adId = adId,
+                    amount = amount,
+                    comission = Some(SIO_COMISSION_SHARE),
+                    prodContractId = mbc.id.get,
+                    prodAdnId = request.producerId,
+                    rcvrAdnId = advEntry.adnId,
+                    dateStart = advEntry.dateStart.toDateTimeAtStartOfDay,
+                    dateEnd = advEntry.dateEnd.toDateTimeAtStartOfDay,
+                    onStartPage = advEntry.onStartPage
+                  ).save
+                  // Нужно заблокировать на счете узла необходимую сумму денег.
+                  mbb0.updateBlocked(amount)
+                }
               }
+              Redirect(routes.MarketAdv.advForAd(adId))
+                .flashing("success" -> "Запросы на размещение отправлены.")
+            } catch {
+              case ex: SQLException =>
+                warn(s"advFormSumbit($adId): Failed to commit adv transaction for advs:\n " + advs2, ex)
+                val formWithErrors = formBinded.withGlobalError("error.no.money")
+                renderAdvFormForRcvrs(adId, formWithErrors, allRcvrsFut)
+                  .map { NotAcceptable(_) }
             }
-            "Запросы на размещение отправлены."
           } else {
-            "Без изменений."
+            Redirect(routes.MarketAdv.advForAd(adId))
+              .flashing("success" -> "Без изменений.")
           }
-          Redirect(routes.MarketAdv.advForAd(adId))
-            .flashing("success" -> successMsg)
         }
       }
     )

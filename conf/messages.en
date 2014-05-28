@@ -77,6 +77,7 @@ lk.sl.d=Show on start page
 lk.sl.h=Show in common catalog
 lk.sl.m=Show in my catalog
 
+error.no.money=No money
 error.invalid=Invalid value
 error.invalid.java.util.Date=Invalid date value
 error.required=This field is required
