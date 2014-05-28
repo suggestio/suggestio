@@ -16,6 +16,11 @@
 
   @defining( adnNodes.groupBy(_.adn.memberType).mapValues(_.sortBy(_.meta.name)) )  {  adnNodesMap =>
 
+    @* Глобальная ошибка в форме проявляется, если например недостаточно денег на счете. *@
+    @af.globalError.map { ge =>
+      <p>Возникла проблема: @Messages(ge.message, ge.args : _*)</p>
+    }
+
     @* Рендерим табы по типам узлов. *@
     @adnNodesMap.map { case (memberType, _) =>
       <div>@Messages("amts.of.type." + memberType)</div>
