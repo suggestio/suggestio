@@ -9,13 +9,12 @@
 @import _node._
 
 @market.lk.lkBase(node.meta.name, adnIdOpt = node.id) {
-@if(isMyNode) {
-  @helper.javascriptRouter("jsRoutes")(
-    routes.javascript.MarketAd.updateShowLevelSubmit
-  )
-}
+  @if(isMyNode) {
+    @helper.javascriptRouter("jsRoutes")(
+      routes.javascript.MarketAd.updateShowLevelSubmit
+    )
+  }
 
-@defining(node.adn.memberType : AdnShowType) { adnShowType =>
   @* Верхняя строка. *@
   <div class="title-wrap">
     <div class="center">
@@ -110,7 +109,7 @@
       @* Ссылка на demo web site. *@
       @if(isMyNode) {
         <div class="sm-note">
-          @adnShowType.demoWebsiteAdnId(node).map { dwId =>
+          @node.adn.memberType.demoWebsiteAdnId(node).map { dwId =>
             Вы можете посмотреть, как выглядят ваши к карточки в <a class="sm-note__link" target="_blank" href="@routes.Market.demoWebSite(dwId)">рекламной выдаче</a>
           }
         </div>
@@ -138,5 +137,4 @@
     @_installScriptPopupTpl(node)
   }
 
-} @* defining AdnShowType *@
 }
