@@ -5,7 +5,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import util.acl._
 import models._
-import org.joda.time.LocalDate
+import org.joda.time.{DateTime, LocalDate}
 import play.api.db.DB
 import com.github.nscala_time.time.OrderingImplicits._
 import views.html.market.lk.adv._
@@ -28,25 +28,48 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   import LOGGER._
 
   /** Маппинг формы размещения рекламы на других узлах. */
-  val advFormM = {
+  val advFormM: Form[List[AdvFormEntry]] = {
     import play.api.data._, Forms._
     import util.FormUtil._
-    val dateM = jodaLocalDate("yyyy-MM-dd")
-      .verifying("error.date.in.past", _.toDateTimeAtCurrentTime.isAfterNow)
+    val dateOptM = optional(jodaLocalDate("yyyy-MM-dd"))
     Form(
       "node" -> {
         list(
-          mapping(
+          tuple(
             "adnId"       -> esIdM,
             "advertise"   -> boolean,
             "onStartPage" -> boolean,
-            "dateStart"   -> dateM,
-            "dateEnd"     -> dateM
+            "dateStart"   -> dateOptM,
+            "dateEnd"     -> dateOptM
           )
-            (AdvFormEntry.apply)
-            (AdvFormEntry.unapply)
+            .verifying("error.date", { m => m match {
+              case (_, isAdv, _, dateStartOpt, dateEndOpt) =>
+                // Если стоит галочка, то надо проверить даты.
+                if (isAdv) {
+                  // Проверить даты
+                  val now = DateTime.now()
+                  val dateTestF = { d: LocalDate => d.toDateTimeAtStartOfDay isAfter now}
+                  dateStartOpt.exists(dateTestF) && dateEndOpt.exists(dateTestF)
+                } else {
+                  // Галочки нет, пропускаем мимо. На следующем шаге это дело будет отфильтровано.
+                  true
+                }
+              case _ => false
+            }})
         )
-          .transform [List[AdvFormEntry]] (_.filter(_.advertise), identity)
+          .transform[List[AdvFormEntry]](
+            {ts =>
+              ts.foldLeft(List.empty[AdvFormEntry]) {
+                case (acc, (adnId, isAdv @ true, onStartPage, Some(dateStart), Some(dateEnd))) =>
+                  val result = AdvFormEntry(adnId = adnId, advertise = isAdv, onStartPage = onStartPage, dateStart = dateStart, dateEnd = dateEnd)
+                  result :: acc
+                case (acc, _) => acc
+              }
+            },
+            {_.map { e =>
+              (e.adnId, e.advertise, e.onStartPage, Option(e.dateStart), Option(e.dateEnd))
+            }}
+          )
       }
     )
   }

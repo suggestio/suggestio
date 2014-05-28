@@ -134,7 +134,6 @@ case class AdnNodeAccess(adnId: String, povAdnIdOpt: Option[String]) extends Act
       // Отправить анонима на страницу логина.
       case None => IsAuth.onUnauth(request)
     }
-
   }
 }
 

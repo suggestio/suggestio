@@ -30,32 +30,33 @@ object CanAdvertiseAd {
    * @tparam A Параметр типа реквеста.
    * @return None если нельзя. Some([[RequestWithAd]]) если можно исполнять реквест.
    */
-  private def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A], srmFut: Future[SioReqMd]): Future[Option[RequestWithAd[A]]] = {
+  private def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A]): Future[Option[RequestWithAd[A]]] = {
     if (PersonWrapper isSuperuser pwOpt) {
-      for {
-        adnNodeOpt <- MAdnNodeCache.getByIdCached(mad.producerId)
-        srm <- srmFut
-      } yield {
+      MAdnNodeCache.getByIdCached(mad.producerId) flatMap { adnNodeOpt =>
         if (adnNodeOpt exists isAdvertiserNode) {
-          Some(RequestWithAd(mad, request, pwOpt, srm, adnNodeOpt.get))
+          val adnNode = adnNodeOpt.get
+          SioReqMd.fromPwOptAdn(pwOpt, adnNode.id.get) map { srm =>
+            Some(RequestWithAd(mad, request, pwOpt, srm, adnNode))
+          }
         } else {
-          None
+          Future successful None
         }
       }
     } else {
       pwOpt match {
         case Some(pw) =>
-          for {
-            adnNodeOpt <- MAdnNodeCache.getByIdCached(mad.producerId)
-            srm <- srmFut
-          } yield {
-            adnNodeOpt flatMap { adnNode =>
-              if (adnNode.personIds.contains(pw.personId)  &&  isAdvertiserNode(adnNode)) {
-                Some(RequestWithAd(mad, request, pwOpt, srm, adnNode))
-              } else {
-                None
+          MAdnNodeCache.getByIdCached(mad.producerId).flatMap { adnNodeOpt =>
+            adnNodeOpt
+              .filter {
+                adnNode => adnNode.personIds.contains(pw.personId)  &&  isAdvertiserNode(adnNode)
               }
-            }
+              .fold
+                { Future successful Option.empty[RequestWithAd[A]] }
+                {adnNode =>
+                  SioReqMd.fromPwOptAdn(pwOpt, adnNode.id.get) map { srm =>
+                    Some(RequestWithAd(mad, request, pwOpt, srm, adnNode))
+                  }
+                }
           }
 
         case None => Future successful None
@@ -70,10 +71,9 @@ object CanAdvertiseAd {
 case class CanAdvertiseAd(adId: String) extends ActionBuilder[RequestWithAd] {
   protected def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
-    val srmFut = SioReqMd.fromPwOpt(pwOpt)
     MAd.getById(adId) flatMap {
       case Some(mad) =>
-        CanAdvertiseAd.maybeAllowed(pwOpt, mad, request, srmFut) flatMap {
+        CanAdvertiseAd.maybeAllowed(pwOpt, mad, request) flatMap {
           case Some(req1) => block(req1)
           case None       => onUnauth(request)
         }
