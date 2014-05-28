@@ -8,9 +8,9 @@
 @import AdShowLevels._
 @import market.showcase._
 
-@mads.map { mad =>
-
-  <div class="ads-list__block ads-list-block">
+@mads.zipWithIndex.map { case (mad, i) =>
+  @defining( i + 2 ) { i2 =>
+  <div class="ads-list__block ads-list-block s-@i2 @if( i2 % 4 == 0 ){ ads-list__block_no-margin }">
 
     <div class="ads-list-block__preview">
       @if(coverDisableReason) {
@@ -25,6 +25,6 @@
     @postContent(mad)
 
   </div>
-
+  }
 }
 
