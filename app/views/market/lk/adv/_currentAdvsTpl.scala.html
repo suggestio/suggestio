@@ -12,11 +12,22 @@
 
 <div class="advs-info-block">
 
-  <div class="advs-info-block__section advs-info-block__section_left">&nbsp;</div>
-  <div class="advs-info-block__section advs-info-block__section_center">&nbsp;</div>
+  <div class="advs-info-block__section advs-info-block__section_left">
+
+    @* Информация о статусе карточки — нужно уточнить, что именно тут будет выводиться *@
+    <div class="g-sm-strong">Рекламная карточка находится на рассмотрении администратора.</div>
+    <div class="sm-light-text">(создана 22 мая 2014).</div>
+
+  </div>
+
+  <div class="advs-info-block__section advs-info-block__section_center">
+    Ресторан Джесольмино / Москва одобрил размещение. 22 мая 2014 в 18:56
+  </div>
   <div class="advs-info-block__section advs-info-block__section_right">
 
-    <h3>Заблокировано денег</h3>
+    Под данную рекламу заблокировано:
+
+    <div class="advs-info-block__price">
     @if(blockedSums.isEmpty) {
       @formatPrice(0F, java.util.Currency.getInstance(CurrencyCodeOpt.CURRENCY_CODE_DFLT))
     } else {
@@ -24,6 +35,7 @@
         @formatPrice(amount, currency)
       }
     }
+    </div>
   </div>
 
   <div class="clear"></div>
