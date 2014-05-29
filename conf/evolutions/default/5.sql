@@ -33,3 +33,18 @@ ALTER TABLE sio2.bill_mmp_daily
    ALTER COLUMN on_start_page DROP DEFAULT;
 
 COMMIT;
+
+
+
+-- Добавить колонку в adv_ok с флагом авто-аппрува.
+BEGIN;
+
+ALTER TABLE sio2.adv_ok
+  ADD COLUMN is_auto boolean NOT NULL DEFAULT false;
+COMMENT ON COLUMN sio2.adv_ok.is_auto
+  IS 'Если true, то значит аппрув был сделан системой автоматически.';
+ALTER TABLE sio2.adv_ok
+   ALTER COLUMN is_auto DROP DEFAULT;
+
+
+COMMIT;

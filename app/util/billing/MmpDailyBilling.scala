@@ -29,6 +29,10 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
   /** Сколько раз пытаться повторять сохранение обновлённого списка ресиверов. */
   val UPDATE_RCVRS_VSN_CONFLICT_TRY_MAX = configuration.getInt("mmp.daily.save.update.rcvrs.onConflict.try.max") getOrElse 5
 
+  /** Не раньше какого времени можно запускать auto-accept. */
+  val AUTO_ACCEPT_REQS_AFTER_HOURS = configuration.getInt("mmp.daily.accept.auto.after.hours") getOrElse 16
+
+
   /**
    * Рассчитать ценник размещения рекламной карточки.
    * Цена блока рассчитывается по площади, тарифам размещения узла-получателя и исходя из будней-праздников.
@@ -108,9 +112,10 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
   /**
    * Провести MAdvReq в MAdvOk, списав и зачислив все необходимые деньги.
    * @param advReq Одобряемый реквест размещения.
+   * @param isAuto Пользователь одобряет или система?
    * @return Сохранённый экземпляр MAdvOk.
    */
-  def acceptAdvReq(advReq: MAdvReq): MAdvOk = {
+  def acceptAdvReq(advReq: MAdvReq, isAuto: Boolean): MAdvOk = {
     // Надо провести платёж, запилить транзакции для prod и rcvr и т.д.
     val rcvrAdnId = advReq.rcvrAdnId
     val advReqId = advReq.id.get
@@ -174,8 +179,25 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         dateStatus1 = now,
         prodTxnId   = prodTxn.id.get,
         rcvrTxnId   = Some(rcvrTxn.id.get),
-        isOnline    = false
+        isOnline    = false,
+        isAuto      = isAuto
       ).save
+    }
+  }
+
+
+  /** Цикл автоматического накатывания MAdvReq в MAdvOk. Нужно найти висячие MAdvReq и заапрувить их. */
+  def autoApplyOldAdvReqs() {
+    val period = new Period(AUTO_ACCEPT_REQS_AFTER_HOURS, 0, 0, 0)
+    val advsReq = DB.withConnection { implicit c =>
+      MAdvReq.findCreatedLast(period)
+    }
+    val logPrefix = "autoApplyOldAdvReqs(): "
+    if (advsReq.isEmpty) {
+      trace(logPrefix + "Nothing to do.")
+    } else {
+      // TODO Нужно оттягивать накатывание карточки до ближайшего обеда. Для этого нужно знать тайм-зону для рекламных узлов.
+      advsReq.foreach(acceptAdvReq(_, isAuto = true))
     }
   }
 

@@ -1,9 +1,10 @@
 package models
 
 import anorm._
-import org.joda.time.{LocalDate, DateTime}
+import org.joda.time.{Period, LocalDate, DateTime}
 import util.AnormJodaTime._
 import util.AnormPgArray._
+import util.AnormPgInterval._
 import java.sql.Connection
 import java.util.Currency
 
@@ -128,7 +129,6 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
      .as(MAdv.PROD_ADN_ID_PARSER *)
   }
 
-
   /**
    * Посчитать кол-во рядов, относящихся к указанному ресиверу.
    * @param rcvrAdnId adn id узла-ресивера.
@@ -138,6 +138,15 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
     SQL("SELECT count(*) AS c FROM " + TABLE_NAME + " WHERE rcvr_adn_id = {rcvrAdnId}")
       .on('rcvrAdnId -> rcvrAdnId)
       .as(MAdv.COUNT_PARSER single)
+  }
+
+  /**
+   * Фильтрация по колонке date_created. Поиск всех рядов, которые созданы не ранее последнего времени.
+   * @param createdInPeriod Период относительно now(), в течение которого ряды отбрасываются.
+   * @return Список рядов, которые уже созданы и существуют не менее указанного периода.
+   */
+  def findCreatedLast(createdInPeriod: Period, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(" WHERE date_created + {createdInPeriod} <= now()", policy, 'createdInPeriod -> createdInPeriod)
   }
 }
 
