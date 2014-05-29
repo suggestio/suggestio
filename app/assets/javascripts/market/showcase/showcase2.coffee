@@ -391,7 +391,7 @@ siomart =
       next_index = this.active_block_index + 1
 
       if next_index == this.sm_blocks.length
-        next_index = 0
+        next_index = next_index-1
       this.show_block_by_index next_index
 
     prev_block : () ->
@@ -402,7 +402,7 @@ siomart =
       prev_index = this.active_block_index - 1
 
       if prev_index < 0
-        prev_index = this.sm_blocks.length - 1
+        prev_index = 0
 
       this.show_block_by_index prev_index
 
@@ -631,7 +631,7 @@ siomart =
   ########################################
   welcome_ad :
 
-    hide_timeout : 2000
+    hide_timeout : 3000
     fadeout_transition_time : 1000
 
     fit : ( image_dom ) ->
