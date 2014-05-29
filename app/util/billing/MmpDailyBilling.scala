@@ -1,10 +1,12 @@
 package util.billing
 
-import models.MBillMmpDaily
+import models.{BlockConf, MAdvI, MAdT, MBillMmpDaily}
 import io.suggest.ym.parsers.Price
 import org.joda.time.LocalDate
 import org.joda.time.DateTimeConstants._
 import scala.annotation.tailrec
+import util.blocks.{BlocksUtil, BlocksConf}
+import util.PlayMacroLogsImpl
 
 /**
  * Suggest.io
@@ -12,7 +14,9 @@ import scala.annotation.tailrec
  * Created: 28.05.14 19:04
  * Description: Утиль для работы с биллингом, где имеют вес площади и расценки получателя рекламы.
  */
-object MmpDailyBilling {
+object MmpDailyBilling extends PlayMacroLogsImpl {
+
+  import LOGGER._
 
   /**
    * Рассчитать ценник размещения рекламной карточки.
@@ -47,5 +51,24 @@ object MmpDailyBilling {
     Price(amountAllBlocks, rcvrPricing.currency)
   }
 
+
+  /**
+   * Высокоуровневый рассчет цены размещения рекламной карточки. Вычисляет кол-во рекламных модулей и дергает
+   * другой одноимённый метод.
+   * @param mad Рекламная карточка.
+   * @param rcvrPricing Ценовой план получателя.
+   * @param adv Данные о размещении рекламной карточки.
+   * @return Стоимость размещения в валюте получателя.
+   */
+  def calculateAdvPrice(mad: MAdT, rcvrPricing: MBillMmpDaily, adv: MAdvI): Price = {
+    val block: BlockConf = BlocksConf(mad.blockMeta.blockId)
+    var blkModCnt = block.blockWidth match {
+      case BlocksUtil.BLOCK_WIDTH_NORMAL_PX => 2
+      case BlocksUtil.BLOCK_WIDTH_NARROW_PX => 1
+      case _ =>
+        warn("calculateAdvPrice(): Unexpected block width: ")
+    }
+    ???
+  }
 
 }

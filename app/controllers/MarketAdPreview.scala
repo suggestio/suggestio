@@ -5,19 +5,18 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
 import util.FormUtil._
-import play.api.data._, Forms._
+import play.api.data._
 import util.acl._
 import util.img._
 import scala.concurrent.Future
 import play.api.mvc.Request
 import play.api.Play.current
 import io.suggest.ym.parsers.Price
-import io.suggest.model.MUserImgMetadata
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import util.blocks.BlockMapperResult
 import io.suggest.ym.model.common.EMImg.Imgs_t
-import ImgFormUtil.{IMETA_HEIGHT, IMETA_WIDTH}
+import views.html.market.showcase._single_offer
 
 /**
  * Suggest.io
@@ -64,33 +63,38 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
     maybeGetAdPreviewFormM(request.body)
   }
 
+
   /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
   private def maybeGetAdPreviewFormM(reqBody: collection.Map[String, Seq[String]]): Either[AdFormM, (BlockConf, AdFormM)] = {
     // TODO adModes пора выпиливать. И этот Either заодно.
     val adModes = reqBody.get("ad.offer.mode") getOrElse Nil
     adModes.headOption.flatMap { adModeStr =>
       AdOfferTypes.maybeWithName(adModeStr)
-    } map {
+    }.fold[Either[AdFormM, (BlockConf, AdFormM)]] {
+      warn("detectAdForm(): valid AD mode not present in request body. AdModes found: " + adModes)
+      val form = getPreviewAdFormM(MarketAd.dfltBlock.strictMapping)
+        .withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
+      Left(form)
+    } {
       case AdOfferTypes.BLOCK =>
-        val blockId: Int = reqBody.get("ad.offer.blockId")
+        val maybeBlockIdRaw = reqBody.get("ad.offer.blockId")
+        maybeBlockIdRaw
           .getOrElse(Nil)
           .headOption
-          .fold(1)(_.toInt)
-        val blockConf: BlockConf = BlocksConf(blockId)
-        blockConf -> getPreviewAdFormM(blockConf.strictMapping)
-    } match {
-      case Some(result) =>
-        Right(result)
-
-      case None =>
-        warn("detectAdForm(): valid AD mode not present in request body. AdModes found: " + adModes)
-        val form = getPreviewAdFormM(MarketAd.dfltBlock.strictMapping)
-          .withGlobalError("ad.mode.undefined.or.invalid", adModes : _*)
-        Left(form)
+          .map[BlockConf] { blockIdStr => BlocksConf(blockIdStr.toInt) }
+          .filter(_.isShown)
+          .fold[Either[AdFormM, (BlockConf, AdFormM)]] {
+            // Задан пустой или скрытый/неправильный block_id.
+            warn("detectAdForm(): valid block_id not found, raw block ids = " + maybeBlockIdRaw)
+            val form = getPreviewAdFormM(MarketAd.dfltBlock.strictMapping)
+              .withGlobalError("ad.blockId.undefined.or.invalid")
+            Left(form)
+          } { blockConf =>
+            val result = blockConf -> getPreviewAdFormM(blockConf.strictMapping)
+            Right(result)
+          }
     }
   }
-
-  import views.html.market.showcase._single_offer
 
   def adFormPreviewSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
     detectAdPreviewForm match {
