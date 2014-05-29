@@ -287,6 +287,19 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
       .map { searchResp2list }
   }
 
+  /**
+   * Тоже самое, что и [[findByAllAdnRights()]], но возвращает только список id'шников.
+   * @param rigths Права.
+   * @return Фьючерс со списком id в неопределённом порядке.
+   */
+  def findIdsByAllAdnRights(rights: Seq[AdnRight])(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
+    prepareSearch
+      .setQuery(adnRightsAllQuery(rights))
+      .setNoFields()
+      .execute()
+      .map { searchResp2idsList }
+  }
+
   /** Сгенерить запрос для поиска по внешним продьюсерам. */
   def incomingProducerIdQuery(producerId: String) = QueryBuilders.termQuery(ADN_MI_PRODUCER_IDS_ESFN, producerId)
 

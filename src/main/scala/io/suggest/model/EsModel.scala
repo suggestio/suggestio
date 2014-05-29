@@ -455,6 +455,13 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
     }
   }
 
+  /** Список результатов в список id. */
+  def searchResp2idsList(searchResp: SearchResponse): Seq[String] = {
+    searchResp.getHits.getHits
+      .toSeq
+      .map { _.getId }
+  }
+
   /**
    * Прочитать из базы все перечисленные id разом.
    * @param ids id документов этой модели.
