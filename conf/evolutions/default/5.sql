@@ -22,3 +22,14 @@ COMMENT ON COLUMN sio2.adv_ok.online IS 'Удовлетворён ли рекв�
 
 COMMIT;
 
+
+
+BEGIN;
+
+ALTER TABLE sio2.bill_mmp_daily
+  ADD COLUMN on_start_page real NOT NULL DEFAULT 3;
+COMMENT ON COLUMN sio2.bill_mmp_daily.on_start_page IS 'Мультипликатор цены при активации галочки "на главном экране".';
+ALTER TABLE sio2.bill_mmp_daily
+   ALTER COLUMN on_start_page DROP DEFAULT;
+
+COMMIT;

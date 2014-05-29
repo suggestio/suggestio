@@ -7,7 +7,7 @@ import play.api.libs.concurrent.Akka
 import scala.concurrent.duration._
 import models.MPictureTmp
 import play.api.Logger
-import util.billing.Billing
+import util.billing.{MmpDailyBilling, Billing}
 
 /**
  * Suggest.io
@@ -40,7 +40,7 @@ object Crontab extends PlayMacroLogsImpl {
     import _sched.schedule
     List(
       // Чистить tmp-картинки
-      schedule(10 seconds, 5 minutes) {
+      schedule(7 seconds, 5 minutes) {
         try {
           MPictureTmp.cleanupOld()
         } catch {
@@ -54,8 +54,17 @@ object Crontab extends PlayMacroLogsImpl {
         } catch {
           case ex: Throwable => error("Cron: Billing:processFeeTarificationAll() failed", ex)
         }
+      },
+      // Отправлять в выдачу карточки, время которых уже настало.
+      schedule(15 seconds, 2 minutes) {
+        try {
+          MmpDailyBilling.advertiseOfflineAds()
+        } catch {
+          case ex: Throwable => error("Cron: MmpDailyBilling.advertiseOfflineAds() failed", ex)
+        }
       }
     )
+
   }
 
   def stopTimers(timers: Seq[Cancellable]) {

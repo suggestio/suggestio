@@ -30,20 +30,22 @@ object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
     "currencyCode"  -> default(text(minLength = 3, maxLength = 3), "RUB"),
     "mmpWeekday"    -> floatM,
     "mmpWeekend"    -> floatM,
-    "mmpPrimetime"  -> floatM
+    "mmpPrimetime"  -> floatM,
+    "onStartPage"   -> floatM.verifying(_ > 1.0F)
   )
-  {(currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime) =>
+  {(currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime, onStartPage) =>
     MBillMmpDaily(
-      contractId = -1,
-      currencyCode = currencyCode,
-      mmpWeekday = mmpWeekday,
-      mmpWeekend = mmpWeekend,
-      mmpPrimetime = mmpPrimetime
+      contractId    = -1,
+      currencyCode  = currencyCode,
+      mmpWeekday    = mmpWeekday,
+      mmpWeekend    = mmpWeekend,
+      mmpPrimetime  = mmpPrimetime,
+      onStartPage   = onStartPage
     )
   }
   {mbmd =>
     import mbmd._
-    Some((currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime))
+    Some((currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime, onStartPage))
   })
 
 

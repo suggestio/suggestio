@@ -56,9 +56,7 @@ object Billing extends PlayMacroLogsImpl {
       MBillTariffFee.findAllNonDebitedContractActive
     }
     // Есть на руках раскладка по тарифам. Пора пройтись по активным тарифам и попытаться выполнить списания.
-    if (feeTariffs.isEmpty) {
-      debug("processFeeTarificationAll(): No intersting tariffs found. Nothing to do.")
-    } else {
+    if (!feeTariffs.isEmpty) {
       debug(s"processFeeTarificationAll(): There are ${feeTariffs.size} fee-tariffs to process...")
       val contracts = DB.withConnection { implicit c =>
         MBillContract.findAllActive
