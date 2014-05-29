@@ -96,7 +96,7 @@ object MBillContract extends SqlModelStatic[MBillContract] {
       .as(rowParser *)
   }
 
-  val LEGAL_CONTRACT_ID_RE = "(?iu)(\\d{3,10})-(\\d{3})(/[a-zа-я\\d]{1,5})?".r
+  val LEGAL_CONTRACT_ID_RE = "(?iu)(\\d{3,10})-(\\d{3})(/[-a-z_а-я\\d]{1,16})?".r
 
   /** Распарсить номера договоров из строки. */
   def parseLegalContractId(text: String): List[LegalContractId] = {
