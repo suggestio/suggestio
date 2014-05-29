@@ -114,8 +114,13 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
         }
       },
       {mbc =>
-        val mbc1 = DB.withConnection { implicit c =>
-          mbc.save
+        val mbc1 = DB.withTransaction { implicit c =>
+          val _mbc1 = mbc.save
+          // Сразу создать баланс, если ещё не создан.
+          if (MBillBalance.getByAdnId(mbc.adnId).isEmpty) {
+            MBillBalance(mbc.adnId, amount = 0F).save
+          }
+          _mbc1
         }
         Redirect(routes.SysMarketBilling.billingFor(mbc1.adnId))
           .flashing("success" -> s"Создан договор #${mbc1.legalContractId}.")
