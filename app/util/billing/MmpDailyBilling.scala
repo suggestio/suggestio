@@ -5,7 +5,7 @@ import io.suggest.ym.parsers.Price
 import org.joda.time.LocalDate
 import org.joda.time.DateTimeConstants._
 import scala.annotation.tailrec
-import util.blocks.{BlocksUtil, BlocksConf}
+import util.blocks.{BfHeight, BlocksUtil, BlocksConf}
 import util.PlayMacroLogsImpl
 
 /**
@@ -57,18 +57,30 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
    * другой одноимённый метод.
    * @param mad Рекламная карточка.
    * @param rcvrPricing Ценовой план получателя.
-   * @param adv Данные о размещении рекламной карточки.
    * @return Стоимость размещения в валюте получателя.
    */
-  def calculateAdvPrice(mad: MAdT, rcvrPricing: MBillMmpDaily, adv: MAdvI): Price = {
+  def calculateAdvPrice(mad: MAdT, rcvrPricing: MBillMmpDaily, dateStart: LocalDate, dateEnd: LocalDate): Price = {
+    lazy val logPrefix = s"calculateAdvPrice(${mad.id.getOrElse("?")}): "
     val block: BlockConf = BlocksConf(mad.blockMeta.blockId)
-    var blkModCnt = block.blockWidth match {
+    // Мультипликатор по ширине
+    val wmul = block.blockWidth match {
       case BlocksUtil.BLOCK_WIDTH_NORMAL_PX => 2
       case BlocksUtil.BLOCK_WIDTH_NARROW_PX => 1
-      case _ =>
-        warn("calculateAdvPrice(): Unexpected block width: ")
+      case other =>
+        warn(logPrefix + "Unexpected block width: " + other)
+        1
     }
-    ???
+    // Мультипликатор по высоте
+    val hmul = mad.blockMeta.height match {
+      case BfHeight.HEIGHT_300 => 1
+      case BfHeight.HEIGHT_460 => 2
+      case BfHeight.HEIGHT_620 => 3
+      case other =>
+        warn(logPrefix + "Unexpected block height: " + other)
+        1
+    }
+    val blockModulesCount: Int = wmul * hmul
+    calculateAdvPrice(blockModulesCount, rcvrPricing, dateStart, dateEnd)
   }
 
 }

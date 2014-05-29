@@ -85,7 +85,7 @@ trait Height extends ValT with HeightI {
 /** Бывает, что блок имеет фиксированную высоту. Тут хелпер, немного экономящий время.
   * Высоту можно переопределить. */
 trait HeightFixed extends ValT {
-  val HEIGHT = 300
+  val HEIGHT = BfHeight.HEIGHT_300
   def getBlockMeta: BlockMeta = getBlockMeta(HEIGHT)
 }
 

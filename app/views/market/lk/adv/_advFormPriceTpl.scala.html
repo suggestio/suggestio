@@ -1,0 +1,13 @@
+@(prices: Iterable[(java.util.Currency, Float)], hasEnoughtMoney: Boolean)(implicit ctx: Context)
+
+@* Рендер плашки с ценой. *@
+@import ctx._
+@import util.TplDataFormatUtil._
+
+@prices.map { case (currency, amount) =>
+  @formatPrice(amount, currency)
+}
+
+@if( !hasEnoughtMoney ) {
+  (Недостаточно средств на счете)
+}

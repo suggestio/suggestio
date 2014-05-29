@@ -117,7 +117,7 @@ object BlocksConf extends Enumeration {
   /** Блок картинки с двумя текстами. */
   sealed trait Block2t extends BgImg with Height with Title with Descr with FillColor with BorderColor with Discount {
     override def heightBf: BfHeight = super.heightBf.copy(
-      availableVals = Set(300, 460)
+      availableVals = Set(BfHeight.HEIGHT_300, BfHeight.HEIGHT_460)
     )
     override def fillColorBf: BfColor = super.fillColorBf.copy(
       defaultValue = Some("ffffff")
@@ -279,7 +279,7 @@ object BlocksConf extends Enumeration {
 
   sealed trait Block13t extends Height with DiscoIconColor with DiscoBorderColor with BgImg with Discount with Title with Descr {
     override def heightBf: BfHeight = super.heightBf.copy(
-      availableVals = Set(300, 460)
+      availableVals = Set(BfHeight.HEIGHT_300, BfHeight.HEIGHT_460)
     )
     override def discoIconColorBf: BfColor = super.discoIconColorBf.copy(
       defaultValue = Some("828fa0")
@@ -311,7 +311,7 @@ object BlocksConf extends Enumeration {
     override def template = _block14Tpl
     override def isShown = false
     override def heightBf = super.heightBf.copy(
-      availableVals = Set(300, 460)
+      availableVals = Set(BfHeight.HEIGHT_300, BfHeight.HEIGHT_460)
     )
   }
   val Block14 = new Val(14) with Block14t with EmptyKey {
@@ -364,7 +364,7 @@ object BlocksConf extends Enumeration {
   sealed trait Block17t extends Height with CommonBlock17_18 {
     override def isShown = false
     override def heightBf: BfHeight = super.heightBf.copy(
-      availableVals = Set(300, 460)
+      availableVals = Set(BfHeight.HEIGHT_300, BfHeight.HEIGHT_460)
     )
     // Добавляем в начало формы поле высоты.
     override def blockFields: List[BlockFieldT] = heightBf :: super.blockFields

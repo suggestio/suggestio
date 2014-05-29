@@ -10,6 +10,7 @@
 
 <div class="advs-form-block">
 @form(routes.MarketAdv.advFormSubmit(adId)) {
+@*form(routes.MarketAdv.getAdvPriceSubmit(adId)) {*@
 
   @defining( adnNodes.groupBy(_.adn.memberType).mapValues(_.sortBy(_.meta.name)) )  {  adnNodesMap =>
 
@@ -73,8 +74,10 @@
 
   }
 
-
   <input type="submit" value="Отправить запрос"/>
+
+  <p>Чтобы посчитать цену, нужно засабмиттить форму на @routes.MarketAdv.getAdvPriceSubmit(adId)</p>
 }
+
 
 </div>

@@ -47,6 +47,7 @@ object BlocksUtil {
   def defaultFont: AOFieldFont = AOFieldFont(color = "000000")
 
   // Допустимые ширины блоков.
+  // TODO Нужно зафиксировать допустимые значения ширины через Enumeration. Это избавит от проблем с расчетами стоимостей рекламных модулей.
   val BLOCK_WIDTH_NORMAL_PX = 300
   val BLOCK_WIDTH_NARROW_PX = 140
 
@@ -205,14 +206,20 @@ trait BlockAOValueFieldT extends BlockFieldT {
 
 object BfHeight {
   val HEIGHT_DFLT = Some(300)
-  val HEIGHTS_AVAILABLE = Set(300, 460, 620)
+
+  // TODO Нужно зафиксировать значения высоты через Enumeration. Это избавит от проблем с расчетами стоимостей рекламных модулей.
+  val HEIGHT_300 = 300
+  val HEIGHT_460 = 460
+  val HEIGHT_620 = 620
+
+  val HEIGHTS_AVAILABLE_DFLT = Set(HEIGHT_300, HEIGHT_460, HEIGHT_620)
 }
 
 /** Поле для какой-то цифры. */
 case class BfHeight(
   name: String,
   defaultValue: Option[Int] = BfHeight.HEIGHT_DFLT,
-  availableVals: Set[Int] = BfHeight.HEIGHTS_AVAILABLE
+  availableVals: Set[Int] = BfHeight.HEIGHTS_AVAILABLE_DFLT
 ) extends BlockFieldT {
   override type T = Int
   override def field = BlocksEditorFields.Height

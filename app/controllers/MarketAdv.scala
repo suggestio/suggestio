@@ -9,13 +9,15 @@ import org.joda.time.{DateTime, LocalDate}
 import play.api.db.DB
 import com.github.nscala_time.time.OrderingImplicits._
 import views.html.market.lk.adv._
-import util.PlayMacroLogsImpl
+import util.{TplDataFormatUtil, PlayMacroLogsImpl}
 import scala.concurrent.Future
 import play.api.data.Form
 import play.api.templates.HtmlFormat
 import play.api.mvc.{Result, AnyContent}
 import java.sql.SQLException
 import io.suggest.ym.parsers.Price
+import util.billing.MmpDailyBilling
+import java.util.Currency
 
 /**
  * Suggest.io
@@ -137,6 +139,101 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   }
 
 
+  /**
+   * Рассчитать цену размещения. Сюда нужно сабмиттить форму также, как и в [[advFormSubmit()]].
+   * @param adId id размещаемой рекламной карточки.
+   * @return Инлайновый рендер отображаемой цены.
+   */
+  def getAdvPriceSubmit(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
+    advFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"getAdvPriceSubmit($adId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+        NotAcceptable("Cannot bind form.")
+      },
+      {adves =>
+        val allRcvrIdsFut = MAdnNode.findIdsByAllAdnRights(Seq(AdnRights.RECEIVER))
+          .map { _.filter(_ != request.producerId).toSet }
+        val adves1 = filterEntiesByBusyRcvrs(adId, adves)
+        allRcvrIdsFut.map { allRcvrIds =>
+          val adves2 = filterEntiesByPossibleRcvrs(adves1, allRcvrIds)
+          // Начинаем рассчитывать ценник.
+          if (adves2.isEmpty) {
+            val curr = Currency.getInstance(CurrencyCodeOpt.CURRENCY_CODE_DFLT)
+            val prices = List(curr -> 0F)
+            Ok(_advFormPriceTpl(prices, hasEnoughtMoney = true))
+          } else {
+            val syncResult = DB.withConnection { implicit c =>
+              val someTrue = Some(true)
+              val prices = adves2.foldLeft[List[Price]] (Nil) { (acc, adve) =>
+                val rcvrContract = MBillContract.findForAdn(adve.adnId, isActive = someTrue)
+                  .sortBy(_.id.get)
+                  .head
+                val rcvrPricing = MBillMmpDaily.findByContractId(rcvrContract.id.get)
+                  .sortBy(_.id.get)
+                  .head
+                val advPrice = MmpDailyBilling.calculateAdvPrice(request.mad, rcvrPricing, adve.dateStart, dateEnd = adve.dateEnd)
+                advPrice :: acc
+              }
+              val prices2 = prices
+                .groupBy { _.currency.getCurrencyCode }
+                .mapValues { p => p.head.currency -> p.map(_.price).sum }
+                .values
+              val mbb = MBillBalance.getByAdnId(request.producerId).get
+              // Если есть разные валюты, то операция уже невозможна.
+              val hasEnoughtMoney = prices2.size <= 1 && {
+                prices2.headOption.exists { price =>
+                  price._1.getCurrencyCode == mbb.currencyCode  &&  price._2 <= mbb.amount
+                }
+              }
+              prices2 -> hasEnoughtMoney
+            }
+            val (prices, hasEnoughtMoney) = syncResult
+            Ok(_advFormPriceTpl(prices, hasEnoughtMoney))
+          }
+        }
+      }
+    )
+  }
+
+
+  /** Синхронная фильтрация присланного списка запросов на публикацию по уже размещённым adv.
+    * @param adId id размещаемой рекламной карточки.
+    * @param adves Результат сабмита формы [[advFormM]].
+    * @return Новый adves, который НЕ содержит уже размещаемые карточки.
+    */
+  private def filterEntiesByBusyRcvrs(adId: String, adves: List[AdvFormEntry]): List[AdvFormEntry] = {
+    val syncResult1 = DB.withConnection { implicit c =>
+      val advsOk = MAdvOk.findByAdId(adId)
+      val advsReq = MAdvReq.findByAdId(adId)
+      (advsOk, advsReq)
+    }
+    val (advsOk, advsReq) = syncResult1
+    val busyAdnIds = {
+      // Нано-оптимизация: использовать fold для накопления adnId из обоих списков и общую функцию для обоих fold'ов.
+      val foldF = { (acc: List[String], e: MAdvI)  =>  e.rcvrAdnId :: acc }
+      val acc1 = advsOk.foldLeft(List.empty[String])(foldF)
+      advsReq.foldLeft(acc1)(foldF)
+        .toSet
+    }
+    adves.filter { advEntry =>
+      val result = !(busyAdnIds contains advEntry.adnId)
+      if (!result)
+        warn(s"filterEntriesByBusyRcvrs($adId): Dropping submit entry rcvrId=${advEntry.adnId} : Node already is busy by other adv by this adId.")
+      result
+    }
+  }
+
+  /** Фильтрануть список по допустимым ресиверам. */
+  private def filterEntiesByPossibleRcvrs(adves: List[AdvFormEntry], allRcvrIds: Set[String]): List[AdvFormEntry] = {
+    adves.filter { advEntry =>
+      val result = allRcvrIds contains advEntry.adnId
+      if (!result)
+        warn(s"filterEntriesByPossibleRcvrs(): Dropping submit entry rcvrId=${advEntry.adnId} : Not in available rcvrs set")
+      result
+    }
+  }
+
+
   /** Сабмит формы размещения рекламной карточки. */
   def advFormSubmit(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
     lazy val logPrefix = s"advFormSubmit($adId): "
@@ -146,50 +243,42 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         debug(s"${logPrefix}form bind failed:\n${formatFormErrors(formWithErrors)}")
         renderAdvFormFor(adId, formWithErrors).map(NotAcceptable(_))
       },
-      {advs =>
-        trace(logPrefix + "advs entries submitted: " + advs)
+      {adves =>
+        trace(logPrefix + "adves entries submitted: " + adves)
         // Перед сохранением надо проверить возможности публикации на каждый узел.
         // Получаем в фоне все возможные узлы-ресиверы.
         val allRcvrsFut = collectReceivers(request.producerId)
-        // Синхронно отбросить ресиверы, у которых на которых уже есть размещение текущей карточки.
-        val syncResult1 = DB.withConnection { implicit c =>
-          val advsOk = MAdvOk.findByAdId(adId)
-          val advsReq = MAdvReq.findByAdId(adId)
-          (advsOk, advsReq)
-        }
-        val (advsOk, advsReq) = syncResult1
-        val busyAdnIds = {
-          // Нано-оптимизация: использовать fold для накопления adnId из обоих списков и общую функцию для обоих fold'ов.
-          val foldF = { (acc: List[String], e: MAdvI)  =>  e.rcvrAdnId :: acc }
-          val acc1 = advsOk.foldLeft(List.empty[String])(foldF)
-          advsReq.foldLeft(acc1)(foldF)
-            .toSet
-        }
-        val advs1 = advs.filter { advEntry =>
-          val result = !(busyAdnIds contains advEntry.adnId)
-          if (!result)
-            warn(s"${logPrefix}Dropping submit entry rcvrId=${advEntry.adnId} : Node already is busy by other adv by this adId.")
-          result
-        }
+        val advs1 = filterEntiesByBusyRcvrs(adId, adves)
         allRcvrsFut flatMap { allRcvrs =>
-          val allRcvrsAdnIds = allRcvrs.map(_.id.get).toSet
-          val advs2 = advs1.filter { advEntry =>
-            val result = allRcvrsAdnIds contains advEntry.adnId
-            if (!result)
-              warn(s"${logPrefix}Dropping submit entry rcvrId=${advEntry.adnId} : Not in available rcvrs set")
-            result
-          }
+          val allRcvrIds = allRcvrs.map(_.id.get).toSet
+          val advs2 = filterEntiesByPossibleRcvrs(advs1, allRcvrIds)
           // Пора сохранять новые реквесты на размещение в базу.
           if (!advs2.isEmpty) {
             try {
               DB.withTransaction { implicit c =>
                 val mbb0 = MBillBalance.getByAdnId(request.producerId).get
-                val mbc = MBillContract.findForAdn(request.producerId, isActive = Some(true)).head
-                val amount = 10F // TODO Нужно рассчитывать цену
+                val someTrue = Some(true)
+                val mbc = MBillContract.findForAdn(request.producerId, isActive = someTrue).head
+                val prodCurrencyCode = mbb0.currencyCode
                 advs2.foreach { advEntry =>
+                  val rcvrContract = MBillContract.findForAdn(advEntry.adnId, isActive = someTrue)
+                    .sortBy(_.id.get)
+                    .headOption
+                    .getOrElse {
+                      MBillContract(adnId = advEntry.adnId, contractDate = DateTime.now).save
+                    }
+                  val rcvrPricing = MBillMmpDaily.findByContractId(rcvrContract.id.get)
+                    .sortBy(_.id.get)
+                    .head
+                  val advPrice = MmpDailyBilling.calculateAdvPrice(request.mad, rcvrPricing, advEntry.dateStart, dateEnd = advEntry.dateEnd)
+                  val rcvrCurrencyCode = advPrice.currency.getCurrencyCode
+                  assert(
+                    rcvrCurrencyCode == prodCurrencyCode,
+                    s"Rcvr node ${advEntry.adnId} currency ($rcvrCurrencyCode) does not match to producer node ${request.producerId} currency ($prodCurrencyCode)"
+                  )
                   MAdvReq(
                     adId = adId,
-                    amount = amount,
+                    amount = advPrice.price,
                     comission = Some(mbc.sioComission),
                     prodContractId = mbc.id.get,
                     prodAdnId = request.producerId,
@@ -199,7 +288,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
                     onStartPage = advEntry.onStartPage
                   ).save
                   // Нужно заблокировать на счете узла необходимую сумму денег.
-                  mbb0.updateBlocked(amount)
+                  mbb0.updateBlocked(advPrice.price)
                 }
               }
               Redirect(routes.MarketAdv.advForAd(adId))
@@ -373,9 +462,10 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       val prodTxn = MBillTxn(
         contractId      = prodContract.id.get,
         amount          = -amount0,
-        datePaid        = now,
+        datePaid        = request.advReq.dateCreated,
         txnUid          = s"${prodContract.id.get}-$advReqId",
-        paymentComment  = "Debit for advertise"
+        paymentComment  = "Debit for advertise",
+        dateProcessed   = now
       ).save
 
       // Разобраться с кошельком получателя
@@ -383,7 +473,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         .headOption
         .getOrElse {
           warn(s"advReqAcceptSubmit($advReqId): Creating new contract for adv. award receiver...")
-          MBillContract(rcvrAdnId, contractDate = now, isActive = true, suffix = Some("CEO")).save
+          MBillContract(rcvrAdnId, contractDate = now, isActive = true, suffix = Some("CEO"), dateCreated = now).save
         }
       val amount1 = rcvrContract.sioComission * amount0
       assert(amount1 <= amount0, "Comissioned amount must be less or equal than source amount.")
@@ -394,22 +484,23 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       // Зачислить деньги на счет получателя
       rcvrMbb.updateAmount(amount1)
       val rcvrTxn = MBillTxn(
-        contractId  = rcvrContract.id.get,
-        amount      = amount1,
-        comissionPc = Some(rcvrContract.sioComission),
-        datePaid    = now,
-        txnUid      = s"${rcvrContract.id.get}-$advReqId",
-        paymentComment = "Credit for adverise"
+        contractId      = rcvrContract.id.get,
+        amount          = amount1,
+        comissionPc     = Some(rcvrContract.sioComission),
+        datePaid        = request.advReq.dateCreated,
+        txnUid          = s"${rcvrContract.id.get}-$advReqId",
+        paymentComment  = "Credit for adverise",
+        dateProcessed   = now
       ).save
 
       // Сохранить подтверждённое размещение с инфой о платежах.
       MAdvOk(
         request.advReq,
-        comission1 = Some(rcvrContract.sioComission),
+        comission1  = Some(rcvrContract.sioComission),
         dateStatus1 = now,
-        prodTxnId = prodTxn.id.get,
-        rcvrTxnId = Some(rcvrTxn.id.get),
-        isOnline = false
+        prodTxnId   = prodTxn.id.get,
+        rcvrTxnId   = Some(rcvrTxn.id.get),
+        isOnline    = false
       ).save
     }
     // Всё сохранено. Можно отредиректить юзера, чтобы он дальше продолжил одобрять рекламные карточки.
