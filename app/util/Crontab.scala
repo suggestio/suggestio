@@ -55,6 +55,14 @@ object Crontab extends PlayMacroLogsImpl {
           case ex: Throwable => error("Cron: Billing:processFeeTarificationAll() failed", ex)
         }
       },
+      // Автоматически аппрувить залежавшиеся в очереди реквесты.
+      schedule(5 seconds, 2 minutes) {
+        try {
+          MmpDailyBilling.autoApplyOldAdvReqs()
+        } catch {
+          case ex: Throwable => error("Cron: MmpDailyBilling.autoApplyOldAdvReqs() failed", ex)
+        }
+      },
       // Отправлять в выдачу карточки, время которых уже настало.
       schedule(15 seconds, 2 minutes) {
         try {

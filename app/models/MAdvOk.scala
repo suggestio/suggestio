@@ -19,8 +19,10 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
   val TABLE_NAME = "adv_ok"
 
   override val rowParser = {
-    ROW_PARSER_BASE ~ get[DateTime]("date_status") ~ get[Int]("prod_txn_id") ~ get[Option[Int]]("rcvr_txn_id") ~ get[Boolean]("online") map {
-      case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ onStartPage ~ dateStart ~ dateEnd ~ prodAdnId ~ rcvrAdnId ~ dateStatus ~ prodTxnId ~ rcvrTxnId ~ isOnline =>
+    ROW_PARSER_BASE ~ get[DateTime]("date_status") ~ get[Int]("prod_txn_id") ~ get[Option[Int]]("rcvr_txn_id") ~
+      get[Boolean]("online") ~ get[Boolean]("is_auto") map {
+      case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ onStartPage ~ dateStart ~ dateEnd ~
+        prodAdnId ~ rcvrAdnId ~ dateStatus ~ prodTxnId ~ rcvrTxnId ~ isOnline ~ isAuto =>
         MAdvOk(
           id          = id,
           adId        = adId,
@@ -36,12 +38,14 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
           rcvrTxnId   = rcvrTxnId,
           prodAdnId   = prodAdnId,
           rcvrAdnId   = rcvrAdnId,
-          isOnline    = isOnline
+          isOnline    = isOnline,
+          isAuto      = isAuto
         )
     }
   }
 
-  def apply(madv: MAdvI, comission1: Option[Float], dateStatus1: DateTime, prodTxnId: Int, rcvrTxnId: Option[Int], isOnline: Boolean): MAdvOk = {
+  def apply(madv: MAdvI, comission1: Option[Float], dateStatus1: DateTime, prodTxnId: Int, rcvrTxnId: Option[Int],
+            isOnline: Boolean, isAuto: Boolean): MAdvOk = {
     import madv._
     MAdvOk(
       id          = id,
@@ -58,7 +62,8 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
       rcvrTxnId   = rcvrTxnId,
       prodAdnId   = prodAdnId,
       rcvrAdnId   = rcvrAdnId,
-      isOnline    = isOnline
+      isOnline    = isOnline,
+      isAuto      = isAuto
     )
   }
 
@@ -91,6 +96,7 @@ case class MAdvOk(
   onStartPage   : Boolean,
   prodAdnId     : String,
   rcvrAdnId     : String,
+  isAuto        : Boolean,
   dateCreated   : DateTime = DateTime.now(),
   dateStatus    : DateTime = DateTime.now(),
   isOnline      : Boolean = false,
@@ -103,12 +109,12 @@ case class MAdvOk(
 
   override def saveInsert(implicit c: Connection): MAdvOk = {
     SQL("INSERT INTO " + TABLE_NAME +
-      "(ad_id, amount, currency_code, date_created, comission, mode, on_start_page, date_start, date_end, prod_adn_id, rcvr_adn_id, date_status, prod_txn_id, rcvr_txn_id, online) " +
-      "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {comission}, {mode}, {onStartPage}, {dateStart}, {dateEnd}, {prodAdnId}, {rcvrAdnId}, {dateStatus}, {prodTxnId}, {rcvrTxnId}, {isOnline})")
+      "(ad_id, amount, currency_code, date_created, comission, mode, on_start_page, date_start, date_end, prod_adn_id, rcvr_adn_id, date_status, prod_txn_id, rcvr_txn_id, online, is_auto) " +
+      "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {comission}, {mode}, {onStartPage}, {dateStart}, {dateEnd}, {prodAdnId}, {rcvrAdnId}, {dateStatus}, {prodTxnId}, {rcvrTxnId}, {isOnline}, {isAuto})")
     .on('adId -> adId, 'amount -> amount, 'currencyCode -> currencyCode, 'dateCreated -> dateCreated,
         'comission -> comission, 'dateStart -> dateStart, 'mode -> mode.toString, 'onStartPage -> onStartPage,
         'dateStatus -> dateStatus, 'dateStart -> dateStart, 'dateEnd -> dateEnd, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId,
-        'dateStatus -> dateStatus, 'prodTxnId -> prodTxnId, 'rcvrTxnId -> rcvrTxnId, 'isOnline -> isOnline)
+        'dateStatus -> dateStatus, 'prodTxnId -> prodTxnId, 'rcvrTxnId -> rcvrTxnId, 'isOnline -> isOnline, 'isAuto -> isAuto)
     .executeInsert(rowParser single)
   }
 

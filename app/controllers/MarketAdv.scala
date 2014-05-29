@@ -439,7 +439,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    */
   def advReqAcceptSubmit(advReqId: Int) = CanReceiveAdvReq(advReqId).apply { implicit request =>
     // Надо провести платёж, запилить транзакции для prod и rcvr и т.д.
-    MmpDailyBilling.acceptAdvReq(request.advReq)
+    MmpDailyBilling.acceptAdvReq(request.advReq, isAuto = false)
     // Всё сохранено. Можно отредиректить юзера, чтобы он дальше продолжил одобрять рекламные карточки.
     Redirect(routes.MarketAdv.showNodeAdvs(request.advReq.rcvrAdnId))
       .flashing("success" -> "Реклама будет размещена.")
