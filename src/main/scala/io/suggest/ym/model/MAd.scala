@@ -45,19 +45,22 @@ object MAd
 
   override type T = MAd
 
-  val ES_TYPE_NAME: String = "ad"
+  override val ES_TYPE_NAME = "ad"
 
   protected[model] val blockMetaDflt = BlockMeta(height = 140, blockId = 1)  // TODO Убрать после окончания миграции всех карточек на blocks.
 
-  protected[model] def dummy(id: String) = MAd(
-    producerId = null,
-    blockMeta = blockMetaDflt,
-    offers = Nil,
-    imgs = Map.empty,
-    id = Some(id)
-  )
+  override protected[model] def dummy(id: String, version: Long) = {
+    MAd(
+      producerId = null,
+      blockMeta = blockMetaDflt,
+      offers = Nil,
+      imgs = Map.empty,
+      id = Some(id),
+      versionOpt = Some(version)
+    )
+  }
 
-  def generateMappingStaticFields: List[Field] = List(
+  override def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
     FieldAll(enabled = true, index_analyzer = SioConstants.EDGE_NGRAM_AN_1, search_analyzer = DFLT_AN)
   )
@@ -113,7 +116,8 @@ case class MAd(
   var colors     : Map[String, String] = Map.empty,
   var disableReason : List[DisableReason] = Nil,
   var richDescrOpt  : Option[RichDescr] = None,
-  var dateCreated   : DateTime = DateTime.now
+  var dateCreated   : DateTime = DateTime.now,
+  var versionOpt    : Option[Long] = None
 )
   extends EsModelEmpty
   with MAdT

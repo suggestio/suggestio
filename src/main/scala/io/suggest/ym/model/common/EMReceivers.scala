@@ -168,7 +168,10 @@ trait EMReceivers extends EMReceiversI {
     val json = JsObject(Seq(
       RECEIVERS_ESFN -> writeReceiversPlayJson
     ))
-    prepareUpdate.setDoc(json.toString())
+    val req = prepareUpdate.setDoc(json.toString())
+    if (versionOpt.isDefined)
+      req.setVersion(versionOpt.get)
+    req
   }
 
   def updateAllWantLevels(f: Set[AdShowLevel] => Set[AdShowLevel]) {

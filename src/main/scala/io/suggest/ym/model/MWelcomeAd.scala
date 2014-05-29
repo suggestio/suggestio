@@ -28,17 +28,19 @@ object MWelcomeAd
   with EsModelStaticIgnore
 {
 
-  val ES_TYPE_NAME = "wcAd"
+  override val ES_TYPE_NAME = "wcAd"
 
   override type T = MWelcomeAd
 
-  protected def dummy(id: String) = MWelcomeAd(
-    producerId = null,
-    imgs = null,
-    id = Some(id)
-  )
+  override protected def dummy(id: String, version: Long) = {
+    MWelcomeAd(
+      producerId = null,
+      imgs = null,
+      id = Some(id)
+    )
+  }
 
-  def generateMappingStaticFields: List[Field] = List(
+  override def generateMappingStaticFields: List[Field] = List(
     FieldAll(enabled = false),
     FieldSource(enabled = true)
   )
@@ -74,8 +76,9 @@ case class MWelcomeAd(
   with EMDateCreatedMut
 {
   override type T = MWelcomeAd
-
+  @JsonIgnore override def versionOpt = None
   @JsonIgnore override def companion = MWelcomeAd
+
   @JsonIgnore override def offers = Nil
   @JsonIgnore override def prio = None
   @JsonIgnore override def userCatId = None

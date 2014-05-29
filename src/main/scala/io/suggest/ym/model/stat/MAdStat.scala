@@ -143,19 +143,21 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
 
 
   /** Пустой экземпляр класса. */
-  protected def dummy(id: String) = MAdStat(
-    id        = Some(id),
-    clientAddr = null,
-    action    = null,
-    ua        = null,
-    adId      = null,
-    adOwnerId = null,
-    timestamp = null,
-    personId  = null
-  )
+  override protected def dummy(id: String, version: Long) = {
+    MAdStat(
+      id        = Some(id),
+      clientAddr = null,
+      action    = null,
+      ua        = null,
+      adId      = null,
+      adOwnerId = null,
+      timestamp = null,
+      personId  = null
+    )
+  }
 
   /** Десериализация полей из JSON. */
-  def applyKeyValue(acc: MAdStat): PartialFunction[(String, AnyRef), Unit] = {
+  override def applyKeyValue(acc: MAdStat): PartialFunction[(String, AnyRef), Unit] = {
     case (CLIENT_ADDR_ESFN, value) => acc.clientAddr = stringParser(value)
     case (ACTION_ESFN, value)      => acc.action = AdStatActions.withName(stringParser(value))
     case (UA_ESFN, value)          => acc.ua = Option(stringParser(value))
@@ -167,14 +169,14 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
 
 
   /** Статические поля для маппиннга. */
-  def generateMappingStaticFields: List[Field] = List(
+  override def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
     FieldAll(enabled = false),
     FieldTtl(enabled = true, default = TTL_DAYS_DFLT + "d")
   )
 
   /** Маппинги для типа этой модели. */
-  def generateMappingProps: List[DocField] = List(
+  override def generateMappingProps: List[DocField] = List(
     FieldString(CLIENT_ADDR_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
     FieldString(ACTION_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldString(UA_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
@@ -201,7 +203,7 @@ case class MAdStat(
   override type T = MAdStat
 
   @JsonIgnore
-  def companion = MAdStat
+  override def companion = MAdStat
 
   def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     var acc1: FieldsJsonAcc = CLIENT_ADDR_ESFN -> JsString(clientAddr) ::
@@ -217,6 +219,7 @@ case class MAdStat(
     acc1
   }
 
+  override def versionOpt = None
 }
 
 

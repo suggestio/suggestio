@@ -36,7 +36,7 @@ object MShopPromoOffer extends EsModelMinimalStaticT with MacroLogsImpl {
   def generateMappingProps: List[DocField] = ???
   def generateMappingStaticFields: List[Field] = ???
 
-  override def deserializeOne(id: String, m: Map[String, AnyRef]): MShopPromoOffer = {
+  override def deserializeOne(id: String, m: Map[String, AnyRef], version: Long): MShopPromoOffer = {
     MShopPromoOffer(
       id    = Some(id),
       datum = YmPromoOfferDatum.fromJson(m)
@@ -121,8 +121,9 @@ case class MShopPromoOffer(
 
   override type T = MShopPromoOffer
 
-  def companion = MShopPromoOffer
-  def shopId   = datum.shopId
+  override def companion = MShopPromoOffer
+  override def versionOpt = None
+  override def shopId   = datum.shopId
 
   /**
    * Предложить имя товара на основе указанных полей.

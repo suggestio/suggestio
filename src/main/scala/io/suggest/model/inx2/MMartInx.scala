@@ -22,19 +22,19 @@ import play.api.libs.json.JsString
  */
 object MMartInx extends EsModelStaticT with MacroLogsImpl {
 
-  val ES_TYPE_NAME: String = "inxMart"
+  override val ES_TYPE_NAME: String = "inxMart"
 
   override type T = MMartInx
 
-  protected def dummy(martId: String) = MMartInx(martId = martId, targetEsInxName = null)
+  override protected def dummy(martId: String, version: Long) = MMartInx(martId = martId, targetEsInxName = null)
 
 
-  def generateMappingStaticFields: List[Field] = List(
+  override def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
     FieldAll(enabled = false)
   )
 
-  def generateMappingProps: List[DocField] = List(
+  override def generateMappingProps: List[DocField] = List(
     FieldString(MART_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldString(ES_INX_NAME_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
   )
@@ -57,7 +57,8 @@ case class MMartInx(
 
   @JsonIgnore def id: Option[String] = Some(martId)
 
-  def companion = MMartInx
+  override def companion = MMartInx
+  override def versionOpt = None
 
   def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     MART_ID_ESFN -> JsString(martId) ::
@@ -66,11 +67,11 @@ case class MMartInx(
   }
 
 
-  @JsonIgnore def esTypePrefix: String = martId + "_"
+  @JsonIgnore override def esTypePrefix: String = martId + "_"
   @JsonIgnore override val targetEsType = esTypePrefix + MAd.ES_TYPE_NAME
 
 
-  def esInxSettings(shards: Int, replicas: Int = 1): XContentBuilder = {
+  override def esInxSettings(shards: Int, replicas: Int = 1): XContentBuilder = {
     SioEsUtil.getIndexSettingsV2(shards=shards, replicas=replicas)
   }
 
@@ -83,7 +84,7 @@ case class MMartInx(
     )
   }
 
-  def esInxMappings: Seq[(String, XContentBuilder)] = {
+  override def esInxMappings: Seq[(String, XContentBuilder)] = {
     esTypes map { esTypeName =>
       esTypeName -> esAdMapping(esTypeName)
     }

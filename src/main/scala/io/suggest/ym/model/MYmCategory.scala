@@ -101,10 +101,10 @@ object MYmCategory
   }
 
 
-  protected def dummy(id: String) = MYmCategory(id = Option(id), name = null, parentId = None)
+  override protected def dummy(id: String, version: Long) = MYmCategory(id = Option(id), name = null, parentId = None)
 
 
-  def generateMappingStaticFields: List[Field] = List(
+  override def generateMappingStaticFields: List[Field] = List(
     FieldAll(enabled = false),
     FieldSource(enabled = true),
     FieldParent(ES_TYPE_NAME) // _routing включается автоматом.
@@ -131,7 +131,8 @@ case class MYmCategory(
 {
   override type T = MYmCategory
 
-  def companion = MYmCategory
+  override def versionOpt = None
+  override def companion = MYmCategory
 
   /** Дополнительные параметры сохранения можно выставить через эту функцию. */
   override def saveBuilder(irb: IndexRequestBuilder) {

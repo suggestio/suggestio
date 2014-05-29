@@ -31,19 +31,21 @@ object MAdnNode
   with EsModelStaticIgnore
   with MacroLogsImpl
 {
-  val ES_TYPE_NAME: String = "adnNode"
+  override val ES_TYPE_NAME = "adnNode"
 
   override type T = MAdnNode
 
-  protected def dummy(id: String) = MAdnNode(
-    companyId = null,
-    personIds = Set.empty,
-    adn = null,
-    meta = null,
-    id = Option(id)
-  )
+  override protected def dummy(id: String, version: Long) = {
+    MAdnNode(
+      companyId = null,
+      personIds = Set.empty,
+      adn = null,
+      meta = null,
+      id = Option(id)
+    )
+  }
 
-  def generateMappingStaticFields: List[Field] = List(
+  override def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
     FieldAll(enabled = true)
   )
@@ -82,8 +84,8 @@ case class MAdnNode(
   override type T = MAdnNode
 
   @JsonIgnore
-  def companion = MAdnNode
-
+  override def companion = MAdnNode
+  override def versionOpt = None
 
   /** Перед сохранением можно проверять состояние экземпляра (полей экземпляра). */
   @JsonIgnore

@@ -424,7 +424,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
    * @param m Карта, распарсенное json-тело документа.
    * @return Экземпляр модели.
    */
-  def deserializeOne(id: String, m: collection.Map[String, AnyRef]): T
+  def deserializeOne(id: String, m: collection.Map[String, AnyRef], version: Long): T
 
 
   /**
@@ -440,7 +440,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
     req.execute()
       .map { getResp =>
         if (getResp.isExists) {
-          val result = deserializeOne(getResp.getId, getResp.getSourceAsMap)
+          val result = deserializeOne(getResp.getId, getResp.getSourceAsMap, getResp.getVersion)
           Some(result)
         } else {
           None
@@ -451,7 +451,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
   /** Список результатов с source внутри перегнать в распарсенный список. */
   def searchResp2list(searchResp: SearchResponse): Seq[T] = {
     searchResp.getHits.getHits.toSeq.map { hit =>
-      deserializeOne(hit.getId, hit.getSource)
+      deserializeOne(hit.getId, hit.getSource, hit.getVersion)
     }
   }
 
@@ -508,10 +508,12 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
   def mgetResp2list(mgetResp: MultiGetResponse): List[T] = {
     mgetResp.getResponses.foldLeft[List[T]] (Nil) { (acc, mgetItem) =>
       // Поиск может содержать элементы, которые были только что удалены. Нужно их отсеивать.
-      if (mgetItem.isFailed || !mgetItem.getResponse.isExists)
+      if (mgetItem.isFailed || !mgetItem.getResponse.isExists) {
         acc
-      else
-        deserializeOne(mgetItem.getId, mgetItem.getResponse.getSourceAsMap) :: acc
+      } else {
+        val resp = mgetItem.getResponse
+        deserializeOne(mgetItem.getId, resp.getSourceAsMap, resp.getVersion) :: acc
+      }
     }
   }
 
@@ -614,13 +616,13 @@ trait EsModelStaticT extends EsModelMinimalStaticT {
 
   override type T <: EsModelT
 
-  protected def dummy(id: String): T
+  protected def dummy(id: String, version: Long): T
 
   // TODO Надо бы перевести все модели на stackable-трейты и избавится от PartialFunction здесь.
   def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit]
 
-  def deserializeOne(id: String, m: collection.Map[String, AnyRef]): T = {
-    val acc = dummy(id)
+  override def deserializeOne(id: String, m: collection.Map[String, AnyRef], version: Long): T = {
+    val acc = dummy(id, version)
     m foreach applyKeyValue(acc)
     acc.postDeserialize()
     acc
@@ -635,6 +637,9 @@ trait EsModelStaticT extends EsModelMinimalStaticT {
 trait EsModelMinimalT {
 
   type T <: EsModelMinimalT
+
+  /** Модели, желающие версионизации, должны перезаписать это поле. */
+  @JsonIgnore def versionOpt: Option[Long]
 
   @JsonIgnore def companion: EsModelMinimalStaticT
 
@@ -709,6 +714,7 @@ trait EsModelMinimalT {
     case None       => Future failed new IllegalStateException("id is not set")
   }
 }
+
 
 /** Шаблон для динамических частей ES-моделей. */
 trait EsModelT extends EsModelMinimalT {

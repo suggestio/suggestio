@@ -118,7 +118,7 @@ object MShopPriceList extends EsModelStaticT with MacroLogsImpl {
   )
 
 
-  protected def dummy(id: String) = MShopPriceList(
+  override protected def dummy(id: String, version: Long) = MShopPriceList(
     id = Option(id),
     shopId = null,
     url = null,
@@ -167,7 +167,9 @@ case class MShopPriceList(
 
   override type T = MShopPriceList
 
-  def companion = MShopPriceList
+  override def companion = MShopPriceList
+  override def versionOpt = None
+
   def authInfoStr: Option[String] = authInfo map { _.serialize }
 
   def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {

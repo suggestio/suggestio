@@ -28,15 +28,15 @@ object MCompany
 
   type CompanyId_t = String
 
-  val ES_TYPE_NAME: String = "company"
+  override val ES_TYPE_NAME = "company"
 
 
-  def generateMappingStaticFields: List[Field] = List(
+  override def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
     FieldAll(enabled = false)
   )
 
-  protected def dummy(id: String) = MCompany(id = Option(id), name = null)
+  override protected def dummy(id: String, version: Long) = MCompany(id = Option(id), name = null)
 
   /**
    * Удалить документ по id.
@@ -75,8 +75,10 @@ case class MCompany(
 {
   override type T = MCompany
 
+  override def companion = MCompany
+  override def versionOpt = None
+
   def companyId = id.get
-  def companion = MCompany
 }
 
 
