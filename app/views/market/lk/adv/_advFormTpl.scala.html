@@ -52,8 +52,8 @@
               @maybeBusyAdv.get.dateStart.toLocalDate - @maybeBusyAdv.get.dateEnd.toLocalDate
             } else {
               @* Тут должен быть, селект-календарь длительности и галочка появляются при выставлении первой галочки. *@
-              <input type="hidden" name="node[@mid].dateStart" value="2014-05-28"/>
-              <input type="hidden" name="node[@mid].dateEnd" value="2014-05-29"/>
+              <input type="text" name="node[@mid].dateStart" value="2014-05-28"/>
+              <input type="text" name="node[@mid].dateEnd" value="2014-05-29"/>
             }
 
             @if(maybeBusyAdv.isDefined) {
