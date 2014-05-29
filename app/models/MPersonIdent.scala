@@ -84,8 +84,10 @@ object MPersonIdent {
       .map { searchResp =>
         searchResp.getHits.getHits.map { hit =>
           hit.getType match {
-            case MozillaPersonaIdent.ES_TYPE_NAME => MozillaPersonaIdent.deserializeOne(hit.getId, hit.getSource).email
-            case EmailPwIdent.ES_TYPE_NAME        => EmailPwIdent.deserializeOne(hit.getId, hit.getSource).email
+            case MozillaPersonaIdent.ES_TYPE_NAME =>
+              MozillaPersonaIdent.deserializeOne(hit.getId, hit.getSource, hit.getVersion).email
+            case EmailPwIdent.ES_TYPE_NAME =>
+              EmailPwIdent.deserializeOne(hit.getId, hit.getSource, hit.getVersion).email
           }
         }
       }
@@ -171,7 +173,7 @@ object MozillaPersonaIdent extends EsModelStaticT with MPersonIdentSubmodelStati
     case (PERSON_ID_ESFN, value)  => acc.personId = stringParser(value)
   }
 
-  protected def dummy(id: String) = MozillaPersonaIdent(email=null, personId=null)
+  override protected def dummy(id: String, version: Long) = MozillaPersonaIdent(email=null, personId=null)
 
 }
 
@@ -187,13 +189,14 @@ case class MozillaPersonaIdent(
   override type T = MozillaPersonaIdent
 
   /** Сгенерить id. Если допустить, что тут None, то _id будет из взят из поля key согласно маппингу. */
-  def id: Option[String] = Some(email)
-  def key = email
-  def idType = IdTypes.MOZ_PERSONA
-  def value = None
-  def isVerified = true
-  def writeVerifyInfo: Boolean = false
-  def companion = MozillaPersonaIdent
+  override def id: Option[String] = Some(email)
+  override def key = email
+  override def idType = IdTypes.MOZ_PERSONA
+  override def value = None
+  override def isVerified = true
+  override def writeVerifyInfo: Boolean = false
+  override def companion = MozillaPersonaIdent
+  override def versionOpt = None
 }
 
 
@@ -202,16 +205,16 @@ object EmailPwIdent extends EsModelStaticT with MPersonIdentSubmodelStatic with 
 
   override type T = EmailPwIdent
 
-  val ES_TYPE_NAME: String = "mpiEmailPw"
+  override val ES_TYPE_NAME: String = "mpiEmailPw"
 
-  def applyKeyValue(acc: EmailPwIdent): PartialFunction[(String, AnyRef), Unit] = {
+  override def applyKeyValue(acc: EmailPwIdent): PartialFunction[(String, AnyRef), Unit] = {
     case (KEY_ESFN, value)          => acc.email = stringParser(value)
     case (VALUE_ESFN, value)        => acc.pwHash = stringParser(value)
     case (IS_VERIFIED_ESFN, value)  => acc.isVerified = booleanParser(value)
     case (PERSON_ID_ESFN, value)    => acc.personId = stringParser(value)
   }
 
-  protected def dummy(id: String): EmailPwIdent = EmailPwIdent(email=id, personId=null, pwHash=null)
+  override protected def dummy(id: String, version: Long) = EmailPwIdent(email=id, personId=null, pwHash=null)
 
   def getByEmail(email: String)(implicit ec: ExecutionContext, client: Client) = {
     getById(email)
@@ -263,12 +266,14 @@ case class EmailPwIdent(
 ) extends MPersonIdent with MPersonLinks with MPIWithEmail {
   override type T = EmailPwIdent
 
-  def id: Option[String] = Some(email)
-  def idType: MPersonIdentType = IdTypes.EMAIL_PW
-  def key: String = email
-  def companion = EmailPwIdent
-  def writeVerifyInfo: Boolean = true
-  def value: Option[String] = Some(pwHash)
+  override def id: Option[String] = Some(email)
+  override def idType: MPersonIdentType = IdTypes.EMAIL_PW
+  override def key: String = email
+  override def companion = EmailPwIdent
+  override def writeVerifyInfo: Boolean = true
+  override def value: Option[String] = Some(pwHash)
+  override def versionOpt = None
+
   def checkPassword(password: String) = checkHash(password, pwHash)
 }
 
@@ -300,16 +305,16 @@ object EmailActivation extends EsModelStaticT with PlayMacroLogsImpl {
     */
   def randomActivationKey = StringUtil.randomId(len = KEY_LEN)
 
-  protected def dummy(id: String) = EmailActivation(id = Option(id), email = null, key = null)
+  override protected def dummy(id: String, version: Long) = EmailActivation(id = Option(id), email = null, key = null)
 
-  def generateMappingProps: List[DocField] = MPersonIdent.generateMappingProps
+  override def generateMappingProps: List[DocField] = MPersonIdent.generateMappingProps
 
   /** Сборка static-полей маппинга. В этом маппинге должен быть ttl, чтобы старые записи автоматически выпиливались. */
   override def generateMappingStaticFields: List[Field] = {
     FieldTtl(enabled = true, default = TTL_DFLT) :: MPersonIdent.generateMappingStaticFieldsMin
   }
 
-  def applyKeyValue(acc: EmailActivation): PartialFunction[(String, AnyRef), Unit] = {
+  override def applyKeyValue(acc: EmailActivation): PartialFunction[(String, AnyRef), Unit] = {
     case (KEY_ESFN, value)          => acc.key = stringParser(value)
     case (PERSON_ID_ESFN, value)    => acc.email = stringParser(value)
   }
@@ -337,12 +342,13 @@ case class EmailActivation(
 ) extends MPersonIdent with MPersonLinks {
   override type T = EmailActivation
 
-  def personId = email
-  def companion = EmailActivation
-  def writeVerifyInfo: Boolean = false
-  def idType = IdTypes.EMAIL_ACT
-  def isVerified = true
-  def value: Option[String] = None
+  override def personId = email
+  override def companion = EmailActivation
+  override def writeVerifyInfo: Boolean = false
+  override def idType = IdTypes.EMAIL_ACT
+  override def isVerified = true
+  override def value: Option[String] = None
+  override def versionOpt = None
 }
 
 trait EmailActivationJmxMBean extends EsModelJMXMBeanCommon

@@ -180,7 +180,7 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
       .execute()
       .flatMap { getResp =>
         if (getResp.isExists) {
-          val mmc = deserializeOne(getResp.getId, getResp.getSourceAsMap)
+          val mmc = deserializeOne(getResp.getId, getResp.getSourceAsMap, getResp.getVersion)
           val acc1 = f(acc0, mmc)
           mmc.parentId match {
             case Some(parentId) => foldUpChain(parentId, acc1)(f)
@@ -204,7 +204,7 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
   private def sortByMmcat(mmcat: MMartCategory) = mmcat.position + mmcat.name
 
 
-  def generateMappingProps: List[DocField] = List(
+  override def generateMappingProps: List[DocField] = List(
     FieldString(NAME_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
     // Поле id компонента-владельца. По сути тут может быть любой id из любой модели, но обычно id ТЦ или id магазина.
     FieldString(OWNER_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
@@ -219,13 +219,13 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
     FieldBoolean(INCLUDE_IN_ALL_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
   )
 
-  def generateMappingStaticFields: List[Field] = List(
+  override def generateMappingStaticFields: List[Field] = List(
     FieldAll(enabled = false),
     FieldSource(enabled = true)
   )
 
 
-  def applyKeyValue(acc: MMartCategory): PartialFunction[(String, AnyRef), Unit] = {
+  override def applyKeyValue(acc: MMartCategory): PartialFunction[(String, AnyRef), Unit] = {
     case (NAME_ESFN, value)         => acc.name = stringParser(value)
     case (OWNER_ID_ESFN, value)     => acc.ownerId = stringParser(value)
     case (YM_CAT_ESFN, value)       => acc.ymCatPtr = JacksonWrapper.convert[MMartYmCatPtr](value)
@@ -235,7 +235,7 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
     case (INCLUDE_IN_ALL_ESFN, value) => acc.includeInAll = booleanParser(value)
   }
 
-  protected def dummy(id: String) = {
+  override protected def dummy(id: String, version: Long) = {
     MMartCategory(id = Option(id), name = null, ymCatPtr = null, ownerId = null, parentId = None, position = Int.MaxValue)
   }
 }
@@ -265,6 +265,8 @@ case class MMartCategory(
 ) extends EsModelEmpty with EMName with EMParentIdOpt with TreeSortable {
 
   override type T = MMartCategory
+  override def companion = MMartCategory
+  override def versionOpt = None
 
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     var acc1: FieldsJsonAcc = OWNER_ID_ESFN -> JsString(ownerId) ::
@@ -278,8 +280,6 @@ case class MMartCategory(
       acc1 ::= CSS_CLASS_ESFN -> JsString(cssClass.get)
     acc1
   }
-
-  def companion = MMartCategory
 
   /**
    * Сохранить экземпляр в хранилище ES.

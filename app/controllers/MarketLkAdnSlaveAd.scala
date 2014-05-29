@@ -168,6 +168,7 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
       }
       .toMap
     // TODO Вероятно, надо дёргать SLU.applyOutputConstraint(), но он может нарушить исходную задумку супервизора.
+    // TODO Надо отрабатывать VersionConflictEngineException путём повторного getById() + изменить ресиверы + saveReceivers().
     mad.saveReceivers.map { _ =>
       val reply = JsObject(Seq(
         "status" -> JsString("ok")

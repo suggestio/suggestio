@@ -24,7 +24,7 @@ import org.elasticsearch.client.Client
  */
 
 object MBlog extends EsModelStaticT with PlayMacroLogsImpl {
-  override val ES_TYPE_NAME: String = "blog"
+  override val ES_TYPE_NAME = "blog"
 
   override type T = MBlog
 
@@ -35,12 +35,12 @@ object MBlog extends EsModelStaticT with PlayMacroLogsImpl {
   val DATE_ESFN     = "date"
 
 
-  def generateMappingStaticFields: List[Field] = List(
+  override def generateMappingStaticFields: List[Field] = List(
     FieldSource(enabled = true),
     FieldAll(enabled = false)
   )
 
-  def generateMappingProps: List[DocField] = List(
+  override def generateMappingProps: List[DocField] = List(
     FieldString(TITLE_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
     FieldString(DESCRIPTION_ESFN, include_in_all = true, index = FieldIndexingVariants.no),
     FieldString(BG_IMAGE_ESFN, include_in_all = false, index = FieldIndexingVariants.no),
@@ -50,7 +50,7 @@ object MBlog extends EsModelStaticT with PlayMacroLogsImpl {
   )
 
 
-  def applyKeyValue(acc: MBlog): PartialFunction[(String, AnyRef), Unit] = {
+  override def applyKeyValue(acc: MBlog): PartialFunction[(String, AnyRef), Unit] = {
     case (TITLE_ESFN, value)          => acc.title = stringParser(value)
     case (DESCRIPTION_ESFN, value)    => acc.description = stringParser(value)
     case (BG_IMAGE_ESFN, value)       => acc.bgImage = stringParser(value)
@@ -59,14 +59,16 @@ object MBlog extends EsModelStaticT with PlayMacroLogsImpl {
     case (DATE_ESFN, value)           => acc.date = dateTimeParser(value)
   }
 
-  protected def dummy(id: String) = MBlog(
-    id = Option(id),
-    title = null,
-    description = null,
-    bgImage = null,
-    bgColor = null,
-    text = null
-  )
+  override protected def dummy(id: String, version: Long) = {
+    MBlog(
+      id = Option(id),
+      title = null,
+      description = null,
+      bgImage = null,
+      bgColor = null,
+      text = null
+    )
+  }
 }
 
 import MBlog._
@@ -83,7 +85,8 @@ case class MBlog(
 
   override type T = MBlog
 
-  def companion = MBlog
+  override def companion = MBlog
+  override def versionOpt = None
 
   def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     if (date == null)

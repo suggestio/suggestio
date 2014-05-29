@@ -30,7 +30,7 @@ object MPerson extends EsModelStaticT with PlayMacroLogsImpl {
 
   override type T = MPerson
 
-  val ES_TYPE_NAME = "person"
+  override val ES_TYPE_NAME = "person"
 
   val LANG_ESFN   = "lang"
   val IDENTS_ESFN = "idents"
@@ -51,21 +51,21 @@ object MPerson extends EsModelStaticT with PlayMacroLogsImpl {
   def isSuperuserId(personId: String) = SU_IDS contains personId
 
 
-  def generateMappingStaticFields: List[Field] = List(
+  override def generateMappingStaticFields: List[Field] = List(
     FieldAll(enabled = false),
     FieldSource(enabled = true)
   )
 
-  def generateMappingProps: List[DocField] = List(
+  override def generateMappingProps: List[DocField] = List(
     FieldString(LANG_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = false)
   )
 
 
-  def applyKeyValue(acc: MPerson): PartialFunction[(String, AnyRef), Unit] = {
+  override def applyKeyValue(acc: MPerson): PartialFunction[(String, AnyRef), Unit] = {
     case (LANG_ESFN, value)     => acc.lang = stringParser(value)
   }
 
-  protected def dummy(id: String) = MPerson(id = Some(id), lang = null)
+  override protected def dummy(id: String, version: Long) = MPerson(id = Some(id), lang = null)
 
 
   /** Асинхронно найти подходящее имя юзера в хранилищах и подмоделях. */
@@ -111,10 +111,9 @@ case class MPerson(
 ) extends EsModelT with MPersonLinks {
 
   override type T = MPerson
-
-  def personId = id.get
-
+  override def versionOpt = None
   override def companion = MPerson
+  override def personId = id.get
 
   def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     LANG_ESFN -> JsString(lang) :: acc
