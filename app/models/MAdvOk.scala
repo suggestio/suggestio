@@ -61,6 +61,18 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
       isOnline    = isOnline
     )
   }
+
+
+  /**
+   * Найти все одобренные заявки размещения, у которых флаг в online НЕ выставлен, но судя по датам пора бы уже
+   * выбросить в выдачу.
+   * @return Список [[MAdvOk]] в неопределённом порядке.
+   */
+  def findAllOfflineOnTime(implicit c: Connection): List[MAdvOk] = {
+    SQL("SELECT * FROM " + TABLE_NAME + " WHERE NOT online AND date_start <= now() AND date_end >= now()")
+      .as(rowParser *)
+  }
+
 }
 
 
@@ -101,8 +113,12 @@ case class MAdvOk(
   }
 
   /**
-   * Обновление (редактирование) записей не предусмотрено.
-   * @return Кол-во обновлённых рядов. Т.е. 0.
+   * Можно обновлять некоторые поле.
+   * @return Кол-во обновлённых рядов. Т.е. 1 или 0.
    */
-  override def saveUpdate(implicit c: Connection): Int = 0
+  override def saveUpdate(implicit c: Connection): Int = {
+    SQL("UPDATE " + TABLE_NAME + " SET online = {isOnline}, date_start = {dateStart}, date_end = {dateEnd} WHERE id = {id}")
+      .on('id -> id.get, 'isOnline -> isOnline, 'dateStart -> dateStart, 'dateEnd -> dateEnd)
+      .executeUpdate()
+  }
 }

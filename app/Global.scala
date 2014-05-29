@@ -52,7 +52,9 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
     // Блокируемся, чтобы не было ошибок в браузере и консоли из-за асинхронной работы с ещё не запущенной системой.
     val startTimeout: FiniteDuration = (app.configuration.getInt("start.timeout_sec") getOrElse 32).seconds
     Await.ready(fut, startTimeout)
-    cronTimers = Crontab.startTimers
+    synchronized {
+      cronTimers = Crontab.startTimers
+    }
   }
 
 
@@ -84,8 +86,10 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
     super.onStop(app)
     JMXImpl.unregisterAll()
     // Остановить таймеры
-    Crontab.stopTimers(cronTimers)
-    cronTimers = null
+    synchronized {
+      Crontab.stopTimers(cronTimers)
+      cronTimers = null
+    }
     // При девелопменте: ES-клиент сам по себе не остановится, поэтому нужно его грохать вручную, иначе будет куча инстансов.
     SiowebEsUtil.stopNode()
   }

@@ -171,7 +171,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
                 val rcvrPricing = MBillMmpDaily.findByContractId(rcvrContract.id.get)
                   .sortBy(_.id.get)
                   .head
-                val advPrice = MmpDailyBilling.calculateAdvPrice(request.mad, rcvrPricing, adve.dateStart, dateEnd = adve.dateEnd)
+                val advPrice = MmpDailyBilling.calculateAdvPrice(request.mad, rcvrPricing, adve)
                 advPrice :: acc
               }
               val prices2 = prices
@@ -270,7 +270,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
                   val rcvrPricing = MBillMmpDaily.findByContractId(rcvrContract.id.get)
                     .sortBy(_.id.get)
                     .head
-                  val advPrice = MmpDailyBilling.calculateAdvPrice(request.mad, rcvrPricing, advEntry.dateStart, dateEnd = advEntry.dateEnd)
+                  val advPrice = MmpDailyBilling.calculateAdvPrice(request.mad, rcvrPricing, advEntry)
                   val rcvrCurrencyCode = advPrice.currency.getCurrencyCode
                   assert(
                     rcvrCurrencyCode == prodCurrencyCode,
@@ -515,4 +515,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
 }
 
-sealed case class AdvFormEntry(adnId: String, advertise: Boolean, onStartPage: Boolean, dateStart: LocalDate, dateEnd: LocalDate)
+sealed case class AdvFormEntry(
+  adnId: String, advertise: Boolean, onStartPage: Boolean, dateStart: LocalDate, dateEnd: LocalDate
+) extends AdvTerms
+

@@ -1,7 +1,7 @@
 package models
 
 import anorm._
-import org.joda.time.DateTime
+import org.joda.time.{LocalDate, DateTime}
 import util.AnormJodaTime._
 import util.AnormPgArray._
 import java.sql.Connection
@@ -37,7 +37,7 @@ object MAdv {
 
 
 /** Интерфейс всех экземпляров MAdv* моделей. */
-trait MAdvI {
+trait MAdvI { madvi =>
   def adId          : String
   def amount        : Float
   def currencyCode  : String
@@ -53,6 +53,11 @@ trait MAdvI {
   def rcvrAdnId     : String
 
   def amountWithComission: Float = comission.fold(amount)(amount * _)
+  def advTerms = new AdvTerms {
+    override def onStartPage = madvi.onStartPage
+    override def dateEnd: LocalDate = madvi.dateStart.toLocalDate
+    override def dateStart: LocalDate = madvi.dateEnd.toLocalDate
+  }
 }
 
 
@@ -134,4 +139,12 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
       .on('rcvrAdnId -> rcvrAdnId)
       .as(MAdv.COUNT_PARSER single)
   }
+}
+
+
+/** Условия размещения с точки зрения юзера. */
+trait AdvTerms {
+  def onStartPage: Boolean
+  def dateStart: LocalDate
+  def dateEnd: LocalDate
 }
