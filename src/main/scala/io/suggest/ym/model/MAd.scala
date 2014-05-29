@@ -138,7 +138,7 @@ case class MAd(
   override type T = MAd
 
   @JsonIgnore
-  def companion = MAd
+  override def companion = MAd
 
   /**
    * Сохранить экземпляр в хранилище ES. Если всё ок, то породить событие успешного сохранения.
