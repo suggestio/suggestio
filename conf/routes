@@ -22,6 +22,9 @@ POST /login2/persona                    controllers.Ident.persona_submit
 GET  /login2/email_pw                   controllers.Ident.emailPwLoginForm
 POST /login2/email_pw                   controllers.Ident.emailPwLoginFormSubmit
 GET  /logout2                           controllers.Ident.logout
+# ident: Восстановление пароля.
+GET  /ident/pw/recover                  controllers.Ident.recoverPwForm
+POST /ident/pw/recover                  controllers.Ident.recoverPwFormSubmit
 
 ## Callback'и инсталляторов и валидаторов сайтов.
 POST /js/add_domain                             controllers.Js.addDomain

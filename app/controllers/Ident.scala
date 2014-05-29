@@ -214,6 +214,33 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit {
   // TODO выставить нормальный routing тут
   protected def rdrToAdmin = Redirect(routes.Application.index())
 
+
+  // Восстановление пароля
+
+  private val recoverPwFormM = Form(
+    "email" -> email
+  )
+
+  /** Запрос страницы с формой вспоминания пароля по email'у. */
+  def recoverPwForm = MaybeAuth { implicit request =>
+    Ok(recoverPwFormTpl(recoverPwFormM))
+  }
+
+  /** Сабмит формы восстановления пароля. */
+  def recoverPwFormSubmit = MaybeAuth { implicit request =>
+    recoverPwFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug("recoverPwFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
+        NotAcceptable(recoverPwFormTpl(formWithErrors))
+      },
+      {email1 =>
+        // TODO Надо найти юзера в базах, и если есть, то отправить письмецо.
+        // TODO Если нет, то... то создать юзера и тоже отправить письмецо (но тут надо бы капчу прикрутить!)
+        ???
+      }
+    )
+  }
+
 }
 
 
