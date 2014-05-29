@@ -29,7 +29,9 @@ object MBillContract extends SqlModelStatic[MBillContract] {
 
   val TABLE_NAME: String = "bill_contract"
 
-  val rowParser = get[Pk[Int]]("id") ~ get[Int]("crand") ~ get[String]("adn_id") ~ get[DateTime]("contract_date") ~
+  val ADN_ID_PARSER = get[String]("adn_id")
+
+  val rowParser = get[Pk[Int]]("id") ~ get[Int]("crand") ~ ADN_ID_PARSER ~ get[DateTime]("contract_date") ~
     get[DateTime]("date_created") ~ get[Option[String]]("hidden_info") ~ get[Boolean]("is_active") ~
     get[Option[String]]("suffix") ~ get[Float]("sio_comission") map {
     case id ~ crand ~ adnId ~ contractDate ~ dateCreated ~ hiddenInfo ~ isActive ~ suffix ~ sioComission =>

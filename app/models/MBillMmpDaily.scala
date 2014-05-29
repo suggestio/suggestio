@@ -26,6 +26,13 @@ object MBillMmpDaily extends FindByContract[MBillMmpDaily] {
       )
   }
 
+  /** Найти все adnId через таблицу контрактов.
+    * @return Список adnId без повторений в неопределённом порядке.
+    */
+  def findAllAdnIds(implicit c: Connection): List[String] = {
+    SQL(s"SELECT DISTINCT mbc.adn_id FROM ${MBillContract.TABLE_NAME} mbc WHERE mbc.id IN (SELECT DISTINCT contract_id FROM $TABLE_NAME)")
+      .as(MBillContract.ADN_ID_PARSER *)
+  }
 }
 
 

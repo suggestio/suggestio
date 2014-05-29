@@ -86,7 +86,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
   /** Общий для экшенов код подготовки данных и рендера страницы advFormTpl, которая содержит форму размещения. */
   private def renderAdvFormFor(adId: String, form: Form[List[AdvFormEntry]])(implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
-    // Запуск асинхронных операций: подготовка списка узлов, на которые можно вообще возмонжо опубликовать карточку.
+    // Запуск асинхронных операций: подготовка списка узлов, на которые можно вообще возможно опубликовать карточку.
     val rcvrsFut = collectReceivers(request.producerId)
     renderAdvFormForRcvrs(adId, form, rcvrsFut)
   }
@@ -99,11 +99,14 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       // Определяем список узлов, которые проходят по adv_ok. Это можно через транзакции и контракты.
       val advsReq = MAdvReq.findByAdId(adId)
       val advsRefused = MAdvRefuse.findByAdId(adId)
+      // Для сокрытия узлов, которые не имеют тарифного плана, надо получить список тех, у кого он есть.
+      val adnIdsReady = MBillMmpDaily.findAllAdnIds
       // Собираем инфу о заблокированных средствах, относящихся к этой карточке.
       val blockedSums = MAdvReq.calculateBlockedSumForAd(adId)
-      (advsOk, advsReq, advsRefused, blockedSums)
+      (advsOk, advsReq, advsRefused, adnIdsReady, blockedSums)
     }
-    val (advsOk, advsReq, advsRefused, blockedSums) = syncResult
+    val (advsOk, advsReq, advsRefused, adnIdsReady, blockedSums) = syncResult
+    val adnIdsReadySet = adnIdsReady.toSet
     trace(s"_advFormFor($adId): advsOk[${advsOk.size}] advsReq[${advsReq.size}] advsRefused[${advsRefused.size}] blockedSums=${blockedSums.mkString(",")}")
     val advs = (advsReq ++ advsRefused ++ advsOk).sortBy(_.dateCreated)
     // Собираем карту adv.id -> rcvrId. Она нужна для сборки карты adv.id -> rcvr.
@@ -125,14 +128,17 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     for {
       rcvrs <- rcvrsFut
     } yield {
-      val rcvrsMap = rcvrs.map { rcvr => rcvr.id.get -> rcvr }.toMap
+      // Выкинуть узлы, у которых нет своего тарифного плана.
+      val rcvrs1 = rcvrs
+        .filter { node => adnIdsReadySet contains node.id.get }
+      val rcvrsMap = rcvrs1.map { rcvr => rcvr.id.get -> rcvr }.toMap
       // Собираем карту adv.id -> rcvr.
       val adv2adnMap = adv2adnIds.flatMap { case (advId, adnId) =>
         rcvrsMap.get(adnId)
           .fold { List.empty[(Int, MAdnNode)] }  { rcvr => List(advId -> rcvr) }
       }
       // Запускаем рендер шаблона, собрав аргументы в соотв. группы.
-      val formArgs = AdvFormTplArgs(adId, rcvrs, form, busyAdns)
+      val formArgs = AdvFormTplArgs(adId, rcvrs1, form, busyAdns)
       val currAdvsArgs = CurrentAdvsTplArgs(advs, adv2adnMap, blockedSums)
       advForAdTpl(request.mad, currAdvsArgs, formArgs)
     }
