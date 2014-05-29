@@ -16,7 +16,7 @@ import play.api.templates.HtmlFormat
 import play.api.mvc.{Result, AnyContent}
 import java.sql.SQLException
 import io.suggest.ym.parsers.Price
-import util.billing.MmpDailyBilling
+import util.billing.MmpDailyBilling, MmpDailyBilling.assertAdvsReqRowsDeleted
 import java.util.Currency
 
 /**
@@ -439,78 +439,10 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    */
   def advReqAcceptSubmit(advReqId: Int) = CanReceiveAdvReq(advReqId).apply { implicit request =>
     // Надо провести платёж, запилить транзакции для prod и rcvr и т.д.
-    val rcvrAdnId = request.advReq.rcvrAdnId
-    val advOk = DB.withTransaction { implicit c =>
-      // Удалить исходный реквест размещения
-      val reqsDeleted = request.advReq.delete
-      assertAdvsReqRowsDeleted(reqsDeleted, 1, advReqId)
-      // Провести все денежные операции.
-      val prodAdnId = request.advReq.prodAdnId
-      val prodContractOpt = MBillContract.findForAdn(prodAdnId, isActive = Some(true)).headOption
-      assert(prodContractOpt.exists(_.id.get == request.advReq.prodContractId), "Producer contract not found or changed since request creation.")
-      val prodContract = prodContractOpt.get
-      val amount0 = request.advReq.amount
-
-      // Списать заблокированную сумму:
-      val oldProdMbbOpt = MBillBalance.getByAdnId(prodAdnId)
-      assert(oldProdMbbOpt.exists(_.currencyCode == request.advReq.currencyCode), "producer balance currency does not match to adv request")
-      val prodMbbUpdated = MBillBalance.updateBlocked(prodAdnId, -amount0)
-      assert(prodMbbUpdated == 1, "Failed to debit blocked amount for producer " + prodAdnId)
-
-      val now = DateTime.now
-      // Запилить транзакцию списания для продьюсера
-      val prodTxn = MBillTxn(
-        contractId      = prodContract.id.get,
-        amount          = -amount0,
-        datePaid        = request.advReq.dateCreated,
-        txnUid          = s"${prodContract.id.get}-$advReqId",
-        paymentComment  = "Debit for advertise",
-        dateProcessed   = now
-      ).save
-
-      // Разобраться с кошельком получателя
-      val rcvrContract = MBillContract.findForAdn(rcvrAdnId, isActive = Some(true))
-        .headOption
-        .getOrElse {
-          warn(s"advReqAcceptSubmit($advReqId): Creating new contract for adv. award receiver...")
-          MBillContract(rcvrAdnId, contractDate = now, isActive = true, suffix = Some("CEO"), dateCreated = now).save
-        }
-      val amount1 = rcvrContract.sioComission * amount0
-      assert(amount1 <= amount0, "Comissioned amount must be less or equal than source amount.")
-      val rcvrMbbOpt = MBillBalance.getByAdnId(rcvrAdnId)
-      assert(rcvrMbbOpt.exists(_.currencyCode == request.advReq.currencyCode), "Rcvr balance currency does not match to adv request")
-      val rcvrMbb = rcvrMbbOpt getOrElse MBillBalance(rcvrAdnId, 0F, Some(request.advReq.currencyCode))
-
-      // Зачислить деньги на счет получателя
-      rcvrMbb.updateAmount(amount1)
-      val rcvrTxn = MBillTxn(
-        contractId      = rcvrContract.id.get,
-        amount          = amount1,
-        comissionPc     = Some(rcvrContract.sioComission),
-        datePaid        = request.advReq.dateCreated,
-        txnUid          = s"${rcvrContract.id.get}-$advReqId",
-        paymentComment  = "Credit for adverise",
-        dateProcessed   = now
-      ).save
-
-      // Сохранить подтверждённое размещение с инфой о платежах.
-      MAdvOk(
-        request.advReq,
-        comission1  = Some(rcvrContract.sioComission),
-        dateStatus1 = now,
-        prodTxnId   = prodTxn.id.get,
-        rcvrTxnId   = Some(rcvrTxn.id.get),
-        isOnline    = false
-      ).save
-    }
+    MmpDailyBilling.acceptAdvReq(request.advReq)
     // Всё сохранено. Можно отредиректить юзера, чтобы он дальше продолжил одобрять рекламные карточки.
-    Redirect(routes.MarketAdv.showNodeAdvs(rcvrAdnId))
+    Redirect(routes.MarketAdv.showNodeAdvs(request.advReq.rcvrAdnId))
       .flashing("success" -> "Реклама будет размещена.")
-  }
-
-  private def assertAdvsReqRowsDeleted(rowsDeleted: Int, mustBe: Int, advReqId: Int) {
-    if (rowsDeleted != mustBe)
-      throw new IllegalStateException(s"Adv request $advReqId not deleted. Rows deleted = $rowsDeleted, but 1 expected.")
   }
 
 }

@@ -99,6 +99,87 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
   }
 
 
+  def assertAdvsReqRowsDeleted(rowsDeleted: Int, mustBe: Int, advReqId: Int) {
+    if (rowsDeleted != mustBe)
+      throw new IllegalStateException(s"Adv request $advReqId not deleted. Rows deleted = $rowsDeleted, but 1 expected.")
+  }
+
+
+  /**
+   * Провести MAdvReq в MAdvOk, списав и зачислив все необходимые деньги.
+   * @param advReq Одобряемый реквест размещения.
+   * @return Сохранённый экземпляр MAdvOk.
+   */
+  def acceptAdvReq(advReq: MAdvReq): MAdvOk = {
+    // Надо провести платёж, запилить транзакции для prod и rcvr и т.д.
+    val rcvrAdnId = advReq.rcvrAdnId
+    val advReqId = advReq.id.get
+    DB.withTransaction { implicit c =>
+      // Удалить исходный реквест размещения
+      val reqsDeleted = advReq.delete
+      assertAdvsReqRowsDeleted(reqsDeleted, 1, advReqId)
+      // Провести все денежные операции.
+      val prodAdnId = advReq.prodAdnId
+      val prodContractOpt = MBillContract.findForAdn(prodAdnId, isActive = Some(true)).headOption
+      assert(prodContractOpt.exists(_.id.get == advReq.prodContractId), "Producer contract not found or changed since request creation.")
+      val prodContract = prodContractOpt.get
+      val amount0 = advReq.amount
+
+      // Списать заблокированную сумму:
+      val oldProdMbbOpt = MBillBalance.getByAdnId(prodAdnId)
+      assert(oldProdMbbOpt.exists(_.currencyCode == advReq.currencyCode), "producer balance currency does not match to adv request")
+      val prodMbbUpdated = MBillBalance.updateBlocked(prodAdnId, -amount0)
+      assert(prodMbbUpdated == 1, "Failed to debit blocked amount for producer " + prodAdnId)
+
+      val now = DateTime.now
+      // Запилить транзакцию списания для продьюсера
+      val prodTxn = MBillTxn(
+        contractId      = prodContract.id.get,
+        amount          = -amount0,
+        datePaid        = advReq.dateCreated,
+        txnUid          = s"${prodContract.id.get}-$advReqId",
+        paymentComment  = "Debit for advertise",
+        dateProcessed   = now
+      ).save
+
+      // Разобраться с кошельком получателя
+      val rcvrContract = MBillContract.findForAdn(rcvrAdnId, isActive = Some(true))
+        .headOption
+        .getOrElse {
+          warn(s"advReqAcceptSubmit($advReqId): Creating new contract for adv. award receiver...")
+          MBillContract(rcvrAdnId, contractDate = now, isActive = true, suffix = Some("CEO"), dateCreated = now).save
+        }
+      val amount1 = rcvrContract.sioComission * amount0
+      assert(amount1 <= amount0, "Comissioned amount must be less or equal than source amount.")
+      val rcvrMbbOpt = MBillBalance.getByAdnId(rcvrAdnId)
+      assert(rcvrMbbOpt.exists(_.currencyCode == advReq.currencyCode), "Rcvr balance currency does not match to adv request")
+      val rcvrMbb = rcvrMbbOpt getOrElse MBillBalance(rcvrAdnId, 0F, Some(advReq.currencyCode))
+
+      // Зачислить деньги на счет получателя
+      rcvrMbb.updateAmount(amount1)
+      val rcvrTxn = MBillTxn(
+        contractId      = rcvrContract.id.get,
+        amount          = amount1,
+        comissionPc     = Some(rcvrContract.sioComission),
+        datePaid        = advReq.dateCreated,
+        txnUid          = s"${rcvrContract.id.get}-$advReqId",
+        paymentComment  = "Credit for adverise",
+        dateProcessed   = now
+      ).save
+
+      // Сохранить подтверждённое размещение с инфой о платежах.
+      MAdvOk(
+        advReq,
+        comission1  = Some(rcvrContract.sioComission),
+        dateStatus1 = now,
+        prodTxnId   = prodTxn.id.get,
+        rcvrTxnId   = Some(rcvrTxn.id.get),
+        isOnline    = false
+      ).save
+    }
+  }
+
+
   /** Поиск и размещение в выдачах рекламных карточек, время размещения которых уже пришло. */
   def advertiseOfflineAds() {
     val advs = DB.withConnection { implicit c =>
@@ -110,10 +191,12 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
       val advsMap = advs.groupBy(_.adId)
       val sls0 = List(AdShowLevels.LVL_MEMBER)
       advsMap foreach { case (adId, advsOk) =>
-        // Определяем неблокирующую фунцию обновлению, которую можно многократно вызывать. Повторная попытка обновления поможет разрулить конфликт версий.
+        // Определяем неблокирующую функцию получения и обновления рекламной карточки, которую можно многократно вызывать.
+        // Повторная попытка получения и обновления карточки поможет разрулить конфликт версий.
         def tryUpdateRcvrs(counter: Int): Future[_] = {
-          MAd.getById(adId) map {
+          MAd.getById(adId) flatMap {
             case Some(mad) =>
+              // Пропатчить поле ресиверов всеми имеющимися advOk
               mad.receivers ++= advsOk.foldLeft[List[(String, AdReceiverInfo)]](Nil) { (acc, advOk) =>
                 trace(s"${logPrefix}Advertising ad $adId on rcvrNode ${advOk.rcvrAdnId}; advOk.id = ${advOk.id.get}")
                 val sls = if (advOk.onStartPage) {
@@ -142,7 +225,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
                 }
 
             case None =>
-              error(s"${logPrefix}MAd not found: $adId, but it should.")
+              Future failed new RuntimeException(s"MAd not found: $adId, but it should. Cannot continue.")
           }
         }
         tryUpdateRcvrs(0) onComplete {
