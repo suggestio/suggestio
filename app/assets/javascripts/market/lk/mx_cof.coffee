@@ -867,6 +867,15 @@ market =
         success : ( data ) ->
           $('.js-pre-price').html data
 
+    submit : () ->
+      $('#advsFormBlock form').submit()
+
+    init : () ->
+      $('#advsSubmitButton').bind 'click', () ->
+        market.adv_form.submit()
+
+      $('#advsFormBlock input').bind 'change', () ->
+        market.adv_form.update_price()
 
   ##############################
   ## Редактор рекламной карточки
@@ -1051,6 +1060,7 @@ market =
       market.img.init_upload()
       market.resize_preview_photos()
       market.mart.init()
+      market.adv_form.init()
 
 market.init()
 window.market=market
