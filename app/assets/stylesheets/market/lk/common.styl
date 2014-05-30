@@ -41,25 +41,6 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     font-weight: normal
     font-style: normal
 
-.sm-note
-  padding: 0px
-  font-size: 12px
-  color: #959595
-
-.sm-note__link
-  color: #5088aa
-
-.sm-light-text
-  color: #959595
-
-.g-sm-strong
-  font-size: 14px
-  font-weight: bold
-
-.superuser-link
-  font-size: 10px
-  color: #999
-
 .lk
   .body
     font-size: 14px
@@ -254,30 +235,8 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     color: #959595 !important
     font-family: 'Arial' !important
 
-  .green-but-big
-    outline: 0
-    display: block
-    float: right
-    width: 210px
-    height: 14px
-    color: white
-    cursor: pointer
-    font-size: 14px
-    line-height: 14px
-    text-decoration: none
-    text-align: center
-    padding: 13px 0
-    font-family: 'Arial'
-    background: url('/assets/images/market/lk/green-but.big.png') no-repeat
-    background-position: 0 -180px
-  .green-but-big:hover
-    background-position: 0 -90px
-  .green-but-big:active
-    color: #dcea8
-    background-position: 0 0
-
-
   .gray-but-wrap
+    position: relative
     border: 1px solid #9a9b9b
     border-radius(6px)
     display: inline-block
@@ -1149,6 +1108,52 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 @import "ads-list"
 @import "cbca-select"
 
+/* Кнопки */
+.green-but-big
+  outline: 0
+  display: block
+  width: 210px
+  height: 14px
+  color: white
+  cursor: pointer
+  font-size: 14px
+  line-height: 14px
+  text-decoration: none
+  text-align: center
+  padding: 13px 0
+  font-family: 'Arial'
+  background: url('/assets/images/market/lk/green-but.big.png') no-repeat
+  background-position: 0 -180px
+.green-but-big:hover
+  background-position: 0 -90px
+.green-but-big:active
+  color: #dcea8
+  background-position: 0 0
+
+.sm-note
+  padding: 0px
+  font-size: 12px
+  color: #959595
+
+.sm-note__link
+  color: #5088aa
+
+.sm-light-text
+  color: #959595
+
+.g-sm-strong
+  font-size: 14px
+  font-weight: bold
+
+.superuser-link
+  font-size: 10px
+  color: #999
+
+.g-price
+  font-family: 'PT Sans Narrow','sans-serif'
+  font-size: 24px
+  color: #676666
+
 .sm-large-button
   font-family: 'ParagNorCIta'
   border: 1px #9c9c9c solid
@@ -1622,7 +1627,65 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   margin-right: 5px
   -webkit-border-top-left-radius: 10px
   -webkit-border-top-right-radius: 10px
+  -moz-border-radius-topleft: 10px
+  -moz-border-radius-topright: 10px
+  border-radius-topleft: 10px
+  border-radius-topright: 10px
 
 .advs-form-block__tabs-single-tab_active
   background: #208bae
   color: #e1e1e1
+
+/* Блок с подтверждением размешения карточки */
+
+.adv-submit-block
+  text-align: center
+  padding: 20px 0px
+  font-size: 12px
+
+.adv-submit-block__button
+  margin: 20px auto
+
+.adv-submit-block__price
+  color: #000
+  font-size: 30px
+  padding: 10px 0px
+
+/* Список источников / приемников */
+.advs-nodes
+  border: 1px #b2b2b2 solid
+  border-bottom: 0px
+
+.advs-nodes__node
+  position: relative
+  padding: 12px 16px
+  background: #fff
+  border-bottom: 1px #cbcbcb solid
+
+.advs-nodes__node_even
+  background: #f5f5f5
+
+.advs-nodes__node-link
+  font-family: Arial
+  font-weight: bold
+  color: #4f88a9
+  text-decoration: none
+
+.advs-nodes__node-start-page-elt
+  position: absolute
+  right: 20px
+  top: 12px
+  font-size: 12px
+  color: #676666
+
+.lk-adv-reqs-count
+  position: absolute
+  right: 0px
+  top: 0px
+  text-shadow: none
+  background: #676666
+  color: #efefef
+  font-family: Arial
+  font-size: 12px
+  padding: 10px 10px
+

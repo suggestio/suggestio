@@ -8,7 +8,7 @@
 @import util.FormHelpers._
 @import args._
 
-<div class="advs-form-block">
+<div class="advs-form-block" id="advsFormBlock">
 @form(routes.MarketAdv.advFormSubmit(adId)) {
 @*form(routes.MarketAdv.getAdvPriceSubmit(adId)) {*@
 
@@ -28,10 +28,10 @@
     </div>
 
     @* Рендерим содержимое табов, т.е. таблички в рамках одной категории узла *@
-    <div class="advs-form-block__nodes">
+    <div class="advs-form-block__nodes advs-nodes">
       @adnNodesMap.map { case (memberType, adnNodes) =>
         @adnNodes.iterator.zipWithIndex.map { case (node, i) =>
-          <div class="advs-form-block__nodes-node">
+          <div class="advs-nodes__node @if( i % 2 == 0 ){ advs-nodes__node_even }">
           @* числовой id нужен для использования list mapping, хотя в нашем случае вообще не обязателен. *@
           @defining(args.busyAdns.get(node.id.get)) { maybeBusyAdv =>
           @defining((memberType.id + 1) * (i + 1)) { mid =>
@@ -46,7 +46,7 @@
               <input type="checkbox" id="node_@{mid}_onStartPage" name="node[@mid].advertise" value="true">
             }
 
-            <a href="@routes.MarketLkBilling._renderNodeMbmdsWindow(node.id.get)">@node.meta.name</a> / @node.meta.town
+            <a class="advs-nodes__node-link" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(node.id.get)">@node.meta.name</a> / @node.meta.town
 
             @if(maybeBusyAdv.isDefined) {
               @maybeBusyAdv.get.dateStart.toLocalDate - @maybeBusyAdv.get.dateEnd.toLocalDate
@@ -56,14 +56,15 @@
               <input type="text" name="node[@mid].dateEnd" value="2014-05-29"/>
             }
 
+            <div class="advs-nodes__node-start-page-elt">
             @if(maybeBusyAdv.isDefined) {
-            <label>
-              На главном экране
               <input type="checkbox" disabled @if(maybeBusyAdv.get.onStartPage) {checked}/>
-            </label>
+              Размещено на главном экране
             } else {
               <input type="checkbox" id="node_@{mid}_onStartPage" name="node[@mid].onStartPage" value="true">
+              Разместить на главном экране
             }
+            </div>
 
           }
           }
@@ -74,9 +75,15 @@
 
   }
 
-  <input type="submit" value="Отправить запрос"/>
+  @* Рендерим url для подсчета цены для дальнейшего использования в js *@
+  <input type="hidden" id="advsPriceUpdateUrl" value="@routes.MarketAdv.getAdvPriceSubmit(adId)">
 
-  <p>Чтобы посчитать цену, нужно засабмиттить форму на @routes.MarketAdv.getAdvPriceSubmit(adId)</p>
+  <div class="adv-submit-block">
+    <div>Стоимость согласно ставке тарифных планов</div>
+    <div class="g-price adv-submit-block__price js-pre-price">0 р.</div>
+    <a class="green-but-big adv-submit-block__button" id="advsSubmitButton">Отправить запрос</a>
+  </div>
+
 }
 
 
