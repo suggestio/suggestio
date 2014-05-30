@@ -7,7 +7,7 @@ import play.api.data.Forms._
 import util.acl._
 import util._
 import play.api.mvc._
-import views.html.ident._
+import views.html.ident._, recover._
 import play.api.libs.concurrent.Promise.timeout
 import play.api.libs.concurrent.Execution.Implicits._
 import scala.concurrent.duration._
@@ -20,6 +20,8 @@ import SiowebEsUtil.client
 import scala.util.{Failure, Success}
 import play.api.templates.HtmlFormat
 import com.typesafe.scalalogging.slf4j.Logger
+import com.typesafe.plugin.{use, MailerPlugin}
+import util.acl.PersonWrapper.PwOpt_t
 
 /**
  * Suggest.io
@@ -29,7 +31,7 @@ import com.typesafe.scalalogging.slf4j.Logger
  * в будущем будет также и вход по имени/паролю для некоторых учетных записей.
  */
 
-object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit {
+object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit with BruteForceProtect {
 
   import LOGGER._
 
@@ -227,20 +229,154 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit {
   }
 
   /** Сабмит формы восстановления пароля. */
-  def recoverPwFormSubmit = MaybeAuth { implicit request =>
+  def recoverPwFormSubmit = MaybeAuth.async { implicit request =>
     recoverPwFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug("recoverPwFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(recoverPwFormTpl(formWithErrors))
       },
       {email1 =>
-        // TODO Надо найти юзера в базах, и если есть, то отправить письмецо.
-        // TODO Если нет, то... то создать юзера и тоже отправить письмецо (но тут надо бы капчу прикрутить!)
-        ???
+        // TODO Надо найти юзера в базах EmailPwIdent и MozPersonaIdent, и если есть, то отправить письмецо.
+        MPersonIdent.findIdentsByEmail(email1) flatMap { idents =>
+          if (!idents.isEmpty) {
+            val emailIdentFut: Future[EmailPwIdent] = idents
+              .foldLeft[List[EmailPwIdent]] (Nil) {
+                case (acc, epw: EmailPwIdent) => epw :: acc
+                case (acc, _) => acc
+              }
+              .headOption
+              .map { Future successful }
+              .getOrElse {
+                // берём personId из moz persona. Там в списке только один элемент, т.к. email является уникальным в рамках ident-модели.
+                val personId = idents.map(_.personId).head
+                val epw = EmailPwIdent(email = email1, personId = personId, pwHash = "", isVerified = false)
+                epw.save
+                  .map { _ => epw }
+              }
+            emailIdentFut flatMap { epwIdent =>
+              // Нужно сгенерить ключ для восстановления пароля. И ссылку к нему.
+              val eact = EmailActivation(email = email1, key = epwIdent.personId)
+              eact.save.map { eaId =>
+                eact.id = Some(eaId)
+                // Можно отправлять письмецо на ящик.
+                val mail = use[MailerPlugin].email
+                mail.setFrom("no-reply@suggest.io")
+                mail.setSubject("Suggest.io | Восстановление пароля")
+                mail.setRecipient(email1)
+                mail.send(
+                  bodyText = views.txt.ident.recover.emailPwRecoverTpl(eact),
+                  bodyHtml = emailPwRecoverTpl(eact)
+                )
+              }
+            }
+          } else {
+            // TODO Нужно добавить капчу. Если юзера нет, то создать его и тоже отправить письмецо с активацией.
+            Future successful ()
+          }
+        } map { _ =>
+          // отрендерить юзеру результат, что всё ок, независимо от успеха поиска.
+          Redirect(routes.Ident.recoverPwAccepted(email1))
+        }
       }
     )
   }
 
+  /** Рендер страницы, отображаемой когда запрос восстановления пароля принят. */
+  def recoverPwAccepted(email1: String) = MaybeAuth { implicit request =>
+    Ok(pwRecoverAcceptedTpl(email1))
+  }
+
+
+  /**
+   * ActionBuilder для некоторых экшенов восстановления пароля. Завязан на некоторые фунции контроллера, поэтому
+   * лежит здесь.
+   * @param eActId id ключа активации.
+   */
+  case class CanRecoverPw(eActId: String) extends ActionBuilder[RecoverPwRequest] with PlayMacroLogsImpl {
+    def keyNotFound(implicit request: RequestHeader) = {
+      implicit val ctx = new ContextImpl
+      NotFound(pwRecoverFailedTpl())
+    }
+    protected def invokeBlock[A](request: Request[A], block: (RecoverPwRequest[A]) => Future[Result]): Future[Result] = {
+      lazy val logPrefix = s"CanRecoverPw($eActId): "
+      bruteForceProtect flatMap { _ =>
+        val pwOpt = PersonWrapper.getFromRequest(request)
+        val srmFut = SioReqMd.fromPwOpt(pwOpt)
+        EmailActivation.getById(eActId).flatMap {
+          case Some(eAct) =>
+            EmailPwIdent.getById(eAct.email) flatMap {
+              case Some(epw) if epw.personId == eAct.key =>
+                // Можно отрендерить блок
+                debug(logPrefix + "ok: " + request.path)
+                srmFut flatMap { srm =>
+                  val req1 = RecoverPwRequest(request, pwOpt, epw, eAct, srm)
+                  block(req1)
+                }
+              // should never occur: Почему-то нет парольной записи для активатора.
+              // Такое возможно, если юзер взял ключ инвайта в маркет и вставил его в качестве ключа восстановления пароля.
+              case None =>
+                error(s"${logPrefix}eAct exists, but emailPw is NOT! Hacker? pwOpt = $pwOpt ;; eAct = $eAct")
+                keyNotFound(request)
+            }
+          case None =>
+            pwOpt match {
+              // Вероятно, юзер повторно перешел по ссылке из письма.
+              case Some(pw) =>
+                redirectUserSomewhere(pw.personId)
+              // Юзер неизвестен и ключ неизвестен. Возможно, перебор ключей какой-то?
+              case None =>
+                warn(logPrefix + "Unknown eAct key. pwOpt = " + pwOpt)
+                keyNotFound(request)
+            }
+        }
+      }
+    }
+  }
+
+  /** Реквест активации. */
+  case class RecoverPwRequest[A](request: Request[A], pwOpt: PwOpt_t, epw: EmailPwIdent, eAct: EmailActivation, sioReqMd: SioReqMd)
+    extends AbstractRequestWithPwOpt(request)
+
+
+  /** Форма сброса пароля. */
+  private val pwResetFormM = Form(FormUtil.passwordWithConfirmM)
+
+  /** Юзер перешел по ссылке восстановления пароля из письма. Ему нужна форма ввода нового пароля. */
+  def recoverPwReturn(eActId: String) = CanRecoverPw(eActId).apply { implicit request =>
+    Ok(pwResetTpl(request.eAct, pwResetFormM))
+  }
+
+  /** Юзер сабмиттит форму с новым паролем. Нужно его залогинить, сохранить новый пароль в базу,
+    * удалить запись из EmailActivation и отредиректить куда-нибудь. */
+  def pwResetSubmit(eActId: String) = CanRecoverPw(eActId).async { implicit request =>
+    pwResetFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"pwResetSubmit($eActId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+        NotAcceptable(pwResetTpl(request.eAct, formWithErrors))
+      },
+      {newPw =>
+        val pwHash2 = MPersonIdent.mkHash(newPw)
+        val epw2 = request.epw.copy(pwHash = pwHash2, isVerified = true)
+        for {
+          _   <- epw2.save
+          _   <- request.eAct.delete
+          rdr <- redirectUserSomewhere(epw2.personId)
+        } yield {
+          rdr.withSession(username -> epw2.personId)
+            .flashing("success" -> "Новый пароль сохранён.")
+        }
+      }
+    )
+  }
+
+
+  /** Сгенерить редирект куда-нибудь для указанного юзера. */
+  private def redirectUserSomewhere(personId: String) = {
+    MarketLk.getMarketRdrCallFor(personId) map {
+      case Some(rdrCall) => Redirect(rdrCall)
+      case None          => Redirect(routes.Admin.index())
+    }
+  }
 }
 
 

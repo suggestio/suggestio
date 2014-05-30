@@ -23,8 +23,11 @@ GET  /login2/email_pw                   controllers.Ident.emailPwLoginForm
 POST /login2/email_pw                   controllers.Ident.emailPwLoginFormSubmit
 GET  /logout2                           controllers.Ident.logout
 # ident: Восстановление пароля.
-GET  /ident/pw/recover                  controllers.Ident.recoverPwForm
-POST /ident/pw/recover                  controllers.Ident.recoverPwFormSubmit
+GET  /ident/pw/r                        controllers.Ident.recoverPwForm
+POST /ident/pw/r                        controllers.Ident.recoverPwFormSubmit
+GET  /ident/pw/r/ok                     controllers.Ident.recoverPwAccepted(email: String)
+GET  /ident/pw/r/reset/:eActId          controllers.Ident.recoverPwReturn(eActId)
+POST /ident/pw/r/reset/:eActId          controllers.Ident.pwResetSubmit(eActId)
 
 ## Callback'и инсталляторов и валидаторов сайтов.
 POST /js/add_domain                             controllers.Js.addDomain

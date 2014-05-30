@@ -26,7 +26,9 @@ import io.suggest.event.SioNotifierStaticClientI
  * В suggest.io исторически была только persona, которая жила прямо в MPerson.
  * Все PersonIdent имеют общий формат, однако хранятся в разных типах в рамках одного индекса.
  */
-object MPersonIdent {
+object MPersonIdent extends PlayMacroLogsImpl {
+
+  import LOGGER._
 
   /** Список емейлов админов suggest.io. */
   def SU_EMAILS: Seq[String] = {
@@ -43,6 +45,42 @@ object MPersonIdent {
         "sasha@cbca.ru",
         "maksim.sharipov@cbca.ru"
       ))
+  }
+
+  // TODO Нужно дедублицировать код между разными find*() методами.
+
+  /**
+   * Найти по email во всех моделях ident-моделях.
+   * @param email Адрес электронной почты, который является _id в ident-моделях.
+   * @return Список абстрактных результатов в неопределённом порядке.
+   */
+  def findIdentsByEmail(email: String)(implicit ec: ExecutionContext, client: Client): Future[List[MPersonIdent]] = {
+    val identModels = IdTypes.onlyIdents
+    val identModelTypes = identModels.map(_.companion.ES_TYPE_NAME)
+    val iq = QueryBuilders.idsQuery(identModelTypes : _*).addIds(email)
+    val indices = identModels.map(_.companion.ES_INDEX_NAME).distinct
+    client.prepareSearch(indices : _*)
+      .setQuery(iq)
+      .execute()
+      .map { searchResp =>
+        searchResp.getHits.getHits.foldLeft[List[MPersonIdent]] (Nil) { (acc, hit) =>
+          // Выбрать десериализатор исходя из типа.
+          val result1Opt = identModels
+            .find(_.companion.ES_TYPE_NAME == hit.getType)
+            .map {
+             _.companion
+              .deserializeOne(hit.getId, hit.getSource, hit.getVersion)
+            }
+          result1Opt match {
+            case Some(result1) =>
+              result1 :: acc
+            // should never occur
+            case None =>
+              error(s"findIdentsByEmail($email): Unexpected search hit received with type = [${hit.getType}]; possible types are ${identModels.mkString("[","], [","]")}\n $hit")
+              acc
+          }
+        }
+      }
   }
   
   def generateMappingStaticFields: List[Field] = {
@@ -76,8 +114,11 @@ object MPersonIdent {
     */
   def findAllEmails(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
     val personIdQuery = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
-    client.prepareSearch(SIO_ES_INDEX_NAME) // TODO Следует наверное собирать индексы и типы всех подчиненных моделей через что-то дополнительное.
-      .setTypes(MozillaPersonaIdent.ES_TYPE_NAME, EmailPwIdent.ES_TYPE_NAME)
+    val identModels = IdTypes.onlyIdents
+    val identTypes = identModels.map(_.companion.ES_TYPE_NAME)
+    val indices = identModels.map(_.companion.ES_INDEX_NAME).distinct
+    client.prepareSearch(indices : _*)
+      .setTypes(identTypes : _*)
       .setQuery(personIdQuery)
       // TODO ограничить возвращаемые поля только необходимыми
       .execute()
@@ -95,8 +136,24 @@ object MPersonIdent {
 
   /** Типы поддерживаемых алгоритмов идентификаций. В базу пока не сохраняются. */
   object IdTypes extends Enumeration {
-    type MPersonIdentType = Value
-    val MOZ_PERSONA, EMAIL_PW, EMAIL_ACT = Value
+    protected case class Val(companion: EsModelStaticIdentT, isIdent: Boolean) extends super.Val
+
+    type MPersonIdentType = Val
+    val MOZ_PERSONA = Val(MozillaPersonaIdent, isIdent = true)
+    val EMAIL_PW    = Val(EmailPwIdent, isIdent = true)
+    val EMAIL_ACT   = Val(EmailActivation, isIdent = true)
+
+    implicit def value2val(x: Value): MPersonIdentType = x.asInstanceOf[MPersonIdentType]
+
+    def onlyIdents = {
+      values.foldLeft [List[Val]] (Nil) {
+        (acc, e) =>
+          if (e.isIdent)
+            e :: acc
+          else
+            acc
+      }
+    }
   }
 
 
@@ -130,7 +187,7 @@ object MPersonIdent {
 
 import MPersonIdent._
 
-trait MPersonIdent extends EsModelT {
+sealed trait MPersonIdent extends EsModelT {
   override type T <: MPersonIdent
 
   def personId: String
@@ -156,17 +213,23 @@ trait MPersonIdent extends EsModelT {
 }
 
 
-trait MPersonIdentSubmodelStatic {
+sealed trait EsModelStaticIdentT extends EsModelStaticT {
+  override type T <: MPersonIdent
+}
+sealed trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT {
   def generateMappingProps: List[DocField] = MPersonIdent.generateMappingProps
   def generateMappingStaticFields: List[Field] = MPersonIdent.generateMappingStaticFields
+  def getByEmail(email: String)(implicit ec: ExecutionContext, client: Client) = {
+    getById(email)
+  }
 }
 
 /** Идентификации от mozilla-persona. */
-object MozillaPersonaIdent extends EsModelStaticT with MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
+object MozillaPersonaIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
 
   override type T = MozillaPersonaIdent
 
-  val ES_TYPE_NAME = "mpiMozPersona"
+  override val ES_TYPE_NAME = "mpiMozPersona"
 
   def applyKeyValue(acc: MozillaPersonaIdent): PartialFunction[(String, AnyRef), Unit] = {
     case (KEY_ESFN, value)        => acc.email = stringParser(value)
@@ -201,7 +264,7 @@ case class MozillaPersonaIdent(
 
 
 /** Статическая под-модель для хранения юзеров, живущих вне mozilla persona. */
-object EmailPwIdent extends EsModelStaticT with MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
+object EmailPwIdent extends MPersonIdentSubmodelStatic with PlayMacroLogsImpl {
 
   override type T = EmailPwIdent
 
@@ -215,10 +278,6 @@ object EmailPwIdent extends EsModelStaticT with MPersonIdentSubmodelStatic with 
   }
 
   override protected def dummy(id: String, version: Long) = EmailPwIdent(email=id, personId=null, pwHash=null)
-
-  def getByEmail(email: String)(implicit ec: ExecutionContext, client: Client) = {
-    getById(email)
-  }
 
   /** По дефолту email'ы считать проверенными или нет? */
   def IS_VERIFIED_DFLT = false
@@ -288,7 +347,7 @@ class EmailPwIdentJmx(implicit val ec: ExecutionContext, val client: Client, val
 
 /** Статическая часть модели [[EmailActivation]].
   * Модель нужна для хранения ключей для проверки/активации почтовых ящиков. */
-object EmailActivation extends EsModelStaticT with PlayMacroLogsImpl {
+object EmailActivation extends EsModelStaticIdentT with PlayMacroLogsImpl {
 
   override type T = EmailActivation
 

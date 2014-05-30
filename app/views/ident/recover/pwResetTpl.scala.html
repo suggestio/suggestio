@@ -1,0 +1,19 @@
+@(eAct: EmailActivation, prf: Form[_])(implicit ctx: Context)
+
+@* Страница с формой сброса пароля. Содержит форму для задания и подтверждения пароля. *@
+@import ctx._
+@import helper._
+
+  @form(routes.Ident.pwResetSubmit(eAct.id.get)) {
+    @inputPassword(
+      prf("pw1"),
+      '_label -> Messages("Type.new.password")
+    )
+    @inputPassword(
+      prf("pw2"),
+      '_label -> Messages("Confirm.new.password")
+    )
+
+    <input type="submit" value="@Messages("Save")"/>
+  }
+

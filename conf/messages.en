@@ -15,13 +15,18 @@ Shop=Shop
 Shops=Shops
 Save=Save
 Continue=Continue
-Next=Далее
+Next=Next
+
+Password.reset=Password reset
+Type.new.password=Type new password
+Confirm.new.password=Confirm new password
 
 Color=Color
 Colors=Colors
 Manufacturer=Manufacturer
 Size=Size
 Sizes=Sizes
+Price=Price
 
 slaves.of.m=RENTERS
 slaves.of.R=RESTAURANTS

@@ -17,6 +17,10 @@ Save=Сохранить
 Continue=Продолжить
 Next=Далее
 
+Password.reset=Сброс пароля
+Type.new.password=Введите новый пароль
+Confirm.new.password=Подтвердите новый пароль
+
 Color=Цвет
 Colors=Цвета
 Manufacturer=Производитель
