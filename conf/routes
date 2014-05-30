@@ -257,4 +257,8 @@ GET  /sys/market/tmmp/daily/new/:mbcId   controllers.SysMarketBillingMmp.createM
 POST /sys/market/tmmp/daily/new/:mbcId   controllers.SysMarketBillingMmp.createMmpDailySubmit(mbcId: Int)
 GET  /sys/market/tmmp/daily/edit/:mbmdId controllers.SysMarketBillingMmp.editMmpDaily(mbmdId: Int)
 POST /sys/market/tmmp/daily/edit/:mbmdId controllers.SysMarketBillingMmp.editMmpDailySubmit(mbmdId: Int)
+## sys: Календари
+GET  /sys/cal                            controllers.SysCalendar.showCalendars
+POST /sys/cal/new/tpl                    controllers.SysCalendar.newCalendarFromTemplateSubmit
+POST /sys/cal/new                        controllers.SysCalendar.createCalendarSubmit
 

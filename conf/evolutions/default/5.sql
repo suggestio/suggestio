@@ -48,3 +48,7 @@ ALTER TABLE sio2.adv_ok
 
 
 COMMIT;
+
+CREATE INDEX 
+   ON sio2.adv_ok (ad_id ASC NULLS LAST);
+

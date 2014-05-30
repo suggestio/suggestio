@@ -18,6 +18,7 @@ import util.event.SiowebNotifier.Implicts.sn
 import java.sql.Connection
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import scala.concurrent.duration._
+import de.jollyday.{HolidayCalendar, HolidayManager}
 
 /**
  * Suggest.io
@@ -50,15 +51,21 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     val dateStart = advTerms.dateStart
     val dateEnd = advTerms.dateEnd
     assert(!dateStart.isAfter(dateEnd), "dateStart must not be after dateEnd")
+    // TODO Нужно использовать специфичные для узла календари.
+    val holidays = HolidayManager.getInstance(HolidayCalendar.RUSSIA)
     def calculateDateAdvPrice(day: LocalDate): Float = {
-      val isWeekend = day.getDayOfWeek match {
-        case (SUNDAY | SATURDAY) => true
-        case _ => false
-      }
-      if (isWeekend) {
-        rcvrPricing.mmpWeekend
+      if (holidays.isHoliday(day)) {
+        rcvrPricing.mmpPrimetime
       } else {
-        rcvrPricing.mmpWeekday
+        val isWeekend = day.getDayOfWeek match {
+          case (SUNDAY | SATURDAY) => true
+          case _ => false
+        }
+        if (isWeekend) {
+          rcvrPricing.mmpWeekend
+        } else {
+          rcvrPricing.mmpWeekday
+        }
       }
     }
     @tailrec def walkDaysAndPrice(day: LocalDate, acc: Float): Float = {

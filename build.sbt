@@ -45,6 +45,8 @@ libraryDependencies ++= Seq(
   "com.lambdaworks" % "scrypt" % "1.4.0",     // Чтобы хешировать пароли (models.EmailPwIdent например)
   // Для импорт данных из sio v1 кластера. Выпилить вместе с util.compat.v1 после запуска
   "org.erlang.otp" % "jinterface" % "1.5.+",
+  // Календарь праздников
+  "de.jollyday" % "jollyday" % "0.4.+",
   // Для поддержки финансовых моделей нужен асинхронный postgres-драйвер.
   //"com.github.mauricio" %% "postgresql-async" % "0.2.+"
   // Бомжуем с синхронным драйвером из-за конфликта версии netty между postgresql-async и asynchbase

@@ -1,0 +1,21 @@
+@(cals: Seq[MCalendar], cf: Form[_])(implicit ctx: Context)
+
+@* Системная страница работы с календарями.
+   cf: Маппинг формы. Можно создавать календари на базе локальных календарей из списка. *@
+@import helper._
+
+@calBase("Все " + cals.size) {
+  <ul>
+    @cals.map { cal =>
+      <li>
+        <a href="">@cal.name</a>
+      </li>
+    }
+  </ul>
+
+  <h2>Создать новый календарь</h2>
+  @form(routes.SysCalendar.newCalendarFromTemplateSubmit) {
+     TODO нужен select по HolidayCalendar.values
+     <input type="submit" value="Далее" />
+  }
+}

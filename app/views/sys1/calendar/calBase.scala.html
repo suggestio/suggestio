@@ -1,0 +1,13 @@
+@(title: String, hPathAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@import sys1._
+
+@hPathAfter1 = {
+  / Календари
+  @hPathAfter.getOrElse { / @title }
+}
+
+@sysBase(
+  title = title,
+  hPathAfter = Some(hPathAfter1)
+)(content)
