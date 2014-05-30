@@ -17,6 +17,8 @@ Save=Save
 Continue=Continue
 Next=Next
 
+Password.change=Password change
+Type.current.password=Type current password
 Password.reset=Password reset
 Type.new.password=Type new password
 Confirm.new.password=Confirm new password

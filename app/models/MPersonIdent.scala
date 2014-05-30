@@ -222,6 +222,19 @@ sealed trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT {
   def getByEmail(email: String)(implicit ec: ExecutionContext, client: Client) = {
     getById(email)
   }
+
+  /**
+   * Найти иденты для указанного personId.
+   * @param personId id юзера.
+   * @return Список подходящих результатов в неопределённом порядке.
+   */
+  def findByPersonId(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+    val qb = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
+    prepareSearch
+      .setQuery(qb)
+      .execute()
+      .map { searchResp2list }
+  }
 }
 
 /** Идентификации от mozilla-persona. */

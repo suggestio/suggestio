@@ -4,7 +4,10 @@
 @import ctx._
 @import helper._
 
+<h1>@Messages("Password.reset")</h1>
+
   @form(routes.Ident.pwResetSubmit(eAct.id.get)) {
+
     @inputPassword(
       prf("pw1"),
       '_label -> Messages("Type.new.password")
@@ -14,6 +17,6 @@
       '_label -> Messages("Confirm.new.password")
     )
 
-    <input type="submit" value="@Messages("Save")"/>
+    <input type="submit" value="@Messages("Save")" />
   }
 

@@ -3,6 +3,7 @@
 @* Базовый шаблон для личного кабинета sio-маркета (не важно: ТЦ или магазин).
    - Параметр headAfter содержит дополнения к телу тега head.
 *@
+@import ctx._
 
 <!DOCTYPE html>
 <html>
@@ -33,6 +34,7 @@
       @ctx.usernameOpt.map { username =>
         <div class="auth">
 
+          @*<a href="@routes.Ident.changePassword">@Messages("Password.change")</a>*@
           <a class="logout-but" href="@routes.Ident.logout"></a>
 
           @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@

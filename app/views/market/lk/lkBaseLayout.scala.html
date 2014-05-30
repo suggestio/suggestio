@@ -1,6 +1,6 @@
 @(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None, backHref: Option[Call] = None)(content: Html)(implicit ctx: util.Context)
 
-@market.lk.lkBase(title = title, adnIdOpt = adnIdOpt, headAfter = headAfter) {
+@lkBase(title = title, adnIdOpt = adnIdOpt, headAfter = headAfter) {
 <div class="title-wrap">
   <div class="center">
     @backHref.map { bh =>

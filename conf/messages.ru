@@ -17,6 +17,8 @@ Save=Сохранить
 Continue=Продолжить
 Next=Далее
 
+Password.change=Смена пароля
+Type.current.password=Введите текущий пароль
 Password.reset=Сброс пароля
 Type.new.password=Введите новый пароль
 Confirm.new.password=Подтвердите новый пароль

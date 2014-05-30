@@ -22,6 +22,7 @@ import play.api.templates.HtmlFormat
 import com.typesafe.scalalogging.slf4j.Logger
 import com.typesafe.plugin.{use, MailerPlugin}
 import util.acl.PersonWrapper.PwOpt_t
+import FormUtil.{passwordM, passwordWithConfirmM}
 
 /**
  * Suggest.io
@@ -61,7 +62,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
   /** Форма логина по email и паролю. */
   val emailPwLoginFormM: EmailPwLoginForm_t = Form(tuple(
     "email"    -> email,
-    "password" -> FormUtil.passwordM
+    "password" -> passwordM
   ))
 
 
@@ -339,7 +340,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
 
 
   /** Форма сброса пароля. */
-  private val pwResetFormM = Form(FormUtil.passwordWithConfirmM)
+  private val pwResetFormM = Form(passwordWithConfirmM)
 
   /** Юзер перешел по ссылке восстановления пароля из письма. Ему нужна форма ввода нового пароля. */
   def recoverPwReturn(eActId: String) = CanRecoverPw(eActId).apply { implicit request =>
@@ -377,6 +378,63 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
       case None          => Redirect(routes.Admin.index())
     }
   }
+
+
+
+  private val changePasswordFormM = Form(tuple(
+    "old" -> passwordM,
+    "new" -> passwordWithConfirmM
+  ))
+
+  /** Страница с формой смены пароля. */
+  def changePassword = IsAuth { implicit request =>
+    Ok(changePasswordTpl(changePasswordFormM))
+  }
+
+  /** Сабмит формы смены пароля. Нужно проверить старый пароль и затем заменить его новым. */
+  def changePasswordSubmit = IsAuth.async { implicit request =>
+    changePasswordFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug("changePasswordSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
+        NotAcceptable(changePasswordTpl(formWithErrors))
+      },
+      {case (oldPw, newPw) =>
+        // Нужно проверить старый пароль, если юзер есть в базе.
+        val personId = request.pwOpt.get.personId
+        EmailPwIdent.findByPersonId(personId).flatMap { epws =>
+          if (epws.isEmpty) {
+            // Юзер меняет пароль, но залогинен через moz persona.
+            MozillaPersonaIdent.findByPersonId(personId)
+              .map { mps =>
+                if (mps.isEmpty) {
+                  warn("changePasswordSubmit(): Unknown user session: " + personId)
+                  None
+                } else {
+                  val mp = mps.head
+                  val epw = EmailPwIdent(email = mp.email, personId = mp.personId, pwHash = MPersonIdent.mkHash(newPw), isVerified = true)
+                  Some(epw)
+                }
+              }
+          } else {
+            // Юзер меняет пароль, но у него уже есть EmailPw-логины на s.io.
+            val result = epws
+              .find { _.checkPassword(oldPw) }
+              .map { _.copy(pwHash = MPersonIdent.mkHash(newPw)) }
+            Future successful result
+          }
+        } flatMap {
+          case Some(epw) =>
+            epw.save
+              .flatMap { _ => redirectUserSomewhere(personId) }
+              .map { _.flashing("success" -> "Новый пароль сохранён.") }
+          case None =>
+            val formWithErrors = changePasswordFormM.withGlobalError("error.password.invalid")
+            NotAcceptable(changePasswordTpl(formWithErrors))
+        }
+      }
+    )
+  }
+
 }
 
 
