@@ -18,7 +18,6 @@ $(document).ready ->
   cbca.shop.init()
   cbca.editAdPage.updatePreview()
 
-
   if (typeof tinymce != 'undefined')
     tinymce.init(
       selector:'textarea.tiny-mce',
@@ -855,6 +854,18 @@ market =
           market.img.crop.save_crop $(this)
 
           return false
+
+  ################################
+  ## Размещение рекламной карточки
+  ################################
+  adv_form :
+    update_price : () ->
+      $.ajax
+        url : $('#advsPriceUpdateUrl').val()
+        method : 'post'
+        data : $('#advsFormBlock form').serialize()
+        success : ( data ) ->
+          $('.js-pre-price').html data
 
 
   ##############################
