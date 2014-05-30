@@ -95,7 +95,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     // Работа с синхронными моделями.
     val syncResult = DB.withConnection { implicit c =>
       // Собираем всю инфу о размещении этой рекламной карточки
-      val advsOk = MAdvOk.findByAdId(adId)
+      val advsOk = MAdvOk.findNotExpiredByAdId(adId)
       // Определяем список узлов, которые проходят по adv_ok. Это можно через транзакции и контракты.
       val advsReq = MAdvReq.findByAdId(adId)
       val advsRefused = MAdvRefuse.findByAdId(adId)

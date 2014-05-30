@@ -15,6 +15,9 @@ import util.SiowebEsUtil.client
 import org.elasticsearch.index.engine.VersionConflictEngineException
 import scala.util.{Success, Failure}
 import util.event.SiowebNotifier.Implicts.sn
+import java.sql.Connection
+import io.suggest.ym.model.common.EMReceivers.Receivers_t
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -32,6 +35,10 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
   /** Не раньше какого времени можно запускать auto-accept. */
   val AUTO_ACCEPT_REQS_AFTER_HOURS = configuration.getInt("mmp.daily.accept.auto.after.hours") getOrElse 16
 
+  /** Как часто надо проверять таблицу advsOK на предмет необходимости изменений в выдаче. */
+  val CHECK_ADVS_OK_DURATION: FiniteDuration = configuration.getInt("mmp.daily.check.advs.ok.every.seconds")
+    .getOrElse(120)
+    .seconds
 
   /**
    * Рассчитать ценник размещения рекламной карточки.
@@ -192,50 +199,66 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     val advsReq = DB.withConnection { implicit c =>
       MAdvReq.findCreatedLast(period)
     }
-    val logPrefix = "autoApplyOldAdvReqs(): "
-    if (advsReq.isEmpty) {
-      trace(logPrefix + "Nothing to do.")
-    } else {
+    //val logPrefix = "autoApplyOldAdvReqs(): "
+    if (!advsReq.isEmpty) {
       // TODO Нужно оттягивать накатывание карточки до ближайшего обеда. Для этого нужно знать тайм-зону для рекламных узлов.
       advsReq.foreach(acceptAdvReq(_, isAuto = true))
     }
   }
 
 
-  /** Поиск и размещение в выдачах рекламных карточек, время размещения которых уже пришло. */
+  /** Выполнить поиск и размещение в выдачах рекламных карточек, время размещения которых уже пришло. */
   def advertiseOfflineAds() {
-    val advs = DB.withConnection { implicit c =>
-      MAdvOk.findAllOfflineOnTime
+    (new AdvertiseOfflineAdvs).run()
+  }
+
+  /** Выполнить поиск и сокрытие в выдачах рекламных карточках, время размещения которых истекло. */
+  def depublishExpiredAdvs() {
+    (new DepublishExpiredAdvs).run()
+  }
+
+}
+
+
+/** Код вывода в выдачу и последующего сокрытия рекламных карточек крайне похож, поэтому он вынесен в трейт. */
+trait AdvSlsUpdater extends PlayMacroLogsImpl {
+
+  import LOGGER._
+  import MmpDailyBilling.UPDATE_RCVRS_VSN_CONFLICT_TRY_MAX
+
+  lazy val logPrefix: String = getClass.getSimpleName + ": "
+
+  def findAdvsOk(implicit c: Connection): List[MAdvOk]
+  val sls0 = List(AdShowLevels.LVL_MEMBER)
+
+  def maybeSlsWithStartPage(onStartPage: Boolean): List[AdShowLevel] = {
+    if (onStartPage) {
+      AdShowLevels.LVL_START_PAGE :: sls0
+    } else {
+      sls0
     }
-    val logPrefix = "advertiseOfflineAds(): "
+  }
+
+  def updateReceivers(rcvrs0: Receivers_t, advsOk: List[MAdvOk]): Receivers_t
+
+  def nothingToDo() {}
+
+  def updateAdvOk(advOk: MAdvOk, now: DateTime): MAdvOk
+
+  def run() {
+    val advs = DB.withConnection { implicit c =>
+      findAdvsOk
+    }
     if (!advs.isEmpty) {
       trace(s"${logPrefix}Where are ${advs.size} items. ids = ${advs.map(_.id.get).mkString(", ")}")
       val advsMap = advs.groupBy(_.adId)
-      val sls0 = List(AdShowLevels.LVL_MEMBER)
       advsMap foreach { case (adId, advsOk) =>
         // Определяем неблокирующую функцию получения и обновления рекламной карточки, которую можно многократно вызывать.
         // Повторная попытка получения и обновления карточки поможет разрулить конфликт версий.
         def tryUpdateRcvrs(counter: Int): Future[_] = {
           MAd.getById(adId) flatMap {
             case Some(mad) =>
-              // Пропатчить поле ресиверов всеми имеющимися advOk
-              mad.receivers ++= advsOk.foldLeft[List[(String, AdReceiverInfo)]](Nil) { (acc, advOk) =>
-                trace(s"${logPrefix}Advertising ad $adId on rcvrNode ${advOk.rcvrAdnId}; advOk.id = ${advOk.id.get}")
-                val sls = if (advOk.onStartPage) {
-                  AdShowLevels.LVL_START_PAGE :: sls0
-                } else {
-                  sls0
-                }
-                val slss = sls.toSet
-                val rcvrInfo = mad.receivers.get(advOk.rcvrAdnId) match {
-                  case None =>
-                    AdReceiverInfo(advOk.rcvrAdnId, slss, slss)
-                  case Some(ri) =>
-                    // Всё уже готово вроде бы.
-                    ri.copy(slsWant = ri.slsWant ++ slss, slsPub = ri.slsPub ++ slss)
-                }
-                advOk.rcvrAdnId -> rcvrInfo :: acc
-              }
+              mad.receivers = updateReceivers(mad.receivers, advsOk)
               // Сохраняем. Нужно отрабатывать ситуацию с изменившейся версией
               mad.saveReceivers
                 .recoverWith {
@@ -252,28 +275,105 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         }
         tryUpdateRcvrs(0) onComplete {
           case Success(_) =>
-            trace(s"${logPrefix}Saving online state for ${advsOk.size} advsOk...")
+            trace(s"${logPrefix}Updating isOnline state for ${advsOk.size} advsOk...")
             val now = DateTime.now
-            val advsOk1 = advsOk.map { advOk =>
-              val dateDiff = new Period(advOk.dateStart, now)
-              advOk.copy(
-                dateStart = now,
-                dateEnd = advOk.dateEnd plus dateDiff,
-                isOnline = true
-              )
-            }
+            val advsOk1 = advsOk
+              .map { updateAdvOk(_, now) }
             DB.withTransaction { implicit c =>
               advsOk1.foreach(_.save)
             }
-            trace(s"${logPrefix}Successfully onlined ad $adId for advs = ${advsOk.mkString(", ")}")
+            trace(s"${logPrefix}Successfully updated state for ad.id=$adId for advs = ${advsOk.mkString(", ")}")
 
           case Failure(ex) =>
-            error(s"${logPrefix}Failed to make ad $adId online", ex)
+            error(s"${logPrefix}Failed to update ad $adId advs states", ex)
         }
       }
     } else {
-      trace(logPrefix + "Nothing to do.")
+      nothingToDo()
+    }
+  }
+}
+
+
+class AdvertiseOfflineAdvs extends AdvSlsUpdater {
+  import LOGGER._
+
+  override def findAdvsOk(implicit c: Connection): List[MAdvOk] = {
+    MAdvOk.findAllOfflineOnTime
+  }
+
+  /** Добавить новые ресиверы для рекламной карточки. */
+  override def updateReceivers(rcvrs0: Receivers_t, advsOk: List[MAdvOk]): Receivers_t = {
+    rcvrs0 ++ advsOk.foldLeft[List[(String, AdReceiverInfo)]](Nil) { (acc, advOk) =>
+      trace(s"${logPrefix}Advertising ad ${advOk.adId} on rcvrNode ${advOk.rcvrAdnId}; advOk.id = ${advOk.id.get}")
+      val sls = maybeSlsWithStartPage(advOk.onStartPage)
+      val slss = sls.toSet
+      val rcvrInfo = rcvrs0.get(advOk.rcvrAdnId) match {
+        case None =>
+          AdReceiverInfo(advOk.rcvrAdnId, slss, slss)
+        case Some(ri) =>
+          // Всё уже готово вроде бы.
+          ri.copy(slsWant = ri.slsWant ++ slss, slsPub = ri.slsPub ++ slss)
+      }
+      advOk.rcvrAdnId -> rcvrInfo :: acc
     }
   }
 
+  override def updateAdvOk(advOk: MAdvOk, now: DateTime): MAdvOk = {
+    val dateDiff = new Period(advOk.dateStart, now)
+    advOk.copy(
+      dateStart = now,
+      dateEnd = advOk.dateEnd plus dateDiff,
+      isOnline = true
+    )
+  }
 }
+
+
+class DepublishExpiredAdvs extends AdvSlsUpdater {
+  import LOGGER._
+
+  override def findAdvsOk(implicit c: Connection): List[MAdvOk] = {
+    MAdvOk.findDateEndExpired()
+  }
+
+  /** Удалить ресиверы для рекламной карточки. */
+  override def updateReceivers(rcvrs0: Receivers_t, advsOk: List[MAdvOk]): Receivers_t = {
+    val adId = advsOk.headOption.fold("???")(_.adId)
+    val rcvr2adv = advsOk
+      .map { advOk => advOk.rcvrAdnId -> advOk }
+      .toMap
+    val rcvrs1 = rcvrs0.foldLeft[List[(String, AdReceiverInfo)]] (Nil) {
+      case (acc, e @ (rcvrAdnId, rcvrInfo)) =>
+        rcvr2adv.get(rcvrAdnId) match {
+          // Работа не касается этого ресивера. Просто пропускаем его на выход.
+          case None =>
+            e :: acc
+          // Есть ресивер. Надо подстричь его уровни отображения или всего ресивера целиком.
+          case Some(advOk) =>
+            trace(s"${logPrefix}Depublishing ad $adId on rcvrNode $rcvrAdnId ;; advOk.id = ${advOk.id}")
+            val slss = maybeSlsWithStartPage(advOk.onStartPage)
+            // Нужно отфильтровать уровни отображения или целиком этот ресивер спилить.
+            val slsWant1 = rcvrInfo.slsWant -- slss
+            if (slsWant1.isEmpty) {
+              acc
+            } else {
+              val e1 = rcvrInfo.copy(
+                slsWant = slsWant1,
+                slsPub = rcvrInfo.slsPub -- slss
+              )
+              rcvrAdnId -> e1  ::  acc
+            }
+        }
+    }
+    rcvrs1.toMap
+  }
+
+  override def updateAdvOk(advOk: MAdvOk, now: DateTime): MAdvOk = {
+    advOk.copy(
+      isOnline = false,
+      dateEnd = now
+    )
+  }
+}
+

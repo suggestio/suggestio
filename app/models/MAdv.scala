@@ -84,6 +84,15 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
   }
 
   /**
+   * Найти все ряды, которые относятся к указанной рекламной карточке и date_end ещё пока в будущем.
+   * @param adId id рекламной карточки.
+   * @return Список подходящих под запрос рядов в произвольном порядке.
+   */
+  def findNotExpiredByAdId(adId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(" WHERE ad_id = {adId} AND now() <= date_end", policy, 'adId -> adId)
+  }
+
+  /**
    * Найти ряды по карточке и адресату запроса размещения.
    * @param adId id карточки.
    * @param rcvrId id получателя.
@@ -148,6 +157,7 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
   def findCreatedLast(createdInPeriod: Period, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
     findBy(" WHERE date_created + {createdInPeriod} <= now()", policy, 'createdInPeriod -> createdInPeriod)
   }
+
 }
 
 

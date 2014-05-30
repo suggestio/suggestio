@@ -78,6 +78,10 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
       .as(rowParser *)
   }
 
+  /** Найти все ряды, у которых date_end уже в прошлом. Т.е. неактуальные ряды. */
+  def findDateEndExpired(policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[MAdvOk] = {
+    findBy(" WHERE date_end >= now() AND online", policy)
+  }
 }
 
 

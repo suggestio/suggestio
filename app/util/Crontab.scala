@@ -56,15 +56,23 @@ object Crontab extends PlayMacroLogsImpl {
         }
       },
       // Автоматически аппрувить залежавшиеся в очереди реквесты.
-      schedule(5 seconds, 2 minutes) {
+      schedule(3 seconds, MmpDailyBilling.CHECK_ADVS_OK_DURATION) {
         try {
           MmpDailyBilling.autoApplyOldAdvReqs()
         } catch {
           case ex: Throwable => error("Cron: MmpDailyBilling.autoApplyOldAdvReqs() failed", ex)
         }
       },
+      // Выкинуть из выдачи залежавшиеся карточки. Нужно вызывать это ДО размещения готовых карточек.
+      schedule(10 seconds, MmpDailyBilling.CHECK_ADVS_OK_DURATION) {
+        try {
+          MmpDailyBilling.depublishExpiredAdvs()
+        } catch {
+          case ex: Throwable => error("Cron: MmpDailyBilling.depublishExpiredAdvs() failed", ex)
+        }
+      },
       // Отправлять в выдачу карточки, время которых уже настало.
-      schedule(15 seconds, 2 minutes) {
+      schedule(30 seconds, MmpDailyBilling.CHECK_ADVS_OK_DURATION) {
         try {
           MmpDailyBilling.advertiseOfflineAds()
         } catch {
