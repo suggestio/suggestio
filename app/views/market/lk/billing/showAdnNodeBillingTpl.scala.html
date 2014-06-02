@@ -16,7 +16,7 @@
 
   <div class="body billing-page">
 
-    <div class="lk-edit-form__block js-slide-wrap">
+    <div class="lk-edit-form__block js-slide-wrap" style="margin-bottom: 0;">
 
       <div class="lk-edit-form__block_title">
         <div class="border-line"></div>
@@ -31,14 +31,14 @@
         <div class="lk-edit-form__block_body_inner">
 
           @* Верхняя информация: баланс, тарификация *@
-          <table class="top-info">
+          <table>
 
 
             @ctx.billBalanceOpt.map { mbb =>
 
               <td>
                 <div class="ovh" style="padding-left: 0;">
-                  <span class="gray font-12">Текущий баланс:</span>
+                  <span class="prop-title">Текущий баланс:</span>
                 </div>
               </td>
               <td>
@@ -50,17 +50,23 @@
               <td>
                 <div class="border-line-vertical f-left"></div>
                 <div class="ovh">
-                  <span class="gray font-12">Списание средств:</span>
+                  <span class="prop-title">Списание средств:</span>
                 </div>
               </td>
               <td>
                 <div class="border-line-vertical f-right"></div>
                 <div class="ovh">
-                  <span class="value f-left" style="padding-top: 5px;">18.05.2014</span>
+                  @if(!txns.isEmpty) {
+                    <span class="value f-left" style="padding-top: 5px;">18.05.2014</span>
 
-                  <span class="gray-but-smallest inline f-left" style="margin-left: 20px;">
-                    <a href="transactionsHistory" class="white-border-top js-slide-btn">История операций</a>
-                  </span>
+                    <span class="gray-but-smallest inline f-left" style="margin-left: 20px;">
+                      <a href="transactionsHistory" class="white-border-top js-slide-btn">История операций</a>
+                    </span>
+                  } else {
+
+                    Не происходило
+                  }
+
                 </div>
               </td>
 
@@ -81,7 +87,7 @@
       </div>
     </div><!-- Биллинг end -->
 
-    <div class="lk-edit-form__block js-slide-wrap" id="requisitesContent" style="display: none;">
+    <div class="lk-edit-form__block js-slide-wrap" id="requisitesContent" style="display: none; margin-bottom: 0;">
 
       <div class="lk-edit-form__block_title">
         <span class="lk-edit-form__block_title_span">
@@ -106,7 +112,7 @@
 
 
     @if(!txns.isEmpty) {
-      <div class="lk-edit-form__block js-slide-wrap" id="transactionsHistory" style="display: none;">
+      <div class="lk-edit-form__block js-slide-wrap" id="transactionsHistory" style="display: none; margin-bottom: 0;">
 
         <div class="lk-edit-form__block_title">
           <span class="lk-edit-form__block_title_span">
@@ -142,25 +148,21 @@
     }
 
 
-
     @* Посуточная mmp-тарифная сетка этого узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
     @if(!mmpDailyTariffs.isEmpty) {
-      <div>
-        <h4>Ставка тарифных планов</h4>
         @_dailyMmpTariffPlansTpl(mmpDailyTariffs, adnNode)
-      </div>
     }
 
     @* Если продьюсер, то надо отобразить список узлов-ресиверов, на которые можно разместить рекламную карточку.
        Содержимое узла (тарифная сетка) рендерится асинхронно при нажатии кнопки "развернуть" в списке. *@
-    @if(!otherRcvrs.isEmpty) {
+    <!--if(!otherRcvrs.isEmpty) {
       @* Пока без вкладок, просто сплошным списком. *@
-      @otherRcvrs.map { rcvr =>
-        @rcvr.meta.name / @rcvr.meta.town
+      otherRcvrs.map { rcvr =>
+        rcvr.meta.name / rcvr.meta.town
         @* При развертывании элемента нужно слать запрос по указанной ссылке. При повторном развертывании нужно отображать уже полученную табличку тарифов. *@
-        <a href="@routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get)">Развернуть</a>
+        <a href="routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get)">Развернуть</a>
       }
-    }
+    }-->
 
   </div>
 

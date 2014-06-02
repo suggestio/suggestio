@@ -80,12 +80,19 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   .f-right
     float: right
 
+  .inline
+    display: inline
+
+  .inline-block
+    display: inline-block
+
   .border-line
     overflow: hidden
     width: 100%
     border-top: 1px solid #cbcbcb
     border-bottom: 1px solid #f8f8f8
   .border-line-vertical
+    margin-top: 5px
     border-left: 1px solid #cbcbcb
     border-right: 1px solid #f8f8f8
 
@@ -757,37 +764,34 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
    */
   .billing-page
 
-    .top-info
 
-      td
-        vertical-align: middle
-
-        .ovh
-          display: inline-block
-          padding: 10px 20px
-
-        .gray
-          display: inline-block
-          width: 60px
-
-        .value
-          font-size: 14px
-          font-family: 'Arial'
-          color: #676666
-
-        .value.big
-          font-size: 24px
-          color: #23313d
-          font-family: 'ParagNorCIta'
-
-    .mid-info
-      margin: 30px 0
-
-      .f-left
-        width: 100px
+    td
+      vertical-align: middle
 
       .ovh
-        color: #616161
+        display: inline-block
+        padding: 10px 20px
+
+      .prop-title
+        display: inline-block
+        width: 60px
+        color: #959595
+        font-size: 12px
+
+      .value
+        font-size: 14px
+        font-family: 'Arial'
+        color: #676666
+
+      strong
+        font-size: 14px
+        font-family: 'Arial'
+        color: #676666
+
+      .value.big
+        font-size: 24px
+        color: #23313d
+        font-family: 'ParagNorCIta'
 
 
     .transactions-list
