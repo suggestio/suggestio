@@ -315,17 +315,6 @@ object MarketAdFormUtil {
   }
 
 
-  /*
-  val panelColorM = colorM
-    .transform(
-      { AdPanelSettings.apply },
-      { mmaps: common.AdPanelSettings => mmaps.color }
-    )
-  val PANEL_COLOR_K = "panelColor"
-  val panelColorKM = PANEL_COLOR_K -> panelColorM
-  */
-
-
   val OFFER_K = "offer"
 
   /**
