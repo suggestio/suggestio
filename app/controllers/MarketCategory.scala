@@ -35,7 +35,7 @@ object MarketCategory extends SioController with PlayMacroLogsImpl {
   // applyF()
   {(name, ymCatId, ymCatInherit, position, cssClassOpt, includeInAll) =>
     val ymCatPtr = MMartYmCatPtr(ycId = ymCatId, inherit = ymCatInherit)
-    MMartCategory(name=name, ownerId=null, parentId=null, ymCatPtr=ymCatPtr, position=position, cssClass=cssClassOpt, includeInAll=includeInAll)
+    MMartCategory(name=name, parentId=null, ymCatPtr=ymCatPtr, position=position, cssClass=cssClassOpt, includeInAll=includeInAll)
   }
   // unapplyF()
   {mmcat =>

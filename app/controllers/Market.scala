@@ -58,8 +58,8 @@ object Market extends SioController with PlayMacroLogsImpl {
 
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
-  def findAds(martId: String, adSearch: AdSearch) = MaybeAuth.async { implicit request =>
-    val mmcatsFut = MMartCategory.findTopForOwner(martId)
+  def findAds(adnId: String, adSearch: AdSearch) = MaybeAuth.async { implicit request =>
+    val mmcatsFut = MMartCategory.findTopForOwner(getCatOwner(adnId))
     val producersFut = Future.traverse(adSearch.producerIds) { MAdnNodeCache.getByIdCached }
       .map { _.flatMap(_.toList) }
     for {
@@ -128,14 +128,14 @@ object Market extends SioController with PlayMacroLogsImpl {
   /** Action-composition для нужд ряда экшенов этого контроллера. Хранит в себе данные для рендере и делает
     * проверки наличия индекса и MMart. */
   // TODO Надо бы заинлайнить и убрать все контейнеры и прочее добро. Это ускорит работу.
-  private def marketAction(martId: String)(f: MarketRequest => Future[Result]) = MaybeAuth.async { implicit request =>
+  private def marketAction(adnId: String)(f: MarketRequest => Future[Result]) = MaybeAuth.async { implicit request =>
     // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
-    val shopsFut = shopsMap(martId)
+    val shopsFut = shopsMap(adnId)
     // Читаем из основной базы текущий ТЦ
-    val mmartFut = MAdnNode.getById(martId)
+    val nodeOptFut = MAdnNode.getById(adnId)
     // Текущие категории ТЦ
-    val mmcatsFut = MMartCategory.findTopForOwner(martId)
-    mmartFut flatMap {
+    val mmcatsFut = MMartCategory.findTopForOwner(getCatOwner(adnId))
+    nodeOptFut flatMap {
       case Some(mmart1) =>
         val marketDataFut1 = for {
           mshops <- shopsFut
@@ -150,8 +150,8 @@ object Market extends SioController with PlayMacroLogsImpl {
         f(req1)
 
       case None =>
-        warn(s"marketAction($martId): mart index exists, but mart is NOT.")
-        martNotFound(martId)
+        warn(s"marketAction($adnId): mart index exists, but mart is NOT.")
+        martNotFound(adnId)
     }
   }
 
@@ -184,6 +184,9 @@ object Market extends SioController with PlayMacroLogsImpl {
     }
     acc1.reverse
   }
+
+
+  def getCatOwner(adnId: String) = MMartCategory.DEFAULT_OWNER_ID
 
 
   /** Реквест, используемый в Market-экшенах. */

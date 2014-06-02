@@ -334,11 +334,14 @@ object MarketAdFormUtil {
    * @return id узла-владельца категорий.
    */
   def getCatOwnerId(adnNode: MAdnNode): String = {
+    /*
     import AdNetMemberTypes._
     adnNode.adn.memberType match {
       case SHOP | RESTAURANT => adnNode.adn.supId getOrElse adnNode.id.get
       case MART | RESTAURANT_SUP => adnNode.id.get
     }
+    */
+    MMartCategory.DEFAULT_OWNER_ID
   }
 
 }

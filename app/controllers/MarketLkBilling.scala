@@ -43,9 +43,7 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
    */
   def showAdnNodeBilling(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     val isProducer = request.adnNode.adn.isProducer
-    val isReceiver = request.adnNode.adn.isReceiver
-    val showOtherRcvrs = isProducer
-    val otherRcvrsFut = if (showOtherRcvrs) {
+    val otherRcvrsFut = if (isProducer) {
       MAdnNode.findByAllAdnRights(Seq(AdnRights.RECEIVER))
         .map { _.filter(_.id.get != adnId).sortBy(_.meta.name) }
     } else {
@@ -58,12 +56,12 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
           val contractId = mbc.id.get
           val txns = MBillTxn.findForContract(contractId)
           // Если этот узел - приёмник рекламы, то нужно найти в базе его тарифные планы.
-          val myMbmds = if (isReceiver) {
+          val myMbmds = if (request.adnNode.adn.isReceiver) {
             MBillMmpDaily.findByContractId(contractId)
           } else {
             Nil
           }
-          val allRcvrAdnIds = if (showOtherRcvrs) {
+          val allRcvrAdnIds = if (isProducer) {
             MBillMmpDaily.findAllAdnIds
           } else {
             Nil

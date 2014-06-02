@@ -45,7 +45,12 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
   val POSITION_ESFN         = "position"
   val INCLUDE_IN_ALL_ESFN   = "iia"
 
-  private def ownerIdQuery(ownerId: String) = QueryBuilders.termQuery(OWNER_ID_ESFN, ownerId)
+  /** Дефолтовый id владелеца категории. */
+  val DEFAULT_OWNER_ID = "~DFLT"
+
+  private def ownerIdQuery(ownerId: String) = {
+    QueryBuilders.termQuery(OWNER_ID_ESFN, ownerId)
+  }
 
   /**
    * Получить список пользовательских категорий в неопределённом порядке.
@@ -255,9 +260,9 @@ import MMartCategory._
  */
 case class MMartCategory(
   var name      : String,
-  var ownerId   : String,
   var ymCatPtr  : MMartYmCatPtr,
   var parentId  : Option[String],
+  var ownerId   : String = MMartCategory.DEFAULT_OWNER_ID,
   var position  : Int = Int.MaxValue,
   var id        : Option[String] = None,
   var cssClass  : Option[String] = None,
@@ -269,7 +274,8 @@ case class MMartCategory(
   override def versionOpt = None
 
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    var acc1: FieldsJsonAcc = OWNER_ID_ESFN -> JsString(ownerId) ::
+    var acc1: FieldsJsonAcc =
+      OWNER_ID_ESFN -> JsString(ownerId) ::
       POSITION_ESFN -> JsNumber(position) ::
       INCLUDE_IN_ALL_ESFN -> JsBoolean(includeInAll) ::
       YM_CAT_ESFN -> ymCatPtr.renderPlayJson ::

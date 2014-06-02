@@ -1,6 +1,7 @@
 @()(implicit ctx: util.Context)
 
 @* Список ссылок на страницы управления магазинной частью. *@
+@import MMartCategory._
 
 @marketBase("index") {
   <p>
@@ -23,7 +24,8 @@
   </p>
 
   <p>
-    <a href="@routes.SysMarket.showYmCats">YM-категории</a>
+    <a href="@routes.SysMarket.showYmCats">YM-категории</a>,
+    <a href="@routes.MarketCategory.showCatsFor(DEFAULT_OWNER_ID)">Глобальные категории</a><br/>
   </p>
 
   <p>
