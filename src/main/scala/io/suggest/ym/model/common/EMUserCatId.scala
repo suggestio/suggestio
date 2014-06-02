@@ -4,6 +4,11 @@ import io.suggest.model.{EsModel, EsModelStaticT, EsModelT}
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel.FieldsJsonAcc
 import play.api.libs.json.JsString
+import scala.concurrent.{Future, ExecutionContext}
+import org.elasticsearch.action.search.SearchRequestBuilder
+import org.elasticsearch.search.aggregations.AggregationBuilders
+import org.elasticsearch.search.aggregations.bucket.terms.Terms
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -31,6 +36,28 @@ trait EMUserCatIdStatic extends EsModelStaticT {
       case (USER_CAT_ID_ESFN, value) =>
         acc.userCatId = Option(EsModel.stringParser(value))
     }
+  }
+
+  /**
+   * Сбор статистики по категориям в рамках произвольного реквеста.
+   * @param reqBuilder Билдер поискового реквеста.
+   * @return Фьючерс со списком id_категории -> кол-во документов.
+   */
+  def stats4UserCats(reqBuilder: SearchRequestBuilder)(implicit ec: ExecutionContext): Future[List[(String, Long)]] = {
+    val agg = AggregationBuilders
+      .terms(USER_CAT_ID_ESFN)
+      .field(USER_CAT_ID_ESFN)
+    reqBuilder
+      .addAggregation(agg)
+      .execute()
+      .map { searchResp =>
+        searchResp.getAggregations
+          .get[Terms](USER_CAT_ID_ESFN)
+          .getBuckets
+          .iterator()
+          .map { bkt => bkt.getKey -> bkt.getDocCount }
+          .toList
+      }
   }
 }
 
