@@ -49,6 +49,31 @@ ALTER TABLE sio2.adv_ok
 
 COMMIT;
 
-CREATE INDEX 
-   ON sio2.adv_ok (ad_id ASC NULLS LAST);
 
+
+CREATE INDEX adv_ok_ad_id_idx
+  ON sio2.adv_ok
+  USING btree
+  (ad_id COLLATE pg_catalog."default");
+
+
+
+-- mmp-daily: добавить колонки для описания праздников и прайм-таймов.
+BEGIN;
+
+ALTER TABLE sio2.bill_mmp_daily
+  ADD COLUMN weekend_cal_id character varying(32) NOT NULL DEFAULT 'dN7ZNIPFRean7nfvIHa0mA';
+COMMENT ON COLUMN sio2.bill_mmp_daily.weekend_cal_id
+  IS 'es id календаря, который хранит карту праздников.';
+ALTER TABLE sio2.bill_mmp_daily
+   ALTER COLUMN weekend_cal_id DROP DEFAULT;
+
+ALTER TABLE sio2.bill_mmp_daily
+   ADD COLUMN prime_cal_id character varying(32) NOT NULL DEFAULT 'dN7ZNIPFRean7nfvIHa0mA';
+COMMENT ON COLUMN sio2.bill_mmp_daily.prime_cal_id
+  IS 'es_id календаря, хранящего дни прайм-тайма.';
+ALTER TABLE sio2.bill_mmp_daily
+   ALTER COLUMN prime_cal_id DROP DEFAULT;
+
+
+COMMIT;

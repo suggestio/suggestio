@@ -60,9 +60,13 @@ trait SqlModelStatic[T] {
    * @return Список результатов в неопределённом порядке.
    */
   def multigetByIds(ids: Seq[Int])(implicit c: Connection): List[T] = {
-    SQL("SELECT * FROM " + TABLE_NAME + " WHERE id = ANY({ids})")
-      .on('ids -> seqInt2pgArray(ids))
-      .as(rowParser *)
+    if (ids.isEmpty) {
+      Nil
+    } else {
+      SQL("SELECT * FROM " + TABLE_NAME + " WHERE id = ANY({ids})")
+        .on('ids -> seqInt2pgArray(ids))
+        .as(rowParser *)
+    }
   }
 
   /** Прочитать всю таблицу. */

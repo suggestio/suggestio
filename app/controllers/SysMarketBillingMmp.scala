@@ -31,21 +31,25 @@ object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
     "mmpWeekday"    -> floatM,
     "mmpWeekend"    -> floatM,
     "mmpPrimetime"  -> floatM,
-    "onStartPage"   -> floatM.verifying(_ > 1.0F)
+    "onStartPage"   -> floatM.verifying(_ > 1.0F),
+    "weekendCalId"  -> esIdM,
+    "primeCalId"    -> esIdM
   )
-  {(currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime, onStartPage) =>
+  {(currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime, onStartPage, weekendCalId, primeCalId) =>
     MBillMmpDaily(
       contractId    = -1,
       currencyCode  = currencyCode,
       mmpWeekday    = mmpWeekday,
       mmpWeekend    = mmpWeekend,
       mmpPrimetime  = mmpPrimetime,
-      onStartPage   = onStartPage
+      onStartPage   = onStartPage,
+      weekendCalId  = weekendCalId,
+      primeCalId    = primeCalId
     )
   }
   {mbmd =>
     import mbmd._
-    Some((currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime, onStartPage))
+    Some((currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime, onStartPage, weekendCalId, primeCalId))
   })
 
 
@@ -58,8 +62,12 @@ object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
   }
 
   private def _createMmpDaily(form: Form[MBillMmpDaily])(implicit request: ContractRequest[AnyContent]): Future[HtmlFormat.Appendable] = {
-    MAdnNodeCache.getByIdCached(request.contract.adnId) map { adnNodeOpt =>
-      createMppDailyTpl(request.contract, mmpDailyFormM, adnNodeOpt)
+    val mcalsFut = MCalendar.getAll()
+    for {
+      adnNodeOpt <- MAdnNodeCache.getByIdCached(request.contract.adnId)
+      mcals      <- mcalsFut
+    } yield {
+      createMppDailyTpl(request.contract, mmpDailyFormM, adnNodeOpt, mcals)
     }
   }
 
@@ -96,6 +104,7 @@ object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
   }
 
   private def _editMmpDaily(mmpdId: Int, form: Form[MBillMmpDaily])(implicit request: AbstractRequestWithPwOpt[AnyContent]): Future[HtmlFormat.Appendable] = {
+    val mcalsFut = MCalendar.getAll()
     val syncResult = DB.withConnection { implicit c =>
       val mbmd = MBillMmpDaily.getById(mmpdId).get
       val mbc  = MBillContract.getById(mbmd.contractId).get
@@ -104,8 +113,11 @@ object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
     val (mbmd, mbc) = syncResult
     val nodeOptFut = MAdnNodeCache.getByIdCached(mbc.adnId)
     val formBinded = mmpDailyFormM.fill(mbmd)
-    nodeOptFut.map { nodeOpt =>
-      editMppDailyTpl(mbmd, mbc, formBinded, nodeOpt)
+    for {
+      nodeOpt <- nodeOptFut
+      mcals   <- mcalsFut
+    } yield {
+      editMppDailyTpl(mbmd, mbc, formBinded, nodeOpt, mcals)
     }
   }
 

@@ -2,20 +2,28 @@
 
 @* Системная страница работы с календарями.
    cf: Маппинг формы. Можно создавать календари на базе локальных календарей из списка. *@
-@import helper._
 
-@calBase("Все " + cals.size) {
+@import helper._
+@import de.jollyday.HolidayCalendar.{values => hcs}
+
+@calBase(
+  title = cals.size match {case 0 => ""; case n => s" ($n)"}
+) {
   <ul>
     @cals.map { cal =>
       <li>
-        <a href="">@cal.name</a>
+        <a href="@routes.SysCalendar.editCalendar(cal.id.get)">@cal.name</a>
       </li>
     }
   </ul>
 
   <h2>Создать новый календарь</h2>
   @form(routes.SysCalendar.newCalendarFromTemplateSubmit) {
-     TODO нужен select по HolidayCalendar.values
-     <input type="submit" value="Далее" />
+    @select(
+      cf("tplId"),
+      options = hcs.toSeq.map(hk => hk.toString -> hk.toString),
+      '_label -> "Исходный шаблон календаря"
+    )
+    <input type="submit" value="Далее" />
   }
 }

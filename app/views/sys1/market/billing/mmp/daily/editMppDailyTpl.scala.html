@@ -1,4 +1,4 @@
-@(mbmd: MBillMmpDaily, mbc: MBillContract, mdf: Form[_], nodeOpt: Option[MAdnNode])(implicit ctx: Context)
+@(mbmd: MBillMmpDaily, mbc: MBillContract, mdf: Form[_], nodeOpt: Option[MAdnNode], mcals: Seq[MCalendar])(implicit ctx: Context)
 
 @* Страница с формой редактирования посуточного mmp-тарификатора. *@
 @import ctx._
@@ -10,6 +10,7 @@
   @_mmpDailyFormTpl(
     mdf = mdf,
     btnText = Messages("Save"),
+    mcals = mcals,
     submitCall = routes.SysMarketBillingMmp.editMmpDailySubmit(mbmd.id.get)
   )
 
