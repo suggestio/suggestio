@@ -14,9 +14,19 @@
 
   @adnNode.adn.memberType.inviteSubNodeCall(adnNode.id.get).map { inviteCall =>
     @market.lk.lkBlock("Управление") {
-      <div class="lk-">
-      <p>Выдавайте личные кабинеты, это бесплатно и для вас и для рекламодателей.</p>
-      <a class="green-but-big" href="@inviteCall">Выдать личный кабинет</a>
+      <table>
+        <tr>
+          <td style="width: 200px; padding-right: 30px; vertical-align: middle;">
+            <p class="gray font-12">Выдавайте личный кабинет, это бесплатно и для вас и для рекламодателей.</p>
+          </td>
+          <td>
+            <div class="border-line-vertical"></div>
+          </td>
+          <td style="padding-left: 30px; vertical-align: middle;">
+            <a class="green-but-big" href="@inviteCall">Выдать личный кабинет</a>
+          </td>
+        </tr>
+      </table>
     }
   }
 
