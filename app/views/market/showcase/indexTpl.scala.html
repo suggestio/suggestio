@@ -7,7 +7,7 @@
 @* Картинка-приветствие для первого экрана *@
 @welcomeAdOpt.flatMap(_.imgs.get(WELCOME_IMG_KEY)).map { welcomeAdImg =>
 <div class="sm-welcome-ad">
-  <img id="smWelcomeAd" class="sm-welcome-ad__img js-index-welcome-ad"
+  <img style="background-color: #@mmart.meta.color;" id="smWelcomeAd" class="sm-welcome-ad__img js-index-welcome-ad"
        data-width="@welcomeAdImg.meta.map(_.width)"
        data-height="@welcomeAdImg.meta.map(_.height)"
        src="@ctx.myAudienceUrl@routes.Img.getImg(welcomeAdImg.filename)"/>

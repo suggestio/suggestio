@@ -333,13 +333,16 @@ siomart =
       return false
 
     if data.action == 'martIndex'
+      cbca_grid.set_window_size()
       container = this.utils.ge 'sioMartLayout'
       container.innerHTML = data.html
       document.getElementById('sioMartIndexOffers').scrollTop = '0';
-      cbca_grid.init()
+
+      siomart.init_navigation()
 
       siomart.welcome_ad.init()
-      siomart.init_navigation()
+
+      cbca_grid.init()
 
       siomart.set_window_class()
 
