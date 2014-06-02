@@ -11,7 +11,6 @@ siomart =
     welcome_ad_hide_timeout : 2500
 
   utils :
-
     is_firefox : () ->
       navigator.userAgent.toLowerCase().indexOf('firefox') > -1
 
@@ -271,6 +270,17 @@ siomart =
   ## Добавить в DOM необходимую разметку для Sio.Market
   #####################################################
   draw_layout : () ->
+
+    ## Иконка для быстрого вызова маркета
+    sm_trigger_attrs =
+      class : this.config.sm_trigger_class
+      id : 'sioMartTrigger'
+      style : 'background-color: #' + window.siomart_node_color
+    sm_trigger = this.utils.ce "div", sm_trigger_attrs, '<img src="' + window.siomart_logo_src + '" width=80/>'
+
+    this.utils.ge_tag("body")[0].appendChild sm_trigger
+
+
     ## Интерфейс маркета
     sm_layout_attrs =
       class : this.config.sm_layout_class
@@ -278,14 +288,6 @@ siomart =
     sm_layout = this.utils.ce "div", sm_layout_attrs, '<div id="sioMartLayout"></div>'
 
     this.utils.ge_tag("body")[0].appendChild sm_layout
-
-    ## Иконка для быстрого вызова маркета
-    sm_trigger_attrs =
-      class : this.config.sm_trigger_class
-      id : 'sioMartTrigger'
-    sm_trigger = this.utils.ce "div", sm_trigger_attrs, 'Sio.Market'
-
-    this.utils.ge_tag("body")[0].appendChild sm_trigger
 
     meta_viewport_attrs =
       name : 'viewport'
@@ -344,6 +346,7 @@ siomart =
 
       grid_cb = () ->
         document.body.style.backgroundColor = "#ffffff"
+        siomart.utils.ge('sioMartRoot').style.backgroundColor = "#ffffff"
         cbca_grid.init()
 
       setTimeout grid_cb, 1000

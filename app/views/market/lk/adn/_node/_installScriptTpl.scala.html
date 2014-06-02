@@ -7,6 +7,10 @@
   _siom.src = "@ctx.myAudienceUrl@routes.Assets.at("javascripts/market/showcase/showcase2.min.js")";
   window.siomart_host = '@ctx.myAudienceUrl';
   var _sh = document.getElementsByTagName("head")[0];
+  @mmart.logoImgOpt.map { logoImg =>
+  window.siomart_logo_src = '@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)';
+  }
+  window.siomart_node_color = '@mmart.meta.color';
   window.siomart_index = '/market/index/@mmart.id';
   window.siomart_id = '@mmart.id';
   _sh.appendChild(_siom);
