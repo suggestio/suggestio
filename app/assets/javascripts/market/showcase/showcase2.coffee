@@ -699,9 +699,7 @@ siomart =
 
     ## Кнопка вызова окна с категориями
     this.utils.add_single_listener this.utils.ge('smCategoriesButton'), _event, siomart.navigation_layer.open
-
     this.utils.add_single_listener this.utils.ge('smNavigationLayerBackButton'), _event, siomart.navigation_layer.back
-
 
     ## Возврат на индекс выдачи
     this.utils.add_single_listener this.utils.ge('rootNodeLogo'), _event, siomart.load_index_ads
@@ -710,9 +708,9 @@ siomart =
       siomart.utils.ge('smSearchField').focus()
 
     this.init_shop_links()
+    this.init_categories_links()
 
   init_shop_links : () ->
-
     _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
     blocks_w_actions = siomart.utils.ge_class document, 'js-shop-link'
     for _b in blocks_w_actions
@@ -722,6 +720,16 @@ siomart =
         siomart.utils.add_single_listener b, _event, () ->
           console.log producer_id
           siomart.load_for_shop_id producer_id, ad_id
+      cb _b
+
+  init_categories_links : () ->
+    _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
+    blocks_w_actions = siomart.utils.ge_class document, 'js-cat-link'
+    for _b in blocks_w_actions
+      cb = ( b ) ->
+        cat_id = b.getAttribute 'data-cat-id'
+        siomart.utils.add_single_listener b, _event, () ->
+          siomart.load_for_cat_id cat_id
       cb _b
 
   set_window_class : () ->

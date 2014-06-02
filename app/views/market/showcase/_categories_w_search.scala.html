@@ -9,10 +9,10 @@
 
       <div class="sm-categories-list">
         @mmcats.map { mmcat =>
-          <a class="sm-single-categorie @mmcat.cssClass" onclick="siomart.load_for_cat_id('@mmcat.id');" ontouchend="siomart.load_for_cat_id('@mmcat.id');">
+          <span class="sm-single-categorie js-cat-link @mmcat.cssClass" data-cat-id="@mmcat.id">
             <div class="icon"></div>
             <div class="name">@mmcat.name</div>
-          </a>
+          </span>
         }
       </div>
 
