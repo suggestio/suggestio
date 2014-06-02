@@ -69,6 +69,22 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
 
 
   /**
+   * Удалить все категории, у который ownerId != null.
+   * @return Фьючерс для синхронизации.
+   */
+  def deleteAllOwnedNonDflt(implicit ec: ExecutionContext, client: Client): Future[_] = {
+    val allQuery = QueryBuilders.matchAllQuery()
+    val ownerExistsFilter = FilterBuilders.notFilter(
+      FilterBuilders.termFilter(OWNER_ID_ESFN, DEFAULT_OWNER_ID)
+    )
+    val query = QueryBuilders.filteredQuery(allQuery, ownerExistsFilter)
+    prepareDeleteByQuery
+      .setQuery(query)
+      .execute()
+  }
+
+
+  /**
    * Выдать все категории для рендера в виде дерева.
    * @param ownerId id модели-владельца дерева категорий.
    * @return Иерархически и лексикографически отсортированный список из уровней и категорий.
@@ -316,10 +332,18 @@ case class MMartYmCatPtr(ycId: String, inherit: Boolean = true) {
 
 
 /** JMX MBean интерфейс */
-trait MMartCategoryJmxMBean extends EsModelJMXMBeanCommon
+trait MMartCategoryJmxMBean extends EsModelJMXMBeanCommon {
+  def deleteAllOwnedNonDflt()
+}
 
 /** JMX MBean реализация. */
 case class MMartCategoryJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase with MMartCategoryJmxMBean {
   def companion = MMartCategory
+
+  override def deleteAllOwnedNonDflt() {
+    awaitFuture(
+      MMartCategory.deleteAllOwnedNonDflt
+    )
+  }
 }
