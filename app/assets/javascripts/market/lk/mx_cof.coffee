@@ -979,6 +979,7 @@ market =
       tinymce.init(
         selector:'textarea.js-tinymce',
         width: 615,
+        height: 300,
         menubar: false,
         statusbar : false,
         plugins: 'link, textcolor, paste',
