@@ -23,7 +23,7 @@
         <span class="lk-edit-form__block_title_span">
         Биллинг
         </span>
-        <a class="js-g-slide-toggle oepn l-right" href="#">Свернуть</a>
+        <a class="js-g-slide-toggle open l-right">Свернуть</a>
         <div class="border-line"></div>
       </div>
 
@@ -150,7 +150,20 @@
 
     @* Посуточная mmp-тарифная сетка этого узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
     @if(!mmpDailyTariffs.isEmpty) {
+      <div class="lk-edit-form__block js-slide-wrap" style="margin-top: 10px;">
+
+        <div class="lk-edit-form__block_title">
+          <div class="border-line"></div>
+          <span class="lk-edit-form__block_title_span">
+          Ставка тарифных планов
+          </span>
+          <a class="js-g-slide-toggle open l-right">Свернуть</a>
+          <div class="border-line"></div>
+        </div>
+
         @_dailyMmpTariffPlansTpl(mmpDailyTariffs, adnNode)
+
+      </div>
     }
 
     @* Если продьюсер, то надо отобразить список узлов-ресиверов, на которые можно разместить рекламную карточку.
@@ -164,7 +177,7 @@
           <span class="lk-edit-form__block_title_span">
           История операций:
           </span>
-          <a class="js-g-slide-toggle oepn l-right" href="#">Свернуть</a>
+          <a class="js-g-slide-toggle open l-right">Свернуть</a>
           <div class="border-line"></div>
         </div>
 
@@ -172,9 +185,21 @@
           <div class="lk-edit-form__block_body_inner">
             @* Пока без вкладок, просто сплошным списком. *@
             @otherRcvrs.map { rcvr =>
-              @rcvr.meta.name / @rcvr.meta.town
+
               @* При развертывании элемента нужно слать запрос по указанной ссылке. При повторном развертывании нужно отображать уже полученную табличку тарифов. *@
-              <a href="@routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get)">Развернуть</a>
+              <div class="lk-edit-form__block js-slide-wrap">
+
+                <div class="lk-edit-form__block_title">
+                  <div class="border-line"></div>
+                  <span class="lk-edit-form__block_title_span">
+                   @rcvr.meta.name / @rcvr.meta.town
+                  </span>
+                  <a class="js-g-slide-toggle l-right" href="@routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get)">Развернуть</a>
+                  <div class="border-line"></div>
+                </div>
+
+              </div>
+
             }
           </div>
         </div>

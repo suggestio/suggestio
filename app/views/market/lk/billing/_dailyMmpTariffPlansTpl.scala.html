@@ -4,35 +4,24 @@
 
 
 
-<div class="lk-edit-form__block js-slide-wrap" style="margin-top: 10px;">
 
-  <div class="lk-edit-form__block_title">
-    <div class="border-line"></div>
-        <span class="lk-edit-form__block_title_span">
-        Ставка тарифных планов
-        </span>
-    <a class="js-g-slide-toggle oepn l-right" href="#">Свернуть</a>
-    <div class="border-line"></div>
-  </div>
 
-  <div class="lk-edit-form__block_body js-slide-content">
-    <div class="lk-edit-form__block_body_inner">
+<div class="lk-edit-form__block_body js-slide-content">
+  <div class="lk-edit-form__block_body_inner">
 
-      <div class="f-left" style="padding-left: 10px; padding-right: 40px">
-        <img src="/assets/images/market/lk/tariff-illustration.png" />
-      </div>
+    <div class="f-left" style="padding-left: 10px; padding-right: 40px">
+      <img src="/assets/images/market/lk/tariff-illustration.png" />
+    </div>
 
 
 
-      <div class="ovh" style="padding-left: 20px; padding-right: 10px;">
+    <div class="ovh" style="padding-left: 20px; padding-right: 10px;">
 
-        @mbmds.map { mbmd =>
-          @_dailyMmpTariffPlanTpl(mbmd, adnNode)
-        }
-
-      </div>
+      @mbmds.map { mbmd =>
+        @_dailyMmpTariffPlanTpl(mbmd, adnNode)
+      }
 
     </div>
-  </div>
 
+  </div>
 </div>

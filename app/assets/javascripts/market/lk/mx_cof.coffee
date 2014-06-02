@@ -153,10 +153,20 @@ CbcaCommon = () ->
     $(document).on 'click', '.js-g-slide-toggle', (e)->
       e.preventDefault()
       $this = $(this)
+      href = $this.attr('href')
 
-      $this.closest('.js-slide-wrap').find('.js-slide-content').slideToggle()
+      if(href)
+        $.ajax(
+          url: href
+          success: (data) ->
+            $data = $(data).hide()
+            $this.closest('.js-slide-wrap').append($data).find('.js-slide-content:first').slideDown()
+            $this.attr('href', '')
+        )
+      else
+        $this.closest('.js-slide-wrap').find('.js-slide-content:first').slideToggle()
+
       $this.toggleClass('open')
-
       if($this.hasClass('open'))
         $this.html('Свернуть')
       else
