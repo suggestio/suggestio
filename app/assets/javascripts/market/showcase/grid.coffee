@@ -181,7 +181,7 @@ cbca_grid =
 
   is_only_spacers : () ->
     for b in this.blocks
-      if b.className != 'sm-block-spacer'
+      if b.class != 'sm-block-spacer'
         return false
 
     return true
@@ -199,7 +199,7 @@ cbca_grid =
   ## Find all blocks on the page
   ##############################
   load_blocks : () ->
-
+    cbca_grid.blocks = []
     i = 0
     ## TODO : make selector configurable
     for elt in siomart.utils.ge_class document, 'sm-block'
@@ -298,8 +298,8 @@ cbca_grid =
     if columns > 8
       columns = 8
 
-    if columns == 3
-      columns = 2
+    #if columns == 3
+    #  columns = 2
 
     if columns == 5
       columns = 4
@@ -318,6 +318,8 @@ cbca_grid =
       columns_used_space[c] =
         used_height : 0
 
+    is_break = false
+
     ## Генерим поле
     for i in [0..1000]
       pline = cline
@@ -330,52 +332,62 @@ cbca_grid =
       top = cline * ( this.cell_size + this.cell_padding ) + this.top_offset
       left = left_pointer
 
-      if this.is_only_spacers()
+      if this.is_only_spacers() == true
+        is_break = true
         break
 
       if cline > pline && this.is_only_spacers() == true && cline == this.max_used_height columns_used_space
+        is_break = true
         break
 
-      if columns_used_space[cur_column].used_height == cline
+      if is_break == false
 
-        # есть место хотя бы для одного блока с минимальной шириной
-        # высяним блок с какой шириной может влезть
-        block_max_w = this.get_max_block_width columns_used_space, cline, cur_column, columns
+        if columns_used_space[cur_column].used_height == cline
 
-        b = this.fetch_block block_max_w
+          # есть место хотя бы для одного блока с минимальной шириной
+          # высяним блок с какой шириной может влезть
+          block_max_w = this.get_max_block_width columns_used_space, cline, cur_column, columns
 
-        if b == null
-          if this.blocks.length > 0
-            b = this.fetch_spacer block_max_w
-          else
-            break
+          b = this.fetch_block block_max_w
 
-        w_cell_width = Math.floor ( b.width + this.cell_padding ) / ( this.cell_size + this.cell_padding )
-        w_cell_height = Math.floor ( b.height + this.cell_padding ) / ( this.cell_size + this.cell_padding )
+          if b == null
+            if this.blocks.length > 0
+              b = this.fetch_spacer block_max_w
+            else
+              break
 
-        for ci in [cur_column..cur_column+w_cell_width-1]
-          if typeof( columns_used_space[cur_column] ) != 'undefined'
-            columns_used_space[cur_column].used_height += w_cell_height
-            cur_column++
+          w_cell_width = Math.floor ( b.width + this.cell_padding ) / ( this.cell_size + this.cell_padding )
+          w_cell_height = Math.floor ( b.height + this.cell_padding ) / ( this.cell_size + this.cell_padding )
 
-        id = b.id
+          for ci in [cur_column..cur_column+w_cell_width-1]
+            if typeof( columns_used_space[cur_column] ) != 'undefined'
+              columns_used_space[cur_column].used_height += w_cell_height
+              cur_column++
 
-        _pelt = siomart.utils.ge('elt' + id)
-        for p in [vendor_prefix.css + 'transform', 'transform']
+          id = b.id
+
+          _pelt = document.getElementById('elt' + id)
 
           if _pelt != null
-            _pelt.style[p] = 'translate3d(' + left + 'px, ' + top + 'px,0)'
 
-        left_pointer += b.width + this.cell_padding
-        pline = cline
+            for p in [vendor_prefix.css + 'transform', 'transform']
+              style_string = 'translate3d(' + left + 'px, ' + top + 'px,0)'
+              _pelt.style[p] = style_string
 
-      else
-        cur_column++
-        left_pointer += this.cell_size + this.cell_padding
+
+          left_pointer += b.width + this.cell_padding
+          pline = cline
+
+        else
+          cur_column++
+          left_pointer += this.cell_size + this.cell_padding
 
     for b in this.blocks
       bid = b.id
-      siomart.utils.ge('elt' + bid ).style.opacity = 0
+      b_elt = siomart.utils.ge('elt' + bid )
+
+      if b_elt != null
+        b_elt.style.opacity = 0
 
     ## Вычислим максимальную высоту внутри колонки
     max_h = this.max_used_height columns_used_space
