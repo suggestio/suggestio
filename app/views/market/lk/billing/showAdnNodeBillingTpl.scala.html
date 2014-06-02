@@ -156,12 +156,30 @@
     @* Если продьюсер, то надо отобразить список узлов-ресиверов, на которые можно разместить рекламную карточку.
        Содержимое узла (тарифная сетка) рендерится асинхронно при нажатии кнопки "развернуть" в списке. *@
     @if(!otherRcvrs.isEmpty) {
-      @* Пока без вкладок, просто сплошным списком. *@
-      @otherRcvrs.map { rcvr =>
-        @rcvr.meta.name / @rcvr.meta.town
-        @* При развертывании элемента нужно слать запрос по указанной ссылке. При повторном развертывании нужно отображать уже полученную табличку тарифов. *@
-        <a href="@routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get)">Развернуть</a>
-      }
+
+      <div class="lk-edit-form__block js-slide-wrap">
+
+        <div class="lk-edit-form__block_title">
+          <div class="border-line"></div>
+          <span class="lk-edit-form__block_title_span">
+          История операций:
+          </span>
+          <a class="js-g-slide-toggle oepn l-right" href="#">Свернуть</a>
+          <div class="border-line"></div>
+        </div>
+
+        <div class="lk-edit-form__block_body js-slide-content">
+          <div class="lk-edit-form__block_body_inner">
+            @* Пока без вкладок, просто сплошным списком. *@
+            @otherRcvrs.map { rcvr =>
+              @rcvr.meta.name / @rcvr.meta.town
+              @* При развертывании элемента нужно слать запрос по указанной ссылке. При повторном развертывании нужно отображать уже полученную табличку тарифов. *@
+              <a href="@routes.MarketLkBilling._renderNodeMbmds(rcvr.id.get)">Развернуть</a>
+            }
+          </div>
+        </div>
+      </div>
+
     }
 
   </div>
