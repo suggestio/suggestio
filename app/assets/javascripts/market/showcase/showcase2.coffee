@@ -314,6 +314,9 @@ siomart =
         src : siomart.config.host + url
       js_request = siomart.utils.ce "script", js_request_attrs
       siomart.utils.ge_tag("head")[0].appendChild js_request
+
+      siomart.utils.ge('smLoading').style.display = 'block'
+
   ##################################################
   ## Получить результаты по последнему отправленному
   ## зпросу и передать их в нужный callback
@@ -329,7 +332,7 @@ siomart =
     if data.action == 'martIndex'
       container = this.utils.ge 'sioMartLayout'
       container.innerHTML = data.html
-
+      document.getElementById('sioMartIndexOffers').scrollTop = '0';
       cbca_grid.init()
 
       siomart.welcome_ad.init()
@@ -350,6 +353,7 @@ siomart =
       grid_container_dom = siomart.utils.ge 'sioMartIndexGrid'
 
       grid_container_dom.innerHTML = data.html
+      document.getElementById('sioMartIndexOffers').scrollTop = '0';
       cbca_grid.init()
       siomart.init_shop_links()
 
@@ -357,6 +361,8 @@ siomart =
         siomart.navigation_layer.close true
       else
         siomart.navigation_layer.close()
+
+    siomart.utils.ge('smLoading').style.display = 'none'
 
   close_node_offers_popup : ( event ) ->
 
@@ -619,7 +625,6 @@ siomart =
 
   ## Загрузить все офферы для магазина
   load_for_cat_id : ( cat_id ) ->
-
     if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
       return false
 
