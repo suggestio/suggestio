@@ -43,7 +43,9 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
    */
   def showAdnNodeBilling(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     val isProducer = request.adnNode.adn.isProducer
-    val otherRcvrsFut = if (isProducer) {
+    val isReceiver = request.adnNode.adn.isReceiver
+    val showOtherRcvrs = !isReceiver && isProducer
+    val otherRcvrsFut = if (showOtherRcvrs) {
       MAdnNode.findByAllAdnRights(Seq(AdnRights.RECEIVER))
         .map { _.filter(_.id.get != adnId).sortBy(_.meta.name) }
     } else {
@@ -56,18 +58,25 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
           val contractId = mbc.id.get
           val txns = MBillTxn.findForContract(contractId)
           // Если этот узел - приёмник рекламы, то нужно найти в базе его тарифные планы.
-          val myMbmds = if (request.adnNode.adn.isReceiver) {
+          val myMbmds = if (isReceiver) {
             MBillMmpDaily.findByContractId(contractId)
           } else {
             Nil
           }
-          (mbc, txns, myMbmds)
+          val allRcvrAdnIds = if (showOtherRcvrs) {
+            MBillMmpDaily.findAllAdnIds
+          } else {
+            Nil
+          }
+          (mbc, txns, myMbmds, allRcvrAdnIds)
         }
     }
     billInfoOpt match {
-      case Some((mbc, txns, mbmds)) =>
+      case Some((mbc, txns, mbmds, allRcvrAdnIds)) =>
+        val allRcvrAdnIdsSet = allRcvrAdnIds.toSet
         otherRcvrsFut.map { otherRcvrs =>
-          Ok(showAdnNodeBillingTpl(request.adnNode, mbmds, txns, mbc, otherRcvrs))
+          val otherRcvrs1 = otherRcvrs.filter(_.id.exists(allRcvrAdnIdsSet.contains))
+          Ok(showAdnNodeBillingTpl(request.adnNode, mbmds, txns, mbc, otherRcvrs1))
         }
 
       case None =>

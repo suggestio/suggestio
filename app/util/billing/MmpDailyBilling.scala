@@ -18,7 +18,7 @@ import util.event.SiowebNotifier.Implicts.sn
 import java.sql.Connection
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import scala.concurrent.duration._
-import de.jollyday.{HolidayCalendar, HolidayManager}
+import de.jollyday.HolidayManager
 import java.net.URL
 import controllers.routes
 
