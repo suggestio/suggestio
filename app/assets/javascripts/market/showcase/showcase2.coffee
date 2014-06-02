@@ -346,7 +346,7 @@ siomart =
         document.body.style.backgroundColor = "#ffffff"
         cbca_grid.init()
 
-      setTimeout grid_cb, 500
+      setTimeout grid_cb, 1000
       siomart.set_window_class()
 
     if data.action == 'producerAds'
