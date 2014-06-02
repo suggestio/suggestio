@@ -163,6 +163,19 @@ CbcaCommon = () ->
 
   self.init = () ->
 
+    $(document).on 'click', '.js-slide-btn', (e)->
+      e.preventDefault()
+      $this = $(this)
+      targetId = $this.attr('href')
+
+      $('#'+targetId).slideToggle()
+
+    $(document).on 'click', '.lk-edit-form__block_title .js-close-btn', (e)->
+        e.preventDefault()
+        $this = $(this)
+
+        $this.parent().parent().slideUp()
+
     $(document).on 'click', '.ads-list-block__preview_add-new', ()->
       $this = $(this)
 

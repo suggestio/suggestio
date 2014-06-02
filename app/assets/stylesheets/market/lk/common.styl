@@ -755,20 +755,19 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   .billing-page
 
     .top-info
-      margin-bottom: 15px
 
       td
         vertical-align: middle
 
         .ovh
           display: inline-block
-          padding: 10px 25px
+          padding: 10px 20px
 
         .gray
           display: inline-block
           width: 60px
 
-        .vlaue
+        .value
           font-size: 14px
           font-family: 'Arial'
           color: #676666
@@ -787,61 +786,28 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
       .ovh
         color: #616161
 
-    .transactions-history
-      margin-top: 100px
-      margin-bottom: 50px
 
-      .title
-        padding: 10px
-        background: #dad9d9
+    .transactions-list
 
-        .toggle
-          float: right
-          text-decoration: none
-          display: inline-block
-          font-size: 12px
-          line-height: 14px
-          font-family: 'Arial'
-          color: #959595
-          padding-right: 20px
-          background: url('/assets/images/market/lk/angle.png') no-repeat
-          background-position: right -115px
-        .toggle:hover
-          color: #5088aa
-          background-position: right 3px
-        .toggle:active
-          margin-top: 1px
+      .item
+        padding: 15px 0px 15px 20px
+        overflow: hidden
 
-      .title.open
-        background: #efefef
+        .f-left
+          width: 630px
 
-        .toggle
-          background-position: right -176px
-        .toggle:hover
-          color: #5088aa
-          background-position: right -58px
+      .item:first-child
+        padding-top: 5px
 
+      .item:last-child
+        padding-bottom: 5px
 
-
-      .transactions-list
-        display: none
-
-        .item
-          padding: 15px 0px 15px 20px
-          overflow: hidden
-
-          .f-left
-            width: 630px
-
-    .gray-but-smallest
-      margin-top: 25px
-      margin-left: 1px
 
 @import "../reset"
 @import "base"
 @import "main-page"
 @import "new-shop"
-@import "edit-mart" 
+@import "edit-mart"
 @import "edit-shop"
 @import "ads-list"
 @import "cbca-select"
@@ -1140,6 +1106,10 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
   .js-g-slide-toggle
     margin: 7px 11px
+
+  .js-close-btn
+    margin-top: 7px
+    margin-right: 11px
 
 .lk-edit-form__block_title_span
   display: inline-block
