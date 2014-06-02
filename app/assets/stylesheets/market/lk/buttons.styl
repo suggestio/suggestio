@@ -219,6 +219,7 @@
 
 
   .gray-but-smallest
+    margin-left: 1px
     display: inline-block
     overflow: hidden
     border: 1px solid #b2b2b2
@@ -234,6 +235,9 @@
       text-decoration: none
       font-size: 12px
       font-family: 'Arial'
+
+  .gray-but-smallest.inline
+    display: inline
 
   @css {
     .gray-but-smallest .white-border-top {
@@ -263,3 +267,16 @@
     }
 
   }
+
+
+  .js-close-btn
+    cursor: pointer
+    width: 17px
+    height: 17px
+    text-decoration: none
+    background: url('/assets/images/market/lk/close-icon.png') no-repeat
+    background-position: 0 -67px
+  .js-close-btn:hover
+    background-position: 0 0
+  .js-close-btn:active
+    background-position: 0 1px

@@ -10,76 +10,137 @@
   <div class="title-wrap">
     <div class="center">
       <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)">&nbsp;</a>
-      <div class="title-inner">БАЛАНС</div>
+      <div class="title-inner">НАСТРОЙКИ</div>
     </div>
   </div>
 
   <div class="body billing-page">
 
-    @* Верхняя информация: баланс, тарификация *@
-    <table class="top-info">
+    <div class="lk-edit-form__block js-slide-wrap">
 
-
-      @ctx.billBalanceOpt.map { mbb =>
-
-        <td>
-          <div class="ovh" style="padding-left: 0;">
-            <span class="gray font-12">Текущий баланс:</span>
-          </div>
-        </td>
-        <td>
-          <div class="ovh">
-            <span class="value big">@formatPrice(mbb.amount, mbb.currency)</span>
-          </div>
-        </td>
-
-      }
-
-    </table>
-    <div class="border-line"></div>
-
-
-    <div class="mid-info">
-      @* Реквизиты платежа *@
-
-      <div class="f-left gray font-12">
-        Реквизиты:
-      </div>
-      <div class="ovh">
-        @_billPaymentBankTpl(mbc)
-        <span class="gray-but-smallest">
-          <a class="white-border-top" href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">Распечатать</a>
-        </span>
-
-      </div>
-    </div>
-
-
-    @* История транзакций *@
-    <div class="transactions-history">
-
-      @if(!txns.isEmpty) {
-        <div class="title">
-          <strong>История операций:</strong>
-          <a class="toggle" href="#">Развернуть</a>
-        </div>
+      <div class="lk-edit-form__block_title">
         <div class="border-line"></div>
-        <div class="transactions-list">
-          @txns.map { txn =>
-            <div class="item">
-              <div class="f-left">
-                <strong>@txn.paymentComment</strong> / <span title="@_prettyDate(txn.datePaid).toString.trim">@numericDate(txn.datePaid)</span>
-              </div>
-              <div class="ovh">
-                Сумма: <strong>@formatPrice(txn.amount, txn.currency)</strong>
-              </div>
-            </div>
-            <div class="border-line"></div>
-          }
-        </div>
-      }
+        <span class="lk-edit-form__block_title_span">
+        Биллинг
+        </span>
+        <a class="js-g-slide-toggle oepn l-right" href="#">Свернуть</a>
+        <div class="border-line"></div>
+      </div>
 
+      <div class="lk-edit-form__block_body js-slide-content">
+        <div class="lk-edit-form__block_body_inner">
+
+          @* Верхняя информация: баланс, тарификация *@
+          <table class="top-info">
+
+
+            @ctx.billBalanceOpt.map { mbb =>
+
+              <td>
+                <div class="ovh" style="padding-left: 0;">
+                  <span class="gray font-12">Текущий баланс:</span>
+                </div>
+              </td>
+              <td>
+                <div class="ovh">
+                  <span class="value big">@formatPrice(mbb.amount, mbb.currency)</span>
+                </div>
+              </td>
+
+              <td>
+                <div class="border-line-vertical f-left"></div>
+                <div class="ovh">
+                  <span class="gray font-12">Списание средств:</span>
+                </div>
+              </td>
+              <td>
+                <div class="border-line-vertical f-right"></div>
+                <div class="ovh">
+                  <span class="value f-left" style="padding-top: 5px;">18.05.2014</span>
+
+                  <span class="gray-but-smallest inline f-left" style="margin-left: 20px;">
+                    <a href="transactionsHistory" class="white-border-top js-slide-btn">История операций</a>
+                  </span>
+                </div>
+              </td>
+
+              <td>
+                <div class="ovh" style="padding-top: 0; padding-bottom: 0;">
+                  <div class="gray-but-wrap">
+                    <div class="white-border-top">
+                      <a style="padding: 7px 15px 3px;" href="requisitesContent" class="btn js-slide-btn">Реквизиты</a>
+                    </div>
+                  </div>
+                </div>
+              </td>
+
+            }
+          </table>
+
+        </div>
+      </div>
+    </div><!-- Биллинг end -->
+
+    <div class="lk-edit-form__block js-slide-wrap" id="requisitesContent" style="display: none;">
+
+      <div class="lk-edit-form__block_title">
+        <span class="lk-edit-form__block_title_span">
+        Реквизиты платежа:
+        </span>
+        <a class="js-close-btn f-right"></a>
+        <div class="border-line"></div>
+      </div>
+
+      <div class="lk-edit-form__block_body js-slide-content">
+        <div class="lk-edit-form__block_body_inner">
+
+          @* Реквизиты платежа *@
+          @_billPaymentBankTpl(mbc)
+          <span class="gray-but-smallest" style="margin-top: 25px;">
+            <a class="white-border-top" href="@routes.MarketLkBilling.paymentRequsites(adnNode.id.get)">Распечатать</a>
+          </span>
+
+        </div>
+      </div>
     </div>
+
+
+    @if(!txns.isEmpty) {
+      <div class="lk-edit-form__block js-slide-wrap" id="transactionsHistory" style="display: none;">
+
+        <div class="lk-edit-form__block_title">
+          <span class="lk-edit-form__block_title_span">
+          История операций:
+          </span>
+          <a class="js-close-btn f-right"></a>
+          <div class="border-line"></div>
+        </div>
+
+        <div class="lk-edit-form__block_body js-slide-content">
+          <div class="lk-edit-form__block_body_inner transactions-list">
+
+            @* История транзакций *@
+            @txns.zipWithIndex.map { case (txn , i) =>
+              <div class="item">
+                <div class="f-left">
+                  <strong>@txn.paymentComment</strong> / <span title="@_prettyDate(txn.datePaid).toString.trim">@numericDate(txn.datePaid)</span>
+                </div>
+                <div class="ovh">
+                  Сумма: <strong>@formatPrice(txn.amount, txn.currency)</strong>
+                </div>
+              </div>
+
+              @if(i != txns.size - 1) {
+                <div class="border-line"></div>
+              }
+
+            }
+
+          </div>
+        </div>
+      </div>
+    }
+
 
 
     @* Посуточная mmp-тарифная сетка этого узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
