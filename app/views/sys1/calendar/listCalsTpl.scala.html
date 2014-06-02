@@ -6,7 +6,9 @@
 @import helper._
 @import de.jollyday.HolidayCalendar.{values => hcs}
 
-@calBase("Все" + (cals.size match {case 0 => ""; case n => s" ($n)"})) {
+@calBase(
+  title = cals.size match {case 0 => ""; case n => s" ($n)"}
+) {
   <ul>
     @cals.map { cal =>
       <li>

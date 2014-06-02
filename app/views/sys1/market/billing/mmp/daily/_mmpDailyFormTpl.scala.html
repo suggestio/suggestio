@@ -1,4 +1,4 @@
-@(mdf: Form[_], btnText: String, submitCall: Call)(implicit ctx: Context)
+@(mdf: Form[_], btnText: String, submitCall: Call, mcals: Seq[MCalendar])(implicit ctx: Context)
 
 @* Костяк формы создания/редактирования посуточного mmp-тарификатора. *@
 
@@ -35,5 +35,19 @@
     'title  -> "Во сколько раз изменять цену, если выставлена галочка размещения на главном экране?"
   )
 
+  @* Рендерим селекторы для календарей. *@
+  @defining( mcals.map(mcal => mcal.id.get -> mcal.name) ) { mcalsOptions =>
+    @select(
+      mdf("weekendCalId"),
+      options = mcalsOptions,
+      '_label  -> "Календарь выходных/праздников"
+    )
+
+    @select(
+      mdf("primeCalId"),
+      options = mcalsOptions,
+      '_label  -> "Календарь дней прайм-тайма"
+    )
+  }
   <input type="submit" value="@btnText"/>
 }

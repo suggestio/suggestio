@@ -1,4 +1,4 @@
-@(mbc: MBillContract, mdf: Form[_], nodeOpt: Option[MAdnNode])(implicit ctx: Context)
+@(mbc: MBillContract, mdf: Form[_], nodeOpt: Option[MAdnNode], mcals: Seq[MCalendar])(implicit ctx: Context)
 
 @* Страница с формой создания нового посуточного mmp-тарификатора. *@
 @import ctx._
@@ -8,6 +8,7 @@
   @_mmpDailyFormTpl(
     mdf = mdf,
     btnText = Messages("Create"),
+    mcals = mcals,
     submitCall = routes.SysMarketBillingMmp.createMmpDailySubmit(mbc.id.get)
   )
 
