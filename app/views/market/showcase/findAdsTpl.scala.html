@@ -73,5 +73,7 @@
   }
 
 }else{
-  @_block_offers_list(ads, true)
+  @adProducerOpt.map { producer =>
+    @_block_offers_list(ads, true, producer)
+  }
 }

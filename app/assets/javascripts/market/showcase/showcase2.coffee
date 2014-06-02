@@ -301,9 +301,12 @@ siomart =
 
     on_request_error : () ->
       siomart.notifications.show "НЕ УДАЛОСЬ ВЫПОЛНИТЬ ЗАПРОС"
+      if siomart.utils.ge('smLoading') != null
+        siomart.utils.ge('smLoading').style.display = 'none'
 
     perform : ( url ) ->
-
+      if siomart.utils.ge('smLoading') != null
+        siomart.utils.ge('smLoading').style.display = 'block'
       timeout_cb = () ->
         siomart.request.on_request_error()
 
@@ -315,8 +318,6 @@ siomart =
       js_request = siomart.utils.ce "script", js_request_attrs
       siomart.utils.ge_tag("head")[0].appendChild js_request
 
-      siomart.utils.ge('smLoading').style.display = 'block'
-
   ##################################################
   ## Получить результаты по последнему отправленному
   ## зпросу и передать их в нужный callback
@@ -327,6 +328,8 @@ siomart =
 
     if data.html == ''
       siomart.notifications.show "КАРТОЧЕК НЕ НАЙДЕНО, ПОПРОБУЙТЕ ДРУГОЙ ЗАПРОС"
+      if siomart.utils.ge('smLoading') != null
+        siomart.utils.ge('smLoading').style.display = 'none'
       return false
 
     if data.action == 'martIndex'
