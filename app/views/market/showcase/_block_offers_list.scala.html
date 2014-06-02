@@ -1,4 +1,4 @@
-@(ads: Seq[MAdT], isIndex:Boolean=false, producer: MAdnNode)(implicit ctx: util.Context)
+@(ads: Seq[MAdT], isIndex:Boolean=false)(implicit ctx: util.Context)
 
 @if(!ads.isEmpty) {
   @ads.map { mad =>
@@ -9,12 +9,10 @@
     )
   }
 
-  @producer.logoImgOpt.map { logoImg =>
-    @for(i <- 0 to 10) {
-      <div class="sm-block-spacer" data-width="140" data-height="140" style="background: #@producer.meta.color; display: none; width: 140px; height: 140px; position: absolute;">
-        <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
-      </div>
-    }
+  @for(i <- 0 to 10) {
+    <div class="sm-block-spacer" data-width="140" data-height="140" style="background: #ccc; display: none; width: 140px; height: 140px; position: absolute;">
+      @*<img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>*@
+    </div>
   }
 
 }
