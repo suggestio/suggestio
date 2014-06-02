@@ -261,4 +261,7 @@ POST /sys/market/tmmp/daily/edit/:mbmdId controllers.SysMarketBillingMmp.editMmp
 GET  /sys/cal                            controllers.SysCalendar.showCalendars
 POST /sys/cal/new/tpl                    controllers.SysCalendar.newCalendarFromTemplateSubmit
 POST /sys/cal/new                        controllers.SysCalendar.createCalendarSubmit
+GET  /sys/cal/edit/:calId                controllers.SysCalendar.editCalendar(calId)
+POST /sys/cal/edit/:calId                controllers.SysCalendar.editCalendarSubmit(calId)
+GET  /sys/cal/get/:calId                 controllers.SysCalendar.getCalendarXml(calId)
 

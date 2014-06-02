@@ -1,13 +1,13 @@
-@(cf: Form[_])(implicit ctx: Context)
+@(cf: Form[_], submitCall: Call, btnText: String)(implicit ctx: Context)
 
-@* Страница создания/редактирования календаря. *@
+@* Форма создания/редактирования календаря. *@
 @import helper._
 
-@form(routes.SysCalendar.createCalendarSubmit) {
+@form(submitCall) {
 
-  @inputText(cf("name"), '_label -> "Название календаря")
+  @inputText(cf("name"), '_label -> "Название календаря", 'size -> 80)
 
-  @textarea(cf("data"), '_label -> "Содержимое календаря")
+  @textarea(cf("data"), '_label -> "Содержимое календаря", 'cols -> 150, 'rows -> 70)
 
-  <input type="submit" value="@Messages("Save")" />
+  <input type="submit" value="@btnText" />
 }

@@ -1,0 +1,12 @@
+@(cf: Form[_])(implicit ctx: Context)
+
+@* Страница создания календаря. *@
+@import ctx._
+
+@calBase("Создать новый календарь") {
+  @calFormTpl(
+    cf = cf,
+    submitCall = routes.SysCalendar.createCalendarSubmit,
+    btnText = Messages("Create")
+  )
+}

@@ -228,7 +228,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
 
 
 /** Код вывода в выдачу и последующего сокрытия рекламных карточек крайне похож, поэтому он вынесен в трейт. */
-trait AdvSlsUpdater extends PlayMacroLogsImpl {
+sealed trait AdvSlsUpdater extends PlayMacroLogsImpl {
 
   import LOGGER._
   import MmpDailyBilling.UPDATE_RCVRS_VSN_CONFLICT_TRY_MAX
@@ -302,7 +302,8 @@ trait AdvSlsUpdater extends PlayMacroLogsImpl {
 }
 
 
-class AdvertiseOfflineAdvs extends AdvSlsUpdater {
+/** Обновлялка adv sls, добавляющая уровни отображаения к существующей рекламе, которая должна бы выйти в свет. */
+sealed class AdvertiseOfflineAdvs extends AdvSlsUpdater {
   import LOGGER._
 
   override def findAdvsOk(implicit c: Connection): List[MAdvOk] = {
@@ -337,7 +338,9 @@ class AdvertiseOfflineAdvs extends AdvSlsUpdater {
 }
 
 
-class DepublishExpiredAdvs extends AdvSlsUpdater {
+/** Обновлялка adv sls, которая снимает уровни отображения с имеющейся рекламы, которая должна уйти из выдачи
+  * по истечению срока размещения. */
+sealed class DepublishExpiredAdvs extends AdvSlsUpdater {
   import LOGGER._
 
   override def findAdvsOk(implicit c: Connection): List[MAdvOk] = {
