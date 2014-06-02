@@ -31,6 +31,9 @@ transform(v)
 
 lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
+.colorpicker
+  z-index: 10000000!important
+
 @font-face
     font-family: 'ParagNorCIta'
     src: url('/assets/fonts/market/DINCondensedC/PFDinTextCompPro-Medium.eot')
@@ -235,269 +238,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     color: #959595 !important
     font-family: 'Arial' !important
 
-  .gray-but-wrap
-    position: relative
-    border: 1px solid #9a9b9b
-    border-radius(6px)
-    display: inline-block
-    padding: 1px 0
 
-    .white-border-top
-      border-radius(6px)
-      box-shadow(0 -1px 0 0 white)
-      overflow: hidden
-
-      .btn
-        background: none
-        border: none
-        display: inline-block
-        padding: 16px 18px
-        color: #676666
-        cursor: pointer
-        font-size: 30px
-        text-decoration: none
-        text-align: center
-        font-family: 'ParagNorCIta'
-        box-shadow(0 1px 0 0 #B5B6B6)
-        text-shadow(1px 1px 1px #F8F8F8)
-  .gray-but-wrap:hover
-    border: 1px solid #4f88a9
-    .btn
-      color: #4f88a9
-  .gray-but-wrap:active
-    border: 1px solid #9a9b9b
-    box-shadow(inset 0 0 40px 0 #9a9b9b)
-
-    .white-border-top
-      box-shadow: none
-
-      .btn
-        color: #676666
-
-
-  .green-but-small
-    outline: 0
-    display: inline-block
-    float: right
-    width: 100px
-    padding: 13px 0
-    color: white
-    cursor: pointer
-    text-align: center
-    font-size: 14px
-    line-height: 14px
-    font-family: 'Arial'
-    background: url('/assets/images/market/lk/green-but.small.png') no-repeat
-    background-position: 0 -180px
-  .green-but-small:hover
-    background-position: 0 -90px
-  .green-but-small:active
-    color: #dcea8
-    background-position: 0 0
-
-  .blue-but-small
-    outline: 0
-    display: inline-block
-    width: 122px
-    color: white !important
-    cursor: pointer
-    font-size: 14px
-    line-height: 14px
-    text-align: center
-    text-decoration: none
-    padding: 13px 0
-    font-family: 'Arial'
-    background: url('/assets/images/market/lk/blue-but.small.png') no-repeat
-    background-position: 0 -180px
-  .blue-but-small:hover
-    background-position: 0 -90px
-  .blue-but-small:active
-    color: #a8bdc9
-    background-position: 0 0
-
-  .red-but-small
-    outline: 0
-    display: inline-block
-    width: 107px
-    height: 14px
-    padding: 13px 0
-    color: white
-    cursor: pointer
-    font-size: 14px
-    line-height: 14px
-    text-align: center
-    text-decoration: none
-    font-family: 'Arial'
-    background: url('/assets/images/market/lk/red-but.small.png') no-repeat
-    background-position: 0 -180px
-  .red-but-small:hover
-    background-position: 0 -90px
-  .red-but-small:active
-    color: #dcea8
-    background-position: 0 0
-  input.red-but-small
-    height: 40px
-    padding: 0
-
-
-
-  .billing-but
-    margin-top: 7px
-    margin-right: 20px
-    display: inline-block
-    border: 1px solid #646464
-    border-radius(10px)
-    font-size: 24px
-    font-family: 'PT Sans Narrow','sans-serif'
-
-    .white-border-top
-      border-top: 1px solid #97b9cc
-      border-radius(10px)
-      background: #4f88a9
-      padding: 10px 15px
-      min-height: 14px
-
-      a
-        display: block
-        height: 0
-        color: white
-        text-decoration: none
-
-        span
-          font-size: 12px
-          font-family: 'Arial'
-
-  .billing-but:hover
-    .white-border-top
-
-      a
-        box-shadow(0 7px 20px 3px #FFFFFF)
-
-  .billing-but:active
-    .white-border-top
-      border-color: #3e718f
-      background: #3e718f
-
-
-
-  .logout-but
-    float: right
-    display: inline-block
-    width: 49px
-    height: 49px
-    cursor: pointer
-    background: url('/assets/images/market/lk/logout-but.png') no-repeat
-    background-position: 0 -198px
-  .logout-but:hover
-    background-position: 0 -99px
-  .logout-but:active
-    background-position: 0 0
-
-
-
-  .gray-but-small
-      outline: 0
-      display: inline-block
-      width: 121px
-      height: 14px
-      padding: 13px 0
-      color: white
-      cursor: pointer
-      font-size: 14px
-      line-height: 14px
-      text-align: center
-      text-decoration: none
-      font-family: 'Arial'
-      background: url('/assets/images/market/lk/gray-but.small.png') no-repeat
-      background-position: 0 -180px
-    .gray-but-small:hover
-      background-position: 0 0
-    .gray-but-small:active
-      color: #dcea8
-      background-position: 0 -90px
-
-  .gray-but
-    display: inline-block
-    border: 1px solid #646464
-    border-radius(6px)
-
-    .white-border-top
-      border-radius(6px)
-      border-top: 1px solid #e5e6e6
-      overflow: hidden
-      padding: 10px 25px
-      background: #9a9d9e
-
-      a
-        display: inline-block
-        text-decoration: none
-        color: white
-        text-shadow(1px 1px 1px #435f6e)
-        height: 0
-        font-family: 'Arial'
-        font-size: 14px
-  .gray-but:hover
-
-    .white-border-top
-
-      a
-        box-shadow(0 7px 20px 3px #FFFFFF)
-  .gray-but:active
-
-    .white-border-top
-      border-top: 1px solid #7f8283
-      background: #7f8283
-
-      a
-        box-shadow(none)
-        opacity: 0.6
-
-
-  .gray-but-smallest
-    display: inline-block
-    overflow: hidden
-    border: 1px solid #b2b2b2
-    border-radius(10px)
-    box-shadow(1px 1px 1px 1px #676767)
-
-    .white-border-top
-      display: inline-block
-      border-top: 1px solid #fbfbfb
-      border-radius(10px)
-      padding: 4px 15px
-      color: #959595
-      text-decoration: none
-      font-size: 12px
-      font-family: 'Arial'
-
-  @css {
-    .gray-but-smallest .white-border-top {
-        background: #eeeeee;
-        background: -moz-linear-gradient(top, #eeeeee 0%, #d7d7d7 100%);
-        background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#eeeeee), color-stop(100%,#d7d7d7));
-        background: -webkit-linear-gradient(top, #eeeeee 0%,#d7d7d7 100%);
-        background: -o-linear-gradient(top, #eeeeee 0%,#d7d7d7 100%);
-        background: -ms-linear-gradient(top, #eeeeee 0%,#d7d7d7 100%);
-        background: linear-gradient(to bottom, #eeeeee 0%,#d7d7d7 100%);
-        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#eeeeee', endColorstr='#d7d7d7',GradientType=0 );
-    }
-
-    .gray-but-smallest:hover .white-border-top {
-      background: #f0f0f0
-    }
-
-    .gray-but-smallest:active .white-border-top  {
-      background: #d7d7d7;
-      background: -moz-linear-gradient(top, #d7d7d7 0%, #ebebeb 100%);
-      background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#d7d7d7), color-stop(100%,#ebebeb));
-      background: -webkit-linear-gradient(top, #d7d7d7 0%,#ebebeb 100%);
-      background: -o-linear-gradient(top, #d7d7d7 0%,#ebebeb 100%);
-      background: -ms-linear-gradient(top, #d7d7d7 0%,#ebebeb 100%);
-      background: linear-gradient(to bottom, #d7d7d7 0%,#ebebeb 100%);
-      filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d7d7d7', endColorstr='#ebebeb',GradientType=0 );
-    }
-
-  }
 
 
 
@@ -1017,20 +758,19 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   .billing-page
 
     .top-info
-      margin-bottom: 15px
 
       td
         vertical-align: middle
 
         .ovh
           display: inline-block
-          padding: 10px 25px
+          padding: 10px 20px
 
         .gray
           display: inline-block
           width: 60px
 
-        .vlaue
+        .value
           font-size: 14px
           font-family: 'Arial'
           color: #676666
@@ -1049,55 +789,22 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
       .ovh
         color: #616161
 
-    .transactions-history
-      margin-top: 100px
-      margin-bottom: 50px
 
-      .title
-        padding: 10px
-        background: #dad9d9
+    .transactions-list
 
-        .toggle
-          float: right
-          text-decoration: none
-          display: inline-block
-          font-size: 12px
-          line-height: 14px
-          font-family: 'Arial'
-          color: #959595
-          padding-right: 20px
-          background: url('/assets/images/market/lk/angle.png') no-repeat
-          background-position: right -115px
-        .toggle:hover
-          color: #5088aa
-          background-position: right 3px
-        .toggle:active
-          margin-top: 1px
+      .item
+        padding: 15px 0px 15px 20px
+        overflow: hidden
 
-      .title.open
-        background: #efefef
+        .f-left
+          width: 630px
 
-        .toggle
-          background-position: right -176px
-        .toggle:hover
-          color: #5088aa
-          background-position: right -58px
+      .item:first-child
+        padding-top: 5px
 
+      .item:last-child
+        padding-bottom: 5px
 
-
-      .transactions-list
-        display: none
-
-        .item
-          padding: 15px 0px 15px 20px
-          overflow: hidden
-
-          .f-left
-            width: 630px
-
-    .gray-but-smallest
-      margin-top: 25px
-      margin-left: 1px
 
 @import "../reset"
 @import "base"
@@ -1107,6 +814,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 @import "edit-shop"
 @import "ads-list"
 @import "cbca-select"
+@import "buttons"
 
 /* Кнопки */
 .green-but-big
@@ -1401,6 +1109,10 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
   .js-g-slide-toggle
     margin: 7px 11px
+
+  .js-close-btn
+    margin-top: 7px
+    margin-right: 11px
 
 .lk-edit-form__block_title_span
   display: inline-block

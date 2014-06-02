@@ -30,15 +30,11 @@
   }
 </div>
 
-<div class="sio-mart__index-offers">
+<div class="sio-mart__index-offers" id="sioMartIndexOffers">
   <div class="sio-mart__index-offers__container" id="sioMartIndexGridLayout">
     <div id="sioMartIndexGrid" style="padding-bottom: 30px">
 
-      @_block_offers_list(ads, true)
-
-      @*for(i <- 0 to 0) {
-        <div class="sm-block-spacer" data-width="140" data-height="140" style="background: #fff; display: none; width: 140px; height: 140px; position: absolute;"></div>
-      }*@
+      @_block_offers_list(ads, true, mmart)
 
     </div>
   </div>
@@ -46,6 +42,9 @@
 
 <div class="sm-notification" id="smNotification">
   <div class="data" id="smNotificationData"></div>
+</div>
+
+<div class="sm-loading" id="smLoading">
 </div>
 
 <div class="sm-preload">

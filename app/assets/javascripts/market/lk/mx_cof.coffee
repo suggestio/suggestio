@@ -18,38 +18,6 @@ $(document).ready ->
   cbca.shop.init()
   cbca.editAdPage.updatePreview()
 
-  if (typeof tinymce != 'undefined')
-    tinymce.init(
-      selector:'textarea.tiny-mce',
-      ode: "textareas",
-      menubar : false,
-      statusbar : false,
-      content_css: "/assets/javascripts/lib/tinymce/style-formats.css",
-      toolbar: "undo redo | styleselect",
-      style_formats: [
-        {
-          title: 'Custom format 1'
-          inline: 'span'
-          classes: "custom-format-1"
-        }
-        {
-          title: 'Custom format 2'
-          inline: 'span'
-          classes: "custom-format-2"
-        }
-      ],
-      setup: (editor)->
-        editor.on 'keyup', (event)->
-          clearTimeout(upd)
-          updTextarea = ()->
-            $('#ad_offer_text_value').val(editor.getContent()).trigger('change')
-          upd = setTimeout(updTextarea, 500)
-    )
-
-
-
-
-
 ##СКРЫТЬ ВЫБРАННОЕ ФОТО##
 $(document).on 'click', '.input-wrap .close', (event)->
   event.preventDefault()
@@ -162,6 +130,19 @@ CbcaCommon = () ->
   self = this
 
   self.init = () ->
+
+    $(document).on 'click', '.js-slide-btn', (e)->
+      e.preventDefault()
+      $this = $(this)
+      targetId = $this.attr('href')
+
+      $('#'+targetId).slideToggle()
+
+    $(document).on 'click', '.lk-edit-form__block_title .js-close-btn', (e)->
+        e.preventDefault()
+        $this = $(this)
+
+        $this.parent().parent().slideUp()
 
     $(document).on 'click', '.ads-list-block__preview_add-new', ()->
       $this = $(this)
@@ -871,9 +852,20 @@ market =
       $('#advsFormBlock form').submit()
 
     init : () ->
+
+      $('.js-datepicker').each () ->
+
+        $(this).datetimepicker
+          lang:'ru'
+          i18n:
+            ru:
+              months:['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
+              dayOfWeek:["Вс", "Пн", "Вт", "Ср","Чт", "Пт", "Сб"]
+          timepicker:false
+          format:'Y-m-d'
+
       $('#advsSubmitButton').bind 'click', () ->
         market.adv_form.submit()
-
       $('#advsFormBlock input').bind 'change', () ->
         market.adv_form.update_price()
 
