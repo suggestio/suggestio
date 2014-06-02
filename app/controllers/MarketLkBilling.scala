@@ -44,7 +44,7 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
   def showAdnNodeBilling(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     val isProducer = request.adnNode.adn.isProducer
     val isReceiver = request.adnNode.adn.isReceiver
-    val showOtherRcvrs = !isReceiver && isProducer
+    val showOtherRcvrs = isProducer
     val otherRcvrsFut = if (showOtherRcvrs) {
       MAdnNode.findByAllAdnRights(Seq(AdnRights.RECEIVER))
         .map { _.filter(_.id.get != adnId).sortBy(_.meta.name) }

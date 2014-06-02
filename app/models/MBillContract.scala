@@ -159,6 +159,12 @@ object MBillContract extends SqlModelStatic[MBillContract] {
     SQL("SELECT * FROM " + TABLE_NAME + " WHERE is_active")
       .as(rowParser *)
   }
+
+  def hasActiveForNode(adnId: String)(implicit c: Connection): Boolean = {
+    SQL("SELECT count(*) > 0 AS bool FROM " + TABLE_NAME + " WHERE adn_id = {adnId} AND is_active")
+      .on('adnId -> adnId)
+      .as(SqlModelStatic.boolColumnParser single)
+  }
 }
 
 import MBillContract._
@@ -239,6 +245,28 @@ trait FindByContract[T] extends SqlModelStatic[T] {
    */
   def findByNotContractId(contractId: Int, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
     findBy(" WHERE contract_id != {contractId}", policy, 'contractId -> contractId)
+  }
+
+  /**
+   * Найти все ряды в таблице, которые относятся к указанному узлу
+   * @param adnId id узла, прописанного к договоре.
+   * @return Список результатов в неопределённом порядке.
+   */
+  def findByContractAdnId(adnId: String)(implicit c: Connection): List[T] = {
+    SQL(s"SELECT t.* FROM $TABLE_NAME t WHERE t.contract_id IN (SELECT id FROM bill_contract WHERE adn_id = {adnId} AND is_active)")
+      .on('adnId -> adnId)
+      .as(rowParser *)
+  }
+
+  /**
+    * Есть ли ряды, содержащие contract_id, контракт которого относится к указанному узлу.
+    * @param adnId id узла.
+    * @return true, если есть ряды, чей контракт активен и относится к указанному узлу.
+    */
+  def hasByContractAdnId(adnId: String)(implicit c: Connection): Boolean = {
+    SQL("SELECT count(t.*) > 0 AS bool FROM " + TABLE_NAME + " t WHERE t.contract_id IN (SELECT id FROM bill_contract WHERE adn_id = {adnId} AND is_active) LIMIT 1")
+      .on('adnId -> adnId)
+      .as(SqlModelStatic.boolColumnParser single)
   }
 
 }

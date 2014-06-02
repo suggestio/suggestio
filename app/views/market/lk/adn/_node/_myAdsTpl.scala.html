@@ -1,4 +1,4 @@
-@(node: MAdnNode, mads: Seq[MAdT] = Nil)(implicit ctx: util.Context)
+@(node: MAdnNode, mads: Seq[MAdT] = Nil, canAdv: Boolean)(implicit ctx: util.Context)
 
 @* Список рекламных карточек для создателя рекламы. В нём галочки есть. *@
 @import market.lk.ad._
@@ -38,7 +38,9 @@
               }
             }
           }
-          <a class="sm-large-button" href="@routes.MarketAdv.advForAd(mad.id.get)"><span>УПРАВЛЕНИЕ</span></a>
+          @if(canAdv) {
+            <a class="sm-large-button" href="@routes.MarketAdv.advForAd(mad.id.get)"><span>УПРАВЛЕНИЕ</span></a>
+          }
         </div>
       } @* ads list*@
     }

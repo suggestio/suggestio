@@ -42,6 +42,12 @@ trait SqlModelStatic[T] {
       .headOption
   }
 
+  def hasId(id: Int)(implicit c: Connection): Boolean = {
+    SQL("SELECT count(*) > 0 AS bool FROM " + TABLE_NAME + " WHERE id = {id}")
+      .on('id -> id)
+      .as(SqlModelStatic.boolColumnParser single)
+  }
+
   /**
    * Удалить ряд по ключу.
    * @param id id ряда.
@@ -50,7 +56,7 @@ trait SqlModelStatic[T] {
   def deleteById(id: Int)(implicit c: Connection): Int = {
     SQL("DELETE FROM " + TABLE_NAME + " WHERE id = {id}")
       .on('id -> id)
-        .executeUpdate()
+      .executeUpdate()
   }
 
 
@@ -86,10 +92,9 @@ trait SqlModelStatic[T] {
     val sb = new StringBuilder("SELECT * FROM ").append(TABLE_NAME).append(afterFrom)
     policy.append2sb(sb)
     SQL(sb.toString())
-     .on(args : _*)
-     .as(rowParser *)
+      .on(args: _*)
+      .as(rowParser *)
   }
-
 }
 
 

@@ -100,6 +100,12 @@ object MBillBalance {
       .on('adnId -> adnId, 'amount -> blockAmount)
       .executeUpdate()
   }
+
+  def hasForNode(adnId: String)(implicit c: Connection): Boolean = {
+    SQL("SELECT count(*) > 0 AS bool FROM " + TABLE_NAME + " WHERE adn_id = {adnId}")
+      .on('adnId -> adnId)
+      .as(SqlModelStatic.boolColumnParser single)
+  }
 }
 
 

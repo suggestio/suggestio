@@ -101,13 +101,18 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl {
       } else {
         0L -> Future.successful(Nil)
       }
+      // Надо ли отображать кнопку "управление" под карточками
+      val canAdv: Boolean = isMyNode && adnNode.adn.isProducer && {
+        DB.withConnection { implicit c =>
+          MBillContract.hasActiveForNode(adnId)  &&  MBillBalance.hasForNode(adnId)
+        }
+      }
       // Дождаться всех фьючерсов и отрендерить результат.
       for {
         mads        <- madsFut
         slaves      <- slavesFut
         advertisers <- advertisersFut
       } yield {
-
         Ok(adnNodeShowTpl(
           node          = adnNode,
           mads          = mads,
@@ -115,7 +120,8 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl {
           isMyNode      = isMyNode,
           advertisers   = advertisers,
           povAdnIdOpt   = request.povAdnNodeOpt.flatMap(_.id),
-          advReqsCount  = advReqsCount
+          advReqsCount  = advReqsCount,
+          canAdv        = canAdv
         ))
       }
     }

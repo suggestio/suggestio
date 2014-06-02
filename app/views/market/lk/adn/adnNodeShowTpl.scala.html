@@ -1,4 +1,4 @@
-@(node: MAdnNode, mads: Seq[MAdT], slaves: Seq[MAdnNode], advertisers: Seq[MAdnNode], isMyNode: Boolean, povAdnIdOpt: Option[String], advReqsCount: Long)(implicit ctx: Context)
+@(node: MAdnNode, mads: Seq[MAdT], slaves: Seq[MAdnNode], advertisers: Seq[MAdnNode], isMyNode: Boolean, povAdnIdOpt: Option[String], advReqsCount: Long, canAdv: Boolean)(implicit ctx: Context)
 
 @* Заглавная страница узла рекламной сети в личных кабинетах.
    Если isMyNode, то идёт рендер управляемого узла, и povAdnIdOpt игнорируется.
@@ -101,7 +101,7 @@
     @* Для тех, кто может создавать свою рекламу, рисуем список своих рекламных карточек с галочками. *@
     @if(node.adn.isProducer) {
       @if(isMyNode) {
-        @_myAdsTpl(node, mads)
+        @_myAdsTpl(node, mads, canAdv)
       } else {
         @_readOnlyAdsListTpl(mads, povAdnIdOpt)
       }
