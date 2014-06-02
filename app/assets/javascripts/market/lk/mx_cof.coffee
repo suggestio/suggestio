@@ -337,7 +337,7 @@ CbcaCommon = () ->
       $this = $(this)
       $parent = $this.parent()
 
-      $this.height($parent.height())
+      $this.height($parent.height() - 10)
 
 
     $(document).on 'click', '.transactions-history .toggle', (e) ->

@@ -3,10 +3,76 @@
 @import ctx._
 @import util.TplDataFormatUtil._
 
-Cоглашением между компанией CBCA и @Messages("amt.of.type." + adnNode.adn.memberType) @adnNode.meta.name
-определены тарифные планы на @ctx.now.getYear год.
-@defining( mbmd.currency ) { currency =>
-  <p>Будние дни: @formatPrice(mbmd.mmpWeekday, currency)</p>
-  <p>Выходные: @formatPrice(mbmd.mmpWeekend, currency)</p>
-  <p>Праймтайм: @formatPrice(mbmd.mmpPrimetime, currency)</p>
-}
+
+<span class="gray font-12 inline-block" style="padding: 10px 0;">
+  Cоглашением между компанией CBCA и @Messages("amt.of.type." + adnNode.adn.memberType) @adnNode.meta.name
+  определены тарифные планы на @ctx.now.getYear год.
+</span>
+<div class="border-line"></div>
+<table>
+  <tr>
+    <td>&nbsp;</td>
+    <td>
+      <div class="ovh gray font-12">
+        Будние дни: пн-чт
+      </div>
+    </td>
+    <td>
+      <div class="border-line-vertical"></div>
+    </td>
+    <td>
+      <div class="ovh gray font-12">
+        Выходние дни: пт-вс
+      </div>
+    </td>
+    <td>
+      <div class="border-line-vertical"></div>
+    </td>
+    <td>
+      <div class="ovh gray font-12">
+        Праздники/праймтайм
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="6">
+      <div class="border-line"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div class="ovh gray font-12" style="padding-left: 0;">
+        Минимальный модуль
+        (на схеме слева)
+      </div>
+    </td>
+    @defining( mbmd.currency ) { currency =>
+      <td>
+        <div class="ovh value">
+          @formatPrice(mbmd.mmpWeekday, currency)/сутки
+        </div>
+      </td>
+      <td>
+        <div class="border-line-vertical"></div>
+      </td>
+      <td>
+        <div class="ovh value">
+          @formatPrice(mbmd.mmpWeekend, currency)/сутки
+        </div>
+      </td>
+      <td>
+        <div class="border-line-vertical"></div>
+      </td>
+      <td>
+        <div class="ovh value">
+          @formatPrice(mbmd.mmpPrimetime, currency)/сутки
+        </div>
+      </td>
+    }
+  </tr>
+</table>
+
+<div class="border-line"></div>
+<span class="gray font-12 inline-block f-right" style="padding: 10px 0;">
+  Остальные модули кратны минимальному и их цена высчитыватся <strong>х2, x3 ...</strong>
+</span>
