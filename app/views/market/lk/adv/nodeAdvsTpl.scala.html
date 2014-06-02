@@ -17,7 +17,7 @@
       <table class="advertising-management">
         <tr>
           <td class="advertising-management_td" style="width: 200px; padding-left: 0;">
-            <p class="gray font-12">Выдавайте личный кабинет, это бесплатно и для вас и для рекламодателей.</p>
+            <span class="gray font-12">Выдавайте личный кабинет, это бесплатно и для вас и для рекламодателей.</span>
           </td>
           <td>
             <div class="border-line-vertical"></div>
@@ -32,12 +32,39 @@
 
 
   @market.lk.lkBlock("На рассмотрении") {
-    <p>В этом разделе появляются запросы на размещение рекламных карточек.</p>
-    @advsWithAds.map { case (advReq, mad) =>
-      @_single_offer(mad)
-      @* Надо сделать, чтобы окно рендерилось поверх текущего добра. *@
-      <a href="@routes.MarketAdv._showAdvReq(advReq.id.get)">Нажмите для просмотра информации</a>
-    }
+    <div class="advertising-requests">
+
+      <div class="advertising-requests_text">
+        <p class="gray font-12">В этом разделе
+          появляются запросы
+          на размещение
+          рекламных карточек.
+          Расценки на размещение
+          прописаны в договоре
+          с компанией cbca.
+        </p>
+        <p class="gray font-12">
+          Нажмите на карточку
+          для детального просмотра
+          и утверждения, либо
+          отклонения.</p>
+      </div>
+
+      <div class="advertising-requests_items">
+        @advsWithAds.map { case (advReq, mad) =>
+
+          <div class="ads-list-block__preview">
+            <div class="ads-list-block__preview-container">
+              @_single_offer(mad)
+              @* Надо сделать, чтобы окно рендерилось поверх текущего добра. *@
+              </div>
+          </div>
+          <a href="@routes.MarketAdv._showAdvReq(advReq.id.get)">Нажмите для просмотра информации</a>
+        
+        }
+      </div>
+
+    </div>
   }
 
 }
