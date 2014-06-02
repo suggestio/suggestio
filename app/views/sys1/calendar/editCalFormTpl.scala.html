@@ -1,10 +1,24 @@
-@(mcal: MCalendar, cf: Form[_])(implicit ctx: Context)
+@(mcal: MCalendar, cf: Form[_], calUsers: Seq[MAdnNode])(implicit ctx: Context)
 
 @* Страница редактирования календаря. *@
 
 @import ctx._
 
 @calBase("Редактировать календарь") {
+
+  @if(calUsers.isEmpty) {
+    <p>Этот календарь никем не используется.</p>
+  } else {
+    <h3>Этот календарь используется @calUsers.size узлами:</h3>
+    <ul>
+      @calUsers.map { cu =>
+        <li><a href="@routes.SysMarket.showAdnNode(cu.id.get)">@cu.meta.name</a></li>
+      }
+    </ul>
+  }
+
+  <br/><br/>
+
   @calFormTpl(
     cf = cf,
     submitCall = routes.SysCalendar.editCalendarSubmit(mcal.id.get),

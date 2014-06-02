@@ -19,6 +19,8 @@ import java.sql.Connection
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import scala.concurrent.duration._
 import de.jollyday.{HolidayCalendar, HolidayManager}
+import java.net.URL
+import controllers.routes
 
 /**
  * Suggest.io
@@ -41,29 +43,48 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     .getOrElse(120)
     .seconds
 
+  val MYSELF_URL_PREFIX: String = configuration.getString("mmp.daily.localhost.url.prefix") getOrElse {
+    val myPort = Option(System.getProperty("http.port")).fold(9000)(_.toInt)
+    s"http://localhost:$myPort"
+  }
+
+  private def getUrlCal(calId: String) = {
+    HolidayManager.getInstance(
+      new URL(MYSELF_URL_PREFIX + routes.SysCalendar.getCalendarXml(calId))
+    )
+  }
+
   /**
    * Рассчитать ценник размещения рекламной карточки.
    * Цена блока рассчитывается по площади, тарифам размещения узла-получателя и исходя из будней-праздников.
    * @return
    */
   def calculateAdvPrice(blockModulesCount: Int, rcvrPricing: MBillMmpDaily, advTerms: AdvTerms): Price = {
+    lazy val logPrefix = s"calculateAdvPrice($blockModulesCount/${rcvrPricing.id.get}): "
+    trace(s"${logPrefix}rcvr: tariffId=${rcvrPricing.id.get} mbcId=${rcvrPricing.contractId};; terms: from=${advTerms.dateStart} to=${advTerms.dateEnd} onStartPage=${advTerms.onStartPage}")
     // Во избежание бесконечного цикла, огораживаем dateStart <= dateEnd
     val dateStart = advTerms.dateStart
     val dateEnd = advTerms.dateEnd
     assert(!dateStart.isAfter(dateEnd), "dateStart must not be after dateEnd")
     // TODO Нужно использовать специфичные для узла календари.
-    val holidays = HolidayManager.getInstance(HolidayCalendar.RUSSIA)
+    val primeHolidays = getUrlCal(rcvrPricing.weekendCalId)
+    lazy val weekendCal = getUrlCal(rcvrPricing.primeCalId)
     def calculateDateAdvPrice(day: LocalDate): Float = {
-      if (holidays.isHoliday(day)) {
+      if (primeHolidays isHoliday day) {
+        trace(s"${logPrefix}$day -> primetime -> +${rcvrPricing.mmpPrimetime}")
         rcvrPricing.mmpPrimetime
       } else {
         val isWeekend = day.getDayOfWeek match {
-          case (SUNDAY | SATURDAY) => true
-          case _ => false
+          case (SUNDAY | SATURDAY) =>
+            true
+          case _ =>
+            weekendCal isHoliday day
         }
         if (isWeekend) {
+          trace(s"${logPrefix}$day -> weekend -> +${rcvrPricing.mmpWeekend}")
           rcvrPricing.mmpWeekend
         } else {
+          trace(s"${logPrefix}$day -> weekday -> +${rcvrPricing.mmpWeekday}")
           rcvrPricing.mmpWeekday
         }
       }
@@ -78,10 +99,15 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
       }
     }
     val amount1 = walkDaysAndPrice(dateStart, 0F)
-    var amountAllBlocks: Float = blockModulesCount * amount1
-    if (advTerms.onStartPage)
-      amountAllBlocks *= rcvrPricing.onStartPage
-    Price(amountAllBlocks, rcvrPricing.currency)
+    val amountN: Float = blockModulesCount * amount1
+    val amountTotal = if (advTerms.onStartPage) {
+      trace(s"$logPrefix +onStartPage -> x${rcvrPricing.onStartPage}")
+      amountN * rcvrPricing.onStartPage
+    } else {
+      amountN
+    }
+    trace(s"${logPrefix}amount (1/N/Total) = $amount1 / $amountN / $amountTotal")
+    Price(amountTotal, rcvrPricing.currency)
   }
 
 
@@ -113,6 +139,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         1
     }
     val blockModulesCount: Int = wmul * hmul
+    trace(s"${logPrefix}blockModulesCount = $wmul * $hmul = $blockModulesCount ;; blockId = ${mad.blockMeta.blockId}")
     calculateAdvPrice(blockModulesCount, rcvrPricing, advTerms)
   }
 

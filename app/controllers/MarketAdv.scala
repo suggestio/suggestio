@@ -209,7 +209,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     */
   private def filterEntiesByBusyRcvrs(adId: String, adves: List[AdvFormEntry]): List[AdvFormEntry] = {
     val syncResult1 = DB.withConnection { implicit c =>
-      val advsOk = MAdvOk.findByAdId(adId)
+      val advsOk = MAdvOk.findNotExpiredByAdId(adId)
       val advsReq = MAdvReq.findByAdId(adId)
       (advsOk, advsReq)
     }

@@ -4,7 +4,8 @@ import util.{FormUtil, PlayMacroLogsImpl}
 import util.acl.{AbstractRequestWithPwOpt, PersonWrapper, SioReqMd, IsSuperuser}
 import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import models.MCalendar
+import play.api.Play.current
+import models._
 import views.html.sys1.calendar._
 import play.api.data._, Forms._
 import de.jollyday.{HolidayManager, HolidayCalendar}
@@ -12,9 +13,13 @@ import java.io.{ByteArrayInputStream, StringWriter}
 import org.apache.commons.io.IOUtils
 import FormUtil._
 import de.jollyday.util.XMLUtil
-import play.api.mvc.{Action, Result, Request, ActionBuilder}
+import play.api.mvc._
 import util.acl.PersonWrapper.PwOpt_t
 import scala.concurrent.Future
+import play.api.db.DB
+import play.api.templates.HtmlFormat
+import scala.Some
+import play.api.mvc.Result
 
 /**
  * Suggest.io
@@ -134,10 +139,28 @@ object SysCalendar extends SioController with PlayMacroLogsImpl {
    * Редактировать календарь.
    * @param calId id календаря.
    */
-  def editCalendar(calId: String) = CanAlterCal(calId).apply { implicit request =>
-    // TODO Нужно обнаруживать список узлов, которые пользуются этим календарём и уведомлять оператора об этом.
+  def editCalendar(calId: String) = CanAlterCal(calId).async { implicit request =>
     val cf = calFormM fill request.mcal
-    Ok(editCalFormTpl(request.mcal, cf))
+    editCalendarRespBody(calId, cf)
+      .map(Ok(_))
+  }
+
+  /** Общий код экшенов, рендерящих страницу редактирования. */
+  private def editCalendarRespBody(calId: String, cf: Form[MCalendar])(implicit request: CalendarRequest[AnyContent]): Future[HtmlFormat.Appendable] = {
+    val calMbcs = DB.withConnection { implicit c =>
+      val calMbmds = MBillMmpDaily.findForCalId(calId)
+      if (calMbmds.isEmpty) {
+        Nil
+      } else {
+        val contractIds = calMbmds.map(_.contractId)
+        MBillContract.multigetByIds(contractIds)
+      }
+    }
+    val calUsersAdnIds = calMbcs.map(_.adnId)
+    val calUsersFut = MAdnNode.multiGet(calUsersAdnIds)
+    calUsersFut map { calUsers =>
+      editCalFormTpl(request.mcal, cf, calUsers)
+    }
   }
 
   /**
@@ -148,7 +171,8 @@ object SysCalendar extends SioController with PlayMacroLogsImpl {
     calFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"editCalendarSubmit($calId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
-        NotAcceptable(editCalFormTpl(request.mcal, formWithErrors))
+        editCalendarRespBody(calId, formWithErrors)
+          .map(NotAcceptable(_))
       },
       {mcal2 =>
         val mcal1 = request.mcal

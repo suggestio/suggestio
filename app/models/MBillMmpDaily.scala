@@ -34,6 +34,13 @@ object MBillMmpDaily extends FindByContract[MBillMmpDaily] {
     SQL(s"SELECT DISTINCT mbc.adn_id FROM ${MBillContract.TABLE_NAME} mbc WHERE mbc.id IN (SELECT DISTINCT contract_id FROM $TABLE_NAME)")
       .as(MBillContract.ADN_ID_PARSER *)
   }
+
+  /** Найти все ряды, в которых встречается указанный календарь. */
+  def findForCalId(calId: String)(implicit c: Connection): List[MBillMmpDaily] = {
+    SQL("SELECT * FROM " + TABLE_NAME + " WHERE weekend_cal_id = {calId} OR prime_cal_id = {calId}")
+      .on('calId -> calId)
+      .as(rowParser *)
+  }
 }
 
 
