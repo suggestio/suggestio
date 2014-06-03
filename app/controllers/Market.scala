@@ -30,20 +30,25 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   /** Входная страница для sio-market для ТЦ. */
   def martIndex(martId: String) = marketAction(martId) { implicit request =>
+    val allAdsSearchReq = AdSearch(receiverIds = List(martId))
+    // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
+    val catsStatsFut = MAd.stats4UserCats(MAd.searchAdsReqBuilder(allAdsSearchReq))
+      .map { _.toMap }
     val welcomeAdOptFut: Future[Option[MWelcomeAd]] = request.mmart.meta.welcomeAdId match {
       case Some(waId) => MWelcomeAd.getById(waId)
       case None => Future successful None
     }
-    val searchReq = AdSearch(
+    val startPageSearchReq = AdSearch(
       levels = List(AdShowLevels.LVL_START_PAGE),
       receiverIds = List(martId)
     )
     for {
-      mads  <- MAd.searchAds(searchReq).map(groupNarrowAds)
+      mads  <- MAd.searchAds(startPageSearchReq).map(groupNarrowAds)
       rmd   <- request.marketDataFut
       waOpt <- welcomeAdOptFut
+      catsStats <- catsStatsFut
     } yield {
-      val html = indexTpl(request.mmart, mads, rmd.mshops, rmd.mmcats, waOpt)
+      val html = indexTpl(request.mmart, mads, rmd.mshops, rmd.mmcats, waOpt, catsStats)
       jsonOk(html, "martIndex")
     }
   }
