@@ -1,7 +1,7 @@
 package util
 
 import org.joda.time.format.{PeriodFormatter, DateTimeFormatterBuilder, PeriodFormatterBuilder}
-import org.joda.time.{DateTimeZone, Duration, Period, DateTime}
+import org.joda.time._
 import java.util.Locale
 
 /**
@@ -175,5 +175,17 @@ object DateTimePrettyPrinter {
 
   def formatDate(dt: DateTime)(implicit ctx: Context): String = {
     dtFormatterOld.print(dt)
+  }
+
+  private val yyyyMMddFmt = new DateTimeFormatterBuilder()
+    .appendYear(4, 4).appendLiteral('-')
+    .appendMonthOfYear(2).appendLiteral('-')
+    .appendDayOfMonth(2)
+    .toFormatter
+  def formatDateDeficedYYYYmmDD(dt: DateTime): String = {
+    yyyyMMddFmt.print(dt)
+  }
+  def formatDateDeficedYYYYmmDD(d: LocalDate): String = {
+    yyyyMMddFmt.print(d)
   }
 }
