@@ -33,16 +33,20 @@
 
       <p>@formatPrice(advReq.amountWithComission, advReq.currency)</p>
 
+
       @* Отменить размещение рекламы с указанием причины. *@
       @form(routes.MarketAdv.advReqRefuseSubmit(advReq.id.get)) {
         @textarea(refuseFormM("reason"))
-        <input type="submit" value="Отменить размещение"/>
+        <input class="gray-but-small f-left" type="submit" value="Отменить" style="margin: 25px 0 25px 100px;"/>
       }
 
       @* Подтвердить размещение рекламы. *@
       @form(routes.MarketAdv.advReqAcceptSubmit(advReq.id.get)) {
-        <input type="submit" value="Разместить"/>
+        <input class="red-but-small f-right" type="submit" value="Разместить" style="margin: 25px 100px 25px 0;"/>
       }
+
+
+
     </div>
 
   </div>
