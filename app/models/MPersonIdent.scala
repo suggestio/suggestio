@@ -169,7 +169,7 @@ object MPersonIdent extends PlayMacroLogsImpl {
 
   /** Генерировать новый хеш с указанными выше дефолтовыми параметрами.
     * @param password Пароль, который надо захешировать.
-    * @return Текстовый хеш в стандартном формате $s0$params$salt$key.
+    * @return Текстовый хеш в стандартном формате \$s0\$params\$salt\$key.
     */
   def mkHash(password: String): String = {
     SCryptUtil.scrypt(password, SCRYPT_COMPLEXITY, SCRYPT_RAM_BLOCKSIZE, SCRYPT_PARALLEL)

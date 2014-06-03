@@ -39,7 +39,7 @@ object AnormPgInterval {
                pgi.getHours, pgi.getMinutes, seconds, ms)
   }
 
-  /** Конвертор joda.time.Period -> PGInterval, т.е. обратный к [[pgInterval2jodaPeriod()]]. */
+  /** Конвертор joda.time.Period -> PGInterval, т.е. обратный к pgInterval2jodaPeriod(). */
   implicit def jodaPeriod2pgInterval(period: Period): PGInterval = {
     new PGInterval(
       period.getYears, period.getMonths, period.getDays,

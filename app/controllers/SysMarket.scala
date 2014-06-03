@@ -492,7 +492,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     }
   }
 
-  /** Импорт дерева категорий из [[io.suggest.ym.cat.YmCategory.CAT_TREE]]. */
+  /** Импорт дерева категорий из io.suggest.ym.cat.YmCategory.CAT_TREE. */
   def importYmCatsSubmit = IsSuperuser.async { implicit request =>
     // TODO WARNING DANGER ACHTUNG Эту функцию надо выпилить после запуска.
     warn("Inserting categories into MYmCategories...")

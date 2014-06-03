@@ -146,7 +146,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
 
   /**
-   * Рассчитать цену размещения. Сюда нужно сабмиттить форму также, как и в [[advFormSubmit()]].
+   * Рассчитать цену размещения. Сюда нужно сабмиттить форму также, как и в advFormSubmit().
    * @param adId id размещаемой рекламной карточки.
    * @return Инлайновый рендер отображаемой цены.
    */

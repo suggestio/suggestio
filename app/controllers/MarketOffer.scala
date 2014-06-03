@@ -26,14 +26,14 @@ object MarketOffer extends SioController with MacroLogsImpl {
 
   // Мапперы полей сборных форм.
 
-  /** Маппер производителя товара/услуги. Используется для [[io.suggest.ym.OfferTypes.Simple]] и
-    * [[io.suggest.ym.OfferTypes.VendorModel]]. */
+  /** Маппер производителя товара/услуги. Используется для io.suggest.ym.OfferTypes.Simple
+    * io.suggest.ym.OfferTypes.VendorModel. */
   val vendorM = "vendor" -> nonEmptyText(maxLength = YmlSax.VENDOR_MAXLEN)
 
   /** Некая точная группа товаров/категория. Используется если дерева категорий недостаточно. */
   val typePrefixM = "typePrefix" -> text(maxLength = YmlSax.OFFER_TYPE_PREFIX_MAXLEN)
 
-  /** Название комерческого предложения. Для [[io.suggest.ym.OfferTypes.VendorModel]] не доступно: там используется
+  /** Название комерческого предложения. Для io.suggest.ym.OfferTypes.VendorModel не доступно: там используется
     * связка typePrefix + vendor + model. */
   val nameM   = "name"   -> nonEmptyText(maxLength = YmlSax.OFFER_NAME_MAXLEN)
 

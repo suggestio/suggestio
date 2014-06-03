@@ -425,7 +425,7 @@ object FormDataSerializer extends PlayLazyMacroLogsImpl {
     compress(jsonStr)
   }
 
-  /** Десериализация выхлопа [[serializeData()]]. Для упрощения используется jackson. */
+  /** Десериализация выхлопа serializeData(). Для упрощения используется jackson. */
   def deserializeData(s: String): Map[String, String] = {
     val jsonStream = decompressStream(s)
     try {

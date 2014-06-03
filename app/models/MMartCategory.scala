@@ -171,6 +171,12 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
 
   type CollectMMCatsAcc_t = List[(Option[String], Seq[MMartCategory])]
 
+  /**
+   * Обернуть фьючерс списка категорий во фьючерс результата-аккамулятора collectCatListsUpTo().
+   * Используется для подставления выхлопа findTopForOwner() в качестве результата collectCatListsUpTo().
+   * @param catsFut Фьючерс списка категорий.
+   * @return Тоже самое, что и collectCatListsUpTo().
+   */
   def catsAsAccFut(catsFut: Future[Seq[MMartCategory]])(implicit ec: ExecutionContext): Future[CollectMMCatsAcc_t] = {
     catsFut
       .map { mmcats => List(None -> mmcats) }
@@ -186,8 +192,7 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
       // Реанимируем работу через возврат исходного списка категорий.
       case None =>
         debug(s"collectCatListsUpTo(own=$catOwnerId, catId=$currCatId): expected currCat don't exists! Recovering with top cats...")
-        findTopForOwner(catOwnerId)
-          .map { mmcats => List(None -> mmcats) }
+        catsAsAccFut(findTopForOwner(catOwnerId))
       // Не-None результат означает, что можно двигаться дальше.
       case maybeParentId =>
         findAllOnSameLevelParent(catOwnerId, maybeParentId) flatMap { lCats =>

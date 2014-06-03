@@ -121,7 +121,7 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
 
 
   /**
-   * Тоже самое, что и [[_renderNodeMbmds()]], но ещё обрамляет всё дело в окно, пригодное для отображения юзеру
+   * Тоже самое, что и _renderNodeMbmds(), но ещё обрамляет всё дело в окно, пригодное для отображения юзеру
    * в плавающей форме.
    * @param adnId id просматриваемого узла.
    */

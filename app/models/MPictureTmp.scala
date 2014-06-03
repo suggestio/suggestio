@@ -24,7 +24,7 @@ object MPictureTmp {
   val TEMP_DIR = current.getFile(TEMP_DIR_REL)
 
   /** Префикс для ключей модели. Нужно чтобы различать tmpid'шники от других моделей
-    * (от [[io.suggest.model.MUserImgOrig]] в частности) */
+    * (от io.suggest.model.MUserImgOrig в частности) */
   val KEY_PREFIX = "itmp-"
 
   private val deleteTmpAfterMs = configuration.getInt("picture.temp.delete_after_minutes").getOrElse(60).minutes.toMillis
