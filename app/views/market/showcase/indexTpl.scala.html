@@ -1,4 +1,4 @@
-@(mmart: MAdnNode, ads: Seq[MAd], shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory], welcomeAdOpt: Option[MWelcomeAd])(implicit ctx: util.Context)
+@(mmart: MAdnNode, ads: Seq[MAd], shops: Map[String, MAdnNode], mmcats: Seq[MMartCategory], welcomeAdOpt: Option[MWelcomeAd], catsStats: Map[String, Long])(implicit ctx: Context)
 
 @* Начальная страница для sio-market. *@
 
@@ -52,7 +52,7 @@
 </div>
 
 @* Окно с выбором категорий *@
-@_categories_w_search(mmcats, mmart)
+@_categories_w_search(mmcats, mmart, catsStats, withSubnodesBtn = !shops.isEmpty)
 
 @* Окно с предупреждением о выходе из Sio.Market *@
 @_exit_screen()

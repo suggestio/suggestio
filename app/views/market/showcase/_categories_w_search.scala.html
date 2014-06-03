@@ -1,4 +1,4 @@
-@(mmcats: Seq[MMartCategory], mmart:MAdnNode)(implicit ctx:util.Context)
+@(mmcats: Seq[MMartCategory], mmart:MAdnNode, catsStats: Map[String, Long], withSubnodesBtn: Boolean)(implicit ctx: Context)
 
 @_search_bar(mmart)
 
@@ -9,7 +9,7 @@
 
       <div class="sm-categories-list">
         @mmcats.map { mmcat =>
-          <span class="sm-single-categorie js-cat-link @mmcat.cssClass" data-cat-id="@mmcat.id">
+          <span class="sm-single-categorie js-cat-link @mmcat.cssClass @if(!(catsStats contains mmcat.id.get)) {disabled}" data-cat-id="@mmcat.id">
             <div class="icon"></div>
             <div class="name">@mmcat.name</div>
           </span>
@@ -19,18 +19,20 @@
     </div>
   </div>
 
-  <div class="sm-categories-footer">
+  @if(withSubnodesBtn) {
+    <div class="sm-categories-footer">
 
-    <div class="or-title" style="margin-top: 18px;">
-      <span style="background-color: #@mmart.meta.color">ИЛИ</span>
+      <div class="or-title" style="margin-top: 18px;">
+        <span style="background-color: #@mmart.meta.color">ИЛИ</span>
+      </div>
+
+      <div style="text-align: center; margin-top: 18px;">
+        <a href="#" class="white-border-btn" id="smShopListButton">
+          ВЫБЕРИТЕ МАГАЗИН ИЗ СПИСКА
+        </a>
+      </div>
+
     </div>
-
-    <div style="text-align: center; margin-top: 18px;">
-      <a href="#" class="white-border-btn" id="smShopListButton">
-        ВЫБЕРИТЕ МАГАЗИН ИЗ СПИСКА
-      </a>
-    </div>
-
-  </div>
+  }
 
 </div>
