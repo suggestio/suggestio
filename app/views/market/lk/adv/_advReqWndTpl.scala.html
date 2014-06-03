@@ -8,28 +8,43 @@
 @import util.FormHelpers._
 @import util.DateTimePrettyPrinter._
 
-<div>
-  @_single_offer(mad)
+<div class="popup" id="advReqWindTpl">
 
-  <p>Запрос размещения рекламы от <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">@adProducer.meta.name</a></p>
+  <div class="hat">
+    <a href="#" class="close">&nbsp;</a>
+  </div>
 
-  <p>С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)</p>
-  @if(advReq.onStartPage) {
-    <p>+ Размещение на главном экране</p>
-  }
+  <div class="content">
+    <div>
+      <div class="ad-preview">
+        @_single_offer(mad)
+      </div>
 
-  <p>Стоимость согласно <a href="@routes.MarketLkBilling._renderNodeMbmdsWindow(adRcvr.id.get)">ставке тарифных планов</a>.</p>
+      <div class="popup_title">
+        Запрос размещения рекламы от <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">@adProducer.meta.name</a>
+      </div>
 
-  <p>@formatPrice(advReq.amountWithComission, advReq.currency)</p>
+      <p>С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)</p>
+      @if(advReq.onStartPage) {
+        <p>+ Размещение на главном экране</p>
+      }
 
-  @* Отменить размещение рекламы с указанием причины. *@
-  @form(routes.MarketAdv.advReqRefuseSubmit(advReq.id.get)) {
-    @textarea(refuseFormM("reason"))
-    <input type="submit" value="Отменить размещение"/>
-  }
+      <p>Стоимость согласно <a href="@routes.MarketLkBilling._renderNodeMbmdsWindow(adRcvr.id.get)">ставке тарифных планов</a>.</p>
 
-  @* Подтвердить размещение рекламы. *@
-  @form(routes.MarketAdv.advReqAcceptSubmit(advReq.id.get)) {
-    <input type="submit" value="Разместить"/>
-  }
+      <p>@formatPrice(advReq.amountWithComission, advReq.currency)</p>
+
+      @* Отменить размещение рекламы с указанием причины. *@
+      @form(routes.MarketAdv.advReqRefuseSubmit(advReq.id.get)) {
+        @textarea(refuseFormM("reason"))
+        <input type="submit" value="Отменить размещение"/>
+      }
+
+      @* Подтвердить размещение рекламы. *@
+      @form(routes.MarketAdv.advReqAcceptSubmit(advReq.id.get)) {
+        <input type="submit" value="Разместить"/>
+      }
+    </div>
+
+  </div>
+
 </div>

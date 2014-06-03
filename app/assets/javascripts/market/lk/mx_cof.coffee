@@ -131,6 +131,18 @@ CbcaCommon = () ->
 
   self.init = () ->
 
+    $(document).on 'click', '.js-advertising-requests-item_get-info', (e)->
+      e.preventDefault()
+      $this = $(this)
+      href = $this.attr('href')
+
+      $.ajax(
+        url: href,
+        success: (data)->
+          $('.body-wrap').append(data)
+          cbca.popup.showPopup('#advReqWindTpl')
+      )
+
     $(document).on 'click', '.js-slide-btn', (e)->
       e.preventDefault()
       $this = $(this)
