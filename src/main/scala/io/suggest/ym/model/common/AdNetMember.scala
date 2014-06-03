@@ -173,7 +173,8 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
    * @return Список MShop в неопределённом порядке.
    */
   def findBySupId(supId: String, sortField: Option[String] = None, isReversed:Boolean = false, onlyEnabled: Boolean = false,
-                  companyId: Option[CompanyId_t] = None)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
+                  companyId: Option[CompanyId_t] = None, maxResults: Int = 10, offset: Int = 0)
+                 (implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
     var query: QueryBuilder = supIdQuery(supId)
     if (onlyEnabled) {
       val isEnabledFilter = FilterBuilders.termFilter(PS_IS_ENABLED_ESFN, true)
@@ -187,7 +188,10 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
       .setQuery(query)
     if (sortField.isDefined)
       req.addSort(sortField.get, isReversed2sortOrder(isReversed))
-    req.execute()
+    req
+      .setSize(maxResults)
+      .setFrom(offset)
+      .execute()
       .map { searchResp2list }
   }
 
