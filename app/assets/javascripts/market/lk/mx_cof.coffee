@@ -139,8 +139,9 @@ CbcaCommon = () ->
       $.ajax(
         url: href,
         success: (data)->
+          $('#advReqWind').remove()
           $('.body-wrap').append(data)
-          cbca.popup.showPopup('#advReqWindTpl')
+          cbca.popup.showPopup('#advReqWind')
       )
 
     $(document).on 'click', '.js-slide-btn', (e)->

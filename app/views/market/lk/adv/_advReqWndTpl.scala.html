@@ -8,7 +8,7 @@
 @import util.FormHelpers._
 @import util.DateTimePrettyPrinter._
 
-<div class="popup" id="advReqWindTpl">
+<div class="popup adv-req-wind" id="advReqWind">
 
   <div class="hat">
     <a href="#" class="close">&nbsp;</a>
@@ -21,17 +21,17 @@
       </div>
 
       <div class="popup_title">
-        Запрос размещения рекламы от <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">@adProducer.meta.name</a>
+        <strong>Запрос размещения рекламы от</strong> <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">@adProducer.meta.name</a>
       </div>
 
-      <p>С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)</p>
+      <p class="gray font-12">С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)</p>
       @if(advReq.onStartPage) {
         <p>+ Размещение на главном экране</p>
       }
 
-      <p>Стоимость согласно <a href="@routes.MarketLkBilling._renderNodeMbmdsWindow(adRcvr.id.get)">ставке тарифных планов</a>.</p>
+      <p class="gray font-12">Стоимость согласно <a href="@routes.MarketLkBilling._renderNodeMbmdsWindow(adRcvr.id.get)">ставке тарифных планов</a>.</p>
 
-      <p>@formatPrice(advReq.amountWithComission, advReq.currency)</p>
+      <strong class="adv-req-wind_price">@formatPrice(advReq.amountWithComission, advReq.currency)</strong>
 
 
       @* Отменить размещение рекламы с указанием причины. *@
