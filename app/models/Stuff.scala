@@ -85,3 +85,20 @@ case class AdvFormTplArgs(
   busyAdns: Map[String, MAdvI]
 )
 
+
+/** Размеры аудиторий. */
+object AudienceSizes extends Enumeration {
+  type AudienceSize = Value
+  val LessThan20 = Value("lt20")
+  val LessThan50 = Value("lt50")
+  val Greater50  = Value("gt50")
+
+  def maybeWithName(n: String): Option[AudienceSize] = {
+    try {
+      Some(withName(n))
+    } catch {
+      case ex: NoSuchElementException  =>  None
+    }
+  }
+}
+

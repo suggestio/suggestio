@@ -12,6 +12,20 @@ import io.suggest.ym.model.ad.AdsSearchArgsT
  * Description: Здесь складываются небольшие QueryStringBindable для сложных get-реквестов.
  */
 
+object QsbUtil {
+
+  implicit def eitherOpt2option[T](e: Either[_, Option[T]]): Option[T] = {
+    e match {
+      case Left(_)  => None
+      case Right(b) => b
+    }
+  }
+
+}
+
+
+import QsbUtil._
+
 object AdSearch {
 
   /** Максимальное число результатов в ответе на запрос (макс. результатов на странице). */
@@ -22,14 +36,6 @@ object AdSearch {
 
   /** Макс.кол-во сдвигов в страницах. */
   val MAX_PAGE_OFFSET = configuration.getInt("market.search.ad.results.offset.max") getOrElse 20
-
-
-  private implicit def eitherOpt2option[T](e: Either[_, Option[T]]): Option[T] = {
-    e match {
-      case Left(_)  => None
-      case Right(b) => b
-    }
-  }
 
   private implicit def eitherOpt2list[T](e: Either[_, Option[T]]): List[T] = {
     e match {

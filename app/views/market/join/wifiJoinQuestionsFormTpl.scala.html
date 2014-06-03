@@ -1,0 +1,13 @@
+@(qf: Form[_])(implicit ctx: Context)
+
+@* Анкета для запроса подключения в качестве ресивера рекламных карточек. *@
+@import helper._
+@import ctx._
+
+@joinBase("Готова ли ваша wi-fi сеть к SIO-Market") {
+  <h1>Готова ли ваша сеть?</h1>
+
+  @form(routes.MarketJoin.joinQuestionsFormSubmit) {
+    <input type="submit" value="Написать"/>
+  }
+}

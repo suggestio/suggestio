@@ -165,6 +165,9 @@ GET  /market/site/:adnId                controllers.Market.demoWebSite(adnId)
 GET  /market/ads/:adnId                 controllers.Market.findAds(adnId, a: util.qsb.AdSearch)
 POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)
 
+# market+join: Присоединение к sio-market.
+GET  /market/join/wifi/qs               controllers.MarketJoin.joinQuestionsForm
+POST /market/join/wifi/qs               controllers.MarketJoin.joinQuestionsFormSubmit
 
 GET  /sys                               controllers.Sys.index
 GET  /sys/dkeys/all                     controllers.Sys.dkeysListAll
