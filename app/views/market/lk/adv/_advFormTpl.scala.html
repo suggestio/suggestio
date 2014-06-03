@@ -35,8 +35,8 @@
       @adnNodesMap.map { case (memberType, adnNodes) =>
         @adnNodes.iterator.zipWithIndex.map { case (node, i) =>
           <div class="advs-nodes__node @if( i % 2 == 0 ){ advs-nodes__node_even }">
-          @* числовой id нужен для использования list mapping, хотя в нашем случае вообще не обязателен. *@
           @defining(args.busyAdns.get(node.id.get)) { maybeBusyAdv =>
+          @* Более-менее устойчивый числовой id (mid) нужен для использования в list mapping. Из-за вкладок умножаем на номер вкладки (номер типа). *@
           @defining((memberType.id + 1) * (i + 1)) { mid =>
 
             @* Галочка включения узла в публикацию. Если busy, то уже занято. *@
