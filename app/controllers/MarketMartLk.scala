@@ -1,6 +1,6 @@
 package controllers
 
-import util.{Context, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
 import util.acl._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client

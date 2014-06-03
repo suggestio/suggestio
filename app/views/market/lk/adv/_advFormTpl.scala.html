@@ -6,6 +6,7 @@
 @import ctx._
 @import helper._
 @import util.FormHelpers._
+@import util.DateTimePrettyPrinter._
 @import args._
 
 <div class="advs-form-block" id="advsFormBlock">
@@ -29,6 +30,8 @@
 
     @* Рендерим содержимое табов, т.е. таблички в рамках одной категории узла *@
     <div class="advs-form-block__nodes advs-nodes">
+      @defining( now.plusDays(1) ) { tomorrow1 =>
+      @defining( tomorrow1.plusDays(1) ) { tomorrow2 =>
       @adnNodesMap.map { case (memberType, adnNodes) =>
         @adnNodes.iterator.zipWithIndex.map { case (node, i) =>
           <div class="advs-nodes__node @if( i % 2 == 0 ){ advs-nodes__node_even }">
@@ -52,8 +55,8 @@
               @maybeBusyAdv.get.dateStart.toLocalDate - @maybeBusyAdv.get.dateEnd.toLocalDate
             } else {
               @* Тут должен быть, селект-календарь длительности и галочка появляются при выставлении первой галочки. *@
-              <input type="text" class="js-datepicker" name="node[@mid].dateStart" value="2014-05-31"/>
-              <input type="text" class="js-datepicker" name="node[@mid].dateEnd" value="2014-06-01"/>
+              <input type="text" class="js-datepicker" name="node[@mid].dateStart" value="@formatDateDeficedYYYYmmDD(tomorrow1)"/>
+              <input type="text" class="js-datepicker" name="node[@mid].dateEnd" value="@formatDateDeficedYYYYmmDD(tomorrow2)"/>
             }
 
             <div class="advs-nodes__node-start-page-elt">
@@ -70,6 +73,8 @@
           }
           </div>
         }
+      }
+      }
       }
     </div>
 
