@@ -43,7 +43,21 @@
   @inputText(af("meta.siteUrl"), 'placeholder -> "http://", '_label -> "Адрес сайта в интернете")
   @inputText(af("meta.color"),   'placeholder -> "cceeff",  '_label -> "Цвет")
 
-  @inputText(af("maxAds"), 'title -> "макс.число отображаемых рекламных карточек.")
+  <div>
+    @AdnRights.values.map { adnRight =>
+      @checkbox(af(s"adn.rights.${adnRight.longName}"), '_label -> adnRight.longName)
+    }
+  </div>
+
+  @inputText(af("adn.sls.in"),  '_label -> "Входящие уровни отображения и лимиты")
+  @inputText(af("adn.sls.out"), '_label -> "Исходящие уровни отображения и лимиты")
+
+  <p>Формат: 'd = 1, m = 20, h = 5'.<br/>
+  @AdShowLevels.values.map { sl =>
+    @sl.name -- @Messages("lk.sl." + sl.name),
+  }</p>
+
+  @inputText(af("adn.supId"), '_label -> "id узла-супервизора, если есть")
 
   <input type="submit" value="@btnText"/>
 }

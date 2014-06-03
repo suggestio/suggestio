@@ -1,7 +1,7 @@
 package controllers
 
 import io.suggest.util.MacroLogsImpl
-import util.acl.{AbstractRequestWithPwOpt, IsSuperuserAdnNode, IsSuperuser}
+import util.acl.{AbstractRequestForAdnNode, AbstractRequestWithPwOpt, IsSuperuserAdnNode, IsSuperuser}
 import models._
 import views.html.sys1.market._
 import views.html.market.lk
@@ -16,6 +16,10 @@ import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.current
 import io.suggest.ym.ad.ShowLevelsUtil
 import scala.concurrent.Future
+import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
+import io.suggest.ym.model.common.AdnMemberShowLevels
+import play.api.mvc.AnyContent
+import play.api.templates.HtmlFormat
 
 /**
  * Suggest.io
@@ -206,34 +210,90 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     Some((name, description, town, address, phone, floor, section, siteUrl, color))
   }
 
+  private val adnRightsM: Mapping[Set[AdnRight]] = {
+    import AdnRights._
+    mapping(
+      PRODUCER.longName -> boolean,
+      RECEIVER.longName -> boolean,
+      SUPERVISOR.longName -> boolean
+    )
+    {(isProd, isRcvr, isSup) =>
+      var acc: List[AdnRight] = Nil
+      if (isProd) acc ::= PRODUCER
+      if (isRcvr) acc ::= RECEIVER
+      if (isSup)  acc ::= SUPERVISOR
+      acc.toSet
+    }
+    {rights =>
+      val isProd = rights contains PRODUCER
+      val isRcvr = rights contains RECEIVER
+      val isSup  = rights contains SUPERVISOR
+      Some((isProd, isRcvr, isSup))
+    }
+  }
+
+  private val slsStrM: Mapping[LvlMap_t] = {
+    nonEmptyText(maxLength = 256)
+      .transform[LvlMap_t](
+        {raw =>
+          raw.split("\\s*,\\s*")
+            .toSeq
+            .map { one =>
+              val Array(slRaw, slMaxRaw) = one.split("\\s*=\\s*")
+              val sl: AdShowLevel = AdShowLevels.withName(slRaw)
+              sl -> slMaxRaw.toInt
+            }
+            .filter(_._2 > 0)
+            .toMap
+        },
+        {sls =>
+          val raws = sls.map {
+            case (sl, slMax)  =>  s"${sl.name} = $slMax"
+          }
+          raws.mkString(", ")
+        }
+      )
+  }
+
+  private val adnSlInfoM: Mapping[AdnMemberShowLevels] = {
+    val slsStrOptM: Mapping[LvlMap_t] = default(slsStrM, Map.empty)
+    mapping(
+      "in" -> slsStrOptM,
+      "out" -> slsStrOptM
+    )
+    { AdnMemberShowLevels.apply }
+    { AdnMemberShowLevels.unapply }
+  }
+
   /** Маппинг для adn-полей формы adn-узла. */
   private val adnMemberM: Mapping[AdNetMemberInfo] = mapping(
     "memberType" -> adnMemberTypeM,
-    "isEnabled"  -> boolean
+    "isEnabled"  -> boolean,
+    "rights"     -> adnRightsM,
+    "sls"        -> adnSlInfoM,
+    "supId"      -> optional(esIdM)
   )
-  {(mt, isEnabled) =>
+  {(mt, isEnabled, rights, sls, supId) =>
     val result = mt.getAdnInfoDflt
     result.isEnabled = isEnabled
+    result.rights = rights
+    result.showLevelsInfo = sls
+    result.supId = supId
     result
   }
   {anmi =>
-    Some((anmi.memberType, anmi.isEnabled))
+    import anmi._
+    Some((memberType, isEnabled, rights, showLevelsInfo, supId))
   }
-
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
   private val adnNodeFormM = Form(mapping(
     "companyId" -> esIdM,
     "adn"       -> adnMemberM,
-    "meta"      -> adnNodeMetaM,
-    "maxAds"    -> default(
-      number(min = 0, max = 30),
-      ShowLevelsUtil.MART_LVL_IN_START_PAGE_DFLT
-    )
+    "meta"      -> adnNodeMetaM
   )
   // apply()
-  {(companyId, anmi, meta, maxAds) =>
-    anmi.showLevelsInfo.setMaxOutAtLevel(anmi.memberType.slDflt, maxAds)
+  {(companyId, anmi, meta) =>
     MAdnNode(
       meta = meta,
       companyId = companyId,
@@ -244,8 +304,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   // unapply()
   {adnNode =>
     import adnNode._
-    val maxAds = adn.showLevelsInfo.maxOutAtLevel(adnNode.adn.memberType.slDflt)
-    Some((companyId, adn, meta, maxAds))
+    Some((companyId, adn, meta))
   })
 
   private def maybeSupOpt(supIdOpt: Option[String]): Future[Option[MAdnNode]] = {
@@ -304,37 +363,53 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     )
   }
 
+
   /** Страница с формой редактирования узла ADN. */
   def editAdnNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
     import request.adnNode
-    val companiesFut = MCompany.getAll(maxResults = 1000)
     val formFilled = adnNodeFormM.fill(adnNode)
-    companiesFut map { companies =>
-      Ok(editAdnNodeFormTpl(adnNode, formFilled, companies))
+    editAdnNodeBody(adnId, formFilled)
+      .map { Ok(_) }
+  }
+
+  private def editAdnNodeBody(adnId: String, form: Form[MAdnNode])(implicit request: AbstractRequestForAdnNode[AnyContent]): Future[HtmlFormat.Appendable] = {
+    MCompany.getAll(maxResults = 1000) map { companies =>
+      editAdnNodeFormTpl(request.adnNode, form, companies)
     }
   }
+
   /** Самбит формы редактирования узла. */
   def editAdnNodeSubmit(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
     import request.adnNode
-    adnNodeFormM.bindFromRequest().fold(
+    val formBinded = adnNodeFormM.bindFromRequest()
+    formBinded.fold(
       {formWithErrors =>
-        val companiesFut = MCompany.getAll(maxResults = 1000)
         debug(s"editAdnNodeSubmit($adnId): Failed to bind form: ${formatFormErrors(formWithErrors)}")
-        companiesFut map { companies =>
-          NotAcceptable(editAdnNodeFormTpl(adnNode, formWithErrors, companies))
-        }
+        editAdnNodeBody(adnId, formWithErrors)
+          .map(NotAcceptable(_))
       },
       {adnNode2 =>
-        adnNode.meta = adnNode2.meta
-        adnNode.adn.memberType = adnNode2.adn.memberType
-        adnNode.companyId = adnNode2.companyId
-        val sl = adnNode2.adn.memberType.slDflt
-        val maxAds = adnNode2.adn.showLevelsInfo.maxOutAtLevel(sl)
-        adnNode.adn.showLevelsInfo.setMaxOutAtLevel(sl, maxAds)
-        adnNode.adn.isEnabled = adnNode2.adn.isEnabled
-        adnNode.save.map { _ =>
-          Redirect(routes.SysMarket.showAdnNode(adnId))
-            .flashing("success" -> "Изменения сохранены")
+        val supExistsFut: Future[Boolean] = adnNode2.adn.supId.fold
+          { Future successful true }
+          { supId => MAdnNodeCache.getByIdCached(supId).map(_.isDefined) }
+        supExistsFut flatMap {
+          case true =>
+            adnNode.companyId = adnNode2.companyId
+            adnNode.meta = adnNode2.meta
+            adnNode.adn.memberType = adnNode2.adn.memberType
+            adnNode.adn.rights = adnNode2.adn.rights
+            adnNode.adn.isEnabled = adnNode2.adn.isEnabled
+            adnNode.adn.showLevelsInfo = adnNode2.adn.showLevelsInfo
+            adnNode.adn.supId = adnNode2.adn.supId
+            adnNode.save.map { _ =>
+              Redirect(routes.SysMarket.showAdnNode(adnId))
+                .flashing("success" -> "Изменения сохранены")
+            }
+
+          case false =>
+            val formWithErrors = formBinded.withError("adn.supId", "error.invalid")
+            editAdnNodeBody(adnId, formWithErrors)
+              .map(NotAcceptable(_))
         }
       }
     )
