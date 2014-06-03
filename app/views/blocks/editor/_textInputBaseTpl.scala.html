@@ -19,8 +19,8 @@
           @defining( bfNameBase + ".font.family") { ffname =>
             <div class="lk-field-tools__editor">
             <select name="@ffname" class="js-custom-font-family-select">
-            @List("pfdintextcomppro-medium-webfont","favoritlightcondcregular").zipWithIndex.map { case (vl, i) =>
-              <option value="@vl" @if( vl == af(ffname).value ){selected="selected"}>Шрифт @i</option>
+            @List("pfdintextcomppro-medium-webfont", "favoritlightcondcregular").zipWithIndex.map { case (vl, i) =>
+              <option value="@vl" @if( af(ffname).value.exists(_ == vl) ){selected="selected"}>Шрифт @i</option>
             }
             </select>
             </div>
