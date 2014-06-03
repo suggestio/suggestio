@@ -15,7 +15,7 @@
   </div>
 
   <div class="content">
-    <div class="ad-preview sio-mart-showcase">
+    <div class="sio-mart-showcase" style="position: relative;">
       @_single_offer_w_description(mad, false, false, adProducer, 1, 1)
     </div>
   </div>
@@ -42,14 +42,14 @@
       </p>
 
       @* Отменить размещение рекламы с указанием причины. *@
-      @form(routes.MarketAdv.advReqRefuseSubmit(advReq.id.get)) {
+      @form(routes.MarketAdv.advReqRefuseSubmit(advReq.id.get), 'id -> "advReqRefuse") {
         @textarea(refuseFormM("reason"), '_label -> "", 'placeholder -> "Напишите причину отмены")
-        <input class="gray-but-small f-left" type="submit" value="Отменить" style="margin: 25px 0 25px 100px;"/>
+        <input class="gray-but-small f-left" type="submit" value="Отменить" style="margin: 25px 0 25px 150px;"/>
       }
 
       @* Подтвердить размещение рекламы. *@
       @form(routes.MarketAdv.advReqAcceptSubmit(advReq.id.get)) {
-        <input class="red-but-small f-right" type="submit" value="Разместить" style="margin: 25px 100px 25px 0;"/>
+        <input class="red-but-small f-right" type="submit" value="Разместить" style="margin: 25px 150px 25px 0;"/>
       }
 
 

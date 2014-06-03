@@ -81,8 +81,17 @@ CbcaPopup = () ->
     this.showOverlay()
     $popup = $(popup)
     $popup.show()
-    marginTop = 0 - parseInt($popup.height()/2) + $(window).scrollTop()
-    $popup.css('margin-top', marginTop)
+
+    popupHeight = $popup.height()
+    top = parseInt(popupHeight/2)
+    marginTop = 0 - top + $(window).scrollTop()
+    $popup.css(
+      "margin-top": marginTop + 25,
+      "top": top
+    )
+
+    if(popupHeight > $('.body').height())
+      $('.body').height popupHeight
 
 
   hidePopup: (popup) ->
@@ -90,6 +99,7 @@ CbcaPopup = () ->
     this.hideOverlay()
     $(popup).hide()
     $('#overlay, #overlayData').hide()
+    $('.body').css 'height', ''
 
 
 ##поисковая строка##
@@ -131,6 +141,16 @@ CbcaCommon = () ->
 
   self.init = () ->
 
+    $(document).on 'submit', '#advReqRefuse', (e)->
+      $this = $(this)
+      $textarea = $this.find('textarea')
+
+      if(!$textarea.val())
+        $textarea.closest('.input').addClass('error')
+        return false
+      else
+        return true
+
     $(document).on 'click', '.js-advertising-requests-item_get-info', (e)->
       e.preventDefault()
       $this = $(this)
@@ -140,7 +160,8 @@ CbcaCommon = () ->
         url: href,
         success: (data)->
           $('#advReqWind').remove()
-          $('.body-wrap').append(data)
+          $('#popupsContainer').append(data).find('.sm-block').addClass('double-size')
+
           cbca.popup.showPopup('#advReqWind')
       )
 

@@ -30,7 +30,10 @@
     }
   }
 
-  @market.lk.lkBlock("На рассмотрении", "attention") {
+  @market.lk.lkBlock(
+    blockTitle ="На рассмотрении",
+    titleSubClass = if (!advsWithAds.isEmpty) "attention" else ""
+  ) {
     <div class="advertising-requests">
 
       <div class="advertising-requests_text">
