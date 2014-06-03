@@ -37,7 +37,7 @@ object MAdvReq extends MAdvStatic[MAdvReq] {
       )
   }
 
-  /** Row-парсер выхлопа [[calculateBlockedSumForAd()]]. */
+  /** Row-парсер выхлопа calculateBlockedSumForAd(). */
   val blockedSumParser = AMOUNT_PARSER ~ CURRENCY_PARSER map {
     case amount ~ currency => (amount, currency)
   }

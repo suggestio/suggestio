@@ -129,7 +129,7 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     updateOrigImgFull(needImg, oldImgId.map(MImgInfo(_)))
   }
 
-  /** Комбо из [[updateOrigImgFull()]] и [[miiPreferFirstCropped()]]. */
+  /** Комбо из updateOrigImgFull() и miiPreferFirstCropped(). */
   def updateOrigImg(needImgs: Option[ImgInfo4Save[ImgIdKey]], oldImgs: Option[MImgInfoT]): Future[Option[MImgInfoT]] = {
     updateOrigImgFull(needImgs, oldImgs)
       .map { miiPreferFirstCropped }
@@ -294,10 +294,10 @@ object ImgFormUtil extends PlayMacroLogsImpl {
 
 
   /**
-   * Т.к. [[updateOrigImg()]] возвращает список результатов, хотя подразумевается только один, то надо
+   * Т.к. updateOrigImg() возвращает список результатов, хотя подразумевается только один, то надо
    * выделять нужную картинку из выхлопа сохраненных картинок.
    * Так, при кадрировании возвращается две сохранённые картинки (исходная и кадрированная) вместо одной или нуля.
-   * @param l Выхлоп [[updateOrigImg()]]
+   * @param l Выхлоп updateOrigImg()
    * @return Опционально выбранная картинка.
    */
   def miiPreferFirstCropped(l: List[MImgInfoT]): Option[MImgInfoT] = {

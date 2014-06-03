@@ -103,9 +103,8 @@
   @* Категории в рамках узла возможны, но отключены до лучших времён. *@
   @*<a href="@routes.MarketCategory.showCatsFor(adnNode.id.get)">Категории</a><br/>*@
 
-  @if(adnNode.adn.memberType == AdNetMemberTypes.MART) {
-    <a href="@routes.SysMarket.martInviteForm(adnNode.id.get)">Инвайты на управление ТЦ</a><br/>
-  }
+  <a href="@routes.SysMarket.nodeOwnerInviteForm(adnNode.id.get)">Инвайты на управление узлом</a><br/>
+
   @* Функционал товаров и прайс-листов пока скрыт: кравлер не готов, товары не нужны. *@
   @*<a href="@routes.SysMarket.splAddForm(mshop.id.get)">Добавить источник прайс-листа.</a>
     <a href="@routes.MarketOffer.showShopPromoOffers(mshop.id.get)">ЛК: Товары магазина</a> *@

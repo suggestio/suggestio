@@ -78,7 +78,7 @@ object MBillBalance {
   }
 
   /**
-   * Заблокировать часть денег на счете. По сути, ускоренная версия комбинации [[updateAmount()]] и [[updateBlocked()]].
+   * Заблокировать часть денег на счете. По сути, ускоренная версия комбинации updateAmount() и updateBlocked().
    * @param adnId id узла (id владельца кошелька).
    * @param amount Блокируемый объём средств.
    * @return Кол-во обновлённых рядов, т.е. 0 или 1.
@@ -106,6 +106,7 @@ object MBillBalance {
       .on('adnId -> adnId)
       .as(SqlModelStatic.boolColumnParser single)
   }
+
 }
 
 

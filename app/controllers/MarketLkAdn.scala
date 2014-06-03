@@ -18,6 +18,8 @@ import util.FormUtil._
 import play.api.libs.json._
 import io.suggest.ym.model.common.AdShowLevels
 import play.api.db.DB
+import play.api.mvc.{AnyContent, Result}
+import play.api.mvc.Security.username
 
 /**
  * Suggest.io
@@ -25,7 +27,7 @@ import play.api.db.DB
  * Created: 23.04.14 11:18
  * Description: Унифицированные части личного кабинета.
  */
-object MarketLkAdn extends SioController with PlayMacroLogsImpl {
+object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceProtect {
 
   import LOGGER._
 
@@ -274,6 +276,87 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl {
     )
     MAd.searchAdsRt(req) map { mads =>
       Ok(showSlaveNodeTpl(msup = supNode, mslave = slaveNode, mads))
+    }
+  }
+
+
+
+  // Обработка инвайтов на управление ТЦ.
+  private val nodeOwnerInviteAcceptM = Form(optional(passwordWithConfirmM))
+
+  /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
+  def nodeOwnerInviteAcceptForm(martId: String, eActId: String) = nodeOwnerInviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
+    Ok(invite.inviteAcceptFormTpl(mmart, eAct, nodeOwnerInviteAcceptM))
+  }
+
+  /** Сабмит формы подтверждения инвайта на управление ТЦ. */
+  def nodeOwnerInviteAcceptFormSubmit(martId: String, eActId: String) = nodeOwnerInviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
+    // Если юзер залогинен, то форму биндить не надо
+    val formBinded = nodeOwnerInviteAcceptM.bindFromRequest()
+    formBinded.fold(
+      {formWithErrors =>
+        debug(s"martInviteAcceptFormSubmit($martId, act=$eActId): Form bind failed: ${formatFormErrors(formWithErrors)}")
+        NotAcceptable(invite.inviteAcceptFormTpl(mmart, eAct, formWithErrors))
+      },
+      {passwordOpt =>
+        if (passwordOpt.isEmpty && !request.isAuth) {
+          val form1 = formBinded
+            .withError("pw1", "error.required")
+            .withError("pw2", "error.required")
+          NotAcceptable(invite.inviteAcceptFormTpl(mmart, eAct, form1))
+        } else {
+          // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
+          eAct.delete.flatMap { isDeleted =>
+            val newPersonIdOptFut: Future[Option[String]] = if (!request.isAuth) {
+              MPerson(lang = lang.code).save flatMap { personId =>
+                EmailPwIdent.applyWithPw(email = eAct.email, personId=personId, password = passwordOpt.get, isVerified = true)
+                  .save
+                  .map { emailPwIdentId => Some(personId) }
+              }
+            } else {
+              Future successful None
+            }
+            // Для обновления полей MMart требуется доступ к personId. Дожидаемся сохранения юзера...
+            newPersonIdOptFut flatMap { personIdOpt =>
+              val personId = (personIdOpt orElse request.pwOpt.map(_.personId)).get
+              if (!(mmart.personIds contains personId)) {
+                mmart.personIds += personId
+              }
+              mmart.save.map { _martId =>
+                Redirect(routes.MarketLkAdn.showAdnNode(martId))
+                  .flashing("success" -> "Регистрация завершена.")
+                  .withSession(username -> personId)
+              }
+            }
+          }
+        }
+      }
+    )
+  }
+
+  private def nodeOwnerInviteAcceptCommon(adnId: String, eaId: String)(f: (EmailActivation, MAdnNode) => AbstractRequestWithPwOpt[AnyContent] => Future[Result]) = {
+    MaybeAuth.async { implicit request =>
+      bruteForceProtect flatMap { _ =>
+        EmailActivation.getById(eaId) flatMap {
+          case Some(eAct) if eAct.key == adnId =>
+            MAdnNodeCache.getByIdCached(adnId) flatMap {
+              case Some(mmart) =>
+                f(eAct, mmart)(request)
+              case None =>
+                // should never occur
+                error(s"nodeOwnerInviteAcceptCommon($adnId, eaId=$eaId): Mart not found, but code for mart exist. This should never occur.")
+                NotFound(invite.inviteInvalidTpl("mart.not.found"))
+            }
+
+          case other =>
+            // Неверный код активации или id магазина. Если None, то код скорее всего истёк. Либо кто-то брутфорсит.
+            debug(s"nodeOwnerInviteAcceptCommon($adnId, eaId=$eaId): Invalid activation code (eaId): code not found. Expired?")
+            // TODO Надо проверить, есть ли у юзера права на магазин, и если есть, то значит юзер дважды засабмиттил форму, и надо его сразу отредиректить в его магазин.
+            // TODO Может и быть ситуация, что юзер всё ещё не залогинен, а второй сабмит уже тут. Нужно это тоже как-то обнаруживать. Например через временную сессионную куку из формы.
+            warn(s"TODO I need to handle already activated requests!!!")
+            NotFound(invite.inviteInvalidTpl("mart.activation.expired.or.invalid.code"))
+        }
+      }
     }
   }
 

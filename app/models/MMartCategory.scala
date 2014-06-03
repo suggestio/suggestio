@@ -171,22 +171,40 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
 
   type CollectMMCatsAcc_t = List[(Option[String], Seq[MMartCategory])]
 
+  /**
+   * Обернуть фьючерс списка категорий во фьючерс результата-аккамулятора collectCatListsUpTo().
+   * Используется для подставления выхлопа findTopForOwner() в качестве результата collectCatListsUpTo().
+   * @param catsFut Фьючерс списка категорий.
+   * @return Тоже самое, что и collectCatListsUpTo().
+   */
+  def catsAsAccFut(catsFut: Future[Seq[MMartCategory]])(implicit ec: ExecutionContext): Future[CollectMMCatsAcc_t] = {
+    catsFut
+      .map { mmcats => List(None -> mmcats) }
+  }
+
   /** Рекурсивная сборка иерархии списка категорий от указанной категории наверх до самого top level.
     * Используется, чтобы сгенерить селекторы категорий на всех уровнях необходимых (начиная от top и заканчивая текущей
     * категорией). Используется восходящий траверс.
     */
   def collectCatListsUpTo(catOwnerId: String, currCatId: String, acc: CollectMMCatsAcc_t = Nil)(implicit ec: ExecutionContext, client: Client): Future[CollectMMCatsAcc_t] = {
-    getParentIdOf(currCatId) flatMap { maybeParentId =>
-      findAllOnSameLevelParent(catOwnerId, maybeParentId) flatMap { lCats =>
-        // Нужно решить: надо ли подниматься ещё выше или это уже вершина?
-        val acc1 = (Some(currCatId), lCats) :: acc
-        maybeParentId match {
-          case Some(Some(parentId)) =>
-            collectCatListsUpTo(catOwnerId, currCatId=parentId, acc1)
+    getParentIdOf(currCatId) flatMap {
+      // Вообще None означает, что категория, на которую ссылалась карточка, была удалена и утрачена.
+      // Реанимируем работу через возврат исходного списка категорий.
+      case None =>
+        debug(s"collectCatListsUpTo(own=$catOwnerId, catId=$currCatId): expected currCat don't exists! Recovering with top cats...")
+        catsAsAccFut(findTopForOwner(catOwnerId))
+      // Не-None результат означает, что можно двигаться дальше.
+      case maybeParentId =>
+        findAllOnSameLevelParent(catOwnerId, maybeParentId) flatMap { lCats =>
+          // Нужно решить: надо ли подниматься ещё выше или это уже вершина?
+          val acc1 = (Some(currCatId), lCats) :: acc
+          maybeParentId match {
+            case Some(Some(parentId)) =>
+              collectCatListsUpTo(catOwnerId, currCatId=parentId, acc1)
 
-          case _ => Future successful acc1
+            case _ => Future successful acc1
+          }
         }
-      }
     }
   }
 

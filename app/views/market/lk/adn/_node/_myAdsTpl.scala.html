@@ -21,7 +21,7 @@
 
     @defining(outLvlMap.size == 1) { isSingleOutLvl =>
       @_adsListTpl(mads, coverDisableReason = true) { mad =>
-        <a class="ads-list-block__link" href="@routes.MarketAd.editAd(mad.id.get)"></a>
+        <a class="ads-list-block__link" href="@routes.MarketAd.editAd(mad.id.get)">Нажмите для<br/>редактирования</a>
 
         @* Галочки для управления отображением рекламной карточки магазина. *@
         <div class="ads-list-block__controls">

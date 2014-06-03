@@ -8,28 +8,53 @@
 @import util.FormHelpers._
 @import util.DateTimePrettyPrinter._
 
-<div>
-  @_single_offer(mad)
+<div class="popup adv-req-wind" id="advReqWind" xmlns="http://www.w3.org/1999/html">
 
-  <p>Запрос размещения рекламы от <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">@adProducer.meta.name</a></p>
+  <div class="hat">
+    <a href="#" class="close">&nbsp;</a>
+  </div>
 
-  <p>С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)</p>
-  @if(advReq.onStartPage) {
-    <p>+ Размещение на главном экране</p>
-  }
+  <div class="content">
 
-  <p>Стоимость согласно <a href="@routes.MarketLkBilling._renderNodeMbmdsWindow(adRcvr.id.get)">ставке тарифных планов</a>.</p>
+      <div class="ad-preview">
+        @_single_offer(mad)
+      </div>
 
-  <p>@formatPrice(advReq.amountWithComission, advReq.currency)</p>
+  </div>
 
-  @* Отменить размещение рекламы с указанием причины. *@
-  @form(routes.MarketAdv.advReqRefuseSubmit(advReq.id.get)) {
-    @textarea(refuseFormM("reason"))
-    <input type="submit" value="Отменить размещение"/>
-  }
+  <hr class="line-gray" />
 
-  @* Подтвердить размещение рекламы. *@
-  @form(routes.MarketAdv.advReqAcceptSubmit(advReq.id.get)) {
-    <input type="submit" value="Разместить"/>
-  }
+  <div class="content">
+
+      <p style="margin-top: 0;">
+        <strong>Запрос размещения рекламы от <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">@adProducer.meta.name</a></strong>
+        <br/>
+
+        <span class="gray font-12">С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)</span><br/>
+        @if(advReq.onStartPage) {
+          <span>+ Размещение на главном экране</span>
+        }
+
+      </p>
+
+      <p class="gray font-12">
+        Стоимость согласно <a href="@routes.MarketLkBilling._renderNodeMbmdsWindow(adRcvr.id.get)">ставке тарифных планов</a>.
+        <br/>
+        <strong class="adv-req-wind_price">@formatPrice(advReq.amountWithComission, advReq.currency)</strong>
+      </p>
+
+      @* Отменить размещение рекламы с указанием причины. *@
+      @form(routes.MarketAdv.advReqRefuseSubmit(advReq.id.get)) {
+        @textarea(refuseFormM("reason"), '_label -> "", 'placeholder -> "Напишите причину отмены")
+        <input class="gray-but-small f-left" type="submit" value="Отменить" style="margin: 25px 0 25px 100px;"/>
+      }
+
+      @* Подтвердить размещение рекламы. *@
+      @form(routes.MarketAdv.advReqAcceptSubmit(advReq.id.get)) {
+        <input class="red-but-small f-right" type="submit" value="Разместить" style="margin: 25px 100px 25px 0;"/>
+      }
+
+
+  </div>
+
 </div>

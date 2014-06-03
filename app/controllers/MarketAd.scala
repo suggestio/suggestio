@@ -167,28 +167,6 @@ object MarketAd extends SioController with TempImgSupport {
   }
 
 
-  private def topCatsAsAcc(catOwnerId: String): Future[CollectMMCatsAcc_t] = {
-    MMartCategory.findTopForOwner(catOwnerId) map {
-      topCats => List(None -> topCats)
-    }
-  }
-  
-
-  /** Выдать над и под-категории по отношению к указанной категории. */
-  private def nearCatsList(catOwnerId: String, catId: String): Future[CollectMMCatsAcc_t] = {
-    val subcatsFut = MMartCategory.findDirectSubcatsOf(catId)
-    for {
-      upCats  <- MMartCategory.collectCatListsUpTo(catOwnerId=catOwnerId, currCatId=catId)
-      subcats <- subcatsFut
-    } yield {
-      if (!subcats.isEmpty)
-        upCats ++ List(None -> subcats)
-      else
-        upCats
-    }
-  }
-
-
   private def renderEditFormWith(af: AdFormM)(implicit request: RequestWithAd[_]) = {
     import request.{producer, mad}
     val catOwnerId = getCatOwnerId(producer)
@@ -393,24 +371,36 @@ object MarketAd extends SioController with TempImgSupport {
   /** Получение списков категорий на основе формы и владельца категорий. */
   private def getMMCatsForCreate(af: AdFormM, catOwnerId: String): Future[MMartCategory.CollectMMCatsAcc_t] = {
     val catIdOpt = maybeAfCatId(af)
-    catIdOpt match {
-      case Some(catId) =>
-        nearCatsList(catOwnerId=catOwnerId, catId=catId)
-          .filter { !_.isEmpty }
-          .recoverWith { case ex: NoSuchElementException => topCatsAsAcc(catOwnerId) }
-
-      case None => topCatsAsAcc(catOwnerId)
-    }
+    getMMCatsFor(catIdOpt, catOwnerId: String)
   }
 
 
   private def getMMCatsForEdit(af: AdFormM, mad: MAd, catOwnerId: String): Future[CollectMMCatsAcc_t] = {
-    maybeAfCatId(af).orElse(mad.userCatId) match {
-      case Some(catId) => nearCatsList(catOwnerId=catOwnerId, catId=catId)
-      case None => topCatsAsAcc(catOwnerId)
-    }
+    val catIdOpt = maybeAfCatId(af).orElse(mad.userCatId)
+    getMMCatsFor(catIdOpt, catOwnerId: String)
   }
 
+  private def getMMCatsFor(catIdOpt: Option[String], catOwnerId: String): Future[CollectMMCatsAcc_t] = {
+    catIdOpt.fold
+      { // Выдать top-категории
+        val mmcatsFut = MMartCategory.findTopForOwner(catOwnerId)
+        MMartCategory.catsAsAccFut(mmcatsFut)
+      }
+      {catId =>
+        // Выдать над и под-категории по отношению к указанной категории.
+        val subcatsFut = MMartCategory.findDirectSubcatsOf(catId)
+        val upCatsFut = MMartCategory.collectCatListsUpTo(catOwnerId=catOwnerId, currCatId=catId)
+        for {
+          upCats  <- upCatsFut
+          subcats <- subcatsFut
+        } yield {
+          if (!subcats.isEmpty)
+            upCats ++ List(None -> subcats)
+          else
+            upCats
+        }
+      }
+  }
 
 }
 

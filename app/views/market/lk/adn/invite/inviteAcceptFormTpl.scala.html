@@ -1,6 +1,6 @@
-@(mmart: MAdnNode, eAct: EmailActivation, iaf: Form[_])(implicit ctx: util.Context)
+@(adnNode: MAdnNode, eAct: EmailActivation, iaf: Form[_])(implicit ctx: util.Context)
 
-@* Страница с формой подтверждения регистрации в качестве управляющего ТЦ.
+@* Страница с формой подтверждения регистрации в качестве управляющего узлом ADN.
    Новый пользователь здесь может ввести пароль. Уже залогиненный - просто подтвердить себя. *@
 @import helper._
 
@@ -19,13 +19,13 @@
 
     <table cellpadding="0" cellspacing="0" class="input-wrap big disabled">
       <td class="left">
-        <label for="mmartName">Торговый центр:</label>
+        <label for="adnNodeName">Торговый центр:</label>
       </td>
 
       <td class="right">
         <div class="input clearfix">
           <div class="input-shadow">
-            <input id="mmartName" type="text" disabled value="@mmart.meta.name"/>
+            <input id="adnNodeName" type="text" disabled value="@adnNode.meta.name"/>
           </div>
         </div>
       </td>
@@ -33,20 +33,20 @@
 
     <table cellpadding="0" cellspacing="0" class="input-wrap big disabled">
       <td class="left">
-        <label for="mmartEmail">E-mail:</label>
+        <label for="adnNodeEmail">E-mail:</label>
       </td>
 
       <td class="right">
         <div class="input clearfix">
           <div class="input-shadow">
-            <input id="mmartEmail" type="text" disabled value="@eAct.email"/>
+            <input id="adnNodeEmail" type="text" disabled value="@eAct.email"/>
           </div>
         </div>
       </td>
     </table>
 
 
-      @form(routes.MarketMartLk.martInviteAcceptFormSubmit(mmart.id.get, eAct.id.get)) {
+      @form(routes.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnNode.id.get, eAct.id.get)) {
 
         @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
         @if(!ctx.isAuth) {

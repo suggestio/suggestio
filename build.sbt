@@ -1,3 +1,7 @@
+//import sbt._
+//import sbt.Process._
+//import play.Project._
+
 organization := "io.suggest"
 
 name := "sioweb21"
@@ -53,7 +57,7 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "9.3-1100-jdbc41"
 )
 
-play.Project.playScalaSettings
+playScalaSettings
 
 // После импорта настроек, typesafe-репа не кешируется. Это надо бы исправить.
 resolvers ~= {
