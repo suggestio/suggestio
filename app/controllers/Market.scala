@@ -11,9 +11,10 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
-import play.api.mvc.{AnyContent, Result}
+import play.api.mvc.{RequestHeader, AnyContent, Result}
 import io.suggest.ym.model.stat.{MAdStat, AdStatActions}
 import io.suggest.ym.model.common.IBlockMeta
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -27,6 +28,9 @@ object Market extends SioController with PlayMacroLogsImpl {
   import LOGGER._
 
   val JSONP_CB_FUN = "siomart.receive_response"
+
+  /** Максимальное кол-во магазинов, возвращаемых в списке ТЦ. */
+  val MAX_SHOPS_LIST_LEN = configuration.getInt("market.frontend.subproducers.count.max") getOrElse 200
 
   /** Входная страница для sio-market для ТЦ. */
   def martIndex(martId: String) = marketAction(martId) { implicit request =>
@@ -113,20 +117,18 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   // Внутренние хелперы
 
-  private def shopsMap(martId: String): Future[Map[String, MAdnNode]] = {
-    MAdnNode.findBySupId(martId, onlyEnabled=true)
-      .map { _.map { shop => shop.id.get -> shop }.toMap }
+  private def martNotFound(martId: String)(implicit request: RequestHeader) = {
+    info(s"martNotFound($martId): 404")
+    http404AdHoc
   }
-
-  private def martNotFound(martId: String) = NotFound("Mart not found")
 
   /** Метод для генерации json-ответа с html внутри. */
   private def jsonOk(html: JsString, action: String) = {
-    val jsonHtml = JsObject(Seq(
+    val json = JsObject(Seq(
       "html"    -> html,
       "action"  -> JsString(action)
     ))
-    Ok( Jsonp(JSONP_CB_FUN, jsonHtml) )
+    Ok( Jsonp(JSONP_CB_FUN, json) )
   }
 
 
@@ -135,7 +137,8 @@ object Market extends SioController with PlayMacroLogsImpl {
   // TODO Надо бы заинлайнить и убрать все контейнеры и прочее добро. Это ускорит работу.
   private def marketAction(adnId: String)(f: MarketRequest => Future[Result]) = MaybeAuth.async { implicit request =>
     // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
-    val shopsFut = shopsMap(adnId)
+    val shopsFut = MAdnNode.findBySupId(adnId, onlyEnabled = true, maxResults = MAX_SHOPS_LIST_LEN)
+      .map { _.map { shop => shop.id.get -> shop }.toMap }
     // Читаем из основной базы текущий ТЦ
     val nodeOptFut = MAdnNode.getById(adnId)
     // Текущие категории ТЦ
@@ -195,7 +198,7 @@ object Market extends SioController with PlayMacroLogsImpl {
 
 
   /** Реквест, используемый в Market-экшенах. */
-  abstract class MarketRequest(request: AbstractRequestWithPwOpt[AnyContent])
+  sealed abstract class MarketRequest(request: AbstractRequestWithPwOpt[AnyContent])
     extends AbstractRequestWithPwOpt[AnyContent](request) {
     def mmart: MAdnNode
     def marketDataFut: Future[MarketData]
@@ -205,6 +208,6 @@ object Market extends SioController with PlayMacroLogsImpl {
   }
 
   /** Контейнер асинхронно-получаемых данных, необходимых для рендера, но не нужных на промежуточных шагах. */
-  case class MarketData(mmcats: Seq[MMartCategory], mshops: Map[String, MAdnNode])
+  sealed case class MarketData(mmcats: Seq[MMartCategory], mshops: Map[String, MAdnNode])
 }
 
