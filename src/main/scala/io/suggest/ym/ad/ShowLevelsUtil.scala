@@ -53,12 +53,6 @@ object ShowLevelsUtil extends MacroLogsImpl {
   /** Сколько максимум магазин может постить на главную ТЦ. */
   val SHOP_LVL_OUT_START_PAGE_MAX      = CONFIG.getInt("sl.shop.out.lvl_start_page.max") getOrElse 1
   
-  /** Сколько карточек магазин может поистить на уровень каталога магазинов. По идее - всегда 1. */
-  val SHOP_LVL_OUT_MEMBER_CATALOG_MAX  = CONFIG.getInt("sl.shop.out.lvl_member_catalog.max") getOrElse 1
-  
-  /** Сколько по дефолту магазин может публиковать рекламных карточек на свой внутренний раздел. */
-  val SHOP_LVL_OUT_MEMBER_DLFT         = CONFIG.getInt("sl.shop.out.lvl_member.dflt") getOrElse 2
-
 
   /**
    * Накатить на карточку исходящие трансформации исходных (желаемых) showLevels.

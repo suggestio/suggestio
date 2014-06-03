@@ -106,10 +106,6 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
           mi.isEnabled = booleanParser(isEnabledRaw)
         case (DISABLE_REASON_ESFN, drRaw) =>
           mi.disableReason = Option(drRaw).map(stringParser)
-        // TODO IS-поля устарели, и были заменены на поле rights. Их можно удалить в мае 2014.
-        case (IS_PRODUCER_ESFN, v)    => mi.isProducer = booleanParser(v)
-        case (IS_RECEIVER_ESFN, v)    => mi.isReceiver = booleanParser(v)
-        case (IS_SUPERVISOR_ESFN, v)  => mi.isSupervisor = booleanParser(v)
       }
   }
 
