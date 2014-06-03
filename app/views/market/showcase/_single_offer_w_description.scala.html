@@ -1,0 +1,30 @@
+@(mad: MAdT, isHidden: Boolean = false, isWithAction : Boolean = false, producer:MAdnNode, adIndex:Int=0, adsCount:Int=0)(implicit ctx: util.Context)
+
+<div class="sio-mart-node-offers-window__single-ad-w-border">
+  @_single_offer(mad, false, false)
+</div>
+
+@* Информация о магазине *@
+<div class="sio-mart-node-offers-window__single-ad-location sm-now-location">
+
+  <div class="sio-mart-node-offers-window__page-marker sio-mart-showcase-page-marker">
+
+    <div class="sio-mart-showcase-page-marker__label">Карточек<br/>товара:</div>
+    <div class="sio-mart-showcase-page-marker__no">@adIndex/@adsCount</div>
+
+  </div>
+
+  <div class="sm-now-location__icon"></div>
+  <div class="sm-now-location__info">
+    <span>@if( producer.meta.floor ){ @producer.meta.floor-й этаж }</span>
+    <strong>@producer.meta.name</strong>
+  </div>
+  <div class="sm-clear"></div>
+</div>
+
+@* Контейнер с описанием рекламной карточки *@
+@mad.richDescrOpt.map { rd =>
+<div class="sio-mart-node-offers-window__single-ad-descr" style="background-color: #@rd.bgColor;">
+  @Html(rd.text)
+</div>
+}
