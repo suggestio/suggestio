@@ -399,7 +399,7 @@ case class AdNetMemberInfo(
   var producerIds: Set[String] = Set.empty,
   // перемещено из mpub:
   var showLevelsInfo: AdnMemberShowLevels = AdnMemberShowLevels(),
-  var isEnabled: Boolean = false,
+  var isEnabled: Boolean = true,
   var disableReason: Option[String] = None
 ) {
 

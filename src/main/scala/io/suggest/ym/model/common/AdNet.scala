@@ -3,6 +3,7 @@ package io.suggest.ym.model.common
 import io.suggest.util.MacroLogsImpl
 import AdnRights._
 import io.suggest.ym.model.MAdnNode
+import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 
 /**
  * Suggest.io
@@ -28,9 +29,6 @@ object AdNetMemberTypes extends Enumeration {
     /** Можно ли отображать кнопку просмотра подчинённых узлов? */
     def canViewSlaves: Boolean
 
-    /** Дефолтовая ADN-конфигурация при создании узла. Заливается в поле [[io.suggest.ym.model.MAdnNode.adn]]. */
-    def getAdnInfoDflt: AdNetMemberInfo
-
     /**
      * Добавлен новый узел в качестве подчинённого узла. Нужно внести измения в подчинённый узел.
      * @param parent Существующий узел-супервизор.
@@ -46,6 +44,20 @@ object AdNetMemberTypes extends Enumeration {
      * @return true, если были внесены изменения в child-узел.
      */
     def updateParentForChild(parent: MAdnNode, child: MAdnNode): Boolean = unsupportedNodeOp
+
+    def showLevelsIn: LvlMap_t
+    def showLevelsOut: LvlMap_t
+    def showLevels = AdnMemberShowLevels(in = showLevelsIn, out = showLevelsOut)
+    def adnRights: Set[AdnRight]
+
+    /** Дефолтовая ADN-конфигурация при создании узла. Заливается в поле [[io.suggest.ym.model.MAdnNode.adn]]. */
+    def getAdnInfoDflt: AdNetMemberInfo = {
+      AdNetMemberInfo(
+        memberType = this,
+        rights = adnRights,
+        showLevelsInfo = showLevels
+      )
+    }
   }
 
 
@@ -54,25 +66,19 @@ object AdNetMemberTypes extends Enumeration {
 
   implicit def value2val(x: Value): AdNetMemberType = x.asInstanceOf[AdNetMemberType]
 
+
   /** Торговый центр. */
   val MART = new Val("m", displayAddrOnAds = false, slDflt = AdShowLevels.LVL_START_PAGE) {
+    override def showLevelsIn: LvlMap_t = Map(
+      LVL_MEMBER          -> MART_LVL_IN_MEMBER_DFLT,
+      LVL_MEMBERS_CATALOG -> MART_LVL_IN_MEMBERS_CATALOG_DFLT,
+      LVL_START_PAGE      -> MART_LVL_IN_START_PAGE_DFLT
+    )
+    override def showLevelsOut: LvlMap_t = Map(LVL_START_PAGE -> MART_LVL_OUT_START_PAGE_DFLT)
+    override def adnRights = Set(PRODUCER, RECEIVER)
+    override def showLevels = super.showLevels
+
     override def canViewSlaves = true
-    override def getAdnInfoDflt: AdNetMemberInfo = {
-      AdNetMemberInfo(
-        memberType = this,
-        // 2014.apr.09: Решено, что у ТЦ не должно быть прав супервайзера по объективным причинам.
-        rights = Set(PRODUCER, RECEIVER),
-        isEnabled = true,
-        showLevelsInfo = AdnMemberShowLevels(
-          in = Map(
-            LVL_MEMBER          -> MART_LVL_IN_MEMBER_DFLT,
-            LVL_MEMBERS_CATALOG -> MART_LVL_IN_MEMBERS_CATALOG_DFLT,
-            LVL_START_PAGE      -> MART_LVL_IN_START_PAGE_DFLT
-          ),
-          out = Map(LVL_START_PAGE -> MART_LVL_OUT_START_PAGE_DFLT)
-        )
-      )
-    }
     // ТЦ при добавлении магазина должен прописывать его в свой producerIds.
     override def updateParentForChild(parent: MAdnNode, child: MAdnNode): Boolean = {
       parent.adn.producerIds += child.id.get
@@ -80,47 +86,36 @@ object AdNetMemberTypes extends Enumeration {
     }
   }
 
+
   /** Магазин. Обычно арендатор в ТЦ. */
   val SHOP = new Val("s", displayAddrOnAds = true, slDflt = AdShowLevels.LVL_MEMBER) {
+    override def showLevelsIn: LvlMap_t = Map.empty
+    override def showLevelsOut: LvlMap_t = Map(
+      LVL_START_PAGE      -> SHOP_LVL_OUT_START_PAGE_DFLT,
+      LVL_MEMBERS_CATALOG -> SHOP_LVL_OUT_MEMBER_CATALOG_MAX,
+      LVL_MEMBER          -> SHOP_LVL_OUT_MEMBER_DLFT
+    )
+    override def showLevels = super.showLevels
+    override def adnRights = Set(PRODUCER)
+
     override def canViewSlaves = false
-    override def getAdnInfoDflt: AdNetMemberInfo = {
-      AdNetMemberInfo(
-        memberType = this,
-        rights = Set(PRODUCER),
-        isEnabled = false,
-        showLevelsInfo = AdnMemberShowLevels(
-          // Магазин не является
-          in = Map.empty,
-          out = Map(
-            LVL_START_PAGE      -> SHOP_LVL_OUT_START_PAGE_DFLT,
-            LVL_MEMBERS_CATALOG -> SHOP_LVL_OUT_MEMBER_CATALOG_MAX,
-            LVL_MEMBER          -> SHOP_LVL_OUT_MEMBER_DLFT
-          )
-        )
-      )
-    }
     // Для магазина нормально быть внутри ТЦ. Для этого ему не требуются изменения в состоянии.
     override def prepareChildForParent(parent: MAdnNode, child: MAdnNode) = false
   }
 
+
   /** Ресторан в сети ресторанов. */
   val RESTAURANT = new Val("r", displayAddrOnAds = false, slDflt = AdShowLevels.LVL_START_PAGE) {
+    override def showLevelsIn: LvlMap_t = Map(
+      LVL_START_PAGE -> SHOP_LVL_OUT_START_PAGE_DFLT
+    )
+    override def showLevelsOut: LvlMap_t = Map(
+      LVL_START_PAGE -> MART_LVL_OUT_START_PAGE_DFLT
+    )
+    override def showLevels = super.showLevels
+    override def adnRights = Set(PRODUCER, RECEIVER)
+
     override def canViewSlaves = false
-    override def getAdnInfoDflt: AdNetMemberInfo = {
-      AdNetMemberInfo(
-        memberType = this,
-        rights = Set(PRODUCER, RECEIVER),
-        isEnabled = true,
-        showLevelsInfo = AdnMemberShowLevels(
-          in = Map(
-            LVL_START_PAGE -> SHOP_LVL_OUT_START_PAGE_DFLT
-          ),
-          out = Map(
-            LVL_START_PAGE -> MART_LVL_OUT_START_PAGE_DFLT
-          )
-        )
-      )
-    }
     // При добавлении ресторана, супервизор ресторанной сети является для ресторана источником рекламных карточек.
     override def prepareChildForParent(parent: MAdnNode, child: MAdnNode): Boolean = {
       child.adn.producerIds += parent.id.get
@@ -128,24 +123,19 @@ object AdNetMemberTypes extends Enumeration {
     }
   }
 
+
   /** Супервайзер сети ресторанов. */
   val RESTAURANT_SUP = new Val("R", displayAddrOnAds = false, slDflt = AdShowLevels.LVL_START_PAGE) {
+    override def showLevelsIn: LvlMap_t = Map(
+      LVL_START_PAGE -> MART_LVL_IN_START_PAGE_DFLT
+    )
+    override def showLevelsOut: LvlMap_t = Map(
+      LVL_START_PAGE -> SHOP_LVL_OUT_START_PAGE_DFLT
+    )
+    override def adnRights = Set(PRODUCER, SUPERVISOR)
+    override def showLevels = super.showLevels
+
     override def canViewSlaves = true
-    override def getAdnInfoDflt: AdNetMemberInfo = {
-      AdNetMemberInfo(
-        memberType = this,
-        rights = Set(PRODUCER, SUPERVISOR, RECEIVER),
-        isEnabled = true,
-        showLevelsInfo = AdnMemberShowLevels(
-          in = Map(
-            LVL_START_PAGE -> MART_LVL_IN_START_PAGE_DFLT
-          ),
-          out = Map(
-            LVL_START_PAGE -> SHOP_LVL_OUT_START_PAGE_DFLT
-          )
-        )
-      )
-    }
     // Добавление дочерних элементов -- это норма для супервизора ресторанной сети, но дополнительные действия не требуются.
     override def updateParentForChild(parent: MAdnNode, child: MAdnNode): Boolean = false
   }
