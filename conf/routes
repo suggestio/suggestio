@@ -160,10 +160,10 @@ GET  /img/crop/:imgId                   controllers.Img.imgCropForm(imgId, width
 POST /img/crop                          controllers.Img.imgCropSubmit
 
 # market
-GET  /market/index/:martId              controllers.Market.martIndex(martId)
-GET  /market/demo_website/:martId       controllers.Market.demoWebSite(martId)
-GET  /market/ads/:martId                controllers.Market.findAds(martId, a: util.qsb.AdSearch)
-POST /market/ads/:martId/stat/:adId     controllers.Market.adStats(martId, adId, action: String)
+GET  /market/index/:adnId               controllers.Market.martIndex(adnId)
+GET  /market/site/:adnId                controllers.Market.demoWebSite(adnId)
+GET  /market/ads/:adnId                 controllers.Market.findAds(adnId, a: util.qsb.AdSearch)
+POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)
 
 
 GET  /sys                               controllers.Sys.index

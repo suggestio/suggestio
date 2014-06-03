@@ -33,7 +33,7 @@
     </p>
     @adStatActionsSeq.map { case (asa, txt) =>
       @adnNode.adn.supId.orElse(adnNode.id).map { adnNodeId =>
-        @helper.form( routes.Market.adStats(martId = adnNodeId, adId = mad.id.get, action = asa.toString) ) {
+        @helper.form( routes.Market.adStats(adnNodeId, adId = mad.id.get, action = asa.toString) ) {
           <input type="submit" value="Имитировать @Messages(txt)"/>
         }
       }
