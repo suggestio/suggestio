@@ -1,24 +1,24 @@
-@(mmart: MAdnNode, imf: Form[_], eActs: Seq[EmailActivation])(implicit ctx: util.Context)
+@(adnNode: MAdnNode, imf: Form[_], eActs: Seq[EmailActivation])(implicit ctx: util.Context)
 
-@* Форма для создания инвайта на управление ТЦ. *@
+@* Форма для создания инвайта на управление узлом рекламной сети. *@
 @import helper._
 @import sys1.market.adn._
 
 @hPathAfter1 = {
-  / <a href="@routes.SysMarket.showAdnNode(mmart.id.get)">@mmart.meta.name</a>
+  / <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
   / Инвайт на управление
 }
 
 @adnBase(
-  title = "Инвайт на управление ТЦ " + mmart.meta.name,
+  title = "Инвайт на управление ТЦ " + adnNode.meta.name,
   hPathAfter = Some(hPathAfter1)
 ) {
 
   <h2>Текущие владельцы ТЦ</h2>
-  <p>@if(mmart.personIds.isEmpty) {
+  <p>@if(adnNode.personIds.isEmpty) {
     У этого ТЦ нет пользователей, имеющих права доступа.
   } else {
-    Текущие подтверждённые пользователи: @mmart.personIds.mkString("  ")
+    Текущие подтверждённые пользователи: @adnNode.personIds.mkString("  ")
   }</p>
 
   <h2>Текущие отправленные инвайты</h2>
@@ -32,18 +32,18 @@
 
   <h2>Новый инвайт</h2>
   <p>Для отправки приглашения на управление ТЦ
-    <a href="@routes.SysMarket.showAdnNode(mmart.id.get)">@mmart.meta.name</a>
+    <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
     введите email получателя прав в нижеуказанном поле.
   </p>
 
   @* Форма инвайта прямо тут, т.к. не с кем её шарить. *@
-  @form(routes.SysMarket.martInviteFormSubmit(mmart.id.get)) {
+  @form(routes.SysMarket.nodeOwnerInviteFormSubmit(adnNode.id.get)) {
     @inputText(imf("email"))
     <input type="submit" value="Отправить инвайт"/>
   }
 
   <h2>Отладка</h2>
   Отобразить тело invite-письма:
-  <a href="@routes.SysMarket.showMartEmailInvite(mmart.id.get, isHtml = true)">HTML</a>
-  <a href="@routes.SysMarket.showMartEmailInvite(mmart.id.get, isHtml = false)">TXT</a>
+  <a href="@routes.SysMarket.showNodeOwnerEmailInvite(adnNode.id.get, isHtml = true)">HTML</a>
+  <a href="@routes.SysMarket.showNodeOwnerEmailInvite(adnNode.id.get, isHtml = false)">TXT</a>
 }

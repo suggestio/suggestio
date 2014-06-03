@@ -88,6 +88,9 @@ POST /m/lk/adn/:adnId/search            controllers.MarketLkAdn.searchSlaves(adn
 GET  /m/lk/adn/slave/:adnId             controllers.MarketLkAdn.showSlave(adnId)
 GET  /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffForm(adnId)
 POST /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffSubmit(adnId)
+# Принятие приглашения на управления узлом.
+GET  /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)
+POST /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
 # Супервайзинг рекламных карточек на подчинённых узлах
 GET  /m/lk/adn/:adnId/3adv/:adId        controllers.MarketAdv.advInfoWnd(adId, adnId)
 POST /m/lk/adn/slave/:adnId/set/tla     controllers.MarketLkAdn.setSlaveTopLevelAvailable(adnId)
@@ -112,8 +115,6 @@ GET  /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopForm(
 POST /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopFormSubmit(martId)
 GET  /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopForm(shopId)
 POST /m/lk/mart/shop/:shopId/edit       controllers.MarketMartLk.editShopFormSubmit(shopId)
-GET  /m/lk/m/:martId/eact/:eaId         controllers.MarketMartLk.martInviteAcceptForm(martId, eaId)
-POST /m/lk/m/:martId/eact/:eaId         controllers.MarketMartLk.martInviteAcceptFormSubmit(martId, eaId)
 
 # личный кабинет купца-арендатора ТЦ.
 GET  /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAccept(shopId, eaId)
@@ -207,9 +208,9 @@ GET  /sys/market/adn/:adnId/ads         controllers.SysMarket.showAdnNodeAds(adn
 GET  /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNode(adnId)
 POST /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNodeSubmit(adnId)
 # sys.market.mart
-GET  /sys/market/mart/:id/invite        controllers.SysMarket.martInviteForm(id: String)
-POST /sys/market/mart/:id/invite        controllers.SysMarket.martInviteFormSubmit(id: String)
-GET  /sys/market/mart/:id/invite/email  controllers.SysMarket.showMartEmailInvite(id, isHtml: Boolean)
+GET  /sys/market/adn/:id/invite         controllers.SysMarket.nodeOwnerInviteForm(id: String)
+POST /sys/market/adn/:id/invite         controllers.SysMarket.nodeOwnerInviteFormSubmit(id: String)
+GET  /sys/market/adn/:id/invite/email   controllers.SysMarket.showNodeOwnerEmailInvite(id, isHtml: Boolean)
 # sys.market.shop
 GET  /sys/market/shop/:id/eact          controllers.SysMarket.showShopEmailActMsgHtml(id, isHtml: Boolean)
 GET  /sys/market/s/ad/:adId/email       controllers.SysMarket.showShopEmailAdDisableMsg(adId, isHtml: Boolean ?= true)

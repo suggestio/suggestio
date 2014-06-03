@@ -14,6 +14,7 @@ import concurrent.duration._
 import scala.concurrent.Future
 import play.api.mvc.Security.username
 import util.img._
+import views.html.market.lk.adn.invite.inviteInvalidTpl
 
 /**
  * Suggest.io
@@ -275,11 +276,12 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
         EmailActivation.getById(eaId) flatMap {
           case Some(eAct) if eAct.key == shopId =>
             getShopByIdCache(shopId) flatMap {
-              case Some(mshop) => f(eAct, mshop)(request)
+              case Some(mshop) =>
+                f(eAct, mshop)(request)
               case None =>
                 // should never occur
                 error(s"inviteAcceptCommon($shopId, eaId=$eaId): Shop not found, but code for shop exist. This should never occur.")
-                NotFound(invite.inviteInvalidTpl("shop.not.found"))
+                NotFound(inviteInvalidTpl("shop.not.found"))
             }
 
           case other =>
@@ -288,7 +290,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
             // TODO Надо проверить, есть ли у юзера права на магазин, и если есть, то значит юзер дважды засабмиттил форму, и надо его сразу отредиректить в его магазин.
             // TODO Может и быть ситуация, что юзер всё ещё не залогинен, а второй сабмит уже тут. Нужно это тоже как-то обнаруживать. Например через временную сессионную куку из формы.
             warn(s"TODO I need to handle already activated requests!!!")
-            NotFound(invite.inviteInvalidTpl("shop.activation.expired.or.invalid.code"))
+            NotFound(inviteInvalidTpl("shop.activation.expired.or.invalid.code"))
         }
       }
     }

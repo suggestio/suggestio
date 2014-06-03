@@ -2,8 +2,10 @@
 
 @* Шаблон HTML-письма с приглашением на управление торговым центром. *@
 
-Для подтверждения регистрации в качестве владельца торгового центра используйте ссылку:
-@ctx.myAudienceUrl@routes.MarketMartLk.martInviteAcceptForm(mmart.id.get, eaId = eAct.id.get)
+Добро пожаловать в SIOMarket!
+
+Для подтверждения регистрации в качестве участника рекламной сети используйте ссылку:
+@ctx.myAudienceUrl@routes.MarketLkAdn.nodeOwnerInviteAcceptForm(mmart.id.get, eaId = eAct.id.get)
 
 
 Если вы получили это письмо по ошибке, просто проигнорируйте его или удалите.

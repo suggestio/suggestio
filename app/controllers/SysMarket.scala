@@ -348,35 +348,35 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
   // Инвайты на управление ТЦ
 
-  val martInviteFormM = Form(
+  private val nodeOwnerInviteFormM = Form(
     "email" -> email
   )
 
   /** Рендер страницы с формой инвайта (передачи прав на управление ТЦ). */
-  def martInviteForm(martId: String) = IsSuperuser.async { implicit request =>
-    val eActsFut = EmailActivation.findByKey(martId)
-    getMartById(martId) flatMap {
-      case Some(mmart) =>
+  def nodeOwnerInviteForm(adnId: String) = IsSuperuser.async { implicit request =>
+    val eActsFut = EmailActivation.findByKey(adnId)
+    MAdnNodeCache.getByIdCached(adnId) flatMap {
+      case Some(adnNode) =>
         eActsFut map { eActs =>
-          Ok(mart.martInviteFormTpl(mmart, martInviteFormM, eActs))
+          Ok(nodeOwnerInvitesTpl(adnNode, nodeOwnerInviteFormM, eActs))
         }
-      case None => martNotFound(martId)
+      case None => martNotFound(adnId)
     }
   }
 
   /** Сабмит формы создания инвайта на управление ТЦ. */
-  def martInviteFormSubmit(martId: String) = IsSuperuser.async { implicit request =>
-    getMartById(martId) flatMap {
-      case Some(mmart) =>
-        martInviteFormM.bindFromRequest().fold(
+  def nodeOwnerInviteFormSubmit(adnId: String) = IsSuperuser.async { implicit request =>
+    MAdnNodeCache.getByIdCached(adnId) flatMap {
+      case Some(adnNode) =>
+        nodeOwnerInviteFormM.bindFromRequest().fold(
           {formWithErrors =>
-            debug(s"martInviteFormSubmit($martId): Failed to bind form: ${formWithErrors.errors}")
-            EmailActivation.findByKey(martId) map { eActs =>
-              NotAcceptable(mart.martInviteFormTpl(mmart, formWithErrors, eActs))
+            debug(s"martInviteFormSubmit($adnId): Failed to bind form: ${formWithErrors.errors}")
+            EmailActivation.findByKey(adnId) map { eActs =>
+              NotAcceptable(nodeOwnerInvitesTpl(adnNode, formWithErrors, eActs))
             }
           },
           {email1 =>
-            val eAct = EmailActivation(email=email1, key = martId)
+            val eAct = EmailActivation(email=email1, key = adnId)
             eAct.save.map { eActId =>
               eAct.id = Some(eActId)
               // Собираем и отправляем письмо адресату
@@ -386,17 +386,17 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
               mail.setRecipient(email1)
               val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
               mail.send(
-                bodyText = views.txt.market.lk.mart.invite.emailMartInviteTpl(mmart, eAct)(ctx),
-                bodyHtml = views.html.market.lk.mart.invite.emailMartInviteTpl(mmart, eAct)(ctx)
+                bodyText = views.txt.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct)(ctx),
+                bodyHtml = views.html.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct)(ctx)
               )
               // Письмо отправлено, вернуть админа назад в магазин
-              Redirect(routes.SysMarket.showAdnNode(martId))
+              Redirect(routes.SysMarket.showAdnNode(adnId))
                 .flashing("success" -> ("Письмо с приглашением отправлено на " + email1))
             }
           }
         )
 
-      case None => martNotFound(martId)
+      case None => martNotFound(adnId)
     }
   }
 
@@ -559,17 +559,17 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
   /** Отрендериить тела email-сообщений инвайта передачи прав на ТЦ. */
-  def showMartEmailInvite(martId: String, isHtml: Boolean) = IsSuperuser.async { implicit request =>
-    getMartById(martId) map {
-      case Some(mmart) =>
-        val eAct = EmailActivation("asdasd@kde.org", key=martId, id = Some("123123asdasd_-123"))
+  def showNodeOwnerEmailInvite(adnId: String, isHtml: Boolean) = IsSuperuser.async { implicit request =>
+    MAdnNodeCache.getByIdCached(adnId) map {
+      case Some(adnNode) =>
+        val eAct = EmailActivation("asdasd@kde.org", key=adnId, id = Some("123123asdasd_-123"))
         val ctx = implicitly[Context]
         if (isHtml)
-          Ok(views.html.market.lk.mart.invite.emailMartInviteTpl(mmart, eAct)(ctx))
+          Ok(views.html.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct)(ctx))
         else
-          Ok(views.txt.market.lk.mart.invite.emailMartInviteTpl(mmart, eAct)(ctx) : String)
+          Ok(views.txt.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct)(ctx) : String)
 
-      case None => martNotFound(martId)
+      case None => martNotFound(adnId)
     }
   }
 

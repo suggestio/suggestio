@@ -1,4 +1,4 @@
-@(mmart: MAdnNode, eAct: EmailActivation)(implicit ctx: util.Context)
+@(adnNode: MAdnNode, eAct: EmailActivation)(implicit ctx: util.Context)
 
 @* Шаблон HTML-письма с приглашением на управление торговым центром. *@
 
@@ -27,8 +27,8 @@
   <tr>
     <td style="background: #E1E1E1;">
       <div style="padding-left: 90px; padding-bottom: 30px; font-size: 14px; color: #232323; font-family: 'Arial'; ">
-        Для подтверждения регистрации в качестве владельца торгового центра используйте
-        <a style="color: #4f88a9; text-decoration: none;" target="_blank" href="@ctx.myAudienceUrl@routes.MarketMartLk.martInviteAcceptForm(mmart.id.get, eaId = eAct.id.get)">эту ссылку</a>.
+        Для подтверждения регистрации в качестве участника рекламной сети используйте
+        <a style="color: #4f88a9; text-decoration: none;" target="_blank" href="@ctx.myAudienceUrl@routes.MarketLkAdn.nodeOwnerInviteAcceptForm(adnNode.id.get, eaId = eAct.id.get)">эту ссылку</a>.
       </div>
     </td>
   </tr>
