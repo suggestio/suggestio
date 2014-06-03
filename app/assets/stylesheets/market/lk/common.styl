@@ -1121,6 +1121,27 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     margin-top: 7px
     margin-right: 11px
 
+.attention-icon
+  position: absolute
+  left: -50px
+  top: 0
+  background-image: url('/assets/images/market/lk/attention-icon.png')
+  width: 31px
+  height: 31px
+
+.lk-edit-form__block_title
+
+  .attention-icon
+    display: none
+
+.lk-edit-form__block_title.attention
+  position: relative
+  background-color: #e24a4a
+  color: white
+
+  .attention-icon
+    display: block
+
 .lk-edit-form__block_title_span
   display: inline-block
   padding: 7px 11px
@@ -1438,8 +1459,19 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     background-repeat: no-repeat
     background-position: 70px 50px
 
+.line-gray
+  height: 1px
+  background: #9a9b9b
+
 .adv-req-wind
   text-align: center
+  font-family: 'Arial'
+
+  p
+    margin: 13px 0
+
+  strong
+    color: #676666
 
   a
     color: #5088aa
