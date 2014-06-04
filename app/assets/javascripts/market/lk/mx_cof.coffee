@@ -692,15 +692,8 @@ market =
       market.init_colorpickers()
 
       $('#installScriptButton').bind 'click', () ->
-        $('#installScriptPopup, #overlay').show()
-
-        _dom = $('#installScriptPopup')
-        ish = _dom.height()
-
-        params =
-          'margin-top' : - ish / 2
-
-        _dom.css params
+        
+        cbca.popup.showPopup('#installScriptPopup')
 
         return false
 
