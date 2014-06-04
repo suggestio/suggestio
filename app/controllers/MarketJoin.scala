@@ -77,7 +77,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
 
 
   def joinForm(smja: SMJoinAnswers) = MaybeAuth { implicit request =>
-    Ok(wifiJoinFormTpl(smja, ))
+    Ok(wifiJoinFormTpl(smja, ???))
   }
 
   def joinFormSubmit(smja: SMJoinAnswers) = MaybeAuth { implicit request =>

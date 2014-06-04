@@ -12,11 +12,11 @@ resolvers ++= Seq(
 )
 
 // Comment it out, on non-snapshot releases
-addSbtPlugin("com.typesafe" % "sbt-web" % "1.0.0-SNAPSHOT")
+addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.0.0")
 
-addSbtPlugin("com.typesafe" % "sbt-webdriver" % "1.0.0-SNAPSHOT")
+addSbtPlugin("com.typesafe.sbt" % "sbt-webdriver" % "1.0.0")
 
-addSbtPlugin("com.typesafe" % "sbt-js-engine" % "1.0.0-SNAPSHOT")
+addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.0.0")
 
 
 // Use the Play sbt plugin for Play projects
