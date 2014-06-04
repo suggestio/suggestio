@@ -9,7 +9,7 @@ import util.PlayMacroLogsImpl
  * Created: 04.06.14 13:25
  * Description: Запросы на инвайты.
  */
-object MInviteRequest extends EsModelStaticT with PlayMacroLogsImpl {
+/*object MInviteRequest extends EsModelStaticT with PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -18,9 +18,9 @@ object MInviteRequest extends EsModelStaticT with PlayMacroLogsImpl {
   override val ES_TYPE_NAME = "invReq"
 
 
-}
+}*/
 
 
-case class MInviteRequest() extends EsModelT {
+/*case class MInviteRequest() extends EsModelT {
 
-}
+}*/
