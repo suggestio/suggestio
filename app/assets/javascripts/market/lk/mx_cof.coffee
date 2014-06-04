@@ -91,7 +91,7 @@ CbcaPopup = () ->
     )
 
     if(popupHeight > $('.body').height())
-      $('.body').height popupHeight
+      $('.body').height popupHeight+top
 
 
   hidePopup: (popup) ->
@@ -141,6 +141,19 @@ CbcaCommon = () ->
 
   self.init = () ->
 
+
+    $(document).on 'click', '#advReqRefuseShow', (e)->
+      e.preventDefault()
+
+      $('#advReqRefuse').show()
+      $('#advReqAccept').hide()
+
+    $(document).on 'click', '#advReqAcceptShow', (e)->
+      e.preventDefault()
+
+      $('#advReqRefuse').hide()
+      $('#advReqAccept').show()
+
     $(document).on 'submit', '#advReqRefuse', (e)->
       $this = $(this)
       $textarea = $this.find('textarea')
@@ -163,6 +176,7 @@ CbcaCommon = () ->
           $('#popupsContainer').append(data).find('.sm-block').addClass('double-size')
 
           cbca.popup.showPopup('#advReqWind')
+          $('#advReqRefuse').hide()
       )
 
     $(document).on 'click', '.js-slide-btn', (e)->

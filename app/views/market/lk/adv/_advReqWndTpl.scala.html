@@ -45,25 +45,43 @@
       @form(routes.MarketAdv.advReqRefuseSubmit(advReq.id.get), 'id -> "advReqRefuse") {
         @textarea(refuseFormM("reason"), '_label -> "", 'placeholder -> "Напишите причину отмены")
 
-        <!--<input class="gray-but-small f-left" type="submit" value="Отменить" style="margin: 25px 0 25px 150px;"/>-->
+        <div class="submit-wrap" style="margin: 25px 0;">
 
-        <div class="red-btn f-left" style="margin: 25px 0 25px 150px;">
-          <div class="white-border-top">
-            <a class="btn"></a>
-            <input type="submit" value="Отменить размещение" />
+          <div class="gray-btn f-left" id="advReqAcceptShow" style="margin-left: 175px;">
+            <div class="white-border-top">
+              <a class="btn">Отменить</a>
+            </div>
           </div>
+
+          <div class="red-btn f-left">
+            <div class="white-border-top">
+              <a class="btn"></a>
+              <input type="submit" value="Отправить отказ" />
+            </div>
+          </div>
+
         </div>
 
       }
 
       @* Подтвердить размещение рекламы. *@
-      @form(routes.MarketAdv.advReqAcceptSubmit(advReq.id.get)) {
+      @form(routes.MarketAdv.advReqAcceptSubmit(advReq.id.get), 'id -> "advReqAccept") {
 
-        <div class="green-btn f-right" style="margin: 25px 150px 25px 0;">
-          <div class="white-border-top">
-            <a class="btn"></a>
-            <input type="submit" value="Разместить" />
+        <div class="submit-wrap" style="margin: 25px 0;">
+
+          <div class="red-btn f-left" id="advReqRefuseShow" style="margin-left: 150px;">
+            <div class="white-border-top">
+              <a class="btn">Отменить размещение</a>
+            </div>
           </div>
+
+          <div class="green-btn f-left">
+            <div class="white-border-top">
+              <a class="btn"></a>
+              <input type="submit" value="Разместить" />
+            </div>
+          </div>
+
         </div>
 
       }
