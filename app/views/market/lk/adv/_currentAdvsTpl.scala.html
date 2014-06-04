@@ -8,6 +8,7 @@
 @import util.TplDataFormatUtil._
 @import args._
 
+@if( !advs.isEmpty ){
 <div class="advs-info-block">
 
   <div class="advs-info-block__section advs-info-block__section_left">
@@ -39,3 +40,6 @@
   <div class="clear"></div>
 
 </div>
+}else{
+  Карточка пока что нигде не размещена
+}

@@ -35,34 +35,40 @@
       @adnNodesMap.map { case (memberType, adnNodes) =>
         @adnNodes.iterator.zipWithIndex.map { case (node, i) =>
           @defining(args.busyAdns.get(node.id.get)) { maybeBusyAdv =>
-          <div class="advs-nodes__node @if(maybeBusyAdv.isDefined){advs-nodes__node_active} @if( i % 2 == 0 ){ advs-nodes__node_even }">
           @* Более-менее устойчивый числовой id (mid) нужен для использования в list mapping. Из-за вкладок умножаем на номер вкладки (номер типа). *@
           @defining((memberType.id + 1) * (i + 1)) { mid =>
+          <div class="advs-nodes__node @if(maybeBusyAdv.isDefined){advs-nodes__node_active} @if( i % 2 == 0 ){ advs-nodes__node_even }" id="advs@mid">
 
-            @* Галочка включения узла в публикацию. Если busy, то уже занято. *@
+          @* Галочка включения узла в публикацию. Если busy, то уже занято. *@
             @if(maybeBusyAdv.isDefined) {
               @* Узел уже одобрил или рассматривает предложение. Нельзя влиять на галочку. *@
               <input type="checkbox" checked="checked" disabled="disabled" data-checked="checked"/>
             } else {
               @* Узел может принять рекламную карточку. *@
               <input type="hidden" name="node[@mid].adnId" value="@node.id"/>
-              <input type="checkbox" id="node_@{mid}_onStartPage" name="node[@mid].advertise" value="true">
+              <input data-connected-field="advs@mid" type="checkbox" id="node_@{mid}_onStartPage" name="node[@mid].advertise" value="true">
             }
 
             <a class="advs-nodes__node-link" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(node.id.get)">@node.meta.name</a> / @node.meta.town
 
-            <div>
             @if(maybeBusyAdv.isDefined) {
+            <div class="advs-nodes__node-dates advs-node-dates">
               @maybeBusyAdv.get.dateStart.toLocalDate - @maybeBusyAdv.get.dateEnd.toLocalDate
-            } else {
-              @* Тут должен быть, селект-календарь длительности и галочка появляются при выставлении первой галочки. *@
-              <input type="text" class="js-datepicker" name="node[@mid].dateStart" value="@formatDateDeficedYYYYmmDD(tomorrow1)"/>
-              <input type="text" class="js-datepicker" name="node[@mid].dateEnd" value="@formatDateDeficedYYYYmmDD(tomorrow2)"/>
-            }
             </div>
+            } else {
+            <div class="advs-nodes__node-dates advs-nodes__node-dates_hidden advs-node-dates">
+              @* Тут должен быть, селект-календарь длительности и галочка появляются при выставлении первой галочки. *@
+              <label class="advs-node-dates__elt">Дата начала</label>
+              <input class="advs-node-dates__elt js-datepicker advs-node-dates__input" type="text" name="node[@mid].dateStart" value="@formatDateDeficedYYYYmmDD(tomorrow1)"/>
+              <label class="advs-node-dates__elt"><strong>&mdash;</strong></label>
+              <label class="advs-node-dates__elt">Дата конца</label>
+              <input class="advs-node-dates__elt js-datepicker advs-node-dates__input" type="text" name="node[@mid].dateEnd" value="@formatDateDeficedYYYYmmDD(tomorrow2)"/>
+              <div class="clear"></div>
+            </div>
+            }
 
             @* TODO: реализовать правильную расстановку галочек для размещенных карточек *@
-            <div class="advs-nodes__node-options">
+            <div class="advs-nodes__node-options @if(!maybeBusyAdv.isDefined) { advs-nodes__node-options_hidden }">
               <div><input type="checkbox" id="node_@{mid}_inCatalog" name="node[@mid].onStartPage" data-checked="checked" disabled="disabled" value="true"> Каталог</div>
               <div><input type="checkbox" id="node_@{mid}_inCategories" name="node[@mid].onStartPage" value="true"> Категории товаров и услуг</div>
               <div><input type="checkbox" id="node_@{mid}_onStartPage" name="node[@mid].onStartPage" value="true"> Главный экран</div>
