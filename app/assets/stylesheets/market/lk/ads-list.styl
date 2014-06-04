@@ -27,23 +27,25 @@
 
 .ads-list-block__link
   opacity: 0
-
-.ads-list-block__link:hover
-  color: white
+  text-align: center
   height: 94px
   padding-top: 75px
-  text-align: center
+  color: white
   text-decoration: none
+
+.ads-list-block__link:hover
   background: black lk_sprite
   background-position: 75px -220px
   opacity: 0.8
 
+.ads-list-block__link_inactive,
 .ads-list-block__link_inactive:hover
   cursor: default
   background-color: #4f88a9
   background-image: url('/assets/images/market/lk/time-icon.png')
   background-repeat: no-repeat
   background-position: 75px 50px
+  opacity: 0.8
 
 .ads-list-block__link_disabled
     position: absolute
