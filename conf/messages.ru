@@ -80,6 +80,19 @@ ad.stat.action.v=Просмотр
 ad.stat.action.c=Клик
 
 
+join.qsn.haveWifi=У вас есть Wi-Fi?
+join.qsn.fullCoverage=Wi-fi оборудование покрывает всю необходимую площадь помещения?
+join.qsn.knownEquipment=Вы знаете какое wi-fi оборудование у вас используется?
+join.qsn.altFw=Оборудование работает на альтернативной прошивке?
+join.qsn.isWrtFw=Оборудование работает на прошивке OpenWRT, DD-WRT или RouterOS?
+join.qsn.landlineInet=У вас стационарный интернет?
+join.qsn.smallRoom=У меня небольшое помещение без сплошных бетонных перегородок.
+join.qsn.audienceSz=Предполагаемое количество одновременно подключаемых устройств?
+join.qsn.audienceSz.lt20=< 20
+join.qsn.audienceSz.lt50=< 50
+join.qsn.audienceSz.gt50=> 50
+
+
 lk.sl.enable_ad=Выводить
 lk.sl.d=Выводить в моём каталоге
 lk.sl.h=Выводить в общем каталоге
@@ -187,8 +200,8 @@ last_reindexed=Последний раз полностью переиндекс
 if_show_images=Показывать картинки в результатах поиска
 show_content_text=Показывать описание в результатах поиска
 
-yes=Да
-no=Нет
+Yes=Да
+No=Нет
 
 customize_design_description=Вы можете настроить внешний вид поиска на сайте. Для этого нажмите на кнопку &laquo;Настроить&raquo;. После нажатия вы будете перенаправлены на ваш сайт, где с помощью визуальных инструментов сможете настроить дизайн поиска.
 website=Сайт

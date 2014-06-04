@@ -10,8 +10,8 @@
 		<label>@Messages("if_show_images")?</label>
 		@defining(dusFormM("show_images").value) { siCurrVal =>
 			<select name="show_images" style="width: 160px;">
-				<option value="true"@if(siCurrVal == "true") { selected="selected"}>@Messages("yes")</option>
-				<option value="false"@if(siCurrVal == "false") { selected="selected"}>@Messages("no")</option>
+				<option value="true"@if(siCurrVal == "true") { selected="selected"}>@Messages("Yes")</option>
+				<option value="false"@if(siCurrVal == "false") { selected="selected"}>@Messages("No")</option>
 			</select>
 		}
 		<a id="imageExplanationButton" onclick="showImagesExplanation(); return false;" href="">@Messages("img_site_preferences")</a>
@@ -21,8 +21,8 @@
 		<label>@Messages("show_content_text")</label>
 		@defining(dusFormM("show_content_text").value) { sctCurrVal =>
 			<select name="show_content_text" style="width: 160px;">
-				<option value="true"@if(sctCurrVal == "true") { selected="selected"}>@Messages("yes")</option>
-				<option value="false"@if(sctCurrVal == "false") { selected="selected"}>@Messages("no")</option>
+				<option value="true"@if(sctCurrVal == "true") { selected="selected"}>@Messages("Yes")</option>
+				<option value="false"@if(sctCurrVal == "false") { selected="selected"}>@Messages("No")</option>
 				<option value="if_no_image"@if(sctCurrVal == "if_no_image") { selected="selected"}>@Messages("if_no_image")</option>
 			</select>
 		}

@@ -4,6 +4,7 @@ import util.PlayMacroLogsImpl
 import util.acl.MaybeAuth
 import util.qsb.SMJoinAnswers
 import models._
+import views.html.market.join._
 
 /**
  * Suggest.io
@@ -39,11 +40,27 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
 
   /** Рендер страницы с формой, где можно расставить галочки, ответив на вопросы. */
   def joinQuestionsForm = MaybeAuth { implicit request =>
-    ???
+    Ok(wifiJoinQuestionsFormTpl(joinQuestionsFormM))
   }
 
   /** Сабмит формы галочек для перехода на второй шаг. */
-  def joinQuestionsFormSubmit = MaybeAuth.async { implicit request =>
+  def joinQuestionsFormSubmit = MaybeAuth { implicit request =>
+    joinQuestionsFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug("joinQuestionsFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
+        NotAcceptable(wifiJoinQuestionsFormTpl(formWithErrors))
+      },
+      {smja =>
+        Redirect(???)
+      }
+    )
+  }
+
+  def joinForm(smja: SMJoinAnswers) = MaybeAuth { implicit request =>
+    ???
+  }
+
+  def joinFormSubmit(smja: SMJoinAnswers) = MaybeAuth { implicit request =>
     ???
   }
 
