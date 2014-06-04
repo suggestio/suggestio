@@ -236,7 +236,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
             warn(logPrefix + "eAct record has been already deleted. Suppressing error.")
           // Если юзер не зареган, то создать MPerson залогинить
           val newPersonIdOptFut: Future[Option[String]] = if (!request.isAuth) {
-            MPerson(lang = lang.code).save flatMap { personId =>
+            MPerson(lang = request2lang.code).save flatMap { personId =>
               EmailPwIdent.applyWithPw(email = eAct.email, personId=personId, password = passwordOpt.get, isVerified = true)
                 .save
                 .map { emailPwIdentId => Some(personId) }

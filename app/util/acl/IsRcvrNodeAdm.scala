@@ -27,7 +27,7 @@ object IsRcvrNodeAdm {
 import IsRcvrNodeAdm._
 
 case class IsAnyRcvrNodeAdm(adId: String) extends ActionBuilder[AdAnyRcvrRequest] {
-  override protected def invokeBlock[A](request: Request[A], block: (AdAnyRcvrRequest[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (AdAnyRcvrRequest[A]) => Future[Result]): Future[Result] = {
     PersonWrapper.getFromRequest(request) match {
       case pwOpt @ Some(pw) =>
         val srmFut = SioReqMd.fromPwOpt(pwOpt)
@@ -83,7 +83,7 @@ case class AdAnyRcvrRequest[A](
  * @param fromAdnId id узла, с точки зрения которого происходит просмотр. Возможно, это подставной узел.
  */
 case class ThirdPartyAdAccess(adId: String, fromAdnId: String) extends ActionBuilder[AdRcvrRequest] {
-  override protected def invokeBlock[A](request: Request[A], block: (AdRcvrRequest[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (AdRcvrRequest[A]) => Future[Result]): Future[Result] = {
     PersonWrapper.getFromRequest(request) match {
       case pwOpt @ Some(pw) =>
         val madOptFut = MAd.getById(adId)

@@ -35,7 +35,7 @@ import IsShopAdm._
 
 /** В реквесте содержится магазин, если всё ок. */
 case class IsShopAdm(shopId: String) extends ActionBuilder[RequestForShopAdmFull] {
-  protected def invokeBlock[A](request: Request[A], block: (RequestForShopAdmFull[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestForShopAdmFull[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOptAdn(pwOpt, shopId)
     isShopAdminFull(shopId, pwOpt) flatMap {

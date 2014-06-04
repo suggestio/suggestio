@@ -1,6 +1,7 @@
 import play.Play.autoImport._
 import PlayKeys._
 import play.twirl.sbt.Import._
+import play.twirl.sbt.SbtTwirl
 import com.typesafe.sbt.web._
 
 organization := "io.suggest"
@@ -76,7 +77,7 @@ resolvers ++= Seq(
   "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com"
 )
 
-patience.assets.StylusPlugin.stylusSettings
+//patience.assets.StylusPlugin.stylusSettings
 
 
 // Добавляем задачу сжатия всех сгенеренных js/css файлов.

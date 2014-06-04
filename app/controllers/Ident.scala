@@ -18,7 +18,6 @@ import play.api.mvc.Security.username
 import play.api.i18n.Lang
 import SiowebEsUtil.client
 import scala.util.{Failure, Success}
-import play.api.templates.HtmlFormat
 import com.typesafe.scalalogging.slf4j.Logger
 import com.typesafe.plugin.{use, MailerPlugin}
 import util.acl.PersonWrapper.PwOpt_t
@@ -112,7 +111,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
                       val personFut: Future[MPerson] = mpIdOpt match {
                         case None =>
                           trace(logPrefix + "Registering new user: " + email)
-                          val mperson = new MPerson(lang=lang.code)
+                          val mperson = new MPerson(lang = request2lang.code)
                           mperson.save.flatMap { personId =>
                             MozillaPersonaIdent(email=email, personId=personId).save.map { _ =>
                               mperson.id = Some(personId)
@@ -178,7 +177,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
    */
   def logout = Action { implicit request =>
     Redirect(routes.Application.index())
-      .withSession(session - username)
+      .withSession(request.session - username)
   }
 
 
@@ -197,7 +196,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
   private def recreatePersonIdFor(mpi: MPersonIdent)(implicit request: RequestHeader): Future[MPerson] = {
     val logPrefix = s"recreatePersonIdFor($mpi): "
     error(logPrefix + s"MPerson not found for ident $mpi. Suppressing internal error: creating new one...")
-    val p = MPerson(id=Some(mpi.personId), lang=lang.code)
+    val p = MPerson(id=Some(mpi.personId), lang = request2lang.code)
     p.save.map {
       case _personId if _personId == mpi.personId =>
         warn(logPrefix + s"Emergency recreated MPerson(${_personId}) for identity $mpi")
@@ -298,7 +297,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
       implicit val ctx = new ContextImpl
       NotFound(pwRecoverFailedTpl())
     }
-    protected def invokeBlock[A](request: Request[A], block: (RecoverPwRequest[A]) => Future[Result]): Future[Result] = {
+    override def invokeBlock[A](request: Request[A], block: (RecoverPwRequest[A]) => Future[Result]): Future[Result] = {
       lazy val logPrefix = s"CanRecoverPw($eActId): "
       bruteForceProtect flatMap { _ =>
         val pwOpt = PersonWrapper.getFromRequest(request)

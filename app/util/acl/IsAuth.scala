@@ -25,7 +25,7 @@ object IsAuth extends IsAuthAbstract {
 
 trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
 
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
     if (pwOpt.isDefined) {

@@ -22,7 +22,7 @@ import play.api.Play.current
 object IsSuperuser extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
   import LOGGER._
   
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     pwOpt match {
       case Some(pw) if pw.isSuperuser =>
@@ -49,7 +49,7 @@ object IsSuperuser extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacr
  * @param adnId
  */
 case class IsSuperuserAdnNode(adnId: String) extends ActionBuilder[AbstractRequestForAdnNode] {
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper.isSuperuser(pwOpt)) {
       val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
@@ -78,7 +78,7 @@ case class FeeTariffRequest[A](
 ) extends AbstractRequestWithPwOpt[A](request)
 
 case class IsSuperuserFeeTariffContract(tariffId: Int) extends ActionBuilder[FeeTariffRequest] {
-  override protected def invokeBlock[A](request: Request[A], block: (FeeTariffRequest[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (FeeTariffRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper.isSuperuser(pwOpt)) {
       val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
@@ -108,7 +108,7 @@ case class StatTariffRequest[A](
 ) extends AbstractRequestWithPwOpt[A](request)
 
 case class IsSuperuserStatTariffContract(tariffId: Int) extends ActionBuilder[StatTariffRequest] {
-  override protected def invokeBlock[A](request: Request[A], block: (StatTariffRequest[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (StatTariffRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper.isSuperuser(pwOpt)) {
       val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
@@ -137,7 +137,7 @@ case class ContractRequest[A](
 ) extends AbstractRequestWithPwOpt[A](request)
 
 case class IsSuperuserContract(contractId: Int) extends ActionBuilder[ContractRequest] {
-  override protected def invokeBlock[A](request: Request[A], block: (ContractRequest[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (ContractRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper.isSuperuser(pwOpt)) {
       val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)

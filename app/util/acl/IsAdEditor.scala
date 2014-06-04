@@ -74,7 +74,7 @@ object IsAdEditor extends PlayMacroLogsImpl {
 
 /** Редактировать карточку может только владелец магазина. */
 case class IsAdEditor(adId: String) extends ActionBuilder[RequestWithAd] {
-  protected def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     MAd.getById(adId) flatMap {

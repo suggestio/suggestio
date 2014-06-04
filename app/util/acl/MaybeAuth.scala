@@ -11,9 +11,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * Created: 09.10.13 15:10
  * Description: ActionBuilder для определения залогиненности юзера.
  */
-object MaybeAuth extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
-
-  import LOGGER._
+object MaybeAuth extends ActionBuilder[AbstractRequestWithPwOpt] {
 
   /**
    * Вызывается генератор экшена в билдере.
@@ -22,7 +20,7 @@ object MaybeAuth extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroL
    * @tparam A Подтип реквеста.
    * @return Фьючерс, описывающий результат.
    */
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     srmFut flatMap { srm =>

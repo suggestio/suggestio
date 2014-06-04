@@ -60,7 +60,7 @@ import IsAdnNodeAdmin.onUnauth
 
 /** В реквесте содержится магазин, если всё ок. */
 case class IsAdnNodeAdmin(adnId: String) extends ActionBuilder[AbstractRequestForAdnNode] {
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOptAdn(pwOpt, adnId)
     IsAdnNodeAdmin.isAdnNodeAdmin(adnId, pwOpt) flatMap {
@@ -92,7 +92,7 @@ case class RequestForAdnNodeAdm[A](adnNode: MAdnNode, isMyNode: Boolean, request
  * @param adnId узел.
  */
 case class AdnNodeAccess(adnId: String, povAdnIdOpt: Option[String]) extends ActionBuilder[RequestForAdnNode] {
-  override protected def invokeBlock[A](request: Request[A], block: (RequestForAdnNode[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     PersonWrapper.getFromRequest(request) match {
       case pwOpt @ Some(pw) =>
         val povAdnNodeOptFut = povAdnIdOpt.fold

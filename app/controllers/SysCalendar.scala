@@ -208,7 +208,7 @@ object SysCalendar extends SioController with PlayMacroLogsImpl {
    * @param calId id календаря.
    */
   case class CanAlterCal(calId: String) extends ActionBuilder[CalendarRequest] {
-    override protected def invokeBlock[A](request: Request[A], block: (CalendarRequest[A]) => Future[Result]): Future[Result] = {
+    override def invokeBlock[A](request: Request[A], block: (CalendarRequest[A]) => Future[Result]): Future[Result] = {
       val pwOpt = PersonWrapper getFromRequest request
       if (PersonWrapper.isSuperuser(pwOpt)) {
         val srmFut = SioReqMd.fromPwOpt(pwOpt)

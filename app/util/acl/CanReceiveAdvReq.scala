@@ -16,7 +16,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * Да, если юзер является админом соответствующего rcvr-узла.
  */
 case class CanReceiveAdvReq(advReqId: Int) extends ActionBuilder[RequestWithAdvReq] {
-  override protected def invokeBlock[A](request: Request[A], block: (RequestWithAdvReq[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestWithAdvReq[A]) => Future[Result]): Future[Result] = {
     PersonWrapper.getFromRequest(request) match {
       case pwOpt @ Some(pw) =>
         val advReqOpt = DB.withConnection { implicit c =>

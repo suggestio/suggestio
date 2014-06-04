@@ -1,15 +1,14 @@
 package util.blocks
 
-import play.api.templates._
 import play.api.data._
 import BlocksUtil._
 import views.html.blocks._
 import models._
 import io.suggest.ym.model.common.BlockMeta
 import util.blocks.BlocksUtil.BlockImgMap
-import scala.Some
 import play.api.data.validation.Constraint
 import util.img.{ImgIdKey, ImgInfo4Save}
+import play.twirl.api.{HtmlFormat, Template3}
 
 /**
  * Suggest.io

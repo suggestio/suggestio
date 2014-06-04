@@ -69,7 +69,7 @@ object CanAdvertiseAd {
 
 /** Редактировать карточку может только владелец магазина. */
 case class CanAdvertiseAd(adId: String) extends ActionBuilder[RequestWithAd] {
-  protected def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     MAd.getById(adId) flatMap {
       case Some(mad) =>

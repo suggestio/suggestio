@@ -34,6 +34,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-webdriver" % "1.0.0")
 addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.0.0")
 
 // stylus assets
-addSbtPlugin("patience" % "play-stylus" % "1.1.0-SNAPSHOT")
+//addSbtPlugin("patience" % "play-stylus" % "1.1.0-SNAPSHOT")
+addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.1")
 
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "+")
