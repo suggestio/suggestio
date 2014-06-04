@@ -1,6 +1,10 @@
 import sbt._
 import Keys._
-
+import play.Play.autoImport._
+import PlayKeys._
+import play.twirl.sbt.Import._
+//import play.twirl.sbt.SbtTwirl
+import com.typesafe.sbt.web._
 import java.io.{PrintWriter, File}
 
 object SiobixBuild extends Build {
@@ -41,6 +45,7 @@ object SiobixBuild extends Build {
     dependencies = Seq(util),
     settings = commonSettings
   )
+  .enablePlugins(play.PlayScala, SbtWeb)
 
   lazy val root = Project(
     id = "root",
