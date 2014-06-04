@@ -166,8 +166,10 @@ GET  /market/ads/:adnId                 controllers.Market.findAds(adnId, a: uti
 POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)
 
 # market+join: Присоединение к sio-market.
-GET  /market/join/wifi/qs               controllers.MarketJoin.joinQuestionsForm
+GET  /market/join/wifi/qs               controllers.MarketJoin.joinQuestionsForm(j: Option[util.qsb.SMJoinAnswers] ?= None)
 POST /market/join/wifi/qs               controllers.MarketJoin.joinQuestionsFormSubmit
+GET  /market/join/wifi                  controllers.MarketJoin.joinForm(j: util.qsb.SMJoinAnswers)
+POST /market/join/wifi                  controllers.MarketJoin.joinFormSubmit(j: util.qsb.SMJoinAnswers)
 
 GET  /sys                               controllers.Sys.index
 GET  /sys/dkeys/all                     controllers.Sys.dkeysListAll

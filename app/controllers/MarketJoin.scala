@@ -5,6 +5,9 @@ import util.acl.MaybeAuth
 import util.qsb.SMJoinAnswers
 import models._
 import views.html.market.join._
+import play.api.data.Form
+import util.FormUtil._
+import play.api.data._, Forms._
 
 /**
  * Suggest.io
@@ -15,8 +18,7 @@ import views.html.market.join._
 object MarketJoin extends SioController with PlayMacroLogsImpl {
   import LOGGER._
 
-  val joinQuestionsFormM = {
-    import play.api.data._, Forms._
+  private val joinQuestionsFormM: Form[SMJoinAnswers] = {
     val boolOpt = optional(boolean)
     Form(mapping(
       "haveWifi"        -> boolOpt,
@@ -39,8 +41,9 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
   }
 
   /** Рендер страницы с формой, где можно расставить галочки, ответив на вопросы. */
-  def joinQuestionsForm = MaybeAuth { implicit request =>
-    Ok(wifiJoinQuestionsFormTpl(joinQuestionsFormM))
+  def joinQuestionsForm(smjaOpt: Option[SMJoinAnswers]) = MaybeAuth { implicit request =>
+    val form = smjaOpt.fold(joinQuestionsFormM) { joinQuestionsFormM fill }
+    Ok(wifiJoinQuestionsFormTpl(form))
   }
 
   /** Сабмит формы галочек для перехода на второй шаг. */
@@ -51,13 +54,30 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
         NotAcceptable(wifiJoinQuestionsFormTpl(formWithErrors))
       },
       {smja =>
-        Redirect(???)
+        Redirect(routes.MarketJoin.joinForm(smja))
       }
     )
   }
 
+
+  private val joinFormM = {
+    val text2048 = text(maxLength = 2048)
+    Form(
+      tuple(
+        "company"       -> companyNameM,
+        "audienceDescr" -> text2048,
+        "dailyTraffic"  -> text(maxLength = 1024),
+        "address"       -> addressM,
+        "siteUrl"       -> urlAllowedMapper,
+        "phone"         -> phoneOptM,
+        "info"          -> text2048
+      )
+    )
+  }
+
+
   def joinForm(smja: SMJoinAnswers) = MaybeAuth { implicit request =>
-    ???
+    Ok(wifiJoinFormTpl(smja, ))
   }
 
   def joinFormSubmit(smja: SMJoinAnswers) = MaybeAuth { implicit request =>

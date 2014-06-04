@@ -1,0 +1,28 @@
+@(smja: util.qsb.SMJoinAnswers, jf: Form[_])(implicit ctx: Context)
+
+@* Форма для ввода данных запроса регистрации рекламного узла. *@
+
+@import ctx._
+@import helper._
+
+@joinBase("Стать участником сети") {
+
+  <a href="@routes.MarketJoin.joinQuestionsForm(Option(smja))">Назад</a>
+
+  @form(routes.MarketJoin.joinFormSubmit(smja)) {
+
+    @inputText(jf("company"), '_label -> (Messages("Company") + ":"))
+
+    @textarea(jf("audienceDescr"), '_label -> (Messages("Audience.descr") + ":"))
+
+    @inputText(jf("dailyTraffic"), '_label -> (Messages("Daily.people.traffic") + ":"))
+
+    @inputText(jf("address"), '_label -> (Messages("Address") + ":"))
+
+    @inputText(jf("siteUrl"), '_label -> (Messages("Site") + ":"))
+
+    @inputText(jf("phone"), '_label -> (Messages("Office.phone.number") + ":"))
+
+    <input type="submit" value="@Messages("Request.invite")"/>
+  }
+}

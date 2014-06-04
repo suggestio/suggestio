@@ -16,6 +16,7 @@ Shops=Магазины
 Save=Сохранить
 Continue=Продолжить
 Next=Далее
+Site=Сайт
 
 Password.change=Смена пароля
 Type.current.password=Введите текущий пароль
@@ -91,6 +92,10 @@ join.qsn.audienceSz=Предполагаемое количество однов
 join.qsn.audienceSz.lt20=< 20
 join.qsn.audienceSz.lt50=< 50
 join.qsn.audienceSz.gt50=> 50
+Request.invite=Запросить инвайт
+Audience.descr=Описание аудитории
+Daily.people.traffic=Суточный трафик
+Office.phone.number=Офисный телефон
 
 
 lk.sl.enable_ad=Выводить
