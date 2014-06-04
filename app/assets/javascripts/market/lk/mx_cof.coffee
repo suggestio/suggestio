@@ -72,10 +72,10 @@ $(document).on 'click', '.popup .cancel', (event)->
 CbcaPopup = () ->
 
   showOverlay: ->
-    $('#overlay').show()
+    $('#popupsContainer, #overlay').show()
 
   hideOverlay: ->
-    $('#overlay').hide()
+    $('#popupsContainer, #overlay').hide()
 
   showPopup: (popup) ->
     this.showOverlay()
@@ -85,7 +85,6 @@ CbcaPopup = () ->
 
     $('body').addClass('ovh')
     $('#overlay').height(popupHeight)
-    console.log(popupHeight)
 
   hidePopup: (popup) ->
     popup = '.popup' || popup
