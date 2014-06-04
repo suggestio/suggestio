@@ -40,7 +40,7 @@ object MAdv {
    * @return Список ad_id в неопределённом порядке, но без дубликатов.
    */
   def findAllNonExpiredAdIdsForModes(modes: Set[MAdvMode])(implicit c: Connection): List[String] = {
-    SQL("SELECT DISTINCT ad_id FROM adv WHERE mode = ANY({modes}) AND date_end < now()")
+    SQL("SELECT DISTINCT ad_id FROM adv WHERE mode = ANY({modes}) AND date_end >= now()")
       .on('modes -> strings2pgArray(modes.map(_.toString)))
       .as(AD_ID_PARSER *)
   }
