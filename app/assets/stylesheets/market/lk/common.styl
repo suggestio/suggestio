@@ -900,9 +900,24 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
 .sm-large-button:active
   color: #676666
+
   span
     background: #cfcfcf
     box-shadow(inset 0px 0px 14px #a9a9a9)
+
+.sm-large-button_disabled
+  opacity: 0.5
+  cursor: default
+
+.sm-large-button_disabled:hover
+  color: #676666
+
+.sm-large-button_disabled:active
+  color: #676666
+
+  span
+    background: #e2e1e1
+    box-shadow: none
 
 
 /* Разные окошки, которые нужно отображать поверх всего */

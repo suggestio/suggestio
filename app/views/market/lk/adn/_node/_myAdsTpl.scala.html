@@ -24,7 +24,7 @@
         @if(busyAdIds contains mad.id.get) {
           <a class="ads-list-block__link ads-list-block__link_inactive">Находится<br/>на рассмотрении<br/>администратора</a>
         } else {
-          <a class="ads-list-block__link ads-list-block__link_inactive" href="@routes.MarketAd.editAd(mad.id.get)">Нажмите для<br/>редактирования</a>
+          <a class="ads-list-block__link" href="@routes.MarketAd.editAd(mad.id.get)">Нажмите для<br/>редактирования</a>
         }
 
         @* Галочки для управления отображением рекламной карточки магазина. *@
@@ -42,9 +42,17 @@
               }
             }
           }
+
           @if(canAdv) {
-            <a class="sm-large-button" href="@routes.MarketAdv.advForAd(mad.id.get)"><span>УПРАВЛЕНИЕ</span></a>
+
+            @if(busyAdIds contains mad.id.get) {
+              <a class="sm-large-button sm-large-button_disabled"><span>УПРАВЛЕНИЕ</span></a>
+            } else {
+              <a class="sm-large-button" href="@routes.MarketAdv.advForAd(mad.id.get)"><span>УПРАВЛЕНИЕ</span></a>
+            }
+
           }
+
         </div>
       } @* ads list*@
     }
