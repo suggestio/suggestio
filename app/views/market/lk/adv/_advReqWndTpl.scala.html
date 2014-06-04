@@ -44,12 +44,28 @@
       @* Отменить размещение рекламы с указанием причины. *@
       @form(routes.MarketAdv.advReqRefuseSubmit(advReq.id.get), 'id -> "advReqRefuse") {
         @textarea(refuseFormM("reason"), '_label -> "", 'placeholder -> "Напишите причину отмены")
-        <input class="gray-but-small f-left" type="submit" value="Отменить" style="margin: 25px 0 25px 150px;"/>
+
+        <!--<input class="gray-but-small f-left" type="submit" value="Отменить" style="margin: 25px 0 25px 150px;"/>-->
+
+        <div class="red-btn f-left" style="margin: 25px 0 25px 150px;">
+          <div class="white-border-top">
+            <a class="btn"></a>
+            <input type="submit" value="Отменить размещение" />
+          </div>
+        </div>
+
       }
 
       @* Подтвердить размещение рекламы. *@
       @form(routes.MarketAdv.advReqAcceptSubmit(advReq.id.get)) {
-        <input class="red-but-small f-right" type="submit" value="Разместить" style="margin: 25px 150px 25px 0;"/>
+
+        <div class="green-btn f-right" style="margin: 25px 150px 25px 0;">
+          <div class="white-border-top">
+            <a class="btn"></a>
+            <input type="submit" value="Разместить" />
+          </div>
+        </div>
+
       }
 
 
