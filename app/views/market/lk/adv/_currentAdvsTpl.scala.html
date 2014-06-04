@@ -8,8 +8,6 @@
 @import util.TplDataFormatUtil._
 @import args._
 
-@_currentAdvsListTpl(advs, adv2adn)
-
 <div class="advs-info-block">
 
   <div class="advs-info-block__section advs-info-block__section_left">
@@ -21,7 +19,7 @@
   </div>
 
   <div class="advs-info-block__section advs-info-block__section_center">
-    Ресторан Джесольмино / Москва одобрил размещение. 22 мая 2014 в 18:56
+    @_currentAdvsListTpl(advs, adv2adn)
   </div>
   <div class="advs-info-block__section advs-info-block__section_right">
 

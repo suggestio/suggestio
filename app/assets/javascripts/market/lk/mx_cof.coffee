@@ -692,7 +692,7 @@ market =
       market.init_colorpickers()
 
       $('#installScriptButton').bind 'click', () ->
-        
+
         cbca.popup.showPopup('#installScriptPopup')
 
         return false

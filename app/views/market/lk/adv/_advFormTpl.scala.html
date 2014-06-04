@@ -34,15 +34,15 @@
       @defining( tomorrow1.plusDays(1) ) { tomorrow2 =>
       @adnNodesMap.map { case (memberType, adnNodes) =>
         @adnNodes.iterator.zipWithIndex.map { case (node, i) =>
-          <div class="advs-nodes__node @if( i % 2 == 0 ){ advs-nodes__node_even }">
           @defining(args.busyAdns.get(node.id.get)) { maybeBusyAdv =>
+          <div class="advs-nodes__node @if(maybeBusyAdv.isDefined){advs-nodes__node_active} @if( i % 2 == 0 ){ advs-nodes__node_even }">
           @* Более-менее устойчивый числовой id (mid) нужен для использования в list mapping. Из-за вкладок умножаем на номер вкладки (номер типа). *@
           @defining((memberType.id + 1) * (i + 1)) { mid =>
 
             @* Галочка включения узла в публикацию. Если busy, то уже занято. *@
             @if(maybeBusyAdv.isDefined) {
               @* Узел уже одобрил или рассматривает предложение. Нельзя влиять на галочку. *@
-              <input type="checkbox" checked disabled/>
+              <input type="checkbox" checked="checked" disabled="disabled" data-checked="checked"/>
             } else {
               @* Узел может принять рекламную карточку. *@
               <input type="hidden" name="node[@mid].adnId" value="@node.id"/>
@@ -51,6 +51,7 @@
 
             <a class="advs-nodes__node-link" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(node.id.get)">@node.meta.name</a> / @node.meta.town
 
+            <div>
             @if(maybeBusyAdv.isDefined) {
               @maybeBusyAdv.get.dateStart.toLocalDate - @maybeBusyAdv.get.dateEnd.toLocalDate
             } else {
@@ -58,15 +59,13 @@
               <input type="text" class="js-datepicker" name="node[@mid].dateStart" value="@formatDateDeficedYYYYmmDD(tomorrow1)"/>
               <input type="text" class="js-datepicker" name="node[@mid].dateEnd" value="@formatDateDeficedYYYYmmDD(tomorrow2)"/>
             }
+            </div>
 
-            <div class="advs-nodes__node-start-page-elt">
-            @if(maybeBusyAdv.isDefined) {
-              <input type="checkbox" disabled @if(maybeBusyAdv.get.onStartPage) {checked}/>
-              Размещено на главном экране
-            } else {
-              <input type="checkbox" id="node_@{mid}_onStartPage" name="node[@mid].onStartPage" value="true">
-              Разместить на главном экране
-            }
+            @* TODO: реализовать правильную расстановку галочек для размещенных карточек *@
+            <div class="advs-nodes__node-options">
+              <div><input type="checkbox" id="node_@{mid}_inCatalog" name="node[@mid].onStartPage" data-checked="checked" disabled="disabled" value="true"> Каталог</div>
+              <div><input type="checkbox" id="node_@{mid}_inCategories" name="node[@mid].onStartPage" value="true"> Категории товаров и услуг</div>
+              <div><input type="checkbox" id="node_@{mid}_onStartPage" name="node[@mid].onStartPage" value="true"> Главный экран</div>
             </div>
 
           }
