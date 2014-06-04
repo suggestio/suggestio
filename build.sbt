@@ -1,6 +1,7 @@
-//import sbt._
-//import sbt.Process._
-//import play.Project._
+import sbt._
+import sbt.Process._
+import play.PlayImport._
+import play.twirl.sbt.Import._
 
 organization := "io.suggest"
 
@@ -11,7 +12,7 @@ version := "1.0-SNAPSHOT"
 scalaVersion := "2.10.4"
 
 libraryDependencies ++= Seq(
-  jdbc,
+  jdbc, 
   anorm,
   cache,      // play-2.2+
   json,       // play-2.3+
@@ -57,7 +58,7 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "9.3-1100-jdbc41"
 )
 
-playScalaSettings
+play.PlayScala.projectSettings
 
 // После импорта настроек, typesafe-репа не кешируется. Это надо бы исправить.
 resolvers ~= {
@@ -91,7 +92,7 @@ gzipAssets := {
 }
 
 
-templatesImport ++= Seq(
+TwirlKeys.templateImports ++= Seq(
   "util.blocks.BlocksConf._"
 )
 
