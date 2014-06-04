@@ -45,11 +45,7 @@
 
           @if(canAdv) {
 
-            @if(busyAdIds contains mad.id.get) {
-              <a class="sm-large-button sm-large-button_disabled"><span>УПРАВЛЕНИЕ</span></a>
-            } else {
               <a class="sm-large-button" href="@routes.MarketAdv.advForAd(mad.id.get)"><span>УПРАВЛЕНИЕ</span></a>
-            }
 
           }
 
