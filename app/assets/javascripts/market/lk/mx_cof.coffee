@@ -82,9 +82,19 @@ CbcaPopup = () ->
     $popup = $(popup)
     $popup.show()
     popupHeight = $popup.height()
+    popupsContainerHeight = $('#popupsContainer').height()
 
     $('body').addClass('ovh')
-    $('#overlay').height(popupHeight)
+    if(popupHeight > popupsContainerHeight)
+      $('#overlay').height(popupHeight)
+    else
+      $('#overlay').height(popupsContainerHeight)
+      
+    $popup.find('.border-line-vertical').each () ->
+      $this = $(this)
+      $parent = $this.parent()
+
+      $this.height($parent.height() - 10)
 
   hidePopup: (popup) ->
     popup = '.popup' || popup
@@ -164,11 +174,26 @@ CbcaCommon = () ->
       $.ajax(
         url: href,
         success: (data)->
+          console.log(data)
           $('#advReqWind').remove()
           $('#popupsContainer').append(data).find('.sm-block').addClass('double-size')
 
           cbca.popup.showPopup('#advReqWind')
           $('#advReqRefuse').hide()
+      )
+
+    $(document).on 'click', '.advs-nodes__node-link_show-popup', (e)->
+      e.preventDefault()
+      $this = $(this)
+      href = $this.attr('href')
+
+      $.ajax(
+        url: href,
+        success: (data)->
+          $('#dailyMmpsWindow').remove()
+          $('#popupsContainer').append(data)
+
+          cbca.popup.showPopup('#dailyMmpsWindow')
       )
 
     $(document).on 'click', '.js-slide-btn', (e)->

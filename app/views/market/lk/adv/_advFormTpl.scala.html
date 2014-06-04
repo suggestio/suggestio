@@ -49,7 +49,7 @@
               <input data-connected-field="advs@mid" type="checkbox" id="node_@{mid}_onStartPage" name="node[@mid].advertise" value="true">
             }
 
-            <a class="advs-nodes__node-link" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(node.id.get)">@node.meta.name</a> / @node.meta.town
+            <a class="advs-nodes__node-link advs-nodes__node-link_show-popup" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(node.id.get)">@node.meta.name</a> / @node.meta.town
 
             @if(maybeBusyAdv.isDefined) {
             <div class="advs-nodes__node-dates advs-node-dates">
