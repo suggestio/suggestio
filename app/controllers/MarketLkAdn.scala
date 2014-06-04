@@ -90,18 +90,19 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         }
       }
       // Нужно узнать, есть ли рекламодатели у указанного узла.
-      val (advReqsCount, advertisersFut): (Long, Future[Seq[MAdnNode]]) = if(isMyNode && adnNode.adn.isReceiver) {
+      val (advReqsCount, busyAdIds, advertisersFut): (Long, Set[String], Future[Seq[MAdnNode]]) = if(isMyNode && adnNode.adn.isReceiver) {
         val syncResult = DB.withConnection { implicit c =>
           val okAdnIds = MAdvOk.findAllProducersForRcvr(adnId)
           val reqAdnIds = MAdvReq.findAllProducersForRcvr(adnId)
           val reqsCount = MAdvReq.countForRcvr(adnId)
-          (okAdnIds, reqAdnIds, reqsCount)
+          val _busyAdIds = MAdv.findAllNonExpiredAdIdsForModes(MAdvModes.busyModes)
+          (okAdnIds, reqAdnIds, reqsCount, _busyAdIds)
         }
-        val (okAdnIds, reqAdnIds, reqsCount) = syncResult
+        val (okAdnIds, reqAdnIds, reqsCount, _busyAdIds) = syncResult
         val advAdnIds = (okAdnIds ++ reqAdnIds).distinct
-        reqsCount -> MAdnNode.multiGet(advAdnIds) // TODO Opt надо задействовать кеш в multiget'e.
+        (reqsCount, _busyAdIds.toSet, MAdnNode.multiGet(advAdnIds)) // TODO Opt надо задействовать кеш в multiget'e.
       } else {
-        0L -> Future.successful(Nil)
+        (0L, Set.empty, Future.successful(Nil))
       }
       // Надо ли отображать кнопку "управление" под карточками
       val canAdv: Boolean = isMyNode && adnNode.adn.isProducer && {
@@ -123,7 +124,8 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
           advertisers   = advertisers,
           povAdnIdOpt   = request.povAdnNodeOpt.flatMap(_.id),
           advReqsCount  = advReqsCount,
-          canAdv        = canAdv
+          canAdv        = canAdv,
+          busyAdIds     = busyAdIds
         ))
       }
     }

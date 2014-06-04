@@ -1,4 +1,4 @@
-@(node: MAdnNode, mads: Seq[MAdT] = Nil, canAdv: Boolean)(implicit ctx: util.Context)
+@(node: MAdnNode, mads: Seq[MAdT] = Nil, canAdv: Boolean, busyAdIds: Set[String])(implicit ctx: util.Context)
 
 @* Список рекламных карточек для создателя рекламы. В нём галочки есть. *@
 @import market.lk.ad._

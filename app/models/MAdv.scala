@@ -18,22 +18,32 @@ object MAdv {
   import SqlParser._
 
   val ADV_MODE_PARSER = get[String]("mode").map(MAdvModes.withName)
-
   val AMOUNT_PARSER = get[Float]("amount")
-
   val CURRENCY_CODE_PARSER = get[String]("currency_code")
   val CURRENCY_PARSER = CURRENCY_CODE_PARSER.map { cc =>
     Currency.getInstance(cc)
   }
-
   val PROD_ADN_ID_PARSER = get[String]("prod_adn_id")
+  val AD_ID_PARSER = get[String]("ad_id")
 
   /** Базовый парсер для колонок таблиц ad7ing_*. */
-  val ROW_PARSER_BASE = get[Pk[Int]]("id") ~ get[String]("ad_id") ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
+  val ROW_PARSER_BASE = get[Pk[Int]]("id") ~ AD_ID_PARSER ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
     get[DateTime]("date_created") ~ get[Option[Float]]("comission") ~ ADV_MODE_PARSER ~ get[Boolean]("on_start_page") ~
     get[DateTime]("date_start") ~ get[DateTime]("date_end") ~ PROD_ADN_ID_PARSER ~ get[String]("rcvr_adn_id")
 
   val COUNT_PARSER = get[Long]("c")
+
+  /**
+   * Найти все ad_id (id рекламных карточек), ряды которых имеют указанные режимы и которые ещё не
+   * истекли по date_end.
+   * @param modes Режимы, по которым искать-перебирать.
+   * @return Список ad_id в неопределённом порядке, но без дубликатов.
+   */
+  def findAllNonExpiredAdIdsForModes(modes: Set[MAdvMode])(implicit c: Connection): List[String] = {
+    SQL("SELECT DISTINCT ad_id FROM adv WHERE mode = ANY({modes}) AND date_end < now()")
+      .on('modes -> strings2pgArray(modes.map(_.toString)))
+      .as(AD_ID_PARSER *)
+  }
 }
 
 
@@ -67,6 +77,8 @@ object MAdvModes extends Enumeration {
   val OK      = Value("o")
   val REQ     = Value("r")
   val REFUSED = Value("e")
+
+  def busyModes = Set(OK, REQ)
 }
 
 
