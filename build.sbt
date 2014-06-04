@@ -1,13 +1,15 @@
-import sbt._
-import sbt.Process._
-import play.PlayImport._
+import play.Play.autoImport._
+import PlayKeys._
 import play.twirl.sbt.Import._
+import com.typesafe.sbt.web._
 
 organization := "io.suggest"
 
 name := "sioweb21"
 
 version := "1.0-SNAPSHOT"
+
+lazy val web21 = (project in file(".")).enablePlugins(PlayScala, SbtWeb)
 
 scalaVersion := "2.10.4"
 
@@ -58,7 +60,7 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "9.3-1100-jdbc41"
 )
 
-play.PlayScala.projectSettings
+play.Play.projectSettings
 
 // После импорта настроек, typesafe-репа не кешируется. Это надо бы исправить.
 resolvers ~= {

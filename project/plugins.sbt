@@ -11,19 +11,29 @@ resolvers ++= Seq(
   Resolver.url("sbt-snapshot-plugins", url("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots"))(Resolver.ivyStylePatterns)
 )
 
-// Comment it out, on non-snapshot releases
-//addSbtPlugin("com.typesafe" % "sbt-web" % "1.0.1-SNAPSHOT")
+addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.0")
 
-//addSbtPlugin("com.typesafe" % "webdriver" % "1.0.1-SNAPSHOT")
+addSbtPlugin("com.typesafe.sbt" % "sbt-less" % "1.0.0")
 
-//addSbtPlugin("com.typesafe" % "sbt-js-engine" % "1.0.0-SNAPSHOT")
+addSbtPlugin("com.typesafe.sbt" % "sbt-jshint" % "1.0.0")
+
+addSbtPlugin("com.typesafe.sbt" % "sbt-rjs" % "1.0.1")
+
+addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.0.0")
+
+addSbtPlugin("com.typesafe.sbt" % "sbt-mocha" % "1.0.0")
 
 
 // Use the Play sbt plugin for Play projects
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.3.0")
 
+addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.0.0")
+
+addSbtPlugin("com.typesafe.sbt" % "sbt-webdriver" % "1.0.0")
+
+addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.0.0")
+
 // stylus assets
 addSbtPlugin("patience" % "play-stylus" % "1.1.0-SNAPSHOT")
 
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "+")
-
