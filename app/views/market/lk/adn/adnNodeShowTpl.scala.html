@@ -33,6 +33,15 @@
         @defining(node.adn.isReceiver) { isRcvr =>
           @if(isRcvr || node.adn.isSupervisor) {
             <div class="adn-title-buttons">
+
+              @if(isRcvr) {
+              <div class="gray-but-wrap">
+                <div class="white-border-top">
+                  <a id="installScriptButton" class="btn" href="">КОД УСТАНОВКИ</a>
+                </div>
+              </div>
+              }
+
               @if(node.adn.memberType.canViewSlaves) {
                 <div class="gray-but-wrap">
                   <div class="white-border-top">
@@ -41,13 +50,6 @@
                 </div>
               }
 
-              @if(isRcvr) {
-                <div class="gray-but-wrap">
-                  <div class="white-border-top">
-                    <a id="installScriptButton" class="btn" href="">КОД УСТАНОВКИ</a>
-                  </div>
-                </div>
-              }
             </div>
           }
         }
