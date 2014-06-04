@@ -1,0 +1,31 @@
+@(jf: Form[_], btnClass: String, submitCall: Call, isWifi: Boolean)(implicit ctx: Context)
+
+@import ctx._
+@import helper._
+
+@form(submitCall) {
+
+  @inputText(jf("company"), '_label -> (Messages("Company") + ":"))
+
+  @if( isWifi ) {
+    @textarea(jf("audienceDescr"), '_label -> (Messages("Audience.descr") + ":"))
+    @inputText(jf("humanTraffic"), '_label -> (Messages("Daily.people.traffic") + ":"))
+  } else {
+    @inputText(jf("info"), '_label -> (Messages("Address") + ":"))
+  }
+
+  @inputText(jf("address"), '_label -> (Messages("Address") + ":"))
+
+  @if( !isWifi ) {
+    @inputText(jf("floor"), '_label -> (Messages("Floor.number") + ":"))
+    @inputText(jf("section"), '_label -> (Messages("Section.number") + ":"))
+  }
+
+  @inputText(jf("siteUrl"), '_label -> (Messages("Site") + ":"))
+
+  @inputText(jf("phone"), '_label -> (Messages("Office.phone.number") + ":"))
+
+  @textarea(jf("info"), '_label -> (Messages("Information") + ":"))
+
+  <input type="submit" class="@btnClass" value="@Messages("Request.invite")"/>
+}

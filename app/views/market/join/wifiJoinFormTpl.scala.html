@@ -8,24 +8,13 @@
 
 @joinBase("Стать участником сети") {
 
-  <a href="@routes.MarketJoin.joinQuestionsForm(Option(smja))">Назад</a>
+  <a href="@routes.MarketJoin.wifiJoinQuestionsForm(Option(smja))">Назад</a>
 
-  @form(routes.MarketJoin.joinFormSubmit(smja)) {
+  @_joinReqFormTpl(
+    jf = jf,
+    btnClass = "green",
+    submitCall = routes.MarketJoin.wifiJoinFormSubmit(smja),
+    isWifi = true
+  )
 
-    @inputText(jf("company"), '_label -> (Messages("Company") + ":"))
-
-    @textarea(jf("audienceDescr"), '_label -> (Messages("Audience.descr") + ":"))
-
-    @inputText(jf("humanTraffic"), '_label -> (Messages("Daily.people.traffic") + ":"))
-
-    @inputText(jf("address"), '_label -> (Messages("Address") + ":"))
-
-    @inputText(jf("siteUrl"), '_label -> (Messages("Site") + ":"))
-
-    @inputText(jf("phone"), '_label -> (Messages("Office.phone.number") + ":"))
-
-    @textarea(jf("info"), '_label -> (Messages("Information") + ":"))
-
-    <input type="submit" value="@Messages("Request.invite")"/>
-  }
 }

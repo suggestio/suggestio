@@ -17,6 +17,8 @@ Save=Save
 Continue=Continue
 Next=Next
 Site=Сайт
+Floor.number=Floor number
+Section.number=Section number
 
 Password.change=Password change
 Type.current.password=Type current password
@@ -31,6 +33,7 @@ Size=Size
 Sizes=Sizes
 Price=Price
 Information=Information
+Write=Write
 
 slaves.of.m=RENTERS
 slaves.of.R=RESTAURANTS
@@ -99,7 +102,7 @@ join.qsn.audienceSz=Assumed count of wireless devices connected at the same time
 join.qsn.audienceSz.lt20=< 20
 join.qsn.audienceSz.lt50=< 50
 join.qsn.audienceSz.gt50=> 50
-Request.invite=Make invite request
+Request.invite=Request invite
 Audience.descr=Audience descriptio
 Daily.people.traffic=Daily traffic
 Office.phone.number=Office phone number

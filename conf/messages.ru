@@ -17,6 +17,8 @@ Save=Сохранить
 Continue=Продолжить
 Next=Далее
 Site=Сайт
+Floor.number=Номер этажа
+Section.number=Номер секции
 
 Password.change=Смена пароля
 Type.current.password=Введите текущий пароль
@@ -31,6 +33,7 @@ Size=Размер
 Sizes=Размеры
 Price=Цена
 Information=Информация
+Write=Написать
 
 slaves.of.m=АРЕНДАТОРЫ
 slaves.of.R=РЕСТОРАНЫ

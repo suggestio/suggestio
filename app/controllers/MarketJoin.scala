@@ -20,7 +20,8 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 object MarketJoin extends SioController with PlayMacroLogsImpl {
   import LOGGER._
 
-  private val joinQuestionsFormM: Form[SMJoinAnswers] = {
+  /** Маппинг формы анкеты с галочками про wi-fi. */
+  private val wifiJoinQuestionsFormM: Form[SMJoinAnswers] = {
     val boolOpt = optional(boolean)
     Form(mapping(
       "haveWifi"        -> boolOpt,
@@ -43,26 +44,27 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
   }
 
   /** Рендер страницы с формой, где можно расставить галочки, ответив на вопросы. */
-  def joinQuestionsForm(smjaOpt: Option[SMJoinAnswers]) = MaybeAuth { implicit request =>
-    val form = smjaOpt.fold(joinQuestionsFormM) { joinQuestionsFormM fill }
+  def wifiJoinQuestionsForm(smjaOpt: Option[SMJoinAnswers]) = MaybeAuth { implicit request =>
+    val form = smjaOpt.fold(wifiJoinQuestionsFormM) { wifiJoinQuestionsFormM fill }
     Ok(wifiJoinQuestionsFormTpl(form))
   }
 
   /** Сабмит формы галочек для перехода на второй шаг. */
-  def joinQuestionsFormSubmit = MaybeAuth { implicit request =>
-    joinQuestionsFormM.bindFromRequest().fold(
+  def wifiJoinQuestionsFormSubmit = MaybeAuth { implicit request =>
+    wifiJoinQuestionsFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug("joinQuestionsFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(wifiJoinQuestionsFormTpl(formWithErrors))
       },
       {smja =>
-        Redirect(routes.MarketJoin.joinForm(smja))
+        Redirect(routes.MarketJoin.wifiJoinForm(smja))
       }
     )
   }
 
 
-  private val joinFormM: Form[MInviteRequest] = {
+  /** Маппинг для формы забивания текстовых полей запроса инвайта на wi-fi узел. */
+  private val wifiJoinFormM: Form[MInviteRequest] = {
     val text2048 = text(maxLength = 2048).transform(strTrimSanitizeF, strIdentityF)
     Form(
       mapping(
@@ -89,13 +91,13 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
 
 
   /** Рендер формы запроса подключения, которая содержит разные поля для ввода текстовой информации. */
-  def joinForm(smja: SMJoinAnswers) = MaybeAuth { implicit request =>
-    Ok(wifiJoinFormTpl(smja, joinFormM))
+  def wifiJoinForm(smja: SMJoinAnswers) = MaybeAuth { implicit request =>
+    Ok(wifiJoinFormTpl(smja, wifiJoinFormM))
   }
 
   /** Сабмит запроса инвайта, в котором много полей. */
-  def joinFormSubmit(smja: SMJoinAnswers) = MaybeAuth.async { implicit request =>
-    joinFormM.bindFromRequest().fold(
+  def wifiJoinFormSubmit(smja: SMJoinAnswers) = MaybeAuth.async { implicit request =>
+    wifiJoinFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug("joinFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(wifiJoinFormTpl(smja, formWithErrors))
@@ -112,7 +114,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
           audienceSz    = smja.audienceSz
         )
         mir1.save.map { mirId =>
-          Redirect(routes.MarketJoin.joinRequestSuccess)
+          Redirect(routes.MarketJoin.joinRequestSuccess())
             .flashing("success" -> "Ваш запрос на подключение к системе принят.")
         }
       }

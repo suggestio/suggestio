@@ -26,7 +26,7 @@
 @joinBase("Готова ли ваша wi-fi сеть к SIO-Market") {
   <h1>Готова ли ваша сеть?</h1>
 
-  @form(routes.MarketJoin.joinQuestionsFormSubmit) {
+  @form(routes.MarketJoin.wifiJoinQuestionsFormSubmit) {
     @* Любое поле может сабмиттить на сервер пустое/отсутсвующее значение, обозначающее "не знаю". *@
 
     @yesNoInputs("haveWifi")
@@ -54,6 +54,6 @@
       }
     }
 
-    <input type="submit" value="Написать"/>
+    <input type="submit" value="@Messages("Write")"/>
   }
 }
