@@ -4,6 +4,7 @@
 
 @import ctx._
 @import helper._
+@import util.FormHelpers._
 
 @joinBase("Стать участником сети") {
 
@@ -15,13 +16,15 @@
 
     @textarea(jf("audienceDescr"), '_label -> (Messages("Audience.descr") + ":"))
 
-    @inputText(jf("dailyTraffic"), '_label -> (Messages("Daily.people.traffic") + ":"))
+    @inputText(jf("humanTraffic"), '_label -> (Messages("Daily.people.traffic") + ":"))
 
     @inputText(jf("address"), '_label -> (Messages("Address") + ":"))
 
     @inputText(jf("siteUrl"), '_label -> (Messages("Site") + ":"))
 
     @inputText(jf("phone"), '_label -> (Messages("Office.phone.number") + ":"))
+
+    @textarea(jf("info"), '_label -> (Messages("Information") + ":"))
 
     <input type="submit" value="@Messages("Request.invite")"/>
   }

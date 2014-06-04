@@ -170,6 +170,7 @@ GET  /market/join/wifi/qs               controllers.MarketJoin.joinQuestionsForm
 POST /market/join/wifi/qs               controllers.MarketJoin.joinQuestionsFormSubmit
 GET  /market/join/wifi                  controllers.MarketJoin.joinForm(j: util.qsb.SMJoinAnswers)
 POST /market/join/wifi                  controllers.MarketJoin.joinFormSubmit(j: util.qsb.SMJoinAnswers)
+GET  /market/join/success               controllers.MarketJoin.joinRequestSuccess
 
 GET  /sys                               controllers.Sys.index
 GET  /sys/dkeys/all                     controllers.Sys.dkeysListAll

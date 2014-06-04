@@ -30,6 +30,7 @@ Manufacturer=Производитель
 Size=Размер
 Sizes=Размеры
 Price=Цена
+Information=Информация
 
 slaves.of.m=АРЕНДАТОРЫ
 slaves.of.R=РЕСТОРАНЫ
