@@ -1379,6 +1379,31 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   background: #208bae
   color: #e1e1e1
 
+/*********************************/
+/* Статусы рассмотрения карточек */
+/*********************************/
+.advs-statuses__status
+  position: relative
+  padding: 5px 0px 5px 30px
+
+.advs-statuses__status-icon
+  position: absolute
+  left: 0px
+  top: 0px
+  width: 30px
+  height: 30px
+  background: lk_sprite
+
+.advs-statuses__status-icon_approved
+  background-position: -340px 3px
+
+.advs-statuses__status-icon_pending
+  background-position: -340px -90px
+
+.advs-statuses__status-icon_declined
+  background-position: -340px -43px
+
+
 /* Блок с подтверждением размешения карточки */
 
 .adv-submit-block
