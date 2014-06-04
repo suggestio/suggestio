@@ -81,25 +81,18 @@ CbcaPopup = () ->
     this.showOverlay()
     $popup = $(popup)
     $popup.show()
-
     popupHeight = $popup.height()
-    top = parseInt(popupHeight/2)
-    marginTop = 0 - top + $(window).scrollTop()
-    $popup.css(
-      "margin-top": marginTop + 25,
-      "top": top
-    )
 
-    if(popupHeight > $('.body').height())
-      $('.body').height popupHeight+top
-
+    $('body').addClass('ovh')
+    $('#overlay').height(popupHeight)
+    console.log(popupHeight)
 
   hidePopup: (popup) ->
     popup = '.popup' || popup
     this.hideOverlay()
     $(popup).hide()
     $('#overlay, #overlayData').hide()
-    $('.body').css 'height', ''
+    $('body').removeClass 'ovh'
 
 
 ##поисковая строка##
