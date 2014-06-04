@@ -121,7 +121,6 @@
 
     @* Ресиверу надо отрендерить список его рекламодателей, если они есть. *@
     @if(isMyNode && !advertisers.isEmpty) {
-      <h5>Рекламодатели</h5>
       @_advertisersListTpl(advertisers, povAdnIdOpt = node.id)
     }
 
