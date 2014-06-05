@@ -177,7 +177,9 @@ CbcaCommon = () ->
       action = $form.attr('action')
 
       $.ajax(
+        type: "POST",
         url: action,
+        data: $form.serialize(),
         success: (data)->
           console.log(data)
       )
@@ -188,10 +190,15 @@ CbcaCommon = () ->
       action = $form.attr('action')
 
       $.ajax(
+        type: "POST",
         url: action,
+        data: $form.serialize(),
         success: (data)->
+          $('#recoverPwForm').find('form').remove()
+          $('#recoverPwForm').find('.content').append(data)
+        error: (error)->
           $('#recoverPwForm').remove()
-          $('#popupsContainer').append(data)
+          $('#popupsContainer').append(error.responseText)
           cbca.popup.showPopup('#recoverPwForm')
       )
 
