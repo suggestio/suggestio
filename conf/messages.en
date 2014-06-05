@@ -19,6 +19,7 @@ Next=Next
 Site=Сайт
 Floor.number=Floor number
 Section.number=Section number
+Close=Close
 
 Password.change=Password change
 Type.current.password=Type current password

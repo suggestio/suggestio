@@ -25,11 +25,15 @@ object IsAdnNodeAdmin {
     )
   }
 
+  def isAdnNodeAdminCheck(adnNode: MAdnNode, personId: String): Boolean = {
+    adnNode.personIds contains personId
+  }
+
   def checkAdnNodeCreds(adnNodeOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Either[Option[MAdnNode], MAdnNode]] = {
     adnNodeOptFut map { adnNodeOpt =>
       adnNodeOpt.fold [Either[Option[MAdnNode], MAdnNode]] (Left(None)) { adnNode =>
         val isAllowed = PersonWrapper.isSuperuser(pwOpt) || {
-          pwOpt.isDefined && (adnNode.personIds contains pwOpt.get.personId)
+          pwOpt.exists { pw => isAdnNodeAdminCheck(adnNode, pw.personId) }
         }
         if (isAllowed) {
           Right(adnNode)

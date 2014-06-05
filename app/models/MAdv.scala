@@ -111,8 +111,14 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
    * @param policy Политика блокировок.
    * @return Список подходящих рядов в неопределённом порядке.
    */
-  def findByAdIdAndRcvr(adId: String, rcvrId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
-    findBy(" WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId}", policy, 'adId -> adId, 'rcvrId -> rcvrId)
+  def findByAdIdAndRcvr(adId: String, rcvrId: String, policy: SelectPolicy = SelectPolicies.NONE, limit: Option[Int] = None)(implicit c: Connection): List[T] = {
+    var sql1 = " WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId}"
+    var args1: List[NamedParameter] = List('adId -> adId, 'rcvrId -> rcvrId)
+    if (limit.isDefined) {
+      sql1 += " LIMIT {limit}"
+      args1 ::= 'limit -> limit.get
+    }
+    findBy(sql1, policy, args1 : _*)
   }
 
   def findByAdIdAndRcvrs(adId: String, rcvrIds: Traversable[String], policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {

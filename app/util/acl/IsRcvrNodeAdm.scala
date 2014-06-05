@@ -87,7 +87,7 @@ case class ThirdPartyAdAccess(adId: String, fromAdnId: String) extends ActionBui
     PersonWrapper.getFromRequest(request) match {
       case pwOpt @ Some(pw) =>
         val madOptFut = MAd.getById(adId)
-        MAdnNode.getById(fromAdnId).flatMap {
+        MAdnNodeCache.getByIdCached(fromAdnId).flatMap {
           case Some(maybeRcvrNode) =>
             madOptFut flatMap {
               case Some(mad) =>
@@ -133,3 +133,63 @@ case class AdRcvrRequest[A](
   def isRcvrAccess = rcvrOpt.isDefined
 }
 
+
+/**
+ * Запрос окна с информацией о размещении карточки. Такое окно может запрашивать как создатель карточки,
+ * так и узел-ресивер, который модерирует или уже отмодерировал карточку.
+ * @param adId id рекламной карточки.
+ * @param fromAdnId Опциональная точка зрения на карточку.
+ */
+case class AdvWndAccess(adId: String, fromAdnId: Option[String]) extends ActionBuilder[AdvWndRequest] {
+  override def invokeBlock[A](request: Request[A], block: (AdvWndRequest[A]) => Future[Result]): Future[Result] = {
+    PersonWrapper.getFromRequest(request) match {
+      case pwOpt @ Some(pw) =>
+        MAd.getById(adId).flatMap {
+          case Some(mad) =>
+            val producerOptFut = MAdnNodeCache.getByIdCached(mad.producerId)
+            val rcvrOptFut = fromAdnId
+              .filter(_ != mad.producerId)
+              .fold[Future[Option[MAdnNode]]]
+                { Future successful None }
+                { MAdnNodeCache.getByIdCached }
+            producerOptFut flatMap { producerOpt =>
+              val isProducerAdmin = producerOpt
+                .exists { producer => IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, pw.personId) }
+              rcvrOptFut flatMap { rcvrOpt =>
+                val isRcvrAdmin = rcvrOpt
+                  .exists { rcvr => IsAdnNodeAdmin.isAdnNodeAdminCheck(rcvr, pw.personId) }
+                if (isProducerAdmin || isRcvrAdmin) {
+                  // Юзер может смотреть рекламную карточку.
+                  val myAdnId = producerOpt.orElse(rcvrOpt).map(_.id.get).get
+                  SioReqMd.fromPwOptAdn(pwOpt, myAdnId) flatMap { srm =>
+                    val req1 = AdvWndRequest(mad, producerOpt, rcvrOpt = rcvrOpt, isProducerAdmin, isRcvrAdmin = isRcvrAdmin, pwOpt, request, srm)
+                    block(req1)
+                  }
+                } else {
+                  // Юзер не имеет отношения к узлам, между которым находится карточка
+                  IsAdnNodeAdmin.onUnauth(request)
+                }
+              }
+            }
+
+          case None => notFoundFut
+        }
+
+      case None => IsAuth.onUnauth(request)
+    }
+  }
+}
+
+
+case class AdvWndRequest[A](
+  mad: MAd,
+  producerOpt: Option[MAdnNode],
+  rcvrOpt: Option[MAdnNode],
+  isProducerAdmin: Boolean,
+  isRcvrAdmin: Boolean,
+  pwOpt: PwOpt_t,
+  request: Request[A],
+  sioReqMd: SioReqMd
+) extends AbstractRequestWithPwOpt(request) {
+  def isRcvrAccess = rcvrOpt.isDefined
+}

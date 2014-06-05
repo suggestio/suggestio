@@ -331,10 +331,11 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    */
   def advInfoWnd(adId: String, fromAdnId: String) = ThirdPartyAdAccess(adId, fromAdnId).apply { implicit request =>
     val syncResult = if(request.isRcvrAccess) {
+      val some2 = Some(2)
       DB.withConnection { implicit c =>
-        val advsOk = MAdvOk.findByAdIdAndRcvr(adId, fromAdnId)
-        val advsReq = MAdvReq.findByAdIdAndRcvr(adId, fromAdnId)
-        val advsRefused = MAdvRefuse.findByAdIdAndRcvr(adId, fromAdnId)
+        val advsOk = MAdvOk.findByAdIdAndRcvr(adId, fromAdnId, limit = some2)
+        val advsReq = MAdvReq.findByAdIdAndRcvr(adId, fromAdnId, limit = some2)
+        val advsRefused = MAdvRefuse.findByAdIdAndRcvr(adId, fromAdnId, limit = some2)
         (advsOk, advsReq, advsRefused)
       }
     } else {
@@ -343,6 +344,16 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     val (advsOk, advsReq, advsRefused) = syncResult
     val advs = advsOk ++ advsReq ++ advsRefused
     Ok(_advInfoWndTpl(request.mad, advs))
+  }
+
+
+  /** Запрос к рендеру окошка с полноразмерной превьюшкой карточки и специфичным для конкретной ситуации функционалом.
+    * @param adId id рекламной карточки.
+    * @param fromAdnId Опциональный id узла, с точки зрения которого идёт просмотр карточки.
+    * @return Рендер отображения поверх текущей страницы.
+    */
+  def advFullWnd(adId: String, fromAdnId: Option[String]) = AdvWndAccess(adId, fromAdnId).async { implicit request =>
+    ???
   }
 
 

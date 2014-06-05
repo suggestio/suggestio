@@ -1,0 +1,13 @@
+@(mad: MAd, adProducer: MAdnNode, madvs: Seq[MAdvI], adv2adn: Map[Int, MAdnNode])(implicit ctx: Context)
+
+@* Рендер шаблона, содержащего полноразмерную карточку и данные по текущему размещению оной снизу. *@
+
+@import ctx._
+
+@_advWndFullTpl(mad, adProducer) {
+
+  @* Нарисовать раскладку по последней движухе на счёте. *@
+
+
+  <a href="#">@Messages("Close")</a>
+}
