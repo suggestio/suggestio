@@ -4,7 +4,7 @@
 @import ctx._
 @import helper._
 
-@import util.FormHelpers._
+@import util.FormHelpersNew._
 
 
 <div class="popup login-popup" id="emailPwLoginForm">
@@ -22,27 +22,23 @@
     @form(submitCall) {
 
       @lf.globalError.map { ge =>
-        <p>Ошибка: @Messages(ge.message)</p>
+        <p class="lk-error">Ошибка: @Messages(ge.message)</p>
       }
 
-      <table cellpadding="0" cellspacing="0" class="input-wrap big">
-        @inputText(
-          lf("email"),
-          '_label -> "E-mail:"
-        )
-      </table>
 
-      <table cellpadding="0" cellspacing="0" class="input-wrap big">
-        @inputPassword(
-          lf("password"),
-          '_label -> "Пароль:"
-        )
-      </table>
+      @inputText(
+        lf("email"),
+        '_label -> "E-mail:"
+      )
 
-      <div class="border-line"></div>
+
+      @inputPassword(
+        lf("password"),
+        '_label -> "Пароль:"
+      )
 
       <div class="login-popup__recover-password">
-        У вас проблемы?&nbsp;<a href="@routes.Ident.recoverPwForm">Восстановить пароль?</a>
+        У вас проблемы?&nbsp;<a class="js-btn" href="@routes.Ident.recoverPwForm">Восстановить пароль?</a>
       </div>
 
       <div class="login-popup__submit-wrap">

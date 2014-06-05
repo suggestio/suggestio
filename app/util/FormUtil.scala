@@ -403,6 +403,12 @@ object FormHelpers {
 
 }
 
+object FormHelpersNew {
+
+  implicit val myFields = FieldConstructor(lkFieldConstructorNew.f)
+
+}
+
 
 /** Сериализатор данных в поле формы, пригодное для передачи на клиент и возврату обратно.
   * Структура отражает Map[String, String] на Json + gzip + base64.
