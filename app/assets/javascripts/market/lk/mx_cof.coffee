@@ -1143,6 +1143,8 @@ market =
       ## Предпросмотр карточки с описанием
       $('.js-ad-preview-button').bind 'click', () ->
 
+        tinyMCE.triggerSave()
+
         $.ajax
           url : $('.js-ad-block-full-preview-action').val()
           method : 'post'
@@ -1211,6 +1213,11 @@ market =
 
 
   init: () ->
+
+    $(document).bind 'keyup', ( event ) ->
+      if event.keyCode == 27
+        cbca.popup.hidePopup()
+
     this.ad_form.init()
     $(document).ready () ->
       market.img.init_upload()

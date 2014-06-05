@@ -4,6 +4,9 @@ import io.suggest.model._
 import util.PlayMacroLogsImpl
 import io.suggest.model.EsModel.FieldsJsonAcc
 import play.api.libs.json.JsString
+import scala.concurrent.ExecutionContext
+import io.suggest.event.SioNotifierStaticClientI
+import org.elasticsearch.client.Client
 
 /**
  * Suggest.io
@@ -64,4 +67,12 @@ case class MCalendar(
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     NAME_ESFN -> JsString(name)  ::  DATA_ESFN -> JsString(data)  ::  acc
   }
+}
+
+trait MCalendarJmxMBean extends EsModelJMXMBeanCommon
+class MCalendarJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase
+  with MCalendarJmxMBean
+{
+  override def companion = MCalendar
 }

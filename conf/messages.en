@@ -91,6 +91,7 @@ lk.sl.d=Show on start page
 lk.sl.h=Show in common catalog
 lk.sl.m=Show in my catalog
 
+nth.floor={0}th floor
 
 join.qsn.haveWifi=Do you have Wi-Fi?
 join.qsn.fullCoverage=Your Wi-Fi equipment covers all needed room?

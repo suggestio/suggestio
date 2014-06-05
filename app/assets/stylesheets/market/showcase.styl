@@ -2,7 +2,7 @@
 @import 'categories.styl'
 
 spriteurl = url('/assets/images/sio-market-sprite.png')
-spritesize = 300px 100px
+spritesize = 400px 100px
 
 
 border-radius( param )
@@ -478,7 +478,19 @@ box-shadow( param )
     max-width: 100px
     max-height: 100px
 
+.sio-mart-node-offers-window__arrow
+  position: absolute
+  top: 57px
+  left: 0px
+  background: spriteurl no-repeat -243px 0px
+  background-size: spritesize
+  width: 30px
+  height: 56px
+  z-index: 100000
+
 @import 'blocks.styl'
+
+
 
 .sm-w-980
   .sm-shops-list

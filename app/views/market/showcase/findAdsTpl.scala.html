@@ -25,11 +25,14 @@
         @ads.zipWithIndex.map { case (mad, index) =>
           <div class="sio-mart-node-offers-window__single-ad-container js-nop-single-ad-container">
 
-            <div class="js-no-container" style="min-width: 300px; margin: 0px auto;">
+            <div class="js-no-container" style="min-width: 300px; margin: 0px auto; position: relative;">
 
-            <div class="sio-mart-node-offers-window__top-offset"></div>
-              @_single_offer_w_description(mad, false, false, producer, index+1, ads.length)
-            <div class="sio-mart-node-offers-window__bottom_margin"></div>
+              <div class="sio-mart-node-offers-window__arrow" onclick="siomart.node_offers_popup.prev_block()"></div>
+              <div class="sio-mart-node-offers-window__arrow sio-mart-node-offers-window__arrow_right" onclick="siomart.node_offers_popup.next_block()"></div>
+
+              <div class="sio-mart-node-offers-window__top-offset"></div>
+                @_single_offer_w_description(mad, false, false, producer, index+1, ads.length)
+              <div class="sio-mart-node-offers-window__bottom_margin"></div>
 
             </div>
 

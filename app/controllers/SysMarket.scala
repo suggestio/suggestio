@@ -72,7 +72,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     * @param companyId Числовой id компании.
     */
   def companyShow(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
-    val companyAdnmsFut = MAdnNode.findByCompanyId(companyId)
+    val companyAdnmsFut = MAdnNode.findByCompanyId(companyId, maxResults = 100)
     MCompany.getById(companyId) flatMap {
       case Some(mc) =>
         for {
@@ -159,7 +159,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   /** Унифицированая страница отображения узла рекламной сети. */
   def showAdnNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
     import request.adnNode
-    val slavesFut = MAdnNode.findBySupId(adnId)
+    val slavesFut = MAdnNode.findBySupId(adnId, maxResults = 100)
     val companyOptFut = MCompany.getById(adnNode.companyId)
     for {
       slaves <- slavesFut

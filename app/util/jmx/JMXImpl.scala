@@ -36,7 +36,9 @@ object JMXImpl {
     new MozillaPersonaIdentJmx,
     new MPersonJmx,
     new MBlogJmx,
-    new MCompanyJmx
+    new MCompanyJmx,
+    new MCalendarJmx,
+    new MInviteRequestJmx
   )
 
   private def getSrv = ManagementFactory.getPlatformMBeanServer
