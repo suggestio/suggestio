@@ -143,7 +143,7 @@ GET  /m/c/usr/c/:catId/dc               controllers.MarketCategory.directSubcats
 
 # Управление промо-офферами (для арендатора и для владельца ТЦ).
 GET  /m/lk/s/:shopId/offers             controllers.MarketOffer.showShopPromoOffers(shopId: String)
-GET  /m/lk/offer/promo/add/:shopId      controllers.MarketOffer.addPromoOfferForm(shopId: String)
+GET  /m/lk/poffer/add/:shopId           controllers.MarketOffer.addPromoOfferForm(shopId: String)
 # promo-offer'ы (poffer)
 POST /m/lk/poffer/add/:shopId           controllers.MarketOffer.addPromoOfferFormSubmit(shopId: String)
 POST /m/lk/poffer/:offerId/delete       controllers.MarketOffer.deletePromoOfferSubmit(offerId)
@@ -171,6 +171,8 @@ POST /market/join/wifi/qs               controllers.MarketJoin.wifiJoinQuestions
 GET  /market/join/wifi                  controllers.MarketJoin.wifiJoinForm(j: util.qsb.SMJoinAnswers)
 POST /market/join/wifi                  controllers.MarketJoin.wifiJoinFormSubmit(j: util.qsb.SMJoinAnswers)
 GET  /market/join/success               controllers.MarketJoin.joinRequestSuccess
+GET  /market/join/adv                   controllers.MarketJoin.joinAdvRequest
+POST /market/join/adv                   controllers.MarketJoin.joinAdvRequestSubmit
 
 GET  /sys                               controllers.Sys.index
 GET  /sys/dkeys/all                     controllers.Sys.dkeysListAll
