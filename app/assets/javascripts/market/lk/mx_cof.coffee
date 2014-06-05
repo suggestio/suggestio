@@ -143,6 +143,12 @@ CbcaCommon = () ->
 
   self.init = () ->
 
+    $(document).on 'click', '.js-submit-wrap', (e)->
+      $(this).find('input').trigger('click')
+
+    $(document).on 'click', '.js-submit-wrap input', (e)->
+      e.stopPropagation()
+
     ##todo все кнопки ajax/popup зарефакторить к этому обработчику##
     $(document).on 'click', '.js-btn', (e)->
       e.preventDefault()
@@ -161,8 +167,6 @@ CbcaCommon = () ->
             $('#popupsContainer').append(data)
             $ajaxData = $(data)
             popupId = $ajaxData.attr('id')
-            console.log($ajaxData)
-            console.log(popupId)
             cbca.popup.hidePopup()
             cbca.popup.showPopup('#'+popupId)
         )
@@ -176,6 +180,19 @@ CbcaCommon = () ->
         url: action,
         success: (data)->
           console.log(data)
+      )
+
+    $(document).on 'submit', '#recoverPwForm form', (e)->
+      e.preventDefault()
+      $form = $(this)
+      action = $form.attr('action')
+
+      $.ajax(
+        url: action,
+        success: (data)->
+          $('#recoverPwForm').remove()
+          $('#popupsContainer').append(data)
+          cbca.popup.showPopup('#recoverPwForm')
       )
 
     ## Попапы с ошибками показывать сразу после перезагрузки страницы ##
