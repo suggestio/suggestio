@@ -143,6 +143,13 @@ CbcaCommon = () ->
 
   self.init = () ->
 
+    $(document).on 'click', '.js-popup-back', (e)->
+      $this = $(this)
+      targetPopupId = $this.attr('href')
+
+      $this.closest('.popup').hide()
+      $(targetPopupId).show()
+
     $(document).on 'click', '.js-remove-popup', (e)->
       $popup = $(this).closest('.popup')
 
