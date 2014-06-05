@@ -284,7 +284,9 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
 
 
   // Обработка инвайтов на управление ТЦ.
-  private val nodeOwnerInviteAcceptM = Form(optional(passwordWithConfirmM))
+  private val nodeOwnerInviteAcceptM = Form(
+    "password" -> optional(passwordWithConfirmM)
+  )
 
   /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
   def nodeOwnerInviteAcceptForm(martId: String, eActId: String) = nodeOwnerInviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
@@ -295,13 +297,15 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
   def nodeOwnerInviteAcceptFormSubmit(martId: String, eActId: String) = nodeOwnerInviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
     // Если юзер залогинен, то форму биндить не надо
     val formBinded = nodeOwnerInviteAcceptM.bindFromRequest()
+    lazy val logPrefix = s"nodeOwnerInviteAcceptFormSubmit($martId, act=$eActId): "
     formBinded.fold(
       {formWithErrors =>
-        debug(s"martInviteAcceptFormSubmit($martId, act=$eActId): Form bind failed: ${formatFormErrors(formWithErrors)}")
+        debug(s"${logPrefix}Form bind failed: ${formatFormErrors(formWithErrors)}")
         NotAcceptable(invite.inviteAcceptFormTpl(mmart, eAct, formWithErrors))
       },
       {passwordOpt =>
         if (passwordOpt.isEmpty && !request.isAuth) {
+          debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=${request.isAuth}")
           val form1 = formBinded
             .withError("pw1", "error.required")
             .withError("pw2", "error.required")
