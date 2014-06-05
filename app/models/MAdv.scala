@@ -44,6 +44,7 @@ object MAdv {
       .on('modes -> strings2pgArray(modes.map(_.toString)))
       .as(AD_ID_PARSER *)
   }
+
 }
 
 
@@ -63,7 +64,8 @@ trait MAdvI { madvi =>
   def prodAdnId     : String
   def rcvrAdnId     : String
 
-  def amountWithComission: Float = comission.fold(amount)(amount * _)
+  def amountMinusComission: Float = comission.fold(amount)(comission => amount * (1.0F - comission))
+  def comissionAmount: Float =  comission.fold(amount)(amount * _)
   def advTerms = new AdvTerms {
     override def onStartPage = madvi.onStartPage
     override def dateEnd: LocalDate = madvi.dateStart.toLocalDate
@@ -187,6 +189,17 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
     findBy(" WHERE date_created + {createdInPeriod} <= now()", policy, 'createdInPeriod -> createdInPeriod)
   }
 
+  /** Найти последнюю актуальную запись, касающуюся указанной рекламной карточки, размещаемой на указанном ресивере.
+    * @param adId id рекламной карточки.
+    * @param rcvrId id ресивера.
+    * @return Опциональный результат.
+    */
+  def getLastActualByAdIdRcvr(adId: String, rcvrId: String)(implicit c: Connection): Option[T] = {
+    SQL("SELECT * FROM " + TABLE_NAME + " WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId} AND date_end >= now() ORDER BY id DESC LIMIT 1")
+      .on('adId -> adId, 'rcvrId -> rcvrId)
+      .as(rowParser *)
+      .headOption
+  }
 }
 
 

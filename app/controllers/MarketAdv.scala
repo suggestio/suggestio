@@ -378,16 +378,29 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         val advs = advsOk ++ advsReq ++ advsRefused
         rcvrsFut.map { adnNodes =>
           val adn2advMap = mkAdv2adnMap(adv2adnIds, adnNodes)
-          Ok(_advWndFullOkTpl(request.mad, request.producer, advs, adn2advMap))
+          Ok(_advWndFullListTpl(request.mad, request.producer, advs, adn2advMap))
         }
       } else {
-        // Доступ админа узла-ресивера.
+        // Доступ админа узла-ресивера к чужой рекламной карточке.
         assert(request.isRcvrAccess)
+        val rcvr = request.rcvrOpt.get
         // Тут есть два варианта развития: есть реквест размещения или нет реквеста размещения.
-        DB.withConnection { implicit c =>
-          ???
+        val advOpt: Option[MAdvI] = DB.withConnection { implicit c =>
+          MAdvOk.getLastActualByAdIdRcvr(adId, rcvr.id.get) orElse MAdvReq.getLastActualByAdIdRcvr(adId, rcvr.id.get)
         }
-        ???
+        advOpt match {
+          // ok: предложение было одобрено юзером
+          case Some(advOk: MAdvOk) =>
+            Ok(_advWndFullOkTpl(request.mad, request.producer, advOk))
+          // req: предложение на состоянии модерации. Надо бы отрендерить страницу судьбоносного набега на мозг
+
+          case Some(advReq: MAdvReq) =>
+            Ok(_advReqWndTpl(request.producer, adRcvr=rcvr, request.mad, advReq, reqRefuseFormM))
+
+          case other =>
+            warn(s"advFullWnd($adId, pov=$fromAdnId): Cannot find last actual for rcvr=${rcvr.id} => $other")
+            InternalServerError("Internal failure.")
+        }
       }
     }
   }
