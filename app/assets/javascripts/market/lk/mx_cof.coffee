@@ -793,13 +793,13 @@ market =
 
       save_crop : ( form_dom ) ->
 
-        offset_x = parseInt( this.crop_tool_img_dom.css('left').replace('px', '') ) || 0
+        offset_x = parseInt( $('#imgCropTool img').css('left').replace('px', '') ) || 0
         c_offset_x = this.container_offset_x
-        offset_x = offset_x - parseInt c_offset_x
+        #offset_x = offset_x - parseInt c_offset_x
 
-        offset_y = parseInt( this.crop_tool_img_dom.css('top').replace('px', '') ) || 0
+        offset_y = parseInt( $('#imgCropTool img').css('top').replace('px', '') ) || 0
         c_offset_y = this.container_offset_y
-        offset_y = offset_y - parseInt c_offset_y
+        #offset_y = offset_y - parseInt c_offset_y
 
         ci = this.crop_tool_img_dom
 
@@ -809,15 +809,13 @@ market =
         rw = parseInt ci.width()
         rh = parseInt ci.height()
 
-        alert sw
-        alert rw
-
         offset_x = sw * offset_x / rw
         offset_y = sh * offset_y / rh
 
-        target_offset = "+" + Math.round( Math.abs(offset_x) ) + "+" + Math.round(Math.abs(offset_y))
+        console.log 'offset_x : ' + offset_x
+        console.log 'offset_y : ' + offset_y
 
-        alert target_offset
+        target_offset = "+" + Math.round( Math.abs(offset_x) ) + "+" + Math.round(Math.abs(offset_y))
 
         target_size = rw + 'x' + rh
 
@@ -907,7 +905,6 @@ market =
 
         ## Забиндить событие на сохранение формы
         $('#imgCropTool form').bind 'submit', () ->
-          alert 'submit'
           market.img.crop.save_crop $(this)
 
           return false
