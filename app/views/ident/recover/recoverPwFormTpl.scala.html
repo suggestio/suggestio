@@ -4,13 +4,41 @@
 @import ctx._
 @import helper._
 
-  <div class="admin-layout">
-	<div class="login-page-content-@ctx.langStr">
-	  <a href="/" class="login-page-logo"></a>
 
-      @form(routes.Ident.recoverPwFormSubmit) {
-        @inputText(rf("email"))
-        <input type="submit" value="@Messages("Next")"/>
-      }
-	</div>
+@import util.FormHelpersNew._
+
+
+<div class="popup recover-popup" id="recoverPwForm">
+
+  <div class="hat">
+    <a class="close" href="#">&nbsp;</a>
   </div>
+
+  <div class="content">
+
+    <div class="popup-title popup-title_recover-popup">
+      ВОССТАНОВИТЬ ПАРОЛЬ
+    </div>
+
+
+    @form(routes.Ident.recoverPwFormSubmit) {
+      @inputText(
+        rf("email"),
+        '_label -> "Электронная почта, указанная при регистрации:"
+      )
+
+
+      <div class="recover-popup__submit-wrap">
+
+        <div class="blue-btn-new">
+          <span class="btn"></span>
+          <input type="submit" value="Отправить"/>
+        </div>
+
+      </div>
+
+    }
+
+  </div>
+
+</div>

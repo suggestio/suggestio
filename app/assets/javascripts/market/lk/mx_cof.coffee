@@ -152,14 +152,31 @@ CbcaCommon = () ->
       if(!href)
         return false
 
-      if(href.charAt(0) == '#')
+      if(href && href.charAt(0) == '#')
         cbca.popup.showPopup(href)
       else
         $.ajax(
           url: href,
           success: (data)->
-            console.log(data)
+            $('#popupsContainer').append(data)
+            $ajaxData = $(data)
+            popupId = $ajaxData.attr('id')
+            console.log($ajaxData)
+            console.log(popupId)
+            cbca.popup.hidePopup()
+            cbca.popup.showPopup('#'+popupId)
         )
+
+    $(document).on 'submit', '.js-form', (e)->
+      e.preventDefault()
+      $form = $(this)
+      action = $form.attr('action')
+
+      $.ajax(
+        url: action,
+        success: (data)->
+          console.log(data)
+      )
 
     ## Попапы с ошибками показывать сразу после перезагрузки страницы ##
     $('.popup .lk-error, .popup .error').each ()->
