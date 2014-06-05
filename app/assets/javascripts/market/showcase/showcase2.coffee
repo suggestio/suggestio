@@ -348,7 +348,7 @@ siomart =
         siomart.utils.ge('sioMartRoot').style.backgroundColor = "#ffffff"
         cbca_grid.init()
 
-      setTimeout grid_cb, 1000
+      setTimeout grid_cb, 1500
       siomart.set_window_class()
 
     if data.action == 'producerAds'
@@ -683,7 +683,6 @@ siomart =
       this.fit this.img_dom
 
       setTimeout siomart.welcome_ad.hide, this.hide_timeout
-
 
   ##################################################
   ## Забиндить события на навигационные кнопари
