@@ -140,36 +140,56 @@ case class AdRcvrRequest[A](
  * @param adId id рекламной карточки.
  * @param fromAdnId Опциональная точка зрения на карточку.
  */
-case class AdvWndAccess(adId: String, fromAdnId: Option[String]) extends ActionBuilder[AdvWndRequest] {
+case class AdvWndAccess(adId: String, fromAdnId: Option[String], needMBC: Boolean) extends ActionBuilder[AdvWndRequest] {
   override def invokeBlock[A](request: Request[A], block: (AdvWndRequest[A]) => Future[Result]): Future[Result] = {
     PersonWrapper.getFromRequest(request) match {
       case pwOpt @ Some(pw) =>
+        import pw.personId
         MAd.getById(adId).flatMap {
           case Some(mad) =>
             val producerOptFut = MAdnNodeCache.getByIdCached(mad.producerId)
-            val rcvrOptFut = fromAdnId
-              .filter(_ != mad.producerId)
-              .fold[Future[Option[MAdnNode]]]
-                { Future successful None }
-                { MAdnNodeCache.getByIdCached }
-            producerOptFut flatMap { producerOpt =>
-              val isProducerAdmin = producerOpt
-                .exists { producer => IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, pw.personId) }
-              rcvrOptFut flatMap { rcvrOpt =>
-                val isRcvrAdmin = rcvrOpt
-                  .exists { rcvr => IsAdnNodeAdmin.isAdnNodeAdminCheck(rcvr, pw.personId) }
-                if (isProducerAdmin || isRcvrAdmin) {
+            val rcvrIdOpt0 = fromAdnId.filter(_ != mad.producerId)
+            val isRcvrRelated = rcvrIdOpt0 exists { rcvrId =>
+              DB.withConnection { implicit c =>
+                MAdvOk.hasNotExpiredByAdIdAndRcvr(adId, rcvrId)  ||  MAdvReq.hasNotExpiredByAdIdAndRcvr(adId, rcvrId)
+              }
+            }
+            val rcvrIdOpt = rcvrIdOpt0 filter { _ => isRcvrRelated }
+            val rcvrOptFut = rcvrIdOpt
+              .fold [Future[Option[MAdnNode]]] { Future successful None } { MAdnNodeCache.getByIdCached }
+            producerOptFut flatMap {
+              case Some(producer) =>
+                val isProducerAdmin = IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, personId)
+                // Пока ресивер ещё не готов, проверяем, относится ли текущая рекламная карточка к указанному ресиверу или продьюсеру.
+                if (isProducerAdmin || isRcvrRelated) {
                   // Юзер может смотреть рекламную карточку.
-                  val myAdnId = producerOpt.orElse(rcvrOpt).map(_.id.get).get
-                  SioReqMd.fromPwOptAdn(pwOpt, myAdnId) flatMap { srm =>
-                    val req1 = AdvWndRequest(mad, producerOpt, rcvrOpt = rcvrOpt, isProducerAdmin, isRcvrAdmin = isRcvrAdmin, pwOpt, request, srm)
-                    block(req1)
+                  rcvrOptFut flatMap { rcvrOpt =>
+                    val isRcvrAdmin = rcvrOpt
+                      .exists { rcvr => IsAdnNodeAdmin.isAdnNodeAdminCheck(rcvr, personId) }
+                    // Чтобы получить какой-либо доступ к окошку карточки, нужно быть или админом узла-продьюсера карточки, или же админом ресивера, переданного через fromAdnId.
+                    if (isProducerAdmin || isRcvrAdmin) {
+                      val srmFut = if (needMBC) {
+                        // Узнаём для какого узла отображать кошелёк.
+                        val myAdnId: String = if (isProducerAdmin) mad.producerId else if (isRcvrAdmin) rcvrIdOpt.get else ???
+                        SioReqMd.fromPwOptAdn(pwOpt, myAdnId)
+                      } else {
+                        // Контроллер считает, что кошелёк не нужен.
+                        SioReqMd.fromPwOpt(pwOpt)
+                      }
+                      srmFut flatMap { srm =>
+                        val req1 = AdvWndRequest(mad, producer, rcvrOpt = rcvrOpt, isProducerAdmin, isRcvrAdmin = isRcvrAdmin, pwOpt, request, srm)
+                        block(req1)
+                      }
+                    } else {
+                      IsAdnNodeAdmin.onUnauth(request)
+                    }
                   }
                 } else {
-                  // Юзер не имеет отношения к узлам, между которым находится карточка
                   IsAdnNodeAdmin.onUnauth(request)
                 }
-              }
+
+              case None =>
+                Future successful Results.InternalServerError("Ad producer not found, but it should!")
             }
 
           case None => notFoundFut
@@ -183,7 +203,7 @@ case class AdvWndAccess(adId: String, fromAdnId: Option[String]) extends ActionB
 
 case class AdvWndRequest[A](
   mad: MAd,
-  producerOpt: Option[MAdnNode],
+  producer: MAdnNode,
   rcvrOpt: Option[MAdnNode],
   isProducerAdmin: Boolean,
   isRcvrAdmin: Boolean,
