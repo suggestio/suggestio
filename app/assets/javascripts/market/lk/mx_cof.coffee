@@ -143,6 +143,23 @@ CbcaCommon = () ->
 
   self.init = () ->
 
+    ##todo все кнопки ajax/popup зарефакторить к этому обработчику##
+    $(document).on 'click', '.js-btn', (e)->
+      e.preventDefault()
+      $this = $(this)
+      href = $this.attr('href')
+
+      if(!href)
+        return false
+
+      if(href.charAt(0) == '#')
+        cbca.popup.showPopup(href)
+      else
+        $.ajax(
+          url: href,
+          success: (data)->
+            console.log(data)
+        )
 
     $(document).on 'click', '#advReqRefuseShow', (e)->
       e.preventDefault()

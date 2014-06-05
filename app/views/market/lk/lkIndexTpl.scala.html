@@ -29,7 +29,11 @@
 
     <div class="center">
 
-      <a href="#" class="simple-green-btn f-right login-page_enter_btn">Вход</a>
+      @*if(!ctx.isAuth) {*@
+
+        <a  href="#emailPwLoginForm" class="simple-green-btn f-right login-page_enter_btn js-btn">Вход</a>
+
+
 
     </div>
 
@@ -65,19 +69,25 @@
 
           </div>
 
-          <!--<div class="lp-title">ВХОД</div>
-          <div class="border-line"></div>-->
-
-        @* Рендерим форму логина прямо здесь. *@
-        @*ident._emailPwLoginFormTpl(
-          lf = lf,
-          submitCall = routes.MarketLk.emailPwLoginFormSubmit
-        )*@
-
       </div>
 
     </div>
 
+  </div>
+
+  <div class="popups-container" id="popupsContainer">
+
+    @* Попап с формой логина *@
+    @*if(!ctx.isAuth) {*@
+
+      @ident._emailPwLoginFormTpl(
+        lf = lf,
+        submitCall = routes.MarketLk.emailPwLoginFormSubmit
+      )
+
+
+
+    <div class="overlay" id="overlay"></div>
   </div>
 
   <div class="footer-wrap">
@@ -95,11 +105,12 @@
     </div>
   </div>
 
-
+  <script src="@routes.Assets.at("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
   <script src="@routes.Assets.at("javascripts/market/lk/mx_cof.js")"></script>
   <script src="@routes.Assets.at("javascripts/market/lk/mx_dev.js")"></script>
   <script src="@routes.Assets.at("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
   <script src="@routes.Assets.at("javascripts/jquery-ui.custom.min.js")"></script>
+
 
 </body>
 </html>

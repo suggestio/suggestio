@@ -6,36 +6,56 @@
 
 @import util.FormHelpers._
 
-@form(submitCall) {
 
-  @lf.globalError.map { ge =>
-    <p>Ошибка: @Messages(ge.message)</p>
-  }
+<div class="popup login-popup" id="emailPwLoginForm">
 
-  <table cellpadding="0" cellspacing="0" class="input-wrap big">
-    @inputText(
-      lf("email"),
-      '_label -> "E-mail:"
-    )
-  </table>
-
-  <table cellpadding="0" cellspacing="0" class="input-wrap big">
-    @inputPassword(
-      lf("password"),
-      '_label -> "Пароль:"
-    )
-  </table>
-
-  <div class="ovh recover-password">
-    У вас проблемы?&nbsp;<a href="@routes.Ident.recoverPwForm">Восстановить пароль?</a>
+  <div class="hat">
+    <a class="close" href="#">&nbsp;</a>
   </div>
 
-  <div class="block-480 login-but-wrap">
-    <div class="border-line"></div>
-    <div class="login-but">
-      <input class="blue-but-small but-w-line" type="submit" value="Войти"/>
+  <div class="content">
+
+    <div class="popup-title popup-title_without_padding">
+      ВХОД
     </div>
 
+    @form(submitCall) {
+
+      @lf.globalError.map { ge =>
+        <p>Ошибка: @Messages(ge.message)</p>
+      }
+
+      <table cellpadding="0" cellspacing="0" class="input-wrap big">
+        @inputText(
+          lf("email"),
+          '_label -> "E-mail:"
+        )
+      </table>
+
+      <table cellpadding="0" cellspacing="0" class="input-wrap big">
+        @inputPassword(
+          lf("password"),
+          '_label -> "Пароль:"
+        )
+      </table>
+
+      <div class="border-line"></div>
+
+      <div class="login-popup__recover-password">
+        У вас проблемы?&nbsp;<a href="@routes.Ident.recoverPwForm">Восстановить пароль?</a>
+      </div>
+
+      <div class="login-popup__submit-wrap">
+
+        <div class="blue-btn-new">
+          <span class="btn"></span>
+          <input type="submit" value="Войти"/>
+        </div>
+
+      </div>
+
+    }
+
   </div>
 
-}
+</div>
