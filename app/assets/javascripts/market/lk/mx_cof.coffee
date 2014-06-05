@@ -161,6 +161,13 @@ CbcaCommon = () ->
             console.log(data)
         )
 
+    ## Попапы с ошибками показывать сразу после перезагрузки страницы ##
+    $('.popup .lk-error, .popup .error').each ()->
+      $this = $(this)
+      popupId = $this.closest('.popup').attr('id')
+
+      cbca.popup.showPopup('#'+popupId)
+
     $(document).on 'click', '#advReqRefuseShow', (e)->
       e.preventDefault()
 
