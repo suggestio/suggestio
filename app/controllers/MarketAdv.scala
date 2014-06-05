@@ -361,8 +361,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     */
   def advFullWnd(adId: String, fromAdnId: Option[String]) = {
     AdvWndAccess(adId, fromAdnId, needMBC = false).async { implicit request =>
+      val limit = ADVS_MODE_SELECT_LIMIT
       if (request.isProducerAdmin) {
-        val limit = ADVS_MODE_SELECT_LIMIT
         val syncResult = DB.withConnection { implicit c =>
           val advsOk  = MAdvOk.findNotExpiredByAdId(adId, limit = limit)
           val advsReq = MAdvReq.findNotExpiredByAdId(adId, limit = limit)
@@ -371,12 +371,24 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         }
         val (advsOk, advsReq, advsRefused) = syncResult
         val adv2adnIds = mkAdv2adnIds(advsOk, advsReq, advsRefused)
-        val adv2adnFut = MAdnNode.multiGet(adv2adnIds.valuesIterator.toStream).map { adnNodes =>
+        // Быстро генерим список с минимальным мусором
+        val adnIds = adv2adnIds.valuesIterator.toSet.toSeq
+        // Запускаем сбор узлов
+        val rcvrsFut = MAdnNode.multiGet(adnIds)
+        val advs = advsOk ++ advsReq ++ advsRefused
+        rcvrsFut.map { adnNodes =>
           val adn2advMap = mkAdv2adnMap(adv2adnIds, adnNodes)
+          Ok(_advWndFullOkTpl(request.mad, request.producer, advs, adn2advMap))
+        }
+      } else {
+        // Доступ админа узла-ресивера.
+        assert(request.isRcvrAccess)
+        // Тут есть два варианта развития: есть реквест размещения или нет реквеста размещения.
+        DB.withConnection { implicit c =>
           ???
         }
+        ???
       }
-      ???
     }
   }
 

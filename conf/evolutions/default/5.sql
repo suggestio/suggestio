@@ -14,7 +14,10 @@ COMMENT ON COLUMN sio2.bill_contract.sio_comission
   IS 'комиссия s.io на прибыль за размещение рекламы';
 ALTER TABLE sio2.bill_contract
    ALTER COLUMN sio_comission DROP DEFAULT;
+COMMIT;
 
+
+BEGIN;
 
 ALTER TABLE sio2.adv_ok
   ADD COLUMN online boolean NOT NULL DEFAULT false;

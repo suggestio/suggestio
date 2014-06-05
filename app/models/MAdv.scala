@@ -90,7 +90,7 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
    * @return Список найленных рядов в неопределённом порядке.
    */
   def findByAdId(adId: String, limit: Int = 100, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
-    findBy("WHERE ad_id = {adId} LIMIT {limit}", policy, 'adId -> adId, 'limit -> limit)
+    findBy(" WHERE ad_id = {adId} LIMIT {limit}", policy, 'adId -> adId, 'limit -> limit)
   }
 
   /**
