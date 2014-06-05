@@ -11,11 +11,7 @@
     @advertisers.zipWithIndex.map { case (mnode, i) =>
 
       <div class="advs-nodes__node @if(i%2 == 0) {advs-nodes__node_odd} else {advs-nodes__node_even } @if(mnode.adn.isEnabled) {enabled}" data-shop="@mnode.id">
-
-          <a class="advs-nodes__node-link" href="@routes.MarketLkAdn.showAdnNode(mnode.id.get, povAdnId = povAdnIdOpt)">@mnode.meta.name</a>@if(!mnode.meta.town.isEmpty) {/ @mnode.meta.town.isEmpty }
-
-
-
+        <a target="_blank" class="advs-nodes__node-link" href="@routes.MarketLkAdn.showAdnNode(mnode.id.get, povAdnId = povAdnIdOpt)">@mnode.meta.name</a>@if(!mnode.meta.town.isEmpty) { / @mnode.meta.town }
       </div>
 
     }
