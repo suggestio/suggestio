@@ -19,7 +19,7 @@
   @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@
   @*af.globalError*@
 
-  <input type="hidden" id="preview-action" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get)" />
+  <input type="hidden" id="preview-action" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get, isFull = false)" />
 
   <div class="lk-edit-form__block js-slide-wrap">
     <div class="lk-edit-form__block_title">
@@ -90,7 +90,7 @@
           <div class="lk-ad-block-edit-form__preview">
 
             @* TODO: в этот div надо рендерить превьюшку *@
-            <input class="js-ad-block-preview-action" type="hidden" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get)"/>
+            <input class="js-ad-block-preview-action" type="hidden" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get, isFull = false)"/>
 
             <div class="lk-ad-block-edit-form__preview_container" id="adFormBlockPreview">
 

@@ -62,29 +62,29 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
     )
   }
 
+  private val text2048M = text(maxLength = 2048).transform(strTrimSanitizeF, strIdentityF)
 
   /** Маппинг для формы забивания текстовых полей запроса инвайта на wi-fi узел. */
   private val wifiJoinFormM: Form[MInviteRequest] = {
-    val text2048 = text(maxLength = 2048).transform(strTrimSanitizeF, strIdentityF)
     Form(
       mapping(
         "company"       -> companyNameM,
-        "audienceDescr" -> text2048,
-        "humanTraffic"  -> text(maxLength = 1024).transform(strTrimSanitizeF, strIdentityF),
+        "audienceDescr" -> toStrOptM(text2048M),
+        "humanTraffic"  -> toStrOptM(text(maxLength = 1024).transform(strTrimSanitizeF, strIdentityF)),
         "address"       -> addressM,
         "siteUrl"       -> urlStrOptM,
-        "phone"         -> phoneM,
-        "info"          -> text2048.transform[Option[String]](Option(_).filter(!_.isEmpty), _ getOrElse "")
+        "phone"         -> phoneM
       )
-      {(company, audienceDescr, humanTraffic, address, siteUrl, phone, info) =>
+      {(company, audienceDescr, humanTraffic, address, siteUrl, phone) =>
         MInviteRequest(
+          reqType = InviteReqTypes.Wifi,
           company = company, audienceDescr = audienceDescr, humanTraffic = humanTraffic,
-          address = address, siteUrl = siteUrl, contactPhone = phone, info = info
+          address = address, siteUrl = siteUrl, contactPhone = phone
         )
       }
       {mir =>
         import mir._
-        Some((company, audienceDescr, humanTraffic, address, siteUrl, contactPhone, info))
+        Some((company, audienceDescr, humanTraffic, address, siteUrl, contactPhone))
       }
     )
   }
@@ -113,17 +113,69 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
           smallRoom     = smja.smallRoom,
           audienceSz    = smja.audienceSz
         )
-        mir1.save.map { mirId =>
-          Redirect(routes.MarketJoin.joinRequestSuccess())
-            .flashing("success" -> "Ваш запрос на подключение к системе принят.")
-        }
+        mir1.save.map { mirSavedRdr }
       }
     )
+  }
+
+  /** Куда отправлять юзера, когда его запрос сохранён? */
+  private def mirSavedRdr(mirId: String) = {
+    Redirect(routes.MarketJoin.joinRequestSuccess())
+      .flashing("success" -> "Ваш запрос на подключение к системе принят.")
   }
 
   /** Отобразить страничку с писаниной о том, что всё ок. */
   def joinRequestSuccess = MaybeAuth { implicit request =>
     Ok(joinSuccessTpl())
+  }
+
+
+  private val advJoinFormM: Form[MInviteRequest] = {
+    Form(
+      mapping(
+        "company"   -> companyNameM,
+        "info"      -> text2048M.transform[Option[String]](Option(_).filter(!_.isEmpty), _ getOrElse ""),
+        "address"   -> addressM,
+        "floor"     -> floorOptM,
+        "section"   -> sectionOptM,
+        "siteUrl"   -> urlStrOptM,
+        "phone"     -> phoneM
+      )
+      {(company, info, address, floor, section, siteUrl, phone) =>
+        MInviteRequest(
+          reqType = InviteReqTypes.Adv,
+          company = company, info = info, address = address, floor = floor, section = section,
+          siteUrl = siteUrl, contactPhone = phone
+        )
+      }
+      {mir =>
+        import mir._
+        Some((company, info, address, floor, section, siteUrl, contactPhone))
+      }
+    )
+  }
+
+
+  /** Юзер хочется зарегаться как рекламное агентство. Отрендерить страницу с формой, похожей на форму
+    * заполнения сведений по wi-fi сети. */
+  def joinAdvRequest = MaybeAuth { implicit request =>
+    Ok(joinAdvTpl(advJoinFormM))
+  }
+
+  /**
+   * Сабмит формы запроса присоединения к системе в качестве рекламодателя.
+   * @return Редирект или 406 NotAcceptable.
+   */
+  def joinAdvRequestSubmit = MaybeAuth.async { implicit request =>
+    advJoinFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug("joinAdvRequestSubmit(): Form bind failed:\n" + formatFormErrors(formWithErrors))
+        NotAcceptable(joinAdvTpl(formWithErrors))
+      },
+      {mir =>
+        mir.save.map { mirSavedRdr }
+      }
+    )
   }
 
 }

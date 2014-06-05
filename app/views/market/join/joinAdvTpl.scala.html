@@ -1,0 +1,14 @@
+@(jf: Form[_])(implicit ctx: Context)
+
+@* Страница, отображающая форму для запроса инвайта в качестве рекламодателя. *@
+
+@joinBase("Разместить рекламу") {
+
+  @_joinReqFormTpl(
+    jf = jf,
+    btnClass = "blue",
+    submitCall = routes.MarketJoin.joinAdvRequestSubmit,
+    isWifi = false
+  )
+
+}

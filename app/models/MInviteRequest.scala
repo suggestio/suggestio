@@ -12,9 +12,13 @@ import play.api.libs.json._
  * Created: 04.06.14 13:25
  * Description: Запросы на инвайты.
  */
+
 object MInviteRequest extends EsModelStaticT with PlayMacroLogsImpl {
 
   import LOGGER._
+
+  /** Тип реквеста: рекламодатель или wifi. */
+  val REQ_TYPE_ESFN       = "rt"
 
   val COMPANY_ESFN        = "company"
   val AUDIENCE_DESCR_ESFN = "audDescr"
@@ -33,14 +37,16 @@ object MInviteRequest extends EsModelStaticT with PlayMacroLogsImpl {
   val SMALL_ROOM_ESFN     = "sr"
   val AUDIENCE_SZ_ESFN    = "audSz"
 
+  val FLOOR_ESFN          = "floor"
+  val SECTION_ESFN        = "section"
+
   override type T = MInviteRequest
 
   override val ES_TYPE_NAME = "invReq"
 
   override protected def dummy(id: String, version: Long): T = {
-    MInviteRequest(
-      company = "", audienceDescr = "", humanTraffic = "", address = "", siteUrl = None, contactPhone = ""
-    )
+    val str0 = ""
+    MInviteRequest(reqType = null, company = str0, address = str0, siteUrl = None, contactPhone = str0)
   }
 
   override def generateMappingStaticFields: List[Field] = List(
@@ -49,6 +55,7 @@ object MInviteRequest extends EsModelStaticT with PlayMacroLogsImpl {
   )
 
   override def generateMappingProps: List[DocField] = List(
+    FieldString(REQ_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldString(COMPANY_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
     FieldString(AUDIENCE_DESCR_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
     FieldString(HUMAN_TRAFFIC_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
@@ -63,14 +70,17 @@ object MInviteRequest extends EsModelStaticT with PlayMacroLogsImpl {
     FieldBoolean(IS_WRT_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldBoolean(LANDLINE_INET_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
     FieldBoolean(SMALL_ROOM_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-    FieldBoolean(AUDIENCE_SZ_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+    FieldBoolean(AUDIENCE_SZ_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+    FieldString(FLOOR_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
+    FieldString(SECTION_ESFN, index = FieldIndexingVariants.no, include_in_all = true)
   )
 
   import EsModel._
   override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
+    case (REQ_TYPE_ESFN, rtRaw)               => acc.reqType = InviteReqTypes.withName(stringParser(rtRaw))
     case (COMPANY_ESFN, companyRaw)           => acc.company = stringParser(companyRaw)
-    case (AUDIENCE_DESCR_ESFN, audDescrRaw)   => acc.audienceDescr = stringParser(audDescrRaw)
-    case (HUMAN_TRAFFIC_ESFN, htRaw)          => acc.humanTraffic = stringParser(htRaw)
+    case (AUDIENCE_DESCR_ESFN, audDescrRaw)   => acc.audienceDescr = Option(stringParser(audDescrRaw))
+    case (HUMAN_TRAFFIC_ESFN, htRaw)          => acc.humanTraffic = Option(stringParser(htRaw))
     case (ADDRESS_ESFN, addrRaw)              => acc.address = stringParser(addrRaw)
     case (SITE_URL_ESFN, siteUrlRaw)          => acc.siteUrl = Option(stringParser(siteUrlRaw))
     case (CONTACT_PHONE_ESFN, cphRaw)         => acc.contactPhone = stringParser(cphRaw)
@@ -83,15 +93,18 @@ object MInviteRequest extends EsModelStaticT with PlayMacroLogsImpl {
     case (LANDLINE_INET_ESFN, llInetRaw)      => acc.landlineInet = Option(booleanParser(llInetRaw))
     case (SMALL_ROOM_ESFN, srRaw)             => acc.smallRoom = Option(booleanParser(srRaw))
     case (AUDIENCE_SZ_ESFN, auSzRaw)          => acc.audienceSz = AudienceSizes.maybeWithName(stringParser(auSzRaw))
+    case (FLOOR_ESFN, floorRaw)               => acc.floor = Option(stringParser(floorRaw))
+    case (SECTION_ESFN, sectionRaw)           => acc.section = Option(stringParser(sectionRaw))
   }
 }
 
 import MInviteRequest._
 
 case class MInviteRequest(
+  var reqType: InviteReqType,
   var company: String,
-  var audienceDescr: String,
-  var humanTraffic: String,
+  var audienceDescr: Option[String] = None,
+  var humanTraffic: Option[String] = None,
   var address: String,
   var siteUrl: Option[String] = None,
   var contactPhone: String,
@@ -104,6 +117,8 @@ case class MInviteRequest(
   var landlineInet: Option[Boolean] = None,
   var smallRoom: Option[Boolean] = None,
   var audienceSz: Option[AudienceSize] = None,
+  var floor: Option[String] = None,
+  var section: Option[String] = None,
   id: Option[String] = None
 ) extends EsModelT {
 
@@ -115,14 +130,17 @@ case class MInviteRequest(
 
   override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     var acc1: FieldsJsonAcc =
+      REQ_TYPE_ESFN         -> JsString(reqType.toString) ::
       COMPANY_ESFN          -> JsString(company) ::
-      AUDIENCE_DESCR_ESFN   -> JsString(audienceDescr) ::
-      HUMAN_TRAFFIC_ESFN    -> JsString(humanTraffic) ::
       ADDRESS_ESFN          -> JsString(address) ::
       CONTACT_PHONE_ESFN    -> JsString(contactPhone) ::
       acc
     if (siteUrl.isDefined)
       acc1 ::= SITE_URL_ESFN -> JsString(siteUrl.get)
+    if (audienceDescr.isDefined)
+      acc1 ::= AUDIENCE_DESCR_ESFN -> JsString(audienceDescr.get)
+    if (humanTraffic.isDefined)
+      acc1 ::= HUMAN_TRAFFIC_ESFN -> JsString(humanTraffic.get)
     if (info.isDefined)
       acc1 ::= INFO_ESFN -> JsString(info.get)
     if (haveWifi.isDefined)
@@ -141,6 +159,18 @@ case class MInviteRequest(
       acc1 ::= SMALL_ROOM_ESFN -> JsBoolean(smallRoom.get)
     if (audienceSz.isDefined)
       acc1 ::= AUDIENCE_SZ_ESFN -> JsString(audienceSz.get.toString)
+    if (floor.isDefined)
+      acc1 ::= FLOOR_ESFN -> JsString(floor.get)
+    if (section.isDefined)
+      acc1 ::= SECTION_ESFN -> JsString(section.get)
     acc1
   }
 }
+
+
+object InviteReqTypes extends Enumeration {
+  type InviteReqType = Value
+  val Adv = Value("a")
+  val Wifi = Value("w")
+}
+

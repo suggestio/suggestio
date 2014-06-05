@@ -142,6 +142,6 @@ package object models {
   type DisableReason        = ym.model.common.DisableReason
 
   type MAdvMode             = MAdvModes.MAdvMode
-
   type AudienceSize         = AudienceSizes.AudienceSize
+  type InviteReqType        = InviteReqTypes.InviteReqType
 }
