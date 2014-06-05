@@ -162,7 +162,7 @@ POST /img/crop                          controllers.Img.imgCropSubmit
 # market
 GET  /market/index/:adnId               controllers.Market.martIndex(adnId)
 GET  /market/site/:adnId                controllers.Market.demoWebSite(adnId)
-GET  /market/ads/:adnId                 controllers.Market.findAds(adnId, a: util.qsb.AdSearch)
+GET  /market/ads                        controllers.Market.findAds(a: util.qsb.AdSearch)
 POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)
 
 # market+join: Присоединение к sio-market.

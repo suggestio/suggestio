@@ -307,8 +307,8 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         if (passwordOpt.isEmpty && !request.isAuth) {
           debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=${request.isAuth}")
           val form1 = formBinded
-            .withError("pw1", "error.required")
-            .withError("pw2", "error.required")
+            .withError("password.pw1", "error.required")
+            .withError("password.pw2", "error.required")
           NotAcceptable(invite.inviteAcceptFormTpl(mmart, eAct, form1))
         } else {
           // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
