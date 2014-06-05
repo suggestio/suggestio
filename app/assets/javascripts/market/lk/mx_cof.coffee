@@ -143,6 +143,11 @@ CbcaCommon = () ->
 
   self.init = () ->
 
+    $(document).on 'click', '.js-close-popup', (e)->
+      $popup = $(this).closest('.popup')
+
+      cbca.popup.hidePopup('#'+$popup.attr('id'))
+
     $(document).on 'click', '.js-submit-wrap', (e)->
       $(this).find('input').trigger('click')
 
