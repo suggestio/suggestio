@@ -9,7 +9,7 @@ import org.joda.time.{DateTime, LocalDate}
 import play.api.db.DB
 import com.github.nscala_time.time.OrderingImplicits._
 import views.html.market.lk.adv._
-import util.{TplDataFormatUtil, PlayMacroLogsImpl}
+import util.PlayMacroLogsImpl
 import scala.concurrent.Future
 import play.api.data.Form
 import play.api.templates.HtmlFormat
@@ -30,6 +30,8 @@ import java.util.Currency
 object MarketAdv extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
+
+  val ADVS_MODE_SELECT_LIMIT = configuration.getInt("adv.short.limit") getOrElse 2
 
   /** Маппинг формы размещения рекламы на других узлах. */
   val advFormM: Form[List[AdvFormEntry]] = {
@@ -110,16 +112,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     trace(s"_advFormFor($adId): advsOk[${advsOk.size}] advsReq[${advsReq.size}] advsRefused[${advsRefused.size}] blockedSums=${blockedSums.mkString(",")}")
     val advs = (advsReq ++ advsRefused ++ advsOk).sortBy(_.dateCreated)
     // Собираем карту adv.id -> rcvrId. Она нужна для сборки карты adv.id -> rcvr.
-    val reqAdnIds = advsReq.map {
-      advReq  =>  advReq.id.get -> advReq.rcvrAdnId
-    }
-    val refusedAdnIds = advsRefused.map {
-      advRefused  =>  advRefused.id.get -> advRefused.rcvrAdnId
-    }
-    val okAdnIds = advsOk.map {
-      advOk  =>  advOk.id.get -> advOk.rcvrAdnId
-    }
-    val adv2adnIds: Map[Int, String] = (okAdnIds ++ reqAdnIds ++ refusedAdnIds).toMap
+    val adv2adnIds = mkAdv2adnIds(advsReq, advsRefused, advsOk)
     val busyAdns: Map[String, MAdvI] = {
       val adnAdvsReq = advsReq.map { advReq  =>  advReq.rcvrAdnId -> advReq }
       val adnAdvsOk = advsOk.map { advOk => advOk.rcvrAdnId -> advOk }
@@ -131,17 +124,31 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       // Выкинуть узлы, у которых нет своего тарифного плана.
       val rcvrs1 = rcvrs
         .filter { node => adnIdsReadySet contains node.id.get }
-      val rcvrsMap = rcvrs1.map { rcvr => rcvr.id.get -> rcvr }.toMap
-      // Собираем карту adv.id -> rcvr.
-      val adv2adnMap = adv2adnIds.flatMap { case (advId, adnId) =>
-        rcvrsMap.get(adnId)
-          .fold { List.empty[(Int, MAdnNode)] }  { rcvr => List(advId -> rcvr) }
-      }
+      val adv2adnMap = mkAdv2adnMap(adv2adnIds, rcvrs1)
       // Запускаем рендер шаблона, собрав аргументы в соотв. группы.
       val formArgs = AdvFormTplArgs(adId, rcvrs1, form, busyAdns)
       val currAdvsArgs = CurrentAdvsTplArgs(advs, adv2adnMap, blockedSums)
       advForAdTpl(request.mad, currAdvsArgs, formArgs)
     }
+  }
+
+
+  private def mkAdv2adnMap(adv2adnIds: Map[Int, String], rcvrs: Seq[MAdnNode]): Map[Int, MAdnNode] = {
+    val rcvrsMap = rcvrs.map { rcvr => rcvr.id.get -> rcvr }.toMap
+    // Собираем карту adv.id -> rcvr.
+    adv2adnIds.flatMap { case (advId, adnId) =>
+      rcvrsMap.get(adnId)
+        .fold { List.empty[(Int, MAdnNode)] }  { rcvr => List(advId -> rcvr) }
+    }
+  }
+
+
+  private def mkAdv2adnIds(advss: List[MAdvI] *): Map[Int, String] = {
+    advss.foldLeft [List[(Int, String)]] (Nil) { (acc1, advs) =>
+      advs.foldLeft(acc1) { (acc2, e) =>
+        e.id.get -> e.rcvrAdnId  ::  acc2
+      }
+    }.toMap
   }
 
 
@@ -331,11 +338,11 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    */
   def advInfoWnd(adId: String, fromAdnId: String) = ThirdPartyAdAccess(adId, fromAdnId).apply { implicit request =>
     val syncResult = if(request.isRcvrAccess) {
-      val some2 = Some(2)
+      val someLimit = Some(ADVS_MODE_SELECT_LIMIT)
       DB.withConnection { implicit c =>
-        val advsOk = MAdvOk.findByAdIdAndRcvr(adId, fromAdnId, limit = some2)
-        val advsReq = MAdvReq.findByAdIdAndRcvr(adId, fromAdnId, limit = some2)
-        val advsRefused = MAdvRefuse.findByAdIdAndRcvr(adId, fromAdnId, limit = some2)
+        val advsOk = MAdvOk.findByAdIdAndRcvr(adId, fromAdnId, limit = someLimit)
+        val advsReq = MAdvReq.findByAdIdAndRcvr(adId, fromAdnId, limit = someLimit)
+        val advsRefused = MAdvRefuse.findByAdIdAndRcvr(adId, fromAdnId, limit = someLimit)
         (advsOk, advsReq, advsRefused)
       }
     } else {
@@ -352,8 +359,25 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     * @param fromAdnId Опциональный id узла, с точки зрения которого идёт просмотр карточки.
     * @return Рендер отображения поверх текущей страницы.
     */
-  def advFullWnd(adId: String, fromAdnId: Option[String]) = AdvWndAccess(adId, fromAdnId).async { implicit request =>
-    ???
+  def advFullWnd(adId: String, fromAdnId: Option[String]) = {
+    AdvWndAccess(adId, fromAdnId, needMBC = false).async { implicit request =>
+      if (request.isProducerAdmin) {
+        val limit = ADVS_MODE_SELECT_LIMIT
+        val syncResult = DB.withConnection { implicit c =>
+          val advsOk  = MAdvOk.findNotExpiredByAdId(adId, limit = limit)
+          val advsReq = MAdvReq.findNotExpiredByAdId(adId, limit = limit)
+          val advsRefused = MAdvRefuse.findByAdId(adId, limit = limit)
+          (advsOk, advsReq, advsRefused)
+        }
+        val (advsOk, advsReq, advsRefused) = syncResult
+        val adv2adnIds = mkAdv2adnIds(advsOk, advsReq, advsRefused)
+        val adv2adnFut = MAdnNode.multiGet(adv2adnIds.valuesIterator.toStream).map { adnNodes =>
+          val adn2advMap = mkAdv2adnMap(adv2adnIds, adnNodes)
+          ???
+        }
+      }
+      ???
+    }
   }
 
 

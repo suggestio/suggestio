@@ -89,10 +89,8 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
    * @param adId id рекламной карточки, которую размещают.
    * @return Список найленных рядов в неопределённом порядке.
    */
-  def findByAdId(adId: String)(implicit c: Connection): List[T] = {
-    SQL("SELECT * FROM " + TABLE_NAME + " WHERE ad_id = {adId}")
-      .on('adId -> adId)
-      .as(rowParser *)
+  def findByAdId(adId: String, limit: Int = 100, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy("WHERE ad_id = {adId} LIMIT {limit}", policy, 'adId -> adId, 'limit -> limit)
   }
 
   /**
@@ -100,8 +98,21 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
    * @param adId id рекламной карточки.
    * @return Список подходящих под запрос рядов в произвольном порядке.
    */
-  def findNotExpiredByAdId(adId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
-    findBy(" WHERE ad_id = {adId} AND now() <= date_end", policy, 'adId -> adId)
+  def findNotExpiredByAdId(adId: String, policy: SelectPolicy = SelectPolicies.NONE, limit: Int = 100)(implicit c: Connection): List[T] = {
+    findBy(" WHERE ad_id = {adId} AND now() <= date_end LIMIT {limit}", policy, 'adId -> adId, 'limit -> limit)
+  }
+
+  /**
+   * Есть ли в таблице ряды, которые относятся к указанной комбинации adId и rcvrId, и чтобы были
+   * действительны по времени.
+   * @param adId id рекламной карточки.
+   * @param rcvrId id узла-ресивера.
+   * @return true, если есть хотя бы один актуальный ряд для указанных adId и rcvrId. Иначе false.
+   */
+  def hasNotExpiredByAdIdAndRcvr(adId: String, rcvrId: String)(implicit c: Connection): Boolean = {
+    SQL("SELECT count(*) > 0 FROM " + TABLE_NAME + " WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId} AND now() <= date_end LIMIT 1")
+      .on('adId -> adId, 'rcvrId -> rcvrId)
+      .as(SqlModelStatic.boolColumnParser single)
   }
 
   /**

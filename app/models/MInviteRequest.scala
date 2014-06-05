@@ -1,10 +1,19 @@
 package models
 
-import io.suggest.model.{EsModel, EsModelStaticT, EsModelT}
+import io.suggest.model._
 import util.PlayMacroLogsImpl
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json._
+import io.suggest.util.SioEsUtil.FieldAll
+import io.suggest.util.SioEsUtil.FieldBoolean
+import io.suggest.util.SioEsUtil.FieldString
+import play.api.libs.json.JsString
+import play.api.libs.json.JsBoolean
+import io.suggest.util.SioEsUtil.FieldSource
+import io.suggest.event.SioNotifierStaticClientI
+import scala.concurrent.ExecutionContext
+import org.elasticsearch.client.Client
 
 /**
  * Suggest.io
@@ -174,3 +183,11 @@ object InviteReqTypes extends Enumeration {
   val Wifi = Value("w")
 }
 
+
+trait MInviteRequestJmxMBean extends EsModelJMXMBeanCommon
+class MInviteRequestJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
+  extends EsModelJMXBase
+  with MInviteRequestJmxMBean
+{
+  override def companion = MInviteRequest
+}
