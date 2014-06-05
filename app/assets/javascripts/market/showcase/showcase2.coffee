@@ -280,7 +280,6 @@ siomart =
 
     this.utils.ge_tag("body")[0].appendChild sm_trigger
 
-
     ## Интерфейс маркета
     sm_layout_attrs =
       class : this.config.sm_layout_class
@@ -745,8 +744,11 @@ siomart =
     for _b in blocks_w_actions
       cb = ( b ) ->
         cat_id = b.getAttribute 'data-cat-id'
-        siomart.utils.add_single_listener b, _event, () ->
-          siomart.load_for_cat_id cat_id
+
+        _cat_class_match_regexp = new RegExp( 'disabled' ,"g")
+        if !siomart.utils.is_array( _b.className.match( _cat_class_match_regexp ) )
+          siomart.utils.add_single_listener b, _event, () ->
+            siomart.load_for_cat_id cat_id
       cb _b
 
   set_window_class : () ->
