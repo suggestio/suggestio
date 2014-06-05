@@ -24,30 +24,56 @@
 
 <body class="lk">
 
+
+  <div class="header-wrap header-wrap_without-background">
+
+    <div class="center">
+
+      <a href="#" class="simple-green-btn f-right login-page_enter_btn">Вход</a>
+
+    </div>
+
+  </div>
+
   <div class="body-wrap">
 
     <div class="body">
 
       <div class="login-page">
-        <div class="block-480">
-          <a href="#" class="logo-2"></a>
 
-          <p>
-            Уважаемые дамы и господа! Мы рады приветствовать Вас на сайте sio.market.
-          </p>
-          <p>
-            Если вам посчастливилось получить инвайт и у вас есть личный кабинет,
-            воспользуйтесь формой логина. Если у вас еще нет кабинета — вы можете попробовать получить его, связавшись с нами по электронному адресу <a href="mailto:support@@suggest.io">support@@suggest.io</a>
-          </p>
 
-          <div class="lp-title">ВХОД</div>
-          <div class="border-line"></div>
-        </div>
+          <a href="#" class="login-page__logo"></a>
+
+          <a href="@routes.MarketJoin.joinAdvRequest" class="login-page__blue-btn">
+            <span>РАЗМЕСТИТЬ РЕКЛАМУ</span>
+          </a>
+
+          <a href="@routes.MarketJoin.wifiJoinQuestionsForm()" class="login-page__green-btn">
+            <span>СТАТЬ УЧАСТНИКОМ СЕТИ</span>
+          </a>
+
+          <div class="login-page__wifi_block">
+
+            <div class="wifi-icon"></div>
+            <p>
+              У вас есть Wi-Fi?
+            </p>
+
+            <a href="#" class="login-page__gray-btn">
+              <span>ПРОЙДИТЕ ОПРОС</span>
+            </a>
+
+          </div>
+
+          <!--<div class="lp-title">ВХОД</div>
+          <div class="border-line"></div>-->
+
         @* Рендерим форму логина прямо здесь. *@
-        @ident._emailPwLoginFormTpl(
+        @*ident._emailPwLoginFormTpl(
           lf = lf,
           submitCall = routes.MarketLk.emailPwLoginFormSubmit
-        )
+        )*@
+
       </div>
 
     </div>
