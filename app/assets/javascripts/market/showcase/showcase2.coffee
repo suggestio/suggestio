@@ -236,7 +236,7 @@ siomart =
     request_delay : 600
     
     perform : ( request ) ->
-      url = '/market/ads/' + siomart.config.mart_id + '?a.q=' + request + '&a.rcvr=' + siomart.config.mart_id
+      url = '/market/ads?a.q=' + request + '&a.rcvr=' + siomart.config.mart_id
       siomart.request.perform url
 
     queue_request : ( request ) ->
@@ -251,7 +251,7 @@ siomart =
 
   ## Карточки ноды верхнего уровня
   load_index_ads : () ->
-    url = '/market/ads/' + siomart.config.mart_id + '?a.rcvr=' + siomart.config.mart_id
+    url = '/market/ads?a.rcvr=' + siomart.config.mart_id
     siomart.request.perform url
 
   ####################################
@@ -629,7 +629,7 @@ siomart =
     if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
       return false
 
-    url = '/market/ads/' + siomart.config.mart_id + '?a.shopId=' + shop_id
+    url = '/market/ads?a.shopId=' + shop_id + '&a.rcvr=' + siomart.config.mart_id
 
     siomart.node_offers_popup.requested_ad_id = ad_id
     siomart.request.perform url
@@ -639,7 +639,7 @@ siomart =
     if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
       return false
 
-    url = '/market/ads/' + siomart.config.mart_id + '?a.catId=' + cat_id
+    url = '/market/ads?a.catId=' + cat_id + '&a.rcvr=' + siomart.config.mart_id
     siomart.request.perform url
 
   ########################################

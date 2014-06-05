@@ -33,8 +33,8 @@ object Market extends SioController with PlayMacroLogsImpl {
   val MAX_SHOPS_LIST_LEN = configuration.getInt("market.frontend.subproducers.count.max") getOrElse 200
 
   /** Входная страница для sio-market для ТЦ. */
-  def martIndex(martId: String) = marketAction(martId) { implicit request =>
-    val allAdsSearchReq = AdSearch(receiverIds = List(martId))
+  def martIndex(adnId: String) = marketAction(adnId) { implicit request =>
+    val allAdsSearchReq = AdSearch(receiverIds = List(adnId), maxResultsOpt = Some(500))
     // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
     val catsStatsFut = MAd.stats4UserCats(MAd.searchAdsReqBuilder(allAdsSearchReq))
       .map { _.toMap }
@@ -44,7 +44,7 @@ object Market extends SioController with PlayMacroLogsImpl {
     }
     val startPageSearchReq = AdSearch(
       levels = List(AdShowLevels.LVL_START_PAGE),
-      receiverIds = List(martId)
+      receiverIds = List(adnId)
     )
     for {
       mads  <- MAd.searchAds(startPageSearchReq).map(groupNarrowAds)
@@ -67,13 +67,11 @@ object Market extends SioController with PlayMacroLogsImpl {
 
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
-  def findAds(adnId: String, adSearch: AdSearch) = MaybeAuth.async { implicit request =>
-    val mmcatsFut = MMartCategory.findTopForOwner(getCatOwner(adnId))
+  def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
     val producersFut = Future.traverse(adSearch.producerIds) { MAdnNodeCache.getByIdCached }
       .map { _.flatMap(_.toList) }
     for {
       mads      <- MAd.searchAds(adSearch).map(groupNarrowAds)
-      mmcats    <- mmcatsFut
       producers <- producersFut
     } yield {
       val jsAction: String = if (adSearch.qOpt.isDefined) {
@@ -84,7 +82,7 @@ object Market extends SioController with PlayMacroLogsImpl {
         "findAds"
       }
       // TODO Хвост списка продьюсеров дропается, для рендера используется только один. Надо бы в шаблоне отработать эту ситуацию.
-      val html = findAdsTpl(mads, mmcats, adSearch, producers.headOption)
+      val html = findAdsTpl(mads, adSearch, producers.headOption)
       jsonOk(html, jsAction)
     }
   }
