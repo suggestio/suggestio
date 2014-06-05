@@ -1075,8 +1075,10 @@ market =
 
         $.ajax
           url : $('.js-ad-block-full-preview-action').val()
+          method : 'post'
+          data : $('#promoOfferForm').serialize()
           success : ( data ) ->
-            $('#popupsContainer').show().html data
+            $('#popupsContainer').show().html '<div class="sio-mart-showcase">' + data + '</div>'
 
 
         return false
