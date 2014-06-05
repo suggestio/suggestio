@@ -369,6 +369,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     width: 100%
     height: 100%
     overflow-y: scroll
+    background: rgba(0,0,0,0.5)
 
   .popup
     display: none
@@ -928,6 +929,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   height: 100%
   z-index: 10000
   overflow-y: scroll
+  background: rgba(0, 0, 0, 0.6)
 
 .lk-overlay-data__window
   width: 700px
@@ -939,6 +941,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 .market-crop-tool__container
   border: 1px #ccc solid
   overflow: hidden
+  position: relative
 
 /* Мелкая ссылка */
 .lk-small-link
@@ -1409,6 +1412,20 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   background: #208bae
   color: #e1e1e1
 
+
+/*************************/
+/* Предпросмотр карточки */
+/*************************/
+.ad-full-preview
+  position: relative
+  width: 624px
+  margin: 0px auto
+  padding: 20px 0px
+
+  .sio-mart-showcase
+    position: relative
+
+
 /*********************************/
 /* Статусы рассмотрения карточек */
 /*********************************/
@@ -1619,3 +1636,4 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 .login-page_enter_btn
   margin-right: 50px
   margin-top: 30px
+

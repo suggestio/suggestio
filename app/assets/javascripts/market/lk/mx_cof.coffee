@@ -792,6 +792,7 @@ market =
           return false
 
       save_crop : ( form_dom ) ->
+
         offset_x = parseInt( this.crop_tool_img_dom.css('left').replace('px', '') ) || 0
         c_offset_x = this.container_offset_x
         offset_x = offset_x - parseInt c_offset_x
@@ -808,10 +809,16 @@ market =
         rw = parseInt ci.width()
         rh = parseInt ci.height()
 
+        alert sw
+        alert rw
+
         offset_x = sw * offset_x / rw
         offset_y = sh * offset_y / rh
 
         target_offset = "+" + Math.round( Math.abs(offset_x) ) + "+" + Math.round(Math.abs(offset_y))
+
+        alert target_offset
+
         target_size = rw + 'x' + rh
 
         tw = parseInt this.crop_tool_dom.attr 'data-width'
@@ -900,6 +907,7 @@ market =
 
         ## Забиндить событие на сохранение формы
         $('#imgCropTool form').bind 'submit', () ->
+          alert 'submit'
           market.img.crop.save_crop $(this)
 
           return false
@@ -1078,8 +1086,9 @@ market =
           method : 'post'
           data : $('#promoOfferForm').serialize()
           success : ( data ) ->
-            $('#popupsContainer').show().html '<div class="sio-mart-showcase">' + data + '</div>'
-
+            $('#popupsContainer').html '<div class="ad-full-preview" id="adFullPreview"><div class="sio-mart-showcase">' + data + '</div></div>'
+            $('#adFullPreview .sm-block').addClass 'double-size'
+            cbca.popup.showPopup 'adFullPreview'
 
         return false
 
