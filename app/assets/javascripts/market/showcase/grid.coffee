@@ -298,8 +298,8 @@ cbca_grid =
     if columns > 8
       columns = 8
 
-    #if columns == 3
-    #  columns = 2
+    if columns == 3
+      columns = 2
 
     if columns == 5
       columns = 4
