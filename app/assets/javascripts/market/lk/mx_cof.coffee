@@ -1070,6 +1070,17 @@ market =
             market.ad_form.set_descr_editor_bg()
       )
 
+      ## Предпросмотр карточки с описанием
+      $('.js-ad-preview-button').bind 'click', () ->
+
+        $.ajax
+          url : $('.js-ad-block-full-preview-action').val()
+          success : ( data ) ->
+            $('#popupsContainer').show().html data
+
+
+        return false
+
       $(document).on 'change', '#ad_descr_bgColor', (e)->
         market.ad_form.set_descr_editor_bg()
 
