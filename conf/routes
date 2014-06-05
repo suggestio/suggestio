@@ -123,7 +123,7 @@ POST /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAcceptSub
 POST /m/lk/ad/:adId/delete              controllers.MarketAd.deleteSubmit(adId)
 GET  /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAd(adnId)
 POST /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAdSubmit(adnId)
-POST /m/lk/ap/:adnId/preview            controllers.MarketAdPreview.adFormPreviewSubmit(adnId)
+POST /m/lk/ap/:adnId/preview            controllers.MarketAdPreview.adFormPreviewSubmit(adnId, isFull: Boolean)
 POST /m/lk/ap/:adnId/edit/block         controllers.MarketAdPreview.adBlockSwitchEditor(adnId)
 POST /m/lk/ai/:blockId/:fn              controllers.MarketAdPreview.prepareBlockImg(blockId: Int, fn: String)
 POST /m/lk/sa/:adId/update/show         controllers.MarketAd.updateShowLevelSubmit(adId)
