@@ -89,7 +89,7 @@ CbcaPopup = () ->
       $('#overlay').height(popupHeight)
     else
       $('#overlay').height(popupsContainerHeight)
-      
+
     $popup.find('.border-line-vertical').each () ->
       $this = $(this)
       $parent = $this.parent()
