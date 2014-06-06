@@ -177,10 +177,11 @@ CbcaCommon = () ->
         $.ajax(
           url: href,
           success: (data)->
-            $('#popupsContainer').append(data)
             $ajaxData = $(data)
             popupId = $ajaxData.attr('id')
             cbca.popup.hidePopup()
+            $('#'+popupId).remove()
+            $('#popupsContainer').append(data)
             cbca.popup.showPopup('#'+popupId)
         )
 
