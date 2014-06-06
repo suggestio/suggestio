@@ -33,12 +33,11 @@
           @* Верхняя информация: баланс, тарификация *@
           <table>
 
-
             @ctx.billBalanceOpt.map { mbb =>
-
+            <tr>
               <td>
                 <div class="ovh" style="padding-left: 0;">
-                  <span class="prop-title">Текущий баланс:</span>
+                  <span class="prop-title">Доступные средства:</span>
                 </div>
               </td>
               <td>
@@ -46,6 +45,33 @@
                   <span class="value big">@formatPrice(mbb.amount, mbb.currency)</span>
                 </div>
               </td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="ovh" style="padding-left: 0;">
+                  <span class="prop-title">Всего денег:</span>
+                </div>
+              </td>
+              <td>
+                <div class="ovh">
+                  <span class="value big">@formatPrice(mbb.amount + mbb.blocked, mbb.currency)</span>
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <div class="ovh" style="padding-left: 0;">
+                  <span class="prop-title">Заблокировано:</span>
+                </div>
+              </td>
+              <td>
+                <div class="ovh">
+                  <span class="value big">@formatPrice(mbb.blocked, mbb.currency)</span>
+                </div>
+              </td>
+            </tr>
 
               <td>
                 <div class="border-line-vertical f-left"></div>

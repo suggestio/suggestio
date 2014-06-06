@@ -111,9 +111,8 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
         !(ts0 isAfter dt)
       }
     if (isCached) {
-      trace("serveImg(): 304 Not Modified")
+      //trace("serveImg(): 304 Not Modified")
       NotModified
-
     } else {
       trace(s"serveImg(): 200 OK. size = ${its.img.length} bytes")
       // Бывает, что в базе лежит не jpeg, а картинка в другом формате. Это тоже учитываем:.
