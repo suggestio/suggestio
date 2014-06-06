@@ -391,6 +391,10 @@ siomart =
     scroll_or_move : undefined
 
     show_block_by_index : ( block_index ) ->
+
+      if typeof this.sm_blocks == 'undefined'
+        return false
+
       this.active_block_index = block_index
 
       if vendor_prefix.js == 'Webkit'
@@ -402,6 +406,9 @@ siomart =
       siomart.node_offers_popup._block_container.setAttribute 'data-x-offset', -cbca_grid.ww*block_index
 
     next_block : () ->
+
+      console.log 'next_block'
+
       if typeof this.active_block_index == 'undefined'
         return false
 
@@ -424,6 +431,10 @@ siomart =
       this.show_block_by_index prev_index
 
     fit : () ->
+
+      if typeof this.sm_blocks == 'undefined'
+        return false
+
       for _b in this.sm_blocks
         _block_width = _b.getAttribute 'data-width'
 
@@ -519,11 +530,14 @@ siomart =
       this.fit()
 
       i = 0
-      for _b in this.sm_blocks
-        if _b.getAttribute('data-mad-id') == this.requested_ad_id
-          this.show_block_by_index i
 
-        i++
+      if typeof this.requested_ad_id == 'undefined'
+        this.active_block_index = 0
+      else
+        for _b in this.sm_blocks
+          if _b.getAttribute('data-mad-id') == this.requested_ad_id
+            this.show_block_by_index i
+          i++
 
       siomart.utils.addClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
 
