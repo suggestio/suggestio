@@ -33,27 +33,51 @@ object Market extends SioController with PlayMacroLogsImpl {
   val MAX_SHOPS_LIST_LEN = configuration.getInt("market.frontend.subproducers.count.max") getOrElse 200
 
   /** Входная страница для sio-market для ТЦ. */
-  def martIndex(adnId: String) = marketAction(adnId) { implicit request =>
-    val allAdsSearchReq = AdSearch(receiverIds = List(adnId), maxResultsOpt = Some(500))
-    // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
-    val catsStatsFut = MAd.stats4UserCats(MAd.searchAdsReqBuilder(allAdsSearchReq))
-      .map { _.toMap }
-    val welcomeAdOptFut: Future[Option[MWelcomeAd]] = request.mmart.meta.welcomeAdId match {
-      case Some(waId) => MWelcomeAd.getById(waId)
-      case None => Future successful None
-    }
-    val startPageSearchReq = AdSearch(
-      levels = List(AdShowLevels.LVL_START_PAGE),
-      receiverIds = List(adnId)
-    )
-    for {
-      mads  <- MAd.searchAds(startPageSearchReq).map(groupNarrowAds)
-      rmd   <- request.marketDataFut
-      waOpt <- welcomeAdOptFut
-      catsStats <- catsStatsFut
-    } yield {
-      val html = indexTpl(request.mmart, mads, rmd.mshops, rmd.mmcats, waOpt, catsStats)
-      jsonOk(html, "martIndex")
+  def martIndex(adnId: String) = MaybeAuth.async { implicit request =>
+    MAdnNodeCache.getByIdCached(adnId)
+      .filter { _.isDefined }
+      .flatMap { nodeOpt =>
+        val adnNode = nodeOpt.get
+        // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
+        val allProdsFut = MAdnNode.findBySupId(adnId, onlyEnabled = true, maxResults = MAX_SHOPS_LIST_LEN)
+          .map { _.map { prod => prod.id.get -> prod }.toMap }
+        val prodsStatsFut = MAd.findProducerIdsForReceiver(adnId)
+        // Текущие категории ТЦ
+        val mmcatsFut = MMartCategory.findTopForOwner(getCatOwner(adnId))
+        // Нужно отфильтровать магазины без рекламы.
+        val shopsWithAdsFut = for {
+          allProds    <- allProdsFut
+          prodsStats  <- prodsStatsFut
+        } yield {
+          allProds.filterKeys( prodsStats contains )
+        }
+        val allAdsSearchReq = AdSearch(receiverIds = List(adnId), maxResultsOpt = Some(500))
+        // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
+        val catsStatsFut = MAd.stats4UserCats(MAd.searchAdsReqBuilder(allAdsSearchReq))
+          .map { _.toMap }
+        val welcomeAdOptFut: Future[Option[MWelcomeAd]] = adnNode.meta.welcomeAdId match {
+          case Some(waId) => MWelcomeAd.getById(waId)
+          case None => Future successful None
+        }
+        val startPageSearchReq = AdSearch(
+          levels = List(AdShowLevels.LVL_START_PAGE),
+          receiverIds = List(adnId)
+        )
+        for {
+          mads   <- MAd.searchAds(startPageSearchReq).map(groupNarrowAds)
+          waOpt  <- welcomeAdOptFut
+          catsStats <- catsStatsFut
+          shops  <- shopsWithAdsFut
+          mmcats <- mmcatsFut
+        } yield {
+          val html = indexTpl(adnNode, mads, shops, mmcats, waOpt, catsStats)
+          jsonOk(html, "martIndex")
+        }
+      }
+      .recover {
+        case ex: NoSuchElementException =>
+          warn(s"marketAction($adnId): node does not exist")
+          martNotFound(adnId)
     }
   }
 
@@ -130,46 +154,6 @@ object Market extends SioController with PlayMacroLogsImpl {
   }
 
 
-  /** Action-composition для нужд ряда экшенов этого контроллера. Хранит в себе данные для рендере и делает
-    * проверки наличия индекса и MMart. */
-  // TODO Надо бы заинлайнить и убрать все контейнеры и прочее добро. Это ускорит работу.
-  private def marketAction(adnId: String)(f: MarketRequest => Future[Result]) = MaybeAuth.async { implicit request =>
-    // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
-    val allProdsFut = MAdnNode.findBySupId(adnId, onlyEnabled = true, maxResults = MAX_SHOPS_LIST_LEN)
-      .map { _.map { prod => prod.id.get -> prod }.toMap }
-    val prodsStatsFut = MAd.findProducerIdsForReceiver(adnId)
-    // Читаем из основной базы текущий ТЦ
-    val nodeOptFut = MAdnNode.getById(adnId)
-    // Текущие категории ТЦ
-    val mmcatsFut = MMartCategory.findTopForOwner(getCatOwner(adnId))
-    // Нужно отфильтровать магазины без рекламы.
-    val shopsWithAdsFut = for {
-      allProds    <- allProdsFut
-      prodsStats  <- prodsStatsFut
-    } yield {
-      allProds.filterKeys( prodsStats contains )
-    }
-    nodeOptFut flatMap {
-      case Some(mmart1) =>
-        val marketDataFut1 = for {
-          mshops <- shopsWithAdsFut
-          mmcats <- mmcatsFut
-        } yield {
-          MarketData(mmcats, mshops)
-        }
-        val req1 = new MarketRequest(request) {
-          val marketDataFut = marketDataFut1
-          val mmart = mmart1
-        }
-        f(req1)
-
-      case None =>
-        warn(s"marketAction($adnId): mart index exists, but mart is NOT.")
-        martNotFound(adnId)
-    }
-  }
-
-
   /**
    * Сгруппировать "узкие" карточки, чтобы они были вместе.
    * @param ads Исходный список элементов.
@@ -202,18 +186,5 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   def getCatOwner(adnId: String) = MMartCategory.DEFAULT_OWNER_ID
 
-
-  /** Реквест, используемый в Market-экшенах. */
-  sealed abstract class MarketRequest(request: AbstractRequestWithPwOpt[AnyContent])
-    extends AbstractRequestWithPwOpt[AnyContent](request) {
-    def mmart: MAdnNode
-    def marketDataFut: Future[MarketData]
-
-    def sioReqMd: SioReqMd = request.sioReqMd
-    def pwOpt: PersonWrapper.PwOpt_t = request.pwOpt
-  }
-
-  /** Контейнер асинхронно-получаемых данных, необходимых для рендера, но не нужных на промежуточных шагах. */
-  sealed case class MarketData(mmcats: Seq[MMartCategory], mshops: Map[String, MAdnNode])
 }
 
