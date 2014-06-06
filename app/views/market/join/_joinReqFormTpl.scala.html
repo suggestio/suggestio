@@ -2,30 +2,59 @@
 
 @import ctx._
 @import helper._
+@import util.FC.tdFc
 
 @form(submitCall) {
 
-  @inputText(jf("company"), '_label -> (Messages("Company") + ":"))
+  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    @inputText(jf("company"), '_label -> (Messages("Company") + ":"))
+  </table>
 
   @if( isWifi ) {
-    @textarea(jf("audienceDescr"), '_label -> (Messages("Audience.descr") + ":"))
-    @inputText(jf("humanTraffic"), '_label -> (Messages("Daily.people.traffic") + ":"))
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      @textarea(jf("audienceDescr"), '_label -> (Messages("Audience.descr") + ":"))
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      @inputText(jf("humanTraffic"), '_label -> (Messages("Daily.people.traffic") + ":"))
+    </table>
   } else {
-    @inputText(jf("info"), '_label -> (Messages("Address") + ":"))
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      @inputText(jf("info"), '_label -> (Messages("Address") + ":"))
+    </table>
   }
 
-  @inputText(jf("address"), '_label -> (Messages("Address") + ":"))
+  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    @inputText(jf("address"), '_label -> (Messages("Address") + ":"))
+  </table>
 
   @if( !isWifi ) {
-    @inputText(jf("floor"), '_label -> (Messages("Floor.number") + ":"))
-    @inputText(jf("section"), '_label -> (Messages("Section.number") + ":"))
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      @inputText(jf("floor"), '_label -> (Messages("Floor.number") + ":"))
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      @inputText(jf("section"), '_label -> (Messages("Section.number") + ":"))
+    </table>
   }
 
-  @inputText(jf("siteUrl"), '_label -> (Messages("Site") + ":"))
+  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    @inputText(jf("siteUrl"), '_label -> (Messages("Site") + ":"))
+  </table>
 
-  @inputText(jf("phone"), '_label -> (Messages("Office.phone.number") + ":"))
+  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    @inputText(jf("phone"), '_label -> (Messages("Office.phone.number") + ":"))
+  </table>
 
-  @textarea(jf("info"), '_label -> (Messages("Information") + ":"))
+  <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
+    @textarea(jf("info"), '_label -> (Messages("Information") + ":"))
+  </table>
 
-  <input type="submit" class="@btnClass" value="@Messages("Request.invite")"/>
+  <div class="border-line"></div>
+
+  <div class="blue-btn-new js-submit-wrap f-right" style="margin-top: 10px;">
+    <span class="btn"></span>
+    <input type="submit" class="@btnClass" value="@Messages("Request.invite")"/>
+  </div>
+
 }

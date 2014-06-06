@@ -7,18 +7,21 @@
 @import market.lk._
 @import ctx._
 
-@lkBase(Messages("Edit") + " " + mshop.meta.name) {
 
-  <div class="title-wrap">
-    <div class="center">
-      <a class="back-but" href="@routes.MarketLkAdn.showSlave(mshop.id.get)">&nbsp;</a>
-      <div class="title-inner">
-        ПРОФАЙЛ МАГАЗИНА
-      </div>
+<div class="title-wrap">
+  <div class="center">
+    <a class="back-but" href="@routes.MarketLkAdn.showSlave(mshop.id.get)">&nbsp;</a>
+    <div class="title-inner">
+      ПРОФАЙЛ МАГАЗИНА
     </div>
   </div>
+</div>
 
-  <div class="body">
+
+<div class="body">
+
+  @lkBase(Messages("Edit") + " " + mshop.meta.name) {
+
 
     @shop._shopFormTpl(
       call = routes.MarketMartLk.editShopFormSubmit(mshop.id.get),
@@ -28,6 +31,6 @@
       shopId = mshop.id.get
     )
 
-  </div>
-
 }
+
+</div>

@@ -2,13 +2,30 @@
 
 @* Страница, отображающая форму для запроса инвайта в качестве рекламодателя. *@
 
+
 @joinBase("Разместить рекламу") {
 
-  @_joinReqFormTpl(
-    jf = jf,
-    btnClass = "blue",
-    submitCall = routes.MarketJoin.joinAdvRequestSubmit,
-    isWifi = false
-  )
+  <div class="title-wrap">
+
+    <div class="center">
+      <a class="back-but" href="#">&nbsp;</a>
+      <div class="title-inner">
+        РАЗМЕСТИТЬ РЕКЛАМУ
+      </div>
+    </div>
+
+  </div>
+
+
+  <div class="body">
+
+    @_joinReqFormTpl(
+      jf = jf,
+      btnClass = "blue",
+      submitCall = routes.MarketJoin.joinAdvRequestSubmit,
+      isWifi = false
+    )
+
+  </div>
 
 }
