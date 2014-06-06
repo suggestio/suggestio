@@ -3,6 +3,7 @@
 @* Подложка для внешней (по отношению к ЛК) страниц sio-маркета. *@
 
 @import ctx._
+@import stuff._
 
 <!DOCTYPE html>
 <html>
@@ -99,7 +100,7 @@
     <div class="footer">
 
       <span class="copyright-block">
-        &copy; 2012-@ctx.now.getYear @Messages("all_rights_reserved")
+        @_copyrightTextTpl(withLink = false)
       </span>
 
       <div class="socials">

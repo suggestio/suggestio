@@ -4,6 +4,7 @@
    - Параметр headAfter содержит дополнения к телу тега head.
 *@
 @import ctx._
+@import stuff._
 
 <!DOCTYPE html>
 <html>
@@ -70,8 +71,10 @@
     <div class="footer">
 
       <span class="copyright-block">
-        © 2011-2014 Suggest.io. Все права защищены
+        @_copyrightTextTpl(withLink = false)
       </span>
+
+      <a href="@routes.Market.contractOfferText("ru")">Оферта</a>
 
       <div class="socials">
         <a class="fb" href="#">Facebook</a>

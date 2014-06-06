@@ -11,10 +11,11 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
-import play.api.mvc.{RequestHeader, AnyContent, Result}
+import play.api.mvc.RequestHeader
 import io.suggest.ym.model.stat.{MAdStat, AdStatActions}
 import io.suggest.ym.model.common.IBlockMeta
 import play.api.Play.{current, configuration}
+import play.api.templates.HtmlFormat
 
 /**
  * Suggest.io
@@ -134,6 +135,28 @@ object Market extends SioController with PlayMacroLogsImpl {
       }
     }
     NoContent
+  }
+
+
+  /**
+   * Раздача страниц с текстами договоров sio-market.
+   * @param clang Язык договора.
+   * @return 200 Ok
+   *         404 если текст договора не доступен на указанном языке.
+   */
+  def contractOfferText(clang: String) = MaybeAuth { implicit request =>
+    import views.html.market.contract._
+    val clangNorm = clang.toLowerCase.trim
+    val textRenderOpt: Option[HtmlFormat.Appendable] = if (clangNorm startsWith "ru") {
+      val render = textRuTpl()
+      Some(render)
+    } else {
+      None
+    }
+    textRenderOpt match {
+      case Some(render) => Ok(render)
+      case None         => http404AdHoc
+    }
   }
 
 

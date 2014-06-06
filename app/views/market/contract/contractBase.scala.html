@@ -1,0 +1,20 @@
+@(clang: String)(content: Html)(implicit ctx: Context)
+
+@import market.lk._
+
+@headAfter = {
+  <link ref="canonical" href="@ctx.myAudienceUrl@routes.Market.contractOfferText(clang)" />
+}
+
+@lkBase(
+  title = "Договор на оказание услуг SIO Маркет",
+  headAfter = Some(headAfter)
+) {
+  <h1>Договор на оказание услуг SIO Маркет</h1>
+
+  <a href="@routes.MarketLk.lkIndex">Назад</a>
+
+  <div>
+    @content
+  </div>
+}
