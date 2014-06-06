@@ -5,7 +5,8 @@ import java.util.Currency
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import scala.util.matching.Regex
-import io.suggest.ym.model.ad.AOFieldFont
+import views.html.fc._
+import views.html.helper.FieldConstructor
 
 /**
  * Suggest.io
@@ -111,3 +112,14 @@ object TplDataFormatUtil {
   def numericDate(dt: DateTime) = numericDateFormat.print(dt)
 
 }
+
+
+/** Различные field constructor'ы. */
+object FC {
+
+  implicit val tdFc = FieldConstructor(tdFcTpl.f)
+
+  implicit val divFc = FieldConstructor(divFcTpl.f)
+
+}
+

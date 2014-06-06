@@ -422,7 +422,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
               .map { _.copy(pwHash = MPersonIdent.mkHash(newPw)) }
             Future successful result
           }
-        } flatMap {
+        }.flatMap {
           case Some(epw) =>
             epw.save
               .flatMap { _ => redirectUserSomewhere(personId) }
