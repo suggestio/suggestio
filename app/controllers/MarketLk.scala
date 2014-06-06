@@ -4,7 +4,7 @@ import play.api.mvc.{Result, Call}
 import models._
 import util.acl._
 import scala.concurrent.Future
-import views.html.market.lk
+import views.html.market._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import util.PlayMacroLogsImpl
@@ -50,7 +50,7 @@ object MarketLk extends SioController with EmailPwSubmit with PlayMacroLogsImpl 
   }
 
   /** Рендер дефолтовой страницы. */
-  private def renderDfltPage(implicit ctx: util.Context) = Ok(lk.lkIndexTpl(Ident.emailPwLoginFormM))
+  private def renderDfltPage(implicit ctx: util.Context) = Ok(indexTpl(Ident.emailPwLoginFormM))
 
 
   /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */
@@ -73,6 +73,6 @@ object MarketLk extends SioController with EmailPwSubmit with PlayMacroLogsImpl 
   }
 
   override def emailSubmitError(lf: EmailPwLoginForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    Forbidden(lk.lkIndexTpl(lf))
+    Forbidden(indexTpl(lf))
   }
 }

@@ -1,12 +1,13 @@
-@(lf: Form[_])(implicit ctx: util.Context)
+@(title: String, lf: Form[_])(content: Html)(implicit ctx: Context)
 
-@* Страница, которая отображается незалогиненному юзеру, который зашел в маркет.
-   Тут небольшое описание и поля для логина. *@
+@* Подложка для внешней (по отношению к ЛК) страниц sio-маркета. *@
+
+@import ctx._
 
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Добро пожаловать! | market | Suggest.io</title>
+  <title>@title | market | Suggest.io</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/colorpicker/css/colorpicker.css")'/>
@@ -86,15 +87,16 @@
       )
 
 
-
     <div class="overlay" id="overlay"></div>
+
+    @content
   </div>
 
   <div class="footer-wrap">
     <div class="footer">
 
       <span class="copyright-block">
-        © 2011-2014 Suggest.io. Все права защищены
+        &copy; 2012-@ctx.now.getYear @Messages("all_rights_reserved")
       </span>
 
       <div class="socials">
@@ -114,4 +116,3 @@
 
 </body>
 </html>
-
