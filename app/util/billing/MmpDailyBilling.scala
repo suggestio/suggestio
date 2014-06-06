@@ -260,7 +260,7 @@ sealed trait AdvSlsUpdater extends PlayMacroLogsImpl {
   import LOGGER._
   import MmpDailyBilling.UPDATE_RCVRS_VSN_CONFLICT_TRY_MAX
 
-  lazy val logPrefix: String = getClass.getSimpleName + ": "
+  lazy val logPrefix = ""
 
   def findAdvsOk(implicit c: Connection): List[MAdvOk]
   val sls0 = List(AdShowLevels.LVL_MEMBER)

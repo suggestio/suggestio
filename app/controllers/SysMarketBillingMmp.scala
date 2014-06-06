@@ -27,7 +27,7 @@ object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
 
   /** Маппинг формы для daly-тарификатора. */
   val mmpDailyFormM = Form(mapping(
-    "currencyCode"  -> default(text(minLength = 3, maxLength = 3), "RUB"),
+    "currencyCode"  -> currencyCodeOrDfltM,
     "mmpWeekday"    -> floatM,
     "mmpWeekend"    -> floatM,
     "mmpPrimetime"  -> floatM,

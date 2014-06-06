@@ -17,6 +17,7 @@ import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 import org.apache.commons.codec.binary.{Base64InputStream, Base64OutputStream}
 import scala.collection.GenTraversableOnce
 import scala.Some
+import java.util.Currency
 
 /**
  * Suggest.io
@@ -390,6 +391,23 @@ object FormUtil {
     nonEmptyText(maxLength = 1)
       .transform[AdStatAction]({AdStatActions.withName}, {_.toString})
   }
+
+  val currencyCodeM: Mapping[String] = {
+    text(minLength = 3, maxLength = 3)
+      .transform[String](_.toUpperCase, identity)
+      .verifying("error.currency.code", {cc =>
+        try {
+          Currency.getInstance(cc)
+          true
+        } catch {
+          case ex: Exception => false
+        }
+      })
+  }
+  val currencyCodeOrDfltM: Mapping[String] = {
+    default(currencyCodeM, CurrencyCodeOpt.CURRENCY_CODE_DFLT)
+  }
+
 }
 
 
