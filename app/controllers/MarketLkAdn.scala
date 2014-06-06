@@ -307,7 +307,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
 
   /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
   def nodeOwnerInviteAcceptForm(martId: String, eActId: String) = nodeOwnerInviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
-    Ok(invite.inviteAcceptFormTpl(mmart, eAct, nodeOwnerInviteAcceptM))
+    Ok(invite.inviteAcceptFormTpl(mmart, eAct, nodeOwnerInviteAcceptM, withOfferText = true))
   }
 
   /** Сабмит формы подтверждения инвайта на управление ТЦ. */
@@ -318,7 +318,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
     formBinded.fold(
       {formWithErrors =>
         debug(s"${logPrefix}Form bind failed: ${formatFormErrors(formWithErrors)}")
-        NotAcceptable(invite.inviteAcceptFormTpl(mmart, eAct, formWithErrors))
+        NotAcceptable(invite.inviteAcceptFormTpl(mmart, eAct, formWithErrors, withOfferText = false))
       },
       {passwordOpt =>
         if (passwordOpt.isEmpty && !request.isAuth) {
@@ -326,7 +326,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
           val form1 = formBinded
             .withError("password.pw1", "error.required")
             .withError("password.pw2", "error.required")
-          NotAcceptable(invite.inviteAcceptFormTpl(mmart, eAct, form1))
+          NotAcceptable(invite.inviteAcceptFormTpl(mmart, eAct, form1, withOfferText = false))
         } else {
           // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
           eAct.delete.flatMap { isDeleted =>

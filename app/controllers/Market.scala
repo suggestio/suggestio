@@ -147,15 +147,19 @@ object Market extends SioController with PlayMacroLogsImpl {
   def contractOfferText(clang: String) = MaybeAuth { implicit request =>
     import views.html.market.contract._
     val clangNorm = clang.toLowerCase.trim
-    val textRenderOpt: Option[HtmlFormat.Appendable] = if (clangNorm startsWith "ru") {
-      val render = textRuTpl()
-      Some(render)
+    val ctx = implicitly[Context]
+    val textRenderOpt: Option[(HtmlFormat.Appendable, String)] = if (clangNorm startsWith "ru") {
+      val render = textRuTpl()(ctx)
+      Some(render -> "ru")
     } else {
       None
     }
     textRenderOpt match {
-      case Some(render) => Ok(render)
-      case None         => http404AdHoc
+      case Some((render, clang2)) =>
+        val fullRender = contractBase(clang2)(render)(ctx)
+        Ok(fullRender)
+      case None =>
+        http404ctx(ctx)
     }
   }
 
