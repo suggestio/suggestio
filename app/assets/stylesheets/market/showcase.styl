@@ -55,7 +55,7 @@ box-shadow( param )
     font-size: 20px
 
 .sm-loading
-  background: rgba(255, 255, 255, 0.8)
+  background: rgba(0, 0, 0, 0.3)
 
 .sm-wifi-info
   background: #f7f7f7
@@ -106,6 +106,7 @@ box-shadow( param )
     overflow: hidden
     width: 50px
     height: 50px
+    -webkit-transform: translate3d(0px, 0px, 0px)
   .sm-back-close-button__inner
     width: 50px
     height: 27px
@@ -168,6 +169,13 @@ box-shadow( param )
     height: 100%
     z-index: 1003
     display: none
+    overflow: hidden
+    -webkit-transition: all 0.3s ease
+    -webkit-transform: translate3d( 100%, 0px, 0px )
+    -webkit-box-shadow: 0px 0px 10px #000
+
+  .sio-mart__node-offers-root_in
+    -webkit-transform: translate3d( 0px, 0px, 0px )
 
   .sio-mart__node-offers
     z-index: 1003

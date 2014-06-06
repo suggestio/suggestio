@@ -8,7 +8,7 @@ siomart =
     sm_layout_class : 'sio-mart-showcase'
     sm_trigger_class : 'sio-mart-trigger'
     ontouchmove_offer_change_delta : 80
-    welcome_ad_hide_timeout : 2500
+    welcome_ad_hide_timeout : 2000
 
   utils :
     is_firefox : () ->
@@ -357,6 +357,11 @@ siomart =
       screensContainer.innerHTML += data.html
       screensContainer.style.display = 'block'
 
+      cb = () ->
+        siomart.utils.addClass screensContainer, 'sio-mart__node-offers-root_in'
+
+      setTimeout cb, 10
+
       siomart.utils.ge('smCategoriesScreen').style.display = 'none'
       siomart.node_offers_popup.init()
       siomart.navigation_layer.close()
@@ -377,9 +382,14 @@ siomart =
     siomart.utils.ge('smLoading').style.display = 'none'
 
   close_node_offers_popup : ( event ) ->
+    siomart.utils.removeClass siomart.utils.ge('sioMartNodeOffersRoot'), 'sio-mart__node-offers-root_in'
 
-    siomart.utils.re 'sioMartNodeOffers'
-    siomart.utils.ge('sioMartNodeOffersRoot').style.display = 'none'
+    cb = () ->
+      siomart.utils.re 'sioMartNodeOffers'
+      siomart.utils.ge('sioMartNodeOffersRoot').style.display = 'none'
+
+    setTimeout cb, 400
+
     delete siomart.node_offers_popup.requested_ad_id
     delete siomart.node_offers_popup.active_block_index
 
@@ -523,6 +533,7 @@ siomart =
 
     init : () ->
 
+      this.root
       this._block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
       this._container = siomart.utils.ge('sioMartNodeOffers')
 
