@@ -22,7 +22,7 @@
     @defining(outLvlMap.size == 1) { isSingleOutLvl =>
       @_adsListTpl(mads, coverDisableReason = true) { mad =>
         @if(busyAdIds contains mad.id.get) {
-          <a class="ads-list-block__link ads-list-block__link_inactive" href="@routes.MarketAdv.advFullWnd(mad.id.get)">Находится<br/>на рассмотрении<br/>администратора</a>
+          <a class="ads-list-block__link ads-list-block__link_inactive js-btn" href="@routes.MarketAdv.advFullWnd(mad.id.get)">Находится<br/>на рассмотрении<br/>администратора</a>
         } else {
           <a class="ads-list-block__link" href="@routes.MarketAd.editAd(mad.id.get)">Нажмите для<br/>редактирования</a>
         }
