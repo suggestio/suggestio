@@ -57,7 +57,10 @@ trait SioController extends Controller with ContextT {
   
   /** Тело экшена, генерирующее страницу 404. Используется при минимальном окружении. */
   def http404AdHoc(implicit request: RequestHeader): Result = {
-    implicit val ctx = ContextImpl()
+    http404ctx(ContextImpl())
+  }
+
+  def http404ctx(implicit ctx: Context): Result = {
     NotFound(views.html.static.http404Tpl())
   }
 

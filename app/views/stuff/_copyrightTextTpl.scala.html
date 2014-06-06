@@ -1,0 +1,4 @@
+@(withLink: Boolean)(implicit ctx: Context)
+&copy; 2012-@ctx.now.getYear
+@if(withLink){<a href="http://suggest.io/">}Suggest.io@if(withLink){</a>}.
+@Messages("all_rights_reserved")

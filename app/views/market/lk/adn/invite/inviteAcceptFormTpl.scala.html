@@ -1,8 +1,9 @@
-@(adnNode: MAdnNode, eAct: EmailActivation, iaf: Form[_])(implicit ctx: util.Context)
+@(adnNode: MAdnNode, eAct: EmailActivation, iaf: Form[_], withOfferText: Boolean)(implicit ctx: util.Context)
 
 @* Страница с формой подтверждения регистрации в качестве управляющего узлом ADN.
    Новый пользователь здесь может ввести пароль. Уже залогиненный - просто подтвердить себя. *@
 @import helper._
+@import market.contract._
 
 @market.lk.lkBase("Подтверждение регистрации") {
 
@@ -14,8 +15,13 @@
     </div>
   </div>
 
-  <div class="body">
+  @* Рендер текста открытой оферты, который 0 *@
+  @if(withOfferText) {
+    <textarea>@textRuTpl()</textarea>
+    <input type="checkbox">Я ознакомился и согласен с договором оферты.
+  }
 
+  <div class="body">
 
     <table cellpadding="0" cellspacing="0" class="input-wrap big disabled">
       <td class="left">

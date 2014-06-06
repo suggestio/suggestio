@@ -3,6 +3,7 @@
 @* Подложка для внешней (по отношению к ЛК) страниц sio-маркета. *@
 
 @import ctx._
+@import stuff._
 
 <!DOCTYPE html>
 <html>
@@ -63,13 +64,13 @@
 
             <div class="wifi-icon"></div>
             <p>
-              У вас есть Wi-Fi?
+              Новое рекламное пространство
             </p>
 
-            <a href="#" class="login-page__gray-btn">
+            <!--a href="#" class="login-page__gray-btn">
               <span class="btn"></span>
               ПРОЙДИТЕ ОПРОС
-            </a>
+            </a>-->
 
           </div>
 
@@ -99,7 +100,7 @@
     <div class="footer">
 
       <span class="copyright-block">
-        &copy; 2012-@ctx.now.getYear @Messages("all_rights_reserved")
+        @_copyrightTextTpl(withLink = false)
       </span>
 
       <div class="socials">

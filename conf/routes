@@ -175,6 +175,9 @@ GET  /market/join/success               controllers.MarketJoin.joinRequestSucces
 GET  /market/join/xadv                  controllers.MarketJoin.joinAdvRequest
 POST /market/join/xadv                  controllers.MarketJoin.joinAdvRequestSubmit
 
+# Раздача текстов договора sio market.
+GET  /m/contract/:clang                 controllers.Market.contractOfferText(clang)
+
 GET  /sys                               controllers.Sys.index
 GET  /sys/dkeys/all                     controllers.Sys.dkeysListAll
 GET  /sys/dkey/:dkey                    controllers.Sys.dkeyShow(dkey)
