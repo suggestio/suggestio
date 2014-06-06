@@ -17,12 +17,12 @@
 
   <div class="content recover-popup__content">
 
-    <div class="popup-title popup-title_recover-popup">
+    <div class="popup-title ">
       ВОССТАНОВИТЬ ПАРОЛЬ
     </div>
 
 
-    @form(routes.Ident.recoverPwFormSubmit) {
+    @form(routes.Ident.recoverPwFormSubmit, 'class -> "recover-popup__content__form") {
       @inputText(
         rf("email"),
         '_label -> "Электронная почта, указанная при регистрации:"
