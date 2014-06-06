@@ -389,7 +389,7 @@ object FormUtil {
 
   val adStatActionM: Mapping[AdStatAction] = {
     nonEmptyText(maxLength = 1)
-      .transform[AdStatAction]({AdStatActions.withName}, {_.toString})
+      .transform[AdStatAction](AdStatActions.withName, _.toString)
   }
 
   val currencyCodeM: Mapping[String] = {

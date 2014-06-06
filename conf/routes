@@ -93,7 +93,7 @@ GET  /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteA
 POST /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
 # Супервайзинг рекламных карточек на подчинённых узлах
 GET  /m/lk/adn/:adnId/3adv/:adId        controllers.MarketAdv.advInfoWnd(adId, adnId)
-GET  /m/lk/adv/wnd/:adId                controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None)
+GET  /m/lk/xadv/wnd/:adId                controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None)
 POST /m/lk/adn/slave/:adnId/set/tla     controllers.MarketLkAdn.setSlaveTopLevelAvailable(adnId)
 GET  /m/lk/adn/ad/slave/:adId           controllers.MarketLkAdnSlaveAd.showSlaveAd(adId)
 POST /m/lk/adn/ad/slave/:adId/hide      controllers.MarketLkAdnSlaveAd.slaveAdHideFormSubmit(adId)
@@ -102,14 +102,14 @@ GET  /m/lk/adn/:adnId/_ads              controllers.MarketLkAdnSlaveAd._showSlav
 GET  /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialog(adId)
 POST /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialogSubmit(adId)
 # Адвертайзинг: размещение рекламы на узлах-получателях
-GET  /m/lk/adv/:adId/ctl                controllers.MarketAdv.advForAd(adId)
-POST /m/lk/adv/:adId/ctl                controllers.MarketAdv.advFormSubmit(adId)
-POST /m/lk/adv/:adId/price              controllers.MarketAdv.getAdvPriceSubmit(adId)
-GET  /m/lk/advs/:adnId                  controllers.MarketAdv.showNodeAdvs(adnId)
+GET  /m/lk/xadv/:adId/ctl                controllers.MarketAdv.advForAd(adId)
+POST /m/lk/xadv/:adId/ctl                controllers.MarketAdv.advFormSubmit(adId)
+POST /m/lk/xadv/:adId/price              controllers.MarketAdv.getAdvPriceSubmit(adId)
+GET  /m/lk/xadvs/:adnId                  controllers.MarketAdv.showNodeAdvs(adnId)
 # Размещение рекламы: обработка запросов размещения.
-GET  /m/lk/advs/req/:advReqId           controllers.MarketAdv._showAdvReq(advReqId: Int)
-POST /m/lk/advs/req/:advReqId/refuse    controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int)
-POST /m/lk/advs/req/:advReqId/accept    controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int)
+GET  /m/lk/xadvs/req/:advReqId           controllers.MarketAdv._showAdvReq(advReqId: Int)
+POST /m/lk/xadvs/req/:advReqId/refuse    controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int)
+POST /m/lk/xadvs/req/:advReqId/accept    controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int)
 
 # Личный кабинет владельца ТЦ
 GET  /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopForm(martId)
@@ -172,8 +172,8 @@ POST /market/join/wifi/qs               controllers.MarketJoin.wifiJoinQuestions
 GET  /market/join/wifi                  controllers.MarketJoin.wifiJoinForm(j: util.qsb.SMJoinAnswers)
 POST /market/join/wifi                  controllers.MarketJoin.wifiJoinFormSubmit(j: util.qsb.SMJoinAnswers)
 GET  /market/join/success               controllers.MarketJoin.joinRequestSuccess
-GET  /market/join/adv                   controllers.MarketJoin.joinAdvRequest
-POST /market/join/adv                   controllers.MarketJoin.joinAdvRequestSubmit
+GET  /market/join/xadv                  controllers.MarketJoin.joinAdvRequest
+POST /market/join/xadv                  controllers.MarketJoin.joinAdvRequestSubmit
 
 GET  /sys                               controllers.Sys.index
 GET  /sys/dkeys/all                     controllers.Sys.dkeysListAll
