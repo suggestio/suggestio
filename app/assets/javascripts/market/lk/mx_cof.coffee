@@ -143,6 +143,9 @@ CbcaCommon = () ->
 
   self.init = () ->
 
+    if($('#newPasswordForm').length)
+      cbca.popup.showPopup('#newPasswordForm')
+
     $(document).on 'click', '.js-popup-back', (e)->
       $this = $(this)
       targetPopupId = $this.attr('href')

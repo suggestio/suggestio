@@ -8,19 +8,42 @@
 
 @popupContent = {
 
-  @form(routes.Ident.pwResetSubmit(eAct.id.get)) {
+  <div class="popup" id="newPasswordForm">
 
-    @inputPassword(
-      prf("pw1"),
-      '_label -> Messages("Type.new.password")
-    )
-    @inputPassword(
-      prf("pw2"),
-      '_label -> Messages("Confirm.new.password")
-    )
+    <div class="hat">
+      <a class="close" href="#">&nbsp;</a>
+    </div>
 
-    <input type="submit" value="@Messages("Save")" />
-  }
+    <div class="content recover-popup__content">
+
+      <div class="popup-title popup-title_without_padding">
+        НОВЫЙ ПАРОЛЬ
+      </div>
+
+      @form(routes.Ident.pwResetSubmit(eAct.id.get), 'id -> "pwResetPasswordForm") {
+
+        @inputPassword(
+          prf("pw1"),
+          '_label -> Messages("Type.new.password")
+        )
+        @inputPassword(
+          prf("pw2"),
+          '_label -> Messages("Confirm.new.password")
+        )
+
+
+        <div class="login-popup__submit-wrap">
+          <div class="blue-btn-new js-submit-wrap">
+            <span class="btn"></span>
+            <input type="submit" value="@Messages("Save")" />
+          </div>
+        </div>
+      }
+
+    </div>
+
+  </div>
+
 }
 
 @marketBase(Messages("Password.reset"), popupContent = Some(popupContent)) {
