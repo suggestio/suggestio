@@ -1017,7 +1017,6 @@ market =
       $('#advsSubmitButton').bind 'click', () ->
         market.adv_form.submit()
       $('#advsFormBlock input').bind 'change', () ->
-
         cf_id = $(this).attr 'data-connected-field'
         cf = $('#' + cf_id)
         if typeof cf_id != 'undefined'
@@ -1156,9 +1155,7 @@ market =
 
       ## Предпросмотр карточки с описанием
       $('.js-ad-preview-button').bind 'click', () ->
-
         tinyMCE.triggerSave()
-
         $.ajax
           url : $('.js-ad-block-full-preview-action').val()
           method : 'post'
