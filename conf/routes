@@ -93,7 +93,7 @@ GET  /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteA
 POST /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
 # Супервайзинг рекламных карточек на подчинённых узлах
 GET  /m/lk/adn/:adnId/3adv/:adId        controllers.MarketAdv.advInfoWnd(adId, adnId)
-GET  /m/lk/adv/wnd/:adId                controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] = None)
+GET  /m/lk/adv/wnd/:adId                controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None)
 POST /m/lk/adn/slave/:adnId/set/tla     controllers.MarketLkAdn.setSlaveTopLevelAvailable(adnId)
 GET  /m/lk/adn/ad/slave/:adId           controllers.MarketLkAdnSlaveAd.showSlaveAd(adId)
 POST /m/lk/adn/ad/slave/:adId/hide      controllers.MarketLkAdnSlaveAd.slaveAdHideFormSubmit(adId)

@@ -1,0 +1,12 @@
+@(mad: MAd, adProducer: MAdnNode, advOk: MAdvOk)(implicit ctx: Context)
+
+@* Отображение полноразмерной превьюшки, где внизу написано, что карточка одобрена. *@
+
+@import ctx._
+@import util.TplDataFormatUtil._
+@import datetime._
+
+@_advWndFullTpl(mad, adProducer) {
+  <p>@formatPrice(advOk.amountMinusComission, advOk.currency)</p>
+  [x] Предложение одобрено @_prettyDate(advOk.dateStatus).
+}
