@@ -1,4 +1,4 @@
-@(lf: Form[_])(implicit ctx: util.Context)
+@(lf: Option[Form[_]] = None)(implicit ctx: util.Context)
 
-@marketBase("Добро пожаловать", lf) {
+@marketBase("Добро пожаловать", lf){
 }

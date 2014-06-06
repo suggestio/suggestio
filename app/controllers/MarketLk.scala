@@ -50,7 +50,7 @@ object MarketLk extends SioController with EmailPwSubmit with PlayMacroLogsImpl 
   }
 
   /** Рендер дефолтовой страницы. */
-  private def renderDfltPage(implicit ctx: util.Context) = Ok(indexTpl(Ident.emailPwLoginFormM))
+  private def renderDfltPage(implicit ctx: util.Context) = Ok(indexTpl(Some(Ident.emailPwLoginFormM)))
 
 
   /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */
@@ -73,6 +73,6 @@ object MarketLk extends SioController with EmailPwSubmit with PlayMacroLogsImpl 
   }
 
   override def emailSubmitError(lf: EmailPwLoginForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    Forbidden(indexTpl(lf))
+    Forbidden(indexTpl(Some(lf)))
   }
 }

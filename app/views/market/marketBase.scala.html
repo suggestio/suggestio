@@ -1,4 +1,4 @@
-@(title: String, lf: Form[_])(content: Html)(implicit ctx: Context)
+@(title: String, lf: Option[Form[_]] = None, popupContent: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Подложка для внешней (по отношению к ЛК) страниц sio-маркета. *@
 
@@ -82,14 +82,14 @@
     @*if(!ctx.isAuth) {*@
 
       @ident._emailPwLoginFormTpl(
-        lf = lf,
+        lf = lf getOrElse controllers.Ident.emailPwLoginFormM,
         submitCall = routes.MarketLk.emailPwLoginFormSubmit
       )
 
 
     <div class="overlay" id="overlay"></div>
 
-    @content
+    @popupContent
   </div>
 
   <div class="footer-wrap">
