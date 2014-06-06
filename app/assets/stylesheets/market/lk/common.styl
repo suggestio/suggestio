@@ -341,13 +341,6 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
         .back-but:hover
           background-position: 0 0
 
-  .error-label
-    background: url('/assets/images/market/lk/error-icon.png') no-repeat left center
-    padding-left: 50px
-    height: 50px
-    margin-bottom: 30px
-    margin-left: -50px
-
   .close
     float: right
     width: 17px
@@ -1371,7 +1364,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 /*************************/
 .ad-full-preview
   position: relative
-  width: 624px 
+  width: 624px
   margin: 0px auto
   padding: 20px 0px
 
@@ -1671,3 +1664,44 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 .recover-popup__submit-wrap
   margin-top: 80px
   text-align: center
+
+.recover-failed-popup__content
+  height: 270px
+  font-family: 'Arial'
+  font-size: 14px
+  color: #676666
+
+  .error-label
+    margin-left: 10px
+    margin-top: 45px
+
+  p
+    margin-top: 18px
+    margin-bottom: 18px
+    margin-left: 70px
+
+.error-label
+  overflow: hidden
+
+.error-label__icon
+  float: left
+  background: url('/assets/images/market/lk/error-icon.png') no-repeat left center
+  width: 45px
+  height: 46px
+
+.error-label__title
+  padding-top: 12px
+  padding-left: 15px
+  overflow: hidden
+  font-family: 'Arial'
+  font-size: 18px
+  font-weight: bold
+  color: #e24a4a
+  text-shadow(1px 1px 1px white)
+
+.blue-link
+  color: #07a1ca
+  text-decoration: none
+
+.blue-link:hover
+  text-decoration: underline
