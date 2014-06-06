@@ -159,13 +159,13 @@ case class AdvWndAccess(adId: String, fromAdnId: Option[String], needMBC: Boolea
               .fold [Future[Option[MAdnNode]]] { Future successful None } { MAdnNodeCache.getByIdCached }
             producerOptFut flatMap {
               case Some(producer) =>
-                val isProducerAdmin = IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, personId)
+                val isProducerAdmin = IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, pwOpt)
                 // Пока ресивер ещё не готов, проверяем, относится ли текущая рекламная карточка к указанному ресиверу или продьюсеру.
                 if (isProducerAdmin || isRcvrRelated) {
                   // Юзер может смотреть рекламную карточку.
                   rcvrOptFut flatMap { rcvrOpt =>
                     val isRcvrAdmin = rcvrOpt
-                      .exists { rcvr => IsAdnNodeAdmin.isAdnNodeAdminCheck(rcvr, personId) }
+                      .exists { rcvr => IsAdnNodeAdmin.isAdnNodeAdminCheck(rcvr, pwOpt) }
                     // Чтобы получить какой-либо доступ к окошку карточки, нужно быть или админом узла-продьюсера карточки, или же админом ресивера, переданного через fromAdnId.
                     if (isProducerAdmin || isRcvrAdmin) {
                       val srmFut = if (needMBC) {
