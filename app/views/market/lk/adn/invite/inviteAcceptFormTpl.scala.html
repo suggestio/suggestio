@@ -15,10 +15,9 @@
     </div>
   </div>
 
-  @* Рендер текста открытой оферты, который 0 *@
+  @* Рендер текста открытой оферты. *@
   @if(withOfferText) {
-    <textarea>@textRuTpl()</textarea>
-    <input type="checkbox">Я ознакомился и согласен с договором оферты.
+    @market.contract._inviteWidgetTpl()
   }
 
   <div class="body">

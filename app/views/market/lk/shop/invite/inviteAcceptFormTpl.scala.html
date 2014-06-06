@@ -1,4 +1,4 @@
-@(mshop: MAdnNode, eAct: EmailActivation, iaf: Form[_], withRegister:Boolean)(implicit ctx: util.Context)
+@(mshop: MAdnNode, eAct: EmailActivation, iaf: Form[_], withRegister:Boolean, withOfferText: Boolean)(implicit ctx: util.Context)
 
 @* Страница с формой окончания invite-регистрации магазина. Тут можно ввести пароль и подправить имя магазина. *@
 @import ctx._
@@ -16,6 +16,12 @@
       </div>
     </div>
   </div>
+
+
+  @* Рендер текста открытой оферты. *@
+  @if(withOfferText) {
+    @market.contract._inviteWidgetTpl()
+  }
 
   <div class="body">
 
