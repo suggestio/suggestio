@@ -346,6 +346,7 @@ siomart =
       grid_cb = () ->
         document.body.style.backgroundColor = "#ffffff"
         siomart.utils.ge('sioMartRoot').style.backgroundColor = "#ffffff"
+        siomart.utils.ge('smWifiInfo').style.display = 'block'
         cbca_grid.init()
 
       setTimeout grid_cb, 1500
