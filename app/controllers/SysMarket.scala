@@ -20,6 +20,7 @@ import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.AdnMemberShowLevels
 import play.api.mvc.AnyContent
 import play.api.templates.HtmlFormat
+import play.api.i18n.Messages
 
 /**
  * Suggest.io
@@ -456,10 +457,10 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
               eAct.id = Some(eActId)
               // Собираем и отправляем письмо адресату
               val mail = use[MailerPlugin].email
-              mail.setSubject("Suggest.io | Ваш торговый центр")
+              val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
+              mail.setSubject("Suggest.io | " + Messages("Your")(ctx.lang) + " " + Messages("amt.of.type." + adnNode.adn.memberType)(ctx.lang))
               mail.setFrom("no-reply@suggest.io")
               mail.setRecipient(email1)
-              val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
               mail.send(
                 bodyText = views.txt.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct)(ctx),
                 bodyHtml = views.html.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct)(ctx)

@@ -76,16 +76,17 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
       } else {
         // Это чужой узел. Нужно отобразить только рекламу, отправленную на размещение pov-узлу.
         request.povAdnNodeOpt match {
-          // Юзер является админом pov-узла. Нужно поискать рекламу, созданную на adnId и размещенную на pov-узле.
+          // Есть pov-узел, и юзер является админом оного. Нужно поискать рекламу, созданную на adnId и размещенную на pov-узле.
           case Some(povAdnNode) =>
-            val adSearch = AdSearch(
-              receiverIds = List(povAdnNode.id.get),
-              producerIds = List(adnId)
-            )
-            MAd.searchAds(adSearch)
+            // Вычислить взаимоотношения между двумя узлами через список ad_id
+            val adIds = DB.withConnection { implicit c =>
+              MAdv.findActualAdIdsBetweenNodes(MAdvModes.busyModes, adnId, rcvrId = povAdnNode.id.get)
+            }
+            MAd.multiGet(adIds)
 
           // pov-узел напрочь отсутствует. Нечего отображать.
           case None =>
+            debug(s"showAdnNode($adnId, pov=$povAdnIdOpt): pov node is empty, no rcvr, no ads.")
             Future successful Nil
         }
       }

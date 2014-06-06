@@ -33,6 +33,10 @@ object MAdv {
 
   val COUNT_PARSER = get[Long]("c")
 
+  implicit def modes2strs(modes: Traversable[MAdvMode]): Traversable[String] = {
+    modes.map(_.toString)
+  }
+
   /**
    * Найти все ad_id (id рекламных карточек), ряды которых имеют указанные режимы и которые ещё не
    * истекли по date_end.
@@ -41,10 +45,24 @@ object MAdv {
    */
   def findAllNonExpiredAdIdsForModes(modes: Set[MAdvMode])(implicit c: Connection): List[String] = {
     SQL("SELECT DISTINCT ad_id FROM adv WHERE mode = ANY({modes}) AND date_end <= now()")
-      .on('modes -> strings2pgArray(modes.map(_.toString)))
+      .on('modes -> strings2pgArray(modes))
       .as(AD_ID_PARSER *)
   }
 
+
+  /**
+   * Найти все id рекламных карточек, которые относятся к актуальным рядам между указанными
+   * продьюсером и ресивером.
+   * @param modes в каких таблицах искать.
+   * @param prodId id продьюсера.
+   * @param rcvrId id ресивера.
+   * @return Список ad_id без дубликатов в неопределённом порядке.
+   */
+  def findActualAdIdsBetweenNodes(modes: Set[MAdvMode], prodId: String, rcvrId: String)(implicit c: Connection): List[String] = {
+    SQL("SELECT DISTINCT ad_id FROM adv WHERE mode = ANY({modes}) AND prod_adn_id = {prodId} AND rcvr_adn_id = {rcvrId} AND date_end >= now()")
+      .on('modes -> strings2pgArray(modes), 'prodId -> prodId, 'rcvrId -> rcvrId)
+      .as(MAdv.AD_ID_PARSER *)
+  }
 }
 
 
@@ -108,6 +126,18 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
     findBy(" WHERE prod_adn_id = {adnId} OR rcvr_adn_id = {adnId} AND date_end >= now()", policy, 'adnId -> adnId)
   }
 
+  /**
+   * Найти все id рекламных карточек, которые относятся к актуальным рядам между указанными
+   * продьюсером и ресивером.
+   * @param prodId id продьюсера.
+   * @param rcvrId id ресивера.
+   * @return Список ad_id без дубликатов в неопределённом порядке.
+   */
+  def findActualAdIdsBetweenNodes(prodId: String, rcvrId: String)(implicit c: Connection): List[String] = {
+    SQL("SELECT DISTICT ad_id FROM " + TABLE_NAME + " WHERE prod_adn_id = {prodId} AND rcvr_adn_id = {rcvrId} AND date_end >= now()")
+      .on('prodId -> prodId, 'rcvrId -> rcvrId)
+      .as(MAdv.AD_ID_PARSER *)
+  }
 
   /**
    * Есть ли в таблице ряды, которые относятся к указанной комбинации adId и rcvrId, и чтобы были

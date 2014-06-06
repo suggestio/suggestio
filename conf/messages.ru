@@ -20,6 +20,7 @@ Site=Сайт
 Floor.number=Номер этажа
 Section.number=Номер секции
 Close=Закрыть
+Your=Ваш
 
 Password.change=Смена пароля
 Type.current.password=Введите текущий пароль
