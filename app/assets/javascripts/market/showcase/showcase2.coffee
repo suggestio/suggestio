@@ -733,6 +733,7 @@ siomart =
 
     ## Возврат на индекс выдачи
     this.utils.add_single_listener this.utils.ge('rootNodeLogo'), _event, siomart.load_index_ads
+    this.utils.add_single_listener this.utils.ge('sioMartHomeButton'), _event, siomart.load_index_ads
 
     this.utils.add_single_listener this.utils.ge('smSearchIcon'), _event, () ->
       siomart.utils.ge('smSearchField').focus()

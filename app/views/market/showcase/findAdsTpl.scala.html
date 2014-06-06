@@ -9,9 +9,6 @@
 
       @_screen_nav_button("back","closeNodeOffersPopupButton")
       <div class="sio-mart__producer-header" style="background-color: #@producer.meta.color;">
-        <div class="sio-mart-home-button" id="sioMartHomeButton">
-          <span></span>
-        </div>
         @producer.logoImgOpt.map { logoImg =>
         <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
       }
