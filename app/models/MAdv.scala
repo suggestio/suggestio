@@ -112,7 +112,7 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
    * @return true, если есть хотя бы один актуальный ряд для указанных adId и rcvrId. Иначе false.
    */
   def hasNotExpiredByAdIdAndRcvr(adId: String, rcvrId: String)(implicit c: Connection): Boolean = {
-    SQL("SELECT count(*) > 0 FROM " + TABLE_NAME + " WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId} AND now() <= date_end LIMIT 1")
+    SQL("SELECT count(*) > 0 AS bool FROM " + TABLE_NAME + " WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId} AND now() <= date_end LIMIT 1")
       .on('adId -> adId, 'rcvrId -> rcvrId)
       .as(SqlModelStatic.boolColumnParser single)
   }
