@@ -15,6 +15,8 @@ import scala.concurrent.Future
 import play.api.mvc.Security.username
 import util.img._
 import views.html.market.lk.adn.invite.inviteInvalidTpl
+import play.api.db.DB
+import util.billing.Billing
 
 /**
  * Suggest.io
@@ -253,6 +255,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
             mshop.personIds = Set(personId)
             mshop.save map { _shopId =>
               trace(logPrefix + s"mshop(id=${_shopId}) saved with new owner: $personId")
+              Billing.maybeInitializeNodeBilling(_shopId)
               Redirect(routes.MarketLkAdn.showAdnNode(shopId))
                 .flashing("success" -> "Регистрация завершена успешно.")
                 .withSession(username -> personId)

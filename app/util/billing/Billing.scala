@@ -18,10 +18,53 @@ object Billing extends PlayMacroLogsImpl {
 
   import LOGGER._
 
+  val DEFAULT_CONTRACT_SUFFIX = configuration.getString("billing.contract.autocreate.suffix.default").map(_.trim) getOrElse "CEO"
+  val DEFAULT_SIO_COMISSION   = configuration.getDouble("billing.contract.autocreate.comission.default").map(_.toFloat) getOrElse 0.30F
+
   /** Запускать тарификацию каждые n времени. */
   val TARIFFICATION_EVERY_MINUTES: Int = configuration.getInt("tariff.apply.every.minutes").getOrElse(20)
   val TARIFFICATION_PERIOD = new Period(0, TARIFFICATION_EVERY_MINUTES, 0, 0)
   def SCHED_TARIFFICATION_DURATION = TARIFFICATION_EVERY_MINUTES minutes
+
+  /** Инициализировать биллинг на узле. */
+  def maybeInitializeNodeBilling(adnId: String) {
+    lazy val logPrefix = s"maybeInitializeNodeBilling($adnId): "
+    val newMbcOpt: Option[MBillContract] = DB.withTransaction { implicit c =>
+      MBillContract.lockTableWrite
+      val currentContracts = MBillContract.findForAdn(adnId)
+      if (currentContracts.isEmpty) {
+        val mbc = MBillContract(
+          adnId = adnId,
+          contractDate = DateTime.now(),
+          suffix = Some(DEFAULT_CONTRACT_SUFFIX),
+          isActive = true,
+          sioComission = DEFAULT_SIO_COMISSION
+        ).save
+        Some(mbc)
+      } else {
+        None
+      }
+    }
+    if (newMbcOpt.isDefined) {
+      info(logPrefix + "Created new contract for node: " + newMbcOpt.get)
+    } else {
+      trace(logPrefix + "Node already have at least one contract.")
+    }
+    val newMbbOpt: Option[MBillBalance] = DB.withTransaction { implicit c =>
+      MBillBalance.lockTableWrite
+      if (MBillBalance.getByAdnId(adnId).isEmpty) {
+        val mbb = MBillBalance(adnId, amount = 0F).save
+        Some(mbb)
+      } else {
+        None
+      }
+    }
+    if (newMbbOpt.isDefined) {
+      info(logPrefix + "Created zero balance for node: " + newMbbOpt.get)
+    } else {
+      trace(logPrefix + "Node already have initialized balance.")
+    }
+  }
 
   /**
    * Обработать платеж внутри sql-транзакции.

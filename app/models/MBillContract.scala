@@ -165,6 +165,7 @@ object MBillContract extends SqlModelStatic[MBillContract] {
       .on('adnId -> adnId)
       .as(SqlModelStatic.boolColumnParser single)
   }
+
 }
 
 import MBillContract._

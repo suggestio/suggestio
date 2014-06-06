@@ -17,14 +17,12 @@
     </div>
   </div>
 
-
-  @* Рендер текста открытой оферты. *@
-  @if(withOfferText) {
-    @market.contract._inviteWidgetTpl()
-  }
-
   <div class="body">
 
+    @* Рендер текста открытой оферты. *@
+    @if(withOfferText) {
+      @market.contract._inviteWidgetTpl()
+    }
 
     <div class="hello-message" id="hello-message">
       <div class="accept">

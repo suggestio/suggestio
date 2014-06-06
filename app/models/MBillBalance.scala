@@ -11,7 +11,7 @@ import util.AnormPgArray._
  * Created: 18.04.14 11:07
  * Description: Балансы на счетах узлов рекламной сети. Как бы "кошельки" рекламных узлов.
  */
-object MBillBalance {
+object MBillBalance extends SqlModelStaticMinimal[MBillBalance] {
   import SqlParser._
 
   val TABLE_NAME: String = "bill_balance"
@@ -115,7 +115,7 @@ import MBillBalance._
 case class MBillBalance(
   adnId: String,
   amount: Float,
-  currencyCodeOpt: Option[String] = None,
+  currencyCodeOpt: Option[String] = Some(CurrencyCodeOpt.CURRENCY_CODE_DFLT),
   overdraft: Float = 0F,
   blocked: Float = 0F
 ) extends SqlModelSave[MBillBalance] with CurrencyCodeOpt {

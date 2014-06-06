@@ -1,5 +1,6 @@
 package controllers
 
+import _root_.util.billing.Billing
 import util.qsb.AdSearch
 import util.PlayMacroLogsImpl
 import util.acl._
@@ -345,7 +346,8 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
               if (!(mmart.personIds contains personId)) {
                 mmart.personIds += personId
               }
-              mmart.save.map { _martId =>
+              mmart.save.map { _adnId =>
+                Billing.maybeInitializeNodeBilling(_adnId)
                 Redirect(routes.MarketLkAdn.showAdnNode(martId))
                   .flashing("success" -> "Регистрация завершена.")
                   .withSession(username -> personId)
