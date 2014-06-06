@@ -90,21 +90,29 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         }
       }
       // Нужно узнать, есть ли рекламодатели у указанного узла.
-      val (advReqsCount, busyAdIds, advertisersFut): (Long, Set[String], Future[Seq[MAdnNode]]) = if(isMyNode && adnNode.adn.isReceiver) {
+      val (advReqsCount, advertisersFut): (Long, Future[Seq[MAdnNode]]) = if(isMyNode && adnNode.adn.isReceiver) {
         val syncResult = DB.withConnection { implicit c =>
           val okAdnIds = MAdvOk.findAllProducersForRcvr(adnId)
           val reqAdnIds = MAdvReq.findAllProducersForRcvr(adnId)
           val reqsCount = MAdvReq.countForRcvr(adnId)
-          val _busyAdIds = MAdv.findAllNonExpiredAdIdsForModes(MAdvModes.busyModes)
-          (okAdnIds, reqAdnIds, reqsCount, _busyAdIds)
+          (okAdnIds, reqAdnIds, reqsCount)
         }
-        val (okAdnIds, reqAdnIds, reqsCount, _busyAdIds) = syncResult
+        val (okAdnIds, reqAdnIds, reqsCount) = syncResult
         val advAdnIds = (okAdnIds ++ reqAdnIds).distinct
-        (reqsCount, _busyAdIds.toSet, MAdnNode.multiGet(advAdnIds)) // TODO Opt надо задействовать кеш в multiget'e.
+        (reqsCount, MAdnNode.multiGet(advAdnIds)) // TODO Opt надо задействовать кеш в multiget'e.
       } else {
-        (0L, Set.empty, Future.successful(Nil))
+        (0L, Future.successful(Nil))
       }
-      // Надо ли отображать кнопку "управление" под карточками
+      val ad2advMap = {
+        val myAdnId = request.myNodeId
+        val busyAdvs = DB.withConnection { implicit c =>
+          val busyAdsOk = MAdvOk.findNotExpiredRelatedTo(myAdnId)
+          val busyAdsReq = MAdvReq.findNotExpiredRelatedTo(myAdnId)
+          Seq(busyAdsOk, busyAdsReq)
+        }
+        advs2adIdMap(busyAdvs : _*)
+      }
+      // Надо ли отображать кнопку "управление" под карточками? Да, если есть баланс и контракт.
       val canAdv: Boolean = isMyNode && adnNode.adn.isProducer && {
         DB.withConnection { implicit c =>
           MBillContract.hasActiveForNode(adnId)  &&  MBillBalance.hasForNode(adnId)
@@ -125,13 +133,21 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
           povAdnIdOpt   = request.povAdnNodeOpt.flatMap(_.id),
           advReqsCount  = advReqsCount,
           canAdv        = canAdv,
-          busyAdIds     = busyAdIds
+          ad2advMap     = ad2advMap
         ))
       }
     }
   }
 
-  
+
+  private def advs2adIdMap(advss: Seq[MAdvI] *): Map[String, MAdvI] = {
+    advss.foldLeft [List[(String, MAdvI)]] (Nil) { (acc1, advs) =>
+      advs.foldLeft(acc1) { (acc2, adv) =>
+        adv.adId -> adv  ::  acc2
+      }
+    }.toMap
+  }
+
   
   /**
    * Рендер страницы со списком подчинённых узлов.

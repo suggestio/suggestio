@@ -146,4 +146,8 @@ case class AdnNodeAccess(adnId: String, povAdnIdOpt: Option[String]) extends Act
 
 case class RequestForAdnNode[A](adnNode: MAdnNode, povAdnNodeOpt: Option[MAdnNode], isMyNode: Boolean,
                                 request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
-  extends AbstractRequestForAdnNode(request)
+  extends AbstractRequestForAdnNode(request) {
+
+  def myNode: MAdnNode = if (isMyNode) adnNode else povAdnNodeOpt.get
+  def myNodeId: String = myNode.id.get
+}

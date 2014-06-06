@@ -40,7 +40,7 @@ object MAdv {
    * @return Список ad_id в неопределённом порядке, но без дубликатов.
    */
   def findAllNonExpiredAdIdsForModes(modes: Set[MAdvMode])(implicit c: Connection): List[String] = {
-    SQL("SELECT DISTINCT ad_id FROM adv WHERE mode = ANY({modes}) AND date_end >= now()")
+    SQL("SELECT DISTINCT ad_id FROM adv WHERE mode = ANY({modes}) AND date_end <= now()")
       .on('modes -> strings2pgArray(modes.map(_.toString)))
       .as(AD_ID_PARSER *)
   }
@@ -103,6 +103,11 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
   def findNotExpiredByAdId(adId: String, policy: SelectPolicy = SelectPolicies.NONE, limit: Int = 100)(implicit c: Connection): List[T] = {
     findBy(" WHERE ad_id = {adId} AND now() <= date_end LIMIT {limit}", policy, 'adId -> adId, 'limit -> limit)
   }
+
+  def findNotExpiredRelatedTo(adnId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(" WHERE prod_adn_id = {adnId} OR rcvr_adn_id = {adnId} AND date_end >= now()", policy, 'adnId -> adnId)
+  }
+
 
   /**
    * Есть ли в таблице ряды, которые относятся к указанной комбинации adId и rcvrId, и чтобы были
