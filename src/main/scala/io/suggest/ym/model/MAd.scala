@@ -15,6 +15,7 @@ import scala.util.{Success, Failure}
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import io.suggest.ym.ad.ShowLevelsUtil
 import io.suggest.ym.model.common.EMImg.Imgs_t
+import org.elasticsearch.search.aggregations.AggregationBuilders
 
 /**
  * Suggest.io
@@ -100,6 +101,42 @@ object MAd
     super.findForProducerRt(producerId, maxResults)
       .map { sortByDateCreated }
   }
+
+
+  /**
+   * Собрать в кучу всех ресиверов у объяв, которые созданы указанным продьюсером
+   * @param producerId id продьюсера.
+   * @param maxResults Макс. кол-во результатов на выходе аггрегатора.
+   * @return Карта rcvrId -> docCount.
+   */
+  def findReceiverIdsForProducer(producerId: String, maxResults: Int = 0)(implicit ec: ExecutionContext, client: Client): Future[Map[String, Long]] = {
+    prepareSearch
+      .setQuery( EMProducerId.producerIdQuery(producerId) )
+      .addAggregation( EMReceivers.receiverIdsAgg )
+      .setSize(maxResults)
+      .execute()
+      .map { searchResp =>
+        EMReceivers.extractReceiverIdsAgg( searchResp.getAggregations )
+      }
+  }
+
+  /**
+   * Сбор всех продьюсеров, карточки которых имеют указанного ресивера в соотв.поле.
+   * @param rcvrId id ресивера.
+   * @param maxResults макс.кол-во возвращаемых результатов.
+   * @return Карта (rcvrId -> docCount), длина не превышает maxResults.
+   */
+  def findProducerIdsForReceiver(rcvrId: String, maxResults: Int = 0)(implicit ec: ExecutionContext, client: Client): Future[Map[String, Long]] = {
+    prepareSearch
+      .setQuery( EMReceivers.receiverIdQuery(rcvrId) )
+      .addAggregation(EMProducerId.producerIdAgg)
+      .setSize(maxResults)
+      .execute()
+      .map { searchResp =>
+        EMProducerId.extractProducerIdAgg(searchResp.getAggregations)
+      }
+  }
+
 }
 
 

@@ -12,6 +12,9 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.action.update.UpdateRequestBuilder
 import io.suggest.model.EsModel.FieldsJsonAcc
 import play.api.libs.json._
+import org.elasticsearch.search.aggregations.{Aggregations, AggregationBuilders}
+import org.elasticsearch.search.aggregations.bucket.nested.Nested
+import org.elasticsearch.search.aggregations.bucket.terms.Terms
 
 /**
  * Suggest.io
@@ -42,6 +45,37 @@ object EMReceivers {
   val RCVRS_SLS_WANT_ESFN     = fullFN(SLS_WANT_ESFN)
   val RCVRS_SLS_PUB_ESFN      = fullFN(SLS_PUB_ESFN)
 
+
+  /** Собрать аггрегатор для сбора receivers.receiverId. */
+  def receiverIdsAgg = {
+    val subagg = AggregationBuilders.terms(RECEIVER_ID_ESFN)
+      .field(RCVRS_RECEIVER_ID_ESFN)
+    AggregationBuilders.nested(RECEIVERS_ESFN)
+      .path(RECEIVERS_ESFN)
+      .subAggregation(subagg)
+  }
+
+  /**
+   * Превратить в карту выхлоп аггрегации поиского запроса, созданного на базе receiverIdsAgg().
+   * @param aggs Выхлоп аггрегации ES.
+   * @return Карта (receiverId: String -> docCount: Long).
+   */
+  def extractReceiverIdsAgg(aggs: Aggregations): Map[String, Long] = {
+    aggs.get[Nested](RECEIVERS_ESFN)
+      .getAggregations
+      .get[Terms](RECEIVER_ID_ESFN)
+      .getBuckets
+      .iterator()
+      .foldLeft [List[(String, Long)]] (Nil) {
+        (acc, bkt)  =>  bkt.getKey -> bkt.getDocCount :: acc
+      }
+      .toMap
+  }
+
+  def receiverIdQuery(receiverId: String) = {
+    val q = QueryBuilders.termQuery(RCVRS_RECEIVER_ID_ESFN, receiverId)
+    QueryBuilders.nestedQuery(RECEIVERS_ESFN, q)
+  }
 }
 
 import EMReceivers._
@@ -77,8 +111,6 @@ trait EMReceiversStatic extends EsModelStaticT {
   def findForReceiverRt(receiverId: String, maxResults: Int = 100)(implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
     findQueryRt(receiverIdQuery(receiverId), maxResults)
   }
-
-  def receiverIdQuery(receiverId: String) = QueryBuilders.termQuery(RCVRS_RECEIVER_ID_ESFN, receiverId)
 
   /**
    * Накатить сверху на запрос дополнительный фильтр для уровней.
@@ -174,12 +206,6 @@ trait EMReceivers extends EMReceiversI {
     req
   }
 
-  def updateAllWantLevels(f: Set[AdShowLevel] => Set[AdShowLevel]) {
-    receivers.valuesIterator.foreach { ari =>
-      ari.slsWant = f(ari.slsWant)
-    }
-  }
-
   /** Сохранить новые ресиверы через update. */
   def saveReceivers(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
     updateReceiversReqBuilder.execute()
@@ -190,6 +216,20 @@ trait EMReceivers extends EMReceiversI {
 trait EMReceiversMut extends EMReceivers {
   override type T <: EMReceiversMut
   var receivers: Receivers_t
+
+  def updateAllWantLevels(f: Set[AdShowLevel] => Set[AdShowLevel]) {
+    // Нужно отфильтровать ресиверов с пустыми slsWant.
+    val rcvrs2 = receivers.valuesIterator.foldLeft[List[(String, AdReceiverInfo)]] (Nil) {
+      (acc, ari) =>
+        ari.slsWant = f(ari.slsWant)
+        if (ari.slsWant.isEmpty)
+          acc
+        else
+          ari.receiverId -> ari  ::  acc
+    }
+    receivers = rcvrs2.toMap
+  }
+
 }
 
 

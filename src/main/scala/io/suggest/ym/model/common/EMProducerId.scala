@@ -9,6 +9,9 @@ import org.elasticsearch.index.query.QueryBuilders
 import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
 import play.api.libs.json.JsString
 import io.suggest.event.SioNotifierStaticClientI
+import org.elasticsearch.search.aggregations.{Aggregations, AggregationBuilders}
+import org.elasticsearch.search.aggregations.bucket.terms.Terms
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -22,6 +25,26 @@ object EMProducerId {
 
   /** Имя поля, которое должно содержать id продьюсера. */
   val PRODUCER_ID_ESFN   = "producerId"
+
+  def producerIdAgg = AggregationBuilders.terms(PRODUCER_ID_ESFN).field(PRODUCER_ID_ESFN)
+  def extractProducerIdAgg(aggs: Aggregations): Map[String, Long] = {
+    aggs.get[Terms](PRODUCER_ID_ESFN)
+      .getBuckets
+      .iterator()
+      .foldLeft [List[(String, Long)]] (Nil) {
+        (acc, e) => e.getKey -> e.getDocCount :: acc
+      }
+      .toMap
+  }
+
+
+  /**
+   * Сгенерить es query для поиска по id продьюсера.
+   * @param producerId id продьюсера.
+   * @return QueryBuilder.
+   */
+  def producerIdQuery(producerId: String) = QueryBuilders.termQuery(PRODUCER_ID_ESFN, producerId)
+
 }
 
 import EMProducerId._
@@ -43,20 +66,13 @@ trait EMProducerIdStatic extends EsModelStaticT {
   }
 
   /**
-   * Сгенерить es query для поиска по id продьюсера.
-   * @param producerId id продьюсера.
-   * @return QueryBuilder.
-   */
-  def producerIdQuery(producerId: String) = QueryBuilders.termQuery(PRODUCER_ID_ESFN, producerId)
-
-  /**
    * Найти все рекламные карточки, принадлежащие (созданные) указанным узлом рекламной сети.
    * @param adnId id узла, создавшего рекламные карточки.
    * @return Список результатов.
    */
   def findForProducer(adnId: String, withSorter: Option[SortBuilder] = None)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
     val req = prepareSearch
-      .setQuery(producerIdQuery(adnId))
+      .setQuery( producerIdQuery(adnId) )
     if (withSorter.isDefined)
       req.addSort(withSorter.get)
     req

@@ -9,6 +9,7 @@ import org.elasticsearch.common.xcontent.XContentFactory
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import io.suggest.event.{AdSavedEvent, SioNotifierStaticClientI}
 import io.suggest.util.MyConfig.CONFIG
+import io.suggest.ym.model.common.EMProducerId
 
 /**
  * Suggest.io
@@ -88,7 +89,7 @@ object ShowLevelsUtil extends MacroLogsImpl {
     // В случае использования этих уровней, надо считать текущее кол-во опубликованных карточек на каждом уровне.
     val allowedMLevelsFut: Future[Set[AdShowLevel]] = if (!levelsM.isEmpty) {
       trace(logPrefix + "multi-levels enabled: " + levelsM.mkString(", "))
-      val query0 = MAd.producerIdQuery(producerId)
+      val query0 = EMProducerId.producerIdQuery(producerId)
       Future.traverse(levelsM) { lvl =>
         val queryL = MAd.withLevelsFilter(query0, isPub = true, withLevels = Seq(lvl), useAnd = true)
         // Не нужно считать текущий id.
