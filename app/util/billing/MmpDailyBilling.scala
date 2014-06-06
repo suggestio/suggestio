@@ -21,6 +21,7 @@ import scala.concurrent.duration._
 import de.jollyday.HolidayManager
 import java.net.URL
 import controllers.routes
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -48,6 +49,9 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     s"http://localhost:$myPort"
   }
 
+  /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
+  val WEEKEND_DAYS: Set[Int] = configuration.getIntList("mmp.daily.weekend.days").map(_.map(_.intValue).toSet) getOrElse Set(FRIDAY, SATURDAY, SUNDAY)
+
   private def getUrlCal(calId: String) = {
     HolidayManager.getInstance(
       new URL(MYSELF_URL_PREFIX + routes.SysCalendar.getCalendarXml(calId))
@@ -74,12 +78,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         trace(s"${logPrefix}$day -> primetime -> +${rcvrPricing.mmpPrimetime}")
         rcvrPricing.mmpPrimetime
       } else {
-        val isWeekend = day.getDayOfWeek match {
-          case (SUNDAY | SATURDAY) =>
-            true
-          case _ =>
-            weekendCal isHoliday day
-        }
+        val isWeekend = (WEEKEND_DAYS contains day.getDayOfWeek) || (weekendCal isHoliday day)
         if (isWeekend) {
           trace(s"${logPrefix}$day -> weekend -> +${rcvrPricing.mmpWeekend}")
           rcvrPricing.mmpWeekend

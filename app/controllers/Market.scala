@@ -135,16 +135,24 @@ object Market extends SioController with PlayMacroLogsImpl {
   // TODO Надо бы заинлайнить и убрать все контейнеры и прочее добро. Это ускорит работу.
   private def marketAction(adnId: String)(f: MarketRequest => Future[Result]) = MaybeAuth.async { implicit request =>
     // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
-    val shopsFut = MAdnNode.findBySupId(adnId, onlyEnabled = true, maxResults = MAX_SHOPS_LIST_LEN)
-      .map { _.map { shop => shop.id.get -> shop }.toMap }
+    val allProdsFut = MAdnNode.findBySupId(adnId, onlyEnabled = true, maxResults = MAX_SHOPS_LIST_LEN)
+      .map { _.map { prod => prod.id.get -> prod }.toMap }
+    val prodsStatsFut = MAd.findProducerIdsForReceiver(adnId)
     // Читаем из основной базы текущий ТЦ
     val nodeOptFut = MAdnNode.getById(adnId)
     // Текущие категории ТЦ
     val mmcatsFut = MMartCategory.findTopForOwner(getCatOwner(adnId))
+    // Нужно отфильтровать магазины без рекламы.
+    val shopsWithAdsFut = for {
+      allProds    <- allProdsFut
+      prodsStats  <- prodsStatsFut
+    } yield {
+      allProds.filterKeys( prodsStats contains )
+    }
     nodeOptFut flatMap {
       case Some(mmart1) =>
         val marketDataFut1 = for {
-          mshops <- shopsFut
+          mshops <- shopsWithAdsFut
           mmcats <- mmcatsFut
         } yield {
           MarketData(mmcats, mshops)
