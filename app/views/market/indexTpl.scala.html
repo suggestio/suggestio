@@ -1,4 +1,60 @@
 @(lf: Option[Form[_]] = None)(implicit ctx: util.Context)
 
 @marketBase("Добро пожаловать", lf){
+
+
+
+<div class="header-wrap header-wrap_login-page">
+
+  <div class="center">
+
+    @*if(!ctx.isAuth) {*@
+
+    <a  href="#emailPwLoginForm" class="simple-green-btn f-right login-page_enter_btn js-btn">Вход</a>
+
+
+
+  </div>
+
+</div>
+
+<div class="body-wrap body-wrap_login-page">
+
+  <div class="body">
+
+    <div class="login-page_content">
+
+
+      <a href="#" class="login-page__logo"></a>
+
+      <a href="@routes.MarketJoin.joinAdvRequest" class="login-page__blue-btn">
+        <span class="btn"></span>
+        РАЗМЕСТИТЬ РЕКЛАМУ
+      </a>
+
+      <a href="@routes.MarketJoin.wifiJoinQuestionsForm()" class="login-page__green-btn">
+        <span class="btn"></span>
+        СТАТЬ УЧАСТНИКОМ СЕТИ
+      </a>
+
+      <div class="login-page__wifi_block">
+
+        <div class="wifi-icon"></div>
+        <p>
+          Новое рекламное пространство
+        </p>
+
+        <!--a href="#" class="login-page__gray-btn">
+          <span class="btn"></span>
+          ПРОЙДИТЕ ОПРОС
+        </a>-->
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
 }

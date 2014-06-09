@@ -6,10 +6,29 @@
 
 @* Фунция-генератор для блока с вопросом и ответами, передаваемыми в аргументе content. *@
 @qsn(fn: String)(content: Html) = {
-  <div>
-    <h3>@Messages("join.qsn." + fn)</h3>
-    @content
+
+
+  <div class="lk-edit-form__block js-slide-wrap">
+
+    <div class="lk-edit-form__block_title ovh">
+      <div class="attention-icon">!</div>
+      <div class="border-line"></div>
+        <span class="lk-edit-form__block_title_span">
+          @Messages("join.qsn." + fn)
+        </span>
+      <div class="border-line"></div>
+    </div>
+
+    <div class="lk-edit-form__block_body js-slide-content">
+
+      <div class="lk-edit-form__block_body_inner">
+        @content
+      </div>
+
+    </div>
+
   </div>
+
 }
 
 @* Функция, которая должна генерить блок с заголовком и чекбоксами "да/нет" для ответа на вопрос, заданный в заголовке.
@@ -24,36 +43,74 @@
 }
 
 @joinBase("Готова ли ваша wi-fi сеть к SIO-Market") {
-  <h1>Готова ли ваша сеть?</h1>
 
-  @form(routes.MarketJoin.wifiJoinQuestionsFormSubmit) {
-    @* Любое поле может сабмиттить на сервер пустое/отсутсвующее значение, обозначающее "не знаю". *@
 
-    @yesNoInputs("haveWifi")
+  <div class="header-wrap">
 
-    @* Левая половина ответов (в дизайне). *@
-    @yesNoInputs("fullCoverage")
-    @yesNoInputs("knownEquipment")
-    @yesNoInputs("altFw")
-    @yesNoInputs("isWrtFw")
+    <div class="center">
 
-    @* Правая половина ответов. *@
-    @yesNoInputs("landlineInet")
-    @yesNoInputs("smallRoom")
+      <a class="logo" href="/m/lk">
+        <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
+      </a>
 
-    @defining( "audienceSz" ) { fn =>
-      @qsn(fn) {
-        @defining( qf(fn).value ) { auSzopt =>
-          @AudienceSizes.values.map { auSzVariant =>
-            <label>
-              <input type="checkbox" name="@fn" value="@auSzVariant"/>
-              @Messages(s"join.qsn.$fn.$auSzVariant")
-            </label>
+    </div>
+
+  </div>
+
+  <div class="body-wrap body-wrap_login-page">
+
+    <div class="title-wrap">
+
+      <div class="center">
+        <a class="back-but" href="#">&nbsp;</a>
+        <div class="title-inner">
+          ГОТОВА ЛИ ВАША Wi-Fi СЕТЬ К SIO MARKET?
+        </div>
+      </div>
+
+    </div>
+
+
+      <div class="body">
+
+      @form(routes.MarketJoin.wifiJoinQuestionsFormSubmit) {
+        @* Любое поле может сабмиттить на сервер пустое/отсутсвующее значение, обозначающее "не знаю". *@
+
+        <div class="wifi-page__left-column">
+          @* Левая половина ответов (в дизайне). *@
+          @yesNoInputs("haveWifi")
+          @yesNoInputs("fullCoverage")
+          @yesNoInputs("knownEquipment")
+          @yesNoInputs("altFw")
+          @yesNoInputs("isWrtFw")
+        </div>
+
+        <div class="wifi-page__mid-column">
+          @* Правая половина ответов. *@
+          @yesNoInputs("landlineInet")
+          @yesNoInputs("smallRoom")
+
+          @defining( "audienceSz" ) { fn =>
+            @qsn(fn) {
+              @defining( qf(fn).value ) { auSzopt =>
+                @AudienceSizes.values.map { auSzVariant =>
+                  <label>
+                    <input type="checkbox" name="@fn" value="@auSzVariant"/>
+                    @Messages(s"join.qsn.$fn.$auSzVariant")
+                  </label>
+                }
+              }
+            }
           }
-        }
-      }
-    }
 
-    <input type="submit" value="@Messages("Write")"/>
-  }
+        </div>
+
+
+
+        <input type="submit" value="@Messages("Write")"/>
+      }
+
+    </div>
+
+  </div>
 }
