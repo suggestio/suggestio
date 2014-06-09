@@ -8,7 +8,7 @@
   <div class="sale-mask abs"></div>
 
 
-  <img class="photo" src="@mad.imgs.get(Block11.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl11-bg.jpg"))" />
+  <img class="photo" src="@ctx.myAudienceUrl@mad.imgs.get(Block11.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl11-bg.jpg"))" />
 
 
   @mad.offers.headOption.map { offer =>

@@ -13,7 +13,7 @@
 
   <div class="inner">
 
-    <img src="@mad.imgs.get(Block3.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl3-bg.jpg"))" />
+    <img src="@ctx.myAudienceUrl@mad.imgs.get(Block3.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl3-bg.jpg"))" />
 
     <div class="items">
 

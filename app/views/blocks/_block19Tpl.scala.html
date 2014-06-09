@@ -15,7 +15,7 @@
   <div class="substrate" style="background: #@fillColor">
 
     <div class="inner" style="border-color: #@mad.colors.getOrElse(Block19.borderColorBf.name, Block19.borderColorBf.anyDefaultValue)">
-      <img class="photo" src="@mad.imgs.get(Block19.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl19-bg.jpg"))" />
+      <img class="photo" src="@ctx.myAudienceUrl@mad.imgs.get(Block19.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl19-bg.jpg"))" />
 
       <div class="info">
 
