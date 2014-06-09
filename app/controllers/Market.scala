@@ -53,9 +53,13 @@ object Market extends SioController with PlayMacroLogsImpl {
         } yield {
           allProds.filterKeys( prodsStats contains )
         }
-        val allAdsSearchReq = AdSearch(receiverIds = List(adnId), maxResultsOpt = Some(500))
+        val catAdsSearch = AdSearch(
+          receiverIds = List(adnId),
+          maxResultsOpt = Some(100),
+          levels = List(AdShowLevels.LVL_MEMBERS_CATALOG)
+        )
         // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
-        val catsStatsFut = MAd.stats4UserCats(MAd.searchAdsReqBuilder(allAdsSearchReq))
+        val catsStatsFut = MAd.stats4UserCats(MAd.searchAdsReqBuilder(catAdsSearch))
           .map { _.toMap }
         val welcomeAdOptFut: Future[Option[MWelcomeAd]] = adnNode.meta.welcomeAdId match {
           case Some(waId) => MWelcomeAd.getById(waId)
@@ -80,7 +84,7 @@ object Market extends SioController with PlayMacroLogsImpl {
         case ex: NoSuchElementException =>
           warn(s"marketAction($adnId): node does not exist")
           martNotFound(adnId)
-    }
+      }
   }
 
   /** Экшн, который рендерит страничку приветствия, которое видит юзер при первом подключении к wi-fi */
@@ -100,19 +104,31 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
   def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
+    // TODO Использовать multiget + кеш.
     val producersFut = Future.traverse(adSearch.producerIds) { MAdnNodeCache.getByIdCached }
       .map { _.flatMap(_.toList) }
+    val (jsAction, adSearch2) = if (adSearch.qOpt.isDefined) {
+      "searchAds" -> adSearch
+    } else if (!adSearch.producerIds.isEmpty) {
+      val _adSearch = adSearch.copy(levels = AdShowLevels.LVL_MEMBER :: adSearch.levels)
+      "producerAds" -> _adSearch
+    } else if (!adSearch.catIds.isEmpty) {
+      val _adSearch = adSearch.copy(levels = AdShowLevels.LVL_MEMBERS_CATALOG :: adSearch.levels)
+      "findAds" -> _adSearch
+    } else if (!adSearch.receiverIds.isEmpty) {
+      val _adSearch = adSearch.copy(levels = AdShowLevels.LVL_START_PAGE :: adSearch.levels)
+      // При поиске по категориям надо искать только если есть указанный show level.
+      "findAds" -> _adSearch
+    } else {
+      // Херота какая видимо.
+      warn("findAds(): strange search request: " + adSearch)
+      "findAds" -> adSearch
+    }
+
     for {
-      mads      <- MAd.searchAds(adSearch).map(groupNarrowAds)
+      mads      <- MAd.searchAds(adSearch2).map(groupNarrowAds)
       producers <- producersFut
     } yield {
-      val jsAction: String = if (adSearch.qOpt.isDefined) {
-        "searchAds"
-      } else if (!producers.isEmpty) {
-        "producerAds"
-      } else {
-        "findAds"
-      }
       // TODO Хвост списка продьюсеров дропается, для рендера используется только один. Надо бы в шаблоне отработать эту ситуацию.
       val html = findAdsTpl(mads, adSearch, producers.headOption)
       jsonOk(html, jsAction)
