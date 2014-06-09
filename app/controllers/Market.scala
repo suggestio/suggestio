@@ -6,6 +6,7 @@ import util._
 import util.acl._
 import views.html.market.showcase._
 import views.html.market.lk.adn._node._installScriptTpl
+import views.html.market.aboutTpl
 import play.api.libs.json._
 import play.api.libs.Jsonp
 import models._
@@ -184,6 +185,12 @@ object Market extends SioController with PlayMacroLogsImpl {
       case None =>
         http404ctx(ctx)
     }
+  }
+
+
+  /** Статическая страничка, описывающая суть sio market. */
+  def aboutMarket = MaybeAuth { implicit request =>
+    Ok(aboutTpl())
   }
 
 
