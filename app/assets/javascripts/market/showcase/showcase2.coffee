@@ -3,7 +3,7 @@
 ###############################
 siomart =
   config :
-    css : '/assets/stylesheets/market/showcase.min.css?v=34'
+    css : '/assets/stylesheets/market/showcase.min.css?v=35'
     index_action : window.siomart_index
     sm_layout_class : 'sio-mart-showcase'
     sm_trigger_class : 'sio-mart-trigger'
@@ -354,14 +354,17 @@ siomart =
       siomart.welcome_ad.init()
 
       grid_cb = () ->
-        document.body.style.backgroundColor = "#ffffff"
-        siomart.utils.ge('sioMartRoot').style.backgroundColor = "#ffffff"
+        document.body.style.backgroundColor = '#ffffff'
 
-        siomart.utils.addClass document.body, 'sm-hidden-body'
+        ## Android
+        document.body.style.overflow = 'hidden'
+
+        siomart.utils.ge('sioMartRoot').style.backgroundColor = "#ffffff"
 
         sm_wifi_info_dom = siomart.utils.ge('smWifiInfo')
         if sm_wifi_info_dom != null
           siomart.utils.ge('smWifiInfo').style.display = 'block'
+
         cbca_grid.init()
 
       setTimeout grid_cb, 1500
