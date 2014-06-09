@@ -467,7 +467,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
    * @param ids id документов этой модели.
    * @return Список результатов в неопределённом порядке.
    */
-  def multiGet(ids: Seq[String])(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+  def multiGet(ids: Seq[String], acc0: List[T] = Nil)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
     if (ids.isEmpty) {
       Future successful Nil
     } else {
@@ -478,16 +478,14 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
           req.add(ES_INDEX_NAME, ES_TYPE_NAME, id)
       }
       req.execute()
-        .map {
-        mgetResp2list
-      }
+        .map { mgetResp2list(_, acc0) }
     }
   }
 
   /** Для ряда задач бывает необходимо задействовать multiGet вместо обычного поиска, который не успевает за refresh.
     * Этот метод позволяет сконвертить поисковые результаты в результаты multiget.
     * @return Результат - что-то неопределённом порядке. */
-  def searchResp2RtMultiget(searchResp: SearchResponse)(implicit ex: ExecutionContext, client: Client): Future[List[T]] = {
+  def searchResp2RtMultiget(searchResp: SearchResponse, acc0: List[T] = Nil)(implicit ex: ExecutionContext, client: Client): Future[List[T]] = {
     val searchHits = searchResp.getHits.getHits
     if (searchHits.length == 0) {
       Future successful Nil
@@ -499,14 +497,14 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
       }
       mgetReq
         .execute()
-        .map { mgetResp2list }
+        .map { mgetResp2list(_, acc0) }
     }
   }
 
 
   /** Распарсить выхлоп мультигета. */
-  def mgetResp2list(mgetResp: MultiGetResponse): List[T] = {
-    mgetResp.getResponses.foldLeft[List[T]] (Nil) { (acc, mgetItem) =>
+  def mgetResp2list(mgetResp: MultiGetResponse, acc0: List[T] = Nil): List[T] = {
+    mgetResp.getResponses.foldLeft (acc0) { (acc, mgetItem) =>
       // Поиск может содержать элементы, которые были только что удалены. Нужно их отсеивать.
       if (mgetItem.isFailed || !mgetItem.getResponse.isExists) {
         acc
@@ -519,13 +517,13 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
 
 
   /** С помощью query найти результаты, но сами результаты прочитать с помощью realtime multi-get. */
-  def findQueryRt(query: QueryBuilder, maxResults: Int = 100)(implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
+  def findQueryRt(query: QueryBuilder, maxResults: Int = 100, acc0: List[T] = Nil)(implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
     prepareSearch
       .setQuery(query)
       .setNoFields()
       .setSize(maxResults)
       .execute()
-      .flatMap { searchResp2RtMultiget }
+      .flatMap { searchResp2RtMultiget(_, acc0) }
   }
 
 

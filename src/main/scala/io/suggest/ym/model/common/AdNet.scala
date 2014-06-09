@@ -135,9 +135,14 @@ object AdShowLevels extends Enumeration with MacroLogsImpl {
     checkboxCssClass: String
   ) extends super.Val(name)
 
-  implicit def value2val(v: Value) = v.asInstanceOf[Val]
-
   type AdShowLevel = Val
+
+  implicit def value2val(v: Value) = v.asInstanceOf[AdShowLevel]
+
+  /** Сконвертить множество уровней в множество строковых id этих уровней. */
+  implicit def sls2strings(sls: Set[AdShowLevel]) = sls.map(_.name)
+
+  def withNameTyped(n: String): AdShowLevel = withName(n)
 
   /** Отображать на нулевом уровне, т.е. при входе в ТЦ/ресторан и т.д. */
   val LVL_START_PAGE = Val("d", 300, "firstPage-catalog")

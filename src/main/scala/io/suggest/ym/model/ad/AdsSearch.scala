@@ -178,7 +178,7 @@ trait AdsSimpleSearchT extends EsModelMinimalStaticT {
     val resultFut = searchAdsReqBuilder(adSearch)
       .setNoFields()
       .execute()
-      .flatMap { searchResp2RtMultiget }
+      .flatMap { searchResp2RtMultiget(_) }
     postprocessSearchResults(adSearch, resultFut)
   }
 
