@@ -408,6 +408,7 @@ object BlocksConf extends Enumeration {
 
 
   sealed trait Block20t extends Height with BgImg with Title with Descr {
+    override def ordering = 1000
     override def template = _block20Tpl
   }
   val Block20 = new Val(20) with Block20t with EmptyKey {
@@ -474,7 +475,12 @@ object BlocksConf extends Enumeration {
 
   /** Отображаемые блоки. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id и только отображаемые. */
-  val valuesShown = values.toSeq.filter(_.isShown).sortBy(_.id)
+  val valuesShown: Seq[BlockConf] = {
+    values.asInstanceOf[collection.Set[BlockConf]]
+      .toSeq
+      .filter(_.isShown)
+      .sortBy { bc => bc.ordering -> bc.id }
+  }
 }
 
 
@@ -488,6 +494,8 @@ case class BlockMapperResult(bd: BlockData, bim: BlockImgMap) {
 /** Базовый интерфейс для реализаций класса Enumeration.Val. */
 trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
   def id: Int
+
+  def ordering: Int = 10000
 
   /** Ширина блока. Используется при дублировании блоков. */
   def blockWidth: Int = BLOCK_WIDTH_NORMAL_PX
