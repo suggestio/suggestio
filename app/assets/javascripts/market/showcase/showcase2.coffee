@@ -276,7 +276,7 @@ siomart =
       class : this.config.sm_trigger_class
       id : 'sioMartTrigger'
       style : 'background-color: #' + window.siomart_node_color
-    sm_trigger = this.utils.ce "div", sm_trigger_attrs, '<img src="' + window.siomart_logo_src + '" width=80/>'
+    sm_trigger = this.utils.ce "div", sm_trigger_attrs, '<span class="trigger-helper"></span><img src="' + window.siomart_logo_src + '" width=80/>'
 
     this.utils.ge_tag("body")[0].appendChild sm_trigger
 
