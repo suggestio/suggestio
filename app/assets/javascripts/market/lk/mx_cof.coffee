@@ -165,6 +165,8 @@ CbcaCommon = () ->
 
       $this.attr('disabled', 'disabled')
       $('.js-quiz__result').hide()
+      if(nextSelector == '#text0' || nextSelector == '#text1')
+        nextSelector += ',#text3'
       $(nextSelector).show()
 
     ###################
