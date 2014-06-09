@@ -30,7 +30,7 @@
   <div class="header-wrap">
 
     <div class="center">
-      <a class="logo" href="/m/lk">
+      <a class="logo" href="@routes.MarketLk.lkIndex">
         <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
       </a>
       @ctx.usernameOpt.map { username =>
@@ -72,9 +72,8 @@
 
       <span class="copyright-block">
         @_copyrightTextTpl(withLink = false)
+        &nbsp;|&nbsp;<a href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>
       </span>
-
-      <a href="@routes.Market.contractOfferText("ru")">Оферта</a>
 
       <div class="socials">
         <a class="fb" href="#">Facebook</a>

@@ -4,57 +4,63 @@
 
 
 
-<div class="header-wrap header-wrap_login-page">
+  <div class="header-wrap header-wrap_login-page">
 
-  <div class="center">
+    <div class="center">
 
-    @*if(!ctx.isAuth) {*@
+      @*if(!ctx.isAuth) {*@
 
-    <a  href="#emailPwLoginForm" class="simple-green-btn f-right login-page_enter_btn js-btn">Вход</a>
+      <a  href="#emailPwLoginForm" class="simple-green-btn f-right login-page_enter_btn js-btn">Вход</a>
 
 
+
+    </div>
 
   </div>
 
-</div>
+  <div class="body-wrap body-wrap_login-page">
 
-<div class="body-wrap body-wrap_login-page">
+    <div class="body">
 
-  <div class="body">
-
-    <div class="login-page_content">
+      <div class="login-page_content">
 
 
-      <a href="#" class="login-page__logo"></a>
+        <a href="@routes.MarketLk.lkIndex" class="login-page__logo"></a>
 
-      <a href="@routes.MarketJoin.joinAdvRequest" class="login-page__blue-btn">
-        <span class="btn"></span>
-        РАЗМЕСТИТЬ РЕКЛАМУ
-      </a>
-
-      <a href="@routes.MarketJoin.wifiJoinQuestionsForm()" class="login-page__green-btn">
-        <span class="btn"></span>
-        СТАТЬ УЧАСТНИКОМ СЕТИ
-      </a>
-
-      <div class="login-page__wifi_block">
-
-        <div class="wifi-icon"></div>
-        <p>
-          Новое рекламное пространство
-        </p>
-
-        <!--a href="#" class="login-page__gray-btn">
+        <a href="#" class="simple-green-btn simple-green-btn_logo-mode" style="margin-top: 30px;">
           <span class="btn"></span>
-          ПРОЙДИТЕ ОПРОС
-        </a>-->
+          Как это работает?
+        </a>
+
+
+        <a href="@routes.MarketJoin.joinAdvRequest" class="login-page__blue-btn">
+          <span class="btn"></span>
+          РАЗМЕСТИТЬ РЕКЛАМУ
+        </a>
+
+        <a href="@routes.MarketJoin.wifiJoinQuestionsForm()" class="login-page__green-btn">
+          <span class="btn"></span>
+          СТАТЬ УЧАСТНИКОМ СЕТИ
+        </a>
+
+        <div class="login-page__wifi_block">
+
+          <div class="wifi-icon"></div>
+          <p>
+            Новое рекламное пространство
+          </p>
+
+          <!--a href="#" class="login-page__gray-btn">
+            <span class="btn"></span>
+            ПРОЙДИТЕ ОПРОС
+          </a>-->
+
+        </div>
 
       </div>
 
     </div>
 
   </div>
-
-</div>
 
 }

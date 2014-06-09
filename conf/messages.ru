@@ -38,6 +38,8 @@ Information=Информация
 Write=Написать
 WRITE=НАПИСАТЬ
 
+Offer=Оферта
+
 slaves.of.m=АРЕНДАТОРЫ
 slaves.of.R=РЕСТОРАНЫ
 
