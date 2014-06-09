@@ -15,7 +15,10 @@
     <br/>
 
     <span class="gray font-12">С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)</span><br/>
-    @if(advReq.onStartPage) {
+    @if( advReq.showLevels contains AdShowLevels.LVL_MEMBERS_CATALOG ) {
+      <span>+ Размещение в категориях товаров и услуг</span>
+    }
+    @if( advReq.showLevels contains AdShowLevels.LVL_START_PAGE ) {
       <span>+ Размещение на главном экране</span>
     }
 

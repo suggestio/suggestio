@@ -4,8 +4,10 @@ import anorm._
 import MAdv._
 import org.joda.time.DateTime
 import util.AnormJodaTime._
+import util.AnormPgArray._
 import util.SqlModelSave
 import java.sql.Connection
+import AdShowLevels.sls2strings
 
 /**
  * Suggest.io
@@ -19,10 +21,10 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
   val TABLE_NAME = "adv_ok"
 
   override val rowParser = {
-    ROW_PARSER_BASE ~ get[DateTime]("date_status") ~ get[Int]("prod_txn_id") ~ get[Option[Int]]("rcvr_txn_id") ~
-      get[Boolean]("online") ~ get[Boolean]("is_auto") map {
-      case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ onStartPage ~ dateStart ~ dateEnd ~
-        prodAdnId ~ rcvrAdnId ~ dateStatus ~ prodTxnId ~ rcvrTxnId ~ isOnline ~ isAuto =>
+    ADV_ROW_PARSER_LEFT ~ get[DateTime]("date_status") ~ get[Int]("prod_txn_id") ~ get[Option[Int]]("rcvr_txn_id") ~
+      get[Boolean]("online") ~ get[Boolean]("is_auto") ~ ADV_ROW_PARSER_RIGHT map {
+      case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ dateStart ~ dateEnd ~
+        prodAdnId ~ rcvrAdnId ~ dateStatus ~ prodTxnId ~ rcvrTxnId ~ isOnline ~ isAuto ~ showLevels =>
         MAdvOk(
           id          = id,
           adId        = adId,
@@ -33,13 +35,13 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
           dateStatus  = dateStatus,
           dateStart   = dateStart,
           dateEnd     = dateEnd,
-          onStartPage = onStartPage,
           prodTxnId   = prodTxnId,
           rcvrTxnId   = rcvrTxnId,
           prodAdnId   = prodAdnId,
           rcvrAdnId   = rcvrAdnId,
           isOnline    = isOnline,
-          isAuto      = isAuto
+          isAuto      = isAuto,
+          showLevels  = showLevels
         )
     }
   }
@@ -57,13 +59,13 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
       dateStatus  = dateStatus1,
       dateStart   = dateStart,
       dateEnd     = dateEnd,
-      onStartPage = onStartPage,
       prodTxnId   = prodTxnId,
       rcvrTxnId   = rcvrTxnId,
       prodAdnId   = prodAdnId,
       rcvrAdnId   = rcvrAdnId,
       isOnline    = isOnline,
-      isAuto      = isAuto
+      isAuto      = isAuto,
+      showLevels  = showLevels
     )
   }
 
@@ -97,10 +99,10 @@ case class MAdvOk(
   dateEnd       : DateTime,
   prodTxnId     : Int,
   rcvrTxnId     : Option[Int],
-  onStartPage   : Boolean,
   prodAdnId     : String,
   rcvrAdnId     : String,
   isAuto        : Boolean,
+  showLevels    : Set[AdShowLevel],
   dateCreated   : DateTime = DateTime.now(),
   dateStatus    : DateTime = DateTime.now(),
   isOnline      : Boolean = false,
@@ -113,10 +115,10 @@ case class MAdvOk(
 
   override def saveInsert(implicit c: Connection): MAdvOk = {
     SQL("INSERT INTO " + TABLE_NAME +
-      "(ad_id, amount, currency_code, date_created, comission, mode, on_start_page, date_start, date_end, prod_adn_id, rcvr_adn_id, date_status, prod_txn_id, rcvr_txn_id, online, is_auto) " +
-      "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {comission}, {mode}, {onStartPage}, {dateStart}, {dateEnd}, {prodAdnId}, {rcvrAdnId}, {dateStatus}, {prodTxnId}, {rcvrTxnId}, {isOnline}, {isAuto})")
+      "(ad_id, amount, currency_code, date_created, comission, mode, date_start, date_end, prod_adn_id, rcvr_adn_id, date_status, prod_txn_id, rcvr_txn_id, online, is_auto, show_levels) " +
+      "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {comission}, {mode}, {dateStart}, {dateEnd}, {prodAdnId}, {rcvrAdnId}, {dateStatus}, {prodTxnId}, {rcvrTxnId}, {isOnline}, {isAuto}, {showLevels})")
     .on('adId -> adId, 'amount -> amount, 'currencyCode -> currencyCode, 'dateCreated -> dateCreated,
-        'comission -> comission, 'dateStart -> dateStart, 'mode -> mode.toString, 'onStartPage -> onStartPage,
+        'comission -> comission, 'dateStart -> dateStart, 'mode -> mode.toString, 'showLevels -> strings2pgArray(showLevels),
         'dateStatus -> dateStatus, 'dateStart -> dateStart, 'dateEnd -> dateEnd, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId,
         'dateStatus -> dateStatus, 'prodTxnId -> prodTxnId, 'rcvrTxnId -> rcvrTxnId, 'isOnline -> isOnline, 'isAuto -> isAuto)
     .executeInsert(rowParser single)

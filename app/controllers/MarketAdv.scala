@@ -40,16 +40,18 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     val dateOptM = optional(jodaLocalDate("yyyy-MM-dd"))
     Form(
       "node" -> {
+        // TODO list mapping не умеет unbind в нашем случае. Надо запилить свой map mapping, который будет биндить форму в карту adnId -> AdvFormEntry.
         list(
           tuple(
-            "adnId"       -> esIdM,
-            "advertise"   -> boolean,
-            "onStartPage" -> boolean,
-            "dateStart"   -> dateOptM,
-            "dateEnd"     -> dateOptM
+            "adnId"         -> esIdM,
+            "advertise"     -> boolean,
+            "onStartPage"   -> boolean,
+            "onRcvrCat"     -> boolean,
+            "dateStart"     -> dateOptM,
+            "dateEnd"       -> dateOptM
           )
             .verifying("error.date", { m => m match {
-              case (_, isAdv, _, dateStartOpt, dateEndOpt) =>
+              case (_, isAdv, _, _, dateStartOpt, dateEndOpt) =>
                 // Если стоит галочка, то надо проверить даты.
                 if (isAdv) {
                   // Проверить даты
@@ -66,14 +68,21 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
           .transform[List[AdvFormEntry]](
             {ts =>
               ts.foldLeft(List.empty[AdvFormEntry]) {
-                case (acc, (adnId, isAdv @ true, onStartPage, Some(dateStart), Some(dateEnd))) =>
-                  val result = AdvFormEntry(adnId = adnId, advertise = isAdv, onStartPage = onStartPage, dateStart = dateStart, dateEnd = dateEnd)
+                case (acc, (adnId, isAdv @ true, onStartPage, onRcvrCat, Some(dateStart), Some(dateEnd))) =>
+                  var showLevels: List[AdShowLevel] = Nil
+                  if (onStartPage)
+                    showLevels ::= AdShowLevels.LVL_START_PAGE
+                  if (onRcvrCat)
+                    showLevels ::= AdShowLevels.LVL_MEMBERS_CATALOG
+                  val result = AdvFormEntry(adnId = adnId, advertise = isAdv, showLevels = showLevels.toSet, dateStart = dateStart, dateEnd = dateEnd)
                   result :: acc
                 case (acc, _) => acc
               }
             },
             {_.map { e =>
-              (e.adnId, e.advertise, e.onStartPage, Option(e.dateStart), Option(e.dateEnd))
+              val onStartPage = e.showLevels contains AdShowLevels.LVL_START_PAGE
+              val onRcvrCat = e.showLevels contains AdShowLevels.LVL_MEMBERS_CATALOG
+              (e.adnId, e.advertise, onStartPage, onRcvrCat, Option(e.dateStart), Option(e.dateEnd))
             }}
           )
       }
@@ -269,7 +278,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
           if (!advs2.isEmpty) {
             try {
               DB.withTransaction { implicit c =>
-                val mbb0 = MBillBalance.getByAdnId(request.producerId).get
+                // Вешаем update lock на баланс чтобы избежать блокирования суммы, списанной в параллельном треде, и дальнейшего ухода в минус.
+                val mbb0 = MBillBalance.getByAdnId(request.producerId, SelectPolicies.UPDATE).get
                 val someTrue = Some(true)
                 val mbc = MBillContract.findForAdn(request.producerId, isActive = someTrue).head
                 val prodCurrencyCode = mbb0.currencyCode
@@ -298,7 +308,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
                     rcvrAdnId = advEntry.adnId,
                     dateStart = advEntry.dateStart.toDateTimeAtStartOfDay,
                     dateEnd = advEntry.dateEnd.toDateTimeAtStartOfDay,
-                    onStartPage = advEntry.onStartPage
+                    showLevels = advEntry.showLevels
                   ).save
                   // Нужно заблокировать на счете узла необходимую сумму денег.
                   mbb0.updateBlocked(advPrice.price)
@@ -486,7 +496,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       },
       {reason =>
         val advRefused = MAdvRefuse(request.advReq, reason, DateTime.now)
-        val advRefused1 = DB.withTransaction { implicit c =>
+        DB.withTransaction { implicit c =>
           val rowsDeleted = request.advReq.delete
           assertAdvsReqRowsDeleted(rowsDeleted, 1, advReqId)
           advRefused.save
@@ -514,6 +524,6 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 }
 
 sealed case class AdvFormEntry(
-  adnId: String, advertise: Boolean, onStartPage: Boolean, dateStart: LocalDate, dateEnd: LocalDate
+  adnId: String, advertise: Boolean, showLevels: Set[AdShowLevel], dateStart: LocalDate, dateEnd: LocalDate
 ) extends AdvTerms
 
