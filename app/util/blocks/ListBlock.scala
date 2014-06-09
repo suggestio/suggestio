@@ -158,13 +158,13 @@ trait TitlePriceListBlockT extends PairListBlock {
 
   override type T1 = AOStringField
   override type BfT1 = BfText
-  override def bf1(offerNopt: Option[Int]): BfT1 = {
+  override def bf1(offerNopt: Option[Int]) = {
     BfText(TITLE_FN, BlocksEditorFields.TextArea, maxLen = 128, offerNopt = offerNopt)
   }
 
   override type T2 = AOPriceField
   override type BfT2 = BfPrice
-  override def bf2(offerNopt: Option[Int]): BfT2 = {
+  override def bf2(offerNopt: Option[Int]) = {
     BfPrice(PRICE_FN, offerNopt = offerNopt)
   }
 
