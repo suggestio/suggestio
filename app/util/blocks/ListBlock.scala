@@ -17,11 +17,16 @@ object ListBlock {
 
 }
 
-/** Для сборки блоков, обрабатывающие блоки с офферами вида "title+price много раз", используется этот трейт. */
-trait TitlePriceListBlockT extends ValT {
 
-  def TITLE_FN = ListBlock.TITLE_FN
-  def PRICE_FN = ListBlock.PRICE_FN
+/** Абстрактная платформа блока для списка пар. Работает с AOValueField, но можно снять это ограничение в будущем. */
+trait PairListBlock extends ValT {
+  type T1 <: AOValueField
+  type BfT1 <: BlockAOValueFieldT { type T = T1 }
+  def bf1(offerNopt: Option[Int]): BfT1
+
+  type T2 <: AOValueField
+  type BfT2 <: BlockAOValueFieldT { type T = T2 }
+  def bf2(offerNopt: Option[Int]): BfT2
 
   /** Начало отсчета счетчика офферов. */
   def N0 = 0
@@ -29,11 +34,6 @@ trait TitlePriceListBlockT extends ValT {
   /** Макс кол-во офферов (макс.длина списка офферов). */
   def offersCount: Int
 
-  protected def bfTitle(offerNopt: Option[Int]) = BfText(TITLE_FN, BlocksEditorFields.TextArea, maxLen = 128, offerNopt = offerNopt)
-  protected def bfPrice(offerNopt: Option[Int]) = BfPrice(PRICE_FN, offerNopt = offerNopt)
-
-  def titleBf = bfTitle(None)
-  def priceBf = bfPrice(None)
 
   /** Генерация описания полей. У нас тут повторяющийся маппинг, поэтому blockFields для редактора генерится без полей-констант. */
   abstract override def blockFieldsRev: List[BlockFieldT] = {
@@ -41,20 +41,18 @@ trait TitlePriceListBlockT extends ValT {
     (N0 until offersCount).foldLeft(acc0) {
       (acc, offerN) =>
         val offerNopt = Some(offerN)
-        val _titleBf = bfTitle(offerNopt)
-        val _priceBf = bfPrice(offerNopt)
-        _priceBf :: _titleBf :: acc
+        val _bf1 = bf1(offerNopt)
+        val _bf2 = bf2(offerNopt)
+        _bf2 :: _bf1 :: acc
     }
   }
 
-  // Поля оффера
-  protected def titleMapping = bfTitle(None)
-  protected def priceMapping = bfPrice(None)
+
 
   // Маппинг для одного элемента (оффера)
   protected def offerMapping = tuple(
-    titleMapping.getOptionalStrictMappingKV,
-    priceMapping.getOptionalStrictMappingKV
+    bf1(None).getOptionalStrictMappingKV,
+    bf2(None).getOptionalStrictMappingKV
   )
   // Маппинг для списка офферов.
   protected def offersMapping = list(offerMapping)
@@ -63,7 +61,7 @@ trait TitlePriceListBlockT extends ValT {
 
 
   /** Собрать AOBlock на основе куска выхлопа формы. */
-  protected def applyAOBlocks(l: List[(Option[AOStringField], Option[AOPriceField])]): List[AOBlock] = {
+  protected def applyAOBlocks(l: List[(Option[T1], Option[T2])]): List[AOBlock] = {
     l.iterator
       // Делаем zipWithIndex перед фильтром чтобы сохранять выравнивание на странице (css-классы), если 1 или 2 элемент пропущен.
       .zipWithIndex
@@ -74,15 +72,18 @@ trait TitlePriceListBlockT extends ValT {
     }
       // Оставшиеся офферы завернуть в AOBlock
       .map {
-      case ((titleOpt, priceOpt), i) =>
-        AOBlock(n = i,  text1 = titleOpt,  price = priceOpt)
+      case ((v1Opt, v2Opt), i) =>
+        applyAOBlock(i, v1Opt, v2Opt)
     }
       .toList
   }
 
+  protected def applyAOBlock(offerN: Int, v1: Option[T1], v2: Option[T2]): AOBlock
+
+
   /** unapply для offersMapping. Вынесен для упрощения кода. Метод восстанавливает исходный выхлоп формы,
     * даже если были пропущены какие-то группы полей. */
-  protected def unapplyAOBlocks(aoBlocks: Seq[AOBlock]) = {
+  protected def unapplyAOBlocks(aoBlocks: Seq[AOBlock]): List[(Option[T1], Option[T2])] = {
     // без if isEmpty будет экзепшен в maxBy().
     if (aoBlocks.isEmpty) {
       Nil
@@ -96,17 +97,20 @@ trait TitlePriceListBlockT extends ValT {
       // Восстанавливаем новый список выхлопов мапперов на основе длины и имеющихся экземпляров AOBlock.
       (N0 to maxN)
         .map { n =>
-        aoBlocksNS
-          .get(n)
-          .map { aoBlock => aoBlock.text1 -> aoBlock.price }
-          .getOrElse(None -> None)
-      }
+          aoBlocksNS
+            .get(n)
+            .map { unapplyAOBlock }
+            .getOrElse(None -> None)
+        }
         .toList
     }
   }
 
+  def unapplyAOBlock(blk: AOBlock): (Option[T1], Option[T2])
+
   // Mapping
   private def m = offersMapping.withPrefix("offer").withPrefix(key)
+
 
   abstract override def mappingsAcc: List[Mapping[_]] = {
     val m1 = m
@@ -143,5 +147,39 @@ trait TitlePriceListBlockT extends ValT {
     val (cms, cfes) = m.unbindAndValidate(c)
     (ms ++ cms) -> (fes ++ cfes)
   }
+}
+
+
+/** Для сборки блоков, обрабатывающие блоки с офферами вида "title+price много раз", используется этот трейт. */
+trait TitlePriceListBlockT extends PairListBlock {
+
+  def TITLE_FN = ListBlock.TITLE_FN
+  def PRICE_FN = ListBlock.PRICE_FN
+
+  override type T1 = AOStringField
+  override type BfT1 = BfText
+  override def bf1(offerNopt: Option[Int]) = {
+    BfText(TITLE_FN, BlocksEditorFields.TextArea, maxLen = 128, offerNopt = offerNopt)
+  }
+
+  override type T2 = AOPriceField
+  override type BfT2 = BfPrice
+  override def bf2(offerNopt: Option[Int]) = {
+    BfPrice(PRICE_FN, offerNopt = offerNopt)
+  }
+
+
+  def titleBf = bf1(None)
+  def priceBf = bf2(None)
+
+  override protected def applyAOBlock(offerN: Int, v1: Option[T1], v2: Option[T2]): AOBlock = {
+    AOBlock(n = offerN, text1 = v1, price = v2)
+  }
+
+
+  override def unapplyAOBlock(blk: AOBlock): (Option[T1], Option[T2]) = {
+    blk.text1 -> blk.price
+  }
+
 }
 
