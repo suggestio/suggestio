@@ -5,6 +5,7 @@ import util.qsb.AdSearch
 import util._
 import util.acl._
 import views.html.market.showcase._
+import views.html.market.lk.adn._node._installScriptTpl
 import play.api.libs.json._
 import play.api.libs.Jsonp
 import models._
@@ -82,10 +83,16 @@ object Market extends SioController with PlayMacroLogsImpl {
     }
   }
 
-  /** Временный экшн, рендерит демо страничку предполагаемого сайта ТЦ, на которой вызывается Sio.Market */
-  def demoWebSite(martId: String) = MaybeAuth.async { implicit request =>
+  /** Экшн, который рендерит страничку приветствия, которое видит юзер при первом подключении к wi-fi */
+  def demoWebSite(martId: String, isStandalone: Boolean = false) = MaybeAuth.async { implicit request =>
     MAdnNode.getById(martId) map {
-      case Some(mmart) => Ok(demoWebsiteTpl(mmart))
+      case Some(mmart) =>
+        val Tpl = if( isStandalone == true ){
+          _installScriptTpl(mmart)
+        }else{
+          demoWebsiteTpl(mmart)
+        }
+        Ok(Tpl)
       case None => NotFound("martNotFound")
     }
   }

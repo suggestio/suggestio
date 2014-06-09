@@ -254,6 +254,14 @@ siomart =
     url = '/market/ads?a.rcvr=' + siomart.config.mart_id
     siomart.request.perform url
 
+  load_grid : () ->
+    grid_js_attrs =
+      type : 'text/javascript'
+      src : siomart.config.host + '/assets/javascripts/market/showcase/grid.min.js'
+    console.log siomart.config.host
+    gid_js = this.utils.ce "script", grid_js_attrs
+    this.utils.ge_tag("head")[0].appendChild gid_js
+
   ####################################
   ## Загрузить все нужные стили цсс'ки
   ####################################
@@ -348,7 +356,12 @@ siomart =
       grid_cb = () ->
         document.body.style.backgroundColor = "#ffffff"
         siomart.utils.ge('sioMartRoot').style.backgroundColor = "#ffffff"
-        siomart.utils.ge('smWifiInfo').style.display = 'block'
+
+        siomart.utils.addClass document.body, 'sm-hidden-body'
+
+        sm_wifi_info_dom = siomart.utils.ge('smWifiInfo')
+        if sm_wifi_info_dom != null
+          siomart.utils.ge('smWifiInfo').style.display = 'block'
         cbca_grid.init()
 
       setTimeout grid_cb, 1500
@@ -805,11 +818,12 @@ siomart =
 
   ## Инициализация Sio.Market
   init : () ->
-
     this.utils.is_touch_device()
 
     siomart.config.mart_id = window.siomart_id
     siomart.config.host = window.siomart_host
+
+    this.load_grid()
 
     this.utils.set_vendor_prefix()
     this.load_stylesheets()

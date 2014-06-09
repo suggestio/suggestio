@@ -21,8 +21,8 @@
   <p><a href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)"><b>-&gt; Личный кабинет узла</b></a></p>
 
   @adnNode.adn.memberType.demoWebsiteAdnId(adnNode).map { dwId =>
-    <p><a href="@routes.Market.demoWebSite(dwId)"><b>-&gt; demoWebSite</b></a>
-      (<a href="http://10.0.0.101:9001@routes.Market.demoWebSite(dwId)" target="_blank">osm01-vpn</a>)
+    <p><a href="@routes.Market.demoWebSite(dwId, false)"><b>-&gt; demoWebSite</b></a>
+      (<a href="http://10.0.0.101:9001@routes.Market.demoWebSite(dwId, false)" target="_blank">osm01-vpn</a>)
       <a href="@routes.Market.martIndex(dwId)"><b>JSON</b></a>
     </p>
   }
