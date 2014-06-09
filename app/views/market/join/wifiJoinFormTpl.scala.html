@@ -8,15 +8,42 @@
 
 @joinBase("Стать участником сети") {
 
+  <div class="header-wrap">
 
-    <a href="@routes.MarketJoin.wifiJoinQuestionsForm(Option(smja))">Назад</a>
+    <div class="center">
 
-    @_joinReqFormTpl(
-      jf = jf,
-      btnClass = "green",
-      submitCall = routes.MarketJoin.wifiJoinFormSubmit(smja),
-      isWifi = true
-    )
+      <a class="logo" href="/m/lk">
+        <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
+      </a>
 
+    </div>
+
+  </div>
+
+  <div class="body-wrap body-wrap_login-page">
+
+    <div class="title-wrap">
+
+      <div class="center">
+        <a class="back-but" href="@routes.MarketJoin.wifiJoinQuestionsForm(Option(smja))">&nbsp;</a>
+        <div class="title-inner">
+          РАЗМЕСТИТЬ РЕКЛАМУ
+        </div>
+      </div>
+
+    </div>
+
+    <div class="body">
+
+      @_joinReqFormTpl(
+        jf = jf,
+        btnClass = "green",
+        submitCall = routes.MarketJoin.wifiJoinFormSubmit(smja),
+        isWifi = true
+      )
+
+    </div>
+
+  </div>
 
 }

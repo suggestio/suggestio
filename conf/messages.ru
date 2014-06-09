@@ -36,6 +36,7 @@ Sizes=Размеры
 Price=Цена
 Information=Информация
 Write=Написать
+WRITE=НАПИСАТЬ
 
 slaves.of.m=АРЕНДАТОРЫ
 slaves.of.R=РЕСТОРАНЫ

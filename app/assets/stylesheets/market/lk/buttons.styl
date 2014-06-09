@@ -488,6 +488,19 @@
       color: white
       text-decoration: none
 
+    input
+      display: block
+      height: 26px
+      margin-top: -2px
+      cursor: pointer
+      background: none
+      font-size: 24px
+      line-height: 24px
+      font-family: 'PT Sans Narrow','sans-serif'
+      text-shadow(1px 1px 1px black)
+      color: #efefef
+
+
   .login-page__blue-btn:hover
 
     .btn
@@ -500,6 +513,18 @@
 
     .btn
       box-shadow(none)
+
+  .login-page__blue-btn.js-submit-wrap
+    padding: 5px 10px
+
+    input
+      height: 32px
+
+  .login-page__blue-btn.js-submit-wrap:active
+    padding: 6px 10px 4px
+
+    input
+      color: #a9beca
 
   .login-page__blue-btn_width-auto
     margin-top: 0
