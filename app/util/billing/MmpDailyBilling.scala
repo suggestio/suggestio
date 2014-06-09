@@ -65,7 +65,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
    */
   def calculateAdvPrice(blockModulesCount: Int, rcvrPricing: MBillMmpDaily, advTerms: AdvTerms): Price = {
     lazy val logPrefix = s"calculateAdvPrice($blockModulesCount/${rcvrPricing.id.get}): "
-    trace(s"${logPrefix}rcvr: tariffId=${rcvrPricing.id.get} mbcId=${rcvrPricing.contractId};; terms: from=${advTerms.dateStart} to=${advTerms.dateEnd} onStartPage=${advTerms.onStartPage}")
+    trace(s"${logPrefix}rcvr: tariffId=${rcvrPricing.id.get} mbcId=${rcvrPricing.contractId};; terms: from=${advTerms.dateStart} to=${advTerms.dateEnd} sls=${advTerms.showLevels}")
     // Во избежание бесконечного цикла, огораживаем dateStart <= dateEnd
     val dateStart = advTerms.dateStart
     val dateEnd = advTerms.dateEnd
@@ -99,7 +99,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     }
     val amount1 = walkDaysAndPrice(dateStart, 0F)
     val amountN: Float = blockModulesCount * amount1
-    val amountTotal = if (advTerms.onStartPage) {
+    val amountTotal = if (advTerms.showLevels contains AdShowLevels.LVL_START_PAGE) {
       trace(s"$logPrefix +onStartPage -> x${rcvrPricing.onStartPage}")
       amountN * rcvrPricing.onStartPage
     } else {
@@ -264,12 +264,8 @@ sealed trait AdvSlsUpdater extends PlayMacroLogsImpl {
   def findAdvsOk(implicit c: Connection): List[MAdvOk]
   val sls0 = List(AdShowLevels.LVL_MEMBER)
 
-  def maybeSlsWithStartPage(onStartPage: Boolean): List[AdShowLevel] = {
-    if (onStartPage) {
-      AdShowLevels.LVL_START_PAGE :: sls0
-    } else {
-      sls0
-    }
+  def prepareShowLevels(sls: Set[AdShowLevel]): Set[AdShowLevel] = {
+    sls ++ sls0
   }
 
   def updateReceivers(rcvrs0: Receivers_t, advsOk: List[MAdvOk]): Receivers_t
@@ -340,7 +336,7 @@ sealed class AdvertiseOfflineAdvs extends AdvSlsUpdater {
   override def updateReceivers(rcvrs0: Receivers_t, advsOk: List[MAdvOk]): Receivers_t = {
     rcvrs0 ++ advsOk.foldLeft[List[(String, AdReceiverInfo)]](Nil) { (acc, advOk) =>
       trace(s"${logPrefix}Advertising ad ${advOk.adId} on rcvrNode ${advOk.rcvrAdnId}; advOk.id = ${advOk.id.get}")
-      val sls = maybeSlsWithStartPage(advOk.onStartPage)
+      val sls = prepareShowLevels(advOk.showLevels)
       val slss = sls.toSet
       val rcvrInfo = rcvrs0.get(advOk.rcvrAdnId) match {
         case None =>
@@ -388,7 +384,7 @@ sealed class DepublishExpiredAdvs extends AdvSlsUpdater {
           // Есть ресивер. Надо подстричь его уровни отображения или всего ресивера целиком.
           case Some(advOk) =>
             trace(s"${logPrefix}Depublishing ad $adId on rcvrNode $rcvrAdnId ;; advOk.id = ${advOk.id}")
-            val slss = maybeSlsWithStartPage(advOk.onStartPage)
+            val slss = prepareShowLevels(advOk.showLevels)
             // Нужно отфильтровать уровни отображения или целиком этот ресивер спилить.
             val slsWant1 = rcvrInfo.slsWant -- slss
             if (slsWant1.isEmpty) {

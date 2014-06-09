@@ -20,16 +20,17 @@ object MAdv {
   val ADV_MODE_PARSER = get[String]("mode").map(MAdvModes.withName)
   val AMOUNT_PARSER = get[Float]("amount")
   val CURRENCY_CODE_PARSER = get[String]("currency_code")
-  val CURRENCY_PARSER = CURRENCY_CODE_PARSER.map { cc =>
-    Currency.getInstance(cc)
-  }
+  val CURRENCY_PARSER = CURRENCY_CODE_PARSER.map { Currency.getInstance }
   val PROD_ADN_ID_PARSER = get[String]("prod_adn_id")
   val AD_ID_PARSER = get[String]("ad_id")
 
-  /** Базовый парсер для колонок таблиц ad7ing_*. */
-  val ROW_PARSER_BASE = get[Pk[Int]]("id") ~ AD_ID_PARSER ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
-    get[DateTime]("date_created") ~ get[Option[Float]]("comission") ~ ADV_MODE_PARSER ~ get[Boolean]("on_start_page") ~
+  /** Базовый парсер для колонок таблиц adv_* для колонок, которые идут слева, т.е. появились до создания дочерних таблиц. */
+  val ADV_ROW_PARSER_LEFT = get[Pk[Int]]("id") ~ AD_ID_PARSER ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
+    get[DateTime]("date_created") ~ get[Option[Float]]("comission") ~ ADV_MODE_PARSER ~
     get[DateTime]("date_start") ~ get[DateTime]("date_end") ~ PROD_ADN_ID_PARSER ~ get[String]("rcvr_adn_id")
+
+  val SHOW_LEVELS_PARSER = get[Set[String]]("show_levels") map { _.map(AdShowLevels.withNameTyped) }
+  def ADV_ROW_PARSER_RIGHT = SHOW_LEVELS_PARSER
 
   val COUNT_PARSER = get[Long]("c")
 
@@ -75,17 +76,19 @@ trait MAdvI { madvi =>
   def dateCreated   : DateTime
   def id            : Pk[Int]
   def mode          : MAdvMode
-  def onStartPage   : Boolean
   def dateStatus    : DateTime
   def dateStart     : DateTime
   def dateEnd       : DateTime
   def prodAdnId     : String
   def rcvrAdnId     : String
+  def showLevels    : Set[AdShowLevel]
+
+  //def onStartPage = showLevels contains AdShowLevels.LVL_START_PAGE
 
   def amountMinusComission: Float = comission.fold(amount)(comission => amount * (1.0F - comission))
   def comissionAmount: Float =  comission.fold(amount)(amount * _)
   def advTerms = new AdvTerms {
-    override def onStartPage = madvi.onStartPage
+    override def showLevels = madvi.showLevels
     override def dateEnd: LocalDate = madvi.dateStart.toLocalDate
     override def dateStart: LocalDate = madvi.dateEnd.toLocalDate
   }
@@ -240,7 +243,7 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
 
 /** Условия размещения с точки зрения юзера. */
 trait AdvTerms {
-  def onStartPage: Boolean
+  def showLevels: Set[AdShowLevel]
   def dateStart: LocalDate
   def dateEnd: LocalDate
 }
