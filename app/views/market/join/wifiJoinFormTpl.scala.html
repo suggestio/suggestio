@@ -8,13 +8,15 @@
 
 @joinBase("Стать участником сети") {
 
-  <a href="@routes.MarketJoin.wifiJoinQuestionsForm(Option(smja))">Назад</a>
 
-  @_joinReqFormTpl(
-    jf = jf,
-    btnClass = "green",
-    submitCall = routes.MarketJoin.wifiJoinFormSubmit(smja),
-    isWifi = true
-  )
+    <a href="@routes.MarketJoin.wifiJoinQuestionsForm(Option(smja))">Назад</a>
+
+    @_joinReqFormTpl(
+      jf = jf,
+      btnClass = "green",
+      submitCall = routes.MarketJoin.wifiJoinFormSubmit(smja),
+      isWifi = true
+    )
+
 
 }

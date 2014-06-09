@@ -5,26 +5,43 @@
 
 @joinBase("Разместить рекламу") {
 
-  <div class="title-wrap">
+
+  <div class="header-wrap">
 
     <div class="center">
-      <a class="back-but" href="#">&nbsp;</a>
-      <div class="title-inner">
-        РАЗМЕСТИТЬ РЕКЛАМУ
-      </div>
+
+      <a class="logo" href="/m/lk">
+        <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
+      </a>
+
     </div>
 
   </div>
 
+  <div class="body-wrap body-wrap_login-page">
 
-  <div class="body">
+    <div class="title-wrap">
 
-    @_joinReqFormTpl(
-      jf = jf,
-      btnClass = "blue",
-      submitCall = routes.MarketJoin.joinAdvRequestSubmit,
-      isWifi = false
-    )
+      <div class="center">
+        <a class="back-but" href="#">&nbsp;</a>
+        <div class="title-inner">
+          РАЗМЕСТИТЬ РЕКЛАМУ
+        </div>
+      </div>
+
+    </div>
+
+
+    <div class="body">
+
+      @_joinReqFormTpl(
+        jf = jf,
+        btnClass = "blue",
+        submitCall = routes.MarketJoin.joinAdvRequestSubmit,
+        isWifi = false
+      )
+
+    </div>
 
   </div>
 

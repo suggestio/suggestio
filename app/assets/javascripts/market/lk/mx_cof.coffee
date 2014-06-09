@@ -143,6 +143,34 @@ CbcaCommon = () ->
 
   self.init = () ->
 
+    #####################
+    ## WIFI FORM start ##
+    #####################
+
+    $(document).on 'click', '.js-quiz__checkbox', (e)->
+      $this = $(this)
+      nextSelector = $this.attr('data-next')
+      quizElement = $this.closest('.js-quiz__element')
+      thisIndex = quizElement.attr('data-index')
+
+      $('.js-quiz__element').not(this).each ()->
+        $element = $(this)
+
+        if($element.attr('data-index') > thisIndex)
+          $element.hide().find('input').removeAttr('disabled').removeAttr('checked')
+
+        if($element.attr('data-index') == thisIndex)
+          $element.find('input').removeAttr('disabled')
+
+
+      $this.attr('disabled', 'disabled')
+      $('.js-quiz__result').hide()
+      $(nextSelector).show()
+
+    ###################
+    ## WIFI FORM end ##
+    ###################
+
     if($('#newPasswordForm').length)
       cbca.popup.showPopup('#newPasswordForm')
 
