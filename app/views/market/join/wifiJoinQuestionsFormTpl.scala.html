@@ -44,58 +44,73 @@
 
 @joinBase("Готова ли ваша wi-fi сеть к SIO-Market") {
 
-  <div class="title-wrap">
+
+  <div class="header-wrap">
 
     <div class="center">
-      <a class="back-but" href="#">&nbsp;</a>
-      <div class="title-inner">
-        ГОТОВА ЛИ ВАША Wi-Fi СЕТЬ К SIO MARKET?
-      </div>
+
+      <a class="logo" href="/m/lk">
+        <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
+      </a>
+
     </div>
 
   </div>
 
+  <div class="body-wrap body-wrap_login-page">
 
-  <div class="body">
+    <div class="title-wrap">
 
-    @form(routes.MarketJoin.wifiJoinQuestionsFormSubmit) {
-      @* Любое поле может сабмиттить на сервер пустое/отсутсвующее значение, обозначающее "не знаю". *@
-
-      <div class="wifi-page__left-column">
-        @* Левая половина ответов (в дизайне). *@
-        @yesNoInputs("haveWifi")
-        @yesNoInputs("fullCoverage")
-        @yesNoInputs("knownEquipment")
-        @yesNoInputs("altFw")
-        @yesNoInputs("isWrtFw")
+      <div class="center">
+        <a class="back-but" href="#">&nbsp;</a>
+        <div class="title-inner">
+          ГОТОВА ЛИ ВАША Wi-Fi СЕТЬ К SIO MARKET?
+        </div>
       </div>
 
-      <div class="wifi-page__mid-column">
-        @* Правая половина ответов. *@
-        @yesNoInputs("landlineInet")
-        @yesNoInputs("smallRoom")
+    </div>
 
-        @defining( "audienceSz" ) { fn =>
-          @qsn(fn) {
-            @defining( qf(fn).value ) { auSzopt =>
-              @AudienceSizes.values.map { auSzVariant =>
-                <label>
-                  <input type="checkbox" name="@fn" value="@auSzVariant"/>
-                  @Messages(s"join.qsn.$fn.$auSzVariant")
-                </label>
+
+      <div class="body">
+
+      @form(routes.MarketJoin.wifiJoinQuestionsFormSubmit) {
+        @* Любое поле может сабмиттить на сервер пустое/отсутсвующее значение, обозначающее "не знаю". *@
+
+        <div class="wifi-page__left-column">
+          @* Левая половина ответов (в дизайне). *@
+          @yesNoInputs("haveWifi")
+          @yesNoInputs("fullCoverage")
+          @yesNoInputs("knownEquipment")
+          @yesNoInputs("altFw")
+          @yesNoInputs("isWrtFw")
+        </div>
+
+        <div class="wifi-page__mid-column">
+          @* Правая половина ответов. *@
+          @yesNoInputs("landlineInet")
+          @yesNoInputs("smallRoom")
+
+          @defining( "audienceSz" ) { fn =>
+            @qsn(fn) {
+              @defining( qf(fn).value ) { auSzopt =>
+                @AudienceSizes.values.map { auSzVariant =>
+                  <label>
+                    <input type="checkbox" name="@fn" value="@auSzVariant"/>
+                    @Messages(s"join.qsn.$fn.$auSzVariant")
+                  </label>
+                }
               }
             }
           }
-        }
 
-      </div>
-
+        </div>
 
 
-      <input type="submit" value="@Messages("Write")"/>
-    }
 
+        <input type="submit" value="@Messages("Write")"/>
+      }
+
+    </div>
 
   </div>
-
 }
