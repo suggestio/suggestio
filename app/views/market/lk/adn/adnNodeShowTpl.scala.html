@@ -38,7 +38,7 @@
               @if(isRcvr) {
               <div class="gray-but-wrap">
                 <div class="white-border-top">
-                  <a id="installScriptButton" class="btn" href="">КОД УСТАНОВКИ</a>
+                  <a id="installScriptButton" class="btn" href="">СКРИПТ на САЙТ</a>
                 </div>
               </div>
               }
@@ -65,17 +65,21 @@
         <span class="name">@node.meta.name</span>
         @if(isMyNode) {
           <a class="edit" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">@Messages("Edit")</a>
+
+        @if(isMyNode) {
+        <span class="sm-note">
+          <span class="sm-note__q-mark">?</span>
+          <span class="sm-note__message">
+            Подсказка: в редактировании вы можете указать информацию о вашем магазине и загрузить основной логотип, который будет отображаться на всех рекламных карточках.
+          </span>
+        </span>
+        }
+
           @if(isSuperuser) {
             <a class="superuser-link" href="@routes.SysMarket.showAdnNode(node.id.get)">/sys</a>
           }
         }
       </div>
-
-      @if(isMyNode) {
-        <div class="sm-note">
-          Подсказка: в редактировании вы можете указать информацию о вашем магазине и загрузить основной логотип, который будет отображаться на всех рекламных карточках.
-        </div>
-      }
 
       <div class="border-line"></div>
 

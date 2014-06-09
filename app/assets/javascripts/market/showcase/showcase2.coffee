@@ -324,6 +324,8 @@ siomart =
   ## зпросу и передать их в нужный callback
   ##################################################
   receive_response : ( data ) ->
+    console.log 'receive response, data : '
+    console.log data
     if typeof siomart.request.request_timeout_timer != 'undefined'
       clearTimeout siomart.request.request_timeout_timer
 
@@ -387,6 +389,9 @@ siomart =
     cb = () ->
       siomart.utils.re 'sioMartNodeOffers'
       siomart.utils.ge('sioMartNodeOffersRoot').style.display = 'none'
+
+      delete siomart.shop_load_locked
+      console.log 'unlock'
 
     setTimeout cb, 400
 
@@ -655,6 +660,13 @@ siomart =
     if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
       return false
 
+    if typeof siomart.shop_load_locked != 'undefined'
+      return false
+
+    siomart.shop_load_locked = true
+
+    console.log 'load_for_shop_id : ' + shop_id + ', ad_id : ' + ad_id
+
     url = '/market/ads?a.shopId=' + shop_id + '&a.rcvr=' + siomart.config.mart_id
 
     siomart.node_offers_popup.requested_ad_id = ad_id
@@ -760,7 +772,6 @@ siomart =
         producer_id = b.getAttribute 'data-producer-id'
         ad_id = b.getAttribute 'data-ad-id'
         siomart.utils.add_single_listener b, _event, () ->
-          console.log producer_id
           siomart.load_for_shop_id producer_id, ad_id
       cb _b
 
