@@ -97,13 +97,18 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         walkDaysAndPrice(day1, acc1)
       }
     }
+    // amount1 - минимальная оплата одного минимального блока по времени
     val amount1 = walkDaysAndPrice(dateStart, 0F)
+    // amountN -- amount1 домноженная на кол-во блоков.
     val amountN: Float = blockModulesCount * amount1
-    val amountTotal = if (advTerms.showLevels contains AdShowLevels.LVL_START_PAGE) {
+    var amountTotal: Float = amountN
+    if (advTerms.showLevels contains AdShowLevels.LVL_MEMBERS_CATALOG) {
+      trace(s"$logPrefix +rcvrCat -> x${rcvrPricing.onRcvrCat}")
+      amountTotal *= rcvrPricing.onRcvrCat
+    }
+    if (advTerms.showLevels contains AdShowLevels.LVL_START_PAGE) {
       trace(s"$logPrefix +onStartPage -> x${rcvrPricing.onStartPage}")
-      amountN * rcvrPricing.onStartPage
-    } else {
-      amountN
+      amountTotal *= rcvrPricing.onStartPage
     }
     trace(s"${logPrefix}amount (1/N/Total) = $amount1 / $amountN / $amountTotal")
     Price(amountTotal, rcvrPricing.currency)
@@ -262,10 +267,13 @@ sealed trait AdvSlsUpdater extends PlayMacroLogsImpl {
   lazy val logPrefix = ""
 
   def findAdvsOk(implicit c: Connection): List[MAdvOk]
-  val sls0 = List(AdShowLevels.LVL_MEMBER)
 
   def prepareShowLevels(sls: Set[AdShowLevel]): Set[AdShowLevel] = {
-    sls ++ sls0
+    if (sls contains AdShowLevels.LVL_MEMBER) {
+      sls
+    } else {
+      sls + AdShowLevels.LVL_MEMBER
+    }
   }
 
   def updateReceivers(rcvrs0: Receivers_t, advsOk: List[MAdvOk]): Receivers_t

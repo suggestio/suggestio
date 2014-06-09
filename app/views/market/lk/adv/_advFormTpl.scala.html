@@ -1,13 +1,25 @@
 @(args: AdvFormTplArgs)(implicit ctx: Context)
 
 @* Форма для размещения рекламы (ADVertising) на узлах-получателях рекламной сети.
-   Отображается на странице управления рекламной карточкой. *@
+   Отображается на странице управления рекламной карточкой.
+   TODO form unapply не работает из-за использования list mapping. *@
 
 @import ctx._
 @import helper._
 @import util.FC.tdFc
 @import util.DateTimePrettyPrinter._
 @import args._
+
+@* Генератор чекбоксов, задающих/с заданными уровнями отображения. *@
+@slCheckbox(maybeBusyAdv: Option[MAdvI], mid: Int, fnSuffix: String, sl: AdShowLevel) = {
+  <input type="checkbox" id="node_@{mid}_@fnSuffix"
+    @maybeBusyAdv.fold {
+      name="node[@mid].@fnSuffix" value="true" checked="checked" data-checked="checked"
+    } { busyAdv =>
+      disabled="disabled" @if(busyAdv.showLevels contains sl) {data-checked="checked"}
+    }
+  />
+}
 
 <div class="advs-form-block" id="advsFormBlock">
 @form(routes.MarketAdv.advFormSubmit(adId)) {
@@ -22,9 +34,9 @@
 
     @* Рендерим табы по типам узлов. *@
     <div class="advs-form-block__tabs">
-    @adnNodesMap.zipWithIndex.map { case ((memberType, _), i) =>
-      <div class="advs-form-block__tabs-single-tab @if( i == 0 ){ advs-form-block__tabs-single-tab_active }">@Messages("amts.of.type." + memberType)</div>
-    }
+      @adnNodesMap.zipWithIndex.map { case ((memberType, _), i) =>
+        <div class="advs-form-block__tabs-single-tab @if( i == 0 ){ advs-form-block__tabs-single-tab_active }">@Messages("amts.of.type." + memberType)</div>
+      }
       <div class="clear"></div>
     </div>
 
@@ -39,14 +51,16 @@
           @defining((memberType.id + 1) * (i + 1)) { mid =>
           <div class="advs-nodes__node @if(maybeBusyAdv.isDefined){advs-nodes__node_active} @if( i % 2 == 0 ){ advs-nodes__node_even }" id="advs@mid">
 
-          @* Галочка включения узла в публикацию. Если busy, то уже занято. *@
+            @* Галочка включения узла в публикацию. Если busy, то уже занято. *@
             @if(maybeBusyAdv.isDefined) {
               @* Узел уже одобрил или рассматривает предложение. Нельзя влиять на галочку. *@
               <input type="checkbox" checked="checked" disabled="disabled" data-checked="checked"/>
             } else {
               @* Узел может принять рекламную карточку. *@
               <input type="hidden" name="node[@mid].adnId" value="@node.id"/>
-              <input data-connected-field="advs@mid" type="checkbox" id="node_@{mid}_onStartPage" name="node[@mid].advertise" value="true">
+              @defining( s"node[$mid].advertise" ) { fn =>
+                <input data-connected-field="advs@mid" type="checkbox" id="node_@{mid}_onStartPage" name="@fn" value="true" />
+              }
             }
 
             <a class="advs-nodes__node-link advs-nodes__node-link_show-popup" href="@routes.MarketLkBilling._renderNodeMbmdsWindow(node.id.get)">@node.meta.name</a> / @node.meta.town
@@ -67,11 +81,10 @@
             </div>
             }
 
-            @* TODO: реализовать правильную расстановку галочек для размещенных карточек *@
-            <div class="advs-nodes__node-options @if(!maybeBusyAdv.isDefined) { advs-nodes__node-options_hidden }">
-              <div><input type="checkbox" id="node_@{mid}_inCatalog" name="node[@mid].onStartPage" data-checked="checked" disabled="disabled" value="true"> Каталог</div>
-              <div><input type="checkbox" id="node_@{mid}_inCategories" name="node[@mid].onStartPage" value="true"> Категории товаров и услуг</div>
-              <div><input type="checkbox" id="node_@{mid}_onStartPage" name="node[@mid].onStartPage" value="true"> Главный экран</div>
+            <div class="advs-nodes__node-options @if(maybeBusyAdv.isEmpty) { advs-nodes__node-options_hidden }">
+              <div><input type="checkbox" id="node_@{mid}_inCatalog" name="" data-checked="checked" disabled="disabled" value="true"/> Каталог</div>
+              <div>@slCheckbox(maybeBusyAdv, mid, "onRcvrCat", AdShowLevels.LVL_MEMBERS_CATALOG) Категории товаров и услуг</div>
+              <div>@slCheckbox(maybeBusyAdv, mid, "onStartPage", AdShowLevels.LVL_START_PAGE) Главный экран</div>
             </div>
 
           }

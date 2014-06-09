@@ -26,31 +26,36 @@ object SysMarketBillingMmp extends SioController with PlayMacroLogsImpl {
   import LOGGER._
 
   /** Маппинг формы для daly-тарификатора. */
-  val mmpDailyFormM = Form(mapping(
-    "currencyCode"  -> currencyCodeOrDfltM,
-    "mmpWeekday"    -> floatM,
-    "mmpWeekend"    -> floatM,
-    "mmpPrimetime"  -> floatM,
-    "onStartPage"   -> floatM.verifying(_ > 1.0F),
-    "weekendCalId"  -> esIdM,
-    "primeCalId"    -> esIdM
-  )
-  {(currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime, onStartPage, weekendCalId, primeCalId) =>
-    MBillMmpDaily(
-      contractId    = -1,
-      currencyCode  = currencyCode,
-      mmpWeekday    = mmpWeekday,
-      mmpWeekend    = mmpWeekend,
-      mmpPrimetime  = mmpPrimetime,
-      onStartPage   = onStartPage,
-      weekendCalId  = weekendCalId,
-      primeCalId    = primeCalId
+  val mmpDailyFormM = {
+    val floatGreaterThan1 = floatM.verifying(_ > 1.0F)
+    Form(mapping(
+      "currencyCode"  -> currencyCodeOrDfltM,
+      "mmpWeekday"    -> floatM,
+      "mmpWeekend"    -> floatM,
+      "mmpPrimetime"  -> floatM,
+      "onStartPage"   -> floatGreaterThan1,
+      "onRcvrCat"     -> floatGreaterThan1,
+      "weekendCalId"  -> esIdM,
+      "primeCalId"    -> esIdM
     )
+    {(currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime, onStartPage, onRcvrCat, weekendCalId, primeCalId) =>
+      MBillMmpDaily(
+        contractId    = -1,
+        currencyCode  = currencyCode,
+        mmpWeekday    = mmpWeekday,
+        mmpWeekend    = mmpWeekend,
+        mmpPrimetime  = mmpPrimetime,
+        onStartPage   = onStartPage,
+        onRcvrCat     = onRcvrCat,
+        weekendCalId  = weekendCalId,
+        primeCalId    = primeCalId
+      )
+    }
+    {mbmd =>
+      import mbmd._
+      Some((currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime, onStartPage, onRcvrCat, weekendCalId, primeCalId))
+    })
   }
-  {mbmd =>
-    import mbmd._
-    Some((currencyCode, mmpWeekday, mmpWeekend, mmpPrimetime, onStartPage, weekendCalId, primeCalId))
-  })
 
 
   /** Рендер страницы создания нового посуточного mmp-тарификтора.

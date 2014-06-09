@@ -40,16 +40,18 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     val dateOptM = optional(jodaLocalDate("yyyy-MM-dd"))
     Form(
       "node" -> {
+        // TODO list mapping не умеет unbind в нашем случае. Надо запилить свой map mapping, который будет биндить форму в карту adnId -> AdvFormEntry.
         list(
           tuple(
-            "adnId"       -> esIdM,
-            "advertise"   -> boolean,
-            "onStartPage" -> boolean,
-            "dateStart"   -> dateOptM,
-            "dateEnd"     -> dateOptM
+            "adnId"         -> esIdM,
+            "advertise"     -> boolean,
+            "onStartPage"   -> boolean,
+            "onRcvrCat"     -> boolean,
+            "dateStart"     -> dateOptM,
+            "dateEnd"       -> dateOptM
           )
             .verifying("error.date", { m => m match {
-              case (_, isAdv, _, dateStartOpt, dateEndOpt) =>
+              case (_, isAdv, _, _, dateStartOpt, dateEndOpt) =>
                 // Если стоит галочка, то надо проверить даты.
                 if (isAdv) {
                   // Проверить даты
@@ -66,10 +68,12 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
           .transform[List[AdvFormEntry]](
             {ts =>
               ts.foldLeft(List.empty[AdvFormEntry]) {
-                case (acc, (adnId, isAdv @ true, onStartPage, Some(dateStart), Some(dateEnd))) =>
+                case (acc, (adnId, isAdv @ true, onStartPage, onRcvrCat, Some(dateStart), Some(dateEnd))) =>
                   var showLevels: List[AdShowLevel] = Nil
                   if (onStartPage)
                     showLevels ::= AdShowLevels.LVL_START_PAGE
+                  if (onRcvrCat)
+                    showLevels ::= AdShowLevels.LVL_MEMBERS_CATALOG
                   val result = AdvFormEntry(adnId = adnId, advertise = isAdv, showLevels = showLevels.toSet, dateStart = dateStart, dateEnd = dateEnd)
                   result :: acc
                 case (acc, _) => acc
@@ -77,7 +81,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
             },
             {_.map { e =>
               val onStartPage = e.showLevels contains AdShowLevels.LVL_START_PAGE
-              (e.adnId, e.advertise, onStartPage, Option(e.dateStart), Option(e.dateEnd))
+              val onRcvrCat = e.showLevels contains AdShowLevels.LVL_MEMBERS_CATALOG
+              (e.adnId, e.advertise, onStartPage, onRcvrCat, Option(e.dateStart), Option(e.dateEnd))
             }}
           )
       }

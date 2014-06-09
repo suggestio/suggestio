@@ -92,7 +92,8 @@ case class CurrentAdvsTplArgs(
 )
 case class AdvFormTplArgs(
   adId: String,
-  adnNodes: Seq[MAdnNode], af: Form[_],
+  adnNodes: Seq[MAdnNode],
+  af: Form[_],
   busyAdns: Map[String, MAdvI]
 )
 
