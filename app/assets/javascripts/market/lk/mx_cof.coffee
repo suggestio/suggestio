@@ -1204,7 +1204,7 @@ market =
           {title: 'Confic', inline: 'span', styles: { 'font-family':'confic-webfont'}}
         ],
 
-        language: 'ru_RU'
+        language: 'RU_ru'
 
         font_size_style_values : '1px,2px',
         setup: (editor) ->
