@@ -1,5 +1,7 @@
 @()(implicit ctx: Context)
 
+@import play.api.Play.current
+
 @* Статическая success-страничка, которая сообщает юзеру, что его запрос принят к рассмотрению. *@
 
 @joinBase("Запрос на подключение принят") {
@@ -47,7 +49,9 @@
         <p class="gray-text pargraph_join-success">
           Пока можно посмотреть выдачу всех рекламных карточек<br/> на нашем сайте. Это бетта версия.
           <br/>
-          <a class="blue-link" href="#">Смотреть →</a>
+          @current.configuration.getString("market.demo.adn.id").map { demoAdnId =>
+            <a class="blue-link" target="_blank" href="@routes.Market.demoWebSite(demoAdnId, false)">Смотреть →</a>
+          }
         </p>
 
       </div>
