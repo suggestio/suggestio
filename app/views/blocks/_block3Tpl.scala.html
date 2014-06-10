@@ -20,20 +20,18 @@
       @mad.offers.map { offer =>
         <div class="item el-@{offer.n + 1}">
           @offer.text1.map { title =>
-          <div class="js-mvbl mvbl-title-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].title">
-          <div class="title title-@offer.n">
-            @Html(title.value)
-          </div>
-          </div>
-          @_blockStyleTpl( mad.id, title, Block3.titleBf, "title-" + offer.n, left = 22, top = (offer.n)*80+30 )
+            <div class="js-mvbl mvbl-title-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].title">
+              <div class="title title-@offer.n">@Html(title.value)</div>
+            </div>
+            @_blockStyleTpl( mad.id, title, Block3.titleBf, "title-" + offer.n, left = 22, top = (offer.n)*80+30 )
           }
           @offer.price.map { price =>
-          <div class="js-mvbl mvbl-price-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].price">
-          <div class="price price-@offer.n">
-            @formatPrice(price.value, price.currency)
-          </div>
-          </div>
-          @_blockStyleTpl( mad.id, price, Block3.priceBf, "price-" + offer.n, left = 22, top = (offer.n)*80+50)
+            <div class="js-mvbl mvbl-price-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].price">
+              <div class="price price-@offer.n">
+                @formatPrice(price.value, price.currency)
+              </div>
+            </div>
+            @_blockStyleTpl( mad.id, price, Block3.priceBf, "price-" + offer.n, left = 22, top = (offer.n)*80+50)
           }
         </div>
       }

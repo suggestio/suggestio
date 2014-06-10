@@ -407,9 +407,10 @@ object BlocksConf extends Enumeration {
   }
 
 
-  sealed trait Block20t extends Height with BgImg with Title with Descr {
+  sealed trait Block20t extends Height with BgImg with TitleDescrListBlockT {
     override def ordering = 1000
     override def template = _block20Tpl
+    override def offersCount: Int = 3
   }
   val Block20 = new Val(20) with Block20t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block20Wrapper(key = newKey)
