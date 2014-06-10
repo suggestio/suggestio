@@ -21,16 +21,20 @@
             <select name="@ffname" class="js-custom-font-family-select">
             @List(
               ("favoritlightcondcregular","Favorit Light Cond C Regular"),
-              ("favoritcondcregular", "Favorit Cond C Regular"),
               ("favoritcondc-bold-webfont", "Favorit Cond C Bold"),
               ("heliosthin", "Helios Thin"),
+              ("helioscondlight-webfont", "Helios Cond Light"),
               ("HeliosExtBlack", "Helios Ext Black"),
               ("pfdintextcomppro-medium-webfont", "PF Din Text Comp Pro Medium"),
               ("futurfutc-webfont", "Futur Fut C"),
-              ("helioscond-webfont", "Helios Cond"),
               ("PharmadinCondensedLight", "Pharmadin Condensed Light"),
-              ("BlocExtCondC", "Bloc Ext Cond C"),
-              ("newspsan-webfont", "Newspaper Sans")
+              ("newspsan-webfont", "Newspaper Sans"),
+              ("rex_bold-webfont", "Rex Bold"),
+              ("perforama-webfont", "Perforama"),
+              ("decorc-webfont", "Decor C"),
+              ("blocextconc-webfont", "BlocExt Cond"),
+              ("bodonconc-webfont", "Bodon Conc"),
+              ("confic-webfont", "Confic")
             ).zipWithIndex.map { case ((vl,nm), i) =>
               <option value="@vl" @if( af(ffname).value.exists(_ == vl) ){selected="selected"}>@nm</option>
             }
