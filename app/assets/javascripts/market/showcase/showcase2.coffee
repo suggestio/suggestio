@@ -653,6 +653,7 @@ siomart =
   ## Скрыть / показать sio.market
   ###############################
   close_mart : ( event ) ->
+    localStorage.setItem('is_closed_by_used', true)
     siomart.utils.ge('sioMartRoot').style.display = 'none'
     siomart.utils.ge('smCloseScreen').style.display = 'none'
     event.preventDefault()

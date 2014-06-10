@@ -12,7 +12,6 @@ cbca_grid =
   set_window_size : () ->
 
     ww = wh = 0
-
     if typeof window.innerWidth == 'number'
       ww = window.innerWidth
       wh = window.innerHeight
@@ -50,8 +49,8 @@ cbca_grid =
 
     this.max_allowed_cell_width = no_of_cells
     this.layout_dom.style.width = cw + 'px'
-
-    document.getElementById('sioMartIndexGridLayout').style.height = cbca_grid.wh + 'px'
+    this.layout_dom.style.height = cbca_grid.wh + 'px'
+    this.layout_dom.style.opacity = 1
 
   ##############
   ## Fetch block
