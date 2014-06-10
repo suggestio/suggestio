@@ -281,3 +281,7 @@ GET  /sys/cal/edit/:calId                controllers.SysCalendar.editCalendar(ca
 POST /sys/cal/edit/:calId                controllers.SysCalendar.editCalendarSubmit(calId)
 GET  /sys/cal/get/:calId                 controllers.SysCalendar.getCalendarXml(calId)
 
+## sys: invreq - обработка входящих реквестов на подключение.
+GET  /sys/ir                             controllers.SysMarketInvReq.index
+GET  /sys/ir/show/:irId                  controllers.SysMarketInvReq.showIR(irId)
+

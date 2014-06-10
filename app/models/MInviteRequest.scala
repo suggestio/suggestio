@@ -55,7 +55,7 @@ object MInviteRequest extends EsModelStaticT with PlayMacroLogsImpl {
 
   override protected def dummy(id: String, version: Long): T = {
     val str0 = ""
-    MInviteRequest(reqType = null, company = str0, address = str0, siteUrl = None, contactPhone = str0)
+    MInviteRequest(id = Some(id), reqType = null, company = str0, address = str0, siteUrl = None, contactPhone = str0)
   }
 
   override def generateMappingStaticFields: List[Field] = List(

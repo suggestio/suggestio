@@ -1,0 +1,22 @@
+@(mirs: Seq[MInviteRequest], thisCount: Long, allCount: Long)(implicit ctx: Context)
+
+@* Начальная страница для sys-раздела для работы с реквестами инвайтов. *@
+
+@irBase("Запросы инвайтов") {
+  @if(mirs.isEmpty) {
+    <p><strong>Нет инвайтов</strong></p>
+  } else {
+    @if(thisCount != allCount) {
+      <p><b>Отображается @thisCount запросов из @allCount всего.</b></p>
+    }
+    <ul>
+      @mirs.map { mir =>
+        <li>
+          <a href="@routes.SysMarketInvReq.showIR(mir.id.get)">
+            @mir.company / @mir.address
+          </a>
+        </li>
+      }
+    </ul>
+  }
+}
