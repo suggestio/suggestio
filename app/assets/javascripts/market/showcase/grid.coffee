@@ -51,6 +51,8 @@ cbca_grid =
     this.max_allowed_cell_width = no_of_cells
     this.layout_dom.style.width = cw + 'px'
 
+    document.getElementById('sioMartIndexGridLayout').style.height = cbca_grid.wh + 'px'
+
   ##############
   ## Fetch block
   ##############
