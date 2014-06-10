@@ -10,11 +10,22 @@
   title = "Договор на оказание услуг SIO Маркет",
   headAfter = Some(headAfter)
 ) {
-  <h1>Договор на оказание услуг SIO Маркет</h1>
 
-  <a href="@routes.MarketLk.lkIndex">Назад</a>
+  <div class="title-wrap">
 
-  <div>
-    @content
+    <div class="center">
+      <a class="back-but" href="@routes.MarketLk.lkIndex">&nbsp;</a>
+      <div class="title-inner">
+        ДОГОВОР НА ОКАЗАНИЕ УСЛУГ SIO МАРКЕТ
+      </div>
+    </div>
+
+  </div>
+
+
+  <div class="body">
+
+      @content
+
   </div>
 }
