@@ -86,6 +86,8 @@ blocks.field.fillColor=Fill color
 ad.stat.action.v=View
 ad.stat.action.c=Click
 
+mir.type.a=Advertiser
+mir.type.w=Wi-Fi AP owner
 
 lk.sl.enable_ad=Enable ad
 lk.sl.d=Show on start page

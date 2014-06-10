@@ -117,7 +117,7 @@
       @if(isMyNode) {
         <div class="sm-note">
           @node.adn.memberType.demoWebsiteAdnId(node).map { dwId =>
-            Вы можете посмотреть, как выглядят ваши к карточки в <a class="sm-note__link" target="_blank" href="@routes.Market.demoWebSite(dwId, false)">рекламной выдаче</a>
+            Вы можете посмотреть, как выглядят ваши к карточки в <a class="sm-note__link" target="_blank" href="@routes.Market.demoWebSite(dwId)">рекламной выдаче</a>
           }
         </div>
       }

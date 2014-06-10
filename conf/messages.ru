@@ -89,6 +89,8 @@ blocks.field.fillColor=Цвет заливки
 ad.stat.action.v=Просмотр
 ad.stat.action.c=Клик
 
+mir.type.a=Рекламодатель
+mir.type.w=Владелец Wi-Fi
 
 join.qsn.haveWifi=У вас есть Wi-Fi?
 join.qsn.fullCoverage=Wi-fi оборудование покрывает всю необходимую площадь помещения?

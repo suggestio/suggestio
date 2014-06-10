@@ -259,7 +259,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   private val adnSlInfoM: Mapping[AdnMemberShowLevels] = {
     val slsStrOptM: Mapping[LvlMap_t] = default(slsStrM, Map.empty)
     mapping(
-      "in" -> slsStrOptM,
+      "in"  -> slsStrOptM,
       "out" -> slsStrOptM
     )
     { AdnMemberShowLevels.apply }

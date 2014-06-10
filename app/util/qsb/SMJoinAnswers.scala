@@ -11,14 +11,14 @@ import models._
  */
 object SMJoinAnswers {
 
-  def haveWifiSuf     = ".haveWifi"
-  def fullCoverSuf    = ".fullCover"
-  def knownEquipSuf   = ".knownEquip"
-  def altFwSuf        = ".altFw"
-  def wrtFwSuf        = ".wrtFw"
-  def landlineInetSuf = ".landlineInet"
-  def smallRoomSuf    = ".smallRoom"
-  def audSzSuf        = ".audSz"
+  private def haveWifiSuf     = ".haveWifi"
+  private def fullCoverSuf    = ".fullCover"
+  private def knownEquipSuf   = ".knownEquip"
+  private def altFwSuf        = ".altFw"
+  private def wrtFwSuf        = ".wrtFw"
+  private def landlineInetSuf = ".landlineInet"
+  private def smallRoomSuf    = ".smallRoom"
+  private def audSzSuf        = ".audSz"
 
   implicit def queryStringBinder(implicit boolOptBinder: QueryStringBindable[Option[Boolean]], strOptBinder: QueryStringBindable[Option[String]]) = {
     import QsbUtil._

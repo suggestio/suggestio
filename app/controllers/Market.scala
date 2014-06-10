@@ -36,70 +36,56 @@ object Market extends SioController with PlayMacroLogsImpl {
   val MAX_SHOPS_LIST_LEN = configuration.getInt("market.frontend.subproducers.count.max") getOrElse 200
 
   /** Входная страница выдачи для узла sio-market. */
-  def martIndex(adnId: String) = MaybeAuth.async { implicit request =>
-    MAdnNodeCache.getByIdCached(adnId)
-      .filter { _.isDefined }
-      .flatMap { nodeOpt =>
-        val adnNode = nodeOpt.get
-        // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
-        val allProdsFut = MAdnNode.findBySupId(adnId, onlyEnabled = true, maxResults = MAX_SHOPS_LIST_LEN)
-          .map { _.map { prod => prod.id.get -> prod }.toMap }
-        val prodsStatsFut = MAd.findProducerIdsForReceiver(adnId)
-        // Текущие категории ТЦ
-        val mmcatsFut = MMartCategory.findTopForOwner(getCatOwner(adnId))
-        // Нужно отфильтровать магазины без рекламы.
-        val shopsWithAdsFut = for {
-          allProds    <- allProdsFut
-          prodsStats  <- prodsStatsFut
-        } yield {
-          allProds.filterKeys( prodsStats contains )
-        }
-        val catAdsSearch = AdSearch(
-          receiverIds = List(adnId),
-          maxResultsOpt = Some(100),
-          levels = List(AdShowLevels.LVL_MEMBERS_CATALOG)
-        )
-        // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
-        val catsStatsFut = MAd.stats4UserCats(MAd.searchAdsReqBuilder(catAdsSearch))
-          .map { _.toMap }
-        val welcomeAdOptFut: Future[Option[MWelcomeAd]] = adnNode.meta.welcomeAdId match {
-          case Some(waId) => MWelcomeAd.getById(waId)
-          case None => Future successful None
-        }
-        val startPageSearchReq = AdSearch(
-          levels = List(AdShowLevels.LVL_START_PAGE),
-          receiverIds = List(adnId)
-        )
-        for {
-          mads   <- MAd.searchAds(startPageSearchReq).map(groupNarrowAds)
-          waOpt  <- welcomeAdOptFut
-          catsStats <- catsStatsFut
-          shops  <- shopsWithAdsFut
-          mmcats <- mmcatsFut
-        } yield {
-          val html = indexTpl(adnNode, mads, shops, mmcats, waOpt, catsStats)
-          jsonOk(html, "martIndex")
-        }
-      }
-      .recover {
-        case ex: NoSuchElementException =>
-          warn(s"marketAction($adnId): node does not exist")
-          martNotFound(adnId)
-      }
+  def martIndex(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
+    val adnNode = request.adnNode
+    // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
+    val allProdsFut = MAdnNode.findBySupId(adnId, onlyEnabled = true, maxResults = MAX_SHOPS_LIST_LEN)
+      .map { _.map { prod => prod.id.get -> prod }.toMap }
+    val prodsStatsFut = MAd.findProducerIdsForReceiver(adnId)
+    // Текущие категории ТЦ
+    val mmcatsFut = MMartCategory.findTopForOwner(getCatOwner(adnId))
+    // Нужно отфильтровать магазины без рекламы.
+    val shopsWithAdsFut = for {
+      allProds    <- allProdsFut
+      prodsStats  <- prodsStatsFut
+    } yield {
+      allProds.filterKeys( prodsStats contains )
+    }
+    val catAdsSearch = AdSearch(
+      receiverIds = List(adnId),
+      maxResultsOpt = Some(100),
+      levels = List(AdShowLevels.LVL_MEMBERS_CATALOG)
+    )
+    // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
+    val catsStatsFut = MAd.stats4UserCats(MAd.searchAdsReqBuilder(catAdsSearch))
+      .map { _.toMap }
+    val welcomeAdOptFut: Future[Option[MWelcomeAd]] = adnNode.meta.welcomeAdId match {
+      case Some(waId) => MWelcomeAd.getById(waId)
+      case None => Future successful None
+    }
+    val startPageSearchReq = AdSearch(
+      levels = List(AdShowLevels.LVL_START_PAGE),
+      receiverIds = List(adnId)
+    )
+    for {
+      mads   <- MAd.searchAds(startPageSearchReq).map(groupNarrowAds)
+      waOpt  <- welcomeAdOptFut
+      catsStats <- catsStatsFut
+      shops  <- shopsWithAdsFut
+      mmcats <- mmcatsFut
+    } yield {
+      val html = indexTpl(adnNode, mads, shops, mmcats, waOpt, catsStats)
+      jsonOk(html, "martIndex")
+    }
   }
 
   /** Экшн, который рендерит страничку приветствия, которое видит юзер при первом подключении к wi-fi */
-  def demoWebSite(adnId: String, isStandalone: Boolean) = MaybeAuth.async { implicit request =>
-    MAdnNode.getById(adnId) map {
-      case Some(adnNode) =>
-        val tpl = if (isStandalone) {
-          _installScriptTpl(adnNode)
-        } else {
-          demoWebsiteTpl(adnNode)
-        }
-        Ok(tpl)
-      case None => NotFound("martNotFound")
-    }
+  def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
+    Ok(demoWebsiteTpl(request.adnNode))
+  }
+
+  def nodeSiteScript(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
+    Ok(_installScriptTpl(request.adnNode)) as "text/javascript"
   }
 
 
@@ -111,8 +97,8 @@ object Market extends SioController with PlayMacroLogsImpl {
     val (jsAction, adSearch2) = if (adSearch.qOpt.isDefined) {
       "searchAds" -> adSearch
     } else if (!adSearch.producerIds.isEmpty) {
-      val _adSearch = adSearch.copy(levels = AdShowLevels.LVL_MEMBER :: adSearch.levels)
-      "producerAds" -> _adSearch
+      //val _adSearch = adSearch.copy(levels = AdShowLevels.LVL_MEMBER :: adSearch.levels)
+      "producerAds" -> adSearch
     } else if (!adSearch.catIds.isEmpty) {
       val _adSearch = adSearch.copy(levels = AdShowLevels.LVL_MEMBERS_CATALOG :: adSearch.levels)
       "findAds" -> _adSearch
