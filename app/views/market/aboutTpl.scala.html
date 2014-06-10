@@ -1,5 +1,7 @@
 @()(implicit ctx: util.Context)
 
+@import play.api.Play.current
+
 @marketBase("Как это работает"){
 
 
@@ -53,10 +55,12 @@
         </div>
 
         <div class="paragraph-13">
-          <a href="@routes.Market.demoWebSite("aeq7hpDfTi6B8x5mJpi5KQ", false)" target="_blank" class="login-page__green-btn login-page__green-btn_width-auto">
-            <span class="btn"></span>
-            ДЕМО
-          </a>
+          @current.configuration.getString("market.demo.adn.id").map { demoAdnId =>
+            <a href="@routes.Market.demoWebSite(demoAdnId, false)" target="_blank" class="login-page__green-btn login-page__green-btn_width-auto">
+              <span class="btn"></span>
+              ДЕМО
+            </a>
+          }
         </div>
 
         <p class="paragraph-13 about-page__under-btn">
