@@ -192,3 +192,5 @@ db.default.password = "Rjvfhjdj&"
 ## Тарификацию по накопленным данных по stat-биллингу производить не чаще этого интервала времени.
 billing.stat.queue.flush.interval.seconds = 10
 
+
+market.demo.adn.id=aeq7hpDfTi6B8x5mJpi5KQ

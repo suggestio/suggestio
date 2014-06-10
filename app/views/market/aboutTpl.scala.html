@@ -1,5 +1,7 @@
 @()(implicit ctx: util.Context)
 
+@import play.api.Play.current
+
 @marketBase("Как это работает"){
 
 
@@ -18,7 +20,59 @@
 
     <div class="body">
 
-      еуеуеу
+      <div class="about-page">
+
+        <div class="about-page__title">
+          SioMarket
+        </div>
+        <div>
+          Реклама в вашей сети Wi-Fi Free
+        </div>
+
+        <div class="about-page__circle-wrap">
+          <span class="about-page__circle-wrap__left-text">Владелец сети Wi-Fi получает</span>
+          <div class="about-page__circle">
+            <span class="about-page__circle__price">70</span><span class="about-page__circle__percent">%</span>
+            <br/>
+            ДОХОДОВ
+          </div>
+          <span class="about-page__circle-wrap__right-text">от размещённой рекламы в своей сети.</span>
+        </div>
+
+        <p class="paragraph-13" style="font-size: 36px;">
+          Как это работает?
+        </p>
+
+        <div class="paragraph-13">
+          <div class="dot about-page__dot"></div>
+          SioM запускается при подключении мобильного коммуникатора посетителя к сети Wi-Fi.
+        </div>
+
+        <div class="paragraph-13">
+          <div class="dot about-page__dot"></div>
+          На коммуникаторах выдаётся информация о товарах, скидках, акциях, хитах продаж рекламодателей.
+          <div class="dot-arrow about-page__dot"></div>
+        </div>
+
+        <div class="paragraph-13">
+          @current.configuration.getString("market.demo.adn.id").map { demoAdnId =>
+            <a href="@routes.Market.demoWebSite(demoAdnId, false)" target="_blank" class="login-page__green-btn login-page__green-btn_width-auto">
+              <span class="btn"></span>
+              ДЕМО
+            </a>
+          }
+        </div>
+
+        <p class="paragraph-13 about-page__under-btn">
+          Откройте эту страницу на мобильном<br/>
+          устройстве для теста, или компьютере
+        </p>
+
+        <p class="paragraph-13">
+          Если возникли вопросы <a class="blue-link" href="mailto:support&#64;suggest.io">свяжитесь с нами</a>
+        </p>
+
+      </div>
 
     </div>
 
