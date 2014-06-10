@@ -4,7 +4,7 @@
 <head>
     <script type="text/javascript" src="colorpic.min.js"></script>
     <link rel="stylesheet" type="text/css" href="style.min.css" />
-    <title>Colorpicker</title>
+    <title>Выбор цвета</title>
     </script>
   </head>
   <body>
@@ -39,6 +39,8 @@
             <div class="io">
                 <label>HEX</label>
                 <input id="hex" type="text" value="" />
+
+              <div style="opacity: 0; height: 63px;">
                 <br/>
                 <label>R:</label>
                 <input id="rgb_r" type="number" value="" />
@@ -53,13 +55,13 @@
                 <input id="hsv_s" type="text" value="" />
                 <label>V:</label>
                 <input id="hsv_v" type="text" value="" />
-
+              </div>
             </div>
             <div id="color"></div>
             <div class="right">
-                <a id="cancel" class="btn cancel" href="#">Cancel</a>
-                <a id="submit2" class="btn submit" href="#">Back Color</a>
-                <a id="submit" class="btn submit" href="#">Text Color</a>
+                <a id="cancel" class="btn cancel" href="#">Отмена</a>
+                <a id="submit2" class="btn submit" href="#">Цвет фона</a>
+                <a id="submit" class="btn submit" href="#">Цвет текста</a>
             </div>
         </div>
     </div>
