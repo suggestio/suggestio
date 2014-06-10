@@ -23,8 +23,10 @@ object AdnShowTypes extends Enumeration {
     /** Ссылка на редактирование подчинённого узла, если есть возможность. */
     def slaveNodeEditCall(adnId: String): Option[Call]
 
-    /** Id для синтеза ссылки на demo web site, если есть возможность. */
-    def demoWebsiteAdnId(adnNode: MAdnNode): Option[String] = adnNode.id
+    /** Call для доступа к поисковой выдаче для админа ЛК. */
+    def nodeAdmSiteCall(adnNode: MAdnNode): Option[Call] = {
+      Some( routes.Market.demoWebSite(adnNode.id.get) )
+    }
   }
 
   type AdnShowType = Val
@@ -36,10 +38,8 @@ object AdnShowTypes extends Enumeration {
   val SHOP = new Val(AdNetMemberTypes.SHOP) {
     override def inviteSubNodeCall(adnId: String) = None
     override def slaveNodeEditCall(adnId: String) = Some(routes.MarketMartLk.editShopForm(adnId))
-    /** Для магазина надо отображать демо всего ТЦ, который обычно является супервизором. */
-    override def demoWebsiteAdnId(adnNode: MAdnNode) = {
-      adnNode.adn.supId
-        .orElse(super.demoWebsiteAdnId(adnNode))
+    override def nodeAdmSiteCall(adnNode: MAdnNode): Option[Call] = {
+      Some( routes.Market.allMyAdsSite(adnNode.id.get) )
     }
   }
 
@@ -57,6 +57,7 @@ object AdnShowTypes extends Enumeration {
   val RESTAURANT_SUP = new Val(AdNetMemberTypes.RESTAURANT_SUP) {
     override def inviteSubNodeCall(adnId: String) = None // TODO Надо?
     override def slaveNodeEditCall(adnId: String) = None
+    override def nodeAdmSiteCall(adnNode: MAdnNode) = None
   }
 
 }
