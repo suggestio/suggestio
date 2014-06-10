@@ -208,6 +208,7 @@ object BfHeight {
   val HEIGHT_DFLT = Some(300)
 
   // TODO Нужно зафиксировать значения высоты через Enumeration. Это избавит от проблем с расчетами стоимостей рекламных модулей.
+  val HEIGHT_140 = 140
   val HEIGHT_300 = 300
   val HEIGHT_460 = 460
   val HEIGHT_620 = 620

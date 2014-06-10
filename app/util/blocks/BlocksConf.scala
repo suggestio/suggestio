@@ -406,7 +406,6 @@ object BlocksConf extends Enumeration {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
   }
 
-
   sealed trait Block20t extends Height with BgImg with TitleDescrListBlockT {
     override def ordering = 1000
     override def template = _block20Tpl
@@ -469,6 +468,22 @@ object BlocksConf extends Enumeration {
   }
 
   sealed case class Block24Wrapper(key: String) extends ValTWrapper(Block24) with ValTEmpty with Block24t {
+    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
+
+
+  sealed trait Block25t extends Height with BgImg with TitleDescrListBlockT {
+    override def ordering = 1100
+    override def template = _block25Tpl
+    override def offersCount: Int = 3
+    override def heightBf: BfHeight = super.heightBf.copy(
+      availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
+    )
+  }
+  val Block25 = new Val(25) with Block25t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block25Wrapper(key = newKey)
+  }
+  sealed case class Block25Wrapper(key: String) extends ValTWrapper(Block25) with ValTEmpty with Block25t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
   }
 
