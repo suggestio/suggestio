@@ -162,7 +162,6 @@ CbcaCommon = () ->
         if($element.attr('data-index') == thisIndex)
           $element.find('input').removeAttr('disabled')
 
-
       $this.attr('disabled', 'disabled')
       $('.js-quiz__result').hide()
       if(nextSelector == '#text0' || nextSelector == '#text1')
@@ -190,10 +189,16 @@ CbcaCommon = () ->
       $('#'+$popup.attr('id')).remove()
 
     $(document).on 'click', '.js-submit-wrap', (e)->
-      $(this).find('input').trigger('click')
+      $this = $(this)
+
+      $this.closest('form').find('input').removeAttr('disabled')
+      $this.find('input').trigger('click')
 
     $(document).on 'click', '.js-submit-wrap input', (e)->
       e.stopPropagation()
+
+      $(this).closest('form').find('input').removeAttr('disabled')
+
 
     ##todo все кнопки ajax/popup зарефакторить к этому обработчику##
     $(document).on 'click', '.js-btn', (e)->
