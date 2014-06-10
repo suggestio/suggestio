@@ -13,7 +13,7 @@ import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
 import scala.concurrent.Future
-import play.api.mvc.RequestHeader
+import play.api.mvc.{Result, AnyContent, RequestHeader}
 import io.suggest.ym.model.stat.{MAdStat, AdStatActions}
 import io.suggest.ym.model.common.IBlockMeta
 import play.api.Play.{current, configuration}
@@ -35,8 +35,24 @@ object Market extends SioController with PlayMacroLogsImpl {
   /** Максимальное кол-во магазинов, возвращаемых в списке ТЦ. */
   val MAX_SHOPS_LIST_LEN = configuration.getInt("market.frontend.subproducers.count.max") getOrElse 200
 
-  /** Входная страница выдачи для узла sio-market. */
+  /** Базовая выдача для rcvr-узла sio-market. */
   def martIndex(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
+    val spsr = AdSearch(
+      levels      = List(AdShowLevels.LVL_START_PAGE),
+      receiverIds = List(adnId)
+    )
+    adnNodeIndex(adnId, spsr)
+  }
+
+  /** Выдача для продьюсера, который сейчас админят. */
+  def allMyAdsIndex(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
+    val spsr = AdSearch(
+      producerIds = List(adnId)
+    )
+    adnNodeIndex(adnId, spsr)
+  }
+
+  private def adnNodeIndex(adnId: String, spsr: AdSearch)(implicit request: AbstractRequestForAdnNode[AnyContent]): Future[Result] = {
     val adnNode = request.adnNode
     // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
     val allProdsFut = MAdnNode.findBySupId(adnId, onlyEnabled = true, maxResults = MAX_SHOPS_LIST_LEN)
@@ -63,12 +79,8 @@ object Market extends SioController with PlayMacroLogsImpl {
       case Some(waId) => MWelcomeAd.getById(waId)
       case None => Future successful None
     }
-    val startPageSearchReq = AdSearch(
-      levels = List(AdShowLevels.LVL_START_PAGE),
-      receiverIds = List(adnId)
-    )
     for {
-      mads   <- MAd.searchAds(startPageSearchReq).map(groupNarrowAds)
+      mads   <- MAd.searchAds(spsr).map(groupNarrowAds)
       waOpt  <- welcomeAdOptFut
       catsStats <- catsStatsFut
       shops  <- shopsWithAdsFut
@@ -82,6 +94,13 @@ object Market extends SioController with PlayMacroLogsImpl {
   /** Экшн, который рендерит страничку приветствия, которое видит юзер при первом подключении к wi-fi */
   def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
     Ok(demoWebsiteTpl(request.adnNode))
+  }
+
+  def allMyAdsSite(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
+    Ok(demoWebsiteTpl(
+      request.adnNode,
+      withIndexCall = Some(routes.Market.allMyAdsIndex(adnId))
+    ))
   }
 
   def nodeSiteScript(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>

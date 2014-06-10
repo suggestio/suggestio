@@ -1,6 +1,6 @@
-@(mmart: MAdnNode)(implicit ctx: util.Context)
+@(mmart: MAdnNode, withIndexCall: Option[Call] = None)(implicit ctx: util.Context)
 
-  (function() {
+(function() {
   var _siom = document.createElement("script");
   _siom.type = "text/javascript";
   _siom.async = true;
@@ -8,10 +8,10 @@
   window.siomart_host = '@ctx.myAudienceUrl';
   var _sh = document.getElementsByTagName("head")[0];
   @mmart.logoImgOpt.map { logoImg =>
-  window.siomart_logo_src = '@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)';
+    window.siomart_logo_src = '@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)';
   }
   window.siomart_node_color = '@mmart.meta.color';
-  window.siomart_index = '/market/index/@mmart.id';
+  window.siomart_index = '@withIndexCall.getOrElse(routes.Market.martIndex(mmart.id.get))';
   window.siomart_id = '@mmart.id';
   _sh.appendChild(_siom);
-  })();
+})();

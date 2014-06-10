@@ -116,8 +116,8 @@
       @* Ссылка на demo web site. *@
       @if(isMyNode) {
         <div class="sm-note">
-          @node.adn.memberType.demoWebsiteAdnId(node).map { dwId =>
-            Вы можете посмотреть, как выглядят ваши к карточки в <a class="sm-note__link" target="_blank" href="@routes.Market.demoWebSite(dwId)">рекламной выдаче</a>
+          @node.adn.memberType.nodeAdmSiteCall(node).map { siteCall =>
+            Вы можете посмотреть, как выглядят ваши к карточки в <a class="sm-note__link" target="_blank" href="@siteCall">рекламной выдаче</a>
           }
         </div>
       }

@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode)(implicit ctx: util.Context)
+@(adnNode: MAdnNode, withIndexCall: Option[Call] = None)(implicit ctx: util.Context)
 
 @* Шаблон для рендеринга демо выдачи. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
 @import ctx._
@@ -43,7 +43,7 @@
   </div>
 
   <script type="text/javascript">
-    @market.lk.adn._node._installScriptTpl( adnNode )
+    @market.lk.adn._node._installScriptTpl( adnNode , withIndexCall)
   </script>
 </body>
 
