@@ -185,6 +185,8 @@ trait TitlePriceListBlockT extends PairListBlock {
 
 /** Блок для списка title-descr. В целом аналогичен TitlePriceListBlockT. */
 trait TitleDescrListBlockT extends PairListBlock {
+  // TODO 2014.06.10 titleBf(), descrBf() методы сделаны по аналогии, но не используются пока что. Можно их удалить, если не понадобятся.
+
   def TITLE_FN = Title.BF_NAME_DFLT
   override type T1 = AOStringField
   override type BfT1 = BfText

@@ -35,7 +35,7 @@ object Market extends SioController with PlayMacroLogsImpl {
   /** Максимальное кол-во магазинов, возвращаемых в списке ТЦ. */
   val MAX_SHOPS_LIST_LEN = configuration.getInt("market.frontend.subproducers.count.max") getOrElse 200
 
-  /** Входная страница для sio-market для ТЦ. */
+  /** Входная страница выдачи для узла sio-market. */
   def martIndex(adnId: String) = MaybeAuth.async { implicit request =>
     MAdnNodeCache.getByIdCached(adnId)
       .filter { _.isDefined }
@@ -89,15 +89,15 @@ object Market extends SioController with PlayMacroLogsImpl {
   }
 
   /** Экшн, который рендерит страничку приветствия, которое видит юзер при первом подключении к wi-fi */
-  def demoWebSite(martId: String, isStandalone: Boolean = false) = MaybeAuth.async { implicit request =>
-    MAdnNode.getById(martId) map {
-      case Some(mmart) =>
-        val Tpl = if( isStandalone == true ){
-          _installScriptTpl(mmart)
-        }else{
-          demoWebsiteTpl(mmart)
+  def demoWebSite(adnId: String, isStandalone: Boolean) = MaybeAuth.async { implicit request =>
+    MAdnNode.getById(adnId) map {
+      case Some(adnNode) =>
+        val tpl = if (isStandalone) {
+          _installScriptTpl(adnNode)
+        } else {
+          demoWebsiteTpl(adnNode)
         }
-        Ok(Tpl)
+        Ok(tpl)
       case None => NotFound("martNotFound")
     }
   }
