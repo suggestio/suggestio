@@ -18,6 +18,12 @@ import EsModel.asJsonStrArray
  * Description: Аддон для ES-моделей, имеющих поле person_id во множественном числе.
  */
 
+object EMPersonIds {
+  def personIdQuery(personId: String) = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
+}
+
+import EMPersonIds._
+
 trait EMPersonIdsStatic extends EsModelStaticT {
 
   override type T <: EMPersonIds
@@ -47,16 +53,17 @@ trait EMPersonIdsStatic extends EsModelStaticT {
    */
   def findByPersonId(personId: String, maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
                     (implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    val personIdQuery = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
-    client.prepareSearch(ES_INDEX_NAME)
-      .setTypes(ES_TYPE_NAME)
-      .setQuery(personIdQuery)
+    prepareSearch
+      .setQuery( personIdQuery(personId) )
       .setSize(maxResults)
       .setFrom(offset)
       .execute()
       .map { searchResp2list }
   }
 
+  def countByPersonId(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
+    count(personIdQuery(personId))
+  }
 }
 
 trait EMPersonIds extends EsModelT {

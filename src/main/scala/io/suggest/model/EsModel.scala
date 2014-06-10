@@ -401,6 +401,13 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
       .map { _.getCount }
   }
 
+  /**
+   * Посчитать кол-во документов в текущей модели.
+   * @return Неотрицательное целое.
+   */
+  def countAll(implicit ec: ExecutionContext, client: Client): Future[Long] = {
+    count(QueryBuilders.matchAllQuery())
+  }
 
   /** Если модели требуется выставлять routing для ключа, то можно делать это через эту функцию.
     * @param idOrNull id или null, если id отсутствует.
