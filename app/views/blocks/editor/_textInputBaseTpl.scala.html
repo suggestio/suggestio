@@ -29,7 +29,8 @@
               ("futurfutc-webfont", "Futur Fut C"),
               ("helioscond-webfont", "Helios Cond"),
               ("PharmadinCondensedLight", "Pharmadin Condensed Light"),
-              ("BlocExtCondC", "Bloc Ext Cond C")
+              ("BlocExtCondC", "Bloc Ext Cond C"),
+              ("newspsan-webfont", "Newspaper Sans")
             ).zipWithIndex.map { case ((vl,nm), i) =>
               <option value="@vl" @if( af(ffname).value.exists(_ == vl) ){selected="selected"}>@nm</option>
             }
