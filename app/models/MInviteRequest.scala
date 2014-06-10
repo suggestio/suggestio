@@ -41,7 +41,7 @@ object MInviteRequest extends EsModelStaticT with PlayMacroLogsImpl {
   val HUMAN_TRAFFIC_ESFN  = "humanTraffic"
   val ADDRESS_ESFN        = "addr"
   val SITE_URL_ESFN       = "siteUrl"
-  val CONTACT_PHONE_ESFN  = "cPhone"
+  val OFFICE_PHONE_ESFN   = "oPhone"
   val INFO_ESFN           = "info"
 
   val HAVE_WIFI_ESFN      = "haveWifi"
@@ -78,7 +78,7 @@ object MInviteRequest extends EsModelStaticT with PlayMacroLogsImpl {
       FieldString(HUMAN_TRAFFIC_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
       FieldString(ADDRESS_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
       FieldString(SITE_URL_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldString(CONTACT_PHONE_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
+      FieldString(OFFICE_PHONE_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
       FieldString(INFO_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
       FieldString(FLOOR_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
       FieldString(SECTION_ESFN, index = FieldIndexingVariants.no, include_in_all = true)
@@ -106,7 +106,7 @@ object MInviteRequest extends EsModelStaticT with PlayMacroLogsImpl {
         case (HUMAN_TRAFFIC_ESFN, htRaw)          => meta2.humanTraffic = Option(stringParser(htRaw))
         case (ADDRESS_ESFN, addrRaw)              => meta2.address = stringParser(addrRaw)
         case (SITE_URL_ESFN, siteUrlRaw)          => meta2.siteUrl = Option(stringParser(siteUrlRaw))
-        case (CONTACT_PHONE_ESFN, cphRaw)         => meta2.contactPhone = stringParser(cphRaw)
+        case (OFFICE_PHONE_ESFN, cphRaw)          => meta2.officePhone = stringParser(cphRaw)
         case (INFO_ESFN, infoRaw)                 => meta2.info = Option(stringParser(infoRaw))
         case (PAY_REQS_ESFN, payReqsRaw)          => meta2.payReqs = Option(stringParser(payReqsRaw))
         case (FLOOR_ESFN, floorRaw)               => meta2.floor = Option(stringParser(floorRaw))
@@ -279,7 +279,7 @@ object MirMeta {
 case class MirMeta(
   var company: String,
   var address: String,
-  var contactPhone: String,
+  var officePhone: String,
   var audienceDescr: Option[String] = None,
   var humanTraffic: Option[String] = None,
   var siteUrl: Option[String] = None,
@@ -293,7 +293,7 @@ case class MirMeta(
     var acc1: FieldsJsonAcc = List(
       COMPANY_ESFN          -> JsString(company),
       ADDRESS_ESFN          -> JsString(address),
-      CONTACT_PHONE_ESFN    -> JsString(contactPhone)
+      OFFICE_PHONE_ESFN    -> JsString(officePhone)
     )
     if (siteUrl.isDefined)
       acc1 ::= SITE_URL_ESFN -> JsString(siteUrl.get)

@@ -77,12 +77,12 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
       {(company, audienceDescr, humanTraffic, address, siteUrl, phone, payReqs) =>
         MirMeta(
           company = company, audienceDescr = audienceDescr, humanTraffic = humanTraffic,
-          address = address, siteUrl = siteUrl, contactPhone = phone
+          address = address, siteUrl = siteUrl, officePhone = phone
         )
       }
       {mirMeta =>
         import mirMeta._
-        Some((company, audienceDescr, humanTraffic, address, siteUrl, contactPhone, payReqs))
+        Some((company, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs))
       }
     )
   }
@@ -133,12 +133,12 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
       {(company, info, address, floor, section, siteUrl, phone) =>
         MirMeta(
           company = company, info = info, address = address, floor = floor, section = section,
-          siteUrl = siteUrl, contactPhone = phone
+          siteUrl = siteUrl, officePhone = phone
         )
       }
       {mirMeta =>
         import mirMeta._
-        Some((company, info, address, floor, section, siteUrl, contactPhone))
+        Some((company, info, address, floor, section, siteUrl, officePhone))
       }
     )
   }

@@ -49,6 +49,14 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
       } else {
         Future successful Nil
       }
+      // Нужно ли отображать кнопку назад? Да, если у юзера есть ещё узлы.
+      val showBackBtnFut = if (isMyNode) {
+        // TODO Надо бы кеширование тут.
+        MAdnNode.countByPersonId(request.pwOpt.get.personId)
+          .map { _ >= 2L }
+      } else {
+        Future successful true
+      }
       // Для узла нужно отобразить его рекламу.
       val madsFut: Future[Seq[MAd]] = if (isMyNode) {
         // Это свой узел. Нужно в реалтайме найти рекламные карточки и проверить newAdIdOpt.
@@ -125,6 +133,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         mads        <- madsFut
         slaves      <- slavesFut
         advertisers <- advertisersFut
+        showBackBtn <- showBackBtnFut
       } yield {
         Ok(adnNodeShowTpl(
           node          = adnNode,
@@ -135,7 +144,8 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
           povAdnIdOpt   = request.povAdnNodeOpt.flatMap(_.id),
           advReqsCount  = advReqsCount,
           canAdv        = canAdv,
-          ad2advMap     = ad2advMap
+          ad2advMap     = ad2advMap,
+          showBackBtn   = showBackBtn
         ))
       }
     }

@@ -1,5 +1,6 @@
 @(node: MAdnNode, mads: Seq[MAdT], slaves: Seq[MAdnNode], advertisers: Seq[MAdnNode], isMyNode: Boolean,
-  povAdnIdOpt: Option[String], advReqsCount: Long, canAdv: Boolean, ad2advMap: Map[String, MAdvI])(implicit ctx: Context)
+  povAdnIdOpt: Option[String], advReqsCount: Long, canAdv: Boolean, ad2advMap: Map[String, MAdvI], showBackBtn: Boolean
+ )(implicit ctx: Context)
 
 @* Заглавная страница узла рекламной сети в личных кабинетах.
    Если isMyNode, то идёт рендер управляемого узла, и povAdnIdOpt игнорируется.
@@ -21,9 +22,11 @@
     <div class="center">
 
       @* TODO Надо бы объеденить map и defining, но почему-то не работает оно. *@
-      @defining( if(isMyNode) Some(routes.MarketLk.lkList) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
-        @backCallOpt.map { backCall =>
-          <a class="back-but" href="@backCall">&nbsp;</a>
+      @if(showBackBtn) {
+        @defining( if(isMyNode) Some(routes.MarketLk.lkList) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
+          @backCallOpt.map { backCall =>
+            <a class="back-but" href="@backCall">&nbsp;</a>
+          }
         }
       }
 

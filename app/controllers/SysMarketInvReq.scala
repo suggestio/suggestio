@@ -7,6 +7,7 @@ import models._
 import scala.concurrent.Future
 import views.html.sys1.market.invreq._
 import util.PlayMacroLogsImpl
+import util.event.SiowebNotifier.Implicts.sn
 
 /**
  * Suggest.io
@@ -43,6 +44,19 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
 
       case None =>
         irNotFound(irId)
+    }
+  }
+
+
+  def deleteIR(irId: String) = IsSuperuser.async { implicit request =>
+    MInviteRequest.deleteById(irId) map { isDeleted =>
+      val flasher: (String, String) = if (isDeleted) {
+        "success" -> "Запрос на подключение удалён."
+      } else {
+        "error"   -> "Не найдено документа для удаления."
+      }
+      Redirect(routes.SysMarketInvReq.index())
+        .flashing(flasher)
     }
   }
 
