@@ -20,15 +20,18 @@
             <div class="lk-field-tools__editor">
             <select name="@ffname" class="js-custom-font-family-select">
             @List(
-              "favoritlightcondcregular",
-              "favoritcondcregular",
-              "heliosthin",
-              "HeliosExtBlack",
-              "pfdintextcomppro-medium-webfont",
-              "futurfutc-webfont",
-              "helioscond-webfont",
-              "favoritcondc-bold-webfont").zipWithIndex.map { case (vl, i) =>
-              <option value="@vl" @if( af(ffname).value.exists(_ == vl) ){selected="selected"}>Шрифт @i</option>
+              ("favoritlightcondcregular","Favorit Light Cond C Regular"),
+              ("favoritcondcregular", "Favorit Cond C Regular"),
+              ("favoritcondc-bold-webfont", "Favorit Cond C Bold"),
+              ("heliosthin", "Helios Thin"),
+              ("HeliosExtBlack", "Helios Ext Black"),
+              ("pfdintextcomppro-medium-webfont", "PF Din Text Comp Pro Medium"),
+              ("futurfutc-webfont", "Futur Fut C"),
+              ("helioscond-webfont", "Helios Cond"),
+              ("PharmadinCondensedLight", "Pharmadin Condensed Light"),
+              ("BlocExtCondC", "Bloc Ext Cond C")
+            ).zipWithIndex.map { case ((vl,nm), i) =>
+              <option value="@vl" @if( af(ffname).value.exists(_ == vl) ){selected="selected"}>@nm</option>
             }
             </select>
             </div>
