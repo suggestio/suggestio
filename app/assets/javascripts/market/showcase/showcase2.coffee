@@ -10,7 +10,51 @@ siomart =
     ontouchmove_offer_change_delta : 80
     welcome_ad_hide_timeout : 2000
 
+  ## Загрузить js- и css- засимости
+  load_deps : () ->
+
+    ## js : cbca_grid
+    grid_js_attrs =
+      type : 'text/javascript'
+      src : siomart.config.host + '/assets/javascripts/market/showcase/grid.min.js'
+    gid_js = this.utils.ce "script", grid_js_attrs
+
+    ## css : showcase.css
+    stylesheet_attrs =
+      type : 'text/css'
+      rel : 'stylesheet'
+      href : siomart.config.host + this.config.css
+
+    stylesheet = this.utils.ce "link", stylesheet_attrs
+
+    ## Созданные элементы добавляем в head
+    _head = this.utils.ge_tag("head")[0]
+
+    _head.appendChild gid_js
+    _head.appendChild stylesheet
+
+  ## Забиндить оконные события
+  bind_window_events : () ->
+    resize_cb = () ->
+      if typeof siomart.window_resize_timer != 'undefined'
+        clearTimeout siomart.window_resize_timer
+
+      grid_resize = () ->
+        cbca_grid.resize()
+        siomart.set_window_class()
+
+        siomart.node_offers_popup.fit()
+        siomart.node_offers_popup.show_block_by_index siomart.node_offers_popup.active_block_index
+
+      siomart.window_resize_timer = setTimeout grid_resize, 300
+
+    this.utils.add_single_listener window, 'resize', resize_cb
+
+  ########
+  ## Утиль
+  ########
   utils :
+    elts_cache : {}
     is_firefox : () ->
       navigator.userAgent.toLowerCase().indexOf('firefox') > -1
 
@@ -39,8 +83,17 @@ siomart =
     ############################
     ## Найти DOM элемент по тегу
     ############################
-    ge_tag : ( tag ) ->
-      document.getElementsByTagName tag
+    ge_tag : ( tag, force_no_cache ) ->
+      force_no_cache = force_no_cache || false
+
+      if force_no_cache != true && typeof this.elts_cache[tag] != 'undefined'
+        console.log 'ge_tag ' + tag + ' : cached'
+        this.elts_cache[tag]
+      else
+        console.log 'ge_tag ' + tag + ' : not cached'
+        _elt = document.getElementsByTagName tag
+        this.elts_cache[tag] = _elt
+        _elt
 
     ge_class : ( parent, _class ) ->
 
@@ -64,7 +117,12 @@ siomart =
     ge : () ->
       for e in arguments
         if typeof e == 'string' || typeof e == 'number'
-          e = document.getElementById e
+
+          if typeof this.elts_cache[e] != 'undefined'
+            e = this.elts_cache[e]
+          else
+            e = document.getElementById e
+            this.elts_cache[e] = e
 
         if arguments.length == 1
           return e
@@ -151,13 +209,13 @@ siomart =
     ## Установить vendor_prefix
     ###########################
     set_vendor_prefix : () ->
-      styles = window.getComputedStyle(document.documentElement, '')
+      styles = window.getComputedStyle document.documentElement, ''
       pre = (Array.prototype.slice.call(styles).join('').match(/-(moz|webkit|ms)-/) || (styles.OLink == '' && ['', 'o']))[1]
 
       obj =
         lowercase: pre
-        css: '-' + pre + '-'
-        js: pre[0].toUpperCase() + pre.substr(1)
+        css: '-'.concat( pre, '-')
+        js: pre[0].toUpperCase().concat( pre.substr(1) )
 
       window.vendor_prefix = obj
 
@@ -254,26 +312,6 @@ siomart =
     url = '/market/ads?a.rcvr=' + siomart.config.mart_id
     siomart.request.perform url
 
-  load_grid : () ->
-    grid_js_attrs =
-      type : 'text/javascript'
-      src : siomart.config.host + '/assets/javascripts/market/showcase/grid.min.js'
-    console.log siomart.config.host
-    gid_js = this.utils.ce "script", grid_js_attrs
-    this.utils.ge_tag("head")[0].appendChild gid_js
-
-  ####################################
-  ## Загрузить все нужные стили цсс'ки
-  ####################################
-  load_stylesheets : () ->
-    stylesheet_attrs =
-      type : 'text/css'
-      rel : 'stylesheet'
-      href : siomart.config.host + this.config.css
-
-    stylesheet = this.utils.ce "link", stylesheet_attrs
-    this.utils.ge_tag("head")[0].appendChild stylesheet
-
   #####################################################
   ## Добавить в DOM необходимую разметку для Sio.Market
   #####################################################
@@ -284,9 +322,7 @@ siomart =
       class : this.config.sm_trigger_class
       id : 'sioMartTrigger'
       style : 'background-color: #' + window.siomart_node_color
-    sm_trigger = this.utils.ce "div", sm_trigger_attrs, '<span class="trigger-helper"></span><img src="' + window.siomart_logo_src + '" width=80/>'
-
-    this.utils.ge_tag("body")[0].appendChild sm_trigger
+    sm_trigger = this.utils.ce 'div', sm_trigger_attrs, '<span class="trigger-helper"></span><img src=\'' + window.siomart_logo_src + '\' width=80/>'
 
     ## Интерфейс маркета
     sm_layout_attrs =
@@ -294,28 +330,39 @@ siomart =
       id : 'sioMartRoot'
     sm_layout = this.utils.ce "div", sm_layout_attrs, '<div id="sioMartLayout"></div>'
 
-    this.utils.ge_tag("body")[0].appendChild sm_layout
+    _body = this.utils.ge_tag('body')[0]
+    _body.appendChild sm_trigger
+    _body.appendChild sm_layout
 
+    _head = this.utils.ge_tag('head')[0]
     meta_viewport_attrs =
       name : 'viewport'
       content : 'width=320,initial-scale=1,user-scalable=no,minimal-ui'
     meta_viewport = this.utils.ce "meta", meta_viewport_attrs
-    this.utils.ge_tag('head')[0].appendChild meta_viewport
+    _head.appendChild meta_viewport
 
   ###################################
   ## Осуществить запрос к серверу sio
   ###################################
   request :
-    request_timeout : 2000
+    request_timeout : 5000
 
+    ## Обработать ошибку
     on_request_error : () ->
       siomart.notifications.show "НЕ УДАЛОСЬ ВЫПОЛНИТЬ ЗАПРОС"
-      if siomart.utils.ge('smLoading') != null
-        siomart.utils.ge('smLoading').style.display = 'none'
+      _sm_loading_dom = siomart.utils.ge('smLoading')
 
+      if _sm_loading_dom != null
+        _sm_loading_dom.style.display = 'none'
+
+    ## Выполнить запрос по указанному url
     perform : ( url ) ->
-      if siomart.utils.ge('smLoading') != null
-        siomart.utils.ge('smLoading').style.display = 'block'
+
+      _sm_loading_dom = siomart.utils.ge('smLoading')
+
+      if _sm_loading_dom != null
+        _sm_loading_dom.style.display = 'block'
+
       timeout_cb = () ->
         siomart.request.on_request_error()
 
@@ -334,40 +381,46 @@ siomart =
   receive_response : ( data ) ->
     console.log 'receive response, data : '
     console.log data
+
     if typeof siomart.request.request_timeout_timer != 'undefined'
       clearTimeout siomart.request.request_timeout_timer
 
+    ## Пришла пустота — уведомить горемыку юзера
     if data.html == ''
       siomart.notifications.show "КАРТОЧЕК НЕ НАЙДЕНО, ПОПРОБУЙТЕ ДРУГОЙ ЗАПРОС"
       if siomart.utils.ge('smLoading') != null
         siomart.utils.ge('smLoading').style.display = 'none'
       return false
 
+    ## Инициализация глагне
     if data.action == 'martIndex'
       cbca_grid.set_window_size()
       container = this.utils.ge 'sioMartLayout'
       container.innerHTML = data.html
       document.getElementById('sioMartIndexOffers').scrollTop = '0';
+      siomart.utils.ge_tag('body')[0].style.overflow = 'hidden'
 
-      siomart.init_navigation()
+      ## Инициализация welcome_ad
+      ## если возвращается false — значит картинки нет и
+      ## нет смысла тянуть с дальнейшей инициализацией
 
-      siomart.welcome_ad.init()
+      if siomart.welcome_ad.init() == false
+        grid_init_timoeut = 1
+      else
+        grid_init_timoeut = siomart.welcome_ad.hide_timeout - 100
 
-      grid_cb = () ->
+      grid_init_cb = () ->
         document.body.style.backgroundColor = '#ffffff'
-
-        ## Android
-        document.body.style.overflow = 'hidden'
-
         siomart.utils.ge('sioMartRoot').style.backgroundColor = "#ffffff"
 
         sm_wifi_info_dom = siomart.utils.ge('smWifiInfo')
         if sm_wifi_info_dom != null
           siomart.utils.ge('smWifiInfo').style.display = 'block'
 
+        siomart.init_navigation()
         cbca_grid.init()
 
-      setTimeout grid_cb, 1500
+      setTimeout grid_init_cb, grid_init_timoeut
       siomart.set_window_class()
 
     if data.action == 'producerAds'
@@ -701,7 +754,6 @@ siomart =
   ## картинка приветствия торгового центра
   ########################################
   welcome_ad :
-
     hide_timeout : 3000
     fadeout_transition_time : 1000
 
@@ -747,7 +799,7 @@ siomart =
 
     siomart.utils.add_single_listener window, 'touchmove', siomart.events.document_touchmove
     siomart.utils.add_single_listener window, 'touchend', siomart.events.document_touchend
-
+    
     ## Кнопка выхода
     siomart.utils.add_single_listener document, 'keyup', siomart.events.document_keyup_event
 
@@ -806,7 +858,6 @@ siomart =
       cb _b
 
   set_window_class : () ->
-
     _window_class = ''
 
     if cbca_grid.ww <= 980
@@ -820,36 +871,25 @@ siomart =
 
     siomart.utils.ge('sioMartLayout').className = _window_class
 
+  ###########################
   ## Инициализация Sio.Market
+  ###########################
   init : () ->
-    this.utils.is_touch_device()
 
     siomart.config.mart_id = window.siomart_id
     siomart.config.host = window.siomart_host
 
-    this.load_grid()
-
+    ## загрузка cbca_grid
+    this.load_deps()
     this.utils.set_vendor_prefix()
-    this.load_stylesheets()
+
+    ## Нарисовать разметку
     this.draw_layout()
 
+    ## Забиндить оконные события
+    this.bind_window_events()
+
     this.load_mart_index_page()
-
-    resize_cb = () ->
-
-      if typeof siomart.window_resize_timer != 'undefined'
-        clearTimeout siomart.window_resize_timer
-
-      grid_resize = () ->
-        cbca_grid.resize()
-        siomart.set_window_class()
-
-        siomart.node_offers_popup.fit()
-        siomart.node_offers_popup.show_block_by_index siomart.node_offers_popup.active_block_index
-
-      siomart.window_resize_timer = setTimeout grid_resize, 300
-
-    this.utils.add_single_listener window, 'resize', resize_cb
 
 window.siomart = siomart
 siomart.init()
