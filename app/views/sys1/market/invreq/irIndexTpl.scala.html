@@ -17,7 +17,7 @@
         @tMirs.map { mir =>
           <li>
             <a href="@routes.SysMarketInvReq.showIR(mir.id.get)">
-              @mir.company / @mir.address
+              @mir.meta.company / @mir.meta.address
             </a>
             - @*_prettyDate(mir.dateCreated, withSpan = true)*@
           </li>

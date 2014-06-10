@@ -166,14 +166,14 @@ GET  /market/index_all/:adnId           controllers.Market.allMyAdsIndex(adnId)
 GET  /market/site/:adnId                controllers.Market.demoWebSite(adnId)
 GET  /market/site_all/:adnId            controllers.Market.allMyAdsSite(adnId)
 GET  /market/script/:adnId              controllers.Market.nodeSiteScript(adnId)
-GET  /market/ads                        controllers.Market.findAds(a: util.qsb.AdSearch)
+GET  /market/ads                        controllers.Market.findAds(a: AdSearch)
 POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)
 
 # market+join: Присоединение к sio-market.
-GET  /market/join/wifi/qs               controllers.MarketJoin.wifiJoinQuestionsForm(j: Option[util.qsb.SMJoinAnswers] ?= None)
+GET  /market/join/wifi/qs               controllers.MarketJoin.wifiJoinQuestionsForm(j: Option[SMJoinAnswers] ?= None)
 POST /market/join/wifi/qs               controllers.MarketJoin.wifiJoinQuestionsFormSubmit
-GET  /market/join/wifi                  controllers.MarketJoin.wifiJoinForm(j: util.qsb.SMJoinAnswers)
-POST /market/join/wifi                  controllers.MarketJoin.wifiJoinFormSubmit(j: util.qsb.SMJoinAnswers)
+GET  /market/join/wifi                  controllers.MarketJoin.wifiJoinForm(j: SMJoinAnswers)
+POST /market/join/wifi                  controllers.MarketJoin.wifiJoinFormSubmit(j: SMJoinAnswers)
 GET  /market/join/success               controllers.MarketJoin.joinRequestSuccess
 GET  /market/join/xadv                  controllers.MarketJoin.joinAdvRequest
 POST /market/join/xadv                  controllers.MarketJoin.joinAdvRequestSubmit

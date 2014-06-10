@@ -98,3 +98,7 @@ templatesImport ++= Seq(
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 
+routesImport ++= Seq(
+  "models._",
+  "util.qsb._"
+)

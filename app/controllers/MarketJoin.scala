@@ -2,11 +2,9 @@ package controllers
 
 import util.PlayMacroLogsImpl
 import util.acl.MaybeAuth
-import util.qsb.SMJoinAnswers
 import util.SiowebEsUtil.client
 import models._
 import views.html.market.join._
-import play.api.data.Form
 import util.FormUtil._
 import play.api.data._, Forms._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -65,7 +63,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
   private val text2048M = text(maxLength = 2048).transform(strTrimSanitizeF, strIdentityF)
 
   /** Маппинг для формы забивания текстовых полей запроса инвайта на wi-fi узел. */
-  private val wifiJoinFormM: Form[MInviteRequest] = {
+  private val wifiJoinFormM: Form[MirMeta] = {
     Form(
       mapping(
         "company"       -> companyNameM,
@@ -73,18 +71,18 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
         "humanTraffic"  -> toStrOptM(text(maxLength = 1024).transform(strTrimSanitizeF, strIdentityF)),
         "address"       -> addressM,
         "siteUrl"       -> urlStrOptM,
-        "phone"         -> phoneM
+        "phone"         -> phoneM,
+        "payReqs"       -> optional(text(maxLength = 2048))
       )
-      {(company, audienceDescr, humanTraffic, address, siteUrl, phone) =>
-        MInviteRequest(
-          reqType = InviteReqTypes.Wifi,
+      {(company, audienceDescr, humanTraffic, address, siteUrl, phone, payReqs) =>
+        MirMeta(
           company = company, audienceDescr = audienceDescr, humanTraffic = humanTraffic,
           address = address, siteUrl = siteUrl, contactPhone = phone
         )
       }
-      {mir =>
-        import mir._
-        Some((company, audienceDescr, humanTraffic, address, siteUrl, contactPhone))
+      {mirMeta =>
+        import mirMeta._
+        Some((company, audienceDescr, humanTraffic, address, siteUrl, contactPhone, payReqs))
       }
     )
   }
@@ -102,18 +100,9 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
         debug("joinFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(wifiJoinFormTpl(smja, formWithErrors))
       },
-      {mir =>
-        val mir1 = mir.copy(
-          haveWifi      = smja.haveWifi,
-          fullCoverage  = smja.fullCoverage,
-          knownEquip    = smja.knownEquipment,
-          altFw         = smja.altFw,
-          isWrtFw       = smja.isWrtFw,
-          landlineInet  = smja.landlineInet,
-          smallRoom     = smja.smallRoom,
-          audienceSz    = smja.audienceSz
-        )
-        mir1.save.map { mirSavedRdr }
+      {mirMeta =>
+        val mir = MInviteRequest(reqType = InviteReqTypes.Wifi, meta = mirMeta, joinAnswers = Some(smja))
+        mir.save.map { mirSavedRdr }
       }
     )
   }
@@ -130,7 +119,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
   }
 
 
-  private val advJoinFormM: Form[MInviteRequest] = {
+  private val advJoinFormM: Form[MirMeta] = {
     Form(
       mapping(
         "company"   -> companyNameM,
@@ -142,14 +131,13 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
         "phone"     -> phoneM
       )
       {(company, info, address, floor, section, siteUrl, phone) =>
-        MInviteRequest(
-          reqType = InviteReqTypes.Adv,
+        MirMeta(
           company = company, info = info, address = address, floor = floor, section = section,
           siteUrl = siteUrl, contactPhone = phone
         )
       }
-      {mir =>
-        import mir._
+      {mirMeta =>
+        import mirMeta._
         Some((company, info, address, floor, section, siteUrl, contactPhone))
       }
     )
@@ -172,7 +160,8 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
         debug("joinAdvRequestSubmit(): Form bind failed:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(joinAdvTpl(formWithErrors))
       },
-      {mir =>
+      {mirMeta =>
+        val mir = MInviteRequest(reqType = InviteReqTypes.Adv, meta = mirMeta)
         mir.save.map { mirSavedRdr }
       }
     )
