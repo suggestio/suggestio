@@ -160,6 +160,7 @@ object FormUtil {
 
   // TODO Нужен нормальный валидатор телефонов.
   val phoneM = nonEmptyText(minLength = 5, maxLength = 16)
+    .transform(strTrimSanitizeF, strIdentityF)
   val phoneOptM = optional(phoneM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
 

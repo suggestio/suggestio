@@ -210,7 +210,7 @@ POST /sys/inx2/create/dflt/mart         controllers.Sys.inx2createDfltMart
 GET  /sys/market                        controllers.SysMarket.index
 # sys.market.company
 GET  /sys/market/companies              controllers.SysMarket.companiesList
-GET  /sys/market/company/add            controllers.SysMarket.companyAddForm
+GET  /sys/market/company/add            controllers.SysMarket.companyAddForm(c: Option[MCompany] ?= None)
 POST /sys/market/company/add            controllers.SysMarket.companyAddFormSubmit
 GET  /sys/market/company/:id/edit       controllers.SysMarket.companyEditForm(id: String)
 POST /sys/market/company/:id/edit       controllers.SysMarket.companyEditFormSubmit(id: String)

@@ -114,13 +114,14 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
     import _root_.models._
     val logPrefix = "resetSuperuserIds(): "
     Future.traverse(MPersonIdent.SU_EMAILS) { email =>
-      MozillaPersonaIdent.getById(email) flatMap {
+      EmailPwIdent.getById(email) flatMap {
         // Суперюзер ещё не сделан. Создать MPerson и MPI для текущего email.
         case None =>
           val logPrefix1 = s"$logPrefix[$email] "
           info(logPrefix1 + "Installing new sio superuser...")
           MPerson(lang = "ru").save.flatMap { personId =>
-            MozillaPersonaIdent(email=email, personId=personId).save.map { mpiId =>
+            val pwHash = MPersonIdent.mkHash(email)
+            EmailPwIdent(email=email, personId=personId, pwHash = pwHash).save.map { mpiId =>
               info(logPrefix1 + s"New superuser installed as $personId. mpi=$mpiId")
               personId
             }

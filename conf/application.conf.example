@@ -194,3 +194,6 @@ billing.stat.queue.flush.interval.seconds = 10
 
 
 market.demo.adn.id=aeq7hpDfTi6B8x5mJpi5KQ
+
+market.join.request.notify.superusers.emails = ["support@suggest.io"]
+
