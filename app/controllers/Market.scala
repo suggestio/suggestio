@@ -110,7 +110,7 @@ object Market extends SioController with PlayMacroLogsImpl {
 
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
-  def findAds(adSearch: AdSearch, firstAdIdOpt: Option[String]) = MaybeAuth.async { implicit request =>
+  def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
     val isProducerAds = !adSearch.producerIds.isEmpty
     // TODO Использовать multiget + кеш.
     val producersFut = Future.traverse(adSearch.producerIds) { MAdnNodeCache.getByIdCached }
@@ -132,11 +132,11 @@ object Market extends SioController with PlayMacroLogsImpl {
       warn("findAds(): strange search request: " + adSearch)
       "findAds" -> adSearch
     }
-    val madsFut = MAd.searchAds(adSearch2)
+    val madsFut: Future[Seq[MAd]] = MAd.searchAds(adSearch2)
       .map { mads =>
         // Для producer ads надо не группировать узкие, а выносить firstAdIdOpt на первое место.
         if (isProducerAds) {
-          firstAdIdOpt.fold(mads) { moveToHead(mads, _) }
+          mads
         } else {
           groupNarrowAds(mads)
         }

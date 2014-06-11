@@ -80,6 +80,7 @@ object AdSearch {
           maybeSizeOpt   <- intOptBinder.bind(key + ".size", params)
           maybeOffsetOpt <- intOptBinder.bind(key + ".offset", params)
           maybeRcvrIdOpt <- strOptBinder.bind(key + ".rcvr", params)
+          maybeFirstId   <- strOptBinder.bind(key + ".firstAdId", params)
 
         } yield {
           Right(
@@ -94,7 +95,8 @@ object AdSearch {
               },
               offsetOpt = eitherOpt2option(maybeOffsetOpt) map { offset =>
                 Math.max(0,  Math.min(offset,  MAX_PAGE_OFFSET * maybeSizeOpt.getOrElse(10)))
-              }
+              },
+              forceFirstIds = maybeFirstId
             )
           )
         }
@@ -108,7 +110,8 @@ object AdSearch {
           strOptBinder.unbind(key + ".level", value.levels.headOption.map(_.toString)),
           strOptBinder.unbind(key + ".q", value.qOpt),
           intOptBinder.unbind(key + ".size", value.maxResultsOpt),
-          intOptBinder.unbind(key + ".offset", value.offsetOpt)
+          intOptBinder.unbind(key + ".offset", value.offsetOpt),
+          strOptBinder.unbind(key + ".firstAdId", value.forceFirstIds.headOption)
         ) .filter(!_.isEmpty)
           .mkString("&")
       }
@@ -124,7 +127,8 @@ case class AdSearch(
   levels      : List[AdShowLevel] = Nil,
   qOpt: Option[String] = None,
   maxResultsOpt: Option[Int] = None,
-  offsetOpt: Option[Int] = None
+  offsetOpt: Option[Int] = None,
+  forceFirstIds: List[String] = Nil
 ) extends AdsSearchArgsT {
 
   /** Абсолютный сдвиг в результатах (постраничный вывод). */

@@ -740,7 +740,7 @@ siomart =
 
     console.log 'load_for_shop_id : ' + shop_id + ', ad_id : ' + ad_id
 
-    url = '/market/ads?a.shopId=' + shop_id + '&firstAdId=' + ad_id + '&a.size=5&a.rcvr=' + siomart.config.mart_id
+    url = '/market/ads?a.shopId=' + shop_id + '&a.firstAdId=' + ad_id + '&a.size=5&a.rcvr=' + siomart.config.mart_id
 
     siomart.node_offers_popup.requested_ad_id = ad_id
     siomart.request.perform url
