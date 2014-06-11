@@ -24,10 +24,7 @@ transform(v)
 .clear
   clear: both
 
-@css {
-  @import url(http://fonts.googleapis.com/css?family=PT+Sans+Narrow:700,400&subset=cyrillic-ext,latin-ext);
-}
-
+screen1024 = 'screen and (max-width: 1024px)'
 lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
 .colorpicker
@@ -1887,3 +1884,23 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 .market-base
   position: relative
   min-height: 650px
+
+@media screen1024
+
+  .about-page__circle-wrap
+    height: auto
+    overflow: hidden
+
+  .about-page__circle-wrap__left-text
+    display: block
+    left: 0
+    top: 0
+
+  .about-page__circle-wrap__right-text
+    display: block
+    top: 0
+    left: 0
+
+  .about-page__circle
+    position: static
+    margin-left: 0
