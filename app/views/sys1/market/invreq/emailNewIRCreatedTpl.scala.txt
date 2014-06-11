@@ -1,0 +1,12 @@
+@(mir: MInviteRequest)(implicit ctx: Context)
+
+@* Тело text/plain email-письма для суперюзеров s.io с уведомлением о том, что был создан новый инвайт. *@
+@import ctx._
+
+Подан новый запрос на получение инвайта.
+
+Тип: @Messages("mir.type." + mir.reqType)
+Указанная компания: @mir.meta.company
+
+Полное содержимое запроса:
+@ctx.myAudienceUrl@routes.SysMarketInvReq.showIR(mir.id.get)

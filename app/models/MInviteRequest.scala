@@ -266,6 +266,7 @@ object MirMeta {
   val AUDIENCE_DESCR_ESFN = "audDescr"
   val HUMAN_TRAFFIC_ESFN  = "humanTraffic"
   val ADDRESS_ESFN        = "addr"
+  val EMAIL_ESFN          = "email"
   val SITE_URL_ESFN       = "siteUrl"
   val OFFICE_PHONE_ESFN   = "oPhone"
   val INFO_ESFN           = "info"
@@ -276,7 +277,7 @@ object MirMeta {
 
   def empty = {
     val str0 = ""
-    MirMeta(str0, str0, str0)
+    MirMeta(str0, str0, str0, str0)
   }
 
   def generateMappingProps: List[DocField] = List(
@@ -317,6 +318,7 @@ case class MirMeta(
   var company: String,
   var address: String,
   var officePhone: String,
+  var email: String,
   var audienceDescr: Option[String] = None,
   var humanTraffic: Option[String] = None,
   var siteUrl: Option[String] = None,
@@ -333,6 +335,7 @@ case class MirMeta(
       COMPANY_ESFN          -> JsString(company),
       ADDRESS_ESFN          -> JsString(address),
       OFFICE_PHONE_ESFN     -> JsString(officePhone),
+      EMAIL_ESFN            -> JsString(email),
       DATE_CREATED_ESFN     -> date2JsStr(dateCreated)
     )
     if (siteUrl.isDefined)

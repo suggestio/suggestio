@@ -51,8 +51,9 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
   /** Отрендерить страницу с формой добавления новой компании. */
-  def companyAddForm = IsSuperuser { implicit request =>
-    Ok(company.companyAddFormTpl(companyFormM))
+  def companyAddForm(c: Option[MCompany]) = IsSuperuser { implicit request =>
+    val form = c.fold(companyFormM) { mc => companyFormM fill mc.name }
+    Ok(company.companyAddFormTpl(form))
   }
 
   /** Самбит формы добавления новой компании. */
@@ -357,7 +358,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
               }
             }
             Redirect(routes.SysMarket.showAdnNode(adnId))
-              .flashing("succes" -> s"Создан узел сети: $adnId")
+              .flashing("success" -> s"Создан узел сети: $adnId")
           }
         }
       }

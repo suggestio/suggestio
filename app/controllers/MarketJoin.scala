@@ -1,6 +1,6 @@
 package controllers
 
-import util.PlayMacroLogsImpl
+import util.{ContextImpl, PlayMacroLogsImpl}
 import util.acl.MaybeAuth
 import util.SiowebEsUtil.client
 import models._
@@ -8,6 +8,9 @@ import views.html.market.join._
 import util.FormUtil._
 import play.api.data._, Forms._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import com.typesafe.plugin.{use, MailerPlugin}
+import play.api.Play.{current, configuration}
+import play.api.mvc.RequestHeader
 
 /**
  * Suggest.io
@@ -72,17 +75,18 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
         "address"       -> addressM,
         "siteUrl"       -> urlStrOptM,
         "phone"         -> phoneM,
-        "payReqs"       -> optional(text(maxLength = 2048))
+        "payReqs"       -> optional(text(maxLength = 2048)),
+        "email"         -> email
       )
-      {(company, audienceDescr, humanTraffic, address, siteUrl, phone, payReqs) =>
+      {(company, audienceDescr, humanTraffic, address, siteUrl, phone, payReqs, email1) =>
         MirMeta(
           company = company, audienceDescr = audienceDescr, humanTraffic = humanTraffic,
-          address = address, siteUrl = siteUrl, officePhone = phone
+          address = address, siteUrl = siteUrl, officePhone = phone, email = email1
         )
       }
       {mirMeta =>
         import mirMeta._
-        Some((company, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs))
+        Some((company, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, mirMeta.email))
       }
     )
   }
@@ -102,7 +106,10 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
       },
       {mirMeta =>
         val mir = MInviteRequest(reqType = InviteReqTypes.Wifi, meta = mirMeta, joinAnswers = Some(smja))
-        mir.save.map { mirSavedRdr }
+        mir.save.map { irId =>
+          sendEmailNewIR(irId, mir)
+          mirSavedRdr(irId)
+        }
       }
     )
   }
@@ -128,17 +135,18 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
         "floor"     -> floorOptM,
         "section"   -> sectionOptM,
         "siteUrl"   -> urlStrOptM,
-        "phone"     -> phoneM
+        "phone"     -> phoneM,
+        "email"     -> email
       )
-      {(company, info, address, floor, section, siteUrl, phone) =>
+      {(company, info, address, floor, section, siteUrl, phone, email1) =>
         MirMeta(
           company = company, info = info, address = address, floor = floor, section = section,
-          siteUrl = siteUrl, officePhone = phone
+          siteUrl = siteUrl, officePhone = phone, email = email1
         )
       }
       {mirMeta =>
         import mirMeta._
-        Some((company, info, address, floor, section, siteUrl, officePhone))
+        Some((company, info, address, floor, section, siteUrl, officePhone, mirMeta.email))
       }
     )
   }
@@ -162,8 +170,31 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
       },
       {mirMeta =>
         val mir = MInviteRequest(reqType = InviteReqTypes.Adv, meta = mirMeta)
-        mir.save.map { mirSavedRdr }
+        mir.save.map { irId =>
+          sendEmailNewIR(irId, mir)
+          mirSavedRdr(irId)
+        }
       }
+    )
+  }
+
+
+  /** Отправить письмецо администрации s.io с ссылой на созданный запрос. */
+  private def sendEmailNewIR(irId: String, mir0: MInviteRequest)(implicit request: RequestHeader) {
+    val suEmailsConfKey = "market.join.request.notify.superusers.emails"
+    val emails: Seq[String] = configuration.getStringSeq(suEmailsConfKey).getOrElse {
+      // Нет ключа, уведомить разработчика, чтобы он настроил конфиг.
+      error("""I don't know, whom to notify about new invite request. Add setting into your application.conf:\n  " + suEmailsConfKey + " = ["support@sugest.io"]""")
+      Seq("support@suggest.io")
+    }
+    val mailMsg = use[MailerPlugin].email
+    mailMsg.setRecipient(emails : _*)
+    mailMsg.setFrom("no-reply@suggest.io")
+    mailMsg.setSubject("Новый запрос на подключение | Suggest.io")
+    val ctx = ContextImpl()
+    val mir1 = mir0.copy(id = Some(irId))
+    mailMsg.send(
+      bodyText = views.txt.sys1.market.invreq.emailNewIRCreatedTpl(mir1)(ctx)
     )
   }
 

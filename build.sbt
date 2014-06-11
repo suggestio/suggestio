@@ -100,5 +100,6 @@ net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 routesImport ++= Seq(
   "models._",
-  "util.qsb._"
+  "util.qsb._",
+  "util.qsb.QSBs._"
 )
