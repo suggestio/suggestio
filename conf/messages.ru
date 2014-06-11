@@ -116,6 +116,8 @@ lk.sl.m=Размещение на первом экране
 
 nth.floor={0}-й этаж
 
+username.unknown=Кто здесь?
+
 error.no.money=Недостаточно средств
 error.invalid=Неверное значение
 error.invalid.java.util.Date=Неверный формат даты

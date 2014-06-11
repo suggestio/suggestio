@@ -1,18 +1,21 @@
 @(lf: Option[Form[_]] = None)(implicit ctx: util.Context)
 
+@import ctx._
+
 @marketBase("Добро пожаловать", lf){
-
-
 
   <div class="header-wrap header-wrap_login-page">
 
     <div class="center">
 
-      @*if(!ctx.isAuth) {*@
-
-      <a  href="#emailPwLoginForm" class="simple-green-btn f-right login-page_enter_btn js-btn">Вход</a>
-
-
+      @if(ctx.isAuth) {
+        @* Юзер залогинен. Нужно отобразить кнопку на его ЛК. *@
+        <a href="@routes.Ident.rdrUserSomewhere" class="simple-green-btn f-right login-page_enter_btn js-btn">
+          @ctx.usernameOpt.getOrElse(Messages("username.unknown"))
+        </a>
+      } else {
+        <a href="#emailPwLoginForm" class="simple-green-btn f-right login-page_enter_btn js-btn">Вход</a>
+      }
 
     </div>
 
@@ -23,7 +26,6 @@
     <div class="body">
 
       <div class="login-page_content">
-
 
         <a href="@routes.MarketLk.lkIndex" class="login-page__logo"></a>
 
@@ -49,11 +51,6 @@
           <p>
             Новое рекламное пространство
           </p>
-
-          <!--a href="#" class="login-page__gray-btn">
-            <span class="btn"></span>
-            ПРОЙДИТЕ ОПРОС
-          </a>-->
 
         </div>
 

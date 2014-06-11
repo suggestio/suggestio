@@ -370,6 +370,9 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
     )
   }
 
+  def rdrUserSomewhere = IsAuth.async { implicit request =>
+    redirectUserSomewhere(request.pwOpt.get.personId)
+  }
 
   /** Сгенерить редирект куда-нибудь для указанного юзера. */
   private def redirectUserSomewhere(personId: String) = {
