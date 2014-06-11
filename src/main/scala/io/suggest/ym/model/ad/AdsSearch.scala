@@ -12,9 +12,13 @@ import io.suggest.model.EsModelMinimalStaticT
 import io.suggest.ym.model.common.EMReceivers
 import io.suggest.util.SioConstants
 import io.suggest.util.SioRandom.rnd
+import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
+import scala.collection.JavaConversions._
 
 /** Статичная утиль для генерации поисковых ES-запросов. */
 object AdsSearch {
+
+  val IDS_SCORE_MVEL_FUN = "if (ids contains doc['_id']) { _score * incr } else { _score }"
 
   /**
    * Скомпилировать из аргументов запроса сам ES-запрос со всеми фильтрами и т.д.
@@ -24,7 +28,7 @@ object AdsSearch {
   def prepareEsQuery(adSearch: AdsSearchArgsT): QueryBuilder = {
     import adSearch._
     // Собираем запрос в функциональном стиле, иначе получается многовато вложенных if-else.
-    adSearch.qOpt.flatMap[QueryBuilder] { q =>
+    val query3 = adSearch.qOpt.flatMap[QueryBuilder] { q =>
       // Собираем запрос текстового поиска.
       // TODO Для коротких запросов следует искать по receiverId и фильтровать по qStr (query-filter + match-query).
       TextQueryV2Util.queryStr2QueryMarket(q, s"${SioConstants.FIELD_ALL}")
@@ -109,6 +113,17 @@ object AdsSearch {
       // Сборка реквеста не удалась вообще: все параметры не заданы. Просто возвращаем все объявы в рамках индекса.
       QueryBuilders.matchAllQuery()
     }
+    // Если указаны id-шники, которые должны быть в начале выдачи, то добавить обернуть всё в ипостась Custom Score Query.
+    val query4: QueryBuilder = if (adSearch.forceFirstIds.isEmpty) {
+      query3
+    } else {
+      // Запрошено, чтобы указанные id были в начале списка результатов.
+      val scoreFun = ScoreFunctionBuilders.scriptFunction(IDS_SCORE_MVEL_FUN)
+        .param("ids", new java.util.ArrayList[String]().addAll(adSearch.forceFirstIds) )
+        .param("incr", 100)
+      QueryBuilders.functionScoreQuery(query3, scoreFun)
+    }
+    query4
   }
 
 }
@@ -138,6 +153,8 @@ trait AdsSearchArgsT {
 
   /** Абсолютный сдвиг в результатах (постраничный вывод). */
   def offset: Int
+
+  def forceFirstIds: Seq[String]
 }
 
 
