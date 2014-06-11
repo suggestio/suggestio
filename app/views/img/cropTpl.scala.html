@@ -24,6 +24,10 @@
     @form(routes.Img.imgCropSubmit) {
       <input type="hidden" name="imgId" value="@imgId"/>
       <input type="hidden" name="crop" value="@cropOpt.map(_.toCropStr)"/>
+
+      @* TODO в value, судя по всему, нужно что-то добавить *@
+      <input type="hidden" name="resize" value=""/>
+
       @markerOpt.map { marker =>
         <input type="hidden" name="marker" value="@marker"/>
       }

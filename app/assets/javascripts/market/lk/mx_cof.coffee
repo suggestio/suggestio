@@ -941,6 +941,8 @@ market =
         tw = parseInt this.crop_tool_dom.attr 'data-width'
         th = parseInt this.crop_tool_dom.attr 'data-height'
 
+        resize = rw*2 + 'x' + rh*2
+
         if sw / sh > tw / th
           ch = sh
           cw = ch * tw / th
@@ -952,6 +954,7 @@ market =
         crop_size = Math.round( cw ) + 'x' + Math.round( ch )
 
         jQuery('input[name=crop]', form_dom).val( crop_size + target_offset )
+        jQuery('input[name=resize]', form_dom).val( resize )
 
         form_dom1 = $('#imgCropTool form')
         image_name = this.image_name
