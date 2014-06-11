@@ -475,7 +475,7 @@ siomart =
     nav_pointer_size : 14
     scroll_or_move : undefined
 
-    show_block_by_index : ( block_index ) ->
+    show_block_by_index : ( block_index, direction ) ->
 
       if typeof this.sm_blocks == 'undefined'
         return false
@@ -487,11 +487,17 @@ siomart =
       else
         siomart.node_offers_popup._block_container.style['transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
 
+      if direction == '+'
+        siomart.utils.ge('sioMartNodeOffers_' + ( block_index + 1 ) ).style.visibility = 'visible';
+        siomart.utils.ge('sioMartNodeOffers_' + ( block_index - 2 ) ).style.visibility = 'hidden';
+
+      if direction == '-'
+        siomart.utils.ge('sioMartNodeOffers_' + ( block_index - 1 ) ).style.visibility = 'visible';
+        siomart.utils.ge('sioMartNodeOffers_' + ( block_index + 2 ) ).style.visibility = 'hidden';
 
       siomart.node_offers_popup._block_container.setAttribute 'data-x-offset', -cbca_grid.ww*block_index
 
     next_block : () ->
-
       console.log 'next_block'
 
       if typeof this.active_block_index == 'undefined'
@@ -501,7 +507,7 @@ siomart =
 
       if next_index == this.sm_blocks.length
         next_index = next_index-1
-      this.show_block_by_index next_index
+      this.show_block_by_index next_index, '+'
 
     prev_block : () ->
 
@@ -509,11 +515,10 @@ siomart =
         return false
 
       prev_index = this.active_block_index - 1
-
       if prev_index < 0
         prev_index = 0
 
-      this.show_block_by_index prev_index
+      this.show_block_by_index prev_index, '-'
 
     fit : () ->
 
@@ -620,13 +625,15 @@ siomart =
 
       i = 0
 
-      if typeof this.requested_ad_id == 'undefined'
-        this.active_block_index = 0
-      else
-        for _b in this.sm_blocks
-          if _b.getAttribute('data-mad-id') == this.requested_ad_id
-            this.show_block_by_index i
-          i++
+      this.active_block_index = 0
+
+      #if typeof this.requested_ad_id == 'undefined'
+      #
+      #else
+      #  for _b in this.sm_blocks
+      #    if _b.getAttribute('data-mad-id') == this.requested_ad_id
+      #      this.show_block_by_index i
+      #    i++
 
       siomart.utils.addClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
 

@@ -18,7 +18,7 @@
       <div class="sio-mart-node-offers-window__root-container" id="sioMartNodeOffersBlockContainer">
       @if(!ads.isEmpty) {
         @ads.zipWithIndex.map { case (mad, index) =>
-          <div class="sio-mart-node-offers-window__single-ad-container js-nop-single-ad-container">
+          <div class="sio-mart-node-offers-window__single-ad-container js-nop-single-ad-container" @if( index > 1 ){ style="visibility: hidden;" } id="sioMartNodeOffers_@index">
             <div class="sm-flex sm-overflow-scrolling">
               <div class="sm-flex sm-overflow-scrolling">
                 <div class="sm-flex" style="margin-bottom: -1px; height: 800px;">
