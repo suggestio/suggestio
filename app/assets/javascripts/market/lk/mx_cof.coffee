@@ -147,6 +147,8 @@ CbcaCommon = () ->
     ## WIFI FORM start ##
     #####################
 
+    $('.js-quiz__checkbox').removeAttr('disabled')
+
     $(document).on 'click', '.js-quiz__checkbox', (e)->
       $this = $(this)
       nextSelector = $this.attr('data-next')
