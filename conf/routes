@@ -31,6 +31,7 @@ POST /ident/pw/r/reset/:eActId          controllers.Ident.pwResetSubmit(eActId)
 # ident: Сменить пароль
 GET  /ident/pw/change                   controllers.Ident.changePassword
 POST /ident/pw/change                   controllers.Ident.changePasswordSubmit
+GET  /ident/rdr/me/somewhere            controllers.Ident.rdrUserSomewhere
 
 ## Callback'и инсталляторов и валидаторов сайтов.
 POST /js/add_domain                             controllers.Js.addDomain

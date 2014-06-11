@@ -36,22 +36,9 @@ object MarketLk extends SioController with EmailPwSubmit with PlayMacroLogsImpl 
 
   /** Юзер заходит в /market (или на market.suggest.io). Он видит страницу с описанием и кнопку для логина.
     * Если юзер уже залогинен и у него есть магазины/тц, то его надо переправить в ЛК. */
-  def lkIndex = MaybeAuth.async { implicit request =>
-    request.pwOpt match {
-      case Some(pw) =>
-        getMarketRdrCallFor(pw.personId) map {
-          case Some(call) => Redirect(call)
-          // Юзер залогинен, но попал в маркет, где у него нет прав. Отобразить обычную форму.
-          case None => renderDfltPage
-        }
-
-      case None => renderDfltPage
-    }
+  def lkIndex = MaybeAuth { implicit request =>
+    Ok(indexTpl(Some(Ident.emailPwLoginFormM)))
   }
-
-  /** Рендер дефолтовой страницы. */
-  private def renderDfltPage(implicit ctx: util.Context) = Ok(indexTpl(Some(Ident.emailPwLoginFormM)))
-
 
   /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */
   def getMarketRdrCallFor(personId: String): Future[Option[Call]] = {
