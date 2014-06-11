@@ -18,6 +18,7 @@ import io.suggest.ym.model.stat.{MAdStat, AdStatActions}
 import io.suggest.ym.model.common.IBlockMeta
 import play.api.Play.{current, configuration}
 import play.api.templates.HtmlFormat
+import io.suggest.model.EsModelMinimalT
 
 /**
  * Suggest.io
@@ -109,13 +110,14 @@ object Market extends SioController with PlayMacroLogsImpl {
 
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
-  def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
+  def findAds(adSearch: AdSearch, firstAdIdOpt: Option[String]) = MaybeAuth.async { implicit request =>
+    val isProducerAds = !adSearch.producerIds.isEmpty
     // TODO Использовать multiget + кеш.
     val producersFut = Future.traverse(adSearch.producerIds) { MAdnNodeCache.getByIdCached }
       .map { _.flatMap(_.toList) }
     val (jsAction, adSearch2) = if (adSearch.qOpt.isDefined) {
       "searchAds" -> adSearch
-    } else if (!adSearch.producerIds.isEmpty) {
+    } else if (isProducerAds) {
       //val _adSearch = adSearch.copy(levels = AdShowLevels.LVL_MEMBER :: adSearch.levels)
       "producerAds" -> adSearch
     } else if (!adSearch.catIds.isEmpty) {
@@ -130,9 +132,17 @@ object Market extends SioController with PlayMacroLogsImpl {
       warn("findAds(): strange search request: " + adSearch)
       "findAds" -> adSearch
     }
-
+    val madsFut = MAd.searchAds(adSearch2)
+      .map { mads =>
+        // Для producer ads надо не группировать узкие, а выносить firstAdIdOpt на первое место.
+        if (isProducerAds) {
+          firstAdIdOpt.fold(mads) { moveToHead(mads, _) }
+        } else {
+          groupNarrowAds(mads)
+        }
+      }
     for {
-      mads      <- MAd.searchAds(adSearch2).map(groupNarrowAds)
+      mads      <- madsFut
       producers <- producersFut
     } yield {
       // TODO Хвост списка продьюсеров дропается, для рендера используется только один. Надо бы в шаблоне отработать эту ситуацию.
@@ -215,6 +225,16 @@ object Market extends SioController with PlayMacroLogsImpl {
     Ok( Jsonp(JSONP_CB_FUN, json) )
   }
 
+
+  private def moveToHead[T <: EsModelMinimalT](src: Seq[T], headId: String): Seq[T] = {
+    val inx = src.indexWhere { _.id.exists(_ == headId) }
+    if (inx <= 0) {
+      src
+    } else {
+      val e = src(inx)
+      e :: src.drop(inx).toList
+    }
+  }
 
   /**
    * Сгруппировать "узкие" карточки, чтобы они были вместе.

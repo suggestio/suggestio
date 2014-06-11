@@ -290,7 +290,8 @@ object MirMeta {
     FieldString(INFO_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
     FieldString(FLOOR_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
     FieldString(SECTION_ESFN, index = FieldIndexingVariants.no, include_in_all = true),
-    FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
+    FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
+    FieldString(EMAIL_ESFN, index = FieldIndexingVariants.no, include_in_all = true)
   )
 
   def deserialize(metaRaw: ju.Map[_,_]): MirMeta = {
@@ -307,6 +308,7 @@ object MirMeta {
       case (FLOOR_ESFN, floorRaw)               => meta2.floor = Option(stringParser(floorRaw))
       case (SECTION_ESFN, sectionRaw)           => meta2.section = Option(stringParser(sectionRaw))
       case (DATE_CREATED_ESFN, dcRaw)           => meta2.dateCreated = dateTimeParser(dcRaw)
+      case (EMAIL_ESFN, emRaw)                  => meta2.email = stringParser(emRaw)
     }
     meta2
   }

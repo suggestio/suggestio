@@ -167,7 +167,7 @@ GET  /market/index_all/:adnId           controllers.Market.allMyAdsIndex(adnId)
 GET  /market/site/:adnId                controllers.Market.demoWebSite(adnId)
 GET  /market/site_all/:adnId            controllers.Market.allMyAdsSite(adnId)
 GET  /market/script/:adnId              controllers.Market.nodeSiteScript(adnId)
-GET  /market/ads                        controllers.Market.findAds(a: AdSearch)
+GET  /market/ads                        controllers.Market.findAds(a: AdSearch, firstAdId: Option[String] ?= None)
 POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)
 
 # market+join: Присоединение к sio-market.
