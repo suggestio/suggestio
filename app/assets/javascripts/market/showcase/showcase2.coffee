@@ -528,7 +528,10 @@ siomart =
         else
           siomart.utils.removeClass _b, 'double-size'
 
-        _b.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
+        console.log _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode
+        _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
+
+        _b.parentNode.parentNode.parentNode.parentNode.style.height = cbca_grid.wh + 'px'
 
         if cbca_grid.ww >= 660
           _b.parentNode.parentNode.parentNode.style.width = _block_width*2 + 11*2 + 'px'
