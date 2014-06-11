@@ -486,6 +486,7 @@ siomart =
         siomart.node_offers_popup._block_container.style['transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
 
       siomart.node_offers_popup._block_container.setAttribute 'data-x-offset', -cbca_grid.ww*block_index
+
       if block_index == this.active_block_index
         return false
 
@@ -493,10 +494,14 @@ siomart =
 
       if direction == '+'
         siomart.utils.ge('sioMartNodeOffers_' + ( block_index + 1 ) ).style.visibility = 'visible';
-        siomart.utils.ge('sioMartNodeOffers_' + ( block_index - 2 ) ).style.visibility = 'hidden';
+
+        if block_index >= 2
+          siomart.utils.ge('sioMartNodeOffers_' + ( block_index - 2 ) ).style.visibility = 'hidden';
 
       if direction == '-'
-        siomart.utils.ge('sioMartNodeOffers_' + ( block_index - 1 ) ).style.visibility = 'visible';
+        if block_index >= 1
+          siomart.utils.ge('sioMartNodeOffers_' + ( block_index - 1 ) ).style.visibility = 'visible';
+
         siomart.utils.ge('sioMartNodeOffers_' + ( block_index + 2 ) ).style.visibility = 'hidden';
 
     next_block : () ->
@@ -586,6 +591,8 @@ siomart =
       c_x_offset = siomart.node_offers_popup._block_container.getAttribute 'data-x-offset'
       c_x_offset = parseInt c_x_offset
 
+      console.log 'touchmove'
+
       if vendor_prefix.js == 'Webkit'
         siomart.node_offers_popup._block_container.style['-webkit-transform'] = 'translate3d(' + parseInt( c_x_offset - delta_x ) + 'px, 0px, 0px)'
       else
@@ -596,7 +603,7 @@ siomart =
       this.last_x = ex
 
     touchend_event : ( event ) ->
-
+      console.log 'touchstart'
       siomart.utils.addClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
 
       delete siomart.node_offers_popup.tstart_x
@@ -620,22 +627,13 @@ siomart =
       this.root
       this._block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
       this._container = siomart.utils.ge('sioMartNodeOffers')
-
+      
       this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
 
       this.fit()
-
       i = 0
 
       this.active_block_index = 0
-
-      #if typeof this.requested_ad_id == 'undefined'
-      #
-      #else
-      #  for _b in this.sm_blocks
-      #    if _b.getAttribute('data-mad-id') == this.requested_ad_id
-      #      this.show_block_by_index i
-      #    i++
 
       siomart.utils.addClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
 
