@@ -76,7 +76,7 @@
 
   </div>
 
-  <div class="body-wrap body-wrap_login-page">
+  <div class="body-wrap wave-pattern">
 
     <div class="title-wrap">
 
@@ -90,158 +90,162 @@
     </div>
 
 
-      <div class="body ovh">
+    <div class="body">
 
-      @form(routes.MarketJoin.wifiJoinQuestionsFormSubmit) {
-        @* Любое поле может сабмиттить на сервер пустое/отсутсвующее значение, обозначающее "не знаю". *@
+      <div class="ovh">
 
-        <div class="wifi-page__left-column">
-          @* Левая половина ответов (в дизайне). *@
-          @yesNoInputs("haveWifi", "#fullCoverage", "#landlineInet", 0)
-          @yesNoInputs("fullCoverage", "#knownEquipment", "#text2", 1)
-          @yesNoInputs("knownEquipment", "#altFw", "#text2", 2)
-          @yesNoInputs("altFw", "#isWrtFw", "#text2", 3)
-          @yesNoInputs("isWrtFw", "#text3", "#text2", 4)
+        @form(routes.MarketJoin.wifiJoinQuestionsFormSubmit) {
+          @* Любое поле может сабмиттить на сервер пустое/отсутсвующее значение, обозначающее "не знаю". *@
+
+          <div class="wifi-page__left-column">
+            @* Левая половина ответов (в дизайне). *@
+            @yesNoInputs("haveWifi", "#fullCoverage", "#landlineInet", 0)
+            @yesNoInputs("fullCoverage", "#knownEquipment", "#text2", 1)
+            @yesNoInputs("knownEquipment", "#altFw", "#text2", 2)
+            @yesNoInputs("altFw", "#isWrtFw", "#text2", 3)
+            @yesNoInputs("isWrtFw", "#text3", "#text2", 4)
 
 
-          @* Правая половина ответов. *@
-          @yesNoInputs("landlineInet", "#smallRoom", "#text2", 1)
-          @yesNoInputs("smallRoom" , "#audienceSz", "#text2", 2)
+            @* Правая половина ответов. *@
+            @yesNoInputs("landlineInet", "#smallRoom", "#text2", 1)
+            @yesNoInputs("smallRoom" , "#audienceSz", "#text2", 2)
 
-          @defining( "audienceSz" ) { fn =>
-            @qsn(fn, 3) {
-              @defining( qf(fn).value ) { auSzopt =>
-                <table cellspacing="0" cellpadding="0">
-                  <tr>
-                    @AudienceSizes.values.zipWithIndex.map { case(auSzVariant, i) =>
-                      <td class="quiz__td">
-                        <div class="quiz__checkbox-wrap ovh">
-                          <label>
-                           <input class="js-quiz__checkbox one-checkbox" data-next="#text@i" type="checkbox" data-name="@fn" name="@fn" value="@auSzVariant"/>
-                            @Messages(s"join.qsn.$fn.$auSzVariant")
-                          </label>
-                        </div>
-                      </td>
-
-                      @if(i < 2) {
+            @defining( "audienceSz" ) { fn =>
+              @qsn(fn, 3) {
+                @defining( qf(fn).value ) { auSzopt =>
+                  <table cellspacing="0" cellpadding="0">
+                    <tr>
+                      @AudienceSizes.values.zipWithIndex.map { case(auSzVariant, i) =>
                         <td class="quiz__td">
-                          <div class="border-line-vertical f-left"></div>
+                          <div class="quiz__checkbox-wrap ovh">
+                            <label>
+                             <input class="js-quiz__checkbox one-checkbox" data-next="#text@i" type="checkbox" data-name="@fn" name="@fn" value="@auSzVariant"/>
+                              @Messages(s"join.qsn.$fn.$auSzVariant")
+                            </label>
+                          </div>
                         </td>
-                      }
 
-                    }
-                  </tr>
-                </table>
+                        @if(i < 2) {
+                          <td class="quiz__td">
+                            <div class="border-line-vertical f-left"></div>
+                          </td>
+                        }
+
+                      }
+                    </tr>
+                  </table>
+                }
               }
             }
-          }
 
 
 
-        </div>
-
-        <div class="wifi-page__right-column">
-
-          <div id="text0" class="js-quiz__result hidden" style="padding-top: 122px;">
-            <img src="/assets/images/market/lk/router1.png" style="margin-left: 30px;" />
-            <p class="paragraph-13">
-              <strong>
-                Беспроводной маршрутизатор
-              </strong>
-              <br/>
-              <strong class="font-16">
-                Microtik RB951Ui-2HnD
-              </strong>
-            </p>
-            <p class="paragraph-13">
-              <strong>Купить и настроить маршрутизатор
-                можно как в нашей компании,
-                так и самостоятельно. В варианте
-                покупки в нашей компании вы
-                получаете уже настроенный
-                маршрутизатор.</strong> (Стоимость
-              устройства с настройкой – 9500 руб.)
-            </p>
-            <p class="paragraph-13">
-              <strong>
-                Если вы приобретаете и
-                настраиваете устройство
-                самостоятельно, высылается
-                бесплатная инструкция по
-                настройке.
-              </strong>
-            </p>
           </div>
 
-          <div id="text1" class="js-quiz__result hidden">
-            <img src="/assets/images/market/lk/router2.png" style="margin-left: -25px;"/>
-            <p class="paragraph-13">
-              <strong>
-                Беспроводной маршрутизатор
-              </strong>
-              <br/>
-              <strong class="font-16">
-                Microtik RB2011UiAS-2HnD-IN
-              </strong>
-            </p>
-            <p class="paragraph-13">
-              <strong>Купить и настроить маршрутизатор
-                можно как в нашей компании,
-                так и самостоятельно. В варианте
-                покупки в нашей компании вы
-                получаете уже настроенный
-                маршрутизатор.</strong> (Стоимость
-              устройства с настройкой – 12500 руб.)
-            </p>
-            <p class="paragraph-13">
-              <strong>
-                Если вы приобретаете и
-                настраиваете устройство
-                самостоятельно, высылается
-                бесплатная инструкция по
-                настройке.
-              </strong>
-            </p>
+          <div class="wifi-page__right-column">
+
+            <div id="text0" class="js-quiz__result hidden" style="padding-top: 122px;">
+              <img src="/assets/images/market/lk/router1.png" style="margin-left: 30px;" />
+              <p class="paragraph-13">
+                <strong>
+                  Беспроводной маршрутизатор
+                </strong>
+                <br/>
+                <strong class="font-16">
+                  Microtik RB951Ui-2HnD
+                </strong>
+              </p>
+              <p class="paragraph-13">
+                <strong>Купить и настроить маршрутизатор
+                  можно как в нашей компании,
+                  так и самостоятельно. В варианте
+                  покупки в нашей компании вы
+                  получаете уже настроенный
+                  маршрутизатор.</strong> (Стоимость
+                устройства с настройкой – 9500 руб.)
+              </p>
+              <p class="paragraph-13">
+                <strong>
+                  Если вы приобретаете и
+                  настраиваете устройство
+                  самостоятельно, высылается
+                  бесплатная инструкция по
+                  настройке.
+                </strong>
+              </p>
+            </div>
+
+            <div id="text1" class="js-quiz__result hidden">
+              <img src="/assets/images/market/lk/router2.png" style="margin-left: -25px;"/>
+              <p class="paragraph-13">
+                <strong>
+                  Беспроводной маршрутизатор
+                </strong>
+                <br/>
+                <strong class="font-16">
+                  Microtik RB2011UiAS-2HnD-IN
+                </strong>
+              </p>
+              <p class="paragraph-13">
+                <strong>Купить и настроить маршрутизатор
+                  можно как в нашей компании,
+                  так и самостоятельно. В варианте
+                  покупки в нашей компании вы
+                  получаете уже настроенный
+                  маршрутизатор.</strong> (Стоимость
+                устройства с настройкой – 12500 руб.)
+              </p>
+              <p class="paragraph-13">
+                <strong>
+                  Если вы приобретаете и
+                  настраиваете устройство
+                  самостоятельно, высылается
+                  бесплатная инструкция по
+                  настройке.
+                </strong>
+              </p>
+            </div>
+
+            <div id="text3" class="hidden js-quiz__result">
+              <p class="blue-text paragraph-13">
+                После небольшой подготовительной
+                работы нашими специалистами у вас
+                будет полноценная Free Wi-Fi зона.
+              </p>
+
+              <a href="#" class="login-page__blue-btn login-page__blue-btn_width-auto js-submit-wrap">
+                <span class="btn"></span>
+                <input type="submit" value="@Messages("WRITE")"/>
+              </a>
+            </div>
+
+            <div id="text2" class="hidden js-quiz__result">
+              <p class="blue-text">
+                Обратитесь к нашим
+                специалистам для
+                детальной проработки
+                сети Wi-Fi.
+              </p>
+              <p class="paragraph-13">
+                Проработаем покрытие,
+                подберём оборудование,
+                произведём настройку.
+              </p>
+
+              <a href="#" class="login-page__blue-btn login-page__blue-btn_width-auto js-submit-wrap">
+                <span class="btn"></span>
+                <input type="submit" value="@Messages("WRITE")"/>
+              </a>
+            </div>
+
+
+
           </div>
 
-          <div id="text3" class="hidden js-quiz__result">
-            <p class="blue-text paragraph-13">
-              После небольшой подготовительной
-              работы нашими специалистами у вас
-              будет полноценная Free Wi-Fi зона.
-            </p>
 
-            <a href="#" class="login-page__blue-btn login-page__blue-btn_width-auto js-submit-wrap">
-              <span class="btn"></span>
-              <input type="submit" value="@Messages("WRITE")"/>
-            </a>
-          </div>
+        }
 
-          <div id="text2" class="hidden js-quiz__result">
-            <p class="blue-text">
-              Обратитесь к нашим
-              специалистам для
-              детальной проработки
-              сети Wi-Fi.
-            </p>
-            <p class="paragraph-13">
-              Проработаем покрытие,
-              подберём оборудование,
-              произведём настройку.
-            </p>
-
-            <a href="#" class="login-page__blue-btn login-page__blue-btn_width-auto js-submit-wrap">
-              <span class="btn"></span>
-              <input type="submit" value="@Messages("WRITE")"/>
-            </a>
-          </div>
-
-
-
-        </div>
-
-
-      }
+      </div>
 
     </div>
 

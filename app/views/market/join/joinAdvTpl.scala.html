@@ -18,7 +18,7 @@
 
   </div>
 
-  <div class="body-wrap body-wrap_login-page">
+  <div class="body-wrap wave-pattern">
 
     <div class="title-wrap">
 
@@ -32,14 +32,18 @@
     </div>
 
 
-    <div class="body ovh">
+    <div class="body">
 
-      @_joinReqFormTpl(
-        jf = jf,
-        btnClass = "blue",
-        submitCall = routes.MarketJoin.joinAdvRequestSubmit,
-        isWifi = false
-      )
+      <div class="ovh">
+
+        @_joinReqFormTpl(
+          jf = jf,
+          btnClass = "blue",
+          submitCall = routes.MarketJoin.joinAdvRequestSubmit,
+          isWifi = false
+        )
+
+      </div>
 
     </div>
 
