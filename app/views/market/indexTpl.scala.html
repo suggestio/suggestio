@@ -10,7 +10,7 @@
 
       @if(ctx.isAuth) {
         @* Юзер залогинен. Нужно отобразить кнопку на его ЛК. *@
-        <a href="@routes.Ident.rdrUserSomewhere" class="simple-green-btn f-right login-page_enter_btn js-btn">
+        <a href="@routes.Ident.rdrUserSomewhere" class="simple-green-btn f-right login-page_enter_btn">
           @ctx.usernameOpt.getOrElse(Messages("username.unknown"))
         </a>
       } else {
