@@ -821,10 +821,12 @@ market =
   init_colorpickers : () ->
     $('.js-custom-color').each () ->
 
+      current_value = $(this).attr 'data-current-value'
+
       cb = ( _this ) ->
         i = Math.random()
         _this.ColorPicker
-      	  color: '#0000ff'
+      	  color: current_value
       	  onShow: (colpkr) ->
       	    $(colpkr).fadeIn(500)
       	  onHide: (colpkr) ->
