@@ -1191,7 +1191,7 @@ market =
         plugins: 'link, textcolor, paste, colorpicker',
         toolbar: ["styleselect | fontsizeselect | alignleft aligncenter alignright | bold italic | colorpicker | link | removeformat" ],
         content_css: '/assets/stylesheets/market/descr.css',
-        fontsize_formats: '18px 22px 26px 30px 34px 38px 42px 46px 50px 54px 58px 62px 66px 70px 74px 80px 84px',
+        fontsize_formats: '10px 12px 14px 16px 18px 22px 26px 30px 34px 38px 42px 46px 50px 54px 58px 62px 66px 70px 74px 80px 84px',
 
         style_formats: [
           {title: 'Favorit Light Cond C Regular', inline: 'span', styles: { 'font-family':'favoritlightcondcregular'}},
