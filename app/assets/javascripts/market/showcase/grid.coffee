@@ -203,6 +203,8 @@ cbca_grid =
   ##############################
   load_blocks : () ->
     cbca_grid.blocks = []
+    cbca_grid.spacers = []
+    cbca_grid.m_spacers = []
     i = 0
     ## TODO : make selector configurable
     for elt in siomart.utils.ge_class document, 'sm-block'
@@ -263,6 +265,8 @@ cbca_grid =
       i++
       cbca_grid.spacers.push block
       cbca_grid.m_spacers = cbca_grid.spacers.slice(0)
+
+    console.log cbca_grid.spacers
 
   init : () ->
     this.blocks_container = document.getElementById 'sioMartIndexGrid'
