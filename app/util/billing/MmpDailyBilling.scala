@@ -135,9 +135,10 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     }
     // Мультипликатор по высоте
     val hmul = mad.blockMeta.height match {
-      case BfHeight.HEIGHT_300 => 1
-      case BfHeight.HEIGHT_460 => 2
-      case BfHeight.HEIGHT_620 => 3
+      case BfHeight.HEIGHT_140 => 1
+      case BfHeight.HEIGHT_300 => 2
+      case BfHeight.HEIGHT_460 => 3
+      case BfHeight.HEIGHT_620 => 4
       case other =>
         warn(logPrefix + "Unexpected block height: " + other)
         1

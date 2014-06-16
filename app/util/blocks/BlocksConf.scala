@@ -410,7 +410,7 @@ object BlocksConf extends Enumeration {
     override def ordering = 1000
     override def template = _block20Tpl
     override def offersCount: Int = 3
-    override def heightBf: BfHeight = super.heightBf.copy(
+    override def heightBf = super.heightBf.copy(
       availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
     )
   }
@@ -479,7 +479,7 @@ object BlocksConf extends Enumeration {
     override def ordering = 1100
     override def template = _block25Tpl
     override def offersCount: Int = 3
-    override def heightBf: BfHeight = super.heightBf.copy(
+    override def heightBf = super.heightBf.copy(
       availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
     )
   }
