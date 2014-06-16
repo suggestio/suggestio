@@ -11,17 +11,6 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * Created: 09.10.13 17:26
  * Description: Убедится, что юзер является авторизованным пользователем. Иначе - отправить на страницу логина или в иное место.
  */
-object IsAuth extends IsAuthAbstract {
-
-  /** Что делать, когда юзер не авторизован? */
-  def onUnauth(req: RequestHeader): Future[Result] = {
-    Future.successful(
-      Results.Redirect(routes.Ident.emailPwLoginForm())
-    )
-  }
-
-}
-
 
 trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
 
@@ -39,9 +28,16 @@ trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
     }
   }
 
-  // Действия, когда персонаж не идентифицирован.
-  def onUnauth(req: RequestHeader): Future[Result]
-
+  /** Что делать, когда юзер не авторизован? */
+  def onUnauth(req: RequestHeader): Future[Result] = {
+    Future.successful(
+      Results.Redirect(routes.Ident.emailPwLoginForm())
+    )
+  }
 }
 
 
+object IsAuth extends IsAuthAbstract with ExpireSession[AbstractRequestWithPwOpt]
+
+/** IsAuth, но без session expire. Пригодится при обслуживании статического контента, связанного со страницей. */
+object IsAuthNSE extends IsAuthAbstract

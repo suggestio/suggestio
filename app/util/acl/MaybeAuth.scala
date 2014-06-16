@@ -2,7 +2,6 @@ package util.acl
 
 import play.api.mvc._
 import scala.concurrent.Future
-import util.PlayMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
@@ -11,9 +10,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * Created: 09.10.13 15:10
  * Description: ActionBuilder для определения залогиненности юзера.
  */
-object MaybeAuth extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
-
-  import LOGGER._
+trait MaybeAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
 
   /**
    * Вызывается генератор экшена в билдере.
@@ -32,5 +29,8 @@ object MaybeAuth extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroL
 
 }
 
+object MaybeAuth extends MaybeAuthAbstract with ExpireSession[AbstractRequestWithPwOpt]
 
-
+/** Тоже самое, что MaybeAuth, но без Session expire. Полезно при обслуживании статического контента,
+  * связанного со страницей. */
+object MaybeAuthNds extends MaybeAuthAbstract
