@@ -119,7 +119,13 @@ object Market extends SioController with PlayMacroLogsImpl {
       "searchAds" -> adSearch
     } else if (isProducerAds) {
       //val _adSearch = adSearch.copy(levels = AdShowLevels.LVL_MEMBER :: adSearch.levels)
-      "producerAds" -> adSearch
+      // Убираем forceFirstIds, т.к. он не пашет так, как нужно.
+      val _adSearch = if (adSearch.forceFirstIds.isEmpty) {
+        adSearch
+      } else {
+        adSearch.copy(forceFirstIds = Nil)
+      }
+      "producerAds" -> _adSearch
     } else if (!adSearch.catIds.isEmpty) {
       val _adSearch = adSearch.copy(levels = AdShowLevels.LVL_MEMBERS_CATALOG :: adSearch.levels)
       "findAds" -> _adSearch
@@ -132,13 +138,28 @@ object Market extends SioController with PlayMacroLogsImpl {
       warn("findAds(): strange search request: " + adSearch)
       "findAds" -> adSearch
     }
+    val firstAdsFut = if (isProducerAds) {
+      MAd.multiGet(adSearch.forceFirstIds)
+        .map { _.filter {
+          mad => adSearch.producerIds contains mad.producerId
+        } }
+    } else {
+      Future successful Nil
+    }
     val madsFut: Future[Seq[MAd]] = MAd.searchAds(adSearch2)
-      .map { mads =>
+      .flatMap { mads =>
         // Для producer ads надо не группировать узкие, а выносить firstAdIdOpt на первое место.
         if (isProducerAds) {
-          mads
+          firstAdsFut map { firstAds =>
+            val firstAdsIds = firstAds.map(_.id.get)
+            // Если в mads, которые получились в результате поиска, уже содержаться те объявы, которые есть в firstAds, то выкинуть их из хвоста.
+            val mads1 = mads filter {
+              mad => !(firstAdsIds contains mad.id.get)
+            }
+            firstAds ++ mads1
+          }
         } else {
-          groupNarrowAds(mads)
+          Future successful groupNarrowAds(mads)
         }
       }
     for {
