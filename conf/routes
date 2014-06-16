@@ -17,8 +17,6 @@ GET  /thumb/get/$dkey<[-_\w\d~.]+>/$imageId<[-_\w\d]+>     controllers.Img.getTh
 GET  /search/site                       controllers.Search.siteSearchGET
 
 # ident: логины/логауты
-GET  /login2/persona                    controllers.Ident.persona
-POST /login2/persona                    controllers.Ident.persona_submit
 GET  /login2/email_pw                   controllers.Ident.emailPwLoginForm
 POST /login2/email_pw                   controllers.Ident.emailPwLoginFormSubmit
 GET  /logout2                           controllers.Ident.logout

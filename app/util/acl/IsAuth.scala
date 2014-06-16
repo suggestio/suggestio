@@ -16,7 +16,7 @@ object IsAuth extends IsAuthAbstract {
   /** Что делать, когда юзер не авторизован? */
   def onUnauth(req: RequestHeader): Future[Result] = {
     Future.successful(
-      Results.Redirect(routes.Ident.persona())
+      Results.Redirect(routes.Ident.emailPwLoginForm())
     )
   }
 
