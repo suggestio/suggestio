@@ -778,8 +778,8 @@ siomart =
   ## картинка приветствия торгового центра
   ########################################
   welcome_ad :
-    hide_timeout : 2000
-    fadeout_transition_time : 1000
+    hide_timeout : 1700
+    fadeout_transition_time : 700
 
     fit : ( image_dom ) ->
       image_w = parseInt image_dom.getAttribute "data-width"

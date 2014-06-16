@@ -1216,7 +1216,7 @@ market =
           {title: 'Helios Thin', inline: 'span', styles: { 'font-family':'heliosthin'}},
           {title: 'Helios Cond Light', inline: 'span', styles: { 'font-family':'helioscondlight-webfont'}},
           {title: 'Helios Ext Black', inline: 'span', styles: { 'font-family':'HeliosExtBlack'}},
-          {title: 'PF Din Text Comp Pro Medium', inline: 'span', styles: { 'font-family':'pfdintextcomppro-medium-webfont'}},
+          {title: 'PF Din Text Comp Pro Medium', inline: 'span', styles: { 'font-family':'PFDinTextCompPro-Medium'}},
           {title: 'Futur Fut C', inline: 'span', styles: { 'font-family':'futurfutc-webfont'}},
           {title: 'Pharmadin Condensed Light', inline: 'span', styles: { 'font-family':'PharmadinCondensedLight'}},
           {title: 'Newspaper Sans', inline: 'span', styles: { 'font-family':'newspsan-webfont'}},
