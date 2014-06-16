@@ -835,6 +835,19 @@ StatusBar =
 ## TODO: отрефакторить
 ######################
 market =
+  styles :
+    init : () ->
+      style_tags = document.getElementsByTagName('code')
+      css = ''
+
+      for s in style_tags
+        css = css.concat( s.innerHTML )
+
+      style_dom = document.createElement('style')
+      style_dom.type = "text/css"
+      style_dom.appendChild(document.createTextNode(css))
+      head = document.getElementsByTagName('head')
+      head[0].appendChild(style_dom)
 
   init_colorpickers : () ->
     $('.js-custom-color').each () ->
@@ -1112,8 +1125,8 @@ market =
 
             if is_with_auto_crop == true
               console.log 'необходим авто кроп'
-
             $('#adFormBlockPreview').html data
+            market.styles.init()
             $('.js-mvbl').draggable
               stop : () ->
                 connected_input = $(this).attr 'data-connected-input'
@@ -1318,6 +1331,7 @@ market =
       market.resize_preview_photos()
       market.mart.init()
       market.adv_form.init()
+      market.styles.init()
 
 market.init()
 window.market=market

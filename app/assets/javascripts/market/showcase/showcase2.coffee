@@ -50,6 +50,20 @@ siomart =
 
     this.utils.add_single_listener window, 'resize', resize_cb
 
+  styles :
+    init : () ->
+      style_tags = siomart.utils.ge_tag('code')
+      css = ''
+
+      for s in style_tags
+        css = css.concat( s.innerHTML )
+
+
+      style_dom = document.createElement('style')
+      style_dom.type = "text/css"
+      style_dom.appendChild(document.createTextNode(css))
+      siomart.utils.ge_tag('head')[0].appendChild(style_dom)
+
   ########
   ## Утиль
   ########
@@ -436,6 +450,7 @@ siomart =
 
         siomart.init_navigation()
         cbca_grid.init()
+        siomart.styles.init()
 
       setTimeout grid_init_cb, grid_init_timoeut
       siomart.set_window_class()
@@ -443,12 +458,13 @@ siomart =
     if data.action == 'producerAds'
 
       console.log 'producerAds : processing dom'
-
       screensContainer = siomart.utils.ge 'sioMartNodeOffersRoot'
       console.log 'producerAds : got sioMartNodeOffersRoot'
 
       screensContainer = siomart.utils.replaceHTMLandShow screensContainer, data.html
       console.log 'producerAds : processed dom'
+      siomart.styles.init()
+      console.log 'producerAds : processed styles'
 
       cb = () ->
         siomart.utils.addClass screensContainer, 'sio-mart__node-offers-root_in'
@@ -761,7 +777,7 @@ siomart =
 
     siomart.shop_load_locked = true
 
-    url = '/market/ads?a.shopId=' + shop_id + '&a.firstAdId=' + ad_id + '&a.size=5&a.rcvr=' + siomart.config.mart_id
+    url = '/market/ads?a.shopId=' + shop_id + '&a.firstAdId=' + ad_id + '&a.size=50&a.rcvr=' + siomart.config.mart_id
 
     siomart.node_offers_popup.requested_ad_id = ad_id
     siomart.request.perform url
