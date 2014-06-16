@@ -9,7 +9,7 @@
     <title>@title | system | s.io</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
-    <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/sys.min.css")"/>
+    <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/sys.min.css")'/>
     @headAfter
   </head>
 
@@ -18,7 +18,7 @@
      <div class="header-wrap">
 
         <div class="center">
-          <a class="logo" href="@routes.MarketLk.lkIndex">
+          <a class="logo" href="@routes.Sys.index">
             <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
           </a>
           @ctx.usernameOpt.map { username =>
@@ -39,12 +39,18 @@
           <p>@flashStatus: @flashMsg</p>
         }
 
-        <div class="sio-db-logo">
-          <a href="@routes.Sys.index"><img src="@routes.Assets.at("images/sio-dark-logo.png")"></a>
+        <div class="title-wrap">
+          <div class="center">
+            <div class="title-inner">
+              <a href="@routes.Sys.index">sys</a> @hPathAfter</h1>
+            </div>
+          </div>
         </div>
-        <div class="sio-db-layout">
-            <h1>/ <a href="@routes.Sys.index">sys</a> @hPathAfter</h1>
-            @content
+
+        <div class="body">
+
+          @content
+
         </div>
 
      </div>
