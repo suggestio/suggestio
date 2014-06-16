@@ -9,6 +9,70 @@
       Страница маркета содержит ссылки на административные страницы, касающие магазинной части.
     </p>
 
+    <div class="sys-market-index__items">
+
+      <div class="sys-market-index__item">
+
+        <a class="transparent-btn transparent-btn_gray" href="@routes.SysMarket.companiesList">
+          <div class="transparent-btn__white-top" style="padding: 40px 0;">
+            <span class="transparent-btn_gray__text font-24">ВСЕ<br/>КОМПАНИИ</span>
+          </div>
+        </a>
+
+      </div>
+
+      <div class="sys-market-index__item">
+
+        <a class="transparent-btn transparent-btn_gray f-left" href="@routes.SysMarket.adnNodesList()">
+          <div class="transparent-btn__white-top" style="padding: 52px 0;">
+            <span class="transparent-btn_gray__text font-24">ADNetwork</span>
+          </div>
+        </a>
+
+      </div>
+
+      <div class="sys-market-index__item">
+
+        <a class="transparent-btn transparent-btn_gray f-left" href="@routes.SysMarketBilling.index">
+          <div class="transparent-btn__white-top" style="padding: 52px 0;">
+            <span class="transparent-btn_gray__text font-24">БИЛЛИНГ</span>
+          </div>
+        </a>
+
+      </div>
+
+      <div class="sys-market-index__item">
+
+        <a class="transparent-btn transparent-btn_gray f-left" href="@routes.SysMarket.showYmCats">
+          <div class="transparent-btn__white-top" style="padding: 40px 0;">
+            <span class="transparent-btn_gray__text font-24">ГЛОБАЛЬНЫЕ<br/>КАТЕГОРИИ</span>
+          </div>
+        </a>
+
+      </div>
+
+      <div class="sys-market-index__item">
+
+        <a class="transparent-btn transparent-btn_gray f-left" href="@routes.SysCalendar.showCalendars">
+          <div class="transparent-btn__white-top" style="padding: 28px 0;">
+            <span class="transparent-btn_gray__text font-24">КАЛЕНДАРИ<br/>ПРАЗДНИКОВ/<br/>ВЫХОДНЫХ</span>
+          </div>
+        </a>
+
+      </div>
+
+      <div class="sys-market-index__item">
+
+        <a class="transparent-btn transparent-btn_gray f-left" href="@routes.SysMarketInvReq.index">
+          <div class="transparent-btn__white-top" style="padding: 28px 0;">
+            <span class="transparent-btn_gray__text font-24">ЗАПРОСЫ<br/>ПОДКЛЮЧЕНИЯ<br/>К СЕТИ</span>
+          </div>
+        </a>
+
+      </div>
+
+    </div>
+
     <p>
       <a href="@routes.SysMarket.companiesList">Все компании</a>,
       <a class="add" href="@routes.SysMarket.companyAddForm()">+добавить</a>
