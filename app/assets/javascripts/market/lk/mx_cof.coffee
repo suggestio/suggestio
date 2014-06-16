@@ -86,7 +86,7 @@ CbcaPopup = () ->
 
     $('body').addClass('ovh')
     if(popupHeight > popupsContainerHeight)
-      $('#overlay').height(popupHeight)
+      $('#overlay').height(popupHeight + 50)
     else
       $('#overlay').height(popupsContainerHeight)
 
@@ -387,7 +387,7 @@ CbcaCommon = () ->
         url: $this.attr('href')
         success: (data) ->
           $('#disable-ad, #anotherNodes').remove()
-          $('.body-wrap').append(data)
+          $('#popupsContainer').append(data)
           cbca.popup.showPopup('#disable-ad')
         error: (error) ->
           console.log(error)
@@ -520,7 +520,7 @@ CbcaCommon = () ->
         url:  $this.find('a').attr('href'),
         success: (data) ->
           $('#disable-ad, #anotherNodes').remove()
-          $('.body-wrap').append(data)
+          $('#popupsContainer').append(data)
           cbca.popup.showPopup('#anotherNodes')
         error: (data) ->
           console.log(data)
@@ -634,7 +634,7 @@ CbcaShop =
       type: "GET",
       success:  (data) ->
         if(data.toString().trim())
-          $('.body-wrap').append(data)
+          $('#popupsContainer').append(data)
           cbca.popup.showPopup('#disable-shop')
       error: (error) ->
         console.log(error)
