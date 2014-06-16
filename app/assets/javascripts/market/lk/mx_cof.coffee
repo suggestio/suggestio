@@ -77,18 +77,33 @@ CbcaPopup = () ->
   hideOverlay: ->
     $('#popupsContainer, #overlay').hide()
 
+  setOverlayHeight: (popupHeight)->
+    if(!popupHeight)
+      popupHeight = 0
+
+      $('.popup').each () ->
+        $this = $(this)
+        thisHeight = $this.height()
+
+        if(thisHeight > popupHeight)
+          popupHeight = thisHeight
+
+    popupsContainerHeight = $('#popupsContainer').height()
+
+    if(popupHeight > popupsContainerHeight)
+      $('#overlay').height(popupHeight + 50)
+    else
+      $('#overlay').height(popupsContainerHeight)
+
   showPopup: (popup) ->
     this.showOverlay()
     $popup = $(popup)
     $popup.show()
     popupHeight = $popup.height()
-    popupsContainerHeight = $('#popupsContainer').height()
+
 
     $('body').addClass('ovh')
-    if(popupHeight > popupsContainerHeight)
-      $('#overlay').height(popupHeight + 50)
-    else
-      $('#overlay').height(popupsContainerHeight)
+    this.setOverlayHeight(popupHeight)
 
     $popup.find('.border-line-vertical').each () ->
       $this = $(this)
@@ -142,6 +157,9 @@ CbcaCommon = () ->
   self = this
 
   self.init = () ->
+
+    $(window).resize () ->
+      cbca.popup.setOverlayHeight()
 
     #####################
     ## WIFI FORM start ##
