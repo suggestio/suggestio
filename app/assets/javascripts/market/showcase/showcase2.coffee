@@ -87,10 +87,8 @@ siomart =
       force_no_cache = force_no_cache || false
 
       if force_no_cache != true && typeof this.elts_cache[tag] != 'undefined'
-        console.log 'ge_tag ' + tag + ' : cached'
         this.elts_cache[tag]
       else
-        console.log 'ge_tag ' + tag + ' : not cached'
         _elt = document.getElementsByTagName tag
         this.elts_cache[tag] = _elt
         _elt
@@ -379,8 +377,6 @@ siomart =
   ## зпросу и передать их в нужный callback
   ##################################################
   receive_response : ( data ) ->
-    console.log 'receive response, data : '
-    console.log data
 
     if typeof siomart.request.request_timeout_timer != 'undefined'
       clearTimeout siomart.request.request_timeout_timer
@@ -460,7 +456,6 @@ siomart =
       siomart.utils.ge('sioMartNodeOffersRoot').style.display = 'none'
 
       delete siomart.shop_load_locked
-      console.log 'unlock'
 
     setTimeout cb, 400
 
@@ -505,8 +500,6 @@ siomart =
         siomart.utils.ge('sioMartNodeOffers_' + ( block_index + 2 ) ).style.visibility = 'hidden';
 
     next_block : () ->
-      console.log 'next_block'
-
       if typeof this.active_block_index == 'undefined'
         return false
 
@@ -540,7 +533,6 @@ siomart =
         else
           siomart.utils.removeClass _b, 'double-size'
 
-        console.log _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode
         _b.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.style.width = cbca_grid.ww + 'px'
 
         _b.parentNode.parentNode.parentNode.parentNode.style.height = cbca_grid.wh + 'px'
@@ -591,8 +583,6 @@ siomart =
       c_x_offset = siomart.node_offers_popup._block_container.getAttribute 'data-x-offset'
       c_x_offset = parseInt c_x_offset
 
-      console.log 'touchmove'
-
       if vendor_prefix.js == 'Webkit'
         siomart.node_offers_popup._block_container.style['-webkit-transform'] = 'translate3d(' + parseInt( c_x_offset - delta_x ) + 'px, 0px, 0px)'
       else
@@ -603,7 +593,6 @@ siomart =
       this.last_x = ex
 
     touchend_event : ( event ) ->
-      console.log 'touchstart'
       siomart.utils.addClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
 
       delete siomart.node_offers_popup.tstart_x
@@ -744,9 +733,6 @@ siomart =
       return false
 
     siomart.shop_load_locked = true
-
-    console.log 'load_for_shop_id : ' + shop_id + ', ad_id : ' + ad_id
-
     url = '/market/ads?a.shopId=' + shop_id + '&a.firstAdId=' + ad_id + '&a.size=50&a.rcvr=' + siomart.config.mart_id
 
     siomart.node_offers_popup.requested_ad_id = ad_id

@@ -108,10 +108,12 @@ cbca_grid =
       return null
 
     if typeof( tmp_spacer ) == "undefined"
-      tmp_spacer = this.spacers
+      tmp_spacers = this.spacers
       i = 0
 
-    b = tmp_spacer[i]
+    b = tmp_spacers[i]
+    tmp_spacers.splice(i,1)
+    this.spacers = tmp_spacers
     b.block.style.display = 'block'
     return b
 
@@ -182,7 +184,7 @@ cbca_grid =
 
   is_only_spacers : () ->
     for b in this.blocks
-      if b.class != 'sm-block-spacer'
+      if b.class != 'sm-b-spacer'
         return false
 
     return true
@@ -234,7 +236,7 @@ cbca_grid =
       cbca_grid.m_blocks = cbca_grid.blocks.slice(0)
 
     ## Загрузить спейсеры
-    for elt in siomart.utils.ge_class document, 'sm-block-spacer'
+    for elt in siomart.utils.ge_class document, 'sm-b-spacer'
       _this = elt
       _this.setAttribute 'id', 'elt' + i
 
@@ -268,6 +270,8 @@ cbca_grid =
 
     this.set_container_size()
     this.load_blocks()
+    console.log cbca_grid.blocks
+    console.log cbca_grid.spacers
     this.build()
 
   resize : () ->
@@ -357,6 +361,8 @@ cbca_grid =
             else
               break
 
+          console.log b
+
           w_cell_width = Math.floor ( b.width + this.cell_padding ) / ( this.cell_size + this.cell_padding )
           w_cell_height = Math.floor ( b.height + this.cell_padding ) / ( this.cell_size + this.cell_padding )
 
@@ -369,6 +375,11 @@ cbca_grid =
 
           _pelt = document.getElementById('elt' + id)
 
+          console.log '_pelt : ' + _pelt
+
+          ## temp
+          _pelt.style.opacity = 1
+
           if _pelt != null
 
             for p in [vendor_prefix.css + 'transform', 'transform']
@@ -378,6 +389,7 @@ cbca_grid =
 
           left_pointer += b.width + this.cell_padding
           pline = cline
+          alert 'block'
 
         else
           cur_column++
