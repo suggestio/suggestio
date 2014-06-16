@@ -22,6 +22,8 @@ Section.number=Section number
 Close=Close
 Your=Your
 
+requisites=Payment details for withdrawal
+
 Password.change=Password change
 Type.current.password=Type current password
 Password.reset=Password reset

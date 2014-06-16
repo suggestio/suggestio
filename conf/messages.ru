@@ -22,6 +22,8 @@ Section.number=Номер секции
 Close=Закрыть
 Your=Ваш
 
+requisites=Платёжные реквизиты для вывода средств
+
 Password.change=Смена пароля
 Type.current.password=Введите текущий пароль
 Password.reset=Сброс пароля
