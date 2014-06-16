@@ -136,7 +136,7 @@ object MarketAd extends SioController with TempImgSupport {
           {case (mad, bim) =>
             val t4s2Fut = newTexts4search(mad)
             // Асинхронно обрабатываем логотип.
-            bc.saveImgs(newImgs = bim, oldImgs = Map.empty) flatMap { savedImgs =>
+            bc.saveImgs(newImgs = bim, oldImgs = Map.empty, blockHeight = mad.blockMeta.height) flatMap { savedImgs =>
               mad.producerId = adnId
               mad.imgs = savedImgs
               t4s2Fut flatMap { t4s2 =>
@@ -223,7 +223,7 @@ object MarketAd extends SioController with TempImgSupport {
           },
           {case (mad2, bim) =>
             val t4s2Fut = newTexts4search(mad2)
-            bc.saveImgs(newImgs = bim, oldImgs = mad.imgs) flatMap { imgsSaved =>
+            bc.saveImgs(newImgs = bim, oldImgs = mad.imgs, blockHeight = mad.blockMeta.height) flatMap { imgsSaved =>
               mad.imgs = imgsSaved
               importFormAdData(oldMad = mad, newMad = mad2)
               t4s2Fut flatMap { t4s2 =>

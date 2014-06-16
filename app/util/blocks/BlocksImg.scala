@@ -6,6 +6,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import util.blocks.BlocksUtil.BlockImgMap
 import play.api.data.{FormError, Mapping}
+import models.MImgInfoMeta
 
 /**
  * Suggest.io
@@ -16,7 +17,7 @@ import play.api.data.{FormError, Mapping}
 
 /** Интерфейс для сохранения картинок. */
 trait ISaveImgs {
-  def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t): Future[Imgs_t] = {
+  def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
     Future successful Map.empty
   }
 }
@@ -24,8 +25,12 @@ trait ISaveImgs {
 /** Базовая утиль для работы с картинками из blocks-контекстов. */
 object SaveImgUtil {
 
-  def saveImgsStatic(newImgs: BlockImgMap, oldImgs: Imgs_t, supImgsFut: Future[Imgs_t], fn: String): Future[Imgs_t] = {
-    val needImgsThis = newImgs.get(fn)
+  def saveImgsStatic(fn: String, newImgs: BlockImgMap, oldImgs: Imgs_t, supImgsFut: Future[Imgs_t],
+                     withDownsize: Option[MImgInfoMeta]): Future[Imgs_t] = {
+    val needImgsThis0 = newImgs.get(fn)
+    val needImgsThis = needImgsThis0.map {
+      _.copy(withDownsize = withDownsize)
+    }
     val oldImgsThis = oldImgs.get(fn)
     // Нанооптимизация: не ворочить картинками, если нет по ним никакой инфы.
     if (needImgsThis.isDefined || oldImgsThis.isDefined) {
@@ -35,9 +40,9 @@ object SaveImgUtil {
         savedBgImg <- saveBgImgFut
         supSavedMap <- supImgsFut
       } yield {
-        savedBgImg
-          .fold(supSavedMap) {
-          savedBgImg => supSavedMap + (fn -> savedBgImg)
+        savedBgImg.fold(supSavedMap) {
+          savedBgImg =>
+            supSavedMap + (fn -> savedBgImg)
         }
       }
     } else {
@@ -83,13 +88,14 @@ trait BgImg extends ValT with SaveBgImgI {
   def BG_IMG_FN = BgImg.BG_IMG_FN
   def bgImgBf = BgImg.bgImgBf
 
-  override def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t): Future[Imgs_t] = {
-    val supImgsFut = super.saveImgs(newImgs, oldImgs)
+  override def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
+    val supImgsFut = super.saveImgs(newImgs, oldImgs, blockHeight)
     SaveImgUtil.saveImgsStatic(
+      fn = BG_IMG_FN,
       newImgs = newImgs,
       oldImgs = oldImgs,
       supImgsFut = supImgsFut,
-      fn = BG_IMG_FN
+      withDownsize = Some(MImgInfoMeta(height = 2*blockHeight, width = 2*blockWidth))
     )
   }
 
@@ -131,13 +137,14 @@ trait LogoImg extends ValT with ISaveImgs {
   def LOGO_IMG_FN = LogoImg.LOGO_IMG_FN
   def logoImgBf = LogoImg.logoImgBf
 
-  override def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t): Future[Imgs_t] = {
-    val supImgsFut = super.saveImgs(newImgs, oldImgs)
+  override def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
+    val supImgsFut = super.saveImgs(newImgs, oldImgs, blockHeight)
     SaveImgUtil.saveImgsStatic(
+      fn = LOGO_IMG_FN,
       newImgs = newImgs,
       oldImgs = oldImgs,
       supImgsFut = supImgsFut,
-      fn = LOGO_IMG_FN
+      withDownsize = None
     )
   }
 
