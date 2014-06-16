@@ -235,6 +235,7 @@ case class MAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn:
       override def producerIds = Nil
       override def qOpt = None
       override def forceFirstIds = Nil
+      override def generation = None
     }
     MAd.searchAds(searchArgs).map {
       _.map(_.toJsonPretty)

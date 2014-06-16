@@ -14,11 +14,22 @@ import io.suggest.util.SioConstants
 import io.suggest.util.SioRandom.rnd
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
 import scala.collection.JavaConversions._
+import java.{util => ju}
 
 /** Статичная утиль для генерации поисковых ES-запросов. */
 object AdsSearch {
 
-  val IDS_SCORE_MVEL_FUN = "if (ids contains doc['_id']) { _score * incr } else { _score }"
+  /** MVEL-код для инкремента скора в incr раз, если id документа содержится в переданной коллекции ids.
+    * Поле _id не доступно в хранимых MAd-документах, поэтому нужно извлекать его из _uid ручками.
+    * @see [[http://stackoverflow.com/a/15539093]]
+    */
+  val IDS_SCORE_MVEL = """if (ids contains org.elasticsearch.index.mapper.Uid.createUid(doc["_uid"].value).id) { _score * incr } else { _score }"""
+
+  /**
+   * MVEL-скрипт Generation-timestamp сортировщика, который организует посраничный вывод с внешне рандомной выдачей.
+   * gents - таймштамп поколения исходной выдачи.
+   */
+  val GENTS_SORTER_MVEL = """(_score + 1) * (doc["_uid"].value.hashCode() / generation)"""
 
   /**
    * Скомпилировать из аргументов запроса сам ES-запрос со всеми фильтрами и т.д.
@@ -28,7 +39,7 @@ object AdsSearch {
   def prepareEsQuery(adSearch: AdsSearchArgsT): QueryBuilder = {
     import adSearch._
     // Собираем запрос в функциональном стиле, иначе получается многовато вложенных if-else.
-    val query3 = adSearch.qOpt.flatMap[QueryBuilder] { q =>
+    var query3: QueryBuilder = adSearch.qOpt.flatMap[QueryBuilder] { q =>
       // Собираем запрос текстового поиска.
       // TODO Для коротких запросов следует искать по receiverId и фильтровать по qStr (query-filter + match-query).
       TextQueryV2Util.queryStr2QueryMarket(q, s"${SioConstants.FIELD_ALL}")
@@ -117,17 +128,22 @@ object AdsSearch {
       val nf = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, f)
       QueryBuilders.filteredQuery(q0, nf)
     }
-    // Если указаны id-шники, которые должны быть в начале выдачи, то добавить обернуть всё в ипостась Custom Score Query.
-    val query4: QueryBuilder = if (adSearch.forceFirstIds.isEmpty) {
-      query3
-    } else {
-      // Запрошено, чтобы указанные id были в начале списка результатов.
-      val scoreFun = ScoreFunctionBuilders.scriptFunction(IDS_SCORE_MVEL_FUN)
-        .param("ids", new java.util.ArrayList[String]().addAll(adSearch.forceFirstIds) )
-        .param("incr", 100)
-      QueryBuilders.functionScoreQuery(query3, scoreFun)
+    if (adSearch.generation.isDefined && adSearch.qOpt.isEmpty) {
+      // Можно и нужно сортировтать с учётом genTs. Точный скоринг не нужен, поэтому просто прикручиваем скипт для скоринга.
+      val scoreFun = ScoreFunctionBuilders.scriptFunction(GENTS_SORTER_MVEL)
+        .param("generation", java.lang.Long.valueOf( Math.abs(adSearch.generation.get) ))
+      query3 = QueryBuilders.functionScoreQuery(query3, scoreFun)
     }
-    query4
+    // Если указаны id-шники, которые должны быть в начале выдачи, то добавить обернуть всё в ипостась Custom Score Query.
+    if (!adSearch.forceFirstIds.isEmpty) {
+      // Запрошено, чтобы указанные id были в начале списка результатов.
+      val scoreFun = ScoreFunctionBuilders.scriptFunction(IDS_SCORE_MVEL)
+        .param("ids", new ju.HashSet[String](adSearch.forceFirstIds.size).addAll(adSearch.forceFirstIds) )  // TODO Opt: использовать java.util.HashSet?
+        .param("incr", 100)
+      query3 = QueryBuilders.functionScoreQuery(query3, scoreFun)
+    }
+    // Возвращаем собранный запрос.
+    query3
   }
 
 }
@@ -158,7 +174,11 @@ trait AdsSearchArgsT {
   /** Абсолютный сдвиг в результатах (постраничный вывод). */
   def offset: Int
 
+  /** Форсировать указанные id в начало списка (через мощный скоринг). */
   def forceFirstIds: Seq[String]
+
+  /** Значение Generation timestamp, генерится при первом обращении к выдаче и передаётся при последующих запросах выдачи. */
+  def generation: Option[Long]
 }
 
 
