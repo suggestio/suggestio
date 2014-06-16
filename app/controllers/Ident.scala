@@ -69,27 +69,6 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
   }
 
 
-  /** Функция обхода foreign-key ошибок */
-  private def recreatePersonIdFor(mpi: MPersonIdent)(implicit request: RequestHeader): Future[MPerson] = {
-    val logPrefix = s"recreatePersonIdFor($mpi): "
-    error(logPrefix + s"MPerson not found for ident $mpi. Suppressing internal error: creating new one...")
-    val p = MPerson(id=Some(mpi.personId), lang=lang.code)
-    p.save.map {
-      case _personId if _personId == mpi.personId =>
-        warn(logPrefix + s"Emergency recreated MPerson(${_personId}) for identity $mpi")
-        p
-      case _personId =>
-        // [Невозможный сценарий] Не удаётся пересоздать запись MPerson с корректным id.
-        error(s"Unable to recreate MPerson record for ident $mpi. oldPersonId=${mpi.personId} != newPersonId=${_personId}")
-        // rollback создания записи.
-        MPerson.deleteById(_personId) onComplete {
-          case Success(isDeleted) => warn(logPrefix + s"Deleted recreated $p for zombie ident $mpi")
-          case Failure(ex) => error("Failed to rollback. Storage failure!", ex)
-        }
-        p
-    }
-  }
-
   // TODO выставить нормальный routing тут
   protected def rdrToAdmin = Redirect(routes.Application.index())
 

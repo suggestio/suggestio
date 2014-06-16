@@ -69,7 +69,7 @@ object AdSearch {
     }
   }
 
-  implicit def queryStringBinder(implicit strOptBinder: QueryStringBindable[Option[String]], intOptBinder: QueryStringBindable[Option[Int]]) = {
+  implicit def queryStringBinder(implicit strOptBinder: QueryStringBindable[Option[String]], intOptBinder: QueryStringBindable[Option[Int]], longOptBinder: QueryStringBindable[Option[Long]]) = {
     new QueryStringBindable[AdSearch] {
       def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, AdSearch]] = {
         for {
@@ -81,6 +81,7 @@ object AdSearch {
           maybeOffsetOpt <- intOptBinder.bind(key + ".offset", params)
           maybeRcvrIdOpt <- strOptBinder.bind(key + ".rcvr", params)
           maybeFirstId   <- strOptBinder.bind(key + ".firstAdId", params)
+          maybeGen       <- longOptBinder.bind(key + ".gen", params)
 
         } yield {
           Right(
@@ -96,7 +97,8 @@ object AdSearch {
               offsetOpt = eitherOpt2option(maybeOffsetOpt) map { offset =>
                 Math.max(0,  Math.min(offset,  MAX_PAGE_OFFSET * maybeSizeOpt.getOrElse(10)))
               },
-              forceFirstIds = maybeFirstId
+              forceFirstIds = maybeFirstId,
+              generation = maybeGen
             )
           )
         }
@@ -111,7 +113,8 @@ object AdSearch {
           strOptBinder.unbind(key + ".q", value.qOpt),
           intOptBinder.unbind(key + ".size", value.maxResultsOpt),
           intOptBinder.unbind(key + ".offset", value.offsetOpt),
-          strOptBinder.unbind(key + ".firstAdId", value.forceFirstIds.headOption)
+          strOptBinder.unbind(key + ".firstAdId", value.forceFirstIds.headOption),
+          longOptBinder.unbind(key + ".gen", value.generation)
         ) .filter(!_.isEmpty)
           .mkString("&")
       }
@@ -128,7 +131,8 @@ case class AdSearch(
   qOpt: Option[String] = None,
   maxResultsOpt: Option[Int] = None,
   offsetOpt: Option[Int] = None,
-  forceFirstIds: List[String] = Nil
+  forceFirstIds: List[String] = Nil,
+  generation  : Option[Long] = None
 ) extends AdsSearchArgsT {
 
   /** Абсолютный сдвиг в результатах (постраничный вывод). */

@@ -9,6 +9,7 @@ import io.suggest.util.UrlUtil
 import java.sql.Connection
 import models.MBillBalance
 import play.api.http.HeaderNames
+import scala.util.Random
 
 /**
  * Suggest.io
@@ -91,6 +92,9 @@ trait Context {
   lazy val isDebug: Boolean     = request.getQueryString("debug").isDefined
 
   lazy val timestamp: Long = now.toInstant.getMillis
+
+  /** Локальный ГСЧ, иногда нужен. */
+  lazy val PRNG = new Random(System.currentTimeMillis())
 }
 
 
