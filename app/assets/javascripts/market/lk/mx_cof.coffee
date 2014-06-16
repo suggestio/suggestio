@@ -856,8 +856,7 @@ market =
   img :
 
     init_upload : () ->
-
-      $('.w-async-image-upload').bind "change", () ->
+      $('.w-async-image-upload').unbind("change").bind "change", () ->
 
         relatedFieldId = $(this).attr 'data-related-field-id'
         form_data = new FormData()
