@@ -111,7 +111,11 @@ object AdsSearch {
       }
     }.getOrElse[QueryBuilder] {
       // Сборка реквеста не удалась вообще: все параметры не заданы. Просто возвращаем все объявы в рамках индекса.
-      QueryBuilders.matchAllQuery()
+      // Нужно фильтровать только отображаемые где-либо.
+      val q0 = QueryBuilders.matchAllQuery()
+      val f = FilterBuilders.existsFilter(EMReceivers.RCVRS_SLS_PUB_ESFN)
+      val nf = FilterBuilders.nestedFilter(EMReceivers.RECEIVERS_ESFN, f)
+      QueryBuilders.filteredQuery(q0, nf)
     }
     // Если указаны id-шники, которые должны быть в начале выдачи, то добавить обернуть всё в ипостась Custom Score Query.
     val query4: QueryBuilder = if (adSearch.forceFirstIds.isEmpty) {
