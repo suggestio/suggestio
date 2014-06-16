@@ -142,6 +142,25 @@ siomart =
 
       elt.parentNode.removeChild elt
 
+    ###################
+    ## Заменить элемент
+    ###################
+    replaceHTMLandShow : ( el, html ) ->
+      if typeof el == "string"
+        oldEl = document.getElementById(el)
+      else
+        oldEl = el
+      newEl = document.createElement oldEl.nodeName
+
+      newEl.id = oldEl.id
+      newEl.className = oldEl.className
+
+      newEl.style.display = 'block'
+      newEl.innerHTML = html
+      oldEl.parentNode.replaceChild newEl, oldEl
+
+      return newEl
+
     ##########################################
     ## Является ли переданный объект массивом?
     ##########################################
@@ -378,6 +397,8 @@ siomart =
   ##################################################
   receive_response : ( data ) ->
 
+    console.log 'receive_response : received data'
+
     if typeof siomart.request.request_timeout_timer != 'undefined'
       clearTimeout siomart.request.request_timeout_timer
 
@@ -420,18 +441,25 @@ siomart =
       siomart.set_window_class()
 
     if data.action == 'producerAds'
+
+      console.log 'producerAds : processing dom'
+
       screensContainer = siomart.utils.ge 'sioMartNodeOffersRoot'
-      screensContainer.innerHTML += data.html
-      screensContainer.style.display = 'block'
+      console.log 'producerAds : got sioMartNodeOffersRoot'
+
+      screensContainer = siomart.utils.replaceHTMLandShow screensContainer, data.html
+      console.log 'producerAds : processed dom'
 
       cb = () ->
         siomart.utils.addClass screensContainer, 'sio-mart__node-offers-root_in'
 
       setTimeout cb, 10
 
-      siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+      #siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+
       siomart.node_offers_popup.init()
       siomart.navigation_layer.close()
+      console.log 'producerAds : ready'
 
     if data.action == 'findAds' || data.action == 'searchAds'
       grid_container_dom = siomart.utils.ge 'sioMartIndexGrid'
@@ -457,7 +485,7 @@ siomart =
 
       delete siomart.shop_load_locked
 
-    setTimeout cb, 400
+    setTimeout cb, 200
 
     delete siomart.node_offers_popup.requested_ad_id
     delete siomart.node_offers_popup.active_block_index
@@ -612,17 +640,9 @@ siomart =
 
 
     init : () ->
-
       this.root
       this._block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
       this._container = siomart.utils.ge('sioMartNodeOffers')
-      
-      this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
-
-      this.fit()
-      i = 0
-
-      this.active_block_index = 0
 
       siomart.utils.addClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
 
@@ -643,6 +663,13 @@ siomart =
 
       siomart.utils.add_single_listener this._block_container, 'touchend', ( event ) ->
         siomart.node_offers_popup.touchend_event event
+
+      this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
+      this.fit()
+      i = 0
+      this.active_block_index = 0
+
+
 
   ######################################
   ## Загрузить индексную страницу для ТЦ
@@ -734,7 +761,7 @@ siomart =
 
     siomart.shop_load_locked = true
 
-    url = '/market/ads?a.shopId=' + shop_id + '&a.firstAdId=' + ad_id + '&a.size=50&a.rcvr=' + siomart.config.mart_id
+    url = '/market/ads?a.shopId=' + shop_id + '&a.firstAdId=' + ad_id + '&a.size=5&a.rcvr=' + siomart.config.mart_id
 
     siomart.node_offers_popup.requested_ad_id = ad_id
     siomart.request.perform url
@@ -751,7 +778,7 @@ siomart =
   ## картинка приветствия торгового центра
   ########################################
   welcome_ad :
-    hide_timeout : 3000
+    hide_timeout : 2000
     fadeout_transition_time : 1000
 
     fit : ( image_dom ) ->

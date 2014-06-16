@@ -266,8 +266,6 @@ cbca_grid =
       cbca_grid.spacers.push block
       cbca_grid.m_spacers = cbca_grid.spacers.slice(0)
 
-    console.log cbca_grid.spacers
-
   init : () ->
     this.blocks_container = document.getElementById 'sioMartIndexGrid'
     this.layout_dom = document.getElementById 'sioMartIndexGridLayout'
