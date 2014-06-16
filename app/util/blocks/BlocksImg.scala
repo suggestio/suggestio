@@ -7,6 +7,7 @@ import scala.concurrent.Future
 import util.blocks.BlocksUtil.BlockImgMap
 import play.api.data.{FormError, Mapping}
 import models.MImgInfoMeta
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -76,6 +77,10 @@ object SaveImgUtil {
 object BgImg {
   val BG_IMG_FN = "bgImg"
   val bgImgBf = BfImage(BG_IMG_FN, marker = BG_IMG_FN, imgUtil = OrigImageUtil)
+
+  /** Размерность финальной стороны картинки вычисляется на основе соотв. стороны блока.
+    * Ширина или высота блока увеличивается на это число, чтобы получить макс.размерность сохраняемой картинки. */
+  val FINAL_DOWNSIZE_SIDE_REL = configuration.getDouble("blocks.img.bg.downsize.final.side.rel") getOrElse 2.00000000
 }
 
 /** Функционал для сохранения фоновой (основной) картинки блока. */
@@ -89,13 +94,14 @@ trait BgImg extends ValT with SaveBgImgI {
   def bgImgBf = BgImg.bgImgBf
 
   override def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
+    import BgImg.{FINAL_DOWNSIZE_SIDE_REL => c}
     val supImgsFut = super.saveImgs(newImgs, oldImgs, blockHeight)
     SaveImgUtil.saveImgsStatic(
       fn = BG_IMG_FN,
       newImgs = newImgs,
       oldImgs = oldImgs,
       supImgsFut = supImgsFut,
-      withDownsize = Some(MImgInfoMeta(height = 2*blockHeight, width = 2*blockWidth))
+      withDownsize = Some(MImgInfoMeta(height = (c*blockHeight).toInt, width = (c*blockWidth).toInt))
     )
   }
 
