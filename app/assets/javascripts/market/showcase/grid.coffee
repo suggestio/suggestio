@@ -270,8 +270,6 @@ cbca_grid =
 
     this.set_container_size()
     this.load_blocks()
-    console.log cbca_grid.blocks
-    console.log cbca_grid.spacers
     this.build()
 
   resize : () ->
@@ -346,7 +344,6 @@ cbca_grid =
         break
 
       if is_break == false
-
         if columns_used_space[cur_column].used_height == cline
 
           # есть место хотя бы для одного блока с минимальной шириной
@@ -361,8 +358,6 @@ cbca_grid =
             else
               break
 
-          console.log b
-
           w_cell_width = Math.floor ( b.width + this.cell_padding ) / ( this.cell_size + this.cell_padding )
           w_cell_height = Math.floor ( b.height + this.cell_padding ) / ( this.cell_size + this.cell_padding )
 
@@ -375,8 +370,6 @@ cbca_grid =
 
           _pelt = document.getElementById('elt' + id)
 
-          console.log '_pelt : ' + _pelt
-
           ## temp
           _pelt.style.opacity = 1
 
@@ -386,10 +379,8 @@ cbca_grid =
               style_string = 'translate3d(' + left + 'px, ' + top + 'px,0)'
               _pelt.style[p] = style_string
 
-
           left_pointer += b.width + this.cell_padding
           pline = cline
-          alert 'block'
 
         else
           cur_column++

@@ -733,6 +733,7 @@ siomart =
       return false
 
     siomart.shop_load_locked = true
+
     url = '/market/ads?a.shopId=' + shop_id + '&a.firstAdId=' + ad_id + '&a.size=50&a.rcvr=' + siomart.config.mart_id
 
     siomart.node_offers_popup.requested_ad_id = ad_id
