@@ -30,15 +30,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 .colorpicker
   z-index: 10000000!important
 
-@font-face
-    font-family: 'ParagNorCIta'
-    src: url('/assets/fonts/market/DINCondensedC/PFDinTextCompPro-Medium.eot')
-    src: url('/assets/fonts/market/DINCondensedC/PFDinTextCompPro-Medium.eot?#iefix') format('embedded-opentype'),
-         url('/assets/fonts/market/DINCondensedC/PFDinTextCompPro-Medium.woff') format('woff'),
-         url('/assets/fonts/market/DINCondensedC/PFDinTextCompPro-Medium.ttf') format('truetype'),
-         url('/assets/fonts/market/DINCondensedC/PFDinTextCompPro-Medium.svg#pf_din_text_comp_promedium') format('svg')
-    font-weight: normal
-    font-style: normal
+
 
 .ovh
   overflow: hidden
@@ -58,20 +50,6 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     font-weight: bold
     font-family: 'Arial'
     margin: 25px 0
-
-  strong
-    font-weight: bold
-
-  .font-12
-    font-size: 12px
-    font-family: 'Arial'
-
-  .font-16
-    font-size: 16px
-    font-family: 'Arial'
-
-  .gray
-    color: #959595
 
   .f-left
     float: left
@@ -306,29 +284,6 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
         font-family: 'Arial'
         color: #b4b4b4
 
-  .body-wrap
-
-    .title-wrap
-
-      .center
-        position: relative
-
-        .adn-title-buttons
-          position: absolute
-          top: 3px
-          right: 50px
-
-          .gray-but-wrap
-
-            a
-              padding: 7px 15px 3px
-
-        .title-inner
-          font-size: 30px
-          color: #676666
-          font-family: 'ParagNorCIta'
-          padding-left: 50px
-
   .close
     float: right
     width: 17px
@@ -389,7 +344,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
         padding-bottom: 25px
         color: #676666
         font-size: 30px
-        font-family: 'ParagNorCIta'
+        font-family: 'PFDinTextCompPro-Medium'
         text-align: center
 
       .ad-preview
@@ -731,7 +686,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
       .value.big
         font-size: 24px
         color: #23313d
-        font-family: 'ParagNorCIta'
+        font-family: 'PFDinTextCompPro-Medium'
 
 
     .transactions-list
@@ -759,6 +714,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 @import "ads-list"
 @import "cbca-select"
 @import "buttons"
+@import "text-styles"
 
 /* Кнопки */
 .green-but-big
@@ -819,7 +775,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   color: #676666
 
 .sm-large-button
-  font-family: 'ParagNorCIta'
+  font-family: 'PFDinTextCompPro-Medium'
   border: 1px #9c9c9c solid
   color: #676666
   text-decoration: none
@@ -1625,7 +1581,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   padding-bottom: 25px
   color: #676666
   font-size: 30px
-  font-family: 'ParagNorCIta'
+  font-family: 'PFDinTextCompPro-Medium'
   text-align: center
 
 .popup-title_without_padding
@@ -1707,22 +1663,6 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
 .paragraph-13
   margin: 13px 0
-
-.blue-text
-  color: #07a1ca
-
-.black-text
-  color: #232323
-
-.gray-text
-  color: #979797
-
-.blue-link
-  color: #07a1ca
-  text-decoration: none
-
-.blue-link:hover
-  text-decoration: underline
 
 .success-label
   overflow: hidden
