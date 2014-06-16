@@ -10,25 +10,20 @@
     @inputText(jf("company"), '_label -> (Messages("Company") + ":"))
   </table>
 
-  @if( isWifi ) {
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
-      @textarea(jf("audienceDescr"), '_label -> (Messages("Audience.descr") + ":"))
-    </table>
-
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
-      @inputText(jf("humanTraffic"), '_label -> (Messages("Daily.people.traffic") + ":"))
-    </table>
-  } else {
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
-      @inputText(jf("info"), '_label -> (Messages("Address") + ":"))
-    </table>
-  }
 
   <table cellpadding="0" cellspacing="0" class="input-wrap big">
-    @inputText(jf("address"), '_label -> (Messages("Address") + ":"))
+    @inputText(jf("audienceDescr"), '_label -> (Messages("Audience.descr") + ":"))
   </table>
 
-  @if( !isWifi ) {
+  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    @inputText(jf("humanTraffic"), '_label -> (Messages("Daily.people.traffic") + ":"))
+  </table>
+
+  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    @textarea(jf("address"), '_label -> (Messages("Address") + ":"))
+  </table>
+
+  @*if( !isWifi ) {
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
       @inputText(jf("floor"), '_label -> (Messages("Floor.number") + ":"))
     </table>
@@ -36,19 +31,27 @@
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
       @inputText(jf("section"), '_label -> (Messages("Section.number") + ":"))
     </table>
-  }
+  }*@
 
   <table cellpadding="0" cellspacing="0" class="input-wrap big">
     @inputText(jf("siteUrl"), '_label -> (Messages("Site") + ":"))
   </table>
 
   <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    @inputText(jf("email"), '_label -> (Messages("constraint.email") + ":"))
+  </table>
+
+  <table cellpadding="0" cellspacing="0" class="input-wrap big">
     @inputText(jf("phone"), '_label -> (Messages("Office.phone.number") + ":"))
   </table>
 
-  <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
-    @textarea(jf("info"), '_label -> (Messages("Information") + ":"))
-  </table>
+  @if( !isWifi ) {
+    <div class="border-line"></div>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
+      @textarea(jf("payReqs"), '_label -> (Messages("requisites") + ":"))
+    </table>
+  }
 
   <div class="border-line"></div>
 
