@@ -152,19 +152,29 @@ object ImgFormUtil extends PlayMacroLogsImpl {
       .map { _.asInstanceOf[ImgInfo4Save[TmpImgIdKey]] }
       // 2014.05.08: Нужно сохранять ещё и исходную tmp-картинку, если передана откадрированная tmp-картинка.
       .flatMap { ti4s =>
+        val id = MPict.randomId
+        val idStr = MPict.idBin2Str(id)
+        val idOpt = Some(idStr)
         if (ti4s.iik.isCropped) {
           // Это откадрированная картинка, значит рядом лежит оригинал. Надо срезать crop и тоже схоронить.
-          val id = MPict.randomId
-          val idStr = MPict.idBin2Str(id)
-          val idOpt = Some(idStr)
           List(
             ti4s.copy(withId = idOpt),
             // Восстанавливать связи между исходными orig-картинками и need tmp пока нет удобной возможности, поэтому тут по сути идёт пересохранение orig-картинки под новым id с параллельным удаление старой.
             // TODO Надо сделать так, чтобы откадрированные оригиналы сохранялись под исходными id, при этом исходники не пересохранялись.
-            ti4s.copy(iik = ti4s.iik.uncropped, withId = idOpt)
+            ti4s.copy(iik = ti4s.iik.uncropped, withId = idOpt, withDownsize = None)
           )
         } else {
-          List(ti4s)
+          // Это картинка без кадрирования. Скорее всего она деформирована, но суть одна - надо бы сохранить оригинал про запас.
+          if (ti4s.withDownsize.isDefined) {
+            // Нужно сохранить ~оригинал без downsize
+            List(
+              ti4s.copy(withId = idOpt),
+              ti4s.copy(withId = idOpt, withDownsize = None)
+            )
+          } else {
+            // downsize отключён - в топку
+            List(ti4s)
+          }
         }
       }
       .toList
@@ -235,12 +245,16 @@ object ImgFormUtil extends PlayMacroLogsImpl {
     }
     // В фоне запускаем сборку данных по финальной сохраняемой картинке
     val identifyResult = OrigImageUtil.identify(mptmp4save.file)
-    // Параметр кропа отображаем на выходной размер фотки. TODO Надо считывать размер из сгенеренной картинки, т.к. downsize не точен.
+    // Параметр кропа отображаем на выходной размер фотки.
     val crop4nameOpt: Option[ImgCrop] = {
       val crop4name0 = tii.iik.cropOpt
-      tii.withDownsize.fold(crop4name0) { wds =>
+      tii.withDownsize.fold { crop4name0 } { wds =>
         crop4name0.map {
           _.copy(h = identifyResult.getImageHeight, w = identifyResult.getImageWidth)
+        } orElse {
+          // Кропа нема, но задан downsize. надо бы указать в имени, что что-то типа кропа присутствует.
+          val pseudoCrop = ImgCrop(h = identifyResult.getImageHeight, w = identifyResult.getImageWidth, offX = 0, offY = 0)
+          Some(pseudoCrop)
         }
       }
     }
@@ -320,10 +334,21 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   def miiPreferFirstCropped(l: List[MImgInfoT]): Option[MImgInfoT] = {
     l.reduceOption { (mii1, mii2) =>
       val oiik1: OrigImgIdKey = mii1
-      if (oiik1.isCropped)
-        mii1
-      else
-        mii2
+      val oiik2: OrigImgIdKey = mii2
+      (oiik1.isCropped, oiik2.isCropped) match {
+        case (true, false) =>
+          mii1
+        case (false, true) =>
+          mii2
+        // Внезапно обе откропленные картинки. Выбираем ту, что имеет название по-длинее
+        case _ =>
+          trace(s"miiPreferFirstCropped($l): reduce(): Both imgs are cropped/uncropped. Selecting one with longest filename...")
+          List(oiik1, oiik2)
+            .map { oiik => oiik.filename -> oiik }
+            .sortBy(_._1)
+            .last
+            ._2
+      }
     }
   }
 
