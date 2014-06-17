@@ -91,10 +91,43 @@ case class MWelcomeAd(
 
 
 /** JMX MBean интерфейс */
-trait MWelcomeAdJmxMBean extends EsModelJMXMBeanCommon
+trait MWelcomeAdJmxMBean extends EsModelJMXMBeanCommon {
+  /** Найти все id'шники, которые НЕ используются ни одним рекламным узлом. Некая read-only сборка мусора. */
+  def printAllUnusedByAdnNodes(): String
+
+  /** Найти и удалить все id'шники. */
+  def deleteAllUnusedByAdnNodes(): String
+}
 
 /** JMX MBean реализация. */
 case class MWelcomeAdJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase with MWelcomeAdJmxMBean {
   def companion = MWelcomeAd
+
+  def findUnusedByAdnNodes(): Future[Set[String]] = {
+    val usedIdsFut = MAdnNode.findAllWelcomeAdIds()
+    val allIdsFut  = MWelcomeAd.getAllIds(maxResults = -1)
+      .map { _.toSet }
+    for {
+      usedIds <- usedIdsFut
+      allIds  <- allIdsFut
+    } yield {
+      allIds -- usedIds
+    }
+  }
+
+  override def printAllUnusedByAdnNodes(): String = {
+    findUnusedByAdnNodes()
+      .mkString("\n")
+  }
+
+  override def deleteAllUnusedByAdnNodes(): String = {
+    findUnusedByAdnNodes().flatMap { ids =>
+      Future.traverse(ids) { wadId =>
+        MWelcomeAd.deleteById(wadId)
+      } map { _ =>
+        ids.mkString("\n")
+      }
+    }
+  }
 }

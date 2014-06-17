@@ -1,10 +1,12 @@
 package io.suggest.model
 
+import org.elasticsearch.common.unit.TimeValue
+
 import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.util._
 import SioEsUtil._
 import org.joda.time.{DateTimeZone, ReadableInstant, DateTime}
-import org.elasticsearch.action.search.SearchResponse
+import org.elasticsearch.action.search.{SearchType, SearchResponse}
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.common.xcontent.XContentBuilder
@@ -115,6 +117,10 @@ object EsModel extends MacroLogsImpl {
   /** Настройки. Это под-объект, чьё содержимое никогда не анализируется никем. */
   val SETTINGS_ESFN     = "settings"
   val META_ESFN         = "meta"
+
+  val MAX_RESULTS_DFLT = 100
+  val OFFSET_DFLT = 0
+  val SCROLL_KEEPALIVE_MS_DFLT = 60000L
 
   /** Тип аккамулятора, который используется во [[EsModelT.writeJsonFields()]]. */
   type FieldsJsonAcc = List[(String, JsValue)]
@@ -271,6 +277,51 @@ object EsModel extends MacroLogsImpl {
     JsArray(strSeq)
   }
 
+
+  /**
+   * Собрать указанные значения id'шников в аккамулятор-множество.
+   * @param searchResp Экземпляр searchResponse.
+   * @param acc0 Начальный акк.
+   * @param keepAliveMs keepAlive для курсоров на стороне сервера ES в миллисекундах.
+   * @return Фьчерс с результирующим аккамулятором-множеством.
+   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/search.html#scrolling]]
+   */
+  def searchScrollResp2ids(searchResp: SearchResponse, maxAccLen: Int, firstReq: Boolean, currAccLen: Int = 0, acc0: List[String] = Nil, keepAliveMs: Long = 60000L)
+                          (implicit ec: ExecutionContext, client: Client): Future[List[String]] = {
+    val hits = searchResp.getHits.getHits
+    if (!firstReq && hits.length == 0) {
+      Future successful acc0
+    } else {
+      val nextAccLen = currAccLen + hits.length
+      val canContinue = maxAccLen <= 0 || nextAccLen < maxAccLen
+      val nextScrollRespFut = if (canContinue) {
+        // Лимит длины акк-ра ещё не пробит. Запустить в фоне получение следующей порции результатов...
+        client.prepareSearchScroll(searchResp.getScrollId)
+          .setScroll(new TimeValue(keepAliveMs))
+          .execute()
+      } else {
+        null
+      }
+      // Если акк заполнен, то надо запустить очистку курсора на стороне ES.
+      if (!canContinue) {
+        client.prepareClearScroll().addScrollId(searchResp.getScrollId).execute()
+      }
+      // Синхронно залить результаты текущего реквеста в аккамулятор
+      val accNew = hits.foldLeft[List[String]] (acc0) { (acc1, hit) =>
+        hit.getId :: acc1
+      }
+      if (canContinue) {
+        // Асинхронно перейти на следующую итерацию, дождавшись новой порции результатов.
+        nextScrollRespFut flatMap { searchResp2 =>
+          searchScrollResp2ids(searchResp2, maxAccLen, firstReq = false, currAccLen = nextAccLen, acc0 = accNew, keepAliveMs = keepAliveMs)
+        }
+      } else {
+        // Пробит лимит аккамулятора по maxAccLen - вернуть акк не продолжая обход.
+        Future successful accNew
+      }
+    }
+  }
+
   // Сериализация дат
   val dateFormatterDflt = ISODateTimeFormat.dateTime().withZone(DateTimeZone.UTC)
 
@@ -346,6 +397,12 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
 
   type T <: EsModelMinimalT
 
+  // Кое-какие константы, которые можно переопределить в рамках конкретных моделей.
+  def MAX_RESULTS_DFLT = EsModel.MAX_RESULTS_DFLT
+  def OFFSET_DFLT = EsModel.OFFSET_DFLT
+  def SCROLL_KEEPALIVE_MS_DFLT = EsModel.SCROLL_KEEPALIVE_MS_DFLT
+  def SCROLL_KEEPALIVE_DFLT = new TimeValue(SCROLL_KEEPALIVE_MS_DFLT)
+
   // Короткие враппер для типичных операций в рамках статической модели.
   def prepareSearch(implicit client: Client) = client.prepareSearch(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
   def prepareCount(implicit client: Client)  = client.prepareCount(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
@@ -353,9 +410,9 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
   def prepareUpdate(id: String)(implicit client: Client) = client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, id)
   def prepareDelete(id: String)(implicit client: Client) = client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
   def prepareDeleteByQuery(implicit client: Client) = client.prepareDeleteByQuery(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
-
-  val MAX_RESULTS_DFLT = 100
-  val OFFSET_DFLT = 0
+  def prepareScroll(keepAlive: TimeValue = SCROLL_KEEPALIVE_DFLT)(implicit client: Client) = {
+    prepareSearch.setSearchType(SearchType.SCAN).setScroll(keepAlive)
+  }
 
   /**
    * Существует ли указанный магазин в хранилище?
@@ -375,17 +432,18 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
 
   /**
    * Сервисная функция для получения списка всех id.
-   * @return Список всех id в алфавитном порядке.
+   * @return Список всех id в неопределённом порядке.
    */
-  def getAllIds(maxResults: Int = 500)(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
+  def getAllIds(maxResults: Int, maxPerStep: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[List[String]] = {
     prepareSearch
+      .setSearchType(SearchType.SCAN)
+      .setScroll(SCROLL_KEEPALIVE_DFLT)
+      .setQuery( QueryBuilders.matchAllQuery() )
+      .setSize(maxPerStep)
       .setNoFields()
-      .setSize(maxResults)
       .execute()
-      .map { searchResp =>
-        searchResp.getHits.getHits.foldLeft(List.empty[String]) {
-          (acc, hit) => hit.getId :: acc
-        }.sorted
+      .flatMap { searchResp =>
+        searchScrollResp2ids(searchResp, firstReq = true, maxAccLen = maxResults, keepAliveMs = SCROLL_KEEPALIVE_MS_DFLT)
       }
   }
 
@@ -878,7 +936,7 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon {
   }
 
   override def getAllIds(maxResults: Int): String = {
-    companion.getAllIds(maxResults).mkString("\n")
+    companion.getAllIds(maxResults).sorted.mkString("\n")
   }
 
   override def esTypeName: String = companion.ES_TYPE_NAME

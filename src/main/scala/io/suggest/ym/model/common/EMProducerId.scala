@@ -85,7 +85,7 @@ trait EMProducerIdStatic extends EsModelStaticT {
    * @param producerId id продьюсера.
    * @return Список MAd.
    */
-  def findForProducerRt(producerId: String, maxResults: Int = 100)(implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
+  def findForProducerRt(producerId: String, maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[List[T]] = {
     findQueryRt(producerIdQuery(producerId), maxResults)
   }
 

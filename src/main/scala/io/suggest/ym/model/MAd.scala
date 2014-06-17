@@ -97,7 +97,7 @@ object MAd
    * @param producerId id продьюсера.
    * @return Список MAd.
    */
-  override def findForProducerRt(producerId: String, maxResults: Int)(implicit ec: ExecutionContext, client: Client): Future[List[MAd]] = {
+  override def findForProducerRt(producerId: String, maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[List[MAd]] = {
     super.findForProducerRt(producerId, maxResults)
       .map { sortByDateCreated }
   }

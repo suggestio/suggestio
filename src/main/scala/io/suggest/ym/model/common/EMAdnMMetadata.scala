@@ -1,5 +1,9 @@
 package io.suggest.ym.model.common
 
+import org.elasticsearch.action.search.SearchResponse
+import org.elasticsearch.client.Client
+import org.elasticsearch.common.unit.TimeValue
+import org.elasticsearch.index.query.QueryBuilders
 import org.joda.time.DateTime
 import io.suggest.model.{EsModelT, EsModelStaticT}
 import io.suggest.util.JacksonWrapper
@@ -7,6 +11,8 @@ import io.suggest.model.EsModel._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.util.SioEsUtil._, FieldIndexingVariants.FieldIndexingVariant
 import play.api.libs.json._
+import scala.collection.JavaConversions._
+import scala.concurrent.{Future, ExecutionContext}
 
 /**
  * Suggest.io
@@ -24,7 +30,46 @@ object EMAdnMMetadataStatic {
   val COLOR_ESFN = "color"
   val WELCOME_AD_ID = "welcomeAdId"
 
-  def META_FLOOR_ESFN = META_ESFN + "." + FLOOR_ESFN
+  def META_FLOOR_ESFN     = META_ESFN + "." + FLOOR_ESFN
+  def META_WELCOME_AD_ID_ESFN  = META_ESFN + "." + WELCOME_AD_ID
+
+  /**
+   * Собрать указанные значения строковых полей в аккамулятор-множество.
+   * @param searchResp Экземпляр searchResponse.
+   * @param fn Название поля, значение которого собираем в акк.
+   * @param acc0 Начальный акк.
+   * @param keepAliveMs keepAlive для курсоров на стороне сервера ES в миллисекундах.
+   * @return Фьчерс с результирующим аккамулятором-множеством.
+   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/search.html#scrolling]]
+   */
+  def searchScrollResp2strSet(searchResp: SearchResponse, fn: String, firstReq: Boolean, acc0: Set[String] = Set.empty, keepAliveMs: Long = 60000L)
+                             (implicit ec: ExecutionContext, client: Client): Future[Set[String]] = {
+    val hits = searchResp.getHits.getHits
+    if (!firstReq && hits.length == 0) {
+      Future successful acc0
+    } else {
+      // Запустить в фоне получение следующей порции результатов
+      val nextScrollRespFut = client.prepareSearchScroll(searchResp.getScrollId)
+        .setScroll(new TimeValue(keepAliveMs))
+        .execute()
+      // Синхронно залить результаты текущего реквеста в аккамулятор
+      val accNew = hits.foldLeft[List[String]] (Nil) { (acc, hit) =>
+        hit.field(fn) match {
+          case null =>
+            acc
+          case values =>
+            values.getValues.foldLeft (acc) {
+              (acc1, v)  =>  v.toString :: acc1
+            }
+        }
+      }
+      val acc1 = acc0 ++ accNew
+      // Асинхронно перейти на следующую итерацию, дождавшись новой порции результатов.
+      nextScrollRespFut flatMap { searchResp2 =>
+        searchScrollResp2strSet(searchResp2, fn, firstReq = false, acc1, keepAliveMs)
+      }
+    }
+  }
 }
 
 import EMAdnMMetadataStatic._
@@ -61,7 +106,24 @@ trait EMAdnMMetadataStatic extends EsModelStaticT {
     }
   }
 
+  /** Собрать все id рекламных карточек, которые встречаются во всех документах модели.
+    * Внутри используется match_all query + scroll.
+    * @return Множество всех значений welcomeAdId.
+    */
+  def findAllWelcomeAdIds(maxResultsPerStep: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[Set[String]] = {
+    val fn = META_WELCOME_AD_ID_ESFN
+    prepareScroll()
+      .setQuery( QueryBuilders.matchAllQuery() )
+      .setSize(maxResultsPerStep)
+      .addField(fn)
+      .execute()
+      .flatMap { searchResp =>
+        searchScrollResp2strSet(searchResp, fn, firstReq = true, keepAliveMs = SCROLL_KEEPALIVE_MS_DFLT)
+      }
+  }
+
 }
+
 
 trait EMAdnMMetadata extends EsModelT {
   override type T <: EMAdnMMetadata
