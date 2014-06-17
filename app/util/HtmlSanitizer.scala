@@ -38,13 +38,4 @@ object HtmlSanitizer {
     .allowCommonInlineFormattingElements()
     .toFactory
 
-  /** Политика текстового форматирования для MMartAdText офферов. */
-  val adTextFmtPolicy = new HtmlPolicyBuilder()
-    .allowElements("span")
-    .allowElements("p")
-    .allowElements("br")
-    // TODO нужно добавить .matching с указанием допустимых значений span.class
-    .allowAttributes("class").onElements("span")
-    .toFactory
-
 }

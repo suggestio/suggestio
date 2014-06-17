@@ -72,8 +72,9 @@ object IsAdnNodeAdmin {
 
 import IsAdnNodeAdmin.onUnauth
 
-/** В реквесте содержится магазин, если всё ок. */
-case class IsAdnNodeAdmin(adnId: String) extends ActionBuilder[AbstractRequestForAdnNode] {
+/** В реквесте содержится администрируемый узел, если всё ок. */
+trait IsAdnNodeAdminBase extends ActionBuilder[AbstractRequestForAdnNode] {
+  def adnId: String
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOptAdn(pwOpt, adnId)
@@ -88,6 +89,9 @@ case class IsAdnNodeAdmin(adnId: String) extends ActionBuilder[AbstractRequestFo
     }
   }
 }
+case class IsAdnNodeAdmin(adnId: String)
+  extends IsAdnNodeAdminBase
+  with ExpireSession[AbstractRequestForAdnNode]
 
 
 
@@ -101,11 +105,9 @@ case class RequestForAdnNodeAdm[A](adnNode: MAdnNode, isMyNode: Boolean, request
   extends AbstractRequestForAdnNode(request)
 
 
-/**
- * Доступ к узлу, к которому НЕ обязательно есть права на админство.
- * @param adnId узел.
- */
-case class AdnNodeAccess(adnId: String, povAdnIdOpt: Option[String]) extends ActionBuilder[RequestForAdnNode] {
+trait AdnNodeAccessBase extends ActionBuilder[RequestForAdnNode] {
+  def adnId: String
+  def povAdnIdOpt: Option[String]
   override protected def invokeBlock[A](request: Request[A], block: (RequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     PersonWrapper.getFromRequest(request) match {
       case pwOpt @ Some(pw) =>
@@ -150,6 +152,14 @@ case class AdnNodeAccess(adnId: String, povAdnIdOpt: Option[String]) extends Act
     }
   }
 }
+/**
+ * Доступ к узлу, к которому НЕ обязательно есть права на админство.
+ * @param adnId узел.
+ */
+case class AdnNodeAccess(adnId: String, povAdnIdOpt: Option[String])
+  extends AdnNodeAccessBase
+  with ExpireSession[RequestForAdnNode]
+
 
 case class RequestForAdnNode[A](adnNode: MAdnNode, povAdnNodeOpt: Option[MAdnNode], isMyNode: Boolean,
                                 request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
@@ -166,11 +176,9 @@ case class SimpleRequestForAdnNode[A](adnNode: MAdnNode, request: Request[A], pw
   override lazy val isMyNode = IsAdnNodeAdmin.isAdnNodeAdminCheck(adnNode, pwOpt)
 }
 
-/**
- * Гибрид [[MaybeAuth]] и читалки MAdnNode из кеша. Права на узел не проверяются.
- * @param adnId id искомого узла.
- */
-case class AdnNodeMaybeAuth(adnId: String) extends ActionBuilder[SimpleRequestForAdnNode] {
+/** Гибрид [[MaybeAuth]] и читалки MAdnNode из кеша. Права на узел не проверяются. */
+trait AdnNodeMaybeAuthBase extends ActionBuilder[SimpleRequestForAdnNode] {
+  def adnId: String
   override def invokeBlock[A](request: Request[A], block: (SimpleRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
@@ -186,3 +194,12 @@ case class AdnNodeMaybeAuth(adnId: String) extends ActionBuilder[SimpleRequestFo
     }
   }
 }
+
+/**
+ * Реализация [[AdnNodeMaybeAuthBase]] с поддержкой таймаута сессии.
+ * @param adnId id искомого узла.
+ */
+case class AdnNodeMaybeAuth(adnId: String)
+  extends AdnNodeMaybeAuthBase
+  with ExpireSession[SimpleRequestForAdnNode]
+

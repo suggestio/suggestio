@@ -23,9 +23,15 @@ object PersonWrapper {
    * @return Option[PersonWrapper].
    */
   def getFromSession(implicit session: Session): PwOpt_t = {
-    session.get(username).map {
-      PersonWrapper.apply
-    }
+    session.get(username)
+      // Если выставлен timestamp, то проверить валидность защищенного session ttl.
+      .filter { _ =>
+        session.get(ExpireSession.SESSION_TSTAMP_KEY)
+          .flatMap { ExpireSession.parseTstamp }
+          .exists { ExpireSession.isTimestampValid(_) }
+      }
+      // Если всё ок, то завернуть в PersonWrapper.
+      .map { PersonWrapper.apply }
   }
 
 

@@ -15,6 +15,8 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  */
 object ExpireSession extends PlayLazyMacroLogsImpl {
 
+  import LOGGER._
+
   /** Ключ с временем в карте сессии. */
   val SESSION_TSTAMP_KEY  = configuration.getString("session.tstamp.key") getOrElse "t"
 
@@ -39,6 +41,20 @@ object ExpireSession extends PlayLazyMacroLogsImpl {
   def withTimestamp(session0: Session, tstamp: Long = currentTstamp): Session = {
     session0 + (SESSION_TSTAMP_KEY -> tstamp.toString)
   }
+
+  def parseTstamp(tstampStr: String): Option[Long] = {
+    try {
+      Some(tstampStr.toLong)
+    } catch {
+      case ex: Exception =>
+        warn(s"invokeBlock(): Failed to parse session timestamp: raw = $tstampStr")
+        None
+    }
+  }
+
+  def isTimestampValid(tstamp: Long, currTstamp: Long = currentTstamp): Boolean = {
+    tstamp + SESSION_TTL_SECONDS >= currTstamp
+  }
 }
 
 
@@ -50,7 +66,6 @@ import ExpireSession._
  * @tparam R тип реквеста, с которым работаем. Просто форвардится из декларации класса ActionBuilder'а.
  */
 trait ExpireSession[R[_]] extends ActionBuilder[R] {
-  import LOGGER._
 
   abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
     super.invokeBlock(request, block) map { result =>
@@ -62,19 +77,11 @@ trait ExpireSession[R[_]] extends ActionBuilder[R] {
         val currTstamp = currentTstamp
         session0
           .get(SESSION_TSTAMP_KEY)
-          .flatMap { tstampStr =>
-            try {
-              Some(tstampStr.toLong)
-            } catch {
-              case ex: Exception =>
-                warn(s"invokeBlock(): Failed to parse session timestamp: raw = $tstampStr ;; path = ${request.path}")
-                None
-            }
-          }
+          .flatMap { parseTstamp }
           // Уже ясно, что нет таймштампа в сессии. Значит это сессия в старом формате или она была только что выставлена в контроллере. Нужно выставить туда currTstamp.
           .orElse { Some(currentTstamp) }
           // Отфильтровать устаревшие timestamp'ы.
-          .filter { _ + SESSION_TTL_SECONDS >= currTstamp }
+          .filter { isTimestampValid(_, currTstamp) }
           .fold {
             // Таймштамп истёк -- стереть сессию.
             result.withNewSession

@@ -30,7 +30,7 @@ object CanAdvertiseAd {
    * @tparam A Параметр типа реквеста.
    * @return None если нельзя. Some([[RequestWithAd]]) если можно исполнять реквест.
    */
-  private def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A]): Future[Option[RequestWithAd[A]]] = {
+  def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A]): Future[Option[RequestWithAd[A]]] = {
     if (PersonWrapper isSuperuser pwOpt) {
       MAdnNodeCache.getByIdCached(mad.producerId) flatMap { adnNodeOpt =>
         if (adnNodeOpt exists isAdvertiserNode) {
@@ -68,7 +68,8 @@ object CanAdvertiseAd {
 
 
 /** Редактировать карточку может только владелец магазина. */
-case class CanAdvertiseAd(adId: String) extends ActionBuilder[RequestWithAd] {
+trait CanAdvertiseAdBase extends ActionBuilder[RequestWithAd] {
+  def adId: String
   protected def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     MAd.getById(adId) flatMap {
@@ -82,3 +83,7 @@ case class CanAdvertiseAd(adId: String) extends ActionBuilder[RequestWithAd] {
     }
   }
 }
+case class CanAdvertiseAd(adId: String)
+  extends CanAdvertiseAdBase
+  with ExpireSession[RequestWithAd]
+
