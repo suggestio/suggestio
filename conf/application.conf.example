@@ -167,11 +167,14 @@ application.langs="en,ru"
 # Эволюция схем БД как всегда не нужна.
 evolutionplugin=disabled
 
-# name of username session key
-session.username = "p"
 
-# name of session cookie
+session.username = "p"
 session.cookieName = "s"
+session.maxAge = 600000
+session.httpOnly = true
+#session.secure = true
+
+
 
 # Переименовать длинный палевный "PLAY_LANG" в "l". Это скроет play.
 application.lang.cookie = "l"

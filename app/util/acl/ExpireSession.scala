@@ -21,8 +21,8 @@ object ExpireSession extends PlayLazyMacroLogsImpl {
   val SESSION_TSTAMP_KEY  = configuration.getString("session.tstamp.key") getOrElse "t"
 
   /** Время жизни сессии. */
-  val SESSION_TTL_SECONDS = configuration.getInt("session.ttl.seconds")
-    .map(_.seconds)
+  val SESSION_TTL_SECONDS = configuration.getInt("session.maxAge")
+    .map(_ milliseconds)
     .getOrElse(10 minutes)
     .toSeconds
 
