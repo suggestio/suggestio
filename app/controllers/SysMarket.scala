@@ -402,7 +402,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
             adnNode.meta.town = adnNode2.meta.town
             adnNode.meta.address = adnNode2.meta.address
             adnNode.meta.phone = adnNode2.meta.phone
-            adnNode.meta.floor = adnNode2.meta.phone
+            adnNode.meta.floor = adnNode2.meta.floor
             adnNode.meta.section = adnNode2.meta.section
             adnNode.meta.siteUrl = adnNode2.meta.siteUrl
             adnNode.meta.color = adnNode2.meta.color

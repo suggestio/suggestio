@@ -151,26 +151,25 @@ trait CanSuperviseSlaveAdBase extends ActionBuilder[RequestForSlaveAd] {
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     MAd.getById(adId) flatMap {
       case Some(mad) =>
-        val slaveNodeOptFut = MAdnNodeCache.getByIdCached(mad.producerId)
         // TODO Наверное надо проверять права супервайзера этого узла над подчинённым узлов.
-        Future.traverse(mad.receivers.valuesIterator) { adRcvr =>
-          IsAdnNodeAdmin.isAdnNodeAdmin(adRcvr.receiverId, pwOpt)
-        } flatMap { results =>
-          results.find(_.isDefined).flatten match {
+        MAdnNodeCache.getByIdCached(mad.producerId) flatMap { slaveNodeOpt =>
+          val slaveNode = slaveNodeOpt.get
+          val supNodeOptFut = slaveNode.adn.supId.fold
+            { Future successful Option.empty[MAdnNode] }
+            { supId => IsAdnNodeAdmin.isAdnNodeAdmin(supId, pwOpt) }
+          supNodeOptFut flatMap {
             // isSuperuser проверяется тут, чтобы легче выявлять ошибки, даже будучи админом.
-            case Some(supNode) if supNode.adn.isSupervisor || PersonWrapper.isSuperuser(pwOpt) =>
-              slaveNodeOptFut.flatMap { slaveNodeOpt =>
-                srmFut.flatMap { srm =>
-                  val req1 = RequestForSlaveAd(
-                    mad = mad,
-                    slaveNode = slaveNodeOpt.get,
-                    supNode = supNode,
-                    request = request,
-                    pwOpt = pwOpt,
-                    sioReqMd = srm
-                  )
-                  block(req1)
-                }
+            case Some(supNode) if supNode.adn.isSupervisor =>
+              srmFut.flatMap { srm =>
+                val req1 = RequestForSlaveAd(
+                  mad = mad,
+                  slaveNode = slaveNode,
+                  supNode = supNode,
+                  request = request,
+                  pwOpt = pwOpt,
+                  sioReqMd = srm
+                )
+                block(req1)
               }
             case _ => onUnauth(request)
           }
