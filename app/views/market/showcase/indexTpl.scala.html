@@ -24,10 +24,14 @@
   <span></span>
 </div>
 
-@* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
-<div class="categories-button" id="smCategoriesButton">
-  <span></span>
-</div>
+@if( !catsStats.isEmpty ){
+  @* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
+  <div class="categories-button" id="smCategoriesButton">
+    <span></span>
+  </div>
+  @* Окно с выбором категорий *@
+  @_categories_w_search(mmcats, mmart, catsStats, withSubnodesBtn = !shops.isEmpty)
+}
 
 <div class="sio-mart__producer-header" style="background-color: #@mmart.meta.color;">
   @mmart.logoImgOpt.map { logoImg =>
@@ -58,9 +62,6 @@
 <div class="sm-preload">
   <img src="@ctx.myAudienceUrl/assets/images/market/categories/icons.png">
 </div>
-
-@* Окно с выбором категорий *@
-@_categories_w_search(mmcats, mmart, catsStats, withSubnodesBtn = !shops.isEmpty)
 
 @* Окно с предупреждением о выходе из Sio.Market *@
 @_exit_screen()
