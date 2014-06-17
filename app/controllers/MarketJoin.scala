@@ -1,7 +1,8 @@
 package controllers
 
+import play.api.i18n.Messages
 import util.{ContextImpl, PlayMacroLogsImpl}
-import util.acl.MaybeAuth
+import util.acl.{AbstractRequestWithPwOpt, MaybeAuth}
 import util.SiowebEsUtil.client
 import models._
 import views.html.market.join._
@@ -115,9 +116,9 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
   }
 
   /** Куда отправлять юзера, когда его запрос сохранён? */
-  private def mirSavedRdr(mirId: String) = {
+  private def mirSavedRdr(mirId: String)(implicit request: AbstractRequestWithPwOpt[_]) = {
     Redirect(routes.MarketJoin.joinRequestSuccess())
-      .flashing("success" -> "Ваш запрос на подключение к системе принят.")
+      .flashing("success" -> Messages("Your.IR.accepted"))
   }
 
   /** Отобразить страничку с писаниной о том, что всё ок. */
@@ -130,7 +131,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
     Form(
       mapping(
         "company"   -> companyNameM,
-        "info"      -> text2048M.transform[Option[String]](Option(_).filter(!_.isEmpty), _ getOrElse ""),
+        //"info"      -> text2048M.transform[Option[String]](Option(_).filter(!_.isEmpty), _ getOrElse ""),
         "address"   -> addressM,
         "floor"     -> floorOptM,
         "section"   -> sectionOptM,
@@ -138,15 +139,15 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
         "phone"     -> phoneM,
         "email"     -> email
       )
-      {(company, info, address, floor, section, siteUrl, phone, email1) =>
+      {(company, address, floor, section, siteUrl, phone, email1) =>
         MirMeta(
-          company = company, info = info, address = address, floor = floor, section = section,
+          company = company, address = address, floor = floor, section = section,
           siteUrl = siteUrl, officePhone = phone, email = email1
         )
       }
       {mirMeta =>
         import mirMeta._
-        Some((company, info, address, floor, section, siteUrl, officePhone, mirMeta.email))
+        Some((company, address, floor, section, siteUrl, officePhone, mirMeta.email))
       }
     )
   }
