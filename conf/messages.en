@@ -25,6 +25,7 @@ Your=Your
 requisites=Payment details for withdrawal
 
 Password.change=Password change
+Password.recovery=Password recovery
 Type.current.password=Type current password
 Password.reset=Password reset
 Type.new.password=Type new password

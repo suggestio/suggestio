@@ -25,6 +25,7 @@ Your=Ваш
 requisites=Платёжные реквизиты для вывода средств
 
 Password.change=Смена пароля
+Password.recovery=Восстановление пароля
 Type.current.password=Введите текущий пароль
 Password.reset=Сброс пароля
 Type.new.password=Введите новый пароль

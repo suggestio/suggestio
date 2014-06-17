@@ -15,7 +15,7 @@ import scala.concurrent.Future
 import play.api.libs.json.JsString
 import models._
 import play.api.mvc.Security.username
-import play.api.i18n.Lang
+import play.api.i18n.{Messages, Lang}
 import SiowebEsUtil.client
 import scala.util.{Failure, Success}
 import play.api.templates.HtmlFormat
@@ -54,7 +54,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
    */
   def logout = Action { implicit request =>
     Redirect(routes.Application.index())
-      .withSession(session - username)
+      .withNewSession
   }
 
 
@@ -94,7 +94,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
       {email1 =>
         // TODO Надо найти юзера в базах EmailPwIdent и MozPersonaIdent, и если есть, то отправить письмецо.
         MPersonIdent.findIdentsByEmail(email1) flatMap { idents =>
-          if (!idents.isEmpty) {
+          if (idents.nonEmpty) {
             val emailIdentFut: Future[EmailPwIdent] = idents
               .foldLeft[List[EmailPwIdent]] (Nil) {
                 case (acc, epw: EmailPwIdent) => epw :: acc
@@ -117,11 +117,12 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
                 // Можно отправлять письмецо на ящик.
                 val mail = use[MailerPlugin].email
                 mail.setFrom("no-reply@suggest.io")
-                mail.setSubject("Suggest.io | Восстановление пароля")
                 mail.setRecipient(email1)
+                val ctx = implicitly[Context]
+                mail.setSubject("Suggest.io | " + Messages("Password.recovery")(ctx.lang))
                 mail.send(
-                  bodyText = views.txt.ident.recover.emailPwRecoverTpl(eact),
-                  bodyHtml = emailPwRecoverTpl(eact)
+                  bodyText = views.txt.ident.recover.emailPwRecoverTpl(eact)(ctx),
+                  bodyHtml = emailPwRecoverTpl(eact)(ctx)
                 )
               }
             }
