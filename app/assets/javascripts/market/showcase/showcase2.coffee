@@ -352,13 +352,17 @@ siomart =
   ## Добавить в DOM необходимую разметку для Sio.Market
   #####################################################
   draw_layout : () ->
-
     ## Иконка для быстрого вызова маркета
     sm_trigger_attrs =
       class : this.config.sm_trigger_class
       id : 'sioMartTrigger'
       style : 'background-color: #' + window.siomart_node_color
-    sm_trigger = this.utils.ce 'div', sm_trigger_attrs, '<span class="trigger-helper"></span><img src=\'' + window.siomart_logo_src + '\' width=80/>'
+
+    logo_img = if typeof window.siomart_logo_src != 'undefined' then '<img src=\'' + window.siomart_logo_src + '\' width=80/>' else ''
+    sm_trigger = this.utils.ce 'div', sm_trigger_attrs, '<span class="trigger-helper">' + logo_img + '</span>'
+
+    _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
+    this.utils.add_single_listener sm_trigger, _event, siomart.open_mart
 
     ## Интерфейс маркета
     sm_layout_attrs =
@@ -762,7 +766,7 @@ siomart =
   ## Скрыть / показать sio.market
   ###############################
   close_mart : ( event ) ->
-    localStorage.setItem('is_closed_by_used', true)
+    localStorage.setItem('siom_is_market_opened', 'false')
     siomart.utils.ge('sioMartRoot').style.display = 'none'
     siomart.utils.ge('smCloseScreen').style.display = 'none'
     event.preventDefault()
@@ -867,8 +871,6 @@ siomart =
 
     this.utils.add_single_listener this.utils.ge('smShopListButton'), _event, siomart.open_shopList_screen
 
-    this.utils.add_single_listener this.utils.ge('sioMartTrigger'), _event, siomart.open_mart
-
     ## поле ввода поискового запроса
     this.utils.add_single_listener this.utils.ge('smSearchField'), 'keyup', () ->
       this.value = this.value.toUpperCase()
@@ -930,7 +932,6 @@ siomart =
   ## Инициализация Sio.Market
   ###########################
   init : () ->
-
     siomart.config.mart_id = window.siomart_id
     siomart.config.host = window.siomart_host
 
@@ -944,7 +945,11 @@ siomart =
     ## Забиндить оконные события
     this.bind_window_events()
 
-    this.load_mart_index_page()
+    isMarketOpened = localStorage.getItem('siom_is_market_opened')
+
+    if isMarketOpened == null || isMarketOpened == 'true'
+      localStorage.setItem('siom_is_market_opened', 'true')
+      this.load_mart_index_page()
 
 window.siomart = siomart
 siomart.init()
