@@ -21,10 +21,11 @@ libraryDependencies ++= {
   val hbaseVsn      = "0.98.1-hadoop2"
   val akkaVsn       = "2.3.+"
   val jacksonVsn    = "2.3.+"
-  val tikaVsn       = "1.4"
+  val tikaVsn       = "1.5"
   val cascadingVsn  = "2.5.+"
   val playVsn       = "2.3-SNAPSHOT"
   val morphVsn      = "1.2-SNAPSHOT"
+  val bcVsn         = "1.46"
   Seq(
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
@@ -42,7 +43,15 @@ libraryDependencies ++= {
     "org.elasticsearch" % "elasticsearch" % esVsn,
     // Parsers
     "org.apache.tika" % "tika-core" % tikaVsn,
-    "org.apache.tika" % "tika-parsers" % tikaVsn exclude("xerces", "xercesImpl"),
+    "org.apache.tika" % "tika-parsers" % tikaVsn
+      exclude("xerces", "xercesImpl")
+      exclude("org.bouncycastle", "bcmail-jdk15") // заменим ниже на *-jdk16
+      exclude("org.bouncycastle", "bcprov-jdk15")
+    ,
+    // apache tika хочет bouncycastle для вскрытия негодных pdf'ов.
+    "org.bouncycastle" % "bcmail-jdk16" % bcVsn,
+    "org.bouncycastle" % "bcprov-jdk16" % bcVsn,
+    // Для разбора csv от яндекс-маркета используем сий простой парсер, т.к. tika смотрит на всё, как на веб-страницу.
     "com.github.tototoshi" %% "scala-csv" % "1.0.0",
     // akka
     "com.typesafe.akka" %% "akka-actor"  % akkaVsn,
