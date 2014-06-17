@@ -340,23 +340,14 @@ object MarketAd extends SioController with TempImgSupport {
 
   /** Детектор получателей рекламы. Заглядывает к себе и к прямому родителю, если он указан. */
   private def detectReceivers(producer: MAdnNode): Future[Receivers_t] = {
-    val supRcvrIdsFut: Future[Seq[String]] = producer.adn.supId
-      .map { supId =>
-        MAdnNodeCache.getByIdCached(supId)
-          .map { _.filter(_.adn.isReceiver).map(_.idOrNull).toSeq }
-      } getOrElse {
-        Future successful Nil
-      }
     val selfRcvrIds: Seq[String] = Some(producer)
       .filter(_.adn.isReceiver)
       .map(_.idOrNull)
       .toSeq
-    supRcvrIdsFut map { supRcvrIds =>
-      val rcvrIds: Seq[String] = supRcvrIds ++ selfRcvrIds
-      rcvrIds.distinct.map { rcvrId =>
-        rcvrId -> AdReceiverInfo(rcvrId)
-      }.toMap
-    }
+    val result = selfRcvrIds.map { rcvrId =>
+      rcvrId -> AdReceiverInfo(rcvrId)
+    }.toMap
+    Future successful result
   }
 
 
