@@ -1,6 +1,7 @@
 package util.acl
 
 import play.api.mvc._
+import util.PlayMacroLogsImpl
 import scala.concurrent.Future
 import controllers.routes
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -12,7 +13,8 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * Description: Убедится, что юзер является авторизованным пользователем. Иначе - отправить на страницу логина или в иное место.
  */
 
-trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
+trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
+  import LOGGER._
 
   protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
@@ -24,6 +26,7 @@ trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
         block(req1)
       }
     } else {
+      debug("invokeBlock(): anonymous access prohibited. path = " + request.path)
       onUnauth(request)
     }
   }
@@ -40,4 +43,4 @@ trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
 object IsAuth extends IsAuthAbstract with ExpireSession[AbstractRequestWithPwOpt]
 
 /** IsAuth, но без session expire. Пригодится при обслуживании статического контента, связанного со страницей. */
-object IsAuthNSE extends IsAuthAbstract
+//object IsAuthNSE extends IsAuthAbstract

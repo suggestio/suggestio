@@ -170,10 +170,9 @@ object MarketLkAdnSlaveAd extends SioController with PlayMacroLogsImpl {
     // TODO Вероятно, надо дёргать SLU.applyOutputConstraint(), но он может нарушить исходную задумку супервизора.
     // TODO Надо отрабатывать VersionConflictEngineException путём повторного getById() + изменить ресиверы + saveReceivers().
     mad.saveReceivers.map { _ =>
-      val reply = JsObject(Seq(
-        "status" -> JsString("ok")
-      ))
-      Ok(reply)
+      val supId = request.supNode.id.get
+      Redirect(routes.MarketLkAdn.showAdnNode(supId))
+        .flashing("success" -> "Настройки публикации карточки сохранены.")
     }
   }
 
