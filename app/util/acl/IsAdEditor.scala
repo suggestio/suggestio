@@ -31,7 +31,7 @@ object IsAdEditor extends PlayMacroLogsImpl {
    * @tparam A Параметр типа реквеста.
    * @return None если нельзя. Some([[RequestWithAd]]) если можно исполнять реквест.
    */
-  private def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A], srmFut: Future[SioReqMd]): Future[Option[RequestWithAd[A]]] = {
+  def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A], srmFut: Future[SioReqMd]): Future[Option[RequestWithAd[A]]] = {
     val hasAdv = DB.withConnection { implicit c =>
       MAdvOk.hasAdvUntilNow(mad.id.get)  ||  MAdvReq.hasAdvUntilNow(mad.id.get)
     }
@@ -73,7 +73,8 @@ object IsAdEditor extends PlayMacroLogsImpl {
 
 
 /** Редактировать карточку может только владелец магазина. */
-case class IsAdEditor(adId: String) extends ActionBuilder[RequestWithAd] {
+trait IsAdEditorBase extends ActionBuilder[RequestWithAd] {
+  def adId: String
   protected def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
@@ -88,6 +89,9 @@ case class IsAdEditor(adId: String) extends ActionBuilder[RequestWithAd] {
     }
   }
 }
+case class IsAdEditor(adId: String)
+  extends IsAdEditorBase
+  with ExpireSession[RequestWithAd]
 
 
 /**

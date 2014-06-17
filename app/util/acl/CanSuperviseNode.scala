@@ -30,7 +30,8 @@ object CanSuperviseNode {
   }
 }
 
-case class CanSuperviseNode(adnId: String) extends ActionBuilder[RequestForSlave] {
+trait CanSuperviseNodeBase extends ActionBuilder[RequestForSlave] {
+  def adnId: String
   protected def invokeBlock[A](request: Request[A], block: (RequestForSlave[A]) => Future[Result]): Future[Result] = {
     MAdnNodeCache.getByIdCached(adnId) flatMap {
       case Some(mslave) if mslave.adn.supId.isDefined =>
@@ -54,6 +55,11 @@ case class CanSuperviseNode(adnId: String) extends ActionBuilder[RequestForSlave
   }
 }
 
+case class CanSuperviseNode(adnId: String)
+  extends CanSuperviseNodeBase
+  with ExpireSession[RequestForSlave]
+
+
 
 // Реквесты
 abstract class AbstractRequestForSlave[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
@@ -66,7 +72,8 @@ case class RequestForSlave[A](slaveNode: MAdnNode, supNode: MAdnNode, request: R
 
 
 /** Просматривать прямые под-узлы может просматривать тот, кто записан в supId. */
-case class CanViewSlave(adnId: String) extends ActionBuilder[RequestForSlave] {
+trait CanViewSlaveBase extends ActionBuilder[RequestForSlave] {
+  def adnId: String
   override protected def invokeBlock[A](request: Request[A], block: (RequestForSlave[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     MAdnNodeCache.getByIdCached(adnId) flatMap {
@@ -89,11 +96,15 @@ case class CanViewSlave(adnId: String) extends ActionBuilder[RequestForSlave] {
     }
   }
 }
+case class CanViewSlave(adnId: String)
+  extends CanViewSlaveBase
+  with ExpireSession[RequestForSlave]
 
 
 
 /** Просматривать рекламу с прямых под-узлов может просматривать тот, кто записан в supId. */
-case class CanViewSlaveAd(adId: String) extends ActionBuilder[RequestForSlaveAd] {
+trait CanViewSlaveAdBase extends ActionBuilder[RequestForSlaveAd] {
+  def adId: String
   override protected def invokeBlock[A](request: Request[A], block: (RequestForSlaveAd[A]) => Future[Result]): Future[Result] = {
     MAd.getById(adId) flatMap {
       case Some(mad) =>
@@ -122,6 +133,9 @@ case class CanViewSlaveAd(adId: String) extends ActionBuilder[RequestForSlaveAd]
     }
   }
 }
+case class CanViewSlaveAd(adId: String)
+  extends CanViewSlaveAdBase
+  with ExpireSession[RequestForSlaveAd]
 
 
 case class RequestForSlaveAd[A](mad: MAd, slaveNode: MAdnNode, supNode: MAdnNode, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
@@ -129,7 +143,8 @@ case class RequestForSlaveAd[A](mad: MAd, slaveNode: MAdnNode, supNode: MAdnNode
 
 
 /** Можно ли влиять на рекламную карточку подчинённого узла? Да, если узел подчинён и если юзер -- админу узла-супервизора. */
-case class CanSuperviseSlaveAd(adId: String) extends ActionBuilder[RequestForSlaveAd] {
+trait CanSuperviseSlaveAdBase extends ActionBuilder[RequestForSlaveAd] {
+  def adId: String
   protected def invokeBlock[A](request: Request[A], block: (RequestForSlaveAd[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     // Для экшенов модерации обычно (пока что) не требуется bill-контекста, поэтому делаем srm по-простому.
@@ -165,4 +180,8 @@ case class CanSuperviseSlaveAd(adId: String) extends ActionBuilder[RequestForSla
     }
   }
 }
+
+case class CanSuperviseSlaveAd(adId: String)
+  extends CanSuperviseSlaveAdBase
+  with ExpireSession[RequestForSlaveAd]
 

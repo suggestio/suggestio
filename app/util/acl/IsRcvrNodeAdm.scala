@@ -20,69 +20,16 @@ import util.SiowebEsUtil.client
 object IsRcvrNodeAdm {
   
   def notFoundFut = Future successful Results.NotFound
-  
-  
+
 }
 
 import IsRcvrNodeAdm._
 
-case class IsAnyRcvrNodeAdm(adId: String) extends ActionBuilder[AdAnyRcvrRequest] {
-  override protected def invokeBlock[A](request: Request[A], block: (AdAnyRcvrRequest[A]) => Future[Result]): Future[Result] = {
-    PersonWrapper.getFromRequest(request) match {
-      case pwOpt @ Some(pw) =>
-        val srmFut = SioReqMd.fromPwOpt(pwOpt)
-        val madOptFut = MAd.getById(adId)
-        MAdnNode.findByPersonId(pw.personId).flatMap { personNodes =>
-          if (personNodes.isEmpty) {
-            // Вероятно у этого юзера нет доступа в маркет. На этом и закончим.
-            IsAdnNodeAdmin.onUnauth(request)
-          } else {
-            madOptFut flatMap {
-              case None =>
-                notFoundFut
-              case Some(mad) =>
-                val personAdnIds = personNodes.map(_.id.get).toSet
-                val syncResult = DB.withConnection { implicit c =>
-                  val advsOk = MAdvOk.findByAdIdAndRcvrs(adId, personAdnIds)
-                  val advsReq = MAdvReq.findByAdIdAndRcvrs(adId, personAdnIds)
-                  val advsRefused = MAdvRefuse.findByAdIdAndRcvrs(adId, personAdnIds)
-                  (advsOk, advsReq, advsRefused)
-                }
-                srmFut flatMap { srm =>
-                  val (advsOk, advsReq, advsRefused) = syncResult
-                  val req1 = AdAnyRcvrRequest(mad, personNodes, advsOk, advsReq, advsRefused, pwOpt, request, srm)
-                  block(req1)
-                }
-            }
-          } // else if personNodes.isEmpty
-        } // MAdnNode.findByPersonId()
 
-      case None => onUnauth(request)
-    }
-
-  }
-}
-
-case class AdAnyRcvrRequest[A](
-  mad: MAd,
-  rcvrs: Seq[MAdnNode],
-  advsOk: List[MAdvOk],
-  advsReq: List[MAdvReq],
-  advsRefused: List[MAdvRefuse],
-  pwOpt: PwOpt_t,
-  request: Request[A],
-  sioReqMd: SioReqMd
-)
-  extends AbstractRequestWithPwOpt(request)
-
-
-
-/**
- * Просмотр чьей-то карточки с точки зрения другого узла. Узел может иметь отношение к карточке или нет.
- * @param adId id рекламной карточки.
- * @param fromAdnId id узла, с точки зрения которого происходит просмотр. Возможно, это подставной узел.
- */
-case class ThirdPartyAdAccess(adId: String, fromAdnId: String) extends ActionBuilder[AdRcvrRequest] {
+/** Просмотр чьей-то карточки с точки зрения другого узла. Узел может иметь отношение к карточке или нет. */
+trait ThirdPartyAdAccessBase extends ActionBuilder[AdRcvrRequest] {
+  def adId: String
+  def fromAdnId: String
   override protected def invokeBlock[A](request: Request[A], block: (AdRcvrRequest[A]) => Future[Result]): Future[Result] = {
     PersonWrapper.getFromRequest(request) match {
       case pwOpt @ Some(pw) =>
@@ -120,6 +67,15 @@ case class ThirdPartyAdAccess(adId: String, fromAdnId: String) extends ActionBui
   }
 }
 
+/**
+ * Реализация [[ThirdPartyAdAccessBase]] с поддержкой таймаута сессии.
+ * @param adId id рекламной карточки.
+ * @param fromAdnId id узла, с точки зрения которого происходит просмотр. Возможно, это подставной узел.
+ */
+case class ThirdPartyAdAccess(adId: String, fromAdnId: String)
+  extends ThirdPartyAdAccessBase
+  with ExpireSession[AdRcvrRequest]
+
 
 
 case class AdRcvrRequest[A](
@@ -137,14 +93,15 @@ case class AdRcvrRequest[A](
 /**
  * Запрос окна с информацией о размещении карточки. Такое окно может запрашивать как создатель карточки,
  * так и узел-ресивер, который модерирует или уже отмодерировал карточку.
- * @param adId id рекламной карточки.
- * @param fromAdnId Опциональная точка зрения на карточку.
  */
-case class AdvWndAccess(adId: String, fromAdnId: Option[String], needMBC: Boolean) extends ActionBuilder[AdvWndRequest] {
+trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] {
+  def adId: String
+  def fromAdnId: Option[String]
+  def needMBC: Boolean
+
   override def invokeBlock[A](request: Request[A], block: (AdvWndRequest[A]) => Future[Result]): Future[Result] = {
     PersonWrapper.getFromRequest(request) match {
       case pwOpt @ Some(pw) =>
-        import pw.personId
         MAd.getById(adId).flatMap {
           case Some(mad) =>
             val producerOptFut = MAdnNodeCache.getByIdCached(mad.producerId)
@@ -199,6 +156,14 @@ case class AdvWndAccess(adId: String, fromAdnId: Option[String], needMBC: Boolea
     }
   }
 }
+/**
+ * Реализация [[AdvWndAccessBase]] с поддержкой таймаута сессии.
+ * @param adId id рекламной карточки.
+ * @param fromAdnId Опциональная точка зрения на карточку.
+ */
+case class AdvWndAccess(adId: String, fromAdnId: Option[String], needMBC: Boolean)
+  extends AdvWndAccessBase
+  with ExpireSession[AdvWndRequest]
 
 
 case class AdvWndRequest[A](

@@ -1,7 +1,7 @@
 package controllers
 
 import util.{FormUtil, PlayMacroLogsImpl}
-import util.acl.{AbstractRequestWithPwOpt, PersonWrapper, SioReqMd, IsSuperuser}
+import util.acl._
 import util.SiowebEsUtil.client
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.Play.current
@@ -203,11 +203,9 @@ object SysCalendar extends SioController with PlayMacroLogsImpl {
   }
 
 
-  /**
-   * ACL для нужд календаря.
-   * @param calId id календаря.
-   */
-  case class CanAlterCal(calId: String) extends ActionBuilder[CalendarRequest] {
+  /** ACL для нужд календаря. */
+  sealed trait CanAlterCalBase extends ActionBuilder[CalendarRequest] {
+    def calId: String
     override protected def invokeBlock[A](request: Request[A], block: (CalendarRequest[A]) => Future[Result]): Future[Result] = {
       val pwOpt = PersonWrapper getFromRequest request
       if (PersonWrapper.isSuperuser(pwOpt)) {
@@ -228,6 +226,12 @@ object SysCalendar extends SioController with PlayMacroLogsImpl {
     }
   }
 
-  case class CalendarRequest[A](mcal: MCalendar, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
+  /**
+   * Реализация CanAlterCalBase с поддержкой [[util.acl.ExpireSession]].
+   * @param calId id календаря.
+   */
+  sealed case class CanAlterCal(calId: String) extends CanAlterCalBase with ExpireSession[CalendarRequest]
+
+  sealed case class CalendarRequest[A](mcal: MCalendar, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
     extends AbstractRequestWithPwOpt(request)
 }
