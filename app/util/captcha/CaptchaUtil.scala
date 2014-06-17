@@ -2,8 +2,9 @@ package util.captcha
 
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
+import io.suggest.util.SioRandom
 import org.apache.commons.codec.binary.Base64
-import util.PlayLazyMacroLogsImpl
+import scala.util.Random
 
 /**
  * Suggest.io
@@ -15,20 +16,26 @@ import util.PlayLazyMacroLogsImpl
  * получении картинки капчи.
  * При сабмите значение капчи расшифровывается и сравнивается с выхлопом юзера через простое API.
  */
-object CaptchaUtil {
 
 
-}
-
-
+/** Утиль для криптографии, используемой при stateless-капчевании. */
 object CipherUtil {
 
-  // TODO В будущем следует придумать ротацию секретных ключей, чтобы генерились и ротировались во времени.
-  // TODO Нужно расширить диапазон байтов ключа за пределы ASCII-таблицы.
-  private val SECRET_KEY: Array[Byte] = "OnfoHecDuwavJuv3".getBytes
+  def generateSecretKey(bitLen: Int = 256, rnd: Random = SioRandom.rnd): Array[Byte] = {
+    val arr = Array.fill[Byte](bitLen / 8)(0)
+    rnd.nextBytes(arr)
+    arr
+  }
 
-  // TODO следует свалить с дефолтовых алгоритмов на какой-нибудь serpent или blowfish из bouncy-castle
-  val CIPHER_SPEC = "AES/CBC/PKCS5Padding"
+  /** Секретный ключ симметричного шифра. Сгенерить новый можно через generateSecretKey(). */
+  // TODO В будущем следует придумать ротацию секретных ключей, чтобы генерились и ротировались во времени.
+  private val SECRET_KEY: Array[Byte] = {
+    Array[Byte](-22, 52, -78, -47, -46, 44, -3, 116, -8, -2, -96, -98, 48, 102, -117, -43,
+                -59, -23, 75, 59, -101, 21, -26, 51, -102, -76, 22, 43, -94, -43, 111, 51)
+  }
+
+  // TODO следует свалить с дефолтовых алгоритмов (AES) на какую-нибудь маргинальщину из bouncy-castle.
+  val CIPHER_SPEC = "AES/CBC/PKCS7Padding"
   val SECRET_KEY_ALGO = "AES"
 
   def encryptPrintable(str2enc: String): String = {
@@ -56,6 +63,5 @@ object CipherUtil {
         throw new RuntimeException("Unable to decrypt string: " + str2dec, ex)
     }
   }
-
 
 }
