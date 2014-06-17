@@ -279,6 +279,11 @@ siomart =
 
       setTimeout cb, 100
 
+    document_touchcancel : ( event ) ->
+      siomart.events.is_touch_locked = false
+      delete siomart.events.document_touch_x
+      delete siomart.events.document_touch_y
+
     document_keyup_event : ( event ) ->
 
       if !event
@@ -593,7 +598,6 @@ siomart =
     ###############################
 
     touchstart_event : ( event ) ->
-
       ex = event.touches[0].pageX
       ey = event.touches[0].pageY
 
@@ -605,7 +609,6 @@ siomart =
       siomart.utils.removeClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
 
     touchmove_event : ( event ) ->
-
       ex = event.touches[0].pageX
       ey = event.touches[0].pageY
 
@@ -613,11 +616,12 @@ siomart =
       delta_y = this.tstart_y - ey
 
       if typeof siomart.node_offers_popup.scroll_or_move == 'undefined' && !( delta_x == 0 && delta_y == 0 )
-
         if Math.abs( delta_y ) > Math.abs( delta_x )
           siomart.node_offers_popup.scroll_or_move = 'scroll'
         else
           siomart.node_offers_popup.scroll_or_move = 'move'
+
+      console.log siomart.node_offers_popup.scroll_or_move
 
       if siomart.node_offers_popup.scroll_or_move == 'scroll'
         return false
@@ -637,6 +641,7 @@ siomart =
       this.last_x = ex
 
     touchend_event : ( event ) ->
+      console.log 'touchend'
       siomart.utils.addClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
 
       delete siomart.node_offers_popup.tstart_x
@@ -652,6 +657,12 @@ siomart =
       if this.scroll_or_move == 'move'
         setTimeout cb, 1
 
+      delete siomart.node_offers_popup.scroll_or_move
+
+    touchcancel_event : ( event ) ->
+
+      delete siomart.node_offers_popup.tstart_x
+      delete siomart.node_offers_popup.tstart_y
       delete siomart.node_offers_popup.scroll_or_move
 
 
@@ -676,6 +687,9 @@ siomart =
 
       siomart.utils.add_single_listener this._block_container, 'touchmove', ( event ) ->
         siomart.node_offers_popup.touchmove_event event
+
+      siomart.utils.add_single_listener this._block_container, 'touchcancel', ( event ) ->
+        siomart.node_offers_popup.touchcancel_event event
 
       siomart.utils.add_single_listener this._block_container, 'touchend', ( event ) ->
         siomart.node_offers_popup.touchend_event event
@@ -839,6 +853,7 @@ siomart =
 
     siomart.utils.add_single_listener window, 'touchmove', siomart.events.document_touchmove
     siomart.utils.add_single_listener window, 'touchend', siomart.events.document_touchend
+    siomart.utils.add_single_listener window, 'touchcancel', siomart.events.document_touchcancel
     
     ## Кнопка выхода
     siomart.utils.add_single_listener document, 'keyup', siomart.events.document_keyup_event

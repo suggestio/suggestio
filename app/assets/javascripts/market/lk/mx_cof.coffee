@@ -1218,6 +1218,7 @@ market =
         height: 300,
         menubar: false,
         statusbar : false,
+        force_p_newlines : true,
         valid_elements : "a[href|target=_blank],strong/b,em/i,div[style],br,p[style],span[style]",
         plugins: 'link, textcolor, paste, colorpicker',
         toolbar: ["styleselect | fontsizeselect | alignleft aligncenter alignright | bold italic | colorpicker | link | removeformat" ],
