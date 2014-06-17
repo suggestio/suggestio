@@ -235,7 +235,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
   private val slsStrM: Mapping[LvlMap_t] = {
-    nonEmptyText(maxLength = 256)
+    text(maxLength = 256)
       .transform[LvlMap_t](
         {raw =>
           raw.split("\\s*,\\s*")
@@ -397,7 +397,15 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         supExistsFut flatMap {
           case true =>
             adnNode.companyId = adnNode2.companyId
-            adnNode.meta = adnNode2.meta
+            adnNode.meta.name = adnNode2.meta.name
+            adnNode.meta.description = adnNode2.meta.description
+            adnNode.meta.town = adnNode2.meta.town
+            adnNode.meta.address = adnNode2.meta.address
+            adnNode.meta.phone = adnNode2.meta.phone
+            adnNode.meta.floor = adnNode2.meta.phone
+            adnNode.meta.section = adnNode2.meta.section
+            adnNode.meta.siteUrl = adnNode2.meta.siteUrl
+            adnNode.meta.color = adnNode2.meta.color
             adnNode.adn.memberType = adnNode2.adn.memberType
             adnNode.adn.rights = adnNode2.adn.rights
             adnNode.adn.isEnabled = adnNode2.adn.isEnabled
