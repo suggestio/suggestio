@@ -1,15 +1,32 @@
 @(lf: Form[_])(implicit ctx: util.Context)
 
-@* Страница с формой логина. *@
 
-@admin.adminBaseTpl(title=" | Login") {
-<div class="admin-layout">
-	<div class="login-page-content-@ctx.langStr">
-	  <a href="/" class="login-page-logo"></a>
-      @_emailPwLoginFormTpl(
-        lf = lf,
-        submitCall = routes.Ident.emailPwLoginFormSubmit
-      )
-	</div>
+@* Страница с формой логина. *@
+@market.marketBase("Добро пожаловать"){
+
+  <div class="body-wrap wave-pattern">
+
+    <div class="body">
+
+      <div class="common-login">
+
+        <a class="common-login__logo" href="/"></a>
+
+        <div class="common-login__title">
+          ВХОД В СИСТЕМУ
+        </div>
+
+        <div class="border-line"></div>
+
+        @_emailPwLoginFormTdTpl(
+          lf = lf,
+          submitCall = routes.Ident.emailPwLoginFormSubmit
+        )
+
+      </div>
+
+    </div>
+
   </div>
+
 }

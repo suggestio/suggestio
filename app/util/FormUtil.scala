@@ -159,7 +159,7 @@ object FormUtil {
   val userCatIdSomeM = userCatIdOptM.verifying("error.required", _.isDefined)
 
   // TODO Нужен нормальный валидатор телефонов.
-  val phoneM = nonEmptyText(minLength = 5, maxLength = 16)
+  val phoneM = nonEmptyText(minLength = 5, maxLength = 50)
     .transform(strTrimSanitizeF, strIdentityF)
   val phoneOptM = optional(phoneM)
     .transform [Option[String]] (emptyStrOptToNone, identity)

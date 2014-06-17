@@ -110,6 +110,7 @@ Request.invite=Запросить инвайт
 Audience.descr=Описание аудитории
 Daily.people.traffic=Суточный трафик
 Office.phone.number=Офисный телефон
+Your.IR.accepted=Ваш запрос на подключение к системе принят.
 
 
 lk.sl.enable_ad=Выводить

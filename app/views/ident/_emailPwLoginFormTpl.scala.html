@@ -7,51 +7,35 @@
 @import util.FC.divFc
 
 
-<div class="popup login-popup" id="emailPwLoginForm">
+@form(submitCall) {
 
-  <div class="hat">
-    <a class="close" href="#">&nbsp;</a>
+  @lf.globalError.map { ge =>
+    <p class="lk-error">Ошибка: @Messages(ge.message)</p>
+  }
+
+
+  @inputText(
+    lf("email"),
+    '_label -> "E-mail:"
+  )
+
+
+  @inputPassword(
+    lf("password"),
+    '_label -> "Пароль:"
+  )
+
+  <div class="login-popup__recover-password">
+    У вас проблемы?&nbsp;<a class="js-btn" href="@routes.Ident.recoverPwForm">Восстановить пароль?</a>
   </div>
 
-  <div class="content">
+  <div class="login-popup__submit-wrap">
 
-    <div class="popup-title popup-title_without_padding">
-      ВХОД
+    <div class="blue-btn-new js-submit-wrap">
+      <span class="btn"></span>
+      <input type="submit" value="Войти"/>
     </div>
 
-    @form(submitCall) {
-
-      @lf.globalError.map { ge =>
-        <p class="lk-error">Ошибка: @Messages(ge.message)</p>
-      }
-
-
-      @inputText(
-        lf("email"),
-        '_label -> "E-mail:"
-      )
-
-
-      @inputPassword(
-        lf("password"),
-        '_label -> "Пароль:"
-      )
-
-      <div class="login-popup__recover-password">
-        У вас проблемы?&nbsp;<a class="js-btn" href="@routes.Ident.recoverPwForm">Восстановить пароль?</a>
-      </div>
-
-      <div class="login-popup__submit-wrap">
-
-        <div class="blue-btn-new js-submit-wrap">
-          <span class="btn"></span>
-          <input type="submit" value="Войти"/>
-        </div>
-
-      </div>
-
-    }
-
   </div>
 
-</div>
+}

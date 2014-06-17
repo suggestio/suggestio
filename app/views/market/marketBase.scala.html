@@ -31,13 +31,29 @@
   <div class="popups-container" id="popupsContainer">
 
     @* Попап с формой логина *@
-    @*if(!ctx.isAuth) {*@
+    @if(!ctx.isAuth) {
 
-      @ident._emailPwLoginFormTpl(
-        lf = lf getOrElse controllers.Ident.emailPwLoginFormM,
-        submitCall = routes.MarketLk.emailPwLoginFormSubmit
-      )
+      <div class="popup login-popup" id="emailPwLoginForm">
 
+        <div class="hat">
+          <a class="close" href="#">&nbsp;</a>
+        </div>
+
+        <div class="content">
+
+          <div class="popup-title popup-title_without_padding">
+            ВХОД
+          </div>
+
+          @ident._emailPwLoginFormTpl(
+            lf = lf getOrElse controllers.Ident.emailPwLoginFormM,
+            submitCall = routes.MarketLk.emailPwLoginFormSubmit
+          )
+
+        </div>
+
+      </div>
+    }
 
     <div class="overlay" id="overlay"></div>
 
