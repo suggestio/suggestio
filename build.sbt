@@ -52,9 +52,8 @@ libraryDependencies ++= Seq(
   // Календарь праздников
   "de.jollyday" % "jollyday" % "0.4.+",
   // TODO Надо бы добавить капчу: com.google.code.kaptcha / kaptcha / 2.3 -- http://stackoverflow.com/a/20015373 -- http://maven-repository.com/artifact/com.google.code.kaptcha/kaptcha/2.3
-  // Для поддержки финансовых моделей нужен асинхронный postgres-драйвер.
-  //"com.github.mauricio" %% "postgresql-async" % "0.2.+"
-  // Бомжуем с синхронным драйвером из-за конфликта версии netty между postgresql-async и asynchbase
+  "com.google.code.kaptcha" % "kaptcha" % "2.3",
+  // Бомжуем с синхронным драйвером из-за конфликта между postgresql-async и asynchbase в версии netty. Зато anorm работает.
   "org.postgresql" % "postgresql" % "9.3-1100-jdbc41"
 )
 
@@ -71,7 +70,8 @@ resolvers ++= Seq(
   "sonatype-oss-releases" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots",
   "apache-releases" at "https://ivy2-internal.cbca.ru/artifactory/apache-releases",
   "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo",
-  "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com"
+  "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com",
+  "sonatype-groups-forge" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-groups-forge"
 )
 
 patience.assets.StylusPlugin.stylusSettings
