@@ -42,6 +42,7 @@ object CipherUtil {
 
   def getCipherInstance = {
     //Cipher.getInstance(CIPHER_SPEC)
+    // Дергаем bcprov напрямую из-за проблем с US Export policy в большинстве ОС. Возможно, это решит проблемы.
     Cipher.getInstance(CIPHER_SPEC, BouncyCastleProvider.PROVIDER_NAME)
   }
 
