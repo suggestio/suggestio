@@ -84,7 +84,10 @@ object EsModel extends MacroLogsImpl {
 
   /** Имя индекса, который будет использоваться для хранения данных для большинства остальных моделей.
     * Имя должно быть коротким и лексикографически предшествовать именам остальных временных индексов. */
-  val SIO_ES_INDEX_NAME = "-sio"
+  val DFLT_INDEX        = "-sio"
+  /** Имя индекса, куда сваливается всякий частоменяющийся/часторастущий хлам. */
+  val GARBAGE_INDEX     = "-siostat"
+
 
   // Имена полей в разных хранилищах. НЕЛЬЗЯ менять их значения.
   val COMPANY_ID_ESFN   = "companyId"
@@ -354,7 +357,7 @@ import EsModel._
   * Однажды был вынесен из [[EsModelStaticT]]. */
 trait EsModelStaticMapping extends EsModelStaticMappingGenerators {
 
-  def ES_INDEX_NAME = SIO_ES_INDEX_NAME
+  def ES_INDEX_NAME = DFLT_INDEX
   def ES_TYPE_NAME: String
   def SHARDS_COUNT = SHARDS_COUNT_DFLT
   def REPLICAS_COUNT = REPLICAS_COUNT_DFLT

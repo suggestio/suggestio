@@ -1,6 +1,6 @@
 package io.suggest.ym.model.stat
 
-import io.suggest.model.{EsModelJMXMBeanCommon, EsModelJMXBase, EsModelT, EsModelStaticT}
+import io.suggest.model._
 import io.suggest.model.EsModel._
 import org.joda.time.DateTime
 import org.elasticsearch.common.joda.time.{DateTime => EsDateTime}
@@ -29,8 +29,8 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   override type T = MAdStat
 
   /** Используем изолированный индекс для статистики из-за крайней суровости статистической информации. */
-  override val ES_INDEX_NAME = "-siostat"
-  val ES_TYPE_NAME = "adStat"
+  override def ES_INDEX_NAME = EsModel.GARBAGE_INDEX
+  override val ES_TYPE_NAME = "adStat"
 
   // Поля модели.
   val CLIENT_ADDR_ESFN = "clientAddr"
@@ -46,7 +46,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
   type AdFreqs_t = Map[String, Map[AdStatAction, Long]]
   type DateHistAds_t = Seq[(EsDateTime, Long)]
 
-  protected[model] def adOwnerQuery(adOwnerId: String) = QueryBuilders.termQuery(AD_OWNER_ID_ESFN, adOwnerId)
+  def adOwnerQuery(adOwnerId: String) = QueryBuilders.termQuery(AD_OWNER_ID_ESFN, adOwnerId)
 
   /**
    * Аггрегат, порождающий карту из id реклам и их статистик по action'ам.
