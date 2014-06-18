@@ -51,7 +51,6 @@ libraryDependencies ++= Seq(
   "org.erlang.otp" % "jinterface" % "1.5.+",
   // Календарь праздников
   "de.jollyday" % "jollyday" % "0.4.+",
-  // TODO Надо бы добавить капчу: com.google.code.kaptcha / kaptcha / 2.3 -- http://stackoverflow.com/a/20015373 -- http://maven-repository.com/artifact/com.google.code.kaptcha/kaptcha/2.3
   "com.google.code.kaptcha" % "kaptcha" % "2.3" classifier "jdk15",
   // Бомжуем с синхронным драйвером из-за конфликта между postgresql-async и asynchbase в версии netty. Зато anorm работает.
   "org.postgresql" % "postgresql" % "9.3-1100-jdbc41"

@@ -11,7 +11,7 @@ import com.google.code.kaptcha.Producer
 import com.google.code.kaptcha.impl.DefaultKaptcha
 import play.api.data.Form
 import play.api.mvc._
-import util.{PlayMacroLogsImpl, PlayLazyMacroLogsImpl}
+import util.PlayMacroLogsImpl
 import util.captcha.CipherUtil
 
 /**
@@ -118,11 +118,11 @@ trait CaptchaValidator {
               val ctext = CipherUtil.decryptPrintable(cookie.value, ivMaterial = ivMaterial)
               // Бывает юзер вводит английские буквы с помощью кириллицы. Исправляем это:
               // TODO Надо исправлять только буквы
-              //val captchaTyped2 = captchaTyped.trim.map { TextUtil.mischarFixEn }
+              val captchaTyped2 = captchaTyped.trim.map { TextUtil.mischarFixEnAlpha }
               // TODO Допускать неточное совпадение капчи?
-              val result = ctext equalsIgnoreCase captchaTyped
+              val result = ctext equalsIgnoreCase captchaTyped2
               if (!result)
-                LOGGER.trace(s"checkCaptcha($captchaIdFn, $captchaValueFn): Invalid captcha typed. expected = $ctext, typed = $captchaTyped")
+                LOGGER.trace(s"checkCaptcha($captchaIdFn, $captchaValueFn): Invalid captcha typed. expected = $ctext, typed = $captchaTyped2")
               result
             } catch {
               case ex: Exception =>
