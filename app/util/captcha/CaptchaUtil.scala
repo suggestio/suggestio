@@ -40,6 +40,12 @@ object CipherUtil {
   }
 
 
+  def getCipherInstance = {
+    //Cipher.getInstance(CIPHER_SPEC)
+    Cipher.getInstance(CIPHER_SPEC, BouncyCastleProvider.PROVIDER_NAME)
+  }
+
+
   def generateSecretKey(bitLen: Int = 256, rnd: Random = SioRandom.rnd): Array[Byte] = {
     val arr = Array.fill[Byte](bitLen / 8)(0)
     rnd.nextBytes(arr)
@@ -71,7 +77,7 @@ object CipherUtil {
 
   def encryptPrintable(str2enc: String, ivMaterial: Array[Byte] = Array.empty): String = {
     try {
-      val cipher = Cipher.getInstance(CIPHER_SPEC)
+      val cipher = getCipherInstance
       val secretKey = new SecretKeySpec(SECRET_KEY, SECRET_KEY_ALGO)
       val iv1 = mixWithIvDflt(ivMaterial)
       val ivSpec = new IvParameterSpec(iv1)
@@ -86,7 +92,7 @@ object CipherUtil {
 
   def decryptPrintable(str2dec: String, ivMaterial: Array[Byte] = Array.empty): String = {
     try {
-      val cipher = Cipher.getInstance(CIPHER_SPEC)
+      val cipher = getCipherInstance
       val secretKey = new SecretKeySpec(SECRET_KEY, SECRET_KEY_ALGO)
       val iv1 = mixWithIvDflt(ivMaterial)
       val ivSpec = new IvParameterSpec(iv1)
