@@ -21,6 +21,16 @@ import util.captcha.CipherUtil
  * Description: Контроллер и сопутствующая утиль для капчеванию пользователей.
  */
 object Captcha extends KaptchaGenerator with PlayMacroLogsImpl {
+  import play.api.data.Forms._
+  import util.FormUtil._
+
+  /** Маппер формы для hidden поля, содержащего id капчи. */
+  val captchaIdM = nonEmptyText(maxLength = 16)
+    .transform(strTrimSanitizeF, strIdentityF)
+
+  /** Маппер формы для поля, в которое юзер вписывает текст с картинки. */
+  val captchaTypedM = nonEmptyText(maxLength = 16)
+    .transform(strTrimF, strIdentityF)
 }
 
 
@@ -101,15 +111,16 @@ trait KaptchaGenerator extends CaptchaGeneratorBase {
 trait CaptchaValidator {
   def LOGGER : slf4j.Logger
 
+  val CAPTCHA_ID_FN     = "captchaId"
+  val CAPTCHA_TYPED_FN  = "captchaTyped"
+
   /** Проверить капчу, присланную в форме. Вызывается перез Form.fold().
     * @param form Маппинг формы.
-    * @param captchaIdFn Название hidden-поля формы, где содержится id капчи.
-    * @param captchaValueFn Название поля формы, куда юзер должен был ввести значение капчи.
     * @return Форма, в которую может быть залита ошибка поля ввода капчи.
     */
-  def checkCaptcha[T](form: Form[T], captchaIdFn: String, captchaValueFn: String)(implicit request: RequestHeader): Form[T] = {
-    val maybeCookieOk = form.data.get(captchaIdFn) flatMap { captchaId =>
-      form.data.get(captchaValueFn) flatMap { captchaTyped =>
+  def checkCaptcha[T](form: Form[T])(implicit request: RequestHeader): Form[T] = {
+    val maybeCookieOk = form.data.get(CAPTCHA_ID_FN) flatMap { captchaId =>
+      form.data.get(CAPTCHA_TYPED_FN) flatMap { captchaTyped =>
         val cookieName = Captcha.cookieName(captchaId)
         request.cookies.get(cookieName)
           .filter { cookie =>
@@ -122,11 +133,11 @@ trait CaptchaValidator {
               // TODO Допускать неточное совпадение капчи?
               val result = ctext equalsIgnoreCase captchaTyped2
               if (!result)
-                LOGGER.trace(s"checkCaptcha($captchaIdFn, $captchaValueFn): Invalid captcha typed. expected = $ctext, typed = $captchaTyped2")
+                LOGGER.trace(s"checkCaptcha($CAPTCHA_ID_FN, $CAPTCHA_TYPED_FN): Invalid captcha typed. expected = $ctext, typed = $captchaTyped2")
               result
             } catch {
               case ex: Exception =>
-                LOGGER.warn(s"checkCaptcha($captchaIdFn, $captchaValueFn): Failed", ex)
+                LOGGER.warn(s"checkCaptcha($CAPTCHA_ID_FN, $CAPTCHA_TYPED_FN): Failed", ex)
                 false
             }
         }
@@ -134,7 +145,7 @@ trait CaptchaValidator {
     }
     maybeCookieOk.fold {
       // Нет результата. Залить в форму ошибки.
-      form.withError(captchaValueFn, "error.captcha")
+      form.withError(CAPTCHA_TYPED_FN, "error.captcha")
     } { _ =>
       // Есть что-то в результате. Значит капчка пропарсилась.
       form
@@ -144,12 +155,11 @@ trait CaptchaValidator {
   /**
    * Удалить капчу из кукисов.
    * @param form Форма.
-   * @param captchaIdFn Название поля с id капчи.
    * @param response Http-ответ.
    * @return Модифицированный http-ответ.
    */
-  def rmCaptcha(form: Form[_], captchaIdFn: String, response: Result) = {
-    form.data.get(captchaIdFn).fold(response) { captchaId =>
+  def rmCaptcha(form: Form[_], response: Result) = {
+    form.data.get(CAPTCHA_ID_FN).fold(response) { captchaId =>
       val cookieName = Captcha.cookieName(captchaId)
       response
         .discardingCookies(DiscardingCookie(name = cookieName, secure = Captcha.COOKIE_FLAG_SECURE))

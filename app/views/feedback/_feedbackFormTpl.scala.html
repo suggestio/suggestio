@@ -20,7 +20,7 @@
     </div>
   </fieldset>
 
-  @defining( feedbackFormM(CAPTCHA_ID_FN).value.getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+  @defining( feedbackFormM(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
     <input type="hidden" name="captchaId" value="@captchaId"/>
     <img src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
   }

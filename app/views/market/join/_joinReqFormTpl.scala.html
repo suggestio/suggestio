@@ -3,6 +3,8 @@
 @import ctx._
 @import helper._
 @import util.FC.tdFc
+@import controllers.MarketJoin.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
+@import io.suggest.util.StringUtil.randomId
 
 @form(submitCall) {
 
@@ -54,6 +56,19 @@
   }
 
   <div class="border-line"></div>
+
+
+  @* Капча *@
+  @defining( jf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+    <input type="hidden" name="captchaId" value="@captchaId"/>
+    <img src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
+  }
+
+  @inputText(
+    jf(CAPTCHA_TYPED_FN),
+    '_label -> Messages("Input.text.from.picture")
+  )
+
 
   <div class="submit-wrap submit-wrap_padding10">
     <div class="blue-btn-new js-submit-wrap f-right">
