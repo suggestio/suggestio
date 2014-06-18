@@ -190,9 +190,9 @@ object TextUtil {
     }
   }
 
-  /** Костыль для отката скрытой визуальной транслитерации на english.
-   * НЕЛЬЗЯ делать через PartialFunction, т.к. там постоянный box-unbox порождает огромные кучи мусора. */
-  def mischarFixEn(ch: Char): Char = {
+
+  /** Исправить русские буквы на схожие по начертанию английские. */
+  def mischarFixEnAlpha(ch: Char): Char = {
     ch match {
       case 'с' => 'c'
       case 'С' => 'c'
@@ -222,12 +222,19 @@ object TextUtil {
       case 'И' => 'N'
       case 'г' => 'r'
       case 'ь' => 'b'
-      // цифры
+      case _   => ch
+    }
+  }
+
+  /** Костыль для отката скрытой визуальной транслитерации на english.
+   * НЕЛЬЗЯ делать через PartialFunction, т.к. там постоянный box-unbox порождает огромные кучи мусора. */
+  def mischarFixEn(ch: Char): Char = {
+    ch match {
       case '0' => 'O'
       case '1' => 'l'
       case '3' => 'E'
       case '7' => 'T'
-      case _   => ch
+      case other => mischarFixEnAlpha(other)
     }
   }
 

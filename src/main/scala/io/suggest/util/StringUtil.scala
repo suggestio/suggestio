@@ -3,7 +3,7 @@ package io.suggest.util
 import annotation.tailrec
 import java.nio.ByteBuffer
 import org.apache.commons.codec.binary.Base32
-import SioRandom.rnd
+import scala.util.Random
 
 /**
  * Suggest.io
@@ -28,33 +28,35 @@ object StringUtil {
    * @param len Опциональная длина выходной строки.
    * @return Случайная строка.
    */
-  def randomId(len:Int = 10) = 1 to len map {_ => randomIdChar} mkString
+  def randomId(len:Int = 10, rnd: Random = SioRandom.rnd) = 1 to len map {_ => randomIdChar(rnd) } mkString
 
 
   /** Сгенерить случайный символ из диапазона 0-9 a-z A-Z
    * @return случайный alphanumeric символ.
    */
   @tailrec
-  def randomIdChar : Char = rnd.nextPrintableChar() match {
+  def randomIdChar(rnd: Random = SioRandom.rnd): Char = rnd.nextPrintableChar() match {
     case c if c>='0' && c<='9' || c>='A' && c<='Z' || c>='a' && c<='z'  => c
-    case _ => randomIdChar
+    case _ => randomIdChar(rnd)
   }
 
   /** Генерация одного случайного lower-case символа латиницы.
    * @return Символ от 'a' до 'z'.
    */
   @tailrec
-  def randomIdLatLcChar: Char = rnd.nextPrintableChar() match {
-    case c if c>='a' && c<='z'  => c
-    case c if c>='A' && c<='Z'  => c.toLower
-    case _                      => randomIdLatLcChar
+  def randomIdLatLcChar(rnd: Random = SioRandom.rnd): Char = {
+    rnd.nextPrintableChar() match {
+      case c if c>='a' && c<='z'  => c
+      case c if c>='A' && c<='Z'  => c.toLower
+      case _                      => randomIdLatLcChar(rnd)
+    }
   }
 
   /** Генерация случайно строки из латинских символов от 'a' до 'z'.
    * @param len Длина результирующей строки.
    * @return Случайная строка вида "asdftbhdb" длины len.
    */
-  def randomIdLatLc(len: Int = 10) = 1 to len map { _ => randomIdLatLcChar } mkString
+  def randomIdLatLc(len: Int = 10, rnd: Random = SioRandom.rnd) = 1 to len map { _ => randomIdLatLcChar(rnd) } mkString
 
 
   def getB32Encoder = new Base32(true)
