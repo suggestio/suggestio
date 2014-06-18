@@ -58,6 +58,8 @@ amts.of.type.m=Marts
 amts.of.type.r=Restaurants
 amts.of.type.R=Restaurant chains
 
+Input.text.from.picture=Input text from the picture
+error.captcha=Invalid human-check code
 
 editing.of.amt.profile.s=Shop profile edit
 editing.of.amt.profile.m=Mhop profile edit

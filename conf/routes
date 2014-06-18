@@ -57,6 +57,8 @@ POST    /blog/edit/:id                  controllers.Blog.editRecSubmit(id:String
 GET     /help                           controllers.Static.help
 GET     /help/:page                     controllers.Static.helpPage(page)
 
+# Генератор капч
+GET     /captcha/get/:captchaId         controllers.Captcha.getCaptcha(captchaId)
 
 # Админка. Адресация первого sioweb почти сохранена.
 GET  /admin                             controllers.Admin.index

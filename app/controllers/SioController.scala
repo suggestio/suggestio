@@ -73,7 +73,6 @@ trait BruteForceProtect {
   val INVITE_CHECK_LAG_DURATION = 333 millis
 
   /** Система асинхронного платформонезависимого противодействия брутфорс-атакам. */
-  // TODO Надо вынести её код в util.
   def bruteForceProtect: Future[_] = {
     // Для противодействию брутфорсу добавляем асинхронную задержку выполнения проверки по методике https://stackoverflow.com/a/17284760
     // TODO Нужно лимитировать попытки по IP клиента. ip можно закидывать в cache с коротким ttl.

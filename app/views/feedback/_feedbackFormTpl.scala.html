@@ -4,6 +4,8 @@
 
 @import ctx._
 @import helper._
+@import io.suggest.util.StringUtil.randomId
+@import controllers.Feedback.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
 
 @form(routes.Feedback.feedbackFormSubmit) {
   <fieldset>
@@ -17,7 +19,17 @@
       @textarea(feedbackFormM("message"), 'id -> "feedbackMessage", '_label -> Messages("your_message"))
     </div>
   </fieldset>
-  
+
+  @defining( feedbackFormM(CAPTCHA_ID_FN).value.getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+    <input type="hidden" name="captchaId" value="@captchaId"/>
+    <img src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
+  }
+
+  @inputText(
+    feedbackFormM(CAPTCHA_TYPED_FN),
+    '_label -> Messages("Input.text.from.picture")
+  )
+
   <fieldset>
     @* Кнопка сабмита "отправить" *@
     <input class="submit" type="submit" value="@Messages("send")"/>

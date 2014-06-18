@@ -61,6 +61,9 @@ amts.of.type.m=Торговые центры
 amts.of.type.r=Рестораны
 amts.of.type.R=Сети ресторанов
 
+Input.text.from.picture=Введите текст, изображенный на картинке
+error.captcha=Неверный код проверки.
+
 editing.of.amt.profile.s=Редактирование профайла магазина
 editing.of.amt.profile.m=Редактирование профайла ТЦ
 editing.of.amt.profile.r=Редактирование профайла ресторана

@@ -3,6 +3,7 @@ import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
 import io.suggest.model.EsModel
 import org.elasticsearch.client.Client
 import play.api.mvc.{Result, WithFilters, RequestHeader}
+import util.captcha.CipherUtil
 import scala.concurrent.{Await, Future, future}
 import scala.util.{Failure, Success}
 import util.jmx.JMXImpl
@@ -51,6 +52,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
     JMXImpl.registerAll()
     // Блокируемся, чтобы не было ошибок в браузере и консоли из-за асинхронной работы с ещё не запущенной системой.
     val startTimeout: FiniteDuration = (app.configuration.getInt("start.timeout_sec") getOrElse 32).seconds
+    CipherUtil.ensureBcJce()
     Await.ready(fut, startTimeout)
     synchronized {
       cronTimers = Crontab.startTimers
