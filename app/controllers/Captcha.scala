@@ -44,7 +44,7 @@ trait CaptchaGeneratorBase extends Controller {
    */
   def getCaptcha(captchaId: String) = Action { implicit request =>
     val ctext = createCaptchaText
-    LOGGER.debug(s"getCaptcha($captchaId): ctext -> $ctext")
+    LOGGER.trace(s"getCaptcha($captchaId): ctext -> $ctext")
     val ctextCrypt = CipherUtil.encryptPrintable(ctext, ivMaterial = ivMaterial(captchaId))
     Ok(createCaptchaImg(ctext))
       .withHeaders(
@@ -152,7 +152,7 @@ trait CaptchaValidator {
     form.data.get(captchaIdFn).fold(response) { captchaId =>
       val cookieName = Captcha.cookieName(captchaId)
       response
-        .withCookies(Cookie(name = cookieName, value = "", maxAge = Some(-1), secure = Captcha.COOKIE_FLAG_SECURE))
+        .discardingCookies(DiscardingCookie(name = cookieName, secure = Captcha.COOKIE_FLAG_SECURE))
     }
   }
 }
