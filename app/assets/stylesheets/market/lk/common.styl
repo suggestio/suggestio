@@ -1762,11 +1762,13 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
 .about-page__circle-wrap
   position: relative
-  height: 142px
   margin: 25px 0
+  overflow: hidden
+  padding-top: 145px
 
 .about-page__circle
   left: 50%
+  top: 0
   margin-left: -70px
   position: absolute
   display: inline-block
@@ -1789,14 +1791,20 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   line-height: 36px
 
 .about-page__circle-wrap__left-text
-  left: -25px
+  display: block
+  left: 0
+  top: 0
+  padding-top: 10px
+  font-family: 'PharmadinCondensedLight'
   position: relative
-  top: 55px
+
 
 .about-page__circle-wrap__right-text
+  display: block
+  top: 0
+  left: 0
+  font-family: 'PharmadinCondensedLight'
   position: relative
-  right: -135px
-  top: 55px
 
 .dot
   background: url('/assets/images/market/lk/dot.png') no-repeat
@@ -1881,29 +1889,12 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   .about-page
     font-size: 16px
 
-  .about-page__circle-wrap
-    height: auto
-    overflow: hidden
-    padding-top: 145px
-
   .about-page__circle-wrap__left-text
-    display: block
-    left: 0
-    top: 0
-    padding-top: 10px
-    font-family: 'PharmadinCondensedLight'
     font-size: 28px
     line-height: 26px
 
   .about-page__circle-wrap__right-text
-    display: block
-    top: 0
-    left: 0
-    font-family: 'PharmadinCondensedLight'
     font-size: 28px
     line-height: 26px
-
-  .about-page__circle
-    top: 0
 
 
