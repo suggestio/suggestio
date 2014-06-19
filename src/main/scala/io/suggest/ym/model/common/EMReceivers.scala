@@ -200,10 +200,7 @@ trait EMReceivers extends EMReceiversI {
     val json = JsObject(Seq(
       RECEIVERS_ESFN -> writeReceiversPlayJson
     ))
-    val req = prepareUpdate.setDoc(json.toString())
-    if (versionOpt.isDefined)
-      req.setVersion(versionOpt.get)
-    req
+    prepareUpdate.setDoc(json.toString())
   }
 
   /** Сохранить новые ресиверы через update. */

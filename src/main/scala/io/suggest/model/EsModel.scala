@@ -728,7 +728,12 @@ trait EsModelMinimalT {
       null
   }
 
-  def prepareUpdate(implicit client: Client) = client.prepareUpdate(esIndexName, esTypeName, id.get)
+  def prepareUpdate(implicit client: Client) = {
+    val req = client.prepareUpdate(esIndexName, esTypeName, id.get)
+    if (versionOpt.isDefined)
+      req.setVersion(versionOpt.get)
+    req
+  }
 
   /** Загрузка новых значений *пользовательских* полей из указанного экземпляра такого же класса.
     * Полезно при edit form sumbit после накатывания маппинга формы на реквест. */
@@ -758,11 +763,14 @@ trait EsModelMinimalT {
   /**
    * Сохранить экземпляр в хранилище ES.
    * @return Фьючерс с новым/текущим id
+   *         VersionConflictException если транзакция в текущем состоянии невозможна.
    */
   def save(implicit ec:ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[String] = {
     if (isFieldsValid) {
-      indexRequestBuilder
-        .execute()
+      val irb = indexRequestBuilder
+      if (versionOpt.isDefined)
+        irb.setVersion(versionOpt.get)
+      irb.execute()
         .map { _.getId }
     } else {
       throw new IllegalStateException("Some or all important fields have invalid values: " + this)

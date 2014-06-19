@@ -40,6 +40,7 @@ object MAd
   with MacroLogsImpl
   with EMDisableReasonStatic
   with EMRichDescrStatic
+  with EMModerationStatic
   with EsModelStaticIgnore
 {
   import LOGGER._
@@ -154,6 +155,7 @@ case class MAd(
   var disableReason : List[DisableReason] = Nil,
   var richDescrOpt  : Option[RichDescr] = None,
   var dateCreated   : DateTime = DateTime.now,
+  var moderation    : ModerationInfo = ModerationInfo(),
   var versionOpt    : Option[Long] = None
 )
   extends EsModelEmpty
@@ -170,6 +172,7 @@ case class MAd(
   with EMColorsMut
   with EMDisableReasonMut
   with EMRichDescrMut
+  with EMModerationMut
 {
   @JsonIgnore
   override type T = MAd
