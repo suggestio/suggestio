@@ -1,0 +1,11 @@
+@()(implicit ctx: Context)
+
+@hPathAfter = {
+  @* Ничего не отображаем, т.к. корневая ссылка из base-шаблона полностью устраивает. *@
+}
+
+@mdrBase("Модерация", hPathAfter = Some(hPathAfter)) {
+
+  <a href="@routes.SysMdr.freeAdvs()">Модерация бесплатных саморазмещённых рекламных карточек</a>
+
+}

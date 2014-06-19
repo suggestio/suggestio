@@ -3,8 +3,8 @@
 @* Страница с формой логина. *@
 @import ctx._
 @import helper._
-
-
+@import controllers.Ident.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
+@import io.suggest.util.StringUtil.randomId
 @import util.FC.divFc
 
 
@@ -27,6 +27,25 @@
         rf("email"),
         '_label -> "Электронная почта, указанная при регистрации:"
       )
+
+
+      @* Капча *@
+      <div class="ovh">
+        <div class="f-left" style="width: 180px;">
+          @inputText(
+          rf(CAPTCHA_TYPED_FN),
+          '_label -> Messages("Input.text.from.picture")
+          )
+        </div>
+
+        <div class="f-right" style="padding-top: 6px; height: 53px;">
+          @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+            <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
+            <img id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
+            <a id="captchaReload" class="captcha-reload-btn" href=""></a>
+          }
+        </div>
+      </div>
 
 
       <div class="recover-popup__submit-wrap">
