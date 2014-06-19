@@ -161,6 +161,21 @@ CbcaCommon = () ->
     $(window).resize () ->
       cbca.popup.setOverlayHeight()
 
+    #############
+    ## CAPTCHA ##
+    #############
+
+    $(document).on 'click', '#captchaReload', (e)->
+      e.preventDefault()
+      $this = $(this)
+      $captchaImage = $('#captchaImage')
+      $parent = $('#captchaImage').parent()
+      random = Math.random()
+
+      $captchaImage.remove()
+      $parent.prepend('<img id="captchaImage" src="/captcha/get/' + $('#captchaId').val() + '?v='+random+'" />')
+
+
     #####################
     ## WIFI FORM start ##
     #####################

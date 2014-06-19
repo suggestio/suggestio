@@ -62,10 +62,11 @@
   <table cellpadding="0" cellspacing="0" class="input-wrap">
     <tr>
       <td class="left"></td>
-      <td class="right">
+      <td class="right" style="height: 55px;">
         @defining( jf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
-          <input type="hidden" name="captchaId" value="@captchaId"/>
-          <img src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
+          <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
+          <img id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
+          <a id="captchaReload" class="captcha-reload-btn" href=""></a>
         }
       </td>
     </tr>
