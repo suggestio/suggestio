@@ -56,6 +56,14 @@ object MarketLk extends SioController with EmailPwSubmit with PlayMacroLogsImpl 
         routes.MarketLk.lkList()
       }
       Option(rdrOrNull)
+        // Если некуда отправлять, а юзер - админ, то отправить в /sys/.
+        .orElse {
+          if (MPerson isSuperuserId personId) {
+            Some(routes.Sys.index())
+          } else {
+            None
+          }
+        }
     }
   }
 
