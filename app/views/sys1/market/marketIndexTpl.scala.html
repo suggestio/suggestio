@@ -3,6 +3,21 @@
 @* Список ссылок на страницы управления магазинной частью. *@
 @import MMartCategory._
 
+
+@* Подшаблон генерации квадратной кнопки. *@
+@btn(href: Call, paddingPx: Int, fLeft: Boolean = true, font: Int = 24)(btnText: Html) = {
+  <div class="sys-market-index__item">
+
+    <a class="transparent-btn transparent-btn_gray@if(fLeft) { f-left}" href="@href">
+      <div class="transparent-btn__white-top" style="padding: @{paddingPx}px 0;">
+        <span class="transparent-btn_gray__text font-@font">@btnText</span>
+      </div>
+    </a>
+
+  </div>
+}
+
+
 @marketBase("index") {
 
     <p>
@@ -10,95 +25,26 @@
     </p>
 
     <div class="sys-market-index__items">
-
-      <div class="sys-market-index__item">
-
-        <a class="transparent-btn transparent-btn_gray" href="@routes.SysMarket.companiesList">
-          <div class="transparent-btn__white-top" style="padding: 40px 0;">
-            <span class="transparent-btn_gray__text font-24">ВСЕ<br/>КОМПАНИИ</span>
-          </div>
-        </a>
-
-      </div>
-
-      <div class="sys-market-index__item">
-
-        <a class="transparent-btn transparent-btn_gray f-left" href="@routes.SysMarket.adnNodesList()">
-          <div class="transparent-btn__white-top" style="padding: 52px 0;">
-            <span class="transparent-btn_gray__text font-24">ADNetwork</span>
-          </div>
-        </a>
-
-      </div>
-
-      <div class="sys-market-index__item">
-
-        <a class="transparent-btn transparent-btn_gray f-left" href="@routes.SysMarketBilling.index">
-          <div class="transparent-btn__white-top" style="padding: 52px 0;">
-            <span class="transparent-btn_gray__text font-24">БИЛЛИНГ</span>
-          </div>
-        </a>
-
-      </div>
-
-      <div class="sys-market-index__item">
-
-        <a class="transparent-btn transparent-btn_gray f-left" href="@routes.SysMarket.showYmCats">
-          <div class="transparent-btn__white-top" style="padding: 40px 0;">
-            <span class="transparent-btn_gray__text font-24">ГЛОБАЛЬНЫЕ<br/>КАТЕГОРИИ</span>
-          </div>
-        </a>
-
-      </div>
-
-      <div class="sys-market-index__item">
-
-        <a class="transparent-btn transparent-btn_gray f-left" href="@routes.SysCalendar.showCalendars">
-          <div class="transparent-btn__white-top" style="padding: 28px 0;">
-            <span class="transparent-btn_gray__text font-24">КАЛЕНДАРИ<br/>ПРАЗДНИКОВ/<br/>ВЫХОДНЫХ</span>
-          </div>
-        </a>
-
-      </div>
-
-      <div class="sys-market-index__item">
-
-        <a class="transparent-btn transparent-btn_gray f-left" href="@routes.SysMarketInvReq.index">
-          <div class="transparent-btn__white-top" style="padding: 28px 0;">
-            <span class="transparent-btn_gray__text font-24">ЗАПРОСЫ<br/>ПОДКЛЮЧЕНИЯ<br/>К СЕТИ</span>
-          </div>
-        </a>
-
-      </div>
-
+      @btn(routes.SysMarket.companiesList(), 40, fLeft = false) { ВСЕ<br/>КОМПАНИИ }
+      @btn(routes.SysMarket.adnNodesList(), 52) { ADNetwork }
+      @btn(routes.SysMarketBilling.index(), 52) { БИЛЛИНГ }
+      @btn(routes.SysMarket.showYmCats, 40) { ГЛОБАЛЬНЫЕ<br/>КАТЕГОРИИ }
+      @btn(routes.SysCalendar.showCalendars, 28) { КАЛЕНДАРИ<br/>ПРАЗДНИКОВ/<br/>ВЫХОДНЫХ }
+      @btn(routes.SysMarketInvReq.index, 28) { ЗАПРОСЫ<br/>ПОДКЛЮЧЕНИЯ<br/>К СЕТИ }
+      @btn(routes.SysMdr.index, 52) { Модерация }
     </div>
 
     <p>
-      <a href="@routes.SysMarket.companiesList">Все компании</a>,
       <a class="add" href="@routes.SysMarket.companyAddForm()">+добавить</a>
     </p>
 
     <p>
-      <a href="@routes.SysMarket.adnNodesList()">ADNetwork</a>,
       <a class="add" href="@routes.SysMarket.createAdnNode()">+добавить узел верхнего уровня</a>
       <br/>
     </p>
 
     <p>
-      <a href="@routes.SysMarketBilling.index">Биллинг</a>
-    </p>
-
-    <p>
       <a href="@routes.SysMarket.showYmCats">YM-категории</a>,
-      <a href="@routes.MarketCategory.showCatsFor(DEFAULT_OWNER_ID)">Глобальные категории</a><br/>
-    </p>
-
-    <p>
-      <a href="@routes.SysCalendar.showCalendars">Календари праздников/выходных</a>
-    </p>
-
-    <p>
-      <a href="@routes.SysMarketInvReq.index">Запросы подключения к сети</a>
     </p>
 
 }
