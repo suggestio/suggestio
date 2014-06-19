@@ -43,7 +43,8 @@ object MPersonIdent extends PlayMacroLogsImpl {
         "konstantin.nikiforov@cbca.ru",
         "ilya@shuma.ru",
         "sasha@cbca.ru",
-        "maksim.sharipov@cbca.ru"
+        "maksim.sharipov@cbca.ru",
+        "alexander.pestrikov@cbca.ru"
       ))
   }
 

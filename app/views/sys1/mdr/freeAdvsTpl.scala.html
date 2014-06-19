@@ -1,9 +1,8 @@
-@(mads: Seq[MAd], prodsMap: Map[String, MAdnNode], currPage: Int)(implicit ctx: Context)
+@(mads: Seq[MAd], prodsMap: Map[String, MAdnNode], currPage: Int, hasNextPage: Boolean)(implicit ctx: Context)
 
 @* Страница для отображения списка карточек, бесплатно размещенных и требующих пост-модерации s.io. *@
 @import market.showcase._
 @import ctx._
-@import controllers.SysMdr.FREE_ADVS_PAGE_SZ
 @import market.lk.ad._
 
 @headAfter = {
@@ -16,8 +15,13 @@
   @* Рендерим список рекламных карточек. *@
   @_adsListTpl(mads, coverDisableReason = true) { mad =>
     <a href="@routes.MarketAd.editAd(mad.id.get)">[ред]</a>
-    <a href="@routes.SysMarket.showAdnNode(mad.producerId)">@prodsMap.get(mad.producerId).fold { ??? } { producer => @producer.meta.name / @producer.meta.town}</a>
+    <a href="@routes.SysMarket.showAdnNode(mad.producerId)">@prodsMap.get(mad.producerId).fold {
+      ???
+    } { producer =>
+      @producer.meta.name / @producer.meta.town
+    }</a>
     <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">[ЛК]</a>
+    <a href="@routes.SysMdr.freeAdvMdr(mad.id.get)">МОДЕРИРОВАТЬ</a>
   }
 
   @* Рендерим переключение страниц. *@
@@ -29,7 +33,7 @@
     <a href="@routes.SysMdr.freeAdvs(currPage - 1)">Предыдущая</a>
   }
   <strong>@currPage</strong>
-  @if(mads.size >= FREE_ADVS_PAGE_SZ) {
+  @if(hasNextPage) {
     <a href="@routes.SysMdr.freeAdvs(currPage + 1)">Следующая</a>
   }
 }
