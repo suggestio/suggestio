@@ -31,6 +31,14 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   z-index: 10000000!important
 
 
+i
+ font-style: italic
+
+ul
+  padding-left: 30px
+
+li
+  list-style: disc
 
 .ovh
   overflow: hidden
@@ -1620,9 +1628,6 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 .recover-popup__content
   height: 270px
 
-.recover-popup__content__form
-  margin-top: 25px
-
 .recover-popup__submit-wrap
   margin-top: 50px
   text-align: center
@@ -1753,60 +1758,33 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   color: white
   font-family: "heliosthin"
   font-size: 24px
+  line-height: 24px
   text-align: center
 
 .about-page__title
-  font-family: "blocextconc-webfont"
-  font-size: 36px
-  line-height: 34px
+  font-family: "aa_higherup-webfont"
+  font-size: 42px
+  line-height: 40px
+  letter-spacing: 2px
+
+.about-page__title__big-btn
+  font-size: 48px
+  line-height: 46px
 
 .about-page__circle-wrap
-  position: relative
+  display: inline-block
   margin: 25px 0
-  overflow: hidden
-  padding-top: 145px
+  padding: 6px
+  background-color: rgba( 107, 126, 133, 0.5)
+  border-radius(50%)
 
 .about-page__circle
-  left: 50%
-  top: 0
-  width: 82px
-  height: 96px
-  margin-left: -70px
-  position: absolute
   display: inline-block
+  padding: 90px 20px 80px
+  width: 232px
+  height: 96px
   border-radius(50%)
-  font-family: 'PharmadinCondensedLight'
-  font-size: 36px
-  line-height: 36px
-  background-color: rgba( 107, 126, 133, 0.5)
   border: 1px solid white
-  padding: 22px 29px
-
-.about-page__circle__price
-  font-family: 'blocextconc-webfont'
-  font-size: 60px
-  line-height: 60px
-
-.about-page__circle__percent
-  font-family: 'blocextconc-webfont'
-  font-size: 36px
-  line-height: 36px
-
-.about-page__circle-wrap__left-text
-  display: block
-  left: 0
-  top: 0
-  padding-top: 10px
-  font-family: 'PharmadinCondensedLight'
-  position: relative
-
-
-.about-page__circle-wrap__right-text
-  display: block
-  top: 0
-  left: 0
-  font-family: 'PharmadinCondensedLight'
-  position: relative
 
 .dot
   background: url('/assets/images/market/lk/dot.png') no-repeat
@@ -1819,10 +1797,10 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   height: 28px
 
 .about-page__dot
-  margin: 0 auto
+  margin: 0 auto 10px
 
 .about-page__dot-arrow
-  margin: 0 auto
+  margin: 10px auto 0
 
 .about-page__under-btn
   font-family: 'Arial'
@@ -1886,17 +1864,15 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   left: 0
 
 
+.contract-page
+  overflow: hidden
+
+.contract__h1
+  margin: 15px 0
+  font-size: 20px
+  text-align: center
+
 @media screen1024
 
   .about-page
     font-size: 16px
-
-  .about-page__circle-wrap__left-text
-    font-size: 28px
-    line-height: 26px
-
-  .about-page__circle-wrap__right-text
-    font-size: 28px
-    line-height: 26px
-
-

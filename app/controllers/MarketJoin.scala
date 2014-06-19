@@ -19,7 +19,7 @@ import play.api.mvc.RequestHeader
  * Created: 03.06.14 18:29
  * Description: Контроллер раздела сайта со страницами и формами присоединения к sio-market.
  */
-object MarketJoin extends SioController with PlayMacroLogsImpl {
+object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValidator {
   import LOGGER._
 
   /** Маппинг формы анкеты с галочками про wi-fi. */
@@ -77,9 +77,11 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
         "siteUrl"       -> urlStrOptM,
         "phone"         -> phoneM,
         "payReqs"       -> optional(text(maxLength = 2048)),
-        "email"         -> email
+        "email"         -> email,
+        CAPTCHA_ID_FN   -> Captcha.captchaIdM,
+        CAPTCHA_TYPED_FN -> Captcha.captchaTypedM
       )
-      {(company, audienceDescr, humanTraffic, address, siteUrl, phone, payReqs, email1) =>
+      {(company, audienceDescr, humanTraffic, address, siteUrl, phone, payReqs, email1, _, _) =>
         MirMeta(
           company = company, audienceDescr = audienceDescr, humanTraffic = humanTraffic,
           address = address, siteUrl = siteUrl, officePhone = phone, email = email1
@@ -87,7 +89,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
       }
       {mirMeta =>
         import mirMeta._
-        Some((company, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, mirMeta.email))
+        Some((company, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, mirMeta.email, "", ""))
       }
     )
   }
@@ -100,7 +102,8 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
 
   /** Сабмит запроса инвайта, в котором много полей. */
   def wifiJoinFormSubmit(smja: SMJoinAnswers) = MaybeAuth.async { implicit request =>
-    wifiJoinFormM.bindFromRequest().fold(
+    val formBinded = checkCaptcha( wifiJoinFormM.bindFromRequest() )
+    formBinded.fold(
       {formWithErrors =>
         debug("joinFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(wifiJoinFormTpl(smja, formWithErrors))
@@ -109,7 +112,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
         val mir = MInviteRequest(reqType = InviteReqTypes.Wifi, meta = mirMeta, joinAnswers = Some(smja))
         mir.save.map { irId =>
           sendEmailNewIR(irId, mir)
-          mirSavedRdr(irId)
+          rmCaptcha(formBinded, mirSavedRdr(irId))
         }
       }
     )
@@ -137,9 +140,11 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
         "section"   -> sectionOptM,
         "siteUrl"   -> urlStrOptM,
         "phone"     -> phoneM,
-        "email"     -> email
+        "email"     -> email,
+        CAPTCHA_ID_FN    -> Captcha.captchaIdM,
+        CAPTCHA_TYPED_FN -> Captcha.captchaTypedM
       )
-      {(company, address, floor, section, siteUrl, phone, email1) =>
+      {(company, address, floor, section, siteUrl, phone, email1, _, _) =>
         MirMeta(
           company = company, address = address, floor = floor, section = section,
           siteUrl = siteUrl, officePhone = phone, email = email1
@@ -147,7 +152,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
       }
       {mirMeta =>
         import mirMeta._
-        Some((company, address, floor, section, siteUrl, officePhone, mirMeta.email))
+        Some((company, address, floor, section, siteUrl, officePhone, mirMeta.email, "", ""))
       }
     )
   }
@@ -164,7 +169,8 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
    * @return Редирект или 406 NotAcceptable.
    */
   def joinAdvRequestSubmit = MaybeAuth.async { implicit request =>
-    advJoinFormM.bindFromRequest().fold(
+    val formBinded = checkCaptcha( advJoinFormM.bindFromRequest() )
+    formBinded.fold(
       {formWithErrors =>
         debug("joinAdvRequestSubmit(): Form bind failed:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(joinAdvTpl(formWithErrors))
@@ -173,7 +179,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl {
         val mir = MInviteRequest(reqType = InviteReqTypes.Adv, meta = mirMeta)
         mir.save.map { irId =>
           sendEmailNewIR(irId, mir)
-          mirSavedRdr(irId)
+          rmCaptcha(formBinded, mirSavedRdr(irId))
         }
       }
     )

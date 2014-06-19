@@ -38,6 +38,8 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
    */
   override def onStart(app: Application) {
     super.onStart(app)
+    ensureScryptNoJni()
+    // Запускаем супервизора
     SiowebSup.startLink
     // Запускать es-клиент при старте, ибо подключение к кластеру ES это занимает некоторое время.
     val fut = future {
@@ -142,6 +144,23 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
     }
   }
 
+
+  /** Запрещаем бородатому scrypt'у грузить в jvm нативную amd64-либу, ибо она взрывоопасна без перекомпиляции
+    * под свежие libcrypto (пакет openssl):
+    *
+    * Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+    * C  [libcrypto.so.1.0.0+0x6c1d7]  SHA256_Update+0x157
+    *
+    * Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
+    *   com.lambdaworks.crypto.SCrypt.scryptN([B[BIIII)[B+0
+    *   com.lambdaworks.crypto.SCrypt.scrypt([B[BIIII)[B+14
+    *   com.lambdaworks.crypto.SCryptUtil.check(Ljava/lang/String;Ljava/lang/String;)Z+118
+    * @see com.lambdaworks.jni.LibraryLoaders.loader(). */
+  private def ensureScryptNoJni() {
+    val scryptJniProp = "com.lambdaworks.jni.loader"
+    if (System.getProperty(scryptJniProp) != "nil")
+      System.setProperty(scryptJniProp, "nil")
+  }
 }
 
 

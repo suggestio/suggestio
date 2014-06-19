@@ -32,7 +32,7 @@ import FormUtil.{passwordM, passwordWithConfirmM}
  * в будущем будет также и вход по имени/паролю для некоторых учетных записей.
  */
 
-object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit with BruteForceProtect {
+object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit with BruteForceProtect with CaptchaValidator {
 
   import LOGGER._
 
@@ -59,7 +59,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
 
 
   /** Рендер страницы с возможностью логина по email и паролю. */
-  def emailPwLoginForm = MaybeAuth { implicit request =>
+  def emailPwLoginForm = IsAnon { implicit request =>
     Ok(emailPwLoginFormTpl(emailPwLoginFormM))
   }
 
@@ -76,17 +76,24 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
   // Восстановление пароля
 
   private val recoverPwFormM = Form(
-    "email" -> email
+    mapping(
+      "email" -> email,
+      CAPTCHA_ID_FN    -> Captcha.captchaIdM,
+      CAPTCHA_TYPED_FN -> Captcha.captchaTypedM
+    )
+    {(email1, _, _) => email1 }
+    {email1 => Some((email1, "", ""))}
   )
 
   /** Запрос страницы с формой вспоминания пароля по email'у. */
-  def recoverPwForm = MaybeAuth { implicit request =>
+  def recoverPwForm = IsAnon { implicit request =>
     Ok(recoverPwFormTpl(recoverPwFormM))
   }
 
   /** Сабмит формы восстановления пароля. */
-  def recoverPwFormSubmit = MaybeAuth.async { implicit request =>
-    recoverPwFormM.bindFromRequest().fold(
+  def recoverPwFormSubmit = IsAnon.async { implicit request =>
+    val formBinded = checkCaptcha( recoverPwFormM.bindFromRequest() )
+    formBinded.fold(
       {formWithErrors =>
         debug("recoverPwFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(recoverPwFormTpl(formWithErrors))
@@ -127,12 +134,13 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
               }
             }
           } else {
-            // TODO Нужно добавить капчу. Если юзера нет, то создать его и тоже отправить письмецо с активацией.
+            // TODO Если юзера нет, то создать его и тоже отправить письмецо с активацией? или что-то иное вывести?
             Future successful ()
           }
         } map { _ =>
           // отрендерить юзеру результат, что всё ок, независимо от успеха поиска.
-          Redirect(routes.Ident.recoverPwAccepted(email1))
+          val result = Redirect(routes.Ident.recoverPwAccepted(email1))
+          rmCaptcha(formBinded, result)
         }
       }
     )
@@ -231,7 +239,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
   }
 
   /** Сгенерить редирект куда-нибудь для указанного юзера. */
-  private def redirectUserSomewhere(personId: String) = {
+  def redirectUserSomewhere(personId: String) = {
     MarketLk.getMarketRdrCallFor(personId) map {
       case Some(rdrCall) =>
         Redirect(rdrCall)
@@ -314,8 +322,7 @@ trait EmailPwSubmit extends SioController {
   def emailSubmitError(lf: EmailPwLoginForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result]
 
   /** Самбит формы логина по email и паролю. */
-  // TODO Нужно отрабатывать уже залогиненных юзеров?
-  def emailPwLoginFormSubmit = MaybeAuth.async { implicit request =>
+  def emailPwLoginFormSubmit = IsAnon.async { implicit request =>
     emailPwLoginFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug("emailPwLoginFormSubmit(): Form bind failed: " + formatFormErrors(formWithErrors))

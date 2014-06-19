@@ -40,6 +40,13 @@ object CipherUtil {
   }
 
 
+  def getCipherInstance = {
+    // TODO Явный вызов bcprov через JCE не помог решить проблемы с US Export policy. Надо бы что-то придумать.
+    //Cipher.getInstance(CIPHER_SPEC, BouncyCastleProvider.PROVIDER_NAME)
+    Cipher.getInstance(CIPHER_SPEC)
+  }
+
+
   def generateSecretKey(bitLen: Int = 256, rnd: Random = SioRandom.rnd): Array[Byte] = {
     val arr = Array.fill[Byte](bitLen / 8)(0)
     rnd.nextBytes(arr)
@@ -49,7 +56,7 @@ object CipherUtil {
   /** При использовании CBC нужен IV, который выводится из разного барахла, в т.ч. из статических рандомных байт. */
   private val IV_MATERIAL_DFLT = {
     Array[Byte](-112, 114, -62, 99, -19, -86, 118, -42, 77, -103, 33, -30, -91, 104, 18, -105,
-          101, -39, 4, -41, 24, -79, 58, 58, -7, -119, -68, -42, -102, 53, -104, -33)
+                101, -39, 4, -41, 24, -79, 58, 58, -7, -119, -68, -42, -102, 53, -104, -33)
   }
 
 
@@ -71,7 +78,7 @@ object CipherUtil {
 
   def encryptPrintable(str2enc: String, ivMaterial: Array[Byte] = Array.empty): String = {
     try {
-      val cipher = Cipher.getInstance(CIPHER_SPEC)
+      val cipher = getCipherInstance
       val secretKey = new SecretKeySpec(SECRET_KEY, SECRET_KEY_ALGO)
       val iv1 = mixWithIvDflt(ivMaterial)
       val ivSpec = new IvParameterSpec(iv1)
@@ -86,7 +93,7 @@ object CipherUtil {
 
   def decryptPrintable(str2dec: String, ivMaterial: Array[Byte] = Array.empty): String = {
     try {
-      val cipher = Cipher.getInstance(CIPHER_SPEC)
+      val cipher = getCipherInstance
       val secretKey = new SecretKeySpec(SECRET_KEY, SECRET_KEY_ALGO)
       val iv1 = mixWithIvDflt(ivMaterial)
       val ivSpec = new IvParameterSpec(iv1)

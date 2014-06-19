@@ -1,6 +1,5 @@
 package controllers
 
-import play.api.mvc.Controller
 import util.{PlayLazyMacroLogsImpl, ContextT}
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.data._
@@ -24,20 +23,13 @@ object Feedback extends SioController with PlayLazyMacroLogsImpl with ContextT w
 
   import LOGGER._
 
-  val CAPTCHA_ID_FN = "captchaId"
-  val CAPTCHA_TYPED_FN = "captchaTyped"
-
-  /**
-   * Форма написания сообщения.
-   */
+  /** Форма написания сообщения. */
   val feedbackSubmitFormM = Form(tuple(
     "email"   -> email,
     "message" -> nonEmptyText(minLength = 10, maxLength = 10000)
       .transform(supportMsgPolicy.sanitize(_).trim, strIdentityF),
-    CAPTCHA_ID_FN -> nonEmptyText(maxLength = 16)
-      .transform(strTrimSanitizeF, strIdentityF),
-    CAPTCHA_TYPED_FN -> nonEmptyText(maxLength = 16)
-      .transform(strTrimF, strIdentityF)
+    CAPTCHA_ID_FN     -> Captcha.captchaIdM,
+    CAPTCHA_TYPED_FN  -> Captcha.captchaTypedM
   ))
 
 
@@ -62,7 +54,7 @@ object Feedback extends SioController with PlayLazyMacroLogsImpl with ContextT w
    */
   def feedbackFormSubmit = MaybeAuth { implicit request =>
     import request.pwOpt
-    val formBinded = checkCaptcha(feedbackSubmitFormM.bindFromRequest(), CAPTCHA_ID_FN, captchaValueFn = CAPTCHA_TYPED_FN)
+    val formBinded = checkCaptcha( feedbackSubmitFormM.bindFromRequest() )
     formBinded.fold(
       {formWithErrors =>
         debug("feedbackFormSubmit(): Failed to bind form: " + formatFormErrors(formWithErrors))
@@ -86,7 +78,7 @@ object Feedback extends SioController with PlayLazyMacroLogsImpl with ContextT w
         // Отредиректить юзера куда-нибудь, стерев капчу из кукисов.
         val resp = Redirect(routes.Application.index())
           .flashing("success" -> Messages("f.feedback_sent_success")(ctx.lang))
-        rmCaptcha(formBinded, CAPTCHA_ID_FN, resp)
+        rmCaptcha(formBinded, resp)
       }
     )
   }

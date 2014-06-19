@@ -18,25 +18,25 @@
 
   <div class="body-wrap blue-pattern body-wrap_responsive-mode">
 
-    <div class="body body_responsive-mode">
+    <div class="body body_responsive-mode body_padding-top-80">
 
       <div class="about-page">
 
         <div class="about-page__title">
-          SioMarket
+          <span class="about-page__title__big-btn">S</span>io<span class="about-page__title__big-btn">M</span>arket
         </div>
         <div>
-          Реклама в вашей сети Wi-Fi Free
+          Новое пространство для эффективной<br/>
+          рекламы в вашей сети Wi-Fi 
         </div>
 
         <div class="about-page__circle-wrap">
-          <span class="about-page__circle-wrap__left-text">Владелец сети Wi-Fi получает</span>
           <div class="about-page__circle">
-            <span class="about-page__circle__price">70</span><span class="about-page__circle__percent">%</span>
-            <br/>
-            ДОХОДОВ
+            ВЫ ПОЛУЧАЕТЕ<br/>
+            70% ОТ СТОИМОСТИ<br/>
+            РАЗМЕЩЕНИЯ<br/>
+            РЕКЛАМЫ.
           </div>
-          <span class="about-page__circle-wrap__right-text">от размещённой рекламы в своей сети.</span>
         </div>
 
         <p class="paragraph-13" style="font-size: 36px;">
@@ -45,30 +45,39 @@
 
         <div class="paragraph-13">
           <div class="dot about-page__dot"></div>
-          SioM запускается при подключении мобильного коммуникатора посетителя к сети Wi-Fi.
+          SioM запускается при подключении мобильного<br/>
+          коммуникатора посетителя к вашей сети Wi-Fi.
         </div>
 
         <div class="paragraph-13">
           <div class="dot about-page__dot"></div>
-          На коммуникаторах выдаётся информация о товарах, скидках, акциях, хитах продаж рекламодателей.
-          <div class="dot-arrow about-page__dot"></div>
+          На экран коммуникатора сначала выводится ваша<br/>
+          страница-приветствие, затем появляется рекламная<br/>
+          информация ваших рекламодателей.
         </div>
 
         <div class="paragraph-13">
+          <div class="dot about-page__dot"></div>
+            Ваша реклама в вашей сети Wi-Fi<br/>
+            размещается бесплатно.
+          <div class="dot-arrow about-page__dot-arrow"></div>
+        </div>
+
+
+        <p class="paragraph-13 about-page__under-btn">
+          Откройте эту страницу на мобильном устройстве или компьютере
+        </p>
+
+        <div class="paragraph-13">
           @current.configuration.getString("market.demo.adn.id").map { demoAdnId =>
-            <a href="@routes.Market.demoWebSite(demoAdnId)" target="_blank" class="login-page__green-btn login-page__green-btn_width-auto">
-              <span class="btn"></span>
-              ДЕМО
-            </a>
+          <a href="@routes.Market.demoWebSite(demoAdnId)" target="_blank" class="login-page__green-btn login-page__green-btn_width-auto">
+            <span class="btn"></span>
+            ДЕМО
+          </a>
           }
         </div>
 
-        <p class="paragraph-13 about-page__under-btn">
-          Откройте эту страницу на мобильном<br/>
-          устройстве для теста, или компьютере
-        </p>
-
-        <p class="paragraph-13">
+        <p class="paragraph-13" style="font-size: 14px;">
           Если возникли вопросы <a class="blue-link" href="mailto:support&#64;suggest.io">свяжитесь с нами</a>
         </p>
 
