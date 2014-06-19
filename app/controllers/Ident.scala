@@ -59,7 +59,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
 
 
   /** Рендер страницы с возможностью логина по email и паролю. */
-  def emailPwLoginForm = MaybeAuth { implicit request =>
+  def emailPwLoginForm = IsAnon { implicit request =>
     Ok(emailPwLoginFormTpl(emailPwLoginFormM))
   }
 
@@ -86,12 +86,12 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
   )
 
   /** Запрос страницы с формой вспоминания пароля по email'у. */
-  def recoverPwForm = MaybeAuth { implicit request =>
+  def recoverPwForm = IsAnon { implicit request =>
     Ok(recoverPwFormTpl(recoverPwFormM))
   }
 
   /** Сабмит формы восстановления пароля. */
-  def recoverPwFormSubmit = MaybeAuth.async { implicit request =>
+  def recoverPwFormSubmit = IsAnon.async { implicit request =>
     val formBinded = checkCaptcha( recoverPwFormM.bindFromRequest() )
     formBinded.fold(
       {formWithErrors =>
@@ -239,7 +239,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
   }
 
   /** Сгенерить редирект куда-нибудь для указанного юзера. */
-  private def redirectUserSomewhere(personId: String) = {
+  def redirectUserSomewhere(personId: String) = {
     MarketLk.getMarketRdrCallFor(personId) map {
       case Some(rdrCall) =>
         Redirect(rdrCall)
@@ -322,8 +322,7 @@ trait EmailPwSubmit extends SioController {
   def emailSubmitError(lf: EmailPwLoginForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result]
 
   /** Самбит формы логина по email и паролю. */
-  // TODO Нужно отрабатывать уже залогиненных юзеров?
-  def emailPwLoginFormSubmit = MaybeAuth.async { implicit request =>
+  def emailPwLoginFormSubmit = IsAnon.async { implicit request =>
     emailPwLoginFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug("emailPwLoginFormSubmit(): Form bind failed: " + formatFormErrors(formWithErrors))
