@@ -435,6 +435,7 @@ siomart =
 
     ## Инициализация глагне
     if data.action == 'martIndex'
+      siomart.utils.ge('sioMartRoot').style.display = 'block'
       cbca_grid.set_window_size()
       container = this.utils.ge 'sioMartLayout'
       container.innerHTML = data.html
@@ -951,10 +952,13 @@ siomart =
     ## Забиндить оконные события
     this.bind_window_events()
 
-    isMarketOpened = localStorage.getItem('siom_is_market_opened')
+    if window.location.hostname == '192.168.199.148' || window.location.hostname == 'localhost' || window.location.hostname == 'suggest.io'
+      isMarketOpened = "true"
+    else
+      isMarketOpened = "false"
+
     this.initialized = false
     if isMarketOpened == null || isMarketOpened == 'true'
-      localStorage.setItem('siom_is_market_opened', 'true')
       this.initialized = true
       this.load_mart_index_page()
 
