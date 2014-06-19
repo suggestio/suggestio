@@ -59,15 +59,27 @@
 
 
   @* Капча *@
-  @defining( jf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
-    <input type="hidden" name="@CAPTCHA_ID_FN" value="@captchaId"/>
-    <img src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
-  }
+  <table cellpadding="0" cellspacing="0" class="input-wrap">
+    <tr>
+      <td class="left"></td>
+      <td class="right">
+        @defining( jf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+          <input type="hidden" name="captchaId" value="@captchaId"/>
+          <img src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
+        }
+      </td>
+    </tr>
+  </table>
 
-  @inputText(
-    jf(CAPTCHA_TYPED_FN),
-    '_label -> Messages("Input.text.from.picture")
-  )
+
+  <table cellpadding="0" cellspacing="0" class="input-wrap">
+    @inputText(
+      jf(CAPTCHA_TYPED_FN),
+      '_label -> Messages("Input.text.from.picture")
+    )
+  </table>
+
+  <div class="border-line"></div>
 
 
   <div class="submit-wrap submit-wrap_padding10">
