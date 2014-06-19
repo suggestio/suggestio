@@ -361,18 +361,19 @@ siomart =
     logo_img = if typeof window.siomart_logo_src != 'undefined' then '<img src=\'' + window.siomart_logo_src + '\' width=80/>' else ''
     sm_trigger = this.utils.ce 'div', sm_trigger_attrs, '<span class="trigger-helper">' + logo_img + '</span>'
 
-    _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
-    this.utils.add_single_listener sm_trigger, _event, siomart.open_mart
-
     ## Интерфейс маркета
     sm_layout_attrs =
       class : this.config.sm_layout_class
       id : 'sioMartRoot'
     sm_layout = this.utils.ce "div", sm_layout_attrs, '<div id="sioMartLayout"></div>'
+    sm_layout.style.display = 'none'
 
     _body = this.utils.ge_tag('body')[0]
     _body.appendChild sm_trigger
     _body.appendChild sm_layout
+
+    _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
+    this.utils.add_single_listener sm_trigger, _event, siomart.open_mart
 
     _head = this.utils.ge_tag('head')[0]
     meta_viewport_attrs =
@@ -773,6 +774,11 @@ siomart =
     return false
 
   open_mart : ( event ) ->
+
+    if siomart.initialized != true
+      siomart.initialized = true
+      siomart.load_mart_index_page()
+
     siomart.utils.ge('sioMartRoot').style.display = 'block'
     event.preventDefault()
     return false
@@ -946,9 +952,10 @@ siomart =
     this.bind_window_events()
 
     isMarketOpened = localStorage.getItem('siom_is_market_opened')
-
+    this.initialized = false
     if isMarketOpened == null || isMarketOpened == 'true'
       localStorage.setItem('siom_is_market_opened', 'true')
+      this.initialized = true
       this.load_mart_index_page()
 
 window.siomart = siomart

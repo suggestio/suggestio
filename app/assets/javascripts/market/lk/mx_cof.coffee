@@ -1218,7 +1218,6 @@ market =
         height: 300,
         menubar: false,
         statusbar : false,
-        force_p_newlines : true,
         valid_elements : "a[href|target=_blank],strong/b,em/i,div[style],br,p[style],span[style]",
         plugins: 'link, textcolor, paste, colorpicker',
         toolbar: ["styleselect | fontsizeselect | alignleft aligncenter alignright | bold italic | colorpicker | link | removeformat" ],
@@ -1254,6 +1253,7 @@ market =
       ## Предпросмотр карточки с описанием
       $('.js-ad-preview-button').bind 'click', () ->
         tinyMCE.triggerSave()
+        $('.js-tinymce').val( $('.js-tinymce').val().replace('<p></p>','<p>&nbsp;</p>') )
         $.ajax
           url : $('.js-ad-block-full-preview-action').val()
           method : 'post'
