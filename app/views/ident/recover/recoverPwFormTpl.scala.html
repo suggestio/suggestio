@@ -38,7 +38,7 @@
           )
         </div>
 
-        <div class="f-right" style="padding-top: 6px;">
+        <div class="f-right" style="padding-top: 6px; height: 53px;">
           @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
             <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
             <img id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
