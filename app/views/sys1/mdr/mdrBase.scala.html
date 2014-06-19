@@ -1,4 +1,4 @@
-@(title: String, hPathAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(title: String, hPathAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон для модерации. *@
 @import sys1.market._
@@ -10,5 +10,6 @@
 
 @marketBase(
   title      = title,
-  hPathAfter = Some(hPathAfter1)
+  hPathAfter = Some(hPathAfter1),
+  headAfter  = headAfter
 )(content)

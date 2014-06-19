@@ -291,4 +291,5 @@ POST /sys/ir/delete/:irId                controllers.SysMarketInvReq.deleteIR(ir
 
 ## sys: mdr - модерация контента
 GET  /sys/mdr                            controllers.SysMdr.index
-
+GET  /sys/mdr/freeAdvs                   controllers.SysMdr.freeAdvs(page: Int ?= 0)
+GET  /sys/mdr/freeAdv/:adId              controllers.SysMdr.freeAdvMdr(adId)
