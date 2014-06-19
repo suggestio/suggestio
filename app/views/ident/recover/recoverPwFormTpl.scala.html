@@ -30,15 +30,22 @@
 
 
       @* Капча *@
-      @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
-        <input type="hidden" name="@CAPTCHA_ID_FN" value="@captchaId"/>
-        <img src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
-      }
+      <div class="ovh">
+        <div class="f-left" style="width: 180px;">
+          @inputText(
+          rf(CAPTCHA_TYPED_FN),
+          '_label -> Messages("Input.text.from.picture")
+          )
+        </div>
 
-      @inputText(
-        rf(CAPTCHA_TYPED_FN),
-        '_label -> Messages("Input.text.from.picture")
-      )
+        <div class="f-right" style="padding-top: 6px;">
+          @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+            <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
+            <img id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
+            <a id="captchaReload" class="captcha-reload-btn" href=""></a>
+          }
+        </div>
+      </div>
 
 
       <div class="recover-popup__submit-wrap">
