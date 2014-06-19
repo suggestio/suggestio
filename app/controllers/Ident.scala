@@ -32,7 +32,7 @@ import FormUtil.{passwordM, passwordWithConfirmM}
  * в будущем будет также и вход по имени/паролю для некоторых учетных записей.
  */
 
-object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit with BruteForceProtect {
+object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit with BruteForceProtect with CaptchaValidator {
 
   import LOGGER._
 
@@ -76,7 +76,13 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
   // Восстановление пароля
 
   private val recoverPwFormM = Form(
-    "email" -> email
+    mapping(
+      "email" -> email,
+      CAPTCHA_ID_FN    -> Captcha.captchaIdM,
+      CAPTCHA_TYPED_FN -> Captcha.captchaTypedM
+    )
+    {(email1, _, _) => email1 }
+    {email1 => Some((email1, "", ""))}
   )
 
   /** Запрос страницы с формой вспоминания пароля по email'у. */
@@ -86,7 +92,8 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
 
   /** Сабмит формы восстановления пароля. */
   def recoverPwFormSubmit = MaybeAuth.async { implicit request =>
-    recoverPwFormM.bindFromRequest().fold(
+    val formBinded = checkCaptcha( recoverPwFormM.bindFromRequest() )
+    formBinded.fold(
       {formWithErrors =>
         debug("recoverPwFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(recoverPwFormTpl(formWithErrors))
@@ -127,12 +134,13 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
               }
             }
           } else {
-            // TODO Нужно добавить капчу. Если юзера нет, то создать его и тоже отправить письмецо с активацией.
+            // TODO Если юзера нет, то создать его и тоже отправить письмецо с активацией? или что-то иное вывести?
             Future successful ()
           }
         } map { _ =>
           // отрендерить юзеру результат, что всё ок, независимо от успеха поиска.
-          Redirect(routes.Ident.recoverPwAccepted(email1))
+          val result = Redirect(routes.Ident.recoverPwAccepted(email1))
+          rmCaptcha(formBinded, result)
         }
       }
     )

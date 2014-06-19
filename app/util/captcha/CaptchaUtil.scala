@@ -41,9 +41,9 @@ object CipherUtil {
 
 
   def getCipherInstance = {
-    //Cipher.getInstance(CIPHER_SPEC)
-    // Дергаем bcprov напрямую из-за проблем с US Export policy в большинстве ОС. Возможно, это решит проблемы.
-    Cipher.getInstance(CIPHER_SPEC, BouncyCastleProvider.PROVIDER_NAME)
+    // TODO Явный вызов bcprov через JCE не помог решить проблемы с US Export policy. Надо бы что-то придумать.
+    //Cipher.getInstance(CIPHER_SPEC, BouncyCastleProvider.PROVIDER_NAME)
+    Cipher.getInstance(CIPHER_SPEC)
   }
 
 
@@ -56,7 +56,7 @@ object CipherUtil {
   /** При использовании CBC нужен IV, который выводится из разного барахла, в т.ч. из статических рандомных байт. */
   private val IV_MATERIAL_DFLT = {
     Array[Byte](-112, 114, -62, 99, -19, -86, 118, -42, 77, -103, 33, -30, -91, 104, 18, -105,
-          101, -39, 4, -41, 24, -79, 58, 58, -7, -119, -68, -42, -102, 53, -104, -33)
+                101, -39, 4, -41, 24, -79, 58, 58, -7, -119, -68, -42, -102, 53, -104, -33)
   }
 
 
