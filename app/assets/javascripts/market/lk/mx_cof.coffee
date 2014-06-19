@@ -1212,6 +1212,30 @@ market =
       $('#ad_descr_text_ifr').contents().find('body').css 'background-color': hex
 
     init : () ->
+
+      $('#promoOfferForm').bind 'submit', () ->
+
+        tinyMCE.triggerSave()
+        tinyMCE.remove()
+
+        $('.tinymce_editor, .tinymce .select-color').hide()
+
+        data = $('.js-tinymce').val()
+        data = data.replace /<p(.*?)><\/p>/g, "<p$1>&nbsp;</p>"
+        data = data.replace /<span(.*?)><\/span>/g, "<span$1>&nbsp;</span>"
+
+        $('.js-tinymce').val data
+        $('#promoOfferForm').unbind 'submit'
+
+        console.log $('.js-tinymce').val()
+
+        submit_cb = () ->
+          $('#promoOfferForm').submit()
+
+        setTimeout submit_cb, 1
+
+        return false
+
       tinymce.init(
         selector:'textarea.js-tinymce',
         width: 615,
@@ -1253,7 +1277,13 @@ market =
       ## Предпросмотр карточки с описанием
       $('.js-ad-preview-button').bind 'click', () ->
         tinyMCE.triggerSave()
-        $('.js-tinymce').val( $('.js-tinymce').val().replace('<p></p>','<p>&nbsp;</p>') )
+
+        data = $('.js-tinymce').val()
+        data = data.replace /<p(.*?)><\/p>/g, "<p$1>&nbsp;</p>"
+        data = data.replace /<span(.*?)><\/span>/g, "<span$1>&nbsp;</span>"
+
+        $('.js-tinymce').val data
+
         $.ajax
           url : $('.js-ad-block-full-preview-action').val()
           method : 'post'
