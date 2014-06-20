@@ -10,6 +10,7 @@ GET  /assets/*file                      controllers.Assets.at(path="/public", fi
 
 # Home page
 GET  /                                  controllers.Application.index
+GET  /xd_server                         controllers.Application.xd_server
 GET  /search                            controllers.Application.search
 GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
 

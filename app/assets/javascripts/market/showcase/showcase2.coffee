@@ -9,6 +9,7 @@ siomart =
     sm_trigger_class : 'sio-mart-trigger'
     ontouchmove_offer_change_delta : 80
     welcome_ad_hide_timeout : 2000
+    sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
   ## Загрузить js- и css- засимости
   load_deps : () ->
@@ -64,6 +65,91 @@ siomart =
       style_dom.appendChild(document.createTextNode(css))
       siomart.utils.ge_tag('head')[0].appendChild(style_dom)
 
+  #######################
+  ## Cross Domain Storage
+  #######################
+  storage :
+    origin : ''
+    path : '/xd_server'
+    _iframe : null
+    _iframeReady : false
+    _queue : []
+    _requests : {}
+    _id : 0
+
+    init : () ->
+      _this = this
+
+      _this.origin = siomart.config.host
+
+      if !_this._iframe
+        if window.postMessage && window.JSON && window.localStorage
+
+          _iframe_attrs =
+            id : 'smStorageIframe'
+            src : siomart.config.host + '/xd_server?t=' + Math.round(Math.random()*1000000)
+          _this._iframe = siomart.utils.ce 'iframe', _iframe_attrs
+          _this._iframe.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;'
+          siomart.utils.ge_tag('body')[0].appendChild _this._iframe
+
+          siomart.utils.add_single_listener _this._iframe, 'load', () ->
+            _this._iframeLoaded()
+
+          siomart.utils.add_single_listener window, 'message', (event) ->
+            _this._handleMessage event
+
+          _this.is_supported = true
+        else
+          _this.is_supported = false
+
+    setValue : ( key, value ) ->
+      this.requestValue(key, '', value)
+
+    requestValue: (key, callback, value) ->
+      _t = this
+      request =
+        key: key
+        id: ++_t._id
+
+      if value
+        request.value = value
+
+      data =
+        request: request
+        callback: callback
+
+      if _t._iframeReady
+        _t._sendRequest data
+      else
+        _t._queue.push data
+
+      if !_t._iframe
+        _t.init()
+
+    _sendRequest: (data) ->
+      _t = this
+
+      console.log data
+
+      _t._requests[data.request.id] = data
+      _t._iframe.contentWindow.postMessage(JSON.stringify(data.request), _t.origin)
+
+    _iframeLoaded: () ->
+      _t = this
+      _t._iframeReady = true
+
+      if _t._queue.length
+        for _i in _t._queue
+          _t._sendRequest _i
+        _t._queue = []
+
+    _handleMessage: (event) ->
+      _t = this
+      #if (event.origin == _t.origin){
+      data = JSON.parse(event.data)
+      _t._requests[data.id].callback(data.key, data.value)
+      delete _t._requests[data.id]
+
   ########
   ## Утиль
   ########
@@ -80,6 +166,12 @@ siomart =
           false
         else
           true
+
+    is_sio_host : () ->
+      for hn in siomart.config.sio_hostnames
+        if window.location.hostname.match hn
+          return true
+      return false
 
     ######################
     ## Создать DOM элемент
@@ -773,19 +865,21 @@ siomart =
   ## Скрыть / показать sio.market
   ###############################
   close_mart : ( event ) ->
-    localStorage.setItem('siom_is_market_opened', 'false')
     siomart.utils.ge('sioMartRoot').style.display = 'none'
     siomart.utils.ge('smCloseScreen').style.display = 'none'
+
+    siomart.storage.setValue "is_market_closed_by_user", 'true'
+
     event.preventDefault()
     return false
 
   open_mart : ( event ) ->
 
-    if siomart.initialized != true
-      siomart.initialized = true
+    if this.is_market_loaded != true
       siomart.load_mart_index_page()
 
     siomart.utils.ge('sioMartRoot').style.display = 'block'
+    siomart.storage.setValue "is_market_closed_by_user", 'false'
     event.preventDefault()
     return false
 
@@ -947,6 +1041,8 @@ siomart =
     siomart.config.mart_id = window.siomart_id
     siomart.config.host = window.siomart_host
 
+    siomart.storage.init()
+
     ## загрузка cbca_grid
     this.load_deps()
     this.utils.set_vendor_prefix()
@@ -957,15 +1053,19 @@ siomart =
     ## Забиндить оконные события
     this.bind_window_events()
 
-    if window.location.hostname == '192.168.199.148' || window.location.hostname == 'localhost' || window.location.hostname == 'suggest.io'
-      isMarketOpened = "true"
-    else
-      isMarketOpened = "false"
+    this.is_market_loaded = false
+    ## Далее идет асинхронное считывание значения is_market_closed_by_user
 
-    this.initialized = false
-    if isMarketOpened == null || isMarketOpened == 'true'
-      this.initialized = true
-      this.load_mart_index_page()
+    console.log 'check startup options and start'
+    this.storage.requestValue "is_market_closed_by_user", (key, value) ->
+      console.log key + ' : ' + value
+
+      if value == null || value == false || value == 'false' || siomart.utils.is_sio_host() == true
+        console.log 'open mart on startup'
+        this.is_market_loaded = false
+        siomart.utils.ge('sioMartRoot').style.display = 'block'
+        siomart.load_mart_index_page()
+
 
 window.siomart = siomart
 siomart.init()
