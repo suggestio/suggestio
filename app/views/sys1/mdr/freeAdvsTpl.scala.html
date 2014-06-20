@@ -16,7 +16,7 @@
   @_adsListTpl(mads, coverDisableReason = true) { mad =>
     <a href="@routes.MarketAd.editAd(mad.id.get)">[ред]</a>
     <a href="@routes.SysMarket.showAdnNode(mad.producerId)">@prodsMap.get(mad.producerId).fold {
-      ???
+      ? ? ?
     } { producer =>
       @producer.meta.name / @producer.meta.town
     }</a>
@@ -27,13 +27,13 @@
   @* Рендерим переключение страниц. *@
   Страницы:
   @if(currPage > 1) {
-    <a href="@routes.SysMdr.freeAdvs(0)">Первая</a>
+    <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(page = 0))">Первая</a>
   }
   @if(currPage > 0) {
-    <a href="@routes.SysMdr.freeAdvs(currPage - 1)">Предыдущая</a>
+    <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(page = currPage - 1))">Предыдущая</a>
   }
   <strong>@currPage</strong>
   @if(hasNextPage) {
-    <a href="@routes.SysMdr.freeAdvs(currPage + 1)">Следующая</a>
+    <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(page = currPage + 1))">Следующая</a>
   }
 }
