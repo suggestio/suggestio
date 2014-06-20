@@ -1083,10 +1083,47 @@ market =
         success : ( data ) ->
           $('.js-pre-price').html data
 
+      this.tabs.refine_counters()
+
+    tabs :
+      init : () ->
+        ## табы с разными типами нод
+        $('.mt-tab').bind 'click', () ->
+          mt = $(this).attr 'data-member-type'
+          $('.mt-block').hide()
+          $('.mt-tab').removeClass 'advs-form-block__tabs-single-tab_active'
+          $(this).addClass 'advs-form-block__tabs-single-tab_active'
+          $('.mt-' + mt + '-block').show()
+
+        this.refine_counters()
+
+      refine_counters : () ->
+        $('.mt-tab').each () ->
+          mt = $(this).attr 'data-member-type'
+
+          active_nodes = $('.mt-' + mt + '-block .advs-nodes__node_active').length
+
+          mt_tab_counter_c = $('.mt-tab-' + mt + '-counter-c')
+          mt_tab_counter = $('.mt-tab-' + mt + '-counter')
+
+          console.log mt + ' : ' + active_nodes
+
+          if active_nodes != 0
+            mt_tab_counter_c.show()
+            mt_tab_counter.html active_nodes
+          else
+            mt_tab_counter_c.hide()
+            mt_tab_counter.html 0
+
+
     submit : () ->
       $('#advsFormBlock form').submit()
 
     init : () ->
+
+      this.tabs.init()
+
+      ## Datepickers
       $('.js-datepicker').each () ->
         $(this).datetimepicker
           lang:'ru'
