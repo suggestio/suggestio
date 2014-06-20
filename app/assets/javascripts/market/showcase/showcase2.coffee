@@ -9,6 +9,7 @@ siomart =
     sm_trigger_class : 'sio-mart-trigger'
     ontouchmove_offer_change_delta : 80
     welcome_ad_hide_timeout : 2000
+    sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
   ## Загрузить js- и css- засимости
   load_deps : () ->
@@ -165,6 +166,12 @@ siomart =
           false
         else
           true
+
+    is_sio_host : () ->
+      for hn in siomart.config.sio_hostnames
+        if window.location.hostname.match hn
+          return true
+      return false
 
     ######################
     ## Создать DOM элемент
@@ -1053,7 +1060,7 @@ siomart =
     this.storage.requestValue "is_market_closed_by_user", (key, value) ->
       console.log key + ' : ' + value
 
-      if value == null || value == false || value == 'false'
+      if value == null || value == false || value == 'false' || siomart.utils.is_sio_host() == true
         console.log 'open mart on startup'
         this.is_market_loaded = false
         siomart.utils.ge('sioMartRoot').style.display = 'block'
