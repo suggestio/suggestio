@@ -30,23 +30,7 @@
     }
 
 
-
-    <div class="hello-message" id="hello-message">
-      <h2>
-        Правила
-      </h2>
-      <p class="paragraph-13">
-        Для участников системы существует лишь одно правило &mdash; ответственное оформление рекламных карточек.
-      </p>
-
-      <div class="gray-but-wrap" style="margin: 25px 0;">
-        <div class="white-border-top">
-          <a class="btn" href="#" id="create-your-market-btn">СОЗДАЙТЕ СВОЙ МАРКЕТ</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="create-your-market" id="create-your-market" style="display: none;">
+    <div class="create-your-market">
       @form(routes.MarketShopLk.inviteAcceptSubmit(eaId=eAct.id.get, shopId=eAct.key)) {
         @* Имя магазина *@
         <table cellpadding="0" cellspacing="0" class="input-wrap big">
