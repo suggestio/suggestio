@@ -28,7 +28,7 @@
       @btn(routes.SysMarket.companiesList(), 40, fLeft = false) { ВСЕ<br/>КОМПАНИИ }
       @btn(routes.SysMarket.adnNodesList(), 52) { ADNetwork }
       @btn(routes.SysMarketBilling.index(), 52) { БИЛЛИНГ }
-      @btn(routes.SysMarket.showYmCats, 40) { ГЛОБАЛЬНЫЕ<br/>КАТЕГОРИИ }
+      @btn(routes.MarketCategory.showCatsFor(DEFAULT_OWNER_ID), 40) { ГЛОБАЛЬНЫЕ<br/>КАТЕГОРИИ }
       @btn(routes.SysCalendar.showCalendars, 28) { КАЛЕНДАРИ<br/>ПРАЗДНИКОВ/<br/>ВЫХОДНЫХ }
       @btn(routes.SysMarketInvReq.index, 28) { ЗАПРОСЫ<br/>ПОДКЛЮЧЕНИЯ<br/>К СЕТИ }
       @btn(routes.SysMdr.index, 52) { Модерация }
