@@ -11,7 +11,7 @@ import play.api.data.{FormError, Mapping}
  * Description: Утиль для блоков, содержащих поле descrBf.
  */
 
-object Descr extends MergeBindAcc[AOStringField] {
+object Descr extends MergeBindAccAOBlock[AOStringField] {
   val BF_NAME_DFLT = "descr"
   val BF_DESCR_DFLT = BfText(BF_NAME_DFLT)
 
@@ -41,7 +41,7 @@ trait Descr extends ValT {
   abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
     val maybeAcc0 = super.bindAcc(data)
     val maybeDescr = m.bind(data)
-    mergeBindAcc(maybeAcc0, offerN = 0, maybeDescr)
+    mergeBindAcc(maybeAcc0, maybeDescr)
   }
 
   abstract override def unbind(value: BlockMapperResult): Map[String, String] = {

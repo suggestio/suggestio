@@ -11,7 +11,7 @@ import play.api.data.{Mapping, FormError}
  * Description: Утиль для сборки блоков, содержащих поле discountBf.
  */
 
-object Discount extends MergeBindAcc[AOFloatField] {
+object Discount extends MergeBindAccAOBlock[AOFloatField] {
   val BF_NAME_DFLT = "discount"
   val DISCOUNT_BF_DFLT = BfDiscount(BF_NAME_DFLT)
 
@@ -43,7 +43,7 @@ trait Discount extends ValT {
   abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
     val maybeAcc0 = super.bindAcc(data)
     val maybeDisco = m.bind(data)
-    mergeBindAcc(maybeAcc0, offerN = 0, maybeDisco)
+    mergeBindAcc(maybeAcc0, maybeDisco)
   }
 
   abstract override def unbind(value: BlockMapperResult): Map[String, String] = {

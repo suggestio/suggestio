@@ -6,8 +6,8 @@
 
   @mad.offers.headOption.map { offer =>
 
-    @offer.text1.map { text1 =>
-      <a href="@text1" target="_blank">
+    @offer.href.map { href =>
+      <a href="@href" target="_blank">
     }
     @mad.imgs.get(Block26.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).map { imgCall =>
       <img class="bg" src="@ctx.myAudienceUrl@imgCall" />

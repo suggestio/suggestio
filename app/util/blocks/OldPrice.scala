@@ -10,7 +10,7 @@ import play.api.data.{Mapping, FormError}
  * Description: Утиль для сборки блоков, содержащих поле старой цены oldPriceBf.
  */
 
-object OldPrice extends MergeBindAcc[AOPriceField] {
+object OldPrice extends MergeBindAccAOBlock[AOPriceField] {
   val BF_NAME_DFLT = "oldPrice"
   val BF_OLD_PRICE_DFLT = BfPrice(BF_NAME_DFLT)
 
@@ -43,7 +43,7 @@ trait OldPrice extends ValT {
   abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
     val maybeAcc0 = super.bindAcc(data)
     val maybeOldPriceOpt = m.bind(data)
-    mergeBindAcc(maybeAcc0, offerN = 0, maybeOldPriceOpt)
+    mergeBindAcc(maybeAcc0, maybeOldPriceOpt)
   }
 
   abstract override def unbind(value: BlockMapperResult): Map[String, String] = {

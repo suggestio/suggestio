@@ -13,28 +13,12 @@ import play.api.data.{Mapping, FormError}
  * Высоты не рендерится в одном из блоков, но всегда доступно для маппинга.
  */
 
-object Height {
+object Height extends MergeBindAcc[Int] {
   val BF_HEIGHT_NAME_DFLT = "height"
   val BF_HEIGHT_DFLT = BfHeight(BF_HEIGHT_NAME_DFLT)
 
-
-  def mergeBindAccWithHeight(maybeAcc: Either[Seq[FormError], BindAcc],
-                               offerN: Int,
-                               maybeHeight: Either[Seq[FormError], Int]):  Either[Seq[FormError], BindAcc] = {
-    (maybeAcc, maybeHeight) match {
-      case (Right(acc0), Right(height)) =>
-        acc0.height = height
-        maybeAcc
-
-      case (Left(accFE), Right(descr)) =>
-        maybeAcc
-
-      case (Right(_), Left(colorFE)) =>
-        Left(colorFE)   // Избыточна пересборка left either из-за right-типа. Можно также вернуть через .asInstanceOf, но это плохо.
-
-      case (Left(accFE), Left(colorFE)) =>
-        Left(accFE ++ colorFE)
-    }
+  def updateAcc(offerN: Int, acc0: BindAcc, height: Int) {
+    acc0.height = height
   }
 
 }
@@ -65,7 +49,7 @@ trait Height extends ValT with HeightI {
   abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
     val maybeAcc0 = super.bindAcc(data)
     val maybeHeight = m.bind(data)
-    mergeBindAccWithHeight(maybeAcc0, offerN = 0, maybeHeight)
+    mergeBindAcc(maybeAcc0, maybeHeight)
   }
 
   abstract override def unbind(value: BlockMapperResult): Map[String, String] = {

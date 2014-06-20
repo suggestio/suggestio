@@ -11,7 +11,7 @@ import play.api.data.{Mapping, FormError}
  * Description: Утиль для блоков, содержащих titleBf.
  */
 
-object Title extends MergeBindAcc[AOStringField] {
+object Title extends MergeBindAccAOBlock[AOStringField] {
   val BF_NAME_DFLT = "title"
   val BF_TITLE_DFLT = BfText(BF_NAME_DFLT)
 
@@ -41,7 +41,7 @@ trait Title extends ValT {
   abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
     val maybeAcc0 = super.bindAcc(data)
     val maybeDescr = m.bind(data)
-    mergeBindAcc(maybeAcc0, offerN = 0, maybeDescr)
+    mergeBindAcc(maybeAcc0, maybeDescr)
   }
 
   abstract override def unbind(value: BlockMapperResult): Map[String, String] = {
