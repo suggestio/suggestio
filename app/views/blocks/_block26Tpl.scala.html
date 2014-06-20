@@ -1,0 +1,21 @@
+@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+
+@* Блок-ссылка, появилась для нужд саморекламы sioM. При щелчке открывает ссылку в новой вкладке. *@
+
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl26 sm-block@mad.id" data-width="@Block26.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+
+  @mad.offers.headOption.map { offer =>
+
+    @offer.text1.map { text1 =>
+      <a href="@text1" target="_blank">
+    }
+    @mad.imgs.get(Block26.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).map { imgCall =>
+      <img class="bg" src="@ctx.myAudienceUrl@imgCall" />
+    }
+    @if(offer.text1.isDefined) {
+      </a>
+    }
+
+  }
+
+</div>

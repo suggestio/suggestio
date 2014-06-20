@@ -491,6 +491,18 @@ object BlocksConf extends Enumeration {
   }
 
 
+  /** Блок-ссылка. Изначально создавался для пиара sioM. */
+  sealed trait Block26t extends Height with BgImg {
+    override def isShown = false
+    override def template = _block26Tpl
+  }
+  val Block26 = new Val(26) with Block25t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block26Wrapper(key = newKey)
+  }
+  sealed case class Block26Wrapper(key: String) extends ValTWrapper(Block26) with ValTEmpty with Block26t {
+    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
+
 
   /** Отображаемые блоки. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id и только отображаемые. */

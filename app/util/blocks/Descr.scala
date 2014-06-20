@@ -11,35 +11,12 @@ import play.api.data.{FormError, Mapping}
  * Description: Утиль для блоков, содержащих поле descrBf.
  */
 
-object Descr {
+object Descr extends MergeBindAcc[AOStringField] {
   val BF_NAME_DFLT = "descr"
   val BF_DESCR_DFLT = BfText(BF_NAME_DFLT)
 
-  def mergeBindAccWithDescr(maybeAcc: Either[Seq[FormError], BindAcc],
-                            offerN: Int,
-                            maybeDescr: Either[Seq[FormError], Option[AOStringField]]):  Either[Seq[FormError], BindAcc] = {
-    (maybeAcc, maybeDescr) match {
-      case (Right(acc0), Right(descrOpt)) =>
-        if (descrOpt.isDefined) {
-          acc0.offers.find { _.n == offerN } match {
-            case Some(blk) =>
-              blk.text2 = descrOpt
-            case None =>
-              val blk = AOBlock(n = offerN, text2 = descrOpt)
-              acc0.offers ::= blk
-          }
-        }
-        maybeAcc
-
-      case (Left(accFE), Right(descr)) =>
-        maybeAcc
-
-      case (Right(_), Left(colorFE)) =>
-        Left(colorFE)   // Избыточна пересборка left either из-за right-типа. Можно также вернуть через .asInstanceOf, но это плохо.
-
-      case (Left(accFE), Left(colorFE)) =>
-        Left(accFE ++ colorFE)
-    }
+  override def updateAOBlockWith(blk: AOBlock, descrOpt: Option[AOStringField]) {
+    blk.text2 = descrOpt
   }
 
   def getDescr(bmr: BlockMapperResult) = bmr.flatMapFirstOffer(_.text2)
@@ -64,7 +41,7 @@ trait Descr extends ValT {
   abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
     val maybeAcc0 = super.bindAcc(data)
     val maybeDescr = m.bind(data)
-    mergeBindAccWithDescr(maybeAcc0, offerN = 0, maybeDescr)
+    mergeBindAcc(maybeAcc0, offerN = 0, maybeDescr)
   }
 
   abstract override def unbind(value: BlockMapperResult): Map[String, String] = {

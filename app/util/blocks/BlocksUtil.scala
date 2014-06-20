@@ -463,3 +463,40 @@ case class BlockDataImpl(
   with IOffers
   with IColors
 
+
+
+trait MergeBindAcc[T] {
+
+  /** Замёржить bind-аккамулятор с новыми данными. */
+  def mergeBindAcc(maybeAcc: Either[Seq[FormError], BindAcc],
+                            offerN: Int,
+                            maybeVOpt: Either[Seq[FormError], Option[T]]):  Either[Seq[FormError], BindAcc] = {
+    (maybeAcc, maybeVOpt) match {
+      case (Right(acc0), Right(vOpt)) =>
+        if (vOpt.isDefined) {
+          acc0.offers.find { _.n == offerN } match {
+            case Some(blk) =>
+              updateAOBlockWith(blk, vOpt)
+            case None =>
+              val blk = AOBlock(n = offerN)
+              updateAOBlockWith(blk, vOpt)
+              acc0.offers ::= blk
+          }
+        }
+        maybeAcc
+
+      case (Left(accFE), Right(descr)) =>
+        maybeAcc
+
+      case (Right(_), Left(colorFE)) =>
+        Left(colorFE)   // Избыточна пересборка left either из-за right-типа. Можно также вернуть через .asInstanceOf, но это плохо.
+
+      case (Left(accFE), Left(colorFE)) =>
+        Left(accFE ++ colorFE)
+    }
+  }
+
+  /** Обновить указанный изменяемый AOBlock с помощью текущего значения. */
+  def updateAOBlockWith(blk: AOBlock, v: Option[T])
+
+}
