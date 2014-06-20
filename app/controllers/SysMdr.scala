@@ -39,10 +39,18 @@ object SysMdr extends SioController with PlayMacroLogsImpl {
   def freeAdvs(args: MdrSearchArgs, hideAdId: Option[String]) = IsSuperuser.async { implicit request =>
     MAd.findSelfAdvNonMdr(args) flatMap { mads0 =>
       val mads = hideAdId.fold(mads0) { hai => mads0.filter(_.id.get != hai) }
-      val producerIds = mads.map(_.producerId)
+      val producerIds = mads.map(_.producerId).toSet ++ args.producerId.toSet
       MAdnNodeCache.multigetByIdCached( producerIds ) map { producers =>
-        val prodsMap = producers.map { p => p.id.get -> p }.toMap
-        Ok(freeAdvsTpl(mads, prodsMap, args.page, hasNextPage = mads.size >= MdrSearchArgs.FREE_ADVS_PAGE_SZ))
+        val prodsMap = producers
+          .map { p => p.id.get -> p }
+          .toMap
+        Ok(freeAdvsTpl(
+          mads = mads,
+          prodsMap = prodsMap,
+          currPage = args.page,
+          hasNextPage = mads.size >= MdrSearchArgs.FREE_ADVS_PAGE_SZ,
+          adnNodeOpt = args.producerId.flatMap(prodsMap.get)
+        ))
       }
     }
   }

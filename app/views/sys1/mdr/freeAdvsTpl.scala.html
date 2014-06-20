@@ -1,4 +1,4 @@
-@(mads: Seq[MAd], prodsMap: Map[String, MAdnNode], currPage: Int, hasNextPage: Boolean)(implicit ctx: Context)
+@(mads: Seq[MAd], prodsMap: Map[String, MAdnNode], currPage: Int, hasNextPage: Boolean, adnNodeOpt: Option[MAdnNode] = None)(implicit ctx: Context)
 
 @* Страница для отображения списка карточек, бесплатно размещенных и требующих пост-модерации s.io. *@
 @import market.showcase._
@@ -9,7 +9,11 @@
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/ads-list.min.css")'/>
 }
 
-@mdrBase("Free Advs", headAfter = Some(headAfter)) {
+@mdrBase(
+  title = "Free Advs",
+  headAfter = Some(headAfter),
+  adnNodeOpt = adnNodeOpt
+) {
   <h2>Саморазмещённые (бесплатные) карточки, подлежащие модерации</h2>
 
   @* Рендерим список рекламных карточек. *@
