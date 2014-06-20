@@ -718,15 +718,20 @@ siomart =
   ##################################################
   navigation_layer :
     open : () ->
-      siomart.utils.ge('smCategoriesScreen').style.display = 'block'
-      siomart.utils.ge('smSearchBar').style.display = 'block'
+      sm_cat_screen = siomart.utils.ge('smCategoriesScreen')
+      if sm_cat_screen != null
+        sm_cat_screen.style.display = 'block'
+        siomart.utils.ge('smSearchBar').style.display = 'block'
 
     close : ( all_except_search ) ->
-      siomart.utils.ge('smCategoriesScreen').style.display = 'none'
-      siomart.utils.ge('smShopListScreen').style.display = 'none'
+      sm_cat_screen = siomart.utils.ge('smCategoriesScreen')
+      console.log sm_cat_screen
+      if sm_cat_screen != null
+        siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+        siomart.utils.ge('smShopListScreen').style.display = 'none'
 
-      if all_except_search != true
-        siomart.utils.ge('smSearchBar').style.display = 'none'
+        if all_except_search != true
+          siomart.utils.ge('smSearchBar').style.display = 'none'
 
 
     back : () ->
