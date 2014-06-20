@@ -537,7 +537,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
    */
   def multiGet(ids: Seq[String], acc0: List[T] = Nil)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
     if (ids.isEmpty) {
-      Future successful Nil
+      Future successful acc0
     } else {
       val req = client.prepareMultiGet()
         .setRealtime(true)
@@ -556,7 +556,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
   def searchResp2RtMultiget(searchResp: SearchResponse, acc0: List[T] = Nil)(implicit ex: ExecutionContext, client: Client): Future[List[T]] = {
     val searchHits = searchResp.getHits.getHits
     if (searchHits.length == 0) {
-      Future successful Nil
+      Future successful acc0
     } else {
       val mgetReq = client.prepareMultiGet()
         .setRealtime(true)

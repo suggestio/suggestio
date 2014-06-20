@@ -52,6 +52,7 @@ object EMAdOffers {
   val TEXT1_ESFN        = "text1"
   val TEXT2_ESFN        = "text2"
   val DISCOUNT_ESFN     = "discount"
+  val HREF_ESFN         = "href"
 
   /** В списке офферов порядок поддерживается с помощью поля n, которое поддерживает порядок по возрастанию. */
   val N_ESFN            = "n"
@@ -99,7 +100,8 @@ trait EMAdOffersStatic extends EsModelStaticT {
       // discount-поля
       FieldObject(TEXT1_ESFN, properties = stringValueField(1.1F) :: vfields0),
       FieldObject(DISCOUNT_ESFN, properties = floatValueField(iia = true) :: vfields0),
-      FieldObject(TEXT2_ESFN, properties = stringValueField(0.9F) :: vfields0)
+      FieldObject(TEXT2_ESFN, properties = stringValueField(0.9F) :: vfields0),
+      FieldString(HREF_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
     )
     // Полный маппинг для поля offer.
     val offersField = FieldNestedObject(OFFERS_ESFN,
@@ -240,6 +242,10 @@ object AOBlock {
                 case OLD_PRICE_ESFN => acc.oldPrice = result
               }
 
+            // Десериализация ссылки.
+            case HREF_ESFN =>
+              acc.href = Option(v).map(EsModel.stringParser)
+
             // Есть проблемы с десериализацией
             case other =>
               println("AOBlock.deserializeBody: Skipping unknown field: " + other + " = " + v)
@@ -258,7 +264,8 @@ case class AOBlock(
   var text2: Option[AOStringField] = None,
   var discount: Option[AOFloatField] = None,
   var price: Option[AOPriceField]  = None,
-  var oldPrice: Option[AOPriceField] = None
+  var oldPrice: Option[AOPriceField] = None,
+  var href: Option[String] = None
 ) extends AdOfferT {
   @JsonIgnore
   override def offerType = AdOfferTypes.BLOCK
@@ -276,6 +283,8 @@ case class AOBlock(
       acc ::= PRICE_ESFN -> price.get.renderPlayJson
     if (oldPrice.isDefined)
       acc ::= OLD_PRICE_ESFN -> oldPrice.get.renderPlayJson
+    if (href.isDefined)
+      acc ::= HREF_ESFN -> JsString(href.get)
     acc
   }
 }
@@ -439,7 +448,7 @@ case class AOFieldFont(
     if (family.isDefined)
       fieldsAcc ::= FAMILY_ESFN -> JsString(family.get)
     if (align.isDefined)
-      fieldsAcc ::= ALIGN_ESFN -> JsString(align.get.toString)
+      fieldsAcc ::= ALIGN_ESFN -> JsString(align.get.toString())
     if (size.isDefined)
       fieldsAcc ::= SIZE_ESFN -> JsNumber(size.get)
     if (lineHeight.isDefined)

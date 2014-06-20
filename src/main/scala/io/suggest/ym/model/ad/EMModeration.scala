@@ -5,7 +5,7 @@ import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import io.suggest.ym.model.common.{EMReceivers, EMProducerId}
 import org.elasticsearch.client.Client
-import org.elasticsearch.index.query.{FilterBuilders, QueryBuilders}
+import org.elasticsearch.index.query.{QueryBuilder, FilterBuilders, QueryBuilders}
 import org.joda.time.DateTime
 import play.api.libs.json._
 import java.{util => ju}
@@ -21,6 +21,8 @@ import scala.concurrent.{Future, ExecutionContext}
  */
 object EMModeration {
 
+  /** Название поля, с которого начинается всё остальное в этом файле.
+    * В нём хранится объект с данными по модерации. */
   val MODERATION_ESFN = "mdr"
 
   /** MVEL-код определения рекламной карточки, у которой producer_id совпадает с одним из ресиверов.
@@ -44,6 +46,39 @@ object EMModeration {
       |return false;
     """.stripMargin
   }
+
+  /** Добавить в query фильтрацию скриптом. */
+  def queryFilteredFreeAdvNeedMdr(q0: QueryBuilder): QueryBuilder = {
+    val filterSelfAdv = FilterBuilders.scriptFilter(FREE_ADV_NEED_MDR_MVEL)
+    QueryBuilders.filteredQuery(q0, filterSelfAdv)
+  }
+
+  /** Скомпилить аргументы поиска модерированных карточек в query. */
+  def mdrSearchArgs2query(args: MdrSearchArgsI): QueryBuilder = {
+    args.producerId.map[QueryBuilder] { producerId =>
+      EMProducerId.producerIdQuery(producerId)
+    } map { pqb =>
+      args.freeAdvIsAllowed.fold {
+        // Не задан искомый вердикт модерации. Найти саморазмещённые, но ещё не отмодерированные карточки:
+        queryFilteredFreeAdvNeedMdr(pqb)
+      } { freeAdvIsAllowed =>
+        // Есть искомый вердикт модерации. Нужно фильтровать по полю.
+        val fn = FreeAdvStatus.MDR_IS_ALLOWED_ESFN
+        val f = FilterBuilders.termFilter(fn, freeAdvIsAllowed)
+        QueryBuilders.filteredQuery(pqb, f)
+      }
+    } orElse {
+      // producerId не задан. Нужно попытаться поискать по следующему параметру
+      args.freeAdvIsAllowed.map { freeAdvIsAllowed =>
+        val fn = FreeAdvStatus.MDR_IS_ALLOWED_ESFN
+        QueryBuilders.termQuery(fn, freeAdvIsAllowed)
+      }
+    } getOrElse {
+      // Не задано ничего для поиска по индексам. Фильтруем скриптом весь индекс+тип целиком.
+      queryFilteredFreeAdvNeedMdr( QueryBuilders.matchAllQuery() )
+    }
+  }
+
 }
 
 import EMModeration._
@@ -65,16 +100,11 @@ trait EMModerationStatic extends EsModelStaticT {
   }
 
   /** Собрать саморазмещённые карточки, у которых не было модерации вообще. */
-  def findSelfAdvNonMdr(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
-                       (implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    val query0 = QueryBuilders.matchAllQuery()
-    // Найти саморазмещённые, но ещё не отмодерированные карточки:
-    val filterSelfAdv = FilterBuilders.scriptFilter(FREE_ADV_NEED_MDR_MVEL)
-    val query1 = QueryBuilders.filteredQuery(query0, filterSelfAdv)
+  def findSelfAdvNonMdr(args: MdrSearchArgsI)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
     prepareSearch
-      .setQuery(query1)
-      .setSize(maxResults)
-      .setFrom(offset)
+      .setQuery( mdrSearchArgs2query(args) )
+      .setSize(args.maxResults)
+      .setFrom(args.offset)
       .execute()
       .map { searchResp2list }
   }
@@ -165,6 +195,8 @@ object FreeAdvStatus {
   val BY_USER_ESFN = "bu"
   val REASON_ESFN = "r"
 
+  def MDR_IS_ALLOWED_ESFN = MODERATION_ESFN + "." + ModerationInfo.FREE_ADV_ESFN + "." + IS_ALLOWED_ESFN
+
   /** Создать под-маппинг для индекса. */
   def generateMappingProps: List[DocField] = List(
     FieldBoolean(IS_ALLOWED_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
@@ -213,3 +245,14 @@ case class FreeAdvStatus(
     JsObject(acc)
   }
 }
+
+
+/** Аргументы для поиска карточек, подлежащий модерации или отмодерированных, передаются через
+  * этот интерфейс. */
+trait MdrSearchArgsI {
+  def producerId: Option[String]
+  def freeAdvIsAllowed: Option[Boolean]
+  def maxResults: Int
+  def offset: Int
+}
+
