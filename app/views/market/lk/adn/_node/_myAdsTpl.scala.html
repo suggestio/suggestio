@@ -1,4 +1,4 @@
-@(node: MAdnNode, mads: Seq[MAdT] = Nil, canAdv: Boolean, ad2advMap: Map[String, MAdvI])(implicit ctx: Context)
+@(node: MAdnNode, mads: Seq[MAd] = Nil, canAdv: Boolean, ad2advMap: Map[String, MAdvI])(implicit ctx: Context)
 
 @* Список рекламных карточек для создателя рекламы. В нём галочки есть. *@
 @import market.lk.ad._
@@ -33,20 +33,27 @@
           }
         }
 
-        @* Галочки для управления отображением рекламной карточки магазина. *@
-        <div class="ads-list-block__controls">
-          @defining(mad.allWantShowLevels) { adSls =>
-            @* Обходим карту уровней, переводя её в список галочек. *@
-            @outLvlMap.map { case (sl, (slAllowed, slMax)) =>
-              @defining(node.adn.canOutAtLevel(sl)) { hl =>
-                <label class="@sl.checkboxCssClass@if(!slAllowed){ inactive}">
-                  <input class="@if(slMax == 1){one-}checkbox" type="checkbox"
-                         data-level="@sl" data-adid="@mad.id" data-name="@sl.checkboxCssClass"
-                         @if(!slAllowed) {disabled="disabled"} @if(adSls contains sl) {data-checked="checked"}
-                         />&nbsp;@Messages(if(isSingleOutLvl) "lk.sl.enable_ad" else "lk.sl." + sl.name)
-                </label>
+        @* Галочки для управления отображением рекламной карточки магазина.
+           Отображаются, если модератор не запретил бесплатное размещение этой карточки. *@
+        @mad.moderation.freeAdv.filter(!_.isAllowed).fold {
+          @* Бесплатное размещение не запрещено. *@
+          <div class="ads-list-block__controls">
+            @defining(mad.allWantShowLevels) { adSls =>
+              @* Обходим карту уровней, переводя её в список галочек. *@
+              @outLvlMap.map { case (sl, (slAllowed, slMax)) =>
+                @defining(node.adn.canOutAtLevel(sl)) { hl =>
+                  <label class="@sl.checkboxCssClass@if(!slAllowed){ inactive}">
+                    <input class="@if(slMax == 1){one-}checkbox" type="checkbox"
+                           data-level="@sl" data-adid="@mad.id" data-name="@sl.checkboxCssClass"
+                           @if(!slAllowed) {disabled="disabled"} @if(adSls contains sl) {data-checked="checked"}
+                           />&nbsp;@Messages(if(isSingleOutLvl) "lk.sl.enable_ad" else "lk.sl." + sl.name)
+                  </label>
+                }
               }
             }
+          } { faMdr =>
+            @* Модератор запретил бесплатное размещение указанное карточки. *@
+            @faMdr.reason
           }
 
           @if(canAdv) {
