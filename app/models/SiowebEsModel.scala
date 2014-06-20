@@ -92,7 +92,20 @@ abstract class EsModelCache[T1 <: EsModelMinimalT : ClassTag] extends SNStaticSu
             accCached -> (id :: notCached)
         }
     }
-    companion.multiGet(nonCachedIds, acc0 = cached)
+    val resultFut = companion.multiGet(nonCachedIds, acc0 = cached)
+    // Асинхронно отправить в кеш всё, чего там ещё не было.
+    if (nonCachedIds.nonEmpty) {
+      resultFut onSuccess { case results =>
+        val ncisSet = nonCachedIds.toSet
+        results.foreach { result =>
+          if (ncisSet contains result.idOrNull) {
+            val ck = cacheKey(result.idOrNull)
+            Cache.set(ck, result, EXPIRE_SEC)
+          }
+        }
+      }
+    }
+    resultFut
   }
 
   /**
