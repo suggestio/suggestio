@@ -20,16 +20,22 @@
   <div class="ovh">
 
     @_adsListTpl(mads, coverDisableReason = true, startIndex = 0, itemsInLine = 4) { mad =>
-      <a href="@routes.MarketAd.editAd(mad.id.get)">[ред]</a>
-      <a href="@routes.SysMarket.showAdnNode(mad.producerId)">@prodsMap.get(mad.producerId).fold {
+
+      <a class="free-ad__link blue-link" href="@routes.SysMarket.showAdnNode(mad.producerId)">@prodsMap.get(mad.producerId).fold {
         ? ? ?
       } { producer =>
         @producer.meta.name / @producer.meta.town
       }</a>
-      <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">[ЛК]</a>
+
+      <div class="border-line"></div>
+
+      <a class="free-ad__link blue-link" href="@routes.MarketAd.editAd(mad.id.get)">Редактировать объявление</a>
+
+      <a class="free-ad__link blue-link" href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">Перейти в ЛК</a>
+
 
       <a class="transparent-btn transparent-btn_gray" href="@routes.SysMdr.freeAdvMdr(mad.id.get)">
-        <div class="transparent-btn__white-top">
+        <div class="transparent-btn__white-top" style="padding: 10px 0;">
           <span class="transparent-btn_gray__text font-30">МОДЕРИРОВАТЬ</span>
         </div>
       </a>
