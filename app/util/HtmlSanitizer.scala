@@ -29,7 +29,7 @@ object HtmlSanitizer {
 
   /** Из оформления стрипать html, оставляя только базовое форматирование. */
   val textFmtPolicy =  new HtmlPolicyBuilder()
-    .allowElements("a", "p", "span", "em", "i", "li", "ol")
+    .allowElements("a", "p", "br", "span", "em", "i", "li", "ol")
     .allowAttributes("href", "target").onElements("a")
     .allowAttributes("style").onElements("span", "p")
     .requireRelNofollowOnLinks()

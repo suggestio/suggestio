@@ -1,6 +1,6 @@
 package controllers
 
-import _root_.util.billing.Billing
+import util.billing.Billing
 import util.qsb.AdSearch
 import util.PlayMacroLogsImpl
 import util.acl._

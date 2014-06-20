@@ -77,7 +77,7 @@ case class MBillMmpDaily(
       "mmp_weekend = {mmpWeekend}, mmp_primetime = {mmpPrimetime}, on_start_page = {onStartPage}, on_rcvr_cat = {onRcvrCat}, " +
       "weekend_cal_id = {weekendCalId}, prime_cal_id = {primeCalId} WHERE id = {id}")
       .on('id -> id.get, 'currencyCode -> currencyCode, 'mmpWeekday -> mmpWeekday, 'mmpWeekend -> mmpWeekend,
-          'onRcvrsCat -> onRcvrCat, 'mmpPrimetime -> mmpPrimetime, 'onStartPage -> onStartPage,
+          'onRcvrCat -> onRcvrCat, 'mmpPrimetime -> mmpPrimetime, 'onStartPage -> onStartPage,
           'weekendCalId -> weekendCalId, 'primeCalId -> primeCalId)
       .executeUpdate()
   }

@@ -2,8 +2,22 @@
 
 @* Барахло для встраивания в invite-формы. *@
 
-<textarea>@textRuTpl()</textarea>
-<input type="checkbox">Я согласен с условиями договора.
+
+<div class="contract-widget">
+  <div class="input clearfix">
+
+    <div class="input-shadow">
+
+      <div class="contract_invite-form">
+        @textRuTpl()
+      </div>
+
+    </div>
+
+  </div>
+
+  <input class="contract-widget__input" type="checkbox">Я согласен с условиями договора.
+</div>
 
 
 

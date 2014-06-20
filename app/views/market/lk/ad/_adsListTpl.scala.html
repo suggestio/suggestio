@@ -1,4 +1,4 @@
-@(mads: Seq[MAdT], coverDisableReason: Boolean)(postContent: MAdT => Html)(implicit ctx: util.Context)
+@(mads: Seq[MAd], coverDisableReason: Boolean)(postContent: MAd => Html)(implicit ctx: util.Context)
 
 @* Заготовка списка рекламных карточек на странице узла рекламной сети.
    postContent содержит функцию, которая генерит верстку для каждого элемента списка.

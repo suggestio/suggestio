@@ -5,6 +5,23 @@
 @import helper._
 @import market.contract._
 
+@table_fieldset(Label:String, Class:String)(Input:Html) = {
+<table cellpadding="0" cellspacing="0" class="input-wrap big @Class">
+  <td class="left">
+    <label for="adnNodeName">@Label</label>
+  </td>
+
+  <td class="right">
+    <div class="input clearfix">
+      <div class="input-shadow">
+        @Input
+      </div>
+
+    </div>
+  </td>
+</table>
+}
+
 @market.lk.lkBase("Подтверждение регистрации") {
 
   <div class="title-wrap">
@@ -17,69 +34,45 @@
 
   <div class="body">
 
+    <div class="success-label success-label__adn-invite-accept">
+      <div class="success-label__icon"></div>
+      <div class="success-label__title">Вы приглашены к участию в сиетеме Sio.Market</div>
+    </div>
+
     @* Рендер текста открытой оферты. *@
     @if(withOfferText) {
       @market.contract._inviteWidgetTpl()
     }
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big disabled">
-      <td class="left">
-        <label for="adnNodeName">Торговый центр:</label>
-      </td>
+    @table_fieldset("Торговый центр:", "disabled"){
+      <input id="adnNodeName" type="text" disabled value="@adnNode.meta.name"/>
+    }
 
-      <td class="right">
-        <div class="input clearfix">
-          <div class="input-shadow">
-            <input id="adnNodeName" type="text" disabled value="@adnNode.meta.name"/>
-          </div>
-        </div>
-      </td>
-    </table>
+    @table_fieldset("E-mail:", "disabled"){
+      <input id="adnNodeEmail" type="text" disabled value="@eAct.email"/>
+    }
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big disabled">
-      <td class="left">
-        <label for="adnNodeEmail">E-mail:</label>
-      </td>
+    @form(routes.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnNode.id.get, eAct.id.get)) {
 
-      <td class="right">
-        <div class="input clearfix">
-          <div class="input-shadow">
-            <input id="adnNodeEmail" type="text" disabled value="@eAct.email"/>
-          </div>
-        </div>
-      </td>
-    </table>
+      @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
+      @if(!ctx.isAuth) {
 
+        @table_fieldset("Пароль:", ""){
+          <input type="text" name="password.pw1"/>
+        }
 
-      @form(routes.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnNode.id.get, eAct.id.get)) {
+        @table_fieldset("Подтвердите пароль:", ""){
+          <input type="text" name="password.pw2"/>
 
-        @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
-        @if(!ctx.isAuth) {
-          @* Юзер вводит пароли. *@
-          <table cellpadding="0" cellspacing="0" class="input-wrap pass">
-            <tr>
-              @inputPassword(
-                iaf("password.pw1"),
-                '_label -> "Пароль:"
-              )
-              <td class="pass-text" rowspan="2">
-                Используйте адрес электронной почты
-                и пароль для следующего входа.
-              </td>
-            </tr>
-            <tr>
-              @inputPassword(
-                iaf("password.pw2"),
-                '_label -> "Подтверждение пароля:"
-              )
-            </tr>
-          </table>
-
+        }
           @* TODO Нужна ссылка с формой для логина в систему, если юзер уже зареган, но ещё не залогинен. *@
         }
 
         <div class="submit-wrap">
-          <div class="gray-but-wrap" style="margin-top: 50px; margin-left: 120px;">
+
+          <div class="font-12 gray" style="padding-left: 120px;">Используйте указанные e-mail и пароль в дальшейнем для авторизации в Sio.Market</div>
+
+          <div class="gray-but-wrap" style="margin-top: 25px; margin-bottom: 25px; margin-left: 120px;">
             <div class="white-border-top">
               <input class="btn" type="submit" value="@Messages("ПРОДОЛЖИТЬ")"/>
             </div>

@@ -35,7 +35,7 @@
     @* Рендерим табы по типам узлов. *@
     <div class="advs-form-block__tabs">
       @adnNodesMap.zipWithIndex.map { case ((memberType, _), i) =>
-        <div class="advs-form-block__tabs-single-tab @if( i == 0 ){ advs-form-block__tabs-single-tab_active }">@Messages("amts.of.type." + memberType)</div>
+        <div class="advs-form-block__tabs-single-tab mt-tab @if( i == 0 ){ advs-form-block__tabs-single-tab_active }" data-member-type="@memberType">@Messages("amts.of.type." + memberType) <span class="mt-tab-@memberType-counter-c" style="display: none;">(<span class="mt-tab-@memberType-counter">1</span>)</span></div>
       }
       <div class="clear"></div>
     </div>
@@ -44,7 +44,8 @@
     <div class="advs-form-block__nodes advs-nodes">
       @defining( now.plusDays(1) ) { tomorrow1 =>
       @defining( tomorrow1.plusDays(1) ) { tomorrow2 =>
-      @adnNodesMap.map { case (memberType, adnNodes) =>
+      @adnNodesMap.zipWithIndex.map { case ((memberType, adnNodes), i) =>
+        <div class="mt-block mt-@memberType-block" @if( i > 0 ){style="display: none;"}>
         @adnNodes.iterator.zipWithIndex.map { case (node, i) =>
           @defining(args.busyAdns.get(node.id.get)) { maybeBusyAdv =>
           @* Более-менее устойчивый числовой id (mid) нужен для использования в list mapping. Из-за вкладок умножаем на номер вкладки (номер типа). *@
@@ -91,6 +92,7 @@
           }
           </div>
         }
+        </div>
       }
       }
       }

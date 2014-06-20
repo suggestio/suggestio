@@ -446,18 +446,19 @@ siomart =
     logo_img = if typeof window.siomart_logo_src != 'undefined' then '<img src=\'' + window.siomart_logo_src + '\' width=80/>' else ''
     sm_trigger = this.utils.ce 'div', sm_trigger_attrs, '<span class="trigger-helper">' + logo_img + '</span>'
 
-    _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
-    this.utils.add_single_listener sm_trigger, _event, siomart.open_mart
-
     ## Интерфейс маркета
     sm_layout_attrs =
       class : this.config.sm_layout_class
       id : 'sioMartRoot'
     sm_layout = this.utils.ce "div", sm_layout_attrs, '<div id="sioMartLayout"></div>'
+    sm_layout.style.display = 'none'
 
     _body = this.utils.ge_tag('body')[0]
     _body.appendChild sm_trigger
     _body.appendChild sm_layout
+
+    _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
+    this.utils.add_single_listener sm_trigger, _event, siomart.open_mart
 
     _head = this.utils.ge_tag('head')[0]
     meta_viewport_attrs =
@@ -519,6 +520,7 @@ siomart =
 
     ## Инициализация глагне
     if data.action == 'martIndex'
+      siomart.utils.ge('sioMartRoot').style.display = 'block'
       cbca_grid.set_window_size()
       container = this.utils.ge 'sioMartLayout'
       container.innerHTML = data.html
@@ -801,15 +803,20 @@ siomart =
   ##################################################
   navigation_layer :
     open : () ->
-      siomart.utils.ge('smCategoriesScreen').style.display = 'block'
-      siomart.utils.ge('smSearchBar').style.display = 'block'
+      sm_cat_screen = siomart.utils.ge('smCategoriesScreen')
+      if sm_cat_screen != null
+        sm_cat_screen.style.display = 'block'
+        siomart.utils.ge('smSearchBar').style.display = 'block'
 
     close : ( all_except_search ) ->
-      siomart.utils.ge('smCategoriesScreen').style.display = 'none'
-      siomart.utils.ge('smShopListScreen').style.display = 'none'
+      sm_cat_screen = siomart.utils.ge('smCategoriesScreen')
+      console.log sm_cat_screen
+      if sm_cat_screen != null
+        siomart.utils.ge('smCategoriesScreen').style.display = 'none'
+        siomart.utils.ge('smShopListScreen').style.display = 'none'
 
-      if all_except_search != true
-        siomart.utils.ge('smSearchBar').style.display = 'none'
+        if all_except_search != true
+          siomart.utils.ge('smSearchBar').style.display = 'none'
 
 
     back : () ->

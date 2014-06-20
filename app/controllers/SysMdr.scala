@@ -26,10 +26,6 @@ object SysMdr extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
-  /** Сколько карточек на одну страницу модерации. */
-  val FREE_ADVS_PAGE_SZ: Int = configuration.getInt("mdr.freeAdvs.page.size") getOrElse 10
-
-
   /** Отобразить начальную страницу раздела модерации рекламных карточек. */
   def index = IsSuperuser { implicit request =>
     Ok(mdrIndexTpl())
@@ -40,12 +36,12 @@ object SysMdr extends SioController with PlayMacroLogsImpl {
     * @param hideAdId Можно скрыть какую-нибудь карточку. Полезно скрывать отмодерированную, т.к. она
     *                 некоторое время ещё будет висеть на этой странице.
     */
-  def freeAdvs(page: Int, hideAdId: Option[String]) = IsSuperuser.async { implicit request =>
-    MAd.findSelfAdvNonMdr(maxResults = FREE_ADVS_PAGE_SZ, offset = page * FREE_ADVS_PAGE_SZ) flatMap { mads0 =>
+  def freeAdvs(args: MdrSearchArgs, hideAdId: Option[String]) = IsSuperuser.async { implicit request =>
+    MAd.findSelfAdvNonMdr(args) flatMap { mads0 =>
       val mads = hideAdId.fold(mads0) { hai => mads0.filter(_.id.get != hai) }
       MAdnNodeCache.multigetByIdCached( mads.map(_.producerId) ) map { producers =>
         val prodsMap = producers.map { p => p.id.get -> p }.toMap
-        Ok(freeAdvsTpl(mads, prodsMap, page, hasNextPage = mads.size >= FREE_ADVS_PAGE_SZ))
+        Ok(freeAdvsTpl(mads, prodsMap, args.page, hasNextPage = mads.size >= MdrSearchArgs.FREE_ADVS_PAGE_SZ))
       }
     }
   }

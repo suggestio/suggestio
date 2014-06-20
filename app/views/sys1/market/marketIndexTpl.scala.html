@@ -5,15 +5,16 @@
 
 
 @* Подшаблон генерации квадратной кнопки. *@
-@btn(href: Call, paddingPx: Int, fLeft: Boolean = true, font: Int = 24)(btnText: Html) = {
+@btn(href: Call, paddingPx: Int, font: Int = 24)(btnText: Html)(afterBtn: Html) = {
   <div class="sys-market-index__item">
 
-    <a class="transparent-btn transparent-btn_gray@if(fLeft) { f-left}" href="@href">
+    <a class="transparent-btn transparent-btn_gray" href="@href">
       <div class="transparent-btn__white-top" style="padding: @{paddingPx}px 0;">
         <span class="transparent-btn_gray__text font-@font">@btnText</span>
       </div>
     </a>
 
+    @afterBtn
   </div>
 }
 
@@ -25,26 +26,36 @@
     </p>
 
     <div class="sys-market-index__items">
-      @btn(routes.SysMarket.companiesList(), 40, fLeft = false) { ВСЕ<br/>КОМПАНИИ }
-      @btn(routes.SysMarket.adnNodesList(), 52) { ADNetwork }
-      @btn(routes.SysMarketBilling.index(), 52) { БИЛЛИНГ }
-      @btn(routes.SysMarket.showYmCats, 40) { ГЛОБАЛЬНЫЕ<br/>КАТЕГОРИИ }
-      @btn(routes.SysCalendar.showCalendars, 28) { КАЛЕНДАРИ<br/>ПРАЗДНИКОВ/<br/>ВЫХОДНЫХ }
-      @btn(routes.SysMarketInvReq.index, 28) { ЗАПРОСЫ<br/>ПОДКЛЮЧЕНИЯ<br/>К СЕТИ }
-      @btn(routes.SysMdr.index, 52) { Модерация }
+      <div class="ovh">
+        @btn(routes.SysMarket.companiesList(), 40) { ВСЕ<br/>КОМПАНИИ } {
+
+          <a href="@routes.SysMarket.companyAddForm()" class="green-btn-new sys-market-index__btn">
+            <span class="btn"></span>
+            +добавить компанию
+          </a>
+
+        }
+        @btn(routes.SysMarket.adnNodesList(), 52) { ADNetwork } {
+
+          <a href="@routes.SysMarket.createAdnNode()" class="green-btn-new sys-market-index__btn">
+            <span class="btn"></span>
+            +добавить узел верхнего уровня
+          </a>
+
+        }
+        @btn(routes.SysMarketBilling.index(), 52) { БИЛЛИНГ } { }
+        @btn(routes.MarketCategory.showCatsFor(DEFAULT_OWNER_ID), 40) { ГЛОБАЛЬНЫЕ<br/>КАТЕГОРИИ } {
+
+          <a href="@routes.SysMarket.showYmCats" class="blue-btn-new sys-market-index__btn">
+            <span class="btn"></span>
+            YM-категории
+          </a>
+
+        }
+        @btn(routes.SysCalendar.showCalendars, 28) { КАЛЕНДАРИ<br/>ПРАЗДНИКОВ/<br/>ВЫХОДНЫХ } { }
+      </div>
+      @btn(routes.SysMarketInvReq.index, 28) { ЗАПРОСЫ<br/>ПОДКЛЮЧЕНИЯ<br/>К СЕТИ } { }
+      @btn(routes.SysMdr.index, 52) { Модерация } { }
     </div>
-
-    <p>
-      <a class="add" href="@routes.SysMarket.companyAddForm()">+добавить компанию</a>
-    </p>
-
-    <p>
-      <a class="add" href="@routes.SysMarket.createAdnNode()">+добавить узел верхнего уровня</a>
-      <br/>
-    </p>
-
-    <p>
-      <a href="@routes.SysMarket.showYmCats">YM-категории</a>,
-    </p>
 
 }

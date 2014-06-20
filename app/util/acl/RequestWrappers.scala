@@ -63,7 +63,7 @@ abstract class AbstractRequestForShopAdm[A](request: Request[A]) extends Abstrac
   *                    [[models.MPerson]] и [[models.MPersonIdent]].
   */
 case class SioReqMd(
-  usernameOpt: Option[String],
+  usernameOpt: Option[String] = None,
   billBallanceOpt: Option[MBillBalance] = None
 )
 object SioReqMd {

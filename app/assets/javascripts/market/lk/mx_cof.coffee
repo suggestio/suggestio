@@ -156,7 +156,28 @@ CbcaCommon = () ->
 
   self = this
 
+  ################################
+  ## ВЫРАВНИВАНИЕ ВЫСОТЫ БЛОКОВ ##
+  ################################
+
+  self.setEqualHeightBlocks = () ->
+    $blocks = $('.js-equal-height')
+    height = 0
+
+    $blocks.each () ->
+      thisHeight = $(this).height()
+      if(thisHeight > height)
+        height = thisHeight
+
+    $blocks.height(height)
+
+  #########################################
+  ## TODO разнести по отдельным функциям ##
+  #########################################
+
   self.init = () ->
+
+    self.setEqualHeightBlocks()
 
     $(window).resize () ->
       cbca.popup.setOverlayHeight()
@@ -403,13 +424,6 @@ CbcaCommon = () ->
       formId = $this.attr('data-for')
 
       $('#'+formId).trigger('submit')
-
-
-    $(document).on 'click', '#create-your-market-btn', (event)->
-      event.preventDefault()
-
-      $('#hello-message').hide()
-      $('#create-your-market').show()
 
 
     $(document).on 'click', '.ads-list .js-tc-edit', (event)->
@@ -1090,10 +1104,47 @@ market =
         success : ( data ) ->
           $('.js-pre-price').html data
 
+      this.tabs.refine_counters()
+
+    tabs :
+      init : () ->
+        ## табы с разными типами нод
+        $('.mt-tab').bind 'click', () ->
+          mt = $(this).attr 'data-member-type'
+          $('.mt-block').hide()
+          $('.mt-tab').removeClass 'advs-form-block__tabs-single-tab_active'
+          $(this).addClass 'advs-form-block__tabs-single-tab_active'
+          $('.mt-' + mt + '-block').show()
+
+        this.refine_counters()
+
+      refine_counters : () ->
+        $('.mt-tab').each () ->
+          mt = $(this).attr 'data-member-type'
+
+          active_nodes = $('.mt-' + mt + '-block .advs-nodes__node_active').length
+
+          mt_tab_counter_c = $('.mt-tab-' + mt + '-counter-c')
+          mt_tab_counter = $('.mt-tab-' + mt + '-counter')
+
+          console.log mt + ' : ' + active_nodes
+
+          if active_nodes != 0
+            mt_tab_counter_c.show()
+            mt_tab_counter.html active_nodes
+          else
+            mt_tab_counter_c.hide()
+            mt_tab_counter.html 0
+
+
     submit : () ->
       $('#advsFormBlock form').submit()
 
     init : () ->
+
+      this.tabs.init()
+
+      ## Datepickers
       $('.js-datepicker').each () ->
         $(this).datetimepicker
           lang:'ru'
@@ -1227,13 +1278,36 @@ market =
       $('#ad_descr_text_ifr').contents().find('body').css 'background-color': hex
 
     init : () ->
+
+      $('#promoOfferForm').bind 'submit', () ->
+
+        tinyMCE.triggerSave()
+        tinyMCE.remove()
+
+        $('.tinymce_editor, .tinymce .select-color').hide()
+
+        data = $('.js-tinymce').val()
+        data = data.replace /<p(.*?)><\/p>/g, "<p$1>&nbsp;</p>"
+        data = data.replace /<span(.*?)><\/span>/g, "<span$1>&nbsp;</span>"
+
+        $('.js-tinymce').val data
+        $('#promoOfferForm').unbind 'submit'
+
+        console.log $('.js-tinymce').val()
+
+        submit_cb = () ->
+          $('#promoOfferForm').submit()
+
+        setTimeout submit_cb, 1
+
+        return false
+
       tinymce.init(
         selector:'textarea.js-tinymce',
         width: 615,
         height: 300,
         menubar: false,
         statusbar : false,
-        force_p_newlines : true,
         valid_elements : "a[href|target=_blank],strong/b,em/i,div[style],br,p[style],span[style]",
         plugins: 'link, textcolor, paste, colorpicker',
         toolbar: ["styleselect | fontsizeselect | alignleft aligncenter alignright | bold italic | colorpicker | link | removeformat" ],
@@ -1269,6 +1343,13 @@ market =
       ## Предпросмотр карточки с описанием
       $('.js-ad-preview-button').bind 'click', () ->
         tinyMCE.triggerSave()
+
+        data = $('.js-tinymce').val()
+        data = data.replace /<p(.*?)><\/p>/g, "<p$1>&nbsp;</p>"
+        data = data.replace /<span(.*?)><\/span>/g, "<span$1>&nbsp;</span>"
+
+        $('.js-tinymce').val data
+
         $.ajax
           url : $('.js-ad-block-full-preview-action').val()
           method : 'post'
