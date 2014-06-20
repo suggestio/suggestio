@@ -156,7 +156,28 @@ CbcaCommon = () ->
 
   self = this
 
+  ################################
+  ## ВЫРАВНИВАНИЕ ВЫСОТЫ БЛОКОВ ##
+  ################################
+
+  self.setEqualHeightBlocks = () ->
+    $blocks = $('.js-equal-height')
+    height = 0
+
+    $blocks.each () ->
+      thisHeight = $(this).height()
+      if(thisHeight > height)
+        height = thisHeight
+
+    $blocks.height(height)
+
+  #########################################
+  ## TODO разнести по отдельным функциям ##
+  #########################################
+
   self.init = () ->
+
+    self.setEqualHeightBlocks()
 
     $(window).resize () ->
       cbca.popup.setOverlayHeight()
