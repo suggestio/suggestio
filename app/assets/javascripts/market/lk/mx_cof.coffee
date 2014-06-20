@@ -412,6 +412,11 @@ CbcaCommon = () ->
       $('#create-your-market').show()
 
 
+    if($('#create-your-market').find('.error').length)
+      $('#hello-message').hide()
+      $('#create-your-market').show()
+
+
     $(document).on 'click', '.ads-list .js-tc-edit', (event)->
       event.preventDefault()
 

@@ -19,29 +19,27 @@
 
   <div class="body">
 
+    <div class="success-label success-label__adn-invite-accept">
+      <div class="success-label__icon"></div>
+      <div class="success-label__title">Вы приглашены к участию в сиетеме Sio.Market</div>
+    </div>
+
     @* Рендер текста открытой оферты. *@
     @if(withOfferText) {
       @market.contract._inviteWidgetTpl()
     }
 
+
+
     <div class="hello-message" id="hello-message">
-      <div class="accept">
-        Вы приглашены к участию в сиетеме Sio.Market
-      </div>
       <h2>
         Правила
       </h2>
-      <p>
+      <p class="paragraph-13">
         Для участников системы существует лишь одно правило &mdash; ответственное оформление рекламных карточек.
       </p>
-      @*<h2>
-        Формат передачи данных
-      </h2>
-      <p>
-      </p>
-      *@
 
-      <div class="gray-but-wrap" style="margin-top: 50px;">
+      <div class="gray-but-wrap" style="margin: 25px 0;">
         <div class="white-border-top">
           <a class="btn" href="#" id="create-your-market-btn">СОЗДАЙТЕ СВОЙ МАРКЕТ</a>
         </div>
@@ -130,7 +128,7 @@
         }
 
         <div class="submit-wrap">
-          <div class="gray-but-wrap" style="margin-top: 50px; margin-left: 120px;">
+          <div class="gray-but-wrap" style="margin-top: 25px; margin-bottom: 25px; margin-left: 120px;">
             <div class="white-border-top">
               <input class="btn" type="submit" value="@Messages("ПРОДОЛЖИТЬ")"/>
             </div>
