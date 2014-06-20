@@ -1,4 +1,4 @@
-@(mads: Seq[MAd], coverDisableReason: Boolean)(postContent: MAd => Html)(implicit ctx: util.Context)
+@(mads: Seq[MAd], coverDisableReason: Boolean, startIndex: Int = 1, itemsInLine: Int = 4)(postContent: MAd => Html)(implicit ctx: util.Context)
 
 @* Заготовка списка рекламных карточек на странице узла рекламной сети.
    postContent содержит функцию, которая генерит верстку для каждого элемента списка.
@@ -9,8 +9,8 @@
 @import market.showcase._
 
 @mads.zipWithIndex.map { case (mad, i) =>
-  @defining( i + 2 ) { i2 =>
-  <div class="ads-list__block ads-list-block s-@i2 @if( i2 % 4 == 0 ){ ads-list__block_no-margin }">
+  @defining( i + startIndex ) { i2 =>
+  <div class="ads-list__block ads-list-block s-@i2 @if( i2 % itemsInLine == itemsInLine - 1 ){ ads-list__block_no-margin }">
 
     <div class="ads-list-block__preview">
       @if(coverDisableReason) {

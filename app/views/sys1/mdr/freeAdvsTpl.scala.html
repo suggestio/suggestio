@@ -1,4 +1,4 @@
-@(mads: Seq[MAd], prodsMap: Map[String, MAdnNode], currPage: Int, hasNextPage: Boolean)(implicit ctx: Context)
+@(mads: Seq[MAd], prodsMap: Map[String, MAdnNode], currPage: Int, hasNextPage: Boolean, adnNodeOpt: Option[MAdnNode] = None)(implicit ctx: Context)
 
 @* Страница для отображения списка карточек, бесплатно размещенных и требующих пост-модерации s.io. *@
 @import market.showcase._
@@ -9,20 +9,33 @@
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/ads-list.min.css")'/>
 }
 
-@mdrBase("Free Advs", headAfter = Some(headAfter)) {
+@mdrBase(
+  title = "Free Advs",
+  headAfter = Some(headAfter),
+  adnNodeOpt = adnNodeOpt
+) {
   <h2>Саморазмещённые (бесплатные) карточки, подлежащие модерации</h2>
 
   @* Рендерим список рекламных карточек. *@
-  @_adsListTpl(mads, coverDisableReason = true) { mad =>
-    <a href="@routes.MarketAd.editAd(mad.id.get)">[ред]</a>
-    <a href="@routes.SysMarket.showAdnNode(mad.producerId)">@prodsMap.get(mad.producerId).fold {
-      ? ? ?
-    } { producer =>
-      @producer.meta.name / @producer.meta.town
-    }</a>
-    <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">[ЛК]</a>
-    <a href="@routes.SysMdr.freeAdvMdr(mad.id.get)">МОДЕРИРОВАТЬ</a>
-  }
+  <div class="ovh">
+
+    @_adsListTpl(mads, coverDisableReason = true, startIndex = 0, itemsInLine = 4) { mad =>
+      <a href="@routes.MarketAd.editAd(mad.id.get)">[ред]</a>
+      <a href="@routes.SysMarket.showAdnNode(mad.producerId)">@prodsMap.get(mad.producerId).fold {
+        ? ? ?
+      } { producer =>
+        @producer.meta.name / @producer.meta.town
+      }</a>
+      <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">[ЛК]</a>
+
+      <a class="transparent-btn transparent-btn_gray" href="@routes.SysMdr.freeAdvMdr(mad.id.get)">
+        <div class="transparent-btn__white-top">
+          <span class="transparent-btn_gray__text font-30">МОДЕРИРОВАТЬ</span>
+        </div>
+      </a>
+    }
+
+  </div>
 
   @* Рендерим переключение страниц. *@
   Страницы:

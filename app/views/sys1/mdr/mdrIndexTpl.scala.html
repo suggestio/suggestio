@@ -6,6 +6,11 @@
 
 @mdrBase("Модерация", hPathAfter = Some(hPathAfter)) {
 
-  <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(page = 0))">Модерация бесплатных саморазмещённых рекламных карточек</a>
+  <h2>Модерация бесплатного размещения рекламных карточек</h2>
+  <p>
+    <a href="@routes.SysMdr.freeAdvs()">Очередь на модерацию</a> /
+    <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(true)))">Одобренные</a> /
+    <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(false)))">Отклонённые</a>
+  </p>
 
 }

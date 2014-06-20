@@ -32,16 +32,25 @@ object SysMdr extends SioController with PlayMacroLogsImpl {
   }
 
   /** Страница с бесплатно-размещёнными рекламными карточками, подлежащими модерации s.io.
-    * @param page номер страницы.
+    * @param args Аргументы для поиска (QSB).
     * @param hideAdId Можно скрыть какую-нибудь карточку. Полезно скрывать отмодерированную, т.к. она
     *                 некоторое время ещё будет висеть на этой странице.
     */
   def freeAdvs(args: MdrSearchArgs, hideAdId: Option[String]) = IsSuperuser.async { implicit request =>
     MAd.findSelfAdvNonMdr(args) flatMap { mads0 =>
       val mads = hideAdId.fold(mads0) { hai => mads0.filter(_.id.get != hai) }
-      MAdnNodeCache.multigetByIdCached( mads.map(_.producerId) ) map { producers =>
-        val prodsMap = producers.map { p => p.id.get -> p }.toMap
-        Ok(freeAdvsTpl(mads, prodsMap, args.page, hasNextPage = mads.size >= MdrSearchArgs.FREE_ADVS_PAGE_SZ))
+      val producerIds = mads.map(_.producerId).toSet ++ args.producerId.toSet
+      MAdnNodeCache.multigetByIdCached( producerIds ) map { producers =>
+        val prodsMap = producers
+          .map { p => p.id.get -> p }
+          .toMap
+        Ok(freeAdvsTpl(
+          mads = mads,
+          prodsMap = prodsMap,
+          currPage = args.page,
+          hasNextPage = mads.size >= MdrSearchArgs.FREE_ADVS_PAGE_SZ,
+          adnNodeOpt = args.producerId.flatMap(prodsMap.get)
+        ))
       }
     }
   }

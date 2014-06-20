@@ -82,7 +82,12 @@ abstract class EsModelCache[T1 <: EsModelMinimalT : ClassTag] extends SNStaticSu
     }
   }
 
-  def multigetByIdCached(ids: Seq[String])(implicit ec: ExecutionContext, client: Client): Future[Seq[T1]] = {
+  /**
+   * Аналог getByIdCached, но для multiget().
+   * @param ids Список id, которые надо получить.
+   * @return Результаты в неопределённом порядке.
+   */
+  def multigetByIdCached(ids: Traversable[String])(implicit ec: ExecutionContext, client: Client): Future[Seq[T1]] = {
     val (cached, nonCachedIds) = ids.foldLeft [(List[T1], List[String])] (Nil -> Nil) {
       case ((accCached, notCached), id) =>
         getByIdFromCache(id) match {
@@ -92,7 +97,20 @@ abstract class EsModelCache[T1 <: EsModelMinimalT : ClassTag] extends SNStaticSu
             accCached -> (id :: notCached)
         }
     }
-    companion.multiGet(nonCachedIds, acc0 = cached)
+    val resultFut = companion.multiGet(nonCachedIds, acc0 = cached)
+    // Асинхронно отправить в кеш всё, чего там ещё не было.
+    if (nonCachedIds.nonEmpty) {
+      resultFut onSuccess { case results =>
+        val ncisSet = nonCachedIds.toSet
+        results.foreach { result =>
+          if (ncisSet contains result.idOrNull) {
+            val ck = cacheKey(result.idOrNull)
+            Cache.set(ck, result, EXPIRE_SEC)
+          }
+        }
+      }
+    }
+    resultFut
   }
 
   /**
