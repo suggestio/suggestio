@@ -5,55 +5,249 @@
 @import ctx._
 
 @* Фунция-генератор для блока с вопросом и ответами, передаваемыми в аргументе content. *@
-@qsn(fn: String)(content: Html) = {
-  <div>
-    <h3>@Messages("join.qsn." + fn)</h3>
-    @content
+@qsn(fn: String, index: Integer)(content: Html) = {
+
+
+  <div class="lk-edit-form__block js-slide-wrap js-quiz__element @if(index > 0){hidden}" id="@fn" data-index="@index" >
+
+    <div class="lk-edit-form__block_title ovh">
+      <div class="attention-icon">!</div>
+      <div class="border-line"></div>
+        <span class="lk-edit-form__block_title_span">
+          @Messages("join.qsn." + fn)
+        </span>
+      <div class="border-line"></div>
+    </div>
+
+    <div class="lk-edit-form__block_body js-slide-content">
+
+      <div class="lk-edit-form__block_body_inner">
+        @content
+      </div>
+
+    </div>
+
   </div>
+
 }
 
 @* Функция, которая должна генерить блок с заголовком и чекбоксами "да/нет" для ответа на вопрос, заданный в заголовке.
    На сервер должно приходить "true", "false" или пустое/отсутсвующее поле для значения "не знаю". *@
-@yesNoInputs(fn: String) = {
-  @qsn(fn) {
+@yesNoInputs(fn: String, yesId: String, noId: String, index: Int) = {
+  @qsn(fn, index) {
     @defining( qf(fn).value.map(_.toBoolean) ) { fv =>
-      <input type="checkbox" name="@fn" value="true"@if(fv.isDefined && fv.get) { checked}/>@Messages("Yes")<br/>
-      <input type="checkbox" name="@fn" value="false"@if(fv.isDefined && !fv.get) { checked}/>@Messages("No")<br/>
+      <table cellspacing="0" cellpadding="0">
+        <tr>
+          <td class="quiz__td">
+            <div class="quiz__checkbox-wrap ovh">
+              <label>
+                <input class="one-checkbox js-quiz__checkbox" data-next="@yesId" type="checkbox" data-name="@fn" name="@fn" value="true"@if(fv.isDefined && fv.get) { checked}/>@Messages("Yes")
+              </label>
+            </div>
+          </td>
+          <td class="quiz__td">
+            <div class="border-line-vertical f-left"></div>
+          </td>
+          <td>
+            <div class="quiz__checkbox-wrap ovh">
+              <label>
+                <input class="one-checkbox js-quiz__checkbox" data-next="@noId" type="checkbox" data-name="@fn" name="@fn" value="false"@if(fv.isDefined && !fv.get) { checked}/>@Messages("No")
+              </label>
+            </div>
+          </td>
+        </tr>
+      </table>
     }
   }
 }
 
 @joinBase("Готова ли ваша wi-fi сеть к SIO-Market") {
-  <h1>Готова ли ваша сеть?</h1>
 
-  @form(routes.MarketJoin.joinQuestionsFormSubmit) {
-    @* Любое поле может сабмиттить на сервер пустое/отсутсвующее значение, обозначающее "не знаю". *@
 
-    @yesNoInputs("haveWifi")
+  <div class="header-wrap">
 
-    @* Левая половина ответов (в дизайне). *@
-    @yesNoInputs("fullCoverage")
-    @yesNoInputs("knownEquipment")
-    @yesNoInputs("altFw")
-    @yesNoInputs("isWrtFw")
+    <div class="center">
 
-    @* Правая половина ответов. *@
-    @yesNoInputs("landlineInet")
-    @yesNoInputs("smallRoom")
+      <a class="logo" href="/m/lk">
+        <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
+      </a>
 
-    @defining( "audienceSz" ) { fn =>
-      @qsn(fn) {
-        @defining( qf(fn).value ) { auSzopt =>
-          @AudienceSizes.values.map { auSzVariant =>
-            <label>
-              <input type="checkbox" name="@fn" value="@auSzVariant"/>
-              @Messages(s"join.qsn.$fn.$auSzVariant")
-            </label>
-          }
+    </div>
+
+  </div>
+
+  <div class="body-wrap wave-pattern">
+
+    <div class="title-wrap">
+
+      <div class="center">
+        <a class="back-but" href="@routes.MarketLk.lkIndex">&nbsp;</a>
+        <div class="title-inner">
+          ГОТОВА ЛИ ВАША Wi-Fi СЕТЬ К SIO MARKET?
+        </div>
+      </div>
+
+    </div>
+
+
+    <div class="body">
+
+      <div class="ovh">
+
+        @form(routes.MarketJoin.wifiJoinQuestionsFormSubmit) {
+          @* Любое поле может сабмиттить на сервер пустое/отсутсвующее значение, обозначающее "не знаю". *@
+
+          <div class="wifi-page__left-column">
+            @* Левая половина ответов (в дизайне). *@
+            @yesNoInputs("haveWifi", "#fullCoverage", "#landlineInet", 0)
+            @yesNoInputs("fullCoverage", "#knownEquipment", "#text2", 1)
+            @yesNoInputs("knownEquipment", "#altFw", "#text2", 2)
+            @yesNoInputs("altFw", "#isWrtFw", "#text2", 3)
+            @yesNoInputs("isWrtFw", "#text3", "#text2", 4)
+
+
+            @* Правая половина ответов. *@
+            @yesNoInputs("landlineInet", "#smallRoom", "#text2", 1)
+            @yesNoInputs("smallRoom" , "#audienceSz", "#text2", 2)
+
+            @defining( "audienceSz" ) { fn =>
+              @qsn(fn, 3) {
+                @defining( qf(fn).value ) { auSzopt =>
+                  <table cellspacing="0" cellpadding="0">
+                    <tr>
+                      @AudienceSizes.values.zipWithIndex.map { case(auSzVariant, i) =>
+                        <td class="quiz__td">
+                          <div class="quiz__checkbox-wrap ovh">
+                            <label>
+                             <input class="js-quiz__checkbox one-checkbox" data-next="#text@i" type="checkbox" data-name="@fn" name="@fn" value="@auSzVariant"/>
+                              @Messages(s"join.qsn.$fn.$auSzVariant")
+                            </label>
+                          </div>
+                        </td>
+
+                        @if(i < 2) {
+                          <td class="quiz__td">
+                            <div class="border-line-vertical f-left"></div>
+                          </td>
+                        }
+
+                      }
+                    </tr>
+                  </table>
+                }
+              }
+            }
+
+
+
+          </div>
+
+          <div class="wifi-page__right-column">
+
+            <div id="text0" class="js-quiz__result hidden" style="padding-top: 122px;">
+              <img src="/assets/images/market/lk/router1.png" style="margin-left: 30px;" />
+              <p class="paragraph-13">
+                <strong>
+                  Беспроводной маршрутизатор
+                </strong>
+                <br/>
+                <strong class="font-16">
+                  Microtik RB951Ui-2HnD
+                </strong>
+              </p>
+              <p class="paragraph-13">
+                <strong>Купить и настроить маршрутизатор
+                  можно как в нашей компании,
+                  так и самостоятельно. В варианте
+                  покупки в нашей компании вы
+                  получаете уже настроенный
+                  маршрутизатор.</strong> (Стоимость
+                устройства с настройкой – 9500 руб.)
+              </p>
+              <p class="paragraph-13">
+                <strong>
+                  Если вы приобретаете и
+                  настраиваете устройство
+                  самостоятельно, высылается
+                  бесплатная инструкция по
+                  настройке.
+                </strong>
+              </p>
+            </div>
+
+            <div id="text1" class="js-quiz__result hidden">
+              <img src="/assets/images/market/lk/router2.png" style="margin-left: -25px;"/>
+              <p class="paragraph-13">
+                <strong>
+                  Беспроводной маршрутизатор
+                </strong>
+                <br/>
+                <strong class="font-16">
+                  Microtik RB2011UiAS-2HnD-IN
+                </strong>
+              </p>
+              <p class="paragraph-13">
+                <strong>Купить и настроить маршрутизатор
+                  можно как в нашей компании,
+                  так и самостоятельно. В варианте
+                  покупки в нашей компании вы
+                  получаете уже настроенный
+                  маршрутизатор.</strong> (Стоимость
+                устройства с настройкой – 12500 руб.)
+              </p>
+              <p class="paragraph-13">
+                <strong>
+                  Если вы приобретаете и
+                  настраиваете устройство
+                  самостоятельно, высылается
+                  бесплатная инструкция по
+                  настройке.
+                </strong>
+              </p>
+            </div>
+
+            <div id="text3" class="hidden js-quiz__result">
+              <p class="blue-text paragraph-13">
+                После небольшой подготовительной
+                работы нашими специалистами у вас
+                будет полноценная Free Wi-Fi зона.
+              </p>
+
+              <a href="#" class="login-page__blue-btn login-page__blue-btn_width-auto js-submit-wrap">
+                <span class="btn"></span>
+                <input type="submit" value="@Messages("WRITE")"/>
+              </a>
+            </div>
+
+            <div id="text2" class="hidden js-quiz__result">
+              <p class="blue-text">
+                Обратитесь к нашим
+                специалистам для
+                детальной проработки
+                сети Wi-Fi.
+              </p>
+              <p class="paragraph-13">
+                Проработаем покрытие,
+                подберём оборудование,
+                произведём настройку.
+              </p>
+
+              <a href="#" class="login-page__blue-btn login-page__blue-btn_width-auto js-submit-wrap">
+                <span class="btn"></span>
+                <input type="submit" value="@Messages("WRITE")"/>
+              </a>
+            </div>
+
+
+
+          </div>
+
+
         }
-      }
-    }
 
-    <input type="submit" value="Написать"/>
-  }
+      </div>
+
+    </div>
+
+  </div>
 }

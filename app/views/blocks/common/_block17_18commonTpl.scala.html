@@ -25,7 +25,7 @@
     @mad.offers.headOption.map { offer =>
       <div class="inner" style="background: #@bgColor;">
 
-        <img class="photo" src="@mad.imgs.get(bc.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl17-bg.jpg"))" />
+        <img class="photo" src="@ctx.myAudienceUrl@mad.imgs.get(bc.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl17-bg.jpg"))" />
 
         @offer.text1.map { text1 =>
           <div @_aovfStyleTpl(text1, bc.titleBf, "title")>

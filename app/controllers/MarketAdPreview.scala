@@ -16,7 +16,7 @@ import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import util.blocks.BlockMapperResult
 import io.suggest.ym.model.common.EMImg.Imgs_t
-import views.html.market.showcase._single_offer
+import views.html.market.showcase._
 
 /**
  * Suggest.io
@@ -96,7 +96,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
     }
   }
 
-  def adFormPreviewSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
+  def adFormPreviewSubmit(adnId: String, isFull: Boolean) = IsAdnNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
     detectAdPreviewForm match {
       case Right((bc, adFormM)) =>
         adFormM.bindFromRequest().fold(
@@ -118,7 +118,12 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
               imgs <- imgsFut
             } yield {
               mad.imgs = imgs
-              Ok(_single_offer(mad))
+              val render = if (isFull) {
+                _single_offer_w_description(mad, producer = request.adnNode)
+              } else {
+                _single_offer(mad)
+              }
+              Ok(render)
             }
           }
         )
@@ -204,7 +209,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
 
   /** Подготовка картинки, которая загружается в динамическое поле блока. */
   def prepareBlockImg(blockId: Int, fn: String) = IsAuth.apply(parse.multipartFormData) { implicit request =>
-    val bc = BlocksConf(blockId)
+    val bc: BlockConf = BlocksConf(blockId)
     bc.blockFieldForName(fn) match {
       case Some(bfi: BfImage) =>
         _handleTempImg(bfi.imgUtil, Some(bfi.marker))

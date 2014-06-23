@@ -30,21 +30,11 @@ object HtmlSanitizer {
   /** Из оформления стрипать html, оставляя только базовое форматирование. */
   val textFmtPolicy =  new HtmlPolicyBuilder()
     .allowCommonBlockElements()
-    .allowElements("a", "span", "em", "i", "ul", "li", "ol")
     .allowAttributes("href", "target").onElements("a")
-    .allowAttributes("style").onElements("span", "p")
+    .allowAttributes("style").onElements("span", "p", "div")
     .requireRelNofollowOnLinks()
     .allowUrlProtocols("http", "https")
     .allowCommonInlineFormattingElements()
-    .toFactory
-
-  /** Политика текстового форматирования для MMartAdText офферов. */
-  val adTextFmtPolicy = new HtmlPolicyBuilder()
-    .allowElements("span")
-    .allowElements("p")
-    .allowElements("br")
-    // TODO нужно добавить .matching с указанием допустимых значений span.class
-    .allowAttributes("class").onElements("span")
     .toFactory
 
 }

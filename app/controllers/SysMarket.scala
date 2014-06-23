@@ -20,6 +20,7 @@ import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.AdnMemberShowLevels
 import play.api.mvc.AnyContent
 import play.api.templates.HtmlFormat
+import play.api.i18n.Messages
 
 /**
  * Suggest.io
@@ -50,8 +51,9 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
   /** Отрендерить страницу с формой добавления новой компании. */
-  def companyAddForm = IsSuperuser { implicit request =>
-    Ok(company.companyAddFormTpl(companyFormM))
+  def companyAddForm(c: Option[MCompany]) = IsSuperuser { implicit request =>
+    val form = c.fold(companyFormM) { mc => companyFormM fill mc.name }
+    Ok(company.companyAddFormTpl(form))
   }
 
   /** Самбит формы добавления новой компании. */
@@ -72,7 +74,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     * @param companyId Числовой id компании.
     */
   def companyShow(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
-    val companyAdnmsFut = MAdnNode.findByCompanyId(companyId)
+    val companyAdnmsFut = MAdnNode.findByCompanyId(companyId, maxResults = 100)
     MCompany.getById(companyId) flatMap {
       case Some(mc) =>
         for {
@@ -159,7 +161,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   /** Унифицированая страница отображения узла рекламной сети. */
   def showAdnNode(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
     import request.adnNode
-    val slavesFut = MAdnNode.findBySupId(adnId)
+    val slavesFut = MAdnNode.findBySupId(adnId, maxResults = 100)
     val companyOptFut = MCompany.getById(adnNode.companyId)
     for {
       slaves <- slavesFut
@@ -233,7 +235,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
   private val slsStrM: Mapping[LvlMap_t] = {
-    nonEmptyText(maxLength = 256)
+    text(maxLength = 256)
       .transform[LvlMap_t](
         {raw =>
           raw.split("\\s*,\\s*")
@@ -258,7 +260,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   private val adnSlInfoM: Mapping[AdnMemberShowLevels] = {
     val slsStrOptM: Mapping[LvlMap_t] = default(slsStrM, Map.empty)
     mapping(
-      "in" -> slsStrOptM,
+      "in"  -> slsStrOptM,
       "out" -> slsStrOptM
     )
     { AdnMemberShowLevels.apply }
@@ -356,7 +358,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
               }
             }
             Redirect(routes.SysMarket.showAdnNode(adnId))
-              .flashing("succes" -> s"Создан узел сети: $adnId")
+              .flashing("success" -> s"Создан узел сети: $adnId")
           }
         }
       }
@@ -395,7 +397,15 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         supExistsFut flatMap {
           case true =>
             adnNode.companyId = adnNode2.companyId
-            adnNode.meta = adnNode2.meta
+            adnNode.meta.name = adnNode2.meta.name
+            adnNode.meta.description = adnNode2.meta.description
+            adnNode.meta.town = adnNode2.meta.town
+            adnNode.meta.address = adnNode2.meta.address
+            adnNode.meta.phone = adnNode2.meta.phone
+            adnNode.meta.floor = adnNode2.meta.floor
+            adnNode.meta.section = adnNode2.meta.section
+            adnNode.meta.siteUrl = adnNode2.meta.siteUrl
+            adnNode.meta.color = adnNode2.meta.color
             adnNode.adn.memberType = adnNode2.adn.memberType
             adnNode.adn.rights = adnNode2.adn.rights
             adnNode.adn.isEnabled = adnNode2.adn.isEnabled
@@ -456,10 +466,10 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
               eAct.id = Some(eActId)
               // Собираем и отправляем письмо адресату
               val mail = use[MailerPlugin].email
-              mail.setSubject("Suggest.io | Ваш торговый центр")
+              val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
+              mail.setSubject("Suggest.io | " + Messages("Your")(ctx.lang) + " " + Messages("amt.of.type." + adnNode.adn.memberType)(ctx.lang))
               mail.setFrom("no-reply@suggest.io")
               mail.setRecipient(email1)
-              val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
               mail.send(
                 bodyText = views.txt.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct)(ctx),
                 bodyHtml = views.html.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct)(ctx)

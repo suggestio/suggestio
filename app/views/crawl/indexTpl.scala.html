@@ -89,9 +89,9 @@
 
 <p>
   @if(isAuth) {
-    <a href="@routes.Admin.index"></a>
+    <a href="@routes.Admin.index()"></a>
   } else {
-    <a href="@routes.Ident.persona" id="signin"></a>
+    <a href="@routes.Ident.emailPwLoginForm()" id="signin"></a>
   }
 </p>
 

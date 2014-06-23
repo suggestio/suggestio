@@ -1,0 +1,29 @@
+@(mirs: Seq[MInviteRequest], thisCount: Long, allCount: Long)(implicit ctx: Context)
+
+@* Начальная страница для sys-раздела для работы с реквестами инвайтов. *@
+@import datetime._
+@import ctx._
+
+@irBase("Запросы инвайтов") {
+  @if(mirs.isEmpty) {
+    <p><strong>Нет запросов подключения.</strong></p>
+  } else {
+    @if(thisCount != allCount) {
+      <p><b>Отображается @thisCount запросов из @allCount всего.</b></p>
+    }
+    @mirs.groupBy(_.reqType).map { case (reqType, tMirs) =>
+      <h3>@Messages("mir.type." + reqType)</h3>
+      <ul>
+        @tMirs.map { mir =>
+          <li>
+            <a href="@routes.SysMarketInvReq.showIR(mir.id.get)">
+              @mir.meta.company / @mir.meta.address
+            </a>
+            - @*_prettyDate(mir.dateCreated, withSpan = true)*@
+          </li>
+        }
+      </ul>
+      <br/><br/>
+    }
+  }
+}

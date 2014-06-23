@@ -2,10 +2,18 @@
 
 @* Виджет-список узлов, которые например поставляют рекламу текущему узлу. *@
 
-@advertisers.zipWithIndex.map { case (mnode, i) =>
-  <div class="item @if(i%2 == 0) {odd} else {even} @if(mnode.adn.isEnabled) {enabled}" data-shop="@mnode.id">
-    <div class="left">
-      <a href="@routes.MarketLkAdn.showAdnNode(mnode.id.get, povAdnId = povAdnIdOpt)">@mnode.meta.name</a>
-    </div>
+<div class="advs-nodes advs-nodes_lk-mode">
+
+  <div class="advs-nodes__hat">
+    Рекламодатели
   </div>
-}
+
+    @advertisers.zipWithIndex.map { case (mnode, i) =>
+
+      <div class="advs-nodes__node @if(i%2 == 0) {advs-nodes__node_odd} else {advs-nodes__node_even } @if(mnode.adn.isEnabled) {enabled}" data-shop="@mnode.id">
+        <a target="_blank" class="advs-nodes__node-link" href="@routes.MarketLkAdn.showAdnNode(mnode.id.get, povAdnId = povAdnIdOpt)">@mnode.meta.name</a>@if(!mnode.meta.town.isEmpty) { / @mnode.meta.town }
+      </div>
+
+    }
+
+</div>

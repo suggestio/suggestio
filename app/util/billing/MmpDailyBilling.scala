@@ -21,6 +21,7 @@ import scala.concurrent.duration._
 import de.jollyday.HolidayManager
 import java.net.URL
 import controllers.routes
+import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -48,6 +49,9 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     s"http://localhost:$myPort"
   }
 
+  /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
+  val WEEKEND_DAYS: Set[Int] = configuration.getIntList("mmp.daily.weekend.days").map(_.map(_.intValue).toSet) getOrElse Set(FRIDAY, SATURDAY, SUNDAY)
+
   private def getUrlCal(calId: String) = {
     HolidayManager.getInstance(
       new URL(MYSELF_URL_PREFIX + routes.SysCalendar.getCalendarXml(calId))
@@ -61,7 +65,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
    */
   def calculateAdvPrice(blockModulesCount: Int, rcvrPricing: MBillMmpDaily, advTerms: AdvTerms): Price = {
     lazy val logPrefix = s"calculateAdvPrice($blockModulesCount/${rcvrPricing.id.get}): "
-    trace(s"${logPrefix}rcvr: tariffId=${rcvrPricing.id.get} mbcId=${rcvrPricing.contractId};; terms: from=${advTerms.dateStart} to=${advTerms.dateEnd} onStartPage=${advTerms.onStartPage}")
+    trace(s"${logPrefix}rcvr: tariffId=${rcvrPricing.id.get} mbcId=${rcvrPricing.contractId};; terms: from=${advTerms.dateStart} to=${advTerms.dateEnd} sls=${advTerms.showLevels}")
     // Во избежание бесконечного цикла, огораживаем dateStart <= dateEnd
     val dateStart = advTerms.dateStart
     val dateEnd = advTerms.dateEnd
@@ -74,12 +78,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         trace(s"${logPrefix}$day -> primetime -> +${rcvrPricing.mmpPrimetime}")
         rcvrPricing.mmpPrimetime
       } else {
-        val isWeekend = day.getDayOfWeek match {
-          case (SUNDAY | SATURDAY) =>
-            true
-          case _ =>
-            weekendCal isHoliday day
-        }
+        val isWeekend = (WEEKEND_DAYS contains day.getDayOfWeek) || (weekendCal isHoliday day)
         if (isWeekend) {
           trace(s"${logPrefix}$day -> weekend -> +${rcvrPricing.mmpWeekend}")
           rcvrPricing.mmpWeekend
@@ -98,13 +97,18 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         walkDaysAndPrice(day1, acc1)
       }
     }
+    // amount1 - минимальная оплата одного минимального блока по времени
     val amount1 = walkDaysAndPrice(dateStart, 0F)
+    // amountN -- amount1 домноженная на кол-во блоков.
     val amountN: Float = blockModulesCount * amount1
-    val amountTotal = if (advTerms.onStartPage) {
+    var amountTotal: Float = amountN
+    if (advTerms.showLevels contains AdShowLevels.LVL_MEMBERS_CATALOG) {
+      trace(s"$logPrefix +rcvrCat -> x${rcvrPricing.onRcvrCat}")
+      amountTotal *= rcvrPricing.onRcvrCat
+    }
+    if (advTerms.showLevels contains AdShowLevels.LVL_START_PAGE) {
       trace(s"$logPrefix +onStartPage -> x${rcvrPricing.onStartPage}")
-      amountN * rcvrPricing.onStartPage
-    } else {
-      amountN
+      amountTotal *= rcvrPricing.onStartPage
     }
     trace(s"${logPrefix}amount (1/N/Total) = $amount1 / $amountN / $amountTotal")
     Price(amountTotal, rcvrPricing.currency)
@@ -131,9 +135,10 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     }
     // Мультипликатор по высоте
     val hmul = mad.blockMeta.height match {
-      case BfHeight.HEIGHT_300 => 1
-      case BfHeight.HEIGHT_460 => 2
-      case BfHeight.HEIGHT_620 => 3
+      case BfHeight.HEIGHT_140 => 1
+      case BfHeight.HEIGHT_300 => 2
+      case BfHeight.HEIGHT_460 => 3
+      case BfHeight.HEIGHT_620 => 4
       case other =>
         warn(logPrefix + "Unexpected block height: " + other)
         1
@@ -260,16 +265,15 @@ sealed trait AdvSlsUpdater extends PlayMacroLogsImpl {
   import LOGGER._
   import MmpDailyBilling.UPDATE_RCVRS_VSN_CONFLICT_TRY_MAX
 
-  lazy val logPrefix: String = getClass.getSimpleName + ": "
+  lazy val logPrefix = ""
 
   def findAdvsOk(implicit c: Connection): List[MAdvOk]
-  val sls0 = List(AdShowLevels.LVL_MEMBER)
 
-  def maybeSlsWithStartPage(onStartPage: Boolean): List[AdShowLevel] = {
-    if (onStartPage) {
-      AdShowLevels.LVL_START_PAGE :: sls0
+  def prepareShowLevels(sls: Set[AdShowLevel]): Set[AdShowLevel] = {
+    if (sls contains AdShowLevels.LVL_MEMBER) {
+      sls
     } else {
-      sls0
+      sls + AdShowLevels.LVL_MEMBER
     }
   }
 
@@ -341,7 +345,7 @@ sealed class AdvertiseOfflineAdvs extends AdvSlsUpdater {
   override def updateReceivers(rcvrs0: Receivers_t, advsOk: List[MAdvOk]): Receivers_t = {
     rcvrs0 ++ advsOk.foldLeft[List[(String, AdReceiverInfo)]](Nil) { (acc, advOk) =>
       trace(s"${logPrefix}Advertising ad ${advOk.adId} on rcvrNode ${advOk.rcvrAdnId}; advOk.id = ${advOk.id.get}")
-      val sls = maybeSlsWithStartPage(advOk.onStartPage)
+      val sls = prepareShowLevels(advOk.showLevels)
       val slss = sls.toSet
       val rcvrInfo = rcvrs0.get(advOk.rcvrAdnId) match {
         case None =>
@@ -389,7 +393,7 @@ sealed class DepublishExpiredAdvs extends AdvSlsUpdater {
           // Есть ресивер. Надо подстричь его уровни отображения или всего ресивера целиком.
           case Some(advOk) =>
             trace(s"${logPrefix}Depublishing ad $adId on rcvrNode $rcvrAdnId ;; advOk.id = ${advOk.id}")
-            val slss = maybeSlsWithStartPage(advOk.onStartPage)
+            val slss = prepareShowLevels(advOk.showLevels)
             // Нужно отфильтровать уровни отображения или целиком этот ресивер спилить.
             val slsWant1 = rcvrInfo.slsWant -- slss
             if (slsWant1.isEmpty) {

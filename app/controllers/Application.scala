@@ -4,6 +4,7 @@ import play.api.mvc._
 import util.PlayMacroLogsImpl
 import util.acl._
 import views.html.crawl._
+import views.html.stuff._
 import play.api.i18n.Lang
 import play.api.Play.current
 import scala.concurrent.Future
@@ -24,6 +25,10 @@ object Application extends SioController with PlayMacroLogsImpl {
   /** Форма быстрого поиска на произвольном сайте. Используется в служебных целях в основном, в /sys/. */
   def search = MaybeAuth { implicit request =>
     Ok(searchTpl())
+  }
+
+  def xd_server  = MaybeAuth { implicit request =>
+    Ok(xdServerTpl())
   }
 
   /** Запрос смены языка UI. */

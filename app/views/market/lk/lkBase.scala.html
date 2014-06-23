@@ -4,6 +4,7 @@
    - Параметр headAfter содержит дополнения к телу тега head.
 *@
 @import ctx._
+@import stuff._
 
 <!DOCTYPE html>
 <html>
@@ -13,9 +14,8 @@
 
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/colorpicker/css/colorpicker.css")'/>
 
-  <script src="//tinymce.cachefly.net/4.0/tinymce.min.js"></script>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/common.min.css")'/>
-	<link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/create-ad.min.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/create-ad.min.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase.min.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/edit-shop.min.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase_previews.min.css")'/>
@@ -30,8 +30,8 @@
   <div class="header-wrap">
 
     <div class="center">
-      <a class="logo" href="/m/lk">
-        <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" />
+      <a class="logo" href="@routes.MarketLk.lkIndex">
+        <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
       </a>
       @ctx.usernameOpt.map { username =>
         <div class="auth">
@@ -63,31 +63,37 @@
 
   </div>
 
-  <div id="popupsContainer"></div>
+  <div class="popups-container" id="popupsContainer">
+    <div class="overlay" id="overlay"></div>
+  </div>
 
   <div class="footer-wrap">
     <div class="footer">
 
       <span class="copyright-block">
-        © 2011-2014 Suggest.io. Все права защищены
+        @_copyrightTextTpl(withLink = false)
+        @*&nbsp;|&nbsp;<a href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>*@
       </span>
 
-      <div class="socials">
+      <!--<div class="socials">
         <a class="fb" href="#">Facebook</a>
         <a class="tw" href="#">Twitter</a>
-      </div>
+      </div>-->
 
     </div>
   </div>
 
-  <div class="overlay" id="overlay"></div>
   <div class="lk-overlay-data" id="overlayData"></div>
 
+  <!--<script src="//tinymce.cachefly.net/4.0/tinymce.min.js"></script>-->
+
+  <script src="@routes.Assets.at("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
   <script src="@routes.Assets.at("javascripts/market/lk/mx_cof.js")"></script>
   <script src="@routes.Assets.at("javascripts/market/lk/mx_dev.js")"></script>
   <script src="@routes.Assets.at("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
   <script src="@routes.Assets.at("javascripts/jquery-ui.custom.min.js")"></script>
   <script src='@routes.Assets.at("javascripts/lib/datetimepicker-master/jquery.datetimepicker.js")'></script>
+
 
 </body>
 </html>

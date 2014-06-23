@@ -10,6 +10,8 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import java.lang.management.ManagementFactory
 import io.suggest.util.JMXBase
 import models._
+import util.PlayLazyMacroLogsImpl
+import io.suggest.util.JMXHelpers._
 
 /**
  * Suggest.io
@@ -18,8 +20,8 @@ import models._
  * Description: JMX MBean'ы нужно заливать в энтерпрайз. Тут добавка к Global, чтобы тот мог включать/выключать jmx.
  */
 
-object JMXImpl {
-  import io.suggest.util.JMXHelpers._
+object JMXImpl extends PlayLazyMacroLogsImpl {
+  import LOGGER._
 
   /** Список моделей, отправляемых в MBeanServer. private для защиты от возможных воздействий извне. */
   private val JMX_MODELS = List[JMXBase](
@@ -36,7 +38,9 @@ object JMXImpl {
     new MozillaPersonaIdentJmx,
     new MPersonJmx,
     new MBlogJmx,
-    new MCompanyJmx
+    new MCompanyJmx,
+    new MCalendarJmx,
+    new MInviteRequestJmx
   )
 
   private def getSrv = ManagementFactory.getPlatformMBeanServer
@@ -45,7 +49,11 @@ object JMXImpl {
   def registerAll() {
     val srv = getSrv
     JMX_MODELS.foreach { jmxMB =>
-      srv.registerMBean(jmxMB, jmxMB.jmxName)
+      try {
+        srv.registerMBean(jmxMB, jmxMB.jmxName)
+      } catch {
+        case ex: Exception => error("Cannot register " + jmxMB, ex)
+      }
     }
   }
 
@@ -53,7 +61,11 @@ object JMXImpl {
   def unregisterAll() {
     val srv = getSrv
     JMX_MODELS.foreach { jmxMB =>
-      srv.unregisterMBean(jmxMB.jmxName)
+      try {
+        srv.unregisterMBean(jmxMB.jmxName)
+      } catch {
+        case ex: Exception => warn("Cannot unregister " + jmxMB.jmxName, ex)
+      }
     }
   }
 

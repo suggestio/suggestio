@@ -12,7 +12,6 @@ cbca_grid =
   set_window_size : () ->
 
     ww = wh = 0
-
     if typeof window.innerWidth == 'number'
       ww = window.innerWidth
       wh = window.innerHeight
@@ -50,6 +49,8 @@ cbca_grid =
 
     this.max_allowed_cell_width = no_of_cells
     this.layout_dom.style.width = cw + 'px'
+    this.layout_dom.style.height = cbca_grid.wh + 'px'
+    this.layout_dom.style.opacity = 1
 
   ##############
   ## Fetch block
@@ -107,10 +108,12 @@ cbca_grid =
       return null
 
     if typeof( tmp_spacer ) == "undefined"
-      tmp_spacer = this.spacers
+      tmp_spacers = this.spacers
       i = 0
 
-    b = tmp_spacer[i]
+    b = tmp_spacers[i]
+    tmp_spacers.splice(i,1)
+    this.spacers = tmp_spacers
     b.block.style.display = 'block'
     return b
 
@@ -181,7 +184,7 @@ cbca_grid =
 
   is_only_spacers : () ->
     for b in this.blocks
-      if b.class != 'sm-block-spacer'
+      if b.class != 'sm-b-spacer'
         return false
 
     return true
@@ -200,6 +203,8 @@ cbca_grid =
   ##############################
   load_blocks : () ->
     cbca_grid.blocks = []
+    cbca_grid.spacers = []
+    cbca_grid.m_spacers = []
     i = 0
     ## TODO : make selector configurable
     for elt in siomart.utils.ge_class document, 'sm-block'
@@ -233,7 +238,7 @@ cbca_grid =
       cbca_grid.m_blocks = cbca_grid.blocks.slice(0)
 
     ## Загрузить спейсеры
-    for elt in siomart.utils.ge_class document, 'sm-block-spacer'
+    for elt in siomart.utils.ge_class document, 'sm-b-spacer'
       _this = elt
       _this.setAttribute 'id', 'elt' + i
 
@@ -298,8 +303,8 @@ cbca_grid =
     if columns > 8
       columns = 8
 
-    #if columns == 3
-    #  columns = 2
+    if columns == 3
+      columns = 2
 
     if columns == 5
       columns = 4
@@ -341,7 +346,6 @@ cbca_grid =
         break
 
       if is_break == false
-
         if columns_used_space[cur_column].used_height == cline
 
           # есть место хотя бы для одного блока с минимальной шириной
@@ -368,12 +372,14 @@ cbca_grid =
 
           _pelt = document.getElementById('elt' + id)
 
+          ## temp
+          _pelt.style.opacity = 1
+
           if _pelt != null
 
             for p in [vendor_prefix.css + 'transform', 'transform']
               style_string = 'translate3d(' + left + 'px, ' + top + 'px,0)'
               _pelt.style[p] = style_string
-
 
           left_pointer += b.width + this.cell_padding
           pline = cline

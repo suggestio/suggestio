@@ -5,6 +5,7 @@ import io.suggest.event._
 import io.suggest.event.SioNotifier.{Event, Subscriber, Classifier}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -31,8 +32,8 @@ object MAdnNodeCache extends AdnEsModelCache[MAdnNode] {
     )
   }
 
-
-  override def getByIdNoCache(id: String) = MAdnNode.getById(id)
+  override type StaticModel_t = MAdnNode.type
+  override def companion: StaticModel_t = MAdnNode
 
   /** Извлекаем adnId из события. */
   override def event2id(event: Event): String = {

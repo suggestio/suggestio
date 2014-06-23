@@ -1,0 +1,64 @@
+@(advs: Seq[MAdvI], adv2adn: Map[Int, MAdnNode])(implicit ctx: Context)
+
+@* Список размещений какой-то рекламной карточки. *@
+
+@import MAdvModes._
+@import ctx._
+@import datetime._
+@import util.TplDataFormatUtil._
+
+@_single_status(statusClass: String, node: MAdnNode)(content: Html) = {
+<div class="advs-statuses__status advs-statuses__@statusClass advs-statuses__status_in-popup">
+  <div class="advs-statuses__status-icon advs-statuses__status-icon_@statusClass"></div>
+  @Messages("amt.of.type." + node.adn.memberType) <strong>@node.meta.name / @node.meta.town</strong>
+  @content
+</div>
+}
+
+<div class="advs-statuses advs-statuses_in-popup">
+
+  @advs.zipWithIndex.map { case(adv, i) =>
+
+    @if(i == 2) {
+      <div class="ovh" id="transactionsHistoryInPopup" style="display: none;">
+    }
+    @adv2adn.get(adv.id.get).map { node =>
+
+      @adv match {
+
+        case advOk: MAdvOk => {
+          @_single_status( "approved", node ) {
+            одобрил размещение. <span class="advs-statuses__status__date">@_prettyDate(advOk.dateStatus)</span>
+          }
+          @* dateStatus - одобрение, dateStart - начало размещения. *@
+        }
+        case advReq: MAdvReq => {
+          @_single_status( "pending", node ) {
+            рассматривает размещение.
+          }
+        }
+        case advRefused: MAdvRefuse => {
+          @_single_status( "declined", node ) {
+            отменил размещение. @advRefused.reason
+          }
+        }
+
+      }
+
+      <div class="border-line"></div>
+
+    }
+
+    @if(advs.length > 3 && i == 2) {
+      </div>
+    }
+
+  }
+
+  @if(advs.length > 3) {
+    <span class="gray-but-smallest advs-statuses__transactions-btn">
+      <a class="white-border-top js-slide-btn" href="transactionsHistoryInPopup">История операций</a>
+    </span>
+  }
+
+</div>

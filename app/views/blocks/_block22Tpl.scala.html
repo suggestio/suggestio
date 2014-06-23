@@ -6,10 +6,10 @@
 @defining( mad.colors.getOrElse(Block22.borderColorBf.name, Block22.borderColorBf.anyDefaultValue) )  { borderColor =>
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl22 sm-block@mad.id" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
-  <img class="bg abs" src="@mad.imgs.get(Block22.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl22-bg.jpg"))" />
+  <img class="bg abs" src="@ctx.myAudienceUrl@mad.imgs.get(Block22.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl22-bg.jpg"))" />
 
   <div class="logo-wrap abs">
-    <img class="logo" src="@mad.imgs.get(Block22.LOGO_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl22-logo.jpg"))" />
+    <img class="logo" src="@ctx.myAudienceUrl@mad.imgs.get(Block22.LOGO_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl22-logo.jpg"))" />
   </div>
 
   <div class="outer-border" style="border-color: #@borderColor;">

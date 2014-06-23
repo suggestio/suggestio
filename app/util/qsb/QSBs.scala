@@ -16,15 +16,40 @@ object QsbUtil {
 
   implicit def eitherOpt2option[T](e: Either[_, Option[T]]): Option[T] = {
     e match {
-      case Left(_)  => None
+      case Left(_) => None
       case Right(b) => b
+    }
+  }
+}
+
+import QsbUtil._
+
+object QSBs {
+
+  private def companyNameSuf = ".name"
+
+  /** qsb для MCompany. */
+  implicit def mcompanyQSB(implicit strBinder: QueryStringBindable[String]) = {
+    new QueryStringBindable[MCompany] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MCompany]] = {
+        for {
+          maybeCompanyName <- strBinder.bind(key + companyNameSuf, params)
+        } yield {
+          maybeCompanyName.right.map { companyName =>
+            MCompany(name = companyName)
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MCompany): String = {
+        strBinder.unbind(key + companyNameSuf, value.name)
+      }
     }
   }
 
 }
 
-
-import QsbUtil._
+// TODO Перенести AdSearch в models.
 
 object AdSearch {
 
@@ -44,7 +69,7 @@ object AdSearch {
     }
   }
 
-  implicit def queryStringBinder(implicit strOptBinder: QueryStringBindable[Option[String]], intOptBinder: QueryStringBindable[Option[Int]]) = {
+  implicit def queryStringBinder(implicit strOptBinder: QueryStringBindable[Option[String]], intOptBinder: QueryStringBindable[Option[Int]], longOptBinder: QueryStringBindable[Option[Long]]) = {
     new QueryStringBindable[AdSearch] {
       def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, AdSearch]] = {
         for {
@@ -55,6 +80,8 @@ object AdSearch {
           maybeSizeOpt   <- intOptBinder.bind(key + ".size", params)
           maybeOffsetOpt <- intOptBinder.bind(key + ".offset", params)
           maybeRcvrIdOpt <- strOptBinder.bind(key + ".rcvr", params)
+          maybeFirstId   <- strOptBinder.bind(key + ".firstAdId", params)
+          maybeGen       <- longOptBinder.bind(key + ".gen", params)
 
         } yield {
           Right(
@@ -69,7 +96,9 @@ object AdSearch {
               },
               offsetOpt = eitherOpt2option(maybeOffsetOpt) map { offset =>
                 Math.max(0,  Math.min(offset,  MAX_PAGE_OFFSET * maybeSizeOpt.getOrElse(10)))
-              }
+              },
+              forceFirstIds = maybeFirstId,
+              generation = maybeGen
             )
           )
         }
@@ -83,7 +112,9 @@ object AdSearch {
           strOptBinder.unbind(key + ".level", value.levels.headOption.map(_.toString)),
           strOptBinder.unbind(key + ".q", value.qOpt),
           intOptBinder.unbind(key + ".size", value.maxResultsOpt),
-          intOptBinder.unbind(key + ".offset", value.offsetOpt)
+          intOptBinder.unbind(key + ".offset", value.offsetOpt),
+          strOptBinder.unbind(key + ".firstAdId", value.forceFirstIds.headOption),
+          longOptBinder.unbind(key + ".gen", value.generation)
         ) .filter(!_.isEmpty)
           .mkString("&")
       }
@@ -99,7 +130,9 @@ case class AdSearch(
   levels      : List[AdShowLevel] = Nil,
   qOpt: Option[String] = None,
   maxResultsOpt: Option[Int] = None,
-  offsetOpt: Option[Int] = None
+  offsetOpt: Option[Int] = None,
+  forceFirstIds: List[String] = Nil,
+  generation  : Option[Long] = None
 ) extends AdsSearchArgsT {
 
   /** Абсолютный сдвиг в результатах (постраничный вывод). */

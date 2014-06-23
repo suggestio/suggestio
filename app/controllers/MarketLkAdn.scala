@@ -1,5 +1,6 @@
 package controllers
 
+import util.billing.Billing
 import util.qsb.AdSearch
 import util.PlayMacroLogsImpl
 import util.acl._
@@ -48,6 +49,14 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
       } else {
         Future successful Nil
       }
+      // Нужно ли отображать кнопку назад? Да, если у юзера есть ещё узлы.
+      val showBackBtnFut = if (isMyNode) {
+        // TODO Надо бы кеширование тут.
+        MAdnNode.countByPersonId(request.pwOpt.get.personId)
+          .map { _ >= 2L }
+      } else {
+        Future successful true
+      }
       // Для узла нужно отобразить его рекламу.
       val madsFut: Future[Seq[MAd]] = if (isMyNode) {
         // Это свой узел. Нужно в реалтайме найти рекламные карточки и проверить newAdIdOpt.
@@ -76,16 +85,17 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
       } else {
         // Это чужой узел. Нужно отобразить только рекламу, отправленную на размещение pov-узлу.
         request.povAdnNodeOpt match {
-          // Юзер является админом pov-узла. Нужно поискать рекламу, созданную на adnId и размещенную на pov-узле.
+          // Есть pov-узел, и юзер является админом оного. Нужно поискать рекламу, созданную на adnId и размещенную на pov-узле.
           case Some(povAdnNode) =>
-            val adSearch = AdSearch(
-              receiverIds = List(povAdnNode.id.get),
-              producerIds = List(adnId)
-            )
-            MAd.searchAds(adSearch)
+            // Вычислить взаимоотношения между двумя узлами через список ad_id
+            val adIds = DB.withConnection { implicit c =>
+              MAdv.findActualAdIdsBetweenNodes(MAdvModes.busyModes, adnId, rcvrId = povAdnNode.id.get)
+            }
+            MAd.multiGet(adIds)
 
           // pov-узел напрочь отсутствует. Нечего отображать.
           case None =>
+            debug(s"showAdnNode($adnId, pov=$povAdnIdOpt): pov node is empty, no rcvr, no ads.")
             Future successful Nil
         }
       }
@@ -99,11 +109,20 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         }
         val (okAdnIds, reqAdnIds, reqsCount) = syncResult
         val advAdnIds = (okAdnIds ++ reqAdnIds).distinct
-        reqsCount -> MAdnNode.multiGet(advAdnIds) // TODO Opt надо задействовать кеш в multiget'e.
+        (reqsCount, MAdnNode.multiGet(advAdnIds)) // TODO Opt надо задействовать кеш в multiget'e.
       } else {
-        0L -> Future.successful(Nil)
+        (0L, Future.successful(Nil))
       }
-      // Надо ли отображать кнопку "управление" под карточками
+      val ad2advMap = {
+        val myAdnId = request.myNodeId
+        val busyAdvs = DB.withConnection { implicit c =>
+          val busyAdsOk = MAdvOk.findNotExpiredRelatedTo(myAdnId)
+          val busyAdsReq = MAdvReq.findNotExpiredRelatedTo(myAdnId)
+          Seq(busyAdsOk, busyAdsReq)
+        }
+        advs2adIdMap(busyAdvs : _*)
+      }
+      // Надо ли отображать кнопку "управление" под карточками? Да, если есть баланс и контракт.
       val canAdv: Boolean = isMyNode && adnNode.adn.isProducer && {
         DB.withConnection { implicit c =>
           MBillContract.hasActiveForNode(adnId)  &&  MBillBalance.hasForNode(adnId)
@@ -114,6 +133,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         mads        <- madsFut
         slaves      <- slavesFut
         advertisers <- advertisersFut
+        showBackBtn <- showBackBtnFut
       } yield {
         Ok(adnNodeShowTpl(
           node          = adnNode,
@@ -123,13 +143,23 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
           advertisers   = advertisers,
           povAdnIdOpt   = request.povAdnNodeOpt.flatMap(_.id),
           advReqsCount  = advReqsCount,
-          canAdv        = canAdv
+          canAdv        = canAdv,
+          ad2advMap     = ad2advMap,
+          showBackBtn   = showBackBtn
         ))
       }
     }
   }
 
-  
+
+  private def advs2adIdMap(advss: Seq[MAdvI] *): Map[String, MAdvI] = {
+    advss.foldLeft [List[(String, MAdvI)]] (Nil) { (acc1, advs) =>
+      advs.foldLeft(acc1) { (acc2, adv) =>
+        adv.adId -> adv  ::  acc2
+      }
+    }.toMap
+  }
+
   
   /**
    * Рендер страницы со списком подчинённых узлов.
@@ -282,28 +312,32 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
 
 
   // Обработка инвайтов на управление ТЦ.
-  private val nodeOwnerInviteAcceptM = Form(optional(passwordWithConfirmM))
+  private val nodeOwnerInviteAcceptM = Form(
+    "password" -> optional(passwordWithConfirmM)
+  )
 
   /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
   def nodeOwnerInviteAcceptForm(martId: String, eActId: String) = nodeOwnerInviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
-    Ok(invite.inviteAcceptFormTpl(mmart, eAct, nodeOwnerInviteAcceptM))
+    Ok(invite.inviteAcceptFormTpl(mmart, eAct, nodeOwnerInviteAcceptM, withOfferText = true))
   }
 
   /** Сабмит формы подтверждения инвайта на управление ТЦ. */
   def nodeOwnerInviteAcceptFormSubmit(martId: String, eActId: String) = nodeOwnerInviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
     // Если юзер залогинен, то форму биндить не надо
     val formBinded = nodeOwnerInviteAcceptM.bindFromRequest()
+    lazy val logPrefix = s"nodeOwnerInviteAcceptFormSubmit($martId, act=$eActId): "
     formBinded.fold(
       {formWithErrors =>
-        debug(s"martInviteAcceptFormSubmit($martId, act=$eActId): Form bind failed: ${formatFormErrors(formWithErrors)}")
-        NotAcceptable(invite.inviteAcceptFormTpl(mmart, eAct, formWithErrors))
+        debug(s"${logPrefix}Form bind failed: ${formatFormErrors(formWithErrors)}")
+        NotAcceptable(invite.inviteAcceptFormTpl(mmart, eAct, formWithErrors, withOfferText = false))
       },
       {passwordOpt =>
         if (passwordOpt.isEmpty && !request.isAuth) {
+          debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=${request.isAuth}")
           val form1 = formBinded
-            .withError("pw1", "error.required")
-            .withError("pw2", "error.required")
-          NotAcceptable(invite.inviteAcceptFormTpl(mmart, eAct, form1))
+            .withError("password.pw1", "error.required")
+            .withError("password.pw2", "error.required")
+          NotAcceptable(invite.inviteAcceptFormTpl(mmart, eAct, form1, withOfferText = false))
         } else {
           // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
           eAct.delete.flatMap { isDeleted =>
@@ -322,7 +356,8 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
               if (!(mmart.personIds contains personId)) {
                 mmart.personIds += personId
               }
-              mmart.save.map { _martId =>
+              mmart.save.map { _adnId =>
+                Billing.maybeInitializeNodeBilling(_adnId)
                 Redirect(routes.MarketLkAdn.showAdnNode(martId))
                   .flashing("success" -> "Регистрация завершена.")
                   .withSession(username -> personId)

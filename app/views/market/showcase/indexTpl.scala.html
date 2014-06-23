@@ -19,10 +19,19 @@
 
 @_screen_nav_button("close", "smCloseButton")
 
-@* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
-<div class="categories-button" id="smCategoriesButton">
+
+<div class="sio-mart-home-button" id="sioMartHomeButton">
   <span></span>
 </div>
+
+@if( !catsStats.isEmpty ){
+  @* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
+  <div class="categories-button" id="smCategoriesButton">
+    <span></span>
+  </div>
+  @* Окно с выбором категорий *@
+  @_categories_w_search(mmcats, mmart, catsStats, withSubnodesBtn = !shops.isEmpty)
+}
 
 <div class="sio-mart__producer-header" style="background-color: #@mmart.meta.color;">
   @mmart.logoImgOpt.map { logoImg =>
@@ -30,14 +39,17 @@
   }
 </div>
 
-<div class="sio-mart__index-offers" id="sioMartIndexOffers">
-  <div class="sio-mart__index-offers__container" id="sioMartIndexGridLayout">
-    <div id="sioMartIndexGrid" style="padding-bottom: 30px">
+<div class="sm-flex sm-overflow-scrolling">
+<div class="sm-flex sm-overflow-scrolling sio-mart__index-offers" id="sioMartIndexOffers">
+  <div class="sm-flex sio-mart__index-offers__container" style="margin-bottom: -1px" id="sioMartIndexGridLayout">
 
+    <div id="sioMartIndexGrid" style="position: relative; height: 3000px; width: 100%;">
       @_block_offers_list(ads, true)
-
     </div>
+    <div style="height: 30px"></div>
+
   </div>
+</div>
 </div>
 
 <div class="sm-notification" id="smNotification">
@@ -50,9 +62,6 @@
 <div class="sm-preload">
   <img src="@ctx.myAudienceUrl/assets/images/market/categories/icons.png">
 </div>
-
-@* Окно с выбором категорий *@
-@_categories_w_search(mmcats, mmart, catsStats, withSubnodesBtn = !shops.isEmpty)
 
 @* Окно с предупреждением о выходе из Sio.Market *@
 @_exit_screen()

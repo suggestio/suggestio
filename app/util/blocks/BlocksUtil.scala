@@ -53,6 +53,7 @@ object BlocksUtil {
 
   /** Линейка размеров шрифтов. */
   val FONT_SIZES_DFLT: List[FontSize] = List(
+    FontSize(10, 8), FontSize(12, 10), FontSize(14, 12), FontSize(16, 14),
     FontSize(18, 16), FontSize(22, 20), FontSize(26, 24), FontSize(30, 28), FontSize(34, 30), FontSize(38, 34),
     FontSize(42, 38), FontSize(46, 42), FontSize(50, 46), FontSize(54, 50), FontSize(58, 54), FontSize(62, 58),
     FontSize(66, 62), FontSize(70, 66), FontSize(74, 70), FontSize(80, 76), FontSize(84, 80)
@@ -204,10 +205,11 @@ trait BlockAOValueFieldT extends BlockFieldT {
 }
 
 
+// TODO Нужно зафиксировать значения высоты через Enumeration. Это избавит от проблем с расчетами стоимостей рекламных модулей.
 object BfHeight {
   val HEIGHT_DFLT = Some(300)
 
-  // TODO Нужно зафиксировать значения высоты через Enumeration. Это избавит от проблем с расчетами стоимостей рекламных модулей.
+  val HEIGHT_140 = 140
   val HEIGHT_300 = 300
   val HEIGHT_460 = 460
   val HEIGHT_620 = 620

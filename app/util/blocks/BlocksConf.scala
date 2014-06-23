@@ -405,9 +405,13 @@ object BlocksConf extends Enumeration {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
   }
 
-
-  sealed trait Block20t extends Height with BgImg with Title with Descr {
+  sealed trait Block20t extends Height with BgImg with TitleDescrListBlockT {
+    override def ordering = 1000
     override def template = _block20Tpl
+    override def offersCount: Int = 3
+    override def heightBf = super.heightBf.copy(
+      availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
+    )
   }
   val Block20 = new Val(20) with Block20t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block20Wrapper(key = newKey)
@@ -470,10 +474,31 @@ object BlocksConf extends Enumeration {
   }
 
 
+  sealed trait Block25t extends Height with BgImg with TitleDescrListBlockT {
+    override def ordering = 1100
+    override def template = _block25Tpl
+    override def offersCount: Int = 3
+    override def heightBf = super.heightBf.copy(
+      availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
+    )
+  }
+  val Block25 = new Val(25) with Block25t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block25Wrapper(key = newKey)
+  }
+  sealed case class Block25Wrapper(key: String) extends ValTWrapper(Block25) with ValTEmpty with Block25t {
+    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
+
+
 
   /** Отображаемые блоки. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id и только отображаемые. */
-  val valuesShown = values.toSeq.filter(_.isShown).sortBy(_.id)
+  val valuesShown: Seq[BlockConf] = {
+    values.asInstanceOf[collection.Set[BlockConf]]
+      .toSeq
+      .filter(_.isShown)
+      .sortBy { bc => bc.ordering -> bc.id }
+  }
 }
 
 
@@ -487,6 +512,8 @@ case class BlockMapperResult(bd: BlockData, bim: BlockImgMap) {
 /** Базовый интерфейс для реализаций класса Enumeration.Val. */
 trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
   def id: Int
+
+  def ordering: Int = 10000
 
   /** Ширина блока. Используется при дублировании блоков. */
   def blockWidth: Int = BLOCK_WIDTH_NORMAL_PX

@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode)(implicit ctx: util.Context)
+@(adnNode: MAdnNode, withIndexCall: Option[Call] = None)(implicit ctx: util.Context)
 
 @* Шаблон для рендеринга демо выдачи. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
 @import ctx._
@@ -35,7 +35,17 @@
 </head>
 
 <body style="background-color: #@adnNode.meta.color">
-  @market.lk.adn._node._installScriptTpl( adnNode )
+  <div class="sm-wifi-info" style="display: none" id="smWifiInfo">
+    <div class="sm-wifi-info__data">
+      Вы можете продолжать пользоваться интернетом. Для быстрого доступа к SioMarket — нажмите на логотип в левом верхнем углу.
+      <a href="http://ya.ru/" target="_blank"><div class="sm-wifi-info__logo"></div></a>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    @market.lk.adn._node._installScriptTpl( adnNode , withIndexCall)
+  </script>
+  <!-- a.gen = @ctx.PRNG.nextLong   a.size=20   a.offset=0 (20, 40, 60, 80, ...)  -->
 </body>
 
 </html>

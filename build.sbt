@@ -24,7 +24,7 @@ libraryDependencies ++= Seq(
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.2.1play23-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
   // io.suggest stuff
-  "io.suggest" %% "util"      % "1.2.0-SNAPSHOT" changing()
+  "io.suggest" %% "util" % "1.2.0-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
@@ -49,15 +49,14 @@ libraryDependencies ++= Seq(
   // for domain validation:
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.+",
   "org.apache.httpcomponents" % "httpcore" % "4.1.+",
-  "com.google.guava" % "guava" % "14.+",
+  "com.google.guava" % "guava" % "17.+",
   "com.lambdaworks" % "scrypt" % "1.4.0",     // Чтобы хешировать пароли (models.EmailPwIdent например)
   // Для импорт данных из sio v1 кластера. Выпилить вместе с util.compat.v1 после запуска
   "org.erlang.otp" % "jinterface" % "1.5.+",
   // Календарь праздников
   "de.jollyday" % "jollyday" % "0.4.+",
-  // Для поддержки финансовых моделей нужен асинхронный postgres-драйвер.
-  //"com.github.mauricio" %% "postgresql-async" % "0.2.+"
-  // Бомжуем с синхронным драйвером из-за конфликта версии netty между postgresql-async и asynchbase
+  "com.google.code.kaptcha" % "kaptcha" % "2.3" classifier "jdk15",
+  // Бомжуем с синхронным драйвером из-за конфликта между postgresql-async и asynchbase в версии netty. Зато anorm работает.
   "org.postgresql" % "postgresql" % "9.3-1100-jdbc41"
 )
 
@@ -74,7 +73,8 @@ resolvers ++= Seq(
   "sonatype-oss-releases" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots",
   "apache-releases" at "https://ivy2-internal.cbca.ru/artifactory/apache-releases",
   "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo",
-  "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com"
+  "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com",
+  "sonatype-groups-forge" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-groups-forge"
 )
 
 //patience.assets.StylusPlugin.stylusSettings
@@ -101,3 +101,8 @@ TwirlKeys.templateImports ++= Seq(
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 
+routesImport ++= Seq(
+  "models._",
+  "util.qsb._",
+  "util.qsb.QSBs._"
+)

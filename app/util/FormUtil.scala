@@ -5,8 +5,6 @@ import java.net.URL
 import io.suggest.util.{JacksonWrapper, DateParseUtil, UrlUtil}
 import gnu.inet.encoding.IDNA
 import HtmlSanitizer._
-import views.html.helper.FieldConstructor
-import views.html.market.lk._
 import play.api.data.Mapping
 import org.joda.time.{Period, LocalDate}
 import io.suggest.ym.YmParsers
@@ -19,8 +17,7 @@ import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 import org.apache.commons.codec.binary.{Base64InputStream, Base64OutputStream}
 import scala.collection.GenTraversableOnce
 import scala.Some
-import play.api.Logger
-import java.util.regex.Pattern
+import java.util.Currency
 
 /**
  * Suggest.io
@@ -162,7 +159,8 @@ object FormUtil {
   val userCatIdSomeM = userCatIdOptM.verifying("error.required", _.isDefined)
 
   // TODO Нужен нормальный валидатор телефонов.
-  val phoneM = nonEmptyText(minLength = 5, maxLength = 16)
+  val phoneM = nonEmptyText(minLength = 5, maxLength = 50)
+    .transform(strTrimSanitizeF, strIdentityF)
   val phoneOptM = optional(phoneM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
 
@@ -392,14 +390,24 @@ object FormUtil {
 
   val adStatActionM: Mapping[AdStatAction] = {
     nonEmptyText(maxLength = 1)
-      .transform[AdStatAction]({AdStatActions.withName}, {_.toString})
+      .transform[AdStatAction](AdStatActions.withName, _.toString)
   }
-}
 
-
-object FormHelpers {
-
-  implicit val myFields = FieldConstructor(lkFieldConstructor.f)
+  val currencyCodeM: Mapping[String] = {
+    text(minLength = 3, maxLength = 3)
+      .transform[String](_.toUpperCase, identity)
+      .verifying("error.currency.code", {cc =>
+        try {
+          Currency.getInstance(cc)
+          true
+        } catch {
+          case ex: Exception => false
+        }
+      })
+  }
+  val currencyCodeOrDfltM: Mapping[String] = {
+    default(currencyCodeM, CurrencyCodeOpt.CURRENCY_CODE_DFLT)
+  }
 
 }
 

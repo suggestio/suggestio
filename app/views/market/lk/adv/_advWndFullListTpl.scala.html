@@ -1,0 +1,18 @@
+@(mad: MAd, adProducer: MAdnNode, advs: Seq[MAdvI], adv2adn: Map[Int, MAdnNode])(implicit ctx: Context)
+
+@* Рендер шаблона, содержащего полноразмерную карточку и данные по текущему размещению оной снизу. *@
+
+@import ctx._
+
+@_advWndFullTpl(mad, adProducer) {
+
+  @* Нарисовать раскладку по последней движухе на счёте. *@
+  @_currentAdvsListForPopupTpl(advs, adv2adn)
+
+  <div class="gray-btn js-remove-popup" style="margin-top: 20px;">
+    <div class="white-border-top">
+      <a class="btn" href="#">@Messages("Close")</a>
+    </div>
+  </div>
+
+}

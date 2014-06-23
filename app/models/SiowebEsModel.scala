@@ -27,8 +27,9 @@ object SiowebEsModel {
    * @return Список EsModelMinimalStaticT.
    */
   def ES_MODELS: Seq[EsModelMinimalStaticT] = {
-    Seq(MBlog, MPerson, MozillaPersonaIdent, EmailPwIdent, EmailActivation, MMartCategory) ++
-      EsModel.ES_MODELS
+    EsModel.ES_MODELS ++ Seq(
+      MBlog, MPerson, MozillaPersonaIdent, EmailPwIdent, EmailActivation, MMartCategory, MInviteRequest, MCalendar
+    )
   }
 
   def putAllMappings(implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
@@ -43,9 +44,10 @@ object SiowebEsModel {
 /** В sioweb есть быстрый кеш, поэтому тут кеш-прослойка для моделей. */
 // TODO Следует засунуть поддержку ehcache в sioutil и отправить этот трейт с кеш-поддержкой туда.
 // TODO Это по идее как бы трейт, но из-за ClassTag использовать trait нельзя.
-abstract class EsModelCache[T <: EsModelMinimalT : ClassTag] extends SNStaticSubscriber with SnClassSubscriber {
+abstract class EsModelCache[T1 <: EsModelMinimalT : ClassTag] extends SNStaticSubscriber with SnClassSubscriber {
 
-  def getByIdNoCache(id: String): Future[Option[T]]
+  type StaticModel_t <: EsModelMinimalStaticT { type T = T1 }
+  def companion: StaticModel_t
 
   val EXPIRE_SEC: Int
   val CACHE_KEY_SUFFIX: String
@@ -59,15 +61,20 @@ abstract class EsModelCache[T <: EsModelMinimalT : ClassTag] extends SNStaticSub
    */
   def cacheKey(id: String): String = id + CACHE_KEY_SUFFIX
 
+  def getByIdFromCache(id: String): Option[T1] = {
+    val ck = cacheKey(id)
+    Cache.getAs[T1](ck)
+  }
+
   /**
    * Вернуть закешированный результат либо прочитать его из хранилища.
    * @param id id исходного документа.
    * @return Тоже самое, что и исходный getById().
    */
-  def getByIdCached(id: String)(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
+  def getByIdCached(id: String)(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
     val ck = cacheKey(id)
     // Негативные результаты не кешируются.
-    Cache.getAs[T](ck) match {
+    Cache.getAs[T1](ck) match {
       case r @ Some(adnn) =>
         Future successful r
 
@@ -76,11 +83,42 @@ abstract class EsModelCache[T <: EsModelMinimalT : ClassTag] extends SNStaticSub
   }
 
   /**
+   * Аналог getByIdCached, но для multiget().
+   * @param ids Список id, которые надо получить.
+   * @return Результаты в неопределённом порядке.
+   */
+  def multigetByIdCached(ids: Traversable[String])(implicit ec: ExecutionContext, client: Client): Future[Seq[T1]] = {
+    val (cached, nonCachedIds) = ids.foldLeft [(List[T1], List[String])] (Nil -> Nil) {
+      case ((accCached, notCached), id) =>
+        getByIdFromCache(id) match {
+          case Some(adnNode) =>
+            (adnNode :: accCached) -> notCached
+          case None =>
+            accCached -> (id :: notCached)
+        }
+    }
+    val resultFut = companion.multiGet(nonCachedIds, acc0 = cached)
+    // Асинхронно отправить в кеш всё, чего там ещё не было.
+    if (nonCachedIds.nonEmpty) {
+      resultFut onSuccess { case results =>
+        val ncisSet = nonCachedIds.toSet
+        results.foreach { result =>
+          if (ncisSet contains result.idOrNull) {
+            val ck = cacheKey(result.idOrNull)
+            Cache.set(ck, result, EXPIRE_SEC)
+          }
+        }
+      }
+    }
+    resultFut
+  }
+
+  /**
    * Если id задан, то прочитать из кеша или из хранилища. Иначе вернуть None.
    * @param idOpt Опциональный id.
    * @return Тоже самое, что и [[getByIdCached]].
    */
-  def maybeGetByIdCached(idOpt: Option[String])(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
+  def maybeGetByIdCached(idOpt: Option[String])(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
     idOpt match {
       case Some(id) => getByIdCached(id)
       case None     => Future successful None
@@ -93,9 +131,9 @@ abstract class EsModelCache[T <: EsModelMinimalT : ClassTag] extends SNStaticSub
    * @param ck0 Ключ в кеше.
    * @return Тоже самое, что и исходный getById().
    */
-  def getByIdAndCache(id: String, ck0: String = null)(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
+  def getByIdAndCache(id: String, ck0: String = null)(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
     val ck: String = if (ck0 == null) cacheKey(id) else ck0
-    val resultFut = getByIdNoCache(id)
+    val resultFut = companion.getById(id)
     resultFut onSuccess {
       case Some(adnn) =>
         Cache.set(ck, adnn, EXPIRE_SEC)

@@ -15,6 +15,8 @@ import scala.concurrent.Future
 import play.api.mvc.Security.username
 import util.img._
 import views.html.market.lk.adn.invite.inviteInvalidTpl
+import play.api.db.DB
+import util.billing.Billing
 
 /**
  * Suggest.io
@@ -208,7 +210,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
     // Можно также продлить жизнь записи активации. Но сценарий нужности этого маловероятен.
     val formUsedM = if (request.isAuth) inviteAcceptAuthFormM else inviteAcceptAnonFormM
     val formBindedM = formUsedM.fill((mshop.meta.name, None))
-    Ok(invite.inviteAcceptFormTpl(mshop, eAct, formBindedM, withRegister = !request.isAuth))
+    Ok(invite.inviteAcceptFormTpl(mshop, eAct, formBindedM, withRegister = !request.isAuth, withOfferText = true))
   }
 
   /**
@@ -223,7 +225,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
     formBindM.bindFromRequest().fold(
       {formWithErrors =>
         debug(logPrefix + "Failed to bind invite form: " + formWithErrors.errors)
-        NotAcceptable(invite.inviteAcceptFormTpl(mshop, eAct, formWithErrors, withRegister = !request.isAuth))
+        NotAcceptable(invite.inviteAcceptFormTpl(mshop, eAct, formWithErrors, withRegister = !request.isAuth, withOfferText = true))
       },
       {case (shopName, passwordOpt) =>
         // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
@@ -253,6 +255,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
             mshop.personIds = Set(personId)
             mshop.save map { _shopId =>
               trace(logPrefix + s"mshop(id=${_shopId}) saved with new owner: $personId")
+              Billing.maybeInitializeNodeBilling(_shopId)
               Redirect(routes.MarketLkAdn.showAdnNode(shopId))
                 .flashing("success" -> "Регистрация завершена успешно.")
                 .withSession(username -> personId)

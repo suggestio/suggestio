@@ -34,7 +34,8 @@ object IsShopAdm extends controllers.ShopMartCompat {
 import IsShopAdm._
 
 /** В реквесте содержится магазин, если всё ок. */
-case class IsShopAdm(shopId: String) extends ActionBuilder[RequestForShopAdmFull] {
+trait IsShopAdmBase extends ActionBuilder[RequestForShopAdmFull] {
+  def shopId: String
   override def invokeBlock[A](request: Request[A], block: (RequestForShopAdmFull[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOptAdn(pwOpt, shopId)
@@ -49,6 +50,9 @@ case class IsShopAdm(shopId: String) extends ActionBuilder[RequestForShopAdmFull
     }
   }
 }
+case class IsShopAdm(shopId: String)
+  extends IsShopAdmBase
+  with ExpireSession[RequestForShopAdmFull]
 
 case class RequestForShopAdmFull[A](mshop: MAdnNode, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
   extends AbstractRequestForShopAdm(request) {

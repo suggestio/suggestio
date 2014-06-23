@@ -1,4 +1,6 @@
-@(node: MAdnNode, mads: Seq[MAdT], slaves: Seq[MAdnNode], advertisers: Seq[MAdnNode], isMyNode: Boolean, povAdnIdOpt: Option[String], advReqsCount: Long, canAdv: Boolean)(implicit ctx: Context)
+@(node: MAdnNode, mads: Seq[MAd], slaves: Seq[MAdnNode], advertisers: Seq[MAdnNode], isMyNode: Boolean,
+  povAdnIdOpt: Option[String], advReqsCount: Long, canAdv: Boolean, ad2advMap: Map[String, MAdvI], showBackBtn: Boolean
+ )(implicit ctx: Context)
 
 @* Заглавная страница узла рекламной сети в личных кабинетах.
    Если isMyNode, то идёт рендер управляемого узла, и povAdnIdOpt игнорируется.
@@ -20,9 +22,11 @@
     <div class="center">
 
       @* TODO Надо бы объеденить map и defining, но почему-то не работает оно. *@
-      @defining( if(isMyNode) Some(routes.MarketLk.lkList) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
-        @backCallOpt.map { backCall =>
-          <a class="back-but" href="@backCall">&nbsp;</a>
+      @if(showBackBtn) {
+        @defining( if(isMyNode) Some(routes.MarketLk.lkList) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
+          @backCallOpt.map { backCall =>
+            <a class="back-but" href="@backCall">&nbsp;</a>
+          }
         }
       }
 
@@ -37,7 +41,7 @@
               @if(isRcvr) {
               <div class="gray-but-wrap">
                 <div class="white-border-top">
-                  <a id="installScriptButton" class="btn" href="">КОД УСТАНОВКИ</a>
+                  <a id="installScriptButton" class="btn" href="">СКРИПТ на САЙТ</a>
                 </div>
               </div>
               }
@@ -45,7 +49,7 @@
               @if(node.adn.memberType.canViewSlaves) {
                 <div class="gray-but-wrap">
                   <div class="white-border-top">
-                    <a class="btn" href="@routes.MarketAdv.showNodeAdvs(node.id.get)">РЕКЛАМОДАТЕЛИ @if(advReqsCount > 0L) {<span class="lk-adv-reqs-count attention-icon">@advReqsCount</span>} </a>
+                    <a class="btn" href="@routes.MarketAdv.showNodeAdvs(node.id.get)"> @if(advReqsCount > 0L) {<span class="lk-adv-reqs-count attention-icon">@advReqsCount</span>} РЕКЛАМОДАТЕЛИ</a>
                   </div>
                 </div>
               }
@@ -64,17 +68,21 @@
         <span class="name">@node.meta.name</span>
         @if(isMyNode) {
           <a class="edit" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">@Messages("Edit")</a>
+
+        @if(isMyNode) {
+        <span class="sm-note">
+          <span class="sm-note__q-mark">?</span>
+          <span class="sm-note__message">
+            Подсказка: в редактировании вы можете указать информацию о вашем магазине и загрузить основной логотип, который будет отображаться на всех рекламных карточках.
+          </span>
+        </span>
+        }
+
           @if(isSuperuser) {
             <a class="superuser-link" href="@routes.SysMarket.showAdnNode(node.id.get)">/sys</a>
           }
         }
       </div>
-
-      @if(isMyNode) {
-        <div class="sm-note">
-          Подсказка: в редактировании вы можете указать информацию о вашем магазине и загрузить основной логотип, который будет отображаться на всех рекламных карточках.
-        </div>
-      }
 
       <div class="border-line"></div>
 
@@ -103,16 +111,16 @@
     @* Для тех, кто может создавать свою рекламу, рисуем список своих рекламных карточек с галочками. *@
     @if(node.adn.isProducer) {
       @if(isMyNode) {
-        @_myAdsTpl(node, mads, canAdv)
+        @_myAdsTpl(node, mads, canAdv, ad2advMap)
       } else {
-        @_readOnlyAdsListTpl(mads, povAdnIdOpt)
+        @_readOnlyAdsListTpl(mads, povAdnIdOpt, ad2advMap)
       }
 
       @* Ссылка на demo web site. *@
       @if(isMyNode) {
         <div class="sm-note">
-          @node.adn.memberType.demoWebsiteAdnId(node).map { dwId =>
-            Вы можете посмотреть, как выглядят ваши к карточки в <a class="sm-note__link" target="_blank" href="@routes.Market.demoWebSite(dwId)">рекламной выдаче</a>
+          @node.adn.memberType.nodeAdmSiteCall(node).map { siteCall =>
+            Вы можете посмотреть, как выглядят ваши к карточки в <a class="sm-note__link" target="_blank" href="@siteCall">рекламной выдаче</a>
           }
         </div>
       }
@@ -121,7 +129,6 @@
 
     @* Ресиверу надо отрендерить список его рекламодателей, если они есть. *@
     @if(isMyNode && !advertisers.isEmpty) {
-      <h5>Рекламодатели</h5>
       @_advertisersListTpl(advertisers, povAdnIdOpt = node.id)
     }
 

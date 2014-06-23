@@ -1,24 +1,23 @@
 package controllers
 
+import io.suggest.model.{MUserImgOrig, ImgWithTimestamp, MImgThumb}
 import play.api.mvc._
-import _root_.util.{FormUtil, PlayMacroLogsImpl, SiobixFs, DateTimeUtil}
+import util.{PlayMacroLogsImpl, SiobixFs, DateTimeUtil}
 import org.apache.hadoop.fs.Path
 import io.suggest.util.SioConstants._
 import play.api.libs.concurrent.Execution.Implicits._
-import io.suggest.model.{MUserImgMetadata, MUserImgOrig, MImgThumb, ImgWithTimestamp}
 import org.joda.time.Instant
 import play.api.Play.current
-import util.acl.IsAuth
-import _root_.util.img._
+import util.acl._
+import util.img._
 import play.api.libs.json._
 import scala.concurrent.duration._
-import models.MPictureTmp
+import models._
 import net.sf.jmimemagic.Magic
 import scala.concurrent.Future
 import views.html.img._
 import play.api.data._, Forms._
 import io.suggest.img.ConvertModes
-import io.suggest.model
 import io.suggest.ym.model.common.MImgInfoMeta
 
 /**
@@ -111,9 +110,8 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
         !(ts0 isAfter dt)
       }
     if (isCached) {
-      trace("serveImg(): 304 Not Modified")
+      //trace("serveImg(): 304 Not Modified")
       NotModified
-
     } else {
       trace(s"serveImg(): 200 OK. size = ${its.img.length} bytes")
       // Бывает, что в базе лежит не jpeg, а картинка в другом формате. Это тоже учитываем:.
@@ -134,6 +132,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
   }
 
   /** Раздавалка картинок, созданных в [[handleTempImg]]. */
+  // TODO Тут надо бы IsAuth, но он мешает работать программистам из-за использования audience_url в ряде случаев.
   def getTempImg(filename: String) = IsAuth.async { implicit request =>
     suppressQsFlood(routes.Img.getTempImg(filename)) {
       // Надо бы добавить сюда поддержку if-modifier-since...

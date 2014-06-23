@@ -25,23 +25,34 @@ object IsAdnNodeAdmin {
     )
   }
 
-  def checkAdnNodeCreds(adnNodeOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Either[Option[MAdnNode], MAdnNode]] = {
-    adnNodeOptFut map { adnNodeOpt =>
-      adnNodeOpt.fold [Either[Option[MAdnNode], MAdnNode]] (Left(None)) { adnNode =>
-        val isAllowed = PersonWrapper.isSuperuser(pwOpt) || {
-          pwOpt.isDefined && (adnNode.personIds contains pwOpt.get.personId)
-        }
-        if (isAllowed) {
-          Right(adnNode)
-        } else {
-          Left(adnNodeOpt)
-        }
+
+  def isAdnNodeAdminCheck(adnNode: MAdnNode, pwOpt: PwOpt_t): Boolean = {
+    PersonWrapper.isSuperuser(pwOpt) || {
+      pwOpt.exists { pw =>
+        adnNode.personIds contains pw.personId
       }
     }
   }
 
+  def checkAdnNodeCredsFut(adnNodeOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Either[Option[MAdnNode], MAdnNode]] = {
+    adnNodeOptFut map {
+      checkAdnNodeCreds(_, pwOpt)
+    }
+  }
+
+  def checkAdnNodeCreds(adnNodeOpt: Option[MAdnNode], pwOpt: PwOpt_t): Either[Option[MAdnNode], MAdnNode] = {
+    adnNodeOpt.fold [Either[Option[MAdnNode], MAdnNode]] (Left(None)) { adnNode =>
+      val isAllowed = isAdnNodeAdminCheck(adnNode, pwOpt)
+      if (isAllowed) {
+        Right(adnNode)
+      } else {
+        Left(adnNodeOpt)
+      }
+    }
+  }
+  
   def checkAdnNodeCredsOpt(adnNodeOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
-    checkAdnNodeCreds(adnNodeOptFut, pwOpt) map {
+    checkAdnNodeCredsFut(adnNodeOptFut, pwOpt) map {
       case Right(adnNode) => Some(adnNode)
       case _ => None
     }
@@ -53,13 +64,17 @@ object IsAdnNodeAdmin {
     checkAdnNodeCredsOpt(fut, pwOpt)
   }
 
+  def nodeNotFound(adnId: String)(implicit request: RequestHeader): Future[Result] = {
+    controllers.Application.http404Fut
+  }
 }
 
 
 import IsAdnNodeAdmin.onUnauth
 
-/** В реквесте содержится магазин, если всё ок. */
-case class IsAdnNodeAdmin(adnId: String) extends ActionBuilder[AbstractRequestForAdnNode] {
+/** В реквесте содержится администрируемый узел, если всё ок. */
+trait IsAdnNodeAdminBase extends ActionBuilder[AbstractRequestForAdnNode] {
+  def adnId: String
   override def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOptAdn(pwOpt, adnId)
@@ -74,6 +89,9 @@ case class IsAdnNodeAdmin(adnId: String) extends ActionBuilder[AbstractRequestFo
     }
   }
 }
+case class IsAdnNodeAdmin(adnId: String)
+  extends IsAdnNodeAdminBase
+  with ExpireSession[AbstractRequestForAdnNode]
 
 
 
@@ -87,11 +105,10 @@ case class RequestForAdnNodeAdm[A](adnNode: MAdnNode, isMyNode: Boolean, request
   extends AbstractRequestForAdnNode(request)
 
 
-/**
- * Доступ к узлу, к которому НЕ обязательно есть права на админство.
- * @param adnId узел.
- */
-case class AdnNodeAccess(adnId: String, povAdnIdOpt: Option[String]) extends ActionBuilder[RequestForAdnNode] {
+/** Доступ к узлу, к которому НЕ обязательно есть права на админство. */
+trait AdnNodeAccessBase extends ActionBuilder[RequestForAdnNode] {
+  def adnId: String
+  def povAdnIdOpt: Option[String]
   override def invokeBlock[A](request: Request[A], block: (RequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     PersonWrapper.getFromRequest(request) match {
       case pwOpt @ Some(pw) =>
@@ -99,7 +116,7 @@ case class AdnNodeAccess(adnId: String, povAdnIdOpt: Option[String]) extends Act
           { Future successful Option.empty[MAdnNode] }
           { povAdnId => IsAdnNodeAdmin.isAdnNodeAdmin(povAdnId, pwOpt) }
         val adnNodeOptFut = MAdnNodeCache.getByIdCached(adnId)
-        IsAdnNodeAdmin.checkAdnNodeCreds(adnNodeOptFut, pwOpt) flatMap {
+        IsAdnNodeAdmin.checkAdnNodeCredsFut(adnNodeOptFut, pwOpt) flatMap {
           // Это админ текущего узла
           case Right(adnNode) =>
             SioReqMd.fromPwOptAdn(pwOpt, adnId) flatMap { srm =>
@@ -136,7 +153,54 @@ case class AdnNodeAccess(adnId: String, povAdnIdOpt: Option[String]) extends Act
     }
   }
 }
+/**
+ * Доступ к узлу, к которому НЕ обязательно есть права на админство.
+ * @param adnId узел.
+ */
+case class AdnNodeAccess(adnId: String, povAdnIdOpt: Option[String])
+  extends AdnNodeAccessBase
+  with ExpireSession[RequestForAdnNode]
+
 
 case class RequestForAdnNode[A](adnNode: MAdnNode, povAdnNodeOpt: Option[MAdnNode], isMyNode: Boolean,
                                 request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
-  extends AbstractRequestForAdnNode(request)
+  extends AbstractRequestForAdnNode(request) {
+
+  def myNode: MAdnNode = if (isMyNode) adnNode else povAdnNodeOpt.get
+  def myNodeId: String = myNode.id.get
+}
+
+
+
+case class SimpleRequestForAdnNode[A](adnNode: MAdnNode, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
+  extends AbstractRequestForAdnNode(request) {
+  override lazy val isMyNode = IsAdnNodeAdmin.isAdnNodeAdminCheck(adnNode, pwOpt)
+}
+
+/** Гибрид [[MaybeAuth]] и читалки MAdnNode из кеша. Права на узел не проверяются. */
+trait AdnNodeMaybeAuthBase extends ActionBuilder[SimpleRequestForAdnNode] {
+  def adnId: String
+  override def invokeBlock[A](request: Request[A], block: (SimpleRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    val srmFut = SioReqMd.fromPwOpt(pwOpt)
+    MAdnNodeCache.getByIdCached(adnId) flatMap {
+      case Some(adnNode) =>
+        srmFut flatMap { srm =>
+          val req1 = SimpleRequestForAdnNode(adnNode, request, pwOpt, srm)
+          block(req1)
+        }
+
+      case None =>
+        IsAdnNodeAdmin.nodeNotFound(adnId)(request)
+    }
+  }
+}
+
+/**
+ * Реализация [[AdnNodeMaybeAuthBase]] с поддержкой таймаута сессии.
+ * @param adnId id искомого узла.
+ */
+case class AdnNodeMaybeAuth(adnId: String)
+  extends AdnNodeMaybeAuthBase
+  with ExpireSession[SimpleRequestForAdnNode]
+

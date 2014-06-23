@@ -16,7 +16,7 @@
 
   <div class="sm-now-location__icon"></div>
   <div class="sm-now-location__info">
-    <span>@if( producer.meta.floor ){ @producer.meta.floor-й этаж }</span>
+    <span>@producer.meta.floor.map { floor => @Messages("nth.floor", floor) }</span>
     <strong>@producer.meta.name</strong>
   </div>
   <div class="sm-clear"></div>

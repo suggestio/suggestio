@@ -1,0 +1,34 @@
+@(mad: MAd, adProducer: MAdnNode)(content: Html)(implicit ctx: Context)
+
+@* Подложка для шаблона окошка и полноразмерной превьюшкой карточки. *@
+
+@import ctx._
+@import market.showcase._
+
+<div class="popup adv-req-wind" id="advReqWind" xmlns="http://www.w3.org/1999/html">
+
+  <div class="hat">
+    <a href="#" class="close">&nbsp;</a>
+  </div>
+
+  <div class="content">
+    <div class="sio-mart-showcase" style="position: relative;">
+      @_single_offer_w_description(
+        mad      = mad,
+        isHidden = false,
+        isWithAction = false,
+        producer = adProducer,
+        adIndex  = 1,
+        adsCount = 1
+      )
+    </div>
+  </div>
+
+  <hr class="line-gray" />
+
+  <div class="content">
+    @content
+  </div>
+
+</div>
+

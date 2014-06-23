@@ -15,7 +15,8 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * Description: Может ли текущий юзер обрабатывать заявки на размещение рекламы?
  * Да, если юзер является админом соответствующего rcvr-узла.
  */
-case class CanReceiveAdvReq(advReqId: Int) extends ActionBuilder[RequestWithAdvReq] {
+trait CanReceiveAdvReqBase extends ActionBuilder[RequestWithAdvReq] {
+  def advReqId: Int
   override def invokeBlock[A](request: Request[A], block: (RequestWithAdvReq[A]) => Future[Result]): Future[Result] = {
     PersonWrapper.getFromRequest(request) match {
       case pwOpt @ Some(pw) =>
@@ -45,6 +46,9 @@ case class CanReceiveAdvReq(advReqId: Int) extends ActionBuilder[RequestWithAdvR
     }
   }
 }
+case class CanReceiveAdvReq(advReqId: Int)
+  extends CanReceiveAdvReqBase
+  with ExpireSession[RequestWithAdvReq]
 
 case class RequestWithAdvReq[A](request: Request[A], advReq: MAdvReq, rcvrNode: MAdnNode, pwOpt: PwOpt_t, sioReqMd: SioReqMd)
   extends AbstractRequestWithPwOpt(request)

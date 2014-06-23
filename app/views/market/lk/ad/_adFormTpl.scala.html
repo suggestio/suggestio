@@ -19,7 +19,7 @@
   @* Бывает, что у формы задана ошибка верхнего уровня. Такое происходит например если ad.mode не верен. *@
   @*af.globalError*@
 
-  <input type="hidden" id="preview-action" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get)" />
+  <input type="hidden" id="preview-action" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get, isFull = false)" />
 
   <div class="lk-edit-form__block js-slide-wrap">
     <div class="lk-edit-form__block_title">
@@ -27,7 +27,7 @@
       <span class="lk-edit-form__block_title_span">
         Выбор категории
       </span>
-      <a href="#" class="js-g-slide-toggle open l-right">Свернуть</a>
+      <a class="js-g-slide-toggle open l-right">Свернуть</a>
       <div class="border-line"></div>
     </div>
 
@@ -46,7 +46,7 @@
       <span class="lk-edit-form__block_title_span">
         Выбор шаблона
       </span>
-      <a href="#" class="js-g-slide-toggle open l-right">Свернуть</a>
+      <a class="js-g-slide-toggle open l-right">Свернуть</a>
       <div class="border-line"></div>
     </div>
     <div class="lk-edit-form__block_body js-slide-content">
@@ -76,7 +76,7 @@
       <span class="lk-edit-form__block_title_span">
         Отображение рекламной карточки
       </span>
-      <a href="#" class="js-g-slide-toggle open l-right">Свернуть</a>
+      <a class="js-g-slide-toggle open l-right">Свернуть</a>
       <div class="border-line"></div>
     </div>
     <div class="lk-edit-form__block_body js-slide-content">
@@ -90,7 +90,8 @@
           <div class="lk-ad-block-edit-form__preview">
 
             @* TODO: в этот div надо рендерить превьюшку *@
-            <input class="js-ad-block-preview-action" type="hidden" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get)"/>
+            <input class="js-ad-block-preview-action" type="hidden" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get, isFull = false)"/>
+            <input class="js-ad-block-full-preview-action" type="hidden" value="@routes.MarketAdPreview.adFormPreviewSubmit(adnNode.id.get, isFull = true)"/>
 
             <div class="lk-ad-block-edit-form__preview_container" id="adFormBlockPreview">
 
@@ -121,7 +122,7 @@
       <span class="lk-edit-form__block_title_span">
         Описание
       </span>
-      <a href="#" class="js-g-slide-toggle open l-right">Свернуть</a>
+      <a class="js-g-slide-toggle open l-right">Свернуть</a>
       <div class="border-line"></div>
     </div>
 

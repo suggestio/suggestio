@@ -1,5 +1,5 @@
 @( bid:Option[String], aovf: AOValueField, bf: BlockAOValueFieldT, className: String = "", left : Int = 0, top : Int = 0, isMvbl:Boolean=true )
-<style type="text/css">
+<code>
   @if( isMvbl == true ){
   .sm-block@bid .mvbl-@className
   {
@@ -16,4 +16,4 @@
   .sm-block@{bid}.double-size .@{className} {
     @_aovfStyleTpl(aovf, bf, className, isDouble = true)
   }
-</style>
+</code>

@@ -1,0 +1,63 @@
+@()(implicit ctx: Context)
+
+@import play.api.Play.current
+
+@* Статическая success-страничка, которая сообщает юзеру, что его запрос принят к рассмотрению. *@
+
+@joinBase("Запрос на подключение принят") {
+
+  <div class="header-wrap">
+
+    <div class="center">
+
+      <a class="logo" href="/m/lk">
+        <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
+      </a>
+
+    </div>
+
+  </div>
+
+  <div class="body-wrap body-wrap_login-page">
+
+    <div class="title-wrap">
+
+      <div class="center">
+        <a class="back-but" href="@routes.MarketLk.lkIndex">&nbsp;</a>
+        <div class="title-inner">
+          СТАТЬ УЧАСТНИКОМ СЕТИ
+        </div>
+      </div>
+
+    </div>
+
+    <div class="body">
+
+      <div class="join-success">
+
+        <div class="success-label">
+          <div class="success-label__icon"></div>
+          <div class="success-label__title">
+            Ваш запрос отправлен.
+          </div>
+        </div>
+
+        <p class="paragraph-13 black-text pargraph_join-success">
+          После того как администраторы рассмотрят ваш запрос мы<br/> с вами свяжемся.
+        </p>
+
+        <p class="gray-text pargraph_join-success">
+          Пока можно посмотреть выдачу всех рекламных карточек<br/> на нашем сайте. Это бета версия.
+          <br/>
+          @current.configuration.getString("market.demo.adn.id").map { demoAdnId =>
+            <a class="blue-link" target="_blank" href="@routes.Market.demoWebSite(demoAdnId)">Смотреть →</a>
+          }
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+}

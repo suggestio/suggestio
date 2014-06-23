@@ -1,0 +1,88 @@
+@(title: String, lf: Option[Form[_]] = None, popupContent: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Подложка для внешней (по отношению к ЛК) страниц sio-маркета. *@
+
+@import ctx._
+@import stuff._
+
+<!DOCTYPE html>
+<html class="market-base">
+<head>
+  <title>@title | market | Suggest.io</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <meta name="viewport" content="width=device-width, user-scalable=no"/>
+
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/colorpicker/css/colorpicker.css")'/>
+
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/common.min.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/create-ad.min.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase.min.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/edit-shop.min.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase_previews.min.css")'/>
+
+  <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
+
+</head>
+
+
+<body class="lk login-page">
+
+  @content
+
+  <div class="popups-container" id="popupsContainer">
+
+    @* Попап с формой логина *@
+    @if(!ctx.isAuth) {
+
+      <div class="popup login-popup" id="emailPwLoginForm">
+
+        <div class="hat">
+          <a class="close" href="#">&nbsp;</a>
+        </div>
+
+        <div class="content">
+
+          <div class="popup-title popup-title_without_padding">
+            ВХОД
+          </div>
+
+          @ident._emailPwLoginFormTpl(
+            lf = lf getOrElse controllers.Ident.emailPwLoginFormM,
+            submitCall = routes.MarketLk.emailPwLoginFormSubmit
+          )
+
+        </div>
+
+      </div>
+    }
+
+    <div class="overlay" id="overlay"></div>
+
+    @popupContent
+  </div>
+
+  <div class="footer-wrap footer-wrap_responsive-mode">
+    <div class="footer footer_responsive-mode">
+
+      <span class="copyright-block">
+        @_copyrightTextTpl(withLink = false)
+        @*&nbsp;|&nbsp;<a href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>*@
+      </span>
+
+      <!--<div class="socials">
+        <a class="fb" href="#">Facebook</a>
+        <a class="tw" href="#">Twitter</a>
+      </div>-->
+
+    </div>
+  </div>
+
+  <script src="@routes.Assets.at("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
+  <script src="@routes.Assets.at("javascripts/market/lk/mx_cof.js")"></script>
+  <script src="@routes.Assets.at("javascripts/market/lk/mx_dev.js")"></script>
+  <script src="@routes.Assets.at("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
+  <script src="@routes.Assets.at("javascripts/jquery-ui.custom.min.js")"></script>
+
+
+</body>
+</html>

@@ -28,7 +28,8 @@ object UserCatAdm {
 }
 
 /** Пока нет конкретной категории, с которой работаем. */
-case class TreeUserCatAdm(ownerId: String) extends ActionBuilder[RequestUserCatAdm] {
+trait TreeUserCatAdmBase extends ActionBuilder[RequestUserCatAdm] {
+  def ownerId: String
   override def invokeBlock[A](request: Request[A], block: (RequestUserCatAdm[A]) => Future[Result]): Future[Result] = {
     // TODO нужно проверить права над указанным субъектов ownerId.
     val pwOpt = PersonWrapper.getFromRequest(request)
@@ -43,9 +44,15 @@ case class TreeUserCatAdm(ownerId: String) extends ActionBuilder[RequestUserCatA
     }
   }
 }
+case class TreeUserCatAdm(ownerId: String)
+  extends TreeUserCatAdmBase
+  with ExpireSession[RequestUserCatAdm]
+
+
 
 /** Есть конкретная категория, с которой работаем. */
-case class UserCatAdm(catId: String) extends ActionBuilder[RequestUserCatAdm] {
+trait UserCatAdmBase extends ActionBuilder[RequestUserCatAdm] {
+  def catId: String
   override def invokeBlock[A](request: Request[A], block: (RequestUserCatAdm[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
@@ -64,6 +71,7 @@ case class UserCatAdm(catId: String) extends ActionBuilder[RequestUserCatAdm] {
     }
   }
 }
+case class UserCatAdm(catId: String) extends UserCatAdmBase with ExpireSession[RequestUserCatAdm]
 
 
 
@@ -78,3 +86,4 @@ class UnauthCatAdm extends ActionBuilder[RequestUserCatAdm] {
 /** Реквест, в тело которого забита категория, к которой адресован реквест. И корректный ownerId тоже. */
 case class RequestUserCatAdm[A](cat: Option[MMartCategory], ownerId:String, pwOpt: PwOpt_t, request: Request[A], sioReqMd: SioReqMd)
   extends AbstractRequestWithPwOpt(request)
+

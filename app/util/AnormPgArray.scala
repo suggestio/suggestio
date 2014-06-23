@@ -19,13 +19,25 @@ object AnormPgArray {
    * @return
    */
   implicit def rowToSeqInt: Column[Seq[Int]] = Column.nonNull { (value, meta) =>
-    val MetaDataItem(qualified, nullable, clazz) = meta
+    val MetaDataItem(qualifier, nullable, clazz) = meta
     value match {
       case arr: java.sql.Array =>
         Right(arr.getArray.asInstanceOf[Array[Integer]].toSeq.map(_.intValue) )
 
       case _ =>
-        Left(TypeDoesNotMatch("Cannot convert " + value + ":" + value.asInstanceOf[AnyRef].getClass + " to Seq[String] for column " + qualified))
+        Left(TypeDoesNotMatch("Cannot convert " + value + ":" + value.asInstanceOf[AnyRef].getClass + " to Seq[String] for column " + qualifier))
+    }
+  }
+
+
+  implicit def rowToStringSet: Column[Set[String]] = Column.nonNull { (value, meta) =>
+    val MetaDataItem(qualifier, nullable, clazz) = meta
+    value match {
+      case arr: java.sql.Array =>
+        Right(arr.getArray.asInstanceOf[Array[String]].toSet)
+
+      case _ =>
+        Left(TypeDoesNotMatch(s"Cannot conv. $value :: ${value.asInstanceOf[AnyRef].getClass} to Set[String] for column $qualifier"))
     }
   }
 
@@ -37,7 +49,6 @@ object AnormPgArray {
   def strings2pgArray(l: Traversable[String])(implicit c: Connection) = {
     c.createArrayOf("varchar", l.toArray)
   }
-
 
   implicit val arrayToStatement = new ToStatement[java.sql.Array] {
     def set(s: PreparedStatement, index: Int, v: sql.Array) {

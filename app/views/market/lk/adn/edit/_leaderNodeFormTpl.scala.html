@@ -2,8 +2,7 @@
 
 @* Форма для создания/редактирования торгового центра через личный кабинет. *@
 @import helper._
-
-@import util.FormHelpers._
+@import util.FC.tdFc
 
 @form(submitCall) {
 
@@ -102,7 +101,7 @@
   <div class="border-line"></div>
 
   <div class="submit-wrap">
-    <input class="blue-but-small" type="submit" value="@btnText" style="float: right;"/>
+    <input class="blue-but-small f-right" type="submit" value="@btnText" style="margin-top: 10px;"/>
   </div>
 
 }

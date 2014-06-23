@@ -3,7 +3,8 @@ package models
 import java.util.Currency
 import play.api.i18n.Messages
 import play.api.data.Form
-
+import util.PlayLazyMacroLogsImpl
+import scala.collection.JavaConversions._
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -11,14 +12,24 @@ import play.api.data.Form
  * Description: Моделе-подобное барахло, которые в основном нужно для шаблонов.
  */
 
-object CurrencyCodeOpt {
+object CurrencyCodeOpt extends PlayLazyMacroLogsImpl {
   val CURRENCY_CODE_DFLT = "RUB"
 }
 
 
 trait CurrencyCode {
+  import CurrencyCodeOpt.LOGGER._
+
   def currencyCode: String
-  def currency = Currency.getInstance(currencyCode)
+  def currency = {
+    try {
+      Currency.getInstance(currencyCode)
+    } catch {
+      case ex: Exception =>
+        error("Unsupported/unknown currency code: " + currencyCode + "; Supported are " + Currency.getAvailableCurrencies.toSeq.map(_.getCurrencyCode).mkString(", "), ex)
+        throw ex
+    }
+  }
 }
 
 /** Опциональное поле currencyCode, подразумевающее дефолтовую валюту. */
@@ -81,7 +92,8 @@ case class CurrentAdvsTplArgs(
 )
 case class AdvFormTplArgs(
   adId: String,
-  adnNodes: Seq[MAdnNode], af: Form[_],
+  adnNodes: Seq[MAdnNode],
+  af: Form[_],
   busyAdns: Map[String, MAdvI]
 )
 

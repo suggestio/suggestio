@@ -20,10 +20,9 @@
 
   <p><a href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)"><b>-&gt; Личный кабинет узла</b></a></p>
 
-  @adnNode.adn.memberType.demoWebsiteAdnId(adnNode).map { dwId =>
-    <p><a href="@routes.Market.demoWebSite(dwId)"><b>-&gt; demoWebSite</b></a>
-      (<a href="http://10.0.0.101:9001@routes.Market.demoWebSite(dwId)" target="_blank">osm01-vpn</a>)
-      <a href="@routes.Market.martIndex(dwId)"><b>JSON</b></a>
+  @adnNode.adn.memberType.nodeAdmSiteCall(adnNode).map { siteCall =>
+    <p><a href="@siteCall"><b>-&gt; demoWebSite</b></a>
+      (<a href="http://10.0.0.101:9001@siteCall" target="_blank">osm01-vpn</a>)
     </p>
   }
 
@@ -64,7 +63,7 @@
       Цвет: <b>#@color</b> <span style="background-color: #@color;">&nbsp;&nbsp;&nbsp;&nbsp;</span><br/>
     }
     @adnNode.meta.welcomeAdId.map { wad =>
-      Приветствие: @wad
+      Приветствие: Есть (@wad)
     }
   </div>
 
@@ -108,6 +107,15 @@
   @* Функционал товаров и прайс-листов пока скрыт: кравлер не готов, товары не нужны. *@
   @*<a href="@routes.SysMarket.splAddForm(mshop.id.get)">Добавить источник прайс-листа.</a>
     <a href="@routes.MarketOffer.showShopPromoOffers(mshop.id.get)">ЛК: Товары магазина</a> *@
+
+
+  <br/>
+  <p>
+      Модерация бесплатного размещения:
+      <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(producerId = adnNode.id))">Очередь на модерацию</a> /
+      <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(true), producerId = adnNode.id))">Одобренные</a> /
+      <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(false), producerId = adnNode.id))">Отклонённые</a>
+  </p>
 
 
   <br/>

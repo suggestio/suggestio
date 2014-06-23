@@ -30,7 +30,8 @@ object CanSuperviseNode {
   }
 }
 
-case class CanSuperviseNode(adnId: String) extends ActionBuilder[RequestForSlave] {
+trait CanSuperviseNodeBase extends ActionBuilder[RequestForSlave] {
+  def adnId: String
   override def invokeBlock[A](request: Request[A], block: (RequestForSlave[A]) => Future[Result]): Future[Result] = {
     MAdnNodeCache.getByIdCached(adnId) flatMap {
       case Some(mslave) if mslave.adn.supId.isDefined =>
@@ -54,6 +55,11 @@ case class CanSuperviseNode(adnId: String) extends ActionBuilder[RequestForSlave
   }
 }
 
+case class CanSuperviseNode(adnId: String)
+  extends CanSuperviseNodeBase
+  with ExpireSession[RequestForSlave]
+
+
 
 // Реквесты
 abstract class AbstractRequestForSlave[A](request: Request[A]) extends AbstractRequestWithPwOpt(request) {
@@ -66,7 +72,8 @@ case class RequestForSlave[A](slaveNode: MAdnNode, supNode: MAdnNode, request: R
 
 
 /** Просматривать прямые под-узлы может просматривать тот, кто записан в supId. */
-case class CanViewSlave(adnId: String) extends ActionBuilder[RequestForSlave] {
+trait CanViewSlaveBase extends ActionBuilder[RequestForSlave] {
+  def adnId: String
   override def invokeBlock[A](request: Request[A], block: (RequestForSlave[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     MAdnNodeCache.getByIdCached(adnId) flatMap {
@@ -89,11 +96,15 @@ case class CanViewSlave(adnId: String) extends ActionBuilder[RequestForSlave] {
     }
   }
 }
+case class CanViewSlave(adnId: String)
+  extends CanViewSlaveBase
+  with ExpireSession[RequestForSlave]
 
 
 
 /** Просматривать рекламу с прямых под-узлов может просматривать тот, кто записан в supId. */
-case class CanViewSlaveAd(adId: String) extends ActionBuilder[RequestForSlaveAd] {
+trait CanViewSlaveAdBase extends ActionBuilder[RequestForSlaveAd] {
+  def adId: String
   override def invokeBlock[A](request: Request[A], block: (RequestForSlaveAd[A]) => Future[Result]): Future[Result] = {
     MAd.getById(adId) flatMap {
       case Some(mad) =>
@@ -122,6 +133,9 @@ case class CanViewSlaveAd(adId: String) extends ActionBuilder[RequestForSlaveAd]
     }
   }
 }
+case class CanViewSlaveAd(adId: String)
+  extends CanViewSlaveAdBase
+  with ExpireSession[RequestForSlaveAd]
 
 
 case class RequestForSlaveAd[A](mad: MAd, slaveNode: MAdnNode, supNode: MAdnNode, request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
@@ -129,33 +143,33 @@ case class RequestForSlaveAd[A](mad: MAd, slaveNode: MAdnNode, supNode: MAdnNode
 
 
 /** Можно ли влиять на рекламную карточку подчинённого узла? Да, если узел подчинён и если юзер -- админу узла-супервизора. */
-case class CanSuperviseSlaveAd(adId: String) extends ActionBuilder[RequestForSlaveAd] {
+trait CanSuperviseSlaveAdBase extends ActionBuilder[RequestForSlaveAd] {
+  def adId: String
   override def invokeBlock[A](request: Request[A], block: (RequestForSlaveAd[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     // Для экшенов модерации обычно (пока что) не требуется bill-контекста, поэтому делаем srm по-простому.
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     MAd.getById(adId) flatMap {
       case Some(mad) =>
-        val slaveNodeOptFut = MAdnNodeCache.getByIdCached(mad.producerId)
         // TODO Наверное надо проверять права супервайзера этого узла над подчинённым узлов.
-        Future.traverse(mad.receivers.valuesIterator) { adRcvr =>
-          IsAdnNodeAdmin.isAdnNodeAdmin(adRcvr.receiverId, pwOpt)
-        } flatMap { results =>
-          results.find(_.isDefined).flatten match {
+        MAdnNodeCache.getByIdCached(mad.producerId) flatMap { slaveNodeOpt =>
+          val slaveNode = slaveNodeOpt.get
+          val supNodeOptFut = slaveNode.adn.supId.fold
+            { Future successful Option.empty[MAdnNode] }
+            { supId => IsAdnNodeAdmin.isAdnNodeAdmin(supId, pwOpt) }
+          supNodeOptFut flatMap {
             // isSuperuser проверяется тут, чтобы легче выявлять ошибки, даже будучи админом.
-            case Some(supNode) if supNode.adn.isSupervisor || PersonWrapper.isSuperuser(pwOpt) =>
-              slaveNodeOptFut.flatMap { slaveNodeOpt =>
-                srmFut.flatMap { srm =>
-                  val req1 = RequestForSlaveAd(
-                    mad = mad,
-                    slaveNode = slaveNodeOpt.get,
-                    supNode = supNode,
-                    request = request,
-                    pwOpt = pwOpt,
-                    sioReqMd = srm
-                  )
-                  block(req1)
-                }
+            case Some(supNode) if supNode.adn.isSupervisor =>
+              srmFut.flatMap { srm =>
+                val req1 = RequestForSlaveAd(
+                  mad = mad,
+                  slaveNode = slaveNode,
+                  supNode = supNode,
+                  request = request,
+                  pwOpt = pwOpt,
+                  sioReqMd = srm
+                )
+                block(req1)
               }
             case _ => onUnauth(request)
           }
@@ -165,4 +179,8 @@ case class CanSuperviseSlaveAd(adId: String) extends ActionBuilder[RequestForSla
     }
   }
 }
+
+case class CanSuperviseSlaveAd(adId: String)
+  extends CanSuperviseSlaveAdBase
+  with ExpireSession[RequestForSlaveAd]
 

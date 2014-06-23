@@ -1,0 +1,93 @@
+@(jf: Form[_], btnClass: String, submitCall: Call, isWifi: Boolean)(implicit ctx: Context)
+
+@import ctx._
+@import helper._
+@import util.FC.tdFc
+@import controllers.MarketJoin.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
+@import io.suggest.util.StringUtil.randomId
+
+@form(submitCall) {
+
+  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    @inputText(jf("company"), '_label -> (Messages("Company") + ":"))
+  </table>
+
+
+  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    @inputText(jf("audienceDescr"), '_label -> (Messages("Audience.descr") + ":"))
+  </table>
+
+  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    @inputText(jf("humanTraffic"), '_label -> (Messages("Daily.people.traffic") + ":"))
+  </table>
+
+  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    @textarea(jf("address"), '_label -> (Messages("Address") + ":"))
+  </table>
+
+  @*if( !isWifi ) {
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      @inputText(jf("floor"), '_label -> (Messages("Floor.number") + ":"))
+    </table>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      @inputText(jf("section"), '_label -> (Messages("Section.number") + ":"))
+    </table>
+  }*@
+
+  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    @inputText(jf("siteUrl"), '_label -> (Messages("Site") + ":"))
+  </table>
+
+  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    @inputText(jf("email"), '_label -> (Messages("constraint.email") + ":"))
+  </table>
+
+  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    @inputText(jf("phone"), '_label -> (Messages("Office.phone.number") + ":"))
+  </table>
+
+  @if( isWifi ) {
+    <div class="border-line"></div>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
+      @textarea(jf("payReqs"), '_label -> (Messages("requisites") + ":"))
+    </table>
+  }
+
+  <div class="border-line"></div>
+
+
+  @* Капча *@
+  <table cellpadding="0" cellspacing="0" class="input-wrap">
+    <tr>
+      <td class="left"></td>
+      <td class="right" style="height: 55px;">
+        @defining( jf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+          <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
+          <img id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
+          <a id="captchaReload" class="captcha-reload-btn" href=""></a>
+        }
+      </td>
+    </tr>
+  </table>
+
+
+  <table cellpadding="0" cellspacing="0" class="input-wrap">
+    @inputText(
+      jf(CAPTCHA_TYPED_FN),
+      '_label -> Messages("Input.text.from.picture")
+    )
+  </table>
+
+  <div class="border-line"></div>
+
+
+  <div class="submit-wrap submit-wrap_padding10">
+    <div class="blue-btn-new js-submit-wrap f-right">
+      <span class="btn"></span>
+      <input type="submit" class="@btnClass" value="@Messages("Request.invite")"/>
+    </div>
+  </div>
+
+}

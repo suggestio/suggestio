@@ -1,0 +1,52 @@
+@(jf: Form[_])(implicit ctx: Context)
+
+@* Страница, отображающая форму для запроса инвайта в качестве рекламодателя. *@
+
+
+@joinBase("Разместить рекламу") {
+
+
+  <div class="header-wrap">
+
+    <div class="center">
+
+      <a class="logo" href="/m/lk">
+        <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
+      </a>
+
+    </div>
+
+  </div>
+
+  <div class="body-wrap wave-pattern">
+
+    <div class="title-wrap">
+
+      <div class="center">
+        <a class="back-but" href="@routes.MarketLk.lkIndex">&nbsp;</a>
+        <div class="title-inner">
+          РАЗМЕСТИТЬ РЕКЛАМУ
+        </div>
+      </div>
+
+    </div>
+
+
+    <div class="body">
+
+      <div class="ovh">
+
+        @_joinReqFormTpl(
+          jf = jf,
+          btnClass = "blue",
+          submitCall = routes.MarketJoin.joinAdvRequestSubmit,
+          isWifi = false
+        )
+
+      </div>
+
+    </div>
+
+  </div>
+
+}

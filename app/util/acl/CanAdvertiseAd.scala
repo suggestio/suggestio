@@ -2,6 +2,7 @@ package util.acl
 
 import play.api.mvc.{Result, Request, ActionBuilder}
 import models._
+import util.PlayMacroLogsImpl
 import util.acl.PersonWrapper.PwOpt_t
 import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -15,7 +16,9 @@ import IsAdnNodeAdmin.onUnauth
  * Description: Проверка прав на размещение рекламной карточки.
  */
 
-object CanAdvertiseAd {
+object CanAdvertiseAd extends PlayMacroLogsImpl {
+
+  import LOGGER._
 
   /** Является ли указанный узел рекламодателем? */
   def isAdvertiserNode(adnNode: MAdnNode): Boolean = {
@@ -30,7 +33,7 @@ object CanAdvertiseAd {
    * @tparam A Параметр типа реквеста.
    * @return None если нельзя. Some([[RequestWithAd]]) если можно исполнять реквест.
    */
-  private def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A]): Future[Option[RequestWithAd[A]]] = {
+  def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A]): Future[Option[RequestWithAd[A]]] = {
     if (PersonWrapper isSuperuser pwOpt) {
       MAdnNodeCache.getByIdCached(mad.producerId) flatMap { adnNodeOpt =>
         if (adnNodeOpt exists isAdvertiserNode) {
@@ -39,6 +42,7 @@ object CanAdvertiseAd {
             Some(RequestWithAd(mad, request, pwOpt, srm, adnNode))
           }
         } else {
+          debug(s"maybeAllowed($pwOpt, ${mad.id.get}): superuser, but ad producer node ${mad.producerId} is not allowed to advertise.")
           Future successful None
         }
       }
@@ -47,11 +51,14 @@ object CanAdvertiseAd {
         case Some(pw) =>
           MAdnNodeCache.getByIdCached(mad.producerId).flatMap { adnNodeOpt =>
             adnNodeOpt
-              .filter {
-                adnNode => adnNode.personIds.contains(pw.personId)  &&  isAdvertiserNode(adnNode)
+              .filter { adnNode =>
+                adnNode.personIds.contains(pw.personId)  &&  isAdvertiserNode(adnNode)
               }
               .fold
-                { Future successful Option.empty[RequestWithAd[A]] }
+                {
+                  debug(s"maybeAllowed($pwOpt, ${mad.id.get}): User is not node ${mad.producerId} admin or node is not a producer.")
+                  Future successful Option.empty[RequestWithAd[A]]
+                }
                 {adnNode =>
                   SioReqMd.fromPwOptAdn(pwOpt, adnNode.id.get) map { srm =>
                     Some(RequestWithAd(mad, request, pwOpt, srm, adnNode))
@@ -59,7 +66,9 @@ object CanAdvertiseAd {
                 }
           }
 
-        case None => Future successful None
+        case None =>
+          debug(s"maybeAllowed(${mad.id.get}): anonymous access prohibited")
+          Future successful None
       }
     }
   }
@@ -68,17 +77,27 @@ object CanAdvertiseAd {
 
 
 /** Редактировать карточку может только владелец магазина. */
-case class CanAdvertiseAd(adId: String) extends ActionBuilder[RequestWithAd] {
-  override def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
+trait CanAdvertiseAdBase extends ActionBuilder[RequestWithAd] {
+  import CanAdvertiseAd.LOGGER._
+  def adId: String
+  def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     MAd.getById(adId) flatMap {
       case Some(mad) =>
         CanAdvertiseAd.maybeAllowed(pwOpt, mad, request) flatMap {
           case Some(req1) => block(req1)
-          case None       => onUnauth(request)
+          case None =>
+            debug(s"invokeBlock(): maybeAllowed($pwOpt, mad=${mad.id.get}) -> false.")
+            onUnauth(request)
         }
 
-      case None => onUnauth(request)
+      case None =>
+        debug("invokeBlock(): MAd not found: " + adId)
+        onUnauth(request)
     }
   }
 }
+case class CanAdvertiseAd(adId: String)
+  extends CanAdvertiseAdBase
+  with ExpireSession[RequestWithAd]
+

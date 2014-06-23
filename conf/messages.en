@@ -17,8 +17,15 @@ Save=Save
 Continue=Continue
 Next=Next
 Site=Сайт
+Floor.number=Floor number
+Section.number=Section number
+Close=Close
+Your=Your
+
+requisites=Payment details for withdrawal
 
 Password.change=Password change
+Password.recovery=Password recovery
 Type.current.password=Type current password
 Password.reset=Password reset
 Type.new.password=Type new password
@@ -30,6 +37,8 @@ Manufacturer=Manufacturer
 Size=Size
 Sizes=Sizes
 Price=Price
+Information=Information
+Write=Write
 
 slaves.of.m=RENTERS
 slaves.of.R=RESTAURANTS
@@ -49,6 +58,8 @@ amts.of.type.m=Marts
 amts.of.type.r=Restaurants
 amts.of.type.R=Restaurant chains
 
+Input.text.from.picture=Input text from the picture
+error.captcha=Invalid human-check code
 
 editing.of.amt.profile.s=Shop profile edit
 editing.of.amt.profile.m=Mhop profile edit
@@ -80,12 +91,17 @@ blocks.field.fillColor=Fill color
 ad.stat.action.v=View
 ad.stat.action.c=Click
 
+mir.type.a=Advertiser
+mir.type.w=Wi-Fi AP owner
 
 lk.sl.enable_ad=Enable ad
 lk.sl.d=Show on start page
 lk.sl.h=Show in common catalog
 lk.sl.m=Show in my catalog
 
+nth.floor={0}th floor
+
+username.unknown=Who?
 
 join.qsn.haveWifi=Do you have Wi-Fi?
 join.qsn.fullCoverage=Your Wi-Fi equipment covers all needed room?
@@ -98,10 +114,11 @@ join.qsn.audienceSz=Assumed count of wireless devices connected at the same time
 join.qsn.audienceSz.lt20=< 20
 join.qsn.audienceSz.lt50=< 50
 join.qsn.audienceSz.gt50=> 50
-Request.invite=Make invite request
+Request.invite=Request invite
 Audience.descr=Audience descriptio
 Daily.people.traffic=Daily traffic
 Office.phone.number=Office phone number
+Your.IR.accepted=Your connection request accepted successfully.
 
 
 error.no.money=No money

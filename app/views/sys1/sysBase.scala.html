@@ -4,26 +4,61 @@
 @* base-шаблон для системной панели suggest.io. *@
 <!DOCTYPE html>
 <html>
-<head>
-	<title>@title | system | s.io</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-	<script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
-	<link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/sys.min.css")"/>
-	@headAfter
-</head>
 
-<body>
-    @* Рендер flash-нотификаций. *@
-    @ctx.flashMap.map { case (flashStatus, flashMsg) =>
-      <p>@flashStatus: @flashMsg</p>
-    }
+  <head>
+    <title>@title | system | s.io</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
+    <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/sys.min.css")'/>
+    @headAfter
+  </head>
 
-	<div class="sio-db-logo">
-		<a href="@routes.Sys.index"><img src="@routes.Assets.at("images/sio-dark-logo.png")"></a>
-	</div>
-	<div class="sio-db-layout">
-	    <h1>/ <a href="@routes.Sys.index">sys</a> @hPathAfter</h1>
-	    @content
-	</div>
-</body>
+  <body class="lk">
+
+     <div class="header-wrap">
+
+        <div class="center">
+          <a class="logo" href="@routes.Sys.index">
+            <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
+          </a>
+          @ctx.usernameOpt.map { username =>
+            <div class="auth">
+
+              <a class="logout-but" href="@routes.Ident.logout"></a>
+
+            </div>
+          }
+        </div>
+
+      </div><!-- header-wrap end -->
+
+     <div class="body-wrap">
+
+        @* Рендер flash-нотификаций. *@
+        @ctx.flashMap.map { case (flashStatus, flashMsg) =>
+          <p>@flashStatus: @flashMsg</p>
+        }
+
+        <div class="title-wrap">
+          <div class="center">
+            <div class="title-inner">
+              <a class="blue-link" href="@routes.Sys.index">sys</a> @hPathAfter
+            </div>
+          </div>
+        </div>
+
+        <div class="body">
+
+          @content
+
+        </div>
+
+     </div>
+
+    <div class="footer-wrap">
+
+    </div>
+
+  </body>
+
 </html>

@@ -4,26 +4,28 @@
 
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl20 sm-block@mad.id" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
-  <img class="bg" src="@mad.imgs.get(Block20.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl20-bg.jpg"))" />
+  <img class="bg" src="@ctx.myAudienceUrl@mad.imgs.get(Block20.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl20-bg.jpg"))" />
 
-  @mad.offers.headOption.map { offer =>
-    <div class="info">
-    @offer.text1.map { text1 =>
-      <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title">
-      <div class="title">
-        @Html(text1.value)
-      </div>
-      </div>
-      @_blockStyleTpl( mad.id, text1, Block20.titleBf, "title", left = 38, top = 24  )
-    }
-    @offer.text2.map { text2 =>
-      <div class="js-mvbl mvbl-descr" data-connected-input="ad.offer.descr">
-      <div class="descr">
-        @Html(text2.value)
-      </div>
-      </div>
-      @_blockStyleTpl( mad.id, text2, Block20.descrBf, "descr", left = 38, top = 50  )
-    }
+  @mad.offers.map { offer =>
+
+    <div class="info el-@{offer.n + 1}">
+      @offer.text1.map { text1 =>
+        <div class="js-mvbl mvbl-title-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].title">
+          <div class="title title-@offer.n">
+            @Html(text1.value)
+          </div>
+        </div>
+        @_blockStyleTpl( mad.id, text1, Block20.titleBf, "title-" + offer.n, left = 38, top = 70*( offer.n + 1 )  )
+      }
+
+      @offer.text2.map { text2 =>
+        <div class="js-mvbl mvbl-descr mvbl-descr-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].descr">
+          <div class="descr descr-@offer.n">
+            @Html(text2.value)
+          </div>
+        </div>
+        @_blockStyleTpl( mad.id, text2, Block20.descrBf, "descr-" + offer.n, left = 38, top = 70*( offer.n + 1 )+25  )
+      }
     </div>
   }
 

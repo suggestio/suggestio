@@ -33,17 +33,35 @@
           @* Верхняя информация: баланс, тарификация *@
           <table>
 
-
             @ctx.billBalanceOpt.map { mbb =>
-
+            <tr>
               <td>
                 <div class="ovh" style="padding-left: 0;">
-                  <span class="prop-title">Текущий баланс:</span>
+                  <span class="prop-title">Доступные средства:</span>
                 </div>
-              </td>
-              <td>
+
                 <div class="ovh">
                   <span class="value big">@formatPrice(mbb.amount, mbb.currency)</span>
+                </div>
+
+                <br/>
+
+                <div class="ovh" style="padding-left: 0;">
+                  <span class="prop-title">Всего денег:</span>
+                </div>
+
+                <div class="ovh">
+                  <span class="value big">@formatPrice(mbb.amount + mbb.blocked, mbb.currency)</span>
+                </div>
+
+                <br/>
+
+                <div class="ovh" style="padding-left: 0;">
+                  <span class="prop-title">Заблокиро-<br/>вано:</span>
+                </div>
+
+                <div class="ovh">
+                  <span class="value big">@formatPrice(mbb.blocked, mbb.currency)</span>
                 </div>
               </td>
 
@@ -70,7 +88,7 @@
                 </div>
               </td>
 
-              <td>
+              <td style="vertical-align: top; padding-top: 10px;">
                 <div class="ovh" style="padding-top: 0; padding-bottom: 0;">
                   <div class="gray-but-wrap">
                     <div class="white-border-top">
@@ -116,7 +134,7 @@
 
         <div class="lk-edit-form__block_title">
           <span class="lk-edit-form__block_title_span">
-          История операций:
+          История операций
           </span>
           <a class="js-close-btn f-right"></a>
           <div class="border-line"></div>
@@ -174,9 +192,7 @@
 
         <div class="lk-edit-form__block_title">
           <div class="border-line"></div>
-          <span class="lk-edit-form__block_title_span">
-          История операций:
-          </span>
+          <span class="lk-edit-form__block_title_span">Ставка тарифных планов рекламного размещения</span>
           <a class="js-g-slide-toggle open l-right">Свернуть</a>
           <div class="border-line"></div>
         </div>

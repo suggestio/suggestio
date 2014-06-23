@@ -1,5 +1,6 @@
 package controllers
 
+import org.elasticsearch.index.engine.VersionConflictEngineException
 import views.html.market.lk.ad._
 import models._
 import play.api.libs.concurrent.Execution.Implicits._
@@ -9,7 +10,7 @@ import play.api.data._, Forms._
 import util.acl._
 import scala.concurrent.Future
 import play.api.mvc.Request
-import play.api.Play.current
+import play.api.Play.{current, configuration}
 import MMartCategory.CollectMMCatsAcc_t
 import io.suggest.ym.ad.ShowLevelsUtil
 import io.suggest.ym.model.common.EMReceivers.Receivers_t
@@ -33,6 +34,9 @@ object MarketAd extends SioController with TempImgSupport {
   val CAT_ID_K = "catId"
   val AD_IMG_ID_K = "image_key"
 
+  /** Сколько попыток сохранения карточки предпринимать при runtime-экзепшенах при сохранении?
+    * Такие проблемы возникают при конфликте версий. */
+  val SAVE_AD_RETRIES_MAX = configuration.getInt("ad.save.retries.max") getOrElse 7
 
   /** Дефолтовый блок, используемый редакторами форм. */
   protected[controllers] def dfltBlock = BlocksConf.Block1
@@ -76,14 +80,14 @@ object MarketAd extends SioController with TempImgSupport {
 
   /** Выдать маппинг ad-формы в зависимости от типа adn-узла. */
   private def detectAdnAdForm(anmt: AdNetMemberType)(implicit request: ReqSubmit): DetectForm_t = {
-    val adMode = (request.body.get("ad.offer.mode") getOrElse Nil)
+    val adMode = request.body.getOrElse("ad.offer.mode", Nil)
       .headOption
       .flatMap(AdOfferTypes.maybeWithName)
       .getOrElse(AdOfferTypes.BLOCK)
     adMode match {
       case aot @ AdOfferTypes.BLOCK =>
         // Нужно раздобыть id из реквеста
-        val blockId = (request.body.get("ad.offer.blockId") getOrElse Nil)
+        val blockId = request.body.getOrElse("ad.offer.blockId", Nil)
           .headOption
           .fold(1)(_.toInt)
         val blockConf: BlockConf = BlocksConf(blockId)
@@ -136,7 +140,7 @@ object MarketAd extends SioController with TempImgSupport {
           {case (mad, bim) =>
             val t4s2Fut = newTexts4search(mad)
             // Асинхронно обрабатываем логотип.
-            bc.saveImgs(newImgs = bim, oldImgs = Map.empty) flatMap { savedImgs =>
+            bc.saveImgs(newImgs = bim, oldImgs = Map.empty, blockHeight = mad.blockMeta.height) flatMap { savedImgs =>
               mad.producerId = adnId
               mad.imgs = savedImgs
               t4s2Fut flatMap { t4s2 =>
@@ -185,7 +189,7 @@ object MarketAd extends SioController with TempImgSupport {
   /** Рендер страницы с формой редактирования рекламной карточки магазина.
     * @param adId id рекламной карточки.
     */
-  def editAd(adId: String) = IsAdEditor(adId).async { implicit request =>
+  def editAd(adId: String) = CanEditAd(adId).async { implicit request =>
     import request.mad
     val blockConf: BlockConf = BlocksConf.apply(mad.blockMeta.blockId)
     val form0 = getSaveAdFormM(request.producer.adn.memberType, blockConf.strictMapping)
@@ -211,7 +215,7 @@ object MarketAd extends SioController with TempImgSupport {
   /** Сабмит формы рендера страницы редактирования рекламной карточки.
     * @param adId id рекламной карточки.
     */
-  def editAdSubmit(adId: String) = IsAdEditor(adId).async(parse.urlFormEncoded) { implicit request =>
+  def editAdSubmit(adId: String) = CanEditAd(adId).async(parse.urlFormEncoded) { implicit request =>
     import request.mad
     detectAdnAdForm(request.producer.adn.memberType) match {
       case Right((bc, formM)) =>
@@ -223,17 +227,43 @@ object MarketAd extends SioController with TempImgSupport {
           },
           {case (mad2, bim) =>
             val t4s2Fut = newTexts4search(mad2)
-            bc.saveImgs(newImgs = bim, oldImgs = mad.imgs) flatMap { imgsSaved =>
-              mad.imgs = imgsSaved
-              importFormAdData(oldMad = mad, newMad = mad2)
-              t4s2Fut flatMap { t4s2 =>
-                mad.texts4search = t4s2
-                mad.disableReason = Nil
-                mad.save.map { _ =>
-                  Redirect(routes.MarketLkAdn.showAdnNode(mad.producerId))
-                    .flashing("success" -> "Изменения сохранены")
+            // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
+            // Сейчас проблема: что при ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
+            val saveImgsFut = bc.saveImgs(newImgs = bim, oldImgs = mad.imgs, blockHeight = mad.blockMeta.height)
+            // Для подавления конфликтов версий при сохранении используем рекурсивную функцию обновления,
+            // которая повторяет получение рекламной карточки и её обновление при конфликте версий.
+            def tryUpdate(mad0: MAd, counter: Int = 0): Future[_] = {
+              saveImgsFut flatMap { imgsSaved =>
+                mad0.imgs = imgsSaved
+                importFormAdData(oldMad = mad0, newMad = mad2)
+                t4s2Fut flatMap { t4s2 =>
+                  mad0.texts4search = t4s2
+                  mad0.disableReason = Nil
+                  // Выкинуть выверенную успешную модерацию, т.к. карточка была отредактирована.
+                  // Если карточка не прошла, то она и не пройдёт её.
+                  mad0.moderation = mad0.moderation.copy(
+                    freeAdv = mad0.moderation.freeAdv.filter { _.isAllowed != true }
+                  )
+                  // Попытаться сохранить модифицированную карточку
+                  mad0.save.recoverWith {
+                    case ex: VersionConflictEngineException =>
+                      if (counter < SAVE_AD_RETRIES_MAX) {
+                        val remadOptFut = MAd.getById(adId)
+                        val counter1 = counter + 1
+                        trace(s"editAdSubmit($adId): ES said: Version conflict. Retrying... ($counter1/$SAVE_AD_RETRIES_MAX)")
+                        remadOptFut flatMap { remadOpt =>
+                          tryUpdate(remadOpt.get, counter1)
+                        }
+                      } else {
+                        Future failed new RuntimeException(s"Cannot save ad $adId, too many vsn conflicts: $counter, lastVsn = ${mad0.versionOpt}, vsn0 = ${mad.versionOpt}", ex)
+                      }
+                  }
                 }
               }
+            }
+            tryUpdate(mad).map { _ =>
+              Redirect(routes.MarketLkAdn.showAdnNode(mad.producerId))
+                .flashing("success" -> "Изменения сохранены")
             }
           }
         )
@@ -249,7 +279,7 @@ object MarketAd extends SioController with TempImgSupport {
    * @param adId id рекламы.
    * @return Редирект в магазин или ТЦ.
    */
-  def deleteSubmit(adId: String) = IsAdEditor(adId).async { implicit request =>
+  def deleteSubmit(adId: String) = CanEditAd(adId).async { implicit request =>
     MAd.deleteById(adId) map { _ =>
       val routeCall = routes.MarketLkAdn.showAdnNode(request.mad.producerId)
       Redirect(routeCall)
@@ -298,7 +328,7 @@ object MarketAd extends SioController with TempImgSupport {
    * Включение/выключение какого-то уровня отображения указанной рекламы.
    * Сабмит сюда должен отсылаться при нажатии на чекбоксы отображения на тех или иных экранах в _showAdsTpl.
    */
-  def updateShowLevelSubmit(adId: String) = IsAdEditor(adId).async { implicit request =>
+  def updateShowLevelSubmit(adId: String) = CanUpdateSls(adId).async { implicit request =>
     lazy val logPrefix = s"updateShowLevelSubmit($adId): "
     adShowLevelFormM.bindFromRequest().fold(
       {formWithErrors =>
@@ -340,23 +370,14 @@ object MarketAd extends SioController with TempImgSupport {
 
   /** Детектор получателей рекламы. Заглядывает к себе и к прямому родителю, если он указан. */
   private def detectReceivers(producer: MAdnNode): Future[Receivers_t] = {
-    val supRcvrIdsFut: Future[Seq[String]] = producer.adn.supId
-      .map { supId =>
-        MAdnNodeCache.getByIdCached(supId)
-          .map { _.filter(_.adn.isReceiver).map(_.idOrNull).toSeq }
-      } getOrElse {
-        Future successful Nil
-      }
     val selfRcvrIds: Seq[String] = Some(producer)
       .filter(_.adn.isReceiver)
       .map(_.idOrNull)
       .toSeq
-    supRcvrIdsFut map { supRcvrIds =>
-      val rcvrIds: Seq[String] = supRcvrIds ++ selfRcvrIds
-      rcvrIds.distinct.map { rcvrId =>
-        rcvrId -> AdReceiverInfo(rcvrId)
-      }.toMap
-    }
+    val result = selfRcvrIds.map { rcvrId =>
+      rcvrId -> AdReceiverInfo(rcvrId)
+    }.toMap
+    Future successful result
   }
 
 

@@ -7,7 +7,7 @@
 
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl24" data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
-  <img class="bg abs" src="@mad.imgs.get(Block24.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-bg.jpg"))" />
+  <img class="bg abs" src="@ctx.myAudienceUrl@mad.imgs.get(Block24.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-bg.jpg"))" />
 
   @_mask24(
     cssClass = "mask abs",
@@ -15,7 +15,7 @@
   )
 
   <div class="info">
-    <img class="logo" src="@mad.imgs.get(Block24.LOGO_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-logo.jpg"))" />
+    <img class="logo" src="@ctx.myAudienceUrl@mad.imgs.get(Block24.LOGO_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl5-logo.jpg"))" />
     @mad.offers.headOption.map { offer =>
       @offer.text1.map { text1 =>
         <div @_aovfStyleTpl(text1, Block24.titleBf, "title")>

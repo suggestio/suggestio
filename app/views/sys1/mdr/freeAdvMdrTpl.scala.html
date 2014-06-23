@@ -1,0 +1,36 @@
+@(mad: MAd, producer: MAdnNode, banFormM: Form[_])(implicit ctx: Context)
+
+@* Страница отображает карточку в полный рост для полномасштабной визуальной оценки,
+   и содержит формы для одобрения и бана бесплатного размещения. *@
+
+@import ctx._
+@import market.showcase._
+@import helper._
+
+@hPathAfter = {
+  / <a href="@routes.SysMdr.freeAdvs()">Free Advs</a> / Карточка
+}
+
+@mdrBase(
+  title = "Модерация бесплатного размещения карточки",
+  adnNodeOpt = Some(producer),
+  hPathAfter = Some(hPathAfter)
+) {
+
+  @* Отрендерить управление модерацией в одной колонке. *@
+  @* Одобрить размещение: *@
+  @form(routes.SysMdr.freeAdvMdrAccept(mad.id.get)) {
+    <input type="submit" value="Одобрить"/>
+  }
+
+  @* Запретить размещение с указание причины. *@
+  @form(routes.SysMdr.freeAdvMdrBan(mad.id.get)) {
+    @textarea(banFormM("reason"))
+    <input type="submit" value="Отклонить"/>
+  }
+
+
+  @* Отобразить карточку целиком (задействовать другую колонку) *@
+  @_single_offer_w_description(mad, producer = producer)
+
+}

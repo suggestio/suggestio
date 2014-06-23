@@ -1,4 +1,4 @@
-@(ads: Seq[MAd], mmcats: Seq[MMartCategory], adSearch:util.qsb.AdSearch, adProducerOpt: Option[MAdnNode])(implicit ctx: util.Context)
+@(ads: Seq[MAd], adSearch:util.qsb.AdSearch, adProducerOpt: Option[MAdnNode])(implicit ctx: util.Context)
 
 @if( !adSearch.producerIds.isEmpty ){
 
@@ -9,9 +9,6 @@
 
       @_screen_nav_button("back","closeNodeOffersPopupButton")
       <div class="sio-mart__producer-header" style="background-color: #@producer.meta.color;">
-        <div class="sio-mart-home-button" id="sioMartHomeButton">
-          <span></span>
-        </div>
         @producer.logoImgOpt.map { logoImg =>
         <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
       }
@@ -19,25 +16,23 @@
 
       @* Контейнер с прокручивающимися офферами *@
       <div class="sio-mart-node-offers-window__root-container" id="sioMartNodeOffersBlockContainer">
-
       @if(!ads.isEmpty) {
-
         @ads.zipWithIndex.map { case (mad, index) =>
-          <div class="sio-mart-node-offers-window__single-ad-container js-nop-single-ad-container">
-
-            <div class="js-no-container" style="min-width: 300px; margin: 0px auto;">
-
-            <div class="sio-mart-node-offers-window__top-offset"></div>
-              @_single_offer_w_description(mad, false, false, producer, index+1, ads.length)
-            <div class="sio-mart-node-offers-window__bottom_margin"></div>
-
+          <div class="sio-mart-node-offers-window__single-ad-container js-nop-single-ad-container" @if( index > 1 ){ style="visibility: hidden;" } id="sioMartNodeOffers_@index">
+            <div class="sm-flex sm-overflow-scrolling">
+              <div class="sm-flex sm-overflow-scrolling">
+                <div class="sm-flex" style="margin-bottom: -1px; height: 800px; overflow-y:scroll;">
+                  <div class="js-no-container" style="min-width: 300px; margin: 0px auto; position: relative;">
+                    <div class="sio-mart-node-offers-window__top-offset"></div>
+                    @_single_offer_w_description(mad, false, false, producer, index+1, ads.length)
+                    <div class="sio-mart-node-offers-window__bottom_margin"></div>
+                  </div>
+                </div>
+              </div>
             </div>
-
           </div>
         }
-
       }
-
       </div>
 
     </div>

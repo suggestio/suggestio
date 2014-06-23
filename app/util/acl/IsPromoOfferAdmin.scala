@@ -13,8 +13,8 @@ import util.SiowebEsUtil.client
  * Created: 20.02.14 18:06
  * Description: Проверка прав на управление оффером. Внутренне - это как бы враппер над IsMartShopAdmin.
  */
-
-case class IsPromoOfferAdmin(offerId: String) extends ActionBuilder[AbstractRequestForPromoOfferAdm] {
+trait IsPromoOfferAdminBase extends ActionBuilder[AbstractRequestForPromoOfferAdm] {
+  def offerId: String
   override def invokeBlock[A](request: Request[A], block: (AbstractRequestForPromoOfferAdm[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
@@ -41,6 +41,9 @@ case class IsPromoOfferAdmin(offerId: String) extends ActionBuilder[AbstractRequ
     }
   }
 }
+case class IsPromoOfferAdmin(offerId: String)
+  extends IsPromoOfferAdminBase
+  with ExpireSession[AbstractRequestForPromoOfferAdm]
 
 
 /** Админство промо-оффера в магазине. */
@@ -53,7 +56,8 @@ case class RequestForPromoOfferAdm[A](shopId:String, offerId:String, pwOpt:PwOpt
 
 
 /** Почти тоже самое, что и [[IsPromoOfferAdmin]], но внутри реквеста содержится полный оффер, к которому обращаются. */
-case class IsPromoOfferAdminFull(offerId: String) extends ActionBuilder[RequestForPromoOfferAdmFull] {
+trait IsPromoOfferAdminFullBase extends ActionBuilder[RequestForPromoOfferAdmFull] {
+  def offerId: String
   override def invokeBlock[A](request: Request[A], block: (RequestForPromoOfferAdmFull[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
@@ -80,6 +84,10 @@ case class IsPromoOfferAdminFull(offerId: String) extends ActionBuilder[RequestF
     }
   }
 }
+case class IsPromoOfferAdminFull(offerId: String)
+  extends IsPromoOfferAdminFullBase
+  with ExpireSession[RequestForPromoOfferAdmFull]
+
 
 case class RequestForPromoOfferAdmFull[A](offer:MShopPromoOffer, pwOpt:PwOpt_t, request: Request[A], sioReqMd: SioReqMd)
   extends AbstractRequestForPromoOfferAdm(request) {

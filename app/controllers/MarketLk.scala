@@ -4,7 +4,7 @@ import play.api.mvc.{Result, Call}
 import models._
 import util.acl._
 import scala.concurrent.Future
-import views.html.market.lk
+import views.html.market._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import util.PlayMacroLogsImpl
@@ -36,22 +36,9 @@ object MarketLk extends SioController with EmailPwSubmit with PlayMacroLogsImpl 
 
   /** Юзер заходит в /market (или на market.suggest.io). Он видит страницу с описанием и кнопку для логина.
     * Если юзер уже залогинен и у него есть магазины/тц, то его надо переправить в ЛК. */
-  def lkIndex = MaybeAuth.async { implicit request =>
-    request.pwOpt match {
-      case Some(pw) =>
-        getMarketRdrCallFor(pw.personId) map {
-          case Some(call) => Redirect(call)
-          // Юзер залогинен, но попал в маркет, где у него нет прав. Отобразить обычную форму.
-          case None => renderDfltPage
-        }
-
-      case None => renderDfltPage
-    }
+  def lkIndex = MaybeAuth { implicit request =>
+    Ok(indexTpl(Some(Ident.emailPwLoginFormM)))
   }
-
-  /** Рендер дефолтовой страницы. */
-  private def renderDfltPage(implicit ctx: util.Context) = Ok(lk.lkIndexTpl(Ident.emailPwLoginFormM))
-
 
   /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */
   def getMarketRdrCallFor(personId: String): Future[Option[Call]] = {
@@ -69,10 +56,18 @@ object MarketLk extends SioController with EmailPwSubmit with PlayMacroLogsImpl 
         routes.MarketLk.lkList()
       }
       Option(rdrOrNull)
+        // Если некуда отправлять, а юзер - админ, то отправить в /sys/.
+        .orElse {
+          if (MPerson isSuperuserId personId) {
+            Some(routes.Sys.index())
+          } else {
+            None
+          }
+        }
     }
   }
 
   override def emailSubmitError(lf: EmailPwLoginForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    Forbidden(lk.lkIndexTpl(lf))
+    Forbidden(indexTpl(Some(lf)))
   }
 }

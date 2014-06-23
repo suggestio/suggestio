@@ -23,7 +23,7 @@
   }
 
   <div class="photo" style="overflow:hidden;">
-    <img src="@mad.imgs.get(Block13.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl13-bg.jpg"))" />
+    <img src="@ctx.myAudienceUrl@mad.imgs.get(Block13.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl13-bg.jpg"))" />
   </div>
 
 

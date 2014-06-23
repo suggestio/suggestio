@@ -17,8 +17,15 @@ Save=Сохранить
 Continue=Продолжить
 Next=Далее
 Site=Сайт
+Floor.number=Номер этажа
+Section.number=Номер секции
+Close=Закрыть
+Your=Ваш
+
+requisites=Платёжные реквизиты для вывода средств
 
 Password.change=Смена пароля
+Password.recovery=Восстановление пароля
 Type.current.password=Введите текущий пароль
 Password.reset=Сброс пароля
 Type.new.password=Введите новый пароль
@@ -30,6 +37,11 @@ Manufacturer=Производитель
 Size=Размер
 Sizes=Размеры
 Price=Цена
+Information=Информация
+Write=Написать
+WRITE=НАПИСАТЬ
+
+Offer=Оферта
 
 slaves.of.m=АРЕНДАТОРЫ
 slaves.of.R=РЕСТОРАНЫ
@@ -48,6 +60,9 @@ amts.of.type.s=Магазины
 amts.of.type.m=Торговые центры
 amts.of.type.r=Рестораны
 amts.of.type.R=Сети ресторанов
+
+Input.text.from.picture=Введите текст, изображенный на картинке
+error.captcha=Неверный код проверки.
 
 editing.of.amt.profile.s=Редактирование профайла магазина
 editing.of.amt.profile.m=Редактирование профайла ТЦ
@@ -80,6 +95,8 @@ blocks.field.fillColor=Цвет заливки
 ad.stat.action.v=Просмотр
 ad.stat.action.c=Клик
 
+mir.type.a=Рекламодатель
+mir.type.w=Владелец Wi-Fi
 
 join.qsn.haveWifi=У вас есть Wi-Fi?
 join.qsn.fullCoverage=Wi-fi оборудование покрывает всю необходимую площадь помещения?
@@ -89,19 +106,24 @@ join.qsn.isWrtFw=Оборудование работает на прошивке
 join.qsn.landlineInet=У вас стационарный интернет?
 join.qsn.smallRoom=У меня небольшое помещение без сплошных бетонных перегородок.
 join.qsn.audienceSz=Предполагаемое количество одновременно подключаемых устройств?
-join.qsn.audienceSz.lt20=< 20
-join.qsn.audienceSz.lt50=< 50
+join.qsn.audienceSz.lt20=≤ 20
+join.qsn.audienceSz.lt50=≤ 50
 join.qsn.audienceSz.gt50=> 50
 Request.invite=Запросить инвайт
 Audience.descr=Описание аудитории
 Daily.people.traffic=Суточный трафик
 Office.phone.number=Офисный телефон
+Your.IR.accepted=Ваш запрос на подключение к системе принят.
 
 
 lk.sl.enable_ad=Выводить
-lk.sl.d=Выводить в моём каталоге
+lk.sl.d=Размещение на первом экране
 lk.sl.h=Выводить в общем каталоге
-lk.sl.m=Размещение на первом экране
+lk.sl.m=Выводить в моём каталоге
+
+nth.floor={0}-й этаж
+
+username.unknown=Кто здесь?
 
 error.no.money=Недостаточно средств
 error.invalid=Неверное значение

@@ -19,7 +19,7 @@ import play.api.Play.current
  * Created: 16.10.13 13:48
  * Description: Суперпользователи сервиса имеют все необходимые права, в т.ч. для доступа в /sys/.
  */
-object IsSuperuser extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
+trait IsSuperuserAbstract extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
   import LOGGER._
   
   override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
@@ -43,12 +43,11 @@ object IsSuperuser extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacr
   }
 
 }
+object IsSuperuser extends IsSuperuserAbstract with ExpireSession[AbstractRequestWithPwOpt]
 
-/**
- * Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin.
- * @param adnId
- */
-case class IsSuperuserAdnNode(adnId: String) extends ActionBuilder[AbstractRequestForAdnNode] {
+/** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin. */
+trait IsSuperuserAdnNodeAbstract extends ActionBuilder[AbstractRequestForAdnNode] {
+  def adnId: String
   override def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper.isSuperuser(pwOpt)) {
@@ -66,6 +65,13 @@ case class IsSuperuserAdnNode(adnId: String) extends ActionBuilder[AbstractReque
     }
   }
 }
+/**
+ * Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin.
+ * @param adnId
+ */
+case class IsSuperuserAdnNode(adnId: String)
+  extends IsSuperuserAdnNodeAbstract
+  with ExpireSession[AbstractRequestForAdnNode]
 
 
 
@@ -77,7 +83,8 @@ case class FeeTariffRequest[A](
   sioReqMd: SioReqMd
 ) extends AbstractRequestWithPwOpt[A](request)
 
-case class IsSuperuserFeeTariffContract(tariffId: Int) extends ActionBuilder[FeeTariffRequest] {
+trait IsSuperuserFeeTariffContractAbstract extends ActionBuilder[FeeTariffRequest] {
+  def tariffId: Int
   override def invokeBlock[A](request: Request[A], block: (FeeTariffRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper.isSuperuser(pwOpt)) {
@@ -96,6 +103,9 @@ case class IsSuperuserFeeTariffContract(tariffId: Int) extends ActionBuilder[Fee
     }
   }
 }
+case class IsSuperuserFeeTariffContract(tariffId: Int)
+  extends IsSuperuserFeeTariffContractAbstract
+  with ExpireSession[FeeTariffRequest]
 
 
 
@@ -107,7 +117,8 @@ case class StatTariffRequest[A](
   sioReqMd: SioReqMd
 ) extends AbstractRequestWithPwOpt[A](request)
 
-case class IsSuperuserStatTariffContract(tariffId: Int) extends ActionBuilder[StatTariffRequest] {
+trait IsSuperuserStatTariffContractAbstract extends ActionBuilder[StatTariffRequest] {
+  def tariffId: Int
   override def invokeBlock[A](request: Request[A], block: (StatTariffRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper.isSuperuser(pwOpt)) {
@@ -126,6 +137,9 @@ case class IsSuperuserStatTariffContract(tariffId: Int) extends ActionBuilder[St
     }
   }
 }
+case class IsSuperuserStatTariffContract(tariffId: Int)
+  extends IsSuperuserStatTariffContractAbstract
+  with ExpireSession[StatTariffRequest]
 
 
 
@@ -136,7 +150,8 @@ case class ContractRequest[A](
   sioReqMd: SioReqMd
 ) extends AbstractRequestWithPwOpt[A](request)
 
-case class IsSuperuserContract(contractId: Int) extends ActionBuilder[ContractRequest] {
+trait IsSuperuserContractAbstract extends ActionBuilder[ContractRequest] {
+  def contractId: Int
   override def invokeBlock[A](request: Request[A], block: (ContractRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper.isSuperuser(pwOpt)) {
@@ -153,3 +168,7 @@ case class IsSuperuserContract(contractId: Int) extends ActionBuilder[ContractRe
     }
   }
 }
+case class IsSuperuserContract(contractId: Int)
+  extends IsSuperuserContractAbstract
+  with ExpireSession[ContractRequest]
+

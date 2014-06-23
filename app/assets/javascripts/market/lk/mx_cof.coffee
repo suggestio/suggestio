@@ -72,34 +72,51 @@ $(document).on 'click', '.popup .cancel', (event)->
 CbcaPopup = () ->
 
   showOverlay: ->
-    $('#overlay').show()
+    $('#popupsContainer, #overlay').show()
 
   hideOverlay: ->
-    $('#overlay').hide()
+    $('#popupsContainer, #overlay').hide()
+
+  setOverlayHeight: (popupHeight)->
+    if(!popupHeight)
+      popupHeight = 0
+
+      $('.popup').each () ->
+        $this = $(this)
+        thisHeight = $this.height()
+
+        if(thisHeight > popupHeight)
+          popupHeight = thisHeight
+
+    popupsContainerHeight = $('#popupsContainer').height()
+
+    if(popupHeight > popupsContainerHeight)
+      $('#overlay').height(popupHeight + 50)
+    else
+      $('#overlay').height(popupsContainerHeight)
 
   showPopup: (popup) ->
     this.showOverlay()
     $popup = $(popup)
     $popup.show()
-
     popupHeight = $popup.height()
-    top = parseInt(popupHeight/2)
-    marginTop = 0 - top + $(window).scrollTop()
-    $popup.css(
-      "margin-top": marginTop + 25,
-      "top": top
-    )
 
-    if(popupHeight > $('.body').height())
-      $('.body').height popupHeight
 
+    $('body').addClass('ovh')
+    this.setOverlayHeight(popupHeight)
+
+    $popup.find('.border-line-vertical').each () ->
+      $this = $(this)
+      $parent = $this.parent()
+
+      $this.height($parent.height() - 10)
 
   hidePopup: (popup) ->
     popup = '.popup' || popup
     this.hideOverlay()
     $(popup).hide()
     $('#overlay, #overlayData').hide()
-    $('.body').css 'height', ''
+    $('body').removeClass 'ovh'
 
 
 ##поисковая строка##
@@ -139,7 +156,178 @@ CbcaCommon = () ->
 
   self = this
 
+  ################################
+  ## ВЫРАВНИВАНИЕ ВЫСОТЫ БЛОКОВ ##
+  ################################
+
+  self.setEqualHeightBlocks = () ->
+    $blocks = $('.js-equal-height')
+    height = 0
+
+    $blocks.each () ->
+      thisHeight = $(this).height()
+      if(thisHeight > height)
+        height = thisHeight
+
+    $blocks.height(height)
+
+  #########################################
+  ## TODO разнести по отдельным функциям ##
+  #########################################
+
   self.init = () ->
+
+    self.setEqualHeightBlocks()
+
+    $(window).resize () ->
+      cbca.popup.setOverlayHeight()
+
+    #############
+    ## CAPTCHA ##
+    #############
+
+    $(document).on 'click', '#captchaReload', (e)->
+      e.preventDefault()
+      $this = $(this)
+      $captchaImage = $('#captchaImage')
+      $parent = $('#captchaImage').parent()
+      random = Math.random()
+
+      $captchaImage.remove()
+      $parent.prepend('<img id="captchaImage" src="/captcha/get/' + $('#captchaId').val() + '?v='+random+'" />')
+
+
+    #####################
+    ## WIFI FORM start ##
+    #####################
+
+    $('.js-quiz__checkbox').removeAttr('disabled')
+
+    $(document).on 'click', '.js-quiz__checkbox', (e)->
+      $this = $(this)
+      nextSelector = $this.attr('data-next')
+      quizElement = $this.closest('.js-quiz__element')
+      thisIndex = quizElement.attr('data-index')
+
+      $('.js-quiz__element').not(this).each ()->
+        $element = $(this)
+
+        if($element.attr('data-index') > thisIndex)
+          $element.hide().find('input').removeAttr('disabled').removeAttr('checked')
+
+        if($element.attr('data-index') == thisIndex)
+          $element.find('input').removeAttr('disabled')
+
+      $this.attr('disabled', 'disabled')
+      $('.js-quiz__result').hide()
+      if(nextSelector == '#text0' || nextSelector == '#text1')
+        nextSelector += ',#text3'
+      $(nextSelector).show()
+
+    ###################
+    ## WIFI FORM end ##
+    ###################
+
+    if($('#newPasswordForm').length)
+      cbca.popup.showPopup('#newPasswordForm')
+
+    $(document).on 'click', '.js-popup-back', (e)->
+      $this = $(this)
+      targetPopupId = $this.attr('href')
+
+      $this.closest('.popup').hide()
+      $(targetPopupId).show()
+
+    $(document).on 'click', '.js-remove-popup', (e)->
+      $popup = $(this).closest('.popup')
+
+      cbca.popup.hidePopup('#'+$popup.attr('id'))
+      $('#'+$popup.attr('id')).remove()
+
+    $(document).on 'click', '.js-submit-wrap', (e)->
+      $this = $(this)
+
+      $this.closest('form').find('input').removeAttr('disabled')
+      $this.find('input').trigger('click')
+
+    $(document).on 'click', '.js-submit-wrap input', (e)->
+      e.stopPropagation()
+
+      $(this).closest('form').find('input').removeAttr('disabled')
+
+
+    ##todo все кнопки ajax/popup зарефакторить к этому обработчику##
+    $(document).on 'click', '.js-btn', (e)->
+      e.preventDefault()
+      $this = $(this)
+      href = $this.attr('href')
+
+      if(!href)
+        return false
+
+      if(href && href.charAt(0) == '#')
+        cbca.popup.showPopup(href)
+      else
+        $.ajax(
+          url: href,
+          success: (data)->
+            $ajaxData = $(data)
+            popupId = $ajaxData.attr('id')
+            cbca.popup.hidePopup()
+            $('#'+popupId).remove()
+            $('#popupsContainer').append(data)
+            cbca.popup.showPopup('#'+popupId)
+        )
+
+    $(document).on 'submit', '.js-form', (e)->
+      e.preventDefault()
+      $form = $(this)
+      action = $form.attr('action')
+
+      $.ajax(
+        type: "POST",
+        url: action,
+        data: $form.serialize(),
+        success: (data)->
+          console.log(data)
+      )
+
+    $(document).on 'submit', '#recoverPwForm form', (e)->
+      e.preventDefault()
+      $form = $(this)
+      action = $form.attr('action')
+
+      $.ajax(
+        type: "POST",
+        url: action,
+        data: $form.serialize(),
+        success: (data)->
+          $('#recoverPwForm').find('form').remove()
+          $('#recoverPwForm').find('.content').append(data)
+        error: (error)->
+          $('#recoverPwForm').remove()
+          $('#popupsContainer').append(error.responseText)
+          cbca.popup.showPopup('#recoverPwForm')
+      )
+
+    ## Попапы с ошибками показывать сразу после перезагрузки страницы ##
+    $('.popup .lk-error, .popup .error').each ()->
+      $this = $(this)
+      popupId = $this.closest('.popup').attr('id')
+
+      cbca.popup.showPopup('#'+popupId)
+
+    $(document).on 'click', '#advReqRefuseShow', (e)->
+      e.preventDefault()
+
+      $('#advReqRefuse').show()
+      $('#advReqAccept').hide()
+
+    $(document).on 'click', '#advReqAcceptShow', (e)->
+      e.preventDefault()
+
+      $('#advReqRefuse').hide()
+      $('#advReqAccept').show()
 
     $(document).on 'submit', '#advReqRefuse', (e)->
       $this = $(this)
@@ -159,10 +347,26 @@ CbcaCommon = () ->
       $.ajax(
         url: href,
         success: (data)->
+          console.log(data)
           $('#advReqWind').remove()
           $('#popupsContainer').append(data).find('.sm-block').addClass('double-size')
 
           cbca.popup.showPopup('#advReqWind')
+          $('#advReqRefuse').hide()
+      )
+
+    $(document).on 'click', '.advs-nodes__node-link_show-popup', (e)->
+      e.preventDefault()
+      $this = $(this)
+      href = $this.attr('href')
+
+      $.ajax(
+        url: href,
+        success: (data)->
+          $('#dailyMmpsWindow').remove()
+          $('#popupsContainer').append(data)
+
+          cbca.popup.showPopup('#dailyMmpsWindow')
       )
 
     $(document).on 'click', '.js-slide-btn', (e)->
@@ -222,13 +426,6 @@ CbcaCommon = () ->
       $('#'+formId).trigger('submit')
 
 
-    $(document).on 'click', '#create-your-market-btn', (event)->
-      event.preventDefault()
-
-      $('#hello-message').hide()
-      $('#create-your-market').show()
-
-
     $(document).on 'click', '.ads-list .js-tc-edit', (event)->
       event.preventDefault()
 
@@ -237,7 +434,7 @@ CbcaCommon = () ->
         url: $this.attr('href')
         success: (data) ->
           $('#disable-ad, #anotherNodes').remove()
-          $('.body-wrap').append(data)
+          $('#popupsContainer').append(data)
           cbca.popup.showPopup('#disable-ad')
         error: (error) ->
           console.log(error)
@@ -370,7 +567,7 @@ CbcaCommon = () ->
         url:  $this.find('a').attr('href'),
         success: (data) ->
           $('#disable-ad, #anotherNodes').remove()
-          $('.body-wrap').append(data)
+          $('#popupsContainer').append(data)
           cbca.popup.showPopup('#anotherNodes')
         error: (data) ->
           console.log(data)
@@ -484,7 +681,7 @@ CbcaShop =
       type: "GET",
       success:  (data) ->
         if(data.toString().trim())
-          $('.body-wrap').append(data)
+          $('#popupsContainer').append(data)
           cbca.popup.showPopup('#disable-shop')
       error: (error) ->
         console.log(error)
@@ -667,14 +864,29 @@ StatusBar =
 ## TODO: отрефакторить
 ######################
 market =
+  styles :
+    init : () ->
+      style_tags = document.getElementsByTagName('code')
+      css = ''
+
+      for s in style_tags
+        css = css.concat( s.innerHTML )
+
+      style_dom = document.createElement('style')
+      style_dom.type = "text/css"
+      style_dom.appendChild(document.createTextNode(css))
+      head = document.getElementsByTagName('head')
+      head[0].appendChild(style_dom)
 
   init_colorpickers : () ->
     $('.js-custom-color').each () ->
 
+      current_value = $(this).attr 'data-current-value'
+
       cb = ( _this ) ->
         i = Math.random()
         _this.ColorPicker
-      	  color: '#0000ff'
+      	  color: current_value
       	  onShow: (colpkr) ->
       	    $(colpkr).fadeIn(500)
       	  onHide: (colpkr) ->
@@ -704,8 +916,7 @@ market =
   img :
 
     init_upload : () ->
-
-      $('.w-async-image-upload').bind "change", () ->
+      $('.w-async-image-upload').unbind("change").bind "change", () ->
 
         relatedFieldId = $(this).attr 'data-related-field-id'
         form_data = new FormData()
@@ -761,13 +972,14 @@ market =
           return false
 
       save_crop : ( form_dom ) ->
-        offset_x = parseInt( this.crop_tool_img_dom.css('left').replace('px', '') ) || 0
-        c_offset_x = this.container_offset_x
-        offset_x = offset_x - parseInt c_offset_x
 
-        offset_y = parseInt( this.crop_tool_img_dom.css('top').replace('px', '') ) || 0
+        offset_x = parseInt( $('#imgCropTool img').css('left').replace('px', '') ) || 0
+        c_offset_x = this.container_offset_x
+        #offset_x = offset_x - parseInt c_offset_x
+
+        offset_y = parseInt( $('#imgCropTool img').css('top').replace('px', '') ) || 0
         c_offset_y = this.container_offset_y
-        offset_y = offset_y - parseInt c_offset_y
+        #offset_y = offset_y - parseInt c_offset_y
 
         ci = this.crop_tool_img_dom
 
@@ -780,11 +992,17 @@ market =
         offset_x = sw * offset_x / rw
         offset_y = sh * offset_y / rh
 
+        console.log 'offset_x : ' + offset_x
+        console.log 'offset_y : ' + offset_y
+
         target_offset = "+" + Math.round( Math.abs(offset_x) ) + "+" + Math.round(Math.abs(offset_y))
+
         target_size = rw + 'x' + rh
 
         tw = parseInt this.crop_tool_dom.attr 'data-width'
         th = parseInt this.crop_tool_dom.attr 'data-height'
+
+        resize = rw*2 + 'x' + rh*2
 
         if sw / sh > tw / th
           ch = sh
@@ -797,6 +1015,7 @@ market =
         crop_size = Math.round( cw ) + 'x' + Math.round( ch )
 
         jQuery('input[name=crop]', form_dom).val( crop_size + target_offset )
+        jQuery('input[name=resize]', form_dom).val( resize )
 
         form_dom1 = $('#imgCropTool form')
         image_name = this.image_name
@@ -885,13 +1104,48 @@ market =
         success : ( data ) ->
           $('.js-pre-price').html data
 
+      this.tabs.refine_counters()
+
+    tabs :
+      init : () ->
+        ## табы с разными типами нод
+        $('.mt-tab').bind 'click', () ->
+          mt = $(this).attr 'data-member-type'
+          $('.mt-block').hide()
+          $('.mt-tab').removeClass 'advs-form-block__tabs-single-tab_active'
+          $(this).addClass 'advs-form-block__tabs-single-tab_active'
+          $('.mt-' + mt + '-block').show()
+
+        this.refine_counters()
+
+      refine_counters : () ->
+        $('.mt-tab').each () ->
+          mt = $(this).attr 'data-member-type'
+
+          active_nodes = $('.mt-' + mt + '-block .advs-nodes__node_active').length
+
+          mt_tab_counter_c = $('.mt-tab-' + mt + '-counter-c')
+          mt_tab_counter = $('.mt-tab-' + mt + '-counter')
+
+          console.log mt + ' : ' + active_nodes
+
+          if active_nodes != 0
+            mt_tab_counter_c.show()
+            mt_tab_counter.html active_nodes
+          else
+            mt_tab_counter_c.hide()
+            mt_tab_counter.html 0
+
+
     submit : () ->
       $('#advsFormBlock form').submit()
 
     init : () ->
 
-      $('.js-datepicker').each () ->
+      this.tabs.init()
 
+      ## Datepickers
+      $('.js-datepicker').each () ->
         $(this).datetimepicker
           lang:'ru'
           i18n:
@@ -904,6 +1158,18 @@ market =
       $('#advsSubmitButton').bind 'click', () ->
         market.adv_form.submit()
       $('#advsFormBlock input').bind 'change', () ->
+        cf_id = $(this).attr 'data-connected-field'
+        cf = $('#' + cf_id)
+        if typeof cf_id != 'undefined'
+          if $(this).is(':checked')
+            cf.addClass 'advs-nodes__node_active'
+            cf.find('.advs-nodes__node-dates').removeClass 'advs-nodes__node-dates_hidden'
+            cf.find('.advs-nodes__node-options').removeClass 'advs-nodes__node-options_hidden'
+          else
+            cf.removeClass 'advs-nodes__node_active'
+            cf.find('.advs-nodes__node-dates').addClass 'advs-nodes__node-dates_hidden'
+            cf.find('.advs-nodes__node-options').addClass 'advs-nodes__node-options_hidden'
+
         market.adv_form.update_price()
 
   ##############################
@@ -925,8 +1191,8 @@ market =
 
             if is_with_auto_crop == true
               console.log 'необходим авто кроп'
-
             $('#adFormBlockPreview').html data
+            market.styles.init()
             $('.js-mvbl').draggable
               stop : () ->
                 connected_input = $(this).attr 'data-connected-input'
@@ -1013,20 +1279,86 @@ market =
 
     init : () ->
 
+      $('#promoOfferForm').bind 'submit', () ->
+
+        tinyMCE.triggerSave()
+        tinyMCE.remove()
+
+        $('.tinymce_editor, .tinymce .select-color').hide()
+
+        data = $('.js-tinymce').val()
+        data = data.replace /<p(.*?)><\/p>/g, "<p$1>&nbsp;</p>"
+        data = data.replace /<span(.*?)><\/span>/g, "<span$1>&nbsp;</span>"
+
+        $('.js-tinymce').val data
+        $('#promoOfferForm').unbind 'submit'
+
+        console.log $('.js-tinymce').val()
+
+        submit_cb = () ->
+          $('#promoOfferForm').submit()
+
+        setTimeout submit_cb, 1
+
+        return false
+
       tinymce.init(
         selector:'textarea.js-tinymce',
         width: 615,
         height: 300,
         menubar: false,
         statusbar : false,
-        plugins: 'link, textcolor, paste',
-        toolbar: ["fontselect | fontsizeselect | alignleft aligncenter alignright | bold italic | forecolor backcolor | link" ],
-        content_css: "/assets/stylesheets/market/descr.css",
+        plugins: 'link, textcolor, paste, colorpicker',
+        toolbar: ["styleselect | fontsizeselect | alignleft aligncenter alignright | bold italic | colorpicker | link | removeformat" ],
+        content_css: '/assets/stylesheets/market/descr.css',
+        fontsize_formats: '10px 12px 14px 16px 18px 22px 26px 30px 34px 38px 42px 46px 50px 54px 58px 62px 66px 70px 74px 80px 84px',
 
+        style_formats: [
+          {title: 'Favorit Light Cond C Regular', inline: 'span', styles: { 'font-family':'favoritlightcondcregular'}},
+          {title: 'Favorit Cond C Bold', inline: 'span', styles: { 'font-family':'favoritcondc-bold-webfont'}},
+          {title: 'Helios Thin', inline: 'span', styles: { 'font-family':'heliosthin'}},
+          {title: 'Helios Cond Light', inline: 'span', styles: { 'font-family':'helioscondlight-webfont'}},
+          {title: 'Helios Ext Black', inline: 'span', styles: { 'font-family':'HeliosExtBlack'}},
+          {title: 'PF Din Text Comp Pro Medium', inline: 'span', styles: { 'font-family':'PFDinTextCompPro-Medium'}},
+          {title: 'Futur Fut C', inline: 'span', styles: { 'font-family':'futurfutc-webfont'}},
+          {title: 'Pharmadin Condensed Light', inline: 'span', styles: { 'font-family':'PharmadinCondensedLight'}},
+          {title: 'Newspaper Sans', inline: 'span', styles: { 'font-family':'newspsan-webfont'}},
+          {title: 'Rex Bold', inline: 'span', styles: { 'font-family':'rex_bold-webfont'}},
+          {title: 'Perforama', inline: 'span', styles: { 'font-family':'perforama-webfont'}},
+          {title: 'Decor C', inline: 'span', styles: { 'font-family':'decorc-webfont'}},
+          {title: 'BlocExt Cond', inline: 'span', styles: { 'font-family':'blocextconc-webfont'}},
+          {title: 'Bodon Conc', inline: 'span', styles: { 'font-family':'bodonconc-webfont'}},
+          {title: 'Confic', inline: 'span', styles: { 'font-family':'confic-webfont'}}
+        ],
+
+        language: 'RU_ru'
+
+        font_size_style_values : '1px,2px',
         setup: (editor) ->
           editor.on 'init', (e) ->
             market.ad_form.set_descr_editor_bg()
       )
+
+      ## Предпросмотр карточки с описанием
+      $('.js-ad-preview-button').bind 'click', () ->
+        tinyMCE.triggerSave()
+
+        data = $('.js-tinymce').val()
+        data = data.replace /<p(.*?)><\/p>/g, "<p$1>&nbsp;</p>"
+        data = data.replace /<span(.*?)><\/span>/g, "<span$1>&nbsp;</span>"
+
+        $('.js-tinymce').val data
+
+        $.ajax
+          url : $('.js-ad-block-full-preview-action').val()
+          method : 'post'
+          data : $('#promoOfferForm').serialize()
+          success : ( data ) ->
+            $('#popupsContainer').html '<div class="ad-full-preview" id="adFullPreview"><div class="sio-mart-showcase">' + data + '</div></div>'
+            $('#adFullPreview .sm-block').addClass 'double-size'
+            cbca.popup.showPopup 'adFullPreview'
+
+        return false
 
       $(document).on 'change', '#ad_descr_bgColor', (e)->
         market.ad_form.set_descr_editor_bg()
@@ -1085,12 +1417,18 @@ market =
 
 
   init: () ->
+
+    $(document).bind 'keyup', ( event ) ->
+      if event.keyCode == 27
+        cbca.popup.hidePopup()
+
     this.ad_form.init()
     $(document).ready () ->
       market.img.init_upload()
       market.resize_preview_photos()
       market.mart.init()
       market.adv_form.init()
+      market.styles.init()
 
 market.init()
 window.market=market

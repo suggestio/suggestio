@@ -10,6 +10,7 @@ GET  /assets/*file                      controllers.Assets.at(path="/public", fi
 
 # Home page
 GET  /                                  controllers.Application.index
+GET  /xd_server                         controllers.Application.xd_server
 GET  /search                            controllers.Application.search
 GET  /change_locale/:locale             controllers.Application.change_locale(locale:String)
 
@@ -17,8 +18,6 @@ GET  /thumb/get/$dkey<[-_\w\d~.]+>/$imageId<[-_\w\d]+>     controllers.Img.getTh
 GET  /search/site                       controllers.Search.siteSearchGET
 
 # ident: логины/логауты
-GET  /login2/persona                    controllers.Ident.persona
-POST /login2/persona                    controllers.Ident.persona_submit
 GET  /login2/email_pw                   controllers.Ident.emailPwLoginForm
 POST /login2/email_pw                   controllers.Ident.emailPwLoginFormSubmit
 GET  /logout2                           controllers.Ident.logout
@@ -31,6 +30,7 @@ POST /ident/pw/r/reset/:eActId          controllers.Ident.pwResetSubmit(eActId)
 # ident: Сменить пароль
 GET  /ident/pw/change                   controllers.Ident.changePassword
 POST /ident/pw/change                   controllers.Ident.changePasswordSubmit
+GET  /ident/rdr/me/somewhere            controllers.Ident.rdrUserSomewhere
 
 ## Callback'и инсталляторов и валидаторов сайтов.
 POST /js/add_domain                             controllers.Js.addDomain
@@ -58,6 +58,8 @@ POST    /blog/edit/:id                  controllers.Blog.editRecSubmit(id:String
 GET     /help                           controllers.Static.help
 GET     /help/:page                     controllers.Static.helpPage(page)
 
+# Генератор капч
+GET     /captcha/get/:captchaId         controllers.Captcha.getCaptcha(captchaId)
 
 # Админка. Адресация первого sioweb почти сохранена.
 GET  /admin                             controllers.Admin.index
@@ -76,7 +78,7 @@ POST /feedback                          controllers.Feedback.feedbackFormSubmit
 
 # Входы в личные кабинеты
 GET  /m                                 controllers.MarketLk.lkIndex
-POST /m                                 controllers.MarketLk.emailPwLoginFormSubmit
+POST /m/login                           controllers.MarketLk.emailPwLoginFormSubmit
 GET  /m/lk                              controllers.MarketLk.lkList
 GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
 GET  /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNode(adnId)
@@ -93,6 +95,7 @@ GET  /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteA
 POST /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
 # Супервайзинг рекламных карточек на подчинённых узлах
 GET  /m/lk/adn/:adnId/3adv/:adId        controllers.MarketAdv.advInfoWnd(adId, adnId)
+GET  /m/lk/xadv/wnd/:adId                controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None)
 POST /m/lk/adn/slave/:adnId/set/tla     controllers.MarketLkAdn.setSlaveTopLevelAvailable(adnId)
 GET  /m/lk/adn/ad/slave/:adId           controllers.MarketLkAdnSlaveAd.showSlaveAd(adId)
 POST /m/lk/adn/ad/slave/:adId/hide      controllers.MarketLkAdnSlaveAd.slaveAdHideFormSubmit(adId)
@@ -101,14 +104,14 @@ GET  /m/lk/adn/:adnId/_ads              controllers.MarketLkAdnSlaveAd._showSlav
 GET  /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialog(adId)
 POST /m/lk/adn/ad/slave/:adId/publish   controllers.MarketLkAdnSlaveAd.adPublishDialogSubmit(adId)
 # Адвертайзинг: размещение рекламы на узлах-получателях
-GET  /m/lk/adv/:adId/ctl                controllers.MarketAdv.advForAd(adId)
-POST /m/lk/adv/:adId/ctl                controllers.MarketAdv.advFormSubmit(adId)
-POST /m/lk/adv/:adId/price              controllers.MarketAdv.getAdvPriceSubmit(adId)
-GET  /m/lk/advs/:adnId                  controllers.MarketAdv.showNodeAdvs(adnId)
+GET  /m/lk/xadv/:adId/ctl                controllers.MarketAdv.advForAd(adId)
+POST /m/lk/xadv/:adId/ctl                controllers.MarketAdv.advFormSubmit(adId)
+POST /m/lk/xadv/:adId/price              controllers.MarketAdv.getAdvPriceSubmit(adId)
+GET  /m/lk/xadvs/:adnId                  controllers.MarketAdv.showNodeAdvs(adnId)
 # Размещение рекламы: обработка запросов размещения.
-GET  /m/lk/advs/req/:advReqId           controllers.MarketAdv._showAdvReq(advReqId: Int)
-POST /m/lk/advs/req/:advReqId/refuse    controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int)
-POST /m/lk/advs/req/:advReqId/accept    controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int)
+GET  /m/lk/xadvs/req/:advReqId           controllers.MarketAdv._showAdvReq(advReqId: Int)
+POST /m/lk/xadvs/req/:advReqId/refuse    controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int)
+POST /m/lk/xadvs/req/:advReqId/accept    controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int)
 
 # Личный кабинет владельца ТЦ
 GET  /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopForm(martId)
@@ -123,7 +126,7 @@ POST /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAcceptSub
 POST /m/lk/ad/:adId/delete              controllers.MarketAd.deleteSubmit(adId)
 GET  /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAd(adnId)
 POST /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAdSubmit(adnId)
-POST /m/lk/ap/:adnId/preview            controllers.MarketAdPreview.adFormPreviewSubmit(adnId)
+POST /m/lk/ap/:adnId/preview            controllers.MarketAdPreview.adFormPreviewSubmit(adnId, isFull: Boolean)
 POST /m/lk/ap/:adnId/edit/block         controllers.MarketAdPreview.adBlockSwitchEditor(adnId)
 POST /m/lk/ai/:blockId/:fn              controllers.MarketAdPreview.prepareBlockImg(blockId: Int, fn: String)
 POST /m/lk/sa/:adId/update/show         controllers.MarketAd.updateShowLevelSubmit(adId)
@@ -143,7 +146,7 @@ GET  /m/c/usr/c/:catId/dc               controllers.MarketCategory.directSubcats
 
 # Управление промо-офферами (для арендатора и для владельца ТЦ).
 GET  /m/lk/s/:shopId/offers             controllers.MarketOffer.showShopPromoOffers(shopId: String)
-GET  /m/lk/offer/promo/add/:shopId      controllers.MarketOffer.addPromoOfferForm(shopId: String)
+GET  /m/lk/poffer/add/:shopId           controllers.MarketOffer.addPromoOfferForm(shopId: String)
 # promo-offer'ы (poffer)
 POST /m/lk/poffer/add/:shopId           controllers.MarketOffer.addPromoOfferFormSubmit(shopId: String)
 POST /m/lk/poffer/:offerId/delete       controllers.MarketOffer.deletePromoOfferSubmit(offerId)
@@ -161,17 +164,29 @@ POST /img/crop                          controllers.Img.imgCropSubmit
 
 # market
 GET  /market/index/:adnId               controllers.Market.martIndex(adnId)
+GET  /market/index_all/:adnId           controllers.Market.allMyAdsIndex(adnId)
 GET  /market/site/:adnId                controllers.Market.demoWebSite(adnId)
-GET  /market/ads/:adnId                 controllers.Market.findAds(adnId, a: util.qsb.AdSearch)
+GET  /market/site_all/:adnId            controllers.Market.allMyAdsSite(adnId)
+GET  /market/script/:adnId              controllers.Market.nodeSiteScript(adnId)
+GET  /market/ads                        controllers.Market.findAds(a: AdSearch)
 POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)
 
 # market+join: Присоединение к sio-market.
-GET  /market/join/wifi/qs               controllers.MarketJoin.joinQuestionsForm(j: Option[util.qsb.SMJoinAnswers] ?= None)
-POST /market/join/wifi/qs               controllers.MarketJoin.joinQuestionsFormSubmit
-GET  /market/join/wifi                  controllers.MarketJoin.joinForm(j: util.qsb.SMJoinAnswers)
-POST /market/join/wifi                  controllers.MarketJoin.joinFormSubmit(j: util.qsb.SMJoinAnswers)
+GET  /market/join/wifi/qs               controllers.MarketJoin.wifiJoinQuestionsForm(j: Option[SMJoinAnswers] ?= None)
+POST /market/join/wifi/qs               controllers.MarketJoin.wifiJoinQuestionsFormSubmit
+GET  /market/join/wifi                  controllers.MarketJoin.wifiJoinForm(j: SMJoinAnswers)
+POST /market/join/wifi                  controllers.MarketJoin.wifiJoinFormSubmit(j: SMJoinAnswers)
+GET  /market/join/success               controllers.MarketJoin.joinRequestSuccess
+GET  /market/join/xadv                  controllers.MarketJoin.joinAdvRequest
+POST /market/join/xadv                  controllers.MarketJoin.joinAdvRequestSubmit
 
-GET  /sys                               controllers.Sys.index
+GET  /market/about                      controllers.Market.aboutMarket
+
+# Раздача текстов договора sio market.
+GET  /m/contract/:clang                 controllers.Market.contractOfferText(clang)
+
+# /sys/index вместо /sys для решения проблем с rewrite в nginx, который слэши в правилах как-то по-своему трактует.
+GET  /sys/index                         controllers.Sys.index
 GET  /sys/dkeys/all                     controllers.Sys.dkeysListAll
 GET  /sys/dkey/:dkey                    controllers.Sys.dkeyShow(dkey)
 GET  /sys/dkey/:dkey/search             controllers.Sys.dkeySearch(dkey)
@@ -197,7 +212,7 @@ POST /sys/inx2/create/dflt/mart         controllers.Sys.inx2createDfltMart
 GET  /sys/market                        controllers.SysMarket.index
 # sys.market.company
 GET  /sys/market/companies              controllers.SysMarket.companiesList
-GET  /sys/market/company/add            controllers.SysMarket.companyAddForm
+GET  /sys/market/company/add            controllers.SysMarket.companyAddForm(c: Option[MCompany] ?= None)
 POST /sys/market/company/add            controllers.SysMarket.companyAddFormSubmit
 GET  /sys/market/company/:id/edit       controllers.SysMarket.companyEditForm(id: String)
 POST /sys/market/company/:id/edit       controllers.SysMarket.companyEditFormSubmit(id: String)
@@ -270,4 +285,16 @@ POST /sys/cal/new                        controllers.SysCalendar.createCalendarS
 GET  /sys/cal/edit/:calId                controllers.SysCalendar.editCalendar(calId)
 POST /sys/cal/edit/:calId                controllers.SysCalendar.editCalendarSubmit(calId)
 GET  /sys/cal/get/:calId                 controllers.SysCalendar.getCalendarXml(calId)
+
+## sys: invreq - обработка входящих реквестов на подключение.
+GET  /sys/ir                             controllers.SysMarketInvReq.index
+GET  /sys/ir/show/:irId                  controllers.SysMarketInvReq.showIR(irId)
+POST /sys/ir/delete/:irId                controllers.SysMarketInvReq.deleteIR(irId)
+
+## sys: mdr - модерация контента
+GET  /sys/mdr                            controllers.SysMdr.index
+GET  /sys/mdr/freeAdvs                   controllers.SysMdr.freeAdvs(a: MdrSearchArgs ?= MdrSearchArgs(), hideAdId: Option[String] ?= None)
+GET  /sys/mdr/freeAdv/:adId              controllers.SysMdr.freeAdvMdr(adId)
+POST /sys/mdr/freeAdv/:adId/accept       controllers.SysMdr.freeAdvMdrAccept(adId)
+POST /sys/mdr/freeAdv/:adId/ban          controllers.SysMdr.freeAdvMdrBan(adId)
 

@@ -17,13 +17,47 @@ object SqlModelStatic {
   val boolColumnParser = get[Boolean]("bool")
 }
 
-trait SqlModelStatic[T] {
+
+trait SqlModelStaticMinimal[T] {
 
   /** Парсер ряда. */
   val rowParser: RowParser[T]
 
   /** Название таблицы. Используется при сборке sql-запросов. */
   val TABLE_NAME: String
+
+
+  /** Прочитать всю таблицу. */
+  def getAll(implicit c: Connection): List[T] = {
+    SQL("SELECT * FROM " + TABLE_NAME)
+      .as(rowParser *)
+  }
+
+  /** Произвольный поиск с доступом к блокировкам.
+    * Генерится запрос на базе "select * from ..." и отправляется на исполнение.
+    * @param afterFrom SQL-часть запроса, идущая после "FROM %TABLE_NAME%". В частности пустая строка.
+    * @param policy Политика блокировки.
+    * @param args Аргументы SQL-запроса. Тоже самое, что и в SQL.on().
+    * @return Список экземпляров модели в произвольном либо заданном порядке.
+    */
+  def findBy(afterFrom: String, policy: SelectPolicy, args: NamedParameter*)(implicit c: Connection) = {
+    val sb = new StringBuilder("SELECT * FROM ").append(TABLE_NAME).append(afterFrom)
+    policy.append2sb(sb)
+    SQL(sb.toString())
+      .on(args: _*)
+      .as(rowParser *)
+  }
+
+
+  /** Блокировка таблицы на запись в целях защиты от добавления рядов. */
+  def lockTableWrite(implicit c: Connection) {
+    SQL("LOCK TABLE " + TABLE_NAME + " IN ROW EXCLUSIVE MODE")
+      .executeUpdate()
+  }
+}
+
+
+trait SqlModelStatic[T] extends SqlModelStaticMinimal[T] {
 
   /**
    * Прочитать ряд по ключу ряда.
@@ -75,26 +109,6 @@ trait SqlModelStatic[T] {
     }
   }
 
-  /** Прочитать всю таблицу. */
-  def getAll(implicit c: Connection): List[T] = {
-    SQL("SELECT * FROM " + TABLE_NAME)
-      .as(rowParser *)
-  }
-
-  /** Произвольный поиск с доступом к блокировкам.
-    * Генерится запрос на базе "select * from ..." и отправляется на исполнение.
-    * @param afterFrom SQL-часть запроса, идущая после "FROM %TABLE_NAME%". В частности пустая строка.
-    * @param policy Политика блокировки.
-    * @param args Аргументы SQL-запроса. Тоже самое, что и в SQL.on().
-    * @return Список экземпляров модели в произвольном либо заданном порядке.
-    */
-  def findBy(afterFrom: String, policy: SelectPolicy, args: NamedParameter*)(implicit c: Connection) = {
-    val sb = new StringBuilder("SELECT * FROM ").append(TABLE_NAME).append(afterFrom)
-    policy.append2sb(sb)
-    SQL(sb.toString())
-      .on(args: _*)
-      .as(rowParser *)
-  }
 }
 
 

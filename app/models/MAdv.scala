@@ -18,22 +18,52 @@ object MAdv {
   import SqlParser._
 
   val ADV_MODE_PARSER = get[String]("mode").map(MAdvModes.withName)
-
   val AMOUNT_PARSER = get[Float]("amount")
-
   val CURRENCY_CODE_PARSER = get[String]("currency_code")
-  val CURRENCY_PARSER = CURRENCY_CODE_PARSER.map { cc =>
-    Currency.getInstance(cc)
-  }
-
+  val CURRENCY_PARSER = CURRENCY_CODE_PARSER.map { Currency.getInstance }
   val PROD_ADN_ID_PARSER = get[String]("prod_adn_id")
+  val AD_ID_PARSER = get[String]("ad_id")
 
-  /** Базовый парсер для колонок таблиц ad7ing_*. */
-  val ROW_PARSER_BASE = get[Pk[Int]]("id") ~ get[String]("ad_id") ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
-    get[DateTime]("date_created") ~ get[Option[Float]]("comission") ~ ADV_MODE_PARSER ~ get[Boolean]("on_start_page") ~
+  /** Базовый парсер для колонок таблиц adv_* для колонок, которые идут слева, т.е. появились до создания дочерних таблиц. */
+  val ADV_ROW_PARSER_LEFT = get[Pk[Int]]("id") ~ AD_ID_PARSER ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
+    get[DateTime]("date_created") ~ get[Option[Float]]("comission") ~ ADV_MODE_PARSER ~
     get[DateTime]("date_start") ~ get[DateTime]("date_end") ~ PROD_ADN_ID_PARSER ~ get[String]("rcvr_adn_id")
 
+  val SHOW_LEVELS_PARSER = get[Set[String]]("show_levels") map { _.map(AdShowLevels.withNameTyped) }
+  def ADV_ROW_PARSER_RIGHT = SHOW_LEVELS_PARSER
+
   val COUNT_PARSER = get[Long]("c")
+
+  implicit def modes2strs(modes: Traversable[MAdvMode]): Traversable[String] = {
+    modes.map(_.toString)
+  }
+
+  /**
+   * Найти все ad_id (id рекламных карточек), ряды которых имеют указанные режимы и которые ещё не
+   * истекли по date_end.
+   * @param modes Режимы, по которым искать-перебирать.
+   * @return Список ad_id в неопределённом порядке, но без дубликатов.
+   */
+  def findAllNonExpiredAdIdsForModes(modes: Set[MAdvMode])(implicit c: Connection): List[String] = {
+    SQL("SELECT DISTINCT ad_id FROM adv WHERE mode = ANY({modes}) AND date_end <= now()")
+      .on('modes -> strings2pgArray(modes))
+      .as(AD_ID_PARSER *)
+  }
+
+
+  /**
+   * Найти все id рекламных карточек, которые относятся к актуальным рядам между указанными
+   * продьюсером и ресивером.
+   * @param modes в каких таблицах искать.
+   * @param prodId id продьюсера.
+   * @param rcvrId id ресивера.
+   * @return Список ad_id без дубликатов в неопределённом порядке.
+   */
+  def findActualAdIdsBetweenNodes(modes: Set[MAdvMode], prodId: String, rcvrId: String)(implicit c: Connection): List[String] = {
+    SQL("SELECT DISTINCT ad_id FROM adv WHERE mode = ANY({modes}) AND prod_adn_id = {prodId} AND rcvr_adn_id = {rcvrId} AND date_end >= now()")
+      .on('modes -> strings2pgArray(modes), 'prodId -> prodId, 'rcvrId -> rcvrId)
+      .as(MAdv.AD_ID_PARSER *)
+  }
 }
 
 
@@ -46,16 +76,19 @@ trait MAdvI { madvi =>
   def dateCreated   : DateTime
   def id            : Pk[Int]
   def mode          : MAdvMode
-  def onStartPage   : Boolean
   def dateStatus    : DateTime
   def dateStart     : DateTime
   def dateEnd       : DateTime
   def prodAdnId     : String
   def rcvrAdnId     : String
+  def showLevels    : Set[AdShowLevel]
 
-  def amountWithComission: Float = comission.fold(amount)(amount * _)
+  //def onStartPage = showLevels contains AdShowLevels.LVL_START_PAGE
+
+  def amountMinusComission: Float = comission.fold(amount)(comission => amount * (1.0F - comission))
+  def comissionAmount: Float =  comission.fold(amount)(amount * _)
   def advTerms = new AdvTerms {
-    override def onStartPage = madvi.onStartPage
+    override def showLevels = madvi.showLevels
     override def dateEnd: LocalDate = madvi.dateStart.toLocalDate
     override def dateStart: LocalDate = madvi.dateEnd.toLocalDate
   }
@@ -67,6 +100,8 @@ object MAdvModes extends Enumeration {
   val OK      = Value("o")
   val REQ     = Value("r")
   val REFUSED = Value("e")
+
+  def busyModes = Set(OK, REQ)
 }
 
 
@@ -77,10 +112,8 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
    * @param adId id рекламной карточки, которую размещают.
    * @return Список найленных рядов в неопределённом порядке.
    */
-  def findByAdId(adId: String)(implicit c: Connection): List[T] = {
-    SQL("SELECT * FROM " + TABLE_NAME + " WHERE ad_id = {adId}")
-      .on('adId -> adId)
-      .as(rowParser *)
+  def findByAdId(adId: String, limit: Int = 100, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(" WHERE ad_id = {adId} LIMIT {limit}", policy, 'adId -> adId, 'limit -> limit)
   }
 
   /**
@@ -88,8 +121,38 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
    * @param adId id рекламной карточки.
    * @return Список подходящих под запрос рядов в произвольном порядке.
    */
-  def findNotExpiredByAdId(adId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
-    findBy(" WHERE ad_id = {adId} AND now() <= date_end", policy, 'adId -> adId)
+  def findNotExpiredByAdId(adId: String, policy: SelectPolicy = SelectPolicies.NONE, limit: Int = 100)(implicit c: Connection): List[T] = {
+    findBy(" WHERE ad_id = {adId} AND now() <= date_end LIMIT {limit}", policy, 'adId -> adId, 'limit -> limit)
+  }
+
+  def findNotExpiredRelatedTo(adnId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(" WHERE prod_adn_id = {adnId} OR rcvr_adn_id = {adnId} AND date_end >= now()", policy, 'adnId -> adnId)
+  }
+
+  /**
+   * Найти все id рекламных карточек, которые относятся к актуальным рядам между указанными
+   * продьюсером и ресивером.
+   * @param prodId id продьюсера.
+   * @param rcvrId id ресивера.
+   * @return Список ad_id без дубликатов в неопределённом порядке.
+   */
+  def findActualAdIdsBetweenNodes(prodId: String, rcvrId: String)(implicit c: Connection): List[String] = {
+    SQL("SELECT DISTICT ad_id FROM " + TABLE_NAME + " WHERE prod_adn_id = {prodId} AND rcvr_adn_id = {rcvrId} AND date_end >= now()")
+      .on('prodId -> prodId, 'rcvrId -> rcvrId)
+      .as(MAdv.AD_ID_PARSER *)
+  }
+
+  /**
+   * Есть ли в таблице ряды, которые относятся к указанной комбинации adId и rcvrId, и чтобы были
+   * действительны по времени.
+   * @param adId id рекламной карточки.
+   * @param rcvrId id узла-ресивера.
+   * @return true, если есть хотя бы один актуальный ряд для указанных adId и rcvrId. Иначе false.
+   */
+  def hasNotExpiredByAdIdAndRcvr(adId: String, rcvrId: String)(implicit c: Connection): Boolean = {
+    SQL("SELECT count(*) > 0 AS bool FROM " + TABLE_NAME + " WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId} AND now() <= date_end LIMIT 1")
+      .on('adId -> adId, 'rcvrId -> rcvrId)
+      .as(SqlModelStatic.boolColumnParser single)
   }
 
   /**
@@ -99,8 +162,14 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
    * @param policy Политика блокировок.
    * @return Список подходящих рядов в неопределённом порядке.
    */
-  def findByAdIdAndRcvr(adId: String, rcvrId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
-    findBy(" WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId}", policy, 'adId -> adId, 'rcvrId -> rcvrId)
+  def findByAdIdAndRcvr(adId: String, rcvrId: String, policy: SelectPolicy = SelectPolicies.NONE, limit: Option[Int] = None)(implicit c: Connection): List[T] = {
+    var sql1 = " WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId}"
+    var args1: List[NamedParameter] = List('adId -> adId, 'rcvrId -> rcvrId)
+    if (limit.isDefined) {
+      sql1 += " LIMIT {limit}"
+      args1 ::= 'limit -> limit.get
+    }
+    findBy(sql1, policy, args1 : _*)
   }
 
   def findByAdIdAndRcvrs(adId: String, rcvrIds: Traversable[String], policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
@@ -158,12 +227,23 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
     findBy(" WHERE date_created + {createdInPeriod} <= now()", policy, 'createdInPeriod -> createdInPeriod)
   }
 
+  /** Найти последнюю актуальную запись, касающуюся указанной рекламной карточки, размещаемой на указанном ресивере.
+    * @param adId id рекламной карточки.
+    * @param rcvrId id ресивера.
+    * @return Опциональный результат.
+    */
+  def getLastActualByAdIdRcvr(adId: String, rcvrId: String)(implicit c: Connection): Option[T] = {
+    SQL("SELECT * FROM " + TABLE_NAME + " WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId} AND date_end >= now() ORDER BY id DESC LIMIT 1")
+      .on('adId -> adId, 'rcvrId -> rcvrId)
+      .as(rowParser *)
+      .headOption
+  }
 }
 
 
 /** Условия размещения с точки зрения юзера. */
 trait AdvTerms {
-  def onStartPage: Boolean
+  def showLevels: Set[AdShowLevel]
   def dateStart: LocalDate
   def dateEnd: LocalDate
 }

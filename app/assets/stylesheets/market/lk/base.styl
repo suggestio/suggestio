@@ -7,14 +7,6 @@
 
 .lk
 
-  .logo-2
-    text-decoration: none
-    display: block
-    width: 120px
-    height: 124px
-    margin: 0 auto 40px
-    background: url('/assets/images/market/lk/logo-2.png') no-repeat
-
   .header-wrap
     background: #23313d
     position: relative
@@ -27,6 +19,7 @@
       margin: 0 auto
 
       .logo
+        margin-left: 7px
         margin-top: 5px
         display: block
         text-decoration: none
@@ -97,6 +90,7 @@
             li:hover
               color: #676666
               text-decoration: underline
+
   .body-wrap
     min-width: 1000px
     min-height: 100%
@@ -110,9 +104,26 @@
       border-bottom: 1px solid #9a9b9b
 
       .center
+        position: relative
         padding-top: 15px
         width: 1000px
         margin: 0 auto
+
+        .adn-title-buttons
+          position: absolute
+          top: 3px
+          right: 50px
+
+          .gray-but-wrap
+
+            a
+              padding: 7px 15px 3px
+
+        .title-inner
+          font-size: 30px
+          color: #676666
+          font-family: 'PFDinTextCompPro-Medium'
+          padding-left: 50px
 
     .status-bar
       position: absolute
@@ -138,6 +149,9 @@
       padding-bottom: 60px
       padding-top: 130px
 
+    .body_width-auto
+      width: auto
+
   .footer-wrap
     min-width: 1000px
     height: 60px
@@ -152,10 +166,17 @@
 
       .copyright-block
         padding-right: 5px
-        border-right: 1px solid #a8c3cb
+        padding-left: 62px
         color: #a8c3cb
         font-size: 12px
         font-family: 'Arial'
+
+        a
+          color: #a8c3cb
+          text-decoration: none
+
+        a:hover
+          text-decoration: underline
 
       .socials
         margin-right: 50px
@@ -176,3 +197,28 @@
           background-position: 0 0
         .tw
           background-position: 0 -65px
+
+
+.body-wrap_responsive-mode
+  min-width: 320px !important
+
+.body_responsive-mode
+  width: auto !important
+  max-width: 1000px
+
+.body_padding-top-80
+  padding-top: 80px !important
+
+.header-wrap_responsive-mode
+  min-width: 320px !important
+
+.header_responsive-mode
+  width: auto !important
+  max-width: 1000px
+
+.footer-wrap_responsive-mode
+  min-width: 320px !important
+
+.footer_responsive-mode
+  width: auto !important
+  max-width: 1000px

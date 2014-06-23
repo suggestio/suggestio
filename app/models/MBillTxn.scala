@@ -32,10 +32,10 @@ object MBillTxn extends SqlModelStatic[MBillTxn] {
   /**
    * Найти все транзакции для указанного контракта.
    * @param contractId id контракта.
-   * @return Список транзакций в порядке их появления.
+   * @return Список транзакций, новые сверху.
    */
   def findForContract(contractId: Int)(implicit c: Connection): List[MBillTxn] = {
-    SQL("SELECT * FROM " + TABLE_NAME + " WHERE contract_id = {contractId} ORDER BY id ASC")
+    SQL("SELECT * FROM " + TABLE_NAME + " WHERE contract_id = {contractId} ORDER BY id DESC")
       .on('contractId -> contractId)
       .as(rowParser *)
   }

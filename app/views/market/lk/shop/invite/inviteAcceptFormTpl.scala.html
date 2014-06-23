@@ -1,11 +1,10 @@
-@(mshop: MAdnNode, eAct: EmailActivation, iaf: Form[_], withRegister:Boolean)(implicit ctx: util.Context)
+@(mshop: MAdnNode, eAct: EmailActivation, iaf: Form[_], withRegister:Boolean, withOfferText: Boolean)(implicit ctx: util.Context)
 
 @* Страница с формой окончания invite-регистрации магазина. Тут можно ввести пароль и подправить имя магазина. *@
 @import ctx._
 @import market.lk._
 @import helper._
-
-@import util.FormHelpers._
+@import util.FC.tdFc
 
 @lkBase("Подтверждение регистрации") {
 
@@ -20,32 +19,18 @@
 
   <div class="body">
 
-
-    <div class="hello-message" id="hello-message">
-      <div class="accept">
-        Вы приглашены к участию в сиетеме Sio.Market
-      </div>
-      <h2>
-        Правила
-      </h2>
-      <p>
-        Для участников системы существует лишь одно правило &mdash; ответственное оформление рекламных карточек.
-      </p>
-      @*<h2>
-        Формат передачи данных
-      </h2>
-      <p>
-      </p>
-      *@
-
-      <div class="gray-but-wrap" style="margin-top: 50px;">
-        <div class="white-border-top">
-          <a class="btn" href="#" id="create-your-market-btn">СОЗДАЙТЕ СВОЙ МАРКЕТ</a>
-        </div>
-      </div>
+    <div class="success-label success-label__adn-invite-accept">
+      <div class="success-label__icon"></div>
+      <div class="success-label__title">Вы приглашены к участию в сиетеме Sio.Market</div>
     </div>
 
-    <div class="create-your-market" id="create-your-market" style="display: none;">
+    @* Рендер текста открытой оферты. *@
+    @if(withOfferText) {
+      @market.contract._inviteWidgetTpl()
+    }
+
+
+    <div class="create-your-market">
       @form(routes.MarketShopLk.inviteAcceptSubmit(eaId=eAct.id.get, shopId=eAct.key)) {
         @* Имя магазина *@
         <table cellpadding="0" cellspacing="0" class="input-wrap big">
@@ -127,7 +112,7 @@
         }
 
         <div class="submit-wrap">
-          <div class="gray-but-wrap" style="margin-top: 50px; margin-left: 120px;">
+          <div class="gray-but-wrap" style="margin-top: 25px; margin-bottom: 25px; margin-left: 120px;">
             <div class="white-border-top">
               <input class="btn" type="submit" value="@Messages("ПРОДОЛЖИТЬ")"/>
             </div>

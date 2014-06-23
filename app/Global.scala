@@ -3,6 +3,7 @@ import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
 import io.suggest.model.EsModel
 import org.elasticsearch.client.Client
 import play.api.mvc.{Result, WithFilters, RequestHeader}
+import util.captcha.CipherUtil
 import scala.concurrent.{Await, Future, future}
 import scala.util.{Failure, Success}
 import util.jmx.JMXImpl
@@ -37,6 +38,8 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
    */
   override def onStart(app: Application) {
     super.onStart(app)
+    ensureScryptNoJni()
+    // Запускаем супервизора
     SiowebSup.startLink
     // Запускать es-клиент при старте, ибо подключение к кластеру ES это занимает некоторое время.
     val fut = future {
@@ -51,6 +54,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
     JMXImpl.registerAll()
     // Блокируемся, чтобы не было ошибок в браузере и консоли из-за асинхронной работы с ещё не запущенной системой.
     val startTimeout: FiniteDuration = (app.configuration.getInt("start.timeout_sec") getOrElse 32).seconds
+    CipherUtil.ensureBcJce()
     Await.ready(fut, startTimeout)
     synchronized {
       cronTimers = Crontab.startTimers
@@ -113,14 +117,17 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
   def resetSuperuserIds(implicit client: Client): Future[_] = {
     import _root_.models._
     val logPrefix = "resetSuperuserIds(): "
-    Future.traverse(MPersonIdent.SU_EMAILS) { email =>
-      MozillaPersonaIdent.getById(email) flatMap {
+    val se = MPersonIdent.SU_EMAILS
+    trace(s"${logPrefix}There are ${se.size} superuser emails: [${se.mkString(", ")}]")
+    Future.traverse(se) { email =>
+      EmailPwIdent.getById(email) flatMap {
         // Суперюзер ещё не сделан. Создать MPerson и MPI для текущего email.
         case None =>
           val logPrefix1 = s"$logPrefix[$email] "
           info(logPrefix1 + "Installing new sio superuser...")
           MPerson(lang = "ru").save.flatMap { personId =>
-            MozillaPersonaIdent(email=email, personId=personId).save.map { mpiId =>
+            val pwHash = MPersonIdent.mkHash(email)
+            EmailPwIdent(email=email, personId=personId, pwHash = pwHash).save.map { mpiId =>
               info(logPrefix1 + s"New superuser installed as $personId. mpi=$mpiId")
               personId
             }
@@ -132,13 +139,30 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
     } andThen {
       case Success(suPersonIds) =>
         MPerson.setSuIds(suPersonIds.toSet)
-        info(logPrefix + suPersonIds.length + " superusers installed successfully")
+        trace(logPrefix + suPersonIds.length + " superusers installed successfully")
 
       case Failure(ex) =>
         error(logPrefix + "Failed to install superusers", ex)
     }
   }
 
+
+  /** Запрещаем бородатому scrypt'у грузить в jvm нативную amd64-либу, ибо она взрывоопасна без перекомпиляции
+    * под свежие libcrypto (пакет openssl):
+    *
+    * Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+    * C  [libcrypto.so.1.0.0+0x6c1d7]  SHA256_Update+0x157
+    *
+    * Java frames: (J=compiled Java code, j=interpreted, Vv=VM code)
+    *   com.lambdaworks.crypto.SCrypt.scryptN([B[BIIII)[B+0
+    *   com.lambdaworks.crypto.SCrypt.scrypt([B[BIIII)[B+14
+    *   com.lambdaworks.crypto.SCryptUtil.check(Ljava/lang/String;Ljava/lang/String;)Z+118
+    * @see com.lambdaworks.jni.LibraryLoaders.loader(). */
+  private def ensureScryptNoJni() {
+    val scryptJniProp = "com.lambdaworks.jni.loader"
+    if (System.getProperty(scryptJniProp) != "nil")
+      System.setProperty(scryptJniProp, "nil")
+  }
 }
 
 

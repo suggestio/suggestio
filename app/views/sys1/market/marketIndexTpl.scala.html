@@ -3,32 +3,59 @@
 @* Список ссылок на страницы управления магазинной частью. *@
 @import MMartCategory._
 
+
+@* Подшаблон генерации квадратной кнопки. *@
+@btn(href: Call, paddingPx: Int, font: Int = 24)(btnText: Html)(afterBtn: Html) = {
+  <div class="sys-market-index__item">
+
+    <a class="transparent-btn transparent-btn_gray" href="@href">
+      <div class="transparent-btn__white-top" style="padding: @{paddingPx}px 0;">
+        <span class="transparent-btn_gray__text font-@font">@btnText</span>
+      </div>
+    </a>
+
+    @afterBtn
+  </div>
+}
+
+
 @marketBase("index") {
-  <p>
-    Страница маркета содержит ссылки на административные страницы, касающие магазинной части.
-  </p>
 
-  <p>
-    <a href="@routes.SysMarket.companiesList">Все компании</a>,
-    <a class="add" href="@routes.SysMarket.companyAddForm">+добавить</a>
-  </p>
+    <p>
+      Страница маркета содержит ссылки на административные страницы, касающие магазинной части.
+    </p>
 
-  <p>
-    <a href="@routes.SysMarket.adnNodesList()">ADNetwork</a>,
-    <a class="add" href="@routes.SysMarket.createAdnNode()">+добавить узел верхнего уровня</a>
-    <br/>
-  </p>
+    <div class="sys-market-index__items">
+      <div class="ovh">
+        @btn(routes.SysMarket.companiesList(), 40) { ВСЕ<br/>КОМПАНИИ } {
 
-  <p>
-    <a href="@routes.SysMarketBilling.index">Биллинг</a>
-  </p>
+          <a href="@routes.SysMarket.companyAddForm()" class="green-btn-new sys-market-index__btn">
+            <span class="btn"></span>
+            +добавить компанию
+          </a>
 
-  <p>
-    <a href="@routes.SysMarket.showYmCats">YM-категории</a>,
-    <a href="@routes.MarketCategory.showCatsFor(DEFAULT_OWNER_ID)">Глобальные категории</a><br/>
-  </p>
+        }
+        @btn(routes.SysMarket.adnNodesList(), 52) { ADNetwork } {
 
-  <p>
-    <a href="@routes.SysCalendar.showCalendars">Календари праздников/выходных</a>
-  </p>
+          <a href="@routes.SysMarket.createAdnNode()" class="green-btn-new sys-market-index__btn">
+            <span class="btn"></span>
+            +добавить узел верхнего уровня
+          </a>
+
+        }
+        @btn(routes.SysMarketBilling.index(), 52) { БИЛЛИНГ } { }
+        @btn(routes.MarketCategory.showCatsFor(DEFAULT_OWNER_ID), 40) { ГЛОБАЛЬНЫЕ<br/>КАТЕГОРИИ } {
+
+          <a href="@routes.SysMarket.showYmCats" class="blue-btn-new sys-market-index__btn">
+            <span class="btn"></span>
+            YM-категории
+          </a>
+
+        }
+        @btn(routes.SysCalendar.showCalendars, 28) { КАЛЕНДАРИ<br/>ПРАЗДНИКОВ/<br/>ВЫХОДНЫХ } { }
+      </div>
+      @btn(routes.SysMarketInvReq.index, 28) { ЗАПРОСЫ<br/>ПОДКЛЮЧЕНИЯ<br/>К СЕТИ } { }
+      @btn(routes.SysMdr.index, 52) { Модерация } { }
+    </div>
+
 }

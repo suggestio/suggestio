@@ -1,7 +1,41 @@
 @()(implicit ctx: Context)
 
+@import market._
+
 @* Страница сообщает о проблеме при восстановлении пароля. *@
 
-Ключ восстановления истёк или уже использован. Невозможно продолжить восстановление пароля.
+@popupContent = {
+
+<div class="popup recover-failed-popup" id="newPasswordForm">
+
+  <div class="hat">
+    <a class="close" href="#">&nbsp;</a>
+  </div>
+
+  <div class="content recover-failed-popup__content">
+
+    <div class="popup-title popup-title_without_padding">
+      НОВЫЙ ПАРОЛЬ
+    </div>
+
+    <div class="error-label">
+      <div class="error-label__icon"></div>
+      <div class="error-label__title">Ошибка</div>
+    </div>
+
+    <p>Ключ восстановления истёк или уже использован. Невозможно продолжить восстановление пароля.</p>
+
+    <p>
+      <a class="js-btn blue-link" href="@routes.Ident.recoverPwForm">Восстановить пароль?</a>
+    </p>
+
+  </div>
+
+</div>
+
+}
+
+@marketBase(Messages("Password.reset"), popupContent = Some(popupContent)) {
+}
 
 

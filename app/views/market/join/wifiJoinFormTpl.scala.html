@@ -1,28 +1,53 @@
-@(smja: util.qsb.SMJoinAnswers, jf: Form[_])(implicit ctx: Context)
+@(smja: SMJoinAnswers, jf: Form[_])(implicit ctx: Context)
 
 @* Форма для ввода данных запроса регистрации рекламного узла. *@
 
 @import ctx._
 @import helper._
+@import util.FC.tdFc
 
 @joinBase("Стать участником сети") {
 
-  <a href="@routes.MarketJoin.joinQuestionsForm(Option(smja))">Назад</a>
+  <div class="header-wrap">
 
-  @form(routes.MarketJoin.joinFormSubmit(smja)) {
+    <div class="center">
 
-    @inputText(jf("company"), '_label -> (Messages("Company") + ":"))
+      <a class="logo" href="/m/lk">
+        <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
+      </a>
 
-    @textarea(jf("audienceDescr"), '_label -> (Messages("Audience.descr") + ":"))
+    </div>
 
-    @inputText(jf("dailyTraffic"), '_label -> (Messages("Daily.people.traffic") + ":"))
+  </div>
 
-    @inputText(jf("address"), '_label -> (Messages("Address") + ":"))
+  <div class="body-wrap wave-pattern">
 
-    @inputText(jf("siteUrl"), '_label -> (Messages("Site") + ":"))
+    <div class="title-wrap">
 
-    @inputText(jf("phone"), '_label -> (Messages("Office.phone.number") + ":"))
+      <div class="center">
+        <a class="back-but" href="@routes.MarketJoin.wifiJoinQuestionsForm(Option(smja))">&nbsp;</a>
+        <div class="title-inner">
+          РАЗМЕСТИТЬ РЕКЛАМУ
+        </div>
+      </div>
 
-    <input type="submit" value="@Messages("Request.invite")"/>
-  }
+    </div>
+
+    <div class="body">
+
+      <div class="ovh">
+
+        @_joinReqFormTpl(
+          jf = jf,
+          btnClass = "green",
+          submitCall = routes.MarketJoin.wifiJoinFormSubmit(smja),
+          isWifi = true
+        )
+
+      </div>
+
+    </div>
+
+  </div>
+
 }

@@ -24,25 +24,30 @@ transform(v)
 .clear
   clear: both
 
-@css {
-  @import url(http://fonts.googleapis.com/css?family=PT+Sans+Narrow:700,400&subset=cyrillic-ext,latin-ext);
-
-}
-
+screen1024 = 'screen and (max-width: 1024px)'
 lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
 .colorpicker
   z-index: 10000000!important
 
-@font-face
-    font-family: 'ParagNorCIta'
-    src: url('/assets/fonts/market/DINCondensedC/PFDinTextCompPro-Medium.eot')
-    src: url('/assets/fonts/market/DINCondensedC/PFDinTextCompPro-Medium.eot?#iefix') format('embedded-opentype'),
-         url('/assets/fonts/market/DINCondensedC/PFDinTextCompPro-Medium.woff') format('woff'),
-         url('/assets/fonts/market/DINCondensedC/PFDinTextCompPro-Medium.ttf') format('truetype'),
-         url('/assets/fonts/market/DINCondensedC/PFDinTextCompPro-Medium.svg#pf_din_text_comp_promedium') format('svg')
-    font-weight: normal
-    font-style: normal
+
+i
+ font-style: italic
+
+u
+ text-decoration: underline
+
+blockquote
+ padding-left: 30px
+
+ul
+  padding-left: 30px
+
+li
+  list-style: disc
+
+.ovh
+  overflow: hidden
 
 .lk
   .body
@@ -50,8 +55,8 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     font-family: 'Arial'
     color: #676666
 
-  .ovh
-    overflow: hidden
+  .abs
+    position: absolute
 
   h5
     color: #676666
@@ -59,20 +64,6 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     font-weight: bold
     font-family: 'Arial'
     margin: 25px 0
-
-  strong
-    font-weight: bold
-
-  .font-12
-    font-size: 12px
-    font-family: 'Arial'
-
-  .font-16
-    font-size: 16px
-    font-family: 'Arial'
-
-  .gray
-    color: #959595
 
   .f-left
     float: left
@@ -192,7 +183,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
       input
         outline: 0
         padding: 0 10px
-        width: 80%
+        width: 100%
         height: 35px
         font-size: 16px
         color: #959595
@@ -218,6 +209,10 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     border: 1px solid #e23131
 
     input
+      background: #F3B0B0
+      color: white
+
+    textarea
       background: #F3B0B0
       color: white
 
@@ -303,49 +298,6 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
         font-family: 'Arial'
         color: #b4b4b4
 
-  .body-wrap
-
-    .title-wrap
-
-      .center
-        position: relative
-
-        .adn-title-buttons
-          position: absolute
-          top: 3px
-          right: 50px
-
-          .gray-but-wrap
-
-            a
-              padding: 7px 15px 3px
-
-        .title-inner
-          font-size: 30px
-          color: #676666
-          font-family: 'ParagNorCIta'
-          padding-left: 50px
-
-        .back-but
-          display: block
-          margin-left: 11px
-          margin-right: 15px
-          width: 35px
-          height: 35px
-          float: left
-          text-decoration: none
-          background: url('/assets/images/market/lk/back-but.png') no-repeat
-          background-position: 0 -85px
-        .back-but:hover
-          background-position: 0 0
-
-  .error-label
-    background: url('/assets/images/market/lk/error-icon.png') no-repeat left center
-    padding-left: 50px
-    height: 50px
-    margin-bottom: 30px
-    margin-left: -50px
-
   .close
     float: right
     width: 17px
@@ -358,31 +310,39 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   .close:active
     background-position: 0 1px
 
-  .popup
-    display: none
-    position: absolute
-    left: 50%
-    z-index: 20000
-  .overlay
+  .popups-container
     display: none
     position: fixed
     top: 0
     left: 0
-    z-index: 5
+    z-index: 40
     width: 100%
     height: 100%
+    overflow-y: scroll
+    background: rgba(0,0,0,0.5)
+
+  .popup
+    display: none
+    position: absolute
+    top: 25px
+    left: 50%
+    z-index: 20000
+
+  .overlay
+    display: none
+    position: absolute
+    top: 0
+    left: 0
+    z-index: 5
+    width: 100%
     background: black
     opacity: 0.5
-
-  .submit-wrap
-    overflow: hidden
-    width: 100%
 
   .popup
     width: 488px
     margin-left: -249px
     background: #e1e1e1
-    border-radius(10px)
+    border-radius(6px)
 
     .hat
       background: #efefef
@@ -398,7 +358,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
         padding-bottom: 25px
         color: #676666
         font-size: 30px
-        font-family: 'ParagNorCIta'
+        font-family: 'PFDinTextCompPro-Medium'
         text-align: center
 
       .ad-preview
@@ -519,57 +479,6 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   .triger-wrap.enabled
     .circle
       transform( translate3d(27px, 0, 0))
-
-  .login-page
-    font-size: 14px
-    font-family: "Arial"
-    width: 600px
-    margin: -70px auto 0
-
-    p
-      margin: 13px 0
-
-    .lp-title
-      font-size: 30px
-      color: #676666
-      font-family: 'ParagNorCIta'
-      text-align: center
-      padding: 20px 0 10px
-
-    .block-480
-      margin-left: 120px
-
-    .recover-password
-      color: #bebebe
-      text-align: right
-      font-size: 12px
-
-      a
-        color: #07a1ca
-        text-decoration: none
-
-      a:hover
-        text-decoration: underline
-
-    .login-but-wrap
-      position: relative
-      text-align: center
-      margin-top: 25px
-
-      .border-line
-        position: absolute
-        top: 50%
-
-      .login-but
-        position: relative
-        z-index: 1
-        background: #E1E1E1
-        margin: 0 auto
-        width: 152px
-
-      input
-        position: relative
-        z-index: 2
 
   .lk-list
     .item
@@ -791,7 +700,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
       .value.big
         font-size: 24px
         color: #23313d
-        font-family: 'ParagNorCIta'
+        font-family: 'PFDinTextCompPro-Medium'
 
 
     .transactions-list
@@ -811,14 +720,15 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
 
 @import "../reset"
+@import "fonts"
 @import "base"
 @import "main-page"
 @import "new-shop"
-@import "edit-mart"
 @import "edit-shop"
 @import "ads-list"
 @import "cbca-select"
 @import "buttons"
+@import "text-styles"
 
 /* Кнопки */
 .green-but-big
@@ -843,9 +753,21 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   background-position: 0 0
 
 .sm-note
-  padding: 0px
+  position: relative
+  padding: 10px 0px
   font-size: 12px
   color: #959595
+
+.sm-note__q-mark
+  color: #208bae
+  font-family: Arial
+  font-size: 13px
+  padding: 0px
+  cursor: help
+  border-bottom: 1px #208bae solid
+
+.sm-note__message
+  display: none
 
 .sm-note__link
   color: #5088aa
@@ -867,7 +789,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   color: #676666
 
 .sm-large-button
-  font-family: 'ParagNorCIta'
+  font-family: 'PFDinTextCompPro-Medium'
   border: 1px #9c9c9c solid
   color: #676666
   text-decoration: none
@@ -890,9 +812,24 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
 .sm-large-button:active
   color: #676666
+
   span
     background: #cfcfcf
     box-shadow(inset 0px 0px 14px #a9a9a9)
+
+.sm-large-button_disabled
+  opacity: 0.5
+  cursor: default
+
+.sm-large-button_disabled:hover
+  color: #676666
+
+.sm-large-button_disabled:active
+  color: #676666
+
+  span
+    background: #e2e1e1
+    box-shadow: none
 
 
 /* Разные окошки, которые нужно отображать поверх всего */
@@ -905,6 +842,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   height: 100%
   z-index: 10000
   overflow-y: scroll
+  background: rgba(0, 0, 0, 0.6)
 
 .lk-overlay-data__window
   width: 700px
@@ -916,6 +854,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 .market-crop-tool__container
   border: 1px #ccc solid
   overflow: hidden
+  position: relative
 
 /* Мелкая ссылка */
 .lk-small-link
@@ -1086,6 +1025,9 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
     border: 1px #ccc solid
     margin-top: 5px
     color: #000
+
+.lk-field-tools__editor.lk-color-select
+  width: 30px
 
 .lk-field-tools__editor_align-editor
   padding-top: 4px
@@ -1366,6 +1308,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   border-bottom: 3px #208bae solid
 
 .advs-form-block__tabs-single-tab
+  cursor: pointer
   background: #dad9d9
   font-family: Arial
   font-size: 14px
@@ -1383,8 +1326,23 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   border-radius-topright: 10px
 
 .advs-form-block__tabs-single-tab_active
+  cursor: default
   background: #208bae
   color: #e1e1e1
+
+
+/*************************/
+/* Предпросмотр карточки */
+/*************************/
+.ad-full-preview
+  position: relative
+  width: 624px
+  margin: 0px auto
+  padding: 20px 0px
+
+  .sio-mart-showcase
+    position: relative
+
 
 /*********************************/
 /* Статусы рассмотрения карточек */
@@ -1410,6 +1368,20 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 .advs-statuses__status-icon_declined
   background-position: -340px -43px
 
+.advs-statuses_in-popup
+  width: 535px
+  padding-left: 30px
+  color: #676666
+  font-size: 12px
+
+.advs-statuses__status_in-popup
+  padding: 10px 0px 10px 30px
+
+.advs-statuses__status__date
+  color: #959595
+
+.advs-statuses__transactions-btn
+  margin: 20px 0
 
 /* Блок с подтверждением размешения карточки */
 
@@ -1429,7 +1401,6 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 /* Список источников / приемников */
 .advs-nodes
   border: 1px #b2b2b2 solid
-  border-bottom: 0px
 
 .advs-nodes__node
   position: relative
@@ -1437,11 +1408,17 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   background: #fff
   border-bottom: 1px #cbcbcb solid
 
+.advs-nodes__node:last-child
+  border-bottom: none !important
+
 .advs-nodes__node_even
   background: #f5f5f5
 
 .advs-nodes__node_active
   background: #d6fecf
+
+.advs-nodes_lk-mode
+  margin: 25px 0
 
 .advs-nodes__node-link
   font-family: Arial
@@ -1449,12 +1426,43 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
   color: #4f88a9
   text-decoration: none
 
+.advs-nodes__node-link:hover
+  text-decoration: underline
+
+.advs-nodes__hat
+  color: #efefef
+  position: relative
+  padding: 12px 16px
+  background: #cbcbcb
+  border-bottom: 1px #b2b2b2 solid
+
 .advs-nodes__node-options
   position: absolute
   width: 200px
   right: 20px
   top: 12px
   font-size: 12px
+  color: #676666
+  padding-bottom: 20px
+
+.advs-nodes__node-options_hidden
+  display: none
+
+.advs-nodes__node-dates
+  color: #959595
+  font-family: Arial
+  font-size: 12px
+  padding: 12px 0px 5px 6px
+
+.advs-nodes__node-dates_hidden
+  display: none
+
+.advs-node-dates__elt
+  float: left
+  padding: 5px 10px
+.advs-node-dates__input
+  width: 70px
+  border: 1px #b2b2b2 solid
   color: #676666
 
 .lk-adv-reqs-count
@@ -1488,7 +1496,7 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 .advertising-requests_item
   float: left
   margin-bottom: 20px
-  margin-right: 70px
+  margin-right: 40px
 
   .ads-list-block__link:hover
     background-color: black
@@ -1521,4 +1529,379 @@ lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 .adv-req-wind_price
   color: #23313d !important
   font-family: 'PT Sans Narrow','sans-serif'
+  font-weight: bold
   font-size: 24px
+
+.daily-mmps-window
+  width: 908px !important
+  margin-left: -454px !important
+
+
+.login-page_content
+  font-size: 14px
+  font-family: "Arial"
+  width: 275px
+  margin: 0 auto
+  text-align: center
+
+.login-page__logo
+  text-decoration: none
+  display: block
+  width: 65px
+  height: 93px
+  margin: 0 auto
+  background: url('/assets/images/market/lk/logo-2.png') no-repeat
+  background-size: 65px 93px
+
+.wifi-icon
+  display: inline-block
+  background: url('/assets/images/market/lk/wifi-icon.png') no-repeat
+  background-size: 50px 35px
+  width: 50px
+  height: 35px
+
+.login-page__wifi_block
+  position: absolute
+  bottom: 80px
+  left: 50%
+  margin-left: -104px
+  color: #23313d
+
+  p
+    margin: 13px 0
+
+.login-page_enter_btn
+  margin-right: 22px
+  margin-top: 30px
+
+
+.login-popup__submit-wrap
+  margin-top: 40px
+  text-align: center
+
+.login-popup__recover-password
+  padding-left: 20px
+  color: #959595
+  text-align: left
+  font-family: 'Arial'
+  font-size: 12px
+
+  a
+    color: #07a1ca
+    text-decoration: none
+
+  a:hover
+    text-decoration: underline
+
+.popup-title
+  padding-bottom: 25px
+  color: #676666
+  font-size: 30px
+  font-family: 'PFDinTextCompPro-Medium'
+  text-align: center
+
+.popup-title_without_padding
+  padding: 0
+
+.popup__back-btn
+  display: block
+  background: url('/assets/images/market/lk/popup-back.png') no-repeat
+  background-position: 0 -67px
+  width: 21px
+  height: 17px
+
+.popup__back-btn:hover
+  background-position: 0 0
+
+.popup__back-btn:active
+  background-position: 0 1px
+
+.lk-field
+  margin-bottom: 10px
+
+.lk-field__name
+  font-family: 'Arial'
+  font-size: 12px
+  line-height: 12px
+  color: #959595
+
+.lk-error
+  color: #e23131
+
+.recover-popup
+  font-family: 'Arial'
+  font-size: 14px
+  color: #959595
+
+.recover-popup__content
+  height: 270px
+
+.recover-popup__submit-wrap
+  margin-top: 50px
+  text-align: center
+
+.recover-failed-popup__content
+  height: 270px
+  font-family: 'Arial'
+  font-size: 14px
+  color: #676666
+
+  .error-label
+    margin-left: 10px
+    margin-top: 45px
+
+  p
+    margin-top: 18px
+    margin-bottom: 18px
+    margin-left: 70px
+
+.error-label
+  overflow: hidden
+
+.error-label__icon
+  float: left
+  background: url('/assets/images/market/lk/error-icon.png') no-repeat left center
+  width: 45px
+  height: 46px
+
+.error-label__title
+  padding-top: 12px
+  padding-left: 15px
+  overflow: hidden
+  font-family: 'Arial'
+  font-size: 18px
+  font-weight: bold
+  color: #e24a4a
+  text-shadow(1px 1px 1px white)
+
+.paragraph-13
+  margin: 13px 0
+
+.success-label
+  overflow: hidden
+
+.success-label__icon
+  float: left
+  background: url('/assets/images/market/lk/ok.png') no-repeat left center
+  width: 53px
+  height: 49px
+
+.success-label__title
+  padding-top: 12px
+  padding-left: 15px
+  overflow: hidden
+  font-family: 'Arial'
+  font-size: 18px
+  font-weight: bold
+  color: #48ab38
+  text-shadow(1px 1px 1px white)
+
+.success-label__adn-invite-accept
+  margin-left: -65px
+  margin-top: 25px
+  margin-bottom: 25px
+
+.wifi-page__left-column
+  float: left
+  width: 350px
+
+.wifi-page__mid-column
+  float: left
+  width: 350px
+  margin-left: 20px
+
+.wifi-page__right-column
+  float: left
+  margin-left: 20px
+  width: 350px
+
+.visibility-hidden
+  visibility: hidden
+
+.hidden
+  display: none
+
+.quiz__td
+  vertical-align: middle
+
+.quiz__checkbox-wrap
+  padding: 10px 20px
+
+.js-quiz__checkbox
+  margin-right: 15px
+
+.join-success
+  margin-top: 30px
+
+.pargraph_join-success
+  padding-left: 70px
+
+.wave-pattern
+  background: url('/assets/images/market/lk/wave-pattern.png') repeat !important
+
+.blue-pattern
+  background-color: #23313D !important
+  background-image: url('/assets/images/market/lk/blue patern_retina.png') !important
+  background-repeat: repeat
+  background-size: 500px 333px !important
+
+.back-but
+  display: block
+  margin-left: 11px
+  margin-right: 15px
+  width: 35px
+  height: 35px
+  float: left
+  text-decoration: none
+  background: url('/assets/images/market/lk/back-but.png') no-repeat
+  background-position: 0 -85px
+.back-but:hover
+  background-position: 0 0
+.back-but:active
+  background-position: 0 1px
+
+.back-but_centered
+  position: relative
+  float: none
+  margin: 0 auto
+  top: 10px
+
+.about-page
+  margin-bottom: 40px
+  color: white
+  font-family: "heliosthin"
+  font-size: 24px
+  line-height: 24px
+  text-align: center
+
+.about-page__title
+  font-family: "aa_higherup-webfont"
+  font-size: 42px
+  line-height: 40px
+  letter-spacing: 2px
+
+.about-page__title__big-btn
+  font-size: 48px
+  line-height: 46px
+
+.about-page__circle-wrap
+  display: inline-block
+  margin: 25px 0
+  padding: 6px
+  background-color: rgba( 107, 126, 133, 0.5)
+  border-radius(50%)
+
+.about-page__circle
+  display: inline-block
+  padding: 90px 20px 80px
+  width: 232px
+  height: 96px
+  border-radius(50%)
+  border: 1px solid white
+
+.dot
+  background: url('/assets/images/market/lk/dot.png') no-repeat
+  width: 8px
+  height: 8px
+
+.dot-arrow
+  background: url('/assets/images/market/lk/dot&arrow.png') no-repeat
+  width: 19px
+  height: 28px
+
+.about-page__dot
+  margin: 0 auto 10px
+
+.about-page__dot-arrow
+  margin: 10px auto 0
+
+.about-page__under-btn
+  font-family: 'Arial'
+  color: #6b7e85
+  font-size: 12px
+
+.submit-wrap
+  overflow: hidden
+  width: 100%
+
+.submit-wrap_padding10
+  padding: 10px 0
+
+.market-base
+  position: relative
+  min-height: 650px
+
+
+.common-login
+  width: 475px
+  margin: 0 auto
+
+.common-login__logo
+  display: block
+  margin: 0 auto
+  background: url('/assets/images/market/lk/common_login_logo.png') no-repeat
+  width: 120px
+  height: 124px
+
+.common-login__title
+  font-family: 'PFDinTextCompPro-Medium'
+  font-size: 30px
+  line-height: 30px
+  text-align: center
+  color: #676666
+  margin-bottom: 15px
+
+.common-login__input
+  margin-left: -120px
+  width: 595px !important
+
+.common-login__password-recover
+  text-align: center
+  padding-left: 0
+
+.common-login__submit-wrap
+  position: relative
+  height: 34px
+
+.common-login__submit
+  position: relative
+  display: inline-block
+  margin: 0 auto
+  padding: 0 15px
+  z-index: 5
+
+.common-login__submit__line
+  position: absolute
+  margin-top: -1px
+  top: 50%
+  left: 0
+
+.contract_invite-form
+  height: 400px
+  padding: 15px
+  overflow-y: scroll
+  overflow-x: hidden
+
+.contract-page
+  overflow: hidden
+
+.contract__h1
+  margin: 15px 0
+  font-size: 20px
+  text-align: center
+
+.contract-widget
+  margin-bottom: 25px
+
+.contract-widget__input
+  margin-right: 10px
+  margin-top: 10px
+  margin-bottom: 10px
+
+@media screen1024
+
+  .about-page
+    font-size: 16px
+
+  .about-page__circle
+    font-size: 24px
