@@ -37,6 +37,7 @@ siomart =
   ## Забиндить оконные события
   bind_window_events : () ->
     resize_cb = () ->
+      window.scrollTo(0,0)
       if typeof siomart.window_resize_timer != 'undefined'
         clearTimeout siomart.window_resize_timer
 
@@ -1055,6 +1056,8 @@ siomart =
 
     this.is_market_loaded = false
     ## Далее идет асинхронное считывание значения is_market_closed_by_user
+
+    window.scrollTo 0,0
 
     console.log 'check startup options and start'
     this.storage.requestValue "is_market_closed_by_user", (key, value) ->
