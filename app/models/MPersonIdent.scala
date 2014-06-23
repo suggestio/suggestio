@@ -35,8 +35,11 @@ object MPersonIdent extends PlayMacroLogsImpl {
     // id'шники суперюзеров sio можно указыват через конфиг, но мыльники должны быть в известных доменах.
     current.configuration.getStringSeq("sio.superuser.emails")
       .map {
-        _.view.filter {
-          email => email.endsWith("@cbca.ru") || email.endsWith("@shuma.ru")
+        _.view.filter { email =>
+          val result = email.endsWith("@cbca.ru") || email.endsWith("@shuma.ru")
+          if (!result)
+            warn("SU_EMAILS(): Superuser email ignored: " + email + " : Invalid domain or other problem.")
+          result
         }
       }
       .getOrElse(Seq(

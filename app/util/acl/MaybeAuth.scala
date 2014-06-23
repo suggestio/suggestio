@@ -30,7 +30,3 @@ trait MaybeAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
 }
 
 object MaybeAuth extends MaybeAuthAbstract with ExpireSession[AbstractRequestWithPwOpt]
-
-/** Тоже самое, что MaybeAuth, но без Session expire. Полезно при обслуживании статического контента,
-  * связанного со страницей. */
-object MaybeAuthNds extends MaybeAuthAbstract
