@@ -736,3 +736,70 @@ input.gray-but-small
 
 .captcha-reload-btn:active
   margin-bottom: 12px
+
+
+/* refactoring to MCSS */
+
+/********************************************************************************************************************/
+/* SioMarket default action btn */
+/********************************************************************************************************************/
+
+siomAcBtnHoverGradient(innerColor, defColor)
+  background: #feffff
+  background: -moz-radial-gradient(center, ellipse cover,  #feffff 0%, innerColor 0%, defColor 100%)
+  background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,#feffff), color-stop(0%,innerColor), color-stop(100%,defColor))
+  background: -webkit-radial-gradient(center, ellipse cover,  #feffff 0%,innerColor 0%,defColor 100%)
+  background: -o-radial-gradient(center, ellipse cover,  #feffff 0%,innerColor 0%,defColor 100%)
+  background: -ms-radial-gradient(center, ellipse cover,  #feffff 0%,innerColor 0%,defColor 100%)
+  background: radial-gradient(ellipse at center,  #feffff 0%,innerColor 0%,defColor 100%)
+
+siomAcBtnDefColor = #48ab38
+siomAcBtnColor2 = #4f88a9
+
+.siom-ac-btn
+  display: inline-block
+  cursor: pointer
+  text-decoration: none
+  text-align: center
+  text-shadow(1px 1px 1px #363636)
+
+.siom-ac-btn._def-color
+  color: white
+  background: siomAcBtnDefColor
+
+.siom-ac-btn._def-color:hover
+  siomAcBtnHoverGradient(#67CE52, siomAcBtnDefColor)
+
+.siom-ac-btn._def-color:active
+  background: siomAcBtnDefColor
+  box-shadow(0 0 30px 0 #2e7921 inset)
+  color: #a4c59e
+
+.siom-ac-btn._color-2
+  color: white
+  background: siomAcBtnColor2
+
+.siom-ac-btn._color-2:hover
+  siomAcBtnHoverGradient(#62AAD1, siomAcBtnColor2)
+
+.siom-ac-btn._color-2:active
+  background: siomAcBtnColor2
+  box-shadow(0 0 30px 0 #30607c inset)
+  color: #a9beca
+
+.siom-ac-btn._size-M
+  padding: 10px 25px
+
+.siom-ac-btn._size-M:active
+  padding: 11px 15px 9px
+
+.siom-ac-btn._size-XL
+  padding: 10px 0
+  width: 100%
+
+.siom-ac-btn._size-XL:active
+  padding: 11px 0 9px
+
+.siom-ac-btn._ft-M
+  font-size: 14px
+  font-family: 'Arial'
