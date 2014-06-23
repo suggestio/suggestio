@@ -150,6 +150,18 @@ siomart =
       _t._requests[data.id].callback(data.key, data.value)
       delete _t._requests[data.id]
 
+  #########################
+  ## History Api navigation
+  #########################
+  history :
+    is_supported : () ->
+      !!(window.history && history.pushState);
+
+    init : () ->
+      if !this.is_supported()
+        console.log 'history api not supported'
+        return false
+
   ########
   ## Утиль
   ########
@@ -1052,6 +1064,9 @@ siomart =
 
     ## Забиндить оконные события
     this.bind_window_events()
+
+    ## Инициализировать history api
+    this.history.init()
 
     this.is_market_loaded = false
     ## Далее идет асинхронное считывание значения is_market_closed_by_user
