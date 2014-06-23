@@ -21,7 +21,7 @@ object Href extends MergeBindAccAOBlock[String] {
     maxLen = 512
   ) {
     override def mappingBase = FormUtil.urlStrM
-    override def getOptionalStrictMapping = FormUtil.urlStrOptM
+    override def getOptionalStrictMapping = FormUtil.urlStrOptTolerantM
   }
 
   /** Обновить указанный изменяемый AOBlock с помощью текущего значения ссылки. */

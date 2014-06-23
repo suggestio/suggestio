@@ -176,6 +176,22 @@ object FormUtil {
     .verifying("mappers.url.invalid_url", isValidUrl(_))
   val urlStrOptM = optional(urlStrM)
 
+  /** Толерантный к проблемам маппинг ссылки. */
+  val urlStrOptTolerantM: Mapping[Option[String]] = optional(text)
+    .transform[Option[String]] (
+      {sOpt =>
+        sOpt.flatMap { s =>
+          val st = strTrimSanitizeF(s)
+          if (isValidUrl(st))
+            Some(st)
+          else
+            None
+        }
+      },
+      identity
+    )
+
+
   /** Маппер form-поля с ссылкой в java.net.URL. */
   val urlMapper = urlStrM
     .transform(new URL(_), {url:URL => url.toExternalForm})

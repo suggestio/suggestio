@@ -184,7 +184,7 @@ object MarketAd extends SioController with TempImgSupport {
   }
 
   /** Выдать множество допустимых id блоков в контексте узла. */
-  private def blockIdsFor(adnNode: MAdnNode): Set[Int] = {
+  def blockIdsFor(adnNode: MAdnNode): Set[Int] = {
     val seq1 = BlocksConf.valuesShown.map(_.id).toSet
     val ids0 = adnNode.conf.withBlocks
     if (ids0.isEmpty) {
