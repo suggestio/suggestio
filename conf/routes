@@ -78,7 +78,7 @@ POST /feedback                          controllers.Feedback.feedbackFormSubmit
 
 # Входы в личные кабинеты
 GET  /m                                 controllers.MarketLk.lkIndex
-POST /m                                 controllers.MarketLk.emailPwLoginFormSubmit
+POST /m/login                           controllers.MarketLk.emailPwLoginFormSubmit
 GET  /m/lk                              controllers.MarketLk.lkList
 GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
 GET  /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNode(adnId)
@@ -185,7 +185,8 @@ GET  /market/about                      controllers.Market.aboutMarket
 # Раздача текстов договора sio market.
 GET  /m/contract/:clang                 controllers.Market.contractOfferText(clang)
 
-GET  /sys                               controllers.Sys.index
+# /sys/index вместо /sys для решения проблем с rewrite в nginx, который слэши в правилах как-то по-своему трактует.
+GET  /sys/index                         controllers.Sys.index
 GET  /sys/dkeys/all                     controllers.Sys.dkeysListAll
 GET  /sys/dkey/:dkey                    controllers.Sys.dkeyShow(dkey)
 GET  /sys/dkey/:dkey/search             controllers.Sys.dkeySearch(dkey)
