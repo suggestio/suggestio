@@ -519,145 +519,6 @@ input.gray-but-small
 .js-close-btn:active
   background-position: 0 1px
 
-
-.login-page__blue-btn
-  display: inline-block
-  background: #4f88a9
-  padding: 10px 15px
-  width: 255px
-  margin-top: 60px
-  cursor: pointer
-  text-decoration: none
-  text-align: center
-  font-size: 24px
-  line-height: 24px
-  font-family: 'PT_Sans-Narrow','sans-serif'
-  text-shadow(1px 1px 1px #313131)
-  color: #efefef
-
-  .btn
-    display: block
-    height: 0
-    color: white
-    text-decoration: none
-
-  input
-    display: block
-    height: 26px
-    margin-top: -2px
-    cursor: pointer
-    background: none
-    font-size: 24px
-    line-height: 24px
-    font-family: 'PT_Sans-Narrow','sans-serif'
-    text-shadow(1px 1px 1px #313131)
-    color: #efefef
-
-
-.login-page__blue-btn:hover
-
-  .btn
-    box-shadow(0 13px 20px 3px #FFFFFF)
-
-.login-page__blue-btn:active
-  box-shadow(0 0 30px 0 #30607c inset)
-  padding: 11px 15px 9px
-  color: #a9beca
-
-  .btn
-    box-shadow(none)
-
-.login-page__blue-btn.js-submit-wrap
-  padding: 5px 10px
-
-  input
-    height: 32px
-
-.login-page__blue-btn.js-submit-wrap:active
-  padding: 6px 10px 4px
-
-  input
-    color: #a9beca
-
-.login-page__blue-btn_width-auto
-  margin-top: 0
-  width: auto
-
-
-.login-page__green-btn
-  display: inline-block
-  background: #48ab38
-  padding: 10px 15px
-  width: 255px
-  margin-top: 10px
-  cursor: pointer
-  text-decoration: none
-  text-align: center
-  font-size: 24px
-  line-height: 24px
-  font-family: 'PT_Sans-Narrow','sans-serif'
-  color: #efefef
-  text-shadow(1px 1px 1px #313131)
-
-  .btn
-    display: block
-    height: 0
-    color: white
-    text-decoration: none
-
-.login-page__green-btn:hover
-
-  .btn
-    box-shadow(0 13px 20px 3px #FFFFFF)
-
-.login-page__green-btn:active
-  box-shadow(0 0 30px 0 #2e7921 inset)
-  padding: 11px 15px 9px
-  color: #a4c59e
-
-  .btn
-    box-shadow(none)
-
-.login-page__green-btn_width-auto
-  width: auto
-  margin: 0
-
-
-.login-page__gray-btn
-  display: inline-block
-  background: #6b7e85
-  padding: 10px
-  width: 255px
-  margin-top: 10px
-  cursor: pointer
-  text-decoration: none
-  text-align: center
-  font-size: 24px
-  line-height: 24px
-  font-family: 'PT_Sans-Narrow','sans-serif'
-  color: #efefef
-  text-shadow(1px 1px 1px #313131)
-
-  .btn
-    display: block
-    height: 0
-    color: white
-    text-decoration: none
-
-.login-page__gray-btn:hover
-
-  .btn
-    box-shadow(0 13px 20px 3px #FFFFFF)
-
-.login-page__gray-btn:active
-  box-shadow(0 0 30px 0 #596a71 inset)
-  padding: 11px 10px 9px
-  color: #bac2c5
-
-  .btn
-    box-shadow(none)
-
-
 .simple-green-btn
   display: inline-block
   padding: 10px 20px
@@ -753,7 +614,7 @@ siomAcBtnHoverGradient(innerColor, defColor)
   background: -ms-radial-gradient(center, ellipse cover,  #feffff 0%,innerColor 0%,defColor 100%)
   background: radial-gradient(ellipse at center,  #feffff 0%,innerColor 0%,defColor 100%)
 
-siomAcBtnDefColor = #48ab38
+siomAcBtnColor1 = #48ab38
 siomAcBtnColor2 = #4f88a9
 
 .siom-ac-btn
@@ -763,49 +624,49 @@ siomAcBtnColor2 = #4f88a9
   text-align: center
   text-shadow(1px 1px 1px #363636)
 
-.siom-ac-btn._def-color
+.siom-ac-btn.__color-1
   color: white
-  background: siomAcBtnDefColor
+  background: siomAcBtnColor1
 
-.siom-ac-btn._def-color:hover
-  siomAcBtnHoverGradient(#67CE52, siomAcBtnDefColor)
+.siom-ac-btn.__color-1:hover
+  siomAcBtnHoverGradient(#67CE52, siomAcBtnColor1)
 
-.siom-ac-btn._def-color:active
-  background: siomAcBtnDefColor
+.siom-ac-btn.__color-1:active
+  background: siomAcBtnColor1
   box-shadow(0 0 30px 0 #2e7921 inset)
   color: #a4c59e
 
-.siom-ac-btn._color-2
+.siom-ac-btn.__color-2
   color: white
   background: siomAcBtnColor2
 
-.siom-ac-btn._color-2:hover
+.siom-ac-btn.__color-2:hover
   siomAcBtnHoverGradient(#62AAD1, siomAcBtnColor2)
 
-.siom-ac-btn._color-2:active
+.siom-ac-btn.__color-2:active
   background: siomAcBtnColor2
   box-shadow(0 0 30px 0 #30607c inset)
   color: #a9beca
 
-.siom-ac-btn._size-M
+.siom-ac-btn.__size-M
   padding: 10px 25px
 
-.siom-ac-btn._size-M:active
-  padding: 11px 15px 9px
+.siom-ac-btn.__size-M:active
+  padding: 11px 25px 9px
 
-.siom-ac-btn._size-XL
+.siom-ac-btn.__size-XL
   padding: 10px 0
   width: 100%
 
-.siom-ac-btn._size-XL:active
+.siom-ac-btn.__size-XL:active
   padding: 11px 0 9px
 
-.siom-ac-btn._ft-M
+.siom-ac-btn.__ft-M
   font-family: 'Arial'
   font-size: 14px
   line-height: 14px
 
-.siom-ac-btn._ft-L
+.siom-ac-btn.__ft-L
   font-family: 'PT_Sans-Narrow','sans-serif'
   font-size: 24px
   line-height: 24px

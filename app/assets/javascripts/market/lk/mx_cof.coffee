@@ -244,6 +244,13 @@ CbcaCommon = () ->
       cbca.popup.hidePopup('#'+$popup.attr('id'))
       $('#'+$popup.attr('id')).remove()
 
+    $(document).on 'click', '.js-submit-btn', (e)->
+      e.preventDefault()
+      $this = $(this)
+      $form = $this.closest('form')
+
+      $form.trigger('submit')
+
     $(document).on 'click', '.js-submit-wrap', (e)->
       $this = $(this)
 
