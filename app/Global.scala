@@ -117,7 +117,9 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
   def resetSuperuserIds(implicit client: Client): Future[_] = {
     import _root_.models._
     val logPrefix = "resetSuperuserIds(): "
-    Future.traverse(MPersonIdent.SU_EMAILS) { email =>
+    val se = MPersonIdent.SU_EMAILS
+    trace(s"${logPrefix}There are ${se.size} superuser emails: [${se.mkString(", ")}]")
+    Future.traverse(se) { email =>
       EmailPwIdent.getById(email) flatMap {
         // Суперюзер ещё не сделан. Создать MPerson и MPI для текущего email.
         case None =>
@@ -137,7 +139,7 @@ object Global extends WithFilters(SioHTMLCompressorFilter()) {
     } andThen {
       case Success(suPersonIds) =>
         MPerson.setSuIds(suPersonIds.toSet)
-        info(logPrefix + suPersonIds.length + " superusers installed successfully")
+        trace(logPrefix + suPersonIds.length + " superusers installed successfully")
 
       case Failure(ex) =>
         error(logPrefix + "Failed to install superusers", ex)
