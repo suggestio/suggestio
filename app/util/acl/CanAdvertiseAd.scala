@@ -35,7 +35,7 @@ object CanAdvertiseAd extends PlayMacroLogsImpl {
    */
   def maybeAllowed[A](pwOpt: PwOpt_t, mad: MAd, request: Request[A]): Future[Option[RequestWithAd[A]]] = {
     if (PersonWrapper isSuperuser pwOpt) {
-      MAdnNodeCache.getByIdCached(mad.producerId) flatMap { adnNodeOpt =>
+      MAdnNodeCache.getById(mad.producerId) flatMap { adnNodeOpt =>
         if (adnNodeOpt exists isAdvertiserNode) {
           val adnNode = adnNodeOpt.get
           SioReqMd.fromPwOptAdn(pwOpt, adnNode.id.get) map { srm =>
@@ -49,7 +49,7 @@ object CanAdvertiseAd extends PlayMacroLogsImpl {
     } else {
       pwOpt match {
         case Some(pw) =>
-          MAdnNodeCache.getByIdCached(mad.producerId).flatMap { adnNodeOpt =>
+          MAdnNodeCache.getById(mad.producerId).flatMap { adnNodeOpt =>
             adnNodeOpt
               .filter { adnNode =>
                 adnNode.personIds.contains(pw.personId)  &&  isAdvertiserNode(adnNode)

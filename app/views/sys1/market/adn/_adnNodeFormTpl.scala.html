@@ -36,12 +36,15 @@
   @inputText(af("meta.name"),    '_label -> "Название")
   @textarea(af("meta.descr"),    '_label -> "Описание объекта")
   @inputText(af("meta.town"),    '_label -> "Город")
-  @inputText(af("meta.address"), 'placeholder -> "пр.Ленина, д.1", '_label -> "Адрес в городе")
-  @inputText(af("meta.phone"),   'placeholder -> "+78121234567", '_label -> "Номер телефона")
-  @inputText(af("meta.floor"),   'placeholder -> 1,         '_label -> "Этаж")
-  @inputText(af("meta.section"), 'placeholder -> 101,       '_label -> "Номер секции")
-  @inputText(af("meta.siteUrl"), 'placeholder -> "http://", '_label -> "Адрес сайта в интернете")
-  @inputText(af("meta.color"),   'placeholder -> "cceeff",  '_label -> "Цвет")
+  @inputText(af("meta.address"), 'placeholder -> "пр.Ленина, д.1",  '_label -> "Адрес в городе")
+  @inputText(af("meta.phone"),   'placeholder -> "+78121234567",    '_label -> "Номер телефона")
+  @inputText(af("meta.floor"),   'placeholder -> 1,                 '_label -> "Этаж")
+  @inputText(af("meta.section"), 'placeholder -> 101,               '_label -> "Номер секции")
+  @inputText(af("meta.siteUrl"), 'placeholder -> "http://",         '_label -> "Адрес сайта в интернете")
+  @inputText(af("meta.color"),   'placeholder -> "cceeff",          '_label -> "Цвет")
+
+  @* conf *@
+  @inputText(af("conf.withBlocks"), 'placeholder -> "1, 2, 3",      '_label -> "Доп.id блоков")
 
   <div>
     @AdnRights.values.map { adnRight =>

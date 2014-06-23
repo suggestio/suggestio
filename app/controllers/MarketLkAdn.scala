@@ -374,7 +374,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
       bruteForceProtect flatMap { _ =>
         EmailActivation.getById(eaId) flatMap {
           case Some(eAct) if eAct.key == adnId =>
-            MAdnNodeCache.getByIdCached(adnId) flatMap {
+            MAdnNodeCache.getById(adnId) flatMap {
               case Some(mmart) =>
                 f(eAct, mmart)(request)
               case None =>

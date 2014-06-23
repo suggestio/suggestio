@@ -34,7 +34,7 @@ trait ThirdPartyAdAccessBase extends ActionBuilder[AdRcvrRequest] {
     PersonWrapper.getFromRequest(request) match {
       case pwOpt @ Some(pw) =>
         val madOptFut = MAd.getById(adId)
-        MAdnNodeCache.getByIdCached(fromAdnId).flatMap {
+        MAdnNodeCache.getById(fromAdnId).flatMap {
           case Some(maybeRcvrNode) =>
             madOptFut flatMap {
               case Some(mad) =>
@@ -104,7 +104,7 @@ trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] {
       case pwOpt @ Some(pw) =>
         MAd.getById(adId).flatMap {
           case Some(mad) =>
-            val producerOptFut = MAdnNodeCache.getByIdCached(mad.producerId)
+            val producerOptFut = MAdnNodeCache.getById(mad.producerId)
             val rcvrIdOpt0 = fromAdnId.filter(_ != mad.producerId)
             val isRcvrRelated = rcvrIdOpt0 exists { rcvrId =>
               DB.withConnection { implicit c =>
@@ -113,7 +113,7 @@ trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] {
             }
             val rcvrIdOpt = rcvrIdOpt0 filter { _ => isRcvrRelated }
             val rcvrOptFut = rcvrIdOpt
-              .fold [Future[Option[MAdnNode]]] { Future successful None } { MAdnNodeCache.getByIdCached }
+              .fold [Future[Option[MAdnNode]]] { Future successful None } { MAdnNodeCache.getById }
             producerOptFut flatMap {
               case Some(producer) =>
                 val isProducerAdmin = IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, pwOpt)
