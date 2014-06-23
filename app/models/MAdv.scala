@@ -25,12 +25,12 @@ object MAdv {
   val AD_ID_PARSER = get[String]("ad_id")
 
   /** Базовый парсер для колонок таблиц adv_* для колонок, которые идут слева, т.е. появились до создания дочерних таблиц. */
-  val ADV_ROW_PARSER_LEFT = get[Pk[Int]]("id") ~ AD_ID_PARSER ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
+  val ADV_ROW_PARSER_1 = get[Pk[Int]]("id") ~ AD_ID_PARSER ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
     get[DateTime]("date_created") ~ get[Option[Float]]("comission") ~ ADV_MODE_PARSER ~
     get[DateTime]("date_start") ~ get[DateTime]("date_end") ~ PROD_ADN_ID_PARSER ~ get[String]("rcvr_adn_id")
 
   val SHOW_LEVELS_PARSER = get[Set[String]]("show_levels") map { _.map(AdShowLevels.withNameTyped) }
-  def ADV_ROW_PARSER_RIGHT = SHOW_LEVELS_PARSER
+  def ADV_ROW_PARSER_2 = SHOW_LEVELS_PARSER
 
   val COUNT_PARSER = get[Long]("c")
 

@@ -23,7 +23,13 @@
 
 <div class="advs-form-block" id="advsFormBlock">
 @form(routes.MarketAdv.advFormSubmit(adId)) {
-@*form(routes.MarketAdv.getAdvPriceSubmit(adId)) {*@
+@*form(routes.MarketAdv.getAdvPriceSubmit(adId)) {*@   @* Сабмит для получения стоимости текущей конфигурации размещения. *@
+
+  @* Суперюзерам доступно беплатное размещение на любом узле. *@
+  @if(ctx.isSuperuser) {
+    @checkbox(af("freeAdv"), '_label -> "Размещать бесплатно, без подтверждения?")
+  }
+
 
   @defining( adnNodes.groupBy(_.adn.memberType).mapValues(_.sortBy(_.meta.name)) )  {  adnNodesMap =>
 
