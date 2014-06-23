@@ -23,7 +23,7 @@
 
   <div class="body-wrap wave-pattern body-wrap_responsive-mode">
 
-    <div class="body body_responsive-mode">
+    <div class="body wave-pattern body_responsive-mode">
 
       <div class="login-page_content">
 
@@ -34,16 +34,17 @@
           Как это работает?
         </a>
 
+        <div class="login-page__join-adv">
+          <a href="@routes.MarketJoin.joinAdvRequest" class="siom-ac-btn _color-2 _size-XL _ft-L">
+            РАЗМЕСТИТЬ РЕКЛАМУ
+          </a>
+        </div>
 
-        <a href="@routes.MarketJoin.joinAdvRequest" class="login-page__blue-btn">
-          <span class="btn"></span>
-          РАЗМЕСТИТЬ РЕКЛАМУ
-        </a>
-
-        <a href="@routes.MarketJoin.wifiJoinQuestionsForm()" class="login-page__green-btn">
-          <span class="btn"></span>
-          СТАТЬ УЧАСТНИКОМ СЕТИ
-        </a>
+        <div class="login-page__join-wifi">
+          <a href="@routes.MarketJoin.wifiJoinQuestionsForm()" class="siom-ac-btn _def-color _size-XL _ft-L">
+            СТАТЬ УЧАСТНИКОМ СЕТИ
+          </a>
+        </div>
 
         <div class="login-page__wifi_block">
 
