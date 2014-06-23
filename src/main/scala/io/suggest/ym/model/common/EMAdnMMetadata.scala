@@ -169,7 +169,7 @@ case class AdnMMetadata(
   var siteUrl       : Option[String] = None,
   // перемещено из visual
   var color         : Option[String] = None,
-  var welcomeAdId   : Option[String] = None
+  var welcomeAdId   : Option[String] = None   // TODO Перенести в поле MAdnNode.conf.welcomeAdId
 ) {
 
   /** Загрузить строки из другого объекта метаданных. */
