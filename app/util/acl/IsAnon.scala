@@ -8,7 +8,7 @@ import scala.concurrent.Future
  * Created: 19.06.14 17:42
  * Description: Является ли текущий юзер НЕзалогиненным (анонимусом)?
  */
-object IsAnon extends ActionBuilder[AbstractRequestWithPwOpt] {
+trait IsAnonBase extends ActionBuilder[AbstractRequestWithPwOpt] {
   override protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     pwOpt match {
@@ -22,3 +22,7 @@ object IsAnon extends ActionBuilder[AbstractRequestWithPwOpt] {
     }
   }
 }
+
+/** Реализация [[IsAnonBase]] с поддержкой [[ExpireSession]]. Такое необходимо, чтобы
+  * в функциях логина выставлялся таймер после выставления personId в контроллере. */
+object IsAnon extends IsAnonBase with ExpireSession[AbstractRequestWithPwOpt]

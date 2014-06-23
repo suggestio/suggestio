@@ -5,8 +5,12 @@
 
 <table>
   <tr>
-    <th>@Messages("Name")</th>
-    <th>@if(withDateCreated) {Создана}</th>
+    <th>
+      <strong class="sys-strong">@Messages("Name")</strong>
+    </th>
+    <th>
+      <strong>@if(withDateCreated) {Создана}</strong>
+    </th>
   </tr>
   @companies.map { company =>
     <tr>
