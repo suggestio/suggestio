@@ -76,7 +76,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     // Во избежание бесконечного цикла, огораживаем dateStart <= dateEnd
     val dateStart = advTerms.dateStart
     val dateEnd = advTerms.dateEnd
-    assert(!dateStart.isAfter(dateEnd), "dateStart must not be after dateEnd")
+    //assert(!(dateStart isAfter dateEnd), "dateStart must not be after dateEnd")
     // TODO Нужно использовать специфичные для узла календари.
     val primeHolidays = getUrlCal(rcvrPricing.weekendCalId)
     lazy val weekendCal = getUrlCal(rcvrPricing.primeCalId)
@@ -228,7 +228,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
           prodAdnId   = producerId,
           rcvrAdnId   = advEntry.adnId,
           dateStart   = advEntry.dateStart.toDateTimeAtStartOfDay,
-          dateEnd     = advEntry.dateEnd.toDateTimeAtStartOfDay,
+          dateEnd     = date2DtAtEndOfDay(advEntry.dateEnd),
           showLevels  = advEntry.showLevels
         ).save
         // Нужно заблокировать на счете узла необходимую сумму денег.
@@ -236,6 +236,9 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
       }
     }
   }
+
+  def date2DtAtEndOfDay(ld: LocalDate) = ld.toDateTimeAtStartOfDay.plusDays(1).minusSeconds(1)
+
 
   /**
    * Стрёмная функция для получения активного контракта. Создаёт такой контракт, если его нет.
@@ -269,7 +272,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
           prodAdnId   = producerId,
           rcvrAdnId   = advEntry.adnId,
           dateStart   = advEntry.dateStart.toDateTimeAtStartOfDay,
-          dateEnd     = advEntry.dateEnd.toDateTimeAtStartOfDay,
+          dateEnd     = date2DtAtEndOfDay(advEntry.dateEnd),
           showLevels  = advEntry.showLevels,
           dateStatus  = DateTime.now(),
           prodTxnId   = None,
