@@ -492,9 +492,13 @@ object BlocksConf extends Enumeration {
 
 
   /** Блок-ссылка. Изначально создавался для пиара sioM. */
-  sealed trait Block26t extends Height with BgImg with Href {
+  sealed trait Block26t extends Height with BgImg with TitleDescrListBlockT with Href {
     override def isShown = false
     override def template = _block26Tpl
+    override def offersCount: Int = 1
+    override def heightBf = super.heightBf.copy(
+      availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
+    )
   }
   val Block26 = new Val(26) with Block26t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block26Wrapper(key = newKey)
