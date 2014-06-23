@@ -31,12 +31,10 @@ object AdNetMember {
   val ADN_ESFN = "adn"
 
   // Имена полей вышеуказнного объекта
-  val IS_PRODUCER_ESFN    = "isProd"
-  val IS_RECEIVER_ESFN    = "isRcvr"
-  val IS_SUPERVISOR_ESFN  = "isSup"
   val SUPERVISOR_ID_ESFN  = "supId"
   val MEMBER_TYPE_ESFN    = "mType"
   val RIGHTS_ESFN         = "rights"
+
   /** Название поля с подчинёнными продьюсерами, от которых происходит приём рекламного контента.
     * Например: список id магазинов по отношению к ТЦ. Или id супервизора в каждом из подчинённых ресторанов. */
   val PRODUCER_IDS_ESFN   = "producerIds"
@@ -49,9 +47,6 @@ object AdNetMember {
   private def fullFN(subFN: String): String = ADN_ESFN + "." + subFN
 
   // Абсолютные (плоские) имена полей. Используются при поиске.
-  val ADN_MI_IS_PRODUCER_ESFN   = fullFN(IS_PRODUCER_ESFN)
-  val ADN_MI_IS_RECEIVER_ESFN   = fullFN(IS_RECEIVER_ESFN)
-  val ADN_MI_IS_SUPERVISOR_ESFN = fullFN(IS_SUPERVISOR_ESFN)
   val ADN_MI_SUPERVISOR_ID_ESFN = fullFN(SUPERVISOR_ID_ESFN)
   val ADN_MI_MEMBER_TYPE_ESFN   = fullFN(MEMBER_TYPE_ESFN)
   val ADN_MI_PRODUCER_IDS_ESFN  = fullFN(PRODUCER_IDS_ESFN)
