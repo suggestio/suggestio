@@ -168,12 +168,26 @@ siomart =
       !!(window.history && history.pushState);
 
     navigate : ( state ) ->
+      console.log 'navigate to :'
+      console.log state
+
+      if typeof siomart.node_offers_popup.requested_ad_id != 'undefined'
+        siomart.close_node_offers_popup()
+        return false
 
       if state == null
+        siomart.navigation_layer.back()
+        siomart.load_index_ads()
+        return false
 
-        if typeof siomart.node_offers_popup.requested_ad_id != 'undefined'
-          siomart.close_node_offers_popup()
-          siomart.navigation_layer.back()
+      if state.action == 'load_for_shop_id'
+        siomart.load_for_shop_id state.shop_id, state.ad_id, false
+
+      if state.action == 'open_navigation_layer'
+        siomart.navigation_layer.open( false )
+
+      if state.action == 'load_for_cat_id'
+        siomart.load_for_cat_id state.cat_id, false
 
     push : ( data, title, path ) ->
 
@@ -851,11 +865,23 @@ siomart =
   ## Показать / скрыть экран с категориями и поиском
   ##################################################
   navigation_layer :
-    open : () ->
+    open : ( history_push ) ->
+
+      if typeof history_push != 'boolean'
+        history_push = true
+
       sm_cat_screen = siomart.utils.ge('smCategoriesScreen')
+
       if sm_cat_screen != null
         sm_cat_screen.style.display = 'block'
         siomart.utils.ge('smSearchBar').style.display = 'block'
+
+      console.log history_push
+
+      if history_push == true
+        state_data =
+          action : 'open_navigation_layer'
+        siomart.history.push state_data, 'SioMarket', '/n/categories'
 
     close : ( all_except_search ) ->
       sm_cat_screen = siomart.utils.ge('smCategoriesScreen')
@@ -933,7 +959,10 @@ siomart =
       _dom = siomart.utils.ge 'smIndexNavigation'
       siomart.utils.removeClass _dom, 'hidden'
 
-  load_for_shop_id : ( shop_id, ad_id ) ->
+  load_for_shop_id : ( shop_id, ad_id, history_push ) ->
+
+    if typeof history_push == 'undefined'
+      history_push = true
 
     if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
       return false
@@ -945,20 +974,29 @@ siomart =
 
     url = '/market/ads?a.shopId=' + shop_id + '&a.firstAdId=' + ad_id + '&a.size=50&a.rcvr=' + siomart.config.mart_id
 
-    state_data =
-      action : 'load_mart_index_page'
-      shop_id : shop_id
-      ad_id : ad_id
-
-    siomart.history.push state_data, 'SioMarket', '/n/mart/' + shop_id + '/' + ad_id
+    if history_push == true
+      state_data =
+        action : 'load_for_shop_id'
+        shop_id : shop_id
+        ad_id : ad_id
+      siomart.history.push state_data, 'SioMarket', '/n/mart/' + shop_id + '/' + ad_id
 
     siomart.node_offers_popup.requested_ad_id = ad_id
     siomart.request.perform url
 
   ## Загрузить все офферы для магазина
-  load_for_cat_id : ( cat_id ) ->
+  load_for_cat_id : ( cat_id, history_push ) ->
+    if typeof history_push != 'boolean'
+      history_push = true
+
     if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
       return false
+
+    if history_push == true
+      state_data =
+        action : 'load_for_cat_id'
+        cat_id : cat_id
+      siomart.history.push state_data, 'SioMarket', '/n/cat/' + cat_id
 
     url = '/market/ads?a.catId=' + cat_id + '&a.rcvr=' + siomart.config.mart_id
     siomart.request.perform url
