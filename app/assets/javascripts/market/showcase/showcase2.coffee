@@ -53,18 +53,26 @@ siomart =
     this.utils.add_single_listener window, 'resize', resize_cb
 
   styles :
+
+    style_dom : null
+
     init : () ->
+      console.log 'initialized styles'
       style_tags = siomart.utils.ge_tag('code')
       css = ''
 
       for s in style_tags
         css = css.concat( s.innerHTML )
 
-
-      style_dom = document.createElement('style')
-      style_dom.type = "text/css"
-      style_dom.appendChild(document.createTextNode(css))
-      siomart.utils.ge_tag('head')[0].appendChild(style_dom)
+      if this.style_dom == null
+        style_dom = document.createElement('style')
+        style_dom.type = "text/css"
+        siomart.utils.ge_tag('head')[0].appendChild(style_dom)
+        this.style_dom = style_dom
+      else
+        this.style_dom.innerHTML = ''
+      
+      this.style_dom.appendChild(document.createTextNode(css))
 
   #######################
   ## Cross Domain Storage
@@ -587,6 +595,7 @@ siomart =
       grid_container_dom.innerHTML = data.html
       document.getElementById('sioMartIndexOffers').scrollTop = '0';
       cbca_grid.init()
+      siomart.styles.init()
       siomart.init_shop_links()
 
       if data.action == 'searchAds'
