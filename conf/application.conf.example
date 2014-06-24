@@ -160,7 +160,7 @@ es.mapping.model.ignore_exist = false
 application.secret="t6]=<]3/5pf19dTae_K?_DemwXGVK12<:6tnlL^7vVV9q>ZW<]jhh8[pH]YIJY=8"
 
 # The application languages
-application.langs="en,ru"
+application.langs="ru,en"
 
 #application.global=Global
 

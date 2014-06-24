@@ -12,10 +12,10 @@
     @* Если задан POV-узел, то отрендерить ссылку, которая отображает инфу по размещению карточки. *@
     @mad.id.flatMap(ad2advMap.get).map {
       case advReq: MAdvReq => {
-        <a class="ads-list-block__link js-advertising-requests-item_get-info" href="@routes.MarketAdv.advFullWnd(mad.id.get, povAdnIdOpt)">Нажмите для просмотра информации</a>
+        <a class="ads-list-block__link js-advertising-requests-item_get-info" href="@routes.MarketAdv.advFullWnd(mad.id.get, povAdnIdOpt, r = Some(request.path))">Нажмите для просмотра информации</a>
       }
       case advOk: MAdvOk => {
-        <a class="ads-list-block__link js-advertising-requests-item_get-info" href="@routes.MarketAdv.advFullWnd(mad.id.get, povAdnIdOpt)">Принята к размещению</a>
+        <a class="ads-list-block__link js-advertising-requests-item_get-info" href="@routes.MarketAdv.advFullWnd(mad.id.get, povAdnIdOpt, r = Some(request.path))">Принята к размещению</a>
       }
     }
   }

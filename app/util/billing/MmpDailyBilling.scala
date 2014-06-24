@@ -337,7 +337,8 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
             dateCreated   = now
           ).save
         }
-      val amount1 = rcvrContract.sioComission * amount0
+      // Начислять получателю бабки с учётом комиссии sioM.
+      val amount1 = (1.0F - rcvrContract.sioComission) * amount0
       assert(amount1 <= amount0, "Comissioned amount must be less or equal than source amount.")
       val rcvrMbbOpt = MBillBalance.getByAdnId(rcvrAdnId)
       assert(rcvrMbbOpt.exists(_.currencyCode == advReq.currencyCode), "Rcvr balance currency does not match to adv request")

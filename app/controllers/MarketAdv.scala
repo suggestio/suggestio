@@ -363,7 +363,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     * @param fromAdnId Опциональный id узла, с точки зрения которого идёт просмотр карточки.
     * @return Рендер отображения поверх текущей страницы.
     */
-  def advFullWnd(adId: String, fromAdnId: Option[String]) = {
+  def advFullWnd(adId: String, fromAdnId: Option[String], r: Option[String]) = {
     AdvWndAccess(adId, fromAdnId, needMBC = false).async { implicit request =>
       val limit = ADVS_MODE_SELECT_LIMIT
       if (request.isProducerAdmin) {
@@ -396,10 +396,10 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
           // ok: предложение было одобрено юзером
           case Some(advOk: MAdvOk) =>
             Ok(_advWndFullOkTpl(request.mad, request.producer, advOk))
-          // req: предложение на состоянии модерации. Надо бы отрендерить страницу судьбоносного набега на мозг
 
+          // req: предложение на состоянии модерации. Надо бы отрендерить страницу судьбоносного набега на мозг
           case Some(advReq: MAdvReq) =>
-            Ok(_advReqWndTpl(request.producer, adRcvr=rcvr, request.mad, advReq, reqRefuseFormM))
+            Ok(_advReqWndTpl(request.producer, adRcvr=rcvr, request.mad, advReq, reqRefuseFormM, goBackTo = r))
 
           case other =>
             warn(s"advFullWnd($adId, pov=$fromAdnId): Cannot find last actual for rcvr=${rcvr.id} => $other")
@@ -413,20 +413,38 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   /** Рендер страницы, которая появляется по ссылке-кнопке "рекламодатели". */
   // TODO Вместо IsAdnAdmin надо какой-то IsAdnRcvrAdmin
   def showNodeAdvs(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
-    val advsReq = DB.withConnection { implicit c =>
-      MAdvReq.findByRcvr(adnId)
-    }
-    val adIds = advsReq.map(_.adId).distinct
-    val madsFut = MAd.multiGet(adIds)
-    val advReqMap = advsReq.map { advReq => advReq.adId -> advReq }.toMap
-    madsFut map { mads =>
-      val reqsAndMads = mads
-        .map { mad =>
-          val madId = mad.id.get
-          advReqMap(madId) -> mad
-        }
-        .sortBy(_._1.id.get)
-      Ok(nodeAdvsTpl(request.adnNode, reqsAndMads))
+    // Отрабатываем делегирование adv-прав текущему узлу:
+    MAdnNode.findIdsAdvDelegatedTo(adnId) flatMap { dgAdnIds =>
+      var dgAdnIdsList = dgAdnIds.toList
+      // Дописать в начало ещё текущей узел, если он также является рекламо-получателем.
+      if (request.adnNode.adn.isReceiver)
+        dgAdnIdsList ::= adnId
+      // TODO Отрабатывать цепочное делегирование, когда узел делегирует дальше adv-права ещё какому-то узлу.
+      val adnIdsSet = dgAdnIdsList.toSet
+      // Получаем список реквестов, для всех необходимых ресиверов.
+      val advsReq = DB.withConnection { implicit c =>
+        MAdvReq.findByRcvrs(adnIdsSet)
+      }
+      // Список рекламных карточек.
+      val adIds = advsReq
+        .map(_.adId)
+        .distinct
+      // В фоне запрашиваем рекламные карточки, которые нужно модерачить.
+      val madsFut = MAd.multiGet(adIds)
+      // Строим карту adId -> MAdvReq
+      val advReqMap = advsReq
+        .map { advReq => advReq.adId -> advReq }
+        .toMap
+      madsFut map { mads =>
+        // Выстраиваем порядок рекламных карточек.
+        val reqsAndMads = mads
+          .map { mad =>
+            val madId = mad.id.get
+            advReqMap(madId) -> mad
+          }
+          .sortBy(_._1.id.get)
+        Ok(nodeAdvsTpl(request.adnNode, reqsAndMads))
+      }
     }
   }
 
@@ -436,12 +454,13 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    * @param advReqId id запроса на размещение.
    * @return 404 если что-то не найдено, иначе 200.
    */
-  def _showAdvReq(advReqId: Int) = CanReceiveAdvReq(advReqId).async { implicit request =>
-    _showAdvReq1(reqRefuseFormM)
+  def _showAdvReq(advReqId: Int, r: Option[String]) = CanReceiveAdvReq(advReqId).async { implicit request =>
+    _showAdvReq1(reqRefuseFormM, r)
       .map { _.fold(identity, Ok(_))}
   }
 
-  private def _showAdvReq1(refuseFormM: Form[String])(implicit request: RequestWithAdvReq[AnyContent]): Future[Either[Result, HtmlFormat.Appendable]] = {
+  private def _showAdvReq1(refuseFormM: Form[String], r: Option[String])
+                          (implicit request: RequestWithAdvReq[AnyContent]): Future[Either[Result, HtmlFormat.Appendable]] = {
     val madOptFut = MAd.getById(request.advReq.adId)
     val adProducerOptFut = madOptFut flatMap { madOpt =>
       val prodIdOpt = madOpt.map(_.producerId)
@@ -457,7 +476,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
           adRcvr = request.rcvrNode,
           mad = madOpt.get,
           advReq = request.advReq,
-          refuseFormM = refuseFormM
+          refuseFormM = refuseFormM,
+          goBackTo = r
         ))
       } else {
         val advReqId = request.advReq.id.get
@@ -479,13 +499,14 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   /**
    * Сабмит формы отказа от размещения рекламной карточки.
    * @param advReqId id реквеста.
-   * @return 406 если причина слишком короткая или слишком длинная. 302 если всё ок.
+   * @return 406 если причина слишком короткая или слишком длинная.
+   *         302 если всё ок.
    */
-  def advReqRefuseSubmit(advReqId: Int) = CanReceiveAdvReq(advReqId).async { implicit request =>
+  def advReqRefuseSubmit(advReqId: Int, r: Option[String]) = CanReceiveAdvReq(advReqId).async { implicit request =>
     reqRefuseFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"advReqRefuseSubmit($advReqId): Failed to bind refuse form:\n${formatFormErrors(formWithErrors)}")
-        _showAdvReq1(formWithErrors)
+        _showAdvReq1(formWithErrors, r)
           .map { _.fold(identity, NotAcceptable(_)) }
       },
       {reason =>
@@ -495,23 +516,22 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
           assertAdvsReqRowsDeleted(rowsDeleted, 1, advReqId)
           advRefused.save
         }
-        Redirect(routes.MarketAdv.showNodeAdvs(request.rcvrNode.id.get))
+        RdrBackOr(r) { routes.MarketAdv.showNodeAdvs(request.rcvrNode.id.get) }
           .flashing("success" -> "Размещение рекламы отменено.")
       }
     )
   }
-
 
   /**
    * Юзер одобряет размещение рекламной карточки.
    * @param advReqId id одобряемого реквеста.
    * @return 302
    */
-  def advReqAcceptSubmit(advReqId: Int) = CanReceiveAdvReq(advReqId).apply { implicit request =>
+  def advReqAcceptSubmit(advReqId: Int, r: Option[String]) = CanReceiveAdvReq(advReqId).apply { implicit request =>
     // Надо провести платёж, запилить транзакции для prod и rcvr и т.д.
     MmpDailyBilling.acceptAdvReq(request.advReq, isAuto = false)
     // Всё сохранено. Можно отредиректить юзера, чтобы он дальше продолжил одобрять рекламные карточки.
-    Redirect(routes.MarketAdv.showNodeAdvs(request.advReq.rcvrAdnId))
+    RdrBackOr(r) { routes.MarketAdv.showNodeAdvs(request.advReq.rcvrAdnId) }
       .flashing("success" -> "Реклама будет размещена.")
   }
 

@@ -40,7 +40,7 @@ object SysMdr extends SioController with PlayMacroLogsImpl {
     MAd.findSelfAdvNonMdr(args) flatMap { mads0 =>
       val mads = hideAdId.fold(mads0) { hai => mads0.filter(_.id.get != hai) }
       val producerIds = mads.map(_.producerId).toSet ++ args.producerId.toSet
-      MAdnNodeCache.multigetByIdCached( producerIds ) map { producers =>
+      MAdnNodeCache.multigetById( producerIds ) map { producers =>
         val prodsMap = producers
           .map { p => p.id.get -> p }
           .toMap
