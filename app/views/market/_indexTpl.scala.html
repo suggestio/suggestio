@@ -1,6 +1,7 @@
 @()(implicit ctx: util.Context)
 
 @import ctx._
+@import play.api.Play.current
 
 <div class="header-wrap wave-pattern header-wrap_responsive-mode">
 
@@ -31,10 +32,6 @@
 
       <a href="@routes.MarketLk.lkIndex" class="login-page__logo"></a>
 
-      @*<a class="siom-link-btn __ft-M __size-XL __color-2" style="margin-top: 30px;">
-        Как это работает?
-      </a>*@
-
       <div class="login-page__join-adv">
 
         <a class="siom-link-btn __color-3 __size-XS __ft-XM __radial index_help-btn" href="@routes.Market.aboutForAdMakers" >?</a>
@@ -51,6 +48,14 @@
         <a class="siom-ac-btn __color-1 __size-XL __ft-L" href="@routes.MarketJoin.wifiJoinQuestionsForm()">
           СТАТЬ УЧАСТНИКОМ СЕТИ
         </a>
+      </div>
+
+      <div class="login-page__demo-btn">
+        @current.configuration.getString("market.demo.adn.id").map { demoAdnId =>
+          <a class="siom-ac-btn __color-4 __ft-XM __size-M" href="@routes.Market.demoWebSite(demoAdnId)" target="_blank">
+            ДЕМО
+          </a>
+        }
       </div>
 
       <div class="login-page__wifi_block">

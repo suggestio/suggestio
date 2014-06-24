@@ -79,13 +79,13 @@
 
       <div class="paragraph-13 about-page__under-btn">
         <div class="dot about-page__dot"></div>
-        Так может выглядеть ваша реклама в сетях WiFi Free.
+        Как выглядит рекламная выдача?
         <div class="bot-arrow about-page__bot-arrow"></div>
       </div>
 
       <div class="paragraph-13">
         @current.configuration.getString("market.demo.adn.id").map { demoAdnId =>
-        <a href="@routes.Market.demoWebSite(demoAdnId)" target="_blank" class="siom-ac-btn __color-1 __size-M __ft-L">
+        <a class="siom-ac-btn __color-1 __size-M __ft-L" href="@routes.Market.demoWebSite(demoAdnId)" target="_blank">
           ДЕМО
         </a>
         }
