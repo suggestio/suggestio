@@ -8,11 +8,15 @@
 
     @if(ctx.isAuth) {
     @* Юзер залогинен. Нужно отобразить кнопку на его ЛК. *@
-    <a href="@routes.Ident.rdrUserSomewhere" class="simple-green-btn f-right login-page_enter_btn">
-      @ctx.usernameOpt.getOrElse(Messages("username.unknown"))
-    </a>
+
+      <a href="@routes.Ident.rdrUserSomewhere" class="siom-link-btn __ft-M __size-M __color-1 f-right login-page_enter_btn">
+        @ctx.usernameOpt.getOrElse(Messages("username.unknown"))
+      </a>
+
     } else {
-    <a href="#emailPwLoginForm" class="simple-green-btn f-right login-page_enter_btn js-btn">Вход</a>
+
+      <a href="#emailPwLoginForm" class="siom-link-btn __ft-M __size-M __color-1 f-right login-page_enter_btn js-btn">Вход</a>
+
     }
 
   </div>
@@ -27,7 +31,7 @@
 
       <a href="@routes.MarketLk.lkIndex" class="login-page__logo"></a>
 
-      <a href="@routes.Market.aboutMarket" class="simple-green-btn simple-green-btn_logo-mode" style="margin-top: 30px;">
+      <a href="@routes.Market.aboutMarket" class="siom-link-btn __ft-M __size-XL __color-2" style="margin-top: 30px;">
         <span class="btn"></span>
         Как это работает?
       </a>

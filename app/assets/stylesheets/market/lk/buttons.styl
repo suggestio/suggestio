@@ -412,29 +412,6 @@ input.gray-but-small
 .js-close-btn:active
   background-position: 0 1px
 
-.simple-green-btn
-  display: inline-block
-  padding: 10px 20px
-  border: 1px solid #6b7e85
-  color: #6b7e85
-  font-family: 'Arial'
-  font-size: 14px
-  line-height: 14px
-  text-align: center
-  text-decoration: none
-
-.simple-green-btn:hover
-  color: #4c4c4c
-  border-color: #4c4c4c
-
-.simple-green-btn:active
-  background: #b6c2c5
-
-.simple-green-btn_logo-mode
-  display: block
-  color: #b6c2c5
-  border-color: #b6c2c5
-
 
 .transparent-btn
   cursor: pointer
@@ -492,10 +469,15 @@ input.gray-but-small
   margin-bottom: 12px
 
 
+/********************************************************************************************************************/
 /* refactoring to MCSS */
+/********************************************************************************************************************/
+
+
+
 
 /********************************************************************************************************************/
-/* SioMarket default action btn */
+/* SioMarket default action button */
 /********************************************************************************************************************/
 
 siomAcBtnHoverGradient(innerColor, defColor)
@@ -507,8 +489,9 @@ siomAcBtnHoverGradient(innerColor, defColor)
   background: -ms-radial-gradient(center, ellipse cover,  #feffff 0%,innerColor 0%,defColor 100%)
   background: radial-gradient(ellipse at center,  #feffff 0%,innerColor 0%,defColor 100%)
 
-siomAcBtnColor1 = #48ab38
-siomAcBtnColor2 = #4f88a9
+siomAcBtnColor1 = #48ab38 /* зелёный */
+siomAcBtnColor2 = #4f88a9 /* синий */
+siomAcBtnColor3 = #9a9d9e /* серый */
 
 .siom-ac-btn
   display: inline-block
@@ -541,6 +524,18 @@ siomAcBtnColor2 = #4f88a9
   box-shadow(0 0 30px 0 #30607c inset)
   color: #a9beca
 
+.siom-ac-btn.__color-3
+  color: white
+  background: siomAcBtnColor3
+
+.siom-ac-btn.__color-3:hover
+  siomAcBtnHoverGradient(#A9ACAD, siomAcBtnColor3)
+
+.siom-ac-btn.__color-3:active
+  background: siomAcBtnColor3
+  box-shadow(0 0 30px 0 #76797a inset)
+  color: #d2d1d1
+
 .siom-ac-btn.__size-M
   padding: 10px 25px
 
@@ -548,8 +543,8 @@ siomAcBtnColor2 = #4f88a9
   padding: 11px 25px 9px
 
 .siom-ac-btn.__size-XL
+  display: block
   padding: 10px 0
-  width: 100%
 
 .siom-ac-btn.__size-XL:active
   padding: 11px 0 9px
@@ -563,3 +558,69 @@ siomAcBtnColor2 = #4f88a9
   font-family: 'PT_Sans-Narrow','sans-serif'
   font-size: 24px
   line-height: 24px
+
+
+/********************************************************************************************************************/
+/* SioMarket default link button */
+/********************************************************************************************************************/
+
+siomLinkBtnColor1 = #6b7e85
+siomLinkBtnColor2 = #b6c2c5
+
+.siom-link-btn
+  display: inline-block
+
+  text-align: center
+  text-decoration: none
+
+.siom-link-btn.__size-M
+  padding: 10px 20px
+
+.siom-link-btn.__size-M:active
+  padding: 11px 20px 9px
+
+.siom-link-btn.__size-XL
+  display: block
+  padding: 10px 0
+
+.siom-link-btn.__size-XL:active
+  padding: 11px 0 9px
+
+.siom-link-btn.__ft-M
+  font-family: 'Arial'
+  font-size: 14px
+  line-height: 14px
+
+.siom-link-btn.__ft-L
+  font-family: 'PFDinTextCompPro-Medium'
+  font-size: 30px
+  line-height: 30px
+  padding-top: 12px /* особенности шрифта */
+  padding-bottom: 8px /* особенности шрифта */
+  text-shadow( 1px 1px 1px #fff )
+
+.siom-link-btn.__ft-L:active
+  padding-top: 13px /* особенности шрифта */
+  padding-bottom: 7px /* особенности шрифта */
+
+.siom-link-btn.__color-1
+  border: 1px solid siomLinkBtnColor1
+  color: siomLinkBtnColor1
+
+.siom-link-btn.__color-1:hover
+  color: #4c4c4c
+  border-color: #4c4c4c
+
+.siom-link-btn.__color-1:active
+  background: #b6c2c5
+
+.siom-link-btn.__color-2
+  border: 1px solid siomLinkBtnColor2
+  color: siomLinkBtnColor2
+
+.siom-link-btn.__color-2:hover
+  color: #4c4c4c
+  border-color: #4c4c4c
+
+.siom-link-btn.__color-2:active
+  background: #b6c2c5

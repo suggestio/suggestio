@@ -247,7 +247,11 @@ CbcaCommon = () ->
     $(document).on 'click', '.js-submit-btn', (e)->
       e.preventDefault()
       $this = $(this)
-      $form = $this.closest('form')
+      dataFor = $this.attr('data-for')
+      if(dataFor)
+        $form = $(dataFor)
+      else
+        $form = $this.closest('form')
 
       $form.trigger('submit')
 
@@ -424,13 +428,6 @@ CbcaCommon = () ->
 
     $(document).on 'blur', '.input-wrap input, .input-wrap textarea', ->
       $(this).closest('.input-wrap').removeClass('focus')
-
-
-    $(document).on 'click', '.submit', ->
-      $this = $(this)
-      formId = $this.attr('data-for')
-
-      $('#'+formId).trigger('submit')
 
 
     $(document).on 'click', '.ads-list .js-tc-edit', (event)->
