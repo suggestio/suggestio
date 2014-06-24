@@ -173,7 +173,7 @@ abstract class AdnEsModelCache[T <: EMAdNetMember : ClassTag] extends EsModelCac
    * @param memberType тип участника рекламной сети.
    * @return Тоже самое, что и все остальные getById().
    */
-  def getByIdTypeCached(id: String, memberType: AdNetMemberType)
+  def getByIdType(id: String, memberType: AdNetMemberType)
                        (implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
     val ck = cacheKey(id)
     Cache.getAs[T](ck) match {

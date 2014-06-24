@@ -126,8 +126,8 @@ trait TempImgSupport extends SioController with PlayMacroLogsImpl {
   * После унификации в web21 этот контроллер наверное уже не будет нужен. */
 trait ShopMartCompat {
   def getShopById(shopId: String) = MAdnNode.getByIdType(shopId, AdNetMemberTypes.SHOP)
-  def getShopByIdCache(shopId: String) = MAdnNodeCache.getByIdTypeCached(shopId, AdNetMemberTypes.SHOP)
+  def getShopByIdCache(shopId: String) = MAdnNodeCache.getByIdType(shopId, AdNetMemberTypes.SHOP)
 
   def getMartById(martId: String) = MAdnNode.getByIdType(martId, AdNetMemberTypes.MART)
-  def getMartByIdCache(martId: String) = MAdnNodeCache.getByIdTypeCached(martId, AdNetMemberTypes.MART)
+  def getMartByIdCache(martId: String) = MAdnNodeCache.getByIdType(martId, AdNetMemberTypes.MART)
 }
