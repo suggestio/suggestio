@@ -507,6 +507,7 @@ siomAcBtnColor1 = #48ab38 /* зелёный */
 siomAcBtnColor2 = #4f88a9 /* синий */
 siomAcBtnColor3 = #9a9d9e /* серый */
 siomAcBtnColor4 = #e24a4a /* красный */
+siomAcBtnColor5 = #b6c2c5 /* серо-синий */
 
 .siom-ac-btn
   display: inline-block
@@ -562,6 +563,18 @@ siomAcBtnColor4 = #e24a4a /* красный */
   background: siomAcBtnColor4
   box-shadow(0 0 30px 0 #b43232 inset)
   color: #ffa1a1
+
+.siom-ac-btn.__color-5
+  color: white
+  background: siomAcBtnColor5
+
+.siom-ac-btn.__color-5:hover
+  siomAcBtnHoverGradient(#C9D5D8, siomAcBtnColor5)
+
+.siom-ac-btn.__color-5:active
+  background: siomAcBtnColor5
+  box-shadow(0 0 30px 0 #9EA9AA inset)
+  color: #d2d1d1
 
 .siom-ac-btn.__size-M
   padding: 10px 25px
