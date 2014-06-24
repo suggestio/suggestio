@@ -92,7 +92,7 @@ siomart =
       _this.origin = siomart.config.host
 
       if !_this._iframe
-        if window.postMessage && window.JSON && window.localStorage
+        if window.postMessage && window.JSON && window.sessionStorage
 
           _iframe_attrs =
             id : 'smStorageIframe'
@@ -522,6 +522,7 @@ siomart =
     _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
     this.utils.add_single_listener sm_trigger, _event, siomart.open_mart
 
+  set_meta : () ->
     _head = this.utils.ge_tag('head')[0]
     meta_viewport_attrs =
       name : 'viewport'
@@ -859,6 +860,7 @@ siomart =
   ## Загрузить индексную страницу для ТЦ
   ######################################
   load_mart_index_page : () ->
+    this.set_meta()
     this.request.perform siomart.config.index_action
 
   ##################################################
@@ -937,6 +939,8 @@ siomart =
     siomart.utils.ge('smCloseScreen').style.display = 'none'
 
     siomart.storage.setValue "is_market_closed_by_user", 'true'
+
+    siomart.utils.ge_tag('body')[0].style.overflow = 'auto'
 
     event.preventDefault()
     return false
