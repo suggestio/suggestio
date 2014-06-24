@@ -7,6 +7,7 @@ import util.acl._
 import views.html.market.showcase._
 import views.html.market.lk.adn._node._installScriptTpl
 import views.html.market.aboutTpl
+import views.html.market.aboutForAdMakersTpl
 import play.api.libs.json._
 import play.api.libs.Jsonp
 import models._
@@ -224,11 +225,15 @@ object Market extends SioController with PlayMacroLogsImpl {
   }
 
 
-  /** Статическая страничка, описывающая суть sio market. */
+  /** Статическая страничка, описывающая суть sio market для владельцев WiFi. */
   def aboutMarket = MaybeAuth { implicit request =>
     Ok(aboutTpl())
   }
 
+  /** Статическая страничка, описывающая суть sio market для рекламодателей. */
+  def aboutForAdMakers = MaybeAuth { implicit request =>
+    Ok(aboutForAdMakersTpl())
+  }
 
   // Внутренние хелперы
 

@@ -31,19 +31,24 @@
 
       <a href="@routes.MarketLk.lkIndex" class="login-page__logo"></a>
 
-      <a href="@routes.Market.aboutMarket" class="siom-link-btn __ft-M __size-XL __color-2" style="margin-top: 30px;">
-        <span class="btn"></span>
+      @*<a class="siom-link-btn __ft-M __size-XL __color-2" style="margin-top: 30px;">
         Как это работает?
-      </a>
+      </a>*@
 
       <div class="login-page__join-adv">
-        <a href="@routes.MarketJoin.joinAdvRequest" class="siom-ac-btn __color-2 __size-XL __ft-L">
+
+        <a class="siom-link-btn __color-3 __size-XS __ft-XM __radial index_help-btn" href="@routes.Market.aboutForAdMakers" >?</a>
+
+        <a class="siom-ac-btn __color-2 __size-XL __ft-L" href="@routes.MarketJoin.joinAdvRequest">
           РАЗМЕСТИТЬ РЕКЛАМУ
         </a>
+
       </div>
 
       <div class="login-page__join-wifi">
-        <a href="@routes.MarketJoin.wifiJoinQuestionsForm()" class="siom-ac-btn __color-1 __size-XL __ft-L">
+        <a class="siom-link-btn __color-4 __size-XS __ft-XM __radial index_help-btn" href="@routes.Market.aboutMarket" >?</a>
+
+        <a class="siom-ac-btn __color-1 __size-XL __ft-L" href="@routes.MarketJoin.wifiJoinQuestionsForm()">
           СТАТЬ УЧАСТНИКОМ СЕТИ
         </a>
       </div>
