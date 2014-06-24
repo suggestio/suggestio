@@ -26,7 +26,8 @@ import io.suggest.event.subscriber.SnFunSubscriber
  */
 
 object AdNetMember {
-  
+  import AdnRights.AdnRight
+
   /** Название root-object поля, в котором хранятся данные по участию в рекламной сети. */
   val ADN_ESFN = "adn"
 
@@ -39,6 +40,9 @@ object AdNetMember {
     * Например: список id магазинов по отношению к ТЦ. Или id супервизора в каждом из подчинённых ресторанов. */
   val PRODUCER_IDS_ESFN   = "producerIds"
 
+  /** Option[String] поле, содержит id узла-делегата размещения рекламных карточек.
+    * К такому узлу рекламные карточки попадают на модерацию. */
+  val ADV_DELEGATE_ESFN = "advDg"
 
   val IS_ENABLED_ESFN = "isEnabled"
   val SHOW_LEVELS_ESFN = "showLevels"
@@ -50,11 +54,49 @@ object AdNetMember {
   val ADN_MI_SUPERVISOR_ID_ESFN = fullFN(SUPERVISOR_ID_ESFN)
   val ADN_MI_MEMBER_TYPE_ESFN   = fullFN(MEMBER_TYPE_ESFN)
   val ADN_MI_PRODUCER_IDS_ESFN  = fullFN(PRODUCER_IDS_ESFN)
+  val ADN_MI_ADV_DELEGATE_ESFN  = fullFN(ADV_DELEGATE_ESFN)
 
   // Полные (flat) имена используемых полей. Используются при составлении поисковых запросов.
   val PS_IS_ENABLED_ESFN = fullFN(IS_ENABLED_ESFN)
   val PS_LEVELS_MAP_ESFN = fullFN(SHOW_LEVELS_ESFN)
   val PS_DISABLE_REASON_ESFN = fullFN(DISABLE_REASON_ESFN)
+
+
+  /** Генератор es-query для указанного member type.
+    * @param memberType Необходимый тип участников.
+    * @return QueryBuilder.
+    */
+  def adnMemberTypeQuery(memberType: AdNetMemberType) = {
+    QueryBuilders.termQuery(ADN_MI_MEMBER_TYPE_ESFN, memberType.toString())
+  }
+
+  /** Сгенерить запрос для поиска по внешним продьюсерам. */
+  def incomingProducerIdQuery(producerId: String): QueryBuilder = {
+    QueryBuilders.termQuery(ADN_MI_PRODUCER_IDS_ESFN, producerId)
+  }
+
+  def supIdQuery(supId: String): QueryBuilder = {
+    QueryBuilders.termQuery(ADN_MI_SUPERVISOR_ID_ESFN, supId)
+  }
+
+  /**
+   * Генератор es-query для поиска по id делегата размещения.
+   * @param adnId id узла-делегата.
+   * @return QueryBuilder.
+   */
+  def advDelegatesQuery(adnId: String): QueryBuilder = {
+    QueryBuilders.termQuery(ADN_MI_ADV_DELEGATE_ESFN, adnId)
+  }
+
+
+  /**
+   * Собрать es query для поиска по полю adn-прав. Искомый объект обязан обладать всеми перечисленными правами.
+   * @param rights Список прав, по которым ищем.
+   * @return ES Query.
+   */
+  def adnRightsAllQuery(rights: Seq[AdnRight]) = QueryBuilders
+    .termsQuery(RIGHTS_ESFN, rights.map(_.toString()) : _*)
+    .minimumMatch(rights.size)
 
 }
 
@@ -73,7 +115,8 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
       FieldString(RIGHTS_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(SUPERVISOR_ID_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(MEMBER_TYPE_ESFN, index = not_analyzed, include_in_all = false),
-      FieldString(PRODUCER_IDS_ESFN, index= not_analyzed, include_in_all = false),
+      FieldString(PRODUCER_IDS_ESFN, index = not_analyzed, include_in_all = false),
+      FieldString(ADV_DELEGATE_ESFN, index = not_analyzed, include_in_all = false),
       // раньше это лежало в EMAdnMPubSettings, но потом было перемещено сюда, т.к. по сути это разделение было некорректно.
       FieldBoolean(IS_ENABLED_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(DISABLE_REASON_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
@@ -82,34 +125,30 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
   }
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = super.applyKeyValue(acc) orElse {
-    case (ADN_ESFN, value: java.util.Map[_,_]) =>
-      if (acc.adn == null)
-        acc.adn = new AdNetMemberInfo(null, rights = Set.empty)
-      val mi = acc.adn
-      value.foreach {
-        case (RIGHTS_ESFN, v: jl.Iterable[_]) =>
-          mi.rights = v.map { rid => AdnRights.withName(rid.toString) : AdnRight }.toSet
-        case (SUPERVISOR_ID_ESFN, v)  => mi.supId = Option(stringParser(v))
-        case (MEMBER_TYPE_ESFN, v)    => mi.memberType = AdNetMemberTypes.withName(stringParser(v))
-        case (SHOW_LEVELS_ESFN, levelsInfoRaw) =>
-          mi.showLevelsInfo = AdnMemberShowLevels.deserialize(levelsInfoRaw)
-        case (PRODUCER_IDS_ESFN, producerIds: jl.Iterable[_]) =>
-          mi.producerIds = producerIds.foldLeft[List[String]] (Nil) { (acc, e) =>
-            e.toString :: acc
-          }.toSet
-        case (IS_ENABLED_ESFN, isEnabledRaw) =>
-          mi.isEnabled = booleanParser(isEnabledRaw)
-        case (DISABLE_REASON_ESFN, drRaw) =>
-          mi.disableReason = Option(drRaw).map(stringParser)
-      }
-  }
-
-  /** Генератор es-query для указанного member type.
-    * @param memberType Необходимый тип участников.
-    * @return QueryBuilder.
-    */
-  def adnMemberTypeQuery(memberType: AdNetMemberType) = {
-    QueryBuilders.termQuery(ADN_MI_MEMBER_TYPE_ESFN, memberType.toString())
+    case (ADN_ESFN, vm: java.util.Map[_,_]) =>
+      // Билдим инстанс ANMI как будто он неизменяемый. Потом, возможно, полностью уйдём от var в полях ANMI.
+      acc.adn = AdNetMemberInfo(
+        memberType = Option(vm get MEMBER_TYPE_ESFN)
+          .fold(AdNetMemberTypes.SHOP) { mtRaw => AdNetMemberTypes.withName(stringParser(mtRaw)) : AdNetMemberType },
+        rights = Option(vm get RIGHTS_ESFN).fold(Set.empty[AdnRight]) {
+          case l: jl.Iterable[_] =>
+            l.map { rid => AdnRights.withName(rid.toString) : AdnRight }.toSet
+        },
+        supId = Option(vm get SUPERVISOR_ID_ESFN) map stringParser,
+        producerIds = Option(vm get PRODUCER_IDS_ESFN)
+          .fold(Set.empty[String]) {
+            case l: jl.Iterable[_] =>
+              l.foldLeft[List[String]] (Nil) {
+                (acc, e) => e.toString :: acc
+              }.toSet
+          },
+        advDelegate = Option(vm get ADV_DELEGATE_ESFN) map stringParser,
+        showLevelsInfo = Option(vm get SHOW_LEVELS_ESFN)
+          .fold(AdnMemberShowLevels()) { AdnMemberShowLevels.deserialize(_) },
+        isEnabled = Option(vm get IS_ENABLED_ESFN)
+          .fold(true)(booleanParser),
+        disableReason = Option(vm get DISABLE_REASON_ESFN) map stringParser
+      )
   }
 
   /**
@@ -186,7 +225,6 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
       .map { searchResp2list }
   }
 
-  def supIdQuery(supId: String) = QueryBuilders.termQuery(ADN_MI_SUPERVISOR_ID_ESFN, supId)
 
   /**
    * Подсчет узлов, принадлежащих указанному супервизору.
@@ -261,15 +299,6 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
   }
 
 
-  /**
-   * Собрать es query для поиска по полю adn-прав. Искомый объект обязан обладать всеми перечисленными правами.
-   * @param rights Список прав, по которым ищем.
-   * @return ES Query.
-   */
-  def adnRightsAllQuery(rights: Seq[AdnRight]) = QueryBuilders
-    .termsQuery(RIGHTS_ESFN, rights.map(_.toString()) : _*)
-    .minimumMatch(rights.size)
-
 
   def findByAllAdnRightsBuilder(rights: Seq[AdnRight])(implicit client: Client) = {
     prepareSearch
@@ -305,9 +334,6 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
   }
 
 
-  /** Сгенерить запрос для поиска по внешним продьюсерам. */
-  def incomingProducerIdQuery(producerId: String) = QueryBuilders.termQuery(ADN_MI_PRODUCER_IDS_ESFN, producerId)
-
   /** Поиск по элементу из поля списка внешних продьюсеров. Позволяет найти ТЦ по id магазина например.
     * @param producerId id исходного продьюсера.
     * @return
@@ -319,6 +345,35 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
       .map { searchResp2list }
   }
 
+
+  // Поиски по полю adn.advDelegate
+
+  /**
+   * Найти все узлы, которые делегировали свои полномочия размещения рекл.карточек (adv) указанным узлам.
+   * @param dgAdnId id узла-делегата.
+   * @return Фьючерс со списком результатов в неопределённом порядке.
+   */
+  def findAdvDelegatedTo(dgAdnId: String, maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+    prepareSearch
+      .setQuery( advDelegatesQuery(dgAdnId) )
+      .setSize( maxResults )
+      .execute()
+      .map { searchResp2list }
+  }
+
+  /**
+   * Найти id документов, которые делегировали свои полномочия размещения рекл.карточек (adv) указанным узлам.
+   * @param dgAdnId id узла-делегата.
+   * @return Список id документов в неопределённом порядке.
+   */
+  def findIdsAdvDelegatedTo(dgAdnId: String, maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
+    prepareSearch
+      .setQuery( advDelegatesQuery(dgAdnId) )
+      .setSize( maxResults )
+      .setNoFields()
+      .execute()
+      .map { searchResp2idsList }
+  }
 }
 
 
@@ -382,12 +437,23 @@ object AdnRights extends Enumeration {
 
 import AdnRights._
 
-/** Инфа об участнике рекламной сети. Все параметры его участия свернуты в один объект. */
+
+/** Инфа об участнике рекламной сети. Все параметры его участия свернуты в один объект.
+  * @param memberType Тип участника. Например, магазин.
+  * @param rights Права участника сети.
+  * @param supId Опциональный id супер-узла.
+  * @param producerIds id узлов-продьюсеров, которые поставляют контент указанному узлу. Пока не используется толком.
+  * @param advDelegate Опциональный id узла, который совершает управление размещением рекламных карточек на данном узле.
+  * @param showLevelsInfo Контейнер с инфой об уровнях отображения.
+  * @param isEnabled Включен ли узел? Отключение узла приводит к блокировке некоторых функций.
+  * @param disableReason Причина отключения узла, если есть.
+  */
 case class AdNetMemberInfo(
   var memberType: AdNetMemberType,
   var rights: Set[AdnRight],
   var supId: Option[String] = None,
   var producerIds: Set[String] = Set.empty,
+  var advDelegate: Option[String] = None,
   // перемещено из mpub:
   var showLevelsInfo: AdnMemberShowLevels = AdnMemberShowLevels(),
   var isEnabled: Boolean = true,
@@ -418,13 +484,13 @@ case class AdNetMemberInfo(
       MEMBER_TYPE_ESFN   -> JsString(memberType.toString()),
       IS_ENABLED_ESFN    -> JsBoolean(isEnabled)
     )
-    if (!rights.isEmpty) {
+    if (rights.nonEmpty) {
       val rightsJson = rights.foldLeft[List[JsString]] (Nil) {
         (acc, e) => JsString(e.toString) :: acc
       }
       acc0 ::= RIGHTS_ESFN -> JsArray(rightsJson)
     }
-    if (!producerIds.isEmpty) {
+    if (producerIds.nonEmpty) {
       val arrElems = producerIds.foldLeft[List[JsString]] (Nil) {
         (acc, e)  =>  JsString(e) :: acc
       }
@@ -432,6 +498,8 @@ case class AdNetMemberInfo(
     }
     if (supId.isDefined)
       acc0 ::= SUPERVISOR_ID_ESFN -> JsString(supId.get)
+    if (advDelegate.isDefined)
+      acc0 ::= ADV_DELEGATE_ESFN -> JsString(advDelegate.get)
     if (!showLevelsInfo.isEmpty)
       acc0 ::= SHOW_LEVELS_ESFN -> showLevelsInfo.toPlayJson
     if (disableReason.isDefined)
@@ -538,7 +606,7 @@ object AdnMemberShowLevels {
     * @return Неотрицательное целое. Если уровень запрещён, то будет 0.
     */
   def maxAtLevel(lvl: AdShowLevel, levelsMap: LvlMap_t): Int = {
-    levelsMap.get(lvl).getOrElse(0)
+    levelsMap.getOrElse(lvl, 0)
   }
 
   /**

@@ -39,7 +39,7 @@ object AdNetMemberTypes extends Enumeration {
 
 
   /** Торговый центр. */
-  val MART = new Val("m") with ANMTProducer with ANMTReceiver {
+  val MART: AdNetMemberType = new Val("m") with ANMTProducer with ANMTReceiver {
     override def displayAddrOnAds = false
     override def slDflt = AdShowLevels.LVL_START_PAGE
 
@@ -53,7 +53,7 @@ object AdNetMemberTypes extends Enumeration {
 
 
   /** Магазин. Обычно арендатор в ТЦ. */
-  val SHOP = new Val("s") with ANMTProducer {
+  val SHOP: AdNetMemberType = new Val("s") with ANMTProducer {
     override def displayAddrOnAds = true
     override def slDflt = AdShowLevels.LVL_MEMBER
 
@@ -64,7 +64,7 @@ object AdNetMemberTypes extends Enumeration {
 
 
   /** Ресторан в сети ресторанов. */
-  val RESTAURANT = new Val("r") with ANMTProducer with ANMTReceiver {
+  val RESTAURANT: AdNetMemberType = new Val("r") with ANMTProducer with ANMTReceiver {
     override def displayAddrOnAds = false
     override def slDflt = AdShowLevels.LVL_START_PAGE
     override def canViewSlaves = false
@@ -77,7 +77,7 @@ object AdNetMemberTypes extends Enumeration {
 
 
   /** Супервайзер сети ресторанов. */
-  val RESTAURANT_SUP = new Val("R") with ANMTProducer with ANMTSupervisor {
+  val RESTAURANT_SUP: AdNetMemberType = new Val("R") with ANMTProducer with ANMTSupervisor {
     override def displayAddrOnAds = false
     override def slDflt = AdShowLevels.LVL_START_PAGE
     override def canViewSlaves = true
@@ -105,7 +105,7 @@ object AdNetMemberTypes extends Enumeration {
 object AdOfferTypes extends Enumeration {
   type AdOfferType = Value
 
-  val BLOCK = Value("b")
+  val BLOCK: AdOfferType = Value("b")
 
   def maybeWithName(n: String): Option[AdOfferType] = {
     try {
@@ -145,13 +145,13 @@ object AdShowLevels extends Enumeration with MacroLogsImpl {
   def withNameTyped(n: String): AdShowLevel = withName(n)
 
   /** Отображать на нулевом уровне, т.е. при входе в ТЦ/ресторан и т.д. */
-  val LVL_START_PAGE = Val("d", 300, "firstPage-catalog")
+  val LVL_START_PAGE: AdShowLevel = Val("d", 300, "firstPage-catalog")
 
   /** Отображать в каталоге продьюсеров. */
-  val LVL_MEMBERS_CATALOG = Val("h", 100, "common-catalog")
+  val LVL_MEMBERS_CATALOG: AdShowLevel = Val("h", 100, "common-catalog")
 
   /** Отображать эту рекламу внутри каталога продьюсера. */
-  val LVL_MEMBER = Val("m", 200, "shop-catalog")
+  val LVL_MEMBER: AdShowLevel = Val("m", 200, "shop-catalog")
 
 
   def maybeWithName(n: String): Option[AdShowLevel] = {
