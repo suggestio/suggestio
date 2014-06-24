@@ -492,6 +492,7 @@ siomAcBtnHoverGradient(innerColor, defColor)
 siomAcBtnColor1 = #48ab38 /* зелёный */
 siomAcBtnColor2 = #4f88a9 /* синий */
 siomAcBtnColor3 = #9a9d9e /* серый */
+siomAcBtnColor4 = #e24a4a /* красный */
 
 .siom-ac-btn
   display: inline-block
@@ -536,6 +537,18 @@ siomAcBtnColor3 = #9a9d9e /* серый */
   box-shadow(0 0 30px 0 #76797a inset)
   color: #d2d1d1
 
+.siom-ac-btn.__color-4
+  color: white
+  background: siomAcBtnColor4
+
+.siom-ac-btn.__color-4:hover
+  siomAcBtnHoverGradient(#FC5353, siomAcBtnColor4)
+
+.siom-ac-btn.__color-4:active
+  background: siomAcBtnColor4
+  box-shadow(0 0 30px 0 #b43232 inset)
+  color: #ffa1a1
+
 .siom-ac-btn.__size-M
   padding: 10px 25px
 
@@ -554,8 +567,18 @@ siomAcBtnColor3 = #9a9d9e /* серый */
   font-size: 14px
   line-height: 14px
 
+.siom-ac-btn.__ft-XM
+  font-family: 'heliosthin'
+  font-size: 16px
+  line-height: 16px
+
 .siom-ac-btn.__ft-L
-  font-family: 'PT_Sans-Narrow','sans-serif'
+  font-family: 'heliosthin'
+  font-size: 20px
+  line-height: 20px
+
+.siom-ac-btn.__ft-XL
+  font-family: 'PT_Sans-Narrow'
   font-size: 24px
   line-height: 24px
 
