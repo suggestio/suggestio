@@ -5,7 +5,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import util.acl._
 import models._
-import org.joda.time.{Period, DateTime, LocalDate}
+import org.joda.time.{DateTime, LocalDate}
 import play.api.db.DB
 import com.github.nscala_time.time.OrderingImplicits._
 import views.html.market.lk.adv._
@@ -301,7 +301,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
               // В зависимости от настроек размещения
               val successMsg: String = if (isFree) {
                 MmpDailyBilling.mkAdvsOk(request.mad, advs2)
-                "Рекламные карточки отправлены на размещение"
+                "Рекламные карточки отправлены на размещение."
               } else {
                 MmpDailyBilling.mkAdvReqs(request.mad, advs2)
                 "Запросы на размещение отправлены."
