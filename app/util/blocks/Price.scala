@@ -10,35 +10,12 @@ import play.api.data.{Mapping, FormError}
  * Description: Утиль для поля priceBf, содержащего актуальную цену товара/услуги в блоке.
  */
 
-object Price {
+object Price extends MergeBindAccAOBlock[AOPriceField] {
   val BF_NAME_DFLT = "price"
   val BF_PRICE_DFLT = BfPrice(BF_NAME_DFLT)
-  
-  def mergeBindAccWithPrice(maybeAcc: Either[Seq[FormError], BindAcc],
-                            offerN: Int,
-                            maybePrice: Either[Seq[FormError], Option[AOPriceField]]):  Either[Seq[FormError], BindAcc] = {
-    (maybeAcc, maybePrice) match {
-      case (Right(acc0), Right(priceOpt)) =>
-        if (priceOpt.isDefined) {
-          acc0.offers.find { _.n == offerN } match {
-            case Some(blk) =>
-              blk.price = priceOpt
-            case None =>
-              val blk = AOBlock(n = offerN, price = priceOpt)
-              acc0.offers ::= blk
-          }
-        }
-        maybeAcc
 
-      case (Left(accFE), Right(descr)) =>
-        maybeAcc
-
-      case (Right(_), Left(colorFE)) =>
-        Left(colorFE)   // Избыточна пересборка left either из-за right-типа. Можно также вернуть через .asInstanceOf, но это плохо.
-
-      case (Left(accFE), Left(colorFE)) =>
-        Left(accFE ++ colorFE)
-    }
+  override def updateAOBlockWith(blk: AOBlock, priceOpt: Option[AOPriceField]) {
+    blk.price = priceOpt
   }
 
   def getPrice(bmr: BlockMapperResult) = bmr.flatMapFirstOffer(_.price)
@@ -62,8 +39,8 @@ trait Price extends ValT {
 
   abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
     val maybeAcc0 = super.bindAcc(data)
-    val maybeDescr = m.bind(data)
-    mergeBindAccWithPrice(maybeAcc0, offerN = 0, maybeDescr)
+    val maybePrice = m.bind(data)
+    mergeBindAcc(maybeAcc0, maybePrice)
   }
 
   abstract override def unbind(value: BlockMapperResult): Map[String, String] = {

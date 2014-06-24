@@ -60,7 +60,7 @@ object IsAdnNodeAdmin {
 
 
   def isAdnNodeAdmin(adnId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
-    val fut = MAdnNodeCache.getByIdCached(adnId)
+    val fut = MAdnNodeCache.getById(adnId)
     checkAdnNodeCredsOpt(fut, pwOpt)
   }
 
@@ -114,7 +114,7 @@ trait AdnNodeAccessBase extends ActionBuilder[RequestForAdnNode] {
         val povAdnNodeOptFut = povAdnIdOpt.fold
           { Future successful Option.empty[MAdnNode] }
           { povAdnId => IsAdnNodeAdmin.isAdnNodeAdmin(povAdnId, pwOpt) }
-        val adnNodeOptFut = MAdnNodeCache.getByIdCached(adnId)
+        val adnNodeOptFut = MAdnNodeCache.getById(adnId)
         IsAdnNodeAdmin.checkAdnNodeCredsFut(adnNodeOptFut, pwOpt) flatMap {
           // Это админ текущего узла
           case Right(adnNode) =>
@@ -182,7 +182,7 @@ trait AdnNodeMaybeAuthBase extends ActionBuilder[SimpleRequestForAdnNode] {
   override def invokeBlock[A](request: Request[A], block: (SimpleRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
-    MAdnNodeCache.getByIdCached(adnId) flatMap {
+    MAdnNodeCache.getById(adnId) flatMap {
       case Some(adnNode) =>
         srmFut flatMap { srm =>
           val req1 = SimpleRequestForAdnNode(adnNode, request, pwOpt, srm)

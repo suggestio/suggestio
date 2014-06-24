@@ -11,35 +11,14 @@ import play.api.data.{Mapping, FormError}
  * Description: Утиль для сборки блоков, содержащих поле discountBf.
  */
 
-object Discount {
+object Discount extends MergeBindAccAOBlock[AOFloatField] {
   val BF_NAME_DFLT = "discount"
   val DISCOUNT_BF_DFLT = BfDiscount(BF_NAME_DFLT)
 
-  def mergeBindAccWithDiscount(maybeAcc: Either[Seq[FormError], BindAcc],
-                            offerN: Int,
-                            maybeDiscount: Either[Seq[FormError], Option[AOFloatField]]):  Either[Seq[FormError], BindAcc] = {
-    (maybeAcc, maybeDiscount) match {
-      case (Right(acc0), Right(discountOpt)) =>
-        if (discountOpt.isDefined) {
-          acc0.offers.find { _.n == offerN } match {
-            case Some(blk) =>
-              blk.discount = discountOpt
-            case None =>
-              val blk = AOBlock(n = offerN, discount = discountOpt)
-              acc0.offers ::= blk
-          }
-        }
-        maybeAcc
 
-      case (Left(accFE), Right(descr)) =>
-        maybeAcc
-
-      case (Right(_), Left(colorFE)) =>
-        Left(colorFE)   // Избыточна пересборка left either из-за right-типа. Можно также вернуть через .asInstanceOf, но это плохо.
-
-      case (Left(accFE), Left(colorFE)) =>
-        Left(accFE ++ colorFE)
-    }
+  /** Обновить указанный изменяемый AOBlock с помощью текущего значения. */
+  override def updateAOBlockWith(blk: AOBlock, discountOpt: Option[AOFloatField]) {
+    blk.discount = discountOpt
   }
 
   def getDiscount(bmr: BlockMapperResult) = bmr.flatMapFirstOffer(_.discount)
@@ -64,7 +43,7 @@ trait Discount extends ValT {
   abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
     val maybeAcc0 = super.bindAcc(data)
     val maybeDisco = m.bind(data)
-    mergeBindAccWithDiscount(maybeAcc0, offerN = 0, maybeDisco)
+    mergeBindAcc(maybeAcc0, maybeDisco)
   }
 
   abstract override def unbind(value: BlockMapperResult): Map[String, String] = {

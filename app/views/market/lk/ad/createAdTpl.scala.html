@@ -1,4 +1,4 @@
-@(mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], adnNode: MAdnNode, withBC: Option[BlockConf] = None)(implicit ctx: util.Context)
+@(mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], adnNode: MAdnNode, withBC: Option[BlockConf] = None, allBlocks: Seq[BlockConf])(implicit ctx: util.Context)
 
 @* Рендер страницы с формой создания рекламы. *@
 @import ctx._
@@ -18,7 +18,8 @@
             btnText = Messages("Create"),
             mmcats  = mmcats,
             withBC  = withBC,
-            adnNode = adnNode
+            adnNode = adnNode,
+            allBlocks = allBlocks
           )
 
           <div class="submit-wrap">

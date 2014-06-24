@@ -113,7 +113,7 @@ object Market extends SioController with PlayMacroLogsImpl {
   def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
     val isProducerAds = !adSearch.producerIds.isEmpty
     // TODO Использовать multiget + кеш.
-    val producersFut = Future.traverse(adSearch.producerIds) { MAdnNodeCache.getByIdCached }
+    val producersFut = Future.traverse(adSearch.producerIds) { MAdnNodeCache.getById }
       .map { _.flatMap(_.toList) }
     val (jsAction, adSearch2) = if (adSearch.qOpt.isDefined) {
       "searchAds" -> adSearch

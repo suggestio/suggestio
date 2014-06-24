@@ -53,7 +53,7 @@ trait IsSuperuserAdnNodeAbstract extends ActionBuilder[AbstractRequestForAdnNode
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper.isSuperuser(pwOpt)) {
       val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
-      MAdnNodeCache.getByIdCached(adnId) flatMap {
+      MAdnNodeCache.getById(adnId) flatMap {
         case Some(adnNode) =>
           sioReqMdFut flatMap { srm =>
             block(RequestForAdnNodeAdm(adnNode, isMyNode = true, request, pwOpt, srm))

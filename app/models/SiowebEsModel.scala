@@ -71,7 +71,7 @@ abstract class EsModelCache[T1 <: EsModelMinimalT : ClassTag] extends SNStaticSu
    * @param id id исходного документа.
    * @return Тоже самое, что и исходный getById().
    */
-  def getByIdCached(id: String)(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
+  def getById(id: String)(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
     val ck = cacheKey(id)
     // Негативные результаты не кешируются.
     Cache.getAs[T1](ck) match {
@@ -116,11 +116,11 @@ abstract class EsModelCache[T1 <: EsModelMinimalT : ClassTag] extends SNStaticSu
   /**
    * Если id задан, то прочитать из кеша или из хранилища. Иначе вернуть None.
    * @param idOpt Опциональный id.
-   * @return Тоже самое, что и [[getByIdCached]].
+   * @return Тоже самое, что и [[getById]].
    */
   def maybeGetByIdCached(idOpt: Option[String])(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
     idOpt match {
-      case Some(id) => getByIdCached(id)
+      case Some(id) => getById(id)
       case None     => Future successful None
     }
   }

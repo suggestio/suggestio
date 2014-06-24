@@ -18,8 +18,11 @@
   </div>
 }
 
+@hPathAfter = {
+  @* Ничего не дописываем в заголовочный путь. *@
+}
 
-@marketBase("index") {
+@marketBase("index", hPathAfter = Some(hPathAfter)) {
 
     <div class="info-label _market-index">
       <div class="info-label__icon"></div>

@@ -22,7 +22,7 @@ object MAdvRefuse extends MAdvStatic[MAdvRefuse] {
   override val TABLE_NAME = "adv_refuse"
 
   override val rowParser = {
-    ADV_ROW_PARSER_LEFT ~ get[DateTime]("date_status") ~ get[String]("reason") ~ ADV_ROW_PARSER_RIGHT map {
+    ADV_ROW_PARSER_1 ~ get[DateTime]("date_status") ~ get[String]("reason") ~ ADV_ROW_PARSER_2 map {
       case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ dateStart ~ dateEnd ~ prodAdnId ~
         rcvrAdnId ~ dateStatus ~ reason ~ showLevels =>
         MAdvRefuse(

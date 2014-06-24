@@ -133,7 +133,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
 
   /** Раздавалка картинок, созданных в [[handleTempImg]]. */
   // TODO Тут надо бы IsAuth, но он мешает работать программистам из-за использования audience_url в ряде случаев.
-  def getTempImg(filename: String) = IsAuth.async { implicit request =>
+  def getTempImg(filename: String) = Action.async { implicit request =>
     suppressQsFlood(routes.Img.getTempImg(filename)) {
       // Надо бы добавить сюда поддержку if-modifier-since...
       MPictureTmp.find(filename) match {

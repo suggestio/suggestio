@@ -11,13 +11,12 @@ import com.github.nscala_time.time.OrderingImplicits._
 import views.html.market.lk.adv._
 import util.PlayMacroLogsImpl
 import scala.concurrent.Future
-import play.api.data.Form
 import play.api.templates.HtmlFormat
 import play.api.mvc.{Result, AnyContent}
 import java.sql.SQLException
-import io.suggest.ym.parsers.Price
 import util.billing.MmpDailyBilling, MmpDailyBilling.assertAdvsReqRowsDeleted
 import java.util.Currency
+import play.api.data._, Forms._
 
 /**
  * Suggest.io
@@ -33,13 +32,19 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
   val ADVS_MODE_SELECT_LIMIT = configuration.getInt("adv.short.limit") getOrElse 2
 
+  /** Отдельный маппинг для adv-формы, который парсит исходные данные по бесплатному размещению. */
+  private val freeAdvFormM: Form[Option[Boolean]] = Form(
+    "freeAdv" -> optional(boolean)
+  )
+
+  type AdvFormM_t = Form[List[AdvFormEntry]]
+
   /** Маппинг формы размещения рекламы на других узлах. */
-  val advFormM: Form[List[AdvFormEntry]] = {
-    import play.api.data._, Forms._
+  private def advFormM(lowerAdvDate: LocalDate): AdvFormM_t = {
     import util.FormUtil._
-    val dateOptM = optional(jodaLocalDate("yyyy-MM-dd"))
     Form(
       "node" -> {
+        val dateOptM = optional(jodaLocalDate("yyyy-MM-dd"))
         // TODO list mapping не умеет unbind в нашем случае. Надо запилить свой map mapping, который будет биндить форму в карту adnId -> AdvFormEntry.
         list(
           tuple(
@@ -55,9 +60,14 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
                 // Если стоит галочка, то надо проверить даты.
                 if (isAdv) {
                   // Проверить даты
-                  val now = DateTime.now()
-                  val dateTestF = { d: LocalDate => d.toDateTimeAtStartOfDay isAfter now}
-                  dateStartOpt.exists(dateTestF) && dateEndOpt.exists(dateTestF)
+                  val dateTestF = { d: LocalDate => !(d isBefore lowerAdvDate) }
+                  dateStartOpt.exists(dateTestF) && dateEndOpt.exists(dateTestF) && {
+                    dateStartOpt exists { dateStart =>
+                      dateEndOpt.exists { dateEnd =>
+                        !(dateStart isAfter dateEnd)
+                      }
+                    }
+                  }
                 } else {
                   // Галочки нет, пропускаем мимо. На следующем шаге это дело будет отфильтровано.
                   true
@@ -74,7 +84,13 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
                     showLevels ::= AdShowLevels.LVL_START_PAGE
                   if (onRcvrCat)
                     showLevels ::= AdShowLevels.LVL_MEMBERS_CATALOG
-                  val result = AdvFormEntry(adnId = adnId, advertise = isAdv, showLevels = showLevels.toSet, dateStart = dateStart, dateEnd = dateEnd)
+                  val result = AdvFormEntry(
+                    adnId = adnId,
+                    advertise = isAdv,
+                    showLevels = showLevels.toSet,
+                    dateStart = dateStart,
+                    dateEnd = dateEnd
+                  )
                   result :: acc
                 case (acc, _) => acc
               }
@@ -92,17 +108,25 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
   /** Страница управления размещением рекламной карточки. */
   def advForAd(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
-    renderAdvFormFor(adId, advFormM).map { Ok(_) }
+    val now = DateTime.now()
+    val lowerAdvDt = if (request.isSuperuser)
+      now
+    else
+      now.plusDays(1)
+    val formM = advFormM(lowerAdvDt.toLocalDate)
+    renderAdvFormFor(adId, formM)
+      .map { Ok(_) }
   }
 
   /** Общий для экшенов код подготовки данных и рендера страницы advFormTpl, которая содержит форму размещения. */
-  private def renderAdvFormFor(adId: String, form: Form[List[AdvFormEntry]])(implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
+  private def renderAdvFormFor(adId: String, form: AdvFormM_t)(implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
     // Запуск асинхронных операций: подготовка списка узлов, на которые можно вообще возможно опубликовать карточку.
     val rcvrsFut = collectReceivers(request.producerId)
     renderAdvFormForRcvrs(adId, form, rcvrsFut)
   }
 
-  private def renderAdvFormForRcvrs(adId: String, form: Form[List[AdvFormEntry]], rcvrsFut: Future[Seq[MAdnNode]])(implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
+  private def renderAdvFormForRcvrs(adId: String, form: AdvFormM_t, rcvrsFut: Future[Seq[MAdnNode]])
+                                   (implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
     // Работа с синхронными моделями.
     val syncResult = DB.withConnection { implicit c =>
       // Собираем всю инфу о размещении этой рекламной карточки
@@ -160,6 +184,20 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     }.toMap
   }
 
+  private def maybeFreeAdv(implicit request: AbstractRequestWithPwOpt[_]): (Boolean, LocalDate) = {
+    val isFree = isFreeAdv( freeAdvFormM.bindFromRequest().fold({_ => None}, identity) )
+    val now = DateTime.now
+    val lowerDate: DateTime = if (isFree) {
+      // Для бесплатного размещения: можно размещать хоть сейчас.
+      now
+    } else {
+      // Для обычного размещения: можно отображаеть карточку в выдаче только с завтрашнего дня
+      now.plusDays(1)
+    }
+    val result = isFree -> lowerDate.toLocalDate
+    //trace("maybeFreeAdv(): (isFree, lowerDate) = " + result)
+    result
+  }
 
   /**
    * Рассчитать цену размещения. Сюда нужно сабмиттить форму также, как и в advFormSubmit().
@@ -167,7 +205,8 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
    * @return Инлайновый рендер отображаемой цены.
    */
   def getAdvPriceSubmit(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
-    advFormM.bindFromRequest().fold(
+    val (isFree, lowerDate) = maybeFreeAdv
+    advFormM(lowerDate).bindFromRequest().fold(
       {formWithErrors =>
         debug(s"getAdvPriceSubmit($adId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
         NotAcceptable("Cannot bind form.")
@@ -179,42 +218,22 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         allRcvrIdsFut.map { allRcvrIds =>
           val adves2 = filterEntiesByPossibleRcvrs(adves1, allRcvrIds)
           // Начинаем рассчитывать ценник.
-          if (adves2.isEmpty) {
-            val curr = Currency.getInstance(CurrencyCodeOpt.CURRENCY_CODE_DFLT)
-            val prices = List(curr -> 0F)
-            Ok(_advFormPriceTpl(prices, hasEnoughtMoney = true))
+          val advPricing: MAdvPricing = if (adves2.isEmpty || isFree) {
+            zeroPricing
           } else {
-            val syncResult = DB.withConnection { implicit c =>
-              val someTrue = Some(true)
-              val prices = adves2.foldLeft[List[Price]] (Nil) { (acc, adve) =>
-                val rcvrContract = MBillContract.findForAdn(adve.adnId, isActive = someTrue)
-                  .sortBy(_.id.get)
-                  .head
-                val rcvrPricing = MBillMmpDaily.findByContractId(rcvrContract.id.get)
-                  .sortBy(_.id.get)
-                  .head
-                val advPrice = MmpDailyBilling.calculateAdvPrice(request.mad, rcvrPricing, adve)
-                advPrice :: acc
-              }
-              val prices2 = prices
-                .groupBy { _.currency.getCurrencyCode }
-                .mapValues { p => p.head.currency -> p.map(_.price).sum }
-                .values
-              val mbb = MBillBalance.getByAdnId(request.producerId).get
-              // Если есть разные валюты, то операция уже невозможна.
-              val hasEnoughtMoney = prices2.size <= 1 && {
-                prices2.headOption.exists { price =>
-                  price._1.getCurrencyCode == mbb.currencyCode  &&  price._2 <= mbb.amount
-                }
-              }
-              prices2 -> hasEnoughtMoney
-            }
-            val (prices, hasEnoughtMoney) = syncResult
-            Ok(_advFormPriceTpl(prices, hasEnoughtMoney))
+            MmpDailyBilling.getAdvPrices(request.mad, adves2)
           }
+          Ok(_advFormPriceTpl(advPricing))
         }
       }
     )
+  }
+
+  /** Нулевая цена, передавая в соотв. шаблон. */
+  private val zeroPricing: MAdvPricing = {
+    val curr = Currency.getInstance(CurrencyCodeOpt.CURRENCY_CODE_DFLT)
+    val prices = List(curr -> 0F)
+    MAdvPricing(prices, hasEnoughtMoney = true)
   }
 
 
@@ -259,11 +278,13 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   /** Сабмит формы размещения рекламной карточки. */
   def advFormSubmit(adId: String) = CanAdvertiseAd(adId).async { implicit request =>
     lazy val logPrefix = s"advFormSubmit($adId): "
-    val formBinded = advFormM.bindFromRequest()
+    val (isFree, lowerDate) = maybeFreeAdv
+    val formBinded = advFormM(lowerDate).bindFromRequest()
     formBinded.fold(
       {formWithErrors =>
         debug(s"${logPrefix}form bind failed:\n${formatFormErrors(formWithErrors)}")
-        renderAdvFormFor(adId, formWithErrors).map(NotAcceptable(_))
+        renderAdvFormFor(adId, formWithErrors)
+          .map(NotAcceptable(_))
       },
       {adves =>
         trace(logPrefix + "adves entries submitted: " + adves)
@@ -275,50 +296,23 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
           val allRcvrIds = allRcvrs.map(_.id.get).toSet
           val advs2 = filterEntiesByPossibleRcvrs(advs1, allRcvrIds)
           // Пора сохранять новые реквесты на размещение в базу.
-          if (!advs2.isEmpty) {
+          if (advs2.nonEmpty) {
             try {
-              DB.withTransaction { implicit c =>
-                // Вешаем update lock на баланс чтобы избежать блокирования суммы, списанной в параллельном треде, и дальнейшего ухода в минус.
-                val mbb0 = MBillBalance.getByAdnId(request.producerId, SelectPolicies.UPDATE).get
-                val someTrue = Some(true)
-                val mbc = MBillContract.findForAdn(request.producerId, isActive = someTrue).head
-                val prodCurrencyCode = mbb0.currencyCode
-                advs2.foreach { advEntry =>
-                  val rcvrContract = MBillContract.findForAdn(advEntry.adnId, isActive = someTrue)
-                    .sortBy(_.id.get)
-                    .headOption
-                    .getOrElse {
-                      MBillContract(adnId = advEntry.adnId, contractDate = DateTime.now).save
-                    }
-                  val rcvrPricing = MBillMmpDaily.findByContractId(rcvrContract.id.get)
-                    .sortBy(_.id.get)
-                    .head
-                  val advPrice = MmpDailyBilling.calculateAdvPrice(request.mad, rcvrPricing, advEntry)
-                  val rcvrCurrencyCode = advPrice.currency.getCurrencyCode
-                  assert(
-                    rcvrCurrencyCode == prodCurrencyCode,
-                    s"Rcvr node ${advEntry.adnId} currency ($rcvrCurrencyCode) does not match to producer node ${request.producerId} currency ($prodCurrencyCode)"
-                  )
-                  MAdvReq(
-                    adId = adId,
-                    amount = advPrice.price,
-                    comission = Some(mbc.sioComission),
-                    prodContractId = mbc.id.get,
-                    prodAdnId = request.producerId,
-                    rcvrAdnId = advEntry.adnId,
-                    dateStart = advEntry.dateStart.toDateTimeAtStartOfDay,
-                    dateEnd = advEntry.dateEnd.toDateTimeAtStartOfDay,
-                    showLevels = advEntry.showLevels
-                  ).save
-                  // Нужно заблокировать на счете узла необходимую сумму денег.
-                  mbb0.updateBlocked(advPrice.price)
-                }
+              // В зависимости от настроек размещения
+              val successMsg: String = if (isFree) {
+                MmpDailyBilling.mkAdvsOk(request.mad, advs2)
+                "Рекламные карточки отправлены на размещение."
+              } else {
+                MmpDailyBilling.mkAdvReqs(request.mad, advs2)
+                "Запросы на размещение отправлены."
               }
               Redirect(routes.MarketAdv.advForAd(adId))
-                .flashing("success" -> "Запросы на размещение отправлены.")
+                .flashing("success" -> successMsg)
             } catch {
               case ex: SQLException =>
                 warn(s"advFormSumbit($adId): Failed to commit adv transaction for advs:\n " + advs2, ex)
+                // Для бесплатной инжекции: сгенерить экзепшен, чтобы привелегированному юзеру код ошибки отобразился на экране.
+                if (isFree) throw ex
                 val formWithErrors = formBinded.withGlobalError("error.no.money")
                 renderAdvFormForRcvrs(adId, formWithErrors, allRcvrsFut)
                   .map { NotAcceptable(_) }
@@ -519,6 +513,14 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
     // Всё сохранено. Можно отредиректить юзера, чтобы он дальше продолжил одобрять рекламные карточки.
     Redirect(routes.MarketAdv.showNodeAdvs(request.advReq.rcvrAdnId))
       .flashing("success" -> "Реклама будет размещена.")
+  }
+
+
+  /** На основе маппинга формы и сессии суперюзера определить, как размещать рекламу:
+    * бесплатно инжектить или за деньги размещать. */
+  private def isFreeAdv(isFreeOpt: Option[Boolean])(implicit request: AbstractRequestWithPwOpt[_]): Boolean = {
+    isFreeOpt
+      .fold(false) { _ && request.isSuperuser }
   }
 
 }

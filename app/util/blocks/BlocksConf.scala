@@ -491,14 +491,35 @@ object BlocksConf extends Enumeration {
   }
 
 
+  /** Блок-ссылка. Изначально создавался для пиара sioM. */
+  sealed trait Block26t extends Height with BgImg with TitleDescrListBlockT with Href {
+    override def isShown = false
+    override def template = _block26Tpl
+    override def offersCount: Int = 1
+    override def heightBf = super.heightBf.copy(
+      availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
+    )
+  }
+  val Block26 = new Val(26) with Block26t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block26Wrapper(key = newKey)
+  }
+  sealed case class Block26Wrapper(key: String) extends ValTWrapper(Block26) with ValTEmpty with Block26t {
+    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
+
 
   /** Отображаемые блоки. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id и только отображаемые. */
   val valuesShown: Seq[BlockConf] = {
-    values.asInstanceOf[collection.Set[BlockConf]]
+    val vs0 = values.asInstanceOf[collection.Set[BlockConf]]
       .toSeq
       .filter(_.isShown)
-      .sortBy { bc => bc.ordering -> bc.id }
+    orderBlocks(vs0)
+  }
+
+  /** Отсортировать блоки согласно ordering с учётом id. */
+  def orderBlocks(values: Seq[BlockConf]) = {
+    values.sortBy { bc => bc.ordering -> bc.id }
   }
 }
 

@@ -59,13 +59,13 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
     MarketAd.getAdFormM(userCatIdOptM, blockM)
   }
 
-  private def detectAdPreviewForm(implicit request: Request[collection.Map[String, Seq[String]]]) = {
-    maybeGetAdPreviewFormM(request.body)
+  private def detectAdPreviewForm(adnNode: MAdnNode)(implicit request: Request[collection.Map[String, Seq[String]]]) = {
+    maybeGetAdPreviewFormM(adnNode, request.body)
   }
 
 
   /** Выбрать форму в зависимости от содержимого реквеста. Если ad.offer.mode не валиден, то будет Left с формой с global error. */
-  private def maybeGetAdPreviewFormM(reqBody: collection.Map[String, Seq[String]]): Either[AdFormM, (BlockConf, AdFormM)] = {
+  private def maybeGetAdPreviewFormM(adnNode: MAdnNode, reqBody: collection.Map[String, Seq[String]]): Either[AdFormM, (BlockConf, AdFormM)] = {
     // TODO adModes пора выпиливать. И этот Either заодно.
     val adModes = reqBody.get("ad.offer.mode") getOrElse Nil
     adModes.headOption.flatMap { adModeStr =>
@@ -82,7 +82,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
           .getOrElse(Nil)
           .headOption
           .map[BlockConf] { blockIdStr => BlocksConf(blockIdStr.toInt) }
-          .filter(_.isShown)
+          .filter { block => MarketAd.blockIdsFor(adnNode) contains block.id }
           .fold[Either[AdFormM, (BlockConf, AdFormM)]] {
             // Задан пустой или скрытый/неправильный block_id.
             warn("detectAdForm(): valid block_id not found, raw block ids = " + maybeBlockIdRaw)
@@ -97,7 +97,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
   }
 
   def adFormPreviewSubmit(adnId: String, isFull: Boolean) = IsAdnNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
-    detectAdPreviewForm match {
+    detectAdPreviewForm(request.adnNode) match {
       case Right((bc, adFormM)) =>
         adFormM.bindFromRequest().fold(
           {formWithErrors =>
@@ -154,7 +154,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
 
   /** Экшен смены блока редактора. */
   def adBlockSwitchEditor(adnId: String) = IsAdnNodeAdmin(adnId).apply(parse.urlFormEncoded) { implicit request =>
-    detectAdPreviewForm match {
+    detectAdPreviewForm(request.adnNode) match {
       case Right((bc, newAdForm)) =>
         // Для улучшения восстановления значений при переключении между формами разных блоков, используем сериализацию состояния формы в hidden-поле редактора.
         val prevFormData: Map[String, String] = request.body.get("formData")

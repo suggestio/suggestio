@@ -12,6 +12,7 @@ import play.api.data.{FormError, Mapping}
 object BlocksCtorUtil {
 
   // Закинуть новый цвет в bind-аккамулятор.
+  // TODO Надо бы дедублицировать сие через MergeBindAcc, но аргумент colorName: String мешает.
   def mergeBindAccWithColor(maybeAcc: Either[Seq[FormError], BindAcc],
                             colorName: String,
                             maybeColor: Either[Seq[FormError], String]): Either[Seq[FormError], BindAcc] = {

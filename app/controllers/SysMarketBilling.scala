@@ -67,7 +67,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
 
   /** Страница с информацией по биллингу. */
   def billingFor(adnId: String) = IsSuperuser.async { implicit request =>
-    val adnNodeOptFut = MAdnNodeCache.getByIdCached(adnId)
+    val adnNodeOptFut = MAdnNodeCache.getById(adnId)
     // Синхронные модели
     val syncResult = DB.withConnection { implicit c =>
       val contracts = MBillContract.findForAdn(adnId)
@@ -248,7 +248,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
           if (maybeMbc0.isDefined)
             mbcs ::= maybeMbc0.get
           Future.traverse(mbcs) { mbc =>
-            MAdnNodeCache.getByIdCached(mbc.adnId) map { adnNodeOpt =>
+            MAdnNodeCache.getById(mbc.adnId) map { adnNodeOpt =>
               mbc -> adnNodeOpt.get
             }
           } map { mbcsNoded =>
@@ -257,7 +257,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
         } else {
           // Есть точное совпадение. Нужно отрендерить страницу-подтверждение.
           val mbc = maybeMbc.get
-          MAdnNodeCache.getByIdCached(mbc.adnId) map { adnNodeOpt =>
+          MAdnNodeCache.getById(mbc.adnId) map { adnNodeOpt =>
             val adnNode = adnNodeOpt.get
             Ok(confirmIncomingPaymentTpl(adnNode, mbc, formBinded))
           }
@@ -319,7 +319,7 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
   }
 
   private def getNodeAndSupAsync(adnId: String): Future[Option[(MAdnNode, Option[MAdnNode])]] = {
-    MAdnNodeCache.getByIdCached(adnId) flatMap {
+    MAdnNodeCache.getById(adnId) flatMap {
       case Some(adnNode) =>
         MAdnNodeCache.maybeGetByIdCached(adnNode.adn.supId) map { supOpt =>
           Some(adnNode -> supOpt)

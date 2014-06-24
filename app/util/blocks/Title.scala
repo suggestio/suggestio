@@ -11,35 +11,12 @@ import play.api.data.{Mapping, FormError}
  * Description: Утиль для блоков, содержащих titleBf.
  */
 
-object Title {
+object Title extends MergeBindAccAOBlock[AOStringField] {
   val BF_NAME_DFLT = "title"
   val BF_TITLE_DFLT = BfText(BF_NAME_DFLT)
 
-  def mergeBindAccWithTitle(maybeAcc: Either[Seq[FormError], BindAcc],
-                            offerN: Int,
-                            maybeDescr: Either[Seq[FormError], Option[AOStringField]]):  Either[Seq[FormError], BindAcc] = {
-    (maybeAcc, maybeDescr) match {
-      case (Right(acc0), Right(titleOpt)) =>
-        if (titleOpt.isDefined) {
-          acc0.offers.find { _.n == offerN } match {
-            case Some(blk) =>
-              blk.text1 = titleOpt
-            case None =>
-              val blk = AOBlock(n = offerN, text1 = titleOpt)
-              acc0.offers ::= blk
-          }
-        }
-        maybeAcc
-
-      case (Left(accFE), Right(descr)) =>
-        maybeAcc
-
-      case (Right(_), Left(colorFE)) =>
-        Left(colorFE)   // Избыточна пересборка left either из-за right-типа. Можно также вернуть через .asInstanceOf, но это плохо.
-
-      case (Left(accFE), Left(colorFE)) =>
-        Left(accFE ++ colorFE)
-    }
+  override def updateAOBlockWith(blk: AOBlock, titleOpt: Option[AOStringField]) {
+    blk.text1 = titleOpt
   }
 
   def getTitle(bmr: BlockMapperResult) = bmr.flatMapFirstOffer(_.text1)
@@ -64,7 +41,7 @@ trait Title extends ValT {
   abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
     val maybeAcc0 = super.bindAcc(data)
     val maybeDescr = m.bind(data)
-    mergeBindAccWithTitle(maybeAcc0, offerN = 0, maybeDescr)
+    mergeBindAcc(maybeAcc0, maybeDescr)
   }
 
   abstract override def unbind(value: BlockMapperResult): Map[String, String] = {

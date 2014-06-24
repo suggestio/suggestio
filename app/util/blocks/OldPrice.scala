@@ -10,35 +10,14 @@ import play.api.data.{Mapping, FormError}
  * Description: Утиль для сборки блоков, содержащих поле старой цены oldPriceBf.
  */
 
-object OldPrice {
+object OldPrice extends MergeBindAccAOBlock[AOPriceField] {
   val BF_NAME_DFLT = "oldPrice"
   val BF_OLD_PRICE_DFLT = BfPrice(BF_NAME_DFLT)
 
-  def mergeBindAccWithOldPrice(maybeAcc: Either[Seq[FormError], BindAcc],
-                            offerN: Int,
-                            maybeOldPrice: Either[Seq[FormError], Option[AOPriceField]]):  Either[Seq[FormError], BindAcc] = {
-    (maybeAcc, maybeOldPrice) match {
-      case (Right(acc0), Right(oldPriceOpt)) =>
-        if (oldPriceOpt.isDefined) {
-          acc0.offers.find { _.n == offerN } match {
-            case Some(blk) =>
-              blk.oldPrice = oldPriceOpt
-            case None =>
-              val blk = AOBlock(n = offerN, oldPrice = oldPriceOpt)
-              acc0.offers ::= blk
-          }
-        }
-        maybeAcc
 
-      case (Left(accFE), Right(descr)) =>
-        maybeAcc
-
-      case (Right(_), Left(colorFE)) =>
-        Left(colorFE)   // Избыточна пересборка left either из-за right-типа. Можно также вернуть через .asInstanceOf, но это плохо.
-
-      case (Left(accFE), Left(colorFE)) =>
-        Left(accFE ++ colorFE)
-    }
+  /** Обновить указанный изменяемый AOBlock с помощью текущего значения. */
+  override def updateAOBlockWith(blk: AOBlock, oldPriceOpt: Option[AOPriceField]) {
+    blk.oldPrice = oldPriceOpt
   }
 
   def getOldPrice(bmr: BlockMapperResult) = bmr.flatMapFirstOffer(_.oldPrice)
@@ -63,8 +42,8 @@ trait OldPrice extends ValT {
 
   abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
     val maybeAcc0 = super.bindAcc(data)
-    val maybeDescr = m.bind(data)
-    mergeBindAccWithOldPrice(maybeAcc0, offerN = 0, maybeDescr)
+    val maybeOldPriceOpt = m.bind(data)
+    mergeBindAcc(maybeAcc0, maybeOldPriceOpt)
   }
 
   abstract override def unbind(value: BlockMapperResult): Map[String, String] = {

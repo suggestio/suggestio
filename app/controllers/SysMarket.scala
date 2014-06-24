@@ -17,7 +17,7 @@ import play.api.Play.current
 import io.suggest.ym.ad.ShowLevelsUtil
 import scala.concurrent.Future
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
-import io.suggest.ym.model.common.AdnMemberShowLevels
+import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import play.api.mvc.AnyContent
 import play.api.templates.HtmlFormat
 import play.api.i18n.Messages
@@ -288,30 +288,70 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     Some((memberType, isEnabled, rights, showLevelsInfo, supId))
   }
 
+
+  /** Маппинг для конфига ноды. */
+  private val nodeConfM: Mapping[NodeConf] = {
+    val intSetM = text(maxLength = 1024)
+      .transform [Set[Int]] (
+        {raw =>
+          raw.trim
+            .split("\\s*,\\s*")
+            .foldLeft [List[Int]] (Nil) { (acc, vRaw) =>
+              val vOpt: Option[Int] = try {
+                val blockId = vRaw.toInt
+                BlocksConf.apply(blockId)   // Проверяем, есть ли блок с указанным id.
+                Some(blockId)
+              } catch {
+                case ex: NumberFormatException =>
+                  warn("Cannot parse block id as integer: " + vRaw)
+                  None
+                case ex: NoSuchElementException =>
+                  warn("Block id not found: " + vRaw)
+                  None
+              }
+              vOpt match {
+                case Some(blockId) => blockId :: acc
+                case None => acc
+              }
+            }
+            .toSet
+        },
+        { _.mkString(", ") }
+      )
+    mapping(
+      "withBlocks" -> default [Set[Int]] (intSetM, Set.empty)
+    )
+    { NodeConf.apply }
+    { NodeConf.unapply }
+  }
+
+
   /** Маппинг для формы добавления/редактирования торгового центра. */
   private val adnNodeFormM = Form(mapping(
     "companyId" -> esIdM,
     "adn"       -> adnMemberM,
-    "meta"      -> adnNodeMetaM
+    "meta"      -> adnNodeMetaM,
+    "conf"      -> nodeConfM
   )
   // apply()
-  {(companyId, anmi, meta) =>
+  {(companyId, anmi, meta, conf) =>
     MAdnNode(
       meta = meta,
       companyId = companyId,
       adn = anmi,
-      personIds = Set.empty
+      personIds = Set.empty,
+      conf = conf
     )
   }
   // unapply()
   {adnNode =>
     import adnNode._
-    Some((companyId, adn, meta))
+    Some((companyId, adn, meta, conf))
   })
 
   private def maybeSupOpt(supIdOpt: Option[String]): Future[Option[MAdnNode]] = {
     supIdOpt match {
-      case Some(supId) => MAdnNodeCache.getByIdCached(supId)
+      case Some(supId) => MAdnNodeCache.getById(supId)
       case None => Future successful None
     }
   }
@@ -393,7 +433,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       {adnNode2 =>
         val supExistsFut: Future[Boolean] = adnNode2.adn.supId.fold
           { Future successful true }
-          { supId => MAdnNodeCache.getByIdCached(supId).map(_.isDefined) }
+          { supId => MAdnNodeCache.getById(supId).map(_.isDefined) }
         supExistsFut flatMap {
           case true =>
             adnNode.companyId = adnNode2.companyId
@@ -411,6 +451,9 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
             adnNode.adn.isEnabled = adnNode2.adn.isEnabled
             adnNode.adn.showLevelsInfo = adnNode2.adn.showLevelsInfo
             adnNode.adn.supId = adnNode2.adn.supId
+            adnNode.conf = adnNode.conf.copy(
+              withBlocks = adnNode2.conf.withBlocks
+            )
             adnNode.save.map { _ =>
               Redirect(routes.SysMarket.showAdnNode(adnId))
                 .flashing("success" -> "Изменения сохранены")
@@ -440,7 +483,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   /** Рендер страницы с формой инвайта (передачи прав на управление ТЦ). */
   def nodeOwnerInviteForm(adnId: String) = IsSuperuser.async { implicit request =>
     val eActsFut = EmailActivation.findByKey(adnId)
-    MAdnNodeCache.getByIdCached(adnId) flatMap {
+    MAdnNodeCache.getById(adnId) flatMap {
       case Some(adnNode) =>
         eActsFut map { eActs =>
           Ok(nodeOwnerInvitesTpl(adnNode, nodeOwnerInviteFormM, eActs))
@@ -451,7 +494,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
   /** Сабмит формы создания инвайта на управление ТЦ. */
   def nodeOwnerInviteFormSubmit(adnId: String) = IsSuperuser.async { implicit request =>
-    MAdnNodeCache.getByIdCached(adnId) flatMap {
+    MAdnNodeCache.getById(adnId) flatMap {
       case Some(adnNode) =>
         nodeOwnerInviteFormM.bindFromRequest().fold(
           {formWithErrors =>
@@ -645,7 +688,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
   /** Отрендериить тела email-сообщений инвайта передачи прав на ТЦ. */
   def showNodeOwnerEmailInvite(adnId: String, isHtml: Boolean) = IsSuperuser.async { implicit request =>
-    MAdnNodeCache.getByIdCached(adnId) map {
+    MAdnNodeCache.getById(adnId) map {
       case Some(adnNode) =>
         val eAct = EmailActivation("asdasd@kde.org", key=adnId, id = Some("123123asdasd_-123"))
         val ctx = implicitly[Context]

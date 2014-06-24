@@ -1,10 +1,10 @@
 package util.acl
 
-import play.api.mvc.{Session, Result, Request, ActionBuilder}
+import play.api.mvc._
 import scala.concurrent.Future
 import play.api.Play.{current, configuration}
 import scala.concurrent.duration._
-import util.PlayLazyMacroLogsImpl
+import util.PlayMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
@@ -13,7 +13,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * Created: 16.06.14 17:57
  * Description: Функции для сброса сессии при наступлении таймаута, и соотв.утиль для пролонгации сессии.
  */
-object ExpireSession extends PlayLazyMacroLogsImpl {
+object ExpireSession extends PlayMacroLogsImpl {
 
   import LOGGER._
 
@@ -28,6 +28,8 @@ object ExpireSession extends PlayLazyMacroLogsImpl {
 
   /** Чтобы не делать лишних движений, фиксируем начало времён, вычитая его из всех timestamp'ов. */
   val TSAMP_SUBSTRACT = 1402927907242L
+
+  trace(s"Session tstamp key = $SESSION_TSTAMP_KEY; session ttl = ${SESSION_TTL_SECONDS}s = ${SESSION_TTL_SECONDS / 60} minutes")
 
   /** Сгенерить текущий timestamp. */
   def currentTstamp = (System.currentTimeMillis() - TSAMP_SUBSTRACT) / 1000L
@@ -66,6 +68,7 @@ import ExpireSession._
  * @tparam R тип реквеста, с которым работаем. Просто форвардится из декларации класса ActionBuilder'а.
  */
 trait ExpireSession[R[_]] extends ActionBuilder[R] {
+  import LOGGER._
 
   abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
     super.invokeBlock(request, block) map { result =>
@@ -84,6 +87,7 @@ trait ExpireSession[R[_]] extends ActionBuilder[R] {
           .filter { isTimestampValid(_, currTstamp) }
           .fold {
             // Таймштамп истёк -- стереть сессию.
+            trace("invokeBlock(): Erasing expired session for person " + session0.get(Security.username))
             result.withNewSession
           } { _ =>
             // Есть таймштамп, значит пора залить новый (настоящий) таймштамп в сессию.

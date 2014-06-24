@@ -24,7 +24,7 @@ trait ISaveImgs {
 }
 
 /** Базовая утиль для работы с картинками из blocks-контекстов. */
-object SaveImgUtil {
+object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
 
   def saveImgsStatic(fn: String, newImgs: BlockImgMap, oldImgs: Imgs_t, supImgsFut: Future[Imgs_t],
                      withDownsize: Option[MImgInfoMeta]): Future[Imgs_t] = {
@@ -52,23 +52,8 @@ object SaveImgUtil {
     }
   }
 
-  /** Закинуть данные по картинке в bindAcc аккамулятор. */
-  def mergeBindAccWithBim(maybeAcc: Either[Seq[FormError], BindAcc],
-                          maybeImg: Either[Seq[FormError], BlockImgMap]): Either[Seq[FormError], BindAcc] = {
-    (maybeAcc, maybeImg) match {
-      case (a @ Right(acc0), Right(bim)) =>
-        acc0.bim ++= bim
-        maybeAcc
-
-      case (Left(accFE), Right(bim)) =>
-        maybeAcc
-
-      case (Right(_), Left(colorFE)) =>
-        Left(colorFE)   // Избыточна пересборка left either из-за right-типа. Можно также вернуть через .asInstanceOf, но это плохо.
-
-      case (Left(accFE), Left(colorFE)) =>
-        Left(accFE ++ colorFE)
-    }
+  def updateAcc(offerN: Int, acc0: BindAcc, bim: BlockImgMap) {
+    acc0.bim ++= bim
   }
 
 }
@@ -117,7 +102,7 @@ trait BgImg extends ValT with SaveBgImgI {
   abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
     val maybeAcc0 = super.bindAcc(data)
     val maybeBim = m.bind(data)
-    SaveImgUtil.mergeBindAccWithBim(maybeAcc0, maybeBim)
+    SaveImgUtil.mergeBindAcc(maybeAcc0, maybeBim)
   }
 
   abstract override def unbind(value: BlockMapperResult): Map[String, String] = {
@@ -166,7 +151,7 @@ trait LogoImg extends ValT with ISaveImgs {
   abstract override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
     val maybeAcc0 = super.bindAcc(data)
     val maybeBim = m.bind(data)
-    SaveImgUtil.mergeBindAccWithBim(maybeAcc0, maybeBim)
+    SaveImgUtil.mergeBindAcc(maybeAcc0, maybeBim)
   }
 
   abstract override def unbind(value: BlockMapperResult): Map[String, String] = {

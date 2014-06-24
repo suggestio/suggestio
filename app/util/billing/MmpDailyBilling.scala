@@ -1,5 +1,7 @@
 package util.billing
 
+import java.util.Currency
+
 import models._
 import org.joda.time.{Period, DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
@@ -20,7 +22,7 @@ import io.suggest.ym.model.common.EMReceivers.Receivers_t
 import scala.concurrent.duration._
 import de.jollyday.HolidayManager
 import java.net.URL
-import controllers.routes
+import controllers.{AdvFormEntry, routes}
 import scala.collection.JavaConversions._
 
 /**
@@ -49,9 +51,14 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     s"http://localhost:$myPort"
   }
 
+  /** Если внезапно необходимо создать контракт, то сделать его с таким суффиксом. */
+  lazy val CONTRACT_SUFFIX_DFLT = configuration.getString("mmp.daily.contract.suffix.dflt") getOrElse "СЕО"
+
   /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
   val WEEKEND_DAYS: Set[Int] = configuration.getIntList("mmp.daily.weekend.days").map(_.map(_.intValue).toSet) getOrElse Set(FRIDAY, SATURDAY, SUNDAY)
 
+
+  /** Сгенерить localhost-ссылку на xml-текст календаря. */
   private def getUrlCal(calId: String) = {
     HolidayManager.getInstance(
       new URL(MYSELF_URL_PREFIX + routes.SysCalendar.getCalendarXml(calId))
@@ -69,7 +76,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     // Во избежание бесконечного цикла, огораживаем dateStart <= dateEnd
     val dateStart = advTerms.dateStart
     val dateEnd = advTerms.dateEnd
-    assert(!dateStart.isAfter(dateEnd), "dateStart must not be after dateEnd")
+    //assert(!(dateStart isAfter dateEnd), "dateStart must not be after dateEnd")
     // TODO Нужно использовать специфичные для узла календари.
     val primeHolidays = getUrlCal(rcvrPricing.weekendCalId)
     lazy val weekendCal = getUrlCal(rcvrPricing.primeCalId)
@@ -156,6 +163,130 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
 
 
   /**
+   * Посчитать цену размещения рекламной карточки согласно переданной спеке.
+   * @param mad Размещаемая рекламная карточка.
+   * @param adves2 Требования по размещению карточки на узлах.
+   */
+  def getAdvPrices(mad: MAd, adves2: List[AdvFormEntry]): MAdvPricing = {
+    DB.withConnection { implicit c =>
+      val someTrue = Some(true)
+      val prices = adves2.foldLeft[List[Price]] (Nil) { (acc, adve) =>
+        val rcvrContract = MBillContract.findForAdn(adve.adnId, isActive = someTrue)
+          .sortBy(_.id.get)
+          .head
+        val rcvrPricing = MBillMmpDaily.findByContractId(rcvrContract.id.get)
+          .sortBy(_.id.get)
+          .head
+        val advPrice = MmpDailyBilling.calculateAdvPrice(mad, rcvrPricing, adve)
+        advPrice :: acc
+      }
+      val prices2 = prices
+        .groupBy { _.currency.getCurrencyCode }
+        .mapValues { p => p.head.currency -> p.map(_.price).sum }
+        .values
+      val mbb = MBillBalance.getByAdnId(mad.producerId).get
+      // Если есть разные валюты, то операция уже невозможна.
+      val hasEnoughtMoney = prices2.size <= 1 && {
+        prices2.headOption.exists { price =>
+          price._1.getCurrencyCode == mbb.currencyCode  &&  price._2 <= mbb.amount
+        }
+      }
+      MAdvPricing(prices2, hasEnoughtMoney)
+    }
+  }
+
+
+  /**
+   * Сохранить в БД реквесты размещения рекламных карточек.
+   * @param mad рекламная карточка.
+   * @param advs Список запросов на размещение.
+   */
+  def mkAdvReqs(mad: MAd, advs: List[AdvFormEntry]) {
+    import mad.producerId
+    DB.withTransaction { implicit c =>
+      // Вешаем update lock на баланс чтобы избежать блокирования суммы, списанной в параллельном треде, и дальнейшего ухода в минус.
+      val mbb0 = MBillBalance.getByAdnId(producerId, SelectPolicies.UPDATE).get
+      val someTrue = Some(true)
+      val mbc = MBillContract.findForAdn(producerId, isActive = someTrue).head
+      val prodCurrencyCode = mbb0.currencyCode
+      advs.foreach { advEntry =>
+        val rcvrContract = getOrCreateContract(advEntry.adnId)
+        val rcvrPricing = MBillMmpDaily.findByContractId(rcvrContract.id.get)
+          .sortBy(_.id.get)
+          .head
+        val advPrice = MmpDailyBilling.calculateAdvPrice(mad, rcvrPricing, advEntry)
+        val rcvrCurrencyCode = advPrice.currency.getCurrencyCode
+        assert(
+          rcvrCurrencyCode == prodCurrencyCode,
+          s"Rcvr node ${advEntry.adnId} currency ($rcvrCurrencyCode) does not match to producer node $producerId currency ($prodCurrencyCode)"
+        )
+        MAdvReq(
+          adId        = mad.id.get,
+          amount      = advPrice.price,
+          comission   = Some(mbc.sioComission),
+          prodContractId = mbc.id.get,
+          prodAdnId   = producerId,
+          rcvrAdnId   = advEntry.adnId,
+          dateStart   = advEntry.dateStart.toDateTimeAtStartOfDay,
+          dateEnd     = date2DtAtEndOfDay(advEntry.dateEnd),
+          showLevels  = advEntry.showLevels
+        ).save
+        // Нужно заблокировать на счете узла необходимую сумму денег.
+        mbb0.updateBlocked(advPrice.price)
+      }
+    }
+  }
+
+  def date2DtAtEndOfDay(ld: LocalDate) = ld.toDateTimeAtStartOfDay.plusDays(1).minusSeconds(1)
+
+
+  /**
+   * Стрёмная функция для получения активного контракта. Создаёт такой контракт, если его нет.
+   * @param adnId id узла, с которым нужен контракт.
+   * @return Экземпляр [[models.MBillContract]].
+   */
+  private def getOrCreateContract(adnId: String)(implicit c: Connection): MBillContract = {
+    MBillContract.findForAdn(adnId, isActive = Some(true))
+      .sortBy(_.id.get)
+      .headOption
+      .getOrElse {
+        MBillContract(adnId = adnId, contractDate = DateTime.now).save
+      }
+  }
+
+
+  /**
+   * Провести по БД прямую инжекцию рекламной карточки в выдачи.
+   * А потом проверялка оффлайновых карточек отправит их в выдачу.
+   * @param mad Рекламные карточки.
+   * @param advs Список размещений.
+   */
+  def mkAdvsOk(mad: MAd, advs: List[AdvFormEntry]): List[MAdvOk] = {
+    import mad.producerId
+    DB.withTransaction { implicit c =>
+      advs map { advEntry =>
+        MAdvOk(
+          adId        = mad.id.get,
+          amount      = 0F,
+          comission   = None,
+          prodAdnId   = producerId,
+          rcvrAdnId   = advEntry.adnId,
+          dateStart   = advEntry.dateStart.toDateTimeAtStartOfDay,
+          dateEnd     = date2DtAtEndOfDay(advEntry.dateEnd),
+          showLevels  = advEntry.showLevels,
+          dateStatus  = DateTime.now(),
+          prodTxnId   = None,
+          rcvrTxnId   = None,
+          isOnline    = false,
+          isPartner   = true,
+          isAuto      = false
+        ).save
+      }
+    }
+  }
+
+
+  /**
    * Провести MAdvReq в MAdvOk, списав и зачислив все необходимые деньги.
    * @param advReq Одобряемый реквест размещения.
    * @param isAuto Пользователь одобряет или система?
@@ -198,7 +329,13 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         .headOption
         .getOrElse {
           warn(s"advReqAcceptSubmit($advReqId): Creating new contract for adv. award receiver...")
-          MBillContract(rcvrAdnId, contractDate = now, isActive = true, suffix = Some("CEO"), dateCreated = now).save
+          MBillContract(
+            adnId         = rcvrAdnId,
+            contractDate  = now,
+            isActive      = true,
+            suffix        = Some(CONTRACT_SUFFIX_DFLT),
+            dateCreated   = now
+          ).save
         }
       val amount1 = rcvrContract.sioComission * amount0
       assert(amount1 <= amount0, "Comissioned amount must be less or equal than source amount.")
@@ -223,9 +360,10 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         advReq,
         comission1  = Some(rcvrContract.sioComission),
         dateStatus1 = now,
-        prodTxnId   = prodTxn.id.get,
-        rcvrTxnId   = Some(rcvrTxn.id.get),
+        prodTxnId   = prodTxn.id.toOption,
+        rcvrTxnId   = rcvrTxn.id.toOption,
         isOnline    = false,
+        isPartner   = false,
         isAuto      = isAuto
       ).save
     }
@@ -239,7 +377,7 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
       MAdvReq.findCreatedLast(period)
     }
     //val logPrefix = "autoApplyOldAdvReqs(): "
-    if (!advsReq.isEmpty) {
+    if (advsReq.nonEmpty) {
       // TODO Нужно оттягивать накатывание карточки до ближайшего обеда. Для этого нужно знать тайм-зону для рекламных узлов.
       advsReq.foreach(acceptAdvReq(_, isAuto = true))
     }
@@ -248,12 +386,12 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
 
   /** Выполнить поиск и размещение в выдачах рекламных карточек, время размещения которых уже пришло. */
   def advertiseOfflineAds() {
-    (new AdvertiseOfflineAdvs).run()
+    AdvertiseOfflineAdvs.run()
   }
 
   /** Выполнить поиск и сокрытие в выдачах рекламных карточках, время размещения которых истекло. */
   def depublishExpiredAdvs() {
-    (new DepublishExpiredAdvs).run()
+    DepublishExpiredAdvs.run()
   }
 
 }
@@ -287,7 +425,7 @@ sealed trait AdvSlsUpdater extends PlayMacroLogsImpl {
     val advs = DB.withConnection { implicit c =>
       findAdvsOk
     }
-    if (!advs.isEmpty) {
+    if (advs.nonEmpty) {
       trace(s"${logPrefix}Where are ${advs.size} items. ids = ${advs.map(_.id.get).mkString(", ")}")
       val advsMap = advs.groupBy(_.adId)
       advsMap foreach { case (adId, advsOk) =>
@@ -334,7 +472,7 @@ sealed trait AdvSlsUpdater extends PlayMacroLogsImpl {
 
 
 /** Обновлялка adv sls, добавляющая уровни отображаения к существующей рекламе, которая должна бы выйти в свет. */
-sealed class AdvertiseOfflineAdvs extends AdvSlsUpdater {
+object AdvertiseOfflineAdvs extends AdvSlsUpdater {
   import LOGGER._
 
   override def findAdvsOk(implicit c: Connection): List[MAdvOk] = {
@@ -371,7 +509,7 @@ sealed class AdvertiseOfflineAdvs extends AdvSlsUpdater {
 
 /** Обновлялка adv sls, которая снимает уровни отображения с имеющейся рекламы, которая должна уйти из выдачи
   * по истечению срока размещения. */
-sealed class DepublishExpiredAdvs extends AdvSlsUpdater {
+object DepublishExpiredAdvs extends AdvSlsUpdater {
   import LOGGER._
 
   override def findAdvsOk(implicit c: Connection): List[MAdvOk] = {

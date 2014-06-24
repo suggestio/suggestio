@@ -79,7 +79,8 @@ object MarketAd extends SioController with TempImgSupport {
 
 
   /** Выдать маппинг ad-формы в зависимости от типа adn-узла. */
-  private def detectAdnAdForm(anmt: AdNetMemberType)(implicit request: ReqSubmit): DetectForm_t = {
+  private def detectAdnAdForm(adnNode: MAdnNode)(implicit request: ReqSubmit): DetectForm_t = {
+    val anmt = adnNode.adn.memberType
     val adMode = request.body.getOrElse("ad.offer.mode", Nil)
       .headOption
       .flatMap(AdOfferTypes.maybeWithName)
@@ -87,9 +88,28 @@ object MarketAd extends SioController with TempImgSupport {
     adMode match {
       case aot @ AdOfferTypes.BLOCK =>
         // Нужно раздобыть id из реквеста
+        val nodeBlockIds = blockIdsFor(adnNode)
         val blockId = request.body.getOrElse("ad.offer.blockId", Nil)
           .headOption
-          .fold(1)(_.toInt)
+          // Аккуратно парсим blockId ручками
+          .flatMap { rawBlockId =>
+            try {
+              Some(rawBlockId.toInt)
+            } catch {
+              case ex: NumberFormatException =>
+                warn("detectAdnAdForm(): Invalid block number format: " + rawBlockId)
+                None
+            }
+          }
+          // Фильтруем блокId по списку допустимых для узла.
+          .filter { blockId =>
+            val result = nodeBlockIds contains blockId
+            if (!result)
+              warn("detectAdnAdForm(): Unknown or disallowed blockId requested: " + blockId)
+            result
+          }
+          // Если blockId был отфильтрован или отсутствовал, то берём первый допустимый id. TODO А надо это вообще?
+          .getOrElse ( nodeBlockIds.head )
         val blockConf: BlockConf = BlocksConf(blockId)
         Right(blockConf -> getSaveAdFormM(anmt, blockConf.strictMapping))
     }
@@ -128,7 +148,7 @@ object MarketAd extends SioController with TempImgSupport {
     import request.adnNode
     val catOwnerId = getCatOwnerId(adnNode)
     lazy val logPrefix = s"createAdSubmit($adnId): "
-    detectAdnAdForm(adnNode.adn.memberType) match {
+    detectAdnAdForm(adnNode) match {
       // Как маппить форму - ясно. Теперь надо это сделать.
       case Right((bc, formM)) =>
         val formBinded = formM.bindFromRequest()
@@ -163,10 +183,45 @@ object MarketAd extends SioController with TempImgSupport {
     }
   }
 
+  /** Выдать множество допустимых id блоков в контексте узла. */
+  def blockIdsFor(adnNode: MAdnNode): Set[Int] = {
+    val seq1 = BlocksConf.valuesShown.map(_.id).toSet
+    val ids0 = adnNode.conf.withBlocks
+    if (ids0.isEmpty) {
+      seq1
+    } else {
+      seq1 ++ ids0
+    }
+  }
+
+  /** Выдать список блоков в корректном порядке: публичные + специфичные для узла. */
+  private def blocksFor(adnNode: MAdnNode): Seq[BlockConf] = {
+    val seq1 = BlocksConf.valuesShown
+    val ids0 = adnNode.conf.withBlocks
+    if (ids0.isEmpty) {
+      seq1
+    } else {
+      val allIds = seq1.map(_.id).toSet ++ ids0
+      val allBlocks = allIds
+        .toSeq
+        .flatMap { id =>
+          try {
+            Some(BlocksConf(id) : BlockConf)
+          } catch {
+            case ex: NoSuchElementException =>
+              error(s"blocksFor(node=${adnNode.id.get}): No such block: $id, looks like node.conf.withBlocks is invalid: ${adnNode.conf.withBlocks} ;; node text: ${adnNode.meta.name} / ${adnNode.meta.town}")
+              None
+          }
+        }
+      BlocksConf.orderBlocks(allBlocks)
+    }
+  }
+
+
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
   private def renderCreateFormWith(af: AdFormM, catOwnerId: String, adnNode: MAdnNode, withBC: Option[BlockConf] = None)(implicit ctx: Context) = {
     getMMCatsForCreate(af, catOwnerId) map { mmcats =>
-      createAdTpl(mmcats, af, adnNode, withBC)
+      createAdTpl(mmcats, af, adnNode, withBC, blocksFor(adnNode))
     }
   }
 
@@ -175,7 +230,7 @@ object MarketAd extends SioController with TempImgSupport {
     import request.{producer, mad}
     val catOwnerId = getCatOwnerId(producer)
     getMMCatsForEdit(af, mad, catOwnerId) map { mmcats =>
-      editAdTpl(mad, mmcats, af, producer)
+      editAdTpl(mad, mmcats, af, producer, blocksFor(producer))
     }
   }
 
@@ -217,7 +272,7 @@ object MarketAd extends SioController with TempImgSupport {
     */
   def editAdSubmit(adId: String) = CanEditAd(adId).async(parse.urlFormEncoded) { implicit request =>
     import request.mad
-    detectAdnAdForm(request.producer.adn.memberType) match {
+    detectAdnAdForm(request.producer) match {
       case Right((bc, formM)) =>
         val formBinded = formM.bindFromRequest()
         formBinded.fold(

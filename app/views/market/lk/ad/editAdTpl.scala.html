@@ -1,4 +1,4 @@
-@(mad: MAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], adnNode: MAdnNode)(implicit ctx: util.Context)
+@(mad: MAd, mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], adnNode: MAdnNode, allBlocks: Seq[BlockConf])(implicit ctx: util.Context)
 
 @* Страница с формой редактирования рекламной карточки. *@
 @import ctx._
@@ -34,7 +34,8 @@
     btnText = Messages("Save"),
     mmcats = mmcats,
     withBC  = Some(BlocksConf(mad.blockMeta.blockId)),
-    adnNode = adnNode
+    adnNode = adnNode,
+    allBlocks = allBlocks
   )
 
   <div class="submit-wrap">
