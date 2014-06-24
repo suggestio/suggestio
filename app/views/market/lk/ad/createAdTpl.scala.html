@@ -15,7 +15,6 @@
           @_adFormTpl(
             af      = af,
             call    = routes.MarketAd.createAdSubmit(adnNode.id.get),
-            btnText = Messages("Create"),
             mmcats  = mmcats,
             withBC  = withBC,
             adnNode = adnNode,
@@ -23,9 +22,8 @@
           )
 
           <div class="submit-wrap">
-            <a class="gray-but-small js-ad-preview-button">Предпросмотр</a>
-            <a class="green-but-small submit" data-for="promoOfferForm">Создать</a>
-
+            <a class="gray-but-small js-ad-preview-button">@Messages("Preview")</a>
+            <a class="green-but-small submit" data-for="promoOfferForm">@Messages("Create")</a>
           </div>
 
       </div><!-- create-ad end -->

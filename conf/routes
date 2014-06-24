@@ -132,6 +132,7 @@ POST /m/lk/ai/:blockId/:fn              controllers.MarketAdPreview.prepareBlock
 POST /m/lk/sa/:adId/update/show         controllers.MarketAd.updateShowLevelSubmit(adId)
 GET  /m/lk/ad/:adId/edit                controllers.MarketAd.editAd(adId)
 POST /m/lk/ad/:adId/edit                controllers.MarketAd.editAdSubmit(adId)
+GET  /m/lk/ad/:adId/delete              controllers.MarketAd.deleteWnd(adId)
 # lk.billing
 GET  /m/lk/bill/adn/:adnId              controllers.MarketLkBilling.showAdnNodeBilling(adnId)
 GET  /m/lk/bill/adn/:adnId/pay/bank     controllers.MarketLkBilling.paymentRequsites(adnId)
