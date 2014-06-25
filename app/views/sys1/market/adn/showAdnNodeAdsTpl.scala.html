@@ -6,11 +6,10 @@
 @import ctx._
 
 @hPathAfter1 = {
-  / <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
   / Реклама
 }
 
-@adnBase("Рекламные карточки", hPathAfter = Some(hPathAfter1)) {
+@adnBase("Рекламные карточки", Some(hPathAfter1), Some(adnNode)) {
   @mads.map { mad =>
     <a href="@routes.MarketAd.editAd(mad.id.get)">@mad.offers.headOption.map {
       case adBlock: AOBlock => {

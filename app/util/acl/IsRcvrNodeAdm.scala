@@ -107,7 +107,7 @@ trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] {
   def maybeRcvrAdmin(rcvrOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Option[PovRcvrInfo]] = {
     rcvrOptFut map {
       _.filter { rcvrId  =>
-        val result = IsAdnNodeAdmin.isAdnNodeAdminCheckStrict(rcvrId, pwOpt)
+        val result = IsAdnNodeAdmin.isAdnNodeAdminCheck(rcvrId, pwOpt)
         // Логгируем результат фильтрации
         lazy val logPrefix = {
           val personId = pwOpt.fold("?anonymous?")(_.personId)
@@ -157,10 +157,15 @@ trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] {
             producerOptFut flatMap {
               case Some(producer) =>
                 // Strict-проверка прав на продьюсер, чтобы не терять логику работы в случае ресивера при суперюзера.
-                val isProducerAdmin = IsAdnNodeAdmin.isAdnNodeAdminCheckStrict(producer, pwOpt)
+                val isProducerAdmin = if (povAdnId exists { _ != mad.producerId }) {
+                  // В povAdnId задан не producer, поэтому подразумеваем, что юзер не является админом продьюсером, даже если он админ.
+                  false
+                } else {
+                  IsAdnNodeAdmin.isAdnNodeAdminCheckStrict(producer, pwOpt)
+                }
                 val rcvrInfoFut: Future[Option[PovRcvrInfo]] = if (isProducerAdmin) {
                   // Юзер выступает в роли автора рекламной карточки.
-                  trace(s"User[${pw.personId}] is producer node[${mad.producerId}] admin.")
+                  trace(s"User[${pw.personId}] is admin of producer node[${mad.producerId}].")
                   maybeRcvr2arInfo(rcvrOptFut, pwOpt)
                 } else if (povAdnId.isDefined && rcvrIdOpt.isEmpty) {
                   // Возможно, pov-узел - это узел-модератор узла-ресивера.

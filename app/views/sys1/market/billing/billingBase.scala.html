@@ -3,16 +3,30 @@
 @* Подложка страниц с управлением биллингом. *@
 
 @hPathAfter1 = {
-  @nodeOpt.map { node =>
-    / <a href="@routes.SysMarket.showAdnNode(node.id.get)" title="@node.adn.memberType / @node.meta.town">@node.meta.name</a>
-  }
   @hPathAfter.getOrElse {
     / @title
   }
 }
 
-@sys1.market.marketBase(
-  title = title + " | billing",
-  hPathAfter = Some(hPathAfter1)
-)(content)
+@defining( title + " | billing" ) { title1 =>
 
+  @if(nodeOpt.isEmpty) {
+
+   @* ADN-Узел не задан. Рендерим через примитивный marketBase *@
+   @sys1.market.marketBase(
+     title = title1,
+     hPathAfter = Some(hPathAfter1)
+   )(content)
+
+  } else {
+
+    @* Задан adn-узел, рендерим через adnBase *@
+    @sys1.market.adn.adnBase(
+      title = title1,
+      hPathAfter = Some(hPathAfter1),
+      nodeOpt = nodeOpt
+    )(content)
+
+  }
+
+}
