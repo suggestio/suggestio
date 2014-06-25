@@ -5,6 +5,7 @@
 
 @adFormBase("Редактирование рекламной карточки", adnId = adnNode.id.get) {
 
+
 <div class="body">
   <div class="create-ad">
 
@@ -18,23 +19,25 @@
     allBlocks = allBlocks
   )
 
-  <div class="submit-w __size-M">
 
-    <div class="f-left remove-btn">
-      <a class="siom-ac-btn __color-4 __ft-XM __size-M js-btn" href="@routes.MarketAd.deleteWnd(mad.id.get)">@Messages("Delete")</a>
+    <div class="submit-w __size-M">
+
+      <div class="f-left remove-btn">
+        <a class="siom-ac-btn __color-4 __ft-XM __size-M js-btn" href="@routes.MarketAd.deleteWnd(mad.id.get)">Удалить</a>
+      </div>
+
+      <div class="f-right save-btn">
+        <a class="siom-ac-btn __color-1 __ft-XM __size-M js-submit-btn" data-for="#promoOfferForm">Сохранить</a>
+      </div>
+
+      <div class="f-right preview-btn">
+        <a class="siom-ac-btn __color-3 __ft-XM __size-M js-ad-preview-button">Предпросмотр</a>
+      </div>
+
     </div>
-
-    <div class="f-right save-btn">
-      <a class="siom-ac-btn __color-1 __ft-XM __size-M js-submit-btn" data-for="#promoOfferForm">@Messages("Save")</a>
-    </div>
-
-    <div class="f-right preview-btn">
-      <a class="siom-ac-btn __color-3 __ft-XM __size-M js-ad-preview-button">@Messages("Preview")</a>
-    </div>
-
-  </div>
 
   </div><!-- create-ad end -->
 </div>
+
 
 }

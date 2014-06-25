@@ -12,8 +12,6 @@
       РЕКЛАМНАЯ КАРТОЧКА БУДЕТ УДАЛЕНА ИЗ ПОИСКОВОЙ ВЫДАЧИ
     </div>
 
-    @* вызвать шаблон с id рекламной карточки *@
-    <div class="ad-preview"></div>
     <div class="controls">
       <a class="gray-but-small cancel" style="margin-right: 80px;" href="@routes.MarketAd.editAd(mad.id.get)">Отменить</a>
       @stuff._deleteSmthFormBtnTpl(routes.MarketAd.deleteSubmit(mad.id.get))
