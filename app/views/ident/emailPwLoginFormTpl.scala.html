@@ -1,4 +1,4 @@
-@(lf: Form[_])(implicit ctx: util.Context)
+@(lf: Form[_], r: Option[String])(implicit ctx: util.Context)
 
 
 @* Страница с формой логина. *@
@@ -20,7 +20,7 @@
 
         @_emailPwLoginFormTdTpl(
           lf = lf,
-          submitCall = routes.Ident.emailPwLoginFormSubmit
+          submitCall = routes.Ident.emailPwLoginFormSubmit(r)
         )
 
       </div>

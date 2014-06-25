@@ -32,15 +32,12 @@ trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMa
   }
 
   /** Что делать, когда юзер не авторизован? */
-  def onUnauth(req: RequestHeader): Future[Result] = {
+  def onUnauth(request: RequestHeader): Future[Result] = {
     Future.successful(
-      Results.Redirect(routes.Ident.emailPwLoginForm())
+      Results.Redirect(routes.Ident.emailPwLoginForm(r = Some(request.path)))
     )
   }
 }
 
 
 object IsAuth extends IsAuthAbstract with ExpireSession[AbstractRequestWithPwOpt]
-
-/** IsAuth, но без session expire. Пригодится при обслуживании статического контента, связанного со страницей. */
-//object IsAuthNSE extends IsAuthAbstract

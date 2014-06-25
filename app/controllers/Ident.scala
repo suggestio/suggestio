@@ -59,13 +59,13 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
 
 
   /** Рендер страницы с возможностью логина по email и паролю. */
-  def emailPwLoginForm = IsAnon { implicit request =>
-    Ok(emailPwLoginFormTpl(emailPwLoginFormM))
+  def emailPwLoginForm(r: Option[String]) = IsAnon { implicit request =>
+    Ok(emailPwLoginFormTpl(emailPwLoginFormM, r))
   }
 
 
-  override def emailSubmitError(lf: EmailPwLoginForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
-    Forbidden(emailPwLoginFormTpl(lf))
+  override def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+    Forbidden(emailPwLoginFormTpl(lf, r))
   }
 
 
@@ -319,14 +319,14 @@ trait EmailPwSubmit extends SioController {
     }
   }
 
-  def emailSubmitError(lf: EmailPwLoginForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result]
+  def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result]
 
   /** Самбит формы логина по email и паролю. */
-  def emailPwLoginFormSubmit = IsAnon.async { implicit request =>
+  def emailPwLoginFormSubmit(r: Option[String]) = IsAnon.async { implicit request =>
     emailPwLoginFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug("emailPwLoginFormSubmit(): Form bind failed: " + formatFormErrors(formWithErrors))
-        emailSubmitError(formWithErrors)
+        emailSubmitError(formWithErrors, r)
       },
       {case (email1, pw1) =>
         EmailPwIdent.getByEmail(email1) flatMap { epwOpt =>
@@ -334,14 +334,12 @@ trait EmailPwSubmit extends SioController {
             // Логин удался.
             // TODO Нужно дать возможность режима сессии "чужой компьютер".
             val personId = epwOpt.get.personId
-            emailSubmitOkCall(personId) map { call =>
-              Redirect(call)
-                .withSession(username -> personId)
-            }
+            RdrBackOrFut(r) { emailSubmitOkCall(personId) }
+              .map { _.withSession(username -> personId) }
           } else {
             val lf = emailPwLoginFormM.fill(email1 -> "")
             val lfe = lf.withGlobalError("error.unknown.email_pw")
-            emailSubmitError(lfe)
+            emailSubmitError(lfe, r)
           }
         }
       }

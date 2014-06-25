@@ -67,7 +67,7 @@ object MarketLk extends SioController with EmailPwSubmit with PlayMacroLogsImpl 
     }
   }
 
-  override def emailSubmitError(lf: EmailPwLoginForm_t)(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
+  override def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[Result] = {
     Forbidden(indexTpl(Some(lf)))
   }
 }
