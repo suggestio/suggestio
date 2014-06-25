@@ -490,7 +490,7 @@ object BlocksConf extends Enumeration {
   sealed trait Block26t extends Height with BgImg with TitleDescrListBlockT with Href {
     override def isShown = false
     override def template = _block26Tpl
-    override def offersCount: Int = 1
+    override def offersCount: Int = 3
     override def heightBf = super.heightBf.copy(
       availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
     )

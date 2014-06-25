@@ -25,8 +25,7 @@
     }
 
     @img
-
-
+        @mad.offers.map { offer =>
         <div class="info el-@{offer.n + 1}">
           @offer.text1.map { text1 =>
           <div class="js-mvbl mvbl-title-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].title">
@@ -46,6 +45,7 @@
           @_blockStyleTpl( mad.id, text2, Block26.descrBf, "descr-" + offer.n, left = 38, top = 70*( offer.n + 1 )+25  )
           }
         </div>
+        }
 
     @if(offer.href.isDefined) {
     </a>

@@ -1377,6 +1377,8 @@ market =
             $('#adFullPreview .sm-block').addClass 'double-size'
             cbca.popup.showPopup 'adFullPreview'
 
+            market.styles.init()
+
         return false
 
       $(document).on 'change', '#ad_descr_bgColor', (e)->
