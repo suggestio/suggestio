@@ -9,7 +9,6 @@ import models._
 import scala.concurrent.Future
 import play.api.Play.current
 import play.api.db.DB
-import IsAuth.onUnauth
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 

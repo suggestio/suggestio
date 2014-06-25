@@ -1,6 +1,7 @@
 @(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
 
 @import common._
+@import util.blocks.BlocksConf.Block26
 
 @* Блок-ссылка, появилась для нужд саморекламы sioM. При щелчке открывает ссылку в новой вкладке. *@
 
@@ -33,7 +34,7 @@
               @Html(text1.value)
             </div>
           </div>
-          @_blockStyleTpl( mad.id, text1, Block20.titleBf, "title-" + offer.n, left = 38, top = 70*( offer.n + 1 )  )
+          @_blockStyleTpl( mad.id, text1, Block26.titleBf, "title-" + offer.n, left = 38, top = 70*( offer.n + 1 )  )
           }
 
           @offer.text2.map { text2 =>
@@ -42,7 +43,7 @@
               @Html(text2.value)
             </div>
           </div>
-          @_blockStyleTpl( mad.id, text2, Block20.descrBf, "descr-" + offer.n, left = 38, top = 70*( offer.n + 1 )+25  )
+          @_blockStyleTpl( mad.id, text2, Block26.descrBf, "descr-" + offer.n, left = 38, top = 70*( offer.n + 1 )+25  )
           }
         </div>
 

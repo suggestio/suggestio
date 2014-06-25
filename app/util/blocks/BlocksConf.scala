@@ -131,7 +131,6 @@ object BlocksConf extends Enumeration {
 
   /** Блок с тремя ценами в первом дизайне. */
   sealed trait Block3t extends Height with BgImg with TitlePriceListBlockT {
-    override def offersCount = 3
     override def template = _block3Tpl
   }
   val Block3 = new Val(3) with EmptyKey with Block3t {
@@ -179,7 +178,6 @@ object BlocksConf extends Enumeration {
 
   /** Блок, который содержит до трёх офферов с ценами. Аналог [[Block3]], но с иным дизайном. */
   sealed trait Block6t extends BgImg with TitlePriceListBlockT with HeightFixed with FillColor with BorderColor {
-    override val offersCount = 3
     override def template = _block6Tpl
   }
   val Block6 = new Val(6) with Block6t with EmptyKey {
@@ -387,7 +385,6 @@ object BlocksConf extends Enumeration {
 
 
   sealed trait Block19t extends Height with BgImg with BorderColor with TitlePriceListBlockT with BgColor with FillColor {
-    override val offersCount = 3
     override def borderColorBf = super.borderColorBf.copy(
       defaultValue = Some("444444")
     )
@@ -409,7 +406,6 @@ object BlocksConf extends Enumeration {
   sealed trait Block20t extends Height with BgImg with TitleDescrListBlockT {
     override def ordering = 1000
     override def template = _block20Tpl
-    override def offersCount: Int = 3
     override def heightBf = super.heightBf.copy(
       availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
     )
@@ -478,7 +474,6 @@ object BlocksConf extends Enumeration {
   sealed trait Block25t extends Height with BgImg with TitleDescrListBlockT {
     override def ordering = 1100
     override def template = _block25Tpl
-    override def offersCount: Int = 3
     override def heightBf = super.heightBf.copy(
       availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
     )

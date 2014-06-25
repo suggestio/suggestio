@@ -16,6 +16,8 @@ object ListBlock {
     BfText(bfName, BlocksEditorFields.TextArea, maxLen = 128, offerNopt = offerNopt)
   }
 
+  val OFFERS_COUNT_DFLT = 3
+
 }
 
 
@@ -33,7 +35,7 @@ trait PairListBlock extends ValT {
   def N0 = 0
 
   /** Макс кол-во офферов (макс.длина списка офферов). */
-  def offersCount: Int
+  def offersCount: Int = ListBlock.OFFERS_COUNT_DFLT
 
 
   /** Генерация описания полей. У нас тут повторяющийся маппинг, поэтому blockFields для редактора генерится без полей-констант. */

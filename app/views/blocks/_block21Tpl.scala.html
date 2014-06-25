@@ -1,6 +1,7 @@
 @(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
 
 @import common._
+@import util.blocks.BlocksConf.Block21
 
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl21 sm-block@mad.id" data-width="300" style="border-color: #@mad.colors.getOrElse(Block21.borderColorBf.name, Block21.borderColorBf.anyDefaultValue);" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
