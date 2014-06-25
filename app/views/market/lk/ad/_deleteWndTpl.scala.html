@@ -13,8 +13,12 @@
     </div>
 
     <div class="controls">
-      <a class="gray-but-small cancel" style="margin-right: 80px;" href="@routes.MarketAd.editAd(mad.id.get)">Отменить</a>
-      @stuff._deleteSmthFormBtnTpl(routes.MarketAd.deleteSubmit(mad.id.get))
-    </div>
+
+      <div class="submit-w __size-S">
+
+      <a class="siom-ac-btn __color-3 __ft-M __size-M f-left js-close-popup">Отменить</a>
+      @stuff._deleteSmthFormBtnTpl(routes.MarketAd.deleteSubmit(mad.id.get), "__ft-M __size-M f-right")
+
+      </div>
   </div>
 </div>

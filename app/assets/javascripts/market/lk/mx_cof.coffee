@@ -3,6 +3,7 @@ $(document).ready ->
   cbca.emptyPhoto = '/assets/images/market/lk/empty-image.gif'
 
   cbca.popup = new CbcaPopup()
+  cbca.popup.init()
   cbca.search = new CbcaSearch()
 
   cbca.statusBar = StatusBar
@@ -52,22 +53,9 @@ $(document).on 'change', '#product-photo', ->
   ##$('#upload-product-photo').find('form').trigger('submit')##
 
 
-##ПОПАПЫ##
-$(document).on 'click', '.popup-but', ->
-  $this = $(this)
-
-  cbca.popup.showPopup($this.attr('href'))
-
-$(document).on 'click', '.popup .close', (event)->
-  event.preventDefault()
-  cbca.popup.hidePopup()
-
-$(document).on 'click', '#overlay', ->
-    cbca.popup.hidePopup()
-
-$(document).on 'click', '.popup .cancel', (event)->
-    event.preventDefault()
-    cbca.popup.hidePopup()
+#######################################################################################################################
+## Всплывающие окна ##
+#######################################################################################################################
 
 CbcaPopup = () ->
 
@@ -118,8 +106,34 @@ CbcaPopup = () ->
     $('#overlay, #overlayData').hide()
     $('body').removeClass 'ovh'
 
+  init: () ->
 
-##поисковая строка##
+    $(document).on 'click', '.popup .js-close-popup', (event)->
+      event.preventDefault()
+      $this = $(this)
+      $popup = $this.closest('.popup')
+      popupId = $popup.attr('id')
+
+      cbca.popup.hidePopup(popupId)
+
+
+    $(document).on 'click', '.popup-but', ->
+      $this = $(this)
+
+      cbca.popup.showPopup($this.attr('href'))
+
+
+    $(document).on 'click', '.popup .close', (event)->
+      event.preventDefault()
+      cbca.popup.hidePopup()
+
+
+    $(document).on 'click', '#overlay', ->
+        cbca.popup.hidePopup()
+
+#######################################################################################################################
+## Работа с поисковой строкой ##
+#######################################################################################################################
 CbcaSearch = () ->
 
   self = this
