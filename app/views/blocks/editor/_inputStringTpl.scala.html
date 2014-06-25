@@ -1,6 +1,8 @@
 @(bf: BfString, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
 
-<div>
+<div class="lk-text-field">
+  <label class="ad-block-editor__fieldset_label">@Messages(bc.i18nLabelOf(bf.name))</label>
+  <div>
   @defining( af(bfNameBase) ) { sf =>
     <input name="@sf.name"
            type="text"
@@ -9,4 +11,5 @@
            maxlength="@bf.maxLen"
     />
   }
+</div>
 </div>

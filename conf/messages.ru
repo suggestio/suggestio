@@ -92,6 +92,7 @@ blocks.field.discoIconColor=Цвет значка скидки
 blocks.field.discoBorderColor=Цвет бордюра скидки
 blocks.field.maskColor=Цвет маски
 blocks.field.fillColor=Цвет заливки
+blocks.field.href=Ссылка на внешний ресурс
 
 ad.stat.action.v=Просмотр
 ad.stat.action.c=Клик

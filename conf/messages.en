@@ -88,6 +88,7 @@ blocks.field.discoIconColor=Discount icon color
 blocks.field.discoBorderColor=Discount border color
 blocks.field.maskColor=Mask color
 blocks.field.fillColor=Fill color
+blocks.field.href=External url address
 
 ad.stat.action.v=View
 ad.stat.action.c=Click
