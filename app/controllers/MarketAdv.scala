@@ -335,38 +335,16 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   }
 
 
-  /**
-   * Рендер окна информации для карточки с точки зрения ресивера.
-   * @param adId id рекламной карточки
-   * @return
-   */
-  def advInfoWnd(adId: String, fromAdnId: String) = ThirdPartyAdAccess(adId, fromAdnId).apply { implicit request =>
-    val syncResult = if(request.isRcvrAccess) {
-      val someLimit = Some(ADVS_MODE_SELECT_LIMIT)
-      DB.withConnection { implicit c =>
-        val advsOk = MAdvOk.findByAdIdAndRcvr(adId, fromAdnId, limit = someLimit)
-        val advsReq = MAdvReq.findByAdIdAndRcvr(adId, fromAdnId, limit = someLimit)
-        val advsRefused = MAdvRefuse.findByAdIdAndRcvr(adId, fromAdnId, limit = someLimit)
-        (advsOk, advsReq, advsRefused)
-      }
-    } else {
-      (Nil, Nil, Nil)
-    }
-    val (advsOk, advsReq, advsRefused) = syncResult
-    val advs = advsOk ++ advsReq ++ advsRefused
-    Ok(_advInfoWndTpl(request.mad, advs))
-  }
-
-
   /** Запрос к рендеру окошка с полноразмерной превьюшкой карточки и специфичным для конкретной ситуации функционалом.
     * @param adId id рекламной карточки.
-    * @param fromAdnId Опциональный id узла, с точки зрения которого идёт просмотр карточки.
+    * @param povAdnId Опциональный id узла, с точки зрения которого идёт просмотр карточки.
     * @return Рендер отображения поверх текущей страницы.
     */
-  def advFullWnd(adId: String, fromAdnId: Option[String], r: Option[String]) = {
-    AdvWndAccess(adId, fromAdnId, needMBC = false).async { implicit request =>
-      val limit = ADVS_MODE_SELECT_LIMIT
+  def advFullWnd(adId: String, povAdnId: Option[String], r: Option[String]) = {
+    AdvWndAccess(adId, povAdnId, needMBB = false).async { implicit request =>
       if (request.isProducerAdmin) {
+        // Узел-продьюсер смотрит инфу по размещению карточки. Нужно отобразить ему список по текущим векторам размещения.
+        val limit = ADVS_MODE_SELECT_LIMIT
         val syncResult = DB.withConnection { implicit c =>
           val advsOk  = MAdvOk.findNotExpiredByAdId(adId, limit = limit)
           val advsReq = MAdvReq.findNotExpiredByAdId(adId, limit = limit)
@@ -378,15 +356,14 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         // Быстро генерим список с минимальным мусором
         val adnIds = adv2adnIds.valuesIterator.toSet.toSeq
         // Запускаем сбор узлов
-        val rcvrsFut = MAdnNode.multiGet(adnIds)
+        val rcvrsFut = MAdnNodeCache.multiGet(adnIds)
         val advs = advsOk ++ advsReq ++ advsRefused
         rcvrsFut.map { adnNodes =>
           val adn2advMap = mkAdv2adnMap(adv2adnIds, adnNodes)
-          Ok(_advWndFullListTpl(request.mad, request.producer, advs, adn2advMap))
+          Ok(_advWndFullListTpl(request.mad, request.producer, advs, adn2advMap, goBackTo = r))
         }
       } else {
-        // Доступ админа узла-ресивера к чужой рекламной карточке.
-        assert(request.isRcvrAccess)
+        // Доступ не-продьюсера к чужой рекламной карточке. Это узел-ресивер или узел-модератор, которому делегировали возможности размещения.
         val rcvr = request.rcvrOpt.get
         // Тут есть два варианта развития: есть реквест размещения или нет реквеста размещения.
         val advOpt: Option[MAdvI] = DB.withConnection { implicit c =>
@@ -395,14 +372,14 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         advOpt match {
           // ok: предложение было одобрено юзером
           case Some(advOk: MAdvOk) =>
-            Ok(_advWndFullOkTpl(request.mad, request.producer, advOk))
+            Ok(_advWndFullOkTpl(request.mad, request.producer, advOk, goBackTo = r))
 
           // req: предложение на состоянии модерации. Надо бы отрендерить страницу судьбоносного набега на мозг
           case Some(advReq: MAdvReq) =>
             Ok(_advReqWndTpl(request.producer, adRcvr=rcvr, request.mad, advReq, reqRefuseFormM, goBackTo = r))
 
           case other =>
-            warn(s"advFullWnd($adId, pov=$fromAdnId): Cannot find last actual for rcvr=${rcvr.id} => $other")
+            warn(s"advFullWnd($adId, pov=$povAdnId): Cannot find last actual for rcvr=${rcvr.id} => $other")
             InternalServerError("Internal failure.")
         }
       }
@@ -481,7 +458,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         ))
       } else {
         val advReqId = request.advReq.id.get
-        warn(s"_showAdvReq($advReqId): Something not found, but it should: mad=$madOpt producer=$adProducerOpt")
+        warn(s"_showAdvReq1($advReqId): Something not found, but it should: mad=$madOpt producer=$adProducerOpt")
         Left(http404AdHoc)
       }
     }

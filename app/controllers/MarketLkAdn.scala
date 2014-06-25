@@ -85,7 +85,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
           }
           val (okAdnIds, reqAdnIds, reqsCount) = syncResult
           val advAdnIds = (okAdnIds ++ reqAdnIds).distinct
-          MAdnNodeCache.multigetById(advAdnIds)
+          MAdnNodeCache.multiGet(advAdnIds)
             .map { adns => reqsCount -> adns }
         }
       } else {
