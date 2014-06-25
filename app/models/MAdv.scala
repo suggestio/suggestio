@@ -107,6 +107,10 @@ object MAdvModes extends Enumeration {
 
 trait MAdvStatic[T] extends SqlModelStatic[T] {
 
+  def getActualById(id: Int, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection) = {
+    getByIdBase(id, policy, Some("AND date_end >= now()"))
+  }
+
   /**
    * Поиск по колонке adId, т.е. по id рекламной карточки.
    * @param adId id рекламной карточки, которую размещают.
@@ -186,6 +190,16 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
   }
 
   /**
+   * Аналог findByRcvr(), но для множества ресиверов.
+   * @param rcvrAdnIds id искомых ресиверов.
+   * @param policy Политика блокирования выбранных рядов. По умолчанию - без локов.
+   * @return Список рядов, имеющих любого из указанных ресиверов в поле rcvr_adn_id, в неопределённом порядке.
+   */
+  def findByRcvrs(rcvrAdnIds: Traversable[String], policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(" WHERE rcvr_adn_id = ANY({rcvrs})", policy, 'rcvrs -> strings2pgArray(rcvrAdnIds))
+  }
+
+  /**
    * Есть ли в текущей adv-модели ряд, который относится к указанной рекламной карточке
    * @param adId id рекламной карточки.
    * @return true, если в таблице есть хотя бы один подходящий ряд.
@@ -206,6 +220,11 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
      .on('rcvrAdnId -> rcvrAdnId)
      .as(MAdv.PROD_ADN_ID_PARSER *)
   }
+  def findAllProducersForRcvrs(rcvrAdnIds: Traversable[String])(implicit c: Connection): List[String] = {
+    SQL("SELECT DISTINCT prod_adn_id FROM " + TABLE_NAME + " WHERE rcvr_adn_id = ANY({rcvrs}) AND date_end >= now()")
+     .on('rcvrs -> strings2pgArray(rcvrAdnIds))
+     .as(MAdv.PROD_ADN_ID_PARSER *)
+  }
 
   /**
    * Посчитать кол-во рядов, относящихся к указанному ресиверу.
@@ -215,6 +234,11 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
   def countForRcvr(rcvrAdnId: String)(implicit c: Connection): Long = {
     SQL("SELECT count(*) AS c FROM " + TABLE_NAME + " WHERE rcvr_adn_id = {rcvrAdnId}")
       .on('rcvrAdnId -> rcvrAdnId)
+      .as(MAdv.COUNT_PARSER single)
+  }
+  def countForRcvrs(rcvrAdnIds: Traversable[String])(implicit c: Connection): Long = {
+    SQL("SELECT count(*) AS c FROM " + TABLE_NAME + " WHERE rcvr_adn_id = ANY({rcvrs})")
+      .on('rcvrs -> strings2pgArray(rcvrAdnIds))
       .as(MAdv.COUNT_PARSER single)
   }
 

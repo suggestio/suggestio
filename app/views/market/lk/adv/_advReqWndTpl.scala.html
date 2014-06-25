@@ -1,4 +1,4 @@
-@(adProducer: MAdnNode, adRcvr: MAdnNode, mad: MAd, advReq: MAdvReq, refuseFormM: Form[_])(implicit ctx: Context)
+@(adProducer: MAdnNode, mad: MAd, advReq: MAdvReq, refuseFormM: Form[_], goBackTo: Option[String] = None)(implicit ctx: Context)
 
 @* Рендер окошка, отображающего предложение размещения рекламной карточки у узла. *@
 
@@ -25,13 +25,14 @@
   </p>
 
   <p class="gray font-12">
-    <!--Стоимость согласно <a href="routes.MarketLkBilling._renderNodeMbmdsWindow(adRcvr.id.get)">ставке тарифных планов</a>.
-    <br/>-->
     <strong class="adv-req-wind_price">@formatPrice(advReq.amountMinusComission, advReq.currency)</strong>
   </p>
 
   @* Отменить размещение рекламы с указанием причины. *@
-  @form(routes.MarketAdv.advReqRefuseSubmit(advReq.id.get), 'id -> "advReqRefuse") {
+  @form(
+    routes.MarketAdv.advReqRefuseSubmit(advReq.id.get, r = goBackTo),
+    'id -> "advReqRefuse"
+  ) {
     @textarea(refuseFormM("reason"), '_label -> "", 'placeholder -> "Напишите причину отмены")
 
     <div class="submit-w __size-S">
@@ -49,8 +50,10 @@
   }
 
   @* Подтвердить размещение рекламы. *@
-  @form(routes.MarketAdv.advReqAcceptSubmit(advReq.id.get), 'id -> "advReqAccept") {
-
+  @form(
+    routes.MarketAdv.advReqAcceptSubmit(advReq.id.get, r = goBackTo),
+    'id -> "advReqAccept"
+  ) {
     <div class="submit-w __size-S">
 
       <a class="siom-ac-btn __color-4 __size-M __ft-M f-left" id="advReqRefuseShow">

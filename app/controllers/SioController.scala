@@ -64,6 +64,14 @@ trait SioController extends Controller with ContextT {
     NotFound(views.html.static.http404Tpl())
   }
 
+  // Обработка возвратов (?r=/../.../..) либо редиректов.
+  /** Вернуть редирект через ?r=/... либо через указанный вызов. */
+  def RdrBackOr(rdrPath: Option[String])(dflt: => Call)(implicit request: RequestHeader): Result = {
+    val rdrTo = request.getQueryString("r")
+      .filter(_ startsWith "/")
+      .getOrElse(dflt.url)
+    Results.Redirect(rdrTo)
+  }
 }
 
 

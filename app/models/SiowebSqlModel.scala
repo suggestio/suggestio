@@ -66,15 +66,23 @@ trait SqlModelStatic[T] extends SqlModelStaticMinimal[T] {
    * @return
    */
   def getById(id: Int, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): Option[T] = {
+    getByIdBase(id, policy, None)
+  }
+
+  protected def getByIdBase(id: Int, policy: SelectPolicy = SelectPolicies.NONE, whereAppendix: Option[String] = None)
+                           (implicit c: Connection): Option[T] = {
     val req = new StringBuilder(50, "SELECT * FROM ")
       .append(TABLE_NAME)
       .append(" WHERE id = {id}")
+    if (whereAppendix.isDefined)
+      req.append(' ').append(whereAppendix.get)
     policy.append2sb(req)
     SQL(req.toString())
       .on('id -> id)
       .as(rowParser *)
       .headOption
   }
+
 
   def hasId(id: Int)(implicit c: Connection): Boolean = {
     SQL("SELECT count(*) > 0 AS bool FROM " + TABLE_NAME + " WHERE id = {id}")

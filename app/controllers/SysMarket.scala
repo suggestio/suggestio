@@ -269,23 +269,25 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
   /** Маппинг для adn-полей формы adn-узла. */
   private val adnMemberM: Mapping[AdNetMemberInfo] = mapping(
-    "memberType" -> adnMemberTypeM,
-    "isEnabled"  -> boolean,
-    "rights"     -> adnRightsM,
-    "sls"        -> adnSlInfoM,
-    "supId"      -> optional(esIdM)
+    "memberType"    -> adnMemberTypeM,
+    "isEnabled"     -> boolean,
+    "rights"        -> adnRightsM,
+    "sls"           -> adnSlInfoM,
+    "supId"         -> optional(esIdM),
+    "advDelegate"   -> optional(esIdM)
   )
-  {(mt, isEnabled, rights, sls, supId) =>
-    val result = mt.getAdnInfoDflt
-    result.isEnabled = isEnabled
-    result.rights = rights
-    result.showLevelsInfo = sls
-    result.supId = supId
-    result
+  {(mt, isEnabled, rights, sls, supId, advDgOpt) =>
+    mt.getAdnInfoDflt.copy(
+      isEnabled = isEnabled,
+      rights    = rights,
+      showLevelsInfo = sls,
+      supId     = supId,
+      advDelegate = advDgOpt
+    )
   }
   {anmi =>
     import anmi._
-    Some((memberType, isEnabled, rights, showLevelsInfo, supId))
+    Some((memberType, isEnabled, rights, showLevelsInfo, supId, advDelegate))
   }
 
 
@@ -451,6 +453,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
             adnNode.adn.isEnabled = adnNode2.adn.isEnabled
             adnNode.adn.showLevelsInfo = adnNode2.adn.showLevelsInfo
             adnNode.adn.supId = adnNode2.adn.supId
+            adnNode.adn.advDelegate = adnNode2.adn.advDelegate
             adnNode.conf = adnNode.conf.copy(
               withBlocks = adnNode2.conf.withBlocks
             )

@@ -87,7 +87,7 @@ abstract class EsModelCache[T1 <: EsModelMinimalT : ClassTag] extends SNStaticSu
    * @param ids Список id, которые надо получить.
    * @return Результаты в неопределённом порядке.
    */
-  def multigetByIdCached(ids: Traversable[String])(implicit ec: ExecutionContext, client: Client): Future[Seq[T1]] = {
+  def multiGet(ids: Traversable[String])(implicit ec: ExecutionContext, client: Client): Future[Seq[T1]] = {
     val (cached, nonCachedIds) = ids.foldLeft [(List[T1], List[String])] (Nil -> Nil) {
       case ((accCached, notCached), id) =>
         getByIdFromCache(id) match {

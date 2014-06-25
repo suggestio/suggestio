@@ -1,6 +1,6 @@
 @(node: MAdnNode, mads: Seq[MAd], slaves: Seq[MAdnNode], advertisers: Seq[MAdnNode], isMyNode: Boolean,
-  povAdnIdOpt: Option[String], advReqsCount: Long, canAdv: Boolean, ad2advMap: Map[String, MAdvI], showBackBtn: Boolean
- )(implicit ctx: Context)
+  povAdnIdOpt: Option[String], advReqsCount: Long, canAdv: Boolean, ad2advMap: Map[String, MAdvI], showBackBtn: Boolean,
+  showAdvsBtn: Boolean)(implicit ctx: Context)
 
 @* Заглавная страница узла рекламной сети в личных кабинетах.
    Если isMyNode, то идёт рендер управляемого узла, и povAdnIdOpt игнорируется.
@@ -35,24 +35,28 @@
       @* У узла-приемника/супервизора есть доступ к списку входных продьюсеров рекламы и доступ к коду установки. *@
       @if(isMyNode) {
         @defining(node.adn.isReceiver) { isRcvr =>
-          @if(isRcvr || node.adn.isSupervisor) {
+          @if(isRcvr || showAdvsBtn || node.adn.isSupervisor) {
             <div class="adn-title-buttons">
 
               @if(isRcvr) {
-              <div class="gray-but-wrap">
-                <div class="white-border-top">
-                  <a id="installScriptButton" class="btn" href="">СКРИПТ на САЙТ</a>
-                </div>
-              </div>
-              }
-
-              @if(node.adn.memberType.canViewSlaves) {
                 <div class="gray-but-wrap">
                   <div class="white-border-top">
-                    <a class="btn" href="@routes.MarketAdv.showNodeAdvs(node.id.get)"> @if(advReqsCount > 0L) {<span class="lk-adv-reqs-count attention-icon">@advReqsCount</span>} РЕКЛАМОДАТЕЛИ</a>
+                    <a id="installScriptButton" class="btn" href="">СКРИПТ на САЙТ</a>
                   </div>
                 </div>
-              }
+              } @* isRcvr? *@
+
+              @* Кнопку "рекламодатели" отображать только ресиверу, и только если он не делегировал adv-функции другому узлу. *@
+              @if(showAdvsBtn) {
+                <div class="gray-but-wrap">
+                  <div class="white-border-top">
+                    <a class="btn" href="@routes.MarketAdv.showNodeAdvs(node.id.get)">
+                      @if(advReqsCount > 0L) {<span class="lk-adv-reqs-count attention-icon">@advReqsCount</span>}
+                      РЕКЛАМОДАТЕЛИ
+                    </a>
+                  </div>
+                </div>
+              } @* showAdsvBtn? *@
 
             </div>
           }

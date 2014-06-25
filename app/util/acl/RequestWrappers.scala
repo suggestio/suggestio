@@ -1,7 +1,7 @@
 package util.acl
 
 import util.acl.PersonWrapper._
-import play.api.mvc.{WrappedRequest, Request}
+import play.api.mvc._
 import models._
 import scala.concurrent.{Future, future}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext

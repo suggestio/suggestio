@@ -7,13 +7,10 @@
 @import controllers.adn.AdnShowTypes._
 
 @hPathAfter = {
-  @adnNode.adn.supId.map { supId =>
-    / <a href="@routes.SysMarket.showAdnNode(supId)">..</a>
-  }
-  / <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
+  @* Исходного заголовка достаточно для рендера. *@
 }
 
-@adnBase(adnNode.meta.name, hPathAfter = Some(hPathAfter)) {
+@adnBase(adnNode.meta.name, Some(hPathAfter), Some(adnNode)) {
 
   <h2>@Messages("amt.of.type." + adnNode.adn.memberType)</h2>
   <a href="@routes.SysMarket.editAdnNode(adnNode.id.get)">@Messages("Edit")</a>

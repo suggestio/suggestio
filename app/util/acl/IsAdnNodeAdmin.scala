@@ -26,13 +26,18 @@ object IsAdnNodeAdmin {
   }
 
 
+  /** Проверка прав на управления узлом с учётом того, что юзер может быть суперюзером s.io. */
   def isAdnNodeAdminCheck(adnNode: MAdnNode, pwOpt: PwOpt_t): Boolean = {
-    PersonWrapper.isSuperuser(pwOpt) || {
-      pwOpt.exists { pw =>
-        adnNode.personIds contains pw.personId
-      }
+    PersonWrapper.isSuperuser(pwOpt) || isAdnNodeAdminCheckStrict(adnNode, pwOpt)
+  }
+
+  /** Проверка прав на домен без учёта суперюзеров. */
+  def isAdnNodeAdminCheckStrict(adnNode: MAdnNode, pwOpt: PwOpt_t): Boolean = {
+    pwOpt.exists { pw =>
+      adnNode.personIds contains pw.personId
     }
   }
+
 
   def checkAdnNodeCredsFut(adnNodeOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Either[Option[MAdnNode], MAdnNode]] = {
     adnNodeOptFut map {
@@ -50,7 +55,7 @@ object IsAdnNodeAdmin {
       }
     }
   }
-  
+
   def checkAdnNodeCredsOpt(adnNodeOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
     checkAdnNodeCredsFut(adnNodeOptFut, pwOpt) map {
       case Right(adnNode) => Some(adnNode)

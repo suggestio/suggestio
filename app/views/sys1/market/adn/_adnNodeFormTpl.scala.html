@@ -60,7 +60,12 @@
     @sl.name -- @Messages("lk.sl." + sl.name),
   }</p>
 
-  @inputText(af("adn.supId"), '_label -> "id узла-супервизора, если есть")
+  @inputText(af("adn.supId"), '_label -> "id узла-супервизора, если есть.")
+  @inputText(
+    af("adn.advDelegate"),
+    '_label -> "id узла-делегата рекламного размещения, если есть.",
+    'title  -> "Входящие запросы рекламного размещения будут отправляться к указанному узлу, а не к текущему."
+  )
 
   <input type="submit" value="@btnText"/>
 }
