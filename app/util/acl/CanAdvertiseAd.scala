@@ -67,7 +67,7 @@ object CanAdvertiseAd extends PlayMacroLogsImpl {
           }
 
         case None =>
-          debug(s"maybeAllowed(${mad.id.get}): anonymous access prohibited")
+          trace(s"maybeAllowed(${mad.id.get}): anonymous access prohibited")
           Future successful None
       }
     }

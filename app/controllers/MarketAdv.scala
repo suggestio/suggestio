@@ -338,9 +338,12 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   /** Запрос к рендеру окошка с полноразмерной превьюшкой карточки и специфичным для конкретной ситуации функционалом.
     * @param adId id рекламной карточки.
     * @param povAdnId Опциональный id узла, с точки зрения которого идёт просмотр карточки.
+    * @param advId Опциональный id adv-реквеста, к которому относится запрос. Появился в связи с возможностями
+    *              внешней модерации, которая по определению допускает обработку нескольких активных реквестов
+    *              для одной карточки.
     * @return Рендер отображения поверх текущей страницы.
     */
-  def advFullWnd(adId: String, povAdnId: Option[String], r: Option[String]) = {
+  def advFullWnd(adId: String, povAdnId: Option[String], advId: Option[Int], r: Option[String]) = {
     AdvWndAccess(adId, povAdnId, needMBB = false).async { implicit request =>
       if (request.isProducerAdmin) {
         // Узел-продьюсер смотрит инфу по размещению карточки. Нужно отобразить ему список по текущим векторам размещения.
@@ -364,23 +367,27 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         }
       } else {
         // Доступ не-продьюсера к чужой рекламной карточке. Это узел-ресивер или узел-модератор, которому делегировали возможности размещения.
-        val rcvr = request.rcvrOpt.get
-        // Тут есть два варианта развития: есть реквест размещения или нет реквеста размещения.
-        val advOpt: Option[MAdvI] = DB.withConnection { implicit c =>
-          MAdvOk.getLastActualByAdIdRcvr(adId, rcvr.id.get) orElse MAdvReq.getLastActualByAdIdRcvr(adId, rcvr.id.get)
-        }
-        advOpt match {
+        advId.flatMap[MAdvI] { _advId =>
+          DB.withConnection { implicit c =>
+            MAdvOk.getById(_advId) orElse MAdvReq.getById(_advId)
+          }
+        }.filter {
+          adv  =>  (adv.adId == adId) && (request.rcvrIds contains adv.rcvrAdnId)
+        }.fold [Future[Result]] {
+          error(s"advFullWnd($adId, pov=$povAdnId): Cannot find adv[$advId] for ad[$adId] and rcvrs = [${request.rcvrIds.mkString(", ")}]")
+          InternalServerError("Unexpected situation.")
+        } {
           // ok: предложение было одобрено юзером
-          case Some(advOk: MAdvOk) =>
+          case advOk: MAdvOk =>
             Ok(_advWndFullOkTpl(request.mad, request.producer, advOk, goBackTo = r))
 
           // req: предложение на состоянии модерации. Надо бы отрендерить страницу судьбоносного набега на мозг
-          case Some(advReq: MAdvReq) =>
-            Ok(_advReqWndTpl(request.producer, adRcvr=rcvr, request.mad, advReq, reqRefuseFormM, goBackTo = r))
+          case advReq: MAdvReq =>
+            Ok(_advReqWndTpl(request.producer, request.mad, advReq, reqRefuseFormM, goBackTo = r))
 
+          // should never occur
           case other =>
-            warn(s"advFullWnd($adId, pov=$povAdnId): Cannot find last actual for rcvr=${rcvr.id} => $other")
-            InternalServerError("Internal failure.")
+            throw new IllegalArgumentException("Unexpected result from MAdv models: " + other)
         }
       }
     }
@@ -450,7 +457,6 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
       if (madOpt.isDefined && adProducerOpt.isDefined) {
         Right(_advReqWndTpl(
           adProducer = adProducerOpt.get,
-          adRcvr = request.rcvrNode,
           mad = madOpt.get,
           advReq = request.advReq,
           refuseFormM = refuseFormM,

@@ -6,18 +6,31 @@
 @import market.lk.ad._
 @import ctx._
 
+@wndAnchor(adId: String, advIdOpt: Option[Int])(text: Html) = {
+  <a class="ads-list-block__link js-advertising-requests-item_get-info"
+     href="@routes.MarketAdv.advFullWnd(adId, povAdnId = povAdnIdOpt, advId = advIdOpt, r = Some(request.path))">
+  </a>
+}
+
 @_adsListOuterTpl {
 
   @_adsListTpl(mads, coverDisableReason = false) { mad =>
+
     @* Если задан POV-узел, то отрендерить ссылку, которая отображает инфу по размещению карточки. *@
-    @mad.id.flatMap(ad2advMap.get).map {
-      case advReq: MAdvReq => {
-        <a class="ads-list-block__link js-advertising-requests-item_get-info" href="@routes.MarketAdv.advFullWnd(mad.id.get, povAdnIdOpt, r = Some(request.path))">Нажмите для просмотра информации</a>
+    @defining( mad.id.flatMap(ad2advMap.get) ) { advOpt =>
+
+      @* Рендерим ссылку, которая что-то отображает. *@
+      @wndAnchor(mad.id.get, advIdOpt = advOpt.flatMap(_.id.toOption)) {
+        @* Для advOk выводим, что карточка принята к размещению. В остальных случаях предлагаем ознакомится с информацией. *@
+        @advOpt.filter(_.isInstanceOf[MAdvOk]).fold {
+          Нажмите для просмотра информации
+        } { advOk =>
+          Принята к размещению
+        }
       }
-      case advOk: MAdvOk => {
-        <a class="ads-list-block__link js-advertising-requests-item_get-info" href="@routes.MarketAdv.advFullWnd(mad.id.get, povAdnIdOpt, r = Some(request.path))">Принята к размещению</a>
-      }
-    }
-  }
+
+    } @* defining advOpt *@
+
+  } @* adsListTpl *@
 
 }

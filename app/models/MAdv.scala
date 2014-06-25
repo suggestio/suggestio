@@ -107,6 +107,10 @@ object MAdvModes extends Enumeration {
 
 trait MAdvStatic[T] extends SqlModelStatic[T] {
 
+  def getActualById(id: Int, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection) = {
+    getByIdBase(id, policy, Some("AND date_end >= now()"))
+  }
+
   /**
    * Поиск по колонке adId, т.е. по id рекламной карточки.
    * @param adId id рекламной карточки, которую размещают.

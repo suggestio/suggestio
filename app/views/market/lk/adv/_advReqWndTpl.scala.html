@@ -1,4 +1,4 @@
-@(adProducer: MAdnNode, adRcvr: MAdnNode, mad: MAd, advReq: MAdvReq, refuseFormM: Form[_], goBackTo: Option[String] = None)(implicit ctx: Context)
+@(adProducer: MAdnNode, mad: MAd, advReq: MAdvReq, refuseFormM: Form[_], goBackTo: Option[String] = None)(implicit ctx: Context)
 
 @* Рендер окошка, отображающего предложение размещения рекламной карточки у узла. *@
 
@@ -25,8 +25,6 @@
   </p>
 
   <p class="gray font-12">
-    <!--Стоимость согласно <a href="routes.MarketLkBilling._renderNodeMbmdsWindow(adRcvr.id.get)">ставке тарифных планов</a>.
-    <br/>-->
     <strong class="adv-req-wind_price">@formatPrice(advReq.amountMinusComission, advReq.currency)</strong>
   </p>
 
