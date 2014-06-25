@@ -1,6 +1,7 @@
 package util.acl
 
 import play.api.mvc.{Results, Result, ActionBuilder, Request}
+import util.PlayMacroLogsImpl
 import util.acl.PersonWrapper.PwOpt_t
 import models._
 import scala.concurrent.Future
@@ -89,6 +90,9 @@ case class AdRcvrRequest[A](
 }
 
 
+/** Статические функции логгирования для ACL AdvWndAccess. */
+object AdvWndAccess extends PlayMacroLogsImpl
+
 /**
  * Запрос окна с информацией о размещении карточки. Такое окно может запрашивать как создатель карточки,
  * так и узел-ресивер, который модерирует или уже отмодерировал карточку. Такое же окно может появлятся у узла,
@@ -98,6 +102,8 @@ trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] {
   def adId: String
   def povAdnId: Option[String]
   def needMBB: Boolean
+
+  import AdvWndAccess.LOGGER._
 
   override def invokeBlock[A](request: Request[A], block: (AdvWndRequest[A]) => Future[Result]): Future[Result] = {
     PersonWrapper.getFromRequest(request) match {
@@ -122,6 +128,7 @@ trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] {
                   rcvrOptFut flatMap { rcvrOpt =>
                     val isRcvrAdmin = rcvrOpt
                       .exists { rcvr => IsAdnNodeAdmin.isAdnNodeAdminCheckStrict(rcvr, pwOpt) }
+                    trace(s"[adId=$adId povAdnId=$povAdnId] isProdAdm -> $isProducerAdmin rcvrId -> $rcvrIdOpt isRcvrAdm -> $isRcvrAdmin")
                     // Чтобы получить какой-либо доступ к окошку карточки, нужно быть или админом узла-продьюсера карточки, или же админом ресивера, переданного через fromAdnId.
                     if (isProducerAdmin || isRcvrAdmin) {
                       val srmFut = if (needMBB) {
@@ -137,21 +144,30 @@ trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] {
                         block(req1)
                       }
                     } else {
+                      warn(s"[adId=$adId] User ${pw.personId} is nor admin of producer (${mad.producerId}), and neither of rcvr ($rcvrIdOpt)")
                       IsAdnNodeAdmin.onUnauth(request)
                     }
                   }
                 } else {
+                  warn(s"[adId=$adId] User ${pw.personId} is not admin of producer (${mad.producerId}), and rcvr not exists requested")
                   IsAdnNodeAdmin.onUnauth(request)
                 }
 
+              // should never occur
               case None =>
-                Future successful Results.InternalServerError("Ad producer not found, but it should!")
+                val msg = "Ad producer not found, but it should!"
+                error(s"ISE: adId=$adId producerId=${mad.producerId} :: $msg")
+                Future successful Results.InternalServerError(msg)
             }
 
-          case None => notFoundFut
+          case None =>
+            debug(s"ad not found: adId = " + adId)
+            notFoundFut
         }
 
-      case None => IsAuth.onUnauth(request)
+      case None =>
+        trace(s"User is NOT logged in: " + request.remoteAddress)
+        IsAuth.onUnauth(request)
     }
   }
 }
