@@ -19,7 +19,7 @@ cbca_grid =
       ww = document.documentElement.clientWidth
       wh = document.documentElement.clientHeight
     else if document.body && ( document.body.clientWidth || document.body.clientHeight )
-      ww = document.body.clientWidth
+      ww = document.body.clientWidthb
       wh = document.body.clientHeight
 
     this.ww = ww
@@ -353,6 +353,8 @@ cbca_grid =
           block_max_w = this.get_max_block_width columns_used_space, cline, cur_column, columns
 
           b = this.fetch_block block_max_w
+
+          console.log b
 
           if b == null
             if this.blocks.length > 0

@@ -7,11 +7,11 @@
 
 @img = {
   @mad.imgs.get(Block26.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).map { imgCall =>
-   <img class="sm-block-tpl26_bg" src="@ctx.myAudienceUrl@imgCall" />
+   <img src="@ctx.myAudienceUrl@imgCall" />
   }
 }
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl26 sm-block@mad.id" data-width="@Block26.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl26 sm-block@mad.id" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   @* Картинка рендерится в пределах ссылки оффера, если та существует.
      Если оффера нет, то чтобы избежать неотображения картинки, картинка будет отрендерена вне блока. *@
