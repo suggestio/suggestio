@@ -878,6 +878,7 @@ market =
 
       style_dom = document.createElement('style')
       style_dom.type = "text/css"
+      style_dom.innerHTML = ''
       style_dom.appendChild(document.createTextNode(css))
       head = document.getElementsByTagName('head')
       head[0].appendChild(style_dom)
@@ -1358,7 +1359,7 @@ market =
           method : 'post'
           data : $('#promoOfferForm').serialize()
           success : ( data ) ->
-            $('#popupsContainer').html '<div class="ad-full-preview" id="adFullPreview"><div class="sio-mart-showcase">' + data + '</div></div>'
+            $('#popupsContainer').html '<div class="ad-full-preview" id="adFullPreview"><div class="ad-full-preview__close-cross" onclick="cbca.popup.hidePopup();"></div><div class="sio-mart-showcase">' + data + '</div></div>'
             $('#adFullPreview .sm-block').addClass 'double-size'
             cbca.popup.showPopup 'adFullPreview'
 
