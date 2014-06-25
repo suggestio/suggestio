@@ -365,7 +365,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
   // Обработка инвайтов на управление узлом.
   /** Маппинг формы принятия инвайта. Содержит галочку для договора и опциональный пароль. */
   private val nodeOwnerInviteAcceptM = Form(tuple(
-    "contractAgreed" -> boolean
+    Market.MARKET_CONTRACT_AGREE_FN -> boolean
       .verifying("error.contract.not.agreed", identity(_)),
     "password" -> optional(passwordWithConfirmM)
   ))

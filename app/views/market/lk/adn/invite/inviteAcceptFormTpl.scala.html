@@ -42,7 +42,7 @@
 
     @* Рендер текста открытой оферты. *@
     @if(withOfferText) {
-      @market.contract._inviteWidgetTpl()
+      @market.contract._inviteWidgetTpl(iaf)
     }
 
     @table_fieldset(Messages("amt.of.type." + adnNode.adn.memberType) + ":", "disabled"){

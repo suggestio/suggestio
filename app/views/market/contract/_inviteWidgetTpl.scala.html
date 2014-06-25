@@ -1,7 +1,10 @@
-@()(implicit ctx: Context)
+@(ff: Form[_])(implicit ctx: Context)
 
 @* Барахло для встраивания в invite-формы. *@
 
+@import ctx._
+@import helper._
+@import controllers.Market.MARKET_CONTRACT_AGREE_FN
 
 <div class="contract-widget">
   <div class="input clearfix">
@@ -16,7 +19,11 @@
 
   </div>
 
-  <input class="contract-widget__input" type="checkbox">Я согласен с условиями договора.
+  @checkbox(
+    ff(MARKET_CONTRACT_AGREE_FN),
+    '_label -> "Я согласен с условиями договора.",
+    'class -> "contract-widget__input"
+  )
 </div>
 
 

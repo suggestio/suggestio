@@ -33,6 +33,7 @@ object Market extends SioController with PlayMacroLogsImpl {
   import LOGGER._
 
   val JSONP_CB_FUN = "siomart.receive_response"
+  val MARKET_CONTRACT_AGREE_FN = "contractAgreed"
 
   /** Максимальное кол-во магазинов, возвращаемых в списке ТЦ. */
   val MAX_SHOPS_LIST_LEN = configuration.getInt("market.frontend.subproducers.count.max") getOrElse 200
