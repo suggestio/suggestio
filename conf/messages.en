@@ -137,6 +137,7 @@ error.max.strict=Must be strictly less than {0}
 error.minLength=Minimum length is {0}
 error.maxLength=Maximum length is {0}
 error.unknown.email_pw=Invalid email/password.
+error.contract.not.agreed=Agreement is not accepted. Please carefully read the contract and click on checkbox below, if you agreed.
 
 constraint.required=Required
 constraint.min=Minimum value: {0}

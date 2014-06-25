@@ -4,6 +4,7 @@
    Новый пользователь здесь может ввести пароль. Уже залогиненный - просто подтвердить себя. *@
 @import helper._
 @import market.contract._
+@import ctx._
 
 @table_fieldset(Label:String, Class:String)(Input:Html) = {
 <table cellpadding="0" cellspacing="0" class="input-wrap big @Class">
@@ -44,7 +45,7 @@
       @market.contract._inviteWidgetTpl()
     }
 
-    @table_fieldset("Торговый центр:", "disabled"){
+    @table_fieldset(Messages("amt.of.type." + adnNode.adn.memberType) + ":", "disabled"){
       <input id="adnNodeName" type="text" disabled value="@adnNode.meta.name"/>
     }
 

@@ -362,11 +362,13 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
   }
 
 
-
-  // Обработка инвайтов на управление ТЦ.
-  private val nodeOwnerInviteAcceptM = Form(
+  // Обработка инвайтов на управление узлом.
+  /** Маппинг формы принятия инвайта. Содержит галочку для договора и опциональный пароль. */
+  private val nodeOwnerInviteAcceptM = Form(tuple(
+    "contractAgreed" -> boolean
+      .verifying("error.contract.not.agreed", identity(_)),
     "password" -> optional(passwordWithConfirmM)
-  )
+  ))
 
   /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
   def nodeOwnerInviteAcceptForm(martId: String, eActId: String) = nodeOwnerInviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
@@ -383,7 +385,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         debug(s"${logPrefix}Form bind failed: ${formatFormErrors(formWithErrors)}")
         NotAcceptable(invite.inviteAcceptFormTpl(mmart, eAct, formWithErrors, withOfferText = false))
       },
-      {passwordOpt =>
+      {case (contractAgreed, passwordOpt) =>
         if (passwordOpt.isEmpty && !request.isAuth) {
           debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=${request.isAuth}")
           val form1 = formBinded
