@@ -21,6 +21,7 @@ Floor.number=Номер этажа
 Section.number=Номер секции
 Close=Закрыть
 Your=Ваш
+Preview=Предпросмотр
 
 requisites=Платёжные реквизиты для вывода средств
 

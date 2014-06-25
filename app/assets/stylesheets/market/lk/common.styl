@@ -1562,13 +1562,10 @@ li
 
 .login-page__wifi_block
   position: absolute
-  bottom: 80px
+  bottom: 70px
   left: 50%
-  margin-left: -104px
+  margin-left: -65px
   color: #23313d
-
-  p
-    margin: 13px 0
 
 .login-page__join-adv
   margin-top: 60px
@@ -1580,6 +1577,8 @@ li
   margin-right: 22px
   margin-top: 30px
 
+.login-page__demo-btn
+  margin-top: 85px
 
 .login-popup__submit-wrap
   margin-top: 40px
@@ -1810,15 +1809,15 @@ li
   width: 8px
   height: 8px
 
-.dot-arrow
-  background: url('/assets/images/market/lk/dot&arrow.png') no-repeat
+.bot-arrow
+  background: url('/assets/images/market/lk/bot-arrow.png') no-repeat
   width: 19px
-  height: 28px
+  height: 11px
 
 .about-page__dot
   margin: 0 auto 10px
 
-.about-page__dot-arrow
+.about-page__bot-arrow
   margin: 10px auto 0
 
 .about-page__under-btn
@@ -1912,18 +1911,27 @@ li
   .about-page__circle
     font-size: 24px
 
+  .login-page_content
+    width: 300px
+
+  .login-page__join-adv
+    padding-right: 50px
+
+  .login-page__join-wifi
+    padding-right: 50px
+
+  .body_responsive-mode
+    padding-top: 90px !important
 
 /********************************************************************************************************************/
 /* refactoring to MCSS */
 /********************************************************************************************************************/
+
+.submit-w
+  overflow: hidden /* т.к. все внутренние блоки со свойством float */
 
 .submit-w.__size-M
   padding: 10px 0
 
 .submit-w.__size-L
   padding: 25px 0
-
-.create-ad
-
-  .submit-w
-    text-align: center

@@ -5,24 +5,6 @@
 
 @adFormBase("Редактирование рекламной карточки", adnId = adnNode.id.get) {
 
-  @* Кнопка стирания рекламной карточки пока лежит тут. До лучших времён. *@
-  <div class="popup remove-ad" id="remove-ad">
-    <div class="hat">
-      <a href="#" class="close">&nbsp;</a>
-    </div>
-
-    <div class="content">
-      <div class="popup_title">
-        РЕКЛАМНАЯ КАРТОЧКА БУДЕТ УДАЛЕНА ИЗ ПОИСКОВОЙ ВЫДАЧИ
-      </div>
-      <!-- вызвать шаблон с id рекламной карточки -->
-      <div class="ad-preview"></div>
-      <div class="controls">
-        <a class="gray-but-small cancel" style="margin-right: 80px;" href="#">Отменить</a>
-        @stuff._deleteSmthFormBtnTpl(routes.MarketAd.deleteSubmit(mad.id.get))
-      </div>
-    </div>
-  </div>
 
 <div class="body">
   <div class="create-ad">
@@ -31,20 +13,28 @@
   @_adFormTpl(
     af = af,
     call = routes.MarketAd.editAdSubmit(mad.id.get),
-    btnText = Messages("Save"),
     mmcats = mmcats,
     withBC  = Some(BlocksConf(mad.blockMeta.blockId)),
     adnNode = adnNode,
     allBlocks = allBlocks
   )
 
-  <div class="submit-w __size-M">
 
-    <a class="siom-ac-btn __color-3 __ft-M __size-M js-ad-preview-button">Предпросмотр</a>
-    <a class="siom-ac-btn __color-1 __ft-M __size-M js-submit-btn" data-for="#promoOfferForm">Сохранить</a>
+    <div class="submit-w __size-M">
 
-    <a href="#remove-ad" class="red-but-small popup-but">Удалить</a>
-  </div>
+      <div class="f-left remove-btn">
+        <a class="siom-ac-btn __color-4 __ft-XM __size-M js-btn" href="@routes.MarketAd.deleteWnd(mad.id.get)">Удалить</a>
+      </div>
+
+      <div class="f-right save-btn">
+        <a class="siom-ac-btn __color-1 __ft-XM __size-M js-submit-btn" data-for="#promoOfferForm">Сохранить</a>
+      </div>
+
+      <div class="f-right preview-btn">
+        <a class="siom-ac-btn __color-3 __ft-XM __size-M js-ad-preview-button">Предпросмотр</a>
+      </div>
+
+    </div>
 
   </div><!-- create-ad end -->
 </div>

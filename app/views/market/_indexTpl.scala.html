@@ -1,6 +1,7 @@
 @()(implicit ctx: util.Context)
 
 @import ctx._
+@import play.api.Play.current
 
 <div class="header-wrap wave-pattern header-wrap_responsive-mode">
 
@@ -31,28 +32,37 @@
 
       <a href="@routes.MarketLk.lkIndex" class="login-page__logo"></a>
 
-      <a href="@routes.Market.aboutMarket" class="siom-link-btn __ft-M __size-XL __color-2" style="margin-top: 30px;">
-        <span class="btn"></span>
-        Как это работает?
-      </a>
-
       <div class="login-page__join-adv">
-        <a href="@routes.MarketJoin.joinAdvRequest" class="siom-ac-btn __color-2 __size-XL __ft-L">
+
+        <a class="siom-link-btn __color-3 __size-XS __ft-XM __radial index_help-btn" href="@routes.Market.aboutForAdMakers" >?</a>
+
+        <a class="siom-ac-btn __color-2 __size-XL __ft-L" href="@routes.MarketJoin.joinAdvRequest">
           РАЗМЕСТИТЬ РЕКЛАМУ
         </a>
+
       </div>
 
       <div class="login-page__join-wifi">
-        <a href="@routes.MarketJoin.wifiJoinQuestionsForm()" class="siom-ac-btn __color-1 __size-XL __ft-L">
+        <a class="siom-link-btn __color-4 __size-XS __ft-XM __radial index_help-btn" href="@routes.Market.aboutMarket" >?</a>
+
+        <a class="siom-ac-btn __color-1 __size-XL __ft-L" href="@routes.MarketJoin.wifiJoinQuestionsForm()">
           СТАТЬ УЧАСТНИКОМ СЕТИ
         </a>
       </div>
 
+      @*<div class="login-page__demo-btn">
+        @current.configuration.getString("market.demo.adn.id").map { demoAdnId =>
+          <a class="siom-ac-btn __color-5 __ft-XM __size-M" href="@routes.Market.demoWebSite(demoAdnId)" target="_blank">
+            ДЕМО
+          </a>
+        }
+      </div>*@
+
       <div class="login-page__wifi_block">
 
         <div class="wifi-icon"></div>
-        <p>
-          Новое рекламное пространство
+        <p class="ft-XS">
+          Эффективная реклама<br/>в сетях WiFi Free
         </p>
 
       </div>

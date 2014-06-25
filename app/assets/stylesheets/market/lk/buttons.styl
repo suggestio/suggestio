@@ -474,7 +474,21 @@ input.gray-but-small
 /********************************************************************************************************************/
 
 
+.create-ad
 
+  .remove-btn
+    margin-left: 22px
+
+  .save-btn
+    margin-right: 35px
+
+  .preview-btn
+    margin-right: 20px
+
+
+.index_help-btn
+  float: right
+  margin-right: -50px
 
 /********************************************************************************************************************/
 /* SioMarket default action button */
@@ -492,6 +506,8 @@ siomAcBtnHoverGradient(innerColor, defColor)
 siomAcBtnColor1 = #48ab38 /* зелёный */
 siomAcBtnColor2 = #4f88a9 /* синий */
 siomAcBtnColor3 = #9a9d9e /* серый */
+siomAcBtnColor4 = #e24a4a /* красный */
+siomAcBtnColor5 = #b6c2c5 /* серо-синий */
 
 .siom-ac-btn
   display: inline-block
@@ -536,6 +552,30 @@ siomAcBtnColor3 = #9a9d9e /* серый */
   box-shadow(0 0 30px 0 #76797a inset)
   color: #d2d1d1
 
+.siom-ac-btn.__color-4
+  color: white
+  background: siomAcBtnColor4
+
+.siom-ac-btn.__color-4:hover
+  siomAcBtnHoverGradient(#FC5353, siomAcBtnColor4)
+
+.siom-ac-btn.__color-4:active
+  background: siomAcBtnColor4
+  box-shadow(0 0 30px 0 #b43232 inset)
+  color: #ffa1a1
+
+.siom-ac-btn.__color-5
+  color: white
+  background: siomAcBtnColor5
+
+.siom-ac-btn.__color-5:hover
+  siomAcBtnHoverGradient(#C9D5D8, siomAcBtnColor5)
+
+.siom-ac-btn.__color-5:active
+  background: siomAcBtnColor5
+  box-shadow(0 0 30px 0 #9EA9AA inset)
+  color: #d2d1d1
+
 .siom-ac-btn.__size-M
   padding: 10px 25px
 
@@ -554,8 +594,18 @@ siomAcBtnColor3 = #9a9d9e /* серый */
   font-size: 14px
   line-height: 14px
 
+.siom-ac-btn.__ft-XM
+  font-family: 'heliosthin'
+  font-size: 16px
+  line-height: 16px
+
 .siom-ac-btn.__ft-L
-  font-family: 'PT_Sans-Narrow','sans-serif'
+  font-family: 'heliosthin'
+  font-size: 20px
+  line-height: 20px
+
+.siom-ac-btn.__ft-XL
+  font-family: 'PT_Sans-Narrow'
   font-size: 24px
   line-height: 24px
 
@@ -566,12 +616,23 @@ siomAcBtnColor3 = #9a9d9e /* серый */
 
 siomLinkBtnColor1 = #6b7e85
 siomLinkBtnColor2 = #b6c2c5
+siomLinkBtnColor3 = #4f88a9
+siomLinkBtnColor4 = #48ab38
 
 .siom-link-btn
   display: inline-block
 
+  cursor: pointer
+
   text-align: center
   text-decoration: none
+
+.siom-link-btn.__size-XS
+  width: 24px
+  padding: 7px
+
+.siom-link-btn.__size-XS:active
+  padding: 8px 7px 6px
 
 .siom-link-btn.__size-M
   padding: 10px 20px
@@ -590,6 +651,11 @@ siomLinkBtnColor2 = #b6c2c5
   font-family: 'Arial'
   font-size: 14px
   line-height: 14px
+
+.siom-link-btn.__ft-XM
+  font-family: 'PT_Sans-Narrow'
+  font-size: 24px
+  line-height: 24px
 
 .siom-link-btn.__ft-L
   font-family: 'PFDinTextCompPro-Medium'
@@ -624,3 +690,36 @@ siomLinkBtnColor2 = #b6c2c5
 
 .siom-link-btn.__color-2:active
   background: #b6c2c5
+
+.siom-link-btn.__color-3
+  border: 1px solid siomLinkBtnColor3
+  color: siomLinkBtnColor3
+
+.siom-link-btn.__color-3:hover
+  border: 1px solid siomLinkBtnColor3
+  background: siomLinkBtnColor3
+  color: white
+
+.siom-link-btn.__color-3:active
+  background: siomLinkBtnColor3
+  border: 1px solid #2f5d79
+  box-shadow(0 0 30px 0 #2f5d79 inset)
+  color: #98b2c1
+
+.siom-link-btn.__color-4
+  border: 1px solid siomLinkBtnColor4
+  color: siomLinkBtnColor4
+
+.siom-link-btn.__color-4:hover
+  border: 1px solid siomLinkBtnColor4
+  background: siomLinkBtnColor4
+  color: white
+
+.siom-link-btn.__color-4:active
+  background: siomLinkBtnColor4
+  border: 1px solid #2c751f
+  box-shadow(0 0 30px 0 #2c751f inset)
+  color: #92bb8b
+
+.siom-link-btn.__radial
+  border-radius(50%)

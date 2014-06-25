@@ -329,6 +329,11 @@ object MarketAd extends SioController with TempImgSupport {
     }
   }
 
+  /** Рендер окошка с подтверждением удаления рекламной карточки. */
+  def deleteWnd(adId: String) = CanEditAd(adId).async { implicit request =>
+    Ok(_deleteWndTpl(request.mad))
+  }
+
   /**
    * POST для удаления рекламной карточки.
    * @param adId id рекламы.
