@@ -3,7 +3,6 @@ package controllers
 import play.api.mvc._
 import util.{PlayMacroLogsImpl, HtmlCompressUtil, ContextT}
 import scala.concurrent.{Promise, Future}
-import play.api.i18n.Lang
 import util.event.SiowebNotifier
 import play.api.templates.{TxtFormat, HtmlFormat}
 import play.api.libs.concurrent.Akka
@@ -18,7 +17,6 @@ import util.img.OutImgFmts
 import net.sf.jmimemagic.Magic
 import util.ContextImpl
 import play.api.libs.json.JsString
-import scala.Some
 import play.api.mvc.Result
 import util.SiowebEsUtil.client
 

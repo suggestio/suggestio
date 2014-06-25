@@ -126,7 +126,7 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
    * @return Список подходящих под запрос рядов в произвольном порядке.
    */
   def findNotExpiredByAdId(adId: String, policy: SelectPolicy = SelectPolicies.NONE, limit: Int = 100)(implicit c: Connection): List[T] = {
-    findBy(" WHERE ad_id = {adId} AND now() <= date_end LIMIT {limit}", policy, 'adId -> adId, 'limit -> limit)
+    findBy(" WHERE ad_id = {adId} AND date_end >= now() LIMIT {limit}", policy, 'adId -> adId, 'limit -> limit)
   }
 
   def findNotExpiredRelatedTo(adnId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
