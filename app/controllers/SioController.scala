@@ -66,11 +66,18 @@ trait SioController extends Controller with ContextT {
 
   // Обработка возвратов (?r=/../.../..) либо редиректов.
   /** Вернуть редирект через ?r=/... либо через указанный вызов. */
-  def RdrBackOr(rdrPath: Option[String])(dflt: => Call)(implicit request: RequestHeader): Result = {
-    val rdrTo = request.getQueryString("r")
+  def RdrBackOr(rdrPath: Option[String])(dflt: => Call): Result = {
+    val rdrTo = rdrPath
       .filter(_ startsWith "/")
       .getOrElse(dflt.url)
     Results.Redirect(rdrTo)
+  }
+
+  def RdrBackOrFut(rdrPath: Option[String])(dflt: => Future[Call]): Future[Result] = {
+    rdrPath
+      .filter(_ startsWith "/")
+      .fold { dflt.map(_.url) }  { Future successful }
+      .map { r => Results.Redirect(r) }
   }
 }
 

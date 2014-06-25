@@ -18,8 +18,8 @@ GET  /thumb/get/$dkey<[-_\w\d~.]+>/$imageId<[-_\w\d]+>     controllers.Img.getTh
 GET  /search/site                       controllers.Search.siteSearchGET
 
 # ident: логины/логауты
-GET  /login2/email_pw                   controllers.Ident.emailPwLoginForm
-POST /login2/email_pw                   controllers.Ident.emailPwLoginFormSubmit
+GET  /login2/email_pw                   controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
+POST /login2/email_pw                   controllers.Ident.emailPwLoginFormSubmit(r: Option[String] ?= None)
 GET  /logout2                           controllers.Ident.logout
 # ident: Восстановление пароля.
 GET  /ident/pw/r                        controllers.Ident.recoverPwForm
@@ -78,7 +78,7 @@ POST /feedback                          controllers.Feedback.feedbackFormSubmit
 
 # Входы в личные кабинеты
 GET  /m                                 controllers.MarketLk.lkIndex
-POST /m/login                           controllers.MarketLk.emailPwLoginFormSubmit
+POST /m/login                           controllers.MarketLk.emailPwLoginFormSubmit(r: Option[String] ?= None)
 GET  /m/lk                              controllers.MarketLk.lkList
 GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
 GET  /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNode(adnId)
