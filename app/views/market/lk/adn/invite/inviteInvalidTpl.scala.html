@@ -15,23 +15,31 @@
 
   <div class="body">
 
-    <div class="error-label"></div>
-
-    <p> Произошла непредвиденная ошибка при обработке вашего ключа регистрации.
-        Возможно, ваш ключ истёк, невернен или произошла внутренняя ошибка системы suggest.io</p>
-
-    <p>Указанная причина:</p>
-    <p><b>@Messages(reasonId)</b><p>
-
-    <p>Если вам требуется помощь, <a href="@routes.Feedback.feedbackForm(isAsync = false)">напишите нам</a>,
-      скопировав причину возникновения проблемы, укажите данные о магазине
-      и любую другую информацию, которая может помочь в устранении проблемы.</p>
-
-  <div class="gray-but-wrap" style="margin-top: 50px;">
-    <div class="white-border-top">
-      <a class="btn" href="@routes.Feedback.feedbackForm(isAsync = false)">НАПИШИТЕ НАМ</a>
+    <div class="error-label __position-def __size-M">
+      <div class="error-label__icon"></div>
+      <div class="error-label__title">Произошла непредвиденная ошибка при обработке вашего ключа регистрации.</div>
     </div>
-  </div>
+
+    <p class="paragraph __size-M">
+        Возможно, ваш ключ истёк, невернен или произошла внутренняя ошибка системы suggest.io
+    </p>
+
+    <p class="paragraph __size-M">
+      Указанная причина:
+      <br/>
+      <strong>@Messages(reasonId)</strong>
+    <p>
+
+    <p class="paragraph __size-M">
+      Если вам требуется помощь, напишите нам,
+      скопировав причину возникновения проблемы, укажите данные о магазине
+      и любую другую информацию, которая может помочь в устранении проблемы.
+    </p>
+
+    <div class="submit-w __size-M">
+      <a class="siom-ac-btn __color-2 __size-M __ft-XM f-left" href="@routes.Feedback.feedbackForm(isAsync = false)">Напишите нам</a>
+    </div>
+
 
   </div>
 
