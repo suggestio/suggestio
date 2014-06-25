@@ -327,28 +327,37 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     { NodeConf.unapply }
   }
 
+  /** Маппер для поля, содержащего список id юзеров. */
+  private val personIdsM: Mapping[Set[String]] = {
+    text(maxLength = 1024)
+      .transform[Set[String]](
+        {s => s.trim.split("\\s*[,;]\\s*").toSet },
+        { _.mkString(", ") }
+      )
+  }
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
   private val adnNodeFormM = Form(mapping(
     "companyId" -> esIdM,
     "adn"       -> adnMemberM,
     "meta"      -> adnNodeMetaM,
-    "conf"      -> nodeConfM
+    "conf"      -> nodeConfM,
+    "personIds" -> personIdsM
   )
   // apply()
-  {(companyId, anmi, meta, conf) =>
+  {(companyId, anmi, meta, conf, personIds) =>
     MAdnNode(
       meta = meta,
       companyId = companyId,
       adn = anmi,
-      personIds = Set.empty,
-      conf = conf
+      conf = conf,
+      personIds = personIds
     )
   }
   // unapply()
   {adnNode =>
     import adnNode._
-    Some((companyId, adn, meta, conf))
+    Some((companyId, adn, meta, conf, personIds))
   })
 
   private def maybeSupOpt(supIdOpt: Option[String]): Future[Option[MAdnNode]] = {
@@ -439,6 +448,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         supExistsFut flatMap {
           case true =>
             adnNode.companyId = adnNode2.companyId
+            adnNode.personIds = adnNode2.personIds
             adnNode.meta.name = adnNode2.meta.name
             adnNode.meta.description = adnNode2.meta.description
             adnNode.meta.town = adnNode2.meta.town
