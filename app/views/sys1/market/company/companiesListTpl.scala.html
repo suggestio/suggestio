@@ -4,7 +4,9 @@
 @import ctx._
 
 @companyBase(Messages("All")) {
-  <h1>Все компании</h1>
+
+  <h1 class="sys__t">Все компании</h1>
+
   @if(!companies.isEmpty) {
     @_companyListTpl(companies)
   } else {

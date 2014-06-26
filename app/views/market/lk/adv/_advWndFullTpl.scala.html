@@ -1,4 +1,4 @@
-@(mad: MAd, adProducer: MAdnNode)(content: Html)(implicit ctx: Context)
+@(mad: MAd, adProducer: MAdnNode, goBackTo: Option[String] = None)(content: Html)(implicit ctx: Context)
 
 @* Подложка для шаблона окошка и полноразмерной превьюшкой карточки. *@
 
@@ -8,14 +8,13 @@
 <div class="popup adv-req-wind" id="advReqWind" xmlns="http://www.w3.org/1999/html">
 
   <div class="hat">
-    <a href="#" class="close">&nbsp;</a>
+    <a href="@goBackTo.getOrElse("#")" class="close">&nbsp;</a>
   </div>
 
   <div class="content">
     <div class="sio-mart-showcase" style="position: relative;">
       @_single_offer_w_description(
         mad      = mad,
-        isHidden = false,
         isWithAction = false,
         producer = adProducer,
         adIndex  = 1,

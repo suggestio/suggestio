@@ -21,6 +21,7 @@ Floor.number=Номер этажа
 Section.number=Номер секции
 Close=Закрыть
 Your=Ваш
+Preview=Предпросмотр
 
 requisites=Платёжные реквизиты для вывода средств
 
@@ -91,6 +92,7 @@ blocks.field.discoIconColor=Цвет значка скидки
 blocks.field.discoBorderColor=Цвет бордюра скидки
 blocks.field.maskColor=Цвет маски
 blocks.field.fillColor=Цвет заливки
+blocks.field.href=Ссылка на внешний ресурс
 
 ad.stat.action.v=Просмотр
 ad.stat.action.c=Клик
@@ -139,6 +141,7 @@ error.max.strict=Значение должно быть меньше {0}
 error.minLength=Минимум {0} символов
 error.maxLength=Максимальная длина — {0} символов
 error.unknown.email_pw=Неверные email/пароль.
+error.contract.not.agreed=Пожалуйста, внимательно прочитайте текст договора. В случае согласия со всеми условиями договора, подтвердите своё согласие, поставив галочку ниже.
 
 constraint.required=Обязательно
 constraint.min=Минимальное значение: {0}

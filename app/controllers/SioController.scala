@@ -3,7 +3,6 @@ package controllers
 import play.api.mvc._
 import util.{PlayMacroLogsImpl, HtmlCompressUtil, ContextT}
 import scala.concurrent.{Promise, Future}
-import play.api.i18n.Lang
 import util.event.SiowebNotifier
 import play.api.templates.{TxtFormat, HtmlFormat}
 import play.api.libs.concurrent.Akka
@@ -18,7 +17,6 @@ import util.img.OutImgFmts
 import net.sf.jmimemagic.Magic
 import util.ContextImpl
 import play.api.libs.json.JsString
-import scala.Some
 import play.api.mvc.Result
 import util.SiowebEsUtil.client
 
@@ -64,6 +62,21 @@ trait SioController extends Controller with ContextT {
     NotFound(views.html.static.http404Tpl())
   }
 
+  // Обработка возвратов (?r=/../.../..) либо редиректов.
+  /** Вернуть редирект через ?r=/... либо через указанный вызов. */
+  def RdrBackOr(rdrPath: Option[String])(dflt: => Call): Result = {
+    val rdrTo = rdrPath
+      .filter(_ startsWith "/")
+      .getOrElse(dflt.url)
+    Results.Redirect(rdrTo)
+  }
+
+  def RdrBackOrFut(rdrPath: Option[String])(dflt: => Future[Call]): Future[Result] = {
+    rdrPath
+      .filter(_ startsWith "/")
+      .fold { dflt.map(_.url) }  { Future successful }
+      .map { r => Results.Redirect(r) }
+  }
 }
 
 
@@ -126,8 +139,8 @@ trait TempImgSupport extends SioController with PlayMacroLogsImpl {
   * После унификации в web21 этот контроллер наверное уже не будет нужен. */
 trait ShopMartCompat {
   def getShopById(shopId: String) = MAdnNode.getByIdType(shopId, AdNetMemberTypes.SHOP)
-  def getShopByIdCache(shopId: String) = MAdnNodeCache.getByIdTypeCached(shopId, AdNetMemberTypes.SHOP)
+  def getShopByIdCache(shopId: String) = MAdnNodeCache.getByIdType(shopId, AdNetMemberTypes.SHOP)
 
   def getMartById(martId: String) = MAdnNode.getByIdType(martId, AdNetMemberTypes.MART)
-  def getMartByIdCache(martId: String) = MAdnNodeCache.getByIdTypeCached(martId, AdNetMemberTypes.MART)
+  def getMartByIdCache(martId: String) = MAdnNodeCache.getByIdType(martId, AdNetMemberTypes.MART)
 }

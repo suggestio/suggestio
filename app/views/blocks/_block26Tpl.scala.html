@@ -1,0 +1,55 @@
+@(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
+
+@import common._
+@import util.blocks.BlocksConf.Block26
+
+@* Блок-ссылка, появилась для нужд саморекламы sioM. При щелчке открывает ссылку в новой вкладке. *@
+
+@img = {
+  @mad.imgs.get(Block26.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).map { imgCall =>
+   <img src="@ctx.myAudienceUrl@imgCall" />
+  }
+}
+
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl26 sm-block@mad.id" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+
+  @* Картинка рендерится в пределах ссылки оффера, если та существует.
+     Если оффера нет, то чтобы избежать неотображения картинки, картинка будет отрендерена вне блока. *@
+
+  @mad.offers.headOption.fold {
+    @img
+  } { offer =>
+
+    @offer.href.map { href =>
+      <a href="@href" target="_blank">
+    }
+
+    @img
+        @mad.offers.map { offer =>
+        <div class="info el-@{offer.n + 1}">
+          @offer.text1.map { text1 =>
+          <div class="js-mvbl mvbl-title-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].title">
+            <div class="title title-@offer.n">
+              @Html(text1.value)
+            </div>
+          </div>
+          @_blockStyleTpl( mad.id, text1, Block26.titleBf, "title-" + offer.n, left = 38, top = 70*( offer.n + 1 )  )
+          }
+
+          @offer.text2.map { text2 =>
+          <div class="js-mvbl mvbl-descr mvbl-descr-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].descr">
+            <div class="descr descr-@offer.n">
+              @Html(text2.value)
+            </div>
+          </div>
+          @_blockStyleTpl( mad.id, text2, Block26.descrBf, "descr-" + offer.n, left = 38, top = 70*( offer.n + 1 )+25  )
+          }
+        </div>
+        }
+
+    @if(offer.href.isDefined) {
+    </a>
+    }
+  }
+
+</div>

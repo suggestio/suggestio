@@ -18,36 +18,41 @@
   </div>
 }
 
+@hPathAfter = {
+  @* Ничего не дописываем в заголовочный путь. *@
+}
 
-@marketBase("index") {
+@marketBase("index", hPathAfter = Some(hPathAfter)) {
 
-    <p>
-      Страница маркета содержит ссылки на административные страницы, касающие магазинной части.
-    </p>
+    <div class="info-label _market-index">
+      <div class="info-label__icon"></div>
+      <div class="info-label__title">
+        Страница маркета содержит ссылки<br/>
+        на административные страницы,<br/>
+        касающие магазинной части.
+      </div>
+    </div>
 
     <div class="sys-market-index__items">
       <div class="ovh">
         @btn(routes.SysMarket.companiesList(), 40) { ВСЕ<br/>КОМПАНИИ } {
 
-          <a href="@routes.SysMarket.companyAddForm()" class="green-btn-new sys-market-index__btn">
-            <span class="btn"></span>
+          <a href="@routes.SysMarket.companyAddForm()" class="siom-ac-btn __color-1 __size-XL __ft-M sys-market-index__btn">
             +добавить компанию
           </a>
 
         }
         @btn(routes.SysMarket.adnNodesList(), 52) { ADNetwork } {
 
-          <a href="@routes.SysMarket.createAdnNode()" class="green-btn-new sys-market-index__btn">
-            <span class="btn"></span>
-            +добавить узел верхнего уровня
+          <a href="@routes.SysMarket.createAdnNode()" class="siom-ac-btn __color-1 __size-XL __ft-M sys-market-index__btn">
+            +добавить<br/>узел верхнего<br/>уровня
           </a>
 
         }
         @btn(routes.SysMarketBilling.index(), 52) { БИЛЛИНГ } { }
         @btn(routes.MarketCategory.showCatsFor(DEFAULT_OWNER_ID), 40) { ГЛОБАЛЬНЫЕ<br/>КАТЕГОРИИ } {
 
-          <a href="@routes.SysMarket.showYmCats" class="blue-btn-new sys-market-index__btn">
-            <span class="btn"></span>
+          <a href="@routes.SysMarket.showYmCats" class="siom-ac-btn __color-2 __size-XL __ft-M sys-market-index__btn">
             YM-категории
           </a>
 

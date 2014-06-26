@@ -1,0 +1,24 @@
+@(mad: MAd)(implicit ctx: Context)
+
+@* Окошко с подтверждением удаления рекламной карточки. Загружается по ajax при нажатии на кнопку "удалить". *@
+
+<div class="popup remove-ad" id="remove-ad">
+  <div class="hat">
+    <a href="@routes.MarketAd.editAd(mad.id.get)" class="close">&nbsp;</a>
+  </div>
+
+  <div class="content">
+    <div class="popup_title">
+      РЕКЛАМНАЯ КАРТОЧКА БУДЕТ УДАЛЕНА ИЗ ПОИСКОВОЙ ВЫДАЧИ
+    </div>
+
+    <div class="controls">
+
+      <div class="submit-w __size-S">
+
+      <a class="siom-ac-btn __color-3 __ft-XM __size-M f-left js-close-popup">Отменить</a>
+      @stuff._deleteSmthFormBtnTpl(routes.MarketAd.deleteSubmit(mad.id.get), Some("__ft-XM __size-M f-right"))
+
+      </div>
+  </div>
+</div>

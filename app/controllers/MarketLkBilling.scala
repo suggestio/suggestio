@@ -44,7 +44,7 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
   def showAdnNodeBilling(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     val isProducer = request.adnNode.adn.isProducer
     val otherRcvrsFut = if (isProducer) {
-      MAdnNode.findByAllAdnRights(Seq(AdnRights.RECEIVER))
+      MAdnNode.findByAllAdnRights(Seq(AdnRights.RECEIVER), withoutTestNodes = false)
         .map { _.filter(_.id.get != adnId).sortBy(_.meta.name) }
     } else {
       Future successful Nil
@@ -93,7 +93,7 @@ object MarketLkBilling extends SioController with PlayMacroLogsImpl {
    */
   private def _prepareNodeMbmds(adnId: String)(f: (List[MBillMmpDaily], MAdnNode) => Result)(implicit request: RequestHeader): Future[Result] = {
     // TODO По идее надо бы проверять узел на то, является ли он ресивером наверное?
-    val adnNodeFut = MAdnNodeCache.getByIdCached(adnId)
+    val adnNodeFut = MAdnNodeCache.getById(adnId)
     val mbdms = DB.withConnection { implicit c =>
       // TODO Opt Нам тут нужны только номера договоров (id), а не сами договоры.
       val contracts = MBillContract.findForAdn(adnId, isActive = Some(true))

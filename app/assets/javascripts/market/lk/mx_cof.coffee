@@ -3,6 +3,7 @@ $(document).ready ->
   cbca.emptyPhoto = '/assets/images/market/lk/empty-image.gif'
 
   cbca.popup = new CbcaPopup()
+  cbca.popup.init()
   cbca.search = new CbcaSearch()
 
   cbca.statusBar = StatusBar
@@ -52,22 +53,9 @@ $(document).on 'change', '#product-photo', ->
   ##$('#upload-product-photo').find('form').trigger('submit')##
 
 
-##ПОПАПЫ##
-$(document).on 'click', '.popup-but', ->
-  $this = $(this)
-
-  cbca.popup.showPopup($this.attr('href'))
-
-$(document).on 'click', '.popup .close', (event)->
-  event.preventDefault()
-  cbca.popup.hidePopup()
-
-$(document).on 'click', '#overlay', ->
-    cbca.popup.hidePopup()
-
-$(document).on 'click', '.popup .cancel', (event)->
-    event.preventDefault()
-    cbca.popup.hidePopup()
+#######################################################################################################################
+## Всплывающие окна ##
+#######################################################################################################################
 
 CbcaPopup = () ->
 
@@ -118,8 +106,34 @@ CbcaPopup = () ->
     $('#overlay, #overlayData').hide()
     $('body').removeClass 'ovh'
 
+  init: () ->
 
-##поисковая строка##
+    $(document).on 'click', '.popup .js-close-popup', (event)->
+      event.preventDefault()
+      $this = $(this)
+      $popup = $this.closest('.popup')
+      popupId = $popup.attr('id')
+
+      cbca.popup.hidePopup(popupId)
+
+
+    $(document).on 'click', '.popup-but', ->
+      $this = $(this)
+
+      cbca.popup.showPopup($this.attr('href'))
+
+
+    $(document).on 'click', '.popup .close', (event)->
+      event.preventDefault()
+      cbca.popup.hidePopup()
+
+
+    $(document).on 'click', '#overlay', ->
+        cbca.popup.hidePopup()
+
+#######################################################################################################################
+## Работа с поисковой строкой ##
+#######################################################################################################################
 CbcaSearch = () ->
 
   self = this
@@ -243,6 +257,17 @@ CbcaCommon = () ->
 
       cbca.popup.hidePopup('#'+$popup.attr('id'))
       $('#'+$popup.attr('id')).remove()
+
+    $(document).on 'click', '.js-submit-btn', (e)->
+      e.preventDefault()
+      $this = $(this)
+      dataFor = $this.attr('data-for')
+      if(dataFor)
+        $form = $(dataFor)
+      else
+        $form = $this.closest('form')
+
+      $form.trigger('submit')
 
     $(document).on 'click', '.js-submit-wrap', (e)->
       $this = $(this)
@@ -417,13 +442,6 @@ CbcaCommon = () ->
 
     $(document).on 'blur', '.input-wrap input, .input-wrap textarea', ->
       $(this).closest('.input-wrap').removeClass('focus')
-
-
-    $(document).on 'click', '.submit', ->
-      $this = $(this)
-      formId = $this.attr('data-for')
-
-      $('#'+formId).trigger('submit')
 
 
     $(document).on 'click', '.ads-list .js-tc-edit', (event)->
@@ -874,6 +892,7 @@ market =
 
       style_dom = document.createElement('style')
       style_dom.type = "text/css"
+      style_dom.innerHTML = ''
       style_dom.appendChild(document.createTextNode(css))
       head = document.getElementsByTagName('head')
       head[0].appendChild(style_dom)
@@ -1354,9 +1373,11 @@ market =
           method : 'post'
           data : $('#promoOfferForm').serialize()
           success : ( data ) ->
-            $('#popupsContainer').html '<div class="ad-full-preview" id="adFullPreview"><div class="sio-mart-showcase">' + data + '</div></div>'
+            $('#popupsContainer').html '<div class="ad-full-preview" id="adFullPreview"><div class="ad-full-preview__close-cross" onclick="cbca.popup.hidePopup();"></div><div class="sio-mart-showcase">' + data + '</div></div>'
             $('#adFullPreview .sm-block').addClass 'double-size'
             cbca.popup.showPopup 'adFullPreview'
+
+            market.styles.init()
 
         return false
 

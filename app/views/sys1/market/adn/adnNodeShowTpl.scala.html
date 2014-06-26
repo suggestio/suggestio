@@ -5,15 +5,13 @@
 @import datetime._
 @import helper._
 @import controllers.adn.AdnShowTypes._
+@import util.qsb._
 
 @hPathAfter = {
-  @adnNode.adn.supId.map { supId =>
-    / <a href="@routes.SysMarket.showAdnNode(supId)">..</a>
-  }
-  / <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
+  @* Исходного заголовка достаточно для рендера. *@
 }
 
-@adnBase(adnNode.meta.name, hPathAfter = Some(hPathAfter)) {
+@adnBase(adnNode.meta.name, Some(hPathAfter), Some(adnNode)) {
 
   <h2>@Messages("amt.of.type." + adnNode.adn.memberType)</h2>
   <a href="@routes.SysMarket.editAdnNode(adnNode.id.get)">@Messages("Edit")</a>
@@ -97,7 +95,10 @@
 
   <br/>
   <h3>Управление</h3>
-  <a href="@routes.SysMarket.showAdnNodeAds(adnNode.id.get)">Список рекламных карточек узла</a><br/>
+  Список рекламных карточек узла:
+    <a href="@routes.SysMarket.showAdnNodeAds(AdSearch(producerIds = adnNode.id.toList))">собственных</a>,
+    <a href="@routes.SysMarket.showAdnNodeAds(AdSearch(receiverIds = adnNode.id.toList))">в выдаче</a>.
+  <br/>
 
   @* Категории в рамках узла возможны, но отключены до лучших времён. *@
   @*<a href="@routes.MarketCategory.showCatsFor(adnNode.id.get)">Категории</a><br/>*@

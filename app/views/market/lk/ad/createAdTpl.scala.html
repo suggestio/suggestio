@@ -1,4 +1,4 @@
-@(mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], adnNode: MAdnNode, withBC: Option[BlockConf] = None)(implicit ctx: util.Context)
+@(mmcats: MMartCategory.CollectMMCatsAcc_t, af: Form[_], adnNode: MAdnNode, withBC: Option[BlockConf] = None, allBlocks: Seq[BlockConf])(implicit ctx: util.Context)
 
 @* Рендер страницы с формой создания рекламы. *@
 @import ctx._
@@ -15,15 +15,23 @@
           @_adFormTpl(
             af      = af,
             call    = routes.MarketAd.createAdSubmit(adnNode.id.get),
-            btnText = Messages("Create"),
             mmcats  = mmcats,
             withBC  = withBC,
-            adnNode = adnNode
+            adnNode = adnNode,
+            allBlocks = allBlocks
           )
 
-          <div class="submit-wrap">
-            <a class="gray-but-small js-ad-preview-button">Предпросмотр</a>
-            <a class="green-but-small submit" data-for="promoOfferForm">Создать</a>
+
+          <div class="submit-w __size-M">
+
+
+            <div class="f-right save-btn">
+              <a class="siom-ac-btn __color-1 __ft-XM __size-M js-submit-btn" data-for="#promoOfferForm">Сохранить</a>
+            </div>
+
+            <div class="f-right preview-btn">
+              <a class="siom-ac-btn __color-3 __ft-XM __size-M js-ad-preview-button">Предпросмотр</a>
+            </div>
 
           </div>
 

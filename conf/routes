@@ -18,8 +18,8 @@ GET  /thumb/get/$dkey<[-_\w\d~.]+>/$imageId<[-_\w\d]+>     controllers.Img.getTh
 GET  /search/site                       controllers.Search.siteSearchGET
 
 # ident: логины/логауты
-GET  /login2/email_pw                   controllers.Ident.emailPwLoginForm
-POST /login2/email_pw                   controllers.Ident.emailPwLoginFormSubmit
+GET  /login2/email_pw                   controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
+POST /login2/email_pw                   controllers.Ident.emailPwLoginFormSubmit(r: Option[String] ?= None)
 GET  /logout2                           controllers.Ident.logout
 # ident: Восстановление пароля.
 GET  /ident/pw/r                        controllers.Ident.recoverPwForm
@@ -78,7 +78,7 @@ POST /feedback                          controllers.Feedback.feedbackFormSubmit
 
 # Входы в личные кабинеты
 GET  /m                                 controllers.MarketLk.lkIndex
-POST /m/login                           controllers.MarketLk.emailPwLoginFormSubmit
+POST /m/login                           controllers.MarketLk.emailPwLoginFormSubmit(r: Option[String] ?= None)
 GET  /m/lk                              controllers.MarketLk.lkList
 GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
 GET  /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNode(adnId)
@@ -94,8 +94,7 @@ POST /m/lk/adn/slave/:adnId/on-off      controllers.MarketLkAdn.nodeOnOffSubmit(
 GET  /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)
 POST /m/lk/m/:adnId/eact/:eaId          controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
 # Супервайзинг рекламных карточек на подчинённых узлах
-GET  /m/lk/adn/:adnId/3adv/:adId        controllers.MarketAdv.advInfoWnd(adId, adnId)
-GET  /m/lk/xadv/wnd/:adId                controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None)
+GET  /m/lk/xadv/wnd/:adId               controllers.MarketAdv.advFullWnd(adId, povAdnId: Option[String] ?= None, advId: Option[Int] ?= None, r: Option[String] ?= None)
 POST /m/lk/adn/slave/:adnId/set/tla     controllers.MarketLkAdn.setSlaveTopLevelAvailable(adnId)
 GET  /m/lk/adn/ad/slave/:adId           controllers.MarketLkAdnSlaveAd.showSlaveAd(adId)
 POST /m/lk/adn/ad/slave/:adId/hide      controllers.MarketLkAdnSlaveAd.slaveAdHideFormSubmit(adId)
@@ -109,9 +108,8 @@ POST /m/lk/xadv/:adId/ctl                controllers.MarketAdv.advFormSubmit(adI
 POST /m/lk/xadv/:adId/price              controllers.MarketAdv.getAdvPriceSubmit(adId)
 GET  /m/lk/xadvs/:adnId                  controllers.MarketAdv.showNodeAdvs(adnId)
 # Размещение рекламы: обработка запросов размещения.
-GET  /m/lk/xadvs/req/:advReqId           controllers.MarketAdv._showAdvReq(advReqId: Int)
-POST /m/lk/xadvs/req/:advReqId/refuse    controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int)
-POST /m/lk/xadvs/req/:advReqId/accept    controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int)
+POST /m/lk/xadvs/req/:advReqId/refuse    controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int, r: Option[String] ?= None)
+POST /m/lk/xadvs/req/:advReqId/accept    controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int, r: Option[String] ?= None)
 
 # Личный кабинет владельца ТЦ
 GET  /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopForm(martId)
@@ -132,6 +130,7 @@ POST /m/lk/ai/:blockId/:fn              controllers.MarketAdPreview.prepareBlock
 POST /m/lk/sa/:adId/update/show         controllers.MarketAd.updateShowLevelSubmit(adId)
 GET  /m/lk/ad/:adId/edit                controllers.MarketAd.editAd(adId)
 POST /m/lk/ad/:adId/edit                controllers.MarketAd.editAdSubmit(adId)
+GET  /m/lk/ad/:adId/delete              controllers.MarketAd.deleteWnd(adId)
 # lk.billing
 GET  /m/lk/bill/adn/:adnId              controllers.MarketLkBilling.showAdnNodeBilling(adnId)
 GET  /m/lk/bill/adn/:adnId/pay/bank     controllers.MarketLkBilling.paymentRequsites(adnId)
@@ -181,6 +180,7 @@ GET  /market/join/xadv                  controllers.MarketJoin.joinAdvRequest
 POST /market/join/xadv                  controllers.MarketJoin.joinAdvRequestSubmit
 
 GET  /market/about                      controllers.Market.aboutMarket
+GET  /market/about-for-ad-makers        controllers.Market.aboutForAdMakers
 
 # Раздача текстов договора sio market.
 GET  /m/contract/:clang                 controllers.Market.contractOfferText(clang)
@@ -224,7 +224,8 @@ GET  /sys/market/adns                   controllers.SysMarket.adnNodesList(anmt:
 GET  /sys/market/create/adn             controllers.SysMarket.createAdnNode(supId: Option[String] ?= None)
 POST /sys/market/create/adn             controllers.SysMarket.createAdnNodeSubmit(supId: Option[String] ?= None)
 POST /sys/market/adn/:adnId/delete      controllers.SysMarket.deleteAdnNodeSubmit(adnId)
-GET  /sys/market/adn/:adnId/ads         controllers.SysMarket.showAdnNodeAds(adnId)
+GET  /sys/market/ads                    controllers.SysMarket.showAdnNodeAds(a: AdSearch)
+POST /sys/market/ad/:adId/rm/rcvr/:rcvrId controllers.SysMarket.removeAdRcvr(adId, rcvrId, r: Option[String] ?= None)
 GET  /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNode(adnId)
 POST /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNodeSubmit(adnId)
 # sys.market.mart

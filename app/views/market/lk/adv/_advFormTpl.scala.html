@@ -23,7 +23,14 @@
 
 <div class="advs-form-block" id="advsFormBlock">
 @form(routes.MarketAdv.advFormSubmit(adId)) {
-@*form(routes.MarketAdv.getAdvPriceSubmit(adId)) {*@
+@*form(routes.MarketAdv.getAdvPriceSubmit(adId)) {*@   @* Сабмит для получения стоимости текущей конфигурации размещения. *@
+
+  @* Суперюзерам доступно беплатное размещение на любом узле. *@
+  @if(ctx.isSuperuser) {
+    <div style="padding: 20px 0px;padding: 20px 17px; font-weight: bold; background: #f5f5f5; margin-bottom: 10px; -webkit-border-radius: 10px;">
+      <input type="checkbox" name="@af("freeAdv").name" value="true" /> Размещать бесплатно, без подтверждения?
+    </div>
+  }
 
   @defining( adnNodes.groupBy(_.adn.memberType).mapValues(_.sortBy(_.meta.name)) )  {  adnNodesMap =>
 
@@ -103,10 +110,13 @@
   @* Рендерим url для подсчета цены для дальнейшего использования в js *@
   <input type="hidden" id="advsPriceUpdateUrl" value="@routes.MarketAdv.getAdvPriceSubmit(adId)">
 
-  <div class="adv-submit-block">
+  <div class="paragraph __size-L __text-1">
     <div>Стоимость согласно ставке тарифных планов</div>
     <div class="g-price adv-submit-block__price js-pre-price">0 р.</div>
-    <a class="green-but-big adv-submit-block__button" id="advsSubmitButton">Отправить запрос</a>
+  </div>
+
+  <div class="submit-w __size-M">
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM js-submit-btn">Отправить запрос</a>
   </div>
 
 }

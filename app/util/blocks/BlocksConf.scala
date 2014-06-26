@@ -130,7 +130,6 @@ object BlocksConf extends Enumeration {
 
   /** Блок с тремя ценами в первом дизайне. */
   sealed trait Block3t extends Height with BgImg with TitlePriceListBlockT {
-    override def offersCount = 3
     override def template = _block3Tpl
   }
   val Block3 = new Val(3) with EmptyKey with Block3t {
@@ -178,7 +177,6 @@ object BlocksConf extends Enumeration {
 
   /** Блок, который содержит до трёх офферов с ценами. Аналог [[Block3]], но с иным дизайном. */
   sealed trait Block6t extends BgImg with TitlePriceListBlockT with HeightFixed with FillColor with BorderColor {
-    override val offersCount = 3
     override def template = _block6Tpl
   }
   val Block6 = new Val(6) with Block6t with EmptyKey {
@@ -386,7 +384,6 @@ object BlocksConf extends Enumeration {
 
 
   sealed trait Block19t extends Height with BgImg with BorderColor with TitlePriceListBlockT with BgColor with FillColor {
-    override val offersCount = 3
     override def borderColorBf = super.borderColorBf.copy(
       defaultValue = Some("444444")
     )
@@ -408,7 +405,6 @@ object BlocksConf extends Enumeration {
   sealed trait Block20t extends Height with BgImg with TitleDescrListBlockT {
     override def ordering = 1000
     override def template = _block20Tpl
-    override def offersCount: Int = 3
     override def heightBf = super.heightBf.copy(
       availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
     )
@@ -477,7 +473,6 @@ object BlocksConf extends Enumeration {
   sealed trait Block25t extends Height with BgImg with TitleDescrListBlockT {
     override def ordering = 1100
     override def template = _block25Tpl
-    override def offersCount: Int = 3
     override def heightBf = super.heightBf.copy(
       availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
     )
@@ -490,14 +485,35 @@ object BlocksConf extends Enumeration {
   }
 
 
+  /** Блок-ссылка. Изначально создавался для пиара sioM. */
+  sealed trait Block26t extends Height with BgImg with TitleDescrListBlockT with Href {
+    override def isShown = false
+    override def template = _block26Tpl
+    override def offersCount: Int = 3
+    override def heightBf = super.heightBf.copy(
+      availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
+    )
+  }
+  val Block26 = new Val(26) with Block26t with EmptyKey {
+    override def mappingWithNewKey(newKey: String) = Block26Wrapper(key = newKey)
+  }
+  sealed case class Block26Wrapper(key: String) extends ValTWrapper(Block26) with ValTEmpty with Block26t {
+    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
+  }
+
 
   /** Отображаемые блоки. Обращение напрямую к values порождает множество с неопределённым порядком,
     * а тут - сразу отсортировано по id и только отображаемые. */
   val valuesShown: Seq[BlockConf] = {
-    values.asInstanceOf[collection.Set[BlockConf]]
+    val vs0 = values.asInstanceOf[collection.Set[BlockConf]]
       .toSeq
       .filter(_.isShown)
-      .sortBy { bc => bc.ordering -> bc.id }
+    orderBlocks(vs0)
+  }
+
+  /** Отсортировать блоки согласно ordering с учётом id. */
+  def orderBlocks(values: Seq[BlockConf]) = {
+    values.sortBy { bc => bc.ordering -> bc.id }
   }
 }
 
@@ -520,6 +536,9 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
   def isNarrow = blockWidth <= BLOCK_WIDTH_NARROW_PX
 
   def isShown = true
+
+  /** Флаг того, что на блок не стоит навешивать скрипты, отрабатывающие клик по нему. */
+  def hrefBlock = false
 
   /** Шаблон для рендера. */
   def template: Template3[MAdT, Boolean, Context, HtmlFormat.Appendable]

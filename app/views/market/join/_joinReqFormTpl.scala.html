@@ -12,14 +12,15 @@
     @inputText(jf("company"), '_label -> (Messages("Company") + ":"))
   </table>
 
+  @if( isWifi ) {
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      @inputText(jf("audienceDescr"), '_label -> (Messages("Audience.descr") + ":"))
+    </table>
 
-  <table cellpadding="0" cellspacing="0" class="input-wrap big">
-    @inputText(jf("audienceDescr"), '_label -> (Messages("Audience.descr") + ":"))
-  </table>
-
-  <table cellpadding="0" cellspacing="0" class="input-wrap big">
-    @inputText(jf("humanTraffic"), '_label -> (Messages("Daily.people.traffic") + ":"))
-  </table>
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      @inputText(jf("humanTraffic"), '_label -> (Messages("Daily.people.traffic") + ":"))
+    </table>
+  }
 
   <table cellpadding="0" cellspacing="0" class="input-wrap big">
     @textarea(jf("address"), '_label -> (Messages("Address") + ":"))
@@ -84,10 +85,11 @@
 
 
   <div class="submit-wrap submit-wrap_padding10">
-    <div class="blue-btn-new js-submit-wrap f-right">
-      <span class="btn"></span>
-      <input type="submit" class="@btnClass" value="@Messages("Request.invite")"/>
-    </div>
+
+    <a class="siom-ac-btn __color-2 __size-M __ft-XM f-right js-submit-btn">
+      @Messages("Request.invite")
+    </a>
+
   </div>
 
 }

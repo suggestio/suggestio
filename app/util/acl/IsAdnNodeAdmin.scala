@@ -26,13 +26,18 @@ object IsAdnNodeAdmin {
   }
 
 
+  /** Проверка прав на управления узлом с учётом того, что юзер может быть суперюзером s.io. */
   def isAdnNodeAdminCheck(adnNode: MAdnNode, pwOpt: PwOpt_t): Boolean = {
-    PersonWrapper.isSuperuser(pwOpt) || {
-      pwOpt.exists { pw =>
-        adnNode.personIds contains pw.personId
-      }
+    PersonWrapper.isSuperuser(pwOpt) || isAdnNodeAdminCheckStrict(adnNode, pwOpt)
+  }
+
+  /** Проверка прав на домен без учёта суперюзеров. */
+  def isAdnNodeAdminCheckStrict(adnNode: MAdnNode, pwOpt: PwOpt_t): Boolean = {
+    pwOpt.exists { pw =>
+      adnNode.personIds contains pw.personId
     }
   }
+
 
   def checkAdnNodeCredsFut(adnNodeOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Either[Option[MAdnNode], MAdnNode]] = {
     adnNodeOptFut map {
@@ -50,7 +55,7 @@ object IsAdnNodeAdmin {
       }
     }
   }
-  
+
   def checkAdnNodeCredsOpt(adnNodeOptFut: Future[Option[MAdnNode]], pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
     checkAdnNodeCredsFut(adnNodeOptFut, pwOpt) map {
       case Right(adnNode) => Some(adnNode)
@@ -60,7 +65,7 @@ object IsAdnNodeAdmin {
 
 
   def isAdnNodeAdmin(adnId: String, pwOpt: PwOpt_t): Future[Option[MAdnNode]] = {
-    val fut = MAdnNodeCache.getByIdCached(adnId)
+    val fut = MAdnNodeCache.getById(adnId)
     checkAdnNodeCredsOpt(fut, pwOpt)
   }
 
@@ -115,7 +120,7 @@ trait AdnNodeAccessBase extends ActionBuilder[RequestForAdnNode] {
         val povAdnNodeOptFut = povAdnIdOpt.fold
           { Future successful Option.empty[MAdnNode] }
           { povAdnId => IsAdnNodeAdmin.isAdnNodeAdmin(povAdnId, pwOpt) }
-        val adnNodeOptFut = MAdnNodeCache.getByIdCached(adnId)
+        val adnNodeOptFut = MAdnNodeCache.getById(adnId)
         IsAdnNodeAdmin.checkAdnNodeCredsFut(adnNodeOptFut, pwOpt) flatMap {
           // Это админ текущего узла
           case Right(adnNode) =>
@@ -166,8 +171,8 @@ case class RequestForAdnNode[A](adnNode: MAdnNode, povAdnNodeOpt: Option[MAdnNod
                                 request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
   extends AbstractRequestForAdnNode(request) {
 
-  def myNode: MAdnNode = if (isMyNode) adnNode else povAdnNodeOpt.get
-  def myNodeId: String = myNode.id.get
+  def myNode: Option[MAdnNode] = if (isMyNode) Some(adnNode) else povAdnNodeOpt
+  def myNodeId: Option[String] = myNode.flatMap(_.id)
 }
 
 
@@ -183,7 +188,7 @@ trait AdnNodeMaybeAuthBase extends ActionBuilder[SimpleRequestForAdnNode] {
   override def invokeBlock[A](request: Request[A], block: (SimpleRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
-    MAdnNodeCache.getByIdCached(adnId) flatMap {
+    MAdnNodeCache.getById(adnId) flatMap {
       case Some(adnNode) =>
         srmFut flatMap { srm =>
           val req1 = SimpleRequestForAdnNode(adnNode, request, pwOpt, srm)

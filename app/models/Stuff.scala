@@ -114,3 +114,8 @@ object AudienceSizes extends Enumeration {
   }
 }
 
+
+case class MAdvPricing(
+  prices: Iterable[(Currency, Float)],
+  hasEnoughtMoney: Boolean
+)

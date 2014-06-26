@@ -26,7 +26,7 @@
 
     @* Рендер текста открытой оферты. *@
     @if(withOfferText) {
-      @market.contract._inviteWidgetTpl()
+      @market.contract._inviteWidgetTpl(iaf)
     }
 
 
@@ -111,12 +111,8 @@
           @* TODO Нужна ссылка с формой для логина в систему, если юзер уже зареган, но ещё не залогинен. *@
         }
 
-        <div class="submit-wrap">
-          <div class="gray-but-wrap" style="margin-top: 25px; margin-bottom: 25px; margin-left: 120px;">
-            <div class="white-border-top">
-              <input class="btn" type="submit" value="@Messages("ПРОДОЛЖИТЬ")"/>
-            </div>
-          </div>
+        <div class="submit-w __size-L __invite-form">
+          <a class="siom-ac-btn __color-2 __size-M __ft-XM f-left js-submit-btn">@Messages("Продолжить")</a>
         </div>
 
       }

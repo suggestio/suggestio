@@ -33,10 +33,11 @@
 
 
         <div class="login-popup__submit-wrap">
-          <div class="blue-btn-new js-submit-wrap">
-            <span class="btn"></span>
-            <input type="submit" value="@Messages("Save")" />
-          </div>
+
+          <a class="siom-ac-btn __color-2 __size-M __ft-XM js-submit-btn">
+            @Messages("Save")
+          </a>
+
         </div>
       }
 
@@ -47,5 +48,8 @@
 }
 
 @marketBase(Messages("Password.reset"), popupContent = Some(popupContent)) {
+
+  @_indexTpl()
+
 }
 

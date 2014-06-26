@@ -21,7 +21,7 @@ object MAdvReq extends MAdvStatic[MAdvReq] {
 
   val TABLE_NAME = "adv_req"
 
-  val rowParser = ADV_ROW_PARSER_LEFT ~ get[Int]("prod_contract_id") ~ ADV_ROW_PARSER_RIGHT map {
+  val rowParser = ADV_ROW_PARSER_1 ~ get[Int]("prod_contract_id") ~ ADV_ROW_PARSER_2 map {
     case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ dateStart ~ dateEnd ~ prodAdnId ~
       rcvrAdnId ~ prodContractId ~ showLevels =>
       MAdvReq(

@@ -133,6 +133,10 @@ object BlocksEditorFields extends Enumeration {
     override def fieldTemplate = _inputTextTpl
   }
 
+  val InputString: BefString = new Val("inputStr") with StringVal {
+    def fieldTemplate = _inputStringTpl
+  }
+
   /** Это когда много букв с указанием цвета. */
   val TextArea: BefText = new Val("textarea") with TextVal {
     override def fieldTemplate = _textareaTpl
@@ -463,3 +467,59 @@ case class BlockDataImpl(
   with IOffers
   with IColors
 
+
+/** Добавлялка длинного статического метода, который занимается объединением Either-результата
+  * промежуточного биндинга и общего аккамулятора биндинга. */
+trait MergeBindAcc[T] {
+  /** Как-то обновить акк. */
+  def updateAcc(offerN: Int, acc0: BindAcc, v: T)
+
+  /**
+   * Создать новый bind-аккамулятор (Either) на основе текущего bind-аккамулятора и результата
+   * бинда текущего шага.
+   * @param maybeAcc Either исходного аккамулятора с предыдущих шагов.
+   * @param maybeV Either результата текущего биндинга.
+   * @param offerN Необязательный номер оффера (блока).
+   *               Используется в ListBlock-биндерах, в обычных биндерах всегда 0.
+   *@return Новый Either-аккамулятор на основе объединения двух первых аргументов.
+   */
+  def mergeBindAcc(maybeAcc: Either[Seq[FormError], BindAcc],
+                   maybeV: Either[Seq[FormError], T],
+                   offerN: Int = 0): Either[Seq[FormError], BindAcc] = {
+    (maybeAcc, maybeV) match {
+      case (Right(acc0), Right(v)) =>
+        updateAcc(offerN, acc0, v)
+        maybeAcc
+
+      case (Left(_), Right(_)) =>
+        maybeAcc
+
+      case (Right(_), Left(fes)) =>
+        Left(fes)   // Избыточна пересборка left either из-за right-типа. Можно также вернуть через .asInstanceOf, но это плохо.
+
+      case (Left(accFE), Left(fes)) =>
+        Left(accFE ++ fes)
+    }
+  }
+
+}
+
+trait MergeBindAccAOBlock[T] extends MergeBindAcc[Option[T]] {
+
+  /** Обновить указанный изменяемый AOBlock с помощью текущего значения. */
+  def updateAOBlockWith(blk: AOBlock, v: Option[T])
+
+  def updateAcc(offerN: Int, acc0: BindAcc, vOpt: Option[T]) {
+    if (vOpt.isDefined) {
+      acc0.offers.find { _.n == offerN } match {
+        case Some(blk) =>
+          updateAOBlockWith(blk, vOpt)
+        case None =>
+          val blk = AOBlock(n = offerN)
+          updateAOBlockWith(blk, vOpt)
+          acc0.offers ::= blk
+      }
+    }
+  }
+
+}

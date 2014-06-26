@@ -56,7 +56,7 @@ trait CanEditAdBase extends ActionBuilder[RequestWithAd] {
           forbiddenFut(adId, "Ad is advertised somewhere. Cannot edit during advertising.", request)
         } else {
           if (PersonWrapper isSuperuser pwOpt) {
-            MAdnNodeCache.getByIdCached(mad.producerId).flatMap { adnNodeOpt =>
+            MAdnNodeCache.getById(mad.producerId).flatMap { adnNodeOpt =>
               srmFut flatMap { srm =>
                 val req1 = RequestWithAd(mad, request, pwOpt, srm, adnNodeOpt.get)
                 block(req1)
@@ -65,7 +65,7 @@ trait CanEditAdBase extends ActionBuilder[RequestWithAd] {
           } else {
             pwOpt match {
               case Some(pw) =>
-                MAdnNodeCache.getByIdCached(mad.producerId) flatMap { adnNodeOpt =>
+                MAdnNodeCache.getById(mad.producerId) flatMap { adnNodeOpt =>
                   adnNodeOpt
                     .filter { adnNode => IsAdnNodeAdmin.isAdnNodeAdminCheck(adnNode, pwOpt) }
                     .fold {
@@ -149,7 +149,7 @@ trait CanUpdateSlsBase extends ActionBuilder[RequestWithAd] {
               debug("invokeBlock(): cannot update sls for false-moderated ad " + adId + " mdrResult = " + mad.moderation.freeAdv)
               forbiddenFut(adId, "false-moderated ad", request)
             } else {
-              MAdnNodeCache.getByIdCached(mad.producerId) flatMap { producerOpt =>
+              MAdnNodeCache.getById(mad.producerId) flatMap { producerOpt =>
                 val isNodeAdmin = producerOpt.exists {
                   producer  =>  IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, pwOpt)
                 }

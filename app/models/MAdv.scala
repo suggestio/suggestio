@@ -25,12 +25,12 @@ object MAdv {
   val AD_ID_PARSER = get[String]("ad_id")
 
   /** Базовый парсер для колонок таблиц adv_* для колонок, которые идут слева, т.е. появились до создания дочерних таблиц. */
-  val ADV_ROW_PARSER_LEFT = get[Pk[Int]]("id") ~ AD_ID_PARSER ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
+  val ADV_ROW_PARSER_1 = get[Pk[Int]]("id") ~ AD_ID_PARSER ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
     get[DateTime]("date_created") ~ get[Option[Float]]("comission") ~ ADV_MODE_PARSER ~
     get[DateTime]("date_start") ~ get[DateTime]("date_end") ~ PROD_ADN_ID_PARSER ~ get[String]("rcvr_adn_id")
 
   val SHOW_LEVELS_PARSER = get[Set[String]]("show_levels") map { _.map(AdShowLevels.withNameTyped) }
-  def ADV_ROW_PARSER_RIGHT = SHOW_LEVELS_PARSER
+  def ADV_ROW_PARSER_2 = SHOW_LEVELS_PARSER
 
   val COUNT_PARSER = get[Long]("c")
 
@@ -107,6 +107,10 @@ object MAdvModes extends Enumeration {
 
 trait MAdvStatic[T] extends SqlModelStatic[T] {
 
+  def getActualById(id: Int, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection) = {
+    getByIdBase(id, policy, Some("AND date_end >= now()"))
+  }
+
   /**
    * Поиск по колонке adId, т.е. по id рекламной карточки.
    * @param adId id рекламной карточки, которую размещают.
@@ -122,11 +126,11 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
    * @return Список подходящих под запрос рядов в произвольном порядке.
    */
   def findNotExpiredByAdId(adId: String, policy: SelectPolicy = SelectPolicies.NONE, limit: Int = 100)(implicit c: Connection): List[T] = {
-    findBy(" WHERE ad_id = {adId} AND now() <= date_end LIMIT {limit}", policy, 'adId -> adId, 'limit -> limit)
+    findBy(" WHERE ad_id = {adId} AND date_end >= now() LIMIT {limit}", policy, 'adId -> adId, 'limit -> limit)
   }
 
   def findNotExpiredRelatedTo(adnId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
-    findBy(" WHERE prod_adn_id = {adnId} OR rcvr_adn_id = {adnId} AND date_end >= now()", policy, 'adnId -> adnId)
+    findBy(" WHERE (prod_adn_id = {adnId} OR rcvr_adn_id = {adnId}) AND date_end >= now()", policy, 'adnId -> adnId)
   }
 
   /**
@@ -176,6 +180,23 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
     findBy(" WHERE ad_id = {adId} AND rcvr_adn_id = ANY({rcvrIds})", policy, 'rcvrIds -> strings2pgArray(rcvrIds), 'ad_id -> adId)
   }
 
+  /** Найти все ряды, поля adId и rcvrAdnId которых одновременно лежат в указанных множествах. */
+  def findByAdIdsAndRcvrs(adIds: Traversable[String], rcvrIds: Traversable[String],
+                          policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(
+      " WHERE ad_id = ANY({adIds}) AND rcvr_adn_id = ANY({rcvrIds})", policy,
+      'adIds -> strings2pgArray(adIds), 'rcvrIds -> strings2pgArray(rcvrIds)
+    )
+  }
+
+  def findByAdIdsAndProducers(adIds: Traversable[String], prodIds: Traversable[String], isOnline: Boolean,
+                              policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(
+      " WHERE ad_id = ANY({adIds}) AND prod_adn_id = ANY({prodIds}) AND online = {isOnline}", policy,
+      'adIds -> strings2pgArray(adIds), 'prodIds -> strings2pgArray(prodIds), 'isOnline -> isOnline
+    )
+  }
+
   /** Найти все ряда, содержащие указанного получателя в соотв. колонке.
     * @param rcvrAdnId id узла-получателя.
     * @param policy Политика блокировки рядов.
@@ -183,6 +204,16 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
     */
   def findByRcvr(rcvrAdnId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
     findBy(" WHERE rcvr_adn_id = {rcvrAdnId}", policy, 'rcvrAdnId -> rcvrAdnId)
+  }
+
+  /**
+   * Аналог findByRcvr(), но для множества ресиверов.
+   * @param rcvrAdnIds id искомых ресиверов.
+   * @param policy Политика блокирования выбранных рядов. По умолчанию - без локов.
+   * @return Список рядов, имеющих любого из указанных ресиверов в поле rcvr_adn_id, в неопределённом порядке.
+   */
+  def findByRcvrs(rcvrAdnIds: Traversable[String], policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(" WHERE rcvr_adn_id = ANY({rcvrs})", policy, 'rcvrs -> strings2pgArray(rcvrAdnIds))
   }
 
   /**
@@ -206,6 +237,11 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
      .on('rcvrAdnId -> rcvrAdnId)
      .as(MAdv.PROD_ADN_ID_PARSER *)
   }
+  def findAllProducersForRcvrs(rcvrAdnIds: Traversable[String])(implicit c: Connection): List[String] = {
+    SQL("SELECT DISTINCT prod_adn_id FROM " + TABLE_NAME + " WHERE rcvr_adn_id = ANY({rcvrs}) AND date_end >= now()")
+     .on('rcvrs -> strings2pgArray(rcvrAdnIds))
+     .as(MAdv.PROD_ADN_ID_PARSER *)
+  }
 
   /**
    * Посчитать кол-во рядов, относящихся к указанному ресиверу.
@@ -215,6 +251,11 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
   def countForRcvr(rcvrAdnId: String)(implicit c: Connection): Long = {
     SQL("SELECT count(*) AS c FROM " + TABLE_NAME + " WHERE rcvr_adn_id = {rcvrAdnId}")
       .on('rcvrAdnId -> rcvrAdnId)
+      .as(MAdv.COUNT_PARSER single)
+  }
+  def countForRcvrs(rcvrAdnIds: Traversable[String])(implicit c: Connection): Long = {
+    SQL("SELECT count(*) AS c FROM " + TABLE_NAME + " WHERE rcvr_adn_id = ANY({rcvrs})")
+      .on('rcvrs -> strings2pgArray(rcvrAdnIds))
       .as(MAdv.COUNT_PARSER single)
   }
 

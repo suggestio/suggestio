@@ -21,6 +21,7 @@ Floor.number=Floor number
 Section.number=Section number
 Close=Close
 Your=Your
+Preview=Preview
 
 requisites=Payment details for withdrawal
 
@@ -87,6 +88,7 @@ blocks.field.discoIconColor=Discount icon color
 blocks.field.discoBorderColor=Discount border color
 blocks.field.maskColor=Mask color
 blocks.field.fillColor=Fill color
+blocks.field.href=External url address
 
 ad.stat.action.v=View
 ad.stat.action.c=Click
@@ -135,6 +137,7 @@ error.max.strict=Must be strictly less than {0}
 error.minLength=Minimum length is {0}
 error.maxLength=Maximum length is {0}
 error.unknown.email_pw=Invalid email/password.
+error.contract.not.agreed=Agreement is not accepted. Please carefully read the contract and click on checkbox below, if you agreed.
 
 constraint.required=Required
 constraint.min=Minimum value: {0}

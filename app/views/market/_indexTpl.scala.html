@@ -1,0 +1,74 @@
+@()(implicit ctx: util.Context)
+
+@import ctx._
+@import play.api.Play.current
+
+<div class="header-wrap wave-pattern header-wrap_responsive-mode">
+
+  <div class="center header_responsive-mode">
+
+    @if(ctx.isAuth) {
+    @* Юзер залогинен. Нужно отобразить кнопку на его ЛК. *@
+
+      <a href="@routes.Ident.rdrUserSomewhere" class="siom-link-btn __ft-M __size-M __color-1 f-right login-page_enter_btn">
+        @ctx.usernameOpt.getOrElse(Messages("username.unknown"))
+      </a>
+
+    } else {
+
+      <a href="#emailPwLoginForm" class="siom-link-btn __ft-M __size-M __color-1 f-right login-page_enter_btn js-btn">Вход</a>
+
+    }
+
+  </div>
+
+</div>
+
+<div class="body-wrap wave-pattern body-wrap_responsive-mode">
+
+  <div class="body wave-pattern body_responsive-mode">
+
+    <div class="login-page_content">
+
+      <a href="@routes.MarketLk.lkIndex" class="login-page__logo"></a>
+
+      <div class="login-page__join-adv">
+
+        <a class="siom-link-btn __color-3 __size-XS __ft-XM __radial index_help-btn" href="@routes.Market.aboutForAdMakers" >?</a>
+
+        <a class="siom-ac-btn __color-2 __size-XL __ft-L" href="@routes.MarketJoin.joinAdvRequest">
+          РАЗМЕСТИТЬ РЕКЛАМУ
+        </a>
+
+      </div>
+
+      <div class="login-page__join-wifi">
+        <a class="siom-link-btn __color-4 __size-XS __ft-XM __radial index_help-btn" href="@routes.Market.aboutMarket" >?</a>
+
+        <a class="siom-ac-btn __color-1 __size-XL __ft-L" href="@routes.MarketJoin.wifiJoinQuestionsForm()">
+          СТАТЬ УЧАСТНИКОМ СЕТИ
+        </a>
+      </div>
+
+      @*<div class="login-page__demo-btn">
+        @current.configuration.getString("market.demo.adn.id").map { demoAdnId =>
+          <a class="siom-ac-btn __color-5 __ft-XM __size-M" href="@routes.Market.demoWebSite(demoAdnId)" target="_blank">
+            ДЕМО
+          </a>
+        }
+      </div>*@
+
+      <div class="login-page__wifi_block">
+
+        <div class="wifi-icon"></div>
+        <p class="ft-XS">
+          Эффективная реклама<br/>в сетях WiFi Free
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

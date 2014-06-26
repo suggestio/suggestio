@@ -12,10 +12,6 @@
         @_adDisableReasonCoverTpl(mad.disableReason)
 
         <a class="ads-list-block__link js-tc-edit" href="@routes.MarketLkAdnSlaveAd.showSlaveAd(mad.id.get)"></a>
-        @* Для отображения окошка информации по размещению надо дергать эту ссылку:
-           routes.MarketAdv.advInfoWnd(adId, powAdnId)
-           где powAdnId - adnId узла, с точки зрения которого смотрим на этот узел.
-        *@
 
         <div class="ads-list-block__preview-container">
           @_single_offer(mad)

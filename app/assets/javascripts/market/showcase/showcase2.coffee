@@ -37,6 +37,7 @@ siomart =
   ## Забиндить оконные события
   bind_window_events : () ->
     resize_cb = () ->
+      window.scrollTo(0,0)
       if typeof siomart.window_resize_timer != 'undefined'
         clearTimeout siomart.window_resize_timer
 
@@ -52,18 +53,26 @@ siomart =
     this.utils.add_single_listener window, 'resize', resize_cb
 
   styles :
+
+    style_dom : null
+
     init : () ->
+      console.log 'initialized styles'
       style_tags = siomart.utils.ge_tag('code')
       css = ''
 
       for s in style_tags
         css = css.concat( s.innerHTML )
 
-
-      style_dom = document.createElement('style')
-      style_dom.type = "text/css"
-      style_dom.appendChild(document.createTextNode(css))
-      siomart.utils.ge_tag('head')[0].appendChild(style_dom)
+      if this.style_dom == null
+        style_dom = document.createElement('style')
+        style_dom.type = "text/css"
+        siomart.utils.ge_tag('head')[0].appendChild(style_dom)
+        this.style_dom = style_dom
+      else
+        this.style_dom.innerHTML = ''
+      
+      this.style_dom.appendChild(document.createTextNode(css))
 
   #######################
   ## Cross Domain Storage
@@ -83,7 +92,7 @@ siomart =
       _this.origin = siomart.config.host
 
       if !_this._iframe
-        if window.postMessage && window.JSON && window.localStorage
+        if window.postMessage && window.JSON && window.sessionStorage
 
           _iframe_attrs =
             id : 'smStorageIframe'
@@ -149,6 +158,52 @@ siomart =
       data = JSON.parse(event.data)
       _t._requests[data.id].callback(data.key, data.value)
       delete _t._requests[data.id]
+
+  #########################
+  ## History Api navigation
+  #########################
+  history :
+    base_path : null
+    is_supported : () ->
+      !!(window.history && history.pushState);
+
+    navigate : ( state ) ->
+      console.log 'navigate to :'
+      console.log state
+
+      if typeof siomart.node_offers_popup.requested_ad_id != 'undefined'
+        siomart.close_node_offers_popup()
+        return false
+
+      if state == null
+        siomart.navigation_layer.back()
+        siomart.load_index_ads()
+        return false
+
+      if state.action == 'load_for_shop_id'
+        siomart.load_for_shop_id state.shop_id, state.ad_id, false
+
+      if state.action == 'open_navigation_layer'
+        siomart.navigation_layer.open( false )
+
+      if state.action == 'load_for_cat_id'
+        siomart.load_for_cat_id state.cat_id, false
+
+    push : ( data, title, path ) ->
+
+      #history.pushState data, title, this.base_path + path
+      history.pushState data, title, this.base_path
+
+    init : () ->
+
+      this.base_path = window.location.pathname
+
+      if !this.is_supported()
+        console.log 'history api not supported'
+        return false
+
+      siomart.utils.add_single_listener window, 'popstate', ( event ) ->
+        siomart.history.navigate event.state
 
   ########
   ## Утиль
@@ -467,6 +522,7 @@ siomart =
     _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
     this.utils.add_single_listener sm_trigger, _event, siomart.open_mart
 
+  set_meta : () ->
     _head = this.utils.ge_tag('head')[0]
     meta_viewport_attrs =
       name : 'viewport'
@@ -586,6 +642,7 @@ siomart =
       grid_container_dom.innerHTML = data.html
       document.getElementById('sioMartIndexOffers').scrollTop = '0';
       cbca_grid.init()
+      siomart.styles.init()
       siomart.init_shop_links()
 
       if data.action == 'searchAds'
@@ -803,17 +860,30 @@ siomart =
   ## Загрузить индексную страницу для ТЦ
   ######################################
   load_mart_index_page : () ->
+    this.set_meta()
     this.request.perform siomart.config.index_action
 
   ##################################################
   ## Показать / скрыть экран с категориями и поиском
   ##################################################
   navigation_layer :
-    open : () ->
+    open : ( history_push ) ->
+
+      if typeof history_push != 'boolean'
+        history_push = true
+
       sm_cat_screen = siomart.utils.ge('smCategoriesScreen')
+
       if sm_cat_screen != null
         sm_cat_screen.style.display = 'block'
         siomart.utils.ge('smSearchBar').style.display = 'block'
+
+      console.log history_push
+
+      if history_push == true
+        state_data =
+          action : 'open_navigation_layer'
+        siomart.history.push state_data, 'SioMarket', '/n/categories'
 
     close : ( all_except_search ) ->
       sm_cat_screen = siomart.utils.ge('smCategoriesScreen')
@@ -870,6 +940,8 @@ siomart =
 
     siomart.storage.setValue "is_market_closed_by_user", 'true'
 
+    siomart.utils.ge_tag('body')[0].style.overflow = 'auto'
+
     event.preventDefault()
     return false
 
@@ -891,7 +963,10 @@ siomart =
       _dom = siomart.utils.ge 'smIndexNavigation'
       siomart.utils.removeClass _dom, 'hidden'
 
-  load_for_shop_id : ( shop_id, ad_id ) ->
+  load_for_shop_id : ( shop_id, ad_id, history_push ) ->
+
+    if typeof history_push == 'undefined'
+      history_push = true
 
     if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
       return false
@@ -903,13 +978,29 @@ siomart =
 
     url = '/market/ads?a.shopId=' + shop_id + '&a.firstAdId=' + ad_id + '&a.size=50&a.rcvr=' + siomart.config.mart_id
 
+    if history_push == true
+      state_data =
+        action : 'load_for_shop_id'
+        shop_id : shop_id
+        ad_id : ad_id
+      siomart.history.push state_data, 'SioMarket', '/n/mart/' + shop_id + '/' + ad_id
+
     siomart.node_offers_popup.requested_ad_id = ad_id
     siomart.request.perform url
 
   ## Загрузить все офферы для магазина
-  load_for_cat_id : ( cat_id ) ->
+  load_for_cat_id : ( cat_id, history_push ) ->
+    if typeof history_push != 'boolean'
+      history_push = true
+
     if siomart.utils.is_touch_device() && siomart.events.is_touch_locked
       return false
+
+    if history_push == true
+      state_data =
+        action : 'load_for_cat_id'
+        cat_id : cat_id
+      siomart.history.push state_data, 'SioMarket', '/n/cat/' + cat_id
 
     url = '/market/ads?a.catId=' + cat_id + '&a.rcvr=' + siomart.config.mart_id
     siomart.request.perform url
@@ -1053,8 +1144,13 @@ siomart =
     ## Забиндить оконные события
     this.bind_window_events()
 
+    ## Инициализировать history api
+    this.history.init()
+
     this.is_market_loaded = false
     ## Далее идет асинхронное считывание значения is_market_closed_by_user
+
+    window.scrollTo 0,0
 
     console.log 'check startup options and start'
     this.storage.requestValue "is_market_closed_by_user", (key, value) ->

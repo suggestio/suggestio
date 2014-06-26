@@ -1,4 +1,4 @@
-@(af: Form[_], call: Call, btnText: String, mmcats: CollectMMCatsAcc_t, withBC: Option[BlockConf], adnNode: MAdnNode)(implicit ctx: util.Context)
+@(af: Form[_], call: Call, mmcats: CollectMMCatsAcc_t, withBC: Option[BlockConf], adnNode: MAdnNode, allBlocks: Seq[BlockConf])(implicit ctx: util.Context)
 
 @* Рендер формы редактирования произвольной рекламы.
  * offerType - предпочитаемый тип оффера, когда он неизвестен.
@@ -54,9 +54,9 @@
       <div class="lk-edit-form__block_body_inner">
 
         <div class="lk-edit-form__blocks-list-icons" id="adFormBlocksList">
-        @defining( withBC getOrElse BlocksConf(1) ) { bc =>
-          @BlocksConf.valuesShown.map { bca =>
-            <div class="blocks-list-icons__single-icon @if( bc.id == bca.id ){blocks-list-icons__single-icon_active} block-list-icon-@bca.id" data-block-id="@bca.id"></div>
+        @defining( withBC getOrElse allBlocks.head ) { currBc =>
+          @allBlocks.map { bca =>
+            <div class="blocks-list-icons__single-icon @if( currBc.id == bca.id ){blocks-list-icons__single-icon_active} block-list-icon-@bca.id" data-block-id="@bca.id"></div>
           }
         }
 

@@ -4,6 +4,7 @@
    Новый пользователь здесь может ввести пароль. Уже залогиненный - просто подтвердить себя. *@
 @import helper._
 @import market.contract._
+@import ctx._
 
 @table_fieldset(Label:String, Class:String)(Input:Html) = {
 <table cellpadding="0" cellspacing="0" class="input-wrap big @Class">
@@ -39,48 +40,44 @@
       <div class="success-label__title">Вы приглашены к участию в сиетеме Sio.Market</div>
     </div>
 
-    @* Рендер текста открытой оферты. *@
-    @if(withOfferText) {
-      @market.contract._inviteWidgetTpl()
-    }
-
-    @table_fieldset("Торговый центр:", "disabled"){
-      <input id="adnNodeName" type="text" disabled value="@adnNode.meta.name"/>
-    }
-
-    @table_fieldset("E-mail:", "disabled"){
-      <input id="adnNodeEmail" type="text" disabled value="@eAct.email"/>
-    }
-
     @form(routes.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnNode.id.get, eAct.id.get)) {
+      @* Рендер текста открытой оферты. *@
+      @if(withOfferText) {
+        @market.contract._inviteWidgetTpl(iaf)
+      }
+
+      @table_fieldset(Messages("amt.of.type." + adnNode.adn.memberType) + ":", "disabled"){
+        <input id="adnNodeName" type="text" disabled value="@adnNode.meta.name"/>
+      }
+
+      @table_fieldset("E-mail:", "disabled"){
+        <input id="adnNodeEmail" type="text" disabled value="@eAct.email"/>
+      }
 
       @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
       @if(!ctx.isAuth) {
 
         @table_fieldset("Пароль:", ""){
-          <input type="text" name="password.pw1"/>
+          <input type="password" name="password.pw1"/>
         }
 
         @table_fieldset("Подтвердите пароль:", ""){
-          <input type="text" name="password.pw2"/>
+          <input type="password" name="password.pw2"/>
 
         }
           @* TODO Нужна ссылка с формой для логина в систему, если юзер уже зареган, но ещё не залогинен. *@
         }
 
-        <div class="submit-wrap">
 
           <div class="font-12 gray" style="padding-left: 120px;">Используйте указанные e-mail и пароль в дальшейнем для авторизации в Sio.Market</div>
 
-          <div class="gray-but-wrap" style="margin-top: 25px; margin-bottom: 25px; margin-left: 120px;">
-            <div class="white-border-top">
-              <input class="btn" type="submit" value="@Messages("ПРОДОЛЖИТЬ")"/>
-            </div>
+
+          <div class="submit-w __size-L __invite-form">
+            <a class="siom-ac-btn __color-2 __size-M __ft-XM f-left js-submit-btn">@Messages("Продолжить")</a>
           </div>
-        </div>
+      }
 
   </div>
 
-  }
 }
 

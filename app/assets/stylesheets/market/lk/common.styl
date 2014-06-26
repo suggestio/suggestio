@@ -25,6 +25,7 @@ transform(v)
   clear: both
 
 screen1024 = 'screen and (max-width: 1024px)'
+screen768 = 'screen and (max-width: 768px)'
 lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
 .colorpicker
@@ -1233,7 +1234,7 @@ li
 
 .ad-block-editor__fieldset_label
   display: block
-  padding: 5px 0px
+  padding: 5px 0px 5px 15px
   color: #838383
   font-family: Arial
   font-size: 12px
@@ -1342,6 +1343,15 @@ li
 
   .sio-mart-showcase
     position: relative
+
+.ad-full-preview__close-cross
+  position: absolute
+  right: -40px
+  top: 20px
+  width: 24px
+  height: 27px
+  cursor: pointer
+  background: url('/assets/images/market/ad-form-popup-close-cross.png')
 
 
 /*********************************/
@@ -1520,12 +1530,6 @@ li
   strong
     color: #676666
 
-  a
-    color: #5088aa
-    text-decoration: none
-  a:hover
-    text-decoration: underline
-
 .adv-req-wind_price
   color: #23313d !important
   font-family: 'PT Sans Narrow','sans-serif'
@@ -1562,18 +1566,23 @@ li
 
 .login-page__wifi_block
   position: absolute
-  bottom: 80px
+  bottom: 70px
   left: 50%
-  margin-left: -104px
+  margin-left: -65px
   color: #23313d
 
-  p
-    margin: 13px 0
+.login-page__join-adv
+  margin-top: 60px
+
+.login-page__join-wifi
+  margin-top: 10px
 
 .login-page_enter_btn
   margin-right: 22px
   margin-top: 30px
 
+.login-page__demo-btn
+  margin-top: 85px
 
 .login-popup__submit-wrap
   margin-top: 40px
@@ -1632,9 +1641,6 @@ li
   font-family: 'Arial'
   font-size: 14px
   color: #959595
-
-.recover-popup__content
-  height: 270px
 
 .recover-popup__submit-wrap
   margin-top: 50px
@@ -1804,15 +1810,15 @@ li
   width: 8px
   height: 8px
 
-.dot-arrow
-  background: url('/assets/images/market/lk/dot&arrow.png') no-repeat
+.bot-arrow
+  background: url('/assets/images/market/lk/bot-arrow.png') no-repeat
   width: 19px
-  height: 28px
+  height: 11px
 
 .about-page__dot
   margin: 0 auto 10px
 
-.about-page__dot-arrow
+.about-page__bot-arrow
   margin: 10px auto 0
 
 .about-page__under-btn
@@ -1905,3 +1911,166 @@ li
 
   .about-page__circle
     font-size: 24px
+
+  .login-page_content
+    width: 300px
+
+  .login-page__join-adv
+    padding-right: 50px
+
+  .login-page__join-wifi
+    padding-right: 50px
+
+  .copyright-block
+    padding-left: 10px !important
+
+@media screen768
+
+  .popup
+    width: 100% !important
+    margin-left: 0 !important
+    left: 0 !important
+
+    .content
+      padding: 20px 10px !important
+
+  .title-wrap
+    height: auto !important
+
+    .center
+      padding: 15px 0 10px !important
+
+  .wifi-page__left-column
+    width: 100%
+
+  .quiz__checkbox-wrap
+    padding: 10px
+
+  .wifi-page__right-column
+    margin-left: 0
+    margin-bottom: 25px
+    width: 100%
+
+  .input-wrap
+
+    tr
+      display: block
+
+    .left
+      display: block
+      overflow: hidden
+      width: 100% !important
+
+    .right
+      display: block
+
+  .captcha-table
+
+    tr
+      display: block
+
+    .captcha-table_left
+      display: block
+      width: 100%
+
+
+
+/********************************************************************************************************************/
+/* refactoring to MCSS */
+/********************************************************************************************************************/
+
+.submit-w
+  overflow: hidden /* т.к. все внутренние блоки со свойством float */
+  text-align: center
+
+.submit-w.__size-XS
+  padding: 10px 20%
+
+.submit-w.__size-S
+  padding: 25px 20%
+
+.submit-w.__size-M
+  padding: 10px 0
+
+.submit-w.__size-L
+  padding: 25px 0
+
+.submit-w.__size-XL
+  padding: 50px 0
+
+.submit-w.__invite-form
+  width: 100%
+  padding-left: 120px
+
+
+.paragraph
+  display: block
+
+.paragraph.__size-M
+  margin: 13px 0
+
+.paragraph.__size-L
+  margin: 20px 0
+
+.paragraph.__text-1
+  text-align: center
+
+
+.error-label
+  overflow: hidden
+
+.error-label_icon
+  float: left
+  width: 45px
+  height: 46px
+  background: url('/assets/images/market/lk/error-icon.png') no-repeat left center
+
+.error-label_title
+  padding-top: 12px /* чтобы однострочный текст был по середине иконки */
+  padding-left: 60px
+
+  font-family: 'Arial'
+  font-size: 18px
+  font-weight: bold
+  color: #e24a4a
+  text-shadow(1px 1px 1px white)
+
+.error-label.__position-def
+  margin-left: -60px
+
+.error-label.__size-M
+  padding: 25px 0
+
+
+.captcha-table_left
+  vertical-align: bottom
+  width: 180px
+  padding-right: 10px
+
+.captcha-table_right
+  vertical-align: bottom
+  padding-bottom: 10px
+
+.captcha-table_image
+  float: left
+  display: block
+
+.captcha
+  overflow: hidden
+
+  .captcha-reload-btn
+    margin-top: 13px
+
+
+.lk-field_error-text
+  display: none
+
+  color: #e24a4a
+  font-family: 'Arial'
+  font-size: 12px
+  line-height: 12px
+
+.lk-field.__error
+
+  .lk-field_error-text
+    display: block

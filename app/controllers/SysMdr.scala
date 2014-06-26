@@ -40,7 +40,7 @@ object SysMdr extends SioController with PlayMacroLogsImpl {
     MAd.findSelfAdvNonMdr(args) flatMap { mads0 =>
       val mads = hideAdId.fold(mads0) { hai => mads0.filter(_.id.get != hai) }
       val producerIds = mads.map(_.producerId).toSet ++ args.producerId.toSet
-      MAdnNodeCache.multigetByIdCached( producerIds ) map { producers =>
+      MAdnNodeCache.multiGet( producerIds ) map { producers =>
         val prodsMap = producers
           .map { p => p.id.get -> p }
           .toMap
@@ -76,7 +76,7 @@ object SysMdr extends SioController with PlayMacroLogsImpl {
   private def freeAdvMdrBody(adId: String, banForm: Form[String])(implicit request: AbstractRequestWithPwOpt[_]): Future[HtmlFormat.Appendable] = {
     MAd.getById(adId) flatMap { madOpt =>
       val mad = madOpt.get
-      MAdnNodeCache.getByIdCached(mad.producerId) map { producerOpt =>
+      MAdnNodeCache.getById(mad.producerId) map { producerOpt =>
         val producer = producerOpt.get
         freeAdvMdrTpl(mad, producer, banForm)
       }

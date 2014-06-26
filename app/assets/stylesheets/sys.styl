@@ -17,7 +17,6 @@ text-shadow(v)
 @import "market/lk/base.styl"
 @import "market/lk/buttons.styl"
 @import "market/lk/text-styles.styl"
-@import "market/lk/blocks-styles.styl"
 
 .object
     padding: 5px 20px
@@ -57,15 +56,9 @@ body
 .db-search-result img
     margin: 10px 10px 10px 0px
     float: left
-
-h1
-  padding: 20px 0px
-  font-weight: normal
-
 p
   font-size: 12px
   padding: 10px 0px
-
 
 a.add
   color: green
@@ -75,6 +68,42 @@ table
   td
     text-align: left
     padding: 10px 20px 10px 0px
+
+
+/* NEW SYS */
+
+.sys
+  font-size: 14px
+  font-family: 'Arial'
+
+.sys-strong
+  color: #676666
+  font-weight: bold
+
+.ovh
+  overflow: hidden
+
+.abs
+  position: absolute
+  top: 0
+  left: 0
+
+.f-left
+  float: left
+
+.f-right
+  float: right
+
+.border-line
+  overflow: hidden
+  width: 100%
+  border-top: 1px solid #cbcbcb
+  border-bottom: 1px solid #f8f8f8
+
+.border-line-vertical
+  margin-top: 5px
+  border-left: 1px solid #cbcbcb
+  border-right: 1px solid #f8f8f8
 
 
 .sys-market-index__items
@@ -94,3 +123,37 @@ table
 .free-ad__link
   display: block
   margin: 5px 0
+
+
+.info-label
+  overflow: hidden
+
+.info-label._market-index
+  margin-left: -30px
+  margin-top: 20px
+
+.info-label__icon
+  float: left
+
+  width: 7px /* Ширина и высота по размеру изображения */
+  height: 38px
+
+  background: url('/assets/images/market/lk/info-label-icon.png') no-repeat left center
+
+.info-label__title
+  padding-left: 25px
+  float: left
+
+  font-family: 'Arial'
+  font-size: 12px
+  font-weight: bold
+  color: #959595
+  text-shadow(1px 1px 1px white)
+
+
+.sys__t
+  margin: 25px 0
+
+  font-family: 'PT_Sans-Narrow'
+  ft(24px)
+  color: #676666

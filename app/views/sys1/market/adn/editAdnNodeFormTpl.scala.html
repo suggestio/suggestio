@@ -3,7 +3,7 @@
 @* Редактирования узла ADN. *@
 @import ctx._
 
-@adnBase("Редактирование") {
+@adnBase("Редактирование", nodeOpt = Some(adnNode)) {
 
   @stuff._deleteSmthFormBtnTpl(routes.SysMarket.deleteAdnNodeSubmit(adnNode.id.get))
 

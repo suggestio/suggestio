@@ -21,10 +21,11 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
   val TABLE_NAME = "adv_ok"
 
   override val rowParser = {
-    ADV_ROW_PARSER_LEFT ~ get[DateTime]("date_status") ~ get[Int]("prod_txn_id") ~ get[Option[Int]]("rcvr_txn_id") ~
-      get[Boolean]("online") ~ get[Boolean]("is_auto") ~ ADV_ROW_PARSER_RIGHT map {
+    ADV_ROW_PARSER_1 ~ get[DateTime]("date_status") ~ get[Option[Int]]("prod_txn_id") ~
+      get[Option[Int]]("rcvr_txn_id") ~ get[Boolean]("online") ~ get[Boolean]("is_auto") ~ ADV_ROW_PARSER_2 ~
+      get[Boolean]("is_partner") map {
       case id ~ adId ~ amount ~ currencyCode ~ dateCreated ~ comission ~ mode ~ dateStart ~ dateEnd ~
-        prodAdnId ~ rcvrAdnId ~ dateStatus ~ prodTxnId ~ rcvrTxnId ~ isOnline ~ isAuto ~ showLevels =>
+        prodAdnId ~ rcvrAdnId ~ dateStatus ~ prodTxnId ~ rcvrTxnId ~ isOnline ~ isAuto ~ showLevels ~ isPartner =>
         MAdvOk(
           id          = id,
           adId        = adId,
@@ -41,13 +42,14 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
           rcvrAdnId   = rcvrAdnId,
           isOnline    = isOnline,
           isAuto      = isAuto,
+          isPartner   = isPartner,
           showLevels  = showLevels
         )
     }
   }
 
-  def apply(madv: MAdvI, comission1: Option[Float], dateStatus1: DateTime, prodTxnId: Int, rcvrTxnId: Option[Int],
-            isOnline: Boolean, isAuto: Boolean): MAdvOk = {
+  def apply(madv: MAdvI, comission1: Option[Float], dateStatus1: DateTime, prodTxnId: Option[Int],
+            rcvrTxnId: Option[Int], isOnline: Boolean, isAuto: Boolean, isPartner: Boolean): MAdvOk = {
     import madv._
     MAdvOk(
       id          = id,
@@ -65,6 +67,7 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
       rcvrAdnId   = rcvrAdnId,
       isOnline    = isOnline,
       isAuto      = isAuto,
+      isPartner   = isPartner,
       showLevels  = showLevels
     )
   }
@@ -84,6 +87,37 @@ object MAdvOk extends MAdvStatic[MAdvOk] {
   def findDateEndExpired(policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[MAdvOk] = {
     findBy(" WHERE date_end <= now() AND online", policy)
   }
+
+  /**
+   * Найти все ряды, которые относятся к указанной рекламной карточке и ресиверу,
+   * и выставлен флаг online в указанное значение (true по дефолту),
+   * @param adId id рекламной карточки.
+   * @param rcvrId id ресивера.
+   * @param isOnline значение поля isOnline, по дефолту true.
+   * @param policy Политика блокирования рядов.
+   * @return Список рядов в неопределённом порядке.
+   */
+  def findOnlineFor(adId: String, rcvrId: String, isOnline: Boolean = true,
+                    policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[MAdvOk] = {
+    findBy(
+      " WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId} AND online = {isOnline}",
+      policy,
+      'adId -> adId, 'rcvrId -> rcvrId, 'isOnline -> isOnline
+    )
+  }
+
+  /**
+   * Аналог findAllProducersForRcvrs(), но фильтрует по значению флага is_partner, спицифичному только для MAdvOk.
+   * @param rcvrAdnIds id ресиверов.
+   * @param isPartner Значение поля is_partner.
+   * @return Тоже самое, что и findAllProducersForRcvrs().
+   */
+  def findAllProducersForRcvrsPartner(rcvrAdnIds: Traversable[String], isPartner: Boolean)(implicit c: Connection): List[String] = {
+    SQL("SELECT DISTINCT prod_adn_id FROM " + TABLE_NAME + " WHERE rcvr_adn_id = ANY({rcvrs}) AND date_end >= now() AND is_partner = {isPartner}")
+     .on('rcvrs -> strings2pgArray(rcvrAdnIds), 'isPartner -> isPartner)
+     .as(MAdv.PROD_ADN_ID_PARSER *)
+  }
+
 }
 
 
@@ -97,7 +131,7 @@ case class MAdvOk(
   comission     : Option[Float],
   dateStart     : DateTime,
   dateEnd       : DateTime,
-  prodTxnId     : Int,
+  prodTxnId     : Option[Int],
   rcvrTxnId     : Option[Int],
   prodAdnId     : String,
   rcvrAdnId     : String,
@@ -106,6 +140,7 @@ case class MAdvOk(
   dateCreated   : DateTime = DateTime.now(),
   dateStatus    : DateTime = DateTime.now(),
   isOnline      : Boolean = false,
+  isPartner     : Boolean = false,
   id            : Pk[Int] = NotAssigned
 ) extends SqlModelSave[MAdvOk] with CurrencyCode with SqlModelDelete with MAdvI {
 
@@ -115,12 +150,15 @@ case class MAdvOk(
 
   override def saveInsert(implicit c: Connection): MAdvOk = {
     SQL("INSERT INTO " + TABLE_NAME +
-      "(ad_id, amount, currency_code, date_created, comission, mode, date_start, date_end, prod_adn_id, rcvr_adn_id, date_status, prod_txn_id, rcvr_txn_id, online, is_auto, show_levels) " +
-      "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {comission}, {mode}, {dateStart}, {dateEnd}, {prodAdnId}, {rcvrAdnId}, {dateStatus}, {prodTxnId}, {rcvrTxnId}, {isOnline}, {isAuto}, {showLevels})")
+      "(ad_id, amount, currency_code, date_created, comission, mode, date_start, date_end, prod_adn_id, rcvr_adn_id," +
+      " date_status, prod_txn_id, rcvr_txn_id, online, is_auto, show_levels, is_partner) " +
+      "VALUES ({adId}, {amount}, {currencyCode}, {dateCreated}, {comission}, {mode}, {dateStart}, {dateEnd}, {prodAdnId}, {rcvrAdnId}," +
+      " {dateStatus}, {prodTxnId}, {rcvrTxnId}, {isOnline}, {isAuto}, {showLevels}, {isPartner})")
     .on('adId -> adId, 'amount -> amount, 'currencyCode -> currencyCode, 'dateCreated -> dateCreated,
         'comission -> comission, 'dateStart -> dateStart, 'mode -> mode.toString, 'showLevels -> strings2pgArray(showLevels),
         'dateStatus -> dateStatus, 'dateStart -> dateStart, 'dateEnd -> dateEnd, 'prodAdnId -> prodAdnId, 'rcvrAdnId -> rcvrAdnId,
-        'dateStatus -> dateStatus, 'prodTxnId -> prodTxnId, 'rcvrTxnId -> rcvrTxnId, 'isOnline -> isOnline, 'isAuto -> isAuto)
+        'dateStatus -> dateStatus, 'prodTxnId -> prodTxnId, 'rcvrTxnId -> rcvrTxnId, 'isOnline -> isOnline, 'isAuto -> isAuto,
+        'isPartner -> isPartner)
     .executeInsert(rowParser single)
   }
 

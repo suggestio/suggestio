@@ -13,12 +13,12 @@
     @headAfter
   </head>
 
-  <body class="lk">
+  <body class="sys">
 
-     <div class="header-wrap">
+     <div class="header">
 
-        <div class="center">
-          <a class="logo" href="@routes.Sys.index">
+        <div class="header__cnt">
+          <a class="siom-logo-def" href="@routes.Sys.index">
             <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
           </a>
           @ctx.usernameOpt.map { username =>
@@ -32,22 +32,20 @@
 
       </div><!-- header-wrap end -->
 
-     <div class="body-wrap">
+     <div class="body">
 
         @* Рендер flash-нотификаций. *@
         @ctx.flashMap.map { case (flashStatus, flashMsg) =>
           <p>@flashStatus: @flashMsg</p>
         }
 
-        <div class="title-wrap">
-          <div class="center">
-            <div class="title-inner">
+        <div class="title">
+            <div class="title-cnt">
               <a class="blue-link" href="@routes.Sys.index">sys</a> @hPathAfter
             </div>
-          </div>
         </div>
 
-        <div class="body">
+        <div class="body__cnt">
 
           @content
 

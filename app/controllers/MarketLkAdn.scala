@@ -49,6 +49,70 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
       } else {
         Future successful Nil
       }
+
+      // Делегированная модерация: собрать id узлов, которые делегировали adv-модерацию этому узлу
+      // Сами узлы отображать вроде бы [пока] не нужно.
+      val advDg2meIdsFut: Future[Seq[String]] = if (isMyNode) {
+        MAdnNode.findIdsAdvDelegatedTo(adnId)
+      } else {
+        Future successful Nil
+      }
+
+      val isRcvr = adnNode.adn.isReceiver
+
+      // Узнать, инфу по рекламодателям с учетом возможности делегированной к этому узлу модерации в качестве модератора.
+      val advsForMeFut: Future[(Long, Seq[MAdnNode])] = if (isMyNode) {
+        // Чтобы узнать список рекламодетелей, надо дождаться списка узлов, которые делегировали adv-работу этому узлу.
+        advDg2meIdsFut flatMap { dgAdnIds =>
+          var dgAdnIdsList = dgAdnIds.toList
+          // Дописать в начало ещё текущей узел, если он также является рекламо-получателем.
+          if (isRcvr)
+            dgAdnIdsList ::= adnId
+          // TODO Отрабатывать цепочное делегирование, когда узел делегирует дальше adv-права ещё какому-то узлу.
+          val adnIdsSet = dgAdnIdsList.toSet
+          // Собрать из sql-моделей инфу по размещениям.
+          val syncResult = DB.withConnection { implicit c =>
+            // 2014.06.26: Скрывать бесплатные размещения, помеченные как isPartner.
+            val okAdnIds = MAdvOk.findAllProducersForRcvrsPartner(adnIdsSet, isPartner = false)
+            // Если adv-полномочия делегированы другому узлу, то не надо использовать ещё не принятые реквесты
+            // для формирования списка текущих рекламодателей.
+            val reqAdnIds: List[String] = if (adnNode.adn.advDelegate.isEmpty) {
+              MAdvReq.findAllProducersForRcvrs(adnIdsSet)
+            } else {
+              Nil
+            }
+            val reqsCount = MAdvReq.countForRcvrs(adnIdsSet)
+            (okAdnIds, reqAdnIds, reqsCount)
+          }
+          val (okAdnIds, reqAdnIds, reqsCount) = syncResult
+          val advAdnIds = (okAdnIds ++ reqAdnIds).distinct
+          MAdnNodeCache.multiGet(advAdnIds)
+            .map { adns =>
+              // Отсортировать рекламодателей по алфавиту.
+              val adnsSorted = adns.sortBy(_.meta.name)
+              reqsCount -> adnsSorted
+            }
+        }
+      } else {
+        Future successful (0L, Nil)
+      }
+
+      // Рендерить ли кнопку "рекламодатели"? Да, если ресивер либо есть ноды, делегировавшие сюда модерацию
+      val showAdvsBtnFut: Future[Boolean] = {
+        // Если это собственный ресивер, НЕ делегировавший adv-права другому узлу, то отображать кнопку.
+        if (isMyNode && isRcvr && adnNode.adn.advDelegate.isEmpty) {
+          Future successful true
+        } else if (isMyNode) {
+          // Возможно, это узел, которому делегировали adv-права модерации иные узлы.
+          advDg2meIdsFut map { dgAdnIds =>
+            dgAdnIds.nonEmpty
+          }
+        } else {
+          // Скрывать кнопку "рекламодатели".
+          Future successful false
+        }
+      }
+
       // Нужно ли отображать кнопку назад? Да, если у юзера есть ещё узлы.
       val showBackBtnFut = if (isMyNode) {
         // TODO Надо бы кеширование тут.
@@ -57,6 +121,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
       } else {
         Future successful true
       }
+
       // Для узла нужно отобразить его рекламу.
       val madsFut: Future[Seq[MAd]] = if (isMyNode) {
         // Это свой узел. Нужно в реалтайме найти рекламные карточки и проверить newAdIdOpt.
@@ -99,53 +164,46 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
             Future successful Nil
         }
       }
-      // Нужно узнать, есть ли рекламодатели у указанного узла.
-      val (advReqsCount, advertisersFut): (Long, Future[Seq[MAdnNode]]) = if(isMyNode && adnNode.adn.isReceiver) {
-        val syncResult = DB.withConnection { implicit c =>
-          val okAdnIds = MAdvOk.findAllProducersForRcvr(adnId)
-          val reqAdnIds = MAdvReq.findAllProducersForRcvr(adnId)
-          val reqsCount = MAdvReq.countForRcvr(adnId)
-          (okAdnIds, reqAdnIds, reqsCount)
-        }
-        val (okAdnIds, reqAdnIds, reqsCount) = syncResult
-        val advAdnIds = (okAdnIds ++ reqAdnIds).distinct
-        (reqsCount, MAdnNode.multiGet(advAdnIds)) // TODO Opt надо задействовать кеш в multiget'e.
-      } else {
-        (0L, Future.successful(Nil))
-      }
+
+      // Карта размещений, чтобы определять размещена ли карточка где-либо или нет.
       val ad2advMap = {
-        val myAdnId = request.myNodeId
-        val busyAdvs = DB.withConnection { implicit c =>
-          val busyAdsOk = MAdvOk.findNotExpiredRelatedTo(myAdnId)
-          val busyAdsReq = MAdvReq.findNotExpiredRelatedTo(myAdnId)
-          Seq(busyAdsOk, busyAdsReq)
+        request.myNodeId.fold(Map.empty[String, MAdvI]) { myAdnId =>
+          val busyAdvs = DB.withConnection { implicit c =>
+            val busyAdsOk = MAdvOk.findNotExpiredRelatedTo(myAdnId)
+            val busyAdsReq = MAdvReq.findNotExpiredRelatedTo(myAdnId)
+            Seq(busyAdsOk, busyAdsReq)
+          }
+          advs2adIdMap(busyAdvs : _*)
         }
-        advs2adIdMap(busyAdvs : _*)
       }
+
       // Надо ли отображать кнопку "управление" под карточками? Да, если есть баланс и контракт.
       val canAdv: Boolean = isMyNode && adnNode.adn.isProducer && {
         DB.withConnection { implicit c =>
           MBillContract.hasActiveForNode(adnId)  &&  MBillBalance.hasForNode(adnId)
         }
       }
+
       // Дождаться всех фьючерсов и отрендерить результат.
       for {
-        mads        <- madsFut
-        slaves      <- slavesFut
-        advertisers <- advertisersFut
-        showBackBtn <- showBackBtnFut
+        mads            <- madsFut
+        slaves          <- slavesFut
+        (advReqsCount, advs) <- advsForMeFut
+        showAdvsBtn     <- showAdvsBtnFut
+        showBackBtn     <- showBackBtnFut
       } yield {
         Ok(adnNodeShowTpl(
           node          = adnNode,
           mads          = mads,
           slaves        = slaves,
           isMyNode      = isMyNode,
-          advertisers   = advertisers,
+          advertisers   = advs,
           povAdnIdOpt   = request.povAdnNodeOpt.flatMap(_.id),
           advReqsCount  = advReqsCount,
           canAdv        = canAdv,
           ad2advMap     = ad2advMap,
-          showBackBtn   = showBackBtn
+          showBackBtn   = showBackBtn,
+          showAdvsBtn   = showAdvsBtn
         ))
       }
     }
@@ -310,11 +368,13 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
   }
 
 
-
-  // Обработка инвайтов на управление ТЦ.
-  private val nodeOwnerInviteAcceptM = Form(
+  // Обработка инвайтов на управление узлом.
+  /** Маппинг формы принятия инвайта. Содержит галочку для договора и опциональный пароль. */
+  private val nodeOwnerInviteAcceptM = Form(tuple(
+    Market.MARKET_CONTRACT_AGREE_FN -> boolean
+      .verifying("error.contract.not.agreed", identity(_)),
     "password" -> optional(passwordWithConfirmM)
-  )
+  ))
 
   /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
   def nodeOwnerInviteAcceptForm(martId: String, eActId: String) = nodeOwnerInviteAcceptCommon(martId, eActId) { (eAct, mmart) => implicit request =>
@@ -331,7 +391,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
         debug(s"${logPrefix}Form bind failed: ${formatFormErrors(formWithErrors)}")
         NotAcceptable(invite.inviteAcceptFormTpl(mmart, eAct, formWithErrors, withOfferText = false))
       },
-      {passwordOpt =>
+      {case (contractAgreed, passwordOpt) =>
         if (passwordOpt.isEmpty && !request.isAuth) {
           debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=${request.isAuth}")
           val form1 = formBinded
@@ -374,7 +434,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
       bruteForceProtect flatMap { _ =>
         EmailActivation.getById(eaId) flatMap {
           case Some(eAct) if eAct.key == adnId =>
-            MAdnNodeCache.getByIdCached(adnId) flatMap {
+            MAdnNodeCache.getById(adnId) flatMap {
               case Some(mmart) =>
                 f(eAct, mmart)(request)
               case None =>

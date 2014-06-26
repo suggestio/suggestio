@@ -30,30 +30,36 @@
 
 
       @* Капча *@
-      <div class="ovh">
-        <div class="f-left" style="width: 180px;">
-          @inputText(
-          rf(CAPTCHA_TYPED_FN),
-          '_label -> Messages("Input.text.from.picture")
-          )
-        </div>
+      <table class="captcha-table">
+        <tr>
 
-        <div class="f-right" style="padding-top: 6px; height: 53px;">
-          @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
-            <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
-            <img id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
-            <a id="captchaReload" class="captcha-reload-btn" href=""></a>
-          }
-        </div>
-      </div>
+          <td class="captcha-table_left">
+            @inputText(
+            rf(CAPTCHA_TYPED_FN),
+            '_label -> Messages("Input.text.from.picture")
+            )
+          </td>
+
+          <td class="captcha-table_right">
+            @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+              <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
+              <div class="captcha">
+                <img class="captcha-table_image" id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
+                <a id="captchaReload" class="captcha-reload-btn" href=""></a>
+              </div>
+            }
+          </td>
+
+        </tr>
+      </table>
 
 
-      <div class="recover-popup__submit-wrap">
+      <div class="submit-w __size-L">
 
-        <div class="blue-btn-new js-submit-wrap">
-          <span class="btn"></span>
-          <input type="submit" value="Отправить"/>
-        </div>
+        <a class="siom-ac-btn __color-2 __size-M __ft-XM js-submit-btn">
+          Отправить
+        </a>
+
 
       </div>
 

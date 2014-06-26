@@ -1,4 +1,4 @@
-@(adProducer: MAdnNode, adRcvr: MAdnNode, mad: MAd, advReq: MAdvReq, refuseFormM: Form[_])(implicit ctx: Context)
+@(adProducer: MAdnNode, mad: MAd, advReq: MAdvReq, refuseFormM: Form[_], goBackTo: Option[String] = None)(implicit ctx: Context)
 
 @* Рендер окошка, отображающего предложение размещения рекламной карточки у узла. *@
 
@@ -11,12 +11,12 @@
 @_advWndFullTpl(mad, adProducer) {
 
   <p style="margin-top: 0;">
-    <strong>Запрос размещения рекламы от <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">@adProducer.meta.name</a></strong>
+    <strong>Запрос размещения рекламы от <a class="blue-link" href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">@adProducer.meta.name</a></strong>
     <br/>
 
     <span class="gray font-12">С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)</span><br/>
     @if( advReq.showLevels contains AdShowLevels.LVL_MEMBERS_CATALOG ) {
-      <span>+ Размещение в категориях товаров и услуг</span>
+      <span>+ Размещение в категориях товаров и услуг</span><br/>
     }
     @if( advReq.showLevels contains AdShowLevels.LVL_START_PAGE ) {
       <span>+ Размещение на главном экране</span>
@@ -25,51 +25,45 @@
   </p>
 
   <p class="gray font-12">
-    <!--Стоимость согласно <a href="routes.MarketLkBilling._renderNodeMbmdsWindow(adRcvr.id.get)">ставке тарифных планов</a>.
-    <br/>-->
-    <strong class="adv-req-wind_price">@formatPrice(advReq.amountMinusComission, advReq.currency)</strong>
+    <strong class="adv-req-wind_price">@formatPrice(advReq.amount, advReq.currency)</strong>
+    @advReq.comission.map { c =>
+      (комиссия @formatPercent(c))
+    }
   </p>
 
   @* Отменить размещение рекламы с указанием причины. *@
-  @form(routes.MarketAdv.advReqRefuseSubmit(advReq.id.get), 'id -> "advReqRefuse") {
+  @form(
+    routes.MarketAdv.advReqRefuseSubmit(advReq.id.get, r = goBackTo),
+    'id -> "advReqRefuse"
+  ) {
     @textarea(refuseFormM("reason"), '_label -> "", 'placeholder -> "Напишите причину отмены")
 
-    <div class="submit-wrap" style="margin: 25px 0;">
+    <div class="submit-w __size-S">
 
-      <div class="gray-btn f-left" id="advReqAcceptShow" style="margin-left: 175px;">
-        <div class="white-border-top">
-          <a class="btn">Отменить</a>
-        </div>
-      </div>
+      <a class="siom-ac-btn __color-4 __size-M __ft-XM f-left" id="advReqAcceptShow">
+        Отменить
+      </a>
 
-      <div class="red-btn f-left">
-        <div class="white-border-top">
-          <a class="btn"></a>
-          <input type="submit" value="Отправить отказ" />
-        </div>
-      </div>
+      <a class="siom-ac-btn __color-3 __size-M __ft-XM f-right js-submit-btn">
+        Отправить отказ
+      </a>
 
     </div>
 
   }
 
   @* Подтвердить размещение рекламы. *@
-  @form(routes.MarketAdv.advReqAcceptSubmit(advReq.id.get), 'id -> "advReqAccept") {
+  @form(
+    routes.MarketAdv.advReqAcceptSubmit(advReq.id.get, r = goBackTo),
+    'id -> "advReqAccept"
+  ) {
+    <div class="submit-w __size-S">
 
-    <div class="submit-wrap" style="margin: 25px 0;">
+      <a class="siom-ac-btn __color-4 __size-M __ft-XM f-left" id="advReqRefuseShow">
+        Отменить размещение
+      </a>
 
-      <div class="red-btn f-left" id="advReqRefuseShow" style="margin-left: 150px;">
-        <div class="white-border-top">
-          <a class="btn">Отменить размещение</a>
-        </div>
-      </div>
-
-      <div class="green-btn f-left">
-        <div class="white-border-top">
-          <a class="btn"></a>
-          <input type="submit" value="Разместить" />
-        </div>
-      </div>
+      <a class="siom-ac-btn __color-1 __size-M __ft-XM f-right js-submit-btn">Разместить</a>
 
     </div>
 

@@ -121,5 +121,7 @@ object FC {
 
   implicit val divFc = FieldConstructor(divFcTpl.f)
 
+  implicit val checkboxFc = FieldConstructor(checkboxFcTpl.f)
+
 }
 

@@ -71,7 +71,7 @@ abstract class EsModelCache[T1 <: EsModelMinimalT : ClassTag] extends SNStaticSu
    * @param id id исходного документа.
    * @return Тоже самое, что и исходный getById().
    */
-  def getByIdCached(id: String)(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
+  def getById(id: String)(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
     val ck = cacheKey(id)
     // Негативные результаты не кешируются.
     Cache.getAs[T1](ck) match {
@@ -87,7 +87,7 @@ abstract class EsModelCache[T1 <: EsModelMinimalT : ClassTag] extends SNStaticSu
    * @param ids Список id, которые надо получить.
    * @return Результаты в неопределённом порядке.
    */
-  def multigetByIdCached(ids: Traversable[String])(implicit ec: ExecutionContext, client: Client): Future[Seq[T1]] = {
+  def multiGet(ids: Traversable[String])(implicit ec: ExecutionContext, client: Client): Future[Seq[T1]] = {
     val (cached, nonCachedIds) = ids.foldLeft [(List[T1], List[String])] (Nil -> Nil) {
       case ((accCached, notCached), id) =>
         getByIdFromCache(id) match {
@@ -116,11 +116,11 @@ abstract class EsModelCache[T1 <: EsModelMinimalT : ClassTag] extends SNStaticSu
   /**
    * Если id задан, то прочитать из кеша или из хранилища. Иначе вернуть None.
    * @param idOpt Опциональный id.
-   * @return Тоже самое, что и [[getByIdCached]].
+   * @return Тоже самое, что и [[getById]].
    */
   def maybeGetByIdCached(idOpt: Option[String])(implicit ec: ExecutionContext, client: Client): Future[Option[T1]] = {
     idOpt match {
-      case Some(id) => getByIdCached(id)
+      case Some(id) => getById(id)
       case None     => Future successful None
     }
   }
@@ -173,7 +173,7 @@ abstract class AdnEsModelCache[T <: EMAdNetMember : ClassTag] extends EsModelCac
    * @param memberType тип участника рекламной сети.
    * @return Тоже самое, что и все остальные getById().
    */
-  def getByIdTypeCached(id: String, memberType: AdNetMemberType)
+  def getByIdType(id: String, memberType: AdNetMemberType)
                        (implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
     val ck = cacheKey(id)
     Cache.getAs[T](ck) match {

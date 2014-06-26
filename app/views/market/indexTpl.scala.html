@@ -4,60 +4,6 @@
 
 @marketBase("Добро пожаловать", lf){
 
-  <div class="header-wrap wave-pattern header-wrap_responsive-mode">
-
-    <div class="center header_responsive-mode">
-
-      @if(ctx.isAuth) {
-        @* Юзер залогинен. Нужно отобразить кнопку на его ЛК. *@
-        <a href="@routes.Ident.rdrUserSomewhere" class="simple-green-btn f-right login-page_enter_btn">
-          @ctx.usernameOpt.getOrElse(Messages("username.unknown"))
-        </a>
-      } else {
-        <a href="#emailPwLoginForm" class="simple-green-btn f-right login-page_enter_btn js-btn">Вход</a>
-      }
-
-    </div>
-
-  </div>
-
-  <div class="body-wrap wave-pattern body-wrap_responsive-mode">
-
-    <div class="body body_responsive-mode">
-
-      <div class="login-page_content">
-
-        <a href="@routes.MarketLk.lkIndex" class="login-page__logo"></a>
-
-        <a href="@routes.Market.aboutMarket" class="simple-green-btn simple-green-btn_logo-mode" style="margin-top: 30px;">
-          <span class="btn"></span>
-          Как это работает?
-        </a>
-
-
-        <a href="@routes.MarketJoin.joinAdvRequest" class="login-page__blue-btn">
-          <span class="btn"></span>
-          РАЗМЕСТИТЬ РЕКЛАМУ
-        </a>
-
-        <a href="@routes.MarketJoin.wifiJoinQuestionsForm()" class="login-page__green-btn">
-          <span class="btn"></span>
-          СТАТЬ УЧАСТНИКОМ СЕТИ
-        </a>
-
-        <div class="login-page__wifi_block">
-
-          <div class="wifi-icon"></div>
-          <p>
-            Новое рекламное пространство
-          </p>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
+  @_indexTpl()
 
 }

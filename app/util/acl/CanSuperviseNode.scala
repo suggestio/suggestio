@@ -33,7 +33,7 @@ object CanSuperviseNode {
 trait CanSuperviseNodeBase extends ActionBuilder[RequestForSlave] {
   def adnId: String
   override def invokeBlock[A](request: Request[A], block: (RequestForSlave[A]) => Future[Result]): Future[Result] = {
-    MAdnNodeCache.getByIdCached(adnId) flatMap {
+    MAdnNodeCache.getById(adnId) flatMap {
       case Some(mslave) if mslave.adn.supId.isDefined =>
         val pwOpt = PersonWrapper.getFromRequest(request)
         val supId = mslave.adn.supId.get
@@ -76,7 +76,7 @@ trait CanViewSlaveBase extends ActionBuilder[RequestForSlave] {
   def adnId: String
   override def invokeBlock[A](request: Request[A], block: (RequestForSlave[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
-    MAdnNodeCache.getByIdCached(adnId) flatMap {
+    MAdnNodeCache.getById(adnId) flatMap {
       case Some(mslave) if mslave.adn.supId.isDefined || PersonWrapper.isSuperuser(pwOpt) =>
         val supId = mslave.adn.supId.get
         val srmFut = SioReqMd.fromPwOptAdn(pwOpt, supId)
@@ -110,7 +110,7 @@ trait CanViewSlaveAdBase extends ActionBuilder[RequestForSlaveAd] {
       case Some(mad) =>
         val adnId = mad.producerId
         val pwOpt = PersonWrapper.getFromRequest(request)
-        MAdnNodeCache.getByIdCached(adnId) flatMap {
+        MAdnNodeCache.getById(adnId) flatMap {
           case Some(mslave) if mslave.adn.supId.isDefined || PersonWrapper.isSuperuser(pwOpt) =>
             val supId = mslave.adn.supId.get
             val srmFut = SioReqMd.fromPwOptAdn(pwOpt, supId)
@@ -152,7 +152,7 @@ trait CanSuperviseSlaveAdBase extends ActionBuilder[RequestForSlaveAd] {
     MAd.getById(adId) flatMap {
       case Some(mad) =>
         // TODO Наверное надо проверять права супервайзера этого узла над подчинённым узлов.
-        MAdnNodeCache.getByIdCached(mad.producerId) flatMap { slaveNodeOpt =>
+        MAdnNodeCache.getById(mad.producerId) flatMap { slaveNodeOpt =>
           val slaveNode = slaveNodeOpt.get
           val supNodeOptFut = slaveNode.adn.supId.fold
             { Future successful Option.empty[MAdnNode] }

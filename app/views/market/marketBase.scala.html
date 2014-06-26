@@ -11,6 +11,7 @@
   <title>@title | market | Suggest.io</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <meta name="viewport" content="width=device-width, user-scalable=no"/>
+  <meta name="format-detection" content="telephone=no">
 
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/colorpicker/css/colorpicker.css")'/>
 
@@ -48,7 +49,7 @@
 
           @ident._emailPwLoginFormTpl(
             lf = lf getOrElse controllers.Ident.emailPwLoginFormM,
-            submitCall = routes.MarketLk.emailPwLoginFormSubmit
+            submitCall = routes.MarketLk.emailPwLoginFormSubmit()
           )
 
         </div>

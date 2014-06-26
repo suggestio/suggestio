@@ -7,6 +7,7 @@ import util.acl._
 import views.html.market.showcase._
 import views.html.market.lk.adn._node._installScriptTpl
 import views.html.market.aboutTpl
+import views.html.market.aboutForAdMakersTpl
 import play.api.libs.json._
 import play.api.libs.Jsonp
 import models._
@@ -32,6 +33,7 @@ object Market extends SioController with PlayMacroLogsImpl {
   import LOGGER._
 
   val JSONP_CB_FUN = "siomart.receive_response"
+  val MARKET_CONTRACT_AGREE_FN = "contractAgreed"
 
   /** Максимальное кол-во магазинов, возвращаемых в списке ТЦ. */
   val MAX_SHOPS_LIST_LEN = configuration.getInt("market.frontend.subproducers.count.max") getOrElse 200
@@ -113,7 +115,7 @@ object Market extends SioController with PlayMacroLogsImpl {
   def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
     val isProducerAds = !adSearch.producerIds.isEmpty
     // TODO Использовать multiget + кеш.
-    val producersFut = Future.traverse(adSearch.producerIds) { MAdnNodeCache.getByIdCached }
+    val producersFut = Future.traverse(adSearch.producerIds) { MAdnNodeCache.getById }
       .map { _.flatMap(_.toList) }
     val (jsAction, adSearch2) = if (adSearch.qOpt.isDefined) {
       "searchAds" -> adSearch
@@ -224,11 +226,15 @@ object Market extends SioController with PlayMacroLogsImpl {
   }
 
 
-  /** Статическая страничка, описывающая суть sio market. */
+  /** Статическая страничка, описывающая суть sio market для владельцев WiFi. */
   def aboutMarket = MaybeAuth { implicit request =>
     Ok(aboutTpl())
   }
 
+  /** Статическая страничка, описывающая суть sio market для рекламодателей. */
+  def aboutForAdMakers = MaybeAuth { implicit request =>
+    Ok(aboutForAdMakersTpl())
+  }
 
   // Внутренние хелперы
 

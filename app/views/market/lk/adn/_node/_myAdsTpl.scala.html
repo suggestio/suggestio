@@ -2,6 +2,7 @@
 
 @* Список рекламных карточек для создателя рекламы. В нём галочки есть. *@
 @import market.lk.ad._
+@import ctx._
 
 @* Флаг single переименовывает единственную галочку "Выводить". *@
 @defining(node.adn.showLevelsInfo.out4render) { outLvlMap =>
@@ -23,16 +24,23 @@
       @_adsListTpl(mads, coverDisableReason = true) { mad =>
 
         <div class="js-equal-height">
-        @ad2advMap.get(mad.id.get) match {
-          case Some(advReq: MAdvReq) => {
-            <a class="ads-list-block__link ads-list-block__link_inactive js-btn" href="@routes.MarketAdv.advFullWnd(mad.id.get)">Находится<br/>на рассмотрении<br/>администратора</a>
-          }
-          case Some(advOk : MAdvOk) => {
-            <a class="ads-list-block__link ads-list-block__link_inactive js-btn" href="@routes.MarketAdv.advFullWnd(mad.id.get)">Находится<br/>в размещении</a>
-          }
-          case _ => {
-            <a class="ads-list-block__link" href="@routes.MarketAd.editAd(mad.id.get)">Нажмите для<br/>редактирования</a>
-          }
+        @ad2advMap.get(mad.id.get).fold {
+          <a class="ads-list-block__link" href="@routes.MarketAd.editAd(mad.id.get)">Нажмите для<br/>редактирования</a>
+        } { adv =>
+          <a class="ads-list-block__link ads-list-block__link_inactive js-btn" href="@routes.MarketAdv.advFullWnd(mad.id.get, advId = adv.id.toOption, r = Some(request.path))">
+            @adv match {
+              case advReq: MAdvReq => {
+                Находится<br/>на рассмотрении<br/>администратора
+              }
+              case advOk: MAdvOk => {
+                Находится<br/>в размещении
+              }
+              case advRefused: MAdvRefuse => {
+                @* Этот код по идее никогда не должен выполняться: *@
+                Отказано<br/>в размещении
+              }
+            }
+          </a>
         }
 
         @* Галочки для управления отображением рекламной карточки магазина.
@@ -60,7 +68,9 @@
         }
         </div><!-- .js-equal-height end -->
           @if(canAdv) {
-              <a class="sm-large-button" href="@routes.MarketAdv.advForAd(mad.id.get)"><span>УПРАВЛЕНИЕ</span></a>
+              <a class="siom-ac-btn __ft-XM __size-XL __color-2" href="@routes.MarketAdv.advForAd(mad.id.get)">
+                Управление
+              </a>
           }
 
 
