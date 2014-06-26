@@ -25,6 +25,7 @@ transform(v)
   clear: both
 
 screen1024 = 'screen and (max-width: 1024px)'
+screen768 = 'screen and (max-width: 768px)'
 lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
 
 .colorpicker
@@ -1641,9 +1642,6 @@ li
   font-size: 14px
   color: #959595
 
-.recover-popup__content
-  height: 270px
-
 .recover-popup__submit-wrap
   margin-top: 50px
   text-align: center
@@ -1923,8 +1921,59 @@ li
   .login-page__join-wifi
     padding-right: 50px
 
-  .body_responsive-mode
-    padding-top: 90px !important
+  .copyright-block
+    padding-left: 10px !important
+
+@media screen768
+
+  .popup
+    width: 100% !important
+    margin-left: 0 !important
+    left: 0 !important
+
+    .content
+      padding: 20px 10px !important
+
+  .title-wrap
+    height: auto !important
+
+    .center
+      padding: 15px 0 10px !important
+
+  .wifi-page__left-column
+    width: 100%
+
+  .quiz__checkbox-wrap
+    padding: 10px
+
+  .wifi-page__right-column
+    margin-left: 0
+    margin-bottom: 25px
+    width: 100%
+
+  .input-wrap
+
+    tr
+      display: block
+
+    .left
+      display: block
+      overflow: hidden
+      width: 100% !important
+
+    .right
+      display: block
+
+  .captcha-table
+
+    tr
+      display: block
+
+    .captcha-table_left
+      display: block
+      width: 100%
+
+
 
 /********************************************************************************************************************/
 /* refactoring to MCSS */
