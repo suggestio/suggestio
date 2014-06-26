@@ -17,15 +17,12 @@ import util.SiowebEsUtil.client
 import util.Context
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.current
-import io.suggest.ym.ad.ShowLevelsUtil
 import scala.concurrent.Future
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import play.api.mvc.AnyContent
 import play.api.templates.HtmlFormat
 import play.api.i18n.Messages
-
-import scala.util.Success
 
 /**
  * Suggest.io

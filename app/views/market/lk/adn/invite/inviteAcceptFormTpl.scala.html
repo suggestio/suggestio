@@ -40,30 +40,29 @@
       <div class="success-label__title">Вы приглашены к участию в сиетеме Sio.Market</div>
     </div>
 
-    @* Рендер текста открытой оферты. *@
-    @if(withOfferText) {
-      @market.contract._inviteWidgetTpl(iaf)
-    }
-
-    @table_fieldset(Messages("amt.of.type." + adnNode.adn.memberType) + ":", "disabled"){
-      <input id="adnNodeName" type="text" disabled value="@adnNode.meta.name"/>
-    }
-
-    @table_fieldset("E-mail:", "disabled"){
-      <input id="adnNodeEmail" type="text" disabled value="@eAct.email"/>
-    }
-
     @form(routes.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnNode.id.get, eAct.id.get)) {
+      @* Рендер текста открытой оферты. *@
+      @if(withOfferText) {
+        @market.contract._inviteWidgetTpl(iaf)
+      }
+
+      @table_fieldset(Messages("amt.of.type." + adnNode.adn.memberType) + ":", "disabled"){
+        <input id="adnNodeName" type="text" disabled value="@adnNode.meta.name"/>
+      }
+
+      @table_fieldset("E-mail:", "disabled"){
+        <input id="adnNodeEmail" type="text" disabled value="@eAct.email"/>
+      }
 
       @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
       @if(!ctx.isAuth) {
 
         @table_fieldset("Пароль:", ""){
-          <input type="text" name="password.pw1"/>
+          <input type="password" name="password.pw1"/>
         }
 
         @table_fieldset("Подтвердите пароль:", ""){
-          <input type="text" name="password.pw2"/>
+          <input type="password" name="password.pw2"/>
 
         }
           @* TODO Нужна ссылка с формой для логина в систему, если юзер уже зареган, но ещё не залогинен. *@
@@ -76,11 +75,9 @@
           <div class="submit-w __size-L __invite-form">
             <a class="siom-ac-btn __color-2 __size-M __ft-XM f-left js-submit-btn">@Messages("Продолжить")</a>
           </div>
-
-
+      }
 
   </div>
 
-  }
 }
 
