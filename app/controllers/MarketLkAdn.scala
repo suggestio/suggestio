@@ -72,7 +72,8 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
           val adnIdsSet = dgAdnIdsList.toSet
           // Собрать из sql-моделей инфу по размещениям.
           val syncResult = DB.withConnection { implicit c =>
-            val okAdnIds = MAdvOk.findAllProducersForRcvrs(adnIdsSet)
+            // 2014.06.26: Скрывать бесплатные размещения, помеченные как isPartner.
+            val okAdnIds = MAdvOk.findAllProducersForRcvrsPartner(adnIdsSet, isPartner = false)
             // Если adv-полномочия делегированы другому узлу, то не надо использовать ещё не принятые реквесты
             // для формирования списка текущих рекламодателей.
             val reqAdnIds: List[String] = if (adnNode.adn.advDelegate.isEmpty) {
@@ -86,7 +87,11 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
           val (okAdnIds, reqAdnIds, reqsCount) = syncResult
           val advAdnIds = (okAdnIds ++ reqAdnIds).distinct
           MAdnNodeCache.multiGet(advAdnIds)
-            .map { adns => reqsCount -> adns }
+            .map { adns =>
+              // Отсортировать рекламодателей по алфавиту.
+              val adnsSorted = adns.sortBy(_.meta.name)
+              reqsCount -> adnsSorted
+            }
         }
       } else {
         Future successful (0L, Nil)
