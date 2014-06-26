@@ -108,3 +108,16 @@ routesImport ++= Seq(
   "util.qsb._",
   "util.qsb.QSBs._"
 )
+
+
+// Stylus
+includeFilter in (Assets, StylusKeys.stylus) := "*.styl"
+
+//excludeFilter in (Assets, StylusKeys.stylus) := "fonts.styl"
+
+//StylusKeys.compress in Assets := true
+
+
+// sbt-web
+pipelineStages := Seq(uglify, gzip)
+
