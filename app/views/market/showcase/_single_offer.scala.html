@@ -1,8 +1,8 @@
-@(mad: MAdT, isHidden: Boolean = false, isWithAction : Boolean = false)(implicit ctx: util.Context)
+@(mad: MAdT, isWithAction : Boolean = false)(implicit ctx: util.Context)
 
 @import util.TplDataFormatUtil._
 @import AdNetMemberTypes.MART
 
-<div @if( isWithAction && mad.blockMeta.blockId != 26 ){ class="js-shop-link" data-producer-id="@mad.producerId" data-ad-id="@mad.id" } @if( isHidden == true){}>
+<div @if( isWithAction && mad.blockMeta.blockId != 26 ){ class="js-shop-link" data-producer-id="@mad.producerId" data-ad-id="@mad.id" } >
   @BlocksConf(mad.blockMeta.blockId).renderBlock(mad, isStandalone = false)
 </div>

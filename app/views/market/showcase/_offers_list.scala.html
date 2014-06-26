@@ -1,19 +1,17 @@
 @(ads: Seq[MAdT], isNav: Boolean = false, isIndex : Boolean = false)(implicit ctx: util.Context)
-@if(ads.isEmpty) {
-  @* рекламы в ТЦ нет *@
-} else {
+
+@if(ads.nonEmpty) {
 
   @ads.map { mad =>
     @if( isNav ){
       <a class="sm-offer-control @if( (mad eq ads.head) ){active}" href=""><span></span></a>
     } else {
-      @defining( !(mad eq ads.head) ) { isHidden =>
-        @if( isIndex ){
-          @_single_index_offer(mad, isHidden = isHidden)
-        } else {
-          @_single_offer(mad, isHidden = isHidden)
-        }
+      @if( isIndex ){
+        @_single_index_offer(mad)
+      } else {
+        @_single_offer(mad)
       }
     }
   }
+
 }

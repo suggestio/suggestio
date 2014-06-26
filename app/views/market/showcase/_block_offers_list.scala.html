@@ -1,10 +1,9 @@
-@(ads: Seq[MAdT], isIndex:Boolean=false)(implicit ctx: util.Context)
+@(ads: Seq[MAdT], isIndex: Boolean = false)(implicit ctx: util.Context)
 
 @if(!ads.isEmpty) {
   @ads.map { mad =>
     @_single_offer(
       mad = mad,
-      isHidden = !isIndex && (mad != ads.head),
       isWithAction = isIndex
     )
   }
