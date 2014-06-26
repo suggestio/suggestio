@@ -335,7 +335,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   private val personIdsM: Mapping[Set[String]] = {
     text(maxLength = 1024)
       .transform[Set[String]](
-        {s => s.trim.split("\\s*[,;]\\s*").toSet },
+        {s => s.trim.split("\\s*[,;]\\s*").filter(!_.isEmpty).toSet },
         { _.mkString(", ") }
       )
   }

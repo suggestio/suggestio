@@ -170,8 +170,8 @@ case class RequestForAdnNode[A](adnNode: MAdnNode, povAdnNodeOpt: Option[MAdnNod
                                 request: Request[A], pwOpt: PwOpt_t, sioReqMd: SioReqMd)
   extends AbstractRequestForAdnNode(request) {
 
-  def myNode: MAdnNode = if (isMyNode) adnNode else povAdnNodeOpt.get
-  def myNodeId: String = myNode.id.get
+  def myNode: Option[MAdnNode] = if (isMyNode) Some(adnNode) else povAdnNodeOpt
+  def myNodeId: Option[String] = myNode.flatMap(_.id)
 }
 
 

@@ -162,13 +162,14 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
 
       // Карта размещений, чтобы определять размещена ли карточка где-либо или нет.
       val ad2advMap = {
-        val myAdnId = request.myNodeId
-        val busyAdvs = DB.withConnection { implicit c =>
-          val busyAdsOk = MAdvOk.findNotExpiredRelatedTo(myAdnId)
-          val busyAdsReq = MAdvReq.findNotExpiredRelatedTo(myAdnId)
-          Seq(busyAdsOk, busyAdsReq)
+        request.myNodeId.fold(Map.empty[String, MAdvI]) { myAdnId =>
+          val busyAdvs = DB.withConnection { implicit c =>
+            val busyAdsOk = MAdvOk.findNotExpiredRelatedTo(myAdnId)
+            val busyAdsReq = MAdvReq.findNotExpiredRelatedTo(myAdnId)
+            Seq(busyAdsOk, busyAdsReq)
+          }
+          advs2adIdMap(busyAdvs : _*)
         }
-        advs2adIdMap(busyAdvs : _*)
       }
 
       // Надо ли отображать кнопку "управление" под карточками? Да, если есть баланс и контракт.
