@@ -538,6 +538,9 @@ trait ValT extends ISaveImgs with Mapping[BlockMapperResult] {
 
   def isShown = true
 
+  /** Флаг того, что на блок не стоит навешивать скрипты, отрабатывающие клик по нему. */
+  def hrefBlock = false
+
   /** Шаблон для рендера. */
   def template: Template3[MAdT, Boolean, Context, HtmlFormat.Appendable]
 

@@ -16,7 +16,7 @@
 
     <span class="gray font-12">С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)</span><br/>
     @if( advReq.showLevels contains AdShowLevels.LVL_MEMBERS_CATALOG ) {
-      <span>+ Размещение в категориях товаров и услуг</span>
+      <span>+ Размещение в категориях товаров и услуг</span><br/>
     }
     @if( advReq.showLevels contains AdShowLevels.LVL_START_PAGE ) {
       <span>+ Размещение на главном экране</span>
@@ -25,7 +25,10 @@
   </p>
 
   <p class="gray font-12">
-    <strong class="adv-req-wind_price">@formatPrice(advReq.amountMinusComission, advReq.currency)</strong>
+    <strong class="adv-req-wind_price">@formatPrice(advReq.amount, advReq.currency)</strong>
+    @advReq.comission.map { c =>
+      (комиссия @formatPercent(c))
+    }
   </p>
 
   @* Отменить размещение рекламы с указанием причины. *@

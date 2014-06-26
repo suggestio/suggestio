@@ -37,6 +37,8 @@ import Href._
 trait Href extends ValT {
   def hrefBf = BF_HREF_DFLT
 
+  override def hrefBlock = true
+
   abstract override def blockFieldsRev = hrefBf :: super.blockFieldsRev
 
   private def m = hrefBf.getOptionalStrictMapping.withPrefix(hrefBf.name).withPrefix(key)

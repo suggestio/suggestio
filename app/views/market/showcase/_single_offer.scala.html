@@ -2,7 +2,8 @@
 
 @import util.TplDataFormatUtil._
 @import AdNetMemberTypes.MART
+@import util.blocks._
 
-<div @if( isWithAction && mad.blockMeta.blockId != 26 ){ class="js-shop-link" data-producer-id="@mad.producerId" data-ad-id="@mad.id" } >
+<div @if( isWithAction && !BlocksConf(mad.blockMeta.blockId).hrefBlock ){ class="js-shop-link" data-producer-id="@mad.producerId" data-ad-id="@mad.id" } >
   @BlocksConf(mad.blockMeta.blockId).renderBlock(mad, isStandalone = false)
 </div>
