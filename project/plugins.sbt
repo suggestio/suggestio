@@ -25,7 +25,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-mocha" % "1.0.0")
 
 
 // Use the Play sbt plugin for Play projects
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.3.0")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.3.1")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.0.0")
 
