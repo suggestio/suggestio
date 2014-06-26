@@ -121,7 +121,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
   /** Общий для экшенов код подготовки данных и рендера страницы advFormTpl, которая содержит форму размещения. */
   private def renderAdvFormFor(adId: String, form: AdvFormM_t)(implicit request: RequestWithAd[AnyContent]): Future[HtmlFormat.Appendable] = {
     // Запуск асинхронных операций: подготовка списка узлов, на которые можно вообще возможно опубликовать карточку.
-    val rcvrsFut = collectReceivers(request.producerId)
+    val rcvrsFut = collectReceivers(request.producer)
     renderAdvFormForRcvrs(adId, form, rcvrsFut)
   }
 
@@ -212,7 +212,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         NotAcceptable("Cannot bind form.")
       },
       {adves =>
-        val allRcvrIdsFut = MAdnNode.findIdsByAllAdnRights(Seq(AdnRights.RECEIVER))
+        val allRcvrIdsFut = MAdnNode.findIdsByAllAdnRights(Seq(AdnRights.RECEIVER), withoutTestNodes = !request.producer.adn.testNode)
           .map { _.filter(_ != request.producerId).toSet }
         val adves1 = filterEntiesByBusyRcvrs(adId, adves)
         allRcvrIdsFut.map { allRcvrIds =>
@@ -290,7 +290,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
         trace(logPrefix + "adves entries submitted: " + adves)
         // Перед сохранением надо проверить возможности публикации на каждый узел.
         // Получаем в фоне все возможные узлы-ресиверы.
-        val allRcvrsFut = collectReceivers(request.producerId)
+        val allRcvrsFut = collectReceivers(request.producer)
         val advs1 = filterEntiesByBusyRcvrs(adId, adves)
         allRcvrsFut flatMap { allRcvrs =>
           val allRcvrIds = allRcvrs.map(_.id.get).toSet
@@ -328,8 +328,9 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
 
 
   /** Собрать все узлы сети, пригодные для размещения рекламной карточки. */
-  private def collectReceivers(dropRcvrId: String) = {
-    MAdnNode.findByAllAdnRights(Seq(AdnRights.RECEIVER))
+  private def collectReceivers(myNode: MAdnNode) = {
+    val dropRcvrId = myNode.id.get
+    MAdnNode.findByAllAdnRights(Seq(AdnRights.RECEIVER), withoutTestNodes = !myNode.adn.testNode)
       // Самому себе через "управление размещением" публиковать нельзя.
       .map { _.filter(_.id.get != dropRcvrId) }
   }

@@ -274,20 +274,22 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     "rights"        -> adnRightsM,
     "sls"           -> adnSlInfoM,
     "supId"         -> optional(esIdM),
-    "advDelegate"   -> optional(esIdM)
+    "advDelegate"   -> optional(esIdM),
+    "testNode"      -> boolean
   )
-  {(mt, isEnabled, rights, sls, supId, advDgOpt) =>
+  {(mt, isEnabled, rights, sls, supId, advDgOpt, isTestNode) =>
     mt.getAdnInfoDflt.copy(
       isEnabled = isEnabled,
       rights    = rights,
       showLevelsInfo = sls,
       supId     = supId,
-      advDelegate = advDgOpt
+      advDelegate = advDgOpt,
+      testNode  = isTestNode
     )
   }
   {anmi =>
     import anmi._
-    Some((memberType, isEnabled, rights, showLevelsInfo, supId, advDelegate))
+    Some((memberType, isEnabled, rights, showLevelsInfo, supId, advDelegate, testNode))
   }
 
 
@@ -447,27 +449,35 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
           { supId => MAdnNodeCache.getById(supId).map(_.isDefined) }
         supExistsFut flatMap {
           case true =>
-            adnNode.companyId = adnNode2.companyId
-            adnNode.personIds = adnNode2.personIds
-            adnNode.meta.name = adnNode2.meta.name
-            adnNode.meta.description = adnNode2.meta.description
-            adnNode.meta.town = adnNode2.meta.town
-            adnNode.meta.address = adnNode2.meta.address
-            adnNode.meta.phone = adnNode2.meta.phone
-            adnNode.meta.floor = adnNode2.meta.floor
-            adnNode.meta.section = adnNode2.meta.section
-            adnNode.meta.siteUrl = adnNode2.meta.siteUrl
-            adnNode.meta.color = adnNode2.meta.color
-            adnNode.adn.memberType = adnNode2.adn.memberType
-            adnNode.adn.rights = adnNode2.adn.rights
-            adnNode.adn.isEnabled = adnNode2.adn.isEnabled
-            adnNode.adn.showLevelsInfo = adnNode2.adn.showLevelsInfo
-            adnNode.adn.supId = adnNode2.adn.supId
-            adnNode.adn.advDelegate = adnNode2.adn.advDelegate
-            adnNode.conf = adnNode.conf.copy(
-              withBlocks = adnNode2.conf.withBlocks
+            // Собираем новый объект MAdnNode, считая его не изменяемым. Так и будет в будущем.
+            val adnNode3 = adnNode.copy(
+              companyId = adnNode2.companyId,
+              personIds = adnNode2.personIds,
+              meta = adnNode.meta.copy(
+                name    = adnNode2.meta.name,
+                description = adnNode2.meta.description,
+                town    = adnNode2.meta.town,
+                address = adnNode2.meta.address,
+                phone   = adnNode2.meta.phone,
+                floor   = adnNode2.meta.floor,
+                section = adnNode2.meta.section,
+                siteUrl = adnNode2.meta.siteUrl,
+                color   = adnNode2.meta.color
+              ),
+              adn = adnNode.adn.copy(
+                memberType  = adnNode2.adn.memberType,
+                rights      = adnNode2.adn.rights,
+                isEnabled   = adnNode2.adn.isEnabled,
+                showLevelsInfo = adnNode2.adn.showLevelsInfo,
+                supId       = adnNode2.adn.supId,
+                advDelegate = adnNode2.adn.advDelegate,
+                testNode    = adnNode2.adn.testNode
+              ),
+              conf = adnNode.conf.copy(
+                withBlocks = adnNode2.conf.withBlocks
+              )
             )
-            adnNode.save.map { _ =>
+            adnNode3.save.map { _ =>
               Redirect(routes.SysMarket.showAdnNode(adnId))
                 .flashing("success" -> "Изменения сохранены")
             }

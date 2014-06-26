@@ -56,6 +56,8 @@
   @inputText(af("adn.sls.in"),  '_label -> "Входящие уровни отображения и лимиты")
   @inputText(af("adn.sls.out"), '_label -> "Исходящие уровни отображения и лимиты")
 
+  @checkbox(af("adn.testNode"), '_label -> "Тестовый узел?")
+
   <p>Формат: 'd = 1, m = 20, h = 5'.<br/>
   @AdShowLevels.values.map { sl =>
     @sl.name -- @Messages("lk.sl." + sl.name),
