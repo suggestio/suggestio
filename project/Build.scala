@@ -3,6 +3,7 @@ import Keys._
 import play.Play.autoImport._
 import PlayKeys._
 import play.twirl.sbt.Import._
+import play.twirl.sbt._
 //import play.twirl.sbt.SbtTwirl
 import com.typesafe.sbt.web._
 import java.io.{PrintWriter, File}
@@ -12,7 +13,8 @@ object SiobixBuild extends Build {
   val org = "io.suggest"
 
   val commonSettings = Project.defaultSettings ++ Seq(
-    organization := org
+    organization := org,
+    scalaVersion := "2.10.4"
   )
 
 
@@ -39,10 +41,17 @@ object SiobixBuild extends Build {
     settings = commonSettings
   )
 
+  lazy val utilPlay = Project(
+    id = "util-play",
+    base = file("util-play"),
+    dependencies = Seq(util),
+    settings = commonSettings
+  )
+
   lazy val web21 = Project(
     id = "web21",
     base = file("web21"),
-    dependencies = Seq(util),
+    dependencies = Seq(util, utilPlay),
     settings = commonSettings
   )
   .enablePlugins(play.PlayScala, SbtWeb)
@@ -52,7 +61,7 @@ object SiobixBuild extends Build {
     base = file("."),
     settings = commonSettings
   )
-  .aggregate(util, cascadingEs2, siobix)
+  .aggregate(util, cascadingEs2, siobix, web21)
 
   // TODO Добавить сюда util-play?
 }
