@@ -130,7 +130,7 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
   }
 
   def findNotExpiredRelatedTo(adnId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
-    findBy(" WHERE prod_adn_id = {adnId} OR rcvr_adn_id = {adnId} AND date_end >= now()", policy, 'adnId -> adnId)
+    findBy(" WHERE (prod_adn_id = {adnId} OR rcvr_adn_id = {adnId}) AND date_end >= now()", policy, 'adnId -> adnId)
   }
 
   /**
@@ -178,6 +178,23 @@ trait MAdvStatic[T] extends SqlModelStatic[T] {
 
   def findByAdIdAndRcvrs(adId: String, rcvrIds: Traversable[String], policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
     findBy(" WHERE ad_id = {adId} AND rcvr_adn_id = ANY({rcvrIds})", policy, 'rcvrIds -> strings2pgArray(rcvrIds), 'ad_id -> adId)
+  }
+
+  /** Найти все ряды, поля adId и rcvrAdnId которых одновременно лежат в указанных множествах. */
+  def findByAdIdsAndRcvrs(adIds: Traversable[String], rcvrIds: Traversable[String],
+                          policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(
+      " WHERE ad_id = ANY({adIds}) AND rcvr_adn_id = ANY({rcvrIds})", policy,
+      'adIds -> strings2pgArray(adIds), 'rcvrIds -> strings2pgArray(rcvrIds)
+    )
+  }
+
+  def findByAdIdsAndProducers(adIds: Traversable[String], prodIds: Traversable[String], isOnline: Boolean,
+                              policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(
+      " WHERE ad_id = ANY({adIds}) AND prod_adn_id = ANY({prodIds}) AND online = {isOnline}", policy,
+      'adIds -> strings2pgArray(adIds), 'prodIds -> strings2pgArray(prodIds), 'isOnline -> isOnline
+    )
   }
 
   /** Найти все ряда, содержащие указанного получателя в соотв. колонке.

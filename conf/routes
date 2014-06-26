@@ -224,7 +224,8 @@ GET  /sys/market/adns                   controllers.SysMarket.adnNodesList(anmt:
 GET  /sys/market/create/adn             controllers.SysMarket.createAdnNode(supId: Option[String] ?= None)
 POST /sys/market/create/adn             controllers.SysMarket.createAdnNodeSubmit(supId: Option[String] ?= None)
 POST /sys/market/adn/:adnId/delete      controllers.SysMarket.deleteAdnNodeSubmit(adnId)
-GET  /sys/market/adn/:adnId/ads         controllers.SysMarket.showAdnNodeAds(adnId)
+GET  /sys/market/ads                    controllers.SysMarket.showAdnNodeAds(a: AdSearch)
+POST /sys/market/ad/:adId/rm/rcvr/:rcvrId controllers.SysMarket.removeAdRcvr(adId, rcvrId, r: Option[String] ?= None)
 GET  /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNode(adnId)
 POST /sys/market/adn/:adnId/edit        controllers.SysMarket.editAdnNodeSubmit(adnId)
 # sys.market.mart

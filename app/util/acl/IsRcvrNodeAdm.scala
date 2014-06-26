@@ -156,7 +156,8 @@ trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] {
             producerOptFut flatMap {
               case Some(producer) =>
                 // Strict-проверка прав на продьюсер, чтобы не терять логику работы в случае ресивера при суперюзера.
-                val isProducerAdmin = if (povAdnId exists {
+                // var - на случай отложенного признания producer-админа в текущем суперюзере
+                var isProducerAdmin: Boolean = if (povAdnId exists {
                   _ != mad.producerId
                 }) {
                   // В povAdnId задан не producer, поэтому подразумеваем, что юзер не является админом продьюсером, даже если он админ.
@@ -164,6 +165,7 @@ trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] {
                 } else {
                   IsAdnNodeAdmin.isAdnNodeAdminCheckStrict(producer, pwOpt)
                 }
+                lazy val isSuperuser = PersonWrapper isSuperuser pwOpt
                 val rcvrInfoFut: Future[Option[PovRcvrInfo]] = if (isProducerAdmin) {
                   // Юзер выступает в роли автора рекламной карточки.
                   trace(s"User[${pw.personId}] is admin of producer node[${mad.producerId}].")
@@ -174,9 +176,10 @@ trait AdvWndAccessBase extends ActionBuilder[AdvWndRequest] {
                 } else if (rcvrIdOpt.isDefined) {
                   // Есть id ресивера, и в фоне уже идёт запрос данных по ресиверу. Цепляемся за него.
                   maybeRcvrAdmin(rcvrOptFut, pwOpt)
-                } else if (PersonWrapper.isSuperuser(pwOpt)) {
+                } else if (isSuperuser) {
                   // Это суперюзер, и ресиверов не видать. Предполагаем, что у нас тут продьюсер.
                   trace(s"User[${pw.personId}] is superuser, and no rcvr is found. Guessing as producer admin.")
+                  isProducerAdmin = true
                   maybeRcvr2arInfo(rcvrOptFut, pwOpt)
                 } else {
                   // Больше идей нет.

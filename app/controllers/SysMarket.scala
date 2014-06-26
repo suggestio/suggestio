@@ -1,8 +1,11 @@
 package controllers
 
 import io.suggest.util.MacroLogsImpl
+import org.joda.time.DateTime
+import play.api.db.DB
 import util.acl.{AbstractRequestForAdnNode, AbstractRequestWithPwOpt, IsSuperuserAdnNode, IsSuperuser}
 import models._
+import util.qsb.AdSearch
 import views.html.sys1.market._
 import views.html.market.lk
 import play.api.data._, Forms._
@@ -21,6 +24,8 @@ import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import play.api.mvc.AnyContent
 import play.api.templates.HtmlFormat
 import play.api.i18n.Messages
+
+import scala.util.Success
 
 /**
  * Suggest.io
@@ -673,16 +678,82 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
 
   /** Отобразить технический список рекламных карточек узла. */
-  def showAdnNodeAds(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
-    val madsFut = MAd.findForProducer(adnId)
-    val adFreqsFut = MAdStat.findAdByActionFreqs(adnId)
+  def showAdnNodeAds(a: AdSearch) = IsSuperuser.async { implicit request =>
+    val madsFut = MAd.searchAds(a)
+    val adnNodeIdOpt = a.producerIds.headOption
+    val adFreqsFut = adnNodeIdOpt
+      .fold [Future[MAdStat.AdFreqs_t]] (Future successful Map.empty) { MAdStat.findAdByActionFreqs }
+    val adnNodeOptFut: Future[Option[MAdnNode]] = {
+      adnNodeIdOpt.fold (Future successful Option.empty[MAdnNode]) { MAdnNodeCache.getById }
+    }
+    val rcvrsFut = Future
+      .traverse(a.receiverIds) { MAdnNodeCache.getById }
+      .map { _.flatten }
+    val ad2advMapFut = madsFut map { mads =>
+      lazy val adIds = mads.flatMap(_.id)
+      val advsOk = if (a.receiverIds.nonEmpty) {
+        // Ищем все размещения имеющихся карточек у запрошенных ресиверов.
+        DB.withConnection { implicit c =>
+          MAdvOk.findByAdIdsAndRcvrs(adIds, rcvrIds = a.receiverIds)
+        }
+      } else if (a.producerIds.nonEmpty) {
+        // Ищем размещения карточек для продьюсера.
+        DB.withConnection { implicit c =>
+          MAdvOk.findByAdIdsAndProducers(adIds, prodIds = a.producerIds, isOnline = true)
+        }
+      } else {
+        Nil
+      }
+      advsOk.groupBy(_.adId)
+    }
     for {
-      adFreqs  <- adFreqsFut
-      mads     <- madsFut
+      adFreqs       <- adFreqsFut
+      mads          <- madsFut
+      adnNodeOpt    <- adnNodeOptFut
+      rcvrs         <- rcvrsFut
+      ad2advMap     <- ad2advMapFut
     } yield {
-      Ok(showAdnNodeAdsTpl(mads, request.adnNode, adFreqs))
+      Ok(showAdnNodeAdsTpl(mads, adnNodeOpt, adFreqs, rcvrs, a, ad2advMap))
     }
   }
+
+  /** Убрать указанную рекламную карточку из выдачи указанного ресивера. */
+  def removeAdRcvr(adId: String, rcvrId: String, r: Option[String]) = IsSuperuser.async { implicit request =>
+    lazy val logPrefix = s"removeAdRcvr(ad[$adId], rcvr[$rcvrId]): "
+    // Надо убрать указанного ресиверов из списка ресиверов
+    val isOkFut = MAd.getById(adId) flatMap {
+      case Some(mad) =>
+        mad.copy(
+          receivers = mad.receivers.filterKeys(_ != rcvrId)
+        ) .save
+          .map { _ => true }
+      case None =>
+        warn(logPrefix + "MAd not found: " + adId)
+        Future successful false
+    }
+    // Надо убрать карточку из текущего размещения на узле, если есть.
+    DB.withTransaction { implicit c =>
+      MAdvOk.findOnlineFor(adId, rcvrId = rcvrId, isOnline = true, policy = SelectPolicies.UPDATE)
+        .foreach { advOk =>
+          trace(s"${logPrefix}offlining advOk[${advOk.id.get}]...")
+          advOk.copy(dateEnd = DateTime.now, isOnline = false).saveUpdate
+        }
+    }
+    // Дождаться завершения остальных операций.
+    for {
+      rdr  <- RdrBackOr(r) { routes.SysMarket.showAdnNodeAds(AdSearch(receiverIds = List(rcvrId))) }
+      isOk <- isOkFut
+    } yield {
+      // Вернуть редирект с результатом работы.
+      val flasher = if (isOk) {
+        "success" -> "Карточка убрана из выдачи."
+      } else {
+        "error"   -> "Карточка не найдена."
+      }
+      rdr.flashing(flasher)
+    }
+  }
+
 
   /** Отобразить email-уведомление об отключении указанной рекламы. */
   def showShopEmailAdDisableMsg(adId: String, isHtml: Boolean) = IsSuperuser.async { implicit request =>
