@@ -26,67 +26,69 @@
   nodeOpt = thisNode
 ) {
 
-  @_adsListTpl(mads, coverDisableReason = false, startIndex = 0, itemsInLine = 1) { mad =>
-    <a href="@routes.MarketAd.editAd(mad.id.get)">Редактор карточки</a>
-    <br/>
-    <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">ЛК создателя карточки</a>
-    <p>Отобразить email-сообщение о деактивации:
-      @Seq(true -> "HTML", false -> "TXT").map { case (isHtml, linkText) =>
-        <a href="@routes.SysMarket.showShopEmailAdDisableMsg(mad.id.get, isHtml = isHtml)">@linkText</a>
-      }
-    </p>
-
-    @nodeOpt.map { adnNode =>
-      @* Вывод статистики для узла-продьюсера. *@
-      <p>Stat:
-        @adFreqs.get(mad.id.get).map { freqs =>
-          За последние @MAdStat.TTL_DAYS_DFLT дней:
-          @freqs.map { case (action, freq) =>
-            @action: @freq
-          }
+  <div class="ovh">
+    @_adsListTpl(mads, coverDisableReason = false, startIndex = 0, itemsInLine = 4) { mad =>
+      <a href="@routes.MarketAd.editAd(mad.id.get)">Редактор карточки</a>
+      <br/>
+      <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">ЛК создателя карточки</a>
+      <p>Отобразить email-сообщение о деактивации:
+        @Seq(true -> "HTML", false -> "TXT").map { case (isHtml, linkText) =>
+          <a href="@routes.SysMarket.showShopEmailAdDisableMsg(mad.id.get, isHtml = isHtml)">@linkText</a>
         }
       </p>
-      @adStatActionsSeq.map { case (asa, txt) =>
-        @adnNode.adn.supId.orElse(adnNode.id).map { adnNodeId =>
-          @form( routes.Market.adStats(adnNodeId, adId = mad.id.get, action = asa.toString) ) {
-            <input type="submit" value="Имитировать @Messages(txt)"/>
-          }
-        }
-      }
-    }
 
-    @if(rcvrs.nonEmpty) {
-      <br/>
-      @rcvrs.map { rcvr =>
-        @form( routes.SysMarket.removeAdRcvr(adId = mad.id.get, rcvrId = rcvr.id.get) ) {
-          <input type="submit" value="Убрать из выдачи на узле &laquo;@rcvr.meta.name / @rcvr.meta.town &raquo;" />
-        }
-      }
-    }
-
-    @if(thisNode.flatMap(_.id).exists(_ == mad.producerId)) {
-      <p>Саморазмещение</p>
-    }
-
-    @mad.id.flatMap(ad2advMap.get).map { advsOk =>
-      @advsOk.map { advOk =>
-        <p>
-          @if(advOk.isAuto) {Авторазмещение} else {Размещение}
-          c [@_prettyDate(advOk.dateStart, withSpan = true)]
-          по [@_prettyDate(advOk.dateEnd, withSpan = true)]
-          <a href="@routes.SysMarket.showAdnNode(advOk.prodAdnId)">узел</a>
-          =&gt;
-          <a href="@routes.SysMarket.showAdnNode(advOk.rcvrAdnId)">узел</a>
-          @if(advOk.isPartner) {по-партнёрски}
-          за @formatPrice(advOk.amount, advOk.currency)
-          @advOk.comission.map { c =>
-            с комиссией @formatPercent(c)
+      @nodeOpt.map { adnNode =>
+        @* Вывод статистики для узла-продьюсера. *@
+        <p>Stat:
+          @adFreqs.get(mad.id.get).map { freqs =>
+            За последние @MAdStat.TTL_DAYS_DFLT дней:
+            @freqs.map { case (action, freq) =>
+              @action: @freq
+            }
           }
         </p>
+        @adStatActionsSeq.map { case (asa, txt) =>
+          @adnNode.adn.supId.orElse(adnNode.id).map { adnNodeId =>
+            @form( routes.Market.adStats(adnNodeId, adId = mad.id.get, action = asa.toString) ) {
+              <input type="submit" value="Имитировать @Messages(txt)"/>
+            }
+          }
+        }
       }
+
+      @if(rcvrs.nonEmpty) {
+        <br/>
+        @rcvrs.map { rcvr =>
+          @form( routes.SysMarket.removeAdRcvr(adId = mad.id.get, rcvrId = rcvr.id.get) ) {
+            <input type="submit" value="Убрать из выдачи на узле &laquo;@rcvr.meta.name / @rcvr.meta.town &raquo;" />
+          }
+        }
+      }
+
+      @if(thisNode.flatMap(_.id).exists(_ == mad.producerId)) {
+        <p>Саморазмещение</p>
+      }
+
+      @mad.id.flatMap(ad2advMap.get).map { advsOk =>
+        @advsOk.map { advOk =>
+          <p>
+            @if(advOk.isAuto) {Авторазмещение} else {Размещение}
+            c [@_prettyDate(advOk.dateStart, withSpan = true)]
+            по [@_prettyDate(advOk.dateEnd, withSpan = true)]
+            <a href="@routes.SysMarket.showAdnNode(advOk.prodAdnId)">узел</a>
+            =&gt;
+            <a href="@routes.SysMarket.showAdnNode(advOk.rcvrAdnId)">узел</a>
+            @if(advOk.isPartner) {по-партнёрски}
+            за @formatPrice(advOk.amount, advOk.currency)
+            @advOk.comission.map { c =>
+              с комиссией @formatPercent(c)
+            }
+          </p>
+        }
+      }
+      <br/><br/>
     }
-    <br/><br/>
-  }
+  </div>
 
   <br/><br/>
 
