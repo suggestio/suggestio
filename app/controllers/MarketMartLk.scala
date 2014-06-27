@@ -9,7 +9,6 @@ import play.api.data._, Forms._
 import util.FormUtil._
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.current
-import util.acl.IsMartAdminShop
 import models._
 
 /**
@@ -40,13 +39,6 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     "email" -> email,
     "meta" -> shopMetaM
   ))
-
-
-  /** Форма на которой нельзя менять логотип, но можно настраивать разные поля.
-    * Подходит для редактирования из ТЦ-аккаунта */
-  private val shopEditFormM = Form(
-    MarketShopLk.shopMetaFullKM
-  )
 
 
   /**

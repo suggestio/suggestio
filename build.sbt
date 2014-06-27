@@ -124,5 +124,6 @@ includeFilter in (Assets, LessKeys.less) := "bootstrap.less"
 
 
 // sbt-web
-//pipelineStages := Seq(gzip)
+//pipelineStages := Seq(rjs, gzip)
+pipelineStages := Seq(gzip)
 

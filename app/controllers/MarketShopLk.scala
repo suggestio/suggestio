@@ -8,12 +8,11 @@ import util.FormUtil._
 import util.acl._
 import models._
 import views.html.market.lk.shop._
-import play.api.mvc.{RequestHeader, AnyContent, Result}
+import play.api.mvc.{AnyContent, Result}
 import play.api.Play.current
 import concurrent.duration._
 import scala.concurrent.Future
 import play.api.mvc.Security.username
-import util.img._
 import views.html.market.lk.adn.invite.inviteInvalidTpl
 import util.billing.Billing
 
@@ -35,31 +34,6 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
 
   /** Маркер картинки для logo-вещичек */
   val SHOP_TMP_LOGO_MARKER = "shopLogo"
-
-  private val colorOptM = toStrOptM(colorM)
-
-  /** Метаданные магазина, которые может редактировать владелец магазина. */
-  private val shopMetaFullM = mapping(
-    "name"          -> shopNameM,
-    "description"   -> publishedTextOptM,
-    "floor"         -> optional(floorM),
-    "color"         -> colorOptM,
-    "section"       -> optional(sectionM)
-  )
-  {(name, descr, floor, colorOpt, section) =>
-    AdnMMetadata(
-      name = name,
-      description = descr,
-      floor = floor,
-      section = section,
-      color = colorOpt
-    )
-  }
-  {adnMeta =>
-    import adnMeta._
-    Some((name, description, floor, color, section))
-  }
-  val shopMetaFullKM = "meta" -> shopMetaFullM
 
 
   /** Есть формы подтверждаения инвайта для зареганных и для незареганных юзеров. Они обрабатываются вместе и должны быть совместимы. */
@@ -185,8 +159,5 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
       }
     }
   }
-
-
-  private def martNotFound(martId: String)(implicit request: RequestHeader) = http404AdHoc
 
 }
