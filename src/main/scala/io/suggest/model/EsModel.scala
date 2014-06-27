@@ -6,7 +6,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import io.suggest.util._
 import SioEsUtil._
 import org.joda.time.{DateTimeZone, ReadableInstant, DateTime}
-import org.elasticsearch.action.search.{SearchType, SearchResponse}
+import org.elasticsearch.action.search.{SearchRequestBuilder, SearchType, SearchResponse}
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.common.xcontent.XContentBuilder
@@ -417,6 +417,11 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
     prepareSearch.setSearchType(SearchType.SCAN).setScroll(keepAlive)
   }
 
+  /** Запуск поискового запроса и парсинг результатов в представление этой модели. */
+  def runSearch(srb: SearchRequestBuilder)(implicit ec: ExecutionContext): Future[Seq[T]] = {
+    srb.execute().map { searchResp2list }
+  }
+
   /**
    * Существует ли указанный магазин в хранилище?
    * @param id id магазина.
@@ -600,12 +605,11 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
    * @return Список магазинов в порядке их создания.
    */
   def getAll(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)(implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
-    prepareSearch
+    val req = prepareSearch
       .setQuery(QueryBuilders.matchAllQuery())
       .setSize(maxResults)
       .setFrom(offset)
-      .execute()
-      .map { searchResp2list }
+    runSearch(req)
   }
 
   /**

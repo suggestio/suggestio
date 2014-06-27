@@ -7,6 +7,7 @@ version := "1.2.0-SNAPSHOT"
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
 resolvers ++= Seq(
+  "typesafe-releases" at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
   "sonatype-oss-releases" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots",
   "apache-releases" at "https://ivy2-internal.cbca.ru/artifactory/apache-releases",
   "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo",
@@ -20,18 +21,18 @@ libraryDependencies ++= {
   val hadoopVsn     = "2.4.+"
   val hbaseVsn      = "0.98.1-hadoop2"
   val akkaVsn       = "2.3.+"
-  val jacksonVsn    = "2.3.+"
+  val jacksonVsn    = "2.4.+"
   val tikaVsn       = "1.5"
-  val cascadingVsn  = "2.5.+"
+  val cascadingVsn  = "2.6.+"
   val playVsn       = "2.3-SNAPSHOT"
   val morphVsn      = "1.2-SNAPSHOT"
   val bcVsn         = "1.46"
   Seq(
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
-    "com.typesafe" %% "scalalogging-slf4j" % "1.1.+",
-    "org.gnu.inet" % "libidn" % "1.1+",
-    "com.github.nscala-time" %% "nscala-time" % "0.+",
+    "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.+",
+    "org.gnu.inet" % "libidn" % "1.15",
+    "com.github.nscala-time" %% "nscala-time" % "1.+",
     "commons-lang" % "commons-lang" % "2.+",
     "org.im4java" % "im4java" % "1.+",
     // JSON

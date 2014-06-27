@@ -44,6 +44,9 @@ object AdNetMember {
     * К такому узлу рекламные карточки попадают на модерацию. */
   val ADV_DELEGATE_ESFN = "advDg"
 
+  /** Название поля с флагом тестового узла. */
+  val TEST_NODE_ESFN = "tn"
+
   val IS_ENABLED_ESFN = "isEnabled"
   val SHOW_LEVELS_ESFN = "showLevels"
   val DISABLE_REASON_ESFN = "disableReason"
@@ -94,9 +97,20 @@ object AdNetMember {
    * @param rights Список прав, по которым ищем.
    * @return ES Query.
    */
-  def adnRightsAllQuery(rights: Seq[AdnRight]) = QueryBuilders
-    .termsQuery(RIGHTS_ESFN, rights.map(_.toString()) : _*)
-    .minimumMatch(rights.size)
+  def adnRightsAllQuery(rights: Seq[AdnRight]): QueryBuilder = {
+    QueryBuilders
+      .termsQuery(RIGHTS_ESFN, rights.map(_.toString()) : _*)
+      .minimumMatch(rights.size)
+  }
+
+  /** Добавить фильтр, отсеивающий test-узлы. */
+  def filterOutTestNodes(qb0: QueryBuilder): QueryBuilder = {
+    // Фильтруем инвертированно (tn != true), т.к. изначально у узлов не было флагов TEST_NODE.
+    val filter = FilterBuilders.notFilter(
+      FilterBuilders.termFilter(TEST_NODE_ESFN, true)
+    )
+    QueryBuilders.filteredQuery(qb0, filter)
+  }
 
 }
 
@@ -117,6 +131,7 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
       FieldString(MEMBER_TYPE_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(PRODUCER_IDS_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(ADV_DELEGATE_ESFN, index = not_analyzed, include_in_all = false),
+      FieldBoolean(TEST_NODE_ESFN, index = not_analyzed, include_in_all = false),
       // раньше это лежало в EMAdnMPubSettings, но потом было перемещено сюда, т.к. по сути это разделение было некорректно.
       FieldBoolean(IS_ENABLED_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(DISABLE_REASON_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
@@ -143,6 +158,8 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
               }.toSet
           },
         advDelegate = Option(vm get ADV_DELEGATE_ESFN) map stringParser,
+        testNode = Option(vm get TEST_NODE_ESFN)
+          .fold(false)(booleanParser),
         showLevelsInfo = Option(vm get SHOW_LEVELS_ESFN)
           .fold(AdnMemberShowLevels()) { AdnMemberShowLevels.deserialize(_) },
         isEnabled = Option(vm get IS_ENABLED_ESFN)
@@ -167,10 +184,9 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
       val martIdFilter = FilterBuilders.termFilter(SUPERVISOR_ID_ESFN, supId.get)
       textQuery = QueryBuilders.filteredQuery(textQuery, martIdFilter)
     }
-    prepareSearch
+    val req = prepareSearch
       .setQuery(textQuery)
-      .execute()
-      .map { searchResp2list }
+    runSearch(req)
   }
 
   /**
@@ -221,8 +237,7 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
     req
       .setSize(maxResults)
       .setFrom(offset)
-      .execute()
-      .map { searchResp2list }
+    runSearch(req)
   }
 
 
@@ -290,19 +305,21 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
   def findAllByType(memberType: AdNetMemberType, maxResult: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
                    (implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
     val query = adnMemberTypeQuery(memberType)
-    prepareSearch
+    val req = prepareSearch
       .setQuery(query)
       .setSize(maxResult)
       .setFrom(offset)
-      .execute()
-      .map { searchResp2list }
+    runSearch(req)
   }
 
 
 
-  def findByAllAdnRightsBuilder(rights: Seq[AdnRight])(implicit client: Client) = {
+  def findByAllAdnRightsBuilder(rights: Seq[AdnRight], withoutTestNodes: Boolean)(implicit client: Client) = {
+    var query: QueryBuilder = adnRightsAllQuery(rights)
+    if (withoutTestNodes)
+      query = filterOutTestNodes(query)
     prepareSearch
-      .setQuery(adnRightsAllQuery(rights))
+      .setQuery(query)
   }
 
   /**
@@ -310,15 +327,14 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
    * @param rights Список прав, по которым происходит поиск.
    * @return Фьючерс со списком результатов в неопределённом порядке.
    */
-  def findByAllAdnRights(rights: Seq[AdnRight])(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    findByAllAdnRightsBuilder(rights)
-      .execute()
-      .map { searchResp2list }
+  def findByAllAdnRights(rights: Seq[AdnRight], withoutTestNodes: Boolean)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+    val req = findByAllAdnRightsBuilder(rights, withoutTestNodes)
+    runSearch(req)
   }
 
 
-  def findIdsByAllAdnRightsBuilder(rights: Seq[AdnRight])(implicit client: Client) = {
-    findByAllAdnRightsBuilder(rights)
+  def findIdsByAllAdnRightsBuilder(rights: Seq[AdnRight], withoutTestNodes: Boolean)(implicit client: Client) = {
+    findByAllAdnRightsBuilder(rights, withoutTestNodes)
       .setNoFields()
   }
 
@@ -327,8 +343,8 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
    * @param rights Права.
    * @return Фьючерс со списком id в неопределённом порядке.
    */
-  def findIdsByAllAdnRights(rights: Seq[AdnRight])(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
-    findIdsByAllAdnRightsBuilder(rights)
+  def findIdsByAllAdnRights(rights: Seq[AdnRight], withoutTestNodes: Boolean)(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
+    findIdsByAllAdnRightsBuilder(rights, withoutTestNodes)
       .execute()
       .map { searchResp2idsList }
   }
@@ -339,10 +355,9 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
     * @return
     */
   def findByIncomingProducerId(producerId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    prepareSearch
-      .setQuery(incomingProducerIdQuery(producerId))
-      .execute()
-      .map { searchResp2list }
+    val req = prepareSearch
+      .setQuery( incomingProducerIdQuery(producerId) )
+    runSearch(req)
   }
 
 
@@ -354,11 +369,10 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
    * @return Фьючерс со списком результатов в неопределённом порядке.
    */
   def findAdvDelegatedTo(dgAdnId: String, maxResults: Int = MAX_RESULTS_DFLT)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
-    prepareSearch
+    val req = prepareSearch
       .setQuery( advDelegatesQuery(dgAdnId) )
       .setSize( maxResults )
-      .execute()
-      .map { searchResp2list }
+    runSearch(req)
   }
 
   /**
@@ -444,6 +458,8 @@ import AdnRights._
   * @param supId Опциональный id супер-узла.
   * @param producerIds id узлов-продьюсеров, которые поставляют контент указанному узлу. Пока не используется толком.
   * @param advDelegate Опциональный id узла, который совершает управление размещением рекламных карточек на данном узле.
+  * @param testNode Отметка о тестовом характере существования этого узла.
+  *                 Он не должен отображаться для обычных участников сети, а только для других тестовых узлов.
   * @param showLevelsInfo Контейнер с инфой об уровнях отображения.
   * @param isEnabled Включен ли узел? Отключение узла приводит к блокировке некоторых функций.
   * @param disableReason Причина отключения узла, если есть.
@@ -454,6 +470,7 @@ case class AdNetMemberInfo(
   var supId: Option[String] = None,
   var producerIds: Set[String] = Set.empty,
   var advDelegate: Option[String] = None,
+  var testNode: Boolean = false,
   // перемещено из mpub:
   var showLevelsInfo: AdnMemberShowLevels = AdnMemberShowLevels(),
   var isEnabled: Boolean = true,
@@ -482,6 +499,7 @@ case class AdNetMemberInfo(
   def toPlayJson: JsObject = {
     var acc0: FieldsJsonAcc = List(
       MEMBER_TYPE_ESFN   -> JsString(memberType.toString()),
+      TEST_NODE_ESFN     -> JsBoolean(testNode),
       IS_ENABLED_ESFN    -> JsBoolean(isEnabled)
     )
     if (rights.nonEmpty) {
