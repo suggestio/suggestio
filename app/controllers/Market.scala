@@ -236,12 +236,8 @@ object Market extends SioController with PlayMacroLogsImpl {
     Ok(aboutForAdMakersTpl())
   }
 
-  // Внутренние хелперы
 
-  private def martNotFound(martId: String)(implicit request: RequestHeader) = {
-    info(s"martNotFound($martId): 404")
-    http404AdHoc
-  }
+  // Внутренние хелперы
 
   /** Метод для генерации json-ответа с html внутри. */
   private def jsonOk(html: JsString, action: String) = {
@@ -252,16 +248,6 @@ object Market extends SioController with PlayMacroLogsImpl {
     Ok( Jsonp(JSONP_CB_FUN, json) )
   }
 
-
-  private def moveToHead[T <: EsModelMinimalT](src: Seq[T], headId: String): Seq[T] = {
-    val inx = src.indexWhere { _.id.exists(_ == headId) }
-    if (inx <= 0) {
-      src
-    } else {
-      val e = src(inx)
-      e :: src.drop(inx).toList
-    }
-  }
 
   /**
    * Сгруппировать "узкие" карточки, чтобы они были вместе.

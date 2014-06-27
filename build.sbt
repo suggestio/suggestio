@@ -11,6 +11,18 @@ name := "sioweb21"
 
 version := "1.0-SNAPSHOT"
 
+
+// Добавить резолверы, в т.ч. кэш-резолвер для отфильтрованной выше репы.
+resolvers ++= Seq(
+  "typesafe-releases" at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
+  "sonatype-oss-releases" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots",
+  "apache-releases" at "https://ivy2-internal.cbca.ru/artifactory/apache-releases",
+  "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo",
+  "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com",
+  "sonatype-groups-forge" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-groups-forge"
+)
+
+
 lazy val web21 = (project in file(".")).enablePlugins(PlayScala, SbtWeb)
 
 JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
@@ -71,16 +83,6 @@ resolvers ~= {
   rs => rs filter {_.name != "Typesafe Releases Repository" }
 }
 
-// Добавить резолверы, в т.ч. кэш-резолвер для отфильтрованной выше репы.
-resolvers ++= Seq(
-  "typesafe-releases" at "https://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
-  "sonatype-oss-releases" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-oss-snapshots",
-  "apache-releases" at "https://ivy2-internal.cbca.ru/artifactory/apache-releases",
-  "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo",
-  "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com",
-  "sonatype-groups-forge" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-groups-forge"
-)
-
 //patience.assets.StylusPlugin.stylusSettings
 
 
@@ -97,10 +99,6 @@ gzipAssets := {
     gzTarget
   }
 }
-
-TwirlKeys.templateImports ++= Seq(
-  "util.blocks.BlocksConf._"
-)
 
 //net.virtualvoid.sbt.graph.Plugin.graphSettings
 

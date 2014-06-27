@@ -24,7 +24,7 @@
   <div class="title-wrap">
     <div class="center">
       <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(msup.id.get)">&nbsp;</a>
-      <div class="title-inner">КАРТОЧКА АРЕНДАТОРА</div>
+      <div class="title-inner">КАРТОЧКА РЕКЛАМОДАТЕЛЯ</div>
     </div>
   </div>
 
@@ -34,9 +34,6 @@
 
       <div class="name-wrap">
         <span class="name">@mslave.meta.name</span>
-        @mslave.adn.memberType.slaveNodeEditCall(mslave.id.get).map { call =>
-          <a class="edit" href="@call">Редактировать</a>
-        }
       </div>
       <div class="border-line"></div>
 

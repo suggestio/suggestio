@@ -20,9 +20,6 @@ object AdnShowTypes extends Enumeration {
     /** Ссылка на создание инвайта для под-узла, если есть возможность. */
     def inviteSubNodeCall(adnId: String): Option[Call]
 
-    /** Ссылка на редактирование подчинённого узла, если есть возможность. */
-    def slaveNodeEditCall(adnId: String): Option[Call] = None
-
     /** Call для доступа к поисковой выдаче для админа ЛК. */
     def nodeAdmSiteCall(adnNode: MAdnNode): Option[Call] = {
       Some( routes.Market.demoWebSite(adnNode.id.get) )
