@@ -339,7 +339,7 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
   }
 
   /**
-   * Тоже самое, что и [[findByAllAdnRights()]], но возвращает только список id'шников.
+   * Тоже самое, что и findByAllAdnRights(), но возвращает только список id'шников.
    * @param rights Права.
    * @return Фьючерс со списком id в неопределённом порядке.
    */
@@ -405,7 +405,7 @@ trait EMAdNetMember extends EsModelT {
   }
 
 
-  /** Быстрый доступ к статическому [[EMAdNetMemberStatic.setIsEnabled( )]].
+  /** Быстрый доступ к статическому EMAdNetMemberStatic.setIsEnabled().
     * @param isEnabled Новое значение isEnabled.
     * @param reason Причина отлючения.
     * @return Фьючерс для синхронизации.

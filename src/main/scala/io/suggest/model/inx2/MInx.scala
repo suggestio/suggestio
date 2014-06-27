@@ -31,7 +31,7 @@ trait MInxT {
   def esTypes: Seq[String]
   def esInxSettings(shards: Int, replicas: Int = 1): XContentBuilder
 
-  /** Тут список обязательных маппингов, которые создаются в [[setMappings()]]. */
+  /** Тут список обязательных маппингов, которые создаются в setMappings(). */
   @JsonIgnore def esInxMappings: Seq[(String, XContentBuilder)]
 
   /** Обновить index settings. */

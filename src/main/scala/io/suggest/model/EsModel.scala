@@ -125,7 +125,7 @@ object EsModel extends MacroLogsImpl {
   val OFFSET_DFLT = 0
   val SCROLL_KEEPALIVE_MS_DFLT = 60000L
 
-  /** Тип аккамулятора, который используется во [[EsModelT.writeJsonFields()]]. */
+  /** Тип аккамулятора, который используется во [[EsModelT]].writeJsonFields(). */
   type FieldsJsonAcc = List[(String, JsValue)]
 
   def companyIdParser = stringParser

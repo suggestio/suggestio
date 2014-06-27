@@ -36,7 +36,7 @@ object MImgInfo {
   /**
    * Проверить, являются ли указанные сериализованные данные результатом сериализации MImgInfo.
    * @param v выхлоп jackson'а.
-   * @return true, если можно это отправлять в [[convertFrom()]]. Иначе false.
+   * @return true, если можно это отправлять в convertFrom(). Иначе false.
    */
   def testSerialized(v: Any): Boolean = {
     v match {
