@@ -82,15 +82,15 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     lazy val weekendCal = getUrlCal(rcvrPricing.primeCalId)
     def calculateDateAdvPrice(day: LocalDate): Float = {
       if (primeHolidays isHoliday day) {
-        trace(s"${logPrefix}$day -> primetime -> +${rcvrPricing.mmpPrimetime}")
+        trace(s"$logPrefix $day -> primetime -> +${rcvrPricing.mmpPrimetime}")
         rcvrPricing.mmpPrimetime
       } else {
         val isWeekend = (WEEKEND_DAYS contains day.getDayOfWeek) || (weekendCal isHoliday day)
         if (isWeekend) {
-          trace(s"${logPrefix}$day -> weekend -> +${rcvrPricing.mmpWeekend}")
+          trace(s"$logPrefix $day -> weekend -> +${rcvrPricing.mmpWeekend}")
           rcvrPricing.mmpWeekend
         } else {
-          trace(s"${logPrefix}$day -> weekday -> +${rcvrPricing.mmpWeekday}")
+          trace(s"$logPrefix $day -> weekday -> +${rcvrPricing.mmpWeekday}")
           rcvrPricing.mmpWeekday
         }
       }
@@ -110,14 +110,16 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
     val amountN: Float = blockModulesCount * amount1
     var amountTotal: Float = amountN
     if (advTerms.showLevels contains AdShowLevels.LVL_MEMBERS_CATALOG) {
-      trace(s"$logPrefix +rcvrCat -> x${rcvrPricing.onRcvrCat}")
-      amountTotal *= rcvrPricing.onRcvrCat
+      val incr = rcvrPricing.onRcvrCat * amountN
+      amountTotal += incr
+      trace(s"$logPrefix +rcvrCat: +x${rcvrPricing.onRcvrCat} == +$incr -> $amountTotal")
     }
     if (advTerms.showLevels contains AdShowLevels.LVL_START_PAGE) {
-      trace(s"$logPrefix +onStartPage -> x${rcvrPricing.onStartPage}")
-      amountTotal *= rcvrPricing.onStartPage
+      val incr = rcvrPricing.onStartPage * amountN
+      amountTotal += incr
+      trace(s"$logPrefix +onStartPage: +x${rcvrPricing.onStartPage} == +$incr -> $amountTotal")
     }
-    trace(s"${logPrefix}amount (1/N/Total) = $amount1 / $amountN / $amountTotal")
+    trace(s"$logPrefix amount (1/N/Total) = $amount1 / $amountN / $amountTotal")
     Price(amountTotal, rcvrPricing.currency)
   }
 
