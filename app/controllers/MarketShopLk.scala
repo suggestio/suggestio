@@ -15,7 +15,6 @@ import scala.concurrent.Future
 import play.api.mvc.Security.username
 import util.img._
 import views.html.market.lk.adn.invite.inviteInvalidTpl
-import play.api.db.DB
 import util.billing.Billing
 
 /**
@@ -40,7 +39,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
   private val colorOptM = toStrOptM(colorM)
 
   /** Метаданные магазина, которые может редактировать владелец магазина. */
-  val shopMetaFullM = mapping(
+  private val shopMetaFullM = mapping(
     "name"          -> shopNameM,
     "description"   -> publishedTextOptM,
     "floor"         -> optional(floorM),
@@ -63,124 +62,12 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
   val shopMetaFullKM = "meta" -> shopMetaFullM
 
 
-  /** Маппер для необязательного логотипа магазина. */
-  val logoImgOptIdKM = ImgFormUtil.getLogoKM("shop.logo.invalid", marker=SHOP_TMP_LOGO_MARKER)
-
-  /** Форма для заполнения страницы, но НЕ для сабмита. */
-  val shopFullFormM = Form(tuple(
-    "email" -> optional(email),
-    shopMetaFullKM,
-    logoImgOptIdKM
-  ))
-
-
-  /** Ограниченный маппинг доступен владельцу магазина внутри ТЦ. */
-  val shopMetaLimitedM = mapping(
-    "name"          -> shopNameM,
-    "color"         -> colorOptM,
-    "description"   -> publishedTextOptM
-  )
-  {(name, colorOpt, descr) =>
-    AdnMMetadata(
-      name = name,
-      color = colorOpt,
-      description = descr
-    )
-  }
-  {adnMeta =>
-    import adnMeta._
-    Some((name, color, description))
-  }
-
-  /** Ограниченный маппинг магазина. Используется при сабмите редактирования профиля магазина для имитации
-    * неизменяемых полей на форме. Некоторые поля не доступны для редактирования владельцу магазина. */
-  val limitedShopFormM = Form(tuple(
-    // Вложенный маппинг для совместимости с исходным шаблоном.
-    "meta" -> shopMetaLimitedM,
-    logoImgOptIdKM
-  ))
-
-
-  /** Асинхронно заполнить full форму с помощью указанного магазина. */
-  def fillFullForm(mshop: MAdnNode) = {
-    val shopOwnerEmailFut: Future[Option[String]] = mshop.mainPersonId match {
-      case Some(personId) =>
-        MPersonIdent.findAllEmails(personId)
-          .map { _.headOption }
-
-      // Нет почты, магазин не активирован. Но юзеру надо что-то отобразить, поэтому ищем в активациях.
-      case None =>
-        EmailActivation.findByKey(mshop.id.get)
-          .map { _.headOption.map(_.email) }
-    }
-    val imgId = mshop.logoImgOpt.map { img =>
-      ImgInfo4Save(ImgFormUtil.imgInfo2imgKey(img))
-    }
-    shopOwnerEmailFut map { shopOwnerEmail =>
-      shopFullFormM fill (shopOwnerEmail, mshop.meta, imgId)
-    }
-  }
-
-
-  /** Страница с формой редактирования магазина. Арендатору не доступны некоторые поля. */
-  def editShopForm(implicit request: AbstractRequestForAdnNode[_]): Future[Result] = {
-    import request.adnNode
-    // TODO Если магазин удалён из рекламной сети или не имеет своего ТЦ, то это как должно выражаться?
-    val martId = adnNode.adn.supId.get
-    val formBindedFut = fillFullForm(adnNode)
-    getMartByIdCache(martId) flatMap {
-      case Some(mmart) =>
-        formBindedFut map { formBinded =>
-          Ok(shopEditFormTpl(mmart, adnNode, formBinded))
-        }
-
-      case None => martNotFound(martId)
-    }
-  }
-
-  /** Сабмит формы редактирования магазина арендатором. */
-  def editShopFormSubmit(implicit request: AbstractRequestForAdnNode[_]): Future[Result] = {
-    import request.adnNode
-    limitedShopFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        val fullFormBindedFut = fillFullForm(adnNode) map { _.bindFromRequest }
-        debug(s"editShopFormSubmit(${adnNode.id.get}}): Bind failed: " + formWithErrors.errors)
-        // TODO Что делать, если у магазина нет своего супервизора?
-        val martId = adnNode.adn.supId.get
-        getMartByIdCache(martId) flatMap {
-          case Some(mmart) =>
-            fullFormBindedFut map { formWithErrors2 =>
-              NotAcceptable(shopEditFormTpl(mmart, adnNode, formWithErrors2))
-            }
-          case None        => martNotFound(martId)
-        }
-      },
-      {case (meta, logoImgIdOpt) =>
-        val updateImgsFut = ImgFormUtil.updateOrigImg(
-          needImgs = logoImgIdOpt,
-          oldImgs  = adnNode.logoImgOpt
-        )
-        adnNode.meta.name = meta.name
-        adnNode.meta.description = meta.description
-        adnNode.meta.color = meta.color
-        // Для обновления shop'а надо дождаться генерации нового id логотипа.
-        updateImgsFut.flatMap { newImgInfo =>
-          adnNode.logoImgOpt = newImgInfo
-          adnNode.save map { _shopId =>
-            Redirect(routes.MarketLkAdn.showAdnNode(adnNode.id.get))
-              .flashing("success" -> "Изменения сохранены.")
-          }
-        }
-      }
-    )
-  }
-
   /** Есть формы подтверждаения инвайта для зареганных и для незареганных юзеров. Они обрабатываются вместе и должны быть совместимы. */
   type InviteAcceptFormM = Form[(String, Option[String])]
 
   /** Маппинг формы, которая рендерится будущему владельцу магазина (незареганному),
     * когда тот проходит по ссылки из письма-инвайта. */
-  val inviteAcceptAnonFormM: InviteAcceptFormM = {
+  private val inviteAcceptAnonFormM: InviteAcceptFormM = {
     Form(tuple(
       "shopName" -> shopNameM,
       "password" -> passwordWithConfirmSomeM
@@ -188,7 +75,7 @@ object MarketShopLk extends SioController with PlayMacroLogsImpl with BruteForce
   }
 
   /** Маппинг формы, которая для уже залогиненного будущего владельца магазина, когда тот проходит по ссылке инвайта. */
-  val inviteAcceptAuthFormM: InviteAcceptFormM = Form(
+  private val inviteAcceptAuthFormM: InviteAcceptFormM = Form(
     "shopName" -> shopNameM
       // Чтобы сохранить совместимость с anon-формой, добавляем в маппинг пустое поле пароля с None вместо нового пароля.
       .transform(

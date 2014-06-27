@@ -120,48 +120,4 @@ object MarketMartLk extends SioController with PlayMacroLogsImpl with BruteForce
     )
   }
 
-  /**
-   * Рендер страницы с формой редактирования магазина-арендатора.
-   * Владельцу ТЦ доступны различные опции формы, недоступные для редактирования арендатору, поэтому для биндинга
-   * используется именно расширенная форма.
-   * @param shopId id магазина.
-   */
-  def editShopForm(shopId: String) = IsMartAdminShop(shopId).async { implicit request =>
-    import request.{mmart, mshop}
-    MarketShopLk.fillFullForm(mshop) map { formBinded =>
-      Ok(shop.shopEditFormTpl(mmart, mshop, formBinded))
-    }
-  }
-
-
-  /**
-   * Сабмит формы редактирования магазина-арендатора.
-   * @param shopId id редактируемого магазина.
-   */
-  def editShopFormSubmit(shopId: String) = IsMartAdminShop(shopId).async { implicit request =>
-    import request.mshop
-    shopEditFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(s"editShopFormSubmit($shopId): Form bind failed: ${formatFormErrors(formWithErrors)}")
-        MarketShopLk.fillFullForm(mshop) map { formWithErrors2 =>
-          val fwe3 = formWithErrors2.bindFromRequest()
-          NotAcceptable(shop.shopEditFormTpl(request.mmart, mshop, fwe3))
-        }
-      },
-      {meta =>
-        // Пора накатить изменения на текущий магазин и сохранить
-        mshop.meta.name = meta.name
-        mshop.meta.description = meta.description
-        mshop.meta.floor = meta.floor
-        mshop.meta.section = meta.section
-        mshop.meta.color = meta.color
-        mshop.save.map { _ =>
-          Redirect(routes.MarketLkAdn.showSlave(shopId))
-            .flashing("success" -> "Изменения сохранены.")
-        }
-      }
-    )
-
-  }
-
 }

@@ -50,11 +50,59 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   /** Сабмит формы редактирования узла рекламной сети. Функция смотрит тип узла рекламной сети и использует
     * тот или иной хелпер. */
   def editAdnNodeSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
-    import AdNetMemberTypes._
-    request.adnNode.adn.memberType match {
-      case MART | RESTAURANT | RESTAURANT_SUP => editAdnLeaderSubmit
-      case SHOP => MarketShopLk.editShopFormSubmit
-    }
+    import request.adnNode
+    martFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        val welcomeAdOptFut = getWelcomeAdOpt(adnNode)
+        debug(s"martEditFormSubmit(${adnNode.id.get}): Failed to bind form: ${formatFormErrors(formWithErrors)}")
+        welcomeAdOptFut map { welcomeAdOpt =>
+          NotAcceptable(leaderEditFormTpl(adnNode, formWithErrors, welcomeAdOpt))
+            .flashing("error" -> "Ошибка заполнения формы.")
+        }
+      },
+      {case (adnMeta, welcomeImgOpt, logoImgIdOpt) =>
+        // В фоне обновляем логотип ТЦ
+        val savedLogoFut = ImgFormUtil.updateOrigImg(logoImgIdOpt, oldImgs = adnNode.logoImgOpt)
+        // В фоне обновляем картинку карточки-приветствия.
+        val savedWelcomeImgsFut: Future[_] = getWelcomeAdOpt(adnNode) flatMap { welcomeAdOpt =>
+          ImgFormUtil.updateOrigImg(
+            needImgs = welcomeImgOpt.map(ImgInfo4Save(_, withThumb = false)),
+            oldImgs = welcomeAdOpt.flatMap(_.imgs.headOption).map(_._2)
+          ) flatMap {
+              // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
+              case None =>
+                val deleteOldAdFut = adnNode.meta.welcomeAdId
+                  .fold [Future[_]] {Future successful ()} { MAd.deleteById }
+                adnNode.meta.welcomeAdId = None
+                deleteOldAdFut
+
+              // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
+              case newImgInfoOpt @ Some(newImgInfo) =>
+                val imgs = Map(WELCOME_IMG_KEY -> newImgInfo)
+                val welcomeAd = welcomeAdOpt.fold
+                  { MWelcomeAd(producerId = adnNode.id.get, imgs = imgs) }
+                  {welcomeAd =>
+                    welcomeAd.imgs = imgs
+                    welcomeAd
+                  }
+                welcomeAd.save andThen {
+                  case Success(welcomeAdId) =>
+                    adnNode.meta.welcomeAdId = Some(welcomeAdId)
+                }
+          }
+        }
+        adnNode.meta = adnMeta
+        savedLogoFut.flatMap { savedLogo =>
+          adnNode.logoImgOpt = savedLogo
+          savedWelcomeImgsFut flatMap { _ =>
+            adnNode.save.map { _ =>
+              Redirect(routes.MarketLkAdn.showAdnNode(adnNode.id.get))
+                .flashing("success" -> "Изменения сохранены.")
+            }
+          }
+        }
+      }
+    )
   }
 
 
@@ -115,64 +163,5 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
     mmart.meta.welcomeAdId
       .fold [Future[Option[MWelcomeAd]]] (Future successful None) (MWelcomeAd.getById)
   }
-
-
-  /** Сабмит формы редактирования узла-лидера. */
-  private def editAdnLeaderSubmit(implicit request: AbstractRequestForAdnNode[_]): Future[Result] = {
-    import request.adnNode
-    martFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        val welcomeAdOptFut = getWelcomeAdOpt(adnNode)
-        debug(s"martEditFormSubmit(${adnNode.id.get}): Failed to bind form: ${formatFormErrors(formWithErrors)}")
-        welcomeAdOptFut map { welcomeAdOpt =>
-          NotAcceptable(leaderEditFormTpl(adnNode, formWithErrors, welcomeAdOpt))
-            .flashing("error" -> "Ошибка заполнения формы.")
-        }
-      },
-      {case (adnMeta, welcomeImgOpt, logoImgIdOpt) =>
-        // В фоне обновляем логотип ТЦ
-        val savedLogoFut = ImgFormUtil.updateOrigImg(logoImgIdOpt, oldImgs = adnNode.logoImgOpt)
-        // В фоне обновляем картинку карточки-приветствия.
-        val savedWelcomeImgsFut: Future[_] = getWelcomeAdOpt(adnNode) flatMap { welcomeAdOpt =>
-          ImgFormUtil.updateOrigImg(
-            needImgs = welcomeImgOpt.map(ImgInfo4Save(_, withThumb = false)),
-            oldImgs = welcomeAdOpt.flatMap(_.imgs.headOption).map(_._2)
-          ) flatMap {
-              // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
-              case None =>
-                val deleteOldAdFut = adnNode.meta.welcomeAdId
-                  .fold [Future[_]] {Future successful ()} { MAd.deleteById }
-                adnNode.meta.welcomeAdId = None
-                deleteOldAdFut
-
-              // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
-              case newImgInfoOpt @ Some(newImgInfo) =>
-                val imgs = Map(WELCOME_IMG_KEY -> newImgInfo)
-                val welcomeAd = welcomeAdOpt.fold
-                  { MWelcomeAd(producerId = adnNode.id.get, imgs = imgs) }
-                  {welcomeAd =>
-                    welcomeAd.imgs = imgs
-                    welcomeAd
-                  }
-                welcomeAd.save andThen {
-                  case Success(welcomeAdId) =>
-                    adnNode.meta.welcomeAdId = Some(welcomeAdId)
-                }
-          }
-        }
-        adnNode.meta = adnMeta
-        savedLogoFut.flatMap { savedLogo =>
-          adnNode.logoImgOpt = savedLogo
-          savedWelcomeImgsFut flatMap { _ =>
-            adnNode.save.map { _ =>
-              Redirect(routes.MarketLkAdn.showAdnNode(adnNode.id.get))
-                .flashing("success" -> "Изменения сохранены.")
-            }
-          }
-        }
-      }
-    )
-  }
-
 
 }
