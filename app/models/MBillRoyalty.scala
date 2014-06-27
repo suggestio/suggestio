@@ -56,7 +56,7 @@ case class MBillRoyalty(
 
   override def saveUpdate(implicit c: Connection): Int = {
     SQL("UPDATE " + TABLE_NAME + " SET royalty = {royalty}, is_internal = {isInternal}, to_adn_id = {toAdnId} WHERE id = {id}")
-      .on('id -> id, 'royalty -> royalty, 'isInternal -> isInternal, 'toAdnId -> toAdnId)
+      .on('id -> id.get, 'royalty -> royalty, 'isInternal -> isInternal, 'toAdnId -> toAdnId)
       .executeUpdate()
   }
 
