@@ -35,11 +35,14 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
 
   /** Страница с формой редактирования узла рекламной сети. Функция смотрит тип узла и рендерит ту или иную страницу. */
   def editAdnNode(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
-    import AdNetMemberTypes._
-    request.adnNode.adn.memberType match {
-      case MART | RESTAURANT | RESTAURANT_SUP =>
-        editAdnLeader
-      case SHOP => MarketShopLk.editShopForm
+    import request.adnNode
+    getWelcomeAdOpt(adnNode) map { welcomeAdOpt =>
+      val martLogoOpt = adnNode.logoImgOpt.map { img =>
+        ImgInfo4Save(imgInfo2imgKey(img))
+      }
+      val welcomeImgKey = welcomeAdOpt.flatMap { _.imgs.headOption }.map[OrigImgIdKey] { img => img._2 }
+      val formFilled = martFormM.fill((adnNode.meta, welcomeImgKey, martLogoOpt))
+      Ok(leaderEditFormTpl(adnNode, formFilled, welcomeAdOpt))
     }
   }
 
@@ -111,20 +114,6 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   private def getWelcomeAdOpt(mmart: MAdnNode): Future[Option[MWelcomeAd]] = {
     mmart.meta.welcomeAdId
       .fold [Future[Option[MWelcomeAd]]] (Future successful None) (MWelcomeAd.getById)
-  }
-
-
-  /** Страница с формой редактирования узла-лидера. */
-  private def editAdnLeader(implicit request: AbstractRequestForAdnNode[_]): Future[Result] = {
-    import request.adnNode
-    getWelcomeAdOpt(adnNode) map { welcomeAdOpt =>
-      val martLogoOpt = adnNode.logoImgOpt.map { img =>
-        ImgInfo4Save(imgInfo2imgKey(img))
-      }
-      val welcomeImgKey = welcomeAdOpt.flatMap { _.imgs.headOption }.map[OrigImgIdKey] { img => img._2 }
-      val formFilled = martFormM.fill((adnNode.meta, welcomeImgKey, martLogoOpt))
-      Ok(leaderEditFormTpl(adnNode, formFilled, welcomeAdOpt))
-    }
   }
 
 

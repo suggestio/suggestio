@@ -113,7 +113,7 @@ object Market extends SioController with PlayMacroLogsImpl {
 
   /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
   def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
-    val isProducerAds = !adSearch.producerIds.isEmpty
+    val isProducerAds = adSearch.producerIds.nonEmpty
     // TODO Использовать multiget + кеш.
     val producersFut = Future.traverse(adSearch.producerIds) { MAdnNodeCache.getById }
       .map { _.flatMap(_.toList) }
@@ -128,10 +128,10 @@ object Market extends SioController with PlayMacroLogsImpl {
         adSearch.copy(forceFirstIds = Nil)
       }
       "producerAds" -> _adSearch
-    } else if (!adSearch.catIds.isEmpty) {
+    } else if (adSearch.catIds.nonEmpty) {
       val _adSearch = adSearch.copy(levels = AdShowLevels.LVL_MEMBERS_CATALOG :: adSearch.levels)
       "findAds" -> _adSearch
-    } else if (!adSearch.receiverIds.isEmpty) {
+    } else if (adSearch.receiverIds.nonEmpty) {
       val _adSearch = adSearch.copy(levels = AdShowLevels.LVL_START_PAGE :: adSearch.levels)
       // При поиске по категориям надо искать только если есть указанный show level.
       "findAds" -> _adSearch
