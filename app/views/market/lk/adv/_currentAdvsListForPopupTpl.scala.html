@@ -8,11 +8,11 @@
 @import util.TplDataFormatUtil._
 
 @_single_status(statusClass: String, node: MAdnNode)(content: Html) = {
-<div class="advs-statuses__status advs-statuses__@statusClass advs-statuses__status_in-popup">
-  <div class="advs-statuses__status-icon advs-statuses__status-icon_@statusClass"></div>
-  @Messages("amt.of.type." + node.adn.memberType) <strong>@node.meta.name / @node.meta.town</strong>
-  @content
-</div>
+  <div class="advs-statuses__status advs-statuses__@statusClass advs-statuses__status_in-popup">
+    <div class="advs-statuses__status-icon advs-statuses__status-icon_@statusClass"></div>
+    @Messages("amt.of.type." + node.adn.memberType) <strong>@node.meta.name / @node.meta.town</strong>
+    @content
+  </div>
 }
 
 <div class="advs-statuses advs-statuses_in-popup">

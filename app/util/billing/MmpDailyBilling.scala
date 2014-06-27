@@ -1,7 +1,5 @@
 package util.billing
 
-import java.util.Currency
-
 import models._
 import org.joda.time.{Period, DateTime, LocalDate}
 import org.joda.time.DateTimeConstants._
