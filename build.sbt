@@ -27,13 +27,13 @@ libraryDependencies ++= Seq(
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.3",  // https://github.com/mohiva/play-html-compressor
   // io.suggest stuff
-  "io.suggest" %% "util" % "1.2.0-SNAPSHOT" changing()
+  "io.suggest" %% "util" % "1.3.0-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
     exclude("org.slf4j", "log4j-over-slf4j")
     ,
-  "io.suggest" %% "util-play" % "0.6.0-SNAPSHOT"
+  "io.suggest" %% "util-play" % "2.3.1-SNAPSHOT"
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
@@ -61,6 +61,7 @@ libraryDependencies ++= Seq(
   "com.google.code.kaptcha" % "kaptcha" % "2.3" classifier "jdk15",
   // Бомжуем с синхронным драйвером из-за конфликта между postgresql-async и asynchbase в версии netty. Зато anorm работает.
   "org.postgresql" % "postgresql" % "9.3-1100-jdbc41"
+  // webjars
 )
 
 play.Play.projectSettings
@@ -116,6 +117,10 @@ includeFilter in (Assets, StylusKeys.stylus) := "*.styl"
 //excludeFilter in (Assets, StylusKeys.stylus) := "fonts.styl"
 
 //StylusKeys.compress in Assets := true
+
+
+// LESS
+includeFilter in (Assets, LessKeys.less) := "bootstrap.less"
 
 
 // sbt-web
