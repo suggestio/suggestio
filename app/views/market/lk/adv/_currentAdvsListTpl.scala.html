@@ -23,7 +23,8 @@
     @adv match {
       case advOk: MAdvOk => {
         @_single_status( "approved", node ) {
-          одобрил размещение. @_prettyDate(advOk.dateStatus)
+          @if(advOk.isOnline){<a href="@routes.Market.demoWebSite(node.id.get)">}одобрил размещение@if(advOk.isOnline){</a>}.
+          @_prettyDate(advOk.dateStatus)
         }
         @* dateStatus - одобрение, dateStart - начало размещения. *@
       }
