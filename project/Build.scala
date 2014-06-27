@@ -4,7 +4,6 @@ import play.Play.autoImport._
 import PlayKeys._
 import play.twirl.sbt.Import._
 import play.twirl.sbt._
-//import play.twirl.sbt.SbtTwirl
 import com.typesafe.sbt.web._
 import java.io.{PrintWriter, File}
 
@@ -51,8 +50,7 @@ object SiobixBuild extends Build {
   lazy val web21 = Project(
     id = "web21",
     base = file("web21"),
-    dependencies = Seq(util, utilPlay),
-    settings = commonSettings
+    dependencies = Seq(util, utilPlay)
   )
   .enablePlugins(play.PlayScala, SbtWeb)
 
