@@ -29,6 +29,7 @@ object MAdnNode
   with EMLogoImgStatic
   with EMAdnMMetadataStatic
   with EMNodeConfStatic
+  with EMImgGalleryStatic
   with EsModelStaticIgnore
   with MacroLogsImpl
 {
@@ -74,6 +75,7 @@ case class MAdnNode(
   var meta          : AdnMMetadata,
   var logoImgOpt    : Option[MImgInfoT] = None,   // TODO Перенести в conf.logoImg
   var conf          : NodeConf = NodeConf.DEFAULT,
+  var imgGallery    : List[String] = Nil,
   var id            : Option[String] = None
 )
   extends EsModelEmpty
@@ -83,6 +85,7 @@ case class MAdnNode(
   with EMLogoImgMut
   with EMAdnMMetadata
   with EMNodeConfMut
+  with EMImgGalleryMut
 {
   override type T = MAdnNode
 
