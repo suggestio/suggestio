@@ -25,7 +25,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.0.0")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-mocha" % "1.0.0")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-uglify" % "1.0.1")
+//addSbtPlugin("com.typesafe.sbt" % "sbt-uglify" % "1.0.1")
 
 
 // Use the Play sbt plugin for Play projects
@@ -33,11 +33,11 @@ addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.3.1")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-web" % "1.0.0")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-webdriver" % "1.0.0")
+//addSbtPlugin("com.typesafe.sbt" % "sbt-webdriver" % "1.0.0")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.0.0")
+addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.0.1")
 
 // stylus assets
-addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.1")
+addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2x-SNAPSHOT")
 
-addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "+")
+//addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "+")

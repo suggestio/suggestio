@@ -102,7 +102,7 @@ TwirlKeys.templateImports ++= Seq(
   "util.blocks.BlocksConf._"
 )
 
-net.virtualvoid.sbt.graph.Plugin.graphSettings
+//net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 routesImport ++= Seq(
   "models._",
@@ -114,7 +114,7 @@ routesImport ++= Seq(
 // Stylus
 includeFilter in (Assets, StylusKeys.stylus) := "*.styl"
 
-//excludeFilter in (Assets, StylusKeys.stylus) := "fonts.styl"
+excludeFilter in (Assets, StylusKeys.stylus) := "_*.styl"
 
 //StylusKeys.compress in Assets := true
 
@@ -124,5 +124,5 @@ includeFilter in (Assets, LessKeys.less) := "bootstrap.less"
 
 
 // sbt-web
-pipelineStages := Seq(uglify, gzip)
+//pipelineStages := Seq(gzip)
 
