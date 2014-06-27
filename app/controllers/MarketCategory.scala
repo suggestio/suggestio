@@ -75,9 +75,11 @@ object MarketCategory extends SioController with PlayMacroLogsImpl {
         NotAcceptable(addUserCatFormTpl(request.ownerId, formWithErrors, parentOpt = request.cat))
       },
       {mmcat =>
-        mmcat.ownerId = request.ownerId
-        mmcat.parentId = parentId
-        mmcat.save.map { mmcatId =>
+        val mmcat3 = mmcat.copy(
+          ownerId = request.ownerId,
+          parentId = parentId
+        )
+        mmcat3.save.map { mmcatId =>
           Redirect(routes.MarketCategory.showCatsFor(request.ownerId))
             .flashing("success" -> "Категория создана.")
         }
@@ -117,12 +119,14 @@ object MarketCategory extends SioController with PlayMacroLogsImpl {
         }
       },
       {mmcat2 =>
-        mmcat.name = mmcat2.name
-        mmcat.ymCatPtr = mmcat2.ymCatPtr
-        mmcat.position = mmcat2.position
-        mmcat.cssClass = mmcat2.cssClass
-        mmcat.includeInAll = mmcat2.includeInAll
-        mmcat.save.map { _ =>
+        val mmcat3 = mmcat.copy(
+          name = mmcat2.name,
+          ymCatPtr = mmcat2.ymCatPtr,
+          position = mmcat2.position,
+          cssClass = mmcat2.cssClass,
+          includeInAll = mmcat2.includeInAll
+        )
+        mmcat3.save.map { _ =>
           Redirect(routes.MarketCategory.showCatsFor(mmcat.ownerId))
             .flashing("success" -> "Изменения категории сохранены.")
         }
