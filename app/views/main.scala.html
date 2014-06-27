@@ -11,11 +11,11 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <link href="@routes.Assets.at("stylesheets/bootstrap.min.css")" rel="stylesheet" media="screen">
+    <link href="@routes.Assets.at("stylesheets/bootstrap.css")" rel="stylesheet" media="screen">
     @* HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries *@
     <!--[if lt IE 9]>
       <script src="@routes.Assets.at("javascripts/bootstrap/html5shiv.js")"></script>
-      <script src="@routes.Assets.at("javascripts/bootstrap/respond.min.js")"></script>
+      <script src="@routes.Assets.at("javascripts/bootstrap/respond.js")"></script>
     <![endif]-->
     
     @if(!browserCheck.isDefined) {
@@ -25,10 +25,10 @@
     }
 
     <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
-    <script src="@routes.Assets.at("javascripts/common.min.js")"></script>
+    <script src="@routes.Assets.at("javascripts/common.js")"></script>
     
     @if(withHeadCommon) {
-      <link href="@routes.Assets.at("stylesheets/main.min.css")" rel="stylesheet" media="screen">
+      <link href="@routes.Assets.at("stylesheets/main.css")" rel="stylesheet" media="screen">
       <link href="@routes.Assets.at("images/favicon.png")" rel="shortcut icon" type="image/x-icon">
     }
     

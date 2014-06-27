@@ -22,7 +22,7 @@ import play.api.Play.current
 trait IsSuperuserAbstract extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
   import LOGGER._
   
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     pwOpt match {
       case Some(pw) if pw.isSuperuser =>
@@ -45,11 +45,10 @@ trait IsSuperuserAbstract extends ActionBuilder[AbstractRequestWithPwOpt] with P
 }
 object IsSuperuser extends IsSuperuserAbstract with ExpireSession[AbstractRequestWithPwOpt]
 
-
+/** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin. */
 trait IsSuperuserAdnNodeAbstract extends ActionBuilder[AbstractRequestForAdnNode] {
   def adnId: String
-
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper.isSuperuser(pwOpt)) {
       val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
@@ -86,8 +85,7 @@ case class FeeTariffRequest[A](
 
 trait IsSuperuserFeeTariffContractAbstract extends ActionBuilder[FeeTariffRequest] {
   def tariffId: Int
-
-  override protected def invokeBlock[A](request: Request[A], block: (FeeTariffRequest[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (FeeTariffRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper.isSuperuser(pwOpt)) {
       val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
@@ -121,7 +119,7 @@ case class StatTariffRequest[A](
 
 trait IsSuperuserStatTariffContractAbstract extends ActionBuilder[StatTariffRequest] {
   def tariffId: Int
-  override protected def invokeBlock[A](request: Request[A], block: (StatTariffRequest[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (StatTariffRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper.isSuperuser(pwOpt)) {
       val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
@@ -154,7 +152,7 @@ case class ContractRequest[A](
 
 trait IsSuperuserContractAbstract extends ActionBuilder[ContractRequest] {
   def contractId: Int
-  override protected def invokeBlock[A](request: Request[A], block: (ContractRequest[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (ContractRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper.isSuperuser(pwOpt)) {
       val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)

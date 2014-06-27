@@ -10,7 +10,7 @@
 @import ctx._
 
 @headAfter = {
-	<link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/admin_index.min.css")"/>
+	<link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/admin_index.css")"/>
 }
 
 @adminBaseTpl(title=Messages("domain_admin_title"), headAfter=Some(headAfter)) {
@@ -123,12 +123,5 @@
 	<div class="admin-copyright">&copy; 2012-@now.getYear Suggest.io. @Messages("all_rights_reserved")</div>
 	</div>
 </div>
-
-
-@* жабаскрипт вынесен в отдельный файл coffeescript, оставив тут только динамические данные. *@
-<script type="text/javascript">
-
-
-</script>
 
 }

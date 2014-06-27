@@ -15,7 +15,7 @@ import util.SiowebEsUtil.client
  */
 trait IsPromoOfferAdminBase extends ActionBuilder[AbstractRequestForPromoOfferAdm] {
   def offerId: String
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForPromoOfferAdm[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (AbstractRequestForPromoOfferAdm[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     // Проверяем есть ли права на магазин. Если из глубин вернулся shopId, то да.
@@ -58,7 +58,7 @@ case class RequestForPromoOfferAdm[A](shopId:String, offerId:String, pwOpt:PwOpt
 /** Почти тоже самое, что и [[IsPromoOfferAdmin]], но внутри реквеста содержится полный оффер, к которому обращаются. */
 trait IsPromoOfferAdminFullBase extends ActionBuilder[RequestForPromoOfferAdmFull] {
   def offerId: String
-  protected def invokeBlock[A](request: Request[A], block: (RequestForPromoOfferAdmFull[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestForPromoOfferAdmFull[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     // Проверяем есть ли права на магазин. Если из глубин вернулся shopId, то да.

@@ -30,7 +30,7 @@ import IsMartAdmin._
 /** Административная операция над торговым центром. */
 trait IsMartAdminBase extends ActionBuilder[AbstractRequestForMartAdm] {
   def martId: String
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForMartAdm[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (AbstractRequestForMartAdm[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOptAdn(pwOpt, martId)
     isMartAdmin(martId, pwOpt) flatMap {
@@ -53,7 +53,7 @@ case class IsMartAdmin(martId: String)
 /** Какая-то административная операция над магазином, подразумевающая права на ТЦ. */
 trait IsMartAdminShopBase extends ActionBuilder[RequestForMartShopAdm] {
   def shopId: String
-  protected def invokeBlock[A](request: Request[A], block: (RequestForMartShopAdm[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestForMartShopAdm[A]) => Future[Result]): Future[Result] = {
     IsMartAdmin.getShopByIdCache(shopId) flatMap {
       case Some(mshop) if mshop.adn.supId.isDefined =>
         val pwOpt = PersonWrapper.getFromRequest(request)

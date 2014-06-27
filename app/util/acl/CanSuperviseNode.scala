@@ -32,7 +32,7 @@ object CanSuperviseNode {
 
 trait CanSuperviseNodeBase extends ActionBuilder[RequestForSlave] {
   def adnId: String
-  protected def invokeBlock[A](request: Request[A], block: (RequestForSlave[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestForSlave[A]) => Future[Result]): Future[Result] = {
     MAdnNodeCache.getById(adnId) flatMap {
       case Some(mslave) if mslave.adn.supId.isDefined =>
         val pwOpt = PersonWrapper.getFromRequest(request)
@@ -74,7 +74,7 @@ case class RequestForSlave[A](slaveNode: MAdnNode, supNode: MAdnNode, request: R
 /** Просматривать прямые под-узлы может просматривать тот, кто записан в supId. */
 trait CanViewSlaveBase extends ActionBuilder[RequestForSlave] {
   def adnId: String
-  override protected def invokeBlock[A](request: Request[A], block: (RequestForSlave[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestForSlave[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     MAdnNodeCache.getById(adnId) flatMap {
       case Some(mslave) if mslave.adn.supId.isDefined || PersonWrapper.isSuperuser(pwOpt) =>
@@ -105,7 +105,7 @@ case class CanViewSlave(adnId: String)
 /** Просматривать рекламу с прямых под-узлов может просматривать тот, кто записан в supId. */
 trait CanViewSlaveAdBase extends ActionBuilder[RequestForSlaveAd] {
   def adId: String
-  override protected def invokeBlock[A](request: Request[A], block: (RequestForSlaveAd[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestForSlaveAd[A]) => Future[Result]): Future[Result] = {
     MAd.getById(adId) flatMap {
       case Some(mad) =>
         val adnId = mad.producerId
@@ -145,7 +145,7 @@ case class RequestForSlaveAd[A](mad: MAd, slaveNode: MAdnNode, supNode: MAdnNode
 /** Можно ли влиять на рекламную карточку подчинённого узла? Да, если узел подчинён и если юзер -- админу узла-супервизора. */
 trait CanSuperviseSlaveAdBase extends ActionBuilder[RequestForSlaveAd] {
   def adId: String
-  protected def invokeBlock[A](request: Request[A], block: (RequestForSlaveAd[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestForSlaveAd[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     // Для экшенов модерации обычно (пока что) не требуется bill-контекста, поэтому делаем srm по-простому.
     val srmFut = SioReqMd.fromPwOpt(pwOpt)

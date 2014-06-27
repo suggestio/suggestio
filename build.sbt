@@ -1,6 +1,9 @@
-//import sbt._
-//import sbt.Process._
-//import play.Project._
+import play.Play.autoImport._
+import PlayKeys._
+import play.twirl.sbt.Import._
+import play.twirl.sbt.SbtTwirl
+import com.typesafe.sbt.web._
+
 
 organization := "io.suggest"
 
@@ -8,25 +11,29 @@ name := "sioweb21"
 
 version := "1.0-SNAPSHOT"
 
+lazy val web21 = (project in file(".")).enablePlugins(PlayScala, SbtWeb)
+
+JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
+
 scalaVersion := "2.10.4"
 
 libraryDependencies ++= Seq(
-  jdbc,
+  jdbc, 
   anorm,
   cache,      // play-2.2+
   json,       // play-2.3+
   ws,
-  "com.typesafe" %% "play-plugins-mailer" % "2.2.+",
+  "com.typesafe.play.plugins" %% "play-plugins-mailer" % "2.3.+",
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
-  "com.mohiva" %% "play-html-compressor" % "0.2.1play23-SNAPSHOT",  // https://github.com/mohiva/play-html-compressor
+  "com.mohiva" %% "play-html-compressor" % "0.3",  // https://github.com/mohiva/play-html-compressor
   // io.suggest stuff
-  "io.suggest" %% "util" % "1.2.0-SNAPSHOT" changing()
+  "io.suggest" %% "util" % "1.3.0-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
     exclude("org.slf4j", "log4j-over-slf4j")
     ,
-  "io.suggest" %% "util-play" % "0.6.0-SNAPSHOT"
+  "io.suggest" %% "util-play" % "2.3.1-SNAPSHOT"
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
@@ -54,9 +61,10 @@ libraryDependencies ++= Seq(
   "com.google.code.kaptcha" % "kaptcha" % "2.3" classifier "jdk15",
   // Бомжуем с синхронным драйвером из-за конфликта между postgresql-async и asynchbase в версии netty. Зато anorm работает.
   "org.postgresql" % "postgresql" % "9.3-1100-jdbc41"
+  // webjars
 )
 
-playScalaSettings
+play.Play.projectSettings
 
 // После импорта настроек, typesafe-репа не кешируется. Это надо бы исправить.
 resolvers ~= {
@@ -73,7 +81,7 @@ resolvers ++= Seq(
   "sonatype-groups-forge" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-groups-forge"
 )
 
-patience.assets.StylusPlugin.stylusSettings
+//patience.assets.StylusPlugin.stylusSettings
 
 
 // Добавляем задачу сжатия всех сгенеренных js/css файлов.
@@ -90,6 +98,9 @@ gzipAssets := {
   }
 }
 
+TwirlKeys.templateImports ++= Seq(
+  "util.blocks.BlocksConf._"
+)
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 
@@ -98,3 +109,20 @@ routesImport ++= Seq(
   "util.qsb._",
   "util.qsb.QSBs._"
 )
+
+
+// Stylus
+includeFilter in (Assets, StylusKeys.stylus) := "*.styl"
+
+//excludeFilter in (Assets, StylusKeys.stylus) := "fonts.styl"
+
+//StylusKeys.compress in Assets := true
+
+
+// LESS
+includeFilter in (Assets, LessKeys.less) := "bootstrap.less"
+
+
+// sbt-web
+pipelineStages := Seq(uglify, gzip)
+

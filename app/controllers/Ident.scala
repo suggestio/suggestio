@@ -18,7 +18,6 @@ import play.api.mvc.Security.username
 import play.api.i18n.{Messages, Lang}
 import SiowebEsUtil.client
 import scala.util.{Failure, Success}
-import play.api.templates.HtmlFormat
 import com.typesafe.scalalogging.slf4j.Logger
 import com.typesafe.plugin.{use, MailerPlugin}
 import util.acl.PersonWrapper.PwOpt_t
@@ -46,7 +45,6 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
     "email"    -> email,
     "password" -> passwordM
   ))
-
 
   /**
    * Юзер разлогинивается. Выпилить из сессии данные о его логине.
@@ -162,7 +160,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
       implicit val ctx = new ContextImpl
       NotFound(pwRecoverFailedTpl())
     }
-    protected def invokeBlock[A](request: Request[A], block: (RecoverPwRequest[A]) => Future[Result]): Future[Result] = {
+    override def invokeBlock[A](request: Request[A], block: (RecoverPwRequest[A]) => Future[Result]): Future[Result] = {
       lazy val logPrefix = s"CanRecoverPw($eActId): "
       bruteForceProtect flatMap { _ =>
         val pwOpt = PersonWrapper.getFromRequest(request)

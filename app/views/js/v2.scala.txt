@@ -45,7 +45,7 @@ TODO:
 sio =
   config :
     host : "http://@request.host"
-    css_href : "/assets/stylesheets/sio.v8.min.css"
+    css_href : "/assets/stylesheets/sio.v8.css"
     searchRequestDelay : 500
     search_field_dom_depth : 3
     debug_hash : 'sio_debug'

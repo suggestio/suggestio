@@ -17,7 +17,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  */
 trait CanReceiveAdvReqBase extends ActionBuilder[RequestWithAdvReq] {
   def advReqId: Int
-  override protected def invokeBlock[A](request: Request[A], block: (RequestWithAdvReq[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestWithAdvReq[A]) => Future[Result]): Future[Result] = {
     PersonWrapper.getFromRequest(request) match {
       case pwOpt @ Some(pw) =>
         val advReqOpt = DB.withConnection { implicit c =>

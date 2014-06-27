@@ -402,7 +402,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
           // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
           eAct.delete.flatMap { isDeleted =>
             val newPersonIdOptFut: Future[Option[String]] = if (!request.isAuth) {
-              MPerson(lang = lang.code).save flatMap { personId =>
+              MPerson(lang = request2lang.code).save flatMap { personId =>
                 EmailPwIdent.applyWithPw(email = eAct.email, personId=personId, password = passwordOpt.get, isVerified = true)
                   .save
                   .map { emailPwIdentId => Some(personId) }

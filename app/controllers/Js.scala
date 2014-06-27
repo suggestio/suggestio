@@ -1,12 +1,12 @@
 package controllers
 
-import _root_.util.urls_supply.SeedUrlsSupplier
+import util.urls_supply.SeedUrlsSupplier
 import util.event._
 import play.api.mvc.{Result, WebSocket}
 import play.api.data._
 import util.FormUtil._
 import util.acl._
-import _root_.util._
+import util._
 import io.suggest.util.UrlUtil
 import models._
 import play.api.Play.current
@@ -15,12 +15,11 @@ import views.txt.js._
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.JsString
 import io.suggest.event.subscriber.SnActorRefSubscriber
-import scala.Some
 import play.api.libs.json.JsObject
 import scala.concurrent.Future
 import java.util.UUID
 import play.api.libs.iteratee.Concurrent
-import play.api.templates.Txt
+import play.twirl.api.Txt
 import play.api.mvc.RequestHeader
 
 
@@ -245,7 +244,7 @@ object Js extends SioController with Logs {
 
       // Кто-то долбится на веб-сокет в обход сессии.
       case false =>
-        error(logPrefix + "Requested dkey/qi_id not in session %s. Returning error to user via websocket." format session)
+        error(logPrefix + "Requested dkey/qi_id not in session %s. Returning error to user via websocket." format request.session)
         EventUtil.wsAccessImpossbleIO("Illegial access, installation flow is not running.")
     }
   }
@@ -268,7 +267,7 @@ object Js extends SioController with Logs {
     if (isQi) {
       DomainQi.installFromSession(request.pwOpt.get.personId, onlyDkeys=List(dkey)) map { session1 =>
         // На период тестирования
-        if (session.data.size == session1.data.size) {
+        if (request.session.data.size == session1.data.size) {
           NoContent
         } else {
           Accepted withSession session1

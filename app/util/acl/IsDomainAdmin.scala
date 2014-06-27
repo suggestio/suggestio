@@ -67,7 +67,7 @@ abstract class IsDomainAdminAbstract extends ActionBuilder[AbstractRequestWithDA
 
   def hostname: String
 
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithDAuthz[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithDAuthz[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     val dkey = UrlUtil.normalizeHostname(hostname)

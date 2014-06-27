@@ -16,7 +16,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMacroLogsImpl {
   import LOGGER._
 
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val sioReqMdFut = SioReqMd.fromPwOpt(pwOpt)
     if (pwOpt.isDefined) {

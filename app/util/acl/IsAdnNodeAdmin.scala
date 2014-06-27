@@ -80,7 +80,7 @@ import IsAdnNodeAdmin.onUnauth
 /** В реквесте содержится администрируемый узел, если всё ок. */
 trait IsAdnNodeAdminBase extends ActionBuilder[AbstractRequestForAdnNode] {
   def adnId: String
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOptAdn(pwOpt, adnId)
     IsAdnNodeAdmin.isAdnNodeAdmin(adnId, pwOpt) flatMap {
@@ -110,10 +110,11 @@ case class RequestForAdnNodeAdm[A](adnNode: MAdnNode, isMyNode: Boolean, request
   extends AbstractRequestForAdnNode(request)
 
 
+/** Доступ к узлу, к которому НЕ обязательно есть права на админство. */
 trait AdnNodeAccessBase extends ActionBuilder[RequestForAdnNode] {
   def adnId: String
   def povAdnIdOpt: Option[String]
-  override protected def invokeBlock[A](request: Request[A], block: (RequestForAdnNode[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     PersonWrapper.getFromRequest(request) match {
       case pwOpt @ Some(pw) =>
         val povAdnNodeOptFut = povAdnIdOpt.fold

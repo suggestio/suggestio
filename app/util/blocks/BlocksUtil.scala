@@ -2,7 +2,6 @@ package util.blocks
 
 import play.api.data._, Forms._
 import util.FormUtil._
-import play.api.templates.{Template5, HtmlFormat}
 import models._
 import views.html.blocks.editor._
 import BlocksConf.BlockConf
@@ -14,6 +13,7 @@ import controllers.MarketAdPreview.PreviewFormDefaults
 import io.suggest.img.SioImageUtilT
 import util.img.ImgInfo4Save
 import util.FormUtil
+import play.twirl.api.{HtmlFormat, Template5}
 
 /**
  * Suggest.io

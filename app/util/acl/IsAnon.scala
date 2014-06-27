@@ -9,7 +9,7 @@ import scala.concurrent.Future
  * Description: Является ли текущий юзер НЕзалогиненным (анонимусом)?
  */
 trait IsAnonBase extends ActionBuilder[AbstractRequestWithPwOpt] {
-  override protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     pwOpt match {
       case None =>

@@ -1,6 +1,6 @@
 package util
 
-import play.api.templates._
+import play.twirl.api._
 import org.jcoffeescript
 
 /**

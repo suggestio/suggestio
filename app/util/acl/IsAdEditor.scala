@@ -43,7 +43,7 @@ trait CanEditAdBase extends ActionBuilder[RequestWithAd] {
   import LOGGER._
 
   def adId: String
-  protected def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     MAd.getById(adId) flatMap {

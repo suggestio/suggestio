@@ -30,7 +30,7 @@ object UserCatAdm {
 /** Пока нет конкретной категории, с которой работаем. */
 trait TreeUserCatAdmBase extends ActionBuilder[RequestUserCatAdm] {
   def ownerId: String
-  protected def invokeBlock[A](request: Request[A], block: (RequestUserCatAdm[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestUserCatAdm[A]) => Future[Result]): Future[Result] = {
     // TODO нужно проверить права над указанным субъектов ownerId.
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
@@ -53,7 +53,7 @@ case class TreeUserCatAdm(ownerId: String)
 /** Есть конкретная категория, с которой работаем. */
 trait UserCatAdmBase extends ActionBuilder[RequestUserCatAdm] {
   def catId: String
-  protected def invokeBlock[A](request: Request[A], block: (RequestUserCatAdm[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestUserCatAdm[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     if (PersonWrapper isSuperuser pwOpt) {
@@ -78,7 +78,7 @@ case class UserCatAdm(catId: String) extends UserCatAdmBase with ExpireSession[R
 /** Статический ActionBuilder на случай, если заведомо у юзера нет прав доступа. Такое бывает при неправильном вызове.
   * Реализован в виде класса из-за музейной редкости подобных запросов. */
 class UnauthCatAdm extends ActionBuilder[RequestUserCatAdm] {
-  protected def invokeBlock[A](request: Request[A], block: (RequestUserCatAdm[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestUserCatAdm[A]) => Future[Result]): Future[Result] = {
     IsAuth onUnauth request
   }
 }

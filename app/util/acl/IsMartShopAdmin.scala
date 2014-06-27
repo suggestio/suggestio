@@ -36,7 +36,7 @@ import IsShopAdm._
 /** В реквесте содержится магазин, если всё ок. */
 trait IsShopAdmBase extends ActionBuilder[RequestForShopAdmFull] {
   def shopId: String
-  protected def invokeBlock[A](request: Request[A], block: (RequestForShopAdmFull[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (RequestForShopAdmFull[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOptAdn(pwOpt, shopId)
     isShopAdminFull(shopId, pwOpt) flatMap {

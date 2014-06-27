@@ -6,7 +6,7 @@
 @import share._
 
 @headAfter = {
-  <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/static_about.min.css")"/>
+  <link rel="stylesheet" type="text/css" href="@routes.Assets.at("stylesheets/static_about.css")"/>
 }
 
 @main(title = Messages("s.a.about"), headAfter=Some(headAfter)) {
@@ -43,6 +43,6 @@
     </div>
   </div>
 
-  <script src="@routes.Assets.at("javascripts/about.min.js")"></script>
+  <script src="@routes.Assets.at("javascripts/about.js")"></script>
 
 }

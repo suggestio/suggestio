@@ -19,7 +19,7 @@ trait MaybeAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] {
    * @tparam A Подтип реквеста.
    * @return Фьючерс, описывающий результат.
    */
-  protected def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](request: Request[A], block: (AbstractRequestWithPwOpt[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     val srmFut = SioReqMd.fromPwOpt(pwOpt)
     srmFut flatMap { srm =>

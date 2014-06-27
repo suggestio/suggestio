@@ -80,7 +80,7 @@ object CanAdvertiseAd extends PlayMacroLogsImpl {
 trait CanAdvertiseAdBase extends ActionBuilder[RequestWithAd] {
   import CanAdvertiseAd.LOGGER._
   def adId: String
-  protected def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
+  def invokeBlock[A](request: Request[A], block: (RequestWithAd[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     MAd.getById(adId) flatMap {
       case Some(mad) =>

@@ -3,7 +3,7 @@
 ###############################
 siomart =
   config :
-    css : '/assets/stylesheets/market/showcase.min.css?v=35'
+    css : '/assets/stylesheets/market/showcase.css?v=35'
     index_action : window.siomart_index
     sm_layout_class : 'sio-mart-showcase'
     sm_trigger_class : 'sio-mart-trigger'
@@ -17,7 +17,7 @@ siomart =
     ## js : cbca_grid
     grid_js_attrs =
       type : 'text/javascript'
-      src : siomart.config.host + '/assets/javascripts/market/showcase/grid.min.js'
+      src : siomart.config.host + '/assets/javascripts/market/showcase/grid.js'
     gid_js = this.utils.ce "script", grid_js_attrs
 
     ## css : showcase.css
