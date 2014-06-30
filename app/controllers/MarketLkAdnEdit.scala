@@ -34,13 +34,12 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   /** Маркер картинки для использования в качестве логотипа. */
   private val TMP_LOGO_MARKER = "leadLogo"
 
-
   /** Маппер для метаданных. */
   private val nodeMetaM = mapping(
     "name"      -> nameM,
-    "town"      -> toStrOptM(townM),
-    "address"   -> toStrOptM(martAddressM),
-    "color"     -> toStrOptM(colorM),
+    "town"      -> townOptM,
+    "address"   -> addressOptM,
+    "color"     -> colorOptM,
     "siteUrl"   -> urlStrOptM,
     "phone"     -> phoneOptM
   )
@@ -49,7 +48,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
       name    = name,
       town    = town,
       address = address,
-      color = color,
+      color   = color,
       siteUrl = siteUrlOpt,
       phone   = phoneOpt
     )
@@ -62,9 +61,10 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
   private val nodeFormM = Form(tuple(
-    "meta" -> nodeMetaM,
-    "welcomeImgId" -> optional(ImgFormUtil.imgIdJpegM),
-    ImgFormUtil.getLogoKM("adn.rcvr.logo.invalid", marker=TMP_LOGO_MARKER)
+    "meta"          -> nodeMetaM,
+    "welcomeImgId"  -> optional(ImgFormUtil.imgIdJpegM),
+    ImgFormUtil.getLogoKM("adn.rcvr.logo.invalid", marker=TMP_LOGO_MARKER),
+    "gallery"       -> list(ImgFormUtil.imgIdJpegM)
   ))
 
 
@@ -75,8 +75,12 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
       val martLogoOpt = adnNode.logoImgOpt.map { img =>
         ImgInfo4Save(imgInfo2imgKey(img))
       }
-      val welcomeImgKey = welcomeAdOpt.flatMap { _.imgs.headOption }.map[OrigImgIdKey] { img => img._2 }
-      val formFilled = nodeFormM.fill((adnNode.meta, welcomeImgKey, martLogoOpt))
+      val welcomeImgKey = welcomeAdOpt
+        .flatMap { _.imgs.headOption }
+        .map[OrigImgIdKey] { img => img._2 }
+      val gallerryIks = adnNode.imgGallery
+        .map { OrigImgIdKey.apply }
+      val formFilled = nodeFormM.fill((adnNode.meta, welcomeImgKey, martLogoOpt, gallerryIks))
       Ok(leaderEditFormTpl(adnNode, formFilled, welcomeAdOpt))
     }
   }
@@ -95,36 +99,43 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
             .flashing("error" -> "Ошибка заполнения формы.")
         }
       },
-      {case (adnMeta2, newWelcomeImgOpt, logoImgIdOpt) =>
+      {case (adnMeta2, newWelcomeImgOpt, logoImgIdOpt, newGallery) =>
         // В фоне обновляем логотип ТЦ
         val savedLogoFut = ImgFormUtil.updateOrigImg(logoImgIdOpt, oldImgs = adnNode.logoImgOpt)
         // В фоне обновляем картинку карточки-приветствия.
         val savedWelcomeImgsFut = updateWelcodeAdFut(adnNode, newWelcomeImgOpt)
-        savedLogoFut flatMap { savedLogo =>
-          savedWelcomeImgsFut flatMap { waIdOpt =>
-            // Собираем новый экземпляр узла
-            val adnNode3 = adnNode.copy(
-              meta = adnNode.meta.copy(
-                // сохраняем метаданные
-                name    = adnMeta2.name,
-                town    = adnMeta2.town,
-                address = adnMeta2.address,
-                color   = adnMeta2.color,
-                siteUrl = adnMeta2.siteUrl,
-                phone   = adnMeta2.phone,
-                // сохраняем welcome ad id
-                welcomeAdId = waIdOpt
-              ),
-              // сохраняем логотип
-              logoImgOpt = savedLogo
-            )
-            adnNode3.save.map { _adnId =>
-              Redirect(routes.MarketLkAdn.showAdnNode(_adnId))
-                .flashing("success" -> "Изменения сохранены.")
-            }
-          }
+        for {
+          savedLogo <- savedLogoFut
+          waIdOpt   <- savedWelcomeImgsFut
+          _adnId    <- applyNodeChanges(adnNode, adnMeta2, waIdOpt, savedLogo).save
+        } yield {
+          // Собираем новый экземпляр узла
+          Redirect(routes.MarketLkAdn.showAdnNode(_adnId))
+            .flashing("success" -> "Изменения сохранены.")
         }
       }
+    )
+  }
+
+
+  /** Накатить изменения на инстанс узла, породив новый инстанс.
+    * Вынесена из editAdnNodeSubmit() для декомпозиции и для нужд for{}-синтаксиса. */
+  private def applyNodeChanges(adnNode: MAdnNode, adnMeta2: AdnMMetadata, waIdOpt: Option[String],
+                               newLogo: Option[MImgInfoT]): MAdnNode = {
+    adnNode.copy(
+      meta = adnNode.meta.copy(
+        // сохраняем метаданные
+        name    = adnMeta2.name,
+        town    = adnMeta2.town,
+        address = adnMeta2.address,
+        color   = adnMeta2.color,
+        siteUrl = adnMeta2.siteUrl,
+        phone   = adnMeta2.phone,
+        // сохраняем welcome ad id
+        welcomeAdId = waIdOpt
+      ),
+      // сохраняем логотип
+      logoImgOpt = newLogo
     )
   }
 
@@ -149,7 +160,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   }
 
 
-  /** Обновление картинки приветствия. Она хранится в полу-рекламной карточке, поэтому надо ещё
+  /** Обновление картинки и карточки приветствия. Картинка хранится в полу-рекламной карточке, поэтому надо ещё
     * обновить карточку и пересохранить её. */
   private def updateWelcodeAdFut(adnNode: MAdnNode, newWelcomeImgOpt: Option[ImgIdKey]): Future[Option[String]] = {
     getWelcomeAdOpt(adnNode) flatMap { currWelcomeAdOpt =>
