@@ -751,10 +751,10 @@ siomLinkBtnColor4 = #48ab38
   border-radius(50%)
 
 /********************************************************************************************************************/
-/* SioMarket add file button */
+/* SioMarket add/remove images buttons */
 /********************************************************************************************************************/
 
-.siom-add-file-btn
+.siom-add-image-btn
   display: inline-block
   width: 45px
   height: 45px
@@ -770,3 +770,18 @@ siomLinkBtnColor4 = #48ab38
 
   &:active
     background-position: 0 -69px
+
+.siom-remove-image-btn
+  display: block
+  width: 100%
+  height: 100%
+
+  &:hover
+    background-color: rgba(219,98,98,0.9)
+    background-image: url('/assets/images/market/lk/basket-icon_retina.png')
+    background-size: 18px 20px
+    background-repeat: no-repeat
+    background-position: center center
+
+  &:active
+    background-position: center 13px
