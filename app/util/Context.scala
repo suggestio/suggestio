@@ -73,10 +73,9 @@ trait Context {
 
   def userAgent: Option[String] = request.headers.get(HeaderNames.USER_AGENT)
 
-  def isMobile : Boolean = {
-    userAgent.exists {
-      case Context.mobileUaPattern(a) => true
-      case _ => false
+  lazy val isMobile : Boolean = {
+    userAgent.exists { x =>
+      Context.mobileUaPattern.pattern.matcher(x).find()
     }
   }
 
