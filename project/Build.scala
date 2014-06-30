@@ -9,18 +9,9 @@ import java.io.{PrintWriter, File}
 
 object SiobixBuild extends Build {
 
-  val org = "io.suggest"
-
-  val commonSettings = Project.defaultSettings ++ Seq(
-    organization := org,
-    scalaVersion := "2.10.4"
-  )
-
-
   lazy val util = Project(
     id = "util",
-    base = file("bixo/util"),
-    settings = commonSettings
+    base = file("bixo/util")
   )
 
   lazy val cascadingEs2 = {
@@ -28,23 +19,20 @@ object SiobixBuild extends Build {
     Project(
       id    = ces2,
       base  = file("bixo/" + ces2),
-      dependencies = Seq(util),
-      settings = commonSettings
+      dependencies = Seq(util)
     )
   }
 
   lazy val siobix = Project(
     id = "siobix",
     base = file("bixo"),
-    dependencies = Seq(util, cascadingEs2),
-    settings = commonSettings
+    dependencies = Seq(util, cascadingEs2)
   )
 
   lazy val utilPlay = Project(
     id = "util-play",
     base = file("util-play"),
-    dependencies = Seq(util),
-    settings = commonSettings
+    dependencies = Seq(util)
   )
 
   lazy val web21 = Project(
@@ -54,12 +42,11 @@ object SiobixBuild extends Build {
   )
   .enablePlugins(play.PlayScala, SbtWeb)
 
+
   lazy val root = Project(
     id = "root",
-    base = file("."),
-    settings = commonSettings
+    base = file(".")
   )
-  .aggregate(util, cascadingEs2, siobix, web21)
+  .aggregate(util, cascadingEs2, siobix, web21, web21)
 
-  // TODO Добавить сюда util-play?
 }
