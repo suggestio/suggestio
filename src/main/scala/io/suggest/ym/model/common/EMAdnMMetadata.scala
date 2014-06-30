@@ -19,8 +19,7 @@ import java.{util => ju}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 04.04.14 13:43
- * Description: Метаданные участников рекламной сети. Всякие малоинтересные вещи складываются тут
- * (дата создания и т.д.).
+ * Description: Метаданные узлов-участников рекламной сети: названия, адреса, даты и т.д.
  */
 
 object EMAdnMMetadataStatic {
@@ -114,7 +113,8 @@ trait EMAdnMMetadata extends EsModelT {
   var meta: AdnMMetadata
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    META_ESFN -> meta.toPlayJson :: super.writeJsonFields(acc)
+    val f = META_ESFN -> meta.toPlayJson
+    f :: super.writeJsonFields(acc)
   }
 
 }
@@ -199,7 +199,7 @@ object AdnMMetadata {
 case class AdnMMetadata(
   name          : String,
   description   : Option[String] = None,
-  dateCreated       : DateTime = DateTime.now,
+  dateCreated   : DateTime = DateTime.now,
   // перемещено из legal
   town          : Option[String] = None,
   address       : Option[String] = None,
