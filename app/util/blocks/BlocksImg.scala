@@ -36,7 +36,10 @@ object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
     // Нанооптимизация: не ворочить картинками, если нет по ним никакой инфы.
     if (needImgsThis.isDefined || oldImgsThis.isDefined) {
       // Есть картинки для обработки (старые или новые), запустить обработку.
-      val saveBgImgFut = ImgFormUtil.updateOrigImg(needImgs = needImgsThis,  oldImgs = oldImgsThis)
+      val saveBgImgFut = ImgFormUtil.updateOrigImg(
+        needImgs = needImgsThis.toSeq,
+        oldImgs  = oldImgsThis.toIterable
+      )
       for {
         savedBgImg <- saveBgImgFut
         supSavedMap <- supImgsFut

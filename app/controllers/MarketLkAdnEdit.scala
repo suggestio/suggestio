@@ -13,8 +13,6 @@ import io.suggest.ym.model.MAdnNode
 import play.api.data.Form
 import play.api.data.Forms._
 import util.FormUtil._
-import scala.util.Success
-import play.api.mvc.Result
 
 /**
  * Suggest.io
@@ -101,13 +99,22 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
       },
       {case (adnMeta2, newWelcomeImgOpt, logoImgIdOpt, newGallery) =>
         // В фоне обновляем логотип ТЦ
-        val savedLogoFut = ImgFormUtil.updateOrigImg(logoImgIdOpt, oldImgs = adnNode.logoImgOpt)
+        val savedLogoFut = ImgFormUtil.updateOrigImg(
+          needImgs = logoImgIdOpt.toSeq,
+          oldImgs  = adnNode.logoImgOpt.toIterable
+        )
+        // Запускаем апдейт галереи.
+        val galleryUpdFut = ImgFormUtil.updateOrigImgId(
+          needImgs = newGallery.map { iik => ImgInfo4Save(iik, withThumb = true) },
+          oldImgIds = adnNode.imgGallery
+        )
         // В фоне обновляем картинку карточки-приветствия.
         val savedWelcomeImgsFut = updateWelcodeAdFut(adnNode, newWelcomeImgOpt)
         for {
           savedLogo <- savedLogoFut
           waIdOpt   <- savedWelcomeImgsFut
-          _adnId    <- applyNodeChanges(adnNode, adnMeta2, waIdOpt, savedLogo).save
+          gallery   <- galleryUpdFut
+          _adnId    <- applyNodeChanges(adnNode, adnMeta2, waIdOpt, savedLogo, gallery).save
         } yield {
           // Собираем новый экземпляр узла
           Redirect(routes.MarketLkAdn.showAdnNode(_adnId))
@@ -121,7 +128,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   /** Накатить изменения на инстанс узла, породив новый инстанс.
     * Вынесена из editAdnNodeSubmit() для декомпозиции и для нужд for{}-синтаксиса. */
   private def applyNodeChanges(adnNode: MAdnNode, adnMeta2: AdnMMetadata, waIdOpt: Option[String],
-                               newLogo: Option[MImgInfoT]): MAdnNode = {
+                               newLogo: Option[MImgInfoT], newImgGallery: List[MImgInfoT]): MAdnNode = {
     adnNode.copy(
       meta = adnNode.meta.copy(
         // сохраняем метаданные
@@ -135,7 +142,8 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
         welcomeAdId = waIdOpt
       ),
       // сохраняем логотип
-      logoImgOpt = newLogo
+      logoImgOpt = newLogo,
+      imgGallery = newImgGallery.map(_.filename)
     )
   }
 
@@ -165,8 +173,8 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   private def updateWelcodeAdFut(adnNode: MAdnNode, newWelcomeImgOpt: Option[ImgIdKey]): Future[Option[String]] = {
     getWelcomeAdOpt(adnNode) flatMap { currWelcomeAdOpt =>
       ImgFormUtil.updateOrigImg(
-        needImgs = newWelcomeImgOpt.map(ImgInfo4Save(_, withThumb = false)),
-        oldImgs = currWelcomeAdOpt.flatMap(_.imgs.headOption).map(_._2)
+        needImgs = newWelcomeImgOpt.map(ImgInfo4Save(_, withThumb = false)).toSeq,
+        oldImgs = currWelcomeAdOpt.flatMap(_.imgs.headOption).map(_._2).toIterable
       ) flatMap {
         // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
         case None =>
