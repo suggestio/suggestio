@@ -185,11 +185,21 @@ CbcaCommon = () ->
 
     $blocks.height(height)
 
+
   #########################################
   ## TODO разнести по отдельным функциям ##
   #########################################
 
   self.init = () ->
+
+    $(document).on 'click', '.js-file-upload-btn', (e) ->
+      e.preventDefault()
+      $this = $ this
+      $parent = $this.parent()
+
+      $parent
+      .find 'input[type = "file"]'
+      .trigger 'click'
 
     self.setEqualHeightBlocks()
 

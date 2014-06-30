@@ -12,10 +12,20 @@
       <tr>
 
         <td class="left">
-          <label>Логотип</label>
+          <label for="logoImgInput">Логотип</label>
         </td>
 
         <td class="right">
+
+          <div class="add-file-w __preview __size-S">
+            <img src=""/>
+          </div>
+
+          <div class="add-file-w __size-S">
+            <input id="photogallery-input" type="file" class="add-file-w_input __size-S"/>
+            <a href="#" class="add-file-w_btn siom-add-file-btn js-file-upload-btn"></a>
+          </div>
+
           <div class="select-file-wrap" id="logoImgInput">
             @defining(mf("logoImgId").value) { logoImgIdOpt =>
             <div class="preview">

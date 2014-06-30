@@ -7,7 +7,11 @@
 
 
 <td class="left">
-  <label for="@elements.id">@elements.label(elements.lang)</label>
+  <label for="@elements.id">@elements.label(elements.lang)
+    @if(elements.field.constraints.exists { _._1 == "constraint.required" }) {
+      <span class="required-icon">*</span>
+    }
+  </label>
 </td>
 
 <td class="right">
