@@ -660,17 +660,13 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   // отладка email-сообщений
 
   /** Отобразить html/txt email-сообщение активации без отправки куда-либо чего-либо. Нужно для отладки. */
-  def showShopEmailActMsgHtml(shopId: String, isHtml: Boolean) = IsSuperuser.async { implicit request =>
-    for {
-      mshop <- getShopById(shopId).map(_.get)
-      mmart <- getMartById(mshop.adn.supId.get).map(_.get)
-    } yield {
-      val eAct = EmailActivation("test@test.com", id = Some("asdQE123_"))
-      if (isHtml)
-        Ok(lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct))
-      else
-        Ok(views.txt.market.lk.mart.shop.emailShopInviteTpl(mmart, mshop, eAct) : String)
-    }
+  def showEmailInviteMsg(adnId: String, isHtml: Boolean) = IsSuperuserAdnNode(adnId) { implicit request =>
+    import request.adnNode
+    val eAct = EmailActivation("test@test.com", id = Some("asdQE123_"))
+    if (isHtml)
+      Ok(views.html.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct))
+    else
+      Ok(views.txt.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct) : String)
   }
 
 

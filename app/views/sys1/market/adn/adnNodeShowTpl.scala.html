@@ -121,12 +121,10 @@
 
   <br/>
   <h3>Отладка</h3>
-  @if(adnNode.adn.memberType == AdNetMemberTypes.SHOP) {
-    Отобразить email-письмо активации:
-      <a href="@routes.SysMarket.showShopEmailActMsgHtml(adnNode.id.get, isHtml=true)">HTML</a>
-      <a href="@routes.SysMarket.showShopEmailActMsgHtml(adnNode.id.get, isHtml=false)">TXT</a>
+  Отобразить email-письмо инвайта:
+    <a href="@routes.SysMarket.showEmailInviteMsg(adnNode.id.get, isHtml=true)">HTML</a>,
+    <a href="@routes.SysMarket.showEmailInviteMsg(adnNode.id.get, isHtml=false)">TXT</a>
     <br/>
-  }
 
 }
 

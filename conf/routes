@@ -111,13 +111,6 @@ GET  /m/lk/xadvs/:adnId                  controllers.MarketAdv.showNodeAdvs(adnI
 POST /m/lk/xadvs/req/:advReqId/refuse    controllers.MarketAdv.advReqRefuseSubmit(advReqId: Int, r: Option[String] ?= None)
 POST /m/lk/xadvs/req/:advReqId/accept    controllers.MarketAdv.advReqAcceptSubmit(advReqId: Int, r: Option[String] ?= None)
 
-# Личный кабинет владельца ТЦ
-GET  /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopForm(martId)
-POST /m/lk/mart/:martId/shop/invite     controllers.MarketMartLk.inviteShopFormSubmit(martId)
-
-# личный кабинет купца-арендатора ТЦ.
-GET  /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAccept(shopId, eaId)
-POST /m/lk/s/:shopId/act/:eaId          controllers.MarketShopLk.inviteAcceptSubmit(shopId, eaId)
 # ЛК: Рекламные карточки
 POST /m/lk/ad/:adId/delete              controllers.MarketAd.deleteSubmit(adId)
 GET  /m/lk/adn/:adnId/ad/new            controllers.MarketAd.createAd(adnId)
@@ -231,7 +224,7 @@ GET  /sys/market/adn/:id/invite         controllers.SysMarket.nodeOwnerInviteFor
 POST /sys/market/adn/:id/invite         controllers.SysMarket.nodeOwnerInviteFormSubmit(id: String)
 GET  /sys/market/adn/:id/invite/email   controllers.SysMarket.showNodeOwnerEmailInvite(id, isHtml: Boolean)
 # sys.market.shop
-GET  /sys/market/shop/:id/eact          controllers.SysMarket.showShopEmailActMsgHtml(id, isHtml: Boolean)
+GET  /sys/market/shop/:id/eact          controllers.SysMarket.showEmailInviteMsg(id, isHtml: Boolean)
 GET  /sys/market/s/ad/:adId/email       controllers.SysMarket.showShopEmailAdDisableMsg(adId, isHtml: Boolean ?= true)
 # sys.market.shop.pricelist
 GET  /sys/market/spl/add/:shopId        controllers.SysMarket.splAddForm(shopId)

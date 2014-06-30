@@ -17,9 +17,6 @@ import models._
   * Пришло на смену ShowAdnNodeCtx, жившему на уровне реализаций контроллеров. */
 object AdnShowTypes extends Enumeration {
   protected abstract case class Val(amt: AdNetMemberType) extends super.Val(amt.name) {
-    /** Ссылка на создание инвайта для под-узла, если есть возможность. */
-    def inviteSubNodeCall(adnId: String): Option[Call]
-
     /** Call для доступа к поисковой выдаче для админа ЛК. */
     def nodeAdmSiteCall(adnNode: MAdnNode): Option[Call] = {
       Some( routes.Market.demoWebSite(adnNode.id.get) )
@@ -33,23 +30,18 @@ object AdnShowTypes extends Enumeration {
 
 
   val SHOP: AdnShowType = new Val(AdNetMemberTypes.SHOP) {
-    override def inviteSubNodeCall(adnId: String) = None
     override def nodeAdmSiteCall(adnNode: MAdnNode): Option[Call] = {
-      Some( routes.Market.allMyAdsSite(adnNode.id.get) )
+      val call = routes.Market.allMyAdsSite(adnNode.id.get)
+      Some(call)
     }
   }
 
-  val MART: AdnShowType = new Val(AdNetMemberTypes.MART) {
-    override def inviteSubNodeCall(adnId: String) = Some(routes.MarketMartLk.inviteShopForm(adnId))
-  }
+  val MART: AdnShowType = new Val(AdNetMemberTypes.MART) {}
 
 
-  val RESTAURANT: AdnShowType = new Val(AdNetMemberTypes.RESTAURANT) {
-    override def inviteSubNodeCall(adnId: String) = None
-  }
+  val RESTAURANT: AdnShowType = new Val(AdNetMemberTypes.RESTAURANT) {}
 
   val RESTAURANT_SUP: AdnShowType = new Val(AdNetMemberTypes.RESTAURANT_SUP) {
-    override def inviteSubNodeCall(adnId: String) = None // TODO Надо?
     override def nodeAdmSiteCall(adnNode: MAdnNode) = None
   }
 

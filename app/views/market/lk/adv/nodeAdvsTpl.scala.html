@@ -12,24 +12,6 @@
   backHref = adnNode.id.map(routes.MarketLkAdn.showAdnNode(_))
 ) {
 
-  @adnNode.adn.memberType.inviteSubNodeCall(adnNode.id.get).map { inviteCall =>
-    @market.lk.lkBlock("Управление") {
-      <table class="advertising-management">
-        <tr>
-          <td class="advertising-management_td" style="width: 200px; padding-left: 0;">
-            <span class="gray font-12">Выдавайте личный кабинет, это бесплатно и для вас и для рекламодателей.</span>
-          </td>
-          <td>
-            <div class="border-line-vertical"></div>
-          </td>
-          <td class="advertising-management_td">
-            <a class="siom-ac-btn __color-1 __size-M __ft-XM" href="@inviteCall">Выдать личный кабинет</a>
-          </td>
-        </tr>
-      </table>
-    }
-  }
-
   @market.lk.lkBlock(
     blockTitle ="На рассмотрении",
     titleSubClass = if (!advsWithAds.isEmpty) "attention" else ""
