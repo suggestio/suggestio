@@ -66,7 +66,7 @@ object MBillTariffFee extends FindByContract[MBillTariffFee] with TariffsAllEnab
 
 
 case class MBillTariffFee(
-  id              : Pk[Int] = NotAssigned,
+  id              : Option[Int] = None,
   contractId      : Int,
   var name        : String,
   ttype           : BTariffType = BTariffTypes.Fee,

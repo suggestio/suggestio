@@ -25,7 +25,7 @@ object MAdv {
   val AD_ID_PARSER = get[String]("ad_id")
 
   /** Базовый парсер для колонок таблиц adv_* для колонок, которые идут слева, т.е. появились до создания дочерних таблиц. */
-  val ADV_ROW_PARSER_1 = get[Pk[Int]]("id") ~ AD_ID_PARSER ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
+  val ADV_ROW_PARSER_1 = get[Option[Int]]("id") ~ AD_ID_PARSER ~ AMOUNT_PARSER ~ CURRENCY_CODE_PARSER ~
     get[DateTime]("date_created") ~ get[Option[Float]]("comission") ~ ADV_MODE_PARSER ~
     get[DateTime]("date_start") ~ get[DateTime]("date_end") ~ PROD_ADN_ID_PARSER ~ get[String]("rcvr_adn_id")
 
@@ -74,7 +74,7 @@ trait MAdvI { madvi =>
   def currencyCode  : String
   def comission     : Option[Float]
   def dateCreated   : DateTime
-  def id            : Pk[Int]
+  def id            : Option[Int]
   def mode          : MAdvMode
   def dateStatus    : DateTime
   def dateStart     : DateTime

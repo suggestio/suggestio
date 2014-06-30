@@ -60,7 +60,7 @@ object MBillTariffStat extends FindByContract[MBillTariffStat] with TariffsAllEn
 
 
 case class MBillTariffStat(
-  id              : Pk[Int] = NotAssigned,
+  id              : Option[Int] = None,
   contractId      : Int,
   var name        : String,
   var debitFor    : AdStatAction,

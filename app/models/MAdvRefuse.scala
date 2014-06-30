@@ -81,7 +81,7 @@ case class MAdvRefuse(
   showLevels    : Set[AdShowLevel],
   dateStatus    : DateTime = DateTime.now,
   dateCreated   : DateTime = DateTime.now,
-  id            : Pk[Int] = NotAssigned
+  id            : Option[Int] = None
 ) extends SqlModelSave[MAdvRefuse] with CurrencyCode with SqlModelDelete with MAdvI {
 
   override def mode = MAdvModes.REFUSED

@@ -17,7 +17,7 @@ object MBillTxn extends SqlModelStatic[MBillTxn] {
 
   val TABLE_NAME: String = "bill_txn"
 
-  val rowParser = get[Pk[Int]]("id") ~ get[Int]("contract_id") ~ get[Float]("amount") ~
+  val rowParser = get[Option[Int]]("id") ~ get[Int]("contract_id") ~ get[Float]("amount") ~
                   get[Option[String]]("currency") ~ get[DateTime]("date_paid") ~ get[DateTime]("date_processed") ~
                   get[String]("payment_comment") ~ get[String]("txn_uid") ~ get[Option[String]]("ad_id") ~
                   get[Option[Float]]("comission_pc") map {
@@ -77,7 +77,7 @@ case class MBillTxn(
   paymentComment  : String,
   adId            : Option[String] = None,
   comissionPc     : Option[Float] = None,
-  id              : Pk[Int] = NotAssigned
+  id              : Option[Int] = None
 ) extends CurrencyCodeOpt {
 
   /**

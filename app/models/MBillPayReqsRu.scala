@@ -30,6 +30,6 @@ case class MBillPayReqsRu(
   accountNumber: String,
   commentPrefix: Option[String] = None,
   commentSuffix: Option[String] = None,
-  id: Pk[Int] = NotAssigned
+  id: Option[Int] = None
 )
 

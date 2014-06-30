@@ -361,8 +361,8 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
         advReq,
         comission1  = Some(rcvrContract.sioComission),
         dateStatus1 = now,
-        prodTxnId   = prodTxn.id.toOption,
-        rcvrTxnId   = rcvrTxn.id.toOption,
+        prodTxnId   = prodTxn.id,
+        rcvrTxnId   = rcvrTxn.id,
         isOnline    = false,
         isPartner   = false,
         isAuto      = isAuto

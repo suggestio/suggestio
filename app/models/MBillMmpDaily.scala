@@ -16,7 +16,7 @@ object MBillMmpDaily extends FindByContract[MBillMmpDaily] {
 
   val TABLE_NAME = "bill_mmp_daily"
 
-  val rowParser = get[Pk[Int]]("id") ~ get[Int]("contract_id") ~ get[Float]("mmp_weekday") ~ get[Float]("mmp_weekend") ~
+  val rowParser = get[Option[Int]]("id") ~ get[Int]("contract_id") ~ get[Float]("mmp_weekday") ~ get[Float]("mmp_weekend") ~
     get[Float]("mmp_primetime") ~ get[String]("currency_code") ~ get[Float]("on_start_page") ~
     get[String]("weekend_cal_id") ~ get[String]("prime_cal_id") ~ get[Float]("on_rcvr_cat") map {
     case id ~ contractId ~ mmpWeekday ~ mmpWeekend ~ mmpPrimetime ~ currencyCode ~ onStartPage ~ weekendCalId ~ primeCalId ~ onRcvrCat =>
@@ -57,7 +57,7 @@ case class MBillMmpDaily(
   weekendCalId  : String,
   primeCalId    : String,
   currencyCode  : String = CurrencyCodeOpt.CURRENCY_CODE_DFLT,
-  id            : Pk[Int] = NotAssigned
+  id            : Option[Int] = None
 ) extends SqlModelSave[MBillMmpDaily] with CurrencyCode with MBillContractSel with SqlModelDelete {
 
   override def hasId = id.isDefined

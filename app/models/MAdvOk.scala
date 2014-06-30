@@ -141,7 +141,7 @@ case class MAdvOk(
   dateStatus    : DateTime = DateTime.now(),
   isOnline      : Boolean = false,
   isPartner     : Boolean = false,
-  id            : Pk[Int] = NotAssigned
+  id            : Option[Int] = None
 ) extends SqlModelSave[MAdvOk] with CurrencyCode with SqlModelDelete with MAdvI {
 
   override def mode = MAdvModes.OK

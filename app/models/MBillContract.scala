@@ -31,7 +31,7 @@ object MBillContract extends SqlModelStatic[MBillContract] {
 
   val ADN_ID_PARSER = get[String]("adn_id")
 
-  val rowParser = get[Pk[Int]]("id") ~ get[Int]("crand") ~ ADN_ID_PARSER ~ get[DateTime]("contract_date") ~
+  val rowParser = get[Option[Int]]("id") ~ get[Int]("crand") ~ ADN_ID_PARSER ~ get[DateTime]("contract_date") ~
     get[DateTime]("date_created") ~ get[Option[String]]("hidden_info") ~ get[Boolean]("is_active") ~
     get[Option[String]]("suffix") ~ get[Float]("sio_comission") map {
     case id ~ crand ~ adnId ~ contractDate ~ dateCreated ~ hiddenInfo ~ isActive ~ suffix ~ sioComission =>
@@ -179,7 +179,7 @@ case class MBillContract(
   var isActive  : Boolean = true,
   crand         : Int = rnd.nextInt(999) + 1, // от 1 до 999. Чтоб не было 0, а то перепутают с 'O'.
   var sioComission: Float = MBillContract.SIO_COMISSION_SHARE_DFLT,
-  id            : Pk[Int] = NotAssigned
+  id            : Option[Int] = None
 ) extends SqlModelSave[MBillContract] {
 
   def hasId: Boolean = id.isDefined

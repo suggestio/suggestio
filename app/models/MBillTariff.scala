@@ -19,7 +19,7 @@ object MBillTariff {
 
   /** Базовый парсер ряда без унаследованных полей. */
   val BASE_ROW_PARSER = {
-    get[Pk[Int]]("id") ~ get[Int]("contract_id") ~ get[String]("name") ~ ttypeP ~
+    get[Option[Int]]("id") ~ get[Int]("contract_id") ~ get[String]("name") ~ ttypeP ~
       get[Boolean]("is_enabled") ~ get[DateTime]("date_first") ~ get[DateTime]("date_created") ~
       get[Option[DateTime]]("date_modified") ~ get[Option[DateTime]]("date_last") ~
       get[DateTime]("date_status") ~ get[Int]("generation") ~ get[Int]("debit_count")
@@ -87,7 +87,7 @@ trait MBillTariff extends MBillContractSel {
   def dateStatus  : DateTime
   def dateModified: Option[DateTime]
   def dateLast    : Option[DateTime]
-  def id          : Pk[Int]
+  def id          : Option[Int]
   def generation  : Int
   def debitCount  : Int
 }

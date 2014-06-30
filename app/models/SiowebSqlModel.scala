@@ -121,7 +121,7 @@ trait SqlModelStatic[T] extends SqlModelStaticMinimal[T] {
 
 
 trait SqlModelDelete {
-  def id: Pk[Int]
+  def id: Option[Int]
   def companion: SqlModelStatic[_]
 
   def delete(implicit c: Connection) = {

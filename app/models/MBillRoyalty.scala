@@ -17,7 +17,7 @@ object MBillRoyalty extends FindByContract[MBillRoyalty] {
   override val TABLE_NAME = "bill_royalty"
 
   override val rowParser: RowParser[MBillRoyalty] = {
-    get[Pk[Int]]("id") ~ get[Int]("contract_id") ~ get[Float]("royalty") ~ get[Boolean]("is_internal") ~ get[String]("to_adn_id") map {
+    get[Option[Int]]("id") ~ get[Int]("contract_id") ~ get[Float]("royalty") ~ get[Boolean]("is_internal") ~ get[String]("to_adn_id") map {
       case id ~ contractId ~ royalty ~ isInternal ~ toAdnId =>
         MBillRoyalty(
           id = id,
@@ -40,7 +40,7 @@ case class MBillRoyalty(
   royalty: Float,
   isInternal: Boolean,
   toAdnId: String,
-  id: Pk[Int] = NotAssigned
+  id: Option[Int] = None
 ) extends SqlModelSave[MBillRoyalty] with MBillContractSel {
 
   override def hasId = id.isDefined
