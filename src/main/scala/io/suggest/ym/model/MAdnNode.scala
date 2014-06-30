@@ -91,6 +91,8 @@ case class MAdnNode(
 
   @JsonIgnore
   override def companion = MAdnNode
+
+  // TODO Надо бы включить версионизацию, т.к. save() вызывается из ~5-7 разных контроллеров.
   override def versionOpt = None
 
   /** Перед сохранением можно проверять состояние экземпляра (полей экземпляра). */

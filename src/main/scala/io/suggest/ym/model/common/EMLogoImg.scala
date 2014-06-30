@@ -17,7 +17,9 @@ object EMLogoImg {
   def esMappingField = FieldObject(LOGO_IMG_ESFN, enabled = false, properties = Nil)
 }
 
+
 import EMLogoImg._
+
 
 trait EMLogoImgStatic extends EsModelStaticT {
   override type T <: EMLogoImgMut
@@ -32,6 +34,7 @@ trait EMLogoImgStatic extends EsModelStaticT {
     }
   }
 }
+
 
 trait EMLogoImgI extends EsModelT {
   override type T <: EMLogoImgI

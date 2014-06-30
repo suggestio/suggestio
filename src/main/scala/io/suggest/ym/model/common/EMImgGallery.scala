@@ -20,7 +20,9 @@ object EMImgGallery {
 
 }
 
+
 import EMImgGallery._
+
 
 trait EMImgGalleryStatic extends EsModelStaticT {
   override type T <: EMImgGalleryMut

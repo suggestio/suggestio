@@ -1,18 +1,19 @@
 package io.suggest.ym.model.common
 
+import io.suggest.model.EsModel.FieldsJsonAcc
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.index.query.QueryBuilders
 import org.joda.time.DateTime
-import io.suggest.model.{EsModelT, EsModelStaticT}
+import io.suggest.model.{EsModel, EsModelT, EsModelStaticT}
 import io.suggest.util.JacksonWrapper
-import io.suggest.model.EsModel._
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.util.SioEsUtil._, FieldIndexingVariants.FieldIndexingVariant
 import play.api.libs.json._
 import scala.collection.JavaConversions._
 import scala.concurrent.{Future, ExecutionContext}
+import java.{util => ju}
 
 /**
  * Suggest.io
@@ -23,15 +24,11 @@ import scala.concurrent.{Future, ExecutionContext}
  */
 
 object EMAdnMMetadataStatic {
-  /** Название поля с объектом метаданных. */
-  val FLOOR_ESFN = "floor"
-  val SECTION_ESFN = "section"
 
-  val COLOR_ESFN = "color"
-  val WELCOME_AD_ID = "welcomeAdId"
+  val META_ESFN         = "meta"
 
-  def META_FLOOR_ESFN     = META_ESFN + "." + FLOOR_ESFN
-  def META_WELCOME_AD_ID_ESFN  = META_ESFN + "." + WELCOME_AD_ID
+  def META_FLOOR_ESFN           = META_ESFN + "." + AdnMMetadata.FLOOR_ESFN
+  def META_WELCOME_AD_ID_ESFN   = META_ESFN + "." + AdnMMetadata.WELCOME_AD_ID
 
   /**
    * Собрать указанные значения строковых полей в аккамулятор-множество.
@@ -70,6 +67,7 @@ object EMAdnMMetadataStatic {
       }
     }
   }
+
 }
 
 import EMAdnMMetadataStatic._
@@ -79,24 +77,9 @@ trait EMAdnMMetadataStatic extends EsModelStaticT {
 
   override type T <: EMAdnMMetadata
 
-  private def fs(fn: String, iia: Boolean = true, index: FieldIndexingVariant = FieldIndexingVariants.no) = {
-    FieldString(fn, include_in_all = iia, index = FieldIndexingVariants.no)
-  }
-
   abstract override def generateMappingProps: List[DocField] = {
-    FieldObject(META_ESFN, enabled = true, properties = Seq(
-      FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
-      // перемещено из legal
-      fs(TOWN_ESFN, iia = true),
-      fs(ADDRESS_ESFN, iia = true),
-      fs(PHONE_ESFN, iia = true),
-      fs(FLOOR_ESFN, iia = true, index = FieldIndexingVariants.not_analyzed),   // Внезапно, вдруг кто-то захочет найти все магазины на первом этаже.
-      fs(SECTION_ESFN, iia = true),
-      fs(SITE_URL_ESFN),
-      // перемещено из visual
-      FieldString(COLOR_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldString(WELCOME_AD_ID, index = FieldIndexingVariants.no, include_in_all = false)
-    )) :: super.generateMappingProps
+    val f = FieldObject(META_ESFN, enabled = true, properties = AdnMMetadata.generateMappingProps)
+    f :: super.generateMappingProps
   }
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
@@ -134,11 +117,68 @@ trait EMAdnMMetadata extends EsModelT {
     META_ESFN -> meta.toPlayJson :: super.writeJsonFields(acc)
   }
 
-  /** Загрузка новых значений *пользовательских* полей из указанного экземпляра такого же класса.
-    * Полезно при edit form sumbit после накатывания маппинга формы на реквест. */
-  override def loadUserFieldsFrom(other: T) {
-    super.loadUserFieldsFrom(other)
-    meta.loadUserFieldsFrom(other.meta)
+}
+
+
+object AdnMMetadata {
+
+  val NAME_ESFN               = "name"
+  val TOWN_ESFN               = "town"
+  val ADDRESS_ESFN            = "address"
+  val DATE_CREATED_ESFN       = "dateCreated"
+  val PHONE_ESFN              = "phone"
+  val SITE_URL_ESFN           = "siteUrl"
+  val DESCRIPTION_ESFN        = "description"
+  val AUDIENCE_DESCR_ESFN     = "audDescr"
+  val HUMAN_TRAFFIC_AVG_ESFN  = "htAvg"
+  val COLOR_ESFN              = "color"
+  val WELCOME_AD_ID           = "welcomeAdId"
+  val FLOOR_ESFN              = "floor"
+  val SECTION_ESFN            = "section"
+
+
+  private def fieldString(fn: String, iia: Boolean = true, index: FieldIndexingVariant = FieldIndexingVariants.no) = {
+    FieldString(fn, include_in_all = iia, index = FieldIndexingVariants.no)
+  }
+
+  def generateMappingProps: List[DocField] = List(
+    fieldString(NAME_ESFN, iia = true),
+    fieldString(DESCRIPTION_ESFN, iia = true),
+    FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
+    // legal
+    fieldString(TOWN_ESFN, iia = true),
+    fieldString(ADDRESS_ESFN, iia = true),
+    fieldString(PHONE_ESFN, iia = true),
+    fieldString(FLOOR_ESFN, iia = true, index = FieldIndexingVariants.not_analyzed),   // Внезапно, вдруг кто-то захочет найти все магазины на первом этаже.
+    fieldString(SECTION_ESFN, iia = true),
+    fieldString(SITE_URL_ESFN),
+    // Рекламные характеристики узла.
+    fieldString(AUDIENCE_DESCR_ESFN),
+    FieldNumber(HUMAN_TRAFFIC_AVG_ESFN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.analyzed, include_in_all = false),
+    // перемещено из visual
+    FieldString(COLOR_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
+    FieldString(WELCOME_AD_ID, index = FieldIndexingVariants.no, include_in_all = false)
+  )
+
+  /** Десериализация сериализованного экземпляра класса AdnMMetadata. */
+  val deserialize: PartialFunction[Any, AdnMMetadata] = {
+    case jmap: ju.Map[_,_] =>
+      import EsModel.stringParser
+      AdnMMetadata(
+        name        = EsModel.stringParser(jmap get NAME_ESFN),
+        description = Option(jmap get DESCRIPTION_ESFN) map stringParser,
+        dateCreated = EsModel.dateTimeParser(jmap get DATE_CREATED_ESFN),
+        town        = Option(jmap get TOWN_ESFN) map stringParser,
+        address     = Option(jmap get ADDRESS_ESFN) map stringParser,
+        phone       = Option(jmap get PHONE_ESFN) map stringParser,
+        floor       = Option(jmap get FLOOR_ESFN) map stringParser,
+        section     = Option(jmap get SECTION_ESFN) map stringParser,
+        siteUrl     = Option(jmap get SITE_URL_ESFN) map stringParser,
+        audienceDescr = Option(jmap get SITE_URL_ESFN) map stringParser,
+        humanTrafficAvg = Option(jmap get HUMAN_TRAFFIC_AVG_ESFN) map EsModel.intParser,
+        color       = Option(jmap get COLOR_ESFN) map stringParser,
+        welcomeAdId = Option(jmap get WELCOME_AD_ID) map stringParser
+      )
   }
 }
 
@@ -157,43 +197,31 @@ trait EMAdnMMetadata extends EsModelT {
  * @param welcomeAdId id карточки приветствия в [[io.suggest.ym.model.MWelcomeAd]].
  */
 case class AdnMMetadata(
-  var name          : String,
-  var description   : Option[String] = None,
+  name          : String,
+  description   : Option[String] = None,
   dateCreated       : DateTime = DateTime.now,
   // перемещено из legal
-  var town          : Option[String] = None,
-  var address       : Option[String] = None,
-  var phone         : Option[String] = None,
-  var floor         : Option[String] = None,
-  var section       : Option[String] = None,
-  var siteUrl       : Option[String] = None,
+  town          : Option[String] = None,
+  address       : Option[String] = None,
+  phone         : Option[String] = None,
+  floor         : Option[String] = None,
+  section       : Option[String] = None,
+  siteUrl       : Option[String] = None,
+  // 2014.06.30: Рекламные характеристики узла-producer'а.
+  audienceDescr : Option[String] = None,
+  humanTrafficAvg: Option[Int] = None,
   // перемещено из visual
-  var color         : Option[String] = None,
-  var welcomeAdId   : Option[String] = None   // TODO Перенести в поле MAdnNode.conf.welcomeAdId
+  color         : Option[String] = None,
+  welcomeAdId   : Option[String] = None   // TODO Перенести в поле MAdnNode.conf.welcomeAdId
 ) {
-
-  /** Загрузить строки из другого объекта метаданных. */
-  @JsonIgnore
-  def loadUserFieldsFrom(other: AdnMMetadata) {
-    if (other != null) {
-      name = other.name
-      description = other.description
-      // перемещено из legal
-      town = other.town
-      address = other.address
-      phone = other.phone
-      floor = other.floor
-      section = other.section
-      siteUrl = other.siteUrl
-    }
-  }
+  import AdnMMetadata._
 
   /** Статически-типизированный json-генератор. */
   @JsonIgnore
   def toPlayJson: JsObject = {
     var acc0: FieldsJsonAcc = List(
       NAME_ESFN -> JsString(name),
-      DATE_CREATED_ESFN -> date2JsStr(dateCreated)
+      DATE_CREATED_ESFN -> EsModel.date2JsStr(dateCreated)
     )
     if (description.isDefined)
       acc0 ::= DESCRIPTION_ESFN -> JsString(description.get)
@@ -209,6 +237,10 @@ case class AdnMMetadata(
       acc0 ::= SECTION_ESFN -> JsString(section.get)
     if (siteUrl.isDefined)
       acc0 ::= SITE_URL_ESFN -> JsString(siteUrl.get)
+    if (audienceDescr.isDefined)
+      acc0 ::= AUDIENCE_DESCR_ESFN -> JsString(audienceDescr.get)
+    if (humanTrafficAvg.isDefined)
+      acc0 ::= HUMAN_TRAFFIC_AVG_ESFN -> JsNumber(humanTrafficAvg.get)
     if (color.isDefined)
       acc0 ::= COLOR_ESFN -> JsString(color.get)
     if (welcomeAdId.isDefined)

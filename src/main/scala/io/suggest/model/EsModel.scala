@@ -739,10 +739,6 @@ trait EsModelMinimalT {
     req
   }
 
-  /** Загрузка новых значений *пользовательских* полей из указанного экземпляра такого же класса.
-    * Полезно при edit form sumbit после накатывания маппинга формы на реквест. */
-  def loadUserFieldsFrom(other: T) {}
-
   /** Перед сохранением можно проверять состояние экземпляра. */
   @JsonIgnore
   def isFieldsValid: Boolean = true
