@@ -2,45 +2,13 @@
 
 @* Отображение одного реквеста. *@
 @import ctx._
-@import stuff._
-
-@yn(b: Boolean) = {
-  @(if(b) Messages("Yes") else Messages("No"))
-}
+@import stuff.{_yesNoTpl => yn, _deleteSmthFormBtnTpl}
 
 @irBase(title = mir.meta.company) {
 
   <h3>@Messages("mir.type." + mir.reqType)</h3>
 
-  @* Рендерим раздел метаданных. *@
-  <p>Компания: @mir.meta.company</p>
-  <p>Адрес:</p>
-  <pre>@mir.meta.address</pre>
-  <p>Офисный телефон: @mir.meta.officePhone</p>
-  <p>Email: <a href="mailto:@mir.meta.email">@mir.meta.email</a></p>
-  @mir.meta.audienceDescr.map { aud =>
-    <p>Описание аудитории: @aud</p>
-  }
-  @mir.meta.humanTraffic.map { ht =>
-    <p>Людской траффик: @ht</p>
-  }
-  @mir.meta.siteUrl.map { siteUrl =>
-    <p>Ссылка на сайт: <a href="@siteUrl">@siteUrl</a></p>
-  }
-  @mir.meta.info.map { info =>
-    <p>Информация: </p>
-    <pre>@info</pre>
-  }
-  @mir.meta.floor.map { floor =>
-    <p>Этаж: @floor</p>
-  }
-  @mir.meta.section.map { section =>
-    <p>Секция: @section</p>
-  }
-  @mir.meta.payReqs.map { payReqs =>
-    <p>Реквизиты платежа:</p>
-    <pre>@payReqs</pre>
-  }
+  @* TODO Отрендерить тут данные по узлу/компании. *@
 
   @* Ответы на вопросы по поводу wi-fi, если есть. *@
   @mir.joinAnswers.map { ja =>

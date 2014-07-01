@@ -78,83 +78,123 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         "address"         -> addressM,
         "siteUrl"         -> urlStrOptM,
         "phone"           -> phoneM,
-        "payReqs"         -> optional(text(maxLength = 2048)),
+        "payReqs"         -> optional(text(maxLength = 2048)),  // TODO Парсить и проверять
         "email"           -> email,
         CAPTCHA_ID_FN     -> Captcha.captchaIdM,
         CAPTCHA_TYPED_FN  -> Captcha.captchaTypedM
       )
       {(companyName, audienceDescr, humanTrafficAvg, address, siteUrl, phone, payReqs, email1, _, _) =>
-        val company = MCompany(
-          meta = MCompanyMeta(name = companyName, officePhones = List(phone))
-        )
-        val node = MAdnNode(
-          companyId = "",
-          meta = AdnMMetadata(
-            name = companyName,
-            address = Some(address),
-            siteUrl = siteUrl,
-            humanTrafficAvg = Some(humanTrafficAvg),
-            audienceDescr = Option(audienceDescr)
-          ),
-          personIds = Set.empty,
-          adn = AdNetMemberTypes.MART.getAdnInfoDflt
-        )
-        val eact = EmailActivation(email1)
-        val mbc = MBillContract(adnId = "", contractDate = DateTime.now, suffix = Option(MmpDailyBilling.CONTRACT_SUFFIX_DFLT), isActive = true)
-        val mbb = MBillBalance(adnId = "", amount = 0F)
-        // TODO Использовать формулу для рассчёта значений тарифов на основе человеч.трафика
-        // TODO Использовать конфиг для хранения дефолтовых значений.
-        val mmp = MBillMmpDaily(
-          contractId = -1,
-          mmpWeekday = 10F,
-          mmpWeekend = 15F,
-          mmpPrimetime = 20F,
-          onRcvrCat = 2.0F,
-          onStartPage = 4.0F,
-          weekendCalId = "",    // TODO
-          primeCalId = ""       // TODO
-        )
-        MInviteRequest(
-          reqType = InviteReqTypes.Wifi,
-          company = Left(company),
-          adnNode = Left(node),
-          contract = Left(mbc),
-          mmp = Some(Left(mmp)),
-          balance = Left(mbb),
-          emailAct = Left(eact),
-          payReqs = None // TODO Нужно отмаппить платёжные атрибуты
-        )
+        applyForm(companyName = companyName, audienceDescr = Some(audienceDescr),
+          humanTrafficAvg = Some(humanTrafficAvg), address = address, siteUrl = siteUrl, phone = phone,
+          payReqs = payReqs, email1 = email1, anmt = AdNetMemberTypes.MART, withMmp = true,
+          reqType = InviteReqTypes.Wifi)
       }
       {mir =>
         // unapply() вызывается только когда всё в Left, т.е. при ошибка заполнения форм.
-        val companyName: String = mir.company
-          .left.map(_.meta.name)
-          .left.getOrElse { mir.adnNode.left.map(_.meta.name).left getOrElse "" }
-        val audienceDescr: String = mir.adnNode
-          .left.map(_.meta.audienceDescr)
-          .left.getOrElse(None)
-          .getOrElse("")
-        val humanTraffic: Int = mir.adnNode
-          .left.map(_.meta.humanTrafficAvg)
-          .left.getOrElse(None)
-          .getOrElse(0)
-        val address: String = mir.adnNode
-          .left.map(_.meta.address)
-          .left.getOrElse(None)
-          .getOrElse("")
-        val siteUrl: Option[String] = mir.adnNode
-          .left.map(_.meta.siteUrl)
-          .getOrElse(None)
-        val officePhone: String = mir.company
-          .left.map(_.meta.officePhones.headOption)
-          .getOrElse(None).getOrElse("")
-        val payReqs: Option[String] = mir.payReqs
-          .flatMap { _.left.map(_.toString).fold(Some.apply, { _ => None }) }
-        val email1: String = mir.emailAct
-          .left.map(_.email)
-          .left.getOrElse("")
+        val companyName = unapplyCompanyName(mir)
+        val audienceDescr = unapplyAudDescr(mir)
+        val humanTraffic = unapplyHumanTraffic(mir)
+        val address = unapplyAddress(mir)
+        val siteUrl = unapplySiteUrl(mir)
+        val officePhone = unapplyOfficePhone(mir)
+        val payReqs = unapplyPayReqs(mir)
+        val email1 = unapplyEmail(mir)
         Some((companyName, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, email1, "", ""))
       }
+    )
+  }
+
+  private def unapplyCompanyName(mir: MInviteRequest): String = {
+    mir.company
+      .left.map(_.meta.name)
+      .left.getOrElse { mir.adnNode.left.map(_.meta.name).left getOrElse "" }
+  }
+  private def unapplyAudDescr(mir: MInviteRequest): String = {
+    mir.adnNode
+      .left.map(_.meta.audienceDescr)
+      .left.getOrElse(None)
+      .getOrElse("")
+  }
+  private def unapplyHumanTraffic(mir: MInviteRequest): Int = {
+    mir.adnNode
+      .left.map(_.meta.humanTrafficAvg)
+      .left.getOrElse(None)
+      .getOrElse(0)
+  }
+  private def unapplyAddress(mir: MInviteRequest): String = {
+    mir.adnNode
+      .left.map(_.meta.address)
+      .left.getOrElse(None)
+      .getOrElse("")
+  }
+  private def unapplySiteUrl(mir: MInviteRequest): Option[String] = {
+    mir.adnNode
+      .left.map(_.meta.siteUrl)
+      .left.getOrElse(None)
+  }
+  private def unapplyOfficePhone(mir: MInviteRequest): String = {
+    mir.company
+      .left.map(_.meta.officePhones.headOption)
+      .left.getOrElse(None)
+      .getOrElse("")
+  }
+  private def unapplyPayReqs(mir: MInviteRequest): Option[String] = {
+    mir.payReqs
+      .flatMap { _.left.map(_.toString).fold(Some.apply, { _ => None }) }
+  }
+  private def unapplyEmail(mir: MInviteRequest): String = {
+    mir.emailAct
+      .left.map(_.email)
+      .left.getOrElse("")
+  }
+
+  private def applyForm(companyName: String, audienceDescr: Option[String] = None, humanTrafficAvg: Option[Int] = None,
+    address: String, siteUrl: Option[String], phone: String, payReqs: Option[String] = None, email1: String,
+    anmt: AdNetMemberType, withMmp: Boolean, reqType: InviteReqType): MInviteRequest = {
+    val company = MCompany(
+      meta = MCompanyMeta(name = companyName, officePhones = List(phone))
+    )
+    val node = MAdnNode(
+      companyId = "",
+      meta = AdnMMetadata(
+        name            = companyName,
+        address         = Option(address),
+        siteUrl         = siteUrl,
+        humanTrafficAvg = humanTrafficAvg,
+        audienceDescr   = audienceDescr
+      ),
+      personIds = Set.empty,
+      adn = anmt.getAdnInfoDflt
+    )
+    val eact = EmailActivation(email1)
+    val mbc = MBillContract(adnId = "", contractDate = DateTime.now, suffix = Option(MmpDailyBilling.CONTRACT_SUFFIX_DFLT), isActive = true)
+    val mbb = MBillBalance(adnId = "", amount = 0F)
+    val mmp: Option[Either[MBillMmpDaily, Int]] = if (withMmp) {
+      // TODO Использовать формулу для рассчёта значений тарифов на основе человеч.трафика
+      // TODO Использовать конфиг для хранения дефолтовых значений.
+      val mmp = MBillMmpDaily(
+        contractId = -1,
+        mmpWeekday = 10F,
+        mmpWeekend = 15F,
+        mmpPrimetime = 20F,
+        onRcvrCat = 2.0F,
+        onStartPage = 4.0F,
+        weekendCalId = "", // TODO
+        primeCalId = "" // TODO
+      )
+      Some(Left(mmp))
+    } else {
+      None
+    }
+    MInviteRequest(
+      reqType   = InviteReqTypes.Wifi,
+      company   = Left(company),
+      adnNode   = Left(node),
+      contract  = Left(mbc),
+      mmp       = mmp,
+      balance   = Left(mbb),
+      emailAct  = Left(eact),
+      payReqs   = None // TODO Нужно сохранить сюда платёжные атрибуты
     )
   }
 
@@ -172,9 +212,11 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         debug("joinFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(wifiJoinFormTpl(smja, formWithErrors))
       },
-      {mirMeta =>
-        val mir = MInviteRequest(reqType = InviteReqTypes.Wifi, meta = mirMeta, joinAnswers = Some(smja))
-        mir.save.map { irId =>
+      {mir =>
+        val mir2 = mir.copy(
+          joinAnswers = Some(smja)
+        )
+        mir2.save.map { irId =>
           sendEmailNewIR(irId, mir)
           rmCaptcha(formBinded, mirSavedRdr(irId))
         }
@@ -194,29 +236,31 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
   }
 
 
-  private val advJoinFormM: Form[MirMeta] = {
+  /** Подключение в качестве рекламного агента, источника рекламы. */
+  private val advJoinFormM: Form[MInviteRequest] = {
     Form(
       mapping(
         "company"   -> companyNameM,
         //"info"      -> text2048M.transform[Option[String]](Option(_).filter(!_.isEmpty), _ getOrElse ""),
         "address"   -> addressM,
-        "floor"     -> floorOptM,
-        "section"   -> sectionOptM,
         "siteUrl"   -> urlStrOptM,
         "phone"     -> phoneM,
         "email"     -> email,
         CAPTCHA_ID_FN    -> Captcha.captchaIdM,
         CAPTCHA_TYPED_FN -> Captcha.captchaTypedM
       )
-      {(company, address, floor, section, siteUrl, phone, email1, _, _) =>
-        MirMeta(
-          company = company, address = address, floor = floor, section = section,
-          siteUrl = siteUrl, officePhone = phone, email = email1
-        )
+      {(companyName, address, siteUrl, phone, email1, _, _) =>
+        applyForm(companyName = companyName, address = address, siteUrl = siteUrl,
+          phone = phone, email1 = email1, anmt = AdNetMemberTypes.SHOP, withMmp = false,
+          reqType = InviteReqTypes.Adv)
       }
-      {mirMeta =>
-        import mirMeta._
-        Some((company, address, floor, section, siteUrl, officePhone, mirMeta.email, "", ""))
+      {mir =>
+        val companyName = unapplyCompanyName(mir)
+        val address = unapplyAddress(mir)
+        val siteUrl = unapplySiteUrl(mir)
+        val officePhone = unapplyOfficePhone(mir)
+        val email1 = unapplyEmail(mir)
+        Some((companyName, address, siteUrl, officePhone, email1, "", ""))
       }
     )
   }
@@ -239,8 +283,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         debug("joinAdvRequestSubmit(): Form bind failed:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(joinAdvTpl(formWithErrors))
       },
-      {mirMeta =>
-        val mir = MInviteRequest(reqType = InviteReqTypes.Adv, meta = mirMeta)
+      {mir =>
         mir.save.map { irId =>
           sendEmailNewIR(irId, mir)
           rmCaptcha(formBinded, mirSavedRdr(irId))

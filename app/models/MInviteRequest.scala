@@ -118,7 +118,7 @@ object MInviteRequest extends EsModelStaticT with PlayMacroLogsImpl {
   def deserializeEsModel[X](companion: EsModelStaticT { type T = X }, jmap: ju.Map[_,_]): Either[X, String] = {
     jmap.get(ID_ESFN) match {
       case null =>
-        val docId = Option(jmap get "_id") map stringParser
+        val docId = Option(jmap get "id") map stringParser
         val r = companion.deserializeOne(docId, jmap.asInstanceOf[ju.Map[String, AnyRef]], version = -1)
         Left(r)
       case idRaw =>
