@@ -28,7 +28,7 @@
         @companies.map { _companies =>
           <td>
             @_companies.get(adnNode.companyId).map { mc =>
-              <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a>
+              <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.meta.name</a>
             }
           </td>
         }

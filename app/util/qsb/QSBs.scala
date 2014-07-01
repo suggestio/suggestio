@@ -26,7 +26,7 @@ import QsbUtil._
 
 object QSBs {
 
-  private def companyNameSuf = ".name"
+  private def companyNameSuf = ".meta.name"
 
   /** qsb для MCompany. */
   implicit def mcompanyQSB(implicit strBinder: QueryStringBindable[String]) = {
@@ -36,13 +36,13 @@ object QSBs {
           maybeCompanyName <- strBinder.bind(key + companyNameSuf, params)
         } yield {
           maybeCompanyName.right.map { companyName =>
-            MCompany(name = companyName)
+            MCompany(meta = MCompanyMeta(name = companyName))
           }
         }
       }
 
       override def unbind(key: String, value: MCompany): String = {
-        strBinder.unbind(key + companyNameSuf, value.name)
+        strBinder.unbind(key + companyNameSuf, value.meta.name)
       }
     }
   }

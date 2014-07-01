@@ -4,7 +4,7 @@ import io.suggest.util.MacroLogsImpl
 import org.joda.time.DateTime
 import play.api.db.DB
 import play.twirl.api.HtmlFormat
-import util.acl.{AbstractRequestForAdnNode, AbstractRequestWithPwOpt, IsSuperuserAdnNode, IsSuperuser}
+import util.acl._
 import models._
 import util.qsb.AdSearch
 import views.html.sys1.market._
@@ -32,10 +32,26 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
   import LOGGER._
 
+  /** Маппер для метаданных компании. */
+  private val companyMetaM = {
+    mapping(
+      "name" -> companyNameM
+    )
+    { name => MCompanyMeta.apply(name) }
+    { meta => Some(meta.name) }
+  }
+
+
   /** Маппинг для формы добавления/редактирования компании. */
-  val companyFormM = Form(
-    "name" -> companyNameM
-  )
+  private val companyFormM = {
+    val m = mapping(
+      "meta" -> companyMetaM
+    )
+    { meta => MCompany(meta = meta) }
+    { mc   => Some(mc.meta) }
+    Form(m)
+  }
+
 
   /** Индексная страница продажной части. Тут ссылки на дальнейшие страницы. */
   def index = IsSuperuser { implicit request =>
@@ -52,7 +68,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
   /** Отрендерить страницу с формой добавления новой компании. */
   def companyAddForm(c: Option[MCompany]) = IsSuperuser { implicit request =>
-    val form = c.fold(companyFormM) { mc => companyFormM fill mc.name }
+    val form = c.fold(companyFormM) { mc => companyFormM fill mc }
     Ok(company.companyAddFormTpl(form))
   }
 
@@ -60,10 +76,11 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   def companyAddFormSubmit = IsSuperuser.async { implicit request =>
     companyFormM.bindFromRequest.fold(
       {formWithErrors =>
+        debug(s"companyAddFormSubmit(): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
         NotAcceptable(company.companyAddFormTpl(formWithErrors))
       },
-      {name =>
-        MCompany(name).save.map { companyId =>
+      {mc =>
+        mc.save.map { companyId =>
           Redirect(routes.SysMarket.companyShow(companyId))
         }
       }
@@ -73,50 +90,41 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   /** Отобразить информацию по указанной компании.
     * @param companyId Числовой id компании.
     */
-  def companyShow(companyId: String) = IsSuperuser.async { implicit request =>
-    val companyAdnmsFut = MAdnNode.findByCompanyId(companyId, maxResults = 100)
-    MCompany.getById(companyId) flatMap {
-      case Some(mc) =>
-        for {
-          adnms <- companyAdnmsFut
-        } yield {
-          Ok(company.companyShowTpl(mc, adnms))
-        }
-
-      case None => companyNotFound(companyId)
+  def companyShow(companyId: String) = IsSuperuserCompany(companyId).async { implicit request =>
+    MAdnNode.findByCompanyId(companyId, maxResults = 100) map { adnms =>
+      Ok(company.companyShowTpl(request.company, adnms))
     }
   }
 
 
   /** Отрендерить страницу с формой редактирования компании. */
-  def companyEditForm(companyId: String) = IsSuperuser.async { implicit request =>
-    MCompany.getById(companyId) map {
-      case Some(mc)  =>
-        val form = companyFormM.fill(mc.name)
-        Ok(company.companyEditFormTpl(mc, form))
-
-      case None => companyNotFound(companyId)
-    }
+  def companyEditForm(companyId: String) = IsSuperuserCompany(companyId).apply { implicit request =>
+    import request.{company => mc}
+    val form = companyFormM fill mc
+    Ok(company.companyEditFormTpl(mc, form))
   }
 
   /** Сабмит формы редактирования компании. */
-  def companyEditFormSubmit(companyId: String) = IsSuperuser.async { implicit request =>
-    MCompany.getById(companyId) flatMap {
-      case Some(mc) =>
-        companyFormM.bindFromRequest.fold(
-          {formWithErrors =>
-            NotAcceptable(company.companyEditFormTpl(mc, formWithErrors))
-          },
-          {name =>
-            mc.name = name
-            mc.save map { _ =>
-              Redirect(routes.SysMarket.companyShow(companyId))
-            }
-          }
+  def companyEditFormSubmit(companyId: String) = IsSuperuserCompany(companyId).async { implicit request =>
+    import request.{company => mc}
+    companyFormM.bindFromRequest.fold(
+      {formWithErrors =>
+        debug(s"companyEditFormSubmit($companyId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+        NotAcceptable(company.companyEditFormTpl(mc, formWithErrors))
+      },
+      {mc2 =>
+        // Собираем новый инстанс компании.
+        val mc3 = mc.copy(
+          meta = mc.meta.copy(
+            name = mc2.meta.name
+          )
         )
-
-      case None => companyNotFound(companyId)
-    }
+        mc3.save map { _companyId =>
+          Redirect(routes.SysMarket.companyShow(_companyId))
+            .flashing("success" -> "Изменения сохранены.")
+        }
+      }
+    )
   }
 
   /** Админ приказал удалить указанную компанию. */
@@ -126,13 +134,9 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         Redirect(routes.SysMarket.companiesList())
           .flashing("success" -> s"Company $companyId deleted.")
 
-      case false => companyNotFound(companyId)
+      case false => IsSuperuserCompany.companyNotFound(companyId)
     }
   }
-
-
-  /** Реакция на ошибку обращения к несуществующей компании. Эта логика расшарена между несколькими экшенами. */
-  private def companyNotFound(companyId: String) = NotFound("Company not found: " + companyId)
 
 
   /* Унифицированные узлы ADN */
@@ -140,9 +144,11 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
   /** Страница с унифицированным списком узлов рекламной сети в алфавитном порядке с делёжкой по memberType.  */
   def adnNodesList(anmtRaw: Option[String]) = IsSuperuser.async { implicit request =>
-    val companiesFut = MCompany.getAll(maxResults = 1000).map {
-      _.map {c => c.id.get -> c }.toMap
-    }
+    val companiesFut = MCompany
+      .getAll(maxResults = 1000)
+      .map { companies =>
+        companies.map { c  =>  c.id.get -> c }.toMap
+      }
     val adnNodesFut = anmtRaw match {
       case Some(_anmtRaw) =>
         val anmt = AdNetMemberTypes.withName(_anmtRaw)

@@ -5,9 +5,9 @@
 @import ctx._
 @import AdNetMemberTypes._
 
-@companyBase(title = mc.name) {
+@companyBase(title = mc.meta.name) {
   @* Отображаем данные по компании. *@
-  <h2>@mc.name</h2>
+  <h2>@mc.meta.name</h2>
 
   <p><a href="@routes.SysMarket.companyEditForm(mc.id.get)">@Messages("Edit")</a></p>
   @stuff._deleteSmthFormBtnTpl(routes.SysMarket.companyDeleteSubmit(mc.id.get))

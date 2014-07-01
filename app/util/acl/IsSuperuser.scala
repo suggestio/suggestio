@@ -39,14 +39,26 @@ trait IsSuperuserAbstract extends ActionBuilder[AbstractRequestWithPwOpt] with P
   def onUnauthFut(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
     import request._
     warn(s"$method $path <- BLOCKED access to hidden/priveleged place from $remoteAddress user=$pwOpt")
-    http404Fut(request)
+    onUnauthResult(request, pwOpt)
   }
 
+  def onUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result]
 }
-object IsSuperuser extends IsSuperuserAbstract with ExpireSession[AbstractRequestWithPwOpt]
+object IsSuperuser extends IsSuperuserAbstract with ExpireSession[AbstractRequestWithPwOpt] {
+  override def onUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
+    IsAuth.onUnauth(request)
+  }
+}
+object IsSuperuserOr404 extends IsSuperuserAbstract with ExpireSession[AbstractRequestWithPwOpt] {
+  override def onUnauthResult(request: RequestHeader, pwOpt: PwOpt_t): Future[Result] = {
+    http404Fut(request)
+  }
+}
+
+
 
 /** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin. */
-trait IsSuperuserAdnNodeAbstract extends ActionBuilder[AbstractRequestForAdnNode] {
+trait IsSuperuserAdnNodeBase extends ActionBuilder[AbstractRequestForAdnNode] {
   def adnId: String
   override def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
@@ -70,7 +82,7 @@ trait IsSuperuserAdnNodeAbstract extends ActionBuilder[AbstractRequestForAdnNode
  * @param adnId
  */
 case class IsSuperuserAdnNode(adnId: String)
-  extends IsSuperuserAdnNodeAbstract
+  extends IsSuperuserAdnNodeBase
   with ExpireSession[AbstractRequestForAdnNode]
 
 
@@ -83,7 +95,7 @@ case class FeeTariffRequest[A](
   sioReqMd: SioReqMd
 ) extends AbstractRequestWithPwOpt[A](request)
 
-trait IsSuperuserFeeTariffContractAbstract extends ActionBuilder[FeeTariffRequest] {
+trait IsSuperuserFeeTariffContractBase extends ActionBuilder[FeeTariffRequest] {
   def tariffId: Int
   override def invokeBlock[A](request: Request[A], block: (FeeTariffRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
@@ -104,7 +116,7 @@ trait IsSuperuserFeeTariffContractAbstract extends ActionBuilder[FeeTariffReques
   }
 }
 case class IsSuperuserFeeTariffContract(tariffId: Int)
-  extends IsSuperuserFeeTariffContractAbstract
+  extends IsSuperuserFeeTariffContractBase
   with ExpireSession[FeeTariffRequest]
 
 
@@ -150,7 +162,7 @@ case class ContractRequest[A](
   sioReqMd: SioReqMd
 ) extends AbstractRequestWithPwOpt[A](request)
 
-trait IsSuperuserContractAbstract extends ActionBuilder[ContractRequest] {
+trait IsSuperuserContractBase extends ActionBuilder[ContractRequest] {
   def contractId: Int
   override def invokeBlock[A](request: Request[A], block: (ContractRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
@@ -169,6 +181,44 @@ trait IsSuperuserContractAbstract extends ActionBuilder[ContractRequest] {
   }
 }
 case class IsSuperuserContract(contractId: Int)
-  extends IsSuperuserContractAbstract
+  extends IsSuperuserContractBase
   with ExpireSession[ContractRequest]
+
+
+
+case class CompanyRequest[A](
+  company: MCompany,
+  pwOpt: PwOpt_t,
+  request: Request[A],
+  sioReqMd: SioReqMd
+) extends AbstractRequestWithPwOpt[A](request)
+
+object IsSuperuserCompany {
+  def companyNotFound(companyId: String) = Results.NotFound("Company not found: " + companyId)
+}
+trait IsSuperuserCompanyBase extends ActionBuilder[CompanyRequest] {
+  import IsSuperuserCompany._
+  def companyId: String
+  override def invokeBlock[A](request: Request[A], block: (CompanyRequest[A]) => Future[Result]): Future[Result] = {
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    if (PersonWrapper.isSuperuser(pwOpt)) {
+      MCompany.getById(companyId) flatMap {
+        case Some(company) =>
+          SioReqMd.fromPwOpt(pwOpt) flatMap { srm =>
+            val req1 = CompanyRequest(company, pwOpt, request, srm)
+            block(req1)
+          }
+
+        case None =>
+          Future successful companyNotFound(companyId)
+      }
+    } else {
+      IsSuperuser.onUnauthFut(request, pwOpt)
+    }
+  }
+
+}
+case class IsSuperuserCompany(companyId: String)
+  extends IsSuperuserCompanyBase
+  with ExpireSession[CompanyRequest]
 

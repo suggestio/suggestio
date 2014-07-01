@@ -13,6 +13,9 @@ package object models {
   type MCompany             = ym.model.MCompany
   val  MCompany             = ym.model.MCompany
 
+  type MCompanyMeta         = ym.model.common.MCompanyMeta
+  val  MCompanyMeta         = ym.model.common.MCompanyMeta
+
   val  MAdnNode             = ym.model.MAdnNode
   type MAdnNode             = ym.model.MAdnNode
 

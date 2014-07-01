@@ -28,7 +28,7 @@
 
 
   @company.map { mc =>
-    <p>@Messages("Company")-@Messages("Owner"): <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.name</a></p>
+    <p>@Messages("Company")-@Messages("Owner"): <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.meta.name</a></p>
   }
 
 

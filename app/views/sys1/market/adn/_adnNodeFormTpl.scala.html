@@ -25,7 +25,7 @@
       <select name="@ciField.name">
         <option disabled>@Messages("Company")-@Messages("Owner")</option>
         @companies.map { mcompany =>
-          <option value="@mcompany.id.get"@if(currCompanyId == mcompany.id.get) {selected}>@mcompany.name</option>
+          <option value="@mcompany.id.get"@if(currCompanyId == mcompany.id.get) {selected}>@mcompany.meta.name</option>
         }
       </select>
     }

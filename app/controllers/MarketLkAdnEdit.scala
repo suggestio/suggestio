@@ -76,7 +76,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
       val welcomeImgKey = welcomeAdOpt
         .flatMap { _.imgs.headOption }
         .map[OrigImgIdKey] { img => img._2 }
-      val gallerryIks = adnNode.imgGallery
+      val gallerryIks = adnNode.gallery
         .map { OrigImgIdKey.apply }
       val formFilled = nodeFormM.fill((adnNode.meta, welcomeImgKey, martLogoOpt, gallerryIks))
       Ok(leaderEditFormTpl(adnNode, formFilled, welcomeAdOpt))
@@ -106,7 +106,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
         // Запускаем апдейт галереи.
         val galleryUpdFut = ImgFormUtil.updateOrigImgId(
           needImgs = newGallery.map { iik => ImgInfo4Save(iik, withThumb = true) },
-          oldImgIds = adnNode.imgGallery
+          oldImgIds = adnNode.gallery
         )
         // В фоне обновляем картинку карточки-приветствия.
         val savedWelcomeImgsFut = updateWelcodeAdFut(adnNode, newWelcomeImgOpt)
@@ -143,7 +143,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
       ),
       // сохраняем логотип
       logoImgOpt = newLogo,
-      imgGallery = newImgGallery.map(_.filename)
+      gallery = newImgGallery.map(_.filename)
     )
   }
 

@@ -104,8 +104,8 @@ case class MInviteRequest(
 
 object InviteReqTypes extends Enumeration {
   type InviteReqType = Value
-  val Adv = Value("a")
-  val Wifi = Value("w")
+  val Adv: InviteReqType  = Value("a")
+  val Wifi: InviteReqType = Value("w")
 }
 
 
