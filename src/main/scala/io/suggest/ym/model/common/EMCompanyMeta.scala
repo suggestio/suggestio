@@ -65,14 +65,12 @@ object MCompanyMeta {
   val NAME_ESFN           = "name"
   val DATE_CREATED_ESFN   = "dateCreated"
   val OFFICE_PHONES_ESFN  = "oph"
-  val PAY_REQS_ESFN       = "payr"
 
   def generateMappingProps: List[DocField] = {
     List(
       FieldString(NAME_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
       FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldString(OFFICE_PHONES_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(PAY_REQS_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
+      FieldString(OFFICE_PHONES_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true)
     )
   }
 
@@ -83,8 +81,7 @@ object MCompanyMeta {
       MCompanyMeta(
         name          = stringParser(jmap get NAME_ESFN),
         dateCreated   = dateTimeParser(jmap get DATE_CREATED_ESFN),
-        officePhones  = strListParser(jmap get OFFICE_PHONES_ESFN),
-        payReqs       = strListParser(jmap get PAY_REQS_ESFN)
+        officePhones  = strListParser(jmap get OFFICE_PHONES_ESFN)
       )
   }
 
@@ -93,8 +90,7 @@ object MCompanyMeta {
 case class MCompanyMeta(
   name          : String,
   dateCreated   : DateTime = DateTime.now,
-  officePhones  : List[String] = Nil,
-  payReqs       : List[String] = Nil
+  officePhones  : List[String] = Nil
 ) {
   import MCompanyMeta._
 
@@ -116,10 +112,6 @@ case class MCompanyMeta(
     if (officePhones.nonEmpty) {
       val ophs = officePhones.map(JsString.apply)
       acc ::= OFFICE_PHONES_ESFN -> JsArray(ophs)
-    }
-    if (payReqs.nonEmpty) {
-      val prs = payReqs.map(JsString.apply)
-      acc ::= PAY_REQS_ESFN -> JsArray(prs)
     }
     JsObject(acc)
   }
