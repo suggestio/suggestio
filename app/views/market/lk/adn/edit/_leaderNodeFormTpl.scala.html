@@ -17,35 +17,24 @@
 
         <td class="right">
 
-          <div class="add-file-w __preview __size-S">
-            <img class="add-file-w_image" src="/assets/images/market/lk/blue patern_retina.png"/>
-            <a class="add-file-w_btn siom-remove-image-btn" title="Удалить файл"></a>
-          </div>
+          @defining(mf("logoImgId").value) { logoImgIdOpt =>
 
-          <div class="add-file-w __size-S">
-            <input id="photogallery-input" type="file" class="add-file-w_input __size-S"/>
-            <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
-          </div>
-
-          <div class="select-file-wrap" id="logoImgInput">
-            @defining(mf("logoImgId").value) { logoImgIdOpt =>
-            <div class="preview">
-              <img class="image-preview" src="@logoImgIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {@routes.Assets.at("images/market/lk/empty-image.gif")}" width="59" />
-            </div>
-            <div class="selectbox">
-              <div class="select-file">
-                @stuff._fileUploadTpl(routes.MarketLkAdnEdit.handleTempLogo(adnId), relatedFieldId="logoImgInput")
-                <input class="image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
-                <div class="bg">Выбрать файл для загрузки</div>
+            @logoImgIdOpt.filter(!_.isEmpty).map { imgId =>
+              <div class="add-file-w __preview">
+                <input class="js-image-key" type="hidden" name="logoImgId" value="@logoImgIdOpt"/>
+                <img class="add-file-w_image js-image-preview" src="@routes.Img.getImg(imgId)" />
+                <a class="add-file-w_btn siom-remove-image-btn js-remove-image" title="Удалить файл"></a>
               </div>
-              <div class="descr">
-                Файл должен быть на прозрачном
-                фоне и иметь формат .png
-              </div>
-            </div>
             }
-          </div>
-          <a href="#" class="close">&nbsp;</a>
+
+            <div class="add-file-w __size-S"  @if(!logoImgIdOpt.isEmpty) {style="display: none;"}>
+              @stuff._fileUploadTpl(routes.MarketLkAdnEdit.handleTempLogo(adnId), fieldName = "logoImgId")
+              <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
+            </div>
+
+
+          }
+
         </td>
 
       </tr>

@@ -2080,22 +2080,30 @@ li
 .required-icon
   color: #e23131
 
+
+siomPreviewSize = 43
+
 .add-file-w
   position: relative
   float: left
   margin-right: 30px
 
   &.__size-S
-    width: 45px
-    height: 45px
+    width: (siomPreviewSize + 2) px
+    height: (siomPreviewSize + 2) px
 
   &.__preview
-    border: 1px solid #676565
+    border: 1px solid #e1e1e1
     cursor: pointer
+    text-align: center
 
-  &.__size-S.__preview
-    width: 43px
-    height: 43px
+  &.__preview:hover
+    border: 1px solid white
+
+  &.__preview
+    width: siomPreviewSize px
+    height: siomPreviewSize px
+    line-height: (siomPreviewSize - 2) px
 
   &_btn
     position: absolute
@@ -2113,10 +2121,7 @@ li
     height: 100%
 
   &_image
-    position: absolute
-    top: 0
-    left: 0
-
-    display: block
-    width: 100%
-    height: 100%
+    margin: 0 auto
+    vertical-align: middle
+    max-width: siomPreviewSize px
+    max-height:  siomPreviewSize px

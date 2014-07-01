@@ -19,16 +19,6 @@ $(document).ready ->
   cbca.shop.init()
   cbca.editAdPage.updatePreview()
 
-##СКРЫТЬ ВЫБРАННОЕ ФОТО##
-$(document).on 'click', '.input-wrap .close', (event)->
-  event.preventDefault()
-
-  $this =$(this)
-  $wrap = $this.closest('.input-wrap')
-  $wrap.find('.image-key').val('')
-  $wrap.find('.image-preview').attr('src', cbca.emptyPhoto)
-  cbca.editAdPage.updatePreview()
-
 ##ПРЕВЬЮ РЕКЛАМНОЙ КАРТОЧКИ##
 $(document).on 'click', '.device', ->
   $this = $(this)
@@ -191,15 +181,6 @@ CbcaCommon = () ->
   #########################################
 
   self.init = () ->
-
-    $(document).on 'click', '.js-file-upload-btn', (e) ->
-      e.preventDefault()
-      $this = $ this
-      $parent = $this.parent()
-
-      $parent
-      .find 'input[type = "file"]'
-      .trigger 'click'
 
     self.setEqualHeightBlocks()
 
@@ -939,24 +920,52 @@ market =
         return false
 
 
-  ################################
-  ## Класс для работы с картинками
-  ################################
+  ###################################################################################################################
+  ## Класс для работы с картинками ##################################################################################
+  ###################################################################################################################
   img :
 
     init_upload : () ->
-      $('.w-async-image-upload').unbind("change").bind "change", () ->
 
-        relatedFieldId = $(this).attr 'data-related-field-id'
+      $(document).on 'click', '.js-remove-image', (e)->
+        e.preventDefault()
+        $this =$ this
+        $parent = $this.parent()
+
+        $parent
+        .next '.add-file-w'
+        .show()
+        $parent.remove()
+
+        cbca.editAdPage.updatePreview()
+
+
+      $(document).on 'click', '.js-file-upload-btn', (e) ->
+        e.preventDefault()
+        $this = $ this
+        $parent = $this.parent()
+
+        $parent
+        .find 'input[type = "file"]'
+        .trigger 'click'
+
+
+      $('.js-file-upload').unbind("change").bind "change", (e) ->
+        e.preventDefault()
+        $this = $ this
+        $parent = $this
+                  .closest '.add-file-w'
+
+
         form_data = new FormData()
 
-        is_w_block_preview = $(this).attr 'data-w-block-preview'
+        is_w_block_preview = $this.attr 'data-w-block-preview'
 
-        if $(this)[0].type == 'file'
-          form_data.append $(this)[0].name, $(this)[0].files[0]
+        if $this[0].type == 'file'
+          form_data.append $this[0].name, $this[0].files[0]
 
         request_params =
-          url : $(this).attr "data-action"
+          url : $this.attr "data-action"
           method : 'post'
           data : form_data
           contentType: false
@@ -966,12 +975,37 @@ market =
             if typeof is_w_block_preview != 'undefined'
               market.ad_form.queue_block_preview_request()
 
-            $('#' + relatedFieldId + ' .image-key, #' + relatedFieldId + ' .js-image-key').val(resp_data.image_key).trigger('change')
-            $('#' + relatedFieldId + ' .image-preview').show().attr "src", resp_data.image_link
+
+            htmlArr = ['<div class="add-file-w __preview">',
+                       '<input class="js-image-key" type="hidden" name="',
+                       $this.attr 'data-name'
+                       '" value=""/>',
+                       '<img class="add-file-w_image js-image-preview" src="" />',
+                       '<a class="add-file-w_btn siom-remove-image-btn js-remove-image" title="Удалить файл"></a>',
+                       '</div>']
+
+            html = htmlArr.join ''
+            $parent.before html
+
+            $parent
+            .prev()
+            .find '.js-image-key'
+            .val resp_data.image_key
+            .trigger 'change'
+
+            $parent
+            .prev()
+            .find '.js-image-preview'
+            .show()
+            .attr 'src', resp_data.image_link
+
+            if !$this.attr 'multiple'
+              $parent.hide()
+
+
 
         $.ajax request_params
 
-        return false
 
     crop :
       init_triggers : () ->
