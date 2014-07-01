@@ -78,16 +78,6 @@ li
   .inline-block
     display: inline-block
 
-  .border-line
-    overflow: hidden
-    width: 100%
-    border-top: 1px solid #cbcbcb
-    border-bottom: 1px solid #f8f8f8
-  .border-line-vertical
-    margin-top: 5px
-    border-left: 1px solid #cbcbcb
-    border-right: 1px solid #f8f8f8
-
   .input-wrap
     margin-top: 10px
     margin-bottom: 10px
@@ -363,6 +353,9 @@ li
         font-size: 30px
         font-family: 'PFDinTextCompPro-Medium'
         text-align: center
+
+        &.__second
+          padding-top: 25px
 
       .ad-preview
         position: relative
@@ -1974,7 +1967,7 @@ li
 
 
 /********************************************************************************************************************/
-/* refactoring to MCSS */
+/* refactoring to MCSS  TODO убрать все important, когда весь css будет написан по методологии */
 /********************************************************************************************************************/
 
 .submit-w
@@ -2076,7 +2069,9 @@ li
 .required-icon
   color: #e23131
 
-
+/********************************************************************************************************************/
+/* file uploads */
+/********************************************************************************************************************/
 siomPreviewSize = 43
 
 .add-file-w
@@ -2121,3 +2116,44 @@ siomPreviewSize = 43
     vertical-align: middle
     max-width: siomPreviewSize px
     max-height:  siomPreviewSize px
+
+/********************************************************************************************************************/
+/* border-lines */
+/********************************************************************************************************************/
+.border-line
+  overflow: hidden
+  width: 100%
+  border-top: 1px solid #cbcbcb
+  border-bottom: 1px solid #f8f8f8
+
+  &.__margin-M
+    margin-top: 25px
+
+  &.__vertical
+    margin-top: 5px
+    border-left: 1px solid #cbcbcb
+    border-right: 1px solid #f8f8f8
+
+/********************************************************************************************************************/
+/* inputs */
+/********************************************************************************************************************/
+.input-w
+  margin-top: 10px
+  margin-bottom: 10px
+
+  &.__big
+    width: 100%
+
+  &_left
+    width: 120px
+
+    &.__text-top
+      vertical-align: top !important
+
+  &_prop-name
+    float: left
+
+    color: #959595
+    font-family: 'Arial'
+    font-size: 12px
+    text-shadow: 1px 1px 1px #f8f8f8
