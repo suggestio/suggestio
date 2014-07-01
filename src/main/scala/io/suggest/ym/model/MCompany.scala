@@ -1,12 +1,12 @@
 package io.suggest.ym.model
 
-import org.joda.time.DateTime
+import io.suggest.model.common.{EMDateCreatedStatic, EMName}
+import io.suggest.ym.model.common.{EMCompanyMetaMut, MCompanyMeta, EMCompanyMeta, EMCompanyMetaStatic}
 import scala.concurrent.{ExecutionContext, Future}
 import org.elasticsearch.client.Client
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
-import io.suggest.model.common._
 import io.suggest.util.MacroLogsImpl
 
 /**
@@ -19,15 +19,11 @@ import io.suggest.util.MacroLogsImpl
 
 object MCompany
   extends EsModelStaticEmpty
-  with EMNameStatic
-  with EMDateCreatedStatic
+  with EMCompanyMetaStatic
   with MacroLogsImpl
 {
 
   override type T = MCompany
-
-  type CompanyId_t = String
-
   override val ES_TYPE_NAME = "company"
 
 
@@ -36,7 +32,9 @@ object MCompany
     FieldAll(enabled = false)
   )
 
-  override protected def dummy(id: String, version: Long) = MCompany(id = Option(id), name = null)
+  override protected def dummy(id: String, version: Long) = {
+    MCompany(id = Option(id), versionOpt = Option(version), meta = MCompanyMeta(name = ""))
+  }
 
   /**
    * Удалить документ по id.
@@ -53,6 +51,17 @@ object MCompany
         Future failed new ForeignKeyException(s"Cannot delete company with $adnsCount marts/shops or other AdnMembers.")
     }
   }
+
+  // compat: 2014.07.01: поля name и dateCreated были перемещены в контейнер-поле meta.
+  // TODO Пересохранить все компании и удалить этот код:
+  override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
+    super.applyKeyValue(acc) orElse {
+      case (EMName.NAME_ESFN, nameRaw) =>
+        acc.meta = acc.meta.copy(name = EsModel.stringParser(nameRaw))
+      case (EMDateCreatedStatic.DATE_CREATED_ESFN, dcRaw) =>
+        acc.meta = acc.meta.copy(dateCreated = EsModel.dateTimeParser(dcRaw))
+    }
+  }
 }
 
 
@@ -60,30 +69,24 @@ import MCompany._
 
 /**
  * Экземпляр распарсенного ряда БД.
- * @param name Название конторы.
  * @param id id по базе.
- * @param dateCreated Дата создания ряда/компании.
  */
 case class MCompany(
-  var name          : String,
-  id                : Option[MCompany.CompanyId_t] = None,
-  var dateCreated   : DateTime = null
+  var meta    : MCompanyMeta,
+  id          : Option[String] = None,
+  versionOpt  : Option[Long] = None
 )
   extends EsModelEmpty
-  with EMName
-  with EMDateCreatedMut
+  with EMCompanyMetaMut
 {
   override type T = MCompany
-
   override def companion = MCompany
-  override def versionOpt = None
 
-  def companyId = id.get
 }
 
 
 trait MCompanySel {
-  def companyId: CompanyId_t
+  def companyId: String
   def company(implicit ec:ExecutionContext, client: Client) = getById(companyId)
 }
 
@@ -95,3 +98,4 @@ class MCompanyJmx(implicit val ec: ExecutionContext, val client: Client, val sn:
 {
   override def companion = MCompany
 }
+

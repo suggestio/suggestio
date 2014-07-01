@@ -69,7 +69,7 @@ object MAdnNode
 
 
 case class MAdnNode(
-  var companyId     : CompanyId_t,
+  var companyId     : String,
   var personIds     : Set[String],
   var adn           : AdNetMemberInfo,
   var meta          : AdnMMetadata,

@@ -1,8 +1,7 @@
 package io.suggest.model.common
 
 import io.suggest.model._
-import org.elasticsearch.common.xcontent.XContentBuilder
-import io.suggest.model.EsModel.{FieldsJsonAcc, NAME_ESFN, nameParser}
+import io.suggest.model.EsModel.{FieldsJsonAcc, stringParser}
 import io.suggest.util.SioEsUtil._
 import play.api.libs.json.JsString
 
@@ -12,6 +11,12 @@ import play.api.libs.json.JsString
  * Created: 02.04.14 16:25
  * Description: Аддон для es-моделей с полем name.
  */
+
+object EMName {
+  val NAME_ESFN = "name"
+}
+
+import EMName._
 
 trait EMNameStatic extends EsModelStaticT {
   override type T <: EMName
@@ -23,7 +28,7 @@ trait EMNameStatic extends EsModelStaticT {
 
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
-      case (NAME_ESFN, value)  => acc.name = nameParser(value)
+      case (NAME_ESFN, value)  => acc.name = stringParser(value)
     }
   }
 }

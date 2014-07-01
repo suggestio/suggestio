@@ -11,7 +11,7 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{FilterBuilders, QueryBuilder, QueryBuilders}
 import org.elasticsearch.common.unit.Fuzziness
 import org.elasticsearch.index.mapper.internal.AllFieldMapper
-import io.suggest.ym.model.{MAdnNode, AdShowLevel, CompanyId_t}
+import io.suggest.ym.model.{MAdnNode, AdShowLevel}
 import java.{util => ju, lang => jl}
 import io.suggest.event.{AdnNodeDeletedEvent, AdnNodeOnOffEvent, SioNotifierStaticClientI}
 import play.api.libs.json._
@@ -219,7 +219,7 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
    * @return Список MShop в неопределённом порядке.
    */
   def findBySupId(supId: String, sortField: Option[String] = None, isReversed:Boolean = false, onlyEnabled: Boolean = false,
-                  companyId: Option[CompanyId_t] = None, maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
+                  companyId: Option[String] = None, maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
                  (implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
     var query: QueryBuilder = supIdQuery(supId)
     if (onlyEnabled) {

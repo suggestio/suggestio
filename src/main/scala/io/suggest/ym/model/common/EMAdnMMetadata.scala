@@ -131,6 +131,7 @@ object AdnMMetadata {
   val DESCRIPTION_ESFN        = "description"
   val AUDIENCE_DESCR_ESFN     = "audDescr"
   val HUMAN_TRAFFIC_AVG_ESFN  = "htAvg"
+  val INFO_ESFN               = "info"
   val COLOR_ESFN              = "color"
   val WELCOME_AD_ID           = "welcomeAdId"
   val FLOOR_ESFN              = "floor"
@@ -152,10 +153,11 @@ object AdnMMetadata {
     fieldString(FLOOR_ESFN, iia = true, index = FieldIndexingVariants.not_analyzed),   // Внезапно, вдруг кто-то захочет найти все магазины на первом этаже.
     fieldString(SECTION_ESFN, iia = true),
     fieldString(SITE_URL_ESFN),
-    // Рекламные характеристики узла.
+    // 2014.06.30: Рекламные характеристики узла.
     fieldString(AUDIENCE_DESCR_ESFN),
     FieldNumber(HUMAN_TRAFFIC_AVG_ESFN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.analyzed, include_in_all = false),
-    // перемещено из visual
+    FieldString(INFO_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
+    // Перемещено из visual - TODO Перенести в conf.
     FieldString(COLOR_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
     FieldString(WELCOME_AD_ID, index = FieldIndexingVariants.no, include_in_all = false)
   )
@@ -165,7 +167,7 @@ object AdnMMetadata {
     case jmap: ju.Map[_,_] =>
       import EsModel.stringParser
       AdnMMetadata(
-        name        = EsModel.stringParser(jmap get NAME_ESFN),
+        name        = stringParser(jmap get NAME_ESFN),
         description = Option(jmap get DESCRIPTION_ESFN) map stringParser,
         dateCreated = EsModel.dateTimeParser(jmap get DATE_CREATED_ESFN),
         town        = Option(jmap get TOWN_ESFN) map stringParser,
@@ -176,6 +178,7 @@ object AdnMMetadata {
         siteUrl     = Option(jmap get SITE_URL_ESFN) map stringParser,
         audienceDescr = Option(jmap get SITE_URL_ESFN) map stringParser,
         humanTrafficAvg = Option(jmap get HUMAN_TRAFFIC_AVG_ESFN) map EsModel.intParser,
+        info        = Option(jmap get INFO_ESFN) map stringParser,
         color       = Option(jmap get COLOR_ESFN) map stringParser,
         welcomeAdId = Option(jmap get WELCOME_AD_ID) map stringParser
       )
@@ -209,7 +212,8 @@ case class AdnMMetadata(
   siteUrl       : Option[String] = None,
   // 2014.06.30: Рекламные характеристики узла-producer'а.
   audienceDescr : Option[String] = None,
-  humanTrafficAvg: Option[Int] = None,
+  humanTrafficAvg: Option[Int]   = None,
+  info          : Option[String] = None,
   // перемещено из visual
   color         : Option[String] = None,
   welcomeAdId   : Option[String] = None   // TODO Перенести в поле MAdnNode.conf.welcomeAdId
@@ -237,10 +241,14 @@ case class AdnMMetadata(
       acc0 ::= SECTION_ESFN -> JsString(section.get)
     if (siteUrl.isDefined)
       acc0 ::= SITE_URL_ESFN -> JsString(siteUrl.get)
+    // 2014.06.30
     if (audienceDescr.isDefined)
       acc0 ::= AUDIENCE_DESCR_ESFN -> JsString(audienceDescr.get)
     if (humanTrafficAvg.isDefined)
       acc0 ::= HUMAN_TRAFFIC_AVG_ESFN -> JsNumber(humanTrafficAvg.get)
+    if (info.isDefined)
+      acc0 ::= INFO_ESFN -> JsString(info.get)
+    // TODO Надобно переместить это в conf отсюда:
     if (color.isDefined)
       acc0 ::= COLOR_ESFN -> JsString(color.get)
     if (welcomeAdId.isDefined)

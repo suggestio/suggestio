@@ -18,6 +18,4 @@ package object model {
   val  AdNetMemberTypes   = common.AdNetMemberTypes
   type AdNetMemberType    = AdNetMemberTypes.AdNetMemberType
 
-  type CompanyId_t        = MCompany.CompanyId_t
-
 }

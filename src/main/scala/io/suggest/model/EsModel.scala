@@ -28,6 +28,7 @@ import org.elasticsearch.action.get.MultiGetResponse
 import io.suggest.util.SioEsUtil.IndexMapping
 import io.suggest.ym.model.UsernamePw
 import com.typesafe.scalalogging.slf4j.Logger
+import java.{util => ju, lang => jl}
 
 /**
  * Suggest.io
@@ -212,6 +213,15 @@ object EsModel extends MacroLogsImpl {
     case ri: ReadableInstant => new DateTime(ri)
   }
 
+  val strListParser: PartialFunction[Any, List[String]] = {
+    case null => Nil
+    case l: jl.Iterable[_] =>
+      l.foldLeft (List.empty[String]) {
+        (acc,e) => EsModel.stringParser(e) :: acc
+      }.reverse
+  }
+  
+  
   val SHARDS_COUNT_DFLT   = MyConfig.CONFIG.getInt("es.model.shards.count.dflt") getOrElse 2
   val REPLICAS_COUNT_DFLT = MyConfig.CONFIG.getInt("es.model.replicas.count.dflt") getOrElse 1
 

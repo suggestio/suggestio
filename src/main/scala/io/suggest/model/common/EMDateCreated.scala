@@ -2,9 +2,8 @@ package io.suggest.model.common
 
 import io.suggest.model.{EsModelStaticT, EsModelT}
 import org.joda.time.DateTime
-import io.suggest.model.EsModel._
 import io.suggest.util.SioEsUtil._
-import io.suggest.model.EsModel.date2JsStr
+import io.suggest.model.EsModel.{FieldsJsonAcc, date2JsStr, dateTimeParser}
 import com.github.nscala_time.time.OrderingImplicits._
 
 /**
@@ -15,6 +14,8 @@ import com.github.nscala_time.time.OrderingImplicits._
  */
 
 object EMDateCreatedStatic {
+  val DATE_CREATED_ESFN = "dateCreated"
+
   def fieldDate = FieldDate(DATE_CREATED_ESFN, include_in_all = false, index = FieldIndexingVariants.no)
 }
 
@@ -31,7 +32,7 @@ trait EMDateCreatedStatic extends EsModelStaticT {
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
       case (DATE_CREATED_ESFN, value) =>
-        acc.dateCreated = dateCreatedParser(value)
+        acc.dateCreated = dateTimeParser(value)
     }
   }
 

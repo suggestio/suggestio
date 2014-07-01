@@ -1,8 +1,6 @@
 package io.suggest.ym.model.common
 
 import io.suggest.model.{EsModelStaticT, EsModel, EsModelT}
-import io.suggest.ym.model.MCompany.CompanyId_t
-import org.elasticsearch.common.xcontent.XContentBuilder
 import EsModel._
 import io.suggest.util.SioEsUtil._
 import scala.concurrent.{Future, ExecutionContext}
@@ -34,7 +32,7 @@ trait EMCompanyIdStatic extends EsModelStaticT {
 
 
   /** Генерация es query для поиска по компании. */
-  def companyIdQuery(companyId: CompanyId_t) = QueryBuilders.termQuery(COMPANY_ID_ESFN, companyId)
+  def companyIdQuery(companyId: String) = QueryBuilders.termQuery(COMPANY_ID_ESFN, companyId)
 
 
   /**
@@ -42,7 +40,7 @@ trait EMCompanyIdStatic extends EsModelStaticT {
    * @param companyId id конторы.
    * @return Список ТЦ в неопределённом порядке.
    */
-  def findByCompanyId(companyId: CompanyId_t, maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
+  def findByCompanyId(companyId: String, maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT)
                      (implicit ec:ExecutionContext, client: Client): Future[Seq[T]] = {
     prepareSearch
       .setQuery(companyIdQuery(companyId))
@@ -55,11 +53,8 @@ trait EMCompanyIdStatic extends EsModelStaticT {
     * @param companyId id компании.
     * @return Long.
     */
-  def countByCompanyId(companyId: CompanyId_t)(implicit ec:ExecutionContext, client: Client): Future[Long] = {
-    prepareCount
-      .setQuery(companyIdQuery(companyId))
-      .execute()
-      .map { _.getCount }
+  def countByCompanyId(companyId: String)(implicit ec:ExecutionContext, client: Client): Future[Long] = {
+    count( companyIdQuery(companyId) )
   }
 
 }
@@ -68,7 +63,7 @@ trait EMCompanyIdStatic extends EsModelStaticT {
 trait EMCompanyId extends EsModelT with MCompanySel {
   override type T <: EMCompanyId
 
-  var companyId: CompanyId_t
+  var companyId: String
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     COMPANY_ID_ESFN -> JsString(companyId) :: super.writeJsonFields(acc)
