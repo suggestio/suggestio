@@ -6,8 +6,6 @@
 
 @form(submitCall) {
 
-  <div class="fields">
-
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
       <tr>
 
@@ -97,7 +95,40 @@
 
     </table>
 
-  </div>
+
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+
+      <tr>
+        <td class="left">
+          <label for="logoImgInput">Фотографии<br/>объекта:</label>
+        </td>
+
+        <td class="right">
+
+          @defining(mf("gallery").value) { imgIdOpt =>
+
+            @imgIdOpt.filter(!_.isEmpty).map { imgId =>
+              <div class="add-file-w __preview">
+                <input class="js-image-key" type="hidden" name="gallery" value="@imgId"/>
+                <img class="add-file-w_image js-image-preview" src="@routes.Img.getImg(imgId)" />
+                <a class="add-file-w_btn siom-remove-image-btn js-remove-image" title="Удалить файл"></a>
+              </div>
+            }
+
+            <div class="add-file-w __size-S" >
+              @stuff._fileUploadTpl(routes.Img.handleTempImg, fieldName = "gallery", multiple = true)
+             <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
+            </div>
+
+          }
+
+        </td>
+      </tr>
+
+    </table>
+
+
   <div class="border-line"></div>
 
   <div class="submit-w __size-M">

@@ -975,16 +975,22 @@ market =
             if typeof is_w_block_preview != 'undefined'
               market.ad_form.queue_block_preview_request()
 
+            fieldName = $this.attr 'data-name'
 
-            htmlArr = ['<div class="add-file-w __preview">',
-                       '<input class="js-image-key" type="hidden" name="',
-                       $this.attr 'data-name'
-                       '" value=""/>',
-                       '<img class="add-file-w_image js-image-preview" src="" />',
-                       '<a class="add-file-w_btn siom-remove-image-btn js-remove-image" title="Удалить файл"></a>',
-                       '</div>']
+            if $this.attr 'multiple'
+              i = $parent
+                  .prev '.__preview'
+                  .size()
+              fieldName = fieldName + '[' + i + ']'
 
-            html = htmlArr.join ''
+            html = ['<div class="add-file-w __preview">',
+                    '<input class="js-image-key" type="hidden" name="',
+                    fieldName,
+                    '" value=""/>',
+                    '<img class="add-file-w_image js-image-preview" src="" />',
+                    '<a class="add-file-w_btn siom-remove-image-btn js-remove-image" title="Удалить файл"></a>',
+                    '</div>'].join ''
+
             $parent.before html
 
             $parent
@@ -1001,8 +1007,6 @@ market =
 
             if !$this.attr 'multiple'
               $parent.hide()
-
-
 
         $.ajax request_params
 
