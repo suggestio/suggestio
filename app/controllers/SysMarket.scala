@@ -3,15 +3,14 @@ package controllers
 import io.suggest.util.MacroLogsImpl
 import org.joda.time.DateTime
 import play.api.db.DB
+import play.twirl.api.HtmlFormat
 import util.acl.{AbstractRequestForAdnNode, AbstractRequestWithPwOpt, IsSuperuserAdnNode, IsSuperuser}
 import models._
 import util.qsb.AdSearch
 import views.html.sys1.market._
-import views.html.market.lk
 import play.api.data._, Forms._
 import util.FormUtil._
 import io.suggest.ym.model.UsernamePw
-import MCompany.CompanyId_t
 import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
 import util.Context
@@ -21,7 +20,6 @@ import scala.concurrent.Future
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import play.api.mvc.AnyContent
-import play.api.templates.HtmlFormat
 import play.api.i18n.Messages
 
 /**
@@ -75,7 +73,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   /** Отобразить информацию по указанной компании.
     * @param companyId Числовой id компании.
     */
-  def companyShow(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
+  def companyShow(companyId: String) = IsSuperuser.async { implicit request =>
     val companyAdnmsFut = MAdnNode.findByCompanyId(companyId, maxResults = 100)
     MCompany.getById(companyId) flatMap {
       case Some(mc) =>
@@ -91,7 +89,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
 
   /** Отрендерить страницу с формой редактирования компании. */
-  def companyEditForm(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
+  def companyEditForm(companyId: String) = IsSuperuser.async { implicit request =>
     MCompany.getById(companyId) map {
       case Some(mc)  =>
         val form = companyFormM.fill(mc.name)
@@ -102,7 +100,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
   /** Сабмит формы редактирования компании. */
-  def companyEditFormSubmit(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
+  def companyEditFormSubmit(companyId: String) = IsSuperuser.async { implicit request =>
     MCompany.getById(companyId) flatMap {
       case Some(mc) =>
         companyFormM.bindFromRequest.fold(
@@ -122,7 +120,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
   /** Админ приказал удалить указанную компанию. */
-  def companyDeleteSubmit(companyId: CompanyId_t) = IsSuperuser.async { implicit request =>
+  def companyDeleteSubmit(companyId: String) = IsSuperuser.async { implicit request =>
     MCompany.deleteById(companyId) map {
       case true =>
         Redirect(routes.SysMarket.companiesList())
@@ -134,7 +132,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
 
   /** Реакция на ошибку обращения к несуществующей компании. Эта логика расшарена между несколькими экшенами. */
-  private def companyNotFound(companyId: CompanyId_t) = NotFound("Company not found: " + companyId)
+  private def companyNotFound(companyId: String) = NotFound("Company not found: " + companyId)
 
 
   /* Унифицированные узлы ADN */
@@ -429,7 +427,8 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       .map { Ok(_) }
   }
 
-  private def editAdnNodeBody(adnId: String, form: Form[MAdnNode])(implicit request: AbstractRequestForAdnNode[AnyContent]): Future[HtmlFormat.Appendable] = {
+  private def editAdnNodeBody(adnId: String, form: Form[MAdnNode])
+                             (implicit request: AbstractRequestForAdnNode[AnyContent]): Future[HtmlFormat.Appendable] = {
     MCompany.getAll(maxResults = 1000) map { companies =>
       editAdnNodeFormTpl(request.adnNode, form, companies)
     }

@@ -12,8 +12,7 @@ package object models {
 
   type MCompany             = ym.model.MCompany
   val  MCompany             = ym.model.MCompany
-  type CompanyId_t          = MCompany.CompanyId_t
-  
+
   val  MAdnNode             = ym.model.MAdnNode
   type MAdnNode             = ym.model.MAdnNode
 
