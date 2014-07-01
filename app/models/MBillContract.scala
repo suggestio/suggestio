@@ -1,6 +1,8 @@
 package models
 
 import anorm._
+import io.suggest.model.{ToPlayJsonObj, EsModel}
+import io.suggest.model.EsModel.FieldsJsonAcc
 import util.AnormJodaTime._
 import util.AnormPgArray._
 import org.joda.time.DateTime
@@ -11,6 +13,8 @@ import java.text.DecimalFormat
 import org.joda.time.format.DateTimeFormat
 import io.suggest.util.TextUtil
 import play.api.Play.{current, configuration}
+import play.api.libs.json._
+import java.{util => ju}
 
 /**
  * Suggest.io
@@ -19,21 +23,33 @@ import play.api.Play.{current, configuration}
  * Description: Биллинг: SQL-модель для работы со списком договоров.
  */
 // TODO Модель синхронная. Надо бы её рассинхронизировать, когда в asynchbase переедут на netty 4.x.
-object MBillContract extends SqlModelStatic[MBillContract] {
+object MBillContract extends SqlModelStatic with FromJson {
   import SqlParser._
+
+  override type T = MBillContract
 
   /** Комиссия s.io за размещение рекламной карточки. Пока что одна для всех. Вероятно, надо вынести это в другое место. */
   val SIO_COMISSION_SHARE_DFLT = configuration.getDouble("adv.comission.sio").map(_.toFloat) getOrElse 0.300000F
 
   private def idFormatter = new DecimalFormat("000")
 
+  val ID_FN = "id"
+  val ADN_ID_FN = "adn_id"
+  val CRAND_FN  = "crand"
+  val CONTRACT_DATE_FN = "contract_date"
+  val DATE_CREATED_FN = "date_created"
+  val HIDDEN_INFO_FN = "hidden_info"
+  val IS_ACTIVE_FN = "is_active"
+  val SUFFIX_FN = "suffix"
+  val SIO_COMISSION_FN = "sio_comission"
+
   val TABLE_NAME: String = "bill_contract"
 
-  val ADN_ID_PARSER = get[String]("adn_id")
+  val ADN_ID_PARSER = get[String](ADN_ID_FN)
 
-  val rowParser = get[Option[Int]]("id") ~ get[Int]("crand") ~ ADN_ID_PARSER ~ get[DateTime]("contract_date") ~
-    get[DateTime]("date_created") ~ get[Option[String]]("hidden_info") ~ get[Boolean]("is_active") ~
-    get[Option[String]]("suffix") ~ get[Float]("sio_comission") map {
+  val rowParser = get[Option[Int]](ID_FN) ~ get[Int](CRAND_FN) ~ ADN_ID_PARSER ~ get[DateTime](CONTRACT_DATE_FN) ~
+    get[DateTime](DATE_CREATED_FN) ~ get[Option[String]](HIDDEN_INFO_FN) ~ get[Boolean](IS_ACTIVE_FN) ~
+    get[Option[String]](SUFFIX_FN) ~ get[Float](SIO_COMISSION_FN) map {
     case id ~ crand ~ adnId ~ contractDate ~ dateCreated ~ hiddenInfo ~ isActive ~ suffix ~ sioComission =>
       MBillContract(
         id = id,  crand = crand,  adnId = adnId, contractDate = contractDate,
@@ -51,15 +67,15 @@ object MBillContract extends SqlModelStatic[MBillContract] {
    */
   def findForAdn(adnId: String, isActive: Option[Boolean] = None)(implicit c: Connection): List[MBillContract] = {
     val reqSql = new StringBuilder()
-      .append("SELECT * FROM ").append(TABLE_NAME).append(" WHERE adn_id = {adnId}")
+      .append("SELECT * FROM ").append(TABLE_NAME).append(" WHERE ").append(ADN_ID_FN).append(" = {adnId}")
     var args: List[NamedParameter] = List('adnId -> adnId)
     // Если задан isActive, то добавляем в запрос ещё кое-какие данные.
     if (isActive.isDefined) {
-      reqSql.append(" AND is_active = {is_active}")
+      reqSql.append(" AND ").append(IS_ACTIVE_FN).append(" = {is_active}")
       args ::= (('is_active, isActive.get) : NamedParameter)
     }
     // Добавляем сортировку и запускаем на исполнение.
-    reqSql.append(" ORDER BY id ASC")
+    reqSql.append(" ORDER BY ").append(ID_FN).append(" ASC")
     SQL(reqSql.toString())
       .on(args : _*)
       .as(rowParser *)
@@ -74,11 +90,11 @@ object MBillContract extends SqlModelStatic[MBillContract] {
   def findForAdns(adnIds: Traversable[String], isActive: Option[Boolean] = None)(implicit c: Connection): List[MBillContract] = {
     val reqSql = new StringBuilder("SELECT * FROM ")
       .append(TABLE_NAME)
-      .append(" WHERE adn_id = ANY({adnIds})")
+      .append(" WHERE ").append(ADN_ID_FN).append(" = ANY({adnIds})")
     var args: List[NamedParameter] = List('adnIds -> strings2pgArray(adnIds))
     // Если задан isActive, то нужно добавить ещё проверку в исходный запрос
     if (isActive.isDefined) {
-      reqSql.append(" AND is_active = {is_active}")
+      reqSql.append(" AND ").append(IS_ACTIVE_FN).append(" = {is_active}")
       args ::= (('is_active, isActive.get) : NamedParameter)
     }
     SQL(reqSql.toString())
@@ -93,7 +109,7 @@ object MBillContract extends SqlModelStatic[MBillContract] {
    */
   def findByCrand(crand: Int)(implicit c: Connection): List[MBillContract] = {
     // TODO Добавить сортировку по similarity id и suffix
-    SQL("SELECT * FROM " + TABLE_NAME + " WHERE crand = {crand}")
+    SQL(s"SELECT * FROM $TABLE_NAME WHERE $CRAND_FN = {crand}")
       .on('crand -> crand)
       .as(rowParser *)
   }
@@ -156,31 +172,47 @@ object MBillContract extends SqlModelStatic[MBillContract] {
    * @return Список контрактов в неопределённом порядке.
    */
   def findAllActive(implicit c: Connection): List[MBillContract] = {
-    SQL("SELECT * FROM " + TABLE_NAME + " WHERE is_active")
+    SQL(s"SELECT * FROM $TABLE_NAME WHERE $IS_ACTIVE_FN")
       .as(rowParser *)
   }
 
   def hasActiveForNode(adnId: String)(implicit c: Connection): Boolean = {
-    SQL("SELECT count(*) > 0 AS bool FROM " + TABLE_NAME + " WHERE adn_id = {adnId} AND is_active")
+    SQL(s"SELECT count(*) > 0 AS bool FROM $TABLE_NAME WHERE $ADN_ID_FN = {adnId} AND $IS_ACTIVE_FN")
       .on('adnId -> adnId)
       .as(SqlModelStatic.boolColumnParser single)
   }
 
+  /** Десериализация из json для нужд [[MInviteRequest]]. */
+  val fromJson: PartialFunction[Any, MBillContract] = {
+    case jmap: ju.Map[_,_] =>
+      import EsModel.{stringParser, intParser, floatParser, booleanParser, dateTimeParser}
+      MBillContract(
+        adnId         = stringParser(jmap get ADN_ID_FN),
+        contractDate  = dateTimeParser(jmap get CONTRACT_DATE_FN),
+        suffix        = Option(jmap get SUFFIX_FN) map stringParser,
+        dateCreated   = Option(jmap get DATE_CREATED_FN).fold(DateTime.now)(dateTimeParser),
+        hiddenInfo    = Option(jmap get HIDDEN_INFO_FN) map stringParser,
+        isActive      = Option(jmap get IS_ACTIVE_FN).fold(true)(booleanParser),
+        crand         = intParser(jmap get CRAND_FN),
+        sioComission  = Option(jmap get SIO_COMISSION_FN).fold(0.30F)(floatParser),
+        id            = Option(jmap get ID_FN) map intParser
+      )
+  }
 }
 
 import MBillContract._
 
 case class MBillContract(
   adnId         : String,
-  var contractDate: DateTime,
-  var suffix    : Option[String] = None,
+  contractDate  : DateTime,
+  suffix        : Option[String] = None,
   dateCreated   : DateTime = DateTime.now,
-  var hiddenInfo: Option[String] = None,
-  var isActive  : Boolean = true,
+  hiddenInfo    : Option[String] = None,
+  isActive      : Boolean = true,
   crand         : Int = rnd.nextInt(999) + 1, // от 1 до 999. Чтоб не было 0, а то перепутают с 'O'.
-  var sioComission: Float = MBillContract.SIO_COMISSION_SHARE_DFLT,
+  sioComission  : Float = MBillContract.SIO_COMISSION_SHARE_DFLT,
   id            : Option[Int] = None
-) extends SqlModelSave[MBillContract] {
+) extends SqlModelSave[MBillContract] with ToPlayJsonObj {
 
   def hasId: Boolean = id.isDefined
 
@@ -195,7 +227,7 @@ case class MBillContract(
    * @return Новый экземпляр сабжа.
    */
   def saveInsert(implicit c: Connection): MBillContract = {
-    SQL("INSERT INTO " + TABLE_NAME + "(adn_id, contract_date, date_created, hidden_info, is_active, crand, suffix, sio_comission)" +
+    SQL(s"INSERT INTO $TABLE_NAME ($ADN_ID_FN, $CONTRACT_DATE_FN, $DATE_CREATED_FN, $HIDDEN_INFO_FN, $IS_ACTIVE_FN, $CRAND_FN, $SUFFIX_FN, $SIO_COMISSION_FN)" +
         " VALUES ({adnId}, {contractDate}, {dateCreated}, {hiddenInfo}, {isActive}, {crand}, {suffix}, {sioComission})")
       .on('adnId -> adnId, 'contractDate -> contractDate, 'dateCreated -> dateCreated, 'hiddenInfo -> hiddenInfo,
           'isActive -> isActive, 'crand -> crand, 'suffix -> suffix, 'sioComission -> sioComission)
@@ -208,13 +240,35 @@ case class MBillContract(
    * @return Кол-во обновлённых рядов. Обычно 0 либо 1.
    */
   def saveUpdate(implicit c: Connection): Int = {
-    SQL("UPDATE " + TABLE_NAME + " SET contract_date = {contractDate}, hidden_info = {hiddenInfo}," +
-        " is_active = {isActive}, suffix = {suffix}, sio_comission = {sioComission} WHERE id = {id}")
+    SQL(s"UPDATE $TABLE_NAME SET $CONTRACT_DATE_FN = {contractDate}, $HIDDEN_INFO_FN = {hiddenInfo}," +
+        s" $IS_ACTIVE_FN = {isActive}, $SUFFIX_FN = {suffix}, $SIO_COMISSION_FN = {sioComission} WHERE $ID_FN = {id}")
       .on('id -> id.get, 'contractDate -> contractDate, 'hiddenInfo -> hiddenInfo,
           'isActive -> isActive, 'suffix -> suffix, 'sioComission -> sioComission)
       .executeUpdate()
   }
 
+  /** Сериализация в JSON экземпляра этого класса для нужд [[MInviteRequest]]. */
+  def toPlayJsonAcc: FieldsJsonAcc = {
+    var acc: FieldsJsonAcc = List(
+      ADN_ID_FN         -> JsString(adnId),
+      CONTRACT_DATE_FN  -> EsModel.date2JsStr(contractDate),
+      DATE_CREATED_FN   -> EsModel.date2JsStr(dateCreated),
+      IS_ACTIVE_FN      -> JsBoolean(isActive),
+      SIO_COMISSION_FN  -> JsNumber(sioComission)
+    )
+    if (suffix.isDefined)
+      acc ::= SUFFIX_FN -> JsString(suffix.get)
+    if (hiddenInfo.isDefined)
+      acc ::= HIDDEN_INFO_FN -> JsString(hiddenInfo.get)
+    acc
+  }
+
+  override def toPlayJsonWithId: JsObject = {
+    var acc = toPlayJsonAcc
+    if (id.isDefined)
+      acc ::= ID_FN -> JsNumber(id.get)
+    JsObject(acc)
+  }
 }
 
 
@@ -224,7 +278,7 @@ trait MBillContractSel {
 }
 
 
-trait FindByContract[T] extends SqlModelStatic[T] {
+trait FindByContract extends SqlModelStatic {
 
   /**
    * Найти все ряды для указанного номера договора.

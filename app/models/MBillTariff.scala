@@ -45,7 +45,7 @@ object BTariffTypes extends Enumeration {
 
 
 /** Добавить функции нахождения всех активных тарифов. */
-trait TariffsAllEnabled[T] extends SqlModelStatic[T] {
+trait TariffsAllEnabled extends SqlModelStatic {
   def findAllEnabled(implicit c: Connection): List[T] = {
     SQL("SELECT * FROM " + TABLE_NAME + " WHERE is_enabled")
       .as(rowParser *)

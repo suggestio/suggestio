@@ -1,6 +1,8 @@
 package controllers
 
+import org.joda.time.DateTime
 import play.api.i18n.Messages
+import util.billing.MmpDailyBilling
 import util.{ContextImpl, PlayMacroLogsImpl}
 import util.acl.{AbstractRequestWithPwOpt, MaybeAuth}
 import util.SiowebEsUtil.client
@@ -67,29 +69,91 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
   private val text2048M = text(maxLength = 2048).transform(strTrimSanitizeF, strIdentityF)
 
   /** Маппинг для формы забивания текстовых полей запроса инвайта на wi-fi узел. */
-  private val wifiJoinFormM: Form[MirMeta] = {
+  private val wifiJoinFormM: Form[MInviteRequest] = {
     Form(
       mapping(
-        "company"       -> companyNameM,
-        "audienceDescr" -> toStrOptM(text2048M),
-        "humanTraffic"  -> toStrOptM(text(maxLength = 1024).transform(strTrimSanitizeF, strIdentityF)),
-        "address"       -> addressM,
-        "siteUrl"       -> urlStrOptM,
-        "phone"         -> phoneM,
-        "payReqs"       -> optional(text(maxLength = 2048)),
-        "email"         -> email,
-        CAPTCHA_ID_FN   -> Captcha.captchaIdM,
-        CAPTCHA_TYPED_FN -> Captcha.captchaTypedM
+        "company"         -> companyNameM,
+        "audienceDescr"   -> text2048M,
+        "humanTrafficAvg" -> number(min = 10),
+        "address"         -> addressM,
+        "siteUrl"         -> urlStrOptM,
+        "phone"           -> phoneM,
+        "payReqs"         -> optional(text(maxLength = 2048)),
+        "email"           -> email,
+        CAPTCHA_ID_FN     -> Captcha.captchaIdM,
+        CAPTCHA_TYPED_FN  -> Captcha.captchaTypedM
       )
-      {(company, audienceDescr, humanTraffic, address, siteUrl, phone, payReqs, email1, _, _) =>
-        MirMeta(
-          company = company, audienceDescr = audienceDescr, humanTraffic = humanTraffic,
-          address = address, siteUrl = siteUrl, officePhone = phone, email = email1
+      {(companyName, audienceDescr, humanTrafficAvg, address, siteUrl, phone, payReqs, email1, _, _) =>
+        val company = MCompany(
+          meta = MCompanyMeta(name = companyName, officePhones = List(phone))
+        )
+        val node = MAdnNode(
+          companyId = "",
+          meta = AdnMMetadata(
+            name = companyName,
+            address = Some(address),
+            siteUrl = siteUrl,
+            humanTrafficAvg = Some(humanTrafficAvg),
+            audienceDescr = Option(audienceDescr)
+          ),
+          personIds = Set.empty,
+          adn = AdNetMemberTypes.MART.getAdnInfoDflt
+        )
+        val eact = EmailActivation(email1)
+        val mbc = MBillContract(adnId = "", contractDate = DateTime.now, suffix = Option(MmpDailyBilling.CONTRACT_SUFFIX_DFLT), isActive = true)
+        val mbb = MBillBalance(adnId = "", amount = 0F)
+        // TODO Использовать формулу для рассчёта значений тарифов на основе человеч.трафика
+        // TODO Использовать конфиг для хранения дефолтовых значений.
+        val mmp = MBillMmpDaily(
+          contractId = -1,
+          mmpWeekday = 10F,
+          mmpWeekend = 15F,
+          mmpPrimetime = 20F,
+          onRcvrCat = 2.0F,
+          onStartPage = 4.0F,
+          weekendCalId = "",    // TODO
+          primeCalId = ""       // TODO
+        )
+        MInviteRequest(
+          reqType = InviteReqTypes.Wifi,
+          company = Left(company),
+          adnNode = Left(node),
+          contract = Left(mbc),
+          mmp = Some(Left(mmp)),
+          balance = Left(mbb),
+          emailAct = Left(eact),
+          payReqs = None // TODO Нужно отмаппить платёжные атрибуты
         )
       }
-      {mirMeta =>
-        import mirMeta._
-        Some((company, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, mirMeta.email, "", ""))
+      {mir =>
+        // unapply() вызывается только когда всё в Left, т.е. при ошибка заполнения форм.
+        val companyName: String = mir.company
+          .left.map(_.meta.name)
+          .left.getOrElse { mir.adnNode.left.map(_.meta.name).left getOrElse "" }
+        val audienceDescr: String = mir.adnNode
+          .left.map(_.meta.audienceDescr)
+          .left.getOrElse(None)
+          .getOrElse("")
+        val humanTraffic: Int = mir.adnNode
+          .left.map(_.meta.humanTrafficAvg)
+          .left.getOrElse(None)
+          .getOrElse(0)
+        val address: String = mir.adnNode
+          .left.map(_.meta.address)
+          .left.getOrElse(None)
+          .getOrElse("")
+        val siteUrl: Option[String] = mir.adnNode
+          .left.map(_.meta.siteUrl)
+          .getOrElse(None)
+        val officePhone: String = mir.company
+          .left.map(_.meta.officePhones.headOption)
+          .getOrElse(None).getOrElse("")
+        val payReqs: Option[String] = mir.payReqs
+          .flatMap { _.left.map(_.toString).fold(Some.apply, { _ => None }) }
+        val email1: String = mir.emailAct
+          .left.map(_.email)
+          .left.getOrElse("")
+        Some((companyName, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, email1, "", ""))
       }
     )
   }

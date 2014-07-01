@@ -70,17 +70,5 @@
     }
   }
 
-  @mir.progress.map { p =>
-    <h3>Исполнение запроса</h3>
-
-    @* TODO Раскомментить, когда при создании кампании будет происходить обновление экземпляра MInviteRequest. *@
-    @*p.companyIdOpt.fold {
-      <a href="@routes.SysMarket.companyAddForm( Some(MCompany(name = mir.meta.company)) )">Создать новую компанию...</a>
-    } { companyId =>
-      <a href="@routes.SysMarket.companyShow(companyId)">Перейти к компании</a>
-      TODO Надо добавить сюда обработку adn_id
-    }*@
-  }
-
   @_deleteSmthFormBtnTpl( routes.SysMarketInvReq.deleteIR(mir.id.get) )
 }

@@ -1,8 +1,14 @@
+-- 2014.07.01: внесены изменения в родительскую таблицу до ввода модели в эксплуатацию.
+
+-- DROP TABLE sio2.bill_pay_reqs CASCADE;
+
 BEGIN;
 
-    
-CREATE TABLE sio2.bill_pay_reqs (
-  id serial NOT NULL
+
+CREATE TABLE sio2.bill_pay_reqs
+(
+  id serial NOT NULL,
+  contract_id integer NOT NULL
 )
 WITH (
   OIDS=FALSE
@@ -14,7 +20,8 @@ COMMENT ON TABLE sio2.bill_pay_reqs
 
 
 
-CREATE TABLE sio2.bill_pay_reqs_ru (
+CREATE TABLE sio2.bill_pay_reqs_ru
+(
 -- Унаследована from table sio2.bill_pay_reqs:  id integer NOT NULL DEFAULT nextval('sio2.bill_pay_reqs_id_seq'::regclass),
   r_name character varying(128) NOT NULL, -- Имя получателя платежа.
   r_inn bigint NOT NULL, -- ИНН получателя платежа.
@@ -27,7 +34,11 @@ CREATE TABLE sio2.bill_pay_reqs_ru (
   account_number character varying(32) NOT NULL, -- Номер счета получателя в банке получателя. Обычно состоит из 20 цифр.
   comment_prefix character varying(128),
   comment_suffix character varying(128),
+-- Унаследована from table :  contract_id integer NOT NULL,
   CONSTRAINT bill_pay_reqs_ru_pkey PRIMARY KEY (id),
+  CONSTRAINT bill_pay_reqs_ru_contract_id_fkey FOREIGN KEY (contract_id)
+      REFERENCES sio2.bill_contract (id) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE,
   CONSTRAINT bill_pay_reqs_ru_check CHECK (NOT r_okato IS NULL OR NOT r_oktmo IS NULL)
 )
 INHERITS (sio2.bill_pay_reqs)
@@ -47,6 +58,5 @@ COMMENT ON COLUMN sio2.bill_pay_reqs_ru.bank_name IS 'название банк�
 COMMENT ON COLUMN sio2.bill_pay_reqs_ru.bank_bik IS 'БИК банка получателя.';
 COMMENT ON COLUMN sio2.bill_pay_reqs_ru.bank_kbk IS 'КБК-код банка получателя. Обычно состоит из цифр и пробелов.';
 COMMENT ON COLUMN sio2.bill_pay_reqs_ru.account_number IS 'Номер счета получателя в банке получателя. Обычно состоит из 20 цифр.';
-
 
 COMMIT;

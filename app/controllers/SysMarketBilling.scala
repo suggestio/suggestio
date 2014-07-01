@@ -166,16 +166,18 @@ object SysMarketBilling extends SioController with PlayMacroLogsImpl {
         }
       },
       {mbc1 =>
-        mbc0.contractDate = mbc1.contractDate
-        mbc0.hiddenInfo   = mbc1.hiddenInfo
-        mbc0.isActive     = mbc1.isActive
-        mbc0.suffix       = mbc1.suffix
-        mbc0.sioComission = mbc1.sioComission
+        val mbc3 = mbc0.copy(
+          contractDate = mbc1.contractDate,
+          hiddenInfo   = mbc1.hiddenInfo,
+          isActive     = mbc1.isActive,
+          suffix       = mbc1.suffix,
+          sioComission = mbc1.sioComission
+        )
         DB.withConnection { implicit c =>
-          mbc0.save
+          mbc3.save
         }
-        Redirect(routes.SysMarketBilling.billingFor(mbc1.adnId))
-          .flashing("success" -> s"Изменения сохранены: #${mbc0.legalContractId}.")
+        Redirect(routes.SysMarketBilling.billingFor(mbc3.adnId))
+          .flashing("success" -> s"Изменения сохранены: #${mbc3.legalContractId}.")
       }
     )
   }

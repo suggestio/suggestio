@@ -16,8 +16,10 @@ import AdShowLevels.sls2strings
  * Description: Модель для хранения записей об отказах в размещении рекламы. Т.е. некий антипод [[MAdvOk]].
  */
 
-object MAdvRefuse extends MAdvStatic[MAdvRefuse] {
+object MAdvRefuse extends MAdvStatic {
   import SqlParser._
+
+  override type T = MAdvRefuse
 
   override val TABLE_NAME = "adv_refuse"
 

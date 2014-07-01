@@ -12,8 +12,10 @@ import java.sql.Connection
  * Created: 18.04.14 11:43
  * Description: Журнал транзакций по биллингу.
  */
-object MBillTxn extends SqlModelStatic[MBillTxn] {
+object MBillTxn extends SqlModelStatic {
   import SqlParser._
+
+  override type T = MBillTxn
 
   val TABLE_NAME: String = "bill_txn"
 

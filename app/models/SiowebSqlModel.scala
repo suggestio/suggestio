@@ -18,9 +18,11 @@ object SqlModelStatic {
 }
 
 
-trait SqlModelStaticMinimal[T] {
+trait SqlModelStaticMinimal {
 
-  /** Парсер ряда. */
+  type T
+
+  /** Парсер одного ряда. */
   val rowParser: RowParser[T]
 
   /** Название таблицы. Используется при сборке sql-запросов. */
@@ -57,7 +59,7 @@ trait SqlModelStaticMinimal[T] {
 }
 
 
-trait SqlModelStatic[T] extends SqlModelStaticMinimal[T] {
+trait SqlModelStatic extends SqlModelStaticMinimal {
 
   /**
    * Прочитать ряд по ключу ряда.
@@ -122,7 +124,7 @@ trait SqlModelStatic[T] extends SqlModelStaticMinimal[T] {
 
 trait SqlModelDelete {
   def id: Option[Int]
-  def companion: SqlModelStatic[_]
+  def companion: SqlModelStatic
 
   def delete(implicit c: Connection) = {
     if (id.isDefined) {
@@ -175,4 +177,9 @@ object PgTransaction {
     SQL("ROLLBACK TO " + name).execute()
   }
 
+}
+
+trait FromJson {
+  type T
+  def fromJson: PartialFunction[AnyRef, T]
 }
