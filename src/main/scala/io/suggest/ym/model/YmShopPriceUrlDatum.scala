@@ -118,8 +118,8 @@ object MShopPriceList extends EsModelStaticT with MacroLogsImpl {
   )
 
 
-  override protected def dummy(id: String, version: Long) = MShopPriceList(
-    id = Option(id),
+  override protected def dummy(id: Option[String], version: Long) = MShopPriceList(
+    id = id,
     shopId = null,
     url = null,
     authInfo = None

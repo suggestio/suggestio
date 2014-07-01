@@ -101,7 +101,9 @@ object MYmCategory
   }
 
 
-  override protected def dummy(id: String, version: Long) = MYmCategory(id = Option(id), name = null, parentId = None)
+  override protected def dummy(id: Option[String], version: Long) = {
+    MYmCategory(id = id, name = null, parentId = None)
+  }
 
 
   override def generateMappingStaticFields: List[Field] = List(

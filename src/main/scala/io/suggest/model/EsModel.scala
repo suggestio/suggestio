@@ -14,7 +14,6 @@ import org.elasticsearch.client.Client
 import scala.util.{Failure, Success}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.ym.model._
-import java.lang.{Iterable => jlIterable}
 import org.elasticsearch.search.sort.SortOrder
 import org.elasticsearch.action.index.IndexRequestBuilder
 import scala.annotation.tailrec
@@ -181,34 +180,40 @@ object EsModel extends MacroLogsImpl {
   // Следует помнить, что любое поле может быть списком значений.
   val intParser: PartialFunction[Any, Int] = {
     case null => ???
-    case is: jlIterable[_] =>
+    case is: jl.Iterable[_] =>
       intParser(is.head.asInstanceOf[AnyRef])
     case i: Integer => i.intValue()
   }
+  val longParser: PartialFunction[Any, Long] = {
+    case null => ???
+    case ls: jl.Iterable[_] =>
+      longParser(ls.head.asInstanceOf[AnyRef])
+    case l: jl.Number => l.longValue()
+  }
   val floatParser: PartialFunction[Any, Float] = {
     case null               => ???
-    case fs: jlIterable[_] =>
-      floatParser(fs.head.asInstanceOf[Any])
-    case f: java.lang.Number => f.floatValue()
+    case fs: jl.Iterable[_] =>
+      floatParser(fs.head.asInstanceOf[AnyRef])
+    case f: jl.Number => f.floatValue()
   }
   val stringParser: PartialFunction[Any, String] = {
     case null => null
-    case strings: jlIterable[_] =>
+    case strings: jl.Iterable[_] =>
       stringParser(strings.head.asInstanceOf[AnyRef])
     case s: String  => s
   }
   val booleanParser: PartialFunction[Any, Boolean] = {
     case null => ???
-    case bs: jlIterable[_] =>
+    case bs: jl.Iterable[_] =>
       booleanParser(bs.head.asInstanceOf[AnyRef])
-    case b: java.lang.Boolean => b.booleanValue()
+    case b: jl.Boolean => b.booleanValue()
   }
   val dateTimeParser: PartialFunction[Any, DateTime] = {
     case null => null
-    case dates: jlIterable[_] =>
+    case dates: jl.Iterable[_] =>
       dateTimeParser(dates.head.asInstanceOf[AnyRef])
     case s: String           => new DateTime(s)
-    case d: java.util.Date   => new DateTime(d)
+    case d: ju.Date          => new DateTime(d)
     case d: DateTime         => d
     case ri: ReadableInstant => new DateTime(ri)
   }
@@ -503,7 +508,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
    * @param m Карта, распарсенное json-тело документа.
    * @return Экземпляр модели.
    */
-  def deserializeOne(id: String, m: collection.Map[String, AnyRef], version: Long): T
+  def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Long): T
 
 
   /**
@@ -519,7 +524,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
     req.execute()
       .map { getResp =>
         if (getResp.isExists) {
-          val result = deserializeOne(getResp.getId, getResp.getSourceAsMap, getResp.getVersion)
+          val result = deserializeOne(Option(getResp.getId), getResp.getSourceAsMap, getResp.getVersion)
           Some(result)
         } else {
           None
@@ -530,7 +535,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
   /** Список результатов с source внутри перегнать в распарсенный список. */
   def searchResp2list(searchResp: SearchResponse): Seq[T] = {
     searchResp.getHits.getHits.toSeq.map { hit =>
-      deserializeOne(hit.getId, hit.getSource, hit.getVersion)
+      deserializeOne(Option(hit.getId), hit.getSource, hit.getVersion)
     }
   }
 
@@ -589,7 +594,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
         acc
       } else {
         val resp = mgetItem.getResponse
-        deserializeOne(mgetItem.getId, resp.getSourceAsMap, resp.getVersion) :: acc
+        deserializeOne(Option(mgetItem.getId), resp.getSourceAsMap, resp.getVersion) :: acc
       }
     }
   }
@@ -692,12 +697,12 @@ trait EsModelStaticT extends EsModelMinimalStaticT {
 
   override type T <: EsModelT
 
-  protected def dummy(id: String, version: Long): T
+  protected def dummy(id: Option[String], version: Long): T
 
   // TODO Надо бы перевести все модели на stackable-трейты и избавится от PartialFunction здесь.
   def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit]
 
-  override def deserializeOne(id: String, m: collection.Map[String, AnyRef], version: Long): T = {
+  override def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Long): T = {
     val acc = dummy(id, version)
     m foreach applyKeyValue(acc)
     acc.postDeserialize()
@@ -707,10 +712,16 @@ trait EsModelStaticT extends EsModelMinimalStaticT {
 }
 
 
+/** Добавить поле id: Option[String] */
+trait OptStrId {
+  @JsonIgnore
+  def id: Option[String]
+}
+
 
 /** Шаблон для динамических частей ES-моделей.
  * В минимальной редакции механизм десериализации полностью абстрактен. */
-trait EsModelMinimalT {
+trait EsModelMinimalT extends OptStrId {
 
   type T <: EsModelMinimalT
 
@@ -727,9 +738,6 @@ trait EsModelMinimalT {
 
   @JsonIgnore def toJson: String
   @JsonIgnore def toJsonPretty: String = toJson
-
-  @JsonIgnore
-  def id: Option[String]
 
   @JsonIgnore def idOrNull = {
     if (id.isDefined)
@@ -796,12 +804,27 @@ trait EsModelMinimalT {
 }
 
 
+/** Интерфейс с методом сериализации в play.Json экземпляра модели данных. */
+trait ToPlayJsonObj {
+  def toPlayJsonAcc: FieldsJsonAcc
+  /** Сериализовать экземпляр модели данных в промежуточное представление play.Json. */
+  def toPlayJson = JsObject(toPlayJsonAcc)
+  def toPlayJsonWithId: JsObject
+}
+
 /** Шаблон для динамических частей ES-моделей. */
-trait EsModelT extends EsModelMinimalT {
+trait EsModelT extends EsModelMinimalT with ToPlayJsonObj {
   override type T <: EsModelT
 
-  def toPlayJson = JsObject(writeJsonFields(Nil))
-  def toJson = toPlayJson.toString()
+  override def toPlayJsonAcc = writeJsonFields(Nil)
+  override def toPlayJsonWithId: JsObject = {
+    var acc = toPlayJsonAcc
+    if (id.isDefined)
+      acc ::= "id" -> JsString(id.get)
+    JsObject(acc)
+  }
+
+  override def toJson = toPlayJson.toString()
   override def toJsonPretty: String = Json.prettyPrint(toPlayJson)
 
   def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc

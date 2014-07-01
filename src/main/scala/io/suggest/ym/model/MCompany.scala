@@ -32,8 +32,8 @@ object MCompany
     FieldAll(enabled = false)
   )
 
-  override protected def dummy(id: String, version: Long) = {
-    MCompany(id = Option(id), versionOpt = Option(version), meta = MCompanyMeta(name = ""))
+  override protected def dummy(id: Option[String], version: Long) = {
+    MCompany(id = id, versionOpt = Option(version), meta = MCompanyMeta(name = ""))
   }
 
   /**

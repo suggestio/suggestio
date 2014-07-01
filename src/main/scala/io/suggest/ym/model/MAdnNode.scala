@@ -37,13 +37,13 @@ object MAdnNode
 
   override type T = MAdnNode
 
-  override protected def dummy(id: String, version: Long) = {
+  override protected def dummy(id: Option[String], version: Long) = {
     MAdnNode(
       companyId = null,
       personIds = Set.empty,
       adn = null,
       meta = null,
-      id = Option(id)
+      id = id
     )
   }
 
@@ -70,12 +70,12 @@ object MAdnNode
 
 case class MAdnNode(
   var companyId     : String,
-  var personIds     : Set[String],
   var adn           : AdNetMemberInfo,
   var meta          : AdnMMetadata,
+  var personIds     : Set[String] = Set.empty,
   var logoImgOpt    : Option[MImgInfoT] = None,   // TODO Перенести в conf.logoImg
   var conf          : NodeConf = NodeConf.DEFAULT,
-  var imgGallery    : List[String] = Nil,
+  var gallery       : List[String] = Nil,
   var id            : Option[String] = None
 )
   extends EsModelEmpty

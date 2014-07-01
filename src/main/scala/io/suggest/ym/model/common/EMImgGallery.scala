@@ -35,7 +35,7 @@ trait EMImgGalleryStatic extends EsModelStaticT {
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
       case (IMG_GALLERY_ESFN, v: jl.Iterable[_]) =>
-        acc.imgGallery = v
+        acc.gallery = v
           .foldLeft(List.empty[String]) {
             (acc, e) => EsModel.stringParser(e) :: acc
           }
@@ -46,14 +46,14 @@ trait EMImgGalleryStatic extends EsModelStaticT {
 
 trait EMImgGallery extends EsModelT {
   override type T <: EMImgGallery
-  def imgGallery: List[String]
+  def gallery: List[String]
 
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc1 = super.writeJsonFields(acc)
-    if (imgGallery.isEmpty) {
+    if (gallery.isEmpty) {
       acc1
     } else {
-      val v = JsArray( imgGallery.map(JsString.apply) )
+      val v = JsArray( gallery.map(JsString.apply) )
       IMG_GALLERY_ESFN -> v :: acc1
     }
   }
@@ -61,5 +61,5 @@ trait EMImgGallery extends EsModelT {
 
 trait EMImgGalleryMut extends EMImgGallery {
   override type T <: EMImgGalleryMut
-  var imgGallery: List[String]
+  var gallery: List[String]
 }

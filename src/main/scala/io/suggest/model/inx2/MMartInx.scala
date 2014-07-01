@@ -26,7 +26,9 @@ object MMartInx extends EsModelStaticT with MacroLogsImpl {
 
   override type T = MMartInx
 
-  override protected def dummy(martId: String, version: Long) = MMartInx(martId = martId, targetEsInxName = null)
+  override protected def dummy(martId: Option[String], version: Long) = {
+    MMartInx(martId = martId.orNull, targetEsInxName = null)
+  }
 
 
   override def generateMappingStaticFields: List[Field] = List(
