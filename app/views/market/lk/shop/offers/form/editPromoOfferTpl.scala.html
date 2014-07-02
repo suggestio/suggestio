@@ -12,7 +12,7 @@
 @offersBase(Messages("New offer"), Some(mshop), Some(hPathAfter1)) {
   <h1>Редактирование комерческого предложения</h1>
   @offer.datum.pictures.map { pictureId =>
-    <img src="@routes.Img.getThumb("asdasd", pictureId)"/>
+    <img src="@routes.Img.getThumb(pictureId)"/>
   }
   @_promoOfferFormTpl(f, call=routes.MarketOffer.editPromoOfferFormSubmit(offer.id.get), Messages("Edit"))
 }

@@ -56,18 +56,17 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
   /**
    * Выдать картинку из HDFS. Используется для визуализации выдачи.
    * Валидность параметров проверяется в роутере регэкспами.
-   * @param dkey Ключ домена. Возможно содержит www и иной мусор.
    * @param imageId Хеш-ключ картинки в хранилище домена.
    * @return
    */
-  def getThumb(dkey:String, imageId:String) = Action.async { implicit request =>
-    suppressQsFlood(routes.Img.getThumb(dkey, imageId)) {
+  def getThumb(imageId: String) = Action.async { implicit request =>
+    suppressQsFlood(routes.Img.getThumb(imageId)) {
       MImgThumb.getThumbById(imageId) map {
         case Some(its) =>
           serveImgBytes(its, CACHE_THUMB_CLIENT_SECONDS)
 
         case None =>
-          info(s"getThumb($dkey, $imageId): 404 Not found")
+          info(s"getThumb($imageId): 404 Not found")
           imgNotFound
       }
     }
