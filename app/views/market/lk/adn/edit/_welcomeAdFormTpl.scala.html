@@ -4,26 +4,6 @@
 @import ctx._
 @import helper._
 
-@*<div class="select-file-wrap">
-  <div class="preview" id="welcomeAdPreview">
-    @defining(mf("welcomeImgId").value) { imgIdOpt =>
-      @defining(welcomeAdOpt.flatMap(_.imgs.headOption).map(_._2.filename)) { welcomeAdIdOpt =>
-        <input class="image-key" type="hidden" name="welcomeImgId" value="@welcomeAdIdOpt"/>
-        <img class="image-preview" width="59" src="@welcomeAdIdOpt.filter(!_.isEmpty).map { imgId =>@routes.Img.getImg(imgId) }.getOrElse {@routes.Assets.at("images/market/lk/empty-image.gif")}" />
-      }
-    }
-  </div>
-  <div class="selectbox">
-    <div class="select-file">
-      @stuff._fileUploadTpl(routes.Img.handleTempImg, relatedFieldId="welcomeAdPreview")
-      <div class="bg">Выбрать файл для загрузки</div>
-    </div>
-    <div class="descr">
-      Изображение, которое увидят пользователи при открытии Sio.Market
-    </div>
-  </div>
-</div>*@
-
 @defining(mf("welcomeImgId").value) { imgIdOpt =>
 
   @defining(welcomeAdOpt.flatMap(_.imgs.headOption).map(_._2.filename)) { welcomeAdIdOpt =>

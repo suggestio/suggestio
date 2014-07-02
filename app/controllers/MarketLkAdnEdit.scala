@@ -98,6 +98,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
         }
       },
       {case (adnMeta2, newWelcomeImgOpt, logoImgIdOpt, newGallery) =>
+        trace(s"editAdnNodeSubmit($adnId): newGallery[${newGallery.size}] ;; newLogo = ${logoImgIdOpt.map(_.iik.filename)}")
         // В фоне обновляем логотип ТЦ
         val savedLogoFut = ImgFormUtil.updateOrigImg(
           needImgs = logoImgIdOpt.toSeq,
