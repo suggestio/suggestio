@@ -582,7 +582,7 @@ siomart =
       return false
 
     ## Инициализация глагне
-    if data.action == 'martIndex'
+    if data.action == 'showcaseIndex'
       siomart.utils.ge('sioMartRoot').style.display = 'block'
       cbca_grid.set_window_size()
       container = this.utils.ge 'sioMartLayout'

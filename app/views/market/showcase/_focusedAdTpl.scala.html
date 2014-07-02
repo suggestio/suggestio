@@ -1,0 +1,21 @@
+@(mad: MAd, index: Int, producer: MAdnNode, adsCount: Int)(implicit ctx: Context)
+
+<div class="sio-mart-node-offers-window__single-ad-container js-nop-single-ad-container" @if( index > 1 ){ style="visibility: hidden;" } id="sioMartNodeOffers_@index">
+  <div class="sm-flex sm-overflow-scrolling">
+    <div class="sm-flex sm-overflow-scrolling">
+      <div class="sm-flex" style="margin-bottom: -1px; height: 800px; overflow-y:scroll;">
+        <div class="js-no-container" style="min-width: 300px; margin: 0px auto; position: relative;">
+          <div class="sio-mart-node-offers-window__top-offset"></div>
+            @_single_offer_w_description(
+              mad = mad,
+              isWithAction = false,
+              producer = producer,
+              adIndex = index + 1,
+              adsCount = adsCount
+            )
+          <div class="sio-mart-node-offers-window__bottom_margin"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

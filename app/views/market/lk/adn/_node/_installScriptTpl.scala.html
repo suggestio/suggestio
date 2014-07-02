@@ -1,4 +1,4 @@
-@(mmart: MAdnNode, withIndexCall: Option[Call] = None)(implicit ctx: util.Context)
+@(adnNode: MAdnNode, withIndexCall: Option[Call] = None)(implicit ctx: util.Context)
 
 (function() {
   var _siom = document.createElement("script");
@@ -7,11 +7,11 @@
   _siom.src = "@ctx.myAudienceUrl@routes.Assets.at("javascripts/market/showcase/showcase2.js")";
   window.siomart_host = '@ctx.myAudienceUrl';
   var _sh = document.getElementsByTagName("head")[0];
-  @mmart.logoImgOpt.map { logoImg =>
+  @adnNode.logoImgOpt.map { logoImg =>
     window.siomart_logo_src = '@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)';
   }
-  window.siomart_node_color = '@mmart.meta.color';
-  window.siomart_index = '@withIndexCall.getOrElse(routes.Market.martIndex(mmart.id.get))';
-  window.siomart_id = '@mmart.id';
+  window.siomart_node_color = '@adnNode.meta.color';
+  window.siomart_index = '@withIndexCall.getOrElse(routes.MarketShowcase.showcase(adnNode.id.get))';
+  window.siomart_id = '@adnNode.id';
   _sh.appendChild(_siom);
 })();
