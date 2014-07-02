@@ -11,8 +11,10 @@ import util.SqlModelSave
  * Created: 27.06.14 10:16
  * Description: Роялти, т.е. отчисления узла другим узлам.
  */
-object MBillRoyalty extends FindByContract[MBillRoyalty] {
+object MBillRoyalty extends FindByContract {
   import SqlParser._
+
+  override type T = MBillRoyalty
 
   override val TABLE_NAME = "bill_royalty"
 

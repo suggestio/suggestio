@@ -280,7 +280,7 @@ GET  /sys/cal/get/:calId                 controllers.SysCalendar.getCalendarXml(
 
 ## sys: invreq - обработка входящих реквестов на подключение.
 GET  /sys/ir                             controllers.SysMarketInvReq.index
-GET  /sys/ir/show/:irId                  controllers.SysMarketInvReq.showIR(irId)
+GET  /sys/ir/show/:mirId                 controllers.SysMarketInvReq.showIR(mirId)
 POST /sys/ir/delete/:irId                controllers.SysMarketInvReq.deleteIR(irId)
 
 ## sys: mdr - модерация контента

@@ -16,8 +16,10 @@ import AdShowLevels.sls2strings
  * Created: 23.05.14 17:04
  * Description: Список запросов на размещение рекламы.
  */
-object MAdvReq extends MAdvStatic[MAdvReq] {
+object MAdvReq extends MAdvStatic {
   import SqlParser._
+
+  override type T = MAdvReq
 
   val TABLE_NAME = "adv_req"
 

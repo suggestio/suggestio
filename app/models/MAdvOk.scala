@@ -15,8 +15,10 @@ import AdShowLevels.sls2strings
  * Created: 23.05.14 17:35
  * Description: Одобренные заявки на размещение рекламы, т.е. проведённые сделки.
  */
-object MAdvOk extends MAdvStatic[MAdvOk] {
+object MAdvOk extends MAdvStatic {
   import SqlParser._
+
+  override type T = MAdvOk
 
   val TABLE_NAME = "adv_ok"
 

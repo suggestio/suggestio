@@ -1,46 +1,14 @@
-@(mir: MInviteRequest)(implicit ctx: Context)
+@(mir: MInviteRequest, mcOpt: Option[MCompany])(implicit ctx: Context)
 
 @* Отображение одного реквеста. *@
 @import ctx._
-@import stuff._
+@import stuff.{_yesNoTpl => yn, _deleteSmthFormBtnTpl}
 
-@yn(b: Boolean) = {
-  @(if(b) Messages("Yes") else Messages("No"))
-}
-
-@irBase(title = mir.meta.company) {
+@irBase(title = mir.name) {
 
   <h3>@Messages("mir.type." + mir.reqType)</h3>
 
-  @* Рендерим раздел метаданных. *@
-  <p>Компания: @mir.meta.company</p>
-  <p>Адрес:</p>
-  <pre>@mir.meta.address</pre>
-  <p>Офисный телефон: @mir.meta.officePhone</p>
-  <p>Email: <a href="mailto:@mir.meta.email">@mir.meta.email</a></p>
-  @mir.meta.audienceDescr.map { aud =>
-    <p>Описание аудитории: @aud</p>
-  }
-  @mir.meta.humanTraffic.map { ht =>
-    <p>Людской траффик: @ht</p>
-  }
-  @mir.meta.siteUrl.map { siteUrl =>
-    <p>Ссылка на сайт: <a href="@siteUrl">@siteUrl</a></p>
-  }
-  @mir.meta.info.map { info =>
-    <p>Информация: </p>
-    <pre>@info</pre>
-  }
-  @mir.meta.floor.map { floor =>
-    <p>Этаж: @floor</p>
-  }
-  @mir.meta.section.map { section =>
-    <p>Секция: @section</p>
-  }
-  @mir.meta.payReqs.map { payReqs =>
-    <p>Реквизиты платежа:</p>
-    <pre>@payReqs</pre>
-  }
+  @* TODO Отрендерить тут данные по узлу/компании. *@
 
   @* Ответы на вопросы по поводу wi-fi, если есть. *@
   @mir.joinAnswers.map { ja =>
@@ -70,17 +38,17 @@
     }
   }
 
-  @mir.progress.map { p =>
-    <h3>Исполнение запроса</h3>
-
-    @* TODO Раскомментить, когда при создании кампании будет происходить обновление экземпляра MInviteRequest. *@
-    @*p.companyIdOpt.fold {
-      <a href="@routes.SysMarket.companyAddForm( Some(MCompany(name = mir.meta.company)) )">Создать новую компанию...</a>
-    } { companyId =>
-      <a href="@routes.SysMarket.companyShow(companyId)">Перейти к компании</a>
-      TODO Надо добавить сюда обработку adn_id
-    }*@
-  }
+  <div>
+    @mcOpt.fold {
+      <p>Ошибка доступа к данным компании.</p>
+      @* TODO Нужна кнопка восстановления в шаблон. *@
+    } { mc =>
+      @defining( mir.company.isRight ) { mcInstalled =>
+        <h3>@if(mcInstalled) {@Messages("Company")} else {Шаблон компании}</h3>
+        <p>Название: @mc.meta.name</p>
+      }
+    }
+  </div>
 
   @_deleteSmthFormBtnTpl( routes.SysMarketInvReq.deleteIR(mir.id.get) )
 }

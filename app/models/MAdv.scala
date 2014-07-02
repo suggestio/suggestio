@@ -105,7 +105,9 @@ object MAdvModes extends Enumeration {
 }
 
 
-trait MAdvStatic[T] extends SqlModelStatic[T] {
+trait MAdvStatic extends SqlModelStatic {
+
+  override type T <: MAdvI
 
   def getActualById(id: Int, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection) = {
     getByIdBase(id, policy, Some("AND date_end >= now()"))
