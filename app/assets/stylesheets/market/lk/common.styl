@@ -2085,17 +2085,13 @@ siomPreviewSize = 43
     height: (siomPreviewSize + 2) px
 
   &.__preview
-    border: 1px solid #e1e1e1
-    cursor: pointer
-    text-align: center
-
-  &.__preview:hover
-    border: 1px solid white
-
-  &.__preview
     width: siomPreviewSize px
     height: siomPreviewSize px
-    line-height: (siomPreviewSize - 2) px
+    line-height: siomPreviewSize px
+
+    border: 1px solid transparent
+    cursor: pointer
+    text-align: center
 
   &_btn
     position: absolute

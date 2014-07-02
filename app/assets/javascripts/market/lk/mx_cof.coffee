@@ -79,6 +79,7 @@ CbcaPopup = () ->
     $popup.show()
     popupHeight = $popup.height()
 
+    console.log(popup)
 
     $('body').addClass('ovh')
     this.setOverlayHeight(popupHeight)
@@ -90,7 +91,7 @@ CbcaPopup = () ->
       $this.height($parent.height() - 10)
 
   hidePopup: (popup) ->
-    popup = '.popup' || popup
+    popup = popup || '.popup'
     this.hideOverlay()
     $(popup).hide()
     $('#overlay, #overlayData').hide()
@@ -98,13 +99,13 @@ CbcaPopup = () ->
 
   init: () ->
 
-    $(document).on 'click', '.popup .js-close-popup', (event)->
+    $(document).on 'click', '.js-close-popup', (event)->
       event.preventDefault()
       $this = $(this)
-      $popup = $this.closest('.popup')
+      $popup = $this.closest('.js-popup')
       popupId = $popup.attr('id')
 
-      cbca.popup.hidePopup(popupId)
+      cbca.popup.hidePopup '#'+popupId
 
 
     $(document).on 'click', '.popup-but', ->
@@ -979,7 +980,8 @@ market =
 
             if $this.attr 'multiple'
               i = $parent
-                  .prev '.__preview'
+                  .parent()
+                  .find '.__preview'
                   .size()
               fieldName = fieldName + '[' + i + ']'
 
@@ -1421,9 +1423,9 @@ market =
           method : 'post'
           data : $('#promoOfferForm').serialize()
           success : ( data ) ->
-            $('#popupsContainer').html '<div class="ad-full-preview" id="adFullPreview"><div class="ad-full-preview__close-cross" onclick="cbca.popup.hidePopup();"></div><div class="sio-mart-showcase">' + data + '</div></div>'
+            $('#popupsContainer').html '<div class="ad-full-preview js-popup" id="adFullPreview"><div class="ad-full-preview__close-cross js-close-popup"></div><div class="sio-mart-showcase">' + data + '</div></div>'
             $('#adFullPreview .sm-block').addClass 'double-size'
-            cbca.popup.showPopup 'adFullPreview'
+            cbca.popup.showPopup '#adFullPreview'
 
             market.styles.init()
 
