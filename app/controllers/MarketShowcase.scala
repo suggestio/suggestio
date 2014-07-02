@@ -15,11 +15,12 @@ import SiowebEsUtil.client
 import scala.concurrent.Future
 import play.api.mvc.{Result, AnyContent}
 import play.api.Play.{current, configuration}
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 02.07.14 14:07
- * Description:
+ * Description: Контроллер выдачи sio-market.
  */
 object MarketShowcase extends SioController with PlayMacroLogsImpl {
 

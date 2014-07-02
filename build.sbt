@@ -95,6 +95,7 @@ resolvers ++= Seq(
   "conjars-repo" at "https://ivy2-internal.cbca.ru/artifactory/conjars-repo",
   "maven-twttr-com" at "https://ivy2-internal.cbca.ru/artifactory/maven-twttr-com",
   "sonatype-groups-forge" at "https://ivy2-internal.cbca.ru/artifactory/sonatype-groups-forge"
+  //"sonatype-snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
 )
 
 
