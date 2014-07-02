@@ -32,7 +32,7 @@ object MWelcomeAd
 
   override type T = MWelcomeAd
 
-  override protected def dummy(id: Option[String], version: Long) = {
+  override protected def dummy(id: Option[String], version: Option[Long]) = {
     MWelcomeAd(
       producerId = null,
       imgs = null,

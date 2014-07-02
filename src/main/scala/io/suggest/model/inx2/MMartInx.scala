@@ -26,7 +26,7 @@ object MMartInx extends EsModelStaticT with MacroLogsImpl {
 
   override type T = MMartInx
 
-  override protected def dummy(martId: Option[String], version: Long) = {
+  override protected def dummy(martId: Option[String], version: Option[Long]) = {
     MMartInx(martId = martId.orNull, targetEsInxName = null)
   }
 

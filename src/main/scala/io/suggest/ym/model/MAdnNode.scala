@@ -37,7 +37,7 @@ object MAdnNode
 
   override type T = MAdnNode
 
-  override protected def dummy(id: Option[String], version: Long) = {
+  override protected def dummy(id: Option[String], version: Option[Long]) = {
     MAdnNode(
       companyId = null,
       personIds = Set.empty,

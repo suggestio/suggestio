@@ -7,7 +7,6 @@ import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.index.query.QueryBuilders
 import org.joda.time.DateTime
 import io.suggest.model.{EsModel, EsModelT, EsModelStaticT}
-import io.suggest.util.JacksonWrapper
 import com.fasterxml.jackson.annotation.JsonIgnore
 import io.suggest.util.SioEsUtil._, FieldIndexingVariants.FieldIndexingVariant
 import play.api.libs.json._
@@ -84,7 +83,7 @@ trait EMAdnMMetadataStatic extends EsModelStaticT {
   abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
     super.applyKeyValue(acc) orElse {
       case (META_ESFN, value) =>
-        acc.meta = JacksonWrapper.convert[AdnMMetadata](value)
+        acc.meta = AdnMMetadata.deserialize(value)
     }
   }
 
@@ -176,7 +175,7 @@ object AdnMMetadata {
         floor       = Option(jmap get FLOOR_ESFN) map stringParser,
         section     = Option(jmap get SECTION_ESFN) map stringParser,
         siteUrl     = Option(jmap get SITE_URL_ESFN) map stringParser,
-        audienceDescr = Option(jmap get SITE_URL_ESFN) map stringParser,
+        audienceDescr = Option(jmap get AUDIENCE_DESCR_ESFN) map stringParser,
         humanTrafficAvg = Option(jmap get HUMAN_TRAFFIC_AVG_ESFN) map EsModel.intParser,
         info        = Option(jmap get INFO_ESFN) map stringParser,
         color       = Option(jmap get COLOR_ESFN) map stringParser,

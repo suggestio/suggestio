@@ -101,7 +101,7 @@ object MYmCategory
   }
 
 
-  override protected def dummy(id: Option[String], version: Long) = {
+  override protected def dummy(id: Option[String], version: Option[Long]) = {
     MYmCategory(id = id, name = null, parentId = None)
   }
 

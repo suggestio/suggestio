@@ -143,7 +143,7 @@ object MAdStat extends EsModelStaticT with MacroLogsImpl {
 
 
   /** Пустой экземпляр класса. */
-  override protected def dummy(id: Option[String], version: Long) = {
+  override protected def dummy(id: Option[String], version: Option[Long]) = {
     MAdStat(
       id        = id,
       clientAddr = null,

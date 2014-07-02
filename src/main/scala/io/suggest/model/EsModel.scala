@@ -508,7 +508,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
    * @param m Карта, распарсенное json-тело документа.
    * @return Экземпляр модели.
    */
-  def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Long): T
+  def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Option[Long]): T
 
 
   /**
@@ -524,7 +524,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
     req.execute()
       .map { getResp =>
         if (getResp.isExists) {
-          val result = deserializeOne(Option(getResp.getId), getResp.getSourceAsMap, getResp.getVersion)
+          val result = deserializeOne(Option(getResp.getId), getResp.getSourceAsMap, Option(getResp.getVersion))
           Some(result)
         } else {
           None
@@ -535,7 +535,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
   /** Список результатов с source внутри перегнать в распарсенный список. */
   def searchResp2list(searchResp: SearchResponse): Seq[T] = {
     searchResp.getHits.getHits.toSeq.map { hit =>
-      deserializeOne(Option(hit.getId), hit.getSource, hit.getVersion)
+      deserializeOne(Option(hit.getId), hit.getSource, Option(hit.getVersion))
     }
   }
 
@@ -594,7 +594,7 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
         acc
       } else {
         val resp = mgetItem.getResponse
-        deserializeOne(Option(mgetItem.getId), resp.getSourceAsMap, resp.getVersion) :: acc
+        deserializeOne(Option(mgetItem.getId), resp.getSourceAsMap, Option(resp.getVersion)) :: acc
       }
     }
   }
@@ -697,12 +697,12 @@ trait EsModelStaticT extends EsModelMinimalStaticT {
 
   override type T <: EsModelT
 
-  protected def dummy(id: Option[String], version: Long): T
+  protected def dummy(id: Option[String], version: Option[Long]): T
 
   // TODO Надо бы перевести все модели на stackable-трейты и избавится от PartialFunction здесь.
   def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit]
 
-  override def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Long): T = {
+  override def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Option[Long]): T = {
     val acc = dummy(id, version)
     m foreach applyKeyValue(acc)
     acc.postDeserialize()

@@ -51,14 +51,14 @@ object MAd
 
   protected[model] val blockMetaDflt = BlockMeta(height = 140, blockId = 1)  // TODO Убрать после окончания миграции всех карточек на blocks.
 
-  override protected[model] def dummy(id: Option[String], version: Long) = {
+  override protected[model] def dummy(id: Option[String], version: Option[Long]) = {
     MAd(
       producerId = null,
       blockMeta = blockMetaDflt,
       offers = Nil,
       imgs = Map.empty,
       id = id,
-      versionOpt = Some(version)
+      versionOpt = version
     )
   }
 
