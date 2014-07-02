@@ -1,6 +1,8 @@
 package controllers
 
 import org.elasticsearch.index.engine.VersionConflictEngineException
+import play.api.mvc.{AnyContent, Result}
+import play.twirl.api.HtmlFormat
 import util.acl._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
@@ -49,14 +51,12 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
   /** Отрендерить страницу одного инвайт-реквеста. */
   def showIR(mirId: String) = IsSuperuserMir(mirId).async { implicit request =>
     import request.mir
-    val mcOptFut = mir.company.fold[Future[Option[MCompany]]](
-      { mc => Future successful Some(mc) },
-      { mcId => MCompany.getById(mcId) }
-    )
+    val adnNodeOptFut = nodeOptFut(mir)
     for {
-      mcOpt <- mcOptFut
+      mcOpt   <- companyOptFut(mir)
+      nodeOpt <- adnNodeOptFut
     } yield {
-      Ok(irShowOneTpl(mir, mcOpt))
+      Ok(irShowOneTpl(mir, mcOpt, nodeOpt))
     }
   }
 
@@ -167,6 +167,127 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
   }
 
 
+  /** Форма для редактирования узла, но вместо id компании может быть любой мусор. */
+  private val adnNodeFormM = {
+    import play.api.data._, Forms._
+    SysMarket.getAdnNodeFormM(text(maxLength = 40))
+  }
+
+  /** Запрос страницы с формой редактирования заготовки узла. */
+  def nodeEdit(mirId: String) = isNodeLeft(mirId).async { implicit request =>
+    nodeEditBody(request.mir)(Ok(_))
+  }
+
+  private def nodeEditBody(mir: MInviteRequest)(onSuccess: HtmlFormat.Appendable => Result)
+                          (implicit request: MirRequest[AnyContent]): Future[Result] = {
+    val mcOptFut = companyOptFut(mir)
+    val adnOptFut = nodeOptFut(mir)
+    mcOptFut flatMap {
+      case Some(mc) =>
+        adnOptFut map {
+          case Some(adnNode) =>
+            val formFilled = adnNodeFormM fill adnNode
+            Ok(nodeEditTpl(mir, adnNode, mc, formFilled))
+          case None =>
+            NotFound("Node not found")
+        }
+
+      case None =>
+        NotFound("Company not found.")
+    }
+  }
+
+  /** Сабмит формы редактирования заготовки рекламного узла.
+    * Здесь может быть подвох в поле companyId, которое может содержать пустое значение. */
+  def nodeEditFormSubmit(mirId: String) = isNodeLeft(mirId).async { implicit request =>
+    import request.mir
+    adnNodeFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"nodeEditFormSubmit($mirId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+        nodeEditBody(mir)(NotAcceptable(_))
+      },
+      {adnNode2 =>
+        tryUpdateMir(mir) { mir0 =>
+          val adnNode = mir0.adnNode.left.get
+          val adnNode3 = SysMarket.updateAdnNode(adnNode, adnNode2)
+          mir0.copy(
+            adnNode = Left(adnNode3)
+          )
+        } map { _mirId =>
+          Redirect( routes.SysMarketInvReq.showIR(_mirId) )
+            .flashing("success" -> "Шаблон узла сохранён.")
+        }
+      }
+    )
+  }
+
+  /** sio-админ приказывает развернуть рекламный узел. */
+  def nodeInstallSubmit(mirId: String) = isNodeLeft(mirId).async { implicit request =>
+    import request.mir
+    assert(mir.company.isRight, "error.company.not.installed")
+    val mcId = mir.company.right.get
+    val adnNode = mir.adnNode.left.get.copy(
+      companyId = mcId
+    )
+    // Определить, существовал ли узел. Если нет, то при ошибке обновления MIR новый созданный узел будет удалён.
+    val previoslyExistedFut = adnNode.id.fold [Future[Boolean]]
+      { Future successful false }
+      { MAdnNode.isExist }
+    previoslyExistedFut flatMap { previoslyExisted =>
+      // Запуск сохранения узла.
+      adnNode.save flatMap { adnId =>
+        // Узел сохранён. Пора обновить экземпляр MIR
+        val updateFut = tryUpdateMir(mir) { mir0 =>
+          mir0.copy(
+            adnNode = Right(adnId)
+          )
+        }
+        if (previoslyExisted) {
+          updateFut onFailure { case ex =>
+            warn(s"nodeInstallSubmit($mirId): Rollbacking node[$adnId] installation due to exception during MIR update", ex)
+            MAdnNode.deleteById(adnId)
+          }
+        }
+        updateFut map { _mirId =>
+          Redirect( routes.SysMarketInvReq.showIR(_mirId) )
+            .flashing("success" -> "Рекламный узел добавлен в систему.")
+        }
+      }
+    }
+  }
+
+
+  def nodeUninstallSubmit(mirId: String) = isNodeRight(mirId).async { implicit request =>
+    import request.mir
+    val adnId = mir.adnNode.right.get
+    MAdnNode.getById(adnId) flatMap {
+      case Some(adnNode) =>
+        adnNode.delete flatMap {
+          case true =>
+            // Узел удалён. Пора залить его в состояние MIR
+            val updateFut = tryUpdateMir(mir) { mir0 =>
+              mir0.copy(
+                adnNode = Left(adnNode)
+              )
+            }
+            updateFut onFailure { case ex =>
+              adnNode.save
+              warn(s"nodeUnistallSubmit($mirId): rollbacking node[$adnId] deinstallation due to exception.", ex)
+            }
+            updateFut map { _mirId =>
+              Redirect( routes.SysMarketInvReq.showIR(_mirId) )
+                .flashing("success" -> "Рекламный узел деинсталлирован назад в шаблон узла. Это может нарушить ссылочную целостность.")
+            }
+          case false =>
+            ExpectationFailed(s"Cannot delete node[$adnId], proposed for installation.")
+        }
+
+      case None =>
+        NotFound(s"Node $adnId not exist, but it should.")
+    }
+  }
+
+
   /** Обновления инстанса [[models.MInviteRequest]] с аккуратным подавлением конфликтов версий.
     * @param mir0 Начальный инстанс MIR. Будет опробован только при нулевой попытке.
     * @param n Необязательный номер попытки, который не превышает максимум UPDATE_RETRIES_MAX.
@@ -186,7 +307,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
               case Some(mir00) =>
                 tryUpdateMir(mir00, n1)(updateF)
               case None =>
-                throw new IllegalStateException(s"${logPrefix}Looks like MIR instance has been deleted during update. last try was $n")
+                throw new IllegalStateException(s"${logPrefix}Looks like MIR instance has been deleted during update. last try was $n", ex)
             }
           } else {
             throw new RuntimeException(logPrefix + "Too many save-update retries failed: " + n, ex)
@@ -214,6 +335,44 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
         mir.company.isRight
       }
     }
+  }
+
+  private def isNodeLeft(mirId: String) = new IsSuperuserMir(mirId) {
+     override def mirStateInvalidMsg: String = {
+      "MIR.node is installed, but action possible only for NOT installed node. Go back and press F5."
+    }
+    override def isMirStateOk(mir: MInviteRequest): Boolean = {
+      super.isMirStateOk(mir) && {
+        mir.adnNode.isLeft
+      }
+    }
+  }
+
+  private def isNodeRight(mirId: String) = new IsSuperuserMir(mirId) {
+     override def mirStateInvalidMsg: String = {
+      "MIR.node is NOT installed, but action possible only for already installed node. Go back and press F5."
+    }
+    override def isMirStateOk(mir: MInviteRequest): Boolean = {
+      super.isMirStateOk(mir) && {
+        mir.adnNode.isRight
+      }
+    }
+  }
+
+
+  /** Прочитать MCompany из реквеста или из модели. */
+  private def companyOptFut(mir: MInviteRequest): Future[Option[MCompany]] = {
+    mir.company.fold[Future[Option[MCompany]]](
+      { mc => Future successful Option(mc) },
+      { mcId => MCompany.getById(mcId) }
+    )
+  }
+
+  private def nodeOptFut(mir: MInviteRequest): Future[Option[MAdnNode]] = {
+    mir.adnNode.fold[Future[Option[MAdnNode]]](
+      { an => Future successful Option(an) },
+      { adnId => MAdnNodeCache.getById(adnId) }
+    )
   }
 
 }

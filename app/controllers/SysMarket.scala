@@ -353,29 +353,31 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       )
   }
 
-  /** Маппинг для формы добавления/редактирования торгового центра. */
-  private val adnNodeFormM = Form(mapping(
-    "companyId" -> esIdM,
-    "adn"       -> adnMemberM,
-    "meta"      -> adnNodeMetaM,
-    "conf"      -> nodeConfM,
-    "personIds" -> personIdsM
-  )
-  // apply()
-  {(companyId, anmi, meta, conf, personIds) =>
-    MAdnNode(
-      meta = meta,
-      companyId = companyId,
-      adn = anmi,
-      conf = conf,
-      personIds = personIds
+  private val adnKM  = "adn" -> adnMemberM
+  private val metaKM = "meta" -> adnNodeMetaM
+  private val confKM = "conf" -> nodeConfM
+  private val personIdsKM = "personIds" -> personIdsM
+
+  /** Генератор маппингов для формы добавления/редактирования рекламного узла. */
+  def getAdnNodeFormM(companyM: Mapping[String]): Form[MAdnNode] = {
+    Form(mapping(
+      "companyId" -> companyM, adnKM, metaKM, confKM, personIdsKM
     )
+    {(companyId, anmi, meta, conf, personIds) =>
+      MAdnNode(
+        meta = meta,
+        companyId = companyId,
+        adn = anmi,
+        conf = conf,
+        personIds = personIds
+      )
+    }
+    {adnNode =>
+      import adnNode._
+      Some((companyId, adn, meta, conf, personIds))
+    })
   }
-  // unapply()
-  {adnNode =>
-    import adnNode._
-    Some((companyId, adn, meta, conf, personIds))
-  })
+  private val adnNodeFormM = getAdnNodeFormM(esIdM)
 
   private def maybeSupOpt(supIdOpt: Option[String]): Future[Option[MAdnNode]] = {
     supIdOpt match {
@@ -466,33 +468,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         supExistsFut flatMap {
           case true =>
             // Собираем новый объект MAdnNode, считая его не изменяемым. Так и будет в будущем.
-            val adnNode3 = adnNode.copy(
-              companyId = adnNode2.companyId,
-              personIds = adnNode2.personIds,
-              meta = adnNode.meta.copy(
-                name    = adnNode2.meta.name,
-                description = adnNode2.meta.description,
-                town    = adnNode2.meta.town,
-                address = adnNode2.meta.address,
-                phone   = adnNode2.meta.phone,
-                floor   = adnNode2.meta.floor,
-                section = adnNode2.meta.section,
-                siteUrl = adnNode2.meta.siteUrl,
-                color   = adnNode2.meta.color
-              ),
-              adn = adnNode.adn.copy(
-                memberType  = adnNode2.adn.memberType,
-                rights      = adnNode2.adn.rights,
-                isEnabled   = adnNode2.adn.isEnabled,
-                showLevelsInfo = adnNode2.adn.showLevelsInfo,
-                supId       = adnNode2.adn.supId,
-                advDelegate = adnNode2.adn.advDelegate,
-                testNode    = adnNode2.adn.testNode
-              ),
-              conf = adnNode.conf.copy(
-                withBlocks = adnNode2.conf.withBlocks
-              )
-            )
+            val adnNode3 = updateAdnNode(adnNode, adnNode2)
             adnNode3.save.map { _ =>
               Redirect(routes.SysMarket.showAdnNode(adnId))
                 .flashing("success" -> "Изменения сохранены")
@@ -507,6 +483,36 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     )
   }
 
+  /** Накатить отмаппленные изменения на существующий интанс узла, породив новый интанс.*/
+  def updateAdnNode(adnNode: MAdnNode, adnNode2: MAdnNode): MAdnNode = {
+    adnNode.copy(
+      companyId = adnNode2.companyId,
+      personIds = adnNode2.personIds,
+      meta = adnNode.meta.copy(
+        name    = adnNode2.meta.name,
+        description = adnNode2.meta.description,
+        town    = adnNode2.meta.town,
+        address = adnNode2.meta.address,
+        phone   = adnNode2.meta.phone,
+        floor   = adnNode2.meta.floor,
+        section = adnNode2.meta.section,
+        siteUrl = adnNode2.meta.siteUrl,
+        color   = adnNode2.meta.color
+      ),
+      adn = adnNode.adn.copy(
+        memberType  = adnNode2.adn.memberType,
+        rights      = adnNode2.adn.rights,
+        isEnabled   = adnNode2.adn.isEnabled,
+        showLevelsInfo = adnNode2.adn.showLevelsInfo,
+        supId       = adnNode2.adn.supId,
+        advDelegate = adnNode2.adn.advDelegate,
+        testNode    = adnNode2.adn.testNode
+      ),
+      conf = adnNode.conf.copy(
+        withBlocks = adnNode2.conf.withBlocks
+      )
+    )
+  }
 
   /* Торговые центры и площади. */
 
