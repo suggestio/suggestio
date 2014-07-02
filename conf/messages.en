@@ -123,6 +123,7 @@ Office.phone.number=Office phone number
 Your.IR.accepted=Your connection request accepted successfully.
 
 
+error.gallery.too.large=Too many pictures in gallery.
 error.no.money=No money
 error.invalid=Invalid value
 error.invalid.java.util.Date=Invalid date value

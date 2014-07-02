@@ -127,6 +127,7 @@ nth.floor={0}-й этаж
 
 username.unknown=Кто здесь?
 
+error.gallery.too.large=Слишком много картинок в галлерее.
 error.no.money=Недостаточно средств
 error.invalid=Неверное значение
 error.invalid.java.util.Date=Неверный формат даты

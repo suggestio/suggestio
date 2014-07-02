@@ -13,6 +13,7 @@ import io.suggest.ym.model.MAdnNode
 import play.api.data.Form
 import play.api.data.Forms._
 import util.FormUtil._
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -25,6 +26,9 @@ import util.FormUtil._
 object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImgSupport {
 
   import LOGGER._
+
+  /** Максимально кол-во картинок в галереи. */
+  val GALLERY_LEN_MAX = configuration.getInt("adn.gallery.len.max") getOrElse 7
 
   /** Ключ для картинки, используемой в качестве приветствия. */
   val WELCOME_IMG_KEY = "wlcm"
@@ -63,6 +67,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
     "welcomeImgId"  -> optional(ImgFormUtil.imgIdJpegM),
     ImgFormUtil.getLogoKM("adn.rcvr.logo.invalid", marker=TMP_LOGO_MARKER),
     "gallery"       -> list(ImgFormUtil.imgIdJpegM)
+      .verifying("error.gallery.too.large",  { _.size <= GALLERY_LEN_MAX })
   ))
 
 
