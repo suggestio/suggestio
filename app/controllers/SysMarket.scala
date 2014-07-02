@@ -114,16 +114,25 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       },
       {mc2 =>
         // Собираем новый инстанс компании.
-        val mc3 = mc.copy(
-          meta = mc.meta.copy(
-            name = mc2.meta.name
-          )
-        )
+        val mc3 = updateCompany(mc, mc2)
         mc3.save map { _companyId =>
           RdrBackOr(r) { routes.SysMarket.companyShow(_companyId) }
             .flashing("success" -> "Изменения сохранены.")
         }
       }
+    )
+  }
+
+  /** Функция для обновления компании отмаппленными данными companyFormM.
+    * @param mc Текущий (исходный) инстанс компании.
+    * @param mc2 Результат маппинга companyFormM.
+    * @return Новый инстанс, содержащий в себе былые данные, местами перезаписанные новыми.
+    */
+  def updateCompany(mc: MCompany, mc2: MCompany): MCompany = {
+    mc.copy(
+      meta = mc.meta.copy(
+        name = mc2.meta.name
+      )
     )
   }
 

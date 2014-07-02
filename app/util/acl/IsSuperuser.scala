@@ -237,14 +237,23 @@ object IsSuperuserMir {
 trait IsSuperuserMirBase extends ActionBuilder[MirRequest] {
   import IsSuperuserMir._
   def mirId: String
+
+  def isMirStateOk(mir: MInviteRequest) = true
+  def mirStateInvalidMsg = s"MIR[$mirId] has impossible state for this action."
+  def mirStateInvalid = Results.ExpectationFailed(mirStateInvalidMsg)
+
   override def invokeBlock[A](request: Request[A], block: (MirRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper isSuperuser pwOpt) {
       MInviteRequest.getById(mirId) flatMap {
         case Some(mir) =>
-          SioReqMd.fromPwOpt(pwOpt) flatMap { srm =>
-            val req1 = MirRequest(mir, pwOpt, request, srm)
-            block(req1)
+          if (isMirStateOk(mir)) {
+            SioReqMd.fromPwOpt(pwOpt) flatMap { srm =>
+              val req1 = MirRequest(mir, pwOpt, request, srm)
+              block(req1)
+            }
+          } else {
+            Future successful mirStateInvalid
           }
 
         case None =>

@@ -65,7 +65,7 @@ object MPerson extends EsModelStaticT with PlayMacroLogsImpl {
     case (LANG_ESFN, value)     => acc.lang = stringParser(value)
   }
 
-  override protected def dummy(id: Option[String], version: Long) = {
+  override protected def dummy(id: Option[String], version: Option[Long]) = {
     MPerson(id = id, lang = null)
   }
 

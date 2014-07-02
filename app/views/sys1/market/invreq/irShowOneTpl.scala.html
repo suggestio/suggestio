@@ -3,8 +3,17 @@
 @* Отображение одного реквеста. *@
 @import ctx._
 @import stuff.{_yesNoTpl => yn, _deleteSmthFormBtnTpl}
+@import helper._
+
+@btn(btnText: String, to: Call) = {
+  @form(to) {
+    <input type="submit" value="@Messages(btnText)"/>
+  }
+}
 
 @irBase(title = mir.name) {
+
+  @_deleteSmthFormBtnTpl( routes.SysMarketInvReq.deleteIR(mir.id.get) )
 
   <h3>@Messages("mir.type." + mir.reqType)</h3>
 
@@ -47,9 +56,13 @@
         <h3>@if(mcInstalled) {@Messages("Company")} else {Шаблон компании}</h3>
         <p>Название: @mc.meta.name</p>
         <a href="@if(mcInstalled) {@routes.SysMarket.companyEditForm(mc.id.get)} else {@routes.SysMarketInvReq.companyEdit(mir.id.get)}">@Messages("Edit")</a>
+        @if(mcInstalled) {
+          @btn("Uninstall", routes.SysMarketInvReq.companyUninstallSubmit(mir.id.get))
+        } else {
+          @btn("Install", routes.SysMarketInvReq.companyInstallSubmit(mir.id.get))
+        }
       }
     }
   </div>
 
-  @_deleteSmthFormBtnTpl( routes.SysMarketInvReq.deleteIR(mir.id.get) )
 }

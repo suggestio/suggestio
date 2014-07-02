@@ -284,6 +284,8 @@ GET  /sys/ir/show/:mirId                 controllers.SysMarketInvReq.showIR(mirI
 POST /sys/ir/delete/:irId                controllers.SysMarketInvReq.deleteIR(irId)
 GET  /sys/ir/edit/:mirId/company         controllers.SysMarketInvReq.companyEdit(mirId)
 POST /sys/ir/edit/:mirId/company         controllers.SysMarketInvReq.companyEditFormSubmit(mirId)
+POST /sys/ir/install/:mirId/company      controllers.SysMarketInvReq.companyInstallSubmit(mirId)
+POST /sys/ir/uninstall/:mirId/company    controllers.SysMarketInvReq.companyUninstallSubmit(mirId)
 
 
 ## sys: mdr - модерация контента

@@ -57,8 +57,8 @@ object MInviteRequest
 
   override val ES_TYPE_NAME = "invReq"
 
-  override def dummy(id: Option[String], version: Long): T = {
-    MInviteRequest(id = id, versionOpt = Some(version), reqType = null, company = null,
+  override def dummy(id: Option[String], version: Option[Long]): T = {
+    MInviteRequest(id = id, versionOpt = version, reqType = null, company = null,
       adnNode = null, contract = null, balance = null, emailAct = null, name = "")
   }
 
@@ -85,7 +85,10 @@ object MInviteRequest
     jmap.get(ID_ESFN) match {
       case null =>
         val docId = Option(jmap get "id") map stringParser
-        val r = companion.deserializeOne(docId, jmap.asInstanceOf[ju.Map[String, AnyRef]], version = -1)
+        val m = jmap
+          .asInstanceOf[ju.Map[String, AnyRef]]
+          .filterKeys(_ != "id")
+        val r = companion.deserializeOne(docId, m, version = None)
         Left(r)
       case idRaw =>
         Right(stringParser(idRaw))
