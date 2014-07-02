@@ -1,4 +1,4 @@
-@(mir: MInviteRequest)(implicit ctx: Context)
+@(mir: MInviteRequest, mcOpt: Option[MCompany])(implicit ctx: Context)
 
 @* Отображение одного реквеста. *@
 @import ctx._
@@ -37,6 +37,18 @@
       <p>Кол-во пользователей: @Messages("join.qsn.audienceSz." + auSz)</p>
     }
   }
+
+  <div>
+    @mcOpt.fold {
+      <p>Ошибка доступа к данным компании.</p>
+      @* TODO Нужна кнопка восстановления в шаблон. *@
+    } { mc =>
+      @defining( mir.company.isRight ) { mcInstalled =>
+        <h3>@if(mcInstalled) {@Messages("Company")} else {Шаблон компании}</h3>
+        <p>Название: @mc.meta.name</p>
+      }
+    }
+  </div>
 
   @_deleteSmthFormBtnTpl( routes.SysMarketInvReq.deleteIR(mir.id.get) )
 }

@@ -254,6 +254,7 @@ case class MBillContract(
       CONTRACT_DATE_FN  -> EsModel.date2JsStr(contractDate),
       DATE_CREATED_FN   -> EsModel.date2JsStr(dateCreated),
       IS_ACTIVE_FN      -> JsBoolean(isActive),
+      CRAND_FN          -> JsNumber(crand),
       SIO_COMISSION_FN  -> JsNumber(sioComission)
     )
     if (suffix.isDefined)

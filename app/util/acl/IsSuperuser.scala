@@ -222,3 +222,38 @@ case class IsSuperuserCompany(companyId: String)
   extends IsSuperuserCompanyBase
   with ExpireSession[CompanyRequest]
 
+
+
+// ActionBuilder и его детали для экшенов, работающих с экземпляром MInviteRequest.
+case class MirRequest[A](
+  mir: MInviteRequest,
+  pwOpt: PwOpt_t,
+  request: Request[A],
+  sioReqMd: SioReqMd
+) extends AbstractRequestWithPwOpt(request)
+object IsSuperuserMir {
+  def mirNotFound(mirId: String) = Results.NotFound("Invite request not found: " + mirId)
+}
+trait IsSuperuserMirBase extends ActionBuilder[MirRequest] {
+  import IsSuperuserMir._
+  def mirId: String
+  override def invokeBlock[A](request: Request[A], block: (MirRequest[A]) => Future[Result]): Future[Result] = {
+    val pwOpt = PersonWrapper.getFromRequest(request)
+    if (PersonWrapper isSuperuser pwOpt) {
+      MInviteRequest.getById(mirId) flatMap {
+        case Some(mir) =>
+          SioReqMd.fromPwOpt(pwOpt) flatMap { srm =>
+            val req1 = MirRequest(mir, pwOpt, request, srm)
+            block(req1)
+          }
+
+        case None =>
+          Future successful mirNotFound(mirId)
+      }
+    } else {
+      IsSuperuser.onUnauthFut(request, pwOpt)
+    }
+  }
+}
+case class IsSuperuserMir(mirId: String) extends IsSuperuserMirBase with ExpireSession[MirRequest]
+
