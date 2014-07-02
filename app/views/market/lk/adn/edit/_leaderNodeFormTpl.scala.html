@@ -1,4 +1,4 @@
-@(adnId:String, btnText: String, mf: Form[_], submitCall:Call, welcomeAdOpt: Option[MAdT])(implicit ctx: util.Context)
+@(adnId:String, btnText: String, mf: Form[_], submitCall:Call, welcomeAdOpt: Option[MAdT], nodeInfo: AdNetMemberInfo)(implicit ctx: util.Context)
 
 @* Форма для создания/редактирования торгового центра через личный кабинет. *@
 @import helper._
@@ -140,4 +140,12 @@
     <a class="siom-ac-btn __size-M __color-2 __ft-XM js-submit-btn f-right">@btnText</a>
   </div>
 
+  @if(nodeInfo.isReceiver) {
+    @textarea(mf("meta.audienceDescr"))
+    @inputText(mf("meta.humanTrafficAvg"))
+  } else {
+    @if(nodeInfo.isProducer) {
+      @textarea(mf("meta.info"))
+    }
+  }
 }

@@ -117,6 +117,11 @@ object FormUtil {
   def toStrOptM(x: Mapping[String]): Mapping[Option[String]] = {
     x.transform[Option[String]](Option.apply, strOptGetOrElseEmpty)
   }
+  def toSomeStrM(x: Mapping[String], trimmer: String => String = strTrimSanitizeF): Mapping[Option[String]] = {
+    x.transform[String](trimmer, strIdentityF)
+     .verifying("error.required", !_.isEmpty)
+     .transform[Option[String]](Some.apply, strOptGetOrElseEmpty)
+  }
 
 
   /** Возвращение проверенного пароля как Some(). */
@@ -125,8 +130,6 @@ object FormUtil {
 
   val nameM = nonEmptyText(maxLength = 64)
     .transform(strTrimSanitizeF, strIdentityF)
-  def shopNameM = nameM
-  def martNameM = nameM
   def companyNameM = nameM
 
 
@@ -136,6 +139,7 @@ object FormUtil {
     .verifying("error.color.invalid", colorCheckRE.pattern.matcher(_).matches)
   val colorOptM = optional(colorM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
+  val colorSomeM = toSomeStrM(colorM)
 
   val publishedTextM = text(maxLength = 2048)
     .transform(strFmtTrimF, strIdentityF)
@@ -146,11 +150,14 @@ object FormUtil {
     .transform(strTrimSanitizeF, strIdentityF)
   val townOptM = optional(townM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
+  val townSomeM = toSomeStrM(townM)
 
   val addressM = nonEmptyText(minLength = 10, maxLength = 128)
     .transform(strTrimSanitizeF, strIdentityF)
   val addressOptM = optional(addressM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
+  val addressSomeM = toSomeStrM(addressM)
+
 
   /** id категории. */
   def userCatIdM = esIdM
@@ -163,8 +170,13 @@ object FormUtil {
     .transform(strTrimSanitizeF, strIdentityF)
   val phoneOptM = optional(phoneM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
+  val phoneSomeM = toSomeStrM(phoneM)
 
-  def martAddressM = addressM
+  /** Маппер для человеческого траффика, заданного числом. */
+  val humanTrafficAvgM = number(min = 10)
+
+  val text2048M = text(maxLength = 2048).transform(strTrimSanitizeF, strIdentityF)
+  def audienceDescrM = text2048M
 
   // Трансформеры для optional-списков.
   def optList2ListF[T] = { optList: Option[List[T]] => optList getOrElse Nil }

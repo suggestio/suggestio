@@ -1,5 +1,6 @@
 package controllers
 
+import io.suggest.ym.model.common.EMAdNetMember
 import util.img._
 import ImgFormUtil.imgInfo2imgKey
 import util.PlayMacroLogsImpl
@@ -36,39 +37,102 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   /** Маркер картинки для использования в качестве логотипа. */
   private val TMP_LOGO_MARKER = "leadLogo"
 
-  /** Маппер для метаданных. */
-  private val nodeMetaM = mapping(
-    "name"      -> nameM,
-    "town"      -> townOptM,
-    "address"   -> addressOptM,
-    "color"     -> colorOptM,
-    "siteUrl"   -> urlStrOptM,
-    "phone"     -> phoneOptM
-  )
-  {(name, town, address, color, siteUrlOpt, phoneOpt) =>
-    AdnMMetadata(
-      name    = name,
-      town    = town,
-      address = address,
-      color   = color,
-      siteUrl = siteUrlOpt,
-      phone   = phoneOpt
-    )
-  }
-  {meta =>
-    import meta._
-    Some((name, town, address, color, siteUrl, phone))
+
+  // У нас несколько вариантов развития событий с формами: ресивер, продьюсер или что-то иное. Нужно три маппинга.
+  private val nameKM        = "name"    -> nameM
+  private val townKM        = "town"    -> townSomeM
+  private val addressKM     = "address" -> addressSomeM
+  private val colorKM       = "color"   -> colorSomeM
+  private val siteUrlKM     = "siteUrl" -> urlStrOptM
+  private val phoneKM       = "phone"   -> phoneOptM
+
+  private val audDescrKM    = "audienceDescr"   -> toSomeStrM(audienceDescrM)
+  private val humTrafAvgKM  = "humanTrafficAvg" -> humanTrafficAvgM.transform[Option[Int]](Some.apply, { _ getOrElse 0 })
+
+  private val infoKM        = "info" -> toSomeStrM(text2048M)
+
+  /** Маппер подформы метаданных для узла-ресивера. */
+  private val rcvrMetaM = {
+    mapping(nameKM, townKM, addressKM, colorKM, siteUrlKM, phoneKM, audDescrKM, humTrafAvgKM)
+    {(name, town, address, color, siteUrlOpt, phoneOpt, audDescr, humanTrafficAvg) =>
+      AdnMMetadata(
+        name    = name,
+        town    = town,
+        address = address,
+        color   = color,
+        siteUrl = siteUrlOpt,
+        phone   = phoneOpt,
+        audienceDescr = audDescr,
+        humanTrafficAvg = humanTrafficAvg
+      )
+    }
+    {meta =>
+      import meta._
+      Some((name, town, address, color, siteUrl, phone, audienceDescr, humanTrafficAvg))
+    }
   }
 
+  /** Маппер подформы метаданных для узла-продьюсера. */
+  private val prodMetaM = {
+    mapping(nameKM, townKM, addressKM, colorKM, siteUrlKM, phoneKM, infoKM)
+    {(name, town, address, color, siteUrlOpt, phoneOpt, info) =>
+      AdnMMetadata(
+        name    = name,
+        town    = town,
+        address = address,
+        color   = color,
+        siteUrl = siteUrlOpt,
+        phone   = phoneOpt,
+        info    = info
+      )
+    }
+    {meta =>
+      import meta._
+      Some((name, town, address, color, siteUrl, phone, info))
+    }
+  }
+
+  /** Маппер для метаданных какого-то узла, для которого не подходят две предыдущие формы.
+    * Сделан в виде метода, т.к. такой случай почти невероятен. */
+  private def nodeMetaM = {
+    mapping(nameKM, townKM, addressKM, colorKM, siteUrlKM, phoneKM)
+    {(name, town, address, color, siteUrlOpt, phoneOpt) =>
+      AdnMMetadata(
+        name    = name,
+        town    = town,
+        address = address,
+        color   = color,
+        siteUrl = siteUrlOpt,
+        phone   = phoneOpt
+      )
+    }
+    {meta =>
+      import meta._
+      Some((name, town, address, color, siteUrl, phone))
+    }
+  }
+
+  private val waIdKM = "welcomeImgId" -> optional(ImgFormUtil.imgIdJpegM)
+  private val galleryKM = "gallery" -> list(ImgFormUtil.imgIdJpegM)
+    .verifying("error.gallery.too.large",  { _.size <= GALLERY_LEN_MAX })
+  private val logoKM = ImgFormUtil.getLogoKM("adn.rcvr.logo.invalid", marker=TMP_LOGO_MARKER)
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
-  private val nodeFormM = Form(tuple(
-    "meta"          -> nodeMetaM,
-    "welcomeImgId"  -> optional(ImgFormUtil.imgIdJpegM),
-    ImgFormUtil.getLogoKM("adn.rcvr.logo.invalid", marker=TMP_LOGO_MARKER),
-    "gallery"       -> list(ImgFormUtil.imgIdJpegM)
-      .verifying("error.gallery.too.large",  { _.size <= GALLERY_LEN_MAX })
-  ))
+  private def nodeFormM(nodeInfo: AdNetMemberInfo) = {
+    val metaM = if (nodeInfo.isReceiver) {
+      rcvrMetaM
+    } else if (nodeInfo.isProducer) {
+      prodMetaM
+    } else {
+      nodeMetaM
+    }
+    Form(tuple(
+      "meta" -> metaM,
+      waIdKM,
+      logoKM,
+      galleryKM
+    ))
+  }
 
 
   /** Страница с формой редактирования узла рекламной сети. Функция смотрит тип узла и рендерит ту или иную страницу. */
@@ -83,7 +147,8 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
         .map[OrigImgIdKey] { img => img._2 }
       val gallerryIks = adnNode.gallery
         .map { OrigImgIdKey.apply }
-      val formFilled = nodeFormM.fill((adnNode.meta, welcomeImgKey, martLogoOpt, gallerryIks))
+      val formFilled = nodeFormM(adnNode.adn)
+        .fill((adnNode.meta, welcomeImgKey, martLogoOpt, gallerryIks))
       Ok(leaderEditFormTpl(adnNode, formFilled, welcomeAdOpt))
     }
   }
@@ -93,13 +158,12 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
     * тот или иной хелпер. */
   def editAdnNodeSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     import request.adnNode
-    nodeFormM.bindFromRequest().fold(
+    nodeFormM(adnNode.adn).bindFromRequest().fold(
       {formWithErrors =>
         val welcomeAdOptFut = getWelcomeAdOpt(adnNode)
         debug(s"martEditFormSubmit(${adnNode.id.get}): Failed to bind form: ${formatFormErrors(formWithErrors)}")
         welcomeAdOptFut map { welcomeAdOpt =>
           NotAcceptable(leaderEditFormTpl(adnNode, formWithErrors, welcomeAdOpt))
-            .flashing("error" -> "Ошибка заполнения формы.")
         }
       },
       {case (adnMeta2, newWelcomeImgOpt, logoImgIdOpt, newGallery) =>
@@ -144,6 +208,10 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
         color   = adnMeta2.color,
         siteUrl = adnMeta2.siteUrl,
         phone   = adnMeta2.phone,
+        // TODO Нужно осторожнее обновлять поля, которые не всегда содержат значения.
+        audienceDescr = adnMeta2.audienceDescr,
+        humanTrafficAvg = adnMeta2.humanTrafficAvg,
+        info = adnMeta2.info,
         // сохраняем welcome ad id
         welcomeAdId = waIdOpt
       ),

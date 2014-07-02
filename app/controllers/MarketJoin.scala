@@ -66,15 +66,14 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     )
   }
 
-  private val text2048M = text(maxLength = 2048).transform(strTrimSanitizeF, strIdentityF)
 
   /** Маппинг для формы забивания текстовых полей запроса инвайта на wi-fi узел. */
   private val wifiJoinFormM: Form[MInviteRequest] = {
     Form(
       mapping(
         "company"         -> companyNameM,
-        "audienceDescr"   -> text2048M,
-        "humanTrafficAvg" -> number(min = 10),
+        "audienceDescr"   -> audienceDescrM,
+        "humanTrafficAvg" -> humanTrafficAvgM,
         "address"         -> addressM,
         "siteUrl"         -> urlStrOptM,
         "phone"           -> phoneM,
