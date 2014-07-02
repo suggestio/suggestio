@@ -43,7 +43,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
 
   /** Маппинг для формы добавления/редактирования компании. */
-  private val companyFormM = {
+  val companyFormM = {
     val m = mapping(
       "meta" -> companyMetaM
     )
@@ -98,19 +98,19 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
 
   /** Отрендерить страницу с формой редактирования компании. */
-  def companyEditForm(companyId: String) = IsSuperuserCompany(companyId).apply { implicit request =>
+  def companyEditForm(companyId: String, r: Option[String]) = IsSuperuserCompany(companyId).apply { implicit request =>
     import request.{company => mc}
     val form = companyFormM fill mc
-    Ok(company.companyEditFormTpl(mc, form))
+    Ok(company.companyEditFormTpl(mc, form, r))
   }
 
   /** Сабмит формы редактирования компании. */
-  def companyEditFormSubmit(companyId: String) = IsSuperuserCompany(companyId).async { implicit request =>
+  def companyEditFormSubmit(companyId: String, r: Option[String]) = IsSuperuserCompany(companyId).async { implicit request =>
     import request.{company => mc}
     companyFormM.bindFromRequest.fold(
       {formWithErrors =>
         debug(s"companyEditFormSubmit($companyId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
-        NotAcceptable(company.companyEditFormTpl(mc, formWithErrors))
+        NotAcceptable(company.companyEditFormTpl(mc, formWithErrors, r))
       },
       {mc2 =>
         // Собираем новый инстанс компании.
@@ -120,7 +120,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
           )
         )
         mc3.save map { _companyId =>
-          Redirect(routes.SysMarket.companyShow(_companyId))
+          RdrBackOr(r) { routes.SysMarket.companyShow(_companyId) }
             .flashing("success" -> "Изменения сохранены.")
         }
       }

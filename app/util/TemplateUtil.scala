@@ -19,6 +19,8 @@ object TplDataFormatUtil {
   private val CURRENCY_FIXER_RUB = "руб\\.".r
   private val CURRENCY_FIXER_USD = "USD".r
 
+  val ELLIPSIS = "…"
+
   /** Сконвертить "ffffff" в List(255,255,255). */
   final def colorHex2rgb(hex: String, start: Int = 0, acc: List[Int] = Nil): List[Int] = {
     if (start > hex.length - 1) {
@@ -106,6 +108,15 @@ object TplDataFormatUtil {
   }
 
 
+  /** Лимитирование длины строки слева. Если строка длинее указанного порога,
+    * то она будет урезана и в конце появится многоточие. */
+  def strLimitLen(str: String, maxLen: Int): String = {
+    if (str.length <= maxLen) {
+      str
+    } else {
+      str.substring(0, maxLen) + ELLIPSIS
+    }
+  }
 
   private val numericDateFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 

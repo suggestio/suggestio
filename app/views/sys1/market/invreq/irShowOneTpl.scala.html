@@ -41,11 +41,12 @@
   <div>
     @mcOpt.fold {
       <p>Ошибка доступа к данным компании.</p>
-      @* TODO Нужна кнопка восстановления в шаблон. *@
+      TODO Нужна кнопка восстановления в шаблон.
     } { mc =>
       @defining( mir.company.isRight ) { mcInstalled =>
         <h3>@if(mcInstalled) {@Messages("Company")} else {Шаблон компании}</h3>
         <p>Название: @mc.meta.name</p>
+        <a href="@if(mcInstalled) {@routes.SysMarket.companyEditForm(mc.id.get)} else {@routes.SysMarketInvReq.companyEdit(mir.id.get)}">@Messages("Edit")</a>
       }
     }
   </div>

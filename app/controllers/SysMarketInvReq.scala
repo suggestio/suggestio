@@ -8,6 +8,7 @@ import scala.concurrent.Future
 import views.html.sys1.market.invreq._
 import util.PlayMacroLogsImpl
 import util.event.SiowebNotifier.Implicts.sn
+import SysMarket.companyFormM
 
 /**
  * Suggest.io
@@ -51,6 +52,18 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
     } yield {
       Ok(irShowOneTpl(mir, mcOpt))
     }
+  }
+
+  /** Страница редактирования компании, встроенной в интанс [[models.MInviteRequest]]'a. */
+  def companyEdit(mirId: String) = IsSuperuserMir(mirId).apply { implicit request =>
+    import request.mir
+    assert(mir.company.isLeft, "Cannot edit external company from this controller.")
+    Ok(companyEditTpl(mir, mir.company.left.get, companyFormM))
+  }
+
+  /** Сабмит формы редактирования компании. */
+  def companyEditFormSubmit(mirId: String) = IsSuperuserMir(mirId).async { implicit request =>
+    ???
   }
 
 
