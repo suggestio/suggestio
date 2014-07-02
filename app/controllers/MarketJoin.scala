@@ -148,6 +148,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       .left.getOrElse("")
   }
 
+  /** Накатывание результатов маппинга формы на новый экземпляр [[models.MInviteRequest]]. */
   private def applyForm(companyName: String, audienceDescr: Option[String] = None, humanTrafficAvg: Option[Int] = None,
     address: String, siteUrl: Option[String], phone: String, payReqs: Option[String] = None, email1: String,
     anmt: AdNetMemberType, withMmp: Boolean, reqType: InviteReqType): MInviteRequest = {
@@ -167,7 +168,12 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       adn = anmt.getAdnInfoDflt
     )
     val eact = EmailActivation(email1)
-    val mbc = MBillContract(adnId = "", contractDate = DateTime.now, suffix = Option(MmpDailyBilling.CONTRACT_SUFFIX_DFLT), isActive = true)
+    val mbc = MBillContract(
+      adnId = "",
+      contractDate = DateTime.now,
+      suffix = Option(MmpDailyBilling.CONTRACT_SUFFIX_DFLT),
+      isActive = true
+    )
     val mbb = MBillBalance(adnId = "", amount = 0F)
     val mmp: Option[Either[MBillMmpDaily, Int]] = if (withMmp) {
       // TODO Использовать формулу для рассчёта значений тарифов на основе человеч.трафика
@@ -187,6 +193,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       None
     }
     MInviteRequest(
+      name      = companyName + " / " + email1,
       reqType   = InviteReqTypes.Wifi,
       company   = Left(company),
       adnNode   = Left(node),

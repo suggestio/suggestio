@@ -2,6 +2,8 @@ package models
 
 import _root_.util.qsb.QsbUtil
 import io.suggest.model._
+import io.suggest.model.common.{EMNameStatic, EMDateCreatedStatic, EMName, EMDateCreatedMut}
+import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
 import io.suggest.model.EsModel.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
@@ -27,7 +29,13 @@ import EsModel.{stringParser, booleanParser, intParser}
  * Description: Запросы на инвайты.
  */
 
-object MInviteRequest extends EsModelStaticT with PlayMacroLogsImpl {
+object MInviteRequest
+  extends EsModelStaticEmpty
+  with EMInviteRequestStatic
+  with EMDateCreatedStatic
+  with EMNameStatic
+  with PlayMacroLogsImpl
+{
 
   import LOGGER._
 
@@ -51,55 +59,13 @@ object MInviteRequest extends EsModelStaticT with PlayMacroLogsImpl {
 
   override def dummy(id: Option[String], version: Long): T = {
     MInviteRequest(id = id, versionOpt = Some(version), reqType = null, company = null,
-      adnNode = null, contract = null, balance = null, emailAct = null)
+      adnNode = null, contract = null, balance = null, emailAct = null, name = "")
   }
 
   override def generateMappingStaticFields: List[Field] = List(
     FieldAll(enabled = true),
     FieldSource(enabled = true)
   )
-
-  override def generateMappingProps: List[DocField] = {
-    val idField = FieldString(ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
-    List(
-      FieldString(REQ_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      // ES-модели индексируем, чтоб можно было искать потом среди инвайтов.
-      FieldObject(COMPANY_ESFN, enabled = true, properties = idField :: MCompany.generateMappingProps),
-      FieldObject(ADN_NODE_ESFN, enabled = true, properties = idField :: MAdnNode.generateMappingProps),
-      // SQL-модели: не индексируем.
-      FieldObject(CONTRACT_EFSN, enabled = false, properties = Nil),
-      FieldObject(DAILY_MMP_ESFN, enabled = false, properties = Nil),
-      FieldObject(BALANCE_ESFN, enabled = false, properties = Nil),
-      FieldObject(EMAIL_ACT_ESFN, enabled = false, properties = Nil),
-      FieldObject(PAY_REQS_ESFN, enabled = false, properties = Nil),
-      // Поле объекта с текущими данными по ответам на вопросы.
-      FieldObject(JOIN_ANSWERS_ESFN, enabled = true, properties = SMJoinAnswers.generateMappingProps)
-    )
-  }
-
-  // без override, чтобы случайно не затереть super-метод при использовании EM-trait'ов в будущем.
-  def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
-    case (REQ_TYPE_ESFN, rtRaw) =>
-      acc.reqType = InviteReqTypes.withName(stringParser(rtRaw))
-    case (COMPANY_ESFN, jmap: ju.Map[_,_]) =>
-      acc.company = deserializeEsModel(MCompany, jmap)
-    case (ADN_NODE_ESFN, jmap: ju.Map[_,_]) =>
-      acc.adnNode = deserializeEsModel(MAdnNode, jmap)
-    case (CONTRACT_EFSN, jmap: ju.Map[_,_]) =>
-      acc.contract = deseralizeSqlIntModel(MBillContract, jmap)
-    case (DAILY_MMP_ESFN, jmap: ju.Map[_,_]) =>
-      val result = deseralizeSqlIntModel(MBillMmpDaily, jmap)
-      acc.mmp = Option(result)
-    case (BALANCE_ESFN, jmap: ju.Map[_,_]) =>
-      acc.balance = deseralizeSqlStrModel(MBillBalance, jmap)
-    case (EMAIL_ACT_ESFN, jmap: ju.Map[_,_]) =>
-      acc.emailAct = deserializeEsModel(EmailActivation, jmap)
-    case (PAY_REQS_ESFN, jmap: ju.Map[_,_]) =>
-      val r = deseralizeSqlIntModel(MBillPayReqsRu, jmap)
-      acc.payReqs = Option(r)
-    case (JOIN_ANSWERS_ESFN, jaRaw: ju.Map[_,_]) =>
-      acc.joinAnswers = Option( SMJoinAnswers.deserialize(jaRaw) )
-  }
 
   // Служебные фунции модели.
   // Генерации json-объектов, содержащих поле _id
@@ -145,9 +111,10 @@ object MInviteRequest extends EsModelStaticT with PlayMacroLogsImpl {
   }
 }
 
-import MInviteRequest._
 
+/** Экземпляр модели. */
 case class MInviteRequest(
+  var name      : String,
   var reqType   : InviteReqType,
   var company   : Either[MCompany, String],
   var adnNode   : Either[MAdnNode, String],
@@ -157,42 +124,39 @@ case class MInviteRequest(
   var emailAct  : Either[EmailActivation, String],
   var payReqs   : Option[Either[MBillPayReqsRu, Int]] = None,
   var joinAnswers: Option[SMJoinAnswers] = None,
+  var dateCreated : DateTime = DateTime.now(),
   id            : Option[String] = None,
   versionOpt    : Option[Long] = None
-) extends EsModelT {
-
+)
+  extends EsModelEmpty
+  with EMInviteRequestMut
+  with EMDateCreatedMut
+  with EMName
+{
   override type T = MInviteRequest
-
   override def companion = MInviteRequest
-
-  override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
-    var acc: FieldsJsonAcc =
-      REQ_TYPE_ESFN   -> JsString(reqType.toString) ::
-      COMPANY_ESFN    -> strModel2json(company) ::
-      ADN_NODE_ESFN   -> strModel2json(adnNode) ::
-      CONTRACT_EFSN   -> intModel2json(contract) ::
-      BALANCE_ESFN    -> strModel2json(balance) ::
-      EMAIL_ACT_ESFN  -> strModel2json(emailAct) ::
-      acc
-    if (joinAnswers exists { _.isDefined })
-      acc ::= JOIN_ANSWERS_ESFN -> joinAnswers.get.toPlayJson
-    if (mmp.isDefined)
-      acc ::= DAILY_MMP_ESFN -> intModel2json(mmp.get)
-    if (payReqs.isDefined)
-      acc ::= PAY_REQS_ESFN -> intModel2json(payReqs.get)
-    acc
-  }
 }
 
 
+
+/** Типы запросов на подключение. */
 object InviteReqTypes extends Enumeration {
-  type InviteReqType = Value
-  val Adv: InviteReqType  = Value("a")
-  val Wifi: InviteReqType = Value("w")
+  protected case class Val(name: String) extends super.Val(name) {
+    val l10n = "mir.type." + name
+  }
+  type InviteReqType = Val
+
+  val Adv: InviteReqType  = Val("a")
+  val Wifi: InviteReqType = Val("w")
+
+  implicit def value2val(x: Value): InviteReqType = x.asInstanceOf[InviteReqType]
 }
 
 
+
+/** mbean-интерфейс для JMX. */
 trait MInviteRequestJmxMBean extends EsModelJMXMBeanCommon
+/** Реализация mbean'a: */
 class MInviteRequestJmx(implicit val ec: ExecutionContext, val client: Client, val sn: SioNotifierStaticClientI)
   extends EsModelJMXBase
   with MInviteRequestJmxMBean
@@ -298,6 +262,7 @@ object SMJoinAnswers {
   )
 }
 
+/** Блок с ответами на вопросы. Относится обычно к wifi-подключениям. */
 case class SMJoinAnswers(
   haveWifi        : Option[Boolean],
   fullCoverage    : Option[Boolean],
@@ -337,6 +302,94 @@ case class SMJoinAnswers(
     if (audienceSz.isDefined)
       acc1 ::= AUDIENCE_SZ_ESFN -> JsString(audienceSz.get.toString)
     JsObject(acc1)
+  }
+}
+
+
+// Если import вынести наружу, то будет "illegal cyclic reference involving object MInviteRequest"
+
+/** Аддон для статической части модели [[MInviteRequest]]. */
+sealed trait EMInviteRequestStatic extends EsModelStaticT {
+  import MInviteRequest._
+  override type T <: EMInviteRequestMut
+
+  abstract override def generateMappingProps: List[DocField] = {
+    val acc = super.generateMappingProps
+    val idField = FieldString(ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+    FieldString(REQ_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false) ::
+      // ES-модели индексируем, чтоб можно было искать потом среди инвайтов.
+      FieldObject(COMPANY_ESFN, enabled = true, properties = idField :: MCompany.generateMappingProps) ::
+      FieldObject(ADN_NODE_ESFN, enabled = true, properties = idField :: MAdnNode.generateMappingProps) ::
+      // SQL-модели: не индексируем.
+      FieldObject(CONTRACT_EFSN, enabled = false, properties = Nil) ::
+      FieldObject(DAILY_MMP_ESFN, enabled = false, properties = Nil) ::
+      FieldObject(BALANCE_ESFN, enabled = false, properties = Nil) ::
+      FieldObject(EMAIL_ACT_ESFN, enabled = false, properties = Nil) ::
+      FieldObject(PAY_REQS_ESFN, enabled = false, properties = Nil) ::
+      // Поле объекта с текущими данными по ответам на вопросы.
+      FieldObject(JOIN_ANSWERS_ESFN, enabled = true, properties = SMJoinAnswers.generateMappingProps) ::
+      acc
+  }
+
+  abstract override def applyKeyValue(acc: T): PartialFunction[(String, AnyRef), Unit] = {
+    super.applyKeyValue(acc) orElse {
+      case (REQ_TYPE_ESFN, rtRaw) =>
+        acc.reqType = InviteReqTypes.withName(stringParser(rtRaw))
+      case (COMPANY_ESFN, jmap: ju.Map[_, _]) =>
+        acc.company = deserializeEsModel(MCompany, jmap)
+      case (ADN_NODE_ESFN, jmap: ju.Map[_, _]) =>
+        acc.adnNode = deserializeEsModel(MAdnNode, jmap)
+      case (CONTRACT_EFSN, jmap: ju.Map[_, _]) =>
+        acc.contract = deseralizeSqlIntModel(MBillContract, jmap)
+      case (DAILY_MMP_ESFN, jmap: ju.Map[_, _]) =>
+        val result = deseralizeSqlIntModel(MBillMmpDaily, jmap)
+        acc.mmp = Option(result)
+      case (BALANCE_ESFN, jmap: ju.Map[_, _]) =>
+        acc.balance = deseralizeSqlStrModel(MBillBalance, jmap)
+      case (EMAIL_ACT_ESFN, jmap: ju.Map[_, _]) =>
+        acc.emailAct = deserializeEsModel(EmailActivation, jmap)
+      case (PAY_REQS_ESFN, jmap: ju.Map[_, _]) =>
+        val r = deseralizeSqlIntModel(MBillPayReqsRu, jmap)
+        acc.payReqs = Option(r)
+      case (JOIN_ANSWERS_ESFN, jaRaw: ju.Map[_, _]) =>
+        acc.joinAnswers = Option(SMJoinAnswers.deserialize(jaRaw))
+    }
+  }
+
+}
+
+/** Аддон для динамической части модели [[MInviteRequest]]. */
+sealed trait EMInviteRequestMut extends EsModelT {
+  import MInviteRequest._
+  override type T <: EMInviteRequestMut
+
+  var reqType   : InviteReqType
+  var company   : Either[MCompany, String]
+  var adnNode   : Either[MAdnNode, String]
+  var contract  : Either[MBillContract, Int]
+  var mmp       : Option[Either[MBillMmpDaily, Int]]
+  var balance   : Either[MBillBalance, String]
+  var emailAct  : Either[EmailActivation, String]
+  var payReqs   : Option[Either[MBillPayReqsRu, Int]]
+  var joinAnswers: Option[SMJoinAnswers]
+
+  abstract override def writeJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
+    val acc1 = super.writeJsonFields(acc0)
+    var acc =
+      REQ_TYPE_ESFN   -> JsString(reqType.toString) ::
+      COMPANY_ESFN    -> strModel2json(company) ::
+      ADN_NODE_ESFN   -> strModel2json(adnNode) ::
+      CONTRACT_EFSN   -> intModel2json(contract) ::
+      BALANCE_ESFN    -> strModel2json(balance) ::
+      EMAIL_ACT_ESFN  -> strModel2json(emailAct) ::
+      acc1
+    if (joinAnswers exists { _.isDefined })
+      acc ::= JOIN_ANSWERS_ESFN -> joinAnswers.get.toPlayJson
+    if (mmp.isDefined)
+      acc ::= DAILY_MMP_ESFN -> intModel2json(mmp.get)
+    if (payReqs.isDefined)
+      acc ::= PAY_REQS_ESFN -> intModel2json(payReqs.get)
+    acc
   }
 }
 

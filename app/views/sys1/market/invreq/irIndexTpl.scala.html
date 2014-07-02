@@ -12,14 +12,13 @@
       <p><b>Отображается @thisCount запросов из @allCount всего.</b></p>
     }
     @mirs.groupBy(_.reqType).map { case (reqType, tMirs) =>
-      <h3>@Messages("mir.type." + reqType)</h3>
+      <h3>@Messages(reqType.l10n)</h3>
       <ul>
         @tMirs.map { mir =>
           <li>
             <a href="@routes.SysMarketInvReq.showIR(mir.id.get)">
-              @mir.meta.company / @mir.meta.address
+              @mir.name / @_prettyDate(mir.dateCreated)
             </a>
-            - @*_prettyDate(mir.dateCreated, withSpan = true)*@
           </li>
         }
       </ul>

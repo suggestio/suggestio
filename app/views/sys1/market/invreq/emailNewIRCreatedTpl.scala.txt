@@ -6,7 +6,7 @@
 Подан новый запрос на получение инвайта.
 
 Тип: @Messages("mir.type." + mir.reqType)
-Указанная компания: @mir.meta.company
+Указанная компания: @mir.name
 
 Полное содержимое запроса:
 @ctx.myAudienceUrl@routes.SysMarketInvReq.showIR(mir.id.get)
