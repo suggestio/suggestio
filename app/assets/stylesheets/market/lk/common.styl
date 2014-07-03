@@ -2085,9 +2085,9 @@ siomPreviewSize = 43
     height: (siomPreviewSize + 2) px
 
   &.__preview
-    width: siomPreviewSize px
-    height: siomPreviewSize px
-    line-height: siomPreviewSize px
+    width: (siomPreviewSize + 2) px
+    height: (siomPreviewSize + 2) px
+    line-height: (siomPreviewSize + 2) px
 
     border: 1px solid transparent
     cursor: pointer
@@ -2138,6 +2138,12 @@ siomPreviewSize = 43
   margin-top: 10px
   margin-bottom: 10px
 
+  &.__textarea
+
+    .input-w_left
+      vertical-align: top
+      padding-top: 18px
+
   &.__big
     width: 100%
 
@@ -2153,4 +2159,4 @@ siomPreviewSize = 43
     color: #959595
     font-family: 'Arial'
     font-size: 12px
-    text-shadow: 1px 1px 1px #f8f8f8
+    text-shadow(1px 1px 1px #f8f8f8)
