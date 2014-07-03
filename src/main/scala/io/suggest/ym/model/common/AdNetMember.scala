@@ -51,6 +51,9 @@ object AdNetMember {
   val SHOW_LEVELS_ESFN = "showLevels"
   val DISABLE_REASON_ESFN = "disableReason"
 
+  /** id отображаемого типа узла. */
+  val SHOWN_TYPE_ID_ESFN = "sti"
+
   private def fullFN(subFN: String): String = ADN_ESFN + "." + subFN
 
   // Абсолютные (плоские) имена полей. Используются при поиске.
@@ -129,6 +132,7 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
       FieldString(RIGHTS_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(SUPERVISOR_ID_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(MEMBER_TYPE_ESFN, index = not_analyzed, include_in_all = false),
+      FieldString(SHOWN_TYPE_ID_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(PRODUCER_IDS_ESFN, index = not_analyzed, include_in_all = false),
       FieldString(ADV_DELEGATE_ESFN, index = not_analyzed, include_in_all = false),
       FieldBoolean(TEST_NODE_ESFN, index = not_analyzed, include_in_all = false),
@@ -149,6 +153,7 @@ trait EMAdNetMemberStatic extends EsModelStaticT {
           case l: jl.Iterable[_] =>
             l.map { rid => AdnRights.withName(rid.toString) : AdnRight }.toSet
         },
+        shownTypeIdOpt = Option(vm get SHOWN_TYPE_ID_ESFN) map stringParser,
         supId = Option(vm get SUPERVISOR_ID_ESFN) map stringParser,
         producerIds = Option(vm get PRODUCER_IDS_ESFN)
           .fold(Set.empty[String]) {
@@ -455,6 +460,8 @@ import AdnRights._
 /** Инфа об участнике рекламной сети. Все параметры его участия свернуты в один объект.
   * @param memberType Тип участника. Например, магазин.
   * @param rights Права участника сети.
+  * @param shownTypeIdOpt ID отображаемого типа участника сети. Нужно для задания кастомных типов на стороне web21.
+  *                       Появилось, когда понадобилось обозначить торговый центр вокзалом/портом, не меняя его свойств.
   * @param supId Опциональный id супер-узла.
   * @param producerIds id узлов-продьюсеров, которые поставляют контент указанному узлу. Пока не используется толком.
   * @param advDelegate Опциональный id узла, который совершает управление размещением рекламных карточек на данном узле.
@@ -467,6 +474,7 @@ import AdnRights._
 case class AdNetMemberInfo(
   var memberType: AdNetMemberType,
   var rights: Set[AdnRight],
+  var shownTypeIdOpt: Option[String] = None,
   var supId: Option[String] = None,
   var producerIds: Set[String] = Set.empty,
   var advDelegate: Option[String] = None,
@@ -483,6 +491,9 @@ case class AdNetMemberInfo(
     else
       rights -= flag
   }
+
+  /** Отображаемый для юзера id типа узла. */
+  def shownTypeId: String = shownTypeIdOpt getOrElse memberType.name
 
   // Быстрый доступ к каталогу adn-прав
   @JsonIgnore
@@ -514,6 +525,8 @@ case class AdNetMemberInfo(
       }
       acc0 ::= PRODUCER_IDS_ESFN -> JsArray(arrElems)
     }
+    if (shownTypeIdOpt.isDefined)
+      acc0 ::= SHOWN_TYPE_ID_ESFN -> JsString(shownTypeIdOpt.get)
     if (supId.isDefined)
       acc0 ::= SUPERVISOR_ID_ESFN -> JsString(supId.get)
     if (advDelegate.isDefined)

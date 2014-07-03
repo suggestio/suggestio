@@ -23,7 +23,12 @@ object AdsSearch {
     * Поле _id не доступно в хранимых MAd-документах, поэтому нужно извлекать его из _uid ручками.
     * @see [[http://stackoverflow.com/a/15539093]]
     */
-  val IDS_SCORE_MVEL = """if (ids contains org.elasticsearch.index.mapper.Uid.createUid(doc["_uid"].value).id) { _score * incr } else { _score }"""
+  // TODO Скрипт не пашет: не видит org.elasticsearch....
+  val IDS_SCORE_MVEL =
+    """
+      |id = org.elasticsearch.index.mapper.Uid.createUid(doc["_uid"].value).id
+      |if (ids contains id) { _score * incr; } else { _score; }
+      |""".stripMargin
 
   /**
    * MVEL-скрипт Generation-timestamp сортировщика, который организует посраничный вывод с внешне рандомной выдачей.
@@ -78,16 +83,16 @@ object AdsSearch {
       }
     }.map { qb =>
       // Если receiverId задан, то надо фильтровать в рамках ресивера. Сразу надо уровни отработать, т.к. они nested в одном поддокументе.
-      if (!receiverIds.isEmpty || !levels.isEmpty) {
+      if (receiverIds.nonEmpty || levels.nonEmpty) {
         var nestedSubfilters: List[FilterBuilder] = Nil
-        if (!receiverIds.isEmpty) {
+        if (receiverIds.nonEmpty) {
           nestedSubfilters ::= FilterBuilders.termsFilter(EMReceivers.RCVRS_RECEIVER_ID_ESFN, receiverIds: _*)
         }
-        if (!levels.isEmpty) {
+        if (levels.nonEmpty) {
           nestedSubfilters ::= FilterBuilders.termsFilter(EMReceivers.RCVRS_SLS_PUB_ESFN, levels.map(_.toString) : _*)
         }
         // Если получилось несколько фильтров, то надо их объеденить.
-        val finalNestedSubfilter: FilterBuilder = if (!nestedSubfilters.tail.isEmpty) {
+        val finalNestedSubfilter: FilterBuilder = if (nestedSubfilters.tail.nonEmpty) {
           FilterBuilders.andFilter(nestedSubfilters: _*)
         } else {
           nestedSubfilters.head
@@ -135,7 +140,7 @@ object AdsSearch {
       query3 = QueryBuilders.functionScoreQuery(query3, scoreFun)
     }
     // Если указаны id-шники, которые должны быть в начале выдачи, то добавить обернуть всё в ипостась Custom Score Query.
-    if (!adSearch.forceFirstIds.isEmpty) {
+    if (adSearch.forceFirstIds.nonEmpty) {
       // Запрошено, чтобы указанные id были в начале списка результатов.
       val scoreFun = ScoreFunctionBuilders.scriptFunction(IDS_SCORE_MVEL)
         .param("ids", new ju.HashSet[String](adSearch.forceFirstIds.size).addAll(adSearch.forceFirstIds) )  // TODO Opt: использовать java.util.HashSet?

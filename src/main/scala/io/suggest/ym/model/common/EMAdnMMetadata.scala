@@ -16,6 +16,8 @@ import scala.collection.JavaConversions._
 import scala.concurrent.{Future, ExecutionContext}
 import java.{util => ju}
 
+import scala.util.Success
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -122,8 +124,15 @@ trait EMAdnMMetadata extends EsModelT {
     val fut = super.eraseResources
     // Раньше вызывался MWelcomeAd.deleteByProducerId1by1(producerId) через событие SioNotifier.
     meta.welcomeAdId.fold(fut) { welcomeAdId =>
-      MWelcomeAd.deleteById(welcomeAdId)
-        .flatMap { _ => fut }
+      MWelcomeAd.getById(welcomeAdId)
+        .flatMap {
+          case Some(mwa) =>
+            mwa.eraseResources
+              .flatMap { _ => mwa.delete }
+          case None => Future successful false
+        } flatMap {
+          _ => fut
+        }
     }
   }
 }

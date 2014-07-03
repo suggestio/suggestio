@@ -45,21 +45,6 @@ object MWelcomeAd
     FieldSource(enabled = true)
   )
 
-  /**
-   * Удалить документ по id.
-   * @param id id документа.
-   * @return true, если документ найден и удалён. Если не найден, то false
-   */
-  override def deleteById(id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
-    val adOptFut = getById(id)
-    val imgDelFut = adOptFut flatMap {
-      case Some(ad) => ad.eraseResources
-      case None     => Future successful None
-    }
-    imgDelFut flatMap { _ =>
-      super.deleteById(id)
-    }
-  }
 }
 
 

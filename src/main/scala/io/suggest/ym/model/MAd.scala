@@ -78,7 +78,7 @@ object MAd
     adOptFut flatMap {
       case Some(ad) =>
         lazy val logPrefix = s"deleteById($id): "
-        // Удаляем картинку рекламы в фоне
+        // Удаляем картинки, привязанные к этой рекламе.
         ad.eraseResources
         // Одновременно удаляем саму рекламную карточку из хранилища
         val resultFut = super.deleteById(id)
