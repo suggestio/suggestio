@@ -178,7 +178,7 @@ siomart =
 
       if state == null
         siomart.navigation_layer.back()
-        siomart.load_index_ads()
+        siomart.grid_ads.load_index_ads()
         return false
 
       if state.action == 'load_for_shop_id'
@@ -476,7 +476,7 @@ siomart =
   search :
 
     request_delay : 600
-    
+
     perform : ( request ) ->
       url = '/market/ads?a.q=' + request + '&a.rcvr=' + siomart.config.mart_id
       siomart.request.perform url
@@ -492,10 +492,11 @@ siomart =
       siomart.search.search_timer = setTimeout search_cb, siomart.search.request_delay
 
   ## Карточки ноды верхнего уровня
-  load_index_ads : () ->
-    grd_c = siomart.utils.ge('sioMartIndexGrid')
-    url = grd_c.getAttribute 'data-index-offers-action'
-    siomart.request.perform url + '&a.size=' + siomart.config.ads_per_load
+  grid_ads :
+    load_index_ads : () ->
+      grd_c = siomart.utils.ge('sioMartIndexGrid')
+      url = grd_c.getAttribute 'data-index-offers-action'
+      siomart.request.perform url + '&a.size=' + siomart.config.ads_per_load
 
   #####################################################
   ## Добавить в DOM необходимую разметку для Sio.Market
@@ -612,7 +613,7 @@ siomart =
           siomart.utils.ge('smWifiInfo').style.display = 'block'
 
         siomart.init_navigation()
-        siomart.load_index_ads()
+        siomart.grid_ads.load_index_ads()
         siomart.styles.init()
 
       setTimeout grid_init_cb, grid_init_timoeut
@@ -1087,8 +1088,8 @@ siomart =
     this.utils.add_single_listener this.utils.ge('smNavigationLayerBackButton'), _event, siomart.navigation_layer.back
 
     ## Возврат на индекс выдачи
-    this.utils.add_single_listener this.utils.ge('rootNodeLogo'), _event, siomart.load_index_ads
-    this.utils.add_single_listener this.utils.ge('sioMartHomeButton'), _event, siomart.load_index_ads
+    this.utils.add_single_listener this.utils.ge('rootNodeLogo'), _event, siomart.grid_ads.load_index_ads
+    this.utils.add_single_listener this.utils.ge('sioMartHomeButton'), _event, siomart.grid_ads.load_index_ads
 
     this.utils.add_single_listener this.utils.ge('smSearchIcon'), _event, () ->
       siomart.utils.ge('smSearchField').focus()
