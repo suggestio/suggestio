@@ -142,6 +142,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
 
   /** Экшен для рендера горизонтальной выдачи карточек. */
   def focusedAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
+    // Костыль, т.к. сортировка forceFirstIds на стороне сервера не пашет:
     val adSearch2 = if (adSearch.forceFirstIds.isEmpty) {
       adSearch
     } else {
@@ -149,9 +150,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
     }
     val mads1Fut = MAd.searchAds(adSearch2)
     val producersFut = MAdnNodeCache.multiGet(adSearch2.producerIds)
-    val firstAdsFut = MAd.multiGet(adSearch2.forceFirstIds)
+    val firstAdsFut = MAd.multiGet(adSearch.forceFirstIds)
       .map { _.filter {
-        mad => adSearch2.producerIds contains mad.producerId
+        mad => adSearch.producerIds contains mad.producerId
       } }
     val mads2Fut: Future[Seq[MAd]] = mads1Fut flatMap { mads =>
       firstAdsFut map { firstAds =>
@@ -175,7 +176,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
         }
         // В текущем потоке рендерим основную HTML'ку, которая будет сразу отображена юзеру.
         val firstMads = mads.headOption.toList
-        val html = JsString(_focusedAdsTpl(firstMads, adSearch2, producer, adsCount = adsCount)(ctx))
+        val html = JsString(_focusedAdsTpl(firstMads, adSearch, producer, adsCount = adsCount)(ctx))
         for {
           blocks <- blocksHtmlsFut
         } yield {
