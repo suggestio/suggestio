@@ -17,6 +17,7 @@ import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
 import util.img.GalleryUtil._
 import MarketLkAdnEdit.{logoKM, colorKM}
+import util.img.WelcomeUtil._
 
 /**
  * Suggest.io
@@ -85,17 +86,18 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         colorKM,
         galleryKM,
         logoKM,
+        welcomeImgIdKM,
         CAPTCHA_ID_FN     -> Captcha.captchaIdM,
         CAPTCHA_TYPED_FN  -> Captcha.captchaTypedM
       )
-      {(companyName, audienceDescr, humanTrafficAvg, address, siteUrl, phone, payReqs, email1, color, galleryIks, logoOpt, _, _) =>
+      {(companyName, audienceDescr, humanTrafficAvg, address, siteUrl, phone, payReqs, email1, color, galleryIks, logoOpt, welcomeImgId, _, _) =>
         val mir = applyForm(companyName = companyName, audienceDescr = Some(audienceDescr),
           humanTrafficAvg = Some(humanTrafficAvg), address = address, siteUrl = siteUrl, phone = phone,
           payReqs = payReqs, email1 = email1, anmt = AdNetMemberTypes.MART, withMmp = true,
           reqType = InviteReqTypes.Wifi, color = color)
-        (mir, galleryIks, logoOpt)
+        (mir, galleryIks, logoOpt, welcomeImgId)
       }
-      {case (mir, galleryIks, logoOpt) =>
+      {case (mir, galleryIks, logoOpt, welcomeImgId) =>
         // unapply() вызывается только когда всё в Left, т.е. при ошибка заполнения форм.
         val companyName = unapplyCompanyName(mir)
         val audienceDescr = unapplyAudDescr(mir)
@@ -106,7 +108,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         val payReqs = unapplyPayReqs(mir)
         val email1 = unapplyEmail(mir)
         val color = unapplyColor(mir)
-        Some((companyName, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, email1, color, galleryIks, logoOpt, "", ""))
+        Some((companyName, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, email1, color, galleryIks, logoOpt, welcomeImgId, "", ""))
       }
     )
   }
@@ -239,29 +241,33 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         debug("joinFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(wifiJoinFormTpl(smja, formWithErrors))
       },
-      {case (mir, galleryIiks, logoOpt) =>
+      {case (mir, galleryIiks, logoOpt, welcomeImgId) =>
         assert(mir.adnNode.isLeft, "error.mir.adnNode.not.isLeft")
         // Схоронить логотип
         val savedLogoFut = ImgFormUtil.updateOrigImg(logoOpt.toSeq, oldImgs  = Nil)
+        // Схоронить картинку приветствия
+        val savedWaOptFut = updateWelcodeAdFut(mir.adnNode.left.get, welcomeImgId)
         // Схоронить картинки галлереи.
-        ImgFormUtil.updateOrigImgFull(
-          needImgs = gallery4s(galleryIiks),
-          oldImgs = Nil
-        ) flatMap { savedImgs =>
+        ImgFormUtil.updateOrigImgFull(gallery4s(galleryIiks), oldImgs = Nil) flatMap { savedImgs =>
           savedLogoFut flatMap { savedLogoOpt =>
-            // Картинки сохранены. Обновить рекламный узел.
-            val mir2 = mir.copy(
-              joinAnswers = Some(smja),
-              adnNode = mir.adnNode.left.map { adnNode0 =>
-                adnNode0.copy(
-                  gallery = gallery2filenames(savedImgs),
-                  logoImgOpt = savedLogoOpt
-                )
+            savedWaOptFut flatMap { savedWaOpt =>
+              // Картинки сохранены. Обновить рекламный узел.
+              val mir2 = mir.copy(
+                joinAnswers = Some(smja),
+                adnNode = mir.adnNode.left.map { adnNode0 =>
+                  adnNode0.copy(
+                    gallery = gallery2filenames(savedImgs),
+                    logoImgOpt = savedLogoOpt,
+                    meta = adnNode0.meta.copy(
+                      welcomeAdId = savedWaOpt
+                    )
+                  )
+                }
+              )
+              mir2.save.map { irId =>
+                sendEmailNewIR(irId, mir2)
+                rmCaptcha(formBinded, mirSavedRdr(irId))
               }
-            )
-            mir2.save.map { irId =>
-              sendEmailNewIR(irId, mir2)
-              rmCaptcha(formBinded, mirSavedRdr(irId))
             }
           }
         }

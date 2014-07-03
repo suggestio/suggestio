@@ -19,7 +19,7 @@ object WelcomeUtil {
   /** Ключ для картинки, используемой в качестве приветствия. */
   val WELCOME_IMG_KEY = "wlcm"
 
-  val waIdKM = "welcomeImgId" -> optional(ImgFormUtil.imgIdJpegM)
+  val welcomeImgIdKM = "welcomeImgId" -> optional(ImgFormUtil.imgIdJpegM)
 
   /** Асинхронно получить welcome-ad-карточку. */
   def getWelcomeAdOpt(welcomeAdId: Option[String]): Future[Option[MWelcomeAd]] = {

@@ -117,7 +117,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
     }
     Form(tuple(
       "meta" -> metaM,
-      waIdKM,
+      welcomeImgIdKM,
       logoKM,
       galleryKM
     ))
