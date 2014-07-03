@@ -57,8 +57,13 @@ object IsSuperuserOr404 extends IsSuperuserAbstract with ExpireSession[AbstractR
 
 
 
+object IsSuperuserAdnNode {
+  def nodeNotFound(adnId: String) = Results.NotFound("Adn node not found: " + adnId)
+}
 /** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin. */
 trait IsSuperuserAdnNodeBase extends ActionBuilder[AbstractRequestForAdnNode] {
+  import IsSuperuserAdnNode._
+
   def adnId: String
   override def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
@@ -70,7 +75,7 @@ trait IsSuperuserAdnNodeBase extends ActionBuilder[AbstractRequestForAdnNode] {
             block(RequestForAdnNodeAdm(adnNode, isMyNode = true, request, pwOpt, srm))
           }
         case None =>
-          Future successful Results.NotFound("Adn node not found: " + adnId)
+          Future successful nodeNotFound(adnId)
       }
     } else {
       IsSuperuser.onUnauthFut(request, pwOpt)
@@ -237,14 +242,23 @@ object IsSuperuserMir {
 trait IsSuperuserMirBase extends ActionBuilder[MirRequest] {
   import IsSuperuserMir._
   def mirId: String
+
+  def isMirStateOk(mir: MInviteRequest) = true
+  def mirStateInvalidMsg = s"MIR[$mirId] has impossible state for this action."
+  def mirStateInvalid = Results.ExpectationFailed(mirStateInvalidMsg)
+
   override def invokeBlock[A](request: Request[A], block: (MirRequest[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
     if (PersonWrapper isSuperuser pwOpt) {
       MInviteRequest.getById(mirId) flatMap {
         case Some(mir) =>
-          SioReqMd.fromPwOpt(pwOpt) flatMap { srm =>
-            val req1 = MirRequest(mir, pwOpt, request, srm)
-            block(req1)
+          if (isMirStateOk(mir)) {
+            SioReqMd.fromPwOpt(pwOpt) flatMap { srm =>
+              val req1 = MirRequest(mir, pwOpt, request, srm)
+              block(req1)
+            }
+          } else {
+            Future successful mirStateInvalid
           }
 
         case None =>

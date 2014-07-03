@@ -219,7 +219,7 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
       .execute()
       .flatMap { getResp =>
         if (getResp.isExists) {
-          val mmc = deserializeOne(Option(getResp.getId), getResp.getSourceAsMap, getResp.getVersion)
+          val mmc = deserializeOne(Option(getResp.getId), getResp.getSourceAsMap, Option(getResp.getVersion))
           val acc1 = f(acc0, mmc)
           mmc.parentId match {
             case Some(parentId) => foldUpChain(parentId, acc1)(f)
@@ -274,7 +274,7 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
     case (INCLUDE_IN_ALL_ESFN, value) => acc.includeInAll = booleanParser(value)
   }
 
-  override protected def dummy(id: Option[String], version: Long) = {
+  override protected def dummy(id: Option[String], version: Option[Long]) = {
     MMartCategory(id = id, name = null, ymCatPtr = null, ownerId = null, parentId = None, position = Int.MaxValue)
   }
 }

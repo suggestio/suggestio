@@ -5,6 +5,10 @@
 # Раздача жабаскрипта всем посетителям всех сайтов. Самая частовызываемая функция.
 GET  /js/v2/:domain/:qi_id              controllers.Js.v2(domain, qi_id)
 
+# Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20
+# Без этого костыля, запрос html'ки просто подвисает.
+GET  /assets/javascripts/lib/tinymce/js/tinymce/plugins/colorpicker/index.html  controllers.Static.tinymceColorpicker
+
 # Map static resources from the /public folder to the /assets URL path
 GET  /assets/*file                      controllers.Assets.at(path="/public", file)
 
@@ -287,7 +291,13 @@ GET  /sys/ir/show/:mirId                 controllers.SysMarketInvReq.showIR(mirI
 POST /sys/ir/delete/:irId                controllers.SysMarketInvReq.deleteIR(irId)
 GET  /sys/ir/edit/:mirId/company         controllers.SysMarketInvReq.companyEdit(mirId)
 POST /sys/ir/edit/:mirId/company         controllers.SysMarketInvReq.companyEditFormSubmit(mirId)
-
+POST /sys/ir/install/:mirId/company      controllers.SysMarketInvReq.companyInstallSubmit(mirId)
+POST /sys/ir/uninstall/:mirId/company    controllers.SysMarketInvReq.companyUninstallSubmit(mirId)
+GET  /sys/ir/edit/:mirId/node            controllers.SysMarketInvReq.nodeEdit(mirId)
+POST /sys/ir/edit/:mirId/node            controllers.SysMarketInvReq.nodeEditFormSubmit(mirId)
+POST /sys/ir/install/:mirId/node         controllers.SysMarketInvReq.nodeInstallSubmit(mirId)
+POST /sys/ir/uninstall/:mirId/node       controllers.SysMarketInvReq.nodeUninstallSubmit(mirId)
+POST /sys/ir/install/:mirId/eact         controllers.SysMarketInvReq.eactInstallSubmit(mirId)
 
 ## sys: mdr - модерация контента
 GET  /sys/mdr                            controllers.SysMdr.index

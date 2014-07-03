@@ -3,7 +3,7 @@
 @* Форма для создания/редактирования торгового центра через личный кабинет. *@
 @import helper._
 @import util.FC.tdFc
-@import controllers.MarketLkAdnEdit.GALLERY_LEN_MAX
+@import util.img.GalleryUtil.GALLERY_LEN_MAX
 
 @form(submitCall) {
 
@@ -30,7 +30,6 @@
               @stuff._fileUploadTpl(routes.MarketLkAdnEdit.handleTempLogo(adnId), fieldName = "logoImgId")
               <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
             </div>
-
 
           }
 

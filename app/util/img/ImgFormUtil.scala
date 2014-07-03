@@ -137,13 +137,21 @@ object ImgFormUtil extends PlayMacroLogsImpl {
   }
 
   /**
-   * Замена иллюстрации к некоей сущности.
+   * Замена иллюстраций к некоей сущности.
    * @param needImgs Необходимые в результате набор картинок. Тут могут быть как уже сохранённыя картинка,
    *                 так и новая из tmp. Если Nil, то старые картинки будут удалены.
    * @param oldImgs Уже сохранённые ранее картинки, если есть.
    * @return Список id новых и уже сохранённых картинок.
    */
   def updateOrigImgFull(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgs: Iterable[MImgInfoT]): Future[List[MImgInfoT]] = {
+    // Защита от какой-либо деятельности в случае полного отсутствия входных данных.
+    if (needImgs.isEmpty && oldImgs.isEmpty) {
+      Future successful Nil
+    } else {
+      updateOrigImgFullDo(needImgs, oldImgs = oldImgs)
+    }
+  }
+  private def updateOrigImgFullDo(needImgs: Seq[ImgInfo4Save[ImgIdKey]], oldImgs: Iterable[MImgInfoT]): Future[List[MImgInfoT]] = {
     val oldImgsSet = oldImgs.toSet
     // newTmpImgs - это одноразовый итератор, содержит исходные индексы и списки картинок для сохранения.
     val newTmpImgs = needImgs

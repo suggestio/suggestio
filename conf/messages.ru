@@ -22,6 +22,8 @@ Section.number=Номер секции
 Close=Закрыть
 Your=Ваш
 Preview=Предпросмотр
+Install=Установить
+Uninstall=Деинсталлировать
 
 requisites=Платёжные реквизиты для вывода средств
 

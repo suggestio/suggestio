@@ -21,6 +21,8 @@ import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import play.api.mvc.AnyContent
 import play.api.i18n.Messages
 
+import scala.util.Success
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -113,11 +115,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       },
       {mc2 =>
         // Собираем новый инстанс компании.
-        val mc3 = mc.copy(
-          meta = mc.meta.copy(
-            name = mc2.meta.name
-          )
-        )
+        val mc3 = updateCompany(mc, mc2)
         mc3.save map { _companyId =>
           RdrBackOr(r) { routes.SysMarket.companyShow(_companyId) }
             .flashing("success" -> "Изменения сохранены.")
@@ -126,15 +124,37 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     )
   }
 
-  /** Админ приказал удалить указанную компанию. */
-  def companyDeleteSubmit(companyId: String) = IsSuperuser.async { implicit request =>
-    MCompany.deleteById(companyId) map {
-      case true =>
-        Redirect(routes.SysMarket.companiesList())
-          .flashing("success" -> s"Company $companyId deleted.")
+  /** Функция для обновления компании отмаппленными данными companyFormM.
+    * @param mc Текущий (исходный) инстанс компании.
+    * @param mc2 Результат маппинга companyFormM.
+    * @return Новый инстанс, содержащий в себе былые данные, местами перезаписанные новыми.
+    */
+  def updateCompany(mc: MCompany, mc2: MCompany): MCompany = {
+    mc.copy(
+      meta = mc.meta.copy(
+        name = mc2.meta.name
+      )
+    )
+  }
 
-      case false => IsSuperuserCompany.companyNotFound(companyId)
-    }
+  /** Админ приказал удалить указанную компанию. */
+  def companyDeleteSubmit(companyId: String) = IsSuperuserCompany(companyId).async { implicit request =>
+    request.company
+      .delete
+      .flatMap { isDeleted =>
+        request.company.eraseResources
+          .map { _ => isDeleted }
+      }
+      .filter(identity)
+      .map { _ =>
+        Redirect(routes.SysMarket.companiesList())
+          .flashing("success" -> "Компания удалёна.")
+      }
+      .recover {
+        case nse: NoSuchElementException =>
+          warn(s"deleteAdnNodeSubmit($companyId): Node not found. Anyway, resources re-erased.")
+          IsSuperuserCompany.companyNotFound(companyId)
+      }
   }
 
 
@@ -177,13 +197,24 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
   /** Безвозвратное удаление узла рекламной сети. */
-  def deleteAdnNodeSubmit(adnId: String) = IsSuperuser.async { implicit request =>
-    MAdnNode.deleteById(adnId) map {
-      case true =>
+  def deleteAdnNodeSubmit(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+    import request.adnNode
+    adnNode
+      .delete
+      .flatMap { isDeleted =>
+        adnNode.eraseResources
+          .map { _ => isDeleted }
+      }
+      .filter(identity)
+      .map { _ =>
         Redirect(routes.SysMarket.adnNodesList())
           .flashing("success" -> "Узел ADN удалён.")
-      case false => NotFound("ADN node not found: " + adnId)
-    }
+      }
+      .recover {
+        case nse: NoSuchElementException =>
+          warn(s"deleteAdnNodeSubmit($adnId): Node not found. Anyway, resources re-erased.")
+          IsSuperuserAdnNode.nodeNotFound(adnId)
+      }
   }
 
 
@@ -343,29 +374,31 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       )
   }
 
-  /** Маппинг для формы добавления/редактирования торгового центра. */
-  private val adnNodeFormM = Form(mapping(
-    "companyId" -> esIdM,
-    "adn"       -> adnMemberM,
-    "meta"      -> adnNodeMetaM,
-    "conf"      -> nodeConfM,
-    "personIds" -> personIdsM
-  )
-  // apply()
-  {(companyId, anmi, meta, conf, personIds) =>
-    MAdnNode(
-      meta = meta,
-      companyId = companyId,
-      adn = anmi,
-      conf = conf,
-      personIds = personIds
+  private val adnKM  = "adn" -> adnMemberM
+  private val metaKM = "meta" -> adnNodeMetaM
+  private val confKM = "conf" -> nodeConfM
+  private val personIdsKM = "personIds" -> personIdsM
+
+  /** Генератор маппингов для формы добавления/редактирования рекламного узла. */
+  def getAdnNodeFormM(companyM: Mapping[String]): Form[MAdnNode] = {
+    Form(mapping(
+      "companyId" -> companyM, adnKM, metaKM, confKM, personIdsKM
     )
+    {(companyId, anmi, meta, conf, personIds) =>
+      MAdnNode(
+        meta = meta,
+        companyId = companyId,
+        adn = anmi,
+        conf = conf,
+        personIds = personIds
+      )
+    }
+    {adnNode =>
+      import adnNode._
+      Some((companyId, adn, meta, conf, personIds))
+    })
   }
-  // unapply()
-  {adnNode =>
-    import adnNode._
-    Some((companyId, adn, meta, conf, personIds))
-  })
+  private val adnNodeFormM = getAdnNodeFormM(esIdM)
 
   private def maybeSupOpt(supIdOpt: Option[String]): Future[Option[MAdnNode]] = {
     supIdOpt match {
@@ -456,33 +489,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         supExistsFut flatMap {
           case true =>
             // Собираем новый объект MAdnNode, считая его не изменяемым. Так и будет в будущем.
-            val adnNode3 = adnNode.copy(
-              companyId = adnNode2.companyId,
-              personIds = adnNode2.personIds,
-              meta = adnNode.meta.copy(
-                name    = adnNode2.meta.name,
-                description = adnNode2.meta.description,
-                town    = adnNode2.meta.town,
-                address = adnNode2.meta.address,
-                phone   = adnNode2.meta.phone,
-                floor   = adnNode2.meta.floor,
-                section = adnNode2.meta.section,
-                siteUrl = adnNode2.meta.siteUrl,
-                color   = adnNode2.meta.color
-              ),
-              adn = adnNode.adn.copy(
-                memberType  = adnNode2.adn.memberType,
-                rights      = adnNode2.adn.rights,
-                isEnabled   = adnNode2.adn.isEnabled,
-                showLevelsInfo = adnNode2.adn.showLevelsInfo,
-                supId       = adnNode2.adn.supId,
-                advDelegate = adnNode2.adn.advDelegate,
-                testNode    = adnNode2.adn.testNode
-              ),
-              conf = adnNode.conf.copy(
-                withBlocks = adnNode2.conf.withBlocks
-              )
-            )
+            val adnNode3 = updateAdnNode(adnNode, adnNode2)
             adnNode3.save.map { _ =>
               Redirect(routes.SysMarket.showAdnNode(adnId))
                 .flashing("success" -> "Изменения сохранены")
@@ -497,6 +504,36 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     )
   }
 
+  /** Накатить отмаппленные изменения на существующий интанс узла, породив новый интанс.*/
+  def updateAdnNode(adnNode: MAdnNode, adnNode2: MAdnNode): MAdnNode = {
+    adnNode.copy(
+      companyId = adnNode2.companyId,
+      personIds = adnNode2.personIds,
+      meta = adnNode.meta.copy(
+        name    = adnNode2.meta.name,
+        description = adnNode2.meta.description,
+        town    = adnNode2.meta.town,
+        address = adnNode2.meta.address,
+        phone   = adnNode2.meta.phone,
+        floor   = adnNode2.meta.floor,
+        section = adnNode2.meta.section,
+        siteUrl = adnNode2.meta.siteUrl,
+        color   = adnNode2.meta.color
+      ),
+      adn = adnNode.adn.copy(
+        memberType  = adnNode2.adn.memberType,
+        rights      = adnNode2.adn.rights,
+        isEnabled   = adnNode2.adn.isEnabled,
+        showLevelsInfo = adnNode2.adn.showLevelsInfo,
+        supId       = adnNode2.adn.supId,
+        advDelegate = adnNode2.adn.advDelegate,
+        testNode    = adnNode2.adn.testNode
+      ),
+      conf = adnNode.conf.copy(
+        withBlocks = adnNode2.conf.withBlocks
+      )
+    )
+  }
 
   /* Торговые центры и площади. */
 
@@ -522,39 +559,41 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
   /** Сабмит формы создания инвайта на управление ТЦ. */
-  def nodeOwnerInviteFormSubmit(adnId: String) = IsSuperuser.async { implicit request =>
-    MAdnNodeCache.getById(adnId) flatMap {
-      case Some(adnNode) =>
-        nodeOwnerInviteFormM.bindFromRequest().fold(
-          {formWithErrors =>
-            debug(s"martInviteFormSubmit($adnId): Failed to bind form: ${formWithErrors.errors}")
-            EmailActivation.findByKey(adnId) map { eActs =>
-              NotAcceptable(nodeOwnerInvitesTpl(adnNode, formWithErrors, eActs))
-            }
-          },
-          {email1 =>
-            val eAct = EmailActivation(email=email1, key = adnId)
-            eAct.save.map { eActId =>
-              eAct.id = Some(eActId)
-              // Собираем и отправляем письмо адресату
-              val mail = use[MailerPlugin].email
-              val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
-              mail.setSubject("Suggest.io | " + Messages("Your")(ctx.lang) + " " + Messages("amt.of.type." + adnNode.adn.memberType)(ctx.lang))
-              mail.setFrom("no-reply@suggest.io")
-              mail.setRecipient(email1)
-              mail.send(
-                bodyText = views.txt.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct)(ctx),
-                bodyHtml = views.html.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct)(ctx)
-              )
-              // Письмо отправлено, вернуть админа назад в магазин
-              Redirect(routes.SysMarket.showAdnNode(adnId))
-                .flashing("success" -> ("Письмо с приглашением отправлено на " + email1))
-            }
-          }
-        )
+  def nodeOwnerInviteFormSubmit(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+    import request.adnNode
+    nodeOwnerInviteFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"martInviteFormSubmit($adnId): Failed to bind form: ${formWithErrors.errors}")
+        EmailActivation.findByKey(adnId) map { eActs =>
+          NotAcceptable(nodeOwnerInvitesTpl(adnNode, formWithErrors, eActs))
+        }
+      },
+      {email1 =>
+        val eAct = EmailActivation(email=email1, key = adnId)
+        eAct.save.map { eActId =>
+          eAct.id = Some(eActId)
+          sendEmailInvite(eAct, adnNode)
+          // Письмо отправлено, вернуть админа назад в магазин
+          Redirect(routes.SysMarket.showAdnNode(adnId))
+            .flashing("success" -> ("Письмо с приглашением отправлено на " + email1))
+        }
+      }
+    )
+  }
 
-      case None => martNotFound(adnId)
-    }
+
+  /** Выслать письмо активации. */
+  def sendEmailInvite(ea: EmailActivation, adnNode: MAdnNode)(implicit request: AbstractRequestWithPwOpt[AnyContent]) {
+    // Собираем и отправляем письмо адресату
+    val mail = use[MailerPlugin].email
+    val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
+    mail.setSubject("Suggest.io | " + Messages("Your")(ctx.lang) + " " + Messages("amt.of.type." + adnNode.adn.memberType)(ctx.lang))
+    mail.setFrom("no-reply@suggest.io")
+    mail.setRecipient(ea.email)
+    mail.send(
+      bodyText = views.txt.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, ea)(ctx),
+      bodyHtml = views.html.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, ea)(ctx)
+    )
   }
 
 

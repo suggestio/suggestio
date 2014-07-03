@@ -59,7 +59,7 @@ object MBlog extends EsModelStaticT with PlayMacroLogsImpl {
     case (DATE_ESFN, value)           => acc.date = dateTimeParser(value)
   }
 
-  override protected def dummy(id: Option[String], version: Long) = {
+  override protected def dummy(id: Option[String], version: Option[Long]) = {
     MBlog(
       id = id,
       title = null,

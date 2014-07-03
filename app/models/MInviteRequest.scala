@@ -15,7 +15,7 @@ import play.api.libs.json.JsString
 import play.api.libs.json.JsBoolean
 import io.suggest.util.SioEsUtil.FieldSource
 import io.suggest.event.SioNotifierStaticClientI
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import play.api.mvc.QueryStringBindable
 import java.{util => ju}
@@ -57,8 +57,8 @@ object MInviteRequest
 
   override val ES_TYPE_NAME = "invReq"
 
-  override def dummy(id: Option[String], version: Long): T = {
-    MInviteRequest(id = id, versionOpt = Some(version), reqType = null, company = null,
+  override def dummy(id: Option[String], version: Option[Long]): T = {
+    MInviteRequest(id = id, versionOpt = version, reqType = null, company = null,
       adnNode = null, contract = null, balance = null, emailAct = null, name = "")
   }
 
@@ -85,7 +85,10 @@ object MInviteRequest
     jmap.get(ID_ESFN) match {
       case null =>
         val docId = Option(jmap get "id") map stringParser
-        val r = companion.deserializeOne(docId, jmap.asInstanceOf[ju.Map[String, AnyRef]], version = -1)
+        val m = jmap
+          .asInstanceOf[ju.Map[String, AnyRef]]
+          .filterKeys(_ != "id")
+        val r = companion.deserializeOne(docId, m, version = None)
         Left(r)
       case idRaw =>
         Right(stringParser(idRaw))
@@ -108,6 +111,15 @@ object MInviteRequest
 
   def deseralizeSqlStrModel[X](companion: FromJson { type T = X },  jmap: ju.Map[_,_]): Either[X, String] = {
     deseralizeSqlModel(companion, jmap, stringParser)
+  }
+
+  /** Стереть ресурсы, которые прилинкованы к Left()-шаблонам моделей. */
+  private def withEraseLeftResources(fut0: Future[_], next: Either[EraseResources, _])
+                                    (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    next.fold(
+      { m => m.eraseResources flatMap { _ => fut0 } },
+      { _ => fut0 }
+    )
   }
 }
 
@@ -135,6 +147,15 @@ case class MInviteRequest(
 {
   override type T = MInviteRequest
   override def companion = MInviteRequest
+
+  /** Стирание ресурсов, относящихся к этой модели. */
+  override def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    var fut = super.eraseResources
+    fut = MInviteRequest.withEraseLeftResources(fut, company)
+    fut = MInviteRequest.withEraseLeftResources(fut, adnNode)
+    fut = MInviteRequest.withEraseLeftResources(fut, emailAct)
+    fut
+  }
 }
 
 

@@ -25,10 +25,10 @@ object MCalendar extends EsModelStaticT with PlayMacroLogsImpl {
   val NAME_ESFN = "name"
   val DATA_ESFN = "data"
 
-  override protected def dummy(id: Option[String], version: Long): T = {
+  override protected def dummy(id: Option[String], version: Option[Long]): T = {
     MCalendar(
       id = id,
-      versionOpt = Some(version),
+      versionOpt = version,
       name = null,
       data = null
     )

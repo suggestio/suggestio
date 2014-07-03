@@ -48,4 +48,13 @@ object Static extends Controller with ContextT {
     }
   }
 
+  /**
+   * Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20
+   * Без этого костыля, запрос html'ки просто подвисает.
+   */
+  def tinymceColorpicker = Action { implicit request =>
+    Ok(tinymce.colorpicker.indexTpl())
+      .withHeaders(CACHE_CONTROL -> "public, max-age=3600")
+  }
+
 }
