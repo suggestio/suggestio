@@ -156,10 +156,14 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
       } }
     val mads2Fut: Future[Seq[MAd]] = mads1Fut flatMap { mads =>
       firstAdsFut map { firstAds =>
-        val firstAdsIds = firstAds.map(_.id.get)
-        // Если в mads, которые получились в результате поиска, уже содержаться те объявы, которые есть в firstAds, то выкинуть их из хвоста.
-        val mads1 = mads filter {
-          mad => !(firstAdsIds contains mad.id.get)
+        val mads1: Seq[MAd] = if (firstAds.nonEmpty) {
+          val firstAdsIds = firstAds.map(_.id.get)
+          // Если в mads, которые получились в результате поиска, уже содержаться те объявы, которые есть в firstAds, то выкинуть их из хвоста.
+          mads filter {
+            mad => !(firstAdsIds contains mad.id.get)
+          }
+        } else {
+          mads
         }
         firstAds ++ mads1
       }
@@ -169,7 +173,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
         // Рендерим базовый html подвыдачи и рендерим остальные рекламные блоки отдельно, для ленивой подгрузки.
         val producer = producers.head
         val adsCount = mads.size
-        // Распараллеливаем рендер блоков по всем ядрам (называется parallel map)
+        // Распараллеливаем рендер блоков по всем ядрам (называется parallel map). На 4ядернике (2 + HT) получается двукратный прирост на 33 карточках.
         val ctx = implicitly[Context]
         val blocksHtmlsFut = parRenderBlocks(mads.tail) {
           (mad, index)  =>  _focusedAdTpl(mad, index + 1, producer, adsCount = adsCount)(ctx)
