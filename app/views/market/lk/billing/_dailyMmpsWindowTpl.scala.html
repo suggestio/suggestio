@@ -93,7 +93,7 @@
                 @adnNode.gallery.map { imgId =>
                   <div class="add-file-w __preview">
                     <img class="add-file-w_image js-image-preview" src="@routes.Img.getThumb(imgId)">
-                    <a data-lightbox="obj-photos" href="@routes.Img.getThumb(imgId)" class="add-file-w_btn siom-zoom-image-btn"></a>
+                    <a data-lightbox="obj-photos" href="@routes.Img.getImg(imgId)" class="add-file-w_btn siom-zoom-image-btn" title="Увеличить изображение"></a>
                   </div>
                 }
               </td>
