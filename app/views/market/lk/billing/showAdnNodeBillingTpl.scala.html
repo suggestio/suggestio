@@ -1,4 +1,4 @@
-@(adnNode: MAdnNode, mmpDailyTariffs: Seq[MBillMmpDaily], txns: Seq[MBillTxn], mbc: MBillContract, otherRcvrs: Seq[MAdnNode])(implicit ctx: util.Context)
+@(adnNode: MAdnNode, mmpDailyTariffs: Seq[MBillMmpDaily], mbc: MBillContract, otherRcvrs: Seq[MAdnNode])(implicit ctx: util.Context)
 
 @* Страница с информацией по биллингу для узла рекламной сети. *@
 @import ctx._
@@ -74,16 +74,11 @@
               <td>
                 <div class="border-line-vertical f-right"></div>
                 <div class="ovh">
-                  @if(!txns.isEmpty) {
                     <span class="value f-left" style="padding-top: 5px;">18.05.2014</span>
 
                     <span class="gray-but-smallest inline f-left" style="margin-left: 20px;">
                       <a href="transactionsHistory" class="white-border-top js-slide-btn">История операций</a>
                     </span>
-                  } else {
-
-                    Не происходило
-                  }
 
                 </div>
               </td>
@@ -129,7 +124,6 @@
     </div>
 
 
-    @if(!txns.isEmpty) {
       <div class="lk-edit-form__block js-slide-wrap" id="transactionsHistory" style="display: none; margin-bottom: 0;">
 
         <div class="lk-edit-form__block_title">
@@ -142,28 +136,11 @@
 
         <div class="lk-edit-form__block_body js-slide-content">
           <div class="lk-edit-form__block_body_inner transactions-list">
-
-            @* История транзакций *@
-            @txns.zipWithIndex.map { case (txn , i) =>
-              <div class="item">
-                <div class="f-left">
-                  <strong>@txn.paymentComment</strong> / <span title="@_prettyDate(txn.datePaid).toString.trim">@numericDate(txn.datePaid)</span>
-                </div>
-                <div class="ovh">
-                  Сумма: <strong>@formatPrice(txn.amount, txn.currency)</strong>
-                </div>
-              </div>
-
-              @if(i != txns.size - 1) {
-                <div class="border-line"></div>
-              }
-
-            }
-
+            @* Тут раньше был список транзакций. *@
+            <a href="@routes.MarketLkBilling._txnsList(adnNode.id.get)">Показать транзакции</a>
           </div>
         </div>
       </div>
-    }
 
 
     @* Посуточная mmp-тарифная сетка этого узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@

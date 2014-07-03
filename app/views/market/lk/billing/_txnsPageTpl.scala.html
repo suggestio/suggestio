@@ -1,0 +1,27 @@
+@(adnNode: MAdnNode, txns: Seq[MBillTxn], currPage: Int)(implicit ctx: Context)
+
+@import ctx._
+@import util.TplDataFormatUtil._
+@import datetime._
+@import controllers.MarketLkBilling.TXNS_PER_PAGE
+
+@* Страница истории транзакций *@
+
+@txns.zipWithIndex.map { case (txn , i) =>
+  <div class="item">
+    <div class="f-left">
+      <strong>@txn.paymentComment</strong> / <span title="@_prettyDate(txn.datePaid).toString.trim">@numericDate(txn.datePaid)</span>
+    </div>
+    <div class="ovh">
+      Сумма: <strong>@formatPrice(txn.amount, txn.currency)</strong>
+    </div>
+  </div>
+
+  @if(i != txns.size - 1) {
+    <div class="border-line"></div>
+  }
+
+  @if(txns.size >= TXNS_PER_PAGE) {
+    <a href="@routes.MarketLkBilling._txnsList(adnNode.id.get, page = currPage + 1)">Следующая страничка</a>
+  }
+}

@@ -36,9 +36,9 @@ object MBillTxn extends SqlModelStatic {
    * @param contractId id контракта.
    * @return Список транзакций, новые сверху.
    */
-  def findForContract(contractId: Int)(implicit c: Connection): List[MBillTxn] = {
-    SQL("SELECT * FROM " + TABLE_NAME + " WHERE contract_id = {contractId} ORDER BY id DESC")
-      .on('contractId -> contractId)
+  def findForContract(contractId: Int, limit: Int = 10, offset: Int = 0)(implicit c: Connection): List[MBillTxn] = {
+    SQL("SELECT * FROM " + TABLE_NAME + " WHERE contract_id = {contractId} ORDER BY id DESC LIMIT {limit} OFFSET {offset}")
+      .on('contractId -> contractId, 'limit -> limit, 'offset -> offset)
       .as(rowParser *)
   }
 
@@ -47,9 +47,9 @@ object MBillTxn extends SqlModelStatic {
    * @param contractIds Список номеров договоров.
    * @return Список транзакций в порядке их появления.
    */
-  def findForContracts(contractIds: Seq[Int])(implicit c: Connection): List[MBillTxn] = {
-    SQL("SELECT * FROM " + TABLE_NAME + " WHERE contract_id = ANY({ids}) ORDER BY id ASC")
-      .on('ids -> seqInt2pgArray(contractIds))
+  def findForContracts(contractIds: Traversable[Int], limit: Int = 10, offset: Int = 0)(implicit c: Connection): List[MBillTxn] = {
+    SQL("SELECT * FROM " + TABLE_NAME + " WHERE contract_id = ANY({ids}) ORDER BY id DESC LIMIT {limit} OFFSET {offset}")
+      .on('ids -> seqInt2pgArray(contractIds), 'limit -> limit, 'offset -> offset)
       .as(rowParser *)
   }
 
