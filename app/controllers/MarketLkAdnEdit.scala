@@ -7,14 +7,13 @@ import util.acl._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
-import scala.concurrent.Future
 import views.html.market.lk.adn._
 import io.suggest.ym.model.MAdnNode
 import play.api.data.Form
 import play.api.data.Forms._
 import util.FormUtil._
-import play.api.Play.{current, configuration}
 import GalleryUtil._
+import WelcomeUtil._
 
 /**
  * Suggest.io
@@ -28,12 +27,8 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
 
   import LOGGER._
 
-  /** Ключ для картинки, используемой в качестве приветствия. */
-  val WELCOME_IMG_KEY = "wlcm"
-
   /** Маркер картинки для использования в качестве логотипа. */
   private val TMP_LOGO_MARKER = "leadLogo"
-
 
   // У нас несколько вариантов развития событий с формами: ресивер, продьюсер или что-то иное. Нужно три маппинга.
   private val nameKM        = "name"    -> nameM
@@ -109,7 +104,6 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
     }
   }
 
-  private val waIdKM = "welcomeImgId" -> optional(ImgFormUtil.imgIdJpegM)
   val logoKM = ImgFormUtil.getLogoKM("adn.logo.invalid", marker=TMP_LOGO_MARKER)
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
@@ -133,15 +127,15 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   /** Страница с формой редактирования узла рекламной сети. Функция смотрит тип узла и рендерит ту или иную страницу. */
   def editAdnNode(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
     import request.adnNode
-    getWelcomeAdOpt(adnNode) map { welcomeAdOpt =>
-      val martLogoOpt = adnNode.logoImgOpt.map { img =>
-        ImgInfo4Save(imgInfo2imgKey(img))
-      }
-      val welcomeImgKey = welcomeAdOpt
-        .flatMap { _.imgs.headOption }
-        .map[OrigImgIdKey] { img => img._2 }
-      val gallerryIks = gallery2iiks( adnNode.gallery )
-      val formFilled = nodeFormM(adnNode.adn)
+    val waOptFut = getWelcomeAdOpt(adnNode)
+    val martLogoOpt = adnNode.logoImgOpt.map { img =>
+      ImgInfo4Save(imgInfo2imgKey(img))
+    }
+    val gallerryIks = gallery2iiks( adnNode.gallery )
+    val formNotFilled = nodeFormM(adnNode.adn)
+    waOptFut map { welcomeAdOpt =>
+      val welcomeImgKey = welcomeAd2iik(welcomeAdOpt)
+      val formFilled = formNotFilled
         .fill((adnNode.meta, welcomeImgKey, martLogoOpt, gallerryIks))
       Ok(leaderEditFormTpl(adnNode, formFilled, welcomeAdOpt))
     }
@@ -222,45 +216,6 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
    */
   def handleTempLogo(adnId: String) = IsAdnNodeAdmin(adnId)(parse.multipartFormData) { implicit request =>
     _handleTempImg(MartLogoImageUtil, Some(TMP_LOGO_MARKER))
-  }
-
-
-  /** Асинхронно получить welcome-ad-карточку. */
-  private def getWelcomeAdOpt(welcomeAdId: Option[String]): Future[Option[MWelcomeAd]] = {
-    welcomeAdId
-      .fold [Future[Option[MWelcomeAd]]] (Future successful None) (MWelcomeAd.getById)
-  }
-  private def getWelcomeAdOpt(node: MAdnNode): Future[Option[MWelcomeAd]] = {
-    getWelcomeAdOpt( node.meta.welcomeAdId )
-  }
-
-
-  /** Обновление картинки и карточки приветствия. Картинка хранится в полу-рекламной карточке, поэтому надо ещё
-    * обновить карточку и пересохранить её. */
-  private def updateWelcodeAdFut(adnNode: MAdnNode, newWelcomeImgOpt: Option[ImgIdKey]): Future[Option[String]] = {
-    getWelcomeAdOpt(adnNode) flatMap { currWelcomeAdOpt =>
-      ImgFormUtil.updateOrigImg(
-        needImgs = newWelcomeImgOpt.map(ImgInfo4Save(_, withThumb = false)).toSeq,
-        oldImgs = currWelcomeAdOpt.flatMap(_.imgs.headOption).map(_._2).toIterable
-      ) flatMap {
-        // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
-        case None =>
-          adnNode.meta
-            .welcomeAdId
-            .fold [Future[Option[String]]]
-              { Future successful None }
-              { waId => MAd.deleteById(waId).map { _ => None } }
-
-        // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
-        case newImgInfoOpt @ Some(newImgInfo) =>
-          val newImgs = Map(WELCOME_IMG_KEY -> newImgInfo)
-          val newWelcomeAd = currWelcomeAdOpt.fold
-            { MWelcomeAd(producerId = adnNode.id.get, imgs = newImgs) }
-            { _.copy(imgs = newImgs) }
-          newWelcomeAd.save
-            .map { Some.apply }
-      }
-    }
   }
 
 }
