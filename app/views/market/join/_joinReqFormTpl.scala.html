@@ -17,6 +17,7 @@
 
       <td class="input-w_left">
         <label class="input-w_prop-name">Логотип:</label>
+        <span class="required-icon">*</span>
       </td>
 
       <td>
@@ -37,7 +38,7 @@
     </table>
 
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
-      @inputText(jf("humanTraffic"), '_label -> (Messages("Daily.people.traffic") + ":"))
+      @inputText(jf("humanTrafficAvg"), '_label -> (Messages("Daily.people.traffic") + ":"))
     </table>
   }
 
@@ -64,6 +65,7 @@
 
         <td class="input-w_left">
           <label class="input-w_prop-name">Картинка<br/>приветствия:</label>
+          <span class="required-icon">*</span>
         </td>
 
         <td>
@@ -77,16 +79,36 @@
 
       </tr>
     </table>
+
+    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+
+      <tr>
+        <td class="left">
+          <label for="logoImgInput">Фотографии<br/>объекта:</label>
+        </td>
+
+        <td class="right">
+
+          <div class="add-file-w __size-S" >
+            @stuff._fileUploadTpl(routes.Img.handleTempImg, fieldName = "gallery", multiple = true)
+            <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
+          </div>
+
+        </td>
+      </tr>
+
+    </table>
   }
 
   <table class="input-wrap big">
     <td class="left">
       <label for="meta_color">Основной цвет:</label>
+      <span class="required-icon">*</span>
     </td>
     <td class="right">
-      <div class="lk-color-select__color lk-color-select__color_custom js-custom-color" style="background: #@jf("meta.color").value;">
+      <div class="lk-color-select__color lk-color-select__color_custom js-custom-color" style="background: #@jf("color").value;">
       <div></div>
-      <input id="meta_color" type="hidden" name="meta.color" value="@jf("meta.color").value"/>
+      <input id="meta_color" type="hidden" name="color" value="@jf("color").value"/>
       </div>
     </td>
   </table>
