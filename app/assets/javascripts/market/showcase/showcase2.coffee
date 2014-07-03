@@ -499,6 +499,8 @@ siomart =
     c_url : null
 
     load_more : () ->
+      if this.is_load_more_requested == true
+        return false
       console.log 'load more'
       console.log 'loaded : ' + this.loaded
 
@@ -678,6 +680,14 @@ siomart =
         else
           grid_container_dom.innerHTML += html
           cbca_grid.init(is_add = true)
+
+        this.utils.add_single_listener this.utils.ge('sioMartIndexOffers'), 'scroll', () ->
+          scrollTop = siomart.utils.ge('sioMartIndexOffers').scrollTop
+          height = siomart.utils.ge('sioMartIndexOffers').offsetHeight
+
+          if parseInt( height + scrollTop ) > siomart.utils.ge('sioMartIndexGrid').offsetHeight
+            siomart.grid_ads.load_more()
+
 
         siomart.grid_ads.is_load_more_requested = false
 
