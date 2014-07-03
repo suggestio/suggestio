@@ -16,6 +16,18 @@
       </select>
     }
   </label>
+
+  <label>Отображаемый тип узла
+    @defining( af("adn.shownTypeIdOpt") ) { stiField =>
+      <select name="@stiField.name">
+        <option disabled>Тип узла</option>
+        @AdnShownTypes.values.map { ast =>
+          <option value="@ast" @if(stiField.value.exists(_ == ast.toString)) {selected}>@Messages("amt.of.type." + ast)</option>
+        }
+      </select>
+    }
+  </label>
+
   @checkbox(af("adn.isEnabled"), '_label -> "Включён?")
 
 

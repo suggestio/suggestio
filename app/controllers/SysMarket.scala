@@ -308,16 +308,18 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   private val adnMemberM: Mapping[AdNetMemberInfo] = mapping(
     "memberType"    -> adnMemberTypeM,
     "isEnabled"     -> boolean,
+    "shownTypeIdOpt" -> adnShownTypeIdOptM,
     "rights"        -> adnRightsM,
     "sls"           -> adnSlInfoM,
     "supId"         -> optional(esIdM),
     "advDelegate"   -> optional(esIdM),
     "testNode"      -> boolean
   )
-  {(mt, isEnabled, rights, sls, supId, advDgOpt, isTestNode) =>
+  {(mt, isEnabled, shownTypeIdOpt, rights, sls, supId, advDgOpt, isTestNode) =>
     mt.getAdnInfoDflt.copy(
       isEnabled = isEnabled,
       rights    = rights,
+      shownTypeIdOpt = shownTypeIdOpt,
       showLevelsInfo = sls,
       supId     = supId,
       advDelegate = advDgOpt,
@@ -326,7 +328,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
   {anmi =>
     import anmi._
-    Some((memberType, isEnabled, rights, showLevelsInfo, supId, advDelegate, testNode))
+    Some((memberType, isEnabled, Some(shownTypeId), rights, showLevelsInfo, supId, advDelegate, testNode))
   }
 
 
@@ -524,6 +526,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
       adn = adnNode.adn.copy(
         memberType  = adnNode2.adn.memberType,
         rights      = adnNode2.adn.rights,
+        shownTypeIdOpt = adnNode2.adn.shownTypeIdOpt,
         isEnabled   = adnNode2.adn.isEnabled,
         showLevelsInfo = adnNode2.adn.showLevelsInfo,
         supId       = adnNode2.adn.supId,
@@ -588,7 +591,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     // Собираем и отправляем письмо адресату
     val mail = use[MailerPlugin].email
     val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
-    mail.setSubject("Suggest.io | " + Messages("Your")(ctx.lang) + " " + Messages("amt.of.type." + adnNode.adn.memberType)(ctx.lang))
+    mail.setSubject("Suggest.io | " + Messages("Your")(ctx.lang) + " " + Messages("amt.of.type." + adnNode.adn.shownTypeId)(ctx.lang))
     mail.setFrom("no-reply@suggest.io")
     mail.setRecipient(ea.email)
     mail.send(

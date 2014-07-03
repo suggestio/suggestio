@@ -46,7 +46,7 @@
         @market.contract._inviteWidgetTpl(iaf)
       }
 
-      @table_fieldset(Messages("amt.of.type." + adnNode.adn.memberType) + ":", "disabled"){
+      @table_fieldset(Messages("amt.of.type." + adnNode.adn.shownTypeId) + ":", "disabled"){
         <input id="adnNodeName" type="text" disabled value="@adnNode.meta.name"/>
       }
 

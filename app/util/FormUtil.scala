@@ -113,6 +113,25 @@ object FormUtil {
   )
 
 
+  val adnShownTypeOptM: Mapping[Option[AdnShownType]] = {
+    nonEmptyText(maxLength = 10)
+      .transform[Option[AdnShownType]]( AdnShownTypes.maybeWithName, _.fold("")(_.toString) )
+  }
+  val adnShownTypeM: Mapping[AdnShownType] = {
+    adnShownTypeOptM
+      .verifying("error.required", _.isDefined)
+      .transform[AdnShownType](_.get, Some.apply)
+  }
+  val adnShownTypeIdM: Mapping[String] = {
+    adnShownTypeM
+      .transform[String](_.toString, AdnShownTypes.withName)
+  }
+  val adnShownTypeIdOptM: Mapping[Option[String]] = {
+    adnShownTypeOptM
+      .transform[Option[String]](_.map(_.toString), _.flatMap(AdnShownTypes.maybeWithName))
+  }
+
+
   def strOptGetOrElseEmpty(x: Option[String]) = x getOrElse ""
   def toStrOptM(x: Mapping[String]): Mapping[Option[String]] = {
     x.transform[Option[String]](Option.apply, strOptGetOrElseEmpty)

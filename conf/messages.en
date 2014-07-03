@@ -55,20 +55,27 @@ amt.of.type.s=Shop
 amt.of.type.m=Mart
 amt.of.type.r=Restaurant
 amt.of.type.R=Restaurant chain
+amt.of.type.a=Transport
+amt.of.type.b=Metro station
 
 amts.of.type.s=Shops
 amts.of.type.m=Marts
 amts.of.type.r=Restaurants
 amts.of.type.R=Restaurant chains
-
-Input.text.from.picture=Input text from the picture
-error.captcha=Invalid human-check code
+amts.of.type.a=Transport
+amts.of.type.b=Metro stations
 
 editing.of.amt.profile.s=Shop profile edit
 editing.of.amt.profile.m=Mhop profile edit
 editing.of.amt.profile.r=Restaurant profile edit
 editing.of.amt.profile.R=Supervisor profile edit
+editing.of.amt.profile.a=Transport node profile edit
+editing.of.amt.profile.b=Metro station profile edit
 
+
+
+Input.text.from.picture=Input text from the picture
+error.captcha=Invalid human-check code
 
 blocks.field.price=Price
 blocks.field.oldPrice=Old price

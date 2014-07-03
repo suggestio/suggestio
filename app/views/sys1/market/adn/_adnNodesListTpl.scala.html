@@ -23,7 +23,7 @@
         <td>
           <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
         </td>
-        <td>@Messages("amt.of.type." + memberType)</td>
+        <td>@Messages("amt.of.type." + adnNode.adn.shownTypeId)</td>
         <td>@adnNode.meta.town</td>
         @companies.map { _companies =>
           <td>

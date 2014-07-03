@@ -4,13 +4,13 @@
 @import ctx._
 @import edit._
 
-@market.lk.lkBase(Messages("editing.of.amt.profile." + adnNode.adn.memberType), adnIdOpt = adnNode.id) {
+@market.lk.lkBase(Messages("editing.of.amt.profile." + adnNode.adn.shownTypeId), adnIdOpt = adnNode.id) {
 
   <div class="title-wrap">
     <div class="center">
       <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)">&nbsp;</a>
       <div class="title-inner">
-        @Messages("editing.of.amt.profile." + adnNode.adn.memberType).toUpperCase
+        @Messages("editing.of.amt.profile." + adnNode.adn.shownTypeId).toUpperCase
       </div>
     </div>
   </div>

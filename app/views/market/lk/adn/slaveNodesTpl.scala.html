@@ -14,7 +14,7 @@
 )
 
 @market.lk.lkBase(mnode.meta.name, adnIdOpt = mnode.id) {
-@defining(Messages("slaves.of." + mnode.adn.memberType)) { title =>
+@defining(Messages("slaves.of." + mnode.adn.shownTypeId)) { title =>
   <div class="title-wrap">
     <div class="center">
       <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(mnode.id.get)">&nbsp;</a>

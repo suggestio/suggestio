@@ -16,7 +16,7 @@ import models._
 /** Расширение функционала AdNetMemberTypes для функций доступа к дополнительным данным в рамках.
   * Пришло на смену ShowAdnNodeCtx, жившему на уровне реализаций контроллеров. */
 object AdnShowTypes extends Enumeration {
-  protected abstract case class Val(amt: AdNetMemberType) extends super.Val(amt.name) {
+  protected case class Val(amt: AdNetMemberType) extends super.Val(amt.name) {
     /** Call для доступа к поисковой выдаче для админа ЛК. */
     def nodeAdmSiteCall(adnNode: MAdnNode): Option[Call] = {
       Some( routes.Market.demoWebSite(adnNode.id.get) )
@@ -36,10 +36,10 @@ object AdnShowTypes extends Enumeration {
     }
   }
 
-  val MART: AdnShowType = new Val(AdNetMemberTypes.MART) {}
+  val MART: AdnShowType = Val(AdNetMemberTypes.MART)
 
 
-  val RESTAURANT: AdnShowType = new Val(AdNetMemberTypes.RESTAURANT) {}
+  val RESTAURANT: AdnShowType = Val(AdNetMemberTypes.RESTAURANT)
 
   val RESTAURANT_SUP: AdnShowType = new Val(AdNetMemberTypes.RESTAURANT_SUP) {
     override def nodeAdmSiteCall(adnNode: MAdnNode) = None
