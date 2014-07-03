@@ -150,6 +150,11 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       .left.map(_.email)
       .left.getOrElse("")
   }
+  private def unapplyInfo(mir: MInviteRequest): Option[String] = {
+    mir.adnNode
+      .left.map(_.meta.info)
+      .left.getOrElse(None)
+  }
   private def unapplyGallery(mir: MInviteRequest): List[OrigImgIdKey] = {
     mir.adnNode
       .left.map { adnNode => gallery2iiks(adnNode.gallery) }
@@ -160,7 +165,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
   /** Накатывание результатов маппинга формы на новый экземпляр [[models.MInviteRequest]]. */
   private def applyForm(companyName: String, audienceDescr: Option[String] = None, humanTrafficAvg: Option[Int] = None,
     address: String, siteUrl: Option[String], phone: String, payReqs: Option[String] = None, email1: String,
-    anmt: AdNetMemberType, withMmp: Boolean, reqType: InviteReqType): MInviteRequest = {
+    anmt: AdNetMemberType, withMmp: Boolean, reqType: InviteReqType, info: Option[String] = None): MInviteRequest = {
     val company = MCompany(
       meta = MCompanyMeta(name = companyName, officePhones = List(phone))
     )
@@ -171,7 +176,8 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         address         = Option(address),
         siteUrl         = siteUrl,
         humanTrafficAvg = humanTrafficAvg,
-        audienceDescr   = audienceDescr
+        audienceDescr   = audienceDescr,
+        info            = info
       ),
       personIds = Set.empty,
       adn = anmt.getAdnInfoDflt
@@ -270,7 +276,8 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     Form(
       mapping(
         "company"   -> companyNameM,
-        //"info"      -> text2048M.transform[Option[String]](Option(_).filter(!_.isEmpty), _ getOrElse ""),
+        "info"      -> text2048M
+          .transform[Option[String]]({str => emptyStrOptToNone(Option(str))}, strOptGetOrElseEmpty),
         "address"   -> addressM,
         "siteUrl"   -> urlStrOptM,
         "phone"     -> phoneM,
@@ -278,18 +285,19 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         CAPTCHA_ID_FN    -> Captcha.captchaIdM,
         CAPTCHA_TYPED_FN -> Captcha.captchaTypedM
       )
-      {(companyName, address, siteUrl, phone, email1, _, _) =>
+      {(companyName, info, address, siteUrl, phone, email1, _, _) =>
         applyForm(companyName = companyName, address = address, siteUrl = siteUrl,
           phone = phone, email1 = email1, anmt = AdNetMemberTypes.SHOP, withMmp = false,
-          reqType = InviteReqTypes.Adv)
+          reqType = InviteReqTypes.Adv, info = info)
       }
       {mir =>
         val companyName = unapplyCompanyName(mir)
+        val info = unapplyInfo(mir)
         val address = unapplyAddress(mir)
         val siteUrl = unapplySiteUrl(mir)
         val officePhone = unapplyOfficePhone(mir)
         val email1 = unapplyEmail(mir)
-        Some((companyName, address, siteUrl, officePhone, email1, "", ""))
+        Some((companyName, info, address, siteUrl, officePhone, email1, "", ""))
       }
     )
   }
