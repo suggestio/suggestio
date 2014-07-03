@@ -594,7 +594,7 @@ CbcaCommon = () ->
       )
 
 
-    $('.border-line-vertical').each () ->
+    $('.border-line-vertical, .js-vertical-line').each () ->
       $this = $(this)
       $parent = $this.parent()
 
