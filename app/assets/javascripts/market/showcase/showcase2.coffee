@@ -668,25 +668,26 @@ siomart =
       for index, elt of data.blocks
         html += elt
 
-      siomart.grid_ads.loaded += data.blocks.length
+      if typeof data.blocks != 'undefined'
+        siomart.grid_ads.loaded += data.blocks.length
 
-      if siomart.grid_ads.is_load_more_requested == false
-        grid_container_dom.innerHTML = html
-        document.getElementById('sioMartIndexOffers').scrollTop = '0';
-        cbca_grid.init()
-      else
-        grid_container_dom.innerHTML += html
-        cbca_grid.init(is_add = true)
+        if siomart.grid_ads.is_load_more_requested == false
+          grid_container_dom.innerHTML = html
+          document.getElementById('sioMartIndexOffers').scrollTop = '0';
+          cbca_grid.init()
+        else
+          grid_container_dom.innerHTML += html
+          cbca_grid.init(is_add = true)
 
-      siomart.grid_ads.is_load_more_requested = false
+        siomart.grid_ads.is_load_more_requested = false
 
-      siomart.styles.init()
-      siomart.init_shop_links()
+        siomart.styles.init()
+        siomart.init_shop_links()
 
-      if data.action == 'searchAds'
-        siomart.navigation_layer.close true
-      else
-        siomart.navigation_layer.close()
+        if data.action == 'searchAds'
+          siomart.navigation_layer.close true
+        else
+          siomart.navigation_layer.close()
 
     siomart.utils.ge('smLoading').style.display = 'none'
 

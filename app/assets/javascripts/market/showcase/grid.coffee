@@ -311,8 +311,9 @@ cbca_grid =
     for elt in siomart.utils.ge_class document, 'blocks-container'
       elt.style.display = 'block'
 
-    for elt in siomart.utils.ge_class document, 'sm-b-spacer'
-      elt.style.display = 'none'
+    if is_add == false
+      for elt in siomart.utils.ge_class document, 'sm-b-spacer'
+        elt.style.display = 'none'
 
     blocks_length = cbca_grid.blocks.length
 
