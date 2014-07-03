@@ -201,41 +201,48 @@ cbca_grid =
   ##############################
   ## Find all blocks on the page
   ##############################
-  load_blocks : () ->
+  load_blocks : ( is_add ) ->
+
+    is_add = is_add || false
+
     cbca_grid.blocks = []
     cbca_grid.spacers = []
     cbca_grid.m_spacers = []
-    i = 0
+
+    if is_add == true
+      i = cbca_grid.blocks_index
+    else
+      i = 0
     ## TODO : make selector configurable
     for elt in siomart.utils.ge_class document, 'sm-block'
+      if elt.id == ''
+        _this = elt
 
-      _this = elt
+        _this.setAttribute 'id', 'elt' + i
 
-      _this.setAttribute 'id', 'elt' + i
+        height = parseInt _this.getAttribute 'data-height'
+        width = parseInt _this.getAttribute 'data-width'
 
-      height = parseInt _this.getAttribute 'data-height'
-      width = parseInt _this.getAttribute 'data-width'
+        opened_height = parseInt _this.getAttribute 'data-opened-height'
+        opened_width = parseInt _this.getAttribute 'data-opened-width'
 
-      opened_height = parseInt _this.getAttribute 'data-opened-height'
-      opened_width = parseInt _this.getAttribute 'data-opened-width'
+        _class = _this.className
+        _search_string = _this.getAttribute 'data-search-string'
+        _is_moveable = _this.getAttribute 'data-is-moveable' || 'false'
 
-      _class = _this.className
-      _search_string = _this.getAttribute 'data-search-string'
-      _is_moveable = _this.getAttribute 'data-is-moveable' || 'false'
+        block =
+          'id' : i
+          'width' : width
+          'height' : height
+          'opened_width' : opened_width
+          'opened_height' : opened_height
+          'class' : _class
+          'block' : _this
+          '_is_moveable' : _is_moveable
 
-      block =
-        'id' : i
-        'width' : width
-        'height' : height
-        'opened_width' : opened_width
-        'opened_height' : opened_height
-        'class' : _class
-        'block' : _this
-        '_is_moveable' : _is_moveable
-
-      i++
-      cbca_grid.blocks.push block
-      cbca_grid.m_blocks = cbca_grid.blocks.slice(0)
+        i++
+        cbca_grid.blocks.push block
+        cbca_grid.m_blocks = cbca_grid.blocks.slice(0)
 
     ## Загрузить спейсеры
     #for i in siomart.utils.ge_class document, 'sm-b-spacer'
@@ -277,13 +284,15 @@ cbca_grid =
       cbca_grid.spacers.push block
       cbca_grid.m_spacers = cbca_grid.spacers.slice(0)
 
-  init : () ->
+    cbca_grid.blocks_index = i
+
+  init : ( is_add ) ->
     this.blocks_container = document.getElementById 'sioMartIndexGrid'
     this.layout_dom = document.getElementById 'sioMartIndexGridLayout'
 
     this.set_container_size()
-    this.load_blocks()
-    this.build()
+    this.load_blocks( is_add )
+    this.build( is_add )
 
   resize : () ->
     this.set_container_size()
@@ -295,7 +304,9 @@ cbca_grid =
     cbca_grid.m_blocks = cbca_grid.blocks.slice(0)
     this.build()
 
-  build : ( active_block ) ->
+  build : ( is_add ) ->
+
+    is_add = is_add || false
 
     for elt in siomart.utils.ge_class document, 'blocks-container'
       elt.style.display = 'block'
@@ -335,11 +346,14 @@ cbca_grid =
     pline = 0
     cur_column = 0
 
-    # Генерим объект с инфой об использованном месте
-    columns_used_space = {}
-    for c in [0..columns-1]
-      columns_used_space[c] =
-        used_height : 0
+    if is_add == false
+      # Генерим объект с инфой об использованном месте
+      columns_used_space = {}
+      for c in [0..columns-1]
+        columns_used_space[c] =
+          used_height : 0
+    else
+      columns_used_space = cbca_grid.columns_used_space
 
     is_break = false
 
@@ -414,6 +428,8 @@ cbca_grid =
 
       if b_elt != null
         b_elt.style.opacity = 0
+
+    cbca_grid.columns_used_space = columns_used_space
 
     ## Вычислим максимальную высоту внутри колонки
     max_h = this.max_used_height columns_used_space

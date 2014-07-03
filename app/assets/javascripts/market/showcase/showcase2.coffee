@@ -494,9 +494,23 @@ siomart =
 
   ## Карточки ноды верхнего уровня
   grid_ads :
+    is_load_more_requested : false
+    loaded : 0
+    c_url : null
+
+    load_more : () ->
+      console.log 'load more'
+      console.log 'loaded : ' + this.loaded
+
+      this.is_load_more_requested = true
+
+      siomart.request.perform this.c_url + '&a.size=' + siomart.config.ads_per_load + '&a.offset=' + this.loaded
+
     load_index_ads : () ->
       grd_c = siomart.utils.ge('sioMartIndexGrid')
       url = grd_c.getAttribute 'data-index-offers-action'
+
+      this.c_url = url
       siomart.request.perform url + '&a.size=' + siomart.config.ads_per_load
 
   #####################################################
@@ -654,9 +668,18 @@ siomart =
       for index, elt of data.blocks
         html += elt
 
-      grid_container_dom.innerHTML = html
-      document.getElementById('sioMartIndexOffers').scrollTop = '0';
-      cbca_grid.init()
+      siomart.grid_ads.loaded += data.blocks.length
+
+      if siomart.grid_ads.is_load_more_requested == false
+        grid_container_dom.innerHTML = html
+        document.getElementById('sioMartIndexOffers').scrollTop = '0';
+        cbca_grid.init()
+      else
+        grid_container_dom.innerHTML += html
+        cbca_grid.init(is_add = true)
+
+      siomart.grid_ads.is_load_more_requested = false
+
       siomart.styles.init()
       siomart.init_shop_links()
 
