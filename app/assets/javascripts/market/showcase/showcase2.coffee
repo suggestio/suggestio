@@ -10,6 +10,7 @@ siomart =
     ontouchmove_offer_change_delta : 80
     welcome_ad_hide_timeout : 2000
     ads_per_load : 5
+    producer_ads_per_load : 50
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
   ## Загрузить js- и css- засимости
@@ -573,13 +574,12 @@ siomart =
   receive_response : ( data ) ->
 
     console.log 'receive_response : received data'
-    console.warn 'data : '
     console.warn data
 
     if typeof siomart.request.request_timeout_timer != 'undefined'
       clearTimeout siomart.request.request_timeout_timer
 
-    ## Пришла пустота — уведомить горемыку юзера
+    ## Пришла пустота — уведомить юзера
     if data.html == ''
       siomart.notifications.show "КАРТОЧЕК НЕ НАЙДЕНО, ПОПРОБУЙТЕ ДРУГОЙ ЗАПРОС"
       if siomart.utils.ge('smLoading') != null
@@ -627,6 +627,10 @@ siomart =
       console.log 'producerAds : got sioMartNodeOffersRoot'
 
       screensContainer = siomart.utils.replaceHTMLandShow screensContainer, data.html
+
+      bc = siomart.utils.ge('sioMartNodeOffersBlockContainer')
+      bc.innerHTML = bc.innerHTML + data.blocks[0]
+
       console.log 'producerAds : processed dom'
       siomart.styles.init()
       console.log 'producerAds : processed styles'
@@ -987,7 +991,7 @@ siomart =
 
     siomart.shop_load_locked = true
 
-    url = '/market/fads?a.shopId=' + shop_id + '&a.firstAdId=' + ad_id + '&a.size=50&a.rcvr=' + siomart.config.mart_id
+    url = '/market/fads?a.shopId=' + shop_id + '&a.firstAdId=' + ad_id + '&a.size=' + siomart.config.producer_ads_per_load + '&a.rcvr=' + siomart.config.mart_id
 
     if history_push == true
       state_data =
