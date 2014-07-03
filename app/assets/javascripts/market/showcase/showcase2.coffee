@@ -9,6 +9,7 @@ siomart =
     sm_trigger_class : 'sio-mart-trigger'
     ontouchmove_offer_change_delta : 80
     welcome_ad_hide_timeout : 2000
+    ads_per_load : 5
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
   ## Загрузить js- и css- засимости
@@ -494,7 +495,7 @@ siomart =
   load_index_ads : () ->
     grd_c = siomart.utils.ge('sioMartIndexGrid')
     url = grd_c.getAttribute 'data-index-offers-action'
-    siomart.request.perform url + '&a.q=3'
+    siomart.request.perform url + '&a.size=' + siomart.config.ads_per_load
 
   #####################################################
   ## Добавить в DOM необходимую разметку для Sio.Market
