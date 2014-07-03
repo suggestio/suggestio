@@ -300,6 +300,9 @@ cbca_grid =
     for elt in siomart.utils.ge_class document, 'blocks-container'
       elt.style.display = 'block'
 
+    for elt in siomart.utils.ge_class document, 'sm-b-spacer'
+      elt.style.display = 'none'
+
     blocks_length = cbca_grid.blocks.length
 
     # setting up left and top
@@ -370,8 +373,6 @@ cbca_grid =
 
           b = this.fetch_block block_max_w
 
-          console.log b
-
           if b == null
             if this.blocks.length > 0
               b = this.fetch_spacer block_max_w
@@ -392,6 +393,7 @@ cbca_grid =
 
           ## temp
           _pelt.style.opacity = 1
+          _pelt.style.display = 'block'
 
           if _pelt != null
 

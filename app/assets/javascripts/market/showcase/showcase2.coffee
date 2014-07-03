@@ -573,7 +573,8 @@ siomart =
   receive_response : ( data ) ->
 
     console.log 'receive_response : received data'
-    console.warn 'data.action : ' + data.action
+    console.warn 'data : '
+    console.warn data
 
     if typeof siomart.request.request_timeout_timer != 'undefined'
       clearTimeout siomart.request.request_timeout_timer
@@ -986,7 +987,7 @@ siomart =
 
     siomart.shop_load_locked = true
 
-    url = '/market/ads?a.shopId=' + shop_id + '&a.firstAdId=' + ad_id + '&a.size=50&a.rcvr=' + siomart.config.mart_id
+    url = '/market/fads?a.shopId=' + shop_id + '&a.firstAdId=' + ad_id + '&a.size=50&a.rcvr=' + siomart.config.mart_id
 
     if history_push == true
       state_data =
