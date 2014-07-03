@@ -15,7 +15,7 @@ import play.api.libs.json.JsString
 import play.api.libs.json.JsBoolean
 import io.suggest.util.SioEsUtil.FieldSource
 import io.suggest.event.SioNotifierStaticClientI
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext}
 import org.elasticsearch.client.Client
 import play.api.mvc.QueryStringBindable
 import java.{util => ju}
@@ -112,6 +112,15 @@ object MInviteRequest
   def deseralizeSqlStrModel[X](companion: FromJson { type T = X },  jmap: ju.Map[_,_]): Either[X, String] = {
     deseralizeSqlModel(companion, jmap, stringParser)
   }
+
+  /** Стереть ресурсы, которые прилинкованы к Left()-шаблонам моделей. */
+  private def withEraseLeftResources(fut0: Future[_], next: Either[EraseResources, _])
+                                    (implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    next.fold(
+      { m => m.eraseResources flatMap { _ => fut0 } },
+      { _ => fut0 }
+    )
+  }
 }
 
 
@@ -138,6 +147,15 @@ case class MInviteRequest(
 {
   override type T = MInviteRequest
   override def companion = MInviteRequest
+
+  /** Стирание ресурсов, относящихся к этой модели. */
+  override def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    var fut = super.eraseResources
+    fut = MInviteRequest.withEraseLeftResources(fut, company)
+    fut = MInviteRequest.withEraseLeftResources(fut, adnNode)
+    fut = MInviteRequest.withEraseLeftResources(fut, emailAct)
+    fut
+  }
 }
 
 

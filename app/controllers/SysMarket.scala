@@ -22,6 +22,8 @@ import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import play.api.mvc.AnyContent
 import play.api.i18n.Messages
 
+import scala.util.Success
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -137,14 +139,23 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
   /** Админ приказал удалить указанную компанию. */
-  def companyDeleteSubmit(companyId: String) = IsSuperuser.async { implicit request =>
-    MCompany.deleteById(companyId) map {
-      case true =>
+  def companyDeleteSubmit(companyId: String) = IsSuperuserCompany(companyId).async { implicit request =>
+    request.company
+      .delete
+      .flatMap { isDeleted =>
+        request.company.eraseResources
+          .map { _ => isDeleted }
+      }
+      .filter(identity)
+      .map { _ =>
         Redirect(routes.SysMarket.companiesList())
-          .flashing("success" -> s"Company $companyId deleted.")
-
-      case false => IsSuperuserCompany.companyNotFound(companyId)
-    }
+          .flashing("success" -> "Компания удалёна.")
+      }
+      .recover {
+        case nse: NoSuchElementException =>
+          warn(s"deleteAdnNodeSubmit($companyId): Node not found. Anyway, resources re-erased.")
+          IsSuperuserCompany.companyNotFound(companyId)
+      }
   }
 
 
@@ -187,13 +198,24 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
   /** Безвозвратное удаление узла рекламной сети. */
-  def deleteAdnNodeSubmit(adnId: String) = IsSuperuser.async { implicit request =>
-    MAdnNode.deleteById(adnId) map {
-      case true =>
+  def deleteAdnNodeSubmit(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+    import request.adnNode
+    adnNode
+      .delete
+      .flatMap { isDeleted =>
+        adnNode.eraseResources
+          .map { _ => isDeleted }
+      }
+      .filter(identity)
+      .map { _ =>
         Redirect(routes.SysMarket.adnNodesList())
           .flashing("success" -> "Узел ADN удалён.")
-      case false => NotFound("ADN node not found: " + adnId)
-    }
+      }
+      .recover {
+        case nse: NoSuchElementException =>
+          warn(s"deleteAdnNodeSubmit($adnId): Node not found. Anyway, resources re-erased.")
+          IsSuperuserAdnNode.nodeNotFound(adnId)
+      }
   }
 
 

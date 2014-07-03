@@ -57,8 +57,13 @@ object IsSuperuserOr404 extends IsSuperuserAbstract with ExpireSession[AbstractR
 
 
 
+object IsSuperuserAdnNode {
+  def nodeNotFound(adnId: String) = Results.NotFound("Adn node not found: " + adnId)
+}
 /** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin. */
 trait IsSuperuserAdnNodeBase extends ActionBuilder[AbstractRequestForAdnNode] {
+  import IsSuperuserAdnNode._
+
   def adnId: String
   override def invokeBlock[A](request: Request[A], block: (AbstractRequestForAdnNode[A]) => Future[Result]): Future[Result] = {
     val pwOpt = PersonWrapper.getFromRequest(request)
@@ -70,7 +75,7 @@ trait IsSuperuserAdnNodeBase extends ActionBuilder[AbstractRequestForAdnNode] {
             block(RequestForAdnNodeAdm(adnNode, isMyNode = true, request, pwOpt, srm))
           }
         case None =>
-          Future successful Results.NotFound("Adn node not found: " + adnId)
+          Future successful nodeNotFound(adnId)
       }
     } else {
       IsSuperuser.onUnauthFut(request, pwOpt)
