@@ -2,7 +2,7 @@ package util
 
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Currency
-import org.joda.time.DateTime
+import org.joda.time.{ReadableInstant, ReadablePartial, DateTime}
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 import scala.util.matching.Regex
 import views.html.fc._
@@ -123,10 +123,16 @@ object TplDataFormatUtil {
     }
   }
 
-  private val numericDateFormat: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+  private val numericDateFormat = DateTimeFormat.forPattern("dd.MM.yyyy")
+  def numericDate(dt: ReadableInstant) = numericDateFormat.print(dt)
+  def numericDate(d: ReadablePartial)  = numericDateFormat.print(d)
 
-  def numericDate(dt: DateTime) = numericDateFormat.print(dt)
+  private val numericDtFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
+  // TODO Нужно прикрутить поддержку timezone, используя context
+  def numericDt(dt: ReadableInstant)(implicit ctx: Context) = numericDtFormat.print(dt)
 
+  private val numericTimeFormat = DateTimeFormat.forPattern("HH:mm:ss")
+  def numericTime(dt: ReadableInstant)(implicit ctx: Context) = numericTimeFormat.print(dt)
 }
 
 

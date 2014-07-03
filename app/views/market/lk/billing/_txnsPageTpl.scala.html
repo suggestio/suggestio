@@ -14,7 +14,7 @@
         <strong>@txn.paymentComment</strong>
       </td>
       <td>
-        <span title="@_prettyDate(txn.datePaid).toString.trim">@numericDate(txn.datePaid)</span>
+        <span title="@_prettyDate(txn.datePaid).toString.trim"><strong>@numericDate(txn.datePaid)</strong> @numericTime(txn.datePaid)</span>
       </td>
       <td>
         Сумма: <strong>@formatPrice(txn.amount, txn.currency)</strong>
