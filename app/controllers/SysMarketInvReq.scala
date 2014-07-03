@@ -51,12 +51,14 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
   /** Отрендерить страницу одного инвайт-реквеста. */
   def showIR(mirId: String) = IsSuperuserMir(mirId).async { implicit request =>
     import request.mir
-    val adnNodeOptFut = nodeOptFut(mir)
+    val nodeOptFut = getNodeOptFut(mir)
+    val eactOptFut = getEactOptFut(mir)
     for {
-      mcOpt   <- companyOptFut(mir)
-      nodeOpt <- adnNodeOptFut
+      mcOpt   <- getCompanyOptFut(mir)
+      nodeOpt <- nodeOptFut
+      eactOpt <- eactOptFut
     } yield {
-      Ok(irShowOneTpl(mir, mcOpt, nodeOpt))
+      Ok(irShowOneTpl(mir, mcOpt, nodeOpt, eactOpt))
     }
   }
 
@@ -84,8 +86,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
             company = Left(mc3)
           )
         } map { _mirId =>
-          Redirect(routes.SysMarketInvReq.showIR(_mirId))
-            .flashing("success" -> "Шаблон будущей компании успешно обновлён.")
+          rdrToIr(_mirId, "Шаблон будущей компании успешно обновлён.")
         }
       }
     )
@@ -110,9 +111,8 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
             MCompany.deleteById(savedMcId)
           }
         }
-        updateFut map { _ =>
-          Redirect( routes.SysMarketInvReq.showIR(mirId) )
-            .flashing("success" -> s"Создана компания '${mc0.meta.name}'")
+        updateFut map { _mirId =>
+          rdrToIr(_mirId, s"Создана компания '${mc0.meta.name}'")
         }
       }
     }
@@ -138,9 +138,8 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
               warn(s"${logPrefix}Rollbacking deletion of $mc due to exception during MIR update", ex)
               mc.save
             }
-            updFut map { _ =>
-              Redirect( routes.SysMarketInvReq.showIR(mirId) )
-                .flashing("success" -> "Компания деинсталлирована назад в шаблон компании.")
+            updFut map { _mirId =>
+              rdrToIr(_mirId, "Компания деинсталлирована назад в шаблон компании.")
             }
 
           case false =>
@@ -180,8 +179,8 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
 
   private def nodeEditBody(mir: MInviteRequest)(onSuccess: HtmlFormat.Appendable => Result)
                           (implicit request: MirRequest[AnyContent]): Future[Result] = {
-    val mcOptFut = companyOptFut(mir)
-    val adnOptFut = nodeOptFut(mir)
+    val mcOptFut = getCompanyOptFut(mir)
+    val adnOptFut = getNodeOptFut(mir)
     mcOptFut flatMap {
       case Some(mc) =>
         adnOptFut map {
@@ -214,8 +213,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
             adnNode = Left(adnNode3)
           )
         } map { _mirId =>
-          Redirect( routes.SysMarketInvReq.showIR(_mirId) )
-            .flashing("success" -> "Шаблон узла сохранён.")
+          rdrToIr(_mirId, "Шаблон узла сохранён.")
         }
       }
     )
@@ -249,14 +247,13 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
           }
         }
         updateFut map { _mirId =>
-          Redirect( routes.SysMarketInvReq.showIR(_mirId) )
-            .flashing("success" -> "Рекламный узел добавлен в систему.")
+          rdrToIr(_mirId, "Рекламный узел добавлен в систему.")
         }
       }
     }
   }
 
-
+  /** sio-админ приказывает деинсталлировать узел. */
   def nodeUninstallSubmit(mirId: String) = isNodeRight(mirId).async { implicit request =>
     import request.mir
     val adnId = mir.adnNode.right.get
@@ -275,8 +272,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
               warn(s"nodeUnistallSubmit($mirId): rollbacking node[$adnId] deinstallation due to exception.", ex)
             }
             updateFut map { _mirId =>
-              Redirect( routes.SysMarketInvReq.showIR(_mirId) )
-                .flashing("success" -> "Рекламный узел деинсталлирован назад в шаблон узла. Это может нарушить ссылочную целостность.")
+              rdrToIr(_mirId, "Рекламный узел деинсталлирован назад в шаблон узла. Это может нарушить ссылочную целостность.")
             }
           case false =>
             ExpectationFailed(s"Cannot delete node[$adnId], proposed for installation.")
@@ -285,6 +281,57 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
       case None =>
         NotFound(s"Node $adnId not exist, but it should.")
     }
+  }
+
+
+  /** sio-админ командует создать реквест и отправить письмо на email. */
+  def eactInstallSubmit(mirId: String) = isNodeEactLeft(mirId).async { implicit request =>
+    import request.mir
+    val adnId = mir.adnNode.right.get
+    val adnNodeOptFut = MAdnNodeCache.getById(adnId)
+    val eact = mir.emailAct.left.get.copy(
+      key = adnId
+    )
+    val previoslyExistedFut = eact.id.fold [Future[Boolean]]
+      { Future successful false }
+      { EmailActivation.isExist }
+    previoslyExistedFut flatMap { previoslyExisted =>
+      adnNodeOptFut flatMap {
+        case Some(adnNode) =>
+          eact.save flatMap { eaId =>
+            val ea1 = eact.copy(id = Option(eaId))
+            val sendEmailFut = Future {
+              SysMarket.sendEmailInvite(ea1, adnNode)
+            }
+            val updFut = sendEmailFut flatMap { _ =>
+              // Пора переключить состояние mir
+              tryUpdateMir(mir) { mir0 =>
+                mir0.copy(
+                  emailAct = Right(eaId)
+                )
+              }
+            }
+            if (!previoslyExisted) {
+              updFut onFailure { case ex =>
+                ea1.delete
+                warn(s"eactInstallSubmit($mirId): Rollbacking save of eact[$eaId] due to exception.", ex)
+              }
+            }
+            updFut map { _mirId =>
+              rdrToIr(_mirId, s"Сохранён запрос на активацию. Письмо отправлено на ${ea1.email}.")
+            }
+          }
+
+        case None => NotFound("Node marked as installed, but not found: " + adnId)
+      }
+    }
+  }
+
+
+  /** Общий код редиректа назад на страницу обработки реквеста вынесен сюда. */
+  private def rdrToIr(mirId: String, flashMsg: String, flashCode: String = "success") = {
+    Redirect( routes.SysMarketInvReq.showIR(mirId) )
+      .flashing(flashCode -> flashMsg)
   }
 
 
@@ -349,7 +396,7 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
   }
 
   private def isNodeRight(mirId: String) = new IsSuperuserMir(mirId) {
-     override def mirStateInvalidMsg: String = {
+    override def mirStateInvalidMsg: String = {
       "MIR.node is NOT installed, but action possible only for already installed node. Go back and press F5."
     }
     override def isMirStateOk(mir: MInviteRequest): Boolean = {
@@ -359,19 +406,46 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
     }
   }
 
+  private def isEactLeft(mirId: String) = new IsSuperuserMir(mirId) {
+    override def mirStateInvalidMsg: String = {
+      "MIR.eact is installed, but action possible only for already NOT-installed EAct. Go back and press F5."
+    }
+    override def isMirStateOk(mir: MInviteRequest): Boolean = {
+      super.isMirStateOk(mir) && {
+        mir.emailAct.isLeft
+      }
+    }
+  }
+  private def isNodeEactLeft(mirId: String) = new IsSuperuserMir(mirId) {
+    override def mirStateInvalidMsg: String = {
+      "MIR.eact is already installed OR node NOT installed, but action possible only for already NOT-installed EAct and installed node. Go back and press F5."
+    }
+    override def isMirStateOk(mir: MInviteRequest): Boolean = {
+      super.isMirStateOk(mir) && {
+        mir.adnNode.isRight && mir.emailAct.isLeft
+      }
+    }
+  }
 
   /** Прочитать MCompany из реквеста или из модели. */
-  private def companyOptFut(mir: MInviteRequest): Future[Option[MCompany]] = {
+  private def getCompanyOptFut(mir: MInviteRequest): Future[Option[MCompany]] = {
     mir.company.fold[Future[Option[MCompany]]](
       { mc => Future successful Option(mc) },
       { mcId => MCompany.getById(mcId) }
     )
   }
 
-  private def nodeOptFut(mir: MInviteRequest): Future[Option[MAdnNode]] = {
+  private def getNodeOptFut(mir: MInviteRequest): Future[Option[MAdnNode]] = {
     mir.adnNode.fold[Future[Option[MAdnNode]]](
       { an => Future successful Option(an) },
       { adnId => MAdnNodeCache.getById(adnId) }
+    )
+  }
+
+  private def getEactOptFut(mir: MInviteRequest): Future[Option[EmailActivation]] = {
+    mir.emailAct.fold [Future[Option[EmailActivation]]] (
+      { eact => Future successful Option(eact) },
+      { EmailActivation.getById }
     )
   }
 

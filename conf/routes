@@ -294,6 +294,7 @@ GET  /sys/ir/edit/:mirId/node            controllers.SysMarketInvReq.nodeEdit(mi
 POST /sys/ir/edit/:mirId/node            controllers.SysMarketInvReq.nodeEditFormSubmit(mirId)
 POST /sys/ir/install/:mirId/node         controllers.SysMarketInvReq.nodeInstallSubmit(mirId)
 POST /sys/ir/uninstall/:mirId/node       controllers.SysMarketInvReq.nodeUninstallSubmit(mirId)
+POST /sys/ir/install/:mirId/eact         controllers.SysMarketInvReq.eactInstallSubmit(mirId)
 
 ## sys: mdr - модерация контента
 GET  /sys/mdr                            controllers.SysMdr.index

@@ -560,39 +560,41 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
   }
 
   /** Сабмит формы создания инвайта на управление ТЦ. */
-  def nodeOwnerInviteFormSubmit(adnId: String) = IsSuperuser.async { implicit request =>
-    MAdnNodeCache.getById(adnId) flatMap {
-      case Some(adnNode) =>
-        nodeOwnerInviteFormM.bindFromRequest().fold(
-          {formWithErrors =>
-            debug(s"martInviteFormSubmit($adnId): Failed to bind form: ${formWithErrors.errors}")
-            EmailActivation.findByKey(adnId) map { eActs =>
-              NotAcceptable(nodeOwnerInvitesTpl(adnNode, formWithErrors, eActs))
-            }
-          },
-          {email1 =>
-            val eAct = EmailActivation(email=email1, key = adnId)
-            eAct.save.map { eActId =>
-              eAct.id = Some(eActId)
-              // Собираем и отправляем письмо адресату
-              val mail = use[MailerPlugin].email
-              val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
-              mail.setSubject("Suggest.io | " + Messages("Your")(ctx.lang) + " " + Messages("amt.of.type." + adnNode.adn.memberType)(ctx.lang))
-              mail.setFrom("no-reply@suggest.io")
-              mail.setRecipient(email1)
-              mail.send(
-                bodyText = views.txt.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct)(ctx),
-                bodyHtml = views.html.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, eAct)(ctx)
-              )
-              // Письмо отправлено, вернуть админа назад в магазин
-              Redirect(routes.SysMarket.showAdnNode(adnId))
-                .flashing("success" -> ("Письмо с приглашением отправлено на " + email1))
-            }
-          }
-        )
+  def nodeOwnerInviteFormSubmit(adnId: String) = IsSuperuserAdnNode(adnId).async { implicit request =>
+    import request.adnNode
+    nodeOwnerInviteFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        debug(s"martInviteFormSubmit($adnId): Failed to bind form: ${formWithErrors.errors}")
+        EmailActivation.findByKey(adnId) map { eActs =>
+          NotAcceptable(nodeOwnerInvitesTpl(adnNode, formWithErrors, eActs))
+        }
+      },
+      {email1 =>
+        val eAct = EmailActivation(email=email1, key = adnId)
+        eAct.save.map { eActId =>
+          eAct.id = Some(eActId)
+          sendEmailInvite(eAct, adnNode)
+          // Письмо отправлено, вернуть админа назад в магазин
+          Redirect(routes.SysMarket.showAdnNode(adnId))
+            .flashing("success" -> ("Письмо с приглашением отправлено на " + email1))
+        }
+      }
+    )
+  }
 
-      case None => martNotFound(adnId)
-    }
+
+  /** Выслать письмо активации. */
+  def sendEmailInvite(ea: EmailActivation, adnNode: MAdnNode)(implicit request: AbstractRequestWithPwOpt[AnyContent]) {
+    // Собираем и отправляем письмо адресату
+    val mail = use[MailerPlugin].email
+    val ctx = implicitly[Context]   // нано-оптимизация: один контекст для обоих шаблонов.
+    mail.setSubject("Suggest.io | " + Messages("Your")(ctx.lang) + " " + Messages("amt.of.type." + adnNode.adn.memberType)(ctx.lang))
+    mail.setFrom("no-reply@suggest.io")
+    mail.setRecipient(ea.email)
+    mail.send(
+      bodyText = views.txt.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, ea)(ctx),
+      bodyHtml = views.html.market.lk.adn.invite.emailNodeOwnerInviteTpl(adnNode, ea)(ctx)
+    )
   }
 
 
