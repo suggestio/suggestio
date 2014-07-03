@@ -110,7 +110,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   }
 
   private val waIdKM = "welcomeImgId" -> optional(ImgFormUtil.imgIdJpegM)
-  private val logoKM = ImgFormUtil.getLogoKM("adn.rcvr.logo.invalid", marker=TMP_LOGO_MARKER)
+  val logoKM = ImgFormUtil.getLogoKM("adn.logo.invalid", marker=TMP_LOGO_MARKER)
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
   private def nodeFormM(nodeInfo: AdNetMemberInfo) = {

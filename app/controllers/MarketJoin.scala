@@ -3,7 +3,7 @@ package controllers
 import org.joda.time.DateTime
 import play.api.i18n.Messages
 import util.billing.MmpDailyBilling
-import util.img.{ImgFormUtil, OrigImgIdKey}
+import util.img.ImgFormUtil
 import util.{ContextImpl, PlayMacroLogsImpl}
 import util.acl.{AbstractRequestWithPwOpt, MaybeAuth}
 import util.SiowebEsUtil.client
@@ -16,6 +16,7 @@ import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
 import util.img.GalleryUtil._
+import MarketLkAdnEdit.logoKM
 
 /**
  * Suggest.io
@@ -82,17 +83,18 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         "payReqs"         -> optional(text(maxLength = 2048)),  // TODO Парсить и проверять
         "email"           -> email,
         galleryKM,
+        logoKM,
         CAPTCHA_ID_FN     -> Captcha.captchaIdM,
         CAPTCHA_TYPED_FN  -> Captcha.captchaTypedM
       )
-      {(companyName, audienceDescr, humanTrafficAvg, address, siteUrl, phone, payReqs, email1, galleryIks, _, _) =>
+      {(companyName, audienceDescr, humanTrafficAvg, address, siteUrl, phone, payReqs, email1, galleryIks, logoOpt, _, _) =>
         val mir = applyForm(companyName = companyName, audienceDescr = Some(audienceDescr),
           humanTrafficAvg = Some(humanTrafficAvg), address = address, siteUrl = siteUrl, phone = phone,
           payReqs = payReqs, email1 = email1, anmt = AdNetMemberTypes.MART, withMmp = true,
           reqType = InviteReqTypes.Wifi)
-        (mir, galleryIks)
+        (mir, galleryIks, logoOpt)
       }
-      {case (mir, galleryIks) =>
+      {case (mir, galleryIks, logoOpt) =>
         // unapply() вызывается только когда всё в Left, т.е. при ошибка заполнения форм.
         val companyName = unapplyCompanyName(mir)
         val audienceDescr = unapplyAudDescr(mir)
@@ -102,7 +104,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         val officePhone = unapplyOfficePhone(mir)
         val payReqs = unapplyPayReqs(mir)
         val email1 = unapplyEmail(mir)
-        Some((companyName, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, email1, galleryIks, "", ""))
+        Some((companyName, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, email1, galleryIks, logoOpt, "", ""))
       }
     )
   }
@@ -154,11 +156,6 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     mir.adnNode
       .left.map(_.meta.info)
       .left.getOrElse(None)
-  }
-  private def unapplyGallery(mir: MInviteRequest): List[OrigImgIdKey] = {
-    mir.adnNode
-      .left.map { adnNode => gallery2iiks(adnNode.gallery) }
-      .left.getOrElse(Nil)
   }
 
 
@@ -234,25 +231,30 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         debug("joinFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(wifiJoinFormTpl(smja, formWithErrors))
       },
-      {case (mir, galleryIiks) =>
+      {case (mir, galleryIiks, logoOpt) =>
         assert(mir.adnNode.isLeft, "error.mir.adnNode.not.isLeft")
-        // Схоронить картинки.
+        // Схоронить логотип
+        val savedLogoFut = ImgFormUtil.updateOrigImg(logoOpt.toSeq, oldImgs  = Nil)
+        // Схоронить картинки галлереи.
         ImgFormUtil.updateOrigImgFull(
           needImgs = gallery4s(galleryIiks),
           oldImgs = Nil
         ) flatMap { savedImgs =>
-          // Картинки сохранены. Обновить рекламный узел.
-          val mir2 = mir.copy(
-            joinAnswers = Some(smja),
-            adnNode = mir.adnNode.left.map { adnNode0 =>
-              adnNode0.copy(
-                gallery = gallery2filenames(savedImgs)
-              )
+          savedLogoFut flatMap { savedLogoOpt =>
+            // Картинки сохранены. Обновить рекламный узел.
+            val mir2 = mir.copy(
+              joinAnswers = Some(smja),
+              adnNode = mir.adnNode.left.map { adnNode0 =>
+                adnNode0.copy(
+                  gallery = gallery2filenames(savedImgs),
+                  logoImgOpt = savedLogoOpt
+                )
+              }
+            )
+            mir2.save.map { irId =>
+              sendEmailNewIR(irId, mir2)
+              rmCaptcha(formBinded, mirSavedRdr(irId))
             }
-          )
-          mir2.save.map { irId =>
-            sendEmailNewIR(irId, mir)
-            rmCaptcha(formBinded, mirSavedRdr(irId))
           }
         }
       }
@@ -272,7 +274,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
 
 
   /** Подключение в качестве рекламного агента, источника рекламы. */
-  private val advJoinFormM: Form[MInviteRequest] = {
+  private val advJoinFormM = {
     Form(
       mapping(
         "company"   -> companyNameM,
@@ -282,22 +284,24 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         "siteUrl"   -> urlStrOptM,
         "phone"     -> phoneM,
         "email"     -> email,
+        logoKM,
         CAPTCHA_ID_FN    -> Captcha.captchaIdM,
         CAPTCHA_TYPED_FN -> Captcha.captchaTypedM
       )
-      {(companyName, info, address, siteUrl, phone, email1, _, _) =>
-        applyForm(companyName = companyName, address = address, siteUrl = siteUrl,
+      {(companyName, info, address, siteUrl, phone, email1, logoOpt, _, _) =>
+        val mir = applyForm(companyName = companyName, address = address, siteUrl = siteUrl,
           phone = phone, email1 = email1, anmt = AdNetMemberTypes.SHOP, withMmp = false,
           reqType = InviteReqTypes.Adv, info = info)
+        (mir, logoOpt)
       }
-      {mir =>
+      {case (mir, logoOpt) =>
         val companyName = unapplyCompanyName(mir)
         val info = unapplyInfo(mir)
         val address = unapplyAddress(mir)
         val siteUrl = unapplySiteUrl(mir)
         val officePhone = unapplyOfficePhone(mir)
         val email1 = unapplyEmail(mir)
-        Some((companyName, info, address, siteUrl, officePhone, email1, "", ""))
+        Some((companyName, info, address, siteUrl, officePhone, email1, logoOpt, "", ""))
       }
     )
   }
@@ -320,10 +324,21 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         debug("joinAdvRequestSubmit(): Form bind failed:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(joinAdvTpl(formWithErrors))
       },
-      {mir =>
-        mir.save.map { irId =>
-          sendEmailNewIR(irId, mir)
-          rmCaptcha(formBinded, mirSavedRdr(irId))
+      {case (mir, logoOpt) =>
+        assert(mir.adnNode.isLeft, "error.mir.adnNode.not.isLeft")
+        val savedLogoFut = ImgFormUtil.updateOrigImg(logoOpt.toSeq, oldImgs = Nil)
+        savedLogoFut flatMap { savedLogoOpt =>
+          val mir2 = mir.copy(
+            adnNode = mir.adnNode.left.map { adnNode0 =>
+              adnNode0.copy(
+                logoImgOpt = savedLogoOpt
+              )
+            }
+          )
+          mir2.save.map { irId =>
+            sendEmailNewIR(irId, mir2)
+            rmCaptcha(formBinded, mirSavedRdr(irId))
+          }
         }
       }
     )
