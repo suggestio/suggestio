@@ -17,7 +17,7 @@ siomart =
     ## js : cbca_grid
     grid_js_attrs =
       type : 'text/javascript'
-      src : siomart.config.host + '/assets/javascripts/market/showcase/grid.js'
+      src : siomart.config.host + '/assets/javascripts/market/showcase/grid.js?v=1'
     gid_js = this.utils.ce "script", grid_js_attrs
 
     ## css : showcase.css
@@ -492,8 +492,9 @@ siomart =
 
   ## Карточки ноды верхнего уровня
   load_index_ads : () ->
-    url = '/market/ads?a.rcvr=' + siomart.config.mart_id
-    siomart.request.perform url
+    grd_c = siomart.utils.ge('sioMartIndexGrid')
+    url = grd_c.getAttribute 'data-index-offers-action'
+    siomart.request.perform url + '&a.q=3'
 
   #####################################################
   ## Добавить в DOM необходимую разметку для Sio.Market
@@ -570,6 +571,7 @@ siomart =
   receive_response : ( data ) ->
 
     console.log 'receive_response : received data'
+    console.warn 'data.action : ' + data.action
 
     if typeof siomart.request.request_timeout_timer != 'undefined'
       clearTimeout siomart.request.request_timeout_timer
@@ -583,6 +585,7 @@ siomart =
 
     ## Инициализация глагне
     if data.action == 'showcaseIndex'
+
       siomart.utils.ge('sioMartRoot').style.display = 'block'
       cbca_grid.set_window_size()
       container = this.utils.ge 'sioMartLayout'
@@ -608,7 +611,7 @@ siomart =
           siomart.utils.ge('smWifiInfo').style.display = 'block'
 
         siomart.init_navigation()
-        cbca_grid.init()
+        siomart.load_index_ads()
         siomart.styles.init()
 
       setTimeout grid_init_cb, grid_init_timoeut
@@ -639,7 +642,12 @@ siomart =
     if data.action == 'findAds' || data.action == 'searchAds'
       grid_container_dom = siomart.utils.ge 'sioMartIndexGrid'
 
-      grid_container_dom.innerHTML = data.html
+      html = ''
+
+      for index, elt of data.blocks
+        html += elt
+
+      grid_container_dom.innerHTML = html
       document.getElementById('sioMartIndexOffers').scrollTop = '0';
       cbca_grid.init()
       siomart.styles.init()

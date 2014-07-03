@@ -43,9 +43,8 @@
 <div class="sm-flex sm-overflow-scrolling sio-mart__index-offers" id="sioMartIndexOffers">
   <div class="sm-flex sio-mart__index-offers__container" style="margin-bottom: -1px" id="sioMartIndexGridLayout">
 
-    <div id="sioMartIndexGrid" style="position: relative; height: 3000px; width: 100%;">
-      @* Сюда должны отрендерится рекламные карточки с этого адресочка: *@
-      @routes.MarketShowcase.findAds(spsr)
+    @* Сюда должны отрендерится рекламные карточки с этого адресочка: *@
+    <div id="sioMartIndexGrid" data-index-offers-action="@routes.MarketShowcase.findAds(spsr)" style="position: relative; height: 3000px; width: 100%;">
     </div>
     <div style="height: 30px"></div>
 

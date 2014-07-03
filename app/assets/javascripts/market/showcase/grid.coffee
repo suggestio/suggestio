@@ -238,15 +238,26 @@ cbca_grid =
       cbca_grid.m_blocks = cbca_grid.blocks.slice(0)
 
     ## Загрузить спейсеры
-    for elt in siomart.utils.ge_class document, 'sm-b-spacer'
-      _this = elt
+    #for i in siomart.utils.ge_class document, 'sm-b-spacer'
+    for k in [1..30]
+
+      _spacer_attributes =
+        'class' : 'sm-b-spacer sm-b-spacer-' + k
+        'data-width' : 140
+        'data-height' : 140
+
+      _spacer = siomart.utils.ce 'div', _spacer_attributes
+      _this = _spacer
+
+      siomart.utils.ge('sioMartIndexGrid').appendChild _spacer
+
       _this.setAttribute 'id', 'elt' + i
 
-      height = parseInt _this.getAttribute 'data-height'
-      width = parseInt _this.getAttribute 'data-width'
+      height = 140
+      width = 140
 
-      opened_height = parseInt _this.getAttribute 'data-opened-height'
-      opened_width = parseInt _this.getAttribute 'data-opened-width'
+      opened_height = 140
+      opened_width = 140
 
       _class = _this.className
       _search_string = _this.getAttribute 'data-search-string'
@@ -277,6 +288,10 @@ cbca_grid =
   resize : () ->
     this.set_container_size()
     cbca_grid.blocks = cbca_grid.m_blocks
+
+    if typeof cbca_grid.blocks == 'undefined'
+      return false
+
     cbca_grid.m_blocks = cbca_grid.blocks.slice(0)
     this.build()
 
@@ -327,6 +342,7 @@ cbca_grid =
 
     ## Генерим поле
     for i in [0..1000]
+
       pline = cline
 
       if cur_column >= Math.floor columns
