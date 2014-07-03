@@ -1,6 +1,5 @@
 package controllers
 
-import io.suggest.ym.model.common.EMAdNetMember
 import util.img._
 import ImgFormUtil.imgInfo2imgKey
 import util.PlayMacroLogsImpl
@@ -15,6 +14,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import util.FormUtil._
 import play.api.Play.{current, configuration}
+import GalleryUtil._
 
 /**
  * Suggest.io
@@ -27,9 +27,6 @@ import play.api.Play.{current, configuration}
 object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImgSupport {
 
   import LOGGER._
-
-  /** Максимально кол-во картинок в галереи. */
-  val GALLERY_LEN_MAX = configuration.getInt("adn.gallery.len.max") getOrElse 7
 
   /** Ключ для картинки, используемой в качестве приветствия. */
   val WELCOME_IMG_KEY = "wlcm"
@@ -113,8 +110,6 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   }
 
   private val waIdKM = "welcomeImgId" -> optional(ImgFormUtil.imgIdJpegM)
-  private val galleryKM = "gallery" -> list(ImgFormUtil.imgIdJpegM)
-    .verifying("error.gallery.too.large",  { _.size <= GALLERY_LEN_MAX })
   private val logoKM = ImgFormUtil.getLogoKM("adn.rcvr.logo.invalid", marker=TMP_LOGO_MARKER)
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
@@ -145,14 +140,12 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
       val welcomeImgKey = welcomeAdOpt
         .flatMap { _.imgs.headOption }
         .map[OrigImgIdKey] { img => img._2 }
-      val gallerryIks = adnNode.gallery
-        .map { OrigImgIdKey.apply }
+      val gallerryIks = gallery2iiks( adnNode.gallery )
       val formFilled = nodeFormM(adnNode.adn)
         .fill((adnNode.meta, welcomeImgKey, martLogoOpt, gallerryIks))
       Ok(leaderEditFormTpl(adnNode, formFilled, welcomeAdOpt))
     }
   }
-
 
   /** Сабмит формы редактирования узла рекламной сети. Функция смотрит тип узла рекламной сети и использует
     * тот или иной хелпер. */
@@ -175,7 +168,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
         )
         // Запускаем апдейт галереи.
         val galleryUpdFut = ImgFormUtil.updateOrigImgId(
-          needImgs = newGallery.map { iik => ImgInfo4Save(iik, withThumb = true) },
+          needImgs = gallery4s(newGallery),
           oldImgIds = adnNode.gallery
         )
         // В фоне обновляем картинку карточки-приветствия.
@@ -217,7 +210,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
       ),
       // сохраняем логотип
       logoImgOpt = newLogo,
-      gallery = newImgGallery.map(_.filename)
+      gallery = gallery2filenames(newImgGallery)
     )
   }
 

@@ -3,6 +3,7 @@ package controllers
 import org.joda.time.DateTime
 import play.api.i18n.Messages
 import util.billing.MmpDailyBilling
+import util.img.{ImgFormUtil, OrigImgIdKey}
 import util.{ContextImpl, PlayMacroLogsImpl}
 import util.acl.{AbstractRequestWithPwOpt, MaybeAuth}
 import util.SiowebEsUtil.client
@@ -14,6 +15,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
+import util.img.GalleryUtil._
 
 /**
  * Suggest.io
@@ -68,7 +70,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
 
 
   /** Маппинг для формы забивания текстовых полей запроса инвайта на wi-fi узел. */
-  private val wifiJoinFormM: Form[MInviteRequest] = {
+  private val wifiJoinFormM = {
     Form(
       mapping(
         "company"         -> companyNameM,
@@ -79,16 +81,18 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         "phone"           -> phoneM,
         "payReqs"         -> optional(text(maxLength = 2048)),  // TODO Парсить и проверять
         "email"           -> email,
+        galleryKM,
         CAPTCHA_ID_FN     -> Captcha.captchaIdM,
         CAPTCHA_TYPED_FN  -> Captcha.captchaTypedM
       )
-      {(companyName, audienceDescr, humanTrafficAvg, address, siteUrl, phone, payReqs, email1, _, _) =>
-        applyForm(companyName = companyName, audienceDescr = Some(audienceDescr),
+      {(companyName, audienceDescr, humanTrafficAvg, address, siteUrl, phone, payReqs, email1, galleryIks, _, _) =>
+        val mir = applyForm(companyName = companyName, audienceDescr = Some(audienceDescr),
           humanTrafficAvg = Some(humanTrafficAvg), address = address, siteUrl = siteUrl, phone = phone,
           payReqs = payReqs, email1 = email1, anmt = AdNetMemberTypes.MART, withMmp = true,
           reqType = InviteReqTypes.Wifi)
+        (mir, galleryIks)
       }
-      {mir =>
+      {case (mir, galleryIks) =>
         // unapply() вызывается только когда всё в Left, т.е. при ошибка заполнения форм.
         val companyName = unapplyCompanyName(mir)
         val audienceDescr = unapplyAudDescr(mir)
@@ -98,7 +102,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         val officePhone = unapplyOfficePhone(mir)
         val payReqs = unapplyPayReqs(mir)
         val email1 = unapplyEmail(mir)
-        Some((companyName, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, email1, "", ""))
+        Some((companyName, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, email1, galleryIks, "", ""))
       }
     )
   }
@@ -146,6 +150,12 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       .left.map(_.email)
       .left.getOrElse("")
   }
+  private def unapplyGallery(mir: MInviteRequest): List[OrigImgIdKey] = {
+    mir.adnNode
+      .left.map { adnNode => gallery2iiks(adnNode.gallery) }
+      .left.getOrElse(Nil)
+  }
+
 
   /** Накатывание результатов маппинга формы на новый экземпляр [[models.MInviteRequest]]. */
   private def applyForm(companyName: String, audienceDescr: Option[String] = None, humanTrafficAvg: Option[Int] = None,
@@ -218,13 +228,26 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         debug("joinFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
         NotAcceptable(wifiJoinFormTpl(smja, formWithErrors))
       },
-      {mir =>
-        val mir2 = mir.copy(
-          joinAnswers = Some(smja)
-        )
-        mir2.save.map { irId =>
-          sendEmailNewIR(irId, mir)
-          rmCaptcha(formBinded, mirSavedRdr(irId))
+      {case (mir, galleryIiks) =>
+        assert(mir.adnNode.isLeft, "error.mir.adnNode.not.isLeft")
+        // Схоронить картинки.
+        ImgFormUtil.updateOrigImgFull(
+          needImgs = gallery4s(galleryIiks),
+          oldImgs = Nil
+        ) flatMap { savedImgs =>
+          // Картинки сохранены. Обновить рекламный узел.
+          val mir2 = mir.copy(
+            joinAnswers = Some(smja),
+            adnNode = mir.adnNode.left.map { adnNode0 =>
+              adnNode0.copy(
+                gallery = gallery2filenames(savedImgs)
+              )
+            }
+          )
+          mir2.save.map { irId =>
+            sendEmailNewIR(irId, mir)
+            rmCaptcha(formBinded, mirSavedRdr(irId))
+          }
         }
       }
     )
