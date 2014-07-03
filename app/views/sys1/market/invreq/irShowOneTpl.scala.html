@@ -76,7 +76,7 @@
           <h3>@if(nodeInstalled) {Узел} else {Шаблон узла}</h3>
           <p>Название: @node.meta.name</p>
           @* TODO Отобразить другие полезные поля узла тут. *@
-          <a href="@if(nodeInstalled) {@routes.SysMarket.editAdnNode(node.id.get)} else {@routes.SysMarketInvReq.nodeEdit(node.id.get)}">@Messages("Edit")</a>
+          <a href="@if(nodeInstalled) {@routes.SysMarket.editAdnNode(node.id.get)} else {@routes.SysMarketInvReq.nodeEdit(mir.id.get)}">@Messages("Edit")</a>
           @if(mcInstalled) {
             @if(nodeInstalled) {
               @btn("Uninstall", routes.SysMarketInvReq.nodeUninstallSubmit(mir.id.get))
