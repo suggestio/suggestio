@@ -6,8 +6,8 @@
 @import views.html.helper._
 
 
-<td class="left">
-  <label for="@elements.id">@elements.label(elements.lang)
+<td class="left input-w_left">
+  <label class="input-w_prop-name" for="@elements.id">@elements.label(elements.lang)
     @if(elements.field.constraints.exists { _._1 == "constraint.required" }) {
       <span class="required-icon">*</span>
     }

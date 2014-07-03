@@ -748,7 +748,7 @@ siomLinkBtnColor4 = #48ab38
   border-radius(50%)
 
 /********************************************************************************************************************/
-/* SioMarket add/remove images buttons */
+/* SioMarket add/remove/zoom images buttons */
 /********************************************************************************************************************/
 
 .siom-add-image-btn
@@ -784,3 +784,18 @@ siomLinkBtnColor4 = #48ab38
 
   &:active
     background-position: center 13px
+
+
+.siom-zoom-image-btn
+  display: block
+  width: 100%
+  height: 100%
+
+  &:hover
+    background-image: url('/assets/images/market/lk/zoom-icon_retina.png')
+    background-size: 45px 45px
+    background-repeat: no-repeat
+    background-position: 0 0
+
+  &:active
+    background-position: 0 1px

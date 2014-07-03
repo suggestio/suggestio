@@ -80,6 +80,30 @@
       )
     </table>
 
+    @if(nodeInfo.isReceiver) {
+      <table cellpadding="0" cellspacing="0" class="input-w __big __textarea">
+        @textarea(
+          mf("meta.audienceDescr"),
+          '_label -> "Описание \n аудитории:"
+        )
+      </table>
+      <table cellpadding="0" cellspacing="0" class="input-w __big">
+        @inputText(
+          mf("meta.humanTrafficAvg"),
+          '_label -> "Суточный трафик:"
+        )
+      </table>
+    } else {
+      @if(nodeInfo.isProducer) {
+        <table cellpadding="0" cellspacing="0" class="input-w __big __textarea">
+          @textarea(
+            mf("meta.info"),
+            '_label -> "Информация о товарах или услугах:"
+          )
+        </table>
+      }
+    }
+
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
 
       <tbody>
@@ -139,12 +163,4 @@
     <a class="siom-ac-btn __size-M __color-2 __ft-XM js-submit-btn f-right">@btnText</a>
   </div>
 
-  @if(nodeInfo.isReceiver) {
-    @textarea(mf("meta.audienceDescr"))
-    @inputText(mf("meta.humanTrafficAvg"))
-  } else {
-    @if(nodeInfo.isProducer) {
-      @textarea(mf("meta.info"))
-    }
-  }
 }
