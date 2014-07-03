@@ -41,7 +41,7 @@
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
       @inputText(
         mf("meta.name"),
-        '_label -> "Название ТЦ:"
+        '_label -> "Название:"
       )
     </table>
 
@@ -76,7 +76,7 @@
     <table cellpadding="0" cellspacing="0" class="input-wrap big">
       @inputText(
         mf("meta.siteUrl"),
-        '_label -> "Сайт ТЦ:"
+        '_label -> "Сайт:"
       )
     </table>
 
@@ -104,57 +104,59 @@
       }
     }
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    @if(nodeInfo.isReceiver) {
+      <table cellpadding="0" cellspacing="0" class="input-wrap big">
 
-      <tbody>
+        <tbody>
+          <tr>
+            <td class="left">
+              <label>Картинка приветствия:</label>
+            </td>
+            <td class="right">
+              @_welcomeAdFormTpl(adnId, welcomeAdOpt, mf)
+            </td>
+          </tr>
+        </tbody>
+
+      </table>
+
+
+
+      <table cellpadding="0" cellspacing="0" class="input-wrap big">
+
         <tr>
           <td class="left">
-            <label>Картинка приветствия:</label>
+            <label for="logoImgInput">Фотографии<br/>объекта:</label>
           </td>
+
           <td class="right">
-            @_welcomeAdFormTpl(adnId, welcomeAdOpt, mf)
-          </td>
-        </tr>
-      </tbody>
 
-    </table>
-
-
-
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
-
-      <tr>
-        <td class="left">
-          <label for="logoImgInput">Фотографии<br/>объекта:</label>
-        </td>
-
-        <td class="right">
-
-          @* Рендерим существующие значения. gf - поле, gfi - индекс картинки (1, 2, 3), gfn - имя поля в индексе ("gallery[0]") *@
-          @defining( mf("gallery") ) { gf =>
-            @gf.indexes.map { gfi =>
-              @defining( s"gallery[$gfi]" ) { gfn =>
-                @mf(gfn).value.map { imgId =>
-                  <div class="add-file-w __preview">
-                    <input class="js-image-key" type="hidden" name="@gfn" value="@imgId"/>
-                    <img class="add-file-w_image js-image-preview" src="@routes.Img.getThumb(imgId)" />
-                    <a class="add-file-w_btn siom-remove-image-btn js-remove-image" title="Удалить файл"></a>
-                  </div>
+            @* Рендерим существующие значения. gf - поле, gfi - индекс картинки (1, 2, 3), gfn - имя поля в индексе ("gallery[0]") *@
+            @defining( mf("gallery") ) { gf =>
+              @gf.indexes.map { gfi =>
+                @defining( s"gallery[$gfi]" ) { gfn =>
+                  @mf(gfn).value.map { imgId =>
+                    <div class="add-file-w __preview">
+                      <input class="js-image-key" type="hidden" name="@gfn" value="@imgId"/>
+                      <img class="add-file-w_image js-image-preview" src="@routes.Img.getThumb(imgId)" />
+                      <a class="add-file-w_btn siom-remove-image-btn js-remove-image" title="Удалить файл"></a>
+                    </div>
+                  }
                 }
               }
+
+              <div class="add-file-w __size-S" >
+                @stuff._fileUploadTpl(routes.Img.handleTempImg, fieldName = "gallery", multiple = true)
+               <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
+              </div>
+
             }
 
-            <div class="add-file-w __size-S" >
-              @stuff._fileUploadTpl(routes.Img.handleTempImg, fieldName = "gallery", multiple = true)
-             <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
-            </div>
+          </td>
+        </tr>
 
-          }
-
-        </td>
-      </tr>
-
-    </table>
+      </table>
+    }
 
 
   <div class="border-line"></div>
