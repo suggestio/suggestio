@@ -48,12 +48,17 @@ object TplDataFormatUtil {
     val currencySymbol = formatCurrency(currency)
     dcs.setCurrencySymbol(currencySymbol)
     currFmt.setDecimalFormatSymbols(dcs)
-    if (price <= 9999)
-      currFmt.setGroupingUsed(false)
+    currFmt.setGroupingUsed(price >= 10000)
     val formatted = currFmt.format(price)
     pricePostprocess(formatted)
   }
 
+  /** Рендер целого числа. */
+  def formatInt(number: Int)(implicit ctx: Context): String = {
+    val fmt = NumberFormat.getNumberInstance
+    fmt.setGroupingUsed(number >= 10000)
+    fmt.format(number)
+  }
 
   // Пока локали не поддерживаются, используется один форматтер на всех.
   def formatPriceDigits(price: Float)(implicit ctx: Context): String = {

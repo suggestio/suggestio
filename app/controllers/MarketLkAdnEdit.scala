@@ -1,5 +1,6 @@
 package controllers
 
+import play.api.mvc.Action
 import util.img._
 import ImgFormUtil.imgInfo2imgKey
 import util.PlayMacroLogsImpl
@@ -214,7 +215,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
    * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
    * @return Тот же формат ответа, что и для просто temp-картинок.
    */
-  def handleTempLogo(adnId: String) = IsAdnNodeAdmin(adnId)(parse.multipartFormData) { implicit request =>
+  def handleTempLogo = Action(parse.multipartFormData) { implicit request =>
     _handleTempImg(MartLogoImageUtil, Some(TMP_LOGO_MARKER))
   }
 

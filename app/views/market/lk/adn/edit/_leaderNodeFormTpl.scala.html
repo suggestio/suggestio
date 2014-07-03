@@ -27,7 +27,7 @@
             }
 
             <div class="add-file-w __size-S"  @if(!logoImgIdOpt.isEmpty) {style="display: none;"}>
-              @stuff._fileUploadTpl(routes.MarketLkAdnEdit.handleTempLogo(adnId), fieldName = "logoImgId")
+              @stuff._fileUploadTpl(routes.MarketLkAdnEdit.handleTempLogo(), fieldName = "logoImgId")
               <a class="add-file-w_btn siom-add-image-btn js-file-upload-btn" title="Загрузить файл"></a>
             </div>
 

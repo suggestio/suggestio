@@ -1,6 +1,9 @@
 @(mbmds: Seq[MBillMmpDaily], adnNode: MAdnNode)(implicit ctx: Context)
 
 @* Рендер окошка, которое должно бы отображаться при щелчке на имени узла в форме размещения рекламной карточки. *@
+@import ctx._
+@import util.TplDataFormatUtil._
+@import util.FormUtil.replaceEOLwithBR
 
 <div id="dailyMmpsWindow" class="popup billing-page daily-mmps-window">
 
@@ -24,89 +27,78 @@
       <div class="lk-edit-form__block_body_inner">
         <div class="ovh"></div>
 
-        <table class="input-w __big">
-          <tr>
-            <td class="input-w_left __text-top">
-              <label class="input-w_prop-name">
-                Описание<br/>аудитори
-              </label>
-            </td>
-            <td>
-              <strong>Предприниматели – представители малого и среднего бизнеса. Косвенно  можно
-              зацепить директоров компаний и маркетологов, но это не целевая аудитория, т.к. они слабо мотивированы.
-              Директоров  (наемных менеджеров) интересует не какой-то конечный результат, а откаты от выделенного
-              бюджета. Маркетологимогут прийти учиться, но от них не стоит ожидать каких-то крупных заказов,
-              деньги они свои тратить не будут, они попросят в компании.</strong>
-              <div class="border-line __margin-M"></div>
-            </td>
-          </tr>
-        </table>
+        @adnNode.meta.audienceDescr.map { audDescr =>
+          <table class="input-w __big">
+            <tr>
+              <td class="input-w_left __text-top">
+                <label class="input-w_prop-name">
+                  Описание<br/>аудитори
+                </label>
+              </td>
+              <td>
+                <strong>@audDescr</strong>
+                <div class="border-line __margin-M"></div>
+              </td>
+            </tr>
+          </table>
+        }
 
-        <table class="input-w __big">
-          <tr>
-            <td class="input-w_left __text-top">
-              <label class="input-w_prop-name">
-                Суточный<br/>трафик:
-              </label>
-            </td>
-            <td>
-              <strong>6 миллиардов человек в сутки.</strong>
-              <div class="border-line __margin-M"></div>
-            </td>
-          </tr>
-        </table>
 
-        <table class="input-w __big">
-          <tr>
-            <td class="input-w_left __text-top">
-              <label class="input-w_prop-name">
-                Адрес:
-              </label>
-            </td>
-            <td>
-              <strong>
-                Планета Земля<br/>
-                Страна Россия<br/>
-                г.Санкт-Петербург<br/>
-                пл. Морской славы, 1 офис 5093<br/>
-                тел.: 8 9999 9 9 9 9
-              </strong>
-              <div class="border-line __margin-M"></div>
-            </td>
-          </tr>
-        </table>
+        @adnNode.meta.humanTrafficAvg.map { htAvg =>
+          <table class="input-w __big">
+            <tr>
+              <td class="input-w_left __text-top">
+                <label class="input-w_prop-name">
+                  Суточный<br/>трафик:
+                </label>
+              </td>
+              <td>
+                <strong>@formatInt(htAvg) человек в сутки.</strong>
+                <div class="border-line __margin-M"></div>
+              </td>
+            </tr>
+          </table>
+        }
 
-        <table class="input-w __big">
-          <tr>
-            <td class="input-w_left __text-top">
-              <label class="input-w_prop-name">
-                Фотографии:
-              </label>
-            </td>
-            <td>
-              <div class="add-file-w __preview">
-                <img class="add-file-w_image js-image-preview" src="">
-                <a class="add-file-w_btn siom-zoom-image-btn" title="Удалить файл"></a>
-              </div>
-              <div class="add-file-w __preview">
-                <img class="add-file-w_image js-image-preview" src="">
-                <a class="add-file-w_btn siom-zoom-image-btn" title="Удалить файл"></a>
-              </div>
-              <div class="add-file-w __preview">
-                <img class="add-file-w_image js-image-preview" src="">
-                <a class="add-file-w_btn siom-zoom-image-btn" title="Удалить файл"></a>
-              </div>
-              <div class="add-file-w __preview">
-                <img class="add-file-w_image js-image-preview" src="">
-                <a class="add-file-w_btn siom-zoom-image-btn" title="Удалить файл"></a>
-              </div>
-              <div class="add-file-w __preview">
-                <img class="add-file-w_image js-image-preview" src="">
-                <a class="add-file-w_btn siom-zoom-image-btn" title="Удалить файл"></a>
-              </div>
-            </td>
-          </tr>
-        </table>
+        @adnNode.meta.address.map { address =>
+          <table class="input-w __big">
+            <tr>
+              <td class="input-w_left __text-top">
+                <label class="input-w_prop-name">
+                  Адрес:
+                </label>
+              </td>
+              <td>
+                <strong>
+                  replaceEOLwithBR(address)
+                  @adnNode.meta.phone.map { phone =>
+                    тел. @phone
+                  }
+                </strong>
+                <div class="border-line __margin-M"></div>
+              </td>
+            </tr>
+          </table>
+        }
+
+        @if(adnNode.gallery.nonEmpty) {
+          <table class="input-w __big">
+            <tr>
+              <td class="input-w_left __text-top">
+                <label class="input-w_prop-name">
+                  Фотографии:
+                </label>
+              </td>
+              <td>
+                @adnNode.gallery.map { imgId =>
+                  <div class="add-file-w __preview">
+                    <img class="add-file-w_image js-image-preview" src="@routes.Img.getThumb(imgId)">
+                  </div>
+                }
+              </td>
+            </tr>
+          </table>
+        }
 
       </div>
     </div>

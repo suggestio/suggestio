@@ -87,7 +87,7 @@ GET  /m/lk                              controllers.MarketLk.lkList
 GET  /m/lk/adn/:adnId                   controllers.MarketLkAdn.showAdnNode(adnId, newAdId: Option[String] ?= None, povAdnId: Option[String] ?= None)
 GET  /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNode(adnId)
 POST /m/lk/adn/:adnId/edit              controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
-POST /m/lk/adn/:adnId/logo              controllers.MarketLkAdnEdit.handleTempLogo(adnId)
+POST /m/adn/logo/prepare                controllers.MarketLkAdnEdit.handleTempLogo
 # Базовый супервайзинг узлов
 GET  /m/lk/adn/:adnId/slaves            controllers.MarketLkAdn.showSlaves(adnId, sortByRaw: Option[String] ?= None, isReversed: Boolean ?= false)
 POST /m/lk/adn/:adnId/search            controllers.MarketLkAdn.searchSlaves(adnId)
