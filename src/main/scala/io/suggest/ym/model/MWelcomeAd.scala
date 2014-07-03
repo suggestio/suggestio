@@ -53,8 +53,8 @@ object MWelcomeAd
   override def deleteById(id: String)(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[Boolean] = {
     val adOptFut = getById(id)
     val imgDelFut = adOptFut flatMap {
-      case Some(ad) => eraseImgs(ad)
-      case None     => Future successful ()
+      case Some(ad) => ad.eraseResources
+      case None     => Future successful None
     }
     imgDelFut flatMap { _ =>
       super.deleteById(id)

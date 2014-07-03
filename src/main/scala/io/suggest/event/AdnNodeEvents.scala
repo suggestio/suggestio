@@ -96,7 +96,6 @@ object DeleteAdsOnAdnNodeDeleteSubscriber extends MacroLogsImpl {
           val logPrefix = s"event(prodId=$producerId): "
           debug(logPrefix + "Starting deletion of all ads, related to producer...")
           MAd.deleteByProducerId1by1(producerId) onComplete handleFinishPf(logPrefix, MAd)
-          MWelcomeAd.deleteByProducerId1by1(producerId) onComplete handleFinishPf(logPrefix, MWelcomeAd)
 
         case other =>
           warn("Unexpected event received: " + other)

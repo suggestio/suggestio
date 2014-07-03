@@ -79,7 +79,7 @@ object MAd
       case Some(ad) =>
         lazy val logPrefix = s"deleteById($id): "
         // Удаляем картинку рекламы в фоне
-        eraseImgs(ad)
+        ad.eraseResources
         // Одновременно удаляем саму рекламную карточку из хранилища
         val resultFut = super.deleteById(id)
         // Когда всё будет удалено ок, то надо породить событие.

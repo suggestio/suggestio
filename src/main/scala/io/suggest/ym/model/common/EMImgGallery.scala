@@ -1,11 +1,14 @@
 package io.suggest.ym.model.common
 
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel.FieldsJsonAcc
+import org.elasticsearch.client.Client
 import play.api.libs.json.{JsString, JsArray}
 import java.{lang => jl}
 import scala.collection.JavaConversions._
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -56,6 +59,12 @@ trait EMImgGallery extends EsModelT {
       val v = JsArray( gallery.map(JsString.apply) )
       IMG_GALLERY_ESFN -> v :: acc1
     }
+  }
+
+  override def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    val fut = super.eraseResources
+    Future.traverse(gallery) { MPict.deleteFully }
+      .flatMap { _ => fut }
   }
 }
 

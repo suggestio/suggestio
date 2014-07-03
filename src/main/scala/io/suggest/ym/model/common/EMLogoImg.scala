@@ -1,8 +1,12 @@
 package io.suggest.ym.model.common
 
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model._
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.EsModel.FieldsJsonAcc
+import org.elasticsearch.client.Client
+
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -23,6 +27,7 @@ import EMLogoImg._
 
 trait EMLogoImgStatic extends EsModelStaticT {
   override type T <: EMLogoImgMut
+
   abstract override def generateMappingProps: List[DocField] = {
     esMappingField :: super.generateMappingProps
   }
@@ -48,6 +53,14 @@ trait EMLogoImg extends EMLogoImgI {
       LOGO_IMG_ESFN -> logoImgOpt.get.toPlayJson :: acc0
     else
       acc0
+  }
+
+  override def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    val fut = super.eraseResources
+    logoImgOpt.fold(fut) { img =>
+      MPict.deleteFully(img.filename)
+        .flatMap { _ => fut }
+    }
   }
 }
 

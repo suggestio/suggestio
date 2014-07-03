@@ -1,6 +1,8 @@
 package io.suggest.ym.model.common
 
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.EsModel.FieldsJsonAcc
+import io.suggest.ym.model.MWelcomeAd
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
@@ -116,6 +118,14 @@ trait EMAdnMMetadata extends EsModelT {
     f :: super.writeJsonFields(acc)
   }
 
+  override def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    val fut = super.eraseResources
+    // Раньше вызывался MWelcomeAd.deleteByProducerId1by1(producerId) через событие SioNotifier.
+    meta.welcomeAdId.fold(fut) { welcomeAdId =>
+      MWelcomeAd.deleteById(welcomeAdId)
+        .flatMap { _ => fut }
+    }
+  }
 }
 
 

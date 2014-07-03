@@ -697,7 +697,7 @@ object CleanupAdnProducerIdsOnAdnNodeDelete {
     val sub = SnFunSubscriber {
       case ande: AdnNodeDeletedEvent =>
         MAdnNode.findByIncomingProducerId(ande.adnId)
-          .filter(!_.isEmpty)
+          .filter(_.nonEmpty)
           .foreach { ands =>
             ands.foreach { adnNode =>
               if (adnNode.adn.producerIds contains ande.adnId) {

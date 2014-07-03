@@ -1,8 +1,10 @@
 package io.suggest.ym.model.common
 
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.util.SioEsUtil._
 import io.suggest.model.{MPict, EsModelT, EsModelStaticT}
 import io.suggest.model.EsModel.FieldsJsonAcc
+import org.elasticsearch.client.Client
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 import com.typesafe.scalalogging.slf4j.Logger
@@ -74,9 +76,6 @@ trait EMImgStatic extends EsModelStaticT {
     }
   }
 
-  def eraseImgs(impl: T)(implicit ec: ExecutionContext): Future[_] = {
-    EMImg.eraseImgs(impl.imgs)
-  }
 }
 
 
@@ -91,7 +90,7 @@ trait EMImgI extends EsModelT with Imgs {
 trait EMImg extends EMImgI {
   abstract override def writeJsonFields(acc: FieldsJsonAcc): FieldsJsonAcc = {
     val acc0 = super.writeJsonFields(acc)
-    if (!imgs.isEmpty) {
+    if (imgs.nonEmpty) {
       // Переводим карту в JsObject стандартным образом.
       val jsonAcc1 = imgs.foldLeft [List[(String, JsValue)]] (Nil) {
         case (jsonAcc, (k, imgInfo)) =>
@@ -101,6 +100,13 @@ trait EMImg extends EMImgI {
     } else {
       acc0
     }
+  }
+
+  /** Стирание ресурсов, относящихся к этой модели. */
+  override def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    val fut = super.eraseResources
+    EMImg.eraseImgs(imgs)
+      .flatMap { _ => fut }
   }
 }
 

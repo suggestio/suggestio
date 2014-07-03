@@ -718,10 +718,17 @@ trait OptStrId {
   def id: Option[String]
 }
 
+trait EraseResources {
+  /** Стирание ресурсов, относящихся к этой модели. */
+  @JsonIgnore
+  def eraseResources(implicit ec: ExecutionContext, client: Client, sn: SioNotifierStaticClientI): Future[_] = {
+    Future successful None
+  }
+}
 
 /** Шаблон для динамических частей ES-моделей.
  * В минимальной редакции механизм десериализации полностью абстрактен. */
-trait EsModelMinimalT extends OptStrId {
+trait EsModelMinimalT extends OptStrId with EraseResources {
 
   type T <: EsModelMinimalT
 
