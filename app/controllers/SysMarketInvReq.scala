@@ -153,15 +153,18 @@ object SysMarketInvReq extends SioController with PlayMacroLogsImpl {
 
 
   /** Удалить один MIR. */
-  def deleteIR(irId: String) = IsSuperuser.async { implicit request =>
-    MInviteRequest.deleteById(irId) map { isDeleted =>
-      val flasher: (String, String) = if (isDeleted) {
-        "success" -> "Запрос на подключение удалён."
-      } else {
-        "error"   -> "Не найдено документа для удаления."
+  def deleteIR(mirId: String) = IsSuperuserMir(mirId).async { implicit request =>
+    import request.mir
+    mir.eraseResources flatMap { _ =>
+      mir.delete map { isDeleted =>
+        val flasher: (String, String) = if (isDeleted) {
+          "success" -> "Запрос на подключение удалён."
+        } else {
+          "error"   -> "Возникли какие-то проблемы с удалением."
+        }
+        Redirect(routes.SysMarketInvReq.index())
+          .flashing(flasher)
       }
-      Redirect(routes.SysMarketInvReq.index())
-        .flashing(flasher)
     }
   }
 

@@ -286,7 +286,7 @@ GET  /sys/cal/get/:calId                 controllers.SysCalendar.getCalendarXml(
 ## sys: invreq - обработка входящих реквестов на подключение.
 GET  /sys/ir                             controllers.SysMarketInvReq.index
 GET  /sys/ir/show/:mirId                 controllers.SysMarketInvReq.showIR(mirId)
-POST /sys/ir/delete/:irId                controllers.SysMarketInvReq.deleteIR(irId)
+POST /sys/ir/delete/:mirId               controllers.SysMarketInvReq.deleteIR(mirId)
 GET  /sys/ir/edit/:mirId/company         controllers.SysMarketInvReq.companyEdit(mirId)
 POST /sys/ir/edit/:mirId/company         controllers.SysMarketInvReq.companyEditFormSubmit(mirId)
 POST /sys/ir/install/:mirId/company      controllers.SysMarketInvReq.companyInstallSubmit(mirId)
