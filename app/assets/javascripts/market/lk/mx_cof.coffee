@@ -207,6 +207,16 @@ CbcaCommon = () ->
     ## WIFI FORM start ##
     #####################
 
+    $(document).on 'submit', '#wifiJoinForm', (e)->
+      $form = $ this
+
+      $form
+      .find '.js-quiz__checkbox'
+      .removeAttr 'disabled'
+
+      return true
+
+
     $('.js-quiz__checkbox').removeAttr('disabled')
 
     $(document).on 'click', '.js-quiz__checkbox', (e)->
@@ -584,7 +594,7 @@ CbcaCommon = () ->
       )
 
 
-    $('.border-line-vertical').each () ->
+    $('.border-line-vertical, .js-vertical-line').each () ->
       $this = $(this)
       $parent = $this.parent()
 
