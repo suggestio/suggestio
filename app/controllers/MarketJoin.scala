@@ -3,7 +3,7 @@ package controllers
 import org.joda.time.DateTime
 import play.api.i18n.Messages
 import util.billing.MmpDailyBilling
-import util.img.ImgFormUtil
+import util.img._
 import util.{ContextImpl, PlayMacroLogsImpl}
 import util.acl.{AbstractRequestWithPwOpt, MaybeAuth}
 import util.SiowebEsUtil.client
@@ -15,9 +15,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
-import util.img.GalleryUtil._
 import MarketLkAdnEdit.{logoKM, colorKM}
-import util.img.WelcomeUtil._
 
 /**
  * Suggest.io
@@ -84,9 +82,9 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         "payReqs"         -> optional(text(maxLength = 2048)),  // TODO Парсить и проверять
         "email"           -> email,
         colorKM,
-        galleryKM,
+        GalleryUtil.galleryKM,
         logoKM,
-        welcomeImgIdKM,
+        WelcomeUtil.welcomeImgIdKM,
         CAPTCHA_ID_FN     -> Captcha.captchaIdM,
         CAPTCHA_TYPED_FN  -> Captcha.captchaTypedM
       )
@@ -168,7 +166,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
   }
 
 
-  /** Накатывание результатов маппинга формы на новый экземпляр [[models.MInviteRequest]]. */
+  /** Накатывание результатов маппинга формы на новый экземпляр MInviteRequest. */
   private def applyForm(companyName: String, audienceDescr: Option[String] = None, humanTrafficAvg: Option[Int] = None,
     address: String, siteUrl: Option[String], phone: String, payReqs: Option[String] = None, email1: String,
     anmt: AdNetMemberType, withMmp: Boolean, reqType: InviteReqType, info: Option[String] = None, color: Option[String]): MInviteRequest = {
@@ -247,21 +245,20 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         // Схоронить логотип
         val savedLogoFut = ImgFormUtil.updateOrigImg(logoOpt.toSeq, oldImgs  = Nil)
         // Схоронить картинку приветствия
-        val savedWaOptFut = updateWelcodeAdFut(mir.adnNode.left.get, welcomeImgId)
+        val savedWaImgOptFut = WelcomeUtil.updateWaImg(None, welcomeImgId)
         // Схоронить картинки галлереи.
-        ImgFormUtil.updateOrigImgFull(gallery4s(galleryIiks), oldImgs = Nil) flatMap { savedImgs =>
+        ImgFormUtil.updateOrigImgFull(GalleryUtil.gallery4s(galleryIiks), oldImgs = Nil) flatMap { savedImgs =>
           savedLogoFut flatMap { savedLogoOpt =>
-            savedWaOptFut flatMap { savedWaOpt =>
+            savedWaImgOptFut flatMap { savedWaOpt =>
+              val waOpt = WelcomeUtil.updateWaOptAdHoc(None, savedWaOpt, newProducerId = "")
               // Картинки сохранены. Обновить рекламный узел.
               val mir2 = mir.copy(
                 joinAnswers = Some(smja),
+                waOpt   = waOpt.map(Left.apply),
                 adnNode = mir.adnNode.left.map { adnNode0 =>
                   adnNode0.copy(
-                    gallery = gallery2filenames(savedImgs),
-                    logoImgOpt = savedLogoOpt,
-                    meta = adnNode0.meta.copy(
-                      welcomeAdId = savedWaOpt
-                    )
+                    gallery = GalleryUtil.gallery2filenames(savedImgs),
+                    logoImgOpt = savedLogoOpt
                   )
                 }
               )

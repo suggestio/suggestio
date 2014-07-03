@@ -30,32 +30,54 @@ object WelcomeUtil {
     getWelcomeAdOpt( node.meta.welcomeAdId )
   }
 
+  def updateWaImg(waOpt: Option[MWelcomeAd], newWaImgOpt: Option[ImgIdKey]) = {
+    ImgFormUtil.updateOrigImg(
+      needImgs = newWaImgOpt.map(ImgInfo4Save(_, withThumb = false)).toSeq,
+      oldImgs = waOpt.flatMap(_.imgs.headOption).map(_._2).toIterable
+    )
+  }
+
   /** Обновление картинки и карточки приветствия. Картинка хранится в полу-рекламной карточке, поэтому надо ещё
     * обновить карточку и пересохранить её. */
   def updateWelcodeAdFut(adnNode: MAdnNode, newWelcomeImgOpt: Option[ImgIdKey]): Future[Option[String]] = {
     getWelcomeAdOpt(adnNode) flatMap { currWelcomeAdOpt =>
-      ImgFormUtil.updateOrigImg(
-        needImgs = newWelcomeImgOpt.map(ImgInfo4Save(_, withThumb = false)).toSeq,
-        oldImgs = currWelcomeAdOpt.flatMap(_.imgs.headOption).map(_._2).toIterable
-      ) flatMap {
+      updateWaImg(currWelcomeAdOpt, newWelcomeImgOpt) flatMap {
         // Новой картинки нет. Надо удалить старую карточку (если была), и очистить соотв. welcome-поле.
         case None =>
           adnNode.meta
             .welcomeAdId
             .fold [Future[Option[String]]]
               { Future successful None }
-              { waId => MAd.deleteById(waId).map { _ => None } }
+              { waId => MWelcomeAd.deleteById(waId).map { _ => None } }
 
         // Новая картинка есть. Пора обновить текущую карточук, или новую создать.
         case newImgInfoOpt @ Some(newImgInfo) =>
-          val newImgs = Map(WELCOME_IMG_KEY -> newImgInfo)
-          val newWelcomeAd = currWelcomeAdOpt.fold
-            { MWelcomeAd(producerId = adnNode.id.get, imgs = newImgs) }
-            { _.copy(imgs = newImgs) }
+          val newWelcomeAd = updateWaOptWith(currWelcomeAdOpt, newImgInfo, adnNode.id.get)
           newWelcomeAd.save
             .map { Some.apply }
       }
     }
+  }
+
+
+  /**
+   * Обновление указанной рекламной карточки без сайд-эффектов. Если картинки нет, то и карточки на выходе не будет.
+   * @param waOpt Исходная рекламная карточка, если есть.
+   * @param newImgOpt Новая картинка, если есть.
+   * @param newProducerId producerId если понадобится его выставить.
+   * @return Опциональный результат в виде экземпляра MWA (новой или на основе исходной waOpt).
+   */
+  def updateWaOptAdHoc(waOpt: Option[MWelcomeAd], newImgOpt: Option[MImgInfoT], newProducerId: String): Option[MWelcomeAd] = {
+    newImgOpt map { newImg =>
+      updateWaOptWith(waOpt, newImg, newProducerId)
+    }
+  }
+
+  def updateWaOptWith(waOpt: Option[MWelcomeAd], newImg: MImgInfoT, newProducerId: String): MWelcomeAd = {
+    val newImgs = Map(WELCOME_IMG_KEY -> newImg)
+    waOpt.fold
+      { MWelcomeAd(producerId = newProducerId, imgs = newImgs) }
+      { _.copy(imgs = newImgs) }
   }
 
 
