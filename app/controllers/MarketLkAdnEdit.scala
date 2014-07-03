@@ -39,7 +39,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   private val nameKM        = "name"    -> nameM
   private val townKM        = "town"    -> townSomeM
   private val addressKM     = "address" -> addressSomeM
-  private val colorKM       = "color"   -> colorSomeM
+  val colorKM = "color"   -> colorSomeM
   private val siteUrlKM     = "siteUrl" -> urlStrOptM
   private val phoneKM       = "phone"   -> phoneOptM
 

@@ -16,7 +16,7 @@ import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
 import util.img.GalleryUtil._
-import MarketLkAdnEdit.logoKM
+import MarketLkAdnEdit.{logoKM, colorKM}
 
 /**
  * Suggest.io
@@ -82,16 +82,17 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         "phone"           -> phoneM,
         "payReqs"         -> optional(text(maxLength = 2048)),  // TODO Парсить и проверять
         "email"           -> email,
+        colorKM,
         galleryKM,
         logoKM,
         CAPTCHA_ID_FN     -> Captcha.captchaIdM,
         CAPTCHA_TYPED_FN  -> Captcha.captchaTypedM
       )
-      {(companyName, audienceDescr, humanTrafficAvg, address, siteUrl, phone, payReqs, email1, galleryIks, logoOpt, _, _) =>
+      {(companyName, audienceDescr, humanTrafficAvg, address, siteUrl, phone, payReqs, email1, color, galleryIks, logoOpt, _, _) =>
         val mir = applyForm(companyName = companyName, audienceDescr = Some(audienceDescr),
           humanTrafficAvg = Some(humanTrafficAvg), address = address, siteUrl = siteUrl, phone = phone,
           payReqs = payReqs, email1 = email1, anmt = AdNetMemberTypes.MART, withMmp = true,
-          reqType = InviteReqTypes.Wifi)
+          reqType = InviteReqTypes.Wifi, color = color)
         (mir, galleryIks, logoOpt)
       }
       {case (mir, galleryIks, logoOpt) =>
@@ -104,7 +105,8 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         val officePhone = unapplyOfficePhone(mir)
         val payReqs = unapplyPayReqs(mir)
         val email1 = unapplyEmail(mir)
-        Some((companyName, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, email1, galleryIks, logoOpt, "", ""))
+        val color = unapplyColor(mir)
+        Some((companyName, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, email1, color, galleryIks, logoOpt, "", ""))
       }
     )
   }
@@ -157,12 +159,17 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
       .left.map(_.meta.info)
       .left.getOrElse(None)
   }
+  private def unapplyColor(mir: MInviteRequest): Option[String] = {
+    mir.adnNode
+      .left.map(_.meta.color)
+      .left.getOrElse(None)
+  }
 
 
   /** Накатывание результатов маппинга формы на новый экземпляр [[models.MInviteRequest]]. */
   private def applyForm(companyName: String, audienceDescr: Option[String] = None, humanTrafficAvg: Option[Int] = None,
     address: String, siteUrl: Option[String], phone: String, payReqs: Option[String] = None, email1: String,
-    anmt: AdNetMemberType, withMmp: Boolean, reqType: InviteReqType, info: Option[String] = None): MInviteRequest = {
+    anmt: AdNetMemberType, withMmp: Boolean, reqType: InviteReqType, info: Option[String] = None, color: Option[String]): MInviteRequest = {
     val company = MCompany(
       meta = MCompanyMeta(name = companyName, officePhones = List(phone))
     )
@@ -174,7 +181,8 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         siteUrl         = siteUrl,
         humanTrafficAvg = humanTrafficAvg,
         audienceDescr   = audienceDescr,
-        info            = info
+        info            = info,
+        color           = color
       ),
       personIds = Set.empty,
       adn = anmt.getAdnInfoDflt
@@ -284,14 +292,15 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         "siteUrl"   -> urlStrOptM,
         "phone"     -> phoneM,
         "email"     -> email,
+        colorKM,
         logoKM,
         CAPTCHA_ID_FN    -> Captcha.captchaIdM,
         CAPTCHA_TYPED_FN -> Captcha.captchaTypedM
       )
-      {(companyName, info, address, siteUrl, phone, email1, logoOpt, _, _) =>
+      {(companyName, info, address, siteUrl, phone, email1, color, logoOpt, _, _) =>
         val mir = applyForm(companyName = companyName, address = address, siteUrl = siteUrl,
           phone = phone, email1 = email1, anmt = AdNetMemberTypes.SHOP, withMmp = false,
-          reqType = InviteReqTypes.Adv, info = info)
+          reqType = InviteReqTypes.Adv, info = info, color = color)
         (mir, logoOpt)
       }
       {case (mir, logoOpt) =>
@@ -301,7 +310,8 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         val siteUrl = unapplySiteUrl(mir)
         val officePhone = unapplyOfficePhone(mir)
         val email1 = unapplyEmail(mir)
-        Some((companyName, info, address, siteUrl, officePhone, email1, logoOpt, "", ""))
+        val color = unapplyColor(mir)
+        Some((companyName, info, address, siteUrl, officePhone, email1, color, logoOpt, "", ""))
       }
     )
   }
