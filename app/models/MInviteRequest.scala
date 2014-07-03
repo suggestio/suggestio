@@ -50,6 +50,7 @@ object MInviteRequest
   val BALANCE_ESFN        = "mbb"
   val EMAIL_ACT_ESFN      = "ea"
   val PAY_REQS_ESFN       = "prq"
+  val PAY_REQS_RAW_ESFN   = "prqRaw"
 
   val JOIN_ANSWERS_ESFN   = "ja"
 
@@ -136,7 +137,8 @@ case class MInviteRequest(
   var emailAct  : Either[EmailActivation, String],
   var payReqs   : Option[Either[MBillPayReqsRu, Int]] = None,
   var joinAnswers: Option[SMJoinAnswers] = None,
-  var dateCreated : DateTime = DateTime.now(),
+  var dateCreated: DateTime = DateTime.now(),
+  var payReqsRaw : Option[String] = None,
   id            : Option[String] = None,
   versionOpt    : Option[Long] = None
 )
@@ -374,6 +376,8 @@ sealed trait EMInviteRequestStatic extends EsModelStaticT {
         acc.payReqs = Option(r)
       case (JOIN_ANSWERS_ESFN, jaRaw: ju.Map[_, _]) =>
         acc.joinAnswers = Option(SMJoinAnswers.deserialize(jaRaw))
+      case (PAY_REQS_RAW_ESFN, prqRaw) =>
+        acc.payReqsRaw = Option(prqRaw) map stringParser
     }
   }
 
@@ -393,6 +397,7 @@ sealed trait EMInviteRequestMut extends EsModelT {
   var emailAct  : Either[EmailActivation, String]
   var payReqs   : Option[Either[MBillPayReqsRu, Int]]
   var joinAnswers: Option[SMJoinAnswers]
+  var payReqsRaw: Option[String]
 
   abstract override def writeJsonFields(acc0: FieldsJsonAcc): FieldsJsonAcc = {
     val acc1 = super.writeJsonFields(acc0)
@@ -410,6 +415,8 @@ sealed trait EMInviteRequestMut extends EsModelT {
       acc ::= DAILY_MMP_ESFN -> intModel2json(mmp.get)
     if (payReqs.isDefined)
       acc ::= PAY_REQS_ESFN -> intModel2json(payReqs.get)
+    if (payReqsRaw.isDefined)
+      acc ::= PAY_REQS_RAW_ESFN -> JsString(payReqsRaw.get)
     acc
   }
 }
