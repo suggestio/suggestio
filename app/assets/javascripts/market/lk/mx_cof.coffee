@@ -1023,39 +1023,46 @@ market =
             if typeof is_w_block_preview != 'undefined'
               market.ad_form.queue_block_preview_request()
 
-            fieldName = $this.attr 'data-name'
+              $('#' + $this.attr('data-related-field-id'))
+              .find '.js-image-key'
+              .val resp_data.image_key
+              .trigger 'change'
 
-            if $this.attr 'multiple'
-              i = $parent
-                  .parent()
-                  .find '.__preview'
-                  .size()
-              fieldName = fieldName + '[' + i + ']'
+            else
 
-            html = ['<div class="add-file-w __preview">',
-                    '<input class="js-image-key" type="hidden" name="',
-                    fieldName,
-                    '" value=""/>',
-                    '<img class="add-file-w_image js-image-preview" src="" />',
-                    '<a class="add-file-w_btn siom-remove-image-btn js-remove-image" title="Удалить файл"></a>',
-                    '</div>'].join ''
+              fieldName = $this.attr 'data-name'
 
-            $parent.before html
+              if $this.attr 'multiple'
+                i = $parent
+                    .parent()
+                    .find '.__preview'
+                    .size()
+                fieldName = fieldName + '[' + i + ']'
 
-            $parent
-            .prev()
-            .find '.js-image-key'
-            .val resp_data.image_key
-            .trigger 'change'
+              html = ['<div class="add-file-w __preview">',
+                      '<input class="js-image-key" type="hidden" name="',
+                      fieldName,
+                      '" value=""/>',
+                      '<img class="add-file-w_image js-image-preview" src="" />',
+                      '<a class="add-file-w_btn siom-remove-image-btn js-remove-image" title="Удалить файл"></a>',
+                      '</div>'].join ''
 
-            $parent
-            .prev()
-            .find '.js-image-preview'
-            .show()
-            .attr 'src', resp_data.image_link
+              $parent.before html
 
-            if !$this.attr 'multiple'
-              $parent.hide()
+              $parent
+              .prev()
+              .find '.js-image-key'
+              .val resp_data.image_key
+              .trigger 'change'
+
+              $parent
+              .prev()
+              .find '.js-image-preview'
+              .show()
+              .attr 'src', resp_data.image_link
+
+              if !$this.attr 'multiple'
+                $parent.hide()
 
         $.ajax request_params
 
