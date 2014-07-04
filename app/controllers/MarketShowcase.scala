@@ -184,10 +184,10 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
     madsCountFut flatMap { madsCount =>
       val madsCountInt = madsCount.toInt
       producersFut flatMap { producers =>
+        val producer = producers.head
         mads2Fut flatMap { mads =>
           // Рендерим базовый html подвыдачи (если запрошен) и рендерим остальные рекламные блоки отдельно, для отложенный инжекции в выдачу (чтобы подавить тормоза от картинок).
           val mads4renderAsArray = if (h) mads.tail else mads
-          val producer = producers.head
           val ctx = implicitly[Context]
           // Распараллеливаем рендер блоков по всем ядрам (называется parallel map). На 4ядернике (2 + HT) получается двукратный прирост на 33 карточках.
           val blocksHtmlsFut = parRenderBlocks(mads4renderAsArray) {
