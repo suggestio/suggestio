@@ -978,15 +978,25 @@ market =
         cbca.editAdPage.updatePreview()
 
 
-      $(document).on 'click', '.js-file-upload-btn', (e) ->
-        e.preventDefault()
-        $this = $ this
-        $parent = $this.parent()
+      $(document).on 'mouseenter', '.add-file-w', () ->
+        $ this
+        .find('.add-file-w_btn')
+        .addClass '__hover'
 
-        $parent
-        .find 'input[type = "file"]'
-        .trigger 'click'
+      $(document).on 'mouseleave', '.add-file-w', () ->
+        $ this
+        .find('.add-file-w_btn')
+        .removeClass '__hover'
 
+      $(document).on 'mousedown', '.add-file-w', () ->
+        $ this
+        .find('.add-file-w_btn')
+        .addClass '__active'
+
+      $(document).on 'mouseup', '.add-file-w', () ->
+        $ this
+        .find('.add-file-w_btn')
+        .removeClass '__active'
 
       $('.js-file-upload').unbind("change").bind "change", (e) ->
         e.preventDefault()

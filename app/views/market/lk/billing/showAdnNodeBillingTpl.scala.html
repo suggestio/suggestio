@@ -137,7 +137,10 @@
         <div class="lk-edit-form__block_body js-slide-content">
           <div class="lk-edit-form__block_body_inner transactions-list">
             @* Тут раньше был список транзакций. *@
-            <a href="@routes.MarketLkBilling._txnsList(adnNode.id.get)">Показать транзакции</a>
+              <span class="gray-but-smallest inline f-left" >
+                <a href="@routes.MarketLkBilling._txnsList(adnNode.id.get)" class="white-border-top js-slide-btn">Показать транзакции</a>
+              </span>
+
           </div>
         </div>
       </div>
