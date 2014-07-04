@@ -1,5 +1,6 @@
 package util
 
+import org.apache.commons.lang3.StringEscapeUtils
 import play.api.data.Forms._
 import java.net.URL
 import io.suggest.util.{JacksonWrapper, DateParseUtil, UrlUtil}
@@ -43,6 +44,8 @@ object FormUtil {
     textFmtPolicy.sanitize(s).trim
   }
 
+  val strUnescapeF = {s: String => StringEscapeUtils.unescapeHtml4(s) }
+
   private val crLfRe = "\r\n".r
   private val lfCrRe = "\n\r".r
   private val lfRe = "\n".r
@@ -66,9 +69,10 @@ object FormUtil {
 
   def isValidUrl(urlStr: String): Boolean = {
     try {
-      new URL(urlStr)
-      true
-
+      !urlStr.isEmpty && {
+        new URL(urlStr)
+        true
+      }
     } catch {
       case ex: Exception => false
     }
@@ -186,7 +190,7 @@ object FormUtil {
 
   // TODO Нужен нормальный валидатор телефонов.
   val phoneM = nonEmptyText(minLength = 5, maxLength = 50)
-    .transform(strTrimSanitizeF, strIdentityF)
+    .transform(strTrimSanitizeF andThen strUnescapeF, strIdentityF)
   val phoneOptM = optional(phoneM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
   val phoneSomeM = toSomeStrM(phoneM)
@@ -202,8 +206,15 @@ object FormUtil {
   def list2OptListF[T] = { l:List[T] =>  if (l.isEmpty) None else Some(l) }
 
   /** Маппер form-поля URL в строку URL */
+  val urlNormalizeSafeF = {s: String =>
+    try {
+      UrlUtil.normalize(s)
+    } catch {
+      case ex: Exception => ""
+    }
+  }
   val urlStrM = nonEmptyText(minLength = 8)
-    .transform(strTrimF, strIdentityF)
+    .transform(strTrimF andThen urlNormalizeSafeF, strIdentityF)
     .verifying("mappers.url.invalid_url", isValidUrl(_))
   val urlStrOptM = optional(urlStrM)
 

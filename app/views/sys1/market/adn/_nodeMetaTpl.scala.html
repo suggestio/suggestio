@@ -3,6 +3,7 @@
 @* Блок верстки, отображающий поля метаданных узла. *@
 @import ctx._
 @import datetime._
+@import util.TplDataFormatUtil._
 
 @Messages("Name"): @meta.name<br/>
 
@@ -21,7 +22,7 @@
 }
 
 @meta.humanTrafficAvg.map { htAvg =>
-  Человеческий трафик: @htAvg чел. в день<br/>
+  Человеческий трафик: @formatInt(htAvg) чел. в день<br/>
 }
 
 @meta.info.map { info =>
