@@ -4,6 +4,7 @@ import java.text.{DecimalFormat, NumberFormat}
 import java.util.Currency
 import org.joda.time.{ReadableInstant, ReadablePartial, DateTime}
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+import play.twirl.api.{HtmlFormat, Html}
 import scala.util.matching.Regex
 import views.html.fc._
 import views.html.helper.FieldConstructor
@@ -133,6 +134,25 @@ object TplDataFormatUtil {
 
   private val numericTimeFormat = DateTimeFormat.forPattern("HH:mm:ss")
   def numericTime(dt: ReadableInstant)(implicit ctx: Context) = numericTimeFormat.print(dt)
+
+
+  val firstWordRe = "(?iU)^(\\w+)\\s?(.*)$".r
+
+  /**
+   * Выделить первое слово с помощью тега. Весь текст проэкранировать.
+   * @param str Исходная строка.
+   * @param tag Тег. Например "strong".
+   * @return Html-строка.
+   */
+  def highlightFirstWordEsc(str: String, start: String, end: String): Html = {
+    val htmlStr = str match {
+      case firstWordRe(head, tail) =>
+        s"$start${HtmlFormat.escape(head)}$end ${HtmlFormat.escape(tail)}"
+      case _ =>
+        str
+    }
+    Html(htmlStr)
+  }
 }
 
 

@@ -19,7 +19,7 @@
     <td>
       <div class="border-line __vertical js-vertical-line f-left"></div>
       <div class="table-cell-cnt __size-M">
-        <strong class="color-strong">@txn.paymentComment</strong>
+        @highlightFirstWordEsc(txn.paymentComment, start = """<strong class="color-strong">""", end = "</strong>")
       </div>
       <div class="border-line"></div>
     </td>
