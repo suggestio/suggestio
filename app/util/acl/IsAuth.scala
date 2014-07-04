@@ -34,12 +34,14 @@ trait IsAuthAbstract extends ActionBuilder[AbstractRequestWithPwOpt] with PlayMa
     }
   }
 
+  def onUnauthBase(request: RequestHeader): Result = {
+    val r = if (obeyReturnPath) Some(request.path) else None
+    Results.Redirect(routes.Ident.emailPwLoginForm(r = r))
+  }
+
   /** Что делать, когда юзер не авторизован? */
   def onUnauth(request: RequestHeader): Future[Result] = {
-    val r = if (obeyReturnPath) Some(request.path) else None
-    Future.successful(
-      Results.Redirect(routes.Ident.emailPwLoginForm(r = r))
-    )
+    Future successful onUnauthBase(request)
   }
 }
 
