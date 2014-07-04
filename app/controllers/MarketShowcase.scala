@@ -192,14 +192,14 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
           val mads4renderAsArray = if (h) mads.tail else mads
           val ctx = implicitly[Context]
           // Распараллеливаем рендер блоков по всем ядрам (называется parallel map). На 4ядернике (2 + HT) получается двукратный прирост на 33 карточках.
-          val blocksHtmlsFut = parRenderBlocks(mads4renderAsArray) {
+          val blocksHtmlsFut = parRenderBlocks(mads4renderAsArray, startIndex = adSearch.offset) {
             (mad, index) => _focusedAdTpl(mad, index + 1, producer, adsCount = madsCountInt)(ctx)
           }
           // В текущем потоке рендерим основную HTML'ку, которая будет сразу отображена юзеру. (если запрошено через аргумент h)
           val htmlOpt = if (h) {
             val firstMads = mads.headOption.toList
-            val html = JsString(_focusedAdsTpl(firstMads, adSearch, producer, adsCount = madsCountInt)(ctx))
-            Some(html)
+            val html = _focusedAdsTpl(firstMads, adSearch, producer,  adsCount = madsCountInt,  startIndex = adSearch.offset)(ctx)
+            Some(JsString(html))
           } else {
             None
           }
@@ -219,11 +219,11 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
     * @param r функция-рендерер, зависимая от контекста.
     * @return Фьючерс с результатом. Внутри список отрендеренных карточек в исходном порядке.
     */
-  private def parRenderBlocks(mads: Seq[MAd])(r: (MAd, Int) => HtmlFormat.Appendable): Future[Seq[JsString]] = {
+  private def parRenderBlocks(mads: Seq[MAd], startIndex: Int = 0)(r: (MAd, Int) => HtmlFormat.Appendable): Future[Seq[JsString]] = {
     val mads1 = mads.zipWithIndex
     Future.traverse(mads1) { case (mad, index) =>
       Future {
-        index -> JsString(r(mad, index))
+        index -> JsString(r(mad, startIndex + index))
       }
     } map {
       _.sortBy(_._1).map(_._2)
