@@ -90,7 +90,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
 
   /** Сабмит формы восстановления пароля. */
   def recoverPwFormSubmit = IsAnon.async { implicit request =>
-    bruteForceProtect(request) flatMap { _ =>
+    bruteForceProtected {
       val formBinded = checkCaptcha(recoverPwFormM.bindFromRequest())
       formBinded.fold(
         {formWithErrors =>
@@ -164,7 +164,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
     }
     override def invokeBlock[A](request: Request[A], block: (RecoverPwRequest[A]) => Future[Result]): Future[Result] = {
       lazy val logPrefix = s"CanRecoverPw($eActId): "
-      bruteForceProtect(request) flatMap { _ =>
+      bruteForceProtectedNoimpl(request) {
         val pwOpt = PersonWrapper.getFromRequest(request)
         val srmFut = SioReqMd.fromPwOpt(pwOpt)
         EmailActivation.getById(eActId).flatMap {
@@ -321,7 +321,7 @@ trait EmailPwSubmit extends SioController with PlayMacroLogsI with BruteForcePro
 
   /** Самбит формы логина по email и паролю. */
   def emailPwLoginFormSubmit(r: Option[String]) = IsAnon.async { implicit request =>
-    bruteForceProtect flatMap { _ =>
+    bruteForceProtected {
       emailPwLoginFormM.bindFromRequest().fold(
         {formWithErrors =>
           LOGGER.debug("emailPwLoginFormSubmit(): Form bind failed:\n" + formatFormErrors(formWithErrors))

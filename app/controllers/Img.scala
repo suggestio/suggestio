@@ -127,7 +127,7 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with
   /** Загрузка сырой картинки для дальнейшей базовой обработки (кадрирования).
     * Картинка загружается в tmp-хранилище, чтобы её можно было оттуда оперативно удалить и иметь реалтаймовый доступ к ней. */
   def handleTempImg = Action.async(parse.multipartFormData) { implicit request =>
-    bruteForceProtect.map { _ =>
+    bruteForceProtected {
       _handleTempImg(OrigImageUtil, marker = None)
     }
   }

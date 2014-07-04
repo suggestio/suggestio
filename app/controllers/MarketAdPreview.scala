@@ -211,7 +211,7 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
 
   /** Подготовка картинки, которая загружается в динамическое поле блока. */
   def prepareBlockImg(blockId: Int, fn: String) = IsAuth.async(parse.multipartFormData) { implicit request =>
-    bruteForceProtect flatMap { _ =>
+    bruteForceProtected {
       val bc: BlockConf = BlocksConf(blockId)
       bc.blockFieldForName(fn) match {
         case Some(bfi: BfImage) =>

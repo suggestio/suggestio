@@ -433,7 +433,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
 
   private def nodeOwnerInviteAcceptCommon(adnId: String, eaId: String)(f: F) = {
     MaybeAuth.async { implicit request =>
-      bruteForceProtect flatMap { _ =>
+      bruteForceProtected {
         EmailActivation.getById(eaId) flatMap {
           case Some(eAct) if eAct.key == adnId =>
             nodeOwnerInviteAcceptGo(adnId, eAct, f)
