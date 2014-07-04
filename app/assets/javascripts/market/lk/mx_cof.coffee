@@ -183,13 +183,6 @@ CbcaCommon = () ->
 
   self.init = () ->
 
-    $(document).on 'click', '#hideTransactions', (e)->
-      e.preventDefault()
-      $this = $ this
-
-      $('#transactionsList tr')
-      .not ':first'
-      .remove()
 
     $(document).on 'click', '#getTransactions', (e)->
       e.preventDefault()
@@ -208,6 +201,9 @@ CbcaCommon = () ->
             .remove()
 
           $('#transactionsList').append data
+
+          if $this.attr 'data-init'
+            $('#transactionsHistory').slideDown()
 
           $('.js-vertical-line').each () ->
             $this = $ this

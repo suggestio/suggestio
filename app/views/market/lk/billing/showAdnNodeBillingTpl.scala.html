@@ -77,7 +77,7 @@
                     <span class="value f-left" style="padding-top: 5px;">18.05.2014</span>
 
                     <span class="gray-but-smallest inline f-left" style="margin-left: 20px;">
-                      <a href="transactionsHistory" class="white-border-top js-slide-btn">История операций</a>
+                      <a  class="white-border-top" id="getTransactions" data-init="true" href="@routes.MarketLkBilling._txnsList(adnNode.id.get)">История операций</a>
                     </span>
 
                 </div>
@@ -135,43 +135,45 @@
         </div>
 
         <div class="lk-edit-form__block_body js-slide-content">
-          <div class="lk-edit-form__block_body_inner">
-            @* Тут раньше был список транзакций. *@
+          @*<div class="lk-edit-form__block_body_inner">
+
               <span class="gray-but-smallest inline f-left" >
                 <a href="@routes.MarketLkBilling._txnsList(adnNode.id.get)" class="white-border-top" id="getTransactions" data-init="true">Показать транзакции</a>
               </span>
 
-          </div>
+          </div>*@
+
+          <table class="siom-table __size-XL" id="transactionsList">
+            <tr>
+              <th class="__bg-head">
+                <div class="table-cell-cnt __size-S">
+                  №
+                </div>
+                <div class="border-line"></div>
+              </th>
+              <th class="__bg-head">
+                <div class="table-cell-cnt __size-S">
+                  Основание:
+                </div>
+                <div class="border-line"></div>
+              </th>
+              <th class="__bg-head">
+                <div class="table-cell-cnt __size-S">
+                  Дата операции:
+                </div>
+                <div class="border-line"></div>
+              </th>
+              <th class="__bg-head">
+                <div class="table-cell-cnt __size-S ">
+                  Сумма:
+                </div>
+                <div class="border-line"></div>
+              </th>
+            </tr>
+          </table>
+
         </div>
 
-        <table class="siom-table __size-XL" id="transactionsList">
-          <tr>
-            <th class="__bg-head">
-              <div class="table-cell-cnt __size-S">
-                №
-              </div>
-              <div class="border-line"></div>
-            </th>
-            <th class="__bg-head">
-              <div class="table-cell-cnt __size-S">
-                Основание:
-              </div>
-              <div class="border-line"></div>
-            </th>
-            <th class="__bg-head">
-              <div class="table-cell-cnt __size-S">
-                Дата операции:
-              </div>
-              <div class="border-line"></div>
-            </th>
-            <th class="__bg-head">
-              <div class="table-cell-cnt __size-S ">
-                Сумма:
-              </div>
-              <div class="border-line"></div>
-            </th>
-          </tr>
-        </table>
 
       </div>
 
