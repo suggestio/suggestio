@@ -7,7 +7,7 @@
 
 @market.lk.lkBase("Биллинг | " + adnNode.meta.name, adnIdOpt = adnNode.id) {
 
-  <div class="title-wrap">
+<div class="title-wrap" xmlns="http://www.w3.org/1999/html">
     <div class="center">
       <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)">&nbsp;</a>
       <div class="title-inner">НАСТРОЙКИ</div>
@@ -144,7 +144,35 @@
           </div>
         </div>
 
-        <table class="siom-table __size-XL" id="transactionsList"></table>
+        <table class="siom-table __size-XL" id="transactionsList">
+          <tr>
+            <th class="__bg-head">
+              <div class="table-cell-cnt __size-S">
+                №
+              </div>
+              <div class="border-line"></div>
+            </th>
+            <th class="__bg-head">
+              <div class="table-cell-cnt __size-S">
+                Основание:
+              </div>
+              <div class="border-line"></div>
+            </th>
+            <th class="__bg-head">
+              <div class="table-cell-cnt __size-S">
+                Дата операции:
+              </div>
+              <div class="border-line"></div>
+            </th>
+            <th class="__bg-head">
+              <div class="table-cell-cnt __size-S ">
+                Сумма:
+              </div>
+              <div class="border-line"></div>
+            </th>
+          </tr>
+        </table>
+
       </div>
 
 

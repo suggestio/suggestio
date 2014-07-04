@@ -191,7 +191,9 @@ CbcaCommon = () ->
         url: $this.attr 'href'
         success: (data)->
           if $this.attr 'data-init'
-            $('#transactionsList').html ''
+            $('#transactionsList tr')
+            .not ':first'
+            .remove()
           else
             $this
             .closest 'tr'
