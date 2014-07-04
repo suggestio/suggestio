@@ -4,14 +4,9 @@
 @import util.TplDataFormatUtil._
 
 @ctx.billBalanceOpt.map { mbb =>
-  <div class="billing-but">
-    <div class="white-border-top">
-      <a href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)">
 
-        @* Отобразить баланс + TODO ссылка на выписку по счету. *@
-        <span>Баланс:</span> @formatPrice(mbb.amount, mbb.currency)
-
+      <a class="siom-ac-btn __color-2 __size-S __ft-XL __billing" href="@routes.MarketLkBilling.showAdnNodeBilling(adnId)">
+        <span class="siom-ac-btn_ft-S">Баланс:</span> @formatPrice(mbb.amount, mbb.currency)
       </a>
-    </div>
-  </div>
+
 }
