@@ -31,6 +31,9 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
   /** Максимальное кол-во магазинов, возвращаемых в списке ТЦ. */
   val MAX_SHOPS_LIST_LEN = configuration.getInt("market.frontend.subproducers.count.max") getOrElse 200
 
+  /** Отображать ли пустые категории? */
+  val SHOW_EMPTY_CATS = configuration.getBoolean("market.frontend.cats.empty.show") getOrElse false
+
 
   /** Экшн, который рендерит страничку приветствия, которое видит юзер при первом подключении к wi-fi */
   def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
@@ -75,8 +78,6 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
     val allProdsFut = MAdnNode.findBySupId(adnId, onlyEnabled = true, maxResults = MAX_SHOPS_LIST_LEN)
       .map { _.map { prod => prod.id.get -> prod }.toMap }
     val prodsStatsFut = MAd.findProducerIdsForReceiver(adnId)
-    // Текущие категории ТЦ
-    val mmcatsFut = MMartCategory.findTopForOwner(getCatOwner(adnId))
     // Нужно отфильтровать магазины без рекламы.
     val shopsWithAdsFut = for {
       allProds    <- allProdsFut
@@ -92,6 +93,16 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
     // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
     val catsStatsFut = MAd.stats4UserCats(MAd.searchAdsReqBuilder(catAdsSearch))
       .map { _.toMap }
+    // Текущие категории узла
+    val mmcatsFut: Future[Seq[MMartCategory]] = if(SHOW_EMPTY_CATS) {
+      MMartCategory.findTopForOwner(getCatOwner(adnId))
+    } else {
+      // Отключено отображение скрытых категорий. Исходя из статистики, прочитать из модели только необходимые карточки.
+      catsStatsFut flatMap { catsStats =>
+        MMartCategory.multiGet(catsStats.keysIterator)
+          .map { _.sortBy(MMartCategory.sortByMmcat) }
+      }
+    }
     val welcomeAdOptFut: Future[Option[MWelcomeAd]] = adnNode.meta.welcomeAdId match {
       case Some(waId) => MWelcomeAd.getById(waId)
       case None => Future successful None
