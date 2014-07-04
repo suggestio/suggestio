@@ -176,6 +176,50 @@ object UrlUtil extends Serializable {
     result.toString()
   }
 
+  def humanizeUrlAggressive(url: String): String = {
+    try {
+      humanizeUrlAggressive( new URL(url) )
+    } catch {
+      case ex: Exception => url
+    }
+  }
+  def humanizeUrlAggressive(url: URL): String = {
+    val sb = new StringBuilder(128)
+    val proto = url.getProtocol
+    if ( !((proto equalsIgnoreCase "http") || (proto equalsIgnoreCase "https")) ) {
+      sb.append(proto.toUpperCase).append("://")
+    }
+    humanizeUrlHost(url, sb)
+    val file = url.getFile
+    if (file != null && !file.isEmpty && file != "/") {
+      sb append file
+    }
+    sb.toString()
+  }
+
+
+  def humanizeUrl(url: String): String = {
+    try {
+      humanizeUrl( new URL(url) )
+    } catch {
+      case ex: Exception => url
+    }
+  }
+  def humanizeUrl(url: URL): String = {
+    val sb = new StringBuilder(128)
+    sb.append(url.getProtocol).append("://")
+    humanizeUrlHost(url, sb)
+    sb.append(url.getFile)
+    sb.toString()
+  }
+
+  private def humanizeUrlHost(url: URL, sb: StringBuilder) {
+    sb append IDNA.toUnicode(url.getHost)
+    val port = url.getPort
+    if (port > 0 && port != url.getDefaultPort) {
+      sb.append(":").append(port)
+    }
+  }
 
   // URL normalizer - система нормализации ссылок, которая будет далее использоваться в энтерпрайзе.
   // Является статическим подобием SimpleUrlNormalizer, но часть функций дополнена из sio_url_norm и в целом допилена.
@@ -198,7 +242,6 @@ object UrlUtil extends Serializable {
         ""
     }
   }
-
 
   /**
    * Враппер над encodeCodePoint. Закодировать целый компонент ссылки. В зависимости от компонента используются те или иные

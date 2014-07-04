@@ -186,6 +186,20 @@ trait AdsSearchArgsT {
   def generation: Option[Long]
 }
 
+/** Трейт враппера над экземпляром [[AdsSearchArgsT]]. */
+trait AdsSearchArgsWrapperT extends AdsSearchArgsT {
+  def underlying: AdsSearchArgsT
+  override def producerIds = underlying.producerIds
+  override def maxResults  = underlying.maxResults
+  override def forceFirstIds = underlying.forceFirstIds
+  override def levels = underlying.levels
+  override def offset = underlying.offset
+  override def receiverIds = underlying.receiverIds
+  override def qOpt = underlying.qOpt
+  override def generation = underlying.generation
+  override def catIds = underlying.catIds
+}
+
 
 /** Если нужно добавить в рекламную модель поиск по рекламным карточкам, то следует задействовать вот этот трейт. */
 trait AdsSimpleSearchT extends EsModelMinimalStaticT {
@@ -218,6 +232,22 @@ trait AdsSimpleSearchT extends EsModelMinimalStaticT {
       .execute()
       .map { searchResp2list }
     postprocessSearchResults(adSearch, resultFut)
+  }
+
+  /**
+   * Посчитать кол-во рекламных карточек, подходящих под запрос.
+   * @param adSearch Экземпляр, описывающий поисковый запрос.
+   * @return Фьючерс с кол-вом совпадений.
+   */
+  def countAds(adSearch: AdsSearchArgsT)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
+    // Необходимо выкинуть из запроса ненужные части.
+    val adSearch2 = new AdsSearchArgsWrapperT {
+      override def underlying = adSearch
+      override def generation = None
+      override def forceFirstIds = Nil
+    }
+    val query = AdsSearch.prepareEsQuery(adSearch2)
+    count(query)
   }
 
   def searchAdsRt(adSearch: AdsSearchArgsT)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
