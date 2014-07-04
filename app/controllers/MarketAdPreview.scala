@@ -26,7 +26,7 @@ import views.html.market.showcase._
  * для обновления рекламной карточки в реальном времени.
  */
 
-object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImgSupport {
+object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtect {
   import LOGGER._
 
   /** Объект, содержащий дефолтовые значения для preview-формы. Нужен для возможности простого импорта значений
@@ -206,15 +206,19 @@ object MarketAdPreview extends SioController with PlayMacroLogsImpl with TempImg
   }
 
 
+  override val BRUTEFORCE_TRY_COUNT_DIVISOR: Int = 3
+  override val BRUTEFORCE_CACHE_PREFIX: String = "aip:"
 
   /** Подготовка картинки, которая загружается в динамическое поле блока. */
-  def prepareBlockImg(blockId: Int, fn: String) = IsAuth.apply(parse.multipartFormData) { implicit request =>
-    val bc: BlockConf = BlocksConf(blockId)
-    bc.blockFieldForName(fn) match {
-      case Some(bfi: BfImage) =>
-        _handleTempImg(bfi.imgUtil, Some(bfi.marker))
+  def prepareBlockImg(blockId: Int, fn: String) = IsAuth.async(parse.multipartFormData) { implicit request =>
+    bruteForceProtect flatMap { _ =>
+      val bc: BlockConf = BlocksConf(blockId)
+      bc.blockFieldForName(fn) match {
+        case Some(bfi: BfImage) =>
+          _handleTempImg(bfi.imgUtil, Some(bfi.marker))
 
-      case _ => NotFound
+        case _ => NotFound
+      }
     }
   }
 
