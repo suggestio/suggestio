@@ -178,6 +178,8 @@ siomart =
         return false
 
       if state == null
+        if siomart.utils.ge('sioMartIndexGrid').innerHTML == ''
+          return false
         siomart.navigation_layer.back()
         siomart.grid_ads.load_index_ads()
         return false
@@ -1178,6 +1180,7 @@ siomart =
   ## Инициализация Sio.Market
   ###########################
   init : () ->
+
     siomart.config.mart_id = window.siomart_id
     siomart.config.host = window.siomart_host
 
@@ -1207,7 +1210,7 @@ siomart =
 
       if value == null || value == false || value == 'false' || siomart.utils.is_sio_host() == true
         console.log 'open mart on startup'
-        this.is_market_loaded = false
+        this.is_market_loaded = true
         siomart.utils.ge('sioMartRoot').style.display = 'block'
         siomart.load_mart_index_page()
 
