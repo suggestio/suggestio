@@ -2,7 +2,7 @@ package controllers
 
 import play.api.mvc.Action
 import util.img._
-import ImgFormUtil.imgInfo2imgKey
+import util.img.ImgFormUtil.{LogoOpt_t, imgInfo2imgKey}
 import util.PlayMacroLogsImpl
 import util.acl._
 import models._
@@ -10,7 +10,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.SiowebEsUtil.client
 import views.html.market.lk.adn._
 import io.suggest.ym.model.MAdnNode
-import play.api.data.Form
+import play.api.data.{Mapping, Form}
 import play.api.data.Forms._
 import util.FormUtil._
 import GalleryUtil._
@@ -108,7 +108,7 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
   val logoKM = ImgFormUtil.getLogoKM("adn.logo.invalid", marker=TMP_LOGO_MARKER)
 
   /** Маппинг для формы добавления/редактирования торгового центра. */
-  private def nodeFormM(nodeInfo: AdNetMemberInfo) = {
+  private def nodeFormM(nodeInfo: AdNetMemberInfo): Form[FormMapResult] = {
     val metaM = if (nodeInfo.isReceiver) {
       rcvrMetaM
     } else if (nodeInfo.isProducer) {
@@ -116,12 +116,18 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
     } else {
       nodeMetaM
     }
-    Form(tuple(
-      "meta" -> metaM,
-      welcomeImgIdKM,
-      logoKM,
-      galleryKM
-    ))
+    val metaKM = "meta" -> metaM
+    // У ресивера есть поля для картинки приветствия и галерея для демонстрации.
+    val m: Mapping[FormMapResult] = if (nodeInfo.isReceiver) {
+      mapping(metaKM, logoKM, welcomeImgIdKM, galleryKM)
+        { FormMapResult.apply }
+        { FormMapResult.unapply }
+    } else {
+      mapping(metaKM, logoKM)
+        { FormMapResult(_, _) }
+        { fmr => Some((fmr.meta, fmr.logoOpt)) }
+    }
+    Form(m)
   }
 
 
@@ -136,8 +142,8 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
     val formNotFilled = nodeFormM(adnNode.adn)
     waOptFut map { welcomeAdOpt =>
       val welcomeImgKey = welcomeAd2iik(welcomeAdOpt)
-      val formFilled = formNotFilled
-        .fill((adnNode.meta, welcomeImgKey, martLogoOpt, gallerryIks))
+      val fmr = FormMapResult(adnNode.meta, martLogoOpt, welcomeImgKey, gallerryIks)
+      val formFilled = formNotFilled fill fmr
       Ok(leaderEditFormTpl(adnNode, formFilled, welcomeAdOpt))
     }
   }
@@ -154,25 +160,25 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
           NotAcceptable(leaderEditFormTpl(adnNode, formWithErrors, welcomeAdOpt))
         }
       },
-      {case (adnMeta2, newWelcomeImgOpt, logoImgIdOpt, newGallery) =>
-        trace(s"editAdnNodeSubmit($adnId): newGallery[${newGallery.size}] ;; newLogo = ${logoImgIdOpt.map(_.iik.filename)}")
+      {fmr =>
+        trace(s"editAdnNodeSubmit($adnId): newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.iik.filename)}")
         // В фоне обновляем логотип ТЦ
         val savedLogoFut = ImgFormUtil.updateOrigImg(
-          needImgs = logoImgIdOpt.toSeq,
+          needImgs = fmr.logoOpt.toSeq,
           oldImgs  = adnNode.logoImgOpt.toIterable
         )
         // Запускаем апдейт галереи.
         val galleryUpdFut = ImgFormUtil.updateOrigImgId(
-          needImgs = gallery4s(newGallery),
+          needImgs = gallery4s(fmr.gallery),
           oldImgIds = adnNode.gallery
         )
         // В фоне обновляем картинку карточки-приветствия.
-        val savedWelcomeImgsFut = updateWelcodeAdFut(adnNode, newWelcomeImgOpt)
+        val savedWelcomeImgsFut = updateWelcodeAdFut(adnNode, fmr.waImgIdOpt)
         for {
           savedLogo <- savedLogoFut
           waIdOpt   <- savedWelcomeImgsFut
           gallery   <- galleryUpdFut
-          _adnId    <- applyNodeChanges(adnNode, adnMeta2, waIdOpt, savedLogo, gallery).save
+          _adnId    <- applyNodeChanges(adnNode, fmr.meta, waIdOpt, savedLogo, gallery).save
         } yield {
           // Собираем новый экземпляр узла
           Redirect(routes.MarketLkAdn.showAdnNode(_adnId))
@@ -219,5 +225,12 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
     _handleTempImg(MartLogoImageUtil, Some(TMP_LOGO_MARKER))
   }
 
+
+  sealed case class FormMapResult(
+    meta: AdnMMetadata,
+    logoOpt: LogoOpt_t,
+    waImgIdOpt: Option[ImgIdKey] = None,
+    gallery: List[ImgIdKey] = Nil
+  )
 }
 
