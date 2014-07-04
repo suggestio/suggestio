@@ -505,7 +505,7 @@ siomart =
       id : 'sioMartTrigger'
       style : 'background-color: #' + window.siomart_node_color
 
-    logo_img = if typeof window.siomart_logo_src != 'undefined' then '<img src=\'' + window.siomart_logo_src + '\' width=80/>' else ''
+    logo_img = if typeof window.siomart_logo_src != 'undefined' then '<img src=\'' + window.siomart_logo_src + '\'/>' else ''
     sm_trigger = this.utils.ce 'div', sm_trigger_attrs, '<span class="trigger-helper">' + logo_img + '</span>'
 
     ## Интерфейс маркета
