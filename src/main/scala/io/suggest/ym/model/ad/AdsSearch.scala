@@ -109,7 +109,7 @@ object AdsSearch {
         None
       } else {
         var nestedSubquery: QueryBuilder = QueryBuilders.termsQuery(EMReceivers.RCVRS_RECEIVER_ID_ESFN, receiverIds : _*)
-        if (!levels.isEmpty) {
+        if (levels.nonEmpty) {
           val levelFilter = FilterBuilders.termsFilter(EMReceivers.RCVRS_SLS_PUB_ESFN, levels.map(_.toString) : _*)
           nestedSubquery = QueryBuilders.filteredQuery(nestedSubquery, levelFilter)
         }

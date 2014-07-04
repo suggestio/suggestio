@@ -548,10 +548,10 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
 
   /**
    * Прочитать из базы все перечисленные id разом.
-   * @param ids id документов этой модели.
+   * @param ids id документов этой модели. Можно передавать как коллекцию, так и свеженький итератор оной.
    * @return Список результатов в неопределённом порядке.
    */
-  def multiGet(ids: Seq[String], acc0: List[T] = Nil)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+  def multiGet(ids: TraversableOnce[String], acc0: List[T] = Nil)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
     if (ids.isEmpty) {
       Future successful acc0
     } else {
