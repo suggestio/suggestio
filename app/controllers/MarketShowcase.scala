@@ -140,22 +140,32 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
   }
 
 
-  /** Экшен для рендера горизонтальной выдачи карточек. */
-  def focusedAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
-    // Костыль, т.к. сортировка forceFirstIds на стороне сервера не пашет:
+  /** Экшен для рендера горизонтальной выдачи карточек.
+    * @param adSearch Поисковый запрос.
+    * @param h true означает, что нужна начальная страница с html.
+    *          false - возвращать только json-массив с отрендеренными блоками, без html-страницы с первой карточкой.
+    * @return
+    */
+  def focusedAds(adSearch: AdSearch, h: Boolean) = MaybeAuth.async { implicit request =>
+    // Костыль, т.к. сортировка forceFirstIds на стороне ES-сервера всё ещё не пашет:
     val adSearch2 = if (adSearch.forceFirstIds.isEmpty) {
       adSearch
     } else {
       adSearch.copy(forceFirstIds = Nil)
     }
     val mads1Fut = MAd.searchAds(adSearch2)
+    val madsCountFut = MAd.countAds(adSearch2)  // В countAds() можно отправлять и обычный adSearch: forceFirstIds там игнорируется.
     val producersFut = MAdnNodeCache.multiGet(adSearch2.producerIds)
-    val firstAdsFut = MAd.multiGet(adSearch.forceFirstIds)
-      .map { _.filter {
-        mad => adSearch.producerIds contains mad.producerId
-      } }
-    val mads2Fut: Future[Seq[MAd]] = mads1Fut flatMap { mads =>
-      firstAdsFut map { firstAds =>
+    // Если выставлены forceFirstIds, то нужно подолнительно запросить получение указанных id карточек и выставить их в начало списка mads1.
+    val mads2Fut: Future[Seq[MAd]] = if (adSearch2.forceFirstIds.nonEmpty) {
+      val firstAdsFut = MAd.multiGet(adSearch.forceFirstIds)
+        .map { _.filter {
+          mad => adSearch.producerIds contains mad.producerId
+        } }
+      for {
+        mads      <- mads1Fut
+        firstAds  <- firstAdsFut
+      } yield {
         val mads1: Seq[MAd] = if (firstAds.nonEmpty) {
           val firstAdsIds = firstAds.map(_.id.get)
           // Если в mads, которые получились в результате поиска, уже содержаться те объявы, которые есть в firstAds, то выкинуть их из хвоста.
@@ -167,24 +177,35 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
         }
         firstAds ++ mads1
       }
+    } else {
+      // Дополнительно выставлять первые карточки не требуется. Просто возвращаем фьючерс исходного списка карточек.
+      mads1Fut
     }
-    mads2Fut flatMap { mads =>
+    madsCountFut flatMap { madsCount =>
+      val madsCountInt = madsCount.toInt
       producersFut flatMap { producers =>
-        // Рендерим базовый html подвыдачи и рендерим остальные рекламные блоки отдельно, для ленивой подгрузки.
         val producer = producers.head
-        val adsCount = mads.size
-        // Распараллеливаем рендер блоков по всем ядрам (называется parallel map). На 4ядернике (2 + HT) получается двукратный прирост на 33 карточках.
-        val ctx = implicitly[Context]
-        val blocksHtmlsFut = parRenderBlocks(mads.tail) {
-          (mad, index)  =>  _focusedAdTpl(mad, index + 1, producer, adsCount = adsCount)(ctx)
-        }
-        // В текущем потоке рендерим основную HTML'ку, которая будет сразу отображена юзеру.
-        val firstMads = mads.headOption.toList
-        val html = JsString(_focusedAdsTpl(firstMads, adSearch, producer, adsCount = adsCount)(ctx))
-        for {
-          blocks <- blocksHtmlsFut
-        } yield {
-          jsonOk("producerAds", Some(html), blocks)
+        mads2Fut flatMap { mads =>
+          // Рендерим базовый html подвыдачи (если запрошен) и рендерим остальные рекламные блоки отдельно, для отложенный инжекции в выдачу (чтобы подавить тормоза от картинок).
+          val mads4renderAsArray = if (h) mads.tail else mads
+          val ctx = implicitly[Context]
+          // Распараллеливаем рендер блоков по всем ядрам (называется parallel map). На 4ядернике (2 + HT) получается двукратный прирост на 33 карточках.
+          val blocksHtmlsFut = parRenderBlocks(mads4renderAsArray) {
+            (mad, index) => _focusedAdTpl(mad, index + 1, producer, adsCount = madsCountInt)(ctx)
+          }
+          // В текущем потоке рендерим основную HTML'ку, которая будет сразу отображена юзеру. (если запрошено через аргумент h)
+          val htmlOpt = if (h) {
+            val firstMads = mads.headOption.toList
+            val html = JsString(_focusedAdsTpl(firstMads, adSearch, producer, adsCount = madsCountInt)(ctx))
+            Some(html)
+          } else {
+            None
+          }
+          for {
+            blocks <- blocksHtmlsFut
+          } yield {
+            jsonOk("producerAds", htmlOpt, blocks)
+          }
         }
       }
     }

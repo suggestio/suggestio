@@ -163,7 +163,7 @@ GET  /market/site_all/:adnId            controllers.MarketShowcase.myAdsSite(adn
 GET  /market/index_all/:adnId           controllers.MarketShowcase.myAdsShowcase(adnId)
 GET  /market/script/:adnId              controllers.MarketShowcase.nodeSiteScript(adnId)
 GET  /market/ads                        controllers.MarketShowcase.findAds(a: AdSearch)
-GET  /market/fads                       controllers.MarketShowcase.focusedAds(a: AdSearch)
+GET  /market/fads                       controllers.MarketShowcase.focusedAds(a: AdSearch, h: Boolean ?= true)
 
 # Сбор статистики.
 POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)
