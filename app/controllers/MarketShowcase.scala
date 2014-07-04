@@ -147,17 +147,19 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
     * @return
     */
   def focusedAds(adSearch: AdSearch, h: Boolean) = MaybeAuth.async { implicit request =>
-    // Костыль, т.к. сортировка forceFirstIds на стороне ES-сервера всё ещё не пашет:
-    val adSearch2 = if (adSearch.forceFirstIds.isEmpty) {
-      adSearch
-    } else {
-      adSearch.copy(forceFirstIds = Nil)
+    val mads1Fut = {
+      // Костыль, т.к. сортировка forceFirstIds на стороне ES-сервера всё ещё не пашет:
+      val adSearch2 = if (adSearch.forceFirstIds.isEmpty) {
+        adSearch
+      } else {
+        adSearch.copy(forceFirstIds = Nil)
+      }
+      MAd.searchAds(adSearch2)
     }
-    val mads1Fut = MAd.searchAds(adSearch2)
-    val madsCountFut = MAd.countAds(adSearch2)  // В countAds() можно отправлять и обычный adSearch: forceFirstIds там игнорируется.
-    val producersFut = MAdnNodeCache.multiGet(adSearch2.producerIds)
+    val madsCountFut = MAd.countAds(adSearch)  // В countAds() можно отправлять и обычный adSearch: forceFirstIds там игнорируется.
+    val producersFut = MAdnNodeCache.multiGet(adSearch.producerIds)
     // Если выставлены forceFirstIds, то нужно подолнительно запросить получение указанных id карточек и выставить их в начало списка mads1.
-    val mads2Fut: Future[Seq[MAd]] = if (adSearch2.forceFirstIds.nonEmpty) {
+    val mads2Fut: Future[Seq[MAd]] = if (adSearch.forceFirstIds.nonEmpty) {
       val firstAdsFut = MAd.multiGet(adSearch.forceFirstIds)
         .map { _.filter {
           mad => adSearch.producerIds contains mad.producerId
