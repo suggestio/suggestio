@@ -1,10 +1,12 @@
 package controllers
 
+import models.Context
+import play.api.cache.Cache
 import play.api.mvc._
-import util.{PlayMacroLogsImpl, HtmlCompressUtil, ContextT}
+import play.twirl.api.{TxtFormat, HtmlFormat}
+import util._
 import scala.concurrent.{Promise, Future}
 import util.event.SiowebNotifier
-import play.api.templates.{TxtFormat, HtmlFormat}
 import play.api.libs.concurrent.Akka
 import scala.concurrent.duration._
 import play.api.Play.current
@@ -15,7 +17,6 @@ import play.api.libs.Files.TemporaryFile
 import models._
 import util.img.OutImgFmts
 import net.sf.jmimemagic.Magic
-import util.ContextImpl
 import play.api.libs.json.JsString
 import play.api.mvc.Result
 import util.SiowebEsUtil.client
@@ -80,20 +81,51 @@ trait SioController extends Controller with ContextT {
 }
 
 
-/** Функция для защиты от брутфорса. Повзоляет сделать асинхронную задержку выполнения экшена в контроллере. */
-trait BruteForceProtect {
+/** Функция для защиты от брутфорса. Повзоляет сделать асинхронную задержку выполнения экшена в контроллере.
+  * Настраивается путём перезаписи констант. Если LAG = 333 ms, и DIVISOR = 3, то скорость ответов будет такова:
+  * 0*333 = 0 ms (3 раза), затем 1*333 = 333 ms (3 раза), затем 2*333 = 666 ms (3 раза), и т.д.
+  */
+trait BruteForceProtect extends PlayMacroLogsI {
 
-  val INVITE_CHECK_LAG_DURATION = 333 millis
+  /** Шаг задержки. Добавляемая задержка ответа будет кратна этому лагу. */
+  val BRUTEFORCE_LAG_MS = 222
+
+  /** Префикс в кеше для ip-адреса. */
+  val BRUTEFORCE_CACHE_PREFIX = "bfp:"
+
+  /** Нормализация кол-ва попыток происходит по этому целому числу. */
+  val BRUTEFORCE_TRY_COUNT_DIVISOR = 2
+
+  /** Время хранения в кеше инфы о попытках для ip-адреса. */
+  val BRUTEFORCE_CACHE_TTL = 30 seconds
 
   /** Система асинхронного платформонезависимого противодействия брутфорс-атакам. */
-  def bruteForceProtect: Future[_] = {
+  def bruteForceProtect(implicit request: RequestHeader): Future[_] = {
     // Для противодействию брутфорсу добавляем асинхронную задержку выполнения проверки по методике https://stackoverflow.com/a/17284760
-    // TODO Нужно лимитировать попытки по IP клиента. ip можно закидывать в cache с коротким ttl.
-    val lagPromise = Promise[Unit]()
-    Akka.system.scheduler.scheduleOnce(INVITE_CHECK_LAG_DURATION) {
-      lagPromise.success()
+    val raddr = request.remoteAddress
+    val ck = BRUTEFORCE_CACHE_PREFIX + raddr
+    val prevTryCount: Int = Cache.getAs[Int](ck) getOrElse 0
+    val lagLevel = prevTryCount / BRUTEFORCE_TRY_COUNT_DIVISOR
+    val lagMs = lagLevel * lagLevel * BRUTEFORCE_LAG_MS
+    val resultFut = if (lagMs <= 0) {
+      Future successful None
+    } else {
+      // Запускаем таймер задержки исполнения реквеста, пока в фоне.
+      val lagPromise = Promise[Unit]()
+      Akka.system.scheduler.scheduleOnce(lagMs milliseconds) {
+        lagPromise.success()
+      }
+      lazy val logPrefix = s"bruteForceProtect($raddr): ${request.method} ${request.path} :: "
+      if (lagMs > 2000) {
+        LOGGER.warn(s"${logPrefix}Attack is going on! Inserting fat lag $lagMs ms, prev.try count = $prevTryCount.")
+      } else {
+        LOGGER.debug(s"${logPrefix}Inserting lag $lagMs ms, try = $prevTryCount")
+      }
+      lagPromise.future
     }
-    lagPromise.future
+    // Закинуть в кеш инфу о попытке
+    Cache.set(ck, prevTryCount + 1, BRUTEFORCE_CACHE_TTL)
+    resultFut
   }
 
 }

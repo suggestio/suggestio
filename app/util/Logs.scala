@@ -31,11 +31,14 @@ trait LazyLogger {
 
 /** Аналог MacroLogsImpl, но использует плеевский генератор slf4j-логгеров. Скорее всего эквивалентен исходному логгеру.
   * Создан для проверки некоторых вещей, касающихся логгирования, потом можно будет безопасно удалить. */
-trait PlayMacroLogsImpl {
-  val LOGGER = PlayMacroLogsImpl.getLogger(getClass)
+trait PlayMacroLogsI {
+  def LOGGER: MacroLogger
 }
-trait PlayLazyMacroLogsImpl {
-  lazy val LOGGER = PlayMacroLogsImpl.getLogger(getClass)
+trait PlayMacroLogsImpl extends PlayMacroLogsI {
+  override val LOGGER = PlayMacroLogsImpl.getLogger(getClass)
+}
+trait PlayLazyMacroLogsImpl extends PlayMacroLogsI {
+  override lazy val LOGGER = PlayMacroLogsImpl.getLogger(getClass)
 }
 
 

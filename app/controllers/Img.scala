@@ -28,7 +28,7 @@ import io.suggest.ym.model.common.MImgInfoMeta
  * Изначально контроллер служил только для превьюшек картинок, и назывался "Thumb".
  */
 
-object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
+object Img extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtect {
 
   import LOGGER._
 
@@ -126,9 +126,10 @@ object Img extends SioController with PlayMacroLogsImpl with TempImgSupport {
 
   /** Загрузка сырой картинки для дальнейшей базовой обработки (кадрирования).
     * Картинка загружается в tmp-хранилище, чтобы её можно было оттуда оперативно удалить и иметь реалтаймовый доступ к ней. */
-  def handleTempImg = Action(parse.multipartFormData) { implicit request =>
-    // TODO Нужен ddos protection, срабатывающий по накапливанию данных в cache.
-    _handleTempImg(OrigImageUtil, marker = None)
+  def handleTempImg = Action.async(parse.multipartFormData) { implicit request =>
+    bruteForceProtect.map { _ =>
+      _handleTempImg(OrigImageUtil, marker = None)
+    }
   }
 
   /** Раздавалка картинок, созданных в [[handleTempImg]]. */

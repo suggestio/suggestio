@@ -90,58 +90,60 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
 
   /** Сабмит формы восстановления пароля. */
   def recoverPwFormSubmit = IsAnon.async { implicit request =>
-    val formBinded = checkCaptcha( recoverPwFormM.bindFromRequest() )
-    formBinded.fold(
-      {formWithErrors =>
-        debug("recoverPwFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
-        NotAcceptable(recoverPwFormTpl(formWithErrors))
-      },
-      {email1 =>
-        // TODO Надо найти юзера в базах EmailPwIdent и MozPersonaIdent, и если есть, то отправить письмецо.
-        MPersonIdent.findIdentsByEmail(email1) flatMap { idents =>
-          if (idents.nonEmpty) {
-            val emailIdentFut: Future[EmailPwIdent] = idents
-              .foldLeft[List[EmailPwIdent]] (Nil) {
+    bruteForceProtect(request) flatMap { _ =>
+      val formBinded = checkCaptcha(recoverPwFormM.bindFromRequest())
+      formBinded.fold(
+        {formWithErrors =>
+          debug("recoverPwFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
+          NotAcceptable(recoverPwFormTpl(formWithErrors))
+        },
+        {email1 =>
+          // TODO Надо найти юзера в базах EmailPwIdent и MozPersonaIdent, и если есть, то отправить письмецо.
+          MPersonIdent.findIdentsByEmail(email1) flatMap { idents =>
+            if (idents.nonEmpty) {
+              val emailIdentFut: Future[EmailPwIdent] = idents
+                .foldLeft[List[EmailPwIdent]](Nil) {
                 case (acc, epw: EmailPwIdent) => epw :: acc
                 case (acc, _) => acc
               }
-              .headOption
-              .map { Future successful }
-              .getOrElse {
-                // берём personId из moz persona. Там в списке только один элемент, т.к. email является уникальным в рамках ident-модели.
-                val personId = idents.map(_.personId).head
-                val epw = EmailPwIdent(email = email1, personId = personId, pwHash = "", isVerified = false)
-                epw.save
-                  .map { _ => epw }
+                .headOption
+                .map { Future successful }
+                .getOrElse {
+                  // берём personId из moz persona. Там в списке только один элемент, т.к. email является уникальным в рамках ident-модели.
+                  val personId = idents.map(_.personId).head
+                  val epw = EmailPwIdent(email = email1, personId = personId, pwHash = "", isVerified = false)
+                  epw.save
+                    .map { _ => epw}
+                }
+              emailIdentFut flatMap { epwIdent =>
+                // Нужно сгенерить ключ для восстановления пароля. И ссылку к нему.
+                val eact = EmailActivation(email = email1, key = epwIdent.personId)
+                eact.save.map { eaId =>
+                  eact.id = Some(eaId)
+                  // Можно отправлять письмецо на ящик.
+                  val mail = use[MailerPlugin].email
+                  mail.setFrom("no-reply@suggest.io")
+                  mail.setRecipient(email1)
+                  val ctx = implicitly[Context]
+                  mail.setSubject("Suggest.io | " + Messages("Password.recovery")(ctx.lang))
+                  mail.send(
+                    bodyText = views.txt.ident.recover.emailPwRecoverTpl(eact)(ctx),
+                    bodyHtml = emailPwRecoverTpl(eact)(ctx)
+                  )
+                }
               }
-            emailIdentFut flatMap { epwIdent =>
-              // Нужно сгенерить ключ для восстановления пароля. И ссылку к нему.
-              val eact = EmailActivation(email = email1, key = epwIdent.personId)
-              eact.save.map { eaId =>
-                eact.id = Some(eaId)
-                // Можно отправлять письмецо на ящик.
-                val mail = use[MailerPlugin].email
-                mail.setFrom("no-reply@suggest.io")
-                mail.setRecipient(email1)
-                val ctx = implicitly[Context]
-                mail.setSubject("Suggest.io | " + Messages("Password.recovery")(ctx.lang))
-                mail.send(
-                  bodyText = views.txt.ident.recover.emailPwRecoverTpl(eact)(ctx),
-                  bodyHtml = emailPwRecoverTpl(eact)(ctx)
-                )
-              }
+            } else {
+              // TODO Если юзера нет, то создать его и тоже отправить письмецо с активацией? или что-то иное вывести?
+              Future successful()
             }
-          } else {
-            // TODO Если юзера нет, то создать его и тоже отправить письмецо с активацией? или что-то иное вывести?
-            Future successful ()
+          } map { _ =>
+            // отрендерить юзеру результат, что всё ок, независимо от успеха поиска.
+            val result = Redirect(routes.Ident.recoverPwAccepted(email1))
+            rmCaptcha(formBinded, result)
           }
-        } map { _ =>
-          // отрендерить юзеру результат, что всё ок, независимо от успеха поиска.
-          val result = Redirect(routes.Ident.recoverPwAccepted(email1))
-          rmCaptcha(formBinded, result)
         }
-      }
-    )
+      )
+    }
   }
 
   /** Рендер страницы, отображаемой когда запрос восстановления пароля принят. */
@@ -162,7 +164,7 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
     }
     override def invokeBlock[A](request: Request[A], block: (RecoverPwRequest[A]) => Future[Result]): Future[Result] = {
       lazy val logPrefix = s"CanRecoverPw($eActId): "
-      bruteForceProtect flatMap { _ =>
+      bruteForceProtect(request) flatMap { _ =>
         val pwOpt = PersonWrapper.getFromRequest(request)
         val srmFut = SioReqMd.fromPwOpt(pwOpt)
         EmailActivation.getById(eActId).flatMap {
@@ -306,10 +308,8 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
 
 
 /** Добавить обработчик сабмита формы логина по email и паролю в контроллер. */
-trait EmailPwSubmit extends SioController {
+trait EmailPwSubmit extends SioController with PlayMacroLogsI with BruteForceProtect {
   import Ident.{EmailPwLoginForm_t, emailPwLoginFormM}
-
-  def LOGGER: Logger
 
   def emailSubmitOkCall(personId: String)(implicit request: AbstractRequestWithPwOpt[_]): Future[Call] = {
     MarketLk.getMarketRdrCallFor(personId) map { callOpt =>
@@ -321,27 +321,29 @@ trait EmailPwSubmit extends SioController {
 
   /** Самбит формы логина по email и паролю. */
   def emailPwLoginFormSubmit(r: Option[String]) = IsAnon.async { implicit request =>
-    emailPwLoginFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug("emailPwLoginFormSubmit(): Form bind failed: " + formatFormErrors(formWithErrors))
-        emailSubmitError(formWithErrors, r)
-      },
-      {case (email1, pw1) =>
-        EmailPwIdent.getByEmail(email1) flatMap { epwOpt =>
-          if (epwOpt.exists(_.checkPassword(pw1))) {
-            // Логин удался.
-            // TODO Нужно дать возможность режима сессии "чужой компьютер".
-            val personId = epwOpt.get.personId
-            RdrBackOrFut(r) { emailSubmitOkCall(personId) }
-              .map { _.withSession(username -> personId) }
-          } else {
-            val lf = emailPwLoginFormM.fill(email1 -> "")
-            val lfe = lf.withGlobalError("error.unknown.email_pw")
-            emailSubmitError(lfe, r)
+    bruteForceProtect flatMap { _ =>
+      emailPwLoginFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug("emailPwLoginFormSubmit(): Form bind failed:\n" + formatFormErrors(formWithErrors))
+          emailSubmitError(formWithErrors, r)
+        },
+        {case (email1, pw1) =>
+          EmailPwIdent.getByEmail(email1) flatMap { epwOpt =>
+            if (epwOpt.exists(_.checkPassword(pw1))) {
+              // Логин удался.
+              // TODO Нужно дать возможность режима сессии "чужой компьютер".
+              val personId = epwOpt.get.personId
+              RdrBackOrFut(r) { emailSubmitOkCall(personId) }
+                .map { _.withSession(username -> personId) }
+            } else {
+              val lf = emailPwLoginFormM.fill(email1 -> "")
+              val lfe = lf.withGlobalError("error.unknown.email_pw")
+              emailSubmitError(lfe, r)
+            }
           }
         }
-      }
-    )
+      )
+    }
   }
 
 }

@@ -24,7 +24,7 @@ import WelcomeUtil._
  * узлов делают те или иные действия.
  * Супервайзер ресторанной сети и ТЦ имеют одну форму и здесь обозначаются как "узлы-лидеры".
  */
-object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImgSupport {
+object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImgSupport with BruteForceProtect {
 
   import LOGGER._
 
@@ -221,8 +221,10 @@ object MarketLkAdnEdit extends SioController with PlayMacroLogsImpl with TempImg
    * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
    * @return Тот же формат ответа, что и для просто temp-картинок.
    */
-  def handleTempLogo = Action(parse.multipartFormData) { implicit request =>
-    _handleTempImg(MartLogoImageUtil, Some(TMP_LOGO_MARKER))
+  def handleTempLogo = Action.async(parse.multipartFormData) { implicit request =>
+    bruteForceProtect map { _ =>
+      _handleTempImg(MartLogoImageUtil, Some(TMP_LOGO_MARKER))
+    }
   }
 
 
