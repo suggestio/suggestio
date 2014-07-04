@@ -2,7 +2,6 @@
 
 @* Страница, отображающая информацию по торговому центру. *@
 @import ctx._
-@import datetime._
 @import helper._
 @import controllers.adn.AdnShowTypes._
 @import util.qsb._
@@ -34,35 +33,7 @@
 
   <h3>Метаданные</h3>
   <div>
-    @Messages("Name"): @adnNode.meta.name<br/>
-    @adnNode.meta.description.map { descr =>
-      Описание: @Html(descr)<br/>
-    }
-    @Messages("Created"): @_prettyDate(adnNode.meta.dateCreated, withSpan = true)<br/>
-    @adnNode.meta.town.map { town =>
-      Город: @town<br/>
-    }
-    @adnNode.meta.address.map { address =>
-      @Messages("Address"): @address<br/>
-    }
-    @adnNode.meta.phone.map { phone =>
-      Телефон: @phone<br/>
-    }
-    @adnNode.meta.floor.map { floor =>
-      Этаж: @floor<br/>
-    }
-    @adnNode.meta.section.map { section =>
-      Секция: @section<br/>
-    }
-    @adnNode.meta.siteUrl.map { siteUrl =>
-      URL сайта: <a href="@siteUrl">@siteUrl</a><br/>
-    }
-    @adnNode.meta.color.map { color =>
-      Цвет: <b>#@color</b> <span style="background-color: #@color;">&nbsp;&nbsp;&nbsp;&nbsp;</span><br/>
-    }
-    @adnNode.meta.welcomeAdId.map { wad =>
-      Приветствие: Есть (@wad)
-    }
+    @_nodeMetaTpl(adnNode.meta)
   </div>
 
 

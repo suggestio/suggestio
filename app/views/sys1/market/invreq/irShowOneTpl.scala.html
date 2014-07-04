@@ -4,19 +4,21 @@
 @import ctx._
 @import stuff.{_yesNoTpl => yn, _deleteSmthFormBtnTpl}
 @import helper._
+@import sys1.market.adn._
 
 @btn(btnText: String, to: Call) = {
   @form(to) {
-    <input type="submit" value="@Messages(btnText)"/>
+    <input type="submit" value="@btnText"/>
   }
 }
 
 @irBase(title = mir.name) {
 
   @form( routes.SysMarketInvReq.deleteIR(mir.id.get) ) {
-    <input type="submit" value="@Messages("Delete")"/>
+    <input type="submit" value="Удалить этот запрос"/>
   }
 
+  <br/><br/>
   <h3>@Messages("mir.type." + mir.reqType)</h3>
 
   @* TODO Отрендерить тут данные по узлу/компании. *@
@@ -53,6 +55,7 @@
   @defining( mir.adnNode.isRight ) { nodeInstalled =>
 
     @* Блок компании. *@
+    <br/><br/>
     <div>
       @mcOpt.fold {
         <p>Ошибка доступа к данным компании.</p>
@@ -65,9 +68,11 @@
         }
         <a href="@if(mcInstalled) {@routes.SysMarket.companyEditForm(mc.id.get)} else {@routes.SysMarketInvReq.companyEdit(mir.id.get)}">@Messages("Edit")</a>
         @if(mcInstalled) {
-          @btn("Uninstall", routes.SysMarketInvReq.companyUninstallSubmit(mir.id.get))
+          @btn("Деинсталлировать компанию назад в заготовку", routes.SysMarketInvReq.companyUninstallSubmit(mir.id.get))
         } else {
-          @btn("Install", routes.SysMarketInvReq.companyInstallSubmit(mir.id.get))
+          @if(!nodeInstalled) {
+            @btn("Установить компанию в систему", routes.SysMarketInvReq.companyInstallSubmit(mir.id.get))
+          }
         }
         @* TODO Нужна замена компании на существующую. *@
       }
@@ -75,13 +80,14 @@
 
 
     @* Блок рекламного узла. *@
+    <br/><br/>
     <div>
       @nodeOpt.fold {
         <p>Ошибка доступа к данным узла.</p>
         TODO Нужна ссылка для синтеза нового узла.
       } { node =>
         <h3>@if(nodeInstalled) {Узел} else {Шаблон узла}</h3>
-        <p>Название: @node.meta.name</p>
+        @_nodeMetaTpl(node.meta)
         @* TODO Отобразить другие полезные поля узла тут. *@
         @if(nodeInstalled) {
           Этот узел сейчас <a href="@routes.SysMarket.showAdnNode(node.id.get)">существует</a> в системе.
@@ -89,9 +95,9 @@
         <a href="@if(nodeInstalled) {@routes.SysMarket.editAdnNode(node.id.get)} else {@routes.SysMarketInvReq.nodeEdit(mir.id.get)}">@Messages("Edit")</a>
         @if(mcInstalled) {
           @if(nodeInstalled) {
-            @btn("Uninstall", routes.SysMarketInvReq.nodeUninstallSubmit(mir.id.get))
+            @btn("Деинсталировать узла назад в заготовку", routes.SysMarketInvReq.nodeUninstallSubmit(mir.id.get))
           } else {
-            @btn("Install", routes.SysMarketInvReq.nodeInstallSubmit(mir.id.get))
+            @btn("Установить узел в систему", routes.SysMarketInvReq.nodeInstallSubmit(mir.id.get))
           }
         }
       }
@@ -99,6 +105,7 @@
 
 
     @* Блок инвайта на управление узлом. *@
+    <br/><br/>
     <div>
       @eactOpt.fold {
         <p>Кажется, инвайт уже использован или был удалён.</p>
@@ -106,13 +113,15 @@
           <a href="@routes.SysMarket.nodeOwnerInviteForm(adnId)">Инвайты на управление узлом</a>
         }.right.getOrElse {}
       } { eact =>
-        <a href="mailto:@eact.email">@eact.email</a>
+        <h3>Инвайт на управление узлом</h3>
+        Указанный email: <a href="mailto:@eact.email">@eact.email</a>
         @if(nodeInstalled) {
           @if(mir.emailAct.isLeft) {
-            @btn("Install", routes.SysMarketInvReq.eactInstallSubmit(mir.id.get))
+            @btn("Выслать инвайт", routes.SysMarketInvReq.eactInstallSubmit(mir.id.get))
           } else {
             @* TODO Кнопка деинсталляция запроса на активацию. *@
           }
+          <a href="@routes.SysMarket.nodeOwnerInviteForm(mir.adnNode.right.get)">Смотреть инвайты на управление узлом...</a>
         }
       }
     </div>
@@ -123,8 +132,9 @@
 
   @* Нарисовать на экране заданные в инвайте платёжные реквизиты. *@
   @mir.payReqsRaw.map { prr =>
+    <br/><br/>
     <div>
-      <h3>Платёжные реквизиты</h3>
+      <h3>Указаны платёжные реквизиты:</h3>
       <pre>@prr</pre>
     </div>
   }

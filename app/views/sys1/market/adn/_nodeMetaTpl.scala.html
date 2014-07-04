@@ -1,0 +1,58 @@
+@(meta: AdnMMetadata)(implicit ctx: Context)
+
+@* Блок верстки, отображающий поля метаданных узла. *@
+@import ctx._
+@import datetime._
+
+@Messages("Name"): @meta.name<br/>
+
+@meta.description.map { descr =>
+  Описание: @Html(descr)<br/>
+}
+
+@Messages("Created"): @_prettyDate(meta.dateCreated, withSpan = true)<br/>
+
+@meta.town.map { town =>
+  Город: @town<br/>
+}
+
+@meta.audienceDescr.map { audDescr =>
+  Описание аудитории: @Html(audDescr)<br/>
+}
+
+@meta.humanTrafficAvg.map { htAvg =>
+  Человеческий трафик: @htAvg чел. в день<br/>
+}
+
+@meta.info.map { info =>
+  Информация о товарах/услугах: @info<br/>
+}
+
+@meta.address.map { address =>
+  @Messages("Address"): @address<br/>
+}
+
+@meta.phone.map { phone =>
+  Телефон: @phone<br/>
+}
+
+@meta.floor.map { floor =>
+  Этаж: @floor<br/>
+}
+
+@meta.section.map { section =>
+  Секция: @section<br/>
+}
+
+@meta.siteUrl.map { siteUrl =>
+  URL сайта: <a href="http://anonym.to/?@siteUrl">@siteUrl</a><br/>
+}
+
+@meta.color.map { color =>
+  Цвет: <b>#@color</b> <span style="background-color: #@color;">&nbsp;&nbsp;&nbsp;&nbsp;</span><br/>
+}
+
+@meta.welcomeAdId.map { wad =>
+  Приветствие: Есть (@wad)
+}
+

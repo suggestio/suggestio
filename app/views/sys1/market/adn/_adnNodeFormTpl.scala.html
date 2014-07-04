@@ -1,6 +1,7 @@
 @(af: Form[_], call: Call, companies: Seq[MCompany], btnText: String)(implicit ctx: util.Context)
 
-@* Форма для создания/редактирования торгового центра. *@
+@* Форма для создания/редактирования торгового центра.
+   При верстке шаблона следует помнить, что mcompany.id может быть None. *@
 @import helper._
 @import ctx._
 
@@ -37,7 +38,7 @@
       <select name="@ciField.name">
         <option disabled>@Messages("Company")-@Messages("Owner")</option>
         @companies.map { mcompany =>
-          <option value="@mcompany.id.get"@if(currCompanyId == mcompany.id.get) {selected}>@mcompany.meta.name</option>
+          <option value="@mcompany.id"@if(mcompany.id.exists(_ == currCompanyId)) {selected}>@mcompany.meta.name</option>
         }
       </select>
     }
