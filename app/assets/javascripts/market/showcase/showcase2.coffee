@@ -721,7 +721,7 @@ siomart =
       event.preventDefault()
 
   node_offers_popup :
-
+    loaded_blocks : 0
     nav_pointer_size : 14
     scroll_or_move : undefined
 
@@ -798,10 +798,6 @@ siomart =
           _b.parentNode.parentNode.parentNode.style.width = _block_width + 'px'
 
       this._block_container.style.width = this.sm_blocks.length * cbca_grid.ww + 'px'
-
-    ###############################
-    ## События для обработки свайпа
-    ###############################
 
     touchstart_event : ( event ) ->
       ex = event.touches[0].pageX
@@ -902,6 +898,7 @@ siomart =
 
       this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
       this.fit()
+      this.loaded_blocks =
       i = 0
       this.active_block_index = 0
 
