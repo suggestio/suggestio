@@ -183,6 +183,14 @@ CbcaCommon = () ->
 
   self.init = () ->
 
+    $(document).on 'click', '#hideTransactions', (e)->
+      e.preventDefault()
+      $this = $ this
+
+      $('#transactionsList tr')
+      .not ':first'
+      .remove()
+
     $(document).on 'click', '#getTransactions', (e)->
       e.preventDefault()
       $this = $ this
