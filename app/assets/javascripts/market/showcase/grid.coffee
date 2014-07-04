@@ -48,9 +48,11 @@ cbca_grid =
     cw = no_of_cells * ( this.cell_size + this.cell_padding) - this.cell_padding
 
     this.max_allowed_cell_width = no_of_cells
-    this.layout_dom.style.width = cw + 'px'
-    this.layout_dom.style.height = cbca_grid.wh + 'px'
-    this.layout_dom.style.opacity = 1
+
+    if typeof this.layout_dom != 'undefined'
+      this.layout_dom.style.width = cw + 'px'
+      this.layout_dom.style.height = cbca_grid.wh + 'px'
+      this.layout_dom.style.opacity = 1
 
   ##############
   ## Fetch block
