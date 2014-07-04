@@ -640,18 +640,21 @@ siomart =
 
     if data.action == 'producerAds'
 
-      screensContainer = siomart.utils.ge 'sioMartNodeOffersRoot'
-      screensContainer = siomart.utils.replaceHTMLandShow screensContainer, data.html
+      if siomart.focused_ads.load_more_ads_requested == true
+        siomart.focused_ads.render_more data.blocks
+      else
+        screensContainer = siomart.utils.ge 'sioMartNodeOffersRoot'
+        screensContainer = siomart.utils.replaceHTMLandShow screensContainer, data.html
 
-      cb = () ->
-        siomart.utils.addClass screensContainer, 'sio-mart__node-offers-root_in'
+        cb = () ->
+          siomart.utils.addClass screensContainer, 'sio-mart__node-offers-root_in'
 
-      setTimeout cb, 10
+        setTimeout cb, 30
 
-      siomart.focused_ads.blocks = data.blocks
-      siomart.focused_ads.init()
-      siomart.navigation_layer.close()
-      console.log 'producerAds : ready'
+        siomart.focused_ads.blocks = data.blocks
+        siomart.focused_ads.init()
+        siomart.navigation_layer.close()
+        console.log 'producerAds : ready'
 
     if data.action == 'findAds' || data.action == 'searchAds'
       grid_container_dom = siomart.utils.ge 'sioMartIndexGrid'
@@ -708,13 +711,33 @@ siomart =
 
     if event
       event.preventDefault()
-  
+
   focused_ads :
-    loaded_blocks : 0
-    nav_pointer_size : 14
+
+    load_more_ads_requested : false
+
+    load_more_ads : () ->
+      siomart.request.perform this.curl + '&h=' + false + '&offset=' + this.blocks.length
+      this.load_more_ads_requested = true
+
+    render_more : ( more_blocks ) ->
+      console.log more_blocks[0]
+      for i, v of more_blocks
+        this.render_ad more_blocks[i]
+        this.blocks.push more_blocks[i]
+
+      this.ads_rendered += this.blocks.length
+
+      this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
+      this.fit()
+
+
     scroll_or_move : undefined
 
     show_block_by_index : ( block_index, direction ) ->
+
+      if block_index == parseInt( this.blocks.length - 1 )
+        this.load_more_ads()
 
       if typeof this.sm_blocks == 'undefined'
         return false
@@ -867,8 +890,11 @@ siomart =
       this.bcInnerHTML = this._block_container.innerHTML
       
       this.ads_count = this._block_container.getAttribute 'data-ads-count'
-      this.ads_rendered = 1
-      this.render_ad this.blocks[0]
+
+      this.ads_rendered = this.blocks.length
+
+      for i, v of this.blocks
+        this.render_ad this.blocks[i]
 
       this._container = siomart.utils.ge('sioMartNodeOffers')
 
@@ -897,8 +923,6 @@ siomart =
 
       this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
       this.fit()
-      this.loaded_blocks = this.blocks.length
-      this.rendered_blocks = 2
       i = 0
       this.active_block_index = 0
 
@@ -1025,7 +1049,9 @@ siomart =
 
     siomart.shop_load_locked = true
 
-    url = '/market/fads?a.shopId=' + shop_id + '&a.firstAdId=' + ad_id + '&a.size=' + siomart.config.producer_ads_per_load + '&a.rcvr=' + siomart.config.mart_id
+    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + siomart.config.producer_ads_per_load + '&a.rcvr=' + siomart.config.mart_id
+
+    siomart.focused_ads.curl = url
 
     if history_push == true
       state_data =
@@ -1035,7 +1061,7 @@ siomart =
       siomart.history.push state_data, 'SioMarket', '/n/mart/' + shop_id + '/' + ad_id
 
     siomart.focused_ads.requested_ad_id = ad_id
-    siomart.request.perform url
+    siomart.request.perform url + '&a.firstAdId=' + ad_id
 
   ## Загрузить все офферы для магазина
   load_for_cat_id : ( cat_id, history_push ) ->
