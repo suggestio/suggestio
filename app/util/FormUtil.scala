@@ -214,7 +214,7 @@ object FormUtil {
     }
   }
   val urlStrM = nonEmptyText(minLength = 8)
-    .transform(strTrimF andThen urlNormalizeSafeF, strIdentityF)
+    .transform[String](strTrimF andThen urlNormalizeSafeF, UrlUtil.humanizeUrl)
     .verifying("mappers.url.invalid_url", isValidUrl(_))
   val urlStrOptM = optional(urlStrM)
 
@@ -236,7 +236,7 @@ object FormUtil {
 
   /** Маппер form-поля с ссылкой в java.net.URL. */
   val urlMapper = urlStrM
-    .transform(new URL(_), {url:URL => url.toExternalForm})
+    .transform[URL](new URL(_), {url:URL => url.toExternalForm})
 
   /** Проверить ссылку на возможность добавления сайта в индексацию. */
   val urlAllowedMapper = urlMapper

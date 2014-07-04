@@ -4,6 +4,7 @@
 @import ctx._
 @import datetime._
 @import util.TplDataFormatUtil._
+@import io.suggest.util.UrlUtil._
 
 @Messages("Name"): @meta.name<br/>
 
@@ -46,7 +47,7 @@
 }
 
 @meta.siteUrl.map { siteUrl =>
-  URL сайта: <a href="http://anonym.to/?@siteUrl">@siteUrl</a><br/>
+  Сайт: <a href="http://anonym.to/?@siteUrl" title="@humanizeUrl(siteUrl)">@humanizeUrlAggressive(siteUrl)</a><br/>
 }
 
 @meta.color.map { color =>
