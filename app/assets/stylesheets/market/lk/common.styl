@@ -689,31 +689,10 @@ li
         font-family: 'Arial'
         color: #676666
 
-      strong
-        font-size: 14px
-        font-family: 'Arial'
-        color: #676666
-
       .value.big
         font-size: 24px
         color: #23313d
         font-family: 'PFDinTextCompPro-Medium'
-
-
-    .transactions-list
-
-      .item
-        padding: 15px 0px 15px 20px
-        overflow: hidden
-
-        .f-left
-          width: 630px
-
-      .item:first-child
-        padding-top: 5px
-
-      .item:last-child
-        padding-bottom: 5px
 
 
 @import "../reset"
@@ -1965,6 +1944,15 @@ li
 /* refactoring to MCSS  TODO убрать все important, когда весь css будет написан по методологии */
 /********************************************************************************************************************/
 
+.color-error
+  color: #e12d2d !important
+
+.color-success
+  color: #48ab38 !important
+
+.color-strong
+  color: #676666
+
 .submit-w
   overflow: hidden /* т.к. все внутренние блоки со свойством float */
   text-align: center
@@ -2158,3 +2146,24 @@ siomPreviewSize = 43
     font-family: 'Arial'
     font-size: 12px
     text-shadow(1px 1px 1px #f8f8f8)
+
+/********************************************************************************************************************/
+/* tables */
+/********************************************************************************************************************/
+.siom-table
+
+  &.__size-XL
+    width: 100%
+
+.table-cell-cnt
+  display: inline-block
+
+  &.__size-M
+    padding: 10px 20px
+
+  &.__size-XL
+    width: 100%
+    padding: 10px 20px
+
+  &.__centered
+    text-align: center

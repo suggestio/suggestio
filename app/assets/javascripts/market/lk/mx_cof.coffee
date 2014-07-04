@@ -183,6 +183,32 @@ CbcaCommon = () ->
 
   self.init = () ->
 
+    $(document).on 'click', '#getTransactions', (e)->
+      e.preventDefault()
+      $this = $ this
+
+      $.ajax(
+        url: $this.attr 'href'
+        success: (data)->
+          if $this.attr 'data-init'
+            $('#transactionsList').html ''
+          else
+            $this
+            .closest 'tr'
+            .remove()
+
+          $('#transactionsList').append data
+
+          $('.js-vertical-line').each () ->
+            $this = $ this
+            $parent = $this.parent()
+
+            $this.height($parent.height() - 10)
+        error: (error)->
+          console.log(error)
+      )
+
+
     self.setEqualHeightBlocks()
 
     $(window).resize () ->
@@ -599,20 +625,6 @@ CbcaCommon = () ->
       $parent = $this.parent()
 
       $this.height($parent.height() - 10)
-
-
-    $(document).on 'click', '.transactions-history .toggle', (e) ->
-      e.preventDefault()
-      $this = $(this)
-      $parent = $this.parent()
-
-      if($parent.hasClass('open'))
-        $parent.removeClass('open').parent().find('.transactions-list').slideUp()
-        $this.html('Развернуть')
-      else
-        $parent.addClass('open').parent().find('.transactions-list').slideDown()
-        $this.html('Свернуть')
-
 
 
 

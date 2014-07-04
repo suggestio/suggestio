@@ -7,21 +7,50 @@
 
 @* Страница истории транзакций *@
 
-<table>
-  @txns.zipWithIndex.map { case (txn , i) =>
-    <tr>
-      <td>
-        <strong>@txn.paymentComment</strong>
-      </td>
-      <td>
-        <span title="@_prettyDate(txn.datePaid).toString.trim"><strong>@numericDate(txn.datePaid)</strong> @numericTime(txn.datePaid)</span>
-      </td>
-      <td>
-        Сумма: <strong>@formatPrice(txn.amount, txn.currency)</strong>
-      </td>
-    </tr>
-  }
-</table>
-@if(txns.size >= TXNS_PER_PAGE) {
-  <a href="@routes.MarketLkBilling._txnsList(adnNode.id.get, page = currPage + 1)">Следующая страничка</a>
+
+@txns.zipWithIndex.map { case (txn , i) =>
+  <tr>
+    <td>
+      <div class="table-cell-cnt __size-M">
+        @txn.txnUid
+      </div>
+      <div class="border-line"></div>
+    </td>
+    <td>
+      <div class="border-line __vertical js-vertical-line f-left"></div>
+      <div class="table-cell-cnt __size-M">
+        <strong class="color-strong">@txn.paymentComment</strong>
+      </div>
+      <div class="border-line"></div>
+    </td>
+    <td>
+      <div class="border-line __vertical js-vertical-line f-left"></div>
+      <div class="table-cell-cnt __size-M">
+        <span title="@_prettyDate(txn.datePaid).toString.trim">
+          <strong class="color-strong">@numericDate(txn.datePaid)</strong>
+          @numericTime(txn.datePaid)
+        </span>
+      </div>
+      <div class="border-line"></div>
+    </td>
+    <td>
+      <div class="border-line __vertical js-vertical-line f-left"></div>
+      <div class="table-cell-cnt __size-M">
+        <strong class="@if(txn.amount < 0) {color-error} else {color-success}">@formatPrice(txn.amount, txn.currency)</strong>
+      </div>
+      <div class="border-line"></div>
+    </td>
+  </tr>
 }
+
+<tr>
+  <td colspan="4">
+    @if(txns.size >= TXNS_PER_PAGE) {
+      <div class="table-cell-cnt __size-XL __centered">
+        <span class="gray-but-smallest" >
+          <a href="@routes.MarketLkBilling._txnsList(adnNode.id.get, page = currPage + 1)" class="white-border-top" id="getTransactions">Показать ещё</a>
+        </span>
+      </div>
+    }
+  </td>
+</tr>

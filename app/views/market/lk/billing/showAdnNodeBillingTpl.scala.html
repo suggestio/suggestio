@@ -31,49 +31,49 @@
         <div class="lk-edit-form__block_body_inner">
 
           @* Верхняя информация: баланс, тарификация *@
-          <table>
+          <table class="siom-table __size-XL">
 
             @ctx.billBalanceOpt.map { mbb =>
             <tr>
               <td>
-                <div class="ovh" style="padding-left: 0;">
+                <div class="table-cell-cnt __size-M" style="padding-left: 0;">
                   <span class="prop-title">Доступные средства:</span>
                 </div>
 
-                <div class="ovh">
+                <div class="table-cell-cnt __size-M">
                   <span class="value big">@formatPrice(mbb.amount, mbb.currency)</span>
                 </div>
 
                 <br/>
 
-                <div class="ovh" style="padding-left: 0;">
+                <div class="table-cell-cnt __size-M" style="padding-left: 0;">
                   <span class="prop-title">Всего денег:</span>
                 </div>
 
-                <div class="ovh">
+                <div class="table-cell-cnt __size-M">
                   <span class="value big">@formatPrice(mbb.amount + mbb.blocked, mbb.currency)</span>
                 </div>
 
                 <br/>
 
-                <div class="ovh" style="padding-left: 0;">
+                <div class="table-cell-cnt __size-M" style="padding-left: 0;">
                   <span class="prop-title">Заблокиро-<br/>вано:</span>
                 </div>
 
-                <div class="ovh">
+                <div class="table-cell-cnt __size-M">
                   <span class="value big">@formatPrice(mbb.blocked, mbb.currency)</span>
                 </div>
               </td>
 
               <td>
                 <div class="border-line __vertical js-vertical-line f-left"></div>
-                <div class="ovh">
+                <div class="table-cell-cnt __size-M">
                   <span class="prop-title">Списание средств:</span>
                 </div>
               </td>
               <td>
                 <div class="border-line __vertical js-vertical-line f-right"></div>
-                <div class="ovh">
+                <div class="table-cell-cnt __size-M">
                     <span class="value f-left" style="padding-top: 5px;">18.05.2014</span>
 
                     <span class="gray-but-smallest inline f-left" style="margin-left: 20px;">
@@ -84,7 +84,7 @@
               </td>
 
               <td style="vertical-align: top; padding-top: 10px;">
-                <div class="ovh" style="padding-top: 0; padding-bottom: 0;">
+                <div class="table-cell-cnt __size-M" style="padding-top: 0; padding-bottom: 0;">
                   <div class="gray-but-wrap">
                     <div class="white-border-top">
                       <a style="padding: 7px 15px 3px;" href="requisitesContent" class="btn js-slide-btn">РЕКВИЗИТЫ</a>
@@ -135,14 +135,16 @@
         </div>
 
         <div class="lk-edit-form__block_body js-slide-content">
-          <div class="lk-edit-form__block_body_inner transactions-list">
+          <div class="lk-edit-form__block_body_inner">
             @* Тут раньше был список транзакций. *@
               <span class="gray-but-smallest inline f-left" >
-                <a href="@routes.MarketLkBilling._txnsList(adnNode.id.get)" class="white-border-top js-slide-btn">Показать транзакции</a>
+                <a href="@routes.MarketLkBilling._txnsList(adnNode.id.get)" class="white-border-top" id="getTransactions" data-init="true">Показать транзакции</a>
               </span>
 
           </div>
         </div>
+
+        <table class="siom-table __size-XL" id="transactionsList"></table>
       </div>
 
 
