@@ -9,8 +9,8 @@ siomart =
     sm_trigger_class : 'sio-mart-trigger'
     ontouchmove_offer_change_delta : 80
     welcome_ad_hide_timeout : 2000
-    ads_per_load : 5
-    producer_ads_per_load : 50
+    ads_per_load : 30
+    producer_ads_per_load : 5
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
   ## Загрузить js- и css- засимости
@@ -47,8 +47,8 @@ siomart =
         cbca_grid.resize()
         siomart.set_window_class()
 
-        siomart.node_offers_popup.fit()
-        siomart.node_offers_popup.show_block_by_index siomart.node_offers_popup.active_block_index
+        siomart.focused_ads.fit()
+        siomart.focused_ads.show_block_by_index siomart.focused_ads.active_block_index
 
       siomart.window_resize_timer = setTimeout grid_resize, 300
 
@@ -173,8 +173,8 @@ siomart =
       console.log 'navigate to :'
       console.log state
 
-      if typeof siomart.node_offers_popup.requested_ad_id != 'undefined'
-        siomart.close_node_offers_popup()
+      if typeof siomart.focused_ads.requested_ad_id != 'undefined'
+        siomart.close_focused_ads()
         return false
 
       if state == null
@@ -442,14 +442,14 @@ siomart =
 
       ## Exc button
       if event.keyCode == 27
-        siomart.close_node_offers_popup()
+        siomart.close_focused_ads()
         siomart.navigation_layer.back()
 
       if event.keyCode == 39
-        siomart.node_offers_popup.next_block()
+        siomart.focused_ads.next_block()
 
       if event.keyCode == 37
-        siomart.node_offers_popup.prev_block()
+        siomart.focused_ads.prev_block()
 
 
   notifications :
@@ -640,27 +640,16 @@ siomart =
 
     if data.action == 'producerAds'
 
-      console.log 'producerAds : processing dom'
       screensContainer = siomart.utils.ge 'sioMartNodeOffersRoot'
-      console.log 'producerAds : got sioMartNodeOffersRoot'
-
       screensContainer = siomart.utils.replaceHTMLandShow screensContainer, data.html
-
-      bc = siomart.utils.ge('sioMartNodeOffersBlockContainer')
-      bc.innerHTML = bc.innerHTML + data.blocks[0]
-
-      console.log 'producerAds : processed dom'
-      siomart.styles.init()
-      console.log 'producerAds : processed styles'
 
       cb = () ->
         siomart.utils.addClass screensContainer, 'sio-mart__node-offers-root_in'
 
       setTimeout cb, 10
 
-      #siomart.utils.ge('smCategoriesScreen').style.display = 'none'
-
-      siomart.node_offers_popup.init()
+      siomart.focused_ads.blocks = data.blocks
+      siomart.focused_ads.init()
       siomart.navigation_layer.close()
       console.log 'producerAds : ready'
 
@@ -703,7 +692,7 @@ siomart =
 
     siomart.utils.ge('smLoading').style.display = 'none'
 
-  close_node_offers_popup : ( event ) ->
+  close_focused_ads : ( event ) ->
     siomart.utils.removeClass siomart.utils.ge('sioMartNodeOffersRoot'), 'sio-mart__node-offers-root_in'
 
     cb = () ->
@@ -714,13 +703,13 @@ siomart =
 
     setTimeout cb, 200
 
-    delete siomart.node_offers_popup.requested_ad_id
-    delete siomart.node_offers_popup.active_block_index
+    delete siomart.focused_ads.requested_ad_id
+    delete siomart.focused_ads.active_block_index
 
     if event
       event.preventDefault()
-
-  node_offers_popup :
+  
+  focused_ads :
     loaded_blocks : 0
     nav_pointer_size : 14
     scroll_or_move : undefined
@@ -731,11 +720,11 @@ siomart =
         return false
 
       if vendor_prefix.js == 'Webkit'
-        siomart.node_offers_popup._block_container.style['-webkit-transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
+        siomart.focused_ads._block_container.style['-webkit-transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
       else
-        siomart.node_offers_popup._block_container.style['transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
+        siomart.focused_ads._block_container.style['transform'] = 'translate3d(-' + cbca_grid.ww*block_index + 'px, 0px, 0px)'
 
-      siomart.node_offers_popup._block_container.setAttribute 'data-x-offset', -cbca_grid.ww*block_index
+      siomart.focused_ads._block_container.setAttribute 'data-x-offset', -cbca_grid.ww*block_index
 
       if block_index == this.active_block_index
         return false
@@ -774,7 +763,7 @@ siomart =
         prev_index = 0
 
       this.show_block_by_index prev_index, '-'
-
+      
     fit : () ->
 
       if typeof this.sm_blocks == 'undefined'
@@ -817,26 +806,26 @@ siomart =
       delta_x = this.tstart_x - ex
       delta_y = this.tstart_y - ey
 
-      if typeof siomart.node_offers_popup.scroll_or_move == 'undefined' && !( delta_x == 0 && delta_y == 0 )
+      if typeof siomart.focused_ads.scroll_or_move == 'undefined' && !( delta_x == 0 && delta_y == 0 )
         if Math.abs( delta_y ) > Math.abs( delta_x )
-          siomart.node_offers_popup.scroll_or_move = 'scroll'
+          siomart.focused_ads.scroll_or_move = 'scroll'
         else
-          siomart.node_offers_popup.scroll_or_move = 'move'
+          siomart.focused_ads.scroll_or_move = 'move'
 
-      console.log siomart.node_offers_popup.scroll_or_move
+      console.log siomart.focused_ads.scroll_or_move
 
-      if siomart.node_offers_popup.scroll_or_move == 'scroll'
+      if siomart.focused_ads.scroll_or_move == 'scroll'
         return false
       else
         event.preventDefault()
 
-      c_x_offset = siomart.node_offers_popup._block_container.getAttribute 'data-x-offset'
+      c_x_offset = siomart.focused_ads._block_container.getAttribute 'data-x-offset'
       c_x_offset = parseInt c_x_offset
 
       if vendor_prefix.js == 'Webkit'
-        siomart.node_offers_popup._block_container.style['-webkit-transform'] = 'translate3d(' + parseInt( c_x_offset - delta_x ) + 'px, 0px, 0px)'
+        siomart.focused_ads._block_container.style['-webkit-transform'] = 'translate3d(' + parseInt( c_x_offset - delta_x ) + 'px, 0px, 0px)'
       else
-        siomart.node_offers_popup._block_container.style['transform'] = 'translate3d(' + parseInt( c_x_offset - delta_x ) + 'px, 0px, 0px)'
+        siomart.focused_ads._block_container.style['transform'] = 'translate3d(' + parseInt( c_x_offset - delta_x ) + 'px, 0px, 0px)'
 
       this.x_delta_direction = this.last_x - ex
 
@@ -846,31 +835,41 @@ siomart =
       console.log 'touchend'
       siomart.utils.addClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
 
-      delete siomart.node_offers_popup.tstart_x
-      delete siomart.node_offers_popup.tstart_y
+      delete siomart.focused_ads.tstart_x
+      delete siomart.focused_ads.tstart_y
 
       if this.x_delta_direction > 0
         cb = () ->
-          siomart.node_offers_popup.next_block()
+          siomart.focused_ads.next_block()
       else
         cb = () ->
-          siomart.node_offers_popup.prev_block()
+          siomart.focused_ads.prev_block()
 
       if this.scroll_or_move == 'move'
         setTimeout cb, 1
 
-      delete siomart.node_offers_popup.scroll_or_move
+      delete siomart.focused_ads.scroll_or_move
 
     touchcancel_event : ( event ) ->
 
-      delete siomart.node_offers_popup.tstart_x
-      delete siomart.node_offers_popup.tstart_y
-      delete siomart.node_offers_popup.scroll_or_move
+      delete siomart.focused_ads.tstart_x
+      delete siomart.focused_ads.tstart_y
+      delete siomart.focused_ads.scroll_or_move
 
+    render_ad : ( ad ) ->
+      this.bcInnerHTML = this.bcInnerHTML + ad
+      this._block_container.innerHTML = this.bcInnerHTML
 
     init : () ->
       this.root
+
       this._block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
+      this.bcInnerHTML = this._block_container.innerHTML
+      
+      this.ads_count = this._block_container.getAttribute 'data-ads-count'
+      this.ads_rendered = 1
+      this.render_ad this.blocks[0]
+
       this._container = siomart.utils.ge('sioMartNodeOffers')
 
       siomart.utils.addClass this._block_container, 'sio-mart-node-offers-window__root-container_animated'
@@ -879,26 +878,27 @@ siomart =
       _e = if siomart.utils.is_touch_device() then 'touchend' else 'click'
 
       ## Кнопка возврата на главный экран
-      siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), _e, siomart.close_node_offers_popup
+      siomart.utils.add_single_listener siomart.utils.ge('closeNodeOffersPopupButton'), _e, siomart.close_focused_ads
 
-      siomart.utils.add_single_listener siomart.utils.ge('sioMartHomeButton'), _e, siomart.close_node_offers_popup
+      siomart.utils.add_single_listener siomart.utils.ge('sioMartHomeButton'), _e, siomart.close_focused_ads
 
       ## События для свайпа
       siomart.utils.add_single_listener this._block_container, 'touchstart', ( event ) ->
-        siomart.node_offers_popup.touchstart_event event
+        siomart.focused_ads.touchstart_event event
 
       siomart.utils.add_single_listener this._block_container, 'touchmove', ( event ) ->
-        siomart.node_offers_popup.touchmove_event event
+        siomart.focused_ads.touchmove_event event
 
       siomart.utils.add_single_listener this._block_container, 'touchcancel', ( event ) ->
-        siomart.node_offers_popup.touchcancel_event event
+        siomart.focused_ads.touchcancel_event event
 
       siomart.utils.add_single_listener this._block_container, 'touchend', ( event ) ->
-        siomart.node_offers_popup.touchend_event event
+        siomart.focused_ads.touchend_event event
 
       this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
       this.fit()
-      this.loaded_blocks =
+      this.loaded_blocks = this.blocks.length
+      this.rendered_blocks = 2
       i = 0
       this.active_block_index = 0
 
@@ -909,6 +909,7 @@ siomart =
   ######################################
   load_mart_index_page : () ->
     this.set_meta()
+    this.define_per_load_values()
     this.request.perform siomart.config.index_action
 
   ##################################################
@@ -1033,7 +1034,7 @@ siomart =
         ad_id : ad_id
       siomart.history.push state_data, 'SioMarket', '/n/mart/' + shop_id + '/' + ad_id
 
-    siomart.node_offers_popup.requested_ad_id = ad_id
+    siomart.focused_ads.requested_ad_id = ad_id
     siomart.request.perform url
 
   ## Загрузить все офферы для магазина
@@ -1172,6 +1173,33 @@ siomart =
       _window_class = 'sm-w-400'
 
     siomart.utils.ge('sioMartLayout').className = _window_class
+
+  define_per_load_values : () ->
+
+    ww = wh = 0
+    if typeof window.innerWidth == 'number'
+      ww = window.innerWidth
+      wh = window.innerHeight
+    else if document.documentElement && ( document.documentElement.clientWidth || document.documentElement.clientHeight )
+      ww = document.documentElement.clientWidth
+      wh = document.documentElement.clientHeight
+    else if document.body && ( document.body.clientWidth || document.body.clientHeight )
+      ww = document.body.clientWidthb
+      wh = document.body.clientHeight
+
+
+
+    if ww <= 980
+      siomart.config.ads_per_load = 20
+
+    if ww <= 800
+      siomart.config.ads_per_load = 10
+
+    if ww <= 660
+      siomart.config.ads_per_load = 5
+
+    console.log ww
+    console.log siomart.config.ads_per_load
 
   ###########################
   ## Инициализация Sio.Market
