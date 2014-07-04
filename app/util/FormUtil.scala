@@ -236,7 +236,7 @@ object FormUtil {
 
   /** Маппер form-поля с ссылкой в java.net.URL. */
   val urlMapper = urlStrM
-    .transform[URL](new URL(_), {url:URL => url.toExternalForm})
+    .transform[URL](new URL(_), _.toExternalForm)
 
   /** Проверить ссылку на возможность добавления сайта в индексацию. */
   val urlAllowedMapper = urlMapper

@@ -15,7 +15,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import com.typesafe.plugin.{use, MailerPlugin}
 import play.api.Play.{current, configuration}
 import play.api.mvc.RequestHeader
-import MarketLkAdnEdit.{logoKM, colorKM}
+import MarketLkAdnEdit.{logoKM, colorKM, townKM}
 
 /**
  * Suggest.io
@@ -25,6 +25,8 @@ import MarketLkAdnEdit.{logoKM, colorKM}
  */
 object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValidator {
   import LOGGER._
+
+  private val companyKM = "company" -> companyNameM
 
   /** Маппинг формы анкеты с галочками про wi-fi. */
   private val wifiJoinQuestionsFormM: Form[SMJoinAnswers] = {
@@ -73,7 +75,8 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
   private val wifiJoinFormM = {
     Form(
       mapping(
-        "company"         -> companyNameM,
+        companyKM,
+        townKM,
         "audienceDescr"   -> audienceDescrM,
         "humanTrafficAvg" -> humanTrafficAvgM,
         "address"         -> addressM,
@@ -88,16 +91,17 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         CAPTCHA_ID_FN     -> Captcha.captchaIdM,
         CAPTCHA_TYPED_FN  -> Captcha.captchaTypedM
       )
-      {(companyName, audienceDescr, humanTrafficAvg, address, siteUrl, phone, payReqs, email1, color, galleryIks, logoOpt, welcomeImgId, _, _) =>
+      {(companyName, town, audienceDescr, humanTrafficAvg, address, siteUrl, phone, payReqs, email1, color, galleryIks, logoOpt, welcomeImgId, _, _) =>
         val mir = applyForm(companyName = companyName, audienceDescr = Some(audienceDescr),
           humanTrafficAvg = Some(humanTrafficAvg), address = address, siteUrl = siteUrl, phone = phone,
-          payReqs = payReqs, email1 = email1, anmt = AdNetMemberTypes.MART, withMmp = true,
+          payReqs = payReqs, email1 = email1, anmt = AdNetMemberTypes.MART, withMmp = true, town = town,
           reqType = InviteReqTypes.Wifi, color = color)
         (mir, galleryIks, logoOpt, welcomeImgId)
       }
       {case (mir, galleryIks, logoOpt, welcomeImgId) =>
         // unapply() вызывается только когда всё в Left, т.е. при ошибка заполнения форм.
         val companyName = unapplyCompanyName(mir)
+        val town = unapplyTown(mir)
         val audienceDescr = unapplyAudDescr(mir)
         val humanTraffic = unapplyHumanTraffic(mir)
         val address = unapplyAddress(mir)
@@ -106,7 +110,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         val payReqs = unapplyPayReqs(mir)
         val email1 = unapplyEmail(mir)
         val color = unapplyColor(mir)
-        Some((companyName, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, email1, color, galleryIks, logoOpt, welcomeImgId, "", ""))
+        Some((companyName, town, audienceDescr, humanTraffic, address, siteUrl, officePhone, payReqs, email1, color, galleryIks, logoOpt, welcomeImgId, "", ""))
       }
     )
   }
@@ -115,6 +119,11 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     mir.company
       .left.map(_.meta.name)
       .left.getOrElse { mir.adnNode.left.map(_.meta.name).left getOrElse "" }
+  }
+  private def unapplyTown(mir: MInviteRequest): Option[String] = {
+    mir.adnNode
+      .left.map(_.meta.town)
+      .left.getOrElse(None)
   }
   private def unapplyAudDescr(mir: MInviteRequest): String = {
     mir.adnNode
@@ -168,7 +177,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
 
   /** Накатывание результатов маппинга формы на новый экземпляр MInviteRequest. */
   private def applyForm(companyName: String, audienceDescr: Option[String] = None, humanTrafficAvg: Option[Int] = None,
-    address: String, siteUrl: Option[String], phone: String, payReqs: Option[String] = None, email1: String,
+    address: String, siteUrl: Option[String], phone: String, payReqs: Option[String] = None, email1: String, town: Option[String],
     anmt: AdNetMemberType, withMmp: Boolean, reqType: InviteReqType, info: Option[String] = None, color: Option[String]): MInviteRequest = {
     val company = MCompany(
       meta = MCompanyMeta(name = companyName, officePhones = List(phone))
@@ -182,7 +191,8 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         humanTrafficAvg = humanTrafficAvg,
         audienceDescr   = audienceDescr,
         info            = info,
-        color           = color
+        color           = color,
+        town            = town
       ),
       personIds = Set.empty,
       adn = anmt.getAdnInfoDflt
@@ -289,7 +299,8 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
   private val advJoinFormM = {
     Form(
       mapping(
-        "company"   -> companyNameM,
+        companyKM,
+        townKM,
         "info"      -> text2048M
           .transform[Option[String]]({str => emptyStrOptToNone(Option(str))}, strOptGetOrElseEmpty),
         "address"   -> addressM,
@@ -301,21 +312,22 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
         CAPTCHA_ID_FN    -> Captcha.captchaIdM,
         CAPTCHA_TYPED_FN -> Captcha.captchaTypedM
       )
-      {(companyName, info, address, siteUrl, phone, email1, color, logoOpt, _, _) =>
-        val mir = applyForm(companyName = companyName, address = address, siteUrl = siteUrl,
+      {(companyName, town, info, address, siteUrl, phone, email1, color, logoOpt, _, _) =>
+        val mir = applyForm(companyName = companyName, address = address, siteUrl = siteUrl, town = town,
           phone = phone, email1 = email1, anmt = AdNetMemberTypes.SHOP, withMmp = false,
           reqType = InviteReqTypes.Adv, info = info, color = color)
         (mir, logoOpt)
       }
       {case (mir, logoOpt) =>
         val companyName = unapplyCompanyName(mir)
+        val town = unapplyTown(mir)
         val info = unapplyInfo(mir)
         val address = unapplyAddress(mir)
         val siteUrl = unapplySiteUrl(mir)
         val officePhone = unapplyOfficePhone(mir)
         val email1 = unapplyEmail(mir)
         val color = unapplyColor(mir)
-        Some((companyName, info, address, siteUrl, officePhone, email1, color, logoOpt, "", ""))
+        Some((companyName, town, info, address, siteUrl, officePhone, email1, color, logoOpt, "", ""))
       }
     )
   }
