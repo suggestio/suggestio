@@ -717,7 +717,7 @@ siomart =
     load_more_ads_requested : false
 
     load_more_ads : () ->
-      siomart.request.perform this.curl + '&h=' + false + '&offset=' + this.blocks.length
+      siomart.request.perform this.curl + '&h=' + false + '&a.offset=' + this.blocks.length
       this.load_more_ads_requested = true
 
     render_more : ( more_blocks ) ->
@@ -730,6 +730,7 @@ siomart =
 
       this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
       this.fit()
+      siomart.styles.init()
 
 
     scroll_or_move : undefined
