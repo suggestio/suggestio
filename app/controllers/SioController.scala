@@ -1,5 +1,7 @@
 package controllers
 
+import java.util.regex.Pattern
+
 import models.Context
 import play.api.cache.Cache
 import play.api.mvc._
@@ -87,20 +89,24 @@ trait SioController extends Controller with ContextT {
   */
 trait BruteForceProtect extends SioController with PlayMacroLogsI {
 
+  /** имя модуля по конфигу. Нельзя, чтобы ключ конфига содержал знак $, который скала добавляет
+    * ко всем объектам. Используется только при инициализации. */
+  def myBfpConfName = getClass.getSimpleName.replace("$", "")
+
   /** Шаг задержки. Добавляемая задержка ответа будет кратна этому лагу. */
-  val BRUTEFORCE_LAG_MS = configuration.getInt(s"bfp.${getClass.getSimpleName}.lag_ms") getOrElse 222
+  val BRUTEFORCE_LAG_MS = configuration.getInt(s"bfp.$myBfpConfName.lag_ms") getOrElse 222
 
   /** Префикс в кеше для ip-адреса. */
-  val BRUTEFORCE_CACHE_PREFIX = configuration.getInt(s"bfp.${getClass.getSimpleName}.cache.prefix") getOrElse "bfp:"
+  val BRUTEFORCE_CACHE_PREFIX = configuration.getInt(s"bfp.$myBfpConfName.cache.prefix") getOrElse "bfp:"
 
   /** Нормализация кол-ва попыток происходит по этому целому числу. */
-  val BRUTEFORCE_TRY_COUNT_DIVISOR = configuration.getInt(s"bfp.${getClass.getSimpleName}.try.count.divisor") getOrElse 2
+  val BRUTEFORCE_TRY_COUNT_DIVISOR = configuration.getInt(s"bfp.$myBfpConfName.try.count.divisor") getOrElse 2
 
   /** Время хранения в кеше инфы о попытках для ip-адреса. */
-  val BRUTEFORCE_CACHE_TTL = configuration.getInt(s"bfp.${getClass.getSimpleName}.cache.ttl").getOrElse(30).seconds
+  val BRUTEFORCE_CACHE_TTL = configuration.getInt(s"bfp.$myBfpConfName.cache.ttl").getOrElse(30).seconds
 
   /** Макс кол-во попыток, после которого запросы будут отправляться в помойку. */
-  val BRUTEFORCE_TRY_COUNT_DEADLINE = configuration.getInt(s"bfp.${getClass.getSimpleName}.cache.ttl") getOrElse 40
+  val BRUTEFORCE_TRY_COUNT_DEADLINE = configuration.getInt(s"bfp.$myBfpConfName.cache.ttl") getOrElse 40
 
   /** Система асинхронного платформонезависимого противодействия брутфорс-атакам. */
   def bruteForceProtected(f: => Future[Result])(implicit request: RequestHeader): Future[Result] = {
