@@ -38,25 +38,21 @@
           @if(isRcvr || showAdvsBtn || node.adn.isSupervisor) {
             <div class="adn-title-buttons">
 
-              @if(isRcvr) {
-                <div class="gray-but-wrap">
-                  <div class="white-border-top">
-                    <a id="installScriptButton" class="btn" href="">СКРИПТ на САЙТ</a>
-                  </div>
-                </div>
-              } @* isRcvr? *@
-
               @* Кнопку "рекламодатели" отображать только ресиверу, и только если он не делегировал adv-функции другому узлу. *@
               @if(showAdvsBtn) {
-                <div class="gray-but-wrap">
-                  <div class="white-border-top">
-                    <a class="btn" href="@routes.MarketAdv.showNodeAdvs(node.id.get)">
+
+                    <a class="siom-link-btn __size-M __ft-L __color-5 f-right" href="@routes.MarketAdv.showNodeAdvs(node.id.get)">
                       @if(advReqsCount > 0L) {<span class="lk-adv-reqs-count attention-icon">@advReqsCount</span>}
                       РЕКЛАМОДАТЕЛИ
                     </a>
-                  </div>
-                </div>
+
               } @* showAdsvBtn? *@
+
+              @if(isRcvr) {
+
+                <a id="installScriptButton" class="siom-link-btn __size-M __ft-L __color-5 __list-element f-right" href="">СКРИПТ на САЙТ</a>
+
+              } @* isRcvr? *@
 
             </div>
           }

@@ -16,7 +16,6 @@ text-shadow(v)
 @import "market/fonts.styl"
 @import "market/lk/base.styl"
 @import "market/lk/buttons.styl"
-@import "market/lk/text-styles.styl"
 
 .object
     padding: 5px 20px
@@ -24,9 +23,6 @@ text-shadow(v)
 
 .data-row
     padding: 20px 0px
-
-.clear
-    clear: both
 
 body
     background: #152d3b
@@ -70,18 +66,39 @@ table
     padding: 10px 20px 10px 0px
 
 
-/* NEW SYS */
+
+/********************************************************************************************************************/
+/* refactoring to MCSS  TODO убрать все important, когда весь css будет написан по методологии */
+/********************************************************************************************************************/
 
 .sys
   font-size: 14px
   font-family: 'Arial'
 
-.sys-strong
-  color: #676666
+  &_t
+    margin: 25px 0
+    font-family: 'PT_Sans-Narrow'
+    ft(24px)
+    color: #676666
+
+strong
   font-weight: bold
+
+.blue-link
+  color: #07a1ca
+  text-decoration: none
+
+.blue-link:hover
+  text-decoration: underline
+
+.color-strong
+  color: #676666
 
 .ovh
   overflow: hidden
+
+.clear
+  clear: both
 
 .abs
   position: absolute
@@ -100,60 +117,52 @@ table
   border-top: 1px solid #cbcbcb
   border-bottom: 1px solid #f8f8f8
 
-.border-line-vertical
-  margin-top: 5px
-  border-left: 1px solid #cbcbcb
-  border-right: 1px solid #f8f8f8
-
-
-.sys-market-index__items
-  overflow: hidden
-  margin-top: 60px
-
-.sys-market-index__item
-  overflow: hidden
-  float: left
-  width: 130px
-  margin-right: 35px
-  margin-bottom: 35px
-
-.sys-market-index__btn
-  margin-top: 15px
-
-.free-ad__link
-  display: block
-  margin: 5px 0
+  &.__vertical
+    width: 0
+    margin-top: 5px
+    border-left: 1px solid #cbcbcb
+    border-right: 1px solid #f8f8f8
 
 
 .info-label
   overflow: hidden
 
-.info-label._market-index
-  margin-left: -30px
-  margin-top: 20px
+  &.__outer
+    margin-left: -30px
 
-.info-label__icon
-  float: left
+  &_icon
+    float: left
+    width: 7px /* Ширина и высота по размеру изображения */
+    height: 38px
+    background: url('/assets/images/market/lk/info-label-icon.png') no-repeat left center
 
-  width: 7px /* Ширина и высота по размеру изображения */
-  height: 38px
+  &_t
+    padding-left: 25px
+    float: left
 
-  background: url('/assets/images/market/lk/info-label-icon.png') no-repeat left center
-
-.info-label__title
-  padding-left: 25px
-  float: left
-
-  font-family: 'Arial'
-  font-size: 12px
-  font-weight: bold
-  color: #959595
-  text-shadow(1px 1px 1px white)
+    font-family: 'Arial'
+    font-size: 12px
+    font-weight: bold
+    color: #959595
 
 
-.sys__t
-  margin: 25px 0
+/********************************************************************************************************************/
+/* sys market index page */
+/********************************************************************************************************************/
 
-  font-family: 'PT_Sans-Narrow'
-  ft(24px)
-  color: #676666
+.sys-market-index
+  padding-top: 20px
+
+  &_items
+    overflow: hidden
+    margin-top: 60px
+
+  &_item
+    overflow: hidden
+    float: left
+    width: 130px
+    margin-right: 35px
+    margin-bottom: 35px
+
+.siom-ac-btn.__sys-market-index
+  margin-top: 15px
