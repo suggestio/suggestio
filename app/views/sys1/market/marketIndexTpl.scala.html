@@ -5,10 +5,10 @@
 
 
 @* Подшаблон генерации квадратной кнопки. *@
-@btn(href: Call, paddingPx: Int, font: String = "XM")(btnText: Html)(afterBtn: Html) = {
-  <div class="sys-market-index_item">
+@btn(href: Call, paddingPx: Int)(btnText: Html)(afterBtn: Html) = {
+  <div class="i __btn">
 
-    <a class="siom-link-btn __color-5 __size-XL __ft-@font" href="@href" style="padding: @{paddingPx}px 0;">
+    <a class="siom-link-btn __color-5 __size-XL __ft-XM" href="@href" style="padding: @{paddingPx}px 0;">
       @btnText
     </a>
 
@@ -22,7 +22,7 @@
 
 @marketBase("index", hPathAfter = Some(hPathAfter)) {
 
-    <div class="sys-market-index">
+    <div class="page-cnt">
 
       <div class="info-label __outer">
         <div class="info-label_icon"></div>
@@ -33,12 +33,12 @@
         </div>
       </div>
 
-      <div class="sys-market-index_items">
+      <div class="i-list __market-index">
 
           @btn(routes.SysMarket.companiesList(), 40) { ВСЕ<br/>КОМПАНИИ } {
 
             <a href="@routes.SysMarket.companyAddForm()" class="siom-ac-btn __color-1 __size-XL __ft-XM __sys-market-index">
-              +добавить компанию
+              +добавить<br/>компанию
             </a>
 
           }
@@ -61,7 +61,7 @@
 
         <div class="clear"></div>
         @btn(routes.SysMarketInvReq.index, 28) { ЗАПРОСЫ<br/>ПОДКЛЮЧЕНИЯ<br/>К СЕТИ } { }
-        @btn(routes.SysMdr.index, 52) { Модерация } { }
+        @btn(routes.SysMdr.index, 52) { МОДЕРАЦИЯ } { }
       </div>
 
    </div>

@@ -156,28 +156,27 @@ siomBlueColor = #07a1ca
     padding: 25px 0
 
 
-
-/********************************************************************************************************************/
-/* sys market index page */
-/********************************************************************************************************************/
-
-.sys-market-index
+.page-cnt
   padding-top: 20px
-
-  &_items
-    overflow: hidden
-    margin-top: 60px
-
-  &_item
-    overflow: hidden
-    float: left
-    width: 130px
-    margin-right: 35px
-    margin-bottom: 35px
 
 .siom-ac-btn.__sys-market-index
   margin-top: 15px
 
+
+.i-list
+  overflow: hidden
+
+  &.__market-index
+    margin-top: 60px
+
+.i
+  overflow: hidden
+
+  &.__btn
+    float: left
+    width: 130px
+    margin-right: 35px
+    margin-bottom: 35px
 
 /********************************************************************************************************************/
 /* tables */
@@ -204,6 +203,17 @@ siomBlueColor = #07a1ca
 .input-w
   margin-top: 10px
   margin-bottom: 10px
+
+  &.__focus
+
+    .input
+      border: 1px solid #07a1ca !important
+
+    input
+      color: #07a1ca
+
+    textarea
+      color: #07a1ca
 
   &.__textarea
 
@@ -245,35 +255,22 @@ siomBlueColor = #07a1ca
     border-top: 1px solid #D2D3D3
     border-radius(4px)
 
-    input
-      outline: 0
-      padding: 0 10px
-      width: 100%
-      height: 35px
-      font-size: 16px
-      color: #959595
-      font-family: 'Arial'
+  input
+    outline: 0
+    padding: 0 10px
+    width: 100%
+    height: 35px
+    font-size: 16px
+    color: #959595
+    font-family: 'Arial'
 
-    textarea
-      width: 100%
-      height: 60px
-      padding: 10px
-      resize: none
-      font-size: 16px
-      color: #959595
-      font-family: 'Arial'
-
-.__focus
-
-  .input
-    border: 1px solid #07a1ca !important
-
-    .input-shadow
-
-      input
-        color: #07a1ca
-
-      textarea
-        color: #07a1ca
+  textarea
+    width: 100%
+    height: 60px
+    padding: 10px
+    resize: none
+    font-size: 16px
+    color: #959595
+    font-family: 'Arial'
 
 /* конец куска для рефакторинга */
