@@ -11,6 +11,7 @@ import views.html.sys1.market.cat._
 import scala.concurrent.Future
 import play.api.mvc.Action
 import play.api.libs.json._
+import play.api.Play.{current, configuration}
 
 /**
  * Suggest.io
@@ -22,8 +23,11 @@ object MarketCategory extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
 
+  /** Кнопка установки стандартных глобальных категорий должна нажиматься только единожды. */
+  def CAN_INSTALL_MART_CATS = configuration.getBoolean("cats.install.mart.allowed") getOrElse false
+
   /** Маппинг для формы создания/редактирования пользовательской категории. */
-  val catFormM = Form(mapping(
+  private val catFormM = Form(mapping(
     "name"          -> nameM,
     "ymCatId"       -> nonEmptyText(minLength = 1, maxLength = 10),
     "ymCatInherit"  -> default(boolean, true),
@@ -171,9 +175,13 @@ object MarketCategory extends SioController with PlayMacroLogsImpl {
 
   /** Установить набор пользовательских категорий в указанный узел рекламной сети (обычно ТЦ). */
   def installMartCategories(adnId: String) = IsSuperuser.async { implicit request =>
-    MartCategories.saveDefaultMartCatsFor(adnId) map { catIds =>
-      Redirect(routes.MarketCategory.showCatsFor(adnId))
-        .flashing("success" -> s"Добавлено ${catIds.size} категорий. Они появятся здесь через неск.секунд. Обновите страницу.")
+    if (CAN_INSTALL_MART_CATS) {
+      MartCategories.saveDefaultMartCatsFor(adnId) map { catIds =>
+        Redirect(routes.MarketCategory.showCatsFor(adnId))
+          .flashing("success" -> s"Добавлено ${catIds.size} категорий. Они появятся здесь через неск.секунд. Обновите страницу.")
+      }
+    } else {
+      NotAcceptable("Mart cats install disabled in config.")
     }
   }
 

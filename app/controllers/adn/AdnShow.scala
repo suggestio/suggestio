@@ -19,7 +19,7 @@ object AdnShowTypes extends Enumeration {
   protected case class Val(amt: AdNetMemberType) extends super.Val(amt.name) {
     /** Call для доступа к поисковой выдаче для админа ЛК. */
     def nodeAdmSiteCall(adnNode: MAdnNode): Option[Call] = {
-      Some( routes.Market.demoWebSite(adnNode.id.get) )
+      Some( routes.MarketShowcase.demoWebSite(adnNode.id.get) )
     }
   }
 
@@ -31,7 +31,7 @@ object AdnShowTypes extends Enumeration {
 
   val SHOP: AdnShowType = new Val(AdNetMemberTypes.SHOP) {
     override def nodeAdmSiteCall(adnNode: MAdnNode): Option[Call] = {
-      val call = routes.Market.allMyAdsSite(adnNode.id.get)
+      val call = routes.MarketShowcase.myAdsSite(adnNode.id.get)
       Some(call)
     }
   }

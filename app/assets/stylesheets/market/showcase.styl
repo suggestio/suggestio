@@ -80,7 +80,7 @@ code
     font-size: 20px
 
 .sm-loading
-  background: rgba(0, 0, 0, 0.3)
+  background: rgba(0, 0, 0, 0.1)
 
 .sm-wifi-info
   background: #f7f7f7
@@ -605,6 +605,12 @@ code
   z-index: 99998
 
   .trigger-helper
+    display: inline-block
+    height: 100%
+    vertical-align: middle
+
+  .trigger-helper:before
+    content: ''
     display: inline-block
     height: 100%
     vertical-align: middle
