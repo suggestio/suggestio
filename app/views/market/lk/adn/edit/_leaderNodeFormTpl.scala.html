@@ -7,14 +7,14 @@
 
 @form(submitCall) {
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
       <tr>
 
-        <td class="left">
-          <label for="logoImgInput">Логотип</label>
+        <td class="input-w_left">
+          <label class="input-w_prop-name" for="logoImgInput">Логотип</label>
         </td>
 
-        <td class="right">
+        <td>
 
           @defining(mf("logoImgId").value) { logoImgIdOpt =>
 
@@ -38,21 +38,21 @@
       </tr>
     </table>
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
       @inputText(
         mf("meta.name"),
         '_label -> "Название:"
       )
     </table>
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
       @inputText(
         mf("meta.town"),
         '_label -> "Город:"
       )
     </table>
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
+    <table cellpadding="0" cellspacing="0" class="input-w __size-L __textarea">
       @textarea(
         mf("meta.address"),
         '_label -> "Адрес:"
@@ -60,20 +60,22 @@
     </table>
 
 
-    <table class="input-wrap big" cellspacing="0" cellpadding="0">
-      <td class="left">
-        <label for="meta_color">Основной цвет:</label>
+    <table class="input-w __size-L" cellspacing="0" cellpadding="0">
+
+      <td class="input-w_left">
+        <label class="input-w_prop-name" for="meta_color">Основной цвет:</label>
       </td>
-      <td class="right">
+      <td class="input-w_right">
         <div class="lk-color-select__color lk-color-select__color_custom js-custom-color" style="background: #@mf("meta.color").value;">
           <div></div>
           <input id="meta_color" type="hidden" name="meta.color" value="@mf("meta.color").value"/>
         </div>
       </td>
+
     </table>
 
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
       @inputText(
         mf("meta.siteUrl"),
         '_label -> "Сайт:"
@@ -81,13 +83,13 @@
     </table>
 
     @if(nodeInfo.isReceiver) {
-      <table cellpadding="0" cellspacing="0" class="input-w __big __textarea">
+      <table cellpadding="0" cellspacing="0" class="input-w __size-L __textarea">
         @textarea(
           mf("meta.audienceDescr"),
           '_label -> "Описание \n аудитории:"
         )
       </table>
-      <table cellpadding="0" cellspacing="0" class="input-w __big">
+      <table cellpadding="0" cellspacing="0" class="input-w __size-L">
         @inputText(
           mf("meta.humanTrafficAvg"),
           '_label -> "Суточный трафик:"
@@ -95,7 +97,7 @@
       </table>
     } else {
       @if(nodeInfo.isProducer) {
-        <table cellpadding="0" cellspacing="0" class="input-w __big __textarea">
+        <table cellpadding="0" cellspacing="0" class="input-w __size-L __textarea">
           @textarea(
             mf("meta.info"),
             '_label -> "Информация о товарах или услугах:"
@@ -105,14 +107,14 @@
     }
 
     @if(nodeInfo.isReceiver) {
-      <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      <table cellpadding="0" cellspacing="0" class="input-w __size-L">
 
         <tbody>
           <tr>
-            <td class="left">
-              <label>Картинка приветствия:</label>
+            <td class="input-w_left">
+              <label class="input-w_prop-name">Картинка приветствия:</label>
             </td>
-            <td class="right">
+            <td>
               @_welcomeAdFormTpl(adnId, welcomeAdOpt, mf)
             </td>
           </tr>
@@ -122,14 +124,14 @@
 
 
 
-      <table cellpadding="0" cellspacing="0" class="input-wrap big">
+      <table cellpadding="0" cellspacing="0" class="input-w __size-L">
 
         <tr>
-          <td class="left">
-            <label for="logoImgInput">Фотографии<br/>объекта:</label>
+          <td class="input-w_left">
+            <label class="input-w_prop-name" for="logoImgInput">Фотографии<br/>объекта:</label>
           </td>
 
-          <td class="right">
+          <td>
 
             @* Рендерим существующие значения. gf - поле, gfi - индекс картинки (1, 2, 3), gfn - имя поля в индексе ("gallery[0]") *@
             @defining( mf("gallery") ) { gf =>

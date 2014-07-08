@@ -471,11 +471,15 @@ CbcaCommon = () ->
 
 
 
-    $(document).on 'focus', '.input-wrap input, .input-wrap textarea', ->
-      $(this).closest('.input-wrap').toggleClass('focus', true)
+    $(document).on 'focus', '.js-input-w input, .js-input-w textarea', (e)->
+      $ this
+      .closest '.input-w'
+      .toggleClass '__focus', true
 
-    $(document).on 'blur', '.input-wrap input, .input-wrap textarea', ->
-      $(this).closest('.input-wrap').removeClass('focus')
+    $(document).on 'blur', '.js-input-w input, .js-input-w textarea', (e)->
+      $ this
+      .closest '.input-w'
+      .removeClass '__focus'
 
 
     $(document).on 'click', '.ads-list .js-tc-edit', (event)->

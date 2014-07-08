@@ -24,6 +24,8 @@ transform(v)
 .clear
   clear: both
 
+siomBlueColor = #07a1ca
+
 screen1024 = 'screen and (max-width: 1024px)'
 screen768 = 'screen and (max-width: 768px)'
 lk_sprite = url('/assets/images/market-lk-sprite.png') no-repeat left top
@@ -130,7 +132,7 @@ li
   .input-wrap.big
     width: 100%
 
-    .input-shadow
+    .input_shadow
 
       input
         width: 98%
@@ -149,7 +151,7 @@ li
     float: left
     margin-right: 60px
 
-    .input-shadow
+    .input_shadow
 
       input
         width: 88%
@@ -163,7 +165,7 @@ li
     border: 1px solid #B4B3B3
     padding: 1px
 
-    .input-shadow
+    .input_shadow
       overflow: hidden
       border-left: 1px solid #FBFBFB
       border-right: 1px solid #FBFBFB
@@ -190,7 +192,7 @@ li
   .focus
     .input
       border: 1px solid #07a1ca !important
-      .input-shadow
+      .input_shadow
         input
           color: #07a1ca
         textarea
@@ -2128,6 +2130,9 @@ siomPreviewSize = 43
   &.__big
     width: 100%
 
+  &.__size-L
+    width: 100%
+
   &_left
     width: 120px
     vertical-align: middle
@@ -2142,6 +2147,17 @@ siomPreviewSize = 43
     font-family: 'Arial'
     font-size: 12px
     text-shadow(1px 1px 1px #f8f8f8)
+
+  &.__focus
+
+    .input
+      border-color: siomBlueColor
+
+      input
+        color: siomBlueColor
+
+      textarea
+        color: siomBlueColor
 
 /********************************************************************************************************************/
 /* tables */

@@ -178,6 +178,7 @@ siomBlueColor = #07a1ca
 .siom-ac-btn.__sys-market-index
   margin-top: 15px
 
+
 /********************************************************************************************************************/
 /* tables */
 /********************************************************************************************************************/
@@ -195,3 +196,84 @@ siomBlueColor = #07a1ca
 
   &.__text-align-1
     text-align: left
+
+
+/********************************************************************************************************************/
+/* inputs */
+/********************************************************************************************************************/
+.input-w
+  margin-top: 10px
+  margin-bottom: 10px
+
+  &.__textarea
+
+    .input-w_left
+      vertical-align: top
+      padding-top: 18px
+
+  &.__size-L
+    width: 100%
+
+  &_left
+    width: 120px
+    vertical-align: middle
+
+  .input-w_left.__text-top
+    vertical-align: top
+
+  &_prop-name
+    float: left
+
+    color: #959595
+    font-family: 'Arial'
+    font-size: 12px
+    text-shadow(1px 1px 1px #f8f8f8)
+
+.required-icon
+  color: #e23131
+
+/* TODO этот кусок нужно зарефакторить */
+.input
+  background: none repeat scroll 0 0 #FFFFFF
+  border: 1px solid #B4B3B3
+  padding: 1px
+
+  .input_shadow
+    overflow: hidden
+    border-left: 1px solid #FBFBFB
+    border-right: 1px solid #FBFBFB
+    border-top: 1px solid #D2D3D3
+    border-radius(4px)
+
+    input
+      outline: 0
+      padding: 0 10px
+      width: 100%
+      height: 35px
+      font-size: 16px
+      color: #959595
+      font-family: 'Arial'
+
+    textarea
+      width: 100%
+      height: 60px
+      padding: 10px
+      resize: none
+      font-size: 16px
+      color: #959595
+      font-family: 'Arial'
+
+.__focus
+
+  .input
+    border: 1px solid #07a1ca !important
+
+    .input-shadow
+
+      input
+        color: #07a1ca
+
+      textarea
+        color: #07a1ca
+
+/* конец куска для рефакторинга */
