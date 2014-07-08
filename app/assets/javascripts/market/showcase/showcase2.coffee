@@ -514,7 +514,7 @@ siomart =
       grd_c = siomart.utils.ge('sioMartIndexGrid')
       url = grd_c.getAttribute 'data-index-offers-action'
 
-      this.c_url = url
+      this.c_url = url + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1)
       siomart.request.perform url + '&a.size=' + siomart.config.ads_per_load
 
   #####################################################
@@ -682,9 +682,6 @@ siomart =
           if parseInt( height + scrollTop ) > siomart.utils.ge('sioMartIndexGrid').offsetHeight
             siomart.grid_ads.load_more()
 
-
-        siomart.grid_ads.is_load_more_requested = false
-
         siomart.styles.init()
         siomart.init_shop_links()
 
@@ -692,6 +689,8 @@ siomart =
           siomart.navigation_layer.close true
         else
           siomart.navigation_layer.close()
+
+      siomart.grid_ads.is_load_more_requested = false
 
     siomart.utils.ge('smLoading').style.display = 'none'
 
