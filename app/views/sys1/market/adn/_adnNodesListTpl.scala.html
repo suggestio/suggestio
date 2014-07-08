@@ -2,38 +2,105 @@
 
 @* Инлайновый список узлов. *@
 
-<table>
+<table class="siom-table __size-XL color-strong">
   <tr>
-    <th>@Messages("Name")</th>
-    <th>Тип</th>
-    <th>Город</th>
-    @if(companies.isDefined) {<th>@Messages("Company")</th>}
+    <th class="siom-cell-head __text-align-1">
+      <div class="siom-cell-cnt __size-M">
+        <strong class="color-strong">@Messages("Name")</strong>
+      </div>
+      <div class="border-line"></div>
+    </th>
+    <th class="siom-cell-head __text-align-1">
+      <div class="siom-cell-cnt __size-M">
+        <strong class="color-strong">Тип</strong>
+      </div>
+      <div class="border-line"></div>
+    </th>
+    <th class="siom-cell-head __text-align-1">
+      <div class="siom-cell-cnt __size-M">&nbsp;
+        <strong class="color-strong">Город</strong>
+      </div>
+      <div class="border-line"></div>
+    </th>
+    @if(companies.isDefined) {
+      <th class="siom-cell-head __text-align-1">
+        <div class="siom-cell-cnt __size-M">
+          <strong class="color-strong">@Messages("Company")</strong>
+        </div>
+        <div class="border-line"></div>
+      </th>
+    }
   </tr>
   @adnNodes.groupBy(_.adn.memberType).map { case (memberType, adnNodes1) =>
     @if(withDelims) {
       <tr>
-        <td>-------------</td>
-        <td><a href="@routes.SysMarket.adnNodesList(Some(memberType.name))">@Messages("amt.of.type." + memberType)</a></td>
-        <td>-------------</td>
-        @if(companies.isDefined) { <td>-------------</td> }
+        <td>
+          <div class="siom-cell-cnt __size-M">
+            -------------
+          </div>
+          <div class="border-line"></div>
+        </td>
+        <td>
+          <div class="siom-cell-cnt __size-M">
+            <a class="blue-link" href="@routes.SysMarket.adnNodesList(Some(memberType.name))">
+              @Messages("amt.of.type." + memberType)
+            </a>
+          </div>
+          <div class="border-line"></div>
+        </td>
+        <td>
+          <div class="siom-cell-cnt __size-M">&nbsp;
+            -------------
+          </div>
+          <div class="border-line"></div>
+        </td>
+        @if(companies.isDefined) {
+          <td>
+            <div class="siom-cell-cnt __size-M">
+              -------------
+            </div>
+            <div class="border-line"></div>
+          </td>
+        }
       </tr>
     }
     @adnNodes1.sortBy(_.meta.name).map { adnNode =>
       <tr>
         <td>
-          <a href="@routes.SysMarket.showAdnNode(adnNode.id.get)">@adnNode.meta.name</a>
+          <div class="siom-cell-cnt __size-M">
+            <strong>
+              <a class="blue-link" href="@routes.SysMarket.showAdnNode(adnNode.id.get)">
+                @adnNode.meta.name
+              </a>
+            </strong>
+          </div>
+          <div class="border-line"></div>
         </td>
-        <td>@Messages("amt.of.type." + adnNode.adn.shownTypeId)</td>
-        <td>@adnNode.meta.town</td>
+        <td>
+          <div class="siom-cell-cnt __size-M">
+            @Messages("amt.of.type." + adnNode.adn.shownTypeId)
+          </div>
+          <div class="border-line"></div>
+        </td>
+        <td>
+          <div class="siom-cell-cnt __size-M">&nbsp;
+            @adnNode.meta.town
+          </div>
+          <div class="border-line"></div>
+        </td>
         @companies.map { _companies =>
           <td>
-            @_companies.get(adnNode.companyId).map { mc =>
-              <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.meta.name</a>
-            }
+            <div class="siom-cell-cnt __size-M">
+              @_companies.get(adnNode.companyId).map { mc =>
+                <a class="blue-link" href="@routes.SysMarket.companyShow(mc.id.get)">@mc.meta.name</a>
+              }
+            </div>
+            <div class="border-line"></div>
           </td>
         }
       }
     </tr>
   }
+
 </table>
 

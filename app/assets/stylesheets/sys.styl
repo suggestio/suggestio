@@ -12,6 +12,11 @@ text-shadow(v)
   -moz-text-shadow:    v
   text-shadow:         v
 
+transition(v)
+  -webkit-transition: v
+  -moz-transition: v
+  transition: v
+
 @import "market/reset.styl"
 @import "market/fonts.styl"
 @import "market/lk/base.styl"
@@ -78,12 +83,17 @@ a.add
 strong
   font-weight: bold
 
-.blue-link
-  color: #07a1ca
-  text-decoration: none
+siomBlueColor = #07a1ca
 
-.blue-link:hover
-  text-decoration: underline
+.blue-link
+  color: siomBlueColor
+  text-decoration: none
+  border-bottom: 1px solid rgba(7, 161, 202, 0.3)
+  transition(all 0.2s ease-in-out 0s)
+
+  &:hover
+    color: #276e98
+    border-color: #c6c6c6
 
 .color-strong
   color: #676666
@@ -109,13 +119,13 @@ strong
   overflow: hidden
   width: 100%
   border-top: 1px solid #cbcbcb
-  border-bottom: 1px solid #f8f8f8
+  border-bottom: 1px solid #eeeeee
 
   &.__vertical
     width: 0
     margin-top: 5px
     border-left: 1px solid #cbcbcb
-    border-right: 1px solid #f8f8f8
+    border-right: 1px solid #eeeeee
 
 
 .info-label
@@ -176,7 +186,6 @@ strong
 
   &.__size-XL
     width: 100%
-
 
 .siom-cell-cnt
 

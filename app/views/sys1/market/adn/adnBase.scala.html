@@ -5,12 +5,12 @@
 @import ctx._
 
 @hPathAfter1 = {
-  / <a href="@routes.SysMarket.adnNodesList()">ADN</a>
+  / <a class="blue-link" href="@routes.SysMarket.adnNodesList()">ADN</a>
   @nodeOpt.flatMap(_.adn.supId).map { supId =>
-    / <a href="@routes.SysMarket.showAdnNode(supId)">..</a>
+    / <a class="blue-link" href="@routes.SysMarket.showAdnNode(supId)">..</a>
   }
   @nodeOpt.map { node =>
-    / <a href="@routes.SysMarket.showAdnNode(node.id.get)" title="@Messages("amt.of.type." + node.adn.shownTypeId) / @node.meta.town">@node.meta.name</a>
+    / <a class="blue-link" href="@routes.SysMarket.showAdnNode(node.id.get)" title="@Messages("amt.of.type." + node.adn.shownTypeId) / @node.meta.town">@node.meta.name</a>
   }
   @hPathAfter.getOrElse {
     / @title

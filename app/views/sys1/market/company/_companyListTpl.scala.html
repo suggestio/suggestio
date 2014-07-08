@@ -3,17 +3,19 @@
 @* Рендер списка компаний. *@
 @import ctx._
 
-<table class="siom-table __size-XL">
+<table class="siom-table __size-XL color-strong">
   <tr>
     <th class="siom-cell-head __text-align-1">
       <div class="siom-cell-cnt __size-M">
-        <strong class="color-strong">@Messages("Name")</strong>
+        <strong>@Messages("Name")</strong>
       </div>
       <div class="border-line"></div>
     </th>
     <th class="siom-cell-head __text-align-1">
-      <div class="siom-cell-cnt __size-M">
-        <strong class="color-strong">@if(withDateCreated) {Создана}</strong>
+      <div class="siom-cell-cnt __size-M">&nbsp;
+        @if(withDateCreated) {
+          <strong>Создана</strong>
+        }
       </div>
       <div class="border-line"></div>
     </th>
@@ -34,7 +36,7 @@
       <td>
         <div class="siom-cell-cnt __size-M">&nbsp; <!-- неразрывный пробел, чтобы верстка не ехала, если нет даты создания -->
           @if(withDateCreated) {
-              <span class="color-strong">@datetime._prettyDate(company.meta.dateCreated)</span>
+              <span>@datetime._prettyDate(company.meta.dateCreated)</span>
           }
         </div>
         <div class="border-line"></div>
