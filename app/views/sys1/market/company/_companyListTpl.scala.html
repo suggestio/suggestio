@@ -14,7 +14,9 @@
   </tr>
   @companies.map { company =>
     <tr>
-      <td><a href="@routes.SysMarket.companyShow(company.id.get)">@company.meta.name</a></td>
+      <td>
+        <a href="@routes.SysMarket.companyShow(company.id.get)">@company.meta.name</a>
+      </td>
       @if(withDateCreated) {
         <td>@datetime._prettyDate(company.meta.dateCreated)</td>
       }
