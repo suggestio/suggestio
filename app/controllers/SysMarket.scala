@@ -6,7 +6,6 @@ import play.api.db.DB
 import play.twirl.api.HtmlFormat
 import util.acl._
 import models._
-import util.qsb.AdSearch
 import views.html.sys1.market._
 import play.api.data._, Forms._
 import util.FormUtil._

@@ -200,3 +200,6 @@ market.demo.adn.id=aeq7hpDfTi6B8x5mJpi5KQ
 
 market.join.request.notify.superusers.emails = ["support@suggest.io"]
 
+## Отображать ли пустые категории в выдаче? [false]
+#market.frontend.cats.empty.show = false
+

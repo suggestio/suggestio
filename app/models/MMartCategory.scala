@@ -240,7 +240,7 @@ object MMartCategory extends EsModelStaticT with PlayMacroLogsImpl {
       .sortBy(sortByMmcat)
   }
 
-  private def sortByMmcat(mmcat: MMartCategory) = mmcat.position + mmcat.name
+  def sortByMmcat(mmcat: MMartCategory) = mmcat.position + mmcat.name
 
 
   override def generateMappingProps: List[DocField] = List(

@@ -22,6 +22,7 @@ import models._
  * http://www.playframework.com/documentation/2.1.0/ScalaGlobal
  */
 
+//object Global extends GlobalSettings {
 object Global extends WithFilters(SioHTMLCompressorFilter()) {
 
   // Логгеры тут работают через вызов Logger.*

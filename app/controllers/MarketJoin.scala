@@ -376,7 +376,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     val suEmailsConfKey = "market.join.request.notify.superusers.emails"
     val emails: Seq[String] = configuration.getStringSeq(suEmailsConfKey).getOrElse {
       // Нет ключа, уведомить разработчика, чтобы он настроил конфиг.
-      error("""I don't know, whom to notify about new invite request. Add setting into your application.conf:\n  " + suEmailsConfKey + " = ["support@sugest.io"]""")
+      warn(s"""I don't know, whom to notify about new invite request. Add following setting into your application.conf:\n  $suEmailsConfKey = ["support@sugest.io"]""")
       Seq("support@suggest.io")
     }
     val mailMsg = use[MailerPlugin].email
