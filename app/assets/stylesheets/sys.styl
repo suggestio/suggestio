@@ -12,6 +12,10 @@ text-shadow(v)
   -moz-text-shadow:    v
   text-shadow:         v
 
+transition(v)
+  -webkit-transition: v
+  transition: v
+
 @import "market/reset.styl"
 @import "market/fonts.styl"
 @import "market/lk/base.styl"
@@ -59,12 +63,6 @@ p
 a.add
   color: green
 
-table
-  th,
-  td
-    text-align: left
-    padding: 10px 20px 10px 0px
-
 
 
 /********************************************************************************************************************/
@@ -84,12 +82,17 @@ table
 strong
   font-weight: bold
 
-.blue-link
-  color: #07a1ca
-  text-decoration: none
+siomBlueColor = #07a1ca
 
-.blue-link:hover
-  text-decoration: underline
+.blue-link
+  color: siomBlueColor
+  text-decoration: none
+  border-bottom: 1px solid rgba(7, 161, 202, 0.3)
+  transition(all 0.2s ease-in-out 0s)
+
+  &:hover
+    color: #276e98
+    border-color: #c6c6c6
 
 .color-strong
   color: #676666
@@ -115,13 +118,13 @@ strong
   overflow: hidden
   width: 100%
   border-top: 1px solid #cbcbcb
-  border-bottom: 1px solid #f8f8f8
+  border-bottom: 1px solid #eeeeee
 
   &.__vertical
     width: 0
     margin-top: 5px
     border-left: 1px solid #cbcbcb
-    border-right: 1px solid #f8f8f8
+    border-right: 1px solid #eeeeee
 
 
 .info-label
@@ -146,6 +149,14 @@ strong
     color: #959595
 
 
+.btn-w
+  overflow: hidden /* внутри лежат элементы со свойством float */
+
+  &.__size-M
+    padding: 25px 0
+
+
+
 /********************************************************************************************************************/
 /* sys market index page */
 /********************************************************************************************************************/
@@ -166,3 +177,103 @@ strong
 
 .siom-ac-btn.__sys-market-index
   margin-top: 15px
+
+
+/********************************************************************************************************************/
+/* tables */
+/********************************************************************************************************************/
+.siom-table
+
+  &.__size-XL
+    width: 100%
+
+.siom-cell-cnt
+
+  &.__size-M
+    padding: 10px 0
+
+.siom-cell-head
+
+  &.__text-align-1
+    text-align: left
+
+
+/********************************************************************************************************************/
+/* inputs */
+/********************************************************************************************************************/
+.input-w
+  margin-top: 10px
+  margin-bottom: 10px
+
+  &.__textarea
+
+    .input-w_left
+      vertical-align: top
+      padding-top: 18px
+
+  &.__size-L
+    width: 100%
+
+  &_left
+    width: 120px
+    vertical-align: middle
+
+  .input-w_left.__text-top
+    vertical-align: top
+
+  &_prop-name
+    float: left
+
+    color: #959595
+    font-family: 'Arial'
+    font-size: 12px
+    text-shadow(1px 1px 1px #f8f8f8)
+
+.required-icon
+  color: #e23131
+
+/* TODO этот кусок нужно зарефакторить */
+.input
+  background: none repeat scroll 0 0 #FFFFFF
+  border: 1px solid #B4B3B3
+  padding: 1px
+
+  .input_shadow
+    overflow: hidden
+    border-left: 1px solid #FBFBFB
+    border-right: 1px solid #FBFBFB
+    border-top: 1px solid #D2D3D3
+    border-radius(4px)
+
+    input
+      outline: 0
+      padding: 0 10px
+      width: 100%
+      height: 35px
+      font-size: 16px
+      color: #959595
+      font-family: 'Arial'
+
+    textarea
+      width: 100%
+      height: 60px
+      padding: 10px
+      resize: none
+      font-size: 16px
+      color: #959595
+      font-family: 'Arial'
+
+.__focus
+
+  .input
+    border: 1px solid #07a1ca !important
+
+    .input-shadow
+
+      input
+        color: #07a1ca
+
+      textarea
+        color: #07a1ca
+
+/* конец куска для рефакторинга */

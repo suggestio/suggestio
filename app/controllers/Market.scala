@@ -1,179 +1,27 @@
 package controllers
 
+import play.twirl.api.HtmlFormat
 import util.billing.StatBillingQueueActor
-import util.qsb.AdSearch
 import util._
 import util.acl._
-import views.html.market.showcase._
-import views.html.market.lk.adn._node._installScriptTpl
 import views.html.market.aboutTpl
 import views.html.market.aboutForAdMakersTpl
-import play.api.libs.json._
-import play.api.libs.Jsonp
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
-import scala.concurrent.Future
-import play.api.mvc.{Result, AnyContent, RequestHeader}
 import io.suggest.ym.model.stat.{MAdStat, AdStatActions}
-import io.suggest.ym.model.common.IBlockMeta
-import play.api.Play.{current, configuration}
-import play.api.templates.HtmlFormat
-import io.suggest.model.EsModelMinimalT
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 19.02.14 11:37
- * Description: Выдача sio market.
+ * Description: sio-market controller. Сюда попадают всякие экшены, которые относятся к маркету, но пока
+ * не доросли до отдельных контроллеров.
  */
 
 object Market extends SioController with PlayMacroLogsImpl {
 
   import LOGGER._
-
-  val JSONP_CB_FUN = "siomart.receive_response"
-  val MARKET_CONTRACT_AGREE_FN = "contractAgreed"
-
-  /** Максимальное кол-во магазинов, возвращаемых в списке ТЦ. */
-  val MAX_SHOPS_LIST_LEN = configuration.getInt("market.frontend.subproducers.count.max") getOrElse 200
-
-  /** Базовая выдача для rcvr-узла sio-market. */
-  def martIndex(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
-    val spsr = AdSearch(
-      levels      = List(AdShowLevels.LVL_START_PAGE),
-      receiverIds = List(adnId)
-    )
-    adnNodeIndex(adnId, spsr)
-  }
-
-  /** Выдача для продьюсера, который сейчас админят. */
-  def allMyAdsIndex(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
-    val spsr = AdSearch(
-      producerIds = List(adnId)
-    )
-    adnNodeIndex(adnId, spsr)
-  }
-
-  private def adnNodeIndex(adnId: String, spsr: AdSearch)(implicit request: AbstractRequestForAdnNode[AnyContent]): Future[Result] = {
-    val adnNode = request.adnNode
-    // Надо получить карту всех магазинов ТЦ. Это нужно для рендера фреймов.
-    val allProdsFut = MAdnNode.findBySupId(adnId, onlyEnabled = true, maxResults = MAX_SHOPS_LIST_LEN)
-      .map { _.map { prod => prod.id.get -> prod }.toMap }
-    val prodsStatsFut = MAd.findProducerIdsForReceiver(adnId)
-    // Текущие категории ТЦ
-    val mmcatsFut = MMartCategory.findTopForOwner(getCatOwner(adnId))
-    // Нужно отфильтровать магазины без рекламы.
-    val shopsWithAdsFut = for {
-      allProds    <- allProdsFut
-      prodsStats  <- prodsStatsFut
-    } yield {
-      allProds.filterKeys( prodsStats contains )
-    }
-    val catAdsSearch = AdSearch(
-      receiverIds = List(adnId),
-      maxResultsOpt = Some(100),
-      levels = List(AdShowLevels.LVL_MEMBERS_CATALOG)
-    )
-    // Сборка статитстики по категориям нужна, чтобы подсветить серым пустые категории.
-    val catsStatsFut = MAd.stats4UserCats(MAd.searchAdsReqBuilder(catAdsSearch))
-      .map { _.toMap }
-    val welcomeAdOptFut: Future[Option[MWelcomeAd]] = adnNode.meta.welcomeAdId match {
-      case Some(waId) => MWelcomeAd.getById(waId)
-      case None => Future successful None
-    }
-    for {
-      mads   <- MAd.searchAds(spsr).map(groupNarrowAds)
-      waOpt  <- welcomeAdOptFut
-      catsStats <- catsStatsFut
-      shops  <- shopsWithAdsFut
-      mmcats <- mmcatsFut
-    } yield {
-      val html = indexTpl(adnNode, mads, shops, mmcats, waOpt, catsStats)
-      jsonOk(html, "martIndex")
-    }
-  }
-
-  /** Экшн, который рендерит страничку приветствия, которое видит юзер при первом подключении к wi-fi */
-  def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
-    Ok(demoWebsiteTpl(request.adnNode))
-  }
-
-  def allMyAdsSite(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
-    Ok(demoWebsiteTpl(
-      request.adnNode,
-      withIndexCall = Some(routes.Market.allMyAdsIndex(adnId))
-    ))
-  }
-
-  def nodeSiteScript(adnId: String) = AdnNodeMaybeAuth(adnId).async { implicit request =>
-    Ok(_installScriptTpl(request.adnNode)) as "text/javascript"
-  }
-
-
-  /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина. */
-  def findAds(adSearch: AdSearch) = MaybeAuth.async { implicit request =>
-    val isProducerAds = adSearch.producerIds.nonEmpty
-    // TODO Использовать multiget + кеш.
-    val producersFut = Future.traverse(adSearch.producerIds) { MAdnNodeCache.getById }
-      .map { _.flatMap(_.toList) }
-    val (jsAction, adSearch2) = if (adSearch.qOpt.isDefined) {
-      "searchAds" -> adSearch
-    } else if (isProducerAds) {
-      //val _adSearch = adSearch.copy(levels = AdShowLevels.LVL_MEMBER :: adSearch.levels)
-      // Убираем forceFirstIds, т.к. он не пашет так, как нужно.
-      val _adSearch = if (adSearch.forceFirstIds.isEmpty) {
-        adSearch
-      } else {
-        adSearch.copy(forceFirstIds = Nil)
-      }
-      "producerAds" -> _adSearch
-    } else if (adSearch.catIds.nonEmpty) {
-      val _adSearch = adSearch.copy(levels = AdShowLevels.LVL_MEMBERS_CATALOG :: adSearch.levels)
-      "findAds" -> _adSearch
-    } else if (adSearch.receiverIds.nonEmpty) {
-      val _adSearch = adSearch.copy(levels = AdShowLevels.LVL_START_PAGE :: adSearch.levels)
-      // При поиске по категориям надо искать только если есть указанный show level.
-      "findAds" -> _adSearch
-    } else {
-      // Херота какая видимо.
-      warn("findAds(): strange search request: " + adSearch)
-      "findAds" -> adSearch
-    }
-    val firstAdsFut = if (isProducerAds) {
-      MAd.multiGet(adSearch.forceFirstIds)
-        .map { _.filter {
-          mad => adSearch.producerIds contains mad.producerId
-        } }
-    } else {
-      Future successful Nil
-    }
-    val madsFut: Future[Seq[MAd]] = MAd.searchAds(adSearch2)
-      .flatMap { mads =>
-        // Для producer ads надо не группировать узкие, а выносить firstAdIdOpt на первое место.
-        if (isProducerAds) {
-          firstAdsFut map { firstAds =>
-            val firstAdsIds = firstAds.map(_.id.get)
-            // Если в mads, которые получились в результате поиска, уже содержаться те объявы, которые есть в firstAds, то выкинуть их из хвоста.
-            val mads1 = mads filter {
-              mad => !(firstAdsIds contains mad.id.get)
-            }
-            firstAds ++ mads1
-          }
-        } else {
-          Future successful groupNarrowAds(mads)
-        }
-      }
-    for {
-      mads      <- madsFut
-      producers <- producersFut
-    } yield {
-      // TODO Хвост списка продьюсеров дропается, для рендера используется только один. Надо бы в шаблоне отработать эту ситуацию.
-      val html = findAdsTpl(mads, adSearch, producers.headOption)
-      jsonOk(html, jsAction)
-    }
-  }
-
 
   // статистка
 
@@ -235,51 +83,6 @@ object Market extends SioController with PlayMacroLogsImpl {
   def aboutForAdMakers = MaybeAuth { implicit request =>
     Ok(aboutForAdMakersTpl())
   }
-
-
-  // Внутренние хелперы
-
-  /** Метод для генерации json-ответа с html внутри. */
-  private def jsonOk(html: JsString, action: String) = {
-    val json = JsObject(Seq(
-      "html"    -> html,
-      "action"  -> JsString(action)
-    ))
-    Ok( Jsonp(JSONP_CB_FUN, json) )
-  }
-
-
-  /**
-   * Сгруппировать "узкие" карточки, чтобы они были вместе.
-   * @param ads Исходный список элементов.
-   * @tparam T Тип элемента.
-   * @return
-   */
-  private def groupNarrowAds[T <: IBlockMeta](ads: Seq[T]): Seq[T] = {
-    val (enOpt1, acc0) = ads.foldLeft [(Option[T], List[T])] (None -> Nil) {
-      case ((enOpt, acc), e) =>
-        val blockId = e.blockMeta.blockId
-        val bc: BlockConf = BlocksConf(blockId)
-        if (bc.isNarrow) {
-          enOpt match {
-            case Some(en) =>
-              (None, en :: e :: acc)
-            case None =>
-              (Some(e), acc)
-          }
-        } else {
-          (enOpt, e :: acc)
-        }
-    }
-    val acc1 = enOpt1 match {
-      case Some(en) => en :: acc0
-      case None     => acc0
-    }
-    acc1.reverse
-  }
-
-
-  def getCatOwner(adnId: String) = MMartCategory.DEFAULT_OWNER_ID
 
 }
 

@@ -1,7 +1,6 @@
 package controllers
 
 import util.billing.Billing
-import util.qsb.AdSearch
 import util.PlayMacroLogsImpl
 import util.acl._
 import models._
@@ -31,6 +30,8 @@ import play.api.mvc.Security.username
 object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceProtect {
 
   import LOGGER._
+
+  val MARKET_CONTRACT_AGREE_FN = "contractAgreed"
 
   /**
    * Отрендерить страницу ЛК какого-то узла рекламной сети. Экшен различает свои и чужие узлы.
@@ -371,7 +372,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
   // Обработка инвайтов на управление узлом.
   /** Маппинг формы принятия инвайта. Содержит галочку для договора и опциональный пароль. */
   private val nodeOwnerInviteAcceptM = Form(tuple(
-    Market.MARKET_CONTRACT_AGREE_FN -> boolean
+    MARKET_CONTRACT_AGREE_FN -> boolean
       .verifying("error.contract.not.agreed", identity(_)),
     "password" -> optional(passwordWithConfirmM)
   ))
@@ -433,7 +434,7 @@ object MarketLkAdn extends SioController with PlayMacroLogsImpl with BruteForceP
 
   private def nodeOwnerInviteAcceptCommon(adnId: String, eaId: String)(f: F) = {
     MaybeAuth.async { implicit request =>
-      bruteForceProtect flatMap { _ =>
+      bruteForceProtected {
         EmailActivation.getById(eaId) flatMap {
           case Some(eAct) if eAct.key == adnId =>
             nodeOwnerInviteAcceptGo(adnId, eAct, f)

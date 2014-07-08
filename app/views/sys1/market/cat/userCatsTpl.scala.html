@@ -3,6 +3,7 @@
 @* Список пользовательских категорий (в частости ТЦ-категорий). *@
 @import org.apache.commons.lang3.StringUtils.leftPad
 @import helper._
+@import controllers.MarketCategory.CAN_INSTALL_MART_CATS
 
 @userCatBase("Категории", adnId = ownerId) {
   <h2>Управление деревом</h2>
@@ -22,8 +23,10 @@
   <h2>JSON API</h2>
   <p><a href="@routes.MarketCategory.topCatsOf(ownerId)">topCatsOf()</a></p>
 
-  <h2>Управление</h2>
-  @form(routes.MarketCategory.installMartCategories(ownerId)) {
-    <input type="submit" value="Доустановить категории ТЦ"/>
+  @if(CAN_INSTALL_MART_CATS) {
+    <h2>Управление</h2>
+    @form(routes.MarketCategory.installMartCategories(ownerId)) {
+      <input type="submit" value="Доустановить категории ТЦ"/>
+    }
   }
 }

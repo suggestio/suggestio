@@ -1,5 +1,7 @@
 package controllers
 
+import java.util.regex.Pattern
+
 import models.Context
 import play.api.cache.Cache
 import play.api.mvc._
@@ -9,7 +11,7 @@ import scala.concurrent.{Promise, Future}
 import util.event.SiowebNotifier
 import play.api.libs.concurrent.Akka
 import scala.concurrent.duration._
-import play.api.Play.current
+import play.api.Play.{current, configuration}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.data.Form
 import io.suggest.img.SioImageUtilT
@@ -85,47 +87,63 @@ trait SioController extends Controller with ContextT {
   * Настраивается путём перезаписи констант. Если LAG = 333 ms, и DIVISOR = 3, то скорость ответов будет такова:
   * 0*333 = 0 ms (3 раза), затем 1*333 = 333 ms (3 раза), затем 2*333 = 666 ms (3 раза), и т.д.
   */
-trait BruteForceProtect extends PlayMacroLogsI {
+trait BruteForceProtect extends SioController with PlayMacroLogsI {
+
+  /** имя модуля по конфигу. Нельзя, чтобы ключ конфига содержал знак $, который скала добавляет
+    * ко всем объектам. Используется только при инициализации. */
+  def myBfpConfName = getClass.getSimpleName.replace("$", "")
 
   /** Шаг задержки. Добавляемая задержка ответа будет кратна этому лагу. */
-  val BRUTEFORCE_LAG_MS = 222
+  val BRUTEFORCE_LAG_MS = configuration.getInt(s"bfp.$myBfpConfName.lag_ms") getOrElse 222
 
   /** Префикс в кеше для ip-адреса. */
-  val BRUTEFORCE_CACHE_PREFIX = "bfp:"
+  val BRUTEFORCE_CACHE_PREFIX = configuration.getInt(s"bfp.$myBfpConfName.cache.prefix") getOrElse "bfp:"
 
   /** Нормализация кол-ва попыток происходит по этому целому числу. */
-  val BRUTEFORCE_TRY_COUNT_DIVISOR = 2
+  val BRUTEFORCE_TRY_COUNT_DIVISOR = configuration.getInt(s"bfp.$myBfpConfName.try.count.divisor") getOrElse 2
 
   /** Время хранения в кеше инфы о попытках для ip-адреса. */
-  val BRUTEFORCE_CACHE_TTL = 30 seconds
+  val BRUTEFORCE_CACHE_TTL = configuration.getInt(s"bfp.$myBfpConfName.cache.ttl").getOrElse(30).seconds
+
+  /** Макс кол-во попыток, после которого запросы будут отправляться в помойку. */
+  val BRUTEFORCE_TRY_COUNT_DEADLINE = configuration.getInt(s"bfp.$myBfpConfName.cache.ttl") getOrElse 40
 
   /** Система асинхронного платформонезависимого противодействия брутфорс-атакам. */
-  def bruteForceProtect(implicit request: RequestHeader): Future[_] = {
+  def bruteForceProtected(f: => Future[Result])(implicit request: RequestHeader): Future[Result] = {
     // Для противодействию брутфорсу добавляем асинхронную задержку выполнения проверки по методике https://stackoverflow.com/a/17284760
     val raddr = request.remoteAddress
     val ck = BRUTEFORCE_CACHE_PREFIX + raddr
     val prevTryCount: Int = Cache.getAs[Int](ck) getOrElse 0
-    val lagLevel = prevTryCount / BRUTEFORCE_TRY_COUNT_DIVISOR
-    val lagMs = lagLevel * lagLevel * BRUTEFORCE_LAG_MS
-    val resultFut = if (lagMs <= 0) {
-      Future successful None
+    if (prevTryCount > BRUTEFORCE_TRY_COUNT_DEADLINE) {
+      TooManyRequest("Service overloaded. Please try again later.")
     } else {
-      // Запускаем таймер задержки исполнения реквеста, пока в фоне.
-      val lagPromise = Promise[Unit]()
-      Akka.system.scheduler.scheduleOnce(lagMs milliseconds) {
-        lagPromise.success()
-      }
-      lazy val logPrefix = s"bruteForceProtect($raddr): ${request.method} ${request.path} :: "
-      if (lagMs > 2000) {
-        LOGGER.warn(s"${logPrefix}Attack is going on! Inserting fat lag $lagMs ms, prev.try count = $prevTryCount.")
+      val lagLevel = prevTryCount / BRUTEFORCE_TRY_COUNT_DIVISOR
+      val lagMs = lagLevel * lagLevel * BRUTEFORCE_LAG_MS
+      val resultFut: Future[Result] = if (lagMs <= 0) {
+        f
       } else {
-        LOGGER.debug(s"${logPrefix}Inserting lag $lagMs ms, try = $prevTryCount")
+        // Запускаем таймер задержки исполнения реквеста, пока в фоне.
+        val lagPromise = Promise[Result]()
+        Akka.system.scheduler.scheduleOnce(lagMs milliseconds) {
+          lagPromise completeWith f
+        }
+        lazy val logPrefix = s"bruteForceProtect($raddr): ${request.method} ${request.path} :: "
+        if (lagMs > 2000) {
+          LOGGER.warn(s"${logPrefix}Attack is going on! Inserting fat lag $lagMs ms, prev.try count = $prevTryCount.")
+        } else {
+          LOGGER.debug(s"${logPrefix}Inserting lag $lagMs ms, try = $prevTryCount")
+        }
+        lagPromise.future
       }
-      lagPromise.future
+      // Закинуть в кеш инфу о попытке
+      Cache.set(ck, prevTryCount + 1, BRUTEFORCE_CACHE_TTL)
+      resultFut
     }
-    // Закинуть в кеш инфу о попытке
-    Cache.set(ck, prevTryCount + 1, BRUTEFORCE_CACHE_TTL)
-    resultFut
+  }
+
+  /** Если нет возможности использовать implicit request, тут явная версия: */
+  def bruteForceProtectedNoimpl(request: RequestHeader)(f: => Future[Result]): Future[Result] = {
+    bruteForceProtected(f)(request)
   }
 
 }

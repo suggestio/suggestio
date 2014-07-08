@@ -659,6 +659,7 @@ siomLinkBtnColor5 = #9a9b9b
   cursor: pointer
   text-align: center
   text-decoration: none
+  transition(color 0.2s ease-in-out 0s)
 
   &.__size-XS
     width: 24px
@@ -829,3 +830,27 @@ siomLinkBtnColor5 = #9a9b9b
 
   &.__active
     background-position: 0 1px
+
+/********************************************************************************************************************/
+/* edit btn */
+/********************************************************************************************************************/
+
+.edit-btn
+  background: url('/assets/images/market/lk/edit-but.png') no-repeat
+  background-position: 0 -64px
+  padding-left: 15px
+  padding-top: 5px
+  text-decoration: none
+
+  &:hover
+    background-position: 0 0
+
+  &.__ft-XS
+    font-family: 'Arial'
+    ft(10px)
+
+  &.__color-1
+    color: #959595
+
+    &:hover
+      color: #5088aa
