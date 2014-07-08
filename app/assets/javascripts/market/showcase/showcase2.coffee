@@ -176,6 +176,8 @@ siomart =
         return false
 
       if state == null
+        if siomart.utils.ge('sioMartIndexGrid').innerHTML == ''
+          return false
         siomart.navigation_layer.back()
         siomart.load_index_ads()
         return false
