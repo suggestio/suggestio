@@ -59,7 +59,7 @@ siomart =
     style_dom : null
 
     init : () ->
-      console.log 'initialized styles'
+
       style_tags = siomart.utils.ge_tag('code')
       css = ''
 
@@ -720,22 +720,12 @@ siomart =
       siomart.request.perform this.curl + '&h=' + false + '&a.offset=' + this.blocks.length
       this.load_more_ads_requested = true
 
-    render_more : ( more_blocks ) ->
-      console.log more_blocks[0]
-      for i, v of more_blocks
-        this.render_ad more_blocks[i]
-        this.blocks.push more_blocks[i]
-
-      this.ads_rendered += this.blocks.length
-
-      this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
-      this.fit()
-      siomart.styles.init()
-
-
     scroll_or_move : undefined
 
     show_block_by_index : ( block_index, direction ) ->
+
+      if typeof this.blocks == 'undefined'
+        return false
 
       if block_index == parseInt( this.blocks.length - 1 )
         this.load_more_ads()
@@ -756,16 +746,20 @@ siomart =
       this.active_block_index = block_index
 
       if direction == '+'
-        siomart.utils.ge('sioMartNodeOffers_' + ( block_index + 1 ) ).style.visibility = 'visible';
+        ad_c_el = siomart.utils.ge('ad_c_' + ( block_index + 1 ) )
+        if ad_c_el != null
+          ad_c_el.style.visibility = 'visible';
 
         if block_index >= 2
-          siomart.utils.ge('sioMartNodeOffers_' + ( block_index - 2 ) ).style.visibility = 'hidden';
+          siomart.utils.ge('ad_c_' + ( block_index - 2 ) ).style.visibility = 'hidden';
 
       if direction == '-'
         if block_index >= 1
-          siomart.utils.ge('sioMartNodeOffers_' + ( block_index - 1 ) ).style.visibility = 'visible';
+          siomart.utils.ge('ad_c_' + ( block_index - 1 ) ).style.visibility = 'visible';
 
-        siomart.utils.ge('sioMartNodeOffers_' + ( block_index + 2 ) ).style.visibility = 'hidden';
+        fel = siomart.utils.ge('ad_c_' + ( block_index + 2 ) )
+        if fel != null
+          fel.style.visibility = 'hidden';
 
     next_block : () ->
       if typeof this.active_block_index == 'undefined'
@@ -881,18 +875,39 @@ siomart =
       delete siomart.focused_ads.scroll_or_move
 
     render_ad : ( ad ) ->
-      this.bcInnerHTML = this.bcInnerHTML + ad
-      this._block_container.innerHTML = this.bcInnerHTML
+
+      console.log this.ads_rendered
+
+      siomart.utils.ge('ad_c_' + this.ads_rendered).innerHTML = ad
+      this.ads_rendered++
+
+    render_more : ( more_blocks ) ->
+      this.load_more_ads_requested = false
+      if typeof more_blocks == 'undefined'
+        return false
+
+      for i, v of more_blocks
+        this.render_ad more_blocks[i], i
+        this.blocks.push more_blocks[i]
+
+      this.sm_blocks = sm_blocks = siomart.utils.ge_class this._container, 'sm-block'
+      this.fit()
+      siomart.styles.init()
 
     init : () ->
-      this.root
 
       this._block_container = siomart.utils.ge('sioMartNodeOffersBlockContainer')
       this.bcInnerHTML = this._block_container.innerHTML
       
       this.ads_count = this._block_container.getAttribute 'data-ads-count'
 
-      this.ads_rendered = this.blocks.length
+      this.ads_rendered = 1
+
+      ads_cs = this.bcInnerHTML
+      for i in [1..this.ads_count]
+        ads_cs += '<div id="ad_c_' + i + '"></div>'
+
+      this._block_container.innerHTML = ads_cs
 
       for i, v of this.blocks
         this.render_ad this.blocks[i]

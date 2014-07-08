@@ -16,7 +16,9 @@
   @* Контейнер с прокручивающимися офферами *@
   <div class="sio-mart-node-offers-window__root-container" id="sioMartNodeOffersBlockContainer" data-ads-count="@adsCount">
     @mads.zipWithIndex.map { case (mad, index) =>
+    <div id="ad_c_@index">
       @_focusedAdTpl(mad,  startIndex + index,  producer,  adsCount = adsCount)
+    </div>
     }
   </div>
 
