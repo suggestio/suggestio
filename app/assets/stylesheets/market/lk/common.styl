@@ -561,18 +561,21 @@ li
     padding-right: 20px
     background: url('/assets/images/market/lk/angle.png') no-repeat
     background-position: right -115px
-  .js-g-slide-toggle:hover
-    color: #5088aa
-    background-position: right 3px
+    transition(color 0.2s ease-in-out 0s)
 
-  .js-g-slide-toggle.open
-    background-position: right -176px
-  .js-g-slide-toggle.open:hover
-    color: #5088aa
-    background-position: right -58px
+    &:hover
+      color: #5088aa
+      background-position: right 3px
 
-  .js-g-slide-toggle.l-right
-    float: right
+    &.open
+      background-position: right -176px
+
+      &:hover
+        color: #5088aa
+        background-position: right -58px
+
+    &.l-right
+      float: right
 
   /*
    *  Список узлов с чередованием цветов
@@ -1934,67 +1937,79 @@ li
 .color-light-strong
   color: #959595
 
+
+.blue-link
+  color: siomBlueColor
+  text-decoration: none
+  border-bottom: 1px solid rgba(7, 161, 202, 0.3)
+  transition(all 0.2s ease-in-out 0s)
+
+  &:hover
+    color: #276e98
+    border-color: #c6c6c6
+
+
 .submit-w
   overflow: hidden /* т.к. все внутренние блоки со свойством float */
   text-align: center
 
-.submit-w.__size-XS
-  padding: 10px 20%
+  &.__size-XS
+    padding: 10px 20%
 
-.submit-w.__size-S
-  padding: 25px 20%
+  &.__size-S
+    padding: 25px 20%
 
-.submit-w.__size-M
-  padding: 10px 0
+  &.__size-M
+    padding: 10px 0
 
-.submit-w.__size-L
-  padding: 25px 0
+  &.__size-L
+    padding: 25px 0
 
-.submit-w.__size-XL
-  padding: 50px 0
+  &.__size-XL
+    padding: 50px 0
 
-.submit-w.__invite-form
-  width: 100%
-  padding-left: 120px
+  &.__invite-form
+    width: 100%
+    padding-left: 120px
 
 
 .paragraph
   display: block
 
-.paragraph.__size-M
-  margin: 13px 0
+  &.__size-M
+    margin: 13px 0
 
-.paragraph.__size-L
-  margin: 20px 0
+  &.__size-L
+    margin: 20px 0
 
-.paragraph.__text-1
-  text-align: center
+  &.__text-1
+    text-align: center
 
 
 .error-label
   overflow: hidden
 
-.error-label_icon
-  float: left
-  width: 45px
-  height: 46px
-  background: url('/assets/images/market/lk/error-icon.png') no-repeat left center
+  &_icon
+    float: left
+    width: 45px
+    height: 46px
+    background: url('/assets/images/market/lk/error-icon.png') no-repeat left center
 
-.error-label_title
-  padding-top: 12px /* чтобы однострочный текст был по середине иконки */
-  padding-left: 60px
+  &_title
+    padding-top: 12px /* чтобы однострочный текст был по середине иконки */
+    padding-left: 60px
 
-  font-family: 'Arial'
-  font-size: 18px
-  font-weight: bold
-  color: #e24a4a
-  text-shadow(1px 1px 1px white)
+    font-family: 'Arial'
+    font-size: 18px
+    font-weight: bold
+    color: #e24a4a
+    text-shadow(1px 1px 1px white)
 
-.error-label.__position-def
-  margin-left: -60px
+  &.__position-def
+    margin-left: -60px
 
-.error-label.__size-M
-  padding: 25px 0
+  &.__size-M
+    padding: 25px 0
 
 
 .captcha-table_left
