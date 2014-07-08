@@ -5,7 +5,7 @@
 
 @companyBase(Messages("All")) {
 
-  <h1 class="sys__t">Все компании</h1>
+  <div class="sys_t">Все компании</div>
 
   @if(!companies.isEmpty) {
     @_companyListTpl(companies)
@@ -13,8 +13,8 @@
     Пока нет компаний в системе.
   }
 
-  <p>
-    <a class="add" href="@routes.SysMarket.companyAddForm()">+ Добавить компанию</a>
-  </p>
+  <div class="btn-w __size-M">
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM" href="@routes.SysMarket.companyAddForm()">+ Добавить компанию</a>
+  </div>
 }
 
