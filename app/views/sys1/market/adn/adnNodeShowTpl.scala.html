@@ -54,6 +54,8 @@
     <p>@Messages("Company")-@Messages("Owner"): <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.meta.name</a></p>
   }
 
+  @market.lk.lkBlock("Метаданные") { @_nodeMetaTpl(adnNode.meta) }
+
 
   <h3>Метаданные</h3>
   <div>

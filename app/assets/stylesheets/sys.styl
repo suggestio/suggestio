@@ -274,3 +274,73 @@ siomBlueColor = #07a1ca
     font-family: 'Arial'
 
 /* конец куска для рефакторинга */
+
+
+/* Общие стили */
+.lk-edit-form__block
+  margin-bottom: 10px
+
+.lk-edit-form__block_title
+  background: #dad9d9
+  color: #676666
+  font-weight: bold
+
+  .js-g-slide-toggle
+    margin: 7px 11px
+
+  .js-close-btn
+    margin-top: 7px
+    margin-right: 11px
+
+
+.lk-edit-form__block_title
+
+  .attention-icon
+    display: none
+
+.lk-edit-form__block_title.attention
+  position: relative
+  background-color: #e24a4a
+  color: white
+
+  .attention-icon
+    display: block
+
+.lk-edit-form__block_title_span
+  display: inline-block
+  padding: 7px 11px
+
+.lk-edit-form__block_body
+  background: #efefef
+  box-shadow(0px 1px 0px 0px #acadad)
+
+  .lk-edit-form__block_body
+    box-shadow: none
+
+.lk-edit-form__block_body_inner
+  padding: 10px 22px
+  overflow: hidden
+
+.js-g-slide-toggle
+  cursor: pointer
+  text-decoration: none
+  display: inline-block
+  font-size: 12px
+  line-height: 14px
+  font-family: 'Arial'
+  color: #959595
+  padding-right: 20px
+  background: url('/assets/images/market/lk/angle.png') no-repeat
+  background-position: right -115px
+  transition(color 0.2s ease-in-out 0s)
+
+  &:hover
+    color: #5088aa
+    background-position: right 3px
+
+  &.open
+    background-position: right -176px
+
+    &:hover
+      color: #5088aa
+      background-position: right -58px

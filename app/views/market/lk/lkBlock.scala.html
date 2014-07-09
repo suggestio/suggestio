@@ -1,18 +1,18 @@
 @(blockTitle: String, titleSubClass: String = "")(blockContent: Html)(implicit ctx: util.Context)
 
-<div class="lk-edit-form__block js-slide-wrap">
+<div class="lk-edit-form__block siom-block js-slide-w">
 
-  <div class="lk-edit-form__block_title @if(!titleSubClass.isEmpty) { @titleSubClass }">
+  <div class="lk-edit-form__block_title siom-block_title-w @if(!titleSubClass.isEmpty) { @titleSubClass }">
     <div class="attention-icon">!</div>
     <div class="border-line"></div>
-      <span class="lk-edit-form__block_title_span">
+      <span class="lk-edit-form__block_title_span siom-block_title-w_title">
         @blockTitle
       </span>
-    <a class="js-g-slide-toggle open f-right">Свернуть</a>
+    <a class="js-g-slide-toggle js-slide-btn open f-right">Свернуть</a>
     <div class="border-line"></div>
   </div>
 
-  <div class="lk-edit-form__block_body js-slide-content">
+  <div class="lk-edit-form__block_body js-slide-cnt">
 
     <div class="lk-edit-form__block_body_inner">
       @blockContent

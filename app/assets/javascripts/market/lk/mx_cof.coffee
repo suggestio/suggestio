@@ -353,7 +353,7 @@ CbcaCommon = () ->
 
     $(document).on 'submit', '#recoverPwForm form', (e)->
       e.preventDefault()
-      $form = $(this)
+      $form = $ this
       action = $form.attr('action')
 
       $.ajax(
@@ -428,13 +428,6 @@ CbcaCommon = () ->
           cbca.popup.showPopup('#dailyMmpsWindow')
       )
 
-    $(document).on 'click', '.js-slide-btn', (e)->
-      e.preventDefault()
-      $this = $(this)
-      targetId = $this.attr('href')
-
-      $('#'+targetId).slideToggle()
-
     $(document).on 'click', '.lk-edit-form__block_title .js-close-btn', (e)->
         e.preventDefault()
         $this = $(this)
@@ -447,27 +440,37 @@ CbcaCommon = () ->
       $this.parent().find('.ads-list-block__link')[0].click()
 
 
-    $(document).on 'click', '.js-g-slide-toggle', (e)->
+    $(document).on 'click', '.js-slide-btn', (e)->
       e.preventDefault()
-      $this = $(this)
-      href = $this.attr('href')
+      $this = $ this
+      href = $this.attr 'href'
 
-      if(href)
-        $.ajax(
-          url: href
-          success: (data) ->
-            $data = $(data).hide()
-            $this.closest('.js-slide-wrap').append($data).find('.js-slide-content:first').slideDown()
-            $this.attr('href', '')
-        )
+      if href
+        if href.charAt(0) == '#'
+          $(href).slideToggle()
+        else
+          $.ajax(
+            url: href
+            success: (data) ->
+              $data = $(data).hide()
+              $this
+              .closest '.js-slide-w'
+              .append($data)
+              .find '.js-slide-cnt'
+              .slideDown()
+              $this.attr('href', '')
+          )
       else
-        $this.closest('.js-slide-wrap').find('.js-slide-content:first').slideToggle()
+        $this
+        .closest '.js-slide-w'
+        .find '.js-slide-cnt'
+        .slideToggle()
 
-      $this.toggleClass('open')
-      if($this.hasClass('open'))
-        $this.html('Свернуть')
+      $this.toggleClass 'open'
+      if $this.hasClass 'open'
+        $this.html 'Свернуть'
       else
-        $this.html('Развернуть')
+        $this.html 'Развернуть'
 
 
 
