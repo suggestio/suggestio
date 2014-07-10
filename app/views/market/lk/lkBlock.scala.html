@@ -1,20 +1,24 @@
-@(blockTitle: String, titleSubClass: String = "")(blockContent: Html)(implicit ctx: util.Context)
+@(blockTitle: String, slideBtnHref: Call=Call("", ""), cntSubClass: String = "")(blockContent: Html)(implicit ctx: util.Context)
 
-<div class="lk-edit-form__block siom-block js-slide-w">
+<div class="siom-block js-slide-w">
+  <div class="border-line"></div>
 
-  <div class="lk-edit-form__block_title siom-block_title-w @if(!titleSubClass.isEmpty) { @titleSubClass }">
-    <div class="attention-icon">!</div>
-    <div class="border-line"></div>
-      <span class="lk-edit-form__block_title_span siom-block_title-w_title">
-        @blockTitle
-      </span>
-    <a class="js-g-slide-toggle js-slide-btn open f-right">Свернуть</a>
-    <div class="border-line"></div>
+  <div class="siom-block_title">
+    <strong class="color-strong ft-S">
+      @blockTitle
+    </strong>
+    @if(slideBtnHref.toString) {
+      <a class="slide-btn f-right js-slide-btn " href="@slideBtnHref">Развернуть</a>
+    } else {
+      <a class="slide-btn __open f-right js-slide-btn ">Свернуть</a>
+    }
   </div>
 
-  <div class="lk-edit-form__block_body js-slide-cnt">
+  <div class="border-line"></div>
 
-    <div class="lk-edit-form__block_body_inner">
+  <div class="siom-block_cnt-w js-slide-cnt"  @if(slideBtnHref.toString) { style="display: none;" }>
+
+    <div class="siom-block_cnt @cntSubClass">
       @blockContent
     </div>
 

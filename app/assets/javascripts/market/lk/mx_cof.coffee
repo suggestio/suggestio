@@ -203,7 +203,7 @@ CbcaCommon = () ->
           $('#transactionsList').append data
 
           if $this.attr 'data-init'
-            $('#transactionsHistory').slideDown()
+            $('#transactionsHistory').slideToggle()
 
           $('.js-vertical-line').each () ->
             $this = $ this
@@ -452,25 +452,28 @@ CbcaCommon = () ->
           $.ajax(
             url: href
             success: (data) ->
-              $data = $(data).hide()
-              $this
-              .closest '.js-slide-w'
-              .append($data)
-              .find '.js-slide-cnt'
+              $data = $ data
+              $siomBlock = $this.closest '.js-slide-w'
+              $siomBlock
+              .find '.siom-block_cnt'
+              .append $data
+              $siomBlock
+              .find '.js-slide-cnt:first' ## :first потому что может вложенный siomBlock
               .slideDown()
-              $this.attr('href', '')
+              $this.removeAttr 'href'
           )
       else
         $this
         .closest '.js-slide-w'
-        .find '.js-slide-cnt'
+        .find '.js-slide-cnt:first' ## :first потому что может вложенный siomBlock
         .slideToggle()
 
-      $this.toggleClass 'open'
-      if $this.hasClass 'open'
-        $this.html 'Свернуть'
-      else
-        $this.html 'Развернуть'
+      $this.toggleClass '__open'
+      if !$this.attr 'data-fix-title'
+        if $this.hasClass '__open'
+          $this.html 'Свернуть'
+        else
+          $this.html 'Развернуть'
 
 
 

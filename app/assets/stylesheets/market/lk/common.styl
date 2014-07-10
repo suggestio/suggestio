@@ -1034,6 +1034,8 @@ li
   text-align: center
   text-shadow: none
   font-size: 12px
+  line-height: 16px
+  margin-top: -5px
   color: white
 
 .lk-edit-form__block_title
@@ -1474,17 +1476,9 @@ li
   text-align: center
   font-family: 'Arial'
 
-  p
-    margin: 13px 0
-
-  strong
-    color: #676666
-
-.adv-req-wind_price
-  color: #23313d !important
-  font-family: 'PT Sans Narrow','sans-serif'
-  font-weight: bold
-  font-size: 24px
+  &_price
+    color: #23313d
+    font-family: 'PT Sans Narrow','sans-serif'
 
 .daily-mmps-window
   width: 908px !important
@@ -1632,9 +1626,6 @@ li
   font-weight: bold
   color: #e24a4a
   text-shadow(1px 1px 1px white)
-
-.paragraph-13
-  margin: 13px 0
 
 .success-label
   overflow: hidden
@@ -1951,6 +1942,10 @@ li
     border-color: #c6c6c6
 
 
+.paragraph-13
+  margin: 13px 0
+
+
 .submit-w
   overflow: hidden /* т.к. все внутренние блоки со свойством float */
   text-align: center
@@ -2051,7 +2046,7 @@ li
   color: #e23131
 
 /********************************************************************************************************************/
-/* file uploads */
+/* Загрузка файлов */
 /********************************************************************************************************************/
 siomPreviewSize = 43
 
@@ -2097,7 +2092,7 @@ siomPreviewSize = 43
     max-height:  siomPreviewSize px
 
 /********************************************************************************************************************/
-/* border-lines */
+/* Разделительные линии */
 /********************************************************************************************************************/
 .border-line
   overflow: hidden
@@ -2115,7 +2110,7 @@ siomPreviewSize = 43
     border-right: 1px solid #eeeeee
 
 /********************************************************************************************************************/
-/* inputs */
+/* Поля для ввода информации */
 /********************************************************************************************************************/
 .input-w
   margin-top: 10px
@@ -2160,7 +2155,7 @@ siomPreviewSize = 43
         color: siomBlueColor
 
 /********************************************************************************************************************/
-/* tables */
+/* Таблицы SioMarket */
 /********************************************************************************************************************/
 .siom-table
 
@@ -2185,3 +2180,60 @@ siomPreviewSize = 43
 
 th.__bg-head
   background-color: #dad9d9
+
+
+/********************************************************************************************************************/
+/* Стандартный блок SioMarket */
+/********************************************************************************************************************/
+.siom-block
+  margin-bottom: 10px
+
+  &_title
+    background: #dad9d9
+    padding: 7px 11px
+
+  &_cnt-w
+    background: #efefef
+    box-shadow(0px 1px 0px 0px #acadad)
+
+
+  &_cnt
+    padding: 10px 22px
+    overflow: hidden
+
+  &_cnt.__innerVisible
+    overflow: visible
+
+.siom-block-child
+  display: none
+  margin-top: -10px
+
+/********************************************************************************************************************/
+/* Кнопка Свернуть/Развернуть */
+/********************************************************************************************************************/
+.slide-btn
+  display: inline-block
+  cursor: pointer
+  padding-right: 20px
+
+  background: url('/assets/images/market/lk/angle.png') no-repeat
+  background-position: right -115px
+
+  text-decoration: none
+  font-size: 12px
+  line-height: 14px
+  font-family: 'Arial'
+  color: #959595
+
+  &:hover
+    color: #5088aa
+    background-position: right 3px
+
+  &.__open
+    background-position: right -176px
+
+    &:hover
+      background-position: right -58px
+
+
+

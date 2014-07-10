@@ -10,22 +10,28 @@
 
 @_advWndFullTpl(mad, adProducer) {
 
-  <p style="margin-top: 0;">
-    <strong>Запрос размещения рекламы от <a class="blue-link" href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">@adProducer.meta.name</a></strong>
-    <br/>
+  <p class="paragraph-13 color-light-strong ft-S">
+    <strong class="color-strong">
+      Запрос размещения рекламы от <a class="blue-link" href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">@adProducer.meta.name</a>
+    </strong>
+  </p>
 
-    <span class="gray font-12">С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)</span><br/>
+  <p class="paragraph-13 color-light-strong ft-XS">
+    С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)<br/>
     @if( advReq.showLevels contains AdShowLevels.LVL_MEMBERS_CATALOG ) {
-      <span>+ Размещение в категориях товаров и услуг</span><br/>
+      + Размещение в категориях товаров и услуг<br/>
     }
     @if( advReq.showLevels contains AdShowLevels.LVL_START_PAGE ) {
-      <span>+ Размещение на главном экране</span>
+      + Размещение на главном экране
     }
 
   </p>
 
-  <p class="gray font-12">
-    <strong class="adv-req-wind_price">@formatPrice(advReq.amount, advReq.currency)</strong>
+  <p class="paragraph-13 color-light-strong ft-XS">
+    <strong class="ft-L adv-req-wind_price">
+      @formatPrice(advReq.amount, advReq.currency)
+    </strong>
+
     @advReq.comission.map { c =>
       (комиссия @formatPercent(c))
     }

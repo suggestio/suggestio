@@ -12,10 +12,7 @@
   backHref = adnNode.id.map(routes.MarketLkAdn.showAdnNode(_))
 ) {
 
-  @market.lk.lkBlock(
-    blockTitle ="На рассмотрении",
-    titleSubClass = if (!advsWithAds.isEmpty) "attention" else ""
-  ) {
+  @market.lk.lkBlock("На рассмотрении") {
     <div class="advertising-requests">
 
       <div class="advertising-requests_text">
