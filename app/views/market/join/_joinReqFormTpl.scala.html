@@ -8,11 +8,11 @@
 
 @form(submitCall) {
 
-  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+  <table cellpadding="0" cellspacing="0" class="input-w __size-L">
     @inputText(jf("company"), '_label -> (Messages("Company") + ":"))
   </table>
 
-  <table class="input-w __big">
+  <table class="input-w __size-L">
     <tr>
 
       <td class="input-w_left">
@@ -33,38 +33,38 @@
   </table>
 
   @if( isWifi ) {
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
       @inputText(jf("audienceDescr"), '_label -> (Messages("Audience.descr") + ":"))
     </table>
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
       @inputText(jf("humanTrafficAvg"), '_label -> (Messages("Daily.people.traffic") + ":"))
     </table>
   }
 
-  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+  <table cellpadding="0" cellspacing="0" class="input-w __size-L">
     @inputText(jf("town"), '_label -> (Messages("Town") + ":"))
   </table>
 
-  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+  <table cellpadding="0" cellspacing="0" class="input-w __size-L">
     @textarea(jf("address"), '_label -> (Messages("Address") + ":"))
   </table>
 
 
-  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+  <table cellpadding="0" cellspacing="0" class="input-w __size-L">
     @inputText(jf("siteUrl"), '_label -> (Messages("Site") + ":"))
   </table>
 
-  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+  <table cellpadding="0" cellspacing="0" class="input-w __size-L">
     @inputText(jf("email"), '_label -> (Messages("constraint.email") + ":"))
   </table>
 
-  <table cellpadding="0" cellspacing="0" class="input-wrap big">
+  <table cellpadding="0" cellspacing="0" class="input-w __size-L">
     @inputText(jf("phone"), '_label -> (Messages("Office.phone.number") + ":"))
   </table>
 
   @if( isWifi ) {
-    <table class="input-w __big">
+    <table class="input-w __size-L">
       <tr>
 
         <td class="input-w_left">
@@ -84,14 +84,14 @@
       </tr>
     </table>
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
 
       <tr>
-        <td class="left">
-          <label for="logoImgInput">Фотографии<br/>объекта:</label>
+        <td class="input-w_left">
+          <label class="input-w_prop-name" for="logoImgInput">Фотографии<br/>объекта:</label>
         </td>
 
-        <td class="right">
+        <td>
 
           <div class="add-file-w __size-S" >
             @stuff._fileUploadTpl(routes.Img.handleTempImg, fieldName = "gallery", multiple = true)
@@ -103,17 +103,17 @@
 
     </table>
   } else {
-    <table cellpadding="0" cellspacing="0" class="input-wrap big">
+    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
       @textarea(jf("info"), '_label -> "Описание товаров или услуг:")
     </table>
   }
 
-  <table class="input-wrap big">
-    <td class="left">
-      <label for="meta_color">Основной цвет:</label>
+  <table class="input-w __size-L">
+    <td class="input-w_left">
+      <label class="input-w_prop-name" for="meta_color">Основной цвет:</label>
       <span class="required-icon">*</span>
     </td>
-    <td class="right">
+    <td>
       <div class="lk-color-select__color lk-color-select__color_custom js-custom-color" style="background: #@jf("color").value;">
       <div></div>
       <input id="meta_color" type="hidden" name="color" value="@jf("color").value"/>
@@ -126,7 +126,7 @@
 
     <div class="border-line"></div>
 
-    <table cellpadding="0" cellspacing="0" class="input-wrap big textarea">
+    <table cellpadding="0" cellspacing="0" class="input-w __size-L textarea">
       @textarea(jf("payReqs"), '_label -> (Messages("requisites") + ":"))
     </table>
 
@@ -137,10 +137,10 @@
 
 
   @* Капча *@
-  <table cellpadding="0" cellspacing="0" class="input-wrap">
+  <table cellpadding="0" cellspacing="0" class="input-w">
     <tr>
-      <td class="left"></td>
-      <td class="right" style="height: 55px;">
+      <td class="input-w_prop-name"></td>
+      <td style="height: 55px;">
         @defining( jf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
           <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
           <img id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
@@ -151,7 +151,7 @@
   </table>
 
 
-  <table cellpadding="0" cellspacing="0" class="input-wrap">
+  <table cellpadding="0" cellspacing="0" class="input-w">
     @inputText(
       jf(CAPTCHA_TYPED_FN),
       '_label -> Messages("Input.text.from.picture")
@@ -163,7 +163,7 @@
   <div class="border-line"></div>
 
 
-  <div class="submit-wrap submit-wrap_padding10">
+  <div class="submit-w __size-M">
 
     <a class="siom-ac-btn __color-2 __size-M __ft-XM f-right js-submit-btn">
       @Messages("Request.invite")

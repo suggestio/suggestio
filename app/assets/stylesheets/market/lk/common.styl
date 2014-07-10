@@ -80,85 +80,7 @@ li
   .inline-block
     display: inline-block
 
-  .input-wrap
-    margin-top: 10px
-    margin-bottom: 10px
 
-    .left
-      vertical-align: middle
-      width: 120px
-
-      label
-        float: left
-        font-size: 12px
-        color: #959595
-        font-family: 'Arial'
-        text-shadow(1px 1px 1px #F8F8F8)
-
-    .select-color
-      vertical-align: middle
-      font-size: 12px
-      color: #959595
-      font-family: 'Arial'
-      padding-left: 20px
-      width: 80px
-
-      label
-        float: left
-        padding-right: 10px
-        width: 50px
-
-      .color
-        margin-left: 10px
-        display: inline-block
-        width: 27px
-        line-height: 27px
-        border: 1px solid #b2b2b2
-        border-radius(2px)
-
-      .color.custom
-        background: url('/assets/images/market/lk/custom-color.png') no-repeat
-        background-size: 21px 21px
-        background-position: 3px 3px
-
-    .close
-      margin-top: 5px
-      margin-right: 10px
-  .input-wrap.textarea
-    .left
-      vertical-align: top
-      padding-top: 18px
-
-  .input-wrap.big
-    width: 100%
-
-    .input_shadow
-
-      input
-        width: 98%
-
-  .input-wrap.tinymce
-
-    .tinymce_editor
-      width: 615px
-
-    .select-color
-      width: auto
-      vertical-align: top
-
-  .input-wrap.small
-    width: 260px
-    float: left
-    margin-right: 60px
-
-    .input_shadow
-
-      input
-        width: 88%
-
-  .input-wrap.hide-label
-    .left
-      display: none
 
   .input
     background: none repeat scroll 0 0 #FFFFFF
@@ -182,6 +104,7 @@ li
         font-family: 'Arial'
 
       textarea
+        outline: 0
         width: 100%
         height: 60px
         padding: 10px
@@ -189,6 +112,7 @@ li
         font-size: 16px
         color: #959595
         font-family: 'Arial'
+
   .focus
     .input
       border: 1px solid #07a1ca !important
@@ -197,6 +121,7 @@ li
           color: #07a1ca
         textarea
           color: #07a1ca
+
   .input.error
     border: 1px solid #e23131
 
@@ -231,6 +156,7 @@ li
       color: #b4b4b4
       width: 250px
       padding-left: 45px
+
   .mce-container
 
     font-size: 16px !important
@@ -239,62 +165,6 @@ li
 
 
 
-
-
-
-  .select-file-wrap
-    width: 300px
-    float: left
-    overflow: hidden
-    .preview
-      margin-top: 1px
-      float: left
-      img
-        border: 1px solid #b2b2b2
-    .selectbox
-      width: 200px
-      float: left
-      padding-left: 20px
-      .select-file
-        position: relative
-        height: 27px
-        overflow: hidden
-        input
-          outline: 0
-          position: absolute
-          z-index: 2
-          cursor: pointer
-          top: 0
-          left: 0
-          display: block
-          opacity: 0
-          width: 188px
-          height: 27px
-        .bg
-          padding-top: 6px
-          position: absolute
-          top: 0
-          left: 0
-          width: 188px
-          height: 27px
-          background: url('/assets/images/market/lk/gray-but.png') no-repeat
-          background-position: 0 -154px
-          font-size: 12px
-          font-family: 'Arial'
-          color: #959595
-          text-align: center
-      .select-file:hover
-        .bg
-          background-position: 0 -77px
-      .select-file:active
-         .bg
-          background-position: 0 0
-      .descr
-        padding-top: 5px
-        font-size: 12px
-        font-family: 'Arial'
-        color: #b4b4b4
-
   .close
     float: right
     width: 17px
@@ -302,10 +172,12 @@ li
     text-decoration: none
     background: url('/assets/images/market/lk/close-icon.png') no-repeat
     background-position: 0 -67px
-  .close:hover
-    background-position: 0 0
-  .close:active
-    background-position: 0 1px
+
+    &:hover
+      background-position: 0 0
+
+    &:active
+      background-position: 0 1px
 
   .popups-container
     display: none
@@ -400,6 +272,7 @@ li
           border-top: 1px #d3d3d3 solid
           box-shadow( inset 1px 1px 3px d3d3d3 )
           border-radius( 2px )
+
   .popup.another-nodes
     width: 768px
 
@@ -428,23 +301,6 @@ li
     color: #E23131
     font-size: 12px
     font-family: 'Arial'
-
-  .white-board
-    position: relative
-    display: inline-block
-    border-radius(6px)
-    background: #efefef
-    box-shadow(1px 1px 2px 0 #959595)
-
-    .white-border-top
-      border-radius(6px)
-      box-shadow(0 -2px 0 0 white)
-      overflow: hidden
-
-      .gray-border-bottom
-        overflow: hidden
-        border-radius(6px)
-        box-shadow(0 1px 0 0 gray)
 
   .triger-wrap
     text-align: center
@@ -552,32 +408,6 @@ li
     .ads-list
       display: none
 
-  .js-g-slide-toggle
-    cursor: pointer
-    text-decoration: none
-    display: inline-block
-    font-size: 12px
-    line-height: 14px
-    font-family: 'Arial'
-    color: #959595
-    padding-right: 20px
-    background: url('/assets/images/market/lk/angle.png') no-repeat
-    background-position: right -115px
-    transition(color 0.2s ease-in-out 0s)
-
-    &:hover
-      color: #5088aa
-      background-position: right 3px
-
-    &.open
-      background-position: right -176px
-
-      &:hover
-        color: #5088aa
-        background-position: right -58px
-
-    &.l-right
-      float: right
 
   /*
    *  Список узлов с чередованием цветов
@@ -1537,17 +1367,6 @@ li
 
 .login-popup__recover-password
   padding-left: 20px
-  color: #959595
-  text-align: left
-  font-family: 'Arial'
-  font-size: 12px
-
-  a
-    color: #07a1ca
-    text-decoration: none
-
-  a:hover
-    text-decoration: underline
 
 .popup-title
   padding-bottom: 25px
@@ -1704,30 +1523,30 @@ li
   line-height: 24px
   text-align: center
 
-.about-page__title
-  font-family: "aa_higherup-webfont"
-  font-size: 42px
-  line-height: 40px
-  letter-spacing: 2px
+  &__title
+    font-family: "aa_higherup-webfont"
+    font-size: 42px
+    line-height: 40px
+    letter-spacing: 2px
 
-.about-page__title__big-btn
-  font-size: 48px
-  line-height: 46px
+  &__title__big-btn
+    font-size: 48px
+    line-height: 46px
 
-.about-page__circle-wrap
-  display: inline-block
-  margin: 25px 0
-  padding: 6px
-  background-color: rgba( 107, 126, 133, 0.5)
-  border-radius(50%)
+  &__circle-wrap
+    display: inline-block
+    margin: 25px 0
+    padding: 6px
+    background-color: rgba( 107, 126, 133, 0.5)
+    border-radius(50%)
 
-.about-page__circle
-  display: inline-block
-  padding: 90px 20px 80px
-  width: 232px
-  height: 96px
-  border-radius(50%)
-  border: 1px solid white
+  &__circle
+    display: inline-block
+    padding: 90px 20px 80px
+    width: 232px
+    height: 96px
+    border-radius(50%)
+    border: 1px solid white
 
 .dot
   background: url('/assets/images/market/lk/dot.png') no-repeat
@@ -1875,18 +1694,15 @@ li
     margin-bottom: 25px
     width: 100%
 
-  .input-wrap
+  .input-w
 
     tr
       display: block
 
-    .left
+    td
       display: block
       overflow: hidden
       width: 100% !important
-
-    .right
-      display: block
 
   .captcha-table
 
@@ -2135,6 +1951,10 @@ siomPreviewSize = 43
   .input-w_left.__text-top
     vertical-align: top
 
+  &_tinymce-editor
+    vertical-align: top
+    width: 650px
+
   &_prop-name
     float: left
 
@@ -2142,6 +1962,9 @@ siomPreviewSize = 43
     font-family: 'Arial'
     font-size: 12px
     text-shadow(1px 1px 1px #f8f8f8)
+
+  .input-w_prop-name.__right
+    padding-left: 10px
 
   &.__focus
 

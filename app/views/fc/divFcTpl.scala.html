@@ -6,13 +6,16 @@
 @import views.html.helper._
 
 
-<div class="lk-field">
+<div class="input-w">
 
-  <label class="lk-field__name" for="@elements.id">@elements.label(elements.lang)
-    @if(elements.field.constraints.exists { _._1 == "constraint.required" }) {
-      <span class="required-icon">*</span>
-    }
-  </label>
+  @if(elements.label.toString.size > 0) {
+    <label class="lk-field__name" for="@elements.id">
+      @elements.label(elements.lang)
+      @if(elements.field.constraints.exists { _._1 == "constraint.required" }) {
+        <span class="required-icon">*</span>
+      }
+    </label>
+  }
 
   <div class="input clearfix @elements.args.get('_class) @if(elements.hasErrors) {error}" id="@elements.args.get('_id).getOrElse(elements.id + "_field")">
 

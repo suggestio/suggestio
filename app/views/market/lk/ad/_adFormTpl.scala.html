@@ -79,15 +79,16 @@
   @* HTML-редактор для ввода текстового описания. *@
   @market.lk.lkBlock("Описание") {
 
-        <table class="input-wrap big tinymce">
-          <td class="tinymce_editor">
+        <table class="input-w __size-L tinymce">
+
+          <td class="input-w_tinymce-editor">
             @*textarea(af("ad.descr.text"))*@
             <textarea class="js-tinymce" id="ad_descr_text" name="ad.descr.text">
               @af("ad.descr.text").value
             </textarea>
           </td>
 
-          @_selectColorTpl(af("ad.descr.bgColor"), label = "Цвет фона:")
+          @_selectColorTpl(af("ad.descr.bgColor"), label = "Цвет фона")
         </table>
 
   }

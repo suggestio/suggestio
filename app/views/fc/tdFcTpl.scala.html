@@ -6,7 +6,7 @@
 @import views.html.helper._
 
 
-<td class="left input-w_left">
+<td class="input-w_left">
   <label class="input-w_prop-name" for="@elements.id">@elements.label(elements.lang)
     @if(elements.field.constraints.exists { _._1 == "constraint.required" }) {
       <span class="required-icon">*</span>
@@ -14,7 +14,7 @@
   </label>
 </td>
 
-<td class="right">
+<td>
     <div class="input clearfix @elements.args.get('_class) @if(elements.hasErrors) {error}" id="@elements.args.get('_id).getOrElse(elements.id + "_field")">
       <div class="input_shadow js-input-w">
         @elements.input
