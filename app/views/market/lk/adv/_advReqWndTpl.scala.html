@@ -10,13 +10,13 @@
 
 @_advWndFullTpl(mad, adProducer) {
 
-  <p class="paragraph-13 color-light-strong ft-S">
+  <p class="paragraph __size-M color-light-strong ft-S">
     <strong class="color-strong">
       Запрос размещения рекламы от <a class="blue-link" href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">@adProducer.meta.name</a>
     </strong>
   </p>
 
-  <p class="paragraph-13 color-light-strong ft-XS">
+  <p class="paragraph __size-M color-light-strong ft-XS">
     С @formatDate(advReq.dateStart) по @formatDate(advReq.dateEnd)<br/>
     @if( advReq.showLevels contains AdShowLevels.LVL_MEMBERS_CATALOG ) {
       + Размещение в категориях товаров и услуг<br/>
@@ -27,7 +27,7 @@
 
   </p>
 
-  <p class="paragraph-13 color-light-strong ft-XS">
+  <p class="paragraph __size-M color-light-strong ft-XS">
     <strong class="ft-L adv-req-wind_price">
       @formatPrice(advReq.amount, advReq.currency)
     </strong>
