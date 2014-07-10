@@ -113,14 +113,6 @@ li
         color: #959595
         font-family: 'Arial'
 
-  .focus
-    .input
-      border: 1px solid #07a1ca !important
-      .input_shadow
-        input
-          color: #07a1ca
-        textarea
-          color: #07a1ca
 
   .input.error
     border: 1px solid #e23131
@@ -133,15 +125,12 @@ li
       background: #F3B0B0
       color: white
 
-  .input-wrap.disabled
+  .input-w.__disabled
     input
       background: url('/assets/images/market/lk/lock.png') no-repeat 95% center #F0F0F0
 
-  .input-wrap.big.disabled
-    input
-      background: url('/assets/images/market/lk/lock.png') no-repeat 99% center #F0F0F0
 
-  .input-wrap.pass
+  .input-w.__pass
 
     td
       padding: 5px 0
@@ -156,14 +145,6 @@ li
       color: #b4b4b4
       width: 250px
       padding-left: 45px
-
-  .mce-container
-
-    font-size: 16px !important
-    color: #959595 !important
-    font-family: 'Arial' !important
-
-
 
   .close
     float: right
@@ -533,9 +514,7 @@ li
 @import "../reset"
 @import "fonts"
 @import "base"
-@import "main-page"
-@import "new-shop"
-@import "edit-shop"
+
 @import "ads-list"
 @import "cbca-select"
 @import "buttons"
@@ -2060,3 +2039,9 @@ th.__bg-head
 
 
 
+.categories-select
+  position: relative
+  height: 24px
+
+.invite-form_description
+  padding-left: 120px
