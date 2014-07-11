@@ -28,7 +28,7 @@
 
         case advOk: MAdvOk => {
           @_single_status( "approved", node ) {
-            @if(advOk.isOnline){<a href="@routes.MarketShowcase.demoWebSite(node.id.get)">}одобрил размещение@if(advOk.isOnline){</a>}.
+            @if(advOk.isOnline){<a class="blue-link" href="@routes.MarketShowcase.demoWebSite(node.id.get)">}одобрил размещение@if(advOk.isOnline){</a>}.
             <span class="advs-statuses__status__date">@_prettyDate(advOk.dateStatus)</span>
           }
           @* dateStatus - одобрение, dateStart - начало размещения. *@
