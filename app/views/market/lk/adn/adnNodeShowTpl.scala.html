@@ -62,21 +62,21 @@
   </div>
 
   <div class="body">
-    <div class="shop-info">
 
-      <div class="name-wrap" style="padding-bottom: 0px;">
-        <span class="name">@node.meta.name</span>
+      <div class="paragraph __size-M">
+        <span class="ft-L node-name">@node.meta.name</span>
         @if(isMyNode) {
-          <a class="edit" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">@Messages("Edit")</a>
+          <a class="edit-btn __color-1 __ft-XS" href="@routes.MarketLkAdnEdit.editAdnNode(node.id.get)">
+            @Messages("Edit")
+          </a>
 
-        @if(isMyNode) {
-        <span class="sm-note">
-          <span class="sm-note__q-mark">?</span>
-          <span class="sm-note__message">
-            Подсказка: в редактировании вы можете указать информацию о вашем магазине и загрузить основной логотип, который будет отображаться на всех рекламных карточках.
+          <span class="sm-note">
+            <span class="sm-note__q-mark">?</span>
+            <span class="sm-note__message">
+              Подсказка: в редактировании вы можете указать информацию о вашем магазине и загрузить основной логотип, который будет отображаться на всех рекламных карточках.
+            </span>
           </span>
-        </span>
-        }
+
 
           @if(isSuperuser) {
             <a class="superuser-link" href="@routes.SysMarket.showAdnNode(node.id.get)">/sys</a>
@@ -87,20 +87,18 @@
       <div class="border-line"></div>
 
       @if(node.meta.town.isDefined) {
-        <div class="name-wrap">
+        <div class="paragraph __size-M">
           @node.meta.town@if(node.meta.address.isDefined) {, @node.meta.address}
         </div>
         <div class="border-line"></div>
       }
 
       @if(node.meta.description.isDefined) {
-        <table class="block">
-          <tr>
+        <p class="paragraph __size-M">
             @_nodeDescrTdTpl(node, style = "border-left: none; padding-left: 0;")
-          </tr>
-        </table>
+        </p>
+        <div class="border-line"></div>
       }
-    </div>
 
     @* Если указаны этаж/секция, то их напечатать таблицей. *@
     @if(node.meta.floor.isDefined || node.meta.section.isDefined) {
