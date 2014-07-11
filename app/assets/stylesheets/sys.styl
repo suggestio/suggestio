@@ -56,9 +56,6 @@ body
 .db-search-result img
     margin: 10px 10px 10px 0px
     float: left
-p
-  font-size: 12px
-  padding: 10px 0px
 
 a.add
   color: green
@@ -68,6 +65,18 @@ a.add
 /********************************************************************************************************************/
 /* refactoring to MCSS  TODO убрать все important, когда весь css будет написан по методологии */
 /********************************************************************************************************************/
+
+.color-error
+  color: #e12d2d !important
+
+.color-success
+  color: #48ab38 !important
+
+.color-strong
+  color: #676666
+
+.color-light-strong
+  color: #959595
 
 .sys
   font-size: 14px
@@ -94,8 +103,19 @@ siomBlueColor = #07a1ca
     color: #276e98
     border-color: #c6c6c6
 
-.color-strong
-  color: #676666
+
+.paragraph
+  display: block
+
+  &.__size-M
+    margin: 13px 0
+
+  &.__size-L
+    margin: 20px 0
+
+  &.__text-1
+    text-align: center
+
 
 .ovh
   overflow: hidden
@@ -185,6 +205,14 @@ siomBlueColor = #07a1ca
 
   &.__size-XL
     width: 100%
+
+.siom-cell
+
+  &.__size-S
+    width: 120px
+
+  &.__inner-S
+    padding: 5px
 
 .siom-cell-cnt
 

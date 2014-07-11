@@ -51,42 +51,50 @@
 
 
   @company.map { mc =>
-    <p>@Messages("Company")-@Messages("Owner"): <a href="@routes.SysMarket.companyShow(mc.id.get)">@mc.meta.name</a></p>
+    <p class="paragraph __size-M color-light-strong">
+      @Messages("Company")-@Messages("Owner"): <a class="blue-link" href="@routes.SysMarket.companyShow(mc.id.get)">@mc.meta.name</a>
+    </p>
   }
 
-  @market.lk.lkBlock("Метаданные") { @_nodeMetaTpl(adnNode.meta) }
-
-
-  <h3>Метаданные</h3>
-  <div>
+  @market.lk.lkBlock("Метаданные") {
     @_nodeMetaTpl(adnNode.meta)
-  </div>
-
-
-  <br/>
-  <h3>Подчинённые узлы (@slaves.size)</h3>
-  <a class="add" href="@routes.SysMarket.createAdnNode(adnNode.id)">Добавить подузел...</a><br/>
-  @if(slaves.isEmpty) {
-    <p>Нет подчинённых узлов.</p>
-  } else {
-    <br/>
-    @_adnNodesListTpl(slaves, withDelims = false)
   }
 
+  @market.lk.lkBlock("Подчинённые узлы(" +slaves.size +")") {
 
-  <br/>
-  <h3>Участие в рекламной сети</h3>
-  Права: @adnNode.adn.rights.map(_.longName).mkString(", ")<br/>
-  @if(!adnNode.adn.producerIds.isEmpty) {
-    producerIds = @adnNode.adn.producerIds.toSeq.zipWithIndex.map { case (producerId, i) =>
-      <a href="@routes.SysMarket.showAdnNode(producerId)">@i</a>
+    @if(slaves.isEmpty) {
+      <p class="paragraph __size-M color-light-strong">Нет подчинённых узлов.</p>
+    } else {
+      @_adnNodesListTpl(slaves, withDelims = false)
     }
-    <br/>
+
+    <div class="btn-w __size-M">
+      <a class="siom-ac-btn __color-1 __size-M __ft-XM" href="@routes.SysMarket.createAdnNode(adnNode.id)">+Добавить подузел</a>
+    </div>
+
   }
-  @* TODO Надо бы отображать как-то showLevelsInfo. *@
-  isEnabled = @adnNode.adn.isEnabled<br/>
-  @adnNode.adn.disableReason.map { dr =>
-    disableReason = @dr<br/>
+
+  @market.lk.lkBlock("Участие в рекламной сети") {
+
+    <div class="color-light-strong">
+      Права: <strong class="color-strong">@adnNode.adn.rights.map(_.longName).mkString(", ")</strong>
+      <br/>
+      @if(!adnNode.adn.producerIds.isEmpty) {
+        producerIds = @adnNode.adn.producerIds.toSeq.zipWithIndex.map { case (producerId, i) =>
+          <a class="blue-link" href="@routes.SysMarket.showAdnNode(producerId)">@i</a>
+        }
+        <br/>
+      }
+
+      @* TODO Надо бы отображать как-то showLevelsInfo. *@
+      isEnabled = <strong class="color-strong">@adnNode.adn.isEnabled</strong>
+      <br/>
+      @adnNode.adn.disableReason.map { dr =>
+        disableReason = <strong class="color-strong">@dr</strong>
+        <br/>
+      }
+    </div>
+
   }
 
 

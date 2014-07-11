@@ -6,55 +6,89 @@
 @import util.TplDataFormatUtil._
 @import io.suggest.util.UrlUtil._
 
-@Messages("Name"): @meta.name<br/>
 
-@meta.description.map { descr =>
-  Описание: @Html(descr)<br/>
+@tableRow(title: String)(value: Html) = {
+
+  <tr>
+    <td class="siom-cell __size-S __inner-S">
+      @title
+    </td>
+    <td class="siom-cell __inner-S">
+      @value
+    </td>
+  </tr>
+
 }
 
-@Messages("Created"): @_prettyDate(meta.dateCreated, withSpan = true)<br/>
 
-@meta.town.map { town =>
-  Город: @town<br/>
+@strong(cnt: Html) = {
+  <strong class="color-strong">@cnt</strong>
 }
 
-@meta.audienceDescr.map { audDescr =>
-  Описание аудитории: @Html(audDescr)<br/>
-}
 
-@meta.humanTrafficAvg.map { htAvg =>
-  Человеческий трафик: @formatInt(htAvg) чел. в день<br/>
-}
+<table class="color-light-strong">
+  @tableRow( Messages("Name")+":") { @strong(Html(meta.name)) }
 
-@meta.info.map { info =>
-  Информация о товарах/услугах: @info<br/>
-}
+  @meta.description.map { descr =>
+    @tableRow( "Описание:") { @strong( Html(descr)) }
+  }
 
-@meta.address.map { address =>
-  @Messages("Address"): @address<br/>
-}
+  @tableRow( Messages("Created")+":") { @strong(_prettyDate(meta.dateCreated, withSpan = true)) }
 
-@meta.phone.map { phone =>
-  Телефон: @phone<br/>
-}
+  @meta.town.map { town =>
+    @tableRow( "Город:") { @strong(Html(town)) }
+  }
 
-@meta.floor.map { floor =>
-  Этаж: @floor<br/>
-}
+  @meta.audienceDescr.map { audDescr =>
+    @tableRow( "Описание аудитории:") { @strong(Html(audDescr)) }
+  }
 
-@meta.section.map { section =>
-  Секция: @section<br/>
-}
+  @meta.humanTrafficAvg.map { htAvg =>
+    @tableRow( "Человеческий трафик:") { @strong(Html(formatInt(htAvg)+"чел. в день")) }
+  }
 
-@meta.siteUrl.map { siteUrl =>
-  Сайт: <a href="http://anonym.to/?@siteUrl" title="@humanizeUrl(siteUrl)">@humanizeUrlAggressive(siteUrl)</a><br/>
-}
+  @meta.info.map { info =>
+    @tableRow( "Информация о товарах/услугах:") { @strong(Html(info)) }
+  }
 
-@meta.color.map { color =>
-  Цвет: <b>#@color</b> <span style="background-color: #@color;">&nbsp;&nbsp;&nbsp;&nbsp;</span><br/>
-}
+  @meta.address.map { address =>
+    @tableRow( Messages("Address")+":") { @strong(Html(address)) }
+  }
 
-@meta.welcomeAdId.map { wad =>
-  Приветствие: Есть (@wad)
-}
+  @meta.phone.map { phone =>
+    @tableRow( "Телефон:") { @strong(Html(phone)) }
+  }
+
+  @meta.floor.map { floor =>
+    @tableRow( "Этаж:") { @strong(Html(floor)) }
+  }
+
+  @meta.section.map { section =>
+    @tableRow( "Секция:") { @strong(Html(section)) }
+  }
+
+  @meta.siteUrl.map { siteUrl =>
+    @tableRow( "Сайт:") {
+      <strong class="color-strong">
+        <a class="blue-link" href="http://anonym.to/?@siteUrl" target="_blank" title="@humanizeUrl(siteUrl)">@humanizeUrlAggressive(siteUrl)</a>
+      </strong>
+    }
+
+  }
+
+  @meta.color.map { color =>
+    @tableRow("Цвет:") {
+      <strong class="color-strong">
+        #@color
+        <span style="background-color: #@color;">&nbsp;&nbsp;&nbsp;&nbsp;</span></strong>
+    }
+  }
+
+  @meta.welcomeAdId.map { wad =>
+    @tableRow("Приветствие:") {
+      @strong( Html("Есть("+wad+")") )
+    }
+  }
+
+  </table>
 
