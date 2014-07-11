@@ -19,6 +19,20 @@
   </div>
 }
 
+@tableRow(title: String)(value: Html) = {
+
+  <tr>
+    <td class="siom-cell __size-S __inner-S">
+      @title
+    </td>
+    <td class="siom-cell __inner-S">
+      @value
+    </td>
+  </tr>
+
+}
+
+
 
 @hPathAfter = {
   @* Исходного заголовка достаточно для рендера. *@
@@ -76,60 +90,76 @@
 
   @market.lk.lkBlock("Участие в рекламной сети") {
 
-    <div class="color-light-strong">
-      Права: <strong class="color-strong">@adnNode.adn.rights.map(_.longName).mkString(", ")</strong>
-      <br/>
-      @if(!adnNode.adn.producerIds.isEmpty) {
-        producerIds = @adnNode.adn.producerIds.toSeq.zipWithIndex.map { case (producerId, i) =>
-          <a class="blue-link" href="@routes.SysMarket.showAdnNode(producerId)">@i</a>
-        }
-        <br/>
+    <table class="color-light-strong">
+      @tableRow("Права:") {
+
+        <strong class="color-strong">
+          @adnNode.adn.rights.map(_.longName).mkString(", ")
+
+          @if(!adnNode.adn.producerIds.isEmpty) {
+
+            producerIds = @adnNode.adn.producerIds.toSeq.zipWithIndex.map { case (producerId, i) =>
+              <a class="blue-link" href="@routes.SysMarket.showAdnNode(producerId)">@i</a>
+            }
+            <br/>
+          }
+        </strong>
+
       }
 
       @* TODO Надо бы отображать как-то showLevelsInfo. *@
-      isEnabled = <strong class="color-strong">@adnNode.adn.isEnabled</strong>
-      <br/>
-      @adnNode.adn.disableReason.map { dr =>
-        disableReason = <strong class="color-strong">@dr</strong>
-        <br/>
+      @tableRow("isEnabled:") {
+        <strong class="color-strong">@adnNode.adn.isEnabled</strong>
       }
-    </div>
+
+      @adnNode.adn.disableReason.map { dr =>
+        @tableRow("disableReason:") {
+          <strong class="color-strong">@dr</strong>
+        }
+
+      }
+    </table>
+
+  }
+
+  @market.lk.lkBlock("Управление") {
+
+    @btn(routes.SysMarket.showAdnNodeAds(AdSearch(producerIds = adnNode.id.toList)), 28) { Собственные<br/>рекламные<br/>карточки }{ }
+    @btn(routes.SysMarket.showAdnNodeAds(AdSearch(receiverIds = adnNode.id.toList)), 28) { Рекламные<br/>карточки<br/>в выдаче }{ }
+    @btn(routes.SysMarket.nodeOwnerInviteForm(adnNode.id.get), 28) { Инвайты на<br/>управление<br/> узлом }{ }
 
   }
 
 
-  <br/>
-  <h3>Управление</h3>
-  Список рекламных карточек узла:
-    <a href="@routes.SysMarket.showAdnNodeAds(AdSearch(producerIds = adnNode.id.toList))">собственных</a>,
-    <a href="@routes.SysMarket.showAdnNodeAds(AdSearch(receiverIds = adnNode.id.toList))">в выдаче</a>.
-  <br/>
 
   @* Категории в рамках узла возможны, но отключены до лучших времён. *@
   @*<a href="@routes.MarketCategory.showCatsFor(adnNode.id.get)">Категории</a><br/>*@
 
-  <a href="@routes.SysMarket.nodeOwnerInviteForm(adnNode.id.get)">Инвайты на управление узлом</a><br/>
 
   @* Функционал товаров и прайс-листов пока скрыт: кравлер не готов, товары не нужны. *@
   @*<a href="@routes.SysMarket.splAddForm(mshop.id.get)">Добавить источник прайс-листа.</a>
     <a href="@routes.MarketOffer.showShopPromoOffers(mshop.id.get)">ЛК: Товары магазина</a> *@
 
 
-  <br/>
-  <p>
-      Модерация бесплатного размещения:
-      <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(producerId = adnNode.id))">Очередь на модерацию</a> /
-      <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(true), producerId = adnNode.id))">Одобренные</a> /
-      <a href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(false), producerId = adnNode.id))">Отклонённые</a>
-  </p>
+
+  @market.lk.lkBlock("Модерация бесплатного размещения") {
+
+      <a class="siom-ac-btn __color-2 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(producerId = adnNode.id))">Очередь на модерацию</a>
+      <a class="siom-ac-btn __color-1 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(true), producerId = adnNode.id))">Одобренные</a>
+      <a class="siom-ac-btn __color-4 __size-M __ft-XM __list f-left" href="@routes.SysMdr.freeAdvs(MdrSearchArgs(freeAdvIsAllowed = Some(false), producerId = adnNode.id))">Отклонённые</a>
+
+  }
 
 
-  <br/>
-  <h3>Отладка</h3>
-  Отобразить email-письмо инвайта:
-    <a href="@routes.SysMarket.showEmailInviteMsg(adnNode.id.get, isHtml=true)">HTML</a>,
-    <a href="@routes.SysMarket.showEmailInviteMsg(adnNode.id.get, isHtml=false)">TXT</a>
-    <br/>
+  @market.lk.lkBlock("Отладка") {
+
+    <p class="color-light-strong">
+      Отобразить email-письмо инвайта:
+      <a class="blue-link" href="@routes.SysMarket.showEmailInviteMsg(adnNode.id.get, isHtml=true)">HTML</a>,
+      <a class="blue-link" href="@routes.SysMarket.showEmailInviteMsg(adnNode.id.get, isHtml=false)">TXT</a>
+    </p>
+
+  }
 
 }
 

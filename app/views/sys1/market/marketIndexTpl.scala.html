@@ -35,6 +35,7 @@
 
       <div class="i-list __market-index">
 
+        <div class="paragraph __size-M ovh">
           @btn(routes.SysMarket.companiesList(), 40) { ВСЕ<br/>КОМПАНИИ } {
 
             <a href="@routes.SysMarket.companyAddForm()" class="siom-ac-btn __color-1 __size-XL __ft-XM __sys-market-index">
@@ -59,9 +60,13 @@
           }
           @btn(routes.SysCalendar.showCalendars, 28) { КАЛЕНДАРИ<br/>ПРАЗДНИКОВ/<br/>ВЫХОДНЫХ } { }
 
-        <div class="clear"></div>
-        @btn(routes.SysMarketInvReq.index, 28) { ЗАПРОСЫ<br/>ПОДКЛЮЧЕНИЯ<br/>К СЕТИ } { }
-        @btn(routes.SysMdr.index, 52) { МОДЕРАЦИЯ } { }
+        </div>
+
+        <div class="paragraph __size-M ovh">
+          @btn(routes.SysMarketInvReq.index, 28) { ЗАПРОСЫ<br/>ПОДКЛЮЧЕНИЯ<br/>К СЕТИ } { }
+          @btn(routes.SysMdr.index, 52) { МОДЕРАЦИЯ } { }
+        </div>
+
       </div>
 
    </div>
