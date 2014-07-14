@@ -8,12 +8,17 @@
 @import helper._
 
 @hPathAfter = {
-  / <a href="@routes.SysMdr.freeAdvs()">Free Advs</a> / Карточка
+  / <a class="blue-link" href="@routes.SysMdr.freeAdvs()">Free Advs</a> / Карточка
+}
+
+@headAfter = {
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase.css")'/>
 }
 
 @mdrBase(
   title = "Модерация бесплатного размещения карточки",
   adnNodeOpt = Some(producer),
+  headAfter = Some(headAfter),
   hPathAfter = Some(hPathAfter)
 ) {
 
@@ -31,6 +36,10 @@
 
 
   @* Отобразить карточку целиком (задействовать другую колонку) *@
-  @_single_offer_w_description(mad, producer = producer)
+  <div class="ad-full-preview">
+    <div class="sio-mart-showcase">
+      @_single_offer_w_description(mad, producer = producer)
+    </div>
+  </div>
 
 }

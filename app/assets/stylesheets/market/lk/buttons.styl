@@ -78,45 +78,6 @@
   background-position: 0 1px
 
 
-.transparent-btn
-  cursor: pointer
-  border-width: 1px
-  border-style: solid
-  display: block
-  position: relative
-  text-align: center
-  text-decoration: none
-
-.transparent-btn__white-top
-  box-shadow(0 1px 0 0 white inset)
-  overflow: hidden
-
-.transparent-btn_gray
-  border-color: #9a9b9b
-
-.transparent-btn_gray__text
-  color: #676666
-  font-family: 'PFDinTextCompPro-Medium'
-  text-shadow(1px 1px 1px #F8F8F8)
-
-.transparent-btn_gray:hover
-  border-color: #4f88a9
-
-  .transparent-btn_gray__text
-    color: #4f88a9
-
-.transparent-btn_gray:active
-  border-color: #9a9b9b
-  background: #cbcbcb
-
-  .transparent-btn__white-top
-    border-color: #cbcbcb
-    box-shadow: none
-
-  .transparent-btn_gray__text
-    color: #676666
-
-
 .captcha-reload-btn
   cursor: pointer
   display: inline-block
@@ -209,6 +170,9 @@ siomAcBtnColor5 = #b6c2c5 /* серо-синий */
 
   &.__list
     margin-right: 25px
+
+  &.__list-vertical
+    margin: 5px 0
 
   &.__color-1
     color: white
@@ -330,6 +294,9 @@ siomLinkBtnColor5 = #9a9b9b
   text-align: center
   text-decoration: none
   transition(color 0.2s ease-in-out 0s)
+
+  &.__list-vertical
+    margin: 5px 0
 
   &.__size-XS
     width: 24px
