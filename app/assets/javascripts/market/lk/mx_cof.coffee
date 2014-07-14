@@ -77,12 +77,20 @@ CbcaPopup = () ->
     this.showOverlay()
     $popup = $(popup)
     $popup.show()
+
+    $ 'body'
+    .addClass 'ovh'
+
+    $popup
+    .find '.sm-block'
+    .addClass 'double-size'
+
+    $popup
+    .find '.js-hidden'
+    .hide()
+
     popupHeight = $popup.height()
-
-    console.log(popup)
-
-    $('body').addClass('ovh')
-    this.setOverlayHeight(popupHeight)
+    this.setOverlayHeight popupHeight
 
     $popup.find('.border-line-vertical').each () ->
       $this = $(this)
@@ -183,6 +191,7 @@ CbcaCommon = () ->
 
   self.init = () ->
 
+    $('.js-hidden').hide()
 
     $(document).on 'click', '#getTransactions', (e)->
       e.preventDefault()
@@ -408,7 +417,10 @@ CbcaCommon = () ->
         success: (data)->
           console.log(data)
           $('#advReqWind').remove()
-          $('#popupsContainer').append(data).find('.sm-block').addClass('double-size')
+          $ '#popupsContainer'
+          .append data
+          .find '.sm-block'
+          .addClass 'double-size'
 
           cbca.popup.showPopup('#advReqWind')
           $('#advReqRefuse').hide()

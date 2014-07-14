@@ -88,6 +88,20 @@ a.add
     ft(24px)
     color: #676666
 
+.close
+  width: 17px
+  height: 17px
+  cursor: pointer
+  background: url('/assets/images/market/lk/close-icon.png') no-repeat
+  background-position: 0 -67px
+  text-decoration: none
+
+  &:hover
+    background-position: 0 0
+
+  &:active
+    background-position: 0 1px
+
 strong
   font-weight: bold
 
@@ -171,10 +185,13 @@ siomBlueColor = #07a1ca
 
 .btn-w
   overflow: hidden /* внутри лежат элементы со свойством float */
+  text-align: center
 
   &.__size-M
     padding: 25px 0
 
+  &.__size-S
+    padding: 25px 20%
 
 .page-cnt
   padding-top: 20px
@@ -300,6 +317,17 @@ siomBlueColor = #07a1ca
     color: #959595
     font-family: 'Arial'
 
+  &.error
+    border: 1px solid #e23131
+
+    input
+      background: #F3B0B0
+      color: white
+
+    textarea
+      background: #F3B0B0
+      color: white
+
 /* конец куска для рефакторинга */
 
 
@@ -348,3 +376,59 @@ siomBlueColor = #07a1ca
 
     &:hover
       background-position: right -58px
+
+
+/********************************************************************************************************************/
+/* Всплывающие окна SIoMarket */
+/********************************************************************************************************************/
+
+
+.popups-container
+  position: fixed
+  top: 0
+  left: 0
+  z-index: 40
+
+  display: none
+  width: 100%
+  height: 100%
+  overflow-y: scroll
+
+  background-color: rgba(0,0,0,0.5)
+
+  text-align: center
+
+.overlay
+  position: absolute
+  top: 0
+  left: 0
+  z-index: 5
+
+  display: none
+  width: 100%
+
+  background-color: black
+  opacity: 0.5
+
+.popup
+  position: relative
+  top: 25px
+  z-index: 20000
+  display: inline-block
+  background: #e1e1e1
+
+  &_header
+    background: #efefef
+    border-bottom: 1px solid #9a9b9b
+    overflow: hidden
+    padding: 10px
+
+  &_cnt
+    padding: 25px
+
+  &_t
+    padding-bottom: 25px
+    color: #676666
+    ft(30px)
+    font-family: 'PFDinTextCompPro-Medium'
+    text-align: center
