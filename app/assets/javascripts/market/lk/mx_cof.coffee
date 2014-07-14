@@ -85,12 +85,12 @@ CbcaPopup = () ->
     .find '.sm-block'
     .addClass 'double-size'
 
+    popupHeight = $popup.height()
+    this.setOverlayHeight popupHeight
+
     $popup
     .find '.js-hidden'
     .hide()
-
-    popupHeight = $popup.height()
-    this.setOverlayHeight popupHeight
 
     $popup.find('.border-line-vertical').each () ->
       $this = $(this)
@@ -407,24 +407,6 @@ CbcaCommon = () ->
       else
         return true
 
-    $(document).on 'click', '.js-advertising-requests-item_get-info', (e)->
-      e.preventDefault()
-      $this = $(this)
-      href = $this.attr('href')
-
-      $.ajax(
-        url: href,
-        success: (data)->
-          console.log(data)
-          $('#advReqWind').remove()
-          $ '#popupsContainer'
-          .append data
-          .find '.sm-block'
-          .addClass 'double-size'
-
-          cbca.popup.showPopup('#advReqWind')
-          $('#advReqRefuse').hide()
-      )
 
     $(document).on 'click', '.advs-nodes__node-link_show-popup', (e)->
       e.preventDefault()

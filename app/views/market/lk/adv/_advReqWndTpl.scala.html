@@ -40,7 +40,8 @@
   @* Отменить размещение рекламы с указанием причины. *@
   @form(
     routes.MarketAdv.advReqRefuseSubmit(advReq.id.get, r = goBackTo),
-    'id -> "advReqRefuse"
+    'id -> "advReqRefuse",
+    'class -> "js-hidden"
   ) {
     @textarea(refuseFormM("reason"), '_label -> "", 'placeholder -> "Напишите причину отмены")
 

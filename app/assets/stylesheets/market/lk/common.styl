@@ -222,45 +222,6 @@ li
           position: relative
           margin: 0 auto
 
-      .controls
-        text-align: center
-        padding-top: 50px
-
-      .note
-        color: #b4b4b4
-        font-family: Arial
-        font-size: 12px
-        text-shadow: 1px #eaeaea solid
-        padding: 13px 60px
-        text-align: center
-
-        .blue
-          color: #6290ad
-          font-weight: bold
-
-      .textarea
-        border: 1px #b2b2b2 solid
-        background: #fff
-        padding: 1px
-
-        textarea
-          min-width: 404px
-          max-width: 404px
-          color: #959595
-          font-family: Arial
-          font-size: 14px
-          padding: 12px 15px;height: 160px
-          border-top: 1px #d3d3d3 solid
-          box-shadow( inset 1px 1px 3px d3d3d3 )
-          border-radius( 2px )
-
-  .popup.another-nodes
-    width: 768px
-
-  .disable-shop
-    .input-wrap
-      .left
-        display: none
 
   .disable-ad
     .descr
@@ -274,9 +235,6 @@ li
     a:hover
       text-decoration: underline
 
-  .hide-content
-    display: none
-
   .err-msg
     padding-top: 5px
     color: #E23131
@@ -285,198 +243,33 @@ li
 
 
   .lk-list
+
     .item
       font-family: 'Arial'
       display: block
       padding: 5px 10px
       margin: 2px 0
       text-decoration: none
+
       .number
         font-size: 12px
         color: #959595
+
       .name
         padding-left: 100px
         font-size: 24px
         color: #23313d
         font-weight: bold
         font-family: 'PT Sans Narrow'
+
       .mmart-name
         font-size: 16px
         color: #676666
+
     .item:hover
       background: #efefef
 
 
-  /*
-   *  Список дочерних элементов в кабинете супервайзера
-   */
-  .nodes
-    margin-bottom: 50px
-
-    .node
-      padding: 10px
-      background: #dad9d9
-
-      .n-name,
-      .n-city
-        font-size: 14px
-        color: #676666
-
-      .n-expand
-        float: right
-        color: #959595
-        font-size: 12px
-        text-decoration: none
-
-      .toggle
-        float: right
-        text-decoration: none
-        display: inline-block
-        font-size: 12px
-        line-height: 14px
-        font-family: 'Arial'
-        color: #959595
-        padding-right: 20px
-        background: url('/assets/images/market/lk/angle.png') no-repeat
-        background-position: right -115px
-      .toggle:hover
-        color: #5088aa
-        background-position: right 3px
-      .toggle:active
-        margin-top: 1px
-
-    .node.open
-      background: #efefef
-
-      .toggle
-        background-position: right -176px
-      .toggle:hover
-        color: #5088aa
-        background-position: right -58px
-
-    .ads-list
-      display: none
-
-
-  /*
-   *  Список узлов с чередованием цветов
-   */
-  .nodes-list
-    margin-top: 10px
-    border: 1px solid #b2b2b2
-
-    .hat
-      padding: 12px
-      background: #cbcbcb
-      font-size: 12px
-      line-height: 12px
-      font-family: 'Arial'
-      color: #efefef
-      text-align: right
-
-    .even,
-    .odd
-      overflow: hidden
-      padding: 11px 12px
-
-    .even
-      background: #f5f5f5
-
-    .odd
-      background: white
-
-    .left
-      float: left
-
-      a
-        font-family: 'Arial'
-        color: #959595
-        font-weight: bold
-        text-decoration: none
-        font-size: 16px
-      a:hover
-        text-decoration: underline
-
-      .type
-        font-family: 'Arial'
-        font-size: 16px
-        color: #959595
-
-    .right
-      float: right
-
-      span
-        font-family: 'Arial'
-        font-size: 10px
-
-      span:hover
-        cursor: pointer
-        color: #5088aa
-
-      .disable-but
-        color: #cbcbcb
-
-      .triger
-        position: relative
-        display: inline-block
-        width: 44px
-        height: 6px
-        background: url('/assets/images/market/lk/triger-bg.png') no-repeat center center
-
-        .circle
-          transition( -webkit-transform linear 0.1s )
-          transition( transform linear 0.1s )
-          position: absolute
-          width: 20px
-          height: 18px
-          top: -6px
-          transform( translate3d(-3px, 0, 0))
-          background: url('/assets/images/market/lk/circle.png') no-repeat
-          background-position: 0 -68px
-        .circle:hover
-          cursor: pointer
-          background-position: 0 0
-
-    .enabled
-
-      .left
-
-        a
-          color: #4f88a9
-
-      .right
-
-        .circle
-          transform( translate3d(27px, 0, 0))
-
-  /*
-   *  Биллинг
-   */
-  .billing-page
-
-
-    td
-      vertical-align: middle
-
-      .ovh
-        display: inline-block
-        padding: 10px 20px
-
-      .prop-title
-        display: inline-block
-        width: 60px
-        color: #959595
-        font-size: 12px
-
-      .value
-        font-size: 14px
-        font-family: 'Arial'
-        color: #676666
-
-      .value.big
-        font-size: 24px
-        color: #23313d
-        font-family: 'PFDinTextCompPro-Medium'
 
 
 @import "../reset"
@@ -1693,6 +1486,8 @@ li
 .color-light-strong
   color: #959595
 
+.color-link
+  color: siomBlueColor
 
 .blue-link
   color: siomBlueColor
@@ -2004,6 +1799,64 @@ th.__bg-head
       background-position: right -58px
 
 
+/********************************************************************************************************************/
+/* Всплывающие окна SIoMarket */
+/********************************************************************************************************************/
+.popups-container
+  position: fixed
+  top: 0
+  left: 0
+  z-index: 40
+
+  display: none
+  width: 100%
+  height: 100%
+  overflow-y: scroll
+
+  background-color: rgba(0,0,0,0.5)
+
+  text-align: center
+
+.overlay
+  position: absolute
+  top: 0
+  left: 0
+  z-index: 5
+
+  display: none
+  width: 100%
+
+  background-color: black
+  opacity: 0.5
+
+.popup
+  position: relative
+  top: 25px
+  z-index: 20000
+  display: inline-block
+  background: #e1e1e1
+
+  &_header
+    background: #efefef
+    border-bottom: 1px solid #9a9b9b
+    overflow: hidden
+    padding: 10px
+
+  &_cnt
+    padding: 25px
+
+  &_t
+    padding-bottom: 25px
+    color: #676666
+    ft(30px)
+    font-family: 'PFDinTextCompPro-Medium'
+    text-align: center
+
+
+
+
+
+
 
 .categories-select
   position: relative
@@ -2021,3 +1874,9 @@ th.__bg-head
   line-height: 30px
   background: url('/assets/images/market/lk/location-icon.png') no-repeat left center
   padding-left: 30px
+
+.install-script
+
+  textarea
+    height: 250px !important
+    ft(12px !important)
