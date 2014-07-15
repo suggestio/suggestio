@@ -92,11 +92,13 @@ CbcaPopup = () ->
     .find '.js-hidden'
     .hide()
 
-    $popup.find('.border-line-vertical').each () ->
-      $this = $(this)
+    $ '.js-vertical-line'
+    .each () ->
+      $this = $ this
       $parent = $this.parent()
+      lineHeight = $parent.height() - 10
 
-      $this.height($parent.height() - 10)
+      $this.height lineHeight
 
   hidePopup: (popup) ->
     popup = popup || '.popup'
@@ -173,8 +175,11 @@ CbcaCommon = () ->
   ## ВЫРАВНИВАНИЕ ВЫСОТЫ БЛОКОВ ##
   ################################
 
-  self.setEqualHeightBlocks = () ->
-    $blocks = $('.js-equal-height')
+  self.setEqualHeightBlocks = ($obj) ->
+    if $obj && $obj.size
+      $blocks = $obj.find '.js-equal-height'
+    else
+      $blocks = $ '.js-equal-height'
     height = 0
 
     $blocks.each () ->
@@ -184,6 +189,19 @@ CbcaCommon = () ->
 
     $blocks.height(height)
 
+
+  #######################################################################################################################
+  ## ВЫРАВНИВАНИЕ ВЫСОТЫ БЛОКОВ ##
+  #######################################################################################################################
+
+  self.setVerticalLineHeight = () ->
+    $ '.js-vertical-line'
+    .each () ->
+      $this = $ this
+      $parent = $this.parent()
+      lineHeight = $parent.height() - 10
+
+      $this.height lineHeight
 
   #########################################
   ## TODO разнести по отдельным функциям ##
@@ -196,12 +214,15 @@ CbcaCommon = () ->
     $(document).on 'click', '#getTransactions', (e)->
       e.preventDefault()
       $this = $ this
+      $transactionsHistory = $ '#transactionsHistory'
+      $transactionsList = $ '#transactionsList'
 
       $.ajax(
         url: $this.attr 'href'
         success: (data)->
           if $this.attr 'data-init'
-            $('#transactionsList tr')
+            $transactionsList
+            .find 'tr'
             .not ':first'
             .remove()
           else
@@ -209,22 +230,22 @@ CbcaCommon = () ->
             .closest 'tr'
             .remove()
 
-          $('#transactionsList').append data
+          $transactionsList
+          .append data
 
           if $this.attr 'data-init'
-            $('#transactionsHistory').slideToggle()
+            $transactionsHistory
+            .slideDown 600,
+                       () ->
+                        self.setVerticalLineHeight($transactionsList)
 
-          $('.js-vertical-line').each () ->
-            $this = $ this
-            $parent = $this.parent()
-
-            $this.height($parent.height() - 10)
         error: (error)->
           console.log(error)
       )
 
 
     self.setEqualHeightBlocks()
+    self.setVerticalLineHeight()
 
     $(window).resize () ->
       cbca.popup.setOverlayHeight()
@@ -448,12 +469,17 @@ CbcaCommon = () ->
             success: (data) ->
               $data = $ data
               $siomBlock = $this.closest '.js-slide-w'
+
               $siomBlock
               .find '.siom-block_cnt'
               .append $data
+
               $siomBlock
               .find '.js-slide-cnt:first' ## :first потому что может вложенный siomBlock
-              .slideDown()
+              .slideDown 600,
+                         () ->
+                          self.setVerticalLineHeight($siomBlock)
+
               $this.removeAttr 'href'
           )
       else
@@ -628,14 +654,6 @@ CbcaCommon = () ->
         error: (data) ->
           console.log(data)
       )
-
-
-    $('.border-line-vertical, .js-vertical-line').each () ->
-      $this = $(this)
-      $parent = $this.parent()
-
-      $this.height($parent.height() - 10)
-
 
 
   self.init()

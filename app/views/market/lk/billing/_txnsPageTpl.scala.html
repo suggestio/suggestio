@@ -10,21 +10,25 @@
 
 @txns.zipWithIndex.map { case (txn , i) =>
   <tr>
-    <td>
+    <td class="siom-table_vertical-cnt">
       <div class="table-cell-cnt __size-M">
         @txn.txnUid
       </div>
       <div class="border-line"></div>
     </td>
-    <td>
-      <div class="border-line __vertical js-vertical-line f-left"></div>
+    <td class="siom-table_vertical-cnt">
+      <div class="border-line __vertical js-vertical-line"></div>
+    </td>
+    <td class="siom-table_vertical-cnt">
       <div class="table-cell-cnt __size-M">
         @highlightFirstWordEsc(txn.paymentComment, start = """<strong class="color-strong">""", end = "</strong>")
       </div>
       <div class="border-line"></div>
     </td>
-    <td>
-      <div class="border-line __vertical js-vertical-line f-left"></div>
+    <td class="siom-table_vertical-cnt">
+      <div class="border-line __vertical js-vertical-line"></div>
+    </td>
+    <td class="siom-table_vertical-cnt">
       <div class="table-cell-cnt __size-M">
         <span title="@_prettyDate(txn.datePaid).toString.trim">
           <strong class="color-strong">@numericDate(txn.datePaid)</strong>
@@ -33,8 +37,10 @@
       </div>
       <div class="border-line"></div>
     </td>
-    <td>
-      <div class="border-line __vertical js-vertical-line f-left"></div>
+    <td class="siom-table_vertical-cnt">
+      <div class="border-line __vertical js-vertical-line"></div>
+    </td>
+    <td class="siom-table_vertical-cnt">
       <div class="table-cell-cnt __size-M">
         <strong class="@if(txn.amount < 0) {color-error} else {color-success}">@formatPrice(txn.amount, txn.currency)</strong>
       </div>
@@ -44,7 +50,7 @@
 }
 
 <tr>
-  <td colspan="4">
+  <td colspan="7">
     @if(txns.size >= TXNS_PER_PAGE) {
       <div class="table-cell-cnt __size-XL __centered">
 
