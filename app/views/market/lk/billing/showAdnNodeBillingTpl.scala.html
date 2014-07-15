@@ -14,7 +14,7 @@
     </div>
   </div>
 
-  <div class="body billing-page">
+  <div class="body">
 
     @market.lk.lkBlock("Биллинг") {
 
@@ -24,55 +24,46 @@
         @ctx.billBalanceOpt.map { mbb =>
         <tr>
           <td>
-            <div class="table-cell-cnt __size-M" style="padding-left: 0;">
-              <span class="prop-title">Доступные средства:</span>
+            <div class="table-cell-cnt __size-XS">
+              <span class="f-left ft-XS color-light-strong billing-prop-name">Всего на<br/>счёте:</span>
+
+              <strong class="billing-prop-value ft-L">@formatPrice(mbb.amount, mbb.currency)</strong>
             </div>
+            <div class="clear"></div>
+            <div class="table-cell-cnt __size-XS">
+              <span class="f-left ft-XS color-light-strong billing-prop-name">Доступно для<br/>операций:</span>
 
-            <div class="table-cell-cnt __size-M">
-              <span class="value big">@formatPrice(mbb.amount, mbb.currency)</span>
+              <strong class="billing-prop-value ft-L">@formatPrice(mbb.amount + mbb.blocked, mbb.currency)</strong>
             </div>
+            <div class="clear"></div>
+            <div class="table-cell-cnt __size-XS">
+              <span class="f-left ft-XS color-light-strong billing-prop-name">Заблокировано<br/>средств:</span>
 
-            <br/>
-
-            <div class="table-cell-cnt __size-M" style="padding-left: 0;">
-              <span class="prop-title">Всего денег:</span>
-            </div>
-
-            <div class="table-cell-cnt __size-M">
-              <span class="value big">@formatPrice(mbb.amount + mbb.blocked, mbb.currency)</span>
-            </div>
-
-            <br/>
-
-            <div class="table-cell-cnt __size-M" style="padding-left: 0;">
-              <span class="prop-title">Заблокиро-<br/>вано:</span>
-            </div>
-
-            <div class="table-cell-cnt __size-M">
-              <span class="value big">@formatPrice(mbb.blocked, mbb.currency)</span>
+              <strong class="billing-prop-value ft-L">@formatPrice(mbb.blocked, mbb.currency)</strong>
             </div>
           </td>
 
           <td>
             <div class="border-line __vertical js-vertical-line f-left"></div>
-            <div class="table-cell-cnt __size-M">
-              <span class="prop-title">Списание средств:</span>
+            <div class="table-cell-cnt __size-XS">
+              <span class="f-left ft-XS color-light-strong billing-prop-name">Списание средств:</span>
+
+              <strong class="color-strong f-left">18.05.2014</strong>
             </div>
           </td>
           <td>
             <div class="border-line __vertical js-vertical-line f-right"></div>
-            <div class="table-cell-cnt __size-M">
-                <span class="value f-left" style="padding-top: 5px;">18.05.2014</span>
+            <div class="table-cell-cnt __size-XS">
 
-                <span class="gray-but-smallest inline f-left" style="margin-left: 20px;">
-                  <a  class="white-border-top" id="getTransactions" data-init="true" href="@routes.MarketLkBilling._txnsList(adnNode.id.get)">История операций</a>
-                </span>
+              <span class="gray-but-smallest inline f-left">
+                <a  class="white-border-top" id="getTransactions" data-init="true" href="@routes.MarketLkBilling._txnsList(adnNode.id.get)">История операций</a>
+              </span>
 
             </div>
           </td>
 
           <td style="vertical-align: top; padding-top: 10px;">
-            <div class="table-cell-cnt __size-M" style="padding-top: 0; padding-bottom: 0;">
+            <div class="table-cell-cnt __size-XS" style="padding-top: 0; padding-bottom: 0;">
               <a class="siom-link-btn __size-M __ft-L __color-5 js-slide-btn" data-fix-title="true"  href="#requisites">РЕКВИЗИТЫ</a>
             </div>
           </td>
