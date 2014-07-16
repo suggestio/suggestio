@@ -57,140 +57,23 @@ li
   font-family: 'Arial'
   color: #676666
 
-  .abs
-    position: absolute
-
-  h5
-    color: #676666
-    font-size: 14px
-    font-weight: bold
-    font-family: 'Arial'
-    margin: 25px 0
-
-  .f-left
-    float: left
-
-  .f-right
-    float: right
-
-  .inline
-    display: inline
-
-  .inline-block
-    display: inline-block
 
 
+.input-w.__pass
+
+  td
+    padding: 5px 0
 
   .input
-    background: none repeat scroll 0 0 #FFFFFF
-    border: 1px solid #B4B3B3
-    padding: 1px
+    width: 278px
 
-    .input_shadow
-      overflow: hidden
-      border-left: 1px solid #FBFBFB
-      border-right: 1px solid #FBFBFB
-      border-top: 1px solid #D2D3D3
-      border-radius(4px)
-
-      input
-        outline: 0
-        padding: 0 10px
-        width: 100%
-        height: 35px
-        font-size: 16px
-        color: #959595
-        font-family: 'Arial'
-
-      textarea
-        outline: 0
-        width: 100%
-        height: 60px
-        padding: 10px
-        resize: none
-        font-size: 16px
-        color: #959595
-        font-family: 'Arial'
-
-
-  .input.error
-    border: 1px solid #e23131
-
-    input
-      background: #F3B0B0
-      color: white
-
-    textarea
-      background: #F3B0B0
-      color: white
-
-  .input-w.__disabled
-    input
-      background: url('/assets/images/market/lk/lock.png') no-repeat 95% center #F0F0F0
-
-
-  .input-w.__pass
-
-    td
-      padding: 5px 0
-
-    .input
-      width: 278px
-
-    .pass-text
-      vertical-align: middle
-      font-size: 12px
-      font-family: 'Arial'
-      color: #b4b4b4
-      width: 250px
-      padding-left: 45px
-
-  .disable-ad
-    .descr
-      text-align: center
-      font-size: 12px
-      font-family: 'Arial'
-      color: #b4b4b4
-    a
-      color: #4f88a9
-      text-decoration: none
-    a:hover
-      text-decoration: underline
-
-  .err-msg
-    padding-top: 5px
-    color: #E23131
+  .pass-text
+    vertical-align: middle
     font-size: 12px
     font-family: 'Arial'
-
-
-  .lk-list
-
-    .item
-      font-family: 'Arial'
-      display: block
-      padding: 5px 10px
-      margin: 2px 0
-      text-decoration: none
-
-      .number
-        font-size: 12px
-        color: #959595
-
-      .name
-        padding-left: 100px
-        font-size: 24px
-        color: #23313d
-        font-weight: bold
-        font-family: 'PT Sans Narrow'
-
-      .mmart-name
-        font-size: 16px
-        color: #676666
-
-    .item:hover
-      background: #efefef
-
+    color: #b4b4b4
+    width: 250px
+    padding-left: 45px
 
 
 
@@ -823,12 +706,12 @@ li
   background-position: -340px -43px
 
 .advs-statuses_in-popup
-  width: 535px
   padding-left: 30px
   color: #676666
   font-size: 12px
 
 .advs-statuses__status_in-popup
+  display: inline-block
   padding: 10px 0px 10px 30px
 
 .advs-statuses__status__date
@@ -1628,6 +1511,55 @@ siomPreviewSize = 43
       textarea
         color: siomBlueColor
 
+
+  &.__disabled
+
+    input
+      background: url('/assets/images/market/lk/lock.png') no-repeat 95% center #F0F0F0
+
+
+.input
+  background: none repeat scroll 0 0 #FFFFFF
+  border: 1px solid #B4B3B3
+  padding: 1px
+
+  &_shadow
+    overflow: hidden
+    border-left: 1px solid #FBFBFB
+    border-right: 1px solid #FBFBFB
+    border-top: 1px solid #D2D3D3
+    border-radius(4px)
+
+    input
+      outline: 0
+      padding: 0 10px
+      width: 100%
+      height: 35px
+      font-size: 16px
+      color: #959595
+      font-family: 'Arial'
+
+    textarea
+      outline: 0
+      width: 100%
+      height: 60px
+      padding: 10px
+      resize: none
+      font-size: 16px
+      color: #959595
+      font-family: 'Arial'
+
+  &.__error
+    border: 1px solid #e23131
+
+    input
+      background: #F3B0B0
+      color: white
+
+    textarea
+      background: #F3B0B0
+      color: white
+
 /********************************************************************************************************************/
 /* Таблицы SioMarket */
 /********************************************************************************************************************/
@@ -1787,6 +1719,7 @@ th.__bg-head
     .sio-mart-showcase
       position: relative !important
       height: auto !important
+      max-width: 622px
 
   &_cnt.__with-label
     padding-left: 85px
@@ -1805,10 +1738,38 @@ th.__bg-head
     padding-top: 25px
 
 
+/********************************************************************************************************************/
+/*  Списки SIoMarket */
+/********************************************************************************************************************/
+
+.lst
+
+  &_node
+    display: block
+    padding: 5px 10px
+    margin: 2px 0
+    text-decoration: none
+
+    &:hover
+      background: #efefef
+
+  &_node-name
+    padding-left: 100px
+    color: #23313d
+    font-family: 'PT Sans Narrow'
 
 /********************************************************************************************************************/
 /* Общие элементы */
 /********************************************************************************************************************/
+
+.abs
+  position: absolute
+
+.f-left
+  float: left
+
+.f-right
+  float: right
 
 .categories-select
   position: relative

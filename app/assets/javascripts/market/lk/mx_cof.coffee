@@ -3,7 +3,6 @@ $(document).ready ->
   cbca.emptyPhoto = '/assets/images/market/lk/empty-image.gif'
 
   cbca.popup = new CbcaPopup()
-  cbca.popup.init()
   cbca.search = new CbcaSearch()
 
   cbca.statusBar = StatusBar
@@ -16,6 +15,7 @@ $(document).ready ->
   cbca.editAdPage.init()
 
   cbca.common = new CbcaCommon()
+  cbca.popup.init()
   cbca.shop.init()
   cbca.editAdPage.updatePreview()
 
@@ -111,26 +111,23 @@ CbcaPopup = () ->
 
     $(document).on 'click', '.js-close-popup', (event)->
       event.preventDefault()
-      $this = $(this)
-      $popup = $this.closest('.js-popup')
-      popupId = $popup.attr('id')
+      $this = $ this
+      $popup = $this.closest '.popup'
+      popupId = $popup.attr 'id'
 
       cbca.popup.hidePopup '#'+popupId
 
-
-    $(document).on 'click', '.popup-but', ->
-      $this = $(this)
-
-      cbca.popup.showPopup($this.attr('href'))
-
-
-    $(document).on 'click', '.popup .close', (event)->
-      event.preventDefault()
+    $(document).on 'click', '#overlay', ()->
       cbca.popup.hidePopup()
 
 
-    $(document).on 'click', '#overlay', ->
-        cbca.popup.hidePopup()
+    $('.popup .__error').each ()->
+      $this = $ this
+      popupId = $this
+                .closest '.popup'
+                .attr 'id'
+
+      cbca.popup.showPopup '#'+popupId
 
 #######################################################################################################################
 ## Работа с поисковой строкой ##
@@ -398,13 +395,6 @@ CbcaCommon = () ->
           $('#popupsContainer').append(error.responseText)
           cbca.popup.showPopup('#recoverPwForm')
       )
-
-    ## Попапы с ошибками показывать сразу после перезагрузки страницы ##
-    $('.popup .lk-error, .popup .error').each ()->
-      $this = $(this)
-      popupId = $this.closest('.popup').attr('id')
-
-      cbca.popup.showPopup('#'+popupId)
 
     $(document).on 'click', '#advReqRefuseShow', (e)->
       e.preventDefault()
