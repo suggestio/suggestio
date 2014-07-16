@@ -1,4 +1,4 @@
-@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None)(content: Html)(implicit ctx: util.Context)
+@(title: String, adnIdOpt: Option[String] = None, headAfter:Option[Html] = None, popupContent: Option[Html] = None)(content: Html)(implicit ctx: util.Context)
 
 @* Базовый шаблон для личного кабинета sio-маркета (не важно: ТЦ или магазин).
    - Параметр headAfter содержит дополнения к телу тега head.
@@ -64,6 +64,8 @@
 
   <div class="popups-container" id="popupsContainer">
     <div class="overlay" id="overlay"></div>
+
+    @popupContent
   </div>
 
   <div class="footer-wrap">

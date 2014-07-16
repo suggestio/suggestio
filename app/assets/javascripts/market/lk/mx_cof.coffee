@@ -392,7 +392,7 @@ CbcaCommon = () ->
         data: $form.serialize(),
         success: (data)->
           $('#recoverPwForm').find('form').remove()
-          $('#recoverPwForm').find('.content').append(data)
+          $('#recoverPwForm').find('.popup_cnt').append(data)
         error: (error)->
           $('#recoverPwForm').remove()
           $('#popupsContainer').append(error.responseText)

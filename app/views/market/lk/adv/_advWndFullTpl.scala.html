@@ -5,14 +5,14 @@
 @import ctx._
 @import market.showcase._
 
-<div class="popup adv-req-wind" id="advReqWind">
+<div class="popup" id="advReqWind">
 
-  <div class="hat">
-    <a href="@goBackTo.getOrElse("#")" class="close">&nbsp;</a>
+  <div class="popup_header">
+    <a href="@goBackTo.getOrElse("#")" class="close f-right js-close-btn">&nbsp;</a>
   </div>
 
-  <div class="content">
-    <div class="sio-mart-showcase" style="position: relative;">
+  <div class="popup_cnt">
+    <div class="sio-mart-showcase">
       @_single_offer_w_description(
         mad      = mad,
         isWithAction = false,
@@ -25,7 +25,7 @@
 
   <hr class="line-gray" />
 
-  <div class="content">
+  <div class="popup_cnt __text-center">
     @content
   </div>
 

@@ -53,10 +53,9 @@ li
   overflow: hidden
 
 .lk
-  .body
-    font-size: 14px
-    font-family: 'Arial'
-    color: #676666
+  font-size: 14px
+  font-family: 'Arial'
+  color: #676666
 
   .abs
     position: absolute
@@ -145,83 +144,6 @@ li
       color: #b4b4b4
       width: 250px
       padding-left: 45px
-
-  .close
-    float: right
-    width: 17px
-    height: 17px
-    text-decoration: none
-    background: url('/assets/images/market/lk/close-icon.png') no-repeat
-    background-position: 0 -67px
-
-    &:hover
-      background-position: 0 0
-
-    &:active
-      background-position: 0 1px
-
-  .popups-container
-    display: none
-    position: fixed
-    top: 0
-    left: 0
-    z-index: 40
-    width: 100%
-    height: 100%
-    overflow-y: scroll
-    background: rgba(0,0,0,0.5)
-
-  .popup
-    display: none
-    position: absolute
-    top: 25px
-    left: 50%
-    z-index: 20000
-
-  .overlay
-    display: none
-    position: absolute
-    top: 0
-    left: 0
-    z-index: 5
-    width: 100%
-    background: black
-    opacity: 0.5
-
-  .popup
-    width: 488px
-    margin-left: -249px
-    background: #e1e1e1
-
-    .hat
-      background: #efefef
-      border-bottom: 1px solid #9a9b9b
-      overflow: hidden
-      padding: 10px
-
-    .content
-      padding: 25px
-
-      .popup_title
-        padding-bottom: 25px
-        color: #676666
-        font-size: 30px
-        font-family: 'PFDinTextCompPro-Medium'
-        text-align: center
-
-        &.__second
-          padding-top: 25px
-
-      .ad-preview
-        position: relative
-        overflow: hidden
-        width: 300px
-        margin: 0px auto
-
-        .sm-block
-          position: relative
-          margin: 0 auto
-
 
   .disable-ad
     .descr
@@ -1041,10 +963,7 @@ li
   background: #9a9b9b
 
 .adv-req-wind
-  width: 672px !important
-  margin-left: -336px !important
   text-align: center
-  font-family: 'Arial'
 
   &_price
     color: #23313d
@@ -1153,14 +1072,6 @@ li
   text-align: center
 
 .recover-failed-popup__content
-  height: 270px
-  font-family: 'Arial'
-  font-size: 14px
-  color: #676666
-
-  .error-label
-    margin-left: 10px
-    margin-top: 45px
 
   p
     margin-top: 18px
@@ -1170,59 +1081,61 @@ li
 .error-label
   overflow: hidden
 
-.error-label__icon
-  float: left
-  background: url('/assets/images/market/lk/error-icon.png') no-repeat left center
-  width: 45px
-  height: 46px
+  &__icon
+    float: left
+    background: url('/assets/images/market/lk/error-icon.png') no-repeat left center
+    width: 45px
+    height: 46px
 
-.error-label__title
-  padding-top: 12px
-  padding-left: 15px
-  overflow: hidden
-  font-family: 'Arial'
-  font-size: 18px
-  font-weight: bold
-  color: #e24a4a
-  text-shadow(1px 1px 1px white)
+  &__title
+    padding-top: 12px
+    padding-left: 15px
+    overflow: hidden
+    font-family: 'Arial'
+    font-size: 18px
+    font-weight: bold
+    color: #e24a4a
+    text-shadow(1px 1px 1px white)
 
 .success-label
   overflow: hidden
 
-.success-label__icon
-  float: left
-  background: url('/assets/images/market/lk/ok.png') no-repeat left center
-  width: 53px
-  height: 49px
+  &__icon
+    float: left
+    background: url('/assets/images/market/lk/ok.png') no-repeat left center
+    width: 53px
+    height: 49px
 
-.success-label__title
-  padding-top: 12px
-  padding-left: 15px
-  overflow: hidden
-  font-family: 'Arial'
-  font-size: 18px
-  font-weight: bold
-  color: #48ab38
-  text-shadow(1px 1px 1px white)
+  &__title
+    padding-top: 12px
+    padding-left: 15px
+    overflow: hidden
+    font-family: 'Arial'
+    font-size: 18px
+    font-weight: bold
+    color: #48ab38
+    text-shadow(1px 1px 1px white)
 
-.success-label__adn-invite-accept
-  margin-left: -65px
-  margin-top: 25px
-  margin-bottom: 25px
+  &__adn-invite-accept
+    margin-left: -65px
+    margin-top: 25px
+    margin-bottom: 25px
 
-.wifi-page__left-column
-  float: left
-  width: 350px
+.wifi-page
 
-.wifi-page__mid-column
-  float: left
-  width: 350px
-  margin-left: 20px
+  &__left-column
+    float: left
+    width: 350px
 
-.wifi-page__right-column
-  float: left
-  margin-left: 20px
-  width: 350px
+  &__mid-column
+    float: left
+    width: 350px
+    margin-left: 20px
+
+  &__right-column
+    float: left
+    margin-left: 20px
+    width: 350px
 
 .visibility-hidden
   visibility: hidden
@@ -1414,7 +1327,7 @@ li
     margin-left: 0 !important
     left: 0 !important
 
-    .content
+    &_cnt
       padding: 20px 10px !important
 
   .title-wrap
@@ -1518,6 +1431,10 @@ li
 
   &.__size-XL
     padding: 50px 0
+
+  &.__size-XXL
+    width: 100%
+    padding: 25px 0
 
   &.__invite-form
     width: 100%
@@ -1828,6 +1745,18 @@ th.__bg-head
   top: 0
   left: 0
   z-index: 5
+  opacity: 0.5
+
+  display: none
+  width: 100%
+
+  background: black
+
+.overlay
+  position: absolute
+  top: 0
+  left: 0
+  z-index: 5
 
   display: none
   width: 100%
@@ -1842,6 +1771,9 @@ th.__bg-head
   display: inline-block
   background: #e1e1e1
 
+  &.__join
+    width: 500px
+
   &_header
     background: #efefef
     border-bottom: 1px solid #9a9b9b
@@ -1850,6 +1782,17 @@ th.__bg-head
 
   &_cnt
     padding: 25px
+    text-align: left
+
+    .sio-mart-showcase
+      position: relative !important
+      height: auto !important
+
+  &_cnt.__with-label
+    padding-left: 85px
+
+  &_cnt.__text-center
+    text-align: center
 
   &_t
     padding-bottom: 25px
@@ -1858,11 +1801,14 @@ th.__bg-head
     font-family: 'PFDinTextCompPro-Medium'
     text-align: center
 
+  &_t.__inner
+    padding-top: 25px
 
 
 
-
-
+/********************************************************************************************************************/
+/* Общие элементы */
+/********************************************************************************************************************/
 
 .categories-select
   position: relative
@@ -1893,3 +1839,16 @@ th.__bg-head
 .billing-prop-value
   color: #23313d
   font-family: 'PT_Sans-Narrow'
+
+.close
+  width: 17px
+  height: 17px
+  text-decoration: none
+  background: url('/assets/images/market/lk/close-icon.png') no-repeat
+  background-position: 0 -67px
+
+  &:hover
+    background-position: 0 0
+
+  &:active
+    background-position: 0 1px

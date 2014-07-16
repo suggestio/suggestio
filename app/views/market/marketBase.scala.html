@@ -16,9 +16,7 @@
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("javascripts/lib/colorpicker/css/colorpicker.css")'/>
 
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/common.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/create-ad.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/edit-shop.css")'/>
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase_previews.css")'/>
 
   <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
@@ -35,15 +33,15 @@
     @* Попап с формой логина *@
     @if(!ctx.isAuth) {
 
-      <div class="popup login-popup" id="emailPwLoginForm">
+      <div class="popup __join js-hidden" id="emailPwLoginForm">
 
-        <div class="hat">
-          <a class="close" href="#">&nbsp;</a>
+        <div class="popup_header">
+          <a class="close f-right js-close-popup" href="#">&nbsp;</a>
         </div>
 
-        <div class="content">
+        <div class="popup_cnt">
 
-          <div class="popup-title popup-title_without_padding">
+          <div class="popup_t">
             ВХОД
           </div>
 

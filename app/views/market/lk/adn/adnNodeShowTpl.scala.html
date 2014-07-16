@@ -10,7 +10,18 @@
 @import controllers.adn.AdnShowTypes._
 @import _node._
 
-@market.lk.lkBase(node.meta.name, adnIdOpt = node.id) {
+
+@* Обладают выдачей только ресиверы, поэтому окно с кодом рендерится только для них. *@
+@popupContent = {
+
+  @if(isMyNode && node.adn.isReceiver) {
+    @_installScriptPopupTpl(node)
+  }
+
+}
+
+
+@market.lk.lkBase(node.meta.name, adnIdOpt = node.id, popupContent = Some(popupContent)) {
   @if(isMyNode) {
     @helper.javascriptRouter("jsRoutes")(
       routes.javascript.MarketAd.updateShowLevelSubmit
@@ -139,9 +150,5 @@
 
   </div>
 
-  @* Обладают выдачей только ресиверы, поэтому окно с кодом рендерится только для них. *@
-  @if(isMyNode && node.adn.isReceiver) {
-    @_installScriptPopupTpl(node)
-  }
 
 }
