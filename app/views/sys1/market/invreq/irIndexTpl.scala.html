@@ -6,23 +6,25 @@
 
 @irBase("Запросы инвайтов") {
   @if(mirs.isEmpty) {
-    <p><strong>Нет запросов подключения.</strong></p>
+    <p class="paragraph __size-M">
+      <strong>Нет запросов подключения.</strong>
+    </p>
   } else {
     @if(thisCount != allCount) {
-      <p><b>Отображается @thisCount запросов из @allCount всего.</b></p>
+      <p class="paragraph __size-M">
+        <strong>Отображается @thisCount запросов из @allCount всего.</strong>
+      </p>
     }
     @mirs.groupBy(_.reqType).map { case (reqType, tMirs) =>
-      <h3>@Messages(reqType.l10n)</h3>
-      <ul>
+      <strong class="color-strong">@Messages(reqType.l10n)</strong>
         @tMirs.map { mir =>
-          <li>
-            <a href="@routes.SysMarketInvReq.showIR(mir.id.get)">
+          <p class="paragraph __size-M">
+            <a class="blue-link" href="@routes.SysMarketInvReq.showIR(mir.id.get)">
               @mir.name / @_prettyDate(mir.dateCreated)
             </a>
-          </li>
+          </p>
         }
-      </ul>
-      <br/><br/>
+
     }
   }
 }

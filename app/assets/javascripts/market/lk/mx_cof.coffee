@@ -19,28 +19,6 @@ $(document).ready ->
   cbca.shop.init()
   cbca.editAdPage.updatePreview()
 
-##ПРЕВЬЮ РЕКЛАМНОЙ КАРТОЧКИ##
-$(document).on 'click', '.device', ->
-  $this = $(this)
-
-  if(!$this.hasClass('selected'))
-    $('.device.selected').removeClass('selected')
-    $this.addClass('selected')
-
-    $('#previewContainer')
-    .width($this.attr('data-width'))
-    .height($this.attr('data-height'))
-    .closest('table').attr('class', 'ad-preview ' + $this.attr('data-class'))
-
-    market.resize_preview_photos()
-
-
-##ФОТО ТОВАРА##
-$(document).on 'change', '#product-photo', ->
-  value = $(this).val()
-  console.log(value)
-  $('#upload-product-photo').find('input[type = "file"]').val(value)
-  ##$('#upload-product-photo').find('form').trigger('submit')##
 
 
 #######################################################################################################################
@@ -129,39 +107,6 @@ CbcaPopup = () ->
 
       cbca.popup.showPopup '#'+popupId
 
-#######################################################################################################################
-## Работа с поисковой строкой ##
-#######################################################################################################################
-CbcaSearch = () ->
-
-  self = this
-
-  self.search = (martId, searchString) ->
-    jsRoutes.controllers.MarketLkAdn.searchSlaves(martId).ajax(
-      type: "POST",
-      data:
-        'q': searchString
-      success: (data) ->
-        if(data.trim().length)
-          $('#search-results').html(data.trim())
-        else
-          $('#search-results').html('')
-      error: (error) ->
-        console.log(error)
-    )
-
-
-  self.init = () ->
-    $(document).on 'keyup', '#searchShop', ->
-      $this = $(this)
-      if($this.val().trim())
-        $('#shop-list').hide()
-        self.search($this.attr('data-mart-id'), $this.val())
-      else
-        $('#search-results').html('')
-        $('#shop-list').show()
-
-  self.init()
 
 ##Общее оформление##
 CbcaCommon = () ->
