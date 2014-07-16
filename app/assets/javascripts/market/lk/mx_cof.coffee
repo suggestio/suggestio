@@ -3,7 +3,6 @@ $(document).ready ->
   cbca.emptyPhoto = '/assets/images/market/lk/empty-image.gif'
 
   cbca.popup = new CbcaPopup()
-  cbca.search = new CbcaSearch()
 
   cbca.statusBar = StatusBar
   cbca.statusBar.init()
@@ -192,19 +191,20 @@ CbcaCommon = () ->
     $(window).resize () ->
       cbca.popup.setOverlayHeight()
 
-    #############
+    #################################################################################################################
     ## CAPTCHA ##
-    #############
+    #################################################################################################################
 
     $(document).on 'click', '#captchaReload', (e)->
       e.preventDefault()
-      $this = $(this)
-      $captchaImage = $('#captchaImage')
-      $parent = $('#captchaImage').parent()
+      $this = $ this
+      $captchaImage = $ '#captchaImage'
+      $parent = $ '#captchaImage'
+                .parent()
       random = Math.random()
 
       $captchaImage.remove()
-      $parent.prepend('<img id="captchaImage" src="/captcha/get/' + $('#captchaId').val() + '?v='+random+'" />')
+      $parent.prepend '<img id="captchaImage" src="/captcha/get/' + $('#captchaId').val() + '?v='+random+'" />'
 
 
     #####################
@@ -443,38 +443,6 @@ CbcaCommon = () ->
       .removeClass '__focus'
 
 
-    $(document).on 'click', '.ads-list .js-tc-edit', (event)->
-      event.preventDefault()
-
-      $this = $(this)
-      $.ajax(
-        url: $this.attr('href')
-        success: (data) ->
-          $('#disable-ad, #anotherNodes').remove()
-          $('#popupsContainer').append(data)
-          cbca.popup.showPopup('#disable-ad')
-        error: (error) ->
-          console.log(error)
-      )
-
-    $(document).on 'click', '#disable-ad .blue-but-small', ()->
-      if($('#disable-ad .hide-content').css('display') == 'none')
-        $('#disable-ad .hide-content').show()
-        return false
-      else
-        $form = $(this).closest('form')
-        if(!$.trim($form.find('textarea').val()))
-          $form.find('.input').addClass('error')
-          return false
-        $.ajax(
-          url: $form.attr('action')
-          type: 'POST'
-          data: $form.serialize()
-          success: (data) ->
-            cbca.popup.hidePopup('#disable-ad')
-          error: (error) ->
-            console.log(error)
-        )
 
     ##########################
     ## Работа с checkbox`ов ##
@@ -541,54 +509,6 @@ CbcaCommon = () ->
         $(this).removeAttr('checked')
 
       event.stopPropagation()
-
-
-    $('.slide-content').each ()->
-      $this = $(this)
-
-      if($this.find('.err-msg').size())
-        $this.slideDown()
-
-
-    $('.nodes .node').each () ->
-      $(this).data('dataLoaded', false)
-
-    $(document).on 'click', '.nodes .node .toggle', (e) ->
-      e.preventDefault()
-      $this = $(this)
-      $node = $this.parent()
-
-      if($node.hasClass('open'))
-        $node.removeClass('open').next().next().slideUp()
-        $this.html('Развернуть')
-      else if($node.data('dataLoaded'))
-        $node.addClass('open').next().next().slideDown()
-        $this.html('Свернуть')
-      else
-        $.ajax(
-          url: $this.attr('href')
-          success: (data) ->
-            $node.addClass('open').data('dataLoaded', true).next().after('<div class="ads-list small">'+data+'</div>')
-            $node.next().next().slideDown('normal', () ->  market.resize_preview_photos())
-            $this.html('Свернуть')
-          error: (error) ->
-            console.log(error)
-        )
-
-
-    $(document).on 'click', '.add-to-another-node', (e) ->
-      e.preventDefault()
-      $this = $(this)
-
-      $.ajax(
-        url:  $this.find('a').attr('href'),
-        success: (data) ->
-          $('#disable-ad, #anotherNodes').remove()
-          $('#popupsContainer').append(data)
-          cbca.popup.showPopup('#anotherNodes')
-        error: (data) ->
-          console.log(data)
-      )
 
 
   self.init()
