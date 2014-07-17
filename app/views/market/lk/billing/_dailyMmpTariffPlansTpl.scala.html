@@ -25,82 +25,80 @@
       Информация
     </div>
 
-    <div class="siom-block_cnt-w">
-      <div class="siom-block_cnt">
 
-        @adnNode.meta.audienceDescr.map { audDescr =>
-          <table class="input-w __size-L">
-            <tr>
-              <td class="input-w_left __text-top">
-                <label class="input-w_prop-name">
-                  Описание<br/>аудитори
-                </label>
-              </td>
-              <td>
-                <strong class="color-strong">@audDescr</strong>
-                <div class="border-line __margin-M"></div>
-              </td>
-            </tr>
-          </table>
-        }
+    <div class="siom-block_cnt">
 
-        @adnNode.meta.humanTrafficAvg.map { htAvg =>
-          <table class="input-w __size-L">
-            <tr>
-              <td class="input-w_left __text-top">
-                <label class="input-w_prop-name">
-                  Суточный<br/>трафик:
-                </label>
-              </td>
-              <td>
-                <strong class="color-strong">@formatInt(htAvg) человек в сутки.</strong>
-                <div class="border-line __margin-M"></div>
-              </td>
-            </tr>
-          </table>
-        }
+      @adnNode.meta.audienceDescr.map { audDescr =>
+        <table class="input-w __size-L">
+          <tr>
+            <td class="input-w_left __text-top">
+              <label class="input-w_prop-name">
+                Описание<br/>аудитори
+              </label>
+            </td>
+            <td>
+              <strong class="color-strong">@audDescr</strong>
+              <div class="border-line __margin-M"></div>
+            </td>
+          </tr>
+        </table>
+      }
 
-        @adnNode.meta.address.map { address =>
-          <table class="input-w __size-L">
-            <tr>
-              <td class="input-w_left __text-top">
-                <label class="input-w_prop-name">
-                  Адрес:
-                </label>
-              </td>
-              <td>
-                <strong class="color-strong">
-                  @replaceEOLwithBR(address)
-                  @adnNode.meta.phone.map { phone =>
-                  тел. @phone
-                  }
-                </strong>
-                <div class="border-line __margin-M"></div>
-              </td>
-            </tr>
-          </table>
-        }
+      @adnNode.meta.humanTrafficAvg.map { htAvg =>
+        <table class="input-w __size-L">
+          <tr>
+            <td class="input-w_left __text-top">
+              <label class="input-w_prop-name">
+                Суточный<br/>трафик:
+              </label>
+            </td>
+            <td>
+              <strong class="color-strong">@formatInt(htAvg) человек в сутки.</strong>
+              <div class="border-line __margin-M"></div>
+            </td>
+          </tr>
+        </table>
+      }
 
-        @if(adnNode.gallery.nonEmpty) {
-          <table class="input-w __size-L">
-            <tr>
-              <td class="input-w_left __text-top">
-                <label class="input-w_prop-name">
-                  Фотографии:
-                </label>
-              </td>
-              <td>
-                @adnNode.gallery.map { imgId =>
-                <div class="add-file-w __preview">
-                  <img class="add-file-w_image js-image-preview" src="@routes.Img.getThumb(imgId)">
-                  <a data-lightbox="obj-photos" href="@routes.Img.getImg(imgId)" class="add-file-w_btn siom-zoom-image-btn"></a>
-                </div>
+      @adnNode.meta.address.map { address =>
+        <table class="input-w __size-L">
+          <tr>
+            <td class="input-w_left __text-top">
+              <label class="input-w_prop-name">
+                Адрес:
+              </label>
+            </td>
+            <td>
+              <strong class="color-strong">
+                @replaceEOLwithBR(address)
+                @adnNode.meta.phone.map { phone =>
+                тел. @phone
                 }
-              </td>
-            </tr>
-          </table>
-        }
+              </strong>
+              <div class="border-line __margin-M"></div>
+            </td>
+          </tr>
+        </table>
+      }
 
-      </div>
+      @if(adnNode.gallery.nonEmpty) {
+        <table class="input-w __size-L">
+          <tr>
+            <td class="input-w_left __text-top">
+              <label class="input-w_prop-name">
+                Фотографии:
+              </label>
+            </td>
+            <td>
+              @adnNode.gallery.map { imgId =>
+              <div class="add-file-w __preview">
+                <img class="add-file-w_image js-image-preview" src="@routes.Img.getThumb(imgId)">
+                <a data-lightbox="obj-photos" href="@routes.Img.getImg(imgId)" class="add-file-w_btn siom-zoom-image-btn"></a>
+              </div>
+              }
+            </td>
+          </tr>
+        </table>
+      }
 
     </div>
