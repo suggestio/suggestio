@@ -38,7 +38,7 @@ PersonalCabinet =
 
         setTimeout close_cb, 5000
 
-      $(document).on 'click', '.status-bar', ->
+      $(document).on 'click', '.status-bar', ()->
         $this = $ this
         cbca.pc.statusBar.close $this
 
@@ -101,9 +101,11 @@ PersonalCabinet =
     ##################################################################################################################
     checkbox: () ->
 
-      $('input[type = "checkbox"]').each ()->
+      $ 'input[type = "checkbox"]'
+      .each ()->
         $this = $ this
         checked = $this.attr 'data-checked'
+
         if checked == 'checked'
           this.checked = true
         else
@@ -121,6 +123,7 @@ PersonalCabinet =
           $ '.js-one-checkbox[data-name = "'+dataName+'"]'
           .filter ':checked'
           .removeAttr 'checked'
+
           this.checked = true
 
           $ '#'+dataFor
@@ -222,6 +225,7 @@ PersonalCabinet =
         e.preventDefault()
         $this = $ this
         dataFor = $this.attr 'data-for'
+
         if dataFor
           $form = $ dataFor
         else
@@ -311,14 +315,16 @@ CbcaPopup = () ->
     popupsContainerHeight = $ '#popupsContainer'
                             .height()
 
-    if(popupHeight > popupsContainerHeight)
-      $('#overlay').height(popupHeight + 50)
+    if popupHeight > popupsContainerHeight
+      $ '#overlay'
+      .height popupHeight + 50
     else
-      $('#overlay').height(popupsContainerHeight)
+      $ '#overlay'
+      .height popupsContainerHeight
 
   showPopup: (popup) ->
     this.showOverlay()
-    $popup = $(popup)
+    $popup = $ popup
     $popup.show()
 
     $ 'body'
@@ -343,36 +349,49 @@ CbcaPopup = () ->
 
   hidePopup: (popup) ->
     popup = popup || '.popup'
+
     this.hideOverlay()
-    $(popup).hide()
-    $('#overlay, #overlayData').hide()
-    $('body').removeClass 'ovh'
+
+    $ popup
+    .hide()
+
+    $ '#overlay, #overlayData'
+    .hide()
+
+    $ 'body'
+    .removeClass 'ovh'
 
   init: () ->
 
-    $(window).resize () ->
+    $ window
+    .resize () ->
       cbca.popup.setOverlayHeight()
 
-    $(document).on 'click', '.js-close-popup', (event)->
-      event.preventDefault()
+    $ document
+    .on 'click', '.js-close-popup', (e)->
+      e.preventDefault()
       $this = $ this
       $popup = $this.closest '.popup'
       popupId = $popup.attr 'id'
+      popupSelector = '#'+popupId
 
-      cbca.popup.hidePopup '#'+popupId
+      cbca.popup.hidePopup popupSelector
 
-    $(document).on 'click', '#overlay', ()->
+    $ document
+    .on 'click', '#overlay', ()->
       cbca.popup.hidePopup()
 
-    $('.popup .__error').each ()->
+    $ '.popup .__error'
+    .each ()->
       $this = $ this
-      popupId = $this
-                .closest '.popup'
-                .attr 'id'
+      $popup = $this.closest '.popup'
+      popupId = $popup.attr 'id'
+      popupSelector = '#'+popupId
 
-      cbca.popup.showPopup '#'+popupId
+      cbca.popup.showPopup popupSelector
 
-    $(document).on 'click', '.js-popup-back', (e)->
+    $ document
+    .on 'click', '.js-popup-back', (e)->
       $this = $ this
       targetPopupId = $this.attr 'href'
 
@@ -383,12 +402,16 @@ CbcaPopup = () ->
       $ targetPopupId
       .show()
 
-    $(document).on 'click', '.js-remove-popup', (e)->
+    $ document
+    .on 'click', '.js-remove-popup', (e)->
       $this = $ this
       $popup = $this.closest '.popup'
+      popupId = $popup.attr 'id'
+      popupSelector = '#' .concat popupId
 
-      cbca.popup.hidePopup '#'+$popup.attr('id')
-      $ '#'+$popup.attr('id')
+      cbca.popup.hidePopup popupSelector
+
+      $ popupSelector
       .remove()
 
 
@@ -429,11 +452,11 @@ CbcaCommon = () ->
             .slideDown(
               600,
               () ->
-                cbca.pc.common.setBorderLineHeight($transactionsList)
+                cbca.pc.common.setBorderLineHeight $transactionsList
             )
 
         error: (error)->
-          console.log(error)
+          console.log error
       )
 
 
@@ -455,7 +478,7 @@ CbcaCommon = () ->
 
 
     if $('#newPasswordForm').length
-      cbca.popup.showPopup('#newPasswordForm')
+      cbca.popup.showPopup '#newPasswordForm'
 
 
     $(document).on 'submit', '.js-form', (e)->
@@ -468,7 +491,7 @@ CbcaCommon = () ->
         url: action,
         data: $form.serialize(),
         success: (data)->
-          console.log(data)
+          console.log data
       )
 
     $(document).on 'submit', '#recoverPwForm form', (e)->
@@ -481,32 +504,50 @@ CbcaCommon = () ->
         url: action,
         data: $form.serialize(),
         success: (data)->
-          $('#recoverPwForm').find('form').remove()
-          $('#recoverPwForm').find('.popup_cnt').append(data)
+
+          $ '#recoverPwForm'
+          .find 'form'
+          .remove()
+
+          $ '#recoverPwForm'
+          .find '.popup_cnt'
+          .append data
+
         error: (error)->
-          $('#recoverPwForm').remove()
-          $('#popupsContainer').append(error.responseText)
-          cbca.popup.showPopup('#recoverPwForm')
+
+          $ '#recoverPwForm'
+          .remove()
+
+          $ '#popupsContainer'
+          .append error.responseText
+
+          cbca.popup.showPopup '#recoverPwForm'
       )
 
     $(document).on 'click', '#advReqRefuseShow', (e)->
       e.preventDefault()
 
-      $('#advReqRefuse').show()
-      $('#advReqAccept').hide()
+      $ '#advReqRefuse'
+      .show()
+      $ '#advReqAccept'
+      .hide()
 
     $(document).on 'click', '#advReqAcceptShow', (e)->
       e.preventDefault()
 
-      $('#advReqRefuse').hide()
-      $('#advReqAccept').show()
+      $ '#advReqRefuse'
+      .hide()
+      $ '#advReqAccept'
+      .show()
 
     $(document).on 'submit', '#advReqRefuse', (e)->
-      $this = $(this)
-      $textarea = $this.find('textarea')
+      $this = $ this
+      $textarea = $this.find 'textarea'
 
-      if(!$textarea.val())
-        $textarea.closest('.input').addClass('error')
+      if !$textarea.val()
+        $textarea
+        .closest '.input'
+        .addClass 'error'
         return false
       else
         return true
@@ -520,16 +561,20 @@ CbcaCommon = () ->
       $.ajax(
         url: href,
         success: (data)->
-          $('#dailyMmpsWindow').remove()
-          $('#popupsContainer').append(data)
+          $ '#dailyMmpsWindow'
+          .remove()
+          $ '#popupsContainer'
+          .append data
 
-          cbca.popup.showPopup('#dailyMmpsWindow')
+          cbca.popup.showPopup '#dailyMmpsWindow'
       )
 
     $(document).on 'click', '.ads-list-block__preview_add-new', ()->
-      $this = $(this)
+      $this = $ this
 
-      $this.parent().find('.ads-list-block__link')[0].click()
+      $this
+      .parent()
+      .find('.ads-list-block__link')[0].click()
 
 
 
