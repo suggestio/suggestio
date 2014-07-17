@@ -7,18 +7,39 @@ $(document).ready ->
   cbca.statusBar = StatusBar
   cbca.statusBar.init()
 
-  cbca.shop = CbcaShop
-
+  cbca.pc = PersonalCabinet
 
   cbca.editAdPage = EditAdPage
   cbca.editAdPage.init()
 
   cbca.common = new CbcaCommon()
   cbca.popup.init()
-  cbca.shop.init()
   cbca.editAdPage.updatePreview()
 
 
+PersonalCabinet =
+
+  common:
+
+    setBorderLineHeight: ($obj) ->
+
+      if $obj && $obj.size
+        $lines = $obj.find '.js-vertical-line'
+      else
+        $lines = $ '.js-vertical-line'
+      $lines
+      .each () ->
+        $this = $ this
+        $parent = $this.parent()
+        lineHeight = $parent.height() - 10
+
+        $this.height lineHeight
+
+  init: () ->
+
+    $(document).ready () ->
+
+      cbca.pc.common.setBorderLineHeight()
 
 #######################################################################################################################
 ## Всплывающие окна ##
@@ -112,15 +133,12 @@ CbcaCommon = () ->
 
   self = this
 
-  ################################
-  ## ВЫРАВНИВАНИЕ ВЫСОТЫ БЛОКОВ ##
-  ################################
+  ####################################################################################################################
+  ## Блоки с одинаковой высотой ##
+  ####################################################################################################################
 
-  self.setEqualHeightBlocks = ($obj) ->
-    if $obj && $obj.size
-      $blocks = $obj.find '.js-equal-height'
-    else
-      $blocks = $ '.js-equal-height'
+  self.setEqualHeightBlocks = () ->
+    $blocks = $ '.js-equal-height'
     height = 0
 
     $blocks.each () ->
@@ -130,13 +148,16 @@ CbcaCommon = () ->
 
     $blocks.height(height)
 
+  ####################################################################################################################
+  ## Высота вертикальных линий ##
+  ####################################################################################################################
 
-  #######################################################################################################################
-  ## ВЫРАВНИВАНИЕ ВЫСОТЫ БЛОКОВ ##
-  #######################################################################################################################
-
-  self.setVerticalLineHeight = () ->
-    $ '.js-vertical-line'
+  self.setVerticalLineHeight = ($obj) ->
+    if $obj && $obj.size
+      $lines = $obj.find '.js-vertical-line'
+    else
+      $lines = $ '.js-vertical-line'
+    $lines
     .each () ->
       $this = $ this
       $parent = $this.parent()
@@ -176,9 +197,11 @@ CbcaCommon = () ->
 
           if $this.attr 'data-init'
             $transactionsHistory
-            .slideDown 600,
-                       () ->
-                        self.setVerticalLineHeight($transactionsList)
+            .slideDown(
+              600,
+              () ->
+                cbca.pc.common.setBorderLineHeight()($transactionsList)
+            )
 
         error: (error)->
           console.log(error)
@@ -186,7 +209,6 @@ CbcaCommon = () ->
 
 
     self.setEqualHeightBlocks()
-    self.setVerticalLineHeight()
 
     $(window).resize () ->
       cbca.popup.setOverlayHeight()
@@ -404,16 +426,16 @@ CbcaCommon = () ->
             success: (data) ->
               $data = $ data
               $siomBlock = $this.closest '.js-slide-w'
+              $siomBLockCnt = $siomBlock.find '.js-slide-cnt:first' ## :first потому что может вложенный siomBlock
 
-              $siomBlock
-              .find '.siom-block_cnt'
-              .append $data
+              $siomBLockCnt.append $data
 
-              $siomBlock
-              .find '.js-slide-cnt:first' ## :first потому что может вложенный siomBlock
-              .slideDown 600,
-                         () ->
-                          self.setVerticalLineHeight($siomBlock)
+              $siomBLockCnt
+              .slideDown(
+                600,
+                () ->
+                  cbca.pc.common.setBorderLineHeight($siomBLockCnt)
+              )
 
               $this.removeAttr 'href'
           )
@@ -587,164 +609,6 @@ EditAdPage =
         cbca.editAdPage.updatePreview()
 
 
-#########################
-## Работа с магазинами ##
-#########################
-CbcaShop =
-  disableShop: (shopId) ->
-    jsRoutes.controllers.MarketLkAdn.nodeOnOffForm(shopId).ajax(
-      type: "GET",
-      success:  (data) ->
-        if(data.toString().trim())
-          $('#popupsContainer').append(data)
-          cbca.popup.showPopup('#disable-shop')
-      error: (error) ->
-        console.log(error)
-    )
-
-  enableShop: (shopId) ->
-    jsRoutes.controllers.MarketLkAdn.nodeOnOffSubmit(shopId).ajax(
-      type: 'POST'
-      dataType: 'JSON'
-      data:
-        'isEnabled': true
-      error: (error) ->
-        console.log(error)
-    )
-
-
-  fixActiveAds: (labelSelector, count)->
-    if($(labelSelector).find('input[type = "checkbox"]').filter(':checked').size() >= count)
-      $(labelSelector).find('input[type = "checkbox"]').not(':checked').each ()->
-        $(this).removeAttr('checked').attr('disabled', 'disabled').closest('label').addClass('inactive')
-    else
-      $(labelSelector).find('input[type = "checkbox"]').not(':checked').each ()->
-        $(this).removeAttr('disabled').closest('label').removeClass('inactive')
-
-  checkDisabledAds: ()->
-    $('.ads-list .item').each ()->
-      check = true
-      $this = $(this)
-      if($this.find('label').not('.inactive').find('input[type = "checkbox"]').size())
-        $this.find('label').not('.inactive').find('input[type = "checkbox"]').each ()->
-          if(this.checked)
-            check = false
-        if(check)
-          $this.toggleClass('disabled', true)
-
-
-  init: () ->
-
-    self = this
-    self.martAdsLimit = 0 || parseInt($('#maxMartAds').val(),10)
-    self.shopAdsLimit = 0 || parseInt($('#maxShopAds').val(),10)
-
-    ##########################################
-    ## Чекбоксы в списке рекламных плакатов ##
-    ##########################################
-    $(document).on 'change', '.ads-list .ads-list-block__controls input[type = "checkbox"]', ->
-      $this = $(this)
-      lvlEnabled = this.checked
-
-      jsRoutes.controllers.MarketAd.updateShowLevelSubmit($this.attr('data-adid')).ajax(
-        type: 'POST'
-        data:
-          'levelId': $this.attr('data-level')
-          'levelEnabled': lvlEnabled
-        success: (data) ->
-          if(lvlEnabled)
-            $this.closest('.item').removeClass('disabled')
-
-          cbca.shop.checkDisabledAds()
-        error: (data) ->
-          console.log(data)
-      )
-
-    cbca.shop.checkDisabledAds()
-
-    cbca.shop.fixActiveAds('.shop-catalog', self.shopAdsLimit)
-
-    $(document).on 'change', '.shop-catalog input[type = "checkbox"]', ->
-      cbca.shop.fixActiveAds('.shop-catalog', self.shopAdsLimit)
-
-
-    cbca.shop.fixActiveAds('.martAd-fix', self.martAdsLimit)
-
-    $(document).on 'change', '.martAd-fix input[type = "checkbox"]', ->
-      cbca.shop.fixActiveAds('.martAd-fix', self.martAdsLimit)
-
-    ###################################
-    ## Включение/выключение магазина ##
-    ###################################
-    $(document).on 'click', '.nodes-list .enable-but', ->
-      shopId = $(this).closest('.item').attr('data-shop')
-      $shop = $('#shop-list').find('.item[data-shop = "'+shopId+'"]')
-
-      if(!$shop.hasClass('enabled'))
-        $shop.addClass('enabled')
-        $(this).closest('.item').addClass('enabled')
-        cbca.shop.enableShop($shop.attr('data-shop'))
-
-
-    $(document).on 'click', '.nodes-list .disable-but', ->
-      shopId = $(this).closest('.item').attr('data-shop')
-      $shop = $('#shop-list').find('.item[data-shop = "'+shopId+'"]')
-
-      if($shop.hasClass('enabled'))
-        cbca.shop.disableShop($shop.attr('data-shop'))
-
-
-    $(document).on 'click', '#shop-control .disable-but', ->
-      $shop = $(this).closest('.big-triger')
-      if($shop.hasClass('enabled'))
-        cbca.shop.disableShop($shop.attr('data-shop'))
-
-    $(document).on 'click', '#shop-control .enable-but', ->
-      $shop = $(this).closest('.big-triger')
-
-      if(!$shop.hasClass('enabled'))
-        $shop.addClass('enabled')
-        cbca.shop.enableShop($shop.attr('data-shop'))
-
-
-    $(document).on 'submit', '#disable-shop form', (event) ->
-      event.preventDefault()
-      $this = $(this)
-
-      $.ajax(
-        type: 'POST'
-        dataType: 'JSON'
-        url: $this.attr('action')
-        data: $this.serialize()
-        success: (data) ->
-          if(!data.isEnabled)
-            cbca.popup.hidePopup('#disable-shop')
-            $('#disable-shop').remove()
-            $('*[data-shop = "'+data.shopId+'"]').removeClass('enabled')
-      )
-
-    ###################################################
-    ## Включение/выключение первой страницы магазина ##
-    ###################################################
-    $(document).on 'click', '#first-page-triger .enable-but', ->
-      $shop = $(this).closest('.triger-wrap')
-      if(!$shop.hasClass('enabled'))
-        $shop.addClass('enabled')
-        jsRoutes.controllers.MarketLkAdn.setSlaveTopLevelAvailable($shop.attr('data-shop')).ajax(
-          type: 'POST'
-          data:
-            'isEnabled': true
-        )
-
-    $(document).on 'click', '#first-page-triger .disable-but', ->
-      $shop = $(this).closest('.triger-wrap')
-      if($shop.hasClass('enabled'))
-        $shop.removeClass('enabled')
-        jsRoutes.controllers.MarketLkAdn.setSlaveTopLevelAvailable($shop.attr('data-shop')).ajax(
-          type: 'POST'
-          data:
-            'isEnabled': false
-        )
 
 #################
 ## Уведомления ##
