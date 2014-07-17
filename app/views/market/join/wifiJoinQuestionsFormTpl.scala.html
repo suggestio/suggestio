@@ -41,7 +41,7 @@
           <td class="quiz__td">
             <div class="quiz__checkbox-wrap ovh">
               <label>
-                <input class="one-checkbox js-quiz__checkbox" data-next="@yesId" type="checkbox" data-name="@fn" name="@fn" value="true"@if(fv.isDefined && fv.get) { checked}/>@Messages("Yes")
+                <input class="js-one-checkbox js-quiz__checkbox" data-next="@yesId" type="checkbox" data-name="@fn" name="@fn" value="true"@if(fv.isDefined && fv.get) { checked}/>@Messages("Yes")
               </label>
             </div>
           </td>
@@ -51,7 +51,7 @@
           <td>
             <div class="quiz__checkbox-wrap ovh">
               <label>
-                <input class="one-checkbox js-quiz__checkbox" data-next="@noId" type="checkbox" data-name="@fn" name="@fn" value="false"@if(fv.isDefined && !fv.get) { checked}/>@Messages("No")
+                <input class="js-one-checkbox js-quiz__checkbox" data-next="@noId" type="checkbox" data-name="@fn" name="@fn" value="false"@if(fv.isDefined && !fv.get) { checked}/>@Messages("No")
               </label>
             </div>
           </td>
@@ -119,7 +119,7 @@
                         <td class="quiz__td">
                           <div class="quiz__checkbox-wrap ovh">
                             <label>
-                             <input class="js-quiz__checkbox one-checkbox" data-next="#text@i" type="checkbox" data-name="@fn" name="@fn" value="@auSzVariant"/>
+                             <input class="js-quiz__checkbox js-one-checkbox" data-next="#text@i" type="checkbox" data-name="@fn" name="@fn" value="@auSzVariant"/>
                               @Messages(s"join.qsn.$fn.$auSzVariant")
                             </label>
                           </div>
@@ -146,7 +146,7 @@
 
             <div id="text0" class="js-quiz__result hidden" style="padding-top: 122px;">
               <img src="/assets/images/market/lk/router1.png" style="margin-left: 30px;" />
-              <p class="paragraph-13">
+              <p class="paragraph __size-M">
                 <strong>
                   Беспроводной маршрутизатор
                 </strong>
@@ -155,7 +155,7 @@
                   Microtik RB951Ui-2HnD
                 </strong>
               </p>
-              <p class="paragraph-13">
+              <p class="paragraph __size-M">
                 <strong>Купить и настроить маршрутизатор
                   можно как в нашей компании,
                   так и самостоятельно. В варианте
@@ -164,7 +164,7 @@
                   маршрутизатор.</strong> (Стоимость
                 устройства с настройкой – 9500 руб.)
               </p>
-              <p class="paragraph-13">
+              <p class="paragraph __size-M">
                 <strong>
                   Если вы приобретаете и
                   настраиваете устройство
@@ -177,7 +177,7 @@
 
             <div id="text1" class="js-quiz__result hidden">
               <img src="/assets/images/market/lk/router2.png" style="margin-left: -25px;"/>
-              <p class="paragraph-13">
+              <p class="paragraph __size-M">
                 <strong>
                   Беспроводной маршрутизатор
                 </strong>
@@ -186,7 +186,7 @@
                   Microtik RB2011UiAS-2HnD-IN
                 </strong>
               </p>
-              <p class="paragraph-13">
+              <p class="paragraph __size-M">
                 <strong>Купить и настроить маршрутизатор
                   можно как в нашей компании,
                   так и самостоятельно. В варианте
@@ -195,7 +195,7 @@
                   маршрутизатор.</strong> (Стоимость
                 устройства с настройкой – 12500 руб.)
               </p>
-              <p class="paragraph-13">
+              <p class="paragraph __size-M">
                 <strong>
                   Если вы приобретаете и
                   настраиваете устройство
@@ -207,7 +207,7 @@
             </div>
 
             <div id="text3" class="hidden js-quiz__result">
-              <p class="blue-text paragraph-13">
+              <p class="color-link paragraph __size-M">
                 После небольшой подготовительной
                 работы нашими специалистами у вас
                 будет полноценная Free Wi-Fi зона.
@@ -219,13 +219,13 @@
             </div>
 
             <div id="text2" class="hidden js-quiz__result">
-              <p class="blue-text">
+              <p class="color-link">
                 Обратитесь к нашим
                 специалистам для
                 детальной проработки
                 сети Wi-Fi.
               </p>
-              <p class="paragraph-13">
+              <p class="paragraph __size-M">
                 Проработаем покрытие,
                 подберём оборудование,
                 произведём настройку.

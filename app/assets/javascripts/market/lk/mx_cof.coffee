@@ -1,33 +1,166 @@
-
 $(document).ready ->
-  cbca.emptyPhoto = '/assets/images/market/lk/empty-image.gif'
-
-  cbca.popup = new CbcaPopup()
-
-  cbca.statusBar = StatusBar
-  cbca.statusBar.init()
 
   cbca.pc = PersonalCabinet
   cbca.pc.init()
 
-  cbca.editAdPage = EditAdPage
-  cbca.editAdPage.init()
+  cbca.popup = new CbcaPopup()
 
   cbca.common = new CbcaCommon()
   cbca.popup.init()
-  cbca.editAdPage.updatePreview()
 
 
 PersonalCabinet =
 
+  ###################################################################################################################
+  ## Уведомления в шапке сайта ##
+  ###################################################################################################################
+  statusBar:
+
+    close: ($bar) ->
+      if $bar.data 'open'
+        $bar.data 'open', false
+        $bar.slideUp()
+
+    show: ($bar) ->
+      if !$bar.data 'open'
+        $bar.data 'open', true
+        $bar.slideDown()
+
+    init: ()->
+
+      $ '.status-bar'
+      .each ()->
+        $this = $ this
+
+        cbca.pc.statusBar.show $this
+        close_cb = () ->
+          cbca.pc.statusBar.close $this
+
+        setTimeout close_cb, 5000
+
+      $(document).on 'click', '.status-bar', ->
+        $this = $ this
+        cbca.pc.statusBar.close $this
+
+  ##################################################################################################################
+  ## Форма опроса при запросе инвайта для владельца WiFi сети ##
+  ##################################################################################################################
+  wifi: () ->
+
+    $ '.js-quiz__checkbox'
+    .removeAttr 'disabled'
+    .removeAttr 'checked'
+
+    $(document).on 'submit', '#wifiJoinForm', (e)->
+      $form = $ this
+
+      $form
+      .find '.js-quiz__checkbox'
+      .removeAttr 'disabled'
+
+      return true
+
+    $(document).on 'click', '.js-quiz__checkbox', (e)->
+      $this = $ this
+      nextSelector = $this.attr 'data-next'
+      quizElement = $this.closest '.js-quiz__element'
+      thisIndex = quizElement.attr 'data-index'
+
+      $ '.js-quiz__element:visible'
+      .not this
+      .each () ->
+        $element = $ this
+
+        if $element.attr('data-index') > thisIndex
+          $element
+          .hide()
+          .find 'input'
+          .removeAttr 'disabled'
+          .removeAttr 'checked'
+
+        if $element.attr('data-index') == thisIndex
+          $element
+          .find 'input'
+          .removeAttr 'disabled'
+
+      $this.attr 'disabled', 'disabled'
+      $ '.js-quiz__result'
+      .hide()
+
+      ## вместе с описательным текстом показать кнопку Написать ##
+      if nextSelector == '#text0' || nextSelector == '#text1'
+        nextSelector += ',#text3'
+
+      $ nextSelector
+      .show()
+
   common:
 
-    setBorderLineHeight: ($obj) ->
+    ##################################################################################################################
+    ## Чекбоксы ##
+    ##################################################################################################################
+    checkbox: () ->
 
-      if $obj && $obj.size
-        $lines = $obj.find '.js-vertical-line'
-      else
-        $lines = $ '.js-vertical-line'
+      $('input[type = "checkbox"]').each ()->
+        $this = $ this
+        checked = $this.attr 'data-checked'
+        if checked == 'checked'
+          this.checked = true
+        else
+          $this.removeAttr 'checked'
+
+      ## Набор чекбоксов, где можно выбрать только один вариант
+      $(document).on 'click', '.js-one-checkbox', (e)->
+        e.stopPropagation()
+        $this = $ this
+        dataName = $this.attr 'data-name'
+        dataFor = $this.attr 'data-for'
+        value = $this.attr 'data-value'
+
+        if this.checked
+          $ '.js-one-checkbox[data-name = "'+dataName+'"]'
+          .filter ':checked'
+          .removeAttr 'checked'
+          this.checked = true
+
+          $ '#'+dataFor
+          .val value
+        else
+          $ this
+          .removeAttr 'checked'
+
+    ##################################################################################################################
+    ## Блоки одинаковой высоты ##
+    ##################################################################################################################
+    setEqualHeightBlocks: () ->
+      $blocks = $ '.js-equal-height'
+      height = 0
+
+      $blocks.each () ->
+        $this = $ this
+        thisHeight = $this.height()
+
+        if thisHeight > height
+          height = thisHeight
+
+      $blocks.height height
+
+    ##################################################################################################################
+    ## Скрытые элементы ##
+    ##################################################################################################################
+    hideElements: ($obj) ->
+      $obj = $obj || $ 'html'
+      $elements = $obj.find '.js-hidden'
+
+      $elements.hide()
+
+    ##################################################################################################################
+    ## Высота вертикальных линий ##
+    ##################################################################################################################
+    setBorderLineHeight: ($obj) ->
+      $obj = $obj || $ 'html'
+      $lines = $obj.find '.js-vertical-line'
+
       $lines
       .each () ->
         $this = $ this
@@ -36,6 +169,9 @@ PersonalCabinet =
 
         $this.height lineHeight
 
+    ##################################################################################################################
+    ## Элементы ввода ##
+    ##################################################################################################################
     inputs: () ->
 
       $(document).on 'focus', '.js-input-w input, .js-input-w textarea', (e)->
@@ -48,40 +184,132 @@ PersonalCabinet =
         .closest '.input-w'
         .removeClass '__focus'
 
+
+    ##################################################################################################################
+    ## Стандартные обработчики нажатия кнопок ##
+    ##################################################################################################################
+    buttons: () ->
+
+      $(document).on 'click', '.js-btn', (e)->
+        e.preventDefault()
+        $this = $ this
+        href = $this.attr 'href'
+
+        if !href
+          return false
+
+        if href && href.charAt(0) == '#'
+          cbca.popup.showPopup href
+        else
+          $.ajax(
+            url: href,
+            success: (data)->
+              $ajaxData = $ data
+              popupId = $ajaxData.attr 'id'
+
+              cbca.popup.hidePopup()
+
+              $ '#'+popupId
+              .remove()
+
+              $ '#popupsContainer'
+              .append data
+
+              cbca.popup.showPopup '#'+popupId
+          )
+
+      $(document).on 'click', '.js-submit-btn', (e)->
+        e.preventDefault()
+        $this = $ this
+        dataFor = $this.attr 'data-for'
+        if dataFor
+          $form = $ dataFor
+        else
+          $form = $this.closest 'form'
+
+        $form.trigger 'submit'
+
+      $(document).on 'click', '.js-slide-btn', (e)->
+        e.preventDefault()
+        $this = $ this
+        href = $this.attr 'href'
+
+        if href
+          if href.charAt(0) == '#'
+            $ href
+            .slideToggle()
+          else
+            $.ajax(
+              url: href
+              success: (data) ->
+                $data = $ data
+                $siomBlock = $this.closest '.js-slide-w'
+                ## :first потому что может быть вложенный siomBlock
+                $siomBLockCnt = $siomBlock.find '.js-slide-cnt:first'
+
+                $siomBLockCnt.append $data
+
+                $siomBLockCnt
+                .slideDown(
+                  600,
+                  () ->
+                    cbca.pc.common.setBorderLineHeight $siomBLockCnt
+                )
+
+                $this.removeAttr 'href'
+            )
+        else
+          $this
+          .closest '.js-slide-w'
+          .find '.js-slide-cnt:first' ## :first потому что может вложенный siomBlock
+          .slideToggle()
+
+        $this.toggleClass '__open'
+        if !$this.attr 'data-fix-title'
+          if $this.hasClass '__open'
+            $this.html 'Свернуть'
+          else
+            $this.html 'Развернуть'
+
   init: () ->
 
-    $(document).ready () ->
+    cbca.pc.common.setEqualHeightBlocks()
+    cbca.pc.common.setBorderLineHeight()
+    cbca.pc.common.hideElements()
+    cbca.pc.common.inputs()
+    cbca.pc.common.checkbox()
+    cbca.pc.common.buttons()
 
-      $ '.js-hidden'
-      .hide()
-
-      cbca.pc.common.setBorderLineHeight()
-      cbca.pc.common.inputs()
+    cbca.pc.wifi()
+    cbca.pc.statusBar.init()
 
 #######################################################################################################################
 ## Всплывающие окна ##
 #######################################################################################################################
-
 CbcaPopup = () ->
 
   showOverlay: ->
-    $('#popupsContainer, #overlay').show()
+    $ '#popupsContainer, #overlay'
+    .show()
 
   hideOverlay: ->
-    $('#popupsContainer, #overlay').hide()
+    $ '#popupsContainer, #overlay'
+    .hide()
 
   setOverlayHeight: (popupHeight)->
-    if(!popupHeight)
+    if !popupHeight
       popupHeight = 0
 
-      $('.popup').each () ->
-        $this = $(this)
+      $ '.popup'
+      .each () ->
+        $this = $ this
         thisHeight = $this.height()
 
-        if(thisHeight > popupHeight)
+        if thisHeight > popupHeight
           popupHeight = thisHeight
 
-    popupsContainerHeight = $('#popupsContainer').height()
+    popupsContainerHeight = $ '#popupsContainer'
+                            .height()
 
     if(popupHeight > popupsContainerHeight)
       $('#overlay').height(popupHeight + 50)
@@ -103,9 +331,7 @@ CbcaPopup = () ->
     popupHeight = $popup.height()
     this.setOverlayHeight popupHeight
 
-    $popup
-    .find '.js-hidden'
-    .hide()
+    cbca.pc.common.hideElements $popup
 
     $ '.js-vertical-line'
     .each () ->
@@ -124,6 +350,9 @@ CbcaPopup = () ->
 
   init: () ->
 
+    $(window).resize () ->
+      cbca.popup.setOverlayHeight()
+
     $(document).on 'click', '.js-close-popup', (event)->
       event.preventDefault()
       $this = $ this
@@ -135,7 +364,6 @@ CbcaPopup = () ->
     $(document).on 'click', '#overlay', ()->
       cbca.popup.hidePopup()
 
-
     $('.popup .__error').each ()->
       $this = $ this
       popupId = $this
@@ -144,48 +372,34 @@ CbcaPopup = () ->
 
       cbca.popup.showPopup '#'+popupId
 
+    $(document).on 'click', '.js-popup-back', (e)->
+      $this = $ this
+      targetPopupId = $this.attr 'href'
+
+      $this
+      .closest '.popup'
+      .hide()
+
+      $ targetPopupId
+      .show()
+
+    $(document).on 'click', '.js-remove-popup', (e)->
+      $this = $ this
+      $popup = $this.closest '.popup'
+
+      cbca.popup.hidePopup '#'+$popup.attr('id')
+      $ '#'+$popup.attr('id')
+      .remove()
+
 
 ##Общее оформление##
 CbcaCommon = () ->
 
   self = this
 
-  ####################################################################################################################
-  ## Блоки с одинаковой высотой ##
-  ####################################################################################################################
-
-  self.setEqualHeightBlocks = () ->
-    $blocks = $ '.js-equal-height'
-    height = 0
-
-    $blocks.each () ->
-      thisHeight = $(this).height()
-      if(thisHeight > height)
-        height = thisHeight
-
-    $blocks.height(height)
-
-  ####################################################################################################################
-  ## Высота вертикальных линий ##
-  ####################################################################################################################
-
-  self.setVerticalLineHeight = ($obj) ->
-    if $obj && $obj.size
-      $lines = $obj.find '.js-vertical-line'
-    else
-      $lines = $ '.js-vertical-line'
-    $lines
-    .each () ->
-      $this = $ this
-      $parent = $this.parent()
-      lineHeight = $parent.height() - 10
-
-      $this.height lineHeight
-
   #########################################
   ## TODO разнести по отдельным функциям ##
   #########################################
-
   self.init = () ->
 
     $(document).on 'click', '#getTransactions', (e)->
@@ -223,11 +437,6 @@ CbcaCommon = () ->
       )
 
 
-    self.setEqualHeightBlocks()
-
-    $(window).resize () ->
-      cbca.popup.setOverlayHeight()
-
     #################################################################################################################
     ## CAPTCHA ##
     #################################################################################################################
@@ -244,126 +453,15 @@ CbcaCommon = () ->
       $parent.prepend '<img id="captchaImage" src="/captcha/get/' + $('#captchaId').val() + '?v='+random+'" />'
 
 
-    #################################################################################################################
-    ## WIFI FORM start ##
-    #################################################################################################################
 
-    $(document).on 'submit', '#wifiJoinForm', (e)->
-      $form = $ this
-
-      $form
-      .find '.js-quiz__checkbox'
-      .removeAttr 'disabled'
-
-      return true
-
-
-    $ '.js-quiz__checkbox'
-    .removeAttr 'disabled'
-
-    $(document).on 'click', '.js-quiz__checkbox', (e)->
-      $this = $ this
-      nextSelector = $this.attr 'data-next'
-      quizElement = $this.closest '.js-quiz__element'
-      thisIndex = quizElement.attr 'data-index'
-
-      $ '.js-quiz__element'
-      .not this
-      .each () ->
-        $element = $ this
-
-        if $element.attr('data-index') > thisIndex
-          $element
-          .hide()
-          .find 'input'
-          .removeAttr 'disabled'
-          .removeAttr 'checked'
-
-        if $element.attr('data-index') == thisIndex
-          $element
-          .find 'input'
-          .removeAttr 'disabled'
-
-      $this.attr 'disabled', 'disabled'
-      $ '.js-quiz__result'
-      .hide()
-
-      if nextSelector == '#text0' || nextSelector == '#text1'
-        nextSelector += ',#text3'
-
-      $ nextSelector
-      .show()
-
-    #################################################################################################################
-    ## WIFI FORM end ##
-    #################################################################################################################
-
-    if($('#newPasswordForm').length)
+    if $('#newPasswordForm').length
       cbca.popup.showPopup('#newPasswordForm')
 
-    $(document).on 'click', '.js-popup-back', (e)->
-      $this = $(this)
-      targetPopupId = $this.attr('href')
-
-      $this.closest('.popup').hide()
-      $(targetPopupId).show()
-
-    $(document).on 'click', '.js-remove-popup', (e)->
-      $popup = $(this).closest('.popup')
-
-      cbca.popup.hidePopup('#'+$popup.attr('id'))
-      $('#'+$popup.attr('id')).remove()
-
-    $(document).on 'click', '.js-submit-btn', (e)->
-      e.preventDefault()
-      $this = $(this)
-      dataFor = $this.attr('data-for')
-      if(dataFor)
-        $form = $(dataFor)
-      else
-        $form = $this.closest('form')
-
-      $form.trigger('submit')
-
-    $(document).on 'click', '.js-submit-wrap', (e)->
-      $this = $(this)
-
-      $this.closest('form').find('input').removeAttr('disabled')
-      $this.find('input').trigger('click')
-
-    $(document).on 'click', '.js-submit-wrap input', (e)->
-      e.stopPropagation()
-
-      $(this).closest('form').find('input').removeAttr('disabled')
-
-
-    ##todo все кнопки ajax/popup зарефакторить к этому обработчику##
-    $(document).on 'click', '.js-btn', (e)->
-      e.preventDefault()
-      $this = $(this)
-      href = $this.attr('href')
-
-      if(!href)
-        return false
-
-      if(href && href.charAt(0) == '#')
-        cbca.popup.showPopup(href)
-      else
-        $.ajax(
-          url: href,
-          success: (data)->
-            $ajaxData = $(data)
-            popupId = $ajaxData.attr('id')
-            cbca.popup.hidePopup()
-            $('#'+popupId).remove()
-            $('#popupsContainer').append(data)
-            cbca.popup.showPopup('#'+popupId)
-        )
 
     $(document).on 'submit', '.js-form', (e)->
       e.preventDefault()
-      $form = $(this)
-      action = $form.attr('action')
+      $form = $ this
+      action = $form.attr 'action'
 
       $.ajax(
         type: "POST",
@@ -376,7 +474,7 @@ CbcaCommon = () ->
     $(document).on 'submit', '#recoverPwForm form', (e)->
       e.preventDefault()
       $form = $ this
-      action = $form.attr('action')
+      action = $form.attr 'action'
 
       $.ajax(
         type: "POST",
@@ -428,232 +526,17 @@ CbcaCommon = () ->
           cbca.popup.showPopup('#dailyMmpsWindow')
       )
 
-    $(document).on 'click', '.lk-edit-form__block_title .js-close-btn', (e)->
-        e.preventDefault()
-        $this = $(this)
-
-        $this.parent().parent().slideUp()
-
     $(document).on 'click', '.ads-list-block__preview_add-new', ()->
       $this = $(this)
 
       $this.parent().find('.ads-list-block__link')[0].click()
 
 
-    $(document).on 'click', '.js-slide-btn', (e)->
-      e.preventDefault()
-      $this = $ this
-      href = $this.attr 'href'
-
-      if href
-        if href.charAt(0) == '#'
-          $(href).slideToggle()
-        else
-          $.ajax(
-            url: href
-            success: (data) ->
-              $data = $ data
-              $siomBlock = $this.closest '.js-slide-w'
-              $siomBLockCnt = $siomBlock.find '.js-slide-cnt:first' ## :first потому что может вложенный siomBlock
-
-              $siomBLockCnt.append $data
-
-              $siomBLockCnt
-              .slideDown(
-                600,
-                () ->
-                  cbca.pc.common.setBorderLineHeight($siomBLockCnt)
-              )
-
-              $this.removeAttr 'href'
-          )
-      else
-        $this
-        .closest '.js-slide-w'
-        .find '.js-slide-cnt:first' ## :first потому что может вложенный siomBlock
-        .slideToggle()
-
-      $this.toggleClass '__open'
-      if !$this.attr 'data-fix-title'
-        if $this.hasClass '__open'
-          $this.html 'Свернуть'
-        else
-          $this.html 'Развернуть'
-
-
-
-    ##########################
-    ## Работа с checkbox`ов ##
-    ##########################
-    $('input[type = "checkbox"]').each ()->
-      $this = $(this)
-      if($this.attr('data-checked') == 'checked')
-        this.checked = true
-      else
-        $this.removeAttr('checked')
-
-    $(document).on 'click', '.create-ad .color-list .color', ->
-      $this = $(this)
-      $wrap = $this.closest('.item')
-      $checkbox = $wrap.find('.one-checkbox')
-      dataName = $checkbox.attr('data-name')
-      dataFor = $checkbox.attr('data-for')
-      value = $checkbox.attr('data-value')
-      checkbox = $checkbox.get(0)
-
-      if(!checkbox.checked)
-        $('.one-checkbox[data-name = "'+dataName+'"]').filter(':checked').removeAttr('checked')
-        checkbox.checked = true
-        $('#'+dataFor).val(value)
-      else
-        $checkbox.removeAttr('checked')
-
-      cbca.editAdPage.updatePreview()
-
-    $(document).on 'click', '.create-ad .mask-list .item', (event)->
-      $this = $(this)
-
-      $checkbox = $this.find('.one-checkbox')
-      dataName = $checkbox.attr('data-name')
-      dataFor = $checkbox.attr('data-for')
-      value = $checkbox.attr('data-value')
-      checkbox = $checkbox.get(0)
-
-      if(!checkbox.checked)
-        $('.one-checkbox[data-name = "'+dataName+'"]').filter(':checked').removeAttr('checked')
-        checkbox.checked = true
-        $('#'+dataFor).val(value)
-      else
-        $checkbox.removeAttr('checked')
-
-      cbca.editAdPage.updatePreview()
-
-
-    ########################################
-    ## Набор checkbox`ов, с одним checked ##
-    ########################################
-    $(document).on 'click', '.one-checkbox', (event)->
-      $this = $ this
-      dataName = $this.attr('data-name')
-      dataFor = $this.attr('data-for')
-      value = $this.attr('data-value')
-
-
-      if(this.checked)
-        $('.one-checkbox[data-name = "'+dataName+'"]').filter(':checked').removeAttr('checked')
-        this.checked = true
-        $('#'+dataFor).val(value)
-      else
-        $(this).removeAttr('checked')
-
-      event.stopPropagation()
-
 
   self.init()
 
-#########################################################
-## Страница создания/редактирования рекламной карточки ##
-#########################################################
-EditAdPage =
-
-  updatePreview: () ->
-    return false
-
-  init: () ->
-    #################
-    ## Старая цена ##
-    #################
-    if($('#ad_offer_oldPrice_value').val())
-      $('#old-price-status').attr('data-checked', 'checked')
-      $('.create-ad .old-price').show()
-
-    $(document).on 'click', '#old-price-status', ->
-      if(!$('#ad_offer_oldPrice_value').val())
-        oldPrice = $('#priceValueInput').val()
-        $('#ad_offer_oldPrice_value').val(oldPrice)
-      $('.create-ad .old-price').toggle()
-      cbca.editAdPage.updatePreview()
-
-    ############
-    ## Превью ##
-    ############
-    $(document).on 'change', '#promoOfferForm input', ()->
-      cbca.editAdPage.updatePreview()
-
-    $(document).on 'change', '#promoOfferForm textarea', ()->
-      cbca.editAdPage.updatePreview()
-
-    $(document).on 'keyup', '#promoOfferForm input', ()->
-      clearTimeout(updatePreview)
-      selfUpdatePreview = ()->
-        cbca.editAdPage.updatePreview()
-      updatePreview = setTimeout(selfUpdatePreview, 500)
-
-    ########################################
-    ## Положение элементов на iphone/ipad ##
-    ########################################
-    $(document).on 'click', '.select-iphone .iphone-block', ->
-      $this = $(this)
-      if(!$this.hasClass 'act')
-        $('.iphone-block.act').removeClass 'act'
-        $this.addClass 'act'
-        $('#textAlign-phone').val($this.attr('data-value')).trigger('change')
-
-    $(document).on 'click', '.select-ipad .ipad-block', ->
-        $this = $(this)
-        dataGroup = $this.attr 'data-group'
-
-        if(!$this.hasClass 'act')
-          $('.ipad-block.act[data-group = "'+dataGroup+'"]').removeClass 'act'
-          $this.addClass 'act'
-          $('#'+dataGroup).val($this.attr('data-value')).trigger('change')
-
-    ##########################
-    ## Переключение вкладок ##
-    ##########################
-    $(document).on 'click', '.block .tab', ->
-      $this = $(this)
-      $wrap = $this.closest '.block'
-      index = $wrap.find('.tabs .tab').index(this)
-
-      if(!$this.hasClass 'act')
-        $wrap.find('.tabs .act').removeClass 'act'
-        $this.addClass 'act'
-        $wrap.find('.tab-content').hide()
-        $wrap.find('.tab-content').eq(index).show()
-        $('#ad-mode').val($this.attr('data-mode'))
-        cbca.editAdPage.updatePreview()
 
 
-
-#################
-## Уведомления ##
-#################
-StatusBar =
-
-  close: ($bar) ->
-    if($bar.data('open'))
-      $bar.data('open', false)
-      $bar.slideUp()
-
-  show: ($bar) ->
-    if(!$bar.data('open'))
-      $bar.data('open', true)
-      $bar.slideDown()
-
-  init: ()->
-
-    $('.status-bar').each ()->
-      _this = $(this)
-
-      StatusBar.show _this
-      close_cb = () ->
-        StatusBar.close _this
-
-      setTimeout close_cb, 5000
-
-    $(document).on 'click', '.status-bar', ->
-      StatusBar.close($(this))
 
 ######################
 ## TODO: отрефакторить
