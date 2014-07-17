@@ -8,6 +8,7 @@ $(document).ready ->
   cbca.statusBar.init()
 
   cbca.pc = PersonalCabinet
+  cbca.pc.init()
 
   cbca.editAdPage = EditAdPage
   cbca.editAdPage.init()
@@ -35,11 +36,27 @@ PersonalCabinet =
 
         $this.height lineHeight
 
+    inputs: () ->
+
+      $(document).on 'focus', '.js-input-w input, .js-input-w textarea', (e)->
+        $ this
+        .closest '.input-w'
+        .toggleClass '__focus', true
+
+      $(document).on 'blur', '.js-input-w input, .js-input-w textarea', (e)->
+        $ this
+        .closest '.input-w'
+        .removeClass '__focus'
+
   init: () ->
 
     $(document).ready () ->
 
+      $ '.js-hidden'
+      .hide()
+
       cbca.pc.common.setBorderLineHeight()
+      cbca.pc.common.inputs()
 
 #######################################################################################################################
 ## Всплывающие окна ##
@@ -171,8 +188,6 @@ CbcaCommon = () ->
 
   self.init = () ->
 
-    $('.js-hidden').hide()
-
     $(document).on 'click', '#getTransactions', (e)->
       e.preventDefault()
       $this = $ this
@@ -229,9 +244,9 @@ CbcaCommon = () ->
       $parent.prepend '<img id="captchaImage" src="/captcha/get/' + $('#captchaId').val() + '?v='+random+'" />'
 
 
-    #####################
+    #################################################################################################################
     ## WIFI FORM start ##
-    #####################
+    #################################################################################################################
 
     $(document).on 'submit', '#wifiJoinForm', (e)->
       $form = $ this
@@ -243,32 +258,45 @@ CbcaCommon = () ->
       return true
 
 
-    $('.js-quiz__checkbox').removeAttr('disabled')
+    $ '.js-quiz__checkbox'
+    .removeAttr 'disabled'
 
     $(document).on 'click', '.js-quiz__checkbox', (e)->
-      $this = $(this)
-      nextSelector = $this.attr('data-next')
-      quizElement = $this.closest('.js-quiz__element')
-      thisIndex = quizElement.attr('data-index')
+      $this = $ this
+      nextSelector = $this.attr 'data-next'
+      quizElement = $this.closest '.js-quiz__element'
+      thisIndex = quizElement.attr 'data-index'
 
-      $('.js-quiz__element').not(this).each ()->
-        $element = $(this)
+      $ '.js-quiz__element'
+      .not this
+      .each () ->
+        $element = $ this
 
-        if($element.attr('data-index') > thisIndex)
-          $element.hide().find('input').removeAttr('disabled').removeAttr('checked')
+        if $element.attr('data-index') > thisIndex
+          $element
+          .hide()
+          .find 'input'
+          .removeAttr 'disabled'
+          .removeAttr 'checked'
 
-        if($element.attr('data-index') == thisIndex)
-          $element.find('input').removeAttr('disabled')
+        if $element.attr('data-index') == thisIndex
+          $element
+          .find 'input'
+          .removeAttr 'disabled'
 
-      $this.attr('disabled', 'disabled')
-      $('.js-quiz__result').hide()
-      if(nextSelector == '#text0' || nextSelector == '#text1')
+      $this.attr 'disabled', 'disabled'
+      $ '.js-quiz__result'
+      .hide()
+
+      if nextSelector == '#text0' || nextSelector == '#text1'
         nextSelector += ',#text3'
-      $(nextSelector).show()
 
-    ###################
+      $ nextSelector
+      .show()
+
+    #################################################################################################################
     ## WIFI FORM end ##
-    ###################
+    #################################################################################################################
 
     if($('#newPasswordForm').length)
       cbca.popup.showPopup('#newPasswordForm')
@@ -454,18 +482,6 @@ CbcaCommon = () ->
 
 
 
-    $(document).on 'focus', '.js-input-w input, .js-input-w textarea', (e)->
-      $ this
-      .closest '.input-w'
-      .toggleClass '__focus', true
-
-    $(document).on 'blur', '.js-input-w input, .js-input-w textarea', (e)->
-      $ this
-      .closest '.input-w'
-      .removeClass '__focus'
-
-
-
     ##########################
     ## Работа с checkbox`ов ##
     ##########################
@@ -517,7 +533,7 @@ CbcaCommon = () ->
     ## Набор checkbox`ов, с одним checked ##
     ########################################
     $(document).on 'click', '.one-checkbox', (event)->
-      $this = $(this)
+      $this = $ this
       dataName = $this.attr('data-name')
       dataFor = $this.attr('data-for')
       value = $this.attr('data-value')
