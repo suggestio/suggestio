@@ -200,7 +200,7 @@ CbcaCommon = () ->
             .slideDown(
               600,
               () ->
-                cbca.pc.common.setBorderLineHeight()($transactionsList)
+                cbca.pc.common.setBorderLineHeight($transactionsList)
             )
 
         error: (error)->
