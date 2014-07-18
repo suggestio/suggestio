@@ -3,8 +3,7 @@ $(document).ready ->
   cbca.pc = PersonalCabinet
   cbca.pc.init()
 
-  cbca.popup = new CbcaPopup()
-
+  cbca.popup = CbcaPopup
   cbca.common = new CbcaCommon()
   cbca.popup.init()
 
@@ -38,7 +37,8 @@ PersonalCabinet =
 
         setTimeout close_cb, 5000
 
-      $(document).on 'click', '.status-bar', ()->
+      $ document
+      .on 'click', '.status-bar', ()->
         $this = $ this
         cbca.pc.statusBar.close $this
 
@@ -51,7 +51,8 @@ PersonalCabinet =
     .removeAttr 'disabled'
     .removeAttr 'checked'
 
-    $(document).on 'submit', '#wifiJoinForm', (e)->
+    $ document
+    .on 'submit', '#wifiJoinForm', (e)->
       $form = $ this
 
       $form
@@ -60,7 +61,8 @@ PersonalCabinet =
 
       return true
 
-    $(document).on 'click', '.js-quiz__checkbox', (e)->
+    $ document
+    .on 'click', '.js-quiz__checkbox', (e)->
       $this = $ this
       nextSelector = $this.attr 'data-next'
       quizElement = $this.closest '.js-quiz__element'
@@ -112,7 +114,8 @@ PersonalCabinet =
           $this.removeAttr 'checked'
 
       ## Набор чекбоксов, где можно выбрать только один вариант
-      $(document).on 'click', '.js-one-checkbox', (e)->
+      $ document
+      .on 'click', '.js-one-checkbox', (e)->
         e.stopPropagation()
         $this = $ this
         dataName = $this.attr 'data-name'
@@ -177,12 +180,14 @@ PersonalCabinet =
     ##################################################################################################################
     inputs: () ->
 
-      $(document).on 'focus', '.js-input-w input, .js-input-w textarea', (e)->
+      $ document
+      .on 'focus', '.js-input-w input, .js-input-w textarea', (e)->
         $ this
         .closest '.input-w'
         .toggleClass '__focus', true
 
-      $(document).on 'blur', '.js-input-w input, .js-input-w textarea', (e)->
+      $ document
+      .on 'blur', '.js-input-w input, .js-input-w textarea', (e)->
         $ this
         .closest '.input-w'
         .removeClass '__focus'
@@ -193,7 +198,8 @@ PersonalCabinet =
     ##################################################################################################################
     buttons: () ->
 
-      $(document).on 'click', '.js-btn', (e)->
+      $ document
+      .on 'click', '.js-btn', (e)->
         e.preventDefault()
         $this = $ this
         href = $this.attr 'href'
@@ -221,7 +227,8 @@ PersonalCabinet =
               cbca.popup.showPopup '#'+popupId
           )
 
-      $(document).on 'click', '.js-submit-btn', (e)->
+      $ document
+      .on 'click', '.js-submit-btn', (e)->
         e.preventDefault()
         $this = $ this
         dataFor = $this.attr 'data-for'
@@ -290,15 +297,21 @@ PersonalCabinet =
 #######################################################################################################################
 ## Всплывающие окна ##
 #######################################################################################################################
-CbcaPopup = () ->
+CbcaPopup =
+
+  $overlay: $ '#overlay'
+  $container: $ '#popupsContainer'
+  $body: $ 'body'
 
   showOverlay: ->
-    $ '#popupsContainer, #overlay'
-    .show()
+    this.$overlay.show()
+    this.$container.show()
+    this.$body.addClass 'ovh'
 
   hideOverlay: ->
-    $ '#popupsContainer, #overlay'
-    .hide()
+    this.$overlay.hide()
+    this.$container.hide()
+    this.$body.removeClass 'ovh'
 
   setOverlayHeight: (popupHeight)->
     if !popupHeight
@@ -312,23 +325,17 @@ CbcaPopup = () ->
         if thisHeight > popupHeight
           popupHeight = thisHeight
 
-    popupsContainerHeight = $ '#popupsContainer'
-                            .height()
+    popupsContainerHeight = CbcaPopup.$container.height()
 
     if popupHeight > popupsContainerHeight
-      $ '#overlay'
-      .height popupHeight + 50
+      this.$overlay.height popupHeight + 50
     else
-      $ '#overlay'
-      .height popupsContainerHeight
+      this.$overlay.height popupsContainerHeight
 
   showPopup: (popup) ->
     this.showOverlay()
     $popup = $ popup
     $popup.show()
-
-    $ 'body'
-    .addClass 'ovh'
 
     $popup
     .find '.sm-block'
@@ -338,28 +345,17 @@ CbcaPopup = () ->
     this.setOverlayHeight popupHeight
 
     cbca.pc.common.hideElements $popup
-
-    $ '.js-vertical-line'
-    .each () ->
-      $this = $ this
-      $parent = $this.parent()
-      lineHeight = $parent.height() - 10
-
-      $this.height lineHeight
+    cbca.pc.common.setBorderLineHeight
 
   hidePopup: (popup) ->
     popup = popup || '.popup'
+    $popup = $ popup
 
     this.hideOverlay()
+    $popup.hide()
 
-    $ popup
+    $ '#overlayData'
     .hide()
-
-    $ '#overlay, #overlayData'
-    .hide()
-
-    $ 'body'
-    .removeClass 'ovh'
 
   init: () ->
 
@@ -393,13 +389,13 @@ CbcaPopup = () ->
     $ document
     .on 'click', '.js-popup-back', (e)->
       $this = $ this
-      targetPopupId = $this.attr 'href'
+      targetPopup = $this.attr 'href'
 
       $this
       .closest '.popup'
       .hide()
 
-      $ targetPopupId
+      $ targetPopup
       .show()
 
     $ document
