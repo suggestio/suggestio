@@ -440,18 +440,17 @@ CbcaPopup =
   setPopupPosition: (popupSelector) ->
     $popup = $ popupSelector
     ## независимые цифры, подобраны согласно внешнему виду получаемого результата
-    k = 100
     minTop = 25
 
     if !$popup.size()
-      return false
+      $popup = $ '.popup:visible'
 
     popupHeight = $popup.height()
     containerHeight = this.$container.height()
     diffHeight = containerHeight - popupHeight
 
-    if diffHeight > (k + minTop)*2
-      top = Math.ceil( (containerHeight - popupHeight)/2 ) - 100
+    if diffHeight > minTop*2
+      top = Math.ceil( (containerHeight - popupHeight)/2 )
       $popup.css 'top', top
     else
       $popup.css 'top', minTop
@@ -507,6 +506,7 @@ CbcaPopup =
     $ window
     .resize () ->
       cbca.popup.setOverlayHeight()
+      cbca.popup.setPopupPosition()
 
     $ document
     .on 'click', '.js-close-popup', (e)->
@@ -556,6 +556,12 @@ CbcaPopup =
 
       $ popupSelector
       .remove()
+
+    ## esc button
+    $ document
+    .bind 'keyup', (e) ->
+      if e.keyCode == 27
+        cbca.popup.hidePopup()
 
 
 ######################
@@ -1223,12 +1229,9 @@ market =
 
   init: () ->
 
-    $(document).bind 'keyup', ( event ) ->
-      if event.keyCode == 27
-        cbca.popup.hidePopup()
-
     this.ad_form.init()
-    $(document).ready () ->
+    $ document
+    .ready () ->
       market.img.init_upload()
       market.resize_preview_photos()
       market.mart.init()

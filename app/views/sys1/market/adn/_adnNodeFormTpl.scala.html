@@ -4,84 +4,148 @@
    При верстке шаблона следует помнить, что mcompany.id может быть None. *@
 @import helper._
 @import ctx._
+@import util.FC.tdFc
+
 
 @form(call) {
   @* ADN *@
-  <label>Тип узла ADN
-    @defining(af("adn.memberType")) { mtField =>
-      <select name="@mtField.name">
-        <option disabled>Тип узла</option>
-        @AdNetMemberTypes.values.map { anmt =>
-          <option value="@anmt.name" @if(mtField.value.exists(_ == anmt.name)) {selected}>@Messages("amt.of.type." + anmt.name)</option>
-        }
-      </select>
-    }
-  </label>
+  <table class="input-w __size-L">
+    <td class="input-w_left">
+      <label class="input-w_prop-name">
+        Тип узла ADN
+      </label>
+    </td>
+    <td>
+      @defining(af("adn.memberType")) { mtField =>
+        <select name="@mtField.name">
+          <option disabled>Тип узла</option>
+          @AdNetMemberTypes.values.map { anmt =>
+            <option value="@anmt.name" @if(mtField.value.exists(_ == anmt.name)) {selected}>@Messages("amt.of.type." + anmt.name)</option>
+          }
+        </select>
+      }
+    </td>
+  </table>
 
-  <label>Отображаемый тип узла
-    @defining( af("adn.shownTypeIdOpt") ) { stiField =>
-      <select name="@stiField.name">
-        <option disabled>Тип узла</option>
-        @AdnShownTypes.values.map { ast =>
-          <option value="@ast" @if(stiField.value.exists(_ == ast.toString)) {selected}>@Messages("amt.of.type." + ast)</option>
-        }
-      </select>
-    }
-  </label>
+  <table class="input-w __size-L">
+    <td class="input-w_left">
+      <label class="input-w_prop-name">
+        Отображаемый тип узла
+      </label>
+    </td>
+    <td>
+      @defining( af("adn.shownTypeIdOpt") ) { stiField =>
+        <select name="@stiField.name">
+          <option disabled>Тип узла</option>
+          @AdnShownTypes.values.map { ast =>
+            <option value="@ast" @if(stiField.value.exists(_ == ast.toString)) {selected}>@Messages("amt.of.type." + ast)</option>
+          }
+        </select>
+      }
+    </td>
+  </table>
 
-  @checkbox(af("adn.isEnabled"), '_label -> "Включён?")
+  <table class="input-w __size-L">
+    @checkbox(af("adn.isEnabled"), '_label -> "Включён?", '_class -> "sys-checkbox")
+  </table>
 
 
   @* Компания, к которой принадлежит узел. В продакшене это задаётся неявно. *@
-  @defining(af("companyId")) { ciField =>
-    @defining(ciField.value.orElse(request.getQueryString("company_id")).getOrElse("")) { currCompanyId =>
-      <select name="@ciField.name">
-        <option disabled>@Messages("Company")-@Messages("Owner")</option>
-        @companies.map { mcompany =>
-          <option value="@mcompany.id"@if(mcompany.id.exists(_ == currCompanyId)) {selected}>@mcompany.meta.name</option>
+  <table class="input-w __size-L">
+    <td class="input-w_left">
+      <label class="input-w_prop-name">
+
+      </label>
+    </td>
+    <td>
+      @defining(af("companyId")) { ciField =>
+        @defining(ciField.value.orElse(request.getQueryString("company_id")).getOrElse("")) { currCompanyId =>
+          <select name="@ciField.name">
+            <option disabled>@Messages("Company")-@Messages("Owner")</option>
+            @companies.map { mcompany =>
+              <option value="@mcompany.id"@if(mcompany.id.exists(_ == currCompanyId)) {selected}>@mcompany.meta.name</option>
+            }
+          </select>
         }
-      </select>
-    }
-  }
+      }
+    </td>
+  </table>
 
 
   @* meta *@
-  @inputText(af("meta.name"),    '_label -> "Название")
-  @textarea(af("meta.descr"),    '_label -> "Описание объекта")
-  @inputText(af("meta.town"),    '_label -> "Город")
-  @inputText(af("meta.address"), 'placeholder -> "пр.Ленина, д.1",  '_label -> "Адрес в городе")
-  @inputText(af("meta.phone"),   'placeholder -> "+78121234567",    '_label -> "Номер телефона")
-  @inputText(af("meta.floor"),   'placeholder -> 1,                 '_label -> "Этаж")
-  @inputText(af("meta.section"), 'placeholder -> 101,               '_label -> "Номер секции")
-  @inputText(af("meta.siteUrl"), 'placeholder -> "http://",         '_label -> "Адрес сайта в интернете")
-  @inputText(af("meta.color"),   'placeholder -> "cceeff",          '_label -> "Цвет")
-  @inputText(af("personIds"),    '_label -> "id пользователей админов узла через запятую")
+  <table class="input-w __size-L">
+    @inputText(af("meta.name"),    '_label -> "Название")
+  </table>
+  <table class="input-w __size-L">
+    @textarea(af("meta.descr"),    '_label -> "Описание объекта")
+  </table>
+  <table class="input-w __size-L">
+    @inputText(af("meta.town"),    '_label -> "Город")
+  </table>
+  <table class="input-w __size-L">
+    @inputText(af("meta.address"), 'placeholder -> "пр.Ленина, д.1",  '_label -> "Адрес в городе")
+  </table>
+  <table class="input-w __size-L">
+    @inputText(af("meta.phone"),   'placeholder -> "+78121234567",    '_label -> "Номер телефона")
+  </table>
+  <table class="input-w __size-L">
+    @inputText(af("meta.floor"),   'placeholder -> 1,                 '_label -> "Этаж")
+  </table>
+  <table class="input-w __size-L">
+    @inputText(af("meta.section"), 'placeholder -> 101,               '_label -> "Номер секции")
+  </table>
+  <table class="input-w __size-L">
+    @inputText(af("meta.siteUrl"), 'placeholder -> "http://",         '_label -> "Адрес сайта в интернете")
+  </table>
+  <table class="input-w __size-L">
+    @inputText(af("meta.color"),   'placeholder -> "cceeff",          '_label -> "Цвет")
+  </table>
+  <table class="input-w __size-L">
+    @inputText(af("personIds"),    '_label -> "id пользователей админов узла через запятую")
+  </table>
 
   @* conf *@
-  @inputText(af("conf.withBlocks"), 'placeholder -> "1, 2, 3",      '_label -> "Доп.id блоков")
+  <table class="input-w __size-L">
+    @inputText(af("conf.withBlocks"), 'placeholder -> "1, 2, 3",      '_label -> "Доп.id блоков")
+  </table>
 
-  <div>
-    @AdnRights.values.map { adnRight =>
-      @checkbox(af(s"adn.rights.${adnRight.longName}"), '_label -> adnRight.longName)
-    }
-  </div>
 
-  @inputText(af("adn.sls.in"),  '_label -> "Входящие уровни отображения и лимиты")
-  @inputText(af("adn.sls.out"), '_label -> "Исходящие уровни отображения и лимиты")
+  @AdnRights.values.map { adnRight =>
+    <table class="input-w __size-L">
+      @checkbox(af(s"adn.rights.${adnRight.longName}"), '_label -> adnRight.longName, '_class -> "sys-checkbox")
+    </table>
+  }
 
-  @checkbox(af("adn.testNode"), '_label -> "Тестовый узел?")
+  <table class="input-w __size-L">
+    @inputText(af("adn.sls.in"),  '_label -> "Входящие уровни отображения и лимиты")
+  </table>
+  <table class="input-w __size-L">
+    @inputText(af("adn.sls.out"), '_label -> "Исходящие уровни отображения и лимиты")
+  </table>
+
+  <table class="input-w __size-L">
+    @checkbox(af("adn.testNode"), '_label -> "Тестовый узел?", '_class -> "sys-checkbox")
+  </table>
 
   <p>Формат: 'd = 1, m = 20, h = 5'.<br/>
   @AdShowLevels.values.map { sl =>
     @sl.name -- @Messages("lk.sl." + sl.name),
   }</p>
 
-  @inputText(af("adn.supId"), '_label -> "id узла-супервизора, если есть.")
-  @inputText(
-    af("adn.advDelegate"),
-    '_label -> "id узла-делегата рекламного размещения, если есть.",
-    'title  -> "Входящие запросы рекламного размещения будут отправляться к указанному узлу, а не к текущему."
-  )
+  <table class="input-w __size-L">
+    @inputText(af("adn.supId"), '_label -> "id узла-супервизора, если есть.")
+  </table>
 
-  <input type="submit" value="@btnText"/>
+  <table class="input-w __size-L">
+    @inputText(
+      af("adn.advDelegate"),
+      '_label -> "id узла-делегата рекламного размещения, если есть.",
+      'title  -> "Входящие запросы рекламного размещения будут отправляться к указанному узлу, а не к текущему."
+    )
+  </table>
+
+  <div class="btn-w __size-M">
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM f-right js-submit-btn">@btnText</a>
+  </div>
+
 }
