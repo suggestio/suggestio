@@ -4,7 +4,6 @@ $(document).ready ->
   cbca.pc.init()
 
   cbca.popup = CbcaPopup
-  cbca.common = new CbcaCommon()
   cbca.popup.init()
 
 
@@ -95,6 +94,127 @@ PersonalCabinet =
 
       $ nextSelector
       .show()
+
+  login: () ->
+
+    #################################################################################################################
+    ## CAPTCHA ##
+    #################################################################################################################
+    $ document
+    .on 'click', '#captchaReload', (e)->
+      e.preventDefault()
+      $this = $ this
+      $captchaImage = $ '#captchaImage'
+      $parent = $captchaImage.parent()
+      random = Math.random()
+
+      $captchaImage.remove()
+      $parent.prepend '<img id="captchaImage" src="/captcha/get/' + $('#captchaId').val() + '?v='+random+'" />'
+
+    $newPasswordForm = $ '#newPasswordForm'
+    if $newPasswordForm.size()
+      cbca.popup.showPopup '#newPasswordForm'
+
+    $ document
+    .on 'submit', '#recoverPwForm form', (e)->
+      e.preventDefault()
+      $form = $ this
+      action = $form.attr 'action'
+
+      $.ajax(
+        type: "POST",
+        url: action,
+        data: $form.serialize(),
+        success: (data)->
+          $recoverPwForm = $ '#recoverPwForm'
+
+          $recoverPwForm
+          .find 'form'
+          .remove()
+
+          $recoverPwForm
+          .find '.popup_cnt'
+          .append data
+
+        error: (error)->
+
+          $ '#recoverPwForm'
+          .remove()
+
+          $ '#popupsContainer'
+          .append error.responseText
+
+          cbca.popup.showPopup '#recoverPwForm'
+      )
+
+  billing: () ->
+
+    $ document
+    .on 'click', '#getTransactions', (e)->
+      e.preventDefault()
+      $this = $ this
+      $transactionsHistory = $ '#transactionsHistory'
+      $transactionsList = $ '#transactionsList'
+
+      $.ajax(
+        url: $this.attr 'href'
+        success: (data)->
+          if $this.attr 'data-init'
+            $transactionsList
+            .find 'tr'
+            .not ':first'
+            .remove()
+          else
+            $this
+            .closest 'tr'
+            .remove()
+
+          $transactionsList
+          .append data
+
+          if $this.attr 'data-init'
+            $transactionsHistory
+            .slideDown(
+              600,
+              () ->
+                cbca.pc.common.setBorderLineHeight $transactionsList
+            )
+
+        error: (error)->
+          console.log error
+      )
+
+  advRequest: () ->
+
+    $ document
+    .on 'click', '.js-adv-req-forms', (e)->
+      e.preventDefault()
+      $ '#advReqRefuse, #advReqAccept'
+      .toggle()
+
+    $ document
+    .on 'submit', '#advReqRefuse', (e)->
+      $this = $ this
+      $textarea = $this.find 'textarea'
+
+      if !$textarea.val()
+        $textarea
+        .closest '.input'
+        .addClass '__error'
+        return false
+      else
+        return true
+
+  adsList: () ->
+
+    $ document
+    .on 'click', '.ads-list-block__preview_add-new', ()->
+      $this = $ this
+
+      $this
+      .parent()
+      .find('.ads-list-block__link')[0]
+      .click()
 
   common:
 
@@ -291,8 +411,12 @@ PersonalCabinet =
     cbca.pc.common.checkbox()
     cbca.pc.common.buttons()
 
-    cbca.pc.wifi()
     cbca.pc.statusBar.init()
+    cbca.pc.wifi()
+    cbca.pc.login()
+    cbca.pc.billing()
+    cbca.pc.advRequest()
+    cbca.pc.adsList()
 
 #######################################################################################################################
 ## Всплывающие окна ##
@@ -303,12 +427,12 @@ CbcaPopup =
   $container: $ '#popupsContainer'
   $body: $ 'body'
 
-  showOverlay: ->
+  showOverlay: () ->
     this.$overlay.show()
     this.$container.show()
     this.$body.addClass 'ovh'
 
-  hideOverlay: ->
+  hideOverlay: () ->
     this.$overlay.hide()
     this.$container.hide()
     this.$body.removeClass 'ovh'
@@ -426,181 +550,12 @@ CbcaPopup =
       $this = $ this
       $popup = $this.closest '.popup'
       popupId = $popup.attr 'id'
-      popupSelector = '#' .concat popupId
+      popupSelector = '#'+popupId
 
       cbca.popup.hidePopup popupSelector
 
       $ popupSelector
       .remove()
-
-
-##Общее оформление##
-CbcaCommon = () ->
-
-  self = this
-
-  #########################################
-  ## TODO разнести по отдельным функциям ##
-  #########################################
-  self.init = () ->
-
-    $ document
-    .on 'click', '#getTransactions', (e)->
-      e.preventDefault()
-      $this = $ this
-      $transactionsHistory = $ '#transactionsHistory'
-      $transactionsList = $ '#transactionsList'
-
-      $.ajax(
-        url: $this.attr 'href'
-        success: (data)->
-          if $this.attr 'data-init'
-            $transactionsList
-            .find 'tr'
-            .not ':first'
-            .remove()
-          else
-            $this
-            .closest 'tr'
-            .remove()
-
-          $transactionsList
-          .append data
-
-          if $this.attr 'data-init'
-            $transactionsHistory
-            .slideDown(
-              600,
-              () ->
-                cbca.pc.common.setBorderLineHeight $transactionsList
-            )
-
-        error: (error)->
-          console.log error
-      )
-
-
-    #################################################################################################################
-    ## CAPTCHA ##
-    #################################################################################################################
-
-    $ document
-    .on 'click', '#captchaReload', (e)->
-      e.preventDefault()
-      $this = $ this
-      $captchaImage = $ '#captchaImage'
-      $parent = $captchaImage.parent()
-      random = Math.random()
-
-      $captchaImage.remove()
-      $parent.prepend '<img id="captchaImage" src="/captcha/get/' + $('#captchaId').val() + '?v='+random+'" />'
-
-
-
-    if $('#newPasswordForm').length
-      cbca.popup.showPopup '#newPasswordForm'
-
-
-    $(document).on 'submit', '.js-form', (e)->
-      e.preventDefault()
-      $form = $ this
-      action = $form.attr 'action'
-
-      $.ajax(
-        type: "POST",
-        url: action,
-        data: $form.serialize(),
-        success: (data)->
-          console.log data
-      )
-
-    $(document).on 'submit', '#recoverPwForm form', (e)->
-      e.preventDefault()
-      $form = $ this
-      action = $form.attr 'action'
-
-      $.ajax(
-        type: "POST",
-        url: action,
-        data: $form.serialize(),
-        success: (data)->
-
-          $ '#recoverPwForm'
-          .find 'form'
-          .remove()
-
-          $ '#recoverPwForm'
-          .find '.popup_cnt'
-          .append data
-
-        error: (error)->
-
-          $ '#recoverPwForm'
-          .remove()
-
-          $ '#popupsContainer'
-          .append error.responseText
-
-          cbca.popup.showPopup '#recoverPwForm'
-      )
-
-    $(document).on 'click', '#advReqRefuseShow', (e)->
-      e.preventDefault()
-
-      $ '#advReqRefuse'
-      .show()
-      $ '#advReqAccept'
-      .hide()
-
-    $(document).on 'click', '#advReqAcceptShow', (e)->
-      e.preventDefault()
-
-      $ '#advReqRefuse'
-      .hide()
-      $ '#advReqAccept'
-      .show()
-
-    $(document).on 'submit', '#advReqRefuse', (e)->
-      $this = $ this
-      $textarea = $this.find 'textarea'
-
-      if !$textarea.val()
-        $textarea
-        .closest '.input'
-        .addClass 'error'
-        return false
-      else
-        return true
-
-
-    $(document).on 'click', '.advs-nodes__node-link_show-popup', (e)->
-      e.preventDefault()
-      $this = $(this)
-      href = $this.attr('href')
-
-      $.ajax(
-        url: href,
-        success: (data)->
-          $ '#dailyMmpsWindow'
-          .remove()
-          $ '#popupsContainer'
-          .append data
-
-          cbca.popup.showPopup '#dailyMmpsWindow'
-      )
-
-    $(document).on 'click', '.ads-list-block__preview_add-new', ()->
-      $this = $ this
-
-      $this
-      .parent()
-      .find('.ads-list-block__link')[0].click()
-
-
-
-  self.init()
-
-
 
 
 ######################
@@ -623,7 +578,9 @@ market =
       head[0].appendChild(style_dom)
 
   init_colorpickers : () ->
-    $('.js-custom-color').each () ->
+
+    $ '.js-custom-color'
+    .each () ->
 
       current_value = $(this).attr 'data-current-value'
 
@@ -647,13 +604,6 @@ market =
     init : () ->
       market.init_colorpickers()
 
-      $('#installScriptButton').bind 'click', () ->
-
-        cbca.popup.showPopup('#installScriptPopup')
-
-        return false
-
-
   ###################################################################################################################
   ## Класс для работы с картинками ##################################################################################
   ###################################################################################################################
@@ -661,17 +611,20 @@ market =
 
     init_upload : () ->
 
-      $('.w-async-image-upload').unbind('change').bind 'change', () ->
-        relatedFieldId = $(this).attr 'data-related-field-id'
+      $ '.w-async-image-upload'
+      .unbind 'change'
+      .bind 'change', () ->
+        $this = $ this
+        relatedFieldId = $this.attr 'data-related-field-id'
         form_data = new FormData()
 
-        is_w_block_preview = $(this).attr 'data-w-block-preview'
+        is_w_block_preview = $this.attr 'data-w-block-preview'
 
-        if $(this)[0].type == 'file'
-          form_data.append $(this)[0].name, $(this)[0].files[0]
+        if $this[0].type == 'file'
+          form_data.append $this[0].name, $(this)[0].files[0]
 
         request_params =
-          url : $(this).attr "data-action"
+          url : $this.attr "data-action"
           method : 'post'
           data : form_data
           contentType: false
@@ -688,9 +641,10 @@ market =
 
         return false
 
-      $(document).on 'click', '.js-remove-image', (e)->
+      $ document
+      .on 'click', '.js-remove-image', (e)->
         e.preventDefault()
-        $this =$ this
+        $this = $ this
         $parent = $this.parent()
 
         $parent
@@ -701,33 +655,36 @@ market =
         cbca.editAdPage.updatePreview()
 
 
-      $(document).on 'mouseenter', '.add-file-w', () ->
+      $ document
+      .on 'mouseenter', '.add-file-w', () ->
         $ this
         .find('.add-file-w_btn')
         .addClass '__hover'
 
-      $(document).on 'mouseleave', '.add-file-w', () ->
+      $ document
+      .on 'mouseleave', '.add-file-w', () ->
         $ this
         .find('.add-file-w_btn')
         .removeClass '__hover'
 
-      $(document).on 'mousedown', '.add-file-w', () ->
+      $ document
+      .on 'mousedown', '.add-file-w', () ->
         $ this
         .find('.add-file-w_btn')
         .addClass '__active'
 
-      $(document).on 'mouseup', '.add-file-w', () ->
+      $ document
+      .on 'mouseup', '.add-file-w', () ->
         $ this
         .find('.add-file-w_btn')
         .removeClass '__active'
 
-      $('.js-file-upload').unbind("change").bind "change", (e) ->
+      $ '.js-file-upload'
+      .unbind "change"
+      .bind "change", (e) ->
         e.preventDefault()
         $this = $ this
-        $parent = $this
-                  .closest '.add-file-w'
-
-
+        $parent = $this.closest '.add-file-w'
         form_data = new FormData()
 
         is_w_block_preview = $this.attr 'data-w-block-preview'
