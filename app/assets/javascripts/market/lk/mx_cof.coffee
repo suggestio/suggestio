@@ -313,6 +313,25 @@ CbcaPopup =
     this.$container.hide()
     this.$body.removeClass 'ovh'
 
+  setPopupPosition: (popup) ->
+    $popup = $ popup
+    ## независимые цифры, подобраны согласно внешнему виду получаемого результата
+    k = 100
+    minTop = 25
+
+    if !$popup.size()
+      return false
+
+    popupHeight = $popup.height()
+    containerHeight = this.$container.height()
+    diffHeight = containerHeight - popupHeight
+
+    if diffHeight > (k + minTop)*2
+      top = Math.ceil( (containerHeight - popupHeight)/2 ) - 100
+      $popup.css 'top', top
+    else
+      $popup.css 'top', minTop
+
   setOverlayHeight: (popupHeight)->
     if !popupHeight
       popupHeight = 0
@@ -347,6 +366,8 @@ CbcaPopup =
     cbca.pc.common.hideElements $popup
     cbca.pc.common.setBorderLineHeight
 
+    this.setPopupPosition popup
+
   hidePopup: (popup) ->
     popup = popup || '.popup'
     $popup = $ popup
@@ -377,6 +398,7 @@ CbcaPopup =
     .on 'click', '#overlay', ()->
       cbca.popup.hidePopup()
 
+    ## Если после перезагрузки страницы в попапе есть поля с ошибками, нужно его отобразить
     $ '.popup .__error'
     .each ()->
       $this = $ this
@@ -386,6 +408,7 @@ CbcaPopup =
 
       cbca.popup.showPopup popupSelector
 
+    ## Кнопка Назад внутри попапа
     $ document
     .on 'click', '.js-popup-back', (e)->
       $this = $ this
