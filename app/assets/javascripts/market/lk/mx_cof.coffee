@@ -313,8 +313,8 @@ CbcaPopup =
     this.$container.hide()
     this.$body.removeClass 'ovh'
 
-  setPopupPosition: (popup) ->
-    $popup = $ popup
+  setPopupPosition: (popupSelector) ->
+    $popup = $ popupSelector
     ## независимые цифры, подобраны согласно внешнему виду получаемого результата
     k = 100
     minTop = 25
@@ -351,9 +351,9 @@ CbcaPopup =
     else
       this.$overlay.height popupsContainerHeight
 
-  showPopup: (popup) ->
+  showPopup: (popupSelector) ->
     this.showOverlay()
-    $popup = $ popup
+    $popup = $ popupSelector
     $popup.show()
 
     $popup
@@ -366,11 +366,11 @@ CbcaPopup =
     cbca.pc.common.hideElements $popup
     cbca.pc.common.setBorderLineHeight
 
-    this.setPopupPosition popup
+    this.setPopupPosition popupSelector
 
-  hidePopup: (popup) ->
-    popup = popup || '.popup'
-    $popup = $ popup
+  hidePopup: (popupSelector) ->
+    popupSelector = popupSelector || '.popup'
+    $popup = $ popupSelector
 
     this.hideOverlay()
     $popup.hide()
@@ -412,14 +412,14 @@ CbcaPopup =
     $ document
     .on 'click', '.js-popup-back', (e)->
       $this = $ this
-      targetPopup = $this.attr 'href'
+      targetPopupHref = $this.attr 'href'
+      $targetPopup = $ targetPopupHref
 
       $this
       .closest '.popup'
       .hide()
 
-      $ targetPopup
-      .show()
+      $targetPopup.show()
 
     $ document
     .on 'click', '.js-remove-popup', (e)->
@@ -444,7 +444,8 @@ CbcaCommon = () ->
   #########################################
   self.init = () ->
 
-    $(document).on 'click', '#getTransactions', (e)->
+    $ document
+    .on 'click', '#getTransactions', (e)->
       e.preventDefault()
       $this = $ this
       $transactionsHistory = $ '#transactionsHistory'
@@ -483,12 +484,12 @@ CbcaCommon = () ->
     ## CAPTCHA ##
     #################################################################################################################
 
-    $(document).on 'click', '#captchaReload', (e)->
+    $ document
+    .on 'click', '#captchaReload', (e)->
       e.preventDefault()
       $this = $ this
       $captchaImage = $ '#captchaImage'
-      $parent = $ '#captchaImage'
-                .parent()
+      $parent = $captchaImage.parent()
       random = Math.random()
 
       $captchaImage.remove()
