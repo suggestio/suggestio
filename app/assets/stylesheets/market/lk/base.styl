@@ -9,7 +9,7 @@
   background: #23313d
 
   &.__responsive
-    min-width: 320px !important
+    min-width: 320px
 
 .header_cnt
   height: 60px
@@ -17,7 +17,7 @@
   margin: 0 auto
 
   &.__responsive
-    width: auto !important
+    width: auto
     max-width: 1000px
 
 .siom-logo-def
@@ -39,7 +39,7 @@
   background: #e1e1e1
 
   &.__responsive
-    min-width: 320px !important
+    min-width: 320px
 
 .body_cnt
   max-width: 878px
@@ -55,22 +55,23 @@
     padding-top: 80px
 
 .page-title
-  height: 60px
+  min-height: 60px
   padding-top: 60px
   margin-bottom: -120px
   background: #efefef
   border-bottom: 1px solid #9a9b9b
 
-  &_cnt
-    position: relative
+.page-title_cnt
+  position: relative
 
-    width: 1000px
-    margin: 0 auto
-    padding-top: 15px
+  max-width: 1000px
+  margin: 0 auto
+  padding-top: 15px
 
-    font-size: 30px
-    color: #676666
-    font-family: 'PFDinTextCompPro-Medium'
+  font-size: 30px
+  color: #676666
+  font-family: 'PFDinTextCompPro-Medium'
+
 
 /********************************************************************************************************************/
 /* Footer */
@@ -84,7 +85,7 @@
   background: #23313d
 
   &.__responsive
-    min-width: 320px !important
+    min-width: 320px
 
 .footer_cnt
   margin: 0 auto
@@ -132,4 +133,4 @@
     background: #48ab38
 
   &_cnt
-    margin: 18px
+    margin: 18px  /* Используется дополнительный контейнер, для корректного отображения эффекта SlideDown&SlideUp */
