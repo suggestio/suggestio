@@ -10,7 +10,7 @@
 
 @mads.zipWithIndex.map { case (mad, i) =>
   @defining( i + startIndex ) { i2 =>
-  <div class="ads-list__block ads-list-block s-@i2 @if( i2 % itemsInLine == itemsInLine - 1 ){ ads-list__block_no-margin }">
+  <div class="ads-list__block ads-list-block js-equal-height s-@i2 @if( i2 % itemsInLine == itemsInLine - 1 ){ ads-list__block_no-margin }">
 
     <div class="ads-list-block__preview">
       @if(coverDisableReason) {

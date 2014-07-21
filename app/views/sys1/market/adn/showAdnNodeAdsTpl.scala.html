@@ -16,6 +16,7 @@
 
 @headAfter = {
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/lk/ads-list.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase.css")'/>
 }
 
 @defining( nodeOpt.orElse(rcvrs.headOption) ) { thisNode =>
@@ -28,12 +29,11 @@
 
   <div class="ovh">
     @_adsListTpl(mads, coverDisableReason = false, startIndex = 0, itemsInLine = 4) { mad =>
-      <a href="@routes.MarketAd.editAd(mad.id.get)">Редактор карточки</a>
-      <br/>
-      <a href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">ЛК создателя карточки</a>
+      <a class="siom-ac-btn __color-2 __size-XL __ft-XM __list-vertical" href="@routes.MarketAd.editAd(mad.id.get)">Редактор карточки</a>
+      <a class="siom-link-btn __color-3 __size-XL __ft-XM __list-vertical" href="@routes.MarketLkAdn.showAdnNode(mad.producerId)">ЛК создателя карточки</a>
       <p>Отобразить email-сообщение о деактивации:
         @Seq(true -> "HTML", false -> "TXT").map { case (isHtml, linkText) =>
-          <a href="@routes.SysMarket.showShopEmailAdDisableMsg(mad.id.get, isHtml = isHtml)">@linkText</a>
+          <a class="blue-link" href="@routes.SysMarket.showShopEmailAdDisableMsg(mad.id.get, isHtml = isHtml)">@linkText</a>
         }
       </p>
 
@@ -50,7 +50,7 @@
         @adStatActionsSeq.map { case (asa, txt) =>
           @adnNode.adn.supId.orElse(adnNode.id).map { adnNodeId =>
             @form( routes.Market.adStats(adnNodeId, adId = mad.id.get, action = asa.toString) ) {
-              <input type="submit" value="Имитировать @Messages(txt)"/>
+              <a class="siom-ac-btn __color-3 __size-XL __ft-XM __list-vertical js-submit-btn">Имитировать @Messages(txt)</a>
             }
           }
         }
@@ -75,9 +75,9 @@
             @if(advOk.isAuto) {Авторазмещение} else {Размещение}
             c [@_prettyDate(advOk.dateStart, withSpan = true)]
             по [@_prettyDate(advOk.dateEnd, withSpan = true)]
-            <a href="@routes.SysMarket.showAdnNode(advOk.prodAdnId)">узел</a>
+            <a class="blue-link" href="@routes.SysMarket.showAdnNode(advOk.prodAdnId)">узел</a>
             =&gt;
-            <a href="@routes.SysMarket.showAdnNode(advOk.rcvrAdnId)">узел</a>
+            <a class="blue-link" href="@routes.SysMarket.showAdnNode(advOk.rcvrAdnId)">узел</a>
             @if(advOk.isPartner) {по-партнёрски}
             за @formatPrice(advOk.amount, advOk.currency)
             @advOk.comission.map { c =>
@@ -95,13 +95,13 @@
   @* Рендерим переключение страниц. *@
   Страницы:
   @if( a.offsetOpt.exists(_ > 0) ) {
-    <a href="@routes.SysMarket.showAdnNodeAds(a.copy(offsetOpt = None))">Первая</a>
+    <a class="blue-link" href="@routes.SysMarket.showAdnNodeAds(a.copy(offsetOpt = None))">Первая</a>
   }
   @if(a.offsetOpt.isDefined) {
-    <a href="@routes.SysMarket.showAdnNodeAds( a.copy(offsetOpt = a.offsetOpt.map {_ - a.maxResults}) )">Предыдущая</a>
+    <a class="blue-link" href="@routes.SysMarket.showAdnNodeAds( a.copy(offsetOpt = a.offsetOpt.map {_ - a.maxResults}) )">Предыдущая</a>
   }
-  <strong>@(a.offset / a.maxResults)</strong>
-  <a href="@routes.SysMarket.showAdnNodeAds( a.copy(offsetOpt = Some(a.offsetOpt.getOrElse(0) + a.maxResults) ))">Следующая</a>
+  <strong class="color-strong">@(a.offset / a.maxResults)</strong>
+  <a class="blue-link" href="@routes.SysMarket.showAdnNodeAds( a.copy(offsetOpt = Some(a.offsetOpt.getOrElse(0) + a.maxResults) ))">Следующая</a>
 }
 }
 
