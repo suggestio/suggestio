@@ -47,12 +47,14 @@
 
   </div><!-- header-wrap end -->
 
-  <div class="body-wrap">
+  <div class="body">
 
     @* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
     @ctx.flashMap.map { case (flashStatus, flashMsg) =>
       <div style="display: none;" class="status-bar ft-L @if(flashStatus == "success") {__good} else {__bad}">
-        @flashMsg
+        <div class="status-bar_cnt">
+          @flashMsg
+        </div>
       </div>
     }
 
@@ -66,12 +68,12 @@
     @popupContent
   </div>
 
-  <div class="footer-wrap">
-    <div class="footer">
+  <div class="footer">
+    <div class="footer_cnt">
 
       <span class="copyright-block">
         @_copyrightTextTpl(withLink = false)
-        @*&nbsp;|&nbsp;<a href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>*@
+        @*&nbsp;|&nbsp;<a class="copyright-link" href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>*@
       </span>
 
       <!--<div class="socials">

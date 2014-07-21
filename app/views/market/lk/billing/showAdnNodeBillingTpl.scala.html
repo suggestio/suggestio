@@ -7,14 +7,14 @@
 
 @market.lk.lkBase("Биллинг | " + adnNode.meta.name, adnIdOpt = adnNode.id) {
 
-<div class="title-wrap" xmlns="http://www.w3.org/1999/html">
-    <div class="center">
-      <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)">&nbsp;</a>
-      <div class="title-inner">НАСТРОЙКИ</div>
+  <div class="page-title">
+    <div class="page-title_cnt">
+      <a class="back-btn" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)">&nbsp;</a>
+      НАСТРОЙКИ
     </div>
   </div>
 
-  <div class="body">
+  <div class="body_cnt">
 
     @market.lk.lkBlock("Биллинг") {
 

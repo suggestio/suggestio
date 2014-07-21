@@ -1,67 +1,3 @@
-.lk
-
-  .body-wrap
-    min-width: 1000px
-    min-height: 100%
-    background: #e1e1e1
-
-    .title-wrap
-      height: 60px
-      padding-top: 60px
-      margin-bottom: -120px
-      background: #efefef
-      border-bottom: 1px solid #9a9b9b
-
-      .center
-        position: relative
-        padding-top: 15px
-        max-width: 1000px
-        margin: 0 auto
-
-        .title-inner
-          font-size: 30px
-          color: #676666
-          font-family: 'PFDinTextCompPro-Medium'
-          padding-left: 50px
-
-    .body
-      max-width: 878px
-      margin: 0 auto
-      padding-bottom: 60px
-      padding-top: 130px
-
-    .body_width-auto
-      width: auto
-
-  .footer-wrap
-    min-width: 1000px
-    height: 60px
-    position: relative
-    margin-top: -60px
-    background: #23313d
-
-    .footer
-      width: 1000px
-      margin: 0 auto
-      padding-top: 25px
-
-      .copyright-block
-        padding-right: 5px
-        padding-left: 62px
-        color: #a8c3cb
-        font-size: 12px
-        font-family: 'Arial'
-
-        a
-          color: #a8c3cb
-          text-decoration: none
-
-        a:hover
-          text-decoration: underline
-
-/* BASE REFACTORING */
-
-
 /********************************************************************************************************************/
 /* Header */
 /********************************************************************************************************************/
@@ -97,67 +33,81 @@
 /* Body */
 /********************************************************************************************************************/
 
-/* TODO пока только в .sys потом сделать первого уровня и поменять dom во всём лк */
-.sys
+.body
+  min-width: 1000px
+  min-height: 100%
+  background: #e1e1e1
 
-  .body
-    min-width: 1000px
-    min-height: 100%
-    background: #e1e1e1
+  &.__responsive
+    min-width: 320px !important
 
-  .body__cnt
-    width: 878px
-    margin: 0 auto
-    padding-bottom: 60px /* равно высоте footer'a */
-    padding-top: 130px /* равно высоте header'a + title'a + 10px */
+.body_cnt
+  max-width: 878px
+  margin: 0 auto
+  padding-bottom: 60px /* равно высоте footer'a */
+  padding-top: 130px /* равно высоте header'a + title'a + 10px */
 
-    &._responsible
-      width: auto
+  &.__responsive
+    padding-left: 10px
+    padding-right: 10px
 
-  .title
-    height: 60px
-    padding-top: 60px
-    margin-bottom: -120px
-    background: #efefef
-    border-bottom: 1px solid #9a9b9b
+  &.__top-S
+    padding-top: 80px
 
-  .title-cnt
+.page-title
+  height: 60px
+  padding-top: 60px
+  margin-bottom: -120px
+  background: #efefef
+  border-bottom: 1px solid #9a9b9b
+
+  &_cnt
     position: relative
 
-    width: 950px
+    width: 1000px
     margin: 0 auto
     padding-top: 15px
-    padding-left: 50px
 
     font-size: 30px
     color: #676666
     font-family: 'PFDinTextCompPro-Medium'
 
+/********************************************************************************************************************/
+/* Footer */
+/********************************************************************************************************************/
 
-.body-wrap_responsive-mode
-  min-width: 320px !important
+.footer
+  position: relative
+  margin-top: -60px
+  min-width: 1000px
+  height: 60px
+  background: #23313d
 
-.body_responsive-mode
-  padding-left: 10px
-  padding-right: 10px
+  &.__responsive
+    min-width: 320px !important
 
-.body_padding-top-80
-  padding-top: 80px !important
+.footer_cnt
+  margin: 0 auto
+  width: 1000px
+  padding-top: 25px
 
-.header-wrap_responsive-mode
-  min-width: 320px !important
+  &.__responsive
+    width: auto !important
+    max-width: 1000px
 
-.header_responsive-mode
-  width: auto !important
-  max-width: 1000px
+.copyright-block
+  padding-right: 5px
+  padding-left: 62px
+  color: #a8c3cb
+  font-size: 12px
+  font-family: 'Arial'
 
-.footer-wrap_responsive-mode
-  min-width: 320px !important
+.copyright-link
+  color: #a8c3cb
+  text-decoration: none
 
-.footer_responsive-mode
-  width: auto !important
-  max-width: 1000px
-
+  &:hover
+    text-decoration: underline
 
 /********************************************************************************************************************/
 /* Всплывающие полосы в шапке */
@@ -170,7 +120,6 @@
   left: 0
 
   width: 100%
-  padding: 18px
 
   color: white
   font-family: 'PT Sans Narrow', 'sans-serif'
@@ -181,3 +130,6 @@
 
   &.__good
     background: #48ab38
+
+  &_cnt
+    margin: 18px

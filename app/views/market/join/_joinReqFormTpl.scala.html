@@ -8,7 +8,7 @@
 
 @form(submitCall) {
 
-  <table cellpadding="0" cellspacing="0" class="input-w __size-L">
+  <table  class="input-w __size-L">
     @inputText(jf("company"), '_label -> (Messages("Company") + ":"))
   </table>
 
@@ -33,33 +33,33 @@
   </table>
 
   @if( isWifi ) {
-    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
+    <table  class="input-w __size-L">
       @inputText(jf("audienceDescr"), '_label -> (Messages("Audience.descr") + ":"))
     </table>
 
-    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
+    <table  class="input-w __size-L">
       @inputText(jf("humanTrafficAvg"), '_label -> (Messages("Daily.people.traffic") + ":"))
     </table>
   }
 
-  <table cellpadding="0" cellspacing="0" class="input-w __size-L">
+  <table  class="input-w __size-L">
     @inputText(jf("town"), '_label -> (Messages("Town") + ":"))
   </table>
 
-  <table cellpadding="0" cellspacing="0" class="input-w __size-L">
+  <table  class="input-w __size-L">
     @textarea(jf("address"), '_label -> (Messages("Address") + ":"))
   </table>
 
 
-  <table cellpadding="0" cellspacing="0" class="input-w __size-L">
+  <table  class="input-w __size-L">
     @inputText(jf("siteUrl"), '_label -> (Messages("Site") + ":"))
   </table>
 
-  <table cellpadding="0" cellspacing="0" class="input-w __size-L">
+  <table  class="input-w __size-L">
     @inputText(jf("email"), '_label -> (Messages("constraint.email") + ":"))
   </table>
 
-  <table cellpadding="0" cellspacing="0" class="input-w __size-L">
+  <table  class="input-w __size-L">
     @inputText(jf("phone"), '_label -> (Messages("Office.phone.number") + ":"))
   </table>
 
@@ -84,7 +84,7 @@
       </tr>
     </table>
 
-    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
+    <table  class="input-w __size-L">
 
       <tr>
         <td class="input-w_left">
@@ -103,7 +103,7 @@
 
     </table>
   } else {
-    <table cellpadding="0" cellspacing="0" class="input-w __size-L">
+    <table  class="input-w __size-L">
       @textarea(jf("info"), '_label -> "Описание товаров или услуг:")
     </table>
   }
@@ -126,7 +126,7 @@
 
     <div class="border-line"></div>
 
-    <table cellpadding="0" cellspacing="0" class="input-w __size-L textarea">
+    <table  class="input-w __size-L textarea">
       @textarea(jf("payReqs"), '_label -> (Messages("requisites") + ":"))
     </table>
 
@@ -137,7 +137,7 @@
 
 
   @* Капча *@
-  <table cellpadding="0" cellspacing="0" class="input-w">
+  <table  class="input-w">
     <tr>
       <td class="input-w_prop-name"></td>
       <td style="height: 55px;">
@@ -151,7 +151,7 @@
   </table>
 
 
-  <table cellpadding="0" cellspacing="0" class="input-w">
+  <table  class="input-w">
     @inputText(
       jf(CAPTCHA_TYPED_FN),
       '_label -> Messages("Input.text.from.picture")

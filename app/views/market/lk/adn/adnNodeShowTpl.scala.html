@@ -29,19 +29,19 @@
   }
 
   @* Верхняя строка. *@
-  <div class="title-wrap">
-    <div class="center">
+  <div class="page-title">
+    <div class="page-title_cnt">
 
       @* TODO Надо бы объеденить map и defining, но почему-то не работает оно. *@
       @if(showBackBtn) {
         @defining( if(isMyNode) Some(routes.MarketLk.lkList) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
           @backCallOpt.map { backCall =>
-            <a class="back-but" href="@backCall">&nbsp;</a>
+            <a class="back-btn" href="@backCall">&nbsp;</a>
           }
         }
       }
 
-      <div class="title-inner">@if(isMyNode) {ЛИЧНЫЙ КАБИНЕТ} else {РЕКЛАМОДАТЕЛЬ}</div>
+      @if(isMyNode) {ЛИЧНЫЙ КАБИНЕТ} else {РЕКЛАМОДАТЕЛЬ}
 
       @* У узла-приемника/супервизора есть доступ к списку входных продьюсеров рекламы и доступ к коду установки. *@
       @if(isMyNode) {
@@ -72,7 +72,7 @@
     </div>
   </div>
 
-  <div class="body">
+  <div class="body_cnt">
 
       <div class="paragraph __size-M">
         <span class="ft-L node-name">@node.meta.name</span>

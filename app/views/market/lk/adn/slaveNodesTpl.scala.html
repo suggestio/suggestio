@@ -15,14 +15,14 @@
 
 @market.lk.lkBase(mnode.meta.name, adnIdOpt = mnode.id) {
 @defining(Messages("slaves.of." + mnode.adn.shownTypeId)) { title =>
-  <div class="title-wrap">
-    <div class="center">
-      <a class="back-but" href="@routes.MarketLkAdn.showAdnNode(mnode.id.get)">&nbsp;</a>
-      <div class="title-inner">@title</div>
+  <div class="page-title">
+    <div class="page-title_cnt">
+      <a class="back-btn" href="@routes.MarketLkAdn.showAdnNode(mnode.id.get)">&nbsp;</a>
+      @title
     </div>
   </div>
 
-  <div class="body">
+  <div class="body_cnt">
     <form class="search">
       <div class="input" style="width: 830px; float: left;">
         <div class="input-shadow">
