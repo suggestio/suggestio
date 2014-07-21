@@ -1,21 +1,3 @@
-.logout-but
-  float: right
-  display: inline-block
-  width: 49px
-  height: 49px
-  cursor: pointer
-  background: url('/assets/images/market/lk/logout-btn_retina.png') no-repeat
-  background-size: 47px 191px
-  background-position: 0 0
-
-.logout-but:hover
-  background-position: 0 -144px
-
-.logout-but:active
-  background-position: 0 -72px
-
-
-
 .gray-but-smallest
   margin-left: 1px
   display: inline-block
@@ -94,31 +76,6 @@
 .captcha-reload-btn:active
   margin-bottom: 12px
 
-
-
-.back-but
-  display: block
-  margin-left: 11px
-  margin-right: 15px
-  width: 35px
-  height: 35px
-  float: left
-  text-decoration: none
-  background: url('/assets/images/market/lk/back-btn_retina.png') no-repeat
-  background-size: 35px 95px
-  background-position: 0 0
-
-.back-but:hover
-  background-position: 0 -60px
-
-.back-but:active
-  background-position: 0 -59px
-
-.back-but_centered
-  position: relative
-  float: none
-  margin: 0 auto
-  top: 10px
 
 
 /********************************************************************************************************************/
@@ -270,8 +227,9 @@ siomAcBtnColor5 = #b6c2c5 /* серо-синий */
     ft(24px)
 
   &.__billing
-    margin-right: 20px
-    margin-top: 7px
+    float: right
+    margin-right: 12px
+    margin-top: 10px
     text-shadow(none)
 
   &_ft-S
@@ -469,7 +427,7 @@ siomLinkBtnColor5 = #9a9b9b
     background-position: 0 1px
 
 /********************************************************************************************************************/
-/* edit btn */
+/* Edit btn */
 /********************************************************************************************************************/
 
 .edit-btn
@@ -491,3 +449,54 @@ siomLinkBtnColor5 = #9a9b9b
 
     &:hover
       color: #5088aa
+
+/********************************************************************************************************************/
+/* Back btn */
+/********************************************************************************************************************/
+
+.back-but
+  display: block
+  margin-left: 11px
+  margin-right: 15px
+  width: 35px
+  height: 35px
+  float: left
+  text-decoration: none
+  background: url('/assets/images/market/lk/back-btn_retina.png') no-repeat
+  background-size: 35px 95px
+  background-position: 0 0
+
+  &:hover
+    background-position: 0 -60px
+
+  &:active
+    background-position: 0 -59px
+
+  &.__centered
+    position: relative
+    float: none
+    margin: 0 auto
+    top: 10px
+
+/********************************************************************************************************************/
+/* Logout btn */
+/********************************************************************************************************************/
+
+.logout-btn
+  float: right
+  margin-top: 5px
+
+  display: inline-block
+  width: 49px
+  height: 49px
+
+  cursor: pointer
+  background: url('/assets/images/market/lk/logout-btn_retina.png') no-repeat
+  background-size: 47px 191px
+  background-position: 0 0
+
+  &:hover
+  background-position: 0 -144px
+
+  &:active
+    background-position: 0 -72px

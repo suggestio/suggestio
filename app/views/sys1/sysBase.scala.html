@@ -17,16 +17,14 @@
 
      <div class="header">
 
-        <div class="header__cnt">
+        <div class="header_cnt">
           <a class="siom-logo-def" href="@routes.Sys.index">
             <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
           </a>
           @ctx.usernameOpt.map { username =>
-            <div class="auth">
 
-              <a class="logout-but" href="@routes.Ident.logout"></a>
+              <a class="logout-btn" href="@routes.Ident.logout"></a>
 
-            </div>
           }
         </div>
 

@@ -26,24 +26,22 @@
 </head>
 
 <body class="lk">
-  <div class="header-wrap">
+  <div class="header">
 
-    <div class="center">
-      <a class="logo" href="@routes.MarketLk.lkIndex">
+    <div class="header_cnt">
+      <a class="siom-logo-def" href="@routes.MarketLk.lkIndex">
         <img src='@routes.Assets.at("images/market/lk/logo.png")' alt="logo" width="105" height="50"/>
       </a>
       @ctx.usernameOpt.map { username =>
-        <div class="auth">
 
           @*<a href="@routes.Ident.changePassword">@Messages("Password.change")</a>*@
-          <a class="logout-but" href="@routes.Ident.logout"></a>
+          <a class="logout-btn" href="@routes.Ident.logout"></a>
 
           @* Виджет для отображения денег на счете и доступа к финансовым функциям. Только в контексте узла. *@
           @adnIdOpt.map { adnId =>
             @billing._billBallanceWidgetTpl(adnId)
           }
 
-        </div>
       }
     </div>
 
@@ -53,8 +51,8 @@
 
     @* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
     @ctx.flashMap.map { case (flashStatus, flashMsg) =>
-      <div style="display: none;" class="status-bar @if(flashStatus == "success") {good} else {bad}">
-        <p>@flashMsg</p>
+      <div style="display: none;" class="status-bar ft-L @if(flashStatus == "success") {__good} else {__bad}">
+        @flashMsg
       </div>
     }
 
