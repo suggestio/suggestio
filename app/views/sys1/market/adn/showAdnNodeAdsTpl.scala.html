@@ -60,7 +60,7 @@
         <br/>
         @rcvrs.map { rcvr =>
           @form( routes.SysMarket.removeAdRcvr(adId = mad.id.get, rcvrId = rcvr.id.get) ) {
-            <input type="submit" value="Убрать из выдачи на узле &laquo;@rcvr.meta.name / @rcvr.meta.town &raquo;" />
+            <a class="siom-ac-btn __color-3 __size-XL __ft-XM __list-vertical js-submit-btn">Убрать из выдачи<br/>на узле<br/><strong>&laquo;@rcvr.meta.name / @rcvr.meta.town &raquo;</strong></a>
           }
         }
       }
