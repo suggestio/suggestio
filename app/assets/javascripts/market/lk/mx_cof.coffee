@@ -543,7 +543,8 @@ CbcaPopup =
       .closest '.popup'
       .hide()
 
-      $targetPopup.show()
+      cbca.popup.hidePopup this
+      cbca.popup.showPopup targetPopupHref
 
     $ document
     .on 'click', '.js-remove-popup', (e)->
