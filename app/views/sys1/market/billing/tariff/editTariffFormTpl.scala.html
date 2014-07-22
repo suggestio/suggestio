@@ -5,8 +5,8 @@
 
 @sys1.market.billing.billingBase("Тариф #" + tariff.id, Some(adnNode)) {
 
-  <p>Изменение тарифа #@tariff.id.get.
-     Договор @contract.legalContractId от @contract.printContractDate.</p>
+  <div class="sys_t">Изменение тарифа #@tariff.id.get.
+     Договор @contract.legalContractId от @contract.printContractDate.</div>
 
   @* Кнопку удаления тут отображаем *@
   @stuff._deleteSmthFormBtnTpl(

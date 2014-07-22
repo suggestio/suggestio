@@ -5,7 +5,7 @@
 
 @sys1.market.billing.billingBase("Новый тариф", Some(adnNode)) {
 
-  <p>Добавление нового тарифа к договору @contract.legalContractId от @contract.printContractDate.</p>
+  <div class="sys_t">Добавление нового тарифа к договору @contract.legalContractId от @contract.printContractDate.</div>
 
   @_tariffFormTpl(
     submitCall = routes.SysMarketBillingTariff.addFeeTariffFormSubmit(contract.id.get),

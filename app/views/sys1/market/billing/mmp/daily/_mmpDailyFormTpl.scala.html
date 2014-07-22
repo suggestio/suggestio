@@ -4,56 +4,80 @@
 
 @import ctx._
 @import helper._
+@import util.FC.tdFc
+
 
 @form(submitCall) {
 
-  @inputText(
-    mdf("currencyCode"),
-    '_label -> "Валюта контракта (RUB, USD, EUR, ...)"
-  )
+  <table class="input-w __size-L">
+    @inputText(
+      mdf("currencyCode"),
+      '_label -> "Валюта контракта (RUB, USD, EUR, ...)"
+    )
+  </table>
 
   <h4>Минимальная стоимость модуля</h4>
 
-  @inputText(
-    mdf("mmpWeekday"),
-    '_label -> "Будни"
-  )
+  <table class="input-w __size-L">
+    @inputText(
+      mdf("mmpWeekday"),
+      '_label -> "Будни"
+    )
+  </table>
 
-  @inputText(
-    mdf("mmpWeekend"),
-    '_label -> "Выходные"
-  )
+  <table class="input-w __size-L">
+    @inputText(
+      mdf("mmpWeekend"),
+      '_label -> "Выходные"
+    )
+  </table>
 
-  @inputText(
-    mdf("mmpPrimetime"),
-    '_label -> "Прайм"
-  )
+  <table class="input-w __size-L">
+    @inputText(
+      mdf("mmpPrimetime"),
+      '_label -> "Прайм"
+    )
+  </table>
 
-  @inputText(
-    mdf("onStartPage"),
-    '_label -> "Множитель на главный экран",
-    'title  -> "Во сколько раз изменять цену, если выставлена галочка размещения на главном экране?"
-  )
+  <table class="input-w __size-L">
+    @inputText(
+      mdf("onStartPage"),
+      '_label -> "Множитель на главный экран",
+      'title  -> "Во сколько раз изменять цену, если выставлена галочка размещения на главном экране?"
+    )
+  </table>
 
-  @inputText(
-    mdf("onRcvrCat"),
-    '_label -> "Множитель за размещение в каталоге узла-получателя",
-    'title  -> "Во сколько раз изменять цену, если выставлена галочка размещения в каталоге категорий узла-получателя?"
-  )
+  <table class="input-w __size-L">
+    @inputText(
+      mdf("onRcvrCat"),
+      '_label -> "Множитель за размещение в каталоге узла-получателя",
+      'title  -> "Во сколько раз изменять цену, если выставлена галочка размещения в каталоге категорий узла-получателя?"
+    )
+  </table>
 
   @* Рендерим селекторы для календарей. *@
   @defining( mcals.map(mcal => mcal.id.get -> mcal.name) ) { mcalsOptions =>
-    @select(
-      mdf("weekendCalId"),
-      options = mcalsOptions,
-      '_label  -> "Календарь выходных/праздников"
-    )
+    <table class="input-w __size-L">
+      @select(
+        mdf("weekendCalId"),
+        options = mcalsOptions,
+        '_label  -> "Календарь выходных/праздников",
+        '_class -> "sys-checkbox"
+      )
+    </table>
 
-    @select(
-      mdf("primeCalId"),
-      options = mcalsOptions,
-      '_label  -> "Календарь дней прайм-тайма"
-    )
+    <table class="input-w __size-L">
+      @select(
+        mdf("primeCalId"),
+        options = mcalsOptions,
+        '_label  -> "Календарь дней прайм-тайма",
+        '_class -> "sys-checkbox"
+      )
+    </table>
   }
-  <input type="submit" value="@btnText"/>
+
+  <div class="btn-w __size-M">
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM f-right js-submit-btn">@btnText</a>
+  </div>
+
 }

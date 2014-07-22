@@ -2,40 +2,55 @@
 
 @* Шаблон формы добавления/редактирования контракта. *@
 @import helper._
+@import util.FC.tdFc
+
 
 @form(submitCall) {
   <input type="hidden" name="adnId" value="@adnId"/>
 
-  @inputText(
-    cf("dateContract"),
-    '_label -> "Дата подписания",
-    'title  -> "Дата в удобном формате, например '12 апреля 2014' или '12.04.2014'."
-  )
+  <table class="input-w __size-L">
+    @inputText(
+      cf("dateContract"),
+      '_label -> "Дата подписания",
+      'title  -> "Дата в удобном формате, например '12 апреля 2014' или '12.04.2014'."
+    )
+  </table>
 
-  @inputText(
-    cf("suffix"),
-    '_label -> "Суффикс нумерации контракта.",
-    'title  -> "Например суффикс 'СЕО' превратит '001' в '001/СЕО'."
-  )
+  <table class="input-w __size-L">
+    @inputText(
+      cf("suffix"),
+      '_label -> "Суффикс нумерации контракта.",
+      'title  -> "Например суффикс 'СЕО' превратит '001' в '001/СЕО'."
+    )
+  </table>
 
-  @checkbox(
-    cf("isActive"),
-    '_label -> "Договор активен?",
-    'title  -> "Не забывайте убирать галочку при расторжении договора, и поставить при заключении."
-  )
+  <table class="input-w __size-L">
+    @checkbox(
+      cf("isActive"),
+      '_class -> "sys-checkbox",
+      '_label -> "Договор активен?",
+      'title  -> "Не забывайте убирать галочку при расторжении договора, и поставить при заключении."
+    )
+  </table>
 
-  @textarea(
-    cf("hiddenInfo"),
-    '_label -> "Служебные заметки",
-    'title  -> "Отображаются только вам и другим администраторам suggest.io."
-  )
+  <table class="input-w __size-L">
+    @textarea(
+      cf("hiddenInfo"),
+      '_label -> "Служебные заметки",
+      'title  -> "Отображаются только вам и другим администраторам suggest.io."
+    )
+  </table>
 
-  @inputText(
-    cf("sioComission"),
-    '_label -> "Доля suggest.io в прибыли за размещения рекламы.",
-    'title  -> "0.30 означает 30% от платежа отходит suggest.io, 70% от суммы платежа зачисляется на счет рекламного узла.",
-    'placeholder -> MBillContract.SIO_COMISSION_SHARE_DFLT.toString
-  )
+  <table class="input-w __size-L">
+    @inputText(
+      cf("sioComission"),
+      '_label -> "Доля suggest.io в прибыли за размещения рекламы.",
+      'title  -> "0.30 означает 30% от платежа отходит suggest.io, 70% от суммы платежа зачисляется на счет рекламного узла.",
+      'placeholder -> MBillContract.SIO_COMISSION_SHARE_DFLT.toString
+    )
+  </table>
 
-  <input type="submit" value="@btnText"/>
+  <div class="btn-w __size-M">
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM f-right">@btnText</a>
+  </div>
 }
