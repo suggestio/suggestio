@@ -1164,8 +1164,13 @@ market =
           method : 'post'
           data : $('#promoOfferForm').serialize()
           success : ( data ) ->
-            $('#popupsContainer').html '<div class="popup" id="adFullPreview"><div class="popup_header"><a class="close f-right js-close-popup"></a></div><div class="popup_cnt"><div class="sio-mart-showcase">' + data + '</div></div></div>'
-            $('#adFullPreview .sm-block').addClass 'double-size'
+
+            $ '#adFullPreview'
+            .remove()
+            $ '#popupsContainer'
+            .append '<div class="popup" id="adFullPreview"><div class="popup_header"><a class="close f-right js-close-popup"></a></div><div class="popup_cnt"><div class="sio-mart-showcase">' + data + '</div></div></div>'
+            $ '#adFullPreview .sm-block'
+            .addClass 'double-size'
             cbca.popup.showPopup '#adFullPreview'
 
             market.styles.init()
