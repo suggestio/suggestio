@@ -143,7 +143,7 @@
       <td style="height: 55px;">
         @defining( jf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
           <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
-          <img id="captchaImage" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
+          <img id="captchaImage" class="captcha_image" src="@routes.Captcha.getCaptcha(captchaId)" alt=""/>
           <a id="captchaReload" class="captcha-reload-btn" href=""></a>
         }
       </td>
