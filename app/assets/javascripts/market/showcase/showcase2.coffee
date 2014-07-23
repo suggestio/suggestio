@@ -583,6 +583,19 @@ siomart =
   ########
   ## Утиль
   ########
+
+  log : ( message ) ->
+    this.write_log('log', message)
+
+  warn : ( message ) ->
+    this.write_log('warn', message)
+
+  error : ( message ) ->
+    this.write_log('error', message)
+
+  write_log : ( fun, message ) ->
+    console[fun](message)
+
   utils :
     elts_cache : {}
     is_firefox : () ->
@@ -912,19 +925,18 @@ siomart =
   #####################################################
 
   draw_trigger : () ->
-
     sm_trigger_attrs =
       class : this.config.sm_trigger_class
       id : 'sioMartTrigger'
       style : 'opacity: 0; background-color: #' + siomart.config.node_color
 
-    sm_trigger = this.utils.ce 'div', sm_trigger_attrs, '<span class="trigger-helper">' + '<img src=\'' + siomart.config.host + siomart.config.logo_src + '\'/>' + '</span>'
+    sm_trigger = this.utils.ce 'div', sm_trigger_attrs, '<span class="trigger-helper">' + '<a target="_blank" href="' + siomart.config.host + '/market/site/' + siomart.config.mart_id + '"><img src=\'' + siomart.config.host + siomart.config.logo_src + '\'/></a>' + '</span>'
 
     _body = this.utils.ge_tag('body')[0]
     _body.appendChild sm_trigger
 
-    _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
-    this.utils.add_single_listener sm_trigger, _event, siomart.open_mart
+    #_event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
+    #this.utils.add_single_listener sm_trigger, _event, siomart.open_mart
 
   draw_layout : () ->
 
@@ -943,7 +955,7 @@ siomart =
     _head = this.utils.ge_tag('head')[0]
     meta_viewport_attrs =
       name : 'viewport'
-      content : 'width=320,initial-scale=1,user-scalable=no,minimal-ui'
+      content : 'width=320,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,minimal-ui'
     meta_viewport = this.utils.ce "meta", meta_viewport_attrs
     _head.appendChild meta_viewport
 
@@ -1013,6 +1025,9 @@ siomart =
 
     ## Инициализация глагне
     if data.action == 'showcaseIndex'
+      this.set_meta()
+
+      siomart.log 'showcaseIndex'
 
       ## Нарисовать разметку
       this.draw_layout()
@@ -1023,13 +1038,10 @@ siomart =
       ## Инициализировать history api
       ## this.history.init()
 
-
-
       window.scrollTo 0,0
 
-
       siomart.utils.ge('sioMartRoot').style.display = 'block'
-      cbca_grid.set_window_size()
+
       container = this.utils.ge 'sioMartLayout'
       container.innerHTML = data.html
       document.getElementById('sioMartIndexOffers').scrollTop = '0';
@@ -1058,6 +1070,8 @@ siomart =
 
       setTimeout grid_init_cb, grid_init_timoeut
       siomart.set_window_class()
+      this.is_market_loaded = true
+
 
     if data.action == 'producerAds'
 
@@ -1378,10 +1392,9 @@ siomart =
   ######################################
   ## Загрузить индексную страницу для ТЦ
   ######################################
-  load_mart_index_page : () ->
-    this.set_meta()
+  load_mart : () ->
     this.define_per_load_values()
-    #this.request.perform siomart.config.index_action
+    this.request.perform siomart.config.index_action
 
   ##################################################
   ## Показать / скрыть экран с категориями и поиском
@@ -1464,11 +1477,8 @@ siomart =
     return false
 
   open_mart : ( event ) ->
-
     if this.is_market_loaded != true
-      siomart.load_mart_index_page()
-
-    siomart.utils.ge('sioMartRoot').style.display = 'block'
+      siomart.load_mart()
     event.preventDefault()
     return false
 
@@ -1557,8 +1567,13 @@ siomart =
       setTimeout dn_cb, siomart.welcome_ad.fadeout_transition_time
 
     init : () ->
+
       this.img_dom = siomart.utils.ge 'smWelcomeAd'
       if this.img_dom == null
+        return false
+
+      if siomart.is_market_loaded == true
+        this.img_dom.style.display = 'none'
         return false
 
       this.fit this.img_dom
@@ -1690,18 +1705,17 @@ siomart =
 
     siomart.config.mart_id = window.siomart_id
     siomart.config.host = window.siomart_host
+    siomart.config.index_action = '/market/index/' + siomart.config.mart_id
 
     ## загрузка cbca_grid
     this.load_deps()
     this.utils.set_vendor_prefix()
 
     if !is_mart_minimized
-      console.log 'open mart on startup, domain ' + window.location.host + ' whitelisted'
-      return false
-      this.is_market_loaded = true
-      siomart.utils.ge('sioMartRoot').style.display = 'block'
-      siomart.load_mart_index_page()
+      siomart.log 'open mart on startup, domain ' + window.location.host + ' whitelisted'
+      siomart.load_mart()
     else
+      siomart.log 'keep mart minimized, domain ' + window.location.host + ' is not whitelisted'
       siomart.load_mart_data()
 
 window.siomart = siomart
