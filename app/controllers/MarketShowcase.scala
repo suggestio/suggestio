@@ -40,6 +40,18 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
     Ok(demoWebsiteTpl(request.adnNode))
   }
 
+  /** Экшн, который выдает базовую инфу о ноде */
+  def nodeData(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
+    val node = request.adnNode
+    Ok( Jsonp(JSONP_CB_FUN, Json.obj(
+        "action" -> "setData",
+        "color" -> node.meta.color,
+        "logo_src" -> node.logoImgOpt.map( logo_src => {
+          JsString(routes.Img.getImg(logo_src.filename).toString())
+        })
+      ) ))
+  }
+
   /** Рендер интерфейса выдачи для указанного продьюсера. */
   def myAdsSite(adnId: String) = IsAdnNodeAdmin(adnId).apply { implicit request =>
     Ok(demoWebsiteTpl(

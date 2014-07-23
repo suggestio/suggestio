@@ -159,6 +159,7 @@ POST /img/crop                          controllers.Img.imgCropSubmit
 
 # market
 GET  /market/site/:adnId                controllers.MarketShowcase.demoWebSite(adnId)
+GET  /market/node_data/:adnId           controllers.MarketShowcase.nodeData(adnId)
 GET  /market/index/:adnId               controllers.MarketShowcase.showcase(adnId)
 GET  /market/site_all/:adnId            controllers.MarketShowcase.myAdsSite(adnId)
 GET  /market/index_all/:adnId           controllers.MarketShowcase.myAdsShowcase(adnId)
