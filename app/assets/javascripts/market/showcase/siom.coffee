@@ -75,7 +75,7 @@ siom =
     sm_trigger_attrs =
       class : this.config.sm_trigger_class
       id : 'sioMartTrigger'
-      style : '-webkit-border-radius: 50px; -webkit-transition: all 0.5s linear; opacity: 0; cursor: pointer; position: fixed; left: 10px; top: 10px; color: #fff; border: 1px #333 solid; text-align: center; padding: 0px; width: 50px; height: 50px; z-index: 99998; background-color: #' + siom.config.node_color
+      style : '-webkit-border-radius: 50px; -webkit-transition: all 0.5s linear; opacity: 0; cursor: pointer; position: fixed; left: 10px; top: 10px; color: #fff; border: 1px #333 solid; text-align: center; padding: 0px; width: 50px; height: 50px; z-index: 1000000; background-color: #' + siom.config.node_color
 
     sm_trigger = this.utils.ce 'div', sm_trigger_attrs, '<span style="display: table-cell; height: 50px; vertical-align: middle"><img style="max-width: 50px; max-height: 50px;" src=\'' + siom.config.host + siom.config.logo_src + '\'/>' + '</span>'
 
