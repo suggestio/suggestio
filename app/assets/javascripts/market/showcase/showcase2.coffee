@@ -3,7 +3,10 @@
 ###############################
 siomart =
   config :
-    css : '/assets/stylesheets/market/showcase.css?v=35'
+    min_ww : 300
+    min_wh : 150
+    css : '/assets/stylesheets/market/showcase.css?v=37'
+    whitelisted_domains : ['suggest.io', 'localhost:9000', '192.168.199.148:9000']
     index_action : window.siomart_index
     sm_layout_class : 'sio-mart-showcase'
     sm_trigger_class : 'sio-mart-trigger'
@@ -44,6 +47,14 @@ siomart =
         clearTimeout siomart.window_resize_timer
 
       grid_resize = () ->
+
+        document.getElementById('sioMartIndexOffers').scrollTop = '0';
+
+        cb = () ->
+          siomart.utils.ge('sioMartIndexGrid').style.height = parseInt( siomart.utils.ge('sioMartIndexGrid').style.height) + 10 + 'px'
+
+        setTimeout cb, 70
+
         cbca_grid.resize()
         siomart.set_window_class()
 
@@ -75,91 +86,6 @@ siomart =
         this.style_dom.innerHTML = ''
       
       this.style_dom.appendChild(document.createTextNode(css))
-
-  #######################
-  ## Cross Domain Storage
-  #######################
-  storage :
-    origin : ''
-    path : '/xd_server'
-    _iframe : null
-    _iframeReady : false
-    _queue : []
-    _requests : {}
-    _id : 0
-
-    init : () ->
-      _this = this
-
-      _this.origin = siomart.config.host
-
-      if !_this._iframe
-        if window.postMessage && window.JSON && window.sessionStorage
-
-          _iframe_attrs =
-            id : 'smStorageIframe'
-            src : siomart.config.host + '/xd_server?t=' + Math.round(Math.random()*1000000)
-          _this._iframe = siomart.utils.ce 'iframe', _iframe_attrs
-          _this._iframe.style.cssText = 'position:absolute;width:1px;height:1px;left:-9999px;'
-          siomart.utils.ge_tag('body')[0].appendChild _this._iframe
-
-          siomart.utils.add_single_listener _this._iframe, 'load', () ->
-            _this._iframeLoaded()
-
-          siomart.utils.add_single_listener window, 'message', (event) ->
-            _this._handleMessage event
-
-          _this.is_supported = true
-        else
-          _this.is_supported = false
-
-    setValue : ( key, value ) ->
-      this.requestValue(key, '', value)
-
-    requestValue: (key, callback, value) ->
-      _t = this
-      request =
-        key: key
-        id: ++_t._id
-
-      if value
-        request.value = value
-
-      data =
-        request: request
-        callback: callback
-
-      if _t._iframeReady
-        _t._sendRequest data
-      else
-        _t._queue.push data
-
-      if !_t._iframe
-        _t.init()
-
-    _sendRequest: (data) ->
-      _t = this
-
-      console.log data
-
-      _t._requests[data.request.id] = data
-      _t._iframe.contentWindow.postMessage(JSON.stringify(data.request), _t.origin)
-
-    _iframeLoaded: () ->
-      _t = this
-      _t._iframeReady = true
-
-      if _t._queue.length
-        for _i in _t._queue
-          _t._sendRequest _i
-        _t._queue = []
-
-    _handleMessage: (event) ->
-      _t = this
-      #if (event.origin == _t.origin){
-      data = JSON.parse(event.data)
-      _t._requests[data.id].callback(data.key, data.value)
-      delete _t._requests[data.id]
 
   #########################
   ## History Api navigation
@@ -231,6 +157,21 @@ siomart =
         if window.location.hostname.match hn
           return true
       return false
+
+    set_window_size : () ->
+      ww = wh = 0
+      if typeof window.innerWidth == 'number'
+        ww = window.innerWidth
+        wh = window.innerHeight
+      else if document.documentElement && ( document.documentElement.clientWidth || document.documentElement.clientHeight )
+        ww = document.documentElement.clientWidth
+        wh = document.documentElement.clientHeight
+      else if document.body && ( document.body.clientWidth || document.body.clientHeight )
+        ww = document.body.clientWidthb
+        wh = document.body.clientHeight
+
+      siomart.ww = ww
+      siomart.wh = wh
 
     ######################
     ## Создать DOM элемент
@@ -403,7 +344,7 @@ siomart =
 
   events :
 
-    touchmove_lock_delta : 2
+    touchmove_lock_delta : 0
     is_touch_locked : false
 
     document_touchmove : ( event ) ->
@@ -411,15 +352,17 @@ siomart =
       cx = event.touches[0].pageX
       cy = event.touches[0].pageY
 
+      siomart.events.document_touch_x_delta = siomart.events.document_touch_x - cx
+      siomart.events.document_touch_y_delta = siomart.events.document_touch_y - cy
+
+      if Math.abs( siomart.events.document_touch_x_delta ) > siomart.events.touchmove_lock_delta || Math.abs( siomart.events.document_touch_y_delta ) > siomart.events.touchmove_lock_delta || typeof siomart.events.document_touch_x == 'undefined'
+        siomart.events.is_touch_locked = true
+
       if typeof siomart.events.document_touch_x == 'undefined'
         siomart.events.document_touch_x = cx
         siomart.events.document_touch_y = cy
 
-      siomart.events.document_touch_x_delta = siomart.events.document_touch_x - cx
-      siomart.events.document_touch_y_delta = siomart.events.document_touch_y - cy
 
-      if Math.abs( siomart.events.document_touch_x_delta ) > siomart.events.touchmove_lock_delta || Math.abs( siomart.events.document_touch_y_delta ) > siomart.events.touchmove_lock_delta
-        siomart.events.is_touch_locked = true
 
     document_touchend : ( event ) ->
 
@@ -496,17 +439,20 @@ siomart =
 
   ## Карточки ноды верхнего уровня
   grid_ads :
+    is_fully_loaded : false
     is_load_more_requested : false
-    loaded : 0
     c_url : null
 
     load_more : () ->
-      if this.is_load_more_requested == true
+
+      if this.is_load_more_requested == true || this.is_fully_loaded == true
         return false
       console.log 'load more'
       console.log 'loaded : ' + this.loaded
 
       this.is_load_more_requested = true
+
+      console.log this.c_url
 
       siomart.request.perform this.c_url + '&a.size=' + siomart.config.ads_per_load + '&a.offset=' + this.loaded
 
@@ -514,8 +460,22 @@ siomart =
       grd_c = siomart.utils.ge('sioMartIndexGrid')
       url = grd_c.getAttribute 'data-index-offers-action'
 
-      this.c_url = url + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1)
-      siomart.request.perform url + '&a.size=' + siomart.config.ads_per_load
+      siomart.grid_ads.is_fully_loaded = false
+      siomart.grid_ads.is_load_more_requested = false
+      siomart.utils.ge('gridAdsLoader').style.opacity = 1
+
+      siomart.grid_ads.loaded = 0
+
+      if typeof siomart.grid_ads.multiplier == 'undefined'
+        siomart.grid_ads.multiplier = 100000000000
+      else
+        siomart.grid_ads.multiplier = siomart.grid_ads.multiplier / 10
+
+      siomart.grid_ads.c_url = url + '&a.gen=' + Math.floor((Math.random() * siomart.grid_ads.multiplier) + (Math.random() * 100000) )
+
+      console.log siomart.grid_ads.c_url
+
+      siomart.request.perform siomart.grid_ads.c_url + '&a.size=' + siomart.config.ads_per_load
 
   #####################################################
   ## Добавить в DOM необходимую разметку для Sio.Market
@@ -525,7 +485,7 @@ siomart =
     sm_trigger_attrs =
       class : this.config.sm_trigger_class
       id : 'sioMartTrigger'
-      style : 'background-color: #' + window.siomart_node_color
+      style : 'opacity: 0; background-color: #' + window.siomart_node_color
 
     logo_img = if typeof window.siomart_logo_src != 'undefined' then '<img src=\'' + window.siomart_logo_src + '\'/>' else ''
     sm_trigger = this.utils.ce 'div', sm_trigger_attrs, '<span class="trigger-helper">' + logo_img + '</span>'
@@ -659,10 +619,19 @@ siomart =
     if data.action == 'findAds' || data.action == 'searchAds'
       grid_container_dom = siomart.utils.ge 'sioMartIndexGrid'
 
+      if typeof data.blocks == 'undefined'
+        siomart.grid_ads.is_fully_loaded = true
+        siomart.utils.ge('smLoading').style.display = 'none'
+        return false
+
+      if data.blocks.length < siomart.config.ads_per_load
+        siomart.utils.ge('gridAdsLoader').style.opacity = 0
+
       html = ''
 
       for index, elt of data.blocks
-        html += elt
+        if typeof elt == 'string'
+          html += elt
 
       if typeof data.blocks != 'undefined'
         siomart.grid_ads.loaded += data.blocks.length
@@ -1026,8 +995,6 @@ siomart =
     siomart.utils.ge('sioMartRoot').style.display = 'none'
     siomart.utils.ge('smCloseScreen').style.display = 'none'
 
-    siomart.storage.setValue "is_market_closed_by_user", 'true'
-
     siomart.utils.ge_tag('body')[0].style.overflow = 'auto'
 
     event.preventDefault()
@@ -1039,7 +1006,6 @@ siomart =
       siomart.load_mart_index_page()
 
     siomart.utils.ge('sioMartRoot').style.display = 'block'
-    siomart.storage.setValue "is_market_closed_by_user", 'false'
     event.preventDefault()
     return false
 
@@ -1228,8 +1194,6 @@ siomart =
       ww = document.body.clientWidthb
       wh = document.body.clientHeight
 
-
-
     if ww <= 980
       siomart.config.ads_per_load = 20
 
@@ -1246,11 +1210,23 @@ siomart =
   ## Инициализация Sio.Market
   ###########################
   init : () ->
+    siomart.utils.set_window_size()
+
+    ## Если размеры window меньше определенных значений — не инициализируем
+    if siomart.ww < siomart.config.min_ww
+      return false
+
+    if siomart.wh < siomart.config.min_wh
+      return false
+
+    ## Проверяем — нужно ли оставить sio.market свернутым
+    if siomart.config.whitelisted_domains.indexOf(window.location.host) != -1
+      is_mart_minimized = false
+    else
+      is_mart_minimized = true
 
     siomart.config.mart_id = window.siomart_id
     siomart.config.host = window.siomart_host
-
-    siomart.storage.init()
 
     ## загрузка cbca_grid
     this.load_deps()
@@ -1263,22 +1239,25 @@ siomart =
     this.bind_window_events()
 
     ## Инициализировать history api
-    this.history.init()
+    ## this.history.init()
 
-    this.is_market_loaded = false
+    #this.is_market_loaded = false
     ## Далее идет асинхронное считывание значения is_market_closed_by_user
+
+    ## проверять минимальные значения ww и wh — чтобы выдача не рендерилась во всяких айфреймах
 
     window.scrollTo 0,0
 
-    console.log 'check startup options and start'
-    this.storage.requestValue "is_market_closed_by_user", (key, value) ->
-      console.log key + ' : ' + value
+    if !is_mart_minimized
+      console.log 'open mart on startup, domain ' + window.location.host + 'whitelisted'
+      this.is_market_loaded = true
+      siomart.utils.ge('sioMartRoot').style.display = 'block'
+      siomart.load_mart_index_page()
 
-      if value == null || value == false || value == 'false' || siomart.utils.is_sio_host() == true
-        console.log 'open mart on startup'
-        this.is_market_loaded = true
-        siomart.utils.ge('sioMartRoot').style.display = 'block'
-        siomart.load_mart_index_page()
+    trigger_cb = () ->
+      siomart.utils.ge('sioMartTrigger').style.opacity = '1'
+    setTimeout trigger_cb, 100
+
 
 
 window.siomart = siomart

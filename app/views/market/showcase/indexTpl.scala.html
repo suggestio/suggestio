@@ -25,31 +25,39 @@
 </div>
 
 @if( !catsStats.isEmpty ){
-  @* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
-  <div class="categories-button" id="smCategoriesButton">
-    <span></span>
-  </div>
-  @* Окно с выбором категорий *@
-  @_categories_w_search(mmcats, mmart, catsStats, withSubnodesBtn = !shops.isEmpty)
+@* Кнопка вызова окошка с категориями, находится всегда справа сверху *@
+<div class="categories-button" id="smCategoriesButton">
+  <span></span>
+</div>
+@* Окно с выбором категорий *@
+@_categories_w_search(mmcats, mmart, catsStats, withSubnodesBtn = !shops.isEmpty)
 }
 
 <div class="sio-mart__producer-header" style="background-color: #@mmart.meta.color;">
   @mmart.logoImgOpt.map { logoImg =>
-    <img id="rootNodeLogo" class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
+  <img id="rootNodeLogo" class="sm-offer-logo" height="30" style="height: 30px!important;" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
   }
 </div>
 
 <div class="sm-flex sm-overflow-scrolling">
-<div class="sm-flex sm-overflow-scrolling sio-mart__index-offers" id="sioMartIndexOffers">
-  <div class="sm-flex sio-mart__index-offers__container" style="margin-bottom: -1px" id="sioMartIndexGridLayout">
+  <div class="sm-flex sm-overflow-scrolling sio-mart__index-offers" id="sioMartIndexOffers">
+    <div class="sm-flex sio-mart__index-offers__container" style="margin-bottom: -1px;" id="sioMartIndexGridLayout">
 
-    @* Сюда должны отрендерится рекламные карточки с этого адресочка: *@
-    <div id="sioMartIndexGrid" data-index-offers-action="@routes.MarketShowcase.findAds(spsr)" style="position: relative; height: 3000px; width: 100%;">
+      <div id="sioMartIndexGrid" data-index-offers-action="@routes.MarketShowcase.findAds(spsr)" style="position: relative; width: 100%;">
+      </div>
+
+      <div style="height: 60px;"></div>
+
+      <div class="grid-loader" style="height: 50px;" id="gridAdsLoader">
+        <div style="position: relative; height: 1px; width: 100%; background: #999;">
+          <div style="padding: 5px; position: absolute; left: 50%; top: 50%; margin-left: -15px; margin-top: -16px; background: #fff;">
+            <img style="width: 24px; height: 24px;" src="@ctx.myAudienceUrl/assets/images/market/grid-ads-loader.gif"/>
+          </div>
+        </div>
+      </div>
+
     </div>
-    <div style="height: 30px"></div>
-
   </div>
-</div>
 </div>
 
 <div class="sm-notification" id="smNotification">

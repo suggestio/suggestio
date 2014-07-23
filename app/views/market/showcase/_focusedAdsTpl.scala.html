@@ -1,16 +1,16 @@
 @(mads: Seq[MAd], adSearch: AdSearch, producer: MAdnNode, adsCount: Int, startIndex: Int = 0)(implicit ctx: util.Context)
 
 @* Рендер под-выдачи для просмотра развёрных карточек.
-   Появляется поверх при клике по какой-то карточке в общей плитке. *@
+Появляется поверх при клике по какой-то карточке в общей плитке. *@
 
 @* Список карточек указанного продюссера *@
 <div class="sio-mart__node-offers sio-mart-node-offers-window" id="sioMartNodeOffers">
 
   @_screen_nav_button("back","closeNodeOffersPopupButton")
-  <div class="sio-mart__producer-header" style="background-color: #@producer.meta.color;">
+  <div class="sio-mart__producer-header" style="background-color: #@producer.meta.color; height: 30px!important;">
     @producer.logoImgOpt.map { logoImg =>
-      <img class="sm-offer-logo" height="30" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
-  }
+    <img class="sm-offer-logo" height="30" style="height: 30px!important" src="@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)"/>
+    }
   </div>
 
   @* Контейнер с прокручивающимися офферами *@

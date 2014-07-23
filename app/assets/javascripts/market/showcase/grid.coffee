@@ -37,7 +37,7 @@ cbca_grid =
       no_of_cells = 8
 
     if no_of_cells == 3
-      no_of_cells = 2
+      no_of_cells = 3
 
     if no_of_cells == 5
       no_of_cells = 4
@@ -200,9 +200,9 @@ cbca_grid =
 
     return max_h
 
-  ##############################
-  ## Find all blocks on the page
-  ##############################
+  ################################
+  ## Найти новые блоки на странице
+  ################################
   load_blocks : ( is_add ) ->
 
     is_add = is_add || false
@@ -214,9 +214,16 @@ cbca_grid =
     if is_add == true
       i = cbca_grid.blocks_index
     else
+      cbca_grid.all_blocks = []
       i = 0
+
+    console.log 'cbca_grid.all_blocks'
+    console.log cbca_grid.all_blocks
+
     ## TODO : make selector configurable
+
     for elt in siomart.utils.ge_class document, 'sm-block'
+
       if elt.id == ''
         _this = elt
 
@@ -245,6 +252,7 @@ cbca_grid =
         i++
         cbca_grid.blocks.push block
         cbca_grid.m_blocks = cbca_grid.blocks.slice(0)
+        cbca_grid.all_blocks.push block
 
     ## Загрузить спейсеры
     #for i in siomart.utils.ge_class document, 'sm-b-spacer'
@@ -289,21 +297,24 @@ cbca_grid =
     cbca_grid.blocks_index = i
 
   init : ( is_add ) ->
+
     this.blocks_container = document.getElementById 'sioMartIndexGrid'
     this.layout_dom = document.getElementById 'sioMartIndexGridLayout'
 
     this.set_container_size()
     this.load_blocks( is_add )
+
     this.build( is_add )
 
   resize : () ->
     this.set_container_size()
-    cbca_grid.blocks = cbca_grid.m_blocks
 
     if typeof cbca_grid.blocks == 'undefined'
       return false
 
-    cbca_grid.m_blocks = cbca_grid.blocks.slice(0)
+    cbca_grid.m_blocks = cbca_grid.all_blocks.slice(0)
+    cbca_grid.blocks = cbca_grid.m_blocks
+
     this.build()
 
   build : ( is_add ) ->
@@ -321,7 +332,7 @@ cbca_grid =
 
     # setting up left and top
     left_pointer = left_pointer_base = 0
-    top_pointer = 100
+    top_pointer = 60
 
     # Определяем ширину окна
     window_width = this.ww
@@ -336,7 +347,7 @@ cbca_grid =
       columns = 8
 
     if columns == 3
-      columns = 2
+      columns = 3
 
     if columns == 5
       columns = 4
@@ -370,7 +381,7 @@ cbca_grid =
         cline++
         left_pointer = left_pointer_base
 
-      top = cline * ( this.cell_size + this.cell_padding ) + this.top_offset
+      top = top_pointer + cline * ( this.cell_size + this.cell_padding ) + this.top_offset
       left = left_pointer
 
       if this.is_only_spacers() == true
