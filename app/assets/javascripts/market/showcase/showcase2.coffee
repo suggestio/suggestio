@@ -457,8 +457,6 @@ window.cbca_grid = cbca_grid
 ###############################
 siomart =
   config :
-    min_ww : 300
-    min_wh : 150
     css : '/assets/stylesheets/market/showcase.css?v=38'
     whitelisted_domains : ['suggest.io', 'localhost:9000', '192.168.199.148:9000']
     index_action : window.siomart_index
@@ -1695,21 +1693,6 @@ siomart =
   ## Инициализация Sio.Market
   ###########################
   init : () ->
-
-    cbca_grid.set_window_size()
-    ## Если размеры window меньше определенных значений — не инициализируем
-    if cbca_grid.ww < siomart.config.min_ww
-      return false
-
-    if cbca_grid.wh < siomart.config.min_wh
-      return false
-
-    ## Проверяем — нужно ли оставить sio.market свернутым
-    if siomart.config.whitelisted_domains.indexOf(window.location.host) != -1
-      is_mart_minimized = false
-    else
-      is_mart_minimized = true
-
     siomart.config.mart_id = window.siomart_id
     siomart.config.host = window.siomart_host
     siomart.config.index_action = '/market/index/' + siomart.config.mart_id
@@ -1718,12 +1701,7 @@ siomart =
     this.load_deps()
     this.utils.set_vendor_prefix()
 
-    if !is_mart_minimized
-      siomart.log 'open mart on startup, domain ' + window.location.host + ' whitelisted'
-      siomart.load_mart()
-    else
-      siomart.log 'keep mart minimized, domain ' + window.location.host + ' is not whitelisted'
-      siomart.load_mart_data()
+    siomart.load_mart()
 
 window.siomart = siomart
 siomart.init()
