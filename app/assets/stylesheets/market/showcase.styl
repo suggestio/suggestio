@@ -92,7 +92,7 @@ code
   left: 50%
   top: 50%
   margin-left: -150px
-  margin-top: -80px
+  margin-top: -170px
   width: 300px
   color: #b6c2c5
   font-size: 14px
@@ -100,12 +100,24 @@ code
   font-family: Arial
   text-align: center
 
-.sm-wifi-info__logo
-  background: url('/assets/images/market/lk/logo-2.png') no-repeat left top
-  background-size: 65px 93px
-  width: 65px
-  height: 93px
-  margin-left: 118px
+.sm-wifi-info__button
+  display: block
+  text-decoration: none
+  width: 150px
+  height: 20px
+  padding: 65px 0px
+  margin-left: 75px
+  border-radius( 300px )
+  background: #395565
+  font-size: 23px
+  font-family: Arial
+  color: #95a7b1
+  text-shadow: 0px 1px 1px #333
+  border: 1px #263a46 solid
+  -webkit-tap-highlight-color:rgba(0,0,0,0)
+
+.sm-wifi-info__button:active
+  margin-top: 2px
 
 .sio-mart-showcase 
   position: fixed
@@ -123,6 +135,9 @@ code
     background-color: #ccc
     margin: 0px auto
     -webkit-tap-highlight-color:rgba(0,0,0,0)
+    -webkit-transition: -webkit-transform 0.5s ease
+    -moz-transition: -moz-transform 0.5s ease
+    transition: transform 0.5s ease
 
   .sm-b-spacer
     position: absolute

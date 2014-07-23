@@ -470,6 +470,16 @@ siomart =
     producer_ads_per_load : 5
     sio_hostnames : ["suggest.io", "localhost", "192.168.199.*"]
 
+
+  getDeviceScale : () ->
+    deviceWidth = landscape = Math.abs(window.orientation) == 90
+
+    if landscape
+      deviceWidth = Math.max(480, screen.height)
+    else
+      deviceWidth = screen.width
+    return window.innerWidth / deviceWidth
+
   ## Загрузить js- и css- засимости
   load_deps : () ->
     ## css : showcase.css
@@ -930,13 +940,18 @@ siomart =
       id : 'sioMartTrigger'
       style : 'opacity: 0; background-color: #' + siomart.config.node_color
 
-    sm_trigger = this.utils.ce 'div', sm_trigger_attrs, '<span class="trigger-helper">' + '<a target="_blank" href="' + siomart.config.host + '/market/site/' + siomart.config.mart_id + '"><img src=\'' + siomart.config.host + siomart.config.logo_src + '\'/></a>' + '</span>'
+    sm_trigger = this.utils.ce 'div', sm_trigger_attrs, '<span class="trigger-helper"><img src=\'' + siomart.config.host + siomart.config.logo_src + '\'/>' + '</span>'
 
     _body = this.utils.ge_tag('body')[0]
     _body.appendChild sm_trigger
 
-    #_event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
-    #this.utils.add_single_listener sm_trigger, _event, siomart.open_mart
+    _event = if siomart.utils.is_touch_device() then 'touchend' else 'click'
+    this.utils.add_single_listener sm_trigger, _event, () ->
+      showcase_url = siomart.config.host + '/market/site/' + siomart.config.mart_id
+
+      newwindow = window.open showcase_url, 'Sio.Market'
+      newwindow.focus()
+
 
   draw_layout : () ->
 
@@ -950,14 +965,6 @@ siomart =
 
     _body = this.utils.ge_tag('body')[0]
     _body.appendChild sm_layout
-
-  set_meta : () ->
-    _head = this.utils.ge_tag('head')[0]
-    meta_viewport_attrs =
-      name : 'viewport'
-      content : 'width=320,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,minimal-ui'
-    meta_viewport = this.utils.ce "meta", meta_viewport_attrs
-    _head.appendChild meta_viewport
 
   ###################################
   ## Осуществить запрос к серверу sio
@@ -1025,9 +1032,9 @@ siomart =
 
     ## Инициализация глагне
     if data.action == 'showcaseIndex'
-      this.set_meta()
-
       siomart.log 'showcaseIndex'
+
+      cbca_grid.set_window_size()
 
       ## Нарисовать разметку
       this.draw_layout()
