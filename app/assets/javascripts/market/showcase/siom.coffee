@@ -48,6 +48,16 @@ siom =
           false
         else
           true
+
+    getDeviceScale : () ->
+      deviceWidth = landscape = Math.abs(window.orientation) == 90
+
+      if landscape
+        deviceWidth = Math.max(480, screen.height)
+      else
+        deviceWidth = screen.width
+      return window.innerWidth / deviceWidth
+
     add_single_listener : (elt, eventType, listener) ->
       if elt == null
         return false

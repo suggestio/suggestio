@@ -457,7 +457,7 @@ window.cbca_grid = cbca_grid
 ###############################
 siomart =
   config :
-    css : '/assets/stylesheets/market/showcase.css?v=38'
+
     whitelisted_domains : ['suggest.io', 'localhost:9000', '192.168.199.148:9000']
     index_action : window.siomart_index
     sm_layout_class : 'sio-mart-showcase'
@@ -477,20 +477,6 @@ siomart =
     else
       deviceWidth = screen.width
     return window.innerWidth / deviceWidth
-
-  ## Загрузить js- и css- засимости
-  load_deps : () ->
-    ## css : showcase.css
-    stylesheet_attrs =
-      type : 'text/css'
-      rel : 'stylesheet'
-      href : siomart.config.host + this.config.css
-
-    stylesheet = this.utils.ce "link", stylesheet_attrs
-
-    ## Созданные элементы добавляем в head
-    _head = this.utils.ge_tag("head")[0]
-    _head.appendChild stylesheet
 
   ## Забиндить оконные события
   bind_window_events : () ->
@@ -1697,8 +1683,6 @@ siomart =
     siomart.config.host = window.siomart_host
     siomart.config.index_action = '/market/index/' + siomart.config.mart_id
 
-    ## загрузка cbca_grid
-    this.load_deps()
     this.utils.set_vendor_prefix()
 
     siomart.load_mart()
