@@ -9,7 +9,7 @@
 
   <div class="page-title">
     <div class="page-title_cnt">
-      <a class="back-btn" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)">&nbsp;</a>
+      <a class="back-btn" href="@routes.MarketLkAdn.showAdnNode(adnNode.id.get)"></a>
       НАСТРОЙКИ
     </div>
   </div>
@@ -129,7 +129,7 @@
     @* Посуточная mmp-тарифная сетка этого узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
     @if(!mmpDailyTariffs.isEmpty) {
 
-      @market.lk.lkBlock("Ставка тарифных планов") {
+      @market.lk.lkBlock("Ваша ставка тарифных планов") {
 
           @_dailyMmpTariffPlansTpl(mmpDailyTariffs, adnNode)
 
