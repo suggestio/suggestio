@@ -6,6 +6,7 @@ import util.ShowcaseUtil._
 import util._
 import util.acl._
 import views.html.market.showcase._
+import views.txt.market.showcase.nodeIconJsTpl
 import views.html.market.lk.adn._node._installScriptTpl
 import play.api.libs.json._
 import play.api.libs.Jsonp
@@ -35,9 +36,14 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
   val SHOW_EMPTY_CATS = configuration.getBoolean("market.frontend.cats.empty.show") getOrElse false
 
 
-  /** Экшн, который рендерит страничку приветствия, которое видит юзер при первом подключении к wi-fi */
+  /** Экшн, который рендерит страничку с выдачей */
   def demoWebSite(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
     Ok(demoWebsiteTpl(request.adnNode))
+  }
+
+  /** Экшн, который рендерит скрипт с икнокой */
+  def nodeIconJs(adnId: String) = AdnNodeMaybeAuth(adnId).apply { implicit request =>
+    Ok(nodeIconJsTpl( request.adnNode )).as("text/javascript")
   }
 
   /** Экшн, который выдает базовую инфу о ноде */

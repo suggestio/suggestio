@@ -1,11 +1,18 @@
+@(adnNode: MAdnNode)(implicit ctx: util.Context)
+@import util.CoffeeScriptTemplate._
+@coffee{
+
 ########################################
 ## иконка siom для подмешивания на сайты
 ########################################
 siom =
   config :
-    sm_trigger_class : "sio-mart-trigger"
+    sm_trigger_class : 'sio-mart-trigger'
+    node_color : '@adnNode.meta.color'
+    @adnNode.logoImgOpt.map { logoImg =>
+    logo_src : '@routes.Img.getImg(logoImg.filename)'
+    }
   utils :
-
     elts_cache : {}
 
     ce : ( tag, attributes, inhtml ) ->
@@ -49,15 +56,6 @@ siom =
         else
           true
 
-    getDeviceScale : () ->
-      deviceWidth = landscape = Math.abs(window.orientation) == 90
-
-      if landscape
-        deviceWidth = Math.max(480, screen.height)
-      else
-        deviceWidth = screen.width
-      return window.innerWidth / deviceWidth
-
     add_single_listener : (elt, eventType, listener) ->
       if elt == null
         return false
@@ -68,25 +66,11 @@ siom =
           elt.attachEvent 'on' + eventType, () ->
             listener.apply elt
 
-  perform_request : ( url ) ->
-    js_request_attrs =
-      type : 'text/javascript'
-      src : siom.config.host + url
-    js_request = siom.utils.ce 'script', js_request_attrs
-    siomart.utils.ge_tag('head')[0].appendChild js_request
-
-  receive_response : ( data ) ->
-    siom.config.node_color = data.color
-    siom.config.logo_src = data.logo_src
-
-    siom.draw_trigger()
-
   draw_trigger : () ->
     sm_trigger_attrs =
       class : this.config.sm_trigger_class
       id : 'sioMartTrigger'
       style : '-webkit-border-radius: 50px; -webkit-transition: all 0.5s linear; opacity: 0; cursor: pointer; position: fixed; left: 10px; top: 10px; color: #fff; border: 1px #333 solid; text-align: center; padding: 0px; width: 50px; height: 50px; z-index: 1000000; background-color: #' + siom.config.node_color
-
     sm_trigger = this.utils.ce 'div', sm_trigger_attrs, '<span style="display: table-cell; height: 50px; vertical-align: middle"><img style="max-width: 50px; max-height: 50px;" src=\'' + siom.config.host + siom.config.logo_src + '\'/>' + '</span>'
 
     _body = this.utils.ge_tag('body')[0]
@@ -100,7 +84,6 @@ siom =
 
     this.utils.add_single_listener sm_trigger, _event, () ->
       showcase_url = siomart.config.host + '/market/site/' + siomart.config.mart_id
-
       newwindow = window.open showcase_url, 'Sio.Market'
       newwindow.focus()
 
@@ -108,8 +91,10 @@ siom =
     siom.config.mart_id = window.siomart_id
     siom.config.host = window.siomart_host
 
-    this.perform_request '/market/node_data/' + window.siomart_id
+    siom.draw_trigger()
 
 window.siom=siom
 window.siomart=siom
 siom.init()
+
+}

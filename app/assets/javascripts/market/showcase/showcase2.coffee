@@ -305,6 +305,7 @@ cbca_grid =
     this.build( is_add )
 
   resize : () ->
+
     this.set_container_size()
 
     if typeof cbca_grid.blocks == 'undefined'
@@ -481,6 +482,8 @@ siomart =
   ## Забиндить оконные события
   bind_window_events : () ->
     resize_cb = () ->
+      console.log 'resize'
+      siomart.welcome_ad.fit siomart.welcome_ad.img_dom
       window.scrollTo(0,0)
       if typeof siomart.window_resize_timer != 'undefined'
         clearTimeout siomart.window_resize_timer
