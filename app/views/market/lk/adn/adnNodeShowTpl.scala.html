@@ -36,10 +36,13 @@
       @if(showBackBtn) {
         @defining( if(isMyNode) Some(routes.MarketLk.lkList) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>
           @backCallOpt.map { backCall =>
-            <a class="back-btn" href="@backCall">&nbsp;</a>
+            <a class="back-btn" href="@backCall"></a>
           }
         }
+      } else {
+        <a class="back-btn __hidden"></a>
       }
+
 
       @if(isMyNode) {ЛИЧНЫЙ КАБИНЕТ} else {РЕКЛАМОДАТЕЛЬ}
 
