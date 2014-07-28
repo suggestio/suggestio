@@ -1462,11 +1462,11 @@ siomart =
   ## Скрыть / показать sio.market
   ###############################
   close_mart : ( event ) ->
-    siomart.utils.ge('sioMartRoot').style.display = 'none'
-    siomart.utils.ge('smCloseScreen').style.display = 'none'
+    #siomart.utils.ge('sioMartRoot').style.display = 'none'
+    #siomart.utils.ge('smCloseScreen').style.display = 'none'
 
-    siomart.utils.ge_tag('body')[0].style.overflow = 'auto'
-
+    #siomart.utils.ge_tag('body')[0].style.overflow = 'auto'
+    
     event.preventDefault()
     return false
 
