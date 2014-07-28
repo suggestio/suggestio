@@ -1,17 +1,12 @@
 @(adnNode: MAdnNode, withIndexCall: Option[Call] = None)(implicit ctx: util.Context)
 
-(function() {
-  var _siom = document.createElement("script");
-  _siom.type = "text/javascript";
-  _siom.async = true;
-  _siom.src = "@ctx.myAudienceUrl@routes.Assets.at("javascripts/market/showcase/showcase2.js")";
-  window.siomart_host = '@ctx.myAudienceUrl';
-  var _sh = document.getElementsByTagName("head")[0];
-  @adnNode.logoImgOpt.map { logoImg =>
-    window.siomart_logo_src = '@ctx.myAudienceUrl@routes.Img.getImg(logoImg.filename)';
-  }
-  window.siomart_node_color = '@adnNode.meta.color';
-  window.siomart_index = '@withIndexCall.getOrElse(routes.MarketShowcase.showcase(adnNode.id.get))';
-  window.siomart_id = '@adnNode.id';
+(function(){
+  window.siomart_id='vATJD10eS_a5nz_94hZEpA';
+  window.siomart_host='@ctx.myAudienceUrl';
+  var _siom=document.createElement("script");
+  _siom.type="text/javascript";
+  _siom.async=true;
+  _siom.src=window.siomart_host + "@routes.MarketShowcase.nodeIconJs(adnNode.id.get)";
+  var _sh=document.getElementsByTagName("head")[0];
   _sh.appendChild(_siom);
 })();
