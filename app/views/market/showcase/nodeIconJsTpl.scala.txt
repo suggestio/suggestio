@@ -84,8 +84,7 @@ siom =
 
     this.utils.add_single_listener sm_trigger, _event, () ->
       showcase_url = siomart.config.host + '/market/site/' + siomart.config.mart_id
-      newwindow = window.open showcase_url, 'Sio.Market'
-      newwindow.focus()
+      window.location = showcase_url
 
   init : () ->
     siom.config.mart_id = window.siomart_id

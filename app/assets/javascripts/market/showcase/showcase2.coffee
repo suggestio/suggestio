@@ -1466,7 +1466,7 @@ siomart =
     #siomart.utils.ge('smCloseScreen').style.display = 'none'
 
     #siomart.utils.ge_tag('body')[0].style.overflow = 'auto'
-    
+
     event.preventDefault()
     return false
 
@@ -1591,7 +1591,6 @@ siomart =
 
     siomart.utils.add_single_listener this.utils.ge('smCloseButton'), _event, siomart.open_close_screen
 
-    this.utils.add_single_listener this.utils.ge('smCloseConfirmedButton'), _event, siomart.close_mart
     this.utils.add_single_listener this.utils.ge('smExitCloseScreenButton'), _event, siomart.exit_close_screen
 
     this.utils.add_single_listener this.utils.ge('smShopListButton'), _event, siomart.open_shopList_screen
