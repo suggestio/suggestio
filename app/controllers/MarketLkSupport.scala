@@ -1,11 +1,13 @@
 package controllers
 
+import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
 import util.PlayLazyMacroLogsImpl
 import util.acl.{IsAuth, IsAdnNodeAdmin}
 import views.html.market.lk.support._
+import com.typesafe.plugin.{use, MailerPlugin}
 
 /**
  * Suggest.io
@@ -34,9 +36,12 @@ object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
     * @return 200 Ок и страница с формой.
     */
   def supportForm(adnIdOpt: Option[String]) = IsAuth.async { implicit request =>
-    // TODO Брать дефолтовое значение email'а по сессии
-    val form = supportFormM
-    Ok(supportFormTpl(adnIdOpt, form))
+    // Взять дефолтовое значение email'а по сессии
+    MPersonIdent.findAllEmails(request.pwOpt.get.personId) map {emailsDflt =>
+      val emailDflt = emailsDflt.headOption
+      val form = supportFormM.fill( (None, emailDflt, "") )
+      Ok(supportFormTpl(adnIdOpt, form))
+    }
   }
 
 
