@@ -1,11 +1,11 @@
-@(adnId: String, sf: Form[_])(implicit ctx: Context)
+@(adnIdOpt: Option[String], sf: Form[_])(implicit ctx: Context)
 
 @import helper._
 @import ctx._
 
-@supportBase("Служба поддержки", adnId = adnId) {
+@supportBase("Служба поддержки", adnIdOpt = adnIdOpt) {
 
-  @form(routes.MarketLkSupport.supportFormSubmit(adnId)) {
+  @form(routes.MarketLkSupport.supportFormSubmit(adnIdOpt)) {
     @inputText(
       sf("phone"),
       '_label -> (Messages("Phone") + ":")

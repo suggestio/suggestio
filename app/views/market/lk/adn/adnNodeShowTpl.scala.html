@@ -33,10 +33,6 @@
   <div class="page-title">
     <div class="page-title_cnt">
 
-      @if(isMyNode) {
-        <h1><a href="@routes.MarketLkSupport.supportForm(node.id.get)">Обратиться за помощью</a></h1>
-      }
-
       @* TODO Надо бы объеденить map и defining, но почему-то не работает оно. *@
       @if(showBackBtn) {
         @defining( if(isMyNode) Some(routes.MarketLk.lkList) else povAdnIdOpt.map(routes.MarketLkAdn.showAdnNode(_)) ) { backCallOpt =>

@@ -4,7 +4,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import util.event.SiowebNotifier.Implicts.sn
 import util.SiowebEsUtil.client
 import util.PlayLazyMacroLogsImpl
-import util.acl.IsAdnNodeAdmin
+import util.acl.{IsAuth, IsAdnNodeAdmin}
 import views.html.market.lk.support._
 
 /**
@@ -31,21 +31,19 @@ object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
 
 
   /** Отрендерить форму с запросом помощи.
-    * @param adnId id узла.
     * @return 200 Ок и страница с формой.
     */
-  def supportForm(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  def supportForm(adnIdOpt: Option[String]) = IsAuth.async { implicit request =>
     // TODO Брать дефолтовое значение email'а по сессии
     val form = supportFormM
-    Ok(supportFormTpl(adnId, form))
+    Ok(supportFormTpl(adnIdOpt, form))
   }
 
 
   /**
    * Сабмит формы обращения за помощью.
-   * @param adnId id узла.
    */
-  def supportFormSubmit(adnId: String) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  def supportFormSubmit(adnIdOpt: Option[String]) = IsAuth.async { implicit request =>
     ???
   }
 
