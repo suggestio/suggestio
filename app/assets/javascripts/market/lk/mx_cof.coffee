@@ -291,7 +291,11 @@ PersonalCabinet =
       .each () ->
         $this = $ this
         $parent = $this.parent()
-        lineHeight = $parent.height() - 10
+
+        if $this.attr 'data-inherit-height'
+          lineHeight = $parent.height()
+        else
+          lineHeight = $parent.height() - 10
 
         $this.height lineHeight
 

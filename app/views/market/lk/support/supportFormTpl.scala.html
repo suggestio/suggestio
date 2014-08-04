@@ -2,26 +2,44 @@
 
 @import helper._
 @import ctx._
+@import util.FC.tdFc
 
-@supportBase("Служба поддержки", adnIdOpt = adnIdOpt) {
+
+@supportBase("СЛУЖБА ПОДДЕРЖКИ", adnIdOpt = adnIdOpt) {
 
   @form(routes.MarketLkSupport.supportFormSubmit(adnIdOpt)) {
-    @inputText(
-      sf("phone"),
-      '_label -> (Messages("Phone") + ":")
-    )
 
-    @inputText(
-      sf("email"),
-      '_label -> "E-mail:"
-    )
+    <table class="input-w __size-L">
+      @inputText(
+        sf("phone"),
+        '_label -> (Messages("Phone") + ":")
+      )
+    </table>
 
-    @textarea(
-      sf("msg"),
-      '_label -> "Опишите проблему:"
-    )
+    <table class="input-w __size-L">
+      @inputText(
+        sf("email"),
+        '_label -> "E-mail:"
+      )
+    </table>
 
-    <input type="submit" value="Отправить"/>
+    <table class="input-w __size-L">
+      @textarea(
+        sf("msg"),
+         '_label -> "Опишите проблему:"
+      )
+    </table>
+
+    <div class="btn-w __size-M __align-by-inputs">
+      <a class="siom-ac-btn __color-2 __size-M __ft-XM f-left js-submit-btn">Отправить</a>
+
+      <div class="border-line __vertical-light __separator f-left js-vertical-line" data-inherit-height="true"></div>
+      <div class="color-strong f-left feedback_phone-text">
+        Или свяжитесь с нами по телефону:<br/>
+        <strong class="ft-M">8 (812) 640-76-46</strong>
+      </div>
+
+    </div>
   }
 
 }
