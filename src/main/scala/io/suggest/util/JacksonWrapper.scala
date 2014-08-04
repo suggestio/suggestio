@@ -45,6 +45,12 @@ object JacksonWrapper {
     writer.toString
   }
 
+  /** Распарсить строку json и отрендерить назад в красивую строку. */
+  def prettify(jsonStr: String) = {
+    val json = mapper.readValue(jsonStr, classOf[Object])
+    prettyWriter.writeValueAsString(json)
+  }
+
 
   def deserialize[T: Manifest](arr: Array[Byte]) : T = {
     mapper.readValue(arr, typeReference[T])

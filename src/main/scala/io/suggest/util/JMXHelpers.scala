@@ -1,6 +1,8 @@
 package io.suggest.util
 
 import javax.management.ObjectName
+import org.slf4j.LoggerFactory
+
 import scala.concurrent.{Await, Awaitable}
 import scala.concurrent.duration._
 
@@ -22,5 +24,16 @@ trait JMXBase {
   def jmxName: String
 
   /** Хелпер для быстрой синхронизации фьючерсов. */
-  implicit protected def awaitFuture[T](fut: Awaitable[T]) = Await.result(fut, 10 seconds)
+  implicit protected def awaitFuture[T](fut: Awaitable[T]) = {
+    try {
+      Await.result(fut, 10 seconds)
+    } catch {
+      case ex: Throwable =>
+        val logger = LoggerFactory.getLogger(getClass)
+        logger.error("Failed to execute async JMX action: " + fut.toString, ex)
+        // TODO Нужно возвращать сериализабельный экзепшен, чтобы юзеру нормально отобразился.
+        throw ex
+    }
+  }
+
 }

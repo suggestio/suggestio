@@ -9,7 +9,7 @@ import org.joda.time.{DateTimeZone, ReadableInstant, DateTime}
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchType, SearchResponse}
 import scala.collection.JavaConversions._
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
-import org.elasticsearch.common.xcontent.XContentBuilder
+import org.elasticsearch.common.xcontent.{ToXContent, XContentFactory, XContentBuilder}
 import org.elasticsearch.client.Client
 import scala.util.{Failure, Success}
 import io.suggest.event.SioNotifierStaticClientI
@@ -420,7 +420,13 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
   // Короткие враппер для типичных операций в рамках статической модели.
   def prepareSearch(implicit client: Client) = client.prepareSearch(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
   def prepareCount(implicit client: Client)  = client.prepareCount(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
-  def prepareGet(id: String)(implicit client: Client) = client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
+  def prepareGet(id: String)(implicit client: Client) = {
+    val req = client.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
+    val rk = getRoutingKey(id)
+    if (rk.isDefined)
+      req.setRouting(rk.get)
+    req
+  }
   def prepareUpdate(id: String)(implicit client: Client) = client.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, id)
   def prepareDelete(id: String)(implicit client: Client) = client.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
   def prepareDeleteByQuery(implicit client: Client) = client.prepareDeleteByQuery(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
@@ -439,11 +445,8 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
    * @return true/false
    */
   def isExist(id: String)(implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
-    val req = prepareGet(id)
-    val rk = getRoutingKey(id)
-    if (rk.isDefined)
-      req.setRouting(rk.get)
-    req.setFields()
+    prepareGet(id)
+      .setFields()
       .execute()
       .map { _.isExists }
   }
@@ -517,14 +520,48 @@ trait EsModelMinimalStaticT extends EsModelStaticMapping {
    * @return Экземпляр сабжа, если такой существует.
    */
   def getById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Option[T]] = {
-    val maybeRk = getRoutingKey(id)
-    val req = prepareGet(id)
-    if (maybeRk.isDefined)
-      req.setRouting(maybeRk.get)
-    req.execute()
+    prepareGet(id)
+      .execute()
       .map { getResp =>
         if (getResp.isExists) {
           val result = deserializeOne(Option(getResp.getId), getResp.getSourceAsMap, Option(getResp.getVersion))
+          Some(result)
+        } else {
+          None
+        }
+      }
+  }
+
+  /**
+   * Выбрать документ из хранилища без парсинга. Вернуть сырое тело документа (его контент).
+   * @param id id документа.
+   * @return Строка json с содержимым документа или None.
+   */
+  def getRawContentById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Option[String]] = {
+    prepareGet(id)
+      .execute()
+      .map { getResp =>
+        if (getResp.isExists) {
+          val result = getResp.getSourceAsString
+          Some(result)
+        } else {
+          None
+        }
+      }
+  }
+
+  /**
+   * Прочитать документ как бы всырую.
+   * @param id id документа.
+   * @return Строка json с документом полностью или None.
+   */
+  def getRawById(id: String)(implicit ec:ExecutionContext, client: Client): Future[Option[String]] = {
+    prepareGet(id)
+      .execute()
+      .map { getResp =>
+        if (getResp.isExists) {
+          val xc = getResp.toXContent(XContentFactory.jsonBuilder(), ToXContent.EMPTY_PARAMS)
+          val result = xc.string()
           Some(result)
         } else {
           None
@@ -930,6 +967,19 @@ trait EsModelJMXMBeanCommon {
    */
   def getAllIds(maxResults: Int): String
 
+  /**
+   * Выдать документ "в сырую".
+   * @param id id документа.
+   * @return Сырая строка json pretty.
+   */
+  def getRawById(id: String): String
+
+  /**
+   * Выдать содержимое документа без парсинга.
+   * @param id id документа.
+   * @return Сырая строка json pretty.
+   */
+  def getRawContentById(id: String): String
 }
 
 trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon {
@@ -984,6 +1034,16 @@ trait EsModelJMXBase extends JMXBase with EsModelJMXMBeanCommon {
 
   override def getAllIds(maxResults: Int): String = {
     companion.getAllIds(maxResults).sorted.mkString("\n")
+  }
+
+  override def getRawById(id: String): String = {
+    companion.getRawById(id)
+      .map { _.fold("not found")(JacksonWrapper.prettify) }
+  }
+
+  override def getRawContentById(id: String): String = {
+    companion.getRawContentById(id)
+      .map { _.fold("not found")(JacksonWrapper.prettify) }
   }
 
   override def esTypeName: String = companion.ES_TYPE_NAME
