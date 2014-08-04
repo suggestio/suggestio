@@ -19,15 +19,20 @@ import java.{util => ju}
 /** Статичная утиль для генерации поисковых ES-запросов. */
 object AdsSearch {
 
+  // TODO MVEL-скрипты выпиливаются в es-1.4.0. Нужно обновится до es-1.3.0 и заюзать groovy.
+
   /** MVEL-код для инкремента скора в incr раз, если id документа содержится в переданной коллекции ids.
     * Поле _id не доступно в хранимых MAd-документах, поэтому нужно извлекать его из _uid ручками.
+    * o.es.index.mapper.Uid тоже не доступен, поэтому тупо вытаскиваем _id из _uid путём отрезания по символу #.
     * @see [[http://stackoverflow.com/a/15539093]]
     */
-  // TODO Скрипт не пашет: не видит org.elasticsearch....
+  // TODO Оно кажется не работает совсем.
   val IDS_SCORE_MVEL =
     """
-      |id = org.elasticsearch.index.mapper.Uid.createUid(doc["_uid"].value).id
-      |if (ids contains id) { _score * incr; } else { _score; }
+      |uid = doc["_uid"].value;
+      |dInx = uid.indexOf('#');
+      |id = uid.substring(dInx + 1);
+      |if (ids contains id) { incr; } else { 1.0; }
       |""".stripMargin
 
   /**
@@ -147,6 +152,13 @@ object AdsSearch {
         .param("incr", 100)
       query3 = QueryBuilders.functionScoreQuery(query3, scoreFun)
     }
+    // Если включен withoutIds, то нужно обернуть query3 в соответствующий not(ids filter).
+    if (withoutIds.nonEmpty) {
+      val idsFilter = FilterBuilders.notFilter(
+        FilterBuilders.idsFilter().addIds(withoutIds : _*)
+      )
+      query3 = QueryBuilders.filteredQuery(query3, idsFilter)
+    }
     // Возвращаем собранный запрос.
     query3
   }
@@ -182,6 +194,9 @@ trait AdsSearchArgsT {
   /** Форсировать указанные id в начало списка (через мощный скоринг). */
   def forceFirstIds: Seq[String]
 
+  /** Отбрасывать документы, имеющие указанные id'шники. */
+  def withoutIds: Seq[String]
+
   /** Значение Generation timestamp, генерится при первом обращении к выдаче и передаётся при последующих запросах выдачи. */
   def generation: Option[Long]
 }
@@ -198,6 +213,7 @@ trait AdsSearchArgsWrapperT extends AdsSearchArgsT {
   override def qOpt = underlying.qOpt
   override def generation = underlying.generation
   override def catIds = underlying.catIds
+  override def withoutIds = underlying.withoutIds
 }
 
 
@@ -209,8 +225,8 @@ trait AdsSimpleSearchT extends EsModelMinimalStaticT {
     // Запускаем собранный запрос.
     prepareSearch
       .setQuery(query)
-      .setSize(adSearch.maxResults)
-      .setFrom(adSearch.offset)
+      .setSize(Math.min(200, Math.max(1, adSearch.maxResults)))
+      .setFrom(Math.max(0, adSearch.offset))
   }
 
   /** Постпроцессинг результатов поиска рекламных карточек. */
