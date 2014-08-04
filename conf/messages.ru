@@ -217,6 +217,7 @@ stat_year=За последний год пройдено страниц
 email_us_at=Напишите нам на адрес
 or_fill_the_form=или заполните форму ниже
 
+your_name=Ваше имя
 your_email=Ваш email
 your_message=Ваше сообщение
 about_step_one=Мы — Suggest.io. Мы делаем лучший пользовательский поиск.
