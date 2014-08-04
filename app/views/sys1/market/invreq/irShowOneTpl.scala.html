@@ -88,7 +88,6 @@
       } { node =>
         <h3>@if(nodeInstalled) {Узел} else {Шаблон узла}</h3>
         @_nodeMetaTpl(node.meta)
-        @* TODO Отобразить другие полезные поля узла тут. *@
         @if(nodeInstalled) {
           Этот узел сейчас <a href="@routes.SysMarket.showAdnNode(node.id.get)">существует</a> в системе.
         }

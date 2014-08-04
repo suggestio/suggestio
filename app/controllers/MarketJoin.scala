@@ -224,7 +224,7 @@ object MarketJoin extends SioController with PlayMacroLogsImpl with CaptchaValid
     }
     MInviteRequest(
       name      = companyName + " от " + email1,
-      reqType   = InviteReqTypes.Wifi,
+      reqType   = reqType,
       company   = Left(company),
       adnNode   = Left(node),
       contract  = Left(mbc),
