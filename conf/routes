@@ -146,8 +146,8 @@ GET  /m/lk/poffer/:offerId/edit         controllers.MarketOffer.editPromoOfferFo
 POST /m/lk/poffer/:offerId/edit         controllers.MarketOffer.editPromoOfferFormSubmit(offerId)
 
 # Обращение в тех.поддерку зареганного клиента sio-market.
-GET  /m/lk/support                      controllers.MarketLkSupport.supportForm(adnId: Option[String] ?= None)
-POST /m/lk/support                      controllers.MarketLkSupport.supportFormSubmit(adnId: Option[String] ?= None)
+GET  /m/lk/support                      controllers.MarketLkSupport.supportForm(adnId: Option[String] ?= None, r: Option[String] ?= None)
+POST /m/lk/support                      controllers.MarketLkSupport.supportFormSubmit(adnId: Option[String] ?= None, r: Option[String] ?= None)
 
 
 POST /img/tmp/prepare                   controllers.Img.handleTempImg

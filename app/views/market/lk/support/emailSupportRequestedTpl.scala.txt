@@ -1,0 +1,18 @@
+@(userName: String, lsr: MLkSupportRequest, adnIdOpt: Option[String])(implicit ctx: Context)
+
+@* Шаблон письма для уведомления админов s.io о запросе техподдержки. *@
+
+Пользователь @userName @lsr.phoneOpt.map {phone =>(тел. @phone)} задал вопрос:
+
+------------------------------------------
+@lsr.msg
+------------------------------------------
+
+@if(!(userName equalsIgnoreCase lsr.replyEmail)) {
+  Указанный email для ответа: @lsr.replyEmail
+}
+
+@adnIdOpt.map { adnId =>
+  Возможный рекламный узел запроса:
+  @routes.MarketLkAdn.showAdnNode(adnId)
+}

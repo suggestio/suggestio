@@ -238,14 +238,15 @@ object Ident extends SioController with PlayMacroLogsImpl with EmailPwSubmit wit
     redirectUserSomewhere(request.pwOpt.get.personId)
   }
 
-  /** Сгенерить редирект куда-нибудь для указанного юзера. */
-  def redirectUserSomewhere(personId: String) = {
+  def redirectCallUserSomewhere(personId: String): Future[Call] = {
     MarketLk.getMarketRdrCallFor(personId) map {
-      case Some(rdrCall) =>
-        Redirect(rdrCall)
-      case None =>
-        Redirect(routes.Admin.index())
+      _ getOrElse routes.Admin.index()
     }
+  }
+
+  /** Сгенерить редирект куда-нибудь для указанного юзера. */
+  def redirectUserSomewhere(personId: String): Future[Result] = {
+    redirectCallUserSomewhere(personId) map { Redirect }
   }
 
 

@@ -119,3 +119,12 @@ case class MAdvPricing(
   prices: Iterable[(Currency, Float)],
   hasEnoughtMoney: Boolean
 )
+
+
+/** Экземпляр запроса помощи через обратную связь в ЛК. */
+case class MLkSupportRequest(
+  name        : Option[String],
+  replyEmail  : String,
+  msg         : String,
+  phoneOpt    : Option[String] = None
+)
