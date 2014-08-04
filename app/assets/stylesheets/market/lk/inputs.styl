@@ -1,0 +1,98 @@
+/********************************************************************************************************************/
+/* Поля для ввода информации */
+/********************************************************************************************************************/
+.input-w
+  margin-top: 10px
+  margin-bottom: 10px
+
+  &.__textarea
+
+    .input-w_left
+      vertical-align: top
+      padding-top: 18px
+
+  &.__size-L
+    width: 100%
+
+  &_left
+    width: 120px
+    vertical-align: middle
+
+  .input-w_left.__text-top
+    vertical-align: top
+
+  &_tinymce-editor
+    vertical-align: top
+    width: 650px
+
+  &_prop-name
+    float: left
+
+    color: #959595
+    font-family: 'Arial'
+    font-size: 12px
+    font-weight: normal
+    text-shadow(1px 1px 1px #f8f8f8)
+
+  .input-w_prop-name.__right
+    padding-left: 10px
+
+  &.__focus
+
+    .input
+      border-color: siomBlueColor
+
+      input
+        color: siomBlueColor
+
+      textarea
+        color: siomBlueColor
+
+
+  &.__disabled
+
+    input
+      background: url('/assets/images/market/lk/lock.png') no-repeat 95% center #F0F0F0
+
+
+.input
+  background: none repeat scroll 0 0 #FFFFFF
+  border: 1px solid #B4B3B3
+  padding: 1px
+
+  &_shadow
+    overflow: hidden
+    border-left: 1px solid #FBFBFB
+    border-right: 1px solid #FBFBFB
+    border-top: 1px solid #D2D3D3
+    border-radius(4px)
+
+    input
+      outline: 0
+      padding: 0 10px
+      width: 100%
+      height: 35px
+      font-size: 16px
+      color: #959595
+      font-family: 'Arial'
+
+    textarea
+      outline: 0
+      width: 100%
+      height: 60px
+      padding: 10px
+      resize: none
+      font-size: 16px
+      color: #959595
+      font-family: 'Arial'
+
+  &.__error
+    border: 1px solid #e23131
+
+    input
+      background: #F3B0B0
+      color: white
+
+    textarea
+      background: #F3B0B0
+      color: white

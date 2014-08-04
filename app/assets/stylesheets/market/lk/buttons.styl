@@ -82,6 +82,15 @@
 /* refactoring to MCSS */
 /********************************************************************************************************************/
 
+.btn-w
+  overflow: hidden /* внутри лежат элементы со свойством float */
+  text-align: center
+
+  &.__size-M
+    padding: 25px 0
+
+  &.__size-S
+    padding: 25px 20%
 
 .create-ad
 
@@ -120,6 +129,7 @@ siomAcBtnColor5 = #b6c2c5 /* серо-синий */
 
 .siom-ac-btn
   display: inline-block
+  border: none
   cursor: pointer
   text-decoration: none
   text-align: center
