@@ -5,10 +5,6 @@
 # Раздача жабаскрипта всем посетителям всех сайтов. Самая частовызываемая функция.
 GET  /js/v2/:domain/:qi_id              controllers.Js.v2(domain, qi_id)
 
-# Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20
-# Без этого костыля, запрос html'ки просто подвисает.
-GET  /assets/javascripts/lib/tinymce/js/tinymce/plugins/colorpicker/index.html  controllers.Static.tinymceColorpicker
-
 # Map static resources from the /public folder to the /assets URL path
 GET  /assets/*file                      controllers.Assets.at(path="/public", file)
 
