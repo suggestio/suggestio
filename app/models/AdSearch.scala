@@ -92,7 +92,8 @@ case class AdSearch(
   maxResultsOpt: Option[Int] = None,
   offsetOpt: Option[Int] = None,
   forceFirstIds: List[String] = Nil,
-  generation  : Option[Long] = None
+  generation  : Option[Long] = None,
+  withoutIds  : List[String] = Nil
 ) extends AdsSearchArgsT {
 
   /** Абсолютный сдвиг в результатах (постраничный вывод). */

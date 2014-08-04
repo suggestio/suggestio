@@ -176,12 +176,14 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
     * @return
     */
   def focusedAds(adSearch: AdSearch, h: Boolean) = MaybeAuth.async { implicit request =>
+    // TODO Не искать вообще карточки, если firstIds.len >= adSearch.size
+    // TODO Выставлять offset для поиска с учётом firstIds?
     val mads1Fut = {
       // Костыль, т.к. сортировка forceFirstIds на стороне ES-сервера всё ещё не пашет:
       val adSearch2 = if (adSearch.forceFirstIds.isEmpty) {
         adSearch
       } else {
-        adSearch.copy(forceFirstIds = Nil)
+        adSearch.copy(forceFirstIds = Nil, withoutIds = adSearch.forceFirstIds)
       }
       MAd.searchAds(adSearch2)
     }
@@ -189,24 +191,25 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
     val producersFut = MAdnNodeCache.multiGet(adSearch.producerIds)
     // Если выставлены forceFirstIds, то нужно подолнительно запросить получение указанных id карточек и выставить их в начало списка mads1.
     val mads2Fut: Future[Seq[MAd]] = if (adSearch.forceFirstIds.nonEmpty) {
-      val firstAdsFut = MAd.multiGet(adSearch.forceFirstIds)
-        .map { _.filter {
+      // Если заданы firstIds и offset == 0, то нужно получить из модели указанные рекламные карточки.
+      val firstAdsFut = if (adSearch.offset <= 0) {
+        MAd.multiGet(adSearch.forceFirstIds)
+          .map { _.filter {
           mad => adSearch.producerIds contains mad.producerId
         } }
+      } else {
+        Future successful Nil
+      }
+      // Замёржить полученные first-карточки в основной список карточек.
       for {
         mads      <- mads1Fut
         firstAds  <- firstAdsFut
       } yield {
-        val mads1: Seq[MAd] = if (firstAds.nonEmpty) {
-          val firstAdsIds = firstAds.map(_.id.get)
-          // Если в mads, которые получились в результате поиска, уже содержаться те объявы, которые есть в firstAds, то выкинуть их из хвоста.
-          mads filter {
-            mad => !(firstAdsIds contains mad.id.get)
-          }
-        } else {
+        // Нано-оптимизация.
+        if (firstAds.nonEmpty)
+          firstAds ++ mads
+        else
           mads
-        }
-        firstAds ++ mads1
       }
     } else {
       // Дополнительно выставлять первые карточки не требуется. Просто возвращаем фьючерс исходного списка карточек.
@@ -218,7 +221,7 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
         val producer = producers.head
         mads2Fut flatMap { mads =>
           // Рендерим базовый html подвыдачи (если запрошен) и рендерим остальные рекламные блоки отдельно, для отложенный инжекции в выдачу (чтобы подавить тормоза от картинок).
-          val mads4renderAsArray = if (h) mads.tail else mads
+          val mads4renderAsArray = if (h) mads.tail else mads   // Caused by: java.lang.UnsupportedOperationException: tail of empty list
           val ctx = implicitly[Context]
           // Распараллеливаем рендер блоков по всем ядрам (называется parallel map). На 4ядернике (2 + HT) получается двукратный прирост на 33 карточках.
           val blocksHtmlsFut = parRenderBlocks(mads4renderAsArray, startIndex = adSearch.offset) {
