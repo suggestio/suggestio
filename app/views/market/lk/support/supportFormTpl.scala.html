@@ -1,0 +1,27 @@
+@(adnId: String, sf: Form[_])(implicit ctx: Context)
+
+@import helper._
+@import ctx._
+
+@supportBase("Служба поддержки", adnId = adnId) {
+
+  @form(routes.MarketLkSupport.supportFormSubmit(adnId)) {
+    @inputText(
+      sf("phone"),
+      '_label -> (Messages("Phone") + ":")
+    )
+
+    @inputText(
+      sf("email"),
+      '_label -> "E-mail:"
+    )
+
+    @textarea(
+      sf("msg"),
+      '_label -> "Опишите проблему:"
+    )
+
+    <input type="submit" value="Отправить"/>
+  }
+
+}

@@ -145,6 +145,10 @@ GET  /m/lk/poffer/:offerId              controllers.MarketOffer.showPromoOffer(o
 GET  /m/lk/poffer/:offerId/edit         controllers.MarketOffer.editPromoOfferForm(offerId)
 POST /m/lk/poffer/:offerId/edit         controllers.MarketOffer.editPromoOfferFormSubmit(offerId)
 
+# Обращение в тех.поддерку зареганного клиента sio-market.
+GET  /m/lk/support/adn/:adnId           controllers.MarketLkSupport.supportForm(adnId)
+POST /m/lk/support/adn/:adnId           controllers.MarketLkSupport.supportFormSubmit(adnId)
+
 
 POST /img/tmp/prepare                   controllers.Img.handleTempImg
 GET  /img/tmp/:filename                 controllers.Img.getTempImg(filename)

@@ -22,6 +22,7 @@
 
 
 @market.lk.lkBase(node.meta.name, adnIdOpt = node.id, popupContent = Some(popupContent)) {
+
   @if(isMyNode) {
     @helper.javascriptRouter("jsRoutes")(
       routes.javascript.MarketAd.updateShowLevelSubmit
@@ -31,6 +32,10 @@
   @* Верхняя строка. *@
   <div class="page-title">
     <div class="page-title_cnt">
+
+      @if(isMyNode) {
+        <h1><a href="@routes.MarketLkSupport.supportForm(node.id.get)">Обратиться за помощью</a></h1>
+      }
 
       @* TODO Надо бы объеденить map и defining, но почему-то не работает оно. *@
       @if(showBackBtn) {
