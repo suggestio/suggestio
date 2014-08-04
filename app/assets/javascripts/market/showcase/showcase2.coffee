@@ -1497,7 +1497,7 @@ siomart =
 
     siomart.shop_load_locked = true
 
-    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + siomart.config.producer_ads_per_load + '&a.rcvr=' + siomart.config.mart_id
+    url = '/market/fads?a.shopId=' + shop_id + '&a.gen=' + Math.floor((Math.random() * 100000000000) + 1) + '&a.size=' + siomart.config.producer_ads_per_load + '&a.rcvr=' + siomart.config.mart_id + '&a.firstAdId=' + ad_id
 
     siomart.focused_ads.curl = url
 
@@ -1509,7 +1509,7 @@ siomart =
       siomart.history.push state_data, 'SioMarket', '/n/mart/' + shop_id + '/' + ad_id
 
     siomart.focused_ads.requested_ad_id = ad_id
-    siomart.request.perform url + '&a.firstAdId=' + ad_id
+    siomart.request.perform url
 
   ## Загрузить все офферы для магазина
   load_for_cat_id : ( cat_id, history_push ) ->
