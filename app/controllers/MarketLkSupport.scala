@@ -68,7 +68,7 @@ object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
         NotAcceptable(supportFormTpl(adnIdOpt, formWithErrors, r))
       },
       {lsr =>
-        trace(logPrefix + "Processing request from ip=" + request.remoteAddress)
+        trace(logPrefix + "Processing from ip=" + request.remoteAddress)
         val userEmailsFut = MPersonIdent.findAllEmails(request.pwOpt.get.personId)
         val mail = use[MailerPlugin].email
         mail.addHeader(REPLY_TO_HDR, lsr.replyEmail)
@@ -77,8 +77,9 @@ object MarketLkSupport extends SioController with PlayLazyMacroLogsImpl {
         val personId = request.pwOpt.get.personId
         userEmailsFut.map { ues =>
           val username = ues.headOption getOrElse personId
+          mail.setSubject("SiO Market: Вопрос от пользователя " + lsr.name.orElse(ues.headOption).getOrElse(""))
           mail.send(
-            bodyText = views.txt.market.lk.support.emailSupportRequestedTpl(username, lsr, adnIdOpt)
+            bodyText = views.txt.market.lk.support.emailSupportRequestedTpl(username, lsr, adnIdOpt, r = r)
           )
         } flatMap { _ =>
           // Письмо админам отправлено. Нужно куда-то перенаправить юзера.
