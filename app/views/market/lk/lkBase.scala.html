@@ -31,6 +31,7 @@
     <div class="header_cnt">
       <a class="siom-logo-def" href="@routes.MarketLk.lkIndex">
         <img src='@routes.Assets.at("images/market/sio-logo.png")' alt="logo" width="65" height="47"/>
+        <img class="test-version-icon" src='@routes.Assets.at("images/market/lk/test-version_retina.png")' alt="test version"/>
       </a>
       @ctx.usernameOpt.map { username =>
 
@@ -73,7 +74,8 @@
 
       <span class="copyright-block">
         @_copyrightTextTpl(withLink = false)
-        @*&nbsp;|&nbsp;<a class="copyright-link" href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>*@
+        &nbsp;|&nbsp;<a class="footer_link" href="@routes.Feedback.feedbackForm()">Обратная связь</a>
+        @*&nbsp;|&nbsp;<a class="footer_link" href="@routes.Market.contractOfferText("ru")">@Messages("Offer")</a>*@
       </span>
 
       <!--<div class="socials">
