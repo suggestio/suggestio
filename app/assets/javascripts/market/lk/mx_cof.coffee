@@ -223,7 +223,7 @@ PersonalCabinet =
     ##################################################################################################################
     checkbox: () ->
 
-      $ 'input[type = "checkbox"]'
+      $ '.lk input[type = "checkbox"]'
       .each ()->
         $this = $ this
         checked = $this.attr 'data-checked'
