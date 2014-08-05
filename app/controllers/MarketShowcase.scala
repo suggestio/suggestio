@@ -195,8 +195,8 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
       val firstAdsFut = if (adSearch.offset <= 0) {
         MAd.multiGet(adSearch.forceFirstIds)
           .map { _.filter {
-          mad => adSearch.producerIds contains mad.producerId
-        } }
+            mad => adSearch.producerIds contains mad.producerId
+          } }
       } else {
         Future successful Nil
       }
