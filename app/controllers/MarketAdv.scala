@@ -494,16 +494,7 @@ object MarketAdv extends SioController with PlayMacroLogsImpl {
           .map { _.fold(identity, NotAcceptable(_)) }
       },
       {reason =>
-        val advRefused = MAdvRefuse(request.advReq, reason, DateTime.now)
-        DB.withTransaction { implicit c =>
-          val rowsDeleted = request.advReq.delete
-          assertAdvsReqRowsDeleted(rowsDeleted, 1, advReqId)
-          val advr = advRefused.save
-          // Разблокировать средства на счёте.
-          MBillBalance.blockAmount(advr.prodAdnId, -advr.amount)  // TODO Нужно ли округлять, чтобы blocked в минус не уходило из-за неточностей float/double?
-          // Вернуть сохранённый refused
-          advr
-        }
+        MmpDailyBilling.refuseAdvReq(request.advReq, reason)
         RdrBackOr(r) { routes.MarketAdv.showNodeAdvs(request.rcvrNode.id.get) }
           .flashing("success" -> "Размещение рекламы отменено.")
       }

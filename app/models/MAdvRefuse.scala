@@ -84,7 +84,7 @@ case class MAdvRefuse(
   dateStatus    : DateTime = DateTime.now,
   dateCreated   : DateTime = DateTime.now,
   id            : Option[Int] = None
-) extends SqlModelSave[MAdvRefuse] with CurrencyCode with SqlModelDelete with MAdvI {
+) extends SqlModelSave[MAdvRefuse] with SqlModelDelete with MAdvI {
 
   override def mode = MAdvModes.REFUSED
   override def hasId: Boolean = id.isDefined

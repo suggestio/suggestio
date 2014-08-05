@@ -77,7 +77,7 @@ case class MAdvReq(
   showLevels    : Set[AdShowLevel],
   dateCreated   : DateTime = DateTime.now(),
   id            : Option[Int] = None
-) extends SqlModelSave[MAdvReq] with CurrencyCode with SqlModelDelete with MAdvI {
+) extends SqlModelSave[MAdvReq] with SqlModelDelete with MAdvI {
 
   override def mode = MAdvModes.REQ
   override def hasId = id.isDefined

@@ -68,10 +68,9 @@ object MAdv {
 
 
 /** Интерфейс всех экземпляров MAdv* моделей. */
-trait MAdvI { madvi =>
+trait MAdvI extends CurrencyCode { madvi =>
   def adId          : String
   def amount        : Float
-  def currencyCode  : String
   def comission     : Option[Float]
   def dateCreated   : DateTime
   def id            : Option[Int]
@@ -83,8 +82,6 @@ trait MAdvI { madvi =>
   def rcvrAdnId     : String
   def showLevels    : Set[AdShowLevel]
 
-  //def onStartPage = showLevels contains AdShowLevels.LVL_START_PAGE
-
   def amountMinusComission: Float = comission.fold(amount)(comission => amount * (1.0F - comission))
   def comissionAmount: Float =  comission.fold(amount)(amount * _)
   def advTerms = new AdvTerms {
@@ -92,6 +89,25 @@ trait MAdvI { madvi =>
     override def dateEnd: LocalDate = madvi.dateStart.toLocalDate
     override def dateStart: LocalDate = madvi.dateEnd.toLocalDate
   }
+
+  def maybeOk = this match {
+    case madvOk: MAdvOk => Some(madvOk)
+    case _ => None
+  }
+
+  def maybeRefused = this match {
+    case madvRef: MAdvRefuse => Some(madvRef)
+    case _ => None
+  }
+
+  def maybeReq = this match {
+    case madvReq: MAdvReq => Some(madvReq)
+    case _ => None
+  }
+
+  def isOk      = mode == MAdvModes.OK
+  def isReq     = mode == MAdvModes.REQ
+  def isRefused = mode == MAdvModes.REFUSED
 }
 
 

@@ -1,4 +1,4 @@
-@(mads: Seq[MAd], nodeOpt: Option[MAdnNode], adFreqs: AdFreqs_t, rcvrs: Seq[MAdnNode], a: AdSearch, ad2advMap: Map[String, Traversable[MAdvOk]])(implicit ctx: util.Context)
+@(mads: Seq[MAd], nodeOpt: Option[MAdnNode], adFreqs: AdFreqs_t, rcvrs: Seq[MAdnNode], a: AdSearch, ad2advMap: Map[String, Traversable[MAdvI]])(implicit ctx: util.Context)
 
 @* Список реклам и сервисных функций. *@
 
@@ -65,22 +65,31 @@
         }
       }
 
-      @if(thisNode.flatMap(_.id).exists(_ == mad.producerId)) {
+      @if( thisNode.flatMap(_.id) exists { adnId => mad.receivers.get(adnId).exists(_.slsPub.nonEmpty)} ) {
         <p>Саморазмещение</p>
       }
 
-      @mad.id.flatMap(ad2advMap.get).map { advsOk =>
-        @advsOk.map { advOk =>
+      @mad.id.flatMap(ad2advMap.get).map { advs =>
+        @advs.map { adv =>
           <p>
-            @if(advOk.isAuto) {Авторазмещение} else {Размещение}
-            c [@_prettyDate(advOk.dateStart, withSpan = true)]
-            по [@_prettyDate(advOk.dateEnd, withSpan = true)]
-            <a class="blue-link" href="@routes.SysMarket.showAdnNode(advOk.prodAdnId)">узел</a>
+            @adv.mode match {
+              case MAdvModes.OK         => { Принятое }
+              case MAdvModes.REQ        => { Запрошенное }
+              case MAdvModes.REFUSED    => { Отклонённое }
+            }
+            @adv.maybeOk.map { advOk =>
+              @if(advOk.isAuto) {авто}
+            }размещение
+            c [@_prettyDate(adv.dateStart, withSpan = true)]
+            по [@_prettyDate(adv.dateEnd, withSpan = true)]
+            <a class="blue-link" href="@routes.SysMarket.showAdnNode(adv.prodAdnId)">узел</a>
             =&gt;
-            <a class="blue-link" href="@routes.SysMarket.showAdnNode(advOk.rcvrAdnId)">узел</a>
-            @if(advOk.isPartner) {по-партнёрски}
-            за @formatPrice(advOk.amount, advOk.currency)
-            @advOk.comission.map { c =>
+            <a class="blue-link" href="@routes.SysMarket.showAdnNode(adv.rcvrAdnId)">узел</a>
+            @adv.maybeOk.map { advOk =>
+              @if(advOk.isPartner) {по-партнёрски}
+            }
+            за @formatPrice(adv.amount, adv.currency)
+            @adv.comission.map { c =>
               с комиссией @formatPercent(c)
             }
           </p>

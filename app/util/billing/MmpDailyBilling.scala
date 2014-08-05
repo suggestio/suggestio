@@ -371,6 +371,26 @@ object MmpDailyBilling extends PlayMacroLogsImpl {
   }
 
 
+  /**
+   * Процессинг отказа в запросе размещения рекламной карточки.
+   * @param advReq Запрос размещения.
+   * @param reason Причина отказа.
+   * @return Экземпляр сохранённого MAdvRefuse.
+   */
+  def refuseAdvReq(advReq: MAdvReq, reason: String): MAdvRefuse = {
+    val advRefused = MAdvRefuse(advReq, reason, DateTime.now)
+    DB.withTransaction { implicit c =>
+      val rowsDeleted = advReq.delete
+      assertAdvsReqRowsDeleted(rowsDeleted, 1, advReq.id.get)
+      val advr = advRefused.save
+      // Разблокировать средства на счёте.
+      MBillBalance.blockAmount(advr.prodAdnId, -advr.amount)  // TODO Нужно ли округлять, чтобы blocked в минус не уходило из-за неточностей float/double?
+      // Вернуть сохранённый refused
+      advr
+    }
+  }
+
+
   /** Цикл автоматического накатывания MAdvReq в MAdvOk. Нужно найти висячие MAdvReq и заапрувить их. */
   def autoApplyOldAdvReqs() {
     val period = new Period(AUTO_ACCEPT_REQS_AFTER_HOURS, 0, 0, 0)

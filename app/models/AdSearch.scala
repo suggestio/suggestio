@@ -33,7 +33,7 @@ object AdSearch {
     new QueryStringBindable[AdSearch] {
       def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, AdSearch]] = {
         for {
-          maybeShopIdOpt <- strOptBinder.bind(key + ".shopId", params)
+          maybeProdIdOpt <- strOptBinder.bind(key + ".shopId", params)
           maybeCatIdOpt  <- strOptBinder.bind(key + ".catId", params)
           maybeLevelOpt  <- strOptBinder.bind(key + ".level", params)
           maybeQOpt      <- strOptBinder.bind(key + ".q", params)
@@ -47,18 +47,18 @@ object AdSearch {
           Right(
             AdSearch(
               receiverIds = maybeRcvrIdOpt,
-              producerIds = maybeShopIdOpt,
-              catIds  = maybeCatIdOpt,
-              levels  = eitherOpt2list(maybeLevelOpt).flatMap(AdShowLevels.maybeWithName),
-              qOpt      = maybeQOpt,
+              producerIds = maybeProdIdOpt,
+              catIds      = maybeCatIdOpt,
+              levels      = eitherOpt2list(maybeLevelOpt).flatMap(AdShowLevels.maybeWithName),
+              qOpt        = maybeQOpt,
               maxResultsOpt = eitherOpt2option(maybeSizeOpt) map { size =>
                 Math.max(4,  Math.min(size, MAX_RESULTS_PER_RESPONSE))
               },
-              offsetOpt = eitherOpt2option(maybeOffsetOpt) map { offset =>
+              offsetOpt   = eitherOpt2option(maybeOffsetOpt) map { offset =>
                 Math.max(0,  Math.min(offset,  MAX_PAGE_OFFSET * maybeSizeOpt.getOrElse(10)))
               },
               forceFirstIds = maybeFirstId,
-              generation = maybeGen
+              generation  = maybeGen
             )
           )
         }

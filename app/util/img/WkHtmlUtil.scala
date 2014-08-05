@@ -30,6 +30,9 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
     }
   }
 
+  /** Название/путь к утили, вызываемой из командной строки. */
+  val WKHTML2IMG = configuration.getString("wkhtml.toimg.prog.name") getOrElse "wkhtmltoimage"
+
   /** Команда wkhtmltoimage для отправки на выполнение. */
   val CMD: List[String] = {
     var l = List(
@@ -41,7 +44,7 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
       "--quality", "100"
     )
     l = CACHE_DIR.fold (l) ("--cache-dir" :: _ :: l)
-    "wkhtmltoimage" :: l
+    WKHTML2IMG :: l
   }
 
   /**
@@ -53,7 +56,7 @@ object WkHtmlUtil extends PlayMacroLogsImpl {
    *         Exception при иных проблемах.
    */
   def html2img(url: URL, outFmt: OutImgFmt): Array[Byte] = {
-    val tmpFile = File.createTempFile("wkhtmltoimage", "." + outFmt)
+    val tmpFile = File.createTempFile("wkhtml2img", "." + outFmt)
     try {
       val cmdargs = CMD ++ List(url.toExternalForm, tmpFile.getAbsolutePath)
       val p = Runtime.getRuntime.exec(cmdargs.toArray)

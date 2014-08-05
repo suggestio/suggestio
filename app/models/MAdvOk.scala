@@ -144,7 +144,7 @@ case class MAdvOk(
   isOnline      : Boolean = false,
   isPartner     : Boolean = false,
   id            : Option[Int] = None
-) extends SqlModelSave[MAdvOk] with CurrencyCode with SqlModelDelete with MAdvI {
+) extends SqlModelSave[MAdvOk] with SqlModelDelete with MAdvI {
 
   override def mode = MAdvModes.OK
   override def hasId: Boolean = id.isDefined

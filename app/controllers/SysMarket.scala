@@ -6,6 +6,7 @@ import play.api.db.DB
 import play.twirl.api.HtmlFormat
 import util.acl._
 import models._
+import util.billing.MmpDailyBilling
 import views.html.sys1.market._
 import play.api.data._, Forms._
 import util.FormUtil._
@@ -725,7 +726,7 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     val adnNodeOptFut: Future[Option[MAdnNode]] = {
       adnNodeIdOpt.fold (Future successful Option.empty[MAdnNode]) { MAdnNodeCache.getById }
     }
-    val rcvrsFut = Future
+    val rcvrsFut: Future[Seq[MAdnNode]] = Future
       .traverse(a.receiverIds) { MAdnNodeCache.getById }
       .map { _.flatten }
     val ad2advMapFut = madsFut map { mads =>
@@ -776,6 +777,11 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         .foreach { advOk =>
           trace(s"${logPrefix}offlining advOk[${advOk.id.get}]...")
           advOk.copy(dateEnd = DateTime.now, isOnline = false).saveUpdate
+        }
+      MAdvReq.findByAdIdAndRcvr(adId, rcvrId = rcvrId, policy = SelectPolicies.UPDATE)
+        .foreach { madvReq =>
+          trace(s"${logPrefix}refusing advReq[${madvReq.id.get}]...")
+          MmpDailyBilling.refuseAdvReq(madvReq, "Refused")
         }
     }
     // Дождаться завершения остальных операций.
