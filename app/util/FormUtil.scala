@@ -46,6 +46,9 @@ object FormUtil {
 
   val strUnescapeF = {s: String => StringEscapeUtils.unescapeHtml4(s) }
 
+  /** sanitizer вызывает html escape для амперсандов, ковычек и т.д. Если это не нужно, то следует вызывать unescape ещё. */
+  val strTrimSanitizeUnescapeF = strTrimSanitizeF andThen strUnescapeF
+
   private val crLfRe = "\r\n".r
   private val lfCrRe = "\n\r".r
   private val lfRe = "\n".r
@@ -84,13 +87,13 @@ object FormUtil {
 
   /** Маппинг для номера этажа в ТЦ. */
   val floorM = nonEmptyText(maxLength = 4)
-    .transform(strTrimSanitizeF, strIdentityF)
+    .transform(strTrimSanitizeUnescapeF, strIdentityF)
   val floorOptM = optional(floorM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
 
   /** Маппинг для секции в ТЦ. */
   val sectionM = nonEmptyText(maxLength = 6)
-    .transform(strTrimSanitizeF, strIdentityF)
+    .transform(strTrimSanitizeUnescapeF, strIdentityF)
   val sectionOptM = optional(sectionM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
 
@@ -140,7 +143,7 @@ object FormUtil {
   def toStrOptM(x: Mapping[String]): Mapping[Option[String]] = {
     x.transform[Option[String]](Option.apply, strOptGetOrElseEmpty)
   }
-  def toSomeStrM(x: Mapping[String], trimmer: String => String = strTrimSanitizeF): Mapping[Option[String]] = {
+  def toSomeStrM(x: Mapping[String], trimmer: String => String = strTrimSanitizeUnescapeF): Mapping[Option[String]] = {
     x.transform[String](trimmer, strIdentityF)
      .verifying("error.required", !_.isEmpty)
      .transform[Option[String]](Some.apply, strOptGetOrElseEmpty)
@@ -152,7 +155,7 @@ object FormUtil {
 
 
   val nameM = nonEmptyText(maxLength = 64)
-    .transform(strTrimSanitizeF, strIdentityF)
+    .transform(strTrimSanitizeUnescapeF, strIdentityF)
   def companyNameM = nameM
 
 
@@ -170,13 +173,13 @@ object FormUtil {
     .transform [Option[String]] (emptyStrOptToNone, identity)
 
   val townM = nonEmptyText(maxLength = 32)
-    .transform(strTrimSanitizeF, strIdentityF)
+    .transform(strTrimSanitizeUnescapeF, strIdentityF)
   val townOptM = optional(townM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
   val townSomeM = toSomeStrM(townM)
 
   val addressM = nonEmptyText(minLength = 10, maxLength = 128)
-    .transform(strTrimSanitizeF, strIdentityF)
+    .transform(strTrimSanitizeUnescapeF, strIdentityF)
   val addressOptM = optional(addressM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
   val addressSomeM = toSomeStrM(addressM)
@@ -190,7 +193,7 @@ object FormUtil {
 
   // TODO Нужен нормальный валидатор телефонов.
   val phoneM = nonEmptyText(minLength = 5, maxLength = 50)
-    .transform(strTrimSanitizeF andThen strUnescapeF, strIdentityF)
+    .transform(strTrimSanitizeUnescapeF, strIdentityF)
   val phoneOptM = optional(phoneM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
   val phoneSomeM = toSomeStrM(phoneM)
@@ -433,7 +436,7 @@ object FormUtil {
 
   /** Маппинг для задания причины при сокрытии сущности. */
   val hideEntityReasonM = nonEmptyText(maxLength = 512)
-    .transform(strTrimSanitizeF, strIdentityF)
+    .transform(strTrimSanitizeUnescapeF, strIdentityF)
 
 
   /** Маппер типа adn-узла. */
