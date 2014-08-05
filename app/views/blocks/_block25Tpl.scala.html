@@ -3,6 +3,7 @@
 @import common._
 @import util.blocks.BlocksConf.Block25
 
+@blockBase(isStandalone) {
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl25 sm-block@mad.id" data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   <img class="bg" src="@ctx.myAudienceUrl@mad.imgs.get(Block25.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl20-bg.jpg"))" />
@@ -31,3 +32,4 @@
   }
 
 </div>
+}

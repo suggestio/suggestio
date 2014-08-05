@@ -246,6 +246,26 @@ object MarketShowcase extends SioController with PlayMacroLogsImpl {
   }
 
 
+  /**
+   * Отрендерить одну указанную карточку как веб-страницу.
+   * @param adId id рекламной карточки.
+   * @return 200 Ок с отрендеренной страницей-карточкой.
+   */
+  def standaloneBlock(adId: String) = MaybeAuth.async { implicit request =>
+    // TODO Вынести логику read-набега на карточку в отдельный ACL ActionBuilder.
+    MAd.getById(adId) map {
+      case Some(mad) =>
+        val bc: BlockConf = BlocksConf(mad.blockMeta.blockId)
+        // TODO Проверять карточку на опубликованность?
+        Ok( bc.renderBlock(mad, isStandalone = true) )
+
+      case None =>
+        warn(s"AdId $adId not found.")
+        http404AdHoc
+    }
+  }
+
+
   /** Параллельный рендер scala-списка блоков на основе списка рекламных карточек.
     * @param mads список рекламных карточек.
     * @param r функция-рендерер, зависимая от контекста.

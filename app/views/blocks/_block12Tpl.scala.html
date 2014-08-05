@@ -5,6 +5,7 @@
 @import svg._
 @import util.blocks.BlocksConf.Block12
 
+@blockBase(isStandalone) {
 @defining( mad.colors.getOrElse(Block12.fillColorBf.name, Block12.fillColorBf.anyDefaultValue) ) { fillColor =>
 
   <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl12" style="background: #@fillColor; @mad.colors.get(Block12.saleMaskColorBf.name).map { saleColor => border-color: #@saleColor;}" data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
@@ -39,4 +40,5 @@
 
   </div>
 
+}
 }

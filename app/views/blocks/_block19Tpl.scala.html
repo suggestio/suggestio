@@ -5,6 +5,7 @@
 @import svg._
 @import util.blocks.BlocksConf.Block19
 
+@blockBase(isStandalone) {
 @defining( mad.colors.getOrElse(Block19.fillColorBf.name, Block19.fillColorBf.anyDefaultValue) ) { fillColor =>
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl19 sm-block@mad.id" style="background: #@fillColor" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
@@ -51,4 +52,5 @@
   </div>
 
 </div>
+}
 }

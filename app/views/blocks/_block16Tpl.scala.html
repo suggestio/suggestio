@@ -5,6 +5,7 @@
 @import util.blocks.BlocksConf.Block16
 @import common._
 
+@blockBase(isStandalone) {
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl16 sm-block@mad.id"
      style="background: #@mad.colors.getOrElse(Block16.bgColorBf.name, Block16.bgColorBf.anyDefaultValue);"
      data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
@@ -43,3 +44,4 @@
   </div>
 
 </div>
+}

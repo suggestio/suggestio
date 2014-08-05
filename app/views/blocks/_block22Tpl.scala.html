@@ -4,6 +4,7 @@
 @import util.TplDataFormatUtil._
 @import util.blocks.BlocksConf.Block22
 
+@blockBase(isStandalone) {
 @defining( mad.colors.getOrElse(Block22.borderColorBf.name, Block22.borderColorBf.anyDefaultValue) )  { borderColor =>
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl22 sm-block@mad.id" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
@@ -46,4 +47,5 @@
   </div>
 
 </div>
+}
 }

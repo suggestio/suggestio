@@ -161,7 +161,7 @@ GET  /img/any/:imgId                    controllers.Img.getImg(imgId)
 GET  /img/crop/:imgId                   controllers.Img.imgCropForm(imgId, width:Int, height: Int, marker: Option[String] ?= None)
 POST /img/crop                          controllers.Img.imgCropSubmit
 
-# market
+# Витрины market'а.
 GET  /market/site/:adnId                controllers.MarketShowcase.demoWebSite(adnId)
 GET  /market/node_icon/:adnId           controllers.MarketShowcase.nodeIconJs(adnId)
 GET  /market/node_data/:adnId           controllers.MarketShowcase.nodeData(adnId)
@@ -171,6 +171,7 @@ GET  /market/index_all/:adnId           controllers.MarketShowcase.myAdsShowcase
 GET  /market/script/:adnId              controllers.MarketShowcase.nodeSiteScript(adnId)
 GET  /market/ads                        controllers.MarketShowcase.findAds(a: AdSearch)
 GET  /market/fads                       controllers.MarketShowcase.focusedAds(a: AdSearch, h: Boolean ?= true)
+GET  /market/ad/std/:adId               controllers.MarketShowcase.standaloneBlock(adId)
 
 # Сбор статистики.
 POST /market/ads/:adnId/stat/:adId      controllers.Market.adStats(adnId, adId, action: String)

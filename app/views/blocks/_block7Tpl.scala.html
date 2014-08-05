@@ -4,6 +4,7 @@
 @import common._
 @import util.blocks.BlocksConf.Block7
 
+@blockBase(isStandalone) {
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl7 sm-block@mad.id" @mad.colors.get(Block7.saleMaskColorBf.name).map { saleColor => style="border-color: #@saleColor"} data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   <div class="color-bg"@mad.colors.get(Block7.saleMaskColorBf.name).map { saleColor => style="background: #@saleColor"}></div>
@@ -37,3 +38,4 @@
   }
 
 </div>
+}

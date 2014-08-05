@@ -2,6 +2,7 @@
 
 @import util.TplDataFormatUtil._
 
+@blockBase(isStandalone) {
 <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl@bc.id sm-block@mad.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   <img class="bg" src="@ctx.myAudienceUrl@mad.imgs.get(bc.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl4-bg.jpg"))" alt=""/>
@@ -28,3 +29,4 @@
   }
 
 </div>
+}

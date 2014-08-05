@@ -9,38 +9,38 @@
 
 @blockBase(isStandalone) {
 
-    <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl1 sm-block@mad.id" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
-      <img class="bg" src="@ctx.myAudienceUrl@mad.imgs.get(Block1.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/block-ad-sample-image.jpg"))" alt="SALE"/>
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl1 sm-block@mad.id" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+  <img class="bg" src="@ctx.myAudienceUrl@mad.imgs.get(Block1.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/block-ad-sample-image.jpg"))" alt="SALE"/>
 
-      @mad.offers.headOption.map { offer =>
-          @offer.text1.map { title =>
-            <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title">
-              <div class="title">@Html(title.value)</div>
-            </div>
-            @_blockStyleTpl( mad.id, title, Block1.titleBf, "title", left = 18, top = 24  )
-          }
+  @mad.offers.headOption.map { offer =>
+    @offer.text1.map { title =>
+      <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title">
+        <div class="title">@Html(title.value)</div>
+      </div>
+      @_blockStyleTpl( mad.id, title, Block1.titleBf, "title", left = 18, top = 24  )
+    }
 
-          @offer.text2.map { descr =>
-            <div class="js-mvbl mvbl-description" data-connected-input="ad.offer.descr" style="">
-              <div class="description">@Html(descr.value)</div>
-            </div>
-            @_blockStyleTpl( mad.id, descr, Block1.descrBf, "description", left = 18, top = 52 )
-          }
+    @offer.text2.map { descr =>
+      <div class="js-mvbl mvbl-description" data-connected-input="ad.offer.descr" style="">
+        <div class="description">@Html(descr.value)</div>
+      </div>
+      @_blockStyleTpl( mad.id, descr, Block1.descrBf, "description", left = 18, top = 52 )
+    }
 
-          @offer.oldPrice.map { oldPrice =>
-            <div class="js-mvbl mvbl-old-price" data-connected-input="ad.offer.oldPrice">
-              <div class="old-price">@formatPrice(oldPrice.value, oldPrice.currency)</div>
-            </div>
-            @_blockStyleTpl( mad.id, oldPrice, Block1.oldPriceBf, "old-price", left = 18, top = 164 )
-          }
-          @offer.price.map { price =>
-            <div class="js-mvbl mvbl-price" data-connected-input="ad.offer.price">
-            <div class="price">@formatPrice(price.value, price.currency)</div>
-            </div>
-            @_blockStyleTpl( mad.id, price, Block1.priceBf, "price", left = 14, top = 226 )
-          }
-        }
+    @offer.oldPrice.map { oldPrice =>
+      <div class="js-mvbl mvbl-old-price" data-connected-input="ad.offer.oldPrice">
+        <div class="old-price">@formatPrice(oldPrice.value, oldPrice.currency)</div>
+      </div>
+      @_blockStyleTpl( mad.id, oldPrice, Block1.oldPriceBf, "old-price", left = 18, top = 164 )
+    }
 
-    </div>
+    @offer.price.map { price =>
+      <div class="js-mvbl mvbl-price" data-connected-input="ad.offer.price">
+        <div class="price">@formatPrice(price.value, price.currency)</div>
+      </div>
+      @_blockStyleTpl( mad.id, price, Block1.priceBf, "price", left = 14, top = 226 )
+    }
+  }
+</div>
 
 }
