@@ -4,7 +4,7 @@
 
 @if(isStandalone) {
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru" style="overflow: hidden;">
 <head>
 
   <title>@pageTitle.getOrElse("Suggest.io")</title>
@@ -21,9 +21,13 @@
   <script src="@routes.Assets.at("javascripts/jquery.min.js")"></script>
 
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase.css")'/>
+  <script src="@routes.Assets.at("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
+  <script src="@routes.Assets.at("javascripts/market/lk/mx_dev.js")"></script>
+  <script src="@routes.Assets.at("javascripts/market/lk/mx_cof.js")"></script>
+
 
 </head>
-<body style="position: relative; display: inline-block;">
+<body style="position: relative; display: inline-block; margin: 0; overflow: hidden;">
 }
 
 @content
