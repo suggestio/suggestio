@@ -5,6 +5,7 @@
 @import stuff.{_yesNoTpl => yn, _deleteSmthFormBtnTpl}
 @import helper._
 @import sys1.market.adn._
+@import sys1.market.company._
 
 @btn(btnText: String, to: Call) = {
   @form(to) {
@@ -21,7 +22,6 @@
   <br/><br/>
   <h3>@Messages("mir.type." + mir.reqType)</h3>
 
-  @* TODO Отрендерить тут данные по узлу/компании. *@
 
   @* Ответы на вопросы по поводу wi-fi, если есть. *@
   @mir.joinAnswers.map { ja =>
@@ -62,7 +62,7 @@
         TODO Нужна кнопка восстановления в шаблон.
       } { mc =>
         <h3>@if(mcInstalled) {@Messages("Company")} else {Шаблон компании}</h3>
-        <p>Название: @mc.meta.name</p>
+        @_companyMetaTpl(mc.meta)
         @if(mcInstalled) {
           Эта компания сейчас <a href="@routes.SysMarket.companyShow(mc.id.get)">существует</a> в системе.
         }
