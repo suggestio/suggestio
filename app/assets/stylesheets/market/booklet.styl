@@ -17,7 +17,6 @@ body
 .ft-S
   font-size 12px
 
-
 .color-dark
   color darkColor
 
@@ -75,8 +74,12 @@ body
   height    100%
 
   &.__dark
-    background-color  darkColor
-    opacity           0.8
+    background-color  #414141
+    opacity           0.78
+
+  &.__dark-strong
+    background-color  #282828
+    opacity           0.87
 
 
 .start-work-btn-w
@@ -95,6 +98,39 @@ body
   &.__attention
     border-color attentionColor
 
+.section-cnt
+  margin    0 auto
+  max-width 870px
+
+.title
+  font-size       30px
+  font-weight     800
+  text-transform  uppercase
+
+/********************************************************************************************************************/
+/* Paralax styles */
+/********************************************************************************************************************/
+.paralax
+  width                   100%
+  margin                  auto
+  position                relative
+
+  background-attachment   fixed
+  background-clip         border-box
+  background-color        rgba(0, 0, 0, 0)
+  background-origin       padding-box
+  background-position     center top
+  background-repeat       no-repeat
+
+.bg-paralax
+  background-attachment fixed
+  background-clip       border-box
+  background-repeat     repeat-y
+  height                100%
+  position              absolute
+  width                 100%
+  z-index               -1
+
 /********************************************************************************************************************/
 /* Header */
 /********************************************************************************************************************/
@@ -105,7 +141,11 @@ body
   left      0
   right     0
   z-index   1000
-  height    30px
+  height    50px
+  transition(all 0.4s linear 0s)
+
+  &.__js-dark
+    background-color  rgba(65,65,65,0.9)
 
   &_cnt
     position  relative
@@ -123,7 +163,7 @@ body
   &_nav
     position  absolute
     right     0
-    top       10px
+    top       15px
 
 .top-menu
   overflow hidden /* внутри элементы со свойством float */
@@ -154,17 +194,14 @@ body
 
   &_cnt
     position    relative
-    margin      0 auto
     z-index     500
-    padding-top 100px
-    max-width   870px
+    padding-top 200px
 
   &_title
+    padding-left    50px /* letter-spacing fix */
     font-size       36px
-    font-weight     800
     text-align      center
-    text-transform  uppercase
-    letter-spacing  60px
+    letter-spacing  50px
 
   &_logo
     margin-top    50px
@@ -200,16 +237,14 @@ body
 
   &_cnt
     padding-top 150px
-    max-width   870px
-    margin      0 auto
 
   &_title
+    padding-left    40px /* letter-spacing fix */
+
     color           #acaaaa
     font-size       36px
-    font-weight     800
     text-align      center
-    text-transform  uppercase
-    letter-spacing  45px
+    letter-spacing  40px
 
   &_wifi-title
     text-align  center
@@ -238,11 +273,10 @@ body
   &_bottom-title
     margin-top      200px
     margin-bottom   50px
-    font-size       30px
-    font-weight     800
+    padding-left    40px  /* letter-spacing fix */
+
     text-align      center
-    text-transform  uppercase
-    letter-spacing  50px
+    letter-spacing  40px
 
 
 .section-about-offer
@@ -276,16 +310,136 @@ body
     font-size   12px
 
 /********************************************************************************************************************/
-/* Paralax styles */
+/* Section Start */
 /********************************************************************************************************************/
-.paralax
-  width                   100%
-  margin                  auto
-  position                relative
+.section-start
+  height              400px
 
-  background-attachment   fixed
-  background-clip         border-box
-  background-color        rgba(0, 0, 0, 0)
-  background-origin       padding-box
-  background-position     center top
-  background-repeat       no-repeat
+  &_bg-paralax
+    background-image    url('/assets/images/market/booklet/section-2-4_bg.jpg')
+    background-position center -270px
+
+  &_cnt
+    position    relative
+    padding-top 65px
+
+  &_icon
+    float       left
+    width       50%
+    height      233px
+    background  url('/assets/images/market/booklet/section-start_icon.png') no-repeat center center
+
+  &_descr
+    overflow    hidden
+    text-align  center
+    color       #d3d1d1
+    font-size   12px
+
+  &_title
+    padding-top     30px
+    padding-bottom  50px
+    padding-left    50px /* letter-spacing fix */
+
+    color           attentionColor
+    letter-spacing  50px
+
+/********************************************************************************************************************/
+/* Section I can */
+/********************************************************************************************************************/
+.section-i-can
+
+  &_cnt
+    overflow        hidden
+    padding-top     180px
+    padding-bottom  240px
+
+  &_descr
+    position    relative
+    float       left
+    width       50%
+
+    color       #9b9b9b
+    font-size   12px
+    text-align  center
+
+  &_title
+    padding-bottom  35px
+    padding-left    30px /* letter-spacing fix */
+
+    color           attentionColor
+    letter-spacing  30px
+
+  &_icon
+    float       left
+    width       50%
+    height      189px
+    background  url('/assets/images/market/booklet/section-i-can_icon.png') no-repeat center center
+
+/********************************************************************************************************************/
+/* Section You wil notice */
+/********************************************************************************************************************/
+.section-you-notice
+  height              400px
+
+  &_bg-paralax
+    background-image    url('/assets/images/market/booklet/section-2-4_bg.jpg')
+    background-position center -270px
+
+  &_cnt
+    position    relative
+    padding-top 85px
+
+  &_icon
+    float       left
+    width       50%
+    height      205px
+    background  url('/assets/images/market/booklet/section-you-notice_icon.png') no-repeat center center
+
+  &_descr
+    overflow    hidden
+    width       50%
+
+    color       #9b9b9b
+    font-size   12px
+    text-align  center
+
+  &_title
+    padding-bottom  50px
+    padding-left    30px /* letter-spacing fix */
+
+    color           attentionColor
+    letter-spacing  30px
+
+/********************************************************************************************************************/
+/* Section So easy */
+/********************************************************************************************************************/
+.section-so-easy
+
+  &_cnt
+    overflow        hidden
+    padding-top     70px
+    padding-bottom  140px
+
+  &_descr
+    float       left
+    width       50%
+
+    color       #9b9b9b
+    font-size   12px
+    text-align  center
+
+  &_title
+    padding-bottom  35px
+    padding-left    30px /* letter-spacing fix */
+
+    color           attentionColor
+    letter-spacing  30px
+
+  &_icon
+    overflow     hidden
+    width       50%
+    height      246px
+    background  url('/assets/images/market/booklet/section-so-easy_icon.png') no-repeat center center
+
+  &_btn
+    margin-top  100px
