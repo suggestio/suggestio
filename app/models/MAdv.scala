@@ -177,6 +177,10 @@ trait MAdvStatic extends SqlModelStatic {
       .as(SqlModelStatic.boolColumnParser single)
   }
 
+  def findNotExpiredByAdIdAndRcvr(adId: String, rcvrId: String, policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(" WHERE ad_id = {adId} AND rcvr_adn_id = {rcvrId} AND now() <= date_end", policy, 'adId -> adId, 'rcvrId -> rcvrId)
+  }
+
   /**
    * Найти ряды по карточке и адресату запроса размещения.
    * @param adId id карточки.

@@ -15,14 +15,12 @@ import play.api.libs.concurrent.Execution.Implicits._
 import util.SiowebEsUtil.client
 import util.Context
 import com.typesafe.plugin.{use, MailerPlugin}
-import play.api.Play.current
+import play.api.Play.{current, configuration}
 import scala.concurrent.Future
 import io.suggest.ym.model.common.AdnMemberShowLevels.LvlMap_t
 import io.suggest.ym.model.common.{NodeConf, AdnMemberShowLevels}
 import play.api.mvc.AnyContent
 import play.api.i18n.Messages
-
-import scala.util.Success
 
 /**
  * Suggest.io
@@ -726,9 +724,24 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     val adnNodeOptFut: Future[Option[MAdnNode]] = {
       adnNodeIdOpt.fold (Future successful Option.empty[MAdnNode]) { MAdnNodeCache.getById }
     }
-    val rcvrsFut: Future[Seq[MAdnNode]] = Future
-      .traverse(a.receiverIds) { MAdnNodeCache.getById }
-      .map { _.flatten }
+    val rcvrsFut: Future[Map[String, Seq[MAdnNode]]] = //if (a.receiverIds.nonEmpty) {
+      // Используем только переданные ресиверы.
+      Future
+        .traverse(a.receiverIds) { MAdnNodeCache.getById }
+        .flatMap { rcvrOpts =>
+          val rcvrs = rcvrOpts.flatten
+          madsFut map { mads =>
+            mads.flatMap(_.id)
+              .map { adId => adId -> rcvrs }
+              .toMap
+          }
+        }
+    //} else {
+      // Собираем все ресиверы со всех рекламных карточек.
+      //madsFut flatMap { mads =>
+      //}
+      //???
+    //}
     val ad2advMapFut = madsFut map { mads =>
       lazy val adIds = mads.flatMap(_.id)
       val advsOk = if (a.receiverIds.nonEmpty) {
@@ -757,6 +770,11 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
     }
   }
 
+
+  /** Причина hard-отказа в размещении со стороны suggest.io, а не узла.
+    * Потом надо это заменить на нечто иное: чтобы суперюзер s.io вводил причину. */
+  val SIOM_REFUSE_REASON = configuration.getString("sys.m.ad.hard.refuse.reason") getOrElse "Refused by suggest.io."
+
   /** Убрать указанную рекламную карточку из выдачи указанного ресивера. */
   def removeAdRcvr(adId: String, rcvrId: String, r: Option[String]) = IsSuperuser.async { implicit request =>
     lazy val logPrefix = s"removeAdRcvr(ad[$adId], rcvr[$rcvrId]): "
@@ -771,17 +789,20 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
         warn(logPrefix + "MAd not found: " + adId)
         Future successful false
     }
-    // Надо убрать карточку из текущего размещения на узле, если есть.
+    // Надо убрать карточку из текущего размещения на узле, если есть: из advOk и из advReq.
     DB.withTransaction { implicit c =>
-      MAdvOk.findOnlineFor(adId, rcvrId = rcvrId, isOnline = true, policy = SelectPolicies.UPDATE)
+      // Резать как online, так и в очереди на публикацию.
+      MAdvOk.findNotExpiredByAdIdAndRcvr(adId, rcvrId = rcvrId, policy = SelectPolicies.UPDATE)
         .foreach { advOk =>
           trace(s"${logPrefix}offlining advOk[${advOk.id.get}]...")
           advOk.copy(dateEnd = DateTime.now, isOnline = false).saveUpdate
         }
+      // Запросы размещения переколбашивать в refused с возвратом бабла.
       MAdvReq.findByAdIdAndRcvr(adId, rcvrId = rcvrId, policy = SelectPolicies.UPDATE)
         .foreach { madvReq =>
           trace(s"${logPrefix}refusing advReq[${madvReq.id.get}]...")
-          MmpDailyBilling.refuseAdvReq(madvReq, "Refused")
+          // TODO Нужно как-то управлять причиной выпиливания. Этот action работает через POST, поэтому можно замутить форму какую-то.
+          MmpDailyBilling.refuseAdvReq(madvReq, SIOM_REFUSE_REASON)
         }
     }
     // Дождаться завершения остальных операций.

@@ -1,4 +1,4 @@
-@(mads: Seq[MAd], nodeOpt: Option[MAdnNode], adFreqs: AdFreqs_t, rcvrs: Seq[MAdnNode], a: AdSearch, ad2advMap: Map[String, Traversable[MAdvI]])(implicit ctx: util.Context)
+@(mads: Seq[MAd], nodeOpt: Option[MAdnNode], adFreqs: AdFreqs_t, rcvrsMap: Map[String, Seq[MAdnNode]], a: AdSearch, ad2advMap: Map[String, Traversable[MAdvI]])(implicit ctx: util.Context)
 
 @* Список реклам и сервисных функций. *@
 
@@ -19,12 +19,11 @@
   <link rel="stylesheet" type="text/css" href='@routes.Assets.at("stylesheets/market/showcase.css")'/>
 }
 
-@defining( nodeOpt.orElse(rcvrs.headOption) ) { thisNode =>
 @adnBase(
   title = "Рекламные карточки",
   headAfter = Some(headAfter),
   hPathAfter = Some(hPathAfter1),
-  nodeOpt = thisNode
+  nodeOpt = nodeOpt
 ) {
 
   <div class="ovh">
@@ -56,7 +55,7 @@
         }
       }
 
-      @if(rcvrs.nonEmpty) {
+      @mad.id.flatMap(rcvrsMap.get).map { rcvrs =>
         <br/>
         @rcvrs.map { rcvr =>
           @form( routes.SysMarket.removeAdRcvr(adId = mad.id.get, rcvrId = rcvr.id.get) ) {
@@ -65,7 +64,7 @@
         }
       }
 
-      @if( thisNode.flatMap(_.id) exists { adnId => mad.receivers.get(adnId).exists(_.slsPub.nonEmpty)} ) {
+      @if( nodeOpt.flatMap(_.id) exists { adnId => mad.receivers.get(adnId).exists(_.slsPub.nonEmpty)} ) {
         <p>Саморазмещение</p>
       }
 
@@ -112,5 +111,3 @@
   <strong class="color-strong">@(a.offset / a.maxResults)</strong>
   <a class="blue-link" href="@routes.SysMarket.showAdnNodeAds( a.copy(offsetOpt = Some(a.offsetOpt.getOrElse(0) + a.maxResults) ))">Следующая</a>
 }
-}
-
