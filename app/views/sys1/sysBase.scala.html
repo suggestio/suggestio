@@ -34,7 +34,11 @@
 
         @* Рендер flash-нотификаций. *@
         @ctx.flashMap.map { case (flashStatus, flashMsg) =>
-          <p>@flashStatus: @flashMsg</p>
+          <div style="display: none;" class="status-bar ft-L @if(flashStatus == "success") {__good} else {__bad}">
+            <div class="status-bar_cnt">
+              @flashMsg
+            </div>
+          </div>
         }
 
         <div class="page-title">
