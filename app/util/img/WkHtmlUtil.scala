@@ -13,6 +13,9 @@ import play.api.Play.{current, configuration}
  * Created: 05.08.14 9:57
  * Description: Утиль для работы с wkhtml2image, позволяющая рендерить html в растровые картинки.
  */
+
+// TODO Этот модуль пока не используется (не исп. с момента создания).
+
 object WkHtmlUtil extends PlayMacroLogsImpl {
 
   import LOGGER._

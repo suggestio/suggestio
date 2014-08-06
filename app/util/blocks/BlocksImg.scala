@@ -21,6 +21,8 @@ trait ISaveImgs {
   def saveImgs(newImgs: BlockImgMap, oldImgs: Imgs_t, blockHeight: Int): Future[Imgs_t] = {
     Future successful Map.empty
   }
+
+  def getBgImg(bim: BlockImgMap): Option[ImgInfo4Save[ImgIdKey]] = None
 }
 
 /** Базовая утиль для работы с картинками из blocks-контекстов. */
@@ -75,6 +77,10 @@ object BgImg {
 trait SaveBgImgI extends ISaveImgs {
   def BG_IMG_FN: String
   def bgImgBf: BfImage
+
+  override def getBgImg(bim: BlockImgMap): Option[ImgInfo4Save[ImgIdKey]]  = {
+    bim.get(BG_IMG_FN)
+  }
 }
 trait BgImg extends ValT with SaveBgImgI {
   // Константы можно легко переопределить т.к. trait и early initializers.
