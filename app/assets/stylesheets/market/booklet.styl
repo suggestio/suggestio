@@ -1,0 +1,291 @@
+@import "reset"
+@import "mixins"
+
+darkColor = black
+lightColor = white
+attentionColor = #ec1c23
+
+
+body
+  font-family   'Open Sans'
+  font-size     14px
+
+/********************************************************************************************************************/
+/* Common elements */
+/********************************************************************************************************************/
+
+.ft-S
+  font-size 12px
+
+
+.color-dark
+  color darkColor
+
+.color-light
+  color lightColor
+
+  &.__strong
+    color #a6a3a3
+
+.color-attention
+  color attentionColor
+
+.link
+  cursor          pointer
+  text-decoration none
+
+  &:hover
+    text-decoration none
+
+    .color-attention
+      color lightColor
+
+    .color-attention.__strong
+      color #a6a3a3
+
+    .color-light
+      color attentionColor
+
+    .color-light.__strong
+      color attentionColor
+
+.def-transition
+  transition(all 0.2s ease-in-out 0s)
+
+.relative
+  position relative
+
+.abs
+  position absolute
+
+.ovh
+  overflow hidden
+
+.w
+  display block
+
+  &.__margin-L
+    margin 20px 0
+
+.bg-mask
+  position  absolute
+  top       0
+  left      0
+  width     100%
+  height    100%
+
+  &.__dark
+    background-color  darkColor
+    opacity           0.8
+
+
+.start-work-btn-w
+  text-align center
+
+.start-work-btn
+  display     inline-block
+  padding     10px 50px
+  border      3px solid white
+  font-size   12px
+  border-radius(36px)
+
+  &.__section-sio-market
+    margin-top 50px
+
+  &.__attention
+    border-color attentionColor
+
+/********************************************************************************************************************/
+/* Header */
+/********************************************************************************************************************/
+
+.header
+  position  fixed
+  top       0
+  left      0
+  right     0
+  z-index   1000
+  height    30px
+
+  &_cnt
+    position  relative
+    margin    0 auto
+    max-width 1330px
+
+  &_logo
+    position    absolute
+    top         10px
+    left        10px
+
+    font-size   18px
+    font-weight 800
+
+  &_nav
+    position  absolute
+    right     0
+    top       10px
+
+.top-menu
+  overflow hidden /* внутри элементы со свойством float */
+
+  &_i
+    float       left
+    display     inline-block
+    width       120px
+    text-align  center
+    color       #7a857d
+
+    &:hover
+      color #d5d5d5
+
+  &_i.__js-act
+    color #d5d5d5
+
+
+/********************************************************************************************************************/
+/* Section SioMarket */
+/********************************************************************************************************************/
+.section-sio-market
+  height            100%
+  min-height        700px
+  max-height        1081px /* высота изображения бэкграунда */
+  background-image  url('/assets/images/market/booklet/section-sio-market_bg.jpg')
+  background-size   cover
+
+  &_cnt
+    position    relative
+    margin      0 auto
+    z-index     500
+    padding-top 100px
+    max-width   870px
+
+  &_title
+    font-size       36px
+    font-weight     800
+    text-align      center
+    text-transform  uppercase
+    letter-spacing  60px
+
+  &_logo
+    margin-top    50px
+    margin-left   auto
+    margin-right  auto
+    display       block
+
+  &_text
+    padding-top 25px
+    text-align  center
+    color       #aeadad
+
+  &_wifi
+    color     #e3e3e3
+    font-size 24px
+
+  &_go-bottom-btn
+    position    absolute
+    left        50%
+    bottom      10px
+    z-index     10
+    margin-left -13px
+
+    display     block
+    width       27px
+    height      45px
+    background  url('/assets/images/market/booklet/go-bottom-icon.png') no-repeat
+
+/********************************************************************************************************************/
+/* Section About */
+/********************************************************************************************************************/
+.section-about
+
+  &_cnt
+    padding-top 150px
+    max-width   870px
+    margin      0 auto
+
+  &_title
+    color           #acaaaa
+    font-size       36px
+    font-weight     800
+    text-align      center
+    text-transform  uppercase
+    letter-spacing  45px
+
+  &_wifi-title
+    text-align  center
+    margin-top  80px
+    font-size   20px
+    color       #5e5e5e
+
+  &_wifi-text
+    text-align  center
+    margin-top  15px
+    font-size   12px
+    color       #cac9c9
+
+  &_icons-title
+    text-align  center
+    margin-top  50px
+    font-size   20px
+    color       #ec1c23
+
+  &_offers
+    overflow      hidden /* внутри элементы со свойством float */
+    margin-top    45px
+    margin-bottom 90px
+    text-align    center
+
+  &_bottom-title
+    margin-top      200px
+    margin-bottom   50px
+    font-size       30px
+    font-weight     800
+    text-align      center
+    text-transform  uppercase
+    letter-spacing  50px
+
+
+.section-about-offer
+  display inline-block
+
+  &.__offer-1
+    float left
+
+  &.__offer-3
+    float right
+
+  &_icon
+    margin      0 auto
+    width       103px
+    height      103px
+    background  url('/assets/images/market/booklet/section-about_icons.png')
+
+  &_icon.__icon-1
+    background-position 0 -153px
+
+  &_icon.__icon-2
+    background-position 0 -306px
+
+  &_icon.__icon-3
+    background-position 0 0
+
+  &_text
+    margin-top  15px
+    color       #cac9c9
+    text-align  center
+    font-size   12px
+
+/********************************************************************************************************************/
+/* Paralax styles */
+/********************************************************************************************************************/
+.paralax
+  width                   100%
+  margin                  auto
+  position                relative
+
+  background-attachment   fixed
+  background-clip         border-box
+  background-color        rgba(0, 0, 0, 0)
+  background-origin       padding-box
+  background-position     center top
+  background-repeat       no-repeat
