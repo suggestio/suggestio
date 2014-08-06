@@ -185,8 +185,10 @@ GET  /market/join/success               controllers.MarketJoin.joinRequestSucces
 GET  /market/join/xadv                  controllers.MarketJoin.joinAdvRequest
 POST /market/join/xadv                  controllers.MarketJoin.joinAdvRequestSubmit
 
+# Разные заманушные статические странички.
 GET  /market/about                      controllers.Market.aboutMarket
 GET  /market/about-for-ad-makers        controllers.Market.aboutForAdMakers
+GET  /market/booklet                    controllers.Market.marketBooklet
 
 # Раздача текстов договора sio market.
 GET  /m/contract/:clang                 controllers.Market.contractOfferText(clang)

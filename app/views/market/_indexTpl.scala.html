@@ -58,6 +58,10 @@
         }
       </div>*@
 
+      @if(ctx.isSuperuser) {
+        superuser: <a href="@routes.Market.marketBooklet">booklet</a>
+      }
+
       <div class="login-page__wifi_block">
 
         <div class="wifi-icon"></div>

@@ -4,8 +4,7 @@ import play.twirl.api.HtmlFormat
 import util.billing.StatBillingQueueActor
 import util._
 import util.acl._
-import views.html.market.aboutTpl
-import views.html.market.aboutForAdMakersTpl
+import views.html.market._
 import models._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import SiowebEsUtil.client
@@ -82,6 +81,11 @@ object Market extends SioController with PlayMacroLogsImpl {
   /** Статическая страничка, описывающая суть sio market для рекламодателей. */
   def aboutForAdMakers = MaybeAuth { implicit request =>
     Ok(aboutForAdMakersTpl())
+  }
+
+  /** Выдать страницу с вертикальной страницой-презенташкой sio-маркета. */
+  def marketBooklet = MaybeAuth { implicit request =>
+    Ok(marketBookletTpl())
   }
 
 }
