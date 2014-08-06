@@ -120,6 +120,14 @@ object MAdvOk extends MAdvStatic {
      .as(MAdv.PROD_ADN_ID_PARSER *)
   }
 
+  def findByAdIdsAndProducersOnline(adIds: Traversable[String], prodIds: Traversable[String], isOnline: Boolean,
+                              policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
+    findBy(
+      " WHERE ad_id = ANY({adIds}) AND prod_adn_id = ANY({prodIds}) AND online = {isOnline}", policy,
+      'adIds -> strings2pgArray(adIds), 'prodIds -> strings2pgArray(prodIds), 'isOnline -> isOnline
+    )
+  }
+
 }
 
 

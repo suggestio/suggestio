@@ -717,14 +717,38 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
 
   /** Отобразить технический список рекламных карточек узла. */
   def showAdnNodeAds(a: AdSearch) = IsSuperuser.async { implicit request =>
+    // Ищем все рекламные карточки, подходящие под запрос.
+    // TODO Нужна устойчивая сортировка.
     val madsFut = MAd.searchAds(a)
-    val adnNodeIdOpt = a.producerIds.headOption
+    // Узнаём текущий узел на основе запроса. TODO Кривовато это как-то, может стоит через аргумент передавать?
+    val adnNodeIdOpt = a.producerIds.headOption orElse a.receiverIds.headOption
     val adFreqsFut = adnNodeIdOpt
       .fold [Future[MAdStat.AdFreqs_t]] (Future successful Map.empty) { MAdStat.findAdByActionFreqs }
     val adnNodeOptFut: Future[Option[MAdnNode]] = {
       adnNodeIdOpt.fold (Future successful Option.empty[MAdnNode]) { MAdnNodeCache.getById }
     }
-    val rcvrsFut: Future[Map[String, Seq[MAdnNode]]] = //if (a.receiverIds.nonEmpty) {
+    // Собираем карту размещений рекламных карточек.
+    val ad2advMapFut = madsFut map { mads =>
+      lazy val adIds = mads.flatMap(_.id)
+      val advs: Seq[MAdvI] = if (a.receiverIds.nonEmpty) {
+        // Ищем все размещения имеющихся карточек у запрошенных ресиверов.
+        DB.withConnection { implicit c =>
+          MAdvOk.findByAdIdsAndRcvrs(adIds, rcvrIds = a.receiverIds) ++
+            MAdvReq.findByAdIdsAndRcvrs(adIds, rcvrIds = a.receiverIds)
+        }
+      } else if (a.producerIds.nonEmpty) {
+        // Ищем размещения карточек для продьюсера.
+        DB.withConnection { implicit c =>
+          MAdvOk.findByAdIdsAndProducersOnline(adIds, prodIds = a.producerIds, isOnline = true) ++
+            MAdvReq.findByAdIdsAndProducers(adIds, prodIds = a.producerIds)
+        }
+      } else {
+        Nil
+      }
+      advs.groupBy(_.adId)
+    }
+    // Собираем ресиверов рекламных карточек.
+    val rcvrsFut: Future[Map[String, Seq[MAdnNode]]] = if (a.receiverIds.nonEmpty) {
       // Используем только переданные ресиверы.
       Future
         .traverse(a.receiverIds) { MAdnNodeCache.getById }
@@ -736,29 +760,28 @@ object SysMarket extends SioController with MacroLogsImpl with ShopMartCompat {
               .toMap
           }
         }
-    //} else {
-      // Собираем все ресиверы со всех рекламных карточек.
-      //madsFut flatMap { mads =>
-      //}
-      //???
-    //}
-    val ad2advMapFut = madsFut map { mads =>
-      lazy val adIds = mads.flatMap(_.id)
-      val advsOk = if (a.receiverIds.nonEmpty) {
-        // Ищем все размещения имеющихся карточек у запрошенных ресиверов.
-        DB.withConnection { implicit c =>
-          MAdvOk.findByAdIdsAndRcvrs(adIds, rcvrIds = a.receiverIds)
+    } else {
+      // Собираем всех ресиверов со всех рекламных карточек. Делаем это через биллинг, т.к. в mad только текущие ресиверы.
+      ad2advMapFut.flatMap { ad2advsMap =>
+        val allRcvrIds = ad2advsMap.foldLeft(List.empty[String]) {
+          case (acc0, (_, advs)) =>
+            advs.foldLeft(acc0) {
+              (acc1, adv) => adv.rcvrAdnId :: acc1
+            }
         }
-      } else if (a.producerIds.nonEmpty) {
-        // Ищем размещения карточек для продьюсера.
-        DB.withConnection { implicit c =>
-          MAdvOk.findByAdIdsAndProducers(adIds, prodIds = a.producerIds, isOnline = true)
+        MAdnNodeCache.multiGet(allRcvrIds.toSet) map { allRcvrs =>
+          // Список ресиверов конвертим в карту ресиверов.
+          val rcvrsMap = allRcvrs.map { rcvr => rcvr.id.get -> rcvr }.toMap
+          // Заменяем в исходной карте ad2advs списки adv на списки ресиверов.
+          ad2advsMap.mapValues { advs =>
+            advs.flatMap {
+              adv  =>  rcvrsMap get adv.rcvrAdnId
+            }
+          }
         }
-      } else {
-        Nil
       }
-      advsOk.groupBy(_.adId)
     }
+    // Планируем рендер страницы-результата, когда все данные будут собраны.
     for {
       adFreqs       <- adFreqsFut
       mads          <- madsFut

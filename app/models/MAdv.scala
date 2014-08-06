@@ -211,11 +211,11 @@ trait MAdvStatic extends SqlModelStatic {
     )
   }
 
-  def findByAdIdsAndProducers(adIds: Traversable[String], prodIds: Traversable[String], isOnline: Boolean,
+  def findByAdIdsAndProducers(adIds: Traversable[String], prodIds: Traversable[String],
                               policy: SelectPolicy = SelectPolicies.NONE)(implicit c: Connection): List[T] = {
     findBy(
-      " WHERE ad_id = ANY({adIds}) AND prod_adn_id = ANY({prodIds}) AND online = {isOnline}", policy,
-      'adIds -> strings2pgArray(adIds), 'prodIds -> strings2pgArray(prodIds), 'isOnline -> isOnline
+      " WHERE ad_id = ANY({adIds}) AND prod_adn_id = ANY({prodIds})", policy,
+      'adIds -> strings2pgArray(adIds), 'prodIds -> strings2pgArray(prodIds)
     )
   }
 
