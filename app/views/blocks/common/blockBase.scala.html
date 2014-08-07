@@ -1,4 +1,4 @@
-@(isStandalone: Boolean, pageTitle: Option[String] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+@(isStandalone: Boolean, mad: MAdT, bc: util.blocks.ValT, pageTitle: Option[String] = None, headAfter: Option[Html] = None, cssClass: Option[String] = None, style: Option[String] = None)(content: Html)(implicit ctx: Context)
 
 @* База для шаблонов блоков. *@
 
@@ -30,7 +30,12 @@
 <body style="position: relative; display: inline-block; margin: 0; overflow: hidden;">
 }
 
-@content
+@* Тут постоянный div блока выдачи. Сюда рендерится блок. *@
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl@bc.id sm-block@mad.id @cssClass"
+     data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id"
+     @style.map { _style => style="@_style" }>
+  @content
+</div>
 
 @if(isStandalone) {
 </body>

@@ -5,11 +5,11 @@
 @import svg._
 @import util.blocks.BlocksConf.{Block12 => bc}
 
-@blockBase(isStandalone) {
 @defining( mad.colors.getOrElse(bc.fillColorBf.name, bc.fillColorBf.anyDefaultValue) ) { fillColor =>
-
-  <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl12" style="background: #@fillColor; @mad.colors.get(bc.saleMaskColorBf.name).map { saleColor => border-color: #@saleColor;}" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
-
+@defining( mad.colors.get(bc.saleMaskColorBf.name) ) { saleColorOpt =>
+@blockBase(isStandalone, mad, bc,
+  style = Some(s"background: #$fillColor; ${saleColorOpt.map(sc => "border-color: #@sc;")}")
+) {
     <div class="color-bg"@mad.colors.get(bc.saleMaskColorBf.name).map { saleColor => style="background: #@saleColor"}></div>
     <!--<div class="sale-mask abs"></div>-->
 
@@ -38,7 +38,6 @@
       </div>
     }
 
-  </div>
-
+}
 }
 }

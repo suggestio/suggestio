@@ -5,10 +5,7 @@
 @import util.TplDataFormatUtil._
 @import common._
 
-
-@blockBase(isStandalone) {
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl13 sm-block@mad.id"
-     data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+@blockBase(isStandalone, mad, bc) {
 
   @defining(bc.discoBorderColorBf) { smcbf =>
   @_block6_left_border(
@@ -80,5 +77,4 @@
 
   }
 
-</div>
 }

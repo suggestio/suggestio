@@ -5,9 +5,7 @@
 @import common._
 @import util.blocks.BlocksConf.{Block3 => bc}
 
-@blockBase(isStandalone) {
-
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl3 sm-block@mad.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+@blockBase(isStandalone, mad, bc) {
 
   <div class="triangle-border-top"></div>
   <div class="triangle-border-left"></div>
@@ -41,7 +39,5 @@
 
     </div><!-- .items end -->
   </div>
-
-</div>
 
 }

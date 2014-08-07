@@ -2,8 +2,7 @@
 
 @import blocks.svg._
 
-@blockBase(isStandalone) {
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl@bc.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+@blockBase(isStandalone, mad, bc) {
 
   @defining(mad.colors.getOrElse(bc.lineColorBf.name, bc.lineColorBf.anyDefaultValue)) { lineColor =>
     @_top145(
@@ -36,5 +35,4 @@
     </div>
   }
 
-</div>
 }

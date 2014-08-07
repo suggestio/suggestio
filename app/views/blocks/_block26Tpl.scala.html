@@ -5,8 +5,7 @@
 
 @* Блок-ссылка, появилась для нужд саморекламы sioM. При щелчке открывает ссылку в новой вкладке. *@
 
-@blockBase(isStandalone) {
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl26 sm-block@mad.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+@blockBase(isStandalone, mad, bc) {
 
   @* Картинка рендерится в пределах ссылки оффера, если та существует.
      Если оффера нет, то чтобы избежать неотображения картинки, картинка будет отрендерена вне блока. *@
@@ -47,5 +46,4 @@
     }
   }
 
-</div>
 }

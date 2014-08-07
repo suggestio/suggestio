@@ -6,8 +6,7 @@
 @import util.blocks.BlocksConf.{Block5 => bc}
 
 
-@blockBase(isStandalone) {
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl5 sm-block@mad.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+@blockBase(isStandalone, mad, bc) {
 
   @bgImgTpl(mad, bc,
     dfltImg = Some("images/market/blocks/tpl5-bg.jpg"),
@@ -67,5 +66,4 @@
     }
   </div>
 
-</div>
 }

@@ -7,9 +7,7 @@
 @import common._
 @import util.blocks.BlocksConf.{Block1 => bc}
 
-@blockBase(isStandalone) {
-
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl1 sm-block@mad.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+@blockBase(isStandalone, mad, bc) {
   @bgImgTpl(
     mad      = mad,
     bc       = bc,
@@ -47,6 +45,5 @@
       @_blockStyleTpl( mad.id, price, bc.priceBf, "price", left = 14, top = 226 )
     }
   }
-</div>
 
 }

@@ -4,9 +4,8 @@
 @import util.TplDataFormatUtil._
 @import util.blocks.BlocksConf.{Block22 => bc}
 
-@blockBase(isStandalone) {
+@blockBase(isStandalone, mad, bc) {
 @defining( mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue) )  { borderColor =>
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl22 sm-block@mad.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   @bgImgTpl(mad, bc,
     cssClass = Some("bg abs"),
@@ -49,6 +48,5 @@
 
   </div>
 
-</div>
 }
 }

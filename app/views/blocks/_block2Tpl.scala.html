@@ -7,55 +7,51 @@
 @import svg._
 @import util.blocks.BlocksConf.{Block2 => bc}
 
-@blockBase(isStandalone) {
+@blockBase(isStandalone, mad, bc) {
+
+  @mad.offers.headOption.map { offer =>
+    @offer.discount.map { discount =>
+    <div class="sale-icon" style="color: #@discount.font.color;">
+      @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
+    </div>
+    }
+  }
 
   @defining( mad.colors.getOrElse(bc.fillColorBf.name, bc.fillColorBf.anyDefaultValue) ) { fillColor =>
 
-    <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl2 sm-block@mad.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+    <div class="sale-mask-wrap" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue)">
 
-      @mad.offers.headOption.map { offer =>
-        @offer.discount.map { discount =>
-        <div class="sale-icon" style="color: #@discount.font.color;">
-          @formatPercentRaw(offer.discount.map(_.value).getOrElse(0F))<span>%</span>
-        </div>
-        }
-      }
+      @_mask2(
+        cssClass = "mask",
+        fillColor = fillColor
+      )
 
-      <div class="sale-mask-wrap" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue)">
-
-        @_mask2(
-          cssClass = "mask",
-          fillColor = fillColor
-        )
-
-        <!--<div class="mask"></div>-->
-        <div class="bg">
-          @bgImgTpl(mad,  bc,  dfltImg = Some("images/market/blocks/tpl2-bg.jpg"),  style = Some("height: auto;"))
-        </div>
+      <!--<div class="mask"></div>-->
+      <div class="bg">
+        @bgImgTpl(mad,  bc,  dfltImg = Some("images/market/blocks/tpl2-bg.jpg"),  style = Some("height: auto;"))
       </div>
+    </div>
 
-      <div class="info" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue)">
-        @mad.offers.headOption.map { offer =>
-          @offer.text1.map { title =>
-            <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title" style="@_coordsStyleTpl(title, left = 22, top = 219)">
-              <h5 class="title">@Html(title.value)</h5>
-            </div>
-            @_blockStyleTpl( mad.id, title, bc.titleBf, "title", left = 22, top = 219 )
-          }
+    <div class="info" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue)">
+      @mad.offers.headOption.map { offer =>
+        @offer.text1.map { title =>
+          <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title" style="@_coordsStyleTpl(title, left = 22, top = 219)">
+            <h5 class="title">@Html(title.value)</h5>
+          </div>
+          @_blockStyleTpl( mad.id, title, bc.titleBf, "title", left = 22, top = 219 )
+        }
 
-          @offer.text2.map { descr =>
-            <div class="js-mvbl mvbl-descr" data-connected-input="ad.offer.descr" style="@_coordsStyleTpl(descr, left = 22, top = 249)">
+        @offer.text2.map { descr =>
+          <div class="js-mvbl mvbl-descr" data-connected-input="ad.offer.descr" style="@_coordsStyleTpl(descr, left = 22, top = 249)">
             <div class="descr">
               <p>@Html(descr.value)</p>
             </div>
-            </div>
-            @_blockStyleTpl( mad.id, descr, bc.descrBf, "descr", left = 22, top = 249 )
-          }
-
+          </div>
+          @_blockStyleTpl( mad.id, descr, bc.descrBf, "descr", left = 22, top = 249 )
         }
-      </div>
 
+      }
     </div>
-
   }
+
 }

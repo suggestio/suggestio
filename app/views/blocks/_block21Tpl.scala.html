@@ -3,8 +3,9 @@
 @import common._
 @import util.blocks.BlocksConf.{Block21 => bc}
 
-@blockBase(isStandalone) {
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl21 sm-block@mad.id" data-width="@bc.blockWidth" style="border-color: #@mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue);" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+@blockBase(isStandalone, mad, bc,
+  style = Some("border-color: #${mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue)};")
+) {
 
   @bgImgTpl(mad, bc,
     cssClass = Some("bg"),
@@ -34,5 +35,4 @@
     </div>
   }
 
-</div>
 }

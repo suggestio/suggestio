@@ -3,8 +3,7 @@
 @import blocks.svg._
 @import util.TplDataFormatUtil._
 
-@blockBase(isStandalone) {
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl@bc.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+@blockBase(isStandalone, mad, bc) {
 
   @defining( mad.colors.getOrElse(bc.bgColorBf.name, bc.bgColorBf.anyDefaultValue) ) { bgColor =>
     @_circles17(
@@ -47,5 +46,4 @@
 
   }
 
-</div>
 }

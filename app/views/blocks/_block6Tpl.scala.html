@@ -5,12 +5,9 @@
 @import svg._
 @import util.blocks.BlocksConf.{Block6 => bc}
 
-
-@blockBase(isStandalone) {
 @defining( mad.colors.getOrElse(bc.fillColorBf.name, bc.fillColorBf.anyDefaultValue) ) { fillColor =>
 
-  <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl6 sm-block@mad.id" style="background: #@fillColor;" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
-
+  @blockBase(isStandalone, mad, bc, style = Some(s"background: #$fillColor;")) {
 
     @_block6_left_border(
       cssClass = "left-border abs",
@@ -53,7 +50,5 @@
 
     </div>
 
-  </div>
-
-}
+  }
 }
