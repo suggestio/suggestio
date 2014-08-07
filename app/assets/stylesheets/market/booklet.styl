@@ -17,6 +17,9 @@ body
 .ft-S
   font-size 12px
 
+.ft-L
+  font-size 18px
+
 .color-dark
   color darkColor
 
@@ -47,6 +50,9 @@ body
 
     .color-light.__strong
       color attentionColor
+
+    .color-light.__with-attention-bg
+      color #a6a3a3
 
 .def-transition
   transition(all 0.2s ease-in-out 0s)
@@ -81,6 +87,9 @@ body
     background-color  #282828
     opacity           0.87
 
+  &.__attention
+    background-color  attentionColor
+    opacity           0.68
 
 .start-work-btn-w
   text-align center
@@ -94,6 +103,9 @@ body
 
   &.__section-sio-market
     margin-top 50px
+
+  &.__section-only-you
+    margin-top  100px
 
   &.__attention
     border-color attentionColor
@@ -443,3 +455,152 @@ body
 
   &_btn
     margin-top  100px
+
+/********************************************************************************************************************/
+/* Section How it works */
+/********************************************************************************************************************/
+.section-how-it-works
+
+  &_bg-paralax
+    background-image    url('/assets/images/market/booklet/section-how-it-works_bg.jpg')
+
+  &_cnt
+    position        relative
+    padding-bottom  140px
+
+  &_title
+    position        relative
+    margin          0 auto
+
+    max-width       1090px
+    padding-left    45px /* letter-spacing fix */
+    padding-top     250px
+
+    text-align      center
+    letter-spacing  45px
+
+  &_icon
+    margin-top    160px
+    margin-left   auto
+    margin-right  auto
+    width         106px
+    height        106px
+    background    url('/assets/images/market/booklet/section-how-it-works_icon.png') no-repeat
+
+  &_text
+    max-width   650px
+    margin      70px auto 0
+    font-size   12px
+    color       #9b9b9b
+    text-align  center
+
+  &_place-icon
+    margin-top    50px
+    margin-bottom 100px
+    margin-left   auto
+    margin-right  auto
+
+    width         33px
+    height        52px
+    background    url('/assets/images/market/booklet/place-icon.png') no-repeat
+
+/********************************************************************************************************************/
+/* Section Only you */
+/********************************************************************************************************************/
+.section-only-you
+
+  &_cnt
+    margin          0 auto
+    max-width       1090px
+    padding-top     75px
+    padding-bottom  135px
+
+  &_text
+    margin-top    70px
+    margin-bottom 50px
+    color         #9b9b9b
+    font-size     12px
+    text-align    center
+
+  &_title-w
+    display       inline-block
+    margin-bottom 50px
+
+  &_title
+    letter-spacing      50px
+    padding-left        50px /* letter-spacing fix */
+
+  &_title-border
+    height              20px
+    margin              0 108px
+    background-image    url('/assets/images/market/booklet/section-only-you_border.png')
+    background-repeat   repeat-x
+    background-position center bottom
+
+.only-you-block
+  float left
+  width 50%
+
+  &_icon
+    margin            0 auto
+    width             100px
+    height            100px
+    background-image  url('/assets/images/market/booklet/section-only-you_icons.png')
+    background-repeat no-repeat
+
+  &_icon.__block-1
+    background-position 0 0
+
+  &_icon.__block-2
+    background-position 0 -133px
+
+  &_icon.__block-3
+    background-position 0 -283px
+
+  &_icon.__block-4
+    background-position 0 -412px
+
+  &_text
+    margin-top  15px
+    padding     0 15px
+    color       #9b9b9b
+    text-align  center
+    font-size   12px
+
+/********************************************************************************************************************/
+/* Section Advantages */
+/********************************************************************************************************************/
+.section-advantages
+
+  &_bg-paralax
+    background-image    url('/assets/images/market/booklet/section-advantages_bg.jpg')
+
+  &_cnt
+    position        relative
+    padding-top     150px
+    padding-bottom  100px
+    text-align      center
+
+  &_title
+    display         inline-block
+    padding-left    30px
+    padding-top     5px
+    padding-bottom  5px
+    letter-spacing  40px
+    color           lightColor
+    border          3px solid lightColor
+
+  &_plus
+    color       lightColor
+    font-size   30px
+    margin-top  70px
+    text-align  center
+
+  &_block
+    max-width     450px
+    margin-left   auto
+    margin-right  auto
+    margin-top    70px
+    color         #e7e7e7
+    text-align    center
+    font-size     12px
