@@ -1,10 +1,17 @@
 @import "reset"
 @import "mixins"
 
+title( v )
+  letter-spacing v
+  padding-left   v
+  text-align     center
+
 darkColor = black
 lightColor = white
 attentionColor = #ec1c23
 
+screen768 = 'screen and (max-width: 768px)'
+screen1200 = 'screen and (max-width: 1200px)'
 
 body
   font-family   'Open Sans'
@@ -13,6 +20,9 @@ body
 /********************************************************************************************************************/
 /* Common elements */
 /********************************************************************************************************************/
+
+.hidden
+  display none
 
 .ft-S
   font-size 12px
@@ -210,10 +220,8 @@ body
     padding-top 200px
 
   &_title
-    padding-left    50px /* letter-spacing fix */
     font-size       36px
-    text-align      center
-    letter-spacing  50px
+    title(50px)
 
   &_logo
     margin-top    50px
@@ -251,12 +259,10 @@ body
     padding-top 150px
 
   &_title
-    padding-left    40px /* letter-spacing fix */
-
     color           #acaaaa
     font-size       36px
-    text-align      center
-    letter-spacing  40px
+    title(40px)
+
 
   &_wifi-title
     text-align  center
@@ -285,20 +291,12 @@ body
   &_bottom-title
     margin-top      200px
     margin-bottom   50px
-    padding-left    40px  /* letter-spacing fix */
-
-    text-align      center
-    letter-spacing  40px
+    title(40px)
 
 
 .section-about-offer
-  display inline-block
-
-  &.__offer-1
-    float left
-
-  &.__offer-3
-    float right
+  width 33%
+  float left
 
   &_icon
     margin      0 auto
@@ -317,6 +315,7 @@ body
 
   &_text
     margin-top  15px
+    padding     0 10px
     color       #cac9c9
     text-align  center
     font-size   12px
@@ -350,10 +349,11 @@ body
   &_title
     padding-top     30px
     padding-bottom  50px
-    padding-left    50px /* letter-spacing fix */
-
     color           attentionColor
-    letter-spacing  50px
+    title(40px)
+
+  &_text
+    padding 0 10px
 
 /********************************************************************************************************************/
 /* Section I can */
@@ -376,16 +376,17 @@ body
 
   &_title
     padding-bottom  35px
-    padding-left    30px /* letter-spacing fix */
-
     color           attentionColor
-    letter-spacing  30px
+    title(30px)
 
   &_icon
     float       left
     width       50%
     height      189px
     background  url('/assets/images/market/booklet/section-i-can_icon.png') no-repeat center center
+
+  &_text
+    padding 0 10px
 
 /********************************************************************************************************************/
 /* Section You wil notice */
@@ -417,10 +418,11 @@ body
 
   &_title
     padding-bottom  50px
-    padding-left    30px /* letter-spacing fix */
-
     color           attentionColor
-    letter-spacing  30px
+    title(30px)
+
+  &_text
+    padding 0 10px
 
 /********************************************************************************************************************/
 /* Section So easy */
@@ -442,10 +444,11 @@ body
 
   &_title
     padding-bottom  35px
-    padding-left    30px /* letter-spacing fix */
-
     color           attentionColor
-    letter-spacing  30px
+    title(30px)
+
+  &_text
+    padding 0 10px
 
   &_icon
     overflow     hidden
@@ -471,13 +474,9 @@ body
   &_title
     position        relative
     margin          0 auto
-
     max-width       1090px
-    padding-left    45px /* letter-spacing fix */
     padding-top     250px
-
-    text-align      center
-    letter-spacing  45px
+    title(45px)
 
   &_icon
     margin-top    160px
@@ -527,8 +526,7 @@ body
     margin-bottom 50px
 
   &_title
-    letter-spacing      50px
-    padding-left        50px /* letter-spacing fix */
+    title(50px)
 
   &_title-border
     height              20px
@@ -583,12 +581,11 @@ body
 
   &_title
     display         inline-block
-    padding-left    30px
     padding-top     5px
     padding-bottom  5px
-    letter-spacing  40px
     color           lightColor
     border          3px solid lightColor
+    title(40px)
 
   &_plus
     color       lightColor
@@ -604,3 +601,93 @@ body
     color         #e7e7e7
     text-align    center
     font-size     12px
+
+/********************************************************************************************************************/
+/* Section Equipment */
+/********************************************************************************************************************/
+.section-equipment
+
+  &_btn-w
+    padding 45px 0
+
+  &_btn
+    display     block
+    width       74px
+    height      74px
+    margin      0 auto
+    cursor      pointer
+    background  url('/assets/images/market/booklet/section-equipment_btn.png') no-repeat
+
+  &_slide
+    overflow    hidden
+    position    relative
+
+  &_cnt-w
+    margin-top        18px
+    background-color  #eeecec
+
+  &_cnt
+    max-width         1110px
+    margin            0 auto
+    padding-top       35px
+    padding-bottom    100px
+
+
+  &_title
+    margin-bottom   50px
+    title(50px)
+
+  &_angle
+    position    absolute
+    top         0
+    left        50%
+    margin-left -44px
+    z-index     200
+
+    width       88px
+    height      18px
+    background  url('/assets/images/market/booklet/section-equipment_angle.png') no-repeat
+
+.equipment-block
+  width 33%
+  float left
+
+  &_icon
+    margin      0 auto
+    width       20px
+    height      20px
+    padding     10px
+    border      1px solid attentionColor
+
+    font-size   18px
+    line-height 18px
+    text-align  center
+    border-radius(50%)
+
+  &_text
+    margin-top  30px
+    padding     0 10px
+
+    color       #8b8b8b
+    font-size   12px
+    text-align  center
+
+/********************************************************************************************************************/
+/* Устройстка с разрешением от 768px */
+/********************************************************************************************************************/
+@media screen1200
+
+  .section-about_title
+    title(30px)
+
+  .section-i-can_descr
+    width 45%
+
+  .section-i-can_icon
+    width 55%
+
+  .section-how-it-works_title
+    title(25px)
+
+  .section-advantages_title
+    title(35px)
