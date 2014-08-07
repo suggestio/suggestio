@@ -60,8 +60,10 @@ libraryDependencies ++= Seq(
   "de.jollyday" % "jollyday" % "0.4.+",
   "com.google.code.kaptcha" % "kaptcha" % "2.3" classifier "jdk15",
   // Бомжуем с синхронным драйвером из-за конфликта между postgresql-async и asynchbase в версии netty. Зато anorm работает.
-  "org.postgresql" % "postgresql" % "9.3-1100-jdbc41"
+  "org.postgresql" % "postgresql" % "9.3-1100-jdbc41",
   // webjars
+  // test
+  "org.scalatestplus" %% "play" % "1.1.0" % "test"    // версию надо обновлять согласно таблице http://www.scalatest.org/plus/play/versions
 )
 
 play.Play.projectSettings
