@@ -3,11 +3,11 @@
 @import util.TplDataFormatUtil._
 @import common._
 @import svg._
-@import util.blocks.BlocksConf.Block6
+@import util.blocks.BlocksConf.{Block6 => bc}
 
 
 @blockBase(isStandalone) {
-@defining( mad.colors.getOrElse(Block6.fillColorBf.name, Block6.fillColorBf.anyDefaultValue) ) { fillColor =>
+@defining( mad.colors.getOrElse(bc.fillColorBf.name, bc.fillColorBf.anyDefaultValue) ) { fillColor =>
 
   <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl6 sm-block@mad.id" style="background: #@fillColor;" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
@@ -15,18 +15,21 @@
     @_block6_left_border(
       cssClass = "left-border abs",
       fillColor = fillColor,
-      borderColor = mad.colors.getOrElse(Block6.borderColorBf.name, Block6.borderColorBf.anyDefaultValue)
+      borderColor = mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue)
     )
 
     @_block6_right_border(
       cssClass = "right-border abs",
       fillColor = fillColor,
-      borderColor = mad.colors.getOrElse(Block6.borderColorBf.name, Block6.borderColorBf.anyDefaultValue)
+      borderColor = mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue)
     )
 
-    <img class="bg abs" src="@ctx.myAudienceUrl@mad.imgs.get(Block6.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl6-bg.jpg"))" />
+    @bgImgTpl(mad, bc,
+      dfltImg  = Some("images/market/blocks/tpl6-bg.jpg"),
+      cssClass = Some("bg abs")
+    )
 
-    <div class="info abs" style="background-color: #@mad.colors.getOrElse(Block6.borderColorBf.name, Block6.borderColorBf.anyDefaultValue);">
+    <div class="info abs" style="background-color: #@mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue);">
       @mad.offers.map { offer =>
         <div class="item">
           @offer.text1.map { text1 =>
@@ -35,7 +38,7 @@
               @Html(text1.value)
             </div>
             </div>
-            @_blockStyleTpl( mad.id, text1, Block6.titleBf, "title-" + offer.n, left = 22, top = (offer.n)*80+30 )
+            @_blockStyleTpl( mad.id, text1, bc.titleBf, "title-" + offer.n, left = 22, top = (offer.n)*80+30 )
           }
           @offer.price.map { price =>
             <div class="js-mvbl mvbl-price-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].price">
@@ -43,7 +46,7 @@
               @formatPrice(price.value, price.currency)
             </div>
             </div>
-            @_blockStyleTpl( mad.id, price, Block6.priceBf, "price-" + offer.n, left = 22, top = (offer.n)*80+65 )
+            @_blockStyleTpl( mad.id, price, bc.priceBf, "price-" + offer.n, left = 22, top = (offer.n)*80+65 )
           }
         </div>
       }

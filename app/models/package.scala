@@ -1,5 +1,6 @@
 import io.suggest.ym
 import io.suggest.ym.model.common
+import io.suggest.ym.model.common.EMImg
 
 /**
  * Suggest.io
@@ -148,4 +149,6 @@ package object models {
   type InviteReqType        = InviteReqTypes.InviteReqType
 
   type AdnShownType         = AdnShownTypes.AdnShownType
+
+  type Imgs_t               = EMImg.Imgs_t
 }

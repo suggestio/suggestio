@@ -205,6 +205,7 @@ object BlocksConf extends Enumeration {
 
   sealed trait Block8t extends BgImg with Title with Price with HeightFixed {
     override def template = _block8Tpl
+    override def blockWidth = BLOCK_WIDTH_NARROW_PX
   }
   val Block8 = new Val(8) with Block8t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block8Wrapper(key = newKey)
@@ -229,6 +230,7 @@ object BlocksConf extends Enumeration {
   sealed trait Block10t extends BgImg with Title with OldPrice with Price with HeightFixed {
     override def template = _block10Tpl
     override def isShown = false
+    override def blockWidth = BLOCK_WIDTH_NARROW_PX
   }
   val Block10 = new Val(10) with Block10t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block10Wrapper(key = newKey)
@@ -244,6 +246,7 @@ object BlocksConf extends Enumeration {
       defaultValue = Some("AAAAAA")
     )
     override def template = _block11Tpl
+    override def blockWidth = BLOCK_WIDTH_NARROW_PX
   }
   val Block11 = new Val(11) with Block11t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block11Wrapper(key = newKey)
@@ -259,6 +262,7 @@ object BlocksConf extends Enumeration {
       defaultValue = Some("00ff1a")
     )
     override def template = _block12Tpl
+    override def blockWidth = BLOCK_WIDTH_NARROW_PX
   }
   val Block12 = new Val(12) with Block12t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block12Wrapper(key = newKey)
@@ -315,7 +319,7 @@ object BlocksConf extends Enumeration {
   sealed trait Block15t extends CommonBlock145 {
     override def template = _block15Tpl
     override def isShown = false
-    override def blockWidth: Int = BLOCK_WIDTH_NARROW_PX
+    override def blockWidth = BLOCK_WIDTH_NARROW_PX
   }
   val Block15 = new Val(15) with Block15t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block15Wrapper(key = newKey)
@@ -459,12 +463,11 @@ object BlocksConf extends Enumeration {
       defaultValue = Some("d5c864")
     )
     override def template = _block24Tpl
+    override def blockWidth = BLOCK_WIDTH_NARROW_PX
   }
-
   val Block24 = new Val(24) with Block24t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block24Wrapper(key = newKey)
   }
-
   sealed case class Block24Wrapper(key: String) extends ValTWrapper(Block24) with ValTEmpty with Block24t {
     override def mappingWithNewKey(newKey: String) = copy(key = newKey)
   }
@@ -476,6 +479,7 @@ object BlocksConf extends Enumeration {
     override def heightBf = super.heightBf.copy(
       availableVals = Set(BfHeight.HEIGHT_140, BfHeight.HEIGHT_300, BfHeight.HEIGHT_460, BfHeight.HEIGHT_620)
     )
+    override def blockWidth = BLOCK_WIDTH_NARROW_PX
   }
   val Block25 = new Val(25) with Block25t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block25Wrapper(key = newKey)

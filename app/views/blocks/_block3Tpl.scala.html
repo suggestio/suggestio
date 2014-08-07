@@ -3,11 +3,11 @@
 @import util.TplDataFormatUtil._
 @import ctx._
 @import common._
-@import util.blocks.BlocksConf.Block3
+@import util.blocks.BlocksConf.{Block3 => bc}
 
 @blockBase(isStandalone) {
 
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl3 sm-block@mad.id" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl3 sm-block@mad.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   <div class="triangle-border-top"></div>
   <div class="triangle-border-left"></div>
@@ -16,7 +16,7 @@
 
   <div class="inner">
 
-    <img src="@ctx.myAudienceUrl@mad.imgs.get(Block3.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl3-bg.jpg"))" />
+    @bgImgTpl(mad, bc, dfltImg = Some("images/market/blocks/tpl3-bg.jpg"))
 
     <div class="items">
 
@@ -26,7 +26,7 @@
             <div class="js-mvbl mvbl-title-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].title">
               <div class="title title-@offer.n">@Html(title.value)</div>
             </div>
-            @_blockStyleTpl( mad.id, title, Block3.titleBf, "title-" + offer.n, left = 22, top = (offer.n)*80+30 )
+            @_blockStyleTpl( mad.id, title, bc.titleBf, "title-" + offer.n, left = 22, top = (offer.n)*80+30 )
           }
           @offer.price.map { price =>
             <div class="js-mvbl mvbl-price-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].price">
@@ -34,7 +34,7 @@
                 @formatPrice(price.value, price.currency)
               </div>
             </div>
-            @_blockStyleTpl( mad.id, price, Block3.priceBf, "price-" + offer.n, left = 22, top = (offer.n)*80+50)
+            @_blockStyleTpl( mad.id, price, bc.priceBf, "price-" + offer.n, left = 22, top = (offer.n)*80+50)
           }
         </div>
       }

@@ -1,32 +1,36 @@
 @(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
 
 @import common._
-@import util.blocks.BlocksConf.Block25
+@import util.blocks.BlocksConf.{Block25 => bc}
 
 @blockBase(isStandalone) {
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl25 sm-block@mad.id" data-width="140" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl25 sm-block@mad.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
-  <img class="bg" src="@ctx.myAudienceUrl@mad.imgs.get(Block25.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl20-bg.jpg"))" />
+  @bgImgTpl(mad, bc,
+    cssClass = Some("bg"),
+    dfltImg = Some("images/market/blocks/tpl20-bg.jpg")
+  )
 
   @mad.offers.map { offer =>
 
   <div class="info el-@{offer.n + 1}">
     @offer.text1.map { text1 =>
-    <div class="js-mvbl mvbl-title-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].title">
-      <div class="title title-@offer.n">
-        @Html(text1.value)
+      <div class="js-mvbl mvbl-title-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].title">
+        <div class="title title-@offer.n">
+          @Html(text1.value)
+        </div>
       </div>
-    </div>
-    @_blockStyleTpl( mad.id, text1, Block25.titleBf, "title-" + offer.n, left = 38, top = 70*( offer.n + 1 )  )
+      @_blockStyleTpl( mad.id, text1, bc.titleBf, "title-" + offer.n, left = 38, top = 70*( offer.n + 1 )  )
     }
 
     @offer.text2.map { text2 =>
-    <div class="js-mvbl mvbl-descr mvbl-descr-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].descr">
-      <div class="descr descr-@offer.n">
-        @Html(text2.value)
+      <div class="js-mvbl mvbl-descr mvbl-descr-@offer.n" data-connected-input="ad.offer.offer[@{offer.n}].descr">
+        <div class="descr descr-@offer.n">
+          @Html(text2.value)
+        </div>
       </div>
-    </div>
-    @_blockStyleTpl( mad.id, text2, Block25.descrBf, "descr-" + offer.n, left = 38, top = 70*( offer.n + 1 )+25  )
+
+      @_blockStyleTpl( mad.id, text2, bc.descrBf, "descr-" + offer.n, left = 38, top = 70*( offer.n + 1 )+25  )
     }
   </div>
   }

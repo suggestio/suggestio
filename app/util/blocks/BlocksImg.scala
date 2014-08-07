@@ -1,12 +1,11 @@
 package util.blocks
 
 import util.img._
-import io.suggest.ym.model.common.EMImg.Imgs_t
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import util.blocks.BlocksUtil.BlockImgMap
 import play.api.data.{FormError, Mapping}
-import models.MImgInfoMeta
+import models.{MImgInfoMeta, Imgs_t}
 import play.api.Play.{current, configuration}
 
 /**

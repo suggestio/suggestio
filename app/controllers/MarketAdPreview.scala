@@ -15,7 +15,6 @@ import io.suggest.ym.parsers.Price
 import controllers.ad.MarketAdFormUtil
 import MarketAdFormUtil._
 import util.blocks.BlockMapperResult
-import io.suggest.ym.model.common.EMImg.Imgs_t
 import views.html.market.showcase._
 
 /**

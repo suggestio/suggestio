@@ -1,12 +1,15 @@
 @(mad: MAdT, isStandalone: Boolean)(implicit ctx: Context)
 
 @import common._
-@import util.blocks.BlocksConf.Block21
+@import util.blocks.BlocksConf.{Block21 => bc}
 
 @blockBase(isStandalone) {
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl21 sm-block@mad.id" data-width="300" style="border-color: #@mad.colors.getOrElse(Block21.borderColorBf.name, Block21.borderColorBf.anyDefaultValue);" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl21 sm-block@mad.id" data-width="@bc.blockWidth" style="border-color: #@mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue);" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
-  <img class="bg" src="@ctx.myAudienceUrl@mad.imgs.get(Block21.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl21-bg.jpg"))" />
+  @bgImgTpl(mad, bc,
+    cssClass = Some("bg"),
+    dfltImg = Some("images/market/blocks/tpl21-bg.jpg")
+  )
 
   @mad.offers.headOption.map { offer =>
     <div class="info">
@@ -17,7 +20,7 @@
           @Html(text1.value)
         </div>
         </div>
-        @_blockStyleTpl( mad.id, text1, Block21.titleBf, "title", left = 18, top = 24  )
+        @_blockStyleTpl( mad.id, text1, bc.titleBf, "title", left = 18, top = 24  )
       }
       @offer.text2.map { text2 =>
         <div class="js-mvbl mvbl-descr" data-connected-input="ad.offer.descr">
@@ -25,7 +28,7 @@
           @Html(text2.value)
         </div>
         </div>
-        @_blockStyleTpl( mad.id, text2, Block21.descrBf, "descr", left = 18, top = 50 )
+        @_blockStyleTpl( mad.id, text2, bc.descrBf, "descr", left = 18, top = 50 )
       }
 
     </div>

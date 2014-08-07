@@ -5,13 +5,13 @@
 @import util.TplDataFormatUtil._
 @import common._
 @import svg._
-@import util.blocks.BlocksConf.Block2
+@import util.blocks.BlocksConf.{Block2 => bc}
 
 @blockBase(isStandalone) {
 
-  @defining( mad.colors.getOrElse(Block2.fillColorBf.name, Block2.fillColorBf.anyDefaultValue) ) { fillColor =>
+  @defining( mad.colors.getOrElse(bc.fillColorBf.name, bc.fillColorBf.anyDefaultValue) ) { fillColor =>
 
-    <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl2 sm-block@mad.id" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+    <div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl2 sm-block@mad.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
       @mad.offers.headOption.map { offer =>
         @offer.discount.map { discount =>
@@ -21,7 +21,7 @@
         }
       }
 
-      <div class="sale-mask-wrap" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(Block2.borderColorBf.name, Block2.borderColorBf.anyDefaultValue)">
+      <div class="sale-mask-wrap" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue)">
 
         @_mask2(
           cssClass = "mask",
@@ -30,17 +30,17 @@
 
         <!--<div class="mask"></div>-->
         <div class="bg">
-          <img style="height: auto;" src="@ctx.myAudienceUrl@mad.imgs.get(Block2.BG_IMG_FN).map { img =>@routes.Img.getImg(img.filename) }.getOrElse(routes.Assets.at("images/market/blocks/tpl2-bg.jpg"))"/>
+          @bgImgTpl(mad,  bc,  dfltImg = Some("images/market/blocks/tpl2-bg.jpg"),  style = Some("height: auto;"))
         </div>
       </div>
 
-      <div class="info" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(Block2.borderColorBf.name, Block2.borderColorBf.anyDefaultValue)">
+      <div class="info" style="background: #@fillColor; border-color: #@mad.colors.getOrElse(bc.borderColorBf.name, bc.borderColorBf.anyDefaultValue)">
         @mad.offers.headOption.map { offer =>
           @offer.text1.map { title =>
             <div class="js-mvbl mvbl-title" data-connected-input="ad.offer.title" style="@_coordsStyleTpl(title, left = 22, top = 219)">
               <h5 class="title">@Html(title.value)</h5>
             </div>
-            @_blockStyleTpl( mad.id, title, Block2.titleBf, "title", left = 22, top = 219 )
+            @_blockStyleTpl( mad.id, title, bc.titleBf, "title", left = 22, top = 219 )
           }
 
           @offer.text2.map { descr =>
@@ -49,7 +49,7 @@
               <p>@Html(descr.value)</p>
             </div>
             </div>
-            @_blockStyleTpl( mad.id, descr, Block2.descrBf, "descr", left = 22, top = 249 )
+            @_blockStyleTpl( mad.id, descr, bc.descrBf, "descr", left = 22, top = 249 )
           }
 
         }

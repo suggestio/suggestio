@@ -3,17 +3,20 @@
 @import svg._
 @import common._
 @import util.TplDataFormatUtil._
-@import util.blocks.BlocksConf.Block23
+@import util.blocks.BlocksConf.{Block23 => bc}
 
 @blockBase(isStandalone) {
-<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl23 sm-block@mad.id" data-width="300" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
+<div class="sm-block height-@mad.blockMeta.height sio-mart__single-offer sm-block-tpl23 sm-block@mad.id" data-width="@bc.blockWidth" data-height="@mad.blockMeta.height" data-mad-id="@mad.id">
 
   @_mask23(
     cssClass  = "mask abs",
     fillColor = "#ffffff"
   )
 
-  <img class="bg abs" src="@ctx.myAudienceUrl@mad.imgs.get(Block23.BG_IMG_FN).map(_.filename).map(routes.Img.getImg).getOrElse(routes.Assets.at("images/market/blocks/tpl23-bg.jpg"))" />
+  @bgImgTpl(mad, bc,
+    cssClass = Some("bg abs"),
+    dfltImg = Some("images/market/blocks/tpl23-bg.jpg")
+  )
 
   <div class="info abs">
     @mad.offers.headOption.map { offer =>
@@ -23,7 +26,7 @@
           <p>@Html(text1.value)</p>
         </div>
         </div>
-        @_blockStyleTpl( mad.id, text1, Block23.titleBf, "title", left = 18, top = 24  )
+        @_blockStyleTpl( mad.id, text1, bc.titleBf, "title", left = 18, top = 24  )
       }
 
       @offer.text2.map { text2 =>
@@ -32,7 +35,7 @@
           <p>@Html(text2.value)</p>
         </div>
         </div>
-        @_blockStyleTpl( mad.id, text2, Block23.descrBf, "descr", left = 18, top = 65  )
+        @_blockStyleTpl( mad.id, text2, bc.descrBf, "descr", left = 18, top = 65  )
       }
 
       @offer.price.map { price =>
@@ -41,7 +44,7 @@
           <p>@formatPrice(price.value, price.currency)</p>
         </div>
         </div>
-        @_blockStyleTpl( mad.id, price, Block23.priceBf, "price", left = 12, top = 105  )
+        @_blockStyleTpl( mad.id, price, bc.priceBf, "price", left = 12, top = 105  )
       }
     }
   </div>
